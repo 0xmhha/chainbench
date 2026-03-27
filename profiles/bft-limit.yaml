@@ -1,0 +1,18 @@
+name: bft-limit
+description: "BFT 한계 테스트 (4 validator, 1노드 장애 시나리오)"
+inherits: default
+
+genesis:
+  overrides:
+    wbft:
+      blockPeriodSeconds: 2
+      requestTimeoutSeconds: 5
+
+nodes:
+  verbosity: 5
+  en_verbosity: 5
+
+tests:
+  auto_run:
+    - basic/consensus
+    - fault/node-crash

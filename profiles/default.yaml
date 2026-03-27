@@ -1,0 +1,117 @@
+# chainbench profile: default
+# 기본 로컬 테스트 체인 설정 (go-stablenet, 4 validator + 1 endpoint)
+
+name: default
+description: "기본 4 validator + 1 EN 로컬 체인 (go-stablenet)"
+
+chain:
+  binary: gstable
+  binary_path: "../go-stablenet/build/bin/gstable"  # 상대경로(chainbench 기준) 또는 절대경로
+  network_id: 8283
+  chain_id: 8283
+
+genesis:
+  template: templates/genesis.template.json
+  overrides:
+    wbft:
+      blockPeriodSeconds: 1        # 블록 생성 간격 (초)
+      requestTimeoutSeconds: 2     # WBFT 합의 요청 타임아웃 (초)
+      epochLength: 140             # 에포크 길이 (블록 수)
+      proposerPolicy: 0            # 프로포저 선출 정책 (0: round-robin, 1: sticky)
+      maxRequestTimeoutSeconds: null  # 최대 요청 타임아웃 (null=제한없음)
+    init:                            # anzeon.init 섹션 (밸리데이터 목록)
+      validators:
+        - "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+        - "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+        - "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+        - "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      blsPublicKeys:
+        - "0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f"
+        - "0x929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449"
+        - "0x8c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0"
+        - "0xa63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
+    extraData: "0xf90147808080c0c080c0c086191a20322000f90135f868d994c17d493883eaa3b4cceb0f214b273392d562f9d8831cfde0d9942493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c831cfde0d9948c4a10b9108d49b9d23f764464090831d9c17764831cfde0d9948eb79036bc0f3aba136ef18b3a2fb8c1188939a6831cfde0c480010203f8c4b0a00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556fb0929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449b08c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0b0a63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
+    alloc:                         # 초기 잔액 설정
+      "0xc17d493883eaa3b4cceb0f214b273392d562f9d8": "1000000000000000000000000000"
+      "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c": "1000000000000000000000000000"
+      "0x8c4a10b9108d49b9d23f764464090831d9c17764": "1000000000000000000000000000"
+      "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6": "1000000000000000000000000000"
+    systemContracts:
+      govValidator:
+        address: "0x0000000000000000000000000000000000001001"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "604800"
+          maxProposals: "3"
+          memberVersion: "1"
+          gasTip: "27600000000000"
+      nativeCoinAdapter:
+        address: "0x0000000000000000000000000000000000001000"
+        version: "v1"
+        params:
+          name: "WKRC"
+          symbol: "WKRC"
+          currency: "KRW"
+          decimals: "18"
+          masterMinter: "0x0000000000000000000000000000000000001002"
+          minters: "0x0000000000000000000000000000000000001003"
+          minterAllowed: "100000000000000000000000000000"
+      govMinter:
+        address: "0x0000000000000000000000000000000000001003"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "604800"
+          maxProposals: "3"
+          memberVersion: "1"
+          fiatToken: "0x0000000000000000000000000000000000001000"
+      govMasterMinter:
+        address: "0x0000000000000000000000000000000000001002"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "604800"
+          maxProposals: "3"
+          memberVersion: "1"
+          fiatToken: "0x0000000000000000000000000000000000001000"
+      govCouncil:
+        address: "0x0000000000000000000000000000000000001004"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "604800"
+          maxProposals: "3"
+          memberVersion: "1"
+
+data:
+  directory: /tmp/node-data       # 노드 데이터 루트 디렉토리 (절대경로 또는 chainbench 기준 상대경로)
+
+nodes:
+  validators: 4                   # 밸리데이터 노드 수
+  endpoints: 1                    # 엔드포인트 노드 수 (non-validator)
+  verbosity: 4                    # 로그 레벨 (0-5, 기본 4)
+  en_verbosity: 5                 # EN 로그 레벨
+  gcmode: archive                 # GC 모드 (archive/full)
+  cache: 2048                     # 캐시 크기 (MB)
+  extra_flags: []                 # 추가 gstable 플래그
+
+keys:
+  mode: static                    # static(기본): preset 키 재사용 | generate: 매번 새로 생성
+  source: "keys/preset"           # preset 키 디렉토리 (chainbench 기준 상대경로)
+
+ports:
+  base_p2p: 30301                 # P2P 포트 시작점 (30301, 30302, ...)
+  base_http: 8501                 # HTTP RPC 포트 시작점
+  base_ws: 9501                   # WebSocket 포트 시작점
+  base_auth: 8551                 # Auth RPC 포트 시작점
+  base_metrics: 6061              # 메트릭 포트 시작점
+
+logging:
+  rotation: true                  # 로그 로테이션 사용 여부
+  max_size: 10M                   # 로그 파일 최대 크기
+  max_files: 5                    # 보관 로그 파일 수
+  directory: data/logs            # 로그 디렉토리
+
+tests:
+  auto_run: []                    # init 후 자동 실행할 테스트 목록

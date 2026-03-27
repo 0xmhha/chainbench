@@ -1,0 +1,7 @@
+name: minimal
+description: "최소 구성 (2 validator, 빠른 테스트용)"
+inherits: default
+
+nodes:
+  validators: 2
+  endpoints: 0

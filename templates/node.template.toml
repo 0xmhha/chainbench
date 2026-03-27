@@ -1,0 +1,31 @@
+# chainbench node TOML configuration template
+# Placeholders are substituted by 'chainbench init' from the active profile
+
+[Eth]
+SyncMode = "__SYNC_MODE__"
+
+__MINER_SECTION__
+
+[Node]
+KeyStoreDir = "__KEYSTORE_DIR__"
+AuthPort = __AUTH_PORT__
+HTTPHost = "__HTTP_HOST__"
+HTTPPort = __HTTP_PORT__
+HTTPCors = ["*"]
+HTTPVirtualHosts = ["*"]
+# go-stablenet requires "wbft" and "engine" modules
+HTTPModules = ["admin", "eth", "debug", "miner", "net", "txpool", "personal", "web3", "wbft", "engine"]
+
+[Node.P2P]
+ListenAddr = ":__P2P_PORT__"
+__DISCOVERY_SECTION__
+
+[Ethstats]
+URL = "__ETHSTATS_URL__"
+
+[Metrics]
+Enabled = __METRICS_ENABLED__
+HTTP = "__METRICS_HTTP__"
+Port = __METRICS_PORT__
+EnableInfluxDB = false
+EnableInfluxDBV2 = false

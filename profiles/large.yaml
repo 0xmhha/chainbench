@@ -1,0 +1,8 @@
+name: large
+description: "대규모 구성 (7 validator + 3 EN)"
+inherits: default
+
+nodes:
+  validators: 7
+  endpoints: 3
+  cache: 4096

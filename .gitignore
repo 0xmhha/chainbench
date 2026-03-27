@@ -1,0 +1,40 @@
+# Runtime state
+state/pids.json
+state/current-profile.yaml
+state/current-profile-merged.json
+state/results/*.json
+
+# Node data (generated at runtime)
+data/
+/tmp/
+
+# Logs
+*.log
+*.log.*
+
+# MCP server build artifacts
+mcp-server/node_modules/
+mcp-server/dist/
+mcp-server/package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code
+.claude/
+
+# PID files
+*.pid
+
+# Binaries (platform-specific, not tracked)
+bin/logrot
+bin/gstable
+bin/bootnode
