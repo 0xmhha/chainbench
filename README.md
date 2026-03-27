@@ -42,13 +42,15 @@ cd chainbench
 ## Prerequisites
 
 - **bash** 4.0+
-- **python3** (macOS ships with it; PyYAML optional but recommended: `pip3 install pyyaml`)
+- **python3** 3.6+ (macOS ships with it; PyYAML optional but recommended: `pip3 install pyyaml`)
 - **curl**
+- **Node.js** 18+ and **npm** (only for MCP server / Claude Code integration)
 - **gstable** binary — build from [go-stablenet](https://github.com/user/go-stablenet):
   ```bash
   cd go-stablenet && make gstable
   # Binary at: build/bin/gstable
   ```
+- **logrot** (optional) — log rotation utility. Place in `bin/logrot` if available. Without it, logs are written directly to files (no auto-rotation).
 
 ## Installation
 
@@ -57,7 +59,19 @@ git clone https://github.com/0xmhha/chainbench.git
 cd chainbench
 ```
 
-No build step needed for the CLI. For the MCP server (optional):
+No build step is needed for the CLI itself — it's a shell script.
+
+### Optional: Add to PATH
+
+```bash
+# Option A: symlink
+ln -s "$(pwd)/chainbench" /usr/local/bin/chainbench
+
+# Option B: add to shell profile
+echo 'export PATH="/path/to/chainbench:$PATH"' >> ~/.zshrc
+```
+
+### Optional: MCP Server (for Claude Code integration)
 
 ```bash
 cd mcp-server && npm install && npm run build && cd ..
@@ -221,22 +235,42 @@ chainbench includes an MCP (Model Context Protocol) server that allows AI agents
    cd mcp-server && npm install && npm run build && cd ..
    ```
 
-2. Register in Claude Code settings. Add to your `.claude/settings.local.json` or project-level `.mcp.json`:
+2. Register in Claude Code. Choose one of these methods:
+
+   **Method A: Project-level** — create `.mcp.json` in your project root:
    ```json
    {
      "mcpServers": {
        "chainbench": {
          "command": "node",
-         "args": ["<absolute-path-to>/chainbench/mcp-server/dist/index.js"],
+         "args": ["/Users/yourname/chainbench/mcp-server/dist/index.js"],
          "env": {
-           "CHAINBENCH_DIR": "<absolute-path-to>/chainbench"
+           "CHAINBENCH_DIR": "/Users/yourname/chainbench"
          }
        }
      }
    }
    ```
 
-3. Reload Claude Code. The following MCP tools become available:
+   **Method B: Global** — add to `~/.claude/settings.local.json`:
+   ```json
+   {
+     "mcpServers": {
+       "chainbench": {
+         "command": "node",
+         "args": ["/Users/yourname/chainbench/mcp-server/dist/index.js"],
+         "env": {
+           "CHAINBENCH_DIR": "/Users/yourname/chainbench"
+         }
+       }
+     }
+   }
+   ```
+
+   > Replace `/Users/yourname/chainbench` with your actual chainbench installation path.
+   > Use `pwd` inside the chainbench directory to get the absolute path.
+
+3. Restart Claude Code (or run `/mcp` to reload). The following MCP tools become available:
 
 ### Available MCP Tools
 
@@ -344,6 +378,31 @@ chainbench/
 1. `./chainbench profile create my-profile`
 2. Edit `profiles/custom/my-profile.yaml`
 3. Use `inherits: default` to only override what you need
+
+## Troubleshooting
+
+**`chainbench init` fails with "Cannot find gstable binary"**
+- Set `chain.binary_path` in `profiles/default.yaml` to the absolute path of your `gstable` binary
+- Or add the directory containing `gstable` to your `$PATH`
+
+**Nodes start but immediately die**
+- Check logs: `cat /tmp/node-data/logs/node1.log`
+- Common cause: port conflict. Change `ports.base_*` values in the profile
+- Common cause: `extra_flags` contains invalid YAML — ensure it's a proper list or empty `[]`
+
+**`chainbench stop` doesn't stop all processes**
+- Manual cleanup: `pkill -15 gstable && sleep 3 && pkill -9 gstable`
+- Then remove stale state: `rm -f state/pids.json`
+
+**MCP server not recognized in Claude Code**
+- Verify the path in `.mcp.json` is absolute (not relative)
+- Verify `npm run build` succeeded (check `mcp-server/dist/index.js` exists)
+- Run `/mcp` in Claude Code to reload servers
+- Check Claude Code logs for MCP connection errors
+
+**Port already in use**
+- Default ports: HTTP 8501-8505, WS 9501-9505, P2P 30301-30305
+- Change base ports in the profile: `ports.base_http: 18501`
 
 ## License
 
