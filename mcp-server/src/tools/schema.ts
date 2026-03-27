@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { writeFileSync, mkdirSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
+import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
@@ -8,303 +9,279 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const CHAINBENCH_DIR = resolve(__dirname, "../../../..");
 
 // ---------------------------------------------------------------------------
-// Schema documentation strings
+// Schema documentation
 // ---------------------------------------------------------------------------
 
 const SECTION_DOCS: Record<string, string> = {
   top: `# Top-level fields
-
-- \`name\` (string, **required**): Profile name. Used in log messages and status output.
-- \`description\` (string, optional): Human-readable description shown by \`chainbench status\`.
-- \`inherits\` (string, optional): Name of a parent profile to inherit from. Values in this profile override the parent.`,
+- \`name\` (string, required): Profile name.
+- \`description\` (string, optional): Human-readable description.
+- \`inherits\` (string, optional): Parent profile name for inheritance.`,
 
   chain: `# chain — Binary and network identity
+- \`chain.binary\` (string, default: "gstable"): Executable name.
+- \`chain.binary_path\` (string, default: ""): Absolute path to binary. Empty = search $PATH.
+- \`chain.network_id\` (integer, default: 8283): P2P network ID.
+- \`chain.chain_id\` (integer, default: 8283): EIP-155 chain ID.`,
 
-- \`chain.binary\` (string, default: \`"gstable"\`): Executable name of the go-stablenet binary.
-- \`chain.binary_path\` (string, default: \`""\`): Absolute path to the binary. Empty = search \`$PATH\`.
-- \`chain.network_id\` (integer, default: \`8283\`): P2P network identifier used for peer discovery.
-- \`chain.chain_id\` (integer, default: \`8283\`): EIP-155 chain ID used for transaction signing.`,
+  data: `# data — Data directory
+- \`data.directory\` (string, default: "data"): Root directory for node data. Absolute or relative to chainbench.`,
 
   genesis: `# genesis — Genesis block configuration
-
-- \`genesis.template\` (string, default: \`"templates/genesis.template.json"\`): Path to the JSON template for the genesis block. Relative to the chainbench root directory.
-
-## genesis.overrides.wbft — WBFT Consensus parameters
-
-These values are injected into the \`config.wbft\` section of \`genesis.json\`.
-
-- \`blockPeriodSeconds\` (integer, default: \`1\`): Target interval between blocks in seconds.
-- \`requestTimeoutSeconds\` (integer, default: \`2\`): WBFT view-change timeout in seconds.
-- \`epochLength\` (integer, default: \`140\`): Number of blocks per epoch. At each epoch boundary the validator set is checkpointed.
-- \`proposerPolicy\` (integer, default: \`0\`): Block proposer selection strategy. \`0\` = round-robin, \`1\` = sticky (same proposer until view change).
-- \`maxRequestTimeoutSeconds\` (integer | null, default: \`null\`): Upper cap on request timeout growth. \`null\` = no cap.
-
-## genesis.overrides.alloc — Pre-funded accounts
-
-Map of Ethereum address → initial balance in wei (as a string).
-
-Example:
-\`\`\`yaml
-alloc:
-  "0xc17d493883eaa3b4cceb0f214b273392d562f9d8": "1000000000000000000000000000"
-\`\`\``,
+- \`genesis.template\` (string): Path to genesis JSON template.
+## genesis.overrides.wbft
+- \`blockPeriodSeconds\` (int, default: 1): Block interval in seconds.
+- \`requestTimeoutSeconds\` (int, default: 2): WBFT consensus timeout.
+- \`epochLength\` (int, default: 140): Blocks per epoch.
+- \`proposerPolicy\` (int, default: 0): 0=round-robin, 1=sticky.
+- \`maxRequestTimeoutSeconds\` (int|null, default: null): Timeout cap.`,
 
   "genesis.wbft": `# genesis.overrides.wbft — WBFT Consensus parameters
+- \`blockPeriodSeconds\` (int, default: 1): Block interval.
+- \`requestTimeoutSeconds\` (int, default: 2): Consensus timeout.
+- \`epochLength\` (int, default: 140): Blocks per epoch.
+- \`proposerPolicy\` (int, default: 0): 0=round-robin, 1=sticky.
+- \`maxRequestTimeoutSeconds\` (int|null): Timeout cap.`,
 
-These values are injected into the \`config.wbft\` section of \`genesis.json\`.
+  "genesis.systemContracts": `# genesis.overrides.systemContracts
+- govValidator (0x...1001): Validator governance. Params: quorum, expiry, gasTip, validators, members, blsPublicKeys
+- nativeCoinAdapter (0x...1000): Native coin ERC-20. Params: name, symbol, currency, decimals, masterMinter, minters
+- govMinter (0x...1003): Minting governance. Params: quorum, expiry, fiatToken, members
+- govMasterMinter (0x...1002): Master minter. Params: quorum, expiry, fiatToken, minters, members
+- govCouncil (0x...1004): Council. Params: quorum, expiry, members`,
 
-- \`blockPeriodSeconds\` (integer, default: \`1\`): Target interval between blocks in seconds.
-- \`requestTimeoutSeconds\` (integer, default: \`2\`): WBFT view-change timeout in seconds.
-- \`epochLength\` (integer, default: \`140\`): Number of blocks per epoch. At each epoch boundary the validator set is checkpointed.
-- \`proposerPolicy\` (integer, default: \`0\`): Block proposer selection strategy. \`0\` = round-robin, \`1\` = sticky (same proposer until view change).
-- \`maxRequestTimeoutSeconds\` (integer | null, default: \`null\`): Upper cap on request timeout growth. \`null\` = no cap.`,
+  nodes: `# nodes — Node topology
+- \`nodes.validators\` (int, default: 4): Validator count (with --mine).
+- \`nodes.endpoints\` (int, default: 1): Non-mining node count.
+- \`nodes.verbosity\` (int, default: 4): Validator log level (0-5).
+- \`nodes.en_verbosity\` (int, default: 5): Endpoint log level.
+- \`nodes.gcmode\` (string, default: "archive"): "archive" or "full".
+- \`nodes.cache\` (int, default: 2048): Cache MB per node.
+- \`nodes.extra_flags\` (string[], default: []): Extra gstable CLI flags.`,
 
-  "genesis.systemContracts": `# genesis.overrides.systemContracts — System contracts
+  keys: `# keys — Key material
+- \`keys.mode\` (string, default: "static"): "static" = reuse preset, "generate" = new keys each init.
+- \`keys.source\` (string, default: "keys/preset"): Preset keys directory.`,
 
-go-stablenet deploys governance and token contracts at fixed addresses during genesis.
+  ports: `# ports — Port allocation (base + node_index)
+- \`ports.base_p2p\` (int, default: 30301)
+- \`ports.base_http\` (int, default: 8501)
+- \`ports.base_ws\` (int, default: 9501)
+- \`ports.base_auth\` (int, default: 8551)
+- \`ports.base_metrics\` (int, default: 6061)`,
 
-## govValidator (address: \`0x0000000000000000000000000000000000001001\`)
-Manages the validator set via on-chain proposals.
-- \`quorum\` (string): Minimum approvals needed for a proposal to pass.
-- \`expiry\` (string): Proposal expiry in seconds.
-- \`maxProposals\` (string): Maximum number of simultaneous open proposals.
-- \`memberVersion\` (string): Version tag for the member list.
-- \`gasTip\` (string): Minimum gas tip (wei) validators expect.
-- \`validators\` (string[]): Initial validator addresses.
-- \`members\` (string[]): Governance member addresses.
-- \`blsPublicKeys\` (string[]): BLS public keys for the validators.
+  logging: `# logging — Log management
+- \`logging.rotation\` (bool, default: true): Enable log rotation.
+- \`logging.max_size\` (string, default: "10M"): Max file size.
+- \`logging.max_files\` (int, default: 5): Files to keep.
+- \`logging.directory\` (string, default: "data/logs"): Log directory.`,
 
-## nativeCoinAdapter (address: \`0x0000000000000000000000000000000000001000\`)
-ERC-20 wrapper for the native coin (WKRC).
-- \`name\` (string): Token name (e.g. \`"WKRC"\`).
-- \`symbol\` (string): Token symbol (e.g. \`"WKRC"\`).
-- \`currency\` (string): Fiat currency code (e.g. \`"KRW"\`).
-- \`decimals\` (string): Decimal precision (e.g. \`"18"\`).
-- \`masterMinter\` (address string): Address of the master minter contract.
-- \`minters\` (address string): Initial minter address.
-- \`minterAllowed\` (string): Initial minting allowance (wei).
-
-## govMinter (address: \`0x0000000000000000000000000000000000001003\`)
-Governance contract for minting operations.
-- \`quorum\`, \`expiry\`, \`maxProposals\`, \`memberVersion\`: Same semantics as govValidator.
-- \`fiatToken\` (address string): Address of the nativeCoinAdapter contract.
-- \`members\` (string[]): Governance member addresses.
-
-## govMasterMinter (address: \`0x0000000000000000000000000000000000001002\`)
-Governance contract for master minter management.
-- \`quorum\`, \`expiry\`, \`maxProposals\`, \`memberVersion\`: Same semantics as govValidator.
-- \`fiatToken\` (address string): Address of the nativeCoinAdapter contract.
-- \`minters\` (string[]): Initial minter addresses.
-- \`maxMinterAllowance\` (string): Maximum allowance any minter may be granted (wei).
-- \`members\` (string[]): Governance member addresses.
-
-## govCouncil (address: \`0x0000000000000000000000000000000000001004\`)
-Top-level council governance contract.
-- \`quorum\`, \`expiry\`, \`maxProposals\`, \`memberVersion\`: Same semantics as govValidator.
-- \`members\` (string[]): Council member addresses.`,
-
-  nodes: `# nodes — Node topology and runtime settings
-
-- \`nodes.validators\` (integer, default: \`4\`): Number of validator nodes launched with \`--mine\`.
-- \`nodes.endpoints\` (integer, default: \`1\`): Number of non-mining endpoint nodes.
-- \`nodes.verbosity\` (integer, default: \`4\`): Log verbosity for validator nodes. Range 0–5 (5 = most verbose).
-- \`nodes.en_verbosity\` (integer, default: \`5\`): Log verbosity for endpoint nodes.
-- \`nodes.gcmode\` (string, default: \`"archive"\`): Garbage collection mode. \`"archive"\` retains full state history; \`"full"\` prunes old state.
-- \`nodes.cache\` (integer, default: \`2048\`): In-memory cache size in MB per node.
-- \`nodes.extra_flags\` (string[], default: \`[]\`): Additional CLI flags passed verbatim to \`gstable\` for every node.`,
-
-  keys: `# keys — Key material sources
-
-- \`keys.source\` (string, default: \`""\`): Path to a keystore directory. Empty = use the built-in test keys bundled with chainbench.
-- \`keys.nodekeys\` (string, default: \`""\`): Path to a directory containing per-node \`nodekey\` files. Empty = auto-generate.`,
-
-  ports: `# ports — Network port allocation
-
-All values are **base** ports. The actual port for node N = base + (N - 1).
-
-- \`ports.base_p2p\` (integer, default: \`30301\`): P2P discovery/transport port.
-- \`ports.base_http\` (integer, default: \`8501\`): HTTP JSON-RPC port.
-- \`ports.base_ws\` (integer, default: \`9501\`): WebSocket JSON-RPC port.
-- \`ports.base_auth\` (integer, default: \`8551\`): Authenticated RPC port (engine API).
-- \`ports.base_metrics\` (integer, default: \`6061\`): Prometheus metrics port.
-
-Example with 4 validators:
-| Node | P2P   | HTTP | WS   | Auth |
-|------|-------|------|------|------|
-| 1    | 30301 | 8501 | 9501 | 8551 |
-| 2    | 30302 | 8502 | 9502 | 8552 |
-| 3    | 30303 | 8503 | 9503 | 8553 |
-| 4    | 30304 | 8504 | 9504 | 8554 |`,
-
-  logging: `# logging — Log file management
-
-- \`logging.rotation\` (boolean, default: \`true\`): Enable automatic log rotation via \`logrotate\` or equivalent.
-- \`logging.max_size\` (string, default: \`"10M"\`): Maximum size of a single log file before rotation (e.g. \`"10M"\`, \`"1G"\`).
-- \`logging.max_files\` (integer, default: \`5\`): Number of rotated log files to retain per node.
-- \`logging.directory\` (string, default: \`"data/logs"\`): Directory for log files. Relative to the chainbench root.`,
-
-  tests: `# tests — Automated test configuration
-
-- \`tests.auto_run\` (string[], default: \`[]\`): List of test names to run automatically after a successful \`chainbench_init\`. Uses the same \`category/name\` format as \`chainbench_test_run\`.
-
-Example:
-\`\`\`yaml
-tests:
-  auto_run:
-    - basic/consensus
-    - basic/tx-send
-\`\`\``,
+  tests: `# tests — Auto-run tests
+- \`tests.auto_run\` (string[], default: []): Tests to run after init.`,
 };
 
-const FULL_SCHEMA = `# chainbench YAML Profile Schema (go-stablenet)
-
-Use \`chainbench_schema_query\` with a \`section\` argument to get focused documentation.
-Available sections: chain, genesis, genesis.wbft, genesis.systemContracts, nodes, keys, ports, logging, tests
-
----
-
-${SECTION_DOCS["top"]}
-
----
-
-${SECTION_DOCS["chain"]}
-
----
-
-${SECTION_DOCS["genesis"]}
-
----
-
-${SECTION_DOCS["genesis.systemContracts"]}
-
----
-
-${SECTION_DOCS["nodes"]}
-
----
-
-${SECTION_DOCS["keys"]}
-
----
-
-${SECTION_DOCS["ports"]}
-
----
-
-${SECTION_DOCS["logging"]}
-
----
-
-${SECTION_DOCS["tests"]}
-`;
+const FULL_SCHEMA = Object.entries(SECTION_DOCS).map(([, v]) => v).join("\n\n---\n\n");
 
 function getSchema(section: string | undefined): string {
-  if (!section) {
-    return FULL_SCHEMA;
-  }
-
-  const normalized = section.trim().toLowerCase();
-  const doc = SECTION_DOCS[normalized];
-  if (doc) {
-    return doc;
-  }
-
-  const available = Object.keys(SECTION_DOCS).filter((k) => k !== "top").join(", ");
-  return `Unknown section '${section}'. Available sections: ${available}\n\nOmit the section parameter to retrieve the full schema.`;
+  if (!section) return FULL_SCHEMA;
+  const doc = SECTION_DOCS[section.trim().toLowerCase()];
+  if (doc) return doc;
+  return `Unknown section '${section}'. Available: ${Object.keys(SECTION_DOCS).filter(k => k !== "top").join(", ")}`;
 }
 
-function validateProfileName(name: string): string | null {
-  if (!/^[a-zA-Z0-9_\-]+$/.test(name)) {
-    return "Profile name may only contain alphanumeric characters, dashes, and underscores.";
-  }
-  if (name.length > 64) {
-    return "Profile name must be 64 characters or fewer.";
+// ---------------------------------------------------------------------------
+// Profile helpers
+// ---------------------------------------------------------------------------
+
+function findProfilePath(name: string): string | null {
+  for (const p of [
+    resolve(CHAINBENCH_DIR, "profiles", `${name}.yaml`),
+    resolve(CHAINBENCH_DIR, "profiles", "custom", `${name}.yaml`),
+  ]) {
+    if (existsSync(p)) return p;
   }
   return null;
 }
 
-function validateYamlContent(content: string): string | null {
-  if (content.trim().length === 0) {
-    return "Profile content must not be empty.";
-  }
-  if (content.length > 64 * 1024) {
-    return "Profile content exceeds the 64 KiB limit.";
-  }
-  return null;
+function getActiveProfileName(): string | null {
+  const f = resolve(CHAINBENCH_DIR, "state", "current-profile.yaml");
+  if (!existsSync(f)) return null;
+  const m = readFileSync(f, "utf-8").match(/^name:\s*(.+)$/m);
+  return m ? m[1].trim() : null;
 }
+
+function readProfileAsJson(name: string): Record<string, unknown> | null {
+  if (name === "__active__") {
+    const merged = resolve(CHAINBENCH_DIR, "state", "current-profile-merged.json");
+    if (existsSync(merged)) return JSON.parse(readFileSync(merged, "utf-8"));
+  }
+  const path = findProfilePath(name);
+  if (!path) return null;
+  try {
+    // Use execFileSync (no shell) with python3 to parse YAML safely
+    const pyScript = `
+import json, sys
+try:
+    import yaml
+    with open(sys.argv[1]) as f:
+        print(json.dumps(yaml.safe_load(f)))
+except ImportError:
+    print('{}')
+`;
+    const result = execFileSync("python3", ["-c", pyScript, path], {
+      encoding: "utf-8",
+      timeout: 5000,
+    });
+    return JSON.parse(result.trim());
+  } catch {
+    return null;
+  }
+}
+
+function getNestedValue(obj: Record<string, unknown>, dotPath: string): unknown {
+  let current: unknown = obj;
+  for (const key of dotPath.split(".")) {
+    if (current === null || current === undefined || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+function setNestedValue(obj: Record<string, unknown>, dotPath: string, value: unknown): void {
+  const keys = dotPath.split(".");
+  let current: Record<string, unknown> = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!(keys[i] in current) || typeof current[keys[i]] !== "object" || current[keys[i]] === null) {
+      current[keys[i]] = {};
+    }
+    current = current[keys[i]] as Record<string, unknown>;
+  }
+  current[keys[keys.length - 1]] = value;
+}
+
+function jsonToYaml(obj: Record<string, unknown>, indent = 0): string {
+  const pad = "  ".repeat(indent);
+  let r = "";
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === null || v === undefined) { r += `${pad}${k}: null\n`; }
+    else if (Array.isArray(v)) {
+      if (v.length === 0) { r += `${pad}${k}: []\n`; }
+      else { r += `${pad}${k}:\n`; for (const item of v) r += `${pad}  - ${JSON.stringify(item)}\n`; }
+    }
+    else if (typeof v === "object") { r += `${pad}${k}:\n` + jsonToYaml(v as Record<string, unknown>, indent + 1); }
+    else if (typeof v === "string") { r += `${pad}${k}: "${v}"\n`; }
+    else { r += `${pad}${k}: ${v}\n`; }
+  }
+  return r;
+}
+
+function parseInputValue(raw: string): unknown {
+  try { return JSON.parse(raw); } catch { return raw; }
+}
+
+// ---------------------------------------------------------------------------
+// Tool registration
+// ---------------------------------------------------------------------------
 
 export function registerSchemaTools(server: McpServer): void {
+  // --- Schema query ---
   server.tool(
     "chainbench_schema_query",
-    "Query the YAML profile schema for chainbench. Returns documentation of all supported configuration fields, their types, defaults, and meanings. Use this before creating a custom profile to understand what settings are available.",
+    "Query the YAML profile schema. Returns field documentation with types, defaults, and meanings.",
+    { section: z.string().optional().describe("Section: chain, data, genesis, genesis.wbft, genesis.systemContracts, nodes, keys, ports, logging, tests. Omit for full schema.") },
+    async ({ section }) => ({ content: [{ type: "text" as const, text: getSchema(section) }] })
+  );
+
+  // --- Profile send (create full profile) ---
+  server.tool(
+    "chainbench_profile_send",
+    "Create a custom YAML profile. Saved under profiles/custom/<name>.yaml.",
     {
-      section: z
-        .string()
-        .optional()
-        .describe(
-          "Optional section to query. One of: 'chain', 'genesis', 'genesis.wbft', 'genesis.systemContracts', 'nodes', 'keys', 'ports', 'logging', 'tests'. Omit to retrieve the full schema."
-        ),
+      name: z.string().describe("Profile name (alphanumeric, dashes, underscores)."),
+      content: z.string().describe("Full YAML content."),
     },
-    async ({ section }) => {
-      const text = getSchema(section);
-      return { content: [{ type: "text" as const, text }] };
+    async ({ name, content }) => {
+      if (!/^[a-zA-Z0-9_-]+$/.test(name)) return { content: [{ type: "text" as const, text: "Error: invalid name." }] };
+      if (!content.trim()) return { content: [{ type: "text" as const, text: "Error: empty content." }] };
+      const dir = resolve(CHAINBENCH_DIR, "profiles", "custom");
+      const path = resolve(dir, `${name}.yaml`);
+      if (!path.startsWith(dir)) return { content: [{ type: "text" as const, text: "Error: path traversal." }] };
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path, content, "utf-8");
+      return { content: [{ type: "text" as const, text: `Saved: profiles/custom/${name}.yaml\nUse: chainbench_init({ profile: "custom/${name}" })` }] };
     }
   );
 
+  // --- Profile get (NEW) ---
   server.tool(
-    "chainbench_profile_send",
-    "Create or overwrite a custom YAML profile. The profile will be saved under profiles/custom/<name>.yaml and can then be used with chainbench_init --profile custom/<name>. Use chainbench_schema_query first to understand all available fields.",
+    "chainbench_profile_get",
+    "Read a profile's content or a specific field value. Use to inspect current configuration before making changes.",
     {
-      name: z
-        .string()
-        .describe("Profile name (alphanumeric, dashes, underscores only). Saved as profiles/custom/<name>.yaml."),
-      content: z
-        .string()
-        .describe("Full YAML content for the profile. Must include at minimum a 'name' field."),
+      name: z.string().optional().describe("Profile name. Omit or 'active' for the currently active profile."),
+      field: z.string().optional().describe("Dot-notation path to read a specific field (e.g., 'chain.binary_path', 'nodes.validators'). Omit for full profile."),
     },
-    async ({ name, content }) => {
-      const nameError = validateProfileName(name);
-      if (nameError) {
-        return { content: [{ type: "text" as const, text: `Error: ${nameError}` }] };
+    async ({ name, field }) => {
+      const target = (!name || name === "active") ? "__active__" : name;
+
+      if (field) {
+        const json = readProfileAsJson(target);
+        if (!json) return { content: [{ type: "text" as const, text: `Error: ${target === "__active__" ? "No active profile. Run chainbench init first." : `Profile '${name}' not found.`}` }] };
+        const val = getNestedValue(json, field);
+        if (val === undefined) return { content: [{ type: "text" as const, text: `Field '${field}' not found in profile.` }] };
+        const display = typeof val === "object" ? JSON.stringify(val, null, 2) : String(val);
+        return { content: [{ type: "text" as const, text: `${field} = ${display}` }] };
       }
 
-      const contentError = validateYamlContent(content);
-      if (contentError) {
-        return { content: [{ type: "text" as const, text: `Error: ${contentError}` }] };
+      // Full profile
+      if (target === "__active__") {
+        const stateFile = resolve(CHAINBENCH_DIR, "state", "current-profile.yaml");
+        if (!existsSync(stateFile)) return { content: [{ type: "text" as const, text: "No active profile. Run chainbench init first." }] };
+        return { content: [{ type: "text" as const, text: `# Active profile\n\n${readFileSync(stateFile, "utf-8")}` }] };
       }
 
-      const customDir = resolve(CHAINBENCH_DIR, "profiles", "custom");
-      const profilePath = resolve(customDir, `${name}.yaml`);
+      const path = findProfilePath(target);
+      if (!path) return { content: [{ type: "text" as const, text: `Profile '${name}' not found.` }] };
+      return { content: [{ type: "text" as const, text: `# Profile: ${name}\n\n${readFileSync(path, "utf-8")}` }] };
+    }
+  );
 
-      // Ensure the resolved path stays within profiles/custom/ (path traversal guard)
-      if (!profilePath.startsWith(customDir + "/") && profilePath !== customDir) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: "Error: resolved profile path escapes the profiles/custom/ directory.",
-            },
-          ],
-        };
+  // --- Profile set (NEW) ---
+  server.tool(
+    "chainbench_profile_set",
+    "Update a specific field in a profile. Uses dot-notation for nested fields. After modifying, run chainbench_init to apply.",
+    {
+      name: z.string().default("default").describe("Profile to modify (e.g., 'default', 'minimal', 'custom/my-profile')."),
+      field: z.string().describe("Dot-notation path (e.g., 'chain.binary_path', 'nodes.validators', 'data.directory')."),
+      value: z.string().describe("New value. Numbers/booleans auto-detected. Use JSON for arrays/objects. Strings used as-is."),
+    },
+    async ({ name, field, value }) => {
+      const profilePath = findProfilePath(name);
+      if (!profilePath) return { content: [{ type: "text" as const, text: `Error: Profile '${name}' not found.` }] };
+
+      const json = readProfileAsJson(name);
+      if (!json) return { content: [{ type: "text" as const, text: `Error: Could not parse profile '${name}'.` }] };
+
+      const oldVal = getNestedValue(json, field);
+      const oldDisplay = oldVal === undefined ? "(not set)" : (typeof oldVal === "object" ? JSON.stringify(oldVal) : String(oldVal));
+
+      const parsed = parseInputValue(value);
+      setNestedValue(json, field, parsed);
+
+      const yaml = `# chainbench profile: ${json["name"] || name}\n` + jsonToYaml(json);
+      writeFileSync(profilePath, yaml, "utf-8");
+
+      // Update active state if this profile is active
+      const active = getActiveProfileName();
+      if (active === name || active === (json["name"] as string)) {
+        const stateYaml = resolve(CHAINBENCH_DIR, "state", "current-profile.yaml");
+        const stateMerged = resolve(CHAINBENCH_DIR, "state", "current-profile-merged.json");
+        if (existsSync(stateYaml)) writeFileSync(stateYaml, yaml, "utf-8");
+        if (existsSync(stateMerged)) writeFileSync(stateMerged, JSON.stringify(json, null, 2), "utf-8");
       }
 
-      try {
-        mkdirSync(customDir, { recursive: true });
-        writeFileSync(profilePath, content, { encoding: "utf-8" });
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        return {
-          content: [{ type: "text" as const, text: `Error writing profile: ${message}` }],
-        };
-      }
-
+      const newDisplay = typeof parsed === "object" ? JSON.stringify(parsed) : String(parsed);
       return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Profile saved to profiles/custom/${name}.yaml.\nUse it with: chainbench_init({ profile: "custom/${name}" })`,
-          },
-        ],
+        content: [{ type: "text" as const, text: `Updated '${name}':\n  ${field}: ${oldDisplay} → ${newDisplay}\n\nRun chainbench_init to apply.` }],
       };
     }
   );
