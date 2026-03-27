@@ -38,3 +38,5 @@ Thumbs.db
 bin/logrot
 bin/gstable
 bin/bootnode
+
+.claude/settings.local.json
