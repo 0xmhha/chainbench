@@ -54,12 +54,28 @@ cd chainbench
 
 ## Installation
 
+### One-Command Setup (Recommended)
+
 ```bash
 git clone https://github.com/0xmhha/chainbench.git
 cd chainbench
+./setup.sh
 ```
 
-No build step is needed for the CLI itself — it's a shell script.
+This will:
+1. Check prerequisites (bash, python3, node, npm)
+2. Build the MCP server
+3. Register the MCP server in Claude Code (interactive prompt — global or project-level)
+
+### Manual Setup
+
+```bash
+git clone https://github.com/0xmhha/chainbench.git
+cd chainbench
+
+# Build MCP server (optional, for Claude Code integration)
+cd mcp-server && npm install && npm run build && cd ..
+```
 
 ### Optional: Add to PATH
 
@@ -69,12 +85,6 @@ ln -s "$(pwd)/chainbench" /usr/local/bin/chainbench
 
 # Option B: add to shell profile
 echo 'export PATH="/path/to/chainbench:$PATH"' >> ~/.zshrc
-```
-
-### Optional: MCP Server (for Claude Code integration)
-
-```bash
-cd mcp-server && npm install && npm run build && cd ..
 ```
 
 ### Configuration
