@@ -15,8 +15,8 @@ printf '[INFO]  Block before two-down: %s\n' "$block_before" >&2
 
 # Stop node 3 and node 4
 printf '[INFO]  Stopping nodes 3 and 4...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node stop 3 --quiet
-"${CHAINBENCH_DIR}/chainbench" node stop 4 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node stop 3 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node stop 4 --quiet
 printf '[INFO]  Nodes 3 and 4 stopped\n' >&2
 
 # Wait 10 seconds for any in-flight consensus to settle
@@ -35,7 +35,7 @@ assert_ge "1" "$block_advance" "consensus halted with 2/4 validators down (advan
 
 # Restart node 3 (now 3/4 validators active — BFT threshold met)
 printf '[INFO]  Restarting node 3 to restore 3/4 validators...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node start 3 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node start 3 --quiet
 
 # Wait for new blocks (consensus should resume)
 block_at_restart=$(block_number "1" 2>/dev/null || echo "$block_after_wait")
@@ -47,7 +47,7 @@ reached_block=$(wait_for_block "1" "$target_block" 60)
 if [[ "$reached_block" == "timeout" ]]; then
   _assert_fail "two-down: consensus did not resume after restarting node 3"
   # Attempt to restore node 4
-  "${CHAINBENCH_DIR}/chainbench" node start 4 --quiet 2>/dev/null || true
+  "${CHAINBENCH_DIR}/chainbench.sh" node start 4 --quiet 2>/dev/null || true
   test_result
   exit 1
 fi
@@ -61,6 +61,6 @@ assert_gt "$total_advance" "0" "overall block height advanced during test ($tota
 
 # Restart node 4 to restore full cluster
 printf '[INFO]  Restarting node 4 to restore full cluster...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node start 4 --quiet 2>/dev/null || true
+"${CHAINBENCH_DIR}/chainbench.sh" node start 4 --quiet 2>/dev/null || true
 
 test_result

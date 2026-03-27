@@ -15,7 +15,7 @@ printf '[INFO]  Block at test start: %s\n' "$block_at_start" >&2
 
 # Stop node 3
 printf '[INFO]  Stopping node 3...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node stop 3 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node stop 3 --quiet
 printf '[INFO]  Node 3 stopped\n' >&2
 
 # Wait for 20 blocks on remaining nodes
@@ -26,7 +26,7 @@ reached=$(wait_for_block "1" "$target_block" 90)
 
 if [[ "$reached" == "timeout" ]]; then
   _assert_fail "node-recover: remaining nodes stalled before restart test"
-  "${CHAINBENCH_DIR}/chainbench" node start 3 --quiet 2>/dev/null || true
+  "${CHAINBENCH_DIR}/chainbench.sh" node start 3 --quiet 2>/dev/null || true
   test_result
   exit 1
 fi
@@ -42,7 +42,7 @@ recovery_start=$(date +%s)
 
 # Restart node 3
 printf '[INFO]  Restarting node 3...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node start 3 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node start 3 --quiet
 
 # Poll until node 3 is within 2 blocks of node 1
 printf '[INFO]  Polling until node 3 is within 2 blocks of node 1...\n' >&2

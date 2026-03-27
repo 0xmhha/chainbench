@@ -24,19 +24,19 @@ cd chainbench
 #    Example: binary_path: "/path/to/go-stablenet/build/bin/gstable"
 
 # 3. Initialize the chain (4 validators + 1 endpoint)
-./chainbench init
+./chainbench.sh init
 
 # 4. Start all nodes
-./chainbench start
+./chainbench.sh start
 
 # 5. Check status
-./chainbench status
+./chainbench.sh status
 
 # 6. Run basic tests
-./chainbench test run basic
+./chainbench.sh test run basic
 
 # 7. Stop
-./chainbench stop
+./chainbench.sh stop
 ```
 
 ## Prerequisites
@@ -108,48 +108,48 @@ nodes:
 ### Chain Lifecycle
 
 ```bash
-./chainbench init [--profile <name>]    # Initialize chain from profile
-./chainbench start                       # Start all nodes
-./chainbench stop                        # Stop all nodes (SIGTERM → SIGKILL)
-./chainbench restart                     # stop → clean → init → start
-./chainbench status [--json]             # Show node status
-./chainbench clean                       # Remove all node data
+./chainbench.sh init [--profile <name>]    # Initialize chain from profile
+./chainbench.sh start                       # Start all nodes
+./chainbench.sh stop                        # Stop all nodes (SIGTERM → SIGKILL)
+./chainbench.sh restart                     # stop → clean → init → start
+./chainbench.sh status [--json]             # Show node status
+./chainbench.sh clean                       # Remove all node data
 ```
 
 ### Node Control
 
 ```bash
-./chainbench node stop 3                 # Stop node 3 only
-./chainbench node start 3                # Restart node 3
-./chainbench node log 3                  # Show last 50 lines of node 3 log
-./chainbench node log 3 --follow         # Tail -f node 3 log
-./chainbench node rpc 1 eth_blockNumber  # RPC call to node 1
+./chainbench.sh node stop 3                 # Stop node 3 only
+./chainbench.sh node start 3                # Restart node 3
+./chainbench.sh node log 3                  # Show last 50 lines of node 3 log
+./chainbench.sh node log 3 --follow         # Tail -f node 3 log
+./chainbench.sh node rpc 1 eth_blockNumber  # RPC call to node 1
 ```
 
 ### Testing
 
 ```bash
-./chainbench test list                   # List available tests
-./chainbench test run basic/consensus    # Run single test
-./chainbench test run basic              # Run all basic tests
-./chainbench test run all                # Run everything
-./chainbench report [--format json]      # Show test results
+./chainbench.sh test list                   # List available tests
+./chainbench.sh test run basic/consensus    # Run single test
+./chainbench.sh test run basic              # Run all basic tests
+./chainbench.sh test run all                # Run everything
+./chainbench.sh report [--format json]      # Show test results
 ```
 
 ### Log Analysis
 
 ```bash
-./chainbench log timeline                # Consensus event timeline
-./chainbench log anomaly                 # Detect anomalous patterns
-./chainbench log search "ROUND_CHANGE"   # Search across all node logs
+./chainbench.sh log timeline                # Consensus event timeline
+./chainbench.sh log anomaly                 # Detect anomalous patterns
+./chainbench.sh log search "ROUND_CHANGE"   # Search across all node logs
 ```
 
 ### Profile Management
 
 ```bash
-./chainbench profile list                # List available profiles
-./chainbench profile show default        # Show profile content
-./chainbench profile create my-test      # Create custom profile from default
+./chainbench.sh profile list                # List available profiles
+./chainbench.sh profile show default        # Show profile content
+./chainbench.sh profile create my-test      # Create custom profile from default
 ```
 
 ## Built-in Tests
@@ -181,9 +181,9 @@ Profiles are YAML files that define the entire chain configuration. They support
 Create custom profiles:
 
 ```bash
-./chainbench profile create my-scenario
+./chainbench.sh profile create my-scenario
 # Edit profiles/custom/my-scenario.yaml
-./chainbench init --profile my-scenario
+./chainbench.sh init --profile my-scenario
 ```
 
 ### Profile Schema (Key Fields)
@@ -385,7 +385,7 @@ chainbench/
 
 ### Adding a Profile
 
-1. `./chainbench profile create my-profile`
+1. `./chainbench.sh profile create my-profile`
 2. Edit `profiles/custom/my-profile.yaml`
 3. Use `inherits: default` to only override what you need
 

@@ -24,7 +24,7 @@ printf '[INFO]  Block before node-crash: %s\n' "$block_before" >&2
 
 # Stop node 3
 printf '[INFO]  Stopping node 3...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node stop 3 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node stop 3 --quiet
 printf '[INFO]  Node 3 stopped\n' >&2
 
 # Wait for 10 new blocks on node 1 (proves 3/4 consensus holds)
@@ -36,7 +36,7 @@ reached_block=$(wait_for_block "1" "$target_block" 60)
 if [[ "$reached_block" == "timeout" ]]; then
   _assert_fail "node-crash: consensus stalled — 3/4 validators could not produce 10 blocks"
   # Attempt recovery before exiting
-  "${CHAINBENCH_DIR}/chainbench" node start 3 --quiet 2>/dev/null || true
+  "${CHAINBENCH_DIR}/chainbench.sh" node start 3 --quiet 2>/dev/null || true
   test_result
   exit 1
 fi
@@ -45,7 +45,7 @@ assert_ge "$reached_block" "$target_block" "3/4 validators produced 10 new block
 
 # Restart node 3
 printf '[INFO]  Restarting node 3...\n' >&2
-"${CHAINBENCH_DIR}/chainbench" node start 3 --quiet
+"${CHAINBENCH_DIR}/chainbench.sh" node start 3 --quiet
 
 # Wait for sync (node 3 catches up)
 printf '[INFO]  Waiting for all nodes to sync...\n' >&2

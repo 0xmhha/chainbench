@@ -9,7 +9,7 @@ const CHAINBENCH_DIR = resolve(__dirname, "../../..");
 // This utility is intended for internal CLI invocation only, not for
 // passing raw user input. Callers are responsible for sanitizing args.
 export function runChainbench(args: string): { stdout: string; stderr: string; exitCode: number } {
-  const cmd = `${CHAINBENCH_DIR}/chainbench ${args}`;
+  const cmd = `${CHAINBENCH_DIR}/chainbench.sh ${args}`;
   try {
     const stdout = execSync(cmd, {
       cwd: CHAINBENCH_DIR,
