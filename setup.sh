@@ -51,119 +51,31 @@ fi
 
 echo "  [OK] MCP server built: ${MCP_DIR}/dist/index.js"
 
-# ---- Generate MCP config ----------------------------------------------------
+# ---- Register chainbench in PATH ---------------------------------------------
 
 echo ""
-echo "[2/3] Generating MCP configuration ..."
+echo "[2/3] Registering chainbench in \$PATH ..."
 
-MCP_ENTRY="${MCP_DIR}/dist/index.js"
+SYMLINK_DIR="/usr/local/bin"
+SYMLINK_PATH="${SYMLINK_DIR}/chainbench"
 
-# Detect Claude Code settings location
-CLAUDE_SETTINGS_DIR="${HOME}/.claude"
-CLAUDE_SETTINGS_FILE="${CLAUDE_SETTINGS_DIR}/settings.local.json"
-
-echo ""
-echo "  Where do you want to register the MCP server?"
-echo ""
-echo "  1) Global  — ${CLAUDE_SETTINGS_FILE}"
-echo "     (Available in all Claude Code sessions)"
-echo ""
-echo "  2) Project — .mcp.json in current directory"
-echo "     (Available only when Claude Code is in this directory)"
-echo ""
-echo "  3) Skip    — I'll configure manually"
-echo ""
-printf "  Choice [1/2/3]: "
-read -r _choice
-
-case "${_choice}" in
-  1)
-    # Global registration
-    mkdir -p "${CLAUDE_SETTINGS_DIR}"
-
-    if [[ -f "${CLAUDE_SETTINGS_FILE}" ]]; then
-      # Merge into existing settings
-      python3 -c "
-import json, sys
-
-settings_file = '${CLAUDE_SETTINGS_FILE}'
-try:
-    with open(settings_file) as f:
-        settings = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    settings = {}
-
-if 'mcpServers' not in settings:
-    settings['mcpServers'] = {}
-
-settings['mcpServers']['chainbench'] = {
-    'command': 'node',
-    'args': ['${MCP_ENTRY}'],
-    'env': {
-        'CHAINBENCH_DIR': '${CHAINBENCH_DIR}'
-    }
-}
-
-with open(settings_file, 'w') as f:
-    json.dump(settings, f, indent=2)
-    f.write('\n')
-
-print(f'  [OK] Registered in {settings_file}')
-"
-    else
-      # Create new settings file
-      cat > "${CLAUDE_SETTINGS_FILE}" <<JSONEOF
-{
-  "mcpServers": {
-    "chainbench": {
-      "command": "node",
-      "args": ["${MCP_ENTRY}"],
-      "env": {
-        "CHAINBENCH_DIR": "${CHAINBENCH_DIR}"
-      }
-    }
-  }
-}
-JSONEOF
-      echo "  [OK] Created ${CLAUDE_SETTINGS_FILE}"
-    fi
-    ;;
-
-  2)
-    # Project-level registration
-    _MCP_JSON="${CHAINBENCH_DIR}/.mcp.json"
-    cat > "${_MCP_JSON}" <<JSONEOF
-{
-  "mcpServers": {
-    "chainbench": {
-      "command": "node",
-      "args": ["${MCP_ENTRY}"],
-      "env": {
-        "CHAINBENCH_DIR": "${CHAINBENCH_DIR}"
-      }
-    }
-  }
-}
-JSONEOF
-    echo "  [OK] Created ${_MCP_JSON}"
-    ;;
-
-  3|*)
-    echo "  Skipped. To configure manually, add to your MCP settings:"
-    echo ""
-    echo "  {"
-    echo "    \"mcpServers\": {"
-    echo "      \"chainbench\": {"
-    echo "        \"command\": \"node\","
-    echo "        \"args\": [\"${MCP_ENTRY}\"],"
-    echo "        \"env\": {"
-    echo "          \"CHAINBENCH_DIR\": \"${CHAINBENCH_DIR}\""
-    echo "        }"
-    echo "      }"
-    echo "    }"
-    echo "  }"
-    ;;
-esac
+if command -v chainbench &>/dev/null; then
+  EXISTING="$(command -v chainbench)"
+  if [[ "$(readlink -f "${EXISTING}" 2>/dev/null || realpath "${EXISTING}" 2>/dev/null)" == "${CHAINBENCH_DIR}/chainbench.sh" ]]; then
+    echo "  [OK] Already registered: ${EXISTING} → chainbench.sh"
+  else
+    echo "  [WARN] 'chainbench' already exists at ${EXISTING}"
+    echo "         Skipping symlink creation. Remove it manually if needed."
+  fi
+elif [[ -w "${SYMLINK_DIR}" ]]; then
+  ln -sf "${CHAINBENCH_DIR}/chainbench.sh" "${SYMLINK_PATH}"
+  echo "  [OK] Created symlink: ${SYMLINK_PATH} → chainbench.sh"
+else
+  echo "  Creating symlink requires sudo ..."
+  sudo ln -sf "${CHAINBENCH_DIR}/chainbench.sh" "${SYMLINK_PATH}" && \
+    echo "  [OK] Created symlink: ${SYMLINK_PATH} → chainbench.sh" || \
+    echo "  [WARN] Failed. Add manually: ln -s ${CHAINBENCH_DIR}/chainbench.sh ${SYMLINK_PATH}"
+fi
 
 # ---- Summary -----------------------------------------------------------------
 
@@ -174,14 +86,12 @@ echo "========================================="
 echo "  chainbench is ready"
 echo "========================================="
 echo ""
-echo "  CLI:  ${CHAINBENCH_DIR}/chainbench.sh"
-echo "  MCP:  ${MCP_ENTRY}"
+echo "  CLI:  chainbench --help"
+echo "  MCP:  ${MCP_DIR}/dist/index.js"
 echo ""
 echo "  Next steps:"
-echo "    1. Edit profiles/default.yaml to set chain.binary_path"
-echo "    2. Run: ./chainbench.sh init && ./chainbench.sh start"
-echo "    3. In Claude Code: restart or run /mcp to load the MCP server"
-echo ""
-echo "  Quick test:"
-echo "    ./chainbench.sh --help"
+echo "    1. cd <your-chain-project>"
+echo "    2. chainbench mcp enable          # register MCP for this project"
+echo "    3. Edit profiles/default.yaml     # set chain.binary_path"
+echo "    4. chainbench init && chainbench start"
 echo ""
