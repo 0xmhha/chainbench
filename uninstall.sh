@@ -38,6 +38,11 @@ if [[ -d "${INSTALL_DIR}" ]]; then
   printf "Remove ${INSTALL_DIR}? [y/N]: "
   read -r _confirm
   if [[ "${_confirm}" =~ ^[Yy]$ ]]; then
+    # If the user's CWD is inside INSTALL_DIR, move out first to avoid
+    # a dangling CWD that breaks subsequent commands (getcwd ENOENT).
+    case "$(pwd -P 2>/dev/null)" in
+      "${INSTALL_DIR}"*) cd "${HOME}" ;;
+    esac
     rm -rf "${INSTALL_DIR}"
     echo "[OK] Removed ${INSTALL_DIR}"
   else

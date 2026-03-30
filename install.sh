@@ -3,6 +3,10 @@
 # Usage: curl -fsSL https://raw.githubusercontent.com/0xmhha/chainbench/main/install.sh | bash
 set -euo pipefail
 
+# Ensure a valid CWD — previous uninstall may have removed the directory
+# the user was standing in, leaving a dangling CWD (getcwd ENOENT).
+cd "${HOME}" 2>/dev/null || cd /
+
 REPO_URL="https://github.com/0xmhha/chainbench.git"
 INSTALL_DIR="${HOME}/.chainbench"
 
