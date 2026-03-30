@@ -11,41 +11,66 @@ A local blockchain sandbox test bench for [go-stablenet](https://github.com/stab
 
 ## Quick Start
 
-### Install
+### 1. Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0xmhha/chainbench/main/install.sh | bash
 ```
 
-This clones chainbench to `~/.chainbench`, builds the MCP server, and registers the `chainbench` CLI in your `$PATH`.
+This clones chainbench to `~/.chainbench`, builds the MCP server, and registers `chainbench` and `chainbench-mcp` in your `$PATH`.
 
-### Enable MCP for your project (optional)
+### 2. Enable MCP for your project
 
 ```bash
-cd /path/to/your-chain-project
+cd /path/to/your-chain-project    # must have gstable at build/bin/
 chainbench mcp enable
 ```
 
-This creates a `.mcp.json` in the project root. Restart Claude Code or run `/mcp` to load.
+This creates a portable `.mcp.json` in the project root (no absolute paths — works across machines). Restart Claude Code or run `/mcp` to load.
 
-### Run a local chain
+### 3. Run with Claude Code (recommended)
+
+Open Claude Code in your chain project directory and ask:
+
+```
+"Initialize and start a local chain, then run a tx test"
+```
+
+Claude Code uses MCP tools to drive the full lifecycle:
+
+```
+chainbench_init     → Initialize 4 validators + 1 endpoint
+chainbench_start    → Launch all nodes
+chainbench_status   → Verify consensus OK, all nodes running
+chainbench_test_run → Run "basic/tx-send"
+chainbench_node_rpc → Send tx, query receipt by txHash
+```
+
+You can also interact step by step:
+
+```
+"Check chain status"
+"Stop node 3 and see if consensus continues"
+"Send 1 ETH from node1 to node2 and show the receipt"
+"Run all fault tolerance tests"
+```
+
+### 4. Run with CLI
 
 ```bash
-# 1. Set the gstable binary path
-#    Edit ~/.chainbench/profiles/default.yaml
-#    → chain.binary_path: "/path/to/go-stablenet/build/bin/gstable"
-
-# 2. Initialize and start (4 validators + 1 endpoint)
+# Initialize and start (4 validators + 1 endpoint)
 chainbench init
 chainbench start
 
-# 3. Check status and run tests
+# Check status and run tests
 chainbench status
 chainbench test run basic
 
-# 4. Stop
+# Stop
 chainbench stop
 ```
+
+> **Note:** The CLI auto-detects the `gstable` binary from your project's `build/bin/` directory. If running from a different directory, set `chain.binary_path` in `~/.chainbench/profiles/default.yaml`.
 
 ### Uninstall
 
@@ -214,10 +239,13 @@ chainbench includes an [MCP](https://modelcontextprotocol.io/) server that allow
 # Enable for a specific project (recommended)
 cd /path/to/my-chain-project
 chainbench mcp enable
+# Creates a portable .mcp.json: {"mcpServers": {"chainbench": {"command": "chainbench-mcp"}}}
 
 # Disable when no longer needed (stops token consumption)
 chainbench mcp disable
 ```
+
+The generated `.mcp.json` uses the `chainbench-mcp` wrapper from `$PATH` — no absolute paths, so it works across machines and users without modification.
 
 > **Note:** Per-project registration is preferred. Global registration
 > (`~/.claude/settings.local.json`) activates the MCP server for all projects,
@@ -289,7 +317,8 @@ chainbench/
 ├── tests/                  # Built-in test suites (basic, fault, stress)
 ├── logs/                   # Log analysis tools (parser, timeline, anomaly)
 ├── mcp-server/             # MCP server for AI integration (TypeScript)
-└── bin/                    # Optional platform binaries
+└── bin/                    # CLI wrappers and platform binaries
+    └── chainbench-mcp      # MCP server entry point (resolves $HOME/.chainbench)
 ```
 
 ## Troubleshooting
