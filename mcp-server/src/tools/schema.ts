@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CHAINBENCH_DIR = resolve(__dirname, "../../../..");
+const CHAINBENCH_DIR = resolve(__dirname, "../../..");
 
 // ---------------------------------------------------------------------------
 // Schema documentation

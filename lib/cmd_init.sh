@@ -16,6 +16,16 @@ BINARY="$(resolve_binary "${CHAINBENCH_BINARY}" "${CHAINBENCH_BINARY_PATH:-}")" 
 }
 log_info "Using binary: ${BINARY}"
 
+# Persist resolved binary path to merged JSON so that start/status can find it
+python3 - "${CHAINBENCH_PROFILE_JSON}" "${BINARY}" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as f:
+    data = json.load(f)
+data.setdefault("chain", {})["binary_path"] = sys.argv[2]
+with open(sys.argv[1], "w") as f:
+    json.dump(data, f, indent=2)
+PYEOF
+
 require_cmd python3 "python3 is required" || exit 1
 
 # ---- Resolve data directory --------------------------------------------------

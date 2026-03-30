@@ -103,8 +103,12 @@ stopped_at = sys.argv[3]
 with open(pids_file) as fh:
     data = json.load(fh)
 
-nodes = data.get("nodes", [])
-if 0 <= idx < len(nodes):
+nodes = data.get("nodes", {})
+key = str(idx)
+if isinstance(nodes, dict) and key in nodes:
+    nodes[key]["status"]     = "stopped"
+    nodes[key]["stopped_at"] = stopped_at
+elif isinstance(nodes, list) and 0 <= idx < len(nodes):
     nodes[idx]["status"]     = "stopped"
     nodes[idx]["stopped_at"] = stopped_at
 
@@ -125,7 +129,7 @@ import sys, json
 with open(sys.argv[1]) as fh:
     data = json.load(fh)
 
-print(data.get("chain_name", "unknown"))
+print(data.get("chain_id", data.get("chain_name", "unknown")))
 PYEOF
 }
 
@@ -226,14 +230,20 @@ SEP = "\x1f"
 with open(sys.argv[1]) as fh:
     data = json.load(fh)
 
-for i, node in enumerate(data.get("nodes", [])):
+nodes = data.get("nodes", {})
+if isinstance(nodes, dict):
+    items = sorted(nodes.items(), key=lambda x: int(x[0]))
+else:
+    items = [(str(i + 1), n) for i, n in enumerate(nodes)]
+
+for key, node in items:
     print(SEP.join([
-        str(i),
+        str(key),
         str(node.get("pid",       "")),
         str(node.get("type",      "validator")),
         str(node.get("http_port", "")),
         str(node.get("ws_port",   "")),
-        str(node.get("label",     f"node{i+1}")),
+        str(node.get("label",     f"node{key}")),
         str(node.get("status",    "unknown")),
     ]))
 PYEOF
@@ -433,8 +443,8 @@ cmd_status_main() {
 
     # Count validators for consensus
     if [[ "$node_type" == "validator" ]]; then
-      (( validator_count++ ))
-      [[ "$status" == "running" ]] && (( active_validators++ ))
+      (( ++validator_count )) || true
+      [[ "$status" == "running" ]] && { (( ++active_validators )) || true; }
     fi
 
     # Query block number and peer count for running nodes
@@ -455,7 +465,7 @@ cmd_status_main() {
       fi
     fi
 
-    local node_num=$(( idx + 1 ))
+    local node_num="${idx}"
     local http_label ws_label
     http_label="${http_port:+:${http_port}}"
     ws_label="${ws_port:+:${ws_port}}"

@@ -310,7 +310,7 @@ for _ni in "${!_start_node_info[@]}"; do
   _entry="${_start_node_info[${_ni}]}"
   _pid="${_entry%%|*}"
   if kill -0 "${_pid}" 2>/dev/null; then
-    (( _start_alive_count++ ))
+    (( ++_start_alive_count )) || true
   else
     _start_all_alive=0
     _start_dead_nodes+=( "node${_ni}(pid=${_pid})" )
