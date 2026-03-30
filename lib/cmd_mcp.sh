@@ -56,20 +56,24 @@ EOF
 
 # ---- Subcommands -------------------------------------------------------------
 
-_mcp_ensure_built() {
+_mcp_ensure_ready() {
   if [[ ! -f "${_MCP_ENTRY}" ]]; then
     log_error "MCP server not built. Run setup.sh first or:"
     log_error "  cd ${CHAINBENCH_DIR}/mcp-server && npm install && npm run build"
     exit 1
   fi
+  if ! command -v chainbench-mcp &>/dev/null; then
+    log_error "'chainbench-mcp' not found in \$PATH."
+    log_error "Run setup.sh to register it, or manually:"
+    log_error "  sudo ln -sf ${CHAINBENCH_DIR}/bin/chainbench-mcp /usr/local/bin/chainbench-mcp"
+    exit 1
+  fi
 }
 
 _mcp_enable() {
-  _mcp_ensure_built
+  _mcp_ensure_ready
 
-  local chainbench_dir_escaped
-  chainbench_dir_escaped=$(python3 -c "import json; print(json.dumps('${CHAINBENCH_DIR}'))" | tr -d '"')
-
+  # Portable .mcp.json: uses "chainbench-mcp" from PATH, no absolute paths.
   if [[ -f "${_MCP_JSON_FILE}" ]]; then
     # Merge into existing .mcp.json
     python3 -c "
@@ -83,11 +87,7 @@ if 'mcpServers' not in config:
     config['mcpServers'] = {}
 
 config['mcpServers']['chainbench'] = {
-    'command': 'node',
-    'args': ['${_MCP_ENTRY}'],
-    'env': {
-        'CHAINBENCH_DIR': '${CHAINBENCH_DIR}'
-    }
+    'command': 'chainbench-mcp'
 }
 
 with open(mcp_file, 'w') as f:
@@ -106,11 +106,7 @@ import json
 config = {
     'mcpServers': {
         'chainbench': {
-            'command': 'node',
-            'args': ['${_MCP_ENTRY}'],
-            'env': {
-                'CHAINBENCH_DIR': '${CHAINBENCH_DIR}'
-            }
+            'command': 'chainbench-mcp'
         }
     }
 }

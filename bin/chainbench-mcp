@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# chainbench-mcp - MCP server entry point for chainbench
+# Resolves CHAINBENCH_DIR at runtime from $HOME so that .mcp.json
+# never needs absolute, machine-specific paths.
+#
+# .mcp.json usage (portable):
+#   { "mcpServers": { "chainbench": { "command": "chainbench-mcp" } } }
+
+set -euo pipefail
+
+export CHAINBENCH_DIR="${CHAINBENCH_DIR:-$HOME/.chainbench}"
+
+_ENTRY="${CHAINBENCH_DIR}/mcp-server/dist/index.js"
+
+if [[ ! -f "${_ENTRY}" ]]; then
+  echo "ERROR: MCP server not found at ${_ENTRY}" >&2
+  echo "Run: cd ${CHAINBENCH_DIR}/mcp-server && npm install && npm run build" >&2
+  exit 1
+fi
+
+exec node "${_ENTRY}" "$@"

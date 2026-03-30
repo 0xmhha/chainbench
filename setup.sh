@@ -57,25 +57,38 @@ echo ""
 echo "[2/3] Registering chainbench in \$PATH ..."
 
 SYMLINK_DIR="/usr/local/bin"
-SYMLINK_PATH="${SYMLINK_DIR}/chainbench"
 
-if command -v chainbench &>/dev/null; then
-  EXISTING="$(command -v chainbench)"
-  if [[ "$(readlink -f "${EXISTING}" 2>/dev/null || realpath "${EXISTING}" 2>/dev/null)" == "${CHAINBENCH_DIR}/chainbench.sh" ]]; then
-    echo "  [OK] Already registered: ${EXISTING} → chainbench.sh"
-  else
-    echo "  [WARN] 'chainbench' already exists at ${EXISTING}"
-    echo "         Skipping symlink creation. Remove it manually if needed."
+_register_symlink() {
+  local name="$1"
+  local target="$2"
+  local symlink="${SYMLINK_DIR}/${name}"
+
+  if command -v "${name}" &>/dev/null; then
+    local existing
+    existing="$(command -v "${name}")"
+    if [[ "$(readlink -f "${existing}" 2>/dev/null || realpath "${existing}" 2>/dev/null)" == "${target}" ]]; then
+      echo "  [OK] Already registered: ${existing} → $(basename "${target}")"
+      return 0
+    else
+      echo "  [WARN] '${name}' already exists at ${existing}"
+      echo "         Skipping symlink creation. Remove it manually if needed."
+      return 0
+    fi
   fi
-elif [[ -w "${SYMLINK_DIR}" ]]; then
-  ln -sf "${CHAINBENCH_DIR}/chainbench.sh" "${SYMLINK_PATH}"
-  echo "  [OK] Created symlink: ${SYMLINK_PATH} → chainbench.sh"
-else
-  echo "  Creating symlink requires sudo ..."
-  sudo ln -sf "${CHAINBENCH_DIR}/chainbench.sh" "${SYMLINK_PATH}" && \
-    echo "  [OK] Created symlink: ${SYMLINK_PATH} → chainbench.sh" || \
-    echo "  [WARN] Failed. Add manually: ln -s ${CHAINBENCH_DIR}/chainbench.sh ${SYMLINK_PATH}"
-fi
+
+  if [[ -w "${SYMLINK_DIR}" ]]; then
+    ln -sf "${target}" "${symlink}"
+    echo "  [OK] Created symlink: ${symlink} → $(basename "${target}")"
+  else
+    echo "  Creating symlink requires sudo ..."
+    sudo ln -sf "${target}" "${symlink}" && \
+      echo "  [OK] Created symlink: ${symlink} → $(basename "${target}")" || \
+      echo "  [WARN] Failed. Add manually: ln -s ${target} ${symlink}"
+  fi
+}
+
+_register_symlink "chainbench"     "${CHAINBENCH_DIR}/chainbench.sh"
+_register_symlink "chainbench-mcp" "${CHAINBENCH_DIR}/bin/chainbench-mcp"
 
 # ---- Summary -----------------------------------------------------------------
 

@@ -1,12 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runChainbench } from "../utils/exec.js";
+import { runChainbench, CHAINBENCH_DIR } from "../utils/exec.js";
 import { readdirSync, statSync } from "fs";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const CHAINBENCH_DIR = resolve(__dirname, "../../../..");
+import { resolve } from "path";
 
 function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
   if (result.exitCode === 0) {

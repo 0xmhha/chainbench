@@ -1,12 +1,9 @@
 import { z } from "zod";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { resolve, dirname } from "path";
+import { resolve } from "path";
 import { execFileSync } from "child_process";
-import { fileURLToPath } from "url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const CHAINBENCH_DIR = resolve(__dirname, "../../..");
+import { CHAINBENCH_DIR, buildEnv } from "../utils/exec.js";
 
 // ---------------------------------------------------------------------------
 // Schema documentation
@@ -131,6 +128,7 @@ except ImportError:
     const result = execFileSync("python3", ["-c", pyScript, path], {
       encoding: "utf-8",
       timeout: 5000,
+      env: buildEnv(),
     });
     return JSON.parse(result.trim());
   } catch {
