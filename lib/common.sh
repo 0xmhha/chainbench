@@ -57,32 +57,54 @@ require_cmd() {
 # ---- Binary resolution -------------------------------------------------------
 
 # resolve_binary <binary_name> [explicit_path]
-# Resolves the full path to a binary.
-#   1. If explicit_path is non-empty and the file is executable, use it.
-#   2. Otherwise search $PATH via `command -v`.
-# Prints the resolved path to stdout. Returns 1 on failure.
+# Resolves the full path to a binary using the following priority:
+#   1. explicit_path from profile (binary_path field)
+#   2. Git repository root's build/bin/<binary> (works from any subdirectory)
+#   3. $PWD/build/bin/<binary> (fallback for non-git projects)
+#   4. $PATH lookup (last resort, with warning about potential conflicts)
+# Prints the resolved absolute path to stdout. Returns 1 on failure.
 resolve_binary() {
   local binary_name="${1:?resolve_binary: binary name required}"
   local explicit_path="${2:-}"
 
+  # 1. Explicit path from profile
   if [[ -n "$explicit_path" ]]; then
     if [[ -x "$explicit_path" ]]; then
       printf '%s\n' "$explicit_path"
       return 0
     else
-      log_warn "Explicit binary path '$explicit_path' is not executable, falling back to \$PATH"
+      log_warn "Explicit binary path '$explicit_path' is not executable, trying auto-detection"
     fi
   fi
 
-  local resolved
-  resolved="$(command -v "$binary_name" 2>/dev/null)"
-  if [[ -z "$resolved" ]]; then
-    log_error "Binary '$binary_name' not found in PATH"
-    return 1
+  # 2. Auto-detect from git repository root's build/bin/
+  local git_root
+  git_root="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+  if [[ -n "$git_root" && -x "${git_root}/build/bin/${binary_name}" ]]; then
+    log_info "Auto-detected binary at ${git_root}/build/bin/${binary_name}"
+    printf '%s\n' "${git_root}/build/bin/${binary_name}"
+    return 0
   fi
 
-  printf '%s\n' "$resolved"
-  return 0
+  # 3. Fallback: check $PWD/build/bin/ (for non-git projects)
+  if [[ -x "${PWD}/build/bin/${binary_name}" ]]; then
+    log_info "Auto-detected binary at ${PWD}/build/bin/${binary_name}"
+    printf '%s\n' "${PWD}/build/bin/${binary_name}"
+    return 0
+  fi
+
+  # 4. Last resort: $PATH lookup (with conflict warning)
+  local resolved
+  resolved="$(command -v "$binary_name" 2>/dev/null)"
+  if [[ -n "$resolved" ]]; then
+    log_warn "Using '$binary_name' from \$PATH ($resolved) — set binary_path in profile to avoid conflicts"
+    printf '%s\n' "$resolved"
+    return 0
+  fi
+
+  log_error "Binary '$binary_name' not found"
+  log_error "Tried: explicit_path, git-root/build/bin/, \$PWD/build/bin/, \$PATH"
+  return 1
 }
 
 # ---- Port calculation --------------------------------------------------------
