@@ -4,7 +4,17 @@
 set -euo pipefail
 
 # ---- Resolve CHAINBENCH_DIR -------------------------------------------------
-CHAINBENCH_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Follow symlinks so the path points to the real install directory,
+# not the symlink location (e.g. /usr/local/bin).
+_SOURCE="$0"
+while [[ -L "${_SOURCE}" ]]; do
+  _DIR="$(cd "$(dirname "${_SOURCE}")" && pwd)"
+  _SOURCE="$(readlink "${_SOURCE}")"
+  # Handle relative symlink targets
+  [[ "${_SOURCE}" != /* ]] && _SOURCE="${_DIR}/${_SOURCE}"
+done
+CHAINBENCH_DIR="$(cd "$(dirname "${_SOURCE}")" && pwd)"
+unset _SOURCE _DIR
 export CHAINBENCH_DIR
 
 # ---- Parse global flags -----------------------------------------------------
