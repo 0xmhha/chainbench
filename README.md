@@ -1,158 +1,125 @@
 # chainbench
 
-A local blockchain sandbox test bench for [go-stablenet](https://github.com/user/go-stablenet) (geth fork with WBFT consensus). Manage multi-node local chains with a single CLI, run built-in tests, and integrate with AI agents via MCP.
+A local blockchain sandbox test bench for [go-stablenet](https://github.com/stable-net/go-stablenet) (geth fork with WBFT consensus). Manage multi-node local chains with a single CLI, run built-in tests, and integrate with AI agents via MCP.
 
-## Features
-
-- **Single CLI** — `init`, `start`, `stop`, `status`, `test`, `log` in one tool
-- **Profile-based config** — YAML profiles with inheritance for different test scenarios
-- **Preset keys** — Fixed validator keys for reproducible debugging (`node1 = 0xc17d...` always)
-- **Built-in tests** — 10 tests covering consensus, fault tolerance, and stress
-- **Log analysis** — Consensus timeline, anomaly detection, cross-node search
-- **MCP server** — 13 tools for Claude Code / AI agent integration
-- **No Docker required** — Pure process-based, runs on macOS and Linux
+- **Single CLI** for full chain lifecycle (`init`, `start`, `stop`, `test`, `log`)
+- **YAML profiles** with inheritance for different test scenarios
+- **Preset keys** for reproducible validator addresses across runs
+- **10 built-in tests** covering consensus, fault tolerance, and stress
+- **MCP server** for Claude Code / AI agent integration (per-project opt-in)
+- **No Docker required** — pure process-based, runs on macOS and Linux
 
 ## Quick Start
 
+### Install
+
 ```bash
-# 1. Clone
-git clone https://github.com/0xmhha/chainbench.git
-cd chainbench
+curl -fsSL https://raw.githubusercontent.com/0xmhha/chainbench/main/install.sh | bash
+```
 
-# 2. Set the gstable binary path in the profile
-#    Edit profiles/default.yaml → chain.binary_path to your gstable build location
-#    Example: binary_path: "/path/to/go-stablenet/build/bin/gstable"
+This clones chainbench to `~/.chainbench`, builds the MCP server, and registers the `chainbench` CLI in your `$PATH`.
 
-# 3. Initialize the chain (4 validators + 1 endpoint)
-./chainbench.sh init
+### Enable MCP for your project (optional)
 
-# 4. Start all nodes
-./chainbench.sh start
+```bash
+cd /path/to/your-chain-project
+chainbench mcp enable
+```
 
-# 5. Check status
-./chainbench.sh status
+This creates a `.mcp.json` in the project root. Restart Claude Code or run `/mcp` to load.
 
-# 6. Run basic tests
-./chainbench.sh test run basic
+### Run a local chain
 
-# 7. Stop
-./chainbench.sh stop
+```bash
+# 1. Set the gstable binary path
+#    Edit ~/.chainbench/profiles/default.yaml
+#    → chain.binary_path: "/path/to/go-stablenet/build/bin/gstable"
+
+# 2. Initialize and start (4 validators + 1 endpoint)
+chainbench init
+chainbench start
+
+# 3. Check status and run tests
+chainbench status
+chainbench test run basic
+
+# 4. Stop
+chainbench stop
+```
+
+### Uninstall
+
+```bash
+chainbench uninstall
 ```
 
 ## Prerequisites
 
-- **bash** 4.0+
-- **python3** 3.6+ (macOS ships with it; PyYAML optional but recommended: `pip3 install pyyaml`)
-- **curl**
-- **Node.js** 18+ and **npm** (only for MCP server / Claude Code integration)
-- **gstable** binary — build from [go-stablenet](https://github.com/user/go-stablenet):
-  ```bash
-  cd go-stablenet && make gstable
-  # Binary at: build/bin/gstable
-  ```
-- **logrot** (optional) — log rotation utility. Place in `bin/logrot` if available. Without it, logs are written directly to files (no auto-rotation).
-
-## Installation
-
-### One-Command Setup (Recommended)
-
-```bash
-git clone https://github.com/0xmhha/chainbench.git
-cd chainbench
-./setup.sh
-```
-
-This will:
-1. Check prerequisites (bash, python3, node, npm)
-2. Build the MCP server
-3. Register the MCP server in Claude Code (interactive prompt — global or project-level)
-
-### Manual Setup
-
-```bash
-git clone https://github.com/0xmhha/chainbench.git
-cd chainbench
-
-# Build MCP server (optional, for Claude Code integration)
-cd mcp-server && npm install && npm run build && cd ..
-```
-
-### Optional: Add to PATH
-
-```bash
-# Option A: symlink
-ln -s "$(pwd)/chainbench" /usr/local/bin/chainbench
-
-# Option B: add to shell profile
-echo 'export PATH="/path/to/chainbench:$PATH"' >> ~/.zshrc
-```
-
-### Configuration
-
-Edit `profiles/default.yaml` to set your environment:
-
-```yaml
-chain:
-  binary_path: "/absolute/path/to/gstable"   # or relative to chainbench/
-
-data:
-  directory: /tmp/node-data                    # where node data is stored
-
-nodes:
-  validators: 4
-  endpoints: 1
-```
+| Dependency | Version | Required for |
+|------------|---------|-------------|
+| bash | 4.0+ | CLI |
+| python3 | 3.6+ | Profile parsing, genesis generation |
+| curl | any | RPC calls in tests |
+| git | any | Installation |
+| Node.js | 18+ | MCP server only |
+| npm | any | MCP server only |
+| gstable | latest | Chain binary ([build instructions](https://github.com/stable-net/go-stablenet)) |
 
 ## CLI Reference
 
 ### Chain Lifecycle
 
 ```bash
-./chainbench.sh init [--profile <name>]    # Initialize chain from profile
-./chainbench.sh start                       # Start all nodes
-./chainbench.sh stop                        # Stop all nodes (SIGTERM → SIGKILL)
-./chainbench.sh restart                     # stop → clean → init → start
-./chainbench.sh status [--json]             # Show node status
-./chainbench.sh clean                       # Remove all node data
-./chainbench.sh mcp enable [--target <dir>] # Enable MCP server for a project
-./chainbench.sh mcp disable [--target <dir>]# Disable MCP server for a project
-./chainbench.sh mcp status [--target <dir>] # Check MCP status for a project
+chainbench init [--profile <name>]     # Initialize chain from profile
+chainbench start                        # Start all nodes
+chainbench stop                         # Stop all nodes (SIGTERM -> SIGKILL)
+chainbench restart                      # stop -> clean -> init -> start
+chainbench status [--json]              # Show node status
+chainbench clean                        # Remove all node data
 ```
 
 ### Node Control
 
 ```bash
-./chainbench.sh node stop 3                 # Stop node 3 only
-./chainbench.sh node start 3                # Restart node 3
-./chainbench.sh node log 3                  # Show last 50 lines of node 3 log
-./chainbench.sh node log 3 --follow         # Tail -f node 3 log
-./chainbench.sh node rpc 1 eth_blockNumber  # RPC call to node 1
+chainbench node stop 3                  # Stop node 3 only
+chainbench node start 3                 # Restart node 3
+chainbench node log 3                   # Show last 50 lines of node 3 log
+chainbench node log 3 --follow          # Tail -f node 3 log
+chainbench node rpc 1 eth_blockNumber   # RPC call to node 1
 ```
 
 ### Testing
 
 ```bash
-./chainbench.sh test list                   # List available tests
-./chainbench.sh test run basic/consensus    # Run single test
-./chainbench.sh test run basic              # Run all basic tests
-./chainbench.sh test run all                # Run everything
-./chainbench.sh report [--format json]      # Show test results
+chainbench test list                    # List available tests
+chainbench test run basic/consensus     # Run single test
+chainbench test run basic               # Run all basic tests
+chainbench test run all                 # Run everything
+chainbench report [--format json]       # Show test results
 ```
 
 ### Log Analysis
 
 ```bash
-./chainbench.sh log timeline                # Consensus event timeline
-./chainbench.sh log anomaly                 # Detect anomalous patterns
-./chainbench.sh log search "ROUND_CHANGE"   # Search across all node logs
+chainbench log timeline                 # Consensus event timeline
+chainbench log anomaly                  # Detect anomalous patterns
+chainbench log search "ROUND_CHANGE"    # Search across all node logs
 ```
 
 ### Profile Management
 
 ```bash
-./chainbench.sh profile list                # List available profiles
-./chainbench.sh profile show default        # Show profile content
-./chainbench.sh profile create my-test      # Create custom profile from default
+chainbench profile list                 # List available profiles
+chainbench profile show default         # Show profile content
+chainbench profile create my-test       # Create custom profile from default
+```
+
+### MCP Management
+
+```bash
+chainbench mcp enable [--target <dir>]  # Enable MCP server for a project
+chainbench mcp disable [--target <dir>] # Disable MCP server for a project
+chainbench mcp status [--target <dir>]  # Check MCP status for a project
 ```
 
 ## Built-in Tests
@@ -164,15 +131,15 @@ nodes:
 | `basic/sync` | Check all nodes have synchronized block heights |
 | `basic/peers` | Verify peer connectivity between nodes |
 | `basic/rpc-health` | Check all RPC endpoints respond |
-| `fault/node-crash` | Stop 1/4 validators → consensus continues → recover |
+| `fault/node-crash` | Stop 1/4 validators, verify consensus continues, recover |
 | `fault/node-recover` | Stop node, wait, restart, measure sync time |
-| `fault/two-down` | Stop 2/4 validators → consensus halts → restore 1 → resumes |
+| `fault/two-down` | Stop 2/4 validators, consensus halts, restore 1, resumes |
 | `stress/tx-flood` | Send N transactions, measure TPS |
 | `stress/block-time` | Block time statistics (avg/min/max/p95) over 100 blocks |
 
 ## Profiles
 
-Profiles are YAML files that define the entire chain configuration. They support inheritance with `inherits`.
+Profiles are YAML files that define the entire chain configuration. They support inheritance via `inherits`.
 
 | Profile | Description |
 |---------|-------------|
@@ -181,15 +148,15 @@ Profiles are YAML files that define the entire chain configuration. They support
 | `bft-limit` | 4 validators, 2s blocks, auto-runs fault tests |
 | `large` | 7 validators + 3 endpoints |
 
-Create custom profiles:
+### Creating Custom Profiles
 
 ```bash
-./chainbench.sh profile create my-scenario
+chainbench profile create my-scenario
 # Edit profiles/custom/my-scenario.yaml
-./chainbench.sh init --profile my-scenario
+chainbench init --profile my-scenario
 ```
 
-### Profile Schema (Key Fields)
+### Profile Schema
 
 ```yaml
 chain:
@@ -227,7 +194,7 @@ ports:
 
 ## Preset Keys
 
-The `keys/preset/` directory contains pre-generated keys for 5 nodes. Using fixed keys means validator addresses are **always the same**, making log analysis and debugging much easier:
+The `keys/preset/` directory contains pre-generated keys for 5 nodes. Fixed keys ensure validator addresses are **always the same** across runs, making log analysis and debugging reproducible.
 
 | Node | Address | Role |
 |------|---------|------|
@@ -239,53 +206,22 @@ The `keys/preset/` directory contains pre-generated keys for 5 nodes. Using fixe
 
 ## Claude Code / MCP Integration
 
-chainbench includes an MCP (Model Context Protocol) server that allows AI agents like Claude Code to control the test chain directly.
+chainbench includes an [MCP](https://modelcontextprotocol.io/) server that allows AI agents like Claude Code to control the test chain directly.
 
 ### Setup
 
-1. Build the MCP server:
-   ```bash
-   cd mcp-server && npm install && npm run build && cd ..
-   ```
+```bash
+# Enable for a specific project (recommended)
+cd /path/to/my-chain-project
+chainbench mcp enable
 
-2. Register in Claude Code. Choose one of these methods:
+# Disable when no longer needed (stops token consumption)
+chainbench mcp disable
+```
 
-   **Method A: Per-project via CLI (Recommended)** — enable MCP for a specific project:
-   ```bash
-   # From chainbench directory, targeting another project:
-   chainbench mcp enable --target /path/to/my-chain-project
-
-   # Or from the target project directory:
-   cd /path/to/my-chain-project
-   chainbench mcp enable
-   ```
-   This creates a `.mcp.json` in the target project root with the correct paths.
-   If a `.mcp.json` already exists, chainbench is merged into it (other MCP servers are preserved).
-
-   To remove:
-   ```bash
-   chainbench mcp disable --target /path/to/my-chain-project
-   ```
-
-   **Method B: Global** — add to `~/.claude/settings.local.json`:
-   ```json
-   {
-     "mcpServers": {
-       "chainbench": {
-         "command": "node",
-         "args": ["/Users/yourname/chainbench/mcp-server/dist/index.js"],
-         "env": {
-           "CHAINBENCH_DIR": "/Users/yourname/chainbench"
-         }
-       }
-     }
-   }
-   ```
-
-   > Note: Global registration activates the MCP server for **all** projects,
-   > which may consume tokens even when not needed. Per-project registration is preferred.
-
-3. Restart Claude Code (or run `/mcp` to reload). The following MCP tools become available:
+> **Note:** Per-project registration is preferred. Global registration
+> (`~/.claude/settings.local.json`) activates the MCP server for all projects,
+> which may consume tokens even when not needed.
 
 ### Available MCP Tools
 
@@ -313,11 +249,11 @@ chainbench includes an MCP (Model Context Protocol) server that allows AI agents
 User: "Run a basic consensus test"
 
 AI Agent:
-  1. chainbench_status        → Check if chain is running
-  2. chainbench_init           → Initialize if needed
-  3. chainbench_start          → Start nodes
-  4. chainbench_test_run       → Run "basic/consensus"
-  5. chainbench_report         → Return results to user
+  1. chainbench_status      -> Check if chain is running
+  2. chainbench_init         -> Initialize if needed
+  3. chainbench_start        -> Start nodes
+  4. chainbench_test_run     -> Run "basic/consensus"
+  5. chainbench_report       -> Return results to user
 
 User: "Kill node 3 and check if consensus continues"
 
@@ -328,22 +264,14 @@ AI Agent:
   4. Report analysis to user
 ```
 
-### Schema Query
-
-The `chainbench_schema_query` tool lets the AI understand what profile fields are available before creating custom profiles:
-
-```
-AI calls: chainbench_schema_query({section: "genesis.wbft"})
-Response: blockPeriodSeconds (int, default: 1) - Target block interval...
-AI calls: chainbench_profile_send({name: "slow-blocks", content: "..."})
-AI calls: chainbench_init({profile: "slow-blocks"})
-```
-
 ## Project Structure
 
 ```
 chainbench/
-├── chainbench              # Main CLI entry point (shell script)
+├── install.sh              # Remote installer (curl | bash)
+├── uninstall.sh            # Uninstaller
+├── setup.sh                # Local setup (MCP build + PATH registration)
+├── chainbench.sh           # Main CLI entry point
 ├── lib/                    # CLI command implementations
 │   ├── cmd_init.sh         # Chain initialization
 │   ├── cmd_start.sh        # Node startup with PID tracking
@@ -355,27 +283,49 @@ chainbench/
 │   ├── cmd_mcp.sh          # MCP server enable/disable per project
 │   ├── common.sh           # Shared utilities
 │   └── profile.sh          # YAML profile parser
-├── profiles/               # Test scenario profiles
-│   ├── default.yaml
-│   ├── minimal.yaml
-│   ├── bft-limit.yaml
-│   └── large.yaml
-├── keys/preset/            # Pre-generated validator keys
-│   ├── node1..5/           # Per-node: nodekey, address, bls_pubkey, keystore
-│   ├── metadata.json       # Pre-computed validators, BLS keys, enode URLs
-│   └── password            # Keystore password ("1")
-├── templates/              # Genesis and TOML templates
-├── tests/                  # Built-in test suites
-│   ├── basic/              # Consensus, tx, sync, peers, rpc-health
-│   ├── fault/              # Node crash, recovery, two-down
-│   ├── stress/             # TX flood, block time
-│   └── lib/                # Shared test libraries (rpc, assert, wait, report)
+├── profiles/               # Test scenario profiles (YAML with inheritance)
+├── keys/preset/            # Pre-generated validator keys (5 nodes)
+├── templates/              # Genesis and TOML config templates
+├── tests/                  # Built-in test suites (basic, fault, stress)
 ├── logs/                   # Log analysis tools (parser, timeline, anomaly)
 ├── mcp-server/             # MCP server for AI integration (TypeScript)
-└── bin/                    # Platform binaries (logrot, not tracked in git)
+└── bin/                    # Optional platform binaries
 ```
 
+## Troubleshooting
+
+**`chainbench init` fails with "Cannot find gstable binary"**
+- Set `chain.binary_path` in `profiles/default.yaml` to the absolute path of your `gstable` binary
+- Or add the directory containing `gstable` to your `$PATH`
+
+**Nodes start but immediately die**
+- Check logs: `cat /tmp/node-data/logs/node1.log`
+- Common cause: port conflict. Change `ports.base_*` values in the profile
+
+**`chainbench stop` doesn't stop all processes**
+- Manual cleanup: `pkill -15 gstable && sleep 3 && pkill -9 gstable`
+- Then remove stale state: `rm -f state/pids.json`
+
+**MCP server not recognized in Claude Code**
+- Verify `chainbench mcp status` shows "enabled"
+- Verify MCP server is built: `ls ~/.chainbench/mcp-server/dist/index.js`
+- Run `/mcp` in Claude Code to reload servers
+
+**Port already in use**
+- Default ports: HTTP 8501-8505, WS 9501-9505, P2P 30301-30305
+- Change base ports in the profile: `ports.base_http: 18501`
+
 ## Contributing
+
+Contributions are welcome! Please read the guidelines below before submitting.
+
+### Development Setup
+
+```bash
+git clone https://github.com/0xmhha/chainbench.git
+cd chainbench
+./setup.sh
+```
 
 ### Adding a Test
 
@@ -391,35 +341,23 @@ chainbench/
 
 ### Adding a Profile
 
-1. `./chainbench.sh profile create my-profile`
+1. `chainbench profile create my-profile`
 2. Edit `profiles/custom/my-profile.yaml`
 3. Use `inherits: default` to only override what you need
 
-## Troubleshooting
+### Submitting Changes
 
-**`chainbench init` fails with "Cannot find gstable binary"**
-- Set `chain.binary_path` in `profiles/default.yaml` to the absolute path of your `gstable` binary
-- Or add the directory containing `gstable` to your `$PATH`
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Commit with [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`)
+4. Push and open a Pull Request
+5. Ensure all existing tests pass: `chainbench test run all`
 
-**Nodes start but immediately die**
-- Check logs: `cat /tmp/node-data/logs/node1.log`
-- Common cause: port conflict. Change `ports.base_*` values in the profile
-- Common cause: `extra_flags` contains invalid YAML — ensure it's a proper list or empty `[]`
+### Reporting Issues
 
-**`chainbench stop` doesn't stop all processes**
-- Manual cleanup: `pkill -15 gstable && sleep 3 && pkill -9 gstable`
-- Then remove stale state: `rm -f state/pids.json`
-
-**MCP server not recognized in Claude Code**
-- Verify the path in `.mcp.json` is absolute (not relative)
-- Verify `npm run build` succeeded (check `mcp-server/dist/index.js` exists)
-- Run `/mcp` in Claude Code to reload servers
-- Check Claude Code logs for MCP connection errors
-
-**Port already in use**
-- Default ports: HTTP 8501-8505, WS 9501-9505, P2P 30301-30305
-- Change base ports in the profile: `ports.base_http: 18501`
+- Use [GitHub Issues](https://github.com/0xmhha/chainbench/issues)
+- Include: chainbench version, OS, steps to reproduce, relevant logs
 
 ## License
 
-[Apache License 2.0](LICENSE)
+This project is licensed under the [Apache License 2.0](LICENSE).
