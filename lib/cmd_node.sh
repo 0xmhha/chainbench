@@ -58,13 +58,14 @@ import sys, json
 with open(sys.argv[1]) as fh:
     data = json.load(fh)
 
-print(len(data.get("nodes", [])))
+nodes = data.get("nodes", {})
+print(len(nodes))
 PYEOF
 }
 
 # _cb_node_validate_index <N>
 # Validates that N is a positive integer and within the valid node range.
-# Sets _CB_NODE_IDX (0-based index) on success.
+# Sets _CB_NODE_KEY (string key matching pids.json nodes dict) on success.
 _cb_node_validate_index() {
   local n="$1"
 
@@ -81,55 +82,57 @@ _cb_node_validate_index() {
     return 1
   fi
 
-  _CB_NODE_IDX=$(( n - 1 ))
+  # pids.json stores nodes as {"1": {...}, "2": {...}} with 1-based string keys
+  _CB_NODE_KEY="$n"
   return 0
 }
 
 # ---- pids.json accessors -----------------------------------------------------
 
-# _cb_node_get_field <idx> <field>
-# Reads a single field from pids.json for the node at index idx.
+# _cb_node_get_field <key> <field>
+# Reads a single field from pids.json for the node with the given string key.
 _cb_node_get_field() {
-  local idx="$1"
+  local key="$1"
   local field="$2"
 
-  python3 - "$_CB_NODE_PIDS_FILE" "$idx" "$field" <<'PYEOF'
+  python3 - "$_CB_NODE_PIDS_FILE" "$key" "$field" <<'PYEOF'
 import sys, json
 
 with open(sys.argv[1]) as fh:
     data = json.load(fh)
 
-idx   = int(sys.argv[2])
+key   = sys.argv[2]
 field = sys.argv[3]
 
-nodes = data.get("nodes", [])
-if 0 <= idx < len(nodes):
-    val = nodes[idx].get(field, "")
+nodes = data.get("nodes", {})
+node = nodes.get(key)
+if node is not None:
+    val = node.get(field, "")
     print("" if val is None else val)
 else:
     print("")
 PYEOF
 }
 
-# _cb_node_update_pids <idx> <key=value> [<key=value> ...]
-# Patches pids.json for the node at the given index.
+# _cb_node_update_pids <key> <field=value> [<field=value> ...]
+# Patches pids.json for the node with the given string key.
 _cb_node_update_pids() {
-  local idx="$1"
+  local node_key="$1"
   shift
   local -a kvs=("$@")
 
-  python3 - "$_CB_NODE_PIDS_FILE" "$idx" "${kvs[@]}" <<'PYEOF'
+  python3 - "$_CB_NODE_PIDS_FILE" "$node_key" "${kvs[@]}" <<'PYEOF'
 import sys, json
 
 pids_file = sys.argv[1]
-idx       = int(sys.argv[2])
+node_key  = sys.argv[2]
 kvs       = sys.argv[3:]
 
 with open(pids_file) as fh:
     data = json.load(fh)
 
-nodes = data.get("nodes", [])
-if 0 <= idx < len(nodes):
+nodes = data.get("nodes", {})
+if node_key in nodes:
     for kv in kvs:
         if "=" not in kv:
             continue
@@ -137,7 +140,7 @@ if 0 <= idx < len(nodes):
         # Attempt int coercion for numeric fields
         if value.isdigit():
             value = int(value)
-        nodes[idx][key] = value
+        nodes[node_key][key] = value
 
 with open(pids_file, "w") as fh:
     json.dump(data, fh, indent=2)
@@ -174,13 +177,14 @@ _cb_node_cmd_stop() {
 
   _cb_node_require_pids_file || return 1
 
-  local _CB_NODE_IDX
+  local _CB_NODE_KEY
   _cb_node_validate_index "$node_num" || return 1
 
   local pid label status
-  pid="$(_cb_node_get_field "$_CB_NODE_IDX" "pid")"
-  label="$(_cb_node_get_field "$_CB_NODE_IDX" "label")"
-  status="$(_cb_node_get_field "$_CB_NODE_IDX" "status")"
+  pid="$(_cb_node_get_field "$_CB_NODE_KEY" "pid")"
+  label="$(_cb_node_get_field "$_CB_NODE_KEY" "label")"
+  label="${label:-node${_CB_NODE_KEY}}"
+  status="$(_cb_node_get_field "$_CB_NODE_KEY" "status")"
 
   if [[ "$status" != "running" ]]; then
     log_warn "Node $label is not running (status: $status)"
@@ -210,7 +214,7 @@ _cb_node_cmd_stop() {
   local stopped_at
   stopped_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-  _cb_node_update_pids "$_CB_NODE_IDX" \
+  _cb_node_update_pids "$_CB_NODE_KEY" \
     "status=stopped" \
     "stop_reason=manual" \
     "stopped_at=${stopped_at}"
@@ -221,28 +225,28 @@ _cb_node_cmd_stop() {
 
 # ---- node start <N> ----------------------------------------------------------
 
-# _cb_node_build_start_args <idx>
-# Reconstructs the gstable launch arguments from pids.json for node at idx.
+# _cb_node_build_start_args <key>
+# Reconstructs the gstable launch arguments from pids.json for the given node key.
 # Prints the binary path and all arguments on a single line, NUL-separated.
 _cb_node_build_start_args() {
-  local idx="$1"
+  local key="$1"
 
-  python3 - "$_CB_NODE_PIDS_FILE" "$idx" "$_CB_NODE_DATA_DIR" <<'PYEOF'
+  python3 - "$_CB_NODE_PIDS_FILE" "$key" "$_CB_NODE_DATA_DIR" <<'PYEOF'
 import sys, json, os
 
 pids_file = sys.argv[1]
-idx       = int(sys.argv[2])
+node_key  = sys.argv[2]
 data_dir  = sys.argv[3]
 
 with open(pids_file) as fh:
     data = json.load(fh)
 
-nodes = data.get("nodes", [])
-if idx < 0 or idx >= len(nodes):
+nodes = data.get("nodes", {})
+if node_key not in nodes:
     print("", end="")
     sys.exit(1)
 
-node = nodes[idx]
+node = nodes[node_key]
 
 # If the node has a saved_args field, use it verbatim
 saved = node.get("saved_args", [])
@@ -252,7 +256,7 @@ if saved:
 
 # Otherwise reconstruct from individual port/path fields
 binary   = node.get("binary",    "gstable")
-datadir  = node.get("datadir",   os.path.join(data_dir, f"node{idx+1}"))
+datadir  = node.get("datadir",   os.path.join(data_dir, f"node{node_key}"))
 http_port= node.get("http_port", "")
 ws_port  = node.get("ws_port",   "")
 p2p_port = node.get("p2p_port",  "")
@@ -298,16 +302,17 @@ _cb_node_cmd_start() {
 
   _cb_node_require_pids_file || return 1
 
-  local _CB_NODE_IDX
+  local _CB_NODE_KEY
   _cb_node_validate_index "$node_num" || return 1
 
   local label status
-  label="$(_cb_node_get_field "$_CB_NODE_IDX" "label")"
-  status="$(_cb_node_get_field "$_CB_NODE_IDX" "status")"
+  label="$(_cb_node_get_field "$_CB_NODE_KEY" "label")"
+  label="${label:-node${_CB_NODE_KEY}}"
+  status="$(_cb_node_get_field "$_CB_NODE_KEY" "status")"
 
   if [[ "$status" == "running" ]]; then
     local existing_pid
-    existing_pid="$(_cb_node_get_field "$_CB_NODE_IDX" "pid")"
+    existing_pid="$(_cb_node_get_field "$_CB_NODE_KEY" "pid")"
     if _cb_node_pid_alive "${existing_pid:-0}"; then
       log_warn "Node $label is already running (PID $existing_pid)"
       return 0
@@ -317,7 +322,7 @@ _cb_node_cmd_start() {
 
   # Build command arguments
   local raw_args
-  raw_args="$(_cb_node_build_start_args "$_CB_NODE_IDX")" || {
+  raw_args="$(_cb_node_build_start_args "$_CB_NODE_KEY")" || {
     log_error "Failed to reconstruct start arguments for $label"
     return 1
   }
@@ -357,7 +362,7 @@ _cb_node_cmd_start() {
   local started_at
   started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-  _cb_node_update_pids "$_CB_NODE_IDX" \
+  _cb_node_update_pids "$_CB_NODE_KEY" \
     "pid=${new_pid}" \
     "status=running" \
     "started_at=${started_at}"
@@ -382,11 +387,12 @@ _cb_node_cmd_log() {
 
   _cb_node_require_pids_file || return 1
 
-  local _CB_NODE_IDX
+  local _CB_NODE_KEY
   _cb_node_validate_index "$node_num" || return 1
 
   local label
-  label="$(_cb_node_get_field "$_CB_NODE_IDX" "label")"
+  label="$(_cb_node_get_field "$_CB_NODE_KEY" "label")"
+  label="${label:-node${_CB_NODE_KEY}}"
 
   local log_file="${CHAINBENCH_DIR}/data/logs/${label}.log"
 
@@ -411,13 +417,14 @@ _cb_node_cmd_rpc() {
 
   _cb_node_require_pids_file || return 1
 
-  local _CB_NODE_IDX
+  local _CB_NODE_KEY
   _cb_node_validate_index "$node_num" || return 1
 
   local http_port status label
-  http_port="$(_cb_node_get_field "$_CB_NODE_IDX" "http_port")"
-  status="$(_cb_node_get_field "$_CB_NODE_IDX" "status")"
-  label="$(_cb_node_get_field "$_CB_NODE_IDX" "label")"
+  http_port="$(_cb_node_get_field "$_CB_NODE_KEY" "http_port")"
+  status="$(_cb_node_get_field "$_CB_NODE_KEY" "status")"
+  label="$(_cb_node_get_field "$_CB_NODE_KEY" "label")"
+  label="${label:-node${_CB_NODE_KEY}}"
 
   if [[ -z "$http_port" ]]; then
     log_error "Node $label has no HTTP port configured"
