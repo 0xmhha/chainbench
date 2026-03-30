@@ -53,6 +53,7 @@ Commands:
   profile    Manage profiles (list/show/create)
   report     Show test results
   mcp        Enable/disable MCP server for a project
+  uninstall  Remove chainbench installation
 
 Global Options:
   --profile <name>   Profile to use for init (default: default)
@@ -93,6 +94,9 @@ case "${_CB_SUBCOMMAND}" in
       log_warn "Command '${_CB_SUBCOMMAND}' is not yet implemented (${_CB_CMD_FILE} not found)"
       exit 0
     fi
+    ;;
+  uninstall)
+    exec bash "${CHAINBENCH_DIR}/uninstall.sh"
     ;;
   *)
     log_error "Unknown command: ${_CB_SUBCOMMAND}"
