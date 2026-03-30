@@ -114,6 +114,9 @@ nodes:
 ./chainbench.sh restart                     # stop → clean → init → start
 ./chainbench.sh status [--json]             # Show node status
 ./chainbench.sh clean                       # Remove all node data
+./chainbench.sh mcp enable [--target <dir>] # Enable MCP server for a project
+./chainbench.sh mcp disable [--target <dir>]# Disable MCP server for a project
+./chainbench.sh mcp status [--target <dir>] # Check MCP status for a project
 ```
 
 ### Node Control
@@ -247,19 +250,21 @@ chainbench includes an MCP (Model Context Protocol) server that allows AI agents
 
 2. Register in Claude Code. Choose one of these methods:
 
-   **Method A: Project-level** — create `.mcp.json` in your project root:
-   ```json
-   {
-     "mcpServers": {
-       "chainbench": {
-         "command": "node",
-         "args": ["/Users/yourname/chainbench/mcp-server/dist/index.js"],
-         "env": {
-           "CHAINBENCH_DIR": "/Users/yourname/chainbench"
-         }
-       }
-     }
-   }
+   **Method A: Per-project via CLI (Recommended)** — enable MCP for a specific project:
+   ```bash
+   # From chainbench directory, targeting another project:
+   chainbench mcp enable --target /path/to/my-chain-project
+
+   # Or from the target project directory:
+   cd /path/to/my-chain-project
+   chainbench mcp enable
+   ```
+   This creates a `.mcp.json` in the target project root with the correct paths.
+   If a `.mcp.json` already exists, chainbench is merged into it (other MCP servers are preserved).
+
+   To remove:
+   ```bash
+   chainbench mcp disable --target /path/to/my-chain-project
    ```
 
    **Method B: Global** — add to `~/.claude/settings.local.json`:
@@ -277,8 +282,8 @@ chainbench includes an MCP (Model Context Protocol) server that allows AI agents
    }
    ```
 
-   > Replace `/Users/yourname/chainbench` with your actual chainbench installation path.
-   > Use `pwd` inside the chainbench directory to get the absolute path.
+   > Note: Global registration activates the MCP server for **all** projects,
+   > which may consume tokens even when not needed. Per-project registration is preferred.
 
 3. Restart Claude Code (or run `/mcp` to reload). The following MCP tools become available:
 
@@ -347,6 +352,7 @@ chainbench/
 │   ├── cmd_node.sh         # Individual node control
 │   ├── cmd_test.sh         # Test runner
 │   ├── cmd_log.sh          # Log analysis dispatcher
+│   ├── cmd_mcp.sh          # MCP server enable/disable per project
 │   ├── common.sh           # Shared utilities
 │   └── profile.sh          # YAML profile parser
 ├── profiles/               # Test scenario profiles

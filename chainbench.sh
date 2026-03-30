@@ -52,6 +52,7 @@ Commands:
   log        Analyze node logs (timeline/anomaly/search)
   profile    Manage profiles (list/show/create)
   report     Show test results
+  mcp        Enable/disable MCP server for a project
 
 Global Options:
   --profile <name>   Profile to use for init (default: default)
@@ -85,7 +86,7 @@ set -- "${_CB_ARGS[@]:1}"
 _CB_CMD_FILE="${CHAINBENCH_DIR}/lib/cmd_${_CB_SUBCOMMAND}.sh"
 
 case "${_CB_SUBCOMMAND}" in
-  init|start|stop|restart|status|clean|node|test|log|profile|report)
+  init|start|stop|restart|status|clean|node|test|log|profile|report|mcp)
     if [[ -f "${_CB_CMD_FILE}" ]]; then
       source "${_CB_CMD_FILE}"
     else
