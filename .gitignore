@@ -3,6 +3,8 @@ state/pids.json
 state/current-profile.yaml
 state/current-profile-merged.json
 state/results/*.json
+state/remotes.json
+state/current-remote
 
 # Node data (generated at runtime)
 data/
@@ -40,3 +42,7 @@ bin/gstable
 bin/bootnode
 
 .claude/settings.local.json
+
+# Remote chain profiles with auth headers (security)
+profiles/custom/*-secret.yaml
+profiles/custom/*-auth.yaml

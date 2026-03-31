@@ -1,0 +1,39 @@
+# chainbench remote profile example
+# This profile is a reference template for connecting to external chains.
+#
+# Usage:
+#   1. Copy this file: cp profiles/remote-example.yaml profiles/custom/my-remote.yaml
+#   2. Edit the copy with your RPC details
+#   3. Register: chainbench remote add <alias> <rpc_url> [--type mainnet|testnet|devnet]
+#
+# Note: For auth headers, use the CLI flag (--auth-header) instead of storing
+# them in profile files to avoid accidental git commits.
+
+name: remote-example
+description: Example remote chain connection profile
+type: remote
+
+remote:
+  # Required: HTTP RPC endpoint URL
+  rpc_url: "https://rpc.example.com"
+
+  # Optional: WebSocket RPC endpoint URL
+  # ws_url: "wss://ws.example.com"
+
+  # Chain classification: testnet | mainnet | devnet
+  chain_type: testnet
+
+  # Optional: Authorization header (DO NOT commit to git!)
+  # auth_header: "Bearer your-api-key-here"
+
+# Test configuration for remote chain testing
+tests:
+  # Environment variables for tx-send test
+  # Set these when running: chainbench test run remote/tx-send --remote <alias>
+  #   CHAINBENCH_TEST_FROM=0x...     (sender address, must be unlocked)
+  #   CHAINBENCH_TEST_TO=0x...       (recipient address)
+  #   CHAINBENCH_TEST_PASSWORD=...   (account password for unlocking)
+  #
+  # Address for balance-check test (default: zero address)
+  #   CHAINBENCH_TEST_ADDRESS=0x...
+  auto_run: []

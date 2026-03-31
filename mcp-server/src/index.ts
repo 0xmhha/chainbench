@@ -5,10 +5,11 @@ import { registerNodeTools } from "./tools/node.js";
 import { registerTestTools } from "./tools/test.js";
 import { registerSchemaTools } from "./tools/schema.js";
 import { registerLogTools } from "./tools/log.js";
+import { registerRemoteTools } from "./tools/remote.js";
 
 const server = new McpServer({
   name: "chainbench-mcp-server",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 // Register all tool groups
@@ -17,6 +18,7 @@ registerNodeTools(server);
 registerTestTools(server);
 registerSchemaTools(server);
 registerLogTools(server);
+registerRemoteTools(server);
 
 // Start server with stdio transport
 const transport = new StdioServerTransport();

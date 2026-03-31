@@ -16,7 +16,7 @@ source "${_CB_TEST_LIB_DIR}/common.sh"
 # ---- Constants ---------------------------------------------------------------
 
 readonly _CB_TEST_TESTS_DIR="${CHAINBENCH_DIR}/tests"
-readonly _CB_TEST_CATEGORIES=(basic fault stress upgrade)
+readonly _CB_TEST_CATEGORIES=(basic fault stress upgrade remote)
 
 # Color codes
 _CB_TEST_GREEN='\033[0;32m'
@@ -30,26 +30,31 @@ _CB_TEST_RESET='\033[0m'
 
 _cb_test_usage() {
   cat >&2 <<'EOF'
-Usage: chainbench test <subcommand> [target]
+Usage: chainbench test <subcommand> [target] [--remote <alias>]
 
 Subcommands:
   list              List all available tests with descriptions
   run <target>      Run tests matching target
 
 Target formats:
-  all               Run all tests in all categories
+  all               Run all tests (or only remote/ when --remote is set)
   basic             Run all tests in the basic/ category
   fault             Run all tests in the fault/ category
   stress            Run all tests in the stress/ category
   upgrade           Run all tests in the upgrade/ category
+  remote            Run all tests in the remote/ category
   basic/consensus   Run a single specific test
+
+Options:
+  --remote <alias>  Run tests against a remote chain (exports CHAINBENCH_REMOTE)
 
 Examples:
   chainbench test list
   chainbench test run all
   chainbench test run basic
   chainbench test run basic/consensus
-  chainbench test run fault/node-crash
+  chainbench test run remote --remote eth-mainnet
+  chainbench test run remote/rpc-health --remote my-testnet
 EOF
 }
 
@@ -202,8 +207,31 @@ _cb_test_collect_scripts() {
 # ---- test run ----------------------------------------------------------------
 
 _cb_test_cmd_run() {
-  local target="${1:-all}"
+  local target=""
   local quiet="${CHAINBENCH_QUIET:-0}"
+  local remote_alias=""
+
+  # Parse args: target and --remote flag
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --remote) remote_alias="${2:?--remote requires an alias}"; shift 2 ;;
+      --remote=*) remote_alias="${1#--remote=}"; shift ;;
+      *) [[ -z "$target" ]] && target="$1" || true; shift ;;
+    esac
+  done
+  target="${target:-all}"
+
+  # When --remote is set, export CHAINBENCH_REMOTE for test scripts
+  if [[ -n "$remote_alias" ]]; then
+    export CHAINBENCH_REMOTE="$remote_alias"
+    log_info "Running tests against remote chain: ${remote_alias}"
+
+    # When target is "all" with --remote, only run remote/ category
+    if [[ "$target" == "all" ]]; then
+      target="remote"
+      log_info "Target 'all' with --remote: running only remote/ tests"
+    fi
+  fi
 
   # Collect matching scripts
   local -a scripts=()
@@ -315,8 +343,7 @@ cmd_test_main() {
       _cb_test_cmd_list
       ;;
     run)
-      local target="${1:-all}"
-      _cb_test_cmd_run "$target"
+      _cb_test_cmd_run "$@"
       ;;
     --help|-h|help)
       _cb_test_usage

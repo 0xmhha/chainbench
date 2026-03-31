@@ -75,6 +75,27 @@ const SECTION_DOCS: Record<string, string> = {
 
   tests: `# tests — Auto-run tests
 - \`tests.auto_run\` (string[], default: []): Tests to run after init.`,
+
+  remote: `# remote — Remote chain connection (for type: remote profiles)
+Remote profiles connect to existing testnet/mainnet chains via RPC URL.
+
+## Profile fields
+- \`type\` (string): Must be "remote" for remote chain profiles.
+- \`remote.rpc_url\` (string, required): HTTP RPC endpoint URL.
+- \`remote.ws_url\` (string, optional): WebSocket RPC endpoint URL.
+- \`remote.chain_type\` (string, default: "testnet"): One of "testnet", "mainnet", "devnet".
+- \`remote.auth_header\` (string, optional): Authorization header (SENSITIVE — never committed to git).
+
+## CLI Commands
+- \`chainbench remote add <alias> <url> [--type <type>]\`: Register a remote chain.
+- \`chainbench remote list [--json]\`: List registered remote chains.
+- \`chainbench remote info <alias> [--json]\`: Query chain metadata.
+- \`chainbench remote remove <alias>\`: Remove a registered remote chain.
+- \`chainbench remote select <alias>\`: Set active remote chain.
+
+## Running Tests
+- \`chainbench test run remote --remote <alias>\`: Run all remote-compatible tests.
+- \`chainbench test run remote/rpc-health --remote <alias>\`: Run a specific remote test.`,
 };
 
 const FULL_SCHEMA = Object.entries(SECTION_DOCS).map(([, v]) => v).join("\n\n---\n\n");
@@ -186,7 +207,7 @@ export function registerSchemaTools(server: McpServer): void {
   server.tool(
     "chainbench_schema_query",
     "Query the YAML profile schema. Returns field documentation with types, defaults, and meanings.",
-    { section: z.string().optional().describe("Section: chain, data, genesis, genesis.wbft, genesis.systemContracts, nodes, keys, ports, logging, tests. Omit for full schema.") },
+    { section: z.string().optional().describe("Section: chain, data, genesis, genesis.wbft, genesis.systemContracts, nodes, keys, ports, logging, tests, remote. Omit for full schema.") },
     async ({ section }) => ({ content: [{ type: "text" as const, text: getSchema(section) }] })
   );
 

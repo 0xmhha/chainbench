@@ -109,6 +109,30 @@ export function registerTestTools(server: McpServer): void {
   );
 
   server.tool(
+    "chainbench_test_run_remote",
+    "Run tests against a registered remote chain. When target is 'all' or 'remote', only remote-compatible tests are executed. Requires a remote alias registered via chainbench_remote_add.",
+    {
+      test: z
+        .string()
+        .optional()
+        .default("remote")
+        .describe("Test name or category to run (default: 'remote' for all remote tests). Use 'remote/rpc-health' for a specific test."),
+      alias: z
+        .string()
+        .regex(/^[a-zA-Z][a-zA-Z0-9-]*$/, "Alias must start with a letter, contain only alphanumeric and dashes")
+        .describe("Remote chain alias to run tests against (e.g. 'eth-mainnet')"),
+    },
+    async ({ test, alias }) => {
+      const validationError = validateTestName(test);
+      if (validationError) {
+        return { content: [{ type: "text" as const, text: `Error: ${validationError}` }] };
+      }
+      const result = runChainbench(`test run ${test} --remote ${alias}`);
+      return { content: [{ type: "text" as const, text: formatResult(result) }] };
+    }
+  );
+
+  server.tool(
     "chainbench_report",
     "Retrieve the test results report. Shows a summary of all tests that have been run, their pass/fail status, and timing information.",
     {

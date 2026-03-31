@@ -8,23 +8,28 @@ readonly _CB_CMD_STATUS_SH_LOADED=1
 
 _CB_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_LIB_DIR}/common.sh"
+source "${_CB_LIB_DIR}/remote_state.sh" 2>/dev/null || true
 
 # ---- Constants ---------------------------------------------------------------
 
 readonly _CB_STATUS_PIDS_FILE="${CHAINBENCH_DIR}/state/pids.json"
 readonly _CB_STATUS_CURRENT_PROFILE="${CHAINBENCH_DIR}/state/current-profile.yaml"
 readonly _CB_STATUS_RPC_TIMEOUT=3
+readonly _CB_STATUS_REMOTE_RPC_TIMEOUT=10
 
 # ---- Argument parsing --------------------------------------------------------
 
 _CB_STATUS_JSON_MODE=0
+_CB_STATUS_REMOTE_ALIAS=""
 
 _cb_status_parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --json) _CB_STATUS_JSON_MODE=1; shift ;;
+      --remote) _CB_STATUS_REMOTE_ALIAS="${2:?--remote requires an alias}"; shift 2 ;;
+      --remote=*) _CB_STATUS_REMOTE_ALIAS="${1#--remote=}"; shift ;;
       --help|-h)
-        printf 'Usage: chainbench status [--json]\n' >&2
+        printf 'Usage: chainbench status [--json] [--remote <alias>]\n' >&2
         return 0
         ;;
       *)
@@ -33,12 +38,17 @@ _cb_status_parse_args() {
         ;;
     esac
   done
+
+  # Support CHAINBENCH_REMOTE env var as fallback
+  if [[ -z "$_CB_STATUS_REMOTE_ALIAS" && -n "${CHAINBENCH_REMOTE:-}" ]]; then
+    _CB_STATUS_REMOTE_ALIAS="$CHAINBENCH_REMOTE"
+  fi
 }
 
 # ---- RPC helpers -------------------------------------------------------------
 
 # _cb_status_rpc_call <port> <method> [params]
-# Sends a JSON-RPC request and prints the raw result field on stdout.
+# Sends a JSON-RPC request to a LOCAL node and prints the raw result field on stdout.
 # Returns 1 if curl fails or the response contains an error.
 _cb_status_rpc_call() {
   local port="$1"
@@ -66,6 +76,51 @@ try:
         sys.exit(1)
     result = data.get("result", "")
     print(result)
+except Exception:
+    sys.exit(1)
+PYEOF
+}
+
+# _cb_status_remote_rpc_call <url> <method> [params] [auth_header]
+# Sends a JSON-RPC request to a REMOTE URL and prints the raw result field.
+_cb_status_remote_rpc_call() {
+  local url="$1"
+  local method="$2"
+  local params="${3:-[]}"
+  local auth_header="${4:-}"
+
+  local -a curl_args=(
+    -s --max-time "$_CB_STATUS_REMOTE_RPC_TIMEOUT"
+    -X POST
+    -H "Content-Type: application/json"
+    --data "{\"jsonrpc\":\"2.0\",\"method\":\"${method}\",\"params\":${params},\"id\":1}"
+  )
+  if [[ -n "$auth_header" ]]; then
+    curl_args+=(-H "Authorization: ${auth_header}")
+  fi
+  curl_args+=("$url")
+
+  local response
+  response="$(curl "${curl_args[@]}" 2>/dev/null)" || return 1
+
+  if [[ -z "$response" ]]; then
+    return 1
+  fi
+
+  python3 - "$response" <<'PYEOF'
+import sys, json
+
+try:
+    data = json.loads(sys.argv[1])
+    if "error" in data:
+        sys.exit(1)
+    result = data.get("result", "")
+    if isinstance(result, bool):
+        print(str(result).lower())
+    elif isinstance(result, dict):
+        print(json.dumps(result))
+    else:
+        print(result)
 except Exception:
     sys.exit(1)
 PYEOF
@@ -402,10 +457,91 @@ print(json.dumps(output, indent=2))
 PYEOF
 }
 
+# ---- Remote status logic -----------------------------------------------------
+
+_cb_status_remote() {
+  local alias="$1"
+
+  if ! _cb_remote_exists "$alias" 2>/dev/null; then
+    log_error "Remote alias '${alias}' not found"
+    return 1
+  fi
+
+  local rpc_url auth_header
+  rpc_url="$(_cb_remote_get_url "$alias")"
+  auth_header="$(_cb_remote_get_auth_header "$alias" 2>/dev/null || echo "")"
+
+  local entry_json chain_type
+  entry_json="$(_cb_remote_get "$alias")"
+  chain_type=$(python3 -c "import json,sys; print(json.loads(sys.argv[1]).get('chain_type','N/A'))" "$entry_json")
+
+  # Query chain data
+  local chain_id_hex block_hex peers_hex client_ver
+  chain_id_hex="$(_cb_status_remote_rpc_call "$rpc_url" "eth_chainId" "[]" "$auth_header" 2>/dev/null)" || chain_id_hex=""
+  block_hex="$(_cb_status_remote_rpc_call "$rpc_url" "eth_blockNumber" "[]" "$auth_header" 2>/dev/null)" || block_hex=""
+  peers_hex="$(_cb_status_remote_rpc_call "$rpc_url" "net_peerCount" "[]" "$auth_header" 2>/dev/null)" || peers_hex=""
+  client_ver="$(_cb_status_remote_rpc_call "$rpc_url" "web3_clientVersion" "[]" "$auth_header" 2>/dev/null)" || client_ver=""
+
+  local chain_id="N/A" block_num="N/A" peer_count="N/A" status="unreachable"
+
+  if [[ -n "$chain_id_hex" && "$chain_id_hex" =~ ^0x ]]; then
+    chain_id="$(_cb_status_hex_to_dec "$chain_id_hex")"
+    status="connected"
+  fi
+  if [[ -n "$block_hex" && "$block_hex" =~ ^0x ]]; then
+    block_num="$(_cb_status_hex_to_dec "$block_hex")"
+  fi
+  if [[ -n "$peers_hex" && "$peers_hex" =~ ^0x ]]; then
+    peer_count="$(_cb_status_hex_to_dec "$peers_hex")"
+  fi
+
+  if [[ "$_CB_STATUS_JSON_MODE" == "1" ]]; then
+    python3 -c "
+import json, sys
+data = {
+    'type':           'remote',
+    'alias':          sys.argv[1],
+    'rpc_url':        sys.argv[2],
+    'chain_type':     sys.argv[3],
+    'chain_id':       sys.argv[4],
+    'latest_block':   sys.argv[5],
+    'peer_count':     sys.argv[6],
+    'client_version': sys.argv[7],
+    'status':         sys.argv[8],
+}
+for k in ('chain_id', 'latest_block', 'peer_count'):
+    try: data[k] = int(data[k])
+    except: pass
+print(json.dumps(data, indent=2))
+" "$alias" "$rpc_url" "$chain_type" "$chain_id" "$block_num" "$peer_count" \
+  "${client_ver:-N/A}" "$status"
+  else
+    printf '\n'
+    printf '  Remote Chain Status: %s\n' "$alias"
+    printf '  %s\n' "$(printf '%.0s─' $(seq 1 50))"
+    printf '  %-18s  %s\n' "RPC URL" "$rpc_url"
+    printf '  %-18s  %s\n' "Chain Type" "$chain_type"
+    printf '  %-18s  %s\n' "Status" "$status"
+    printf '  %-18s  %s\n' "Chain ID" "$chain_id"
+    printf '  %-18s  %s\n' "Latest Block" "$block_num"
+    printf '  %-18s  %s\n' "Peer Count" "$peer_count"
+    printf '  %-18s  %s\n' "Client Version" "${client_ver:-N/A}"
+    printf '\n'
+  fi
+
+  return 0
+}
+
 # ---- Main status logic -------------------------------------------------------
 
 cmd_status_main() {
   _cb_status_parse_args "$@"
+
+  # Remote status mode
+  if [[ -n "$_CB_STATUS_REMOTE_ALIAS" ]]; then
+    _cb_status_remote "$_CB_STATUS_REMOTE_ALIAS"
+    return $?
+  fi
 
   if [[ ! -f "$_CB_STATUS_PIDS_FILE" ]]; then
     log_warn "No pids.json found — chain has not been started"

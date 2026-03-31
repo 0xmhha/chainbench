@@ -14,6 +14,7 @@ readonly _CB_CMD_NODE_SH_LOADED=1
 
 _CB_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_LIB_DIR}/common.sh"
+source "${_CB_LIB_DIR}/remote_state.sh" 2>/dev/null || true
 
 # ---- Constants ---------------------------------------------------------------
 
@@ -29,10 +30,11 @@ _cb_node_usage() {
 Usage: chainbench node <subcommand> <N> [options]
 
 Subcommands:
-  stop  <N>                  Stop node N
-  start <N>                  Re-start a stopped node N
-  log   <N> [--follow]       Show log for node N (last 50 lines)
-  rpc   <N> <method> [params] Send a JSON-RPC call to node N
+  stop  <N>                          Stop node N
+  start <N>                          Re-start a stopped node N
+  log   <N> [--follow]               Show log for node N (last 50 lines)
+  rpc   <N> <method> [params]        Send a JSON-RPC call to node N
+  rpc   --remote <alias> <method> [params]  Send a JSON-RPC call to a remote chain
 
 <N> is a 1-based node index.
 EOF
@@ -454,6 +456,48 @@ _cb_node_cmd_rpc() {
   return 0
 }
 
+# ---- node rpc --remote <alias> <method> [params_json] ------------------------
+
+_cb_node_cmd_rpc_remote() {
+  local alias="$1"
+  local method="${2:?node rpc --remote requires a method name}"
+  local params="${3:-[]}"
+
+  if ! _cb_remote_exists "$alias" 2>/dev/null; then
+    log_error "Remote alias '${alias}' not found"
+    return 1
+  fi
+
+  local rpc_url auth_header
+  rpc_url="$(_cb_remote_get_url "$alias")"
+  auth_header="$(_cb_remote_get_auth_header "$alias" 2>/dev/null || echo "")"
+
+  local -a curl_args=(
+    -s --max-time "$_CB_NODE_RPC_TIMEOUT"
+    -X POST
+    -H "Content-Type: application/json"
+    --data "{\"jsonrpc\":\"2.0\",\"method\":\"${method}\",\"params\":${params},\"id\":1}"
+  )
+  if [[ -n "$auth_header" ]]; then
+    curl_args+=(-H "Authorization: ${auth_header}")
+  fi
+  curl_args+=("$rpc_url")
+
+  local response
+  response="$(curl "${curl_args[@]}" 2>/dev/null)" || {
+    log_error "RPC call failed for remote '${alias}' at ${rpc_url}"
+    return 1
+  }
+
+  if [[ -z "$response" ]]; then
+    log_error "Empty response from remote '${alias}'"
+    return 1
+  fi
+
+  printf '%s\n' "$response"
+  return 0
+}
+
 # ---- Subcommand dispatcher ---------------------------------------------------
 
 cmd_node_main() {
@@ -467,6 +511,10 @@ cmd_node_main() {
 
   case "$subcmd" in
     stop)
+      if [[ "${1:-}" == "--remote" ]]; then
+        log_error "'node stop' is not available for remote chains — remote nodes cannot be controlled"
+        return 1
+      fi
       if [[ $# -lt 1 ]]; then
         log_error "Usage: chainbench node stop <N>"
         return 1
@@ -474,6 +522,10 @@ cmd_node_main() {
       _cb_node_cmd_stop "$1"
       ;;
     start)
+      if [[ "${1:-}" == "--remote" ]]; then
+        log_error "'node start' is not available for remote chains — remote nodes cannot be controlled"
+        return 1
+      fi
       if [[ $# -lt 1 ]]; then
         log_error "Usage: chainbench node start <N>"
         return 1
@@ -481,6 +533,10 @@ cmd_node_main() {
       _cb_node_cmd_start "$1"
       ;;
     log)
+      if [[ "${1:-}" == "--remote" ]]; then
+        log_error "'node log' is not available for remote chains — no local log files"
+        return 1
+      fi
       if [[ $# -lt 1 ]]; then
         log_error "Usage: chainbench node log <N> [--follow]"
         return 1
@@ -488,6 +544,17 @@ cmd_node_main() {
       _cb_node_cmd_log "$@"
       ;;
     rpc)
+      # Check for --remote flag
+      if [[ "${1:-}" == "--remote" ]]; then
+        local remote_alias="${2:?--remote requires an alias}"
+        shift 2
+        if [[ $# -lt 1 ]]; then
+          log_error "Usage: chainbench node rpc --remote <alias> <method> [params_json]"
+          return 1
+        fi
+        _cb_node_cmd_rpc_remote "$remote_alias" "$@"
+        return $?
+      fi
       if [[ $# -lt 2 ]]; then
         log_error "Usage: chainbench node rpc <N> <method> [params_json]"
         return 1

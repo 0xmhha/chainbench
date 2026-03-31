@@ -62,6 +62,7 @@ Commands:
   log        Analyze node logs (timeline/anomaly/search)
   profile    Manage profiles (list/show/create)
   report     Show test results
+  remote     Manage remote chain RPC connections
   mcp        Enable/disable MCP server for a project
   uninstall  Remove chainbench installation
 
@@ -77,6 +78,9 @@ Examples:
   chainbench node stop 3
   chainbench stop
   chainbench status
+  chainbench remote add eth-main https://eth.llamarpc.com --type mainnet
+  chainbench remote info eth-main --json
+  chainbench test run remote --remote eth-main
 EOF
 }
 
@@ -97,7 +101,7 @@ set -- "${_CB_ARGS[@]:1}"
 _CB_CMD_FILE="${CHAINBENCH_DIR}/lib/cmd_${_CB_SUBCOMMAND}.sh"
 
 case "${_CB_SUBCOMMAND}" in
-  init|start|stop|restart|status|clean|node|test|log|profile|report|mcp)
+  init|start|stop|restart|status|clean|node|test|log|profile|report|remote|mcp)
     if [[ -f "${_CB_CMD_FILE}" ]]; then
       source "${_CB_CMD_FILE}"
     else
