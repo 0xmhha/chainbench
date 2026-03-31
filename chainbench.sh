@@ -100,22 +100,22 @@ set -- "${_CB_ARGS[@]:1}"
 
 _CB_CMD_FILE="${CHAINBENCH_DIR}/lib/cmd_${_CB_SUBCOMMAND}.sh"
 
-case "${_CB_SUBCOMMAND}" in
-  init|start|stop|restart|status|clean|node|test|log|profile|report|remote|mcp)
-    if [[ -f "${_CB_CMD_FILE}" ]]; then
-      source "${_CB_CMD_FILE}"
-    else
-      log_warn "Command '${_CB_SUBCOMMAND}' is not yet implemented (${_CB_CMD_FILE} not found)"
-      exit 0
-    fi
-    ;;
-  uninstall)
-    exec bash "${CHAINBENCH_DIR}/uninstall.sh"
-    ;;
-  *)
-    log_error "Unknown command: ${_CB_SUBCOMMAND}"
-    echo ""
-    _cb_show_usage
-    exit 1
-    ;;
-esac
+# Dynamic command dispatch: any lib/cmd_<name>.sh is a valid subcommand
+if [[ "${_CB_SUBCOMMAND}" == "uninstall" ]]; then
+  exec bash "${CHAINBENCH_DIR}/uninstall.sh"
+elif [[ -f "${_CB_CMD_FILE}" ]]; then
+  source "${_CB_CMD_FILE}"
+else
+  log_error "Unknown command: ${_CB_SUBCOMMAND}"
+  echo ""
+  echo "Available commands:"
+  for _cmd_file in "${CHAINBENCH_DIR}/lib/cmd_"*.sh; do
+    [[ -f "$_cmd_file" ]] || continue
+    _cmd_name=$(basename "$_cmd_file" | sed 's/cmd_//;s/\.sh//')
+    _cmd_desc=$(head -3 "$_cmd_file" | grep -m1 '^# Command:' | sed 's/# Command: [^ ]* — //' || true)
+    printf "  %-12s %s\n" "$_cmd_name" "${_cmd_desc:-(no description)}"
+  done
+  echo ""
+  echo "Run 'chainbench <command> --help' for details."
+  exit 1
+fi

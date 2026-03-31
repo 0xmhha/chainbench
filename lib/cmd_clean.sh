@@ -8,30 +8,22 @@ readonly _CB_CMD_CLEAN_SH_LOADED=1
 
 _CB_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_LIB_DIR}/common.sh"
+source "${_CB_LIB_DIR}/pids_state.sh"
 
 # ---- Constants ---------------------------------------------------------------
 
-readonly _CB_CLEAN_PIDS_FILE="${CHAINBENCH_DIR}/state/pids.json"
 readonly _CB_CLEAN_DATA_DIR="${CHAINBENCH_DIR}/data"
 readonly _CB_CLEAN_STATE_DIR="${CHAINBENCH_DIR}/state"
 
 # ---- Helpers -----------------------------------------------------------------
 
 # _cb_clean_has_running_nodes
-# Returns 0 if pids.json exists and contains at least one node with
-# status "running".
+# Returns 0 if pids.json exists and contains at least one running node.
 _cb_clean_has_running_nodes() {
-  [[ -f "$_CB_CLEAN_PIDS_FILE" ]] || return 1
-
-  python3 - "$_CB_CLEAN_PIDS_FILE" <<'PYEOF'
-import sys, json
-
-with open(sys.argv[1]) as fh:
-    data = json.load(fh)
-
-running = [n for n in data.get("nodes", []) if n.get("status") == "running"]
-sys.exit(0 if running else 1)
-PYEOF
+  pids_exists || return 1
+  local running
+  running=$(pids_list_nodes --running-only)
+  [[ -n "$running" ]]
 }
 
 # _cb_clean_stop_chain

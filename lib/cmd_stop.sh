@@ -3,9 +3,9 @@
 # Intentionally NOT using set -e: we want to continue stopping remaining nodes
 # even if one fails.
 
-_CB_PIDS_FILE="${CHAINBENCH_DIR}/state/pids.json"
+source "${CHAINBENCH_DIR}/lib/pids_state.sh"
 
-if [[ ! -f "$_CB_PIDS_FILE" ]]; then
+if ! pids_exists; then
   log_info "No pids.json found — nothing to stop"
   return 0 2>/dev/null || exit 0
 fi
@@ -64,16 +64,6 @@ else
 fi
 
 # Update pids.json
-_stopped_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-python3 -c "
-import json
-with open('${_CB_PIDS_FILE}') as f:
-    data = json.load(f)
-for nid in data.get('nodes', {}):
-    data['nodes'][nid]['status'] = 'stopped'
-    data['nodes'][nid]['stopped_at'] = '${_stopped_at}'
-with open('${_CB_PIDS_FILE}', 'w') as f:
-    json.dump(data, f, indent=2)
-" 2>/dev/null || true
+pids_mark_all_stopped 2>/dev/null || true
 
 log_success "pids.json updated — all nodes marked stopped"

@@ -2,13 +2,26 @@
 # lib/common.sh - Shared utility functions for chainbench
 # Source this file: source lib/common.sh
 
-# ---- Color definitions -------------------------------------------------------
+# ---- Color definitions (shared across all modules) ---------------------------
+# Supports NO_COLOR (https://no-color.org/) and CHAINBENCH_NO_COLOR
 
-_CB_RED='\033[0;31m'
-_CB_YELLOW='\033[0;33m'
-_CB_GREEN='\033[0;32m'
-_CB_CYAN='\033[0;36m'
-_CB_RESET='\033[0m'
+if [[ -n "${NO_COLOR:-}" || -n "${CHAINBENCH_NO_COLOR:-}" ]] || ! [[ -t 2 ]]; then
+  CB_RED="" CB_GREEN="" CB_YELLOW="" CB_CYAN="" CB_BOLD="" CB_RESET=""
+else
+  CB_RED='\033[0;31m'
+  CB_GREEN='\033[0;32m'
+  CB_YELLOW='\033[0;33m'
+  CB_CYAN='\033[0;36m'
+  CB_BOLD='\033[1m'
+  CB_RESET='\033[0m'
+fi
+
+# Backward compatibility aliases (used by existing code)
+_CB_RED="$CB_RED"
+_CB_YELLOW="$CB_YELLOW"
+_CB_GREEN="$CB_GREEN"
+_CB_CYAN="$CB_CYAN"
+_CB_RESET="$CB_RESET"
 
 # ---- Logging -----------------------------------------------------------------
 

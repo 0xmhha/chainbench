@@ -97,12 +97,8 @@ mkdir -p "${LOG_DIR}"
 KEYSTORE_DIR="${_START_DATA_DIR}/keystores"
 NODEKEY_DIR="${_START_DATA_DIR}/nodekeys"
 
-# ---- Port helper -------------------------------------------------------------
-
-_start_port() {
-  # _start_port <base> <zero_index>  ->  base + zero_index
-  printf '%d\n' $(( $1 + $2 ))
-}
+# ---- Port helper (delegates to common.sh) ------------------------------------
+# Uses get_node_port from common.sh (already sourced via profile.sh)
 
 # ---- Node launch function ----------------------------------------------------
 
@@ -115,11 +111,11 @@ _start_launch_node() {
 
   local zero_index=$(( node_index - 1 ))
 
-  local p2p_port;      p2p_port="$(_start_port "${CHAINBENCH_BASE_P2P}"      "${zero_index}")"
-  local http_port;    http_port="$(_start_port "${CHAINBENCH_BASE_HTTP}"     "${zero_index}")"
-  local ws_port;        ws_port="$(_start_port "${CHAINBENCH_BASE_WS}"       "${zero_index}")"
-  local auth_port;    auth_port="$(_start_port "${CHAINBENCH_BASE_AUTH}"     "${zero_index}")"
-  local metrics_port; metrics_port="$(_start_port "${CHAINBENCH_BASE_METRICS}" "${zero_index}")"
+  local p2p_port;      p2p_port="$(get_node_port "${CHAINBENCH_BASE_P2P}"      "${zero_index}")"
+  local http_port;    http_port="$(get_node_port "${CHAINBENCH_BASE_HTTP}"     "${zero_index}")"
+  local ws_port;        ws_port="$(get_node_port "${CHAINBENCH_BASE_WS}"       "${zero_index}")"
+  local auth_port;    auth_port="$(get_node_port "${CHAINBENCH_BASE_AUTH}"     "${zero_index}")"
+  local metrics_port; metrics_port="$(get_node_port "${CHAINBENCH_BASE_METRICS}" "${zero_index}")"
 
   local node_datadir="${_START_DATA_DIR}/node${node_index}"
   local node_keystore="${KEYSTORE_DIR}/node${node_index}"
@@ -222,7 +218,7 @@ for (( _ni = CHAINBENCH_VALIDATORS + 1; _ni <= CHAINBENCH_TOTAL_NODES; _ni++ ));
   _start_launch_node "${_ni}" "endpoint"
 done
 
-unset -f _start_launch_node _start_port
+unset -f _start_launch_node
 
 # ---- Write pids.json ---------------------------------------------------------
 

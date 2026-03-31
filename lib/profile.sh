@@ -382,6 +382,7 @@ _cb_export_profile_vars() {
   _cb_set_var CHAINBENCH_BINARY_PATH       ".chain.binary_path"  ""
   _cb_set_var CHAINBENCH_NETWORK_ID        ".chain.network_id"   ""
   _cb_set_var CHAINBENCH_CHAIN_ID          ".chain.chain_id"     ""
+  _cb_set_var CHAINBENCH_CHAIN_TYPE        ".chain.type"          "stablenet"
 
   # data.*
   _cb_set_var CHAINBENCH_DATA_DIR          ".data.directory"     "data"

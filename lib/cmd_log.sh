@@ -13,6 +13,7 @@ readonly _CB_CMD_LOG_SH_LOADED=1
 
 _CB_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_LIB_DIR}/common.sh"
+source "${_CB_LIB_DIR}/pids_state.sh"
 
 # ---- Constants ---------------------------------------------------------------
 
@@ -45,24 +46,14 @@ EOF
 # _cb_log_all_log_files
 # Prints the path to each discovered node log file, one per line.
 _cb_log_all_log_files() {
-  if [[ -f "$_CB_LOG_PIDS_FILE" ]]; then
-    python3 - "$_CB_LOG_PIDS_FILE" "$_CB_LOG_DATA_LOGS_DIR" <<'PYEOF'
-import sys, json, os
-
-pids_file = sys.argv[1]
-logs_dir  = sys.argv[2]
-
-with open(pids_file) as fh:
-    data = json.load(fh)
-
-for node in data.get('nodes', []):
-    label = node.get('label', '')
-    if not label:
-        continue
-    candidate = os.path.join(logs_dir, f'{label}.log')
-    if os.path.isfile(candidate):
-        print(candidate)
-PYEOF
+  if pids_exists; then
+    local node_ids
+    node_ids=$(pids_list_nodes 2>/dev/null)
+    local id log_file
+    for id in $node_ids; do
+      log_file=$(pids_get_field "$id" "log_file" 2>/dev/null)
+      [[ -n "$log_file" && -f "$log_file" ]] && printf '%s\n' "$log_file"
+    done
   fi
 
   # Fallback: glob data/logs/*.log
@@ -84,38 +75,25 @@ _cb_log_file_for_node() {
     return 1
   fi
 
-  if [[ ! -f "$_CB_LOG_PIDS_FILE" ]]; then
+  if ! pids_exists; then
     log_error "pids.json not found — has the chain been started?"
     return 1
   fi
 
-  python3 - "$_CB_LOG_PIDS_FILE" "$_CB_LOG_DATA_LOGS_DIR" "$node_num" <<'PYEOF'
-import sys, json, os
+  local log_file
+  log_file=$(pids_get_field "$node_num" "log_file")
 
-pids_file  = sys.argv[1]
-logs_dir   = sys.argv[2]
-node_num   = int(sys.argv[3])
+  if [[ -z "$log_file" ]]; then
+    # Fallback: construct from convention
+    log_file="${_CB_LOG_DATA_LOGS_DIR}/node${node_num}.log"
+  fi
 
-with open(pids_file) as fh:
-    data = json.load(fh)
+  if [[ ! -f "$log_file" ]]; then
+    log_error "Log file not found: $log_file"
+    return 1
+  fi
 
-nodes = data.get('nodes', [])
-idx   = node_num - 1
-
-if idx < 0 or idx >= len(nodes):
-    print(f'Node {node_num} does not exist (only {len(nodes)} configured)',
-          file=sys.stderr)
-    sys.exit(1)
-
-label     = nodes[idx].get('label', f'node{node_num}')
-candidate = os.path.join(logs_dir, f'{label}.log')
-
-if not os.path.isfile(candidate):
-    print(f'Log file not found: {candidate}', file=sys.stderr)
-    sys.exit(1)
-
-print(candidate)
-PYEOF
+  printf '%s\n' "$log_file"
 }
 
 # ---- Subcommand: timeline ----------------------------------------------------

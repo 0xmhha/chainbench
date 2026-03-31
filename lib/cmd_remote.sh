@@ -16,6 +16,7 @@ readonly _CB_CMD_REMOTE_SH_LOADED=1
 _CB_REMOTE_CMD_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_REMOTE_CMD_LIB_DIR}/common.sh"
 source "${_CB_REMOTE_CMD_LIB_DIR}/remote_state.sh"
+source "${_CB_REMOTE_CMD_LIB_DIR}/rpc_client.sh"
 
 # ---- Constants ---------------------------------------------------------------
 
@@ -257,42 +258,12 @@ _cb_remote_cmd_info() {
 
   log_info "Querying ${rpc_url} ..."
 
-  # Build curl args
-  local -a base_curl_args=(
-    -s --max-time "$_CB_REMOTE_RPC_TIMEOUT"
-    -X POST
-    -H "Content-Type: application/json"
-  )
-  if [[ -n "$auth_header" ]]; then
-    base_curl_args+=(-H "Authorization: ${auth_header}")
-  fi
-
-  # Query multiple RPC methods
+  # Helper: query a single RPC method against this remote
   _rpc_query() {
     local method="$1" params="${2:-[]}"
-    local response
-    response="$(curl "${base_curl_args[@]}" \
-      --data "{\"jsonrpc\":\"2.0\",\"method\":\"${method}\",\"params\":${params},\"id\":1}" \
-      "$rpc_url" 2>/dev/null)" || { echo "N/A"; return; }
-
-    python3 -c "
-import json, sys
-try:
-    d = json.loads(sys.argv[1])
-    r = d.get('result')
-    if r is None:
-        print('N/A')
-    elif isinstance(r, bool):
-        print(str(r).lower())
-    elif isinstance(r, str):
-        print(r)
-    elif isinstance(r, dict):
-        print(json.dumps(r))
-    else:
-        print(str(r))
-except Exception:
-    print('N/A')
-" "$response"
+    local result
+    result=$(cb_rpc_raw "$rpc_url" "$method" "$params" "$auth_header" "$_CB_REMOTE_RPC_TIMEOUT" 2>/dev/null) || { echo "N/A"; return; }
+    cb_json_get_result "$result" 2>/dev/null || echo "N/A"
   }
 
   local chain_id_hex network_id latest_block_hex gas_price_hex
@@ -308,27 +279,31 @@ except Exception:
   syncing="$(_rpc_query "eth_syncing")"
   mining="$(_rpc_query "eth_mining")"
 
-  # Convert hex values
+  # Convert hex values using cb_hex_to_dec
   local chain_id_dec latest_block_dec gas_price_dec peer_count_dec
-  chain_id_dec=$(python3 -c "
-v='${chain_id_hex}'
-print(int(v, 16) if v.startswith('0x') else v)
-" 2>/dev/null || echo "N/A")
+  if [[ "$chain_id_hex" =~ ^0x ]]; then
+    chain_id_dec=$(cb_hex_to_dec "$chain_id_hex" 2>/dev/null || echo "N/A")
+  else
+    chain_id_dec="$chain_id_hex"
+  fi
 
-  latest_block_dec=$(python3 -c "
-v='${latest_block_hex}'
-print(int(v, 16) if v.startswith('0x') else v)
-" 2>/dev/null || echo "N/A")
+  if [[ "$latest_block_hex" =~ ^0x ]]; then
+    latest_block_dec=$(cb_hex_to_dec "$latest_block_hex" 2>/dev/null || echo "N/A")
+  else
+    latest_block_dec="$latest_block_hex"
+  fi
 
-  gas_price_dec=$(python3 -c "
-v='${gas_price_hex}'
-print(int(v, 16) if v.startswith('0x') else v)
-" 2>/dev/null || echo "N/A")
+  if [[ "$gas_price_hex" =~ ^0x ]]; then
+    gas_price_dec=$(cb_hex_to_dec "$gas_price_hex" 2>/dev/null || echo "N/A")
+  else
+    gas_price_dec="$gas_price_hex"
+  fi
 
-  peer_count_dec=$(python3 -c "
-v='${peer_count_hex}'
-print(int(v, 16) if v.startswith('0x') else v)
-" 2>/dev/null || echo "N/A")
+  if [[ "$peer_count_hex" =~ ^0x ]]; then
+    peer_count_dec=$(cb_hex_to_dec "$peer_count_hex" 2>/dev/null || echo "N/A")
+  else
+    peer_count_dec="$peer_count_hex"
+  fi
 
   # Determine sync status
   local sync_status="synced"

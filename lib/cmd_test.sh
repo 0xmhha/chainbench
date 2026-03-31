@@ -16,7 +16,25 @@ source "${_CB_TEST_LIB_DIR}/common.sh"
 # ---- Constants ---------------------------------------------------------------
 
 readonly _CB_TEST_TESTS_DIR="${CHAINBENCH_DIR}/tests"
-readonly _CB_TEST_CATEGORIES=(basic fault stress upgrade remote)
+# Dynamic category discovery — auto-detects test directories
+_cb_test_discover_categories() {
+  local test_dir="${_CB_TEST_TESTS_DIR}"
+  local dir
+  for dir in "${test_dir}"/*/; do
+    [[ ! -d "$dir" ]] && continue
+    local name
+    name=$(basename "$dir")
+    # Exclude library and unit test directories
+    [[ "$name" == "lib" || "$name" == "unit" ]] && continue
+    # Only include directories containing .sh files
+    if compgen -G "${dir}*.sh" > /dev/null 2>&1; then
+      printf '%s\n' "$name"
+    fi
+  done | sort
+}
+
+# Build categories array dynamically
+mapfile -t _CB_TEST_CATEGORIES < <(_cb_test_discover_categories)
 
 # Color codes
 _CB_TEST_GREEN='\033[0;32m'
