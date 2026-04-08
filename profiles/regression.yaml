@@ -1,0 +1,132 @@
+# chainbench profile: regression
+# go-stablenet v2 회귀 테스트용 프로필
+# REGRESSION_TEST_CASES_v2.md 기반, 총 103 TC
+
+name: regression
+description: "go-stablenet v2 회귀 테스트 환경 (AnzeonBlock=0, BohoBlock=0, 4 BP + 1 EN)"
+
+chain:
+  binary: gstable
+  binary_path: ""
+  network_id: 8283
+  chain_id: 8283
+
+genesis:
+  template: templates/genesis.template.json
+  overrides:
+    wbft:
+      blockPeriodSeconds: 1
+      requestTimeoutSeconds: 2
+      epochLength: 30              # 짧은 에폭 → 검증자 추가/제거 테스트가 빨리 반영됨
+      proposerPolicy: 0
+      maxRequestTimeoutSeconds: null
+    init:
+      validators:
+        - "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+        - "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+        - "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+        - "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      blsPublicKeys:
+        - "0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f"
+        - "0x929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449"
+        - "0x8c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0"
+        - "0xa63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
+    extraData: "0xf90147808080c0c080c0c086191a20322000f90135f868d994c17d493883eaa3b4cceb0f214b273392d562f9d8831cfde0d9942493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c831cfde0d9948c4a10b9108d49b9d23f764464090831d9c17764831cfde0d9948eb79036bc0f3aba136ef18b3a2fb8c1188939a6831cfde0c480010203f8c4b0a00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556fb0929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449b08c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0b0a63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
+    alloc:
+      # 4 validator (preset keys in chainbench/keys/preset/node{1-4})
+      "0xc17d493883eaa3b4cceb0f214b273392d562f9d8": "1000000000000000000000000000"
+      "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c": "1000000000000000000000000000"
+      "0x8c4a10b9108d49b9d23f764464090831d9c17764": "1000000000000000000000000000"
+      "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6": "1000000000000000000000000000"
+      # endpoint node5 (회귀 테스트용 일반 계정)
+      "0x1e9bd59eadc3f93bc2f4f84ca8c0707f17cb17ee": "1000000000000000000000000000"
+      # 회귀 테스트용 고정 계정 — Hardhat/Anvil 기본 계정 (private key 공개, tests/regression/lib/common.sh 참조)
+      # TEST_ACC_A (sender)
+      "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266": "1000000000000000000000000000"
+      # TEST_ACC_B (recipient)
+      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8": "100000000000000000000"
+      # TEST_ACC_C (fee payer)
+      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC": "1000000000000000000000000000"
+      # TEST_ACC_D (authorize 후보)
+      "0x90F79bf6EB2c4f870365E785982E1f101E93b906": "1000000000000000000000000000"
+      # TEST_ACC_E (blacklist 후보)
+      "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65": "1000000000000000000000000000"
+    systemContracts:
+      govValidator:
+        address: "0x0000000000000000000000000000000000001001"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "60"              # regression test: 60초 (실제 운영: 604800)
+          maxProposals: "3"
+          memberVersion: "1"
+          gasTip: "27600000000000"
+      nativeCoinAdapter:
+        address: "0x0000000000000000000000000000000000001000"
+        version: "v1"
+        params:
+          name: "WKRC"
+          symbol: "WKRC"
+          currency: "KRW"
+          decimals: "18"
+          masterMinter: "0x0000000000000000000000000000000000001002"
+          minters: "0x0000000000000000000000000000000000001003"
+          minterAllowed: "100000000000000000000000000000"
+      govMinter:
+        address: "0x0000000000000000000000000000000000001003"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "60"              # regression test: 60초 (실제 운영: 604800)
+          maxProposals: "3"
+          memberVersion: "1"
+          fiatToken: "0x0000000000000000000000000000000000001000"
+      govMasterMinter:
+        address: "0x0000000000000000000000000000000000001002"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "60"              # regression test: 60초 (실제 운영: 604800)
+          maxProposals: "3"
+          memberVersion: "1"
+          fiatToken: "0x0000000000000000000000000000000000001000"
+      govCouncil:
+        address: "0x0000000000000000000000000000000000001004"
+        version: "v1"
+        params:
+          quorum: "2"
+          expiry: "60"              # regression test: 60초 (실제 운영: 604800)
+          maxProposals: "3"
+          memberVersion: "1"
+
+data:
+  directory: /tmp/node-data
+
+nodes:
+  validators: 4
+  endpoints: 1
+  verbosity: 4
+  en_verbosity: 5
+  gcmode: archive
+  cache: 2048
+  extra_flags: []
+
+keys:
+  mode: static
+  source: "keys/preset"
+
+ports:
+  base_p2p: 30301
+  base_http: 8501
+  base_ws: 9501
+  base_auth: 8551
+  base_metrics: 6061
+
+logging:
+  rotation: true
+  max_size: 10M
+  max_files: 5
+  directory: data/logs
+
+tests:
+  auto_run: []

@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Test: regression/a-ethereum/a3-06-revert-tx
+# RT-A-3-06 — revert tx: receipt.status == 0, 잔여 가스 환불
+set -euo pipefail
+
+source "$(dirname "$0")/../lib/common.sh"
+
+test_start "regression/a-ethereum/a3-06-revert-tx"
+check_env || { test_result; exit 1; }
+
+reverter_addr=$(cat /tmp/chainbench-regression/reverter.addr 2>/dev/null || echo "")
+if [[ -z "$reverter_addr" ]]; then
+  _assert_fail "reverter not deployed (run a3-05 first)"
+  test_result
+  exit 1
+fi
+
+fail_selector=$(selector "fail()")
+gas_limit=500000
+
+tx_hash=$(python3 <<PYEOF
+import json, requests
+from eth_account import Account
+pk = "${TEST_ACC_A_PK}"
+url = "http://127.0.0.1:8501"
+acct = Account.from_key(pk)
+nonce = int(requests.post(url, json={"jsonrpc":"2.0","method":"eth_getTransactionCount","params":[acct.address, "pending"],"id":1}).json()["result"], 16)
+chain_id = int(requests.post(url, json={"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}).json()["result"], 16)
+base_fee = int(requests.post(url, json={"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["latest", False],"id":1}).json()["result"]["baseFeePerGas"], 16)
+tx = {"nonce": nonce, "to": "${reverter_addr}", "value": 0, "gas": ${gas_limit}, "chainId": chain_id,
+      "data": "${fail_selector}",
+      "maxFeePerGas": base_fee + 50_000_000_000_000,
+      "maxPriorityFeePerGas": 27_600_000_000_000, "type": 2}
+signed = acct.sign_transaction(tx)
+resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1}).json()
+print(resp.get("result", ""))
+PYEOF
+)
+
+assert_contains "$tx_hash" "0x" "revert tx submitted"
+
+receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+assert_eq "$status" "0x0" "receipt.status == 0x0 (failed)"
+
+# gasUsed < gasLimit (잔여 환불)
+gas_used=$(hex_to_dec "$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('gasUsed', ''))")")
+printf '[INFO]  gasUsed=%s, gasLimit=%s\n' "$gas_used" "$gas_limit" >&2
+assert_true "$( [[ $gas_used -lt $gas_limit ]] && echo true || echo false )" "gasUsed ($gas_used) < gasLimit ($gas_limit) — 잔여 가스 환불 확인"
+
+test_result
