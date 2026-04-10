@@ -13,9 +13,10 @@ EPOCH_LENGTH=30
 # 현재 블록 확인
 current=$(block_number "1")
 
-# 첫 에폭 경계 블록 번호 계산 (epoch_length - 1 이 epoch block)
-# 예: epochLength=30 → blocks 29, 59, 89, ... 이 epoch 전환 블록
-first_epoch_block=$(( (current / EPOCH_LENGTH + 1) * EPOCH_LENGTH - 1 ))
+# 첫 에폭 경계 블록 번호 계산
+# 실측 결과: epochInfo는 epochLength의 배수 블록(30, 60, 90, ...)에 기록됨
+# (이전 `- 1`로 29, 59 계산은 chain 실제 동작과 불일치)
+first_epoch_block=$(( (current / EPOCH_LENGTH + 1) * EPOCH_LENGTH ))
 printf '[INFO]  current=%s, waiting for epoch block %s\n' "$current" "$first_epoch_block" >&2
 
 wait_for_block "1" "$first_epoch_block" 60 >/dev/null

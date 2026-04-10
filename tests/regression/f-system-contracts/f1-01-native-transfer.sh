@@ -30,7 +30,7 @@ tx = {"nonce": nonce, "to": "${NATIVE_COIN_ADAPTER}", "value": 0, "gas": 150000,
       "data": "${data}",
       "maxFeePerGas": base_fee + 50_000_000_000_000, "maxPriorityFeePerGas": 27_600_000_000_000, "type": 2}
 signed = acct.sign_transaction(tx)
-resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1}).json()
+resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.raw_transaction.to_0x_hex()],"id":1}).json()
 print(resp.get("result", ""))
 PYEOF
 )

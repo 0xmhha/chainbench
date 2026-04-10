@@ -10,7 +10,8 @@ check_env || { test_result; exit 1; }
 
 # Reverter 컨트랙트: 항상 revert "BAD_INPUT"
 # contract Reverter { function fail() public pure { revert("BAD_INPUT"); } }
-REVERTER_BYTECODE="0x6080604052348015600f57600080fd5b5060a58061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063a9cc471814602d575b600080fd5b60336035565b005b6040517f08c379a00000000000000000000000000000000000000000000000000000000081526004810182815260096024830152684241445f494e50555460b81b604483015281519192909182906064019081905290819003820190fd"
+# solc 0.8.30, --optimize --no-cbor-metadata (이전 placeholder bytecode 교체)
+REVERTER_BYTECODE="0x6080604052348015600e575f5ffd5b50606a80601a5f395ff3fe6080604052348015600e575f5ffd5b50600436106026575f3560e01c8063a9cc471814602a575b5f5ffd5b60306032565b005b60405162461bcd60e51b815260206004820152600960248201526810905117d25394155560ba1b604482015260640160405180910390fd"
 
 # Deploy
 deploy_tx=$(python3 <<PYEOF
@@ -27,7 +28,7 @@ tx = {"nonce": nonce, "value": 0, "gas": 300000, "chainId": chain_id,
       "maxFeePerGas": base_fee + 50_000_000_000_000,
       "maxPriorityFeePerGas": 27_600_000_000_000, "type": 2}
 signed = acct.sign_transaction(tx)
-resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1}).json()
+resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.raw_transaction.to_0x_hex()],"id":1}).json()
 print(resp.get("result", ""))
 PYEOF
 )
@@ -35,6 +36,8 @@ PYEOF
 receipt=$(wait_tx_receipt_full "1" "$deploy_tx" 30)
 reverter_addr=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('contractAddress', ''))")
 assert_not_empty "$reverter_addr" "Reverter contract deployed"
+# checksum 형식으로 정규화 (eth-account >=0.13 요구)
+reverter_addr=$(to_checksum "$reverter_addr")
 echo "$reverter_addr" > /tmp/chainbench-regression/reverter.addr
 
 # fail() 호출 → revert

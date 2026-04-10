@@ -26,14 +26,14 @@ tx1 = {"nonce": nonce, "to": to, "value": 1, "gas": 21000, "chainId": chain_id,
        "maxFeePerGas": base_fee + 27_600_000_000_000,
        "maxPriorityFeePerGas": 27_600_000_000_000, "type": 2}
 signed1 = acct.sign_transaction(tx1)
-r1 = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed1.rawTransaction.hex()],"id":1}).json()
+r1 = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed1.raw_transaction.to_0x_hex()],"id":1}).json()
 
 # tx2: 동일 nonce, 110% 이상 높은 fee
 tx2 = {"nonce": nonce, "to": to, "value": 2, "gas": 21000, "chainId": chain_id,
        "maxFeePerGas": int((base_fee + 27_600_000_000_000) * 1.2),
        "maxPriorityFeePerGas": int(27_600_000_000_000 * 1.2), "type": 2}
 signed2 = acct.sign_transaction(tx2)
-r2 = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed2.rawTransaction.hex()],"id":1}).json()
+r2 = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed2.raw_transaction.to_0x_hex()],"id":1}).json()
 
 print(json.dumps({"tx1": r1.get("result", r1.get("error")), "tx2": r2.get("result", r2.get("error"))}))
 PYEOF

@@ -379,9 +379,11 @@ sys.exit(0 if ('error' in d and d['error'] is not None) else 1)
 # _cb_dot_to_jq <dot.path>
 # Convert dot-path to jq path expression.
 # "nodes.1.http_port" → '.nodes["1"].http_port'
+# "1.http_port"       → '.["1"].http_port'
+# ""                  → '.'
 _cb_dot_to_jq() {
   local path="$1"
-  local result="."
+  local result=""
   local IFS='.'
 
   for part in $path; do
@@ -391,6 +393,14 @@ _cb_dot_to_jq() {
       result="${result}.${part}"
     fi
   done
+
+  # If the path started with a numeric key, result begins with '[' — prepend '.'
+  # to form a valid jq expression. Empty path → '.' (identity).
+  if [[ -z "$result" ]]; then
+    result="."
+  elif [[ "$result" == \[* ]]; then
+    result=".${result}"
+  fi
 
   printf '%s\n' "$result"
 }

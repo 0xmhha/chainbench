@@ -70,9 +70,11 @@ assert_eq() {
 
 # assert_gt <actual> <expected> [msg]
 # Passes when actual > expected (integer comparison).
+# Uses python3 for arbitrary-precision integer comparison. bash -gt is limited
+# to int64 and silently produces wrong results on values like 10^27 wei.
 assert_gt() {
   local actual="${1}" expected="${2}" msg="${3:-assert_gt}"
-  if [[ "$actual" -gt "$expected" ]]; then
+  if python3 -c "import sys; sys.exit(0 if int('$actual') > int('$expected') else 1)" 2>/dev/null; then
     _assert_pass "${msg}: ${actual} > ${expected}"
   else
     _assert_fail "${msg}: expected ${actual} > ${expected}"
@@ -81,9 +83,10 @@ assert_gt() {
 
 # assert_ge <actual> <expected> [msg]
 # Passes when actual >= expected (integer comparison).
+# See assert_gt note about python3 vs bash int64.
 assert_ge() {
   local actual="${1}" expected="${2}" msg="${3:-assert_ge}"
-  if [[ "$actual" -ge "$expected" ]]; then
+  if python3 -c "import sys; sys.exit(0 if int('$actual') >= int('$expected') else 1)" 2>/dev/null; then
     _assert_pass "${msg}: ${actual} >= ${expected}"
   else
     _assert_fail "${msg}: expected ${actual} >= ${expected}"

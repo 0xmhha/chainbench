@@ -22,15 +22,20 @@ acct = Account.from_key(pk)
 nonce = int(requests.post(url, json={"jsonrpc":"2.0","method":"eth_getTransactionCount","params":[acct.address, "pending"],"id":1}).json()["result"], 16)
 chain_id = int(requests.post(url, json={"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}).json()["result"], 16)
 
-MIN_BASE_FEE = 20_000_000_000_000  # 20 Gwei
+MIN_BASE_FEE = 20_000_000_000_000  # 20 Gwei (regression profile)
 tx = {
     "nonce": nonce, "to": to, "value": 1, "gas": 21000, "chainId": chain_id,
-    "maxFeePerGas": MIN_BASE_FEE - 1,   # 하한 미만
-    "maxPriorityFeePerGas": 27_600_000_000_000,
+    "maxFeePerGas": MIN_BASE_FEE - 1,   # 하한 미만 → ErrUnderpriced 기대
+    # NOTE: maxPriorityFeePerGas must be <= maxFeePerGas (EIP-1559 invariant).
+    # Previously set to 27.6e12 which is GREATER than maxFeePerGas(19.99e12),
+    # causing the node to reject with "max priority fee higher than max fee"
+    # before reaching the fee cap validation. Lower to 1 wei to trigger the
+    # intended gas fee cap check path.
+    "maxPriorityFeePerGas": 1,
     "type": 2,
 }
 signed = acct.sign_transaction(tx)
-resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1}).json()
+resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.raw_transaction.to_0x_hex()],"id":1}).json()
 print(json.dumps(resp))
 PYEOF
 )

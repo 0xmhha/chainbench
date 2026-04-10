@@ -48,7 +48,7 @@ tx = {"nonce": nonce, "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "value
       "maxPriorityFeePerGas": ${custom_tip},
       "type": 2}
 signed = acct.sign_transaction(tx)
-resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1}).json()
+resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.raw_transaction.to_0x_hex()],"id":1}).json()
 print(resp.get("result", ""))
 PYEOF
 )

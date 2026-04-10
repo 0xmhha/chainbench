@@ -190,6 +190,13 @@ _start_launch_node() {
 
   log_info "  Starting node${node_index} [${node_type}] -> log: ${node_log}"
 
+  # Persist the full launch_cmd to a file so 'chainbench node start <N>' can
+  # replay it verbatim instead of trying to reconstruct a partial command.
+  # This is critical for validator nodes where --mine, --keystore, --config, etc.
+  # must survive restarts.
+  local _launch_args_file="${_START_DATA_DIR}/.node${node_index}.launch_args"
+  printf '%s\n' "${launch_cmd[@]}" > "${_launch_args_file}"
+
   # Launch node with logrot for log rotation if available.
   # Strategy: redirect to file, launch logrot as a separate background watcher.
   local _logrot_bin="${CHAINBENCH_DIR}/bin/logrot"
@@ -238,6 +245,7 @@ python3 - \
   "${_start_timestamp}" \
   "${LOG_DIR}" \
   "${_start_nodes_payload}" \
+  "${_START_DATA_DIR}" \
   <<'PYEOF'
 import sys, json, os
 
@@ -247,6 +255,22 @@ profile_name  = sys.argv[3]
 started_at    = sys.argv[4]
 log_dir       = sys.argv[5]
 nodes_raw     = sys.argv[6]   # "idx|pid|type|p2p|http|ws|auth|metrics\n..."
+data_dir      = sys.argv[7]
+
+def _load_launch_args(idx):
+    """Read the persisted launch_args file for a node, if present."""
+    path = os.path.join(data_dir, f".node{idx}.launch_args")
+    if not os.path.isfile(path):
+        return []
+    with open(path) as fh:
+        return [ln.rstrip("\n") for ln in fh if ln.rstrip("\n")]
+
+def _extract_flag_value(args, flag):
+    """Return the value following `flag` in args, or empty string."""
+    for i, a in enumerate(args):
+        if a == flag and i + 1 < len(args):
+            return args[i + 1]
+    return ""
 
 nodes = {}
 for line in nodes_raw.strip().splitlines():
@@ -267,6 +291,10 @@ for line in nodes_raw.strip().splitlines():
     metrics_p  = int(parts[7])
     log_file   = os.path.join(log_dir, f"node{idx}.log")
 
+    saved_args = _load_launch_args(idx)
+    binary     = saved_args[0] if saved_args else ""
+    datadir    = _extract_flag_value(saved_args, "--datadir") if saved_args else ""
+
     nodes[idx] = {
         "pid":          pid,
         "type":         ntype,
@@ -277,6 +305,9 @@ for line in nodes_raw.strip().splitlines():
         "metrics_port": metrics_p,
         "status":       "running",
         "log_file":     log_file,
+        "binary":       binary,
+        "datadir":      datadir,
+        "saved_args":   saved_args,
     }
 
 doc = {

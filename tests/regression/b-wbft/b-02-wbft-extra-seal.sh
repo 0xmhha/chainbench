@@ -20,10 +20,10 @@ committed=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
 cs = r.get('committedSeal', {}) or {}
-sealers = cs.get('sealers', '')
+sealers = cs.get('sealers', []) or []
 sig = cs.get('signature', '')
-# sealers bitmap은 hex 문자열. 1인 bit 수를 계산
-n_bits = bin(int(sealers, 16)).count('1') if sealers and sealers != '0x0' else 0
+# sealers는 validator 주소 리스트 (string array). 길이가 서명자 수.
+n_bits = len(sealers) if isinstance(sealers, list) else 0
 print(f'{n_bits}|{len(sig)}')
 ")
 cs_bits=$(echo "$committed" | cut -d'|' -f1)
@@ -37,9 +37,10 @@ prepared=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
 ps = r.get('preparedSeal', {}) or {}
-sealers = ps.get('sealers', '')
+sealers = ps.get('sealers', []) or []
 sig = ps.get('signature', '')
-n_bits = bin(int(sealers, 16)).count('1') if sealers and sealers != '0x0' else 0
+# sealers는 validator 주소 리스트
+n_bits = len(sealers) if isinstance(sealers, list) else 0
 print(f'{n_bits}|{len(sig)}')
 ")
 ps_bits=$(echo "$prepared" | cut -d'|' -f1)

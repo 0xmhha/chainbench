@@ -8,7 +8,9 @@ source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/b-wbft/b-01-block-period"
 
 current=$(block_number "1")
-wait_for_block "1" $(( current + 5 )) 15 >/dev/null
+# 10개 블록을 조회하므로 current+9 까지 mined 되어야 함
+# (이전: +5만 기다려서 뒤쪽 블록들이 null timestamp → diff 계산 오류)
+wait_for_block "1" $(( current + 10 )) 20 >/dev/null
 
 # 10개 연속 블록의 timestamp 수집
 declare -a timestamps=()

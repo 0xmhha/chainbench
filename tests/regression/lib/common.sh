@@ -70,10 +70,24 @@ readonly AUTHORIZED_TX_EXECUTED_SIG="0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b
 
 # hex_to_dec <hex_with_0x>
 # "0x10" → "16"
+# Uses python3 to handle arbitrarily large integers (e.g. wei balances > 2^63).
+# bash printf '%d' is limited to int64 and fails with "Result too large" on
+# values like 10^27 wei (typical regression alloc).
 hex_to_dec() {
   local hex="${1#0x}"
   [[ -z "$hex" || "$hex" == "null" ]] && { echo "0"; return; }
-  printf '%d\n' "0x${hex}"
+  python3 -c "print(int('${hex}', 16))"
+}
+
+# to_checksum <address>
+# Convert an Ethereum address to EIP-55 checksum form.
+# Required because eth-account >=0.13 rejects all-lowercase addresses
+# when passed as the tx["to"] field. receipt.contractAddress is returned
+# in lowercase by nodes, so we normalise before use.
+to_checksum() {
+  local addr="$1"
+  [[ -z "$addr" || "$addr" == "null" ]] && { echo ""; return; }
+  python3 -c "from eth_utils import to_checksum_address; print(to_checksum_address('$addr'))"
 }
 
 # dec_to_hex <decimal>
@@ -82,17 +96,36 @@ dec_to_hex() {
   printf '0x%x\n' "$1"
 }
 
-# json_get <json> <key_path>
-# Extract a field from a JSON object using python
+# json_get <json_or_dash> <key_path>
+# Extract a field from a JSON object using python.
+# If the first argument is "-", reads JSON from stdin instead.
+# This enables both usage patterns:
+#   resp=$(rpc ...); json_get "$resp" "result.hash"
+#   rpc ... | json_get - result.hash
 json_get() {
   local json="$1" path="$2"
+  if [[ "$json" == "-" ]]; then
+    json="$(cat)"
+  fi
+  # Guard against empty or non-JSON input — return empty string instead of crashing.
+  if [[ -z "$json" ]]; then
+    return 0
+  fi
   printf '%s' "$json" | python3 -c "
 import sys, json
-data = json.load(sys.stdin)
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    print('')
+    sys.exit(0)
 path = sys.argv[1].split('.')
 for p in path:
     if isinstance(data, list):
-        data = data[int(p)]
+        try:
+            data = data[int(p)]
+        except (ValueError, IndexError):
+            print('')
+            sys.exit(0)
     elif isinstance(data, dict):
         data = data.get(p)
     if data is None:
@@ -202,7 +235,8 @@ if data:
 
 if tx_type == "legacy":
     tx["gasPrice"] = base_fee + max_priority
-    tx["type"] = 0
+    # NOTE: eth-account >=0.13 rejects explicit type=0. Legacy tx is implied
+    # by the presence of gasPrice without any type field.
 elif tx_type == "dynamic":
     tx["maxFeePerGas"] = max_fee
     tx["maxPriorityFeePerGas"] = max_priority
@@ -215,7 +249,7 @@ elif tx_type == "accesslist":
 signed = acct.sign_transaction(tx)
 send_resp = requests.post(url, json={
     "jsonrpc": "2.0", "method": "eth_sendRawTransaction",
-    "params": [signed.rawTransaction.hex()], "id": 1
+    "params": [signed.raw_transaction.to_0x_hex()], "id": 1
 }).json()
 
 if "error" in send_resp:
@@ -373,6 +407,21 @@ unlock_all_validators() {
   done
 }
 
+# addr_to_node <validator_address>
+# Validator 주소를 해당 node index로 매핑한다.
+# chainbench는 노드별로 자기 keystore만 가지므로 (node 1은 V1 key만, node 2는 V2 key만),
+# eth_sendTransaction은 반드시 그 validator의 홈 노드에서 호출해야 한다.
+addr_to_node() {
+  local addr="${1,,}"  # lowercase
+  case "$addr" in
+    "${VALIDATOR_1_ADDR,,}") echo "1" ;;
+    "${VALIDATOR_2_ADDR,,}") echo "2" ;;
+    "${VALIDATOR_3_ADDR,,}") echo "3" ;;
+    "${VALIDATOR_4_ADDR,,}") echo "4" ;;
+    *) echo "1" ;;  # fallback (non-validator)
+  esac
+}
+
 # extract_proposal_id_from_receipt <target> <tx_hash>
 # ProposalCreated 이벤트 topics[1]에서 proposalId(hex) 추출
 # ProposalCreated(uint256 indexed proposalId, ...) 시그니처 가정
@@ -399,50 +448,91 @@ else:
 # gov_propose <target> <contract> <propose_data> <from_addr>
 # proposal 생성 tx 전송 → receipt 대기 → proposalId 추출
 # 반환: proposalId (decimal)
+# NOTE: <target> 인자는 호환성을 위해 남기지만 실제 tx 전송 노드는 from_addr의 홈 노드
+# (chainbench 노드별 keystore isolation 때문에 from의 홈 노드에서만 eth_sendTransaction 가능)
 gov_propose() {
-  local target="$1" contract="$2" data="$3" from="$4"
+  local _target_unused="$1" contract="$2" data="$3" from="$4"
+  local node
+  node=$(addr_to_node "$from")
   local tx_hash
-  tx_hash=$(gov_call "$target" "$contract" "$data" "$from" 800000) || return 1
-  [[ -z "$tx_hash" || "$tx_hash" == "null" ]] && return 1
-  extract_proposal_id_from_receipt "$target" "$tx_hash"
+  tx_hash=$(gov_call "$node" "$contract" "$data" "$from" 800000) || {
+    printf '[GOV-DEBUG] gov_propose: gov_call FAILED (node=%s from=%s contract=%s)\n' "$node" "$from" "$contract" >&2
+    return 1
+  }
+  if [[ -z "$tx_hash" || "$tx_hash" == "null" ]]; then
+    printf '[GOV-DEBUG] gov_propose: empty tx_hash (node=%s from=%s)\n' "$node" "$from" >&2
+    return 1
+  fi
+  printf '[GOV-DEBUG] gov_propose: tx_hash=%s\n' "$tx_hash" >&2
+  extract_proposal_id_from_receipt "$node" "$tx_hash"
 }
 
 # gov_approve <target> <contract> <proposal_id> <from_addr>
-# approveProposal(uint256) 호출
+# approveProposal(uint256) 호출. 반드시 from의 홈 노드에서 전송해야 함.
 gov_approve() {
-  local target="${1:-1}" contract="$2" proposal_id="$3" from="$4"
-  local sel padded
+  local _target_unused="${1:-1}" contract="$2" proposal_id="$3" from="$4"
+  local sel padded node
   sel=$(selector "approveProposal(uint256)")
   padded=$(pad_uint256 "$proposal_id" | sed 's/^0x//')
   local data="${sel}${padded}"
-  gov_call "$target" "$contract" "$data" "$from" 500000
+  node=$(addr_to_node "$from")
+  gov_call "$node" "$contract" "$data" "$from" 500000
 }
 
 # gov_execute <target> <contract> <proposal_id> <from_addr>
-# executeProposal(uint256) 호출
+# executeProposal(uint256) 호출. 반드시 from의 홈 노드에서 전송해야 함.
 gov_execute() {
-  local target="${1:-1}" contract="$2" proposal_id="$3" from="$4"
-  local sel padded
+  local _target_unused="${1:-1}" contract="$2" proposal_id="$3" from="$4"
+  local sel padded node
   sel=$(selector "executeProposal(uint256)")
   padded=$(pad_uint256 "$proposal_id" | sed 's/^0x//')
   local data="${sel}${padded}"
-  gov_call "$target" "$contract" "$data" "$from" 1500000
+  node=$(addr_to_node "$from")
+  gov_call "$node" "$contract" "$data" "$from" 1500000
 }
 
 # gov_proposal_status <target> <contract> <proposal_id>
-# 프로포절 상태를 enum 값으로 반환: None=0, Voting=1, Approved=2, Executed=3, Cancelled=4, Expired=5, Failed=6, Rejected=7
+# 프로포절 상태를 enum 값으로 반환: None=0, Voting=1, Approved=2, Executed=3,
+# Cancelled=4, Expired=5, Failed=6, Rejected=7
+#
+# GovBase는 별도의 proposalStatus(uint256) 함수가 없고, `mapping(uint256 => Proposal) public proposals`
+# 의 automatic getter만 제공한다. dynamic field(callData)는 자동 getter에서 제외되므로
+# 10개의 primitive field를 tuple로 decode한다. status는 10번째 (index 9).
+# struct Proposal order:
+#   bytes32 actionType; uint256 memberVersion; uint256 votedBitmap;
+#   uint256 createdAt; uint256 executedAt; address proposer;
+#   uint32 requiredApprovals; uint32 approved; uint32 rejected;
+#   ProposalStatus status;  // uint8
 gov_proposal_status() {
   local target="${1:-1}" contract="$2" proposal_id="$3"
   local sel padded call_result
-  sel=$(selector "proposalStatus(uint256)")
+  sel=$(selector "proposals(uint256)")
   padded=$(pad_uint256 "$proposal_id" | sed 's/^0x//')
   call_result=$(eth_call_raw "$target" "$contract" "${sel}${padded}")
-  hex_to_dec "$call_result"
+  python3 -c "
+from eth_abi import decode
+raw_hex = '${call_result}'
+if raw_hex.startswith('0x'):
+    raw_hex = raw_hex[2:]
+if not raw_hex:
+    print(0)
+else:
+    try:
+        raw = bytes.fromhex(raw_hex)
+        types = ['bytes32','uint256','uint256','uint256','uint256','address','uint32','uint32','uint32','uint8']
+        result = decode(types, raw)
+        print(result[9])
+    except Exception:
+        print(0)
+"
 }
 
 # gov_full_flow <contract> <propose_data> <proposer_addr> <approver1> [approver2] ...
 # 전체 lifecycle: propose → approve (N명) → execute → 실행 receipt 반환
 # 반환: execute tx의 전체 receipt JSON
+#
+# 진단 로깅: propose 후 + 각 approve 후 proposal status 출력하여 실패 지점 파악.
+# approve tx가 revert되면 early return (quorum 미달 방지).
 gov_full_flow() {
   local contract="$1" propose_data="$2" proposer="$3"
   shift 3
@@ -452,19 +542,51 @@ gov_full_flow() {
   local proposal_id
   proposal_id=$(gov_propose "1" "$contract" "$propose_data" "$proposer") || return 1
   [[ -z "$proposal_id" ]] && return 1
-  printf '[GOV]  proposalId=%s\n' "$proposal_id" >&2
+  local status_after_propose
+  status_after_propose=$(gov_proposal_status "1" "$contract" "$proposal_id")
+  printf '[GOV]  proposalId=%s (status after propose=%s)\n' "$proposal_id" "$status_after_propose" >&2
 
-  # 2) approve (각 approver)
+  # 2) approve (각 approver) — receipt status 검증
+  # GovBase는 quorum 도달 시 approve tx 안에서 자동으로 execute 한다.
+  # 마지막 approver의 tx가 auto-execute를 포함할 수 있으므로 proposal.status==Executed(3)
+  # 이면 별도 executeProposal 호출 없이 해당 approve receipt을 반환한다.
+  local last_approve_receipt=""
   for ap in "${approvers[@]}"; do
     local tx
     tx=$(gov_approve "1" "$contract" "$proposal_id" "$ap") || true
-    if [[ -n "$tx" && "$tx" != "null" ]]; then
-      wait_receipt "1" "$tx" 15 >/dev/null 2>&1 || true
-      printf '[GOV]  approved by %s (tx=%s)\n' "$ap" "$tx" >&2
+    if [[ -z "$tx" || "$tx" == "null" ]]; then
+      printf '[GOV]  approve by %s: NO TX HASH (submission failed)\n' "$ap" >&2
+      return 1
+    fi
+    # Receipt 대기 + status 체크 (revert 시 early fail)
+    local receipt_json approve_status
+    receipt_json=$(wait_tx_receipt_full "1" "$tx" 15 2>/dev/null || echo "")
+    approve_status=$(printf '%s' "$receipt_json" | python3 -c "
+import sys, json
+try:
+    d = json.loads(sys.stdin.read() or '{}')
+    print(d.get('status', ''))
+except Exception:
+    print('')
+" 2>/dev/null)
+    local prop_status
+    prop_status=$(gov_proposal_status "1" "$contract" "$proposal_id")
+    printf '[GOV]  approved by %s (tx=%s, receipt.status=%s, proposal.status=%s)\n' \
+      "$ap" "$tx" "${approve_status:-none}" "$prop_status" >&2
+    if [[ "$approve_status" != "0x1" ]]; then
+      printf '[GOV]  ERROR: approve tx reverted/missing — aborting before execute\n' >&2
+      return 1
+    fi
+    last_approve_receipt="$receipt_json"
+    # Auto-executed by quorum reach in this approve — skip explicit execute
+    if [[ "$prop_status" == "3" ]]; then
+      printf '[GOV]  auto-executed during approve (status=Executed)\n' >&2
+      printf '%s' "$last_approve_receipt"
+      return 0
     fi
   done
 
-  # 3) execute
+  # 3) execute (quorum 미달/수동 execute 필요한 경우)
   local exec_tx
   exec_tx=$(gov_execute "1" "$contract" "$proposal_id" "$proposer") || return 1
   [[ -z "$exec_tx" || "$exec_tx" == "null" ]] && return 1

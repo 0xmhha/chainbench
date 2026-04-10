@@ -35,7 +35,7 @@ def trigger_tx():
           "maxFeePerGas": base_fee + 50_000_000_000_000,
           "maxPriorityFeePerGas": 27_600_000_000_000, "type": 2}
     signed = acct.sign_transaction(tx)
-    requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1})
+    requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.raw_transaction.to_0x_hex()],"id":1})
 
 async def main():
     t = threading.Thread(target=trigger_tx)

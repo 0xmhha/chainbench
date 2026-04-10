@@ -8,9 +8,11 @@ source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/a-ethereum/a3-01-contract-deploy"
 check_env || { test_result; exit 1; }
 
-# 단순 storage 컨트랙트 bytecode (SimpleStorage.sol compiled)
+# SimpleStorage 컨트랙트 bytecode (solc 0.8.30, --optimize --no-cbor-metadata)
 # contract SimpleStorage { uint256 public x; function set(uint256 _x) public { x = _x; } }
-BYTECODE="0x608060405234801561001057600080fd5b50610150806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80630c55699c1461003b57806360fe47b114610059575b600080fd5b610043610075565b60405161005091906100a1565b60405180910390f35b610073600480360381019061006e91906100ed565b61007b565b005b60005481565b8060008190555050565b6000819050919050565b61009b81610088565b82525050565b60006020820190506100b66000830184610092565b92915050565b600080fd5b6100ca81610088565b81146100d557600080fd5b50565b6000813590506100e7816100c1565b92915050565b600060208284031215610103576101026100bc565b5b6000610111848285016100d8565b9150509291505056fea2646970667358221220000000000000000000000000000000000000000000000000000000000000000064736f6c63430008120033"
+# NOTE: 이전 BYTECODE는 IPFS 해시가 모두 0인 placeholder였으며, 실제 체인에서 배포 시
+# "invalid jump destination" 에러로 revert되는 corrupt 상태였음. 정상 compiled bytecode로 교체.
+BYTECODE="0x6080604052348015600e575f5ffd5b50607480601a5f395ff3fe6080604052348015600e575f5ffd5b50600436106030575f3560e01c80630c55699c14603457806360fe47b114604d575b5f5ffd5b603b5f5481565b60405190815260200160405180910390f35b605c6058366004605e565b5f55565b005b5f60208284031215606d575f5ffd5b503591905056"
 
 # TEST_ACC_A로 배포 (to=null)
 tx_hash=$(python3 <<PYEOF
@@ -33,7 +35,7 @@ tx = {
     "type": 2,
 }
 signed = acct.sign_transaction(tx)
-resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.rawTransaction.hex()],"id":1}).json()
+resp = requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":[signed.raw_transaction.to_0x_hex()],"id":1}).json()
 print(resp.get("result", ""))
 PYEOF
 )
@@ -54,7 +56,9 @@ code=$(rpc "1" "eth_getCode" "[\"$contract_addr\", \"latest\"]" | json_get - "re
 code_len=${#code}
 assert_gt "$code_len" "10" "eth_getCode returns non-empty bytecode (len=$code_len)"
 
-# 저장 (후속 테스트에서 참조용)
+# 저장 (후속 테스트에서 참조용) — checksum 형식으로 정규화
+# eth-account >=0.13 는 소문자 주소를 tx["to"]로 받지 않음
+contract_addr=$(to_checksum "$contract_addr")
 mkdir -p /tmp/chainbench-regression
 echo "$contract_addr" > /tmp/chainbench-regression/simple_storage.addr
 

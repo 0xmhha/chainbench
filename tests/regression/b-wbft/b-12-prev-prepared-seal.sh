@@ -17,9 +17,10 @@ prev_bits=$(printf '%s' "$extra" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
 pps = r.get('prevPreparedSeal', {}) or {}
-sealers = pps.get('sealers', '0x0')
+sealers = pps.get('sealers', []) or []
 sig = pps.get('signature', '')
-n_bits = bin(int(sealers, 16)).count('1') if sealers and sealers != '0x0' else 0
+# sealers는 validator 주소 리스트
+n_bits = len(sealers) if isinstance(sealers, list) else 0
 print(f'{n_bits}|{len(sig)}')
 ")
 

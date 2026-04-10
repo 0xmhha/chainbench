@@ -8,12 +8,23 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/b-wbft/b-06-gastip-header-sync"
 
-# 현재 WBFTExtra.GasTip 조회 (latest 블록)
-current_tip=$(rpc "1" "istanbul_getWbftExtraInfo" '["latest"]' | python3 -c "
+# 현재 WBFTExtra.GasTip 조회 — istanbul_getWbftExtraInfo는 "latest" 문자열을
+# 받지 못하므로 실제 block number를 hex로 전달. gasTip은 decimal 문자열로 반환됨.
+latest_hex=$(rpc "1" "eth_blockNumber" "[]" | json_get - result)
+current_tip=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"${latest_hex}\"]" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
-gt = r.get('gasTip', '0x0')
-print(int(gt, 16) if gt else 0)
+gt = r.get('gasTip', '0')
+# gasTip은 decimal 문자열 (e.g. '27600000000000'). hex가 올 경우도 방어적으로 처리.
+if isinstance(gt, str):
+    if gt.startswith('0x'):
+        print(int(gt, 16))
+    elif gt:
+        print(int(gt))
+    else:
+        print(0)
+else:
+    print(int(gt) if gt else 0)
 ")
 
 # regression profile 기본 gasTip = 27600000000000 wei

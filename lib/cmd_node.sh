@@ -229,7 +229,9 @@ _cb_node_cmd_stop() {
 
 # _cb_node_build_start_args <key>
 # Reconstructs the gstable launch arguments from pids.json for the given node key.
-# Prints the binary path and all arguments on a single line, NUL-separated.
+# Prints the binary path and all arguments, one per line (newline-separated).
+# NOTE: NUL-separation is unusable here because bash command substitution
+# strips NUL bytes. gstable arguments never contain newlines, so \n is safe.
 _cb_node_build_start_args() {
   local key="$1"
 
@@ -253,7 +255,7 @@ node = nodes[node_key]
 # If the node has a saved_args field, use it verbatim
 saved = node.get("saved_args", [])
 if saved:
-    print("\x00".join(saved))
+    print("\n".join(saved))
     sys.exit(0)
 
 # Otherwise reconstruct from individual port/path fields
@@ -295,7 +297,7 @@ if isinstance(extra, list):
 elif extra:
     args.extend(extra.split())
 
-print("\x00".join(args))
+print("\n".join(args))
 PYEOF
 }
 
@@ -334,21 +336,39 @@ _cb_node_cmd_start() {
     return 1
   fi
 
-  # Split NUL-separated args into an array
+  # Split newline-separated args into an array
   local -a launch_args=()
-  while IFS= read -r -d '' arg; do
-    launch_args+=( "$arg" )
-  done <<< "${raw_args}"$'\0'
+  while IFS= read -r arg; do
+    [[ -n "$arg" ]] && launch_args+=( "$arg" )
+  done <<< "$raw_args"
 
-  local binary="${launch_args[0]}"
-  if ! command -v "$binary" &>/dev/null; then
-    log_error "Binary '$binary' not found in PATH"
+  if (( ${#launch_args[@]} == 0 )); then
+    log_error "Empty argument list after parsing start args for $label"
     return 1
   fi
 
-  # Determine log file
+  local binary="${launch_args[0]}"
+  # If binary is not an absolute executable path, resolve it via common.sh
+  # (handles: short name like "gstable", relative path, or missing binary in pids.json).
+  if [[ "$binary" != /* ]] || [[ ! -x "$binary" ]]; then
+    local resolved
+    resolved="$(resolve_binary "$binary" "${CHAINBENCH_BINARY_PATH:-}")" || {
+      log_error "Cannot resolve binary '$binary' for $label"
+      return 1
+    }
+    launch_args[0]="$resolved"
+    binary="$resolved"
+  fi
+
+  # Determine log file: prefer the log_file field saved by cmd_start.sh in pids.json,
+  # which respects the profile's data.directory and logging.directory. Fall back to a
+  # sane default only if the field is missing (older pids.json formats).
   local log_file
-  log_file="${CHAINBENCH_DIR}/data/logs/${label}.log"
+  log_file="$(_cb_node_get_field "$_CB_NODE_KEY" "log_file")"
+  if [[ -z "$log_file" ]]; then
+    log_file="${CHAINBENCH_DIR}/data/logs/${label}.log"
+  fi
+  mkdir -p "$(dirname "$log_file")"
 
   log_info "Starting $label: ${launch_args[*]}"
   "${launch_args[@]}" >>"$log_file" 2>&1 &
