@@ -26,11 +26,7 @@ if [[ "$is_auth" != "1" ]]; then
 fi
 
 # TEST_ACC_D로 임의의 tip 사용
-header_tip=$(rpc "1" "istanbul_getWbftExtraInfo" '["latest"]' | python3 -c "
-import sys, json
-r = json.load(sys.stdin).get('result', {})
-print(int(r.get('gasTip', '0x0'), 16))
-")
+header_tip=$(get_header_gas_tip "1")
 base_fee=$(get_base_fee "1")
 custom_tip=$(( header_tip * 3 ))  # header보다 3배 큰 tip
 

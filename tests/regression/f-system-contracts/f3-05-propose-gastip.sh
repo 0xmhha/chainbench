@@ -51,11 +51,7 @@ fi
 
 # B-06 후행: 다음 블록 헤더에 WBFTExtra.GasTip 반영 확인
 sleep 2
-header_tip=$(rpc 1 istanbul_getWbftExtraInfo '["latest"]' | python3 -c "
-import sys, json
-r = json.load(sys.stdin).get('result', {})
-print(int(r.get('gasTip', '0x0'), 16))
-")
+header_tip=$(get_header_gas_tip "1")
 printf '[INFO]  WBFTExtra.GasTip after execute = %s\n' "$header_tip" >&2
 # worker가 컨트랙트 storage를 읽어 반영 → header_tip == NEW_GASFIP
 if [[ "$header_tip" == "$NEW_GASFIP" ]]; then

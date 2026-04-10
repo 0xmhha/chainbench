@@ -13,7 +13,7 @@ assert_contains "$author" "0x" "Author address returned"
 committer_count=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
-c = r.get('committers', []) or r.get('committers', [])
+c = r.get('Committers', []) or r.get('committers', [])
 print(len(c))
 ")
 assert_ge "$committer_count" "3" "committers >= quorum (3)"

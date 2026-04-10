@@ -24,7 +24,7 @@ result=$(python3 "$HELPER" send \
   --to "$TEST_ACC_B_ADDR" \
   --value 1 \
   --gas 21000 \
-  --tamper sender 2>&1)
+  --tamper sender 2>/dev/null) || true
 
 # 에러 여부 확인
 has_error=$(printf '%s' "$result" | python3 -c "

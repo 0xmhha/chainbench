@@ -90,6 +90,39 @@ to_checksum() {
   python3 -c "from eth_utils import to_checksum_address; print(to_checksum_address('$addr'))"
 }
 
+# get_header_gas_tip <target>
+# latest 블록의 WBFTExtra.GasTip을 decimal string으로 반환.
+# istanbul_getWbftExtraInfo는 "latest" 파라미터를 거부하므로 실제 block number 사용.
+# gasTip은 decimal string으로 반환됨 (hex가 아님).
+get_header_gas_tip() {
+  local target="${1:-1}"
+  local latest_hex
+  latest_hex=$(rpc "$target" "eth_blockNumber" "[]" | json_get - result)
+  rpc "$target" "istanbul_getWbftExtraInfo" "[\"${latest_hex}\"]" | python3 -c "
+import sys, json
+try:
+    r = json.load(sys.stdin).get('result', {})
+    gt = r.get('gasTip', '0')
+    if isinstance(gt, str):
+        print(int(gt, 16) if gt.startswith('0x') else int(gt) if gt else 0)
+    else:
+        print(int(gt) if gt else 0)
+except Exception:
+    print(0)
+"
+}
+
+# get_wbft_extra_json <target> [block_hex]
+# istanbul_getWbftExtraInfo 응답의 result를 JSON string으로 반환.
+# block_hex 생략 시 latest block 사용.
+get_wbft_extra_json() {
+  local target="${1:-1}" block_hex="${2:-}"
+  if [[ -z "$block_hex" ]]; then
+    block_hex=$(rpc "$target" "eth_blockNumber" "[]" | json_get - result)
+  fi
+  rpc "$target" "istanbul_getWbftExtraInfo" "[\"${block_hex}\"]"
+}
+
 # dec_to_hex <decimal>
 # "255" → "0xff"
 dec_to_hex() {

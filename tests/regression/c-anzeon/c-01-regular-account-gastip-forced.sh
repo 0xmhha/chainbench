@@ -9,11 +9,7 @@ test_start "regression/c-anzeon/c-01-regular-account-gastip-forced"
 check_env || { test_result; exit 1; }
 
 # 현재 header.GasTip
-header_tip=$(rpc "1" "istanbul_getWbftExtraInfo" '["latest"]' | python3 -c "
-import sys, json
-r = json.load(sys.stdin).get('result', {})
-print(int(r.get('gasTip', '0x0'), 16))
-")
+header_tip=$(get_header_gas_tip "1")
 printf '[INFO]  header.GasTip = %s wei\n' "$header_tip" >&2
 
 # baseFee
