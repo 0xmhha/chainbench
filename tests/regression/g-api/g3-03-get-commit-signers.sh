@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-3-03
+# name: istanbul_getCommitSignersFromBlock
+# category: regression/g-api
+# tags: [rpc]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-3-03 — istanbul_getCommitSignersFromBlock
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-1-05
+# name: eth_getTransactionCount (nonce 조회)
+# category: regression/g-api
+# tags: [rpc]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-1-05 — eth_getTransactionCount (nonce 조회)
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

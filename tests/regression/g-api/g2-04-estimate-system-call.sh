@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-2-04
+# name: eth_estimateGas (NativeCoinAdapter.transfer)
+# category: regression/g-api
+# tags: [rpc]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-2-04 — eth_estimateGas (NativeCoinAdapter.transfer)
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

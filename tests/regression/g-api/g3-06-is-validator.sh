@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-3-06
+# name: istanbul_isValidator
+# category: regression/g-api
+# tags: [rpc, validator]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-3-06 — istanbul_isValidator
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

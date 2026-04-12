@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-2-01
+# name: eth_gasPrice == baseFee + GasTip
+# category: regression/g-api
+# tags: [rpc, gas]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-2-01 — eth_gasPrice == baseFee + GasTip
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

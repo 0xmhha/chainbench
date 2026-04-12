@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-1-04
+# name: eth_getTransactionReceipt (PR #70 fix 확인)
+# category: regression/g-api
+# tags: [rpc]
+# estimated_seconds: 38
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-1-04 — eth_getTransactionReceipt (PR #70 fix 확인)
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

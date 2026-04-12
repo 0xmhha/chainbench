@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-G-4-04
+# name: admin_peers
+# category: regression/g-api
+# tags: [rpc, p2p]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-G-4-04 — admin_peers
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
