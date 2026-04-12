@@ -130,6 +130,20 @@ _cb_test_script_to_name() {
 # ---- test list ---------------------------------------------------------------
 
 _cb_test_cmd_list() {
+  local format="text"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --format) format="${2:-text}"; shift 2 ;;
+      --format=*) format="${1#--format=}"; shift ;;
+      *) shift ;;
+    esac
+  done
+
+  if [[ "$format" == "json" ]]; then
+    _cb_test_cmd_list_json
+    return $?
+  fi
+
   local found=0
 
   printf '\n'
@@ -160,6 +174,71 @@ _cb_test_cmd_list() {
   fi
 
   return 0
+}
+
+# _cb_test_cmd_list_json
+# Outputs test list as JSON with metadata from frontmatter.
+_cb_test_cmd_list_json() {
+  local -a all_scripts=()
+  local cat script
+  for cat in "${_CB_TEST_CATEGORIES[@]}"; do
+    while IFS= read -r script; do
+      [[ -n "$script" ]] && all_scripts+=("$script")
+    done < <(_cb_test_find_scripts "$cat")
+  done
+
+  python3 -c "
+import json, sys, subprocess, os
+
+chainbench_dir = os.environ.get('CHAINBENCH_DIR', '')
+test_meta_sh = os.path.join(chainbench_dir, 'lib', 'test_meta.sh')
+tests_dir = os.path.join(chainbench_dir, 'tests')
+
+scripts = sys.argv[1:]
+result = {'tests': [], 'total': len(scripts)}
+
+for script in scripts:
+    # Derive name from path
+    rel = script
+    if tests_dir and script.startswith(tests_dir):
+        rel = script[len(tests_dir):].lstrip('/')
+    name = rel.rsplit('.sh', 1)[0] if rel.endswith('.sh') else rel
+
+    # Parse metadata
+    meta = {}
+    try:
+        r = subprocess.run(
+            ['bash', '-c', f'source \"{test_meta_sh}\" 2>/dev/null; cb_parse_meta \"{script}\"'],
+            capture_output=True, text=True, timeout=5,
+            env={**os.environ}
+        )
+        if r.stdout.strip():
+            meta = json.loads(r.stdout.strip())
+    except Exception:
+        pass
+
+    # Extract description from header if no meta name
+    desc = meta.get('name', '')
+    if not desc:
+        try:
+            with open(script) as f:
+                for line in f:
+                    if line.startswith('# Description:'):
+                        desc = line.split(':', 1)[1].strip()
+                        break
+        except Exception:
+            pass
+
+    entry = {'name': name, 'script': os.path.basename(script)}
+    if meta:
+        entry['meta'] = meta
+    if desc and 'meta' not in entry:
+        entry['description'] = desc
+
+    result['tests'].append(entry)
+
+print(json.dumps(result, indent=2, ensure_ascii=False))
+" "${all_scripts[@]}"
 }
 
 # ---- test run helpers --------------------------------------------------------
@@ -438,7 +517,7 @@ cmd_test_main() {
 
   case "$subcmd" in
     list)
-      _cb_test_cmd_list
+      _cb_test_cmd_list "$@"
       ;;
     run)
       _cb_test_cmd_run "$@"
