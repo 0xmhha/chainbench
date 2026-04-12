@@ -35,7 +35,7 @@
 
 | ID | 제안 | 커밋 | 구현 위치 | 상태 |
 |----|------|------|----------|------|
-| A | 프론트매터 (YAML-in-comment) | `3e3ed2c`, `b72c973` | `lib/test_meta.sh`, a-ethereum 32개 스크립트 | ✅ 완료 |
+| A | 프론트매터 (YAML-in-comment) | `3e3ed2c`, `b72c973`, `f055925`, `4e15f44`, `0c125ee` | `lib/test_meta.sh`, 전체 114개 스크립트 (100%), `test list --format json` | ✅ 완료 |
 | B | 관찰값(observables) 캡처 | `069ce95` | `tests/lib/assert.sh:82` `observe()`, 결과 JSON `observed` 필드 | ✅ 완료 |
 | C | 실패 시 자동 컨텍스트 캡처 | `46df850` | `tests/lib/failure_context.sh`, `assert.sh:266` 자동 호출 | ✅ 완료 |
 | D | JSONL 이벤트 스트림 | `e2c0a4e` | `assert.sh` CB_FORMAT 분기 5개소, `cmd_test.sh` `--format jsonl` | ✅ 완료 |

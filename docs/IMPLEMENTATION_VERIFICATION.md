@@ -55,7 +55,8 @@
 | 검증 항목 | 결과 |
 |----------|------|
 | `lib/test_meta.sh` 존재 | ✅ `cb_parse_meta()` 함수 |
-| a-ethereum 스크립트 적용 | ✅ 32개 파일에 `# ---chainbench-meta---` 블록 |
+| 전체 regression 스크립트 적용 | ✅ 114/114 파일에 `# ---chainbench-meta---` 블록 (100%) |
+| `test list --format json` | ✅ `cmd_test.sh` `_cb_test_cmd_list_json` 함수 |
 | 파싱 정확성 | ✅ id, name, category, tags, estimated_seconds, depends_on 추출 |
 | 단위 테스트 | ✅ `tests/unit/tests/test-meta-parse.sh` (6 assertions) |
 
@@ -162,13 +163,13 @@
 | 카테고리 | 전체 스크립트 | 프론트매터 적용 | 비율 |
 |---------|-------------|---------------|------|
 | a-ethereum | 32 | 32 | 100% |
-| b-wbft | 12 | 0 | 0% |
-| c-anzeon | 7 | 0 | 0% |
-| d-fee-delegation | 4 | 0 | 0% |
-| e-blacklist-authorized | 9 | 0 | 0% |
-| f-system-contracts | 27 | 0 | 0% |
-| g-api | 21 | 0 | 0% |
-| **합계** | **112** | **32** | **29%** |
+| b-wbft | 12 | 12 | 100% |
+| c-anzeon | 7 | 7 | 100% |
+| d-fee-delegation | 4 | 4 | 100% |
+| e-blacklist-authorized | 9 | 9 | 100% |
+| f-system-contracts | 27 | 27 | 100% |
+| g-api | 21 | 21 | 100% |
+| **합계** | **114** | **114** | **100%** |
 
 ---
 
@@ -208,4 +209,4 @@ TypeScript:                       0 errors
 | E (스펙 연결) | go-stablenet에 regression spec 문서 미존재 |
 | F (고수준 assertion) | `common.sh`에 이미 충분한 도메인 헬퍼 존재 |
 | I-L (Tier 3) | 실사용 피드백 수집 전 ROI 판단 불가 |
-| 프론트매터 b~g 카테고리 | a-ethereum 32개 완료, 나머지 80개는 피드백 후 일괄 적용 |
+| 프론트매터 전체 카테고리 | ✅ 114/114 완료 (a~g 전체) |
