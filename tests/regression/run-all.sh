@@ -24,6 +24,7 @@ DEFAULT_CATEGORIES=(
   "e-blacklist-authorized"
   "f-system-contracts"
   "g-api"
+  "h-hardfork"
 )
 
 if [[ $# -gt 0 ]]; then

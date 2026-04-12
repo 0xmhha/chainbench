@@ -202,6 +202,33 @@ get_base_fee() {
   hex_to_dec "$result"
 }
 
+# wait_for_block <target> <block_number_decimal> [timeout_secs]
+# Polls eth_blockNumber until the chain reaches the target block.
+# Returns 0 when reached, 1 on timeout.
+wait_for_block() {
+  local target="${1:?wait_for_block: target required}"
+  local target_block="${2:?wait_for_block: block number required}"
+  local timeout="${3:-120}"
+
+  local elapsed=0
+  local current
+  while (( elapsed < timeout )); do
+    current=$(block_number "$target" 2>/dev/null || echo "0")
+    if (( current >= target_block )); then
+      echo >&2 "  Block $current reached (target: $target_block)"
+      return 0
+    fi
+    if (( elapsed % 5 == 0 )); then
+      echo >&2 "  Waiting for block $target_block (current: $current, ${elapsed}s/${timeout}s)"
+    fi
+    sleep 1
+    elapsed=$(( elapsed + 1 ))
+  done
+
+  echo >&2 "  TIMEOUT waiting for block $target_block (current: $current after ${timeout}s)"
+  return 1
+}
+
 # ============================================================================
 # Raw Transaction (eth-account 사용)
 # ============================================================================
@@ -627,6 +654,134 @@ except Exception:
 
   # 4) receipt 반환
   wait_tx_receipt_full "1" "$exec_tx" 30
+}
+
+# ============================================================================
+# GovMinter v2 (Boho) helpers
+# ============================================================================
+
+# Function selectors (computed lazily on first use)
+PROPOSE_BURN_SIG=""
+CLAIM_BURN_REFUND_SIG=""
+CANCEL_PROPOSAL_SIG=""
+DISAPPROVE_PROPOSAL_SIG=""
+BURN_BALANCE_SIG=""
+REFUNDABLE_BALANCE_SIG=""
+
+_init_govminter_v2_sigs() {
+  [[ -n "$PROPOSE_BURN_SIG" ]] && return 0
+  PROPOSE_BURN_SIG=$(selector "proposeBurn(bytes)")
+  CLAIM_BURN_REFUND_SIG=$(selector "claimBurnRefund()")
+  CANCEL_PROPOSAL_SIG=$(selector "cancelProposal(uint256)")
+  DISAPPROVE_PROPOSAL_SIG=$(selector "disapproveProposal(uint256)")
+  BURN_BALANCE_SIG=$(selector "burnBalance(address)")
+  REFUNDABLE_BALANCE_SIG=$(selector "refundableBalance(address)")
+}
+
+# Event signature constants (pre-computed keccak256)
+readonly BURN_REFUND_CLAIMED_SIG="0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24"
+readonly BURN_DEPOSIT_REFUNDED_SIG="0x334fe3eaa506b12e7e46ba469c310822737a959f2553b3cb38dff68085291aed"
+
+# propose_burn <from_addr> <proof_data_hex> <value_wei>
+# Calls GovMinter.proposeBurn(bytes) with msg.value. Returns tx hash.
+propose_burn() {
+  _init_govminter_v2_sigs
+  local from_addr="${1:?propose_burn: from_addr required}"
+  local proof_data="${2:?propose_burn: proof_data required}"
+  local value_wei="${3:?propose_burn: value_wei required}"
+
+  local node_num
+  node_num=$(addr_to_node "$from_addr")
+  unlock_validator "$node_num"
+
+  # ABI encode: proposeBurn(bytes) = selector + offset(0x20) + length + data
+  proof_data="${proof_data#0x}"
+  local data_len=$(( ${#proof_data} / 2 ))
+  local padded_len
+  padded_len=$(printf '%064x' "$data_len")
+  local padded_data="$proof_data"
+  # Pad to 32-byte boundary
+  local remainder=$(( ${#proof_data} % 64 ))
+  if (( remainder > 0 )); then
+    local pad_zeros=$(( 64 - remainder ))
+    padded_data="${padded_data}$(printf '%0*d' "$pad_zeros" 0)"
+  fi
+  local calldata="${PROPOSE_BURN_SIG}0000000000000000000000000000000000000000000000000000000000000020${padded_len}${padded_data}"
+
+  local value_hex
+  value_hex=$(dec_to_hex "$value_wei")
+
+  local response
+  response=$(rpc "$node_num" "eth_sendTransaction" \
+    "[{\"from\":\"${from_addr}\",\"to\":\"${GOV_MINTER}\",\"data\":\"0x${calldata}\",\"value\":\"${value_hex}\",\"gas\":\"0x1e8480\"}]") || return 1
+  json_get "$response" "result"
+}
+
+# claim_burn_refund <from_addr>
+# Calls claimBurnRefund() on GOV_MINTER. Returns tx hash.
+claim_burn_refund() {
+  _init_govminter_v2_sigs
+  local from_addr="${1:?claim_burn_refund: from_addr required}"
+  local node_num
+  node_num=$(addr_to_node "$from_addr")
+  unlock_validator "$node_num"
+
+  local response
+  response=$(rpc "$node_num" "eth_sendTransaction" \
+    "[{\"from\":\"${from_addr}\",\"to\":\"${GOV_MINTER}\",\"data\":\"0x${CLAIM_BURN_REFUND_SIG}\",\"gas\":\"0x1e8480\"}]") || return 1
+  json_get "$response" "result"
+}
+
+# get_burn_balance <target> <address>
+# Returns burnBalance in decimal wei.
+get_burn_balance() {
+  _init_govminter_v2_sigs
+  local target="${1:?get_burn_balance: target required}"
+  local address="${2:?get_burn_balance: address required}"
+  local data="0x${BURN_BALANCE_SIG}$(pad_address "$address")"
+  local result
+  result=$(eth_call_raw "$target" "$GOV_MINTER" "$data") || return 1
+  hex_to_dec "$result"
+}
+
+# get_refundable_balance <target> <address>
+# Returns refundableBalance in decimal wei.
+get_refundable_balance() {
+  _init_govminter_v2_sigs
+  local target="${1:?get_refundable_balance: target required}"
+  local address="${2:?get_refundable_balance: address required}"
+  local data="0x${REFUNDABLE_BALANCE_SIG}$(pad_address "$address")"
+  local result
+  result=$(eth_call_raw "$target" "$GOV_MINTER" "$data") || return 1
+  hex_to_dec "$result"
+}
+
+# disapprove_proposal <contract> <proposal_id> <from_addr>
+# Calls disapproveProposal(uint256). Returns tx hash.
+disapprove_proposal() {
+  _init_govminter_v2_sigs
+  local contract="${1:?disapprove_proposal: contract required}"
+  local proposal_id="${2:?disapprove_proposal: proposal_id required}"
+  local from_addr="${3:?disapprove_proposal: from_addr required}"
+  local node_num
+  node_num=$(addr_to_node "$from_addr")
+  unlock_validator "$node_num"
+  local data="0x${DISAPPROVE_PROPOSAL_SIG}$(pad_uint256 "$proposal_id")"
+  gov_call "$node_num" "$contract" "$data" "$from_addr" "0x1e8480"
+}
+
+# cancel_proposal <contract> <proposal_id> <from_addr>
+# Calls cancelProposal(uint256). Returns tx hash.
+cancel_proposal() {
+  _init_govminter_v2_sigs
+  local contract="${1:?cancel_proposal: contract required}"
+  local proposal_id="${2:?cancel_proposal: proposal_id required}"
+  local from_addr="${3:?cancel_proposal: from_addr required}"
+  local node_num
+  node_num=$(addr_to_node "$from_addr")
+  unlock_validator "$node_num"
+  local data="0x${CANCEL_PROPOSAL_SIG}$(pad_uint256 "$proposal_id")"
+  gov_call "$node_num" "$contract" "$data" "$from_addr" "0x1e8480"
 }
 
 # ============================================================================

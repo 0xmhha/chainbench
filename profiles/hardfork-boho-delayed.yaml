@@ -1,0 +1,14 @@
+# chainbench profile: hardfork-boho-delayed
+# Boho hardfork activates at block 10 (not genesis).
+# Blocks 0-9: GovMinter v1 / pre-Boho state
+# Blocks 10+: GovMinter v2 / post-Boho state
+# Inherits everything else from regression profile.
+
+extends: regression
+
+name: hardfork-boho-delayed
+description: "Boho hardfork delayed activation (BohoBlock=10)"
+
+genesis:
+  overrides:
+    bohoBlock: 10
