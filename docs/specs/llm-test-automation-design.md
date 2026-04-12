@@ -33,7 +33,8 @@ chainbench에는 113개의 regression 테스트가 7개 카테고리(a~g)로 존
 |------|------|
 | `build/bin/gstable` | ✅ 존재 (42MB, 2026-04-12 빌드) |
 | `cmd/logrot/main.go` | ❌ 없음 (go-stablenet에는 logrot cmd 없음) |
-| `REGRESSION_TEST_CASES*.md` | ❌ 없음 (go-stablenet 저장소에 해당 파일 미존재) |
+| 회귀 테스트 스펙 | ✅ `stablenet-test-case/regression-test-spec.md` (116 TC, Gherkin) |
+| 하드포크 테스트 스펙 | 🔄 `stablenet-test-case/hardfork-test-spec.md` (별도 세션 검토 중) |
 | `.mcp.json` | ❌ 없음 (chainbench mcp enable 미실행) |
 | 빌드 명령 | `make gstable` → `build/bin/gstable` |
 | Go 모듈 | `github.com/ethereum/go-ethereum` (go 1.23.0+) |
@@ -68,7 +69,7 @@ check_env || { test_result; exit 1; }
 
 ## 3. Non-Goals
 
-- Tier 2-E (스펙 연결): go-stablenet에 `REGRESSION_TEST_CASES*.md`가 존재하지 않으므로 연결 대상 없음
+- ~~Tier 2-E (스펙 연결): go-stablenet에 스펙 문서 부재~~ → **해제**: 스펙 문서가 `stablenet-test-case/regression-test-spec.md` (116 TC, Gherkin 형식)로 존재 확인. `hardfork-test-spec.md`는 별도 세션에서 검토 중.
 - Tier 2-F (고수준 assertion helper): `tests/regression/lib/common.sh`에 이미 `assert_receipt_status`, `assert_error_contains`, `gov_full_flow` 등 도메인 헬퍼 존재. 별도 `assert_chain.sh` 불필요
 - Tier 3-I~L: 실사용 피드백 후 결정
 - 기존 113개 테스트 스크립트의 로직 변경 (메타데이터 추가만 수행)
@@ -409,7 +410,7 @@ state/failures/
 | 시스템 컨트랙트 | `common.sh`에 주소 하드코딩 | 제네시스에 포함 | ✅ 일치 |
 | Python 의존성 | `eth-account`, `eth-utils`, `eth-abi` | N/A | ✅ chainbench만 필요 |
 
-**스펙 연결 (Tier 2-E) 불가 사유**: go-stablenet에 `REGRESSION_TEST_CASES*.md` 파일이 존재하지 않음. 프론트매터의 `spec` 필드는 optional로 두되, 문서가 생성되면 연결 가능하도록 구조만 준비.
+**스펙 연결 (Tier 2-E)**: 스펙 문서가 `stablenet-test-case/regression-test-spec.md`에 존재함을 확인 (116 TC, Gherkin 형식, ID 체계 호환). 구현 가능 상태로 전환됨.
 
 ---
 

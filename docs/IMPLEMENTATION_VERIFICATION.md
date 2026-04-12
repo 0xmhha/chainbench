@@ -123,10 +123,10 @@
 
 | ID | 제안 | 보류 사유 | 재검토 조건 |
 |----|------|----------|-----------|
-| E | 스펙 연결 MCP 리소스 | go-stablenet에 `REGRESSION_TEST_CASES*.md` 부재 | 스펙 문서 생성 시 |
+| E | 스펙 연결 MCP 리소스 | ~~go-stablenet에 스펙 문서 부재~~ → **해제**: `stablenet-test-case/regression-test-spec.md` 확인 (116 TC) | 구현 가능 |
 | F | 고수준 assertion helper | `common.sh`에 `assert_receipt_status`, `gov_full_flow` 등 이미 존재 | 부족 시 추가 |
 | I | rerun-failed + snapshot | Tier 3, 실사용 피드백 필요 | 반복 디버깅 빈도 증가 시 |
-| J | 스펙 기반 스캐폴딩 | spec 문서 부재 (E와 동일) | E 해결 후 |
+| J | 스펙 기반 스캐폴딩 | ~~spec 문서 부재~~ → **해제**: E와 동일 (스펙 문서 확인) | E 구현 후 |
 | K | 의존성 그래프 | 프론트매터 `depends_on` 데이터 축적 필요 | 전체 스크립트 frontmatter 완료 후 |
 | L | daemon 모드 | 구현 난이도 높음, ROI 불확실 | 성능 병목 측정 후 |
 
@@ -210,3 +210,6 @@ TypeScript:                       0 errors
 | F (고수준 assertion) | `common.sh`에 이미 충분한 도메인 헬퍼 존재 |
 | I-L (Tier 3) | 실사용 피드백 수집 전 ROI 판단 불가 |
 | 프론트매터 전체 카테고리 | ✅ 114/114 완료 (a~g 전체) |
+| E (스펙 연결) 보류 사유 | **해제** — `stablenet-test-case/regression-test-spec.md` (116 TC) 존재 확인 |
+| J (스캐폴딩) 보류 사유 | **해제** — E와 동일 |
+| hardfork-test-spec.md | 🔄 별도 세션에서 검토 중 |

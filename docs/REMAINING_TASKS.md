@@ -44,7 +44,7 @@
 
 | ID | 제안 | 커밋 | 구현 위치 | 상태 |
 |----|------|------|----------|------|
-| E | 스펙 연결 MCP 리소스 | - | - | ⏸️ 보류 (go-stablenet에 spec 문서 부재) |
+| E | 스펙 연결 MCP 리소스 | - | - | 🔜 구현 가능 (스펙 문서 확인됨, 아래 참고) |
 | F | 고수준 assertion helper | - | - | ⏸️ 보류 (`common.sh`에 `assert_receipt_status`, `gov_full_flow` 이미 존재) |
 | G | Dry-run / plan 모드 | `33381b5` | `cmd_test.sh:230` `_cb_test_dry_run`, `--dry-run` 옵션 | ✅ 완료 |
 | H | 압축 상태 MCP tool | `aef22e6` | `test.ts:208` `chainbench_state_compact`, `cmd_status.sh` `--compact` | ✅ 완료 |
@@ -54,18 +54,31 @@
 | ID | 제안 | 상태 | 보류 사유 |
 |----|------|------|----------|
 | I | rerun-failed + snapshot/restore | ⏸️ 보류 | Tier 3 — 실사용 피드백 후 결정 |
-| J | 스펙 기반 테스트 스캐폴딩 | ⏸️ 보류 | spec 문서 부재 (E와 동일) |
+| J | 스펙 기반 테스트 스캐폴딩 | 🔜 구현 가능 | 스펙 문서 확인됨 (E와 동일) |
 | K | 의존성 그래프 | ⏸️ 보류 | 프론트매터 `depends_on` 데이터 축적 후 결정 |
 | L | MCP 대화형 세션 (daemon) | ⏸️ 보류 | 구현 난이도 높음, ROI 불확실 |
 
 ### 요약
 
 ```
-전체 12개 제안:  6개 구현 ✅  |  6개 보류 ⏸️  |  0개 미착수
+전체 12개 제안:  6개 구현 ✅  |  2개 구현 가능 🔜  |  4개 보류 ⏸️
 Tier 1 (A-D):   4/4 완료
-Tier 2 (E-H):   2/4 완료 (E,F 사유 있는 보류)
-Tier 3 (I-L):   0/4 보류
+Tier 2 (E-H):   2/4 완료 (E 구현 가능, F 보류)
+Tier 3 (I-L):   0/4 (J 구현 가능, I·K·L 보류)
 ```
+
+### 스펙 문서 참조 (E, J 보류 해제 근거)
+
+회귀 테스트 스펙 문서가 아래 경로에 존재함을 확인:
+
+| 문서 | 경로 | 상태 |
+|------|------|------|
+| regression-test-spec.md | `/Users/kevin/work/github/wemade/study/projects/stablenet-test-case/regression-test-spec.md` | ✅ 116 TC 정의 완료 |
+| hardfork-test-spec.md | `/Users/kevin/work/github/wemade/study/projects/stablenet-test-case/hardfork-test-spec.md` | 🔄 별도 세션에서 검토 중 |
+
+- ID 체계: `RT-<Section>-<SubSection>-<Num>[-<Variant>]` (chainbench 프론트매터와 호환)
+- 형식: Gherkin (Given/When/Then) + 코드 근거 + 선행 TC + 우선순위
+- 섹션: A(이더리움) B(WBFT) C(Anzeon) D(Fee Delegation) E(블랙리스트) F(거버넌스) G(API)
 
 ---
 
