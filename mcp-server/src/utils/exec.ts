@@ -33,6 +33,12 @@ export function buildEnv(extra?: Record<string, string>): Record<string, string 
   };
 }
 
+// Shell-escape a single argument using POSIX single-quote wrapping.
+// Embedded single quotes are handled via the '\'' idiom.
+export function shellEscapeArg(arg: string): string {
+  return `'${arg.replace(/'/g, "'\\''")}'`;
+}
+
 // NOTE: args must be pre-validated by callers before being passed here.
 // This utility is intended for internal CLI invocation only, not for
 // passing raw user input. Callers are responsible for sanitizing args.

@@ -18,6 +18,7 @@ const SECTION_DOCS: Record<string, string> = {
   chain: `# chain — Binary and network identity
 - \`chain.binary\` (string, default: "gstable"): Executable name.
 - \`chain.binary_path\` (string, default: ""): Absolute path to binary. Empty = search $PATH.
+- \`chain.logrot_path\` (string, default: ""): Absolute path to logrot binary. Empty = auto-detect next to binary, git-root, or build from source.
 - \`chain.network_id\` (integer, default: 8283): P2P network ID.
 - \`chain.chain_id\` (integer, default: 8283): EIP-155 chain ID.`,
 

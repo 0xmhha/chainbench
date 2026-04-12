@@ -8,6 +8,7 @@ import { registerLogTools } from "./tools/log.js";
 import { registerRemoteTools } from "./tools/remote.js";
 import { registerConsensusTools } from "./tools/consensus.js";
 import { registerNetworkTools } from "./tools/network.js";
+import { registerConfigTools } from "./tools/config.js";
 
 const server = new McpServer({
   name: "chainbench-mcp-server",
@@ -23,6 +24,7 @@ registerLogTools(server);
 registerRemoteTools(server);
 registerConsensusTools(server);
 registerNetworkTools(server);
+registerConfigTools(server);
 
 // Start server with stdio transport
 const transport = new StdioServerTransport();

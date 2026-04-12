@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runChainbench } from "../utils/exec.js";
+import { runChainbench, shellEscapeArg } from "../utils/exec.js";
 
 const NODE_INDEX_SCHEMA = z
   .number()
@@ -43,9 +43,22 @@ export function registerNodeTools(server: McpServer): void {
     "Start (or restart) a specific stopped node by its 1-based index. The chain must have been initialized first.",
     {
       node: NODE_INDEX_SCHEMA,
+      binary_path: z
+        .string()
+        .optional()
+        .describe("Absolute path to the chain binary. Overrides profile's chain.binary_path for this invocation."),
     },
-    async ({ node }) => {
-      const result = runChainbench(`node start ${node}`);
+    async ({ node, binary_path }) => {
+      if (binary_path !== undefined) {
+        if (binary_path.length === 0) {
+          return { content: [{ type: "text" as const, text: "Error: binary_path must not be empty." }] };
+        }
+        if (!binary_path.startsWith("/")) {
+          return { content: [{ type: "text" as const, text: "Error: binary_path must be an absolute path." }] };
+        }
+      }
+      const bpArg = binary_path ? ` --binary-path ${shellEscapeArg(binary_path)}` : "";
+      const result = runChainbench(`node start ${node}${bpArg}`);
       return { content: [{ type: "text" as const, text: formatResult(result) }] };
     }
   );
