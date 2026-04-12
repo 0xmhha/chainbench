@@ -7,6 +7,7 @@ state/remotes.json
 state/current-remote
 state/local-config.yaml
 state/logrot-build.log
+state/failures/
 
 # Node data (generated at runtime)
 data/

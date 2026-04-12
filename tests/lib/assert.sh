@@ -4,6 +4,11 @@
 
 CHAINBENCH_DIR="${CHAINBENCH_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 
+# Source failure context capture (non-fatal if missing)
+if [[ -f "${CHAINBENCH_DIR}/tests/lib/failure_context.sh" ]]; then
+  source "${CHAINBENCH_DIR}/tests/lib/failure_context.sh"
+fi
+
 # ---------------------------------------------------------------------------
 # Internal state (reset by test_start)
 # ---------------------------------------------------------------------------
@@ -256,6 +261,11 @@ print(json.dumps(data, indent=2))
     > "$result_file"
 
   printf "         Result file: %s\n" "$result_file" >&2
+
+  # Auto-capture failure context when tests fail
+  if [[ "$_ASSERT_FAIL" -gt 0 ]] && type -t _cb_capture_failure_context &>/dev/null; then
+    _cb_capture_failure_context "$_ASSERT_TEST_NAME" || true
+  fi
 
   # JSONL test_end event
   if [[ "${CB_FORMAT:-text}" == "jsonl" ]]; then
