@@ -29,10 +29,10 @@ describe() {
 assert_eq() {
   local actual="$1" expected="$2" msg="${3:-assert_eq}"
   if [[ "$actual" == "$expected" ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ %s${_UT_RESET}\n" "$msg" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: ${msg} — expected '${expected}', got '${actual}'")
     printf "${_UT_RED}    ✗ %s — expected '%s', got '%s'${_UT_RESET}\n" "$msg" "$expected" "$actual" >&2
   fi
@@ -42,10 +42,10 @@ assert_eq() {
 assert_neq() {
   local actual="$1" not_expected="$2" msg="${3:-assert_neq}"
   if [[ "$actual" != "$not_expected" ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ %s${_UT_RESET}\n" "$msg" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: ${msg} — got unwanted '${actual}'")
     printf "${_UT_RED}    ✗ %s — got unwanted '%s'${_UT_RESET}\n" "$msg" "$actual" >&2
   fi
@@ -55,10 +55,10 @@ assert_neq() {
 assert_empty() {
   local value="$1" msg="${2:-assert_empty}"
   if [[ -z "$value" ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ %s${_UT_RESET}\n" "$msg" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: ${msg} — expected empty, got '${value}'")
     printf "${_UT_RED}    ✗ %s — expected empty, got '%s'${_UT_RESET}\n" "$msg" "$value" >&2
   fi
@@ -68,10 +68,10 @@ assert_empty() {
 assert_nonempty() {
   local value="$1" msg="${2:-assert_nonempty}"
   if [[ -n "$value" ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ %s${_UT_RESET}\n" "$msg" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: ${msg} — expected non-empty")
     printf "${_UT_RED}    ✗ %s — expected non-empty${_UT_RESET}\n" "$msg" >&2
   fi
@@ -81,10 +81,10 @@ assert_nonempty() {
 assert_file_exists() {
   local path="$1" msg="${2:-assert_file_exists}"
   if [[ -f "$path" ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ %s${_UT_RESET}\n" "$msg" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: ${msg} — file not found: ${path}")
     printf "${_UT_RED}    ✗ %s — file not found: %s${_UT_RESET}\n" "$msg" "$path" >&2
   fi
@@ -94,10 +94,10 @@ assert_file_exists() {
 assert_contains() {
   local haystack="$1" needle="$2" msg="${3:-assert_contains}"
   if [[ "$haystack" == *"$needle"* ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ %s${_UT_RESET}\n" "$msg" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: ${msg} — '${needle}' not in output")
     printf "${_UT_RED}    ✗ %s — '%s' not found${_UT_RESET}\n" "$msg" "$needle" >&2
   fi
@@ -111,10 +111,10 @@ assert_exit_code() {
   local actual=0
   "$@" >/dev/null 2>&1 || actual=$?
   if [[ "$actual" -eq "$expected" ]]; then
-    (( _UT_PASS++ ))
+    (( ++_UT_PASS )) || true
     printf "${_UT_GREEN}    ✓ exit code %s${_UT_RESET}\n" "$expected" >&2
   else
-    (( _UT_FAIL++ ))
+    (( ++_UT_FAIL )) || true
     _UT_FAILURES+=("${_UT_TEST_NAME}: expected exit $expected, got $actual — $*")
     printf "${_UT_RED}    ✗ expected exit %s, got %s — %s${_UT_RESET}\n" "$expected" "$actual" "$*" >&2
   fi
