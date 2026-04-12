@@ -20,7 +20,8 @@ check_env || { test_result; exit 1; }
 
 base_fee=$(get_base_fee 1)
 gas_tip=$(get_header_gas_tip 1)
-too_low=$(( base_fee + gas_tip - 1 ))
+min_required=$(( base_fee + gas_tip ))
+too_low=$(( min_required - 1 ))
 
 observe "baseFee" "$base_fee"
 observe "gasTip" "$gas_tip"
