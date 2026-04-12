@@ -70,7 +70,7 @@ chainbench test run basic
 chainbench stop
 ```
 
-> **Note:** The CLI auto-detects the `gstable` binary from your project's `build/bin/` directory. If running from a different directory, set `chain.binary_path` in `~/.chainbench/profiles/default.yaml`.
+> **Note:** The CLI auto-detects the `gstable` binary from your project's `build/bin/` directory. For machine-specific paths, use `chainbench config set chain.binary_path /path/to/gstable` (stored in `state/local-config.yaml`, git-ignored).
 
 ### Uninstall
 
@@ -102,6 +102,20 @@ chainbench restart                      # stop -> clean -> init -> start
 chainbench status [--json]              # Show node status
 chainbench clean                        # Remove all node data
 ```
+
+All lifecycle commands accept `--binary-path <path>` and `--logrot-path <path>` as one-shot overrides.
+
+### Local Configuration
+
+```bash
+chainbench config set chain.binary_path /opt/gstable/build/bin/gstable
+chainbench config set chain.logrot_path /opt/gstable/build/bin/logrot
+chainbench config get chain.binary_path
+chainbench config list                  # Show full local overlay
+chainbench config unset chain.logrot_path
+```
+
+Writes to `state/local-config.yaml` (git-ignored). Merged on top of the profile during loading. Precedence: CLI flag > env var > local overlay > profile YAML > auto-detect.
 
 ### Node Control
 
@@ -187,6 +201,7 @@ chainbench init --profile my-scenario
 chain:
   binary: gstable                          # Binary name
   binary_path: "/path/to/gstable"          # Absolute or relative path
+  logrot_path: ""                          # logrot binary path (auto-detected if empty)
   chain_id: 8283                           # Chain ID
 
 data:
@@ -270,6 +285,9 @@ The generated `.mcp.json` uses the `chainbench-mcp` wrapper from `$PATH` — no 
 | `chainbench_profile_send` | Create a custom profile via YAML content |
 | `chainbench_log_search` | Search node logs |
 | `chainbench_log_timeline` | Get consensus timeline |
+| `chainbench_config_set` | Write to machine-local overlay |
+| `chainbench_config_get` | Read from machine-local overlay |
+| `chainbench_config_list` | List all local overlay fields |
 
 ### AI Agent Workflow Example
 
@@ -308,9 +326,10 @@ chainbench/
 │   ├── cmd_node.sh         # Individual node control
 │   ├── cmd_test.sh         # Test runner
 │   ├── cmd_log.sh          # Log analysis dispatcher
+│   ├── cmd_config.sh       # Local overlay (config set/get/unset/list)
 │   ├── cmd_mcp.sh          # MCP server enable/disable per project
-│   ├── common.sh           # Shared utilities
-│   └── profile.sh          # YAML profile parser
+│   ├── common.sh           # Shared utilities, binary/logrot resolution
+│   └── profile.sh          # YAML profile parser with overlay merge
 ├── profiles/               # Test scenario profiles (YAML with inheritance)
 ├── keys/preset/            # Pre-generated validator keys (5 nodes)
 ├── templates/              # Genesis and TOML config templates
@@ -324,8 +343,14 @@ chainbench/
 ## Troubleshooting
 
 **`chainbench init` fails with "Cannot find gstable binary"**
-- Set `chain.binary_path` in `profiles/default.yaml` to the absolute path of your `gstable` binary
+- Use `chainbench config set chain.binary_path /path/to/gstable` (machine-local, git-ignored)
 - Or add the directory containing `gstable` to your `$PATH`
+- One-shot: `chainbench init --binary-path /path/to/gstable`
+
+**"logrot not available — logs will grow unbounded"**
+- chainbench auto-discovers logrot next to the chain binary, at git-root/build/bin/, or builds from source
+- To set explicitly: `chainbench config set chain.logrot_path /path/to/logrot`
+- Disable rotation: set `logging.rotation: false` in the profile
 
 **Nodes start but immediately die**
 - Check logs: `cat /tmp/node-data/logs/node1.log`
