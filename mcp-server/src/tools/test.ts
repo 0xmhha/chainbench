@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench, CHAINBENCH_DIR } from "../utils/exec.js";
-import { readdirSync, statSync } from "fs";
+import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { resolve } from "path";
 
 function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
@@ -97,13 +97,19 @@ export function registerTestTools(server: McpServer): void {
       test: z
         .string()
         .describe("Test name in 'category/name' format (e.g. 'basic/consensus', 'basic/tx-send'). Use chainbench_test_list to see all available tests."),
+      format: z
+        .enum(["text", "jsonl"])
+        .optional()
+        .default("text")
+        .describe("Output format: 'text' (default) or 'jsonl' (NDJSON event stream for machine parsing)"),
     },
-    async ({ test }) => {
+    async ({ test, format }) => {
       const validationError = validateTestName(test);
       if (validationError) {
         return { content: [{ type: "text" as const, text: `Error: ${validationError}` }] };
       }
-      const result = runChainbench(`test run ${test}`);
+      const formatFlag = format === "jsonl" ? " --format jsonl" : "";
+      const result = runChainbench(`test run ${test}${formatFlag}`);
       return { content: [{ type: "text" as const, text: formatResult(result) }] };
     }
   );
@@ -151,6 +157,85 @@ export function registerTestTools(server: McpServer): void {
       const formatFlag = format === "json" ? " --json" : format === "summary" ? " --summary" : "";
       const result = runChainbench(`report${formatFlag}`);
       return { content: [{ type: "text" as const, text: formatResult(result) }] };
+    }
+  );
+
+  server.tool(
+    "chainbench_failure_context",
+    "Retrieve the most recent failure context snapshot. " +
+    "When a test fails, chainbench auto-captures per-node block height, peer count, " +
+    "syncing status, recent blocks, and log tails into state/failures/. " +
+    "Call this after a test failure to get full diagnostic data in one request.",
+    {},
+    async () => {
+      const failuresDir = resolve(CHAINBENCH_DIR, "state", "failures");
+      if (!existsSync(failuresDir)) {
+        return { content: [{ type: "text" as const, text: "No failure context available. No tests have failed yet." }] };
+      }
+
+      // Find the most recent failure directory
+      let dirs: string[];
+      try {
+        dirs = readdirSync(failuresDir)
+          .map(d => resolve(failuresDir, d))
+          .filter(d => { try { return statSync(d).isDirectory(); } catch { return false; } })
+          .sort()
+          .reverse();
+      } catch {
+        return { content: [{ type: "text" as const, text: "Error reading failure contexts." }] };
+      }
+
+      if (dirs.length === 0) {
+        return { content: [{ type: "text" as const, text: "No failure context available." }] };
+      }
+
+      const latestDir = dirs[0];
+      const contextFile = resolve(latestDir, "context.json");
+      if (!existsSync(contextFile)) {
+        return { content: [{ type: "text" as const, text: `Failure directory exists but context.json is missing: ${latestDir}` }] };
+      }
+
+      try {
+        const contextJson = readFileSync(contextFile, "utf-8");
+        return { content: [{ type: "text" as const, text: contextJson }] };
+      } catch (e: any) {
+        return { content: [{ type: "text" as const, text: `Error reading context.json: ${e.message}` }] };
+      }
+    }
+  );
+
+  server.tool(
+    "chainbench_state_compact",
+    "Return a compact JSON snapshot of the current chain state (< 300 bytes). " +
+    "Includes running status, profile name, per-node block height and peer count, " +
+    "consensus health, and last test result. Efficient for LLM context — call every turn.",
+    {},
+    async () => {
+      const result = runChainbench("status --json --compact");
+      if (result.exitCode === 0) {
+        return { content: [{ type: "text" as const, text: result.stdout || "{}" }] };
+      }
+      // Fallback: construct minimal state from pids.json
+      const pidsFile = resolve(CHAINBENCH_DIR, "state", "pids.json");
+      if (!existsSync(pidsFile)) {
+        return { content: [{ type: "text" as const, text: JSON.stringify({ running: false }) }] };
+      }
+      try {
+        const pids = JSON.parse(readFileSync(pidsFile, "utf-8"));
+        const compact: Record<string, unknown> = {
+          running: true,
+          profile: pids.profile || "unknown",
+          nodes: Object.fromEntries(
+            Object.entries(pids.nodes || {}).map(([k, v]: [string, any]) => [
+              k,
+              { block: "?", peers: "?", role: v.type || "?" },
+            ])
+          ),
+        };
+        return { content: [{ type: "text" as const, text: JSON.stringify(compact) }] };
+      } catch {
+        return { content: [{ type: "text" as const, text: JSON.stringify({ running: false, error: "pids.json parse failed" }) }] };
+      }
     }
   );
 }

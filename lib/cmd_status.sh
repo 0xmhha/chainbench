@@ -17,15 +17,17 @@ source "${_CB_LIB_DIR}/formatter.sh"
 
 _CB_STATUS_JSON_MODE=0
 _CB_STATUS_REMOTE_ALIAS=""
+_CB_STATUS_COMPACT=0
 
 _cb_status_parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --json) _CB_STATUS_JSON_MODE=1; shift ;;
+      --compact) _CB_STATUS_COMPACT=1; shift ;;
       --remote) _CB_STATUS_REMOTE_ALIAS="${2:?--remote requires an alias}"; shift 2 ;;
       --remote=*) _CB_STATUS_REMOTE_ALIAS="${1#--remote=}"; shift ;;
       --help|-h)
-        printf 'Usage: chainbench status [--json] [--remote <alias>]\n' >&2
+        printf 'Usage: chainbench status [--json] [--compact] [--remote <alias>]\n' >&2
         return 0
         ;;
       *)
@@ -314,7 +316,56 @@ cmd_status_main() {
   local joined_rows
   joined_rows="$(printf '%s\n' "${table_rows[@]+"${table_rows[@]}"}")"
 
-  if [[ "$_CB_STATUS_JSON_MODE" == "1" ]]; then
+  if [[ "$_CB_STATUS_JSON_MODE" == "1" && "$_CB_STATUS_COMPACT" == "1" ]]; then
+    # Compact mode: minimal JSON for LLM context efficiency (< 300 bytes)
+    python3 -c "
+import json, sys
+
+rows = sys.argv[1]
+profile = sys.argv[2]
+consensus = sys.argv[3]
+
+nodes = {}
+for line in rows.strip().splitlines():
+    if not line.strip():
+        continue
+    parts = line.split('|')
+    if len(parts) >= 5:
+        idx = parts[0].strip()
+        ntype = parts[1].strip()
+        status = parts[2].strip()
+        block = parts[3].strip()
+        peers = parts[4].strip()
+        role = 'bp' if ntype == 'validator' else 'en'
+        nodes[idx] = {'block': int(block) if block.isdigit() else block, 'peers': int(peers) if peers.isdigit() else peers, 'role': role}
+
+# Last test result
+import os, glob
+results_dir = os.path.join(os.environ.get('CHAINBENCH_DIR', ''), 'state', 'results')
+last_test = {}
+if os.path.isdir(results_dir):
+    files = sorted(glob.glob(os.path.join(results_dir, '*.json')), reverse=True)
+    if files:
+        try:
+            with open(files[0]) as f:
+                r = json.load(f)
+            last_test = {'name': r.get('test',''), 'status': r.get('status',''), 'ts': r.get('timestamp','')}
+        except Exception:
+            pass
+
+compact = {
+    'running': True,
+    'profile': profile,
+    'nodes': nodes,
+    'consensus': consensus,
+}
+if last_test:
+    compact['last_test'] = last_test
+
+print(json.dumps(compact))
+" "$joined_rows" "$profile_name" "$consensus"
+    return $?
+  elif [[ "$_CB_STATUS_JSON_MODE" == "1" ]]; then
     _cb_status_print_json \
       "$chain_name" "$profile_name" "$started_at" \
       "$joined_rows" \
