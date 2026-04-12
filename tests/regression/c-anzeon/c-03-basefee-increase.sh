@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-C-03
+# name: 블록 가스 사용률 > 20% → 다음 블록 baseFee 2% 증가
+# category: regression/c-anzeon
+# tags: [anzeon, gas]
+# estimated_seconds: 8
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/c-anzeon/c-03-basefee-increase
 # RT-C-03 — 블록 가스 사용률 > 20% → 다음 블록 baseFee 2% 증가
 set -euo pipefail

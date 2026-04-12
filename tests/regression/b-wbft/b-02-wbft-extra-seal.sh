@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-02
+# name: WBFTExtra에 Committed Seal + Prepared Seal 모두 존재하고 quorum 이상
+# category: regression/b-wbft
+# tags: [wbft]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-02-wbft-extra-seal
 # RT-B-02 — WBFTExtra에 Committed Seal + Prepared Seal 모두 존재하고 quorum 이상
 set -euo pipefail

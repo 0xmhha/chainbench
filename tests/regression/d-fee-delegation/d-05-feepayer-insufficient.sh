@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-D-05
+# name: FeePayer 잔액 부족 시 거부
+# category: regression/d-fee-delegation
+# tags: [fee-delegation, gas]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/d-fee-delegation/d-05-feepayer-insufficient
 # RT-D-05 — FeePayer 잔액 부족 시 거부
 #

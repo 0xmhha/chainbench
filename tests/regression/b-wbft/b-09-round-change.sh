@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-09
+# name: 라운드 체인지 동작 (제안자 노드 중단 시)
+# category: regression/b-wbft
+# tags: [wbft, consensus]
+# estimated_seconds: 69
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-09-round-change
 # RT-B-09 — 라운드 체인지 동작 (제안자 노드 중단 시)
 set -euo pipefail

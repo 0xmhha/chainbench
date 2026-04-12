@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-3-05의
+# name: GasTip 거버넌스 변경 후 worker가 다음 블록 헤더의 WBFTExtra.GasTip에 반영
+# category: regression/b-wbft
+# tags: [wbft, gas]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-06-gastip-header-sync
 # RT-B-06 — GasTip 거버넌스 변경 후 worker가 다음 블록 헤더의 WBFTExtra.GasTip에 반영
 # (RT-F-3-05의 후행 단계 — F-3-05가 storage gasTip을 변경한 상태 가정)

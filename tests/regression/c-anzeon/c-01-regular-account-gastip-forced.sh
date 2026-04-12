@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-C-01
+# name: 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨
+# category: regression/c-anzeon
+# tags: [anzeon, gas]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/c-anzeon/c-01-regular-account-gastip-forced
 # RT-C-01 — 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨
 set -euo pipefail

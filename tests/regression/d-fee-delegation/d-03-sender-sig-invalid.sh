@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-D-03
+# name: Sender 서명 변조 시 거부 (--tamper sender)
+# category: regression/d-fee-delegation
+# tags: [fee-delegation]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/d-fee-delegation/d-03-sender-sig-invalid
 # RT-D-03 — Sender 서명 변조 시 거부 (--tamper sender)
 set -euo pipefail

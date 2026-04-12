@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-C-02
+# name: Authorized 계정은 tipCap을 자유롭게 설정할 수 있음
+# category: regression/c-anzeon
+# tags: [anzeon, gas, access-control]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/c-anzeon/c-02-authorized-account-gastip-free
 # RT-C-02 — Authorized 계정은 tipCap을 자유롭게 설정할 수 있음
 #

@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-07
+# name: istanbul_getValidators RPC (wbft_* 아님)
+# category: regression/b-wbft
+# tags: [wbft, validator]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-07-istanbul-get-validators
 # RT-B-07 — istanbul_getValidators RPC (wbft_* 아님)
 set -euo pipefail

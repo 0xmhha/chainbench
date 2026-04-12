@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-03
+# name: 에폭 전환 — 검증자 집합 갱신
+# category: regression/b-wbft
+# tags: [wbft]
+# estimated_seconds: 65
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-03-epoch-transition
 # RT-B-03 — 에폭 전환 — 검증자 집합 갱신
 set -euo pipefail

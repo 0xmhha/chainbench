@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-C-07
+# name: baseFee가 MaxBaseFee(20,000 Gwei) 상한을 초과하지 않음
+# category: regression/c-anzeon
+# tags: [anzeon, gas]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/c-anzeon/c-07-max-basefee
 # RT-C-07 — baseFee가 MaxBaseFee(20,000 Gwei) 상한을 초과하지 않음
 #

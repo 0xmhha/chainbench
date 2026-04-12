@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-D-04
+# name: FeePayer 서명 변조 시 거부
+# category: regression/d-fee-delegation
+# tags: [fee-delegation, gas]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/d-fee-delegation/d-04-feepayer-sig-invalid
 # RT-D-04 — FeePayer 서명 변조 시 거부
 set -euo pipefail

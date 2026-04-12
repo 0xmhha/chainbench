@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-D-01
+# name: FeeDelegateDynamicFeeTx (type 0x16) 정상 처리
+# category: regression/d-fee-delegation
+# tags: [fee-delegation, gas, delegation]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/d-fee-delegation/d-01-fee-delegate-normal
 # RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리
 #   Sender(TEST_ACC_A)가 value만 지불, FeePayer(TEST_ACC_C)가 가스비 지불

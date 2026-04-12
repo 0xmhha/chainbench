@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-08
+# name: 쿼럼 미달 시 블록 수락 거부
+# category: regression/b-wbft
+# tags: [wbft, quorum]
+# estimated_seconds: 22
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-08-quorum-deficient
 # RT-B-08 — 쿼럼 미달 시 블록 수락 거부
 #

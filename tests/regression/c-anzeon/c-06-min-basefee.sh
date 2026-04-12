@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-C-06
+# name: baseFee가 MinBaseFee(20 Gwei) 아래로 내려가지 않음
+# category: regression/c-anzeon
+# tags: [anzeon, gas]
+# estimated_seconds: 15
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/c-anzeon/c-06-min-basefee
 # RT-C-06 — baseFee가 MinBaseFee(20 Gwei) 아래로 내려가지 않음
 set -euo pipefail

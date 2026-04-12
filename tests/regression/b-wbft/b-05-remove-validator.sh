@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-05
+# name: 검증자 member 제거 (GovBase proposeRemoveMember + voting)
+# category: regression/b-wbft
+# tags: [wbft, validator]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-05-remove-validator
 # RT-B-05 — 검증자 member 제거 (GovBase proposeRemoveMember + voting)
 #

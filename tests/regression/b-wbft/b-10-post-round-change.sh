@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-10
+# name: 라운드 체인지 후 블록 정상 연결 (parentHash 체인 검증)
+# category: regression/b-wbft
+# tags: [wbft, consensus]
+# estimated_seconds: 15
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-10-post-round-change
 # RT-B-10 — 라운드 체인지 후 블록 정상 연결 (parentHash 체인 검증)
 set -euo pipefail

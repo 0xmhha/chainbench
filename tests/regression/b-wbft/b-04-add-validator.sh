@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-04
+# name: 검증자 member 추가 (GovBase proposeAddMember + voting)
+# category: regression/b-wbft
+# tags: [wbft, validator]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-04-add-validator
 # RT-B-04 — 검증자 member 추가 (GovBase proposeAddMember + voting)
 #

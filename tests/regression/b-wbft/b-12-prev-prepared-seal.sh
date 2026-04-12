@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-12
+# name: 블록 N+1의 PrevPreparedSeal이 블록 N의 prepare 서명자 포함
+# category: regression/b-wbft
+# tags: [wbft]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-12-prev-prepared-seal
 # RT-B-12 — 블록 N+1의 PrevPreparedSeal이 블록 N의 prepare 서명자 포함
 set -euo pipefail

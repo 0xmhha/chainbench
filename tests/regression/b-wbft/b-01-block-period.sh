@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-B-01
+# name: 블록 생산 주기 1초 간격
+# category: regression/b-wbft
+# tags: [wbft, block]
+# estimated_seconds: 15
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/b-wbft/b-01-block-period
 # RT-B-01 — 블록 생산 주기 1초 간격
 set -euo pipefail
