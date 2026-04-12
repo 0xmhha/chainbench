@@ -12,6 +12,7 @@ readonly _CB_CMD_TEST_SH_LOADED=1
 
 _CB_TEST_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_TEST_LIB_DIR}/common.sh"
+source "${_CB_TEST_LIB_DIR}/test_meta.sh" 2>/dev/null || true
 
 # ---- Constants ---------------------------------------------------------------
 
@@ -222,6 +223,71 @@ _cb_test_collect_scripts() {
   return 1
 }
 
+# ---- dry-run -----------------------------------------------------------------
+
+# _cb_test_dry_run <target> <scripts...>
+# Output execution plan as JSON or text without running tests.
+_cb_test_dry_run() {
+  local target="$1"
+  shift
+  local -a scripts=("$@")
+  local format="${CB_FORMAT:-text}"
+
+  if [[ "$format" == "json" ]]; then
+    python3 -c "
+import json, sys, subprocess, os
+
+target = sys.argv[1]
+scripts = sys.argv[2:]
+test_meta_sh = os.environ.get('CHAINBENCH_DIR', '') + '/lib/test_meta.sh'
+
+result = {'target': target, 'scripts': [], 'total_scripts': len(scripts), 'total_estimated_seconds': 0}
+
+for script in scripts:
+    name = os.path.basename(script)
+    meta = {}
+    # Parse meta using cb_parse_meta
+    try:
+        r = subprocess.run(
+            ['bash', '-c', f'source \"{test_meta_sh}\" 2>/dev/null; cb_parse_meta \"{script}\"'],
+            capture_output=True, text=True, timeout=5,
+            env={**os.environ}
+        )
+        if r.stdout.strip():
+            meta = json.loads(r.stdout.strip())
+    except Exception:
+        pass
+
+    est = meta.get('estimated_seconds', 0)
+    if isinstance(est, (int, float)):
+        result['total_estimated_seconds'] += int(est)
+
+    result['scripts'].append({'script': name, 'meta': meta})
+
+print(json.dumps(result, indent=2))
+" "$target" "${scripts[@]}"
+  else
+    printf "Dry-run plan for target: %s\n" "$target" >&2
+    printf "Scripts to execute: %d\n\n" "${#scripts[@]}" >&2
+    local script
+    for script in "${scripts[@]}"; do
+      local name meta_json
+      name=$(basename "$script")
+      meta_json=""
+      if type -t cb_parse_meta &>/dev/null; then
+        meta_json="$(cb_parse_meta "$script" 2>/dev/null)"
+      fi
+      printf "  %s" "$name" >&2
+      if [[ -n "$meta_json" && "$meta_json" != "{}" ]]; then
+        local id
+        id="$(echo "$meta_json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('id',''))" 2>/dev/null)"
+        [[ -n "$id" ]] && printf " [%s]" "$id" >&2
+      fi
+      printf "\n" >&2
+    done
+  fi
+}
+
 # ---- test run ----------------------------------------------------------------
 
 _cb_test_cmd_run() {
@@ -229,14 +295,16 @@ _cb_test_cmd_run() {
   local quiet="${CHAINBENCH_QUIET:-0}"
   local remote_alias=""
   local format="${CB_FORMAT:-text}"
+  local dry_run=0
 
-  # Parse args: target, --remote, --format flags
+  # Parse args: target, --remote, --format, --dry-run flags
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --remote) remote_alias="${2:?--remote requires an alias}"; shift 2 ;;
       --remote=*) remote_alias="${1#--remote=}"; shift ;;
       --format) format="${2:-text}"; shift 2 ;;
       --format=*) format="${1#--format=}"; shift ;;
+      --dry-run) dry_run=1; shift ;;
       *) [[ -z "$target" ]] && target="$1" || true; shift ;;
     esac
   done
@@ -267,6 +335,12 @@ _cb_test_cmd_run() {
     log_error "No tests found for target: '$target'"
     log_error "Run 'chainbench test list' to see available tests."
     return 1
+  fi
+
+  # Dry-run: output execution plan without running tests
+  if [[ "$dry_run" -eq 1 ]]; then
+    _cb_test_dry_run "$target" "${scripts[@]}"
+    return $?
   fi
 
   local total=${#scripts[@]}
