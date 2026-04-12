@@ -13,6 +13,8 @@ _ASSERT_PASS=0
 _ASSERT_FAIL=0
 _ASSERT_FAILURES=()   # array of failure messages
 _ASSERT_START_TS=0
+_OBSERVED_KEYS=()     # observe() keys
+_OBSERVED_VALUES=()   # observe() values
 
 # Color codes (consistent with lib/common.sh)
 _ASSERT_RED='\033[0;31m'
@@ -32,6 +34,8 @@ test_start() {
   _ASSERT_PASS=0
   _ASSERT_FAIL=0
   _ASSERT_FAILURES=()
+  _OBSERVED_KEYS=()
+  _OBSERVED_VALUES=()
   _ASSERT_START_TS=$(date +%s)
   printf "${_ASSERT_CYAN}[TEST]${_ASSERT_RESET}  Starting: %s\n" "$_ASSERT_TEST_NAME" >&2
 }
@@ -51,6 +55,23 @@ _assert_fail() {
   _ASSERT_FAIL=$(( _ASSERT_FAIL + 1 ))
   _ASSERT_FAILURES+=("$msg")
   printf "${_ASSERT_RED}  [FAIL]${_ASSERT_RESET} %s\n" "$msg" >&2
+}
+
+# ---------------------------------------------------------------------------
+# Observables
+# ---------------------------------------------------------------------------
+
+# observe <key> <value>
+# Collect a key-value observation during test execution.
+# Observations are serialized into the result JSON "observed" field.
+observe() {
+  local key="${1:?observe: key required}"
+  local value="${2:-}"
+  _OBSERVED_KEYS+=("$key")
+  _OBSERVED_VALUES+=("$value")
+  if [[ "${CB_FORMAT:-text}" == "jsonl" ]]; then
+    python3 -c "import json,sys; print(json.dumps({'event':'observe','key':sys.argv[1],'value':sys.argv[2]}))" "$key" "$value"
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -182,6 +203,21 @@ failures = sys.argv[1:]
 print(json.dumps(failures))
 " "${_ASSERT_FAILURES[@]+"${_ASSERT_FAILURES[@]}"}")
 
+  # Serialise observed key-value pairs to a JSON object string
+  local observed_json="{}"
+  if [[ ${#_OBSERVED_KEYS[@]} -gt 0 ]]; then
+    observed_json=$(python3 -c "
+import json, sys
+keys = sys.argv[1].split('\x1f') if sys.argv[1] else []
+vals = sys.argv[2].split('\x1f') if sys.argv[2] else []
+obs = {}
+for k, v in zip(keys, vals):
+    if k:
+        obs[k] = v
+print(json.dumps(obs))
+" "$(printf '%s\x1f' "${_OBSERVED_KEYS[@]}")" "$(printf '%s\x1f' "${_OBSERVED_VALUES[@]}")")
+  fi
+
   python3 -c "
 import json, sys
 
@@ -194,6 +230,7 @@ data = {
     'duration':  int(sys.argv[6]),
     'timestamp': sys.argv[7],
     'failures':  json.loads(sys.argv[8]),
+    'observed':  json.loads(sys.argv[9]),
 }
 print(json.dumps(data, indent=2))
 " \
@@ -205,6 +242,7 @@ print(json.dumps(data, indent=2))
     "$duration" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     "$failures_json" \
+    "$observed_json" \
     > "$result_file"
 
   printf "         Result file: %s\n" "$result_file" >&2
