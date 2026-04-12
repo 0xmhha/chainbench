@@ -4,6 +4,12 @@
 # Keys: chainbench/keys/preset/ with metadata.json
 set -euo pipefail
 
+# ---- Parse runtime overrides -------------------------------------------------
+source "${CHAINBENCH_DIR}/lib/common.sh"
+_CB_INIT_REMAINING=()
+_cb_parse_runtime_overrides _CB_INIT_REMAINING "$@"
+set -- "${_CB_INIT_REMAINING[@]+"${_CB_INIT_REMAINING[@]}"}"
+
 # ---- Load dependencies -------------------------------------------------------
 source "${CHAINBENCH_DIR}/lib/profile.sh"
 source "${CHAINBENCH_DIR}/lib/pids_state.sh"

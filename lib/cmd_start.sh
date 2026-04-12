@@ -4,6 +4,11 @@
 # CHAINBENCH_QUIET, and all functions from lib/common.sh.
 set -euo pipefail
 
+# ---- Parse runtime overrides -------------------------------------------------
+_CB_START_REMAINING=()
+_cb_parse_runtime_overrides _CB_START_REMAINING "$@"
+set -- "${_CB_START_REMAINING[@]+"${_CB_START_REMAINING[@]}"}"
+
 # ---- Paths -------------------------------------------------------------------
 
 readonly _START_STATE_DIR="${CHAINBENCH_DIR}/state"

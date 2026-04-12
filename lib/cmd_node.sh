@@ -303,6 +303,10 @@ PYEOF
 
 _cb_node_cmd_start() {
   local node_num="$1"
+  shift
+  # Parse --binary-path / --logrot-path from remaining args
+  local _CB_NODE_START_REMAINING=()
+  _cb_parse_runtime_overrides _CB_NODE_START_REMAINING "$@"
 
   _cb_node_require_pids_file || return 1
 
@@ -550,7 +554,7 @@ cmd_node_main() {
         log_error "Usage: chainbench node start <N>"
         return 1
       fi
-      _cb_node_cmd_start "$1"
+      _cb_node_cmd_start "$@"
       ;;
     log)
       if [[ "${1:-}" == "--remote" ]]; then

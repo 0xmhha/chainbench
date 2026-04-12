@@ -80,7 +80,12 @@ _cb_restart_run_subcommand() {
 # ---- Main restart logic ------------------------------------------------------
 
 cmd_restart_main() {
-  # Parse restart-specific flags (none currently; reserved for future use)
+  # Parse runtime overrides (--binary-path, --logrot-path) first
+  local _CB_RESTART_REMAINING=()
+  _cb_parse_runtime_overrides _CB_RESTART_REMAINING "$@"
+  set -- "${_CB_RESTART_REMAINING[@]+"${_CB_RESTART_REMAINING[@]}"}"
+
+  # Parse restart-specific flags
   local profile=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
