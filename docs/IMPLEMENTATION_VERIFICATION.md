@@ -1,19 +1,18 @@
 # 구현 검증 보고서
 
-> **검증일**: 2026-04-12
-> **검증 대상**: `docs/superpowers/specs/2026-04-09-logging-and-binary-path-design.md` (Logging & Binary Path Spec)
-> **검증 대상**: `docs/LLM_INTEGRATION_ANALYSIS.md` (LLM Integration Roadmap)
-> **검증 기준**: 코드 구현체 (main 브랜치, commit `c2ff06e`)
+> **최초 검증일**: 2026-04-12
+> **최종 갱신일**: 2026-04-12
+> **기준 커밋**: `b72c973` (main 브랜치)
 
 ---
 
-## 1. Logging & Binary Path Design Spec 검증
+## 1. Logging & Binary Path Design Spec — 100% 구현 완료
 
-### 1.1 구현 현황 요약
+### 1.1 구현 현황
 
 | Phase | 커밋 | 상태 | 단위 테스트 |
 |-------|------|------|-----------|
-| 0. stale .bak 제거 | N/A | ✅ 완료 (해당 파일 없음) | - |
+| 0. stale .bak 제거 | N/A | ✅ 완료 | - |
 | 1. Unit test runner | `ed9c884` | ✅ 완료 | 12 assertions |
 | 2. resolve_binary 테스트 | `d50924f` | ✅ 완료 | 6 assertions |
 | 3. 런타임 오버라이드 | `f1dfc9a`, `c2ff06e` | ✅ 완료 | 11 assertions |
@@ -23,169 +22,190 @@
 | 7. MCP 도구 확장 | `fd4a7d1` | ✅ 완료 | TypeScript 빌드 통과 |
 | 8. 문서 업데이트 | `f51a0f6` | ✅ 완료 | - |
 
-**합계: 9 phase 중 9개 완료, 54개 단위 테스트 assertion 전체 통과**
+### 1.2 컴포넌트별 코드 위치
 
-### 1.2 컴포넌트별 상세 검증
-
-#### `lib/common.sh` — 설계 §5.1
-
-| 함수 | 설계 위치 | 구현 위치 | 검증 |
-|------|----------|----------|------|
-| `resolve_logrot()` | §4.3, §5.1 | `common.sh:222-275` | ✅ 6단계 discovery chain 구현 |
-| `_cb_build_logrot_from_source()` | §5.1 | `common.sh:280-304` | ✅ main.go 검출 → `go build` → logrot-build.log |
-| `_cb_parse_runtime_overrides()` | §5.1 | `common.sh:147-209` | ✅ nameref 배열, `--binary-path`, `--logrot-path`, `=` 구문, 검증 |
-
-#### `lib/profile.sh` — 설계 §5.2
-
-| 변경사항 | 설계 위치 | 구현 위치 | 검증 |
-|---------|----------|----------|------|
-| `_cb_set_var` env-first guard | §5.2 | `profile.sh:385-399` | ✅ `CHAINBENCH_PROFILE_ENV_OVERRIDE` 확인, `${!var_name+x}` 테스트 |
-| overlay 머지 (Python block) | §5.2 | `profile.sh:261-269` | ✅ `state/local-config.yaml` deep_merge, `inherits` 제거 |
-| `CHAINBENCH_LOGROT_PATH` export | §5.2 | `profile.sh:411` | ✅ `.chain.logrot_path` 필드 export |
-
-#### CLI 커맨드 파서 연결 — 설계 §5.3
-
-| 파일 | 설계 위치 | 구현 위치 | 검증 |
-|------|----------|----------|------|
-| `cmd_init.sh` | §5.3 | `cmd_init.sh:8-11` | ✅ `_cb_parse_runtime_overrides` 호출 후 `set --` |
-| `cmd_start.sh` | §5.3 | `cmd_start.sh:7-9` | ✅ profile 로딩 전 파서 실행 |
-| `cmd_restart.sh` | §5.3 | `cmd_restart.sh:84-86` | ✅ `cmd_restart_main` 진입부에서 파싱 |
-| `cmd_node.sh` | §5.3 | `cmd_node.sh:307-309` | ✅ `_cb_node_cmd_start` 내부, node_num 소비 후 파싱 |
-
-#### `cmd_start.sh` logrot 파이프라인 — 설계 §5.4
-
-| 변경사항 | 설계 위치 | 구현 위치 | 검증 |
-|---------|----------|----------|------|
-| logrot 해석 | §4.4, §5.4 | `cmd_start.sh:105-113` | ✅ `resolve_logrot` 호출, `is_truthy` 체크 |
-| process substitution launch | §4.4 | `cmd_start.sh:216-222` | ✅ `> >("${LOGROT_BIN}" ...)` 패턴, `$!`로 gstable PID 캡처 |
-| dead code 제거 | §5.4 | - | ✅ `_logrot_bin` 변수 선언 제거됨 |
-
-#### `cmd_config.sh` — 설계 §5.5
-
-| 서브커맨드 | 설계 위치 | 구현 위치 | 검증 |
-|-----------|----------|----------|------|
-| `config list` | §5.5 | `cmd_config.sh` `_cb_config_list` | ✅ 파일 내용 출력 또는 `(empty)` |
-| `config get <field>` | §5.5 | `cmd_config.sh` `_cb_config_get` | ✅ dot-notation, exit 1 on miss |
-| `config set <field> <value>` | §5.5 | `cmd_config.sh` `_cb_config_set` | ✅ JSON 파싱, atomic write (temp+rename) |
-| `config unset <field>` | §5.5 | `cmd_config.sh` `_cb_config_unset` | ✅ cascade-clean empty dicts |
-| field validation | §5.5 | `cmd_config.sh:15` | ✅ `^[a-zA-Z0-9_][a-zA-Z0-9_.]*$`, `..` 거부 |
-
-#### MCP 서버 — 설계 §5.6, §5.7, §5.8
-
-| 컴포넌트 | 설계 위치 | 구현 위치 | 검증 |
-|---------|----------|----------|------|
-| `shellEscapeArg` | §5.6 | `utils/exec.ts:38-40` | ✅ POSIX single-quote escape |
-| `binary_path` on `chainbench_init` | §5.7 | `lifecycle.ts:59` | ✅ optional param, validation, `buildBinaryPathArg` |
-| `binary_path` on `chainbench_start` | §5.7 | `lifecycle.ts:93` | ✅ |
-| `binary_path` on `chainbench_restart` | §5.7 | `lifecycle.ts:124` | ✅ |
-| `binary_path` on `chainbench_node_start` | §5.7 | `node.ts:46-49` | ✅ validation + shellEscapeArg |
-| `chainbench_config_set` | §5.8 | `config.ts:14-32` | ✅ field regex validation, shellEscapeArg |
-| `chainbench_config_get` | (추가) | `config.ts:34-47` | ✅ |
-| `chainbench_config_list` | (추가) | `config.ts:49+` | ✅ |
-| `registerConfigTools` | §5.8 | `index.ts:11,27` | ✅ |
-
-#### Profile & 기타 — 설계 §5.9
-
-| 변경사항 | 구현 위치 | 검증 |
+| 컴포넌트 | 파일:라인 | 검증 |
 |---------|----------|------|
-| `profiles/default.yaml` — `chain.logrot_path` | `default.yaml:10` | ✅ |
-| `.gitignore` — `state/local-config.yaml` | `.gitignore:8` | ✅ |
-| `.gitignore` — `state/logrot-build.log` | `.gitignore:9` | ✅ |
-| `schema.ts` — `chain.logrot_path` 문서 | `schema.ts:21` | ✅ |
-| `README.md` — config 섹션, logrot 트러블슈팅 | README.md | ✅ |
-| `setup.sh` — next-steps 변경 | `setup.sh:105-109` | ✅ |
-
-### 1.3 설계 대비 차이점
-
-| 항목 | 설계 | 실제 구현 | 영향 |
-|------|------|----------|------|
-| `cmd_stop.sh` logrot cleanup | §5.4 "message" | `pkill -f` + `log_info` 추가 | ✅ 설계 초과 충족 |
-| `chainbench_config_get` MCP tool | 설계에 없음 (Non-Goal) | 구현됨 | ✅ 추가 기능 (유용) |
-| `chainbench_config_list` MCP tool | 설계에 없음 | 구현됨 | ✅ 추가 기능 (유용) |
-| Unit test directory layout | §8.1과 동일 | `tests/unit/{run.sh,lib/,tests/,fixtures/}` | ✅ 일치 |
-
-### 1.4 사이드 이펙트 분석
-
-| 영향 범위 | 분석 결과 |
-|----------|----------|
-| 기존 regression 테스트 | ⚠️ 없음 — `tests/regression/` 미변경 |
-| 기존 basic/fault/stress 테스트 | ⚠️ 없음 — 미변경 |
-| `_cb_set_var` 호환성 | ✅ env 미설정 시 기존과 동일 (profile 값 사용) |
-| `cmd_start.sh` logrot 없는 환경 | ✅ `LOGROT_BIN=""` → plain `>>` append (기존 동작) |
-| MCP tool optional params | ✅ `binary_path` 생략 시 기존과 동일 |
-| `cmd_init.sh` parser 추가 | ✅ 인자 없으면 파서가 no-op, 기존 동작 유지 |
+| `resolve_logrot()` | `lib/common.sh:222-275` | ✅ |
+| `_cb_build_logrot_from_source()` | `lib/common.sh:280-304` | ✅ |
+| `_cb_parse_runtime_overrides()` | `lib/common.sh:147-209` | ✅ |
+| 파서 호출: cmd_init | `lib/cmd_init.sh:10` | ✅ |
+| 파서 호출: cmd_start | `lib/cmd_start.sh:9` | ✅ |
+| 파서 호출: cmd_restart | `lib/cmd_restart.sh:85` | ✅ |
+| 파서 호출: cmd_node | `lib/cmd_node.sh:309` | ✅ |
+| `_cb_set_var` env-first guard | `lib/profile.sh:385-399` | ✅ |
+| overlay 머지 (Python) | `lib/profile.sh:261-269` | ✅ |
+| `CHAINBENCH_LOGROT_PATH` export | `lib/profile.sh:411` | ✅ |
+| logrot launch pipeline | `lib/cmd_start.sh:216-222` | ✅ |
+| `config` 서브커맨드 | `lib/cmd_config.sh` | ✅ |
+| `shellEscapeArg` | `mcp-server/src/utils/exec.ts:38-40` | ✅ |
+| `binary_path` MCP param | `lifecycle.ts:59,93,124`, `node.ts:46-49` | ✅ |
+| `chainbench_config_set/get/list` | `mcp-server/src/tools/config.ts` | ✅ |
+| `chain.logrot_path` profile | `profiles/default.yaml:10` | ✅ |
+| `.gitignore` overlay/logrot | `.gitignore:8-9` | ✅ |
 
 ---
 
-## 2. LLM Integration Analysis 검증
+## 2. LLM Integration Analysis — 6/12 구현 완료
 
-### 2.1 구현 현황
+### 2.1 구현 완료 항목 (6개)
 
-| Tier | ID | 제안명 | 코드 존재 여부 | 상태 |
-|------|----|-------|--------------|------|
-| 1 | A | 스크립트 프론트매터 (YAML-in-comment) | `# ---chainbench-meta---` 블록 없음 | ❌ 미구현 |
-| 1 | B | 관찰값(observables) 캡처 API | `observe()` 함수 없음, `_OBSERVED_*` 배열 없음 | ❌ 미구현 |
-| 1 | C | 실패 시 자동 컨텍스트 캡처 | `state/failures/` 디렉토리 없음, MCP tool 없음 | ❌ 미구현 |
-| 1 | D | JSON-first 출력 모드 (NDJSON) | `--format jsonl` 옵션 없음, `CB_FORMAT` 없음 | ❌ 미구현 |
-| 2 | E | 스펙 연결 MCP 리소스 | `mcp-server/src/tools/spec.ts` 없음 | ❌ 미구현 |
-| 2 | F | 고수준 assertion helper | `tests/lib/assert_chain.sh` 없음 | ❌ 미구현 |
-| 2 | G | Dry-run / plan 모드 | `--dry-run` 옵션 없음 | ❌ 미구현 |
-| 2 | H | 압축 상태 MCP tool | `chainbench_state_compact` 없음 | ❌ 미구현 |
-| 3 | I | rerun-failed + snapshot | `rerun-failed`, `snapshot` 커맨드 없음 | ❌ 미구현 |
-| 3 | J | 스캐폴딩 | `test scaffold` 없음 | ❌ 미구현 |
-| 3 | K | 의존성 그래프 | `test graph` 없음 | ❌ 미구현 |
-| 3 | L | daemon 모드 | `daemon` 서브커맨드 없음 | ❌ 미구현 |
+#### A. 스크립트 프론트매터 (YAML-in-comment)
 
-**검증 방법**: `grep -r` 로 각 제안별 키워드 (`observe`, `chainbench-meta`, `--format jsonl`, `chainbench_failure_context`, `spec_lookup`, `assert_tx_success`, `--dry-run`, `state_compact`, `rerun-failed`, `scaffold`, `test graph`, `daemon`) 검색 → `docs/` 하위 문서에만 존재, 코드 구현체에는 없음.
+| 검증 항목 | 결과 |
+|----------|------|
+| `lib/test_meta.sh` 존재 | ✅ `cb_parse_meta()` 함수 |
+| a-ethereum 스크립트 적용 | ✅ 32개 파일에 `# ---chainbench-meta---` 블록 |
+| 파싱 정확성 | ✅ id, name, category, tags, estimated_seconds, depends_on 추출 |
+| 단위 테스트 | ✅ `tests/unit/tests/test-meta-parse.sh` (6 assertions) |
 
-**결론: 12개 제안 중 0개 구현됨**
+#### B. 관찰값(observables) 캡처 API
+
+| 검증 항목 | 결과 |
+|----------|------|
+| `observe()` 함수 | ✅ `tests/lib/assert.sh:82` |
+| `_OBSERVED_KEYS[]` / `_OBSERVED_VALUES[]` | ✅ `assert.sh:21-22` |
+| 결과 JSON `observed` 필드 | ✅ `assert.sh:223-234` 직렬화 |
+| `test_start`에서 배열 초기화 | ✅ `assert.sh:39-40` |
+| 단위 테스트 | ✅ `tests/unit/tests/assert-observe.sh` (6 assertions) |
+
+#### C. 실패 시 자동 컨텍스트 캡처
+
+| 검증 항목 | 결과 |
+|----------|------|
+| `tests/lib/failure_context.sh` | ✅ 107 lines, `_cb_capture_failure_context()` line 14 |
+| `assert.sh`에서 자동 호출 | ✅ `assert.sh:266` (`fail > 0` 조건) |
+| `assert.sh`에서 source | ✅ `assert.sh:8-10` |
+| `state/failures/` 디렉토리 | ✅ `.gitignore`에 포함 |
+| 수집 항목: eth_blockNumber, net_peerCount, eth_syncing | ✅ Python 블록 내 RPC 호출 |
+| 수집 항목: 최근 5블록 hash/stateRoot | ✅ Python 블록 내 구현 |
+| 수집 항목: node log tail -200 | ✅ subprocess.run(["tail"]) |
+| 단위 테스트 | ✅ `tests/unit/tests/failure-context.sh` (7 assertions) |
+
+#### D. JSON-first 출력 모드 (NDJSON)
+
+| 검증 항목 | 결과 |
+|----------|------|
+| `CB_FORMAT` 환경변수 | ✅ `assert.sh` 5개소 참조 |
+| `test_start` → JSONL 이벤트 | ✅ `assert.sh:46-49` |
+| `_assert_pass` → JSONL 이벤트 | ✅ `assert.sh:58-60` |
+| `_assert_fail` → JSONL 이벤트 | ✅ `assert.sh:68-70` |
+| `observe` → JSONL 이벤트 | ✅ `assert.sh:87-89` |
+| `test_result` → `test_end` 이벤트 | ✅ `assert.sh:271-274` |
+| `--format jsonl` CLI 옵션 | ✅ `lib/cmd_test.sh:307` |
+| `CB_FORMAT` export | ✅ `lib/cmd_test.sh:313` |
+| MCP `chainbench_test_run` format param | ✅ `mcp-server/src/tools/test.ts` format enum |
+| 단위 테스트 | ✅ `tests/unit/tests/assert-jsonl.sh` (5 assertions) |
+
+#### G. Dry-run / plan 모드
+
+| 검증 항목 | 결과 |
+|----------|------|
+| `_cb_test_dry_run()` 함수 | ✅ `lib/cmd_test.sh:230` |
+| `--dry-run` 옵션 파싱 | ✅ `lib/cmd_test.sh:307` |
+| JSON 출력 (target, scripts, meta, total) | ✅ Python 블록 내 구현 |
+| text 출력 | ✅ bash printf 기반 |
+| `test_meta.sh` 연동 | ✅ `cb_parse_meta` 호출 |
+| 단위 테스트 | ✅ `tests/unit/tests/cmd-test-dryrun.sh` (4 assertions) |
+
+#### H. 압축 상태 MCP tool
+
+| 검증 항목 | 결과 |
+|----------|------|
+| `chainbench_state_compact` MCP tool | ✅ `mcp-server/src/tools/test.ts:208` |
+| `--compact` CLI 옵션 | ✅ `lib/cmd_status.sh:26` |
+| compact JSON 출력 (< 300 bytes) | ✅ Python 블록 내 구현 |
+| pids.json fallback | ✅ TypeScript fallback 로직 |
+| `chainbench_failure_context` MCP tool | ✅ `mcp-server/src/tools/test.ts:164-205` |
+
+### 2.2 보류 항목 (6개)
+
+| ID | 제안 | 보류 사유 | 재검토 조건 |
+|----|------|----------|-----------|
+| E | 스펙 연결 MCP 리소스 | go-stablenet에 `REGRESSION_TEST_CASES*.md` 부재 | 스펙 문서 생성 시 |
+| F | 고수준 assertion helper | `common.sh`에 `assert_receipt_status`, `gov_full_flow` 등 이미 존재 | 부족 시 추가 |
+| I | rerun-failed + snapshot | Tier 3, 실사용 피드백 필요 | 반복 디버깅 빈도 증가 시 |
+| J | 스펙 기반 스캐폴딩 | spec 문서 부재 (E와 동일) | E 해결 후 |
+| K | 의존성 그래프 | 프론트매터 `depends_on` 데이터 축적 필요 | 전체 스크립트 frontmatter 완료 후 |
+| L | daemon 모드 | 구현 난이도 높음, ROI 불확실 | 성능 병목 측정 후 |
 
 ---
 
 ## 3. 테스트 검증
 
-### 3.1 테스트 파일 목록
+### 3.1 단위 테스트 (12 파일, 82 assertions)
 
-| # | 파일 | Assertion 수 | 커버리지 |
-|---|------|-------------|---------|
-| 1 | `smoke-meta.sh` | 12 | 테스트 프레임워크 자체 검증 |
-| 2 | `common-resolve-binary.sh` | 6 | `resolve_binary` 6단계 우선순위 |
-| 3 | `common-parse-overrides.sh` | 11 | `_cb_parse_runtime_overrides` 파싱 |
-| 4 | `common-resolve-logrot.sh` | 7 | `resolve_logrot` 7단계 discovery |
-| 5 | `profile-env-override.sh` | 4 | `_cb_set_var` env-first guard |
-| 6 | `profile-overlay-merge.sh` | 5 | overlay 머지 + deep merge + inherits 무시 |
-| 7 | `cmd-config.sh` | 9 | config get/set/unset/list/validation |
-| | **합계** | **54** | |
+| # | 파일 | Assertions | 대상 |
+|---|------|-----------|------|
+| 1 | `smoke-meta.sh` | 12 | 테스트 프레임워크 |
+| 2 | `common-resolve-binary.sh` | 6 | `resolve_binary` |
+| 3 | `common-parse-overrides.sh` | 11 | `_cb_parse_runtime_overrides` |
+| 4 | `common-resolve-logrot.sh` | 7 | `resolve_logrot` |
+| 5 | `profile-env-override.sh` | 4 | `_cb_set_var` env-first |
+| 6 | `profile-overlay-merge.sh` | 5 | overlay merge |
+| 7 | `cmd-config.sh` | 9 | config 서브커맨드 |
+| 8 | `assert-observe.sh` | 6 | observe() API |
+| 9 | `test-meta-parse.sh` | 6 | 프론트매터 파서 |
+| 10 | `assert-jsonl.sh` | 5 | JSONL 이벤트 |
+| 11 | `failure-context.sh` | 7 | 실패 컨텍스트 |
+| 12 | `cmd-test-dryrun.sh` | 4 | dry-run 모드 |
 
 ### 3.2 빌드 검증
 
 | 대상 | 결과 |
 |------|------|
-| `bash tests/unit/run.sh` | ✅ 7/7 passed, 54/54 assertions |
+| `bash tests/unit/run.sh` | ✅ 12/12 passed, 82 assertions |
 | `npx tsc --noEmit` (MCP server) | ✅ 0 errors |
-| `shellcheck` (해당 시) | 미실행 (shellcheck 미설치) |
+
+### 3.3 프론트매터 적용 현황
+
+| 카테고리 | 전체 스크립트 | 프론트매터 적용 | 비율 |
+|---------|-------------|---------------|------|
+| a-ethereum | 32 | 32 | 100% |
+| b-wbft | 12 | 0 | 0% |
+| c-anzeon | 7 | 0 | 0% |
+| d-fee-delegation | 4 | 0 | 0% |
+| e-blacklist-authorized | 9 | 0 | 0% |
+| f-system-contracts | 27 | 0 | 0% |
+| g-api | 21 | 0 | 0% |
+| **합계** | **112** | **32** | **29%** |
 
 ---
 
-## 4. 문서 상태 정리
+## 4. 사이드 이펙트 분석
 
-| 문서 | 현재 상태 | 권장 조치 |
-|------|----------|----------|
-| `docs/superpowers/specs/2026-04-09-logging-and-binary-path-design.md` | 구현 완료 | `docs/archive/`로 이동 또는 상단에 "Implemented" 표기 |
-| `docs/LLM_INTEGRATION_ANALYSIS.md` | 12개 제안 모두 미구현 | 유지 — 향후 로드맵 역할 |
-| `docs/REMAINING_TASKS.md` | 현황 반영 완료 | 유지 |
-| `docs/superpowers/` 디렉토리명 | 프로젝트와 무관한 명칭 | `docs/specs/`로 리네임 권장 |
+| 영향 범위 | 결과 |
+|----------|------|
+| 기존 regression 테스트 로직 | ⚠️ 없음 — 프론트매터는 주석이므로 실행에 영향 없음 |
+| `test_result` JSON 스키마 | `observed` 필드 추가 — 기존 소비자는 무시 가능 (additive change) |
+| `assert.sh` 호환성 | `observe()` 미호출 시 `observed: {}` — 기존 테스트 영향 없음 |
+| `failure_context.sh` source | `assert.sh` 상단에서 조건부 source — 파일 없으면 skip |
+| `CB_FORMAT` 기본값 | `text` — 기존 동작 변경 없음 |
+| MCP tool 추가 | additive — 기존 tool 시그니처 변경 없음 (`format` param은 optional default) |
 
 ---
 
-## 5. 결론
+## 5. 전체 요약
 
-### Logging & Binary Path Spec
-- **설계 문서 대비 100% 구현 완료** (9/9 phases)
-- 설계에 명시된 모든 함수, 변수, 파일, MCP tool이 정확한 위치에 구현됨
-- CLI 연결 (`_cb_parse_runtime_overrides` call sites)이 초기 누락되었으나 `c2ff06e`에서 수정 완료
-- 설계에 없는 추가 기능 (`config_get`, `config_list` MCP tools)도 구현
+### 구현 통계
 
-### LLM Integration Analysis
-- **12개 제안 중 0개 구현** — 이 문서는 로드맵/분석 문서이며, 구현 착수를 위해서는 별도 설계 문서(approved spec) 작성이 필요
-- 권장 착수 순서: B (observables) → C (failure context) → D (JSONL) → A (frontmatter) → G (dry-run)
+```
+Logging & Binary Path Spec:      9/9 phases  (100%)
+LLM Integration Tier 1 (A-D):    4/4 items   (100%)
+LLM Integration Tier 2 (E-H):    2/4 items   ( 50%)
+LLM Integration Tier 3 (I-L):    0/4 items   (  0%)
+────────────────────────────────────────────────────
+전체:                             15/21 items  ( 71%)
+단위 테스트:                      12 files, 82 assertions
+TypeScript:                       0 errors
+사이드 이펙트:                    없음
+```
+
+### 미완료 사항 (사유 있는 보류)
+
+| 항목 | 핵심 차단 요인 |
+|------|--------------|
+| E (스펙 연결) | go-stablenet에 regression spec 문서 미존재 |
+| F (고수준 assertion) | `common.sh`에 이미 충분한 도메인 헬퍼 존재 |
+| I-L (Tier 3) | 실사용 피드백 수집 전 ROI 판단 불가 |
+| 프론트매터 b~g 카테고리 | a-ethereum 32개 완료, 나머지 80개는 피드백 후 일괄 적용 |
