@@ -13,6 +13,7 @@ readonly _CB_CMD_TEST_SH_LOADED=1
 _CB_TEST_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_TEST_LIB_DIR}/common.sh"
 source "${_CB_TEST_LIB_DIR}/test_meta.sh" 2>/dev/null || true
+source "${_CB_TEST_LIB_DIR}/test_scaffold.sh" 2>/dev/null || true
 
 # ---- Constants ---------------------------------------------------------------
 
@@ -521,6 +522,23 @@ cmd_test_main() {
       ;;
     run)
       _cb_test_cmd_run "$@"
+      ;;
+    scaffold)
+      # chainbench test scaffold --spec <path> --id <RT-ID> [--target <dir>]
+      local spec_path="" scaffold_id="" target_dir="${_CB_TEST_TESTS_DIR}/regression"
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --spec) spec_path="${2:?--spec requires a path}"; shift 2 ;;
+          --id)   scaffold_id="${2:?--id requires an RT-ID}"; shift 2 ;;
+          --target) target_dir="${2:?--target requires a directory}"; shift 2 ;;
+          *) shift ;;
+        esac
+      done
+      if [[ -z "$spec_path" || -z "$scaffold_id" ]]; then
+        log_error "Usage: chainbench test scaffold --spec <path> --id <RT-ID> [--target <dir>]"
+        return 1
+      fi
+      _cb_test_scaffold "$spec_path" "$scaffold_id" "$target_dir"
       ;;
     --help|-h|help)
       _cb_test_usage
