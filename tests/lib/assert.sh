@@ -38,6 +38,10 @@ test_start() {
   _OBSERVED_VALUES=()
   _ASSERT_START_TS=$(date +%s)
   printf "${_ASSERT_CYAN}[TEST]${_ASSERT_RESET}  Starting: %s\n" "$_ASSERT_TEST_NAME" >&2
+  if [[ "${CB_FORMAT:-text}" == "jsonl" ]]; then
+    python3 -c "import json,sys; print(json.dumps({'event':'test_start','name':sys.argv[1],'ts':sys.argv[2]}))" \
+      "$_ASSERT_TEST_NAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  fi
 }
 
 # _assert_pass <msg>
@@ -46,6 +50,9 @@ _assert_pass() {
   local msg="${1:-}"
   _ASSERT_PASS=$(( _ASSERT_PASS + 1 ))
   printf "${_ASSERT_GREEN}  [PASS]${_ASSERT_RESET} %s\n" "$msg" >&2
+  if [[ "${CB_FORMAT:-text}" == "jsonl" ]]; then
+    python3 -c "import json,sys; print(json.dumps({'event':'assert_pass','msg':sys.argv[1]}))" "$msg"
+  fi
 }
 
 # _assert_fail <msg>
@@ -55,6 +62,9 @@ _assert_fail() {
   _ASSERT_FAIL=$(( _ASSERT_FAIL + 1 ))
   _ASSERT_FAILURES+=("$msg")
   printf "${_ASSERT_RED}  [FAIL]${_ASSERT_RESET} %s\n" "$msg" >&2
+  if [[ "${CB_FORMAT:-text}" == "jsonl" ]]; then
+    python3 -c "import json,sys; print(json.dumps({'event':'assert_fail','msg':sys.argv[1]}))" "$msg"
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -246,5 +256,12 @@ print(json.dumps(data, indent=2))
     > "$result_file"
 
   printf "         Result file: %s\n" "$result_file" >&2
+
+  # JSONL test_end event
+  if [[ "${CB_FORMAT:-text}" == "jsonl" ]]; then
+    python3 -c "import json,sys; print(json.dumps({'event':'test_end','name':sys.argv[1],'status':sys.argv[2],'duration':int(sys.argv[3]),'pass':int(sys.argv[4]),'fail':int(sys.argv[5])}))" \
+      "$_ASSERT_TEST_NAME" "$status" "$duration" "$_ASSERT_PASS" "$_ASSERT_FAIL"
+  fi
+
   return "$exit_code"
 }

@@ -228,15 +228,21 @@ _cb_test_cmd_run() {
   local target=""
   local quiet="${CHAINBENCH_QUIET:-0}"
   local remote_alias=""
+  local format="${CB_FORMAT:-text}"
 
-  # Parse args: target and --remote flag
+  # Parse args: target, --remote, --format flags
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --remote) remote_alias="${2:?--remote requires an alias}"; shift 2 ;;
       --remote=*) remote_alias="${1#--remote=}"; shift ;;
+      --format) format="${2:-text}"; shift 2 ;;
+      --format=*) format="${1#--format=}"; shift ;;
       *) [[ -z "$target" ]] && target="$1" || true; shift ;;
     esac
   done
+
+  # Export format for child test scripts
+  export CB_FORMAT="$format"
   target="${target:-all}"
 
   # When --remote is set, export CHAINBENCH_REMOTE for test scripts
