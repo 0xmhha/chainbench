@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-3-02
+# name: 검증자 추가 proposal quorum 승인 → execute → 다음 에폭 반영
+# category: regression/f-system-contracts
+# tags: [governance, validator]
+# estimated_seconds: 37
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f3-02-add-validator-approve-execute
 # RT-F-3-02 — 검증자 추가 proposal quorum 승인 → execute → 다음 에폭 반영
 set -euo pipefail

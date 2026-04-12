@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-03
+# name: FeePayer가 블랙리스트 계정이면 거부
+# category: regression/e-blacklist-authorized
+# tags: [blacklist, gas, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-03-feepayer-blacklisted
 # RT-E-03 — FeePayer가 블랙리스트 계정이면 거부
 set -euo pipefail

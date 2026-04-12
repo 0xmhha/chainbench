@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-4-03
+# name: GovMasterMinter 자체 멤버 추가/제거 (proposeAddMember, proposeRemoveMember)
+# category: regression/f-system-contracts
+# tags: [governance, mint, minter]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f4-03-masterminter-self-member
 # RT-F-4-03 — GovMasterMinter 자체 멤버 추가/제거 (proposeAddMember, proposeRemoveMember)
 set -euo pipefail

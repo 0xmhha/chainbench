@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-2-03
+# name: quorum 미달 → proposal 상태 Voting 유지, 발행 미실행
+# category: regression/f-system-contracts
+# tags: [governance, quorum]
+# estimated_seconds: 65
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f2-03-quorum-deficient
 # RT-F-2-03 (v2) — quorum 미달 → proposal 상태 Voting 유지, 발행 미실행
 set -euo pipefail

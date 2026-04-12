@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-01
+# name: 블랙리스트 계정이 Sender인 tx 거부 (ErrBlacklistedAccount)
+# category: regression/e-blacklist-authorized
+# tags: [blacklist, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-01-sender-blacklisted
 # RT-E-01 — 블랙리스트 계정이 Sender인 tx 거부 (ErrBlacklistedAccount)
 set -euo pipefail

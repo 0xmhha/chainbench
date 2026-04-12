@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-02
+# name: 블랙리스트 계정이 Recipient인 tx 거부
+# category: regression/e-blacklist-authorized
+# tags: [blacklist, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-02-recipient-blacklisted
 # RT-E-02 — 블랙리스트 계정이 Recipient인 tx 거부
 set -euo pipefail

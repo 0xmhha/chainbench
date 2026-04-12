@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-5-01
+# name: GovCouncil blacklist proposal → execute → isBlacklisted == true
+# category: regression/f-system-contracts
+# tags: [governance, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f5-01-blacklist
 # RT-F-5-01 — GovCouncil blacklist proposal → execute → isBlacklisted == true
 set -euo pipefail

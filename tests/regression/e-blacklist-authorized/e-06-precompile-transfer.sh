@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-06
+# name: Precompile 주소로 value 전송 차단
+# category: regression/e-blacklist-authorized
+# tags: [blacklist, transfer]
+# estimated_seconds: 25
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-06-precompile-transfer
 # RT-E-06 — Precompile 주소로 value 전송 차단
 set -euo pipefail

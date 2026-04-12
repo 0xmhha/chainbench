@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-2-02
+# name: 코인 소각: proposeBurn(proofData) payable → 승인 → execute
+# category: regression/f-system-contracts
+# tags: [governance, proposal, mint]
+# estimated_seconds: 67
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f2-02-burn-proposal
 # RT-F-2-02 — 코인 소각: proposeBurn(proofData) payable → 승인 → execute
 #

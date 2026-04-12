@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-5-05
+# name: 비멤버가 AccountManager.blacklist 직접 호출 → revert
+# category: regression/f-system-contracts
+# tags: [governance, access-control, error]
+# estimated_seconds: 25
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f5-05-direct-blacklist-rejected
 # RT-F-5-05 — 비멤버가 AccountManager.blacklist 직접 호출 → revert
 set -euo pipefail

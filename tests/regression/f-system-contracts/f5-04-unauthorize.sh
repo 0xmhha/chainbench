@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: 
+# name: f5-04-unauthorize
+# category: regression/f-system-contracts
+# tags: [governance]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f5-04-unauthorize
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

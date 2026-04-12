@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-1-05
+# name: Burn 실행 시 Transfer(account → 0x0) 이벤트 발생
+# category: regression/f-system-contracts
+# tags: [governance, mint, transfer, event]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f1-05-burn-transfer-event
 # RT-F-1-05 (v2) — Burn 실행 시 Transfer(account → 0x0) 이벤트 발생
 set -euo pipefail

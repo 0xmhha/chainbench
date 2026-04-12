@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-4-04
+# name: 비멤버 계정의 GovMasterMinter.proposeConfigureMinter 호출 거부
+# category: regression/f-system-contracts
+# tags: [governance, error]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f4-04-non-member-rejected
 # RT-F-4-04 — 비멤버 계정의 GovMasterMinter.proposeConfigureMinter 호출 거부
 set -euo pipefail

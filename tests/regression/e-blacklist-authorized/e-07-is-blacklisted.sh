@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-07
+# name: AccountManager.isBlacklisted 조회
+# category: regression/e-blacklist-authorized
+# tags: [blacklist, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-07-is-blacklisted
 # RT-E-07 — AccountManager.isBlacklisted 조회
 set -euo pipefail

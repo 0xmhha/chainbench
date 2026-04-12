@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-4-01
+# name: GovMasterMinter.proposeConfigureMinter(address, uint256) → 승인 → execute
+# category: regression/f-system-contracts
+# tags: [governance, mint, minter]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f4-01-add-minter
 # RT-F-4-01 — GovMasterMinter.proposeConfigureMinter(address, uint256) → 승인 → execute
 #

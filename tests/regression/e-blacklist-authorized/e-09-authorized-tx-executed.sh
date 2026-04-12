@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-09
+# name: Authorized 계정 tx 실행 시 AuthorizedTxExecuted 이벤트 발생
+# category: regression/e-blacklist-authorized
+# tags: [blacklist, access-control]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-09-authorized-tx-executed
 # RT-E-09 — Authorized 계정 tx 실행 시 AuthorizedTxExecuted 이벤트 발생
 set -euo pipefail

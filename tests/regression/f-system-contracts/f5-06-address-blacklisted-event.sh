@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-5-06
+# name: blacklist 등록 시 AddressBlacklisted 이벤트 발생
+# category: regression/f-system-contracts
+# tags: [governance, event, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f5-06-address-blacklisted-event
 # RT-F-5-06 — blacklist 등록 시 AddressBlacklisted 이벤트 발생
 set -euo pipefail

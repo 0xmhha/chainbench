@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-1-01
+# name: NativeCoinAdapter.transfer → 기본 코인 전송과 동일
+# category: regression/f-system-contracts
+# tags: [governance, transfer]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f1-01-native-transfer
 # RT-F-1-01 — NativeCoinAdapter.transfer → 기본 코인 전송과 동일
 set -euo pipefail

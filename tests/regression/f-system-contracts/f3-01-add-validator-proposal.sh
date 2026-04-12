@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-3-01
+# name: 검증자 추가 proposal 생성 (Voting 상태)
+# category: regression/f-system-contracts
+# tags: [governance, validator, proposal]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f3-01-add-validator-proposal
 # RT-F-3-01 — 검증자 추가 proposal 생성 (Voting 상태)
 set -euo pipefail

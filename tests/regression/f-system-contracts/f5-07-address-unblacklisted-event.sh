@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-5-07
+# name: AddressUnblacklisted 이벤트
+# category: regression/f-system-contracts
+# tags: [governance, event, access-control]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # RT-F-5-07 — AddressUnblacklisted 이벤트
 set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"

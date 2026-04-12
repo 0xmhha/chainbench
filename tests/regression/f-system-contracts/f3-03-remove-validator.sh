@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-3-03
+# name: 검증자 제거 proposal → 승인 → execute
+# category: regression/f-system-contracts
+# tags: [governance, validator]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f3-03-remove-validator
 # RT-F-3-03 — 검증자 제거 proposal → 승인 → execute
 set -euo pipefail

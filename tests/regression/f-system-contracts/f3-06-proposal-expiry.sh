@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-3-06
+# name: proposal expiry 초과 → Expired 상태 전환 → execute 불가
+# category: regression/f-system-contracts
+# tags: [governance, proposal]
+# estimated_seconds: 120
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f3-06-proposal-expiry
 # RT-F-3-06 — proposal expiry 초과 → Expired 상태 전환 → execute 불가
 #

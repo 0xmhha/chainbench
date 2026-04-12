@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-3-05
+# name: GasTip 거버넌스 lifecycle (proposeGasTip → 승인 → execute → storage 변경 + GasTipUpdated 이벤트)
+# category: regression/f-system-contracts
+# tags: [governance, proposal, gas]
+# estimated_seconds: 7
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f3-05-propose-gastip
 # RT-F-3-05 (v2) — GasTip 거버넌스 lifecycle (proposeGasTip → 승인 → execute → storage 변경 + GasTipUpdated 이벤트)
 set -euo pipefail

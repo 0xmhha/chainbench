@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-E-05
+# name: Zero Address로 코인 전송 차단 (ErrZeroAddressTransfer)
+# category: regression/e-blacklist-authorized
+# tags: [blacklist]
+# estimated_seconds: 25
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/e-blacklist-authorized/e-05-zero-address
 # RT-E-05 — Zero Address로 코인 전송 차단 (ErrZeroAddressTransfer)
 set -euo pipefail

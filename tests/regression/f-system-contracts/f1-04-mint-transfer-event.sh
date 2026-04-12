@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-1-04
+# name: Mint 실행 시 Transfer(0x0 → beneficiary) 이벤트 발생
+# category: regression/f-system-contracts
+# tags: [governance, mint, transfer, event]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f1-04-mint-transfer-event
 # RT-F-1-04 (v2) — Mint 실행 시 Transfer(0x0 → beneficiary) 이벤트 발생
 #

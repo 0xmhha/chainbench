@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-F-1-03
+# name: approve / transferFrom 정상 동작
+# category: regression/f-system-contracts
+# tags: [governance, transfer]
+# estimated_seconds: 65
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/f-system-contracts/f1-03-approve-transferfrom
 # RT-F-1-03 (v2) — approve / transferFrom 정상 동작
 set -euo pipefail
