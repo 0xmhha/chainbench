@@ -5,6 +5,8 @@ state/current-profile-merged.json
 state/results/*.json
 state/remotes.json
 state/current-remote
+state/local-config.yaml
+state/logrot-build.log
 
 # Node data (generated at runtime)
 data/

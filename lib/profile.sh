@@ -27,8 +27,9 @@ readonly _CB_PROFILES_DIR="${_CB_LIB_DIR}/../profiles"
 
 _cb_python_merge_yaml() {
   local profile_path="${1:?_cb_python_merge_yaml: profile path required}"
+  local chainbench_dir="${CHAINBENCH_DIR:-}"
 
-  python3 - "$profile_path" "$_CB_PROFILES_DIR" <<'PYEOF'
+  python3 - "$profile_path" "$_CB_PROFILES_DIR" "$chainbench_dir" <<'PYEOF'
 import sys
 import json
 import os
@@ -36,6 +37,7 @@ import re
 
 PROFILE_PATH  = sys.argv[1]
 PROFILES_ROOT = sys.argv[2]
+CHAINBENCH_DIR = sys.argv[3] if len(sys.argv) > 3 else ""
 
 
 # --------------------------------------------------------------------------- #
@@ -253,6 +255,19 @@ def load_with_inheritance(path, profiles_root, depth=0):
 
 try:
     merged = load_with_inheritance(PROFILE_PATH, PROFILES_ROOT)
+
+    # Merge local overlay if present (machine-local, git-ignored)
+    if CHAINBENCH_DIR:
+        overlay_path = os.path.join(CHAINBENCH_DIR, "state", "local-config.yaml")
+        if os.path.isfile(overlay_path):
+            overlay = load_yaml_file(overlay_path)
+            if overlay:
+                if 'inherits' in overlay:
+                    print("WARN: local-config.yaml: 'inherits' field ignored in overlays",
+                          file=sys.stderr)
+                    overlay = {k: v for k, v in overlay.items() if k != 'inherits'}
+                merged = deep_merge(merged, overlay)
+
     print(json.dumps(merged, ensure_ascii=False))
 except Exception as exc:
     print(f"ERROR: {exc}", file=sys.stderr)
@@ -363,11 +378,21 @@ _cb_export_profile_vars() {
   local json_file="${1:?_cb_export_profile_vars: json file required}"
   local profile_name="${2:?_cb_export_profile_vars: profile name required}"
 
-  # Helper: read a field, fall back to default, then export as CHAINBENCH_VAR
+  # Helper: read a field, fall back to default, then export as CHAINBENCH_VAR.
+  # Env-first guard: if the variable is already set and non-empty, preserve it.
+  # This allows CLI flags and env vars to take precedence over profile values.
+  # Opt-out: set CHAINBENCH_PROFILE_ENV_OVERRIDE=0 to always use profile values.
   _cb_set_var() {
     local var_name="$1"
     local field="$2"
     local default="${3:-}"
+
+    if [[ "${CHAINBENCH_PROFILE_ENV_OVERRIDE:-1}" == "1" ]] \
+        && [[ -n "${!var_name+x}" ]] \
+        && [[ -n "${!var_name}" ]]; then
+      return 0
+    fi
+
     local value
     value="$(_cb_jq_get "$json_file" "$field" "$default")"
     export "${var_name}=${value}"
@@ -383,6 +408,7 @@ _cb_export_profile_vars() {
   _cb_set_var CHAINBENCH_NETWORK_ID        ".chain.network_id"   ""
   _cb_set_var CHAINBENCH_CHAIN_ID          ".chain.chain_id"     ""
   _cb_set_var CHAINBENCH_CHAIN_TYPE        ".chain.type"          "stablenet"
+  _cb_set_var CHAINBENCH_LOGROT_PATH      ".chain.logrot_path"   ""
 
   # data.*
   _cb_set_var CHAINBENCH_DATA_DIR          ".data.directory"     "data"
