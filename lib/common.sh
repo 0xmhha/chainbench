@@ -137,6 +137,172 @@ get_node_port() {
   printf '%d\n' $(( base + index ))
 }
 
+# ---- Runtime override parser -------------------------------------------------
+
+# _cb_parse_runtime_overrides <remaining_array_ref> [args...]
+# Shared CLI flag parser for --binary-path and --logrot-path.
+# Consumes recognized flags and exports the corresponding CHAINBENCH_* env vars.
+# Unknown flags are appended to the nameref array for the caller to handle.
+# Exits 2 on validation errors (missing value, non-absolute path).
+_cb_parse_runtime_overrides() {
+  local -n _remaining_ref="$1"
+  shift
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --binary-path)
+        if [[ $# -lt 2 || "$2" == --* ]]; then
+          log_error "--binary-path requires a value (absolute path)"
+          exit 2
+        fi
+        if [[ "$2" != /* ]]; then
+          log_error "--binary-path must be an absolute path (got: '$2')"
+          exit 2
+        fi
+        export CHAINBENCH_BINARY_PATH="$2"
+        shift 2
+        ;;
+      --binary-path=*)
+        local _val="${1#--binary-path=}"
+        if [[ -z "$_val" ]]; then
+          log_error "--binary-path requires a value (absolute path)"
+          exit 2
+        fi
+        if [[ "$_val" != /* ]]; then
+          log_error "--binary-path must be an absolute path (got: '$_val')"
+          exit 2
+        fi
+        export CHAINBENCH_BINARY_PATH="$_val"
+        shift
+        ;;
+      --logrot-path)
+        if [[ $# -lt 2 || "$2" == --* ]]; then
+          log_error "--logrot-path requires a value (absolute path)"
+          exit 2
+        fi
+        if [[ "$2" != /* ]]; then
+          log_error "--logrot-path must be an absolute path (got: '$2')"
+          exit 2
+        fi
+        export CHAINBENCH_LOGROT_PATH="$2"
+        shift 2
+        ;;
+      --logrot-path=*)
+        local _val="${1#--logrot-path=}"
+        if [[ -z "$_val" ]]; then
+          log_error "--logrot-path requires a value (absolute path)"
+          exit 2
+        fi
+        if [[ "$_val" != /* ]]; then
+          log_error "--logrot-path must be an absolute path (got: '$_val')"
+          exit 2
+        fi
+        export CHAINBENCH_LOGROT_PATH="$_val"
+        shift
+        ;;
+      *)
+        _remaining_ref+=("$1")
+        shift
+        ;;
+    esac
+  done
+}
+
+# ---- Logrot resolution ------------------------------------------------------
+
+# resolve_logrot <binary_path> [explicit_logrot_path]
+# Resolves the full path to the logrot binary using the priority chain:
+#   1. Explicit logrot_path (from profile or CLI)
+#   2. dirname(binary_path)/logrot
+#   3. git-root/build/bin/logrot
+#   4. Auto-build from source if cmd/logrot/main.go exists
+#   5. $PATH lookup (with warning)
+#   6. Empty string (non-fatal, caller falls back to plain >>)
+# Prints the resolved absolute path to stdout, or empty string.
+resolve_logrot() {
+  local binary_path="${1:-}"
+  local explicit_path="${2:-}"
+
+  # 1. Explicit path from profile/CLI
+  if [[ -n "$explicit_path" && -x "$explicit_path" ]]; then
+    printf '%s\n' "$explicit_path"
+    return 0
+  elif [[ -n "$explicit_path" ]]; then
+    log_warn "Explicit logrot path '$explicit_path' is not executable, trying auto-detection"
+  fi
+
+  # 2. Same directory as the chain binary
+  if [[ -n "$binary_path" ]]; then
+    local sibling
+    sibling="$(dirname "$binary_path")/logrot"
+    if [[ -x "$sibling" ]]; then
+      printf '%s\n' "$sibling"
+      return 0
+    fi
+  fi
+
+  # 3. git-root/build/bin/logrot
+  local git_root
+  git_root="$(git rev-parse --show-toplevel 2>/dev/null)" || true
+  if [[ -n "$git_root" && -x "${git_root}/build/bin/logrot" ]]; then
+    printf '%s\n' "${git_root}/build/bin/logrot"
+    return 0
+  fi
+
+  # 4. Auto-build from source
+  if [[ -n "$git_root" ]]; then
+    local built
+    built="$(_cb_build_logrot_from_source "$git_root")" || true
+    if [[ -n "$built" && -x "$built" ]]; then
+      log_info "Built logrot from source: $built"
+      printf '%s\n' "$built"
+      return 0
+    fi
+  fi
+
+  # 5. $PATH lookup
+  local resolved
+  resolved="$(command -v logrot 2>/dev/null)" || true
+  if [[ -n "$resolved" ]]; then
+    log_warn "Using logrot from \$PATH ($resolved)"
+    printf '%s\n' "$resolved"
+    return 0
+  fi
+
+  # 6. Not found
+  printf ''
+  return 0
+}
+
+# _cb_build_logrot_from_source <git_root>
+# Attempts to build logrot from cmd/logrot/main.go if present.
+# Prints the built binary path on success, empty on failure.
+_cb_build_logrot_from_source() {
+  local git_root="$1"
+  local main_go="${git_root}/cmd/logrot/main.go"
+  local out="${git_root}/build/bin/logrot"
+
+  if [[ ! -f "$main_go" ]]; then
+    return 0
+  fi
+
+  if ! command -v go &>/dev/null; then
+    log_info "logrot source found but 'go' not available, skipping build"
+    return 0
+  fi
+
+  local log_file="${CHAINBENCH_DIR:-${git_root}}/state/logrot-build.log"
+  mkdir -p "$(dirname "$log_file")" "$(dirname "$out")"
+
+  if (cd "$git_root" && go build -o "$out" ./cmd/logrot) >"$log_file" 2>&1; then
+    printf '%s\n' "$out"
+    return 0
+  else
+    log_warn "logrot build failed, see $log_file"
+    return 0
+  fi
+}
+
 # ---- Misc helpers ------------------------------------------------------------
 
 # is_truthy <value>
