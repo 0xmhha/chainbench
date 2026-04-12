@@ -28,8 +28,8 @@ _cb_test_discover_categories() {
     name=$(basename "$dir")
     # Exclude library and unit test directories
     [[ "$name" == "lib" || "$name" == "unit" ]] && continue
-    # Only include directories containing .sh files
-    if compgen -G "${dir}*.sh" > /dev/null 2>&1; then
+    # Include directories containing .sh files (direct or in subdirectories)
+    if find "$dir" -name '*.sh' -type f 2>/dev/null | head -1 | grep -q .; then
       printf '%s\n' "$name"
     fi
   done | sort
@@ -91,8 +91,11 @@ _cb_test_find_scripts() {
     return 0
   fi
 
-  # Use find with sorted output; avoid globbing issues with empty dirs
-  find "$dir" -maxdepth 1 -name '*.sh' -type f | sort
+  # Discover .sh files recursively, exclude lib/ directories and helper scripts
+  find "$dir" -name '*.sh' -type f \
+    ! -path '*/lib/*' \
+    ! -name 'run-all.sh' \
+    | sort
 }
 
 # _cb_test_extract_description <script_path>
