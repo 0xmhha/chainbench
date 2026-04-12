@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-06
+# name: revert tx: receipt.status == 0, 잔여 가스 환불
+# category: regression/a-ethereum
+# tags: [contract, revert]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: [RT-A-3-05]
+# ---end-meta---
 # Test: regression/a-ethereum/a3-06-revert-tx
 # RT-A-3-06 — revert tx: receipt.status == 0, 잔여 가스 환불
 set -euo pipefail

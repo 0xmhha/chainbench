@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-10
+# name: SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임
+# category: regression/a-ethereum
+# tags: [tx, eip7702]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-10-setcode-tx
 # RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임
 # [v2 보강] effectiveGasPrice + gasLimit valid check

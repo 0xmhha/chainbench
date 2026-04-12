@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-4-07
+# name: eth_subscribe(logs) WebSocket 구독
+# category: regression/a-ethereum
+# tags: [rpc, websocket]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a4-07-ws-subscribe-logs
 # RT-A-4-07 — eth_subscribe(logs) WebSocket 구독
 set -euo pipefail

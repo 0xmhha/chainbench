@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-06
+# name: 잔액 부족 tx 거부
+# category: regression/a-ethereum
+# tags: [tx, error]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-06-insufficient-funds
 # RT-A-2-06 — 잔액 부족 tx 거부
 set -euo pipefail

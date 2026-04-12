@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-1-02
+# name: Full Sync: 동기화 제공 노드가 동기화 요청 노드보다 2 이상 높음
+# category: regression/a-ethereum
+# tags: [sync]
+# estimated_seconds: 26
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a1-02-full-sync
 # RT-A-1-02 (v2 revised) — Full Sync: 동기화 제공 노드가 동기화 요청 노드보다 2 이상 높음
 #

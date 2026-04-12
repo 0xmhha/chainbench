@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-02
+# name: EIP-1559 DynamicFeeTx (type 0x2) 발행
+# category: regression/a-ethereum
+# tags: [tx, eip1559]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-02-dynamic-fee-tx
 # RT-A-2-02 — EIP-1559 DynamicFeeTx (type 0x2) 발행
 # [v2 보강] effectiveGasPrice + gasLimit valid check

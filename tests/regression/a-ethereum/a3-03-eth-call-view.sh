@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-03
+# name: eth_call view 함수 조회 (tx 발행 없이)
+# category: regression/a-ethereum
+# tags: [contract, eth_call]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: [RT-A-3-01]
+# ---end-meta---
 # Test: regression/a-ethereum/a3-03-eth-call-view
 # RT-A-3-03 — eth_call view 함수 조회 (tx 발행 없이)
 set -euo pipefail

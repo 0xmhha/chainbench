@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-05
+# name: eth_call로 revert하는 함수 호출 시 에러 반환
+# category: regression/a-ethereum
+# tags: [contract, revert, eth_call]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: [RT-A-3-05]
+# ---end-meta---
 # Test: regression/a-ethereum/a3-05-eth-call-revert
 # RT-A-3-05 — eth_call로 revert하는 함수 호출 시 에러 반환
 set -euo pipefail

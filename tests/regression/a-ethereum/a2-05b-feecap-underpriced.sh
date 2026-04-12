@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-05b
+# name: GasFeeCap < MinBaseFee+MinTip tx 거부 (Anzeon 활성)
+# category: regression/a-ethereum
+# tags: [tx, anzeon]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-05b-feecap-underpriced
 # RT-A-2-05b — GasFeeCap < MinBaseFee+MinTip tx 거부 (Anzeon 활성)
 # Expected: ErrUnderpriced with message prefix "transaction underpriced: gas fee cap"

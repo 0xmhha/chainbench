@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-04
+# name: Nonce 순서 보장
+# category: regression/a-ethereum
+# tags: [tx, nonce]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-04-nonce-ordering
 # RT-A-2-04 — Nonce 순서 보장
 set -euo pipefail

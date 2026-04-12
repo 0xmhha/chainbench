@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-03
+# name: AccessListTx (type 0x1) 발행
+# category: regression/a-ethereum
+# tags: [tx, accesslist]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-03-access-list-tx
 # RT-A-2-03 — AccessListTx (type 0x1) 발행
 set -euo pipefail

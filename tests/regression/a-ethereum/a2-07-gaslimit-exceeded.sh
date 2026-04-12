@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-07
+# name: Gas Limit 초과 tx 거부 (블록 gas limit 초과)
+# category: regression/a-ethereum
+# tags: [tx, error]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-07-gaslimit-exceeded
 # RT-A-2-07 — Gas Limit 초과 tx 거부 (블록 gas limit 초과)
 set -euo pipefail

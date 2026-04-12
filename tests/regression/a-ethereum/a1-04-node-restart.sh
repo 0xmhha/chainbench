@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-1-04
+# name: 노드 재시작 후 블록 생산 재개 (1초 주기)
+# category: regression/a-ethereum
+# tags: [sync, restart]
+# estimated_seconds: 20
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a1-04-node-restart
 # RT-A-1-04 — 노드 재시작 후 블록 생산 재개 (1초 주기)
 set -euo pipefail

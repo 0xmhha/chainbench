@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-4-02
+# name: eth_getBalance 정상 조회
+# category: regression/a-ethereum
+# tags: [rpc, balance]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a4-02-eth-get-balance
 # RT-A-4-02 — eth_getBalance 정상 조회
 set -euo pipefail

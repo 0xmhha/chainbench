@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-4-01
+# name: eth_blockNumber 단조 증가
+# category: regression/a-ethereum
+# tags: [rpc, blockNumber]
+# estimated_seconds: 9
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a4-01-eth-block-number
 # RT-A-4-01 — eth_blockNumber 단조 증가
 set -euo pipefail

@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-1-06
+# name: Downloader 경로: 큰 gap(≥ 10) 생성 후 동기화
+# category: regression/a-ethereum
+# tags: [sync, downloader]
+# estimated_seconds: 22
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a1-06-downloader-path
 # RT-A-1-06 (v2 신규) — Downloader 경로: 큰 gap(≥ 10) 생성 후 동기화
 #

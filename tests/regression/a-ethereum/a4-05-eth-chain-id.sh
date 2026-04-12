@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-4-05
+# name: eth_chainId genesis 설정과 일치
+# category: regression/a-ethereum
+# tags: [rpc, chainId]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a4-05-eth-chain-id
 # RT-A-4-05 — eth_chainId genesis 설정과 일치
 set -euo pipefail

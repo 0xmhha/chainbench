@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-09
+# name: 동일 nonce, 더 높은 GasFeeCap으로 tx 교체
+# category: regression/a-ethereum
+# tags: [tx, replacement]
+# estimated_seconds: 10
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-09-replacement-tx
 # RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap으로 tx 교체
 set -euo pipefail

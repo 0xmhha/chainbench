@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-1-05
+# name: P2P 피어 연결 확인
+# category: regression/a-ethereum
+# tags: [sync, p2p]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a1-05-p2p-peers
 # RT-A-1-05 — P2P 피어 연결 확인
 set -euo pipefail

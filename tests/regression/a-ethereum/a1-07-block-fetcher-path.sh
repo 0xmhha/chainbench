@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-1-07
+# name: Block Fetcher 경로: 작은 gap(= 1) 또는 정상 운영 중 NewBlock 전파
+# category: regression/a-ethereum
+# tags: [sync, fetcher]
+# estimated_seconds: 13
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a1-07-block-fetcher-path
 # RT-A-1-07 (v2 신규) — Block Fetcher 경로: 작은 gap(= 1) 또는 정상 운영 중 NewBlock 전파
 #

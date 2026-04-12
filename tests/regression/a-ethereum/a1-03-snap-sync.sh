@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-1-03
+# name: Snap Sync: 128 블록 이상, 높이 차이 ≥ 2
+# category: regression/a-ethereum
+# tags: [sync]
+# estimated_seconds: 120
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a1-03-snap-sync
 # RT-A-1-03 (v2 revised) — Snap Sync: 128 블록 이상, 높이 차이 ≥ 2
 #

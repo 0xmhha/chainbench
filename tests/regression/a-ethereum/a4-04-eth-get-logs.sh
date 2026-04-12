@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-4-04
+# name: eth_getLogs 이벤트 로그 조회
+# category: regression/a-ethereum
+# tags: [rpc, logs]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a4-04-eth-get-logs
 # RT-A-4-04 — eth_getLogs 이벤트 로그 조회
 set -euo pipefail

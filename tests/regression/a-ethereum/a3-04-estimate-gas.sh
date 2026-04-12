@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-04
+# name: eth_estimateGas 정상 동작
+# category: regression/a-ethereum
+# tags: [contract, estimateGas]
+# estimated_seconds: 5
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: [RT-A-3-01]
+# ---end-meta---
 # Test: regression/a-ethereum/a3-04-estimate-gas
 # RT-A-3-04 — eth_estimateGas 정상 동작
 set -euo pipefail

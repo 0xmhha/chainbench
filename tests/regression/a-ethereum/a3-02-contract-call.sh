@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-02
+# name: 컨트랙트 상태 변경 함수 호출 (set) + eth_call로 확인
+# category: regression/a-ethereum
+# tags: [contract]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: [RT-A-3-01]
+# ---end-meta---
 # Test: regression/a-ethereum/a3-02-contract-call
 # RT-A-3-02 — 컨트랙트 상태 변경 함수 호출 (set) + eth_call로 확인
 set -euo pipefail

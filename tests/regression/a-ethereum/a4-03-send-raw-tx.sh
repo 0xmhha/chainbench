@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-4-03
+# name: eth_sendRawTransaction 서명된 tx 전파
+# category: regression/a-ethereum
+# tags: [rpc, sendRawTransaction]
+# estimated_seconds: 15
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a4-03-send-raw-tx
 # RT-A-4-03 — eth_sendRawTransaction 서명된 tx 전파
 set -euo pipefail

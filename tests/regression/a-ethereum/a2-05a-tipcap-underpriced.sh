@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-05a
+# name: GasTipCap < MinTip tx 처리 (Anzeon 활성)
+# category: regression/a-ethereum
+# tags: [tx, anzeon]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-05a-tipcap-underpriced
 # RT-A-2-05a — GasTipCap < MinTip tx 처리 (Anzeon 활성)
 #

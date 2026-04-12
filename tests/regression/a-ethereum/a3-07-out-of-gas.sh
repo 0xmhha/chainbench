@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-07
+# name: out-of-gas tx: gasUsed == gasLimit, 전량 소비, 환불 없음
+# category: regression/a-ethereum
+# tags: [contract, gas]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: [RT-A-3-01]
+# ---end-meta---
 # Test: regression/a-ethereum/a3-07-out-of-gas
 # RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 전량 소비, 환불 없음
 set -euo pipefail

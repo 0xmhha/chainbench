@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-01
+# name: Legacy Tx (type 0x0) 발행
+# category: regression/a-ethereum
+# tags: [tx, legacy]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-01-legacy-tx
 # RT-A-2-01 — Legacy Tx (type 0x0) 발행
 # [v2 보강] effectiveGasPrice + gasLimit valid check (21000)

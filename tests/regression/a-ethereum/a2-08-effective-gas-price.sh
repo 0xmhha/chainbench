@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-2-08
+# name: eth_getTransactionReceipt의 effectiveGasPrice 검증
+# category: regression/a-ethereum
+# tags: [tx, gas]
+# estimated_seconds: 38
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a2-08-effective-gas-price
 # RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증
 # PR #70 회귀 검증: BP와 EN(sync) 양쪽에서 동일한 effectiveGasPrice 반환

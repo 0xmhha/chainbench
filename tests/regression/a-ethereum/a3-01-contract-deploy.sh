@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+# ---chainbench-meta---
+# id: RT-A-3-01
+# name: 컨트랙트 배포
+# category: regression/a-ethereum
+# tags: [contract, deploy]
+# estimated_seconds: 35
+# preconditions:
+#   chain_running: true
+#   python_packages: [eth-account, requests, eth-utils]
+# depends_on: []
+# ---end-meta---
 # Test: regression/a-ethereum/a3-01-contract-deploy
 # RT-A-3-01 — 컨트랙트 배포
 set -euo pipefail
