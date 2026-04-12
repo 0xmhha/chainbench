@@ -100,6 +100,21 @@ NODEKEY_DIR="${_START_DATA_DIR}/nodekeys"
 # ---- Port helper (delegates to common.sh) ------------------------------------
 # Uses get_node_port from common.sh (already sourced via profile.sh)
 
+# ---- Resolve logrot ----------------------------------------------------------
+
+LOGROT_BIN=""
+if is_truthy "${CHAINBENCH_LOG_ROTATION:-true}"; then
+  LOGROT_BIN="$(resolve_logrot "${BINARY}" "${CHAINBENCH_LOGROT_PATH:-}")" || LOGROT_BIN=""
+fi
+
+if [[ -z "${LOGROT_BIN}" ]] && is_truthy "${CHAINBENCH_LOG_ROTATION:-true}"; then
+  log_warn "logrot not available — logs will grow unbounded. Set chain.logrot_path or build <git-root>/cmd/logrot."
+fi
+
+if [[ -n "${LOGROT_BIN}" ]]; then
+  log_info "Using logrot: ${LOGROT_BIN}"
+fi
+
 # ---- Node launch function ----------------------------------------------------
 
 # Stores launched node info as "pid:type:p2p:http:ws:auth:metrics" indexed by node number.
@@ -197,14 +212,16 @@ _start_launch_node() {
   local _launch_args_file="${_START_DATA_DIR}/.node${node_index}.launch_args"
   printf '%s\n' "${launch_cmd[@]}" > "${_launch_args_file}"
 
-  # Launch node with logrot for log rotation if available.
-  # Strategy: redirect to file, launch logrot as a separate background watcher.
-  local _logrot_bin="${CHAINBENCH_DIR}/bin/logrot"
-  local _log_max_size="${CHAINBENCH_LOG_MAX_SIZE:-10M}"
-  local _log_max_files="${CHAINBENCH_LOG_MAX_FILES:-5}"
-
-  nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
-  local node_pid=$!
+  # Launch node, routing output through logrot if available
+  if [[ -n "${LOGROT_BIN:-}" ]]; then
+    nohup "${launch_cmd[@]}" \
+      > >("${LOGROT_BIN}" "${node_log}" "${CHAINBENCH_LOG_MAX_SIZE:-10M}" "${CHAINBENCH_LOG_MAX_FILES:-5}") \
+      2>&1 &
+    local node_pid=$!
+  else
+    nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
+    local node_pid=$!
+  fi
   disown "${node_pid}" 2>/dev/null || true
 
   # Store as "pid|type|p2p|http|ws|auth|metrics" (pipe separator avoids colon conflicts)

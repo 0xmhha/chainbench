@@ -51,8 +51,9 @@ else
     sleep 1
   fi
 
-  # Also kill any logrot processes
+  # Kill any logrot processes spawned by process substitution
   pkill -f "logrot.*node.*log" 2>/dev/null || true
+  log_info "Cleaned up logrot processes (if any)"
 fi
 
 # Verify all stopped

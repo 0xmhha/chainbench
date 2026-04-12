@@ -7,6 +7,7 @@ description: "기본 4 validator + 1 EN 로컬 체인 (go-stablenet)"
 chain:
   binary: gstable
   binary_path: ""                # gstable 바이너리 경로 (필수 설정, 아래 예시 참고)
+  logrot_path: ""                # logrot 바이너리 경로 (비어있으면 자동 탐색)
   # 예시:
   #   절대경로: "/home/user/go-stablenet/build/bin/gstable"
   #   상대경로: "../go-stablenet/build/bin/gstable" (chainbench 디렉토리 기준)
