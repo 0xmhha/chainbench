@@ -11,7 +11,7 @@ Code review on `lib/cmd_start.sh`, `lib/common.sh`, and `mcp-server/src/tools/` 
 1. **Log rotation is declared but not implemented.** `cmd_start.sh:200-213` declares `_logrot_bin`, `_log_max_size`, `_log_max_files` variables, then launches nodes with a plain `nohup ... >> "${node_log}" 2>&1 &`. The `bin/logrot` binary referenced in comments does not exist in the repo. Profile fields `logging.rotation`, `logging.max_size`, `logging.max_files` have no effect. Node logs grow unbounded.
 2. **Binary path configuration has no clean runtime override channel.** The only ways to change `chain.binary_path` are editing a git-tracked profile YAML or calling the `chainbench_profile_set` MCP tool (which writes to that same YAML). There is no CLI flag, no env var path (the profile loader overwrites pre-exported env vars), and no machine-local overlay.
 
-The `logrot` binary itself already exists upstream: `go-wemix/cmd/logrot/main.go` is a 3-line wrapper around `github.com/charlanxcc/logrot` with the interface `logrot <file> <size> <count>`. The sibling repo `stable-net/test/local-test/script/run_gstable.sh:92` demonstrates the intended invocation pattern. go-stablenet can build `logrot` from the same source package.
+The `logrot` binary itself already exists upstream: `go-wemix/cmd/logrot/main.go` is a 3-line wrapper around `github.com/charlanxcc/logrot` with the interface `logrot <file> <size> <count>`. `logrot` is a **file-watching rotator** — it monitors the specified file on disk and rotates it when it exceeds the given size limit, keeping `count` backup files. It does not read log data from stdin. The pipe pattern `> file 2>&1 | logrot file 10M 5 &` used in upstream scripts provides **lifecycle coupling**: gstable writes directly to the file via `>`, logrot watches that same file, and when gstable exits the pipe closes causing logrot to exit as well. The sibling repo `stable-net/test/local-test/script/run_gstable.sh:92` demonstrates this invocation pattern. go-stablenet can build `logrot` from the same source package.
 
 ## 2. Goals
 
@@ -90,29 +90,43 @@ Step 6 is non-fatal. `cmd_start.sh` falls back to plain `>>` append when the ret
 
 ### 4.4 Node launch pipeline
 
-**Current (buggy):**
+**Current (broken — logrot declared but never used):**
 
 ```bash
 nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
-# _logrot_bin declared but never used
+# _logrot_bin, _log_max_size, _log_max_files declared but never used
 ```
 
-**Replacement:**
+**Replacement — separate process model:**
+
+`logrot` is a file-watching rotator (not a stdin processor). It monitors the named file on disk. Two launch models were evaluated:
+
+| Model | Pattern | PID tracking |
+|---|---|---|
+| **Pipe (upstream pattern)** | `nohup gstable ... > file 2>&1 \| logrot file 10M 5 &` | `$!` = logrot PID (wrong for health checks) |
+| **Separate processes** | gstable `> file 2>&1 &` then `logrot file 10M 5 &` | `$!` of first command = gstable PID (correct) |
+
+The upstream stable-net test scripts use the pipe model for lifecycle coupling (when gstable exits, the pipe closes, logrot exits). However, chainbench requires per-node PID tracking for `node stop/start` operations. The **separate process model** preserves the existing PID semantics:
 
 ```bash
-if [[ -n "${LOGROT_BIN}" ]]; then
-  nohup "${launch_cmd[@]}" \
-    > >("${LOGROT_BIN}" "${node_log}" "${CHAINBENCH_LOG_MAX_SIZE}" "${CHAINBENCH_LOG_MAX_FILES}") \
-    2>&1 &
-  local node_pid=$!
-else
-  nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
-  local node_pid=$!
-fi
+# Launch gstable — PID tracking unchanged from current code
+nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
+local node_pid=$!
 disown "${node_pid}" 2>/dev/null || true
+
+# Launch logrot as a companion file watcher (if available)
+if [[ -n "${LOGROT_BIN}" ]]; then
+  nohup "${LOGROT_BIN}" "${node_log}" \
+    "${CHAINBENCH_LOG_MAX_SIZE}" "${CHAINBENCH_LOG_MAX_FILES}" &
+  local logrot_pid=$!
+  disown "${logrot_pid}" 2>/dev/null || true
+  log_info "  logrot watching ${node_log} (PID ${logrot_pid})"
+fi
 ```
 
-Process substitution is used instead of a pipe so `$!` captures the `gstable` PID, not `logrot`. PID tracking in `pids.json` is unchanged. The `pkill -f "logrot.*node.*log"` line in `cmd_stop.sh` becomes a functioning cleanup instead of a no-op.
+**Trade-off**: logrot's lifecycle is no longer coupled to gstable's via a pipe. If gstable crashes, logrot keeps running until `cmd_stop.sh` cleans it up via `pkill -f "logrot.*node.*log"` (already present at `cmd_stop.sh:55`). This is acceptable because `cmd_stop.sh` always runs before `cmd_start.sh` in normal workflows.
+
+**Key invariant preserved**: `$!` after the gstable launch is gstable's PID — all existing PID-based operations (`node stop`, `node start`, health checks) work without modification.
 
 ### 4.5 Component boundaries
 
@@ -249,7 +263,7 @@ if [[ -z "${LOGROT_BIN}" ]] && is_truthy "${CHAINBENCH_LOG_ROTATION:-true}"; the
 fi
 ```
 
-Inside `_start_launch_node`, delete the dead declarations at lines 200-213 (`_logrot_bin`, `_log_max_size`, `_log_max_files`) and replace the `nohup` invocation with the conditional block from §4.4.
+Inside `_start_launch_node`, delete the dead declarations at lines 200-213 (`_logrot_bin`, `_log_max_size`, `_log_max_files`) and replace the `nohup` invocation with the separate-process model from §4.4. The existing `nohup ... >> "${node_log}" 2>&1 &` line stays, followed by a conditional `logrot` launch as a companion watcher process.
 
 ### 5.5 `lib/cmd_config.sh` (new)
 
@@ -375,8 +389,10 @@ resolve_logrot      :
       → success, returns /opt/gstable/build/bin/logrot
   log_info "Built logrot from source: /opt/gstable/build/bin/logrot"
 _start_launch_node  :
-  nohup gstable ... > >(logrot node1.log 10M 5) 2>&1 &
-  node_pid=$!   # gstable PID, not logrot
+  nohup gstable ... >> node1.log 2>&1 &       # gstable writes to file
+  node_pid=$!                                   # gstable PID (correct)
+  nohup logrot node1.log 10M 5 &               # companion file watcher
+  logrot_pid=$!
 ```
 
 ### 6.4 MCP atomic init
@@ -490,13 +506,17 @@ This table maps directly to unit test cases in `tests/unit/tests/common-resolve-
 | Shell metacharacters in any forwarded value | `shellEscapeArg` escapes before concatenation |
 | Invalid `chainbench_config_set` field | Rejected by client-side regex before calling CLI |
 
-### 7.7 Process substitution
+### 7.7 Logrot companion process lifecycle
+
+`logrot` runs as a separate background process watching the log file (not piped to gstable). Lifecycle implications:
 
 | Scenario | Behavior |
 |---|---|
-| `logrot` crashes immediately | gstable may receive SIGPIPE. Mitigation strategy deferred to implementation (consider `trap '' PIPE` or a lightweight supervisor). |
-| gstable exits normally | logrot receives EOF and exits. No zombies. |
+| `logrot` crashes immediately | No effect on gstable. Logs continue growing unbounded (same as no-logrot fallback). `cmd_start.sh` health check only verifies gstable PID. |
+| gstable exits normally | logrot keeps running (no pipe coupling). Cleaned up by `cmd_stop.sh:55` `pkill -f "logrot.*node.*log"`. |
+| gstable crashes unexpectedly | logrot keeps watching the (now static) file. Cleaned up on next `cmd_stop.sh` or `cmd_start.sh` stale-PID guard. |
 | Stale logrot from an earlier run | `cmd_stop.sh:55` `pkill -f "logrot.*node.*log"` provides the safety net. |
+| `node stop <N>` called | Kills gstable by stored PID. logrot for that node stays alive until next `cmd_stop.sh`. Acceptable — logrot on a static file is idle and harmless. |
 
 ## 8. Testing
 
@@ -586,9 +606,10 @@ The mock `go` binary in `fixtures/mock-go/go` inspects its args; when it sees `b
 10. Atomic write (temp + rename verified indirectly via file existence check)
 
 **`smoke-logrot-integration.sh`** (mock-based):
-- Instead of running `gstable`, use a shell loop (`while echo "block $i"; do ((i++)); sleep 0.01; done`) as the data source.
-- Pipe through `resolve_logrot`'s result with `CHAINBENCH_LOG_MAX_SIZE=1K`.
-- Assert that `node1.log.1` appears within 3 seconds.
+- Instead of running `gstable`, use a shell loop (`while echo "block $i"; do ((i++)); sleep 0.01; done >> "$logfile"`) to continuously append to a log file.
+- Launch `logrot "$logfile" 1K 3` as a companion watcher (separate process, matching §4.4).
+- Assert that `$logfile.1` appears within 5 seconds (logrot rotated the file).
+- Clean up both processes after assertion.
 
 ### 8.4 Runtime targets
 
@@ -627,7 +648,7 @@ Phase dependencies are strictly linear. Emergency rollback points:
 
 ## 10. Open Questions (deferred to implementation)
 
-- **SIGPIPE handling:** should `cmd_start.sh` set `trap '' PIPE` before launching, or wrap the process-substitution subshell? To be decided when wiring up Phase 6.
+- **Logrot cleanup on `node stop <N>`:** currently `node stop` kills gstable by PID but does not stop the companion logrot process for that specific node. The orphaned logrot is harmless (idle on a static file) and will be cleaned up on `cmd_stop.sh`. If per-node logrot cleanup is desired, store `logrot_pid` in pids.json alongside `pid` and kill both on `node stop`. Decide during Phase 6 implementation.
 - **Rotated file glob in `cmd_log.sh`:** once `node1.log.1`, `node1.log.2`, etc. can exist, should `log search` include them? Current scope says no (non-goal), but a one-liner extension in `_cb_log_all_log_files` may be worthwhile. Decide during Phase 6 review.
 - **`cmd_restart.sh` override propagation:** current `cmd_restart.sh` structure should be inspected during Phase 3. If it re-execs child commands via `bash chainbench.sh`, env vars propagate automatically. If it sources them, propagation already works. Verify rather than guess.
 
