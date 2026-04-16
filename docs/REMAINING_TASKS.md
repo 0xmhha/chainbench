@@ -21,26 +21,33 @@
 
 ## 남은 작업
 
-### Phase A — 즉시 가능 (의사결정 불필요)
+### Phase A — 즉시 가능 ✅ 완료 (2026-04-16, `0d2f1fd`)
 
-| # | 작업 | 파일 | 상태 |
-|---|------|------|------|
-| A-1 | `test-meta-parse.sh` 단위 테스트 실패 수정 | `tests/unit/tests/test-meta-parse.sh` | ❌ 태그 배열 파싱 오류 |
-| A-2 | 하드포크 프로파일 `hardfork-boho-pre.yaml` 생성 | `profiles/hardfork-boho-pre.yaml` | ❌ 미생성 |
-| A-3 | 하드포크 프로파일 `hardfork-boho-post.yaml` 생성 | `profiles/hardfork-boho-post.yaml` | ❌ 미생성 |
+| # | 작업 | 상태 |
+|---|------|------|
+| A-1 | `test-meta-parse.sh` 단위 테스트 실패 수정 | ✅ bash 따옴표 충돌 해소 |
+| A-2 | `hardfork-boho-pre.yaml` 프로파일 생성 | ✅ BohoBlock=999999999 |
+| A-3 | `hardfork-boho-post.yaml` 프로파일 생성 | ✅ BohoBlock=0 |
 
-### Phase B — Layer 2 테스트 유틸리티 (의사결정 필요)
+### Phase B — Layer 2 테스트 유틸리티
 
-> **선행 의사결정**: `tx_builder.sh`의 서명 도구 선택 — cast(foundry) vs Python web3 vs Go 헬퍼
-> 참조: `docs/chainbench-test-system-design.md` §5.1
+> **의사결정 완료 (2026-04-16)**: 도구 선택 — 3-tier 구조
+>
+> | 역할 | 도구 | 적용 범위 |
+> |------|------|----------|
+> | 표준 tx/ABI/이벤트 | **cast** (foundry) | 대부분 TC (A, B, C, E, G 섹션) |
+> | 체인 고유 tx 타입 (0x16, EIP-7702) | **Go 헬퍼** (`chainutil`, go-stablenet import) | D, F 섹션 + 하드포크 TC |
+> | 의도적 malformed/invalid tx | **Python** (rlp + inline `python3 -c`) | 거부 경로 테스트 (소수) |
+>
+> Go 헬퍼는 go-stablenet의 `cmd/chainutil/main.go`로 추가, `resolve_binary` 패턴으로 자동 탐색/빌드.
 
-| # | 파일 | 목적 | 해결 Gap | 우선순위 |
-|---|------|------|---------|---------|
-| B-1 | `tests/lib/system_contracts.sh` | 시스템 컨트랙트 주소/함수 시그니처 상수 | G2, G8 선행 | P0 |
-| B-2 | `tests/lib/contract.sh` | ABI 인코딩, eth_call, 컨트랙트 배포 | G2, G6 | P0 |
-| B-3 | `tests/lib/event.sh` | eth_getLogs, 토픽 해시, 이벤트 디코딩 | G3 | P1 |
-| B-4 | `tests/lib/chain_state.sh` | 하드포크 활성화 확인, Account Extra 검증 | G4, G8 | P1 |
-| B-5 | `tests/lib/tx_builder.sh` | 서명 TX, Fee Delegation(0x16), EIP-7702 | G1, G5, G7 | P1 |
+| # | 파일 | 목적 | 해결 Gap | 도구 | 우선순위 |
+|---|------|------|---------|------|---------|
+| B-1 | `tests/lib/system_contracts.sh` | 시스템 컨트랙트 주소/함수 시그니처 상수 | G2, G8 선행 | - | P0 |
+| B-2 | `tests/lib/contract.sh` | ABI 인코딩, eth_call, 컨트랙트 배포 | G2, G6 | cast | P0 |
+| B-3 | `tests/lib/event.sh` | eth_getLogs, 토픽 해시, 이벤트 디코딩 | G3 | cast | P1 |
+| B-4 | `tests/lib/chain_state.sh` | 하드포크 활성화 확인, Account Extra 검증 | G4, G8 | cast + eth_call | P1 |
+| B-5 | `tests/lib/tx_builder.sh` | 표준 서명 TX (cast) + FD/EIP-7702 (Go) + invalid TX (Python) | G1, G5, G7 | cast + Go + Python | P1 |
 
 현재 `tests/regression/lib/common.sh`에 인라인 존재하는 함수: `send_raw_tx()`, `gov_full_flow()`, `assert_receipt_status()` — Phase B에서 적절한 위치로 추출/리팩토링 대상.
 
