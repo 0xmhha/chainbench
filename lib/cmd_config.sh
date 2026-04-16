@@ -127,12 +127,17 @@ except (json.JSONDecodeError, ValueError):
 # Load existing overlay
 data = {}
 if os.path.isfile(overlay_path):
-    try:
-        import yaml
-        with open(overlay_path) as fh:
-            data = yaml.safe_load(fh) or {}
-    except ImportError:
-        pass
+    with open(overlay_path) as fh:
+        content = fh.read()
+    if content.strip():
+        try:
+            import yaml
+            data = yaml.safe_load(content) or {}
+        except ImportError:
+            try:
+                data = json.loads(content)
+            except (json.JSONDecodeError, ValueError):
+                data = {}
 
 # Set nested field
 parts = field.split('.')
@@ -177,12 +182,18 @@ overlay_path = sys.argv[1]
 field = sys.argv[2]
 
 # Load existing overlay
-try:
-    import yaml
-    with open(overlay_path) as fh:
-        data = yaml.safe_load(fh) or {}
-except ImportError:
-    data = {}
+data = {}
+with open(overlay_path) as fh:
+    content = fh.read()
+if content.strip():
+    try:
+        import yaml
+        data = yaml.safe_load(content) or {}
+    except ImportError:
+        try:
+            data = json.loads(content)
+        except (json.JSONDecodeError, ValueError):
+            data = {}
 
 # Navigate and delete
 parts = field.split('.')
