@@ -61,6 +61,16 @@ function validateReportFormat(format: string): string | null {
   return null;
 }
 
+const REGRESSION_CATEGORIES = [
+  "a-ethereum",
+  "b-wbft",
+  "c-anzeon",
+  "d-fee-delegation",
+  "e-blacklist-authorized",
+  "f-system-contracts",
+  "g-api",
+] as const;
+
 export function registerTestTools(server: McpServer): void {
   server.tool(
     "chainbench_test_list",
@@ -236,6 +246,90 @@ export function registerTestTools(server: McpServer): void {
       } catch {
         return { content: [{ type: "text" as const, text: JSON.stringify({ running: false, error: "pids.json parse failed" }) }] };
       }
+    }
+  );
+
+  server.tool(
+    "chainbench_test_hardfork",
+    "Run Boho hardfork tests (h-hardfork category). The chain must already be running " +
+    "with hardfork-boho-pre or hardfork-boho-post profile (use chainbench_start first). " +
+    "Pass a specific test path to run one test, or omit to run all 21 hardfork tests.",
+    {
+      test: z
+        .string()
+        .optional()
+        .describe(
+          "Specific test in format 'h-hardfork/h-01-chain-config-boho'. Omit to run all h-hardfork tests."
+        ),
+      format: z
+        .enum(["text", "jsonl"])
+        .optional()
+        .default("text")
+        .describe("Output format: 'text' (default) or 'jsonl'"),
+    },
+    async ({ test, format }) => {
+      const target = test ?? "h-hardfork";
+      if (test !== undefined) {
+        const validationError = validateTestName(test);
+        if (validationError) {
+          return { content: [{ type: "text" as const, text: `Error: ${validationError}` }] };
+        }
+      }
+      const formatFlag = format === "jsonl" ? " --format jsonl" : "";
+      const result = runChainbench(`test run ${target}${formatFlag}`);
+      return { content: [{ type: "text" as const, text: formatResult(result) }] };
+    }
+  );
+
+  server.tool(
+    "chainbench_test_regression",
+    "Run regression test suite (categories a through g). The chain must already be running " +
+    "with the regression profile (use chainbench_start first). Specify a category to run " +
+    "only that subset, or omit to run all 7 categories sequentially. " +
+    "Returns per-category results. Does NOT include h-hardfork — use chainbench_test_hardfork for that.",
+    {
+      category: z
+        .string()
+        .optional()
+        .default("all")
+        .describe(
+          "One of: a-ethereum, b-wbft, c-anzeon, d-fee-delegation, e-blacklist-authorized, " +
+          "f-system-contracts, g-api, or 'all' (default) to run all 7 categories."
+        ),
+      format: z
+        .enum(["text", "jsonl"])
+        .optional()
+        .default("text")
+        .describe("Output format: 'text' (default) or 'jsonl'"),
+    },
+    async ({ category, format }) => {
+      const formatFlag = format === "jsonl" ? " --format jsonl" : "";
+
+      if (category === "all") {
+        const parts: string[] = [];
+        for (const cat of REGRESSION_CATEGORIES) {
+          const result = runChainbench(`test run ${cat}${formatFlag}`);
+          parts.push(`=== ${cat} ===\n${formatResult(result)}`);
+        }
+        return { content: [{ type: "text" as const, text: parts.join("\n\n") }] };
+      }
+
+      const knownCategories: readonly string[] = REGRESSION_CATEGORIES;
+      if (!knownCategories.includes(category)) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text:
+                `Error: Unknown category '${category}'. ` +
+                `Valid categories: ${REGRESSION_CATEGORIES.join(", ")}, all`,
+            },
+          ],
+        };
+      }
+
+      const result = runChainbench(`test run ${category}${formatFlag}`);
+      return { content: [{ type: "text" as const, text: formatResult(result) }] };
     }
   );
 }
