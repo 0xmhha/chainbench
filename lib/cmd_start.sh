@@ -217,17 +217,20 @@ _start_launch_node() {
   local _launch_args_file="${_START_DATA_DIR}/.node${node_index}.launch_args"
   printf '%s\n' "${launch_cmd[@]}" > "${_launch_args_file}"
 
-  # Launch node, routing output through logrot if available
-  if [[ -n "${LOGROT_BIN:-}" ]]; then
-    nohup "${launch_cmd[@]}" \
-      > >("${LOGROT_BIN}" "${node_log}" "${CHAINBENCH_LOG_MAX_SIZE:-10M}" "${CHAINBENCH_LOG_MAX_FILES:-5}") \
-      2>&1 &
-    local node_pid=$!
-  else
-    nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
-    local node_pid=$!
-  fi
+  # Launch node — gstable writes directly to file, PID captured for health checks
+  nohup "${launch_cmd[@]}" >> "${node_log}" 2>&1 &
+  local node_pid=$!
   disown "${node_pid}" 2>/dev/null || true
+
+  # Launch logrot as a companion file watcher (if available)
+  # logrot monitors the file on disk and rotates it when it exceeds max_size.
+  # It runs as a separate process — cleanup is handled by cmd_stop.sh pkill.
+  if [[ -n "${LOGROT_BIN:-}" ]]; then
+    nohup "${LOGROT_BIN}" "${node_log}" \
+      "${CHAINBENCH_LOG_MAX_SIZE:-10M}" "${CHAINBENCH_LOG_MAX_FILES:-5}" \
+      >/dev/null 2>&1 &
+    disown $! 2>/dev/null || true
+  fi
 
   # Store as "pid|type|p2p|http|ws|auth|metrics" (pipe separator avoids colon conflicts)
   _start_node_info["${node_index}"]="${node_pid}|${node_type}|${p2p_port}|${http_port}|${ws_port}|${auth_port}|${metrics_port}"
