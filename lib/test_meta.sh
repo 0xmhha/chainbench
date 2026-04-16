@@ -46,7 +46,19 @@ except ImportError:
             key, _, val = line.partition(':')
             key = key.strip()
             val = val.strip()
-            if val:
+            if not val:
+                continue
+            # Parse inline flow sequences: [a, b, c] -> list
+            if val.startswith('[') and val.endswith(']'):
+                inner = val[1:-1]
+                data[key] = [v.strip() for v in inner.split(',') if v.strip()] if inner.strip() else []
+            # Parse integers
+            elif val.isdigit():
+                data[key] = int(val)
+            # Parse booleans
+            elif val.lower() in ('true', 'false'):
+                data[key] = val.lower() == 'true'
+            else:
                 data[key] = val
 except Exception:
     data = {}

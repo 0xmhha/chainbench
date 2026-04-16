@@ -1,0 +1,13 @@
+# chainbench profile: hardfork-boho-pre
+# Boho hardfork NOT activated (BohoBlock set far in the future).
+# All blocks run in pre-Boho state: GovMinter v1, no secp256r1, no gas floor.
+# Inherits everything else from regression profile.
+
+extends: regression
+
+name: hardfork-boho-pre
+description: "Boho hardfork disabled (BohoBlock=999999999, pre-Boho state)"
+
+genesis:
+  overrides:
+    bohoBlock: 999999999

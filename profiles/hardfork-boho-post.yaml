@@ -1,0 +1,13 @@
+# chainbench profile: hardfork-boho-post
+# Boho hardfork activated from genesis (BohoBlock=0).
+# All blocks run in post-Boho state: GovMinter v2, secp256r1 precompile, gas floor.
+# Inherits everything else from regression profile.
+
+extends: regression
+
+name: hardfork-boho-post
+description: "Boho hardfork active from genesis (BohoBlock=0, post-Boho state)"
+
+genesis:
+  overrides:
+    bohoBlock: 0

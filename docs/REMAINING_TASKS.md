@@ -1,88 +1,69 @@
 # chainbench 작업 현황
 
 > **최초 작성**: 2026-04-12
-> **최종 업데이트**: 2026-04-12 (LLM Integration Tier 1 + Tier 2 일부 구현 완료)
-> **기준 커밋**: `b72c973`
+> **최종 업데이트**: 2026-04-16
+> **기준 커밋**: `89a1c99`
 
 ---
 
-## 1. Logging & Binary Path Design Spec — 전체 완료
+## 완료 항목 요약
 
-> 문서: `docs/superpowers/specs/2026-04-09-logging-and-binary-path-design.md`
-
-| Phase | 내용 | 커밋 | 상태 |
-|-------|------|------|------|
-| 0 | stale .bak 제거 | N/A | ✅ 완료 |
-| 1 | Unit test runner scaffolding | `ed9c884` | ✅ 완료 |
-| 2 | resolve_binary 단위 테스트 | `d50924f` | ✅ 완료 |
-| 3 | `--binary-path` / `--logrot-path` 런타임 오버라이드 | `f1dfc9a`, `c2ff06e` | ✅ 완료 |
-| 4 | env-first `_cb_set_var` + local overlay 머지 | `6a9a06f` | ✅ 완료 |
-| 5 | `chainbench config` CLI 서브커맨드 | `1a79d34` | ✅ 완료 |
-| 6 | logrot 통합 | `863705b` | ✅ 완료 |
-| 7 | MCP 도구 확장 (binary_path, config_set) | `fd4a7d1` | ✅ 완료 |
-| 8 | 문서 업데이트 | `f51a0f6` | ✅ 완료 |
-
-**9/9 phases 완료**
-
----
-
-## 2. LLM Integration Analysis — 구현 현황
-
-> 문서: `docs/LLM_INTEGRATION_ANALYSIS.md`
-> 설계: `docs/specs/llm-test-automation-design.md`
-
-### Tier 1 — Quick Win (4/4 완료)
-
-| ID | 제안 | 커밋 | 구현 위치 | 상태 |
-|----|------|------|----------|------|
-| A | 프론트매터 (YAML-in-comment) | `3e3ed2c`, `b72c973`, `f055925`, `4e15f44`, `0c125ee` | `lib/test_meta.sh`, 전체 114개 스크립트 (100%), `test list --format json` | ✅ 완료 |
-| B | 관찰값(observables) 캡처 | `069ce95` | `tests/lib/assert.sh:82` `observe()`, 결과 JSON `observed` 필드 | ✅ 완료 |
-| C | 실패 시 자동 컨텍스트 캡처 | `46df850` | `tests/lib/failure_context.sh`, `assert.sh:266` 자동 호출 | ✅ 완료 |
-| D | JSONL 이벤트 스트림 | `e2c0a4e` | `assert.sh` CB_FORMAT 분기 5개소, `cmd_test.sh` `--format jsonl` | ✅ 완료 |
-
-### Tier 2 — 구조 개선 (2/4 완료)
-
-| ID | 제안 | 커밋 | 구현 위치 | 상태 |
-|----|------|------|----------|------|
-| E | 스펙 연결 MCP 리소스 | `0085178` | `lib/cmd_spec.sh`, `mcp-server/src/tools/spec.ts` `chainbench_spec_lookup` | ✅ 완료 |
-| F | 고수준 assertion helper | - | - | ⏸️ 보류 (`common.sh`에 `assert_receipt_status`, `gov_full_flow` 이미 존재) |
-| G | Dry-run / plan 모드 | `33381b5` | `cmd_test.sh:230` `_cb_test_dry_run`, `--dry-run` 옵션 | ✅ 완료 |
-| H | 압축 상태 MCP tool | `aef22e6` | `test.ts:208` `chainbench_state_compact`, `cmd_status.sh` `--compact` | ✅ 완료 |
-
-### Tier 3 — 대화형 워크플로우 (0/4)
-
-| ID | 제안 | 상태 | 보류 사유 |
-|----|------|------|----------|
-| I | rerun-failed + snapshot/restore | ⏸️ 보류 | Tier 3 — 실사용 피드백 후 결정 |
-| J | 스펙 기반 테스트 스캐폴딩 | `7593e59` | `lib/test_scaffold.sh`, `cmd_test.sh` `scaffold` 서브커맨드 | ✅ 완료 |
-| K | 의존성 그래프 | ⏸️ 보류 | 프론트매터 `depends_on` 데이터 축적 후 결정 |
-| L | MCP 대화형 세션 (daemon) | ⏸️ 보류 | 구현 난이도 높음, ROI 불확실 |
-
-### 요약
-
-```
-전체 12개 제안:  8개 구현 ✅  |  4개 보류 ⏸️
-Tier 1 (A-D):   4/4 완료
-Tier 2 (E-H):   3/4 완료 (F 보류)
-Tier 3 (I-L):   1/4 완료 (I·K·L 보류)
-```
-
-### 스펙 문서 참조 (E, J 보류 해제 근거)
-
-회귀 테스트 스펙 문서가 아래 경로에 존재함을 확인:
-
-| 문서 | 경로 | 상태 |
+| 영역 | 상태 | 비고 |
 |------|------|------|
-| regression-test-spec.md | `/Users/kevin/work/github/wemade/study/projects/stablenet-test-case/regression-test-spec.md` | ✅ 116 TC 정의 완료 |
-| hardfork-test-spec.md | `/Users/kevin/work/github/wemade/study/projects/stablenet-test-case/hardfork-test-spec.md` | 🔄 별도 세션에서 검토 중 |
-
-- ID 체계: `RT-<Section>-<SubSection>-<Num>[-<Variant>]` (chainbench 프론트매터와 호환)
-- 형식: Gherkin (Given/When/Then) + 코드 근거 + 선행 TC + 우선순위
-- 섹션: A(이더리움) B(WBFT) C(Anzeon) D(Fee Delegation) E(블랙리스트) F(거버넌스) G(API)
+| Logging & Binary Path (9 phases) | ✅ 전체 완료 | logrot 통합, config overlay, MCP 확장 |
+| LLM Integration Tier 1 (A-D) | ✅ 4/4 완료 | 프론트매터, observables, JSONL |
+| LLM Integration Tier 2 (E-H) | ✅ 3/4 완료 | F 의도적 보류 |
+| LLM Integration Tier 3 (I-L) | ✅ 1/4 완료 | J 완료, I·K·L 의도적 보류 |
+| Regression 테스트 스크립트 | ✅ 114개 | 7개 섹션 (A~G) |
+| Hardfork 테스트 스크립트 | ✅ 40개 | h-hardfork 디렉토리 |
 
 ---
 
-## 3. 단위 테스트 현황
+## 남은 작업
+
+### Phase A — 즉시 가능 (의사결정 불필요)
+
+| # | 작업 | 파일 | 상태 |
+|---|------|------|------|
+| A-1 | `test-meta-parse.sh` 단위 테스트 실패 수정 | `tests/unit/tests/test-meta-parse.sh` | ❌ 태그 배열 파싱 오류 |
+| A-2 | 하드포크 프로파일 `hardfork-boho-pre.yaml` 생성 | `profiles/hardfork-boho-pre.yaml` | ❌ 미생성 |
+| A-3 | 하드포크 프로파일 `hardfork-boho-post.yaml` 생성 | `profiles/hardfork-boho-post.yaml` | ❌ 미생성 |
+
+### Phase B — Layer 2 테스트 유틸리티 (의사결정 필요)
+
+> **선행 의사결정**: `tx_builder.sh`의 서명 도구 선택 — cast(foundry) vs Python web3 vs Go 헬퍼
+> 참조: `docs/chainbench-test-system-design.md` §5.1
+
+| # | 파일 | 목적 | 해결 Gap | 우선순위 |
+|---|------|------|---------|---------|
+| B-1 | `tests/lib/system_contracts.sh` | 시스템 컨트랙트 주소/함수 시그니처 상수 | G2, G8 선행 | P0 |
+| B-2 | `tests/lib/contract.sh` | ABI 인코딩, eth_call, 컨트랙트 배포 | G2, G6 | P0 |
+| B-3 | `tests/lib/event.sh` | eth_getLogs, 토픽 해시, 이벤트 디코딩 | G3 | P1 |
+| B-4 | `tests/lib/chain_state.sh` | 하드포크 활성화 확인, Account Extra 검증 | G4, G8 | P1 |
+| B-5 | `tests/lib/tx_builder.sh` | 서명 TX, Fee Delegation(0x16), EIP-7702 | G1, G5, G7 | P1 |
+
+현재 `tests/regression/lib/common.sh`에 인라인 존재하는 함수: `send_raw_tx()`, `gov_full_flow()`, `assert_receipt_status()` — Phase B에서 적절한 위치로 추출/리팩토링 대상.
+
+### Phase C — CI/커맨드 통합 (Layer 2 완료 후)
+
+| # | 작업 | 상태 |
+|---|------|------|
+| C-1 | Claude Code 커맨드 2종 (`stablenet-test-hardfork.md`, `stablenet-test-regression.md`) | ❌ 미생성 |
+| C-2 | MCP 도구 확장 (hardfork/regression 테스트 실행) | ❌ 미생성 |
+| C-3 | GitHub Actions 워크플로우 (선택) | ❌ 미생성 |
+
+### 보류 항목 (의도적 — 해제 조건 충족 시 진행)
+
+| ID | 항목 | 보류 사유 | 해제 조건 |
+|----|------|----------|----------|
+| F | 고수준 assertion helper | `common.sh`에 4개 이미 존재 | 테스트 작성 중 반복 패턴 발견 시 |
+| I | rerun-failed + snapshot/restore | ROI 불확실 | 실사용 피드백 후 |
+| K | 의존성 그래프 | `depends_on` 데이터 부족 | 프론트매터 축적 후 |
+| L | MCP 대화형 세션 (daemon) | 구현 난이도 높음 | 명확한 유즈케이스 확보 시 |
+
+---
+
+## 단위 테스트 현황
 
 | # | 파일 | Assertions | 커버리지 |
 |---|------|-----------|---------|
@@ -94,27 +75,26 @@ Tier 3 (I-L):   1/4 완료 (I·K·L 보류)
 | 6 | `profile-overlay-merge.sh` | 5 | overlay 머지 + deep merge |
 | 7 | `cmd-config.sh` | 9 | config get/set/unset/list |
 | 8 | `assert-observe.sh` | 6 | observe() API + 결과 JSON |
-| 9 | `test-meta-parse.sh` | 6 | 프론트매터 파서 |
+| 9 | `test-meta-parse.sh` | 6 | 프론트매터 파서 (**1 실패**) |
 | 10 | `assert-jsonl.sh` | 5 | JSONL 이벤트 스트림 |
 | 11 | `failure-context.sh` | 7 | 실패 컨텍스트 캡처 |
 | 12 | `cmd-test-dryrun.sh` | 4 | dry-run 모드 |
-| | **합계** | **82** | |
+| 13 | `smoke-logrot-integration.sh` | 1 | logrot 파일 로테이션 (SKIP if unavailable) |
+| | **합계** | **83** | |
 
 ---
 
-## 4. 문서 상태
+## 문서 상태
 
 | 문서 | 상태 | 비고 |
 |------|------|------|
 | `docs/REMAINING_TASKS.md` | ✅ 현행 | 이 문서 (마스터 추적) |
-| `docs/chainbench-test-system-design.md` | 🔄 진행 중 | hardfork/regression 테스트 설계 (부분 구현) |
+| `docs/chainbench-test-system-design.md` | 🔄 진행 중 | hardfork/regression 테스트 설계 (Phase B 참조) |
 
-### 정리 완료 (2026-04-16)
+### 정리 이력
 
-구현 완료된 문서 6개를 삭제함 (git 이력에 보존):
-- `IMPLEMENTATION_VERIFICATION.md` — 검증 보고서 (이 문서와 중복)
-- `LLM_INTEGRATION_ANALYSIS.md` — 원본 분석서 (현황은 이 문서에서 추적)
-- `specs/llm-test-automation-design.md` — LLM 통합 설계 (구현 완료)
-- `specs/llm-test-automation-plan.md` — LLM 통합 구현 계획 (구현 완료)
-- `superpowers/specs/2026-04-09-logging-and-binary-path-design.md` — 로깅/바이너리 스펙 (9/9 완료)
-- `superpowers/plans/2026-04-16-logging-binary-path-remaining.md` — 잔여 작업 계획 (3/3 완료)
+**2026-04-16**: 구현 완료된 문서 7개 삭제 (git 이력에 보존):
+- `IMPLEMENTATION_VERIFICATION.md`, `LLM_INTEGRATION_ANALYSIS.md`
+- `specs/llm-test-automation-{design,plan}.md`
+- `superpowers/specs/2026-04-09-logging-and-binary-path-design.{md,ko.md}`
+- `superpowers/plans/2026-04-16-logging-binary-path-remaining.md`
