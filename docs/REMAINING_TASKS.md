@@ -104,11 +104,17 @@ Tier 3 (I-L):   1/4 완료 (I·K·L 보류)
 
 ## 4. 문서 상태
 
-| 문서 | 상태 | 조치 |
+| 문서 | 상태 | 비고 |
 |------|------|------|
-| `docs/REMAINING_TASKS.md` | ✅ 최신 | 이 문서 |
-| `docs/IMPLEMENTATION_VERIFICATION.md` | ✅ 최신 | 동시 갱신 |
-| `docs/LLM_INTEGRATION_ANALYSIS.md` | ℹ️ 원본 유지 | 로드맵 원본으로 보존 (구현 현황은 이 문서에서 추적) |
-| `docs/specs/llm-test-automation-design.md` | ✅ 유효 | Phase 1-7 설계 문서 |
-| `docs/specs/llm-test-automation-plan.md` | ✅ 유효 | Phase 1-7 구현 계획 |
-| `docs/superpowers/specs/2026-04-09-logging-and-binary-path-design.md` | 📦 아카이브 대상 | 구현 완료 |
+| `docs/REMAINING_TASKS.md` | ✅ 현행 | 이 문서 (마스터 추적) |
+| `docs/chainbench-test-system-design.md` | 🔄 진행 중 | hardfork/regression 테스트 설계 (부분 구현) |
+
+### 정리 완료 (2026-04-16)
+
+구현 완료된 문서 6개를 삭제함 (git 이력에 보존):
+- `IMPLEMENTATION_VERIFICATION.md` — 검증 보고서 (이 문서와 중복)
+- `LLM_INTEGRATION_ANALYSIS.md` — 원본 분석서 (현황은 이 문서에서 추적)
+- `specs/llm-test-automation-design.md` — LLM 통합 설계 (구현 완료)
+- `specs/llm-test-automation-plan.md` — LLM 통합 구현 계획 (구현 완료)
+- `superpowers/specs/2026-04-09-logging-and-binary-path-design.md` — 로깅/바이너리 스펙 (9/9 완료)
+- `superpowers/plans/2026-04-16-logging-binary-path-remaining.md` — 잔여 작업 계획 (3/3 완료)
