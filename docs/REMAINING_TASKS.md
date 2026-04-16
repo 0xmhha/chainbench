@@ -1,7 +1,7 @@
 # chainbench 작업 현황
 
 > **최초 작성**: 2026-04-12
-> **최종 업데이트**: 2026-04-16
+> **최종 업데이트**: 2026-04-09
 > **기준 커밋**: `89a1c99`
 
 ---
@@ -16,6 +16,7 @@
 | LLM Integration Tier 3 (I-L) | ✅ 1/4 완료 | J 완료, I·K·L 의도적 보류 |
 | Regression 테스트 스크립트 | ✅ 114개 | 7개 섹션 (A~G) |
 | Hardfork 테스트 스크립트 | ✅ 40개 | h-hardfork 디렉토리 |
+| Phase C (Claude 커맨드 + MCP 확장) | ✅ 완료 | C-3 의도적 보류 |
 
 ---
 
@@ -55,13 +56,13 @@
 
 남은 TODO: `tests/regression/lib/common.sh`의 인라인 함수(`send_raw_tx`, `gov_full_flow`, `assert_receipt_status`)를 Layer 2로 점진적 마이그레이션 (기존 테스트 호환 유지).
 
-### Phase C — CI/커맨드 통합 (Layer 2 완료 후)
+### Phase C — CI/커맨드 통합 ✅ 완료 (2026-04-09, `697ab92`)
 
 | # | 작업 | 상태 |
 |---|------|------|
-| C-1 | Claude Code 커맨드 2종 (`stablenet-test-hardfork.md`, `stablenet-test-regression.md`) | ❌ 미생성 |
-| C-2 | MCP 도구 확장 (hardfork/regression 테스트 실행) | ❌ 미생성 |
-| C-3 | GitHub Actions 워크플로우 (선택) | ❌ 미생성 |
+| C-1 | Claude Code 커맨드 2종 (`stablenet-test-hardfork.md`, `stablenet-test-regression.md`) | ✅ go-stablenet `710dc63` |
+| C-2 | MCP 도구 확장 (`chainbench_test_hardfork`, `chainbench_test_regression`) | ✅ chainbench `697ab92` |
+| C-3 | GitHub Actions 워크플로우 (선택) | ⏭ 의도적 보류 |
 
 ### 보류 항목 (의도적 — 해제 조건 충족 시 진행)
 
