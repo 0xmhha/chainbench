@@ -41,15 +41,19 @@
 >
 > Go 헬퍼는 go-stablenet의 `cmd/chainutil/main.go`로 추가, `resolve_binary` 패턴으로 자동 탐색/빌드.
 
-| # | 파일 | 목적 | 해결 Gap | 도구 | 우선순위 |
-|---|------|------|---------|------|---------|
-| B-1 | `tests/lib/system_contracts.sh` | 시스템 컨트랙트 주소/함수 시그니처 상수 | G2, G8 선행 | - | P0 |
-| B-2 | `tests/lib/contract.sh` | ABI 인코딩, eth_call, 컨트랙트 배포 | G2, G6 | cast | P0 |
-| B-3 | `tests/lib/event.sh` | eth_getLogs, 토픽 해시, 이벤트 디코딩 | G3 | cast | P1 |
-| B-4 | `tests/lib/chain_state.sh` | 하드포크 활성화 확인, Account Extra 검증 | G4, G8 | cast + eth_call | P1 |
-| B-5 | `tests/lib/tx_builder.sh` | 표준 서명 TX (cast) + FD/EIP-7702 (Go) + invalid TX (Python) | G1, G5, G7 | cast + Go + Python | P1 |
+| # | 파일 | 줄 수 | 커밋 | 상태 |
+|---|------|------|------|------|
+| B-1 | `tests/lib/system_contracts.sh` | 107 | `c9a8312` | ✅ 완료 |
+| B-2 | `tests/lib/contract.sh` | 223 | `7cac347` | ✅ 완료 |
+| B-3 | `tests/lib/event.sh` | 246 | `33f1f36` | ✅ 완료 |
+| B-4 | `tests/lib/chain_state.sh` | 203 | `66c112f` | ✅ 완료 |
+| B-5 | `tests/lib/tx_builder.sh` | 292 | `a13ebab` | ✅ 완료 |
+| B-T | 단위 테스트 5개 (`lib-*.sh`) | — | `857add9` | ✅ 20/20 pass |
+| B-E | E2E 테스트 5개 (`z-layer2-e2e/z-0*.sh`) | — | `7e2fefa` | ✅ 생성 (체인 실행 시 검증) |
 
-현재 `tests/regression/lib/common.sh`에 인라인 존재하는 함수: `send_raw_tx()`, `gov_full_flow()`, `assert_receipt_status()` — Phase B에서 적절한 위치로 추출/리팩토링 대상.
+**총 1,071줄** 신규 라이브러리 코드 + 단위 테스트 20개 통과.
+
+남은 TODO: `tests/regression/lib/common.sh`의 인라인 함수(`send_raw_tx`, `gov_full_flow`, `assert_receipt_status`)를 Layer 2로 점진적 마이그레이션 (기존 테스트 호환 유지).
 
 ### Phase C — CI/커맨드 통합 (Layer 2 완료 후)
 
