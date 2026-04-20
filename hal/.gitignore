@@ -1,6 +1,6 @@
 # binaries
 /bin/
-chainbench-hal
+/chainbench-hal
 
 # go
 /vendor/

@@ -65,7 +65,7 @@ Expected: `hal/go.mod` exists and first line is `module github.com/0xmhha/chainb
 ```
 # binaries
 /bin/
-chainbench-hal
+/chainbench-hal
 
 # go
 /vendor/
