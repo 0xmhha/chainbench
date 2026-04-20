@@ -1,0 +1,9 @@
+# binaries
+/bin/
+chainbench-hal
+
+# go
+/vendor/
+*.test
+*.out
+coverage.html
