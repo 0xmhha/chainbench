@@ -23,22 +23,45 @@ check_env || { test_result; exit 1; }
 
 unlock_all_validators
 
-# proposeMint 시그니처는 GovMinter 구현에 따라 다름. 일반적으로:
-#   proposeMint(address beneficiary, uint256 amount) 또는 proposeMint(bytes proofData)
-# v1 GovMinter는 proposeMint(bytes proofData) 형식 — proofData 구조는 구현에 따라
-
-# 단순화: 기본 구조 ABI로 proposeMintWithDeposit 또는 유사 함수 시도
-# 정확한 시그니처를 모를 경우 F-2-01 실행을 먼저 하고 그 결과를 관찰
-
-printf '[INFO]  This test requires F-2-01 (GovMinter proposeMint full flow) to have run\n' >&2
-printf '[INFO]  Checking beneficiary Transfer event from the most recent mint receipt\n' >&2
-
-# F-2-01에서 저장한 receipt 사용
+# F-2-01에서 저장한 receipt 사용 (없으면 직접 mint 수행)
 mint_receipt=$(cat /tmp/chainbench-regression/last_mint_receipt.json 2>/dev/null || echo "")
 if [[ -z "$mint_receipt" ]]; then
-  _assert_fail "no mint receipt available (run f2-01 first)"
-  test_result
-  exit 1
+  printf '[INFO]  No mint receipt cached — running inline mint flow\n' >&2
+  beneficiary="$TEST_ACC_B_ADDR"
+  amount="1000000000000000000"
+  timestamp=$(date +%s)
+  deposit_id="F104-DEP-$(date +%s%N)"
+  bank_ref="F104-BANK-${timestamp}"
+  memo="f1-04 inline mint"
+
+  tx_data=$(python3 <<PYEOF
+from eth_abi import encode
+from eth_utils import keccak
+proof = encode(
+    ['address', 'uint256', 'uint256', 'string', 'string', 'string'],
+    ['${beneficiary}', ${amount}, ${timestamp}, '${deposit_id}', '${bank_ref}', '${memo}']
+)
+selector = keccak(text='proposeMint(bytes)')[:4]
+call_data = encode(['bytes'], [proof])
+print('0x' + (selector + call_data).hex())
+PYEOF
+  ) || { _assert_fail "eth_abi encoding failed"; test_result; exit 1; }
+
+  tx_hash=$(gov_call "1" "$GOV_MINTER" "$tx_data" "$VALIDATOR_1_ADDR" 1500000)
+  propose_receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+  proposal_id=$(extract_proposal_id_from_receipt "1" "$tx_hash")
+
+  approve_tx=$(gov_approve "1" "$GOV_MINTER" "$proposal_id" "$VALIDATOR_2_ADDR")
+  sleep 2
+  prop_status=$(gov_proposal_status "1" "$GOV_MINTER" "$proposal_id")
+  if [[ "$prop_status" == "3" ]]; then
+    approve_node=$(addr_to_node "$VALIDATOR_2_ADDR")
+    mint_receipt=$(wait_tx_receipt_full "$approve_node" "$approve_tx" 30)
+  else
+    exec_tx=$(gov_execute "1" "$GOV_MINTER" "$proposal_id" "$VALIDATOR_1_ADDR")
+    mint_receipt=$(wait_tx_receipt_full "1" "$exec_tx" 30)
+  fi
+  echo "$mint_receipt" > /tmp/chainbench-regression/last_mint_receipt.json
 fi
 
 # NativeCoinAdapter Transfer 이벤트 검색

@@ -40,13 +40,25 @@ for i in 0 1 2 3 4 5; do
 done
 
 # round=0 복귀 확인 (RT-B-09 이후 일반 블록들)
-last_block=$(( rc_block + 5 ))
-extra=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$last_block")\"]")
-round=$(printf '%s' "$extra" | python3 -c "
+# 라운드 체인지 이후 proposer rotation이 완료되기까지 수 블록 소요될 수 있으므로
+# rc_block+5 ~ rc_block+15 범위에서 round=0인 블록을 찾는다.
+found_round_zero=false
+for offset in $(seq 5 15); do
+  check_block=$(( rc_block + offset ))
+  wait_for_block "1" "$check_block" 10 >/dev/null
+  extra=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$check_block")\"]")
+  round=$(printf '%s' "$extra" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
 print(int(r.get('round', '0x0'), 16))
 ")
-assert_eq "$round" "0" "later blocks return to round=0"
+  if [[ "$round" == "0" ]]; then
+    found_round_zero=true
+    printf '[INFO]  block %s has round=0 (recovery confirmed)\n' "$check_block" >&2
+    break
+  fi
+  printf '[INFO]  block %s still at round=%s\n' "$check_block" "$round" >&2
+done
+assert_true "$found_round_zero" "later blocks return to round=0"
 
 test_result

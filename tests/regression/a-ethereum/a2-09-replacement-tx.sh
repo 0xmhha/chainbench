@@ -56,18 +56,20 @@ tx2_hash=$(printf '%s' "$result" | python3 -c "import sys, json; print(json.load
 assert_contains "$tx1_hash" "0x" "tx1 submitted"
 assert_contains "$tx2_hash" "0x" "tx2 (replacement) submitted"
 
-# 블록 포함 대기
-sleep 5
+# tx2가 mine될 때까지 대기 (sleep 5는 timing-dependent로 run-all에서 flaky)
+tx2_receipt=$(wait_tx_receipt_full "1" "$tx2_hash" 30 2>/dev/null || echo "")
 
-# tx2만 블록에 포함되어야 함
-tx1_receipt=$(get_receipt "1" "$tx1_hash")
-tx2_receipt=$(get_receipt "1" "$tx2_hash")
-
-tx2_included=$(printf '%s' "$tx2_receipt" | python3 -c "import sys, json; r = json.load(sys.stdin); print('yes' if r and r.get('status') == '0x1' else 'no')" 2>/dev/null || echo "no")
+tx2_included="no"
+if [[ -n "$tx2_receipt" ]]; then
+  tx2_status=$(printf '%s' "$tx2_receipt" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
+  [[ "$tx2_status" == "0x1" ]] && tx2_included="yes"
+fi
 assert_eq "$tx2_included" "yes" "replacement tx2 included in block"
 
-# tx1은 없거나 제거됨
-tx1_not_found=$(printf '%s' "$tx1_receipt" | python3 -c "import sys, json; d = json.load(sys.stdin) if sys.stdin.read(1) else None; print('yes' if not d else 'no')" 2>/dev/null || echo "yes")
+# tx1은 교체되어 mine 안 됨 — receipt이 null이어야
+tx1_check=$(rpc "1" "eth_getTransactionReceipt" "[\"${tx1_hash}\"]" | json_get - result)
+tx1_not_found="yes"
+[[ -n "$tx1_check" && "$tx1_check" != "null" ]] && tx1_not_found="no"
 assert_eq "$tx1_not_found" "yes" "original tx1 not in chain (replaced)"
 
 test_result

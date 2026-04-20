@@ -52,9 +52,9 @@ readonly GOV_VALIDATOR="0x0000000000000000000000000000000000001001"
 readonly GOV_MASTER_MINTER="0x0000000000000000000000000000000000001002"
 readonly GOV_MINTER="0x0000000000000000000000000000000000001003"
 readonly GOV_COUNCIL="0x0000000000000000000000000000000000001004"
-readonly ACCOUNT_MANAGER="0x00000000000000000000000000000000000B00003"
-readonly NATIVE_COIN_MANAGER="0x00000000000000000000000000000000000B00002"
-readonly BLS_POP="0x00000000000000000000000000000000000B00001"
+readonly ACCOUNT_MANAGER="0x0000000000000000000000000000000000b00003"
+readonly NATIVE_COIN_MANAGER="0x0000000000000000000000000000000000b00002"
+readonly BLS_POP="0x0000000000000000000000000000000000b00001"
 
 # 상수
 readonly ZERO_ADDRESS="0x0000000000000000000000000000000000000000"
@@ -489,19 +489,27 @@ extract_proposal_id_from_receipt() {
   local target="${1:-1}" tx_hash="$2"
   local receipt
   receipt=$(wait_tx_receipt_full "$target" "$tx_hash" 30) || return 1
-  # 첫 log의 topics[1] (proposalId는 보통 indexed)
+  # ProposalCreated(uint256 indexed proposalId, address indexed proposer, ...) 이벤트를
+  # 시그니처(topics[0])로 정확히 매칭한 뒤 topics[1]에서 proposalId 추출
   printf '%s' "$receipt" | python3 -c "
 import sys, json
+PROPOSAL_CREATED_SIG = '0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a'
 r = json.load(sys.stdin)
 logs = r.get('logs', [])
 for log in logs:
     topics = log.get('topics', [])
-    if len(topics) >= 2:
-        # ProposalCreated 이벤트의 topics[1]이 proposalId
+    if len(topics) >= 2 and topics[0].lower() == PROPOSAL_CREATED_SIG:
         print(int(topics[1], 16))
         break
 else:
-    print('')
+    # Fallback: 첫 log의 topics[1] (하위 호환)
+    for log in logs:
+        topics = log.get('topics', [])
+        if len(topics) >= 2:
+            print(int(topics[1], 16))
+            break
+    else:
+        print('')
 "
 }
 

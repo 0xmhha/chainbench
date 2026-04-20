@@ -7,7 +7,7 @@ description: "go-stablenet v2 회귀 테스트 환경 (AnzeonBlock=0, BohoBlock=
 
 chain:
   binary: gstable
-  binary_path: ""
+  binary_path: "/Users/wm-it-22-00661/Work/github/stable-net/regression-test-case/go-stablenet/build/bin/gstable"
   network_id: 8283
   chain_id: 8283
 

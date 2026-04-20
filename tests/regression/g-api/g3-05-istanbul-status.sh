@@ -20,7 +20,7 @@ start=$(( current - 5 ))
 (( start < 1 )) && start=1
 
 resp=$(rpc 1 istanbul_status "[\"$(dec_to_hex "$start")\", \"$(dec_to_hex "$current")\"]")
-for field in sealerActivity authorCounts blockRange roundStats; do
+for field in sealerActivity author blockRange roundStats; do
   has=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

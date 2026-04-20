@@ -18,7 +18,7 @@ test_start "regression/g-api/g3-03-get-commit-signers"
 current=$(block_number "1")
 resp=$(rpc 1 istanbul_getCommitSignersFromBlock "[\"$(dec_to_hex "$current")\"]")
 
-author=$(printf '%s' "$resp" | json_get - "result.author")
+author=$(printf '%s' "$resp" | json_get - "result.Author")
 assert_contains "$author" "0x" "Author address returned"
 
 committer_count=$(printf '%s' "$resp" | python3 -c "

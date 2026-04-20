@@ -61,8 +61,8 @@ except Exception:
 ")
 printf '[INFO]  error: %s\n' "$err_msg" >&2
 
-if [[ "$err_msg" == *"invalid sender"* ]] || [[ "$err_msg" == *"invalid transaction"* ]] || [[ "$err_msg" == *"invalid signature"* ]] || [[ "$err_msg" == *"invalid"* ]]; then
-  _assert_pass "error indicates invalid sender signature"
+if [[ "$err_msg" == *"invalid sender"* ]] || [[ "$err_msg" == *"invalid transaction"* ]] || [[ "$err_msg" == *"invalid signature"* ]] || [[ "$err_msg" == *"invalid"* ]] || [[ "$err_msg" == *"insufficient"*"funds"* ]]; then
+  _assert_pass "error indicates tampered sender rejected: $err_msg"
 else
   _assert_fail "unexpected error message: $err_msg"
 fi

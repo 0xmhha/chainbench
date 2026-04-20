@@ -36,7 +36,7 @@ for n in $(seq $(( block_before + 1 )) $(( block_before + 5 ))); do
   printf '[INFO]  block %s: usage=%s%%, baseFee=%s\n' "$n" "$usage_pct" "$bf" >&2
 
   if (( usage_pct < 6 )); then
-    next_bf=$(hex_to_dec "$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1)))\", false]" | json_get - 'result.baseFeePerGas')")
+    next_bf=$(hex_to_dec "$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]" | json_get - 'result.baseFeePerGas')")
     if (( next_bf < bf )); then
       # 감소 폭 ~2%
       pct_change=$(( (bf - next_bf) * 100 / bf ))

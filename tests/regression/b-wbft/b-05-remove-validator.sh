@@ -37,11 +37,15 @@ fi
 
 unlock_all_validators
 
-# 제거 전 member 확인
-is_member_sel=$(selector "isActiveMember(address)")
+# 제거 전 member 확인 (members mapping의 automatic getter 사용)
+# GovBase에 isActiveMember() public view는 없음.
+is_member_sel=$(selector "members(address)")
 target_padded=$(pad_address "$added_member" | sed 's/^0x//')
 before=$(eth_call_raw "1" "$GOV_VALIDATOR" "${is_member_sel}${target_padded}")
-before_dec=$(hex_to_dec "$before")
+before_dec=$(python3 -c "
+raw = '${before}'.removeprefix('0x')
+print(int(raw[:64], 16) if len(raw) >= 64 else 0)
+")
 
 if [[ "$before_dec" != "1" ]]; then
   printf '[WARN]  target not a member, skipping (run b-04 first)\n' >&2
@@ -64,9 +68,12 @@ receipt=$(gov_full_flow "$GOV_VALIDATOR" "$propose_data" "$VALIDATOR_1_ADDR" "$V
 exec_status=$(printf '%s' "$receipt" | python3 -c "import sys, json; r = json.load(sys.stdin); print(r.get('status', ''))")
 assert_eq "$exec_status" "0x1" "executeProposal receipt status == 0x1"
 
-# isActiveMember == false
+# members(address) → isActive == false
 after=$(eth_call_raw "1" "$GOV_VALIDATOR" "${is_member_sel}${target_padded}")
-after_dec=$(hex_to_dec "$after")
+after_dec=$(python3 -c "
+raw = '${after}'.removeprefix('0x')
+print(int(raw[:64], 16) if len(raw) >= 64 else 0)
+")
 assert_eq "$after_dec" "0" "target is no longer an active member"
 
 # Validator 개수는 여전히 4 (기존 4 validator 유지)
