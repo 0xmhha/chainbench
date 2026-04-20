@@ -1,0 +1,15 @@
+{
+  "name": "devnet",
+  "chain_type": "stablenet",
+  "chain_id": 8283,
+  "nodes": [
+    {
+      "id": "endpoint-0",
+      "role": "endpoint",
+      "provider": "remote",
+      "http": "https://devnet.example.com",
+      "ws":   "wss://devnet.example.com/ws",
+      "auth": { "type": "api-key", "env": "CHAINBENCH_DEVNET_KEY", "header": "X-API-Key" }
+    }
+  ]
+}

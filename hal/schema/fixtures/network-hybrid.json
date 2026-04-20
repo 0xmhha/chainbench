@@ -1,0 +1,11 @@
+{
+  "name": "mixed",
+  "chain_type": "ethereum",
+  "chain_id": 1337,
+  "nodes": [
+    { "id": "v1",  "role": "validator", "provider": "local",  "http": "http://127.0.0.1:8545" },
+    { "id": "v2",  "role": "validator", "provider": "local",  "http": "http://127.0.0.1:8546" },
+    { "id": "v3",  "role": "validator", "provider": "local",  "http": "http://127.0.0.1:8547" },
+    { "id": "rpc", "role": "endpoint",  "provider": "remote", "http": "https://devnet.example.com" }
+  ]
+}
