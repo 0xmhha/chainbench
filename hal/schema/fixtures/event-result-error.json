@@ -1,0 +1,1 @@
+{ "type": "result", "ok": false, "error": { "code": "NOT_SUPPORTED", "message": "capability 'process' is unavailable in remote networks" } }

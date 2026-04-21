@@ -1,0 +1,1 @@
+{ "type": "event", "name": "chain.block", "data": { "height": 42, "hash": "0xabc", "miner": "0xc17d" }, "ts": "2026-04-20T10:00:01Z" }
