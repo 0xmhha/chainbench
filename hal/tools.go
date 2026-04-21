@@ -6,5 +6,5 @@
 package tools
 
 import (
-	_ "github.com/atombender/go-jsonschema"
+	_ "github.com/atombender/go-jsonschema/pkg/generator"
 )
