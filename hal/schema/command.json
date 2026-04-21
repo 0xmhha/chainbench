@@ -2,5 +2,26 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://chainbench.io/schema/command.json",
   "title": "Command",
-  "type": "object"
+  "type": "object",
+  "required": ["command", "args"],
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "type": "string",
+      "enum": [
+        "network.load",
+        "network.probe",
+        "network.capabilities",
+        "node.rpc",
+        "node.start",
+        "node.stop",
+        "node.restart",
+        "node.tail_log",
+        "tx.send",
+        "subscription.open"
+      ]
+    },
+    "args": { "type": "object" },
+    "env":  { "type": "object", "description": "optional env overrides passed through to the process" }
+  }
 }

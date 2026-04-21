@@ -32,3 +32,33 @@ func TestNetworkSchema_RejectsMissingChainType(t *testing.T) {
 		t.Fatal("expected validation error for missing chain_type")
 	}
 }
+
+func TestCommandSchema_AcceptsValidFixtures(t *testing.T) {
+	fixtures := []string{
+		"command-network-load.json",
+		"command-node-rpc.json",
+	}
+	for _, fx := range fixtures {
+		fx := fx
+		t.Run(fx, func(t *testing.T) {
+			path := filepath.Join("fixtures", fx)
+			if err := ValidateFile("command", path); err != nil {
+				t.Fatalf("fixture %s must validate: %v", fx, err)
+			}
+		})
+	}
+}
+
+func TestCommandSchema_RejectsUnknownCommand(t *testing.T) {
+	doc := []byte(`{"command":"not.a.real.command","args":{}}`)
+	if err := ValidateBytes("command", doc); err == nil {
+		t.Fatal("expected validation error for unknown command name")
+	}
+}
+
+func TestCommandSchema_RejectsMissingArgs(t *testing.T) {
+	doc := []byte(`{"command":"network.load"}`)
+	if err := ValidateBytes("command", doc); err == nil {
+		t.Fatal("expected validation error for missing args")
+	}
+}
