@@ -95,3 +95,17 @@ func TestEventSchema_RejectsResultWithoutOk(t *testing.T) {
 		t.Fatal("expected validation error for result without ok field")
 	}
 }
+
+func TestEventSchema_RejectsResultOkTrueWithError(t *testing.T) {
+	doc := []byte(`{"type":"result","ok":true,"error":{"code":"INTERNAL","message":"contradictory"}}`)
+	if err := ValidateBytes("event", doc); err == nil {
+		t.Fatal("expected validation error for ok:true result carrying an error body")
+	}
+}
+
+func TestEventSchema_RejectsResultOkFalseWithoutError(t *testing.T) {
+	doc := []byte(`{"type":"result","ok":false}`)
+	if err := ValidateBytes("event", doc); err == nil {
+		t.Fatal("expected validation error for ok:false result without error body")
+	}
+}

@@ -59,7 +59,17 @@
             "message": { "type": "string" }
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if":   { "properties": { "ok": { "const": true } }, "required": ["ok"] },
+          "then": { "not": { "required": ["error"] } }
+        },
+        {
+          "if":   { "properties": { "ok": { "const": false } }, "required": ["ok"] },
+          "then": { "required": ["error"], "not": { "required": ["data"] } }
+        }
+      ]
     }
   }
 }
