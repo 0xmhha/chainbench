@@ -3,6 +3,7 @@ package wire
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -26,11 +27,17 @@ type Emitter struct {
 	closed bool
 }
 
-// NewEmitter creates an Emitter that writes to w.
+// NewEmitter creates an Emitter that writes to w and uses time.Now for timestamps.
 func NewEmitter(w io.Writer) *Emitter {
+	return NewEmitterWithClock(w, time.Now)
+}
+
+// NewEmitterWithClock creates an Emitter that writes to w and obtains event
+// timestamps by calling clock(). Useful for deterministic tests.
+func NewEmitterWithClock(w io.Writer, clock func() time.Time) *Emitter {
 	return &Emitter{
 		enc:   json.NewEncoder(w),
-		clock: time.Now,
+		clock: clock,
 	}
 }
 
@@ -43,17 +50,23 @@ func (e *Emitter) EmitEvent(name types.EventName, data map[string]any) error {
 	msg := map[string]any{
 		"type": "event",
 		"name": string(name),
-		"ts":   e.clock().UTC().Format(time.RFC3339),
+		"ts":   e.clock().UTC().Format(time.RFC3339Nano),
 	}
 	if data != nil {
 		msg["data"] = data
-	} else {
-		msg["data"] = map[string]any{}
 	}
 	return e.enc.Encode(msg)
 }
 
+// EmitProgress emits a progress message. total must be >= 1 and done must be
+// in [0, total], matching the event.json schema constraints.
 func (e *Emitter) EmitProgress(step string, done, total int) error {
+	if total < 1 {
+		return fmt.Errorf("wire: EmitProgress: total must be >= 1, got %d", total)
+	}
+	if done < 0 || done > total {
+		return fmt.Errorf("wire: EmitProgress: done must be in [0, %d], got %d", total, done)
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if e.closed {

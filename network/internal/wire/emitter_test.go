@@ -144,3 +144,64 @@ func TestEmitter_ConcurrentEmits_AllLinesValidJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestEmitter_EmitEvent_TimestampPreservesNanoseconds(t *testing.T) {
+	var buf bytes.Buffer
+	ts := time.Date(2026, 4, 22, 10, 0, 0, 123456789, time.UTC)
+	e := NewEmitterWithClock(&buf, func() time.Time { return ts })
+	if err := e.EmitEvent(types.EventName("chain.block"), nil); err != nil {
+		t.Fatalf("emit: %v", err)
+	}
+	m := decodeLine(t, bytes.TrimSpace(buf.Bytes()))
+	got, _ := m["ts"].(string)
+	if got != "2026-04-22T10:00:00.123456789Z" {
+		t.Errorf("ts nanosecond precision lost: got %q", got)
+	}
+}
+
+func TestEmitter_EmitEvent_NilDataOmitted(t *testing.T) {
+	var buf bytes.Buffer
+	e := NewEmitter(&buf)
+	if err := e.EmitEvent(types.EventName("chain.block"), nil); err != nil {
+		t.Fatalf("emit: %v", err)
+	}
+	m := decodeLine(t, bytes.TrimSpace(buf.Bytes()))
+	if _, has := m["data"]; has {
+		t.Errorf("nil data should be omitted, got %v", m["data"])
+	}
+}
+
+func TestEmitter_EmitProgress_RejectsInvalidTotal(t *testing.T) {
+	var buf bytes.Buffer
+	e := NewEmitter(&buf)
+	if err := e.EmitProgress("x", 0, 0); err == nil {
+		t.Error("expected error for total=0 (schema minimum is 1)")
+	}
+	if err := e.EmitProgress("x", 0, -1); err == nil {
+		t.Error("expected error for total=-1")
+	}
+}
+
+func TestEmitter_EmitProgress_RejectsDoneOutOfRange(t *testing.T) {
+	var buf bytes.Buffer
+	e := NewEmitter(&buf)
+	if err := e.EmitProgress("x", -1, 3); err == nil {
+		t.Error("expected error for done=-1")
+	}
+	if err := e.EmitProgress("x", 5, 3); err == nil {
+		t.Error("expected error for done=5, total=3")
+	}
+}
+
+func TestNewEmitterWithClock_InjectsClock(t *testing.T) {
+	var buf bytes.Buffer
+	fixed := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	e := NewEmitterWithClock(&buf, func() time.Time { return fixed })
+	if err := e.EmitEvent(types.EventName("chain.block"), nil); err != nil {
+		t.Fatalf("emit: %v", err)
+	}
+	m := decodeLine(t, bytes.TrimSpace(buf.Bytes()))
+	if m["ts"] != "2026-01-02T03:04:05Z" {
+		t.Errorf("injected clock not used: got %v", m["ts"])
+	}
+}
