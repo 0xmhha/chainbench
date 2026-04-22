@@ -11,7 +11,7 @@ var version = "0.0.0-dev"
 
 func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "chainbench-hal",
+		Use:           "chainbench-net",
 		Short:         "Network abstraction layer for chainbench",
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -25,7 +25,7 @@ func newVersionCmd() *cobra.Command {
 		Use:   "version",
 		Short: "Print the binary version",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "chainbench-hal %s\n", version)
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "chainbench-net %s\n", version)
 			return err
 		},
 	}

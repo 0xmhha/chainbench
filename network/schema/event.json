@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://chainbench.io/schema/event.json",
   "title": "StreamMessage",
-  "description": "One JSON object per line on chainbench-hal stdout. A stream always terminates with exactly one type=result message.",
+  "description": "One JSON object per line on chainbench-net stdout. A stream always terminates with exactly one type=result message.",
   "oneOf": [
     { "$ref": "#/$defs/Event" },
     { "$ref": "#/$defs/Progress" },

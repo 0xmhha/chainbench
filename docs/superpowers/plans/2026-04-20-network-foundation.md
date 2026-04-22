@@ -1,10 +1,10 @@
-# HAL Foundation Implementation Plan
+# Network Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Establish the `hal/` Go module skeleton, author three JSON Schemas (network, command, event) with runtime validation tests, wire up a `go generate` pipeline to produce Go types from those schemas, and produce two inventory documents (adapter contract + binary-name hardcoding audit) that future work depends on.
+**Goal:** Establish the `network/` Go module skeleton, author three JSON Schemas (network, command, event) with runtime validation tests, wire up a `go generate` pipeline to produce Go types from those schemas, and produce two inventory documents (adapter contract + binary-name hardcoding audit) that future work depends on.
 
-**Architecture:** A new Go module rooted at `hal/` (inside the existing repo, not a git submodule) hosts a cobra-based CLI binary `chainbench-hal`. Schemas live in `hal/schema/*.json` as the single source of truth; Go types in `hal/internal/types/` are generated from them via `go generate`. Runtime validation uses `santhosh-tekuri/jsonschema/v5`. Inventory scripts in `scripts/inventory/` produce deterministic outputs consumed by markdown docs.
+**Architecture:** A new Go module rooted at `network/` (inside the existing repo, not a git submodule) hosts a cobra-based CLI binary `chainbench-net`. Schemas live in `network/schema/*.json` as the single source of truth; Go types in `network/internal/types/` are generated from them via `go generate`. Runtime validation uses `santhosh-tekuri/jsonschema/v5`. Inventory scripts in `scripts/inventory/` produce deterministic outputs consumed by markdown docs.
 
 **Tech Stack:** Go 1.23 (already installed), `github.com/spf13/cobra`, `github.com/santhosh-tekuri/jsonschema/v5`, `github.com/atombender/go-jsonschema` (generator, dev-only via `tools.go` build tag).
 
@@ -15,23 +15,23 @@
 ## File Structure
 
 **New files:**
-- `hal/go.mod`, `hal/go.sum`
-- `hal/.gitignore`
-- `hal/README.md`
-- `hal/cmd/chainbench-hal/main.go` — cobra root + `version` subcommand
-- `hal/cmd/chainbench-hal/main_test.go`
-- `hal/schema/network.json`, `command.json`, `event.json`
-- `hal/schema/fixtures/network-local.json`, `network-remote.json`, `network-hybrid.json`
-- `hal/schema/fixtures/command-network-load.json`, `command-node-rpc.json`
-- `hal/schema/fixtures/event-node-started.json`, `event-chain-block.json`, `event-progress.json`, `event-result-ok.json`, `event-result-error.json`
-- `hal/schema/schema.go` — embeds schemas for runtime validation
-- `hal/schema/schema_test.go` — validates each fixture against its schema
-- `hal/internal/types/doc.go` — package doc + `go:generate` directives
-- `hal/internal/types/network_gen.go` — generated (committed)
-- `hal/internal/types/command_gen.go` — generated
-- `hal/internal/types/event_gen.go` — generated
-- `hal/internal/types/roundtrip_test.go`
-- `hal/tools.go` — build-tag-gated generator dependency pin
+- `network/go.mod`, `network/go.sum`
+- `network/.gitignore`
+- `network/README.md`
+- `network/cmd/chainbench-net/main.go` — cobra root + `version` subcommand
+- `network/cmd/chainbench-net/main_test.go`
+- `network/schema/network.json`, `command.json`, `event.json`
+- `network/schema/fixtures/network-local.json`, `network-remote.json`, `network-hybrid.json`
+- `network/schema/fixtures/command-network-load.json`, `command-node-rpc.json`
+- `network/schema/fixtures/event-node-started.json`, `event-chain-block.json`, `event-progress.json`, `event-result-ok.json`, `event-result-error.json`
+- `network/schema/schema.go` — embeds schemas for runtime validation
+- `network/schema/schema_test.go` — validates each fixture against its schema
+- `network/internal/types/doc.go` — package doc + `go:generate` directives
+- `network/internal/types/network_gen.go` — generated (committed)
+- `network/internal/types/command_gen.go` — generated
+- `network/internal/types/event_gen.go` — generated
+- `network/internal/types/roundtrip_test.go`
+- `network/tools.go` — build-tag-gated generator dependency pin
 - `scripts/inventory/list-adapter-functions.sh`
 - `scripts/inventory/scan-binary-hardcoding.sh`
 - `docs/ADAPTER_CONTRACT.md`
@@ -44,28 +44,28 @@
 ## Task 1: Initialize Go module skeleton
 
 **Files:**
-- Create: `hal/go.mod`
-- Create: `hal/.gitignore`
-- Create: `hal/README.md`
+- Create: `network/go.mod`
+- Create: `network/.gitignore`
+- Create: `network/README.md`
 
 - [ ] **Step 1.1: Create the directory and module**
 
 ```bash
 cd /Users/wm-it-22-00661/Work/github/tools/chainbench
-mkdir -p hal/cmd/chainbench-hal hal/schema/fixtures hal/internal/types
-cd hal
-go mod init github.com/0xmhha/chainbench/hal
+mkdir -p network/cmd/chainbench-net network/schema/fixtures network/internal/types
+cd network
+go mod init github.com/0xmhha/chainbench/network
 cd ..
 ```
 
-Expected: `hal/go.mod` exists and first line is `module github.com/0xmhha/chainbench/hal`, second line is `go 1.23` (the installed toolchain).
+Expected: `network/go.mod` exists and first line is `module github.com/0xmhha/chainbench/network`, second line is `go 1.23` (the installed toolchain).
 
-- [ ] **Step 1.2: Write `hal/.gitignore`**
+- [ ] **Step 1.2: Write `network/.gitignore`**
 
 ```
 # binaries
 /bin/
-/chainbench-hal
+/chainbench-net
 
 # go
 /vendor/
@@ -74,10 +74,10 @@ Expected: `hal/go.mod` exists and first line is `module github.com/0xmhha/chainb
 coverage.html
 ```
 
-- [ ] **Step 1.3: Write `hal/README.md`**
+- [ ] **Step 1.3: Write `network/README.md`**
 
 ```markdown
-# chainbench-hal
+# chainbench-net
 
 Network abstraction layer for chainbench. Provides a uniform command/event
 interface over local, remote, and (future) ssh-remote chain nodes. Invoked as a
@@ -87,7 +87,7 @@ See `docs/VISION_AND_ROADMAP.md` §5.15–5.17 for the design.
 
 ## Build
 
-    go build -o bin/chainbench-hal ./cmd/chainbench-hal
+    go build -o bin/chainbench-net ./cmd/chainbench-net
 
 ## Develop
 
@@ -97,14 +97,14 @@ See `docs/VISION_AND_ROADMAP.md` §5.15–5.17 for the design.
 
 - [ ] **Step 1.4: Verify module resolves**
 
-Run: `cd hal && go mod tidy && cd ..`
+Run: `cd network && go mod tidy && cd ..`
 Expected: exits 0, `go.sum` not created yet (no deps). No errors about Go version.
 
 - [ ] **Step 1.5: Commit**
 
 ```bash
-git add hal/go.mod hal/.gitignore hal/README.md
-git commit -m "hal: initialize Go module skeleton"
+git add network/go.mod network/.gitignore network/README.md
+git commit -m "network: initialize Go module skeleton"
 ```
 
 ---
@@ -112,22 +112,22 @@ git commit -m "hal: initialize Go module skeleton"
 ## Task 2: Minimal cobra CLI with `version` subcommand
 
 **Files:**
-- Create: `hal/cmd/chainbench-hal/main.go`
-- Create: `hal/cmd/chainbench-hal/main_test.go`
-- Modify: `hal/go.mod` (cobra dep added)
+- Create: `network/cmd/chainbench-net/main.go`
+- Create: `network/cmd/chainbench-net/main_test.go`
+- Modify: `network/go.mod` (cobra dep added)
 
 - [ ] **Step 2.1: Add cobra dependency**
 
 Run:
 ```bash
-cd hal && go get github.com/spf13/cobra@latest && cd ..
+cd network && go get github.com/spf13/cobra@latest && cd ..
 ```
 
-Expected: `hal/go.mod` now contains `require github.com/spf13/cobra`; `hal/go.sum` is created.
+Expected: `network/go.mod` now contains `require github.com/spf13/cobra`; `network/go.sum` is created.
 
 - [ ] **Step 2.2: Write the failing test**
 
-Create `hal/cmd/chainbench-hal/main_test.go`:
+Create `network/cmd/chainbench-net/main_test.go`:
 
 ```go
 package main
@@ -149,8 +149,8 @@ func TestVersionCommand_PrintsSemver(t *testing.T) {
 	}
 
 	out := buf.String()
-	if !strings.HasPrefix(out, "chainbench-hal ") {
-		t.Fatalf("want prefix %q, got %q", "chainbench-hal ", out)
+	if !strings.HasPrefix(out, "chainbench-net ") {
+		t.Fatalf("want prefix %q, got %q", "chainbench-net ", out)
 	}
 	if !strings.Contains(out, "\n") {
 		t.Fatalf("want trailing newline, got %q", out)
@@ -160,12 +160,12 @@ func TestVersionCommand_PrintsSemver(t *testing.T) {
 
 - [ ] **Step 2.3: Run test — expect compile failure**
 
-Run: `cd hal && go test ./cmd/chainbench-hal/... && cd ..`
+Run: `cd network && go test ./cmd/chainbench-net/... && cd ..`
 Expected: FAIL — `newRootCmd` is undefined.
 
 - [ ] **Step 2.4: Write minimal `main.go`**
 
-Create `hal/cmd/chainbench-hal/main.go`:
+Create `network/cmd/chainbench-net/main.go`:
 
 ```go
 package main
@@ -181,7 +181,7 @@ var version = "0.0.0-dev"
 
 func newRootCmd() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "chainbench-hal",
+		Use:           "chainbench-net",
 		Short:         "Network abstraction layer for chainbench",
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -195,7 +195,7 @@ func newVersionCmd() *cobra.Command {
 		Use:   "version",
 		Short: "Print the binary version",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			_, err := fmt.Fprintf(cmd.OutOrStdout(), "chainbench-hal %s\n", version)
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "chainbench-net %s\n", version)
 			return err
 		},
 	}
@@ -211,22 +211,22 @@ func main() {
 
 - [ ] **Step 2.5: Run test — expect pass**
 
-Run: `cd hal && go test ./cmd/chainbench-hal/... && cd ..`
+Run: `cd network && go test ./cmd/chainbench-net/... && cd ..`
 Expected: PASS.
 
 - [ ] **Step 2.6: Smoke-test the binary**
 
 Run:
 ```bash
-cd hal && go run ./cmd/chainbench-hal version && cd ..
+cd network && go run ./cmd/chainbench-net version && cd ..
 ```
-Expected stdout: `chainbench-hal 0.0.0-dev`.
+Expected stdout: `chainbench-net 0.0.0-dev`.
 
 - [ ] **Step 2.7: Commit**
 
 ```bash
-git add hal/go.mod hal/go.sum hal/cmd/chainbench-hal/main.go hal/cmd/chainbench-hal/main_test.go
-git commit -m "hal: add cobra CLI entry with version subcommand"
+git add network/go.mod network/go.sum network/cmd/chainbench-net/main.go network/cmd/chainbench-net/main_test.go
+git commit -m "network: add cobra CLI entry with version subcommand"
 ```
 
 ---
@@ -234,23 +234,23 @@ git commit -m "hal: add cobra CLI entry with version subcommand"
 ## Task 3: `network.json` schema + fixtures + validation test
 
 **Files:**
-- Create: `hal/schema/network.json`
-- Create: `hal/schema/fixtures/network-local.json`
-- Create: `hal/schema/fixtures/network-remote.json`
-- Create: `hal/schema/fixtures/network-hybrid.json`
-- Create: `hal/schema/schema.go`
-- Create: `hal/schema/schema_test.go`
-- Modify: `hal/go.mod` (jsonschema dep)
+- Create: `network/schema/network.json`
+- Create: `network/schema/fixtures/network-local.json`
+- Create: `network/schema/fixtures/network-remote.json`
+- Create: `network/schema/fixtures/network-hybrid.json`
+- Create: `network/schema/schema.go`
+- Create: `network/schema/schema_test.go`
+- Modify: `network/go.mod` (jsonschema dep)
 
 - [ ] **Step 3.1: Add validator dependency**
 
 ```bash
-cd hal && go get github.com/santhosh-tekuri/jsonschema/v5 && cd ..
+cd network && go get github.com/santhosh-tekuri/jsonschema/v5 && cd ..
 ```
 
 - [ ] **Step 3.2: Write the failing test**
 
-Create `hal/schema/schema_test.go`:
+Create `network/schema/schema_test.go`:
 
 ```go
 package schema
@@ -291,12 +291,12 @@ func TestNetworkSchema_RejectsMissingChainType(t *testing.T) {
 
 - [ ] **Step 3.3: Run test — expect compile failure**
 
-Run: `cd hal && go test ./schema/... && cd ..`
+Run: `cd network && go test ./schema/... && cd ..`
 Expected: FAIL — `ValidateFile`, `ValidateBytes`, package `schema` not defined.
 
 - [ ] **Step 3.4: Write `network.json`**
 
-Create `hal/schema/network.json`:
+Create `network/schema/network.json`:
 
 ```json
 {
@@ -367,7 +367,7 @@ Create `hal/schema/network.json`:
 
 - [ ] **Step 3.5: Write three fixtures**
 
-Create `hal/schema/fixtures/network-local.json`:
+Create `network/schema/fixtures/network-local.json`:
 
 ```json
 {
@@ -387,7 +387,7 @@ Create `hal/schema/fixtures/network-local.json`:
 }
 ```
 
-Create `hal/schema/fixtures/network-remote.json`:
+Create `network/schema/fixtures/network-remote.json`:
 
 ```json
 {
@@ -407,7 +407,7 @@ Create `hal/schema/fixtures/network-remote.json`:
 }
 ```
 
-Create `hal/schema/fixtures/network-hybrid.json`:
+Create `network/schema/fixtures/network-hybrid.json`:
 
 ```json
 {
@@ -425,10 +425,10 @@ Create `hal/schema/fixtures/network-hybrid.json`:
 
 - [ ] **Step 3.6: Write `schema.go`**
 
-Create `hal/schema/schema.go`:
+Create `network/schema/schema.go`:
 
 ```go
-// Package schema embeds the JSON Schemas that define the chainbench-hal
+// Package schema embeds the JSON Schemas that define the chainbench-net
 // command/event/network contracts and exposes runtime validation helpers.
 package schema
 
@@ -492,7 +492,7 @@ func ValidateFile(name, path string) error {
 
 These will be filled out in Tasks 4 and 5. For now, minimal valid schemas:
 
-`hal/schema/command.json`:
+`network/schema/command.json`:
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -502,7 +502,7 @@ These will be filled out in Tasks 4 and 5. For now, minimal valid schemas:
 }
 ```
 
-`hal/schema/event.json`:
+`network/schema/event.json`:
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -514,14 +514,14 @@ These will be filled out in Tasks 4 and 5. For now, minimal valid schemas:
 
 - [ ] **Step 3.8: Run test — expect pass**
 
-Run: `cd hal && go test ./schema/... && cd ..`
+Run: `cd network && go test ./schema/... && cd ..`
 Expected: PASS (two tests).
 
 - [ ] **Step 3.9: Commit**
 
 ```bash
-git add hal/schema/ hal/go.mod hal/go.sum
-git commit -m "hal: add network JSON schema with fixtures and validator"
+git add network/schema/ network/go.mod network/go.sum
+git commit -m "network: add network JSON schema with fixtures and validator"
 ```
 
 ---
@@ -529,14 +529,14 @@ git commit -m "hal: add network JSON schema with fixtures and validator"
 ## Task 4: `command.json` schema + fixtures + test
 
 **Files:**
-- Modify: `hal/schema/command.json` (replace placeholder)
-- Create: `hal/schema/fixtures/command-network-load.json`
-- Create: `hal/schema/fixtures/command-node-rpc.json`
-- Modify: `hal/schema/schema_test.go` (add command tests)
+- Modify: `network/schema/command.json` (replace placeholder)
+- Create: `network/schema/fixtures/command-network-load.json`
+- Create: `network/schema/fixtures/command-node-rpc.json`
+- Modify: `network/schema/schema_test.go` (add command tests)
 
 - [ ] **Step 4.1: Write the failing test**
 
-Append to `hal/schema/schema_test.go`:
+Append to `network/schema/schema_test.go`:
 
 ```go
 func TestCommandSchema_AcceptsValidFixtures(t *testing.T) {
@@ -572,12 +572,12 @@ func TestCommandSchema_RejectsMissingArgs(t *testing.T) {
 
 - [ ] **Step 4.2: Run test — expect fail**
 
-Run: `cd hal && go test ./schema/... && cd ..`
+Run: `cd network && go test ./schema/... && cd ..`
 Expected: FAIL — two fixtures missing and placeholder schema accepts unknown commands.
 
 - [ ] **Step 4.3: Write `command.json`**
 
-Replace `hal/schema/command.json`:
+Replace `network/schema/command.json`:
 
 ```json
 {
@@ -611,12 +611,12 @@ Replace `hal/schema/command.json`:
 
 - [ ] **Step 4.4: Write fixtures**
 
-`hal/schema/fixtures/command-network-load.json`:
+`network/schema/fixtures/command-network-load.json`:
 ```json
 { "command": "network.load", "args": { "name": "my-local" } }
 ```
 
-`hal/schema/fixtures/command-node-rpc.json`:
+`network/schema/fixtures/command-node-rpc.json`:
 ```json
 {
   "command": "node.rpc",
@@ -630,14 +630,14 @@ Replace `hal/schema/command.json`:
 
 - [ ] **Step 4.5: Run test — expect pass**
 
-Run: `cd hal && go test ./schema/... && cd ..`
+Run: `cd network && go test ./schema/... && cd ..`
 Expected: PASS (now 5 tests across command + network).
 
 - [ ] **Step 4.6: Commit**
 
 ```bash
-git add hal/schema/command.json hal/schema/fixtures/command-*.json hal/schema/schema_test.go
-git commit -m "hal: add command JSON schema with fixtures"
+git add network/schema/command.json network/schema/fixtures/command-*.json network/schema/schema_test.go
+git commit -m "network: add command JSON schema with fixtures"
 ```
 
 ---
@@ -645,17 +645,17 @@ git commit -m "hal: add command JSON schema with fixtures"
 ## Task 5: `event.json` schema + event catalog + fixtures + test
 
 **Files:**
-- Modify: `hal/schema/event.json` (replace placeholder)
-- Create: `hal/schema/fixtures/event-node-started.json`
-- Create: `hal/schema/fixtures/event-chain-block.json`
-- Create: `hal/schema/fixtures/event-progress.json`
-- Create: `hal/schema/fixtures/event-result-ok.json`
-- Create: `hal/schema/fixtures/event-result-error.json`
-- Modify: `hal/schema/schema_test.go` (add event tests)
+- Modify: `network/schema/event.json` (replace placeholder)
+- Create: `network/schema/fixtures/event-node-started.json`
+- Create: `network/schema/fixtures/event-chain-block.json`
+- Create: `network/schema/fixtures/event-progress.json`
+- Create: `network/schema/fixtures/event-result-ok.json`
+- Create: `network/schema/fixtures/event-result-error.json`
+- Modify: `network/schema/schema_test.go` (add event tests)
 
 - [ ] **Step 5.1: Write the failing test**
 
-Append to `hal/schema/schema_test.go`:
+Append to `network/schema/schema_test.go`:
 
 ```go
 func TestEventSchema_AcceptsValidFixtures(t *testing.T) {
@@ -694,19 +694,19 @@ func TestEventSchema_RejectsResultWithoutOk(t *testing.T) {
 
 - [ ] **Step 5.2: Run test — expect fail**
 
-Run: `cd hal && go test ./schema/... && cd ..`
+Run: `cd network && go test ./schema/... && cd ..`
 Expected: FAIL — fixtures missing, placeholder schema accepts everything.
 
 - [ ] **Step 5.3: Write `event.json`**
 
-Replace `hal/schema/event.json`:
+Replace `network/schema/event.json`:
 
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://chainbench.io/schema/event.json",
   "title": "StreamMessage",
-  "description": "One JSON object per line on chainbench-hal stdout. A stream always terminates with exactly one type=result message.",
+  "description": "One JSON object per line on chainbench-net stdout. A stream always terminates with exactly one type=result message.",
   "oneOf": [
     { "$ref": "#/$defs/Event" },
     { "$ref": "#/$defs/Progress" },
@@ -798,14 +798,14 @@ Replace `hal/schema/event.json`:
 
 - [ ] **Step 5.5: Run test — expect pass**
 
-Run: `cd hal && go test ./schema/... && cd ..`
+Run: `cd network && go test ./schema/... && cd ..`
 Expected: PASS (schema test count now 10).
 
 - [ ] **Step 5.6: Commit**
 
 ```bash
-git add hal/schema/event.json hal/schema/fixtures/event-*.json hal/schema/schema_test.go
-git commit -m "hal: add event JSON schema with catalog and fixtures"
+git add network/schema/event.json network/schema/fixtures/event-*.json network/schema/schema_test.go
+git commit -m "network: add event JSON schema with catalog and fixtures"
 ```
 
 ---
@@ -813,23 +813,23 @@ git commit -m "hal: add event JSON schema with catalog and fixtures"
 ## Task 6: `go generate` pipeline producing Go types
 
 **Files:**
-- Create: `hal/tools.go`
-- Create: `hal/internal/types/doc.go`
-- Create: `hal/internal/types/network_gen.go` (generated, committed)
-- Create: `hal/internal/types/command_gen.go` (generated, committed)
-- Create: `hal/internal/types/event_gen.go` (generated, committed)
-- Create: `hal/internal/types/roundtrip_test.go`
+- Create: `network/tools.go`
+- Create: `network/internal/types/doc.go`
+- Create: `network/internal/types/network_gen.go` (generated, committed)
+- Create: `network/internal/types/command_gen.go` (generated, committed)
+- Create: `network/internal/types/event_gen.go` (generated, committed)
+- Create: `network/internal/types/roundtrip_test.go`
 
 - [ ] **Step 6.1: Pin the generator tool via `tools.go`**
 
-Create `hal/tools.go`:
+Create `network/tools.go`:
 
 ```go
 //go:build tools
 // +build tools
 
 // Package tools pins development-only tool dependencies so they are recorded
-// in go.mod but not compiled into the chainbench-hal binary.
+// in go.mod but not compiled into the chainbench-net binary.
 package tools
 
 import (
@@ -839,23 +839,23 @@ import (
 
 Run:
 ```bash
-cd hal && go mod tidy && cd ..
+cd network && go mod tidy && cd ..
 ```
 Expected: `github.com/atombender/go-jsonschema` appears in `go.mod`.
 
 - [ ] **Step 6.2: Install the generator locally**
 
 ```bash
-cd hal && go install github.com/atombender/go-jsonschema@latest && cd ..
+cd network && go install github.com/atombender/go-jsonschema@latest && cd ..
 ```
 
 Verify: `which go-jsonschema` returns a path under `$HOME/go/bin` (or `$GOBIN`).
 
-- [ ] **Step 6.3: Write `hal/internal/types/doc.go` with `go:generate` directives**
+- [ ] **Step 6.3: Write `network/internal/types/doc.go` with `go:generate` directives**
 
 ```go
 // Package types contains Go structs generated from the JSON Schemas under
-// hal/schema/. Run `go generate ./...` from the hal/ module root after changing
+// network/schema/. Run `go generate ./...` from the network/ module root after changing
 // any schema file.
 package types
 
@@ -867,14 +867,14 @@ package types
 - [ ] **Step 6.4: Run the generator**
 
 ```bash
-cd hal && go generate ./internal/types/... && cd ..
+cd network && go generate ./internal/types/... && cd ..
 ```
 
-Expected: `hal/internal/types/{network_gen.go,command_gen.go,event_gen.go}` appear, each beginning with `// Code generated by github.com/atombender/go-jsonschema, DO NOT EDIT.`
+Expected: `network/internal/types/{network_gen.go,command_gen.go,event_gen.go}` appear, each beginning with `// Code generated by github.com/atombender/go-jsonschema, DO NOT EDIT.`
 
 - [ ] **Step 6.5: Write the roundtrip test**
 
-Create `hal/internal/types/roundtrip_test.go`:
+Create `network/internal/types/roundtrip_test.go`:
 
 ```go
 package types
@@ -922,19 +922,19 @@ func TestNetwork_RoundtripLocalFixture(t *testing.T) {
 
 - [ ] **Step 6.6: Run test**
 
-Run: `cd hal && go test ./internal/types/... && cd ..`
+Run: `cd network && go test ./internal/types/... && cd ..`
 Expected: PASS.
 
 - [ ] **Step 6.7: Verify whole-module test suite still green**
 
-Run: `cd hal && go test ./... && cd ..`
+Run: `cd network && go test ./... && cd ..`
 Expected: PASS. All packages.
 
 - [ ] **Step 6.8: Commit**
 
 ```bash
-git add hal/tools.go hal/internal/ hal/go.mod hal/go.sum
-git commit -m "hal: generate Go types from JSON schemas via go:generate"
+git add network/tools.go network/internal/ network/go.mod network/go.sum
+git commit -m "network: generate Go types from JSON schemas via go:generate"
 ```
 
 ---
@@ -1023,7 +1023,7 @@ wbft       adapter_generate_genesis                 lib/adapters/wbft.sh:<N>    
 # Adapter Contract
 
 > **Status:** draft — inventory of current `lib/adapters/*.sh` interface, to be
-> promoted to the HAL interface contract (§5.17 of VISION_AND_ROADMAP).
+> promoted to the Network Abstraction interface contract (§5.17 of VISION_AND_ROADMAP).
 > Regenerate the tables below with:
 >
 >     scripts/inventory/list-adapter-functions.sh
@@ -1044,9 +1044,9 @@ called from `lib/cmd_*.sh` through the dispatcher in `lib/chain_adapter.sh`.
 
 <paste output of `scripts/inventory/list-adapter-functions.sh` below and keep in sync>
 
-## 3. Gaps — functions the HAL contract will need but adapters do not expose today
+## 3. Gaps — functions the Network Abstraction contract will need but adapters do not expose today
 
-Derived from §5.15 event catalog and §5.17 HAL interface.
+Derived from §5.15 event catalog and §5.17 Network Abstraction interface.
 
 | Proposed function | Why needed | First consumer |
 |---|---|---|
@@ -1059,8 +1059,8 @@ Derived from §5.15 event catalog and §5.17 HAL interface.
 
 ## 4. Migration guidance
 
-Each gap becomes a named entry in the generated `hal/schema/network.json`
-capability flags and a Go interface method in `hal/internal/adapters/`. See
+Each gap becomes a named entry in the generated `network/schema/network.json`
+capability flags and a Go interface method in `network/internal/adapters/`. See
 §5.12 M0–M4 of the roadmap for the sequencing.
 ```
 
@@ -1193,20 +1193,20 @@ git commit -m "docs: add audit of chain binary name hardcoding"
 
 ## Final verification
 
-- [ ] **Run the full Go suite from the HAL module**
+- [ ] **Run the full Go suite from the Network module**
 
 ```bash
-cd hal && go test ./... && cd ..
+cd network && go test ./... && cd ..
 ```
-Expected: PASS across `schema`, `cmd/chainbench-hal`, `internal/types`.
+Expected: PASS across `schema`, `cmd/chainbench-net`, `internal/types`.
 
-- [ ] **Build the HAL binary**
+- [ ] **Build the Network binary**
 
 ```bash
-cd hal && go build -o ../bin/chainbench-hal ./cmd/chainbench-hal && cd ..
-./bin/chainbench-hal version
+cd network && go build -o ../bin/chainbench-net ./cmd/chainbench-net && cd ..
+./bin/chainbench-net version
 ```
-Expected: prints `chainbench-hal 0.0.0-dev`.
+Expected: prints `chainbench-net 0.0.0-dev`.
 
 - [ ] **Run both inventory scripts once and confirm docs are in sync**
 
@@ -1222,12 +1222,12 @@ scripts/inventory/scan-binary-hardcoding.sh       | diff -q - <(sed -n '/^## Fin
 git log --oneline main..HEAD
 ```
 Expected 8 commits, one per task:
-1. `hal: initialize Go module skeleton`
-2. `hal: add cobra CLI entry with version subcommand`
-3. `hal: add network JSON schema with fixtures and validator`
-4. `hal: add command JSON schema with fixtures`
-5. `hal: add event JSON schema with catalog and fixtures`
-6. `hal: generate Go types from JSON schemas via go:generate`
+1. `network: initialize Go module skeleton`
+2. `network: add cobra CLI entry with version subcommand`
+3. `network: add network JSON schema with fixtures and validator`
+4. `network: add command JSON schema with fixtures`
+5. `network: add event JSON schema with catalog and fixtures`
+6. `network: generate Go types from JSON schemas via go:generate`
 7. `docs: add adapter contract with function inventory`
 8. `docs: add audit of chain binary name hardcoding`
 
@@ -1239,9 +1239,9 @@ The following belong to Sprint 2+ and are intentionally not implemented here:
 
 - LocalDriver / RemoteDriver implementation
 - Wire protocol (stdin command envelope + stdout NDJSON handshake) beyond the schemas
-- bash `lib/hal_client.sh` wrapper
+- bash `lib/network_client.sh` wrapper
 - Any modification of existing `cmd_*.sh` files
-- `install.sh` changes to build the HAL binary
-- MCP server refactor to consume HAL
+- `install.sh` changes to build the Network binary
+- MCP server refactor to consume Network Abstraction
 
 Each of those gets its own plan once this foundation is merged.

@@ -17,8 +17,8 @@ func TestVersionCommand_PrintsSemver(t *testing.T) {
 	}
 
 	out := buf.String()
-	if !strings.HasPrefix(out, "chainbench-hal ") {
-		t.Fatalf("want prefix %q, got %q", "chainbench-hal ", out)
+	if !strings.HasPrefix(out, "chainbench-net ") {
+		t.Fatalf("want prefix %q, got %q", "chainbench-net ", out)
 	}
 	if !strings.Contains(out, "\n") {
 		t.Fatalf("want trailing newline, got %q", out)

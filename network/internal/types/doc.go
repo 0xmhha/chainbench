@@ -1,6 +1,6 @@
 // Package types contains Go structs generated from the JSON Schemas under
-// hal/schema/. Run `go generate ./...` from the hal/ module root after changing
-// any schema file.
+// network/schema/. Run `go generate ./...` from the network/ module root after
+// changing any schema file.
 //
 // The -t / --struct-name-from-title flag makes the root struct match the
 // schema "title" field (e.g., Network from title:"Network" rather than the

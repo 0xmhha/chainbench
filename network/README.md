@@ -1,4 +1,4 @@
-# chainbench-hal
+# chainbench-net
 
 Network abstraction layer for chainbench. Provides a uniform command/event
 interface over local, remote, and (future) ssh-remote chain nodes. Invoked as a
@@ -12,7 +12,7 @@ See `docs/VISION_AND_ROADMAP.md` §5.15–5.17 for the design.
 
 ## Build
 
-    go build -o bin/chainbench-hal ./cmd/chainbench-hal
+    go build -o bin/chainbench-net ./cmd/chainbench-net
 
 ## Develop
 

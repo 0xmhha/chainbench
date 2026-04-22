@@ -1,4 +1,4 @@
-// Package schema embeds the JSON Schemas that define the chainbench-hal
+// Package schema embeds the JSON Schemas that define the chainbench-net
 // command/event/network contracts and exposes runtime validation helpers.
 package schema
 

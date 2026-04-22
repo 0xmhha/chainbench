@@ -1,4 +1,4 @@
-module github.com/0xmhha/chainbench/hal
+module github.com/0xmhha/chainbench/network
 
 go 1.25.0
 
