@@ -34,6 +34,12 @@ func DecodeCommand(r io.Reader) (*types.Command, error) {
 	if err := json.Unmarshal(raw, &probe); err != nil {
 		return nil, fmt.Errorf("wire: command envelope: %w", err)
 	}
+	if probe == nil {
+		// JSON "null" unmarshals to a nil map without error; the generated
+		// Command.UnmarshalJSON also skips required-field validation in that
+		// case. Reject explicitly so callers cannot receive a zero-value Command.
+		return nil, fmt.Errorf("wire: command envelope: expected JSON object, got null")
+	}
 	for key := range probe {
 		if _, ok := allowedCommandFields[key]; !ok {
 			return nil, fmt.Errorf("wire: command envelope: unknown field %q", key)

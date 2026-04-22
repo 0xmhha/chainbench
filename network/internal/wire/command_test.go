@@ -40,3 +40,25 @@ func TestDecodeCommand_UnknownField(t *testing.T) {
 		t.Errorf("error should mention unknown field: %v", err)
 	}
 }
+
+func TestDecodeCommand_NullInput(t *testing.T) {
+	_, err := DecodeCommand(bytes.NewReader([]byte(`null`)))
+	if err == nil {
+		t.Fatal("expected error for null input; got silent success")
+	}
+}
+
+func TestDecodeCommand_EmptyInput(t *testing.T) {
+	_, err := DecodeCommand(bytes.NewReader(nil))
+	if err == nil {
+		t.Fatal("expected error for empty input")
+	}
+}
+
+func TestDecodeCommand_TrailingGarbage(t *testing.T) {
+	input := []byte(`{"command":"network.load","args":{}} trailing`)
+	_, err := DecodeCommand(bytes.NewReader(input))
+	if err == nil {
+		t.Fatal("expected error for trailing garbage after JSON object")
+	}
+}
