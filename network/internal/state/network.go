@@ -49,11 +49,16 @@ func LoadActive(opts LoadActiveOptions) (*types.Network, error) {
 		chainType = "stablenet"
 	}
 
-	nodes, err := buildNodes(pids)
-	if err != nil {
-		return nil, err
-	}
+	nodes := buildNodes(pids)
 
+	// Note on generated type surface:
+	//   types.Network.Name is a plain string (not a NetworkName typed alias)
+	//     because go-jsonschema emits the top-level title as a raw string. If a
+	//     future generator run produces a typed alias, restore types.NetworkName(name).
+	//   types.Network.ChainId is int (not int64). profile.Chain.ChainID is int64
+	//     from the YAML parser; this cast assumes a 64-bit build target. All
+	//     production builds are 64-bit (darwin/arm64, linux/amd64) so the range
+	//     loss is theoretical, but worth a guard if we ever target 32-bit.
 	net := &types.Network{
 		Name:      name,
 		ChainType: types.NetworkChainType(chainType),
@@ -63,7 +68,7 @@ func LoadActive(opts LoadActiveOptions) (*types.Network, error) {
 	return net, nil
 }
 
-func buildNodes(p *PIDsFile) ([]types.Node, error) {
+func buildNodes(p *PIDsFile) []types.Node {
 	keys := make([]string, 0, len(p.Nodes))
 	for k := range p.Nodes {
 		keys = append(keys, k)
@@ -90,7 +95,7 @@ func buildNodes(p *PIDsFile) ([]types.Node, error) {
 		}
 		out = append(out, node)
 	}
-	return out, nil
+	return out
 }
 
 func mapRole(t string) types.NodeRole {

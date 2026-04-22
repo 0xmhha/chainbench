@@ -19,6 +19,26 @@ See `docs/VISION_AND_ROADMAP.md` §5.15–5.17 for the design.
     go generate ./...
     go test ./...
 
+## Runtime
+
+The `run` subcommand reads a wire command envelope from stdin and emits an
+NDJSON result terminator on stdout. Structured logs go to stderr.
+
+    echo '{"command":"network.load","args":{"name":"local"}}' | chainbench-net run
+
+Environment:
+
+- `CHAINBENCH_STATE_DIR` — directory containing `pids.json` and
+  `current-profile.yaml`. Defaults to `state` relative to the current
+  working directory.
+- `CHAINBENCH_NET_LOG_LEVEL` — `debug` | `info` | `warn` | `error`
+  (default `info`).
+- `CHAINBENCH_NET_LOG` — optional path to write logs instead of stderr.
+
+Exit codes follow the wire error-code table (VISION §5): 0 success,
+1 generic/INVALID_ARGS/UPSTREAM_ERROR/INTERNAL, 2 NOT_SUPPORTED,
+3 PROTOCOL_ERROR.
+
 ## Tools
 
 Development-only tool dependencies are pinned via `tools.go` under the `tools`
