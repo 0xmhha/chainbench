@@ -1,0 +1,16 @@
+name: default
+
+chain:
+  binary: gstable
+  binary_path: ""
+  network_id: 8283
+  chain_id: 8283
+
+nodes:
+  validators: 4
+  endpoints: 1
+
+ports:
+  base_p2p: 30301
+  base_http: 8501
+  base_ws: 9501

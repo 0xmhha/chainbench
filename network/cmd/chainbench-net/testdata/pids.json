@@ -1,0 +1,33 @@
+{
+  "chain_id": "local-default-20260420084840",
+  "profile": "default",
+  "started_at": "2026-04-20T08:48:40Z",
+  "nodes": {
+    "1": {
+      "pid": 23350,
+      "type": "validator",
+      "p2p_port": 30301,
+      "http_port": 8501,
+      "ws_port": 9501,
+      "auth_port": 8551,
+      "metrics_port": 6061,
+      "status": "running",
+      "log_file": "/tmp/node-data/logs/node1.log",
+      "binary": "/opt/gstable",
+      "datadir": "/tmp/node-data/node1"
+    },
+    "5": {
+      "pid": 23354,
+      "type": "endpoint",
+      "p2p_port": 30305,
+      "http_port": 8505,
+      "ws_port": 9505,
+      "auth_port": 8555,
+      "metrics_port": 6065,
+      "status": "running",
+      "log_file": "/tmp/node-data/logs/node5.log",
+      "binary": "/opt/gstable",
+      "datadir": "/tmp/node-data/node5"
+    }
+  }
+}
