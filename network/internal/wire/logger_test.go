@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -52,4 +54,70 @@ func TestSetupLoggerTo_DebugLevel_ShowsAll(t *testing.T) {
 	if !strings.Contains(buf.String(), "info-msg") {
 		t.Errorf("info should appear at debug level")
 	}
+}
+
+func TestParseLevel_AllBranches(t *testing.T) {
+	cases := map[string]slog.Level{
+		"debug":   slog.LevelDebug,
+		"DEBUG":   slog.LevelDebug,
+		"info":    slog.LevelInfo,
+		"warn":    slog.LevelWarn,
+		"WARN":    slog.LevelWarn,
+		"error":   slog.LevelError,
+		"unknown": slog.LevelInfo, // default fallback
+		"":        slog.LevelInfo, // empty fallback
+	}
+	for input, want := range cases {
+		if got := parseLevel(input); got != want {
+			t.Errorf("parseLevel(%q): got %v, want %v", input, got, want)
+		}
+	}
+}
+
+func TestSetupLogger_EnvDefaultsToStderr(t *testing.T) {
+	t.Setenv(envLogLevel, "")
+	t.Setenv(envLogFile, "")
+	logger := SetupLogger()
+	if logger == nil {
+		t.Fatal("logger is nil")
+	}
+	// Smoke: default logger should accept Info without panic. Output goes to
+	// stderr in this mode; we cannot easily capture it but we verified no panic.
+	logger.Info("smoke")
+}
+
+func TestSetupLogger_EnvPathWritesToFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "net.log")
+	t.Setenv(envLogFile, path)
+	t.Setenv(envLogLevel, "debug")
+
+	logger := SetupLogger()
+	logger.Debug("env-debug")
+	logger.Info("env-info")
+
+	// Read back the file and verify both lines landed.
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read log file: %v", err)
+	}
+	out := string(data)
+	if !strings.Contains(out, "env-debug") {
+		t.Errorf("file missing env-debug: %q", out)
+	}
+	if !strings.Contains(out, "env-info") {
+		t.Errorf("file missing env-info: %q", out)
+	}
+}
+
+func TestSetupLogger_EnvPathBadFallsBackToStderr(t *testing.T) {
+	// A directory that cannot be opened as a file should trigger silent fallback.
+	t.Setenv(envLogFile, "/nonexistent/dir/that/does/not/exist/net.log")
+	t.Setenv(envLogLevel, "info")
+	logger := SetupLogger()
+	if logger == nil {
+		t.Fatal("logger is nil despite fallback path")
+	}
+	// No panic, no assertion on output (it went to stderr); just proving the
+	// fallback branch is reached.
 }
