@@ -93,7 +93,12 @@ _cb_net_parse_result() {
 # See header comment for semantics.
 cb_net_call() {
   local command="${1:?cb_net_call: command required}"
-  local args_json="${2:-{}}"
+  # Bash closes ${...:-...} at the first literal '}', so '{}' as a default
+  # must be built outside the expansion.
+  local args_json="${2:-}"
+  if [[ -z "$args_json" ]]; then
+    args_json='{}'
+  fi
 
   if ! command -v jq >/dev/null 2>&1; then
     echo "network_client: jq not available" >&2
