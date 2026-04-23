@@ -65,44 +65,51 @@ func newHandleNetworkLoad(stateDir string) Handler {
 	}
 }
 
+// resolveNodeID parses the command envelope args into a (nodeID, nodeNum) pair,
+// validates the "node" prefix, and confirms the id exists in the active
+// network's pids.json. Returns APIError sentinels:
+//
+//	INVALID_ARGS  — malformed args, missing/bad node_id, node not found
+//	UPSTREAM_ERROR — state.LoadActive failure (pids.json missing, parse error)
+func resolveNodeID(stateDir string, args json.RawMessage) (nodeID, nodeNum string, err error) {
+	var req struct {
+		NodeID string `json:"node_id"`
+	}
+	if len(args) > 0 {
+		if uerr := json.Unmarshal(args, &req); uerr != nil {
+			return "", "", NewInvalidArgs(fmt.Sprintf("args: %v", uerr))
+		}
+	}
+	if req.NodeID == "" {
+		return "", "", NewInvalidArgs("args.node_id is required")
+	}
+	if !strings.HasPrefix(req.NodeID, "node") {
+		return "", "", NewInvalidArgs(fmt.Sprintf(`node_id must start with "node" prefix (got %q)`, req.NodeID))
+	}
+	num := strings.TrimPrefix(req.NodeID, "node")
+	if num == "" {
+		return "", "", NewInvalidArgs("node_id missing numeric suffix")
+	}
+	net, lerr := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "local"})
+	if lerr != nil {
+		return "", "", NewUpstream("failed to load active state", lerr)
+	}
+	for _, n := range net.Nodes {
+		if n.Id == req.NodeID {
+			return req.NodeID, num, nil
+		}
+	}
+	return "", "", NewInvalidArgs(fmt.Sprintf("node_id %q not found in active network", req.NodeID))
+}
+
 // newHandleNodeStop returns a Handler that stops a node by id via LocalDriver.
 // Args: { "node_id": "nodeN" } where N is the numeric pids.json key.
 // On success: emits a "node.stopped" bus event, returns {node_id, stopped:true}.
 func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
-		var req struct {
-			NodeID string `json:"node_id"`
-		}
-		if len(args) > 0 {
-			if err := json.Unmarshal(args, &req); err != nil {
-				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
-			}
-		}
-		if req.NodeID == "" {
-			return nil, NewInvalidArgs("args.node_id is required")
-		}
-		if !strings.HasPrefix(req.NodeID, "node") {
-			return nil, NewInvalidArgs(fmt.Sprintf(`node_id must start with "node" prefix (got %q)`, req.NodeID))
-		}
-		nodeNum := strings.TrimPrefix(req.NodeID, "node")
-		if nodeNum == "" {
-			return nil, NewInvalidArgs("node_id missing numeric suffix")
-		}
-
-		// Verify the node exists in pids.json.
-		net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "local"})
+		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
-			return nil, NewUpstream("failed to load active state", err)
-		}
-		found := false
-		for _, n := range net.Nodes {
-			if n.Id == req.NodeID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, NewInvalidArgs(fmt.Sprintf("node_id %q not found in active network", req.NodeID))
+			return nil, err
 		}
 
 		driver := local.NewDriver(chainbenchDir)
@@ -123,8 +130,8 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 
 		_ = bus.Publish(events.Event{
 			Name: types.EventName("node.stopped"),
-			Data: map[string]any{"node_id": req.NodeID, "reason": "manual"},
+			Data: map[string]any{"node_id": nodeID, "reason": "manual"},
 		})
-		return map[string]any{"node_id": req.NodeID, "stopped": true}, nil
+		return map[string]any{"node_id": nodeID, "stopped": true}, nil
 	}
 }
