@@ -286,3 +286,71 @@ func TestE2E_ExitCodeViaAPIError(t *testing.T) {
 		t.Errorf("exit code: got %d, want 3 (PROTOCOL_ERROR)", code)
 	}
 }
+
+func TestE2E_NodeTailLog_ViaRootCommand(t *testing.T) {
+	stateDir := t.TempDir()
+	// Load pids.json and rewrite log_file to a tempdir path, then write the log.
+	pidsBytes, err := os.ReadFile(filepath.Join("testdata", "pids.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(pidsBytes, &raw); err != nil {
+		t.Fatal(err)
+	}
+	logPath := filepath.Join(stateDir, "node1.log")
+	raw["nodes"].(map[string]any)["1"].(map[string]any)["log_file"] = logPath
+	patched, _ := json.Marshal(raw)
+	if err := os.WriteFile(filepath.Join(stateDir, "pids.json"), patched, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	profBytes, _ := os.ReadFile(filepath.Join("testdata", "current-profile.yaml"))
+	if err := os.WriteFile(filepath.Join(stateDir, "current-profile.yaml"), profBytes, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(logPath, []byte("line1\nline2\nline3\nline4\nline5\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	// Handler doesn't need CHAINBENCH_DIR, but set something harmless.
+	t.Setenv("CHAINBENCH_DIR", t.TempDir())
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	root.SetIn(strings.NewReader(`{"command":"node.tail_log","args":{"node_id":"node1","lines":3}}`))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Parse all lines — expect zero events and one OK result with data.lines.
+	var gotLines []any
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema validation: %v\nline: %s", err, line)
+		}
+		msg, _ := wire.DecodeMessage(line)
+		if rm, ok := msg.(wire.ResultMessage); ok {
+			if !rm.Ok {
+				t.Fatalf("result not ok: %s", line)
+			}
+			if ls, ok := rm.Data["lines"].([]any); ok {
+				gotLines = ls
+			}
+		}
+	}
+	if len(gotLines) != 3 {
+		t.Fatalf("lines: got %v (len %d)", gotLines, len(gotLines))
+	}
+	want := []string{"line3", "line4", "line5"}
+	for i, w := range want {
+		if gotLines[i] != w {
+			t.Errorf("line %d: got %v, want %q", i, gotLines[i], w)
+		}
+	}
+}
