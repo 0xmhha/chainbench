@@ -68,28 +68,20 @@ func newHandleNetworkLoad(stateDir string) Handler {
 	}
 }
 
-// resolveNodeID parses the command envelope args into a (nodeID, nodeNum) pair,
-// validates the "node" prefix, and confirms the id exists in the active
-// network's pids.json. Returns APIError sentinels:
+// resolveNodeIDFromString validates nodeID's "node" prefix and confirms it
+// exists in the active network's pids.json. Core resolution used by handlers
+// that already parsed their args independently. Returns APIError sentinels:
 //
-//	INVALID_ARGS  — malformed args, missing/bad node_id, node not found
+//	INVALID_ARGS  — empty or malformed node_id, node not found
 //	UPSTREAM_ERROR — state.LoadActive failure (pids.json missing, parse error)
-func resolveNodeID(stateDir string, args json.RawMessage) (nodeID, nodeNum string, err error) {
-	var req struct {
-		NodeID string `json:"node_id"`
-	}
-	if len(args) > 0 {
-		if uerr := json.Unmarshal(args, &req); uerr != nil {
-			return "", "", NewInvalidArgs(fmt.Sprintf("args: %v", uerr))
-		}
-	}
-	if req.NodeID == "" {
+func resolveNodeIDFromString(stateDir, nodeID string) (string, string, error) {
+	if nodeID == "" {
 		return "", "", NewInvalidArgs("args.node_id is required")
 	}
-	if !strings.HasPrefix(req.NodeID, "node") {
-		return "", "", NewInvalidArgs(fmt.Sprintf(`node_id must start with "node" prefix (got %q)`, req.NodeID))
+	if !strings.HasPrefix(nodeID, "node") {
+		return "", "", NewInvalidArgs(fmt.Sprintf(`node_id must start with "node" prefix (got %q)`, nodeID))
 	}
-	num := strings.TrimPrefix(req.NodeID, "node")
+	num := strings.TrimPrefix(nodeID, "node")
 	if num == "" {
 		return "", "", NewInvalidArgs("node_id missing numeric suffix")
 	}
@@ -98,11 +90,26 @@ func resolveNodeID(stateDir string, args json.RawMessage) (nodeID, nodeNum strin
 		return "", "", NewUpstream("failed to load active state", lerr)
 	}
 	for _, n := range net.Nodes {
-		if n.Id == req.NodeID {
-			return req.NodeID, num, nil
+		if n.Id == nodeID {
+			return nodeID, num, nil
 		}
 	}
-	return "", "", NewInvalidArgs(fmt.Sprintf("node_id %q not found in active network", req.NodeID))
+	return "", "", NewInvalidArgs(fmt.Sprintf("node_id %q not found in active network", nodeID))
+}
+
+// resolveNodeID parses the command envelope args into {node_id} and delegates
+// to resolveNodeIDFromString. Used by handlers that receive the full wire
+// envelope args payload.
+func resolveNodeID(stateDir string, args json.RawMessage) (string, string, error) {
+	var req struct {
+		NodeID string `json:"node_id"`
+	}
+	if len(args) > 0 {
+		if err := json.Unmarshal(args, &req); err != nil {
+			return "", "", NewInvalidArgs(fmt.Sprintf("args: %v", err))
+		}
+	}
+	return resolveNodeIDFromString(stateDir, req.NodeID)
 }
 
 // newHandleNodeStop returns a Handler that stops a node by id via LocalDriver.
@@ -254,10 +261,7 @@ func newHandleNodeTailLog(stateDir string) Handler {
 				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
 			}
 		}
-		// Delegate the common node_id resolution to the helper by re-marshaling
-		// just the node_id field. This keeps resolveNodeID's surface unchanged.
-		nidPayload, _ := json.Marshal(map[string]any{"node_id": req.NodeID})
-		nodeID, _, rerr := resolveNodeID(stateDir, nidPayload)
+		nodeID, _, rerr := resolveNodeIDFromString(stateDir, req.NodeID)
 		if rerr != nil {
 			return nil, rerr
 		}
