@@ -21,7 +21,13 @@ source "${_CB_FORMATTER_LIB_DIR}/json_helpers.sh"
 cb_format_json_envelope() {
   local status="${1:?cb_format_json_envelope: status required}"
   local command="${2:?cb_format_json_envelope: command required}"
-  local data_json="${3:-{}}"
+  # Two-step default: bash parses ${var:-{}} as ${var:-{} then literal }, which
+  # appends a stray } to any caller-supplied JSON. See commit 6e4dfa8 for the
+  # same issue in lib/network_client.sh.
+  local data_json="${3:-}"
+  if [[ -z "$data_json" ]]; then
+    data_json='{}'
+  fi
 
   local timestamp
   timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
