@@ -25,6 +25,7 @@ func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 	return map[string]Handler{
 		"network.load": newHandleNetworkLoad(stateDir),
 		"node.stop":    newHandleNodeStop(stateDir, chainbenchDir),
+		"node.start":   newHandleNodeStart(stateDir, chainbenchDir),
 	}
 }
 
@@ -133,5 +134,39 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 			Data: map[string]any{"node_id": nodeID, "reason": "manual"},
 		})
 		return map[string]any{"node_id": nodeID, "stopped": true}, nil
+	}
+}
+
+// newHandleNodeStart returns a Handler that starts a previously-stopped node
+// via LocalDriver. Args: { "node_id": "nodeN" }.
+// On success: emits "node.started" event, returns {node_id, started:true}.
+func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
+	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
+		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
+		if err != nil {
+			return nil, err
+		}
+
+		driver := local.NewDriver(chainbenchDir)
+		result, err := driver.StartNode(context.Background(), nodeNum)
+		if err != nil {
+			return nil, NewUpstream("subprocess exec failed", err)
+		}
+		if result.ExitCode != 0 {
+			tail := strings.TrimSpace(result.Stderr)
+			if len(tail) > 512 {
+				tail = tail[:512]
+			}
+			return nil, NewUpstream(
+				fmt.Sprintf("chainbench.sh node start %s exited %d: %s", nodeNum, result.ExitCode, tail),
+				nil,
+			)
+		}
+
+		_ = bus.Publish(events.Event{
+			Name: types.EventName("node.started"),
+			Data: map[string]any{"node_id": nodeID},
+		})
+		return map[string]any{"node_id": nodeID, "started": true}, nil
 	}
 }

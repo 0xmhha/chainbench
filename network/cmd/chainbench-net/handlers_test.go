@@ -246,3 +246,83 @@ func TestAllHandlers_IncludesNodeStop(t *testing.T) {
 		t.Error("allHandlers missing node.stop")
 	}
 }
+
+// ---- node.start tests ----
+
+func TestHandleNodeStart_HappyPath(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	sub := bus.Subscribe()
+
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"})
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["node_id"] != "node1" || data["started"] != true {
+		t.Errorf("data: got %+v", data)
+	}
+	select {
+	case ev := <-sub:
+		if string(ev.Name) != "node.started" {
+			t.Errorf("event name: got %q", ev.Name)
+		}
+		if ev.Data["node_id"] != "node1" {
+			t.Errorf("event data: got %+v", ev.Data)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("no node.started event received")
+	}
+}
+
+func TestHandleNodeStart_MissingNodeID(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeStart_UnknownNodeID(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"node_id": "node99"})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeStart_SubprocessFails(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	failScript := "#!/usr/bin/env bash\necho 'forced' >&2\nexit 2\n"
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), []byte(failScript), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesNodeStart(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["node.start"]; !ok {
+		t.Error("allHandlers missing node.start")
+	}
+}
