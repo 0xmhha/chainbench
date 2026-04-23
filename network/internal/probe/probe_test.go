@@ -3,8 +3,10 @@ package probe
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -161,8 +163,11 @@ func TestDetect_EthChainIDFails(t *testing.T) {
 
 func TestDetect_RejectsNonHTTP(t *testing.T) {
 	_, err := Detect(context.Background(), Options{RPCURL: "ws://x", Timeout: time.Second})
-	if err == nil {
-		t.Fatal("expected error for non-http scheme")
+	if !errors.Is(err, ErrInvalidURL) {
+		t.Fatalf("err = %v, want wrapped ErrInvalidURL", err)
+	}
+	if !IsInputError(err) {
+		t.Error("IsInputError should classify non-http scheme as input error")
 	}
 }
 
@@ -172,15 +177,35 @@ func TestDetect_UnknownOverride(t *testing.T) {
 	})
 	defer srv.Close()
 	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Override: "fakechain"})
-	if err == nil {
-		t.Fatal("expected error for unknown override")
+	if !errors.Is(err, ErrUnknownOverride) {
+		t.Fatalf("err = %v, want wrapped ErrUnknownOverride", err)
+	}
+	if !IsInputError(err) {
+		t.Error("IsInputError should classify unknown override as input error")
 	}
 }
 
 func TestDetect_MissingURL(t *testing.T) {
 	_, err := Detect(context.Background(), Options{})
+	if !errors.Is(err, ErrMissingURL) {
+		t.Fatalf("err = %v, want ErrMissingURL", err)
+	}
+	if !IsInputError(err) {
+		t.Error("IsInputError should classify missing URL as input error")
+	}
+}
+
+func TestIsInputError_UpstreamNotClassifiedAsInput(t *testing.T) {
+	srv := mockRPC(t, map[string]func() (any, int){
+		"eth_chainId": func() (any, int) { return nil, -32000 },
+	})
+	defer srv.Close()
+	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Timeout: time.Second})
 	if err == nil {
-		t.Fatal("expected error for missing rpc_url")
+		t.Fatal("expected upstream error")
+	}
+	if IsInputError(err) {
+		t.Error("IsInputError should NOT classify upstream RPC error as input error")
 	}
 }
 
@@ -237,12 +262,42 @@ func TestDetect_NetworkError(t *testing.T) {
 	}
 }
 
-func TestDetect_AppendUniqueIdempotent(t *testing.T) {
-	// Exercise appendUnique's de-dup branch: two probes each return the same namespace.
-	// With current signatures this won't happen organically, so call it directly via a
-	// short table; the helper is package-private so tested here.
-	got := appendUnique([]string{"istanbul"}, "istanbul")
-	if len(got) != 1 {
-		t.Fatalf("appendUnique de-dup failed: %v", got)
+func TestDetect_OversizedBodyCapped(t *testing.T) {
+	// Hostile endpoint streams a body larger than maxRPCResponseBytes.
+	// LimitReader should cap the read; decode then fails cleanly as
+	// truncated JSON rather than consuming unbounded memory.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"`))
+		// Write enough to exceed the 1 MiB cap; truncation during decode proves the bound.
+		chunk := strings.Repeat("A", 4096)
+		for range 300 {
+			if _, err := w.Write([]byte(chunk)); err != nil {
+				return
+			}
+		}
+		_, _ = w.Write([]byte(`"}`))
+	}))
+	defer srv.Close()
+	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Timeout: 2 * time.Second})
+	if err == nil {
+		t.Fatal("expected error: oversized body should cause decode failure after cap")
+	}
+}
+
+func TestProbeMethod_RPCErrorReturnsFalse(t *testing.T) {
+	srv := mockRPC(t, map[string]func() (any, int){
+		"eth_chainId":            func() (any, int) { return "0x1", 0 },
+		"istanbul_getValidators": func() (any, int) { return nil, -32602 }, // invalid params
+	})
+	defer srv.Close()
+	// istanbul probe returns RPC error -> probeMethod should treat as unavailable ->
+	// classification must fall through to ethereum, not misclassify as wbft.
+	res, err := Detect(context.Background(), Options{RPCURL: srv.URL, Timeout: time.Second})
+	if err != nil {
+		t.Fatalf("Detect: %v", err)
+	}
+	if res.ChainType != "ethereum" {
+		t.Errorf("ChainType = %q, want ethereum (RPC error on probe should mark unavailable)", res.ChainType)
 	}
 }

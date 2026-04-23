@@ -9,6 +9,11 @@ import (
 	"net/http"
 )
 
+// maxRPCResponseBytes caps per-call response reads. eth_chainId and namespace
+// probe responses are small (bytes, not KB); 1 MiB is generous and prevents a
+// hostile endpoint from streaming unbounded bytes until the context deadline.
+const maxRPCResponseBytes = 1 << 20
+
 type jsonRPCError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -44,7 +49,7 @@ func jsonRPCCall(ctx context.Context, client *http.Client, url, method string, p
 		return nil, fmt.Errorf("rpc http: %w", err)
 	}
 	defer resp.Body.Close()
-	raw, err := io.ReadAll(resp.Body)
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxRPCResponseBytes))
 	if err != nil {
 		return nil, fmt.Errorf("read rpc body: %w", err)
 	}

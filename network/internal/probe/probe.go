@@ -32,14 +32,15 @@ type Result struct {
 
 // Detect probes an RPC endpoint for chain_type and chain_id.
 // Returns (*Result, nil) on success; (nil, error) on unrecoverable failures.
-// Caller wraps error as an APIError (INVALID_ARGS / UPSTREAM_ERROR) per context.
+// Input-validation failures are wrapped with ErrMissingURL / ErrInvalidURL /
+// ErrUnknownOverride — callers classify via errors.Is (see IsInputError).
 func Detect(ctx context.Context, opts Options) (*Result, error) {
 	if opts.RPCURL == "" {
-		return nil, fmt.Errorf("rpc_url required")
+		return nil, ErrMissingURL
 	}
 	parsed, err := url.Parse(opts.RPCURL)
 	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
-		return nil, fmt.Errorf("rpc_url must be http(s): %q", opts.RPCURL)
+		return nil, fmt.Errorf("%w: got %q", ErrInvalidURL, opts.RPCURL)
 	}
 	timeout := opts.Timeout
 	if timeout <= 0 {
@@ -58,15 +59,18 @@ func Detect(ctx context.Context, opts Options) (*Result, error) {
 	}
 
 	result := &Result{
-		ChainID:    chainID,
-		RPCURL:     opts.RPCURL,
+		ChainID: chainID,
+		RPCURL:  opts.RPCURL,
+		// Namespaces: accumulated as signatures match. Warnings: reserved slot
+		// for non-fatal caller-visible messages (e.g., chain_id ∉ expected
+		// range under override) — kept as [] to stabilize JSON output shape.
 		Namespaces: []string{},
 		Warnings:   []string{},
 	}
 
 	if opts.Override != "" {
 		if !isKnownOverride(opts.Override) {
-			return nil, fmt.Errorf("unknown override %q", opts.Override)
+			return nil, fmt.Errorf("%w: %q", ErrUnknownOverride, opts.Override)
 		}
 		result.ChainType = opts.Override
 		result.Overridden = true
@@ -77,26 +81,10 @@ func Detect(ctx context.Context, opts Options) (*Result, error) {
 		if sig.probeMethod == "" {
 			continue
 		}
-		ok, _ := probeMethod(ctx, client, opts.RPCURL, sig.probeMethod)
-		if !ok {
+		if !probeMethod(ctx, client, opts.RPCURL, sig.probeMethod) {
 			continue
 		}
 		if sig.knownChainIDs != nil && !sig.knownChainIDs[chainID] {
-			continue
-		}
-		result.ChainType = sig.chainType
-		result.Namespaces = appendUnique(result.Namespaces, sig.namespace)
-		return result, nil
-	}
-
-	// Disambiguation second pass: if a non-id-gated istanbul signature exists and we
-	// saw istanbul but did not match stablenet's id gate, fall through to wbft.
-	for _, sig := range signatures {
-		if sig.knownChainIDs != nil || sig.probeMethod == "" {
-			continue
-		}
-		ok, _ := probeMethod(ctx, client, opts.RPCURL, sig.probeMethod)
-		if !ok {
 			continue
 		}
 		result.ChainType = sig.chainType
@@ -108,8 +96,8 @@ func Detect(ctx context.Context, opts Options) (*Result, error) {
 	return result, nil
 }
 
-func fetchChainID(ctx context.Context, client *http.Client, url string) (int64, error) {
-	resp, err := jsonRPCCall(ctx, client, url, "eth_chainId", []any{})
+func fetchChainID(ctx context.Context, client *http.Client, endpoint string) (int64, error) {
+	resp, err := jsonRPCCall(ctx, client, endpoint, "eth_chainId", []any{})
 	if err != nil {
 		return 0, err
 	}
@@ -128,15 +116,12 @@ func fetchChainID(ctx context.Context, client *http.Client, url string) (int64, 
 	return id, nil
 }
 
-func probeMethod(ctx context.Context, client *http.Client, url, method string) (bool, *jsonRPCResponse) {
-	resp, err := jsonRPCCall(ctx, client, url, method, []any{})
+func probeMethod(ctx context.Context, client *http.Client, endpoint, method string) bool {
+	resp, err := jsonRPCCall(ctx, client, endpoint, method, []any{})
 	if err != nil {
-		return false, nil
+		return false
 	}
-	if resp.Error != nil {
-		return false, resp
-	}
-	return true, resp
+	return resp.Error == nil
 }
 
 func appendUnique(xs []string, s string) []string {

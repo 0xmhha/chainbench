@@ -650,10 +650,11 @@ func newHandleNetworkProbe() Handler {
 
         result, err := probe.Detect(context.Background(), opts)
         if err != nil {
-            // Distinguish caller error (INVALID_ARGS) from endpoint error (UPSTREAM_ERROR).
-            msg := err.Error()
-            if strings.Contains(msg, "rpc_url must be") || strings.Contains(msg, "unknown override") {
-                return nil, NewInvalidArgs(msg)
+            // probe package exposes sentinel errors for input-validation failures.
+            // errors.Is classification (via probe.IsInputError) avoids fragile
+            // substring matching on error messages.
+            if probe.IsInputError(err) {
+                return nil, NewInvalidArgs(err.Error())
             }
             return nil, NewUpstream("probe failed", err)
         }
