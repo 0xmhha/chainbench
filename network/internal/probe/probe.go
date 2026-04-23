@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -108,7 +109,7 @@ func Detect(ctx context.Context, opts Options) (*Result, error) {
 }
 
 func fetchChainID(ctx context.Context, client *http.Client, url string) (int64, error) {
-	resp, err := jsonRPCCall(ctx, client, url, "eth_chainId", []interface{}{})
+	resp, err := jsonRPCCall(ctx, client, url, "eth_chainId", []any{})
 	if err != nil {
 		return 0, err
 	}
@@ -128,7 +129,7 @@ func fetchChainID(ctx context.Context, client *http.Client, url string) (int64, 
 }
 
 func probeMethod(ctx context.Context, client *http.Client, url, method string) (bool, *jsonRPCResponse) {
-	resp, err := jsonRPCCall(ctx, client, url, method, []interface{}{})
+	resp, err := jsonRPCCall(ctx, client, url, method, []any{})
 	if err != nil {
 		return false, nil
 	}
@@ -139,10 +140,8 @@ func probeMethod(ctx context.Context, client *http.Client, url, method string) (
 }
 
 func appendUnique(xs []string, s string) []string {
-	for _, x := range xs {
-		if x == s {
-			return xs
-		}
+	if slices.Contains(xs, s) {
+		return xs
 	}
 	return append(xs, s)
 }

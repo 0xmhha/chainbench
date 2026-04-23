@@ -10,9 +10,9 @@ import (
 )
 
 type rpcRequest struct {
-	Method string        `json:"method"`
-	Params []interface{} `json:"params"`
-	ID     int           `json:"id"`
+	Method string `json:"method"`
+	Params []any  `json:"params"`
+	ID     int    `json:"id"`
 }
 
 type rpcError struct {
@@ -21,15 +21,15 @@ type rpcError struct {
 }
 
 type rpcResponse struct {
-	Result interface{} `json:"result,omitempty"`
-	Error  *rpcError   `json:"error,omitempty"`
-	ID     int         `json:"id"`
+	Result any       `json:"result,omitempty"`
+	Error  *rpcError `json:"error,omitempty"`
+	ID     int       `json:"id"`
 }
 
 // mockRPC returns an httptest.Server that dispatches by method name.
 // handlers[method] returns (result, errCode). errCode 0 = success (result only).
 // Missing method -> -32601 method-not-found.
-func mockRPC(t *testing.T, handlers map[string]func() (interface{}, int)) *httptest.Server {
+func mockRPC(t *testing.T, handlers map[string]func() (any, int)) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req rpcRequest
@@ -56,7 +56,7 @@ func mockRPC(t *testing.T, handlers map[string]func() (interface{}, int)) *httpt
 func TestDetect(t *testing.T) {
 	cases := []struct {
 		name           string
-		handlers       map[string]func() (interface{}, int)
+		handlers       map[string]func() (any, int)
 		override       string
 		wantChainType  string
 		wantChainID    int64
@@ -65,9 +65,9 @@ func TestDetect(t *testing.T) {
 	}{
 		{
 			name: "stablenet via istanbul + chain_id 8283",
-			handlers: map[string]func() (interface{}, int){
-				"eth_chainId":            func() (interface{}, int) { return "0x205b", 0 },
-				"istanbul_getValidators": func() (interface{}, int) { return []string{}, 0 },
+			handlers: map[string]func() (any, int){
+				"eth_chainId":            func() (any, int) { return "0x205b", 0 },
+				"istanbul_getValidators": func() (any, int) { return []string{}, 0 },
 			},
 			wantChainType:  "stablenet",
 			wantChainID:    8283,
@@ -75,9 +75,9 @@ func TestDetect(t *testing.T) {
 		},
 		{
 			name: "wbft via istanbul + non-stablenet chain_id",
-			handlers: map[string]func() (interface{}, int){
-				"eth_chainId":            func() (interface{}, int) { return "0x7a69", 0 }, // 31337
-				"istanbul_getValidators": func() (interface{}, int) { return []string{}, 0 },
+			handlers: map[string]func() (any, int){
+				"eth_chainId":            func() (any, int) { return "0x7a69", 0 }, // 31337
+				"istanbul_getValidators": func() (any, int) { return []string{}, 0 },
 			},
 			wantChainType:  "wbft",
 			wantChainID:    31337,
@@ -85,9 +85,9 @@ func TestDetect(t *testing.T) {
 		},
 		{
 			name: "wemix via wemix namespace",
-			handlers: map[string]func() (interface{}, int){
-				"eth_chainId":     func() (interface{}, int) { return "0x3e9", 0 }, // 1001
-				"wemix_getReward": func() (interface{}, int) { return "0x0", 0 },
+			handlers: map[string]func() (any, int){
+				"eth_chainId":     func() (any, int) { return "0x3e9", 0 }, // 1001
+				"wemix_getReward": func() (any, int) { return "0x0", 0 },
 			},
 			wantChainType:  "wemix",
 			wantChainID:    1001,
@@ -95,8 +95,8 @@ func TestDetect(t *testing.T) {
 		},
 		{
 			name: "ethereum fallback",
-			handlers: map[string]func() (interface{}, int){
-				"eth_chainId": func() (interface{}, int) { return "0x1", 0 },
+			handlers: map[string]func() (any, int){
+				"eth_chainId": func() (any, int) { return "0x1", 0 },
 			},
 			wantChainType:  "ethereum",
 			wantChainID:    1,
@@ -104,8 +104,8 @@ func TestDetect(t *testing.T) {
 		},
 		{
 			name: "override stablenet short-circuits",
-			handlers: map[string]func() (interface{}, int){
-				"eth_chainId": func() (interface{}, int) { return "0x1", 0 }, // mismatched id
+			handlers: map[string]func() (any, int){
+				"eth_chainId": func() (any, int) { return "0x1", 0 }, // mismatched id
 			},
 			override:       "stablenet",
 			wantChainType:  "stablenet",
@@ -149,8 +149,8 @@ func TestDetect(t *testing.T) {
 }
 
 func TestDetect_EthChainIDFails(t *testing.T) {
-	srv := mockRPC(t, map[string]func() (interface{}, int){
-		"eth_chainId": func() (interface{}, int) { return nil, -32000 },
+	srv := mockRPC(t, map[string]func() (any, int){
+		"eth_chainId": func() (any, int) { return nil, -32000 },
 	})
 	defer srv.Close()
 	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Timeout: time.Second})
@@ -167,8 +167,8 @@ func TestDetect_RejectsNonHTTP(t *testing.T) {
 }
 
 func TestDetect_UnknownOverride(t *testing.T) {
-	srv := mockRPC(t, map[string]func() (interface{}, int){
-		"eth_chainId": func() (interface{}, int) { return "0x1", 0 },
+	srv := mockRPC(t, map[string]func() (any, int){
+		"eth_chainId": func() (any, int) { return "0x1", 0 },
 	})
 	defer srv.Close()
 	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Override: "fakechain"})
@@ -185,8 +185,8 @@ func TestDetect_MissingURL(t *testing.T) {
 }
 
 func TestDetect_ChainIDNotAString(t *testing.T) {
-	srv := mockRPC(t, map[string]func() (interface{}, int){
-		"eth_chainId": func() (interface{}, int) { return 12345, 0 }, // number, not hex string
+	srv := mockRPC(t, map[string]func() (any, int){
+		"eth_chainId": func() (any, int) { return 12345, 0 }, // number, not hex string
 	})
 	defer srv.Close()
 	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Timeout: time.Second})
@@ -196,8 +196,8 @@ func TestDetect_ChainIDNotAString(t *testing.T) {
 }
 
 func TestDetect_ChainIDBadHex(t *testing.T) {
-	srv := mockRPC(t, map[string]func() (interface{}, int){
-		"eth_chainId": func() (interface{}, int) { return "0xZZZ", 0 },
+	srv := mockRPC(t, map[string]func() (any, int){
+		"eth_chainId": func() (any, int) { return "0xZZZ", 0 },
 	})
 	defer srv.Close()
 	_, err := Detect(context.Background(), Options{RPCURL: srv.URL, Timeout: time.Second})

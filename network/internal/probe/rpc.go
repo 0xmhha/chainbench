@@ -24,8 +24,8 @@ type jsonRPCResponse struct {
 // jsonRPCCall fires a single JSON-RPC POST and returns the Response.
 // Network errors, non-200 HTTP, and malformed JSON bubble up as err.
 // RPC-level errors (response.Error != nil) are returned in the response — caller decides.
-func jsonRPCCall(ctx context.Context, client *http.Client, url, method string, params []interface{}) (*jsonRPCResponse, error) {
-	body, err := json.Marshal(map[string]interface{}{
+func jsonRPCCall(ctx context.Context, client *http.Client, url, method string, params []any) (*jsonRPCResponse, error) {
+	body, err := json.Marshal(map[string]any{
 		"jsonrpc": "2.0",
 		"id":      1,
 		"method":  method,
