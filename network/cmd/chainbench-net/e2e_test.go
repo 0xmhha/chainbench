@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -326,5 +329,88 @@ func TestE2E_NodeTailLog_ViaRootCommand(t *testing.T) {
 		if gotLines[i] != w {
 			t.Errorf("line %d: got %v, want %q", i, gotLines[i], w)
 		}
+	}
+}
+
+func TestE2E_NetworkProbe_ViaRootCommand(t *testing.T) {
+	// Mock RPC endpoint returning stablenet-shaped responses:
+	// eth_chainId -> 0x205b (8283); istanbul_getValidators -> []; other -> -32601.
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string `json:"method"`
+			ID     int    `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"result":"0x205b"}`, req.ID)
+		case "istanbul_getValidators":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"result":[]}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"error":{"code":-32601,"message":"method not found"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	// Drive cobra root via in-memory IO, matching the pattern used by the
+	// other E2E cases in this file (network.load, node.*). The command
+	// envelope on stdin is parsed by run.go and dispatched to the probe
+	// handler; the handler writes an NDJSON result terminator to stdout.
+	cmdLine := fmt.Sprintf(`{"command":"network.probe","args":{"rpc_url":%q}}`, rpcSrv.URL)
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	root.SetIn(strings.NewReader(cmdLine))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Scan NDJSON lines; probe issues no events, so we expect exactly one
+	// result terminator.
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema validation: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result line in output")
+	}
+
+	var res struct {
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("result.ok = false: %s", resultLine)
+	}
+	if got, want := res.Data["chain_type"], "stablenet"; got != want {
+		t.Errorf("chain_type = %v, want %q", got, want)
+	}
+	// JSON numbers decode as float64; probe.Result.ChainID is int64 (8283).
+	chainID, ok := res.Data["chain_id"].(float64)
+	if !ok {
+		t.Fatalf("chain_id is not a number: %T %v", res.Data["chain_id"], res.Data["chain_id"])
+	}
+	if int64(chainID) != 8283 {
+		t.Errorf("chain_id = %v, want 8283", chainID)
 	}
 }
