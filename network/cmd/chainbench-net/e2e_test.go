@@ -82,9 +82,9 @@ func TestE2E_NetworkLoad_ViaRootCommand(t *testing.T) {
 
 	// Parse terminator and cross-validate its data against the network schema.
 	var res struct {
-		Type string                 `json:"type"`
-		Ok   bool                   `json:"ok"`
-		Data map[string]interface{} `json:"data"`
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
 	}
 	if err := json.Unmarshal(resultLine, &res); err != nil {
 		t.Fatalf("unmarshal terminator: %v", err)
