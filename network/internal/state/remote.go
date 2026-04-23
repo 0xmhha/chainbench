@@ -76,5 +76,10 @@ func loadRemote(stateDir, name string) (*types.Network, error) {
 	if err := json.Unmarshal(raw, &net); err != nil {
 		return nil, fmt.Errorf("state: decode %s: %w", path, err)
 	}
+	// Integrity check: file contents must agree with filename stem, otherwise
+	// a copy-paste or rename mistake silently serves the wrong network.
+	if net.Name != name {
+		return nil, fmt.Errorf("state: filename %q has mismatched network name %q", name, net.Name)
+	}
 	return &net, nil
 }

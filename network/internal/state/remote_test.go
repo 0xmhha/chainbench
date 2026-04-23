@@ -122,3 +122,19 @@ func TestSaveRemote_AtomicOnExistingFile(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadRemote_RejectsNameMismatch(t *testing.T) {
+	dir := t.TempDir()
+	// Write a file under one name but containing a different network.name.
+	if err := os.MkdirAll(filepath.Join(dir, "networks"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	raw := []byte(`{"name":"impostor","chain_type":"ethereum","chain_id":1,"nodes":[{"id":"node1","provider":"remote","http":"http://x"}]}`)
+	if err := os.WriteFile(filepath.Join(dir, "networks", "sepolia.json"), raw, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := loadRemote(dir, "sepolia")
+	if err == nil {
+		t.Fatal("expected error for filename/name mismatch")
+	}
+}

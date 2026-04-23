@@ -92,7 +92,9 @@ func TestSaveRemote_RejectsLocal(t *testing.T) {
 
 func TestSaveRemote_RejectsBadName(t *testing.T) {
 	dir := t.TempDir()
-	cases := []string{"", "Has-Upper", "has/slash", "..", ".hidden", "trailing-"}
+	// Note: schema pattern ^[a-z0-9][a-z0-9_-]*$ permits a trailing hyphen, so
+	// "trailing-" is NOT a bad name. Test only cases the schema actually forbids.
+	cases := []string{"", "Has-Upper", "has/slash", "..", ".hidden"}
 	for _, name := range cases {
 		t.Run(name, func(t *testing.T) {
 			net := &types.Network{Name: name, ChainType: "ethereum", ChainId: 1}
