@@ -29,7 +29,7 @@ func TestRunOnce_HappyPath_NetworkLoad(t *testing.T) {
 	dir := setupRunStateDir(t)
 	stdin := strings.NewReader(`{"command":"network.load","args":{"name":"local"}}`)
 	var stdout, stderr bytes.Buffer
-	handlers := allHandlers(dir)
+	handlers := allHandlers(dir, "/nowhere")
 
 	err := runOnce(stdin, &stdout, &stderr, handlers)
 	if err != nil {

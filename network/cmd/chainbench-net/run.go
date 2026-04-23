@@ -29,7 +29,12 @@ func newRunCmd() *cobra.Command {
 			if stateDir == "" {
 				stateDir = "state"
 			}
-			return runOnce(cmd.InOrStdin(), cmd.OutOrStdout(), cmd.ErrOrStderr(), allHandlers(stateDir))
+			chainbenchDir := os.Getenv("CHAINBENCH_DIR")
+			if chainbenchDir == "" {
+				chainbenchDir = "."
+			}
+			return runOnce(cmd.InOrStdin(), cmd.OutOrStdout(), cmd.ErrOrStderr(),
+				allHandlers(stateDir, chainbenchDir))
 		},
 	}
 }
