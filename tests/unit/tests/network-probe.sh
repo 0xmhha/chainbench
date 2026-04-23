@@ -76,15 +76,23 @@ cleanup() {
   wait "${MOCK_PID}" 2>/dev/null || true
   rm -rf "${TMPDIR_ROOT}"
 }
-trap cleanup EXIT
+trap cleanup EXIT INT TERM HUP
 
 # ---- Wait for the mock to start listening (bounded). ----
+mock_ready=0
 for _ in 1 2 3 4 5 6 7 8 9 10; do
   if (echo > "/dev/tcp/127.0.0.1/${PORT}") 2>/dev/null; then
+    mock_ready=1
     break
   fi
   sleep 0.1
 done
+if [[ "${mock_ready}" -ne 1 ]]; then
+  echo "FATAL: mock RPC server failed to listen on 127.0.0.1:${PORT}" >&2
+  echo "--- mock log ---" >&2
+  cat "${MOCK_LOG}" >&2 || true
+  exit 1
+fi
 
 # ---- Source the library under test. ----
 # shellcheck disable=SC1091
