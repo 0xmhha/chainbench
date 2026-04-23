@@ -23,6 +23,19 @@ case "$subcmd $action" in
     echo "stub: node $node stopped"
     exit 0
     ;;
+  "node start")
+    node="${3:-}"
+    if [[ -z "$node" ]]; then
+      echo "missing node num" >&2
+      exit 1
+    fi
+    if [[ "$node" == "fail" ]]; then
+      echo "stub: forced start failure for testing" >&2
+      exit 1
+    fi
+    echo "stub: node $node started"
+    exit 0
+    ;;
   *)
     echo "stub: unknown command: $*" >&2
     exit 2
