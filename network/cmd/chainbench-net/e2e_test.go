@@ -149,6 +149,124 @@ func TestE2E_NodeStop_ViaRootCommand(t *testing.T) {
 	}
 }
 
+func TestE2E_NodeStart_ViaRootCommand(t *testing.T) {
+	stateDir := t.TempDir()
+	for _, name := range []string{"pids.json", "current-profile.yaml"} {
+		data, err := os.ReadFile(filepath.Join("testdata", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	chainbenchDir := t.TempDir()
+	stub, _ := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("CHAINBENCH_DIR", chainbenchDir)
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	root.SetIn(strings.NewReader(`{"command":"node.start","args":{"node_id":"node1"}}`))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	var sawEvent, sawResultOK bool
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema validation: %v\nline: %s", err, line)
+		}
+		msg, _ := wire.DecodeMessage(line)
+		switch m := msg.(type) {
+		case wire.EventMessage:
+			if string(m.Name) == "node.started" {
+				sawEvent = true
+			}
+		case wire.ResultMessage:
+			if m.Ok {
+				sawResultOK = true
+			}
+		}
+	}
+	if !sawEvent {
+		t.Error("expected node.started event")
+	}
+	if !sawResultOK {
+		t.Error("expected successful result")
+	}
+}
+
+func TestE2E_NodeRestart_ViaRootCommand_EventOrder(t *testing.T) {
+	stateDir := t.TempDir()
+	for _, name := range []string{"pids.json", "current-profile.yaml"} {
+		data, err := os.ReadFile(filepath.Join("testdata", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	chainbenchDir := t.TempDir()
+	stub, _ := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("CHAINBENCH_DIR", chainbenchDir)
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	root.SetIn(strings.NewReader(`{"command":"node.restart","args":{"node_id":"node1"}}`))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Parse all lines, collect event names in order.
+	var eventNames []string
+	var sawResultOK bool
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema validation: %v\nline: %s", err, line)
+		}
+		msg, _ := wire.DecodeMessage(line)
+		switch m := msg.(type) {
+		case wire.EventMessage:
+			eventNames = append(eventNames, string(m.Name))
+		case wire.ResultMessage:
+			if m.Ok {
+				sawResultOK = true
+			}
+		}
+	}
+	wantOrder := []string{"node.stopped", "node.started"}
+	if len(eventNames) != 2 {
+		t.Fatalf("event count: got %d (%v), want 2", len(eventNames), eventNames)
+	}
+	for i := range wantOrder {
+		if eventNames[i] != wantOrder[i] {
+			t.Errorf("event[%d]: got %q, want %q", i, eventNames[i], wantOrder[i])
+		}
+	}
+	if !sawResultOK {
+		t.Error("expected successful result")
+	}
+}
+
 func TestE2E_ExitCodeViaAPIError(t *testing.T) {
 	// Verify that an intentional handler error propagates through Execute()
 	// and that main's exitCode() maps it correctly. Since we can't os.Exit
