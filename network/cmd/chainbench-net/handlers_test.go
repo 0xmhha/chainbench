@@ -326,3 +326,128 @@ func TestAllHandlers_IncludesNodeStart(t *testing.T) {
 		t.Error("allHandlers missing node.start")
 	}
 }
+
+// ---- node.restart tests ----
+
+func TestHandleNodeRestart_HappyPath_EmitsBothEvents(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeRestart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	sub := bus.Subscribe()
+
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"})
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["node_id"] != "node1" || data["restarted"] != true {
+		t.Errorf("data: got %+v", data)
+	}
+
+	// Expect exactly: node.stopped THEN node.started.
+	wantOrder := []string{"node.stopped", "node.started"}
+	for i, want := range wantOrder {
+		select {
+		case ev := <-sub:
+			if string(ev.Name) != want {
+				t.Fatalf("event %d: got %q, want %q", i, ev.Name, want)
+			}
+		case <-time.After(300 * time.Millisecond):
+			t.Fatalf("event %d timeout (want %q)", i, want)
+		}
+	}
+	// No third event.
+	select {
+	case ev := <-sub:
+		t.Errorf("unexpected 3rd event: %q", ev.Name)
+	case <-time.After(50 * time.Millisecond):
+	}
+}
+
+func TestHandleNodeRestart_MissingNodeID(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeRestart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeRestart_StopFails_NoStartedEvent(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	// Replace chainbench.sh with a script that ALWAYS fails (stop attempt fails first).
+	failScript := "#!/usr/bin/env bash\necho 'always fails' >&2\nexit 2\n"
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), []byte(failScript), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	handler := newHandleNodeRestart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	sub := bus.Subscribe()
+
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+	// No events should have been emitted (stop failed before stopped-event).
+	select {
+	case ev := <-sub:
+		t.Errorf("unexpected event: %q", ev.Name)
+	case <-time.After(100 * time.Millisecond):
+	}
+}
+
+func TestHandleNodeRestart_StartFailsAfterStop(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	// Script that succeeds on stop (arg: "node stop N") but fails on start.
+	selectiveScript := `#!/usr/bin/env bash
+case "$1 $2" in
+  "node stop") echo "stub: stopped"; exit 0 ;;
+  "node start") echo "start failed" >&2; exit 1 ;;
+  *) echo "unknown $*" >&2; exit 2 ;;
+esac
+`
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), []byte(selectiveScript), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	handler := newHandleNodeRestart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	sub := bus.Subscribe()
+
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+	// Expect exactly one event: node.stopped.
+	select {
+	case ev := <-sub:
+		if string(ev.Name) != "node.stopped" {
+			t.Errorf("first event: got %q, want node.stopped", ev.Name)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("no node.stopped event")
+	}
+	// No second event.
+	select {
+	case ev := <-sub:
+		t.Errorf("unexpected 2nd event: %q", ev.Name)
+	case <-time.After(50 * time.Millisecond):
+	}
+}
+
+func TestAllHandlers_IncludesNodeRestart(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["node.restart"]; !ok {
+		t.Error("allHandlers missing node.restart")
+	}
+}

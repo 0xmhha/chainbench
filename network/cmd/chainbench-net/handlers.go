@@ -26,6 +26,7 @@ func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 		"network.load": newHandleNetworkLoad(stateDir),
 		"node.stop":    newHandleNodeStop(stateDir, chainbenchDir),
 		"node.start":   newHandleNodeStart(stateDir, chainbenchDir),
+		"node.restart": newHandleNodeRestart(stateDir, chainbenchDir),
 	}
 }
 
@@ -168,5 +169,67 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 			Data: map[string]any{"node_id": nodeID},
 		})
 		return map[string]any{"node_id": nodeID, "started": true}, nil
+	}
+}
+
+// newHandleNodeRestart returns a Handler that composes node.stop then
+// node.start via LocalDriver. Args: { "node_id": "nodeN" }.
+//
+// Event ordering invariant:
+//  1. If stop fails: no events emitted, return UPSTREAM_ERROR.
+//  2. If stop succeeds + start fails: emit "node.stopped", return UPSTREAM_ERROR.
+//  3. If both succeed: emit "node.stopped" then "node.started".
+//
+// Returns {node_id, restarted:true} on full success.
+func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
+	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
+		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
+		if err != nil {
+			return nil, err
+		}
+
+		driver := local.NewDriver(chainbenchDir)
+
+		// --- stop phase ---
+		stopRes, err := driver.StopNode(context.Background(), nodeNum)
+		if err != nil {
+			return nil, NewUpstream("restart aborted: stop exec failed", err)
+		}
+		if stopRes.ExitCode != 0 {
+			tail := strings.TrimSpace(stopRes.Stderr)
+			if len(tail) > 512 {
+				tail = tail[:512]
+			}
+			return nil, NewUpstream(
+				fmt.Sprintf("restart aborted: stop exited %d: %s", stopRes.ExitCode, tail),
+				nil,
+			)
+		}
+		_ = bus.Publish(events.Event{
+			Name: types.EventName("node.stopped"),
+			Data: map[string]any{"node_id": nodeID, "reason": "restart"},
+		})
+
+		// --- start phase ---
+		startRes, err := driver.StartNode(context.Background(), nodeNum)
+		if err != nil {
+			return nil, NewUpstream("restart incomplete: stop ok, start exec failed", err)
+		}
+		if startRes.ExitCode != 0 {
+			tail := strings.TrimSpace(startRes.Stderr)
+			if len(tail) > 512 {
+				tail = tail[:512]
+			}
+			return nil, NewUpstream(
+				fmt.Sprintf("restart incomplete: stop ok, start exited %d: %s", startRes.ExitCode, tail),
+				nil,
+			)
+		}
+		_ = bus.Publish(events.Event{
+			Name: types.EventName("node.started"),
+			Data: map[string]any{"node_id": nodeID},
+		})
+
+		return map[string]any{"node_id": nodeID, "restarted": true}, nil
 	}
 }
