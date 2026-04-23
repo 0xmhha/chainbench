@@ -82,6 +82,73 @@ func TestE2E_NetworkLoad_ViaRootCommand(t *testing.T) {
 	}
 }
 
+func TestE2E_NodeStop_ViaRootCommand(t *testing.T) {
+	// Lay out state dir + chainbench dir (with our stub renamed to chainbench.sh).
+	stateDir := t.TempDir()
+	for _, name := range []string{"pids.json", "current-profile.yaml"} {
+		data, err := os.ReadFile(filepath.Join("testdata", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	chainbenchDir := t.TempDir()
+	stub, err := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("CHAINBENCH_DIR", chainbenchDir)
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	root.SetIn(strings.NewReader(`{"command":"node.stop","args":{"node_id":"node1"}}`))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Collect and classify lines.
+	var sawEvent, sawResultOK bool
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		switch m := msg.(type) {
+		case wire.EventMessage:
+			if string(m.Name) == "node.stopped" {
+				sawEvent = true
+			}
+		case wire.ResultMessage:
+			if m.Ok {
+				sawResultOK = true
+			}
+		}
+		// Also validate each line against the event schema.
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema validation: %v\nline: %s", err, line)
+		}
+	}
+	if !sawEvent {
+		t.Error("expected a node.stopped event")
+	}
+	if !sawResultOK {
+		t.Error("expected a successful result terminator")
+	}
+}
+
 func TestE2E_ExitCodeViaAPIError(t *testing.T) {
 	// Verify that an intentional handler error propagates through Execute()
 	// and that main's exitCode() maps it correctly. Since we can't os.Exit
