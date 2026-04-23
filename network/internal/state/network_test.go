@@ -71,6 +71,13 @@ func TestLoadActive_HappyPath(t *testing.T) {
 	if net.Nodes[1].Role == nil || string(*net.Nodes[1].Role) != "endpoint" {
 		t.Errorf("role: got %v", net.Nodes[1].Role)
 	}
+	// ProviderMeta must expose log_file for node.tail_log handler.
+	if meta := net.Nodes[0].ProviderMeta; meta["log_file"] != "/tmp/node-data/logs/node1.log" {
+		t.Errorf("node1 log_file: got %v", meta["log_file"])
+	}
+	if meta := net.Nodes[1].ProviderMeta; meta["log_file"] != "/tmp/node-data/logs/node5.log" {
+		t.Errorf("node5 log_file: got %v", meta["log_file"])
+	}
 }
 
 func TestLoadActive_OutputValidatesAgainstSchema(t *testing.T) {

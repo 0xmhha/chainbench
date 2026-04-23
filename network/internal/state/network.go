@@ -91,7 +91,10 @@ func buildNodes(p *PIDsFile) []types.Node {
 			Http:         fmt.Sprintf("http://127.0.0.1:%d", info.HTTPPort),
 			Ws:           &ws,
 			Role:         &role,
-			ProviderMeta: types.NodeProviderMeta{"pid_key": id},
+			ProviderMeta: types.NodeProviderMeta{
+				"pid_key":  id,
+				"log_file": info.LogFile,
+			},
 		}
 		out = append(out, node)
 	}
