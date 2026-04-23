@@ -778,3 +778,156 @@ func TestAllHandlers_IncludesNetworkProbe(t *testing.T) {
 		t.Error("allHandlers missing network.probe")
 	}
 }
+
+// ---- network.attach tests ----
+
+func TestHandleNetworkAttach_HappyPath(t *testing.T) {
+	srv := newStablenetMockRPC(t)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	h := newHandleNetworkAttach(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"rpc_url": srv.URL,
+		"name":    "testnet",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["name"] != "testnet" {
+		t.Errorf("name = %v", data["name"])
+	}
+	if data["chain_type"] != "stablenet" {
+		t.Errorf("chain_type = %v", data["chain_type"])
+	}
+	if data["created"] != true {
+		t.Errorf("created = %v, want true", data["created"])
+	}
+	if data["rpc_url"] != srv.URL {
+		t.Errorf("rpc_url = %v, want %q", data["rpc_url"], srv.URL)
+	}
+	// File must exist.
+	if _, err := os.Stat(filepath.Join(stateDir, "networks", "testnet.json")); err != nil {
+		t.Errorf("state file missing: %v", err)
+	}
+}
+
+func TestHandleNetworkAttach_SecondCallOverwrites(t *testing.T) {
+	srv := newStablenetMockRPC(t)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	h := newHandleNetworkAttach(stateDir)
+	args, _ := json.Marshal(map[string]any{"rpc_url": srv.URL, "name": "testnet"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	if _, err := h(args, bus); err != nil {
+		t.Fatal(err)
+	}
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data["created"] != false {
+		t.Errorf("second call created = %v, want false", data["created"])
+	}
+}
+
+func TestHandleNetworkAttach_RejectsLocalName(t *testing.T) {
+	h := newHandleNetworkAttach(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"rpc_url": "http://x", "name": "local"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	if err == nil {
+		t.Fatal("expected INVALID_ARGS for reserved name 'local'")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("err = %v, want INVALID_ARGS", err)
+	}
+}
+
+func TestHandleNetworkAttach_RejectsBadName(t *testing.T) {
+	h := newHandleNetworkAttach(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"rpc_url": "http://x", "name": "Has-Upper"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	if err == nil {
+		t.Fatal("expected INVALID_ARGS for bad name")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("err = %v, want INVALID_ARGS", err)
+	}
+}
+
+func TestHandleNetworkAttach_MissingURL(t *testing.T) {
+	h := newHandleNetworkAttach(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"name": "testnet"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	if err == nil {
+		t.Fatal("expected INVALID_ARGS for missing rpc_url")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("err = %v, want INVALID_ARGS", err)
+	}
+}
+
+func TestHandleNetworkAttach_MissingName(t *testing.T) {
+	h := newHandleNetworkAttach(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"rpc_url": "http://x"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	if err == nil {
+		t.Fatal("expected INVALID_ARGS for missing name")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("err = %v, want INVALID_ARGS", err)
+	}
+}
+
+func TestHandleNetworkAttach_UpstreamFailure(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "boom", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	h := newHandleNetworkAttach(stateDir)
+	args, _ := json.Marshal(map[string]any{"rpc_url": srv.URL, "name": "testnet"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("err = %v, want UPSTREAM_ERROR", err)
+	}
+	// No state file written when probe fails.
+	if _, statErr := os.Stat(filepath.Join(stateDir, "networks", "testnet.json")); !os.IsNotExist(statErr) {
+		t.Errorf("state file should not exist after upstream failure: %v", statErr)
+	}
+}
+
+func TestAllHandlers_IncludesNetworkAttach(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["network.attach"]; !ok {
+		t.Error("allHandlers missing network.attach")
+	}
+}

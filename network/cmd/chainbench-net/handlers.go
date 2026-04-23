@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,12 +27,13 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 // chainbenchDir are bound via closure into handlers that need them.
 func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 	return map[string]Handler{
-		"network.load":  newHandleNetworkLoad(stateDir),
-		"network.probe": newHandleNetworkProbe(),
-		"node.stop":     newHandleNodeStop(stateDir, chainbenchDir),
-		"node.start":    newHandleNodeStart(stateDir, chainbenchDir),
-		"node.restart":  newHandleNodeRestart(stateDir, chainbenchDir),
-		"node.tail_log": newHandleNodeTailLog(stateDir),
+		"network.load":   newHandleNetworkLoad(stateDir),
+		"network.probe":  newHandleNetworkProbe(),
+		"network.attach": newHandleNetworkAttach(stateDir),
+		"node.stop":      newHandleNodeStop(stateDir, chainbenchDir),
+		"node.start":     newHandleNodeStart(stateDir, chainbenchDir),
+		"node.restart":   newHandleNodeRestart(stateDir, chainbenchDir),
+		"node.tail_log":  newHandleNodeTailLog(stateDir),
 	}
 }
 
@@ -376,6 +379,103 @@ func newHandleNetworkProbe() Handler {
 		if err := json.Unmarshal(raw, &data); err != nil {
 			return nil, NewInternal("unmarshal probe result", err)
 		}
+		return data, nil
+	}
+}
+
+// newHandleNetworkAttach returns the "network.attach" handler. It probes a
+// remote RPC endpoint via probe.Detect, builds a types.Network from the
+// result, and persists it as <stateDir>/networks/<name>.json. Subsequent
+// network.load calls can resolve the network by name.
+//
+// Args: { "rpc_url": "...", "name": "...", "override"?: "stablenet|wbft|wemix|ethereum" }
+//
+// Returns: {name, chain_type, chain_id, rpc_url, nodes, created}
+//
+//	created=true  — no prior state file existed
+//	created=false — an existing file was overwritten
+//
+// Error mapping:
+//
+//	INVALID_ARGS   — malformed args, missing/invalid name, reserved "local" name,
+//	                 missing rpc_url, or probe.IsInputError(err) sentinel.
+//	UPSTREAM_ERROR — probe.Detect failure on the RPC endpoint, or SaveRemote
+//	                 I/O failure.
+//	INTERNAL       — JSON round-trip failure.
+//
+// Probe runs BEFORE any filesystem write so a failed classification never
+// leaves a partial state file behind.
+func newHandleNetworkAttach(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			RPCURL   string `json:"rpc_url"`
+			Name     string `json:"name"`
+			Override string `json:"override"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.RPCURL == "" {
+			return nil, NewInvalidArgs("args.rpc_url is required")
+		}
+		if req.Name == "" {
+			return nil, NewInvalidArgs("args.name is required")
+		}
+		if req.Name == "local" {
+			return nil, NewInvalidArgs("args.name 'local' is reserved")
+		}
+		// Reject structurally-invalid names at the boundary so we don't waste a
+		// probe round-trip on a name we can't persist anyway.
+		if !state.IsValidRemoteName(req.Name) {
+			return nil, NewInvalidArgs(fmt.Sprintf(
+				"args.name must match [a-z0-9][a-z0-9_-]*: %q", req.Name,
+			))
+		}
+
+		result, err := probe.Detect(context.Background(), probe.Options{
+			RPCURL:   req.RPCURL,
+			Override: req.Override,
+		})
+		if err != nil {
+			if probe.IsInputError(err) {
+				return nil, NewInvalidArgs(err.Error())
+			}
+			return nil, NewUpstream("probe failed", err)
+		}
+
+		// Detect prior existence to set created=true on first save, false on
+		// overwrite. Stat after probe succeeds so we never report a pseudo-
+		// create on a failed attach.
+		path := filepath.Join(stateDir, "networks", req.Name+".json")
+		_, statErr := os.Stat(path)
+		created := os.IsNotExist(statErr)
+
+		net := &types.Network{
+			Name:      req.Name,
+			ChainType: types.NetworkChainType(result.ChainType),
+			ChainId:   int(result.ChainID),
+			Nodes: []types.Node{{
+				Id:       "node1",
+				Provider: types.NodeProvider("remote"),
+				Http:     req.RPCURL,
+			}},
+		}
+		if err := state.SaveRemote(stateDir, net); err != nil {
+			return nil, NewUpstream("save remote state", err)
+		}
+
+		raw, err := json.Marshal(net)
+		if err != nil {
+			return nil, NewInternal("marshal network", err)
+		}
+		var data map[string]any
+		if err := json.Unmarshal(raw, &data); err != nil {
+			return nil, NewInternal("unmarshal network", err)
+		}
+		data["rpc_url"] = req.RPCURL
+		data["created"] = created
 		return data, nil
 	}
 }

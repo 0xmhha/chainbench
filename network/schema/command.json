@@ -11,6 +11,7 @@
       "enum": [
         "network.load",
         "network.probe",
+        "network.attach",
         "network.capabilities",
         "node.rpc",
         "node.start",

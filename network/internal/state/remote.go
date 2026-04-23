@@ -22,6 +22,13 @@ var ErrReservedName = errors.New("state: 'local' is reserved for the local netwo
 // ErrInvalidName reports a network name that violates the schema pattern.
 var ErrInvalidName = errors.New("state: network name must match [a-z0-9][a-z0-9_-]*")
 
+// IsValidRemoteName reports whether s is a structurally-valid remote network name.
+// Matches the network.json schema pattern and rejects the reserved "local" name.
+// Handlers use this for input validation before attempting a probe or state write.
+func IsValidRemoteName(s string) bool {
+	return s != "local" && remoteNameRE.MatchString(s)
+}
+
 // SaveRemote persists a remote attached network under
 // <stateDir>/networks/<name>.json. The write is atomic (temp file + rename).
 // Overwriting an existing file is allowed.

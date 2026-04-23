@@ -21,6 +21,7 @@ type CommandArgs map[string]interface{}
 
 type CommandCommand string
 
+const CommandCommandNetworkAttach CommandCommand = "network.attach"
 const CommandCommandNetworkCapabilities CommandCommand = "network.capabilities"
 const CommandCommandNetworkLoad CommandCommand = "network.load"
 const CommandCommandNetworkProbe CommandCommand = "network.probe"
@@ -35,6 +36,7 @@ const CommandCommandTxSend CommandCommand = "tx.send"
 var enumValues_CommandCommand = []interface{}{
 	"network.load",
 	"network.probe",
+	"network.attach",
 	"network.capabilities",
 	"node.rpc",
 	"node.start",
