@@ -47,3 +47,23 @@ transitive graph use:
 
     go build -tags tools ./...
     go list  -tags tools ./...
+
+## Bash client (`lib/network_client.sh`)
+
+Bash callers can invoke `chainbench-net` through the library. It handles
+envelope construction, subprocess spawn, and NDJSON parsing.
+
+    source "${CHAINBENCH_DIR}/lib/network_client.sh"
+    data=$(cb_net_call "network.load" '{"name":"local"}') || exit $?
+
+Exit codes:
+
+- `0` — success; data JSON on stdout.
+- `1` — API error; `<code>: <message>` on stderr.
+- `2` — spawn/parse failure; diagnostic on stderr.
+
+Binary resolution order:
+`$CHAINBENCH_NET_BIN`, `$CHAINBENCH_DIR/bin/chainbench-net`,
+`$CHAINBENCH_DIR/network/bin/chainbench-net`, `command -v chainbench-net`.
+
+Requires `jq`.
