@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -618,5 +621,160 @@ func TestAllHandlers_IncludesNodeTailLog(t *testing.T) {
 	handlers := allHandlers("/s", "/c")
 	if _, ok := handlers["node.tail_log"]; !ok {
 		t.Error("allHandlers missing node.tail_log")
+	}
+}
+
+// ---- network.probe tests ----
+
+// newStablenetMockRPC returns a mock JSON-RPC server that responds to the
+// methods Detect() uses when classifying a stablenet endpoint:
+//   - eth_chainId             -> "0x205b"  (8283)
+//   - istanbul_getValidators  -> []
+//   - everything else         -> -32601 method not found
+func newStablenetMockRPC(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string `json:"method"`
+			ID     int    `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"result":"0x205b"}`, req.ID)
+		case "istanbul_getValidators":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"result":[]}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"error":{"code":-32601,"message":"not found"}}`, req.ID)
+		}
+	}))
+}
+
+func TestHandleNetworkProbe_StablenetOK(t *testing.T) {
+	srv := newStablenetMockRPC(t)
+	defer srv.Close()
+
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"rpc_url": srv.URL})
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler err: %v", err)
+	}
+	if data["chain_type"] != "stablenet" {
+		t.Errorf("chain_type = %v, want stablenet", data["chain_type"])
+	}
+	// JSON numbers decode as float64 via round-trip through map[string]any.
+	cid, ok := data["chain_id"].(float64)
+	if !ok || int64(cid) != 8283 {
+		t.Errorf("chain_id = %v (%T), want 8283", data["chain_id"], data["chain_id"])
+	}
+	if data["rpc_url"] != srv.URL {
+		t.Errorf("rpc_url = %v, want %q", data["rpc_url"], srv.URL)
+	}
+}
+
+func TestHandleNetworkProbe_MissingURL(t *testing.T) {
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(json.RawMessage(`{}`), bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNetworkProbe_InvalidURLScheme(t *testing.T) {
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"rpc_url": "ws://example.com"})
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS (probe sentinel ErrInvalidURL), got %v", err)
+	}
+}
+
+func TestHandleNetworkProbe_UnknownOverride(t *testing.T) {
+	srv := newStablenetMockRPC(t)
+	defer srv.Close()
+
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{
+		"rpc_url":  srv.URL,
+		"override": "fakechain",
+	})
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS (probe sentinel ErrUnknownOverride), got %v", err)
+	}
+}
+
+func TestHandleNetworkProbe_UpstreamFailure(t *testing.T) {
+	// Server returns HTTP 500 on every request — Detect() produces a
+	// non-sentinel error that the handler must classify as UPSTREAM_ERROR.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "boom", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{
+		"rpc_url":    srv.URL,
+		"timeout_ms": 500,
+	})
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
+func TestHandleNetworkProbe_TimeoutOutOfRange(t *testing.T) {
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{
+		"rpc_url":    "http://127.0.0.1:1",
+		"timeout_ms": 10, // < 100
+	})
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNetworkProbe_MalformedArgs(t *testing.T) {
+	h := newHandleNetworkProbe()
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(json.RawMessage(`{not json`), bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesNetworkProbe(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["network.probe"]; !ok {
+		t.Error("allHandlers missing network.probe")
 	}
 }

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/network/internal/drivers/local"
 	"github.com/0xmhha/chainbench/network/internal/events"
+	"github.com/0xmhha/chainbench/network/internal/probe"
 	"github.com/0xmhha/chainbench/network/internal/state"
 	"github.com/0xmhha/chainbench/network/internal/types"
 )
@@ -24,6 +26,7 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 	return map[string]Handler{
 		"network.load":  newHandleNetworkLoad(stateDir),
+		"network.probe": newHandleNetworkProbe(),
 		"node.stop":     newHandleNodeStop(stateDir, chainbenchDir),
 		"node.start":    newHandleNodeStart(stateDir, chainbenchDir),
 		"node.restart":  newHandleNodeRestart(stateDir, chainbenchDir),
@@ -302,5 +305,77 @@ func newHandleNodeTailLog(stateDir string) Handler {
 			"log_file": logPath,
 			"lines":    tailed,
 		}, nil
+	}
+}
+
+const (
+	minProbeTimeoutMs = 100
+	maxProbeTimeoutMs = 60000
+)
+
+// newHandleNetworkProbe returns the "network.probe" handler. It accepts
+//
+//	{ "rpc_url": "...", "timeout_ms"?: 100..60000, "override"?: "stablenet|wbft|wemix|ethereum" }
+//
+// and returns the probe.Result marshalled as a plain map. Error mapping:
+//
+//	INVALID_ARGS    — malformed args, missing rpc_url, out-of-range timeout_ms,
+//	                  or probe.IsInputError(err) == true (sentinel
+//	                  ErrMissingURL / ErrInvalidURL / ErrUnknownOverride).
+//	UPSTREAM_ERROR  — any other probe.Detect failure (RPC HTTP/transport/parse).
+//	INTERNAL        — JSON round-trip failure (should not happen in practice).
+//
+// Stateless: no stateDir / chainbenchDir dependencies, so constructed with no
+// args and registered in allHandlers with a zero-arg closure.
+func newHandleNetworkProbe() Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			RPCURL    string `json:"rpc_url"`
+			TimeoutMs *int   `json:"timeout_ms"`
+			Override  string `json:"override"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.RPCURL == "" {
+			return nil, NewInvalidArgs("args.rpc_url is required")
+		}
+		opts := probe.Options{
+			RPCURL:   req.RPCURL,
+			Override: req.Override,
+		}
+		if req.TimeoutMs != nil {
+			if *req.TimeoutMs < minProbeTimeoutMs || *req.TimeoutMs > maxProbeTimeoutMs {
+				return nil, NewInvalidArgs(fmt.Sprintf(
+					"args.timeout_ms must be %d..%d, got %d",
+					minProbeTimeoutMs, maxProbeTimeoutMs, *req.TimeoutMs,
+				))
+			}
+			opts.Timeout = time.Duration(*req.TimeoutMs) * time.Millisecond
+		}
+
+		result, err := probe.Detect(context.Background(), opts)
+		if err != nil {
+			// Sentinel-based classification (errors.Is via probe.IsInputError)
+			// avoids fragile substring matching on error messages.
+			if probe.IsInputError(err) {
+				return nil, NewInvalidArgs(err.Error())
+			}
+			return nil, NewUpstream("probe failed", err)
+		}
+
+		// Round-trip through JSON so the returned map matches the wire schema
+		// layout exactly (same approach used by newHandleNetworkLoad).
+		raw, err := json.Marshal(result)
+		if err != nil {
+			return nil, NewInternal("marshal probe result", err)
+		}
+		var data map[string]any
+		if err := json.Unmarshal(raw, &data); err != nil {
+			return nil, NewInternal("unmarshal probe result", err)
+		}
+		return data, nil
 	}
 }
