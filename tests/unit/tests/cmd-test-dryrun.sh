@@ -43,7 +43,7 @@ chmod +x "${FAKE_CB}/tests/mycat/t2-no-meta.sh"
 
 # Run dry-run via cmd_test.sh
 run_dryrun() {
-  CHAINBENCH_DIR="${FAKE_CB}" CHAINBENCH_QUIET=0 bash -c '
+  CHAINBENCH_DIR="${FAKE_CB}" CHAINBENCH_QUIET=0 "$BASH" -c '
     export CHAINBENCH_DIR
     unset _CB_CMD_TEST_SH_LOADED
     set -- run mycat --dry-run --format json
