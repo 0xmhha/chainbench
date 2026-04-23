@@ -737,7 +737,7 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 
 **Sprint 3 — RemoteDriver + chain_type probe + 첫 체인 확장**
 - [ ] `drivers/remote` — `go-ethereum/ethclient` 기반. API key / JWT 인증 (S6)
-- [ ] `probe` 패키지 + `network probe <url>` 커맨드 (S7 자동+수동)
+- [x] `probe` 패키지 + `network probe <url>` 커맨드 (S7 자동+수동) — Sprint 3a 완료 (2026-04-23)
 - [ ] `adapters/stablenet` Go 포팅 — 기존 `adapter-contract-stablenet.sh` 계약 테스트 통과
 - [ ] `adapters/wbft` 실구현 시작
 
