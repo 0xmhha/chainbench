@@ -23,10 +23,11 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 // chainbenchDir are bound via closure into handlers that need them.
 func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 	return map[string]Handler{
-		"network.load": newHandleNetworkLoad(stateDir),
-		"node.stop":    newHandleNodeStop(stateDir, chainbenchDir),
-		"node.start":   newHandleNodeStart(stateDir, chainbenchDir),
-		"node.restart": newHandleNodeRestart(stateDir, chainbenchDir),
+		"network.load":  newHandleNetworkLoad(stateDir),
+		"node.stop":     newHandleNodeStop(stateDir, chainbenchDir),
+		"node.start":    newHandleNodeStart(stateDir, chainbenchDir),
+		"node.restart":  newHandleNodeRestart(stateDir, chainbenchDir),
+		"node.tail_log": newHandleNodeTailLog(stateDir),
 	}
 }
 
@@ -231,5 +232,71 @@ func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 		})
 
 		return map[string]any{"node_id": nodeID, "restarted": true}, nil
+	}
+}
+
+const (
+	defaultTailLines = 50
+	maxTailLines     = 1000
+)
+
+// newHandleNodeTailLog returns a Handler that reads the tail of a node's log
+// file. Args: { "node_id": "nodeN", "lines": 50 (optional) }.
+// No subprocess, no events — pure file read. Returns {node_id, log_file, lines}.
+func newHandleNodeTailLog(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			NodeID string `json:"node_id"`
+			Lines  *int   `json:"lines"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		// Delegate the common node_id resolution to the helper by re-marshaling
+		// just the node_id field. This keeps resolveNodeID's surface unchanged.
+		nidPayload, _ := json.Marshal(map[string]any{"node_id": req.NodeID})
+		nodeID, _, rerr := resolveNodeID(stateDir, nidPayload)
+		if rerr != nil {
+			return nil, rerr
+		}
+		lines := defaultTailLines
+		if req.Lines != nil {
+			lines = *req.Lines
+		}
+		if lines < 1 {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.lines must be >= 1, got %d", lines))
+		}
+		if lines > maxTailLines {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.lines must be <= %d, got %d", maxTailLines, lines))
+		}
+
+		net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "local"})
+		if err != nil {
+			return nil, NewUpstream("failed to load active state", err)
+		}
+		var logPath string
+		for _, n := range net.Nodes {
+			if n.Id == nodeID {
+				if v, ok := n.ProviderMeta["log_file"].(string); ok {
+					logPath = v
+				}
+				break
+			}
+		}
+		if logPath == "" {
+			return nil, NewUpstream(fmt.Sprintf("log_file unknown for node %q", nodeID), nil)
+		}
+
+		tailed, err := state.TailFile(logPath, lines)
+		if err != nil {
+			return nil, NewUpstream(fmt.Sprintf("tail log %s", logPath), err)
+		}
+		return map[string]any{
+			"node_id":  nodeID,
+			"log_file": logPath,
+			"lines":    tailed,
+		}, nil
 	}
 }

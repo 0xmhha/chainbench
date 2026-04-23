@@ -6,6 +6,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -449,5 +451,172 @@ func TestAllHandlers_IncludesNodeRestart(t *testing.T) {
 	handlers := allHandlers("/s", "/c")
 	if _, ok := handlers["node.restart"]; !ok {
 		t.Error("allHandlers missing node.restart")
+	}
+}
+
+// ---- node.tail_log tests ----
+
+// setupCmdStubDirWithLog extends setupCmdStubDir by writing a log file for
+// node1 whose path matches the one recorded in testdata/pids.json
+// ("/tmp/node-data/logs/node1.log"). Because we cannot write to /tmp paths
+// under the test harness reliably, we rewrite pids.json to point at a
+// tempdir-local log file instead.
+func setupCmdStubDirWithLog(t *testing.T, logBody string) (stateDir, chainbenchDir, logPath string) {
+	t.Helper()
+	stateDir, chainbenchDir = setupCmdStubDir(t)
+	logPath = filepath.Join(stateDir, "node1.log")
+	if err := os.WriteFile(logPath, []byte(logBody), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Rewrite pids.json in place so node "1"'s log_file points at logPath.
+	pidsBytes, err := os.ReadFile(filepath.Join(stateDir, "pids.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(pidsBytes, &raw); err != nil {
+		t.Fatal(err)
+	}
+	nodes := raw["nodes"].(map[string]any)
+	n1 := nodes["1"].(map[string]any)
+	n1["log_file"] = logPath
+	nodes["1"] = n1
+	raw["nodes"] = nodes
+	patched, _ := json.Marshal(raw)
+	if err := os.WriteFile(filepath.Join(stateDir, "pids.json"), patched, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return stateDir, chainbenchDir, logPath
+}
+
+func TestHandleNodeTailLog_HappyPath(t *testing.T) {
+	stateDir, _, logPath := setupCmdStubDirWithLog(t, "a\nb\nc\nd\ne\n")
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"node_id": "node1", "lines": 3})
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["node_id"] != "node1" {
+		t.Errorf("node_id: got %v", data["node_id"])
+	}
+	if data["log_file"] != logPath {
+		t.Errorf("log_file: got %v", data["log_file"])
+	}
+	lines, ok := data["lines"].([]string)
+	if !ok || len(lines) != 3 {
+		t.Fatalf("lines: got %v", data["lines"])
+	}
+	want := []string{"c", "d", "e"}
+	for i, w := range want {
+		if lines[i] != w {
+			t.Errorf("line %d: got %q, want %q", i, lines[i], w)
+		}
+	}
+}
+
+func TestHandleNodeTailLog_DefaultLines(t *testing.T) {
+	// Write 100 lines; default should return last 50.
+	var b strings.Builder
+	for i := 0; i < 100; i++ {
+		b.WriteString("line")
+		b.WriteString(strconv.Itoa(i))
+		b.WriteByte('\n')
+	}
+	stateDir, _, _ := setupCmdStubDirWithLog(t, b.String())
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"}) // lines omitted
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	lines := data["lines"].([]string)
+	if len(lines) != 50 {
+		t.Errorf("default lines: got %d, want 50", len(lines))
+	}
+	if lines[0] != "line50" || lines[49] != "line99" {
+		t.Errorf("default tail content: first=%q last=%q", lines[0], lines[49])
+	}
+}
+
+func TestHandleNodeTailLog_MissingNodeID(t *testing.T) {
+	stateDir, _, _ := setupCmdStubDirWithLog(t, "a\n")
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{}) // node_id omitted
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTailLog_UnknownNodeID(t *testing.T) {
+	stateDir, _, _ := setupCmdStubDirWithLog(t, "a\n")
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"node_id": "node99"})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTailLog_InvalidLines_Zero(t *testing.T) {
+	stateDir, _, _ := setupCmdStubDirWithLog(t, "a\n")
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"node_id": "node1", "lines": 0})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTailLog_InvalidLines_OverMax(t *testing.T) {
+	stateDir, _, _ := setupCmdStubDirWithLog(t, "a\n")
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"node_id": "node1", "lines": 1001})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTailLog_LogFileMissing(t *testing.T) {
+	stateDir, _, logPath := setupCmdStubDirWithLog(t, "a\n")
+	// Remove the log file so open fails.
+	if err := os.Remove(logPath); err != nil {
+		t.Fatal(err)
+	}
+	handler := newHandleNodeTailLog(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"node_id": "node1", "lines": 5})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesNodeTailLog(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["node.tail_log"]; !ok {
+		t.Error("allHandlers missing node.tail_log")
 	}
 }
