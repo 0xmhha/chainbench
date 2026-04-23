@@ -2,11 +2,13 @@ package state_test
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/0xmhha/chainbench/network/internal/state"
+	"github.com/0xmhha/chainbench/network/internal/types"
 	"github.com/0xmhha/chainbench/network/schema"
 )
 
@@ -125,5 +127,40 @@ func TestLoadActive_MissingProfile(t *testing.T) {
 	_, err := state.LoadActive(state.LoadActiveOptions{StateDir: dir, Name: "local"})
 	if err == nil {
 		t.Fatal("expected error when profile is missing")
+	}
+}
+
+func TestLoadActive_RoutesNonLocalToRemote(t *testing.T) {
+	dir := t.TempDir()
+	orig := &types.Network{
+		Name:      "sepolia",
+		ChainType: types.NetworkChainType("ethereum"),
+		ChainId:   11155111,
+		Nodes: []types.Node{{
+			Id:       "node1",
+			Provider: types.NodeProvider("remote"),
+			Http:     "https://rpc.sepolia.test",
+		}},
+	}
+	if err := state.SaveRemote(dir, orig); err != nil {
+		t.Fatal(err)
+	}
+	got, err := state.LoadActive(state.LoadActiveOptions{StateDir: dir, Name: "sepolia"})
+	if err != nil {
+		t.Fatalf("LoadActive: %v", err)
+	}
+	if got.Name != "sepolia" || got.ChainId != 11155111 {
+		t.Errorf("got %+v", got)
+	}
+}
+
+func TestLoadActive_UnknownNameIsNotFound(t *testing.T) {
+	dir := t.TempDir()
+	_, err := state.LoadActive(state.LoadActiveOptions{StateDir: dir, Name: "ghost"})
+	if err == nil {
+		t.Fatal("expected error for unknown name")
+	}
+	if !errors.Is(err, state.ErrStateNotFound) {
+		t.Errorf("err = %v, want wrapped ErrStateNotFound", err)
 	}
 }

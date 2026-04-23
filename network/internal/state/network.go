@@ -35,6 +35,10 @@ func LoadActive(opts LoadActiveOptions) (*types.Network, error) {
 		name = "local"
 	}
 
+	if name != "local" {
+		return loadRemote(stateDir, name)
+	}
+
 	pids, err := ReadPIDsFile(filepath.Join(stateDir, "pids.json"))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrStateNotFound, err)
