@@ -13,19 +13,40 @@ import (
 	"github.com/0xmhha/chainbench/network/schema"
 )
 
-func TestE2E_NetworkLoad_ViaRootCommand(t *testing.T) {
-	// Prepare state dir.
-	dir := t.TempDir()
+// setupE2EDirs builds two tempdirs: stateDir populated with pids.json +
+// current-profile.yaml fixtures, and chainbenchDir with the stub script copied
+// in as chainbench.sh (so drivers that exec "${dir}/chainbench.sh" find it).
+//
+// Tests that need to write custom log files or mutate fixtures should do so
+// after calling this helper. Tests that don't use the stub (network.load,
+// tail_log) can pass a nil chainbenchDir override by ignoring the second
+// return value.
+func setupE2EDirs(t *testing.T) (stateDir, chainbenchDir string) {
+	t.Helper()
+	stateDir = t.TempDir()
 	for _, name := range []string{"pids.json", "current-profile.yaml"} {
 		data, err := os.ReadFile(filepath.Join("testdata", name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(filepath.Join(dir, name), data, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
-	t.Setenv("CHAINBENCH_STATE_DIR", dir)
+	chainbenchDir = t.TempDir()
+	stub, err := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return stateDir, chainbenchDir
+}
+
+func TestE2E_NetworkLoad_ViaRootCommand(t *testing.T) {
+	stateDir, _ := setupE2EDirs(t)
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
 
 	// Drive cobra root via in-memory IO.
 	var stdout, stderr bytes.Buffer
@@ -83,26 +104,7 @@ func TestE2E_NetworkLoad_ViaRootCommand(t *testing.T) {
 }
 
 func TestE2E_NodeStop_ViaRootCommand(t *testing.T) {
-	// Lay out state dir + chainbench dir (with our stub renamed to chainbench.sh).
-	stateDir := t.TempDir()
-	for _, name := range []string{"pids.json", "current-profile.yaml"} {
-		data, err := os.ReadFile(filepath.Join("testdata", name))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	chainbenchDir := t.TempDir()
-	stub, err := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
-		t.Fatal(err)
-	}
-
+	stateDir, chainbenchDir := setupE2EDirs(t)
 	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
 	t.Setenv("CHAINBENCH_DIR", chainbenchDir)
 
@@ -150,21 +152,7 @@ func TestE2E_NodeStop_ViaRootCommand(t *testing.T) {
 }
 
 func TestE2E_NodeStart_ViaRootCommand(t *testing.T) {
-	stateDir := t.TempDir()
-	for _, name := range []string{"pids.json", "current-profile.yaml"} {
-		data, err := os.ReadFile(filepath.Join("testdata", name))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	chainbenchDir := t.TempDir()
-	stub, _ := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
-	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
-		t.Fatal(err)
-	}
+	stateDir, chainbenchDir := setupE2EDirs(t)
 	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
 	t.Setenv("CHAINBENCH_DIR", chainbenchDir)
 
@@ -206,21 +194,7 @@ func TestE2E_NodeStart_ViaRootCommand(t *testing.T) {
 }
 
 func TestE2E_NodeRestart_ViaRootCommand_EventOrder(t *testing.T) {
-	stateDir := t.TempDir()
-	for _, name := range []string{"pids.json", "current-profile.yaml"} {
-		data, err := os.ReadFile(filepath.Join("testdata", name))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(stateDir, name), data, 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-	chainbenchDir := t.TempDir()
-	stub, _ := os.ReadFile(filepath.Join("testdata", "chainbench-stub.sh"))
-	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), stub, 0o755); err != nil {
-		t.Fatal(err)
-	}
+	stateDir, chainbenchDir := setupE2EDirs(t)
 	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
 	t.Setenv("CHAINBENCH_DIR", chainbenchDir)
 
