@@ -86,11 +86,11 @@ func buildNodes(p *PIDsFile) []types.Node {
 		role := mapRole(info.Type)
 		ws := fmt.Sprintf("ws://127.0.0.1:%d", info.WSPort)
 		node := types.Node{
-			Id:           id,
-			Provider:     types.NodeProvider("local"),
-			Http:         fmt.Sprintf("http://127.0.0.1:%d", info.HTTPPort),
-			Ws:           &ws,
-			Role:         &role,
+			Id:       id,
+			Provider: types.NodeProvider("local"),
+			Http:     fmt.Sprintf("http://127.0.0.1:%d", info.HTTPPort),
+			Ws:       &ws,
+			Role:     &role,
 			ProviderMeta: types.NodeProviderMeta{
 				"pid_key":  id,
 				"log_file": info.LogFile,
