@@ -98,6 +98,8 @@ func newHandleNetworkLoad(stateDir string) Handler {
 //	INVALID_ARGS  — empty or malformed node_id, node not found
 //	UPSTREAM_ERROR — state.LoadActive failure (pids.json missing, parse error)
 func resolveNodeIDFromString(stateDir, nodeID string) (string, string, error) {
+	// Local-only convention: node<N> where N is the numeric pids.json key.
+	// chainbench.sh takes the raw numeric suffix as its arg.
 	if nodeID == "" {
 		return "", "", NewInvalidArgs("args.node_id is required")
 	}
@@ -108,16 +110,14 @@ func resolveNodeIDFromString(stateDir, nodeID string) (string, string, error) {
 	if num == "" {
 		return "", "", NewInvalidArgs("node_id missing numeric suffix")
 	}
-	net, lerr := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "local"})
-	if lerr != nil {
-		return "", "", NewUpstream("failed to load active state", lerr)
+	// Delegate existence check through resolveNode (M4 absorption — single
+	// state.LoadActive call site). resolveNode does the node-lookup + error
+	// mapping; we only need the numeric suffix the caller passes back to the
+	// local chainbench.sh CLI.
+	if _, _, err := resolveNode(stateDir, "local", nodeID); err != nil {
+		return "", "", err
 	}
-	for _, n := range net.Nodes {
-		if n.Id == nodeID {
-			return nodeID, num, nil
-		}
-	}
-	return "", "", NewInvalidArgs(fmt.Sprintf("node_id %q not found in active network", nodeID))
+	return nodeID, num, nil
 }
 
 // resolveNodeID parses the command envelope args into {node_id} and delegates
