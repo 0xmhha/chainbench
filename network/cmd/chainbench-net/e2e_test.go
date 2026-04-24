@@ -918,3 +918,126 @@ func TestE2E_NodeRemoteReads_WithAuth(t *testing.T) {
 		t.Errorf("mock never saw the X-Api-Key header — dialNode may not be threading auth uniformly")
 	}
 }
+
+// TestE2E_NodeTxSend_AgainstAttachedRemote drives the cobra root command twice
+// in-process: first attaches a mock JSON-RPC endpoint, then issues
+// node.tx_send with env-sourced signer key + fully pinned nonce/gas/gas_price
+// so the mock only has to answer eth_chainId + eth_sendRawTransaction. Verifies
+// (a) the broadcast actually arrived at the mock, (b) the handler returned a
+// 0x-prefixed 66-character tx_hash, and (c) neither stdout nor stderr leaked
+// the raw private key hex — this is the Go-side half of the S4 key-material
+// boundary from VISION §5.17.5. The bash counterpart spawns the binary as a
+// subprocess; this in-process test covers the cobra wiring path.
+func TestE2E_NodeTxSend_AgainstAttachedRemote(t *testing.T) {
+	var sawSendRaw bool
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			sawSendRaw = true
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x2222222222222222222222222222222222222222222222222222222222222222"}`, req.ID)
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	// Synthetic test-only key — not associated with any real funds. Tests
+	// treat it as secret and assert it never appears in any observable
+	// output stream.
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+
+	// First drive: attach the mock as "txs-e2e".
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"txs-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Second drive: node.tx_send against the attached network. Explicit
+	// nonce/gas/gas_price short-circuit the auto-fill paths so the mock
+	// doesn't need to answer eth_getTransactionCount / eth_estimateGas /
+	// eth_gasPrice — keeps the test hermetic to the sign + broadcast slice.
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	sendCmd := `{"command":"node.tx_send","args":{"network":"txs-e2e","node_id":"node1","signer":"alice","to":"0x0000000000000000000000000000000000000002","value":"0x0","gas":21000,"gas_price":"0x1","nonce":0}}`
+	root2.SetIn(strings.NewReader(sendCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("tx_send: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Scan NDJSON output; validate each line against the event schema and
+	// find the result terminator.
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+
+	var res struct {
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	if !sawSendRaw {
+		t.Error("mock did not see eth_sendRawTransaction")
+	}
+	if tx, _ := res.Data["tx_hash"].(string); !strings.HasPrefix(tx, "0x") || len(tx) != 66 {
+		t.Errorf("tx_hash shape wrong: %v", res.Data["tx_hash"])
+	}
+
+	// Key-material leak guard at the E2E layer. stderr carries structured
+	// logs from the run path; stdout carries the wire terminator. Neither
+	// may contain the raw key hex (case-sensitive — hex is lower).
+	const keyHex = "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"
+	for _, label := range []string{"stdout", "stderr"} {
+		var buf *bytes.Buffer
+		if label == "stdout" {
+			buf = &stdout
+		} else {
+			buf = &stderr
+		}
+		if strings.Contains(buf.String(), keyHex) {
+			t.Errorf("%s leaks raw key material", label)
+		}
+	}
+}
