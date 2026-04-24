@@ -25,6 +25,7 @@ const CommandCommandNetworkAttach CommandCommand = "network.attach"
 const CommandCommandNetworkCapabilities CommandCommand = "network.capabilities"
 const CommandCommandNetworkLoad CommandCommand = "network.load"
 const CommandCommandNetworkProbe CommandCommand = "network.probe"
+const CommandCommandNodeBlockNumber CommandCommand = "node.block_number"
 const CommandCommandNodeRestart CommandCommand = "node.restart"
 const CommandCommandNodeRpc CommandCommand = "node.rpc"
 const CommandCommandNodeStart CommandCommand = "node.start"
@@ -43,6 +44,7 @@ var enumValues_CommandCommand = []interface{}{
 	"node.stop",
 	"node.restart",
 	"node.tail_log",
+	"node.block_number",
 	"tx.send",
 	"subscription.open",
 }

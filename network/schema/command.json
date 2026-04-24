@@ -18,6 +18,7 @@
         "node.stop",
         "node.restart",
         "node.tail_log",
+        "node.block_number",
         "tx.send",
         "subscription.open"
       ]

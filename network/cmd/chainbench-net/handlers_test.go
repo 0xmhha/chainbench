@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/network/internal/events"
+	"github.com/0xmhha/chainbench/network/internal/state"
 	"github.com/0xmhha/chainbench/network/internal/types"
 	"github.com/0xmhha/chainbench/network/internal/wire"
 )
@@ -959,5 +960,109 @@ func TestAllHandlers_IncludesNetworkAttach(t *testing.T) {
 	handlers := allHandlers("/s", "/c")
 	if _, ok := handlers["network.attach"]; !ok {
 		t.Error("allHandlers missing network.attach")
+	}
+}
+
+// ---- node.block_number tests ----
+
+func TestHandleNodeBlockNumber_RemoteHappy(t *testing.T) {
+	// Mock a JSON-RPC server that returns eth_blockNumber=0x10.
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_blockNumber" {
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"result":"0x10"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"error":{"code":-32601,"message":"nf"}}`))
+	}))
+	defer rpcSrv.Close()
+
+	// Pre-populate a remote network state via SaveRemote.
+	stateDir := t.TempDir()
+	net := &types.Network{
+		Name: "testnet", ChainType: "ethereum", ChainId: 1,
+		Nodes: []types.Node{{Id: "node1", Provider: "remote", Http: rpcSrv.URL}},
+	}
+	if err := state.SaveRemote(stateDir, net); err != nil {
+		t.Fatal(err)
+	}
+
+	h := newHandleNodeBlockNumber(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "testnet", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["network"] != "testnet" {
+		t.Errorf("network = %v", data["network"])
+	}
+	if data["node_id"] != "node1" {
+		t.Errorf("node_id = %v", data["node_id"])
+	}
+	if bn, ok := data["block_number"].(uint64); !ok || bn != 16 {
+		if f, fok := data["block_number"].(float64); fok && f == 16 {
+			// JSON round-trip may produce float64; accept both.
+		} else {
+			t.Errorf("block_number = %v (type %T)", data["block_number"], data["block_number"])
+		}
+	}
+}
+
+func TestHandleNodeBlockNumber_MissingNodeID(t *testing.T) {
+	h := newHandleNodeBlockNumber(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"network": "testnet"})
+	bus, _ := newTestBus(t)
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeBlockNumber_UnknownNetwork(t *testing.T) {
+	h := newHandleNodeBlockNumber(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"network": "ghost", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
+func TestHandleNodeBlockNumber_UnknownNode(t *testing.T) {
+	stateDir := t.TempDir()
+	net := &types.Network{
+		Name: "tn", ChainType: "ethereum", ChainId: 1,
+		Nodes: []types.Node{{Id: "node1", Provider: "remote", Http: "http://127.0.0.1:1"}},
+	}
+	_ = state.SaveRemote(stateDir, net)
+
+	h := newHandleNodeBlockNumber(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "tn", "node_id": "node9"})
+	bus, _ := newTestBus(t)
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// Local-only handler guard: node.stop with network:"remote" → NOT_SUPPORTED.
+func TestHandleNodeStop_RejectsNonLocalNetwork(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	h := newHandleNodeStop(stateDir, chainbenchDir)
+	args, _ := json.Marshal(map[string]any{"network": "remote-foo", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+		t.Errorf("want NOT_SUPPORTED, got %v", err)
 	}
 }

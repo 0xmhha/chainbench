@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/network/internal/drivers/local"
+	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/probe"
 	"github.com/0xmhha/chainbench/network/internal/state"
@@ -28,13 +29,14 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 // chainbenchDir are bound via closure into handlers that need them.
 func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 	return map[string]Handler{
-		"network.load":   newHandleNetworkLoad(stateDir),
-		"network.probe":  newHandleNetworkProbe(),
-		"network.attach": newHandleNetworkAttach(stateDir),
-		"node.stop":      newHandleNodeStop(stateDir, chainbenchDir),
-		"node.start":     newHandleNodeStart(stateDir, chainbenchDir),
-		"node.restart":   newHandleNodeRestart(stateDir, chainbenchDir),
-		"node.tail_log":  newHandleNodeTailLog(stateDir),
+		"network.load":      newHandleNetworkLoad(stateDir),
+		"network.probe":     newHandleNetworkProbe(),
+		"network.attach":    newHandleNetworkAttach(stateDir),
+		"node.stop":         newHandleNodeStop(stateDir, chainbenchDir),
+		"node.start":        newHandleNodeStart(stateDir, chainbenchDir),
+		"node.restart":      newHandleNodeRestart(stateDir, chainbenchDir),
+		"node.tail_log":     newHandleNodeTailLog(stateDir),
+		"node.block_number": newHandleNodeBlockNumber(stateDir),
 	}
 }
 
@@ -126,11 +128,78 @@ func resolveNodeID(stateDir string, args json.RawMessage) (string, string, error
 	return resolveNodeIDFromString(stateDir, req.NodeID)
 }
 
+// resolveNode resolves (networkName, nodeID) to the network + node pair.
+// networkName=="" defaults to "local". Non-local names pattern-checked at the
+// boundary (handler cost; state layer re-validates). Returns APIError sentinels:
+//
+//	INVALID_ARGS   — empty/malformed node_id, bad network name pattern, or
+//	                 node not in resolved network
+//	UPSTREAM_ERROR — state.LoadActive failure (missing pids.json or
+//	                 networks/<name>.json)
+//
+// Distinct from resolveNodeID/resolveNodeIDFromString which are local-only and
+// enforce the "node<N>" numeric suffix convention for chainbench.sh arg shape.
+// This helper is network-name-aware and accepts any node id the Network has
+// (remote networks currently emit "node1" but the helper is agnostic).
+func resolveNode(stateDir, networkName, nodeID string) (*types.Network, *types.Node, error) {
+	if nodeID == "" {
+		return nil, nil, NewInvalidArgs("args.node_id is required")
+	}
+	if networkName == "" {
+		networkName = "local"
+	}
+	if networkName != "local" && !state.IsValidRemoteName(networkName) {
+		return nil, nil, NewInvalidArgs(fmt.Sprintf(
+			"args.network must be 'local' or match [a-z0-9][a-z0-9_-]*: %q", networkName,
+		))
+	}
+	net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: networkName})
+	if err != nil {
+		return nil, nil, NewUpstream("failed to load network state", err)
+	}
+	for i := range net.Nodes {
+		if net.Nodes[i].Id == nodeID {
+			return net, &net.Nodes[i], nil
+		}
+	}
+	return nil, nil, NewInvalidArgs(fmt.Sprintf(
+		"node_id %q not found in network %q", nodeID, networkName,
+	))
+}
+
+// resolveNodeToName wraps resolveNode returning (networkName, node, err).
+// Handler needs the resolved name string (post-default) for its result.
+func resolveNodeToName(stateDir, networkName, nodeID string) (string, *types.Node, error) {
+	if networkName == "" {
+		networkName = "local"
+	}
+	net, node, err := resolveNode(stateDir, networkName, nodeID)
+	if err != nil {
+		return "", nil, err
+	}
+	return net.Name, node, nil
+}
+
 // newHandleNodeStop returns a Handler that stops a node by id via LocalDriver.
 // Args: { "node_id": "nodeN" } where N is the numeric pids.json key.
 // On success: emits a "node.stopped" bus event, returns {node_id, stopped:true}.
 func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
+		// Local-only guard: reject non-local network attachments before we
+		// touch resolveNodeID, which hardcodes name:"local" when looking up
+		// pids.json. Leaving this off would surface as a misleading
+		// "node_id not found in active network" UPSTREAM-ish error.
+		var pre struct {
+			Network string `json:"network"`
+		}
+		if len(args) > 0 {
+			_ = json.Unmarshal(args, &pre) // best-effort; main parse in resolveNodeID
+		}
+		if pre.Network != "" && pre.Network != "local" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"node.stop is only supported on the local network (got %q)", pre.Network,
+			))
+		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
 			return nil, err
@@ -165,6 +234,17 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 // On success: emits "node.started" event, returns {node_id, started:true}.
 func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
+		var pre struct {
+			Network string `json:"network"`
+		}
+		if len(args) > 0 {
+			_ = json.Unmarshal(args, &pre)
+		}
+		if pre.Network != "" && pre.Network != "local" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"node.start is only supported on the local network (got %q)", pre.Network,
+			))
+		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
 			return nil, err
@@ -205,6 +285,17 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 // Returns {node_id, restarted:true} on full success.
 func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
+		var pre struct {
+			Network string `json:"network"`
+		}
+		if len(args) > 0 {
+			_ = json.Unmarshal(args, &pre)
+		}
+		if pre.Network != "" && pre.Network != "local" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"node.restart is only supported on the local network (got %q)", pre.Network,
+			))
+		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
 			return nil, err
@@ -267,13 +358,19 @@ const (
 func newHandleNodeTailLog(stateDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			NodeID string `json:"node_id"`
-			Lines  *int   `json:"lines"`
+			Network string `json:"network"`
+			NodeID  string `json:"node_id"`
+			Lines   *int   `json:"lines"`
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
 				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
 			}
+		}
+		if req.Network != "" && req.Network != "local" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"node.tail_log is only supported on the local network (got %q)", req.Network,
+			))
 		}
 		nodeID, _, rerr := resolveNodeIDFromString(stateDir, req.NodeID)
 		if rerr != nil {
@@ -492,5 +589,51 @@ func newHandleNetworkAttach(stateDir string) Handler {
 		data["rpc_url"] = req.RPCURL
 		data["created"] = created
 		return data, nil
+	}
+}
+
+// newHandleNodeBlockNumber returns a handler that opens an ethclient
+// connection to the resolved node's HTTP endpoint and returns the current
+// head block number. Works uniformly across local and remote networks
+// because both populate types.Node.Http.
+//
+// Args: {network?: "local"|"<remote-name>", node_id: "nodeN"}
+// Returns: {network, node_id, block_number}
+//
+// Error mapping:
+//
+//	INVALID_ARGS   — missing node_id, bad network name, unknown node
+//	UPSTREAM_ERROR — state load failure, Dial failure, or eth_blockNumber failure
+func newHandleNodeBlockNumber(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network string `json:"network"`
+			NodeID  string `json:"node_id"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		networkName, node, err := resolveNodeToName(stateDir, req.Network, req.NodeID)
+		if err != nil {
+			return nil, err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		client, err := remote.Dial(ctx, node.Http)
+		if err != nil {
+			return nil, NewUpstream(fmt.Sprintf("dial %s", node.Http), err)
+		}
+		defer client.Close()
+		bn, err := client.BlockNumber(ctx)
+		if err != nil {
+			return nil, NewUpstream("eth_blockNumber", err)
+		}
+		return map[string]any{
+			"network":      networkName,
+			"node_id":      node.Id,
+			"block_number": bn,
+		}, nil
 	}
 }
