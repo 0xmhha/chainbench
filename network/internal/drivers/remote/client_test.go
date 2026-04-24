@@ -11,7 +11,9 @@ import (
 	"testing"
 	"time"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 // mockRPC returns a JSON-RPC server responding to eth_blockNumber with the given hex.
@@ -305,6 +307,118 @@ func TestClient_GasPrice_RPCError(t *testing.T) {
 		t.Fatal("expected error when server returns method-not-found")
 	} else if !strings.Contains(err.Error(), "remote.GasPrice") {
 		t.Errorf("err should flow through remote.GasPrice wrapper: %v", err)
+	}
+}
+
+// TestClient_PendingNonceAt asserts the PendingNonceAt wrapper forwards
+// eth_getTransactionCount with the pending block tag and returns the parsed
+// nonce. The mock only needs to recognize the method name — ethclient
+// supplies the "pending" tag internally.
+func TestClient_PendingNonceAt(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionCount" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x7"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	n, err := c.PendingNonceAt(ctx, common.HexToAddress("0x01"))
+	if err != nil {
+		t.Fatalf("PendingNonceAt: %v", err)
+	}
+	if n != 7 {
+		t.Errorf("nonce = %d, want 7", n)
+	}
+}
+
+// TestClient_EstimateGas asserts eth_estimateGas is forwarded and the hex
+// result is parsed back to uint64 gas units.
+func TestClient_EstimateGas(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_estimateGas" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x5208"}`, req.ID) // 21000
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	from := common.HexToAddress("0x01")
+	to := common.HexToAddress("0x02")
+	gas, err := c.EstimateGas(ctx, ethereum.CallMsg{From: from, To: &to})
+	if err != nil {
+		t.Fatalf("EstimateGas: %v", err)
+	}
+	if gas != 21000 {
+		t.Errorf("gas = %d, want 21000", gas)
+	}
+}
+
+// TestClient_SendTransaction verifies the wrapper RLP-encodes and forwards a
+// tx via eth_sendRawTransaction. The mock records Params[0] (the hex RLP)
+// and asserts it's non-empty; signature validity is not inspected because
+// ethclient will happily serialize an unsigned LegacyTx.
+func TestClient_SendTransaction(t *testing.T) {
+	var receivedHex string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_sendRawTransaction" {
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &receivedHex)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0xabc123"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	tx := types.NewTx(&types.LegacyTx{Nonce: 0, GasPrice: big.NewInt(1), Gas: 21000})
+	if err := c.SendTransaction(ctx, tx); err != nil {
+		t.Fatalf("SendTransaction: %v", err)
+	}
+	if receivedHex == "" {
+		t.Error("server did not receive a signed tx param")
 	}
 }
 

@@ -10,7 +10,9 @@ import (
 	"net/http"
 	neturl "net/url"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -122,6 +124,36 @@ func (c *Client) GasPrice(ctx context.Context) (*big.Int, error) {
 		return nil, fmt.Errorf("remote.GasPrice: %w", err)
 	}
 	return gp, nil
+}
+
+// PendingNonceAt returns the next available nonce for account (pending + mined).
+// Thin wrapper over ethclient.PendingNonceAt which issues eth_getTransactionCount
+// with the "pending" block tag.
+func (c *Client) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
+	n, err := c.rpc.PendingNonceAt(ctx, account)
+	if err != nil {
+		return 0, fmt.Errorf("remote.PendingNonceAt: %w", err)
+	}
+	return n, nil
+}
+
+// EstimateGas asks the endpoint for the gas required to execute msg.
+func (c *Client) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
+	g, err := c.rpc.EstimateGas(ctx, msg)
+	if err != nil {
+		return 0, fmt.Errorf("remote.EstimateGas: %w", err)
+	}
+	return g, nil
+}
+
+// SendTransaction broadcasts a signed transaction. Caller constructs + signs
+// tx outside this package; remote.Client only forwards the RLP via
+// eth_sendRawTransaction.
+func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) error {
+	if err := c.rpc.SendTransaction(ctx, tx); err != nil {
+		return fmt.Errorf("remote.SendTransaction: %w", err)
+	}
+	return nil
 }
 
 // Close releases the underlying HTTP/RPC connection. Nil-safe on the
