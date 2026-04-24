@@ -414,3 +414,131 @@ func TestE2E_NetworkProbe_ViaRootCommand(t *testing.T) {
 		t.Errorf("chain_id = %v, want 8283", chainID)
 	}
 }
+
+// TestE2E_NetworkAttach_ViaRootCommand drives the cobra root command twice
+// in-process: first to attach a remote network (probed via an httptest mock
+// RPC), then to load the same name back. Verifies that the persisted state
+// file round-trips through state.LoadActive's non-local routing.
+func TestE2E_NetworkAttach_ViaRootCommand(t *testing.T) {
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string `json:"method"`
+			ID     int    `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"result":"0x205b"}`, req.ID)
+		case "istanbul_getValidators":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"result":[]}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"error":{"code":-32601,"message":"method not found"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	cmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"integration"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(cmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Scan NDJSON output; validate every line against the event schema and
+	// find the result terminator.
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema validation: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result line in attach output")
+	}
+
+	var res struct {
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("attach result.ok = false: %s", resultLine)
+	}
+	if got, want := res.Data["chain_type"], "stablenet"; got != want {
+		t.Errorf("chain_type = %v, want %q", got, want)
+	}
+	if got, want := res.Data["name"], "integration"; got != want {
+		t.Errorf("name = %v, want %q", got, want)
+	}
+
+	// Verify the state file landed on disk.
+	if _, err := os.Stat(filepath.Join(stateDir, "networks", "integration.json")); err != nil {
+		t.Errorf("state file missing: %v", err)
+	}
+
+	// Second drive: network.load the same name and assert equivalence.
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	loadCmd := `{"command":"network.load","args":{"name":"integration"}}`
+	root2.SetIn(strings.NewReader(loadCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("load execute: %v\nstderr: %s", err, stderr.String())
+	}
+
+	var loadResult []byte
+	scanner = bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("load schema validation: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("load decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			loadResult = line
+		}
+	}
+	if loadResult == nil {
+		t.Fatal("no result line in load output")
+	}
+	var loadRes struct {
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(loadResult, &loadRes); err != nil {
+		t.Fatalf("unmarshal load terminator: %v", err)
+	}
+	if !loadRes.Ok {
+		t.Fatalf("load result.ok = false: %s", loadResult)
+	}
+	if got, want := loadRes.Data["name"], "integration"; got != want {
+		t.Errorf("load name = %v, want %q", got, want)
+	}
+}
