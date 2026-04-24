@@ -542,3 +542,104 @@ func TestE2E_NetworkAttach_ViaRootCommand(t *testing.T) {
 		t.Errorf("load name = %v, want %q", got, want)
 	}
 }
+
+// TestE2E_NodeBlockNumber_AgainstAttachedRemote drives cobra twice in-process:
+// first attach a mock RPC as "remote-e2e", then issue node.block_number against
+// the attached network. Exercises the ethclient remote-driver path end-to-end
+// and asserts the block number surfaces through the wire result terminator.
+func TestE2E_NodeBlockNumber_AgainstAttachedRemote(t *testing.T) {
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"result":"0x1"}`))
+		case "istanbul_getValidators", "wemix_getReward":
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"error":{"code":-32601,"message":"nf"}}`))
+		case "eth_blockNumber":
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"result":"0x2a"}`))
+		default:
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"error":{"code":-32601,"message":"nf"}}`))
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+
+	// First drive: attach the mock as "remote-e2e".
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"remote-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Second drive: node.block_number against the attached network.
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	bnCmd := `{"command":"node.block_number","args":{"network":"remote-e2e","node_id":"node1"}}`
+	root2.SetIn(strings.NewReader(bnCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("block_number: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Scan NDJSON output; validate each line against the event schema and find
+	// the result terminator.
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+
+	var res struct {
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	if got, want := res.Data["network"], "remote-e2e"; got != want {
+		t.Errorf("network = %v, want %q", got, want)
+	}
+	if got, want := res.Data["node_id"], "node1"; got != want {
+		t.Errorf("node_id = %v, want %q", got, want)
+	}
+	// block_number round-trips as float64 through JSON decode into map[string]any.
+	bn, ok := res.Data["block_number"].(float64)
+	if !ok {
+		t.Fatalf("block_number is not a number: %T %v", res.Data["block_number"], res.Data["block_number"])
+	}
+	if bn != 42 {
+		t.Errorf("block_number = %v, want 42", bn)
+	}
+}
