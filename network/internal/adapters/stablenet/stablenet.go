@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -224,11 +225,7 @@ func cloneMap(src map[string]any) map[string]any {
 	if src == nil {
 		return map[string]any{}
 	}
-	out := make(map[string]any, len(src))
-	for k, v := range src {
-		out[k] = v
-	}
-	return out
+	return maps.Clone(src)
 }
 
 func ensureParams(contract map[string]any) map[string]any {
