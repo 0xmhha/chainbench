@@ -107,9 +107,8 @@ func TestAuthFromNode_NilAuthReturnsNil(t *testing.T) {
 }
 
 func TestAuthFromNode_APIKey(t *testing.T) {
-	apiKey := types.Auth0{Type: "api-key", Env: "TEST_KEY"}
-	// Header field is optional; default to "Authorization".
-	node := &types.Node{Id: "node1", Http: "http://x", Auth: types.NodeAuthFromApiKey(apiKey)}
+	// types.Auth is map[string]interface{} (no typed union from generator).
+	node := &types.Node{Id: "node1", Http: "http://x", Auth: types.Auth{"type": "api-key", "env": "TEST_KEY"}}
 	envs := map[string]string{"TEST_KEY": "abc"}
 	rt, err := AuthFromNode(node, func(k string) string { return envs[k] })
 	if err != nil {
@@ -138,8 +137,7 @@ func TestAuthFromNode_APIKey(t *testing.T) {
 }
 
 func TestAuthFromNode_EmptyEnvIsError(t *testing.T) {
-	apiKey := types.Auth0{Type: "api-key", Env: "MISSING_KEY"}
-	node := &types.Node{Id: "node1", Http: "http://x", Auth: types.NodeAuthFromApiKey(apiKey)}
+	node := &types.Node{Id: "node1", Http: "http://x", Auth: types.Auth{"type": "api-key", "env": "MISSING_KEY"}}
 	_, err := AuthFromNode(node, func(string) string { return "" })
 	if err == nil {
 		t.Fatal("expected error for empty env value")
@@ -152,10 +150,11 @@ func TestAuthFromNode_EmptyEnvIsError(t *testing.T) {
 }
 ```
 
-**Note on types**: `types.NodeAuth` is a generated union from `network.json`'s
-`Auth` schema. Actual field/helper names depend on the generator output.
-Before wiring the test, run `gofmt` and inspect `network/internal/types/*.go`
-to find the correct constructor. Update test to match.
+**Note on types**: `types.Auth` is `map[string]interface{}` (go-jsonschema
+did NOT emit a tagged union for the oneOf; it fell back to a loose map).
+Tests construct it as `types.Auth{"type": "api-key", "env": "KEY_NAME"}`
+directly. Node.Auth field is `Auth` (not a pointer), and is nil-safe on
+`len(node.Auth) == 0`.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -165,18 +164,23 @@ cd network && go test ./internal/drivers/remote/... -run 'TestAPIKey|TestBearer|
 
 Expected: compile failure due to undefined `APIKeyTransport`, `BearerTokenTransport`, `AuthFromNode`.
 
-- [ ] **Step 3: Inspect types.NodeAuth shape**
+- [ ] **Step 3: Confirm types.Auth shape (already known)**
 
 ```bash
-grep -n "NodeAuth\|Auth0\|ApiKey" network/internal/types/*.go | head -30
+grep -n "type Auth\|Auth " network/internal/types/network_gen.go
 ```
 
-Adjust the test's constructor usage to match real helper names. If the
-generator produced something unfriendly (e.g., `NodeAuth_0_ApiKey`), wrap in
-a small test helper `makeAPIKeyAuth(env string) types.NodeAuth` inside
-`auth_test.go` and use it consistently.
+Expected output confirms `type Auth map[string]interface{}`. No helper
+constructors to find — tests use map literals directly.
 
 - [ ] **Step 4: Implement auth.go**
+
+**Important context on the generated types.Auth**: go-jsonschema did NOT emit a
+tagged union for the `Auth` oneOf in `network.json`. Instead, `network_gen.go`
+declares `type Auth map[string]interface{}` — a loose map keyed by JSON field
+names (`type`, `env`, `header`, `user`, etc.). `types.Node.Auth` is that map.
+No `Auth0 / Auth1 / NodeAuthFromApiKey` helpers exist. Branch on
+`auth["type"].(string)` directly.
 
 ```go
 // Package remote — auth helpers.
@@ -224,35 +228,65 @@ func BearerTokenTransport(base http.RoundTripper, token string) http.RoundTrippe
 	return &headerTransport{base: base, header: "Authorization", value: "Bearer " + token}
 }
 
-// AuthFromNode inspects node.Auth and returns a RoundTripper that performs
-// the configured auth. Returns (nil, nil) if node.Auth is nil (unauthenticated).
-// envLookup is injected for testability; production callers pass os.Getenv.
+// AuthFromNode reads node.Auth (generated as map[string]any by go-jsonschema)
+// and returns a RoundTripper matching the configured type. Returns (nil, nil)
+// when node.Auth is empty (unauthenticated). envLookup is injected for
+// testability; production callers pass os.Getenv.
 //
 // Auth material never appears in returned errors. If the env var is unset or
 // empty, the error references the variable name only.
 func AuthFromNode(node *types.Node, envLookup func(string) string) (http.RoundTripper, error) {
-	if node == nil || node.Auth == nil {
+	if node == nil || len(node.Auth) == 0 {
 		return nil, nil
 	}
-	// TODO: unpack node.Auth (generated union type). Use the typed accessors
-	// in types/network_gen.go. Detect type first.
-	// Pseudocode — adapt to actual generator output:
-	//
-	// switch a := node.Auth.AsXxx().(type) {
-	// case APIKey: ...
-	// case JWT:    ...
-	// }
-
-	// PLACEHOLDER BODY — implementer fills this in after inspecting generated union.
-	return nil, fmt.Errorf("remote.AuthFromNode: TODO — union unpacking")
+	rawType, ok := node.Auth["type"].(string)
+	if !ok || rawType == "" {
+		return nil, fmt.Errorf("remote.AuthFromNode: missing or non-string 'type' field")
+	}
+	switch rawType {
+	case "api-key":
+		envName, _ := node.Auth["env"].(string)
+		if envName == "" {
+			return nil, fmt.Errorf("remote.AuthFromNode(api-key): 'env' field is required")
+		}
+		value := envLookup(envName)
+		if value == "" {
+			return nil, fmt.Errorf("remote.AuthFromNode(api-key): env var %q is empty", envName)
+		}
+		header, _ := node.Auth["header"].(string) // optional; APIKeyTransport defaults
+		return APIKeyTransport(nil, header, value), nil
+	case "jwt":
+		envName, _ := node.Auth["env"].(string)
+		if envName == "" {
+			return nil, fmt.Errorf("remote.AuthFromNode(jwt): 'env' field is required")
+		}
+		token := envLookup(envName)
+		if token == "" {
+			return nil, fmt.Errorf("remote.AuthFromNode(jwt): env var %q is empty", envName)
+		}
+		return BearerTokenTransport(nil, token), nil
+	case "ssh-password":
+		// SSH auth belongs to SSHRemoteDriver (future), not RPC client.
+		return nil, fmt.Errorf("remote.AuthFromNode: 'ssh-password' auth not applicable to RPC client")
+	default:
+		return nil, fmt.Errorf("remote.AuthFromNode: unknown auth type %q", rawType)
+	}
 }
 ```
 
-**Note**: the TODO inside `AuthFromNode` reflects that the generated
-`types.NodeAuth` union shape isn't known a priori. Implementer must read
-`network/internal/types/` generated files, find the correct discriminator
-(likely `.Type` field or a `Kind()` method), and branch accordingly.
-Replace the placeholder before committing.
+Corresponding tests in `auth_test.go` should use map literals directly:
+
+```go
+func TestAuthFromNode_APIKey(t *testing.T) {
+	node := &types.Node{
+		Id: "node1", Http: "http://x",
+		Auth: types.Auth{"type": "api-key", "env": "TEST_KEY"},
+	}
+	envs := map[string]string{"TEST_KEY": "abc"}
+	rt, err := AuthFromNode(node, func(k string) string { return envs[k] })
+	// ... etc. Adapt Step 1's test block to use types.Auth{...} map literals.
+}
+```
 
 - [ ] **Step 5: Implement DialWithOptions**
 
