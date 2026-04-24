@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -1269,6 +1270,103 @@ func TestHandleNodeBalance_MissingAddress(t *testing.T) {
 	var api *APIError
 	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
 		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeBalance_BlockNumberForms locks in the block_number parsing
+// contract: integer, "latest", "earliest", "pending", unknown-label, negative,
+// and wrong-shape inputs all produce the expected classification.
+func TestHandleNodeBalance_BlockNumberForms(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeBalance(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	base := map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "0x0000000000000000000000000000000000000001",
+	}
+
+	cases := []struct {
+		name      string
+		blockNum  any
+		wantCode  string // "" for success
+		wantLabel string
+	}{
+		{"integer", float64(5), "", "5"},
+		{"latest string", "latest", "", "latest"},
+		{"earliest string", "earliest", "", "earliest"},
+		{"pending string", "pending", "", "pending"},
+		{"unknown string label", "top", "INVALID_ARGS", ""},
+		{"negative integer", float64(-1), "INVALID_ARGS", ""},
+		{"wrong shape (object)", map[string]any{"x": 1}, "INVALID_ARGS", ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := maps.Clone(base)
+			req["block_number"] = tc.blockNum
+			args, _ := json.Marshal(req)
+			data, err := h(args, bus)
+			if tc.wantCode != "" {
+				var api *APIError
+				if !errors.As(err, &api) || string(api.Code) != tc.wantCode {
+					t.Errorf("want %s, got %v", tc.wantCode, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if data["block"] != tc.wantLabel {
+				t.Errorf("block label = %q, want %q", data["block"], tc.wantLabel)
+			}
+		})
+	}
+}
+
+// TestHandleNodeChainID_AuthSetupError exercises dialNode's auth-setup error
+// branch — Auth references an unset env var, so AuthFromNode returns an error
+// before any network round-trip happens. The handler must surface UPSTREAM_ERROR
+// with the "auth setup" message fragment (so operators see which layer failed).
+func TestHandleNodeChainID_AuthSetupError(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	net := &types.Network{
+		Name:      "authfail",
+		ChainType: "ethereum",
+		ChainId:   1,
+		Nodes: []types.Node{{
+			Id:       "node1",
+			Provider: "remote",
+			Http:     srv.URL,
+			Auth: types.Auth{
+				"type": "api-key",
+				"env":  "CHAINBENCH_TEST_UNSET_ENV_VAR_XYZ",
+			},
+		}},
+	}
+	if err := state.SaveRemote(stateDir, net); err != nil {
+		t.Fatal(err)
+	}
+	os.Unsetenv("CHAINBENCH_TEST_UNSET_ENV_VAR_XYZ")
+
+	h := newHandleNodeChainID(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "authfail", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Fatalf("want UPSTREAM_ERROR, got %v", err)
+	}
+	if !strings.Contains(api.Message, "auth setup") {
+		t.Errorf("message should mention auth setup layer: %v", api.Message)
 	}
 }
 
