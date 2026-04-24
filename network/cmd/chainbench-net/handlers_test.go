@@ -83,6 +83,31 @@ func TestHandleNetworkLoad_UnknownRemoteName(t *testing.T) {
 	}
 }
 
+// TestHandleNetworkLoad_BadNamePattern ensures that a structurally invalid
+// name is rejected at the handler boundary as INVALID_ARGS, not pushed down
+// to the state layer where it would surface as UPSTREAM_ERROR wrapping
+// ErrInvalidName.
+func TestHandleNetworkLoad_BadNamePattern(t *testing.T) {
+	dir := setupCmdStateDir(t)
+	handler := newHandleNetworkLoad(dir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	for _, name := range []string{"Has-Upper", "has space", "has/slash", ".hidden"} {
+		t.Run(name, func(t *testing.T) {
+			args, _ := json.Marshal(map[string]any{"name": name})
+			_, err := handler(args, bus)
+			if err == nil {
+				t.Fatal("expected error")
+			}
+			var api *APIError
+			if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+				t.Errorf("want INVALID_ARGS, got %v", err)
+			}
+		})
+	}
+}
+
 func TestHandleNetworkLoad_MissingArgs(t *testing.T) {
 	dir := setupCmdStateDir(t)
 	handler := newHandleNetworkLoad(dir)

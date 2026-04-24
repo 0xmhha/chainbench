@@ -52,6 +52,13 @@ func newHandleNetworkLoad(stateDir string) Handler {
 		if req.Name == "" {
 			return nil, NewInvalidArgs("args.name is required")
 		}
+		// Pre-check name shape at the handler boundary. "local" is always legal
+		// here; remote names must match the schema pattern. Rejecting here keeps
+		// structural input errors as INVALID_ARGS; state-layer errors (missing
+		// file) below stay as UPSTREAM_ERROR.
+		if req.Name != "local" && !state.IsValidRemoteName(req.Name) {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.name must be 'local' or match [a-z0-9][a-z0-9_-]*: %q", req.Name))
+		}
 
 		// Non-local names are resolved by state.LoadActive → loadRemote, which
 		// returns a wrapped ErrStateNotFound when no matching attached network
