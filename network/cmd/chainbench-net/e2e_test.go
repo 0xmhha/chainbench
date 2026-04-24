@@ -784,3 +784,137 @@ func TestE2E_NodeBlockNumber_WithAuth(t *testing.T) {
 		t.Errorf("mock did not see configured header on eth_blockNumber: got %q, want %q", gotAuth, "e2e-secret")
 	}
 }
+
+// TestE2E_NodeRemoteReads_WithAuth exercises the three new remote read
+// commands (node.chain_id, node.balance, node.gas_price) end-to-end against a
+// single attached remote network configured with api-key auth. The mock RPC
+// tracks whether at least one JSON-RPC request arrived carrying the expected
+// X-Api-Key header value — so a regression where dialNode stops threading
+// auth through to any of these three paths would fail the final assertion
+// rather than silently pass. Each command is driven through a fresh
+// newRootCmd() execution, matching the single-command-per-invocation shape
+// the binary has in production.
+func TestE2E_NodeRemoteReads_WithAuth(t *testing.T) {
+	var authSeen bool
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Api-Key") == "e2e-reads" {
+			authSeen = true
+		}
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x2a"}`, req.ID)
+		case "eth_getBalance":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x500"}`, req.ID)
+		case "eth_gasPrice":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x64"}`, req.ID)
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("READS_KEY", "e2e-reads")
+
+	// runRoot drives a fresh cobra root command for a single envelope on stdin,
+	// scans every NDJSON line for schema validity + terminator, and returns the
+	// decoded result.data map. Failures abort the test with full stderr for
+	// diagnostics.
+	runRoot := func(t *testing.T, stdinJSON string) map[string]any {
+		t.Helper()
+		var stdout, stderr bytes.Buffer
+		root := newRootCmd()
+		root.SetIn(strings.NewReader(stdinJSON))
+		root.SetOut(&stdout)
+		root.SetErr(&stderr)
+		root.SetArgs([]string{"run"})
+		if err := root.Execute(); err != nil {
+			t.Fatalf("execute: %v\nstderr: %s", err, stderr.String())
+		}
+		var resultLine []byte
+		scanner := bufio.NewScanner(&stdout)
+		for scanner.Scan() {
+			line := append([]byte(nil), scanner.Bytes()...)
+			if err := schema.ValidateBytes("event", line); err != nil {
+				t.Fatalf("schema: %v\nline: %s", err, line)
+			}
+			msg, derr := wire.DecodeMessage(line)
+			if derr != nil {
+				t.Fatalf("decode %q: %v", line, derr)
+			}
+			if _, ok := msg.(wire.ResultMessage); ok {
+				resultLine = line
+			}
+		}
+		if resultLine == nil {
+			t.Fatal("no result terminator")
+		}
+		var res struct {
+			Ok   bool           `json:"ok"`
+			Data map[string]any `json:"data"`
+		}
+		if err := json.Unmarshal(resultLine, &res); err != nil {
+			t.Fatalf("unmarshal terminator: %v", err)
+		}
+		if !res.Ok {
+			t.Fatalf("not ok: %s", resultLine)
+		}
+		return res.Data
+	}
+
+	// Attach the mock under "reads-e2e" with X-Api-Key auth sourced from
+	// env(READS_KEY). ValidateAuth is exercised here implicitly — passing
+	// means the structurally-correct api-key config was accepted.
+	attachCmd := fmt.Sprintf(
+		`{"command":"network.attach","args":{"rpc_url":%q,"name":"reads-e2e","auth":{"type":"api-key","header":"X-Api-Key","env":"READS_KEY"}}}`,
+		rpcSrv.URL,
+	)
+	runRoot(t, attachCmd)
+
+	// node.chain_id — mock returns 0x2a (=42). JSON decode of result.data
+	// surfaces uint64 as float64 through map[string]any.
+	chainData := runRoot(t, `{"command":"node.chain_id","args":{"network":"reads-e2e","node_id":"node1"}}`)
+	if cid, ok := chainData["chain_id"].(float64); !ok || cid != 42 {
+		t.Errorf("chain_id = %v (%T), want 42", chainData["chain_id"], chainData["chain_id"])
+	}
+	if got, want := chainData["network"], "reads-e2e"; got != want {
+		t.Errorf("chain_id.network = %v, want %q", got, want)
+	}
+	if got, want := chainData["node_id"], "node1"; got != want {
+		t.Errorf("chain_id.node_id = %v, want %q", got, want)
+	}
+
+	// node.balance — mock returns 0x500; handler preserves the hex prefix.
+	balData := runRoot(t, `{"command":"node.balance","args":{"network":"reads-e2e","node_id":"node1","address":"0x0000000000000000000000000000000000000001"}}`)
+	if got, want := balData["balance"], "0x500"; got != want {
+		t.Errorf("balance = %v, want %q", got, want)
+	}
+	if got, want := balData["address"], "0x0000000000000000000000000000000000000001"; got != want {
+		t.Errorf("balance.address = %v, want %q", got, want)
+	}
+	if got, want := balData["block"], "latest"; got != want {
+		t.Errorf("balance.block = %v, want %q", got, want)
+	}
+
+	// node.gas_price — mock returns 0x64.
+	gpData := runRoot(t, `{"command":"node.gas_price","args":{"network":"reads-e2e","node_id":"node1"}}`)
+	if got, want := gpData["gas_price"], "0x64"; got != want {
+		t.Errorf("gas_price = %v, want %q", got, want)
+	}
+
+	// The mock flips authSeen when X-Api-Key arrives with the expected value.
+	// If dialNode ever regresses and stops wiring auth for any of the three
+	// commands, this assertion fails — guarding against a silent auth gap.
+	if !authSeen {
+		t.Errorf("mock never saw the X-Api-Key header — dialNode may not be threading auth uniformly")
+	}
+}
