@@ -16,7 +16,9 @@ type Client struct {
 	rpc *ethclient.Client
 }
 
-// Dial opens a JSON-RPC client against the given HTTP(S) URL.
+// Dial opens a JSON-RPC client against the given URL. Accepts any scheme
+// ethclient supports (http, https, ws, wss, or an IPC path); Sprint 3b.2a
+// only exercises http(s). Auth transport plumbing will arrive in 3b.2b.
 func Dial(ctx context.Context, url string) (*Client, error) {
 	rpc, err := ethclient.DialContext(ctx, url)
 	if err != nil {
@@ -34,9 +36,13 @@ func (c *Client) BlockNumber(ctx context.Context) (uint64, error) {
 	return bn, nil
 }
 
-// Close releases the underlying HTTP/RPC connection.
+// Close releases the underlying HTTP/RPC connection. Nil-safe on the
+// remote.Client receiver; ethclient's own Close is not nil-safe so the
+// receiver check is load-bearing. BlockNumber and future methods assume
+// construction via Dial and do not replicate the guard.
 func (c *Client) Close() {
-	if c != nil && c.rpc != nil {
-		c.rpc.Close()
+	if c == nil {
+		return
 	}
+	c.rpc.Close()
 }

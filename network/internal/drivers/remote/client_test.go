@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -50,12 +51,57 @@ func TestClient_BlockNumber(t *testing.T) {
 	}
 }
 
-func TestClient_DialRejectsBadURL(t *testing.T) {
+// "not-a-url" surfaces through ethclient as an unknown-transport-scheme
+// failure (url.Parse accepts it; rpc.DialContext rejects the empty scheme).
+// We assert the error flows through our Dial wrapper so callers see the
+// endpoint URL in the message.
+func TestClient_DialRejectsUnsupportedScheme(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	_, err := Dial(ctx, "not-a-url")
 	if err == nil {
-		t.Fatal("expected Dial error for malformed URL")
+		t.Fatal("expected Dial error for unsupported URL scheme")
+	}
+	if !strings.Contains(err.Error(), "remote.Dial") {
+		t.Errorf("err should flow through remote.Dial wrapper: %v", err)
+	}
+}
+
+// Regression-proofs the ctx.Done() contract: a slow RPC must surface as an
+// error on ctx deadline rather than blocking the caller past it. Uses a
+// bounded handler sleep (not an indefinite hang) to avoid test teardown
+// stalling on a keep-alive connection that the client already abandoned.
+func TestClient_BlockNumber_HonorsContextTimeout(t *testing.T) {
+	done := make(chan struct{})
+	defer close(done)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-time.After(2 * time.Second):
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x0"}`))
+		case <-done:
+		}
+	}))
+	defer srv.Close()
+
+	dialCtx, dialCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer dialCancel()
+	c, err := Dial(dialCtx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+
+	callCtx, callCancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+	defer callCancel()
+	start := time.Now()
+	_, err = c.BlockNumber(callCtx)
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("expected error when context deadline passes during RPC")
+	}
+	if elapsed > time.Second {
+		t.Errorf("BlockNumber blocked %v past the 150ms deadline", elapsed)
 	}
 }
 
