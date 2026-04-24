@@ -80,10 +80,14 @@ assert_contains "$data" '"chain_type":"stablenet"' "data contains chain_type"
 assert_contains "$data" '"chain_id":8283' "data contains chain_id"
 assert_contains "$data" '"nodes"' "data contains nodes"
 
-# ---- Scenario 3: API error — unsupported name ----
-describe "network_client: API error (bogus name) -> rc=1 + INVALID_ARGS"
+# ---- Scenario 3: API error — structurally-invalid name ----
+# Post-Sprint 3b: "bogus" is a valid remote-name pattern and would be treated
+# as "attached network not found" (UPSTREAM_ERROR). To still exercise the
+# INVALID_ARGS code path via the wire client, use a name that violates the
+# schema pattern so the handler rejects it at the boundary.
+describe "network_client: API error (bad name pattern) -> rc=1 + INVALID_ARGS"
 rc=0
-err_output=$(cb_net_call "network.load" '{"name":"bogus"}' 2>&1 >/dev/null) || rc=$?
+err_output=$(cb_net_call "network.load" '{"name":"Has-Upper"}' 2>&1 >/dev/null) || rc=$?
 assert_eq "$rc" "1" "api-error exit code"
 assert_contains "$err_output" "INVALID_ARGS" "stderr mentions INVALID_ARGS"
 
