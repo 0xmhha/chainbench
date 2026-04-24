@@ -52,10 +52,10 @@ func newHandleNetworkLoad(stateDir string) Handler {
 		if req.Name == "" {
 			return nil, NewInvalidArgs("args.name is required")
 		}
-		if req.Name != "local" {
-			return nil, NewInvalidArgs(fmt.Sprintf("only 'local' supported (got %q)", req.Name))
-		}
 
+		// Non-local names are resolved by state.LoadActive → loadRemote, which
+		// returns a wrapped ErrStateNotFound when no matching attached network
+		// file exists. That surfaces to callers as UPSTREAM_ERROR below.
 		net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: req.Name})
 		if err != nil {
 			return nil, NewUpstream("failed to load active state", err)

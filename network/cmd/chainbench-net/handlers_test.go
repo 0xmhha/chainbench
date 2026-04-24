@@ -61,8 +61,13 @@ func TestHandleNetworkLoad_HappyPath(t *testing.T) {
 	}
 }
 
-func TestHandleNetworkLoad_WrongName(t *testing.T) {
-	dir := setupCmdStateDir(t)
+// TestHandleNetworkLoad_UnknownRemoteName verifies that requesting a non-local
+// network name with no matching state file surfaces as UPSTREAM_ERROR.
+// state.LoadActive routes non-local names through loadRemote which returns a
+// wrapped ErrStateNotFound; the handler maps that to UPSTREAM_ERROR (the same
+// bucket a missing pids.json for "local" uses).
+func TestHandleNetworkLoad_UnknownRemoteName(t *testing.T) {
+	dir := setupCmdStateDir(t) // contains local state, but no networks/mainnet.json
 	handler := newHandleNetworkLoad(dir)
 	bus, _ := newTestBus(t)
 	defer bus.Close()
@@ -73,8 +78,8 @@ func TestHandleNetworkLoad_WrongName(t *testing.T) {
 		t.Fatal("expected error")
 	}
 	var api *APIError
-	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
-		t.Errorf("want APIError INVALID_ARGS, got %v", err)
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want APIError UPSTREAM_ERROR, got %v", err)
 	}
 }
 
