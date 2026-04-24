@@ -25,7 +25,10 @@ const CommandCommandNetworkAttach CommandCommand = "network.attach"
 const CommandCommandNetworkCapabilities CommandCommand = "network.capabilities"
 const CommandCommandNetworkLoad CommandCommand = "network.load"
 const CommandCommandNetworkProbe CommandCommand = "network.probe"
+const CommandCommandNodeBalance CommandCommand = "node.balance"
 const CommandCommandNodeBlockNumber CommandCommand = "node.block_number"
+const CommandCommandNodeChainId CommandCommand = "node.chain_id"
+const CommandCommandNodeGasPrice CommandCommand = "node.gas_price"
 const CommandCommandNodeRestart CommandCommand = "node.restart"
 const CommandCommandNodeRpc CommandCommand = "node.rpc"
 const CommandCommandNodeStart CommandCommand = "node.start"
@@ -44,7 +47,10 @@ var enumValues_CommandCommand = []interface{}{
 	"node.stop",
 	"node.restart",
 	"node.tail_log",
+	"node.balance",
 	"node.block_number",
+	"node.chain_id",
+	"node.gas_price",
 	"tx.send",
 	"subscription.open",
 }

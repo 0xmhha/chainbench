@@ -1148,6 +1148,186 @@ func TestHandleNodeBlockNumber_UsesAuth(t *testing.T) {
 	}
 }
 
+// ---- node.chain_id / node.balance / node.gas_price tests ----
+
+// newReadMockRPC returns a mock JSON-RPC server that responds to the methods
+// used by the three new read-only handlers: eth_chainId, eth_getBalance,
+// eth_gasPrice. Non-matching methods return a -32601 "method not found"
+// error so the mock composes cleanly with callers that interleave other RPCs.
+func newReadMockRPC(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x2a"}`, req.ID)
+		case "eth_getBalance":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x100"}`, req.ID)
+		case "eth_gasPrice":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x3b9aca00"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+// saveRemoteFixture pre-seeds a one-node remote network pointing at url.
+func saveRemoteFixture(t *testing.T, stateDir, name, url string) {
+	t.Helper()
+	net := &types.Network{
+		Name: name, ChainType: "ethereum", ChainId: 1,
+		Nodes: []types.Node{{Id: "node1", Provider: "remote", Http: url}},
+	}
+	if err := state.SaveRemote(stateDir, net); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHandleNodeChainID_Happy(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeChainID(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "tn", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["network"] != "tn" || data["node_id"] != "node1" {
+		t.Errorf("echo fields: %+v", data)
+	}
+	if cid, ok := data["chain_id"].(uint64); !ok || cid != 42 {
+		t.Errorf("chain_id = %v (%T), want 42 (uint64)", data["chain_id"], data["chain_id"])
+	}
+}
+
+func TestHandleNodeBalance_Happy(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeBalance(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1",
+		"address": "0x0000000000000000000000000000000000000001",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["balance"] != "0x100" {
+		t.Errorf("balance = %v, want 0x100", data["balance"])
+	}
+	if data["block"] != "latest" {
+		t.Errorf("block = %v, want latest (default)", data["block"])
+	}
+}
+
+func TestHandleNodeBalance_BadAddress(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeBalance(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1",
+		"address": "not-a-hex-address",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeBalance_MissingAddress(t *testing.T) {
+	stateDir := t.TempDir()
+	h := newHandleNodeBalance(stateDir)
+	args, _ := json.Marshal(map[string]any{"node_id": "node1"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeGasPrice_Happy(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeGasPrice(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "tn", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["gas_price"] != "0x3b9aca00" {
+		t.Errorf("gas_price = %v, want 0x3b9aca00", data["gas_price"])
+	}
+}
+
+// Attach must reject structurally-invalid auth with INVALID_ARGS before
+// touching the state layer. Probe runs first (unauthenticated), then
+// ValidateAuth gates persistence.
+func TestHandleNetworkAttach_InvalidAuthRejectedAtAttach(t *testing.T) {
+	rpcSrv := newStablenetMockRPC(t)
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	h := newHandleNetworkAttach(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"rpc_url": rpcSrv.URL, "name": "bad",
+		"auth": map[string]any{"type": "totally-unknown-type"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+	// State file must NOT have been written — attach rejects before persistence.
+	if _, serr := os.Stat(filepath.Join(stateDir, "networks", "bad.json")); !os.IsNotExist(serr) {
+		t.Errorf("state file should not exist after invalid-auth attach: %v", serr)
+	}
+}
+
+func TestAllHandlers_IncludesNewRemoteReadCommands(t *testing.T) {
+	h := allHandlers("x", "y")
+	for _, name := range []string{"node.chain_id", "node.balance", "node.gas_price"} {
+		if _, ok := h[name]; !ok {
+			t.Errorf("allHandlers missing %s", name)
+		}
+	}
+}
+
 // Local-only handler guard: node.stop with network:"remote" → NOT_SUPPORTED.
 func TestHandleNodeStop_RejectsNonLocalNetwork(t *testing.T) {
 	stateDir, chainbenchDir := setupCmdStubDir(t)

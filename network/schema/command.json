@@ -18,7 +18,10 @@
         "node.stop",
         "node.restart",
         "node.tail_log",
+        "node.balance",
         "node.block_number",
+        "node.chain_id",
+        "node.gas_price",
         "tx.send",
         "subscription.open"
       ]
