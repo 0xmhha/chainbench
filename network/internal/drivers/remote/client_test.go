@@ -120,3 +120,37 @@ func TestClient_BlockNumber_RPCError(t *testing.T) {
 		t.Fatal("expected error when server returns method-not-found")
 	}
 }
+
+// Verifies that a custom RoundTripper passed via DialOptions.Transport is
+// actually applied to outbound RPC traffic (the ethclient round-trip goes
+// through our injected transport).
+func TestDialWithOptions_TransportInjected(t *testing.T) {
+	var gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("X-Test-Auth")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x5"}`))
+	}))
+	defer srv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	rt := APIKeyTransport(nil, "X-Test-Auth", "mykey")
+	c, err := DialWithOptions(ctx, srv.URL, DialOptions{Transport: rt})
+	if err != nil {
+		t.Fatalf("DialWithOptions: %v", err)
+	}
+	defer c.Close()
+
+	bn, err := c.BlockNumber(ctx)
+	if err != nil {
+		t.Fatalf("BlockNumber: %v", err)
+	}
+	if bn != 5 {
+		t.Errorf("bn = %d, want 5", bn)
+	}
+	if gotAuth != "mykey" {
+		t.Errorf("header not injected: %q", gotAuth)
+	}
+}
