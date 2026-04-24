@@ -253,3 +253,34 @@ func TestAuthFromNode_UnknownType(t *testing.T) {
 		t.Fatal("expected error for unknown auth type")
 	}
 }
+
+// JWT parallel of TestAuthFromNode_EmptyEnvIsError. Closes the coverage
+// asymmetry between api-key and jwt branches so a future refactor can't
+// silently break one while the other's test stays green.
+func TestAuthFromNode_JWT_EmptyEnvIsError(t *testing.T) {
+	node := &types.Node{
+		Id:   "node1",
+		Http: "http://x",
+		Auth: types.Auth{"type": "jwt", "env": "MISSING_JWT"},
+	}
+	_, err := AuthFromNode(node, func(string) string { return "" })
+	if err == nil {
+		t.Fatal("expected error for empty jwt env value")
+	}
+	if !strings.Contains(err.Error(), "MISSING_JWT") {
+		t.Errorf("err should reference env name: %v", err)
+	}
+}
+
+// JWT parallel of TestAuthFromNode_MissingEnvField.
+func TestAuthFromNode_JWT_MissingEnvField(t *testing.T) {
+	node := &types.Node{
+		Id:   "node1",
+		Http: "http://x",
+		Auth: types.Auth{"type": "jwt"}, // no env
+	}
+	_, err := AuthFromNode(node, func(string) string { return "tok" })
+	if err == nil {
+		t.Fatal("expected error when 'env' field is missing for jwt")
+	}
+}

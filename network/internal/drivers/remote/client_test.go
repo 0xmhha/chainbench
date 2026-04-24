@@ -154,3 +154,29 @@ func TestDialWithOptions_TransportInjected(t *testing.T) {
 		t.Errorf("header not injected: %q", gotAuth)
 	}
 }
+
+// Guards against the silent-bypass hazard: passing a Transport for a non-HTTP
+// URL (ws/wss/ipc) must error loudly since WithHTTPClient is ignored by
+// those schemes and auth headers would be dropped.
+func TestDialWithOptions_RejectsNonHTTPWithTransport(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	rt := APIKeyTransport(nil, "X-Test-Auth", "mykey")
+
+	cases := []string{
+		"ws://localhost:8546",
+		"wss://localhost:8546",
+		"/tmp/geth.ipc",
+	}
+	for _, url := range cases {
+		t.Run(url, func(t *testing.T) {
+			_, err := DialWithOptions(ctx, url, DialOptions{Transport: rt})
+			if err == nil {
+				t.Fatalf("expected error for non-HTTP URL %q with Transport", url)
+			}
+			if !strings.Contains(err.Error(), "http(s)") {
+				t.Errorf("error should mention http(s) requirement: %v", err)
+			}
+		})
+	}
+}

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	neturl "net/url"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -22,10 +23,13 @@ type Client struct {
 // is equivalent to the bare Dial path (no custom transport).
 type DialOptions struct {
 	// Transport, when non-nil, replaces the default HTTP transport used by
-	// the underlying JSON-RPC client. The typical use case is
-	// auth-injection: APIKeyTransport / BearerTokenTransport returned by
-	// AuthFromNode. It has no effect for non-HTTP schemes (ws, ipc) — those
-	// fall through to ethclient.DialContext regardless.
+	// the underlying JSON-RPC client. The typical use case is auth injection
+	// via APIKeyTransport / BearerTokenTransport returned by AuthFromNode.
+	//
+	// Only compatible with http(s) URLs. DialWithOptions rejects ws/wss/ipc
+	// URLs when a Transport is provided, because go-ethereum's WithHTTPClient
+	// is silently ignored by non-HTTP dials and the auth header would never
+	// reach the server.
 	Transport http.RoundTripper
 }
 
@@ -56,9 +60,24 @@ func DialWithOptions(ctx context.Context, url string, opts DialOptions) (*Client
 		}
 		return &Client{rpc: rpcClient}, nil
 	}
+	// Custom transport only makes sense for http(s). go-ethereum's
+	// WithHTTPClient is silently ignored by ws / wss / ipc dials, which would
+	// drop auth headers on the floor without surfacing an error. Fail fast
+	// instead so the operator learns the configuration is impossible rather
+	// than debugging a 401 from a server that never saw the key.
+	if parsed, perr := neturl.Parse(url); perr == nil {
+		switch parsed.Scheme {
+		case "http", "https":
+			// OK — Transport is honored.
+		case "":
+			// Likely an IPC path; Transport would be ignored.
+			return nil, fmt.Errorf("remote.DialWithOptions: auth transport requires http(s) URL, got %q", url)
+		default:
+			return nil, fmt.Errorf("remote.DialWithOptions: auth transport requires http(s) scheme, got %q", parsed.Scheme)
+		}
+	}
 	// Custom transport: build an *http.Client and wire it via the rpc
-	// package's ClientOption hook. Only meaningful for http(s) URLs; ws/ipc
-	// dials ignore WithHTTPClient inside go-ethereum.
+	// package's ClientOption hook.
 	httpClient := &http.Client{Transport: opts.Transport}
 	rpcClient, err := rpc.DialOptions(ctx, url, rpc.WithHTTPClient(httpClient))
 	if err != nil {
