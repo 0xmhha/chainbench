@@ -284,3 +284,55 @@ func TestAuthFromNode_JWT_MissingEnvField(t *testing.T) {
 		t.Fatal("expected error when 'env' field is missing for jwt")
 	}
 }
+
+func TestValidateAuth_NilIsOK(t *testing.T) {
+	if err := ValidateAuth(nil); err != nil {
+		t.Errorf("nil auth should be valid: %v", err)
+	}
+	if err := ValidateAuth(types.Auth{}); err != nil {
+		t.Errorf("empty auth should be valid: %v", err)
+	}
+}
+
+func TestValidateAuth_ValidAPIKey(t *testing.T) {
+	if err := ValidateAuth(types.Auth{"type": "api-key", "env": "KEY"}); err != nil {
+		t.Errorf("valid api-key should pass: %v", err)
+	}
+}
+
+func TestValidateAuth_ValidJWT(t *testing.T) {
+	if err := ValidateAuth(types.Auth{"type": "jwt", "env": "TOK"}); err != nil {
+		t.Errorf("valid jwt should pass: %v", err)
+	}
+}
+
+func TestValidateAuth_SSHPasswordPasses(t *testing.T) {
+	// ssh-password is persisted but ignored by RPC client; attach accepts it.
+	if err := ValidateAuth(types.Auth{"type": "ssh-password", "user": "root", "host": "h"}); err != nil {
+		t.Errorf("ssh-password should pass attach validation: %v", err)
+	}
+}
+
+func TestValidateAuth_UnknownType(t *testing.T) {
+	if err := ValidateAuth(types.Auth{"type": "totally-made-up"}); err == nil {
+		t.Error("unknown type should fail")
+	}
+}
+
+func TestValidateAuth_MissingType(t *testing.T) {
+	if err := ValidateAuth(types.Auth{"env": "KEY"}); err == nil {
+		t.Error("missing type should fail")
+	}
+}
+
+func TestValidateAuth_APIKey_MissingEnv(t *testing.T) {
+	if err := ValidateAuth(types.Auth{"type": "api-key"}); err == nil {
+		t.Error("api-key without env should fail")
+	}
+}
+
+func TestValidateAuth_JWT_MissingEnv(t *testing.T) {
+	if err := ValidateAuth(types.Auth{"type": "jwt"}); err == nil {
+		t.Error("jwt without env should fail")
+	}
+}

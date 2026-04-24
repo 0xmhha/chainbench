@@ -3,11 +3,15 @@ package remote
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // mockRPC returns a JSON-RPC server responding to eth_blockNumber with the given hex.
@@ -152,6 +156,155 @@ func TestDialWithOptions_TransportInjected(t *testing.T) {
 	}
 	if gotAuth != "mykey" {
 		t.Errorf("header not injected: %q", gotAuth)
+	}
+}
+
+func TestClient_ChainID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_chainId" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x2a"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	cid, err := c.ChainID(ctx)
+	if err != nil {
+		t.Fatalf("ChainID: %v", err)
+	}
+	if cid.Cmp(big.NewInt(42)) != 0 {
+		t.Errorf("ChainID = %v, want 42", cid)
+	}
+}
+
+func TestClient_BalanceAt(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getBalance" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x100"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	addr := common.HexToAddress("0x0000000000000000000000000000000000000001")
+	bal, err := c.BalanceAt(ctx, addr, nil) // latest
+	if err != nil {
+		t.Fatalf("BalanceAt: %v", err)
+	}
+	if bal.Cmp(big.NewInt(0x100)) != 0 {
+		t.Errorf("balance = %v, want 0x100", bal)
+	}
+}
+
+func TestClient_GasPrice(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_gasPrice" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x3b9aca00"}`, req.ID) // 1 gwei
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	gp, err := c.GasPrice(ctx)
+	if err != nil {
+		t.Fatalf("GasPrice: %v", err)
+	}
+	if gp.Cmp(big.NewInt(1_000_000_000)) != 0 {
+		t.Errorf("gas_price = %v, want 1 gwei", gp)
+	}
+}
+
+// Error-branch coverage for the three new wrappers: each must surface the
+// remote.<Method> wrapper prefix when the underlying JSON-RPC call returns
+// method-not-found. Parallels TestClient_BlockNumber_RPCError.
+func TestClient_ChainID_RPCError(t *testing.T) {
+	srv := mockRPC(t, map[string]string{}) // no methods — every call fails
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	if _, err := c.ChainID(ctx); err == nil {
+		t.Fatal("expected error when server returns method-not-found")
+	} else if !strings.Contains(err.Error(), "remote.ChainID") {
+		t.Errorf("err should flow through remote.ChainID wrapper: %v", err)
+	}
+}
+
+func TestClient_BalanceAt_RPCError(t *testing.T) {
+	srv := mockRPC(t, map[string]string{})
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	addr := common.HexToAddress("0x0000000000000000000000000000000000000001")
+	if _, err := c.BalanceAt(ctx, addr, nil); err == nil {
+		t.Fatal("expected error when server returns method-not-found")
+	} else if !strings.Contains(err.Error(), "remote.BalanceAt") {
+		t.Errorf("err should flow through remote.BalanceAt wrapper: %v", err)
+	}
+}
+
+func TestClient_GasPrice_RPCError(t *testing.T) {
+	srv := mockRPC(t, map[string]string{})
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatalf("Dial: %v", err)
+	}
+	defer c.Close()
+	if _, err := c.GasPrice(ctx); err == nil {
+		t.Fatal("expected error when server returns method-not-found")
+	} else if !strings.Contains(err.Error(), "remote.GasPrice") {
+		t.Errorf("err should flow through remote.GasPrice wrapper: %v", err)
 	}
 }
 

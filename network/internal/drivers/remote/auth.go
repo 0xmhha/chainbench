@@ -57,6 +57,32 @@ func BearerTokenTransport(base http.RoundTripper, token string) http.RoundTrippe
 	return &headerTransport{base: base, header: "Authorization", value: "Bearer " + token}
 }
 
+// ValidateAuth reports whether auth is structurally valid.
+// Returns nil for empty auth (unauthenticated). Callers at input boundaries
+// (e.g., network.attach) use this to fail fast on malformed configuration
+// before persistence. AuthFromNode re-validates the same rules at dial time.
+func ValidateAuth(auth types.Auth) error {
+	if len(auth) == 0 {
+		return nil
+	}
+	rawType, ok := auth["type"].(string)
+	if !ok || rawType == "" {
+		return fmt.Errorf("auth: missing or non-string 'type' field")
+	}
+	switch rawType {
+	case "api-key", "jwt":
+		envName, _ := auth["env"].(string)
+		if envName == "" {
+			return fmt.Errorf("auth(%s): 'env' field is required", rawType)
+		}
+	case "ssh-password":
+		// SSH fields validated by the SSH driver when it lands; attach accepts.
+	default:
+		return fmt.Errorf("auth: unknown type %q", rawType)
+	}
+	return nil
+}
+
 // AuthFromNode reads node.Auth (a loose map[string]interface{} emitted by
 // go-jsonschema for the network.json oneOf) and returns a RoundTripper
 // matching the configured type. Returns (nil, nil) when node is nil or

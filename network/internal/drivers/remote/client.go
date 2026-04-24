@@ -6,9 +6,11 @@ package remote
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"net/http"
 	neturl "net/url"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -93,6 +95,33 @@ func (c *Client) BlockNumber(ctx context.Context) (uint64, error) {
 		return 0, fmt.Errorf("remote.BlockNumber: %w", err)
 	}
 	return bn, nil
+}
+
+// ChainID returns the chain id reported by the endpoint.
+func (c *Client) ChainID(ctx context.Context) (*big.Int, error) {
+	id, err := c.rpc.ChainID(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("remote.ChainID: %w", err)
+	}
+	return id, nil
+}
+
+// BalanceAt returns the balance of address at the given block. Pass nil for latest.
+func (c *Client) BalanceAt(ctx context.Context, address common.Address, blockNumber *big.Int) (*big.Int, error) {
+	bal, err := c.rpc.BalanceAt(ctx, address, blockNumber)
+	if err != nil {
+		return nil, fmt.Errorf("remote.BalanceAt: %w", err)
+	}
+	return bal, nil
+}
+
+// GasPrice returns the current suggested gas price (eth_gasPrice).
+func (c *Client) GasPrice(ctx context.Context) (*big.Int, error) {
+	gp, err := c.rpc.SuggestGasPrice(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("remote.GasPrice: %w", err)
+	}
+	return gp, nil
 }
 
 // Close releases the underlying HTTP/RPC connection. Nil-safe on the
