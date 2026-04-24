@@ -34,6 +34,7 @@ const CommandCommandNodeRpc CommandCommand = "node.rpc"
 const CommandCommandNodeStart CommandCommand = "node.start"
 const CommandCommandNodeStop CommandCommand = "node.stop"
 const CommandCommandNodeTailLog CommandCommand = "node.tail_log"
+const CommandCommandNodeTxSend CommandCommand = "node.tx_send"
 const CommandCommandSubscriptionOpen CommandCommand = "subscription.open"
 const CommandCommandTxSend CommandCommand = "tx.send"
 
@@ -51,6 +52,7 @@ var enumValues_CommandCommand = []interface{}{
 	"node.block_number",
 	"node.chain_id",
 	"node.gas_price",
+	"node.tx_send",
 	"tx.send",
 	"subscription.open",
 }

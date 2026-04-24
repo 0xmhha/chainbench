@@ -1465,3 +1465,132 @@ func TestLocalOnlyHandlers_RejectNonLocalNetwork(t *testing.T) {
 		})
 	}
 }
+
+// ---- node.tx_send tests ----
+
+// TestHandleNodeTxSend_Happy exercises the full flow with explicit nonce/gas
+// to keep the test hermetic (no EstimateGas / PendingNonceAt round-trips).
+// The mock only needs to answer eth_chainId + eth_sendRawTransaction.
+func TestHandleNodeTxSend_Happy(t *testing.T) {
+	var sawSendRaw bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			sawSendRaw = true
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1111111111111111111111111111111111111111111111111111111111111111"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	// Well-known synthetic key (NOT real funds) — test-only.
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":   "tn",
+		"node_id":   "node1",
+		"signer":    "alice",
+		"to":        "0x0000000000000000000000000000000000000002",
+		"value":     "0x0",
+		"gas":       21000,
+		"gas_price": "0x1",
+		"nonce":     0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if !sawSendRaw {
+		t.Error("mock did not see eth_sendRawTransaction")
+	}
+	if tx, _ := data["tx_hash"].(string); !strings.HasPrefix(tx, "0x") || len(tx) != 66 {
+		t.Errorf("tx_hash shape wrong: %v", data["tx_hash"])
+	}
+}
+
+func TestHandleNodeTxSend_MissingSigner(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"node_id": "node1", "to": "0x0000000000000000000000000000000000000002"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_MissingTo(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{"node_id": "node1", "signer": "alice"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_UnknownSigner(t *testing.T) {
+	srv := newReadMockRPC(t)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	os.Unsetenv("CHAINBENCH_SIGNER_GHOST_KEY")
+
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"signer":  "ghost",
+		"to":      "0x0000000000000000000000000000000000000002",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_BadToAddress(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"signer":  "alice",
+		"to":      "not-a-hex-address",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesTxSend(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.tx_send"]; !ok {
+		t.Error("allHandlers missing node.tx_send")
+	}
+}

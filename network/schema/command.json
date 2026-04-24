@@ -22,6 +22,7 @@
         "node.block_number",
         "node.chain_id",
         "node.gas_price",
+        "node.tx_send",
         "tx.send",
         "subscription.open"
       ]
