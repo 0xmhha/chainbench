@@ -1524,6 +1524,77 @@ func TestHandleNodeTxSend_Happy(t *testing.T) {
 	}
 }
 
+// TestHandleNodeTxSend_AutoFill exercises the auto-fill path where the caller
+// omits nonce / gas / gas_price and the handler fetches each from the upstream.
+// Covers resolveNonce (eth_getTransactionCount), resolveGasPrice (eth_gasPrice),
+// and resolveGas (eth_estimateGas) composition — the integration Sprint 4b
+// regression most likely to surface if EIP-1559 changes the CallMsg shape.
+func TestHandleNodeTxSend_AutoFill(t *testing.T) {
+	var sawSendRaw, sawNonce, sawGasPrice, sawEstimate bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_getTransactionCount":
+			sawNonce = true
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x5"}`, req.ID)
+		case "eth_gasPrice":
+			sawGasPrice = true
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x3b9aca00"}`, req.ID)
+		case "eth_estimateGas":
+			sawEstimate = true
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x5208"}`, req.ID)
+		case "eth_sendRawTransaction":
+			sawSendRaw = true
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1111111111111111111111111111111111111111111111111111111111111111"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+
+	h := newHandleNodeTxSend(stateDir)
+	// Omit nonce / gas / gas_price entirely — handler must auto-fill.
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"signer":  "alice",
+		"to":      "0x0000000000000000000000000000000000000002",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if !sawNonce {
+		t.Error("mock did not see eth_getTransactionCount (nonce auto-fill missing)")
+	}
+	if !sawGasPrice {
+		t.Error("mock did not see eth_gasPrice (gas_price auto-fill missing)")
+	}
+	if !sawEstimate {
+		t.Error("mock did not see eth_estimateGas (gas auto-fill missing)")
+	}
+	if !sawSendRaw {
+		t.Error("mock did not see eth_sendRawTransaction")
+	}
+	if tx, _ := data["tx_hash"].(string); !strings.HasPrefix(tx, "0x") || len(tx) != 66 {
+		t.Errorf("tx_hash shape wrong: %v", data["tx_hash"])
+	}
+}
+
 func TestHandleNodeTxSend_MissingSigner(t *testing.T) {
 	h := newHandleNodeTxSend(t.TempDir())
 	args, _ := json.Marshal(map[string]any{"node_id": "node1", "to": "0x0000000000000000000000000000000000000002"})
