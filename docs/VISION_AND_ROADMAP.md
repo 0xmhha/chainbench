@@ -736,7 +736,7 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [ ] Unit test: Go 테이블 테스트 + bash `unit/tests/network-wire-protocol.sh`
 
 **Sprint 3 — RemoteDriver + chain_type probe + 첫 체인 확장**
-- [ ] `drivers/remote` — `go-ethereum/ethclient` 기반. API key / JWT 인증 (S6) — Sprint 3b.2 예정 (첫 remote-node 커맨드 도입 시점에 도입)
+- [x] `drivers/remote` (read-only, no auth) + `node.block_number` + `resolveNode` 헬퍼 (M4 일부 흡수) — Sprint 3b.2a 완료 (2026-04-24); API key / JWT 인증은 Sprint 3b.2b 예정
 - [x] `probe` 패키지 + `network probe <url>` 커맨드 (S7 자동+수동) — Sprint 3a 완료 (2026-04-23)
 - [x] `network.attach` + remote 상태 저장 (`state/networks/<name>.json`) + `network.load` 원격 이름 라우팅 — Sprint 3b 완료 (2026-04-24)
 - [ ] `adapters/stablenet` Go 포팅 — 기존 `adapter-contract-stablenet.sh` 계약 테스트 통과
