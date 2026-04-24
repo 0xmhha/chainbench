@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "index":        1,
+      "address":      "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "publicKey":    "aaaaaaaaaaaa",
+      "blsPublicKey": "0xaaaa"
+    },
+    {
+      "index":        2,
+      "address":      "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "publicKey":    "bbbbbbbbbbbb",
+      "blsPublicKey": "0xbbbb"
+    }
+  ],
+  "extraData": "0xfeedface"
+}

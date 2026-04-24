@@ -1,0 +1,21 @@
+{
+  "chain": { "chain_id": 8283 },
+  "genesis": {
+    "overrides": {
+      "wbft": {
+        "requestTimeoutSeconds": 2,
+        "blockPeriodSeconds": 1,
+        "epochLength": 140,
+        "proposerPolicy": 0
+      },
+      "systemContracts": {
+        "govValidator": { "params": {} },
+        "govMinter":    { "params": {} }
+      },
+      "alloc": {
+        "0x1234567890abcdef1234567890abcdef12345678": "0xDEADBEEF"
+      },
+      "extraData": "0x00"
+    }
+  }
+}
