@@ -1,0 +1,72 @@
+{
+  "config": {
+    "chainId": 8283,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "applepieBlock": 0,
+    "anzeon": {
+      "wbft": {
+        "requestTimeoutSeconds": 2,
+        "blockPeriodSeconds": 1,
+        "epochLength": 140,
+        "proposerPolicy": 0,
+        "maxRequestTimeoutSeconds": null
+      },
+      "init": {
+        "validators": ["0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],
+        "blsPublicKeys": ["0xaaaa","0xbbbb"]
+      },
+      "systemContracts": {
+    "govMinter": {
+        "params": {
+            "members": "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        }
+    },
+    "govValidator": {
+        "params": {
+            "blsPublicKeys": "0xaaaa,0xbbbb",
+            "members": "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+            "validators": "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        }
+    }
+}
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "0x0",
+  "extraData": "0xfeedface",
+  "gasLimit": "0x1312D00",
+  "difficulty": "0x0",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "alloc": {
+    "1234567890abcdef1234567890abcdef12345678": {
+        "balance": "0xDEADBEEF"
+    },
+    "4e59b44847b379578588920cA78FbF26c0B4956C": {
+        "balance": "0x0",
+        "code": "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156014578182fd5b80825250506014600cf3"
+    },
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA": {
+        "balance": "0x84595161401484a000000"
+    },
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB": {
+        "balance": "0x84595161401484a000000"
+    }
+},
+  "number": "0x0",
+  "gasUsed": "0x0",
+  "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "baseFeePerGas": "0x3b9aca00",
+  "excessBlobGas": null,
+  "blobGasUsed": null
+}

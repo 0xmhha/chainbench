@@ -1,0 +1,39 @@
+# chainbench node TOML configuration template
+# Placeholders are substituted by 'chainbench init' from the active profile
+
+[Eth]
+SyncMode = "full"
+
+[Eth.Miner]
+Recommit = "2s"
+
+[Node]
+KeyStoreDir = "__WRITE_DIR__/keystores/node1"
+AuthPort = 8551
+HTTPHost = "0.0.0.0"
+HTTPPort = 8545
+HTTPCors = ["*"]
+HTTPVirtualHosts = ["*"]
+# go-stablenet exposes consensus RPC under the "istanbul" namespace
+# (consensus/wbft/backend/engine.go:234). "wbft" and "engine" are kept for
+# historical / future-proof compatibility even though they are currently
+# no-ops on this chain version.
+HTTPModules = ["admin", "eth", "debug", "miner", "net", "txpool", "personal", "web3", "wbft", "engine", "istanbul"]
+
+[Node.P2P]
+ListenAddr = ":30303"
+NoDiscovery = true
+StaticNodes = [
+    "enode://aaaaaaaaaaaa@127.0.0.1:30303?discport=0",
+    "enode://bbbbbbbbbbbb@127.0.0.1:30304?discport=0"
+]
+
+[Ethstats]
+URL = "node1:local@localhost:3000"
+
+[Metrics]
+Enabled = true
+HTTP = "127.0.0.1"
+Port = 6060
+EnableInfluxDB = false
+EnableInfluxDBV2 = false
