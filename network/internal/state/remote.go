@@ -22,11 +22,19 @@ var ErrReservedName = errors.New("state: 'local' is reserved for the local netwo
 // ErrInvalidName reports a network name that violates the schema pattern.
 var ErrInvalidName = errors.New("state: network name must match [a-z0-9][a-z0-9_-]*")
 
+// IsReservedRemoteName reports whether s is reserved by the state layer and
+// cannot be used as a remote network name. Currently only "local" is reserved.
+// Centralizes the reserved-name rule so IsValidRemoteName, SaveRemote, and
+// loadRemote stay in sync if the reserved set grows.
+func IsReservedRemoteName(s string) bool {
+	return s == "local"
+}
+
 // IsValidRemoteName reports whether s is a structurally-valid remote network name.
-// Matches the network.json schema pattern and rejects the reserved "local" name.
+// Matches the network.json schema pattern and rejects reserved names.
 // Handlers use this for input validation before attempting a probe or state write.
 func IsValidRemoteName(s string) bool {
-	return s != "local" && remoteNameRE.MatchString(s)
+	return !IsReservedRemoteName(s) && remoteNameRE.MatchString(s)
 }
 
 // SaveRemote persists a remote attached network under
@@ -36,7 +44,7 @@ func SaveRemote(stateDir string, net *types.Network) error {
 	if net == nil {
 		return fmt.Errorf("state: nil network")
 	}
-	if net.Name == "local" {
+	if IsReservedRemoteName(net.Name) {
 		return ErrReservedName
 	}
 	if !remoteNameRE.MatchString(net.Name) {
@@ -65,7 +73,7 @@ func SaveRemote(stateDir string, net *types.Network) error {
 // loadRemote is package-private; external callers use LoadActive which
 // routes on Name.
 func loadRemote(stateDir, name string) (*types.Network, error) {
-	if name == "local" {
+	if IsReservedRemoteName(name) {
 		return nil, ErrReservedName
 	}
 	if !remoteNameRE.MatchString(name) {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -463,6 +464,13 @@ func newHandleNetworkAttach(stateDir string) Handler {
 			}},
 		}
 		if err := state.SaveRemote(stateDir, net); err != nil {
+			// The handler pre-checks reserved and invalid names, so the sentinel
+			// branches should be unreachable. Classify defensively anyway — a
+			// future refactor that skips the pre-check must not surface a
+			// structural-input error as an endpoint/UPSTREAM failure.
+			if errors.Is(err, state.ErrReservedName) || errors.Is(err, state.ErrInvalidName) {
+				return nil, NewInvalidArgs(err.Error())
+			}
 			return nil, NewUpstream("save remote state", err)
 		}
 
