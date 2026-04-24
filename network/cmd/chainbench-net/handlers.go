@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -501,9 +502,10 @@ func newHandleNetworkProbe() Handler {
 func newHandleNetworkAttach(stateDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			RPCURL   string `json:"rpc_url"`
-			Name     string `json:"name"`
-			Override string `json:"override"`
+			RPCURL   string          `json:"rpc_url"`
+			Name     string          `json:"name"`
+			Override string          `json:"override"`
+			Auth     json.RawMessage `json:"auth"` // optional; raw passthrough to types.Auth
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
@@ -554,6 +556,17 @@ func newHandleNetworkAttach(stateDir string) Handler {
 				Provider: types.NodeProvider("remote"),
 				Http:     req.RPCURL,
 			}},
+		}
+		// Optional auth config. The raw JSON is decoded into types.Auth (a loose
+		// map[string]interface{}) and attached to Node.Auth. Only the env-var
+		// NAME is persisted; the actual credential stays in env vars and is
+		// resolved at dial time via remote.AuthFromNode.
+		if len(req.Auth) > 0 {
+			var auth types.Auth
+			if err := json.Unmarshal(req.Auth, &auth); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.auth: %v", err))
+			}
+			net.Nodes[0].Auth = auth
 		}
 		if err := state.SaveRemote(stateDir, net); err != nil {
 			// The handler pre-checks reserved and invalid names, so the sentinel
@@ -609,7 +622,19 @@ func newHandleNodeBlockNumber(stateDir string) Handler {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		client, err := remote.Dial(ctx, node.Http)
+		// If Auth is configured on the node, resolve it to an http.RoundTripper
+		// via the injected env lookup. AuthFromNode returns (nil, nil) for
+		// unauthenticated nodes; DialWithOptions with a nil Transport is
+		// behaviorally identical to the bare Dial path.
+		var rt http.RoundTripper
+		if len(node.Auth) > 0 {
+			got, aerr := remote.AuthFromNode(&node, os.Getenv)
+			if aerr != nil {
+				return nil, NewUpstream("auth setup", aerr)
+			}
+			rt = got
+		}
+		client, err := remote.DialWithOptions(ctx, node.Http, remote.DialOptions{Transport: rt})
 		if err != nil {
 			return nil, NewUpstream(fmt.Sprintf("dial %s", node.Http), err)
 		}

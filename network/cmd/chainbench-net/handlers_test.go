@@ -1054,6 +1054,100 @@ func TestHandleNodeBlockNumber_UnknownNode(t *testing.T) {
 	}
 }
 
+// TestHandleNetworkAttach_WithAuth verifies attach accepts an "auth" arg,
+// persists it onto Node.Auth, and the state file records only the env-var
+// name — never the env-var value. Test sets MY_KEY=supersecret in the
+// environment so an accidental value leak would be visible.
+func TestHandleNetworkAttach_WithAuth(t *testing.T) {
+	rpcSrv := newStablenetMockRPC(t)
+	defer rpcSrv.Close()
+
+	// Set the env var with a distinctive value so any accidental value leak
+	// into the state file is detectable via substring search.
+	t.Setenv("MY_KEY", "supersecret-value")
+
+	stateDir := t.TempDir()
+	h := newHandleNetworkAttach(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"rpc_url": rpcSrv.URL,
+		"name":    "protected",
+		"auth": map[string]any{
+			"type":   "api-key",
+			"header": "X-Api-Key",
+			"env":    "MY_KEY",
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("attach: %v", err)
+	}
+	raw, err := os.ReadFile(filepath.Join(stateDir, "networks", "protected.json"))
+	if err != nil {
+		t.Fatalf("state file: %v", err)
+	}
+	s := string(raw)
+	// Env NAME must be present (either indentation style).
+	if !strings.Contains(s, `"env": "MY_KEY"`) && !strings.Contains(s, `"env":"MY_KEY"`) {
+		t.Errorf("auth.env not persisted: %s", s)
+	}
+	// Env VALUE must NOT appear anywhere in the file.
+	if strings.Contains(s, "supersecret-value") {
+		t.Errorf("state file leaked env-var value: %s", s)
+	}
+}
+
+// TestHandleNodeBlockNumber_UsesAuth pre-saves a remote network with an
+// api-key auth block, sets the env var, and verifies the handler injects
+// the configured header on the outbound eth_blockNumber call.
+func TestHandleNodeBlockNumber_UsesAuth(t *testing.T) {
+	var gotKey string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotKey = r.Header.Get("X-Api-Key")
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_blockNumber" {
+			_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"result":"0x7"}`))
+			return
+		}
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":` + string(req.ID) + `,"error":{"code":-32601,"message":"nf"}}`))
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	net := &types.Network{
+		Name: "protected", ChainType: "ethereum", ChainId: 1,
+		Nodes: []types.Node{{
+			Id:       "node1",
+			Provider: "remote",
+			Http:     srv.URL,
+			Auth:     types.Auth{"type": "api-key", "header": "X-Api-Key", "env": "TEST_AUTH_KEY"},
+		}},
+	}
+	if err := state.SaveRemote(stateDir, net); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("TEST_AUTH_KEY", "mysecret")
+
+	h := newHandleNodeBlockNumber(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "protected", "node_id": "node1"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if gotKey != "mysecret" {
+		t.Errorf("server saw X-Api-Key=%q, want %q", gotKey, "mysecret")
+	}
+}
+
 // Local-only handler guard: node.stop with network:"remote" → NOT_SUPPORTED.
 func TestHandleNodeStop_RejectsNonLocalNetwork(t *testing.T) {
 	stateDir, chainbenchDir := setupCmdStubDir(t)
