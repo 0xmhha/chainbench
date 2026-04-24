@@ -128,56 +128,44 @@ func resolveNodeID(stateDir string, args json.RawMessage) (string, string, error
 	return resolveNodeIDFromString(stateDir, req.NodeID)
 }
 
-// resolveNode resolves (networkName, nodeID) to the network + node pair.
-// networkName=="" defaults to "local". Non-local names pattern-checked at the
-// boundary (handler cost; state layer re-validates). Returns APIError sentinels:
+// resolveNode resolves (networkName, nodeID) to the resolved (canonical) name
+// and a copy of the node record. networkName=="" defaults to "local"; non-local
+// names are pattern-checked at the handler boundary. Returns APIError sentinels:
 //
 //	INVALID_ARGS   — empty/malformed node_id, bad network name pattern, or
 //	                 node not in resolved network
 //	UPSTREAM_ERROR — state.LoadActive failure (missing pids.json or
 //	                 networks/<name>.json)
 //
-// Distinct from resolveNodeID/resolveNodeIDFromString which are local-only and
-// enforce the "node<N>" numeric suffix convention for chainbench.sh arg shape.
-// This helper is network-name-aware and accepts any node id the Network has
-// (remote networks currently emit "node1" but the helper is agnostic).
-func resolveNode(stateDir, networkName, nodeID string) (*types.Network, *types.Node, error) {
+// The node is returned by value (Node is ~80 bytes) so callers do not alias
+// the state-layer's slice backing array. Distinct from resolveNodeID, which
+// is local-only and enforces the "node<N>" numeric-suffix convention for
+// chainbench.sh arg shape. This helper is network-aware and node-id agnostic.
+func resolveNode(stateDir, networkName, nodeID string) (string, types.Node, error) {
+	var zero types.Node
 	if nodeID == "" {
-		return nil, nil, NewInvalidArgs("args.node_id is required")
+		return "", zero, NewInvalidArgs("args.node_id is required")
 	}
 	if networkName == "" {
 		networkName = "local"
 	}
 	if networkName != "local" && !state.IsValidRemoteName(networkName) {
-		return nil, nil, NewInvalidArgs(fmt.Sprintf(
+		return "", zero, NewInvalidArgs(fmt.Sprintf(
 			"args.network must be 'local' or match [a-z0-9][a-z0-9_-]*: %q", networkName,
 		))
 	}
 	net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: networkName})
 	if err != nil {
-		return nil, nil, NewUpstream("failed to load network state", err)
+		return "", zero, NewUpstream("failed to load network state", err)
 	}
-	for i := range net.Nodes {
-		if net.Nodes[i].Id == nodeID {
-			return net, &net.Nodes[i], nil
+	for _, n := range net.Nodes {
+		if n.Id == nodeID {
+			return net.Name, n, nil
 		}
 	}
-	return nil, nil, NewInvalidArgs(fmt.Sprintf(
+	return "", zero, NewInvalidArgs(fmt.Sprintf(
 		"node_id %q not found in network %q", nodeID, networkName,
 	))
-}
-
-// resolveNodeToName wraps resolveNode returning (networkName, node, err).
-// Handler needs the resolved name string (post-default) for its result.
-func resolveNodeToName(stateDir, networkName, nodeID string) (string, *types.Node, error) {
-	if networkName == "" {
-		networkName = "local"
-	}
-	net, node, err := resolveNode(stateDir, networkName, nodeID)
-	if err != nil {
-		return "", nil, err
-	}
-	return net.Name, node, nil
 }
 
 // newHandleNodeStop returns a Handler that stops a node by id via LocalDriver.
@@ -615,7 +603,7 @@ func newHandleNodeBlockNumber(stateDir string) Handler {
 				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
 			}
 		}
-		networkName, node, err := resolveNodeToName(stateDir, req.Network, req.NodeID)
+		networkName, node, err := resolveNode(stateDir, req.Network, req.NodeID)
 		if err != nil {
 			return nil, err
 		}

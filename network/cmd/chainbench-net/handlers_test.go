@@ -1066,3 +1066,30 @@ func TestHandleNodeStop_RejectsNonLocalNetwork(t *testing.T) {
 		t.Errorf("want NOT_SUPPORTED, got %v", err)
 	}
 }
+
+// TestLocalOnlyHandlers_RejectNonLocalNetwork covers the NOT_SUPPORTED guard
+// on every local-only lifecycle handler. Prevents a future refactor from
+// breaking one handler silently while the others stay green.
+func TestLocalOnlyHandlers_RejectNonLocalNetwork(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	bus, _ := newTestBus(t)
+
+	cases := []struct {
+		name    string
+		handler Handler
+	}{
+		{"node.start", newHandleNodeStart(stateDir, chainbenchDir)},
+		{"node.restart", newHandleNodeRestart(stateDir, chainbenchDir)},
+		{"node.tail_log", newHandleNodeTailLog(stateDir)},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			args, _ := json.Marshal(map[string]any{"network": "remote-foo", "node_id": "node1"})
+			_, err := tc.handler(args, bus)
+			var api *APIError
+			if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+				t.Errorf("want NOT_SUPPORTED, got %v", err)
+			}
+		})
+	}
+}
