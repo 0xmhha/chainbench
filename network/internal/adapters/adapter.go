@@ -10,8 +10,9 @@
 //   - ConsensusRpcNamespace
 //
 // Bash adapters under lib/adapters/ remain the active `chainbench init`
-// execution path — this package is additive and grows into a drop-in
-// replacement over Sprint 3c.
+// execution path. This package is additive — a future sprint will wire it
+// into a chainbench-net init/bootstrap handler. Drop-in replacement of the
+// bash flow is explicitly out of scope for Sprint 3c.
 package adapters
 
 import (

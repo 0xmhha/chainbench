@@ -1,9 +1,10 @@
 // Package stablenet is the adapter for the stablenet chain type.
 //
 // ExtraStartFlags + ConsensusRpcNamespace mirror the bash adapter
-// (lib/adapters/stablenet.sh) byte-for-byte. GenerateGenesis ports the
-// Python genesis builder from the same file. GenerateToml is still a
-// stub and will be filled in by a follow-up task in sprint 3c.
+// (lib/adapters/stablenet.sh) byte-for-byte. GenerateGenesis and
+// GenerateToml port the Python genesis + per-node TOML builders
+// from the same file. Semantic equivalence is locked via golden-file
+// contract tests under testdata/golden/.
 package stablenet
 
 import (
