@@ -139,3 +139,42 @@ func TestSigner_SignTx_Roundtrip(t *testing.T) {
 		t.Errorf("recovered sender %s != signer.Address() %s", sender.Hex(), s.Address().Hex())
 	}
 }
+
+// TestLoad_InvalidKey_DoesNotLeakValueFromUnderlyingError probes the case
+// where a valid-length but cryptographically invalid hex string is supplied.
+// go-ethereum's HexToECDSA constructs an error string that in some paths
+// reveals bytes of the input — our Load must wrap and discard that, so the
+// value never appears in err.Error(). Regression guard against a well-meaning
+// "better error messages" refactor.
+func TestLoad_InvalidKey_DoesNotLeakValueFromUnderlyingError(t *testing.T) {
+	// 64 hex chars but not a valid secp256k1 scalar (all ffs is > curve order).
+	badHex := "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+	withSignerEnv(t, "leaky", "0x"+badHex)
+	_, err := signer.Load("leaky")
+	if !errors.Is(err, signer.ErrInvalidKey) {
+		t.Fatalf("err = %v, want ErrInvalidKey", err)
+	}
+	if strings.Contains(err.Error(), badHex) {
+		t.Errorf("err leaks full bad hex: %v", err)
+	}
+	// Also assert a reasonably long substring of the bad value is absent —
+	// catches any partial leak (e.g., "first N chars" formatting).
+	if strings.Contains(err.Error(), badHex[:32]) {
+		t.Errorf("err leaks substring of bad hex: %v", err)
+	}
+}
+
+// TestLoad_RejectsLeadingHyphenAlias locks the tighter POSIX-identifier
+// regex. Aliases with a leading hyphen would produce env var names like
+// CHAINBENCH_SIGNER_-ALICE_KEY that most deployment tooling (docker -e,
+// systemd EnvironmentFile, k8s ConfigMap) silently drops.
+func TestLoad_RejectsLeadingHyphenAlias(t *testing.T) {
+	for _, name := range []string{"-alice", "-", "--", "1alice", "_alice"} {
+		t.Run(name, func(t *testing.T) {
+			_, err := signer.Load(signer.Alias(name))
+			if !errors.Is(err, signer.ErrInvalidAlias) {
+				t.Errorf("alias %q: err = %v, want ErrInvalidAlias", name, err)
+			}
+		})
+	}
+}

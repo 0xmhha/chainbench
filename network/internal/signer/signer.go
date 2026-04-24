@@ -42,11 +42,16 @@ type Signer interface {
 // alias and env var name only — never the raw key value.
 var (
 	ErrUnknownAlias = errors.New("signer: unknown alias")
-	ErrInvalidAlias = errors.New("signer: alias must be [A-Za-z0-9_-]+")
+	ErrInvalidAlias = errors.New("signer: alias must match [A-Za-z][A-Za-z0-9_]*")
 	ErrInvalidKey   = errors.New("signer: key material is not a valid hex private key")
 )
 
-var aliasRE = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+// aliasRE: POSIX-identifier-compatible so the resulting env var name (e.g.
+// CHAINBENCH_SIGNER_ALICE_KEY) is accepted by common tooling (shells, docker
+// -e, systemd EnvironmentFile, k8s ConfigMap). ASCII-only by RE2 construction;
+// strings.ToUpper below is safe because the regex filters Unicode out before
+// upper-casing.
+var aliasRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]*$`)
 
 // sealed holds the private key material. Field is unexported; no method
 // returns the key bytes. LogValue / String / GoString redact for any
