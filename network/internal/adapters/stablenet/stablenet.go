@@ -156,12 +156,80 @@ func (*Adapter) GenerateGenesis(_ context.Context, in spec.GenesisInput) error {
 	return nil
 }
 
-// GenerateToml will port lib/adapters/stablenet.sh's per-node TOML emitter;
-// for now it returns spec.ErrNotImplemented.
-//
-// TODO(sprint-3c/task-3): implement.
-func (*Adapter) GenerateToml(_ context.Context, _ spec.TomlInput) error {
-	return spec.ErrNotImplemented
+// GenerateToml ports lib/adapters/stablenet.sh's per-node TOML emitter. For
+// each of the first in.TotalNodes metadata entries it builds a shared static-
+// nodes block (enodes with monotonic p2p ports), then renders a per-node
+// config_node<N>.toml into in.WriteDir with sequential port offsets, a
+// validator-only miner section, and per-node keystore + ethstats strings.
+func (*Adapter) GenerateToml(_ context.Context, in spec.TomlInput) error {
+	if len(in.TemplateBytes) == 0 {
+		return fmt.Errorf("stablenet.GenerateToml: template bytes required")
+	}
+	if in.TotalNodes <= 0 {
+		return fmt.Errorf("stablenet.GenerateToml: TotalNodes must be > 0")
+	}
+	if in.WriteDir == "" {
+		return fmt.Errorf("stablenet.GenerateToml: WriteDir required")
+	}
+
+	nodes, err := metadataNodes(in.Metadata)
+	if err != nil {
+		return err
+	}
+	if in.TotalNodes > len(nodes) {
+		return fmt.Errorf("stablenet.GenerateToml: TotalNodes=%d exceeds metadata.nodes (%d)",
+			in.TotalNodes, len(nodes))
+	}
+	active := nodes[:in.TotalNodes]
+
+	// Shared static-nodes block: every node embeds the same enode list.
+	staticEntries := make([]string, len(active))
+	for i, n := range active {
+		idx := getInt(n, "index", int64(i+1))
+		port := int64(in.BaseP2P) + idx - 1
+		enode := fmt.Sprintf("enode://%s@127.0.0.1:%d?discport=0", getString(n, "publicKey", ""), port)
+		staticEntries[i] = fmt.Sprintf("    %q", enode)
+	}
+	discoverySection := "NoDiscovery = true\nStaticNodes = [\n" + strings.Join(staticEntries, ",\n") + "\n]"
+
+	if err := os.MkdirAll(in.WriteDir, 0o755); err != nil {
+		return fmt.Errorf("stablenet.GenerateToml: mkdir: %w", err)
+	}
+
+	template := string(in.TemplateBytes)
+	for i := 1; i <= in.TotalNodes; i++ {
+		offset := i - 1
+		minerSection := ""
+		if i <= in.NumValidators {
+			minerSection = "[Eth.Miner]\nRecommit = \"2s\""
+		}
+		keystoreDir := filepath.Join(in.WriteDir, "keystores", fmt.Sprintf("node%d", i))
+		ethstatsURL := fmt.Sprintf("node%d:local@localhost:3000", i)
+
+		result := template
+		for _, r := range []struct{ k, v string }{
+			{"__SYNC_MODE__", "full"},
+			{"__MINER_SECTION__", minerSection},
+			{"__KEYSTORE_DIR__", keystoreDir},
+			{"__AUTH_PORT__", fmt.Sprintf("%d", in.BaseAuth+offset)},
+			{"__HTTP_HOST__", "0.0.0.0"},
+			{"__HTTP_PORT__", fmt.Sprintf("%d", in.BaseHTTP+offset)},
+			{"__P2P_PORT__", fmt.Sprintf("%d", in.BaseP2P+offset)},
+			{"__DISCOVERY_SECTION__", discoverySection},
+			{"__ETHSTATS_URL__", ethstatsURL},
+			{"__METRICS_ENABLED__", "true"},
+			{"__METRICS_HTTP__", "127.0.0.1"},
+			{"__METRICS_PORT__", fmt.Sprintf("%d", in.BaseMetrics+offset)},
+		} {
+			result = strings.ReplaceAll(result, r.k, r.v)
+		}
+
+		outPath := filepath.Join(in.WriteDir, fmt.Sprintf("config_node%d.toml", i))
+		if err := os.WriteFile(outPath, []byte(result), 0o644); err != nil {
+			return fmt.Errorf("stablenet.GenerateToml: write %s: %w", outPath, err)
+		}
+	}
+	return nil
 }
 
 // ExtraStartFlags returns the CLI flags appended to the stablenet client
