@@ -643,3 +643,144 @@ func TestE2E_NodeBlockNumber_AgainstAttachedRemote(t *testing.T) {
 		t.Errorf("block_number = %v, want 42", bn)
 	}
 }
+
+// TestE2E_NodeBlockNumber_WithAuth drives cobra twice in-process: first attach
+// a mock RPC as "auth-e2e" with an api-key auth block pointing at env var
+// AUTH_E2E_KEY, then issue node.block_number against the attached network. The
+// mock RPC fails (401-shaped JSON-RPC error) on eth_blockNumber when the
+// X-Api-Key header is missing, so a regression where auth is not actually wired
+// into the dial path would surface as an UPSTREAM error rather than a false
+// pass. Asserts that (a) the handler result is ok, (b) block_number matches
+// the mock's 0x99 (=153), and (c) the mock observed the exact configured
+// header value.
+func TestE2E_NodeBlockNumber_WithAuth(t *testing.T) {
+	var gotAuth string
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		key := r.Header.Get("X-Api-Key")
+		// The attach probe (eth_chainId / istanbul_getValidators /
+		// wemix_getReward) runs before Node.Auth is persisted and takes an
+		// unauthenticated path by design — let those through unconditionally.
+		// The post-attach node.block_number call is the one that exercises
+		// auth, so we fail loudly there if the header is missing to guard
+		// against a silent regression in auth wiring.
+		switch req.Method {
+		case "eth_chainId":
+			_, _ = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "istanbul_getValidators", "wemix_getReward":
+			_, _ = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		case "eth_blockNumber":
+			if key == "" {
+				_, _ = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32001,"message":"missing X-Api-Key header"}}`, req.ID)
+				return
+			}
+			gotAuth = key
+			_, _ = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x99"}`, req.ID)
+		default:
+			_, _ = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("AUTH_E2E_KEY", "e2e-secret")
+
+	// First drive: attach the mock under "auth-e2e" with api-key auth. The
+	// handler persists only the env var NAME, not the resolved value.
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(
+		`{"command":"network.attach","args":{"rpc_url":%q,"name":"auth-e2e","auth":{"type":"api-key","header":"X-Api-Key","env":"AUTH_E2E_KEY"}}}`,
+		rpcSrv.URL,
+	)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Verify the state file persisted the env var NAME but NOT the value.
+	stateFile := filepath.Join(stateDir, "networks", "auth-e2e.json")
+	raw, err := os.ReadFile(stateFile)
+	if err != nil {
+		t.Fatalf("read state file: %v", err)
+	}
+	if !strings.Contains(string(raw), "AUTH_E2E_KEY") {
+		t.Errorf("state file missing env var name: %s", raw)
+	}
+	if strings.Contains(string(raw), "e2e-secret") {
+		t.Errorf("state file leaked secret value: %s", raw)
+	}
+
+	// Second drive: node.block_number against the attached network.
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	bnCmd := `{"command":"node.block_number","args":{"network":"auth-e2e","node_id":"node1"}}`
+	root2.SetIn(strings.NewReader(bnCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("block_number: %v\nstderr: %s", err, stderr.String())
+	}
+
+	// Scan NDJSON output; validate each line and find the result terminator.
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+
+	var res struct {
+		Type string         `json:"type"`
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	if got, want := res.Data["network"], "auth-e2e"; got != want {
+		t.Errorf("network = %v, want %q", got, want)
+	}
+	if got, want := res.Data["node_id"], "node1"; got != want {
+		t.Errorf("node_id = %v, want %q", got, want)
+	}
+	bn, ok := res.Data["block_number"].(float64)
+	if !ok {
+		t.Fatalf("block_number is not a number: %T %v", res.Data["block_number"], res.Data["block_number"])
+	}
+	if bn != 153 {
+		t.Errorf("block_number = %v, want 153 (0x99)", bn)
+	}
+	// The mock only records the header on eth_blockNumber specifically; this
+	// proves the auth RoundTripper was injected into the dial path the
+	// handler takes, not just the attach probe.
+	if gotAuth != "e2e-secret" {
+		t.Errorf("mock did not see configured header on eth_blockNumber: got %q, want %q", gotAuth, "e2e-secret")
+	}
+}
