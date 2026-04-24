@@ -740,6 +740,7 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [x] Remote RPC 인증 (API key / JWT via `http.RoundTripper`) + `network.attach` 의 `auth` arg + `node.block_number` 자동 사용 — Sprint 3b.2b 완료 (2026-04-24); SSH auth / mTLS / JWT 갱신은 후속
 - [x] Remote 읽기 커맨드 확장 (`node.chain_id`, `node.balance`, `node.gas_price`) + `dialNode` helper + attach auth 검증 (INVALID_ARGS fail-fast) + M4 완전 흡수 — Sprint 3b.2c 완료 (2026-04-24); `tx.send` 는 Sprint 4 (signer)
 - [x] `adapters/stablenet` Go 포팅 (genesis + TOML) + `adapters/wbft` / `adapters/wemix` 스켈레톤 + `Adapter` 인터페이스 + `Load` 팩토리 + 골든 파일 계약 테스트 — Sprint 3c 완료 (2026-04-24); wbft / wemix 실구현 + `network.init` wire handler 는 후속
+- [x] `network/internal/signer` (env-only, key redaction boundary) + `node.tx_send` + Go/bash 보안 경계 테스트 + `docs/SECURITY_KEY_HANDLING.md` — Sprint 4 완료 (2026-04-24); keystore provider + EIP-1559 + tx.wait 는 Sprint 4b
 - [x] `probe` 패키지 + `network probe <url>` 커맨드 (S7 자동+수동) — Sprint 3a 완료 (2026-04-23)
 - [x] `network.attach` + remote 상태 저장 (`state/networks/<name>.json`) + `network.load` 원격 이름 라우팅 — Sprint 3b 완료 (2026-04-24)
 - [ ] `adapters/stablenet` Go 포팅 — 기존 `adapter-contract-stablenet.sh` 계약 테스트 통과
