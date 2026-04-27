@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/state"
 	"github.com/0xmhha/chainbench/network/internal/types"
@@ -2013,5 +2015,407 @@ func TestAllHandlers_IncludesTxWait(t *testing.T) {
 	h := allHandlers("x", "y")
 	if _, ok := h["node.tx_wait"]; !ok {
 		t.Error("allHandlers missing node.tx_wait")
+	}
+}
+
+// ---- node.tx_send authorization_list (EIP-7702) tests ----
+
+// keyHexA / keyHexB are deterministic synthetic keys for SetCode tests.
+// keyHexA is the existing sender key reused across Sprint 4/4b tests; keyHexB
+// is a distinct key so sender + authorizer have different recovered addresses.
+// Neither is associated with real funds.
+const keyHexA = "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"
+const keyHexB = "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+const keyHexC = "5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cde8b0c1"
+
+// newSetCodeMock mirrors newDynamicFee mock shape: replies eth_chainId 0x1,
+// captures raw param[0] of eth_sendRawTransaction into *sentRaw, returns a
+// canned tx hash. Other methods return -32601 not-found.
+func newSetCodeMock(t *testing.T, sentRaw *string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if sentRaw != nil && len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1111111111111111111111111111111111111111111111111111111111111111"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+func TestHandleNodeTxSend_SetCode_Happy_SingleAuth(t *testing.T) {
+	var sentRaw string
+	srv := newSetCodeMock(t, &sentRaw)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEY", "0x"+keyHexB)
+
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"value":                    "0x0",
+		"gas":                      100000,
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if sentRaw == "" {
+		t.Fatal("mock did not see eth_sendRawTransaction")
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 4 {
+		t.Errorf("tx type = %d, want 4 (SetCode)", got)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_Happy_MultiAuth(t *testing.T) {
+	var sentRaw string
+	srv := newSetCodeMock(t, &sentRaw)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEY", "0x"+keyHexB)
+	t.Setenv("CHAINBENCH_SIGNER_CAROL_KEY", "0x"+keyHexC)
+
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"value":                    "0x0",
+		"gas":                      150000,
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000cafe", "nonce": "0x1", "signer": "carol"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 4 {
+		t.Errorf("tx type = %d, want 4 (SetCode)", got)
+	}
+	// Decode the broadcast bytes and verify both authorizations carry non-zero
+	// V/R/S signatures (signed by distinct authorizers).
+	rawBytes, err := hex.DecodeString(strings.TrimPrefix(sentRaw, "0x"))
+	if err != nil {
+		t.Fatalf("decode raw: %v", err)
+	}
+	var tx ethtypes.Transaction
+	if err := tx.UnmarshalBinary(rawBytes); err != nil {
+		t.Fatalf("unmarshal binary: %v", err)
+	}
+	auths := tx.SetCodeAuthorizations()
+	if len(auths) != 2 {
+		t.Fatalf("auth count = %d, want 2", len(auths))
+	}
+	for i, a := range auths {
+		if a.R.IsZero() || a.S.IsZero() {
+			t.Errorf("auth[%d] signature R/S is zero", i)
+		}
+	}
+}
+
+func TestHandleNodeTxSend_AuthorizationListWithLegacy(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":   "tn",
+		"node_id":   "node1",
+		"signer":    "alice",
+		"to":        "0x0000000000000000000000000000000000000002",
+		"gas_price": "0x1",
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_AuthorizationListWithoutTip(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":         "tn",
+		"node_id":         "node1",
+		"signer":          "alice",
+		"to":              "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas": "0x59682f00",
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_AuthorizationListEmptyIsDynamicFee(t *testing.T) {
+	var sentRaw string
+	srv := newSetCodeMock(t, &sentRaw)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"value":                    "0x0",
+		"gas":                      21000,
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    0,
+		"authorization_list":       []map[string]any{},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 2 {
+		t.Errorf("tx type = %d, want 2 (DynamicFee, not SetCode)", got)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_AuthSignerUnknown(t *testing.T) {
+	srv := newSetCodeMock(t, nil)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	os.Unsetenv("CHAINBENCH_SIGNER_GHOST_KEY")
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "ghost"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_BadAuthAddress(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "not-a-hex", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_BadAuthChainID(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "zzz", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_BadAuthNonce(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "qqq", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_MissingAuthSigner(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_MissingAuthAddress(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_MissingAuthChainID(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_SetCode_MissingAuthNonce(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
 	}
 }

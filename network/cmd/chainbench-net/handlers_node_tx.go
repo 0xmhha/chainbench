@@ -13,48 +13,67 @@ import (
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/holiman/uint256"
 
 	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/signer"
 )
 
+// authEntry mirrors a single element of node.tx_send args.authorization_list.
+// Each tuple references a separate signer alias so that EIP-7702
+// authorizations can compose across distinct keys without sharing state.
+type authEntry struct {
+	ChainID string `json:"chain_id"`
+	Address string `json:"address"`
+	Nonce   string `json:"nonce"`
+	Signer  string `json:"signer"`
+}
+
 // newHandleNodeTxSend signs + broadcasts a transaction against the resolved
 // node. Fee mode is selected from args: gas_price → legacy (type 0);
-// max_fee_per_gas + max_priority_fee_per_gas → EIP-1559 (type 2). Mixed or
-// partial 1559 args are rejected as INVALID_ARGS. Missing nonce / gas /
+// max_fee_per_gas + max_priority_fee_per_gas → EIP-1559 (type 2);
+// authorization_list (non-empty) plus 1559 fields → EIP-7702 SetCode (type 4).
+// Mixed or partial 1559 args, and authorization_list combined with legacy or
+// partial 1559, are rejected as INVALID_ARGS. Missing nonce / gas /
 // gas_price (legacy only) are auto-filled via the remote.Client. Signer alias
-// is resolved per-request via signer.Load.
+// is resolved per-request via signer.Load. SetCode authorizations resolve a
+// distinct signer alias per entry and sign the EIP-7702 SigHash via SignHash.
 //
 // Args: {network?, node_id, signer, to, value?, data?, gas?,
 //
-//	gas_price?, max_fee_per_gas?, max_priority_fee_per_gas?, nonce?}
+//	gas_price?, max_fee_per_gas?, max_priority_fee_per_gas?, nonce?,
+//	authorization_list?: [{chain_id, address, nonce, signer}]}
 //
 // Result: {tx_hash: "0x..."}
 //
-// Error mapping (spec §11 + §3.1):
+// Error mapping (spec §11 + §3.1 + §9.2):
 //
 //	INVALID_ARGS   — malformed args, missing signer / to, bad to / value / data /
 //	                 gas_price / max_fee / max_priority_fee hex, mixed legacy + 1559
 //	                 fee fields, partial 1559 fee fields, signer.ErrInvalidAlias,
-//	                 signer.ErrUnknownAlias
+//	                 signer.ErrUnknownAlias, authorization_list combined with legacy
+//	                 or partial 1559 fields, missing / malformed authorization entry
+//	                 fields, unknown authorization signer alias
 //	UPSTREAM_ERROR — signer.ErrInvalidKey (config failure), dial failure, chainID /
 //	                 nonce / gas / gas_price fetch failure, SendTransaction failure
-//	INTERNAL       — SignTx failure (invariant breach — inputs validated earlier)
+//	INTERNAL       — SignTx failure (invariant breach — inputs validated earlier),
+//	                 authorization SignHash failure
 func newHandleNodeTxSend(stateDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			Network              string  `json:"network"`
-			NodeID               string  `json:"node_id"`
-			Signer               string  `json:"signer"`
-			To                   string  `json:"to"`
-			Value                string  `json:"value"`
-			Data                 string  `json:"data"`
-			Gas                  *uint64 `json:"gas"`
-			GasPrice             string  `json:"gas_price"`
-			MaxFeePerGas         string  `json:"max_fee_per_gas"`
-			MaxPriorityFeePerGas string  `json:"max_priority_fee_per_gas"`
-			Nonce                *uint64 `json:"nonce"`
+			Network              string      `json:"network"`
+			NodeID               string      `json:"node_id"`
+			Signer               string      `json:"signer"`
+			To                   string      `json:"to"`
+			Value                string      `json:"value"`
+			Data                 string      `json:"data"`
+			Gas                  *uint64     `json:"gas"`
+			GasPrice             string      `json:"gas_price"`
+			MaxFeePerGas         string      `json:"max_fee_per_gas"`
+			MaxPriorityFeePerGas string      `json:"max_priority_fee_per_gas"`
+			Nonce                *uint64     `json:"nonce"`
+			AuthorizationList    []authEntry `json:"authorization_list"`
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
@@ -120,6 +139,20 @@ func newHandleNodeTxSend(stateDir string) Handler {
 			}
 		}
 
+		// SetCode (EIP-7702) selector: presence of a non-empty
+		// authorization_list upgrades the fee mode from 2-way to 3-way. An
+		// empty slice ([]) intentionally falls through to the DynamicFee
+		// path so callers cannot accidentally upgrade by sending an empty
+		// list. SetCode requires both 1559 fields — mixing with gas_price
+		// or omitting either tip field is rejected at the boundary.
+		useSetCode := false
+		if len(req.AuthorizationList) > 0 {
+			if !useDynamicFee {
+				return nil, NewInvalidArgs("authorization_list requires both max_fee_per_gas and max_priority_fee_per_gas")
+			}
+			useSetCode = true
+		}
+
 		// Signer resolution per-request. InvalidAlias / UnknownAlias are
 		// structural input issues (INVALID_ARGS); InvalidKey is a config failure
 		// of the operator-supplied env var (UPSTREAM_ERROR per spec §11).
@@ -160,7 +193,24 @@ func newHandleNodeTxSend(stateDir string) Handler {
 		}
 
 		var unsigned *ethtypes.Transaction
-		if useDynamicFee {
+		switch {
+		case useSetCode:
+			auths, aerr := buildAuthorizations(ctx, req.AuthorizationList)
+			if aerr != nil {
+				return nil, aerr
+			}
+			unsigned = ethtypes.NewTx(&ethtypes.SetCodeTx{
+				ChainID:   uint256.MustFromBig(chainID),
+				Nonce:     nonce,
+				GasTipCap: uint256.MustFromBig(maxPriorityFee),
+				GasFeeCap: uint256.MustFromBig(maxFee),
+				Gas:       gas,
+				To:        to,
+				Value:     uint256.MustFromBig(value),
+				Data:      data,
+				AuthList:  auths,
+			})
+		case useDynamicFee:
 			unsigned = ethtypes.NewTx(&ethtypes.DynamicFeeTx{
 				ChainID:   chainID,
 				Nonce:     nonce,
@@ -171,7 +221,7 @@ func newHandleNodeTxSend(stateDir string) Handler {
 				Value:     value,
 				Data:      data,
 			})
-		} else {
+		default:
 			gasPrice, err := resolveGasPrice(ctx, client, req.GasPrice)
 			if err != nil {
 				return nil, err
@@ -194,6 +244,56 @@ func newHandleNodeTxSend(stateDir string) Handler {
 		}
 		return map[string]any{"tx_hash": signed.Hash().Hex()}, nil
 	}
+}
+
+// buildAuthorizations resolves and signs each EIP-7702 authorization tuple.
+// Validation order is required-fields → address shape → chain_id hex → nonce
+// hex → signer.Load → SignHash → V/R/S decompose so that structural input
+// errors surface as INVALID_ARGS before any signing call. Each entry's signer
+// alias is independent — distinct aliases produce distinct signatures, and
+// signer state never crosses entries.
+func buildAuthorizations(ctx context.Context, entries []authEntry) ([]ethtypes.SetCodeAuthorization, error) {
+	out := make([]ethtypes.SetCodeAuthorization, 0, len(entries))
+	for i, e := range entries {
+		if e.Signer == "" || e.Address == "" || e.ChainID == "" || e.Nonce == "" {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.authorization_list[%d]: chain_id/address/nonce/signer are all required", i))
+		}
+		if !common.IsHexAddress(e.Address) {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.authorization_list[%d].address invalid: %q", i, e.Address))
+		}
+		cid, ok := new(big.Int).SetString(strings.TrimPrefix(e.ChainID, "0x"), 16)
+		if !ok {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.authorization_list[%d].chain_id invalid: %q", i, e.ChainID))
+		}
+		nonce, ok := new(big.Int).SetString(strings.TrimPrefix(e.Nonce, "0x"), 16)
+		if !ok {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.authorization_list[%d].nonce invalid: %q", i, e.Nonce))
+		}
+		s, serr := signer.Load(signer.Alias(e.Signer))
+		if serr != nil {
+			if errors.Is(serr, signer.ErrInvalidAlias) || errors.Is(serr, signer.ErrUnknownAlias) {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.authorization_list[%d].signer: %v", i, serr))
+			}
+			return nil, NewUpstream(fmt.Sprintf("authorization_list[%d] signer load", i), serr)
+		}
+		auth := ethtypes.SetCodeAuthorization{
+			ChainID: *uint256.MustFromBig(cid),
+			Address: common.HexToAddress(e.Address),
+			Nonce:   nonce.Uint64(),
+		}
+		sig, sigErr := s.SignHash(ctx, auth.SigHash())
+		if sigErr != nil {
+			return nil, NewInternal(fmt.Sprintf("sign authorization[%d]", i), sigErr)
+		}
+		if len(sig) != 65 {
+			return nil, NewInternal(fmt.Sprintf("authorization[%d] signature wrong length", i), nil)
+		}
+		auth.R = *uint256.NewInt(0).SetBytes(sig[0:32])
+		auth.S = *uint256.NewInt(0).SetBytes(sig[32:64])
+		auth.V = sig[64]
+		out = append(out, auth)
+	}
+	return out, nil
 }
 
 // resolveNonce returns explicit when provided; otherwise fetches the next
