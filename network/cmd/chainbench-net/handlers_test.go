@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -1663,5 +1664,115 @@ func TestAllHandlers_IncludesTxSend(t *testing.T) {
 	h := allHandlers("x", "y")
 	if _, ok := h["node.tx_send"]; !ok {
 		t.Error("allHandlers missing node.tx_send")
+	}
+}
+
+// decodeBroadcastTxType pulls the first byte of the rlp-prefixed raw hex from
+// eth_sendRawTransaction params. Type-0 (legacy) does not have a leading
+// type byte; types 1+ do. We surface an int (0 for legacy) for assertions.
+func decodeBroadcastTxType(t *testing.T, rawHex string) int {
+	t.Helper()
+	raw := strings.TrimPrefix(rawHex, "0x")
+	if len(raw) < 2 {
+		t.Fatalf("raw too short: %q", rawHex)
+	}
+	var b [1]byte
+	if _, err := hex.Decode(b[:], []byte(raw[:2])); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	// Legacy txs are RLP-encoded lists starting with 0xc0..0xff.
+	if b[0] >= 0xc0 {
+		return 0
+	}
+	return int(b[0])
+}
+
+func TestHandleNodeTxSend_DynamicFee_Happy(t *testing.T) {
+	var sentRaw string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1111111111111111111111111111111111111111111111111111111111111111"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+
+	h := newHandleNodeTxSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"value":                    "0x0",
+		"gas":                      21000,
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if sentRaw == "" {
+		t.Fatal("mock did not see eth_sendRawTransaction")
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 2 {
+		t.Errorf("tx type = %d, want 2 (DynamicFee)", got)
+	}
+}
+
+func TestHandleNodeTxSend_MixedFeeFields(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":         "tn",
+		"node_id":         "node1",
+		"signer":          "alice",
+		"to":              "0x0000000000000000000000000000000000000002",
+		"gas_price":       "0x1",
+		"max_fee_per_gas": "0x2",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxSend_PartialDynamicFee(t *testing.T) {
+	h := newHandleNodeTxSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":         "tn",
+		"node_id":         "node1",
+		"signer":          "alice",
+		"to":              "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas": "0x2",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
 	}
 }

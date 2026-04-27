@@ -19,32 +19,42 @@ import (
 	"github.com/0xmhha/chainbench/network/internal/signer"
 )
 
-// newHandleNodeTxSend signs + broadcasts a legacy-format transaction against
-// the resolved node. Missing nonce / gas / gas_price are auto-filled via the
-// remote.Client. Signer alias is resolved per-request via signer.Load.
+// newHandleNodeTxSend signs + broadcasts a transaction against the resolved
+// node. Fee mode is selected from args: gas_price → legacy (type 0);
+// max_fee_per_gas + max_priority_fee_per_gas → EIP-1559 (type 2). Mixed or
+// partial 1559 args are rejected as INVALID_ARGS. Missing nonce / gas /
+// gas_price (legacy only) are auto-filled via the remote.Client. Signer alias
+// is resolved per-request via signer.Load.
 //
-// Args: {network?, node_id, signer, to, value?, data?, gas?, gas_price?, nonce?}
+// Args: {network?, node_id, signer, to, value?, data?, gas?,
+//
+//	gas_price?, max_fee_per_gas?, max_priority_fee_per_gas?, nonce?}
+//
 // Result: {tx_hash: "0x..."}
 //
 // Error mapping (spec §11 + §3.1):
 //
 //	INVALID_ARGS   — malformed args, missing signer / to, bad to / value / data /
-//	                 gas_price hex, signer.ErrInvalidAlias, signer.ErrUnknownAlias
+//	                 gas_price / max_fee / max_priority_fee hex, mixed legacy + 1559
+//	                 fee fields, partial 1559 fee fields, signer.ErrInvalidAlias,
+//	                 signer.ErrUnknownAlias
 //	UPSTREAM_ERROR — signer.ErrInvalidKey (config failure), dial failure, chainID /
 //	                 nonce / gas / gas_price fetch failure, SendTransaction failure
 //	INTERNAL       — SignTx failure (invariant breach — inputs validated earlier)
 func newHandleNodeTxSend(stateDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			Network  string  `json:"network"`
-			NodeID   string  `json:"node_id"`
-			Signer   string  `json:"signer"`
-			To       string  `json:"to"`
-			Value    string  `json:"value"`
-			Data     string  `json:"data"`
-			Gas      *uint64 `json:"gas"`
-			GasPrice string  `json:"gas_price"`
-			Nonce    *uint64 `json:"nonce"`
+			Network              string  `json:"network"`
+			NodeID               string  `json:"node_id"`
+			Signer               string  `json:"signer"`
+			To                   string  `json:"to"`
+			Value                string  `json:"value"`
+			Data                 string  `json:"data"`
+			Gas                  *uint64 `json:"gas"`
+			GasPrice             string  `json:"gas_price"`
+			MaxFeePerGas         string  `json:"max_fee_per_gas"`
+			MaxPriorityFeePerGas string  `json:"max_priority_fee_per_gas"`
+			Nonce                *uint64 `json:"nonce"`
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
@@ -82,6 +92,34 @@ func newHandleNodeTxSend(stateDir string) Handler {
 			data = decoded
 		}
 
+		// Fee-mode selection: legacy (gas_price) vs EIP-1559 (max_fee + tip).
+		// Mixed and partial 1559 are rejected at the boundary so structural
+		// mistakes never reach the signer.
+		hasLegacy := req.GasPrice != ""
+		hasMaxFee := req.MaxFeePerGas != ""
+		hasTip := req.MaxPriorityFeePerGas != ""
+
+		if hasLegacy && (hasMaxFee || hasTip) {
+			return nil, NewInvalidArgs("args.gas_price cannot be combined with args.max_fee_per_gas or args.max_priority_fee_per_gas")
+		}
+		if hasMaxFee != hasTip {
+			return nil, NewInvalidArgs("args.max_fee_per_gas and args.max_priority_fee_per_gas must both be provided when using EIP-1559")
+		}
+		useDynamicFee := hasMaxFee && hasTip
+
+		var maxFee, maxPriorityFee *big.Int
+		if useDynamicFee {
+			var ok bool
+			maxFee, ok = new(big.Int).SetString(strings.TrimPrefix(req.MaxFeePerGas, "0x"), 16)
+			if !ok {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.max_fee_per_gas is not valid hex: %q", req.MaxFeePerGas))
+			}
+			maxPriorityFee, ok = new(big.Int).SetString(strings.TrimPrefix(req.MaxPriorityFeePerGas, "0x"), 16)
+			if !ok {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.max_priority_fee_per_gas is not valid hex: %q", req.MaxPriorityFeePerGas))
+			}
+		}
+
 		// Signer resolution per-request. InvalidAlias / UnknownAlias are
 		// structural input issues (INVALID_ARGS); InvalidKey is a config failure
 		// of the operator-supplied env var (UPSTREAM_ERROR per spec §11).
@@ -116,23 +154,37 @@ func newHandleNodeTxSend(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		gasPrice, err := resolveGasPrice(ctx, client, req.GasPrice)
-		if err != nil {
-			return nil, err
-		}
 		gas, err := resolveGas(ctx, client, req.Gas, s.Address(), to, value, data)
 		if err != nil {
 			return nil, err
 		}
 
-		unsigned := ethtypes.NewTx(&ethtypes.LegacyTx{
-			Nonce:    nonce,
-			GasPrice: gasPrice,
-			Gas:      gas,
-			To:       &to,
-			Value:    value,
-			Data:     data,
-		})
+		var unsigned *ethtypes.Transaction
+		if useDynamicFee {
+			unsigned = ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+				ChainID:   chainID,
+				Nonce:     nonce,
+				GasTipCap: maxPriorityFee,
+				GasFeeCap: maxFee,
+				Gas:       gas,
+				To:        &to,
+				Value:     value,
+				Data:      data,
+			})
+		} else {
+			gasPrice, err := resolveGasPrice(ctx, client, req.GasPrice)
+			if err != nil {
+				return nil, err
+			}
+			unsigned = ethtypes.NewTx(&ethtypes.LegacyTx{
+				Nonce:    nonce,
+				GasPrice: gasPrice,
+				Gas:      gas,
+				To:       &to,
+				Value:    value,
+				Data:     data,
+			})
+		}
 		signed, err := s.SignTx(ctx, unsigned, chainID)
 		if err != nil {
 			return nil, NewInternal("sign tx", err)
