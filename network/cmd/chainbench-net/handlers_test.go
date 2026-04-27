@@ -1939,6 +1939,47 @@ func TestHandleNodeTxWait_Timeout(t *testing.T) {
 	}
 }
 
+func TestHandleNodeTxWait_UpstreamError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		if req.Method == "eth_getTransactionReceipt" {
+			http.Error(w, "boom", 500)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_chainId" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeTxWait(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1", "tx_hash": "0x" + strings.Repeat("a", 64),
+		"timeout_ms": 1500,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err == nil {
+		t.Fatalf("expected error, got nil (data=%v)", data)
+	}
+	if data != nil {
+		t.Errorf("data = %v, want nil on error", data)
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
 func TestHandleNodeTxWait_BadHash(t *testing.T) {
 	h := newHandleNodeTxWait(t.TempDir())
 	args, _ := json.Marshal(map[string]any{
