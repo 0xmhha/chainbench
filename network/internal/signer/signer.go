@@ -64,6 +64,11 @@ type sealed struct {
 
 func (s *sealed) Address() common.Address { return s.addr }
 
+// ctx is unused today: go-ethereum's secp256k1 signing is CPU-bound and
+// returns synchronously. The parameter is preserved for forward
+// compatibility with HSM- or remote-signer-backed implementations of this
+// interface, where signing becomes an RPC and ctx-driven cancellation /
+// deadlines are essential.
 func (s *sealed) SignTx(_ context.Context, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error) {
 	if tx == nil {
 		return nil, fmt.Errorf("signer.SignTx: tx is nil")
