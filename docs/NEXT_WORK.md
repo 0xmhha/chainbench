@@ -1,6 +1,7 @@
 # Chainbench — 다음 작업 핸드오프 문서
 
 > 작성일: 2026-04-24 (Sprint 4 종료 시점)
+> 최종 업데이트: 2026-04-27 (Sprint 4b 완료 — keystore + EIP-1559 + tx.wait)
 > 이 문서는 **다른 세션에서 맥락 없이 작업을 이어갈 수 있도록** 작성됨.
 > 읽는 순서: §1 (프로젝트 컨텍스트) → §2 (현재 상태) → §3 (다음 작업) → §4 (규약) → §5 (주의사항).
 
@@ -161,42 +162,35 @@ chainbench/
    - 모두 200~260 라인. Sprint 4b 의 keystore 핸들러 추가에 깨끗한 베이스
    - `refactor(network-net): split handlers.go (1046 lines) by command group` (6970c30)
 
-### 🟧 Priority 2 — Sprint 4b (signer 확장 + EIP-1559 + tx.wait)
+### 🟧 Priority 2 — Sprint 4b (signer 확장 + EIP-1559 + tx.wait) — 완료 (2026-04-27)
 
-**목표**: Sprint 4 가 env-only 로 scoped 되어서 제외한 것들을 보강.
+목표 달성: env-only signer + legacy tx 만 가능했던 Go `network/` 가 keystore
+주입 + EIP-1559 dynamic fee + receipt polling 까지 커버.
 
-**범위 제안**:
+**커밋 체인 (7건, Sprint 4b)**:
 
-1. **Keystore provider** (`CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE` + `_KEYSTORE_PASSWORD`)
-   - keystore 파일 경로 + 패스워드 env 쌍
-   - `go-ethereum/accounts/keystore` 사용
-   - `signer.Load` 에서 env-only 실패 후 keystore 경로 fallback
-   - 기존 `Signer` 인터페이스 변경 없음 (추가 구현체만)
-   - 테스트: keystore 파일 fixture + 패스워드 env 검증 + key-leak 경계 유지
+| SHA | 설명 |
+|---|---|
+| `40c6e22` | feat(signer): keystore-backed key loader (Task 1) |
+| `0ef68c0` | feat(network-net): EIP-1559 dynamic fee in node.tx_send (Task 2) |
+| `7639c0e` | feat(drivers/remote): TransactionReceipt with NotFound passthrough (Task 3a) |
+| `f011e80` | feat(network-net): node.tx_wait receipt polling (Task 3b) |
+| `28948d8` | test(network-net): cover node.tx_wait UPSTREAM_ERROR branch (Task 3 follow-up) |
+| `aa103a5` | test(sprint-4b): keystore boundary + tx_wait flows + 1559 E2E (Task 4) |
+| `9629512` | fix(test): guard keystore-generator failure in security-key-boundary (Task 4 follow-up) |
 
-2. **EIP-1559 dynamic fees**
-   - `node.tx_send` args 에 `max_fee_per_gas?`, `max_priority_fee_per_gas?` 추가
-   - 우선순위: 둘 다 제공되면 `DynamicFeeTx` 사용; 둘 다 생략 + `gas_price` 도 없으면 upstream `eth_feeHistory` 로 추정; 혼용은 INVALID_ARGS
-   - `remote.Client.FeeHistory` 추가 (또는 간단히 `SuggestGasTipCap`)
-   - `types.LatestSignerForChainID` 는 이미 1559 지원 → signer 변경 없음
-   - 스키마: `command.json` 변경 없음 (args 는 enum 외부)
+**범위 결과**:
 
-3. **`tx.wait` (receipt polling)**
-   - 새 command: `node.tx_wait {network, node_id, tx_hash, timeout_ms?}`
-   - `remote.Client.TransactionReceipt(ctx, hash)` 추가
-   - 폴링 패턴: exponential backoff, default timeout 60s
-   - 결과: `{status: "success"|"failed"|"pending", receipt: {...}}`
-   - 이벤트 버스 활용 고려 (progress event 매 poll?)
-
-4. **P1 항목들 흡수**: `CHAINBENCH_NET_LOG` fix + handlers.go 분할 + SignTx ctx 주석
-
-**예상 task 구성**:
-- T1: handlers.go 분할 (선행, keystore/1559 추가 전에 깨끗한 베이스)
-- T2: keystore provider + 테스트
-- T3: EIP-1559 args + tx 구성 로직 + 테스트
-- T4: node.tx_wait + receipt polling + 테스트
-- T5: `CHAINBENCH_NET_LOG` fix + SignTx ctx 주석
-- T6: E2E + bash 테스트 + 문서 + 로드맵
+1. **Keystore provider** ✅ — `signer.Load` 에서 raw `_KEY` env 가 우선,
+   없을 때만 `_KEYSTORE`/`_KEYSTORE_PASSWORD` 쌍을 사용. `go-ethereum/accounts/keystore`
+   기반. `RedactionBoundary` + 6개 keystore 케이스 추가.
+2. **EIP-1559 dynamic fees** ✅ — `node.tx_send` args 에 `max_fee_per_gas` +
+   `max_priority_fee_per_gas` 추가. legacy `gas_price` 와 혼용 시 `INVALID_ARGS`.
+   둘 다 미지정 시 auto-fill (`SuggestGasTipCap` + base fee).
+3. **`node.tx_wait`** ✅ — receipt polling, exponential backoff, configurable
+   `timeout_ms`. `status: "success" | "failed" | "pending"` 반환.
+4. **P1 follow-up 흡수** ✅ — `CHAINBENCH_NET_LOG` fix, handlers.go 5개 파일
+   분할, SignTx ctx 주석 모두 Sprint 4b cleanup 단계에서 처리됨.
 
 ### 🟧 Priority 2.5 — Sprint 4 시리즈: evaluation tx 매트릭스 Go 포팅 (4b 후속)
 
@@ -553,8 +547,10 @@ cat docs/VISION_AND_ROADMAP.md | grep -E "^\s*- \[" | head -40
 - `docs/NEXT_WORK.md` — 이 문서
 
 **sprint 별 상세**:
-- `docs/superpowers/specs/2026-04-24-sprint-4-signer-tx-send.md` (최근)
-- `docs/superpowers/plans/2026-04-24-sprint-4-signer-tx-send.md` (최근)
+- `docs/superpowers/specs/2026-04-27-sprint-4b-keystore-1559-tx-wait.md` (최근)
+- `docs/superpowers/plans/2026-04-27-sprint-4b-keystore-1559-tx-wait.md` (최근)
+- `docs/superpowers/specs/2026-04-24-sprint-4-signer-tx-send.md` (직전)
+- `docs/superpowers/plans/2026-04-24-sprint-4-signer-tx-send.md` (직전)
 - 역사적 맥락 필요하면: `docs/superpowers/specs/2026-04-23-*.md` 전체
 
 **코드 규약**:

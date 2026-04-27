@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-24 (Sprint 4 완료 — signer 경계 + `node.tx_send` 종료. Sprint 3a/3b/3b.2a-c/3c/4 모두 §6 체크박스 갱신)
+> **최종 업데이트**: 2026-04-27 (Sprint 4b 완료 — keystore + EIP-1559 + tx.wait)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -779,11 +779,13 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [x] bash 테스트: `unit/tests/security-key-boundary.sh` — 네트워크 바이너리 실행 후 stdout/stderr/log grep
 - [x] 문서화 — 키 관리 정책 (`docs/SECURITY_KEY_HANDLING.md`)
 
-**Sprint 4b — signer 확장 + EIP-1559 + tx.wait (계획)**
-- [ ] keystore provider (`CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE` + `_KEYSTORE_PASSWORD`)
-- [ ] EIP-1559 dynamic-fee tx (`max_fee_per_gas` / `max_priority_fee_per_gas`)
-- [ ] `node.tx_wait` — receipt polling
-- [ ] P1 follow-up 흡수: `CHAINBENCH_NET_LOG` 동작 수정 + `handlers.go` (1046 lines) 분할 + `SignTx` ctx 주석
+**Sprint 4b — signer 확장 + EIP-1559 + tx.wait** — 완료 (2026-04-27)
+- [x] keystore provider (`CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE` + `_KEYSTORE_PASSWORD`)
+- [x] EIP-1559 dynamic-fee tx (`max_fee_per_gas` / `max_priority_fee_per_gas`)
+- [x] `node.tx_wait` — receipt polling
+- [x] P1 follow-up 흡수: `CHAINBENCH_NET_LOG` 동작 수정 + `handlers.go` (1046 lines) 분할 + `SignTx` ctx 주석
+
+완료 (2026-04-27)
 
 **Sprint 5 — Capability gate + Hybrid 네트워크 + MCP 이관 시작**
 - [ ] 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)

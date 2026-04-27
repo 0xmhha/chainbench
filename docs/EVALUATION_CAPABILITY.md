@@ -40,14 +40,14 @@ evaluation 능력은 3축으로 정의:
 | tx 타입 / 동작 | bash `tests/lib/*` | Go `network/` (`node.tx_send`) | MCP high-level | 비고 |
 |---|---|---|---|---|
 | Legacy tx (0x0) value transfer | ✅ `tx_builder.sh` (cast) | ✅ Sprint 4 | ❌ raw `node_rpc` 만 | Go 는 env signer + auto-fill nonce/gas |
-| EIP-1559 (0x2) dynamic fee | ✅ (cast) | 🚧 Sprint 4b | ❌ | `max_fee_per_gas` / `max_priority_fee_per_gas` |
+| EIP-1559 (0x2) dynamic fee | ✅ (cast) | ✅ Sprint 4b | ❌ | `max_fee_per_gas` / `max_priority_fee_per_gas` |
 | Fee Delegation (0x16) | ✅ Layer 2 lib (Go helper `chainutil`) | ❌ Sprint 4c (가칭) | ❌ | 이중 서명 — go-stablenet 고유 |
 | EIP-7702 SetCode (0x4) | ✅ Layer 2 lib (Go helper) | ❌ Sprint 4c (가칭) | ❌ | authorization list |
 | Contract deploy | ✅ `contract.sh` (cast) | ❌ Sprint 4d (가칭) | ❌ | bytecode + constructor args |
 | Contract call (eth_call+ABI) | ✅ `contract.sh` (cast) | ❌ Sprint 4d (가칭) | ❌ | ABI encode/decode |
 | Event log fetch (eth_getLogs) | ✅ `event.sh` | ❌ Sprint 4d (가칭) | ❌ | 토픽 필터 |
 | Event log decode | ✅ `event.sh` (cast / keccak) | ❌ Sprint 4d (가칭) | ❌ | ABI 기반 decode |
-| Receipt polling (status+logs) | ✅ Layer 2 lib | 🚧 Sprint 4b | ❌ | exponential backoff, timeout |
+| Receipt polling (status+logs) | ✅ Layer 2 lib | ✅ Sprint 4b | ❌ | exponential backoff, timeout |
 | Account state assert (balance/nonce/code/storage) | ✅ `chain_state.sh` | ❌ Sprint 4d (가칭) | ❌ | block number 옵션 |
 | Account Extra (블랙리스트/authorized 등) | ✅ `chain_state.sh` | ❌ | ❌ | go-stablenet 고유 |
 | Malformed/invalid tx (거부 경로) | ✅ Python (`rlp`) | ❌ | ❌ | negative test |
@@ -78,7 +78,7 @@ evaluation 능력은 3축으로 정의:
 
 | 검증 종류 | bash | Go `network/` | MCP | 비고 |
 |---|---|---|---|---|
-| Tx receipt status | ✅ Layer 2 lib | 🚧 Sprint 4b (`tx.wait`) | ❌ | success / failed / pending |
+| Tx receipt status | ✅ Layer 2 lib | ✅ Sprint 4b (`node.tx_wait`) | ❌ | success / failed / pending |
 | Tx receipt event log | ✅ `event.sh` | ❌ Sprint 4d (가칭) | ❌ | topics + data decode |
 | Block 정보 (height/hash/miner/ts) | ✅ `rpc_block.sh` | ✅ (`node.block_number`) | ✅ `chainbench_consensus_block_info` | |
 | Account state (balance/nonce/code/storage) | ✅ | partial (balance 만) | partial (`chainbench_node_rpc` raw) | |
@@ -103,7 +103,7 @@ evaluation 능력은 3축으로 정의:
 | 3b / 3b.2a-c | network.attach + remote read RPC + auth | ✅ 완료 |
 | 3c | adapter Go 포팅 (stablenet 실, wbft/wemix skeleton) | ✅ 완료 |
 | 4 | env signer + `node.tx_send` (legacy tx) | ✅ 완료 |
-| **4b** | keystore signer + EIP-1559 + receipt polling (`tx.wait`) | 🚧 계획 |
+| **4b** | keystore signer + EIP-1559 + receipt polling (`node.tx_wait`) | ✅ 완료 (2026-04-27) |
 | **4c (가칭)** | Fee Delegation (0x16) + EIP-7702 SetCode (Go 포팅) | 🚧 계획 |
 | **4d (가칭)** | Contract deploy/call (ABI encode/decode) + event log fetch+decode + state assert | 🚧 계획 |
 | **5** | MCP 이관 (high-level evaluation tool) — wire protocol 경유 + NDJSON event/progress/result → MCP response 구조화 변환 | 🚧 계획 (Sprint 4 시리즈 후) |
@@ -123,7 +123,9 @@ evaluation 능력은 3축으로 정의:
 
 현재 (2026-04-27) coverage 요약:
 - bash CLI surface: 약 90% (Layer 2 lib 거의 완비)
-- Go `network/` surface: 약 25% (Sprint 2a~4 누적)
+- Go `network/` surface: 약 35% (Sprint 2a~4b 누적 — 1559 / receipt polling / keystore signer 추가로 4 → 4b 단계에서 +10%pt)
 - MCP high-level tool surface: 약 10% (lifecycle / read RPC 위주, tx/contract/event 미노출)
 
 → evaluation harness 모드에서 coding agent 가 누리는 실효 coverage 는 MCP 기준이므로 약 10%. Sprint 4 시리즈 + Sprint 5 가 이를 끌어올리는 메인 동력.
+
+Sprint 4b 완료 (2026-04-27): EIP-1559 / receipt polling / keystore signer 추가.

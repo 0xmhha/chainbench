@@ -1,6 +1,6 @@
 # Chainbench Key Handling Security Policy
 
-> Last updated: 2026-04-27 (Sprint 4 env-signer + CHAINBENCH_NET_LOG fix)
+> Last updated: 2026-04-27 (Sprint 4b — keystore + EIP-1559 + tx.wait)
 
 ## Threat Model
 
@@ -15,21 +15,39 @@ operator's deployment environment. The threat model assumes:
 - Any code path inside chainbench-net that could serialize a signer to
   stdout / stderr / log / disk is a contract violation.
 
-## Key Injection (current — env only)
+## Key Injection (current — env-key OR keystore)
 
-Private keys enter via env vars at chainbench-net spawn time:
+Private keys enter via env vars at chainbench-net spawn time. Two
+provider paths are supported; both share the same alias model and the
+same in-memory `signer.Signer` representation downstream.
+
+**Path A — Raw key env (Sprint 4)**:
 
 ```
 CHAINBENCH_SIGNER_<ALIAS>_KEY=0x<64-hex-chars>
 ```
 
-Where `<ALIAS>` matches `[A-Za-z][A-Za-z0-9_]*` (POSIX-identifier shape so
+**Path B — Keystore env pair (Sprint 4b)**:
+
+```
+CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE=/path/to/keystore.json
+CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE_PASSWORD=<password>
+```
+
+Where `<ALIAS>` matches `[A-Za-z][A-Za-z0-9_]*` (POSIX-identifier shape,
+leading letter required; the regex applies identically to both paths so
 the resulting env var name is accepted by common deployment tooling —
 shells, docker `-e`, systemd EnvironmentFile, Kubernetes ConfigMap).
 
+**Resolution order** (`signer.Load`): if `_KEY` is set it wins; the
+`_KEYSTORE`/`_KEYSTORE_PASSWORD` pair is consulted only when `_KEY` is
+absent. This lets operators pin a deterministic test key without
+removing the keystore env. If neither path is set → `ErrUnknownAlias`.
+
 Commands reference the alias via `signer: "<alias>"`; the handler does
-`signer.Load(alias)` → env read → in-memory Signer. On process exit, the
-OS reclaims the memory.
+`signer.Load(alias)` → env read (raw `_KEY` first, then keystore
+decrypt) → in-memory Signer. On process exit, the OS reclaims the
+memory.
 
 ### Never
 
@@ -39,10 +57,21 @@ OS reclaims the memory.
   aliases.
 - Do NOT send the env file over the network (LLM chat, Slack, etc.).
 
-## Key Injection (planned — Sprint 4b)
+### Operator Notes
 
-Keystore provider: `CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE` + `_KEYSTORE_PASSWORD`
-env pair. Same alias model; on load, decrypt keystore file in memory.
+- Keystore file permissions should be `0600` (owner read/write only).
+  `chainbench-net` does NOT enforce this — the check is informational.
+  Deployment tooling (Ansible, systemd, k8s init container, etc.) is
+  responsible for ensuring tight permissions before chainbench-net is
+  spawned.
+- The decrypted key never leaves the `signer` package. Decryption
+  happens once per `signer.Load` call; the password env var is read
+  once via `os.Getenv` and is never cached on disk, in process state,
+  or in any returned struct.
+- Error messages from `signer.Load` reference the alias and env var
+  name only — the keystore file path bytes, file content, and password
+  value are NEVER embedded in error strings (verified by the
+  `RedactionBoundary` and error-probe tests for the keystore variant).
 
 ## Operator Checklist
 
@@ -77,20 +106,30 @@ env pair. Same alias model; on load, decrypt keystore file in memory.
 
 Two tests enforce the boundary:
 
-1. **Unit — `network/internal/signer/signer_test.go`** — verifies redaction
-   across `%v`, `%+v`, `%#v`, `%s`, `slog.TextHandler`, `slog.JSONHandler`,
-   `fmt.Errorf("%v", s)`, and deep-nested containers. Also asserts error
-   messages never contain the raw hex (including a probe test with a
-   valid-length but cryptographically-invalid key).
+1. **Unit — `network/internal/signer/signer_test.go`** — verifies
+   redaction across `%v`, `%+v`, `%#v`, `%s`, `slog.TextHandler`,
+   `slog.JSONHandler`, `fmt.Errorf("%v", s)`, and deep-nested
+   containers. Also asserts error messages never contain the raw hex
+   (including a probe test with a valid-length but
+   cryptographically-invalid key). Sprint 4b added 6 keystore cases
+   covering the env-pair resolution, decryption errors, missing
+   password, malformed keystore JSON, raw-key-wins-over-keystore
+   precedence, and `RedactionBoundary` for a keystore-loaded `*sealed`
+   (same `***` / `<signer:***>` outputs as the raw-key path).
 
-2. **End-to-end — `tests/unit/tests/security-key-boundary.sh`** — spawns
-   the actual chainbench-net binary with `CHAINBENCH_SIGNER_ALICE_KEY=...`
-   set in the environment, performs a `node.tx_send`, and case-insensitively
-   greps stdout, stderr, and the log file for the raw key hex. Any match
-   fails the test with exit 1.
+2. **End-to-end — `tests/unit/tests/security-key-boundary.sh`** —
+   spawns the actual chainbench-net binary and performs a
+   `node.tx_send` against a Python JSON-RPC mock, then
+   case-insensitively greps stdout, stderr, and the log file for any
+   key-shaped substring. Sprint 4b extended the script with a
+   **Scenario 3 (keystore variant)**: it generates a per-run keystore
+   file + random password, loads signer "bob" via the
+   `_KEYSTORE`/`_KEYSTORE_PASSWORD` env pair, runs `node.tx_send`,
+   and greps for BOTH the underlying raw hex AND the password
+   literal. Any match fails the test with exit 1.
 
-Both must stay green for any PR touching signer code or any handler that
-accepts a signer alias.
+Both must stay green for any PR touching signer code or any handler
+that accepts a signer alias.
 
 ## Out of Scope (current sprint)
 
@@ -100,8 +139,6 @@ accepts a signer alias.
   derives externally and exports keys as env
 - Audit logging of sign operations — would need redaction patterns for
   the alias/address pair and a separate audit stream
-- EIP-1559 dynamic-fee tx signing (Sprint 4b)
-- Tx confirmation polling (Sprint 4b or later)
 
 ## Resolved Latent Issues
 
