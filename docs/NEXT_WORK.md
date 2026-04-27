@@ -140,27 +140,26 @@ chainbench/
 > Sprint 4 시리즈 (4b → 4c → 4d) 가 Go `network/` 의 tx 능력을 채우고,
 > Sprint 5 가 그 능력을 MCP high-level tool 로 노출 + LLM 친화 결과 변환을 한다.
 
-### 🟥 Priority 1 — Sprint 4 에서 이월된 follow-ups (4b 에 자연 흡수)
+### 🟥 Priority 1 — Sprint 4 에서 이월된 follow-ups (해결됨, 2026-04-27)
 
-이 항목들은 Sprint 4 리뷰에서 identified 되었고, **Sprint 4b 에서 자연스럽게
-처리** 될 것들. 별도 sprint 불필요.
+3건 모두 Sprint 4b 시작 전 cleanup 으로 처리 완료.
 
-1. **`CHAINBENCH_NET_LOG` env var 미동작 버그** (Important)
-   - 문서화됨 (`network/README.md`, `wire/logger.go`)
-   - 실제로는 `cmd/chainbench-net/run.go` 의 `runOnce` 가 `wire.SetupLoggerTo(stderr, ...)` 하드 와이어링 → env 무시
-   - 수정: `runOnce` 초반에 env 체크 후 `SetupLogger()` 경유로 라우팅
-   - 보안 영향 0 (signer 로그 경로 없음), UX 영향 있음
-   - 영향 파일: `network/cmd/chainbench-net/run.go`
+1. **`CHAINBENCH_NET_LOG` env var 미동작 버그** (resolved)
+   - `wire.SetupLoggerWithFallback(fallback)` 신설 — env 가 설정되면 file 로
+     라우팅, 아니면 caller-injected writer 사용
+   - `runOnce` 가 새 함수 사용 → 운영 시 env 존중, 테스트는 stderr 캡처 유지
+   - `fix(network-net): honour CHAINBENCH_NET_LOG in run subcommand` (688a944)
+   - `docs/SECURITY_KEY_HANDLING.md` "Resolved Latent Issues" 로 이동
 
-2. **tx.send `SignTx` 의 ctx 파라미터 미사용** (Minor)
-   - `sealed.SignTx(_ context.Context, ...)` — 현재 go-ethereum 서명은 CPU-bound 라서 무방
-   - doc 에 "HSM / remote signer 위한 예약" 주석 한 줄 추가 권장
-   - 영향 파일: `network/internal/signer/signer.go`
+2. **`SignTx` 의 ctx 파라미터 미사용** (resolved)
+   - "HSM / remote signer 위한 예약" 주석 추가
+   - `docs(signer): document SignTx ctx parameter as forward-compat reservation` (877397b)
 
-3. **`handlers.go` 1046 라인** (Minor, tech debt)
-   - `coding-style.md` 의 800 라인 권장 초과
-   - 제안: `handlers_network.go` / `handlers_node_read.go` / `handlers_node_lifecycle.go` / `handlers_node_tx.go` 로 분할
-   - Sprint 4b 전 또는 4b 와 함께 수행 권장 (keystore 핸들러가 더 추가되기 전에)
+3. **`handlers.go` 1046 라인** (resolved)
+   - 5개 파일로 분할 — handlers.go / handlers_network.go /
+     handlers_node_lifecycle.go / handlers_node_read.go / handlers_node_tx.go
+   - 모두 200~260 라인. Sprint 4b 의 keystore 핸들러 추가에 깨끗한 베이스
+   - `refactor(network-net): split handlers.go (1046 lines) by command group` (6970c30)
 
 ### 🟧 Priority 2 — Sprint 4b (signer 확장 + EIP-1559 + tx.wait)
 
@@ -273,9 +272,6 @@ high-level evaluation tool 을 노출.
 | 3c | `getInt` 가 문자열-숫자 override 폴백 | 스키마 검증 함께 | 프로파일 검증 도입 시 |
 | 3c | adapter fixture `govMasterMinter`/`govCouncil` 없음 | 4개 중 2개 커버 | 다음 adapter touch 시 |
 | 3c | malformed JSON template 테스트 없음 | | |
-| 4 | CHAINBENCH_NET_LOG 무시 | **→ Sprint 4b P1 로 이관** | |
-| 4 | handlers.go 1046 라인 | **→ Sprint 4b P1 로 이관** | |
-| 4 | SignTx ctx 미사용 주석 | **→ Sprint 4b P1 로 이관** | |
 
 **로드맵 상 아직 불명확한 항목**:
 - wbft `GenerateGenesis`/`GenerateToml` 실구현 — wbft 체인 실제 사용 시
