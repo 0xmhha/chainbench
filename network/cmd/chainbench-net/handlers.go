@@ -29,25 +29,28 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 //	handlers_network.go         — network.load / network.probe / network.attach
 //	handlers_node_lifecycle.go  — node.stop / node.start / node.restart / node.tail_log
 //	handlers_node_read.go       — node.block_number / node.chain_id / node.balance / node.gas_price
-//	handlers_node_tx.go         — node.tx_send / node.tx_wait (newHandleNodeTxWait)
-//	                              + nonce / gas / gas-price resolvers + receipt helpers
+//	handlers_node_tx.go         — node.tx_send (incl. EIP-7702 SetCode path) /
+//	                              node.tx_fee_delegation_send (go-stablenet 0x16) /
+//	                              node.tx_wait + nonce / gas / gas-price resolvers
+//	                              + receipt helpers
 //
 // This file keeps the dispatch table plus shared node-resolution helpers.
 func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 	return map[string]Handler{
-		"network.load":      newHandleNetworkLoad(stateDir),
-		"network.probe":     newHandleNetworkProbe(),
-		"network.attach":    newHandleNetworkAttach(stateDir),
-		"node.stop":         newHandleNodeStop(stateDir, chainbenchDir),
-		"node.start":        newHandleNodeStart(stateDir, chainbenchDir),
-		"node.restart":      newHandleNodeRestart(stateDir, chainbenchDir),
-		"node.tail_log":     newHandleNodeTailLog(stateDir),
-		"node.block_number": newHandleNodeBlockNumber(stateDir),
-		"node.chain_id":     newHandleNodeChainID(stateDir),
-		"node.balance":      newHandleNodeBalance(stateDir),
-		"node.gas_price":    newHandleNodeGasPrice(stateDir),
-		"node.tx_send":      newHandleNodeTxSend(stateDir),
-		"node.tx_wait":      newHandleNodeTxWait(stateDir),
+		"network.load":                newHandleNetworkLoad(stateDir),
+		"network.probe":               newHandleNetworkProbe(),
+		"network.attach":              newHandleNetworkAttach(stateDir),
+		"node.stop":                   newHandleNodeStop(stateDir, chainbenchDir),
+		"node.start":                  newHandleNodeStart(stateDir, chainbenchDir),
+		"node.restart":                newHandleNodeRestart(stateDir, chainbenchDir),
+		"node.tail_log":               newHandleNodeTailLog(stateDir),
+		"node.block_number":           newHandleNodeBlockNumber(stateDir),
+		"node.chain_id":               newHandleNodeChainID(stateDir),
+		"node.balance":                newHandleNodeBalance(stateDir),
+		"node.gas_price":              newHandleNodeGasPrice(stateDir),
+		"node.tx_send":                newHandleNodeTxSend(stateDir),
+		"node.tx_fee_delegation_send": newHandleNodeTxFeeDelegationSend(stateDir),
+		"node.tx_wait":                newHandleNodeTxWait(stateDir),
 	}
 }
 

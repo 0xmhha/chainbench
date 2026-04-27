@@ -2419,3 +2419,291 @@ func TestHandleNodeTxSend_SetCode_MissingAuthNonce(t *testing.T) {
 		t.Errorf("want INVALID_ARGS, got %v", err)
 	}
 }
+
+// keyHexFeePayer is a test-only synthetic ECDSA key used as the fee_payer for
+// the go-stablenet 0x16 fee-delegation tests. Distinct from keyHexA / keyHexB /
+// keyHexC so cross-test contamination of signer state is unmistakable.
+const keyHexFeePayer = "8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f"
+
+// saveRemoteFixtureWithChainType pre-seeds a one-node remote network and lets
+// the caller choose the chain_type. Wraps state.SaveRemote so the chain-type
+// allowlist guard in node.tx_fee_delegation_send can be exercised without
+// touching the existing saveRemoteFixture (which hard-codes "ethereum").
+func saveRemoteFixtureWithChainType(t *testing.T, stateDir, name, url, chainType string) {
+	t.Helper()
+	net := &types.Network{
+		Name: name, ChainType: types.NetworkChainType(chainType), ChainId: 1,
+		Nodes: []types.Node{{Id: "node1", Provider: "remote", Http: url}},
+	}
+	if err := state.SaveRemote(stateDir, net); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// newFeeDelegateMock mirrors newSetCodeMock: replies eth_chainId 0x1, captures
+// the raw param[0] of eth_sendRawTransaction into *sentRaw, returns a canned
+// tx hash. Other methods return -32601 not-found.
+func newFeeDelegateMock(t *testing.T, sentRaw *string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if sentRaw != nil && len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1111111111111111111111111111111111111111111111111111111111111111"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+func TestHandleNodeTxFeeDelegationSend_Happy_Stablenet(t *testing.T) {
+	var sentRaw string
+	srv := newFeeDelegateMock(t, &sentRaw)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixtureWithChainType(t, stateDir, "stab", srv.URL, "stablenet")
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	t.Setenv("CHAINBENCH_SIGNER_FPAYER_KEY", "0x"+keyHexFeePayer)
+
+	h := newHandleNodeTxFeeDelegationSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"value":                    "0x0",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    7,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if !strings.HasPrefix(sentRaw, "0x16") {
+		t.Errorf("raw tx not 0x16-prefixed: %q", sentRaw)
+	}
+	tx, _ := data["tx_hash"].(string)
+	if !strings.HasPrefix(tx, "0x") || len(tx) != 66 {
+		t.Errorf("tx_hash shape wrong: %v", data["tx_hash"])
+	}
+	if _, err := hex.DecodeString(strings.TrimPrefix(tx, "0x")); err != nil {
+		t.Errorf("tx_hash is not valid hex: %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_ChainTypeNotSupported_Ethereum(t *testing.T) {
+	srv := newFeeDelegateMock(t, nil)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixtureWithChainType(t, stateDir, "eth", srv.URL, "ethereum")
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	t.Setenv("CHAINBENCH_SIGNER_FPAYER_KEY", "0x"+keyHexFeePayer)
+
+	h := newHandleNodeTxFeeDelegationSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "eth",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+		t.Errorf("want NOT_SUPPORTED, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_ChainTypeNotSupported_Wemix(t *testing.T) {
+	srv := newFeeDelegateMock(t, nil)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixtureWithChainType(t, stateDir, "wmx", srv.URL, "wemix")
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	t.Setenv("CHAINBENCH_SIGNER_FPAYER_KEY", "0x"+keyHexFeePayer)
+
+	h := newHandleNodeTxFeeDelegationSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "wmx",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+		t.Errorf("want NOT_SUPPORTED, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_MissingFeePayer(t *testing.T) {
+	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_FeePayerAliasUnknown(t *testing.T) {
+	srv := newFeeDelegateMock(t, nil)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixtureWithChainType(t, stateDir, "stab", srv.URL, "stablenet")
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+	// Intentionally do NOT set CHAINBENCH_SIGNER_FPAYER_KEY — alias is unknown.
+
+	h := newHandleNodeTxFeeDelegationSend(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_BadToAddress(t *testing.T) {
+	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "not-an-address",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_MissingMaxFeeFields(t *testing.T) {
+	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":   "stab",
+		"node_id":   "node1",
+		"signer":    "alice",
+		"fee_payer": "fpayer",
+		"to":        "0x0000000000000000000000000000000000000002",
+		"gas":       21000,
+		"nonce":     0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_MissingNonce(t *testing.T) {
+	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"gas":                      21000,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxFeeDelegationSend_MissingGas(t *testing.T) {
+	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesTxFeeDelegationSend(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.tx_fee_delegation_send"]; !ok {
+		t.Error("allHandlers missing node.tx_fee_delegation_send")
+	}
+}
