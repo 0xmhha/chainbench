@@ -29,7 +29,8 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 //	handlers_network.go         — network.load / network.probe / network.attach
 //	handlers_node_lifecycle.go  — node.stop / node.start / node.restart / node.tail_log
 //	handlers_node_read.go       — node.block_number / node.chain_id / node.balance / node.gas_price
-//	handlers_node_tx.go         — node.tx_send + nonce / gas / gas-price resolvers
+//	handlers_node_tx.go         — node.tx_send / node.tx_wait (newHandleNodeTxWait)
+//	                              + nonce / gas / gas-price resolvers + receipt helpers
 //
 // This file keeps the dispatch table plus shared node-resolution helpers.
 func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
@@ -46,6 +47,7 @@ func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 		"node.balance":      newHandleNodeBalance(stateDir),
 		"node.gas_price":    newHandleNodeGasPrice(stateDir),
 		"node.tx_send":      newHandleNodeTxSend(stateDir),
+		"node.tx_wait":      newHandleNodeTxWait(stateDir),
 	}
 }
 

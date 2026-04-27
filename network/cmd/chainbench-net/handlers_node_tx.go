@@ -241,3 +241,118 @@ func resolveGas(ctx context.Context, client *remote.Client, explicit *uint64, fr
 	}
 	return g, nil
 }
+
+const (
+	minTxWaitMs     = 1000
+	defaultTxWaitMs = 60000
+	maxTxWaitMs     = 600000
+	txWaitInitial   = 200 * time.Millisecond
+	txWaitCap       = 2 * time.Second
+)
+
+// newHandleNodeTxWait polls eth_getTransactionReceipt with bounded backoff
+// until the receipt is available, the context deadline elapses, or an
+// upstream error surfaces. ethereum.NotFound is the polling-tick signal
+// (still pending); other RPC errors are upstream failures.
+//
+// Args:    {network?, node_id, tx_hash, timeout_ms? (1000..600000, default 60000)}
+// Result:  {status: "success"|"failed"|"pending", tx_hash, block_number?,
+//
+//	block_hash?, gas_used?, effective_gas_price?, contract_address?,
+//	logs_count?}
+//
+// On terminal "pending" (timeout), only {status, tx_hash} are returned —
+// the caller decides whether to retry.
+func newHandleNodeTxWait(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network   string `json:"network"`
+			NodeID    string `json:"node_id"`
+			TxHash    string `json:"tx_hash"`
+			TimeoutMs *int   `json:"timeout_ms"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.TxHash == "" {
+			return nil, NewInvalidArgs("args.tx_hash is required")
+		}
+		// 0x + 64 lowercase/uppercase hex chars
+		if len(req.TxHash) != 66 || !strings.HasPrefix(req.TxHash, "0x") {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.tx_hash must be 0x + 32-byte hex: %q", req.TxHash))
+		}
+		if _, err := hex.DecodeString(strings.TrimPrefix(req.TxHash, "0x")); err != nil {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.tx_hash is not valid hex: %q", req.TxHash))
+		}
+		timeoutMs := defaultTxWaitMs
+		if req.TimeoutMs != nil {
+			timeoutMs = *req.TimeoutMs
+		}
+		if timeoutMs < minTxWaitMs || timeoutMs > maxTxWaitMs {
+			return nil, NewInvalidArgs(fmt.Sprintf(
+				"args.timeout_ms must be %d..%d, got %d",
+				minTxWaitMs, maxTxWaitMs, timeoutMs,
+			))
+		}
+
+		_, node, err := resolveNode(stateDir, req.Network, req.NodeID)
+		if err != nil {
+			return nil, err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMs)*time.Millisecond)
+		defer cancel()
+		client, err := dialNode(ctx, &node)
+		if err != nil {
+			return nil, err
+		}
+		defer client.Close()
+
+		hash := common.HexToHash(req.TxHash)
+		delay := txWaitInitial
+		for {
+			rcpt, rerr := client.TransactionReceipt(ctx, hash)
+			if rerr == nil {
+				return receiptToResult(req.TxHash, rcpt), nil
+			}
+			if !errors.Is(rerr, ethereum.NotFound) {
+				return nil, NewUpstream("eth_getTransactionReceipt", rerr)
+			}
+			// NotFound: backoff or fall through to "pending" on deadline.
+			select {
+			case <-ctx.Done():
+				return map[string]any{"status": "pending", "tx_hash": req.TxHash}, nil
+			case <-time.After(delay):
+			}
+			delay *= 2
+			if delay > txWaitCap {
+				delay = txWaitCap
+			}
+		}
+	}
+}
+
+func receiptToResult(txHash string, rcpt *ethtypes.Receipt) map[string]any {
+	status := "failed"
+	if rcpt.Status == 1 {
+		status = "success"
+	}
+	out := map[string]any{
+		"status":              status,
+		"tx_hash":             txHash,
+		"block_number":        rcpt.BlockNumber.Uint64(),
+		"block_hash":          rcpt.BlockHash.Hex(),
+		"gas_used":            rcpt.GasUsed,
+		"logs_count":          len(rcpt.Logs),
+		"contract_address":    "",
+		"effective_gas_price": "0x0",
+	}
+	if rcpt.ContractAddress != (common.Address{}) {
+		out["contract_address"] = rcpt.ContractAddress.Hex()
+	}
+	if rcpt.EffectiveGasPrice != nil {
+		out["effective_gas_price"] = "0x" + rcpt.EffectiveGasPrice.Text(16)
+	}
+	return out
+}

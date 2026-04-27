@@ -1776,3 +1776,201 @@ func TestHandleNodeTxSend_PartialDynamicFee(t *testing.T) {
 		t.Errorf("want INVALID_ARGS, got %v", err)
 	}
 }
+
+func TestHandleNodeTxWait_SuccessImmediate(t *testing.T) {
+	txHash := "0x" + strings.Repeat("a", 64)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionReceipt" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":{
+                "transactionHash":%q,
+                "blockHash":"0x%s",
+                "blockNumber":"0x10",
+                "cumulativeGasUsed":"0x5208",
+                "gasUsed":"0x5208",
+                "effectiveGasPrice":"0x3b9aca00",
+                "status":"0x1",
+                "contractAddress":null,
+                "logsBloom":"0x%s",
+                "logs":[]}}`, req.ID, txHash, strings.Repeat("b", 64), strings.Repeat("0", 512))
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeTxWait(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"tx_hash": txHash,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got, _ := data["status"].(string); got != "success" {
+		t.Errorf("status = %v, want success", data["status"])
+	}
+	if got, _ := data["block_number"].(uint64); got != 16 {
+		t.Errorf("block_number = %v, want 16", data["block_number"])
+	}
+}
+
+func TestHandleNodeTxWait_FailedReceipt(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionReceipt" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":{
+                "transactionHash":"0x%s",
+                "blockHash":"0x%s",
+                "blockNumber":"0x10","cumulativeGasUsed":"0x5208","gasUsed":"0x5208","effectiveGasPrice":"0x1",
+                "status":"0x0","contractAddress":null,"logsBloom":"0x%s","logs":[]}}`, req.ID, strings.Repeat("a", 64), strings.Repeat("b", 64), strings.Repeat("0", 512))
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeTxWait(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1", "tx_hash": "0x" + strings.Repeat("a", 64),
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got, _ := data["status"].(string); got != "failed" {
+		t.Errorf("status = %v, want failed", data["status"])
+	}
+}
+
+func TestHandleNodeTxWait_NotFoundThenSuccess(t *testing.T) {
+	var calls int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionReceipt" {
+			calls++
+			if calls == 1 {
+				fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":null}`, req.ID)
+				return
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":{
+                "transactionHash":"0x%s","blockHash":"0x%s","blockNumber":"0x1",
+                "cumulativeGasUsed":"0x5208","gasUsed":"0x5208","status":"0x1","contractAddress":null,"logsBloom":"0x%s","logs":[]}}`,
+				req.ID, strings.Repeat("a", 64), strings.Repeat("b", 64), strings.Repeat("0", 512))
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeTxWait(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1", "tx_hash": "0x" + strings.Repeat("a", 64),
+		"timeout_ms": 5000,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got, _ := data["status"].(string); got != "success" {
+		t.Errorf("status = %v, want success", data["status"])
+	}
+	if calls < 2 {
+		t.Errorf("expected at least 2 polls, got %d", calls)
+	}
+}
+
+func TestHandleNodeTxWait_Timeout(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionReceipt" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":null}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	h := newHandleNodeTxWait(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1", "tx_hash": "0x" + strings.Repeat("a", 64),
+		"timeout_ms": 1500,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got, _ := data["status"].(string); got != "pending" {
+		t.Errorf("status = %v, want pending", data["status"])
+	}
+}
+
+func TestHandleNodeTxWait_BadHash(t *testing.T) {
+	h := newHandleNodeTxWait(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1", "tx_hash": "not-a-hash",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeTxWait_TimeoutOutOfRange(t *testing.T) {
+	h := newHandleNodeTxWait(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn", "node_id": "node1", "tx_hash": "0x" + strings.Repeat("a", 64),
+		"timeout_ms": 50,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesTxWait(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.tx_wait"]; !ok {
+		t.Error("allHandlers missing node.tx_wait")
+	}
+}
