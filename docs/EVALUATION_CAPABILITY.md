@@ -41,8 +41,8 @@ evaluation 능력은 3축으로 정의:
 |---|---|---|---|---|
 | Legacy tx (0x0) value transfer | ✅ `tx_builder.sh` (cast) | ✅ Sprint 4 | ❌ raw `node_rpc` 만 | Go 는 env signer + auto-fill nonce/gas |
 | EIP-1559 (0x2) dynamic fee | ✅ (cast) | ✅ Sprint 4b | ❌ | `max_fee_per_gas` / `max_priority_fee_per_gas` |
-| Fee Delegation (0x16) | ✅ Layer 2 lib (Go helper `chainutil`) | ❌ Sprint 4c (가칭) | ❌ | 이중 서명 — go-stablenet 고유 |
-| EIP-7702 SetCode (0x4) | ✅ Layer 2 lib (Go helper) | ❌ Sprint 4c (가칭) | ❌ | authorization list |
+| Fee Delegation (0x16) | ✅ Layer 2 lib (Go helper `chainutil`) | ✅ Sprint 4c (`node.tx_fee_delegation_send`) | ❌ | 이중 서명 — go-stablenet 고유 |
+| EIP-7702 SetCode (0x4) | ✅ Layer 2 lib (Go helper) | ✅ Sprint 4c (`authorization_list`) | ❌ | authorization list |
 | Contract deploy | ✅ `contract.sh` (cast) | ❌ Sprint 4d (가칭) | ❌ | bytecode + constructor args |
 | Contract call (eth_call+ABI) | ✅ `contract.sh` (cast) | ❌ Sprint 4d (가칭) | ❌ | ABI encode/decode |
 | Event log fetch (eth_getLogs) | ✅ `event.sh` | ❌ Sprint 4d (가칭) | ❌ | 토픽 필터 |
@@ -104,7 +104,7 @@ evaluation 능력은 3축으로 정의:
 | 3c | adapter Go 포팅 (stablenet 실, wbft/wemix skeleton) | ✅ 완료 |
 | 4 | env signer + `node.tx_send` (legacy tx) | ✅ 완료 |
 | **4b** | keystore signer + EIP-1559 + receipt polling (`node.tx_wait`) | ✅ 완료 (2026-04-27) |
-| **4c (가칭)** | Fee Delegation (0x16) + EIP-7702 SetCode (Go 포팅) | 🚧 계획 |
+| **4c** | Fee Delegation (0x16) + EIP-7702 SetCode (Go 포팅) + SignHash 인터페이스 | ✅ 완료 (2026-04-27) |
 | **4d (가칭)** | Contract deploy/call (ABI encode/decode) + event log fetch+decode + state assert | 🚧 계획 |
 | **5** | MCP 이관 (high-level evaluation tool) — wire protocol 경유 + NDJSON event/progress/result → MCP response 구조화 변환 | 🚧 계획 (Sprint 4 시리즈 후) |
 | 5a/5b/5d | capability gate / SSH driver / hybrid 예제 | 후순위 |
@@ -123,9 +123,11 @@ evaluation 능력은 3축으로 정의:
 
 현재 (2026-04-27) coverage 요약:
 - bash CLI surface: 약 90% (Layer 2 lib 거의 완비)
-- Go `network/` surface: 약 35% (Sprint 2a~4b 누적 — 1559 / receipt polling / keystore signer 추가로 4 → 4b 단계에서 +10%pt)
+- Go `network/` surface: 약 45% (Sprint 2a~4c 누적 — 1559 / receipt polling / keystore signer / 0x4 SetCode / 0x16 fee-delegation 추가로 4b → 4c 단계에서 +10%pt)
 - MCP high-level tool surface: 약 10% (lifecycle / read RPC 위주, tx/contract/event 미노출)
 
 → evaluation harness 모드에서 coding agent 가 누리는 실효 coverage 는 MCP 기준이므로 약 10%. Sprint 4 시리즈 + Sprint 5 가 이를 끌어올리는 메인 동력.
 
 Sprint 4b 완료 (2026-04-27): EIP-1559 / receipt polling / keystore signer 추가.
+
+Sprint 4c 완료 (2026-04-27): EIP-7702 SetCodeTx + go-stablenet 0x16 fee delegation 추가. SignHash 인터페이스 도입으로 chain-specific tx 타입 확장 기반 마련.

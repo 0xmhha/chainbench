@@ -1,6 +1,6 @@
 # Chainbench Key Handling Security Policy
 
-> Last updated: 2026-04-27 (Sprint 4b — keystore + EIP-1559 + tx.wait)
+> Last updated: 2026-04-27 (Sprint 4c — SignHash + EIP-7702 + Fee Delegation)
 
 ## Threat Model
 
@@ -101,6 +101,11 @@ memory.
   grep -rn 'signer\..*key\|privateKey\|PrivateKey' network/
   ```
   No export / serialization / log path may surface.
+- `SignHash` returns 65 raw bytes; callers (handlers) compose into V/R/S
+  without ever touching the underlying private key. Used for EIP-7702
+  authorization tuples and go-stablenet 0x16 fee-payer outer hash. Same
+  redaction guarantees as `Sign` — the sealed struct never exposes key
+  material on any logging / serialization path.
 
 ## Boundary Enforcement
 
@@ -126,7 +131,12 @@ Two tests enforce the boundary:
    file + random password, loads signer "bob" via the
    `_KEYSTORE`/`_KEYSTORE_PASSWORD` env pair, runs `node.tx_send`,
    and greps for BOTH the underlying raw hex AND the password
-   literal. Any match fails the test with exit 1.
+   literal. Sprint 4c added **Scenario 4 (fee-delegation
+   variant)**: a `node.tx_fee_delegation_send` with two distinct
+   signers (sender raw `_KEY` for "carol" + fee_payer keystore for
+   "bob", reused from Scenario 3). Asserts none of {sender hex,
+   fee_payer raw hex, keystore password} surfaces in stdout / stderr
+   / log. Any match fails the test with exit 1.
 
 Both must stay green for any PR touching signer code or any handler
 that accepts a signer alias.

@@ -1,7 +1,7 @@
 # Chainbench — 다음 작업 핸드오프 문서
 
 > 작성일: 2026-04-24 (Sprint 4 종료 시점)
-> 최종 업데이트: 2026-04-27 (Sprint 4b 완료 — keystore + EIP-1559 + tx.wait)
+> 최종 업데이트: 2026-04-27 (Sprint 4c 완료 — Fee Delegation + EIP-7702)
 > 이 문서는 **다른 세션에서 맥락 없이 작업을 이어갈 수 있도록** 작성됨.
 > 읽는 순서: §1 (프로젝트 컨텍스트) → §2 (현재 상태) → §3 (다음 작업) → §4 (규약) → §5 (주의사항).
 
@@ -93,6 +93,8 @@ chainbench/
 | 3b.2c | node.chain_id/balance/gas_price + attach 검증 + M4 완전 | 2026-04-24 | 7 |
 | 3c | Adapter Go 포팅 (stablenet) + wbft/wemix 스켈레톤 | 2026-04-24 | 7 |
 | **4** | **Signer boundary (env) + node.tx_send + 보안 경계 테스트** | **2026-04-24** | **8** |
+| **4b** | **keystore signer + EIP-1559 + node.tx_wait** | **2026-04-27** | **7** |
+| **4c** | **SignHash + EIP-7702 SetCode + go-stablenet 0x16 fee delegation** | **2026-04-27** | **7** |
 
 각 sprint 는 `docs/superpowers/specs/<date>-<topic>.md` + `docs/superpowers/plans/<date>-<topic>.md` 를 가지고 있음.
 
@@ -113,7 +115,9 @@ chainbench/
 - `node.chain_id`
 - `node.balance` (address + block_number 옵션)
 - `node.gas_price`
-- `node.tx_send` (서명 + 방송, signer alias 필수)
+- `node.tx_send` (서명 + 방송, signer alias 필수, optional `authorization_list` → EIP-7702 SetCodeTx)
+- `node.tx_fee_delegation_send` (Sprint 4c, stablenet only — sender + fee_payer 이중 서명, 0x16 envelope)
+- `node.tx_wait` (receipt polling, exponential backoff)
 
 **스키마에 선언됐지만 미구현:**
 - `network.capabilities` — Sprint 5 에서 capability gate 와 함께
@@ -121,13 +125,14 @@ chainbench/
 - `tx.send` — `node.tx_send` 가 대체 (cross-network 급이 필요하면 그때)
 - `subscription.open` — WebSocket, 후속
 
-### 2.3 테스트 매트릭스 (Sprint 4 종료 기준)
+### 2.3 테스트 매트릭스 (Sprint 4c 종료 기준)
 
 - Go: 15 packages 전부 green
-- Bash: 27/27 테스트 green
+- Bash: 30/30 테스트 green (Sprint 4c 에서 `node-tx-set-code.sh` + `node-tx-fee-delegation.sh` 추가)
 - 주요 커버리지:
-  - `signer` 보안 테스트: 유닛 + Go E2E + bash subprocess boundary
+  - `signer` 보안 테스트: 유닛 + Go E2E + bash subprocess boundary (Scenario 1~4)
   - `probe` 92.4%, `remote` 97%, `adapters/stablenet` 높은 커버 + 골든 파일 계약
+  - 0x4 SetCode + 0x16 fee-delegation: handler 단위 + Go E2E + bash spawn 3-layer 커버
 
 ---
 
@@ -202,12 +207,38 @@ coding agent 가 단일 surface 로 호출 가능하게 만드는 것이 목표.
 
 목표 cell 은 `docs/EVALUATION_CAPABILITY.md` §2 / §4 의 Go column.
 
-**Sprint 4c (가칭) — chain-specific tx 타입**
-- Fee Delegation (0x16) tx 구성 + 이중 서명 + 전송
-  - `node.tx_send` args 확장 또는 새 command (`node.tx_fee_delegation_send` 후보)
-  - go-stablenet 고유. wbft/wemix/ethereum adapter 에서는 미지원 → adapter 축으로 분기
-- EIP-7702 SetCode (0x4) — authorization list 구성
-- 테스트: env signer 두 개 (sender + fee payer) + golden raw tx 검증
+**Sprint 4c — chain-specific tx 타입** — 완료 (2026-04-27)
+
+목표 달성: Go `network/` 가 EIP-7702 SetCodeTx (0x4) + go-stablenet
+fee-delegation (0x16) 양쪽을 단일 surface 로 노출. SignHash 인터페이스
+도입으로 chain-specific envelope 추가 비용이 핸들러 측 합성으로 격리됨.
+
+**커밋 체인 (7건, Sprint 4c)**:
+
+| SHA | 설명 |
+|---|---|
+| `57ddb54` | feat(signer): add SignHash for chain-specific tx envelopes (Task 1) |
+| `3ab8e9d` | test(signer): tighten SignHash redaction probe + keystore err handling (Task 1 review fix) |
+| `d87fffd` | feat(drivers/remote): add SendRawTransaction (Task 2) |
+| `0e31c69` | feat(network-net): EIP-7702 SetCodeTx via authorization_list (Task 3) |
+| `4a427a9` | chore(network): promote holiman/uint256 to direct dep (Task 3 follow-up) |
+| `515022d` | feat(network-net): node.tx_fee_delegation_send (Task 4) |
+| `bb5c443` | test(network-net): cover fee_delegation BadValueHex + schema alphabetical order (Task 4 review fix) |
+
+**범위 결과**:
+
+1. **`signer.SignHash`** ✅ — 65-byte raw signature 반환. 키 자체는 sealed
+   struct 외부로 누출 안 됨. EIP-7702 authorization tuple + fee-delegation
+   outer hash 의 V/R/S 합성은 핸들러 책임으로 격리.
+2. **`drivers/remote.SendRawTransaction`** ✅ — ethclient 경유로 0x4 / 0x16
+   raw bytes broadcast. type-discriminator-aware.
+3. **EIP-7702 SetCode (0x4)** ✅ — `node.tx_send` 의 `authorization_list`
+   arg 로 다중 authorization 지원. 빈 리스트 = 1559 fall-back.
+4. **Fee Delegation (0x16)** ✅ — `node.tx_fee_delegation_send` 신규 command.
+   stablenet 만 허용 (ethereum/wbft/wemix → NOT_SUPPORTED). sender + fee_payer
+   alias 두 개 필수, schema 알파벳 순서로 정렬.
+5. **보안 경계 Scenario 4** ✅ — fee-delegation 두 키 + 패스워드 stdout /
+   stderr / log 누출 없음 검증.
 
 **Sprint 4d (가칭) — contract / event / state**
 - Contract deploy: bytecode + constructor args → `node.contract_deploy`

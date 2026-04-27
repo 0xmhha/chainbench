@@ -1181,3 +1181,151 @@ func TestE2E_NodeTxWait_SuccessImmediate(t *testing.T) {
 		t.Errorf("last line missing success: %q", last)
 	}
 }
+
+// TestE2E_NodeTxSend_SetCode_AgainstAttachedRemote drives cobra twice
+// in-process to exercise the EIP-7702 SetCode path of node.tx_send: attach
+// a mock RPC, then issue tx_send with one authorization_list entry. The
+// mock captures the broadcast raw-hex; we decode the leading byte to
+// confirm the handler emitted a SetCodeTx (type 4) rather than 1559.
+//
+// decodeBroadcastTxType is defined in handlers_test.go and is in scope
+// here because both files share the `package main` namespace.
+func TestE2E_NodeTxSend_SetCode_AgainstAttachedRemote(t *testing.T) {
+	var sentRaw string
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string            `json:"method"`
+			ID     json.RawMessage   `json:"id"`
+			Params []json.RawMessage `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x%s"}`, req.ID, strings.Repeat("d", 64))
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	// Sender (alice) signs the outer SetCodeTx; authorizer (bob) signs the
+	// inner tuple. Distinct synthetic keys → distinct recovered addresses.
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEY", "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d")
+
+	// attach
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"sc-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// tx_send with authorization_list
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	sendCmd := `{"command":"node.tx_send","args":{"network":"sc-e2e","node_id":"node1","signer":"alice","to":"0x0000000000000000000000000000000000000002","value":"0x0","gas":100000,"max_fee_per_gas":"0x59682f00","max_priority_fee_per_gas":"0x3b9aca00","nonce":0,"authorization_list":[{"chain_id":"0x1","address":"0x000000000000000000000000000000000000beef","nonce":"0x0","signer":"bob"}]}}`
+	root2.SetIn(strings.NewReader(sendCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("tx_send: %v stderr=%s", err, stderr.String())
+	}
+
+	if sentRaw == "" {
+		t.Fatal("mock did not see eth_sendRawTransaction")
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 4 {
+		t.Errorf("tx type = %d, want 4 (SetCode)", got)
+	}
+}
+
+// TestE2E_NodeTxFeeDelegationSend_AgainstAttachedRemote drives cobra
+// twice in-process to exercise the go-stablenet 0x16 fee-delegation
+// path: attach with --override stablenet (so the adapter accepts the
+// fee-delegation envelope), then issue tx_fee_delegation_send with two
+// distinct signer aliases. The mock captures the broadcast raw-hex; we
+// assert the leading byte == 0x16 confirming the outer wrap.
+func TestE2E_NodeTxFeeDelegationSend_AgainstAttachedRemote(t *testing.T) {
+	var sentRaw string
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string            `json:"method"`
+			ID     json.RawMessage   `json:"id"`
+			Params []json.RawMessage `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x%s"}`, req.ID, strings.Repeat("e", 64))
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	t.Setenv("CHAINBENCH_SIGNER_FPAYER_KEY", "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cde8b0c1")
+
+	// attach with --override stablenet so the chain_type adapter accepts
+	// fee-delegation. Without the override the probe path would still
+	// classify the mock as ethereum (no istanbul_* response).
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"fd-e2e","override":"stablenet"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// tx_fee_delegation_send
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	sendCmd := `{"command":"node.tx_fee_delegation_send","args":{"network":"fd-e2e","node_id":"node1","signer":"alice","fee_payer":"fpayer","to":"0x0000000000000000000000000000000000000003","value":"0x0","max_fee_per_gas":"0x59682f00","max_priority_fee_per_gas":"0x3b9aca00","gas":21000,"nonce":7}}`
+	root2.SetIn(strings.NewReader(sendCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("tx_fee_delegation_send: %v stderr=%s", err, stderr.String())
+	}
+
+	if sentRaw == "" {
+		t.Fatal("mock did not see eth_sendRawTransaction")
+	}
+	// Fee-delegation envelope leading byte is 0x16 (decimal 22). The shared
+	// decodeBroadcastTxType helper returns the int form of that byte.
+	if got := decodeBroadcastTxType(t, sentRaw); got != 0x16 {
+		t.Errorf("tx type = 0x%x, want 0x16 (fee-delegation)", got)
+	}
+}

@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-27 (Sprint 4b 완료 — keystore + EIP-1559 + tx.wait)
+> **최종 업데이트**: 2026-04-27 (Sprint 4c 완료 — Fee Delegation + EIP-7702)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -784,6 +784,16 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [x] EIP-1559 dynamic-fee tx (`max_fee_per_gas` / `max_priority_fee_per_gas`)
 - [x] `node.tx_wait` — receipt polling
 - [x] P1 follow-up 흡수: `CHAINBENCH_NET_LOG` 동작 수정 + `handlers.go` (1046 lines) 분할 + `SignTx` ctx 주석
+
+완료 (2026-04-27)
+
+**Sprint 4c — Fee Delegation (0x16) + EIP-7702 SetCode (0x4)** — 완료 (2026-04-27)
+- [x] `signer.SignHash` 인터페이스 추가 — chain-specific tx envelope 의 65-byte raw 서명 경로 (V/R/S 합성은 핸들러 책임, 키 자체는 sealed struct 외부로 누출 안 됨)
+- [x] `drivers/remote.SendRawTransaction` — 0x4 / 0x16 raw bytes 를 ethclient 경유로 broadcast
+- [x] `node.tx_send` 의 `authorization_list` arg — EIP-7702 SetCodeTx 구성 + 다중 authorization 서명
+- [x] `node.tx_fee_delegation_send` — go-stablenet 0x16 envelope (sender 내부 + fee_payer 외부 이중 서명) + adapter 축 NOT_SUPPORTED 가드 (ethereum/wbft/wemix 거절)
+- [x] 보안 경계 Scenario 4 — fee-delegation 두 키 + 패스워드 stdout/stderr/log 누출 없음 검증
+- [x] Go E2E + bash spawn 테스트 (`node-tx-set-code.sh` / `node-tx-fee-delegation.sh`)
 
 완료 (2026-04-27)
 

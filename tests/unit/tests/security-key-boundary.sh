@@ -293,4 +293,63 @@ for label in "stdout" "stderr" "log"; do
 done
 assert_eq "leak-checked" "leak-checked" "no keystore key/password in stdout/stderr/log"
 
+# ---- Scenario 4: fee-delegation tx does not leak sender or fee_payer keys. ----
+# Sprint 4c: stablenet 0x16 fee-delegation routes through TWO independent
+# signers — sender (raw env _KEY for "carol") + fee_payer (keystore for
+# "bob", reused from Scenario 3). The wire payload includes inner sender
+# signature + outer fee_payer signature; both come from key material that
+# must never surface in any observable stream.
+#
+# Reuses:
+#   - The mock RPC server still alive on ${PORT} (cleanup trap fires on EXIT).
+#     The mock answers eth_chainId 0x1 + eth_sendRawTransaction with a fake
+#     hash for any raw bytes — it does NOT inspect the tx envelope, so the
+#     0x16-prefixed payload is accepted unconditionally.
+#   - The keystore + password generated in Scenario 3 (signer "bob" via
+#     CHAINBENCH_SIGNER_BOB_KEYSTORE / _PASSWORD). GEN_KEY_HEX + KS_PASSWORD
+#     are still in scope.
+#
+# Override: --override stablenet short-circuits the probe so only eth_chainId
+# is needed for attach (the existing mock already answers that).
+describe "security: fee-delegation tx does not leak sender or fee_payer keys"
+
+CAROL_KEY_HEX="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+export CHAINBENCH_SIGNER_CAROL_KEY="0x${CAROL_KEY_HEX}"
+
+attach_data="$(cb_net_call "network.attach" \
+  "{\"rpc_url\":\"http://127.0.0.1:${PORT}\",\"name\":\"sec-fd\",\"override\":\"stablenet\"}" 2>/dev/null)"
+assert_eq "$(jq -r .name <<<"$attach_data")" "sec-fd" "fd attach name"
+
+FD_LOG="${TMPDIR_ROOT}/fd-tx.log"
+FD_ERR="${TMPDIR_ROOT}/fd-tx.err"
+FD_OUT="${TMPDIR_ROOT}/fd-tx.out"
+export CHAINBENCH_NET_LOG="${FD_LOG}"
+: > "${FD_LOG}"
+
+FD_ENVELOPE='{"command":"node.tx_fee_delegation_send","args":{"network":"sec-fd","node_id":"node1","signer":"carol","fee_payer":"bob","to":"0x0000000000000000000000000000000000000003","value":"0x0","max_fee_per_gas":"0x1","max_priority_fee_per_gas":"0x1","gas":21000,"nonce":0}}'
+fd_rc=0
+printf '%s\n' "${FD_ENVELOPE}" | "${BINARY}" run >"${FD_OUT}" 2>"${FD_ERR}" || fd_rc=$?
+assert_eq "$fd_rc" "0" "fee_delegation binary exit code"
+
+for label in stdout stderr log; do
+  case "$label" in
+    stdout) cf="${FD_OUT}" ;;
+    stderr) cf="${FD_ERR}" ;;
+    log)    cf="${FD_LOG}" ;;
+  esac
+  if [[ ! -f "${cf}" ]]; then
+    continue
+  fi
+  if grep -qi -- "${CAROL_KEY_HEX}" "${cf}" 2>/dev/null; then
+    echo "FAIL: ${label} leaks sender key" >&2; exit 1
+  fi
+  if grep -qi -- "${GEN_KEY_HEX}" "${cf}" 2>/dev/null; then
+    echo "FAIL: ${label} leaks fee_payer keystore key" >&2; exit 1
+  fi
+  if grep -q -- "${KS_PASSWORD}" "${cf}" 2>/dev/null; then
+    echo "FAIL: ${label} leaks fee_payer password" >&2; exit 1
+  fi
+done
+assert_eq "leak-checked" "leak-checked" "no fd-key/password in stdout/stderr/log"
+
 unit_summary
