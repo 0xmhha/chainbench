@@ -27,6 +27,24 @@ func SetupLogger() *slog.Logger {
 	return SetupLoggerTo(w, parseLevel(os.Getenv(envLogLevel)))
 }
 
+// SetupLoggerWithFallback configures a slog JSON handler with the same env
+// behaviour as SetupLogger (CHAINBENCH_NET_LOG / CHAINBENCH_NET_LOG_LEVEL),
+// but routes to the provided fallback writer when CHAINBENCH_NET_LOG is unset.
+// Callers like runOnce pass their caller-injected stderr writer here so that
+// production honours env redirection while tests still capture log output via
+// the writer they injected.
+func SetupLoggerWithFallback(fallback io.Writer) *slog.Logger {
+	w := fallback
+	if path := os.Getenv(envLogFile); path != "" {
+		f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err == nil {
+			w = f
+		}
+		// on error, silently fall back — logging must not block startup
+	}
+	return SetupLoggerTo(w, parseLevel(os.Getenv(envLogLevel)))
+}
+
 // SetupLoggerTo is the testable variant with explicit writer and level.
 // It also installs the returned logger as slog.Default for convenience.
 func SetupLoggerTo(w io.Writer, level slog.Level) *slog.Logger {

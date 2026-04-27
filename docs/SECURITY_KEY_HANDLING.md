@@ -1,6 +1,6 @@
 # Chainbench Key Handling Security Policy
 
-> Last updated: 2026-04-24 (Sprint 4 env-signer)
+> Last updated: 2026-04-27 (Sprint 4 env-signer + CHAINBENCH_NET_LOG fix)
 
 ## Threat Model
 
@@ -103,11 +103,13 @@ accepts a signer alias.
 - EIP-1559 dynamic-fee tx signing (Sprint 4b)
 - Tx confirmation polling (Sprint 4b or later)
 
-## Known Latent Issue
+## Resolved Latent Issues
 
-`CHAINBENCH_NET_LOG` env var is documented in `network/README.md` but is
-not honored by the `run` subcommand path — `cmd/chainbench-net/run.go`
-always routes logs to stderr. The security-key-boundary test works
-correctly (it scans stderr, which is where logs actually go), but the
-env var appears to have no effect. Tracked as a session-local follow-up
-to be addressed in a later sprint.
+- **CHAINBENCH_NET_LOG / CHAINBENCH_NET_LOG_LEVEL** (resolved 2026-04-27):
+  the `run` subcommand previously hard-wired logs to stderr regardless of
+  env. `runOnce` now uses `wire.SetupLoggerWithFallback(stderr)` which
+  routes to the env-configured file when set and falls back to the
+  injected stderr writer otherwise. The security-key-boundary test
+  remains effective: when the env var redirects logs to a file, the test
+  scans the file as well as stderr (the file is part of the audit
+  surface).

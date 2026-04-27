@@ -13,12 +13,12 @@
 #   would only surface when the binary is executed as a subprocess.
 #
 # Log-file note:
-#   chainbench-net's `run` subcommand configures slog explicitly to
-#   stderr (see run.go: wire.SetupLoggerTo(stderr, ...)) and does NOT
-#   route through wire.SetupLogger(), so CHAINBENCH_NET_LOG has no
-#   effect on the run path. The test still sets it and scans the file
-#   — if a future change wires the env var into run, this test will
-#   already cover that stream without modification.
+#   chainbench-net's `run` subcommand routes slog via
+#   wire.SetupLoggerWithFallback(stderr) — when CHAINBENCH_NET_LOG is set
+#   logs land in that file; otherwise they fall back to the caller's
+#   stderr. This test sets CHAINBENCH_NET_LOG to a tmp file and scans
+#   stdout, stderr, AND that file: the audit surface for key-material
+#   leakage covers all three streams.
 #
 # Mock transport: inline python3 JSON-RPC server on an ephemeral port.
 # Mock process is torn down via a trap covering EXIT INT TERM HUP.

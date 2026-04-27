@@ -15,6 +15,11 @@ import (
 	"github.com/0xmhha/chainbench/network/internal/wire"
 )
 
+// runOnce wires logging through SetupLoggerWithFallback so that the
+// CHAINBENCH_NET_LOG / CHAINBENCH_NET_LOG_LEVEL env vars (documented in
+// network/README.md) are honoured. The injected stderr writer remains the
+// fallback when CHAINBENCH_NET_LOG is unset, preserving test capture.
+
 // newRunCmd builds the `run` subcommand. It reads a wire command envelope
 // from stdin, dispatches to a handler, and emits a result NDJSON terminator
 // on stdout. Structured logs go to stderr.
@@ -44,7 +49,7 @@ func newRunCmd() *cobra.Command {
 // stderr. Returns the error (if any) so the caller can map to an exit code.
 // Safe against handler panics via deferred recover.
 func runOnce(stdin io.Reader, stdout, stderr io.Writer, handlers map[string]Handler) (returnErr error) {
-	wire.SetupLoggerTo(stderr, slog.LevelInfo)
+	wire.SetupLoggerWithFallback(stderr)
 	emitter := wire.NewEmitter(stdout)
 	bus := events.NewBus(emitter)
 	defer bus.Close()

@@ -121,3 +121,63 @@ func TestSetupLogger_EnvPathBadFallsBackToStderr(t *testing.T) {
 	// No panic, no assertion on output (it went to stderr); just proving the
 	// fallback branch is reached.
 }
+
+func TestSetupLoggerWithFallback_NoEnv_UsesFallback(t *testing.T) {
+	t.Setenv(envLogFile, "")
+	t.Setenv(envLogLevel, "")
+	var buf bytes.Buffer
+	logger := SetupLoggerWithFallback(&buf)
+	logger.Info("from-fallback")
+	if !strings.Contains(buf.String(), "from-fallback") {
+		t.Errorf("fallback writer should receive log: %q", buf.String())
+	}
+}
+
+func TestSetupLoggerWithFallback_EnvPath_BypassesFallback(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "net.log")
+	t.Setenv(envLogFile, path)
+	t.Setenv(envLogLevel, "info")
+
+	var fallback bytes.Buffer
+	logger := SetupLoggerWithFallback(&fallback)
+	logger.Info("env-routed")
+
+	if fallback.Len() != 0 {
+		t.Errorf("fallback should be empty when env redirects to file: %q", fallback.String())
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read log file: %v", err)
+	}
+	if !strings.Contains(string(data), "env-routed") {
+		t.Errorf("log file missing env-routed: %q", string(data))
+	}
+}
+
+func TestSetupLoggerWithFallback_RespectsLogLevel(t *testing.T) {
+	t.Setenv(envLogFile, "")
+	t.Setenv(envLogLevel, "warn")
+	var buf bytes.Buffer
+	logger := SetupLoggerWithFallback(&buf)
+	logger.Info("info-hidden")
+	logger.Warn("warn-shown")
+	out := buf.String()
+	if strings.Contains(out, "info-hidden") {
+		t.Errorf("info should be hidden at warn level: %q", out)
+	}
+	if !strings.Contains(out, "warn-shown") {
+		t.Errorf("warn should be visible at warn level: %q", out)
+	}
+}
+
+func TestSetupLoggerWithFallback_EnvPathBadFallsBack(t *testing.T) {
+	t.Setenv(envLogFile, "/nonexistent/dir/that/does/not/exist/net.log")
+	t.Setenv(envLogLevel, "info")
+	var buf bytes.Buffer
+	logger := SetupLoggerWithFallback(&buf)
+	logger.Info("after-bad-env")
+	if !strings.Contains(buf.String(), "after-bad-env") {
+		t.Errorf("fallback should receive log when env path is unreachable: %q", buf.String())
+	}
+}
