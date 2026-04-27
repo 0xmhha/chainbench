@@ -2639,6 +2639,33 @@ func TestHandleNodeTxFeeDelegationSend_BadToAddress(t *testing.T) {
 	}
 }
 
+// Spec §9.3 BadValueHex: malformed value hex must surface as INVALID_ARGS at
+// the boundary, before any signer.Load or RPC round-trip. The handler parses
+// `value` after the required-field block but before resolveNode, so this test
+// mirrors _BadToAddress (no mock, no fixture, no env-keyed signers required).
+func TestHandleNodeTxFeeDelegationSend_BadValueHex(t *testing.T) {
+	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "stab",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"fee_payer":                "fpayer",
+		"to":                       "0x0000000000000000000000000000000000000002",
+		"value":                    "not-hex",
+		"max_fee_per_gas":          "0x1",
+		"max_priority_fee_per_gas": "0x1",
+		"gas":                      21000,
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
 func TestHandleNodeTxFeeDelegationSend_MissingMaxFeeFields(t *testing.T) {
 	h := newHandleNodeTxFeeDelegationSend(t.TempDir())
 	args, _ := json.Marshal(map[string]any{

@@ -22,8 +22,8 @@
         "node.block_number",
         "node.chain_id",
         "node.gas_price",
-        "node.tx_send",
         "node.tx_fee_delegation_send",
+        "node.tx_send",
         "node.tx_wait",
         "tx.send",
         "subscription.open"
