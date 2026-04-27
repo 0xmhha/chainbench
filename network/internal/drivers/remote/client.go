@@ -5,6 +5,7 @@ package remote
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -154,6 +155,21 @@ func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) err
 		return fmt.Errorf("remote.SendTransaction: %w", err)
 	}
 	return nil
+}
+
+// TransactionReceipt fetches the receipt for a tx hash. Returns
+// ethereum.NotFound (verbatim) when the endpoint reports a null result,
+// so callers can distinguish "still pending" from a real RPC failure
+// without string-matching error messages.
+func (c *Client) TransactionReceipt(ctx context.Context, hash common.Hash) (*types.Receipt, error) {
+	rcpt, err := c.rpc.TransactionReceipt(ctx, hash)
+	if err != nil {
+		if errors.Is(err, ethereum.NotFound) {
+			return nil, ethereum.NotFound
+		}
+		return nil, fmt.Errorf("remote.TransactionReceipt: %w", err)
+	}
+	return rcpt, nil
 }
 
 // Close releases the underlying HTTP/RPC connection. Nil-safe on the

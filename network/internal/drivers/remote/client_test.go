@@ -3,6 +3,7 @@ package remote
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -419,6 +420,76 @@ func TestClient_SendTransaction(t *testing.T) {
 	}
 	if receivedHex == "" {
 		t.Error("server did not receive a signed tx param")
+	}
+}
+
+func TestClient_TransactionReceipt_Found(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionReceipt" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":{
+                "transactionHash":"0x%s",
+                "blockHash":"0x2222222222222222222222222222222222222222222222222222222222222222",
+                "blockNumber":"0x1",
+                "cumulativeGasUsed":"0x5208",
+                "gasUsed":"0x5208",
+                "status":"0x1",
+                "contractAddress":null,
+                "logsBloom":"0x%s",
+                "logs":[]}}`, req.ID, strings.Repeat("a", 64), strings.Repeat("0", 512))
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	h := common.HexToHash("0x" + strings.Repeat("a", 64))
+	rcpt, err := c.TransactionReceipt(ctx, h)
+	if err != nil {
+		t.Fatalf("TransactionReceipt: %v", err)
+	}
+	if rcpt.Status != 1 {
+		t.Errorf("status = %d, want 1", rcpt.Status)
+	}
+}
+
+func TestClient_TransactionReceipt_NotFound(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionReceipt" {
+			// ethclient.TransactionReceipt returns ethereum.NotFound when result is null.
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":null}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, err = c.TransactionReceipt(ctx, common.HexToHash("0x"+strings.Repeat("b", 64)))
+	if !errors.Is(err, ethereum.NotFound) {
+		t.Errorf("err = %v, want ethereum.NotFound", err)
 	}
 }
 
