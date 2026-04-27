@@ -340,7 +340,10 @@ func TestSigner_SignHash_KeystoreLoaded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pub, _ := crypto.SigToPub(hash[:], sig)
+	pub, err := crypto.SigToPub(hash[:], sig)
+	if err != nil {
+		t.Fatalf("SigToPub: %v", err)
+	}
 	if got := crypto.PubkeyToAddress(*pub); got != want {
 		t.Errorf("recovered = %s, want %s", got.Hex(), want.Hex())
 	}
@@ -352,17 +355,26 @@ func TestSigner_SignHash_RedactionBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Force an error path via zero-length hash. crypto.Sign requires
-	// exactly 32 bytes; passing a wrong-shape input should fail in a way
-	// that DOES NOT echo key bytes.
-	_, err = s.SignHash(context.Background(), common.Hash{})
-	// Allowed: the implementation may treat zero-hash as valid and return
-	// a signature. If it does, we instead probe via a different angle:
-	// assert the signer's String/GoString still redact after a SignHash
-	// call (state should not leak across).
+
+	hash := common.HexToHash("0x" + strings.Repeat("c", 64))
+	sig, err := s.SignHash(context.Background(), hash)
+	if err != nil {
+		t.Fatalf("SignHash: %v", err)
+	}
+
+	// The 65-byte signature must NEVER contain the raw key hex as a substring.
+	// crypto.Sign output is deterministic for fixed key+hash; if the implementation
+	// ever leaked key bytes into the returned slice (it doesn't, but a future
+	// refactor could), the hex of the sig would contain the key hex.
+	sigHex := strings.ToLower(fmt.Sprintf("%x", sig))
+	if strings.Contains(sigHex, keyHex64) {
+		t.Errorf("signature bytes leak key material: sigHex=%q", sigHex)
+	}
+
+	// Formatter contract still applies after the SignHash call — state must
+	// not have shifted in a way that exposes the key.
 	out := fmt.Sprintf("%v %+v %#v %s", s, s, s, s)
-	if strings.Contains(out, keyHex64) {
+	if strings.Contains(strings.ToLower(out), keyHex64) {
 		t.Errorf("formatter leaks key after SignHash: %q", out)
 	}
-	_ = err
 }
