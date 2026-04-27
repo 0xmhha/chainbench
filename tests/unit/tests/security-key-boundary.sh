@@ -252,9 +252,22 @@ KS_PATH="${TMPDIR_ROOT}/keystore.json"
 KS_PASSWORD="ks-test-pass"
 
 GEN_LOG="${TMPDIR_ROOT}/gen.log"
-( cd "${CHAINBENCH_DIR}/network" && go run "${GEN_DIR}/main.go" "${KS_PATH}" "${KS_PASSWORD}" ) 2>"${GEN_LOG}" >/dev/null
-GEN_KEY_HEX="$(cat "${GEN_LOG}")"
-[[ -n "${GEN_KEY_HEX}" ]] || { echo "FATAL: keystore gen produced no hex" >&2; exit 1; }
+gen_rc=0
+( cd "${CHAINBENCH_DIR}/network" && go run "${GEN_DIR}/main.go" "${KS_PATH}" "${KS_PASSWORD}" ) 2>"${GEN_LOG}" >/dev/null || gen_rc=$?
+if [[ "$gen_rc" -ne 0 ]]; then
+  echo "FATAL: gen-keystore failed rc=$gen_rc" >&2
+  cat "${GEN_LOG}" >&2 || true
+  exit 1
+fi
+# Helper prints the raw hex on its last stderr line. Anything else (build chatter
+# from `go run`) would land before that line, so use tail -n1.
+GEN_KEY_HEX="$(tail -n1 "${GEN_LOG}")"
+if ! [[ "${GEN_KEY_HEX}" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "FATAL: gen-keystore did not emit a 64-char hex private key" >&2
+  echo "--- gen log ---" >&2
+  cat "${GEN_LOG}" >&2 || true
+  exit 1
+fi
 
 export CHAINBENCH_SIGNER_BOB_KEYSTORE="${KS_PATH}"
 export CHAINBENCH_SIGNER_BOB_KEYSTORE_PASSWORD="${KS_PASSWORD}"
