@@ -7,10 +7,16 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 
 	"github.com/0xmhha/chainbench/network/internal/signer"
 )
@@ -176,5 +182,123 @@ func TestLoad_RejectsLeadingHyphenAlias(t *testing.T) {
 				t.Errorf("alias %q: err = %v, want ErrInvalidAlias", name, err)
 			}
 		})
+	}
+}
+
+// keystoreFixture builds an EIP-2335-style encrypted keystore JSON file in dir
+// using a freshly-generated secp256k1 key, returns the path and the derived
+// address. Used by the keystore-branch tests below.
+func keystoreFixture(t *testing.T, dir, password string) (path string, addr common.Address) {
+	t.Helper()
+	key, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, err := uuid.NewRandom()
+	if err != nil {
+		t.Fatal(err)
+	}
+	k := &keystore.Key{
+		Id:         id,
+		Address:    crypto.PubkeyToAddress(key.PublicKey),
+		PrivateKey: key,
+	}
+	enc, err := keystore.EncryptKey(k, password, keystore.LightScryptN, keystore.LightScryptP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path = filepath.Join(dir, "keystore.json")
+	if err := os.WriteFile(path, enc, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path, k.Address
+}
+
+func TestLoad_Keystore_Happy(t *testing.T) {
+	dir := t.TempDir()
+	path, want := keystoreFixture(t, dir, "secret")
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEYSTORE", path)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEYSTORE_PASSWORD", "secret")
+	s, err := signer.Load("alice")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if s.Address() != want {
+		t.Errorf("addr = %s, want %s", s.Address().Hex(), want.Hex())
+	}
+}
+
+func TestLoad_Keystore_WrongPassword(t *testing.T) {
+	dir := t.TempDir()
+	path, _ := keystoreFixture(t, dir, "right")
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEYSTORE", path)
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEYSTORE_PASSWORD", "wrong")
+	_, err := signer.Load("bob")
+	if !errors.Is(err, signer.ErrInvalidKey) {
+		t.Errorf("err = %v, want ErrInvalidKey", err)
+	}
+	if strings.Contains(err.Error(), "wrong") {
+		t.Errorf("error leaks password: %v", err)
+	}
+}
+
+func TestLoad_Keystore_MissingPasswordEnv(t *testing.T) {
+	dir := t.TempDir()
+	path, _ := keystoreFixture(t, dir, "secret")
+	t.Setenv("CHAINBENCH_SIGNER_CAROL_KEYSTORE", path)
+	// Deliberately do not set password.
+	_, err := signer.Load("carol")
+	if !errors.Is(err, signer.ErrInvalidKey) {
+		t.Errorf("err = %v, want ErrInvalidKey", err)
+	}
+}
+
+func TestLoad_Keystore_FileNotFound(t *testing.T) {
+	t.Setenv("CHAINBENCH_SIGNER_DAVE_KEYSTORE", "/nonexistent/keystore.json")
+	t.Setenv("CHAINBENCH_SIGNER_DAVE_KEYSTORE_PASSWORD", "x")
+	_, err := signer.Load("dave")
+	if !errors.Is(err, signer.ErrInvalidKey) {
+		t.Errorf("err = %v, want ErrInvalidKey", err)
+	}
+}
+
+func TestLoad_Keystore_RawKeyWins(t *testing.T) {
+	// Both env paths set: raw KEY must take precedence.
+	dir := t.TempDir()
+	path, ksAddr := keystoreFixture(t, dir, "p")
+	t.Setenv("CHAINBENCH_SIGNER_EVE_KEYSTORE", path)
+	t.Setenv("CHAINBENCH_SIGNER_EVE_KEYSTORE_PASSWORD", "p")
+	rawKey := "0x" + keyHex64
+	t.Setenv("CHAINBENCH_SIGNER_EVE_KEY", rawKey)
+	s, err := signer.Load("eve")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Address() == ksAddr {
+		t.Errorf("address came from keystore; raw KEY should win")
+	}
+}
+
+func TestLoad_Keystore_RedactionBoundary(t *testing.T) {
+	dir := t.TempDir()
+	path, _ := keystoreFixture(t, dir, "p")
+	t.Setenv("CHAINBENCH_SIGNER_FRANK_KEYSTORE", path)
+	t.Setenv("CHAINBENCH_SIGNER_FRANK_KEYSTORE_PASSWORD", "p")
+	s, err := signer.Load("frank")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// %v / %+v / %#v / %s and slog.TextHandler must all redact.
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+	logger.Info("loaded", "signer", s)
+	if !strings.Contains(buf.String(), "***") {
+		t.Errorf("slog must redact: %q", buf.String())
+	}
+	for _, format := range []string{"%v", "%+v", "%#v", "%s"} {
+		out := fmt.Sprintf(format, s)
+		if strings.Contains(out, "PrivateKey") || strings.Contains(out, "ecdsa") {
+			t.Errorf("fmt %s leaks structure: %q", format, out)
+		}
 	}
 }

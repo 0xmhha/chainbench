@@ -23,10 +23,26 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+// Env var suffixes used to look up key material for an alias. The full
+// variable name is built by envName(alias, suffix) below.
+const (
+	envKeySuffix              = "_KEY"
+	envKeystoreSuffix         = "_KEYSTORE"
+	envKeystorePasswordSuffix = "_KEYSTORE_PASSWORD"
+)
+
+// envName composes the canonical CHAINBENCH_SIGNER_<ALIAS><SUFFIX> env var
+// name. Alias is uppercased; aliasRE has already filtered Unicode out so
+// strings.ToUpper is safe here.
+func envName(alias, suffix string) string {
+	return "CHAINBENCH_SIGNER_" + strings.ToUpper(alias) + suffix
+}
 
 // Alias is the operator-chosen name used to look up key material in env.
 type Alias string
@@ -94,25 +110,73 @@ func (*sealed) LogValue() slog.Value { return slog.StringValue("***") }
 func (*sealed) String() string   { return "<signer:***>" }
 func (*sealed) GoString() string { return "<signer:***>" }
 
-// Load resolves alias → Signer via env var. Returns ErrInvalidAlias for
-// structurally bad names, ErrUnknownAlias when no env var is set,
-// ErrInvalidKey when the env value is not a valid hex private key.
+// Load resolves alias → Signer via env var. Resolution order:
+//  1. raw _KEY (hex private key) wins so operators can pin a deterministic
+//     test key without removing the keystore env;
+//  2. _KEYSTORE + _KEYSTORE_PASSWORD (encrypted keystore JSON file);
+//  3. neither set → ErrUnknownAlias.
+//
+// Returns ErrInvalidAlias for structurally bad names, ErrUnknownAlias when no
+// env var is set, ErrInvalidKey for any failure decoding raw key bytes or
+// decrypting a keystore file.
 func Load(alias Alias) (Signer, error) {
 	a := string(alias)
 	if a == "" || !aliasRE.MatchString(a) {
 		return nil, fmt.Errorf("%w: %q", ErrInvalidAlias, a)
 	}
-	envName := "CHAINBENCH_SIGNER_" + strings.ToUpper(a) + "_KEY"
-	raw := os.Getenv(envName)
-	if raw == "" {
-		return nil, fmt.Errorf("%w: %s (env %s not set)", ErrUnknownAlias, a, envName)
+	keyEnv := envName(a, envKeySuffix)
+	if raw := os.Getenv(keyEnv); raw != "" {
+		return loadFromRawKey(alias, raw, keyEnv)
 	}
-	hex := strings.TrimPrefix(raw, "0x")
-	// Validate without ever embedding the raw value in an error message.
-	key, err := crypto.HexToECDSA(hex)
+	ksEnv := envName(a, envKeystoreSuffix)
+	if path := os.Getenv(ksEnv); path != "" {
+		password := os.Getenv(envName(a, envKeystorePasswordSuffix))
+		return loadFromKeystore(alias, path, password)
+	}
+	return nil, fmt.Errorf("%w: %s (env %s and %s not set)",
+		ErrUnknownAlias, a, keyEnv, ksEnv)
+}
+
+// loadFromRawKey factors the existing Sprint 4 path so Load reads cleanly.
+// envName is the variable consulted; embedded in errors for operator
+// diagnostics but the raw value is never echoed.
+func loadFromRawKey(alias Alias, raw, envName string) (*sealed, error) {
+	hexStr := strings.TrimPrefix(raw, "0x")
+	key, err := crypto.HexToECDSA(hexStr)
 	if err != nil {
-		return nil, fmt.Errorf("%w: alias=%s (env %s)", ErrInvalidKey, a, envName)
+		return nil, fmt.Errorf("%w: alias=%s (env %s)",
+			ErrInvalidKey, string(alias), envName)
 	}
-	addr := crypto.PubkeyToAddress(key.PublicKey)
-	return &sealed{alias: alias, addr: addr, key: key}, nil
+	return &sealed{
+		alias: alias,
+		addr:  crypto.PubkeyToAddress(key.PublicKey),
+		key:   key,
+	}, nil
+}
+
+// loadFromKeystore reads an encrypted keystore file at `path` and decrypts
+// it with `password`. Any failure returns an ErrInvalidKey wrapper that
+// references the alias and the relevant env var name only — never the file
+// content, the path content, or the password value.
+func loadFromKeystore(alias Alias, path, password string) (*sealed, error) {
+	a := string(alias)
+	if password == "" {
+		return nil, fmt.Errorf("%w: alias=%s (env %s not set)",
+			ErrInvalidKey, a, envName(a, envKeystorePasswordSuffix))
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("%w: alias=%s (env %s unreadable)",
+			ErrInvalidKey, a, envName(a, envKeystoreSuffix))
+	}
+	k, err := keystore.DecryptKey(raw, password)
+	if err != nil {
+		return nil, fmt.Errorf("%w: alias=%s (env %s decrypt failed)",
+			ErrInvalidKey, a, envName(a, envKeystoreSuffix))
+	}
+	return &sealed{
+		alias: alias,
+		addr:  crypto.PubkeyToAddress(k.PrivateKey.PublicKey),
+		key:   k.PrivateKey,
+	}, nil
 }
