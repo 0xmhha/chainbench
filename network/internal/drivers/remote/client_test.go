@@ -493,6 +493,76 @@ func TestClient_TransactionReceipt_NotFound(t *testing.T) {
 	}
 }
 
+// TestClient_SendRawTransaction_Happy asserts the wrapper hex-encodes the
+// raw bytes once and forwards them as the single string param to
+// eth_sendRawTransaction. The mock captures Params[0] and verifies it is
+// the canonical lowercase hex of the input ([]byte{0x16, 0xc0} -> "0x16c0").
+func TestClient_SendRawTransaction_Happy(t *testing.T) {
+	var sentParam string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_sendRawTransaction" {
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &sentParam)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x%s"}`, req.ID, strings.Repeat("a", 64))
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	raw := []byte{0x16, 0xc0}
+	if err := c.SendRawTransaction(ctx, raw); err != nil {
+		t.Fatalf("SendRawTransaction: %v", err)
+	}
+	if sentParam != "0x16c0" {
+		t.Errorf("sent param = %q, want 0x16c0", sentParam)
+	}
+}
+
+// TestClient_SendRawTransaction_Reject asserts an endpoint rejection
+// (RPC error -32000) is surfaced through the remote.SendRawTransaction
+// wrapper prefix so callers can recognize broadcast failures without
+// string-matching the upstream message.
+func TestClient_SendRawTransaction_Reject(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32000,"message":"invalid tx"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	err = c.SendRawTransaction(ctx, []byte{0x16, 0xc0})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "remote.SendRawTransaction") {
+		t.Errorf("err missing wrap prefix: %v", err)
+	}
+}
+
 // Guards against the silent-bypass hazard: passing a Transport for a non-HTTP
 // URL (ws/wss/ipc) must error loudly since WithHTTPClient is ignored by
 // those schemes and auth headers would be dropped.

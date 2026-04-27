@@ -13,6 +13,7 @@ import (
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -154,6 +155,24 @@ func (c *Client) SendTransaction(ctx context.Context, tx *types.Transaction) err
 	if err := c.rpc.SendTransaction(ctx, tx); err != nil {
 		return fmt.Errorf("remote.SendTransaction: %w", err)
 	}
+	return nil
+}
+
+// SendRawTransaction broadcasts pre-encoded RLP bytes via eth_sendRawTransaction.
+// Used by chain-specific tx types whose envelopes ethclient.SendTransaction does
+// not understand (e.g. go-stablenet FeeDelegateDynamicFeeTx 0x16). The caller
+// is responsible for constructing + signing the bytes; this wrapper only
+// formats the hex payload and forwards.
+//
+// The returned tx hash from the endpoint is intentionally discarded — the
+// caller already has the canonical hash via keccak256(raw) and we don't want
+// to rely on the endpoint's echo for correctness.
+func (c *Client) SendRawTransaction(ctx context.Context, raw []byte) error {
+	var result string
+	if err := c.rpc.Client().CallContext(ctx, &result, "eth_sendRawTransaction", hexutil.Encode(raw)); err != nil {
+		return fmt.Errorf("remote.SendRawTransaction: %w", err)
+	}
+	_ = result
 	return nil
 }
 
