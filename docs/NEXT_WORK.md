@@ -132,6 +132,14 @@ chainbench/
 
 ## 3. 다음 작업 — 우선순위별
 
+> **상위 컨텍스트** (2026-04-27 정렬): chainbench 의 두 모드 (A) coding agent
+> evaluation harness, (B) 독립 도구 가운데 **모드 (A) 의 evaluation 표면 강화**
+> 가 향후 sprint 의 메인 동력이다. 자세한 매트릭스는 `docs/EVALUATION_CAPABILITY.md`,
+> 검토 근거는 `docs/EVALUATION_HARNESS_REVIEW.md`.
+>
+> Sprint 4 시리즈 (4b → 4c → 4d) 가 Go `network/` 의 tx 능력을 채우고,
+> Sprint 5 가 그 능력을 MCP high-level tool 로 노출 + LLM 친화 결과 변환을 한다.
+
 ### 🟥 Priority 1 — Sprint 4 에서 이월된 follow-ups (4b 에 자연 흡수)
 
 이 항목들은 Sprint 4 리뷰에서 identified 되었고, **Sprint 4b 에서 자연스럽게
@@ -191,21 +199,55 @@ chainbench/
 - T5: `CHAINBENCH_NET_LOG` fix + SignTx ctx 주석
 - T6: E2E + bash 테스트 + 문서 + 로드맵
 
-### 🟨 Priority 3 — Sprint 5 (VISION §6 의 원래 Sprint 5)
+### 🟧 Priority 2.5 — Sprint 4 시리즈: evaluation tx 매트릭스 Go 포팅 (4b 후속)
 
-`docs/VISION_AND_ROADMAP.md` §6 Sprint 5 기술:
-- `requires_capabilities` 테스트 프론트매터 점진 부여 (§5.5)
-- `drivers/sshremote` 설계 초안 (Q6, S6)
-- Hybrid 네트워크 샘플 프로파일 (`profiles/hybrid-example.yaml`)
-- MCP (`mcp-server/src/utils/exec.ts`) 확장 — 첫 네트워크 바이너리 경유 tool 1~2개 전환 (§5.17.7)
+**배경**: 사용자 결정 (2026-04-27, `docs/EVALUATION_HARNESS_REVIEW.md` Q3) —
+Sprint 4b scope 는 그대로 두고, evaluation 을 위한 모든 테스트 지원 작업을
+Sprint 4 시리즈(4c, 4d, ...)로 이어서 진행. bash Layer 2 lib (외부 도구
+cast / Go helper / Python 위에서 동작) 의 능력을 Go `network/` 로 이식하여
+coding agent 가 단일 surface 로 호출 가능하게 만드는 것이 목표.
 
-**분해 제안**:
-- **5a**: capability gate (network.capabilities 커맨드 + test 메타데이터 추가)
-- **5b**: SSHRemoteDriver 설계 + 초기 구현
-- **5c**: MCP 툴 2~3개 network 바이너리로 이관
-- **5d**: Hybrid 네트워크 예제 (local + remote 혼합 attach, 테스트 시나리오)
+목표 cell 은 `docs/EVALUATION_CAPABILITY.md` §2 / §4 의 Go column.
 
-각 서브스프린트는 독립적. 순서는 사용자 필요에 따라.
+**Sprint 4c (가칭) — chain-specific tx 타입**
+- Fee Delegation (0x16) tx 구성 + 이중 서명 + 전송
+  - `node.tx_send` args 확장 또는 새 command (`node.tx_fee_delegation_send` 후보)
+  - go-stablenet 고유. wbft/wemix/ethereum adapter 에서는 미지원 → adapter 축으로 분기
+- EIP-7702 SetCode (0x4) — authorization list 구성
+- 테스트: env signer 두 개 (sender + fee payer) + golden raw tx 검증
+
+**Sprint 4d (가칭) — contract / event / state**
+- Contract deploy: bytecode + constructor args → `node.contract_deploy`
+- Contract call: ABI encode/decode → `node.contract_call`
+- Event log fetch + decode → `node.events_get`
+- Account state assert (balance/nonce/code/storage) → `node.account_state`
+- ABI 파싱: `go-ethereum/accounts/abi` 활용 (이미 deps 에 있음)
+
+**의존**: 4c 와 4d 는 독립이지만, Go `network/` 의 bash dependency 끊는
+효과는 둘 다 끝나야 의미 있음.
+
+### 🟨 Priority 3 — Sprint 5 (Sprint 4 시리즈 후, MCP 우선)
+
+**배경**: 사용자 결정 (2026-04-27, Q4) — MCP 이관은 Sprint 4 시리즈 이후.
+즉 Go `network/` 의 evaluation 능력이 충분히 채워진 후 MCP 가 그 위에
+high-level evaluation tool 을 노출.
+
+`docs/VISION_AND_ROADMAP.md` §6 Sprint 5 의 원래 분해 + 우선순위 재배치:
+
+- **5c (1순위)**: MCP high-level evaluation tool 신설 + 기존 38 tool 의 점진 이관
+  - 새 도구 후보: `chainbench_tx_send` (1559/legacy/0x16/0x4 통합) /
+    `chainbench_contract_deploy` / `chainbench_contract_call` /
+    `chainbench_events_get` / `chainbench_account_state` /
+    `chainbench_tx_wait`
+  - 기존 도구 reroute: `chainbench_init/start/stop/...` 가 bash CLI 직접 호출 →
+    `chainbench-net` wire 경유로 전환 (§5.17.7)
+  - **결과 변환 layer**: NDJSON `event` / `progress` / `result` →
+    MCP tool response schema. 실패 시 phase 단위 root cause hint 포함
+- **5a**: capability gate (`network.capabilities` 커맨드 + test 프론트매터 `requires_capabilities`)
+- **5b**: SSHRemoteDriver 설계 + 초기 구현 (Q6, S6)
+- **5d**: Hybrid 네트워크 예제 (`profiles/hybrid-example.yaml`) + 테스트 시나리오
+
+5a/5b/5d 는 5c 와 독립. 순서는 사용자 필요에 따라.
 
 ### 🟩 Priority 4 — 누적 tech debt (건드릴 때 같이 처리)
 
@@ -240,6 +282,20 @@ chainbench/
 - wemix 실구현 — wemix 체인 실제 사용 시
 - `chainbench-net network.init` wire handler — bash `chainbench init` 의 Go 포팅 (Adapter 이미 Go 로 있음)
 - 401/403 distinct APIError code — 3b.2b follow-up
+
+**Layer 2 테스트 유틸리티 (구 `REMAINING_TASKS.md` 흡수)**:
+
+이전(2026-04 초중반) Layer 2 테스트 유틸리티 sprint 의 의도적 보류 항목.
+별도 sprint 가 아닌, 트리거 조건 충족 시 자연스럽게 진행.
+
+| 원인 | 항목 | 설명 | 트리거 조건 |
+|---|---|---|---|
+| Phase B | `regression/lib/common.sh` 인라인 함수 | `send_raw_tx` / `gov_full_flow` / `assert_receipt_status` 를 Layer 2 로 점진 마이그레이션 (호환성 유지) | 관련 테스트 신규/수정 시 |
+| Phase F | 고수준 assertion helper | `common.sh` 에 4개 이미 존재 | 반복 패턴 발견 시 |
+| Phase I | rerun-failed + snapshot/restore | ROI 불확실 | 실사용 피드백 후 |
+| Phase K | 의존성 그래프 | `depends_on` 데이터 부족 | 프론트매터 축적 후 |
+| Phase L | MCP 대화형 세션 (daemon) | 구현 난이도 높음 | 명확한 유즈케이스 확보 시 |
+| Phase C-3 | GitHub Actions 워크플로우 | 의도적 보류 | CI 도입 시 |
 
 ---
 

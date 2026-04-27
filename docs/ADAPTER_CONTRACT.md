@@ -1,8 +1,10 @@
 # Adapter Contract
 
-> **Status:** draft — inventory of current `lib/adapters/*.sh` interface, to be
-> promoted to the HAL interface contract (§5.17 of VISION_AND_ROADMAP).
-> Regenerate the tables below with:
+> **Status:** active — bash adapter inventory (LocalDriver backing) + Go adapter
+> port progress (Sprint 3c, 2026-04-24). The bash surface in §1/§2 still
+> backs `lib/cmd_*.sh`; the Go track in §4 is the long-term home of the
+> Network Abstraction adapter axis (§5.17 of VISION_AND_ROADMAP).
+> Regenerate the bash tables below with:
 >
 >     scripts/inventory/list-adapter-functions.sh
 
@@ -49,8 +51,30 @@ Derived from §5.15 event catalog and §5.17 HAL interface.
 | `adapter_supported_tx_types` | Gate chain-specific tx types (0x16, 0x04) for Layer 2 tx_builder | `tx.send` composite |
 | `adapter_probe_markers` | RPC method names whose presence identifies the chain type | `network.probe` (§5.17 Q2) |
 
-## 4. Migration guidance
+## 4. Go adapter track (Sprint 3c, 2026-04-24)
 
-Each gap becomes a named entry in the generated `hal/schema/network.json`
-capability flags and a Go interface method in `hal/internal/adapters/`. See
-§5.12 M0–M4 of the roadmap for the sequencing.
+The Network Abstraction adapter axis lives at `network/internal/adapters/`.
+The interface and factory are landed; per-chain implementations are partial.
+
+| Chain | `GenerateGenesis` | `GenerateToml` | Notes |
+|---|---|---|---|
+| stablenet | real (Go port — golden-pinned) | real (Go port — golden-pinned) | Sprint 3c |
+| wbft | skeleton (returns `ErrNotImplemented`) | skeleton | real impl pending wbft consumer |
+| wemix | skeleton | skeleton | real impl pending wemix consumer |
+
+Interface (see `network/internal/adapters/spec/`):
+
+- `Adapter.GenerateGenesis(profile, template, out, meta, numValidators, baseP2P) error`
+- `Adapter.GenerateToml(profile, nodeIdx, out) error`
+- `Load(chainType string) (Adapter, error)` — factory that maps chain id → impl
+
+The bash adapter (§1) still backs `LocalDriver` for `init/start/stop/node`
+flows; the Go adapter is invoked from new wire handlers as the network
+binary takes over those flows (§5.12 M4). Both tracks coexist until M4
+fully lands.
+
+## 5. Migration guidance
+
+Each remaining gap (§3) becomes a method on the Go `Adapter` interface plus
+(if it crosses the Go/bash boundary) a flag in `network/schema/network.json`.
+See §5.12 M0–M4 of the roadmap for the sequencing.

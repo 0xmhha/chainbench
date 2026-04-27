@@ -1,18 +1,44 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-20 (§5.16 Sub-decisions S1~S8 확정 · §5.17 Go Network 모듈 구현 상세 추가 · §5.12/§6 Go 기반 재작성)
+> **최종 업데이트**: 2026-04-24 (Sprint 4 완료 — signer 경계 + `node.tx_send` 종료. Sprint 3a/3b/3b.2a-c/3c/4 모두 §6 체크박스 갱신)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
+> **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
 ---
 
 ## 1. 프로젝트 비전
 
+### 1.1 상위 목적
+
+chainbench 는 두 모드로 동작한다.
+
+- **(A) coding agent evaluation harness** — `claude-ai` 기반 자동화 코드 개발 시스템이 LLM 으로 코드를 짜고 chainbench 를 e2e 로 호출하여 검증하는 위치. 1차 표면은 **MCP** 이며 결과는 LLM 이 해석 가능한 구조화 형식이어야 한다.
+- **(B) 독립 도구** — 사람이 직접 쓰는 chain 샌드박스/테스트 프레임워크. 1차 표면은 **bash CLI** 이며 결과는 사람 친화 텍스트.
+
+두 모드는 동일 functional core 위의 **다른 표면**이며 대립 관계가 아니다. 우선순위 결정 시 (A) 와 (B) 양쪽 영향을 모두 검토.
+
+### 1.2 핵심 능력
+
+위 두 모드를 모두 지원하기 위한 5가지:
+
 1. **EVM 다체인 지원** — `go-stablenet`(현재), `go-wbft`, `go-wemix`, `go-ethereum`(확장)
 2. **로컬 또는 원격에 체인 네트워크 구성**
-3. **이미 구성된 체인 네트워크에 연결**(attach)
-4. **체인 네트워크에 transaction 전송**
-5. **체인 네트워크에서 log 수집**
+3. **이미 구성된 체인 네트워크에 연결** (attach)
+4. **체인 네트워크에 transaction 전송** — 체인 client 가 지원하는 모든 tx 타입 (legacy / EIP-1559 / fee delegation 0x16 / EIP-7702 / contract deploy/call 등)
+5. **체인 네트워크에서 log 수집** — chain log + application log 분리
+
+### 1.3 외부 컨텍스트 (모드 A)
+
+chainbench 는 `claude-ai` 기반 자동화 시스템의 **Feature 3 — 체인 테스트벤치 통합 (evaluation tool)** 위치를 차지한다. 자세한 외부 컨텍스트는:
+- `docs/claudedocs/README.md` — 외부 문서 인덱스
+- `docs/claudedocs/AUTOMATION_SYSTEM_PROPOSAL_v2.md` Feature 3
+- `docs/claudedocs/WORK_INSTRUCTION.md` Feature 3
+
+evaluation 능력의 매트릭스·sprint 별 도달 목표·coverage 측정은:
+- `docs/EVALUATION_CAPABILITY.md` (active SSoT, sprint 마다 갱신)
+
+단, 모드 (B) 독립 사용 가능성은 항상 보장한다. 모드 (A) 만을 위한 결정으로 (B) 를 깨뜨리지 않는다.
 
 ---
 
@@ -746,12 +772,18 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [ ] `adapters/stablenet` Go 포팅 — 기존 `adapter-contract-stablenet.sh` 계약 테스트 통과
 - [ ] `adapters/wbft` 실구현 시작
 
-**Sprint 4 — 서명 경계 + 보안 검증 (S4/S5)**
-- [ ] `network/internal/signer` — env + keystore 주입 경로 (§5.17.5)
-- [ ] `SignerAlias` 타입 + `Signer` 인터페이스 (key export 불가 보장)
-- [ ] Go 테스트: `signer_test.go` — key material이 error/log에 leak되지 않음
-- [ ] bash 테스트: `unit/tests/security-key-boundary.sh` — 네트워크 바이너리 실행 후 stdout/stderr/log grep
-- [ ] 문서화 — 키 관리 정책 (`docs/SECURITY_KEY_HANDLING.md`)
+**Sprint 4 — 서명 경계 + 보안 검증 (S4/S5)** — env-only 범위 완료 (2026-04-24)
+- [x] `network/internal/signer` — env 주입 경로 (§5.17.5). keystore 는 Sprint 4b 로 이관
+- [x] `SignerAlias` 타입 + `Signer` 인터페이스 (key export 불가 보장 — sealed struct + redaction)
+- [x] Go 테스트: `signer_test.go` — `%v` / `%+v` / `%#v` / `%s` / slog / 에러 메시지 전부 redacted
+- [x] bash 테스트: `unit/tests/security-key-boundary.sh` — 네트워크 바이너리 실행 후 stdout/stderr/log grep
+- [x] 문서화 — 키 관리 정책 (`docs/SECURITY_KEY_HANDLING.md`)
+
+**Sprint 4b — signer 확장 + EIP-1559 + tx.wait (계획)**
+- [ ] keystore provider (`CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE` + `_KEYSTORE_PASSWORD`)
+- [ ] EIP-1559 dynamic-fee tx (`max_fee_per_gas` / `max_priority_fee_per_gas`)
+- [ ] `node.tx_wait` — receipt polling
+- [ ] P1 follow-up 흡수: `CHAINBENCH_NET_LOG` 동작 수정 + `handlers.go` (1046 lines) 분할 + `SignTx` ctx 주석
 
 **Sprint 5 — Capability gate + Hybrid 네트워크 + MCP 이관 시작**
 - [ ] 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)
@@ -766,10 +798,15 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 ## 7. 참고
 
 - 관련 기존 문서
-  - `docs/chainbench-test-system-design.md` — 테스트 시스템 설계
-  - `docs/REMAINING_TASKS.md` — 완료/보류 작업 현황
+  - `docs/NEXT_WORK.md` — 다음 세션 핸드오프 + tech-debt 추적 (Sprint 종료마다 갱신)
+  - `docs/SECURITY_KEY_HANDLING.md` — Sprint 4 결과: 키 주입 / redaction / 경계 검증 정책
+  - `docs/ADAPTER_CONTRACT.md` — bash adapter 인터페이스 인벤토리 (Phase 1 baseline)
+  - `docs/HARDCODING_AUDIT.md` — `lib/cmd_*.sh` 의 `gstable` 하드코딩 9건 (M4 진행 중)
 - 관련 코드 진입점
-  - `lib/chain_adapter.sh`, `lib/adapters/*` — 어댑터 계층
+  - `lib/chain_adapter.sh`, `lib/adapters/*` — bash 어댑터 계층 (LocalDriver backing)
+  - `network/internal/adapters/*` — Go 어댑터 (Sprint 3c — stablenet 실구현, wbft/wemix 스켈레톤)
+  - `network/cmd/chainbench-net` — network abstraction 바이너리 entry
+  - `lib/network_client.sh` — bash → Go 바이너리 NDJSON 브리지
   - `lib/rpc_client.sh`, `tests/lib/rpc.sh` — 현 local/remote 분기 초기 형태
   - `lib/cmd_remote.sh`, `lib/remote_state.sh` — 원격 연결 관리
   - `tests/lib/*.sh` — Layer 2 테스트 라이브러리 (체인 중립화 대상)
