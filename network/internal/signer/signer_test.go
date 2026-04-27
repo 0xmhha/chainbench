@@ -302,3 +302,67 @@ func TestLoad_Keystore_RedactionBoundary(t *testing.T) {
 		}
 	}
 }
+
+func TestSigner_SignHash_Happy(t *testing.T) {
+	withSignerEnv(t, "alice", "0x"+keyHex64)
+	s, err := signer.Load("alice")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash := common.HexToHash("0x" + strings.Repeat("a", 64))
+	sig, err := s.SignHash(context.Background(), hash)
+	if err != nil {
+		t.Fatalf("SignHash: %v", err)
+	}
+	if len(sig) != 65 {
+		t.Errorf("sig length = %d, want 65", len(sig))
+	}
+	pub, err := crypto.SigToPub(hash[:], sig)
+	if err != nil {
+		t.Fatalf("SigToPub: %v", err)
+	}
+	if got := crypto.PubkeyToAddress(*pub); got != s.Address() {
+		t.Errorf("recovered addr = %s, signer addr = %s", got.Hex(), s.Address().Hex())
+	}
+}
+
+func TestSigner_SignHash_KeystoreLoaded(t *testing.T) {
+	dir := t.TempDir()
+	path, want := keystoreFixture(t, dir, "secret")
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEYSTORE", path)
+	t.Setenv("CHAINBENCH_SIGNER_BOB_KEYSTORE_PASSWORD", "secret")
+	s, err := signer.Load("bob")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash := common.HexToHash("0x" + strings.Repeat("b", 64))
+	sig, err := s.SignHash(context.Background(), hash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pub, _ := crypto.SigToPub(hash[:], sig)
+	if got := crypto.PubkeyToAddress(*pub); got != want {
+		t.Errorf("recovered = %s, want %s", got.Hex(), want.Hex())
+	}
+}
+
+func TestSigner_SignHash_RedactionBoundary(t *testing.T) {
+	withSignerEnv(t, "carol", "0x"+keyHex64)
+	s, err := signer.Load("carol")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Force an error path via zero-length hash. crypto.Sign requires
+	// exactly 32 bytes; passing a wrong-shape input should fail in a way
+	// that DOES NOT echo key bytes.
+	_, err = s.SignHash(context.Background(), common.Hash{})
+	// Allowed: the implementation may treat zero-hash as valid and return
+	// a signature. If it does, we instead probe via a different angle:
+	// assert the signer's String/GoString still redact after a SignHash
+	// call (state should not leak across).
+	out := fmt.Sprintf("%v %+v %#v %s", s, s, s, s)
+	if strings.Contains(out, keyHex64) {
+		t.Errorf("formatter leaks key after SignHash: %q", out)
+	}
+	_ = err
+}

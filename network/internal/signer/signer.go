@@ -52,6 +52,7 @@ type Alias string
 type Signer interface {
 	Address() common.Address
 	SignTx(ctx context.Context, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
+	SignHash(ctx context.Context, hash common.Hash) ([]byte, error)
 }
 
 // Sentinel errors for Load. Error messages from this package reference the
@@ -99,6 +100,22 @@ func (s *sealed) SignTx(_ context.Context, tx *types.Transaction, chainID *big.I
 		return nil, fmt.Errorf("signer.SignTx(%s): %w", s.alias, err)
 	}
 	return signed, nil
+}
+
+// SignHash returns the standard 65-byte ECDSA signature (R || S || V) over
+// the supplied 32-byte hash. Used by chain-specific tx types whose envelopes
+// require multiple signatures composed from raw hashes — EIP-7702 authorization
+// tuples, go-stablenet fee-delegation outer hash. Errors reference the alias
+// only; the underlying private key is never embedded.
+//
+// ctx is unused today (CPU-bound secp256k1) — preserved for future HSM /
+// remote-signer paths, mirroring SignTx.
+func (s *sealed) SignHash(_ context.Context, hash common.Hash) ([]byte, error) {
+	sig, err := crypto.Sign(hash[:], s.key)
+	if err != nil {
+		return nil, fmt.Errorf("signer.SignHash(%s): %w", s.alias, err)
+	}
+	return sig, nil
 }
 
 // LogValue implements slog.LogValuer so any structured-log attr containing a
