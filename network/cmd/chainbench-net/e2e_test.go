@@ -1041,3 +1041,143 @@ func TestE2E_NodeTxSend_AgainstAttachedRemote(t *testing.T) {
 		}
 	}
 }
+
+// TestE2E_NodeTxSend_DynamicFee_AgainstAttachedRemote drives the full
+// cobra root command twice in-process to exercise the EIP-1559 selection
+// path of node.tx_send: attach a mock RPC, then issue a tx_send carrying
+// max_fee_per_gas + max_priority_fee_per_gas (and no gas_price). The mock
+// captures the broadcast raw-hex; we decode the leading byte to confirm
+// the handler emitted a DynamicFeeTx (type 2) rather than legacy. Pinned
+// nonce/gas keep the mock surface to chainId + sendRawTransaction.
+//
+// decodeBroadcastTxType is defined in handlers_test.go and is in scope
+// here because both files share the `package main` namespace.
+func TestE2E_NodeTxSend_DynamicFee_AgainstAttachedRemote(t *testing.T) {
+	var sentRaw string
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string            `json:"method"`
+			ID     json.RawMessage   `json:"id"`
+			Params []json.RawMessage `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x%s"}`, req.ID, strings.Repeat("c", 64))
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+
+	// attach
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"dyn"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// tx_send (1559)
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	sendCmd := `{"command":"node.tx_send","args":{"network":"dyn","node_id":"node1","signer":"alice","to":"0x0000000000000000000000000000000000000002","value":"0x0","gas":21000,"max_fee_per_gas":"0x59682f00","max_priority_fee_per_gas":"0x3b9aca00","nonce":0}}`
+	root2.SetIn(strings.NewReader(sendCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("tx_send: %v stderr=%s", err, stderr.String())
+	}
+
+	if sentRaw == "" {
+		t.Fatal("mock did not see eth_sendRawTransaction")
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 2 {
+		t.Errorf("tx type = %d, want 2 (DynamicFee)", got)
+	}
+}
+
+// TestE2E_NodeTxWait_SuccessImmediate drives cobra twice in-process: first
+// attach a mock RPC, then issue node.tx_wait against a tx hash that the
+// mock immediately resolves to a successful receipt. Asserts the wire
+// terminator carries status=success — exercising the full
+// run.go → handler → remote.Client.TransactionReceipt → wire emit slice.
+//
+// The receipt JSON includes cumulativeGasUsed + logsBloom because
+// go-ethereum's Client.TransactionReceipt parser rejects receipts
+// missing those fields.
+func TestE2E_NodeTxWait_SuccessImmediate(t *testing.T) {
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_getTransactionReceipt":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":{
+                "transactionHash":"0x%s","blockHash":"0x%s","blockNumber":"0x20",
+                "cumulativeGasUsed":"0x5208","gasUsed":"0x5208","effectiveGasPrice":"0x1",
+                "status":"0x1","contractAddress":null,"logsBloom":"0x%s","logs":[]}}`,
+				req.ID, strings.Repeat("a", 64), strings.Repeat("b", 64), strings.Repeat("0", 512))
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	root.SetIn(strings.NewReader(fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"wt"}}`, rpcSrv.URL)))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v", err)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	waitCmd := fmt.Sprintf(`{"command":"node.tx_wait","args":{"network":"wt","node_id":"node1","tx_hash":"0x%s","timeout_ms":3000}}`, strings.Repeat("a", 64))
+	root2.SetIn(strings.NewReader(waitCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("tx_wait: %v", err)
+	}
+
+	// Last NDJSON line is the result terminator. Just assert success status.
+	lines := strings.Split(strings.TrimSpace(stdout.String()), "\n")
+	last := lines[len(lines)-1]
+	if !strings.Contains(last, `"status":"success"`) {
+		t.Errorf("last line missing success: %q", last)
+	}
+}

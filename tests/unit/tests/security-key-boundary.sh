@@ -200,4 +200,84 @@ fi
 
 assert_eq "leak-checked" "leak-checked" "no key material in stdout/stderr/log"
 
+# ---- Scenario 3: keystore variant of tx.send. ----
+# Generates a fresh keystore via a tiny Go helper (rotated per-run), runs
+# tx.send through the keystore-loading branch of signer.Manager, then scans
+# stdout / stderr / log for both the underlying raw-hex AND the password.
+# Re-uses the mock RPC (still alive — cleanup trap fires on EXIT) and the
+# already-attached "sec-key-boundary" network. CHAINBENCH_SIGNER_ALICE_KEY
+# from Scenario 2 stays set; we use a different signer ("bob") so the
+# keystore branch is the one exercised.
+describe "security: keystore variant of tx.send"
+
+GEN_DIR="${TMPDIR_ROOT}/gen-keystore"
+mkdir -p "${GEN_DIR}"
+cat > "${GEN_DIR}/main.go" <<'GOEOF'
+package main
+
+import (
+    "crypto/ecdsa"
+    "encoding/hex"
+    "fmt"
+    "os"
+
+    "github.com/ethereum/go-ethereum/accounts/keystore"
+    "github.com/ethereum/go-ethereum/crypto"
+    "github.com/google/uuid"
+)
+
+func main() {
+    if len(os.Args) < 3 {
+        fmt.Fprintln(os.Stderr, "usage: gen-keystore <out-path> <password>")
+        os.Exit(2)
+    }
+    outPath := os.Args[1]
+    password := os.Args[2]
+    pk, err := crypto.GenerateKey()
+    if err != nil { panic(err) }
+    id, _ := uuid.NewRandom()
+    k := &keystore.Key{Id: id, Address: crypto.PubkeyToAddress(pk.PublicKey), PrivateKey: pk}
+    enc, err := keystore.EncryptKey(k, password, keystore.LightScryptN, keystore.LightScryptP)
+    if err != nil { panic(err) }
+    if err := os.WriteFile(outPath, enc, 0o600); err != nil { panic(err) }
+    // Print the raw hex to stderr for the test harness to capture and grep
+    // against. The hex is rotated per-test via crypto.GenerateKey so it
+    // never matches a real funded account.
+    var pkVal *ecdsa.PrivateKey = pk
+    fmt.Fprintln(os.Stderr, hex.EncodeToString(crypto.FromECDSA(pkVal)))
+}
+GOEOF
+
+KS_PATH="${TMPDIR_ROOT}/keystore.json"
+KS_PASSWORD="ks-test-pass"
+
+GEN_LOG="${TMPDIR_ROOT}/gen.log"
+( cd "${CHAINBENCH_DIR}/network" && go run "${GEN_DIR}/main.go" "${KS_PATH}" "${KS_PASSWORD}" ) 2>"${GEN_LOG}" >/dev/null
+GEN_KEY_HEX="$(cat "${GEN_LOG}")"
+[[ -n "${GEN_KEY_HEX}" ]] || { echo "FATAL: keystore gen produced no hex" >&2; exit 1; }
+
+export CHAINBENCH_SIGNER_BOB_KEYSTORE="${KS_PATH}"
+export CHAINBENCH_SIGNER_BOB_KEYSTORE_PASSWORD="${KS_PASSWORD}"
+
+KS_TX_LOG="${TMPDIR_ROOT}/ks-tx.log"
+KS_TX_ERR="${TMPDIR_ROOT}/ks-tx.err"
+export CHAINBENCH_NET_LOG="${KS_TX_LOG}"
+ks_tx_data="$(cb_net_call "node.tx_send" "{\"network\":\"sec-key-boundary\",\"node_id\":\"node1\",\"signer\":\"bob\",\"to\":\"0x0000000000000000000000000000000000000002\",\"value\":\"0x0\",\"gas\":21000,\"gas_price\":\"0x1\",\"nonce\":0}" 2>"${KS_TX_ERR}")"
+assert_eq "$(jq -r .tx_hash <<<"$ks_tx_data" | cut -c1-2)" "0x" "ks tx_hash starts with 0x"
+
+for label in "stdout" "stderr" "log"; do
+  case "$label" in
+    stdout) content="$ks_tx_data" ;;
+    stderr) content="$(cat "${KS_TX_ERR}" 2>/dev/null || true)" ;;
+    log)    content="$(cat "${KS_TX_LOG}" 2>/dev/null || true)" ;;
+  esac
+  if echo "$content" | grep -qi "${GEN_KEY_HEX}"; then
+    echo "FAIL: ${label} leaks keystore raw key" >&2; exit 1
+  fi
+  if echo "$content" | grep -q "${KS_PASSWORD}"; then
+    echo "FAIL: ${label} leaks keystore password" >&2; exit 1
+  fi
+done
+assert_eq "leak-checked" "leak-checked" "no keystore key/password in stdout/stderr/log"
+
 unit_summary
