@@ -53,7 +53,7 @@ chainbench/
 │   └── schema/                       # JSON Schema — command.json, event.json, network.json
 │       └── fixtures/                 # 스키마 유효성 테스트 픽스처
 ├── templates/                        # genesis.template.json, node.template.toml
-├── tests/unit/                       # bash unit tests (27개, 100% 통과)
+├── tests/unit/                       # bash unit tests (30개, 100% 통과 — Sprint 4c 기준)
 │   ├── lib/assert.sh
 │   ├── run.sh                        # bash 3.2 → 4+ 재-exec 자동 처리
 │   └── tests/*.sh                    # 개별 테스트 파일
@@ -141,7 +141,8 @@ chainbench/
 > **상위 컨텍스트** (2026-04-27 정렬): chainbench 의 두 모드 (A) coding agent
 > evaluation harness, (B) 독립 도구 가운데 **모드 (A) 의 evaluation 표면 강화**
 > 가 향후 sprint 의 메인 동력이다. 자세한 매트릭스는 `docs/EVALUATION_CAPABILITY.md`,
-> 검토 근거는 `docs/EVALUATION_HARNESS_REVIEW.md`.
+> 검토 근거(2026-04-27 정렬 시점): Sprint 4 시리즈 spec/plan 의 `Goal` /
+> `Non-Goals` 절 (`docs/superpowers/specs/2026-04-27-sprint-4{,b,c}-*.md`).
 >
 > Sprint 4 시리즈 (4b → 4c → 4d) 가 Go `network/` 의 tx 능력을 채우고,
 > Sprint 5 가 그 능력을 MCP high-level tool 로 노출 + LLM 친화 결과 변환을 한다.
@@ -199,7 +200,7 @@ chainbench/
 
 ### 🟧 Priority 2.5 — Sprint 4 시리즈: evaluation tx 매트릭스 Go 포팅 (4b 후속)
 
-**배경**: 사용자 결정 (2026-04-27, `docs/EVALUATION_HARNESS_REVIEW.md` Q3) —
+**배경**: 2026-04-27 사용자 결정 (Sprint 4b 정렬 시점, Q3) —
 Sprint 4b scope 는 그대로 두고, evaluation 을 위한 모든 테스트 지원 작업을
 Sprint 4 시리즈(4c, 4d, ...)로 이어서 진행. bash Layer 2 lib (외부 도구
 cast / Go helper / Python 위에서 동작) 의 능력을 Go `network/` 로 이식하여
@@ -213,10 +214,11 @@ coding agent 가 단일 surface 로 호출 가능하게 만드는 것이 목표.
 fee-delegation (0x16) 양쪽을 단일 surface 로 노출. SignHash 인터페이스
 도입으로 chain-specific envelope 추가 비용이 핸들러 측 합성으로 격리됨.
 
-**커밋 체인 (7건, Sprint 4c)**:
+**커밋 체인 (9건, Sprint 4c — spec/plan + 구현 + 후속 + test/docs)**:
 
 | SHA | 설명 |
 |---|---|
+| `17f455a` | docs: add Sprint 4c spec + plan (sprint open) |
 | `57ddb54` | feat(signer): add SignHash for chain-specific tx envelopes (Task 1) |
 | `3ab8e9d` | test(signer): tighten SignHash redaction probe + keystore err handling (Task 1 review fix) |
 | `d87fffd` | feat(drivers/remote): add SendRawTransaction (Task 2) |
@@ -224,6 +226,7 @@ fee-delegation (0x16) 양쪽을 단일 surface 로 노출. SignHash 인터페이
 | `4a427a9` | chore(network): promote holiman/uint256 to direct dep (Task 3 follow-up) |
 | `515022d` | feat(network-net): node.tx_fee_delegation_send (Task 4) |
 | `bb5c443` | test(network-net): cover fee_delegation BadValueHex + schema alphabetical order (Task 4 review fix) |
+| `1da68ac` | test+docs(sprint-4c): SetCode + fee-delegation E2E + boundary + roadmap (Task 5) |
 
 **범위 결과**:
 

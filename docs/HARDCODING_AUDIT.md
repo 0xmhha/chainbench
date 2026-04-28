@@ -1,6 +1,12 @@
 # Chain Binary Hardcoding Audit
 
-> **Status:** baseline for the adapter-extraction work in `docs/VISION_AND_ROADMAP.md` §5.12 M4.
+> **Status (2026-04-27):** still active baseline. Sprint 4 series (4 / 4b / 4c)
+> built out the Go `network/` tx surface but did NOT touch `lib/cmd_*.sh`; the
+> 9 hits below remain intact. M4 (per VISION §5.12) — `gstable` hardcoding →
+> adapter axis — is open. Concretely, the LocalDriver still spawns
+> `chainbench.sh` which reads `_BINARY_NAME` directly, so this audit is the
+> canonical baseline for any future adapter-binary-name promotion.
+>
 > Regenerate with:
 >
 >     scripts/inventory/scan-binary-hardcoding.sh

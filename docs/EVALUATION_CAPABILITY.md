@@ -3,7 +3,7 @@
 > **작성일**: 2026-04-27
 > **Status**: active — sprint 진행마다 cell 갱신
 > **목적**: coding agent 가 chainbench 를 통해 수행할 수 있는 evaluation 시나리오의 현재 능력과 sprint 별 도달 목표 매트릭스. Sprint spec 작성 시 어느 cell 을 채우는지 명시한다.
-> **Related**: `docs/VISION_AND_ROADMAP.md` §1.3, `docs/NEXT_WORK.md` §3, `docs/EVALUATION_HARNESS_REVIEW.md`
+> **Related**: `docs/VISION_AND_ROADMAP.md` §1.3, `docs/NEXT_WORK.md` §3
 
 ---
 

@@ -1,9 +1,16 @@
 # Adapter Contract
 
-> **Status:** active — bash adapter inventory (LocalDriver backing) + Go adapter
-> port progress (Sprint 3c, 2026-04-24). The bash surface in §1/§2 still
-> backs `lib/cmd_*.sh`; the Go track in §4 is the long-term home of the
+> **Status (2026-04-27):** active — bash adapter inventory (LocalDriver
+> backing) + Go adapter port progress (Sprint 3c). The bash surface in §1/§2
+> still backs `lib/cmd_*.sh`; the Go track in §4 is the long-term home of the
 > Network Abstraction adapter axis (§5.17 of VISION_AND_ROADMAP).
+>
+> Sprint 4c shipped chain-specific tx types (Fee Delegation 0x16, EIP-7702
+> 0x4) but did so via a hardcoded chain-type allowlist
+> (`feeDelegationAllowedChains`) inside the Go handler — see §3 row
+> `adapter_supported_tx_types`. Promoting that to an interface method is the
+> next adapter-axis follow-up (Sprint 5+).
+>
 > Regenerate the bash tables below with:
 >
 >     scripts/inventory/list-adapter-functions.sh
@@ -48,7 +55,7 @@ Derived from §5.15 event catalog and §5.17 HAL interface.
 | `adapter_datadir_layout <node_idx>` | Compute per-node data dir path without shell assumptions | LocalDriver + log tail |
 | `adapter_log_file_path <node_idx>` | Locate the appender-rotated file driver-side | `node.tail_log` |
 | `adapter_consensus_validator_rpc_method` | Uniform access to `istanbul_getValidators` / `clique_getSigners` / `wemix_*` | `network.capabilities`, consensus tests |
-| `adapter_supported_tx_types` | Gate chain-specific tx types (0x16, 0x04) for Layer 2 tx_builder | `tx.send` composite |
+| `adapter_supported_tx_types` | Gate chain-specific tx types (0x16, 0x04) for Layer 2 tx_builder. **Sprint 4c shipped** as hardcoded `feeDelegationAllowedChains` map in `network/cmd/chainbench-net/handlers_node_tx.go` (`{stablenet, wbft}`). Promotion to Adapter interface = Sprint 5+ follow-up. | `tx.send` composite + `node.tx_fee_delegation_send` |
 | `adapter_probe_markers` | RPC method names whose presence identifies the chain type | `network.probe` (§5.17 Q2) |
 
 ## 4. Go adapter track (Sprint 3c, 2026-04-24)
