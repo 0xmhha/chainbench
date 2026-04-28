@@ -36,9 +36,16 @@ chainbench/
 ├── network/                          # Go 모듈 (github.com/0xmhha/chainbench/network)
 │   ├── cmd/chainbench-net/           # 바이너리 entrypoint
 │   │   ├── main.go, run.go, errors.go
-│   │   ├── handlers.go               # 모든 wire 핸들러 (⚠️ 1046 라인, 분할 예정)
-│   │   ├── handlers_test.go          # ~3000+ 라인 유닛 테스트
-│   │   └── e2e_test.go               # cobra in-process E2E
+│   │   ├── handlers.go               # 디스패치 + 공유 resolver (160 라인)
+│   │   ├── handlers_network.go       # network.load/probe/attach (Sprint 4b split)
+│   │   ├── handlers_node_lifecycle.go # node.stop/start/restart/tail_log
+│   │   ├── handlers_node_read.go     # block_number/chain_id/balance/gas_price
+│   │   │                             # + contract_call/events_get/account_state (Sprint 4d)
+│   │   │                             # 844 라인 — 800 soft cap 초과, 5번째 read handler 추가 시 분할 권장
+│   │   ├── handlers_node_tx.go       # tx_send/tx_wait/tx_fee_delegation_send/contract_deploy
+│   │   │                             # 953 라인 — 동일 P3 debt
+│   │   ├── handlers_test.go          # ~4000+ 라인 유닛 테스트
+│   │   └── e2e_test.go               # cobra in-process E2E (4d 후 12+ 테스트)
 │   ├── internal/
 │   │   ├── adapters/                 # Sprint 3c — spec + stablenet + wbft + wemix
 │   │   ├── drivers/
@@ -396,7 +403,12 @@ unit_summary
 - 함수: <50 라인 권장
 - 중첩: ≤3 레벨 권장, 4 상한
 
-현재 초과 중: `handlers.go` 1046 라인 → Sprint 4b 에서 분할 예정.
+**현재 초과 중 (Sprint 4d 종료 시점)** — §3 P3 tech debt 표 참조:
+- `handlers_node_read.go` 844 라인 — 5번째 read handler 추가 시 분할
+- `handlers_node_tx.go` 953 라인 — 다음 핸들러 추가 시 분할
+- 핸들러 closure 길이 ~120-200 라인 — phase 별 helper 추출 권장 (Sprint 4 시리즈 전체 패턴)
+
+이전 정리: Sprint 4b 에서 `handlers.go` 1046 → 5 파일로 분할 (handlers.go / handlers_network.go / handlers_node_lifecycle.go / handlers_node_read.go / handlers_node_tx.go).
 
 ---
 
