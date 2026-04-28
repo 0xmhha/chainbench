@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-27 (Sprint 4d 완료 — Sprint 4 series 종료)
+> **최종 업데이트**: 2026-04-28 (Sprint 5c.1 완료)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -739,6 +739,8 @@ MCP 서버도 네트워크 바이너리를 spawn하여 사용:
 - 기존 41 tool 중 RPC/lifecycle/node 관련은 점진적으로 네트워크 바이너리 경유로 전환
 - bash CLI와 동일 프로토콜 → 중복 로직 제거
 
+Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. 기존 38 tool 의 reroute 는 5c.3 후속.
+
 ---
 
 ## 6. 즉시 착수 가능한 작업
@@ -809,11 +811,31 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 
 완료 (2026-04-27). Sprint 4 series 종료 — Go `network/` 의 tx + read 매트릭스 완료. 다음 P1 은 Sprint 5 (MCP 이관).
 
-**Sprint 5 — Capability gate + Hybrid 네트워크 + MCP 이관 시작**
-- [ ] 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)
+**Sprint 5c.1 — MCP foundation + 2 high-level tools (legacy/1559)** — 완료 (2026-04-28)
+- [x] TS wire helper (`mcp-server/src/utils/wire.ts`) — `chainbench-net run` spawn + NDJSON envelope/stream 처리, 바이너리 resolution (env → `$CHAINBENCH_DIR/bin` → `$CHAINBENCH_DIR/network/bin` → PATH)
+- [x] NDJSON result transformer (`mcp-server/src/utils/wireResult.ts`) — event/progress/result → MCP `{content, isError}` 변환, 실패 시 phase 단위 root cause hint
+- [x] `chainbench_account_state` — composite reader (balance/nonce/code/storage) MCP 노출
+- [x] `chainbench_tx_send` — legacy / 1559 mode 명시화, signer alias (host env 의존, key material 미노출)
+
+**Sprint 5c.2 — MCP high-level tools 확장**
+- [ ] `chainbench_contract_deploy` — bytecode + 옵션 ABI 생성자 args
+- [ ] `chainbench_contract_call` — raw calldata or ABI+method+args
+- [ ] `chainbench_events_get` — `eth_getLogs` + 옵션 ABI 기반 log decode
+- [ ] `chainbench_tx_wait` — receipt polling
+- [ ] `chainbench_tx_send` mode 확장 — `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16)
+
+**Sprint 5c.3 — 기존 38 tool reroute through wire helper**
+- [ ] `chainbench_init/start/stop/...` 가 bash CLI 직접 호출 → `chainbench-net` wire 경유 전환 (`docs/VISION_AND_ROADMAP.md` §5.17.7)
+- [ ] `mcp-server/src/tools/` 의 큰 파일 (test.ts 335 / schema.ts 308) 자연스러운 흡수 검토
+
+**Sprint 5a — Capability gate**
+- [ ] `network.capabilities` 커맨드 + 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)
+
+**Sprint 5b — SSH driver**
 - [ ] `drivers/sshremote` 설계 초안 (Q6, S6 세션 prompt)
-- [ ] Hybrid 네트워크 샘플 프로파일 (`profiles/hybrid-example.yaml`)
-- [ ] MCP (`mcp-server/src/utils/exec.ts`) 확장 — 첫 네트워크 바이너리 경유 tool 1~2개 전환 (§5.17.7)
+
+**Sprint 5d — Hybrid 네트워크 예제**
+- [ ] Hybrid 네트워크 샘플 프로파일 (`profiles/hybrid-example.yaml`) + 테스트 시나리오
 
 각 스프린트 완료 시 `/milestone` 플로우로 delta-log · rolling-summary 업데이트.
 
