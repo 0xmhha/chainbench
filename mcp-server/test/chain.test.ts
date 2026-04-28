@@ -241,6 +241,37 @@ describe("chainbench_tx_send arg builder", () => {
       }),
     ).toThrow();
   });
+
+  it("_OddLengthData_RejectedAtBoundary", () => {
+    // EVM calldata is byte-aligned, so the HEX_DATA regex must reject
+    // odd-length payloads ('0xa') at zod parse time. Empty ('0x') and
+    // even-length ('0x1234') payloads continue to pass.
+    expect(() =>
+      TxSendArgs.parse({
+        network: "local",
+        signer: "alice",
+        mode: "legacy",
+        gas_price: "0x1",
+        data: "0xa",
+      }),
+    ).toThrow();
+  });
+
+  it("_LegacyWithMaxPriorityFee_Rejected", () => {
+    // Covers the second operand of the legacy-mode '||' rejection clause:
+    // max_priority_fee_per_gas alone (without max_fee_per_gas) must still
+    // trip the boundary check.
+    const built = _buildTxSendWireArgs({
+      network: "local",
+      signer: "alice",
+      mode: "legacy",
+      gas_price: "0x1",
+      max_priority_fee_per_gas: "0x1",
+    });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) return;
+    expect(built.error).toContain("max_priority_fee_per_gas");
+  });
 });
 
 // Black-box handler test: drives the full path through _buildTxSendWireArgs +

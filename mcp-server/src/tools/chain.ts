@@ -20,7 +20,7 @@ import {
 
 const HEX_ADDRESS = /^0x[a-fA-F0-9]{40}$/;
 const HEX_STORAGE_KEY = /^0x[a-fA-F0-9]{1,64}$/;
-const HEX_DATA = /^0x[a-fA-F0-9]*$/;
+const HEX_DATA = /^0x([a-fA-F0-9]{2})*$/;
 const SIGNER_ALIAS = /^[A-Za-z][A-Za-z0-9_]*$/;
 
 const FIELD = z.enum(["balance", "nonce", "code", "storage"]);
