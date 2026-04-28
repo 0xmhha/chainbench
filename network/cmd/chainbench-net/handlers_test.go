@@ -3289,6 +3289,36 @@ func TestHandleNodeContractCall_BlockNumberLatest(t *testing.T) {
 	}
 }
 
+func TestHandleNodeContractCall_BlockEcho(t *testing.T) {
+	var capturedBlock string
+	srv := newContractCallMock(t, nil, &capturedBlock)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeContractCall(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"calldata":         "0x1234",
+		"block_number":     "pending",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	// "pending" is internally degraded to "latest" for the upstream eth_call,
+	// but the result must echo the caller-provided label so the substitution
+	// is observable.
+	if got := data["block"]; got != "pending" {
+		t.Errorf("data[\"block\"] = %v, want %q", got, "pending")
+	}
+}
+
 func TestHandleNodeContractCall_BlockNumberInteger(t *testing.T) {
 	var capturedBlock string
 	srv := newContractCallMock(t, nil, &capturedBlock)

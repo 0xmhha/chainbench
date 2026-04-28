@@ -271,7 +271,7 @@ func newHandleNodeGasPrice(stateDir string) Handler {
 //
 //	block_number?: <int>|"latest"|"earliest"|"pending", from?: "0x..."}
 //
-// Result: {result_raw: "0x...", result_decoded?: [<value>, ...]}
+// Result: {result_raw: "0x...", block: <label>, result_decoded?: [<value>, ...]}
 //
 // Error mapping:
 //
@@ -349,8 +349,11 @@ func newHandleNodeContractCall(stateDir string) Handler {
 
 		// block_number — int OR "latest" / "earliest" / "pending". Mirrors
 		// node.balance's parsing: nil signals "latest" to ethclient,
-		// big.NewInt(0) for earliest, integers passed as-is.
+		// big.NewInt(0) for earliest, integers passed as-is. blockLabel echoes
+		// the caller-provided label (or numeric form) back in the result so
+		// "pending" (silently degraded to "latest" upstream) is observable.
 		var blockNum *big.Int
+		blockLabel := "latest"
 		if len(req.BlockNumber) > 0 {
 			var asInt int64
 			var asStr string
@@ -359,12 +362,15 @@ func newHandleNodeContractCall(stateDir string) Handler {
 					return nil, NewInvalidArgs(fmt.Sprintf("args.block_number must be non-negative, got %d", asInt))
 				}
 				blockNum = big.NewInt(asInt)
+				blockLabel = fmt.Sprintf("%d", asInt)
 			} else if err := json.Unmarshal(req.BlockNumber, &asStr); err == nil {
 				switch asStr {
 				case "latest", "pending":
 					// nil — ethclient interprets nil as "latest"; "pending" is
 					// approximated as "latest" here (consistent with node.balance).
+					blockLabel = asStr
 				case "earliest":
+					blockLabel = asStr
 					blockNum = big.NewInt(0)
 				default:
 					return nil, NewInvalidArgs(fmt.Sprintf("args.block_number label invalid: %q", asStr))
@@ -405,6 +411,7 @@ func newHandleNodeContractCall(stateDir string) Handler {
 
 		out := map[string]any{
 			"result_raw": "0x" + hex.EncodeToString(result),
+			"block":      blockLabel,
 		}
 		if hasABI {
 			decoded, derr := abiutil.UnpackMethodResult(parsedABI, methodName, result)
