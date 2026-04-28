@@ -563,6 +563,238 @@ func TestClient_SendRawTransaction_Reject(t *testing.T) {
 	}
 }
 
+// TestClient_CallContract_Happy asserts the wrapper forwards eth_call and
+// returns the hex-decoded result bytes. The mock recognizes eth_call and
+// echoes back a simple ABI-encoded uint256 value (0x2a -> 42).
+func TestClient_CallContract_Happy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_call" {
+			// 32-byte big-endian encoding of 42.
+			result := "0x" + strings.Repeat("0", 62) + "2a"
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, result)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	to := common.HexToAddress("0x01")
+	out, err := c.CallContract(ctx, ethereum.CallMsg{To: &to, Data: []byte{0x12, 0x34}}, nil)
+	if err != nil {
+		t.Fatalf("CallContract: %v", err)
+	}
+	if len(out) != 32 || out[31] != 0x2a {
+		t.Errorf("CallContract result = %x, want 32-byte 42", out)
+	}
+}
+
+// TestClient_CallContract_Reject asserts an endpoint rejection surfaces
+// through the remote.CallContract wrapper prefix.
+func TestClient_CallContract_Reject(t *testing.T) {
+	srv := mockRPC(t, map[string]string{}) // no methods -> fail
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	to := common.HexToAddress("0x01")
+	_, err = c.CallContract(ctx, ethereum.CallMsg{To: &to}, nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "remote.CallContract") {
+		t.Errorf("err missing wrap prefix: %v", err)
+	}
+}
+
+// TestClient_FilterLogs_Happy asserts eth_getLogs is forwarded and a
+// minimal log result is parsed back into types.Log.
+func TestClient_FilterLogs_Happy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getLogs" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":[{
+                "address":"0x0000000000000000000000000000000000000001",
+                "topics":["0x%s"],
+                "data":"0x",
+                "blockNumber":"0x1",
+                "transactionHash":"0x%s",
+                "transactionIndex":"0x0",
+                "blockHash":"0x%s",
+                "logIndex":"0x0",
+                "removed":false}]}`, req.ID,
+				strings.Repeat("a", 64), strings.Repeat("b", 64), strings.Repeat("c", 64))
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	logs, err := c.FilterLogs(ctx, ethereum.FilterQuery{})
+	if err != nil {
+		t.Fatalf("FilterLogs: %v", err)
+	}
+	if len(logs) != 1 {
+		t.Fatalf("logs = %d, want 1", len(logs))
+	}
+	if logs[0].Address != common.HexToAddress("0x01") {
+		t.Errorf("log addr = %s, want 0x01", logs[0].Address.Hex())
+	}
+}
+
+// TestClient_FilterLogs_Reject asserts the wrapper prefix surfaces on RPC error.
+func TestClient_FilterLogs_Reject(t *testing.T) {
+	srv := mockRPC(t, map[string]string{})
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, err = c.FilterLogs(ctx, ethereum.FilterQuery{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "remote.FilterLogs") {
+		t.Errorf("err missing wrap prefix: %v", err)
+	}
+}
+
+// TestClient_CodeAt_Happy asserts eth_getCode is forwarded and bytes return.
+func TestClient_CodeAt_Happy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getCode" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0xdeadbeef"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	code, err := c.CodeAt(ctx, common.HexToAddress("0x01"), nil)
+	if err != nil {
+		t.Fatalf("CodeAt: %v", err)
+	}
+	want := []byte{0xde, 0xad, 0xbe, 0xef}
+	if len(code) != 4 || code[0] != want[0] || code[3] != want[3] {
+		t.Errorf("code = %x, want %x", code, want)
+	}
+}
+
+// TestClient_CodeAt_Reject asserts wrapper prefix on RPC error.
+func TestClient_CodeAt_Reject(t *testing.T) {
+	srv := mockRPC(t, map[string]string{})
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, err = c.CodeAt(ctx, common.HexToAddress("0x01"), nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "remote.CodeAt") {
+		t.Errorf("err missing wrap prefix: %v", err)
+	}
+}
+
+// TestClient_StorageAt_Happy asserts eth_getStorageAt is forwarded and the
+// 32-byte word is parsed back.
+func TestClient_StorageAt_Happy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getStorageAt" {
+			result := "0x" + strings.Repeat("0", 62) + "ff"
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, result)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	val, err := c.StorageAt(ctx, common.HexToAddress("0x01"), common.Hash{}, nil)
+	if err != nil {
+		t.Fatalf("StorageAt: %v", err)
+	}
+	if len(val) != 32 || val[31] != 0xff {
+		t.Errorf("storage = %x, want last byte 0xff", val)
+	}
+}
+
+// TestClient_StorageAt_Reject asserts wrapper prefix on RPC error.
+func TestClient_StorageAt_Reject(t *testing.T) {
+	srv := mockRPC(t, map[string]string{})
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, err = c.StorageAt(ctx, common.HexToAddress("0x01"), common.Hash{}, nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "remote.StorageAt") {
+		t.Errorf("err missing wrap prefix: %v", err)
+	}
+}
+
 // Guards against the silent-bypass hazard: passing a Transport for a non-HTTP
 // URL (ws/wss/ipc) must error loudly since WithHTTPClient is ignored by
 // those schemes and auth headers would be dropped.

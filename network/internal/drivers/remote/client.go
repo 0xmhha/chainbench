@@ -191,6 +191,47 @@ func (c *Client) TransactionReceipt(ctx context.Context, hash common.Hash) (*typ
 	return rcpt, nil
 }
 
+// CallContract executes a read-only contract call (eth_call) at the given
+// block and returns the raw return bytes. Pass nil for the latest block.
+// Used by Sprint 4d's contract_call / contract read paths.
+func (c *Client) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
+	out, err := c.rpc.CallContract(ctx, msg, blockNumber)
+	if err != nil {
+		return nil, fmt.Errorf("remote.CallContract: %w", err)
+	}
+	return out, nil
+}
+
+// FilterLogs queries event logs (eth_getLogs) matching the given filter.
+// Used by Sprint 4d's events_get path.
+func (c *Client) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]types.Log, error) {
+	logs, err := c.rpc.FilterLogs(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("remote.FilterLogs: %w", err)
+	}
+	return logs, nil
+}
+
+// CodeAt fetches the deployed bytecode of an account (eth_getCode) at the
+// given block. Returns an empty slice for EOAs / undeployed addresses.
+func (c *Client) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
+	code, err := c.rpc.CodeAt(ctx, account, blockNumber)
+	if err != nil {
+		return nil, fmt.Errorf("remote.CodeAt: %w", err)
+	}
+	return code, nil
+}
+
+// StorageAt fetches a single 32-byte storage slot for account / key
+// (eth_getStorageAt). Pass nil block for latest.
+func (c *Client) StorageAt(ctx context.Context, account common.Address, key common.Hash, blockNumber *big.Int) ([]byte, error) {
+	val, err := c.rpc.StorageAt(ctx, account, key, blockNumber)
+	if err != nil {
+		return nil, fmt.Errorf("remote.StorageAt: %w", err)
+	}
+	return val, nil
+}
+
 // Close releases the underlying HTTP/RPC connection. Nil-safe on the
 // remote.Client receiver; ethclient's own Close is not nil-safe so the
 // receiver check is load-bearing. BlockNumber and future methods assume
