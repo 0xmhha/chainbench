@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -3350,5 +3351,528 @@ func TestAllHandlers_IncludesContractCall(t *testing.T) {
 	h := allHandlers("x", "y")
 	if _, ok := h["node.contract_call"]; !ok {
 		t.Error("allHandlers missing node.contract_call")
+	}
+}
+
+// erc20TransferEventABI exposes the canonical ERC20 Transfer event with both
+// indexed address args and a non-indexed uint256 value. Used by events_get
+// decode-mode tests so we exercise the topics+data split inside DecodeLog.
+const erc20TransferEventABI = `[{"type":"event","name":"Transfer","anonymous":false,"inputs":[{"name":"from","type":"address","indexed":true},{"name":"to","type":"address","indexed":true},{"name":"value","type":"uint256","indexed":false}]}]`
+
+// newEventsGetMock returns a JSON-RPC server that responds to eth_getLogs by
+// echoing the supplied canned logs. When capturedQuery is non-nil it parses
+// params[0] (the filter object as encoded by ethclient.toFilterArg) back into
+// an ethereum.FilterQuery so tests can assert on the structural shape the
+// handler built. Other methods get -32601.
+//
+// The wire shape ethclient produces is:
+//
+//	{"address":[<addr>...],"topics":[[h]|null|[h1,h2]...],
+//	 "fromBlock":"<hex>"|"latest"|"earliest"|"pending"|"0x0",
+//	 "toBlock":"<hex>"|"latest"|"earliest"|"pending"}
+//
+// Per ethclient.toFilterArg (v1.17.2), address/topics are omitted when nil;
+// fromBlock defaults to "0x0" when q.FromBlock == nil; toBlock defaults to
+// "latest" when q.ToBlock == nil. Note that "0x0" is the wire encoding of
+// BOTH nil-FromBlock and big.NewInt(0)-FromBlock — they're indistinguishable
+// downstream of ethclient. Tests that need to assert on the nil-vs-zero
+// distinction must inspect the captured raw payload via newEventsGetMockRaw.
+func newEventsGetMock(t *testing.T, capturedQuery *ethereum.FilterQuery, logs []ethtypes.Log) *httptest.Server {
+	t.Helper()
+	return newEventsGetMockRaw(t, capturedQuery, nil, logs)
+}
+
+// newEventsGetMockRaw is the underlying mock factory exposing the raw
+// params[0] string so tests can assert on the exact wire encoding (e.g.
+// distinguishing "0x64" from "100" or confirming "0x0" defaulting). Either
+// or both capture pointers may be nil.
+func newEventsGetMockRaw(t *testing.T, capturedQuery *ethereum.FilterQuery, capturedRaw *string, logs []ethtypes.Log) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_getLogs":
+			if len(req.Params) > 0 {
+				if capturedRaw != nil {
+					*capturedRaw = string(req.Params[0])
+				}
+				if capturedQuery != nil {
+					*capturedQuery = decodeFilterArg(t, req.Params[0])
+				}
+			}
+			// Marshal canned logs the same way ethclient deserializes them: each
+			// log has hex-encoded fields. Use ethtypes.Log's MarshalJSON which
+			// produces the standard JSON-RPC log shape (topics/address/data/
+			// blockNumber/transactionHash/etc. as hex strings).
+			body, err := json.Marshal(logs)
+			if err != nil {
+				t.Fatalf("marshal logs: %v", err)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%s}`, req.ID, body)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+// decodeFilterArg parses params[0] of an eth_getLogs request back into an
+// ethereum.FilterQuery. ethclient's wire form has fromBlock/toBlock as
+// strings (hex or label), addresses as a JSON array, and topics as a nested
+// array where each position is null (wildcard) or an array of 32-byte hashes.
+func decodeFilterArg(t *testing.T, raw json.RawMessage) ethereum.FilterQuery {
+	t.Helper()
+	var arg struct {
+		FromBlock string            `json:"fromBlock"`
+		ToBlock   string            `json:"toBlock"`
+		Address   []string          `json:"address"`
+		Topics    []json.RawMessage `json:"topics"`
+	}
+	if err := json.Unmarshal(raw, &arg); err != nil {
+		t.Fatalf("decodeFilterArg: %v on %s", err, string(raw))
+	}
+	var q ethereum.FilterQuery
+	q.FromBlock = blockTagToBig(arg.FromBlock)
+	q.ToBlock = blockTagToBig(arg.ToBlock)
+	for _, a := range arg.Address {
+		q.Addresses = append(q.Addresses, common.HexToAddress(a))
+	}
+	if len(arg.Topics) > 0 {
+		q.Topics = make([][]common.Hash, len(arg.Topics))
+		for i, te := range arg.Topics {
+			if len(te) == 0 || string(te) == "null" {
+				q.Topics[i] = nil
+				continue
+			}
+			var hashes []string
+			if err := json.Unmarshal(te, &hashes); err != nil {
+				t.Fatalf("decodeFilterArg topics[%d]: %v on %s", i, err, string(te))
+			}
+			out := make([]common.Hash, 0, len(hashes))
+			for _, h := range hashes {
+				out = append(out, common.HexToHash(h))
+			}
+			q.Topics[i] = out
+		}
+	}
+	return q
+}
+
+// blockTagToBig translates a wire tag — hex ("0x..."), the labels
+// "latest"/"pending"/"earliest", or empty — into the *big.Int form an
+// ethereum.FilterQuery uses. Labels that mean "current head" map to nil so
+// tests can assert on the semantic intent rather than the wire encoding.
+func blockTagToBig(s string) *big.Int {
+	switch s {
+	case "", "latest", "pending":
+		return nil
+	case "earliest":
+		return big.NewInt(0)
+	}
+	if strings.HasPrefix(s, "0x") {
+		v, ok := new(big.Int).SetString(strings.TrimPrefix(s, "0x"), 16)
+		if !ok {
+			return nil
+		}
+		return v
+	}
+	return nil
+}
+
+// makeTransferLog constructs a canned Transfer log: topics = [event_sig, from, to],
+// data = uint256(value) big-endian. Used by both happy-decode and decode-failure
+// paths (the failure variant truncates data).
+func makeTransferLog(t *testing.T, from, to common.Address, value *big.Int, truncate bool) ethtypes.Log {
+	t.Helper()
+	sig := crypto.Keccak256Hash([]byte("Transfer(address,address,uint256)"))
+	topics := []common.Hash{
+		sig,
+		common.BytesToHash(from.Bytes()),
+		common.BytesToHash(to.Bytes()),
+	}
+	// uint256 ABI encoding: 32-byte big-endian. abi.Pack would do the same but
+	// pulling in the full package for one scalar is overkill — value.FillBytes
+	// gives us the exact wire form.
+	data := make([]byte, 32)
+	value.FillBytes(data)
+	if truncate {
+		// Drop the last 16 bytes so abi.UnpackIntoMap fails ("output of length
+		// 16 is too short for uint256"). INTERNAL, not INVALID_ARGS — the
+		// caller's input was valid; the upstream returned malformed data.
+		data = data[:16]
+	}
+	return ethtypes.Log{
+		Address:     common.HexToAddress("0x000000000000000000000000000000000000beef"),
+		Topics:      topics,
+		Data:        data,
+		BlockNumber: 123,
+		BlockHash:   common.HexToHash("0x" + strings.Repeat("ab", 32)),
+		TxHash:      common.HexToHash("0x" + strings.Repeat("cd", 32)),
+		TxIndex:     1,
+		Index:       0,
+		Removed:     false,
+	}
+}
+
+// TestHandleNodeEventsGet_Happy_NoDecode covers the simplest path: caller
+// provides no abi/event, so we return raw log entries with the canonical
+// hex-string fields and no `decoded` key.
+func TestHandleNodeEventsGet_Happy_NoDecode(t *testing.T) {
+	logs := []ethtypes.Log{makeTransferLog(t,
+		common.HexToAddress("0x"+strings.Repeat("11", 20)),
+		common.HexToAddress("0x"+strings.Repeat("22", 20)),
+		big.NewInt(1000), false)}
+	srv := newEventsGetMock(t, nil, logs)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeEventsGet(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	out := logsAsMaps(t, data["logs"])
+	if len(out) != 1 {
+		t.Fatalf("logs length = %d, want 1", len(out))
+	}
+	entry := out[0]
+	for _, k := range []string{"block_number", "block_hash", "tx_hash", "tx_index", "log_index", "address", "topics", "data", "removed"} {
+		if _, present := entry[k]; !present {
+			t.Errorf("log[0] missing key %q (got keys %v)", k, mapKeys(entry))
+		}
+	}
+	if _, present := entry["decoded"]; present {
+		t.Errorf("decoded must be absent without abi+event, got %v", entry["decoded"])
+	}
+	topics, ok := entry["topics"].([]string)
+	if !ok {
+		t.Errorf("topics type = %T, want []string", entry["topics"])
+	} else if len(topics) != 3 {
+		t.Errorf("topics length = %d, want 3", len(topics))
+	}
+	if got, _ := entry["removed"].(bool); got != false {
+		t.Errorf("removed = %v, want false", entry["removed"])
+	}
+	if got, _ := entry["data"].(string); !strings.HasPrefix(got, "0x") {
+		t.Errorf("data = %q, want 0x-prefixed", got)
+	}
+}
+
+// TestHandleNodeEventsGet_Happy_WithDecode covers the decode path: ABI +
+// event name produce a `decoded.args` map keyed by argument name, with
+// indexed args (from/to) drawn from topics[1..] and the non-indexed value
+// drawn from log.Data.
+func TestHandleNodeEventsGet_Happy_WithDecode(t *testing.T) {
+	from := common.HexToAddress("0x" + strings.Repeat("11", 20))
+	to := common.HexToAddress("0x" + strings.Repeat("22", 20))
+	logs := []ethtypes.Log{makeTransferLog(t, from, to, big.NewInt(1000), false)}
+	srv := newEventsGetMock(t, nil, logs)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeEventsGet(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"abi":     erc20TransferEventABI,
+		"event":   "Transfer",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	out := logsAsMaps(t, data["logs"])
+	if len(out) != 1 {
+		t.Fatalf("logs length = %d, want 1", len(out))
+	}
+	entry := out[0]
+	dec, ok := entry["decoded"].(map[string]any)
+	if !ok {
+		t.Fatalf("decoded missing or wrong type: %T %v", entry["decoded"], entry["decoded"])
+	}
+	if dec["event"] != "Transfer" {
+		t.Errorf("decoded.event = %v, want Transfer", dec["event"])
+	}
+	argMap, ok := dec["args"].(map[string]any)
+	if !ok {
+		t.Fatalf("decoded.args wrong type: %T", dec["args"])
+	}
+	if got, _ := argMap["from"].(common.Address); got != from {
+		t.Errorf("decoded.args.from = %v, want %v", argMap["from"], from)
+	}
+	if got, _ := argMap["to"].(common.Address); got != to {
+		t.Errorf("decoded.args.to = %v, want %v", argMap["to"], to)
+	}
+	val, ok := argMap["value"].(*big.Int)
+	if !ok {
+		t.Fatalf("decoded.args.value type = %T, want *big.Int", argMap["value"])
+	}
+	if val.Cmp(big.NewInt(1000)) != 0 {
+		t.Errorf("decoded.args.value = %s, want 1000", val.String())
+	}
+}
+
+func TestHandleNodeEventsGet_BadAddress(t *testing.T) {
+	h := newHandleNodeEventsGet(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "not-hex",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeEventsGet_BadTopicHex(t *testing.T) {
+	h := newHandleNodeEventsGet(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"topics":  []any{"not-hex"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeEventsGet_NoFilter_AllOptional ensures the handler accepts a
+// minimal payload (no address / topics / blocks) and returns an empty-but-
+// shaped result when the upstream has no matching logs. This is the common
+// case for "give me everything from here".
+func TestHandleNodeEventsGet_NoFilter_AllOptional(t *testing.T) {
+	srv := newEventsGetMock(t, nil, nil) // empty result
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeEventsGet(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	out := logsAsMaps(t, data["logs"])
+	if len(out) != 0 {
+		t.Errorf("logs length = %d, want 0", len(out))
+	}
+}
+
+// TestHandleNodeEventsGet_FromBlockInteger asserts integer block numbers are
+// hex-encoded on the wire (0x64 = 100), matching ethclient.toFilterArg's
+// fromBlock formatting.
+func TestHandleNodeEventsGet_FromBlockInteger(t *testing.T) {
+	var captured ethereum.FilterQuery
+	srv := newEventsGetMock(t, &captured, nil)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeEventsGet(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":    "tn",
+		"node_id":    "node1",
+		"from_block": 100,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if captured.FromBlock == nil || captured.FromBlock.Cmp(big.NewInt(100)) != 0 {
+		t.Errorf("FromBlock = %v, want 100 (wire 0x64)", captured.FromBlock)
+	}
+}
+
+// TestHandleNodeEventsGet_FromBlockLatest verifies the "latest" label is
+// translated to a nil *big.Int on the FilterQuery — the canonical "no
+// specific block" representation. ethclient.toFilterArg (v1.17.2) then
+// encodes that nil as fromBlock="0x0" on the wire (its hard-coded default
+// for nil FromBlock; toBlock encodes nil as "latest"). Asserting against
+// the raw payload is the only way to confirm "latest" did not get
+// mis-translated to a positive integer somewhere in the chain — the
+// structural FilterQuery decode would conflate nil with big.NewInt(0).
+func TestHandleNodeEventsGet_FromBlockLatest(t *testing.T) {
+	var captured string
+	srv := newEventsGetMockRaw(t, nil, &captured, nil)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeEventsGet(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":    "tn",
+		"node_id":    "node1",
+		"from_block": "latest",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	// "latest" → nil *big.Int → ethclient encodes as "0x0".
+	if !strings.Contains(captured, `"fromBlock":"0x0"`) {
+		t.Errorf("fromBlock wire = %q, want it to contain \"fromBlock\":\"0x0\"", captured)
+	}
+}
+
+// TestHandleNodeEventsGet_TopicsWildcard verifies the middle-position null
+// survives all the way to ethereum.FilterQuery as a nil inner slice — the
+// "match anything in this position" wire convention.
+func TestHandleNodeEventsGet_TopicsWildcard(t *testing.T) {
+	var captured ethereum.FilterQuery
+	srv := newEventsGetMock(t, &captured, nil)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	t0 := "0x" + strings.Repeat("ab", 32)
+	t2 := "0x" + strings.Repeat("ef", 32)
+
+	h := newHandleNodeEventsGet(stateDir)
+	body := fmt.Sprintf(`{"network":"tn","node_id":"node1","topics":[%q,null,%q]}`, t0, t2)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(json.RawMessage(body), bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if len(captured.Topics) != 3 {
+		t.Fatalf("Topics length = %d, want 3", len(captured.Topics))
+	}
+	if len(captured.Topics[0]) != 1 || captured.Topics[0][0] != common.HexToHash(t0) {
+		t.Errorf("Topics[0] = %v, want [%s]", captured.Topics[0], t0)
+	}
+	if captured.Topics[1] != nil {
+		t.Errorf("Topics[1] = %v, want nil (wildcard)", captured.Topics[1])
+	}
+	if len(captured.Topics[2]) != 1 || captured.Topics[2][0] != common.HexToHash(t2) {
+		t.Errorf("Topics[2] = %v, want [%s]", captured.Topics[2], t2)
+	}
+}
+
+func TestHandleNodeEventsGet_BadFromBlockHex(t *testing.T) {
+	h := newHandleNodeEventsGet(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":    "tn",
+		"node_id":    "node1",
+		"from_block": "0xnothex",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeEventsGet_DecodeFailure exercises the INTERNAL bucket: the
+// caller's args are valid (good ABI, known event), the upstream returns a
+// log whose data length is too short for the declared uint256, and
+// abi.UnpackIntoMap fails. INVALID_ARGS would mis-attribute the failure to
+// the caller.
+func TestHandleNodeEventsGet_DecodeFailure(t *testing.T) {
+	from := common.HexToAddress("0x" + strings.Repeat("11", 20))
+	to := common.HexToAddress("0x" + strings.Repeat("22", 20))
+	logs := []ethtypes.Log{makeTransferLog(t, from, to, big.NewInt(1000), true)}
+	srv := newEventsGetMock(t, nil, logs)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeEventsGet(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"abi":     erc20TransferEventABI,
+		"event":   "Transfer",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INTERNAL" {
+		t.Errorf("want INTERNAL, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesEventsGet(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.events_get"]; !ok {
+		t.Error("allHandlers missing node.events_get")
+	}
+}
+
+// mapKeys returns the sorted key slice of m for stable error messages. Test-
+// only helper; production code paths order keys via the JSON marshaller.
+func mapKeys(m map[string]any) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
+}
+
+// logsAsMaps coerces a handler-produced data["logs"] value into a slice of
+// per-entry maps regardless of whether the handler returned []any (post
+// JSON-roundtrip shape) or []map[string]any (pre-marshal shape — the actual
+// in-memory type the events_get handler produces). Tests assert against
+// per-entry keys uniformly without caring which form the dispatcher
+// surfaces.
+func logsAsMaps(t *testing.T, v any) []map[string]any {
+	t.Helper()
+	switch typed := v.(type) {
+	case []map[string]any:
+		return typed
+	case []any:
+		out := make([]map[string]any, 0, len(typed))
+		for i, e := range typed {
+			m, ok := e.(map[string]any)
+			if !ok {
+				t.Fatalf("logs[%d] type = %T, want map", i, e)
+			}
+			out = append(out, m)
+		}
+		return out
+	case nil:
+		return nil
+	default:
+		t.Fatalf("logs type = %T, want slice of maps", v)
+		return nil
 	}
 }

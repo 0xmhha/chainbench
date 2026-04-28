@@ -23,6 +23,7 @@
         "node.chain_id",
         "node.contract_call",
         "node.contract_deploy",
+        "node.events_get",
         "node.gas_price",
         "node.tx_fee_delegation_send",
         "node.tx_send",

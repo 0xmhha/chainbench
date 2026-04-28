@@ -30,7 +30,8 @@ type Handler func(args json.RawMessage, bus *events.Bus) (map[string]any, error)
 //	handlers_node_lifecycle.go  — node.stop / node.start / node.restart / node.tail_log
 //	handlers_node_read.go       — node.block_number / node.chain_id / node.balance /
 //	                              node.gas_price / node.contract_call (eth_call wrapper,
-//	                              calldata or ABI mode)
+//	                              calldata or ABI mode) / node.events_get
+//	                              (eth_getLogs wrapper, optional ABI log decode)
 //	handlers_node_tx.go         — node.tx_send (incl. EIP-7702 SetCode path) /
 //	                              node.contract_deploy (legacy + 1559; SetCode N/A) /
 //	                              node.tx_fee_delegation_send (go-stablenet 0x16) /
@@ -52,6 +53,7 @@ func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 		"node.balance":                newHandleNodeBalance(stateDir),
 		"node.contract_call":          newHandleNodeContractCall(stateDir),
 		"node.contract_deploy":        newHandleNodeContractDeploy(stateDir),
+		"node.events_get":             newHandleNodeEventsGet(stateDir),
 		"node.gas_price":              newHandleNodeGasPrice(stateDir),
 		"node.tx_send":                newHandleNodeTxSend(stateDir),
 		"node.tx_fee_delegation_send": newHandleNodeTxFeeDelegationSend(stateDir),

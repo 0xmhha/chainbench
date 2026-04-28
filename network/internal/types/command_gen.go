@@ -30,6 +30,7 @@ const CommandCommandNodeBlockNumber CommandCommand = "node.block_number"
 const CommandCommandNodeChainId CommandCommand = "node.chain_id"
 const CommandCommandNodeContractCall CommandCommand = "node.contract_call"
 const CommandCommandNodeContractDeploy CommandCommand = "node.contract_deploy"
+const CommandCommandNodeEventsGet CommandCommand = "node.events_get"
 const CommandCommandNodeGasPrice CommandCommand = "node.gas_price"
 const CommandCommandNodeRestart CommandCommand = "node.restart"
 const CommandCommandNodeRpc CommandCommand = "node.rpc"
@@ -57,6 +58,7 @@ var enumValues_CommandCommand = []interface{}{
 	"node.chain_id",
 	"node.contract_call",
 	"node.contract_deploy",
+	"node.events_get",
 	"node.gas_price",
 	"node.tx_fee_delegation_send",
 	"node.tx_send",
