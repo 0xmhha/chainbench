@@ -3831,6 +3831,52 @@ func TestHandleNodeEventsGet_DecodeFailure(t *testing.T) {
 	}
 }
 
+// TestHandleNodeEventsGet_ABIWithoutEvent verifies the input-validation
+// branch where caller supplies abi but omits the event name. The handler
+// must reject before any RPC dial, so no mock server is needed.
+func TestHandleNodeEventsGet_ABIWithoutEvent(t *testing.T) {
+	h := newHandleNodeEventsGet(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"abi":     erc20TransferEventABI,
+		// no "event" key
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+	if api != nil && !strings.Contains(api.Message, "event") {
+		t.Errorf("error message should mention 'event', got: %s", api.Message)
+	}
+}
+
+// TestHandleNodeEventsGet_EventNotInABI verifies the input-validation
+// branch where the named event is absent from the parsed ABI. Fires before
+// any RPC dial.
+func TestHandleNodeEventsGet_EventNotInABI(t *testing.T) {
+	h := newHandleNodeEventsGet(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"abi":     erc20TransferEventABI, // contains "Transfer" only
+		"event":   "Approval",            // not present in fixture
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+	if api != nil && !strings.Contains(api.Message, "Approval") {
+		t.Errorf("error message should mention the unknown event name, got: %s", api.Message)
+	}
+}
+
 func TestAllHandlers_IncludesEventsGet(t *testing.T) {
 	h := allHandlers("x", "y")
 	if _, ok := h["node.events_get"]; !ok {
