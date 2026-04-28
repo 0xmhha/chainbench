@@ -4,7 +4,9 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   AccountStateArgs,
+  ContractCallArgs,
   _accountStateHandler,
+  _contractCallHandler,
 } from "../src/tools/chain_read.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -144,5 +146,137 @@ describe("chainbench_account_state handler", () => {
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (INVALID_ARGS)");
     expect(out.content[0]?.text).toContain("unknown network");
+  });
+});
+
+// _contractCallHandler shares the same wire-injection contract: the cross-
+// field XOR (calldata vs abi+method+args) is enforced before any spawn so the
+// rejected branches don't need MOCK_SCRIPT, and the happy paths set MOCK_SCRIPT
+// to a single ok:true result line. Saved env values are restored to keep
+// tests isolated from the account_state block above.
+describe("chainbench_contract_call handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_Happy_Calldata", async () => {
+    const data = { result_raw: "0x" + "00".repeat(31) + "2a" };
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data }),
+      },
+    ]);
+    const out = await _contractCallHandler({
+      network: "local",
+      contract_address: "0x" + "b".repeat(40),
+      calldata: "0x70a08231",
+    });
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain(JSON.stringify(data, null, 2));
+  });
+
+  it("_Happy_ABI", async () => {
+    const data = {
+      result_raw: "0x" + "00".repeat(31) + "2a",
+      result_decoded: [42],
+    };
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data }),
+      },
+    ]);
+    const out = await _contractCallHandler({
+      network: "local",
+      contract_address: "0x" + "b".repeat(40),
+      abi: '[{"name":"balanceOf","type":"function","inputs":[{"name":"who","type":"address"}],"outputs":[{"type":"uint256"}]}]',
+      method: "balanceOf",
+      args: ["0x" + "c".repeat(40)],
+    });
+    expect(out.isError).toBeFalsy();
+    expect(out.content[0]?.text).toContain("result_decoded");
+    expect(out.content[0]?.text).toContain("42");
+  });
+
+  it("_BothCalldataAndABI_Rejected", async () => {
+    // Cross-field check fires before any spawn — MOCK_SCRIPT intentionally
+    // empty so a stray wire call would surface as a no-result-terminator
+    // error instead of a silent pass.
+    const out = await _contractCallHandler({
+      network: "local",
+      contract_address: "0x" + "b".repeat(40),
+      calldata: "0x70a08231",
+      abi: '[{"name":"balanceOf","type":"function","inputs":[],"outputs":[]}]',
+      method: "balanceOf",
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("INVALID_ARGS");
+    expect(out.content[0]?.text).toContain("mutually exclusive");
+  });
+
+  it("_NeitherCalldataNorABI_Rejected", async () => {
+    const out = await _contractCallHandler({
+      network: "local",
+      contract_address: "0x" + "b".repeat(40),
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("INVALID_ARGS");
+    expect(out.content[0]?.text).toContain("required");
+  });
+
+  it("_ABIWithoutMethod_Rejected", async () => {
+    const out = await _contractCallHandler({
+      network: "local",
+      contract_address: "0x" + "b".repeat(40),
+      abi: '[{"name":"balanceOf","type":"function","inputs":[],"outputs":[]}]',
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("INVALID_ARGS");
+    expect(out.content[0]?.text).toContain("method");
+  });
+
+  it("_BadAddress_RejectedAtBoundary", () => {
+    // Bad-shaped contract_address must throw at zod parse time so MCP SDK
+    // rejects the call before the handler runs.
+    expect(() =>
+      ContractCallArgs.parse({
+        network: "local",
+        contract_address: "0xnothex",
+        calldata: "0x",
+      }),
+    ).toThrow();
+  });
+
+  it("_StrictRejectsUnknownKeys", () => {
+    // .strict() makes hallucinated keys (e.g. 'gas_limit', 'tag') trip a
+    // structured INVALID_ARGS at the zod boundary instead of being silently
+    // stripped.
+    expect(() =>
+      ContractCallArgs.parse({
+        network: "local",
+        contract_address: "0x" + "b".repeat(40),
+        calldata: "0x",
+        gas_limit: "21000",
+      }),
+    ).toThrow();
   });
 });
