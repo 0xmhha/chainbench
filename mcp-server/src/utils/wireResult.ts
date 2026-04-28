@@ -10,8 +10,9 @@
 import type { WireCallResult } from "./wire.js";
 
 export interface FormattedToolResponse {
-  content: Array<{ type: "text"; text: string }>;
+  content: Array<{ type: "text"; text: string; [k: string]: unknown }>;
   isError?: boolean;
+  [k: string]: unknown;
 }
 
 const MAX_NAMES_IN_SUMMARY = 8;

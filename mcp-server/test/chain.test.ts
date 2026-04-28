@@ -101,6 +101,31 @@ describe("chainbench_account_state handler", () => {
     ).toThrow();
   });
 
+  it("_StrictRejectsUnknownKeys", () => {
+    // .strict() makes hallucinated keys (e.g. 'tag', 'from_block') trip a
+    // structured INVALID_ARGS at the zod boundary instead of being silently
+    // stripped — fail-loud beats silent strip on an LLM-driven surface.
+    expect(() =>
+      AccountStateArgs.parse({
+        network: "local",
+        address: "0x" + "a".repeat(40),
+        tag: "latest",
+      }),
+    ).toThrow();
+  });
+
+  it("_RejectsNonArrayFields", () => {
+    // fields must be an array of FIELD enum values; a bare string must not
+    // be coerced to a single-element array.
+    expect(() =>
+      AccountStateArgs.parse({
+        network: "local",
+        address: "0x" + "a".repeat(40),
+        fields: "balance",
+      }),
+    ).toThrow();
+  });
+
   it("_WireFailure_PassedThrough", async () => {
     process.env.MOCK_SCRIPT = script([
       {

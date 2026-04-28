@@ -10,7 +10,6 @@
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { callWire } from "../utils/wire.js";
 import {
   formatWireResult,
@@ -50,7 +49,7 @@ export const AccountStateArgs = z.object({
     .union([z.string(), z.number()])
     .optional()
     .describe("'latest', 'earliest', '0x10', or integer block number"),
-});
+}).strict();
 
 type AccountStateArgsT = z.infer<typeof AccountStateArgs>;
 
@@ -96,13 +95,7 @@ export function registerChainTools(server: McpServer): void {
     "Read account balance/nonce/code/storage from a network. " +
       "Network can be local or remote (attached). Returns hex-encoded values.",
     AccountStateArgs.shape,
-    // Thin SDK adapter: McpServer.tool's callback signature requires
-    // CallToolResult, whose content items carry an index signature.
-    // FormattedToolResponse is the strict tested shape; this wrapper
-    // widens it to the SDK's structural CallToolResult without changing
-    // any runtime values.
-    async (args) =>
-      (await _accountStateHandler(args)) as unknown as CallToolResult,
+    _accountStateHandler,
   );
   // tx_send is added in Task 4.
 }

@@ -92,4 +92,58 @@ describe("formatWireResult", () => {
     expect(text).toContain("Error (UPSTREAM_ERROR): rpc unreachable");
     expect(text).toContain("Last phase: broadcast");
   });
+
+  it("_Success_PhasesAtCapNoOverflow", () => {
+    // Exactly MAX_NAMES_IN_SUMMARY (8) entries — the boundary case must
+    // render every name and emit no "...+N" overflow suffix.
+    const progress: WireProgressLine[] = Array.from({ length: 8 }, (_, i) => ({
+      type: "progress" as const,
+      step: `step${i + 1}`,
+    }));
+    const out = formatWireResult({
+      result: { type: "result", ok: true, data: { ok: true } },
+      events: [],
+      progress,
+      stderr: "",
+      exitCode: 0,
+    });
+    const text = out.content[0].text;
+    expect(text).toContain(
+      "Phases: [8] step1, step2, step3, step4, step5, step6, step7, step8",
+    );
+    expect(text).not.toContain("...+");
+  });
+
+  it("_Success_PhasesOverCapShowsOverflow", () => {
+    // 9 entries — one over the cap. Summary trims to 8 names and appends
+    // "...+1" so the LLM still sees the total count without unbounded text.
+    const progress: WireProgressLine[] = Array.from({ length: 9 }, (_, i) => ({
+      type: "progress" as const,
+      step: `step${i + 1}`,
+    }));
+    const out = formatWireResult({
+      result: { type: "result", ok: true, data: { ok: true } },
+      events: [],
+      progress,
+      stderr: "",
+      exitCode: 0,
+    });
+    const text = out.content[0].text;
+    expect(text).toContain("Phases: [9] ");
+    expect(text).toContain("...+1");
+  });
+
+  it("_Failure_EmptyMessageRendersPlaceholder", () => {
+    // Wire failures with an empty error message must still render a
+    // human-readable line — formatter substitutes "(no message)".
+    const out = formatWireResult({
+      result: { type: "result", ok: false, error: { code: "INVALID_ARGS", message: "" } },
+      events: [],
+      progress: [],
+      stderr: "",
+      exitCode: 0,
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0].text).toContain("Error (INVALID_ARGS): (no message)");
+  });
 });
