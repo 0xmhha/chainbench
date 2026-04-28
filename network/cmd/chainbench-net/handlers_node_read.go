@@ -659,3 +659,186 @@ func hashesToHex(hashes []common.Hash) []string {
 	}
 	return out
 }
+
+// newHandleNodeAccountState returns a handler for node.account_state — a
+// read-only command that composites balance / nonce / code / storage subset
+// reads against a single account at a single block height. `fields` selects
+// which subset to fetch; default is balance + nonce + code (storage is
+// opt-in only because it requires a separate `storage_key` and would issue
+// a wasteful RPC otherwise).
+//
+// Args: {network?, node_id, address, fields?: [...], storage_key?,
+//
+//	block_number?: <int>|"latest"|"earliest"|"pending"}
+//
+// Result: {address, block, balance?, nonce?, code?, storage?}
+//
+// The nonce read uses NonceAt (eth_getTransactionCount with the explicit
+// block tag) rather than PendingNonceAt — pending-pool semantics belong to
+// tx_send, not state inspection.
+//
+// Validation order: address shape → field-name validity → storage_key shape
+// (when wantStorage) → block_number parse → resolveNode → dial → per-field
+// RPC. Errors fire before any network round-trip when caused by malformed
+// input.
+//
+// Error mapping:
+//
+//	INVALID_ARGS   — missing/invalid address; unknown field name; missing or
+//	                 malformed storage_key when 'storage' requested; invalid
+//	                 block_number; unknown node / bad network name
+//	UPSTREAM_ERROR — state load failure, dial failure, or any of the four
+//	                 underlying eth_get* failures
+func newHandleNodeAccountState(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network     string          `json:"network"`
+			NodeID      string          `json:"node_id"`
+			Address     string          `json:"address"`
+			Fields      []string        `json:"fields"`
+			StorageKey  string          `json:"storage_key"`
+			BlockNumber json.RawMessage `json:"block_number"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+
+		if req.Address == "" {
+			return nil, NewInvalidArgs("args.address is required")
+		}
+		if !common.IsHexAddress(req.Address) {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.address is not a valid hex address: %q", req.Address))
+		}
+		addr := common.HexToAddress(req.Address)
+
+		// Default fields = balance + nonce + code. Storage requires explicit
+		// request because it needs a storage_key and would otherwise issue
+		// a wasteful RPC against a slot the caller did not ask for.
+		fields := req.Fields
+		if len(fields) == 0 {
+			fields = []string{"balance", "nonce", "code"}
+		}
+
+		var wantBalance, wantNonce, wantCode, wantStorage bool
+		for _, f := range fields {
+			switch f {
+			case "balance":
+				wantBalance = true
+			case "nonce":
+				wantNonce = true
+			case "code":
+				wantCode = true
+			case "storage":
+				wantStorage = true
+			default:
+				return nil, NewInvalidArgs(fmt.Sprintf(
+					"args.fields contains unknown field: %q (must be balance/nonce/code/storage)", f,
+				))
+			}
+		}
+
+		// Storage requires storage_key — validate before any RPC round-trip
+		// so callers get a fast, deterministic INVALID_ARGS for malformed
+		// input rather than a delayed UPSTREAM error from a confused upstream.
+		var storageKey common.Hash
+		if wantStorage {
+			if req.StorageKey == "" {
+				return nil, NewInvalidArgs("args.storage_key is required when 'storage' is in fields")
+			}
+			if !strings.HasPrefix(req.StorageKey, "0x") || len(req.StorageKey) != 66 {
+				return nil, NewInvalidArgs(fmt.Sprintf(
+					"args.storage_key must be 0x + 64 hex chars: %q", req.StorageKey,
+				))
+			}
+			if _, err := hex.DecodeString(strings.TrimPrefix(req.StorageKey, "0x")); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.storage_key not valid hex: %q", req.StorageKey))
+			}
+			storageKey = common.HexToHash(req.StorageKey)
+		}
+
+		// block_number — int OR "latest" / "earliest" / "pending". Mirrors the
+		// node.balance / node.contract_call parsing for shape parity. nil
+		// signals "latest" to ethclient (interpreted as the head block);
+		// big.NewInt(0) for earliest; integers passed as-is. blockLabel echoes
+		// the caller-provided form back in the result so "pending" (silently
+		// degraded to "latest" upstream) is observable.
+		var blockNum *big.Int
+		blockLabel := "latest"
+		if len(req.BlockNumber) > 0 {
+			var asInt int64
+			var asStr string
+			if err := json.Unmarshal(req.BlockNumber, &asInt); err == nil {
+				if asInt < 0 {
+					return nil, NewInvalidArgs(fmt.Sprintf("args.block_number must be non-negative, got %d", asInt))
+				}
+				blockNum = big.NewInt(asInt)
+				blockLabel = fmt.Sprintf("%d", asInt)
+			} else if err := json.Unmarshal(req.BlockNumber, &asStr); err == nil {
+				switch asStr {
+				case "latest", "pending":
+					blockLabel = asStr
+				case "earliest":
+					blockLabel = asStr
+					blockNum = big.NewInt(0)
+				default:
+					return nil, NewInvalidArgs(fmt.Sprintf("args.block_number label invalid: %q", asStr))
+				}
+			} else {
+				return nil, NewInvalidArgs("args.block_number must be an integer or a block label string")
+			}
+		}
+
+		_, node, err := resolveNode(stateDir, req.Network, req.NodeID)
+		if err != nil {
+			return nil, err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		client, err := dialNode(ctx, &node)
+		if err != nil {
+			return nil, err
+		}
+		defer client.Close()
+
+		out := map[string]any{
+			"address": req.Address,
+			"block":   blockLabel,
+		}
+
+		if wantBalance {
+			bal, err := client.BalanceAt(ctx, addr, blockNum)
+			if err != nil {
+				return nil, NewUpstream("eth_getBalance", err)
+			}
+			out["balance"] = "0x" + bal.Text(16)
+		}
+		if wantNonce {
+			// NonceAt — eth_getTransactionCount at the given block tag.
+			// Distinct from PendingNonceAt: state inspection wants the
+			// historical/latest mined nonce, not pending-pool inclusion.
+			nonce, err := client.NonceAt(ctx, addr, blockNum)
+			if err != nil {
+				return nil, NewUpstream("eth_getTransactionCount", err)
+			}
+			out["nonce"] = nonce
+		}
+		if wantCode {
+			code, err := client.CodeAt(ctx, addr, blockNum)
+			if err != nil {
+				return nil, NewUpstream("eth_getCode", err)
+			}
+			out["code"] = "0x" + hex.EncodeToString(code)
+		}
+		if wantStorage {
+			slot, err := client.StorageAt(ctx, addr, storageKey, blockNum)
+			if err != nil {
+				return nil, NewUpstream("eth_getStorageAt", err)
+			}
+			out["storage"] = "0x" + hex.EncodeToString(slot)
+		}
+
+		return out, nil
+	}
+}

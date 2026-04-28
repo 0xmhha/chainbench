@@ -3884,6 +3884,374 @@ func TestAllHandlers_IncludesEventsGet(t *testing.T) {
 	}
 }
 
+// newAccountStateMock returns a JSON-RPC server that responds to the four
+// read methods composited by node.account_state — eth_getBalance,
+// eth_getTransactionCount, eth_getCode, eth_getStorageAt — with the
+// caller-supplied scalar values. capturedRequests, when non-nil, accumulates
+// the method names actually invoked so callers can verify selective fetching
+// (e.g. fields=["balance"] should only invoke eth_getBalance, not the others).
+func newAccountStateMock(t *testing.T, capturedRequests *[]string, balance, nonce, code, storageVal string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if capturedRequests != nil {
+			*capturedRequests = append(*capturedRequests, req.Method)
+		}
+		switch req.Method {
+		case "eth_getBalance":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, balance)
+		case "eth_getTransactionCount":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, nonce)
+		case "eth_getCode":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, code)
+		case "eth_getStorageAt":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, storageVal)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+// captureAccountStateBlockMock is a variant that captures the block-tag param
+// (params[1] for balance/nonce/code, params[2] for storage) into *capturedBlock
+// so block-resolution tests can assert on the wire shape ethclient produced.
+// Otherwise identical to newAccountStateMock.
+func captureAccountStateBlockMock(t *testing.T, capturedBlock *string, balance, nonce, code, storageVal string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_getBalance":
+			if len(req.Params) > 1 && capturedBlock != nil {
+				*capturedBlock = string(req.Params[1])
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, balance)
+		case "eth_getTransactionCount":
+			if len(req.Params) > 1 && capturedBlock != nil {
+				*capturedBlock = string(req.Params[1])
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, nonce)
+		case "eth_getCode":
+			if len(req.Params) > 1 && capturedBlock != nil {
+				*capturedBlock = string(req.Params[1])
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, code)
+		case "eth_getStorageAt":
+			// eth_getStorageAt: params = [addr, slot, block]
+			if len(req.Params) > 2 && capturedBlock != nil {
+				*capturedBlock = string(req.Params[2])
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, storageVal)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+// TestHandleNodeAccountState_Default exercises the no-fields case: handler
+// must default to balance + nonce + code (storage is opt-in only).
+func TestHandleNodeAccountState_Default(t *testing.T) {
+	srv := newAccountStateMock(t, nil,
+		"0x1234",                     // balance = 0x1234
+		"0x2a",                       // nonce = 42
+		"0xdeadbeef",                 // code
+		"0x"+strings.Repeat("0", 64)) // storage
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeAccountState(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "0x000000000000000000000000000000000000beef",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	for _, k := range []string{"address", "block", "balance", "nonce", "code"} {
+		if _, present := data[k]; !present {
+			t.Errorf("data missing key %q (got keys %v)", k, mapKeys(data))
+		}
+	}
+	if _, present := data["storage"]; present {
+		t.Errorf("data[\"storage\"] must be absent in default mode, got %v", data["storage"])
+	}
+}
+
+// TestHandleNodeAccountState_BalanceOnly verifies that fields=["balance"]
+// triggers only eth_getBalance — no wasteful nonce/code/storage RPC.
+func TestHandleNodeAccountState_BalanceOnly(t *testing.T) {
+	var captured []string
+	srv := newAccountStateMock(t, &captured,
+		"0x1234", "0x2a", "0xdeadbeef", "0x"+strings.Repeat("0", 64))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeAccountState(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "0x000000000000000000000000000000000000beef",
+		"fields":  []string{"balance"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if _, present := data["balance"]; !present {
+		t.Errorf("data[\"balance\"] missing")
+	}
+	for _, k := range []string{"nonce", "code", "storage"} {
+		if _, present := data[k]; present {
+			t.Errorf("data[%q] must be absent when fields=[balance], got %v", k, data[k])
+		}
+	}
+	if len(captured) != 1 || captured[0] != "eth_getBalance" {
+		t.Errorf("rpc methods called = %v, want [eth_getBalance]", captured)
+	}
+}
+
+// TestHandleNodeAccountState_StorageOnly verifies fields=["storage"]
+// triggers only eth_getStorageAt and surfaces the slot.
+func TestHandleNodeAccountState_StorageOnly(t *testing.T) {
+	var captured []string
+	storageVal := "0x" + strings.Repeat("0", 62) + "ff"
+	srv := newAccountStateMock(t, &captured,
+		"0x1234", "0x2a", "0xdeadbeef", storageVal)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeAccountState(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":     "tn",
+		"node_id":     "node1",
+		"address":     "0x000000000000000000000000000000000000beef",
+		"fields":      []string{"storage"},
+		"storage_key": "0x" + strings.Repeat("0", 63) + "1",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got, _ := data["storage"].(string); got != storageVal {
+		t.Errorf("data[\"storage\"] = %q, want %q", got, storageVal)
+	}
+	for _, k := range []string{"balance", "nonce", "code"} {
+		if _, present := data[k]; present {
+			t.Errorf("data[%q] must be absent when fields=[storage], got %v", k, data[k])
+		}
+	}
+	if len(captured) != 1 || captured[0] != "eth_getStorageAt" {
+		t.Errorf("rpc methods called = %v, want [eth_getStorageAt]", captured)
+	}
+}
+
+// TestHandleNodeAccountState_AllFields exercises the full composite path —
+// all 4 RPCs called, all 4 fields surfaced.
+func TestHandleNodeAccountState_AllFields(t *testing.T) {
+	var captured []string
+	storageVal := "0x" + strings.Repeat("0", 62) + "ff"
+	srv := newAccountStateMock(t, &captured,
+		"0x1234", "0x2a", "0xdeadbeef", storageVal)
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeAccountState(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":     "tn",
+		"node_id":     "node1",
+		"address":     "0x000000000000000000000000000000000000beef",
+		"fields":      []string{"balance", "nonce", "code", "storage"},
+		"storage_key": "0x" + strings.Repeat("0", 63) + "1",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	for _, k := range []string{"balance", "nonce", "code", "storage"} {
+		if _, present := data[k]; !present {
+			t.Errorf("data[%q] missing (got keys %v)", k, mapKeys(data))
+		}
+	}
+	// All 4 method names must appear in the captured list (order not enforced).
+	want := map[string]bool{
+		"eth_getBalance":          false,
+		"eth_getTransactionCount": false,
+		"eth_getCode":             false,
+		"eth_getStorageAt":        false,
+	}
+	for _, m := range captured {
+		if _, ok := want[m]; ok {
+			want[m] = true
+		}
+	}
+	for m, seen := range want {
+		if !seen {
+			t.Errorf("rpc method %q not invoked (captured: %v)", m, captured)
+		}
+	}
+}
+
+// TestHandleNodeAccountState_StorageWithoutKey verifies that asking for the
+// storage field without supplying storage_key fires INVALID_ARGS before any
+// RPC round-trip.
+func TestHandleNodeAccountState_StorageWithoutKey(t *testing.T) {
+	h := newHandleNodeAccountState(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "0x000000000000000000000000000000000000beef",
+		"fields":  []string{"storage"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeAccountState_BadAddress(t *testing.T) {
+	h := newHandleNodeAccountState(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "not-hex",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeAccountState_BadStorageKey(t *testing.T) {
+	h := newHandleNodeAccountState(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":     "tn",
+		"node_id":     "node1",
+		"address":     "0x000000000000000000000000000000000000beef",
+		"fields":      []string{"storage"},
+		"storage_key": "not-hex",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeAccountState_UnknownField(t *testing.T) {
+	h := newHandleNodeAccountState(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"address": "0x000000000000000000000000000000000000beef",
+		"fields":  []string{"balance", "fake_field"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeAccountState_BlockNumberLatest verifies the "latest" label
+// is forwarded literally to the upstream RPC (eth_getBalance params[1]).
+func TestHandleNodeAccountState_BlockNumberLatest(t *testing.T) {
+	var capturedBlock string
+	srv := captureAccountStateBlockMock(t, &capturedBlock,
+		"0x1234", "0x2a", "0xdeadbeef", "0x"+strings.Repeat("0", 64))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeAccountState(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":      "tn",
+		"node_id":      "node1",
+		"address":      "0x000000000000000000000000000000000000beef",
+		"fields":       []string{"balance"},
+		"block_number": "latest",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if !strings.Contains(capturedBlock, "latest") {
+		t.Errorf("eth_getBalance block param = %q, want it to contain \"latest\"", capturedBlock)
+	}
+}
+
+// TestHandleNodeAccountState_BlockEcho verifies the response echoes the
+// caller-provided block label (numeric form for integers) so callers can
+// observe which block the read targeted.
+func TestHandleNodeAccountState_BlockEcho(t *testing.T) {
+	srv := newAccountStateMock(t, nil,
+		"0x1234", "0x2a", "0xdeadbeef", "0x"+strings.Repeat("0", 64))
+	defer srv.Close()
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeAccountState(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":      "tn",
+		"node_id":      "node1",
+		"address":      "0x000000000000000000000000000000000000beef",
+		"fields":       []string{"balance"},
+		"block_number": 100,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got := data["block"]; got != "100" {
+		t.Errorf("data[\"block\"] = %v, want \"100\"", got)
+	}
+}
+
+func TestAllHandlers_IncludesAccountState(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.account_state"]; !ok {
+		t.Error("allHandlers missing node.account_state")
+	}
+}
+
 // mapKeys returns the sorted key slice of m for stable error messages. Test-
 // only helper; production code paths order keys via the JSON marshaller.
 func mapKeys(m map[string]any) []string {
