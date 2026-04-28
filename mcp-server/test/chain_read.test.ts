@@ -6,9 +6,11 @@ import {
   AccountStateArgs,
   ContractCallArgs,
   EventsGetArgs,
+  TxWaitArgs,
   _accountStateHandler,
   _contractCallHandler,
   _eventsGetHandler,
+  _txWaitHandler,
 } from "../src/tools/chain_read.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -425,5 +427,138 @@ describe("events_get", () => {
         block_hash: "0x" + "1".repeat(64),
       }),
     ).toThrow();
+  });
+});
+
+// _txWaitHandler shares the same wire-injection contract as the other
+// chain_read tools. Both happy paths set MOCK_SCRIPT to a single ok:true
+// receipt line; the boundary-rejection cases exercise zod parse() directly
+// and never reach the wire. Saved env values are restored to keep tests
+// isolated from the events_get block above.
+describe("chainbench_tx_wait handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_Happy_DefaultTimeout", async () => {
+    const data = {
+      tx_hash: "0x" + "a".repeat(64),
+      status: "success",
+      block_number: "0x10",
+      block_hash: "0x" + "b".repeat(64),
+      gas_used: "0x5208",
+      logs_count: 0,
+      effective_gas_price: "0x3b9aca00",
+    };
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data }),
+      },
+    ]);
+    const out = await _txWaitHandler({
+      network: "local",
+      tx_hash: "0x" + "a".repeat(64),
+    });
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain(JSON.stringify(data, null, 2));
+  });
+
+  it("_Happy_CustomTimeout", async () => {
+    const data = {
+      tx_hash: "0x" + "a".repeat(64),
+      status: "success",
+      block_number: "0x11",
+      block_hash: "0x" + "c".repeat(64),
+      gas_used: "0x5208",
+      logs_count: 1,
+      effective_gas_price: "0x3b9aca00",
+    };
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data }),
+      },
+    ]);
+    const out = await _txWaitHandler({
+      network: "local",
+      tx_hash: "0x" + "a".repeat(64),
+      timeout_ms: 5000,
+    });
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain(JSON.stringify(data, null, 2));
+  });
+
+  it("_BadTxHash_RejectedAtBoundary", () => {
+    // tx_hash must be exactly 0x + 32-byte (64 hex chars). Too-short hex
+    // must throw at zod parse time rather than reach the wire and surface
+    // as an INVALID_ARGS after a wasted spawn.
+    expect(() =>
+      TxWaitArgs.parse({ network: "local", tx_hash: "0xabc" }),
+    ).toThrow();
+  });
+
+  it("_NegativeTimeout_RejectedAtBoundary", () => {
+    // timeout_ms uses z.number().int().positive() — 0 and negatives must
+    // throw at zod parse time.
+    expect(() =>
+      TxWaitArgs.parse({
+        network: "local",
+        tx_hash: "0x" + "a".repeat(64),
+        timeout_ms: -1,
+      }),
+    ).toThrow();
+  });
+
+  it("_StrictRejectsUnknownKeys", () => {
+    // .strict() makes hallucinated keys (e.g. 'block_number', 'poll_interval')
+    // trip a structured INVALID_ARGS at the zod boundary instead of being
+    // silently stripped.
+    expect(() =>
+      TxWaitArgs.parse({
+        network: "local",
+        tx_hash: "0x" + "a".repeat(64),
+        block_number: "latest",
+      }),
+    ).toThrow();
+  });
+
+  it("_WireFailure_PassedThrough", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({
+          type: "result",
+          ok: false,
+          error: { code: "UPSTREAM_ERROR", message: "rpc dial failed" },
+        }),
+      },
+    ]);
+    const out = await _txWaitHandler({
+      network: "local",
+      tx_hash: "0x" + "a".repeat(64),
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
+    expect(out.content[0]?.text).toContain("rpc dial failed");
   });
 });

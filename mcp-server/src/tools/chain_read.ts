@@ -1,10 +1,8 @@
 // chain_read.ts — read-only high-level tools (no signer required).
 //
 // Hosts MCP tools that read chain state without spending gas or producing
-// transactions. Today: chainbench_account_state, chainbench_contract_call,
-// chainbench_events_get. Sprint 5c.2 follow-up (Task 3) will land in this
-// file:
-//   - chainbench_tx_wait        (receipt polling)
+// transactions. Sprint 5c.2 final shape: chainbench_account_state,
+// chainbench_contract_call, chainbench_events_get, chainbench_tx_wait.
 //
 // Cross-field validation that zod schemas cannot express cleanly (e.g.
 // fields=['storage'] requires storage_key, contract_call's calldata XOR
@@ -30,6 +28,12 @@ const HEX_DATA = /^0x([a-fA-F0-9]{2})*$/;
 // surface as a Zod parse error at the MCP boundary rather than as a
 // chainbench-net UPSTREAM_ERROR after a wasted spawn.
 const HEX_TOPIC = /^0x[a-fA-F0-9]{64}$/;
+// HEX_TX_HASH: 0x-prefixed 32-byte (64 hex chars) transaction hash. Same
+// regex shape as HEX_TOPIC but kept as a separate constant for intent
+// clarity — a malformed tx_hash should surface as a Zod parse error at the
+// MCP boundary rather than as a chainbench-net INVALID_ARGS after a wasted
+// spawn (the Go handler enforces the identical 0x + 32-byte hex shape).
+const HEX_TX_HASH = /^0x[a-fA-F0-9]{64}$/;
 
 const FIELD = z.enum(["balance", "nonce", "code", "storage"]);
 
@@ -299,6 +303,55 @@ export async function _eventsGetHandler(
   return formatWireResult(result);
 }
 
+export const TxWaitArgs = z.object({
+  network: z
+    .string()
+    .min(1)
+    .describe("Network name (e.g. 'local', 'sepolia')"),
+  node_id: z
+    .string()
+    .optional()
+    .describe("Node ID, default first node"),
+  tx_hash: z
+    .string()
+    .regex(HEX_TX_HASH)
+    .describe("Transaction hash to poll for (0x-prefixed 64 hex chars)"),
+  timeout_ms: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Polling deadline in milliseconds. Defaults to chainbench-net's " +
+        "server-side default (~30000ms). Bounded by the Go handler " +
+        "(min/max enforced server-side).",
+    ),
+}).strict();
+
+type TxWaitArgsT = z.infer<typeof TxWaitArgs>;
+
+export async function _txWaitHandler(
+  args: TxWaitArgsT,
+): Promise<FormattedToolResponse> {
+  const wireArgs: Record<string, unknown> = {
+    network: args.network,
+    tx_hash: args.tx_hash,
+  };
+  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
+  if (args.timeout_ms !== undefined) wireArgs.timeout_ms = args.timeout_ms;
+  // Wire helper timeout must outlive the caller's polling deadline so the
+  // pending-status path inside chainbench-net gets a chance to fire (and
+  // return {status:"pending", tx_hash}) before the wire helper kills the
+  // spawn with a SIGTERM. Default chainbench-net deadline is ~30000ms; add
+  // 5000ms grace so the Go side always wins the race.
+  const callerTimeoutMs = args.timeout_ms ?? 30000;
+  const wireTimeoutMs = callerTimeoutMs + 5000;
+  const result = await callWire("node.tx_wait", wireArgs, {
+    timeoutMs: wireTimeoutMs,
+  });
+  return formatWireResult(result);
+}
+
 export function registerChainReadTools(server: McpServer): void {
   server.tool(
     "chainbench_account_state",
@@ -328,5 +381,16 @@ export function registerChainReadTools(server: McpServer): void {
     EventsGetArgs.shape,
     _eventsGetHandler,
   );
-  // Sprint 5c.2 Task 3 will add tx_wait here.
+  server.tool(
+    "chainbench_tx_wait",
+    "Poll for a transaction receipt with exponential backoff. Returns the " +
+      "receipt fields when the tx is mined: status (success/failed), " +
+      "block_number, block_hash, gas_used, logs_count, contract_address (if " +
+      "a deploy), effective_gas_price. If the tx is still unconfirmed when " +
+      "timeout_ms elapses, returns {status: 'pending', tx_hash}. Default " +
+      "timeout_ms is server-side ~30000.",
+    TxWaitArgs.shape,
+    _txWaitHandler,
+  );
+  // All 4 read tools landed (Sprint 5c.2 complete on this file).
 }
