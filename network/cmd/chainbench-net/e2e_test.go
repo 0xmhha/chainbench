@@ -1329,3 +1329,429 @@ func TestE2E_NodeTxFeeDelegationSend_AgainstAttachedRemote(t *testing.T) {
 		t.Errorf("tx type = 0x%x, want 0x16 (fee-delegation)", got)
 	}
 }
+
+// TestE2E_NodeContractDeploy_AgainstAttachedRemote drives cobra twice
+// in-process: first attaches a mock JSON-RPC endpoint, then issues
+// node.contract_deploy with a tiny bytecode stub + 1559 fee fields. The
+// mock captures the broadcast raw-hex; we decode the leading byte to
+// confirm the handler emitted a DynamicFeeTx (type 2 — contract creation
+// with 1559 fields uses the same envelope as a normal 1559 call). Asserts
+// (a) the broadcast arrived, (b) the wire byte is 0x02, and (c) the
+// terminator data carries the locally-computed contract_address (0x +
+// 40 hex chars, distinct from tx_hash's 66-char shape).
+func TestE2E_NodeContractDeploy_AgainstAttachedRemote(t *testing.T) {
+	var sentRaw string
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string            `json:"method"`
+			ID     json.RawMessage   `json:"id"`
+			Params []json.RawMessage `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], &sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x%s"}`, req.ID, strings.Repeat("a", 64))
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+
+	// attach
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"deploy-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// contract_deploy with 1559 fee fields + pinned nonce/gas so the mock
+	// only has to answer chainId + sendRawTransaction.
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	deployCmd := `{"command":"node.contract_deploy","args":{"network":"deploy-e2e","node_id":"node1","signer":"alice","bytecode":"0x6080604052348015600f57600080fd5b50","gas":100000,"max_fee_per_gas":"0x59682f00","max_priority_fee_per_gas":"0x3b9aca00","nonce":0}}`
+	root2.SetIn(strings.NewReader(deployCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("contract_deploy: %v stderr=%s", err, stderr.String())
+	}
+
+	if sentRaw == "" {
+		t.Fatal("mock did not see eth_sendRawTransaction")
+	}
+	if got := decodeBroadcastTxType(t, sentRaw); got != 2 {
+		t.Errorf("tx type = %d, want 2 (DynamicFee with contract creation)", got)
+	}
+
+	// Find result terminator and assert contract_address + tx_hash shapes.
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+	var res struct {
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	if tx, _ := res.Data["tx_hash"].(string); !strings.HasPrefix(tx, "0x") || len(tx) != 66 {
+		t.Errorf("tx_hash shape wrong: %v", res.Data["tx_hash"])
+	}
+	if addr, _ := res.Data["contract_address"].(string); !strings.HasPrefix(addr, "0x") || len(addr) != 42 {
+		t.Errorf("contract_address shape wrong: %v", res.Data["contract_address"])
+	}
+}
+
+// TestE2E_NodeContractCall_AgainstAttachedRemote drives cobra twice
+// in-process: attach a mock JSON-RPC endpoint, then issue node.contract_call
+// with raw calldata. The mock returns a fixed 32-byte uint256(66) response;
+// we assert result_raw round-trips that response verbatim through the wire
+// terminator. The handler does not need a signer (read-only path).
+func TestE2E_NodeContractCall_AgainstAttachedRemote(t *testing.T) {
+	const mockResult = "0x0000000000000000000000000000000000000000000000000000000000000042"
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_call":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, mockResult)
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+
+	// attach
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"call-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// contract_call with raw calldata (balanceOf(address) selector + zero arg).
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	callCmd := `{"command":"node.contract_call","args":{"network":"call-e2e","node_id":"node1","contract_address":"0x000000000000000000000000000000000000abcd","calldata":"0x70a082310000000000000000000000000000000000000000000000000000000000000001"}}`
+	root2.SetIn(strings.NewReader(callCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("contract_call: %v stderr=%s", err, stderr.String())
+	}
+
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+	var res struct {
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	if got, want := res.Data["result_raw"], mockResult; got != want {
+		t.Errorf("result_raw = %v, want %q", got, want)
+	}
+	if got, want := res.Data["block"], "latest"; got != want {
+		t.Errorf("block = %v, want %q", got, want)
+	}
+}
+
+// TestE2E_NodeEventsGet_AgainstAttachedRemote drives cobra twice in-process:
+// attach a mock JSON-RPC endpoint that returns a single Transfer-like log
+// from eth_getLogs, then issue node.events_get with an address+topic[0]
+// filter. Asserts the wire terminator carries logs[] with exactly one
+// entry whose required fields surface unchanged.
+func TestE2E_NodeEventsGet_AgainstAttachedRemote(t *testing.T) {
+	const transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_getLogs":
+			// Single log with 3 topics + 32-byte data. blockNumber/blockHash/
+			// transactionHash/transactionIndex/logIndex/removed are all
+			// required by go-ethereum's Log JSON unmarshaller.
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":[{
+				"address":"0x000000000000000000000000000000000000abcd",
+				"topics":[%q,
+					"0x000000000000000000000000000000000000000000000000000000000000beef",
+					"0x000000000000000000000000000000000000000000000000000000000000cafe"],
+				"data":"0x0000000000000000000000000000000000000000000000000000000000000064",
+				"blockNumber":"0x10",
+				"blockHash":"0x%s",
+				"transactionHash":"0x%s",
+				"transactionIndex":"0x0",
+				"logIndex":"0x0",
+				"removed":false
+			}]}`, req.ID, transferTopic, strings.Repeat("b", 64), strings.Repeat("a", 64))
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+
+	// attach
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"events-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// events_get with address + topic[0] filter.
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	eventsCmd := fmt.Sprintf(
+		`{"command":"node.events_get","args":{"network":"events-e2e","node_id":"node1","address":"0x000000000000000000000000000000000000abcd","topics":[%q]}}`,
+		transferTopic,
+	)
+	root2.SetIn(strings.NewReader(eventsCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("events_get: %v stderr=%s", err, stderr.String())
+	}
+
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+	var res struct {
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	logs, ok := res.Data["logs"].([]any)
+	if !ok {
+		t.Fatalf("logs is not an array: %T %v", res.Data["logs"], res.Data["logs"])
+	}
+	if len(logs) != 1 {
+		t.Fatalf("logs len = %d, want 1", len(logs))
+	}
+	entry, ok := logs[0].(map[string]any)
+	if !ok {
+		t.Fatalf("logs[0] is not a map: %T", logs[0])
+	}
+	// block_number is uint64 → JSON number → float64 through map[string]any.
+	if bn, _ := entry["block_number"].(float64); bn != 16 {
+		t.Errorf("logs[0].block_number = %v, want 16", entry["block_number"])
+	}
+	topics, _ := entry["topics"].([]any)
+	if len(topics) != 3 {
+		t.Errorf("logs[0].topics len = %d, want 3", len(topics))
+	}
+	if removed, _ := entry["removed"].(bool); removed {
+		t.Errorf("logs[0].removed = true, want false")
+	}
+}
+
+// TestE2E_NodeAccountState_AgainstAttachedRemote drives cobra twice
+// in-process: attach a mock JSON-RPC endpoint, then issue node.account_state
+// with default fields (balance + nonce + code, no storage). Asserts all
+// three default fields surface in the wire terminator with the mock-supplied
+// values, and that storage is absent (opt-in only).
+func TestE2E_NodeAccountState_AgainstAttachedRemote(t *testing.T) {
+	rpcSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_getBalance":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0xde0b6b3a7640000"}`, req.ID)
+		case "eth_getTransactionCount":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x2a"}`, req.ID)
+		case "eth_getCode":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x6080604052348015600f57600080fd5b50"}`, req.ID)
+		case "istanbul_getValidators", "wemix_getReward":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer rpcSrv.Close()
+
+	stateDir := t.TempDir()
+	t.Setenv("CHAINBENCH_STATE_DIR", stateDir)
+
+	// attach
+	var stdout, stderr bytes.Buffer
+	root := newRootCmd()
+	attachCmd := fmt.Sprintf(`{"command":"network.attach","args":{"rpc_url":%q,"name":"state-e2e"}}`, rpcSrv.URL)
+	root.SetIn(strings.NewReader(attachCmd))
+	root.SetOut(&stdout)
+	root.SetErr(&stderr)
+	root.SetArgs([]string{"run"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("attach: %v stderr=%s", err, stderr.String())
+	}
+
+	// account_state with default fields (balance + nonce + code).
+	stdout.Reset()
+	stderr.Reset()
+	root2 := newRootCmd()
+	stateCmd := `{"command":"node.account_state","args":{"network":"state-e2e","node_id":"node1","address":"0x0000000000000000000000000000000000000001"}}`
+	root2.SetIn(strings.NewReader(stateCmd))
+	root2.SetOut(&stdout)
+	root2.SetErr(&stderr)
+	root2.SetArgs([]string{"run"})
+	if err := root2.Execute(); err != nil {
+		t.Fatalf("account_state: %v stderr=%s", err, stderr.String())
+	}
+
+	var resultLine []byte
+	scanner := bufio.NewScanner(&stdout)
+	for scanner.Scan() {
+		line := append([]byte(nil), scanner.Bytes()...)
+		if err := schema.ValidateBytes("event", line); err != nil {
+			t.Fatalf("schema: %v\nline: %s", err, line)
+		}
+		msg, derr := wire.DecodeMessage(line)
+		if derr != nil {
+			t.Fatalf("decode %q: %v", line, derr)
+		}
+		if _, ok := msg.(wire.ResultMessage); ok {
+			resultLine = line
+		}
+	}
+	if resultLine == nil {
+		t.Fatal("no result terminator")
+	}
+	var res struct {
+		Ok   bool           `json:"ok"`
+		Data map[string]any `json:"data"`
+	}
+	if err := json.Unmarshal(resultLine, &res); err != nil {
+		t.Fatalf("unmarshal terminator: %v", err)
+	}
+	if !res.Ok {
+		t.Fatalf("not ok: %s", resultLine)
+	}
+	if got, want := res.Data["balance"], "0xde0b6b3a7640000"; got != want {
+		t.Errorf("balance = %v, want %q", got, want)
+	}
+	// nonce is uint64 → JSON number → float64.
+	if nonce, _ := res.Data["nonce"].(float64); nonce != 42 {
+		t.Errorf("nonce = %v, want 42", res.Data["nonce"])
+	}
+	if code, _ := res.Data["code"].(string); !strings.HasPrefix(code, "0x") || len(code) <= 2 {
+		t.Errorf("code shape wrong: %v", res.Data["code"])
+	}
+	if _, ok := res.Data["storage"]; ok {
+		t.Errorf("storage should be absent in default fields, got %v", res.Data["storage"])
+	}
+}

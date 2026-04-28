@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-27 (Sprint 4c 완료 — Fee Delegation + EIP-7702)
+> **최종 업데이트**: 2026-04-27 (Sprint 4d 완료 — Sprint 4 series 종료)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -796,6 +796,18 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [x] Go E2E + bash spawn 테스트 (`node-tx-set-code.sh` / `node-tx-fee-delegation.sh`)
 
 완료 (2026-04-27)
+
+**Sprint 4d — Contract deploy/call + events_get + account_state** — 완료 (2026-04-27)
+- [x] `network/internal/abiutil` — JSON ABI parse / arg coerce / method pack / event decode 헬퍼 (tuple / nested-array / fixed-bytesN(N≠32) 명시적 미지원)
+- [x] `remote.Client` 4 신규 read wrapper — `CallContract` / `FilterLogs` / `CodeAt` / `StorageAt` (`NonceAt` 는 4d 진행 중 추가)
+- [x] `node.contract_deploy` — bytecode + 옵션 ABI 생성자 args. fee-mode selector 재사용 (legacy / 1559; SetCode 는 contract 생성과 의미 없으므로 제외). `contract_address` 는 `crypto.CreateAddress(sender, nonce)` 로 로컬 계산
+- [x] `node.contract_call` — 두 mutually-exclusive mode (raw calldata / ABI+method+args). 응답에 `result_raw` (+ ABI mode 에서 `result_decoded`)
+- [x] `node.events_get` — `eth_getLogs` wrapper. address / from_block / to_block / topics 필터, 옵션 ABI 기반 log decode (topics 의 indexed args + data 의 non-indexed)
+- [x] `node.account_state` — composite reader (balance / nonce / code / storage). `fields` 기본 = balance+nonce+code; storage 는 opt-in (storage_key 필요)
+- [x] 3 신규 bash spawn 테스트 (`node-contract-deploy-call.sh` / `node-events-get.sh` / `node-account-state.sh`) + 4 Go E2E 테스트
+- [x] EVALUATION_CAPABILITY §2/§4 Go column 5 cell ✅; Go coverage 45% → 60%
+
+완료 (2026-04-27). Sprint 4 series 종료 — Go `network/` 의 tx + read 매트릭스 완료. 다음 P1 은 Sprint 5 (MCP 이관).
 
 **Sprint 5 — Capability gate + Hybrid 네트워크 + MCP 이관 시작**
 - [ ] 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)

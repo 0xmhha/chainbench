@@ -1,7 +1,7 @@
 # Chainbench — 다음 작업 핸드오프 문서
 
 > 작성일: 2026-04-24 (Sprint 4 종료 시점)
-> 최종 업데이트: 2026-04-27 (Sprint 4c 완료 — Fee Delegation + EIP-7702)
+> 최종 업데이트: 2026-04-27 (Sprint 4d 완료 — Sprint 4 series 종료)
 > 이 문서는 **다른 세션에서 맥락 없이 작업을 이어갈 수 있도록** 작성됨.
 > 읽는 순서: §1 (프로젝트 컨텍스트) → §2 (현재 상태) → §3 (다음 작업) → §4 (규약) → §5 (주의사항).
 
@@ -95,6 +95,7 @@ chainbench/
 | **4** | **Signer boundary (env) + node.tx_send + 보안 경계 테스트** | **2026-04-24** | **8** |
 | **4b** | **keystore signer + EIP-1559 + node.tx_wait** | **2026-04-27** | **9** |
 | **4c** | **SignHash + EIP-7702 SetCode + go-stablenet 0x16 fee delegation** | **2026-04-27** | **9** |
+| **4d** | **Contract deploy/call + events_get + account_state (Sprint 4 series 종료)** | **2026-04-27** | **10** |
 
 각 sprint 는 `docs/superpowers/specs/<date>-<topic>.md` + `docs/superpowers/plans/<date>-<topic>.md` 를 가지고 있음.
 
@@ -118,6 +119,10 @@ chainbench/
 - `node.tx_send` (서명 + 방송, signer alias 필수, optional `authorization_list` → EIP-7702 SetCodeTx)
 - `node.tx_fee_delegation_send` (Sprint 4c, stablenet only — sender + fee_payer 이중 서명, 0x16 envelope)
 - `node.tx_wait` (receipt polling, exponential backoff)
+- `node.contract_deploy` (Sprint 4d — bytecode + 옵션 ABI 생성자 args. legacy / 1559 fee-mode)
+- `node.contract_call` (Sprint 4d — raw calldata or ABI+method+args. read-only `eth_call`)
+- `node.events_get` (Sprint 4d — `eth_getLogs` + 옵션 ABI 기반 log decode)
+- `node.account_state` (Sprint 4d — composite reader: balance / nonce / code / storage 선택)
 
 **스키마에 선언됐지만 미구현:**
 - `network.capabilities` — Sprint 5 에서 capability gate 와 함께
@@ -125,14 +130,15 @@ chainbench/
 - `tx.send` — `node.tx_send` 가 대체 (cross-network 급이 필요하면 그때)
 - `subscription.open` — WebSocket, 후속
 
-### 2.3 테스트 매트릭스 (Sprint 4c 종료 기준)
+### 2.3 테스트 매트릭스 (Sprint 4d 종료 기준)
 
-- Go: 15 packages 전부 green
-- Bash: 30/30 테스트 green (Sprint 4c 에서 `node-tx-set-code.sh` + `node-tx-fee-delegation.sh` 추가)
+- Go: 16 packages 전부 green (Sprint 4d 에서 `internal/abiutil` 추가)
+- Bash: 33/33 테스트 green (Sprint 4d 에서 `node-contract-deploy-call.sh` + `node-events-get.sh` + `node-account-state.sh` 추가)
 - 주요 커버리지:
   - `signer` 보안 테스트: 유닛 + Go E2E + bash subprocess boundary (Scenario 1~4)
   - `probe` 92.4%, `remote` 97%, `adapters/stablenet` 높은 커버 + 골든 파일 계약
   - 0x4 SetCode + 0x16 fee-delegation: handler 단위 + Go E2E + bash spawn 3-layer 커버
+  - Sprint 4d contract / events / state: handler 단위 + Go E2E + bash spawn 3-layer 커버. `abiutil` 단위 테스트로 ABI parse / coerce / pack / unpack / DecodeLog 격리
 
 ---
 
@@ -144,55 +150,44 @@ chainbench/
 > 검토 근거(2026-04-27 정렬 시점): Sprint 4 시리즈 spec/plan 의 `Goal` /
 > `Non-Goals` 절 (`docs/superpowers/specs/2026-04-27-sprint-4{,b,c}-*.md`).
 >
-> Sprint 4 시리즈 (4b → 4c → 4d) 가 Go `network/` 의 tx 능력을 채우고,
-> Sprint 5 가 그 능력을 MCP high-level tool 로 노출 + LLM 친화 결과 변환을 한다.
+> Sprint 4 시리즈 (4 → 4b → 4c → 4d) 가 Go `network/` 의 tx + read 매트릭스를
+> 완성했다 (2026-04-27 Sprint 4d 종료). 다음 P1 은 **Sprint 5 — MCP 이관**:
+> 그 능력을 MCP high-level tool 로 노출 + LLM 친화 결과 변환.
 
-### 🟥 Priority 1 — Sprint 4d (가칭): contract / event / state
-
-Sprint 4 시리즈를 마무리하는 마지막 매트릭스 cell 묶음. 4d 종료 시점에
-`docs/EVALUATION_CAPABILITY.md` §2 / §4 의 Go column 모든 cell 이 ✅ 가 된다.
-
-**범위**:
-- **Contract deploy** — bytecode + constructor args → 새 명령 `node.contract_deploy`
-- **Contract call** — ABI encode/decode + `eth_call` → `node.contract_call`
-- **Event log fetch + decode** — `eth_getLogs` + ABI 기반 토픽/데이터 디코딩 → `node.events_get`
-- **Account state assert** — balance / nonce / code / storage → `node.account_state`
-- **(선택) Account Extra** — go-stablenet 의 isBlacklisted / isAuthorized 등 → 별도 명령 또는 chain_state 합성
-
-**의존**:
-- ABI 파싱: `go-ethereum/accounts/abi` (이미 transitive dep)
-- Signer 인터페이스 변경 없음 (`SignTx` 만 사용)
-- `remote.Client` 에 `CallContract`, `FilterLogs`, `CodeAt`, `StorageAt` 추가 필요
-
-**참고**:
-- Sprint 4c 의 `feeDelegationAllowedChains` hardcoded allowlist 처럼, chain-specific
-  cell (Account Extra 등) 은 동일 패턴으로 우선 처리. Adapter 인터페이스 promotion 은
-  Sprint 5+.
-
-### 🟨 Priority 2 — Sprint 5 (Sprint 4 시리즈 후, MCP 우선)
+### 🟥 Priority 1 — Sprint 5: MCP 이관 (high-level evaluation tool)
 
 **배경**: 2026-04-27 사용자 결정 (Sprint 4b 정렬 시점, Q4) — MCP 이관은
-Sprint 4 시리즈 이후. 즉 Go `network/` 의 evaluation 능력이 충분히 채워진
-후 MCP 가 그 위에 high-level evaluation tool 을 노출.
+Sprint 4 시리즈 이후. Sprint 4d (2026-04-27) 종료로 Go `network/` 의
+evaluation 능력이 §2/§4 매트릭스 Go column 전 cell ✅ 도달했고, 이제 MCP
+가 그 위에 high-level evaluation tool 을 노출하는 단계.
 
-`docs/VISION_AND_ROADMAP.md` §6 Sprint 5 의 원래 분해 + 우선순위 재배치:
+**5c (1순위)**: MCP high-level evaluation tool 신설 + 기존 38 tool 의 점진 이관
+- 새 도구 후보: `chainbench_tx_send` (1559/legacy/0x16/0x4 통합) /
+  `chainbench_contract_deploy` / `chainbench_contract_call` /
+  `chainbench_events_get` / `chainbench_account_state` /
+  `chainbench_tx_wait`
+- 기존 도구 reroute: `chainbench_init/start/stop/...` 가 bash CLI 직접 호출 →
+  `chainbench-net` wire 경유로 전환 (`docs/VISION_AND_ROADMAP.md` §5.17.7)
+- **결과 변환 layer**: NDJSON `event` / `progress` / `result` →
+  MCP tool response schema. 실패 시 phase 단위 root cause hint 포함
 
-- **5c (1순위)**: MCP high-level evaluation tool 신설 + 기존 38 tool 의 점진 이관
-  - 새 도구 후보: `chainbench_tx_send` (1559/legacy/0x16/0x4 통합) /
-    `chainbench_contract_deploy` / `chainbench_contract_call` /
-    `chainbench_events_get` / `chainbench_account_state` /
-    `chainbench_tx_wait`
-  - 기존 도구 reroute: `chainbench_init/start/stop/...` 가 bash CLI 직접 호출 →
-    `chainbench-net` wire 경유로 전환 (§5.17.7)
-  - **결과 변환 layer**: NDJSON `event` / `progress` / `result` →
-    MCP tool response schema. 실패 시 phase 단위 root cause hint 포함
+**5a/5b/5d (2순위)**: 5c 와 독립적으로 진행 가능
 - **5a**: capability gate (`network.capabilities` 커맨드 + test 프론트매터 `requires_capabilities`)
 - **5b**: SSHRemoteDriver 설계 + 초기 구현 (Q6, S6)
 - **5d**: Hybrid 네트워크 예제 (`profiles/hybrid-example.yaml`) + 테스트 시나리오
-- **Adapter.SupportedTxTypes() promotion** — Sprint 4c 의 `feeDelegationAllowedChains`
-  hardcoded map 을 Adapter 인터페이스 메서드로 승격 (`docs/ADAPTER_CONTRACT.md` §3 참조)
 
-5a/5b/5d/SupportedTxTypes 는 5c 와 독립. 순서는 사용자 필요에 따라.
+**Adapter.SupportedTxTypes() promotion**: Sprint 4c 의 `feeDelegationAllowedChains`
+hardcoded map 을 Adapter 인터페이스 메서드로 승격 (`docs/ADAPTER_CONTRACT.md` §3 참조).
+5번째 chain-specific tx 타입 도입 시 동시 진행.
+
+### 🟨 Priority 2 — Sprint 4d 후속 / 보강 (트리거 조건 시)
+
+Sprint 4d 가 chain-specific cell 은 의도적으로 미터치. 트리거 조건 충족 시
+별도 sprint 또는 5 series 와 병행:
+
+- **Account Extra** (go-stablenet 의 `isBlacklisted` / `isAuthorized` 등) — 별도 명령 또는 `chain_state` 합성. Adapter 인터페이스 promotion 과 묶을 가능성.
+- **abiutil tuple / nested-array / fixed-bytesN(N≠32) 지원** — 현재 명시적 미지원. 실수요 발생 시 확장 (raw calldata fallback 으로 우회 가능).
+- **`abiutil.DecodeLog` anonymous event** — 현재 `topics[0]` 가 event signature 가정. anonymous event (signature 없음) 는 미커버.
 
 ### 🟩 Priority 3 — 누적 tech debt (건드릴 때 같이 처리)
 
@@ -218,9 +213,11 @@ Sprint 4 시리즈 이후. 즉 Go `network/` 의 evaluation 능력이 충분히 
 | 3c | `getInt` 가 문자열-숫자 override 폴백 | 스키마 검증 함께 | 프로파일 검증 도입 시 |
 | 3c | adapter fixture `govMasterMinter`/`govCouncil` 없음 | 4개 중 2개 커버 | 다음 adapter touch 시 |
 | 3c | malformed JSON template 테스트 없음 | | |
-| 4c | `handlers_node_tx.go` 핸들러 closure 길이 | `newHandleNodeTxSend` ~184 줄, `newHandleNodeTxFeeDelegationSend` ~211 줄 — 50줄 가이드라인 초과. 4d 가 추가 핸들러 도입 시 phase 별 helper 추출 권장 (`parseTxSendArgs`, `signFeeDelegationEnvelope` 등). 800줄 ceiling 은 아직 여유. | 4d 가 `handlers_node_tx.go` 추가 시 |
+| 4c | `handlers_node_tx.go` 핸들러 closure 길이 | `newHandleNodeTxSend` ~184 줄, `newHandleNodeTxFeeDelegationSend` ~211 줄, 4d 가 추가한 `newHandleNodeContractDeploy` 도 유사 길이 — 50줄 가이드라인 초과. 다음 핸들러 추가 시 phase 별 helper 추출 권장 (`parseTxSendArgs`, `signFeeDelegationEnvelope` 등). 800줄 ceiling 은 아직 여유. | 다음 `handlers_node_tx.go` 핸들러 추가 시 |
 | 4c | `feeDelegationAllowedChains` hardcoded 맵 | chain-type 별 tx 타입 지원을 inline 으로 처리. `Adapter.SupportedTxTypes()` 인터페이스 promotion 은 Sprint 5+. | 5번째 chain-specific tx 타입 도입 시 |
 | 4c | `resolveNode` 가 chain_type 미반환 | fee-delegation 핸들러가 `state.LoadActive` 두 번 호출 (resolveNode 내부 + chain_type 조회). resolveNode 시그니처 확장은 6개 read 핸들러 모두 영향. | tx_fee_delegation_send 가 hot path 가 될 때 |
+| 4d | `handlers_node_read.go` 파일 크기 | Sprint 4d 가 `newHandleNodeContractCall` / `newHandleNodeEventsGet` / `newHandleNodeAccountState` 3개 추가 — 파일이 800줄 ceiling 근접. read handler 도 `handlers_node_tx.go` 와 같이 분할 또는 helper 추출 필요. | 5번째 read handler 추가 시 |
+| 4d | `abiutil` tuple / nested-array / fixed-bytesN(N≠32) 미지원 | 의도적 격리 — 실수요 발생 시 확장. 사용자는 raw calldata fallback 으로 우회. | 사용자가 tuple-가진 ABI 인코딩 필요할 때 |
 
 **로드맵 상 아직 불명확한 항목**:
 - wbft `GenerateGenesis`/`GenerateToml` 실구현 — wbft 체인 실제 사용 시
@@ -253,9 +250,11 @@ forward-looking 우선순위에서 분리한 완료 sprint 요약. 자세한 com
 | 4 follow-ups | 2026-04-27 | `CHAINBENCH_NET_LOG` fix · `handlers.go` 5-file split · `SignTx` ctx 주석 |
 | 4b | 2026-04-27 | keystore signer · EIP-1559 dynamic fee · `node.tx_wait` receipt polling |
 | 4c | 2026-04-27 | `Signer.SignHash` · `SendRawTransaction` · EIP-7702 SetCode (0x4) · go-stablenet fee delegation (0x16) |
+| 4d | 2026-04-27 | `abiutil` 패키지 · `remote.Client` read wrapper 4종 · `node.contract_deploy` / `contract_call` / `events_get` / `account_state` (Sprint 4 series 종료) |
 
-Sprint 4 시리즈 누적: Go `network/` tx 매트릭스 ~70% 도달. 남은 cell
-(contract / event / state) 은 §3 P1 = Sprint 4d.
+Sprint 4 시리즈 종료 (4 → 4b → 4c → 4d, 2026-04-24 ~ 2026-04-27): Go
+`network/` tx + read 매트릭스 100% 도달 — `docs/EVALUATION_CAPABILITY.md`
+§2 / §4 Go column 모든 cell ✅. 다음 P1 은 §3 = Sprint 5 (MCP 이관).
 
 ---
 
