@@ -93,8 +93,8 @@ chainbench/
 | 3b.2c | node.chain_id/balance/gas_price + attach 검증 + M4 완전 | 2026-04-24 | 7 |
 | 3c | Adapter Go 포팅 (stablenet) + wbft/wemix 스켈레톤 | 2026-04-24 | 7 |
 | **4** | **Signer boundary (env) + node.tx_send + 보안 경계 테스트** | **2026-04-24** | **8** |
-| **4b** | **keystore signer + EIP-1559 + node.tx_wait** | **2026-04-27** | **7** |
-| **4c** | **SignHash + EIP-7702 SetCode + go-stablenet 0x16 fee delegation** | **2026-04-27** | **7** |
+| **4b** | **keystore signer + EIP-1559 + node.tx_wait** | **2026-04-27** | **9** |
+| **4c** | **SignHash + EIP-7702 SetCode + go-stablenet 0x16 fee delegation** | **2026-04-27** | **9** |
 
 각 sprint 는 `docs/superpowers/specs/<date>-<topic>.md` + `docs/superpowers/plans/<date>-<topic>.md` 를 가지고 있음.
 
@@ -147,117 +147,33 @@ chainbench/
 > Sprint 4 시리즈 (4b → 4c → 4d) 가 Go `network/` 의 tx 능력을 채우고,
 > Sprint 5 가 그 능력을 MCP high-level tool 로 노출 + LLM 친화 결과 변환을 한다.
 
-### 🟥 Priority 1 — Sprint 4 에서 이월된 follow-ups (해결됨, 2026-04-27)
+### 🟥 Priority 1 — Sprint 4d (가칭): contract / event / state
 
-3건 모두 Sprint 4b 시작 전 cleanup 으로 처리 완료.
+Sprint 4 시리즈를 마무리하는 마지막 매트릭스 cell 묶음. 4d 종료 시점에
+`docs/EVALUATION_CAPABILITY.md` §2 / §4 의 Go column 모든 cell 이 ✅ 가 된다.
 
-1. **`CHAINBENCH_NET_LOG` env var 미동작 버그** (resolved)
-   - `wire.SetupLoggerWithFallback(fallback)` 신설 — env 가 설정되면 file 로
-     라우팅, 아니면 caller-injected writer 사용
-   - `runOnce` 가 새 함수 사용 → 운영 시 env 존중, 테스트는 stderr 캡처 유지
-   - `fix(network-net): honour CHAINBENCH_NET_LOG in run subcommand` (688a944)
-   - `docs/SECURITY_KEY_HANDLING.md` "Resolved Latent Issues" 로 이동
+**범위**:
+- **Contract deploy** — bytecode + constructor args → 새 명령 `node.contract_deploy`
+- **Contract call** — ABI encode/decode + `eth_call` → `node.contract_call`
+- **Event log fetch + decode** — `eth_getLogs` + ABI 기반 토픽/데이터 디코딩 → `node.events_get`
+- **Account state assert** — balance / nonce / code / storage → `node.account_state`
+- **(선택) Account Extra** — go-stablenet 의 isBlacklisted / isAuthorized 등 → 별도 명령 또는 chain_state 합성
 
-2. **`SignTx` 의 ctx 파라미터 미사용** (resolved)
-   - "HSM / remote signer 위한 예약" 주석 추가
-   - `docs(signer): document SignTx ctx parameter as forward-compat reservation` (877397b)
+**의존**:
+- ABI 파싱: `go-ethereum/accounts/abi` (이미 transitive dep)
+- Signer 인터페이스 변경 없음 (`SignTx` 만 사용)
+- `remote.Client` 에 `CallContract`, `FilterLogs`, `CodeAt`, `StorageAt` 추가 필요
 
-3. **`handlers.go` 1046 라인** (resolved)
-   - 5개 파일로 분할 — handlers.go / handlers_network.go /
-     handlers_node_lifecycle.go / handlers_node_read.go / handlers_node_tx.go
-   - 모두 200~260 라인. Sprint 4b 의 keystore 핸들러 추가에 깨끗한 베이스
-   - `refactor(network-net): split handlers.go (1046 lines) by command group` (6970c30)
+**참고**:
+- Sprint 4c 의 `feeDelegationAllowedChains` hardcoded allowlist 처럼, chain-specific
+  cell (Account Extra 등) 은 동일 패턴으로 우선 처리. Adapter 인터페이스 promotion 은
+  Sprint 5+.
 
-### 🟧 Priority 2 — Sprint 4b (signer 확장 + EIP-1559 + tx.wait) — 완료 (2026-04-27)
+### 🟨 Priority 2 — Sprint 5 (Sprint 4 시리즈 후, MCP 우선)
 
-목표 달성: env-only signer + legacy tx 만 가능했던 Go `network/` 가 keystore
-주입 + EIP-1559 dynamic fee + receipt polling 까지 커버.
-
-**커밋 체인 (7건, Sprint 4b)**:
-
-| SHA | 설명 |
-|---|---|
-| `40c6e22` | feat(signer): keystore-backed key loader (Task 1) |
-| `0ef68c0` | feat(network-net): EIP-1559 dynamic fee in node.tx_send (Task 2) |
-| `7639c0e` | feat(drivers/remote): TransactionReceipt with NotFound passthrough (Task 3a) |
-| `f011e80` | feat(network-net): node.tx_wait receipt polling (Task 3b) |
-| `28948d8` | test(network-net): cover node.tx_wait UPSTREAM_ERROR branch (Task 3 follow-up) |
-| `aa103a5` | test(sprint-4b): keystore boundary + tx_wait flows + 1559 E2E (Task 4) |
-| `9629512` | fix(test): guard keystore-generator failure in security-key-boundary (Task 4 follow-up) |
-
-**범위 결과**:
-
-1. **Keystore provider** ✅ — `signer.Load` 에서 raw `_KEY` env 가 우선,
-   없을 때만 `_KEYSTORE`/`_KEYSTORE_PASSWORD` 쌍을 사용. `go-ethereum/accounts/keystore`
-   기반. `RedactionBoundary` + 6개 keystore 케이스 추가.
-2. **EIP-1559 dynamic fees** ✅ — `node.tx_send` args 에 `max_fee_per_gas` +
-   `max_priority_fee_per_gas` 추가. legacy `gas_price` 와 혼용 시 `INVALID_ARGS`.
-   둘 다 미지정 시 auto-fill (`SuggestGasTipCap` + base fee).
-3. **`node.tx_wait`** ✅ — receipt polling, exponential backoff, configurable
-   `timeout_ms`. `status: "success" | "failed" | "pending"` 반환.
-4. **P1 follow-up 흡수** ✅ — `CHAINBENCH_NET_LOG` fix, handlers.go 5개 파일
-   분할, SignTx ctx 주석 모두 Sprint 4b cleanup 단계에서 처리됨.
-
-### 🟧 Priority 2.5 — Sprint 4 시리즈: evaluation tx 매트릭스 Go 포팅 (4b 후속)
-
-**배경**: 2026-04-27 사용자 결정 (Sprint 4b 정렬 시점, Q3) —
-Sprint 4b scope 는 그대로 두고, evaluation 을 위한 모든 테스트 지원 작업을
-Sprint 4 시리즈(4c, 4d, ...)로 이어서 진행. bash Layer 2 lib (외부 도구
-cast / Go helper / Python 위에서 동작) 의 능력을 Go `network/` 로 이식하여
-coding agent 가 단일 surface 로 호출 가능하게 만드는 것이 목표.
-
-목표 cell 은 `docs/EVALUATION_CAPABILITY.md` §2 / §4 의 Go column.
-
-**Sprint 4c — chain-specific tx 타입** — 완료 (2026-04-27)
-
-목표 달성: Go `network/` 가 EIP-7702 SetCodeTx (0x4) + go-stablenet
-fee-delegation (0x16) 양쪽을 단일 surface 로 노출. SignHash 인터페이스
-도입으로 chain-specific envelope 추가 비용이 핸들러 측 합성으로 격리됨.
-
-**커밋 체인 (9건, Sprint 4c — spec/plan + 구현 + 후속 + test/docs)**:
-
-| SHA | 설명 |
-|---|---|
-| `17f455a` | docs: add Sprint 4c spec + plan (sprint open) |
-| `57ddb54` | feat(signer): add SignHash for chain-specific tx envelopes (Task 1) |
-| `3ab8e9d` | test(signer): tighten SignHash redaction probe + keystore err handling (Task 1 review fix) |
-| `d87fffd` | feat(drivers/remote): add SendRawTransaction (Task 2) |
-| `0e31c69` | feat(network-net): EIP-7702 SetCodeTx via authorization_list (Task 3) |
-| `4a427a9` | chore(network): promote holiman/uint256 to direct dep (Task 3 follow-up) |
-| `515022d` | feat(network-net): node.tx_fee_delegation_send (Task 4) |
-| `bb5c443` | test(network-net): cover fee_delegation BadValueHex + schema alphabetical order (Task 4 review fix) |
-| `1da68ac` | test+docs(sprint-4c): SetCode + fee-delegation E2E + boundary + roadmap (Task 5) |
-
-**범위 결과**:
-
-1. **`signer.SignHash`** ✅ — 65-byte raw signature 반환. 키 자체는 sealed
-   struct 외부로 누출 안 됨. EIP-7702 authorization tuple + fee-delegation
-   outer hash 의 V/R/S 합성은 핸들러 책임으로 격리.
-2. **`drivers/remote.SendRawTransaction`** ✅ — ethclient 경유로 0x4 / 0x16
-   raw bytes broadcast. type-discriminator-aware.
-3. **EIP-7702 SetCode (0x4)** ✅ — `node.tx_send` 의 `authorization_list`
-   arg 로 다중 authorization 지원. 빈 리스트 = 1559 fall-back.
-4. **Fee Delegation (0x16)** ✅ — `node.tx_fee_delegation_send` 신규 command.
-   stablenet 만 허용 (ethereum/wbft/wemix → NOT_SUPPORTED). sender + fee_payer
-   alias 두 개 필수, schema 알파벳 순서로 정렬.
-5. **보안 경계 Scenario 4** ✅ — fee-delegation 두 키 + 패스워드 stdout /
-   stderr / log 누출 없음 검증.
-
-**Sprint 4d (가칭) — contract / event / state**
-- Contract deploy: bytecode + constructor args → `node.contract_deploy`
-- Contract call: ABI encode/decode → `node.contract_call`
-- Event log fetch + decode → `node.events_get`
-- Account state assert (balance/nonce/code/storage) → `node.account_state`
-- ABI 파싱: `go-ethereum/accounts/abi` 활용 (이미 deps 에 있음)
-
-**의존**: 4c 와 4d 는 독립이지만, Go `network/` 의 bash dependency 끊는
-효과는 둘 다 끝나야 의미 있음.
-
-### 🟨 Priority 3 — Sprint 5 (Sprint 4 시리즈 후, MCP 우선)
-
-**배경**: 사용자 결정 (2026-04-27, Q4) — MCP 이관은 Sprint 4 시리즈 이후.
-즉 Go `network/` 의 evaluation 능력이 충분히 채워진 후 MCP 가 그 위에
-high-level evaluation tool 을 노출.
+**배경**: 2026-04-27 사용자 결정 (Sprint 4b 정렬 시점, Q4) — MCP 이관은
+Sprint 4 시리즈 이후. 즉 Go `network/` 의 evaluation 능력이 충분히 채워진
+후 MCP 가 그 위에 high-level evaluation tool 을 노출.
 
 `docs/VISION_AND_ROADMAP.md` §6 Sprint 5 의 원래 분해 + 우선순위 재배치:
 
@@ -273,10 +189,12 @@ high-level evaluation tool 을 노출.
 - **5a**: capability gate (`network.capabilities` 커맨드 + test 프론트매터 `requires_capabilities`)
 - **5b**: SSHRemoteDriver 설계 + 초기 구현 (Q6, S6)
 - **5d**: Hybrid 네트워크 예제 (`profiles/hybrid-example.yaml`) + 테스트 시나리오
+- **Adapter.SupportedTxTypes() promotion** — Sprint 4c 의 `feeDelegationAllowedChains`
+  hardcoded map 을 Adapter 인터페이스 메서드로 승격 (`docs/ADAPTER_CONTRACT.md` §3 참조)
 
-5a/5b/5d 는 5c 와 독립. 순서는 사용자 필요에 따라.
+5a/5b/5d/SupportedTxTypes 는 5c 와 독립. 순서는 사용자 필요에 따라.
 
-### 🟩 Priority 4 — 누적 tech debt (건드릴 때 같이 처리)
+### 🟩 Priority 3 — 누적 tech debt (건드릴 때 같이 처리)
 
 누적된 minor 항목들 — 별도 sprint 아니라 관련 코드 건드릴 때 흡수.
 
@@ -300,6 +218,9 @@ high-level evaluation tool 을 노출.
 | 3c | `getInt` 가 문자열-숫자 override 폴백 | 스키마 검증 함께 | 프로파일 검증 도입 시 |
 | 3c | adapter fixture `govMasterMinter`/`govCouncil` 없음 | 4개 중 2개 커버 | 다음 adapter touch 시 |
 | 3c | malformed JSON template 테스트 없음 | | |
+| 4c | `handlers_node_tx.go` 핸들러 closure 길이 | `newHandleNodeTxSend` ~184 줄, `newHandleNodeTxFeeDelegationSend` ~211 줄 — 50줄 가이드라인 초과. 4d 가 추가 핸들러 도입 시 phase 별 helper 추출 권장 (`parseTxSendArgs`, `signFeeDelegationEnvelope` 등). 800줄 ceiling 은 아직 여유. | 4d 가 `handlers_node_tx.go` 추가 시 |
+| 4c | `feeDelegationAllowedChains` hardcoded 맵 | chain-type 별 tx 타입 지원을 inline 으로 처리. `Adapter.SupportedTxTypes()` 인터페이스 promotion 은 Sprint 5+. | 5번째 chain-specific tx 타입 도입 시 |
+| 4c | `resolveNode` 가 chain_type 미반환 | fee-delegation 핸들러가 `state.LoadActive` 두 번 호출 (resolveNode 내부 + chain_type 조회). resolveNode 시그니처 확장은 6개 read 핸들러 모두 영향. | tx_fee_delegation_send 가 hot path 가 될 때 |
 
 **로드맵 상 아직 불명확한 항목**:
 - wbft `GenerateGenesis`/`GenerateToml` 실구현 — wbft 체인 실제 사용 시
@@ -320,6 +241,21 @@ high-level evaluation tool 을 노출.
 | Phase K | 의존성 그래프 | `depends_on` 데이터 부족 | 프론트매터 축적 후 |
 | Phase L | MCP 대화형 세션 (daemon) | 구현 난이도 높음 | 명확한 유즈케이스 확보 시 |
 | Phase C-3 | GitHub Actions 워크플로우 | 의도적 보류 | CI 도입 시 |
+
+### ✅ 최근 완료 (참조용)
+
+forward-looking 우선순위에서 분리한 완료 sprint 요약. 자세한 commit chain
+및 결과는 §2.1 timeline + 각 sprint 의 spec/plan 파일을 참조.
+
+| Sprint | 완료일 | 핵심 성과 |
+|---|---|---|
+| 4 | 2026-04-24 | env-only signer + `node.tx_send` (legacy) + 보안 경계 테스트 |
+| 4 follow-ups | 2026-04-27 | `CHAINBENCH_NET_LOG` fix · `handlers.go` 5-file split · `SignTx` ctx 주석 |
+| 4b | 2026-04-27 | keystore signer · EIP-1559 dynamic fee · `node.tx_wait` receipt polling |
+| 4c | 2026-04-27 | `Signer.SignHash` · `SendRawTransaction` · EIP-7702 SetCode (0x4) · go-stablenet fee delegation (0x16) |
+
+Sprint 4 시리즈 누적: Go `network/` tx 매트릭스 ~70% 도달. 남은 cell
+(contract / event / state) 은 §3 P1 = Sprint 4d.
 
 ---
 
