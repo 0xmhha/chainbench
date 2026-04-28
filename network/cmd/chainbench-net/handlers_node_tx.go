@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/holiman/uint256"
 
+	"github.com/0xmhha/chainbench/network/internal/abiutil"
 	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/signer"
@@ -246,6 +247,238 @@ func newHandleNodeTxSend(stateDir string) Handler {
 			return nil, NewUpstream("eth_sendRawTransaction", err)
 		}
 		return map[string]any{"tx_hash": signed.Hash().Hex()}, nil
+	}
+}
+
+// newHandleNodeContractDeploy signs + broadcasts a contract-creation tx
+// (to: nil) using the same fee-mode selector as node.tx_send minus the
+// SetCode (EIP-7702) path. SetCode is unavailable here because the
+// authorization_list designates an authority address that is paired with the
+// tx's `to` field — contract creation has no `to`, so the combination is
+// meaningless. Callers who pass authorization_list are rejected at the
+// boundary before any signer load or RPC.
+//
+// Args: {network?, node_id, signer, bytecode, abi?, constructor_args?,
+//
+//	value?, gas?, gas_price?, max_fee_per_gas?, max_priority_fee_per_gas?,
+//	nonce?}
+//
+// Result: {tx_hash: "0x...", contract_address: "0x..."}
+//
+// `contract_address` is computed locally as crypto.CreateAddress(senderAddr,
+// nonce). Callers should follow up with node.tx_wait to confirm the receipt
+// and verify the runtime code at the address.
+//
+// Error mapping (spec §4.2 + §11):
+//
+//	INVALID_ARGS   — missing signer / bytecode, malformed bytecode hex,
+//	                 malformed value / gas_price / max_fee / max_priority_fee
+//	                 hex, mixed legacy + 1559 fee fields, partial 1559 fee
+//	                 fields, ABI parse failure, ABI arg-count mismatch,
+//	                 constructor_args without abi, authorization_list provided,
+//	                 signer.ErrInvalidAlias, signer.ErrUnknownAlias
+//	UPSTREAM_ERROR — signer.ErrInvalidKey (config), dial / chainID / nonce /
+//	                 gas / gas_price / broadcast failure
+//	INTERNAL       — SignTx failure (invariant breach — inputs validated earlier)
+func newHandleNodeContractDeploy(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network              string          `json:"network"`
+			NodeID               string          `json:"node_id"`
+			Signer               string          `json:"signer"`
+			Bytecode             string          `json:"bytecode"`
+			ABI                  string          `json:"abi"`
+			ConstructorArgs      []any           `json:"constructor_args"`
+			Value                string          `json:"value"`
+			Gas                  *uint64         `json:"gas"`
+			GasPrice             string          `json:"gas_price"`
+			MaxFeePerGas         string          `json:"max_fee_per_gas"`
+			MaxPriorityFeePerGas string          `json:"max_priority_fee_per_gas"`
+			Nonce                *uint64         `json:"nonce"`
+			AuthorizationList    json.RawMessage `json:"authorization_list"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.Signer == "" {
+			return nil, NewInvalidArgs("args.signer is required")
+		}
+		if req.Bytecode == "" {
+			return nil, NewInvalidArgs("args.bytecode is required")
+		}
+		// authorization_list paired with deploy is meaningless — SetCode
+		// authorizes an address that pairs with the tx's `to`, but a
+		// contract-creation tx has no `to`. Empty list / null are accepted as
+		// equivalent to absence.
+		if len(req.AuthorizationList) > 0 && string(req.AuthorizationList) != "null" {
+			// Probe the array length so an empty `[]` is not rejected. Anything
+			// else (including non-array shapes) surfaces as the same boundary
+			// error — callers must not pass this field for deploy.
+			var probe []json.RawMessage
+			if err := json.Unmarshal(req.AuthorizationList, &probe); err == nil && len(probe) == 0 {
+				// empty array — fall through
+			} else {
+				return nil, NewInvalidArgs("authorization_list is not supported for node.contract_deploy (SetCode does not pair with contract creation)")
+			}
+		}
+
+		// Hex-decode bytecode at the boundary. A leading "0x" is canonical but
+		// optional — callers occasionally strip it when piping output.
+		bytecodeBytes, err := hex.DecodeString(strings.TrimPrefix(req.Bytecode, "0x"))
+		if err != nil {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.bytecode is not valid hex: %v", err))
+		}
+
+		value := big.NewInt(0)
+		if req.Value != "" {
+			parsed, ok := new(big.Int).SetString(strings.TrimPrefix(req.Value, "0x"), 16)
+			if !ok {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.value is not valid hex: %q", req.Value))
+			}
+			value = parsed
+		}
+
+		// Fee-mode selector: legacy (gas_price) vs EIP-1559 (max_fee + tip).
+		// Mixed and partial 1559 are rejected at the boundary so structural
+		// mistakes never reach the signer. SetCode (4c) is intentionally
+		// excluded above — see comment on the AuthorizationList check.
+		hasLegacy := req.GasPrice != ""
+		hasMaxFee := req.MaxFeePerGas != ""
+		hasTip := req.MaxPriorityFeePerGas != ""
+		if hasLegacy && (hasMaxFee || hasTip) {
+			return nil, NewInvalidArgs("args.gas_price cannot be combined with args.max_fee_per_gas or args.max_priority_fee_per_gas")
+		}
+		if hasMaxFee != hasTip {
+			return nil, NewInvalidArgs("args.max_fee_per_gas and args.max_priority_fee_per_gas must both be provided when using EIP-1559")
+		}
+		useDynamicFee := hasMaxFee && hasTip
+
+		var maxFee, maxPriorityFee *big.Int
+		if useDynamicFee {
+			var ok bool
+			maxFee, ok = new(big.Int).SetString(strings.TrimPrefix(req.MaxFeePerGas, "0x"), 16)
+			if !ok {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.max_fee_per_gas is not valid hex: %q", req.MaxFeePerGas))
+			}
+			maxPriorityFee, ok = new(big.Int).SetString(strings.TrimPrefix(req.MaxPriorityFeePerGas, "0x"), 16)
+			if !ok {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.max_priority_fee_per_gas is not valid hex: %q", req.MaxPriorityFeePerGas))
+			}
+		}
+
+		// Build the calldata: bytecode || encoded(constructor_args). When the
+		// caller omits abi we trust they have already encoded args into
+		// bytecode, so we broadcast as-is. constructor_args without abi has no
+		// well-defined encoding so we reject explicitly rather than silently
+		// drop them.
+		data := bytecodeBytes
+		if req.ABI != "" {
+			parsed, perr := abiutil.ParseABI(req.ABI)
+			if perr != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.abi parse failed: %v", perr))
+			}
+			encoded, eerr := abiutil.PackConstructor(parsed, req.ConstructorArgs)
+			if eerr != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.constructor_args: %v", eerr))
+			}
+			data = append(append([]byte{}, bytecodeBytes...), encoded...)
+		} else if len(req.ConstructorArgs) > 0 {
+			return nil, NewInvalidArgs("args.constructor_args provided without args.abi has no defined encoding")
+		}
+
+		// Signer resolution per-request. Same classification as tx_send.
+		s, serr := signer.Load(signer.Alias(req.Signer))
+		if serr != nil {
+			if errors.Is(serr, signer.ErrInvalidAlias) ||
+				errors.Is(serr, signer.ErrUnknownAlias) {
+				return nil, NewInvalidArgs(serr.Error())
+			}
+			return nil, NewUpstream("signer load", serr)
+		}
+
+		_, node, err := resolveNode(stateDir, req.Network, req.NodeID)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		client, err := dialNode(ctx, &node)
+		if err != nil {
+			return nil, err
+		}
+		defer client.Close()
+
+		chainID, err := client.ChainID(ctx)
+		if err != nil {
+			return nil, NewUpstream("eth_chainId", err)
+		}
+
+		nonce, err := resolveNonce(ctx, client, s.Address(), req.Nonce)
+		if err != nil {
+			return nil, err
+		}
+
+		// Gas estimation for contract creation needs To: nil — the existing
+		// resolveGas helper passes a non-nil *common.Address, which would make
+		// the upstream treat this as a regular call. Inline the small dance
+		// here rather than threading a pointer through the helper.
+		var gas uint64
+		if req.Gas != nil {
+			gas = *req.Gas
+		} else {
+			msg := ethereum.CallMsg{From: s.Address(), Value: value, Data: data}
+			estGas, eerr := client.EstimateGas(ctx, msg)
+			if eerr != nil {
+				return nil, NewUpstream("eth_estimateGas", eerr)
+			}
+			gas = estGas
+		}
+
+		var unsigned *ethtypes.Transaction
+		if useDynamicFee {
+			unsigned = ethtypes.NewTx(&ethtypes.DynamicFeeTx{
+				ChainID:   chainID,
+				Nonce:     nonce,
+				GasTipCap: maxPriorityFee,
+				GasFeeCap: maxFee,
+				Gas:       gas,
+				To:        nil, // contract creation
+				Value:     value,
+				Data:      data,
+			})
+		} else {
+			gasPrice, gerr := resolveGasPrice(ctx, client, req.GasPrice)
+			if gerr != nil {
+				return nil, gerr
+			}
+			unsigned = ethtypes.NewTx(&ethtypes.LegacyTx{
+				Nonce:    nonce,
+				GasPrice: gasPrice,
+				Gas:      gas,
+				To:       nil, // contract creation
+				Value:    value,
+				Data:     data,
+			})
+		}
+
+		signed, serr := s.SignTx(ctx, unsigned, chainID)
+		if serr != nil {
+			return nil, NewInternal("sign tx", serr)
+		}
+		if err := client.SendTransaction(ctx, signed); err != nil {
+			return nil, NewUpstream("eth_sendRawTransaction", err)
+		}
+
+		// Deterministic deployment address — recovered locally so the caller
+		// can poll node.tx_wait without re-deriving it.
+		contractAddr := crypto.CreateAddress(s.Address(), nonce)
+		return map[string]any{
+			"tx_hash":          signed.Hash().Hex(),
+			"contract_address": contractAddr.Hex(),
+		}, nil
 	}
 }
 

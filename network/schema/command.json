@@ -21,6 +21,7 @@
         "node.balance",
         "node.block_number",
         "node.chain_id",
+        "node.contract_deploy",
         "node.gas_price",
         "node.tx_fee_delegation_send",
         "node.tx_send",

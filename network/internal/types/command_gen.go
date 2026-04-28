@@ -28,6 +28,7 @@ const CommandCommandNetworkProbe CommandCommand = "network.probe"
 const CommandCommandNodeBalance CommandCommand = "node.balance"
 const CommandCommandNodeBlockNumber CommandCommand = "node.block_number"
 const CommandCommandNodeChainId CommandCommand = "node.chain_id"
+const CommandCommandNodeContractDeploy CommandCommand = "node.contract_deploy"
 const CommandCommandNodeGasPrice CommandCommand = "node.gas_price"
 const CommandCommandNodeRestart CommandCommand = "node.restart"
 const CommandCommandNodeRpc CommandCommand = "node.rpc"
@@ -53,6 +54,7 @@ var enumValues_CommandCommand = []interface{}{
 	"node.balance",
 	"node.block_number",
 	"node.chain_id",
+	"node.contract_deploy",
 	"node.gas_price",
 	"node.tx_fee_delegation_send",
 	"node.tx_send",

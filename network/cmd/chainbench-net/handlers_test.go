@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,8 +17,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/0xmhha/chainbench/network/internal/abiutil"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/state"
 	"github.com/0xmhha/chainbench/network/internal/types"
@@ -2732,5 +2736,313 @@ func TestAllHandlers_IncludesTxFeeDelegationSend(t *testing.T) {
 	h := allHandlers("x", "y")
 	if _, ok := h["node.tx_fee_delegation_send"]; !ok {
 		t.Error("allHandlers missing node.tx_fee_delegation_send")
+	}
+}
+
+// ---- node.contract_deploy tests ----
+
+// erc20DeployABI is a minimal constructor-only fixture for contract_deploy
+// tests. The single uint256 input mirrors the canonical "ERC-20 with initial
+// supply" pattern so the encoded args are 32 bytes of big-endian supply value.
+const erc20DeployABI = `[{"type":"constructor","inputs":[{"name":"supply","type":"uint256"}],"stateMutability":"nonpayable"}]`
+
+// erc20TwoArgABI is a fixture whose constructor declares two inputs. Used to
+// exercise the arg-count mismatch path — the handler must reject before any
+// signer load when len(args) != len(inputs).
+const erc20TwoArgABI = `[{"type":"constructor","inputs":[{"name":"a","type":"uint256"},{"name":"b","type":"uint256"}],"stateMutability":"nonpayable"}]`
+
+// minimalRuntimeBytecode is a tiny but well-formed deploy bytecode:
+//
+//	0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea2646970667358...
+//
+// Truncated for the test — the handler treats it as an opaque blob; only the
+// "starts with 0x6080" prefix is conventional. We need enough bytes that the
+// resulting tx data field is unambiguously non-empty.
+const minimalRuntimeBytecode = "0x6080604052348015600f57600080fd5b5060358061001e6000396000f3fe6080604052600080fdfea2646970667358221220abcdef00000000000000000000000000000000000000000000000000000000000064736f6c63430008190033"
+
+// newContractDeployMock mirrors the SetCode mock pattern: replies eth_chainId
+// 0x1, captures raw param[0] of eth_sendRawTransaction into *sentRaw, returns
+// a canned tx hash. Other methods return -32601 not-found so the test fails
+// loudly on any unexpected RPC.
+func newContractDeployMock(t *testing.T, sentRaw *string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_chainId":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x1"}`, req.ID)
+		case "eth_sendRawTransaction":
+			if sentRaw != nil && len(req.Params) > 0 {
+				_ = json.Unmarshal(req.Params[0], sentRaw)
+			}
+			fmt.Fprintf(w, `{"jsonrpc":"2.0",`+
+				`"id":%s,`+
+				`"result":"0x1111111111111111111111111111111111111111111111111111111111111111"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+// aliceAddrFromKey derives the address belonging to keyHexA so tests can
+// independently compute the expected contract_address (= CreateAddress(addr,
+// nonce)) without round-tripping through the signer package.
+func aliceAddrFromKey(t *testing.T) common.Address {
+	t.Helper()
+	priv, err := crypto.HexToECDSA(keyHexA)
+	if err != nil {
+		t.Fatalf("HexToECDSA: %v", err)
+	}
+	return crypto.PubkeyToAddress(priv.PublicKey)
+}
+
+func TestHandleNodeContractDeploy_Happy_Bytecode(t *testing.T) {
+	var sentRaw string
+	srv := newContractDeployMock(t, &sentRaw)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+
+	h := newHandleNodeContractDeploy(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"bytecode":                 minimalRuntimeBytecode,
+		"value":                    "0x0",
+		"gas":                      3000000,
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    7,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	txHash, _ := data["tx_hash"].(string)
+	if !strings.HasPrefix(txHash, "0x") || len(txHash) != 66 {
+		t.Errorf("tx_hash shape wrong: %v", data["tx_hash"])
+	}
+	gotAddr, _ := data["contract_address"].(string)
+	expected := crypto.CreateAddress(aliceAddrFromKey(t), 7).Hex()
+	if gotAddr != expected {
+		t.Errorf("contract_address = %q, want %q", gotAddr, expected)
+	}
+	// Decode the broadcast tx and verify To==nil + data == bytecode.
+	rawBytes, derr := hex.DecodeString(strings.TrimPrefix(sentRaw, "0x"))
+	if derr != nil {
+		t.Fatalf("decode raw: %v", derr)
+	}
+	var tx ethtypes.Transaction
+	if err := tx.UnmarshalBinary(rawBytes); err != nil {
+		t.Fatalf("unmarshal tx: %v", err)
+	}
+	if tx.To() != nil {
+		t.Errorf("tx.To = %v, want nil (contract creation)", tx.To())
+	}
+	wantBytes, _ := hex.DecodeString(strings.TrimPrefix(minimalRuntimeBytecode, "0x"))
+	if !bytes.Equal(tx.Data(), wantBytes) {
+		t.Errorf("tx.Data mismatch: got %x want %x", tx.Data(), wantBytes)
+	}
+}
+
+func TestHandleNodeContractDeploy_Happy_WithABI(t *testing.T) {
+	var sentRaw string
+	srv := newContractDeployMock(t, &sentRaw)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+	t.Setenv("CHAINBENCH_SIGNER_ALICE_KEY", "0x"+keyHexA)
+
+	h := newHandleNodeContractDeploy(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":                  "tn",
+		"node_id":                  "node1",
+		"signer":                   "alice",
+		"bytecode":                 minimalRuntimeBytecode,
+		"abi":                      erc20DeployABI,
+		"constructor_args":         []any{"1000000000000000000"},
+		"gas":                      3000000,
+		"max_fee_per_gas":          "0x59682f00",
+		"max_priority_fee_per_gas": "0x3b9aca00",
+		"nonce":                    0,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+
+	// Compute the expected encoded args independently via abiutil so the
+	// assertion encodes the same shape the handler does. tx.Data() must equal
+	// bytecode || encoded(uint256(1e18)).
+	parsed, perr := abiutil.ParseABI(erc20DeployABI)
+	if perr != nil {
+		t.Fatalf("parse abi: %v", perr)
+	}
+	encoded, eerr := abiutil.PackConstructor(parsed, []any{"1000000000000000000"})
+	if eerr != nil {
+		t.Fatalf("pack ctor: %v", eerr)
+	}
+	bytecodeBytes, _ := hex.DecodeString(strings.TrimPrefix(minimalRuntimeBytecode, "0x"))
+	want := append(append([]byte{}, bytecodeBytes...), encoded...)
+
+	rawBytes, derr := hex.DecodeString(strings.TrimPrefix(sentRaw, "0x"))
+	if derr != nil {
+		t.Fatalf("decode raw: %v", derr)
+	}
+	var tx ethtypes.Transaction
+	if err := tx.UnmarshalBinary(rawBytes); err != nil {
+		t.Fatalf("unmarshal tx: %v", err)
+	}
+	if tx.To() != nil {
+		t.Errorf("tx.To = %v, want nil", tx.To())
+	}
+	if !bytes.Equal(tx.Data(), want) {
+		t.Errorf("tx.Data mismatch:\n got %x\nwant %x", tx.Data(), want)
+	}
+	// Trailing 32 bytes must equal big-endian 1e18 — explicit guard against
+	// an off-by-N concat mistake.
+	if len(tx.Data()) < 32 {
+		t.Fatalf("tx.Data too short: %d bytes", len(tx.Data()))
+	}
+	tail := tx.Data()[len(tx.Data())-32:]
+	wantInt := big.NewInt(0)
+	wantInt.SetString("1000000000000000000", 10)
+	gotInt := new(big.Int).SetBytes(tail)
+	if gotInt.Cmp(wantInt) != 0 {
+		t.Errorf("trailing 32 bytes decode = %s, want %s", gotInt.String(), wantInt.String())
+	}
+}
+
+func TestHandleNodeContractDeploy_MissingBytecode(t *testing.T) {
+	h := newHandleNodeContractDeploy(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"signer":  "alice",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractDeploy_BadBytecode(t *testing.T) {
+	h := newHandleNodeContractDeploy(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":  "tn",
+		"node_id":  "node1",
+		"signer":   "alice",
+		"bytecode": "not-hex",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractDeploy_BadABI(t *testing.T) {
+	h := newHandleNodeContractDeploy(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":  "tn",
+		"node_id":  "node1",
+		"signer":   "alice",
+		"bytecode": minimalRuntimeBytecode,
+		"abi":      "not-json",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractDeploy_ABIArgsMismatch(t *testing.T) {
+	h := newHandleNodeContractDeploy(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"signer":           "alice",
+		"bytecode":         minimalRuntimeBytecode,
+		"abi":              erc20TwoArgABI,
+		"constructor_args": []any{"1"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeContractDeploy_AuthorizationListRejected verifies that callers
+// who try to combine a contract-creation tx with EIP-7702 authorizations are
+// rejected at the boundary BEFORE any signer load or RPC. SetCode pairs with a
+// `to` address (the authority being upgraded) — contract creation has none, so
+// the combination is meaningless and must surface as INVALID_ARGS.
+func TestHandleNodeContractDeploy_AuthorizationListRejected(t *testing.T) {
+	h := newHandleNodeContractDeploy(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":  "tn",
+		"node_id":  "node1",
+		"signer":   "alice",
+		"bytecode": minimalRuntimeBytecode,
+		"authorization_list": []map[string]any{
+			{"chain_id": "0x1", "address": "0x000000000000000000000000000000000000beef", "nonce": "0x0", "signer": "bob"},
+		},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractDeploy_FeeModeMixed(t *testing.T) {
+	h := newHandleNodeContractDeploy(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":         "tn",
+		"node_id":         "node1",
+		"signer":          "alice",
+		"bytecode":        minimalRuntimeBytecode,
+		"gas_price":       "0x1",
+		"max_fee_per_gas": "0x2",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesContractDeploy(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.contract_deploy"]; !ok {
+		t.Error("allHandlers missing node.contract_deploy")
 	}
 }
