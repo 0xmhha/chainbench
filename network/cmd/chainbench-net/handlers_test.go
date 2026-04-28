@@ -3046,3 +3046,279 @@ func TestAllHandlers_IncludesContractDeploy(t *testing.T) {
 		t.Error("allHandlers missing node.contract_deploy")
 	}
 }
+
+// erc20BalanceOfABI is a minimal ABI fixture exposing balanceOf(address)
+// returns (uint256). Used for contract_call ABI-mode tests.
+const erc20BalanceOfABI = `[{"type":"function","name":"balanceOf","stateMutability":"view","inputs":[{"name":"owner","type":"address"}],"outputs":[{"name":"","type":"uint256"}]}]`
+
+// newContractCallMock returns a mock JSON-RPC server that responds to eth_call
+// with a 32-byte big-endian uint256 (value = 42 by default). It captures the
+// raw `params[0]` (CallMsg as encoded by ethclient) into *capturedCallObj and
+// the raw `params[1]` (block tag/number) into *capturedBlock so tests can
+// assert on the wire shape. Other methods return -32601 not-found.
+func newContractCallMock(t *testing.T, capturedCallObj, capturedBlock *string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+			Params []json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_call":
+			if len(req.Params) > 0 && capturedCallObj != nil {
+				*capturedCallObj = string(req.Params[0])
+			}
+			if len(req.Params) > 1 && capturedBlock != nil {
+				*capturedBlock = string(req.Params[1])
+			}
+			// 32-byte big-endian uint256 = 42.
+			result := "0x" + strings.Repeat("0", 62) + "2a"
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":%q}`, req.ID, result)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+}
+
+func TestHandleNodeContractCall_Happy_Calldata(t *testing.T) {
+	srv := newContractCallMock(t, nil, nil)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeContractCall(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		// balanceOf(0xabcd...) selector + arg.
+		"calldata": "0x70a08231000000000000000000000000abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	wantRaw := "0x" + strings.Repeat("0", 62) + "2a"
+	if got, _ := data["result_raw"].(string); got != wantRaw {
+		t.Errorf("result_raw = %q, want %q", got, wantRaw)
+	}
+	if _, present := data["result_decoded"]; present {
+		t.Errorf("result_decoded must be absent in calldata mode, got %v", data["result_decoded"])
+	}
+}
+
+func TestHandleNodeContractCall_Happy_ABI(t *testing.T) {
+	srv := newContractCallMock(t, nil, nil)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeContractCall(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"abi":              erc20BalanceOfABI,
+		"method":           "balanceOf",
+		"args":             []any{"0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	wantRaw := "0x" + strings.Repeat("0", 62) + "2a"
+	if got, _ := data["result_raw"].(string); got != wantRaw {
+		t.Errorf("result_raw = %q, want %q", got, wantRaw)
+	}
+	decoded, ok := data["result_decoded"].([]any)
+	if !ok {
+		t.Fatalf("result_decoded missing or wrong type: %T %v", data["result_decoded"], data["result_decoded"])
+	}
+	if len(decoded) != 1 {
+		t.Fatalf("result_decoded length = %d, want 1", len(decoded))
+	}
+	gotInt, ok := decoded[0].(*big.Int)
+	if !ok {
+		t.Fatalf("result_decoded[0] type = %T, want *big.Int", decoded[0])
+	}
+	if gotInt.Cmp(big.NewInt(42)) != 0 {
+		t.Errorf("result_decoded[0] = %s, want 42", gotInt.String())
+	}
+}
+
+func TestHandleNodeContractCall_BothCalldataAndABI(t *testing.T) {
+	h := newHandleNodeContractCall(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"calldata":         "0x1234",
+		"abi":              erc20BalanceOfABI,
+		"method":           "balanceOf",
+		"args":             []any{"0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractCall_NeitherCalldataNorABI(t *testing.T) {
+	h := newHandleNodeContractCall(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractCall_BadAddress(t *testing.T) {
+	h := newHandleNodeContractCall(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "not-hex",
+		"calldata":         "0x1234",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractCall_BadCalldataHex(t *testing.T) {
+	h := newHandleNodeContractCall(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"calldata":         "not-hex",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractCall_BadABI(t *testing.T) {
+	h := newHandleNodeContractCall(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"abi":              "not-json",
+		"method":           "balanceOf",
+		"args":             []any{"0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractCall_UnknownMethod(t *testing.T) {
+	h := newHandleNodeContractCall(t.TempDir())
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"abi":              erc20BalanceOfABI,
+		"method":           "nonExistent",
+		"args":             []any{"0xabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNodeContractCall_BlockNumberLatest(t *testing.T) {
+	var capturedBlock string
+	srv := newContractCallMock(t, nil, &capturedBlock)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeContractCall(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"calldata":         "0x1234",
+		"block_number":     "latest",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if !strings.Contains(capturedBlock, "latest") {
+		t.Errorf("eth_call block param = %q, want %q", capturedBlock, "latest")
+	}
+}
+
+func TestHandleNodeContractCall_BlockNumberInteger(t *testing.T) {
+	var capturedBlock string
+	srv := newContractCallMock(t, nil, &capturedBlock)
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeContractCall(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network":          "tn",
+		"node_id":          "node1",
+		"contract_address": "0x000000000000000000000000000000000000beef",
+		"calldata":         "0x1234",
+		"block_number":     100,
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	if _, err := h(args, bus); err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	// ethclient encodes integer block numbers as hex (0x64 = 100).
+	if !strings.Contains(capturedBlock, "0x64") {
+		t.Errorf("eth_call block param = %q, want it to contain 0x64", capturedBlock)
+	}
+}
+
+func TestAllHandlers_IncludesContractCall(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.contract_call"]; !ok {
+		t.Error("allHandlers missing node.contract_call")
+	}
+}
