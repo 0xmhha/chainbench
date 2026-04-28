@@ -149,9 +149,12 @@ const TxWaitArgs = z.object({
 
 `HEX_TX_HASH` = `^0x[a-fA-F0-9]{64}$` (32-byte hex).
 
-`timeout_ms` 미지정 시 chainbench-net 의 default (현재 ~30000ms) 사용. wire
-helper 의 호출 timeout 은 `timeout_ms + 5000ms` (poll grace) 로 자동 설정 —
-caller 가 명시한 timeout 보다 wire timeout 이 먼저 발동하지 않도록.
+`timeout_ms` 미지정 시 chainbench-net 의 default (현재 60000ms — chainbench-net
+`defaultTxWaitMs`, `handlers_node_tx.go:583`) 사용. wire helper 의 호출 timeout
+은 `timeout_ms + 5000ms` (poll grace) 로 자동 설정 — caller 가 명시한 timeout
+보다 wire timeout 이 먼저 발동하지 않도록. MCP 핸들러는 caller 가 `timeout_ms`
+를 생략한 경우 동일한 60000ms fallback 을 적용해 wire timeout 이 65000ms 가
+되도록 한다 (서버 측 default 와 정합).
 
 Wire command: `node.tx_wait`. Result: receipt JSON (status / block_number /
 gas_used / logs_count / contract_address / effective_gas_price 등) 또는

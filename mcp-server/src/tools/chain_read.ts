@@ -323,8 +323,9 @@ export const TxWaitArgs = z.object({
     .optional()
     .describe(
       "Polling deadline in milliseconds. Defaults to chainbench-net's " +
-        "server-side default (~30000ms). Bounded by the Go handler " +
-        "(min/max enforced server-side).",
+        "server-side default (60000ms — see defaultTxWaitMs in " +
+        "handlers_node_tx.go). Bounded by the Go handler (1000..600000ms " +
+        "enforced server-side).",
     ),
 }).strict();
 
@@ -342,9 +343,10 @@ export async function _txWaitHandler(
   // Wire helper timeout must outlive the caller's polling deadline so the
   // pending-status path inside chainbench-net gets a chance to fire (and
   // return {status:"pending", tx_hash}) before the wire helper kills the
-  // spawn with a SIGTERM. Default chainbench-net deadline is ~30000ms; add
-  // 5000ms grace so the Go side always wins the race.
-  const callerTimeoutMs = args.timeout_ms ?? 30000;
+  // spawn with a SIGTERM. Fallback 60000ms matches chainbench-net's
+  // defaultTxWaitMs (handlers_node_tx.go:583); add 5000ms grace so the Go
+  // side always wins the race when the caller omits timeout_ms.
+  const callerTimeoutMs = args.timeout_ms ?? 60000;
   const wireTimeoutMs = callerTimeoutMs + 5000;
   const result = await callWire("node.tx_wait", wireArgs, {
     timeoutMs: wireTimeoutMs,
@@ -388,7 +390,7 @@ export function registerChainReadTools(server: McpServer): void {
       "block_number, block_hash, gas_used, logs_count, contract_address (if " +
       "a deploy), effective_gas_price. If the tx is still unconfirmed when " +
       "timeout_ms elapses, returns {status: 'pending', tx_hash}. Default " +
-      "timeout_ms is server-side ~30000.",
+      "timeout_ms is server-side 60000 (chainbench-net defaultTxWaitMs).",
     TxWaitArgs.shape,
     _txWaitHandler,
   );

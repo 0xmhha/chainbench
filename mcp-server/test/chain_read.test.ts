@@ -290,7 +290,7 @@ describe("chainbench_contract_call handler", () => {
 // spawn so the rejected branches don't need MOCK_SCRIPT, and the happy paths
 // set MOCK_SCRIPT to a single ok:true result line. Saved env values are
 // restored to keep tests isolated from the contract_call block above.
-describe("events_get", () => {
+describe("chainbench_events_get handler", () => {
   let savedBin: string | undefined;
   let savedScript: string | undefined;
   let savedDir: string | undefined;
