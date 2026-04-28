@@ -139,6 +139,18 @@ func (c *Client) PendingNonceAt(ctx context.Context, account common.Address) (ui
 	return n, nil
 }
 
+// NonceAt returns the account nonce at the given block (eth_getTransactionCount).
+// Pass nil for the latest block. Distinct from PendingNonceAt: this reads the
+// historical / latest mined nonce rather than including pending-pool entries,
+// which is the correct semantics for state inspection (node.account_state).
+func (c *Client) NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error) {
+	n, err := c.rpc.NonceAt(ctx, account, blockNumber)
+	if err != nil {
+		return 0, fmt.Errorf("remote.NonceAt: %w", err)
+	}
+	return n, nil
+}
+
 // EstimateGas asks the endpoint for the gas required to execute msg.
 func (c *Client) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
 	g, err := c.rpc.EstimateGas(ctx, msg)

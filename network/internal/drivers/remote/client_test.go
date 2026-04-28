@@ -347,6 +347,63 @@ func TestClient_PendingNonceAt(t *testing.T) {
 	}
 }
 
+// TestClient_NonceAt_Happy asserts the NonceAt wrapper forwards
+// eth_getTransactionCount at the given block tag and returns the parsed nonce.
+// Distinct from PendingNonceAt: NonceAt reads the historical/latest mined
+// nonce rather than including pending-pool entries.
+func TestClient_NonceAt_Happy(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string
+			ID     json.RawMessage
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		if req.Method == "eth_getTransactionCount" {
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x2a"}`, req.ID)
+			return
+		}
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+	}))
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+
+	n, err := c.NonceAt(ctx, common.HexToAddress("0x01"), nil)
+	if err != nil {
+		t.Fatalf("NonceAt: %v", err)
+	}
+	if n != 42 {
+		t.Errorf("nonce = %d, want 42", n)
+	}
+}
+
+// TestClient_NonceAt_Reject asserts the wrapper-prefix on RPC error so
+// callers can distinguish remote vs local failures by the error string.
+func TestClient_NonceAt_Reject(t *testing.T) {
+	srv := mockRPC(t, map[string]string{})
+	defer srv.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	c, err := Dial(ctx, srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, err = c.NonceAt(ctx, common.HexToAddress("0x01"), nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), "remote.NonceAt") {
+		t.Errorf("err missing wrap prefix: %v", err)
+	}
+}
+
 // TestClient_EstimateGas asserts eth_estimateGas is forwarded and the hex
 // result is parsed back to uint64 gas units.
 func TestClient_EstimateGas(t *testing.T) {
