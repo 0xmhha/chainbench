@@ -108,7 +108,8 @@ evaluation 능력은 3축으로 정의:
 | **4d** | Contract deploy/call (ABI encode/decode) + event log fetch+decode + state assert (`node.contract_deploy`/`call`/`events_get`/`account_state`) | ✅ 완료 (2026-04-27) |
 | **5c.1** | MCP wire helper + transformer + `chainbench_account_state` + `chainbench_tx_send` (legacy/1559) | ✅ 완료 (2026-04-28) |
 | **5c.2** | MCP remaining 4 tools (contract_deploy/call/events_get/tx_wait) + tx_send modes set_code & fee_delegation | ✅ 완료 (2026-04-29) |
-| **5c.3** | 기존 38 tool 의 wire 경유 reroute (`runChainbench` → `callWire`) | 🚧 계획 (5c.2 이후, 다음 P1) |
+| **5c.3** | MCP reroute pass 1 — utils extraction + node.rpc Go handler + 3 chainbench_node_* reroute (~8% of 38) + integration test layer | ✅ 완료 (2026-04-29) |
+| **5c.4** | MCP reroute pass 2 — lifecycle (chainbench_init/start/stop/restart/status/clean) + Go-side wire handlers for missing commands | 🚧 계획 (5c.3 이후, 다음 P1) |
 | 5a/5b/5d | capability gate / SSH driver / hybrid 예제 | 후순위 |
 
 **Sprint 4 시리즈의 의의**: bash Layer 2 lib 가 외부 도구(cast / Go helper / Python) 위에서 제공하는 능력을 Go `network/` 로 이식하여, coding agent 가 단일 surface (chainbench-net wire) 로 모든 tx 시나리오를 호출 가능하게 하는 것이 목표.
@@ -139,3 +140,5 @@ Sprint 4d 완료 (2026-04-27): contract deploy/call + events_get + account_state
 Sprint 5c.1 완료 (2026-04-28): MCP wire helper + transformer + 첫 두 high-level tool — coding agent 가 MCP 만으로 account state + signed legacy/1559 tx 전송 가능.
 
 Sprint 5c.2 완료 (2026-04-29): MCP 가 EVM 다체인 evaluation 시나리오의 전 tx 타입 (legacy / 1559 / set_code / fee_delegation) + read 매트릭스 (account_state / contract_call / events_get / tx_wait) + contract creation 까지 단일 surface 로 노출.
+
+Sprint 5c.3 완료 (2026-04-29): MCP reroute 첫 패스 — 3 `chainbench_node_*` tool 이 `runChainbench` (bash CLI shell-out) → `callWire` (chainbench-net wire) 로 전환. utils/ extraction 으로 errorResp + hex regex 상수가 chain_read/chain_tx 의 중복에서 단일 source of truth 로 통합. Go 측 `node.rpc` generic JSON-RPC passthrough handler 추가 (Schema enum 에는 Sprint 2 부터 있었으나 미구현). Real-binary integration test layer 도입 — `chainbench-net` 바이너리 + Python JSON-RPC mock 으로 wire 계약을 end-to-end 검증. Reroute 진행도: 3/38 (~8%). 5c.4 (lifecycle reroute) 가 다음 P1.
