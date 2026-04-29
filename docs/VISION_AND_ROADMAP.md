@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-29 (Sprint 5c.3 완료)
+> **최종 업데이트**: 2026-04-29 (Sprint 5a 완료)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -739,7 +739,7 @@ MCP 서버도 네트워크 바이너리를 spawn하여 사용:
 - 기존 41 tool 중 RPC/lifecycle/node 관련은 점진적으로 네트워크 바이너리 경유로 전환
 - bash CLI와 동일 프로토콜 → 중복 로직 제거
 
-Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. Sprint 5c.2 (2026-04-29) 에서 남은 4 high-level tool (`chainbench_contract_deploy/_call/_events_get/_tx_wait`) + `chainbench_tx_send` mode `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16) 추가. Sprint 5c.3 (2026-04-29) 에서 utils 추출 (`mcpResp.ts` + `hex.ts`) + `node.rpc` Go 핸들러 + 3 `chainbench_node_*` reroute + real-binary integration test 도입. 나머지 ~35 tool 은 5c.4+ 에서 도메인별 묶음으로 reroute.
+Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. Sprint 5c.2 (2026-04-29) 에서 남은 4 high-level tool (`chainbench_contract_deploy/_call/_events_get/_tx_wait`) + `chainbench_tx_send` mode `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16) 추가. Sprint 5c.3 (2026-04-29) 에서 utils 추출 (`mcpResp.ts` + `hex.ts`) + `node.rpc` Go 핸들러 + 3 `chainbench_node_*` reroute + real-binary integration test 도입. Sprint 5a (2026-04-29) 에서 `chainbench_network_capabilities` 추가 — capability gate 의 MCP 노출. 나머지 ~35 tool 은 5c.4+ 에서 도메인별 묶음으로 reroute.
 
 ---
 
@@ -837,15 +837,21 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 
 다음 P1 = Sprint 5c.4 (lifecycle reroute).
 
-**Sprint 5c.4 — MCP reroute pass 2: lifecycle (chainbench_init/start/stop/restart/status/clean)** (다음 P1)
+**Sprint 5a — Capability gate** — 완료 (2026-04-29)
+- [x] Go `network.capabilities` 핸들러 + provider-based 추론 (local: rpc/ws/process/fs/admin/network-topology, remote: rpc/ws, ssh-remote (future): rpc/ws/process/fs) + hybrid 네트워크 set 교집합
+- [x] MCP `chainbench_network_capabilities` 고수준 tool — coding agent 가 active 네트워크의 가능 시나리오 사전 판단
+- [x] bash test runner 의 `requires_capabilities` frontmatter 게이팅 — 부적합 test 자동 skip + 진단 메시지. 미정의 frontmatter 는 unconditionally run (back-compat)
+- [x] 첫 frontmatter 부여: `tests/fault/node-crash.sh` / `node-recover.sh` (`requires_capabilities: [process]` + `chain_compat: [stablenet, wbft]`)
+- [x] mcp-server 0.6.0 → 0.7.0 · vitest 94 tests · bash 34 tests
+
+다음 P1 = Sprint 5c.4 (lifecycle reroute).
+
+**Sprint 5c.4 — MCP reroute pass 2: lifecycle (chainbench_init/start/stop/restart/status/clean)**
 - [ ] Go-side wire handlers 추가 — 현재 chainbench-net 에 없는 lifecycle 명령들 (`network.init`, `network.start_all`, `network.stop_all`, `network.restart`, `network.status`, `network.clean`)
 - [ ] 6 lifecycle MCP tool reroute — `chainbench_init/start/stop/restart/status/clean` → callWire
 - [ ] `chainbench_node_start binary_path` fallback 제거 — Go `node.start` 가 binary_path arg 수용하도록 확장
 - [ ] Integration test harness 추출 (`_harness.ts`) — 5c.3 의 단일 파일 setup 을 재사용 가능한 형태로
 - [ ] `validateRpcMethod` duplicate in remote.ts 정리 (node.ts 가 `RPC_METHOD` 로 통합된 후에도 remote.ts 는 별도 helper 유지 중)
-
-**Sprint 5a — Capability gate**
-- [ ] `network.capabilities` 커맨드 + 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)
 
 **Sprint 5b — SSH driver**
 - [ ] `drivers/sshremote` 설계 초안 (Q6, S6 세션 prompt)

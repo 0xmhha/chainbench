@@ -109,8 +109,9 @@ evaluation 능력은 3축으로 정의:
 | **5c.1** | MCP wire helper + transformer + `chainbench_account_state` + `chainbench_tx_send` (legacy/1559) | ✅ 완료 (2026-04-28) |
 | **5c.2** | MCP remaining 4 tools (contract_deploy/call/events_get/tx_wait) + tx_send modes set_code & fee_delegation | ✅ 완료 (2026-04-29) |
 | **5c.3** | MCP reroute pass 1 — utils extraction + node.rpc Go handler + 3 chainbench_node_* reroute (~8% of 38) + integration test layer | ✅ 완료 (2026-04-29) |
-| **5c.4** | MCP reroute pass 2 — lifecycle (chainbench_init/start/stop/restart/status/clean) + Go-side wire handlers for missing commands | 🚧 계획 (5c.3 이후, 다음 P1) |
-| 5a/5b/5d | capability gate / SSH driver / hybrid 예제 | 후순위 |
+| **5a** | Capability gate — `network.capabilities` Go handler + `chainbench_network_capabilities` MCP tool + bash `requires_capabilities` frontmatter gating + first proof-of-concept fault test annotations | ✅ 완료 (2026-04-29) |
+| **5c.4** | MCP reroute pass 2 — lifecycle (chainbench_init/start/stop/restart/status/clean) + Go-side wire handlers for missing commands | 🚧 계획 (5a 이후, 다음 P1) |
+| 5b / 5d | SSH driver / hybrid 예제 | 후순위 |
 
 **Sprint 4 시리즈의 의의**: bash Layer 2 lib 가 외부 도구(cast / Go helper / Python) 위에서 제공하는 능력을 Go `network/` 로 이식하여, coding agent 가 단일 surface (chainbench-net wire) 로 모든 tx 시나리오를 호출 가능하게 하는 것이 목표.
 
@@ -142,3 +143,5 @@ Sprint 5c.1 완료 (2026-04-28): MCP wire helper + transformer + 첫 두 high-le
 Sprint 5c.2 완료 (2026-04-29): MCP 가 EVM 다체인 evaluation 시나리오의 전 tx 타입 (legacy / 1559 / set_code / fee_delegation) + read 매트릭스 (account_state / contract_call / events_get / tx_wait) + contract creation 까지 단일 surface 로 노출.
 
 Sprint 5c.3 완료 (2026-04-29): MCP reroute 첫 패스 — 3 `chainbench_node_*` tool 이 `runChainbench` (bash CLI shell-out) → `callWire` (chainbench-net wire) 로 전환. utils/ extraction 으로 errorResp + hex regex 상수가 chain_read/chain_tx 의 중복에서 단일 source of truth 로 통합. Go 측 `node.rpc` generic JSON-RPC passthrough handler 추가 (Schema enum 에는 Sprint 2 부터 있었으나 미구현). Real-binary integration test layer 도입 — `chainbench-net` 바이너리 + Python JSON-RPC mock 으로 wire 계약을 end-to-end 검증. Reroute 진행도: 3/38 (~8%). 5c.4 (lifecycle reroute) 가 다음 P1.
+
+Sprint 5a 완료 (2026-04-29): Capability gate 가 wire (Go) + MCP + bash test runner 세 layer 모두에서 동작. Provider-based 추론 (local: rpc/ws/process/fs/admin/network-topology, remote: rpc/ws, ssh-remote (future): rpc/ws/process/fs) + hybrid 네트워크의 set 교집합. coding agent 는 `chainbench_network_capabilities` 로 active network 의 가능 시나리오를 사전 판단 가능. fault test 가 remote 환경에서 자동 skip — 사용자가 부적합 test 를 직접 추적할 필요 없음. `tests/fault/node-crash.sh` / `node-recover.sh` 가 첫 frontmatter 부여된 사례. 모든 fault/regression test 의 frontmatter 부여는 점진 (트리거: remote 환경 사용 시 발견되는 부적합 케이스).

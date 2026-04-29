@@ -1,6 +1,6 @@
 {
   "name": "chainbench-mcp-server",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "MCP server for chainbench local chain sandbox test bench",
   "type": "module",
   "main": "dist/index.js",
