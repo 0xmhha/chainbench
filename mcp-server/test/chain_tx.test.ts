@@ -295,6 +295,8 @@ describe("chainbench_tx_send mode fee_delegation", () => {
     expect(built.wireArgs.signer).toBe("alice");
     expect(built.wireArgs.gas).toBe(21000);
     expect(built.wireArgs.nonce).toBe(7);
+    expect(built.wireArgs.max_fee_per_gas).toBe("0x59682f00");
+    expect(built.wireArgs.max_priority_fee_per_gas).toBe("0x3b9aca00");
   });
 
   it("_FeeDelegationWithoutFeePayer_Rejected", () => {
@@ -320,12 +322,20 @@ describe("chainbench_tx_send mode fee_delegation", () => {
     expect(built.error).toContain("gas_price");
   });
 
-  it("_FeeDelegationWithoutGasOrNonce_Rejected", () => {
+  it("_FeeDelegationWithoutGas_Rejected", () => {
     const { gas: _omitGas, ...partial } = baseFD;
     const built = _buildTxSendWireArgs(partial as any);
     expect("error" in built).toBe(true);
     if (!("error" in built)) throw new Error("expected error");
     expect(built.error).toContain("gas");
+  });
+
+  it("_FeeDelegationWithoutNonce_Rejected", () => {
+    const { nonce: _omitNonce, ...partial } = baseFD;
+    const built = _buildTxSendWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("nonce");
   });
 
   it("_FeeDelegationWithAuthList_Rejected", () => {
@@ -341,6 +351,9 @@ describe("chainbench_tx_send mode fee_delegation", () => {
     expect("error" in built).toBe(true);
     if (!("error" in built)) throw new Error("expected error");
     expect(built.error).toContain("authorization_list");
+    // Confirms the upstream cross-mode gate's message wins (the dead
+    // branch-local check inside the fee_delegation arm was removed).
+    expect(built.error).toContain("set_code");
   });
 
   it("_FeePayerInLegacyMode_Rejected", () => {

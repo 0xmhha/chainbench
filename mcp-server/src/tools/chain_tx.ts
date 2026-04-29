@@ -185,9 +185,10 @@ export function _buildTxSendWireArgs(
       wireArgs: Record<string, unknown>;
     }
   | { error: string } {
-  // Cross-mode field gating. fee_payer is fee_delegation-only (Task 6 will
-  // lift this); authorization_list is set_code-only. Reject early so the
-  // mode-specific branches below can stay focused on fee-field rules.
+  // Cross-mode field gating. fee_payer is fee_delegation-only (go-stablenet
+  // 0x16 envelope); authorization_list is set_code-only (EIP-7702 SetCodeTx).
+  // Reject early so the mode-specific branches below can stay focused on
+  // fee-field rules.
   if (args.fee_payer !== undefined && args.mode !== "fee_delegation") {
     return {
       error: `mode '${args.mode}' rejects fee_payer (use mode 'fee_delegation' instead)`,
@@ -277,12 +278,9 @@ export function _buildTxSendWireArgs(
     if (args.gas_price !== undefined) {
       return { error: "mode 'fee_delegation' rejects gas_price" };
     }
-    if (args.authorization_list !== undefined) {
-      return {
-        error:
-          "mode 'fee_delegation' rejects authorization_list (no set_code combo supported)",
-      };
-    }
+    // authorization_list rejection is handled by the upstream cross-mode gate
+    // (set_code-only); reaching this branch implies args.authorization_list
+    // is undefined, so no branch-local check is needed.
   }
 
   // Wire envelope: legacy/1559/set_code share node.tx_send (chainbench-net
