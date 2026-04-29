@@ -176,6 +176,97 @@ describe("chainbench_tx_send arg builder", () => {
   });
 });
 
+// Sprint 5c.2 Task 5 — mode set_code (EIP-7702). Branch lives in
+// _buildTxSendWireArgs alongside legacy/1559; wireCommand stays
+// "node.tx_send" because chainbench-net auto-routes to the SetCodeTx
+// envelope when the authorization_list field is present and non-empty.
+// fee_payer / authorization_list cross-field rejection paths are covered
+// here so Task 6 can flip the fee_delegation discriminator without
+// re-touching this file's schema-validation expectations.
+describe("chainbench_tx_send mode set_code", () => {
+  const baseSetCode = {
+    network: "local",
+    signer: "alice",
+    mode: "set_code" as const,
+    to: "0x" + "a".repeat(40),
+    max_fee_per_gas: "0x59682f00",
+    max_priority_fee_per_gas: "0x3b9aca00",
+    authorization_list: [
+      {
+        chain_id: "0x1",
+        address: "0x" + "b".repeat(40),
+        nonce: "0x0",
+        signer: "bob",
+      },
+    ],
+  };
+
+  it("_Happy_SetCode", () => {
+    const built = _buildTxSendWireArgs(baseSetCode);
+    expect("wireArgs" in built).toBe(true);
+    if (!("wireArgs" in built)) throw new Error("expected wireArgs");
+    expect(built.wireCommand).toBe("node.tx_send");
+    expect(built.wireArgs.authorization_list).toBeDefined();
+    expect(built.wireArgs.max_fee_per_gas).toBe("0x59682f00");
+  });
+
+  it("_SetCodeWithoutAuthList_Rejected", () => {
+    const { authorization_list: _omit, ...partial } = baseSetCode;
+    const built = _buildTxSendWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("authorization_list");
+  });
+
+  it("_SetCodeWithoutMaxFee_Rejected", () => {
+    const { max_fee_per_gas: _omit, ...partial } = baseSetCode;
+    const built = _buildTxSendWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("max_fee_per_gas");
+  });
+
+  it("_SetCodeWithGasPrice_Rejected", () => {
+    const built = _buildTxSendWireArgs({ ...baseSetCode, gas_price: "0x1" });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("gas_price");
+  });
+
+  it("_AuthListInLegacyMode_Rejected", () => {
+    const built = _buildTxSendWireArgs({
+      network: "local",
+      signer: "alice",
+      mode: "legacy",
+      gas_price: "0x1",
+      authorization_list: baseSetCode.authorization_list,
+    });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("authorization_list");
+  });
+
+  it("_BadAuthEntry_RejectedAtBoundary", () => {
+    expect(() =>
+      TxSendArgs.parse({
+        network: "local",
+        signer: "alice",
+        mode: "set_code",
+        max_fee_per_gas: "0x1",
+        max_priority_fee_per_gas: "0x1",
+        authorization_list: [
+          {
+            chain_id: "0xnothex", // bad hex
+            address: "0x" + "b".repeat(40),
+            nonce: "0x0",
+            signer: "bob",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+});
+
 // Black-box handler test: drives the full path through _buildTxSendWireArgs +
 // callWire + formatWireResult against the mock binary. The build-arg unit
 // tests above cover the cross-field rejection branches; this one verifies
