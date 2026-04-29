@@ -972,6 +972,138 @@ func TestAllHandlers_IncludesNetworkAttach(t *testing.T) {
 	}
 }
 
+// ---- network.capabilities tests ----
+
+// TestHandleNetworkCapabilities_Local verifies that a seeded local network
+// (pids.json + current-profile.yaml from testdata, all nodes provider="local")
+// reports the full provider="local" capability set. The set is fixed by
+// providerCaps[]; the test pins the wire output so a future capability
+// addition shows up here as a deliberate change rather than silent drift.
+func TestHandleNetworkCapabilities_Local(t *testing.T) {
+	stateDir := setupCmdStateDir(t)
+	h := newHandleNetworkCapabilities(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "local"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["network"] != "local" {
+		t.Errorf("network = %v, want local", data["network"])
+	}
+	caps, ok := data["capabilities"].([]string)
+	if !ok {
+		t.Fatalf("capabilities type = %T, want []string", data["capabilities"])
+	}
+	want := []string{"admin", "fs", "network-topology", "process", "rpc", "ws"}
+	if len(caps) != len(want) {
+		t.Fatalf("capabilities = %v, want %v", caps, want)
+	}
+	for i, c := range want {
+		if caps[i] != c {
+			t.Errorf("capabilities[%d] = %q, want %q", i, caps[i], c)
+		}
+	}
+}
+
+// TestHandleNetworkCapabilities_Remote covers a remote-attached network:
+// only "rpc" and "ws" are advertised since the remote provider has neither
+// process control nor filesystem access.
+func TestHandleNetworkCapabilities_Remote(t *testing.T) {
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", "http://127.0.0.1:1")
+
+	h := newHandleNetworkCapabilities(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "tn"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["network"] != "tn" {
+		t.Errorf("network = %v, want tn", data["network"])
+	}
+	caps, ok := data["capabilities"].([]string)
+	if !ok {
+		t.Fatalf("capabilities type = %T, want []string", data["capabilities"])
+	}
+	want := []string{"rpc", "ws"}
+	if len(caps) != len(want) || caps[0] != want[0] || caps[1] != want[1] {
+		t.Errorf("capabilities = %v, want %v", caps, want)
+	}
+}
+
+// TestHandleNetworkCapabilities_Hybrid covers a hybrid network with one
+// local node and one remote node persisted under networks/<name>.json. The
+// inferred capability set is the intersection — only "rpc" and "ws". This
+// guards the conservative-lower-bound contract that hybrid networks
+// expose only what every node can satisfy.
+func TestHandleNetworkCapabilities_Hybrid(t *testing.T) {
+	stateDir := t.TempDir()
+	hybrid := &types.Network{
+		Name: "mix", ChainType: "ethereum", ChainId: 1,
+		Nodes: []types.Node{
+			{Id: "node1", Provider: "local", Http: "http://127.0.0.1:8501"},
+			{Id: "node2", Provider: "remote", Http: "http://127.0.0.1:1"},
+		},
+	}
+	if err := state.SaveRemote(stateDir, hybrid); err != nil {
+		t.Fatal(err)
+	}
+
+	h := newHandleNetworkCapabilities(stateDir)
+	args, _ := json.Marshal(map[string]any{"network": "mix"})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	caps, ok := data["capabilities"].([]string)
+	if !ok {
+		t.Fatalf("capabilities type = %T, want []string", data["capabilities"])
+	}
+	want := []string{"rpc", "ws"}
+	if len(caps) != len(want) || caps[0] != want[0] || caps[1] != want[1] {
+		t.Errorf("capabilities = %v, want %v (intersection)", caps, want)
+	}
+}
+
+// TestHandleNetworkCapabilities_DefaultsToLocal verifies that omitting
+// args.network resolves to the local network rather than failing with
+// INVALID_ARGS — matches the spec's "defaults to 'local'" contract.
+func TestHandleNetworkCapabilities_DefaultsToLocal(t *testing.T) {
+	stateDir := setupCmdStateDir(t)
+	h := newHandleNetworkCapabilities(stateDir)
+	args, _ := json.Marshal(map[string]any{}) // network omitted
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["network"] != "local" {
+		t.Errorf("network = %v, want local (default)", data["network"])
+	}
+	caps, ok := data["capabilities"].([]string)
+	if !ok || len(caps) != 6 {
+		t.Errorf("capabilities = %v, want 6 local caps", data["capabilities"])
+	}
+}
+
+func TestAllHandlers_IncludesNetworkCapabilities(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["network.capabilities"]; !ok {
+		t.Error("allHandlers missing network.capabilities")
+	}
+}
+
 // ---- node.block_number tests ----
 
 func TestHandleNodeBlockNumber_RemoteHappy(t *testing.T) {

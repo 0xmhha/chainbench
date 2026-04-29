@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
@@ -15,6 +16,116 @@ import (
 	"github.com/0xmhha/chainbench/network/internal/state"
 	"github.com/0xmhha/chainbench/network/internal/types"
 )
+
+// providerCaps maps a node provider type to its declared capability set.
+// Sets are pre-sorted alphabetically for deterministic JSON output once
+// they survive the set-intersection in inferNetworkCapabilities.
+//
+// Forward-compat: "ssh-remote" is declared but not yet used by any driver
+// (Sprint 5b). Listing it here lets handlers infer capabilities for
+// hybrid networks that include ssh-remote nodes once that provider lands,
+// without requiring a follow-up edit to this map.
+var providerCaps = map[string][]string{
+	"local":      {"admin", "fs", "network-topology", "process", "rpc", "ws"},
+	"remote":     {"rpc", "ws"},
+	"ssh-remote": {"fs", "process", "rpc", "ws"},
+}
+
+// inferNetworkCapabilities returns the set intersection of provider-declared
+// capabilities across all nodes. Empty input yields an empty (non-nil) slice.
+// An unknown provider contributes the empty set, which collapses the
+// intersection to empty — the conservative choice when we don't know what a
+// node can do.
+func inferNetworkCapabilities(nodes []types.Node) []string {
+	if len(nodes) == 0 {
+		return []string{}
+	}
+	common := make(map[string]struct{})
+	for _, c := range providerCaps[string(nodes[0].Provider)] {
+		common[c] = struct{}{}
+	}
+	for _, n := range nodes[1:] {
+		next := providerCaps[string(n.Provider)]
+		for c := range common {
+			found := false
+			for _, x := range next {
+				if x == c {
+					found = true
+					break
+				}
+			}
+			if !found {
+				delete(common, c)
+			}
+		}
+	}
+	out := make([]string, 0, len(common))
+	for c := range common {
+		out = append(out, c)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// loadNetworkNodes resolves a network name to its node list via the same
+// state.LoadActive path used by network.load. Routing on Name keeps the
+// "local vs remote" decision in one place (state package); the handler
+// stays a thin args/result shim.
+func loadNetworkNodes(stateDir, network string) ([]types.Node, error) {
+	net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: network})
+	if err != nil {
+		return nil, NewUpstream("failed to load network state", err)
+	}
+	return net.Nodes, nil
+}
+
+// newHandleNetworkCapabilities returns the "network.capabilities" handler.
+// It enumerates the network's nodes (local pids.json or
+// networks/<name>.json) and returns the provider-derived capability
+// intersection. No RPC dial — purely a state-file read.
+//
+// Args: { "network"?: "name" }  (omitted/empty defaults to "local")
+//
+// Result: { "network": "<name>", "capabilities": ["admin", "fs", ...] }
+//
+// Error mapping:
+//
+//	INVALID_ARGS   — malformed args JSON, or non-local name that fails the
+//	                 schema pattern at the state layer.
+//	UPSTREAM_ERROR — state.LoadActive failure (missing pids.json, missing
+//	                 networks/<name>.json, decode error).
+func newHandleNetworkCapabilities(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network string `json:"network"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.Network == "" {
+			req.Network = "local"
+		}
+		// Validate non-local name shape at the boundary so a structural
+		// input error surfaces as INVALID_ARGS rather than UPSTREAM_ERROR
+		// after a (cheap, but still) state read attempt.
+		if req.Network != "local" && !state.IsValidRemoteName(req.Network) {
+			return nil, NewInvalidArgs(fmt.Sprintf(
+				"args.network must be 'local' or match [a-z0-9][a-z0-9_-]*: %q", req.Network,
+			))
+		}
+		nodes, err := loadNetworkNodes(stateDir, req.Network)
+		if err != nil {
+			return nil, err
+		}
+		caps := inferNetworkCapabilities(nodes)
+		return map[string]any{
+			"network":      req.Network,
+			"capabilities": caps,
+		}, nil
+	}
+}
 
 // newHandleNetworkLoad returns the "network.load" handler closing over stateDir.
 func newHandleNetworkLoad(stateDir string) Handler {
