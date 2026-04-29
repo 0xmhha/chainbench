@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { chmodSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { _NodeRpcArgs, _nodeRpcHandler } from "../src/tools/node.js";
+import { NodeRpcArgs, _nodeRpcHandler } from "../src/tools/node.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MOCK_BIN = resolve(__dirname, "fixtures/mock-chainbench-net.mjs");
@@ -73,7 +73,17 @@ describe("chainbench_node_rpc handler", () => {
     // parse time so the MCP SDK rejects the call before the handler runs —
     // no wire spawn occurs.
     expect(() =>
-      _NodeRpcArgs.parse({ node: 1, method: "eth blockNumber" }),
+      NodeRpcArgs.parse({ node: 1, method: "eth blockNumber" }),
+    ).toThrow();
+  });
+
+  it("_StrictRejectsUnknownKeys", () => {
+    expect(() =>
+      NodeRpcArgs.parse({
+        node: 1,
+        method: "eth_blockNumber",
+        tag: "latest", // unknown key — strict() should reject
+      } as any),
     ).toThrow();
   });
 

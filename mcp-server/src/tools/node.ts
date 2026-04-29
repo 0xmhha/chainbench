@@ -33,10 +33,10 @@ function formatResult(result: { stdout: string; stderr: string; exitCode: number
 }
 
 // Exported for unit testing — the MCP SDK consumes the .shape from
-// _NodeRpcArgs and the handler from _nodeRpcHandler. Keeping them as named
+// NodeRpcArgs and the handler from _nodeRpcHandler. Keeping them as named
 // exports lets node.test.ts exercise the zod parse + handler logic directly
 // without spinning up an MCP server stub.
-export const _NodeRpcArgs = z.object({
+export const NodeRpcArgs = z.object({
   node: NODE_INDEX_SCHEMA,
   method: z
     .string()
@@ -46,9 +46,9 @@ export const _NodeRpcArgs = z.object({
     .string()
     .optional()
     .describe("JSON array of parameters (e.g. '[\"0xabc...\", \"latest\"]'). Defaults to '[]' if omitted."),
-});
+}).strict();
 
-type NodeRpcArgsT = z.infer<typeof _NodeRpcArgs>;
+type NodeRpcArgsT = z.infer<typeof NodeRpcArgs>;
 
 export async function _nodeRpcHandler(
   args: NodeRpcArgsT,
@@ -118,7 +118,7 @@ export function registerNodeTools(server: McpServer): void {
     "Send a JSON-RPC call directly to a specific node and return the response. " +
       "Useful for querying state or sending transactions via raw RPC. The 1-based " +
       "node index is mapped to the wire layer's node_id ('node1', 'node2', ...).",
-    _NodeRpcArgs.shape,
+    NodeRpcArgs.shape,
     _nodeRpcHandler,
   );
 }
