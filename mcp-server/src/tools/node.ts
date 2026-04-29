@@ -1,6 +1,21 @@
+// node.ts — node-scoped lifecycle and raw RPC tools.
+//
+// Sprint 5c.3 Task 2 reroutes chainbench_node_rpc from runChainbench (bash CLI
+// shell-out) to callWire (chainbench-net wire). chainbench_node_stop and
+// chainbench_node_start remain on the bash path until Task 3.
+//
+// The 1-based node index argument is preserved at the MCP surface; the wire
+// layer's node_id ('node1', 'node2', ...) is constructed by string
+// concatenation. Keeping the LLM-facing shape unchanged means callers see no
+// surface change across the reroute.
+
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench, shellEscapeArg } from "../utils/exec.js";
+import { callWire } from "../utils/wire.js";
+import { formatWireResult } from "../utils/wireResult.js";
+import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
+import { RPC_METHOD } from "../utils/hex.js";
 
 const NODE_INDEX_SCHEMA = z
   .number()
@@ -17,12 +32,47 @@ function formatResult(result: { stdout: string; stderr: string; exitCode: number
   return `Error (exit ${result.exitCode}): ${detail}`;
 }
 
-function validateRpcMethod(method: string): string | null {
-  // Allow only valid JSON-RPC method names: namespace_methodName
-  if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(method)) {
-    return `Invalid RPC method name '${method}'. Must be alphanumeric with underscores (e.g. 'eth_blockNumber').`;
+// Exported for unit testing — the MCP SDK consumes the .shape from
+// _NodeRpcArgs and the handler from _nodeRpcHandler. Keeping them as named
+// exports lets node.test.ts exercise the zod parse + handler logic directly
+// without spinning up an MCP server stub.
+export const _NodeRpcArgs = z.object({
+  node: NODE_INDEX_SCHEMA,
+  method: z
+    .string()
+    .regex(RPC_METHOD)
+    .describe("JSON-RPC method name (e.g. 'eth_blockNumber', 'eth_getBalance', 'net_peerCount')"),
+  params: z
+    .string()
+    .optional()
+    .describe("JSON array of parameters (e.g. '[\"0xabc...\", \"latest\"]'). Defaults to '[]' if omitted."),
+});
+
+type NodeRpcArgsT = z.infer<typeof _NodeRpcArgs>;
+
+export async function _nodeRpcHandler(
+  args: NodeRpcArgsT,
+): Promise<FormattedToolResponse> {
+  const { node, method, params } = args;
+  let parsedParams: unknown[] = [];
+  if (params !== undefined) {
+    try {
+      const parsed = JSON.parse(params);
+      if (!Array.isArray(parsed)) {
+        return errorResp("params must be a JSON array");
+      }
+      parsedParams = parsed;
+    } catch {
+      return errorResp("params is not valid JSON");
+    }
   }
-  return null;
+  const result = await callWire("node.rpc", {
+    network: "local",
+    node_id: `node${node}`,
+    method,
+    params: parsedParams,
+  });
+  return formatWireResult(result);
 }
 
 export function registerNodeTools(server: McpServer): void {
@@ -65,46 +115,10 @@ export function registerNodeTools(server: McpServer): void {
 
   server.tool(
     "chainbench_node_rpc",
-    "Send a JSON-RPC call directly to a specific node and return the response. Useful for querying state or sending transactions to individual nodes.",
-    {
-      node: NODE_INDEX_SCHEMA,
-      method: z
-        .string()
-        .describe("JSON-RPC method name (e.g. 'eth_blockNumber', 'eth_getBalance', 'net_peerCount')"),
-      params: z
-        .string()
-        .optional()
-        .describe("JSON array of parameters (e.g. '[\"0xabc...\", \"latest\"]'). Defaults to '[]' if omitted."),
-    },
-    async ({ node, method, params }) => {
-      const methodError = validateRpcMethod(method);
-      if (methodError) {
-        return { content: [{ type: "text" as const, text: `Error: ${methodError}` }] };
-      }
-
-      if (params !== undefined) {
-        try {
-          const parsed = JSON.parse(params);
-          if (!Array.isArray(parsed)) {
-            return {
-              content: [
-                {
-                  type: "text" as const,
-                  text: "Error: params must be a JSON array (e.g. '[\"0xabc\"]').",
-                },
-              ],
-            };
-          }
-        } catch {
-          return {
-            content: [{ type: "text" as const, text: "Error: params is not valid JSON." }],
-          };
-        }
-      }
-
-      const paramsArg = params ? ` '${params}'` : "";
-      const result = runChainbench(`node rpc ${node} ${method}${paramsArg}`);
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    "Send a JSON-RPC call directly to a specific node and return the response. " +
+      "Useful for querying state or sending transactions via raw RPC. The 1-based " +
+      "node index is mapped to the wire layer's node_id ('node1', 'node2', ...).",
+    _NodeRpcArgs.shape,
+    _nodeRpcHandler,
   );
 }
