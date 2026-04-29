@@ -14,6 +14,7 @@ _CB_TEST_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${_CB_TEST_LIB_DIR}/common.sh"
 source "${_CB_TEST_LIB_DIR}/test_meta.sh" 2>/dev/null || true
 source "${_CB_TEST_LIB_DIR}/test_scaffold.sh" 2>/dev/null || true
+source "${_CB_TEST_LIB_DIR}/network_client.sh" 2>/dev/null || true
 
 # ---- Constants ---------------------------------------------------------------
 
@@ -76,6 +77,60 @@ Examples:
   chainbench test run remote --remote eth-mainnet
   chainbench test run remote/rpc-health --remote my-testnet
 EOF
+}
+
+# ---- Capability gating -------------------------------------------------------
+
+# _cb_test_active_capabilities
+# Calls chainbench-net network.capabilities and prints the cap list
+# (space-separated). Returns 1 if chainbench-net is unreachable.
+_cb_test_active_capabilities() {
+  if ! type -t cb_net_call >/dev/null 2>&1; then
+    return 1
+  fi
+  local data
+  if ! data=$(cb_net_call "network.capabilities" '{}' 2>/dev/null); then
+    return 1
+  fi
+  echo "$data" | jq -r '.capabilities[]?' 2>/dev/null | tr '\n' ' ' | sed 's/ $//'
+}
+
+# _cb_test_check_capabilities <test_path>
+# Returns 0 if the test can run (no frontmatter, all required caps satisfied,
+# or capability resolution is unreachable — best-effort allow).
+# Returns 1 with a SKIP diagnostic on stderr when caps are missing.
+_cb_test_check_capabilities() {
+  local test_path="${1:?_cb_test_check_capabilities: test_path required}"
+
+  # Parse frontmatter; absent or empty → no requirements → run.
+  local meta_json required
+  meta_json=$(cb_parse_meta "$test_path" 2>/dev/null || echo "{}")
+  required=$(echo "$meta_json" | jq -r '.requires_capabilities[]?' 2>/dev/null | tr '\n' ' ')
+  required="${required% }"
+  [[ -z "$required" ]] && return 0
+
+  # Resolve active network's caps; on failure WARN + permissive allow.
+  local active_caps
+  if ! active_caps=$(_cb_test_active_capabilities); then
+    printf "${_CB_TEST_YELLOW}[WARN]${_CB_TEST_RESET}  cannot resolve network capabilities; running '%s' without gating\n" \
+      "$test_path" >&2
+    return 0
+  fi
+
+  # Compute missing set; bash 3.2 safe (no associative array).
+  local missing="" r
+  for r in $required; do
+    if ! printf ' %s ' "$active_caps" | grep -q " $r "; then
+      missing="${missing:+$missing }$r"
+    fi
+  done
+
+  if [[ -n "$missing" ]]; then
+    printf "${_CB_TEST_YELLOW}[SKIP]${_CB_TEST_RESET}  %s — requires capability: %s; active network provides: %s\n" \
+      "$test_path" "$missing" "$active_caps" >&2
+    return 1
+  fi
+  return 0
 }
 
 # ---- Test discovery ----------------------------------------------------------
@@ -429,7 +484,9 @@ _cb_test_cmd_run() {
   local total=${#scripts[@]}
   local passed=0
   local failed=0
+  local skipped=0
   local -a failed_names=()
+  local -a skipped_names=()
 
   printf '\n'
   printf "${_CB_TEST_CYAN}[TEST]${_CB_TEST_RESET}  Running %d test(s) for target: %s\n" \
@@ -441,6 +498,14 @@ _cb_test_cmd_run() {
   for script in "${scripts[@]}"; do
     name=$(_cb_test_script_to_name "$script")
     printf '\n' >&2
+
+    # Capability gate: skip tests whose required capabilities are not provided
+    # by the active network. SKIP diagnostic is emitted by the helper.
+    if ! _cb_test_check_capabilities "$script"; then
+      skipped=$(( skipped + 1 ))
+      skipped_names+=("$name")
+      continue
+    fi
 
     # Run test; capture exit code without aborting the runner
     set +e
@@ -466,14 +531,28 @@ _cb_test_cmd_run() {
   printf "${_CB_TEST_BOLD}[TEST]  Summary: %d/%d passed" "$passed" "$total" >&2
 
   if [[ "$failed" -gt 0 ]]; then
-    printf " | %d failed${_CB_TEST_RESET}\n" "$failed" >&2
+    printf " | %d failed" "$failed" >&2
+  fi
+  if [[ "$skipped" -gt 0 ]]; then
+    printf " | %d skipped" "$skipped" >&2
+  fi
+  printf "${_CB_TEST_RESET}\n" >&2
+
+  if [[ "$failed" -gt 0 ]]; then
     printf "${_CB_TEST_RED}[FAIL]${_CB_TEST_RESET}  Failed tests:\n" >&2
     local fn
     for fn in "${failed_names[@]}"; do
       printf "         - %s\n" "$fn" >&2
     done
-  else
-    printf "${_CB_TEST_RESET}\n" >&2
+  fi
+  if [[ "$skipped" -gt 0 ]]; then
+    printf "${_CB_TEST_YELLOW}[SKIP]${_CB_TEST_RESET}  Skipped tests (capability gating):\n" >&2
+    local sn
+    for sn in "${skipped_names[@]}"; do
+      printf "         - %s\n" "$sn" >&2
+    done
+  fi
+  if [[ "$failed" -eq 0 && "$skipped" -eq 0 ]]; then
     printf "${_CB_TEST_GREEN}[TEST]${_CB_TEST_RESET}  All tests passed.\n" >&2
   fi
 
