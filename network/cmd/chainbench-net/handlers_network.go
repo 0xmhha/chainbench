@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"time"
 
@@ -47,14 +48,7 @@ func inferNetworkCapabilities(nodes []types.Node) []string {
 	for _, n := range nodes[1:] {
 		next := providerCaps[string(n.Provider)]
 		for c := range common {
-			found := false
-			for _, x := range next {
-				if x == c {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !slices.Contains(next, c) {
 				delete(common, c)
 			}
 		}
