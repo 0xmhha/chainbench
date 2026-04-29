@@ -2,7 +2,14 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { chmodSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NodeRpcArgs, _nodeRpcHandler } from "../src/tools/node.js";
+import {
+  NodeRpcArgs,
+  NodeStartArgs,
+  NodeStopArgs,
+  _nodeRpcHandler,
+  _nodeStartHandler,
+  _nodeStopHandler,
+} from "../src/tools/node.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MOCK_BIN = resolve(__dirname, "fixtures/mock-chainbench-net.mjs");
@@ -23,11 +30,11 @@ beforeAll(() => {
   }
 });
 
-// _nodeRpcHandler calls callWire() which calls resolveBinary() — there is no
-// binaryPath option exposed at the handler boundary. Tests inject the mock by
-// setting CHAINBENCH_NET_BIN, MOCK_SCRIPT (mock fixture scenario), and
-// CHAINBENCH_DIR (cleared so resolveBinary can't pick a real binary). Saved
-// values are restored in afterEach to keep tests isolated.
+// The handlers under test call callWire() which calls resolveBinary() — there
+// is no binaryPath option exposed at the handler boundary. Tests inject the
+// mock by setting CHAINBENCH_NET_BIN, MOCK_SCRIPT (mock fixture scenario),
+// and CHAINBENCH_DIR (cleared so resolveBinary can't pick a real binary).
+// Saved values are restored in afterEach to keep tests isolated.
 describe("chainbench_node_rpc handler", () => {
   let savedBin: string | undefined;
   let savedScript: string | undefined;
@@ -131,5 +138,125 @@ describe("chainbench_node_rpc handler", () => {
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
     expect(out.content[0]?.text).toContain("rpc dial failed");
+  });
+});
+
+describe("chainbench_node_stop handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_NodeStop_Happy", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data: {} }),
+      },
+    ]);
+    const out = await _nodeStopHandler({ node: 1 });
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain("Done.");
+  });
+
+  it("_NodeStop_WireFailure_PassedThrough", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({
+          type: "result",
+          ok: false,
+          error: { code: "INVALID_ARGS", message: "no such node" },
+        }),
+      },
+    ]);
+    const out = await _nodeStopHandler({ node: 7 });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("Error (INVALID_ARGS)");
+    expect(out.content[0]?.text).toContain("no such node");
+  });
+
+  it("_NodeStop_StrictRejectsUnknownKeys", () => {
+    expect(() =>
+      NodeStopArgs.parse({ node: 1, foo: "bar" } as any),
+    ).toThrow();
+  });
+});
+
+describe("chainbench_node_start handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_NodeStart_NoBinaryPath_UsesWire", async () => {
+    // No binary_path → wire path fires. Mock fixture confirms by emitting a
+    // valid result envelope; the handler returns a non-error formatted text.
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data: {} }),
+      },
+    ]);
+    const out = await _nodeStartHandler({ node: 2 });
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain("Done.");
+  });
+
+  it("_NodeStart_BadBinaryPath_Empty_ReturnsError", async () => {
+    const out = await _nodeStartHandler({ node: 1, binary_path: "" });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("INVALID_ARGS");
+    expect(out.content[0]?.text).toContain("must not be empty");
+  });
+
+  it("_NodeStart_BadBinaryPath_Relative_ReturnsError", async () => {
+    const out = await _nodeStartHandler({
+      node: 1,
+      binary_path: "relative/path",
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("INVALID_ARGS");
+    expect(out.content[0]?.text).toContain("absolute");
+  });
+
+  it("_NodeStart_StrictRejectsUnknownKeys", () => {
+    expect(() =>
+      NodeStartArgs.parse({ node: 1, foo: "bar" } as any),
+    ).toThrow();
   });
 });

@@ -1,13 +1,21 @@
 // node.ts — node-scoped lifecycle and raw RPC tools.
 //
-// Sprint 5c.3 Task 2 reroutes chainbench_node_rpc from runChainbench (bash CLI
-// shell-out) to callWire (chainbench-net wire). chainbench_node_stop and
-// chainbench_node_start remain on the bash path until Task 3.
+// Sprint 5c.3 reroutes the three chainbench_node_* tools from runChainbench
+// (bash CLI shell-out) to callWire (chainbench-net wire). Task 2 covered
+// chainbench_node_rpc; Task 3 (this commit) covers chainbench_node_stop and
+// chainbench_node_start.
 //
 // The 1-based node index argument is preserved at the MCP surface; the wire
 // layer's node_id ('node1', 'node2', ...) is constructed by string
 // concatenation. Keeping the LLM-facing shape unchanged means callers see no
 // surface change across the reroute.
+//
+// Known asymmetry: chainbench_node_start exposes an optional binary_path arg
+// that the wire layer's node.start handler does not yet accept. When the
+// caller supplies binary_path, this handler falls back to runChainbench
+// (bash CLI) so the override still works. Sprint 5c.4 will extend the Go
+// node.start handler to take binary_path and remove the fallback. Tracked
+// in NEXT_WORK §3 P3.
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -24,18 +32,74 @@ const NODE_INDEX_SCHEMA = z
   .max(64)
   .describe("1-based node index (e.g. 1 for the first node)");
 
-function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
-  if (result.exitCode === 0) {
-    return result.stdout || "Done.";
-  }
-  const detail = result.stderr || result.stdout || "unknown error";
-  return `Error (exit ${result.exitCode}): ${detail}`;
+// Exported for unit testing — the MCP SDK consumes the .shape from each
+// *Args schema and the matching _*Handler from this file. Keeping them as
+// named exports lets node.test.ts exercise the zod parse + handler logic
+// directly without spinning up an MCP server stub.
+
+export const NodeStopArgs = z.object({
+  node: NODE_INDEX_SCHEMA,
+}).strict();
+
+type NodeStopArgsT = z.infer<typeof NodeStopArgs>;
+
+export async function _nodeStopHandler(
+  args: NodeStopArgsT,
+): Promise<FormattedToolResponse> {
+  const result = await callWire("node.stop", {
+    network: "local",
+    node_id: `node${args.node}`,
+  });
+  return formatWireResult(result);
 }
 
-// Exported for unit testing — the MCP SDK consumes the .shape from
-// NodeRpcArgs and the handler from _nodeRpcHandler. Keeping them as named
-// exports lets node.test.ts exercise the zod parse + handler logic directly
-// without spinning up an MCP server stub.
+export const NodeStartArgs = z.object({
+  node: NODE_INDEX_SCHEMA,
+  binary_path: z
+    .string()
+    .optional()
+    .describe(
+      "Absolute path to the chain binary. Overrides the profile's chain.binary_path. " +
+      "When provided, the call falls back to the bash CLI path because the wire " +
+      "layer's node.start handler does not yet accept this argument.",
+    ),
+}).strict();
+
+type NodeStartArgsT = z.infer<typeof NodeStartArgs>;
+
+export async function _nodeStartHandler(
+  args: NodeStartArgsT,
+): Promise<FormattedToolResponse> {
+  const { node, binary_path } = args;
+  if (binary_path !== undefined) {
+    if (binary_path.length === 0) {
+      return errorResp("binary_path must not be empty");
+    }
+    if (!binary_path.startsWith("/")) {
+      return errorResp("binary_path must be an absolute path");
+    }
+    // Wire layer doesn't yet accept binary_path; fall back to bash CLI.
+    // TODO Sprint 5c.4: extend node.start wire handler to accept binary_path
+    // and drop this branch.
+    const bash = runChainbench(
+      `node start ${node} --binary-path ${shellEscapeArg(binary_path)}`,
+    );
+    const text =
+      bash.exitCode === 0
+        ? bash.stdout || "Done."
+        : `Error (exit ${bash.exitCode}): ${bash.stderr || bash.stdout || "unknown error"}`;
+    return {
+      content: [{ type: "text" as const, text }],
+      isError: bash.exitCode !== 0,
+    };
+  }
+  const result = await callWire("node.start", {
+    network: "local",
+    node_id: `node${node}`,
+  });
+  return formatWireResult(result);
+}
+
 export const NodeRpcArgs = z.object({
   node: NODE_INDEX_SCHEMA,
   method: z
@@ -79,38 +143,15 @@ export function registerNodeTools(server: McpServer): void {
   server.tool(
     "chainbench_node_stop",
     "Stop a specific node by its 1-based index. The node can be restarted later with chainbench_node_start.",
-    {
-      node: NODE_INDEX_SCHEMA,
-    },
-    async ({ node }) => {
-      const result = runChainbench(`node stop ${node}`);
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    NodeStopArgs.shape,
+    _nodeStopHandler,
   );
 
   server.tool(
     "chainbench_node_start",
     "Start (or restart) a specific stopped node by its 1-based index. The chain must have been initialized first.",
-    {
-      node: NODE_INDEX_SCHEMA,
-      binary_path: z
-        .string()
-        .optional()
-        .describe("Absolute path to the chain binary. Overrides profile's chain.binary_path for this invocation."),
-    },
-    async ({ node, binary_path }) => {
-      if (binary_path !== undefined) {
-        if (binary_path.length === 0) {
-          return { content: [{ type: "text" as const, text: "Error: binary_path must not be empty." }] };
-        }
-        if (!binary_path.startsWith("/")) {
-          return { content: [{ type: "text" as const, text: "Error: binary_path must be an absolute path." }] };
-        }
-      }
-      const bpArg = binary_path ? ` --binary-path ${shellEscapeArg(binary_path)}` : "";
-      const result = runChainbench(`node start ${node}${bpArg}`);
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    NodeStartArgs.shape,
+    _nodeStartHandler,
   );
 
   server.tool(
