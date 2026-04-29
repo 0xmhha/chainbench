@@ -8,12 +8,8 @@
 // when the binary recorded any progress before failing.
 
 import type { WireCallResult } from "./wire.js";
-
-export interface FormattedToolResponse {
-  content: Array<{ type: "text"; text: string; [k: string]: unknown }>;
-  isError?: boolean;
-  [k: string]: unknown;
-}
+import type { FormattedToolResponse } from "./mcpResp.js";
+export type { FormattedToolResponse };
 
 const MAX_NAMES_IN_SUMMARY = 8;
 

@@ -20,31 +20,14 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { callWire } from "../utils/wire.js";
+import { formatWireResult } from "../utils/wireResult.js";
+import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
 import {
-  formatWireResult,
-  type FormattedToolResponse,
-} from "../utils/wireResult.js";
-
-const HEX_ADDRESS = /^0x[a-fA-F0-9]{40}$/;
-const HEX_DATA = /^0x([a-fA-F0-9]{2})*$/;
-// HEX_HEX accepts arbitrary-length 0x-hex (not byte-aligned). Used for
-// authorization-list chain_id and nonce, which are RLP-encoded big.Ints on
-// the Go side and may be a single nibble (e.g. "0x0" for "any chain").
-const HEX_HEX = /^0x[a-fA-F0-9]+$/;
-const SIGNER_ALIAS = /^[A-Za-z][A-Za-z0-9_]*$/;
-
-// errorResp: shared INVALID_ARGS shaping for cross-field handler checks. Keeps
-// the structured "Error (INVALID_ARGS): <reason>" text in lock-step with
-// formatWireResult's failure path so MCP clients can parse uniformly. Module-
-// private; the matching helper in chain_read.ts is intentionally a duplicate
-// per plan §0.1 — Sprint 5c.3 P3 will hoist this to utils/mcpResp.ts when the
-// third callsite appears.
-function errorResp(msg: string): FormattedToolResponse {
-  return {
-    content: [{ type: "text", text: `Error (INVALID_ARGS): ${msg}` }],
-    isError: true,
-  };
-}
+  HEX_ADDRESS,
+  HEX_DATA,
+  HEX_HEX,
+  SIGNER_ALIAS,
+} from "../utils/hex.js";
 
 const MODE = z.enum(["legacy", "1559", "set_code", "fee_delegation"]);
 

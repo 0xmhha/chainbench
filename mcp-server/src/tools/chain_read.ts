@@ -13,41 +13,17 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { callWire } from "../utils/wire.js";
+import { formatWireResult } from "../utils/wireResult.js";
+import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
 import {
-  formatWireResult,
-  type FormattedToolResponse,
-} from "../utils/wireResult.js";
-
-const HEX_ADDRESS = /^0x[a-fA-F0-9]{40}$/;
-const HEX_STORAGE_KEY = /^0x[a-fA-F0-9]{1,64}$/;
-// HEX_DATA: 0x-prefixed even-length hex (matches chain_tx.ts deliberately —
-// per plan §0.1 the duplication is intentional until a 5c.3 utils extraction).
-const HEX_DATA = /^0x([a-fA-F0-9]{2})*$/;
-// HEX_TOPIC: 0x-prefixed 32-byte (64 hex chars) event topic hash. Strict —
-// EVM topics are always exactly 32 bytes, so a malformed topic should
-// surface as a Zod parse error at the MCP boundary rather than as a
-// chainbench-net UPSTREAM_ERROR after a wasted spawn.
-const HEX_TOPIC = /^0x[a-fA-F0-9]{64}$/;
-// HEX_TX_HASH: 0x-prefixed 32-byte (64 hex chars) transaction hash. Same
-// regex shape as HEX_TOPIC but kept as a separate constant for intent
-// clarity — a malformed tx_hash should surface as a Zod parse error at the
-// MCP boundary rather than as a chainbench-net INVALID_ARGS after a wasted
-// spawn (the Go handler enforces the identical 0x + 32-byte hex shape).
-const HEX_TX_HASH = /^0x[a-fA-F0-9]{64}$/;
+  HEX_ADDRESS,
+  HEX_DATA,
+  HEX_STORAGE_KEY,
+  HEX_TOPIC,
+  HEX_TX_HASH,
+} from "../utils/hex.js";
 
 const FIELD = z.enum(["balance", "nonce", "code", "storage"]);
-
-// errorResp: shared INVALID_ARGS shaping for cross-field handler checks. Keeps
-// the structured "Error (INVALID_ARGS): <reason>" text in lock-step with
-// formatWireResult's failure path so MCP clients can parse uniformly. Module-
-// private; the matching helper in chain_tx.ts is intentionally a duplicate
-// per plan §0.1 (utils extraction is a 5c.3 P3 candidate).
-function errorResp(msg: string): FormattedToolResponse {
-  return {
-    content: [{ type: "text", text: `Error (INVALID_ARGS): ${msg}` }],
-    isError: true,
-  };
-}
 
 export const AccountStateArgs = z.object({
   network: z
