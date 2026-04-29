@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-28 (Sprint 5c.1 완료)
+> **최종 업데이트**: 2026-04-29 (Sprint 5c.2 완료)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -739,7 +739,7 @@ MCP 서버도 네트워크 바이너리를 spawn하여 사용:
 - 기존 41 tool 중 RPC/lifecycle/node 관련은 점진적으로 네트워크 바이너리 경유로 전환
 - bash CLI와 동일 프로토콜 → 중복 로직 제거
 
-Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. 기존 38 tool 의 reroute 는 5c.3 후속.
+Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. Sprint 5c.2 (2026-04-29) 에서 남은 4 high-level tool (`chainbench_contract_deploy/_call/_events_get/_tx_wait`) + `chainbench_tx_send` mode `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16) 추가. 기존 38 tool reroute 는 5c.3 후속.
 
 ---
 
@@ -817,16 +817,21 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [x] `chainbench_account_state` — composite reader (balance/nonce/code/storage) MCP 노출
 - [x] `chainbench_tx_send` — legacy / 1559 mode 명시화, signer alias (host env 의존, key material 미노출)
 
-**Sprint 5c.2 — MCP high-level tools 확장**
-- [ ] `chainbench_contract_deploy` — bytecode + 옵션 ABI 생성자 args
-- [ ] `chainbench_contract_call` — raw calldata or ABI+method+args
-- [ ] `chainbench_events_get` — `eth_getLogs` + 옵션 ABI 기반 log decode
-- [ ] `chainbench_tx_wait` — receipt polling
-- [ ] `chainbench_tx_send` mode 확장 — `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16)
+**Sprint 5c.2 — MCP high-level tools 확장** — 완료 (2026-04-29)
+- [x] `chainbench_contract_deploy` — bytecode + 옵션 ABI 생성자 args
+- [x] `chainbench_contract_call` — raw calldata or ABI+method+args
+- [x] `chainbench_events_get` — `eth_getLogs` + 옵션 ABI 기반 log decode
+- [x] `chainbench_tx_wait` — receipt polling
+- [x] `chainbench_tx_send` mode 확장 — `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16)
+- [x] chain.ts split → chain_read.ts + chain_tx.ts (orchestrator only) + `_buildTxSendWireArgs` 시그니처 확장 ({wireCommand, wireArgs}) — fee_delegation 이 `node.tx_fee_delegation_send` 로 dispatch
+- [x] mcp-server vitest 73 tests (9 wire + 8 wireResult + 1 chain_read_timeout + 26 chain_read + 29 chain_tx) · mcp-server 0.4.0 → 0.5.0
 
-**Sprint 5c.3 — 기존 38 tool reroute through wire helper**
+다음 P1 = Sprint 5c.3 (기존 38 tool reroute).
+
+**Sprint 5c.3 — 기존 38 tool reroute through wire helper** (다음 P1)
 - [ ] `chainbench_init/start/stop/...` 가 bash CLI 직접 호출 → `chainbench-net` wire 경유 전환 (`docs/VISION_AND_ROADMAP.md` §5.17.7)
-- [ ] `mcp-server/src/tools/` 의 큰 파일 (test.ts 335 / schema.ts 308) 자연스러운 흡수 검토
+- [ ] `mcp-server/src/tools/` 의 큰 파일 (test.ts 335 / schema.ts 308 / chain_tx.ts 505) 자연스러운 흡수 검토
+- [ ] `errorResp` 헬퍼 chain_read.ts ↔ chain_tx.ts 중복 → `utils/mcpResp.ts` 추출 검토
 
 **Sprint 5a — Capability gate**
 - [ ] `network.capabilities` 커맨드 + 테스트 프론트매터 `requires_capabilities` 점진 부여 (§5.5)
