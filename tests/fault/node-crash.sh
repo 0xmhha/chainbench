@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Test: fault/node-crash
 # Description: Stop 1 validator and verify consensus continues with 3/4
+# ---chainbench-meta---
+# description: Stop 1 validator and verify consensus continues with 3/4
+# requires_capabilities: [process]
+# chain_compat: [stablenet, wbft]
+# ---end-meta---
 set -euo pipefail
 
 source "$(dirname "$0")/../lib/rpc.sh"

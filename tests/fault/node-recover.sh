@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Test: fault/node-recover
 # Description: Stop a node, wait, restart, and measure sync time
+# ---chainbench-meta---
+# description: Stop a node, wait, restart, and measure sync time
+# requires_capabilities: [process]
+# chain_compat: [stablenet, wbft]
+# ---end-meta---
 set -euo pipefail
 
 source "$(dirname "$0")/../lib/rpc.sh"
