@@ -6,6 +6,8 @@ import {
   TxSendArgs,
   _buildTxSendWireArgs,
   _txSendHandler,
+  ContractDeployArgs,
+  _buildContractDeployWireArgs,
 } from "../src/tools/chain_tx.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -222,5 +224,84 @@ describe("chainbench_tx_send handler", () => {
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
     expect(out.content[0]?.text).toContain("nonce too low");
+  });
+});
+
+describe("chainbench_contract_deploy handler", () => {
+  const baseLegacy = {
+    network: "local",
+    signer: "alice",
+    mode: "legacy" as const,
+    bytecode: "0x6080604052",
+    gas_price: "0x1",
+  };
+  const base1559 = {
+    network: "local",
+    signer: "alice",
+    mode: "1559" as const,
+    bytecode: "0x6080604052",
+    max_fee_per_gas: "0x59682f00",
+    max_priority_fee_per_gas: "0x3b9aca00",
+  };
+
+  it("_Happy_LegacyBytecode", () => {
+    const built = _buildContractDeployWireArgs(baseLegacy);
+    expect("wireArgs" in built).toBe(true);
+    if (!("wireArgs" in built)) throw new Error("expected wireArgs");
+    expect(built.wireArgs.gas_price).toBe("0x1");
+    expect(built.wireArgs.max_fee_per_gas).toBeUndefined();
+    expect(built.wireArgs.bytecode).toBe("0x6080604052");
+  });
+
+  it("_Happy_1559WithABI", () => {
+    const built = _buildContractDeployWireArgs({
+      ...base1559,
+      abi: '[{"type":"constructor","inputs":[]}]',
+      constructor_args: [],
+    });
+    expect("wireArgs" in built).toBe(true);
+    if (!("wireArgs" in built)) throw new Error("expected wireArgs");
+    expect(built.wireArgs.max_fee_per_gas).toBe("0x59682f00");
+    expect(built.wireArgs.max_priority_fee_per_gas).toBe("0x3b9aca00");
+    expect(built.wireArgs.gas_price).toBeUndefined();
+    expect(built.wireArgs.abi).toBeDefined();
+    expect(built.wireArgs.constructor_args).toEqual([]);
+  });
+
+  it("_BadBytecode_RejectedAtBoundary", () => {
+    expect(() =>
+      ContractDeployArgs.parse({
+        ...baseLegacy,
+        bytecode: "0xnothex",
+      }),
+    ).toThrow();
+  });
+
+  it("_LegacyWithMaxFee_Rejected", () => {
+    const built = _buildContractDeployWireArgs({
+      ...baseLegacy,
+      max_fee_per_gas: "0x1",
+    });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("legacy");
+    expect(built.error).toContain("max_fee");
+  });
+
+  it("_1559WithoutMaxFee_Rejected", () => {
+    const { max_fee_per_gas: _omit, ...partial } = base1559;
+    const built = _buildContractDeployWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("1559");
+  });
+
+  it("_StrictRejectsUnknownKeys", () => {
+    expect(() =>
+      ContractDeployArgs.parse({
+        ...baseLegacy,
+        to: "0x" + "a".repeat(40), // unknown key — deploy creates contracts, no `to`
+      }),
+    ).toThrow();
   });
 });
