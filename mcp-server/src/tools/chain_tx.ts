@@ -5,17 +5,17 @@
 // CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE + _KEYSTORE_PASSWORD); raw key material
 // never crosses the MCP boundary.
 //
-// Today: chainbench_tx_send (modes legacy | 1559 | set_code) and
-// chainbench_contract_deploy (modes legacy | 1559). Sprint 5c.2 follow-up
-// still pending in this file:
-//   - Task 6: chainbench_tx_send mode 'fee_delegation' (go-stablenet 0x16,
-//             dispatched to node.tx_fee_delegation_send via wireCommand)
+// Today: chainbench_tx_send (modes legacy | 1559 | set_code | fee_delegation)
+// and chainbench_contract_deploy (modes legacy | 1559).
 //
-// _buildTxSendWireArgs returns {wireCommand, wireArgs} so Task 6 can
-// dispatch fee_delegation to a different wire command without touching the
-// handler — legacy/1559/set_code all keep wireCommand: "node.tx_send"
-// (chainbench-net auto-routes set_code to the SetCodeTx envelope when the
-// authorization_list field is present).
+// _buildTxSendWireArgs returns {wireCommand, wireArgs} so the fee_delegation
+// mode can dispatch to a different wire command (node.tx_fee_delegation_send)
+// without touching the handler — legacy/1559/set_code all stay on
+// wireCommand: "node.tx_send" (chainbench-net auto-routes set_code to the
+// SetCodeTx envelope when the authorization_list field is present), while
+// fee_delegation dispatches to wireCommand: "node.tx_fee_delegation_send"
+// (go-stablenet's 0x16 envelope; chain adapter must be on the go-stablenet
+// allowlist or chainbench-net surfaces NOT_SUPPORTED).
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -104,8 +104,12 @@ export const TxSendArgs = z.object({
       "max_fee_per_gas / max_priority_fee_per_gas. '1559' requires both " +
       "max_fee_per_gas and max_priority_fee_per_gas and rejects gas_price. " +
       "'set_code' (EIP-7702) requires authorization_list plus 1559 fee " +
-      "fields. 'fee_delegation' (go-stablenet 0x16) requires fee_payer and " +
-      "is currently rejected at the boundary; arrives in Sprint 5c.2 Task 6.",
+      "fields. 'fee_delegation' (go-stablenet 0x16) requires fee_payer, " +
+      "to, both 1559 fee fields, and explicit gas + nonce (chainbench-net " +
+      "does not auto-fill for this tx type); rejects gas_price and " +
+      "authorization_list. The chain adapter must support 0x16 " +
+      "(go-stablenet allowlist) — chainbench-net surfaces NOT_SUPPORTED " +
+      "otherwise.",
   ),
   to: z
     .string()
@@ -156,8 +160,9 @@ export const TxSendArgs = z.object({
     .regex(SIGNER_ALIAS)
     .optional()
     .describe(
-      "Fee payer alias; required for mode 'fee_delegation' (Sprint 5c.2 " +
-        "Task 6). Rejected by other modes.",
+      "Fee payer alias; required for mode 'fee_delegation' (go-stablenet " +
+        "0x16). CHAINBENCH_SIGNER_<ALIAS>_KEY (or _KEYSTORE+_KEYSTORE_PASSWORD) " +
+        "must be set in host env. Rejected by other modes.",
     ),
 }).strict();
 
@@ -167,8 +172,11 @@ type TxSendArgsT = z.infer<typeof TxSendArgs>;
 // the discriminated union without forcing one of two parallel schemas, so the
 // check is a pure function the handler calls before the wire spawn. Returns
 // {wireCommand, wireArgs} ready for callWire, or {error} for the boundary
-// response. wireCommand defaults to "node.tx_send"; Sprint 5c.2 Task 6 will
-// switch fee_delegation mode to "node.tx_fee_delegation_send".
+// response. legacy/1559/set_code dispatch to "node.tx_send" (chainbench-net
+// auto-routes set_code to the SetCodeTx envelope when authorization_list is
+// present); fee_delegation dispatches to "node.tx_fee_delegation_send"
+// (go-stablenet 0x16 — chain adapter must accept the type or chainbench-net
+// surfaces NOT_SUPPORTED).
 export function _buildTxSendWireArgs(
   args: TxSendArgsT,
 ):
@@ -233,28 +241,70 @@ export function _buildTxSendWireArgs(
       return { error: "mode 'set_code' rejects gas_price" };
     }
   } else {
-    // mode === "fee_delegation" — Task 6 will activate dispatch to
-    // node.tx_fee_delegation_send. Until then the boundary rejects the
-    // mode outright so the schema can already accept fee_payer without
-    // exposing a half-wired path to clients.
-    return {
-      error:
-        "mode 'fee_delegation' is not yet exposed in MCP; arrives in Sprint 5c.2 Task 6",
-    };
+    // mode === "fee_delegation" (go-stablenet 0x16). Stricter than other
+    // modes: chainbench-net does NOT auto-fill nonce/gas/fees for this tx
+    // type (chain-specific testing intent demands explicit values), to is
+    // required (no contract creation), and the set_code combo is rejected.
+    // The fee_payer alias is mandatory and resolves on the host the same
+    // way the outer signer does.
+    if (!args.fee_payer) {
+      return { error: "mode 'fee_delegation' requires fee_payer alias" };
+    }
+    if (!args.to) {
+      return {
+        error:
+          "mode 'fee_delegation' requires to (no contract creation in fee delegation)",
+      };
+    }
+    if (!args.max_fee_per_gas || !args.max_priority_fee_per_gas) {
+      return {
+        error:
+          "mode 'fee_delegation' requires both max_fee_per_gas and max_priority_fee_per_gas",
+      };
+    }
+    if (args.gas === undefined) {
+      return {
+        error:
+          "mode 'fee_delegation' requires gas (chainbench-net does not auto-fill for this tx type)",
+      };
+    }
+    if (args.nonce === undefined) {
+      return {
+        error:
+          "mode 'fee_delegation' requires nonce (chainbench-net does not auto-fill for this tx type)",
+      };
+    }
+    if (args.gas_price !== undefined) {
+      return { error: "mode 'fee_delegation' rejects gas_price" };
+    }
+    if (args.authorization_list !== undefined) {
+      return {
+        error:
+          "mode 'fee_delegation' rejects authorization_list (no set_code combo supported)",
+      };
+    }
   }
 
-  // Wire envelope: chainbench-net's node.tx_send auto-detects fee mode from
-  // the presence of max_fee_per_gas, and auto-routes to a SetCodeTx (0x4)
-  // when authorization_list is present and non-empty. The synthetic 'mode'
-  // key is dropped — only concrete fee fields and the auth list go on the
-  // wire. network/signer are pinned first for stable envelope ordering;
-  // remaining optional fields fall through with explicit per-field
-  // assignment to match the pattern used by _accountStateHandler.
+  // Wire envelope: legacy/1559/set_code share node.tx_send (chainbench-net
+  // auto-detects fee mode from max_fee_per_gas presence and auto-routes to
+  // a SetCodeTx (0x4) when authorization_list is present and non-empty).
+  // fee_delegation dispatches to node.tx_fee_delegation_send (go-stablenet
+  // 0x16). The synthetic 'mode' key is dropped from the wire — only
+  // concrete fee fields, auth list, and fee_payer flow through.
+  // network/signer are pinned first for stable envelope ordering; remaining
+  // optional fields fall through with explicit per-field assignment to
+  // match the pattern used by _accountStateHandler.
+  const wireCommand: "node.tx_send" | "node.tx_fee_delegation_send" =
+    args.mode === "fee_delegation"
+      ? "node.tx_fee_delegation_send"
+      : "node.tx_send";
+
   const wireArgs: Record<string, unknown> = {
     network: args.network,
     signer: args.signer,
   };
   if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
+  if (args.fee_payer !== undefined) wireArgs.fee_payer = args.fee_payer;
   if (args.to !== undefined) wireArgs.to = args.to;
   if (args.value !== undefined) wireArgs.value = args.value;
   if (args.data !== undefined) wireArgs.data = args.data;
@@ -270,21 +320,14 @@ export function _buildTxSendWireArgs(
   if (args.authorization_list !== undefined) {
     wireArgs.authorization_list = args.authorization_list;
   }
-  return { wireCommand: "node.tx_send", wireArgs };
+  return { wireCommand, wireArgs };
 }
 
 export async function _txSendHandler(
   args: TxSendArgsT,
 ): Promise<FormattedToolResponse> {
   const built = _buildTxSendWireArgs(args);
-  if ("error" in built) {
-    return {
-      content: [
-        { type: "text", text: `Error (INVALID_ARGS): ${built.error}` },
-      ],
-      isError: true,
-    };
-  }
+  if ("error" in built) return errorResp(built.error);
   const result = await callWire(built.wireCommand, built.wireArgs);
   return formatWireResult(result);
 }
@@ -434,12 +477,17 @@ export function registerChainTxTools(server: McpServer): void {
       "(EIP-7702) builds a SetCodeTx (0x4) — requires non-empty " +
       "authorization_list plus the 1559 fee fields; chainbench-net auto-routes " +
       "to the SetCodeTx envelope when authorization_list is present. Mode " +
-      "'fee_delegation' (go-stablenet 0x16) requires fee_payer and is " +
-      "currently rejected at the boundary; arrives in Sprint 5c.2 Task 6. The " +
-      "signer parameter is an alias only — CHAINBENCH_SIGNER_<ALIAS>_KEY (or " +
-      "CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE + CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE_PASSWORD) " +
-      "must be set in the host environment that spawned the MCP server; raw " +
-      "key material never crosses the MCP boundary.",
+      "'fee_delegation' (go-stablenet 0x16) builds a fee-delegated tx — " +
+      "requires fee_payer alias, to (no contract creation), both 1559 fee " +
+      "fields, and explicit gas + nonce (chainbench-net does not auto-fill " +
+      "for this tx type); rejects gas_price and authorization_list. The " +
+      "chain adapter must support 0x16 (go-stablenet allowlist) — " +
+      "chainbench-net surfaces NOT_SUPPORTED otherwise. The signer (and " +
+      "fee_payer) parameters are aliases only — CHAINBENCH_SIGNER_<ALIAS>_KEY " +
+      "(or CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE + " +
+      "CHAINBENCH_SIGNER_<ALIAS>_KEYSTORE_PASSWORD) must be set in the host " +
+      "environment that spawned the MCP server; raw key material never " +
+      "crosses the MCP boundary.",
     TxSendArgs.shape,
     _txSendHandler,
   );
@@ -456,7 +504,4 @@ export function registerChainTxTools(server: McpServer): void {
     ContractDeployArgs.shape,
     _contractDeployHandler,
   );
-  // Sprint 5c.2 Task 6 remaining: chainbench_tx_send mode 'fee_delegation'
-  // (go-stablenet 0x16 dispatched via node.tx_fee_delegation_send
-  // wireCommand).
 }

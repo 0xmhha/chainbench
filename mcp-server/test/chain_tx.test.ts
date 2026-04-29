@@ -267,6 +267,96 @@ describe("chainbench_tx_send mode set_code", () => {
   });
 });
 
+// Sprint 5c.2 Task 6 — mode fee_delegation (go-stablenet 0x16). Unlike
+// legacy/1559/set_code (all on node.tx_send), fee_delegation dispatches to
+// node.tx_fee_delegation_send via the wireCommand discriminator. Cross-field
+// rules are stricter: fee_payer + to + 1559 fee fields + explicit gas +
+// explicit nonce are required (chainbench-net does not auto-fill); gas_price
+// and authorization_list are rejected.
+describe("chainbench_tx_send mode fee_delegation", () => {
+  const baseFD = {
+    network: "stablenet-mainnet",
+    signer: "alice",
+    fee_payer: "fpayer-1",
+    mode: "fee_delegation" as const,
+    to: "0x" + "a".repeat(40),
+    max_fee_per_gas: "0x59682f00",
+    max_priority_fee_per_gas: "0x3b9aca00",
+    gas: 21000,
+    nonce: 7,
+  };
+
+  it("_Happy_FeeDelegation", () => {
+    const built = _buildTxSendWireArgs(baseFD);
+    expect("wireArgs" in built).toBe(true);
+    if (!("wireArgs" in built)) throw new Error("expected wireArgs");
+    expect(built.wireCommand).toBe("node.tx_fee_delegation_send");
+    expect(built.wireArgs.fee_payer).toBe("fpayer-1");
+    expect(built.wireArgs.signer).toBe("alice");
+    expect(built.wireArgs.gas).toBe(21000);
+    expect(built.wireArgs.nonce).toBe(7);
+  });
+
+  it("_FeeDelegationWithoutFeePayer_Rejected", () => {
+    const { fee_payer: _omit, ...partial } = baseFD;
+    const built = _buildTxSendWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("fee_payer");
+  });
+
+  it("_FeeDelegationWithoutTo_Rejected", () => {
+    const { to: _omit, ...partial } = baseFD;
+    const built = _buildTxSendWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("to");
+  });
+
+  it("_FeeDelegationWithGasPrice_Rejected", () => {
+    const built = _buildTxSendWireArgs({ ...baseFD, gas_price: "0x1" });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("gas_price");
+  });
+
+  it("_FeeDelegationWithoutGasOrNonce_Rejected", () => {
+    const { gas: _omitGas, ...partial } = baseFD;
+    const built = _buildTxSendWireArgs(partial as any);
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("gas");
+  });
+
+  it("_FeeDelegationWithAuthList_Rejected", () => {
+    const built = _buildTxSendWireArgs({
+      ...baseFD,
+      authorization_list: [{
+        chain_id: "0x1",
+        address: "0x" + "b".repeat(40),
+        nonce: "0x0",
+        signer: "bob",
+      }],
+    });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("authorization_list");
+  });
+
+  it("_FeePayerInLegacyMode_Rejected", () => {
+    const built = _buildTxSendWireArgs({
+      network: "local",
+      signer: "alice",
+      mode: "legacy",
+      gas_price: "0x1",
+      fee_payer: "fpayer-1",
+    });
+    expect("error" in built).toBe(true);
+    if (!("error" in built)) throw new Error("expected error");
+    expect(built.error).toContain("fee_payer");
+  });
+});
+
 // Black-box handler test: drives the full path through _buildTxSendWireArgs +
 // callWire + formatWireResult against the mock binary. The build-arg unit
 // tests above cover the cross-field rejection branches; this one verifies
