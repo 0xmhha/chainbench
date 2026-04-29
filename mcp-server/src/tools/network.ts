@@ -2,11 +2,16 @@
  * tools/network.ts - P2P network management and txpool inspection MCP tools.
  *
  * Provides network partition/heal, peer topology, and txpool status
- * across all nodes via admin_* and txpool_* RPC methods.
+ * across all nodes via admin_* and txpool_* RPC methods. Sprint 5a adds
+ * chainbench_network_capabilities, which wraps the chainbench-net
+ * network.capabilities wire command (provider-derived capability set).
  */
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { rpcCall, rpcCallAll, getRunningNodeIds, fromHex } from "../utils/rpc.js";
+import { callWire } from "../utils/wire.js";
+import { formatWireResult } from "../utils/wireResult.js";
+import { type FormattedToolResponse } from "../utils/mcpResp.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -22,10 +27,46 @@ async function getEnode(nodeId: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// chainbench_network_capabilities — schema + handler (Sprint 5a)
+// ---------------------------------------------------------------------------
+
+export const NetworkCapabilitiesArgs = z.object({
+  network: z
+    .string()
+    .min(1)
+    .optional()
+    .describe("Network alias. Defaults to 'local'."),
+}).strict();
+
+type NetworkCapabilitiesArgsT = z.infer<typeof NetworkCapabilitiesArgs>;
+
+export async function _networkCapabilitiesHandler(
+  args: NetworkCapabilitiesArgsT,
+): Promise<FormattedToolResponse> {
+  const wireArgs: Record<string, unknown> = {};
+  if (args.network !== undefined) wireArgs.network = args.network;
+  const result = await callWire("network.capabilities", wireArgs);
+  return formatWireResult(result);
+}
+
+// ---------------------------------------------------------------------------
 // Tool registration
 // ---------------------------------------------------------------------------
 
 export function registerNetworkTools(server: McpServer): void {
+  // ---- chainbench_network_capabilities ----
+  server.tool(
+    "chainbench_network_capabilities",
+    "Read the capability set of a network (defaults to 'local'). " +
+      "Capabilities indicate which operations are supported. " +
+      "Local networks support: rpc, ws, process, fs, admin, network-topology. " +
+      "Remote-attached networks support: rpc, ws (no process control or filesystem access). " +
+      "Use this to gate features that depend on process control (e.g., crash tests need 'process'). " +
+      "Hybrid networks return the intersection of all nodes' capabilities.",
+    NetworkCapabilitiesArgs.shape,
+    _networkCapabilitiesHandler,
+  );
+
   // ---- chainbench_network_peers ----
   server.tool(
     "chainbench_network_peers",
