@@ -4252,6 +4252,145 @@ func TestAllHandlers_IncludesAccountState(t *testing.T) {
 	}
 }
 
+// TestHandleNodeRpc_Happy_BlockNumber covers the happy path: a JSON-RPC
+// passthrough for eth_blockNumber returns the upstream's raw "0x10" string
+// inside the {"result": ...} envelope without ethclient interpreting the
+// value. The mock asserts the wire shape (Method + Params decoded as
+// []any) so a future regression in CallContext params marshalling shows up
+// here rather than during integration.
+func TestHandleNodeRpc_Happy_BlockNumber(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+			Params []any           `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "eth_blockNumber":
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"result":"0x10"}`, req.ID)
+		default:
+			fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"nf"}}`, req.ID)
+		}
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeRpc(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"method":  "eth_blockNumber",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	raw, ok := data["result"].(json.RawMessage)
+	if !ok {
+		t.Fatalf("data[\"result\"] type = %T, want json.RawMessage", data["result"])
+	}
+	if string(raw) != `"0x10"` {
+		t.Errorf("data[\"result\"] = %s, want \"0x10\" (quoted)", raw)
+	}
+}
+
+// TestHandleNodeRpc_BadMethod verifies the rpcMethodRe boundary check —
+// method names containing whitespace or other illegal characters are
+// rejected with INVALID_ARGS before any RPC round-trip.
+func TestHandleNodeRpc_BadMethod(t *testing.T) {
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", "http://127.0.0.1:1")
+
+	h := newHandleNodeRpc(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"method":  "eth blockNumber",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeRpc_BadParams verifies that params shaped as a JSON object
+// (or any non-array, non-null value) is rejected at the boundary — node.rpc
+// only accepts JSON arrays or null because rpc.Client.CallContext takes a
+// variadic args slice.
+func TestHandleNodeRpc_BadParams(t *testing.T) {
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", "http://127.0.0.1:1")
+
+	h := newHandleNodeRpc(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"method":  "eth_blockNumber",
+		"params":  map[string]any{"x": 1},
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+// TestHandleNodeRpc_RpcFailure verifies that JSON-RPC error envelopes from
+// the upstream are surfaced as UPSTREAM_ERROR. The mock returns code -32601
+// (method not found) which rpc.Client.CallContext converts into a non-nil
+// error — the handler wraps it without trying to interpret the payload.
+func TestHandleNodeRpc_RpcFailure(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Method string          `json:"method"`
+			ID     json.RawMessage `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%s,"error":{"code":-32601,"message":"method not found"}}`, req.ID)
+	}))
+	defer srv.Close()
+
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "tn", srv.URL)
+
+	h := newHandleNodeRpc(stateDir)
+	args, _ := json.Marshal(map[string]any{
+		"network": "tn",
+		"node_id": "node1",
+		"method":  "eth_unknownMethod",
+	})
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Errorf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
+func TestAllHandlers_IncludesNodeRpc(t *testing.T) {
+	h := allHandlers("x", "y")
+	if _, ok := h["node.rpc"]; !ok {
+		t.Error("allHandlers missing node.rpc")
+	}
+}
+
 // mapKeys returns the sorted key slice of m for stable error messages. Test-
 // only helper; production code paths order keys via the JSON marshaller.
 func mapKeys(m map[string]any) []string {

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,6 +17,13 @@ import (
 	"github.com/0xmhha/chainbench/network/internal/abiutil"
 	"github.com/0xmhha/chainbench/network/internal/events"
 )
+
+// rpcMethodRe constrains node.rpc method names to a conservative
+// alphanumeric+underscore pattern that mirrors the TS-side RPC_METHOD regex.
+// JSON-RPC itself allows richer characters but every Ethereum-flavoured
+// method (eth_*, debug_*, txpool_*, ...) fits this shape, and rejecting
+// anything else at the boundary keeps the upstream surface predictable.
+var rpcMethodRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
 
 // newHandleNodeBlockNumber returns a handler that opens an ethclient
 // connection to the resolved node's HTTP endpoint and returns the current
@@ -840,5 +848,82 @@ func newHandleNodeAccountState(stateDir string) Handler {
 		}
 
 		return out, nil
+	}
+}
+
+// newHandleNodeRpc returns a handler for node.rpc — a generic JSON-RPC
+// passthrough. The handler validates the method name against rpcMethodRe,
+// decodes params as a JSON array (or null / missing for the no-arg case),
+// resolves the node, and forwards the call to the upstream via the underlying
+// rpc.Client. The raw RPC result is returned inside a {"result": <raw>}
+// envelope so the MCP layer can pretty-print or pass through unchanged
+// without ethclient interpreting the value.
+//
+// Args: {network?: "local"|"<remote-name>", node_id: "nodeN", method: "eth_*",
+//
+//	params?: [<arg>, ...] | null}
+//
+// Result: {result: <raw json.RawMessage>}
+//
+// The 30-second timeout matches the existing read handlers; node.rpc covers
+// both read and write methods (eth_sendRawTransaction is a valid passthrough
+// target) but the wider deadline gives slow upstreams headroom without
+// blocking indefinitely.
+//
+// Error mapping:
+//
+//	INVALID_ARGS   — missing node_id, bad network name, unknown node, empty
+//	                 method, method failing rpcMethodRe, params not a JSON
+//	                 array (objects / scalars rejected)
+//	UPSTREAM_ERROR — state load failure, dial failure, or any RPC-side
+//	                 error (transport, JSON-RPC error envelope, decode)
+func newHandleNodeRpc(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network string          `json:"network"`
+			NodeID  string          `json:"node_id"`
+			Method  string          `json:"method"`
+			Params  json.RawMessage `json:"params"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.Method == "" {
+			return nil, NewInvalidArgs("args.method is required")
+		}
+		if !rpcMethodRe.MatchString(req.Method) {
+			return nil, NewInvalidArgs(fmt.Sprintf("args.method invalid: %q", req.Method))
+		}
+
+		// Decode params: must be a JSON array OR null/missing. A nil
+		// paramsList serialises as the empty params slot rpc.Client expects
+		// for no-arg methods, so explicit null and missing both collapse to
+		// the same wire shape.
+		var paramsList []any
+		if len(req.Params) > 0 && string(req.Params) != "null" {
+			if err := json.Unmarshal(req.Params, &paramsList); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.params must be a JSON array or null: %v", err))
+			}
+		}
+
+		_, node, err := resolveNode(stateDir, req.Network, req.NodeID)
+		if err != nil {
+			return nil, err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		client, err := dialNode(ctx, &node)
+		if err != nil {
+			return nil, err
+		}
+		defer client.Close()
+
+		var raw json.RawMessage
+		if err := client.CallContext(ctx, &raw, req.Method, paramsList...); err != nil {
+			return nil, NewUpstream(req.Method, err)
+		}
+		return map[string]any{"result": raw}, nil
 	}
 }

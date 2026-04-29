@@ -244,6 +244,21 @@ func (c *Client) StorageAt(ctx context.Context, account common.Address, key comm
 	return val, nil
 }
 
+// CallContext performs a generic JSON-RPC call against the underlying
+// rpc.Client. Used by the node.rpc passthrough handler where the method name
+// and params are caller-supplied and we want the raw upstream response back
+// without ethclient marshalling. result must be a pointer (json.RawMessage is
+// the typical choice when the handler intends to forward the bytes through).
+//
+// Args is variadic to match rpc.Client.CallContext; pass an empty slice when
+// the upstream method takes no parameters.
+func (c *Client) CallContext(ctx context.Context, result any, method string, args ...any) error {
+	if err := c.rpc.Client().CallContext(ctx, result, method, args...); err != nil {
+		return fmt.Errorf("remote.CallContext %s: %w", method, err)
+	}
+	return nil
+}
+
 // Close releases the underlying HTTP/RPC connection. Nil-safe on the
 // remote.Client receiver; ethclient's own Close is not nil-safe so the
 // receiver check is load-bearing. BlockNumber and future methods assume
