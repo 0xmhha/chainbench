@@ -56,8 +56,8 @@ export interface RealBinaryHarnessOptions {
   >;
   /** Override pids.json content for the seeded local network. */
   pidsOverride?: object;
-  /** Override current-profile.yaml content (raw YAML string in `.toString()` form). */
-  profileOverride?: object;
+  /** Override current-profile.yaml content as raw YAML text. Default seeds a 1-node local network. */
+  profileOverride?: string;
   /**
    * Optional fake chainbench.sh script body. When provided the harness
    * writes it to <stateDir>/chainbench.sh + chmod 0755 and exports
@@ -203,6 +203,37 @@ const DEFAULT_HANDLERS: Record<
   eth_blockNumber: () => "0xdeadbeef",
 };
 
+// SIGTERM → race(exited, 1s) → SIGKILL fallback shared by the setup-failure
+// catch path and the main teardown(). Safe to call when mockProc is null/
+// undefined or already dead; all kill() calls swallow EPERM/ESRCH (Sprint
+// 5c.4.1 Task 0 review I2 fix — previously the catch path only fired
+// SIGTERM and fell through, leaking a stuck mock past partial-setup
+// failures).
+async function killMockGracefully(
+  mockProc: ChildProcess | null | undefined,
+): Promise<void> {
+  if (!mockProc || mockProc.pid === undefined) return;
+  const exited = new Promise<void>((r) => {
+    mockProc.once("exit", () => r());
+  });
+  try {
+    mockProc.kill("SIGTERM");
+  } catch {
+    // best-effort: process may already be dead
+  }
+  await Promise.race([
+    exited,
+    new Promise<void>((r) => setTimeout(r, 1000)),
+  ]);
+  if (mockProc.exitCode === null && mockProc.signalCode === null) {
+    try {
+      mockProc.kill("SIGKILL");
+    } catch {
+      // best-effort
+    }
+  }
+}
+
 export async function setupRealBinaryHarness(
   opts: RealBinaryHarnessOptions = {},
 ): Promise<RealBinaryHarness> {
@@ -274,9 +305,7 @@ export async function setupRealBinaryHarness(
 
     const profileText =
       opts.profileOverride !== undefined
-        ? typeof opts.profileOverride === "string"
-          ? opts.profileOverride
-          : JSON.stringify(opts.profileOverride, null, 2)
+        ? opts.profileOverride
         : `name: integration-test
 chain:
   type: ethereum
@@ -303,12 +332,12 @@ ports:
     process.env.CHAINBENCH_STATE_DIR = stateDir;
   } catch (err) {
     // Partial setup: kill the mock + clean state dir so the failure
-    // message reaches vitest with no resource leak.
-    try {
-      mockProc.kill("SIGTERM");
-    } catch {
-      // best-effort
-    }
+    // message reaches vitest with no resource leak. Uses the same
+    // SIGTERM → race → SIGKILL helper as teardown() to avoid leaking a
+    // stuck mock when setup fails after spawn (e.g. waitForPort timeout
+    // because the mock bound the wrong interface or the Python import
+    // hung).
+    await killMockGracefully(mockProc);
     rmSync(stateDir, { recursive: true, force: true });
     for (const [k, v] of Object.entries(envBackup)) {
       if (v === undefined) delete process.env[k];
@@ -318,27 +347,7 @@ ports:
   }
 
   const teardown = async (): Promise<void> => {
-    if (mockProc.pid !== undefined) {
-      const exited = new Promise<void>((r) => {
-        mockProc.once("exit", () => r());
-      });
-      try {
-        mockProc.kill("SIGTERM");
-      } catch {
-        // best-effort: process may already be dead
-      }
-      await Promise.race([
-        exited,
-        new Promise<void>((r) => setTimeout(r, 1000)),
-      ]);
-      if (mockProc.exitCode === null && mockProc.signalCode === null) {
-        try {
-          mockProc.kill("SIGKILL");
-        } catch {
-          // best-effort
-        }
-      }
-    }
+    await killMockGracefully(mockProc);
     rmSync(stateDir, { recursive: true, force: true });
     for (const [k, v] of Object.entries(envBackup)) {
       if (v === undefined) delete process.env[k];
