@@ -1,6 +1,28 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench, shellEscapeArg } from "../utils/exec.js";
+import { callWire } from "../utils/wire.js";
+import { formatWireResult } from "../utils/wireResult.js";
+import { type FormattedToolResponse } from "../utils/mcpResp.js";
+
+// Sprint 5c.4.1 Task 2 — chainbench_stop now invokes the network.stop_all
+// wire handler instead of shelling out via runChainbench. Exported as named
+// schema + handler so lifecycle.test.ts can drive zod parse + handler logic
+// directly without spinning up an MCP server stub (matches Sprint 5c.3
+// NodeRpcArgs precedent in node.ts).
+export const StopArgs = z.object({
+  network: z.string().min(1).optional()
+    .describe("Network alias. Defaults to 'local'. Remote networks reject."),
+}).strict();
+
+export async function _stopHandler(
+  args: z.infer<typeof StopArgs>,
+): Promise<FormattedToolResponse> {
+  const wireArgs: Record<string, unknown> = {};
+  if (args.network !== undefined) wireArgs.network = args.network;
+  const result = await callWire("network.stop_all", wireArgs);
+  return formatWireResult(result);
+}
 
 const PROJECT_ROOT_SCHEMA = z
   .string()
@@ -108,12 +130,11 @@ export function registerLifecycleTools(server: McpServer): void {
 
   server.tool(
     "chainbench_stop",
-    "Stop all running chain nodes gracefully.",
-    {},
-    async () => {
-      const result = runChainbench("stop --quiet");
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    "Stop all running chain nodes gracefully. Local network only — remote " +
+    "networks reject (no process control). Returns the bash CLI's stdout " +
+    "showing per-PID SIGTERM and graceful-shutdown wait status.",
+    StopArgs.shape,
+    _stopHandler,
   );
 
   server.tool(
