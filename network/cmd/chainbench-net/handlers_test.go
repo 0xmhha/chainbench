@@ -1104,6 +1104,106 @@ func TestAllHandlers_IncludesNetworkCapabilities(t *testing.T) {
 	}
 }
 
+// ---- network.stop_all tests ----
+
+// writeFakeChainbench writes an executable fake chainbench.sh into dir that
+// echoes "fake chainbench: $@" and exits with the given code. Used by the
+// network.stop_all unit tests so they don't depend on the real bash CLI tree.
+func writeFakeChainbench(t *testing.T, dir string, exitCode int) {
+	t.Helper()
+	script := fmt.Sprintf("#!/bin/bash\necho \"fake chainbench: $@\"\nexit %d\n", exitCode)
+	p := filepath.Join(dir, "chainbench.sh")
+	if err := os.WriteFile(p, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake script: %v", err)
+	}
+}
+
+// TestHandleNetworkStopAll_Happy verifies the thin-wrapper happy path: a fake
+// chainbench.sh that exits 0 should let the handler return ok with the
+// captured stdout. The output assertion pins the script's "fake chainbench:"
+// prefix so any future change to argv forwarding (e.g., losing --quiet) shows
+// up here as a deliberate update.
+func TestHandleNetworkStopAll_Happy(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbench(t, chainbenchDir, 0)
+	stateDir := t.TempDir()
+	handler := newHandleNetworkStopAll(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := handler(nil, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["network"] != "local" {
+		t.Errorf("network = %v, want local", data["network"])
+	}
+	stdout, ok := data["stdout"].(string)
+	if !ok {
+		t.Fatalf("stdout type = %T, want string", data["stdout"])
+	}
+	if !strings.Contains(stdout, "fake chainbench: stop --quiet") {
+		t.Errorf("stdout = %q, want substring 'fake chainbench: stop --quiet'", stdout)
+	}
+}
+
+// TestHandleNetworkStopAll_RemoteRejected verifies that a non-local network
+// is rejected with NOT_SUPPORTED (distinct from INVALID_ARGS — the input is
+// structurally fine, the capability simply doesn't apply to remote networks
+// because they have no node lifecycle).
+func TestHandleNetworkStopAll_RemoteRejected(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbench(t, chainbenchDir, 0)
+	handler := newHandleNetworkStopAll(t.TempDir(), chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"network": "sepolia"})
+	_, err := handler(args, bus)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+		t.Fatalf("want NOT_SUPPORTED, got %v", err)
+	}
+	if !strings.Contains(api.Message, "only operates on the local network") {
+		t.Errorf("message = %q, want substring 'only operates on the local network'", api.Message)
+	}
+}
+
+// TestHandleNetworkStopAll_BashFailure verifies that a chainbench.sh non-zero
+// exit surfaces as UPSTREAM_ERROR with the script's combined output preserved
+// in the wrapped cause — the LLM caller needs the bash diagnostic to act.
+func TestHandleNetworkStopAll_BashFailure(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbench(t, chainbenchDir, 1)
+	handler := newHandleNetworkStopAll(t.TempDir(), chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := handler(nil, bus)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Fatalf("want UPSTREAM_ERROR, got %v", err)
+	}
+	// The wrapped cause should include the fake script's output so callers
+	// can diagnose the failure without a second round-trip.
+	if api.Cause == nil || !strings.Contains(api.Cause.Error(), "fake chainbench: stop --quiet") {
+		t.Errorf("cause = %v, want substring 'fake chainbench: stop --quiet'", api.Cause)
+	}
+}
+
+func TestAllHandlers_IncludesNetworkStopAll(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["network.stop_all"]; !ok {
+		t.Error("allHandlers missing network.stop_all")
+	}
+}
+
 // ---- node.block_number tests ----
 
 func TestHandleNodeBlockNumber_RemoteHappy(t *testing.T) {

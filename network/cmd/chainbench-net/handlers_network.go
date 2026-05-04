@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"sort"
@@ -360,5 +361,76 @@ func newHandleNetworkAttach(stateDir string) Handler {
 		data["rpc_url"] = req.RPCURL
 		data["created"] = created
 		return data, nil
+	}
+}
+
+// stopAllTimeout caps the chainbench.sh stop wall-clock at 30s. Read handlers
+// (e.g. network.probe) use 10s, but `chainbench stop` does a graceful SIGTERM
+// + wait per node before SIGKILL, which can legitimately take longer than a
+// single RPC round-trip. 30s leaves headroom without making a hung shutdown
+// invisible.
+const stopAllTimeout = 30 * time.Second
+
+// newHandleNetworkStopAll returns the "network.stop_all" handler. It is the
+// first lifecycle reroute (Sprint 5c.4.1) and follows the VISION §5.12 M2 thin
+// wrapper pattern: spawn the existing bash `chainbench.sh stop --quiet` via
+// os/exec rather than reimplementing the per-PID SIGTERM/wait/SIGKILL logic
+// natively in Go.
+//
+// Args: { "network"?: "name" }  (omitted/empty defaults to "local")
+//
+// Result: { "network": "local", "stdout": "<bash output>" }
+//
+// Error mapping:
+//
+//	INVALID_ARGS    — malformed args JSON.
+//	NOT_SUPPORTED   — non-local network (remote networks have no node lifecycle
+//	                  to stop; the caller's name is structurally fine, the
+//	                  capability simply doesn't apply).
+//	UPSTREAM_ERROR  — chainbench.sh non-zero exit or spawn failure. The wrapped
+//	                  error includes the script's combined output for diagnosis.
+func newHandleNetworkStopAll(stateDir, chainbenchDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network string `json:"network"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.Network == "" {
+			req.Network = "local"
+		}
+		if req.Network != "local" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"network.stop_all only operates on the local network; got %q", req.Network,
+			))
+		}
+
+		// stateDir is bound by closure for symmetry with the rest of the
+		// dispatch table; the bash CLI reads pids.json from CHAINBENCH_DIR's
+		// state subdir directly, so we do not pass stateDir into the spawn.
+		_ = stateDir
+
+		ctx, cancel := context.WithTimeout(context.Background(), stopAllTimeout)
+		defer cancel()
+		cmd := exec.CommandContext(ctx,
+			filepath.Join(chainbenchDir, "chainbench.sh"),
+			"stop", "--quiet",
+		)
+		// Inherit the parent env so caller-supplied CHAINBENCH_STATE_DIR and
+		// related test/profile overrides flow through. Append CHAINBENCH_DIR
+		// last so the spawned bash always knows where its repo root lives even
+		// if the parent did not export it.
+		cmd.Env = append(os.Environ(), "CHAINBENCH_DIR="+chainbenchDir)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, NewUpstream("chainbench stop", fmt.Errorf("%w: %s", err, string(out)))
+		}
+		return map[string]any{
+			"network": "local",
+			"stdout":  string(out),
+		}, nil
 	}
 }
