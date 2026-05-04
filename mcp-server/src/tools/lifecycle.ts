@@ -24,6 +24,24 @@ export async function _stopHandler(
   return formatWireResult(result);
 }
 
+// Sprint 5c.4.1 Task 4 — chainbench_status now invokes the network.status
+// wire handler. Mirrors the StopArgs / _stopHandler shape (Task 2 precedent),
+// just routes to a different wire command. Local network only — remote
+// networks have no node lifecycle to inspect via the bash status path.
+export const StatusArgs = z.object({
+  network: z.string().min(1).optional()
+    .describe("Network alias. Defaults to 'local'."),
+}).strict();
+
+export async function _statusHandler(
+  args: z.infer<typeof StatusArgs>,
+): Promise<FormattedToolResponse> {
+  const wireArgs: Record<string, unknown> = {};
+  if (args.network !== undefined) wireArgs.network = args.network;
+  const result = await callWire("network.status", wireArgs);
+  return formatWireResult(result);
+}
+
 const PROJECT_ROOT_SCHEMA = z
   .string()
   .optional()
@@ -160,11 +178,10 @@ export function registerLifecycleTools(server: McpServer): void {
 
   server.tool(
     "chainbench_status",
-    "Return current node status as JSON. Includes per-node block height, peer count, running state, and overall consensus health.",
-    {},
-    async () => {
-      const result = runChainbench("status --json");
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    "Return current node status as JSON. Includes per-node block height, " +
+    "peer count, running state, and overall consensus health. Local network " +
+    "only — remote networks reject (use chainbench_node_rpc for remote).",
+    StatusArgs.shape,
+    _statusHandler,
   );
 }

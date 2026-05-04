@@ -2,7 +2,12 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach } from "vitest";
 import { chmodSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { StopArgs, _stopHandler } from "../src/tools/lifecycle.js";
+import {
+  StopArgs,
+  _stopHandler,
+  StatusArgs,
+  _statusHandler,
+} from "../src/tools/lifecycle.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MOCK_BIN = resolve(__dirname, "fixtures/mock-chainbench-net.mjs");
@@ -89,5 +94,77 @@ describe("chainbench_stop handler", () => {
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
     expect(out.content[0]?.text).toContain("chainbench stop exited 1");
+  });
+});
+
+// chainbench_status mirrors the stop handler's wire-routing pattern. The
+// wire envelope's `data` is the parsed JSON from `chainbench status --json`
+// (see network.status Go handler in Sprint 5c.4.1 Task 3); formatWireResult
+// pretty-prints the map, so assertions look for known keys in the rendered
+// text. Same env snapshot/restore convention as the stop block above.
+describe("chainbench_status handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_StatusHappy", async () => {
+    const data = {
+      nodes: [{ id: "node1", running: true, block_height: 42 }],
+      healthy: true,
+    };
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data }),
+      },
+    ]);
+    const out = await _statusHandler({});
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain("healthy");
+    expect(out.content[0]?.text).toContain("block_height");
+  });
+
+  it("_StatusStrictRejectsUnknownKeys", () => {
+    // .strict() makes hallucinated keys (e.g. 'verbose', 'json') trip a
+    // structured zod error instead of being silently stripped — same
+    // rationale as StopArgs above.
+    expect(() =>
+      StatusArgs.parse({ network: "local", extra: "bar" }),
+    ).toThrow();
+  });
+
+  it("_StatusWireFailure_PassedThrough", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({
+          type: "result",
+          ok: false,
+          error: { code: "UPSTREAM_ERROR", message: "chainbench status exited 1" },
+        }),
+      },
+    ]);
+    const out = await _statusHandler({ network: "local" });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
+    expect(out.content[0]?.text).toContain("chainbench status exited 1");
   });
 });
