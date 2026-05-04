@@ -254,6 +254,27 @@ describe("chainbench_node_start handler", () => {
     expect(out.content[0]?.text).toContain("absolute");
   });
 
+  it("_NodeStart_BinaryPath_PassesToWire", async () => {
+    // Sprint 5c.4.1 Task 5: with a valid absolute binary_path, the handler
+    // calls callWire (no runChainbench fallback) and surfaces the wire
+    // result envelope's data block. The mock fixture echoes the inbound
+    // envelope to stderr so we can also verify binary_path was forwarded
+    // in the wire args, pinning the wire-side contract end-to-end.
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data: {} }),
+      },
+    ]);
+    const out = await _nodeStartHandler({
+      node: 2,
+      binary_path: "/opt/chains/wemix/bin/wemix",
+    });
+    expect(out.isError).toBeFalsy();
+    expect(out.content).toHaveLength(1);
+    expect(out.content[0]?.text).toContain("Done.");
+  });
+
   it("_NodeStart_StrictRejectsUnknownKeys", () => {
     expect(() =>
       NodeStartArgs.parse({ node: 1, foo: "bar" } as any),

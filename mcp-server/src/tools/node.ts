@@ -1,25 +1,21 @@
 // node.ts — node-scoped lifecycle and raw RPC tools.
 //
-// Sprint 5c.3 reroutes the three chainbench_node_* tools from runChainbench
+// Sprint 5c.3 rerouted the three chainbench_node_* tools from runChainbench
 // (bash CLI shell-out) to callWire (chainbench-net wire). Task 2 covered
-// chainbench_node_rpc; Task 3 (this commit) covers chainbench_node_stop and
-// chainbench_node_start.
+// chainbench_node_rpc; Task 3 covered chainbench_node_stop and
+// chainbench_node_start. Sprint 5c.4.1 Task 5 closes the last asymmetry:
+// chainbench_node_start's optional binary_path is now forwarded over the
+// wire envelope (the Go node.start handler appends `--binary-path <path>`
+// to chainbench.sh argv), so the runChainbench fallback branch is gone and
+// every node lifecycle call goes through callWire.
 //
 // The 1-based node index argument is preserved at the MCP surface; the wire
 // layer's node_id ('node1', 'node2', ...) is constructed by string
 // concatenation. Keeping the LLM-facing shape unchanged means callers see no
 // surface change across the reroute.
-//
-// Known asymmetry: chainbench_node_start exposes an optional binary_path arg
-// that the wire layer's node.start handler does not yet accept. When the
-// caller supplies binary_path, this handler falls back to runChainbench
-// (bash CLI) so the override still works. Sprint 5c.4 will extend the Go
-// node.start handler to take binary_path and remove the fallback. Tracked
-// in NEXT_WORK §3 P3.
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runChainbench, shellEscapeArg } from "../utils/exec.js";
 import { callWire } from "../utils/wire.js";
 import { formatWireResult } from "../utils/wireResult.js";
 import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
@@ -59,9 +55,11 @@ export const NodeStartArgs = z.object({
     .string()
     .optional()
     .describe(
-      "Absolute path to the chain binary. Overrides the profile's chain.binary_path. " +
-      "When provided, the call falls back to the bash CLI path because the wire " +
-      "layer's node.start handler does not yet accept this argument.",
+      "Absolute path to the chain binary. When provided, overrides the " +
+      "profile's chain.binary_path for this single start. Forwarded to the " +
+      "wire layer's node.start handler, which appends `--binary-path <path>` " +
+      "to chainbench.sh argv. Must be an absolute path (start with `/`); " +
+      "empty / relative paths are rejected at the MCP boundary.",
     ),
 }).strict();
 
@@ -71,6 +69,9 @@ export async function _nodeStartHandler(
   args: NodeStartArgsT,
 ): Promise<FormattedToolResponse> {
   const { node, binary_path } = args;
+  // Boundary validation. The Go handler also enforces these checks
+  // (defense-in-depth) but rejecting here avoids a wasted wire spawn and
+  // surfaces a clearer MCP-side error to the caller.
   if (binary_path !== undefined) {
     if (binary_path.length === 0) {
       return errorResp("binary_path must not be empty");
@@ -78,25 +79,15 @@ export async function _nodeStartHandler(
     if (!binary_path.startsWith("/")) {
       return errorResp("binary_path must be an absolute path");
     }
-    // Wire layer doesn't yet accept binary_path; fall back to bash CLI.
-    // TODO Sprint 5c.4: extend node.start wire handler to accept binary_path
-    // and drop this branch.
-    const bash = runChainbench(
-      `node start ${node} --binary-path ${shellEscapeArg(binary_path)}`,
-    );
-    const text =
-      bash.exitCode === 0
-        ? bash.stdout || "Done."
-        : `Error (exit ${bash.exitCode}): ${bash.stderr || bash.stdout || "unknown error"}`;
-    return {
-      content: [{ type: "text" as const, text }],
-      isError: bash.exitCode !== 0,
-    };
   }
-  const result = await callWire("node.start", {
+  const wireArgs: Record<string, unknown> = {
     network: "local",
     node_id: `node${node}`,
-  });
+  };
+  if (binary_path !== undefined) {
+    wireArgs.binary_path = binary_path;
+  }
+  const result = await callWire("node.start", wireArgs);
   return formatWireResult(result);
 }
 

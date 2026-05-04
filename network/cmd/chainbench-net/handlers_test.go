@@ -372,6 +372,111 @@ func TestAllHandlers_IncludesNodeStart(t *testing.T) {
 	}
 }
 
+// TestHandleNodeStart_BinaryPath verifies the Sprint 5c.4.1 Task 5 extension:
+// when the caller supplies an absolute binary_path, the handler appends
+// `--binary-path <path>` to the chainbench.sh argv. This closes the Sprint
+// 5c.3 asymmetry where the MCP layer had to fall back to runChainbench
+// because the wire layer ignored binary_path.
+//
+// The fake chainbench.sh writes its argv (one per line) to a file in the
+// state dir so the test can pin both the flag name and the argv ordering.
+// A side-channel file is preferable to parsing process stdout because the
+// handler does not return stdout in its result map.
+func TestHandleNodeStart_BinaryPath(t *testing.T) {
+	stateDir, _ := setupCmdStubDir(t)
+	chainbenchDir := t.TempDir()
+	argvLog := filepath.Join(stateDir, "argv.log")
+	// Capture argv via a side-channel file. Quoting `printf "%s\n" "$@"`
+	// preserves spaces in individual args, and the script exits 0 so the
+	// happy-path branch in newHandleNodeStart fires.
+	script := fmt.Sprintf(
+		"#!/usr/bin/env bash\nprintf '%%s\\n' \"$@\" > %q\nexit 0\n",
+		argvLog,
+	)
+	if err := os.WriteFile(filepath.Join(chainbenchDir, "chainbench.sh"), []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{
+		"node_id":     "node1",
+		"binary_path": "/opt/chains/wemix/bin/wemix",
+	})
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["node_id"] != "node1" || data["started"] != true {
+		t.Errorf("data: got %+v", data)
+	}
+
+	captured, err := os.ReadFile(argvLog)
+	if err != nil {
+		t.Fatalf("read argv log: %v", err)
+	}
+	got := strings.Split(strings.TrimSuffix(string(captured), "\n"), "\n")
+	want := []string{"node", "start", "1", "--binary-path", "/opt/chains/wemix/bin/wemix"}
+	if len(got) != len(want) {
+		t.Fatalf("argv: got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("argv[%d]: got %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+// TestHandleNodeStart_BinaryPath_Relative pins the boundary check: a
+// relative path is rejected with INVALID_ARGS before any subprocess spawn,
+// so the bash script never sees a malformed override.
+func TestHandleNodeStart_BinaryPath_Relative(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{
+		"node_id":     "node1",
+		"binary_path": "relative/path/to/binary",
+	})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Fatalf("want INVALID_ARGS, got %v", err)
+	}
+	if !strings.Contains(api.Message, "absolute path") {
+		t.Errorf("message = %q, want substring 'absolute path'", api.Message)
+	}
+}
+
+// TestHandleNodeStart_BinaryPath_EmptyRejected pins that an explicit empty
+// binary_path key is rejected as INVALID_ARGS — the caller either omits the
+// key (use profile default) or supplies a non-empty absolute path. An empty
+// string is treated as a likely caller bug rather than silently using the
+// profile fallback.
+func TestHandleNodeStart_BinaryPath_EmptyRejected(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{
+		"node_id":     "node1",
+		"binary_path": "",
+	})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Fatalf("want INVALID_ARGS, got %v", err)
+	}
+	if !strings.Contains(api.Message, "must not be empty") {
+		t.Errorf("message = %q, want substring 'must not be empty'", api.Message)
+	}
+}
+
 // ---- node.restart tests ----
 
 func TestHandleNodeRestart_HappyPath_EmitsBothEvents(t *testing.T) {

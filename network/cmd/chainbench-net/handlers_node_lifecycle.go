@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -62,12 +63,22 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 }
 
 // newHandleNodeStart returns a Handler that starts a previously-stopped node
-// via LocalDriver. Args: { "node_id": "nodeN" }.
+// via LocalDriver. Args: { "node_id": "nodeN", "binary_path": "/abs/path"
+// (optional) }.
+//
+// When binary_path is supplied, it is forwarded to chainbench.sh as
+// `--binary-path <path>` so the LLM caller can override the profile's
+// chain.binary_path for this single start without rewriting the profile.
+// The path must be absolute (start with `/`) — relative paths and the empty
+// string are rejected as INVALID_ARGS at the handler boundary so the
+// downstream bash script never sees a malformed override.
+//
 // On success: emits "node.started" event, returns {node_id, started:true}.
 func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
 		var pre struct {
-			Network string `json:"network"`
+			Network    string `json:"network"`
+			BinaryPath string `json:"binary_path"`
 		}
 		if len(args) > 0 {
 			_ = json.Unmarshal(args, &pre)
@@ -77,13 +88,25 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 				"node.start is only supported on the local network (got %q)", pre.Network,
 			))
 		}
+		// binary_path is optional; if the JSON key was present we require an
+		// absolute path. Distinguishing "absent" from "empty string" cheaply:
+		// re-scan the raw args for the literal key. (Cheaper than a second
+		// struct unmarshal with *string + nil-vs-empty discrimination.)
+		if pre.BinaryPath != "" && !strings.HasPrefix(pre.BinaryPath, "/") {
+			return nil, NewInvalidArgs(fmt.Sprintf(
+				"args.binary_path must be an absolute path, got %q", pre.BinaryPath,
+			))
+		}
+		if len(args) > 0 && bytes.Contains(args, []byte(`"binary_path"`)) && pre.BinaryPath == "" {
+			return nil, NewInvalidArgs("args.binary_path must not be empty")
+		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
 			return nil, err
 		}
 
 		driver := local.NewDriver(chainbenchDir)
-		result, err := driver.StartNode(context.Background(), nodeNum)
+		result, err := driver.StartNode(context.Background(), nodeNum, pre.BinaryPath)
 		if err != nil {
 			return nil, NewUpstream("subprocess exec failed", err)
 		}
@@ -156,7 +179,10 @@ func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 		})
 
 		// --- start phase ---
-		startRes, err := driver.StartNode(context.Background(), nodeNum)
+		// Restart does not currently propagate binary_path; the override is a
+		// node.start-only arg in this sprint. Pass empty string to use the
+		// profile's chain.binary_path.
+		startRes, err := driver.StartNode(context.Background(), nodeNum, "")
 		if err != nil {
 			return nil, NewUpstream("restart incomplete: stop ok, start exec failed", err)
 		}
