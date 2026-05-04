@@ -14,7 +14,7 @@ import { registerChainTools } from "./tools/chain.js";
 
 const server = new McpServer({
   name: "chainbench-mcp-server",
-  version: "0.7.0",
+  version: "0.7.1",
 });
 
 // Register all tool groups

@@ -1,7 +1,7 @@
 # chainbench Vision & Roadmap
 
 > **작성일**: 2026-04-20
-> **최종 업데이트**: 2026-04-29 (Sprint 5a 완료)
+> **최종 업데이트**: 2026-05-04 (Sprint 5c.4.1 완료)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.
 > **참고**: 다음 세션 핸드오프는 `docs/NEXT_WORK.md`. 보안 정책은 `docs/SECURITY_KEY_HANDLING.md`.
 
@@ -739,7 +739,7 @@ MCP 서버도 네트워크 바이너리를 spawn하여 사용:
 - 기존 41 tool 중 RPC/lifecycle/node 관련은 점진적으로 네트워크 바이너리 경유로 전환
 - bash CLI와 동일 프로토콜 → 중복 로직 제거
 
-Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. Sprint 5c.2 (2026-04-29) 에서 남은 4 high-level tool (`chainbench_contract_deploy/_call/_events_get/_tx_wait`) + `chainbench_tx_send` mode `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16) 추가. Sprint 5c.3 (2026-04-29) 에서 utils 추출 (`mcpResp.ts` + `hex.ts`) + `node.rpc` Go 핸들러 + 3 `chainbench_node_*` reroute + real-binary integration test 도입. Sprint 5a (2026-04-29) 에서 `chainbench_network_capabilities` 추가 — capability gate 의 MCP 노출. 나머지 ~35 tool 은 5c.4+ 에서 도메인별 묶음으로 reroute.
+Sprint 5c.1 (2026-04-28) 에서 wire helper (`mcp-server/src/utils/wire.ts`) + 결과 transformer (`utils/wireResult.ts`) + 첫 두 high-level tool (`chainbench_account_state`, `chainbench_tx_send` mode legacy/1559) 추가. Sprint 5c.2 (2026-04-29) 에서 남은 4 high-level tool (`chainbench_contract_deploy/_call/_events_get/_tx_wait`) + `chainbench_tx_send` mode `set_code` (EIP-7702) / `fee_delegation` (go-stablenet 0x16) 추가. Sprint 5c.3 (2026-04-29) 에서 utils 추출 (`mcpResp.ts` + `hex.ts`) + `node.rpc` Go 핸들러 + 3 `chainbench_node_*` reroute + real-binary integration test 도입. Sprint 5a (2026-04-29) 에서 `chainbench_network_capabilities` 추가 — capability gate 의 MCP 노출. Sprint 5c.4.1 (2026-05-04) 에서 lifecycle 6 tool 중 단순 2 tool (`chainbench_stop`, `chainbench_status`) reroute — thin Go wrapper (`os/exec` 로 bash spawn) 패턴 (VISION §5.12 M2) 검증 + integration harness `_harness.ts` 추출 + `chainbench_node_start binary_path` Go 확장으로 5c.3 fallback 제거. Reroute 진행도 3/38 → 5/38 (~13%). 나머지 ~33 tool 은 5c.4.2+ 에서 도메인별 묶음으로 reroute.
 
 ---
 
@@ -846,12 +846,23 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 
 다음 P1 = Sprint 5c.4 (lifecycle reroute).
 
-**Sprint 5c.4 — MCP reroute pass 2: lifecycle (chainbench_init/start/stop/restart/status/clean)**
-- [ ] Go-side wire handlers 추가 — 현재 chainbench-net 에 없는 lifecycle 명령들 (`network.init`, `network.start_all`, `network.stop_all`, `network.restart`, `network.status`, `network.clean`)
-- [ ] 6 lifecycle MCP tool reroute — `chainbench_init/start/stop/restart/status/clean` → callWire
-- [ ] `chainbench_node_start binary_path` fallback 제거 — Go `node.start` 가 binary_path arg 수용하도록 확장
-- [ ] Integration test harness 추출 (`_harness.ts`) — 5c.3 의 단일 파일 setup 을 재사용 가능한 형태로
+**Sprint 5c.4.1 — Lifecycle reroute pass 1 (stop + status + harness)** — 완료 (2026-05-04)
+- [x] Integration test harness 추출 (`mcp-server/test/integration/_harness.ts`) — 5c.3 의 단일 파일 setup 을 재사용 형태로 + cleanup-await (SIGTERM → 1s → SIGKILL) + 포트 충돌 진단 stderr buffer 캡처
+- [x] Go-side `network.stop_all` 핸들러 — thin `os/exec` wrapper of `chainbench.sh stop --quiet` (VISION §5.12 M2)
+- [x] MCP `chainbench_stop` reroute → `callWire("network.stop_all", ...)`
+- [x] Go-side `network.status` 핸들러 — thin wrapper of `chainbench.sh status --json` + JSON 파싱
+- [x] MCP `chainbench_status` reroute + 첫 lifecycle integration test (`lifecycle.integration.test.ts`)
+- [x] `chainbench_node_start binary_path` fallback 제거 — Go `node.start` 가 `binary_path` arg 수용 (5c.3 P3 닫힘)
+- [x] mcp-server 0.7.0 → 0.7.1 (patch — 2/5 lifecycle만 reroute) · vitest 100 · Go +10
+
+다음 P1 = Sprint 5c.4.2 (lifecycle init/start/restart/clean 잔여 reroute).
+
+**Sprint 5c.4.2 — Lifecycle reroute pass 2 (init/start/restart/clean)**
+- [ ] Go-side wire handlers 추가 — `network.init`, `network.start_all`, `network.restart`, `network.clean` (status/stop_all 은 5c.4.1 완료)
+- [ ] 4 lifecycle MCP tool reroute — `chainbench_init/start/restart/clean` → callWire
+- [ ] `node.restart` 가 `binary_path` arg 수용 (5c.4.1 의 symmetric override 미작업분 정리)
 - [ ] `validateRpcMethod` duplicate in remote.ts 정리 (node.ts 가 `RPC_METHOD` 로 통합된 후에도 remote.ts 는 별도 helper 유지 중)
+- [ ] `INTEGRATION_BEFOREALL_TIMEOUT_MS` (15s) 가 두 integration test 에 중복 — 3rd integration test 추가 시 `_harness.ts` 로 추출
 
 **Sprint 5b — SSH driver**
 - [ ] `drivers/sshremote` 설계 초안 (Q6, S6 세션 prompt)

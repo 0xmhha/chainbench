@@ -1,6 +1,6 @@
 # Chainbench — 남은 작업 리스트
 
-> 작성일: 2026-04-30 (Sprint 5a 완료 시점)
+> 작성일: 2026-04-30 (Sprint 5a 완료 시점) · 최종 업데이트: 2026-05-04 (Sprint 5c.4.1 완료)
 > 목적: 다른 세션에서 맥락 없이도 즉시 착수 가능한 actionable 핸드오프.
 > 본 문서는 self-contained — `NEXT_WORK.md` (full context) / `VISION_AND_ROADMAP.md` (비전 SSoT) 는 깊게 들어갈 때만.
 
@@ -19,7 +19,7 @@
 4. **모든 tx 타입 전송** — legacy / EIP-1559 / EIP-7702 SetCode (0x4) / go-stablenet fee delegation (0x16)
 5. **Log 수집** — chain log + application log 분리
 
-**현재 진행 단계 (2026-04-30)**: Sprint 4 시리즈 (Go 능력 완비) 종료 → Sprint 5 시리즈 (MCP 노출 + 주변 인프라) 진행 중. Sprint 5c.1/5c.2 (high-level tool 노출) → 5c.3 (reroute pass 1) → 5a (capability gate) 까지 완료.
+**현재 진행 단계 (2026-05-04)**: Sprint 4 시리즈 (Go 능력 완비) 종료 → Sprint 5 시리즈 (MCP 노출 + 주변 인프라) 진행 중. Sprint 5c.1/5c.2 (high-level tool 노출) → 5c.3 (reroute pass 1) → 5a (capability gate) → 5c.4.1 (lifecycle reroute pass 1: stop + status) 까지 완료.
 
 ---
 
@@ -60,20 +60,21 @@
 
 ---
 
-## 2. 빠른 상태 (2026-04-30 기준)
+## 2. 빠른 상태 (2026-05-04 기준)
 
 **완료된 Sprint** (5 series):
 - ✅ 5c.1 (2026-04-28) — MCP foundation + 첫 2 tool (`account_state`, `tx_send`)
 - ✅ 5c.2 (2026-04-29) — MCP 남은 4 tool (`contract_deploy/call`, `events_get`, `tx_wait`) + tx_send 4-mode 완비 (legacy/1559/set_code/fee_delegation)
 - ✅ 5c.3 (2026-04-29) — utils 추출 (mcpResp + hex) + Go `node.rpc` 핸들러 + 3 chainbench_node_* reroute (3/38 ≈ 8%) + real-binary integration test layer
 - ✅ 5a (2026-04-29) — Capability gate (Go `network.capabilities` + MCP `chainbench_network_capabilities` + bash `requires_capabilities` frontmatter gating)
+- ✅ 5c.4.1 (2026-05-04) — Lifecycle reroute pass 1 (stop + status thin Go wrappers) + integration harness `_harness.ts` 추출 + `node.start binary_path` Go 확장 (5c.3 fallback 제거)
 
 **커버리지 지표**:
 - EVALUATION_CAPABILITY MCP column: **~60%** (high-level tool 6종 + capability)
-- Reroute 진행도: **3/38 (~8%)**
-- 테스트: vitest **94/94** · Go **16 packages** · bash **34/34** · 회귀 0
+- Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
+- 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: Sprint 5c.4 (lifecycle reroute) — 가장 큰 LLM-facing 효과 (reroute 8% → 24%)
+**다음 P1**: Sprint 5c.4.2 (lifecycle 잔여 init/start/restart/clean reroute) — reroute 13% → 24%
 
 ---
 
@@ -112,39 +113,43 @@
 
 ## 4. Sprint 5 시리즈 — 남은 sprint
 
-### 🟥 Priority 1 — Sprint 5c.4: Lifecycle reroute
+### 🟥 Priority 1 — Sprint 5c.4.2: Lifecycle reroute pass 2 (init/start/restart/clean)
 
-**목표**: 6 lifecycle MCP tool (`chainbench_init/start/stop/restart/status/clean`) 을 wire 경유로 전환. 현재 `runChainbench` (bash CLI shell-out) 사용 중.
+**목표**: 잔여 4 lifecycle MCP tool (`chainbench_init/start/restart/clean`) 을 wire 경유로 전환. 5c.4.1 이 stop + status 만 reroute 했고 (2/6 완료), 잔여 4개는 init/start 의 ~600+ 줄 bash 로직을 가지고 있어 분리됨. 현재 `runChainbench` (bash CLI shell-out) 사용 중.
+
+**5c.4.1 에서 완료된 항목** (이 sprint 에서 재작업 불필요):
+- ✅ chainbench_stop reroute (`network.stop_all` thin Go wrapper)
+- ✅ chainbench_status reroute (`network.status` thin Go wrapper)
+- ✅ Integration test harness 추출 (`_harness.ts`)
+- ✅ Integration test cleanup-await + port-race 진단 보강
+- ✅ `chainbench_node_start binary_path` fallback 제거
 
 **필요 작업**:
-1. **Go-side wire 핸들러 6종 신규 작성** (chainbench-net 에 없음):
-   - `network.init` — bash `chainbench init` 의 Go 포팅 (Adapter Go 포팅이 3c 에 끝나서 가능)
-   - `network.start_all` / `network.stop_all` / `network.restart` — 전체 노드 lifecycle
-   - `network.status` — 노드 상태 합성 응답
-   - `network.clean` — datadir / pids 초기화
+1. **Go-side wire 핸들러 4종 신규 작성** (chainbench-net 에 없음):
+   - `network.init` — bash `chainbench init` 의 thin Go wrapper (`os/exec`) 또는 native Go 포팅 (Adapter Go 포팅이 3c 에 끝나서 native 도 가능)
+   - `network.start_all` — 전체 노드 lifecycle thin wrapper of `chainbench.sh start`
+   - `network.restart` — thin wrapper of `chainbench.sh restart`
+   - `network.clean` — datadir / pids 초기화 thin wrapper
    - **schema enum 갱신 + `go generate ./...` 으로 `command_gen.go` 재생성 + 커밋**
-2. **MCP 측 reroute** — `chainbench_init/start/stop/restart/status/clean` 6 tool 을 callWire 경유 (`mcp-server/src/tools/lifecycle.ts`)
-3. **`chainbench_node_start binary_path` fallback 제거** — Go `node.start` 가 binary_path arg 수용하도록 확장 (Sprint 5c.3 P3 row 닫힘)
-4. **Integration test harness 추출** — `mcp-server/test/integration/_harness.ts` 로 5c.3 의 단일 파일 setup 을 재사용 가능한 형태로 (Sprint 5c.3 P3 — 6+ integration test 추가 전 prerequisite)
-5. **Integration test cleanup-await + port-race 진단 보강** (Sprint 5c.3 P3)
-6. **`validateRpcMethod` duplicate in remote.ts 통합** (Sprint 5c.3 P3)
-7. **Docs + version bump 0.7.0 → 0.8.0**
+2. **MCP 측 reroute** — `chainbench_init/start/restart/clean` 4 tool 을 callWire 경유 (`mcp-server/src/tools/lifecycle.ts`)
+3. **`node.restart binary_path` symmetric override** — start 는 5c.4.1 에서 받지만 restart 는 hardcode `""`. symmetric 확장 (5c.4.1 P3 닫힘)
+4. **`validateRpcMethod` duplicate in remote.ts 통합** (Sprint 5c.3 P3)
+5. **`INTEGRATION_BEFOREALL_TIMEOUT_MS` (15s) 두 곳 중복** — 3rd integration test 추가 시 `_harness.ts` 로 추출 (5c.4.1 P3)
+6. **Docs + version bump 0.7.1 → 0.8.0** (minor — 모든 lifecycle 6/6 reroute 완료 시점)
 
-**완료 시 효과**: Reroute coverage 3/38 → **9/38 (~24%)**. lifecycle MCP 호출이 모두 wire 경유 → bash subprocess 지연 제거 + 일관 NDJSON 응답.
+**완료 시 효과**: Reroute coverage 5/38 → **9/38 (~24%)**. lifecycle MCP 호출이 모두 wire 경유 → bash subprocess 지연 제거 + 일관 NDJSON 응답.
 
 **예상 commit 수**: 8~10.
 
 **첫 task 시작 템플릿**:
 ```
-1. spec 작성: docs/superpowers/specs/YYYY-MM-DD-sprint-5c-4-lifecycle-reroute.md
-   - 5c.3 spec 을 ref 로 (동일한 reroute 패턴)
+1. spec 작성: docs/superpowers/specs/YYYY-MM-DD-sprint-5c-4-2-lifecycle-reroute-pass-2.md
+   - 5c.4.1 spec/plan 을 ref 로 (동일한 reroute 패턴, harness 재사용)
 2. plan 작성: docs/superpowers/plans/...
-3. Task 0 = harness 추출 (5c.3 review 권장 — 6+ tool 추가 전 선행)
-4. Task 1 = Go network.init 핸들러 (5c.3 Task 1 = node.rpc 핸들러 패턴 모방)
-5. Task 2-6 = 나머지 5 lifecycle 핸들러
-6. Task 7-8 = MCP reroute (5c.3 Task 2-3 = node tool reroute 패턴)
-7. Task 9 = node.start binary_path 확장
-8. Task 10 = docs + version bump
+3. Task 1-4 = Go 4 lifecycle 핸들러 (5c.4.1 의 stop_all / status 패턴 모방)
+4. Task 5-8 = MCP reroute 4 tool
+5. Task 9 = node.restart binary_path 확장 + remote.ts validateRpcMethod 통합
+6. Task 10 = docs + version bump 0.8.0
 ```
 
 ---
@@ -207,11 +212,17 @@
 기존 sprint 에서 이월된 항목들. **별도 sprint 가 아니라 관련 코드 건드릴 때 흡수**.
 전체 표는 `NEXT_WORK.md` §3 P3 참조. 트리거 조건별 그룹화:
 
-### 5c.4 lifecycle 작업 시 자연 흡수
-- `chainbench_node_start binary_path` fallback 제거 (5c.3)
-- Integration test harness 추출 (`_harness.ts`) (5c.3) — **prerequisite**
-- Integration test cleanup-await + port-race 진단 (5c.3)
+### 5c.4.1 에서 닫힌 5c.3 P3
+- ✅ `chainbench_node_start binary_path` fallback 제거 (Task 5)
+- ✅ Integration test harness 추출 (`_harness.ts`) (Task 0)
+- ✅ Integration test cleanup-await + port-race 진단 (Task 0 fix)
+
+### 5c.4.2 lifecycle 작업 시 자연 흡수
+- `node.restart binary_path` symmetric override (5c.4.1 P3)
+- `INTEGRATION_BEFOREALL_TIMEOUT_MS` (15s) 두 곳 중복 → `_harness.ts` 로 추출 (5c.4.1 P3, 트리거: 3rd integration test 추가 시)
 - `chain_tx.ts` 505 lines per-tool 분할 검토 (5c.2)
+- `chainbench-net` 바이너리 staleness 진단 — `_harness.ts.hasBinary()` 가 mtime vs source compare (5c.4.1 P3, 트리거: integration test 작성 시 사전 체크)
+- `lifecycle.test.ts` assertion-style 비대칭 (stop=JSON pretty form / status=field name `toContain`) → spec/plan 다음 갱신 시 1줄 rationale (5c.4.1 P3)
 
 ### 5c.5+ remote.ts reroute 시
 - `validateRpcMethod` duplicate in remote.ts (5c.3)
@@ -242,7 +253,7 @@
 | 항목 | 예상 시기 |
 |---|---|
 | WebSocket subscription / chain log streaming | Sprint 6+ (subscription.open wire surface 신설 필요) |
-| `chainbench-net network.init` wire handler | Sprint 5c.4 의 일부로 흡수 |
+| `chainbench-net network.init` wire handler | Sprint 5c.4.2 의 일부로 흡수 |
 | wbft `GenerateGenesis`/`GenerateToml` 실구현 | wbft 체인 실제 사용 시 |
 | wemix 실구현 | wemix 체인 실제 사용 시 |
 | 401/403 distinct APIError code | 3b.2b follow-up — remote auth 실패 진단 정밀화 |
@@ -291,14 +302,14 @@
 
 **가장 작은 단위**: Sprint 5d (hybrid 예제) — 인프라 존재, 예제 + 테스트만. ~3-5 commits.
 
-**중간 단위**: Sprint 5c.4 (lifecycle reroute) — Go 핸들러 6종 + MCP reroute 6 + harness 추출. ~8-10 commits. **가장 가치 있음** (reroute coverage 3/38 → 9/38).
+**중간 단위**: Sprint 5c.4.2 (lifecycle 잔여 reroute) — Go 핸들러 4종 + MCP reroute 4 + node.restart binary_path symmetric. ~8-10 commits. **가장 가치 있음** (reroute coverage 5/38 → 9/38).
 
 **큰 단위**: Sprint 5b (SSH driver) — 새 driver 구현. 두 패스로 나눠 진행 권장.
 
 **권장 순서** (본 sprint 종료 시점 기준):
-1. **Sprint 5c.4** (P1) — 가장 큰 LLM-facing 효과. P3 4건 자연 흡수 (harness 추출 등).
+1. **Sprint 5c.4.2** (P1) — 가장 큰 LLM-facing 효과. P3 5건 자연 흡수 (node.restart symmetric, validateRpcMethod 통합, INTEGRATION timeout hoisting 등).
 2. **Sprint 5d** (smallest, easy win) — capability gate 의 dividend 검증.
-3. **Sprint 5b** (큰 작업, 두 패스) — 5c.4 끝나야 lifecycle 측면이 의미. 5b.1 (read-only) 부터.
+3. **Sprint 5b** (큰 작업, 두 패스) — 5c.4.2 끝나야 lifecycle 측면이 의미. 5b.1 (read-only) 부터.
 
 ---
 
@@ -313,7 +324,7 @@ git status
 # 2. 회귀 테스트 (모두 green 이어야 함)
 go -C network test ./... -count=1 -timeout=60s   # 16 packages
 bash tests/unit/run.sh                            # 34/34
-cd mcp-server && npm test                         # 94/94
+cd mcp-server && npm test                         # 100/100
 cd .. && cd mcp-server && npx tsc --noEmit && npm run build && cd ..
 
 # 3. 다음 작업 결정
