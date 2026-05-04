@@ -1204,6 +1204,126 @@ func TestAllHandlers_IncludesNetworkStopAll(t *testing.T) {
 	}
 }
 
+// ---- network.status tests ----
+
+// writeFakeChainbenchWithStdout is a sibling of writeFakeChainbench that lets
+// the script emit an arbitrary stdout payload (status mode emits a JSON blob
+// rather than the simple "fake chainbench: $@" echo). The payload is single-
+// quoted into a printf so JSON braces and quotes pass through unescaped;
+// embedded single quotes are bash-escaped via the standard '\” trick.
+func writeFakeChainbenchWithStdout(t *testing.T, dir string, exitCode int, stdout string) {
+	t.Helper()
+	escaped := strings.ReplaceAll(stdout, "'", "'\\''")
+	script := fmt.Sprintf("#!/bin/bash\nprintf '%%s' '%s'\nexit %d\n", escaped, exitCode)
+	p := filepath.Join(dir, "chainbench.sh")
+	if err := os.WriteFile(p, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake script: %v", err)
+	}
+}
+
+// TestHandleNetworkStatus_Happy verifies the thin-wrapper happy path: a fake
+// chainbench.sh that emits a valid JSON status payload should be parsed and
+// returned directly as the handler's result map (NOT wrapped in
+// {network, stdout} like stop_all). Specific keys are pinned so a future
+// change that accidentally double-wraps the payload shows up here.
+func TestHandleNetworkStatus_Happy(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbenchWithStdout(t, chainbenchDir, 0,
+		`{"nodes":[{"id":"node1","running":true,"block_height":42}],"healthy":true}`)
+	stateDir := t.TempDir()
+	handler := newHandleNetworkStatus(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	data, err := handler(nil, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if got, want := data["healthy"], true; got != want {
+		t.Errorf("healthy = %v, want %v", got, want)
+	}
+	nodes, ok := data["nodes"].([]any)
+	if !ok {
+		t.Fatalf("nodes type = %T, want []any", data["nodes"])
+	}
+	if len(nodes) != 1 {
+		t.Fatalf("len(nodes) = %d, want 1", len(nodes))
+	}
+	node0, ok := nodes[0].(map[string]any)
+	if !ok {
+		t.Fatalf("nodes[0] type = %T, want map[string]any", nodes[0])
+	}
+	if got, want := node0["id"], "node1"; got != want {
+		t.Errorf("nodes[0].id = %v, want %v", got, want)
+	}
+	if got, want := node0["running"], true; got != want {
+		t.Errorf("nodes[0].running = %v, want %v", got, want)
+	}
+	// block_height should round-trip as float64 (json.Unmarshal default).
+	if got, want := node0["block_height"], float64(42); got != want {
+		t.Errorf("nodes[0].block_height = %v, want %v", got, want)
+	}
+}
+
+// TestHandleNetworkStatus_RemoteRejected mirrors the stop_all NOT_SUPPORTED
+// branch — non-local network names are structurally fine but the composite
+// status command does not apply (remote-only networks are queried via
+// node.rpc / node.block_number et al. instead).
+func TestHandleNetworkStatus_RemoteRejected(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbenchWithStdout(t, chainbenchDir, 0, `{}`)
+	handler := newHandleNetworkStatus(t.TempDir(), chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"network": "sepolia"})
+	_, err := handler(args, bus)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+		t.Fatalf("want NOT_SUPPORTED, got %v", err)
+	}
+	if !strings.Contains(api.Message, "only operates on the local network") {
+		t.Errorf("message = %q, want substring 'only operates on the local network'", api.Message)
+	}
+}
+
+// TestHandleNetworkStatus_BadJsonOutput verifies the INTERNAL classification
+// for invalid bash output. Bash is contracted to emit a JSON object in
+// --json mode, so a parse failure indicates a regression on the bash side
+// (not a caller bug) — INTERNAL is the right code, not UPSTREAM_ERROR.
+func TestHandleNetworkStatus_BadJsonOutput(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbenchWithStdout(t, chainbenchDir, 0, "not-json-at-all\n")
+	handler := newHandleNetworkStatus(t.TempDir(), chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	_, err := handler(nil, bus)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INTERNAL" {
+		t.Fatalf("want INTERNAL, got %v", err)
+	}
+	// The wrapped cause should expose the json.Unmarshal diagnostic so a
+	// future bash regression can be identified without re-running the
+	// command.
+	if api.Cause == nil || !strings.Contains(api.Cause.Error(), "invalid character") {
+		t.Errorf("cause = %v, want substring 'invalid character'", api.Cause)
+	}
+}
+
+func TestAllHandlers_IncludesNetworkStatus(t *testing.T) {
+	handlers := allHandlers("/s", "/c")
+	if _, ok := handlers["network.status"]; !ok {
+		t.Error("allHandlers missing network.status")
+	}
+}
+
 // ---- node.block_number tests ----
 
 func TestHandleNodeBlockNumber_RemoteHappy(t *testing.T) {

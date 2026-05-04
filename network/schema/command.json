@@ -12,6 +12,7 @@
         "network.load",
         "network.probe",
         "network.stop_all",
+        "network.status",
         "network.attach",
         "network.capabilities",
         "node.rpc",

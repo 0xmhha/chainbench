@@ -434,3 +434,89 @@ func newHandleNetworkStopAll(stateDir, chainbenchDir string) Handler {
 		}, nil
 	}
 }
+
+// statusTimeout caps the chainbench.sh status wall-clock at 30s. Status walks
+// every node in pids.json and issues per-node RPC queries (block height, peer
+// count, etc.) — under load this can take longer than a single read RPC, so
+// the bound matches stop_all's 30s rather than the 10s used for atomic reads.
+const statusTimeout = 30 * time.Second
+
+// newHandleNetworkStatus returns the "network.status" handler. Second
+// lifecycle reroute (Sprint 5c.4.1) — same VISION §5.12 M2 thin wrapper
+// pattern as network.stop_all: spawn the existing bash `chainbench.sh status
+// --json` via os/exec rather than reimplementing the 387-line per-node RPC
+// composite formatter natively in Go.
+//
+// Args: { "network"?: "name" }  (omitted/empty defaults to "local")
+//
+// Result: the parsed JSON payload from `chainbench.sh status --json` —
+// returned directly as the wire result data (NOT wrapped in {network, stdout}
+// the way stop_all forwards bash text). The bash CLI is contracted to emit a
+// JSON object in --json mode, so the handler's job is to parse + pass it
+// through unchanged so the LLM sees the same per-node block height / peer
+// count / health shape it has always seen.
+//
+// Error mapping:
+//
+//	INVALID_ARGS    — malformed args JSON.
+//	NOT_SUPPORTED   — non-local network (remote networks are queried via
+//	                  node.rpc / node.block_number etc., not this composite).
+//	UPSTREAM_ERROR  — chainbench.sh non-zero exit or spawn failure. The wrapped
+//	                  error includes the script's stderr (captured separately
+//	                  from stdout via *exec.ExitError so the JSON we parse
+//	                  below is not contaminated).
+//	INTERNAL        — bash stdout is not valid JSON. Invariant violation —
+//	                  bash is contracted to emit JSON in --json mode, so a
+//	                  parse failure indicates a regression in the bash side,
+//	                  not a caller bug.
+func newHandleNetworkStatus(stateDir, chainbenchDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Network string `json:"network"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.Network == "" {
+			req.Network = "local"
+		}
+		if req.Network != "local" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"network.status only operates on the local network; got %q", req.Network,
+			))
+		}
+
+		// stateDir is bound by closure for symmetry with the rest of the
+		// dispatch table; the bash CLI reads pids.json from CHAINBENCH_DIR's
+		// state subdir directly. A future native port would read pids.json
+		// from stateDir here.
+		_ = stateDir
+
+		ctx, cancel := context.WithTimeout(context.Background(), statusTimeout)
+		defer cancel()
+		cmd := exec.CommandContext(ctx,
+			filepath.Join(chainbenchDir, "chainbench.sh"),
+			"status", "--json",
+		)
+		cmd.Env = append(os.Environ(), "CHAINBENCH_DIR="+chainbenchDir)
+		// Use Output() (not CombinedOutput()) so bash stderr does not
+		// contaminate the JSON payload we need to parse below. On non-zero
+		// exit, *exec.ExitError carries the captured stderr separately.
+		out, err := cmd.Output()
+		if err != nil {
+			var stderr []byte
+			var exitErr *exec.ExitError
+			if errors.As(err, &exitErr) {
+				stderr = exitErr.Stderr
+			}
+			return nil, NewUpstream("chainbench status", fmt.Errorf("%w: %s", err, string(stderr)))
+		}
+		var statusJson map[string]any
+		if err := json.Unmarshal(out, &statusJson); err != nil {
+			return nil, NewInternal("status output is not valid JSON", err)
+		}
+		return statusJson, nil
+	}
+}

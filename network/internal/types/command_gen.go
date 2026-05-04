@@ -25,6 +25,7 @@ const CommandCommandNetworkAttach CommandCommand = "network.attach"
 const CommandCommandNetworkCapabilities CommandCommand = "network.capabilities"
 const CommandCommandNetworkLoad CommandCommand = "network.load"
 const CommandCommandNetworkProbe CommandCommand = "network.probe"
+const CommandCommandNetworkStatus CommandCommand = "network.status"
 const CommandCommandNetworkStopAll CommandCommand = "network.stop_all"
 const CommandCommandNodeAccountState CommandCommand = "node.account_state"
 const CommandCommandNodeBalance CommandCommand = "node.balance"
@@ -49,6 +50,7 @@ var enumValues_CommandCommand = []interface{}{
 	"network.load",
 	"network.probe",
 	"network.stop_all",
+	"network.status",
 	"network.attach",
 	"network.capabilities",
 	"node.rpc",
