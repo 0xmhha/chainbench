@@ -49,8 +49,8 @@ const CommandCommandTxSend CommandCommand = "tx.send"
 var enumValues_CommandCommand = []interface{}{
 	"network.load",
 	"network.probe",
-	"network.stop_all",
 	"network.status",
+	"network.stop_all",
 	"network.attach",
 	"network.capabilities",
 	"node.rpc",
