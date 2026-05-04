@@ -296,9 +296,322 @@
 - `network/schema/network.json` 의 `Auth` 는 oneOf 구조지만 go-jsonschema 가 `map[string]interface{}` 로 fallback
 - `auth["type"].(string)` 으로 분기. tagged union refactor 는 후속
 
+### 8.9 macOS fork-EAGAIN under load (2026-05-04 발견)
+- 장시간 세션 + 다수 subagent spawn 시 macOS user fork limit 도달 → `npm test` / shell startup 실패 (`Resource temporarily unavailable`)
+- vitest fallback: `npm test -- --pool=forks --poolOptions.forks.singleFork=true`
+- Go fallback: `go test -p=2 ./...`
+- 새 세션 시작 시 회복
+
+### 8.10 `chainbench-net` binary staleness
+- `_harness.ts.hasBinary()` 가 mtime 검사 안 함 — 존재만 확인
+- Go 변경 후 binary rebuild 필수: `cd network && go build -o bin/chainbench-net ./cmd/chainbench-net`
+- 5c.4.1 Task 4 에서 발견 — 구 binary 가 새 wire command 거절하는 PROTOCOL_ERROR 발생
+- 5c.4.1 P3 — 5c.4.2+ 에서 mtime 비교 추가 가치
+
+### 8.11 Lifecycle 명령은 local 전용 (Sprint 5c.4.1 에서 정착)
+- `network.stop_all` / `network.status` / (5c.4.2 의) init/start_all/restart/clean 모두 `network != "local"` → NOT_SUPPORTED
+- Remote 네트워크는 노드 lifecycle 보유 안 함 — wire 핸들러가 boundary 에서 거절
+
+### 8.12 Schema enum 알파벳 순 (Sprint 5c.4.1 review 에서 확립)
+- `network/schema/command.json` 에 새 명령 추가 시 `network.<verb>` / `node.<verb>` 그룹 내 알파벳 순
+- 5c.4.1 Task 3 review 가 catch — Task 1+3 가 `stop_all` 을 `status` 보다 먼저 추가 → reverse-alphabetical → `c16350c` 에서 swap
+
 ---
 
-## 9. 다음 세션에서 즉시 착수 가능한 단위
+## 9. 검증된 패턴 코드 템플릿 (Sprint 5c.4.1 기준)
+
+5c.4.2 / 5b / 5d 의 새 sprint 가 직접 카피해서 변형하면 됨. 모두 100/100 vitest + Go 16 packages green 으로 검증된 패턴.
+
+### 9.1 Go thin-wrapper handler (lifecycle reroute 용)
+
+`network/cmd/chainbench-net/handlers_network.go` 의 `newHandleNetworkStopAll` (`be7fd7c` 기준) 참조. 5c.4.2 의 init/start/restart/clean 핸들러는 다음 템플릿을 카피하여 변형:
+
+```go
+const <verb>Timeout = 30 * time.Second   // file scope const, 일관성 (stop_all / status 와 동일)
+
+// newHandleNetwork<Verb> returns the "network.<verb>" handler.
+//
+// Args: { "network"?: "local" }  (default + non-local rejected with NOT_SUPPORTED)
+//       (init only) { "profile": "<name>", "binary_path"?: "/abs/path" }
+//
+// Result: { "network": "local", "stdout": "<bash output>" }   ← stop_all pattern
+//         OR parsed JSON map                                    ← status pattern
+//
+// Error mapping:
+//   INVALID_ARGS    — args parse / shape failure
+//   NOT_SUPPORTED   — non-local network
+//   UPSTREAM_ERROR  — bash exit non-zero (with stderr in cause)
+//   INTERNAL        — JSON parse failure (status only — invariant)
+func newHandleNetwork<Verb>(stateDir, chainbenchDir string) Handler {
+    return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+        var req struct {
+            Network    string  `json:"network"`
+            // (init only)
+            // Profile    string  `json:"profile"`
+            // BinaryPath *string `json:"binary_path"`   // *string for absent-vs-empty discrimination (5c.4.1 Task 5 fix)
+        }
+        if len(args) > 0 {
+            if err := json.Unmarshal(args, &req); err != nil {
+                return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+            }
+        }
+        if req.Network == "" { req.Network = "local" }
+        if req.Network != "local" {
+            return nil, NewNotSupported(fmt.Sprintf(
+                "network.<verb> only operates on the local network; got %q", req.Network))
+        }
+        _ = stateDir // future native-port reads pids.json from here
+
+        // Shell-injection-safe: literal argv via execve (NOT bash -c "<concat>").
+        // (init only) ensure profile is regex-validated upstream (zod) and pass via separate argv slot:
+        //   cmdArgs := []string{"init", "--profile", req.Profile, "--quiet"}
+        //   if req.BinaryPath != nil { cmdArgs = append(cmdArgs, "--binary-path", *req.BinaryPath) }
+
+        ctx, cancel := context.WithTimeout(context.Background(), <verb>Timeout)
+        defer cancel()
+        cmd := exec.CommandContext(ctx, filepath.Join(chainbenchDir, "chainbench.sh"),
+            "<verb>", "--quiet")
+        cmd.Env = append(os.Environ(), "CHAINBENCH_DIR="+chainbenchDir)
+
+        // For status-style (JSON output): use cmd.Output() not CombinedOutput()
+        // and use errors.As(err, &exitErr) to extract exitErr.Stderr for the diagnostic.
+        out, err := cmd.CombinedOutput()
+        if err != nil {
+            return nil, NewUpstream("chainbench <verb>",
+                fmt.Errorf("%w: %s", err, string(out)))
+        }
+
+        // For status: json.Unmarshal(out, &result); INTERNAL on parse fail
+        return map[string]any{"network": "local", "stdout": string(out)}, nil
+    }
+}
+```
+
+### 9.2 MCP reroute (lifecycle 용)
+
+`mcp-server/src/tools/lifecycle.ts` 의 `StopArgs/_stopHandler` (`4ef8f13`) 참조:
+
+```typescript
+export const <Verb>Args = z.object({
+  network: z.string().min(1).optional()
+    .describe("Network alias. Defaults to 'local'. Remote networks reject."),
+  // (init only) profile: z.string().regex(/^[a-zA-Z0-9_\-/]+$/),
+  // (init/start/restart) binary_path: z.string().optional(),
+}).strict();
+
+export async function _<verb>Handler(
+  args: z.infer<typeof <Verb>Args>,
+): Promise<FormattedToolResponse> {
+  // (binary_path 있는 핸들러만) boundary validation:
+  // if (args.binary_path !== undefined) {
+  //   if (args.binary_path.length === 0) return errorResp("binary_path must not be empty");
+  //   if (!args.binary_path.startsWith("/")) return errorResp("binary_path must be an absolute path");
+  // }
+  const wireArgs: Record<string, unknown> = {};
+  if (args.network !== undefined) wireArgs.network = args.network;
+  // if (args.profile !== undefined) wireArgs.profile = args.profile;
+  // if (args.binary_path !== undefined) wireArgs.binary_path = args.binary_path;
+  const result = await callWire("network.<verb>", wireArgs);
+  return formatWireResult(result);
+}
+
+server.tool(
+  "chainbench_<verb>",
+  "<description — local-only, what bash does, what return shape is>",
+  <Verb>Args.shape,
+  _<verb>Handler,
+);
+```
+
+### 9.3 Vitest unit test (3 tests per tool — `lifecycle.test.ts`)
+
+```typescript
+describe("chainbench_<verb> handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_<Verb>Happy", async () => {
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    process.env.MOCK_SCRIPT = script([{
+      kind: "stdout",
+      line: JSON.stringify({type:"result", ok:true, data:{network:"local", stdout:"<verb> done"}}),
+    }]);
+    const out = await _<verb>Handler({});
+    expect(out.content[0]?.text ?? "").toContain("<verb> done");
+    expect(out.isError).toBeFalsy();
+  });
+
+  it("_<Verb>StrictRejectsUnknownKeys", () => {
+    expect(() => <Verb>Args.parse({network:"local", extra:"bar"} as any)).toThrow();
+  });
+
+  it("_<Verb>WireFailure_PassedThrough", async () => {
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    process.env.MOCK_SCRIPT = script([{
+      kind: "stdout",
+      line: JSON.stringify({type:"result", ok:false, error:{code:"UPSTREAM_ERROR", message:"chainbench <verb> failed"}}),
+    }]);
+    const out = await _<verb>Handler({});
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text ?? "").toContain("UPSTREAM_ERROR");
+  });
+});
+```
+
+### 9.4 Real-binary integration test (`lifecycle.integration.test.ts`)
+
+```typescript
+describe.skipIf(!hasBinary())("integration: chainbench_<verb>", () => {
+  let harness: RealBinaryHarness;
+  beforeAll(async () => {
+    const fakeScript = `#!/bin/bash
+if [[ "$1" == "<verb>" && "$2" == "--quiet" ]]; then
+  echo "fake <verb>: success"
+  exit 0
+fi
+exit 1
+`;
+    harness = await setupRealBinaryHarness({ fakeChainbenchScript: fakeScript });
+  }, 15000);  // 5c.4.1 P3 — 3rd integration test 시 _harness.ts 의 INTEGRATION_BEFOREALL_TIMEOUT_MS 로 추출
+
+  afterAll(() => harness?.teardown());
+
+  it("end-to-end <verb> through chainbench-net", async () => {
+    const { _<verb>Handler } = await import("../../src/tools/lifecycle.js");
+    const out = await _<verb>Handler({});
+    expect(out.content[0]?.text ?? "").toContain("success");
+    expect(out.isError).toBeFalsy();
+  });
+});
+```
+
+### 9.5 Go unit test (4 tests per handler — `handlers_test.go`)
+
+```go
+// 헬퍼 (5c.4.1 Task 1 에서 정착, Task 3 가 stdout-emitting 변형 추가)
+func writeFakeChainbench(t *testing.T, dir string, exitCode int) {
+    t.Helper()
+    script := fmt.Sprintf("#!/bin/bash\necho \"fake chainbench: $@\"\nexit %d\n", exitCode)
+    p := filepath.Join(dir, "chainbench.sh")
+    if err := os.WriteFile(p, []byte(script), 0755); err != nil {
+        t.Fatalf("write fake script: %v", err)
+    }
+}
+// (status-like 용) writeFakeChainbenchWithStdout(t, dir, exitCode, stdout) 도 sibling 으로 존재
+
+func TestHandleNetwork<Verb>_Happy(t *testing.T) {
+    chainbenchDir := t.TempDir()
+    writeFakeChainbench(t, chainbenchDir, 0)
+    handler := newHandleNetwork<Verb>(t.TempDir(), chainbenchDir)
+    bus, _ := newTestBus(t)
+    defer bus.Close()
+    data, err := handler(json.RawMessage(`{}`), bus)
+    if err != nil { t.Fatalf("handler: %v", err) }
+    if data["network"] != "local" { t.Errorf("network=%v", data["network"]) }
+    if !strings.Contains(data["stdout"].(string), "fake chainbench") {
+        t.Errorf("stdout missing expected substring: %v", data["stdout"])
+    }
+}
+
+func TestHandleNetwork<Verb>_RemoteRejected(t *testing.T) {
+    handler := newHandleNetwork<Verb>(t.TempDir(), t.TempDir())
+    bus, _ := newTestBus(t); defer bus.Close()
+    args, _ := json.Marshal(map[string]any{"network": "sepolia"})
+    _, err := handler(args, bus)
+    var api *APIError
+    if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
+        t.Fatalf("want NOT_SUPPORTED, got %v", err)
+    }
+    if !strings.Contains(api.Message, "only operates on the local network") {
+        t.Errorf("message=%q", api.Message)
+    }
+}
+
+func TestHandleNetwork<Verb>_BashFailure(t *testing.T) {
+    chainbenchDir := t.TempDir()
+    writeFakeChainbench(t, chainbenchDir, 1)  // exit 1
+    handler := newHandleNetwork<Verb>(t.TempDir(), chainbenchDir)
+    bus, _ := newTestBus(t); defer bus.Close()
+    _, err := handler(json.RawMessage(`{}`), bus)
+    var api *APIError
+    if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+        t.Fatalf("want UPSTREAM_ERROR, got %v", err)
+    }
+}
+
+func TestAllHandlers_IncludesNetwork<Verb>(t *testing.T) {
+    h := allHandlers("x", "y")
+    if _, ok := h["network.<verb>"]; !ok {
+        t.Errorf("allHandlers missing network.<verb>")
+    }
+}
+```
+
+### 9.6 `*string` discrimination for optional-string args (5c.4.1 Task 5 fix)
+
+caller-controlled optional string 인자 (예: `binary_path`) 를 받을 때 "key absent" vs "key present + empty" 를 구분해야 하면 `*string` 사용:
+
+```go
+// ❌ 잘못된 idiom (substring scan on raw JSON — false-positive risk):
+//   if bytes.Contains(args, []byte(`"binary_path"`)) && pre.BinaryPath == "" { ... }
+//   → unrelated key 의 value 에 "binary_path" 문자열 들어가도 발동
+
+// ✅ 올바른 idiom (*string pointer):
+var pre struct {
+    BinaryPath *string `json:"binary_path"`
+}
+_ = json.Unmarshal(args, &pre)
+// nil  → key 부재 (profile default 사용)
+// non-nil → key 있음
+if pre.BinaryPath != nil && *pre.BinaryPath == "" {
+    return nil, NewInvalidArgs("args.binary_path must not be empty")
+}
+if pre.BinaryPath != nil && !strings.HasPrefix(*pre.BinaryPath, "/") {
+    return nil, NewInvalidArgs(fmt.Sprintf("args.binary_path must be absolute: %q", *pre.BinaryPath))
+}
+var binaryPath string
+if pre.BinaryPath != nil {
+    binaryPath = *pre.BinaryPath
+}
+```
+
+회귀 방지 테스트 추가 권장 (5c.4.1 의 `TestHandleNodeStart_UnrelatedKeyContainingBinaryPathSubstring` 참조 — unrelated key with substring → no false positive).
+
+### 9.7 Schema enum 추가 + 재생성
+
+```bash
+# 1. network/schema/command.json 의 enum 에 알파벳 순 위치에 추가
+#    (network.* 그룹 내, node.* 그룹 내)
+$EDITOR network/schema/command.json
+
+# 2. 재생성
+cd network && go generate ./...
+# → command_gen.go 에 `CommandCommandNetwork<Verb>` const + enumValues_CommandCommand entry 추가됨
+
+# 3. 같은 commit 에 schema + 재생성 결과 모두 포함
+git add network/schema/command.json network/internal/types/command_gen.go
+```
+
+---
+
+## 10. 다음 세션에서 즉시 착수 가능한 단위
 
 **가장 작은 단위**: Sprint 5d (hybrid 예제) — 인프라 존재, 예제 + 테스트만. ~3-5 commits.
 
@@ -313,12 +626,12 @@
 
 ---
 
-## 10. 새 세션 재개 명령 (체크리스트)
+## 11. 새 세션 재개 명령 (체크리스트)
 
 ```bash
 # 1. 현재 상태 확인
 cd /Users/wm-it-22-00661/Work/github/tools/chainbench
-git log --oneline -10
+git log --oneline -15
 git status
 
 # 2. 회귀 테스트 (모두 green 이어야 함)
@@ -327,40 +640,55 @@ bash tests/unit/run.sh                            # 34/34
 cd mcp-server && npm test                         # 100/100
 cd .. && cd mcp-server && npx tsc --noEmit && npm run build && cd ..
 
-# 3. 다음 작업 결정
+# 3. (선택) chainbench-net binary 신선도 확인 — Go 변경 후 필수 rebuild (§8.10)
+ls -l network/bin/chainbench-net 2>&1   # mtime 확인
+# 최근 Go 변경 후 안 쌓였으면 (또는 처음 세션이면):
+go -C network build -o bin/chainbench-net ./cmd/chainbench-net
+
+# 4. 다음 작업 결정
 cat docs/REMAINING_WORK.md              # 본 문서 — 가장 빠른 핸드오프
 cat docs/NEXT_WORK.md                    # 전체 핸드오프 (자세한 컨텍스트, 트러블 발생 시)
 cat docs/VISION_AND_ROADMAP.md           # SSoT 비전 + 로드맵 (디자인 결정 source)
 
-# 4. Sprint 진행 시 참고 spec/plan
+# 5. Sprint 진행 시 참고 spec/plan
 ls docs/superpowers/specs/ | sort | tail -10     # 최근 spec 목록
 ls docs/superpowers/plans/ | sort | tail -10     # 최근 plan 목록
 
-# 5. 코드 진입점 (3분 읽기로 모듈 이해)
-cat mcp-server/src/utils/wire.ts                 # spawn + NDJSON helper
-cat mcp-server/src/utils/wireResult.ts           # NDJSON → MCP response transformer
-cat mcp-server/src/tools/chain_read.ts           # read-only MCP tool 패턴
-cat mcp-server/src/tools/chain_tx.ts             # write MCP tool 패턴 (4-mode tx_send)
-cat mcp-server/src/tools/node.ts                 # reroute 패턴 (5c.3)
-cat network/cmd/chainbench-net/handlers_network.go    # network.<verb> 핸들러
-cat network/cmd/chainbench-net/handlers_node_read.go  # node.rpc / contract_call / events_get / account_state / tx_wait
-cat network/cmd/chainbench-net/handlers_node_tx.go    # node.tx_send / contract_deploy / fee_delegation
-cat network/internal/signer/signer.go            # 서명 경계 + redaction 패턴
-cat lib/network_client.sh                        # bash → Go 바이너리 NDJSON 브리지
-cat lib/cmd_test.sh                              # bash test runner + capability gating (Sprint 5a)
+# 6. 코드 진입점 (3분 읽기로 모듈 이해)
+# - Utils & 인프라
+cat mcp-server/src/utils/wire.ts                              # spawn + NDJSON helper
+cat mcp-server/src/utils/wireResult.ts                        # NDJSON → MCP transformer
+cat mcp-server/src/utils/mcpResp.ts                           # FormattedToolResponse + errorResp
+cat mcp-server/src/utils/hex.ts                               # HEX_*, SIGNER_ALIAS, RPC_METHOD
+cat mcp-server/test/integration/_harness.ts                   # real-binary integration 인프라
+# - MCP tool 패턴
+cat mcp-server/src/tools/lifecycle.ts                         # 5c.4.1 reroute 패턴 (stop+status, init/start/restart 미rerouted)
+cat mcp-server/src/tools/chain_read.ts                        # read-only MCP tool 패턴
+cat mcp-server/src/tools/chain_tx.ts                          # write MCP tool 패턴 (4-mode tx_send)
+cat mcp-server/src/tools/node.ts                              # node-level reroute + binary_path
+# - Go handlers
+cat network/cmd/chainbench-net/handlers_network.go            # network.* (5c.4.1 thin-wrapper 포함)
+cat network/cmd/chainbench-net/handlers_node_lifecycle.go     # node.start (binary_path *string), stop, restart
+cat network/cmd/chainbench-net/handlers_node_read.go          # node.rpc / contract_call / events_get / account_state / tx_wait
+cat network/cmd/chainbench-net/handlers_node_tx.go            # node.tx_send / contract_deploy / fee_delegation
+cat network/internal/drivers/local/start.go                   # LocalDriver.StartNode (binary_path 인자)
+cat network/internal/signer/signer.go                         # 서명 경계 + redaction 패턴
+# - bash 진입점
+cat lib/network_client.sh                                     # bash → Go 바이너리 NDJSON 브리지
+cat lib/cmd_test.sh                                           # bash test runner + capability gating (5a)
 ```
 
 ---
 
-## 11. 문서 구조 — 본 문서 vs 형제 문서
+## 12. 문서 구조 — 본 문서 vs 형제 문서
 
 세 문서가 보완 관계로 상호 의존:
 
 | 문서 | 분량 | 역할 |
 |---|---|---|
-| **REMAINING_WORK.md** (본 문서) | ~330줄 | Actionable TODO + 30초 컨텍스트 + 빠른 시작. **새 세션 즉시 참조**. |
-| **NEXT_WORK.md** | ~600줄 | 전체 핸드오프 — 디렉토리 레이아웃, 규약 풀버전, 주의사항 풀버전, 모든 sprint 별 P3 표. **트러블 발생 시 깊게 참조**. |
-| **VISION_AND_ROADMAP.md** | ~860줄 | 비전 + 로드맵 SSoT. 디자인 결정의 source (Q1~Q6, S1~S8, §5.4 Provider Interface, §5.17 Go module 상세). **디자인 변경 시 갱신**. |
+| **REMAINING_WORK.md** (본 문서) | ~620줄 | Actionable TODO + 30초 컨텍스트 + 빠른 시작 + 검증된 패턴 코드 템플릿. **새 세션 즉시 참조**. |
+| **NEXT_WORK.md** | ~700줄 | 전체 핸드오프 — 디렉토리 레이아웃, 규약 풀버전, 주의사항 풀버전, 모든 sprint 별 P3 표 (closed + open). **트러블 발생 시 깊게 참조**. |
+| **VISION_AND_ROADMAP.md** | ~870줄 | 비전 + 로드맵 SSoT. 디자인 결정의 source (Q1~Q6, S1~S8, §5.4 Provider Interface, §5.12 M2 LocalDriver-wraps-bash, §5.17 Go module 상세). **디자인 변경 시 갱신**. |
 
 **갱신 시점**:
 - 매 sprint 의 docs+chore 커밋에서 NEXT_WORK + VISION 갱신
@@ -374,7 +702,7 @@ cat lib/cmd_test.sh                              # bash test runner + capability
 
 ---
 
-## 12. 보안 / 사용자 규칙 핵심 (다시 강조)
+## 13. 보안 / 사용자 규칙 핵심 (다시 강조)
 
 - **English commit messages** (docs 본문 Korean OK)
 - **NO `Co-Authored-By` trailer** (사용자 명시 선호)
@@ -385,3 +713,42 @@ cat lib/cmd_test.sh                              # bash test runner + capability
 - **`git push` 는 사용자가 직접 결정** — 명시적 요청 없으면 push 하지 않음
 - **Signer key material 절대 stdout/stderr/log 에 노출 금지** — `network/internal/signer` 의 sealed 패턴 강제
 - **Memory 디렉토리에 프로젝트별 follow-up 저장 금지** — 프로젝트별 정보는 `docs/NEXT_WORK.md` / `docs/REMAINING_WORK.md` / spec-plan 파일에
+- **Shell injection 회피** — bash spawn 시 args 는 execve literal argv 로 (`exec.CommandContext(scriptPath, "init", "--profile", profile)`), `bash -c "<concat>"` 금지. Caller-controlled args 는 zod regex 로 boundary 검증 (예: `profile: z.string().regex(/^[a-zA-Z0-9_\-/]+$/)`)
+
+---
+
+## 14. Sprint commit chain 빠른 참조
+
+`origin/main` 대비 **11 commits ahead** (Sprint 5c.4.1 전체 — 사용자 push 결정 대기).
+
+```
+Sprint 5c.4.1 (be7fd7c, 2026-05-04, 11 commits, 0.7.1):
+  6a790bd  docs: spec + plan
+  297918c  refactor(test): _harness.ts extract (Task 0)
+  d902cca  fix(test): tighten profileOverride + extract kill helper (Task 0 review)
+  2ada02b  feat(network-net): network.stop_all (Task 1)
+  4ef8f13  feat(mcp): reroute chainbench_stop (Task 2)
+  5854d29  feat(network-net): network.status (Task 3)
+  c16350c  chore(schema): swap stop_all/status enum order (Task 3 review)
+  ad32ff8  feat(mcp): reroute chainbench_status + integration test (Task 4)
+  3150719  feat(network-net+mcp): node.start binary_path + remove fallback (Task 5)
+  5702604  fix(network-net): *string discrimination for binary_path (Task 5 review)
+  be7fd7c  docs+chore(sprint-5c-4-1): roadmap + version 0.7.1 (Task 6)
+
+Sprint 5a (bd7284e, 2026-04-29, 8 commits, 0.7.0):
+  39b69aa..bd7284e — capability gate (Go + MCP + bash) + frontmatter PoC
+
+Sprint 5c.3 (9084c4d, 2026-04-29, 8 commits, 0.6.0):
+  e9ddf2d..9084c4d — utils 추출 + node.rpc + 3 chainbench_node_* reroute + integration test layer
+
+Sprint 5c.2 (17f6e6f, 2026-04-29, 11 commits, 0.5.0):
+  90a299d..17f6e6f — MCP 4 high-level tool + tx_send 4-mode + chain.ts split
+
+Sprint 5c.1 (31e4bf9, 2026-04-28, 8 commits, 0.4.0):
+  b35eb67..31e4bf9 — MCP foundation + 첫 2 high-level tool
+
+Sprint 4 series (10 commits 누적, 4 → 4b → 4c → 4d, 2026-04-24~04-27):
+  e9ef018 이전 — Go network/ tx + read 매트릭스 100% 도달
+```
+
+**Sprint 종료마다 docs+chore(sprint-X) 커밋 확인** — VISION + NEXT_WORK + REMAINING_WORK + EVALUATION_CAPABILITY + version 모두 동기화.
