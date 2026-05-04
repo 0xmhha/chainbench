@@ -477,6 +477,36 @@ func TestHandleNodeStart_BinaryPath_EmptyRejected(t *testing.T) {
 	}
 }
 
+// TestHandleNodeStart_UnrelatedKeyContainingBinaryPathSubstring guards
+// against a regression of the bytes.Contains substring scan that earlier
+// versions used to discriminate "key absent" from "key present + empty".
+// A caller that sends an unrelated extra key whose value contains the
+// substring "binary_path" must NOT trip the empty-string check — the
+// closed-struct json.Unmarshal silently drops unknown keys, and the
+// pointer-discrimination introduced post-review correctly distinguishes
+// pre.BinaryPath == nil (absent) from non-nil (present).
+func TestHandleNodeStart_UnrelatedKeyContainingBinaryPathSubstring(t *testing.T) {
+	stateDir, chainbenchDir := setupCmdStubDir(t)
+	handler := newHandleNodeStart(stateDir, chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	// "comment" is unknown to the args struct → ignored. Its value contains
+	// the literal substring "binary_path" which would have been a false
+	// positive under the old bytes.Contains gate.
+	args, _ := json.Marshal(map[string]any{
+		"node_id": "node1",
+		"comment": "todo: support binary_path next sprint",
+	})
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v (false-positive INVALID_ARGS regression)", err)
+	}
+	if data["node_id"] != "node1" || data["started"] != true {
+		t.Errorf("data = %v, want started=true", data)
+	}
+}
+
 // ---- node.restart tests ----
 
 func TestHandleNodeRestart_HappyPath_EmitsBothEvents(t *testing.T) {

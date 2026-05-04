@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -76,9 +75,14 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 // On success: emits "node.started" event, returns {node_id, started:true}.
 func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
+		// *string discriminates "key absent" (nil) from "key present with empty
+		// value" (non-nil pointer to ""). One pointer indirection is the
+		// canonical Go idiom for optional-string args; substring-scanning the
+		// raw JSON would false-positive on unrelated keys whose values happen
+		// to contain "binary_path".
 		var pre struct {
-			Network    string `json:"network"`
-			BinaryPath string `json:"binary_path"`
+			Network    string  `json:"network"`
+			BinaryPath *string `json:"binary_path"`
 		}
 		if len(args) > 0 {
 			_ = json.Unmarshal(args, &pre)
@@ -88,17 +92,19 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 				"node.start is only supported on the local network (got %q)", pre.Network,
 			))
 		}
-		// binary_path is optional; if the JSON key was present we require an
-		// absolute path. Distinguishing "absent" from "empty string" cheaply:
-		// re-scan the raw args for the literal key. (Cheaper than a second
-		// struct unmarshal with *string + nil-vs-empty discrimination.)
-		if pre.BinaryPath != "" && !strings.HasPrefix(pre.BinaryPath, "/") {
+		// binary_path is optional; reject explicit empty / relative paths.
+		// Absent key (pre.BinaryPath == nil) → use profile default.
+		if pre.BinaryPath != nil && *pre.BinaryPath == "" {
+			return nil, NewInvalidArgs("args.binary_path must not be empty")
+		}
+		if pre.BinaryPath != nil && !strings.HasPrefix(*pre.BinaryPath, "/") {
 			return nil, NewInvalidArgs(fmt.Sprintf(
-				"args.binary_path must be an absolute path, got %q", pre.BinaryPath,
+				"args.binary_path must be an absolute path, got %q", *pre.BinaryPath,
 			))
 		}
-		if len(args) > 0 && bytes.Contains(args, []byte(`"binary_path"`)) && pre.BinaryPath == "" {
-			return nil, NewInvalidArgs("args.binary_path must not be empty")
+		var binaryPath string
+		if pre.BinaryPath != nil {
+			binaryPath = *pre.BinaryPath
 		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
@@ -106,7 +112,7 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 		}
 
 		driver := local.NewDriver(chainbenchDir)
-		result, err := driver.StartNode(context.Background(), nodeNum, pre.BinaryPath)
+		result, err := driver.StartNode(context.Background(), nodeNum, binaryPath)
 		if err != nil {
 			return nil, NewUpstream("subprocess exec failed", err)
 		}
