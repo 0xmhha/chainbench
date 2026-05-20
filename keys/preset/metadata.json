@@ -1,5 +1,6 @@
 {
   "description": "Preset keys for go-stablenet local chain testing (4 validators + 1 endpoint)",
+  "warning": "TEST FIXTURE ONLY — do not import to mainnet/testnet. See keys/preset/README.md.",
   "password": "1",
   "validators": [
     "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",

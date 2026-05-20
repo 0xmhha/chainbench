@@ -3,6 +3,8 @@
 #
 # Usage:
 #   1. Copy this file: cp profiles/remote-example.yaml profiles/custom/my-remote.yaml
+#      (Always place copies under profiles/custom/ — that path is .gitignored.
+#      Copies left in profiles/ root may be committed by accident.)
 #   2. Edit the copy with your RPC details
 #   3. Register: chainbench remote add <alias> <rpc_url> [--type mainnet|testnet|devnet]
 #

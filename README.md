@@ -2,9 +2,15 @@
 
 A local blockchain sandbox test bench for [go-stablenet](https://github.com/stable-net/go-stablenet) (geth fork with WBFT consensus). Manage multi-node local chains with a single CLI, run built-in tests, and integrate with AI agents via MCP.
 
+> ⚠️ **TEST FIXTURE ONLY**: This repository commits a set of preset validator
+> keys under `keys/preset/` for reproducible local testing. The password is
+> `1`, the keystore is trivially decryptable, and all nodes bind to `127.0.0.1`.
+> **Never import these keys into any mainnet, testnet, or shared environment.**
+> Treat them as public. See `keys/preset/README.md` for details.
+
 - **Single CLI** for full chain lifecycle (`init`, `start`, `stop`, `test`, `log`)
 - **YAML profiles** with inheritance for different test scenarios
-- **Preset keys** for reproducible validator addresses across runs
+- **Preset keys** for reproducible validator addresses across runs (local-only — see warning above)
 - **10 built-in tests** covering consensus, fault tolerance, and stress
 - **MCP server** for Claude Code / AI agent integration (per-project opt-in)
 - **No Docker required** — pure process-based, runs on macOS and Linux

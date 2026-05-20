@@ -49,3 +49,6 @@ bin/bootnode
 # Remote chain profiles with auth headers (security)
 profiles/custom/*-secret.yaml
 profiles/custom/*-auth.yaml
+# Defense in depth: catch copies placed outside the custom/ subdir
+profiles/*-secret.yaml
+profiles/*-auth.yaml
