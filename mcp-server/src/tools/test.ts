@@ -54,7 +54,7 @@ function validateTestName(test: string): string | null {
 }
 
 function validateReportFormat(format: string): string | null {
-  const allowed = ["text", "json", "summary"];
+  const allowed = ["text", "json"];
   if (!allowed.includes(format)) {
     return `Invalid format '${format}'. Allowed values: ${allowed.join(", ")}.`;
   }
@@ -156,7 +156,7 @@ export function registerTestTools(server: McpServer): void {
         .string()
         .optional()
         .default("text")
-        .describe("Output format: 'text' (default), 'json', or 'summary'"),
+        .describe("Output format: 'text' (default) or 'json'"),
     },
     async ({ format }) => {
       const validationError = validateReportFormat(format);
@@ -164,7 +164,7 @@ export function registerTestTools(server: McpServer): void {
         return { content: [{ type: "text" as const, text: `Error: ${validationError}` }] };
       }
 
-      const formatFlag = format === "json" ? " --json" : format === "summary" ? " --summary" : "";
+      const formatFlag = format === "json" ? " --format json" : "";
       const result = runChainbench(`report${formatFlag}`);
       return { content: [{ type: "text" as const, text: formatResult(result) }] };
     }
