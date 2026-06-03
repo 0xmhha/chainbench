@@ -14,3 +14,4 @@ adapter_generate_genesis()          { _cb_wbft_not_implemented; }
 adapter_generate_toml()             { _cb_wbft_not_implemented; }
 adapter_extra_start_flags()         { printf '--allow-insecure-unlock\n'; }
 adapter_consensus_rpc_namespace()   { printf 'istanbul\n'; }
+adapter_binary_name()               { printf 'gwbft\n'; }

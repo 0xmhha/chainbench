@@ -216,3 +216,16 @@ adapter_extra_start_flags() {
 adapter_consensus_rpc_namespace() {
   printf 'istanbul\n'
 }
+
+# ---- Binary name -------------------------------------------------------------
+
+# adapter_binary_name
+# Canonical short binary name for this chain type. Used as a label/default
+# source (genesis/init log labels, and the default when no binary is otherwise
+# resolved). It is NOT the authority for process matching: the resolved
+# CHAINBENCH_BINARY / the basename actually launched (recorded in pids.json) is
+# what pgrep/pkill must key off, so a renamed binary (e.g. gstable-pr1234)
+# stops cleanly.
+adapter_binary_name() {
+  printf 'gstable\n'
+}
