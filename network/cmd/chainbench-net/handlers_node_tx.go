@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/holiman/uint256"
 
 	"github.com/0xmhha/chainbench/network/internal/abiutil"
+	"github.com/0xmhha/chainbench/network/internal/adapters"
 	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/signer"
@@ -696,17 +698,9 @@ func receiptToResult(txHash string, rcpt *ethtypes.Receipt) map[string]any {
 // feeDelegateTxType is the go-stablenet FeeDelegateDynamicFeeTx type byte.
 // Distinct from any go-ethereum standard typed-tx prefix (0x01 / 0x02 / 0x03 /
 // 0x04) so the broadcast envelope cannot be confused with a vanilla EIP-1559
-// or SetCode transaction.
-const feeDelegateTxType byte = 0x16
-
-// feeDelegationAllowedChains is the chain-type allowlist for
-// node.tx_fee_delegation_send. Hardcoded for Sprint 4c per spec §4.3 — promoting
-// to an Adapter.SupportedTxTypes() method is a Sprint 5 concern. Anything not
-// in this set returns NOT_SUPPORTED before any signer load or RPC round-trip.
-var feeDelegationAllowedChains = map[string]bool{
-	"stablenet": true,
-	"wbft":      true,
-}
+// or SetCode transaction. Sourced from the adapter contract so the gate below
+// and the adapters' SupportedTxTypes share one definition.
+const feeDelegateTxType = adapters.FeeDelegateDynamicFeeTxType
 
 // newHandleNodeTxFeeDelegationSend implements the go-stablenet
 // FeeDelegateDynamicFeeTx (type 0x16). Two signers are required: the sender
@@ -831,9 +825,10 @@ func newHandleNodeTxFeeDelegationSend(stateDir string) Handler {
 			return nil, NewUpstream("failed to load network state", lerr)
 		}
 		chainType := string(netState.ChainType)
-		if !feeDelegationAllowedChains[chainType] {
+		adapter, aerr := adapters.Load(chainType)
+		if aerr != nil || !slices.Contains(adapter.SupportedTxTypes(), feeDelegateTxType) {
 			return nil, NewNotSupported(fmt.Sprintf(
-				"node.tx_fee_delegation_send is only supported on stablenet/wbft chains; got chain_type=%q", chainType,
+				"node.tx_fee_delegation_send is not supported on chain_type=%q", chainType,
 			))
 		}
 

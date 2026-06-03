@@ -35,6 +35,10 @@ type (
 const (
 	RoleValidator = spec.RoleValidator
 	RoleEndpoint  = spec.RoleEndpoint
+
+	// FeeDelegateDynamicFeeTxType is re-exported so the handler package can
+	// reference the canonical 0x16 byte without importing spec directly.
+	FeeDelegateDynamicFeeTxType = spec.FeeDelegateDynamicFeeTxType
 )
 
 var (

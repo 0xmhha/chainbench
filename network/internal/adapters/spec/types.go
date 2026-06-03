@@ -47,6 +47,13 @@ type TomlInput struct {
 	BaseMetrics   int
 }
 
+// FeeDelegateDynamicFeeTxType is the go-stablenet FeeDelegateDynamicFeeTx type
+// byte (0x16). Defined here so each adapter can declare support for it via
+// SupportedTxTypes without importing the handler package (which owns the
+// envelope-building logic). Distinct from go-ethereum's standard typed-tx
+// prefixes (0x01/0x02/0x03/0x04).
+const FeeDelegateDynamicFeeTxType byte = 0x16
+
 // Adapter is the chain-type-specific strategy for initializing a local
 // chainbench network.
 type Adapter interface {
@@ -54,6 +61,10 @@ type Adapter interface {
 	GenerateToml(ctx context.Context, input TomlInput) error
 	ExtraStartFlags(role Role) string
 	ConsensusRpcNamespace() string
+	// SupportedTxTypes reports the chain-specific tx type bytes this chain
+	// accepts beyond the Ethereum baseline (e.g. go-stablenet's 0x16
+	// FeeDelegateDynamicFeeTx). Empty/nil means Ethereum-baseline only.
+	SupportedTxTypes() []byte
 }
 
 var (

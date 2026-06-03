@@ -34,3 +34,7 @@ func (*Adapter) ExtraStartFlags(_ spec.Role) string { return "--allow-insecure-u
 // ConsensusRpcNamespace returns the consensus RPC module name exposed by
 // this chain type.
 func (*Adapter) ConsensusRpcNamespace() string { return "wemix" }
+
+// SupportedTxTypes reports that wemix accepts only the Ethereum baseline (no
+// fee-delegation), matching its exclusion from the prior allowlist.
+func (*Adapter) SupportedTxTypes() []byte { return nil }

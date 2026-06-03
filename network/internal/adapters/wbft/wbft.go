@@ -34,3 +34,9 @@ func (*Adapter) ExtraStartFlags(_ spec.Role) string { return "--allow-insecure-u
 // ConsensusRpcNamespace returns the consensus RPC module name exposed by
 // this chain type.
 func (*Adapter) ConsensusRpcNamespace() string { return "istanbul" }
+
+// SupportedTxTypes reports that wbft accepts the FeeDelegateDynamicFeeTx
+// (0x16), matching the prior fee-delegation allowlist.
+func (*Adapter) SupportedTxTypes() []byte {
+	return []byte{spec.FeeDelegateDynamicFeeTxType}
+}
