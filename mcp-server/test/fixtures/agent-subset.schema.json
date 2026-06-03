@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "chainbench slice of the agent-facing MCP contract (C1)",
+  "description": "The chainbench_* tools the coding-agent evaluator depends on, by exact registered name. This is the chainbench-owned fragment of the canonical coding-agent/contract/agent-mcp.schema.json (authored by the coding-agent repo). contract.test.ts asserts the server registers every tool below by name and that each tool's input field names + required set match. The chainbench_report output is the C4 report shape (documented under `output`); that JSON shape is exercised by report.test.ts and tests/unit/tests/cmd-report-format.sh rather than the registration check, because the tool's output is untyped text at the MCP boundary.",
+  "tools": {
+    "chainbench_init": {
+      "input": {
+        "properties": { "profile": {}, "project_root": {}, "binary_path": {} },
+        "required": []
+      }
+    },
+    "chainbench_start": {
+      "input": {
+        "properties": { "project_root": {}, "binary_path": {} },
+        "required": []
+      }
+    },
+    "chainbench_stop": {
+      "input": {
+        "properties": { "network": {} },
+        "required": []
+      }
+    },
+    "chainbench_status": {
+      "input": {
+        "properties": { "network": {} },
+        "required": []
+      }
+    },
+    "chainbench_test_run": {
+      "input": {
+        "properties": { "test": {}, "format": {} },
+        "required": ["test"]
+      }
+    },
+    "chainbench_report": {
+      "input": {
+        "properties": { "format": {} },
+        "required": []
+      },
+      "output": {
+        "$comment": "C4 report shape when format=json. Verified by report.test.ts + cmd-report-format.sh, not by the registration check.",
+        "properties": {
+          "summary": {
+            "properties": {
+              "total_tests": {},
+              "passed": {},
+              "failed": {},
+              "assertions": { "properties": { "passed": {}, "failed": {} } }
+            }
+          },
+          "tests": {}
+        }
+      }
+    },
+    "chainbench_failure_context": {
+      "input": {
+        "properties": {},
+        "required": []
+      }
+    }
+  }
+}
