@@ -30,12 +30,18 @@ var profileNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_\-/]+$`)
 // inherit the parent env, append CHAINBENCH_DIR, and forward the bash CLI's
 // combined output as {stdout}. The lifecycle reroutes (init/start_all/restart/
 // clean) delegate to the existing bash flow rather than reimplementing genesis
-// generation and node boot natively in Go.
-func runLifecycleScript(chainbenchDir string, timeout time.Duration, args ...string) (map[string]any, error) {
+// generation and node boot natively in Go. When projectRoot is non-empty it
+// becomes the subprocess working directory, so chainbench.sh's resolve_binary
+// can auto-detect <project_root>/build/bin/<binary> (the cwd convention the
+// MCP shell-out path used).
+func runLifecycleScript(chainbenchDir, projectRoot string, timeout time.Duration, args ...string) (map[string]any, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, filepath.Join(chainbenchDir, "chainbench.sh"), args...)
 	cmd.Env = append(os.Environ(), "CHAINBENCH_DIR="+chainbenchDir)
+	if projectRoot != "" {
+		cmd.Dir = projectRoot
+	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, NewUpstream("chainbench "+args[0], fmt.Errorf("%w: %s", err, string(out)))
@@ -55,23 +61,37 @@ func validateWireBinaryPath(p string) error {
 	return nil
 }
 
+// validateWireProjectRoot rejects a non-absolute project_root at the wire
+// boundary. Empty is allowed (the subprocess inherits the server's cwd).
+func validateWireProjectRoot(p string) error {
+	if p == "" {
+		return nil
+	}
+	if !filepath.IsAbs(p) {
+		return NewInvalidArgs(fmt.Sprintf("project_root must be an absolute path: %q", p))
+	}
+	return nil
+}
+
 // newHandleNetworkInit returns the "network.init" handler: it initializes a
 // local chain from a profile (genesis + TOML + datadir) by spawning
 // `chainbench.sh init --profile <profile> --quiet [--binary-path <path>]`.
 //
-// Args: { "profile"?: "default", "binary_path"?: "/abs/path" }
+// Args: { "profile"?: "default", "project_root"?: "/abs/path", "binary_path"?: "/abs/path" }
 //
 // Result: { "stdout": "<bash output>" }
 //
 // Error mapping:
 //
-//	INVALID_ARGS    — malformed args JSON, bad profile name, or relative binary_path.
+//	INVALID_ARGS    — malformed args JSON, bad profile name, or relative
+//	                  project_root / binary_path.
 //	UPSTREAM_ERROR  — chainbench.sh non-zero exit or spawn failure.
 func newHandleNetworkInit(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			Profile    string `json:"profile"`
-			BinaryPath string `json:"binary_path"`
+			Profile     string `json:"profile"`
+			ProjectRoot string `json:"project_root"`
+			BinaryPath  string `json:"binary_path"`
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
@@ -86,6 +106,9 @@ func newHandleNetworkInit(stateDir, chainbenchDir string) Handler {
 				"invalid profile name %q: only alphanumeric, dash, underscore, and slash are allowed", req.Profile,
 			))
 		}
+		if err := validateWireProjectRoot(req.ProjectRoot); err != nil {
+			return nil, err
+		}
 		if err := validateWireBinaryPath(req.BinaryPath); err != nil {
 			return nil, err
 		}
@@ -95,7 +118,7 @@ func newHandleNetworkInit(stateDir, chainbenchDir string) Handler {
 		if req.BinaryPath != "" {
 			cmdArgs = append(cmdArgs, "--binary-path", req.BinaryPath)
 		}
-		return runLifecycleScript(chainbenchDir, lifecycleTimeout, cmdArgs...)
+		return runLifecycleScript(chainbenchDir, req.ProjectRoot, lifecycleTimeout, cmdArgs...)
 	}
 }
 
@@ -103,7 +126,7 @@ func newHandleNetworkInit(stateDir, chainbenchDir string) Handler {
 // all nodes of an initialized local chain by spawning
 // `chainbench.sh start --quiet [--binary-path <path>]`.
 //
-// Args: { "binary_path"?: "/abs/path" }
+// Args: { "project_root"?: "/abs/path", "binary_path"?: "/abs/path" }
 //
 // Result: { "stdout": "<bash output>" }
 //
@@ -111,12 +134,16 @@ func newHandleNetworkInit(stateDir, chainbenchDir string) Handler {
 func newHandleNetworkStartAll(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			BinaryPath string `json:"binary_path"`
+			ProjectRoot string `json:"project_root"`
+			BinaryPath  string `json:"binary_path"`
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
 				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
 			}
+		}
+		if err := validateWireProjectRoot(req.ProjectRoot); err != nil {
+			return nil, err
 		}
 		if err := validateWireBinaryPath(req.BinaryPath); err != nil {
 			return nil, err
@@ -127,7 +154,7 @@ func newHandleNetworkStartAll(stateDir, chainbenchDir string) Handler {
 		if req.BinaryPath != "" {
 			cmdArgs = append(cmdArgs, "--binary-path", req.BinaryPath)
 		}
-		return runLifecycleScript(chainbenchDir, lifecycleTimeout, cmdArgs...)
+		return runLifecycleScript(chainbenchDir, req.ProjectRoot, lifecycleTimeout, cmdArgs...)
 	}
 }
 
@@ -135,7 +162,7 @@ func newHandleNetworkStartAll(stateDir, chainbenchDir string) Handler {
 // re-init, and start with the same profile by spawning
 // `chainbench.sh restart --quiet [--binary-path <path>]`.
 //
-// Args: { "binary_path"?: "/abs/path" }
+// Args: { "project_root"?: "/abs/path", "binary_path"?: "/abs/path" }
 //
 // Result: { "stdout": "<bash output>" }
 //
@@ -143,12 +170,16 @@ func newHandleNetworkStartAll(stateDir, chainbenchDir string) Handler {
 func newHandleNetworkRestart(stateDir, chainbenchDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			BinaryPath string `json:"binary_path"`
+			ProjectRoot string `json:"project_root"`
+			BinaryPath  string `json:"binary_path"`
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
 				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
 			}
+		}
+		if err := validateWireProjectRoot(req.ProjectRoot); err != nil {
+			return nil, err
 		}
 		if err := validateWireBinaryPath(req.BinaryPath); err != nil {
 			return nil, err
@@ -159,7 +190,7 @@ func newHandleNetworkRestart(stateDir, chainbenchDir string) Handler {
 		if req.BinaryPath != "" {
 			cmdArgs = append(cmdArgs, "--binary-path", req.BinaryPath)
 		}
-		return runLifecycleScript(chainbenchDir, lifecycleTimeout, cmdArgs...)
+		return runLifecycleScript(chainbenchDir, req.ProjectRoot, lifecycleTimeout, cmdArgs...)
 	}
 }
 
@@ -176,6 +207,6 @@ func newHandleNetworkRestart(stateDir, chainbenchDir string) Handler {
 func newHandleNetworkClean(stateDir, chainbenchDir string) Handler {
 	return func(_ json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		_ = stateDir
-		return runLifecycleScript(chainbenchDir, cleanTimeout, "clean")
+		return runLifecycleScript(chainbenchDir, "", cleanTimeout, "clean")
 	}
 }

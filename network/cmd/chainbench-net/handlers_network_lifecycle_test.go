@@ -3,9 +3,21 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
+
+// writeCwdEchoChainbench writes a fake chainbench.sh that echoes its working
+// directory, used to assert project_root is forwarded as the subprocess cwd.
+func writeCwdEchoChainbench(t *testing.T, dir string) {
+	t.Helper()
+	script := "#!/bin/bash\necho \"cwd=$PWD\"\nexit 0\n"
+	if err := os.WriteFile(filepath.Join(dir, "chainbench.sh"), []byte(script), 0o755); err != nil {
+		t.Fatalf("write cwd-echo script: %v", err)
+	}
+}
 
 // The lifecycle reroutes are thin wrappers over chainbench.sh, so the unit
 // tests use the same fake-script harness as network.stop_all: writeFakeChainbench
@@ -71,6 +83,41 @@ func TestHandleNetworkInit_RelativeBinaryPath(t *testing.T) {
 	defer bus.Close()
 
 	args, _ := json.Marshal(map[string]any{"binary_path": "build/bin/gstable"})
+	_, err := handler(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+		t.Errorf("want INVALID_ARGS, got %v", err)
+	}
+}
+
+func TestHandleNetworkInit_ProjectRootIsCwd(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeCwdEchoChainbench(t, chainbenchDir)
+	projectRoot := t.TempDir()
+	handler := newHandleNetworkInit(t.TempDir(), chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"project_root": projectRoot})
+	data, err := handler(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	stdout, _ := data["stdout"].(string)
+	// macOS resolves t.TempDir() under /private; match on the trailing path.
+	if !strings.Contains(stdout, filepath.Base(projectRoot)) {
+		t.Errorf("stdout = %q, want cwd to include project_root %q", stdout, projectRoot)
+	}
+}
+
+func TestHandleNetworkInit_RelativeProjectRoot(t *testing.T) {
+	chainbenchDir := t.TempDir()
+	writeFakeChainbench(t, chainbenchDir, 0)
+	handler := newHandleNetworkInit(t.TempDir(), chainbenchDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+
+	args, _ := json.Marshal(map[string]any{"project_root": "relative/dir"})
 	_, err := handler(args, bus)
 	var api *APIError
 	if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
