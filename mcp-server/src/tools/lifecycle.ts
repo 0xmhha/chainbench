@@ -1,9 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runChainbench, shellEscapeArg } from "../utils/exec.js";
 import { callWire } from "../utils/wire.js";
 import { formatWireResult } from "../utils/wireResult.js";
-import { type FormattedToolResponse } from "../utils/mcpResp.js";
+import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
 
 // Sprint 5c.4.1 Task 2 — chainbench_stop now invokes the network.stop_all
 // wire handler instead of shelling out via runChainbench. Exported as named
@@ -47,8 +46,8 @@ const PROJECT_ROOT_SCHEMA = z
   .optional()
   .describe(
     "Absolute path to the blockchain project root (e.g., go-stablenet repo). " +
-    "Used to auto-detect the binary at <project_root>/build/bin/. " +
-    "Falls back to CHAINBENCH_PROJECT_ROOT env var, then $PATH lookup.",
+    "Forwarded over the wire envelope as the chainbench.sh working directory " +
+    "so its binary auto-detection finds <project_root>/build/bin/.",
   );
 
 const BINARY_PATH_SCHEMA = z
@@ -56,16 +55,10 @@ const BINARY_PATH_SCHEMA = z
   .optional()
   .describe(
     "Absolute path to the chain binary (e.g., /opt/gstable/build/bin/gstable). " +
-    "Overrides profile's chain.binary_path for this invocation only.",
+    "Overrides the profile's chain.binary_path for this invocation only. " +
+    "Forwarded to the wire handler, which appends `--binary-path <path>` to " +
+    "chainbench.sh argv.",
   );
-
-function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
-  if (result.exitCode === 0) {
-    return result.stdout || "Done.";
-  }
-  const detail = result.stderr || result.stdout || "unknown error";
-  return `Error (exit ${result.exitCode}): ${detail}`;
-}
 
 function validateProjectRoot(projectRoot: string | undefined): string | null {
   if (projectRoot && !projectRoot.startsWith("/")) {
@@ -81,69 +74,97 @@ function validateBinaryPath(binaryPath: string | undefined): string | null {
   return null;
 }
 
-function buildBinaryPathArg(binaryPath: string | undefined): string {
-  if (!binaryPath) return "";
-  return ` --binary-path ${shellEscapeArg(binaryPath)}`;
+// Sprint 5c.4.2 — chainbench_init/start/restart route through the Go wire
+// (network.init / network.start_all / network.restart) instead of shelling
+// out via runChainbench, matching the node.start precedent. Boundary checks
+// stay here (defense in depth; the Go handler re-validates) so a bad profile
+// or relative path is rejected before a wire spawn. profile / project_root /
+// binary_path are forwarded in the wire envelope.
+export const InitArgs = z.object({
+  profile: z
+    .string()
+    .default("default")
+    .describe("Profile name from the profiles/ directory (e.g. 'default', 'minimal', 'large')"),
+  project_root: PROJECT_ROOT_SCHEMA,
+  binary_path: BINARY_PATH_SCHEMA,
+}).strict();
+
+export async function _initHandler(
+  args: z.infer<typeof InitArgs>,
+): Promise<FormattedToolResponse> {
+  const { profile, project_root, binary_path } = args;
+  if (!/^[a-zA-Z0-9_\-/]+$/.test(profile)) {
+    return errorResp(
+      `invalid profile name '${profile}'. Only alphanumeric characters, dashes, underscores, and slashes are allowed.`,
+    );
+  }
+  const rootError = validateProjectRoot(project_root);
+  if (rootError) return errorResp(rootError);
+  const bpError = validateBinaryPath(binary_path);
+  if (bpError) return errorResp(bpError);
+
+  const wireArgs: Record<string, unknown> = { profile };
+  if (project_root !== undefined) wireArgs.project_root = project_root;
+  if (binary_path !== undefined) wireArgs.binary_path = binary_path;
+  const result = await callWire("network.init", wireArgs);
+  return formatWireResult(result);
+}
+
+export const StartArgs = z.object({
+  project_root: PROJECT_ROOT_SCHEMA,
+  binary_path: BINARY_PATH_SCHEMA,
+}).strict();
+
+export async function _startHandler(
+  args: z.infer<typeof StartArgs>,
+): Promise<FormattedToolResponse> {
+  const { project_root, binary_path } = args;
+  const rootError = validateProjectRoot(project_root);
+  if (rootError) return errorResp(rootError);
+  const bpError = validateBinaryPath(binary_path);
+  if (bpError) return errorResp(bpError);
+
+  const wireArgs: Record<string, unknown> = {};
+  if (project_root !== undefined) wireArgs.project_root = project_root;
+  if (binary_path !== undefined) wireArgs.binary_path = binary_path;
+  const result = await callWire("network.start_all", wireArgs);
+  return formatWireResult(result);
+}
+
+export const RestartArgs = z.object({
+  project_root: PROJECT_ROOT_SCHEMA,
+  binary_path: BINARY_PATH_SCHEMA,
+}).strict();
+
+export async function _restartHandler(
+  args: z.infer<typeof RestartArgs>,
+): Promise<FormattedToolResponse> {
+  const { project_root, binary_path } = args;
+  const rootError = validateProjectRoot(project_root);
+  if (rootError) return errorResp(rootError);
+  const bpError = validateBinaryPath(binary_path);
+  if (bpError) return errorResp(bpError);
+
+  const wireArgs: Record<string, unknown> = {};
+  if (project_root !== undefined) wireArgs.project_root = project_root;
+  if (binary_path !== undefined) wireArgs.binary_path = binary_path;
+  const result = await callWire("network.restart", wireArgs);
+  return formatWireResult(result);
 }
 
 export function registerLifecycleTools(server: McpServer): void {
   server.tool(
     "chainbench_init",
     "Initialize a local blockchain from a profile. Generates genesis.json, TOML configs, and initializes node data directories. Must be run before starting the chain.",
-    {
-      profile: z
-        .string()
-        .default("default")
-        .describe("Profile name to use from the profiles/ directory (e.g. 'default', 'minimal', 'large')"),
-      project_root: PROJECT_ROOT_SCHEMA,
-      binary_path: BINARY_PATH_SCHEMA,
-    },
-    async ({ profile, project_root, binary_path }) => {
-      // Validate profile name: alphanumeric, dashes, underscores, forward-slash only
-      if (!/^[a-zA-Z0-9_\-/]+$/.test(profile)) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error: invalid profile name '${profile}'. Only alphanumeric characters, dashes, underscores, and slashes are allowed.`,
-            },
-          ],
-        };
-      }
-      const rootError = validateProjectRoot(project_root);
-      if (rootError) {
-        return { content: [{ type: "text" as const, text: `Error: ${rootError}` }] };
-      }
-      const bpError = validateBinaryPath(binary_path);
-      if (bpError) {
-        return { content: [{ type: "text" as const, text: `Error: ${bpError}` }] };
-      }
-      const result = runChainbench(`init --profile ${profile} --quiet${buildBinaryPathArg(binary_path)}`, {
-        cwd: project_root,
-      });
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    InitArgs.shape,
+    _initHandler,
   );
 
   server.tool(
     "chainbench_start",
     "Start all chain nodes. The chain must have been initialized with chainbench_init first.",
-    {
-      project_root: PROJECT_ROOT_SCHEMA,
-      binary_path: BINARY_PATH_SCHEMA,
-    },
-    async ({ project_root, binary_path }) => {
-      const rootError = validateProjectRoot(project_root);
-      if (rootError) {
-        return { content: [{ type: "text" as const, text: `Error: ${rootError}` }] };
-      }
-      const bpError = validateBinaryPath(binary_path);
-      if (bpError) {
-        return { content: [{ type: "text" as const, text: `Error: ${bpError}` }] };
-      }
-      const result = runChainbench(`start --quiet${buildBinaryPathArg(binary_path)}`, { cwd: project_root });
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    StartArgs.shape,
+    _startHandler,
   );
 
   server.tool(
@@ -158,22 +179,8 @@ export function registerLifecycleTools(server: McpServer): void {
   server.tool(
     "chainbench_restart",
     "Restart the chain: stop all nodes, clean data, re-initialize with the same profile, and start fresh.",
-    {
-      project_root: PROJECT_ROOT_SCHEMA,
-      binary_path: BINARY_PATH_SCHEMA,
-    },
-    async ({ project_root, binary_path }) => {
-      const rootError = validateProjectRoot(project_root);
-      if (rootError) {
-        return { content: [{ type: "text" as const, text: `Error: ${rootError}` }] };
-      }
-      const bpError = validateBinaryPath(binary_path);
-      if (bpError) {
-        return { content: [{ type: "text" as const, text: `Error: ${bpError}` }] };
-      }
-      const result = runChainbench(`restart --quiet${buildBinaryPathArg(binary_path)}`, { cwd: project_root });
-      return { content: [{ type: "text" as const, text: formatResult(result) }] };
-    }
+    RestartArgs.shape,
+    _restartHandler,
   );
 
   server.tool(

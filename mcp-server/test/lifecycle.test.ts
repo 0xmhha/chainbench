@@ -7,6 +7,10 @@ import {
   _stopHandler,
   StatusArgs,
   _statusHandler,
+  InitArgs,
+  _initHandler,
+  _startHandler,
+  _restartHandler,
 } from "../src/tools/lifecycle.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -166,5 +170,84 @@ describe("chainbench_status handler", () => {
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
     expect(out.content[0]?.text).toContain("chainbench status exited 1");
+  });
+});
+
+// chainbench_init/start/restart route through the Go wire (network.init /
+// network.start_all / network.restart). Same mock-fixture injection as the
+// stop/status blocks: the mock chainbench-net replays a wire result line, and
+// boundary-rejection cases return before any spawn (no MOCK_SCRIPT needed).
+describe("chainbench_init/start/restart handlers", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  function okResult(stdout: string): void {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data: { stdout } }),
+      },
+    ]);
+  }
+
+  it("_InitDefaultsProfileAndRoutesToWire", async () => {
+    okResult("initialized");
+    const out = await _initHandler({ profile: "default" });
+    expect(out.isError).toBeFalsy();
+    expect(out.content[0]?.text).toContain("initialized");
+  });
+
+  it("_InitRejectsBadProfileBeforeSpawn", async () => {
+    const out = await _initHandler({ profile: "../etc/passwd" });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("invalid profile name");
+  });
+
+  it("_InitRejectsRelativeBinaryPath", async () => {
+    const out = await _initHandler({ profile: "default", binary_path: "rel/gstable" });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("binary_path must be an absolute path");
+  });
+
+  it("_InitStrictRejectsUnknownKeys", () => {
+    expect(() => InitArgs.parse({ profile: "default", bogus: 1 })).toThrow();
+  });
+
+  it("_StartRoutesToWire", async () => {
+    okResult("started");
+    const out = await _startHandler({ binary_path: "/opt/gstable" });
+    expect(out.isError).toBeFalsy();
+    expect(out.content[0]?.text).toContain("started");
+  });
+
+  it("_StartRejectsRelativeProjectRoot", async () => {
+    const out = await _startHandler({ project_root: "rel/root" });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("project_root must be an absolute path");
+  });
+
+  it("_RestartRoutesToWire", async () => {
+    okResult("restarted");
+    const out = await _restartHandler({});
+    expect(out.isError).toBeFalsy();
+    expect(out.content[0]?.text).toContain("restarted");
   });
 });

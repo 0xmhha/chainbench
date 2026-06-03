@@ -10,8 +10,15 @@ if ! pids_exists; then
   return 0 2>/dev/null || exit 0
 fi
 
-# Use pkill as the primary mechanism (reliable regardless of PID tracking)
-_BINARY_NAME="${CHAINBENCH_BINARY:-gstable}"
+# Use pkill as the primary mechanism (reliable regardless of PID tracking).
+# Key off the basename of the binary actually launched (recorded in pids.json),
+# not the profile-default name — otherwise a renamed binary (e.g. gstable-pr1234)
+# would not match the pgrep pattern and its processes would leak. Fall back to
+# CHAINBENCH_BINARY (then gstable) only when pids.json predates this field.
+_BINARY_NAME="$(pids_binary_basename 2>/dev/null || true)"
+if [[ -z "${_BINARY_NAME}" ]]; then
+  _BINARY_NAME="${CHAINBENCH_BINARY:-gstable}"
+fi
 
 log_info "Stopping all ${_BINARY_NAME} processes ..."
 

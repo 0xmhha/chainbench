@@ -111,6 +111,39 @@ print(' '.join(pids))
 " "$_CB_PIDS_FILE"
 }
 
+# pids_binary_basename
+# Print the basename of the binary that was actually launched, as recorded in
+# pids.json. Prefers the top-level binary_basename field (written by start);
+# falls back to the basename of the first node's recorded binary path. Prints
+# nothing and returns 1 when neither is available (old-format/partial file) so
+# callers can fall back to CHAINBENCH_BINARY. This is the authority for the
+# stop/kill pattern: it matches what was spawned, so a renamed binary
+# (e.g. gstable-pr1234) is stopped cleanly instead of leaking.
+pids_binary_basename() {
+  pids_exists || return 1
+  python3 - "$_CB_PIDS_FILE" <<'PYEOF'
+import sys, json, os
+
+with open(sys.argv[1]) as fh:
+    data = json.load(fh)
+
+name = data.get("binary_basename") or ""
+if not name:
+    nodes = data.get("nodes", {})
+    if isinstance(nodes, list):
+        nodes = {str(i + 1): n for i, n in enumerate(nodes)}
+    for _, node in sorted(nodes.items(), key=lambda x: str(x[0])):
+        binary = node.get("binary") or ""
+        if binary:
+            name = os.path.basename(binary)
+            break
+
+if not name:
+    sys.exit(1)
+print(name)
+PYEOF
+}
+
 # pids_node_count
 # Print total number of nodes.
 pids_node_count() {

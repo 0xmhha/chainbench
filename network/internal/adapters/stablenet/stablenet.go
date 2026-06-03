@@ -248,6 +248,12 @@ func (*Adapter) ExtraStartFlags(role spec.Role) string {
 // stablenet (WBFT consensus uses the `istanbul` namespace).
 func (*Adapter) ConsensusRpcNamespace() string { return "istanbul" }
 
+// SupportedTxTypes reports that stablenet accepts the FeeDelegateDynamicFeeTx
+// (0x16) on top of the Ethereum baseline.
+func (*Adapter) SupportedTxTypes() []byte {
+	return []byte{spec.FeeDelegateDynamicFeeTxType}
+}
+
 // --- helpers -----------------------------------------------------------------
 
 func getMap(m map[string]any, key string) map[string]any {

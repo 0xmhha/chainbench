@@ -84,9 +84,16 @@ if pids_exists; then
   done
   if [[ "$_any_alive" -eq 1 ]]; then
     log_info "Running nodes detected, stopping first ..."
-    pkill -15 "${CHAINBENCH_BINARY}" 2>/dev/null || true
+    # Kill the binary actually launched by the prior start (recorded in the
+    # still-present pids.json), not the current profile default — so a renamed
+    # binary (e.g. gstable-pr1234) is not left running across a re-init.
+    _init_kill_name="$(pids_binary_basename 2>/dev/null || true)"
+    if [[ -z "${_init_kill_name}" ]]; then
+      _init_kill_name="${CHAINBENCH_BINARY}"
+    fi
+    pkill -15 "${_init_kill_name}" 2>/dev/null || true
     sleep 2
-    pkill -9 "${CHAINBENCH_BINARY}" 2>/dev/null || true
+    pkill -9 "${_init_kill_name}" 2>/dev/null || true
     log_success "Existing nodes stopped"
   fi
 fi

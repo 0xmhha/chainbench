@@ -271,16 +271,18 @@ python3 - \
   "${LOG_DIR}" \
   "${_start_nodes_payload}" \
   "${_START_DATA_DIR}" \
+  "$(basename "${BINARY}")" \
   <<'PYEOF'
 import sys, json, os
 
-OUTPUT_PATH   = sys.argv[1]
-chain_id      = sys.argv[2]
-profile_name  = sys.argv[3]
-started_at    = sys.argv[4]
-log_dir       = sys.argv[5]
-nodes_raw     = sys.argv[6]   # "idx|pid|type|p2p|http|ws|auth|metrics\n..."
-data_dir      = sys.argv[7]
+OUTPUT_PATH     = sys.argv[1]
+chain_id        = sys.argv[2]
+profile_name    = sys.argv[3]
+started_at      = sys.argv[4]
+log_dir         = sys.argv[5]
+nodes_raw       = sys.argv[6]   # "idx|pid|type|p2p|http|ws|auth|metrics\n..."
+data_dir        = sys.argv[7]
+binary_basename = sys.argv[8]   # basename of the resolved binary actually launched
 
 def _load_launch_args(idx):
     """Read the persisted launch_args file for a node, if present."""
@@ -336,10 +338,11 @@ for line in nodes_raw.strip().splitlines():
     }
 
 doc = {
-    "chain_id":   chain_id,
-    "profile":    profile_name,
-    "started_at": started_at,
-    "nodes":      nodes,
+    "chain_id":        chain_id,
+    "profile":         profile_name,
+    "started_at":      started_at,
+    "binary_basename": binary_basename,
+    "nodes":           nodes,
 }
 
 with open(OUTPUT_PATH, "w") as fh:
