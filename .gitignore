@@ -43,6 +43,7 @@ Thumbs.db
 bin/logrot
 bin/gstable
 bin/bootnode
+bin/chainbench-net
 
 .claude/settings.local.json
 
