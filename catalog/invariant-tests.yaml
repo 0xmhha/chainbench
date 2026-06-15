@@ -1,0 +1,78 @@
+# invariant→test catalog (v0, 5 entries) — 2026-06-16
+#
+# Binds canonical SSoT invariant IDs (D-023 개정 scheme: <category>.<area>.<slug>,
+# see study/docs/research/ai-knowledge-data/docs/category-ontology.md) to EXISTING
+# chainbench tests. This is the enforce→chainbench fan-out (D-025) and the seed for
+# a future `chainbench_invariant_check(invariant_id)` MCP tool.
+#
+# binding grades (HONEST — graded by reading each test's actual assertions):
+#   good     = the test asserts the invariant's DISTINGUISHING claim.
+#   partial  = the test asserts the MECHANISM but NOT the distinguishing claim
+#              → a green check can give FALSE ASSURANCE. `missing` says what to add.
+#
+# All `ref` paths verified to exist under chainbench/tests/ on 2026-06-16.
+# Tests verified-to-exist; "currently-passes" run-verification is a separate step
+# (chain must be up). basic/consensus already passes (Gate 0).
+
+schema_version: 0
+source_repo: chainbench
+invariant_ids_from: study/docs/research/ai-knowledge-data/docs/category-ontology.md   # D-024 canonical remap
+
+invariants:
+
+  - id: types.fee_delegation.feepayer_sighash
+    statement: "fee-delegated tx의 feePayer 서명은 올바른 sighash payload에 대해서만 유효하다."
+    lens: fee-policy
+    tests:
+      - ref: regression/d-fee-delegation/d-04-feepayer-sig-invalid
+        asserts: "변조된 feePayer 서명 tx는 거부되고 에러가 'invalid feePayer signature'를 가리킨다."
+        binding: good
+      - ref: regression/d-fee-delegation/d-01-fee-delegate-normal
+        asserts: "정상 fee-delegation tx는 수용된다(positive path)."
+        binding: good
+      - ref: regression/d-fee-delegation/d-03-sender-sig-invalid
+        asserts: "sender 서명 무효 시 거부."
+        binding: good
+    missing: null
+
+  - id: consensus.wbft_core.quorum_calc
+    statement: "WBFT quorum = ceil(2N/3); quorum 미만이면 commit 불가(liveness halt)."
+    lens: consensus-safety
+    tests:
+      - ref: regression/b-wbft/b-08-quorum-deficient
+        asserts: "validator 4→2(quorum 3 미달)이면 체인이 정지, quorum 복구 시 재개."
+        binding: good   # behavioral: quorum 임계의 운영적 결과를 검증
+    missing: "ceil(2N/3) 공식의 수치 직접검증은 없음(임계 동작만). 정확한 quorum 수 단언 추가 권장."
+
+  - id: consensus.validator.equal_power
+    statement: "모든 활성 validator는 동등한 투표 권한(equal voting power)을 가진다."
+    lens: byzantine-fairness
+    tests:
+      - ref: regression/b-wbft/b-07-istanbul-get-validators
+        asserts: "istanbul_getValidators가 genesis validator 4명 집합을 반환."
+        binding: partial
+    missing: "검증자 *집합 멤버십*만 확인 — 각 validator의 *권한 동등성*은 미검증. 가중치/표=1 단언 필요."
+
+  - id: consensus.finality.instant_finality
+    statement: "WBFT는 즉시 finality; committed 블록은 reorg로 뒤집히지 않는다(inert reorg)."
+    lens: consensus-safety
+    tests:
+      - ref: basic/wbft-consensus
+        asserts: "validator 참여 + validator-set 합의 + committed seal 존재."
+        binding: partial
+      - ref: fault/network-partition
+        asserts: "분할 시 halt, 치유 시 합의 재개."
+        binding: partial
+    missing: "committed 블록의 *no-reorg/finality 불변*을 명시 단언하지 않음(halt/recover만). 분할 치유 후 commit된 블록이 그대로 유지됨을 검증하는 assertion 필요."
+
+  - id: consensus.fee.base_fee_redistribution
+    statement: "baseFee는 소각되지 않고(EIP-1559와 다름) validator에게 재분배된다(WKRC 공급 보존)."
+    lens: fee-policy
+    tests:
+      - ref: regression/c-anzeon/c-03-basefee-increase
+        asserts: "사용률>20%면 baseFee가 ~2% 증가(공식)."
+        binding: partial
+      - ref: regression/c-anzeon/c-04-basefee-stable
+        asserts: "baseFee 안정 구간 동작."
+        binding: partial
+    missing: "⚠ 가장 위험: baseFee의 *재분배-not-burned*를 검증하는 테스트가 c-anzeon에 0건(treasury/coinbase/validator-balance 단언 없음). 공식만 통과하면 baseFee를 소각해도 green → 거짓 보증. validator/coinbase 잔액 증가 단언 추가가 P1."
