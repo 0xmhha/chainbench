@@ -33,6 +33,7 @@ go-stablenet 저장소 `core/types/tx_fee_delegation.go`의 RLP 구조 기반:
 
 import argparse
 import json
+import os
 import sys
 
 import requests
@@ -155,8 +156,10 @@ def main():
 
     sign_p = sub.add_parser("sign", help="Build and sign a FeeDelegateDynamicFeeTx")
     sign_p.add_argument("--rpc", default="http://127.0.0.1:8501")
-    sign_p.add_argument("--sender-pk", required=True)
-    sign_p.add_argument("--fee-payer-pk", required=True)
+    # 키는 env(FD_SENDER_PK / FD_FEE_PAYER_PK)로 받는 것을 권장한다(프로세스 목록/히스토리
+    # 노출 방지). argv는 하위호환용으로만 남긴다. 둘 다 없으면 에러.
+    sign_p.add_argument("--sender-pk", default=None)
+    sign_p.add_argument("--fee-payer-pk", default=None)
     sign_p.add_argument("--to", required=True)
     sign_p.add_argument("--value", type=int, default=1)
     sign_p.add_argument("--gas", type=int, default=21000)
@@ -171,8 +174,8 @@ def main():
 
     send_p = sub.add_parser("send", help="Sign + submit via eth_sendRawTransaction")
     send_p.add_argument("--rpc", default="http://127.0.0.1:8501")
-    send_p.add_argument("--sender-pk", required=True)
-    send_p.add_argument("--fee-payer-pk", required=True)
+    send_p.add_argument("--sender-pk", default=None)
+    send_p.add_argument("--fee-payer-pk", default=None)
     send_p.add_argument("--to", required=True)
     send_p.add_argument("--value", type=int, default=1)
     send_p.add_argument("--gas", type=int, default=21000)
@@ -182,6 +185,18 @@ def main():
 
     args = p.parse_args()
 
+    # 키 우선순위: env(FD_SENDER_PK/FD_FEE_PAYER_PK) > argv. 신뢰 경계(서명 래퍼)가 env로
+    # 주입하면 argv·프로세스 목록에 키가 노출되지 않는다.
+    sender_pk = os.environ.get("FD_SENDER_PK") or args.sender_pk
+    fee_payer_pk = os.environ.get("FD_FEE_PAYER_PK") or args.fee_payer_pk
+    if not sender_pk or not fee_payer_pk:
+        print(
+            "ERROR: sender/fee-payer key required via FD_SENDER_PK/FD_FEE_PAYER_PK "
+            "env (preferred) or --sender-pk/--fee-payer-pk",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     data_bytes = b""
     if args.data:
         h = args.data[2:] if args.data.startswith("0x") else args.data
@@ -189,8 +204,8 @@ def main():
 
     result = build_and_sign(
         rpc_url=args.rpc,
-        sender_pk=args.sender_pk,
-        fee_payer_pk=args.fee_payer_pk,
+        sender_pk=sender_pk,
+        fee_payer_pk=fee_payer_pk,
         to=args.to,
         value=args.value,
         gas=args.gas,

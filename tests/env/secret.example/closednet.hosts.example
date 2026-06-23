@@ -1,0 +1,11 @@
+# tests/env/secret/closednet.hosts 의 형식 예시 (실제 파일은 gitignore).
+# 결정#2: 폐쇄망 노드 IP는 비밀 → 실제 내부망 IP는 여기(example)에 쓰지 말고
+#         tests/env/secret/closednet.hosts 에만 둔다. 노드제어 백엔드만 읽는다.
+# 한 줄당 노드 IP 하나 (stablenet-bp1 ~ bp7 순서).
+#
+#   cp tests/env/secret.example/closednet.hosts.example tests/env/secret/closednet.hosts
+#
+# (아래는 형식만 보이는 더미 — 실제 IP 아님)
+10.0.0.1
+10.0.0.2
+# ... bp3 ~ bp7

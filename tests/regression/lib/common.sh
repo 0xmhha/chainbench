@@ -25,7 +25,8 @@ source "${CHAINBENCH_DIR}/tests/lib/wait.sh"
 source "${CHAINBENCH_DIR}/tests/env/profile.sh"
 source "${CHAINBENCH_DIR}/tests/regression/lib/accessors.sh"
 source "${CHAINBENCH_DIR}/tests/regression/lib/constants.sh"
-# 노드제어 백엔드(local|closednet). W8에서 구현 — 없으면 ensure_nodes_running이 no-op.
+source "${CHAINBENCH_DIR}/tests/regression/lib/sign_backends.sh"
+# 노드제어 백엔드(local|closednet). 없으면 ensure_nodes_running이 no-op.
 source "${CHAINBENCH_DIR}/tests/regression/lib/node_ctrl/${CB_NODECTRL_BACKEND}.sh" 2>/dev/null || true
 
 # ============================================================================

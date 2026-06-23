@@ -7,3 +7,6 @@
 CB_SSH_USER="ubuntu"
 CB_SSH_PASSWORD="<<REPLACE-DO-NOT-COMMIT>>"
 CB_SSH_PORT="10022"
+# 원격 노드 기동 스크립트 (W13 인프라 확인). 기본값은 packages node_ctrl.sh 관례.
+REMOTE_SCRIPT_DIR="/data/stableNet/script"
+RUN_SCRIPT="run_testnet.sh"
