@@ -1,0 +1,9 @@
+# tests/env/secret/closednet.keys 의 형식 예시 (실제 파일은 gitignore).
+#
+# ★ 방식 B(노드측 keystore 서명)에서는 이 파일이 필요 없다 — 키는 서버 keystore에만 존재.
+#   이 파일은 다음의 격리된 fallback 경우에만 쓴다:
+#     (예외2) 수수료위임 tx를 gstable이 personal_signTransaction 으로 서명 못 할 때
+#   임시(throwaway) 계정은 런타임 생성 키라 여기 둘 필요 없다.
+#
+# 한 줄당: "<index> <private_key>". 서명 백엔드가 서브셸 내부에서만 로드(env/stdin), argv 금지.
+# 1 0x<<REPLACE-DO-NOT-COMMIT>>

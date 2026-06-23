@@ -1,0 +1,13 @@
+# tests/env/secret/closednet.remotes 의 형식 예시 (실제 파일은 gitignore).
+# 결정#2: 폐쇄망 노드 IP/URL은 비밀 → 실제 내부망 값은 여기(example)에 쓰지 말고
+#         tests/env/secret/closednet.remotes 에만 둔다.
+# 한 줄당: "<alias> <http_url> [ws_url]". 프로파일 활성화 시 remotes.json 레지스트리로 주입된다.
+#
+# 실제 사용:
+#   cp tests/env/secret.example/closednet.remotes.example tests/env/secret/closednet.remotes
+#   stablenet-bp1 ~ bp7 의 실제 URL로 채운다.
+#
+# (아래는 형식만 보이는 더미 — 실제 IP 아님)
+stablenet-bp1 http://10.0.0.1:8545 ws://10.0.0.1:8546
+stablenet-bp2 http://10.0.0.2:8545 ws://10.0.0.2:8546
+# ... bp3 ~ bp7 동일 형식

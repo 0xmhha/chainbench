@@ -70,6 +70,14 @@ _cb_rpc_resolve_remote_url() {
   _cb_remote_get_url "$alias"
 }
 
+# _cb_rpc_resolve_remote_ws_url <alias>
+# Resolves remote alias to WebSocket URL. Exits 1 if ws_url not set.
+_cb_rpc_resolve_remote_ws_url() {
+  local alias="$1"
+  _cb_rpc_ensure_remote_state
+  _cb_remote_get_ws_url "$alias"
+}
+
 # _cb_rpc_resolve_remote_auth <alias>
 # Resolves remote alias to auth header. Prints header on stdout (empty if none).
 _cb_rpc_resolve_remote_auth() {

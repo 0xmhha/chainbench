@@ -53,3 +53,7 @@ profiles/custom/*-auth.yaml
 # Defense in depth: catch copies placed outside the custom/ subdir
 profiles/*-secret.yaml
 profiles/*-auth.yaml
+
+# Test environment secrets (private keys, SSH credentials, node IP/URL mappings)
+# Defense in depth — tests/env/secret/.gitignore also ignores its own contents.
+tests/env/secret/

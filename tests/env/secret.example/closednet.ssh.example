@@ -1,0 +1,9 @@
+# tests/env/secret/closednet.ssh 의 형식 예시 (실제 파일은 tests/env/secret/ 아래 gitignore).
+# 노드제어 백엔드(node_ctrl/closednet.sh)만 이 파일을 읽는다. 절대 출력/로그 금지.
+#
+# 실제 사용:
+#   cp tests/env/secret.example/closednet.ssh.example tests/env/secret/closednet.ssh
+#   값 채운 뒤 chmod 600 tests/env/secret/closednet.ssh
+CB_SSH_USER="ubuntu"
+CB_SSH_PASSWORD="<<REPLACE-DO-NOT-COMMIT>>"
+CB_SSH_PORT="10022"

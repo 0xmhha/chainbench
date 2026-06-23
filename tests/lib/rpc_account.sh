@@ -28,14 +28,24 @@ get_coinbase() {
 }
 
 # unlock_account <target> <address> [password] [duration_secs]
-# Unlocks the given account. Suppresses output.
+# Unlocks the given account. Returns 1 and prints a warning if unlock fails.
+# password 기본값은 빈 문자열(폐쇄망 keystore). 호출자가 환경에 맞는 비번을 넘긴다
+# (common.sh unlock_validator → $CB_VALIDATOR_KEYSTORE_PASSWORD). 라이브러리에 비번을 하드코딩하지 않는다.
 unlock_account() {
   local target="${1:?unlock_account: target required}"
   local address="${2:?unlock_account: address required}"
-  local password="${3:-1}"
+  local password="${3-}"
   local duration="${4:-600}"
-  rpc "$target" "personal_unlockAccount" \
-    "[\"${address}\",\"${password}\",${duration}]" > /dev/null 2>&1
+  local response result
+  response=$(rpc "$target" "personal_unlockAccount" \
+    "[\"${address}\",\"${password}\",${duration}]") || return 1
+  result=$(printf '%s' "$response" | jq -r '.result // empty' 2>/dev/null)
+  if [[ "$result" != "true" ]]; then
+    local errmsg
+    errmsg=$(printf '%s' "$response" | jq -r '.error.message // "unknown error"' 2>/dev/null)
+    printf '[WARN]  unlock_account failed (target=%s addr=%s): %s\n' "$target" "$address" "$errmsg" >&2
+    return 1
+  fi
 }
 
 # get_balance <target> <address>
