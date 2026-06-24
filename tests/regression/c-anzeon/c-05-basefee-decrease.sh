@@ -7,7 +7,6 @@
 # estimated_seconds: 10
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/c-anzeon/c-05-basefee-decrease
@@ -19,24 +18,24 @@ source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/c-anzeon/c-05-basefee-decrease"
 
 # idle 상태로 두어 낮은 사용률 유지. 5 블록 대기 후 baseFee 변화 관찰
-block_before=$(block_number "1")
-base_fee_before=$(get_base_fee "1")
+block_before=$(block_number "$(node 1)")
+base_fee_before=$(get_base_fee "$(node 1)")
 
 wait_for_block "1" $(( block_before + 5 )) 15 >/dev/null
 
 # 5블록 내에서 < 6% 사용률 블록 찾기
-block_gas_limit=$(hex_to_dec "$(rpc "1" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - 'result.gasLimit')")
+block_gas_limit=$(hex_to_dec "$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - 'result.gasLimit')")
 found_decrease=false
 
 for n in $(seq $(( block_before + 1 )) $(( block_before + 5 ))); do
-  blk=$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
+  blk=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
   gas_used=$(hex_to_dec "$(printf '%s' "$blk" | json_get - 'result.gasUsed')")
   bf=$(hex_to_dec "$(printf '%s' "$blk" | json_get - 'result.baseFeePerGas')")
   usage_pct=$(( gas_used * 100 / block_gas_limit ))
   printf '[INFO]  block %s: usage=%s%%, baseFee=%s\n' "$n" "$usage_pct" "$bf" >&2
 
   if (( usage_pct < 6 )); then
-    next_bf=$(hex_to_dec "$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]" | json_get - 'result.baseFeePerGas')")
+    next_bf=$(hex_to_dec "$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]" | json_get - 'result.baseFeePerGas')")
     if (( next_bf < bf )); then
       # 감소 폭 ~2%
       pct_change=$(( (bf - next_bf) * 100 / bf ))

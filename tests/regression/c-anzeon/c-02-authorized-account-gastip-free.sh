@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/c-anzeon/c-02-authorized-account-gastip-free
@@ -20,13 +19,14 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/c-anzeon/c-02-authorized-account-gastip-free"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # TEST_ACC_D가 Authorized 인지 확인
 is_auth_sel=$(selector "isAuthorized(address)")
-addr_padded=$(pad_address "$TEST_ACC_D_ADDR" | sed 's/^0x//')
+addr_padded=$(pad_address "$(acct_addr 4)" | sed 's/^0x//')
 call_data="${is_auth_sel}${addr_padded}"
 
-is_auth_result=$(eth_call_raw "1" "$ACCOUNT_MANAGER" "$call_data")
+is_auth_result=$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "$call_data")
 is_auth=$(hex_to_dec "$is_auth_result")
 
 if [[ "$is_auth" != "1" ]]; then
@@ -37,8 +37,8 @@ if [[ "$is_auth" != "1" ]]; then
 fi
 
 # TEST_ACC_D로 임의의 tip 사용
-header_tip=$(get_header_gas_tip "1")
-base_fee=$(get_base_fee "1")
+header_tip=$(get_header_gas_tip "$(node 1)")
+base_fee=$(get_base_fee "$(node 1)")
 custom_tip=$(( header_tip * 3 ))  # header보다 3배 큰 tip
 
 tx_hash=$(python3 <<PYEOF
@@ -60,7 +60,7 @@ print(resp.get("result", ""))
 PYEOF
 )
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 effective_gp=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(int(json.load(sys.stdin).get('effectiveGasPrice', '0x0'), 16))")
 
 # Authorized 계정: effectiveGasPrice = baseFee + custom_tip (강제 변환 없음)
