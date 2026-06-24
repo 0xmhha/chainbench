@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: [RT-A-3-05]
 # ---end-meta---
 # Test: regression/a-ethereum/a3-05-eth-call-revert
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a3-05-eth-call-revert"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # Reverter 컨트랙트: 항상 revert "BAD_INPUT"
 # contract Reverter { function fail() public pure { revert("BAD_INPUT"); } }
@@ -44,8 +44,8 @@ print(resp.get("result", ""))
 PYEOF
 )
 
-receipt=$(wait_tx_receipt_full "1" "$deploy_tx" 30)
-reverter_addr=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('contractAddress', ''))")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$deploy_tx" 30)
+reverter_addr=$(printf '%s' "$receipt" | jq -r '.contractAddress // empty')
 assert_not_empty "$reverter_addr" "Reverter contract deployed"
 # checksum 형식으로 정규화 (eth-account >=0.13 요구)
 reverter_addr=$(to_checksum "$reverter_addr")
@@ -53,7 +53,7 @@ echo "$reverter_addr" > /tmp/chainbench-regression/reverter.addr
 
 # fail() 호출 → revert
 fail_selector=$(selector "fail()")
-call_resp=$(rpc "1" "eth_call" "[{\"to\":\"${reverter_addr}\",\"data\":\"${fail_selector}\"}, \"latest\"]")
+call_resp=$(rpc "$(node 1)" "eth_call" "[{\"to\":\"${reverter_addr}\",\"data\":\"${fail_selector}\"}, \"latest\"]")
 
 # 에러 응답 확인
 has_error=$(printf '%s' "$call_resp" | python3 -c "import sys, json; print('yes' if 'error' in json.load(sys.stdin) else 'no')")

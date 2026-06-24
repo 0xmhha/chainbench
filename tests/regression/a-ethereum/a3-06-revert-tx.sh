@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: [RT-A-3-05]
 # ---end-meta---
 # Test: regression/a-ethereum/a3-06-revert-tx
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a3-06-revert-tx"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 reverter_addr=$(cat /tmp/chainbench-regression/reverter.addr 2>/dev/null || echo "")
 if [[ -z "$reverter_addr" ]]; then
@@ -50,12 +50,12 @@ PYEOF
 
 assert_contains "$tx_hash" "0x" "revert tx submitted"
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$status" "0x0" "receipt.status == 0x0 (failed)"
 
 # gasUsed < gasLimit (잔여 환불)
-gas_used=$(hex_to_dec "$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('gasUsed', ''))")")
+gas_used=$(hex_to_dec "$(printf '%s' "$receipt" | jq -r '.gasUsed // empty')")
 printf '[INFO]  gasUsed=%s, gasLimit=%s\n' "$gas_used" "$gas_limit" >&2
 assert_true "$( [[ $gas_used -lt $gas_limit ]] && echo true || echo false )" "gasUsed ($gas_used) < gasLimit ($gas_limit) — 잔여 가스 환불 확인"
 

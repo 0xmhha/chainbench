@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: [RT-A-3-01]
 # ---end-meta---
 # Test: regression/a-ethereum/a3-02-contract-call
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a3-02-contract-call"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # A-3-01에서 배포된 컨트랙트 주소 로드
 contract_addr=$(cat /tmp/chainbench-regression/simple_storage.addr 2>/dev/null || echo "")
@@ -55,13 +55,13 @@ PYEOF
 
 assert_contains "$tx_hash" "0x" "set(42) tx submitted"
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$status" "0x1" "set(42) receipt.status == 0x1"
 
 # x()로 값 확인
 get_selector=$(selector "x()")
-result=$(eth_call_raw "1" "$contract_addr" "$get_selector")
+result=$(eth_call_raw "$(node 1)" "$contract_addr" "$get_selector")
 val_dec=$(hex_to_dec "$result")
 assert_eq "$val_dec" "42" "contract state x == 42 (set via tx, read via eth_call)"
 

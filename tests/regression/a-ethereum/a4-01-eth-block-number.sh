@@ -7,7 +7,6 @@
 # estimated_seconds: 9
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a4-01-eth-block-number
@@ -18,11 +17,11 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a4-01-eth-block-number"
 
-b1=$(block_number "1")
+b1=$(block_number "$(node 1)")
 sleep 2
-b2=$(block_number "1")
+b2=$(block_number "$(node 1)")
 sleep 2
-b3=$(block_number "1")
+b3=$(block_number "$(node 1)")
 
 printf '[INFO]  block samples: %s, %s, %s\n' "$b1" "$b2" "$b3" >&2
 

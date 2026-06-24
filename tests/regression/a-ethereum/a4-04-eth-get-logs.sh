@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a4-04-eth-get-logs
@@ -18,15 +17,16 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a4-04-eth-get-logs"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # NativeCoinAdapter Transfer 이벤트는 모든 value transfer에서 발생 (Anzeon)
 # TEST_ACC_A → TEST_ACC_B 송금
-tx_hash=$(send_raw_tx "1" "$TEST_ACC_A_PK" "$TEST_ACC_B_ADDR" "1000000000000000" "" "21000" "dynamic")
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-block_num=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('blockNumber', ''))")
+tx_hash=$(tx_send_as 1 "$(acct_addr 2)" "1000000000000000" "" "21000" "dynamic")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+block_num=$(printf '%s' "$receipt" | jq -r '.blockNumber // empty')
 
 # NativeCoinAdapter address 필터로 log 조회
-logs=$(rpc "1" "eth_getLogs" "[{\"fromBlock\":\"${block_num}\",\"toBlock\":\"${block_num}\",\"address\":\"${NATIVE_COIN_ADAPTER}\"}]")
+logs=$(rpc "$(node 1)" "eth_getLogs" "[{\"fromBlock\":\"${block_num}\",\"toBlock\":\"${block_num}\",\"address\":\"${NATIVE_COIN_ADAPTER}\"}]")
 log_count=$(printf '%s' "$logs" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', [])
@@ -35,7 +35,7 @@ print(len(r))
 assert_gt "$log_count" "0" "eth_getLogs returned at least 1 log"
 
 # Transfer topic 필터
-transfer_logs=$(rpc "1" "eth_getLogs" "[{\"fromBlock\":\"${block_num}\",\"toBlock\":\"${block_num}\",\"topics\":[\"${TRANSFER_EVENT_SIG}\"]}]")
+transfer_logs=$(rpc "$(node 1)" "eth_getLogs" "[{\"fromBlock\":\"${block_num}\",\"toBlock\":\"${block_num}\",\"topics\":[\"${TRANSFER_EVENT_SIG}\"]}]")
 transfer_count=$(printf '%s' "$transfer_logs" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', [])

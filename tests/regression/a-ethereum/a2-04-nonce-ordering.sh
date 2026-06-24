@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a2-04-nonce-ordering
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a2-04-nonce-ordering"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 3개 tx 연속 발행 (TEST_ACC_A → TEST_ACC_B)
 python3 <<'PYEOF' > /tmp/nonce_tx_hashes.txt
@@ -46,14 +46,14 @@ assert_eq "${#tx_hashes[@]}" "3" "3 tx hashes returned"
 
 # 모든 tx의 receipt 대기
 for h in "${tx_hashes[@]}"; do
-  status=$(wait_receipt "1" "$h" 30)
+  status=$(wait_receipt "$(node 1)" "$h" 30)
   assert_eq "$status" "success" "tx $h mined"
 done
 
 # 블록 포함 순서 검증 (nonce 오름차순)
 declare -a nonces=()
 for h in "${tx_hashes[@]}"; do
-  n=$(rpc "1" "eth_getTransactionByHash" "[\"$h\"]" | json_get - "result.nonce")
+  n=$(rpc "$(node 1)" "eth_getTransactionByHash" "[\"$h\"]" | json_get - "result.nonce")
   nonces+=("$(hex_to_dec "$n")")
 done
 

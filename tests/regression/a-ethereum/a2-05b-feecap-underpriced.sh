@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a2-05b-feecap-underpriced
@@ -19,6 +18,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a2-05b-feecap-underpriced"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # gasFeeCap = MinBaseFee - 1 (하한 미만) → Anzeon 활성 시 ErrUnderpriced
 err_output=$(python3 <<'PYEOF' 2>&1 || true
