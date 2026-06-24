@@ -7,7 +7,6 @@
 # estimated_seconds: 15
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-10-post-round-change
@@ -21,7 +20,7 @@ test_start "regression/b-wbft/b-10-post-round-change"
 rc_block=$(cat /tmp/chainbench-regression/round_change_block.txt 2>/dev/null || echo "")
 if [[ -z "$rc_block" ]]; then
   printf '[WARN]  b-09 not run previously, using latest block\n' >&2
-  rc_block=$(block_number "1")
+  rc_block=$(block_number "$(node 1)")
 fi
 
 # rc_block ~ rc_block+5 까지 parentHash 체인 검증
@@ -29,7 +28,7 @@ prev_hash=""
 for i in 0 1 2 3 4 5; do
   n=$(( rc_block + i ))
   wait_for_block "1" "$n" 10 >/dev/null
-  blk=$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
+  blk=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
   h=$(printf '%s' "$blk" | json_get - "result.hash")
   ph=$(printf '%s' "$blk" | json_get - "result.parentHash")
 
@@ -46,7 +45,7 @@ found_round_zero=false
 for offset in $(seq 5 15); do
   check_block=$(( rc_block + offset ))
   wait_for_block "1" "$check_block" 10 >/dev/null
-  extra=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$check_block")\"]")
+  extra=$(rpc "$(node 1)" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$check_block")\"]")
   round=$(printf '%s' "$extra" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-07-istanbul-get-validators
@@ -19,7 +18,7 @@ source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/b-wbft/b-07-istanbul-get-validators"
 
 # istanbul_getValidators 호출
-resp=$(rpc "1" "istanbul_getValidators" '["latest"]')
+resp=$(rpc "$(node 1)" "istanbul_getValidators" '["latest"]')
 result=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
@@ -37,13 +36,13 @@ count=$(python3 -c "print(len('$result'.split(',')))")
 assert_eq "$count" "4" "4 validators"
 
 # 각 validator 주소가 genesis의 4개 중 하나인지
-for v in "$VALIDATOR_1_ADDR" "$VALIDATOR_2_ADDR" "$VALIDATOR_3_ADDR" "$VALIDATOR_4_ADDR"; do
+for v in "$(validator_addr 1)" "$(validator_addr 2)" "$(validator_addr 3)" "$(validator_addr 4)"; do
   v_lower=$(echo "$v" | tr '[:upper:]' '[:lower:]')
   assert_contains "$result" "$v_lower" "genesis validator $v_lower present"
 done
 
 # wbft_getValidators는 존재하지 않음 (v2에서 istanbul_*로 정정)
-wbft_resp=$(rpc "1" "wbft_getValidators" '["latest"]' 2>/dev/null || echo "")
+wbft_resp=$(rpc "$(node 1)" "wbft_getValidators" '["latest"]' 2>/dev/null || echo "")
 wbft_err=$(printf '%s' "$wbft_resp" | python3 -c "
 import sys, json
 try:

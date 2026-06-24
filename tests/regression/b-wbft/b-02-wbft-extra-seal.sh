@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-02-wbft-extra-seal
@@ -21,12 +20,12 @@ test_start "regression/b-wbft/b-02-wbft-extra-seal"
 # 4 validator 환경 → quorum = ceil(2*4/3) = 3
 quorum=3
 
-target=$(block_number "1")
+target=$(block_number "$(node 1)")
 # 최소 1블록은 있어야
 assert_gt "$target" "0" "block exists"
 
 # istanbul_getWbftExtraInfo 조회
-resp=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$target")\"]")
+resp=$(rpc "$(node 1)" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$target")\"]")
 committed=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

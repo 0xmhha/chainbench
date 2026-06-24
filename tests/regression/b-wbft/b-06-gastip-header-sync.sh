@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-06-gastip-header-sync
@@ -21,8 +20,8 @@ test_start "regression/b-wbft/b-06-gastip-header-sync"
 
 # 현재 WBFTExtra.GasTip 조회 — istanbul_getWbftExtraInfo는 "latest" 문자열을
 # 받지 못하므로 실제 block number를 hex로 전달. gasTip은 decimal 문자열로 반환됨.
-latest_hex=$(rpc "1" "eth_blockNumber" "[]" | json_get - result)
-current_tip=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"${latest_hex}\"]" | python3 -c "
+latest_hex=$(rpc "$(node 1)" "eth_blockNumber" "[]" | json_get - result)
+current_tip=$(rpc "$(node 1)" "istanbul_getWbftExtraInfo" "[\"${latest_hex}\"]" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
 gt = r.get('gasTip', '0')
@@ -43,13 +42,13 @@ DEFAULT_TIP=27600000000000
 assert_eq "$current_tip" "$DEFAULT_TIP" "initial WBFTExtra.GasTip matches profile default (27.6 Gwei)"
 
 # eth_maxPriorityFeePerGas도 동일한 값인지 확인 (backend Anzeon 분기)
-mpfpg=$(rpc "1" "eth_maxPriorityFeePerGas" "[]" | json_get - result)
+mpfpg=$(rpc "$(node 1)" "eth_maxPriorityFeePerGas" "[]" | json_get - result)
 mpfpg_dec=$(hex_to_dec "$mpfpg")
 assert_eq "$mpfpg_dec" "$current_tip" "eth_maxPriorityFeePerGas == WBFTExtra.GasTip"
 
 # eth_gasPrice = baseFee + GasTip 확인
-base_fee=$(get_base_fee "1")
-gas_price=$(rpc "1" "eth_gasPrice" "[]" | json_get - result)
+base_fee=$(get_base_fee "$(node 1)")
+gas_price=$(rpc "$(node 1)" "eth_gasPrice" "[]" | json_get - result)
 gas_price_dec=$(hex_to_dec "$gas_price")
 expected=$(( base_fee + current_tip ))
 assert_eq "$gas_price_dec" "$expected" "eth_gasPrice == baseFee + GasTip ($expected)"
