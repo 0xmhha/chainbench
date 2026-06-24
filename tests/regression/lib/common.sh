@@ -25,6 +25,7 @@ source "${CHAINBENCH_DIR}/tests/lib/wait.sh"
 source "${CHAINBENCH_DIR}/tests/env/profile.sh"
 source "${CHAINBENCH_DIR}/tests/regression/lib/accessors.sh"
 source "${CHAINBENCH_DIR}/tests/regression/lib/constants.sh"
+source "${CHAINBENCH_DIR}/tests/regression/lib/prims.sh"
 source "${CHAINBENCH_DIR}/tests/regression/lib/sign_backends.sh"
 # 노드제어 백엔드(local|closednet). 없으면 ensure_nodes_running이 no-op.
 source "${CHAINBENCH_DIR}/tests/regression/lib/node_ctrl/${CB_NODECTRL_BACKEND}.sh" 2>/dev/null || true
@@ -82,20 +83,7 @@ readonly VALIDATOR_KEYSTORE_PASSWORD="${CB_VALIDATOR_KEYSTORE_PASSWORD-}"
 # 기본 유틸리티
 # ============================================================================
 
-# hex_to_dec <hex_with_0x>  "0x10" → "16"
-# cast to-dec로 2^63 초과(예: 10^27 wei) 큰 정수도 처리.
-hex_to_dec() {
-  local hex="${1#0x}"
-  [[ -z "$hex" || "$hex" == "null" ]] && { echo "0"; return; }
-  cast to-dec "0x${hex}"
-}
-
-# to_checksum <address> — EIP-55 체크섬 주소로 정규화.
-to_checksum() {
-  local addr="$1"
-  [[ -z "$addr" || "$addr" == "null" ]] && { echo ""; return; }
-  cast to-checksum "$addr"
-}
+# hex_to_dec / to_checksum / selector / pad_uint256 / send_raw_tx 는 prims.sh(도구 추상화)에서 제공.
 
 # get_header_gas_tip <target>
 # latest 블록 WBFTExtra.GasTip을 decimal string으로 반환.
@@ -107,7 +95,7 @@ get_header_gas_tip() {
   resp=$(rpc "$target" "istanbul_getWbftExtraInfo" "[\"${latest_hex}\"]")
   gt=$(printf '%s' "$resp" | jq -r '.result.gasTip // "0"')
   if [[ "$gt" == 0x* ]]; then
-    cast to-dec "$gt"
+    hex_to_dec "$gt"
   else
     echo "${gt:-0}"
   fi
@@ -242,69 +230,6 @@ wait_for_block() {
 }
 
 # ============================================================================
-# Raw Transaction (cast 클라이언트 서명)
-# ============================================================================
-
-# send_raw_tx <target> <private_key> <to> <value_wei> [data] [gas_limit] [tx_type] [tip_cap] [fee_cap]
-# tx_type: legacy, dynamic (default), accesslist
-# value/gas_limit/tip_cap/fee_cap: decimal string. data: hex(0x 유무 무관, 기본 "").
-# tip_cap 생략 시 노드 eth_maxPriorityFeePerGas, fee_cap 생략 시 base_fee+tip_cap.
-# 반환: txHash (0x...)
-#
-# NOTE: 이 함수는 client_cast 서명 경로다(로컬/임시계정용). 폐쇄망 본문은 직접 호출하지 말고
-#       tx_send_as 를 통해 활성 서명 백엔드(node_keystore)로 위임할 것.
-send_raw_tx() {
-  local target="$1" pk="$2" to="$3" value="$4"
-  local data="${5:-}" gas_limit="${6:-21000}" tx_type="${7:-dynamic}"
-  local tip_cap="${8:-}" fee_cap="${9:-}"
-
-  local url
-  url=$(get_node_url "$target") || return 1
-
-  local cast_args=(--rpc-url "$url" --private-key "$pk" --gas-limit "$gas_limit" --async)
-
-  # baseFee/priorityFee를 노드에서 조회해 명시. cast 기본값이 네트워크 최소 priorityFee보다
-  # 낮아 "transaction underpriced"가 날 수 있어 직접 계산한다.
-  local base_fee priority_fee
-  base_fee=$(get_base_fee "$target")
-  priority_fee=$(get_priority_fee "$target")
-  [[ -n "$tip_cap" ]] && priority_fee="$tip_cap"
-  [[ -n "$fee_cap" ]] || fee_cap="$(( base_fee + priority_fee ))"
-
-  case "$tx_type" in
-    legacy)
-      cast_args+=(--legacy --gas-price "$fee_cap")
-      ;;
-    accesslist)
-      cast_args+=(--access-list --priority-gas-price "$priority_fee" --gas-price "$fee_cap")
-      ;;
-    dynamic|*)
-      # EIP-1559: --gas-price = maxFeePerGas, --priority-gas-price = maxPriorityFeePerGas
-      cast_args+=(--priority-gas-price "$priority_fee" --gas-price "$fee_cap")
-      ;;
-  esac
-
-  local result
-  if [[ -n "$data" ]]; then
-    [[ "$data" != 0x* ]] && data="0x$data"
-    if [[ -z "$to" ]]; then
-      result=$(cast send "${cast_args[@]}" --value "$value" --create "$data" 2>&1) || {
-        printf 'TX_ERROR:%s\n' "$result" >&2; return 1; }
-    else
-      result=$(cast send "${cast_args[@]}" --value "$value" "$to" "$data" 2>&1) || {
-        printf 'TX_ERROR:%s\n' "$result" >&2; return 1; }
-    fi
-  else
-    result=$(cast send "${cast_args[@]}" --value "$value" "$to" 2>&1) || {
-      printf 'TX_ERROR:%s\n' "$result" >&2; return 1; }
-  fi
-  local hash
-  hash=$(printf '%s\n' "$result" | grep -oE '0x[0-9a-fA-F]{64}' | head -1)
-  printf '[INFO]  txHash=%s\n' "${hash:-$result}" >&2
-  printf '%s\n' "${hash:-$result}"
-}
-
-# ============================================================================
 # Receipt / Log 조회
 # ============================================================================
 
@@ -375,27 +300,12 @@ eth_call_raw() {
   printf '%s' "$result"
 }
 
-# selector <function_signature>  "transfer(address,uint256)" → "0xa9059cbb"
-selector() {
-  local sig="$1"
-  cast sig "$sig"
-}
+# selector / pad_uint256 는 prims.sh(도구 추상화)에서 제공.
 
 # pad_address <addr> — 20-byte 주소 → 32-byte padded
 pad_address() {
   local addr="${1#0x}"
   printf '0x%064s\n' "$addr" | tr ' ' '0'
-}
-
-# pad_uint256 <decimal_or_hex>
-pad_uint256() {
-  local val="$1" hex
-  if [[ "$val" == 0x* ]]; then
-    hex="${val#0x}"
-  else
-    hex=$(cast to-hex "$val" 2>/dev/null | sed 's/^0x//')
-  fi
-  printf '0x%064s\n' "$hex" | tr ' ' '0'
 }
 
 # ============================================================================
@@ -467,7 +377,7 @@ extract_proposal_id_from_receipt() {
       "$PROPOSAL_CREATED_SIG" "$log_count" >&2
     echo ""; return 1
   fi
-  cast to-dec "$topic1"
+  hex_to_dec "$topic1"
 }
 
 # gov_propose <target> <contract> <propose_data> <from_addr> → proposalId (decimal)
@@ -522,10 +432,7 @@ gov_proposal_status() {
   sel=$(selector "proposals(uint256)")
   padded=$(pad_uint256 "$proposal_id" | sed 's/^0x//')
   call_result=$(eth_call_raw "$target" "$contract" "${sel}${padded}")
-  [[ -z "$call_result" || "$call_result" == "0x" ]] && { echo "0"; return; }
-  cast abi-decode \
-    "proposals()(bytes32,uint256,uint256,uint256,uint256,address,uint32,uint32,uint32,uint8)" \
-    "$call_result" 2>/dev/null | tail -1 || echo "0"
+  _cb_abi_decode_proposal_status "$call_result"
 }
 
 # gov_full_flow <contract> <propose_data> <proposer_addr> <approver1> [approver2] ...
@@ -731,15 +638,15 @@ assert_error_contains() {
 # 환경 확인 / 노드 상태
 # ============================================================================
 
-# check_env — 회귀 테스트 전제 도구 확인 (cast, jq)
+# check_env — 회귀 테스트 전제 도구 확인 (jq 공통 + primitives 백엔드 cast 또는 python)
 check_env() {
   local ok=true
-  if ! command -v cast >/dev/null 2>&1; then
-    printf '[ERROR] cast (Foundry) not found. Install: https://getfoundry.sh\n' >&2
-    ok=false
-  fi
   if ! command -v jq >/dev/null 2>&1; then
     printf '[ERROR] jq not found. Install: brew install jq\n' >&2
+    ok=false
+  fi
+  if [[ -z "${CB_PRIM_BACKEND:-}" ]]; then
+    printf '[ERROR] no primitives backend: install cast (Foundry) OR python3 eth-account/eth-utils/eth-abi/requests\n' >&2
     ok=false
   fi
   [[ "$ok" == "true" ]]
