@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-4-04 — admin_peers
@@ -15,7 +14,7 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g4-04-admin-peers"
 
-resp=$(rpc 1 admin_peers '[]')
+resp=$(rpc "$(node 1)" admin_peers '[]')
 count=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 print(len(json.load(sys.stdin).get('result', [])))

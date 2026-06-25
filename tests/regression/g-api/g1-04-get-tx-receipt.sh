@@ -7,7 +7,6 @@
 # estimated_seconds: 38
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-1-04 — eth_getTransactionReceipt (PR #70 fix 확인)
@@ -15,9 +14,10 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g1-04-get-tx-receipt"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
-tx_hash=$(send_raw_tx "1" "$TEST_ACC_A_PK" "$TEST_ACC_B_ADDR" "1" "" "21000" "dynamic")
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+tx_hash=$(tx_send_as 1 "$(acct_addr 2)" "1" "" "21000" "dynamic")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 
 # status, effectiveGasPrice, logs 필드 확인
 for field in status effectiveGasPrice logs; do
@@ -32,10 +32,10 @@ done
 
 # BP/EN 양쪽 동일 확인 (PR #70 회귀)
 sleep 3
-en_receipt=$(get_receipt "5" "$tx_hash")
+en_receipt=$(get_receipt "$(node 5)" "$tx_hash")
 if [[ -n "$en_receipt" && "$en_receipt" != "null" ]]; then
-  bp_egp=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('effectiveGasPrice', ''))")
-  en_egp=$(printf '%s' "$en_receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('effectiveGasPrice', ''))")
+  bp_egp=$(printf '%s' "$receipt" | jq -r '.effectiveGasPrice // empty')
+  en_egp=$(printf '%s' "$en_receipt" | jq -r '.effectiveGasPrice // empty')
   assert_eq "$en_egp" "$bp_egp" "BP and EN return identical effectiveGasPrice"
 fi
 

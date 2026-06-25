@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-2-03 — eth_feeHistory
@@ -15,7 +14,7 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g2-03-fee-history"
 
-resp=$(rpc 1 eth_feeHistory '["0x10", "latest", []]')
+resp=$(rpc "$(node 1)" eth_feeHistory '["0x10", "latest", []]')
 all_gte_min=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

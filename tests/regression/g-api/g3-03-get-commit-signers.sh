@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-3-03 — istanbul_getCommitSignersFromBlock
@@ -15,8 +14,8 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g3-03-get-commit-signers"
 
-current=$(block_number "1")
-resp=$(rpc 1 istanbul_getCommitSignersFromBlock "[\"$(dec_to_hex "$current")\"]")
+current=$(block_number "$(node 1)")
+resp=$(rpc "$(node 1)" istanbul_getCommitSignersFromBlock "[\"$(dec_to_hex "$current")\"]")
 
 author=$(printf '%s' "$resp" | json_get - "result.Author")
 assert_contains "$author" "0x" "Author address returned"

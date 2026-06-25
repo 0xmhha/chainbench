@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-3-05 — istanbul_status
@@ -15,11 +14,11 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g3-05-istanbul-status"
 
-current=$(block_number "1")
+current=$(block_number "$(node 1)")
 start=$(( current - 5 ))
 (( start < 1 )) && start=1
 
-resp=$(rpc 1 istanbul_status "[\"$(dec_to_hex "$start")\", \"$(dec_to_hex "$current")\"]")
+resp=$(rpc "$(node 1)" istanbul_status "[\"$(dec_to_hex "$start")\", \"$(dec_to_hex "$current")\"]")
 for field in sealerActivity author blockRange roundStats; do
   has=$(printf '%s' "$resp" | python3 -c "
 import sys, json
