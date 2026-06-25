@@ -133,7 +133,7 @@ assert_ge() {
 # Passes when value is non-empty and not "false", "0", or "no".
 assert_true() {
   local value="${1}" msg="${2:-assert_true}"
-  case "${value,,}" in
+  case "$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')" in
     ""|false|0|no)
       _assert_fail "${msg}: expected truthy, got '${value}'"
       ;;
@@ -148,9 +148,10 @@ assert_true() {
 assert_contains() {
   local haystack="${1}" needle="${2}" msg="${3:-assert_contains}"
   if [[ "$haystack" == *"$needle"* ]]; then
-    _assert_pass "${msg}: found '${needle}'"
+    _assert_pass "${msg}: found '${haystack}'"
   else
-    _assert_fail "${msg}: '${needle}' not found in '${haystack}'"
+    printf "${_ASSERT_RED}  [INFO]${_ASSERT_RESET} full output: %s\n" "$haystack" >&2
+    _assert_fail "${msg}: '${needle}' not found in output (see above)"
   fi
 }
 

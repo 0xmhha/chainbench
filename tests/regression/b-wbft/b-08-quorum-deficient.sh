@@ -7,7 +7,6 @@
 # estimated_seconds: 22
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-08-quorum-deficient
@@ -22,9 +21,9 @@ source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/b-wbft/b-08-quorum-deficient"
 
 # 초기 블록 진행 확인
-b0=$(block_number "1")
+b0=$(block_number "$(node 1)")
 sleep 2
-b1=$(block_number "1")
+b1=$(block_number "$(node 1)")
 assert_gt "$b1" "$b0" "chain is producing blocks initially"
 
 # 2 validator 중단 (4 → 2, quorum 3 미달)
@@ -33,9 +32,9 @@ printf '[INFO]  stopping validator3 and validator4 (2/4 remaining, quorum 3 not 
 "${CHAINBENCH_DIR}/chainbench.sh" node stop 4 --quiet 2>/dev/null || true
 
 sleep 5
-b2=$(block_number "1")
+b2=$(block_number "$(node 1)")
 sleep 5
-b3=$(block_number "1")
+b3=$(block_number "$(node 1)")
 
 printf '[INFO]  blocks: before=%s, after_stop_+5s=%s, after_stop_+10s=%s\n' "$b1" "$b2" "$b3" >&2
 
@@ -48,7 +47,7 @@ assert_true "$( [[ $diff -le 2 ]] && echo true || echo false )" "chain halted or
 "${CHAINBENCH_DIR}/chainbench.sh" node start 4 --quiet 2>/dev/null || true
 sleep 5
 
-b4=$(block_number "1")
+b4=$(block_number "$(node 1)")
 assert_gt "$b4" "$b3" "chain resumed after quorum restored"
 
 test_result

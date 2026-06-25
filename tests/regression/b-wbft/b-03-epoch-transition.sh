@@ -7,7 +7,6 @@
 # estimated_seconds: 65
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-03-epoch-transition
@@ -18,11 +17,10 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/b-wbft/b-03-epoch-transition"
 
-# regression profile의 epoch = 30
-EPOCH_LENGTH=30
+# EPOCH_LENGTH는 활성 프로파일(tests/env)에서 주입 (로컬 30 / 폐쇄망 140)
 
 # 현재 블록 확인
-current=$(block_number "1")
+current=$(block_number "$(node 1)")
 
 # 첫 에폭 경계 블록 번호 계산
 # 실측 결과: epochInfo는 epochLength의 배수 블록(30, 60, 90, ...)에 기록됨
@@ -33,7 +31,7 @@ printf '[INFO]  current=%s, waiting for epoch block %s\n' "$current" "$first_epo
 wait_for_block "1" "$first_epoch_block" 60 >/dev/null
 
 # 에폭 블록의 WBFTExtra 조회
-resp=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$first_epoch_block")\"]")
+resp=$(rpc "$(node 1)" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$first_epoch_block")\"]")
 epoch_info_present=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

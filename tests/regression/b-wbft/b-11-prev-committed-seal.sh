@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-11-prev-committed-seal
@@ -21,7 +20,7 @@ test_start "regression/b-wbft/b-11-prev-committed-seal"
 # 4 validator → quorum=3
 quorum=3
 
-current=$(block_number "1")
+current=$(block_number "$(node 1)")
 assert_gt "$current" "1" "block >= 2 (need N+1)"
 
 n=$(( current - 1 ))
@@ -29,7 +28,7 @@ n_next=$(( current ))
 
 # 블록 N의 CommitSigners (RT-G-3-03 참고)
 # istanbul_getCommitSignersFromBlock 응답의 필드명은 CamelCase: "Committers" (대문자 C)
-commit_signers=$(rpc "1" "istanbul_getCommitSignersFromBlock" "[\"$(dec_to_hex "$n")\"]")
+commit_signers=$(rpc "$(node 1)" "istanbul_getCommitSignersFromBlock" "[\"$(dec_to_hex "$n")\"]")
 signer_count=$(printf '%s' "$commit_signers" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})
@@ -39,7 +38,7 @@ print(len(committers))
 assert_ge "$signer_count" "$quorum" "block N commit signers >= quorum"
 
 # 블록 N+1의 PrevCommittedSeal.sealers count (list 길이)
-extra=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$n_next")\"]")
+extra=$(rpc "$(node 1)" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$n_next")\"]")
 prev_bits=$(printf '%s' "$extra" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

@@ -7,7 +7,6 @@
 # estimated_seconds: 25
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/e-blacklist-authorized/e-05-zero-address
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/e-blacklist-authorized/e-05-zero-address"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # TEST_ACC_A → 0x000...000 value=1 → ErrZeroAddressTransfer
 err_output=$(python3 <<'PYEOF' 2>&1 || true
@@ -51,7 +51,7 @@ except Exception:
     print('')
 ")
   if [[ -n "$tx_hash" && "$tx_hash" != "null" ]]; then
-    status=$(wait_receipt "1" "$tx_hash" 20)
+    status=$(wait_receipt "$(node 1)" "$tx_hash" 20)
     assert_eq "$status" "failed" "zero address tx fails at EVM level"
   else
     _assert_fail "unexpected: $err_output"

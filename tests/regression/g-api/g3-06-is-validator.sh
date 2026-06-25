@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-3-06 — istanbul_isValidator
@@ -22,7 +21,7 @@ for node in 1 2 3 4; do
   assert_eq "$is_val" "true" "node${node} is validator"
 done
 
-is_val5=$(rpc 5 istanbul_isValidator '["latest"]' | json_get - result)
+is_val5=$(rpc "$(node 5)" istanbul_isValidator '["latest"]' | json_get - result)
 is_val5="${is_val5,,}"  # lowercase
 assert_eq "$is_val5" "false" "node5 (EN) is NOT validator"
 

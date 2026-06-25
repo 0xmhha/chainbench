@@ -7,7 +7,6 @@
 # estimated_seconds: 8
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/c-anzeon/c-03-basefee-increase
@@ -18,9 +17,10 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/c-anzeon/c-03-basefee-increase"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 블록 gasLimit 조회
-block_gas_limit_hex=$(rpc "1" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - "result.gasLimit")
+block_gas_limit_hex=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - "result.gasLimit")
 block_gas_limit=$(hex_to_dec "$block_gas_limit_hex")
 target_gas_used=$(( block_gas_limit * 25 / 100 ))  # 25% 사용
 
@@ -32,8 +32,8 @@ tx_count=$(( target_gas_used * 3 / 21000 / 2 + 1 ))
 printf '[INFO]  sending %s txs to exceed 20%% block gas\n' "$tx_count" >&2
 
 # 블록 번호와 baseFee 기록
-block_before=$(block_number "1")
-base_fee_before=$(get_base_fee "1")
+block_before=$(block_number "$(node 1)")
+base_fee_before=$(get_base_fee "$(node 1)")
 
 # 다수 tx 전송 — 사전 서명 후 batch RPC로 일괄 전송하여 단일 블록에 포함 유도
 python3 <<PYEOF
@@ -73,7 +73,7 @@ wait_for_block "1" $(( block_before + 5 )) 20 >/dev/null
 found_increase=false
 for n in $(seq $(( block_before + 1 )) $(( block_before + 10 ))); do
   wait_for_block "1" "$n" 10 >/dev/null
-  blk=$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
+  blk=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
   gas_used=$(hex_to_dec "$(printf '%s' "$blk" | json_get - 'result.gasUsed')")
   bf=$(hex_to_dec "$(printf '%s' "$blk" | json_get - 'result.baseFeePerGas')")
   [[ "$bf" == "0" ]] && continue  # 블록이 아직 없으면 스킵
@@ -83,7 +83,7 @@ for n in $(seq $(( block_before + 1 )) $(( block_before + 10 ))); do
   if (( usage_pct > 20 )); then
     # 다음 블록 baseFee 조회
     wait_for_block "1" "$((n+1))" 10 >/dev/null
-    next_blk=$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]")
+    next_blk=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]")
     next_bf=$(hex_to_dec "$(printf '%s' "$next_blk" | json_get - 'result.baseFeePerGas')")
     if (( next_bf > bf )); then
       pct_change=$(( (next_bf - bf) * 100 / bf ))

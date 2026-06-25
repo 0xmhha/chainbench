@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f1-04-mint-transfer-event
@@ -20,6 +19,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f1-04-mint-transfer-event"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
@@ -27,7 +27,7 @@ unlock_all_validators
 mint_receipt=$(cat /tmp/chainbench-regression/last_mint_receipt.json 2>/dev/null || echo "")
 if [[ -z "$mint_receipt" ]]; then
   printf '[INFO]  No mint receipt cached — running inline mint flow\n' >&2
-  beneficiary="$TEST_ACC_B_ADDR"
+  beneficiary="$(acct_addr 2)"
   amount="1000000000000000000"
   timestamp=$(date +%s)
   deposit_id="F104-DEP-$(date +%s%N)"
@@ -47,19 +47,19 @@ print('0x' + (selector + call_data).hex())
 PYEOF
   ) || { _assert_fail "eth_abi encoding failed"; test_result; exit 1; }
 
-  tx_hash=$(gov_call "1" "$GOV_MINTER" "$tx_data" "$VALIDATOR_1_ADDR" 1500000)
-  propose_receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+  tx_hash=$(gov_call "1" "$GOV_MINTER" "$tx_data" "$(validator_addr 1)" 1500000)
+  propose_receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
   proposal_id=$(extract_proposal_id_from_receipt "1" "$tx_hash")
 
-  approve_tx=$(gov_approve "1" "$GOV_MINTER" "$proposal_id" "$VALIDATOR_2_ADDR")
+  approve_tx=$(gov_approve "$(node 1)" "$GOV_MINTER" "$proposal_id" "$(validator_addr 2)")
   sleep 2
-  prop_status=$(gov_proposal_status "1" "$GOV_MINTER" "$proposal_id")
+  prop_status=$(gov_proposal_status "$(node 1)" "$GOV_MINTER" "$proposal_id")
   if [[ "$prop_status" == "3" ]]; then
-    approve_node=$(addr_to_node "$VALIDATOR_2_ADDR")
+    approve_node=$(addr_to_node "$(validator_addr 2)")
     mint_receipt=$(wait_tx_receipt_full "$approve_node" "$approve_tx" 30)
   else
-    exec_tx=$(gov_execute "1" "$GOV_MINTER" "$proposal_id" "$VALIDATOR_1_ADDR")
-    mint_receipt=$(wait_tx_receipt_full "1" "$exec_tx" 30)
+    exec_tx=$(gov_execute "$(node 1)" "$GOV_MINTER" "$proposal_id" "$(validator_addr 1)")
+    mint_receipt=$(wait_tx_receipt_full "$(node 1)" "$exec_tx" 30)
   fi
   echo "$mint_receipt" > /tmp/chainbench-regression/last_mint_receipt.json
 fi

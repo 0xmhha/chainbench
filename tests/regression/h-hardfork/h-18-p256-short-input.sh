@@ -16,6 +16,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-18-p256-short-input"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 P256_PRECOMPILE="0x0000000000000000000000000000000000000100"
 SUCCESS_RESULT="0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -23,7 +24,7 @@ SUCCESS_RESULT="0x00000000000000000000000000000000000000000000000000000000000000
 # Only 64 bytes (hash + r), missing s, x, y
 SHORT_INPUT="0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca6050232927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838"
 
-resp=$(rpc 1 "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${SHORT_INPUT}\"},\"latest\"]")
+resp=$(rpc "$(node 1)" "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${SHORT_INPUT}\"},\"latest\"]")
 result=$(json_get "$resp" "result")
 error=$(json_get "$resp" "error.message")
 

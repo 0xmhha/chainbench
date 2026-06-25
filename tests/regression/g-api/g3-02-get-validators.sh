@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-3-02 — istanbul_getValidators
@@ -15,7 +14,7 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g3-02-get-validators"
 
-vals=$(rpc 1 istanbul_getValidators '["latest"]' | python3 -c "
+vals=$(rpc "$(node 1)" istanbul_getValidators '["latest"]' | python3 -c "
 import sys, json
 print(','.join(json.load(sys.stdin).get('result', [])))
 ")

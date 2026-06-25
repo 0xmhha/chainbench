@@ -7,7 +7,6 @@
 # estimated_seconds: 20
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-4-6-01 — Authorized accounts get lower effectiveGasPrice (tip=0)
@@ -17,20 +16,21 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-42-egp-authorized"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # Validators are always authorized
-unlock_validator 1
-resp=$(rpc 1 "eth_sendTransaction" \
-  "[{\"from\":\"${VALIDATOR_1_ADDR}\",\"to\":\"${TEST_ACC_B_ADDR}\",\"value\":\"0xDE0B6B3A7640000\"}]")
+unlock_validator "$(node 1)"
+resp=$(rpc "$(node 1)" "eth_sendTransaction" \
+  "[{\"from\":\"$(validator_addr 1)\",\"to\":\"$(acct_addr 2)\",\"value\":\"0xDE0B6B3A7640000\"}]")
 tx_hash=$(json_get "$resp" "result")
 assert_not_empty "$tx_hash" "validator tx sent"
 
-receipt=$(wait_tx_receipt_full 1 "$tx_hash" 30)
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 assert_not_empty "$receipt" "receipt received"
 
 egp=$(json_get "$receipt" "effectiveGasPrice")
 egp_dec=$(hex_to_dec "$egp")
-base_fee=$(get_base_fee 1)
+base_fee=$(get_base_fee "$(node 1)")
 
 observe "effectiveGasPrice_authorized" "$egp_dec"
 observe "baseFee" "$base_fee"

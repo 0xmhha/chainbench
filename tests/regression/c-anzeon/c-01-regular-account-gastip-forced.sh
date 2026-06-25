@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/c-anzeon/c-01-regular-account-gastip-forced
@@ -18,13 +17,14 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/c-anzeon/c-01-regular-account-gastip-forced"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 현재 header.GasTip
-header_tip=$(get_header_gas_tip "1")
+header_tip=$(get_header_gas_tip "$(node 1)")
 printf '[INFO]  header.GasTip = %s wei\n' "$header_tip" >&2
 
 # baseFee
-base_fee=$(get_base_fee "1")
+base_fee=$(get_base_fee "$(node 1)")
 
 # TEST_ACC_A (비-Authorized 계정)로 tipCap = header_tip * 5 (매우 큰 값) 전송
 # 실제 effectiveGasPrice는 header_tip이 강제되어야 함
@@ -51,7 +51,7 @@ PYEOF
 
 assert_contains "$tx_hash" "0x" "tx submitted with high tipCap"
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 effective_gp=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(int(json.load(sys.stdin).get('effectiveGasPrice', '0x0'), 16))")
 
 # Regular 계정이면 tip이 header.GasTip으로 강제되었으므로

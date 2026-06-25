@@ -7,7 +7,6 @@
 # estimated_seconds: 30
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-1-1-09 + TC-1-1-10 — Verify burn refund events in logs
@@ -17,21 +16,22 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-13-burn-events"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 BURN_VALUE="1000000000000000000"
 
 # 1) proposeBurn → cancel (creates refundable balance)
-tx_hash=$(propose_burn "$VALIDATOR_1_ADDR" "deadbeef" "$BURN_VALUE")
-receipt=$(wait_tx_receipt_full 1 "$tx_hash" 30)
+tx_hash=$(propose_burn "$(validator_addr 1)" "deadbeef" "$BURN_VALUE")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 assert_eq "$(json_get "$receipt" "status")" "0x1" "proposeBurn succeeded"
 
 proposal_id=$(extract_proposal_id_from_receipt 1 "$tx_hash")
-cancel_tx=$(cancel_proposal "$GOV_MINTER" "$proposal_id" "$VALIDATOR_1_ADDR")
+cancel_tx=$(cancel_proposal "$GOV_MINTER" "$proposal_id" "$(validator_addr 1)")
 sleep 3
 
 # 2) Check BurnDepositRefunded event in cancel flow
 # Query logs from GOV_MINTER for BurnDepositRefunded topic
-cancel_receipt=$(wait_tx_receipt_full 1 "$cancel_tx" 15)
+cancel_receipt=$(wait_tx_receipt_full "$(node 1)" "$cancel_tx" 15)
 if [[ -n "$cancel_receipt" ]]; then
   deposit_event=$(find_log_by_topic "$cancel_receipt" "$GOV_MINTER" "$BURN_DEPOSIT_REFUNDED_SIG")
   if [[ -n "$deposit_event" && "$deposit_event" != "null" ]]; then
@@ -43,11 +43,11 @@ if [[ -n "$cancel_receipt" ]]; then
 fi
 
 # 3) claimBurnRefund → check BurnRefundClaimed event
-claim_tx=$(claim_burn_refund "$VALIDATOR_1_ADDR")
+claim_tx=$(claim_burn_refund "$(validator_addr 1)")
 assert_not_empty "$claim_tx" "claimBurnRefund tx sent"
 sleep 3
 
-claim_receipt=$(wait_tx_receipt_full 1 "$claim_tx" 15)
+claim_receipt=$(wait_tx_receipt_full "$(node 1)" "$claim_tx" 15)
 assert_not_empty "$claim_receipt" "claim receipt received"
 
 claimed_event=$(find_log_by_topic "$claim_receipt" "$GOV_MINTER" "$BURN_REFUND_CLAIMED_SIG")

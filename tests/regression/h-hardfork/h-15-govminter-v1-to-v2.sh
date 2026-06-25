@@ -18,16 +18,17 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-15-govminter-v1-to-v2"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 BOHO_BLOCK=10
 
 # --- 1) Record v1 bytecode before BohoBlock ---
-current=$(block_number 1)
+current=$(block_number "$(node 1)")
 observe "current_block" "$current"
 
 if (( current < BOHO_BLOCK )); then
   block_hex=$(printf '0x%x' "$current")
-  resp=$(rpc 1 "eth_getCode" "[\"${GOV_MINTER}\",\"${block_hex}\"]")
+  resp=$(rpc "$(node 1)" "eth_getCode" "[\"${GOV_MINTER}\",\"${block_hex}\"]")
   code_v1=$(json_get "$resp" "result")
   code_v1_len=${#code_v1}
   printf '[INFO]  GovMinter code at block %d (pre-Boho): %d hex chars\n' "$current" "$code_v1_len" >&2
@@ -36,7 +37,7 @@ if (( current < BOHO_BLOCK )); then
 else
   printf '[WARN]  Already past BohoBlock %d (current=%d), recording current code as v1 baseline\n' \
     "$BOHO_BLOCK" "$current" >&2
-  resp=$(rpc 1 "eth_getCode" "[\"${GOV_MINTER}\",\"latest\"]")
+  resp=$(rpc "$(node 1)" "eth_getCode" "[\"${GOV_MINTER}\",\"latest\"]")
   code_v1=$(json_get "$resp" "result")
   code_v1_len=${#code_v1}
   observe "govminter_current_len" "$code_v1_len"
@@ -54,7 +55,7 @@ wait_for_block 1 "$BOHO_BLOCK" 120
 sleep 2
 
 # --- 3) Check v2 bytecode after BohoBlock ---
-resp=$(rpc 1 "eth_getCode" "[\"${GOV_MINTER}\",\"latest\"]")
+resp=$(rpc "$(node 1)" "eth_getCode" "[\"${GOV_MINTER}\",\"latest\"]")
 code_v2=$(json_get "$resp" "result")
 code_v2_len=${#code_v2}
 printf '[INFO]  GovMinter code at latest (post-Boho): %d hex chars\n' "$code_v2_len" >&2

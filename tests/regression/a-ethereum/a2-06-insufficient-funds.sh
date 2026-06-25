@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a2-06-insufficient-funds
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a2-06-insufficient-funds"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # TEST_ACC_B는 100 ether만 있음. 1000 ether 송금 시도 → 거부
 err_output=$(python3 <<'PYEOF' 2>&1 || true

@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a4-05-eth-chain-id
@@ -18,7 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a4-05-eth-chain-id"
 
-chain_id_hex=$(rpc "1" "eth_chainId" "[]" | json_get - result)
+chain_id_hex=$(rpc "$(node 1)" "eth_chainId" "[]" | json_get - result)
 chain_id_dec=$(hex_to_dec "$chain_id_hex")
 
 printf '[INFO]  eth_chainId returned: %s (dec: %s)\n' "$chain_id_hex" "$chain_id_dec" >&2

@@ -7,7 +7,6 @@
 # estimated_seconds: 25
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/e-blacklist-authorized/e-06-precompile-transfer
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/e-blacklist-authorized/e-06-precompile-transfer"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 대상 precompile 주소 (폐쇄망 Boho 활성 기준)
 # 0x01 = ecrecover, 0x100 = secp256r1, 0xb00003 = AccountManager
@@ -57,7 +57,7 @@ try: print(json.loads(sys.stdin.read()).get('result', ''))
 except: print('')
 ")
     if [[ -n "$tx_hash" && "$tx_hash" != "null" ]]; then
-      status=$(wait_receipt "1" "$tx_hash" 20 2>/dev/null || echo "timeout")
+      status=$(wait_receipt "$(node 1)" "$tx_hash" 20 2>/dev/null || echo "timeout")
       [[ "$status" == "failed" ]] && fail_count=$(( fail_count + 1 ))
     fi
   fi

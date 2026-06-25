@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-1-01 — eth_getBlockByNumber(latest)
@@ -15,7 +14,7 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g1-01-get-block-by-number"
 
-resp=$(rpc 1 eth_getBlockByNumber '["latest", false]')
+resp=$(rpc "$(node 1)" eth_getBlockByNumber '["latest", false]')
 num=$(printf '%s' "$resp" | json_get - "result.number")
 hash=$(printf '%s' "$resp" | json_get - "result.hash")
 

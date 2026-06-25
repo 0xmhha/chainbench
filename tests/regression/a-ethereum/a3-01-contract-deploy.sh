@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a3-01-contract-deploy
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a3-01-contract-deploy"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # SimpleStorage 컨트랙트 bytecode (solc 0.8.30, --optimize --no-cbor-metadata)
 # contract SimpleStorage { uint256 public x; function set(uint256 _x) public { x = _x; } }
@@ -53,17 +53,17 @@ PYEOF
 
 assert_contains "$tx_hash" "0x" "deploy tx hash returned"
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 assert_not_empty "$receipt" "receipt retrieved"
 
 # contractAddress 확인
-contract_addr=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('contractAddress', ''))")
+contract_addr=$(printf '%s' "$receipt" | jq -r '.contractAddress // empty')
 assert_not_empty "$contract_addr" "receipt.contractAddress is set"
 assert_contains "$contract_addr" "0x" "contractAddress is hex"
 printf '[INFO]  deployed at %s\n' "$contract_addr" >&2
 
 # eth_getCode로 배포 확인 (runtime code, creation code와 다름)
-code=$(rpc "1" "eth_getCode" "[\"$contract_addr\", \"latest\"]" | json_get - "result")
+code=$(rpc "$(node 1)" "eth_getCode" "[\"$contract_addr\", \"latest\"]" | json_get - "result")
 code_len=${#code}
 assert_gt "$code_len" "10" "eth_getCode returns non-empty bytecode (len=$code_len)"
 

@@ -7,7 +7,6 @@
 # estimated_seconds: 20
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-1-1-06 — claimBurnRefund with 0 refundable should revert
@@ -17,20 +16,21 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-11-claim-zero-revert"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # Verify no refundable balance for VALIDATOR_2 (fresh account)
-refundable=$(get_refundable_balance 1 "$VALIDATOR_2_ADDR")
+refundable=$(get_refundable_balance 1 "$(validator_addr 2)")
 observe "refundable_before" "$refundable"
 
 # Attempt claim with 0 refundable — should revert
-claim_tx=$(claim_burn_refund "$VALIDATOR_2_ADDR" 2>/dev/null || true)
+claim_tx=$(claim_burn_refund "$(validator_addr 2)" 2>/dev/null || true)
 
 if [[ -z "$claim_tx" || "$claim_tx" == "null" ]]; then
   _assert_pass "claimBurnRefund with 0 balance was rejected (no tx hash)"
 else
   # Check receipt status
   sleep 3
-  receipt=$(wait_tx_receipt_full 1 "$claim_tx" 15)
+  receipt=$(wait_tx_receipt_full "$(node 1)" "$claim_tx" 15)
   if [[ -n "$receipt" ]]; then
     status=$(json_get "$receipt" "status")
     assert_eq "$status" "0x0" "claimBurnRefund with 0 balance reverted (status=0x0)"

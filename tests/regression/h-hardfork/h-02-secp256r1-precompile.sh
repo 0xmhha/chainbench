@@ -7,7 +7,6 @@
 # estimated_seconds: 15
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/h-hardfork/h-02-secp256r1-precompile
@@ -19,6 +18,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-02-secp256r1-precompile"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # secp256r1 precompile address (RIP-7212)
 readonly P256_PRECOMPILE="0x0000000000000000000000000000000000000100"
@@ -39,7 +39,7 @@ readonly EXPECTED_RESULT="0x0000000000000000000000000000000000000000000000000000
 
 # --- Test 1: eth_call to P-256 precompile with valid signature ---
 printf '[INFO]  calling P-256 precompile at %s\n' "$P256_PRECOMPILE" >&2
-resp=$(rpc "1" "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${INPUT_DATA}\"}, \"latest\"]")
+resp=$(rpc "$(node 1)" "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${INPUT_DATA}\"}, \"latest\"]")
 result=$(json_get "$resp" "result")
 error=$(json_get "$resp" "error.message")
 

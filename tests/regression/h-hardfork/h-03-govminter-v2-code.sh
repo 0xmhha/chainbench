@@ -7,7 +7,6 @@
 # estimated_seconds: 15
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/h-hardfork/h-03-govminter-v2-code
@@ -19,11 +18,12 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-03-govminter-v2-code"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # --- 1) Fetch bytecode at GOV_MINTER system contract address ---
 printf '[INFO]  checking bytecode at GOV_MINTER = %s\n' "$GOV_MINTER" >&2
 
-resp=$(rpc "1" "eth_getCode" "[\"${GOV_MINTER}\", \"latest\"]")
+resp=$(rpc "$(node 1)" "eth_getCode" "[\"${GOV_MINTER}\", \"latest\"]")
 code=$(json_get "$resp" "result")
 error=$(json_get "$resp" "error.message")
 

@@ -7,7 +7,6 @@
 # estimated_seconds: 120
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f3-06-proposal-expiry
@@ -21,6 +20,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f3-06-proposal-expiry"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
@@ -30,8 +30,8 @@ propose_sel=$(selector "proposeGasTip(uint256)")
 amt_padded=$(pad_uint256 "$unique_tip" | sed 's/^0x//')
 propose_data="${propose_sel}${amt_padded}"
 
-tx_hash=$(gov_call "1" "$GOV_VALIDATOR" "$propose_data" "$VALIDATOR_1_ADDR" 800000)
-wait_receipt "1" "$tx_hash" 30 >/dev/null
+tx_hash=$(gov_call "1" "$GOV_VALIDATOR" "$propose_data" "$(validator_addr 1)" 800000)
+wait_receipt "$(node 1)" "$tx_hash" 30 >/dev/null
 proposal_id=$(extract_proposal_id_from_receipt "1" "$tx_hash")
 [[ -z "$proposal_id" ]] && { _assert_fail "propose failed"; test_result; exit 1; }
 
@@ -45,13 +45,13 @@ expire_sel=$(selector "expireProposal(uint256)")
 pid_padded=$(pad_uint256 "$proposal_id" | sed 's/^0x//')
 expire_data="${expire_sel}${pid_padded}"
 
-exp_tx=$(gov_call "1" "$GOV_VALIDATOR" "$expire_data" "$VALIDATOR_1_ADDR" 500000)
-exp_receipt=$(wait_tx_receipt_full "1" "$exp_tx" 30)
-exp_status=$(printf '%s' "$exp_receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exp_tx=$(gov_call "1" "$GOV_VALIDATOR" "$expire_data" "$(validator_addr 1)" 500000)
+exp_receipt=$(wait_tx_receipt_full "$(node 1)" "$exp_tx" 30)
+exp_status=$(printf '%s' "$exp_receipt" | jq -r '.status // empty')
 assert_eq "$exp_status" "0x1" "expireProposal executed (proposal is now expired)"
 
 # proposalStatus == Expired (enum 5)
-status=$(gov_proposal_status "1" "$GOV_VALIDATOR" "$proposal_id" 2>/dev/null || echo "")
+status=$(gov_proposal_status "$(node 1)" "$GOV_VALIDATOR" "$proposal_id" 2>/dev/null || echo "")
 if [[ -n "$status" ]]; then
   assert_eq "$status" "5" "proposal state == Expired (5)"
 fi
@@ -59,10 +59,10 @@ fi
 # executeProposal 시도 → revert
 execute_sel=$(selector "executeProposal(uint256)")
 exec_data="${execute_sel}${pid_padded}"
-exec_tx=$(gov_call "1" "$GOV_VALIDATOR" "$exec_data" "$VALIDATOR_1_ADDR" 500000 2>/dev/null || echo "")
+exec_tx=$(gov_call "1" "$GOV_VALIDATOR" "$exec_data" "$(validator_addr 1)" 500000 2>/dev/null || echo "")
 if [[ -n "$exec_tx" && "$exec_tx" != "null" ]]; then
-  exec_receipt=$(wait_tx_receipt_full "1" "$exec_tx" 30)
-  exec_status=$(printf '%s' "$exec_receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+  exec_receipt=$(wait_tx_receipt_full "$(node 1)" "$exec_tx" 30)
+  exec_status=$(printf '%s' "$exec_receipt" | jq -r '.status // empty')
   assert_eq "$exec_status" "0x0" "executeProposal on expired proposal reverted"
 fi
 

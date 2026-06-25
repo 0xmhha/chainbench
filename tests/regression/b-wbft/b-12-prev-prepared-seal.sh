@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-12-prev-prepared-seal
@@ -20,10 +19,10 @@ test_start "regression/b-wbft/b-12-prev-prepared-seal"
 
 quorum=3  # 4 validator → ceil(2*4/3)=3
 
-current=$(block_number "1")
+current=$(block_number "$(node 1)")
 assert_gt "$current" "1" "block >= 2 (need N+1)"
 
-extra=$(rpc "1" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$current")\"]")
+extra=$(rpc "$(node 1)" "istanbul_getWbftExtraInfo" "[\"$(dec_to_hex "$current")\"]")
 prev_bits=$(printf '%s' "$extra" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

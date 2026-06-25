@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-4-02 (v2) — txpool_status: pending(연속 nonce) + queued(nonce gap) 분리
@@ -15,6 +14,7 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g4-02-txpool-status"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # pending 2개 + queued 1개 주입
 python3 <<'PYEOF'
@@ -46,7 +46,7 @@ PYEOF
 
 # 즉시 조회 (채굴 전)
 sleep 0.5
-status=$(rpc 1 txpool_status '[]')
+status=$(rpc "$(node 1)" txpool_status '[]')
 pending=$(printf '%s' "$status" | python3 -c "
 import sys, json
 r = json.load(sys.stdin).get('result', {})

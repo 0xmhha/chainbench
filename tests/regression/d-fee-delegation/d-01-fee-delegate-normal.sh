@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/d-fee-delegation/d-01-fee-delegate-normal
@@ -22,6 +21,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/d-fee-delegation/d-01-fee-delegate-normal"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # rlp 패키지 설치 확인
 python3 -c "import rlp, eth_keys" 2>/dev/null || {
@@ -34,16 +34,16 @@ HELPER="${CHAINBENCH_DIR}/tests/regression/lib/fee_delegate.py"
 value_wei=1000000000000000  # 0.001 ether
 
 # 사전 잔액
-sender_before=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_A_ADDR}\", \"latest\"]" | json_get - result)")
-payer_before=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_C_ADDR}\", \"latest\"]" | json_get - result)")
-recipient_before=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_B_ADDR}\", \"latest\"]" | json_get - result)")
+sender_before=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 1)\", \"latest\"]" | json_get - result)")
+payer_before=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 3)\", \"latest\"]" | json_get - result)")
+recipient_before=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 2)\", \"latest\"]" | json_get - result)")
 
 # Sign & send
 result=$(python3 "$HELPER" send \
   --rpc http://127.0.0.1:8501 \
   --sender-pk "$TEST_ACC_A_PK" \
   --fee-payer-pk "$TEST_ACC_C_PK" \
-  --to "$TEST_ACC_B_ADDR" \
+  --to "$(acct_addr 2)" \
   --value "$value_wei" \
   --gas 21000 2>&1)
 
@@ -65,18 +65,18 @@ fi
 
 assert_contains "$tx_hash" "0x" "FeeDelegateDynamicFeeTx hash returned"
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$status" "0x1" "receipt.status == 0x1"
 
 # tx type == 0x16
-tx_type=$(rpc 1 eth_getTransactionByHash "[\"${tx_hash}\"]" | json_get - "result.type")
+tx_type=$(rpc "$(node 1)" eth_getTransactionByHash "[\"${tx_hash}\"]" | json_get - "result.type")
 assert_eq "$tx_type" "0x16" "tx type is 0x16 (FeeDelegateDynamicFeeTx)"
 
 # Post 잔액
-sender_after=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_A_ADDR}\", \"latest\"]" | json_get - result)")
-payer_after=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_C_ADDR}\", \"latest\"]" | json_get - result)")
-recipient_after=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_B_ADDR}\", \"latest\"]" | json_get - result)")
+sender_after=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 1)\", \"latest\"]" | json_get - result)")
+payer_after=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 3)\", \"latest\"]" | json_get - result)")
+recipient_after=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 2)\", \"latest\"]" | json_get - result)")
 
 # Sender: value만 차감 (가스비 없음)
 sender_diff=$(( sender_before - sender_after ))
@@ -89,8 +89,8 @@ assert_eq "$recipient_diff" "$value_wei" "Recipient gained $value_wei"
 # FeePayer: 가스비만 차감 (value 차감 없음)
 payer_diff=$(( payer_before - payer_after ))
 # gasUsed × effectiveGasPrice
-gas_used=$(hex_to_dec "$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('gasUsed', ''))")")
-eff_gp=$(hex_to_dec "$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('effectiveGasPrice', ''))")")
+gas_used=$(hex_to_dec "$(printf '%s' "$receipt" | jq -r '.gasUsed // empty')")
+eff_gp=$(hex_to_dec "$(printf '%s' "$receipt" | jq -r '.effectiveGasPrice // empty')")
 expected_gas_cost=$(( gas_used * eff_gp ))
 assert_eq "$payer_diff" "$expected_gas_cost" "FeePayer charged exactly gasUsed × effectiveGasPrice ($expected_gas_cost)"
 

@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-G-5-01 — eth_signRawFeeDelegateTransaction
@@ -15,9 +14,10 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/g-api/g5-01-sign-raw-fee-delegate"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 간접 검증: RPC 메서드 존재 여부
-resp=$(rpc 1 eth_signRawFeeDelegateTransaction "[{\"from\":\"${TEST_ACC_C_ADDR}\"},\"0x00\"]" 2>/dev/null || echo "")
+resp=$(rpc "$(node 1)" eth_signRawFeeDelegateTransaction "[{\"from\":\"$(acct_addr 3)\"},\"0x00\"]" 2>/dev/null || echo "")
 has_method=$(printf '%s' "$resp" | python3 -c "
 import sys, json
 try:

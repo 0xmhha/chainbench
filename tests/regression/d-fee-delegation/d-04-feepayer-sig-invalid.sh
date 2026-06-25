@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/d-fee-delegation/d-04-feepayer-sig-invalid
@@ -18,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/d-fee-delegation/d-04-feepayer-sig-invalid"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 python3 -c "import rlp, eth_keys" 2>/dev/null || { _assert_fail "missing python deps"; test_result; exit 1; }
 
@@ -27,7 +27,7 @@ result=$(python3 "$HELPER" send \
   --rpc http://127.0.0.1:8501 \
   --sender-pk "$TEST_ACC_A_PK" \
   --fee-payer-pk "$TEST_ACC_C_PK" \
-  --to "$TEST_ACC_B_ADDR" \
+  --to "$(acct_addr 2)" \
   --value 1 \
   --gas 21000 \
   --tamper feepayer 2>&1)

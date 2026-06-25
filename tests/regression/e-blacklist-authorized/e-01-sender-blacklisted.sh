@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/e-blacklist-authorized/e-01-sender-blacklisted
@@ -18,23 +17,24 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/e-blacklist-authorized/e-01-sender-blacklisted"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
 # TEST_ACC_E를 GovCouncil로 blacklist 등록
 propose_sel=$(selector "proposeAddBlacklist(address)")
-target_padded=$(pad_address "$TEST_ACC_E_ADDR" | sed 's/^0x//')
+target_padded=$(pad_address "$(acct_addr 5)" | sed 's/^0x//')
 propose_data="${propose_sel}${target_padded}"
 
-receipt=$(gov_full_flow "$GOV_COUNCIL" "$propose_data" "$VALIDATOR_1_ADDR" "$VALIDATOR_2_ADDR") || {
+receipt=$(gov_full_flow "$GOV_COUNCIL" "$propose_data" "$(validator_addr 1)" "$(validator_addr 2)") || {
   _assert_fail "gov flow failed"; test_result; exit 1;
 }
-exec_status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exec_status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$exec_status" "0x1" "blacklist proposal executed"
 
 # isBlacklisted 확인
 is_bl_sel=$(selector "isBlacklisted(address)")
-is_bl=$(hex_to_dec "$(eth_call_raw 1 "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
+is_bl=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
 assert_eq "$is_bl" "1" "TEST_ACC_E is blacklisted"
 
 # TEST_ACC_E가 sender로 tx 발행 시도 → 거부
@@ -58,6 +58,6 @@ PYEOF
 assert_contains "$err_output" "blacklist" "error contains 'blacklist'"
 
 # 상태 저장: E-04에서 해제
-echo "$TEST_ACC_E_ADDR" > /tmp/chainbench-regression/blacklisted_addr.txt
+echo "$(acct_addr 5)" > /tmp/chainbench-regression/blacklisted_addr.txt
 
 test_result

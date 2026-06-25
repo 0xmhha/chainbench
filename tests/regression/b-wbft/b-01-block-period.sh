@@ -7,7 +7,6 @@
 # estimated_seconds: 15
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/b-wbft/b-01-block-period
@@ -18,7 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/b-wbft/b-01-block-period"
 
-current=$(block_number "1")
+current=$(block_number "$(node 1)")
 # 10개 블록을 조회하므로 current+9 까지 mined 되어야 함
 # (이전: +5만 기다려서 뒤쪽 블록들이 null timestamp → diff 계산 오류)
 wait_for_block "1" $(( current + 10 )) 20 >/dev/null
@@ -27,7 +26,7 @@ wait_for_block "1" $(( current + 10 )) 20 >/dev/null
 declare -a timestamps=()
 for i in 0 1 2 3 4 5 6 7 8 9; do
   n=$(( current + i ))
-  ts_hex=$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]" | json_get - "result.timestamp")
+  ts_hex=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]" | json_get - "result.timestamp")
   timestamps+=("$(hex_to_dec "$ts_hex")")
 done
 

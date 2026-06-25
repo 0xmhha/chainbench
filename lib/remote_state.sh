@@ -223,6 +223,28 @@ print(remotes[alias]['rpc_url'])
 " "$alias" "$(_cb_remote_load_state)"
 }
 
+# _cb_remote_get_ws_url <alias>
+# Prints the WebSocket URL for the given alias. Exits 1 if not set.
+_cb_remote_get_ws_url() {
+  local alias="$1"
+  local state
+  state="$(_cb_remote_load_state)"
+  local ws_url
+  ws_url=$(printf '%s' "$state" | python3 -c "
+import json, sys
+state = json.loads(sys.stdin.read())
+remotes = state.get('remotes', {})
+alias = sys.argv[1]
+if alias not in remotes:
+    print(f'ERROR: alias \"{alias}\" not found', file=sys.stderr); sys.exit(1)
+ws = remotes[alias].get('ws_url', '')
+if not ws:
+    print(f'ERROR: no ws_url for \"{alias}\"', file=sys.stderr); sys.exit(1)
+print(ws)
+" "$alias") || return 1
+  echo "$ws_url"
+}
+
 # _cb_remote_get_auth_header <alias>
 # Prints the auth header for the given alias (empty string if none).
 _cb_remote_get_auth_header() {

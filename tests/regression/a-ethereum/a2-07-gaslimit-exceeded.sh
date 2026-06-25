@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/a-ethereum/a2-07-gaslimit-exceeded
@@ -18,9 +17,10 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/a-ethereum/a2-07-gaslimit-exceeded"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 블록 gasLimit 조회
-block_gas_limit_hex=$(rpc "1" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - "result.gasLimit")
+block_gas_limit_hex=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - "result.gasLimit")
 block_gas_limit=$(hex_to_dec "$block_gas_limit_hex")
 printf '[INFO]  block gasLimit = %s\n' "$block_gas_limit" >&2
 

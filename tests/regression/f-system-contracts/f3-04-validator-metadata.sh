@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f3-04-validator-metadata
@@ -18,10 +17,11 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f3-04-validator-metadata"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # (1) validatorList() → 검증자 배열
 vl_sel=$(selector "validatorList()")
-vl_result=$(eth_call_raw 1 "$GOV_VALIDATOR" "$vl_sel")
+vl_result=$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "$vl_sel")
 
 validators=$(printf '%s' "$vl_result" | python3 -c "
 import sys
@@ -60,8 +60,8 @@ for v in "${addr_arr[@]}"; do
   [[ -z "$v" ]] && continue
   v_padded=$(pad_address "$v" | sed 's/^0x//')
 
-  operator=$(eth_call_raw 1 "$GOV_VALIDATOR" "${to_op_sel}${v_padded}")
-  bls_key=$(eth_call_raw 1 "$GOV_VALIDATOR" "${to_bls_sel}${v_padded}")
+  operator=$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "${to_op_sel}${v_padded}")
+  bls_key=$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "${to_bls_sel}${v_padded}")
 
   printf '[INFO]  %s operator=%s blsLen=%d\n' "$v" "${operator:0:20}" "${#bls_key}" >&2
 

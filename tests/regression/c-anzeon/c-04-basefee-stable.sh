@@ -7,7 +7,6 @@
 # estimated_seconds: 8
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/c-anzeon/c-04-basefee-stable
@@ -18,14 +17,15 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/c-anzeon/c-04-basefee-stable"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # 블록 gasLimit 조회
-block_gas_limit=$(hex_to_dec "$(rpc "1" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - 'result.gasLimit')")
+block_gas_limit=$(hex_to_dec "$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"latest\", false]" | json_get - 'result.gasLimit')")
 # 10% 가스 사용 (6~20% 범위)
 target=$(( block_gas_limit * 10 / 100 ))
 tx_count=$(( target / 21000 + 1 ))
 
-block_before=$(block_number "1")
+block_before=$(block_number "$(node 1)")
 
 python3 <<PYEOF
 import json, requests
@@ -62,7 +62,7 @@ wait_for_block "1" $(( block_before + 5 )) 15 >/dev/null
 found_stable=false
 for n in $(seq $(( block_before + 1 )) $(( block_before + 10 ))); do
   wait_for_block "1" "$n" 10 >/dev/null
-  blk=$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
+  blk=$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$n")\", false]")
   gas_used=$(hex_to_dec "$(printf '%s' "$blk" | json_get - 'result.gasUsed')")
   bf=$(hex_to_dec "$(printf '%s' "$blk" | json_get - 'result.baseFeePerGas')")
   [[ "$bf" == "0" ]] && continue  # 블록이 아직 없으면 스킵
@@ -71,7 +71,7 @@ for n in $(seq $(( block_before + 1 )) $(( block_before + 10 ))); do
 
   if (( usage_pct >= 6 && usage_pct <= 20 )); then
     wait_for_block "1" "$((n+1))" 10 >/dev/null
-    next_bf=$(hex_to_dec "$(rpc "1" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]" | json_get - 'result.baseFeePerGas')")
+    next_bf=$(hex_to_dec "$(rpc "$(node 1)" "eth_getBlockByNumber" "[\"$(dec_to_hex "$((n+1))")\", false]" | json_get - 'result.baseFeePerGas')")
     if [[ "$next_bf" == "$bf" ]]; then
       found_stable=true
       _assert_pass "baseFee stable after block usage in 6~20%% range: $bf"

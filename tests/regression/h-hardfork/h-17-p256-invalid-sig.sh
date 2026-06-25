@@ -16,6 +16,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-17-p256-invalid-sig"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 P256_PRECOMPILE="0x0000000000000000000000000000000000000100"
 SUCCESS_RESULT="0x0000000000000000000000000000000000000000000000000000000000000001"
@@ -29,7 +30,7 @@ Y_VAL="f6afd7ebfa4dfddd60ab0272c226d19c1f6aed1cdee3a51a35e415f4dcc33d70"
 
 INPUT="0x${HASH}${R_BAD}${S_VAL}${X_VAL}${Y_VAL}"
 
-resp=$(rpc 1 "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${INPUT}\"},\"latest\"]")
+resp=$(rpc "$(node 1)" "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${INPUT}\"},\"latest\"]")
 result=$(json_get "$resp" "result")
 
 observe "p256_invalid_result" "$result"
