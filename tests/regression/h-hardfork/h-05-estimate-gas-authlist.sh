@@ -7,7 +7,6 @@
 # estimated_seconds: 15
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/h-hardfork/h-05-estimate-gas-authlist
@@ -21,11 +20,12 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-05-estimate-gas-authlist"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # --- 1) Baseline: eth_estimateGas without authorizationList ---
 printf '[INFO]  estimating gas for simple transfer (no authorizationList)\n' >&2
-resp_no_auth=$(rpc "1" "eth_estimateGas" \
-  "[{\"from\":\"${TEST_ACC_A_ADDR}\",\"to\":\"${TEST_ACC_B_ADDR}\",\"value\":\"0x1\"}]")
+resp_no_auth=$(rpc "$(node 1)" "eth_estimateGas" \
+  "[{\"from\":\"$(acct_addr 1)\",\"to\":\"$(acct_addr 2)\",\"value\":\"0x1\"}]")
 estimate_no_auth=$(json_get "$resp_no_auth" "result")
 error_no_auth=$(json_get "$resp_no_auth" "error.message")
 
@@ -46,7 +46,7 @@ assert_ge "$estimate_no_auth_dec" "21000" "estimate without authList >= 21000"
 # chainId, address (delegate target), nonce, v, r, s
 printf '[INFO]  estimating gas with authorizationList\n' >&2
 
-chain_id_hex=$(rpc "1" "eth_chainId" "[]" | json_get - result)
+chain_id_hex=$(rpc "$(node 1)" "eth_chainId" "[]" | json_get - result)
 node_port=$(pids_get_field "1" "http_port")
 
 # Use python to construct the RPC call with authorizationList and parse response
@@ -57,13 +57,13 @@ url = "http://127.0.0.1:${node_port}"
 
 # Build the request with authorizationList
 tx_obj = {
-    "from": "${TEST_ACC_A_ADDR}",
-    "to": "${TEST_ACC_B_ADDR}",
+    "from": "$(acct_addr 1)",
+    "to": "$(acct_addr 2)",
     "value": "0x1",
     "authorizationList": [
         {
             "chainId": "${chain_id_hex}",
-            "address": "${TEST_ACC_B_ADDR}",
+            "address": "$(acct_addr 2)",
             "nonce": "0x0",
             "v": "0x0",
             "r": "0x0000000000000000000000000000000000000000000000000000000000000000",

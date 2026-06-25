@@ -20,11 +20,12 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-32-extra-union-merge"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # --- TC-4-5-05: Union merge → isAuthorized(TEST_ACC_D) == true (no revert/double-add) ---
 is_auth_sel=$(selector "isAuthorized(address)")
-td_padded=$(pad_address "$TEST_ACC_D_ADDR" | sed 's/^0x//')
-td_result_raw=$(eth_call_raw 1 "$ACCOUNT_MANAGER" "${is_auth_sel}${td_padded}")
+td_padded=$(pad_address "$(acct_addr 4)" | sed 's/^0x//')
+td_result_raw=$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "${is_auth_sel}${td_padded}")
 td_result=$(hex_to_dec "$td_result_raw")
 observe "isAuthorized_TEST_ACC_D_raw" "$td_result_raw"
 assert_eq "$td_result" "1" \
@@ -41,7 +42,7 @@ auth_arr_sel=$(selector "authorizedAddresses(uint256)")
 
 # index 0
 idx0_padded=$(python3 -c "print('0x' + format(0,'064x'))" | sed 's/^0x//')
-idx0_raw=$(eth_call_raw 1 "$GOV_COUNCIL" "${auth_arr_sel}${idx0_padded}" 2>/dev/null || echo "")
+idx0_raw=$(eth_call_raw "$(node 1)" "$GOV_COUNCIL" "${auth_arr_sel}${idx0_padded}" 2>/dev/null || echo "")
 observe "govCouncil_authorizedAddresses_0" "$idx0_raw"
 
 # index 0 must be non-empty and non-zero (TEST_ACC_D or the zero-padded address)
@@ -62,7 +63,7 @@ fi
 # index 1 — in this profile only TEST_ACC_D is in authorizedAddresses, so index 1 should
 # revert or return zero address (no second entry means no duplicate was added).
 idx1_padded=$(python3 -c "print('0x' + format(1,'064x'))" | sed 's/^0x//')
-idx1_raw=$(eth_call_raw 1 "$GOV_COUNCIL" "${auth_arr_sel}${idx1_padded}" 2>/dev/null || echo "0x")
+idx1_raw=$(eth_call_raw "$(node 1)" "$GOV_COUNCIL" "${auth_arr_sel}${idx1_padded}" 2>/dev/null || echo "0x")
 observe "govCouncil_authorizedAddresses_1" "$idx1_raw"
 
 # If result is empty, 0x, or all-zeros → no second entry (correct dedup)

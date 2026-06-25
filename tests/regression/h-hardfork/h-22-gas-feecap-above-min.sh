@@ -7,7 +7,6 @@
 # estimated_seconds: 20
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-1-3-03 — gasFeeCap > minBaseFee + minTip → accepted
@@ -17,9 +16,10 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-22-gas-feecap-above-min"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
-base_fee=$(get_base_fee 1)
-gas_tip=$(get_header_gas_tip 1)
+base_fee=$(get_base_fee "$(node 1)")
+gas_tip=$(get_header_gas_tip "$(node 1)")
 min_required=$(( base_fee + gas_tip ))
 above_min=$(( min_required + 1000000000 ))
 
@@ -28,7 +28,7 @@ observe "gasTip" "$gas_tip"
 observe "minRequired" "$min_required"
 observe "gasFeeCap_above" "$above_min"
 
-nonce=$(get_nonce 1 "$TEST_ACC_A_ADDR")
+nonce=$(get_nonce "$(node 1)" "$(acct_addr 1)")
 result=$(python3 -c "
 from eth_account import Account
 from eth_utils import to_hex
@@ -37,7 +37,7 @@ import requests, json
 acct = Account.from_key('${TEST_ACC_A_PK}')
 tx = {
     'type': 2, 'chainId': 8283, 'nonce': ${nonce},
-    'to': '${TEST_ACC_B_ADDR}', 'value': 1000000000000000,
+    'to': '$(acct_addr 2)', 'value': 1000000000000000,
     'gas': 21000, 'maxFeePerGas': ${above_min}, 'maxPriorityFeePerGas': ${gas_tip},
 }
 signed = acct.sign_transaction(tx)
@@ -54,7 +54,7 @@ if [[ "$result" == ERROR:* ]]; then
   _assert_fail "TX with above-min gasFeeCap was rejected: ${result#ERROR:}"
 else
   assert_not_empty "$result" "TX hash returned"
-  receipt=$(wait_tx_receipt_full 1 "$result" 30)
+  receipt=$(wait_tx_receipt_full "$(node 1)" "$result" 30)
   status=$(json_get "$receipt" "status")
   assert_eq "$status" "0x1" "TX with above-min gasFeeCap succeeded"
 fi

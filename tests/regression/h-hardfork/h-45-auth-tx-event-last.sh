@@ -7,7 +7,6 @@
 # estimated_seconds: 20
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-4-6-04 — AuthorizedTxExecuted event must be the last log entry
@@ -17,15 +16,16 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-45-auth-tx-event-last"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # Send from authorized account (validator)
-unlock_validator 1
-resp=$(rpc 1 "eth_sendTransaction" \
-  "[{\"from\":\"${VALIDATOR_1_ADDR}\",\"to\":\"${TEST_ACC_B_ADDR}\",\"value\":\"0xDE0B6B3A7640000\"}]")
+unlock_validator "$(node 1)"
+resp=$(rpc "$(node 1)" "eth_sendTransaction" \
+  "[{\"from\":\"$(validator_addr 1)\",\"to\":\"$(acct_addr 2)\",\"value\":\"0xDE0B6B3A7640000\"}]")
 tx_hash=$(json_get "$resp" "result")
 assert_not_empty "$tx_hash" "authorized tx sent"
 
-receipt=$(wait_tx_receipt_full 1 "$tx_hash" 30)
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 assert_not_empty "$receipt" "receipt received"
 
 # Check AuthorizedTxExecuted is the last log

@@ -17,6 +17,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-16-p256-pre-boho"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 P256_PRECOMPILE="0x0000000000000000000000000000000000000100"
 P256_INPUT="0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca6050232927b10512bae3eddcfe467828128bad2903269919f7086069c8c4df6c732838c7787964eaac00e5921fb1498a60f4606766b3d9685001558d1a974e7341513e04e04e18e1ff7b70e7b5e14d1b70e0bdb8ece3acf34ffee3e8e5a2e4266bfbb0f6afd7ebfa4dfddd60ab0272c226d19c1f6aed1cdee3a51a35e415f4dcc33d70"
@@ -24,7 +25,7 @@ P256_INPUT="0xbb5a52f42f9c9261ed4361f59422a1e30036e7c32b270c8807a419feca60502329
 SUCCESS_RESULT="0x0000000000000000000000000000000000000000000000000000000000000001"
 
 # Call at block 5 (before BohoBlock=10)
-resp=$(rpc 1 "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${P256_INPUT}\"},\"0x5\"]")
+resp=$(rpc "$(node 1)" "eth_call" "[{\"to\":\"${P256_PRECOMPILE}\",\"data\":\"${P256_INPUT}\"},\"0x5\"]")
 result=$(json_get "$resp" "result")
 error=$(json_get "$resp" "error.message")
 

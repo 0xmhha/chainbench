@@ -7,7 +7,6 @@
 # estimated_seconds: 20
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-4-6-03 — EGP must be same on block producer and endpoint node
@@ -17,13 +16,14 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-44-egp-no-overwrite"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
-tx_hash=$(send_raw_tx 1 "$TEST_ACC_A_PK" "$TEST_ACC_B_ADDR" "1000000000000000000")
+tx_hash=$(send_raw_tx 1 "$TEST_ACC_A_PK" "$(acct_addr 2)" "1000000000000000000")
 assert_not_empty "$tx_hash" "tx sent"
 
 # Wait for receipt on both nodes
-receipt_bp=$(wait_tx_receipt_full 1 "$tx_hash" 30)
-receipt_en=$(wait_tx_receipt_full 5 "$tx_hash" 30)
+receipt_bp=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+receipt_en=$(wait_tx_receipt_full "$(node 5)" "$tx_hash" 30)
 
 assert_not_empty "$receipt_bp" "receipt from BP node"
 assert_not_empty "$receipt_en" "receipt from EN node"

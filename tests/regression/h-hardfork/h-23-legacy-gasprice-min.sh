@@ -7,7 +7,6 @@
 # estimated_seconds: 20
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # TC-1-3-04 — Legacy TX gasPrice < minBaseFee + minTip → rejected
@@ -17,16 +16,17 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-23-legacy-gasprice-min"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
-base_fee=$(get_base_fee 1)
-gas_tip=$(get_header_gas_tip 1)
+base_fee=$(get_base_fee "$(node 1)")
+gas_tip=$(get_header_gas_tip "$(node 1)")
 min_required=$(( base_fee + gas_tip ))
 too_low=$(( min_required - 1 ))
 
 observe "minRequired" "$min_required"
 observe "gasPrice_used" "$too_low"
 
-nonce=$(get_nonce 1 "$TEST_ACC_A_ADDR")
+nonce=$(get_nonce "$(node 1)" "$(acct_addr 1)")
 result=$(python3 -c "
 from eth_account import Account
 from eth_utils import to_hex
@@ -38,7 +38,7 @@ tx = {
     'type': 0,
     'chainId': 8283,
     'nonce': ${nonce},
-    'to': '${TEST_ACC_B_ADDR}',
+    'to': '$(acct_addr 2)',
     'value': 1000000000000000,
     'gas': 21000,
     'gasPrice': ${too_low},

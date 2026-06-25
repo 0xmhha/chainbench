@@ -20,19 +20,20 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/h-hardfork/h-35-extra-v1-to-v2-delayed"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 BOHO_BLOCK=10
 
 # ============================================================
 # TC-4-5-10: Before BohoBlock — chain produces blocks normally
 # ============================================================
-current=$(block_number 1)
+current=$(block_number "$(node 1)")
 observe "block_at_start" "$current"
 
 if (( current < BOHO_BLOCK )); then
   # Record GovMinter v1 bytecode length
   block_hex=$(printf '0x%x' "$current")
-  resp_v1=$(rpc 1 "eth_getCode" "[\"${GOV_MINTER}\",\"${block_hex}\"]")
+  resp_v1=$(rpc "$(node 1)" "eth_getCode" "[\"${GOV_MINTER}\",\"${block_hex}\"]")
   code_v1=$(json_get "$resp_v1" "result")
   code_v1_len=${#code_v1}
   observe "govminter_v1_code_len" "$code_v1_len"
@@ -54,7 +55,7 @@ wait_for_block 1 "$BOHO_BLOCK" 90
 # Allow 1-2 additional blocks for state transitions to settle
 sleep 2
 
-resp_v2=$(rpc 1 "eth_getCode" "[\"${GOV_MINTER}\",\"latest\"]")
+resp_v2=$(rpc "$(node 1)" "eth_getCode" "[\"${GOV_MINTER}\",\"latest\"]")
 code_v2=$(json_get "$resp_v2" "result")
 code_v2_len=${#code_v2}
 observe "govminter_v2_code_len" "$code_v2_len"
@@ -75,19 +76,19 @@ fi
 # ============================================================
 # TEST_ACC_A is a standard alloc account (1000000000000000000000000000 wei).
 # decodePrealloc restoration must preserve its balance after the upgrade.
-ta_balance=$(get_balance 1 "$TEST_ACC_A_ADDR")
+ta_balance=$(get_balance "$(node 1)" "$(acct_addr 1)")
 observe "balance_TEST_ACC_A_post_boho" "$ta_balance"
 assert_gt "$ta_balance" "0" \
   "TC-4-5-12a: TEST_ACC_A balance > 0 after BohoBlock (genesis alloc preserved)"
 
 # TEST_ACC_A nonce should still be 0 (we never sent txs from it in this test)
-ta_nonce=$(get_nonce 1 "$TEST_ACC_A_ADDR")
+ta_nonce=$(get_nonce "$(node 1)" "$(acct_addr 1)")
 observe "nonce_TEST_ACC_A_post_boho" "$ta_nonce"
 assert_eq "$ta_nonce" "0" \
   "TC-4-5-12b: TEST_ACC_A nonce == 0 after BohoBlock (account state not wiped)"
 
 # Chain should still be advancing blocks after Boho activation
-post_boho_block=$(block_number 1)
+post_boho_block=$(block_number "$(node 1)")
 observe "block_post_boho" "$post_boho_block"
 assert_gt "$post_boho_block" "$(( BOHO_BLOCK - 1 ))" \
   "TC-4-5-12c: chain continues producing blocks after BohoBlock"
