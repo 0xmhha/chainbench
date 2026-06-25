@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/d-fee-delegation/d-05-feepayer-insufficient
@@ -20,6 +19,7 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/d-fee-delegation/d-05-feepayer-insufficient"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 python3 -c "import rlp, eth_keys" 2>/dev/null || { _assert_fail "missing python deps"; test_result; exit 1; }
 
@@ -39,7 +39,7 @@ print(acct.address)
 ")
 
 # 확인: 잔액 0
-empty_bal=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${empty_addr}\", \"latest\"]" | json_get - result)")
+empty_bal=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"${empty_addr}\", \"latest\"]" | json_get - result)")
 assert_eq "$empty_bal" "0" "generated empty feePayer has 0 balance ($empty_addr)"
 
 # Sender가 서명, FeePayer는 잔액 0인 주소로 지정
@@ -47,7 +47,7 @@ result=$(python3 "$HELPER" send \
   --rpc http://127.0.0.1:8501 \
   --sender-pk "$TEST_ACC_A_PK" \
   --fee-payer-pk "$empty_pk" \
-  --to "$TEST_ACC_B_ADDR" \
+  --to "$(acct_addr 2)" \
   --value 1 \
   --gas 21000 2>&1)
 

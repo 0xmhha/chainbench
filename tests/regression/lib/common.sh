@@ -16,6 +16,10 @@
 [[ -n "${_CB_REGRESSION_COMMON_LOADED:-}" ]] && return 0
 readonly _CB_REGRESSION_COMMON_LOADED=1
 
+# python primitives/bespoke 블록이 stderr 경고(예: macOS LibreSSL의 urllib3 NotOpenSSLWarning)를
+# 2>&1로 캡처해 JSON 파싱을 깨뜨리는 것을 방지. 폐쇄망/clean python엔 영향 없음.
+export PYTHONWARNINGS="${PYTHONWARNINGS:-ignore}"
+
 CHAINBENCH_DIR="${CHAINBENCH_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 source "${CHAINBENCH_DIR}/tests/lib/rpc.sh"
 source "${CHAINBENCH_DIR}/tests/lib/assert.sh"
