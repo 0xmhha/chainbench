@@ -7,7 +7,6 @@
 # estimated_seconds: 67
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f2-01-mint-proposal
@@ -23,17 +22,18 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f2-01-mint-proposal"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
-beneficiary="$TEST_ACC_B_ADDR"
+beneficiary="$(acct_addr 2)"
 amount="1000000000000000000"  # 1 ether
 timestamp=$(date +%s)
 deposit_id="REG-DEP-$(date +%s%N)"
 bank_ref="REG-BANK-${timestamp}"
 memo="regression mint"
 
-bal_before=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${beneficiary}\", \"latest\"]" | json_get - result)")
+bal_before=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"${beneficiary}\", \"latest\"]" | json_get - result)")
 
 # Python으로 proposeMint tx data 생성 (eth_abi로 bytes 인코딩)
 tx_data=$(python3 <<PYEOF
@@ -54,15 +54,15 @@ print('0x' + (selector + call_data).hex())
 PYEOF
 ) || { _assert_fail "eth_abi encoding failed"; test_result; exit 1; }
 
-tx_hash=$(gov_call "1" "$GOV_MINTER" "$tx_data" "$VALIDATOR_1_ADDR" 1500000)
+tx_hash=$(gov_call "1" "$GOV_MINTER" "$tx_data" "$(validator_addr 1)" 1500000)
 if [[ -z "$tx_hash" || "$tx_hash" == "null" ]]; then
   _assert_fail "proposeMint tx submission failed"
   test_result
   exit 1
 fi
 
-propose_receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-propose_status=$(printf '%s' "$propose_receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+propose_receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+propose_status=$(printf '%s' "$propose_receipt" | jq -r '.status // empty')
 assert_eq "$propose_status" "0x1" "proposeMint receipt status == 0x1"
 
 proposal_id=$(extract_proposal_id_from_receipt "1" "$tx_hash")
@@ -70,28 +70,28 @@ assert_not_empty "$proposal_id" "proposalId extracted"
 printf '[INFO]  mint proposal_id=%s\n' "$proposal_id" >&2
 
 # validator2 approve → quorum 달성 (GovBase는 quorum 도달 시 approve 내에서 자동 실행)
-approve_tx=$(gov_approve "1" "$GOV_MINTER" "$proposal_id" "$VALIDATOR_2_ADDR")
+approve_tx=$(gov_approve "$(node 1)" "$GOV_MINTER" "$proposal_id" "$(validator_addr 2)")
 sleep 2
 
 # approve 후 proposal 상태 확인 — auto-execute 되었으면 별도 execute 불필요
-prop_status=$(gov_proposal_status "1" "$GOV_MINTER" "$proposal_id")
+prop_status=$(gov_proposal_status "$(node 1)" "$GOV_MINTER" "$proposal_id")
 if [[ "$prop_status" == "3" ]]; then
   # Auto-executed during approve
-  approve_node=$(addr_to_node "$VALIDATOR_2_ADDR")
+  approve_node=$(addr_to_node "$(validator_addr 2)")
   exec_receipt=$(wait_tx_receipt_full "$approve_node" "$approve_tx" 30)
   echo "$exec_receipt" > /tmp/chainbench-regression/last_mint_receipt.json
 else
   # Manual execute required
-  exec_tx=$(gov_execute "1" "$GOV_MINTER" "$proposal_id" "$VALIDATOR_1_ADDR")
-  exec_receipt=$(wait_tx_receipt_full "1" "$exec_tx" 30)
+  exec_tx=$(gov_execute "$(node 1)" "$GOV_MINTER" "$proposal_id" "$(validator_addr 1)")
+  exec_receipt=$(wait_tx_receipt_full "$(node 1)" "$exec_tx" 30)
   echo "$exec_receipt" > /tmp/chainbench-regression/last_mint_receipt.json
 fi
 
-exec_status=$(printf '%s' "$exec_receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exec_status=$(printf '%s' "$exec_receipt" | jq -r '.status // empty')
 assert_eq "$exec_status" "0x1" "mint execute receipt.status == 0x1"
 
 # beneficiary 잔액 증가
-bal_after=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${beneficiary}\", \"latest\"]" | json_get - result)")
+bal_after=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"${beneficiary}\", \"latest\"]" | json_get - result)")
 diff=$(( bal_after - bal_before ))
 assert_eq "$diff" "$amount" "beneficiary balance increased by $amount"
 

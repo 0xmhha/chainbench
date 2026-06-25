@@ -7,7 +7,6 @@
 # estimated_seconds: 7
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f3-05-propose-gastip
@@ -18,12 +17,13 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f3-05-propose-gastip"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
 # 현재 gasTip
 get_sel=$(selector "getGasTipGwei()")
-current_gasfip_gwei=$(hex_to_dec "$(eth_call_raw 1 "$GOV_VALIDATOR" "$get_sel" 2>/dev/null || echo "0x0")")
+current_gasfip_gwei=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "$get_sel" 2>/dev/null || echo "0x0")")
 printf '[INFO]  current gasTipGwei = %s\n' "$current_gasfip_gwei" >&2
 
 # 새 gasTip (다른 값으로 변경)
@@ -36,15 +36,15 @@ propose_sel=$(selector "proposeGasTip(uint256)")
 amt_padded=$(pad_uint256 "$NEW_GASFIP" | sed 's/^0x//')
 propose_data="${propose_sel}${amt_padded}"
 
-receipt=$(gov_full_flow "$GOV_VALIDATOR" "$propose_data" "$VALIDATOR_1_ADDR" "$VALIDATOR_2_ADDR") || {
+receipt=$(gov_full_flow "$GOV_VALIDATOR" "$propose_data" "$(validator_addr 1)" "$(validator_addr 2)") || {
   _assert_fail "gov flow failed"; test_result; exit 1
 }
 
-exec_status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exec_status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$exec_status" "0x1" "executeProposal succeeded"
 
 # storage 변경 확인
-new_gasfip=$(hex_to_dec "$(eth_call_raw 1 "$GOV_VALIDATOR" "$get_sel" 2>/dev/null || echo "0x0")")
+new_gasfip=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "$get_sel" 2>/dev/null || echo "0x0")")
 printf '[INFO]  new gasTipGwei (contract storage) = %s\n' "$new_gasfip" >&2
 # getGasTipGwei()는 wei 단위인지 Gwei 단위인지 이름에 Gwei가 있으나 구현 확인 필요
 # 일단 변경되었는지만 확인
@@ -62,7 +62,7 @@ fi
 
 # B-06 후행: 다음 블록 헤더에 WBFTExtra.GasTip 반영 확인
 sleep 2
-header_tip=$(get_header_gas_tip "1")
+header_tip=$(get_header_gas_tip "$(node 1)")
 printf '[INFO]  WBFTExtra.GasTip after execute = %s\n' "$header_tip" >&2
 # worker가 컨트랙트 storage를 읽어 반영 → header_tip == NEW_GASFIP
 if [[ "$header_tip" == "$NEW_GASFIP" ]]; then

@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f4-01-add-minter
@@ -21,10 +20,11 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f4-01-add-minter"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
-minter_addr="$TEST_ACC_D_ADDR"
+minter_addr="$(acct_addr 4)"
 allowance="10000000000000000000"  # 10 ether
 
 propose_sel=$(selector "proposeConfigureMinter(address,uint256)")
@@ -32,17 +32,17 @@ m_padded=$(pad_address "$minter_addr" | sed 's/^0x//')
 allow_padded=$(pad_uint256 "$allowance" | sed 's/^0x//')
 propose_data="${propose_sel}${m_padded}${allow_padded}"
 
-receipt=$(gov_full_flow "$GOV_MASTER_MINTER" "$propose_data" "$VALIDATOR_1_ADDR" "$VALIDATOR_2_ADDR") || {
+receipt=$(gov_full_flow "$GOV_MASTER_MINTER" "$propose_data" "$(validator_addr 1)" "$(validator_addr 2)") || {
   _assert_fail "gov flow failed"; test_result; exit 1
 }
 
-exec_status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exec_status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$exec_status" "0x1" "configureMinter execute status == 0x1"
 
 # NativeCoinAdapter.isMinter 확인 (GovMinter가 아니라 NativeCoinAdapter 자체 Minter role)
 # GovMasterMinter는 NativeCoinAdapter의 masterMinter로 설정되어 있음 → NativeCoinAdapter 상에 Minter 등록
 is_minter_sel=$(selector "isMinter(address)")
-is_minter_result=$(eth_call_raw 1 "$NATIVE_COIN_ADAPTER" "${is_minter_sel}${m_padded}" 2>/dev/null || echo "0x0")
+is_minter_result=$(eth_call_raw "$(node 1)" "$NATIVE_COIN_ADAPTER" "${is_minter_sel}${m_padded}" 2>/dev/null || echo "0x0")
 is_minter=$(hex_to_dec "$is_minter_result")
 
 if [[ "$is_minter" == "1" ]]; then
@@ -50,7 +50,7 @@ if [[ "$is_minter" == "1" ]]; then
 else
   # minterAllowance로도 확인
   allow_sel=$(selector "minterAllowance(address)")
-  allow_result=$(hex_to_dec "$(eth_call_raw 1 "$NATIVE_COIN_ADAPTER" "${allow_sel}${m_padded}" 2>/dev/null || echo "0x0")")
+  allow_result=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$NATIVE_COIN_ADAPTER" "${allow_sel}${m_padded}" 2>/dev/null || echo "0x0")")
   assert_gt "$allow_result" "0" "TEST_ACC_D has non-zero minterAllowance ($allow_result)"
 fi
 

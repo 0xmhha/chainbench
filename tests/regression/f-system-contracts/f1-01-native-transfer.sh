@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f1-01-native-transfer
@@ -18,14 +17,15 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f1-01-native-transfer"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # transfer(address,uint256)
 sel=$(selector "transfer(address,uint256)")
-to_padded=$(pad_address "$TEST_ACC_B_ADDR" | sed 's/^0x//')
+to_padded=$(pad_address "$(acct_addr 2)" | sed 's/^0x//')
 amount_padded=$(pad_uint256 "1000000000000000" | sed 's/^0x//')  # 0.001 ether
 data="${sel}${to_padded}${amount_padded}"
 
-before=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_B_ADDR}\", \"latest\"]" | json_get - result)")
+before=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 2)\", \"latest\"]" | json_get - result)")
 
 # NativeCoinAdapter.transfer 호출 (TEST_ACC_A → TEST_ACC_B)
 tx_hash=$(python3 <<PYEOF
@@ -46,12 +46,12 @@ print(resp.get("result", ""))
 PYEOF
 )
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$status" "0x1" "transfer receipt.status == 0x1"
 
 # 수신자 잔액 증가
-after=$(hex_to_dec "$(rpc 1 eth_getBalance "[\"${TEST_ACC_B_ADDR}\", \"latest\"]" | json_get - result)")
+after=$(hex_to_dec "$(rpc "$(node 1)" eth_getBalance "[\"$(acct_addr 2)\", \"latest\"]" | json_get - result)")
 diff=$(( after - before ))
 assert_eq "$diff" "1000000000000000" "recipient balance increased by 0.001 ether"
 

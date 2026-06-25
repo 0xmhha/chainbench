@@ -7,7 +7,6 @@
 # estimated_seconds: 25
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f5-05-direct-blacklist-rejected
@@ -16,10 +15,11 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/f-system-contracts/f5-05-direct-blacklist-rejected"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # AccountManager.blacklist(address) selector
 bl_sel=$(selector "blacklist(address)")
-target_padded=$(pad_address "$TEST_ACC_B_ADDR" | sed 's/^0x//')
+target_padded=$(pad_address "$(acct_addr 2)" | sed 's/^0x//')
 data="${bl_sel}${target_padded}"
 
 # TEST_ACC_A (비멤버)가 AccountManager.blacklist 직접 호출 시도 → revert
@@ -43,8 +43,8 @@ PYEOF
 if [[ -z "$tx_hash" || "$tx_hash" == "null" ]]; then
   _assert_pass "tx rejected at submission (access control)"
 else
-  receipt=$(wait_tx_receipt_full "1" "$tx_hash" 20)
-  status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+  receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 20)
+  status=$(printf '%s' "$receipt" | jq -r '.status // empty')
   assert_eq "$status" "0x0" "direct blacklist call reverted"
 fi
 

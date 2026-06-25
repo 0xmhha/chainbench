@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f4-04-non-member-rejected
@@ -18,10 +17,11 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f4-04-non-member-rejected"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # TEST_ACC_A (비멤버)로 proposeConfigureMinter 호출
 propose_sel=$(selector "proposeConfigureMinter(address,uint256)")
-m_padded=$(pad_address "$TEST_ACC_B_ADDR" | sed 's/^0x//')
+m_padded=$(pad_address "$(acct_addr 2)" | sed 's/^0x//')
 allow_padded=$(pad_uint256 "1000000000000000000" | sed 's/^0x//')
 propose_data="${propose_sel}${m_padded}${allow_padded}"
 
@@ -42,8 +42,8 @@ print(requests.post(url, json={"jsonrpc":"2.0","method":"eth_sendRawTransaction"
 PYEOF
 )
 
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
-status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
+status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$status" "0x0" "non-member proposeConfigureMinter reverted (status==0x0)"
 
 test_result

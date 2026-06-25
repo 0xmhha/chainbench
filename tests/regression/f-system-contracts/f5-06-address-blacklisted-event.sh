@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f5-06-address-blacklisted-event
@@ -16,6 +15,7 @@ set -euo pipefail
 source "$(dirname "$0")/../lib/common.sh"
 test_start "regression/f-system-contracts/f5-06-address-blacklisted-event"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 receipt=$(cat /tmp/chainbench-regression/f5_01_receipt.json 2>/dev/null || echo "")
 if [[ -z "$receipt" ]]; then

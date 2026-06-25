@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/f-system-contracts/f3-03-remove-validator
@@ -18,16 +17,17 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/f-system-contracts/f3-03-remove-validator"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
 # F-3-02에서 추가된 TEST_ACC_E를 제거
-target="$TEST_ACC_E_ADDR"
+target="$(acct_addr 5)"
 target_padded=$(pad_address "$target" | sed 's/^0x//')
 
 # GovBase에 isActiveMember() public view는 없음. members mapping의 automatic getter 사용.
 members_sel=$(selector "members(address)")
-members_result=$(eth_call_raw 1 "$GOV_VALIDATOR" "${members_sel}${target_padded}")
+members_result=$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "${members_sel}${target_padded}")
 is_member=$(python3 -c "
 raw = '${members_result}'.removeprefix('0x')
 print(int(raw[:64], 16) if len(raw) >= 64 else 0)
@@ -44,14 +44,14 @@ quorum_padded=$(pad_uint256 "2" | sed 's/^0x//')
 propose_data="${propose_sel}${target_padded}${quorum_padded}"
 
 # f3-01에서 quorum=3으로 변경했으므로, approve 3명 필요 (proposer + 2 approvers)
-receipt=$(gov_full_flow "$GOV_VALIDATOR" "$propose_data" "$VALIDATOR_1_ADDR" "$VALIDATOR_2_ADDR" "$VALIDATOR_3_ADDR") || {
+receipt=$(gov_full_flow "$GOV_VALIDATOR" "$propose_data" "$(validator_addr 1)" "$(validator_addr 2)" "$(validator_addr 3)") || {
   _assert_fail "flow failed"; test_result; exit 1
 }
 
-exec_status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exec_status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$exec_status" "0x1" "execute succeeded"
 
-members_result_after=$(eth_call_raw 1 "$GOV_VALIDATOR" "${members_sel}${target_padded}")
+members_result_after=$(eth_call_raw "$(node 1)" "$GOV_VALIDATOR" "${members_sel}${target_padded}")
 after=$(python3 -c "
 raw = '${members_result_after}'.removeprefix('0x')
 print(int(raw[:64], 16) if len(raw) >= 64 else 0)

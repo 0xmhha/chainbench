@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # RT-F-5-09 — AuthorizedAccountRemoved 이벤트
