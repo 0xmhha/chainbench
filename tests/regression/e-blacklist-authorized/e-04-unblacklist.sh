@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/e-blacklist-authorized/e-04-unblacklist
@@ -18,14 +17,15 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/e-blacklist-authorized/e-04-unblacklist"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 unlock_all_validators
 
-target_padded=$(pad_address "$TEST_ACC_E_ADDR" | sed 's/^0x//')
+target_padded=$(pad_address "$(acct_addr 5)" | sed 's/^0x//')
 is_bl_sel=$(selector "isBlacklisted(address)")
 
 # 현재 blacklist 상태인지 확인
-before=$(hex_to_dec "$(eth_call_raw 1 "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
+before=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
 if [[ "$before" != "1" ]]; then
   _assert_fail "TEST_ACC_E should be blacklisted (run e-01 first)"
   test_result
@@ -36,20 +36,20 @@ fi
 propose_sel=$(selector "proposeRemoveBlacklist(address)")
 propose_data="${propose_sel}${target_padded}"
 
-receipt=$(gov_full_flow "$GOV_COUNCIL" "$propose_data" "$VALIDATOR_1_ADDR" "$VALIDATOR_2_ADDR") || {
+receipt=$(gov_full_flow "$GOV_COUNCIL" "$propose_data" "$(validator_addr 1)" "$(validator_addr 2)") || {
   _assert_fail "gov flow failed"; test_result; exit 1;
 }
-exec_status=$(printf '%s' "$receipt" | python3 -c "import sys, json; print(json.load(sys.stdin).get('status', ''))")
+exec_status=$(printf '%s' "$receipt" | jq -r '.status // empty')
 assert_eq "$exec_status" "0x1" "unBlacklist executed"
 
 # 해제 확인
-after=$(hex_to_dec "$(eth_call_raw 1 "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
+after=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
 assert_eq "$after" "0" "TEST_ACC_E is no longer blacklisted"
 
 # 정상 tx 전송
-tx_hash=$(send_raw_tx "1" "$TEST_ACC_E_PK" "$TEST_ACC_B_ADDR" "1" "" "21000" "dynamic")
+tx_hash=$(tx_send_as 5 "$(acct_addr 2)" "1" "" "21000" "dynamic")
 assert_contains "$tx_hash" "0x" "tx submitted after unblacklist"
-status=$(wait_receipt "1" "$tx_hash" 30)
+status=$(wait_receipt "$(node 1)" "$tx_hash" 30)
 assert_eq "$status" "success" "tx processed normally"
 
 test_result

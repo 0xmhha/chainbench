@@ -7,7 +7,6 @@
 # estimated_seconds: 35
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/e-blacklist-authorized/e-09-authorized-tx-executed
@@ -18,11 +17,12 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/e-blacklist-authorized/e-09-authorized-tx-executed"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # TEST_ACC_D가 authorized인지 확인 (e-08 선행)
 is_auth_sel=$(selector "isAuthorized(address)")
-td_padded=$(pad_address "$TEST_ACC_D_ADDR" | sed 's/^0x//')
-is_auth=$(hex_to_dec "$(eth_call_raw 1 "$ACCOUNT_MANAGER" "${is_auth_sel}${td_padded}")")
+td_padded=$(pad_address "$(acct_addr 4)" | sed 's/^0x//')
+is_auth=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "${is_auth_sel}${td_padded}")")
 
 if [[ "$is_auth" != "1" ]]; then
   _assert_fail "TEST_ACC_D should be authorized (run e-08 first)"
@@ -31,8 +31,8 @@ if [[ "$is_auth" != "1" ]]; then
 fi
 
 # TEST_ACC_D로 tx 발행
-tx_hash=$(send_raw_tx "1" "$TEST_ACC_D_PK" "$TEST_ACC_B_ADDR" "1" "" "21000" "dynamic")
-receipt=$(wait_tx_receipt_full "1" "$tx_hash" 30)
+tx_hash=$(tx_send_as 4 "$(acct_addr 2)" "1" "" "21000" "dynamic")
+receipt=$(wait_tx_receipt_full "$(node 1)" "$tx_hash" 30)
 assert_not_empty "$receipt" "receipt retrieved"
 
 # AccountManager(0xb00003) 주소의 AuthorizedTxExecuted 이벤트 검색

@@ -7,7 +7,6 @@
 # estimated_seconds: 5
 # preconditions:
 #   chain_running: true
-#   python_packages: [eth-account, requests, eth-utils]
 # depends_on: []
 # ---end-meta---
 # Test: regression/e-blacklist-authorized/e-02-recipient-blacklisted
@@ -18,11 +17,12 @@ source "$(dirname "$0")/../lib/common.sh"
 
 test_start "regression/e-blacklist-authorized/e-02-recipient-blacklisted"
 check_env || { test_result; exit 1; }
+ensure_nodes_running
 
 # E-01이 선행되어 TEST_ACC_E가 blacklist 되어있다고 가정
-target_padded=$(pad_address "$TEST_ACC_E_ADDR" | sed 's/^0x//')
+target_padded=$(pad_address "$(acct_addr 5)" | sed 's/^0x//')
 is_bl_sel=$(selector "isBlacklisted(address)")
-is_bl=$(hex_to_dec "$(eth_call_raw 1 "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
+is_bl=$(hex_to_dec "$(eth_call_raw "$(node 1)" "$ACCOUNT_MANAGER" "${is_bl_sel}${target_padded}")")
 
 if [[ "$is_bl" != "1" ]]; then
   printf '[INFO]  TEST_ACC_E not blacklisted, running e-01 first is recommended\n' >&2
