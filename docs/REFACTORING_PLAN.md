@@ -1,9 +1,10 @@
 # Refactoring Plan — Clean Code & SSOT
 
 > 작성일: 2026-06-26
+> 최종 업데이트: 2026-06-26 (P0 + P1-1 + 사전 버그 2건 완료 — PR #3 머지, commit `63f1d43`)
 > 관점: **Clean Code** (함수/파일 크기, 중복, 매직값, 네이밍) + **SSOT** (Single Source of Truth)
 > 범위: `lib/` (bash) · `network/` (Go) · `mcp-server/src/` (TypeScript)
-> 성격: **리팩토링 준비 문서** — 실제 변경 전 작업 후보를 증거와 함께 목록화·우선순위화한다.
+> 성격: **리팩토링 추적 문서** — §1/§2 는 발견 목록(증거 포함), §3 은 우선순위+진행상태, §6 은 남은 작업.
 > 관련: `docs/NEXT_WORK.md` §3 P3 (기존 tech-debt 추적) · `docs/HARDCODING_AUDIT.md` · `docs/ADAPTER_CONTRACT.md` · `~/.claude/rules/coding-style.md`
 
 ---
@@ -115,21 +116,23 @@ optional 필드를 `if (x) args.x = x` 식으로 쌓는 패턴이 `chain_read.ts
 
 P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 중간, 관련 코드 손댈 때. P2 = 큰 구조, 별도 sprint.
 
-| ID | 작업 | 레이어 | 위험 | 노력 | 검증 | 트리거 |
+| ID | 작업 | 레이어 | 위험 | 노력 | 상태 | 트리거 |
 |---|---|---|---|---|---|---|
-| **P0-1** SSOT-T1 | `formatResult`/`textResult` → `mcpResp.ts`로 통합 (7곳 제거) | TS | 낮음 | S | `npm test` (vitest) | 즉시 |
-| **P0-2** SSOT-T2 | `remote.ts` `validateRpcMethod` → `hex.ts RPC_METHOD` | TS | 낮음 | S | vitest | 즉시 (remote.ts touch 시) |
-| **P0-3** SSOT-G1 | `errors.go` 문자열 → 생성 상수 6곳 | Go | 낮음 | S | `go test ./...` | 즉시 |
-| **P0-4** SSOT-G3 | read/write 타임아웃 명명 상수화 | Go | 낮음 | S | `go test ./...` | 즉시 |
-| **P0-5** SSOT-B1 | `cb_iso_now()` 헬퍼 + 타임아웃 상수 단일화 | bash | 낮음 | S | `bash tests/unit/run.sh` | 즉시 |
-| **P1-1** CC-G1 | `parseBlockArg`/`parseHexInt`/`selectFeeMode` 추출 → 대형 핸들러 분해 | Go | 중간 | M | go test + e2e | read/tx 핸들러 추가 시 |
-| **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate | Go | 중간 | S | go generate + test | **Sprint 5c.4.2와 동시** |
-| **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | vitest | chain_*.ts touch 시 |
-| **P1-4** SSOT-X1 | profile default를 스키마 `default`로 승격, 레이어가 파생 | 전레이어 | 중간 | M | 전 테스트 | M4(adapter binary) 동시 |
-| **P2-1** CC-B1 | `profile.sh` Python 파서 추출 · `json_helpers.sh` 백엔드 단일화 | bash | 높음 | L | bash unit + 수동 e2e | 별도 sprint |
-| **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | bash unit | 해당 파일 기능 추가 시 |
+| **P0-1** SSOT-T1 | `formatResult`/`textResult` → `mcpResp.ts`로 통합 (7곳 제거) | TS | 낮음 | S | ✅ PR #3 | — |
+| **P0-2** SSOT-T2 | `remote.ts` `validateRpcMethod` → `hex.ts RPC_METHOD` | TS | 낮음 | S | ✅ PR #3 | — |
+| **P0-3** SSOT-G1 | `errors.go` 문자열 → 생성 상수 6곳 | Go | 낮음 | S | ✅ PR #3 | — |
+| **P0-4** SSOT-G3 | read/write 타임아웃 명명 상수화 | Go | 낮음 | S | ✅ PR #3 | — |
+| **P0-5** SSOT-B1 | `cb_iso_now()` 헬퍼 (8곳 통합) | bash | 낮음 | S | ✅ PR #3 | — |
+| **P1-1** CC-G1 | `parseBlockNumberArg`/`selectFeeMode` 추출 + 대형 핸들러 파일 분해 | Go | 중간 | M | ✅ PR #3 | — |
+| **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate | Go | 중간 | S | ⬜ 남음 | **Sprint 5c.4.2와 동시** |
+| **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ⬜ 남음 | chain_*.ts touch 시 |
+| **P1-4** SSOT-X1 | profile default를 스키마 `default`로 승격, 레이어가 파생 | 전레이어 | 중간 | M | ⬜ 남음 | M4(adapter binary) 동시 |
+| **P2-1** CC-B1 | `profile.sh` Python 파서 추출 · `json_helpers.sh` 백엔드 단일화 | bash | 높음 | L | ⬜ 남음 | 별도 sprint |
+| **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | ⬜ 남음 | 해당 파일 기능 추가 시 |
 
 `S`≈반나절, `M`≈1–2일, `L`≈sprint 단위.
+
+**P0-5 범위 조정**: 원안의 "RPC 타임아웃 상수 단일화"는 prod(`CHAINBENCH_RPC_TIMEOUT_LOCAL/REMOTE`)와 test(`CHAINBENCH_RPC_TIMEOUT`)의 env 계약·기본값이 다르고 `tests/lib/rpc.sh`가 독립 소싱되어 저위험이 아님 → 아래 §6 N-A 로 분리(잔여).
 
 ---
 
@@ -149,3 +152,50 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 본 문서는 `NEXT_WORK.md §3 P3` tech-debt 표와 **중복 추적이 아니라 보완**이다:
 - 이미 추적 중(handlers 파일 크기, validateRpcMethod, feeDelegationAllowedChains, gstable 하드코딩)은 본 문서에서 **추출 단위·우선순위**를 구체화.
 - 신규로 부각된 것: SSOT-G1(에러 코드 문자열), SSOT-G2(dispatch↔schema drift), SSOT-T1(formatResult/textResult 7중복), SSOT-X1(cross-layer default 승격), SSOT-B1(타임스탬프 8중복).
+
+---
+
+## 6. 진행 현황 + 남은 작업 (2026-06-26)
+
+### 6.1 완료 — PR #3 (squash merge, commit `63f1d43`)
+
+- **SSOT (P0-1~5)**: errors.go 생성상수 · 타임아웃 명명상수 · `cb_iso_now()` · MCP `formatExecResult`/`textResult`/`RPC_METHOD` 통합.
+- **Clean-code (P1-1)**: `parseBlockNumberArg`/`selectFeeMode` 추출 + 핸들러 파일 분해 — `handlers_node_read.go` 929→655, `handlers_node_tx.go` 948→680 (+ `handlers_node_read_events.go`, `handlers_node_tx_fee_delegation.go`).
+- **사전 버그 2건** (리팩토링 중 발견, 본 계획 범위 밖이었으나 동반 수정):
+  - `fix(lib)`: BSD/macOS 비호환 mktemp 템플릿 (`-XXXXXX.json` → `-XXXXXX`) — `profile.sh` + `logs/timeline.sh` + `logs/anomaly.sh`.
+  - `fix(report)`: 결과 0건일 때 `report --format json` 이 빈 stdout → zero-count JSON/markdown 으로 수정.
+- **검증**: Go 15 pkg green · TS vitest 123 pass · bash 36/38 (남은 2건은 `cast` 미설치 환경분).
+
+### 6.2 남은 작업 — 우선순위순
+
+**즉시:**
+
+| ID | 작업 | 비고 |
+|---|---|---|
+| **N2** | foundry(`cast`) 프로비저닝을 coding-agent `doctor`/`setup` 에 추가 | `doctor`=설치 진단(read-only), `setup`=미설치 시 `foundryup` 안내/설치. 완료 시 bash `lib-contract`/`lib-event` 포함 38/38. **코드 버그 아님 — 환경 의존** |
+
+**P1 (관련 코드 손댈 때):**
+
+| ID | 작업 | 트리거 |
+|---|---|---|
+| **P1-2** SSOT-G2 | `command.json` 에 `network.init/start_all/restart/clean` 추가 + `go generate` (dispatch↔schema drift) | Sprint 5c.4.2 (lifecycle reroute) 와 동시 |
+| **P1-3** CC-T1 | TS `buildWireArgs()` 헬퍼로 wire-args 빌드 패턴 표준화 | chain_read/chain_tx/lifecycle.ts touch 시 |
+| **P1-4** SSOT-X1 | profile default(chain_id/ports/binary)를 스키마 `default` 로 승격 → 레이어가 파생 | M4 (adapter binary) 와 동시 |
+
+**P2 (별도 sprint, 큰 구조):**
+
+| ID | 작업 | 위험 |
+|---|---|---|
+| **P2-1** CC-B1 | `profile.sh` 임베디드 Python(240줄) 추출 · `json_helpers.sh` jq/python 이중백엔드 단일화 | 높음 — 충분한 e2e 후 |
+| **P2-2** | bash 대형 파일 분할 (`cmd_test.sh` 639 · `cmd_node.sh` 602 · `cmd_remote.sh` 434) | 중간 |
+
+**기타 (잔여 항목):**
+
+| ID | 작업 | 비고 |
+|---|---|---|
+| **N-A** | RPC 타임아웃 상수 네이밍 단일화 (`CB_RPC_TIMEOUT_*` vs `_CB_RPC_TIMEOUT_*` vs `_CB_REMOTE_RPC_TIMEOUT`) | P0-5 에서 분리 — env 계약 차이로 저위험 아님. 회귀 테스트 영향 검토 후 |
+| **N-B** | §2.5 매직값 상수화 (BFT 임계 2/3, round-0 80%, 2000ms sleep 등) | 해당 파일 touch 시 흡수 |
+
+### 6.3 추천 진행 순서
+
+`N2 (foundry → 38/38)` → `P1-2 + Sprint 5c.4.2 묶음` → `P1-3 / P1-4` → `P2`.
