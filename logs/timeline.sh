@@ -70,7 +70,7 @@ _cb_timeline_merge_events() {
 
   # Collect all raw JSON lines into one temporary file
   local tmp_events
-  tmp_events="$(mktemp /tmp/chainbench-timeline-XXXXXX.jsonl)"
+  tmp_events="$(mktemp /tmp/chainbench-timeline-XXXXXX)"
 
   local lf
   for lf in "${log_files[@]}"; do

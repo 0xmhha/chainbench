@@ -485,7 +485,7 @@ load_profile() {
 
   # Create a temporary file to hold the merged JSON
   local json_tmp
-  json_tmp="$(mktemp /tmp/chainbench-profile-XXXXXX.json)" || {
+  json_tmp="$(mktemp /tmp/chainbench-profile-XXXXXX)" || {
     log_error "Failed to create temporary file for profile JSON"
     return 1
   }

@@ -391,8 +391,8 @@ detect_anomalies() {
 
   # Gather consensus and peer events into temp files
   local tmp_events tmp_peers
-  tmp_events="$(mktemp /tmp/chainbench-anomaly-events-XXXXXX.jsonl)"
-  tmp_peers="$(mktemp /tmp/chainbench-anomaly-peers-XXXXXX.jsonl)"
+  tmp_events="$(mktemp /tmp/chainbench-anomaly-events-XXXXXX)"
+  tmp_peers="$(mktemp /tmp/chainbench-anomaly-peers-XXXXXX)"
 
   local lf
   for lf in "${log_files[@]}"; do
