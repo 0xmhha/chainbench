@@ -22,3 +22,25 @@ export function errorResp(msg: string): FormattedToolResponse {
     isError: true,
   };
 }
+
+// textResult wraps a plain string as the canonical {content:[{type:"text"}]}
+// success response. Shared by the RPC-backed tools (network, consensus) that
+// hand-format their own text rather than going through formatWireResult.
+export function textResult(text: string): FormattedToolResponse {
+  return { content: [{ type: "text", text }] };
+}
+
+// formatExecResult renders a runChainbench {stdout, stderr, exitCode} into a
+// plain string: stdout on success (or emptyFallback when stdout is blank),
+// and "Error (exit N): <detail>" on failure. emptyFallback differs per tool
+// surface ("Done." for actions, "No output." for log, "{}" for spec).
+export function formatExecResult(
+  result: { stdout: string; stderr: string; exitCode: number },
+  emptyFallback = "Done.",
+): string {
+  if (result.exitCode === 0) {
+    return result.stdout || emptyFallback;
+  }
+  const detail = result.stderr || result.stdout || "unknown error";
+  return `Error (exit ${result.exitCode}): ${detail}`;
+}

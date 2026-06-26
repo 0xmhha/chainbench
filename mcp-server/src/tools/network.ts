@@ -11,15 +11,11 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { rpcCall, rpcCallAll, getRunningNodeIds, fromHex } from "../utils/rpc.js";
 import { callWire } from "../utils/wire.js";
 import { formatWireResult } from "../utils/wireResult.js";
-import { type FormattedToolResponse } from "../utils/mcpResp.js";
+import { type FormattedToolResponse, textResult } from "../utils/mcpResp.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function textResult(text: string) {
-  return { content: [{ type: "text" as const, text }] };
-}
 
 async function getEnode(nodeId: string): Promise<string> {
   const info = (await rpcCall(nodeId, "admin_nodeInfo")) as Record<string, unknown>;

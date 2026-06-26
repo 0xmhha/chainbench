@@ -1,6 +1,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench } from "../utils/exec.js";
+import { formatExecResult as formatResult } from "../utils/mcpResp.js";
+import { RPC_METHOD } from "../utils/hex.js";
 
 const ALIAS_SCHEMA = z
   .string()
@@ -18,16 +20,8 @@ const CHAIN_TYPE_SCHEMA = z
   .default("testnet")
   .describe("Chain type classification (default: testnet)");
 
-function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
-  if (result.exitCode === 0) {
-    return result.stdout || "Done.";
-  }
-  const detail = result.stderr || result.stdout || "unknown error";
-  return `Error (exit ${result.exitCode}): ${detail}`;
-}
-
 function validateRpcMethod(method: string): string | null {
-  if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(method)) {
+  if (!RPC_METHOD.test(method)) {
     return `Invalid RPC method name '${method}'. Must be alphanumeric with underscores (e.g. 'eth_blockNumber').`;
   }
   return null;

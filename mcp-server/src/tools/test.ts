@@ -3,14 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench, CHAINBENCH_DIR } from "../utils/exec.js";
 import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { resolve } from "path";
-
-function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
-  if (result.exitCode === 0) {
-    return result.stdout || "Done.";
-  }
-  const detail = result.stderr || result.stdout || "unknown error";
-  return `Error (exit ${result.exitCode}): ${detail}`;
-}
+import { formatExecResult as formatResult } from "../utils/mcpResp.js";
 
 function discoverTests(): string[] {
   const testsDir = resolve(CHAINBENCH_DIR, "tests");

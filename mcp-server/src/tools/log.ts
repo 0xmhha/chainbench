@@ -1,14 +1,11 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench } from "../utils/exec.js";
+import { formatExecResult } from "../utils/mcpResp.js";
 
-function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
-  if (result.exitCode === 0) {
-    return result.stdout || "No output.";
-  }
-  const detail = result.stderr || result.stdout || "unknown error";
-  return `Error (exit ${result.exitCode}): ${detail}`;
-}
+// log output uses "No output." as the blank-stdout fallback.
+const formatResult = (result: { stdout: string; stderr: string; exitCode: number }): string =>
+  formatExecResult(result, "No output.");
 
 function validatePattern(pattern: string): string | null {
   if (pattern.trim().length === 0) {
