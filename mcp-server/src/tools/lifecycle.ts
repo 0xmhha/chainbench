@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { callWire } from "../utils/wire.js";
 import { formatWireResult } from "../utils/wireResult.js";
 import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
+import { buildWireArgs } from "../utils/wireArgs.js";
 
 // Sprint 5c.4.1 Task 2 — chainbench_stop now invokes the network.stop_all
 // wire handler instead of shelling out via runChainbench. Exported as named
@@ -17,8 +18,7 @@ export const StopArgs = z.object({
 export async function _stopHandler(
   args: z.infer<typeof StopArgs>,
 ): Promise<FormattedToolResponse> {
-  const wireArgs: Record<string, unknown> = {};
-  if (args.network !== undefined) wireArgs.network = args.network;
+  const wireArgs = buildWireArgs(args, ["network"]);
   const result = await callWire("network.stop_all", wireArgs);
   return formatWireResult(result);
 }
@@ -35,8 +35,7 @@ export const StatusArgs = z.object({
 export async function _statusHandler(
   args: z.infer<typeof StatusArgs>,
 ): Promise<FormattedToolResponse> {
-  const wireArgs: Record<string, unknown> = {};
-  if (args.network !== undefined) wireArgs.network = args.network;
+  const wireArgs = buildWireArgs(args, ["network"]);
   const result = await callWire("network.status", wireArgs);
   return formatWireResult(result);
 }
@@ -103,9 +102,7 @@ export async function _initHandler(
   const bpError = validateBinaryPath(binary_path);
   if (bpError) return errorResp(bpError);
 
-  const wireArgs: Record<string, unknown> = { profile };
-  if (project_root !== undefined) wireArgs.project_root = project_root;
-  if (binary_path !== undefined) wireArgs.binary_path = binary_path;
+  const wireArgs = buildWireArgs(args, ["project_root", "binary_path"], { profile });
   const result = await callWire("network.init", wireArgs);
   return formatWireResult(result);
 }
@@ -124,9 +121,7 @@ export async function _startHandler(
   const bpError = validateBinaryPath(binary_path);
   if (bpError) return errorResp(bpError);
 
-  const wireArgs: Record<string, unknown> = {};
-  if (project_root !== undefined) wireArgs.project_root = project_root;
-  if (binary_path !== undefined) wireArgs.binary_path = binary_path;
+  const wireArgs = buildWireArgs(args, ["project_root", "binary_path"]);
   const result = await callWire("network.start_all", wireArgs);
   return formatWireResult(result);
 }
@@ -145,9 +140,7 @@ export async function _restartHandler(
   const bpError = validateBinaryPath(binary_path);
   if (bpError) return errorResp(bpError);
 
-  const wireArgs: Record<string, unknown> = {};
-  if (project_root !== undefined) wireArgs.project_root = project_root;
-  if (binary_path !== undefined) wireArgs.binary_path = binary_path;
+  const wireArgs = buildWireArgs(args, ["project_root", "binary_path"]);
   const result = await callWire("network.restart", wireArgs);
   return formatWireResult(result);
 }
