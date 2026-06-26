@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/network/schema"
 )
 
 // writeCwdEchoChainbench writes a fake chainbench.sh that echoes its working
@@ -182,6 +184,24 @@ func TestAllHandlers_RegistersLifecycleReroutes(t *testing.T) {
 	for _, cmd := range []string{"network.init", "network.start_all", "network.restart", "network.clean"} {
 		if _, ok := handlers[cmd]; !ok {
 			t.Errorf("allHandlers missing %s", cmd)
+		}
+	}
+}
+
+// TestAllHandlers_DispatchableCommandsAreInSchema is a cross-cutting regression
+// guard against dispatch<->schema drift: every command registered in
+// allHandlers must be a member of the command.json enum, so the wire schema can
+// never reject a command the dispatcher actually serves. This catches the class
+// of bug where a new wire handler is added without updating command.json (and
+// re-running `go generate`).
+func TestAllHandlers_DispatchableCommandsAreInSchema(t *testing.T) {
+	for cmd := range allHandlers("/s", "/c") {
+		doc, err := json.Marshal(map[string]any{"command": cmd, "args": map[string]any{}})
+		if err != nil {
+			t.Fatalf("marshal command %q: %v", cmd, err)
+		}
+		if err := schema.ValidateBytes("command", doc); err != nil {
+			t.Errorf("command %q is dispatched by allHandlers but not in command.json enum: %v", cmd, err)
 		}
 	}
 }
