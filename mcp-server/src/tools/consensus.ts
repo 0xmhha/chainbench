@@ -7,14 +7,11 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { rpcCall, rpcCallAll, getRunningNodeIds, toHex, fromHex } from "../utils/rpc.js";
+import { textResult } from "../utils/mcpResp.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function textResult(text: string) {
-  return { content: [{ type: "text" as const, text }] };
-}
 
 async function currentBlockNumber(nodeId: string): Promise<number> {
   const hex = (await rpcCall(nodeId, "eth_blockNumber")) as string;

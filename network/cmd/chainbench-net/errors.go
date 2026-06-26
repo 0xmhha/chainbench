@@ -28,23 +28,23 @@ func (e *APIError) Unwrap() error { return e.Cause }
 // Constructors for the common codes.
 
 func NewInvalidArgs(message string) *APIError {
-	return &APIError{Code: types.ResultErrorCode("INVALID_ARGS"), Message: message}
+	return &APIError{Code: types.ResultErrorCodeINVALIDARGS, Message: message}
 }
 
 func NewNotSupported(message string) *APIError {
-	return &APIError{Code: types.ResultErrorCode("NOT_SUPPORTED"), Message: message}
+	return &APIError{Code: types.ResultErrorCodeNOTSUPPORTED, Message: message}
 }
 
 func NewUpstream(message string, cause error) *APIError {
-	return &APIError{Code: types.ResultErrorCode("UPSTREAM_ERROR"), Message: message, Cause: cause}
+	return &APIError{Code: types.ResultErrorCodeUPSTREAMERROR, Message: message, Cause: cause}
 }
 
 func NewProtocolError(message string, cause error) *APIError {
-	return &APIError{Code: types.ResultErrorCode("PROTOCOL_ERROR"), Message: message, Cause: cause}
+	return &APIError{Code: types.ResultErrorCodePROTOCOLERROR, Message: message, Cause: cause}
 }
 
 func NewInternal(message string, cause error) *APIError {
-	return &APIError{Code: types.ResultErrorCode("INTERNAL"), Message: message, Cause: cause}
+	return &APIError{Code: types.ResultErrorCodeINTERNAL, Message: message, Cause: cause}
 }
 
 // exitCode maps an error (possibly nil) to an OS exit code per VISION §5.
@@ -54,12 +54,12 @@ func exitCode(err error) int {
 	}
 	var api *APIError
 	if errors.As(err, &api) {
-		switch string(api.Code) {
-		case "NOT_SUPPORTED":
+		switch api.Code {
+		case types.ResultErrorCodeNOTSUPPORTED:
 			return 2
-		case "PROTOCOL_ERROR":
+		case types.ResultErrorCodePROTOCOLERROR:
 			return 3
-		case "INVALID_ARGS", "UPSTREAM_ERROR", "INTERNAL":
+		case types.ResultErrorCodeINVALIDARGS, types.ResultErrorCodeUPSTREAMERROR, types.ResultErrorCodeINTERNAL:
 			return 1
 		}
 	}

@@ -180,7 +180,7 @@ pids_mark_all_stopped() {
   pids_exists || return 0
 
   local stopped_at
-  stopped_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  stopped_at="$(cb_iso_now)"
 
   python3 - "$_CB_PIDS_FILE" "$stopped_at" <<'PYEOF'
 import sys, json
@@ -210,7 +210,7 @@ pids_mark_node_dead() {
   pids_exists || return 0
 
   local stopped_at
-  stopped_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  stopped_at="$(cb_iso_now)"
 
   pids_update_node "$node_id" "status" "dead"
   pids_update_node "$node_id" "stopped_at" "$stopped_at"

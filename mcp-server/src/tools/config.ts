@@ -1,14 +1,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { runChainbench, shellEscapeArg } from "../utils/exec.js";
-
-function formatResult(result: { stdout: string; stderr: string; exitCode: number }): string {
-  if (result.exitCode === 0) {
-    return result.stdout || "Done.";
-  }
-  const detail = result.stderr || result.stdout || "unknown error";
-  return `Error (exit ${result.exitCode}): ${detail}`;
-}
+import { formatExecResult as formatResult } from "../utils/mcpResp.js";
 
 export function registerConfigTools(server: McpServer): void {
   server.tool(

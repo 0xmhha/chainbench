@@ -30,7 +30,7 @@ cb_format_json_envelope() {
   fi
 
   local timestamp
-  timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  timestamp="$(cb_iso_now)"
 
   python3 -c "
 import json, sys
@@ -52,7 +52,7 @@ cb_format_json_error() {
   local code="${3:-GENERAL_ERROR}"
 
   local timestamp
-  timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  timestamp="$(cb_iso_now)"
 
   python3 -c "
 import json, sys

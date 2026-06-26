@@ -200,7 +200,17 @@ generate_report() {
   count=$(python3 -c "import json,sys; print(len(json.loads(sys.argv[1])))" "$results_json")
 
   if [[ "$count" -eq 0 ]]; then
+    # No results yet. The machine-readable formats must still emit a valid
+    # zero-count document so downstream parsers get a stable contract
+    # regardless of state (the MCP agent reads summary.failed; CI consumers
+    # expect JSON/markdown). Only the human-facing text format stops at the
+    # stderr notice. results_json is "[]" here, which the formatters render as
+    # an empty summary.
     printf "${_REPORT_YELLOW}[REPORT]${_REPORT_RESET}  No result files found in %s\n" "$results_dir" >&2
+    case "$format" in
+      json)        _report_json "$results_json" ;;
+      markdown|md) _report_markdown "$results_json" ;;
+    esac
     return 0
   fi
 

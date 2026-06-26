@@ -137,6 +137,16 @@ get_node_port() {
   printf '%d\n' $(( base + index ))
 }
 
+# ---- Time ----------------------------------------------------------------
+
+# cb_iso_now
+# Single source of truth for the UTC ISO-8601 timestamp format used across
+# state files and wire envelopes (pids.json stopped_at/started_at, formatter
+# envelopes, remote_state). Emits e.g. 2026-06-26T07:30:00Z.
+cb_iso_now() {
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
 # ---- Runtime override parser -------------------------------------------------
 
 # _cb_parse_runtime_overrides <remaining_array_ref> [args...]
