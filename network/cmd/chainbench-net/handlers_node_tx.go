@@ -176,7 +176,7 @@ func newHandleNodeTxSend(stateDir string) Handler {
 			return nil, err
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeWriteTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -405,7 +405,7 @@ func newHandleNodeContractDeploy(stateDir string) Handler {
 			return nil, err
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeWriteTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -849,7 +849,7 @@ func newHandleNodeTxFeeDelegationSend(stateDir string) Handler {
 			return nil, NewUpstream("fee_payer signer load", ferr)
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeWriteTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {

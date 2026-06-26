@@ -25,6 +25,16 @@ import (
 // anything else at the boundary keeps the upstream surface predictable.
 var rpcMethodRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
 
+// Per-call RPC deadlines, shared across node read/tx handlers in this package.
+const (
+	// nodeReadTimeout bounds read-only RPC calls (block_number, chain_id,
+	// balance, gas_price, contract_call, events_get, account_state).
+	nodeReadTimeout = 10 * time.Second
+	// nodeWriteTimeout bounds write/broadcast calls (tx_send, contract_deploy,
+	// fee_delegation) and the generic node.rpc passthrough, which may carry a write.
+	nodeWriteTimeout = 30 * time.Second
+)
+
 // newHandleNodeBlockNumber returns a handler that opens an ethclient
 // connection to the resolved node's HTTP endpoint and returns the current
 // head block number. Works uniformly across local and remote networks
@@ -52,7 +62,7 @@ func newHandleNodeBlockNumber(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -95,7 +105,7 @@ func newHandleNodeChainID(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -189,7 +199,7 @@ func newHandleNodeBalance(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -239,7 +249,7 @@ func newHandleNodeGasPrice(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -400,7 +410,7 @@ func newHandleNodeContractCall(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -556,7 +566,7 @@ func newHandleNodeEventsGet(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -802,7 +812,7 @@ func newHandleNodeAccountState(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeReadTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
@@ -912,7 +922,7 @@ func newHandleNodeRpc(stateDir string) Handler {
 		if err != nil {
 			return nil, err
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), nodeWriteTimeout)
 		defer cancel()
 		client, err := dialNode(ctx, &node)
 		if err != nil {
