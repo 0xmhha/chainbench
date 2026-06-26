@@ -11,6 +11,8 @@ import {
   _initHandler,
   _startHandler,
   _restartHandler,
+  CleanArgs,
+  _cleanHandler,
 } from "../src/tools/lifecycle.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -249,5 +251,65 @@ describe("chainbench_init/start/restart handlers", () => {
     const out = await _restartHandler({});
     expect(out.isError).toBeFalsy();
     expect(out.content[0]?.text).toContain("restarted");
+  });
+});
+
+// chainbench_clean routes through the network.clean wire handler. It takes no
+// arguments (the Go handler removes node data regardless of profile/root), so
+// the only boundary contract is .strict() rejecting hallucinated keys. Same
+// mock-fixture injection convention as the blocks above.
+describe("chainbench_clean handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_CleanRoutesToWire", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data: { stdout: "cleaned node data" } }),
+      },
+    ]);
+    const out = await _cleanHandler({});
+    expect(out.isError).toBeFalsy();
+    expect(out.content[0]?.text).toContain("cleaned node data");
+  });
+
+  it("_CleanStrictRejectsUnknownKeys", () => {
+    expect(() => CleanArgs.parse({ force: true })).toThrow();
+  });
+
+  it("_CleanWireFailure_PassedThrough", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({
+          type: "result",
+          ok: false,
+          error: { code: "UPSTREAM_ERROR", message: "chainbench clean exited 1" },
+        }),
+      },
+    ]);
+    const out = await _cleanHandler({});
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("Error (UPSTREAM_ERROR)");
+    expect(out.content[0]?.text).toContain("chainbench clean exited 1");
   });
 });

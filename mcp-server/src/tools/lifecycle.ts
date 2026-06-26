@@ -152,6 +152,19 @@ export async function _restartHandler(
   return formatWireResult(result);
 }
 
+// chainbench_clean routes through the network.clean wire handler, which removes
+// node data directories (keeping config/profiles) by spawning
+// `chainbench.sh clean`. It takes no arguments — the Go handler ignores
+// profile/root — so the only boundary is .strict() rejecting hallucinated keys.
+export const CleanArgs = z.object({}).strict();
+
+export async function _cleanHandler(
+  _args: z.infer<typeof CleanArgs>,
+): Promise<FormattedToolResponse> {
+  const result = await callWire("network.clean", {});
+  return formatWireResult(result);
+}
+
 export function registerLifecycleTools(server: McpServer): void {
   server.tool(
     "chainbench_init",
@@ -190,5 +203,14 @@ export function registerLifecycleTools(server: McpServer): void {
     "only — remote networks reject (use chainbench_node_rpc for remote).",
     StatusArgs.shape,
     _statusHandler,
+  );
+
+  server.tool(
+    "chainbench_clean",
+    "Remove all node data directories (datadirs, pids), keeping config and " +
+    "profiles. Use to reset chain state before a fresh chainbench_init. Local " +
+    "network only — takes no arguments.",
+    CleanArgs.shape,
+    _cleanHandler,
   );
 }
