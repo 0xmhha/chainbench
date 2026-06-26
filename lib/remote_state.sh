@@ -344,7 +344,7 @@ print(json.dumps(state, indent=2))
 _cb_remote_update_last_checked() {
   local alias="$1"
   local now
-  now="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  now="$(cb_iso_now)"
 
   local new_state
   new_state="$(_cb_remote_update_field "$alias" "last_checked" "$now")" || return 1

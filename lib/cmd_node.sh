@@ -214,7 +214,7 @@ _cb_node_cmd_stop() {
   fi
 
   local stopped_at
-  stopped_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  stopped_at="$(cb_iso_now)"
 
   _cb_node_update_pids "$_CB_NODE_KEY" \
     "status=stopped" \
@@ -386,7 +386,7 @@ _cb_node_cmd_start() {
   fi
 
   local started_at
-  started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  started_at="$(cb_iso_now)"
 
   _cb_node_update_pids "$_CB_NODE_KEY" \
     "pid=${new_pid}" \

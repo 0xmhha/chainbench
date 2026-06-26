@@ -254,7 +254,7 @@ unset -f _start_launch_node
 
 # ---- Write pids.json ---------------------------------------------------------
 
-_start_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+_start_timestamp="$(cb_iso_now)"
 _start_chain_id="local-${CHAINBENCH_PROFILE}-$(date -u +"%Y%m%d%H%M%S")"
 
 # Build a newline-separated node-info string to pass to Python.
