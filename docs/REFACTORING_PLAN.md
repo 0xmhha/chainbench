@@ -124,8 +124,9 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 | **P0-4** SSOT-G3 | read/write 타임아웃 명명 상수화 | Go | 낮음 | S | ✅ PR #3 | — |
 | **P0-5** SSOT-B1 | `cb_iso_now()` 헬퍼 (8곳 통합) | bash | 낮음 | S | ✅ PR #3 | — |
 | **P1-1** CC-G1 | `parseBlockNumberArg`/`selectFeeMode` 추출 + 대형 핸들러 파일 분해 | Go | 중간 | M | ✅ PR #3 | — |
-| **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate | Go | 중간 | S | ⬜ 남음 | **Sprint 5c.4.2와 동시** |
-| **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ⬜ 남음 | chain_*.ts touch 시 |
+| **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate + 가드 테스트 | Go | 중간 | S | ✅ `6d2b4d9` | — |
+| **P1-2b** | `chainbench_clean` MCP 도구 추가 (lifecycle 표면 대칭) | TS | 낮음 | S | ✅ `a67d473` | — |
+| **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ✅ `dbe3812` | — |
 | **P1-4** SSOT-X1 | profile default를 스키마 `default`로 승격, 레이어가 파생 | 전레이어 | 중간 | M | ⬜ 남음 | M4(adapter binary) 동시 |
 | **P2-1** CC-B1 | `profile.sh` Python 파서 추출 · `json_helpers.sh` 백엔드 단일화 | bash | 높음 | L | ⬜ 남음 | 별도 sprint |
 | **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | ⬜ 남음 | 해당 파일 기능 추가 시 |
@@ -166,20 +167,27 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
   - `fix(report)`: 결과 0건일 때 `report --format json` 이 빈 stdout → zero-count JSON/markdown 으로 수정.
 - **검증**: Go 15 pkg green · TS vitest 123 pass · bash 36/38 (남은 2건은 `cast` 미설치 환경분).
 
+### 6.1b 완료 — 그룹 1 (branch `refactor/group1-schema-drift-clean-mcp`)
+
+PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 머지했으나 `command.json` 스키마와 `chainbench_clean` MCP 도구를 누락한 것을 정리. P1-2 트리거("5c.4.2와 동시")는 그 sprint 가 이미 머지되어 죽은 의존성이었음 → 즉시 작업으로 재분류 후 처리.
+
+- **P1-2 SSOT-G2** (`6d2b4d9`): `command.json` 에 `network.init/start_all/restart/clean` 추가 + `go generate` 재생성 + 교차 가드 테스트 `TestAllHandlers_DispatchableCommandsAreInSchema`(모든 allHandlers 키를 command 스키마로 검증 — 드리프트 재발 차단).
+- **P1-2b** (`a67d473`): `chainbench_clean` MCP 도구 추가(`CleanArgs` + `_cleanHandler` → `callWire('network.clean')`) — lifecycle 표면 대칭화. vitest 3 cases.
+- **P1-3 CC-T1** (`dbe3812`): `buildWireArgs()` 헬퍼 추출(`utils/wireArgs.ts`) + chain_read/chain_tx/lifecycle 마이그레이션. 동작 불변.
+- **검증**: Go 16 pkg green · TS vitest 130 pass(+7) · gofmt/vet clean.
+
 ### 6.2 남은 작업 — 우선순위순
 
 **즉시:**
 
 | ID | 작업 | 비고 |
 |---|---|---|
-| **N2** | foundry(`cast`) 프로비저닝을 coding-agent `doctor`/`setup` 에 추가 | `doctor`=설치 진단(read-only), `setup`=미설치 시 `foundryup` 안내/설치. 완료 시 bash `lib-contract`/`lib-event` 포함 38/38. **코드 버그 아님 — 환경 의존** |
+| **N2** | foundry(`cast`) 프로비저닝을 coding-agent `doctor`/`setup` 에 추가 | **별도 레포** — 대상은 `~/.claude/plugins/marketplaces/coding-agent/plugin/scripts/{doctor,setup}.py` 로 chainbench(`0xmhha/chainbench`) 밖. 이 레포 브랜치에서 처리 불가. `doctor`=진단, `setup`=`foundryup` 설치. **코드 버그 아님 — 환경 의존** |
 
 **P1 (관련 코드 손댈 때):**
 
 | ID | 작업 | 트리거 |
 |---|---|---|
-| **P1-2** SSOT-G2 | `command.json` 에 `network.init/start_all/restart/clean` 추가 + `go generate` (dispatch↔schema drift) | Sprint 5c.4.2 (lifecycle reroute) 와 동시 |
-| **P1-3** CC-T1 | TS `buildWireArgs()` 헬퍼로 wire-args 빌드 패턴 표준화 | chain_read/chain_tx/lifecycle.ts touch 시 |
 | **P1-4** SSOT-X1 | profile default(chain_id/ports/binary)를 스키마 `default` 로 승격 → 레이어가 파생 | M4 (adapter binary) 와 동시 |
 
 **P2 (별도 sprint, 큰 구조):**
@@ -198,4 +206,4 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 
 ### 6.3 추천 진행 순서
 
-`N2 (foundry → 38/38)` → `P1-2 + Sprint 5c.4.2 묶음` → `P1-3 / P1-4` → `P2`.
+그룹 1(P1-2 / P1-2b / P1-3) 완료. 남은 순서: `N2 (별도 레포)` → `P1-4 (M4 동시)` → `P2`.
