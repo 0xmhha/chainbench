@@ -1,5 +1,7 @@
 package probe
 
+import "github.com/0xmhha/chainbench/network/internal/types"
+
 // chainSignature describes how to detect one chain family.
 // Order matters: evaluate top-to-bottom, first match wins.
 // "istanbul_*" namespace is shared by stablenet and wbft; disambiguate via knownChainIDs.
@@ -20,7 +22,7 @@ var signatures = []chainSignature{
 		chainType:     "stablenet",
 		namespace:     "istanbul",
 		probeMethod:   "istanbul_getValidators",
-		knownChainIDs: map[int64]bool{8283: true},
+		knownChainIDs: map[int64]bool{types.StablenetChainID: true},
 	},
 	{
 		chainType:   "wbft",
