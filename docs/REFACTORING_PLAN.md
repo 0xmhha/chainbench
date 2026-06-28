@@ -127,7 +127,7 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 | **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate + 가드 테스트 | Go | 중간 | S | ✅ `6d2b4d9` | — |
 | **P1-2b** | `chainbench_clean` MCP 도구 추가 (lifecycle 표면 대칭) | TS | 낮음 | S | ✅ `a67d473` | — |
 | **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ✅ `dbe3812` | — |
-| **P1-4** SSOT-X1 | profile default를 스키마 `default`로 승격, 레이어가 파생 | 전레이어 | 중간 | M | ⬜ 남음 | M4(adapter binary) 동시 |
+| **P1-4** SSOT-X1 | chain_id + base ports를 defaults.json SSoT로 단일화 (빌드타임 codegen) | 전레이어 | 중간 | M | 🟡 `1d4716c`+`2b11b32` (binary는 M4) | — |
 | **P2-1** CC-B1 | `profile.sh` Python 파서 추출 · `json_helpers.sh` 백엔드 단일화 | bash | 높음 | L | ⬜ 남음 | 별도 sprint |
 | **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | ⬜ 남음 | 해당 파일 기능 추가 시 |
 
@@ -184,11 +184,25 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 |---|---|---|
 | **N2** | foundry(`cast`) 프로비저닝을 coding-agent `doctor`/`setup` 에 추가 | **별도 레포** — 대상은 `~/.claude/plugins/marketplaces/coding-agent/plugin/scripts/{doctor,setup}.py` 로 chainbench(`0xmhha/chainbench`) 밖. 이 레포 브랜치에서 처리 불가. `doctor`=진단, `setup`=`foundryup` 설치. **코드 버그 아님 — 환경 의존** |
 
-**P1 (관련 코드 손댈 때):**
+### 6.1c 완료 — P1-4 SSOT-X1 (부분, branch `refactor/group1-schema-drift-clean-mcp`)
+
+문서 §1.1의 원안("스키마 `default` 승격 → Go가 생성 타입에서 파생")은 두 가지 이유로 그대로 불가하여 **빌드타임 codegen** 으로 대체:
+1. `go-jsonschema`(v0.23.1)는 default 값을 생성하지 않음 → Go 파생 경로 부재.
+2. ports/binary는 `network.json`(Network 상태 스키마)에 없음 — profile 개념이고 profile 스키마 파일 부재.
+
+채택: `network/schema/defaults.json`(SSoT) → `gen-defaults` codegen → 레이어별 상수 파일(Go/bash/TS). 런타임 파싱 의존 0.
+
+- **인프라** (`1d4716c`): defaults.json + gen-defaults + 3 생성 파일 + go:generate + drift 가드 테스트.
+- **마이그레이션** (`2b11b32`): stablenet chain_id(Go ×2) · profile.sh 5 base ports · schema.ts 문서 문자열.
+- **검증**: Go all green · vitest 130 · bash 38/38.
+
+**남은 SSOT-X1 잔여** (별도 처리):
 
 | ID | 작업 | 트리거 |
 |---|---|---|
-| **P1-4** SSOT-X1 | profile default(chain_id/ports/binary)를 스키마 `default` 로 승격 → 레이어가 파생 | M4 (adapter binary) 와 동시 |
+| P1-4a | `lib/adapters/stablenet.sh:45` chain_id fallback (quoted python heredoc 내부) 단일화 | P2-1 (임베디드 python 추출) 시 |
+| P1-4b | `chain.network_id` default 불일치 정리 (profile.sh `""` vs schema.ts `8283`) | 별도 — 어느 쪽이 맞는지 결정 필요 |
+| P1-4c | binary(`gstable`) → defaults/adapter axis | **M4** (HARDCODING_AUDIT 9사이트, 비-stablenet e2e) |
 
 **P2 (별도 sprint, 큰 구조):**
 
@@ -206,4 +220,4 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 ### 6.3 추천 진행 순서
 
-그룹 1(P1-2 / P1-2b / P1-3) 완료. 남은 순서: `N2 (별도 레포)` → `P1-4 (M4 동시)` → `P2`.
+그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) 완료. 남은 순서: `N2 (별도 레포)` → `P1-4a/b (잔여)` → `P1-4c=M4 (binary)` → `P2`.
