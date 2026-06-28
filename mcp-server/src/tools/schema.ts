@@ -27,7 +27,7 @@ const SECTION_DOCS: Record<string, string> = {
 - \`chain.binary\` (string, default: "gstable"): Executable name.
 - \`chain.binary_path\` (string, default: ""): Absolute path to binary. Empty = search $PATH.
 - \`chain.logrot_path\` (string, default: ""): Absolute path to logrot binary. Empty = auto-detect next to binary, git-root, or build from source.
-- \`chain.network_id\` (integer, default: 8283): P2P network ID.
+- \`chain.network_id\` (integer, default: chain_id): P2P network ID for gstable --networkid. Omit to match chain_id; if both are omitted gstable uses its own default.
 - \`chain.chain_id\` (integer, default: ${STABLENET_CHAIN_ID}): EIP-155 chain ID.`,
 
   data: `# data — Data directory

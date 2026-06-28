@@ -323,3 +323,16 @@ is_truthy() {
     *) return 1 ;;
   esac
 }
+
+# _cb_resolve_network_id
+# Echoes the effective P2P network id for gstable's --networkid flag: the
+# explicit CHAINBENCH_NETWORK_ID (.chain.network_id), else CHAINBENCH_CHAIN_ID
+# (.chain.chain_id — devnets conventionally match the two), else empty (the
+# caller then omits --networkid and gstable uses its own default).
+#
+# P1-4b / SSOT-X1: CHAINBENCH_NETWORK_ID used to be parsed but never consumed,
+# so a configured network_id never reached the node. cmd_start.sh now feeds this
+# into the launch command so the knob actually takes effect.
+_cb_resolve_network_id() {
+  printf '%s' "${CHAINBENCH_NETWORK_ID:-${CHAINBENCH_CHAIN_ID:-}}"
+}
