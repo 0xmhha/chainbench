@@ -201,8 +201,9 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 | ID | 작업 | 트리거 |
 |---|---|---|
 | P1-4a | `lib/adapters/stablenet.sh:45` chain_id fallback (quoted python heredoc 내부) 단일화 | P2-1 (임베디드 python 추출) 시 |
-| P1-4b | `chain.network_id` default 불일치 정리 (profile.sh `""` vs schema.ts `8283`) | 별도 — 어느 쪽이 맞는지 결정 필요 |
 | P1-4c | binary(`gstable`) → defaults/adapter axis | **M4** (HARDCODING_AUDIT 9사이트, 비-stablenet e2e) |
+
+**P1-4b 완료** (`2e8e787`): 조사 결과 단순 default 불일치가 아니라 **dead knob** — `CHAINBENCH_NETWORK_ID`가 파싱만 되고 어디서도 소비되지 않아 `chain.network_id`(프로파일이 8283 설정해도)가 런타임에 무시됨. 정상 배선(근본 수정): `_cb_resolve_network_id`(network_id→chain_id→empty) 추출 + `cmd_start.sh` launch_cmd에 `--networkid` 추가(+`.launch_args`/saved_args로 재시작 보존) + pids.json node record에 `network_id` 기록(cmd_node.sh reconstruct fallback) + schema.ts 문서 정정(default: chain_id). 회귀: bash 39/39, vitest 130.
 
 **P2 (별도 sprint, 큰 구조):**
 
@@ -220,4 +221,4 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 ### 6.3 추천 진행 순서
 
-그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) 완료. 남은 순서: `N2 (별도 레포)` → `P1-4a/b (잔여)` → `P1-4c=M4 (binary)` → `P2`.
+그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) + P1-4b(network_id 배선) 완료. 남은 순서: `N2 (별도 레포)` → `P1-4a (P2-1과)` → `P1-4c=M4 (binary)` → `P2`.
