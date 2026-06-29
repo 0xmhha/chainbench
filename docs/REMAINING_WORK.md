@@ -1,8 +1,10 @@
 # Chainbench — 남은 작업 리스트
 
-> 작성일: 2026-04-30 (Sprint 5a 완료 시점) · 최종 업데이트: 2026-05-04 (Sprint 5c.4.1 완료)
+> 작성일: 2026-04-30 (Sprint 5a 완료 시점) · 최종 업데이트: 2026-06-29 (PR #1~#4 머지 — lifecycle reroute 완료 + clean-code/SSOT 리팩토링)
 > 목적: 다른 세션에서 맥락 없이도 즉시 착수 가능한 actionable 핸드오프.
-> 본 문서는 self-contained — `NEXT_WORK.md` (full context) / `VISION_AND_ROADMAP.md` (비전 SSoT) 는 깊게 들어갈 때만.
+> 본 문서는 self-contained — `NEXT_WORK.md` (full context) / `VISION_AND_ROADMAP.md` (비전 SSoT) / `REFACTORING_PLAN.md` (clean-code/SSOT 트랙) 는 깊게 들어갈 때만.
+>
+> ⚠️ **2026-06 갱신**: 본 문서의 Sprint 5 시리즈 추적(§2/§4)은 2026-05-04(5c.4.1) 이후 멈춰 있었음. 그 사이 PR #1~#4 가 머지되어 **Sprint 5c.4.2 (lifecycle reroute) 가 사실상 완료**되었고, 별도의 **clean-code/SSOT 리팩토링 트랙**(`REFACTORING_PLAN.md`)이 추가됨. 아래 §2.0 참조.
 
 ---
 
@@ -60,7 +62,26 @@
 
 ---
 
-## 2. 빠른 상태 (2026-05-04 기준)
+## 2.0 PR #1~#4 반영 (2026-06-29 — 최신)
+
+5c.4.1 이후 머지된 작업. 본 §2/§4 의 옛 "다음 P1" 은 이미 처리됨:
+
+| PR | 커밋 | 내용 | 상태 |
+|---|---|---|---|
+| #1 | `5a1d888` | **Sprint 5c.4.2 lifecycle reroute 완료** — Go wire 핸들러(init/start_all/restart/clean) + MCP reroute(init/start/restart) + report json contract fix | ✅ |
+| #2 | `6ea996a` | local ↔ closed-net regression 테스트 환경 통합 | ✅ |
+| #3 | `63f1d43` | clean-code/SSOT 리팩토링 P0+P1-1 + 사전 버그 2건 (mktemp 이식성, report zero-count) | ✅ |
+| #4 | `2046b05` | command-schema drift fix(P1-2) + `chainbench_clean`(P1-2b) + `buildWireArgs`(P1-3) + defaults.json SSoT codegen(P1-4) + network_id 배선(P1-4b) | ✅ |
+
+**lifecycle reroute 결과**: 6개 lifecycle MCP 툴(init/start/restart/stop/status/clean) **전부 callWire 경유** (lifecycle.ts 의 runChainbench 는 주석만). Sprint 5c.4.2 가 노렸던 reroute 5/38 → 9/38(~24%) 목표 달성.
+
+**현재 테스트 상태(2026-06-29 직접 실행)**: Go 전 패키지 green · vitest 130 pass/2 skip · bash **37/39** (실패 2건 `lib-contract.sh`/`lib-event.sh` 는 `cast`(foundry) 미설치 환경 의존 — 코드 버그 아님, 설치 시 39/39).
+
+**clean-code/SSOT 리팩토링 트랙**: `docs/REFACTORING_PLAN.md` 가 별도 추적. 남은 항목은 본 문서 §4 가 아니라 거기 §6.2 참조 (N2 cast 프로비저닝, P1-4a/4c, P2-1/2, N-A/N-B).
+
+---
+
+## 2. 빠른 상태 (2026-05-04 기준 — §2.0 으로 갱신됨)
 
 **완료된 Sprint** (5 series):
 - ✅ 5c.1 (2026-04-28) — MCP foundation + 첫 2 tool (`account_state`, `tx_send`)
@@ -74,7 +95,7 @@
 - Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
 - 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: Sprint 5c.4.2 (lifecycle 잔여 init/start/restart/clean reroute) — reroute 13% → 24%
+**다음 P1**: ~~Sprint 5c.4.2~~ ✅ 완료(PR #1). 다음 후보 → **Sprint 5d (hybrid 예제, 최소 단위)** 또는 **Sprint 5b (SSHRemoteDriver, 큰 작업)**. 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
 
 ---
 
@@ -113,7 +134,13 @@
 
 ## 4. Sprint 5 시리즈 — 남은 sprint
 
-### 🟥 Priority 1 — Sprint 5c.4.2: Lifecycle reroute pass 2 (init/start/restart/clean)
+### ✅ 완료 — Sprint 5c.4.2: Lifecycle reroute pass 2 (init/start/restart/clean) — PR #1 `5a1d888`
+
+> **2026-06-29 갱신**: 본 sprint 는 PR #1 로 **완료**됨. Go wire 핸들러(init/start_all/restart/clean) + schema enum(P1-2 가 가드 테스트까지 추가) + MCP reroute(init/start/restart) + `chainbench_clean`(P1-2b) 모두 머지. 6개 lifecycle 툴 전부 callWire 경유. 아래 원본 계획은 **이력 보존용**.
+>
+> **다음 Priority 1 후보** = Sprint 5d(최소) 또는 Sprint 5b. 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
+
+<details><summary>원본 계획 (이력 보존)</summary>
 
 **목표**: 잔여 4 lifecycle MCP tool (`chainbench_init/start/restart/clean`) 을 wire 경유로 전환. 5c.4.1 이 stop + status 만 reroute 했고 (2/6 완료), 잔여 4개는 init/start 의 ~600+ 줄 bash 로직을 가지고 있어 분리됨. 현재 `runChainbench` (bash CLI shell-out) 사용 중.
 
@@ -152,9 +179,11 @@
 6. Task 10 = docs + version bump 0.8.0
 ```
 
+</details>
+
 ---
 
-### 🟧 Priority 2 — Sprint 5b: SSHRemoteDriver
+### 🟧 Priority 2 — Sprint 5b: SSHRemoteDriver (5c.4.2 완료 후 현 최대 sprint)
 
 **목표**: `drivers/sshremote` 신설. 원격 머신에 SSH 로 chainbench-net (또는 노드 lifecycle) 을 spawn 가능하게.
 
@@ -619,18 +648,19 @@ git add network/schema/command.json network/internal/types/command_gen.go
 
 **큰 단위**: Sprint 5b (SSH driver) — 새 driver 구현. 두 패스로 나눠 진행 권장.
 
-**권장 순서** (본 sprint 종료 시점 기준):
-1. **Sprint 5c.4.2** (P1) — 가장 큰 LLM-facing 효과. P3 5건 자연 흡수 (node.restart symmetric, validateRpcMethod 통합, INTEGRATION timeout hoisting 등).
-2. **Sprint 5d** (smallest, easy win) — capability gate 의 dividend 검증.
-3. **Sprint 5b** (큰 작업, 두 패스) — 5c.4.2 끝나야 lifecycle 측면이 의미. 5b.1 (read-only) 부터.
+**권장 순서** (2026-06-29 갱신 — 5c.4.2 는 PR #1 로 완료):
+1. ~~**Sprint 5c.4.2**~~ ✅ 완료 (PR #1).
+2. **Sprint 5d** (smallest, easy win) — capability gate 의 dividend 검증. 현 최우선 후보.
+3. **Sprint 5b** (큰 작업, 두 패스) — 5b.1 (read-only) 부터.
+4. (병행) `REFACTORING_PLAN.md` §6.2 리팩토링 잔여 — P2-1(bash python 추출) 등은 별도 sprint.
 
 ---
 
 ## 11. 새 세션 재개 명령 (체크리스트)
 
 ```bash
-# 1. 현재 상태 확인
-cd /Users/wm-it-22-00661/Work/github/tools/chainbench
+# 1. 현재 상태 확인 (경로는 환경마다 다름 — repo 루트로 이동)
+cd "$(git rev-parse --show-toplevel)"
 git log --oneline -15
 git status
 

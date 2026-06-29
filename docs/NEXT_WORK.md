@@ -1,7 +1,8 @@
 # Chainbench — 다음 작업 핸드오프 문서
 
 > 작성일: 2026-04-24 (Sprint 4 종료 시점)
-> 최종 업데이트: 2026-05-04 (Sprint 5c.4.1 완료 — Sprint 5 series 진행 중)
+> 최종 업데이트: 2026-06-29 (PR #1~#4 머지 — Sprint 5c.4.2 lifecycle reroute 완료 + clean-code/SSOT 리팩토링 트랙)
+> ⚠️ **2026-06 갱신**: §2.1 timeline / §3 우선순위는 5c.4.1(2026-05-04) 이후 멈춰 있었음. 그 뒤 PR #1~#4 가 머지되어 **Sprint 5c.4.2(lifecycle reroute)가 완료**되고 별도 리팩토링 트랙(`REFACTORING_PLAN.md`)이 추가됨. §2.0 참조.
 > 이 문서는 **다른 세션에서 맥락 없이 작업을 이어갈 수 있도록** 작성됨.
 > 읽는 순서: §1 (프로젝트 컨텍스트) → §2 (현재 상태) → §3 (다음 작업) → §4 (규약) → §5 (주의사항).
 
@@ -86,6 +87,19 @@ chainbench/
 
 ## 2. 현재 상태 — 무엇이 완료되었나
 
+### 2.0 PR #1~#4 (2026-06-29 — 최신, 5c.4.1 이후)
+
+| PR | 커밋 | 내용 |
+|---|---|---|
+| #1 | `5a1d888` | **Sprint 5c.4.2 lifecycle reroute 완료** — Go wire 핸들러(init/start_all/restart/clean) + MCP reroute(init/start/restart) + report json contract fix. 6개 lifecycle 툴 전부 callWire 경유. |
+| #2 | `6ea996a` | local ↔ closed-net regression 테스트 환경 통합 |
+| #3 | `63f1d43` | clean-code/SSOT 리팩토링 P0+P1-1 + 사전 버그 2건 (mktemp 이식성, report zero-count JSON) |
+| #4 | `2046b05` | command-schema drift fix + `chainbench_clean` + `buildWireArgs` + defaults.json SSoT codegen + network_id 배선 |
+
+**테스트(2026-06-29 직접 실행)**: Go 전 패키지 green · vitest 130 pass/2 skip · bash 37/39 (실패 2 = `cast` 미설치 환경 의존, 설치 시 39/39).
+
+**리팩토링 잔여**는 `docs/REFACTORING_PLAN.md` §6.2 가 추적 (본 문서 §3 P3 와 별개 트랙).
+
 ### 2.1 Sprint 타임라인
 
 | Sprint | 범위 | 완료일 | 커밋 수 |
@@ -108,8 +122,10 @@ chainbench/
 | **5c.3** | **MCP reroute pass 1 — utils 추출 + node.rpc Go 핸들러 + 3 chainbench_node_* reroute (8% of 38) + integration test 도입** | **2026-04-29** | **8** |
 | **5a** | **Capability gate — `network.capabilities` Go 핸들러 + `chainbench_network_capabilities` MCP tool + bash `requires_capabilities` frontmatter gating + 2 fault test PoC** | **2026-04-29** | **6** |
 | **5c.4.1** | **Lifecycle reroute pass 1 — stop + status thin Go wrappers + harness extract + node.start binary_path Go support** | **2026-05-04** | **10** |
+| **5c.4.2** | **Lifecycle reroute pass 2 — init/start_all/restart/clean Go 핸들러 + MCP reroute (6/6 callWire) + report json fix** (PR #1 `5a1d888`) | **2026-06** | (squash) |
+| **refactor** | **clean-code/SSOT 트랙 — P0~P1-4b** (PR #3 `63f1d43` + #4 `2046b05`). 상세: `REFACTORING_PLAN.md` | **2026-06** | (squash) |
 
-각 sprint 는 `docs/superpowers/specs/<date>-<topic>.md` + `docs/superpowers/plans/<date>-<topic>.md` 를 가지고 있음.
+각 sprint 는 `docs/superpowers/specs/<date>-<topic>.md` + `docs/superpowers/plans/<date>-<topic>.md` 를 가지고 있음. (PR #1~#4 는 squash 머지 — 개별 task 커밋은 머지 전 브랜치에만 존재.)
 
 ### 2.2 현재 커맨드 표면 (chainbench-net wire protocol)
 
@@ -180,7 +196,13 @@ chainbench/
 > (reroute 5/38 ≈ 13%). 다음 P1 은 **Sprint 5c.4.2 — lifecycle 잔여 4 tool
 > (chainbench_init/start/restart/clean) reroute + node.restart binary_path symmetric override**.
 
-### 🟥 Priority 1 — Sprint 5c.4.2: lifecycle reroute pass 2 (init/start/restart/clean)
+### ✅ 완료 — Sprint 5c.4.2: lifecycle reroute pass 2 (init/start/restart/clean) — PR #1 `5a1d888`
+
+> **2026-06-29 갱신**: 완료됨. Go wire 핸들러(init/start_all/restart/clean) + schema enum(PR #4 P1-2 가 가드 테스트 `TestAllHandlers_DispatchableCommandsAreInSchema` 추가) + MCP reroute(init/start/restart) + `chainbench_clean`(PR #4 P1-2b). 6개 lifecycle 툴 전부 callWire 경유.
+>
+> **다음 Priority 1** = Sprint 5d(최소 단위) 또는 Sprint 5b(SSHRemoteDriver). 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2. 아래 원본 계획은 이력 보존용.
+
+<details><summary>원본 계획 (이력 보존)</summary>
 
 **배경**: Sprint 5c.4.1 (2026-05-04) 이 lifecycle 6-tool 의 가장 단순한 2개
 (`chainbench_stop`, `chainbench_status`) 만 thin Go wrapper 로 reroute. 잔여
@@ -204,6 +226,12 @@ chainbench/
 **Adapter.SupportedTxTypes() promotion**: Sprint 4c 의 `feeDelegationAllowedChains`
 hardcoded map 을 Adapter 인터페이스 메서드로 승격 (`docs/ADAPTER_CONTRACT.md` §3 참조).
 5번째 chain-specific tx 타입 도입 시 동시 진행.
+
+</details>
+
+### 🟥 Priority 1 (현재) — Sprint 5d (최소) 또는 Sprint 5b (SSHRemoteDriver)
+
+> 5c.4.2 완료로 다음 sprint 후보가 P1 으로 승격. **권장**: Sprint 5d (인프라 이미 존재, 예제+테스트만 ~3-5 commits) 를 easy win 으로 먼저, 그 다음 Sprint 5b (SSHRemoteDriver, 두 패스). 두 sprint 의 상세 작업 항목은 `docs/REMAINING_WORK.md` §4 참조. 병행 가능한 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
 
 ### 🟨 Priority 2 — Sprint 4d 후속 / 보강 (트리거 조건 시)
 
@@ -565,14 +593,14 @@ memory 충돌 발생. 세션 간 이어지는 정보는 **이 문서 (`docs/NEXT
 ### 6.1 첫 단계 (모든 새 세션에서)
 
 ```bash
-# 1. 현재 상태 확인
-cd /Users/wm-it-22-00661/Work/github/tools/chainbench
+# 1. 현재 상태 확인 (경로는 환경마다 다름 — repo 루트로 이동)
+cd "$(git rev-parse --show-toplevel)"
 git log --oneline -15
 git status
 
 # 2. 테스트 전부 녹색인지 확인
 go -C network test ./... -count=1 -timeout=60s
-bash tests/unit/run.sh
+bash tests/unit/run.sh   # cast(foundry) 미설치 시 lib-contract.sh/lib-event.sh 2건 실패 (환경 의존)
 ```
 
 ### 6.2 로드맵 확인
