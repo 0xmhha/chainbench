@@ -15,6 +15,9 @@ readonly _CHAINBENCH_PROFILE_SH_LOADED=1
 _CB_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh
 source "${_CB_LIB_DIR}/common.sh"
+# Cross-layer default constants (SSOT-X1, generated from network/schema/defaults.json).
+# shellcheck source=lib/defaults.generated.sh
+source "${_CB_LIB_DIR}/defaults.generated.sh"
 
 # ---- Internal constants ------------------------------------------------------
 
@@ -433,11 +436,11 @@ _cb_export_profile_vars() {
   _cb_set_var CHAINBENCH_KEYS_SOURCE       ".keys.source"        "keys/preset"
 
   # ports.*
-  _cb_set_var CHAINBENCH_BASE_P2P          ".ports.base_p2p"     "30301"
-  _cb_set_var CHAINBENCH_BASE_HTTP         ".ports.base_http"    "8501"
-  _cb_set_var CHAINBENCH_BASE_WS           ".ports.base_ws"      "9501"
-  _cb_set_var CHAINBENCH_BASE_AUTH         ".ports.base_auth"    "8551"
-  _cb_set_var CHAINBENCH_BASE_METRICS      ".ports.base_metrics" "6061"
+  _cb_set_var CHAINBENCH_BASE_P2P          ".ports.base_p2p"     "${CB_DEFAULT_BASE_P2P}"
+  _cb_set_var CHAINBENCH_BASE_HTTP         ".ports.base_http"    "${CB_DEFAULT_BASE_HTTP}"
+  _cb_set_var CHAINBENCH_BASE_WS           ".ports.base_ws"      "${CB_DEFAULT_BASE_WS}"
+  _cb_set_var CHAINBENCH_BASE_AUTH         ".ports.base_auth"    "${CB_DEFAULT_BASE_AUTH}"
+  _cb_set_var CHAINBENCH_BASE_METRICS      ".ports.base_metrics" "${CB_DEFAULT_BASE_METRICS}"
 
   # logging.*
   _cb_set_var CHAINBENCH_LOG_ROTATION      ".logging.rotation"   "true"

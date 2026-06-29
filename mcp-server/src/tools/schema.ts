@@ -4,6 +4,14 @@ import { resolve } from "path";
 import { execFileSync } from "child_process";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { CHAINBENCH_DIR, buildEnv } from "../utils/exec.js";
+import {
+  STABLENET_CHAIN_ID,
+  DEFAULT_BASE_P2P,
+  DEFAULT_BASE_HTTP,
+  DEFAULT_BASE_WS,
+  DEFAULT_BASE_AUTH,
+  DEFAULT_BASE_METRICS,
+} from "../utils/defaults.generated.js";
 
 // ---------------------------------------------------------------------------
 // Schema documentation
@@ -19,8 +27,8 @@ const SECTION_DOCS: Record<string, string> = {
 - \`chain.binary\` (string, default: "gstable"): Executable name.
 - \`chain.binary_path\` (string, default: ""): Absolute path to binary. Empty = search $PATH.
 - \`chain.logrot_path\` (string, default: ""): Absolute path to logrot binary. Empty = auto-detect next to binary, git-root, or build from source.
-- \`chain.network_id\` (integer, default: 8283): P2P network ID.
-- \`chain.chain_id\` (integer, default: 8283): EIP-155 chain ID.`,
+- \`chain.network_id\` (integer, default: chain_id): P2P network ID for gstable --networkid. Omit to match chain_id; if both are omitted gstable uses its own default.
+- \`chain.chain_id\` (integer, default: ${STABLENET_CHAIN_ID}): EIP-155 chain ID.`,
 
   data: `# data — Data directory
 - \`data.directory\` (string, default: "data"): Root directory for node data. Absolute or relative to chainbench.`,
@@ -62,11 +70,11 @@ const SECTION_DOCS: Record<string, string> = {
 - \`keys.source\` (string, default: "keys/preset"): Preset keys directory.`,
 
   ports: `# ports — Port allocation (base + node_index)
-- \`ports.base_p2p\` (int, default: 30301)
-- \`ports.base_http\` (int, default: 8501)
-- \`ports.base_ws\` (int, default: 9501)
-- \`ports.base_auth\` (int, default: 8551)
-- \`ports.base_metrics\` (int, default: 6061)`,
+- \`ports.base_p2p\` (int, default: ${DEFAULT_BASE_P2P})
+- \`ports.base_http\` (int, default: ${DEFAULT_BASE_HTTP})
+- \`ports.base_ws\` (int, default: ${DEFAULT_BASE_WS})
+- \`ports.base_auth\` (int, default: ${DEFAULT_BASE_AUTH})
+- \`ports.base_metrics\` (int, default: ${DEFAULT_BASE_METRICS})`,
 
   logging: `# logging — Log management
 - \`logging.rotation\` (bool, default: true): Enable log rotation.

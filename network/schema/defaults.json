@@ -1,0 +1,13 @@
+{
+  "$comment": "SSoT for cross-layer fallback DEFAULTS (SSOT-X1). These are the values each layer falls back to when a profile omits a field; the profile YAML under profiles/ remains the per-run source of truth. Edit values HERE, then run `go generate ./...` from network/ to regenerate the per-layer constant files (network/internal/types/defaults_gen.go, lib/defaults.generated.sh, mcp-server/src/utils/defaults.generated.ts). Do NOT hand-edit the generated files. The chain binary name (gstable) is intentionally excluded — it is adapter-scoped and tracked by M4 (docs/HARDCODING_AUDIT.md).",
+  "stablenet": {
+    "chain_id": 8283
+  },
+  "ports": {
+    "base_p2p": 30301,
+    "base_http": 8501,
+    "base_ws": 9501,
+    "base_auth": 8551,
+    "base_metrics": 6061
+  }
+}

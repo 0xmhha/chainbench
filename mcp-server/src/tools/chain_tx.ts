@@ -20,6 +20,7 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { callWire } from "../utils/wire.js";
+import { buildWireArgs } from "../utils/wireArgs.js";
 import { formatWireResult } from "../utils/wireResult.js";
 import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
 import {
@@ -280,27 +281,23 @@ export function _buildTxSendWireArgs(
       ? "node.tx_fee_delegation_send"
       : "node.tx_send";
 
-  const wireArgs: Record<string, unknown> = {
-    network: args.network,
-    signer: args.signer,
-  };
-  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
-  if (args.fee_payer !== undefined) wireArgs.fee_payer = args.fee_payer;
-  if (args.to !== undefined) wireArgs.to = args.to;
-  if (args.value !== undefined) wireArgs.value = args.value;
-  if (args.data !== undefined) wireArgs.data = args.data;
-  if (args.gas !== undefined) wireArgs.gas = args.gas;
-  if (args.nonce !== undefined) wireArgs.nonce = args.nonce;
-  if (args.gas_price !== undefined) wireArgs.gas_price = args.gas_price;
-  if (args.max_fee_per_gas !== undefined) {
-    wireArgs.max_fee_per_gas = args.max_fee_per_gas;
-  }
-  if (args.max_priority_fee_per_gas !== undefined) {
-    wireArgs.max_priority_fee_per_gas = args.max_priority_fee_per_gas;
-  }
-  if (args.authorization_list !== undefined) {
-    wireArgs.authorization_list = args.authorization_list;
-  }
+  const wireArgs = buildWireArgs(
+    args,
+    [
+      "node_id",
+      "fee_payer",
+      "to",
+      "value",
+      "data",
+      "gas",
+      "nonce",
+      "gas_price",
+      "max_fee_per_gas",
+      "max_priority_fee_per_gas",
+      "authorization_list",
+    ],
+    { network: args.network, signer: args.signer },
+  );
   return { wireCommand, wireArgs };
 }
 
@@ -416,26 +413,21 @@ export function _buildContractDeployWireArgs(
   // dropped. network/signer/bytecode are pinned first for stable envelope
   // ordering; remaining optional fields fall through with explicit per-field
   // assignment matching _buildTxSendWireArgs.
-  const wireArgs: Record<string, unknown> = {
-    network: args.network,
-    signer: args.signer,
-    bytecode: args.bytecode,
-  };
-  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
-  if (args.abi !== undefined) wireArgs.abi = args.abi;
-  if (args.constructor_args !== undefined) {
-    wireArgs.constructor_args = args.constructor_args;
-  }
-  if (args.value !== undefined) wireArgs.value = args.value;
-  if (args.gas !== undefined) wireArgs.gas = args.gas;
-  if (args.nonce !== undefined) wireArgs.nonce = args.nonce;
-  if (args.gas_price !== undefined) wireArgs.gas_price = args.gas_price;
-  if (args.max_fee_per_gas !== undefined) {
-    wireArgs.max_fee_per_gas = args.max_fee_per_gas;
-  }
-  if (args.max_priority_fee_per_gas !== undefined) {
-    wireArgs.max_priority_fee_per_gas = args.max_priority_fee_per_gas;
-  }
+  const wireArgs = buildWireArgs(
+    args,
+    [
+      "node_id",
+      "abi",
+      "constructor_args",
+      "value",
+      "gas",
+      "nonce",
+      "gas_price",
+      "max_fee_per_gas",
+      "max_priority_fee_per_gas",
+    ],
+    { network: args.network, signer: args.signer, bytecode: args.bytecode },
+  );
   return { wireArgs };
 }
 

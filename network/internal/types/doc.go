@@ -11,3 +11,8 @@ package types
 //go:generate go-jsonschema -t --package types --output network_gen.go ../../schema/network.json
 //go:generate go-jsonschema -t --package types --output command_gen.go ../../schema/command.json
 //go:generate go-jsonschema -t --package types --output event_gen.go   ../../schema/event.json
+
+// Cross-layer default constants (SSOT-X1). Renders defaults_gen.go (here),
+// lib/defaults.generated.sh, and mcp-server/src/utils/defaults.generated.ts
+// from network/schema/defaults.json. Edit that JSON, not the outputs.
+//go:generate go run ../../cmd/gen-defaults -root ../../..

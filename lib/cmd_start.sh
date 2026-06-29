@@ -204,6 +204,16 @@ _start_launch_node() {
     launch_cmd+=( --mine )
   fi
 
+  # P1-4b / SSOT-X1: pass the configured P2P network id so the .chain.network_id
+  # knob (formerly dead) actually reaches gstable. Empty => omit the flag and
+  # let gstable use its own default. Placed before extra_flags so an explicit
+  # --networkid in extra_flags still wins.
+  local _network_id
+  _network_id="$(_cb_resolve_network_id)"
+  if [[ -n "${_network_id}" ]]; then
+    launch_cmd+=( --networkid "${_network_id}" )
+  fi
+
   if [[ ${#extra_flags_arr[@]} -gt 0 ]]; then
     launch_cmd+=( "${extra_flags_arr[@]}" )
   fi
@@ -256,6 +266,9 @@ unset -f _start_launch_node
 
 _start_timestamp="$(cb_iso_now)"
 _start_chain_id="local-${CHAINBENCH_PROFILE}-$(date -u +"%Y%m%d%H%M%S")"
+# Effective P2P network id (P1-4b): persisted per node so the cmd_node.sh
+# reconstruct fallback (used when .launch_args is absent) can replay --networkid.
+_start_network_id="$(_cb_resolve_network_id)"
 
 # Build a newline-separated node-info string to pass to Python.
 _start_nodes_payload=""
@@ -272,6 +285,7 @@ python3 - \
   "${_start_nodes_payload}" \
   "${_START_DATA_DIR}" \
   "$(basename "${BINARY}")" \
+  "${_start_network_id}" \
   <<'PYEOF'
 import sys, json, os
 
@@ -283,6 +297,7 @@ log_dir         = sys.argv[5]
 nodes_raw       = sys.argv[6]   # "idx|pid|type|p2p|http|ws|auth|metrics\n..."
 data_dir        = sys.argv[7]
 binary_basename = sys.argv[8]   # basename of the resolved binary actually launched
+network_id      = sys.argv[9]   # effective P2P network id ("" = none configured)
 
 def _load_launch_args(idx):
     """Read the persisted launch_args file for a node, if present."""
@@ -335,6 +350,7 @@ for line in nodes_raw.strip().splitlines():
         "binary":       binary,
         "datadir":      datadir,
         "saved_args":   saved_args,
+        "network_id":   network_id,
     }
 
 doc = {

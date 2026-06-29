@@ -15,6 +15,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { callWire } from "../utils/wire.js";
 import { formatWireResult } from "../utils/wireResult.js";
 import { errorResp, type FormattedToolResponse } from "../utils/mcpResp.js";
+import { buildWireArgs } from "../utils/wireArgs.js";
 import {
   HEX_ADDRESS,
   HEX_DATA,
@@ -77,17 +78,14 @@ export async function _accountStateHandler(
     };
   }
 
-  const wireArgs: Record<string, unknown> = {
-    network: args.network,
-    address: args.address,
-  };
-  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
-  // When fields is undefined, omit it from the wire envelope so chainbench-net
-  // applies its own default (['balance','nonce','code']) — the MCP layer
-  // stays oblivious to that default.
-  if (args.fields !== undefined) wireArgs.fields = args.fields;
-  if (args.storage_key !== undefined) wireArgs.storage_key = args.storage_key;
-  if (args.block_number !== undefined) wireArgs.block_number = args.block_number;
+  // Optional fields are omitted from the envelope when undefined so
+  // chainbench-net applies its own defaults (e.g. fields ->
+  // ['balance','nonce','code']) — the MCP layer stays oblivious to them.
+  const wireArgs = buildWireArgs(
+    args,
+    ["node_id", "fields", "storage_key", "block_number"],
+    { network: args.network, address: args.address },
+  );
 
   const result = await callWire("node.account_state", wireArgs);
   return formatWireResult(result);
@@ -166,17 +164,11 @@ export async function _contractCallHandler(
     return errorResp("abi requires method");
   }
 
-  const wireArgs: Record<string, unknown> = {
-    network: args.network,
-    contract_address: args.contract_address,
-  };
-  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
-  if (args.calldata !== undefined) wireArgs.calldata = args.calldata;
-  if (args.abi !== undefined) wireArgs.abi = args.abi;
-  if (args.method !== undefined) wireArgs.method = args.method;
-  if (args.args !== undefined) wireArgs.args = args.args;
-  if (args.block_number !== undefined) wireArgs.block_number = args.block_number;
-  if (args.from !== undefined) wireArgs.from = args.from;
+  const wireArgs = buildWireArgs(
+    args,
+    ["node_id", "calldata", "abi", "method", "args", "block_number", "from"],
+    { network: args.network, contract_address: args.contract_address },
+  );
 
   const result = await callWire("node.contract_call", wireArgs);
   return formatWireResult(result);
@@ -266,14 +258,11 @@ export async function _eventsGetHandler(
     return errorResp("event requires abi");
   }
 
-  const wireArgs: Record<string, unknown> = { network: args.network };
-  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
-  if (args.address !== undefined) wireArgs.address = args.address;
-  if (args.from_block !== undefined) wireArgs.from_block = args.from_block;
-  if (args.to_block !== undefined) wireArgs.to_block = args.to_block;
-  if (args.topics !== undefined) wireArgs.topics = args.topics;
-  if (args.abi !== undefined) wireArgs.abi = args.abi;
-  if (args.event !== undefined) wireArgs.event = args.event;
+  const wireArgs = buildWireArgs(
+    args,
+    ["node_id", "address", "from_block", "to_block", "topics", "abi", "event"],
+    { network: args.network },
+  );
 
   const result = await callWire("node.events_get", wireArgs);
   return formatWireResult(result);
@@ -310,12 +299,10 @@ type TxWaitArgsT = z.infer<typeof TxWaitArgs>;
 export async function _txWaitHandler(
   args: TxWaitArgsT,
 ): Promise<FormattedToolResponse> {
-  const wireArgs: Record<string, unknown> = {
+  const wireArgs = buildWireArgs(args, ["node_id", "timeout_ms"], {
     network: args.network,
     tx_hash: args.tx_hash,
-  };
-  if (args.node_id !== undefined) wireArgs.node_id = args.node_id;
-  if (args.timeout_ms !== undefined) wireArgs.timeout_ms = args.timeout_ms;
+  });
   // Wire helper timeout must outlive the caller's polling deadline so the
   // pending-status path inside chainbench-net gets a chance to fire (and
   // return {status:"pending", tx_hash}) before the wire helper kills the

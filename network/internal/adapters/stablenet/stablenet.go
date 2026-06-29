@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/network/internal/adapters/spec"
+	"github.com/0xmhha/chainbench/network/internal/types"
 )
 
 // Adapter is the stablenet implementation of spec.Adapter.
@@ -57,7 +58,7 @@ func (*Adapter) GenerateGenesis(_ context.Context, in spec.GenesisInput) error {
 	overrides := getMap(genesis, "overrides")
 	wbft := getMap(overrides, "wbft")
 
-	chainID := getInt(chain, "chain_id", 8283)
+	chainID := getInt(chain, "chain_id", types.StablenetChainID)
 	reqTimeout := getInt(wbft, "requestTimeoutSeconds", 2)
 	blockPeriod := getInt(wbft, "blockPeriodSeconds", 1)
 	epochLength := getInt(wbft, "epochLength", 140)
