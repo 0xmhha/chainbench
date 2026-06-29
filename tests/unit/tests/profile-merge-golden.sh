@@ -12,6 +12,8 @@
 #   regression- standalone, large/complex
 #   minimal   - inherits: default (inheritance + leaf override: validators 4->2)
 #   large     - inherits: default (inheritance + override: validators ->7)
+#   hardfork-boho-pre - extends: regression (extends-keyword inheritance, fixed
+#               so `extends:` resolves the parent just like `inherits:`)
 #
 # Determinism: CHAINBENCH_DIR points at an empty dir so no machine-local
 # state/local-config.yaml overlay is merged. Output is normalized
@@ -40,7 +42,7 @@ normalize() {
   python3 -c "import json,sys; json.dump(json.load(sys.stdin), sys.stdout, indent=2, sort_keys=True, ensure_ascii=False); sys.stdout.write('\n')"
 }
 
-for profile in default regression minimal large; do
+for profile in default regression minimal large hardfork-boho-pre; do
   describe "profile merge golden: ${profile}"
   golden="${GOLDEN_DIR}/${profile}.json"
   assert_file_exists "$golden" "golden file present for ${profile}"

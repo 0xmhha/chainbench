@@ -217,7 +217,11 @@ def load_with_inheritance(path, profiles_root, depth=0):
         raise RuntimeError(f"Inheritance depth exceeded ({MAX_INHERIT_DEPTH}), "
                            "possible circular reference")
     data = load_yaml_file(path)
-    parent_name = data.get('inherits')
+    # Accept both spellings: `inherits:` (original) and `extends:` (used by the
+    # hardfork profiles). Prior to this fix only `inherits` was honored, so
+    # `extends:` profiles silently skipped parent resolution and failed
+    # validation (missing inherited chain.binary etc.).
+    parent_name = data.get('inherits') or data.get('extends')
     if not parent_name:
         return data
 
@@ -228,8 +232,8 @@ def load_with_inheritance(path, profiles_root, depth=0):
         )
 
     parent_data = load_with_inheritance(parent_path, profiles_root, depth + 1)
-    # Remove meta-only field before merging
-    child = {k: v for k, v in data.items() if k != 'inherits'}
+    # Remove meta-only fields before merging.
+    child = {k: v for k, v in data.items() if k not in ('inherits', 'extends')}
     return deep_merge(parent_data, child)
 
 
@@ -246,10 +250,11 @@ try:
         if os.path.isfile(overlay_path):
             overlay = load_yaml_file(overlay_path)
             if overlay:
-                if 'inherits' in overlay:
-                    print("WARN: local-config.yaml: 'inherits' field ignored in overlays",
+                if 'inherits' in overlay or 'extends' in overlay:
+                    print("WARN: local-config.yaml: 'inherits'/'extends' field ignored in overlays",
                           file=sys.stderr)
-                    overlay = {k: v for k, v in overlay.items() if k != 'inherits'}
+                    overlay = {k: v for k, v in overlay.items()
+                               if k not in ('inherits', 'extends')}
                 merged = deep_merge(merged, overlay)
 
     print(json.dumps(merged, ensure_ascii=False))
