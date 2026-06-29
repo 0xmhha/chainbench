@@ -1,7 +1,8 @@
 # Refactoring Plan — Clean Code & SSOT
 
 > 작성일: 2026-06-26
-> 최종 업데이트: 2026-06-26 (P0 + P1-1 + 사전 버그 2건 완료 — PR #3 머지, commit `63f1d43`)
+> 최종 업데이트: 2026-06-29 (P0~P1-4b 완료 — PR #3 `63f1d43` + PR #4 `2046b05` 머지)
+> ⚠️ 커밋 해시 주의: §6.1b/6.1c 가 기록한 브랜치-로컬 해시(`6d2b4d9`/`a67d473`/`dbe3812`/`1d4716c`/`2b11b32`/`2e8e787`)는 **PR #4 스쿼시 머지(`2046b05`)로 흡수되어 현 히스토리에 없음**. 작업 내용은 모두 main 에 존재.
 > 관점: **Clean Code** (함수/파일 크기, 중복, 매직값, 네이밍) + **SSOT** (Single Source of Truth)
 > 범위: `lib/` (bash) · `network/` (Go) · `mcp-server/src/` (TypeScript)
 > 성격: **리팩토링 추적 문서** — §1/§2 는 발견 목록(증거 포함), §3 은 우선순위+진행상태, §6 은 남은 작업.
@@ -124,10 +125,10 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 | **P0-4** SSOT-G3 | read/write 타임아웃 명명 상수화 | Go | 낮음 | S | ✅ PR #3 | — |
 | **P0-5** SSOT-B1 | `cb_iso_now()` 헬퍼 (8곳 통합) | bash | 낮음 | S | ✅ PR #3 | — |
 | **P1-1** CC-G1 | `parseBlockNumberArg`/`selectFeeMode` 추출 + 대형 핸들러 파일 분해 | Go | 중간 | M | ✅ PR #3 | — |
-| **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate + 가드 테스트 | Go | 중간 | S | ✅ `6d2b4d9` | — |
-| **P1-2b** | `chainbench_clean` MCP 도구 추가 (lifecycle 표면 대칭) | TS | 낮음 | S | ✅ `a67d473` | — |
-| **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ✅ `dbe3812` | — |
-| **P1-4** SSOT-X1 | chain_id + base ports를 defaults.json SSoT로 단일화 (빌드타임 codegen) | 전레이어 | 중간 | M | 🟡 `1d4716c`+`2b11b32` (binary는 M4) | — |
+| **P1-2** SSOT-G2 | `command.json`에 init/start_all/restart/clean 추가 + regenerate + 가드 테스트 | Go | 중간 | S | ✅ PR #4 | — |
+| **P1-2b** | `chainbench_clean` MCP 도구 추가 (lifecycle 표면 대칭) | TS | 낮음 | S | ✅ PR #4 | — |
+| **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ✅ PR #4 | — |
+| **P1-4** SSOT-X1 | chain_id + base ports를 defaults.json SSoT로 단일화 (빌드타임 codegen) | 전레이어 | 중간 | M | 🟡 PR #4 (binary는 M4) | — |
 | **P2-1** CC-B1 | `profile.sh` Python 파서 추출 · `json_helpers.sh` 백엔드 단일화 | bash | 높음 | L | ⬜ 남음 | 별도 sprint |
 | **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | ⬜ 남음 | 해당 파일 기능 추가 시 |
 
@@ -165,16 +166,16 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 - **사전 버그 2건** (리팩토링 중 발견, 본 계획 범위 밖이었으나 동반 수정):
   - `fix(lib)`: BSD/macOS 비호환 mktemp 템플릿 (`-XXXXXX.json` → `-XXXXXX`) — `profile.sh` + `logs/timeline.sh` + `logs/anomaly.sh`.
   - `fix(report)`: 결과 0건일 때 `report --format json` 이 빈 stdout → zero-count JSON/markdown 으로 수정.
-- **검증**: Go 15 pkg green · TS vitest 123 pass · bash 36/38 (남은 2건은 `cast` 미설치 환경분).
+- **검증**: Go 15 pkg green · TS vitest 123 pass · bash 36/38 (남은 2건은 `cast` 미설치 환경분 — cast 설치 시 38/38).
 
-### 6.1b 완료 — 그룹 1 (branch `refactor/group1-schema-drift-clean-mcp`)
+### 6.1b 완료 — 그룹 1 (PR #4 `2046b05`, 머지 전 branch `refactor/group1-schema-drift-clean-mcp`)
 
 PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 머지했으나 `command.json` 스키마와 `chainbench_clean` MCP 도구를 누락한 것을 정리. P1-2 트리거("5c.4.2와 동시")는 그 sprint 가 이미 머지되어 죽은 의존성이었음 → 즉시 작업으로 재분류 후 처리.
 
 - **P1-2 SSOT-G2** (`6d2b4d9`): `command.json` 에 `network.init/start_all/restart/clean` 추가 + `go generate` 재생성 + 교차 가드 테스트 `TestAllHandlers_DispatchableCommandsAreInSchema`(모든 allHandlers 키를 command 스키마로 검증 — 드리프트 재발 차단).
 - **P1-2b** (`a67d473`): `chainbench_clean` MCP 도구 추가(`CleanArgs` + `_cleanHandler` → `callWire('network.clean')`) — lifecycle 표면 대칭화. vitest 3 cases.
 - **P1-3 CC-T1** (`dbe3812`): `buildWireArgs()` 헬퍼 추출(`utils/wireArgs.ts`) + chain_read/chain_tx/lifecycle 마이그레이션. 동작 불변.
-- **검증**: Go 16 pkg green · TS vitest 130 pass(+7) · gofmt/vet clean.
+- **검증**: Go 16 pkg green · TS vitest 130 pass(+7) · gofmt/vet clean. (모두 PR #4 `2046b05` 에 squash 됨)
 
 ### 6.2 남은 작업 — 우선순위순
 
@@ -184,7 +185,7 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 |---|---|---|
 | **N2** | foundry(`cast`) 프로비저닝을 coding-agent `doctor`/`setup` 에 추가 | **별도 레포** — 대상은 `~/.claude/plugins/marketplaces/coding-agent/plugin/scripts/{doctor,setup}.py` 로 chainbench(`0xmhha/chainbench`) 밖. 이 레포 브랜치에서 처리 불가. `doctor`=진단, `setup`=`foundryup` 설치. **코드 버그 아님 — 환경 의존** |
 
-### 6.1c 완료 — P1-4 SSOT-X1 (부분, branch `refactor/group1-schema-drift-clean-mcp`)
+### 6.1c 완료 — P1-4 SSOT-X1 (부분, PR #4 `2046b05`, 머지 전 branch `refactor/group1-schema-drift-clean-mcp`)
 
 문서 §1.1의 원안("스키마 `default` 승격 → Go가 생성 타입에서 파생")은 두 가지 이유로 그대로 불가하여 **빌드타임 codegen** 으로 대체:
 1. `go-jsonschema`(v0.23.1)는 default 값을 생성하지 않음 → Go 파생 경로 부재.
@@ -192,9 +193,9 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 채택: `network/schema/defaults.json`(SSoT) → `gen-defaults` codegen → 레이어별 상수 파일(Go/bash/TS). 런타임 파싱 의존 0.
 
-- **인프라** (`1d4716c`): defaults.json + gen-defaults + 3 생성 파일 + go:generate + drift 가드 테스트.
-- **마이그레이션** (`2b11b32`): stablenet chain_id(Go ×2) · profile.sh 5 base ports · schema.ts 문서 문자열.
-- **검증**: Go all green · vitest 130 · bash 38/38.
+- **인프라** (PR #4): defaults.json + gen-defaults + 3 생성 파일 + go:generate + drift 가드 테스트.
+- **마이그레이션** (PR #4): stablenet chain_id(Go ×2) · profile.sh 5 base ports · schema.ts 문서 문자열.
+- **검증**: Go all green · vitest 130 · bash 38/38 (cast 설치 환경 기준; 미설치 시 37/39).
 
 **남은 SSOT-X1 잔여** (별도 처리):
 
@@ -203,7 +204,7 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 | P1-4a | `lib/adapters/stablenet.sh:45` chain_id fallback (quoted python heredoc 내부) 단일화 | P2-1 (임베디드 python 추출) 시 |
 | P1-4c | binary(`gstable`) → defaults/adapter axis | **M4** (HARDCODING_AUDIT 9사이트, 비-stablenet e2e) |
 
-**P1-4b 완료** (`2e8e787`): 조사 결과 단순 default 불일치가 아니라 **dead knob** — `CHAINBENCH_NETWORK_ID`가 파싱만 되고 어디서도 소비되지 않아 `chain.network_id`(프로파일이 8283 설정해도)가 런타임에 무시됨. 정상 배선(근본 수정): `_cb_resolve_network_id`(network_id→chain_id→empty) 추출 + `cmd_start.sh` launch_cmd에 `--networkid` 추가(+`.launch_args`/saved_args로 재시작 보존) + pids.json node record에 `network_id` 기록(cmd_node.sh reconstruct fallback) + schema.ts 문서 정정(default: chain_id). 회귀: bash 39/39, vitest 130.
+**P1-4b 완료** (PR #4 `2046b05`): 조사 결과 단순 default 불일치가 아니라 **dead knob** — `CHAINBENCH_NETWORK_ID`가 파싱만 되고 어디서도 소비되지 않아 `chain.network_id`(프로파일이 8283 설정해도)가 런타임에 무시됨. 정상 배선(근본 수정): `_cb_resolve_network_id`(network_id→chain_id→empty) 추출 + `cmd_start.sh` launch_cmd에 `--networkid` 추가(+`.launch_args`/saved_args로 재시작 보존) + pids.json node record에 `network_id` 기록(cmd_node.sh reconstruct fallback) + schema.ts 문서 정정(default: chain_id). 회귀: bash 39/39(cast 설치 환경; 미설치 시 37/39), vitest 130.
 
 **P2 (별도 sprint, 큰 구조):**
 
