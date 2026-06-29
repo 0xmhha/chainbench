@@ -1,7 +1,9 @@
 package sshremote
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -43,31 +45,9 @@ type Credentials struct {
 //
 // Errors never include creds.Password — only the host and (upstream) cause.
 func Dial(ctx context.Context, creds Credentials, rpcURL string, hostKey ssh.HostKeyCallback) (*remote.Client, error) {
-	if creds.User == "" || creds.Host == "" {
-		return nil, fmt.Errorf("sshremote.Dial: user and host are required")
-	}
-	if creds.Password == "" {
-		return nil, fmt.Errorf("sshremote.Dial: empty SSH password")
-	}
-	if hostKey == nil {
-		return nil, fmt.Errorf("sshremote.Dial: nil host key callback")
-	}
-	port := creds.Port
-	if port == 0 {
-		port = defaultSSHPort
-	}
-
-	cfg := &ssh.ClientConfig{
-		User:            creds.User,
-		Auth:            []ssh.AuthMethod{ssh.Password(creds.Password)},
-		HostKeyCallback: hostKey,
-		Timeout:         sshDialTimeout,
-	}
-	addr := net.JoinHostPort(creds.Host, strconv.Itoa(port))
-	sshClient, err := ssh.Dial("tcp", addr, cfg)
+	sshClient, err := dialSSH(creds, hostKey)
 	if err != nil {
-		// ssh.Dial wraps auth/host-key/connect failures; none echo the password.
-		return nil, fmt.Errorf("sshremote.Dial %s@%s: %w", creds.User, addr, err)
+		return nil, err
 	}
 
 	// Tunnel every RPC TCP connection through the SSH session. The inner Dial
@@ -90,6 +70,86 @@ func Dial(ctx context.Context, creds Credentials, rpcURL string, hostKey ssh.Hos
 		return nil, err
 	}
 	return client, nil
+}
+
+// dialSSH validates credentials and opens an SSH connection with the given host
+// key policy. Errors never echo the password (ssh.Dial wraps auth/host-key
+// failures by message only). Shared by Dial (tunnel) and Exec (command).
+func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error) {
+	if creds.User == "" || creds.Host == "" {
+		return nil, fmt.Errorf("sshremote: user and host are required")
+	}
+	if creds.Password == "" {
+		return nil, fmt.Errorf("sshremote: empty SSH password")
+	}
+	if hostKey == nil {
+		return nil, fmt.Errorf("sshremote: nil host key callback")
+	}
+	port := creds.Port
+	if port == 0 {
+		port = defaultSSHPort
+	}
+	cfg := &ssh.ClientConfig{
+		User:            creds.User,
+		Auth:            []ssh.AuthMethod{ssh.Password(creds.Password)},
+		HostKeyCallback: hostKey,
+		Timeout:         sshDialTimeout,
+	}
+	addr := net.JoinHostPort(creds.Host, strconv.Itoa(port))
+	c, err := ssh.Dial("tcp", addr, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("ssh dial %s@%s: %w", creds.User, addr, err)
+	}
+	return c, nil
+}
+
+// ExecResult captures the output of a single remote command. ExitCode carries
+// the command's exit status; a non-zero ExitCode is NOT an error from Exec's
+// perspective (the connection worked) — the caller classifies it.
+type ExecResult struct {
+	Stdout   string
+	Stderr   string
+	ExitCode int
+}
+
+// Exec runs a single command on the remote host over SSH and captures its
+// output (Sprint 5b.2 — powers ssh-remote process/fs handlers). The SSH
+// connection is opened per call and closed before returning, matching the
+// spawn-per-call model. Only dial / session-open failures return an error; a
+// command that exits non-zero returns a populated ExecResult with that code.
+//
+// ctx is accepted for API symmetry; x/crypto/ssh's Session.Run is not
+// ctx-cancelable, so the dial timeout bounds the connection. Errors never
+// include the password.
+func Exec(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, command string) (ExecResult, error) {
+	_ = ctx
+	c, err := dialSSH(creds, hostKey)
+	if err != nil {
+		return ExecResult{}, err
+	}
+	defer c.Close()
+
+	sess, err := c.NewSession()
+	if err != nil {
+		return ExecResult{}, fmt.Errorf("ssh session: %w", err)
+	}
+	defer sess.Close()
+
+	var stdout, stderr bytes.Buffer
+	sess.Stdout = &stdout
+	sess.Stderr = &stderr
+
+	runErr := sess.Run(command)
+	res := ExecResult{Stdout: stdout.String(), Stderr: stderr.String()}
+	if runErr != nil {
+		var exitErr *ssh.ExitError
+		if errors.As(runErr, &exitErr) {
+			res.ExitCode = exitErr.ExitStatus()
+			return res, nil // non-zero exit is a command result, not a transport error
+		}
+		return res, fmt.Errorf("ssh exec: %w", runErr)
+	}
+	return res, nil
 }
 
 // ResolveHostKeyCallback builds the SSH host key verifier per the security
