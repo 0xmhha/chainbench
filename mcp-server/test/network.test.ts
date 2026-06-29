@@ -111,6 +111,35 @@ describe("chainbench_network_capabilities handler", () => {
     expect(text).not.toContain("admin");
   });
 
+  it("_Happy_Hybrid", async () => {
+    // A hybrid network (mixed local + remote nodes) advertises only the
+    // intersection of its providers' capabilities — the conservative lower
+    // bound. The local∩remote intersection is computed on the wire side
+    // (Go inferNetworkCapabilities); MCP passes the result through verbatim,
+    // so the surface looks identical to a pure-remote network: rpc + ws only.
+    const data = {
+      network: "hybrid-example",
+      capabilities: ["rpc", "ws"],
+    };
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data }),
+      },
+    ]);
+    const out = await _networkCapabilitiesHandler({ network: "hybrid-example" });
+    expect(out.isError).toBeFalsy();
+    const text = out.content[0]?.text ?? "";
+    expect(text).toContain(JSON.stringify(data, null, 2));
+    expect(text).toContain("hybrid-example");
+    expect(text).toContain("rpc");
+    expect(text).toContain("ws");
+    // process/fs/admin are dropped by the intersection — a hybrid network
+    // cannot guarantee them on every node, so they must not surface.
+    expect(text).not.toContain("process");
+    expect(text).not.toContain("admin");
+  });
+
   it("_StrictRejectsUnknownKeys", () => {
     // .strict() makes hallucinated keys (e.g. 'extra') trip a structured
     // INVALID_ARGS at the zod boundary instead of being silently stripped —
