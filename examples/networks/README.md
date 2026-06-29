@@ -12,7 +12,7 @@ Every node carries a `provider`:
 |----------|--------------|---------|
 | `local` | `admin, fs, network-topology, process, rpc, ws` | a node this host runs (full lifecycle + filesystem + process control) |
 | `remote` | `rpc, ws` | a node reached only over JSON-RPC / WebSocket (no process or filesystem access) |
-| `ssh-remote` | `fs, process, rpc, ws` | a node on another host reached over SSH (future — Sprint 5b) |
+| `ssh-remote` | `rpc, ws` | a node on another host reached over SSH. Read-only RPC is tunneled through the SSH connection (Sprint 5b.1). `fs`/`process` over SSH shell exec arrive in 5b.2. |
 
 A network may mix providers freely — that is a **hybrid** network.
 
@@ -60,6 +60,31 @@ A `remote` node may reference credentials by **environment variable name only**
 
 `type` may be `api-key` or `jwt`. Set the value in your shell, e.g.
 `export CHAINBENCH_REMOTE_API_KEY=...`.
+
+## SSH-remote nodes (`ssh-remote-example.json`)
+
+An `ssh-remote` node reaches a chain node on another host by **tunneling RPC
+through an SSH connection** — useful when the node's RPC port is bound to the
+remote host's loopback and not exposed publicly. Read-only RPC works in Sprint
+5b.1; the node's `http` is the RPC endpoint as seen *from the remote host*
+(e.g. `http://127.0.0.1:8545`).
+
+Auth is `ssh-password`. As with `remote` auth, the password is supplied by an
+**environment variable named in `env`** — never inline the password:
+
+```json
+"auth": { "type": "ssh-password", "user": "deploy", "host": "10.0.0.42", "port": 22, "env": "CHAINBENCH_SSH_PASSWORD" }
+```
+
+```bash
+export CHAINBENCH_SSH_PASSWORD=...        # the SSH password (never stored/logged)
+```
+
+**Host key verification** (MITM protection) defaults to `known_hosts`
+(`CHAINBENCH_SSH_KNOWN_HOSTS`, else `~/.ssh/known_hosts`). An unknown or
+mismatched host key is rejected. To bypass for an ephemeral test host, set
+`CHAINBENCH_SSH_INSECURE_HOST_KEY=1` (a loud, explicit opt-in — do not use
+against hosts you care about).
 
 ## Note: construction is manual in v1
 

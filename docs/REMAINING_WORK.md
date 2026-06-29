@@ -95,7 +95,7 @@
 - Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
 - 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: ~~Sprint 5c.4.2~~ ✅ 완료(PR #1) · ~~Sprint 5d (hybrid 예제)~~ ✅ 완료(2026-06-29, `feat/sprint-5d-hybrid-example`). 다음 후보 → **Sprint 5b (SSHRemoteDriver, 큰 작업)** 또는 `REFACTORING_PLAN.md` §6.2 (P2-1 등).
+**다음 P1**: ~~Sprint 5c.4.2~~ ✅(PR #1) · ~~Sprint 5d~~ ✅ · ~~Sprint 5b.1 (SSH read-only RPC)~~ ✅ 완료(2026-06-29, `feat/sprint-5b-1-sshremote`). 다음 후보 → **Sprint 5b.2 (SSH process/fs)** 또는 `REFACTORING_PLAN.md` §6.2 (P2-1 등).
 
 ---
 
@@ -138,7 +138,7 @@
 
 > **2026-06-29 갱신**: 본 sprint 는 PR #1 로 **완료**됨. Go wire 핸들러(init/start_all/restart/clean) + schema enum(P1-2 가 가드 테스트까지 추가) + MCP reroute(init/start/restart) + `chainbench_clean`(P1-2b) 모두 머지. 6개 lifecycle 툴 전부 callWire 경유. 아래 원본 계획은 **이력 보존용**.
 >
-> **다음 Priority 1 후보** = Sprint 5b (5d 완료). 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
+> **다음 Priority 1 후보** = Sprint 5b.2 (SSH process/fs; 5b.1 완료) 또는 `REFACTORING_PLAN.md` §6.2.
 
 <details><summary>원본 계획 (이력 보존)</summary>
 
@@ -183,9 +183,13 @@
 
 ---
 
-### 🟧 Priority 2 — Sprint 5b: SSHRemoteDriver (5c.4.2 완료 후 현 최대 sprint)
+### 🟧 Priority 2 — Sprint 5b: SSHRemoteDriver (5b.1 완료, 5b.2 잔여)
 
-**목표**: `drivers/sshremote` 신설. 원격 머신에 SSH 로 chainbench-net (또는 노드 lifecycle) 을 spawn 가능하게.
+> **5b.1 완료 (2026-06-29, `feat/sprint-5b-1-sshremote`)**: read-only RPC over SSH 터널. `drivers/sshremote/` 신설 — SSH `DialContext`를 `http.Transport`에 주입해 기존 `remote.Client` 재사용(read 핸들러 무변경). `ssh-password` auth(스키마 `env` 필드 추가, password env-only/미저장/미로깅), host key known_hosts 기본 + `CHAINBENCH_SSH_INSECURE_HOST_KEY=1` opt-in, providerCaps ssh-remote=`{rpc,ws}`(정직), in-process SSH 서버 통합 테스트. 예제 `examples/networks/ssh-remote-example.json`. spec/plan: `2026-06-29-sprint-5b-1-sshremote-readonly.md`.
+>
+> **5b.2 잔여 (아래)**: process/fs capability — shell exec 기반 lifecycle(start/stop/restart) + tail_log, providerCaps fs/process 복원. ssh-remote 구성 명령(attach 확장) + 키 인증/키체인도 이 묶음/후속.
+
+**목표 (원본)**: `drivers/sshremote` 신설. 원격 머신에 SSH 로 chainbench-net (또는 노드 lifecycle) 을 spawn 가능하게.
 
 **왜 필요한가**: VISION §5.16 의 S6 결정 — SSH 자격증명은 세션 prompt 로 받음 (평문 파일 저장 금지). VISION §5.4 의 capability set `[rpc, ws, process, fs]` 가 5a 에서 이미 declared 되어 있어, driver 구현만 추가하면 됨.
 
@@ -639,12 +643,12 @@ git add network/schema/command.json network/internal/types/command_gen.go
 
 ## 10. 다음 세션에서 즉시 착수 가능한 단위
 
-**큰 단위**: Sprint 5b (SSH driver) — 새 driver 구현. 두 패스로 나눠 진행 권장.
+**큰 단위**: Sprint 5b (SSH driver) — 5b.1 (read-only RPC) ✅ 완료. 5b.2 (process/fs over SSH shell exec) 잔여.
 
 **권장 순서** (2026-06-29 갱신 — 5c.4.2 PR #1, 5d 완료):
 1. ~~**Sprint 5c.4.2**~~ ✅ 완료 (PR #1).
 2. ~~**Sprint 5d**~~ ✅ 완료 (`feat/sprint-5d-hybrid-example`).
-3. **Sprint 5b** (큰 작업, 두 패스) — 5b.1 (read-only) 부터. 현 최우선 후보.
+3. ~~**Sprint 5b.1** (read-only RPC)~~ ✅ 완료 (`feat/sprint-5b-1-sshremote`). **5b.2** (process/fs) 현 최우선 후보.
 4. (병행) `REFACTORING_PLAN.md` §6.2 리팩토링 잔여 — P2-1(bash python 추출) 등은 별도 sprint.
 
 ---
