@@ -867,8 +867,8 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 **Sprint 5b — SSH driver**
 - [ ] `drivers/sshremote` 설계 초안 (Q6, S6 세션 prompt)
 
-**Sprint 5d — Hybrid 네트워크 예제**
-- [ ] Hybrid 네트워크 샘플 프로파일 (`profiles/hybrid-example.yaml`) + 테스트 시나리오
+**Sprint 5d — Hybrid 네트워크 예제** — 완료 (2026-06-29)
+- [x] Hybrid 네트워크 예제 (`examples/networks/hybrid-example.json` + README) + cross-layer 검증 (bash 실-바이너리 capability 교집합/게이팅 + MCP lower-bound). 예제는 profile YAML 이 아닌 로드 가능한 network-state JSON (profile 로더가 hybrid 미지원 — spec D1). 전용 구성 명령(`network attach-hybrid`)은 후속.
 
 각 스프린트 완료 시 `/milestone` 플로우로 delta-log · rolling-summary 업데이트.
 

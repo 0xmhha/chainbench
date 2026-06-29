@@ -1,0 +1,18 @@
+{
+  "name": "hybrid-example",
+  "chain_type": "ethereum",
+  "chain_id": 1337,
+  "nodes": [
+    { "id": "v1",  "role": "validator", "provider": "local",  "http": "http://127.0.0.1:8501", "ws": "ws://127.0.0.1:9501" },
+    { "id": "v2",  "role": "validator", "provider": "local",  "http": "http://127.0.0.1:8502", "ws": "ws://127.0.0.1:9502" },
+    { "id": "v3",  "role": "validator", "provider": "local",  "http": "http://127.0.0.1:8503", "ws": "ws://127.0.0.1:9503" },
+    {
+      "id": "rpc",
+      "role": "endpoint",
+      "provider": "remote",
+      "http": "https://devnet.example.com",
+      "ws": "wss://devnet.example.com/ws",
+      "auth": { "type": "api-key", "header": "Authorization", "env": "CHAINBENCH_REMOTE_API_KEY" }
+    }
+  ]
+}
