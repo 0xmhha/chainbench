@@ -162,6 +162,42 @@ func TestDialWithOptions_TransportInjected(t *testing.T) {
 	}
 }
 
+// spyCloser records whether Close was called. Models the SSHRemoteDriver's
+// *ssh.Client lifecycle handoff via DialOptions.Closer.
+type spyCloser struct{ closed int }
+
+func (s *spyCloser) Close() error { s.closed++; return nil }
+
+// Verifies that a Closer passed via DialOptions is closed by Client.Close()
+// (so a tunnel's transport is released alongside the RPC client) and only once.
+func TestDialWithOptions_CloserClosedOnClose(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":"0x5"}`))
+	}))
+	defer srv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	spy := &spyCloser{}
+	// Transport must be non-nil for the Closer path (bare Dial leaves it nil).
+	c, err := DialWithOptions(ctx, srv.URL, DialOptions{
+		Transport: http.DefaultTransport,
+		Closer:    spy,
+	})
+	if err != nil {
+		t.Fatalf("DialWithOptions: %v", err)
+	}
+	if spy.closed != 0 {
+		t.Fatalf("Closer closed before Client.Close(): %d", spy.closed)
+	}
+	c.Close()
+	if spy.closed != 1 {
+		t.Errorf("Closer Close() count = %d, want 1", spy.closed)
+	}
+}
+
 func TestClient_ChainID(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {

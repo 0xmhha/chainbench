@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"net/http"
 	neturl "net/url"
@@ -23,6 +24,12 @@ import (
 // Construct via Dial and Close when done.
 type Client struct {
 	rpc *ethclient.Client
+	// extra, when non-nil, is closed after the RPC client on Close(). It owns
+	// transport-level resources the Client tunnels over but does not itself
+	// manage — e.g. the SSHRemoteDriver's *ssh.Client (Sprint 5b.1). Keeping
+	// it here lets handlers treat an SSH-tunneled client exactly like a plain
+	// HTTP one (single deferred Close()) with no connection leak.
+	extra io.Closer
 }
 
 // DialOptions configures optional behavior for DialWithOptions. A zero value
@@ -37,6 +44,13 @@ type DialOptions struct {
 	// is silently ignored by non-HTTP dials and the auth header would never
 	// reach the server.
 	Transport http.RoundTripper
+
+	// Closer, when non-nil, is closed by Client.Close() after the RPC client.
+	// Used to tie a tunnel's lifecycle to the Client it carries (e.g. the
+	// SSHRemoteDriver passes its *ssh.Client here so the SSH connection is
+	// released when the caller closes the RPC client). Only consulted on the
+	// transport-injection path; the bare Dial path leaves it nil.
+	Closer io.Closer
 }
 
 // Dial opens a JSON-RPC client against the given URL. Accepts any scheme
@@ -87,9 +101,12 @@ func DialWithOptions(ctx context.Context, url string, opts DialOptions) (*Client
 	httpClient := &http.Client{Transport: opts.Transport}
 	rpcClient, err := rpc.DialOptions(ctx, url, rpc.WithHTTPClient(httpClient))
 	if err != nil {
+		// The caller owns opts.Closer until we successfully take ownership
+		// below, so a dial failure here must not close it — leave that to the
+		// caller's own error handling (avoids a double close).
 		return nil, fmt.Errorf("remote.DialWithOptions %q: %w", url, err)
 	}
-	return &Client{rpc: ethclient.NewClient(rpcClient)}, nil
+	return &Client{rpc: ethclient.NewClient(rpcClient), extra: opts.Closer}, nil
 }
 
 // BlockNumber returns the current head block number as reported by the endpoint.
@@ -268,4 +285,10 @@ func (c *Client) Close() {
 		return
 	}
 	c.rpc.Close()
+	if c.extra != nil {
+		// Best-effort: the RPC client is already closed; a tunnel close error
+		// is non-actionable here (the caller's read is done). Swallow it rather
+		// than complicate the nil-safe void signature relied on by defers.
+		_ = c.extra.Close()
+	}
 }
