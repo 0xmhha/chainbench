@@ -23,16 +23,19 @@ import (
 // Sets are pre-sorted alphabetically for deterministic JSON output once
 // they survive the set-intersection in inferNetworkCapabilities.
 //
-// "ssh-remote" advertises only what its driver actually implements. Sprint
-// 5b.1 ships read-only RPC over an SSH tunnel, so the set is {rpc, ws} — the
-// same read surface as a plain remote. The fs/process capabilities (log tail,
-// node lifecycle via shell exec) are restored in 5b.2 when the driver gains
-// them; advertising them earlier would make hybrid-network gating falsely
-// permit operations the ssh-remote node cannot satisfy.
+// "ssh-remote" advertises read-only RPC over an SSH tunnel (Sprint 5b.1) plus
+// fs (log tail) and process (node lifecycle) via SSH shell exec (Sprint 5b.2).
+// It lacks only admin and network-topology, which are local-host concepts.
+//
+// Note: this is the provider-level upper bound. A capability set is per-provider,
+// so it cannot express that an individual ssh-remote node omitted, say, its
+// provider_meta.stop_cmd — such a node reports "process" here but the handler
+// returns NOT_SUPPORTED at call time. Capability gating is a coarse pre-filter;
+// the handler is the authority for a specific node.
 var providerCaps = map[string][]string{
 	"local":      {"admin", "fs", "network-topology", "process", "rpc", "ws"},
 	"remote":     {"rpc", "ws"},
-	"ssh-remote": {"rpc", "ws"},
+	"ssh-remote": {"fs", "process", "rpc", "ws"},
 }
 
 // inferNetworkCapabilities returns the set intersection of provider-declared
