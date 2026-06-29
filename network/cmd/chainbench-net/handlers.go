@@ -191,42 +191,76 @@ func dialNode(ctx context.Context, node *types.Node) (*remote.Client, error) {
 	}
 }
 
-// dialSSHNode builds an SSH-tunneled remote.Client from an ssh-remote node.
-// The node's ssh-password auth supplies user/host/port and the *name* of the
-// env var holding the password; the password value is read here and never
-// stored or logged. Host key verification follows the security policy in
-// sshremote.ResolveHostKeyCallback.
-func dialSSHNode(ctx context.Context, node *types.Node) (*remote.Client, error) {
+// sshCredsFromNode parses an ssh-remote node's ssh-password auth into SSH
+// credentials. The auth supplies user/host/port and the *name* of the env var
+// holding the password; the password value is read here (os.Getenv) and never
+// stored in state or logged. Shared by dialSSHNode (5b.1 tunnel) and the
+// process/fs handlers (5b.2 Exec).
+//
+//	INVALID_ARGS   — auth type not ssh-password, or user/host/env missing.
+//	UPSTREAM_ERROR — the named env var is empty.
+func sshCredsFromNode(node *types.Node) (sshremote.Credentials, error) {
+	var zero sshremote.Credentials
 	if rawType, _ := node.Auth["type"].(string); rawType != "ssh-password" {
-		return nil, NewInvalidArgs(fmt.Sprintf(
+		return zero, NewInvalidArgs(fmt.Sprintf(
 			"ssh-remote node requires ssh-password auth, got %q", rawType))
 	}
 	user, _ := node.Auth["user"].(string)
 	host, _ := node.Auth["host"].(string)
 	envName, _ := node.Auth["env"].(string)
 	if user == "" || host == "" || envName == "" {
-		return nil, NewInvalidArgs("ssh-password auth requires user, host, and env")
+		return zero, NewInvalidArgs("ssh-password auth requires user, host, and env")
 	}
 	password := os.Getenv(envName)
 	if password == "" {
 		// Name the env var, never a value.
-		return nil, NewUpstream("ssh auth", fmt.Errorf("env var %q is empty", envName))
+		return zero, NewUpstream("ssh auth", fmt.Errorf("env var %q is empty", envName))
 	}
-	hostKey, err := sshremote.ResolveHostKeyCallback(os.Getenv)
-	if err != nil {
-		return nil, NewUpstream("ssh host key", err)
-	}
-	creds := sshremote.Credentials{
+	return sshremote.Credentials{
 		User:     user,
 		Host:     host,
 		Port:     authPort(node.Auth),
 		Password: password,
+	}, nil
+}
+
+// dialSSHNode builds an SSH-tunneled remote.Client from an ssh-remote node.
+// Host key verification follows the security policy in
+// sshremote.ResolveHostKeyCallback.
+func dialSSHNode(ctx context.Context, node *types.Node) (*remote.Client, error) {
+	creds, err := sshCredsFromNode(node)
+	if err != nil {
+		return nil, err
+	}
+	hostKey, err := sshremote.ResolveHostKeyCallback(os.Getenv)
+	if err != nil {
+		return nil, NewUpstream("ssh host key", err)
 	}
 	client, err := sshremote.Dial(ctx, creds, node.Http, hostKey)
 	if err != nil {
 		return nil, NewUpstream(fmt.Sprintf("ssh dial %s", node.Http), err)
 	}
 	return client, nil
+}
+
+// execSSHNode runs a single command on an ssh-remote node's host and returns
+// the result. Centralizes creds + host-key resolution for the process/fs
+// handlers (Sprint 5b.2). Errors are classified APIErrors; a non-zero command
+// exit is returned in the ExecResult (ExitCode), not as an error.
+func execSSHNode(ctx context.Context, node *types.Node, command string) (sshremote.ExecResult, error) {
+	creds, err := sshCredsFromNode(node)
+	if err != nil {
+		return sshremote.ExecResult{}, err
+	}
+	hostKey, err := sshremote.ResolveHostKeyCallback(os.Getenv)
+	if err != nil {
+		return sshremote.ExecResult{}, NewUpstream("ssh host key", err)
+	}
+	res, err := sshremote.Exec(ctx, creds, hostKey, command)
+	if err != nil {
+		return sshremote.ExecResult{}, NewUpstream(fmt.Sprintf("ssh exec on %s", creds.Host), err)
+	}
+	return res, nil
 }
 
 // authPort extracts the optional ssh-password "port", defaulting to 0 (the

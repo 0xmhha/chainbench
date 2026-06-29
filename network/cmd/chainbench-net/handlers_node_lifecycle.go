@@ -28,9 +28,11 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 			_ = json.Unmarshal(args, &pre) // best-effort; main parse in resolveNodeID
 		}
 		if pre.Network != "" && pre.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.stop is only supported on the local network (got %q)", pre.Network,
-			))
+			var nid struct {
+				NodeID string `json:"node_id"`
+			}
+			_ = json.Unmarshal(args, &nid)
+			return handleSSHNodeLifecycle(stateDir, pre.Network, nid.NodeID, "stop", bus)
 		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
@@ -88,9 +90,14 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 			_ = json.Unmarshal(args, &pre)
 		}
 		if pre.Network != "" && pre.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.start is only supported on the local network (got %q)", pre.Network,
-			))
+			// binary_path is a local-only override (it tweaks the local
+			// chainbench.sh launch); ssh-remote startup is defined by the
+			// node's provider_meta.start_cmd, so binary_path is ignored here.
+			var nid struct {
+				NodeID string `json:"node_id"`
+			}
+			_ = json.Unmarshal(args, &nid)
+			return handleSSHNodeLifecycle(stateDir, pre.Network, nid.NodeID, "start", bus)
 		}
 		// binary_path is optional; reject explicit empty / relative paths.
 		// Absent key (pre.BinaryPath == nil) → use profile default.
@@ -153,9 +160,11 @@ func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 			_ = json.Unmarshal(args, &pre)
 		}
 		if pre.Network != "" && pre.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.restart is only supported on the local network (got %q)", pre.Network,
-			))
+			var nid struct {
+				NodeID string `json:"node_id"`
+			}
+			_ = json.Unmarshal(args, &nid)
+			return handleSSHNodeLifecycle(stateDir, pre.Network, nid.NodeID, "restart", bus)
 		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
@@ -211,14 +220,102 @@ func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 	}
 }
 
+// runSSHNodeCmd executes the provider_meta command named cmdKey (e.g.
+// "stop_cmd") on an ssh-remote node and classifies the result.
+//
+//	NOT_SUPPORTED  — the command is not configured on this node.
+//	UPSTREAM_ERROR — SSH/exec failure, or the command exited non-zero.
+func runSSHNodeCmd(node *types.Node, cmdKey string) error {
+	cmd, _ := node.ProviderMeta[cmdKey].(string)
+	if cmd == "" {
+		return NewNotSupported(fmt.Sprintf(
+			"node %q has no provider_meta.%s configured", node.Id, cmdKey))
+	}
+	res, err := execSSHNode(context.Background(), node, cmd)
+	if err != nil {
+		return err
+	}
+	if res.ExitCode != 0 {
+		return NewUpstream(fmt.Sprintf(
+			"%s exited %d: %s", cmdKey, res.ExitCode, truncStderr(res.Stderr)), nil)
+	}
+	return nil
+}
+
+// handleSSHNodeLifecycle runs a stop/start/restart on an ssh-remote node via its
+// provider_meta commands, emitting the same bus events as the local path. A
+// non-ssh-remote provider (e.g. "remote") yields NOT_SUPPORTED — the process
+// capability is local/ssh-remote only.
+func handleSSHNodeLifecycle(stateDir, network, nodeID, op string, bus *events.Bus) (map[string]any, error) {
+	_, node, err := resolveNode(stateDir, network, nodeID)
+	if err != nil {
+		return nil, err
+	}
+	if node.Provider != types.NodeProviderSshRemote {
+		return nil, NewNotSupported(fmt.Sprintf(
+			"node.%s requires the process capability; provider %q does not provide it", op, node.Provider))
+	}
+	switch op {
+	case "stop":
+		if err := runSSHNodeCmd(&node, "stop_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.stopped"),
+			Data: map[string]any{"node_id": node.Id, "reason": "manual"}})
+		return map[string]any{"node_id": node.Id, "stopped": true}, nil
+	case "start":
+		if err := runSSHNodeCmd(&node, "start_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.started"),
+			Data: map[string]any{"node_id": node.Id}})
+		return map[string]any{"node_id": node.Id, "started": true}, nil
+	case "restart":
+		// Prefer a single restart_cmd; otherwise compose stop_cmd → start_cmd
+		// with the same event ordering invariant as the local restart.
+		if cmd, _ := node.ProviderMeta["restart_cmd"].(string); cmd != "" {
+			if err := runSSHNodeCmd(&node, "restart_cmd"); err != nil {
+				return nil, err
+			}
+			_ = bus.Publish(events.Event{Name: types.EventName("node.stopped"),
+				Data: map[string]any{"node_id": node.Id, "reason": "restart"}})
+			_ = bus.Publish(events.Event{Name: types.EventName("node.started"),
+				Data: map[string]any{"node_id": node.Id}})
+			return map[string]any{"node_id": node.Id, "restarted": true}, nil
+		}
+		if err := runSSHNodeCmd(&node, "stop_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.stopped"),
+			Data: map[string]any{"node_id": node.Id, "reason": "restart"}})
+		if err := runSSHNodeCmd(&node, "start_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.started"),
+			Data: map[string]any{"node_id": node.Id}})
+		return map[string]any{"node_id": node.Id, "restarted": true}, nil
+	default:
+		return nil, NewInvalidArgs(fmt.Sprintf("unknown lifecycle op %q", op))
+	}
+}
+
 const (
 	defaultTailLines = 50
 	maxTailLines     = 1000
 )
 
 // newHandleNodeTailLog returns a Handler that reads the tail of a node's log
-// file. Args: { "node_id": "nodeN", "lines": 50 (optional) }.
-// No subprocess, no events — pure file read. Returns {node_id, log_file, lines}.
+// file. Args: { "network": "name" (optional), "node_id": "nodeN",
+// "lines": 50 (optional) }.
+//
+// Provider dispatch (fs capability):
+//   - local: pure local file read (state.TailFile).
+//   - ssh-remote: `tail -n <lines> -- <log_file>` over SSH (Sprint 5b.2),
+//     where log_file comes from the node's provider_meta. A node without a
+//     provider_meta.log_file does not provide fs → NOT_SUPPORTED.
+//   - remote: no filesystem access → NOT_SUPPORTED.
+//
+// Returns {node_id, log_file, lines}.
 func newHandleNodeTailLog(stateDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
@@ -231,15 +328,6 @@ func newHandleNodeTailLog(stateDir string) Handler {
 				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
 			}
 		}
-		if req.Network != "" && req.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.tail_log is only supported on the local network (got %q)", req.Network,
-			))
-		}
-		nodeID, _, rerr := resolveNodeIDFromString(stateDir, req.NodeID)
-		if rerr != nil {
-			return nil, rerr
-		}
 		lines := defaultTailLines
 		if req.Lines != nil {
 			lines = *req.Lines
@@ -251,31 +339,85 @@ func newHandleNodeTailLog(stateDir string) Handler {
 			return nil, NewInvalidArgs(fmt.Sprintf("args.lines must be <= %d, got %d", maxTailLines, lines))
 		}
 
-		net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "local"})
-		if err != nil {
-			return nil, NewUpstream("failed to load active state", err)
-		}
-		var logPath string
-		for _, n := range net.Nodes {
-			if n.Id == nodeID {
-				if v, ok := n.ProviderMeta["log_file"].(string); ok {
-					logPath = v
-				}
-				break
+		// --- local: pure file read (unchanged) ---
+		if req.Network == "" || req.Network == "local" {
+			nodeID, _, rerr := resolveNodeIDFromString(stateDir, req.NodeID)
+			if rerr != nil {
+				return nil, rerr
 			}
-		}
-		if logPath == "" {
-			return nil, NewUpstream(fmt.Sprintf("log_file unknown for node %q", nodeID), nil)
+			net, err := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "local"})
+			if err != nil {
+				return nil, NewUpstream("failed to load active state", err)
+			}
+			var logPath string
+			for _, n := range net.Nodes {
+				if n.Id == nodeID {
+					if v, ok := n.ProviderMeta["log_file"].(string); ok {
+						logPath = v
+					}
+					break
+				}
+			}
+			if logPath == "" {
+				return nil, NewUpstream(fmt.Sprintf("log_file unknown for node %q", nodeID), nil)
+			}
+			tailed, err := state.TailFile(logPath, lines)
+			if err != nil {
+				return nil, NewUpstream(fmt.Sprintf("tail log %s", logPath), err)
+			}
+			return map[string]any{"node_id": nodeID, "log_file": logPath, "lines": tailed}, nil
 		}
 
-		tailed, err := state.TailFile(logPath, lines)
+		// --- non-local: dispatch on provider ---
+		_, node, err := resolveNode(stateDir, req.Network, req.NodeID)
 		if err != nil {
-			return nil, NewUpstream(fmt.Sprintf("tail log %s", logPath), err)
+			return nil, err
 		}
-		return map[string]any{
-			"node_id":  nodeID,
-			"log_file": logPath,
-			"lines":    tailed,
-		}, nil
+		if node.Provider != types.NodeProviderSshRemote {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"node.tail_log requires the fs capability; provider %q does not provide it", node.Provider))
+		}
+		logFile, _ := node.ProviderMeta["log_file"].(string)
+		if logFile == "" {
+			return nil, NewNotSupported(fmt.Sprintf(
+				"node %q has no provider_meta.log_file; tail_log unavailable", node.Id))
+		}
+		cmd := fmt.Sprintf("tail -n %d -- %s", lines, shellQuote(logFile))
+		res, err := execSSHNode(context.Background(), &node, cmd)
+		if err != nil {
+			return nil, err
+		}
+		if res.ExitCode != 0 {
+			return nil, NewUpstream(fmt.Sprintf(
+				"tail %s exited %d: %s", logFile, res.ExitCode, truncStderr(res.Stderr)), nil)
+		}
+		return map[string]any{"node_id": node.Id, "log_file": logFile, "lines": splitLines(res.Stdout)}, nil
 	}
+}
+
+// shellQuote single-quotes s for safe interpolation into a remote shell command,
+// escaping embedded single quotes. Used for operator-set paths (log_file) as a
+// defensive measure even though they are not caller-controlled.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// splitLines splits command stdout into lines, trimming a single trailing
+// newline and returning an empty (non-nil) slice for empty output — matching
+// the []string shape state.TailFile returns for the local path.
+func splitLines(s string) []string {
+	s = strings.TrimRight(s, "\n")
+	if s == "" {
+		return []string{}
+	}
+	return strings.Split(s, "\n")
+}
+
+// truncStderr trims and caps a command's stderr for inclusion in an error.
+func truncStderr(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) > 512 {
+		return s[:512]
+	}
+	return s
 }
