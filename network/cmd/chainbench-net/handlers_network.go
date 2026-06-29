@@ -23,14 +23,16 @@ import (
 // Sets are pre-sorted alphabetically for deterministic JSON output once
 // they survive the set-intersection in inferNetworkCapabilities.
 //
-// Forward-compat: "ssh-remote" is declared but not yet used by any driver
-// (Sprint 5b). Listing it here lets handlers infer capabilities for
-// hybrid networks that include ssh-remote nodes once that provider lands,
-// without requiring a follow-up edit to this map.
+// "ssh-remote" advertises only what its driver actually implements. Sprint
+// 5b.1 ships read-only RPC over an SSH tunnel, so the set is {rpc, ws} — the
+// same read surface as a plain remote. The fs/process capabilities (log tail,
+// node lifecycle via shell exec) are restored in 5b.2 when the driver gains
+// them; advertising them earlier would make hybrid-network gating falsely
+// permit operations the ssh-remote node cannot satisfy.
 var providerCaps = map[string][]string{
 	"local":      {"admin", "fs", "network-topology", "process", "rpc", "ws"},
 	"remote":     {"rpc", "ws"},
-	"ssh-remote": {"fs", "process", "rpc", "ws"},
+	"ssh-remote": {"rpc", "ws"},
 }
 
 // inferNetworkCapabilities returns the set intersection of provider-declared
