@@ -14,6 +14,12 @@
         "host": "10.0.0.42",
         "port": 22,
         "env": "CHAINBENCH_SSH_PASSWORD"
+      },
+      "provider_meta": {
+        "log_file": "/var/lib/gstable/node.log",
+        "start_cmd": "systemctl start gstable",
+        "stop_cmd": "systemctl stop gstable",
+        "restart_cmd": "systemctl restart gstable"
       }
     }
   ]

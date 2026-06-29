@@ -12,7 +12,7 @@ Every node carries a `provider`:
 |----------|--------------|---------|
 | `local` | `admin, fs, network-topology, process, rpc, ws` | a node this host runs (full lifecycle + filesystem + process control) |
 | `remote` | `rpc, ws` | a node reached only over JSON-RPC / WebSocket (no process or filesystem access) |
-| `ssh-remote` | `rpc, ws` | a node on another host reached over SSH. Read-only RPC is tunneled through the SSH connection (Sprint 5b.1). `fs`/`process` over SSH shell exec arrive in 5b.2. |
+| `ssh-remote` | `fs, process, rpc, ws` | a node on another host reached over SSH. RPC is tunneled through the SSH connection (5b.1); `tail_log` (fs) and node stop/start/restart (process) run as SSH shell commands (5b.2). |
 
 A network may mix providers freely — that is a **hybrid** network.
 
@@ -85,6 +85,29 @@ export CHAINBENCH_SSH_PASSWORD=...        # the SSH password (never stored/logge
 mismatched host key is rejected. To bypass for an ephemeral test host, set
 `CHAINBENCH_SSH_INSECURE_HOST_KEY=1` (a loud, explicit opt-in — do not use
 against hosts you care about).
+
+### process / fs over SSH (`provider_meta`)
+
+`tail_log` and node lifecycle (stop/start/restart) on an ssh-remote node run as
+**SSH shell commands you configure in `provider_meta`**:
+
+```json
+"provider_meta": {
+  "log_file":    "/var/lib/gstable/node.log",
+  "start_cmd":   "systemctl start gstable",
+  "stop_cmd":    "systemctl stop gstable",
+  "restart_cmd": "systemctl restart gstable"
+}
+```
+
+- `tail_log` runs `tail -n <lines> -- <log_file>` over SSH.
+- `node.stop`/`start`/`restart` run the matching `*_cmd`. If `restart_cmd` is
+  absent, restart composes `stop_cmd` → `start_cmd`.
+- A node that omits a given command (or `log_file`) reports the capability at
+  the network level but returns `NOT_SUPPORTED` for that specific operation.
+- These commands are **operator-supplied** (you wrote them in this file) and run
+  on the remote shell. They are not caller-controlled — an LLM/test only selects
+  the node, never the command string.
 
 ## Note: construction is manual in v1
 
