@@ -865,7 +865,8 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 - [ ] `INTEGRATION_BEFOREALL_TIMEOUT_MS` (15s) 가 두 integration test 에 중복 — 3rd integration test 추가 시 `_harness.ts` 로 추출
 
 **Sprint 5b — SSH driver**
-- [ ] `drivers/sshremote` 설계 초안 (Q6, S6 세션 prompt)
+- [x] 5b.1 — SSHRemoteDriver read-only RPC (SSH 터널 + `remote.Client` 재사용). `ssh-password` auth(env-only password), host key known_hosts 기본+insecure opt-in, providerCaps ssh-remote=`{rpc,ws}`. (2026-06-29)
+- [ ] 5b.2 — process/fs capability (shell exec 기반 lifecycle + tail_log), providerCaps fs/process 복원
 
 **Sprint 5d — Hybrid 네트워크 예제** — 완료 (2026-06-29)
 - [x] Hybrid 네트워크 예제 (`examples/networks/hybrid-example.json` + README) + cross-layer 검증 (bash 실-바이너리 capability 교집합/게이팅 + MCP lower-bound). 예제는 profile YAML 이 아닌 로드 가능한 network-state JSON (profile 로더가 hybrid 미지원 — spec D1). 전용 구성 명령(`network attach-hybrid`)은 후속.

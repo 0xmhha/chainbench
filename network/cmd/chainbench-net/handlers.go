@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
+	"github.com/0xmhha/chainbench/network/internal/drivers/sshremote"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/state"
 	"github.com/0xmhha/chainbench/network/internal/types"
@@ -157,28 +158,87 @@ func resolveNode(stateDir, networkName, nodeID string) (string, types.Node, erro
 	))
 }
 
-// dialNode opens a remote.Client for the given node, wiring auth if
-// node.Auth is populated. Caller owns Close. Errors are returned as
-// APIError sentinels so handlers can propagate them unchanged:
+// dialNode opens a remote.Client for the given node, dispatching on the node's
+// provider. Caller owns Close (which also tears down an SSH tunnel, if any).
+// Errors are returned as APIError sentinels so handlers propagate them unchanged:
 //
-//	UPSTREAM_ERROR — auth setup failure (missing env var, malformed type)
-//	                 or dial failure (DNS, TCP, TLS, bad URL).
+//	INVALID_ARGS   — ssh-remote node with malformed/incomplete ssh-password auth.
+//	UPSTREAM_ERROR — auth setup (missing env var), SSH dial, or RPC dial failure.
 //
-// Shared by every read-only remote command (node.block_number,
-// node.chain_id, node.balance, node.gas_price) so the dial+auth
-// boilerplate lives in one place.
+// Shared by every read-only command so the dial+auth boilerplate lives in one
+// place. The "remote" (HTTP/WS + api-key/jwt) and "ssh-remote" (SSH-tunneled,
+// Sprint 5b.1) providers route here; "local" nodes never reach dialNode.
 func dialNode(ctx context.Context, node *types.Node) (*remote.Client, error) {
-	var rt http.RoundTripper
-	if len(node.Auth) > 0 {
-		got, aerr := remote.AuthFromNode(node, os.Getenv)
-		if aerr != nil {
-			return nil, NewUpstream("auth setup", aerr)
+	switch node.Provider {
+	case types.NodeProviderSshRemote:
+		return dialSSHNode(ctx, node)
+	case types.NodeProviderRemote, "":
+		var rt http.RoundTripper
+		if len(node.Auth) > 0 {
+			got, aerr := remote.AuthFromNode(node, os.Getenv)
+			if aerr != nil {
+				return nil, NewUpstream("auth setup", aerr)
+			}
+			rt = got
 		}
-		rt = got
+		client, err := remote.DialWithOptions(ctx, node.Http, remote.DialOptions{Transport: rt})
+		if err != nil {
+			return nil, NewUpstream(fmt.Sprintf("dial %s", node.Http), err)
+		}
+		return client, nil
+	default:
+		return nil, NewNotSupported(fmt.Sprintf("provider %q is not dialable for RPC", node.Provider))
 	}
-	client, err := remote.DialWithOptions(ctx, node.Http, remote.DialOptions{Transport: rt})
+}
+
+// dialSSHNode builds an SSH-tunneled remote.Client from an ssh-remote node.
+// The node's ssh-password auth supplies user/host/port and the *name* of the
+// env var holding the password; the password value is read here and never
+// stored or logged. Host key verification follows the security policy in
+// sshremote.ResolveHostKeyCallback.
+func dialSSHNode(ctx context.Context, node *types.Node) (*remote.Client, error) {
+	if rawType, _ := node.Auth["type"].(string); rawType != "ssh-password" {
+		return nil, NewInvalidArgs(fmt.Sprintf(
+			"ssh-remote node requires ssh-password auth, got %q", rawType))
+	}
+	user, _ := node.Auth["user"].(string)
+	host, _ := node.Auth["host"].(string)
+	envName, _ := node.Auth["env"].(string)
+	if user == "" || host == "" || envName == "" {
+		return nil, NewInvalidArgs("ssh-password auth requires user, host, and env")
+	}
+	password := os.Getenv(envName)
+	if password == "" {
+		// Name the env var, never a value.
+		return nil, NewUpstream("ssh auth", fmt.Errorf("env var %q is empty", envName))
+	}
+	hostKey, err := sshremote.ResolveHostKeyCallback(os.Getenv)
 	if err != nil {
-		return nil, NewUpstream(fmt.Sprintf("dial %s", node.Http), err)
+		return nil, NewUpstream("ssh host key", err)
+	}
+	creds := sshremote.Credentials{
+		User:     user,
+		Host:     host,
+		Port:     authPort(node.Auth),
+		Password: password,
+	}
+	client, err := sshremote.Dial(ctx, creds, node.Http, hostKey)
+	if err != nil {
+		return nil, NewUpstream(fmt.Sprintf("ssh dial %s", node.Http), err)
 	}
 	return client, nil
+}
+
+// authPort extracts the optional ssh-password "port", defaulting to 0 (the
+// sshremote driver applies the SSH default of 22). JSON numbers decode to
+// float64 through the loose Auth map, so handle both float64 and int.
+func authPort(auth types.Auth) int {
+	switch v := auth["port"].(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	default:
+		return 0
+	}
 }

@@ -1,0 +1,20 @@
+{
+  "name": "ssh-remote-example",
+  "chain_type": "ethereum",
+  "chain_id": 1337,
+  "nodes": [
+    {
+      "id": "node1",
+      "role": "endpoint",
+      "provider": "ssh-remote",
+      "http": "http://127.0.0.1:8545",
+      "auth": {
+        "type": "ssh-password",
+        "user": "deploy",
+        "host": "10.0.0.42",
+        "port": 22,
+        "env": "CHAINBENCH_SSH_PASSWORD"
+      }
+    }
+  ]
+}

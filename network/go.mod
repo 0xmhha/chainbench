@@ -10,6 +10,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.3.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/cobra v1.10.2
+	golang.org/x/crypto v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -45,7 +46,6 @@ require (
 	go.opentelemetry.io/otel v1.40.0 // indirect
 	go.opentelemetry.io/otel/metric v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
-	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 )

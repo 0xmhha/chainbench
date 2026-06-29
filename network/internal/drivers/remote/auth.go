@@ -76,7 +76,15 @@ func ValidateAuth(auth types.Auth) error {
 			return fmt.Errorf("auth(%s): 'env' field is required", rawType)
 		}
 	case "ssh-password":
-		// SSH fields validated by the SSH driver when it lands; attach accepts.
+		// Consumed by the SSHRemoteDriver (Sprint 5b.1), not the RPC client.
+		// Validate the structural fields here so a malformed ssh-remote node is
+		// rejected at attach/load rather than at dial time. The password itself
+		// is never in the node — only the env var name that holds it.
+		for _, f := range []string{"user", "host", "env"} {
+			if s, _ := auth[f].(string); s == "" {
+				return fmt.Errorf("auth(ssh-password): %q field is required", f)
+			}
+		}
 	default:
 		return fmt.Errorf("auth: unknown type %q", rawType)
 	}

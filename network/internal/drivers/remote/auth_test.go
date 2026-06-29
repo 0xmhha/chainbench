@@ -307,9 +307,22 @@ func TestValidateAuth_ValidJWT(t *testing.T) {
 }
 
 func TestValidateAuth_SSHPasswordPasses(t *testing.T) {
-	// ssh-password is persisted but ignored by RPC client; attach accepts it.
-	if err := ValidateAuth(types.Auth{"type": "ssh-password", "user": "root", "host": "h"}); err != nil {
+	// ssh-password is consumed by the SSHRemoteDriver, not the RPC client, but
+	// attach must still accept a structurally complete entry. env names the var
+	// holding the password (the password itself never appears in the node).
+	if err := ValidateAuth(types.Auth{"type": "ssh-password", "user": "root", "host": "h", "env": "PW"}); err != nil {
 		t.Errorf("ssh-password should pass attach validation: %v", err)
+	}
+}
+
+func TestValidateAuth_SSHPassword_MissingFields(t *testing.T) {
+	// Each of user/host/env is required; omitting any must fail at the boundary.
+	for _, missing := range []string{"user", "host", "env"} {
+		full := types.Auth{"type": "ssh-password", "user": "root", "host": "h", "env": "PW"}
+		delete(full, missing)
+		if err := ValidateAuth(full); err == nil {
+			t.Errorf("ssh-password missing %q should fail validation", missing)
+		}
 	}
 }
 
