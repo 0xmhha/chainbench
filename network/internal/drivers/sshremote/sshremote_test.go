@@ -28,7 +28,12 @@ type sshTestServer struct {
 	listener net.Listener
 }
 
-func startSSHServer(t *testing.T, wantUser, wantPassword, backendAddr string) *sshTestServer {
+// execFn fakes remote command execution: given the command string, return the
+// stdout to emit and the exit code. nil means the server rejects session
+// channels (tunnel-only tests).
+type execFn func(command string) (stdout string, exitCode int)
+
+func startSSHServer(t *testing.T, wantUser, wantPassword, backendAddr string, exec execFn) *sshTestServer {
 	t.Helper()
 	_, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -60,14 +65,14 @@ func startSSHServer(t *testing.T, wantUser, wantPassword, backendAddr string) *s
 			if err != nil {
 				return // listener closed
 			}
-			go serveSSHConn(conn, cfg, backendAddr)
+			go serveSSHConn(conn, cfg, backendAddr, exec)
 		}
 	}()
 	t.Cleanup(func() { _ = ln.Close() })
 	return srv
 }
 
-func serveSSHConn(nConn net.Conn, cfg *ssh.ServerConfig, backendAddr string) {
+func serveSSHConn(nConn net.Conn, cfg *ssh.ServerConfig, backendAddr string, exec execFn) {
 	sconn, chans, reqs, err := ssh.NewServerConn(nConn, cfg)
 	if err != nil {
 		_ = nConn.Close()
@@ -76,25 +81,56 @@ func serveSSHConn(nConn net.Conn, cfg *ssh.ServerConfig, backendAddr string) {
 	defer sconn.Close()
 	go ssh.DiscardRequests(reqs)
 	for nc := range chans {
-		if nc.ChannelType() != "direct-tcpip" {
-			_ = nc.Reject(ssh.UnknownChannelType, "only direct-tcpip")
-			continue
-		}
-		ch, chReqs, err := nc.Accept()
-		if err != nil {
-			continue
-		}
-		go ssh.DiscardRequests(chReqs)
-		go func() {
-			defer ch.Close()
-			backend, err := net.Dial("tcp", backendAddr)
+		switch nc.ChannelType() {
+		case "direct-tcpip":
+			ch, chReqs, err := nc.Accept()
 			if err != nil {
-				return
+				continue
 			}
-			defer backend.Close()
-			go func() { _, _ = io.Copy(backend, ch) }()
-			_, _ = io.Copy(ch, backend)
-		}()
+			go ssh.DiscardRequests(chReqs)
+			go func() {
+				defer ch.Close()
+				backend, err := net.Dial("tcp", backendAddr)
+				if err != nil {
+					return
+				}
+				defer backend.Close()
+				go func() { _, _ = io.Copy(backend, ch) }()
+				_, _ = io.Copy(ch, backend)
+			}()
+		case "session":
+			if exec == nil {
+				_ = nc.Reject(ssh.Prohibited, "session not allowed")
+				continue
+			}
+			ch, chReqs, err := nc.Accept()
+			if err != nil {
+				continue
+			}
+			go handleSessionExec(ch, chReqs, exec)
+		default:
+			_ = nc.Reject(ssh.UnknownChannelType, "unsupported channel")
+		}
+	}
+}
+
+// handleSessionExec answers an "exec" request: run the fake exec, write stdout,
+// reply with an exit-status, and close the channel.
+func handleSessionExec(ch ssh.Channel, reqs <-chan *ssh.Request, exec execFn) {
+	defer ch.Close()
+	for req := range reqs {
+		if req.Type != "exec" {
+			_ = req.Reply(false, nil)
+			continue
+		}
+		var payload struct{ Command string }
+		_ = ssh.Unmarshal(req.Payload, &payload)
+		_ = req.Reply(true, nil)
+		stdout, code := exec(payload.Command)
+		_, _ = io.WriteString(ch, stdout)
+		_, _ = ch.SendRequest("exit-status", false,
+			ssh.Marshal(struct{ Status uint32 }{Status: uint32(code)}))
+		return
 	}
 }
 
@@ -130,7 +166,7 @@ func backendAddr(t *testing.T, url string) string {
 func TestDial_TunneledRPC_Happy(t *testing.T) {
 	rpc := mockRPC(t)
 	addr := backendAddr(t, rpc.URL)
-	srv := startSSHServer(t, "alice", "hunter2", addr)
+	srv := startSSHServer(t, "alice", "hunter2", addr, nil)
 
 	host, portStr, _ := net.SplitHostPort(srv.addr)
 	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "hunter2"}
@@ -162,7 +198,7 @@ func TestDial_TunneledRPC_Happy(t *testing.T) {
 
 func TestDial_BadPassword(t *testing.T) {
 	rpc := mockRPC(t)
-	srv := startSSHServer(t, "alice", "hunter2", backendAddr(t, rpc.URL))
+	srv := startSSHServer(t, "alice", "hunter2", backendAddr(t, rpc.URL), nil)
 	host, portStr, _ := net.SplitHostPort(srv.addr)
 	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "WRONG"}
 
@@ -179,7 +215,7 @@ func TestDial_BadPassword(t *testing.T) {
 
 func TestDial_HostKeyMismatch_Rejected(t *testing.T) {
 	rpc := mockRPC(t)
-	srv := startSSHServer(t, "alice", "hunter2", backendAddr(t, rpc.URL))
+	srv := startSSHServer(t, "alice", "hunter2", backendAddr(t, rpc.URL), nil)
 	host, portStr, _ := net.SplitHostPort(srv.addr)
 
 	// known_hosts entry for a DIFFERENT key → server's real key must be rejected.
@@ -201,6 +237,60 @@ func TestDial_HostKeyMismatch_Rejected(t *testing.T) {
 	defer cancel()
 	if _, err := Dial(ctx, creds, rpc.URL, cb); err == nil {
 		t.Fatal("expected host key rejection")
+	}
+}
+
+func TestExec_Happy(t *testing.T) {
+	var gotCmd string
+	srv := startSSHServer(t, "alice", "hunter2", "", func(cmd string) (string, int) {
+		gotCmd = cmd
+		return "ok-output\n", 0
+	})
+	host, portStr, _ := net.SplitHostPort(srv.addr)
+	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "hunter2"}
+
+	res, err := Exec(context.Background(), creds, ssh.InsecureIgnoreHostKey(), "systemctl restart gstable")
+	if err != nil {
+		t.Fatalf("Exec: %v", err)
+	}
+	if res.ExitCode != 0 {
+		t.Errorf("ExitCode = %d, want 0", res.ExitCode)
+	}
+	if res.Stdout != "ok-output\n" {
+		t.Errorf("Stdout = %q", res.Stdout)
+	}
+	if gotCmd != "systemctl restart gstable" {
+		t.Errorf("server saw command %q", gotCmd)
+	}
+}
+
+func TestExec_NonZeroExit(t *testing.T) {
+	srv := startSSHServer(t, "alice", "hunter2", "", func(cmd string) (string, int) {
+		return "boom\n", 7
+	})
+	host, portStr, _ := net.SplitHostPort(srv.addr)
+	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "hunter2"}
+
+	res, err := Exec(context.Background(), creds, ssh.InsecureIgnoreHostKey(), "false")
+	if err != nil {
+		t.Fatalf("Exec should not error on non-zero exit: %v", err)
+	}
+	if res.ExitCode != 7 {
+		t.Errorf("ExitCode = %d, want 7", res.ExitCode)
+	}
+}
+
+func TestExec_BadPassword(t *testing.T) {
+	srv := startSSHServer(t, "alice", "hunter2", "", func(cmd string) (string, int) { return "", 0 })
+	host, portStr, _ := net.SplitHostPort(srv.addr)
+	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "WRONG"}
+
+	_, err := Exec(context.Background(), creds, ssh.InsecureIgnoreHostKey(), "echo hi")
+	if err == nil {
+		t.Fatal("expected auth failure")
+	}
+	if strings.Contains(err.Error(), "WRONG") {
+		t.Errorf("password leaked into error: %v", err)
 	}
 }
 
