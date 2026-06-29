@@ -7,6 +7,11 @@
 [[ -n "${_CB_ADAPTER_STABLENET_LOADED:-}" ]] && return 0
 readonly _CB_ADAPTER_STABLENET_LOADED=1
 
+# Cross-layer default constants (SSOT-X1). Provides CB_STABLENET_CHAIN_ID so the
+# genesis fallback chain_id is sourced from one place, not hardcoded (P1-4a).
+# shellcheck source=lib/defaults.generated.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/defaults.generated.sh"
+
 # ---- Genesis generation ------------------------------------------------------
 
 # adapter_generate_genesis <profile_json> <template_file> <output_file> <metadata_file> <num_validators> <base_p2p>
@@ -21,15 +26,17 @@ adapter_generate_genesis() {
     "$output_file" \
     "$metadata_file" \
     "$num_validators" \
-    "$base_p2p" <<'PYEOF'
+    "$base_p2p" \
+    "$CB_STABLENET_CHAIN_ID" <<'PYEOF'
 import sys, json, os
 
-profile_path   = sys.argv[1]
-template_path  = sys.argv[2]
-output_path    = sys.argv[3]
-metadata_path  = sys.argv[4]
-num_validators = int(sys.argv[5])
-base_p2p       = int(sys.argv[6])
+profile_path      = sys.argv[1]
+template_path     = sys.argv[2]
+output_path       = sys.argv[3]
+metadata_path     = sys.argv[4]
+num_validators    = int(sys.argv[5])
+base_p2p          = int(sys.argv[6])
+default_chain_id  = int(sys.argv[7])
 
 with open(profile_path) as f:
     profile = json.load(f)
@@ -42,7 +49,7 @@ chain = profile.get("chain", {})
 overrides = profile.get("genesis", {}).get("overrides", {})
 wbft = overrides.get("wbft", {})
 
-chain_id = chain.get("chain_id", 8283)
+chain_id = chain.get("chain_id", default_chain_id)
 request_timeout = wbft.get("requestTimeoutSeconds", 2)
 block_period = wbft.get("blockPeriodSeconds", 1)
 epoch_length = wbft.get("epochLength", 140)

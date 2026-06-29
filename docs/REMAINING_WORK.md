@@ -77,7 +77,7 @@
 
 **현재 테스트 상태(2026-06-29 직접 실행)**: Go 전 패키지 green · vitest 130 pass/2 skip · bash **37/39** (실패 2건 `lib-contract.sh`/`lib-event.sh` 는 `cast`(foundry) 미설치 환경 의존 — 코드 버그 아님, 설치 시 39/39).
 
-**clean-code/SSOT 리팩토링 트랙**: `docs/REFACTORING_PLAN.md` 가 별도 추적. 남은 항목은 본 문서 §4 가 아니라 거기 §6.2 참조 (N2 cast 프로비저닝, P1-4a/4c, P2-1/2, N-A/N-B).
+**clean-code/SSOT 리팩토링 트랙**: `docs/REFACTORING_PLAN.md` 가 별도 추적. P2-1a(profile.sh python 추출, extends 버그 수정) + P1-4a(stablenet chain_id SSoT) 완료(2026-06-29). 남은 항목은 §6.2 참조 (P2-1b json_helpers 단일화, P2-2 bash 분할, N2 cast, P1-4c=M4, N-A/N-B).
 
 ---
 
@@ -95,7 +95,7 @@
 - Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
 - 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: ~~5c.4.2~~ ✅ · ~~5d~~ ✅ · ~~5b.1~~ ✅ · ~~Sprint 5b.2 (SSH process/fs)~~ ✅ 완료(2026-06-29, `feat/sprint-5b-2-sshremote-process-fs`). Sprint 5 시리즈의 주요 패스 완료 → 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-1 등) 또는 5b 후속(구성 명령/키 인증).
+**다음 P1**: ~~5c.4.2~~ ✅ · ~~5d~~ ✅ · ~~5b.1~~ ✅ · ~~5b.2~~ ✅ · ~~P2-1a (profile.sh python 추출 + extends 버그 fix)~~ ✅ 완료(2026-06-29, `refactor/p2-1-profile-python-extract`). Sprint 5 + 리팩토링 주요 패스 완료 → 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-1b json_helpers / P2-2 bash 분할) 또는 5b 후속(구성 명령/키 인증).
 
 ---
 
@@ -656,7 +656,7 @@ git add network/schema/command.json network/internal/types/command_gen.go
 1. ~~**Sprint 5c.4.2**~~ ✅ 완료 (PR #1).
 2. ~~**Sprint 5d**~~ ✅ 완료 (`feat/sprint-5d-hybrid-example`).
 3. ~~**Sprint 5b** (5b.1 read-only RPC + 5b.2 process/fs)~~ ✅ 완료. 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-1) 또는 5b 후속(구성 명령/키 인증).
-4. (병행) `REFACTORING_PLAN.md` §6.2 리팩토링 잔여 — P2-1(bash python 추출) 등은 별도 sprint.
+4. (병행) `REFACTORING_PLAN.md` §6.2 리팩토링 잔여 — ~~P2-1a(profile.sh python 추출)~~ ✅. 남음: P2-1b(json_helpers), P2-2(bash 분할).
 
 ---
 

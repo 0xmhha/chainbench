@@ -129,7 +129,8 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 | **P1-2b** | `chainbench_clean` MCP 도구 추가 (lifecycle 표면 대칭) | TS | 낮음 | S | ✅ PR #4 | — |
 | **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ✅ PR #4 | — |
 | **P1-4** SSOT-X1 | chain_id + base ports를 defaults.json SSoT로 단일화 (빌드타임 codegen) | 전레이어 | 중간 | M | 🟡 PR #4 (binary는 M4) | — |
-| **P2-1** CC-B1 | `profile.sh` Python 파서 추출 · `json_helpers.sh` 백엔드 단일화 | bash | 높음 | L | ⬜ 남음 | 별도 sprint |
+| **P2-1a** CC-B1 | `profile.sh` 임베디드 Python(264줄) → `scripts/{merge_profile,extract_json}.py` 추출 | bash | 높음 | L | 🟡 부분완료 (profile.sh 524→259; json_helpers 후속) | — |
+| **P2-1b** CC-B1 | `json_helpers.sh` jq/python 이중백엔드 단일화 | bash | 높음 | M | ⬜ 남음 | 순수 behavior-preserving 아님(atomic write) — 별도 설계 |
 | **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | ⬜ 남음 | 해당 파일 기능 추가 시 |
 
 `S`≈반나절, `M`≈1–2일, `L`≈sprint 단위.
@@ -201,7 +202,7 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 | ID | 작업 | 트리거 |
 |---|---|---|
-| P1-4a | `lib/adapters/stablenet.sh:45` chain_id fallback (quoted python heredoc 내부) 단일화 | P2-1 (임베디드 python 추출) 시 |
+| ~~P1-4a~~ ✅ | `lib/adapters/stablenet.sh` chain_id fallback `8283` → `CB_STABLENET_CHAIN_ID`(SSoT) argv 주입. (2026-06-29, P2-1 동반) | — |
 | P1-4c | binary(`gstable`) → defaults/adapter axis | **M4** (HARDCODING_AUDIT 9사이트, 비-stablenet e2e) |
 
 **P1-4b 완료** (PR #4 `2046b05`): 조사 결과 단순 default 불일치가 아니라 **dead knob** — `CHAINBENCH_NETWORK_ID`가 파싱만 되고 어디서도 소비되지 않아 `chain.network_id`(프로파일이 8283 설정해도)가 런타임에 무시됨. 정상 배선(근본 수정): `_cb_resolve_network_id`(network_id→chain_id→empty) 추출 + `cmd_start.sh` launch_cmd에 `--networkid` 추가(+`.launch_args`/saved_args로 재시작 보존) + pids.json node record에 `network_id` 기록(cmd_node.sh reconstruct fallback) + schema.ts 문서 정정(default: chain_id). 회귀: bash 39/39(cast 설치 환경; 미설치 시 37/39), vitest 130.
@@ -210,8 +211,9 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 | ID | 작업 | 위험 |
 |---|---|---|
-| **P2-1** CC-B1 | `profile.sh` 임베디드 Python(240줄) 추출 · `json_helpers.sh` jq/python 이중백엔드 단일화 | 높음 — 충분한 e2e 후 |
-| **P2-2** | bash 대형 파일 분할 (`cmd_test.sh` 639 · `cmd_node.sh` 602 · `cmd_remote.sh` 434) | 중간 |
+| ~~P2-1a~~ 🟡 | `profile.sh` 임베디드 Python 추출 → `scripts/{merge_profile,extract_json}.py` (524→259줄). 골든 동등성 테스트로 byte-identical 보장. **동반 발견·수정**: `extends:` 상속 버그(hardfork 5종 로드 실패) — `fix(profile)` 별도 커밋. | 완료 (2026-06-29) |
+| **P2-1b** CC-B1 | `json_helpers.sh` jq/python 이중백엔드 단일화 | 남음 — atomic write 보존 위해 'python 단일+atomic' 재설계 필요(behavior-preserving 아님) |
+| **P2-2** | bash 대형 파일 분할 (`cmd_test.sh` 639 · `cmd_node.sh` 602 · `cmd_remote.sh` 434) | 중간 — 해당 파일 기능 추가 시 |
 
 **기타 (잔여 항목):**
 
@@ -222,4 +224,4 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 ### 6.3 추천 진행 순서
 
-그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) + P1-4b(network_id 배선) 완료. 남은 순서: `N2 (별도 레포)` → `P1-4a (P2-1과)` → `P1-4c=M4 (binary)` → `P2`.
+그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) + P1-4b(network_id) + **P2-1a(profile.sh python 추출, extends 버그 수정) + P1-4a(stablenet chain_id SSoT)** 완료. 남은 순서: `P2-1b (json_helpers, 재설계 필요)` → `P2-2 (bash 분할)` → `N2/P1-4c (별도 레포·M4)`.

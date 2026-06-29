@@ -1,0 +1,134 @@
+{
+  "chain": {
+    "binary": "gstable",
+    "binary_path": "",
+    "chain_id": 8283,
+    "logrot_path": "",
+    "network_id": 8283
+  },
+  "data": {
+    "directory": "/tmp/node-data"
+  },
+  "description": "기본 4 validator + 1 EN 로컬 체인 (go-stablenet)",
+  "genesis": {
+    "overrides": {
+      "alloc": {
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c": "1000000000000000000000000000",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764": "1000000000000000000000000000",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6": "1000000000000000000000000000",
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8": "1000000000000000000000000000"
+      },
+      "extraData": "0xf90147808080c0c080c0c086191a20322000f90135f868d994c17d493883eaa3b4cceb0f214b273392d562f9d8831cfde0d9942493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c831cfde0d9948c4a10b9108d49b9d23f764464090831d9c17764831cfde0d9948eb79036bc0f3aba136ef18b3a2fb8c1188939a6831cfde0c480010203f8c4b0a00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556fb0929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449b08c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0b0a63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a",
+      "init": {
+        "blsPublicKeys": [
+          "0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f",
+          "0x929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449",
+          "0x8c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0",
+          "0xa63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
+        ],
+        "validators": [
+          "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+          "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+          "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+        ]
+      },
+      "systemContracts": {
+        "govCouncil": {
+          "address": "0x0000000000000000000000000000000000001004",
+          "params": {
+            "expiry": "604800",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "quorum": "2"
+          },
+          "version": "v1"
+        },
+        "govMasterMinter": {
+          "address": "0x0000000000000000000000000000000000001002",
+          "params": {
+            "expiry": "604800",
+            "fiatToken": "0x0000000000000000000000000000000000001000",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "quorum": "2"
+          },
+          "version": "v1"
+        },
+        "govMinter": {
+          "address": "0x0000000000000000000000000000000000001003",
+          "params": {
+            "expiry": "604800",
+            "fiatToken": "0x0000000000000000000000000000000000001000",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "quorum": "2"
+          },
+          "version": "v1"
+        },
+        "govValidator": {
+          "address": "0x0000000000000000000000000000000000001001",
+          "params": {
+            "expiry": "604800",
+            "gasTip": "27600000000000",
+            "maxProposals": "3",
+            "memberVersion": "1",
+            "quorum": "2"
+          },
+          "version": "v1"
+        },
+        "nativeCoinAdapter": {
+          "address": "0x0000000000000000000000000000000000001000",
+          "params": {
+            "currency": "KRW",
+            "decimals": "18",
+            "masterMinter": "0x0000000000000000000000000000000000001002",
+            "minterAllowed": "100000000000000000000000000000",
+            "minters": "0x0000000000000000000000000000000000001003",
+            "name": "WKRC",
+            "symbol": "WKRC"
+          },
+          "version": "v1"
+        }
+      },
+      "wbft": {
+        "blockPeriodSeconds": 1,
+        "epochLength": 140,
+        "maxRequestTimeoutSeconds": null,
+        "proposerPolicy": 0,
+        "requestTimeoutSeconds": 2
+      }
+    },
+    "template": "templates/genesis.template.json"
+  },
+  "keys": {
+    "mode": "static",
+    "source": "keys/preset"
+  },
+  "logging": {
+    "directory": "data/logs",
+    "max_files": 5,
+    "max_size": "10M",
+    "rotation": true
+  },
+  "name": "default",
+  "nodes": {
+    "cache": 2048,
+    "en_verbosity": 5,
+    "endpoints": 1,
+    "extra_flags": [],
+    "gcmode": "archive",
+    "validators": 4,
+    "verbosity": 4
+  },
+  "ports": {
+    "base_auth": 8551,
+    "base_http": 8501,
+    "base_metrics": 6061,
+    "base_p2p": 30301,
+    "base_ws": 9501
+  },
+  "tests": {
+    "auto_run": []
+  }
+}
