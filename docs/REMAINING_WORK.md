@@ -95,7 +95,7 @@
 - Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
 - 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: ~~Sprint 5c.4.2~~ ✅ 완료(PR #1). 다음 후보 → **Sprint 5d (hybrid 예제, 최소 단위)** 또는 **Sprint 5b (SSHRemoteDriver, 큰 작업)**. 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
+**다음 P1**: ~~Sprint 5c.4.2~~ ✅ 완료(PR #1) · ~~Sprint 5d (hybrid 예제)~~ ✅ 완료(2026-06-29, `feat/sprint-5d-hybrid-example`). 다음 후보 → **Sprint 5b (SSHRemoteDriver, 큰 작업)** 또는 `REFACTORING_PLAN.md` §6.2 (P2-1 등).
 
 ---
 
@@ -138,7 +138,7 @@
 
 > **2026-06-29 갱신**: 본 sprint 는 PR #1 로 **완료**됨. Go wire 핸들러(init/start_all/restart/clean) + schema enum(P1-2 가 가드 테스트까지 추가) + MCP reroute(init/start/restart) + `chainbench_clean`(P1-2b) 모두 머지. 6개 lifecycle 툴 전부 callWire 경유. 아래 원본 계획은 **이력 보존용**.
 >
-> **다음 Priority 1 후보** = Sprint 5d(최소) 또는 Sprint 5b. 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
+> **다음 Priority 1 후보** = Sprint 5b (5d 완료). 리팩토링 잔여는 `REFACTORING_PLAN.md` §6.2.
 
 <details><summary>원본 계획 (이력 보존)</summary>
 
@@ -207,20 +207,17 @@
 
 ---
 
-### 🟦 Priority 3 — Sprint 5d: Hybrid 네트워크 예제
+### ✅ 완료 — Sprint 5d: Hybrid 네트워크 예제 (2026-06-29, `feat/sprint-5d-hybrid-example`)
 
-**목표**: Local 노드 + Remote 노드 혼합 네트워크의 실제 사용 시나리오 + 예제.
+**완료 내용**:
+1. `examples/networks/hybrid-example.json` (local 3 + remote 1) + `examples/networks/README.md` (per-node provider 모델 + capability 하한 + 수동 구성 흐름 + remote auth env 참조). spec D1: profile YAML 이 아니라 **로드 가능한 network-state JSON** (profile 로더가 hybrid 미지원).
+2. bash 실-바이너리 검증 `tests/unit/tests/network-hybrid-capabilities.sh` — 실 mixed-provider state 파일 → `network.capabilities` = `[rpc, ws]` 교집합 + process 게이팅 SKIP + rpc RUN.
+3. MCP `network.test.ts:_Happy_Hybrid` — hybrid lower-bound passthrough.
+4. Go `TestHandleNetworkCapabilities_Hybrid` (기존) 유지.
 
-**필요 작업**:
-1. **`profiles/hybrid-example.yaml`** — local 3 + remote 1 구성 sample (1 remote = sepolia 또는 임의 testnet attach)
-2. **Hybrid network attach 흐름 문서화** — 기존 `state/networks/<name>.json` 스키마는 이미 hybrid 지원 (per-node provider 바인딩) — 사용 시나리오만 부재
-3. **테스트 시나리오** — hybrid 환경에서 fault test 의 capability 게이팅이 의도대로 동작 검증 (5a 의 set 교집합 결과: hybrid = local ∩ remote = `[rpc, ws]` only)
-4. **MCP integration** — `chainbench_network_capabilities` 가 hybrid 의 lower bound 응답 검증 (Sprint 5a 에서 이미 `TestHandleNetworkCapabilities_Hybrid` 단위 테스트 통과)
-5. **(선택) Layer 2 test 가 hybrid 환경에서 작동 검증** — read-only test 만 통과해야 함
+**후속 (Non-goal)**: 전용 구성 명령 `network attach-hybrid`/compose (local pids.json + remote 를 단일 networks 파일로 합성) — 별도 sprint. profile 로더 hybrid 지원은 P2-1 이후.
 
-**복잡도**: 작은 sprint (~3-5 commits). 인프라는 이미 존재 — 예제 + 검증만.
-
-**참고 spec**: VISION §5.6 의 hybrid 데이터 모델 + §5.7 capability 시나리오.
+**참고 spec/plan**: `docs/superpowers/{specs,plans}/2026-06-29-sprint-5d-hybrid-network-example.md`.
 
 ---
 
@@ -642,16 +639,12 @@ git add network/schema/command.json network/internal/types/command_gen.go
 
 ## 10. 다음 세션에서 즉시 착수 가능한 단위
 
-**가장 작은 단위**: Sprint 5d (hybrid 예제) — 인프라 존재, 예제 + 테스트만. ~3-5 commits.
-
-**중간 단위**: Sprint 5c.4.2 (lifecycle 잔여 reroute) — Go 핸들러 4종 + MCP reroute 4 + node.restart binary_path symmetric. ~8-10 commits. **가장 가치 있음** (reroute coverage 5/38 → 9/38).
-
 **큰 단위**: Sprint 5b (SSH driver) — 새 driver 구현. 두 패스로 나눠 진행 권장.
 
-**권장 순서** (2026-06-29 갱신 — 5c.4.2 는 PR #1 로 완료):
+**권장 순서** (2026-06-29 갱신 — 5c.4.2 PR #1, 5d 완료):
 1. ~~**Sprint 5c.4.2**~~ ✅ 완료 (PR #1).
-2. **Sprint 5d** (smallest, easy win) — capability gate 의 dividend 검증. 현 최우선 후보.
-3. **Sprint 5b** (큰 작업, 두 패스) — 5b.1 (read-only) 부터.
+2. ~~**Sprint 5d**~~ ✅ 완료 (`feat/sprint-5d-hybrid-example`).
+3. **Sprint 5b** (큰 작업, 두 패스) — 5b.1 (read-only) 부터. 현 최우선 후보.
 4. (병행) `REFACTORING_PLAN.md` §6.2 리팩토링 잔여 — P2-1(bash python 추출) 등은 별도 sprint.
 
 ---
