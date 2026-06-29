@@ -28,9 +28,11 @@ func newHandleNodeStop(stateDir, chainbenchDir string) Handler {
 			_ = json.Unmarshal(args, &pre) // best-effort; main parse in resolveNodeID
 		}
 		if pre.Network != "" && pre.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.stop is only supported on the local network (got %q)", pre.Network,
-			))
+			var nid struct {
+				NodeID string `json:"node_id"`
+			}
+			_ = json.Unmarshal(args, &nid)
+			return handleSSHNodeLifecycle(stateDir, pre.Network, nid.NodeID, "stop", bus)
 		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
@@ -88,9 +90,14 @@ func newHandleNodeStart(stateDir, chainbenchDir string) Handler {
 			_ = json.Unmarshal(args, &pre)
 		}
 		if pre.Network != "" && pre.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.start is only supported on the local network (got %q)", pre.Network,
-			))
+			// binary_path is a local-only override (it tweaks the local
+			// chainbench.sh launch); ssh-remote startup is defined by the
+			// node's provider_meta.start_cmd, so binary_path is ignored here.
+			var nid struct {
+				NodeID string `json:"node_id"`
+			}
+			_ = json.Unmarshal(args, &nid)
+			return handleSSHNodeLifecycle(stateDir, pre.Network, nid.NodeID, "start", bus)
 		}
 		// binary_path is optional; reject explicit empty / relative paths.
 		// Absent key (pre.BinaryPath == nil) → use profile default.
@@ -153,9 +160,11 @@ func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 			_ = json.Unmarshal(args, &pre)
 		}
 		if pre.Network != "" && pre.Network != "local" {
-			return nil, NewNotSupported(fmt.Sprintf(
-				"node.restart is only supported on the local network (got %q)", pre.Network,
-			))
+			var nid struct {
+				NodeID string `json:"node_id"`
+			}
+			_ = json.Unmarshal(args, &nid)
+			return handleSSHNodeLifecycle(stateDir, pre.Network, nid.NodeID, "restart", bus)
 		}
 		nodeID, nodeNum, err := resolveNodeID(stateDir, args)
 		if err != nil {
@@ -208,6 +217,85 @@ func newHandleNodeRestart(stateDir, chainbenchDir string) Handler {
 		})
 
 		return map[string]any{"node_id": nodeID, "restarted": true}, nil
+	}
+}
+
+// runSSHNodeCmd executes the provider_meta command named cmdKey (e.g.
+// "stop_cmd") on an ssh-remote node and classifies the result.
+//
+//	NOT_SUPPORTED  — the command is not configured on this node.
+//	UPSTREAM_ERROR — SSH/exec failure, or the command exited non-zero.
+func runSSHNodeCmd(node *types.Node, cmdKey string) error {
+	cmd, _ := node.ProviderMeta[cmdKey].(string)
+	if cmd == "" {
+		return NewNotSupported(fmt.Sprintf(
+			"node %q has no provider_meta.%s configured", node.Id, cmdKey))
+	}
+	res, err := execSSHNode(context.Background(), node, cmd)
+	if err != nil {
+		return err
+	}
+	if res.ExitCode != 0 {
+		return NewUpstream(fmt.Sprintf(
+			"%s exited %d: %s", cmdKey, res.ExitCode, truncStderr(res.Stderr)), nil)
+	}
+	return nil
+}
+
+// handleSSHNodeLifecycle runs a stop/start/restart on an ssh-remote node via its
+// provider_meta commands, emitting the same bus events as the local path. A
+// non-ssh-remote provider (e.g. "remote") yields NOT_SUPPORTED — the process
+// capability is local/ssh-remote only.
+func handleSSHNodeLifecycle(stateDir, network, nodeID, op string, bus *events.Bus) (map[string]any, error) {
+	_, node, err := resolveNode(stateDir, network, nodeID)
+	if err != nil {
+		return nil, err
+	}
+	if node.Provider != types.NodeProviderSshRemote {
+		return nil, NewNotSupported(fmt.Sprintf(
+			"node.%s requires the process capability; provider %q does not provide it", op, node.Provider))
+	}
+	switch op {
+	case "stop":
+		if err := runSSHNodeCmd(&node, "stop_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.stopped"),
+			Data: map[string]any{"node_id": node.Id, "reason": "manual"}})
+		return map[string]any{"node_id": node.Id, "stopped": true}, nil
+	case "start":
+		if err := runSSHNodeCmd(&node, "start_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.started"),
+			Data: map[string]any{"node_id": node.Id}})
+		return map[string]any{"node_id": node.Id, "started": true}, nil
+	case "restart":
+		// Prefer a single restart_cmd; otherwise compose stop_cmd → start_cmd
+		// with the same event ordering invariant as the local restart.
+		if cmd, _ := node.ProviderMeta["restart_cmd"].(string); cmd != "" {
+			if err := runSSHNodeCmd(&node, "restart_cmd"); err != nil {
+				return nil, err
+			}
+			_ = bus.Publish(events.Event{Name: types.EventName("node.stopped"),
+				Data: map[string]any{"node_id": node.Id, "reason": "restart"}})
+			_ = bus.Publish(events.Event{Name: types.EventName("node.started"),
+				Data: map[string]any{"node_id": node.Id}})
+			return map[string]any{"node_id": node.Id, "restarted": true}, nil
+		}
+		if err := runSSHNodeCmd(&node, "stop_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.stopped"),
+			Data: map[string]any{"node_id": node.Id, "reason": "restart"}})
+		if err := runSSHNodeCmd(&node, "start_cmd"); err != nil {
+			return nil, err
+		}
+		_ = bus.Publish(events.Event{Name: types.EventName("node.started"),
+			Data: map[string]any{"node_id": node.Id}})
+		return map[string]any{"node_id": node.Id, "restarted": true}, nil
+	default:
+		return nil, NewInvalidArgs(fmt.Sprintf("unknown lifecycle op %q", op))
 	}
 }
 

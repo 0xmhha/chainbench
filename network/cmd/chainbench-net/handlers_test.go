@@ -1922,23 +1922,30 @@ func TestAllHandlers_IncludesNewRemoteReadCommands(t *testing.T) {
 }
 
 // Local-only handler guard: node.stop with network:"remote" → NOT_SUPPORTED.
-func TestHandleNodeStop_RejectsNonLocalNetwork(t *testing.T) {
+// Process/fs handlers reject a remote-provider node with NOT_SUPPORTED: a
+// remote node exposes only rpc/ws, so node.stop has nothing to act on. (As of
+// Sprint 5b.2 these handlers DO serve ssh-remote nodes — see the SSH coverage
+// in sshremote/handler tests — so "non-local" is no longer a blanket reject;
+// the gate is per-provider capability.)
+func TestHandleNodeStop_RemoteProviderNotSupported(t *testing.T) {
 	stateDir, chainbenchDir := setupCmdStubDir(t)
+	saveRemoteFixture(t, stateDir, "tn", "http://127.0.0.1:1")
 	h := newHandleNodeStop(stateDir, chainbenchDir)
-	args, _ := json.Marshal(map[string]any{"network": "remote-foo", "node_id": "node1"})
+	args, _ := json.Marshal(map[string]any{"network": "tn", "node_id": "node1"})
 	bus, _ := newTestBus(t)
 	_, err := h(args, bus)
 	var api *APIError
 	if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
-		t.Errorf("want NOT_SUPPORTED, got %v", err)
+		t.Errorf("want NOT_SUPPORTED for remote provider, got %v", err)
 	}
 }
 
-// TestLocalOnlyHandlers_RejectNonLocalNetwork covers the NOT_SUPPORTED guard
-// on every local-only lifecycle handler. Prevents a future refactor from
-// breaking one handler silently while the others stay green.
-func TestLocalOnlyHandlers_RejectNonLocalNetwork(t *testing.T) {
+// TestProcessFsHandlers_RemoteProviderNotSupported covers the per-provider
+// NOT_SUPPORTED gate on every process/fs handler for a remote-provider node.
+// Prevents a future refactor from breaking one handler silently.
+func TestProcessFsHandlers_RemoteProviderNotSupported(t *testing.T) {
 	stateDir, chainbenchDir := setupCmdStubDir(t)
+	saveRemoteFixture(t, stateDir, "tn", "http://127.0.0.1:1")
 	bus, _ := newTestBus(t)
 
 	cases := []struct {
@@ -1951,7 +1958,7 @@ func TestLocalOnlyHandlers_RejectNonLocalNetwork(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			args, _ := json.Marshal(map[string]any{"network": "remote-foo", "node_id": "node1"})
+			args, _ := json.Marshal(map[string]any{"network": "tn", "node_id": "node1"})
 			_, err := tc.handler(args, bus)
 			var api *APIError
 			if !errors.As(err, &api) || string(api.Code) != "NOT_SUPPORTED" {
