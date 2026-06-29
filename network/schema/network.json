@@ -54,9 +54,10 @@
             "type": { "const": "ssh-password" },
             "user": { "type": "string" },
             "host": { "type": "string" },
-            "port": { "type": "integer", "default": 22 }
+            "port": { "type": "integer", "default": 22 },
+            "env":  { "type": "string", "description": "env var holding the SSH password (value is never stored or logged)" }
           },
-          "required": ["type", "user", "host"]
+          "required": ["type", "user", "host", "env"]
         }
       ]
     }
