@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -50,17 +51,8 @@ func Dial(ctx context.Context, creds Credentials, rpcURL string, hostKey ssh.Hos
 		return nil, err
 	}
 
-	// Tunnel every RPC TCP connection through the SSH session. The inner Dial
-	// is not ctx-cancelable (x/crypto/ssh), but the SSH handshake timeout above
-	// and the handler's per-call ctx on the RPC round-trip bound it in practice.
-	transport := &http.Transport{
-		DialContext: func(_ context.Context, network, dialAddr string) (net.Conn, error) {
-			return sshClient.Dial(network, dialAddr)
-		},
-	}
-
 	client, err := remote.DialWithOptions(ctx, rpcURL, remote.DialOptions{
-		Transport: transport,
+		Transport: tunnelTransport(sshClient),
 		Closer:    sshClient,
 	})
 	if err != nil {
@@ -70,6 +62,31 @@ func Dial(ctx context.Context, creds Credentials, rpcURL string, hostKey ssh.Hos
 		return nil, err
 	}
 	return client, nil
+}
+
+// tunnelTransport builds an http.Transport whose TCP dials go through the SSH
+// connection. The inner Dial is not ctx-cancelable (x/crypto/ssh), but the SSH
+// handshake timeout and the caller's per-request ctx bound it in practice.
+func tunnelTransport(sshClient *ssh.Client) *http.Transport {
+	return &http.Transport{
+		DialContext: func(_ context.Context, network, dialAddr string) (net.Conn, error) {
+			return sshClient.Dial(network, dialAddr)
+		},
+	}
+}
+
+// DialTunnelClient opens an SSH connection and returns an *http.Client whose TCP
+// dials are tunneled through it, plus the SSH connection as an io.Closer for the
+// caller to release when done (e.g. after a probe). Unlike Dial (which returns a
+// remote.Client for ongoing RPC), this exposes a plain http.Client for callers
+// that need one — notably probe.Detect, which accepts an injected *http.Client.
+// Errors never include the password.
+func DialTunnelClient(creds Credentials, hostKey ssh.HostKeyCallback) (*http.Client, io.Closer, error) {
+	sshClient, err := dialSSH(creds, hostKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &http.Client{Transport: tunnelTransport(sshClient)}, sshClient, nil
 }
 
 // dialSSH validates credentials and opens an SSH connection with the given host
