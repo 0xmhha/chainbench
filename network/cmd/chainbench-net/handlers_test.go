@@ -4923,3 +4923,101 @@ func logsAsMaps(t *testing.T, v any) []map[string]any {
 		return nil
 	}
 }
+
+// ---- network.list / network.detach tests (Sprint 5b.5) ----
+
+func TestHandleNetworkList_SortedSummaries(t *testing.T) {
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "zeta", "http://127.0.0.1:1")
+	saveRemoteFixture(t, stateDir, "alpha", "http://127.0.0.1:2")
+
+	h := newHandleNetworkList(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(json.RawMessage(`{}`), bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	nets, ok := data["networks"].([]map[string]any)
+	if !ok {
+		t.Fatalf("networks type = %T", data["networks"])
+	}
+	if len(nets) != 2 {
+		t.Fatalf("len = %d, want 2", len(nets))
+	}
+	if nets[0]["name"] != "alpha" || nets[1]["name"] != "zeta" {
+		t.Errorf("order = [%v %v], want [alpha zeta]", nets[0]["name"], nets[1]["name"])
+	}
+	if nets[0]["node_count"] != 1 {
+		t.Errorf("node_count = %v, want 1", nets[0]["node_count"])
+	}
+}
+
+func TestHandleNetworkList_EmptyOK(t *testing.T) {
+	h := newHandleNetworkList(t.TempDir())
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	data, err := h(json.RawMessage(`{}`), bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	nets, _ := data["networks"].([]map[string]any)
+	if len(nets) != 0 {
+		t.Errorf("len = %d, want 0", len(nets))
+	}
+}
+
+func TestHandleNetworkDetach_Success(t *testing.T) {
+	stateDir := t.TempDir()
+	saveRemoteFixture(t, stateDir, "gone", "http://127.0.0.1:1")
+	h := newHandleNetworkDetach(stateDir)
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"name": "gone"})
+	data, err := h(args, bus)
+	if err != nil {
+		t.Fatalf("handler: %v", err)
+	}
+	if data["detached"] != true {
+		t.Errorf("detached = %v, want true", data["detached"])
+	}
+	// Load must now fail.
+	if _, lerr := state.LoadActive(state.LoadActiveOptions{StateDir: stateDir, Name: "gone"}); lerr == nil {
+		t.Error("network still loadable after detach")
+	}
+}
+
+func TestHandleNetworkDetach_NotFound(t *testing.T) {
+	h := newHandleNetworkDetach(t.TempDir())
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	args, _ := json.Marshal(map[string]any{"name": "nope"})
+	_, err := h(args, bus)
+	var api *APIError
+	if !errors.As(err, &api) || string(api.Code) != "UPSTREAM_ERROR" {
+		t.Fatalf("want UPSTREAM_ERROR, got %v", err)
+	}
+}
+
+func TestHandleNetworkDetach_InvalidArgs(t *testing.T) {
+	h := newHandleNetworkDetach(t.TempDir())
+	bus, _ := newTestBus(t)
+	defer bus.Close()
+	for _, name := range []string{"", "local", "Bad Name"} {
+		args, _ := json.Marshal(map[string]any{"name": name})
+		_, err := h(args, bus)
+		var api *APIError
+		if !errors.As(err, &api) || string(api.Code) != "INVALID_ARGS" {
+			t.Errorf("name %q: want INVALID_ARGS, got %v", name, err)
+		}
+	}
+}
+
+func TestAllHandlers_IncludesNetworkListDetach(t *testing.T) {
+	h := allHandlers("x", "y")
+	for _, k := range []string{"network.list", "network.detach"} {
+		if _, ok := h[k]; !ok {
+			t.Errorf("allHandlers missing %s", k)
+		}
+	}
+}
