@@ -130,7 +130,7 @@ P0 = 저위험·고가치, 마이그레이션과 독립 → 지금 바로. P1 = 
 | **P1-3** CC-T1 | `buildWireArgs()` 헬퍼로 wire-args 표준화 | TS | 낮음 | M | ✅ PR #4 | — |
 | **P1-4** SSOT-X1 | chain_id + base ports를 defaults.json SSoT로 단일화 (빌드타임 codegen) | 전레이어 | 중간 | M | 🟡 PR #4 (binary는 M4) | — |
 | **P2-1a** CC-B1 | `profile.sh` 임베디드 Python(264줄) → `scripts/{merge_profile,extract_json}.py` 추출 | bash | 높음 | L | 🟡 부분완료 (profile.sh 524→259; json_helpers 후속) | — |
-| **P2-1b** CC-B1 | `json_helpers.sh` jq/python 이중백엔드 단일화 | bash | 높음 | M | ⬜ 남음 | 순수 behavior-preserving 아님(atomic write) — 별도 설계 |
+| ~~P2-1b~~ CC-B1 | `json_helpers.sh` jq/python 이중백엔드 → 단일 python(`scripts/json_backend.py`, atomic write) | bash | 높음 | M | ✅ (2026-06-30) | — |
 | **P2-2** | bash 대형 파일 분할 (cmd_test/cmd_node/cmd_remote) | bash | 중간 | L | ⬜ 남음 | 해당 파일 기능 추가 시 |
 
 `S`≈반나절, `M`≈1–2일, `L`≈sprint 단위.
@@ -212,7 +212,7 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 | ID | 작업 | 위험 |
 |---|---|---|
 | ~~P2-1a~~ 🟡 | `profile.sh` 임베디드 Python 추출 → `scripts/{merge_profile,extract_json}.py` (524→259줄). 골든 동등성 테스트로 byte-identical 보장. **동반 발견·수정**: `extends:` 상속 버그(hardfork 5종 로드 실패) — `fix(profile)` 별도 커밋. | 완료 (2026-06-29) |
-| **P2-1b** CC-B1 | `json_helpers.sh` jq/python 이중백엔드 단일화 | 남음 — atomic write 보존 위해 'python 단일+atomic' 재설계 필요(behavior-preserving 아님) |
+| ~~P2-1b~~ ✅ | `json_helpers.sh` 7함수의 jq/python 이중백엔드 → 단일 python(`scripts/json_backend.py`). write/merge atomic(tmp+os.replace). 427→126줄. **부수**: jq `// empty` 의 boolean-`false` read 잠복버그 수정(현 호출처 미발현). 계약 테스트로 byte-identical 보장. | 완료 (2026-06-30) |
 | **P2-2** | bash 대형 파일 분할 (`cmd_test.sh` 639 · `cmd_node.sh` 602 · `cmd_remote.sh` 434) | 중간 — 해당 파일 기능 추가 시 |
 
 **기타 (잔여 항목):**
@@ -224,4 +224,4 @@ PR #1(`5a1d888`)이 lifecycle Go 핸들러 + MCP reroute(init/start/restart)를 
 
 ### 6.3 추천 진행 순서
 
-그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) + P1-4b(network_id) + **P2-1a(profile.sh python 추출, extends 버그 수정) + P1-4a(stablenet chain_id SSoT)** 완료. 남은 순서: `P2-1b (json_helpers, 재설계 필요)` → `P2-2 (bash 분할)` → `N2/P1-4c (별도 레포·M4)`.
+그룹 1(P1-2 / P1-2b / P1-3) + P1-4(chain_id/ports) + P1-4b(network_id) + **P2-1a(profile.sh python 추출 + extends 버그) + P1-4a(stablenet chain_id SSoT) + P2-1b(json_helpers 단일화)** 완료 → **CC-B1 전체 완료**. 남은 순서: `P2-2 (bash 대형 파일 분할)` → `N2/P1-4c (별도 레포·M4)` → `N-A/N-B`.
