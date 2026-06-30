@@ -109,14 +109,18 @@ against hosts you care about).
   on the remote shell. They are not caller-controlled — an LLM/test only selects
   the node, never the command string.
 
-## Note: construction is manual in v1
+## Constructing these networks
 
-There is no dedicated command yet to *compose* a hybrid network from a running
-local network plus a remote alias — `network.attach` builds pure-remote
-networks and `remote add` populates a separate registry. Copying an example
-into `state/networks/` (or hand-writing one against
-[`network/schema/network.json`](../../network/schema/network.json)) is the
-supported v1 path; a construction command is a planned follow-up.
+- **`ssh-remote`**: `network.attach` builds an ssh-remote node directly — pass
+  `provider: "ssh-remote"`, the `ssh-password` `auth`, and `provider_meta`; it
+  probes chain_id/chain_type over the SSH tunnel and persists the node. No
+  hand-written file needed.
+- **`remote`**: `network.attach` builds a pure-remote single node (HTTP probe).
+- **hybrid** (mixed local+remote in one network): no dedicated compose command
+  yet — copy `hybrid-example.json` into `state/networks/<name>.json` (or
+  hand-write one against
+  [`network/schema/network.json`](../../network/schema/network.json)). A compose
+  command and a `chainbench network attach` CLI/MCP surface are planned follow-ups.
 
 The structure of `hybrid-example.json` is exercised end-to-end by
 `tests/unit/tests/network-hybrid-capabilities.sh`.

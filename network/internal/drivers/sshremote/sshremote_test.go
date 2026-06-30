@@ -196,6 +196,47 @@ func TestDial_TunneledRPC_Happy(t *testing.T) {
 	}
 }
 
+func TestDialTunnelClient_TunneledHTTP(t *testing.T) {
+	rpc := mockRPC(t)
+	addr := backendAddr(t, rpc.URL)
+	srv := startSSHServer(t, "alice", "hunter2", addr, nil)
+	host, portStr, _ := net.SplitHostPort(srv.addr)
+	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "hunter2"}
+
+	client, closer, err := DialTunnelClient(creds, ssh.InsecureIgnoreHostKey())
+	if err != nil {
+		t.Fatalf("DialTunnelClient: %v", err)
+	}
+	defer closer.Close()
+
+	// POST a JSON-RPC request through the tunnel to the mock backend.
+	resp, err := client.Post(rpc.URL, "application/json",
+		strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"eth_chainId"}`))
+	if err != nil {
+		t.Fatalf("tunneled POST: %v", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), "0x539") {
+		t.Errorf("tunneled response = %q, want chainId 0x539", string(body))
+	}
+}
+
+func TestDialTunnelClient_BadPassword(t *testing.T) {
+	rpc := mockRPC(t)
+	srv := startSSHServer(t, "alice", "hunter2", backendAddr(t, rpc.URL), nil)
+	host, portStr, _ := net.SplitHostPort(srv.addr)
+	creds := Credentials{User: "alice", Host: host, Port: atoi(t, portStr), Password: "WRONG"}
+
+	_, _, err := DialTunnelClient(creds, ssh.InsecureIgnoreHostKey())
+	if err == nil {
+		t.Fatal("expected auth failure")
+	}
+	if strings.Contains(err.Error(), "WRONG") {
+		t.Errorf("password leaked into error: %v", err)
+	}
+}
+
 func TestDial_BadPassword(t *testing.T) {
 	rpc := mockRPC(t)
 	srv := startSSHServer(t, "alice", "hunter2", backendAddr(t, rpc.URL), nil)
