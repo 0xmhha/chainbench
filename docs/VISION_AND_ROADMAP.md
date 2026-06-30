@@ -867,7 +867,8 @@ Phase 1과 Phase 2 병렬 진행을 가정한 초기 3 스프린트 예시:
 **Sprint 5b — SSH driver**
 - [x] 5b.1 — SSHRemoteDriver read-only RPC (SSH 터널 + `remote.Client` 재사용). `ssh-password` auth(env-only password), host key known_hosts 기본+insecure opt-in, providerCaps ssh-remote=`{rpc,ws}`. (2026-06-29)
 - [x] 5b.2 — process/fs capability (SSH shell exec 기반 node stop/start/restart + tail_log; `provider_meta` 의 `*_cmd`/`log_file` 모델), providerCaps ssh-remote `{fs,process,rpc,ws}` 복원. (2026-06-29)
-- [ ] 5b 후속 — ssh-remote 구성 명령(attach 확장), 키 인증/키체인, network 단위 start_all/stop_all 의 ssh-remote 반영
+- [x] 5b.3 — `network.attach` 가 ssh-remote provider 구성(`provider`+`provider_meta`+ssh-password auth). RPC 가 터널 뒤이므로 `probe.Options.Client` 에 SSH 터널 http.Client 주입해 auto chain_id 감지(`sshremote.DialTunnelClient`). 수동 networks 파일 작성 제거(wire 레벨). (2026-06-30)
+- [ ] 5b 후속 — `chainbench network attach` CLI/MCP 표면(remote+ssh-remote 공통), 키 인증/키체인, network 단위 start_all/stop_all 의 ssh-remote 반영
 
 **Sprint 5d — Hybrid 네트워크 예제** — 완료 (2026-06-29)
 - [x] Hybrid 네트워크 예제 (`examples/networks/hybrid-example.json` + README) + cross-layer 검증 (bash 실-바이너리 capability 교집합/게이팅 + MCP lower-bound). 예제는 profile YAML 이 아닌 로드 가능한 network-state JSON (profile 로더가 hybrid 미지원 — spec D1). 전용 구성 명령(`network attach-hybrid`)은 후속.
