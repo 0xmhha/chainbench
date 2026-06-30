@@ -24,7 +24,9 @@ type CommandCommand string
 const CommandCommandNetworkAttach CommandCommand = "network.attach"
 const CommandCommandNetworkCapabilities CommandCommand = "network.capabilities"
 const CommandCommandNetworkClean CommandCommand = "network.clean"
+const CommandCommandNetworkDetach CommandCommand = "network.detach"
 const CommandCommandNetworkInit CommandCommand = "network.init"
+const CommandCommandNetworkList CommandCommand = "network.list"
 const CommandCommandNetworkLoad CommandCommand = "network.load"
 const CommandCommandNetworkProbe CommandCommand = "network.probe"
 const CommandCommandNetworkRestart CommandCommand = "network.restart"
@@ -60,6 +62,8 @@ var enumValues_CommandCommand = []interface{}{
 	"network.restart",
 	"network.start_all",
 	"network.attach",
+	"network.detach",
+	"network.list",
 	"network.capabilities",
 	"node.rpc",
 	"node.start",

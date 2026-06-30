@@ -54,6 +54,8 @@ func allHandlers(stateDir, chainbenchDir string) map[string]Handler {
 		"network.stop_all":            newHandleNetworkStopAll(stateDir, chainbenchDir),
 		"network.status":              newHandleNetworkStatus(stateDir, chainbenchDir),
 		"network.attach":              newHandleNetworkAttach(stateDir),
+		"network.detach":              newHandleNetworkDetach(stateDir),
+		"network.list":                newHandleNetworkList(stateDir),
 		"network.capabilities":        newHandleNetworkCapabilities(stateDir),
 		"node.stop":                   newHandleNodeStop(stateDir, chainbenchDir),
 		"node.start":                  newHandleNodeStart(stateDir, chainbenchDir),

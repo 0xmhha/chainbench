@@ -128,6 +128,69 @@ func newHandleNetworkCapabilities(stateDir string) Handler {
 	}
 }
 
+// newHandleNetworkList returns the "network.list" handler. It enumerates the
+// attached networks under state/networks/ (the local network is not included —
+// it lives in pids.json). Args: none.
+//
+// Result: { "networks": [ { name, chain_type, chain_id, node_count }, ... ] }
+func newHandleNetworkList(stateDir string) Handler {
+	return func(_ json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		nets, err := state.ListRemotes(stateDir)
+		if err != nil {
+			return nil, NewUpstream("list networks", err)
+		}
+		out := make([]map[string]any, 0, len(nets))
+		for _, n := range nets {
+			out = append(out, map[string]any{
+				"name":       n.Name,
+				"chain_type": string(n.ChainType),
+				"chain_id":   n.ChainId,
+				"node_count": len(n.Nodes),
+			})
+		}
+		return map[string]any{"networks": out}, nil
+	}
+}
+
+// newHandleNetworkDetach returns the "network.detach" handler — the inverse of
+// network.attach. It removes state/networks/<name>.json.
+//
+// Args: { "name": "<alias>" }
+//
+// Error mapping:
+//
+//	INVALID_ARGS   — missing name, reserved ("local"), or invalid name pattern.
+//	UPSTREAM_ERROR — no attached network with that name, or file removal failure.
+func newHandleNetworkDetach(stateDir string) Handler {
+	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
+		var req struct {
+			Name string `json:"name"`
+		}
+		if len(args) > 0 {
+			if err := json.Unmarshal(args, &req); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args: %v", err))
+			}
+		}
+		if req.Name == "" {
+			return nil, NewInvalidArgs("args.name is required")
+		}
+		if req.Name == "local" {
+			return nil, NewInvalidArgs("args.name 'local' is reserved; the local network cannot be detached")
+		}
+		if !state.IsValidRemoteName(req.Name) {
+			return nil, NewInvalidArgs(fmt.Sprintf(
+				"args.name must match [a-z0-9][a-z0-9_-]*: %q", req.Name))
+		}
+		if err := state.RemoveRemote(stateDir, req.Name); err != nil {
+			if errors.Is(err, state.ErrReservedName) || errors.Is(err, state.ErrInvalidName) {
+				return nil, NewInvalidArgs(err.Error())
+			}
+			return nil, NewUpstream("detach network", err)
+		}
+		return map[string]any{"name": req.Name, "detached": true}, nil
+	}
+}
+
 // newHandleNetworkLoad returns the "network.load" handler closing over stateDir.
 func newHandleNetworkLoad(stateDir string) Handler {
 	return func(args json.RawMessage, bus *events.Bus) (map[string]any, error) {
