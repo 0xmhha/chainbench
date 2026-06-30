@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import {
   NetworkCapabilitiesArgs,
   _networkCapabilitiesHandler,
+  NetworkAttachArgs,
+  _networkAttachHandler,
 } from "../src/tools/network.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -167,5 +169,98 @@ describe("chainbench_network_capabilities handler", () => {
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (INVALID_ARGS)");
     expect(out.content[0]?.text).toContain("unknown network");
+  });
+});
+
+describe("chainbench_network_attach handler", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_Attach_Remote_Happy", async () => {
+    const data = {
+      name: "sepolia",
+      chain_type: "ethereum",
+      chain_id: 11155111,
+      nodes: [{ id: "node1", provider: "remote", http: "https://rpc.example" }],
+      rpc_url: "https://rpc.example",
+      created: true,
+    };
+    process.env.MOCK_SCRIPT = script([
+      { kind: "stdout", line: JSON.stringify({ type: "result", ok: true, data }) },
+    ]);
+    const out = await _networkAttachHandler({
+      name: "sepolia",
+      rpc_url: "https://rpc.example",
+    });
+    expect(out.isError).toBeFalsy();
+    const text = out.content[0]?.text ?? "";
+    expect(text).toContain("sepolia");
+    expect(text).toContain("11155111");
+  });
+
+  it("_Attach_SSHRemote_SchemaAccepts", () => {
+    // The ssh-remote shape (provider + ssh-password auth + provider_meta) must
+    // pass zod so an LLM can construct it; .strict() still rejects typos.
+    expect(() =>
+      NetworkAttachArgs.parse({
+        name: "sshnet",
+        rpc_url: "http://127.0.0.1:8545",
+        provider: "ssh-remote",
+        auth: { type: "ssh-password", user: "deploy", host: "10.0.0.1", env: "SSH_PW" },
+        provider_meta: { log_file: "/var/log/node.log", stop_cmd: "systemctl stop x" },
+      }),
+    ).not.toThrow();
+  });
+
+  it("_StrictRejectsUnknownKeys", () => {
+    expect(() =>
+      NetworkAttachArgs.parse({ name: "x", rpc_url: "u", bogus: 1 }),
+    ).toThrow();
+    // nested auth is also strict
+    expect(() =>
+      NetworkAttachArgs.parse({
+        name: "x",
+        rpc_url: "u",
+        auth: { type: "api-key", env: "K", typo: true },
+      }),
+    ).toThrow();
+  });
+
+  it("_WireFailure_PassedThrough", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({
+          type: "result",
+          ok: false,
+          error: { code: "INVALID_ARGS", message: "args.provider must be" },
+        }),
+      },
+    ]);
+    const out = await _networkAttachHandler({
+      name: "x",
+      rpc_url: "u",
+      provider: "remote",
+    });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("Error (INVALID_ARGS)");
   });
 });
