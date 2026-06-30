@@ -95,7 +95,7 @@
 - Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
 - 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: ~~5c.4.2~~ ✅ · ~~5d~~ ✅ · ~~5b.1/5b.2/5b.3~~ ✅ · ~~P2-1a/P2-1b~~ ✅ · ~~5b.4 (attach CLI/MCP 표면)~~ ✅ 완료(2026-06-30, `feat/sprint-5b-4-attach-surface`). Sprint 5 + CC-B1 + SSH 전체 완료 → 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-2 bash 분할) 또는 5b 후속(키 인증, network detach/list).
+**다음 P1**: ~~5c.4.2~~ ✅ · ~~5d~~ ✅ · ~~5b.1~5b.4~~ ✅ · ~~P2-1a/P2-1b~~ ✅ · ~~5b.5 (network list/detach)~~ ✅ 완료(2026-06-30, `feat/sprint-5b-5-network-list-detach`). Sprint 5 + CC-B1 + SSH(5b 전체 + CRUD) 완료 → 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-2 bash 분할) 또는 5b 후속(키 인증, hybrid compose).
 
 ---
 
@@ -193,7 +193,9 @@
 >
 > **5b.4 완료 (2026-06-30, `feat/sprint-5b-4-attach-surface`)**: `network.attach` 사용자 표면 — bash `chainbench network attach`(`lib/cmd_network.sh`) + MCP `chainbench_network_attach`. remote+ssh-remote 공통, 자격증명 env-var 이름만.
 >
-> **5b 후속 (잔여)**: 키 인증/OS 키체인(S6 후속), network 단위 start_all/stop_all 의 ssh-remote 반영, `network detach/list` + hybrid compose.
+> **5b.5 완료 (2026-06-30, `feat/sprint-5b-5-network-list-detach`)**: `network.list` + `network.detach` — state `ListRemotes`/`RemoveRemote` + wire 핸들러 + schema + bash `network list/detach` + MCP `chainbench_network_list`/`_detach`. attach↔detach CRUD 완성.
+>
+> **5b 후속 (잔여)**: 키 인증/OS 키체인(S6 후속), network 단위 start_all/stop_all 의 ssh-remote 반영, hybrid compose.
 > spec/plan: `2026-06-29-sprint-5b-1-...` · `2026-06-29-sprint-5b-2-...`.
 
 <details><summary>원본 목표 (이력)</summary>

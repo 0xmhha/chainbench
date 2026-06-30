@@ -7,6 +7,10 @@ import {
   _networkCapabilitiesHandler,
   NetworkAttachArgs,
   _networkAttachHandler,
+  NetworkListArgs,
+  _networkListHandler,
+  NetworkDetachArgs,
+  _networkDetachHandler,
 } from "../src/tools/network.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -262,5 +266,81 @@ describe("chainbench_network_attach handler", () => {
     });
     expect(out.isError).toBe(true);
     expect(out.content[0]?.text).toContain("Error (INVALID_ARGS)");
+  });
+});
+
+describe("chainbench_network_list / _detach handlers", () => {
+  let savedBin: string | undefined;
+  let savedScript: string | undefined;
+  let savedDir: string | undefined;
+
+  beforeEach(() => {
+    savedBin = process.env.CHAINBENCH_NET_BIN;
+    savedScript = process.env.MOCK_SCRIPT;
+    savedDir = process.env.CHAINBENCH_DIR;
+    process.env.CHAINBENCH_NET_BIN = MOCK_BIN;
+    delete process.env.CHAINBENCH_DIR;
+  });
+
+  afterEach(() => {
+    if (savedBin === undefined) delete process.env.CHAINBENCH_NET_BIN;
+    else process.env.CHAINBENCH_NET_BIN = savedBin;
+    if (savedScript === undefined) delete process.env.MOCK_SCRIPT;
+    else process.env.MOCK_SCRIPT = savedScript;
+    if (savedDir === undefined) delete process.env.CHAINBENCH_DIR;
+    else process.env.CHAINBENCH_DIR = savedDir;
+  });
+
+  it("_List_Happy", async () => {
+    const data = {
+      networks: [
+        { name: "alpha", chain_type: "stablenet", chain_id: 8283, node_count: 1 },
+        { name: "sepolia", chain_type: "ethereum", chain_id: 11155111, node_count: 1 },
+      ],
+    };
+    process.env.MOCK_SCRIPT = script([
+      { kind: "stdout", line: JSON.stringify({ type: "result", ok: true, data }) },
+    ]);
+    const out = await _networkListHandler({});
+    expect(out.isError).toBeFalsy();
+    const text = out.content[0]?.text ?? "";
+    expect(text).toContain("alpha");
+    expect(text).toContain("sepolia");
+  });
+
+  it("_List_StrictRejectsUnknownKeys", () => {
+    expect(() => NetworkListArgs.parse({ extra: 1 })).toThrow();
+  });
+
+  it("_Detach_Happy", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({ type: "result", ok: true, data: { name: "alpha", detached: true } }),
+      },
+    ]);
+    const out = await _networkDetachHandler({ name: "alpha" });
+    expect(out.isError).toBeFalsy();
+    expect(out.content[0]?.text ?? "").toContain("alpha");
+  });
+
+  it("_Detach_StrictRejectsUnknownKeys", () => {
+    expect(() => NetworkDetachArgs.parse({ name: "x", bogus: 1 })).toThrow();
+  });
+
+  it("_Detach_WireFailure_PassedThrough", async () => {
+    process.env.MOCK_SCRIPT = script([
+      {
+        kind: "stdout",
+        line: JSON.stringify({
+          type: "result",
+          ok: false,
+          error: { code: "UPSTREAM_ERROR", message: "no attached network named" },
+        }),
+      },
+    ]);
+    const out = await _networkDetachHandler({ name: "nope" });
+    expect(out.isError).toBe(true);
+    expect(out.content[0]?.text).toContain("UPSTREAM_ERROR");
   });
 });

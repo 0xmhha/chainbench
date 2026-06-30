@@ -109,6 +109,30 @@ export async function _networkAttachHandler(
 }
 
 // ---------------------------------------------------------------------------
+// chainbench_network_list / chainbench_network_detach (Sprint 5b.5)
+// ---------------------------------------------------------------------------
+
+export const NetworkListArgs = z.object({}).strict();
+
+export async function _networkListHandler(
+  _args: z.infer<typeof NetworkListArgs>,
+): Promise<FormattedToolResponse> {
+  const result = await callWire("network.list", {});
+  return formatWireResult(result);
+}
+
+export const NetworkDetachArgs = z.object({
+  name: z.string().min(1).describe("Attached network alias to remove."),
+}).strict();
+
+export async function _networkDetachHandler(
+  args: z.infer<typeof NetworkDetachArgs>,
+): Promise<FormattedToolResponse> {
+  const result = await callWire("network.detach", { name: args.name });
+  return formatWireResult(result);
+}
+
+// ---------------------------------------------------------------------------
 // Tool registration
 // ---------------------------------------------------------------------------
 
@@ -136,6 +160,25 @@ export function registerNetworkTools(server: McpServer): void {
       "never inline a secret. provider_meta carries ssh-remote lifecycle commands.",
     NetworkAttachArgs.shape,
     _networkAttachHandler,
+  );
+
+  // ---- chainbench_network_list ----
+  server.tool(
+    "chainbench_network_list",
+    "List attached networks (remote / ssh-remote) with their chain_type, " +
+      "chain_id, and node count. The local network is not included. Use this to " +
+      "discover networks available for node.* / capability commands.",
+    NetworkListArgs.shape,
+    _networkListHandler,
+  );
+
+  // ---- chainbench_network_detach ----
+  server.tool(
+    "chainbench_network_detach",
+    "Remove an attached network (the inverse of chainbench_network_attach). " +
+      "Deletes state/networks/<name>.json. 'local' cannot be detached.",
+    NetworkDetachArgs.shape,
+    _networkDetachHandler,
   );
 
   // ---- chainbench_network_peers ----

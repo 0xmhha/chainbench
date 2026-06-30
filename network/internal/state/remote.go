@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/0xmhha/chainbench/network/internal/types"
 )
@@ -97,4 +99,55 @@ func loadRemote(stateDir, name string) (*types.Network, error) {
 		return nil, fmt.Errorf("state: filename %q has mismatched network name %q", name, net.Name)
 	}
 	return &net, nil
+}
+
+// ListRemotes returns the attached networks under <stateDir>/networks/, sorted
+// by name. The local network (pids.json) is not included. A missing networks
+// directory yields an empty slice (not an error). Files that fail to parse or
+// whose contents disagree with the filename are skipped rather than failing the
+// whole listing.
+func ListRemotes(stateDir string) ([]*types.Network, error) {
+	dir := filepath.Join(stateDir, "networks")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []*types.Network{}, nil
+		}
+		return nil, fmt.Errorf("state: read networks dir: %w", err)
+	}
+	nets := make([]*types.Network, 0, len(entries))
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".json") {
+			continue
+		}
+		stem := strings.TrimSuffix(name, ".json")
+		net, err := loadRemote(stateDir, stem)
+		if err != nil {
+			continue // skip malformed / reserved / mismatched entries
+		}
+		nets = append(nets, net)
+	}
+	sort.Slice(nets, func(i, j int) bool { return nets[i].Name < nets[j].Name })
+	return nets, nil
+}
+
+// RemoveRemote deletes <stateDir>/networks/<name>.json (the inverse of
+// SaveRemote). Reserved/invalid names are rejected; a missing network yields a
+// wrapped ErrStateNotFound.
+func RemoveRemote(stateDir, name string) error {
+	if IsReservedRemoteName(name) {
+		return ErrReservedName
+	}
+	if !remoteNameRE.MatchString(name) {
+		return fmt.Errorf("%w: %q", ErrInvalidName, name)
+	}
+	path := filepath.Join(stateDir, "networks", name+".json")
+	if err := os.Remove(path); err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%w: no attached network named %q", ErrStateNotFound, name)
+		}
+		return fmt.Errorf("state: remove %s: %w", path, err)
+	}
+	return nil
 }

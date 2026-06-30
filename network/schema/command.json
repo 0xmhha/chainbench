@@ -18,6 +18,8 @@
         "network.restart",
         "network.start_all",
         "network.attach",
+        "network.detach",
+        "network.list",
         "network.capabilities",
         "node.rpc",
         "node.start",
