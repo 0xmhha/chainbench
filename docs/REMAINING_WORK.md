@@ -95,7 +95,7 @@
 - Reroute 진행도: **5/38 (~13%)** (5c.3 의 3 + 5c.4.1 의 2)
 - 테스트: vitest **100/100** · Go **16 packages** · bash **34/34** · 회귀 0
 
-**다음 P1**: ~~5c.4.2~~ ✅ · ~~5d~~ ✅ · ~~5b.1/5b.2~~ ✅ · ~~P2-1a/P2-1b~~ ✅ · ~~5b.3 (ssh-remote attach 구성)~~ ✅ 완료(2026-06-30, `feat/sprint-5b-3-ssh-attach`). Sprint 5 + CC-B1 완료 → 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-2 bash 분할) 또는 5b 후속(attach CLI/MCP 표면, 키 인증).
+**다음 P1**: ~~5c.4.2~~ ✅ · ~~5d~~ ✅ · ~~5b.1/5b.2/5b.3~~ ✅ · ~~P2-1a/P2-1b~~ ✅ · ~~5b.4 (attach CLI/MCP 표면)~~ ✅ 완료(2026-06-30, `feat/sprint-5b-4-attach-surface`). Sprint 5 + CC-B1 + SSH 전체 완료 → 다음 후보 → `REFACTORING_PLAN.md` §6.2 (P2-2 bash 분할) 또는 5b 후속(키 인증, network detach/list).
 
 ---
 
@@ -191,7 +191,9 @@
 >
 > **5b.3 완료 (2026-06-30, `feat/sprint-5b-3-ssh-attach`)**: `network.attach` 가 ssh-remote 구성 지원 — `provider:ssh-remote` + `provider_meta` + ssh-password auth, SSH 터널 경유 probe(`sshremote.DialTunnelClient` → `probe.Options.Client`)로 auto chain_id 감지. 수동 networks 파일 작성 불필요(wire 레벨).
 >
-> **5b 후속 (잔여)**: `chainbench network attach` CLI/MCP 표면(remote+ssh-remote 공통 — 현재 attach 는 wire 프리미티브, 사용자 표면 없음), 키 인증/OS 키체인(S6 후속), network 단위 start_all/stop_all 의 ssh-remote 반영.
+> **5b.4 완료 (2026-06-30, `feat/sprint-5b-4-attach-surface`)**: `network.attach` 사용자 표면 — bash `chainbench network attach`(`lib/cmd_network.sh`) + MCP `chainbench_network_attach`. remote+ssh-remote 공통, 자격증명 env-var 이름만.
+>
+> **5b 후속 (잔여)**: 키 인증/OS 키체인(S6 후속), network 단위 start_all/stop_all 의 ssh-remote 반영, `network detach/list` + hybrid compose.
 > spec/plan: `2026-06-29-sprint-5b-1-...` · `2026-06-29-sprint-5b-2-...`.
 
 <details><summary>원본 목표 (이력)</summary>
