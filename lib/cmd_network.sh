@@ -15,7 +15,13 @@ source "${_CB_NETWORK_CMD_LIB_DIR}/network_client.sh"
 
 _cb_network_usage() {
   cat <<'EOF'
-Usage: chainbench network attach <name> <rpc_url> [options]
+Usage:
+  chainbench network attach <name> <rpc_url> [options]
+  chainbench network list [--json]
+  chainbench network detach <name> [--json]
+
+--- attach ---------------------------------------------------------------------
+chainbench network attach <name> <rpc_url> [options]
 
 Attach a remote or ssh-remote node as a named network. Probes the endpoint for
 chain_id / chain_type and persists state/networks/<name>.json.
@@ -141,11 +147,71 @@ _cb_network_cmd_attach() {
     2>/dev/null || printf '%s\n' "$result"
 }
 
+# _cb_network_cmd_list [--json]
+_cb_network_cmd_list() {
+  local as_json=0
+  [[ "${1:-}" == "--json" ]] && as_json=1
+  local result rc=0
+  result="$(cb_net_call "network.list" '{}')" || rc=$?
+  if [[ $rc -ne 0 ]]; then
+    log_error "List failed"
+    [[ -n "$result" ]] && printf '%s\n' "$result" >&2
+    return "$rc"
+  fi
+  if [[ "$as_json" -eq 1 ]]; then
+    printf '%s\n' "$result"
+    return 0
+  fi
+  local count
+  count="$(printf '%s' "$result" | jq -r '.networks | length' 2>/dev/null || echo 0)"
+  if [[ "$count" == "0" ]]; then
+    echo "No attached networks. Use 'chainbench network attach' to add one."
+    return 0
+  fi
+  printf '%-20s %-12s %-12s %s\n' "NAME" "CHAIN_TYPE" "CHAIN_ID" "NODES"
+  printf '%s' "$result" | jq -r \
+    '.networks[] | "\(.name)\t\(.chain_type)\t\(.chain_id)\t\(.node_count)"' \
+    | while IFS=$'\t' read -r name ctype cid nodes; do
+        printf '%-20s %-12s %-12s %s\n' "$name" "$ctype" "$cid" "$nodes"
+      done
+}
+
+# _cb_network_cmd_detach <name> [--json]
+_cb_network_cmd_detach() {
+  local name="" as_json=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --json) as_json=1; shift ;;
+      -*)     log_warn "Unknown option: $1"; shift ;;
+      *)      [[ -z "$name" ]] && name="$1"; shift ;;
+    esac
+  done
+  if [[ -z "$name" ]]; then
+    log_error "Usage: chainbench network detach <name>"
+    return 1
+  fi
+  local args_json result rc=0
+  args_json="$(jq -cn --arg n "$name" '{name: $n}')"
+  result="$(cb_net_call "network.detach" "$args_json")" || rc=$?
+  if [[ $rc -ne 0 ]]; then
+    log_error "Detach failed"
+    [[ -n "$result" ]] && printf '%s\n' "$result" >&2
+    return "$rc"
+  fi
+  if [[ "$as_json" -eq 1 ]]; then
+    printf '%s\n' "$result"
+    return 0
+  fi
+  printf "Detached '%s'\n" "$name"
+}
+
 cmd_network_main() {
   local action="${1:-}"
   [[ $# -gt 0 ]] && shift
   case "$action" in
     attach)            _cb_network_cmd_attach "$@" ;;
+    list)              _cb_network_cmd_list "$@" ;;
+    detach)            _cb_network_cmd_detach "$@" ;;
     ""|-h|--help|help) _cb_network_usage ;;
     *)                 log_error "Unknown network action: ${action}"; _cb_network_usage; return 1 ;;
   esac
