@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/network/internal/drivers/remote"
+	"github.com/0xmhha/chainbench/network/internal/drivers/sshremote"
 	"github.com/0xmhha/chainbench/network/internal/events"
 	"github.com/0xmhha/chainbench/network/internal/probe"
 	"github.com/0xmhha/chainbench/network/internal/state"
@@ -268,10 +269,12 @@ func newHandleNetworkProbe() Handler {
 func newHandleNetworkAttach(stateDir string) Handler {
 	return func(args json.RawMessage, _ *events.Bus) (map[string]any, error) {
 		var req struct {
-			RPCURL   string          `json:"rpc_url"`
-			Name     string          `json:"name"`
-			Override string          `json:"override"`
-			Auth     json.RawMessage `json:"auth"` // optional; raw passthrough to types.Auth
+			RPCURL       string          `json:"rpc_url"`
+			Name         string          `json:"name"`
+			Override     string          `json:"override"`
+			Auth         json.RawMessage `json:"auth"`          // optional; raw passthrough to types.Auth
+			Provider     string          `json:"provider"`      // "" / "remote" (default) | "ssh-remote"
+			ProviderMeta json.RawMessage `json:"provider_meta"` // ssh-remote: log_file / *_cmd
 		}
 		if len(args) > 0 {
 			if err := json.Unmarshal(args, &req); err != nil {
@@ -295,15 +298,87 @@ func newHandleNetworkAttach(stateDir string) Handler {
 			))
 		}
 
-		result, err := probe.Detect(context.Background(), probe.Options{
-			RPCURL:   req.RPCURL,
-			Override: req.Override,
-		})
-		if err != nil {
-			if probe.IsInputError(err) {
-				return nil, NewInvalidArgs(err.Error())
+		// Build the single node, probing for chain_type/chain_id. The "remote"
+		// path probes the RPC URL directly over HTTP; the "ssh-remote" path
+		// probes through an SSH tunnel (the RPC port lives on the remote host).
+		node := types.Node{Id: "node1", Http: req.RPCURL}
+		var result *probe.Result
+		var err error
+
+		switch req.Provider {
+		case "", "remote":
+			node.Provider = types.NodeProviderRemote
+			result, err = probe.Detect(context.Background(), probe.Options{
+				RPCURL:   req.RPCURL,
+				Override: req.Override,
+			})
+			if err != nil {
+				if probe.IsInputError(err) {
+					return nil, NewInvalidArgs(err.Error())
+				}
+				return nil, NewUpstream("probe failed", err)
 			}
-			return nil, NewUpstream("probe failed", err)
+			// Optional auth config. The raw JSON is decoded into types.Auth (a
+			// loose map) and attached to Node.Auth — only the env-var NAME is
+			// persisted; the credential stays in env vars, resolved at dial time.
+			// ValidateAuth runs before assignment so a malformed payload is an
+			// INVALID_ARGS at the boundary, not a dial-time UPSTREAM_ERROR.
+			if len(req.Auth) > 0 {
+				var auth types.Auth
+				if err := json.Unmarshal(req.Auth, &auth); err != nil {
+					return nil, NewInvalidArgs(fmt.Sprintf("args.auth: %v", err))
+				}
+				if err := remote.ValidateAuth(auth); err != nil {
+					return nil, NewInvalidArgs(err.Error())
+				}
+				node.Auth = auth
+			}
+		case "ssh-remote":
+			node.Provider = types.NodeProviderSshRemote
+			if len(req.Auth) == 0 {
+				return nil, NewInvalidArgs("ssh-remote attach requires ssh-password auth")
+			}
+			var auth types.Auth
+			if err := json.Unmarshal(req.Auth, &auth); err != nil {
+				return nil, NewInvalidArgs(fmt.Sprintf("args.auth: %v", err))
+			}
+			// Reuse the dispatch-side parser so creds validation, env lookup, and
+			// error classification match node.* handlers exactly.
+			creds, cerr := sshCredsFromNode(&types.Node{Auth: auth})
+			if cerr != nil {
+				return nil, cerr
+			}
+			hostKey, herr := sshremote.ResolveHostKeyCallback(os.Getenv)
+			if herr != nil {
+				return nil, NewUpstream("ssh host key", herr)
+			}
+			client, closer, derr := sshremote.DialTunnelClient(creds, hostKey)
+			if derr != nil {
+				return nil, NewUpstream("ssh tunnel", derr)
+			}
+			defer closer.Close()
+			result, err = probe.Detect(context.Background(), probe.Options{
+				RPCURL:   req.RPCURL,
+				Override: req.Override,
+				Client:   client,
+			})
+			if err != nil {
+				if probe.IsInputError(err) {
+					return nil, NewInvalidArgs(err.Error())
+				}
+				return nil, NewUpstream("probe failed (over ssh tunnel)", err)
+			}
+			node.Auth = auth
+			if len(req.ProviderMeta) > 0 {
+				var meta types.NodeProviderMeta
+				if err := json.Unmarshal(req.ProviderMeta, &meta); err != nil {
+					return nil, NewInvalidArgs(fmt.Sprintf("args.provider_meta: %v", err))
+				}
+				node.ProviderMeta = meta
+			}
+		default:
+			return nil, NewInvalidArgs(fmt.Sprintf(
+				"args.provider must be 'remote' or 'ssh-remote', got %q", req.Provider))
 		}
 
 		// Detect prior existence to set created=true on first save, false on
@@ -317,32 +392,7 @@ func newHandleNetworkAttach(stateDir string) Handler {
 			Name:      req.Name,
 			ChainType: types.NetworkChainType(result.ChainType),
 			ChainId:   int(result.ChainID),
-			Nodes: []types.Node{{
-				Id:       "node1",
-				Provider: types.NodeProvider("remote"),
-				Http:     req.RPCURL,
-			}},
-		}
-		// Optional auth config. The raw JSON is decoded into types.Auth (a loose
-		// map[string]interface{}) and attached to Node.Auth. Only the env-var
-		// NAME is persisted; the actual credential stays in env vars and is
-		// resolved at dial time via remote.AuthFromNode.
-		//
-		// ValidateAuth runs BEFORE the Node.Auth assignment and BEFORE
-		// SaveRemote so a structurally-invalid payload (unknown type, missing
-		// required env field) is rejected with INVALID_ARGS at the input
-		// boundary rather than deferring to dial time as UPSTREAM_ERROR. The
-		// check is pure structural — no round trip — so it can run after the
-		// probe without penalty.
-		if len(req.Auth) > 0 {
-			var auth types.Auth
-			if err := json.Unmarshal(req.Auth, &auth); err != nil {
-				return nil, NewInvalidArgs(fmt.Sprintf("args.auth: %v", err))
-			}
-			if err := remote.ValidateAuth(auth); err != nil {
-				return nil, NewInvalidArgs(err.Error())
-			}
-			net.Nodes[0].Auth = auth
+			Nodes:     []types.Node{node},
 		}
 		if err := state.SaveRemote(stateDir, net); err != nil {
 			// The handler pre-checks reserved and invalid names, so the sentinel
