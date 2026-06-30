@@ -138,3 +138,71 @@ func TestLoadRemote_RejectsNameMismatch(t *testing.T) {
 		t.Fatal("expected error for filename/name mismatch")
 	}
 }
+
+// ---- ListRemotes / RemoveRemote (Sprint 5b.5) ----
+
+func mkNet(name, chainType string, chainID int) *types.Network {
+	return &types.Network{
+		Name: name, ChainType: types.NetworkChainType(chainType), ChainId: chainID,
+		Nodes: []types.Node{{Id: "node1", Provider: "remote", Http: "http://127.0.0.1:1"}},
+	}
+}
+
+func TestListRemotes_EmptyWhenNoDir(t *testing.T) {
+	got, err := ListRemotes(t.TempDir())
+	if err != nil {
+		t.Fatalf("ListRemotes: %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("len = %d, want 0", len(got))
+	}
+}
+
+func TestListRemotes_SortedAndSkipsMalformed(t *testing.T) {
+	dir := t.TempDir()
+	if err := SaveRemote(dir, mkNet("zeta", "ethereum", 1)); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveRemote(dir, mkNet("alpha", "stablenet", 8283)); err != nil {
+		t.Fatal(err)
+	}
+	// A malformed file must be skipped, not fail the listing.
+	if err := os.WriteFile(filepath.Join(dir, "networks", "broken.json"), []byte("{not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, err := ListRemotes(dir)
+	if err != nil {
+		t.Fatalf("ListRemotes: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("len = %d, want 2 (broken skipped)", len(got))
+	}
+	if got[0].Name != "alpha" || got[1].Name != "zeta" {
+		t.Errorf("order = [%s %s], want [alpha zeta]", got[0].Name, got[1].Name)
+	}
+}
+
+func TestRemoveRemote_Success(t *testing.T) {
+	dir := t.TempDir()
+	if err := SaveRemote(dir, mkNet("gone", "ethereum", 1)); err != nil {
+		t.Fatal(err)
+	}
+	if err := RemoveRemote(dir, "gone"); err != nil {
+		t.Fatalf("RemoveRemote: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "networks", "gone.json")); !os.IsNotExist(err) {
+		t.Errorf("file still present after RemoveRemote")
+	}
+}
+
+func TestRemoveRemote_NotFound(t *testing.T) {
+	if err := RemoveRemote(t.TempDir(), "nope"); err == nil {
+		t.Fatal("expected error for missing network")
+	}
+}
+
+func TestRemoveRemote_RejectsReserved(t *testing.T) {
+	if err := RemoveRemote(t.TempDir(), "local"); err == nil {
+		t.Fatal("expected error rejecting reserved name 'local'")
+	}
+}
