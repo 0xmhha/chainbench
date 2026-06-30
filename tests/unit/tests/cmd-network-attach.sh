@@ -82,6 +82,24 @@ assert_contains "$out" "stablenet" "summary names chain_type"
 assert_contains "$out" "8283" "summary names chain_id"
 assert_eq "$(cb_json_read "${CHAINBENCH_STATE_DIR}/networks/netx.json" "nodes.0.provider")" "remote" "persisted provider=remote"
 
+# ---- Case 1b: list shows the attached network, detach removes it ----
+describe "network list / detach: round-trip"
+list_out="$(_cb_network_cmd_list 2>/dev/null)"
+assert_contains "$list_out" "netx" "list shows attached network"
+detach_out="$(_cb_network_cmd_detach netx 2>/dev/null)"
+assert_contains "$detach_out" "netx" "detach reports the network"
+if [[ -f "${CHAINBENCH_STATE_DIR}/networks/netx.json" ]]; then
+  assert_eq "present" "removed" "networks/netx.json should be removed after detach"
+else
+  assert_eq "removed" "removed" "networks/netx.json removed after detach"
+fi
+list_out2="$(_cb_network_cmd_list 2>/dev/null)"
+if printf '%s' "$list_out2" | grep -q "netx"; then
+  assert_eq "still-listed" "gone" "detached network must not appear in list"
+else
+  assert_eq "gone" "gone" "detached network no longer listed"
+fi
+
 # ---- Case 2: ssh-remote missing required flags -> CLI error (no wire call) ----
 describe "network attach: ssh-remote missing flags -> CLI error"
 set +e
