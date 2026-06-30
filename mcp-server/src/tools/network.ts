@@ -46,6 +46,69 @@ export async function _networkCapabilitiesHandler(
 }
 
 // ---------------------------------------------------------------------------
+// chainbench_network_attach — schema + handler (Sprint 5b.4)
+// ---------------------------------------------------------------------------
+
+export const NetworkAttachArgs = z.object({
+  name: z.string().min(1).describe("Network alias to persist (state/networks/<name>.json)."),
+  rpc_url: z
+    .string()
+    .min(1)
+    .describe(
+      "RPC endpoint. For ssh-remote, the URL as reachable from the remote host (e.g. http://127.0.0.1:8545).",
+    ),
+  override: z
+    .string()
+    .optional()
+    .describe("Chain type override if probe auto-detection is wrong."),
+  provider: z
+    .enum(["remote", "ssh-remote"])
+    .optional()
+    .describe("Node provider. Defaults to 'remote'. 'ssh-remote' tunnels RPC over SSH."),
+  auth: z
+    .object({
+      type: z.enum(["api-key", "jwt", "ssh-password"]),
+      env: z
+        .string()
+        .optional()
+        .describe("Env var NAME holding the credential — never pass the secret value inline."),
+      header: z.string().optional().describe("Header name for api-key (default Authorization)."),
+      user: z.string().optional().describe("SSH user (ssh-password)."),
+      host: z.string().optional().describe("SSH host (ssh-password)."),
+      port: z.number().optional().describe("SSH port (ssh-password, default 22)."),
+    })
+    .strict()
+    .optional(),
+  provider_meta: z
+    .object({
+      log_file: z.string().optional(),
+      start_cmd: z.string().optional(),
+      stop_cmd: z.string().optional(),
+      restart_cmd: z.string().optional(),
+    })
+    .strict()
+    .optional()
+    .describe("ssh-remote process/fs commands (operator-supplied; run over SSH)."),
+}).strict();
+
+type NetworkAttachArgsT = z.infer<typeof NetworkAttachArgs>;
+
+export async function _networkAttachHandler(
+  args: NetworkAttachArgsT,
+): Promise<FormattedToolResponse> {
+  const wireArgs: Record<string, unknown> = {
+    name: args.name,
+    rpc_url: args.rpc_url,
+  };
+  if (args.override !== undefined) wireArgs.override = args.override;
+  if (args.provider !== undefined) wireArgs.provider = args.provider;
+  if (args.auth !== undefined) wireArgs.auth = args.auth;
+  if (args.provider_meta !== undefined) wireArgs.provider_meta = args.provider_meta;
+  const result = await callWire("network.attach", wireArgs);
+  return formatWireResult(result);
+}
+
+// ---------------------------------------------------------------------------
 // Tool registration
 // ---------------------------------------------------------------------------
 
@@ -61,6 +124,18 @@ export function registerNetworkTools(server: McpServer): void {
       "Hybrid networks return the intersection of all nodes' capabilities.",
     NetworkCapabilitiesArgs.shape,
     _networkCapabilitiesHandler,
+  );
+
+  // ---- chainbench_network_attach ----
+  server.tool(
+    "chainbench_network_attach",
+    "Attach a remote or ssh-remote node as a named network, probing it for " +
+      "chain_id/chain_type. provider 'remote' (default) probes the RPC URL over " +
+      "HTTP; 'ssh-remote' tunnels the probe through SSH (set auth.type='ssh-password' " +
+      "with user/host/env). Credentials are passed by env-var NAME via auth.env — " +
+      "never inline a secret. provider_meta carries ssh-remote lifecycle commands.",
+    NetworkAttachArgs.shape,
+    _networkAttachHandler,
   );
 
   // ---- chainbench_network_peers ----
