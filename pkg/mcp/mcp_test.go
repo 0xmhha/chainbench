@@ -57,14 +57,14 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 11 {
-		t.Fatalf("tools: %d, want 11", len(tools))
+	if len(tools) != 16 {
+		t.Fatalf("tools: %d, want 16", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool", "chainbench_log"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
@@ -90,6 +90,63 @@ func TestStatusTool(t *testing.T) {
 	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node1 validator") || !strings.Contains(text, "pid=4321") {
 		t.Errorf("status tool: err=%v text=%s", isErr, text)
 	}
+}
+
+func TestAccountStateTool(t *testing.T) {
+	srv := rpcMock(map[string]any{
+		"eth_getBalance":          "0xde0b6b3a7640000",
+		"eth_getTransactionCount": "0x2",
+		"eth_getCode":             "0x6001",
+	})
+	defer srv.Close()
+	text, isErr := callText(t, newServer(), "chainbench_account_state", map[string]any{
+		"rpc": srv.URL, "address": "0xabc",
+	})
+	if isErr || !strings.Contains(text, "balance=1000000000000000000") || !strings.Contains(text, "nonce=2") || !strings.Contains(text, "contract=true") {
+		t.Errorf("account_state tool: err=%v text=%s", isErr, text)
+	}
+}
+
+func TestContractCallTool(t *testing.T) {
+	srv := rpcMock(map[string]any{"eth_call": "0x2a"})
+	defer srv.Close()
+	text, isErr := callText(t, newServer(), "chainbench_contract_call", map[string]any{
+		"rpc": srv.URL, "to": "0xdef", "data": "0x00",
+	})
+	if isErr || text != "0x2a" {
+		t.Errorf("contract_call tool: err=%v text=%s", isErr, text)
+	}
+}
+
+func TestTxWaitTool(t *testing.T) {
+	srv := rpcMock(map[string]any{
+		"eth_getTransactionReceipt": map[string]any{"status": "0x1", "blockNumber": "0x7"},
+	})
+	defer srv.Close()
+	text, isErr := callText(t, newServer(), "chainbench_tx_wait", map[string]any{
+		"rpc": srv.URL, "hash": "0xhash", "timeout_seconds": 2,
+	})
+	if isErr || !strings.Contains(text, "0x7") || !strings.Contains(text, "0x1") {
+		t.Errorf("tx_wait tool: err=%v text=%s", isErr, text)
+	}
+}
+
+// rpcMock returns an httptest server answering method->result.
+func rpcMock(results map[string]any) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		resp := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if v, ok := results[req.Method]; ok {
+			resp["result"] = v
+		} else {
+			resp["result"] = nil
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
 }
 
 func TestLogTool(t *testing.T) {
