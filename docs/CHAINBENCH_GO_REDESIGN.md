@@ -34,6 +34,29 @@
 
 ---
 
+## 0.1 구현 현황 (2026-07-24)
+
+두 리포에 한 브랜치씩 누적, 전 패키지 build/vet/test green:
+- **accounts** `feat/multichain-protocol` — 다체인 `protocol` 패키지(stablenet/wbft/wemix), 골든 회귀 통과.
+- **chainbench** `feat/go-redesign-core` — 루트 Go 모듈, 32 패키지, 3 바이너리(`chainbench`/`chainbench-mcp`/`chainbenchd`).
+
+**동작하는 표면**:
+- **CLI 9 명령**: `chains · setup(plan|provision|launch) · stop · verify · test · node rpc · consensus · hardfork · faucet`
+- **MCP 6 tools**: `chainbench_{chains,faucet,verify,test,consensus,node_rpc}` (self-contained JSON-RPC, stdio)
+- **대시보드**: `chainbenchd` SSE 라이브 스트림 + `--dashboard`로 CLI 실행 이벤트 전달 (build-free HTML UI)
+- **라이프사이클**(빌드된 바이너리 시 실 체인): `setup --launch`(config→genesis→TOML→init→run→nodeset.json) → `verify` → `test` → `stop` / `hardfork`(stop+relaunch)
+- **3 체인 genesis**: stablenet(anzeon), wbft(croissant) — 검증자 in-genesis; wemix(poa) — base genesis + `BootstrapPlan`(etcd/governance 시퀀스)
+
+**의도적 이월** (외부 자원/프론트/대규모 이관 필요 — 배선은 완료):
+1. 실 체인 바이너리 E2E (gstable/gwbft/gwemix 빌드 필요)
+2. wemix etcd/governance **부트스트랩 실행** (gwemix + etcd; `BootstrapPlan` 데이터는 완료)
+3. **Svelte SPA** (프론트 툴체인; 현재 build-free HTML 임시 UI)
+4. **`network/` 흡수 + bash `lib/*`·TS `mcp-server` 폐기** (대규모 기계적 이관; 신규 코어와 과도기 공존)
+5. 하드포크 시 target namespace용 node config 재생성 (refinement)
+6. MCP 잔여 tool 이식(log/network/txpool 등) → TS 대비 완전 등가 후 폐기
+
+---
+
 ## 1. 요구사항 → 모듈 매핑
 
 조직 원리 = **세로: 3단계 파이프라인** × **가로: 공통 코어 vs 합의-family 플러그인**.
