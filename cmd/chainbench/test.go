@@ -28,7 +28,9 @@ func newTestCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rep, err := testrun.Run(cmd.Context(), ns, testrun.Options{Names: names, Categories: categories})
+			bus, closeBus := obsBus()
+			defer closeBus()
+			rep, err := testrun.Run(cmd.Context(), ns, testrun.Options{Names: names, Categories: categories, Bus: bus})
 			if err != nil {
 				return err
 			}

@@ -32,7 +32,9 @@ func newVerifyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			rep, err := verify.Run(cmd.Context(), ns, verify.Options{ProgressDelay: delay}, nil)
+			bus, closeBus := obsBus()
+			defer closeBus()
+			rep, err := verify.Run(cmd.Context(), ns, verify.Options{ProgressDelay: delay}, bus)
 			if err != nil {
 				return err
 			}

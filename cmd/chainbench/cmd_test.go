@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -178,6 +179,51 @@ func TestSetupCmd_LaunchWithFakeBinary(t *testing.T) {
 	// Datadirs were initialized.
 	if _, err := os.Stat(filepath.Join(dir, "data", "node1")); err != nil {
 		t.Errorf("node1 datadir not created: %v", err)
+	}
+}
+
+func TestVerifyCmd_ForwardsToDashboard(t *testing.T) {
+	// A node returning a stable chain (not producing) so verify completes fast.
+	node := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		switch req.Method {
+		case "eth_chainId", "net_peerCount":
+			res["result"] = "0x1"
+		case "eth_blockNumber":
+			res["result"] = "0x5"
+		case "eth_syncing":
+			res["result"] = false
+		}
+		_ = json.NewEncoder(w).Encode(res)
+	}))
+	defer node.Close()
+
+	// A dashboard sink capturing forwarded obs events.
+	var mu sync.Mutex
+	var count int
+	dash := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/events" {
+			mu.Lock()
+			count++
+			mu.Unlock()
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer dash.Close()
+
+	_, err := run(t, "verify", "--rpc", node.URL, "--progress-delay", "1ms", "--dashboard", dash.URL)
+	if err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if count == 0 {
+		t.Error("expected obs events forwarded to the dashboard")
 	}
 }
 

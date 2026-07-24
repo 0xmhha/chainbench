@@ -135,7 +135,9 @@ func newSetupCmd() *cobra.Command {
 					}
 				}
 				plan.Genesis = nil // already written by the provision step above
-				ns, err := setup.Run(ctx, plan, driver.NewLocalDriver(), nil)
+				bus, closeBus := obsBus()
+				defer closeBus()
+				ns, err := setup.Run(ctx, plan, driver.NewLocalDriver(), bus)
 				if err != nil {
 					return err
 				}
