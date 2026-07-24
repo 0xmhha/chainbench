@@ -14,6 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/driver"
 	"github.com/0xmhha/chainbench/pkg/core/genesis"
 	"github.com/0xmhha/chainbench/pkg/core/keys"
+	"github.com/0xmhha/chainbench/pkg/core/node"
 	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
@@ -76,11 +77,21 @@ func newSetupCmd() *cobra.Command {
 				return err
 			}
 
+			// Preset keys drive both the genesis and each node's on-disk
+			// identity (devp2p nodekey + validator keystore); load once so
+			// provisioning and launch share them.
+			var preset keys.Preset
+			keysAbs := keysDir
 			if provision || launch {
-				preset, err := keys.LoadPreset(keysDir)
-				if err != nil {
+				if keysAbs, err = filepath.Abs(keysDir); err != nil {
 					return err
 				}
+				if preset, err = keys.LoadPreset(keysDir); err != nil {
+					return err
+				}
+			}
+
+			if provision || launch {
 				sub := preset.Take(cfg.Int("nodes.validators", len(preset.Validators)))
 				gen, err := genesis.Build(p, genesis.Inputs{
 					Validators: sub.Validators,
@@ -112,7 +123,7 @@ func newSetupCmd() *cobra.Command {
 					toml := nodeconfig.Generate(nodeconfig.Params{
 						Role:         spec.Role,
 						Ports:        spec.Ports,
-						KeystoreDir:  filepath.Join(plan.DataRoot, "keystores", fmt.Sprintf("node%d", spec.Index)),
+						KeystoreDir:  filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
 						RPCNamespace: ns,
 						StaticNodes:  staticNodes,
 					})
@@ -128,6 +139,26 @@ func newSetupCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
+
+				// Install each node's preset identity: the devp2p nodekey so
+				// its enode matches the static-node list (peering), and — for
+				// validators — the account to unlock and seal with (a random
+				// key is otherwise "unauthorized" for wbft consensus).
+				for i := range plan.Nodes {
+					spec := &plan.Nodes[i]
+					nodeDir := filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index))
+					spec.Args = append(spec.Args, "--nodekey", filepath.Join(nodeDir, "nodekey"))
+					if spec.Role == node.RoleValidator {
+						if nk := nodeKeyFor(preset, spec.Index); nk != nil {
+							spec.Args = append(spec.Args,
+								"--unlock", nk.Address,
+								"--password", filepath.Join(keysAbs, "password"),
+								"--miner.etherbase", nk.Address,
+							)
+						}
+					}
+				}
+
 				ctx := cmd.Context()
 				for i := range plan.Nodes {
 					plan.Nodes[i].Binary = bin
