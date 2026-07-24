@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/pkg/core/driver"
 	"github.com/0xmhha/chainbench/pkg/core/hardfork"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 	"github.com/0xmhha/chainbench/pkg/core/state"
@@ -13,10 +14,11 @@ import (
 
 func newHardforkCmd() *cobra.Command {
 	var (
-		dataDir string
-		toChain string
-		block   int64
-		dryRun  bool
+		dataDir  string
+		toChain  string
+		toBinary string
+		block    int64
+		dryRun   bool
 	)
 	cmd := &cobra.Command{
 		Use:   "hardfork",
@@ -58,14 +60,26 @@ func newHardforkCmd() *cobra.Command {
 			}
 
 			if !dryRun {
-				return fmt.Errorf("hardfork execution (stop nodes + relaunch on %s at block %d) needs PID tracking and a built %s binary; not yet wired",
-					plan.ToBinary, plan.Block, plan.ToBinary)
+				bin, err := resolveBinary(toBinary, to.Manifest().Binary)
+				if err != nil {
+					return err
+				}
+				newNS, err := plan.Execute(cmd.Context(), driver.NewLocalDriver(), to.Family(), bin)
+				if err != nil {
+					return err
+				}
+				if err := state.SaveNodeSet(dataDir, newNS); err != nil {
+					return err
+				}
+				fmt.Fprintf(out, "upgraded %d node(s) to %s (%s); state updated\n",
+					len(newNS.Nodes), plan.ToChain, plan.ToBinary)
 			}
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with nodeset.json (the running from-chain)")
 	cmd.Flags().StringVar(&toChain, "to-chain", "", "target chain id to upgrade to")
+	cmd.Flags().StringVar(&toBinary, "to-binary", "", "target node binary path (default: chain binary on PATH)")
 	cmd.Flags().Int64Var(&block, "block", 0, "hardfork activation block")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true, "plan only; do not execute")
 	return cmd

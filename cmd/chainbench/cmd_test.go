@@ -359,13 +359,59 @@ func TestHardforkCmd_DryRunPlan(t *testing.T) {
 	}
 }
 
-func TestHardforkCmd_ExecutionNotWired(t *testing.T) {
+func TestHardforkCmd_ExecuteNeedsBinary(t *testing.T) {
 	dir := t.TempDir()
 	nsJSON := `{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator"}]}`
 	_ = os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644)
+	// gwbft is not on PATH → resolveBinary fails.
 	_, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100", "--dry-run=false")
-	if err == nil || !strings.Contains(err.Error(), "not yet wired") {
-		t.Errorf("expected execution-not-wired error, got %v", err)
+	if err == nil || !strings.Contains(err.Error(), "cannot find node binary") {
+		t.Errorf("expected binary-not-found error, got %v", err)
+	}
+}
+
+func TestHardforkCmd_Execute(t *testing.T) {
+	dir := t.TempDir()
+	// A running from-node to be swapped.
+	old := exec.Command("sleep", "30")
+	if err := old.Start(); err != nil {
+		t.Fatal(err)
+	}
+	oldPID := old.Process.Pid
+	nsJSON := fmt.Sprintf(`{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator","ports":{"http":8501,"p2p":30301},"pid":%d}]}`, oldPID)
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	bin := filepath.Join(dir, "faketo")
+	if err := os.WriteFile(bin, []byte("#!/bin/sh\nif [ \"$1\" = \"init\" ]; then exit 0; fi\nsleep 30\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100",
+		"--to-binary", bin, "--dry-run=false")
+	if err != nil {
+		t.Fatalf("hardfork execute: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "upgraded 1 node(s) to wbft") {
+		t.Errorf("expected upgrade confirmation:\n%s", out)
+	}
+	if werr := old.Wait(); werr == nil {
+		t.Error("old node should have been stopped")
+	}
+	// nodeset.json now records the new chain + a new pid; clean up the process.
+	b, _ := os.ReadFile(filepath.Join(dir, "nodeset.json"))
+	var ns struct {
+		Chain string `json:"chain"`
+		Nodes []struct {
+			PID int `json:"pid"`
+		} `json:"nodes"`
+	}
+	_ = json.Unmarshal(b, &ns)
+	if ns.Chain != "wbft" || len(ns.Nodes) != 1 || ns.Nodes[0].PID == 0 {
+		t.Errorf("state after upgrade: %+v", ns)
+	}
+	if p, err := os.FindProcess(ns.Nodes[0].PID); err == nil {
+		_ = p.Kill()
 	}
 }
 

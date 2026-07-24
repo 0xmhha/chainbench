@@ -74,7 +74,7 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 			ConfigPath: configPath,
 			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", i)),
 			Ports:      ports,
-			Args:       launchArgs(dataDir, configPath, ports, fam.StartFlags(role)),
+			Args:       LaunchArgs(dataDir, configPath, ports, fam.StartFlags(role)),
 		})
 	}
 
@@ -88,10 +88,11 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 	}, nil
 }
 
-// launchArgs assembles the common node launch flags plus the family-specific
+// LaunchArgs assembles the common node launch flags plus the family-specific
 // flags. Port flags are geth-family conventions shared by both consensus
-// families.
-func launchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
+// families. Exported so the hardfork executor can relaunch nodes with the same
+// argument shape.
+func LaunchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
 	args := []string{
 		"--datadir", dataDir,
 		"--config", configPath,
