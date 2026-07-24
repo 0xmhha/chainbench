@@ -45,6 +45,9 @@ type Node struct {
 	// Ports holds the node's port map (empty for pure-attach nodes whose
 	// ports are unknown/irrelevant).
 	Ports Endpoints `json:"ports"`
+	// PID is the launched process id (0 for attached nodes chainbench did not
+	// start). Used by `stop` and hardfork execution.
+	PID int `json:"pid,omitempty"`
 }
 
 // NodeSet is the collection of nodes for one network plus its identity and the

@@ -139,6 +139,7 @@ func Run(ctx context.Context, plan Plan, d driver.Driver, bus *obs.Bus) (node.No
 			Host:   spec.Host,
 			RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
 			Ports:  spec.Ports,
+			PID:    h.PID,
 		})
 		emit(bus, obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
 			Node: spec.Index, Message: "node launched",

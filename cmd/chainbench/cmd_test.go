@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -179,6 +181,33 @@ func TestSetupCmd_LaunchWithFakeBinary(t *testing.T) {
 	// Datadirs were initialized.
 	if _, err := os.Stat(filepath.Join(dir, "data", "node1")); err != nil {
 		t.Errorf("node1 datadir not created: %v", err)
+	}
+}
+
+func TestStopCmd_KillsNodes(t *testing.T) {
+	// Spawn a real long-lived process to act as a launched node.
+	proc := exec.Command("sleep", "30")
+	if err := proc.Start(); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	pid := proc.Process.Pid
+
+	dir := t.TempDir()
+	nsJSON := fmt.Sprintf(`{"chain":"stablenet","network":"local","nodes":[{"index":1,"pid":%d}]}`, pid)
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := run(t, "stop", "--data-dir", dir)
+	if err != nil {
+		t.Fatalf("stop: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "stopped 1 node") {
+		t.Errorf("expected stop confirmation:\n%s", out)
+	}
+	// Reap; Wait should report the process was killed by a signal.
+	if werr := proc.Wait(); werr == nil {
+		t.Error("process should have been killed by stop")
 	}
 }
 
