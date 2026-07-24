@@ -1,0 +1,126 @@
+// Package hardfork plans a chain upgrade that reproduces ../script/wemix-upgrade:
+// the same node data directories are re-run with a different binary that
+// activates a fork at a given block (e.g. wemix/gwemix -> wbft/geth at the
+// montBlanc block). It builds the swap as inspectable data; executing it
+// (stop + relaunch on the new binary) needs PID tracking and built binaries and
+// is a later slice (docs/CHAINBENCH_GO_REDESIGN.md §3.1, §11).
+package hardfork
+
+import (
+	"context"
+	"fmt"
+	"path/filepath"
+
+	"github.com/0xmhha/chainbench/pkg/core/driver"
+	"github.com/0xmhha/chainbench/pkg/core/node"
+	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
+	"github.com/0xmhha/chainbench/pkg/core/registry"
+)
+
+// NodeSwap is one node's binary swap, keeping its data directory. It carries
+// enough to stop the running node (PID) and relaunch it on the new binary
+// (datadir/config/ports/role).
+type NodeSwap struct {
+	Index      int
+	Role       node.Role
+	DataDir    string
+	ConfigPath string
+	LogPath    string
+	Ports      node.Endpoints
+	PID        int
+	FromBinary string
+	ToBinary   string
+}
+
+// Plan is a full hardfork upgrade description.
+type Plan struct {
+	FromChain  string
+	ToChain    string
+	FromBinary string
+	ToBinary   string
+	Block      int64
+	Swaps      []NodeSwap
+}
+
+// BuildPlan builds a hardfork upgrade from a running from-chain NodeSet to a
+// target chain, activating at block. dataRoot locates each node's datadir
+// (dataRoot/node<index>), which is preserved across the swap.
+func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, dataRoot string) (Plan, error) {
+	if len(ns.Nodes) == 0 {
+		return Plan{}, fmt.Errorf("hardfork: empty node set")
+	}
+	if block < 0 {
+		return Plan{}, fmt.Errorf("hardfork: negative block %d", block)
+	}
+	fromBin := from.Manifest().Binary
+	toBin := to.Manifest().Binary
+	if fromBin == toBin {
+		return Plan{}, fmt.Errorf("hardfork: from and to use the same binary %q; nothing to swap", fromBin)
+	}
+
+	swaps := make([]NodeSwap, 0, len(ns.Nodes))
+	for _, n := range ns.Nodes {
+		swaps = append(swaps, NodeSwap{
+			Index:      n.Index,
+			Role:       n.Role,
+			DataDir:    filepath.Join(dataRoot, fmt.Sprintf("node%d", n.Index)),
+			ConfigPath: filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", n.Index)),
+			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", n.Index)),
+			Ports:      n.Ports,
+			PID:        n.PID,
+			FromBinary: fromBin,
+			ToBinary:   toBin,
+		})
+	}
+	return Plan{
+		FromChain:  from.Manifest().ID,
+		ToChain:    to.Manifest().ID,
+		FromBinary: fromBin,
+		ToBinary:   toBin,
+		Block:      block,
+		Swaps:      swaps,
+	}, nil
+}
+
+// Execute performs the upgrade: it stops each running node (by PID) and
+// relaunches it on binary (the resolved to-chain binary) over the same data
+// directory and config, using the target family's start flags. It continues the
+// same chain data — no re-init — so the fork activates at the plan's block. It
+// returns the new NodeSet (with new PIDs and the to-chain id).
+//
+// Node config regeneration for the target chain's RPC namespace is a refinement
+// (the existing config launches fine); the datadir, ports, and identity are
+// preserved across the swap.
+func (p Plan) Execute(ctx context.Context, d driver.Driver, toFamily registry.ConsensusFamily, binary string) (node.NodeSet, error) {
+	ns := node.NodeSet{Chain: p.ToChain, Network: "local"}
+	for _, s := range p.Swaps {
+		if s.PID > 0 {
+			// Best-effort stop; a node that already exited is fine.
+			_ = d.Stop(ctx, driver.Handle{Index: s.Index, PID: s.PID})
+		}
+		spec := driver.NodeSpec{
+			Index:      s.Index,
+			Role:       s.Role,
+			Host:       "127.0.0.1",
+			Binary:     binary,
+			DataDir:    s.DataDir,
+			ConfigPath: s.ConfigPath,
+			LogPath:    s.LogPath,
+			Ports:      s.Ports,
+			Args:       setup.LaunchArgs(s.DataDir, s.ConfigPath, s.Ports, toFamily.StartFlags(s.Role)),
+		}
+		h, err := d.Launch(ctx, spec)
+		if err != nil {
+			return ns, fmt.Errorf("hardfork: relaunch node%d on %s: %w", s.Index, binary, err)
+		}
+		ns.Nodes = append(ns.Nodes, node.Node{
+			Index:  s.Index,
+			Role:   s.Role,
+			Host:   "127.0.0.1",
+			RPCURL: fmt.Sprintf("http://127.0.0.1:%d", s.Ports.HTTP),
+			Ports:  s.Ports,
+			PID:    h.PID,
+		})
+	}
+	return ns, nil
+}
