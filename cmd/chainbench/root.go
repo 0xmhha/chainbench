@@ -34,6 +34,9 @@ func newRootCmd() *cobra.Command {
 		newReportCmd(),
 		newFaucetCmd(),
 		newLogCmd(),
+		newAccountCmd(),
+		newTxCmd(),
+		newContractCmd(),
 	)
 	return root
 }

@@ -22,6 +22,13 @@ type Wallet interface {
 	// 0x-prefixed transaction hash. This is the faucet primitive
 	// (requirement #3): a genesis-funded key sends value to another account.
 	SendCoin(ctx context.Context, toHex string, amountWei *big.Int) (string, error)
+	// Deploy sends a contract-creation transaction with initCode (the raw
+	// creation bytecode) and returns the transaction hash and the created
+	// contract address. value may be nil for a zero-value deployment.
+	Deploy(ctx context.Context, initCode []byte, value *big.Int) (txHash, contract string, err error)
+	// Execute sends a transaction to a contract with the given calldata (a
+	// state-changing call) and returns the transaction hash. value may be nil.
+	Execute(ctx context.Context, toHex string, data []byte, value *big.Int) (txHash string, err error)
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -41,6 +48,29 @@ func (s sdkWallet) SendCoin(ctx context.Context, toHex string, amountWei *big.In
 		return "", fmt.Errorf("accounts: nil amount")
 	}
 	h, err := s.w.SendCoin(ctx, to, amountWei)
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) Deploy(ctx context.Context, initCode []byte, value *big.Int) (string, string, error) {
+	if len(initCode) == 0 {
+		return "", "", fmt.Errorf("accounts: empty init code")
+	}
+	h, addr, err := s.w.Deploy(ctx, initCode, value)
+	if err != nil {
+		return "", "", err
+	}
+	return h.Hex(), addr.Hex(), nil
+}
+
+func (s sdkWallet) Execute(ctx context.Context, toHex string, data []byte, value *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid contract address %q: %w", toHex, err)
+	}
+	h, err := s.w.Execute(ctx, to, data, value)
 	if err != nil {
 		return "", err
 	}

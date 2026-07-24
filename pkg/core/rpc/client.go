@@ -10,6 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -127,6 +128,60 @@ func (c *Client) Syncing(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	return strings.TrimSpace(string(raw)) != "false", nil
+}
+
+// BalanceAt returns the latest balance (in wei) of a 0x-hex address.
+func (c *Client) BalanceAt(ctx context.Context, addr string) (*big.Int, error) {
+	var s string
+	if err := c.Call(ctx, "eth_getBalance", &s, addr, "latest"); err != nil {
+		return nil, err
+	}
+	v, ok := new(big.Int).SetString(strings.TrimPrefix(strings.TrimSpace(s), "0x"), 16)
+	if !ok {
+		return nil, fmt.Errorf("rpc: bad balance %q", s)
+	}
+	return v, nil
+}
+
+// NonceAt returns the latest transaction count (nonce) of a 0x-hex address.
+func (c *Client) NonceAt(ctx context.Context, addr string) (uint64, error) {
+	var s string
+	if err := c.Call(ctx, "eth_getTransactionCount", &s, addr, "latest"); err != nil {
+		return 0, err
+	}
+	return parseHexUint(s)
+}
+
+// CodeAt returns the deployed bytecode at a 0x-hex address ("0x" if none).
+func (c *Client) CodeAt(ctx context.Context, addr string) (string, error) {
+	var s string
+	if err := c.Call(ctx, "eth_getCode", &s, addr, "latest"); err != nil {
+		return "", err
+	}
+	return s, nil
+}
+
+// EthCall runs a read-only contract call (eth_call) and returns the 0x-hex
+// result. data is the 0x-hex calldata.
+func (c *Client) EthCall(ctx context.Context, to, data string) (string, error) {
+	var s string
+	if err := c.Call(ctx, "eth_call", &s, map[string]string{"to": to, "data": data}, "latest"); err != nil {
+		return "", err
+	}
+	return s, nil
+}
+
+// TxReceipt returns the raw eth_getTransactionReceipt result for a tx hash, or
+// nil (no error) when the transaction is still pending.
+func (c *Client) TxReceipt(ctx context.Context, hash string) (json.RawMessage, error) {
+	var raw json.RawMessage
+	if err := c.Call(ctx, "eth_getTransactionReceipt", &raw, hash); err != nil {
+		return nil, err
+	}
+	if len(raw) == 0 || strings.TrimSpace(string(raw)) == "null" {
+		return nil, nil
+	}
+	return raw, nil
 }
 
 func parseHexUint(s string) (uint64, error) {
