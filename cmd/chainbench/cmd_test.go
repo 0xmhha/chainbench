@@ -315,6 +315,50 @@ func TestTestCmd_RunsCasesViaAttach(t *testing.T) {
 	}
 }
 
+func TestTestCmd_PersistsAndReport(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x205b"})
+	}))
+	defer srv.Close()
+
+	dir := t.TempDir()
+	nsJSON := `{"chain":"wbft","network":"local","capabilities":["rpc"],"nodes":[{"index":1,"role":"endpoint","rpc_url":"` + srv.URL + `"}]}`
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Run test against the saved network; results persist to runs.json.
+	if _, err := run(t, "test", "--data-dir", dir, "--name", "chain-id"); err != nil {
+		t.Fatalf("test: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "runs.json")); err != nil {
+		t.Fatalf("runs.json not written: %v", err)
+	}
+
+	// report reads them back.
+	out, err := run(t, "report", "--data-dir", dir)
+	if err != nil {
+		t.Fatalf("report: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "test/chain-id") || !strings.Contains(out, "total=1 ok=1") {
+		t.Errorf("report output:\n%s", out)
+	}
+}
+
+func TestReportCmd_Empty(t *testing.T) {
+	out, err := run(t, "report", "--data-dir", t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "no runs recorded") {
+		t.Errorf("expected empty report:\n%s", out)
+	}
+}
+
 func TestTestCmd_FromState(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
