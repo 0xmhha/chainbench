@@ -1,6 +1,7 @@
 package genesis_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -13,6 +14,7 @@ var testInputs = genesis.Inputs{
 	Validators: []string{"0xc17d493883eaa3b4cceb0f214b273392d562f9d8"},
 	BLSKeys:    []string{"0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f"},
 	ExtraData:  "0xdeadbeef",
+	Members:    []string{"0xc17d493883eaa3b4cceb0f214b273392d562f9d8"},
 }
 
 // decodeGenesis parses just enough of a genesis to check chain id and which
@@ -48,6 +50,52 @@ func TestBuild_StablenetIsAnzeon(t *testing.T) {
 	if g.ExtraData != "0xdeadbeef" {
 		t.Errorf("extraData: %s", g.ExtraData)
 	}
+
+	// The anzeon engine requires a full systemContracts section; assert all
+	// five contracts are present and the dynamic lists were substituted with
+	// the supplied validators/BLS keys/members (go-stablenet
+	// params/config_wbft.go:96-111 rejects a genesis missing any of these).
+	var anz struct {
+		SystemContracts struct {
+			GovValidator      *scView `json:"govValidator"`
+			NativeCoinAdapter *scView `json:"nativeCoinAdapter"`
+			GovMasterMinter   *scView `json:"govMasterMinter"`
+			GovMinter         *scView `json:"govMinter"`
+			GovCouncil        *scView `json:"govCouncil"`
+		} `json:"systemContracts"`
+	}
+	if err := json.Unmarshal(g.Config.Anzeon, &anz); err != nil {
+		t.Fatalf("anzeon decode: %v", err)
+	}
+	sc := anz.SystemContracts
+	for name, c := range map[string]*scView{
+		"govValidator": sc.GovValidator, "nativeCoinAdapter": sc.NativeCoinAdapter,
+		"govMasterMinter": sc.GovMasterMinter, "govMinter": sc.GovMinter, "govCouncil": sc.GovCouncil,
+	} {
+		if c == nil {
+			t.Fatalf("systemContracts.%s missing", name)
+		}
+	}
+	if got := sc.GovValidator.Params["validators"]; got != testInputs.Validators[0] {
+		t.Errorf("govValidator.validators = %q, want %q", got, testInputs.Validators[0])
+	}
+	if got := sc.GovValidator.Params["blsPublicKeys"]; got != testInputs.BLSKeys[0] {
+		t.Errorf("govValidator.blsPublicKeys = %q, want %q", got, testInputs.BLSKeys[0])
+	}
+	if got := sc.GovCouncil.Params["members"]; got != testInputs.Members[0] {
+		t.Errorf("govCouncil.members = %q, want %q", got, testInputs.Members[0])
+	}
+	// No placeholder token may survive substitution.
+	if bytes.Contains(g.Config.Anzeon, []byte("__SC_")) {
+		t.Errorf("unsubstituted system-contract placeholder in anzeon:\n%s", g.Config.Anzeon)
+	}
+}
+
+// scView decodes one system contract for assertions.
+type scView struct {
+	Address string            `json:"address"`
+	Version string            `json:"version"`
+	Params  map[string]string `json:"params"`
 }
 
 func TestBuild_WbftIsCroissant(t *testing.T) {

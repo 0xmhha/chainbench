@@ -86,6 +86,7 @@ func newSetupCmd() *cobra.Command {
 					Validators: sub.Validators,
 					BLSKeys:    sub.BLSKeys,
 					ExtraData:  sub.ExtraData,
+					Members:    sub.Members,
 				})
 				if err != nil {
 					return err

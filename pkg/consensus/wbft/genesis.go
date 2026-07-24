@@ -18,6 +18,11 @@ type GenesisParams struct {
 	Validators []string // validator addresses (0x-hex)
 	BLSKeys    []string // BLS public keys (0x-hex), aligned with Validators
 	ExtraData  string   // RLP-encoded validator extra-data (0x-hex)
+	// Members are the governance council addresses (0x-hex) that seed the
+	// anzeon system contracts (stablenet). Required only when the template
+	// carries the system-contract placeholders; empty for templates (e.g.
+	// wbft/croissant) that have no system-contract section.
+	Members []string
 }
 
 // Placeholder tokens substituted in the genesis template.
@@ -26,6 +31,13 @@ const (
 	phValidators = "__VALIDATORS_JSON__"
 	phBLSKeys    = "__BLS_PUBLIC_KEYS_JSON__"
 	phExtraData  = "__EXTRA_DATA__"
+
+	// System-contract (anzeon) placeholders. Each sits inside a JSON string
+	// value ("params" entries are string→string), so it is substituted in
+	// bare form with a comma-separated address/key list.
+	phSCValidators = "__SC_VALIDATORS_CSV__" // active validator addresses
+	phSCBLSKeys    = "__SC_BLS_PUBLIC_KEYS_CSV__"
+	phSCMembers    = "__SC_MEMBERS_CSV__" // governance council addresses
 )
 
 // BuildGenesis substitutes the wbft-family placeholders in template with params
@@ -50,6 +62,14 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 	}
 
 	out := string(template)
+
+	// System-contract templates (anzeon) require a governance member set. Fail
+	// early with a clear message rather than emitting an empty members list the
+	// node would later reject.
+	if strings.Contains(out, phSCMembers) && len(p.Members) == 0 {
+		return nil, fmt.Errorf("wbft genesis: template requires system-contract members but none supplied")
+	}
+
 	// value-position (unquoted) forms first, then quoted forms.
 	out = strings.ReplaceAll(out, phChainID, strconv.FormatInt(p.ChainID, 10))
 	out = strings.ReplaceAll(out, `"`+phValidators+`"`, string(valsJSON))
@@ -58,6 +78,11 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 	out = strings.ReplaceAll(out, phBLSKeys, string(blsJSON))
 	out = strings.ReplaceAll(out, `"`+phExtraData+`"`, strconv.Quote(p.ExtraData))
 	out = strings.ReplaceAll(out, phExtraData, p.ExtraData)
+
+	// System-contract list placeholders (bare, inside JSON string values).
+	out = strings.ReplaceAll(out, phSCValidators, strings.Join(p.Validators, ","))
+	out = strings.ReplaceAll(out, phSCBLSKeys, strings.Join(p.BLSKeys, ","))
+	out = strings.ReplaceAll(out, phSCMembers, strings.Join(p.Members, ","))
 
 	if !json.Valid([]byte(out)) {
 		return nil, fmt.Errorf("wbft genesis: substitution produced invalid JSON")

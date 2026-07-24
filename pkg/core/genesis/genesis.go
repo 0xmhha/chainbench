@@ -27,6 +27,7 @@ type Inputs struct {
 	Validators []string // validator addresses (0x-hex) — wbft family
 	BLSKeys    []string // BLS public keys (0x-hex), aligned with Validators
 	ExtraData  string   // validator extra-data (0x-hex) — wbft family
+	Members    []string // governance council addresses (0x-hex) — anzeon system contracts
 	Coinbase   string   // block coinbase (0x-hex) — poa family; default zero
 }
 
@@ -45,6 +46,7 @@ func Build(p registry.ChainPlugin, in Inputs) ([]byte, error) {
 			Validators: in.Validators,
 			BLSKeys:    in.BLSKeys,
 			ExtraData:  in.ExtraData,
+			Members:    in.Members,
 		})
 	case "poa":
 		tmpl := p.GenesisTemplate()
