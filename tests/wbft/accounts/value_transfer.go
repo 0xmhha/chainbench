@@ -40,8 +40,10 @@ const (
 
 func init() {
 	testkit.Register(testkit.Case{
-		Name:         "value-transfer",
-		Category:     "accounts",
+		Name:     "value-transfer",
+		Category: "accounts",
+		// stablenet only: the croissant (wbft) transaction path does not yet
+		// confirm SDK-signed transfers in this harness (follow-up).
 		ChainCompat:  []string{"stablenet"},
 		RequiresCaps: []string{"rpc"},
 		Fn:           valueTransfer,
