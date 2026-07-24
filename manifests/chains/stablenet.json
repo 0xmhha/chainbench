@@ -1,16 +1,19 @@
 {
   "id": "stablenet",
   "binary": "gstable",
+  "chain_id": 8283,
   "build": { "repo": "go-stablenet", "make_target": "gstable" },
   "consensus_family": "wbft",
+  "genesis": {
+    "engine_field": "anzeon",
+    "hardforks": ["istanbul", "boho"],
+    "template": "stablenet"
+  },
   "consensus": {
     "rpc_namespace": "istanbul",
     "validators_method": "istanbul_getValidators"
   },
   "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
-  "probe": {
-    "method": "istanbul_getValidators",
-    "chain_ids": [8283]
-  },
+  "probe": { "method": "istanbul_getValidators", "chain_ids": [8283] },
   "capabilities": ["process", "rpc", "ws", "consensus"]
 }

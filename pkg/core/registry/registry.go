@@ -40,6 +40,9 @@ type ChainPlugin interface {
 	// Protocol returns the accounts SDK protocol profile (tx types, account
 	// model, system contracts) for this chain.
 	Protocol() protocol.Protocol
+	// GenesisTemplate returns the chain's embedded genesis template bytes, or
+	// nil for chains without a static template (poa/registry family).
+	GenesisTemplate() []byte
 }
 
 var chains = map[string]ChainPlugin{}

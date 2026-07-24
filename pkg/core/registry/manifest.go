@@ -20,12 +20,17 @@ type Manifest struct {
 	ID string `json:"id"`
 	// Binary is the node binary name (gstable|gwbft|gwemix).
 	Binary string `json:"binary"`
+	// ChainID is the default local-network chain id (operator-overridable via
+	// profile). Also used by the probe for chains that disambiguate by id.
+	ChainID int64 `json:"chain_id"`
 	// Build describes how to build the binary.
 	Build BuildSpec `json:"build"`
 	// ConsensusFamily is the consensus algorithm family this chain uses
 	// ("wbft" for stablenet+wbft, "poa" for wemix). It selects the
 	// ConsensusFamily plugin (docs §4, decision D9).
 	ConsensusFamily string `json:"consensus_family"`
+	// Genesis describes how this chain's genesis is structured.
+	Genesis GenesisSpec `json:"genesis"`
 	// Consensus holds the RPC-facing consensus facts.
 	Consensus ConsensusSpec `json:"consensus"`
 	// TxTypes is the set of EIP-2718 tx type bytes this chain accepts,
@@ -42,6 +47,16 @@ type Manifest struct {
 type BuildSpec struct {
 	Repo       string `json:"repo"`        // e.g. "go-wbft"
 	MakeTarget string `json:"make_target"` // e.g. "gwbft"
+}
+
+// GenesisSpec describes a chain's genesis structure. EngineField is the config
+// key that carries consensus config ("anzeon" for stablenet, "croissant" for
+// wbft; empty for the poa/registry family whose genesis is deploy-time).
+// Template is the embedded genesis template name under manifests/genesis/.
+type GenesisSpec struct {
+	EngineField string   `json:"engine_field"`
+	Hardforks   []string `json:"hardforks"`
+	Template    string   `json:"template"` // "" = no static template (poa)
 }
 
 // ConsensusSpec holds the RPC-facing consensus facts used by verify/consensus.
@@ -78,6 +93,9 @@ func (m Manifest) validate() error {
 	}
 	if m.ConsensusFamily == "" {
 		return fmt.Errorf("registry: manifest %q missing consensus_family", m.ID)
+	}
+	if m.ChainID <= 0 {
+		return fmt.Errorf("registry: manifest %q missing/invalid chain_id", m.ID)
 	}
 	return nil
 }

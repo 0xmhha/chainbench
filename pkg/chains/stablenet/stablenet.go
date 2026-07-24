@@ -1,7 +1,7 @@
 // Package stablenet registers the go-stablenet chain plugin: the wbft
-// consensus family + the stablenet accounts protocol + the stablenet manifest.
-// It is a thin composition layer (decision D9) — importing it for side effects
-// registers the chain.
+// consensus family + the stablenet accounts protocol + the stablenet manifest
+// and genesis template (anzeon). It is a thin composition layer (decision D9) —
+// importing it for side effects registers the chain.
 package stablenet
 
 import (
@@ -12,7 +12,10 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
 
-type plugin struct{ m registry.Manifest }
+type plugin struct {
+	m    registry.Manifest
+	tmpl []byte
+}
 
 func init() {
 	raw, err := manifests.Raw("stablenet")
@@ -23,9 +26,16 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	registry.Register(plugin{m: m})
+	var tmpl []byte
+	if m.Genesis.Template != "" {
+		if tmpl, err = manifests.GenesisTemplate(m.Genesis.Template); err != nil {
+			panic(err)
+		}
+	}
+	registry.Register(plugin{m: m, tmpl: tmpl})
 }
 
 func (p plugin) Manifest() registry.Manifest      { return p.m }
 func (p plugin) Family() registry.ConsensusFamily { return wbft.New() }
 func (p plugin) Protocol() protocol.Protocol      { return protocol.StableNet() }
+func (p plugin) GenesisTemplate() []byte          { return p.tmpl }

@@ -1,15 +1,19 @@
 {
   "id": "wbft",
   "binary": "gwbft",
+  "chain_id": 8284,
   "build": { "repo": "go-wbft", "make_target": "gwbft" },
   "consensus_family": "wbft",
+  "genesis": {
+    "engine_field": "croissant",
+    "hardforks": ["istanbul", "pangyo", "applepie", "brioche", "croissant"],
+    "template": "wbft"
+  },
   "consensus": {
     "rpc_namespace": "istanbul",
     "validators_method": "istanbul_getValidators"
   },
   "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
-  "probe": {
-    "method": "istanbul_getValidators"
-  },
+  "probe": { "method": "istanbul_getValidators" },
   "capabilities": ["process", "rpc", "ws", "consensus"]
 }
