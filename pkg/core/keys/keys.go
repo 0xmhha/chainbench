@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // NodeKey is one preset node's identity for building static-node enodes.
@@ -28,6 +29,16 @@ type Preset struct {
 	BLSKeys []string
 	// ExtraData is the RLP-encoded validator extra-data (0x-hex).
 	ExtraData string
+	// Members are the governance council member addresses (0x-hex) that seed
+	// the wbft-family system contracts (govValidator/govMinter/...). For the
+	// stablenet preset these equal the validators; the field is empty for
+	// presets whose family has no system contracts. Decoded from the
+	// comma-separated "systemContractMembers" metadata field.
+	Members []string
+	// Alloc is the raw genesis pre-funded accounts object (address -> account)
+	// exactly as it appears in the metadata, or nil when the preset funds no
+	// accounts. Passed through verbatim into the genesis "alloc" field.
+	Alloc json.RawMessage
 	// Password unlocks the preset keystores.
 	Password string
 	// Nodes are the per-node devp2p identities (for static-node enodes).
@@ -35,15 +46,29 @@ type Preset struct {
 }
 
 type metadata struct {
-	Password      string   `json:"password"`
-	Validators    []string `json:"validators"`
-	BLSPublicKeys []string `json:"blsPublicKeys"`
-	ExtraData     string   `json:"extraData"`
-	Nodes         []struct {
+	Password              string          `json:"password"`
+	Validators            []string        `json:"validators"`
+	BLSPublicKeys         []string        `json:"blsPublicKeys"`
+	ExtraData             string          `json:"extraData"`
+	SystemContractMembers string          `json:"systemContractMembers"`
+	Alloc                 json.RawMessage `json:"alloc"`
+	Nodes                 []struct {
 		Index     int    `json:"index"`
 		PublicKey string `json:"publicKey"`
 		Address   string `json:"address"`
 	} `json:"nodes"`
+}
+
+// splitCSV splits a comma-separated metadata field into trimmed, non-empty
+// entries. An empty or whitespace-only string yields nil.
+func splitCSV(s string) []string {
+	var out []string
+	for p := range strings.SplitSeq(s, ",") {
+		if v := strings.TrimSpace(p); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // LoadPreset reads <dir>/metadata.json and returns the decoded Preset.
@@ -72,13 +97,17 @@ func LoadPreset(dir string) (Preset, error) {
 		Validators: m.Validators,
 		BLSKeys:    m.BLSPublicKeys,
 		ExtraData:  m.ExtraData,
+		Members:    splitCSV(m.SystemContractMembers),
+		Alloc:      m.Alloc,
 		Password:   m.Password,
 		Nodes:      nodes,
 	}, nil
 }
 
 // Take returns the first n validators/BLS keys, for networks smaller than the
-// preset. n<=0 or n>=len returns the full set.
+// preset. n<=0 or n>=len returns the full set. The governance Members (system
+// contract council) are independent of the active validator count and are
+// preserved in full.
 func (p Preset) Take(n int) Preset {
 	if n <= 0 || n >= len(p.Validators) {
 		return p
@@ -87,6 +116,8 @@ func (p Preset) Take(n int) Preset {
 		Validators: p.Validators[:n],
 		BLSKeys:    p.BLSKeys[:n],
 		ExtraData:  p.ExtraData,
+		Members:    p.Members,
+		Alloc:      p.Alloc,
 		Password:   p.Password,
 	}
 }

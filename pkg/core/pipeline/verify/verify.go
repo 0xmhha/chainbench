@@ -30,6 +30,13 @@ type Options struct {
 	// ProgressDelay is the wait between the two block-height samples used to
 	// detect production. Defaults to 2s.
 	ProgressDelay time.Duration
+	// ReadyTimeout bounds how long detection waits for the height to start
+	// advancing. When >0, verify re-samples every ProgressDelay until the
+	// height rises above its baseline or this window elapses — a just-launched
+	// wbft network needs ~20-30s for static-node peering to form the quorum
+	// mesh before it produces its first block. When <=0 (the default), verify
+	// takes a single two-sample reading (legacy behavior).
+	ReadyTimeout time.Duration
 	// Sleep waits for d; injectable so tests don't spend real time. Defaults
 	// to time.Sleep.
 	Sleep func(d time.Duration)
@@ -74,6 +81,12 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options, bus *obs.Bus) (Repo
 
 	rep := Report{Network: ns.Network}
 
+	// Determine production first: with a readiness window this polls through
+	// the RPC-not-up-yet and peering-not-converged phases, so the per-node
+	// snapshot below reflects the settled network rather than the moment right
+	// after launch.
+	rep.Producing = detectProducing(ctx, ns, dial, sleep, delay, opts.ReadyTimeout)
+
 	for _, n := range ns.Nodes {
 		info := NodeInfo{Index: n.Index, RPCURL: n.RPCURL}
 		p := dial(n.RPCURL)
@@ -91,7 +104,6 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options, bus *obs.Bus) (Repo
 		rep.Nodes = append(rep.Nodes, info)
 	}
 
-	rep.Producing = detectProducing(ctx, ns, dial, sleep, delay)
 	emit(bus, obs.Event{Phase: obs.PhaseVerify, Kind: obs.KindResult, Network: ns.Network,
 		Message: "verify complete", Fields: map[string]any{"producing": rep.Producing, "nodes": len(rep.Nodes)}})
 	return rep, nil
@@ -114,24 +126,49 @@ func fill(ctx context.Context, p Prober, info *NodeInfo) error {
 	return nil
 }
 
-// detectProducing samples the primary node's height twice, delay apart, and
-// reports whether it strictly increased.
-func detectProducing(ctx context.Context, ns node.NodeSet, dial func(string) Prober, sleep func(time.Duration), delay time.Duration) bool {
+// detectProducing reports whether the primary node's height advances. With
+// timeout<=0 it takes a single two-sample reading (delay apart). With
+// timeout>0 it captures a baseline then re-samples every delay until the
+// height rises above the baseline or the cumulative wait reaches timeout —
+// giving a freshly launched network time to peer and start sealing.
+func detectProducing(ctx context.Context, ns node.NodeSet, dial func(string) Prober, sleep func(time.Duration), delay, timeout time.Duration) bool {
 	primary, ok := ns.Primary()
 	if !ok {
 		return false
 	}
 	p := dial(primary.RPCURL)
-	first, err := p.BlockNumber(ctx)
-	if err != nil {
-		return false
+
+	if timeout <= 0 {
+		baseline, err := p.BlockNumber(ctx)
+		if err != nil {
+			return false
+		}
+		sleep(delay)
+		second, err := p.BlockNumber(ctx)
+		if err != nil {
+			return false
+		}
+		return second > baseline
 	}
-	sleep(delay)
-	second, err := p.BlockNumber(ctx)
-	if err != nil {
-		return false
+
+	// Poll through transient errors (RPC still starting) until the height
+	// advances beyond the first successful reading, or the window elapses.
+	var baseline uint64
+	haveBaseline := false
+	for waited := time.Duration(0); waited < timeout; waited += delay {
+		if ctx.Err() != nil {
+			return false
+		}
+		if cur, err := p.BlockNumber(ctx); err == nil {
+			if !haveBaseline {
+				baseline, haveBaseline = cur, true
+			} else if cur > baseline {
+				return true
+			}
+		}
+		sleep(delay)
 	}
-	return second > first
+	return false
 }
 
 func emit(bus *obs.Bus, e obs.Event) {

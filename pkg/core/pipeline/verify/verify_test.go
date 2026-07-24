@@ -98,6 +98,56 @@ func TestRun_NotProducingWhenStatic(t *testing.T) {
 	}
 }
 
+// TestRun_WaitsForProductionWithinTimeout models a freshly launched network
+// that stays static for a few samples (peering not yet converged) then starts
+// producing. With ReadyTimeout>0 verify keeps polling and reports true.
+func TestRun_WaitsForProductionWithinTimeout(t *testing.T) {
+	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://n1"}})
+	opts := verify.Options{
+		Dial:          func(string) verify.Prober { return &delayedProber{riseAt: 4, lo: 10, hi: 11} },
+		ProgressDelay: time.Millisecond,
+		ReadyTimeout:  time.Second,
+		Sleep:         func(time.Duration) {},
+	}
+	rep, _ := verify.Run(context.Background(), ns, opts, nil)
+	if !rep.Producing {
+		t.Error("expected Producing=true once height advances within the timeout")
+	}
+}
+
+// TestRun_ReadyTimeoutBoundedWhenStatic ensures the polling loop terminates and
+// reports false when the height never advances within ReadyTimeout.
+func TestRun_ReadyTimeoutBoundedWhenStatic(t *testing.T) {
+	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://n1"}})
+	opts := verify.Options{
+		Dial:          func(string) verify.Prober { return &staticBlock{height: 100, chainID: 1} },
+		ProgressDelay: time.Millisecond,
+		ReadyTimeout:  10 * time.Millisecond,
+		Sleep:         func(time.Duration) {},
+	}
+	rep, _ := verify.Run(context.Background(), ns, opts, nil)
+	if rep.Producing {
+		t.Error("permanently static height must report Producing=false")
+	}
+}
+
+// delayedProber returns lo until its riseAt-th BlockNumber call, then hi.
+type delayedProber struct {
+	calls  atomic.Int64
+	riseAt int64
+	lo, hi uint64
+}
+
+func (d *delayedProber) ChainID(context.Context) (uint64, error) { return 8283, nil }
+func (d *delayedProber) BlockNumber(context.Context) (uint64, error) {
+	if d.calls.Add(1) >= d.riseAt {
+		return d.hi, nil
+	}
+	return d.lo, nil
+}
+func (d *delayedProber) PeerCount(context.Context) (uint64, error) { return 4, nil }
+func (d *delayedProber) Syncing(context.Context) (bool, error)     { return false, nil }
+
 type staticBlock struct {
 	height  uint64
 	chainID uint64

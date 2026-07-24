@@ -22,6 +22,72 @@
       "init": {
         "validators": "__VALIDATORS_JSON__",
         "blsPublicKeys": "__BLS_PUBLIC_KEYS_JSON__"
+      },
+      "systemContracts": {
+        "govValidator": {
+          "address": "0x0000000000000000000000000000000000001001",
+          "version": "v1",
+          "params": {
+            "validators": "__SC_VALIDATORS_CSV__",
+            "blsPublicKeys": "__SC_BLS_PUBLIC_KEYS_CSV__",
+            "members": "__SC_MEMBERS_CSV__",
+            "memberVersion": "1",
+            "quorum": "2",
+            "expiry": "604800",
+            "maxProposals": "3",
+            "gasTip": "27600000000000"
+          }
+        },
+        "nativeCoinAdapter": {
+          "address": "0x0000000000000000000000000000000000001000",
+          "version": "v1",
+          "params": {
+            "name": "WKRC",
+            "symbol": "WKRC",
+            "currency": "KRW",
+            "decimals": "18",
+            "masterMinter": "0x0000000000000000000000000000000000001002",
+            "minters": "0x0000000000000000000000000000000000001003",
+            "minterAllowed": "100000000000000000000000000000"
+          }
+        },
+        "govMasterMinter": {
+          "address": "0x0000000000000000000000000000000000001002",
+          "version": "v1",
+          "params": {
+            "members": "__SC_MEMBERS_CSV__",
+            "memberVersion": "1",
+            "quorum": "2",
+            "expiry": "604800",
+            "maxProposals": "3",
+            "fiatToken": "0x0000000000000000000000000000000000001000",
+            "minters": "0x0000000000000000000000000000000000001003",
+            "maxMinterAllowance": "100000000000000000000000000000"
+          }
+        },
+        "govMinter": {
+          "address": "0x0000000000000000000000000000000000001003",
+          "version": "v1",
+          "params": {
+            "members": "__SC_MEMBERS_CSV__",
+            "memberVersion": "1",
+            "quorum": "2",
+            "expiry": "604800",
+            "maxProposals": "3",
+            "fiatToken": "0x0000000000000000000000000000000000001000"
+          }
+        },
+        "govCouncil": {
+          "address": "0x0000000000000000000000000000000000001004",
+          "version": "v1",
+          "params": {
+            "members": "__SC_MEMBERS_CSV__",
+            "memberVersion": "1",
+            "quorum": "2",
+            "expiry": "604800",
+            "maxProposals": "3"
+          }
+        }
       }
     }
   },
@@ -32,7 +98,7 @@
   "difficulty": "0x0",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",
-  "alloc": {},
+  "alloc": __ALLOC_JSON__,
   "number": "0x0",
   "gasUsed": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",

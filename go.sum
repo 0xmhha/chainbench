@@ -1,3 +1,5 @@
+github.com/0xmhha/accounts v0.1.0 h1:wzaTpRrgg5gSsLDbF/BnV4SpwABWmZQJDzfoyr4oh5U=
+github.com/0xmhha/accounts v0.1.0/go.mod h1:Cq7PTu/9xUEsAgrvLrjlPImd5LCaWdVEA4+aJSqKxnQ=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/decred/dcrd/crypto/blake256 v1.0.0 h1:/8DMNYp9SGi5f0w7uCm6d6M4OU2rGFK09Y2A4Xv7EE0=
 github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn47hh8kt6rqSlvmrXFAc=
