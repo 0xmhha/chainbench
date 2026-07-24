@@ -265,6 +265,35 @@ func TestTestCmd_FromState(t *testing.T) {
 	}
 }
 
+func TestHardforkCmd_DryRunPlan(t *testing.T) {
+	dir := t.TempDir()
+	// A running wemix network's saved state.
+	nsJSON := `{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator"},{"index":2,"role":"validator"}]}`
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100")
+	if err != nil {
+		t.Fatalf("hardfork: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "wemix -> wbft") || !strings.Contains(out, "gwemix -> gwbft") {
+		t.Errorf("expected wemix->wbft binary swap:\n%s", out)
+	}
+	if !strings.Contains(out, "block 100") {
+		t.Errorf("expected fork block 100:\n%s", out)
+	}
+}
+
+func TestHardforkCmd_ExecutionNotWired(t *testing.T) {
+	dir := t.TempDir()
+	nsJSON := `{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator"}]}`
+	_ = os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644)
+	_, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100", "--dry-run=false")
+	if err == nil || !strings.Contains(err.Error(), "not yet wired") {
+		t.Errorf("expected execution-not-wired error, got %v", err)
+	}
+}
+
 func TestConsensusCmd_HTTPMock(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {

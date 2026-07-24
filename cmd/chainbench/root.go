@@ -15,6 +15,7 @@ func newRootCmd() *cobra.Command {
 		newVerifyCmd(),
 		newTestCmd(),
 		newConsensusCmd(),
+		newHardforkCmd(),
 		newFaucetCmd(),
 	)
 	return root
