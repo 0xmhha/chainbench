@@ -13,6 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/pkg/accounts"
 	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/consensus"
+	"github.com/0xmhha/chainbench/pkg/core/logs"
 	"github.com/0xmhha/chainbench/pkg/core/node"
 	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
@@ -38,6 +39,7 @@ func Default(name, version string) *Server {
 	s.Register(statusTool())
 	s.Register(setupPlanTool())
 	s.Register(txpoolTool())
+	s.Register(logTool())
 	return s
 }
 
@@ -366,6 +368,51 @@ func txpoolTool() Tool {
 				return "", err
 			}
 			return fmt.Sprintf("pending=%d queued=%d", hexCount(st.Pending), hexCount(st.Queued)), nil
+		},
+	}
+}
+
+func logTool() Tool {
+	return Tool{
+		Name:        "chainbench_log",
+		Description: "Search a setup's per-node logs (data_dir/logs). Args: data_dir, pattern, regexp (bool), node (int), level (min severity), limit (int).",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"data_dir": map[string]any{"type": "string"},
+				"pattern":  map[string]any{"type": "string"},
+				"regexp":   map[string]any{"type": "boolean"},
+				"node":     map[string]any{"type": "integer"},
+				"level":    map[string]any{"type": "string"},
+				"limit":    map[string]any{"type": "integer"},
+			},
+			"required": []string{"data_dir"},
+		},
+		Handler: func(_ context.Context, args map[string]any) (string, error) {
+			dir := argString(args, "data_dir", "")
+			if dir == "" {
+				return "", fmt.Errorf("data_dir is required")
+			}
+			regexp, _ := args["regexp"].(bool)
+			matches, err := logs.Search(dir, logs.SearchOpts{
+				Pattern: argString(args, "pattern", ""),
+				Regexp:  regexp,
+				Node:    argInt(args, "node", 0),
+				Level:   argString(args, "level", ""),
+				Limit:   argInt(args, "limit", 0),
+			})
+			if err != nil {
+				return "", err
+			}
+			if len(matches) == 0 {
+				return "no matching log lines", nil
+			}
+			var b strings.Builder
+			for _, m := range matches {
+				fmt.Fprintf(&b, "node%d:%d %s\n", m.Node, m.Line, m.Text)
+			}
+			fmt.Fprintf(&b, "%d line(s)", len(matches))
+			return b.String(), nil
 		},
 	}
 }

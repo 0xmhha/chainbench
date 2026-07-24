@@ -57,14 +57,14 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 10 {
-		t.Fatalf("tools: %d, want 10", len(tools))
+	if len(tools) != 11 {
+		t.Fatalf("tools: %d, want 11", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool", "chainbench_log"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
@@ -89,6 +89,24 @@ func TestStatusTool(t *testing.T) {
 	text, isErr := callText(t, newServer(), "chainbench_status", map[string]any{"data_dir": dir})
 	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node1 validator") || !strings.Contains(text, "pid=4321") {
 		t.Errorf("status tool: err=%v text=%s", isErr, text)
+	}
+}
+
+func TestLogTool(t *testing.T) {
+	dir := t.TempDir()
+	logDir := filepath.Join(dir, "logs")
+	if err := os.MkdirAll(logDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	content := "INFO [07-25|05:00:00.000] booted\nERROR [07-25|05:00:01.000] WBFT: invalid validator\n"
+	if err := os.WriteFile(filepath.Join(logDir, "node1.log"), []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	text, isErr := callText(t, newServer(), "chainbench_log", map[string]any{
+		"data_dir": dir, "level": "ERROR",
+	})
+	if isErr || !strings.Contains(text, "node1:2") || !strings.Contains(text, "invalid validator") || strings.Contains(text, "booted") {
+		t.Errorf("log tool: err=%v text=%s", isErr, text)
 	}
 }
 
