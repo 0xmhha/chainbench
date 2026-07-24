@@ -7,6 +7,7 @@
 package genesis
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -24,11 +25,12 @@ var ErrNoStaticGenesis = errors.New("genesis: chain has no static template")
 // preset key metadata): the validator set and the RLP extra-data that encodes
 // it.
 type Inputs struct {
-	Validators []string // validator addresses (0x-hex) — wbft family
-	BLSKeys    []string // BLS public keys (0x-hex), aligned with Validators
-	ExtraData  string   // validator extra-data (0x-hex) — wbft family
-	Members    []string // governance council addresses (0x-hex) — anzeon system contracts
-	Coinbase   string   // block coinbase (0x-hex) — poa family; default zero
+	Validators []string        // validator addresses (0x-hex) — wbft family
+	BLSKeys    []string        // BLS public keys (0x-hex), aligned with Validators
+	ExtraData  string          // validator extra-data (0x-hex) — wbft family
+	Members    []string        // governance council addresses (0x-hex) — anzeon system contracts
+	Alloc      json.RawMessage // raw genesis pre-funded accounts (address -> account) — wbft family
+	Coinbase   string          // block coinbase (0x-hex) — poa family; default zero
 }
 
 // Build produces the genesis.json bytes for a chain plugin. The chain id comes
@@ -47,6 +49,7 @@ func Build(p registry.ChainPlugin, in Inputs) ([]byte, error) {
 			BLSKeys:    in.BLSKeys,
 			ExtraData:  in.ExtraData,
 			Members:    in.Members,
+			Alloc:      in.Alloc,
 		})
 	case "poa":
 		tmpl := p.GenesisTemplate()

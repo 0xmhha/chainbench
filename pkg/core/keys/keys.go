@@ -35,6 +35,10 @@ type Preset struct {
 	// presets whose family has no system contracts. Decoded from the
 	// comma-separated "systemContractMembers" metadata field.
 	Members []string
+	// Alloc is the raw genesis pre-funded accounts object (address -> account)
+	// exactly as it appears in the metadata, or nil when the preset funds no
+	// accounts. Passed through verbatim into the genesis "alloc" field.
+	Alloc json.RawMessage
 	// Password unlocks the preset keystores.
 	Password string
 	// Nodes are the per-node devp2p identities (for static-node enodes).
@@ -42,11 +46,12 @@ type Preset struct {
 }
 
 type metadata struct {
-	Password              string   `json:"password"`
-	Validators            []string `json:"validators"`
-	BLSPublicKeys         []string `json:"blsPublicKeys"`
-	ExtraData             string   `json:"extraData"`
-	SystemContractMembers string   `json:"systemContractMembers"`
+	Password              string          `json:"password"`
+	Validators            []string        `json:"validators"`
+	BLSPublicKeys         []string        `json:"blsPublicKeys"`
+	ExtraData             string          `json:"extraData"`
+	SystemContractMembers string          `json:"systemContractMembers"`
+	Alloc                 json.RawMessage `json:"alloc"`
 	Nodes                 []struct {
 		Index     int    `json:"index"`
 		PublicKey string `json:"publicKey"`
@@ -93,6 +98,7 @@ func LoadPreset(dir string) (Preset, error) {
 		BLSKeys:    m.BLSPublicKeys,
 		ExtraData:  m.ExtraData,
 		Members:    splitCSV(m.SystemContractMembers),
+		Alloc:      m.Alloc,
 		Password:   m.Password,
 		Nodes:      nodes,
 	}, nil
@@ -111,6 +117,7 @@ func (p Preset) Take(n int) Preset {
 		BLSKeys:    p.BLSKeys[:n],
 		ExtraData:  p.ExtraData,
 		Members:    p.Members,
+		Alloc:      p.Alloc,
 		Password:   p.Password,
 	}
 }

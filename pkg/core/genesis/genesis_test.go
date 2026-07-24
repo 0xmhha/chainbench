@@ -15,6 +15,7 @@ var testInputs = genesis.Inputs{
 	BLSKeys:    []string{"0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f"},
 	ExtraData:  "0xdeadbeef",
 	Members:    []string{"0xc17d493883eaa3b4cceb0f214b273392d562f9d8"},
+	Alloc:      json.RawMessage(`{"c17d493883eaa3b4cceb0f214b273392d562f9d8":{"balance":"0x64"}}`),
 }
 
 // decodeGenesis parses just enough of a genesis to check chain id and which
@@ -88,6 +89,22 @@ func TestBuild_StablenetIsAnzeon(t *testing.T) {
 	// No placeholder token may survive substitution.
 	if bytes.Contains(g.Config.Anzeon, []byte("__SC_")) {
 		t.Errorf("unsubstituted system-contract placeholder in anzeon:\n%s", g.Config.Anzeon)
+	}
+
+	// The preset alloc must land in the genesis alloc field (funds accounts).
+	var full struct {
+		Alloc map[string]struct {
+			Balance string `json:"balance"`
+		} `json:"alloc"`
+	}
+	if err := json.Unmarshal(b, &full); err != nil {
+		t.Fatalf("alloc decode: %v", err)
+	}
+	if acct, ok := full.Alloc["c17d493883eaa3b4cceb0f214b273392d562f9d8"]; !ok || acct.Balance != "0x64" {
+		t.Errorf("alloc not substituted: %+v", full.Alloc)
+	}
+	if bytes.Contains(b, []byte("__ALLOC_JSON__")) {
+		t.Errorf("unsubstituted alloc placeholder in genesis")
 	}
 }
 

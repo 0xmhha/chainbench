@@ -23,6 +23,9 @@ type GenesisParams struct {
 	// carries the system-contract placeholders; empty for templates (e.g.
 	// wbft/croissant) that have no system-contract section.
 	Members []string
+	// Alloc is the raw genesis pre-funded accounts object substituted into the
+	// template's alloc placeholder. Empty yields an empty alloc ({}).
+	Alloc json.RawMessage
 }
 
 // Placeholder tokens substituted in the genesis template.
@@ -38,6 +41,9 @@ const (
 	phSCValidators = "__SC_VALIDATORS_CSV__" // active validator addresses
 	phSCBLSKeys    = "__SC_BLS_PUBLIC_KEYS_CSV__"
 	phSCMembers    = "__SC_MEMBERS_CSV__" // governance council addresses
+
+	// Alloc placeholder sits in JSON value position (unquoted object).
+	phAlloc = "__ALLOC_JSON__"
 )
 
 // BuildGenesis substitutes the wbft-family placeholders in template with params
@@ -83,6 +89,13 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 	out = strings.ReplaceAll(out, phSCValidators, strings.Join(p.Validators, ","))
 	out = strings.ReplaceAll(out, phSCBLSKeys, strings.Join(p.BLSKeys, ","))
 	out = strings.ReplaceAll(out, phSCMembers, strings.Join(p.Members, ","))
+
+	// Alloc placeholder (bare object). Empty preset alloc yields {}.
+	alloc := "{}"
+	if len(p.Alloc) > 0 {
+		alloc = string(p.Alloc)
+	}
+	out = strings.ReplaceAll(out, phAlloc, alloc)
 
 	if !json.Valid([]byte(out)) {
 		return nil, fmt.Errorf("wbft genesis: substitution produced invalid JSON")
