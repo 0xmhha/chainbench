@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/pkg/core/node"
+	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/pkg/core/state"
@@ -30,7 +32,16 @@ func newTestCmd() *cobra.Command {
 			}
 			bus, closeBus := obsBus()
 			defer closeBus()
-			rep, err := testrun.Run(cmd.Context(), ns, testrun.Options{Names: names, Categories: categories, Bus: bus})
+			opts := testrun.Options{Names: names, Categories: categories, Bus: bus}
+			// Persist results when a data dir is given, so `report` can read them.
+			if dataDir != "" {
+				store, err := obs.NewFileStore(filepath.Join(dataDir, "runs.json"))
+				if err != nil {
+					return err
+				}
+				opts.Store = store
+			}
+			rep, err := testrun.Run(cmd.Context(), ns, opts)
 			if err != nil {
 				return err
 			}

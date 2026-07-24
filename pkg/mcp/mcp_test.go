@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -55,17 +57,29 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 6 {
-		t.Fatalf("tools: %d, want 6", len(tools))
+	if len(tools) != 7 {
+		t.Fatalf("tools: %d, want 7", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
+	}
+}
+
+func TestReportTool(t *testing.T) {
+	dir := t.TempDir()
+	runsJSON := `[{"id":"test/x","phase":"test","chain":"wbft","status":"succeeded"},{"id":"test/y","phase":"test","chain":"wbft","status":"failed"}]`
+	if err := os.WriteFile(filepath.Join(dir, "runs.json"), []byte(runsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	text, isErr := callText(t, newServer(), "chainbench_report", map[string]any{"data_dir": dir})
+	if isErr || !strings.Contains(text, "test/x") || !strings.Contains(text, "total=2 ok=1 failed=1") {
+		t.Errorf("report tool: err=%v text=%s", isErr, text)
 	}
 }
 

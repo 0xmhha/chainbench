@@ -31,6 +31,7 @@ func newRootCmd() *cobra.Command {
 		newNodeCmd(),
 		newConsensusCmd(),
 		newHardforkCmd(),
+		newReportCmd(),
 		newFaucetCmd(),
 	)
 	return root
