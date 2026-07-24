@@ -66,7 +66,7 @@
 
 ```
 chainbench/  (module github.com/0xmhha/chainbench)
-├── cmd/                          # (#15) cobra 진입점 ✅ chainbench: chains/setup(plan)/verify/faucet
+├── cmd/                          # (#15) cobra ✅ chains/setup(plan|provision|launch)/verify/faucet
 │   ├── chainbench/               #  CLI: setup / verify / test / faucet / attach / hardfork
 │   └── chainbenchd/              #  데몬: 이벤트버스 + 대시보드 API + 상태저장 (#17,#19)
 ├── pkg/core/                     # ── 공통, 체인·합의 불문 (#13) ──

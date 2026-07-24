@@ -53,10 +53,10 @@ func TestSetupCmd_DryRunPlan(t *testing.T) {
 	}
 }
 
-func TestSetupCmd_LaunchNotWired(t *testing.T) {
+func TestSetupCmd_DryRunFalseWithoutLaunch(t *testing.T) {
 	_, err := run(t, "setup", "--chain", "stablenet", "--dry-run=false")
-	if err == nil || !strings.Contains(err.Error(), "not yet wired") {
-		t.Errorf("expected not-yet-wired error, got %v", err)
+	if err == nil || !strings.Contains(err.Error(), "needs --launch") {
+		t.Errorf("expected guidance to use --launch, got %v", err)
 	}
 }
 
@@ -128,6 +128,56 @@ func TestSetupCmd_ProvisionWritesRealGenesis(t *testing.T) {
 	}
 	if strings.Contains(string(cfg5), "[Eth.Miner]") {
 		t.Errorf("node5 (endpoint) should not have miner section")
+	}
+}
+
+func TestSetupCmd_LaunchWithFakeBinary(t *testing.T) {
+	dir := t.TempDir()
+	// Fake node binary: `init` exits 0; run sleeps briefly then exits.
+	bin := filepath.Join(dir, "fakegeth")
+	script := "#!/bin/sh\nif [ \"$1\" = \"init\" ]; then exit 0; fi\nsleep 0.3\n"
+	if err := os.WriteFile(bin, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := run(t, "setup",
+		"--chain", "stablenet",
+		"--validators", "2", "--endpoints", "0",
+		"--data-dir", filepath.Join(dir, "data"),
+		"--keys-dir", filepath.Join("..", "..", "keys", "preset"),
+		"--binary", bin,
+		"--launch",
+	)
+	if err != nil {
+		t.Fatalf("launch: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "launched 2 node(s)") {
+		t.Errorf("expected launch confirmation:\n%s", out)
+	}
+	// NodeSet state persisted.
+	b, err := os.ReadFile(filepath.Join(dir, "data", "nodeset.json"))
+	if err != nil {
+		t.Fatalf("read nodeset.json: %v", err)
+	}
+	var ns struct {
+		Chain string `json:"chain"`
+		Nodes []struct {
+			Index  int    `json:"index"`
+			RPCURL string `json:"rpc_url"`
+		} `json:"nodes"`
+	}
+	if err := json.Unmarshal(b, &ns); err != nil {
+		t.Fatalf("nodeset.json invalid: %v", err)
+	}
+	if ns.Chain != "stablenet" || len(ns.Nodes) != 2 {
+		t.Errorf("nodeset: %+v", ns)
+	}
+	if ns.Nodes[0].RPCURL != "http://127.0.0.1:8501" {
+		t.Errorf("node1 rpc: %s", ns.Nodes[0].RPCURL)
+	}
+	// Datadirs were initialized.
+	if _, err := os.Stat(filepath.Join(dir, "data", "node1")); err != nil {
+		t.Errorf("node1 datadir not created: %v", err)
 	}
 }
 

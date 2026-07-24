@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"text/tabwriter"
@@ -10,11 +11,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
+	"github.com/0xmhha/chainbench/pkg/core/driver"
 	"github.com/0xmhha/chainbench/pkg/core/genesis"
 	"github.com/0xmhha/chainbench/pkg/core/keys"
 	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
+	"github.com/0xmhha/chainbench/pkg/core/state"
 )
 
 func newSetupCmd() *cobra.Command {
@@ -24,7 +27,9 @@ func newSetupCmd() *cobra.Command {
 		endpoints  int
 		dataDir    string
 		keysDir    string
+		binaryPath string
 		provision  bool
+		launch     bool
 		dryRun     bool
 	)
 	cmd := &cobra.Command{
@@ -71,7 +76,7 @@ func newSetupCmd() *cobra.Command {
 				return err
 			}
 
-			if provision {
+			if provision || launch {
 				preset, err := keys.LoadPreset(keysDir)
 				if err != nil {
 					return err
@@ -117,8 +122,33 @@ func newSetupCmd() *cobra.Command {
 				fmt.Fprintf(out, "configs written: %d node TOML files\n", len(plan.Nodes))
 			}
 
+			if launch {
+				bin, err := resolveBinary(binaryPath, p.Manifest().Binary)
+				if err != nil {
+					return err
+				}
+				ctx := cmd.Context()
+				for i := range plan.Nodes {
+					plan.Nodes[i].Binary = bin
+					if err := driver.InitDatadir(ctx, bin, plan.Nodes[i].DataDir, plan.GenesisPath); err != nil {
+						return err
+					}
+				}
+				plan.Genesis = nil // already written by the provision step above
+				ns, err := setup.Run(ctx, plan, driver.NewLocalDriver(), nil)
+				if err != nil {
+					return err
+				}
+				if err := state.SaveNodeSet(plan.DataRoot, ns); err != nil {
+					return err
+				}
+				fmt.Fprintf(out, "launched %d node(s); state: %s\n",
+					len(ns.Nodes), filepath.Join(plan.DataRoot, "nodeset.json"))
+				return nil
+			}
+
 			if !dryRun {
-				return fmt.Errorf("live launch is not yet wired: it needs per-node config + a built %s binary (network absorption). Use --provision to write genesis, --dry-run to plan", p.Manifest().Binary)
+				return fmt.Errorf("live launch needs --launch (with --binary or a %s on PATH). Use --provision to write artifacts, --dry-run to plan", p.Manifest().Binary)
 			}
 			return nil
 		},
@@ -128,9 +158,25 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
+	cmd.Flags().StringVar(&binaryPath, "binary", "", "node binary path (for --launch); default: chain binary on PATH")
 	cmd.Flags().BoolVar(&provision, "provision", false, "write genesis.json + node configs from preset keys")
+	cmd.Flags().BoolVar(&launch, "launch", false, "init datadirs and launch the nodes (implies --provision)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true, "plan only; do not launch")
 	return cmd
+}
+
+// resolveBinary returns the executable path for launch: the explicit path if
+// given, otherwise the chain's binary looked up on PATH.
+func resolveBinary(explicit, chainBinary string) (string, error) {
+	name := explicit
+	if name == "" {
+		name = chainBinary
+	}
+	path, err := exec.LookPath(name)
+	if err != nil {
+		return "", fmt.Errorf("cannot find node binary %q: %w (build it or pass --binary)", name, err)
+	}
+	return path, nil
 }
 
 // nodeKeyFor returns the preset node key for a 1-based node index, or nil.
