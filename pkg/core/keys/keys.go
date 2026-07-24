@@ -12,6 +12,13 @@ import (
 	"path/filepath"
 )
 
+// NodeKey is one preset node's identity for building static-node enodes.
+type NodeKey struct {
+	Index     int    // 1-based node index
+	PublicKey string // 128-hex devp2p public key (no 0x prefix)
+	Address   string // 0x-hex account address
+}
+
 // Preset is a decoded preset key set.
 type Preset struct {
 	// Validators are the validator addresses (0x-hex), in genesis order.
@@ -23,6 +30,8 @@ type Preset struct {
 	ExtraData string
 	// Password unlocks the preset keystores.
 	Password string
+	// Nodes are the per-node devp2p identities (for static-node enodes).
+	Nodes []NodeKey
 }
 
 type metadata struct {
@@ -30,6 +39,11 @@ type metadata struct {
 	Validators    []string `json:"validators"`
 	BLSPublicKeys []string `json:"blsPublicKeys"`
 	ExtraData     string   `json:"extraData"`
+	Nodes         []struct {
+		Index     int    `json:"index"`
+		PublicKey string `json:"publicKey"`
+		Address   string `json:"address"`
+	} `json:"nodes"`
 }
 
 // LoadPreset reads <dir>/metadata.json and returns the decoded Preset.
@@ -50,11 +64,16 @@ func LoadPreset(dir string) (Preset, error) {
 		return Preset{}, fmt.Errorf("keys: %s has %d validators but %d BLS keys",
 			path, len(m.Validators), len(m.BLSPublicKeys))
 	}
+	nodes := make([]NodeKey, 0, len(m.Nodes))
+	for _, n := range m.Nodes {
+		nodes = append(nodes, NodeKey{Index: n.Index, PublicKey: n.PublicKey, Address: n.Address})
+	}
 	return Preset{
 		Validators: m.Validators,
 		BLSKeys:    m.BLSPublicKeys,
 		ExtraData:  m.ExtraData,
 		Password:   m.Password,
+		Nodes:      nodes,
 	}, nil
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/genesis"
 	"github.com/0xmhha/chainbench/pkg/core/keys"
+	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
@@ -91,6 +92,29 @@ func newSetupCmd() *cobra.Command {
 					return err
 				}
 				fmt.Fprintf(out, "genesis written: %s (%d validators)\n", plan.GenesisPath, len(sub.Validators))
+
+				// Per-node TOML configs. Static nodes are every preset node's
+				// enode at its planned p2p port.
+				var staticNodes []string
+				for _, spec := range plan.Nodes {
+					if nk := nodeKeyFor(preset, spec.Index); nk != nil {
+						staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, spec.Host, spec.Ports.P2P))
+					}
+				}
+				ns := p.Manifest().Consensus.RPCNamespace
+				for _, spec := range plan.Nodes {
+					toml := nodeconfig.Generate(nodeconfig.Params{
+						Role:         spec.Role,
+						Ports:        spec.Ports,
+						KeystoreDir:  filepath.Join(plan.DataRoot, "keystores", fmt.Sprintf("node%d", spec.Index)),
+						RPCNamespace: ns,
+						StaticNodes:  staticNodes,
+					})
+					if err := os.WriteFile(spec.ConfigPath, toml, 0o644); err != nil {
+						return err
+					}
+				}
+				fmt.Fprintf(out, "configs written: %d node TOML files\n", len(plan.Nodes))
 			}
 
 			if !dryRun {
@@ -104,7 +128,17 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
-	cmd.Flags().BoolVar(&provision, "provision", false, "write genesis.json from preset keys")
+	cmd.Flags().BoolVar(&provision, "provision", false, "write genesis.json + node configs from preset keys")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true, "plan only; do not launch")
 	return cmd
+}
+
+// nodeKeyFor returns the preset node key for a 1-based node index, or nil.
+func nodeKeyFor(p keys.Preset, index int) *keys.NodeKey {
+	for i := range p.Nodes {
+		if p.Nodes[i].Index == index {
+			return &p.Nodes[i]
+		}
+	}
+	return nil
 }

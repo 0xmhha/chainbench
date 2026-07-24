@@ -102,6 +102,33 @@ func TestSetupCmd_ProvisionWritesRealGenesis(t *testing.T) {
 	if g.Config.Anzeon.Init.Validators[0] != "0xc17d493883eaa3b4cceb0f214b273392d562f9d8" {
 		t.Errorf("first validator: %s", g.Config.Anzeon.Init.Validators[0])
 	}
+
+	// Per-node TOML configs are written too.
+	if !strings.Contains(out, "configs written") {
+		t.Errorf("expected node configs written:\n%s", out)
+	}
+	cfg1, err := os.ReadFile(filepath.Join(dir, "config_node1.toml"))
+	if err != nil {
+		t.Fatalf("read config_node1.toml: %v", err)
+	}
+	s := string(cfg1)
+	if !strings.Contains(s, "[Eth.Miner]") { // node1 is a validator
+		t.Errorf("node1 config should have miner section:\n%s", s)
+	}
+	if !strings.Contains(s, "HTTPPort = 8501") || !strings.Contains(s, `"istanbul"`) {
+		t.Errorf("node1 config ports/namespace wrong:\n%s", s)
+	}
+	if !strings.Contains(s, "enode://8d2153cc") { // static node from preset pubkey
+		t.Errorf("node1 config missing static-node enode:\n%s", s)
+	}
+	// node5 is an endpoint: no miner section.
+	cfg5, err := os.ReadFile(filepath.Join(dir, "config_node5.toml"))
+	if err != nil {
+		t.Fatalf("read config_node5.toml: %v", err)
+	}
+	if strings.Contains(string(cfg5), "[Eth.Miner]") {
+		t.Errorf("node5 (endpoint) should not have miner section")
+	}
 }
 
 func TestVerifyCmd_HTTPMock(t *testing.T) {
