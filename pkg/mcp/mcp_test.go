@@ -57,17 +57,54 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 7 {
-		t.Fatalf("tools: %d, want 7", len(tools))
+	if len(tools) != 10 {
+		t.Fatalf("tools: %d, want 10", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
+	}
+}
+
+func TestSetupPlanTool(t *testing.T) {
+	text, isErr := callText(t, newServer(), "chainbench_setup_plan", map[string]any{
+		"chain": "stablenet", "validators": 2, "endpoints": 1, "data_dir": "/tmp/plan",
+	})
+	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node3 endpoint") || !strings.Contains(text, "http=") {
+		t.Errorf("setup_plan tool: err=%v text=%s", isErr, text)
+	}
+}
+
+func TestStatusTool(t *testing.T) {
+	dir := t.TempDir()
+	nsJSON := `{"chain":"stablenet","network":"local","nodes":[{"index":1,"role":"validator","rpc_url":"http://127.0.0.1:8501","pid":4321}]}`
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	text, isErr := callText(t, newServer(), "chainbench_status", map[string]any{"data_dir": dir})
+	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node1 validator") || !strings.Contains(text, "pid=4321") {
+		t.Errorf("status tool: err=%v text=%s", isErr, text)
+	}
+}
+
+func TestTxpoolTool(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID,
+			"result": map[string]any{"pending": "0x3", "queued": "0x1"}})
+	}))
+	defer srv.Close()
+	text, isErr := callText(t, newServer(), "chainbench_txpool", map[string]any{"rpc": srv.URL})
+	if isErr || text != "pending=3 queued=1" {
+		t.Errorf("txpool tool: err=%v text=%s", isErr, text)
 	}
 }
 

@@ -7,13 +7,16 @@ import (
 	"fmt"
 	"math/big"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/accounts"
+	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/consensus"
 	"github.com/0xmhha/chainbench/pkg/core/node"
 	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/verify"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
@@ -32,6 +35,9 @@ func Default(name, version string) *Server {
 	s.Register(consensusTool())
 	s.Register(nodeRPCTool())
 	s.Register(reportTool())
+	s.Register(statusTool())
+	s.Register(setupPlanTool())
+	s.Register(txpoolTool())
 	return s
 }
 
@@ -266,6 +272,112 @@ func testTool() Tool {
 			return b.String(), nil
 		},
 	}
+}
+
+func statusTool() Tool {
+	return Tool{
+		Name:        "chainbench_status",
+		Description: "Report the saved node set for a setup's data dir (chain, network, and each node's role/rpc/pid). Args: data_dir.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"data_dir": map[string]any{"type": "string"},
+			},
+			"required": []string{"data_dir"},
+		},
+		Handler: func(_ context.Context, args map[string]any) (string, error) {
+			dir := argString(args, "data_dir", "")
+			if dir == "" {
+				return "", fmt.Errorf("data_dir is required")
+			}
+			ns, err := state.LoadNodeSet(dir)
+			if err != nil {
+				return "", err
+			}
+			var b strings.Builder
+			fmt.Fprintf(&b, "chain=%s network=%s nodes=%d\n", ns.Chain, ns.Network, len(ns.Nodes))
+			for _, n := range ns.Nodes {
+				fmt.Fprintf(&b, "  node%d %s %s pid=%d\n", n.Index, n.Role, n.RPCURL, n.PID)
+			}
+			return b.String(), nil
+		},
+	}
+}
+
+func setupPlanTool() Tool {
+	return Tool{
+		Name:        "chainbench_setup_plan",
+		Description: "Preview a local network plan (nodes, roles, ports, genesis path) without launching. Args: chain, validators, endpoints, data_dir.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"chain":      map[string]any{"type": "string"},
+				"validators": map[string]any{"type": "integer"},
+				"endpoints":  map[string]any{"type": "integer"},
+				"data_dir":   map[string]any{"type": "string"},
+			},
+		},
+		Handler: func(_ context.Context, args map[string]any) (string, error) {
+			p, err := registry.Get(argString(args, "chain", "stablenet"))
+			if err != nil {
+				return "", err
+			}
+			override := config.Values{
+				"nodes.validators": strconv.Itoa(argInt(args, "validators", 4)),
+				"nodes.endpoints":  strconv.Itoa(argInt(args, "endpoints", 1)),
+			}
+			plan, err := setup.BuildPlan(config.Resolve(nil, override), p, argString(args, "data_dir", "data"))
+			if err != nil {
+				return "", err
+			}
+			var b strings.Builder
+			fmt.Fprintf(&b, "chain=%s network=%s dataRoot=%s genesis=%s\n",
+				plan.Chain, plan.Network, plan.DataRoot, plan.GenesisPath)
+			for _, n := range plan.Nodes {
+				fmt.Fprintf(&b, "  node%d %s p2p=%d http=%d ws=%d\n",
+					n.Index, n.Role, n.Ports.P2P, n.Ports.HTTP, n.Ports.WS)
+			}
+			return b.String(), nil
+		},
+	}
+}
+
+func txpoolTool() Tool {
+	return Tool{
+		Name:        "chainbench_txpool",
+		Description: "Report a node's transaction pool status (pending/queued counts). Args: rpc.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"rpc": map[string]any{"type": "string"},
+			},
+			"required": []string{"rpc"},
+		},
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			url := argString(args, "rpc", "")
+			if url == "" {
+				return "", fmt.Errorf("rpc is required")
+			}
+			var st struct {
+				Pending string `json:"pending"`
+				Queued  string `json:"queued"`
+			}
+			if err := rpc.Dial(url).Call(ctx, "txpool_status", &st); err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("pending=%d queued=%d", hexCount(st.Pending), hexCount(st.Queued)), nil
+		},
+	}
+}
+
+// hexCount parses a 0x-hex count (e.g. txpool_status fields) to a uint64; a
+// blank or malformed value yields 0.
+func hexCount(s string) uint64 {
+	n, err := strconv.ParseUint(strings.TrimPrefix(s, "0x"), 16, 64)
+	if err != nil {
+		return 0
+	}
+	return n
 }
 
 // nodeSetFromArgs builds a NodeSet from rpc endpoints (attach) or data_dir

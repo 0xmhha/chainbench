@@ -7,7 +7,10 @@
 // over Server.Handle.
 package mcp
 
-import "context"
+import (
+	"context"
+	"strconv"
+)
 
 // Handler runs a tool with decoded arguments and returns human/agent-readable
 // text (mirroring the TS server's text results).
@@ -51,4 +54,20 @@ func argStrings(args map[string]any, key string) []string {
 		return out
 	}
 	return nil
+}
+
+// argInt returns an integer argument or def. JSON numbers decode as float64;
+// a numeric string is also accepted.
+func argInt(args map[string]any, key string, def int) int {
+	switch v := args[key].(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case string:
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return def
 }
