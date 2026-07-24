@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -49,6 +50,50 @@ func TestClient_Quantities(t *testing.T) {
 	}
 	if syncing, err := c.Syncing(ctx); err != nil || syncing {
 		t.Errorf("Syncing: %v, %v", syncing, err)
+	}
+}
+
+func TestClient_AccountReads(t *testing.T) {
+	srv := rpcServer(t, map[string]any{
+		"eth_getBalance":          "0xde0b6b3a7640000", // 1e18
+		"eth_getTransactionCount": "0x5",
+		"eth_getCode":             "0x6001",
+		"eth_call":                "0x2a",
+	})
+	defer srv.Close()
+	c := Dial(srv.URL)
+	ctx := context.Background()
+
+	if bal, err := c.BalanceAt(ctx, "0xabc"); err != nil || bal.String() != "1000000000000000000" {
+		t.Errorf("BalanceAt: %v, %v", bal, err)
+	}
+	if n, err := c.NonceAt(ctx, "0xabc"); err != nil || n != 5 {
+		t.Errorf("NonceAt: %d, %v", n, err)
+	}
+	if code, err := c.CodeAt(ctx, "0xabc"); err != nil || code != "0x6001" {
+		t.Errorf("CodeAt: %q, %v", code, err)
+	}
+	if res, err := c.EthCall(ctx, "0xdef", "0x00"); err != nil || res != "0x2a" {
+		t.Errorf("EthCall: %q, %v", res, err)
+	}
+}
+
+func TestClient_TxReceipt(t *testing.T) {
+	ctx := context.Background()
+
+	pending := rpcServer(t, map[string]any{"eth_getTransactionReceipt": nil})
+	defer pending.Close()
+	if r, err := Dial(pending.URL).TxReceipt(ctx, "0xhash"); err != nil || r != nil {
+		t.Errorf("pending receipt should be nil: %s, %v", r, err)
+	}
+
+	mined := rpcServer(t, map[string]any{
+		"eth_getTransactionReceipt": map[string]any{"status": "0x1", "blockNumber": "0x5"},
+	})
+	defer mined.Close()
+	r, err := Dial(mined.URL).TxReceipt(ctx, "0xhash")
+	if err != nil || r == nil || !strings.Contains(string(r), "0x5") {
+		t.Errorf("mined receipt: %s, %v", r, err)
 	}
 }
 
