@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>chainbench</title>
+<style>
+  :root { color-scheme: light dark; --bg:#0f1115; --panel:#171a21; --line:#252a34; --fg:#e6e9ef; --mut:#8b93a3; --ok:#37d67a; --err:#ff5964; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--bg); color:var(--fg); }
+  header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:center; }
+  header h1 { font-size:15px; margin:0; letter-spacing:.5px; }
+  #conn { margin-left:auto; color:var(--mut); font-size:12px; }
+  main { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--line); }
+  section { background:var(--panel); min-height:70vh; padding:14px; overflow:auto; }
+  section h2 { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--mut); margin:0 0 10px; }
+  .ev { padding:6px 8px; border-left:2px solid var(--line); margin-bottom:6px; white-space:pre-wrap; word-break:break-word; }
+  .ev.result { border-left-color:var(--ok); }
+  .ev.error { border-left-color:var(--err); }
+  .ev small { color:var(--mut); }
+  footer { border-top:1px solid var(--line); padding:10px 20px; color:var(--mut); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>chainbench</h1>
+  <span id="conn">connecting…</span>
+</header>
+<main>
+  <section id="setup"><h2>Setup</h2></section>
+  <section id="verify"><h2>Verify</h2></section>
+  <section id="test"><h2>Test</h2></section>
+</main>
+<footer id="runs">runs: —</footer>
+<script>
+  const cols = { setup: document.querySelector('#setup'), verify: document.querySelector('#verify'), test: document.querySelector('#test') };
+  const conn = document.querySelector('#conn');
+  function addEvent(e) {
+    const col = cols[e.phase] || cols.setup;
+    const div = document.createElement('div');
+    div.className = 'ev ' + (e.kind || 'info');
+    const when = (e.time || '').replace('T', ' ').replace('Z', '');
+    div.innerHTML = '<small>' + when + (e.node ? ' · node' + e.node : '') + '</small>\n' + (e.message || '');
+    col.appendChild(div);
+    col.scrollTop = col.scrollHeight;
+  }
+  const es = new EventSource('/events');
+  es.onopen = () => { conn.textContent = 'live'; conn.style.color = 'var(--ok)'; };
+  es.onerror = () => { conn.textContent = 'disconnected'; conn.style.color = 'var(--err)'; };
+  es.onmessage = (m) => { try { addEvent(JSON.parse(m.data)); } catch {} };
+  async function loadRuns() {
+    try {
+      const r = await fetch('/api/runs'); const runs = await r.json();
+      const by = { succeeded:0, failed:0, running:0 };
+      for (const x of runs) by[x.status] = (by[x.status]||0)+1;
+      document.querySelector('#runs').textContent =
+        'runs: ' + runs.length + ' (ok ' + (by.succeeded||0) + ', failed ' + (by.failed||0) + ', running ' + (by.running||0) + ')';
+    } catch {}
+  }
+  loadRuns(); setInterval(loadRuns, 3000);
+</script>
+</body>
+</html>
