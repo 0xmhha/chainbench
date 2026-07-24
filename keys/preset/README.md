@@ -34,6 +34,17 @@
 | `node{1..5}/nodekey` | secp256k1 **private** key (test-only, public-equivalent). |
 | `node{1..4}/keystore/UTC--*` | Ethereum keystore (encrypted with password `1`). |
 
+## Faucet test key
+
+`metadata.json` `alloc` also funds a standalone faucet account used by the
+`value-transfer` test case (it needs a raw private key, which the encrypted
+node keystores do not expose):
+
+| Address | `0x71562b71999873db5b286df957af199ec94617f7` |
+| Private key | `b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291` |
+
+TEST FIXTURE ONLY — same public-key caveat as every other file here.
+
 ## How chainbench consumes these
 
 `profiles/default.yaml` references this directory via:
