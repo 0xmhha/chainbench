@@ -6,7 +6,7 @@
 //
 //	on-chain — the prerequisite for any faucet/transaction scenario.
 //
-// Applies:  stablenet (its preset alloc funds the validator accounts).
+// Applies:  stablenet, wbft (the preset alloc funds the validator accounts).
 // Requires: the "rpc" capability.
 // Method:   query eth_getBalance for a known preset-funded address on the
 //
@@ -32,7 +32,7 @@ func init() {
 	testkit.Register(testkit.Case{
 		Name:         "genesis-balance",
 		Category:     "accounts",
-		ChainCompat:  []string{"stablenet"},
+		ChainCompat:  []string{"stablenet", "wbft"},
 		RequiresCaps: []string{"rpc"},
 		Fn:           genesisBalance,
 	})

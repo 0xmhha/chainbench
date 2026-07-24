@@ -28,6 +28,36 @@
       "init": {
         "validators": "__VALIDATORS_JSON__",
         "blsPublicKeys": "__BLS_PUBLIC_KEYS_JSON__"
+      },
+      "govContracts": {
+        "govConfig": {
+          "address": "0x0000000000000000000000000000000000001000",
+          "version": "v1",
+          "params": {
+            "minimumStaking": "10000000000000000000000000",
+            "maximumStaking": "100000000000000000000000000",
+            "unbondingPeriodStaker": "604800",
+            "unbondingPeriodDelegator": "259200",
+            "feePrecision": "10000",
+            "changeFeeDelay": "604800",
+            "govCouncil": "0x0000000000000000000000000000000000001003"
+          }
+        },
+        "govStaking": {
+          "address": "0x0000000000000000000000000000000000001001",
+          "version": "v1"
+        },
+        "govRewardeeImp": {
+          "address": "0x0000000000000000000000000000000000001002",
+          "version": "v1"
+        },
+        "govNCP": {
+          "address": "0x0000000000000000000000000000000000001003",
+          "version": "v1",
+          "params": {
+            "ncps": "__SC_MEMBERS_CSV__"
+          }
+        }
       }
     }
   },
@@ -38,7 +68,7 @@
   "difficulty": "0x1",
   "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "coinbase": "0x0000000000000000000000000000000000000000",
-  "alloc": {},
+  "alloc": __ALLOC_JSON__,
   "number": "0x0",
   "gasUsed": "0x0",
   "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",

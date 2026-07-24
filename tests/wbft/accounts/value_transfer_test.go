@@ -27,7 +27,7 @@ func TestValueTransferCase_Registers(t *testing.T) {
 }
 
 // TestValueTransferCase_SkipsForeignChain confirms chain_compat gating: the
-// case does not run outside its ChainCompat (stablenet only).
+// case does not run outside its ChainCompat (the wbft family), e.g. on wemix.
 func TestValueTransferCase_SkipsForeignChain(t *testing.T) {
 	ns, _ := attach.Build("wemix", "local", []attach.Endpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"value-transfer"}})
