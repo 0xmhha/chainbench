@@ -1,0 +1,157 @@
+// Package setup is the first pipeline phase (requirement #8): it turns resolved
+// config + a chain plugin into a running (or provisioned) NodeSet through three
+// steps — plan (config -> node specs), provision (env build: genesis, config,
+// datadir), and launch (driver). It is chain-agnostic; genesis/config content
+// comes from the consensus family and chain plugin
+// (docs/CHAINBENCH_GO_REDESIGN.md §3, §8).
+package setup
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+
+	"github.com/0xmhha/chainbench/pkg/core/config"
+	"github.com/0xmhha/chainbench/pkg/core/driver"
+	"github.com/0xmhha/chainbench/pkg/core/node"
+	"github.com/0xmhha/chainbench/pkg/core/obs"
+	"github.com/0xmhha/chainbench/pkg/core/registry"
+)
+
+// Plan is the fully-resolved setup description: what genesis to write and which
+// nodes to provision/launch. Building a Plan performs no I/O, so it is unit
+// testable and inspectable before anything runs.
+type Plan struct {
+	Chain        string
+	Network      string
+	DataRoot     string
+	GenesisPath  string
+	Genesis      []byte // genesis.json bytes (supplied by the consensus family)
+	Capabilities []string
+	Nodes        []driver.NodeSpec
+}
+
+// BuildPlan plans a local setup from resolved config and a chain plugin. Node 1..V
+// are validators, V+1..V+E are endpoints; each node gets ports offset by its
+// zero-based index (requirement #6). Genesis bytes are attached separately (the
+// caller obtains them from the consensus family) so planning stays pure.
+func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) (Plan, error) {
+	validators := cfg.Int("nodes.validators", 0)
+	endpoints := cfg.Int("nodes.endpoints", 0)
+	total := validators + endpoints
+	if total < 1 {
+		return Plan{}, fmt.Errorf("setup: need at least one node (validators=%d endpoints=%d)", validators, endpoints)
+	}
+
+	m := plugin.Manifest()
+	fam := plugin.Family()
+	host := "127.0.0.1"
+	base := node.Endpoints{
+		P2P:     cfg.Int("ports.base_p2p", 30301),
+		HTTP:    cfg.Int("ports.base_http", 8501),
+		WS:      cfg.Int("ports.base_ws", 9501),
+		Auth:    cfg.Int("ports.base_auth", 8551),
+		Metrics: cfg.Int("ports.base_metrics", 6061),
+	}
+
+	nodes := make([]driver.NodeSpec, 0, total)
+	for i := 1; i <= total; i++ {
+		role := node.RoleValidator
+		if i > validators {
+			role = node.RoleEndpoint
+		}
+		ports := node.Offset(base, i-1)
+		dataDir := filepath.Join(dataRoot, fmt.Sprintf("node%d", i))
+		configPath := filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", i))
+		nodes = append(nodes, driver.NodeSpec{
+			Index:      i,
+			Role:       role,
+			Host:       host,
+			Binary:     m.Binary,
+			DataDir:    dataDir,
+			ConfigPath: configPath,
+			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", i)),
+			Ports:      ports,
+			Args:       launchArgs(dataDir, configPath, ports, fam.StartFlags(role)),
+		})
+	}
+
+	return Plan{
+		Chain:        m.ID,
+		Network:      "local",
+		DataRoot:     dataRoot,
+		GenesisPath:  filepath.Join(dataRoot, "genesis.json"),
+		Capabilities: m.Capabilities,
+		Nodes:        nodes,
+	}, nil
+}
+
+// launchArgs assembles the common node launch flags plus the family-specific
+// flags. Port flags are geth-family conventions shared by both consensus
+// families.
+func launchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
+	args := []string{
+		"--datadir", dataDir,
+		"--config", configPath,
+		"--port", strconv.Itoa(ports.P2P),
+		"--http",
+		"--http.port", strconv.Itoa(ports.HTTP),
+		"--ws",
+		"--ws.port", strconv.Itoa(ports.WS),
+	}
+	return append(args, familyFlags...)
+}
+
+// Run executes a Plan against a Driver: it writes genesis, then provisions and
+// launches each node, emitting obs events. It returns the resulting NodeSet.
+// bus may be nil.
+func Run(ctx context.Context, plan Plan, d driver.Driver, bus *obs.Bus) (node.NodeSet, error) {
+	ns := node.NodeSet{Chain: plan.Chain, Network: plan.Network, Capabilities: plan.Capabilities}
+
+	if len(plan.Genesis) > 0 {
+		if err := os.MkdirAll(plan.DataRoot, 0o755); err != nil {
+			return ns, fmt.Errorf("setup: mkdir data root: %w", err)
+		}
+		if err := os.WriteFile(plan.GenesisPath, plan.Genesis, 0o644); err != nil {
+			return ns, fmt.Errorf("setup: write genesis: %w", err)
+		}
+		emit(bus, obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
+			Message: "genesis written", Fields: map[string]any{"path": plan.GenesisPath}})
+	}
+
+	for _, spec := range plan.Nodes {
+		if err := d.Provision(ctx, spec); err != nil {
+			emit(bus, obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindError, Network: plan.Network,
+				Node: spec.Index, Message: "provision failed", Fields: map[string]any{"error": err.Error()}})
+			return ns, fmt.Errorf("setup: provision node%d: %w", spec.Index, err)
+		}
+		h, err := d.Launch(ctx, spec)
+		if err != nil {
+			emit(bus, obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindError, Network: plan.Network,
+				Node: spec.Index, Message: "launch failed", Fields: map[string]any{"error": err.Error()}})
+			return ns, fmt.Errorf("setup: launch node%d: %w", spec.Index, err)
+		}
+		ns.Nodes = append(ns.Nodes, node.Node{
+			Index:  spec.Index,
+			Role:   spec.Role,
+			Host:   spec.Host,
+			RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
+			Ports:  spec.Ports,
+		})
+		emit(bus, obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
+			Node: spec.Index, Message: "node launched",
+			Fields: map[string]any{"role": string(spec.Role), "pid": h.PID, "http": spec.Ports.HTTP}})
+	}
+
+	emit(bus, obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindResult, Network: plan.Network,
+		Message: "setup complete", Fields: map[string]any{"nodes": len(ns.Nodes)}})
+	return ns, nil
+}
+
+func emit(bus *obs.Bus, e obs.Event) {
+	if bus != nil {
+		bus.Publish(e)
+	}
+}

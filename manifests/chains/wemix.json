@@ -1,0 +1,15 @@
+{
+  "id": "wemix",
+  "binary": "gwemix",
+  "build": { "repo": "go-wemix", "make_target": "gwemix" },
+  "consensus_family": "poa",
+  "consensus": {
+    "rpc_namespace": "wemix",
+    "validators_method": "wemix_getValidators"
+  },
+  "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
+  "probe": {
+    "method": "wemix_getReward"
+  },
+  "capabilities": ["process", "rpc", "ws", "consensus"]
+}
