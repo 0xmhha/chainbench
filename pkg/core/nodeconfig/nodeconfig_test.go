@@ -22,7 +22,8 @@ func TestGenerate_Validator(t *testing.T) {
 		`KeyStoreDir = "/data/keystores/node1"`,
 		"AuthPort = 8551",
 		"HTTPPort = 8501",
-		`"istanbul"`, // namespace in HTTPModules
+		`Recommit = "2s"`, // wbft-family binaries decode Recommit from a string
+		`"istanbul"`,      // namespace in HTTPModules
 		`ListenAddr = ":30301"`,
 		"NoDiscovery = true",
 		"enode://abc@127.0.0.1:30301?discport=0",
@@ -48,6 +49,22 @@ func TestGenerate_EndpointHasNoMiner(t *testing.T) {
 	}
 	if !strings.Contains(toml, "StaticNodes = []") {
 		t.Error("no static nodes should render an empty array")
+	}
+}
+
+func TestGenerate_WemixMinerRecommitIsInt(t *testing.T) {
+	toml := string(Generate(Params{
+		Role:         node.RoleValidator,
+		Ports:        node.Endpoints{P2P: 30301, HTTP: 8501},
+		RPCNamespace: "wemix",
+	}))
+	// The wemix binary decodes miner.Recommit only from an integer number of
+	// nanoseconds, not a TOML string.
+	if !strings.Contains(toml, "Recommit = 2000000000") {
+		t.Errorf("wemix miner Recommit should be an integer, got:\n%s", toml)
+	}
+	if strings.Contains(toml, `Recommit = "2s"`) {
+		t.Error("wemix miner Recommit must not be a string")
 	}
 }
 

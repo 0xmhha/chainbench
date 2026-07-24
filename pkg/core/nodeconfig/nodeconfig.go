@@ -39,7 +39,15 @@ func Generate(p Params) []byte {
 	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n\n", syncMode)
 
 	if p.Role == node.RoleValidator || p.Role == node.RoleBoot {
-		b.WriteString("[Eth.Miner]\nRecommit = \"2s\"\n\n")
+		// miner.Config.Recommit is a time.Duration. The wbft-family binaries
+		// (go-stablenet/go-wbft) decode it from a TOML string ("2s"); the
+		// wemix binary's older go-ethereum decodes it only from an integer
+		// number of nanoseconds. Emit the form the target binary accepts.
+		recommit := `"2s"`
+		if p.RPCNamespace == "wemix" {
+			recommit = "2000000000" // 2s in nanoseconds
+		}
+		fmt.Fprintf(&b, "[Eth.Miner]\nRecommit = %s\n\n", recommit)
 	}
 
 	b.WriteString("[Node]\n")
