@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -55,6 +57,50 @@ func TestSetupCmd_LaunchNotWired(t *testing.T) {
 	_, err := run(t, "setup", "--chain", "stablenet", "--dry-run=false")
 	if err == nil || !strings.Contains(err.Error(), "not yet wired") {
 		t.Errorf("expected not-yet-wired error, got %v", err)
+	}
+}
+
+func TestSetupCmd_ProvisionWritesRealGenesis(t *testing.T) {
+	dir := t.TempDir()
+	out, err := run(t, "setup",
+		"--chain", "stablenet",
+		"--validators", "4", "--endpoints", "1",
+		"--data-dir", dir,
+		"--keys-dir", filepath.Join("..", "..", "keys", "preset"),
+		"--provision",
+	)
+	if err != nil {
+		t.Fatalf("provision: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "genesis written") {
+		t.Errorf("expected genesis written:\n%s", out)
+	}
+	b, err := os.ReadFile(filepath.Join(dir, "genesis.json"))
+	if err != nil {
+		t.Fatalf("read genesis: %v", err)
+	}
+	var g struct {
+		Config struct {
+			ChainID int64 `json:"chainId"`
+			Anzeon  struct {
+				Init struct {
+					Validators []string `json:"validators"`
+				} `json:"init"`
+			} `json:"anzeon"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(b, &g); err != nil {
+		t.Fatalf("genesis not valid JSON: %v", err)
+	}
+	if g.Config.ChainID != 8283 {
+		t.Errorf("chainId: %d", g.Config.ChainID)
+	}
+	// Real preset validators land in the genesis.
+	if len(g.Config.Anzeon.Init.Validators) != 4 {
+		t.Errorf("validators in genesis: %d, want 4", len(g.Config.Anzeon.Init.Validators))
+	}
+	if g.Config.Anzeon.Init.Validators[0] != "0xc17d493883eaa3b4cceb0f214b273392d562f9d8" {
+		t.Errorf("first validator: %s", g.Config.Anzeon.Init.Validators[0])
 	}
 }
 

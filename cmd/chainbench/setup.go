@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"text/tabwriter"
@@ -9,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
+	"github.com/0xmhha/chainbench/pkg/core/genesis"
+	"github.com/0xmhha/chainbench/pkg/core/keys"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
@@ -19,6 +22,8 @@ func newSetupCmd() *cobra.Command {
 		validators int
 		endpoints  int
 		dataDir    string
+		keysDir    string
+		provision  bool
 		dryRun     bool
 	)
 	cmd := &cobra.Command{
@@ -65,8 +70,31 @@ func newSetupCmd() *cobra.Command {
 				return err
 			}
 
+			if provision {
+				preset, err := keys.LoadPreset(keysDir)
+				if err != nil {
+					return err
+				}
+				sub := preset.Take(cfg.Int("nodes.validators", len(preset.Validators)))
+				gen, err := genesis.Build(p, genesis.Inputs{
+					Validators: sub.Validators,
+					BLSKeys:    sub.BLSKeys,
+					ExtraData:  sub.ExtraData,
+				})
+				if err != nil {
+					return err
+				}
+				if err := os.MkdirAll(plan.DataRoot, 0o755); err != nil {
+					return err
+				}
+				if err := os.WriteFile(plan.GenesisPath, gen, 0o644); err != nil {
+					return err
+				}
+				fmt.Fprintf(out, "genesis written: %s (%d validators)\n", plan.GenesisPath, len(sub.Validators))
+			}
+
 			if !dryRun {
-				return fmt.Errorf("live launch is not yet wired: it needs genesis from preset keys + a built %s binary (network absorption). Use --dry-run to plan", p.Manifest().Binary)
+				return fmt.Errorf("live launch is not yet wired: it needs per-node config + a built %s binary (network absorption). Use --provision to write genesis, --dry-run to plan", p.Manifest().Binary)
 			}
 			return nil
 		},
@@ -75,6 +103,8 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().IntVar(&validators, "validators", 0, "override validator count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
+	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
+	cmd.Flags().BoolVar(&provision, "provision", false, "write genesis.json from preset keys")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true, "plan only; do not launch")
 	return cmd
 }
