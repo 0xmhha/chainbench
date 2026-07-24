@@ -55,17 +55,34 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 5 {
-		t.Fatalf("tools: %d, want 5", len(tools))
+	if len(tools) != 6 {
+		t.Fatalf("tools: %d, want 6", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
+	}
+}
+
+func TestNodeRPCTool(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x2a"})
+	}))
+	defer srv.Close()
+	text, isErr := callText(t, newServer(), "chainbench_node_rpc", map[string]any{
+		"rpc": srv.URL, "method": "eth_blockNumber",
+	})
+	if isErr || text != `"0x2a"` {
+		t.Errorf("node_rpc tool: err=%v text=%s", isErr, text)
 	}
 }
 

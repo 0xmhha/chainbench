@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
@@ -27,7 +28,40 @@ func Default(name, version string) *Server {
 	s.Register(verifyTool())
 	s.Register(testTool())
 	s.Register(consensusTool())
+	s.Register(nodeRPCTool())
 	return s
+}
+
+func nodeRPCTool() Tool {
+	return Tool{
+		Name:        "chainbench_node_rpc",
+		Description: "Call an arbitrary JSON-RPC method on a node and return the raw result. Args: rpc, method, params (JSON array).",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"rpc":    map[string]any{"type": "string"},
+				"method": map[string]any{"type": "string"},
+				"params": map[string]any{"type": "array"},
+			},
+			"required": []string{"rpc", "method"},
+		},
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			url := argString(args, "rpc", "")
+			method := argString(args, "method", "")
+			if url == "" || method == "" {
+				return "", fmt.Errorf("rpc and method are required")
+			}
+			var params []any
+			if p, ok := args["params"].([]any); ok {
+				params = p
+			}
+			var raw json.RawMessage
+			if err := rpc.Dial(url).Call(ctx, method, &raw, params...); err != nil {
+				return "", err
+			}
+			return string(raw), nil
+		},
+	}
 }
 
 func consensusTool() Tool {

@@ -28,6 +28,7 @@ func newRootCmd() *cobra.Command {
 		newStopCmd(),
 		newVerifyCmd(),
 		newTestCmd(),
+		newNodeCmd(),
 		newConsensusCmd(),
 		newHardforkCmd(),
 		newFaucetCmd(),

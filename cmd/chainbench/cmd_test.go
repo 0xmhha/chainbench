@@ -415,6 +415,31 @@ func TestHardforkCmd_Execute(t *testing.T) {
 	}
 }
 
+func TestNodeRPCCmd_Passthrough(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int           `json:"id"`
+			Method string        `json:"method"`
+			Params []interface{} `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if req.Method == "eth_getBlockByNumber" && len(req.Params) == 2 {
+			res["result"] = map[string]any{"number": "0x2a"}
+		}
+		_ = json.NewEncoder(w).Encode(res)
+	}))
+	defer srv.Close()
+
+	out, err := run(t, "node", "rpc", "--rpc", srv.URL, "--method", "eth_getBlockByNumber", "--params", `["latest",false]`)
+	if err != nil {
+		t.Fatalf("node rpc: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, `"number":"0x2a"`) {
+		t.Errorf("expected block result:\n%s", out)
+	}
+}
+
 func TestConsensusCmd_HTTPMock(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
