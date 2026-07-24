@@ -12,10 +12,11 @@ import (
 
 func newVerifyCmd() *cobra.Command {
 	var (
-		chain   string
-		dataDir string
-		rpcURLs []string
-		delay   time.Duration
+		chain        string
+		dataDir      string
+		rpcURLs      []string
+		delay        time.Duration
+		readyTimeout time.Duration
 	)
 	cmd := &cobra.Command{
 		Use:   "verify",
@@ -27,7 +28,10 @@ func newVerifyCmd() *cobra.Command {
 			}
 			bus, closeBus := obsBus()
 			defer closeBus()
-			rep, err := verify.Run(cmd.Context(), ns, verify.Options{ProgressDelay: delay}, bus)
+			rep, err := verify.Run(cmd.Context(), ns, verify.Options{
+				ProgressDelay: delay,
+				ReadyTimeout:  readyTimeout,
+			}, bus)
 			if err != nil {
 				return err
 			}
@@ -47,5 +51,6 @@ func newVerifyCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "load the network from a setup's nodeset.json")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "node RPC URL (repeatable)")
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
+	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")
 	return cmd
 }
