@@ -55,17 +55,37 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 4 {
-		t.Fatalf("tools: %d, want 4", len(tools))
+	if len(tools) != 5 {
+		t.Fatalf("tools: %d, want 5", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
+	}
+}
+
+func TestConsensusTool(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if req.Method == "istanbul_getValidators" {
+			res["result"] = []string{"0xaaa", "0xbbb"}
+		}
+		_ = json.NewEncoder(w).Encode(res)
+	}))
+	defer srv.Close()
+	text, isErr := callText(t, newServer(), "chainbench_consensus", map[string]any{"chain": "stablenet", "rpc": srv.URL})
+	if isErr || !strings.Contains(text, "istanbul_getValidators") || !strings.Contains(text, "0xaaa") {
+		t.Errorf("consensus tool: err=%v text=%s", isErr, text)
 	}
 }
 

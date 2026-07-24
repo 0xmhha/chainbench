@@ -8,11 +8,13 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/accounts"
+	"github.com/0xmhha/chainbench/pkg/core/consensus"
 	"github.com/0xmhha/chainbench/pkg/core/node"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/verify"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
+	"github.com/0xmhha/chainbench/pkg/core/rpc"
 	"github.com/0xmhha/chainbench/pkg/core/state"
 )
 
@@ -24,7 +26,41 @@ func Default(name, version string) *Server {
 	s.Register(faucetTool())
 	s.Register(verifyTool())
 	s.Register(testTool())
+	s.Register(consensusTool())
 	return s
+}
+
+func consensusTool() Tool {
+	return Tool{
+		Name:        "chainbench_consensus",
+		Description: "List the validator/producer set via the chain's consensus RPC method. Args: chain, rpc.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"chain": map[string]any{"type": "string"},
+				"rpc":   map[string]any{"type": "string"},
+			},
+			"required": []string{"chain", "rpc"},
+		},
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			chain := argString(args, "chain", "stablenet")
+			p, err := registry.Get(chain)
+			if err != nil {
+				return "", err
+			}
+			method := p.Manifest().Consensus.ValidatorsMethod
+			vals, err := consensus.Validators(ctx, rpc.Dial(argString(args, "rpc", "")), method)
+			if err != nil {
+				return "", err
+			}
+			var b strings.Builder
+			fmt.Fprintf(&b, "validators (%s via %s): %d\n", chain, method, len(vals))
+			for i, v := range vals {
+				fmt.Fprintf(&b, "  %d. %s\n", i+1, v)
+			}
+			return b.String(), nil
+		},
+	}
 }
 
 func chainsTool() Tool {

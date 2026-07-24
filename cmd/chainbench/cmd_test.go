@@ -265,6 +265,33 @@ func TestTestCmd_FromState(t *testing.T) {
 	}
 }
 
+func TestConsensusCmd_HTTPMock(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if req.Method == "istanbul_getValidators" {
+			res["result"] = []string{"0xaaa", "0xbbb", "0xccc"}
+		}
+		_ = json.NewEncoder(w).Encode(res)
+	}))
+	defer srv.Close()
+
+	out, err := run(t, "consensus", "--chain", "stablenet", "--rpc", srv.URL)
+	if err != nil {
+		t.Fatalf("consensus: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "istanbul_getValidators") || !strings.Contains(out, "3") {
+		t.Errorf("expected 3 validators via istanbul method:\n%s", out)
+	}
+	if !strings.Contains(out, "0xaaa") {
+		t.Errorf("validator addresses missing:\n%s", out)
+	}
+}
+
 func TestFaucetCmd_HTTPMock(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
