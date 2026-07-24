@@ -9,6 +9,7 @@ import (
 	"os"
 
 	_ "github.com/0xmhha/chainbench/pkg/chains/all"
+	_ "github.com/0xmhha/chainbench/tests/all"
 )
 
 func main() {

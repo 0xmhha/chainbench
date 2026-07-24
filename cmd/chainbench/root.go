@@ -13,6 +13,7 @@ func newRootCmd() *cobra.Command {
 		newChainsCmd(),
 		newSetupCmd(),
 		newVerifyCmd(),
+		newTestCmd(),
 		newFaucetCmd(),
 	)
 	return root

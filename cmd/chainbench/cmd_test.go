@@ -217,6 +217,54 @@ func TestVerifyCmd_HTTPMock(t *testing.T) {
 	}
 }
 
+func TestTestCmd_RunsCasesViaAttach(t *testing.T) {
+	// Mock node returning a stable non-zero chain id (chain-id case passes).
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x205b"})
+	}))
+	defer srv.Close()
+
+	out, err := run(t, "test", "--chain", "wbft", "--rpc", srv.URL, "--name", "chain-id")
+	if err != nil {
+		t.Fatalf("test cmd: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "chain-id") || !strings.Contains(out, "pass") {
+		t.Errorf("expected chain-id pass in output:\n%s", out)
+	}
+	if !strings.Contains(out, "pass=1") {
+		t.Errorf("expected pass=1:\n%s", out)
+	}
+}
+
+func TestTestCmd_FromState(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x205b"})
+	}))
+	defer srv.Close()
+
+	// Write a nodeset.json pointing at the mock, then run test --data-dir.
+	dir := t.TempDir()
+	nsJSON := `{"chain":"wbft","network":"local","capabilities":["rpc"],"nodes":[{"index":1,"role":"endpoint","rpc_url":"` + srv.URL + `"}]}`
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := run(t, "test", "--data-dir", dir, "--name", "chain-id")
+	if err != nil {
+		t.Fatalf("test --data-dir: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "pass=1") {
+		t.Errorf("expected pass=1 from state:\n%s", out)
+	}
+}
+
 func TestFaucetCmd_HTTPMock(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
