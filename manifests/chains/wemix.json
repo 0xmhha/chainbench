@@ -7,7 +7,7 @@
   "genesis": {
     "engine_field": "",
     "hardforks": ["istanbul", "pangyo", "applepie", "brioche"],
-    "template": ""
+    "template": "wemix"
   },
   "consensus": {
     "rpc_namespace": "wemix",

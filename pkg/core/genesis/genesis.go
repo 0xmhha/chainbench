@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/pkg/consensus/poa"
 	"github.com/0xmhha/chainbench/pkg/consensus/wbft"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
@@ -23,9 +24,10 @@ var ErrNoStaticGenesis = errors.New("genesis: chain has no static template")
 // preset key metadata): the validator set and the RLP extra-data that encodes
 // it.
 type Inputs struct {
-	Validators []string // validator addresses (0x-hex)
+	Validators []string // validator addresses (0x-hex) — wbft family
 	BLSKeys    []string // BLS public keys (0x-hex), aligned with Validators
-	ExtraData  string   // validator extra-data (0x-hex)
+	ExtraData  string   // validator extra-data (0x-hex) — wbft family
+	Coinbase   string   // block coinbase (0x-hex) — poa family; default zero
 }
 
 // Build produces the genesis.json bytes for a chain plugin. The chain id comes
@@ -45,7 +47,13 @@ func Build(p registry.ChainPlugin, in Inputs) ([]byte, error) {
 			ExtraData:  in.ExtraData,
 		})
 	case "poa":
-		return nil, fmt.Errorf("genesis: chain %q (poa) genesis is deploy-time (G7): %w", m.ID, ErrNoStaticGenesis)
+		tmpl := p.GenesisTemplate()
+		if len(tmpl) == 0 {
+			return nil, fmt.Errorf("genesis: chain %q (poa) has no template: %w", m.ID, ErrNoStaticGenesis)
+		}
+		// The validator set is not in a poa genesis — membership is set at
+		// bootstrap (governance + etcd, see poa.BootstrapPlan).
+		return poa.BuildGenesis(tmpl, m.ChainID, in.Coinbase)
 	default:
 		return nil, fmt.Errorf("genesis: chain %q has unknown consensus family %q", m.ID, m.ConsensusFamily)
 	}

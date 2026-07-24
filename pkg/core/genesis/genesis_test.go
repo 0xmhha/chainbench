@@ -2,7 +2,6 @@ package genesis_test
 
 import (
 	"encoding/json"
-	"errors"
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/pkg/chains/all"
@@ -84,10 +83,29 @@ func TestBuild_WbftIsCroissant(t *testing.T) {
 	}
 }
 
-func TestBuild_WemixIsDeployTime(t *testing.T) {
+func TestBuild_WemixBaseGenesis(t *testing.T) {
 	p, _ := registry.Get("wemix")
-	_, err := genesis.Build(p, testInputs)
-	if !errors.Is(err, genesis.ErrNoStaticGenesis) {
-		t.Errorf("wemix should have no static genesis, got err=%v", err)
+	b, err := genesis.Build(p, genesis.Inputs{Coinbase: "0xb4388353fd0f3b3a017e09f2b857052ff219e663"})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	var g genesisView
+	if err := json.Unmarshal(b, &g); err != nil {
+		t.Fatalf("invalid genesis JSON: %v\n%s", err, b)
+	}
+	if g.Config.ChainID != 8285 {
+		t.Errorf("chainId: %d, want 8285", g.Config.ChainID)
+	}
+	// poa genesis carries neither wbft-family engine field (validators come
+	// from bootstrap, not genesis).
+	if len(g.Config.Anzeon) != 0 || len(g.Config.Croissant) != 0 {
+		t.Error("wemix base genesis must not have anzeon/croissant engine fields")
+	}
+	var full struct {
+		Coinbase string `json:"coinbase"`
+	}
+	_ = json.Unmarshal(b, &full)
+	if full.Coinbase != "0xb4388353fd0f3b3a017e09f2b857052ff219e663" {
+		t.Errorf("coinbase: %s", full.Coinbase)
 	}
 }
