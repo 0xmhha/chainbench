@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"path/filepath"
 	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/accounts"
 	"github.com/0xmhha/chainbench/pkg/core/consensus"
 	"github.com/0xmhha/chainbench/pkg/core/node"
+	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/verify"
@@ -29,7 +31,49 @@ func Default(name, version string) *Server {
 	s.Register(testTool())
 	s.Register(consensusTool())
 	s.Register(nodeRPCTool())
+	s.Register(reportTool())
 	return s
+}
+
+func reportTool() Tool {
+	return Tool{
+		Name:        "chainbench_report",
+		Description: "Read stored run/test results from a setup's data dir. Args: data_dir.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"data_dir": map[string]any{"type": "string"},
+			},
+			"required": []string{"data_dir"},
+		},
+		Handler: func(_ context.Context, args map[string]any) (string, error) {
+			dir := argString(args, "data_dir", "")
+			if dir == "" {
+				return "", fmt.Errorf("data_dir is required")
+			}
+			store, err := obs.NewFileStore(filepath.Join(dir, "runs.json"))
+			if err != nil {
+				return "", err
+			}
+			runs := store.ListRuns()
+			if len(runs) == 0 {
+				return "no runs recorded", nil
+			}
+			var b strings.Builder
+			var ok, failed int
+			for _, r := range runs {
+				fmt.Fprintf(&b, "%s [%s] %s %s\n", r.ID, r.Phase, r.Chain, r.Status)
+				switch r.Status {
+				case obs.RunSucceeded:
+					ok++
+				case obs.RunFailed:
+					failed++
+				}
+			}
+			fmt.Fprintf(&b, "total=%d ok=%d failed=%d", len(runs), ok, failed)
+			return b.String(), nil
+		},
+	}
 }
 
 func nodeRPCTool() Tool {

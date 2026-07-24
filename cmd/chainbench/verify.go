@@ -7,28 +7,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/verify"
 )
 
 func newVerifyCmd() *cobra.Command {
 	var (
 		chain   string
+		dataDir string
 		rpcURLs []string
 		delay   time.Duration
 	)
 	cmd := &cobra.Command{
 		Use:   "verify",
-		Short: "Verify an existing network is producing blocks (requirement #7, #9)",
+		Short: "Verify a network is producing blocks (from --rpc or a setup's --data-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if len(rpcURLs) == 0 {
-				return fmt.Errorf("at least one --rpc url is required")
-			}
-			eps := make([]attach.Endpoint, len(rpcURLs))
-			for i, u := range rpcURLs {
-				eps[i] = attach.Endpoint{RPCURL: u}
-			}
-			ns, err := attach.Build(chain, "attached", eps)
+			ns, err := resolveNodeSet(dataDir, chain, rpcURLs)
 			if err != nil {
 				return err
 			}
@@ -50,7 +43,8 @@ func newVerifyCmd() *cobra.Command {
 			return w.Flush()
 		},
 	}
-	cmd.Flags().StringVar(&chain, "chain", "", "chain id (optional metadata)")
+	cmd.Flags().StringVar(&chain, "chain", "", "chain id (optional metadata, used with --rpc)")
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "load the network from a setup's nodeset.json")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "node RPC URL (repeatable)")
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	return cmd

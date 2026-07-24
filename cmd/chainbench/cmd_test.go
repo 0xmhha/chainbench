@@ -256,6 +256,44 @@ func TestVerifyCmd_ForwardsToDashboard(t *testing.T) {
 	}
 }
 
+func TestVerifyCmd_FromState(t *testing.T) {
+	var block int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		switch req.Method {
+		case "eth_blockNumber":
+			block++
+			res["result"] = "0x" + itoaHex(block)
+		case "eth_chainId":
+			res["result"] = "0x205b"
+		case "net_peerCount":
+			res["result"] = "0x1"
+		case "eth_syncing":
+			res["result"] = false
+		}
+		_ = json.NewEncoder(w).Encode(res)
+	}))
+	defer srv.Close()
+
+	dir := t.TempDir()
+	nsJSON := `{"chain":"wbft","network":"local","nodes":[{"index":1,"role":"validator","rpc_url":"` + srv.URL + `"}]}`
+	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := run(t, "verify", "--data-dir", dir, "--progress-delay", "1ms")
+	if err != nil {
+		t.Fatalf("verify --data-dir: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "producing: true") || !strings.Contains(out, "8283") {
+		t.Errorf("expected producing + chain id from saved state:\n%s", out)
+	}
+}
+
 func TestVerifyCmd_HTTPMock(t *testing.T) {
 	var block int
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
