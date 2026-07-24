@@ -40,11 +40,9 @@ const (
 
 func init() {
 	testkit.Register(testkit.Case{
-		Name:     "value-transfer",
-		Category: "accounts",
-		// stablenet only: the croissant (wbft) transaction path does not yet
-		// confirm SDK-signed transfers in this harness (follow-up).
-		ChainCompat:  []string{"stablenet"},
+		Name:         "value-transfer",
+		Category:     "accounts",
+		ChainCompat:  []string{"stablenet", "wbft"},
 		RequiresCaps: []string{"rpc"},
 		Fn:           valueTransfer,
 	})
@@ -64,9 +62,14 @@ func valueTransfer(t *testkit.T) {
 	_, err = ap.Faucet(t.Ctx(), key, transferRecipient, amount, primary.RPCURL)
 	t.NoErr(err, "faucet transfer")
 
+	// The submitted transaction always mines eventually; inclusion is usually
+	// one block but can lag right after launch on wbft, when verify reports
+	// production before the validator mesh has fully converged and gossiped the
+	// transaction to the current proposer. Allow a generous window so the case
+	// is not flaky on that startup tail.
 	t.WaitFor(func() bool {
 		return balanceOf(t, transferRecipient).Cmp(amount) == 0
-	}, 30*time.Second, time.Second, "recipient balance to equal the transferred amount")
+	}, 90*time.Second, time.Second, "recipient balance to equal the transferred amount")
 }
 
 // balanceOf reads an account's latest balance via the primary node; a failed
