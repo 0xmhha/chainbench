@@ -9,29 +9,42 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/pkg/chains/external"
 	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 	"github.com/0xmhha/chainbench/pkg/core/state"
 )
 
+// resolveChain returns the chain plugin for a run: an external, project-supplied
+// manifest when --manifest is given (the hybrid model), otherwise the embedded
+// chain registered for the --chain id.
+func resolveChain(chain, manifestPath, templatePath string) (registry.ChainPlugin, error) {
+	if manifestPath != "" {
+		return external.Load(manifestPath, templatePath)
+	}
+	return registry.Get(chain)
+}
+
 func newSetupCmd() *cobra.Command {
 	var (
-		chain      string
-		validators int
-		endpoints  int
-		dataDir    string
-		keysDir    string
-		binaryPath string
-		provision  bool
-		launch     bool
-		dryRun     bool
+		chain        string
+		manifestPath string
+		templatePath string
+		validators   int
+		endpoints    int
+		dataDir      string
+		keysDir      string
+		binaryPath   string
+		provision    bool
+		launch       bool
+		dryRun       bool
 	)
 	cmd := &cobra.Command{
 		Use:   "setup",
 		Short: "Plan (and, when wired, launch) a local chain network",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			p, err := registry.Get(chain)
+			p, err := resolveChain(chain, manifestPath, templatePath)
 			if err != nil {
 				return err
 			}
@@ -106,7 +119,9 @@ func newSetupCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&chain, "chain", "stablenet", "chain id (stablenet|wbft|wemix)")
+	cmd.Flags().StringVar(&chain, "chain", "stablenet", "embedded chain id (stablenet|wbft|wemix); ignored with --manifest")
+	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
+	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().IntVar(&validators, "validators", 0, "override validator count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")

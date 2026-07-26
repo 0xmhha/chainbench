@@ -44,6 +44,11 @@ type Manifest struct {
 	// ("wbft" for stablenet+wbft, "poa" for wemix). It selects the
 	// ConsensusFamily plugin (docs §4, decision D9).
 	ConsensusFamily string `json:"consensus_family"`
+	// Protocol names the accounts SDK protocol profile (tx types, account model)
+	// this chain uses; empty defaults to ID. An externally-supplied manifest on
+	// an existing family sets this to borrow a built-in protocol (e.g.
+	// "stablenet") since the SDK does not know the external chain's id.
+	Protocol string `json:"protocol,omitempty"`
 	// Genesis describes how this chain's genesis is structured.
 	Genesis GenesisSpec `json:"genesis"`
 	// Consensus holds the RPC-facing consensus facts.

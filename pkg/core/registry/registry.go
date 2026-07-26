@@ -62,6 +62,23 @@ type ChainPlugin interface {
 	GenesisTemplate() []byte
 }
 
+// StaticPlugin is a ChainPlugin assembled from already-resolved parts. It backs
+// a chain whether its manifest came from the embedded set or an external file,
+// so both paths produce the same object. The family and protocol are supplied by
+// the composition layer (which may import concrete families), keeping this core
+// type free of any consensus/chain import.
+type StaticPlugin struct {
+	M     Manifest
+	Fam   ConsensusFamily
+	Proto protocol.Protocol
+	Tmpl  []byte
+}
+
+func (p StaticPlugin) Manifest() Manifest          { return p.M }
+func (p StaticPlugin) Family() ConsensusFamily     { return p.Fam }
+func (p StaticPlugin) Protocol() protocol.Protocol { return p.Proto }
+func (p StaticPlugin) GenesisTemplate() []byte     { return p.Tmpl }
+
 var chains = map[string]ChainPlugin{}
 
 // Register adds a chain plugin. Intended to be called from a chain package's

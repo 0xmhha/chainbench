@@ -235,6 +235,14 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    다체인 상태로 재작성.
 
 ### 남은 작업 (기존)
+- ✅ **하이브리드 외부 매니페스트(프로젝트별 체인 공급)**: 사용자 결정 — first-party 체인은
+  embed 유지하되, 프로젝트가 자기 체인을 `--manifest <path>`/`--genesis-template <path>`로
+  공급(기존 family 재사용 시 chainbench 수정 0). `pkg/chains/external.Load`(매니페스트 파싱 →
+  family를 이름으로 선택 → `protocol.ByName(manifest.protocol|id)` → 템플릿 로딩 →
+  `registry.StaticPlugin`), Manifest에 optional `protocol` 필드(SDK 프로파일 차용), `setup`에
+  `--manifest`/`--genesis-template` 배선. core 경계 유지(family switch는 composition 계층).
+  end-to-end 확인(외부 foonet 체인 plan). 잔여: verify/test/faucet 등 다른 명령에도 동일 플래그
+  확대, 새 consensus family는 여전히 플러그인 필요.
 - ✅ **A5 upgrade_run 하드코딩 제거**: `upgrade_run.go`의 `wemix-config.json`→
   `<fromID>-config.json`, `gwemix.ipc`→`<fromBin basename>.ipc`, `--http.api`의
   `wemix`/`istanbul`→`from/to.Family().RPCNamespace()`로 소싱. launch flag/경로에
