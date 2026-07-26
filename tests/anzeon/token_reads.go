@@ -54,6 +54,13 @@ func init() {
 		RequiresCaps: []string{"rpc"},
 		Fn:           accountAuthorizationReadable,
 	})
+	testkit.Register(testkit.Case{
+		Name:         "account-blacklist-readable",
+		Category:     "system-contracts",
+		ChainCompat:  []string{"stablenet"},
+		RequiresCaps: []string{"rpc"},
+		Fn:           accountBlacklistReadable,
+	})
 }
 
 func tokenBalanceReadable(t *testkit.T) {
@@ -69,6 +76,15 @@ func accountAuthorizationReadable(t *testkit.T) {
 	v, err := accounts.ReadUint(t.Ctx(), caller(t), accountManager, "isAuthorized(address)", accounts.AddressArg(sampleAccount))
 	t.NoErr(err, "isAuthorized")
 	t.Truef(v.Sign() == 0 || v.Cmp(big.NewInt(1)) == 0, "isAuthorized returns 0 or 1 (got %s)", v)
+}
+
+// accountBlacklistReadable checks the account manager answers isBlacklisted(addr)
+// with a boolean word (0 or 1) — the read behind the blacklist enforcement
+// (regression e-blacklist-authorized e-07).
+func accountBlacklistReadable(t *testkit.T) {
+	v, err := accounts.ReadUint(t.Ctx(), caller(t), accountManager, "isBlacklisted(address)", accounts.AddressArg(sampleAccount))
+	t.NoErr(err, "isBlacklisted")
+	t.Truef(v.Sign() == 0 || v.Cmp(big.NewInt(1)) == 0, "isBlacklisted returns 0 or 1 (got %s)", v)
 }
 
 // caller returns an accounts.EthCaller bound to the primary node.
