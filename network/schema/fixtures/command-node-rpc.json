@@ -1,8 +1,0 @@
-{
-  "command": "node.rpc",
-  "args": {
-    "node_id": "node1",
-    "method":  "eth_blockNumber",
-    "params":  []
-  }
-}
