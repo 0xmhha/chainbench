@@ -27,6 +27,11 @@ type LaunchOptions struct {
 	// InitFn initializes a node's datadir from the shared genesis using the
 	// node's own binary; defaults to driver.InitDatadir. Injectable for tests.
 	InitFn func(ctx context.Context, binary, dataDir, genesisPath string) error
+	// ProvisionKeys, if set, runs after a node's datadir is initialized and
+	// before it launches. It is where external key material (the node key in the
+	// binary-specific instance dir, the producer's keystore, static-nodes) is
+	// placed. Optional; nil means the datadir is used as initialized.
+	ProvisionKeys func(ctx context.Context, spec driver.NodeSpec, producer bool) error
 }
 
 func (o LaunchOptions) host() string {
@@ -137,9 +142,14 @@ func Launch(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions)
 	if err != nil {
 		return ns, err
 	}
-	for _, spec := range specs {
+	for i, spec := range specs {
 		if err := initFn(ctx, spec.Binary, spec.DataDir, genesisPath); err != nil {
 			return ns, fmt.Errorf("upgrade: init node%d (%s): %w", spec.Index+1, spec.Binary, err)
+		}
+		if opts.ProvisionKeys != nil {
+			if err := opts.ProvisionKeys(ctx, spec, plan.Nodes[i].Producer); err != nil {
+				return ns, fmt.Errorf("upgrade: provision keys node%d: %w", spec.Index+1, err)
+			}
 		}
 		if err := d.Provision(ctx, spec); err != nil {
 			return ns, fmt.Errorf("upgrade: provision node%d: %w", spec.Index+1, err)
