@@ -46,6 +46,10 @@ func Default(name, version string) *Server {
 	s.Register(txWaitTool())
 	s.Register(txSendTool())
 	s.Register(contractDeployTool())
+	s.Register(networkAttachTool())
+	s.Register(networkListTool())
+	s.Register(networkInfoTool())
+	s.Register(networkDetachTool())
 	return s
 }
 
