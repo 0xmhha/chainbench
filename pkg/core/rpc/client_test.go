@@ -114,3 +114,42 @@ func TestClient_ServerError(t *testing.T) {
 		t.Error("expected server error")
 	}
 }
+
+func TestClient_Coinbase(t *testing.T) {
+	srv := rpcServer(t, map[string]any{"eth_coinbase": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"})
+	defer srv.Close()
+	cb, err := Dial(srv.URL).Coinbase(context.Background())
+	if err != nil || cb != "0xc17d493883eaa3b4cceb0f214b273392d562f9d8" {
+		t.Errorf("Coinbase: %q, %v", cb, err)
+	}
+}
+
+func TestClient_SendTransaction(t *testing.T) {
+	// Capture the params so the node-side tx args (from/to/data) are asserted to
+	// travel, and return a tx hash.
+	var got struct {
+		Method string          `json:"method"`
+		Params []SendTxArgs    `json:"params"`
+		ID     json.RawMessage `json:"id"`
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&got)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jsonrpc": "2.0", "id": 1, "result": "0xdeadbeef",
+		})
+	}))
+	defer srv.Close()
+
+	hash, err := Dial(srv.URL).SendTransaction(context.Background(), SendTxArgs{
+		From: "0xfrom", To: "0xto", Data: "0xabcd", Gas: "0x1e8480",
+	})
+	if err != nil || hash != "0xdeadbeef" {
+		t.Fatalf("SendTransaction: %q, %v", hash, err)
+	}
+	if got.Method != "eth_sendTransaction" || len(got.Params) != 1 {
+		t.Fatalf("bad request: %+v", got)
+	}
+	if a := got.Params[0]; a.From != "0xfrom" || a.To != "0xto" || a.Data != "0xabcd" || a.Gas != "0x1e8480" {
+		t.Errorf("tx args did not travel: %+v", a)
+	}
+}

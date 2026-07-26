@@ -171,6 +171,41 @@ func (c *Client) EthCall(ctx context.Context, to, data string) (string, error) {
 	return s, nil
 }
 
+// Coinbase returns the node's etherbase (eth_coinbase) — for a validator node
+// this is its unlocked block-signing account, usable as the `from` of a
+// node-signed transaction.
+func (c *Client) Coinbase(ctx context.Context) (string, error) {
+	var s string
+	if err := c.Call(ctx, "eth_coinbase", &s); err != nil {
+		return "", err
+	}
+	return s, nil
+}
+
+// SendTxArgs are the fields of an eth_sendTransaction call (node-side signing).
+// From must be an account the node has unlocked (e.g. a validator coinbase);
+// omitted fields (gas, gas price) are filled by the node.
+type SendTxArgs struct {
+	From  string `json:"from"`
+	To    string `json:"to,omitempty"`
+	Data  string `json:"data,omitempty"`
+	Value string `json:"value,omitempty"` // 0x-hex wei
+	Gas   string `json:"gas,omitempty"`   // 0x-hex
+}
+
+// SendTransaction submits a node-signed transaction (eth_sendTransaction) and
+// returns its hash. The node signs with From's unlocked key — unlike the
+// accounts.Wallet path, no private key is held client-side. Used for flows that
+// must originate from a node-held account, e.g. a validator casting a
+// governance vote.
+func (c *Client) SendTransaction(ctx context.Context, args SendTxArgs) (string, error) {
+	var hash string
+	if err := c.Call(ctx, "eth_sendTransaction", &hash, args); err != nil {
+		return "", err
+	}
+	return hash, nil
+}
+
 // TxReceipt returns the raw eth_getTransactionReceipt result for a tx hash, or
 // nil (no error) when the transaction is still pending.
 func (c *Client) TxReceipt(ctx context.Context, hash string) (json.RawMessage, error) {
