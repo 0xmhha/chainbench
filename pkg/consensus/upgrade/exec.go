@@ -72,6 +72,45 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 	return specs, nil
 }
 
+// Bootstrap performs the post-launch producer bring-up (e.g. deploy-governance
+// + etcdInit for a wemix producer). It runs once per producer node. Injectable
+// so the orchestration is testable without a real chain.
+type Bootstrap func(ctx context.Context, producer node.Node) error
+
+// LaunchHandoff runs the full post-plan sequence that a live handoff needs:
+// Launch every node, wire a full peer mesh so the successor validators can reach
+// a quorum with each other, then bootstrap each producer. It is the framework
+// equivalent of the reproduction script's launch+peer+bootstrap steps. The peer
+// caller and bootstrap are injected (defaults: JSON-RPC admin_addPeer, and a
+// no-op bootstrap) so it can be exercised without binaries. Provisioning of key
+// material into datadirs is the caller's concern (external key layout).
+func LaunchHandoff(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions, caller PeerCaller, bootstrap Bootstrap) (node.NodeSet, error) {
+	ns, err := Launch(ctx, d, plan, opts)
+	if err != nil {
+		return ns, err
+	}
+	if caller == nil {
+		caller = DefaultPeerCaller()
+	}
+	endpoints := make([]string, len(ns.Nodes))
+	for i, n := range ns.Nodes {
+		endpoints[i] = n.RPCURL
+	}
+	if err := WireMesh(ctx, caller, endpoints, plan.Enodes(opts.host())); err != nil {
+		return ns, err
+	}
+	if bootstrap != nil {
+		for i, spec := range plan.Nodes {
+			if spec.Producer {
+				if err := bootstrap(ctx, ns.Nodes[i]); err != nil {
+					return ns, fmt.Errorf("upgrade: bootstrap producer node%d: %w", spec.Index+1, err)
+				}
+			}
+		}
+	}
+	return ns, nil
+}
+
 // Launch runs a handoff network: it writes the shared genesis, initializes each
 // node's datadir with that node's own binary (so go-wemix and go-wbft each lay
 // out their chaindata correctly from identical genesis bytes), then provisions

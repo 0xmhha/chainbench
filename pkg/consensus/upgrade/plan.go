@@ -61,6 +61,11 @@ type Inputs struct {
 	// ProducerAddrs are the from-chain producer/member addresses (registered as
 	// governance members). They must be disjoint from the to-chain validators.
 	ProducerAddrs []string
+	// NodePubkeys are each node's 128-hex devp2p public key in plan order
+	// (index 0 = first producer). Optional; when supplied it is carried onto the
+	// node specs so the mesh can be wired from the plan. Length, if non-zero,
+	// must equal the total node count.
+	NodePubkeys []string
 	// Port bases/steps for portplan.Plan (per-node p2p/etcd/http/ws/auth).
 	P2PBase, P2PStep, RPCBase, RPCStep int
 }
@@ -83,6 +88,9 @@ type NodeSpec struct {
 	Recommit string
 	// Ports is the node's resolved port set.
 	Ports portplan.Ports
+	// Pubkey is the node's 128-hex devp2p public key (no 0x prefix), used to
+	// build its enode for mesh wiring. Empty when identities are not supplied.
+	Pubkey string
 }
 
 // Plan is the composed, preflight-validated description of a handoff network.
@@ -161,6 +169,9 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 	// 3. Assign roles, ports and the uniform network id. Producers run the
 	//    from-chain binary/consensus; validators run the to-chain's.
 	total := in.Roles.Producers + in.Roles.Validators
+	if len(in.NodePubkeys) != 0 && len(in.NodePubkeys) != total {
+		return Plan{}, fmt.Errorf("upgrade: %d node pubkeys but %d nodes", len(in.NodePubkeys), total)
+	}
 	nodes := make([]NodeSpec, 0, total)
 	ports := make([]portplan.Ports, 0, total)
 	netids := make([]int64, 0, total)
@@ -173,6 +184,9 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 		spec := NodeSpec{
 			Index: i, Role: node.RoleValidator, Producer: producer,
 			NetworkID: in.NetworkID, Ports: p,
+		}
+		if len(in.NodePubkeys) != 0 {
+			spec.Pubkey = in.NodePubkeys[i]
 		}
 		if producer {
 			spec.Chain, spec.Recommit = fm.ID, fm.MinerRecommit
