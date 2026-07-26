@@ -149,34 +149,49 @@ chainbench stop --data-dir /tmp/d
 
 ---
 
-## 4. 남은 작업 리스트 (권장 순서 포함)
+## 4. 남은 작업 리스트
 
-> 상태 표기: 🟢 지금 구현·테스트 가능 / 🟡 대규모·시간 / 🔴 외부 자원 블로커.
+> 상태 표기: ✅ 완료 / 🟢 지금 구현 가능 / 🔴 외부 자원 블로커.
+>
+> **2026-07 갱신**: 레거시 3-스택(`network/` wire 모듈, TS `mcp-server/`, bash CLI
+> `lib/`·`chainbench.sh`)이 모두 제거되어 저장소가 **Go-first 단일 아키텍처**로
+> 수렴했다. 아래 A~E의 대부분이 완료됨. PR #30~#53 참조.
 
-### A. 지금 구현 가능 (권장 우선) 🟢
-- **A1. 하드포크 target namespace용 node config 재생성** (G8 refinement, 소). 현재 `hardfork.Plan.Execute`는 기존 config 재사용(구 namespace가 HTTPModules에 남음). 해결하려면 execute 시 `nodeconfig.Generate`를 target family namespace로 재실행 — 단 static-node enode 정보가 필요(현재 nodeset.json엔 없음). 방안: setup이 static-node 목록을 state에 저장하거나, 기존 config에서 파싱.
-- **A2. MCP 툴 파리티 확대** (#14, 중). 현재 7툴. TS `mcp-server`(41툴) 대비 log/txpool/events/network-partition/schema 등 추가. `pkg/mcp/tools.go`에 툴 추가(코어 직호출). 각 툴 httptest로 테스트. 완료 후 **B3(TS 폐기)** 가능.
-- **A3. MCP `chainbench_setup` (dry-run plan) 툴** (소). 에이전트가 실행 전 plan 검토.
-- **A4. accounts 프로파일 정리** (중). `governance`/`token`/`account.Extra`를 `accounts/profile/stablenet`로(하위호환 re-export 검토), wbft/wemix governance·token 바인딩 신규(온체인 ABI 스펙 필요 — 스펙 확보 후). A0 문서 §4 참조.
-- **A5. 로그 수집 표면** (#5, 중). setup이 남긴 `<data-dir>/logs/nodeN.log` 대상 검색/타임라인. 구 `logs/*.sh` 대응.
+### 완료됨 ✅
+- **B1. `network/` 흡수 → 삭제**: remote RPC auth + SSH 터널(`pkg/core/remote`),
+  체인 감지(`pkg/core/probe`), named-network 레지스트리(`pkg/core/state`)를 코어로
+  흡수. wire/events는 `pkg/core/obs`, adapters는 genesis/nodeconfig/family/manifest로
+  이미 대체. `network/`·`network/go.mod` 제거(#30–#33, #41).
+- **B2. bash CLI 폐기**: `lib/`·`chainbench.sh`·`tests/unit/`·`logs/` 삭제. Go CLI가
+  핵심 워크플로(setup/start/stop/status/clean/verify/test/…) 커버(#42, #43).
+- **B3. TS `mcp-server/` 폐기**: Go `chainbench-mcp`(단일 바이너리, 30툴)로 전환,
+  `setup.sh`/docs 갱신 후 삭제(#40, #41). **A2**(MCP 파리티)·**A3**(setup-plan)·
+  **A5**(log/log_timeline)도 그 과정에서 완료.
+- **C1/C2/C3. 실 체인 E2E + wemix 부트스트랩 + 하드포크**: go-wemix+etcd → go-wbft
+  croissant 핸드오프를 프레임워크(`pkg/consensus/upgrade`)로 코드화하고 `chainbench
+  upgrade run` + 라이브 E2E(`tests/repro/wemix-wbft-handoff.sh` + gated Go 테스트)로
+  검증(#27–#29, #38, #39).
+- **E1(부분). 원격 RPC 접근**: auth 트랜스포트 + SSH 터널을 `pkg/core/remote`로 흡수,
+  `network_*`/`remote_rpc` MCP 툴로 노출(#30, #33, #34).
+- **회귀 스위트 Go 포팅(진행 중)**: 바인딩 계층(ABI `Selector`/`EncodeCall`, tx 4종
+  `SendLegacy`/`SendCoin`/`SendSetCode`/`SendFeeDelegated`, 이벤트 로그 디코딩) +
+  카테고리 대표 케이스(node/api/consensus/tx/시스템컨트랙트 read·write·event)를
+  `tests/`로 포팅(#44–#53). 원본 bash는 `tests/regression/`에 보존.
 
-### B. 대규모 기계적 이관 🟡
-- **B1. `network/` 흡수** (대). 드라이버(remote/sshremote/probe/wire/events/state/adapters) 이관. import 경로 대량 변경. **remote(ssh) 드라이버가 여기 있음**(E1). 순서: probe → drivers/remote+sshremote → wire/events → adapters. 흡수 후 `network/go.mod` 제거.
-- **B2. bash `lib/*` 폐기** (대). `cmd_*.sh`를 Go 경로가 완전 대체함을 확인 후 `lib/`·`chainbench.sh` 삭제. 현재 과도기 공존.
-- **B3. TS `mcp-server/` 폐기** (중). A2로 Go MCP 등가 도달 후.
-
-### C. 외부 자원 필요(배선 완료, 실행/검증만) 🔴
-- **C1. 실 체인 E2E**: gstable/gwbft/gwemix **빌드** 필요. setup→verify→test→stop을 실 바이너리로.
-- **C2. wemix etcd/governance 부트스트랩 실행**: gwemix + **etcd**. `poa.BootstrapPlan` 데이터는 완료 — 실제 governance 배포/etcd init 실행 배선 필요. 레퍼런스: `../script/wemix-upgrade`.
-- **C3. 하드포크 실 실행 검증**: 빌드된 바이너리(Execute 로직·fake 테스트는 완료).
-
-### D. 프론트엔드 🔴
-- **D1. Svelte SPA**(#19, anti-slop, 3메뉴, 실시간). 프론트 빌드 툴체인 필요. 현재 `pkg/dashboard/index.html`(build-free)이 SSE로 동작 중 — 데이터 계약(SSE Event JSON + `/api/runs`)은 확정. Svelte로 교체 시 이 계약 소비.
-
-### E. 원격(#5 부분) 🔴/🟡
-- **E1. RemoteDriver**(ssh key / id·pw). 검증된 코드가 `network/internal/drivers/{remote,sshremote}`에 존재 → **B1(흡수)과 함께**가 자연스러움. `rpc.DialWithClient(url, httpClient)`가 ssh-tunnel RoundTripper를 받도록 이미 열려 있음. 테스트에 sshd 필요.
-
-**권장 순서**: A1 → A2/A3 → B3 → B1(+E1) → B2 → (외부 자원 확보 시) C/D.
+### 남은 작업
+- **A1(경미/부차). 구 binary-swap 하드포크의 target namespace config 재생성**: 검증된
+  핸드오프는 concurrent 모델(`pkg/consensus/upgrade`)이며 `pkg/core/hardfork`는 균질
+  fork용 binary-swap으로 문서화됨. 이 refinement는 우선순위 낮음.
+- **A4(부분). accounts governance/token 타입 바인딩** 🟢: ABI/tx/event 바인딩 계층은
+  코어에 있음(위). 체인별 거버넌스·토큰의 타입드 프로파일 바인딩은 케이스별 refinement.
+- **E1(잔여). 노드 lifecycle RemoteDriver** 🟢: 원격 RPC 접근은 됨. ssh로 노드를
+  provision/launch하는 드라이버는 별도.
+- **D1. Svelte SPA** 🔴: 프론트 빌드 툴체인 필요. 현재 `pkg/dashboard/index.html`
+  (build-free)이 SSE로 동작 — 데이터 계약(SSE Event JSON + `/api/runs`) 확정.
+- **회귀 잔여 포팅**: f-system-contracts 거버넌스 write(mint/burn/proposal 다단계),
+  c-anzeon basefee 버스트(타이밍 민감) 등. 바인딩 계층이 완비돼 케이스별 반복 작업.
+- **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
+  REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
 
 ---
 

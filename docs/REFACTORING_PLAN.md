@@ -1,5 +1,7 @@
 # Refactoring Plan — Clean Code & SSOT
 
+> **⚠️ SUPERSEDED (2026-07).** 이 문서는 Go 재설계 이전의 레거시 아키텍처(bash CLI · TS mcp-server · `network/` wire 모듈)와 그 sprint 로드맵을 기술한다. 해당 3-스택은 모두 제거되었고 저장소는 Go-first 단일 아키텍처로 수렴했다. 현행 상태·남은 작업은 **`docs/dev/HandOff.md`**, 아키텍처는 **`docs/CHAINBENCH_GO_REDESIGN.md`**를 참조. 아래 내용은 역사적 기록으로만 유효하다.
+
 > 작성일: 2026-06-26
 > 최종 업데이트: 2026-06-29 (P0~P1-4b 완료 — PR #3 `63f1d43` + PR #4 `2046b05` 머지)
 > ⚠️ 커밋 해시 주의: §6.1b/6.1c 가 기록한 브랜치-로컬 해시(`6d2b4d9`/`a67d473`/`dbe3812`/`1d4716c`/`2b11b32`/`2e8e787`)는 **PR #4 스쿼시 머지(`2046b05`)로 흡수되어 현 히스토리에 없음**. 작업 내용은 모두 main 에 존재.
