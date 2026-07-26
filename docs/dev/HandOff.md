@@ -274,7 +274,9 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   BurnProof/ProposeBurnCall 추가. registration/gating 검증됨. ⚠️ **live-tx라 실 gstable
   네트워크 없이는 실행 미검증** — quorum 수·proof 포맷은 회귀 f2/f3 앵커.
   read 케이스 추가(mock 완전검증): `account-blacklist-readable`(e-07 isBlacklisted),
-  `basefee-minimum`(c-06, baseFeePerGas >= anzeon 최소). 잔여: blacklist write(node측 서명),
+  `basefee-minimum`(c-06, baseFeePerGas >= anzeon 최소), `estimate-gas`(a3-04, eth_estimateGas
+  >= 21000), `logs-query-well-formed`(a4-04, eth_getLogs 배열 shape). 포팅 30 케이스.
+  잔여: blacklist write(node측 서명),
   c-anzeon basefee 버스트(타이밍), 나머지 f/e/h/z. 원본 bash는 stablenet 고정이라 Go 러너
   미실행(감사 B4).
 - ✅ **C2 RemoteDriver CLI 노출**: `setup --remote-host/--remote-user/--remote-port`가
