@@ -58,6 +58,7 @@ func Default(name, version string) *Server {
 	s.Register(logTimelineTool())
 	s.Register(networkPeersTool())
 	s.Register(networkTopologyTool())
+	s.Register(stopTool())
 	return s
 }
 
