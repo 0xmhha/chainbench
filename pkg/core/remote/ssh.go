@@ -23,6 +23,11 @@ const sshDialTimeout = 15 * time.Second
 
 const defaultSSHPort = 22
 
+// HostKeyCallback is the SSH host-key verification policy (an alias for
+// ssh.HostKeyCallback), re-exported so callers can name it without importing
+// golang.org/x/crypto/ssh directly. Build one with ResolveHostKeyCallback.
+type HostKeyCallback = ssh.HostKeyCallback
+
 // Credentials carries the inputs for an SSH dial. Password is read by the caller
 // from the env var named in the node's ssh-password auth; it builds the
 // ssh.AuthMethod and is never logged or returned in errors.
