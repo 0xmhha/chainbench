@@ -1,9 +1,13 @@
-// Package hardfork plans a chain upgrade that reproduces ../script/wemix-upgrade:
-// the same node data directories are re-run with a different binary that
-// activates a fork at a given block (e.g. wemix/gwemix -> wbft/geth at the
-// montBlanc block). It builds the swap as inspectable data; executing it
-// (stop + relaunch on the new binary) needs PID tracking and built binaries and
-// is a later slice (docs/CHAINBENCH_GO_REDESIGN.md §3.1, §11).
+// Package hardfork plans a binary-SWAP upgrade: the same node data directories
+// are stopped and re-run with a different binary that activates a fork at a
+// given block. This fits a homogeneous fork where every node upgrades in place
+// and the consensus engine is unchanged across the fork.
+//
+// It does NOT fit a consensus-family handoff such as go-wemix+etcd (poa) ->
+// go-wbft (bft), where the two binaries must run CONCURRENTLY with disjoint
+// roles (producers mine up to the fork; separately-launched validators sync the
+// pre-fork chain and take over after it). That verified model lives in
+// pkg/consensus/upgrade (BuildPlan/Launch); use it for engine-changing handoffs.
 package hardfork
 
 import (
