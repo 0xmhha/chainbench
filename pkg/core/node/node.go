@@ -48,6 +48,11 @@ type Node struct {
 	// PID is the launched process id (0 for attached nodes chainbench did not
 	// start). Used by `stop` and hardfork execution.
 	PID int `json:"pid,omitempty"`
+	// Auth is the optional authentication descriptor for reaching a remote
+	// attached endpoint (see pkg/core/remote.Auth): the auth type plus the env
+	// var name that holds the secret (never the secret itself). Empty for local
+	// or unauthenticated nodes.
+	Auth map[string]any `json:"auth,omitempty"`
 }
 
 // NodeSet is the collection of nodes for one network plus its identity and the
