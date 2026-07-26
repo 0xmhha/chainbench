@@ -2,6 +2,9 @@
   "id": "stablenet",
   "binary": "gstable",
   "chain_id": 8283,
+  "network_id": 8283,
+  "miner_recommit": "duration",
+  "bootstrap": { "type": "static" },
   "build": { "repo": "go-stablenet", "make_target": "gstable" },
   "consensus_family": "wbft",
   "genesis": {

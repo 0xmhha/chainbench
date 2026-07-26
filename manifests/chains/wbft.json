@@ -2,6 +2,9 @@
   "id": "wbft",
   "binary": "gwbft",
   "chain_id": 8284,
+  "network_id": 8284,
+  "miner_recommit": "duration",
+  "bootstrap": { "type": "static" },
   "build": { "repo": "go-wbft", "make_target": "gwbft" },
   "consensus_family": "wbft",
   "genesis": {

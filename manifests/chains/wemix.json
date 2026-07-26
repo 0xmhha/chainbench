@@ -2,6 +2,9 @@
   "id": "wemix",
   "binary": "gwemix",
   "chain_id": 8285,
+  "network_id": 8285,
+  "miner_recommit": "nanos",
+  "bootstrap": { "type": "governance-etcd" },
   "build": { "repo": "go-wemix", "make_target": "gwemix" },
   "consensus_family": "poa",
   "genesis": {
@@ -15,5 +18,10 @@
   },
   "tx_types": ["0x00", "0x01", "0x02", "0x03", "0x04", "0x16"],
   "probe": { "method": "wemix_getReward" },
-  "capabilities": ["process", "rpc", "ws", "consensus"]
+  "capabilities": ["process", "rpc", "ws", "consensus"],
+  "upgrade": {
+    "to_chain": "wbft",
+    "at_fork": "croissant",
+    "validator_source": "croissant_init"
+  }
 }

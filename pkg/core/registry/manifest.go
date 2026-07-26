@@ -23,6 +23,21 @@ type Manifest struct {
 	// ChainID is the default local-network chain id (operator-overridable via
 	// profile). Also used by the probe for chains that disambiguate by id.
 	ChainID int64 `json:"chain_id"`
+	// NetworkID is the devp2p network id. It MUST be set explicitly and be
+	// identical across every node of a network: go-wemix defaults its network
+	// id to 1111 (Wemix mainnet) independent of ChainID, while go-wbft defaults
+	// it to ChainID, so an unset value silently prevents cross-binary peering.
+	// There is deliberately no code default — set it here so a run's network id
+	// is always traceable to the manifest.
+	NetworkID int64 `json:"network_id"`
+	// MinerRecommit selects the TOML encoding of miner.Config.Recommit that
+	// this chain's binary accepts: "duration" (a TOML string like "2s", used by
+	// go-stablenet/go-wbft) or "nanos" (an integer number of nanoseconds, used
+	// by the older go-ethereum in go-wemix). The wrong form crashes the node at
+	// config load. No code default.
+	MinerRecommit string `json:"miner_recommit"`
+	// Bootstrap describes how a network of this chain is brought up.
+	Bootstrap BootstrapSpec `json:"bootstrap"`
 	// Build describes how to build the binary.
 	Build BuildSpec `json:"build"`
 	// ConsensusFamily is the consensus algorithm family this chain uses
@@ -41,6 +56,37 @@ type Manifest struct {
 	// Capabilities is the provider-independent capability set the chain
 	// supports (e.g. "consensus").
 	Capabilities []string `json:"capabilities"`
+	// Upgrade, when present, declares that a network of this chain hands block
+	// production off to another chain's binary/consensus at a fork block (the
+	// wemix+etcd -> wbft hardfork). Absent for chains with no upgrade.
+	Upgrade *UpgradeSpec `json:"upgrade,omitempty"`
+}
+
+// BootstrapSpec describes how a network of a chain is brought up to producing
+// blocks — the seam between the two consensus families.
+type BootstrapSpec struct {
+	// Type is one of:
+	//   "static"          - validators and BLS keys come from the genesis, and
+	//                       nodes peer via a static-node list (anzeon/wbft).
+	//   "governance-etcd" - a boot node deploys the governance contracts and
+	//                       initializes an etcd cluster; peers and the producer
+	//                       rotation are driven by the on-chain member list and
+	//                       etcd (wemix).
+	Type string `json:"type"`
+}
+
+// UpgradeSpec declares a hardfork handoff to another chain at a fork block.
+// Pre-fork, this chain's nodes produce; at the fork block they stop and the
+// to-chain's nodes (running concurrently and syncing until then) take over.
+type UpgradeSpec struct {
+	// ToChain is the chain id whose binary/consensus takes over (e.g. "wbft").
+	ToChain string `json:"to_chain"`
+	// AtFork is the fork name whose activation block is the handoff point
+	// (e.g. "croissant").
+	AtFork string `json:"at_fork"`
+	// ValidatorSource says where the post-fork validator set comes from
+	// ("croissant_init" = the genesis croissant.init validators/BLS keys).
+	ValidatorSource string `json:"validator_source"`
 }
 
 // BuildSpec describes how to obtain the node binary.
@@ -96,6 +142,24 @@ func (m Manifest) validate() error {
 	}
 	if m.ChainID <= 0 {
 		return fmt.Errorf("registry: manifest %q missing/invalid chain_id", m.ID)
+	}
+	if m.NetworkID <= 0 {
+		return fmt.Errorf("registry: manifest %q missing/invalid network_id (set it explicitly; there is no default)", m.ID)
+	}
+	switch m.MinerRecommit {
+	case "duration", "nanos":
+	default:
+		return fmt.Errorf("registry: manifest %q miner_recommit must be \"duration\" or \"nanos\", got %q", m.ID, m.MinerRecommit)
+	}
+	switch m.Bootstrap.Type {
+	case "static", "governance-etcd":
+	default:
+		return fmt.Errorf("registry: manifest %q bootstrap.type must be \"static\" or \"governance-etcd\", got %q", m.ID, m.Bootstrap.Type)
+	}
+	if u := m.Upgrade; u != nil {
+		if u.ToChain == "" || u.AtFork == "" || u.ValidatorSource == "" {
+			return fmt.Errorf("registry: manifest %q upgrade requires to_chain, at_fork, and validator_source", m.ID)
+		}
 	}
 	return nil
 }
