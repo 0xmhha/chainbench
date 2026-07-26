@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -9,13 +10,25 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/node"
 )
 
+// GenesisParams are the per-network genesis values a family's BuildGenesis
+// substitutes into a chain's template. It is the union of what the families
+// need — the wbft family uses the validator set / BLS / extra-data / members /
+// alloc; the poa family uses only ChainID / Coinbase (its membership is set at
+// bootstrap). Defined here (not in pkg/core/genesis) so the ConsensusFamily
+// contract stays the single dispatch seam and core need not import a family.
+type GenesisParams struct {
+	ChainID    int64
+	Validators []string        // validator addresses (0x-hex) — wbft family
+	BLSKeys    []string        // BLS public keys (0x-hex), aligned with Validators
+	ExtraData  string          // RLP validator extra-data (0x-hex) — wbft family
+	Members    []string        // governance council addresses (0x-hex) — anzeon system contracts
+	Alloc      json.RawMessage // raw pre-funded accounts (address -> account) — wbft family
+	Coinbase   string          // block coinbase (0x-hex) — poa family; default zero
+}
+
 // ConsensusFamily is the consensus-algorithm-centric strategy shared by chains
 // of the same family (docs §4, D9): "wbft" (stablenet+wbft) and "poa" (wemix).
 // It owns the parts of setup/verify that depend on the consensus algorithm.
-//
-// Genesis/Bootstrap (block-production bring-up) are added with the setup
-// pipeline in phase G2; G0 defines the static, RPC-facing surface the verify
-// and consensus layers need immediately.
 type ConsensusFamily interface {
 	// ID is the family identifier ("wbft" | "poa").
 	ID() string
@@ -27,6 +40,10 @@ type ConsensusFamily interface {
 	ValidatorsMethod() string
 	// StartFlags returns the node launch flags for a given role.
 	StartFlags(role node.Role) []string
+	// BuildGenesis substitutes the family's placeholders in template with
+	// params and returns the genesis.json bytes. This is the dispatch seam that
+	// lets pkg/core/genesis build a genesis without importing any family.
+	BuildGenesis(template []byte, params GenesisParams) ([]byte, error)
 }
 
 // ChainPlugin is one chain's registration. Most of a chain is data (Manifest)

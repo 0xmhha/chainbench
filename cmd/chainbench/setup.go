@@ -93,7 +93,7 @@ func newSetupCmd() *cobra.Command {
 			}
 
 			if provision {
-				if err := setup.Provision(plan, p, cfg, keysDir); err != nil {
+				if err := setup.Provision(cmd.Context(), plan, p, cfg, keysDir); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "provisioned: genesis + %d node config(s) in %s\n", len(plan.Nodes), plan.DataRoot)
