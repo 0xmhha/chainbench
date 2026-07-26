@@ -22,22 +22,32 @@ func mockNode(t *testing.T) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
-		id := 1
 		var req struct {
-			ID int `json:"id"`
+			ID     int   `json:"id"`
+			Params []any `json:"params"`
 		}
 		_ = json.Unmarshal(body, &req)
-		id = req.ID
 		var result any
 		switch {
+		case strings.Contains(string(body), "eth_blockNumber"):
+			result = "0x64" // head = 100
 		case strings.Contains(string(body), "eth_getBlockByNumber"):
-			result = map[string]any{"hash": "0xabc123"}
+			// echo the requested block as its number + timestamp so
+			// block-progression sees strictly-increasing values; a fixed hash
+			// so genesis-hash-agreement sees agreement.
+			blk := "0x0"
+			if len(req.Params) > 0 {
+				if s, ok := req.Params[0].(string); ok {
+					blk = s
+				}
+			}
+			result = map[string]any{"number": blk, "hash": "0xabc123", "timestamp": blk}
 		case strings.Contains(string(body), "net_peerCount"):
 			result = "0x2"
 		default:
 			result = nil
 		}
-		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": id, "result": result})
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
 	t.Cleanup(srv.Close)
 	return srv
@@ -81,6 +91,12 @@ func TestNetworkCases_Registered(t *testing.T) {
 func TestGenesisHashAgreement_Passes(t *testing.T) {
 	if r := runCase(t, "genesis-hash-agreement", 3); r.Status != testkit.StatusPass {
 		t.Fatalf("genesis-hash-agreement: %+v", r)
+	}
+}
+
+func TestBlockProgression_Passes(t *testing.T) {
+	if r := runCase(t, "block-progression", 1); r.Status != testkit.StatusPass {
+		t.Fatalf("block-progression: %+v", r)
 	}
 }
 
