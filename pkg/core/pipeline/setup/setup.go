@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/driver"
 	"github.com/0xmhha/chainbench/pkg/core/node"
+	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
@@ -74,7 +74,7 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 			ConfigPath: configPath,
 			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", i)),
 			Ports:      ports,
-			Args:       LaunchArgs(dataDir, configPath, ports, fam.StartFlags(role)),
+			Args:       nodeconfig.LaunchArgs(dataDir, configPath, ports, fam.StartFlags(role)),
 		})
 	}
 
@@ -86,23 +86,6 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 		Capabilities: m.Capabilities,
 		Nodes:        nodes,
 	}, nil
-}
-
-// LaunchArgs assembles the common node launch flags plus the family-specific
-// flags. Port flags are geth-family conventions shared by both consensus
-// families. Exported so the hardfork executor can relaunch nodes with the same
-// argument shape.
-func LaunchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
-	args := []string{
-		"--datadir", dataDir,
-		"--config", configPath,
-		"--port", strconv.Itoa(ports.P2P),
-		"--http",
-		"--http.port", strconv.Itoa(ports.HTTP),
-		"--ws",
-		"--ws.port", strconv.Itoa(ports.WS),
-	}
-	return append(args, familyFlags...)
 }
 
 // Run executes a Plan against a Driver: it writes genesis, then provisions and

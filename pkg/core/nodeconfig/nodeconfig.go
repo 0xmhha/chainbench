@@ -7,6 +7,7 @@ package nodeconfig
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/core/node"
@@ -94,6 +95,24 @@ func Generate(p Params) []byte {
 // Enode builds a static-node enode URL from a devp2p public key and p2p port.
 func Enode(publicKey, host string, p2pPort int) string {
 	return fmt.Sprintf("enode://%s@%s:%d?discport=0", publicKey, host, p2pPort)
+}
+
+// LaunchArgs assembles the common geth-family node launch flags (datadir, config,
+// and the port flags) plus the family-specific flags. These are geth-family
+// conventions shared by both consensus families and by the binary-swap hardfork,
+// so they live here (next to the config generation) rather than in a pipeline
+// stage — the hardfork executor need not depend on pkg/core/pipeline/setup.
+func LaunchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
+	args := []string{
+		"--datadir", dataDir,
+		"--config", configPath,
+		"--port", strconv.Itoa(ports.P2P),
+		"--http",
+		"--http.port", strconv.Itoa(ports.HTTP),
+		"--ws",
+		"--ws.port", strconv.Itoa(ports.WS),
+	}
+	return append(args, familyFlags...)
 }
 
 func quoteList(ss []string) string {

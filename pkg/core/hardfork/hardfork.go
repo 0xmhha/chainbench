@@ -17,7 +17,7 @@ import (
 
 	"github.com/0xmhha/chainbench/pkg/core/driver"
 	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
+	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
 
@@ -111,7 +111,7 @@ func (p Plan) Execute(ctx context.Context, d driver.Driver, toFamily registry.Co
 			ConfigPath: s.ConfigPath,
 			LogPath:    s.LogPath,
 			Ports:      s.Ports,
-			Args:       setup.LaunchArgs(s.DataDir, s.ConfigPath, s.Ports, toFamily.StartFlags(s.Role)),
+			Args:       nodeconfig.LaunchArgs(s.DataDir, s.ConfigPath, s.Ports, toFamily.StartFlags(s.Role)),
 		}
 		h, err := d.Launch(ctx, spec)
 		if err != nil {

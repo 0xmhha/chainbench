@@ -6,7 +6,7 @@
 //
 //	on-chain — the prerequisite for any faucet/transaction scenario.
 //
-// Applies:  stablenet, wbft (the preset alloc funds the validator accounts).
+// Applies:  stablenet, wbft (the shared preset alloc funds the validator accounts).
 // Requires: the "rpc" capability.
 // Method:   query eth_getBalance for a known preset-funded address on the
 //
@@ -39,7 +39,10 @@ func init() {
 }
 
 func genesisBalance(t *testkit.T) {
-	// node1's validator account is pre-funded by the stablenet preset alloc.
+	// node1's validator account is pre-funded by the shared preset alloc that
+	// every chain's local setup provisions from (keys/preset), so this holds for
+	// each chain in ChainCompat — not a stablenet-only fixture. A chain that
+	// provisions from a different alloc must supply its own funded address here.
 	const funded = "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
 
 	var hexBal string
