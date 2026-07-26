@@ -1,0 +1,91 @@
+package network_test
+
+import (
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	_ "github.com/0xmhha/chainbench/tests/network" // register the cases
+
+	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
+	"github.com/0xmhha/chainbench/pkg/testkit"
+)
+
+// mockNode answers eth_getBlockByNumber(0) with a fixed genesis hash and
+// net_peerCount with 2, so a two-node set agrees on genesis and has peers.
+func mockNode(t *testing.T) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		id := 1
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.Unmarshal(body, &req)
+		id = req.ID
+		var result any
+		switch {
+		case strings.Contains(string(body), "eth_getBlockByNumber"):
+			result = map[string]any{"hash": "0xabc123"}
+		case strings.Contains(string(body), "net_peerCount"):
+			result = "0x2"
+		default:
+			result = nil
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": id, "result": result})
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func runCase(t *testing.T, name string, endpoints int) testkit.Result {
+	t.Helper()
+	srv := mockNode(t)
+	eps := make([]attach.Endpoint, endpoints)
+	for i := range eps {
+		eps[i] = attach.Endpoint{RPCURL: srv.URL}
+	}
+	ns, _ := attach.Build("wbft", "local", eps)
+	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rep.Results) != 1 {
+		t.Fatalf("%s: want 1 result, got %+v", name, rep.Results)
+	}
+	return rep.Results[0]
+}
+
+func TestNetworkCases_Registered(t *testing.T) {
+	want := map[string]bool{"genesis-hash-agreement": false, "peers-connected": false}
+	for _, c := range testkit.Cases() {
+		if _, ok := want[c.Name]; ok {
+			want[c.Name] = true
+			if c.Category != "network" {
+				t.Errorf("%s category = %q, want network", c.Name, c.Category)
+			}
+		}
+	}
+	for name, found := range want {
+		if !found {
+			t.Errorf("case %q not registered", name)
+		}
+	}
+}
+
+func TestGenesisHashAgreement_Passes(t *testing.T) {
+	if r := runCase(t, "genesis-hash-agreement", 3); r.Status != testkit.StatusPass {
+		t.Fatalf("genesis-hash-agreement: %+v", r)
+	}
+}
+
+func TestPeersConnected_Passes(t *testing.T) {
+	if r := runCase(t, "peers-connected", 2); r.Status != testkit.StatusPass {
+		t.Fatalf("peers-connected: %+v", r)
+	}
+}

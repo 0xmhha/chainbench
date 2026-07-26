@@ -4,6 +4,7 @@
 package all
 
 import (
+	_ "github.com/0xmhha/chainbench/tests/network"
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts"
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus"
 )
