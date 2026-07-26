@@ -50,6 +50,8 @@ func Default(name, version string) *Server {
 	s.Register(networkListTool())
 	s.Register(networkInfoTool())
 	s.Register(networkDetachTool())
+	s.Register(remoteRPCTool())
+	s.Register(testListTool())
 	return s
 }
 
