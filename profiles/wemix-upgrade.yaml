@@ -1,0 +1,83 @@
+# chainbench profile: wemix-upgrade (golden)
+#
+# Hardfork handoff: go-wemix + etcd (poa) produces blocks up to the croissant
+# fork, then go-wbft (bft) validators — which synced the pre-fork chain — take
+# over producing after it. This is a GOLDEN profile: it records the exact,
+# verified-live environment (1 producer + 4 validators, fork at block 20). It
+# is the single source of truth for what was tested; there are NO code defaults,
+# so a change to any value here is a visible, traceable change of environment.
+#
+# Verified conditions this profile encodes (each caused a silent failure once):
+#   - network_id is uniform across every node (go-wemix otherwise defaults its
+#     own id, independent of chain id; go-wbft derives it from chain id).
+#   - producers and validators are disjoint (a wbft validator listed as a wemix
+#     member never joins etcd, shows "down", and stalls the producer).
+#   - validators >= 4 (BFT quorum: 3f+1 tolerating one fault).
+#   - petersburgBlock is present and the croissant section+block are paired
+#     (enforced by genesis.ValidateForks / preflight).
+
+name: wemix-upgrade
+description: "go-wemix+etcd -> go-wbft croissant hardfork handoff (1 producer + 4 validators)"
+
+# The two chains in the handoff, resolved from manifests/chains/*.json.
+upgrade:
+  from: wemix                     # producing chain up to the fork (poa)
+  to: wbft                        # successor chain after the fork (bft)
+  at_fork: croissant              # fork whose activation block is the handoff
+  fork_block: 20                  # handoff height
+  network_id: 8285                # uniform devp2p network id forced on all nodes
+
+chains:
+  from:
+    binary: gwemix
+    binary_path: ""               # go-wemix build/bin/gwemix (required)
+    nodekey_dir: geth             # go-wemix stores the nodekey under geth/
+    miner_recommit: nanos         # go-wemix encodes miner.Recommit as int(nanos)
+  to:
+    binary: gwbft
+    binary_path: ""               # go-wbft build/bin/gwbft (required)
+    nodekey_dir: gwemix           # go-wbft stores the nodekey under gwemix/
+    miner_recommit: duration      # go-wbft encodes miner.Recommit as "2s"
+
+roles:
+  producers: 1                    # from-chain (go-wemix) producers
+  validators: 4                   # to-chain (go-wbft) post-fork validators (>=4)
+
+# From-chain producer/member addresses (registered as governance members).
+# Must be disjoint from the to-chain validator set below.
+producers:
+  members:
+    - "0xf9593d5b8c0e6c1e2f3a4b5c6d7e8f9012345678"
+
+# To-chain (go-wbft) post-fork validator set: the croissant.init validators the
+# successor chain rotates block production across. Aligned lists.
+validators:
+  addresses:
+    - "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+    - "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c"
+    - "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+    - "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+  bls_public_keys:
+    - "0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f"
+    - "0x929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449"
+    - "0x8c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0"
+    - "0xa63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
+  members:                        # anzeon/governance council seeded in the section
+    - "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+
+data:
+  directory: /tmp/wemix-upgrade   # node data root
+
+# Port plan: p2p base+step, rpc base+step. etcd is p2p+1, ws is http+1, auth is
+# http+2 (portplan derives these); steps must clear those reservations
+# (p2p_step>=2, rpc_step>=3) so nodes on one machine never collide.
+ports:
+  base_p2p: 30010
+  step_p2p: 10
+  base_rpc: 40010
+  step_rpc: 10
+
+nodes:
+  verbosity: 4
+  gcmode: archive
+  cache: 2048
