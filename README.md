@@ -341,9 +341,8 @@ chainbench/
 ├── templates/              # Genesis and TOML config templates
 ├── tests/                  # Built-in test suites (basic, fault, stress)
 ├── logs/                   # Log analysis tools (parser, timeline, anomaly)
-├── mcp-server/             # MCP server for AI integration (TypeScript)
-└── bin/                    # CLI wrappers and platform binaries
-    └── chainbench-mcp      # MCP server entry point (resolves $HOME/.chainbench)
+├── cmd/chainbench-mcp/     # MCP server for AI integration (Go, single binary)
+└── bin/                    # built Go binaries (chainbench, chainbench-mcp, chainbenchd)
 ```
 
 ## Troubleshooting
@@ -368,7 +367,7 @@ chainbench/
 
 **MCP server not recognized in Claude Code**
 - Verify `chainbench mcp status` shows "enabled"
-- Verify MCP server is built: `ls ~/.chainbench/mcp-server/dist/index.js`
+- Verify the MCP binary is on PATH: `command -v chainbench-mcp` (built by `setup.sh`)
 - Run `/mcp` in Claude Code to reload servers
 
 **Port already in use**

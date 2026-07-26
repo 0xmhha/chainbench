@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# setup.sh - One-command setup for chainbench + Claude Code MCP integration
+# setup.sh - One-command setup for chainbench + Claude Code MCP integration.
+# Builds the Go binaries (CLI, MCP server, dashboard) and registers them on PATH.
 set -euo pipefail
 
 CHAINBENCH_DIR="$(cd "$(dirname "$0")" && pwd)"
-MCP_DIR="${CHAINBENCH_DIR}/mcp-server"
+BIN_DIR="${CHAINBENCH_DIR}/bin"
 
 echo "========================================="
 echo "  chainbench setup"
@@ -20,36 +21,30 @@ _check_cmd() {
   fi
 }
 
-_check_cmd bash    "Install bash 4.0+"
-_check_cmd python3 "Install python3"
+_check_cmd go      "Install Go 1.25+: https://go.dev/dl"
+_check_cmd python3 "Install python3 (used by the reproduction scripts)"
 _check_cmd curl    "Install curl"
-_check_cmd node    "Install Node.js 18+: https://nodejs.org"
-_check_cmd npm     "Install npm (comes with Node.js)"
 
-NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
-if (( NODE_VERSION < 18 )); then
-  echo "ERROR: Node.js 18+ required (found v${NODE_VERSION})"
-  exit 1
-fi
+echo "[OK] Prerequisites: go $(go version | awk '{print $3}'), python3, curl"
 
-echo "[OK] Prerequisites: bash, python3, curl, node $(node -v), npm $(npm -v)"
-
-# ---- Build MCP server -------------------------------------------------------
+# ---- Build the Go binaries --------------------------------------------------
 
 echo ""
-echo "[1/3] Building MCP server ..."
+echo "[1/3] Building chainbench binaries ..."
 
-cd "${MCP_DIR}"
-npm install --silent 2>&1 | tail -1
-npm run build --silent 2>&1
+mkdir -p "${BIN_DIR}"
 cd "${CHAINBENCH_DIR}"
+go build -o "${BIN_DIR}/chainbench"     ./cmd/chainbench
+go build -o "${BIN_DIR}/chainbench-mcp" ./cmd/chainbench-mcp
+go build -o "${BIN_DIR}/chainbenchd"    ./cmd/chainbenchd
 
-if [[ ! -f "${MCP_DIR}/dist/index.js" ]]; then
-  echo "ERROR: MCP server build failed"
-  exit 1
-fi
-
-echo "  [OK] MCP server built: ${MCP_DIR}/dist/index.js"
+for b in chainbench chainbench-mcp chainbenchd; do
+  if [[ ! -x "${BIN_DIR}/${b}" ]]; then
+    echo "ERROR: build failed: ${BIN_DIR}/${b}"
+    exit 1
+  fi
+done
+echo "  [OK] Built: chainbench, chainbench-mcp, chainbenchd"
 
 # ---- Register chainbench in PATH ---------------------------------------------
 
@@ -87,8 +82,8 @@ _register_symlink() {
   fi
 }
 
-_register_symlink "chainbench"     "${CHAINBENCH_DIR}/chainbench.sh"
-_register_symlink "chainbench-mcp" "${CHAINBENCH_DIR}/bin/chainbench-mcp"
+_register_symlink "chainbench"     "${BIN_DIR}/chainbench"
+_register_symlink "chainbench-mcp" "${BIN_DIR}/chainbench-mcp"
 
 # ---- Summary -----------------------------------------------------------------
 
@@ -100,12 +95,11 @@ echo "  chainbench is ready"
 echo "========================================="
 echo ""
 echo "  CLI:  chainbench --help"
-echo "  MCP:  ${MCP_DIR}/dist/index.js"
+echo "  MCP:  chainbench-mcp        (Go stdio server; register in .mcp.json as \"command\": \"chainbench-mcp\")"
 echo ""
 echo "  Next steps:"
 echo "    1. cd <your-chain-project>"
-echo "    2. chainbench mcp enable          # register MCP for this project"
-echo "    3. chainbench config set chain.binary_path /path/to/gstable"
-echo "    4. chainbench init && chainbench start"
-echo "    5. bash tests/unit/run.sh         # verify unit tests pass"
+echo "    2. chainbench chains                       # list registered chains"
+echo "    3. chainbench setup --chain stablenet --launch --binary /path/to/gstable"
+echo "    4. chainbench verify --data-dir <dir>      # confirm block production"
 echo ""
