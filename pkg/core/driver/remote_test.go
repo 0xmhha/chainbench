@@ -91,3 +91,24 @@ func TestRemoteDriver_NonZeroExitIsError(t *testing.T) {
 		t.Errorf("non-zero exit should surface stderr: %v", err)
 	}
 }
+
+// RemoteDriver satisfies the Initializer capability.
+var _ driver.Initializer = (*driver.RemoteDriver)(nil)
+
+func TestRemoteDriver_InitDatadir(t *testing.T) {
+	f := &fakeRunner{}
+	d := driver.NewRemoteDriver(f.run)
+	spec := driver.NodeSpec{Index: 1, Binary: "/opt/gwbft", DataDir: "/data/node1"}
+	if err := d.InitDatadir(context.Background(), spec, []byte(`{"config":{}}`)); err != nil {
+		t.Fatalf("InitDatadir: %v", err)
+	}
+	all := strings.Join(f.cmds, "\n")
+	// genesis is shipped (base64-decoded to a file under the datadir)...
+	if !strings.Contains(all, "base64 -d > '/data/node1/genesis.json'") {
+		t.Errorf("genesis not shipped to remote datadir:\n%s", all)
+	}
+	// ...then init runs on the remote host against that genesis.
+	if !strings.Contains(all, "'/opt/gwbft' init --datadir '/data/node1' '/data/node1/genesis.json'") {
+		t.Errorf("remote init command not issued:\n%s", all)
+	}
+}

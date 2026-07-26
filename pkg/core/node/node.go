@@ -49,11 +49,17 @@ type Node struct {
 	// start). Used by `stop` and hardfork execution.
 	PID int `json:"pid,omitempty"`
 	// Auth is the optional authentication descriptor for reaching a remote
-	// attached endpoint (see pkg/core/remote.Auth): the auth type plus the env
-	// var name that holds the secret (never the secret itself). Empty for local
-	// or unauthenticated nodes.
-	Auth map[string]any `json:"auth,omitempty"`
+	// attached endpoint. Empty for local or unauthenticated nodes.
+	Auth Auth `json:"auth,omitempty"`
 }
+
+// Auth is a node's authentication descriptor for reaching a remote attached
+// endpoint. It is a flexible map (converted to/from pkg/core/remote.Auth at the
+// boundary, so node need not import remote) with a fixed key convention: "type"
+// (e.g. "api_key" | "bearer") and the name of the env var holding the secret —
+// never the secret value itself. A named type so the seam is documented and
+// greppable rather than an anonymous map[string]any.
+type Auth map[string]any
 
 // NodeSet is the collection of nodes for one network plus its identity and the
 // capabilities its provider exposes. It is the only object passed between

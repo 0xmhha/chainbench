@@ -66,6 +66,24 @@ func (d *RemoteDriver) Provision(ctx context.Context, spec NodeSpec) error {
 	return nil
 }
 
+// InitDatadir ships the genesis to the remote host (base64-piped, like the
+// config) and runs `<binary> init --datadir <dataDir> <genesis>` over SSH,
+// satisfying the Initializer capability so a remote setup needs no local files.
+func (d *RemoteDriver) InitDatadir(ctx context.Context, spec NodeSpec, genesis []byte) error {
+	genesisPath := path.Join(spec.DataDir, "genesis.json")
+	b64 := base64.StdEncoding.EncodeToString(genesis)
+	ship := "mkdir -p " + shq(spec.DataDir) +
+		" && printf %s " + shq(b64) + " | base64 -d > " + shq(genesisPath)
+	if _, err := d.sh(ctx, ship); err != nil {
+		return fmt.Errorf("driver: remote ship genesis node%d: %w", spec.Index, err)
+	}
+	initCmd := shq(spec.Binary) + " init --datadir " + shq(spec.DataDir) + " " + shq(genesisPath)
+	if _, err := d.sh(ctx, initCmd); err != nil {
+		return fmt.Errorf("driver: remote init node%d: %w", spec.Index, err)
+	}
+	return nil
+}
+
 // Launch starts the node in the background on the remote host, redirecting
 // output to the log file, and returns its PID.
 func (d *RemoteDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error) {

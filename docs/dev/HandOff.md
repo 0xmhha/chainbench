@@ -191,7 +191,8 @@ chainbench stop --data-dir /tmp/d
 > 검증 시 초안 2건 정정: skip은 요약에 정상 집계됨(숨김 아님), MinerRecommit은
 > 死데이터 아님(upgrade 경로는 사용, setup 경로만 무시).
 
-진행 상태: **S1–S5는 #66에서 적용 완료**, S6는 진행 중(hardfork 결합·node 테스트·B2 완료, README 남음).
+진행 상태: **S1–S6 전부 적용 완료**(#66·#67 + 후속 PR). S5 원격 배선 완료(실 원격 E2E는
+Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이후는 회귀 write 포팅 재개.
 
 1. ✅ **S1 테스트 커버리지 신호 + 체인 온보딩** (#66): `obs.RunSkipped` 신설로 skip을
    성공과 구분 기록, `chainbench test`·요약이 `coverage=ran/applicable` 노출,
@@ -219,16 +220,17 @@ chainbench stop --data-dir /tmp/d
    `pkg/accounts` → `pkg/chains/stablenet/govbind`로 이전, `HasAccountExtra` doc 일반화.
    `pkg/accounts`는 generic ABI/event/tx 헬퍼만. SDK per-chain profile(A0)은 별도 repo.
    이제 회귀 write 포팅 재개 가능(부채 해소).
-5. 🟡 **S5 RemoteDriver 배선** (#66, 부분): config를 `NodeSpec.ConfigContent`로 렌더 →
-   driver의 Provision 경유(local=파일, remote=base64 전송), `LaunchOptions.Driver` 주입
-   필드 추가. config provisioning·launch·stop은 Driver seam 뒤로 들어감.
-   **남음(후속): 원격 genesis 전송 + 원격 datadir `init`** — 바이너리 실행·네트워크 단위
-   파일이라 Docker sshd E2E로 검증 필요(현 환경 미검증). `pkg/core/driver/remote.go`에
-   `InitDatadir` 없음.
-6. 🟡 **S6 잔여 정리**(진행 중): hardfork→setup 결합 제거(`LaunchArgs`를 `nodeconfig`로
-   이동) ✅, `pkg/core/node` 테스트 추가(Offset/Primary/HasCapability) ✅, `tests/wbft/accounts`
-   preset 주석 정정(공유 preset임을 명시, B2) ✅. **남음**: `Node.Auth` untyped seam 타입화,
-   노후 README(root) 갱신(레거시 bash CLI·gstable 단일체인 문서 잔존).
+5. ✅ **S5 RemoteDriver 배선** (#66 + 후속 PR): config를 `NodeSpec.ConfigContent`로
+   렌더 → driver의 Provision 경유(local=파일, remote=base64 전송), `LaunchOptions.Driver`
+   주입. 후속 PR에서 선택적 `driver.Initializer` 인터페이스 추가 — Local/Remote가
+   `InitDatadir(spec, genesis)` 구현(local=datadir에 genesis 기록 후 init, remote=genesis
+   base64 전송 후 ssh init). setup.Launch가 type-assert로 원격 init까지 태움. provision·
+   init·launch·stop 전부 Driver seam 뒤. 원격 명령은 fakeRunner 단위테스트로 검증.
+   ⚠️ 실 원격 E2E(Docker sshd)는 이 환경에서 미실행 — 명령 구성만 검증됨.
+6. ✅ **S6 잔여 정리** (#67 + 후속 PR): hardfork→setup 결합 제거(`LaunchArgs`→`nodeconfig`),
+   `pkg/core/node` 테스트 추가, `tests/wbft/accounts` preset 주석 정정(B2), `Node.Auth`
+   명명 타입화(`type node.Auth map[string]any` + 문서), 노후 root README를 Go-first·
+   다체인 상태로 재작성.
 
 ### 남은 작업 (기존)
 - **A1(경미/부차). 구 binary-swap 하드포크의 target namespace config 재생성**: 검증된

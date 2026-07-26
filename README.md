@@ -1,246 +1,174 @@
 # chainbench
 
-A local blockchain sandbox test bench for [go-stablenet](https://github.com/stable-net/go-stablenet) (geth fork with WBFT consensus). Manage multi-node local chains with a single CLI, run built-in tests, and integrate with AI agents via MCP.
+A Go-first, multi-chain local test bench for geth-family chains. It brings up
+multi-node local networks, verifies consensus, and runs test cases against them —
+driven from a CLI, from an MCP server for AI agents, or from a live dashboard,
+all on one shared Go core.
 
-> ⚠️ **TEST FIXTURE ONLY**: This repository commits a set of preset validator
-> keys under `keys/preset/` for reproducible local testing. The password is
-> `1`, the keystore is trivially decryptable, and all nodes bind to `127.0.0.1`.
+Supported chains: **stablenet** and **wbft** (WBFT/BFT family) and **wemix**
+(PoA/etcd family). Adding another chain on an existing consensus family is
+data-only (a manifest + a thin plugin); see [Adding a chain](#adding-a-chain).
+
+> ⚠️ **TEST FIXTURE ONLY**: this repository commits a set of preset validator
+> keys under `keys/preset/` for reproducible local testing. The password is `1`,
+> the keystore is trivially decryptable, and all nodes bind to `127.0.0.1`.
 > **Never import these keys into any mainnet, testnet, or shared environment.**
-> Treat them as public. See `keys/preset/README.md` for details.
+> Treat them as public. See `keys/preset/README.md`.
 
-- **Single CLI** for full chain lifecycle (`init`, `start`, `stop`, `test`, `log`)
-- **YAML profiles** with inheritance for different test scenarios
-- **Preset keys** for reproducible validator addresses across runs (local-only — see warning above)
-- **10 built-in tests** covering consensus, fault tolerance, and stress
-- **MCP server** for Claude Code / AI agent integration (per-project opt-in)
-- **No Docker required** — pure process-based, runs on macOS and Linux
+## Features
 
-## Quick Start
-
-### 1. Install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/0xmhha/chainbench/main/install.sh | bash
-```
-
-This clones chainbench to `~/.chainbench`, builds the MCP server, and registers `chainbench` and `chainbench-mcp` in your `$PATH`.
-
-### 2. Enable MCP for your project
-
-```bash
-cd /path/to/your-chain-project    # must have gstable at build/bin/
-chainbench mcp enable
-```
-
-This creates a portable `.mcp.json` in the project root (no absolute paths — works across machines). Restart Claude Code or run `/mcp` to load.
-
-### 3. Run with Claude Code (recommended)
-
-Open Claude Code in your chain project directory and ask:
-
-```
-"Initialize and start a local chain, then run a tx test"
-```
-
-Claude Code uses MCP tools to drive the full lifecycle:
-
-```
-chainbench_init     → Initialize 4 validators + 1 endpoint
-chainbench_start    → Launch all nodes
-chainbench_status   → Verify consensus OK, all nodes running
-chainbench_test_run → Run "basic/tx-send"
-chainbench_node_rpc → Send tx, query receipt by txHash
-```
-
-You can also interact step by step:
-
-```
-"Check chain status"
-"Stop node 3 and see if consensus continues"
-"Send 1 ETH from node1 to node2 and show the receipt"
-"Run all fault tolerance tests"
-```
-
-### 4. Run with CLI
-
-```bash
-# Initialize and start (4 validators + 1 endpoint)
-chainbench init
-chainbench start
-
-# Check status and run tests
-chainbench status
-chainbench test run basic
-
-# Stop
-chainbench stop
-```
-
-> **Note:** The CLI auto-detects the `gstable` binary from your project's `build/bin/` directory. For machine-specific paths, use `chainbench config set chain.binary_path /path/to/gstable` (stored in `state/local-config.yaml`, git-ignored).
-
-### Uninstall
-
-```bash
-chainbench uninstall
-```
+- **One Go core, three surfaces** — a CLI (`chainbench`), an MCP server
+  (`chainbench-mcp`) for AI agents, and a dashboard daemon (`chainbenchd`), all
+  calling the same core packages.
+- **Consensus-family plugins** — the primary extension axis is the consensus
+  algorithm (`wbft`, `poa`); a chain is a thin plugin that selects a family and
+  supplies a declarative manifest.
+- **Three-phase pipeline** — `setup` (plan → provision → launch) → `verify`
+  (block production, node info) → `test` (gated test cases), each phase a
+  standalone step over a shared `NodeSet`.
+- **Local or remote nodes** — a `Driver` abstraction launches nodes as local
+  subprocesses or over SSH.
+- **No Docker required** — pure process-based, runs on macOS and Linux.
 
 ## Prerequisites
 
 | Dependency | Version | Required for |
-|------------|---------|-------------|
-| bash | 4.0+ | CLI |
-| python3 | 3.6+ | Profile parsing, genesis generation |
-| curl | any | RPC calls in tests |
-| git | any | Installation |
-| Node.js | 18+ | MCP server only |
-| npm | any | MCP server only |
-| gstable | latest | Chain binary ([build instructions](https://github.com/stable-net/go-stablenet)) |
+|------------|---------|--------------|
+| Go | 1.25+ | building and running chainbench |
+| a chain binary | latest | the node binary for the chain under test (`gstable` / `gwbft` / `gwemix`), built from its own repo |
 
-## CLI Reference
+The legacy bash CLI, Python profile tooling, and Node.js MCP server have been
+removed; chainbench is a single Go module.
 
-### Chain Lifecycle
+## Build
 
 ```bash
-chainbench init [--profile <name>]     # Initialize chain from profile
-chainbench start                        # Start all nodes
-chainbench stop                         # Stop all nodes (SIGTERM -> SIGKILL)
-chainbench restart                      # stop -> clean -> init -> start
-chainbench status [--json]              # Show node status
-chainbench clean                        # Remove all node data
+go build ./...                                  # build + type-check everything
+go build -o bin/chainbench     ./cmd/chainbench
+go build -o bin/chainbench-mcp ./cmd/chainbench-mcp
+go build -o bin/chainbenchd    ./cmd/chainbenchd
 ```
 
-All lifecycle commands accept `--binary-path <path>` and `--logrot-path <path>` as one-shot overrides.
+`setup.sh` builds the three binaries and registers them on `$PATH` for local use.
 
-### Local Configuration
+The full test suite is deterministic (httptest / fake binaries), so it runs
+without any real chain binary:
 
 ```bash
-chainbench config set chain.binary_path /opt/gstable/build/bin/gstable
-chainbench config set chain.logrot_path /opt/gstable/build/bin/logrot
-chainbench config get chain.binary_path
-chainbench config list                  # Show full local overlay
-chainbench config unset chain.logrot_path
+go test ./...
 ```
 
-Writes to `state/local-config.yaml` (git-ignored). Merged on top of the profile during loading. Precedence: CLI flag > env var > local overlay > profile YAML > auto-detect.
+## Quick start (CLI)
 
-### Node Control
+Bring up a local stablenet network, verify it, and run the applicable tests. A
+real chain binary is required for `--launch`; point `--binary` at it.
 
 ```bash
-chainbench node stop 3                  # Stop node 3 only
-chainbench node start 3                 # Restart node 3
-chainbench node log 3                   # Show last 50 lines of node 3 log
-chainbench node log 3 --follow          # Tail -f node 3 log
-chainbench node rpc 1 eth_blockNumber   # RPC call to node 1
+# plan + provision + launch a 2-validator network
+chainbench setup --chain stablenet --validators 2 --endpoints 1 \
+  --keys-dir keys/preset --data-dir /tmp/cb --binary /path/to/gstable --launch
+
+# verify block production against the running nodes
+chainbench verify --data-dir /tmp/cb
+
+# run the test cases that apply to this chain (reports per-chain coverage)
+chainbench test --data-dir /tmp/cb
+
+# stop the network
+chainbench stop --data-dir /tmp/cb
 ```
 
-### Testing
+Without a real binary, you can still exercise the full lifecycle with a fake
+node script (see `docs/dev/HandOff.md §3`).
 
-```bash
-chainbench test list                    # List available tests
-chainbench test run basic/consensus     # Run single test
-chainbench test run basic               # Run all basic tests
-chainbench test run all                 # Run everything
-chainbench report [--format json]       # Show test results
+## CLI reference
+
+| Command | Purpose |
+|---------|---------|
+| `chains` | list the registered chains |
+| `setup --chain --validators --endpoints [--provision] [--launch] [--binary] [--keys-dir] [--data-dir]` | plan / provision / launch a network |
+| `verify --rpc <url>… \| --data-dir <dir>` | confirm block production and report node info |
+| `test --rpc <url>… \| --data-dir <dir> [--name] [--category]` | run gated test cases; prints `coverage = ran / applicable` |
+| `stop --data-dir <dir>` | stop the network's nodes by PID |
+| `status` / `clean` | show / remove a network's state |
+| `node rpc --rpc <url> --method <m> [--params …]` | arbitrary JSON-RPC passthrough |
+| `consensus --chain --rpc <url>` | query the validator/producer set (manifest-driven method) |
+| `faucet --chain --rpc --from-key --to --amount` | fund an address from a genesis-allocated key |
+| `contract deploy \| call`, `tx send \| wait`, `account`, `genesis`, `state`, `log` | tx / contract / account / genesis / state / log helpers |
+| `hardfork --data-dir --to-chain --block [--to-binary]` | binary-swap upgrade (homogeneous fork) |
+| `upgrade run …` | concurrent consensus-family handoff (e.g. wemix → wbft) |
+| `report --data-dir <dir>` | show stored run results (`ok` / `failed` / `skipped`) |
+
+A persistent `--dashboard <url>` flag forwards setup/verify/test events to a
+running `chainbenchd` over SSE. Run `chainbench <command> --help` for the full
+flag set.
+
+## MCP integration
+
+`chainbench-mcp` is a self-contained Go MCP server (JSON-RPC over stdio) exposing
+30 tools that call the same core as the CLI — lifecycle
+(`chainbench_start`/`stop`/`status`), tests (`chainbench_test_run`/`test_list`/
+`report`), RPC/tx/contract/consensus queries, logs, and remote-node tools.
+Register it with your agent by pointing at the built `chainbench-mcp` binary
+(`{"mcpServers": {"chainbench": {"command": "chainbench-mcp"}}}`).
+
+## Tests
+
+Test cases are Go `testkit.Case` values registered at `init()` under
+`tests/<family>/<category>/`, blank-imported by `tests/all`. Each case declares
+`ChainCompat` (which chains it applies to) and `RequiresCaps`; the runner skips
+the rest and reports **coverage** (`ran / applicable`) so a chain that gates most
+cases out reads as under-tested rather than green. See `tests/README.md` for the
+conventions and the add-a-chain-to-a-test path.
+
+## Adding a chain
+
+Adding a chain that reuses an existing consensus family (`wbft` or `poa`) is
+data-plus-glue, no core edits:
+
+1. `manifests/chains/<id>.json` — the declarative manifest (binary, chain id,
+   network id, consensus family, genesis template, probe, tx types, …).
+2. `manifests/genesis/<id>.json` — the genesis template (for template-based
+   families).
+3. `pkg/chains/<id>/<id>.go` — a thin plugin: load the manifest, select the
+   family, supply the accounts protocol, and `registry.Register`.
+4. Add a blank import to `pkg/chains/all/all.go`.
+5. Register the chain's accounts protocol from the plugin's `init()`
+   (`protocol.Register`) — no edit to the external accounts SDK is required.
+
+Only a genuinely new consensus algorithm requires a new `pkg/consensus/<family>`.
+Chain-specific bindings (e.g. stablenet governance) live under
+`pkg/chains/<id>/…`, not in the generic core.
+
+## Project structure
+
+```
+chainbench/
+├── cmd/
+│   ├── chainbench/         # Go CLI (cobra)
+│   ├── chainbench-mcp/     # MCP server (Go, single binary)
+│   └── chainbenchd/        # dashboard daemon (HTTP/SSE)
+├── pkg/
+│   ├── core/               # chain-agnostic core: registry, config, pipeline
+│   │                       #   (setup/verify/attach/testrun), driver, genesis,
+│   │                       #   nodeconfig, node, rpc, obs, probe, remote, …
+│   ├── consensus/          # consensus families (wbft, poa) + upgrade handoff
+│   ├── chains/             # chain plugins (stablenet, wbft, wemix) + bindings
+│   ├── accounts/           # chain-agnostic account/tx/ABI boundary over the SDK
+│   ├── mcp/                # MCP tool handlers (same core as the CLI)
+│   ├── dashboard/          # SSE dashboard server
+│   └── testkit/            # test-case framework (Case / T / Report)
+├── manifests/              # declarative chain manifests + genesis templates
+├── profiles/               # local network profiles (YAML)
+├── keys/preset/            # preset validator keys (TEST FIXTURE ONLY)
+└── tests/                  # Go test cases (tests/all) + repro scripts (tests/repro)
 ```
 
-### Log Analysis
+## Preset keys
 
-```bash
-chainbench log timeline                 # Consensus event timeline
-chainbench log anomaly                  # Detect anomalous patterns
-chainbench log search "ROUND_CHANGE"    # Search across all node logs
-```
-
-### Profile Management
-
-```bash
-chainbench profile list                 # List available profiles
-chainbench profile show default         # Show profile content
-chainbench profile create my-test       # Create custom profile from default
-```
-
-### MCP Management
-
-```bash
-chainbench mcp enable [--target <dir>]  # Enable MCP server for a project
-chainbench mcp disable [--target <dir>] # Disable MCP server for a project
-chainbench mcp status [--target <dir>]  # Check MCP status for a project
-```
-
-## Built-in Tests
-
-| Test | Description |
-|------|-------------|
-| `basic/consensus` | Verify block production, timing, miner diversity, sync |
-| `basic/tx-send` | Send transaction and verify receipt |
-| `basic/sync` | Check all nodes have synchronized block heights |
-| `basic/peers` | Verify peer connectivity between nodes |
-| `basic/rpc-health` | Check all RPC endpoints respond |
-| `fault/node-crash` | Stop 1/4 validators, verify consensus continues, recover |
-| `fault/node-recover` | Stop node, wait, restart, measure sync time |
-| `fault/two-down` | Stop 2/4 validators, consensus halts, restore 1, resumes |
-| `stress/tx-flood` | Send N transactions, measure TPS |
-| `stress/block-time` | Block time statistics (avg/min/max/p95) over 100 blocks |
-
-## Profiles
-
-Profiles are YAML files that define the entire chain configuration. They support inheritance via `inherits`.
-
-| Profile | Description |
-|---------|-------------|
-| `default` | 4 validators + 1 endpoint, 1s block time |
-| `minimal` | 2 validators, fast testing |
-| `bft-limit` | 4 validators, 2s blocks, auto-runs fault tests |
-| `large` | 7 validators + 3 endpoints |
-
-### Creating Custom Profiles
-
-```bash
-chainbench profile create my-scenario
-# Edit profiles/custom/my-scenario.yaml
-chainbench init --profile my-scenario
-```
-
-### Profile Schema
-
-```yaml
-chain:
-  binary: gstable                          # Binary name
-  binary_path: "/path/to/gstable"          # Absolute or relative path
-  logrot_path: ""                          # logrot binary path (auto-detected if empty)
-  chain_id: 8283                           # Chain ID
-
-data:
-  directory: /tmp/node-data                # Node data root directory
-
-genesis:
-  overrides:
-    wbft:
-      blockPeriodSeconds: 1                # Block interval
-      requestTimeoutSeconds: 2             # Consensus timeout
-      epochLength: 140                     # Epoch length (blocks)
-      proposerPolicy: 0                    # 0=round-robin, 1=sticky
-
-nodes:
-  validators: 4                            # Validator count
-  endpoints: 1                             # Non-mining node count
-  verbosity: 4                             # Log level (0-5)
-  gcmode: archive                          # archive or full
-  cache: 2048                              # Cache size (MB)
-
-keys:
-  mode: static                             # static (reuse preset) | generate
-  source: "keys/preset"                    # Preset keys directory
-
-ports:
-  base_p2p: 30301                          # Ports are base + node_index
-  base_http: 8501
-  base_ws: 9501
-```
-
-## Preset Keys
-
-The `keys/preset/` directory contains pre-generated keys for 5 nodes. Fixed keys ensure validator addresses are **always the same** across runs, making log analysis and debugging reproducible.
+`keys/preset/` holds fixed keys for 5 nodes so validator addresses are identical
+across runs (reproducible logs/debugging). TEST FIXTURE ONLY — see the warning
+above.
 
 | Node | Address | Role |
 |------|---------|------|
@@ -250,161 +178,16 @@ The `keys/preset/` directory contains pre-generated keys for 5 nodes. Fixed keys
 | node4 | `0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6` | Validator |
 | node5 | `0x5400d8b543eaf6738c7b44799623bea88fd0f5ee` | Endpoint |
 
-## Claude Code / MCP Integration
-
-chainbench includes an [MCP](https://modelcontextprotocol.io/) server that allows AI agents like Claude Code to control the test chain directly.
-
-### Setup
-
-```bash
-# Enable for a specific project (recommended)
-cd /path/to/my-chain-project
-chainbench mcp enable
-# Creates a portable .mcp.json: {"mcpServers": {"chainbench": {"command": "chainbench-mcp"}}}
-
-# Disable when no longer needed (stops token consumption)
-chainbench mcp disable
-```
-
-The generated `.mcp.json` uses the `chainbench-mcp` wrapper from `$PATH` — no absolute paths, so it works across machines and users without modification.
-
-> **Note:** Per-project registration is preferred. Global registration
-> (`~/.claude/settings.local.json`) activates the MCP server for all projects,
-> which may consume tokens even when not needed.
-
-### Available MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `chainbench_init` | Initialize chain with a profile |
-| `chainbench_start` | Start all nodes |
-| `chainbench_stop` | Stop all nodes |
-| `chainbench_restart` | Full restart cycle |
-| `chainbench_status` | Get node status (JSON) |
-| `chainbench_node_stop` | Stop a specific node |
-| `chainbench_node_start` | Start a specific node |
-| `chainbench_node_rpc` | Send RPC to a specific node |
-| `chainbench_test_list` | List available tests |
-| `chainbench_test_run` | Run a test suite |
-| `chainbench_report` | Get test results |
-| `chainbench_schema_query` | Query YAML profile schema |
-| `chainbench_profile_send` | Create a custom profile via YAML content |
-| `chainbench_log_search` | Search node logs |
-| `chainbench_log_timeline` | Get consensus timeline |
-| `chainbench_config_set` | Write to machine-local overlay |
-| `chainbench_config_get` | Read from machine-local overlay |
-| `chainbench_config_list` | List all local overlay fields |
-
-### AI Agent Workflow Example
-
-```
-User: "Run a basic consensus test"
-
-AI Agent:
-  1. chainbench_status      -> Check if chain is running
-  2. chainbench_init         -> Initialize if needed
-  3. chainbench_start        -> Start nodes
-  4. chainbench_test_run     -> Run "basic/consensus"
-  5. chainbench_report       -> Return results to user
-
-User: "Kill node 3 and check if consensus continues"
-
-AI Agent:
-  1. chainbench_node_stop {node: 3}
-  2. chainbench_test_run {test: "fault/node-crash"}
-  3. chainbench_log_timeline
-  4. Report analysis to user
-```
-
-## Project Structure
-
-```
-chainbench/
-├── install.sh              # Remote installer (curl | bash)
-├── uninstall.sh            # Uninstaller
-├── setup.sh                # Local setup (Go build + PATH registration)
-├── cmd/
-│   ├── chainbench/         # Go CLI (cobra commands)
-│   ├── chainbench-mcp/     # MCP server for AI integration (Go, single binary)
-│   └── chainbenchd/        # dashboard daemon
-├── pkg/
-│   ├── core/               # shared core (config, genesis, nodeconfig, driver, rpc, logs, state, ...)
-│   ├── consensus/          # consensus families (wbft, poa) + upgrade orchestration
-│   ├── chains/             # chain plugins (stablenet, wbft, wemix)
-│   ├── mcp/                # MCP tool handlers (call the same core as the CLI)
-│   └── testkit/            # test-case framework
-├── manifests/              # declarative chain manifests + genesis templates
-├── profiles/               # local network profiles (YAML)
-├── keys/preset/            # pre-generated validator keys (5 nodes)
-├── tests/                  # Go test cases (tests/all) + reproduction scripts (tests/repro)
-└── bin/                    # built Go binaries (chainbench, chainbench-mcp, chainbenchd)
-```
-
-## Troubleshooting
-
-**`chainbench init` fails with "Cannot find gstable binary"**
-- Use `chainbench config set chain.binary_path /path/to/gstable` (machine-local, git-ignored)
-- Or add the directory containing `gstable` to your `$PATH`
-- One-shot: `chainbench init --binary-path /path/to/gstable`
-
-**"logrot not available — logs will grow unbounded"**
-- chainbench auto-discovers logrot next to the chain binary, at git-root/build/bin/, or builds from source
-- To set explicitly: `chainbench config set chain.logrot_path /path/to/logrot`
-- Disable rotation: set `logging.rotation: false` in the profile
-
-**Nodes start but immediately die**
-- Check logs: `cat /tmp/node-data/logs/node1.log`
-- Common cause: port conflict. Change `ports.base_*` values in the profile
-
-**`chainbench stop` doesn't stop all processes**
-- Manual cleanup: `pkill -15 gstable && sleep 3 && pkill -9 gstable`
-- Then remove stale state: `rm -f state/pids.json`
-
-**MCP server not recognized in Claude Code**
-- Verify `chainbench mcp status` shows "enabled"
-- Verify the MCP binary is on PATH: `command -v chainbench-mcp` (built by `setup.sh`)
-- Run `/mcp` in Claude Code to reload servers
-
-**Port already in use**
-- Default ports: HTTP 8501-8505, WS 9501-9505, P2P 30301-30305
-- Change base ports in the profile: `ports.base_http: 18501`
-
 ## Contributing
 
-Contributions are welcome! Please read the guidelines below before submitting.
-
-### Development Setup
-
-```bash
-git clone https://github.com/0xmhha/chainbench.git
-cd chainbench
-./setup.sh
-```
-
-### Adding a Test
-
-1. Add a `testkit.Case` under `tests/<category>/` and register it in `tests/all`.
-2. Run it with `go test ./...` or `chainbench test --rpc <url> --category <cat>`.
-
-### Adding a Profile
-
-1. `chainbench profile create my-profile`
-2. Edit `profiles/custom/my-profile.yaml`
-3. Use `inherits: default` to only override what you need
-
-### Submitting Changes
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-feature`)
-3. Commit with [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `refactor:`)
-4. Push and open a Pull Request
-5. Ensure all existing tests pass: `chainbench test run all`
-
-### Reporting Issues
-
-- Use [GitHub Issues](https://github.com/0xmhha/chainbench/issues)
-- Include: chainbench version, OS, steps to reproduce, relevant logs
+1. Create a feature branch (`git checkout -b feat/my-feature`).
+2. Keep `pkg/core` free of chain/consensus imports (the boundary is
+   compiler-enforced); chain-specific code lives in `pkg/chains/*` and
+   `pkg/consensus/*`.
+3. Commit with [Conventional Commits](https://www.conventionalcommits.org/).
+4. Ensure `gofmt`, `go vet`, and `go test ./...` pass.
+5. Open a pull request.
 
 ## License
 
-This project is licensed under the [Apache License 2.0](LICENSE).
+Licensed under the [Apache License 2.0](LICENSE).
