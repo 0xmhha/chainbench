@@ -65,7 +65,7 @@ func Provision(ctx context.Context, plan Plan, plugin registry.ChainPlugin, cfg 
 // node spec's ConfigContent with the rendered TOML; the config bytes are written
 // to their destination by the driver's Provision (local or remote), never here,
 // so a remote launch ships the config over its transport.
-func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, preset keys.Preset, keysAbs string) error {
+func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, preset keys.Preset, keyBase string) error {
 	sub := preset.Take(cfg.Int("nodes.validators", len(preset.Validators)))
 	gen, err := genesis.Build(plugin, genesis.Inputs{
 		Validators: sub.Validators,
@@ -99,7 +99,7 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 		spec.ConfigContent = nodeconfig.Generate(nodeconfig.Params{
 			Role:          spec.Role,
 			Ports:         spec.Ports,
-			KeystoreDir:   filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
+			KeystoreDir:   filepath.Join(keyBase, fmt.Sprintf("node%d", spec.Index), "keystore"),
 			RPCNamespace:  ns,
 			MinerRecommit: recommit,
 			StaticNodes:   staticNodes,
@@ -127,13 +127,28 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 	if err != nil {
 		return node.NodeSet{}, err
 	}
-	if err := provision(&plan, opts.Plugin, opts.Config, preset, keysAbs); err != nil {
-		return node.NodeSet{}, err
-	}
-
 	d := opts.Driver
 	if d == nil {
 		d = driver.NewLocalDriver()
+	}
+
+	// Identity files live at keysAbs locally; a remote driver needs them on its
+	// own host, so they are shipped to a keyBase under the (remote) data root and
+	// the launch args + config keystore point there. keyBase == keysAbs for a
+	// local launch, so local provisioning is unchanged.
+	keyBase := keysAbs
+	fp, remoteFiles := d.(driver.FileProvisioner)
+	if remoteFiles {
+		keyBase = filepath.Join(plan.DataRoot, "keys")
+	}
+
+	if err := provision(&plan, opts.Plugin, opts.Config, preset, keyBase); err != nil {
+		return node.NodeSet{}, err
+	}
+	if remoteFiles {
+		if err := shipIdentities(ctx, fp, keysAbs, keyBase, plan.Nodes); err != nil {
+			return node.NodeSet{}, err
+		}
 	}
 	initer, canInit := d.(driver.Initializer)
 
@@ -142,13 +157,13 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 	// to unlock and seal with (a random key is otherwise "unauthorized").
 	for i := range plan.Nodes {
 		spec := &plan.Nodes[i]
-		nodeDir := filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index))
+		nodeDir := filepath.Join(keyBase, fmt.Sprintf("node%d", spec.Index))
 		spec.Args = append(spec.Args, "--nodekey", filepath.Join(nodeDir, "nodekey"))
 		if spec.Role == node.RoleValidator {
 			if nk := nodeKeyFor(preset, spec.Index); nk != nil {
 				spec.Args = append(spec.Args,
 					"--unlock", nk.Address,
-					"--password", filepath.Join(keysAbs, "password"),
+					"--password", filepath.Join(keyBase, "password"),
 					"--miner.etherbase", nk.Address,
 				)
 			}
@@ -167,6 +182,44 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 	}
 	plan.Genesis = nil // already written by provision + placed by init
 	return Run(ctx, plan, d, opts.Bus)
+}
+
+// shipIdentities copies each node's preset identity files — the devp2p nodekey,
+// the validator keystore, and the shared password — from the local keysAbs to
+// keyBase on the driver's host via the FileProvisioner, so a remote launch finds
+// them at the paths its launch args and config keystore reference.
+func shipIdentities(ctx context.Context, fp driver.FileProvisioner, keysAbs, keyBase string, nodes []driver.NodeSpec) error {
+	if pw, err := os.ReadFile(filepath.Join(keysAbs, "password")); err == nil {
+		if err := fp.ProvisionFile(ctx, filepath.Join(keyBase, "password"), pw, 0o600); err != nil {
+			return err
+		}
+	}
+	for _, spec := range nodes {
+		src := filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index))
+		dst := filepath.Join(keyBase, fmt.Sprintf("node%d", spec.Index))
+		if nk, err := os.ReadFile(filepath.Join(src, "nodekey")); err == nil {
+			if err := fp.ProvisionFile(ctx, filepath.Join(dst, "nodekey"), nk, 0o600); err != nil {
+				return err
+			}
+		}
+		entries, err := os.ReadDir(filepath.Join(src, "keystore"))
+		if err != nil {
+			continue // no keystore (e.g. an endpoint node)
+		}
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			b, err := os.ReadFile(filepath.Join(src, "keystore", e.Name()))
+			if err != nil {
+				return err
+			}
+			if err := fp.ProvisionFile(ctx, filepath.Join(dst, "keystore", e.Name()), b, 0o600); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // nodeKeyFor returns the preset node key for a 1-based node index, or nil.

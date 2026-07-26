@@ -8,6 +8,7 @@ package driver
 
 import (
 	"context"
+	"io/fs"
 
 	"github.com/0xmhha/chainbench/pkg/core/node"
 )
@@ -53,4 +54,13 @@ type Driver interface {
 // Initializer and falls back to the local InitDatadir when it is not supported.
 type Initializer interface {
 	InitDatadir(ctx context.Context, spec NodeSpec, genesis []byte) error
+}
+
+// FileProvisioner is an optional Driver capability: place an arbitrary file on
+// the node's host. It is how the setup pipeline ships per-node identity files
+// (devp2p nodekey, validator keystore, password) to a remote host — the local
+// driver has the files in place already and does not implement it, so the caller
+// type-asserts and only ships when the driver requires it (i.e. is remote).
+type FileProvisioner interface {
+	ProvisionFile(ctx context.Context, remotePath string, content []byte, mode fs.FileMode) error
 }
