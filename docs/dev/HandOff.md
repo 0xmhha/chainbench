@@ -283,9 +283,13 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   RemoteDriver를 빌드·주입(`LaunchOptions.Driver`). **SSH 비밀번호는 `CHAINBENCH_REMOTE_PASS`
   env 전용**(cmdline 금지, 보안), host-key는 표준 SSH env로 해석. 원격이면 `--binary`는 원격
   경로(로컬 stat 안 함). end-to-end로 RemoteDriver.InitDatadir가 SSH로 genesis ship까지 도달
-  확인(연결만 실패=예상). 단위테스트: 비밀번호 가드·드라이버 빌드. ⚠️ **잔여: 검증자 identity
-  파일(nodekey/keystore/password)이 launch args의 로컬 경로를 참조 → 원격 호스트로 shipping
-  필요**(원격 검증자 완전동작의 마지막 조각). 실 over-SSH E2E는 정상 환경 필요(S5 참고).
+  확인(연결만 실패=예상). 단위테스트: 비밀번호 가드·드라이버 빌드.
+  **identity 원격 shipping 완료**: 선택적 `driver.FileProvisioner`(RemoteDriver만 구현 → local
+  무변경) 추가. remote일 때 `keyBase`를 `<DataRoot>/keys`로 두고 preset의 nodekey/keystore/
+  password를 `shipIdentities`로 SSH ship + config KeystoreDir·launch args를 그 경로로 전환.
+  local은 keyBase==keysAbs라 100% 동일. 단위테스트: `RemoteDriver.ProvisionFile`(base64+chmod),
+  `shipIdentities`(경로 검증). CLI e2e로 provision→ship identities→init→launch가 SSH까지 도달
+  확인. ⚠️ 실 over-SSH E2E green은 정상 환경 필요(S5 참고, 샌드박스 hang).
 - **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
   REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
 

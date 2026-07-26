@@ -92,8 +92,26 @@ func TestRemoteDriver_NonZeroExitIsError(t *testing.T) {
 	}
 }
 
-// RemoteDriver satisfies the Initializer capability.
-var _ driver.Initializer = (*driver.RemoteDriver)(nil)
+// RemoteDriver satisfies the Initializer and FileProvisioner capabilities.
+var (
+	_ driver.Initializer     = (*driver.RemoteDriver)(nil)
+	_ driver.FileProvisioner = (*driver.RemoteDriver)(nil)
+)
+
+func TestRemoteDriver_ProvisionFile(t *testing.T) {
+	f := &fakeRunner{}
+	d := driver.NewRemoteDriver(f.run)
+	if err := d.ProvisionFile(context.Background(), "/data/node1/nodekey", []byte("KEY"), 0o600); err != nil {
+		t.Fatalf("ProvisionFile: %v", err)
+	}
+	cmd := f.last()
+	if !strings.Contains(cmd, "base64 -d > '/data/node1/nodekey'") {
+		t.Errorf("file not base64-shipped to the path:\n%s", cmd)
+	}
+	if !strings.Contains(cmd, "chmod 600 '/data/node1/nodekey'") {
+		t.Errorf("file not chmod'd:\n%s", cmd)
+	}
+}
 
 func TestRemoteDriver_InitDatadir(t *testing.T) {
 	f := &fakeRunner{}

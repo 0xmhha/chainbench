@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io/fs"
 	"path"
 	"strconv"
 	"strings"
@@ -62,6 +63,20 @@ func (d *RemoteDriver) Provision(ctx context.Context, spec NodeSpec) error {
 		if _, err := d.sh(ctx, cmd); err != nil {
 			return fmt.Errorf("driver: remote write config: %w", err)
 		}
+	}
+	return nil
+}
+
+// ProvisionFile writes content to remotePath on the remote host (base64-piped to
+// avoid quoting issues) and chmods it, satisfying the FileProvisioner capability
+// so setup can ship per-node identity files (nodekey, keystore, password).
+func (d *RemoteDriver) ProvisionFile(ctx context.Context, remotePath string, content []byte, mode fs.FileMode) error {
+	b64 := base64.StdEncoding.EncodeToString(content)
+	cmd := "mkdir -p " + shq(path.Dir(remotePath)) +
+		" && printf %s " + shq(b64) + " | base64 -d > " + shq(remotePath) +
+		" && chmod " + fmt.Sprintf("%o", mode.Perm()) + " " + shq(remotePath)
+	if _, err := d.sh(ctx, cmd); err != nil {
+		return fmt.Errorf("driver: remote write file %s: %w", remotePath, err)
 	}
 	return nil
 }
