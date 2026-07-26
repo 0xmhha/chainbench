@@ -142,6 +142,10 @@ The manifest is the same schema as `manifests/chains/*.json`; set `"protocol"`
 to a built-in accounts profile (`stablenet` / `wbft` / `wemix`) to borrow its tx
 types and account model. Only a genuinely new consensus algorithm needs code.
 
+The same `--manifest` / `--genesis-template` flags work on `consensus` and
+`faucet` (and `verify` / `test` read the chain from the launched network's
+`nodeset.json`, so they need no extra flag).
+
 ### First-party (embedded in the tool)
 
 To ship a chain with chainbench itself:
