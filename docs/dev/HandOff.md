@@ -250,10 +250,13 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   배선만 남음).
 - **D1. Svelte SPA** 🔴: 프론트 빌드 툴체인 필요. 현재 `pkg/dashboard/index.html`
   (build-free)이 SSE로 동작 — 데이터 계약(SSE Event JSON + `/api/runs`) 확정.
-- **회귀 잔여 포팅**: f-system-contracts 거버넌스 write(mint/burn/proposal 다단계),
-  c-anzeon basefee 버스트(타이밍 민감) 등. 바인딩 계층이 완비돼 케이스별 반복 작업.
-  → **S4 이전 후 재개**(그 전에 재개하면 stablenet 부채가 커짐). 원본 bash 스위트는
-  stablenet 고정이라 Go 러너에서 미실행(감사 B4).
+- **회귀 잔여 포팅**(진행 중): 노드측 서명 인프라 추가 — `rpc.Client.Coinbase`(eth_coinbase)
+  +`SendTransaction`(eth_sendTransaction, httptest 단위검증). 이를 써서 첫 governance
+  write 케이스 `mint-proposal-executes`(f2-01 포팅) 추가: 각 검증자 coinbase로 propose/approve,
+  quorum 도달까지 승인, 수혜자 잔액 증가 확인. govbind + 노드측 서명. registration/gating은
+  검증됨. ⚠️ **live-tx라 실 gstable 네트워크 없이는 이 환경에서 실행 미검증** — quorum 수·
+  proof 포맷은 회귀 f2-01 앵커. 잔여: burn/validator proposal, blacklist write, c-anzeon
+  basefee 버스트. 원본 bash 스위트는 stablenet 고정이라 Go 러너에서 미실행(감사 B4).
 - **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
   REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
 
