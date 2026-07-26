@@ -45,3 +45,12 @@ type Driver interface {
 	// Stop terminates a previously launched node.
 	Stop(ctx context.Context, h Handle) error
 }
+
+// Initializer is an optional Driver capability: place the genesis on the node's
+// host and run the datadir `init`, so the genesis-and-init step goes through the
+// same driver as provision/launch (local writes+execs; remote ships+execs over
+// SSH) instead of assuming a local filesystem. A caller type-asserts a Driver to
+// Initializer and falls back to the local InitDatadir when it is not supported.
+type Initializer interface {
+	InitDatadir(ctx context.Context, spec NodeSpec, genesis []byte) error
+}

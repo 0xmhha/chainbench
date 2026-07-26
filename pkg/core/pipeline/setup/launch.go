@@ -83,6 +83,7 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 	if err := os.WriteFile(plan.GenesisPath, gen, 0o644); err != nil {
 		return err
 	}
+	plan.Genesis = gen // kept so the datadir init can place it (local or remote)
 
 	// static-nodes: every preset node's enode at its planned p2p port.
 	var staticNodes []string
@@ -130,6 +131,12 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 		return node.NodeSet{}, err
 	}
 
+	d := opts.Driver
+	if d == nil {
+		d = driver.NewLocalDriver()
+	}
+	initer, canInit := d.(driver.Initializer)
+
 	// Install each node's preset identity: the devp2p nodekey so its enode
 	// matches the static-node list (peering), and — for validators — the account
 	// to unlock and seal with (a random key is otherwise "unauthorized").
@@ -147,15 +154,18 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 			}
 		}
 		spec.Binary = opts.Binary
-		if err := driver.InitDatadir(ctx, opts.Binary, spec.DataDir, plan.GenesisPath); err != nil {
+		// Init the datadir through the driver when it supports it (so a remote
+		// driver ships the genesis and runs init on its host); otherwise fall
+		// back to the local init from the on-disk genesis.
+		if canInit {
+			if err := initer.InitDatadir(ctx, *spec, plan.Genesis); err != nil {
+				return node.NodeSet{}, err
+			}
+		} else if err := driver.InitDatadir(ctx, opts.Binary, spec.DataDir, plan.GenesisPath); err != nil {
 			return node.NodeSet{}, err
 		}
 	}
-	plan.Genesis = nil // already written by provision
-	d := opts.Driver
-	if d == nil {
-		d = driver.NewLocalDriver()
-	}
+	plan.Genesis = nil // already written by provision + placed by init
 	return Run(ctx, plan, d, opts.Bus)
 }
 

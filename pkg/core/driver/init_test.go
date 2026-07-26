@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -43,5 +44,23 @@ func TestInitDatadir_Failure(t *testing.T) {
 	dd := filepath.Join(t.TempDir(), "node1")
 	if err := InitDatadir(context.Background(), bin, dd, "/tmp/genesis.json"); err == nil {
 		t.Error("expected error from failing init")
+	}
+}
+
+// LocalDriver satisfies the Initializer capability.
+var _ Initializer = (*LocalDriver)(nil)
+
+func TestLocalDriver_InitDatadir(t *testing.T) {
+	bin := fakeBinary(t, 0)
+	dd := filepath.Join(t.TempDir(), "node1")
+	d := NewLocalDriver()
+	spec := NodeSpec{Index: 1, Binary: bin, DataDir: dd}
+	if err := d.InitDatadir(context.Background(), spec, []byte(`{"config":{"chainId":1}}`)); err != nil {
+		t.Fatalf("InitDatadir: %v", err)
+	}
+	// The genesis is placed inside the datadir for the init.
+	b, err := os.ReadFile(filepath.Join(dd, "genesis.json"))
+	if err != nil || !strings.Contains(string(b), "chainId") {
+		t.Errorf("genesis not written into datadir: %v", err)
 	}
 }
