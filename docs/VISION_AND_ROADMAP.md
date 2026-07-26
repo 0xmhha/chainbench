@@ -1,5 +1,7 @@
 # chainbench Vision & Roadmap
 
+> **⚠️ SUPERSEDED (2026-07).** 이 문서는 Go 재설계 이전의 레거시 아키텍처(bash CLI · TS mcp-server · `network/` wire 모듈)와 그 sprint 로드맵을 기술한다. 해당 3-스택은 모두 제거되었고 저장소는 Go-first 단일 아키텍처로 수렴했다. 현행 상태·남은 작업은 **`docs/dev/HandOff.md`**, 아키텍처는 **`docs/CHAINBENCH_GO_REDESIGN.md`**를 참조. 아래 내용은 역사적 기록으로만 유효하다.
+
 > **작성일**: 2026-04-20
 > **최종 업데이트**: 2026-05-04 (Sprint 5c.4.1 완료)
 > **목적**: 프로젝트 비전을 토대로 현 상태를 진단하고, 다체인·로컬/원격 통합을 위한 아키텍처 방향과 단계별 로드맵을 확정한다.

@@ -1,5 +1,7 @@
 # Chainbench — 남은 작업 리스트
 
+> **⚠️ SUPERSEDED (2026-07).** 이 문서는 Go 재설계 이전의 레거시 아키텍처(bash CLI · TS mcp-server · `network/` wire 모듈)와 그 sprint 로드맵을 기술한다. 해당 3-스택은 모두 제거되었고 저장소는 Go-first 단일 아키텍처로 수렴했다. 현행 상태·남은 작업은 **`docs/dev/HandOff.md`**, 아키텍처는 **`docs/CHAINBENCH_GO_REDESIGN.md`**를 참조. 아래 내용은 역사적 기록으로만 유효하다.
+
 > 작성일: 2026-04-30 (Sprint 5a 완료 시점) · 최종 업데이트: 2026-06-29 (PR #1~#4 머지 — lifecycle reroute 완료 + clean-code/SSOT 리팩토링)
 > 목적: 다른 세션에서 맥락 없이도 즉시 착수 가능한 actionable 핸드오프.
 > 본 문서는 self-contained — `NEXT_WORK.md` (full context) / `VISION_AND_ROADMAP.md` (비전 SSoT) / `REFACTORING_PLAN.md` (clean-code/SSOT 트랙) 는 깊게 들어갈 때만.
