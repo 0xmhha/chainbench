@@ -27,12 +27,19 @@ type LaunchOptions struct {
 	Binary   string
 	KeysDir  string
 	Bus      *obs.Bus // optional; events are dropped when nil
+	// Driver launches the nodes; nil defaults to the local driver. Inject a
+	// driver.NewRemoteDriver(...) to provision the per-node config and launch
+	// over SSH. (Genesis writing and datadir init remain local for now — remote
+	// genesis-shipping and remote `init` are a follow-up.)
+	Driver driver.Driver
 }
 
 // Provision writes the genesis and per-node config files from the preset keys,
 // the on-disk artifacts a launch (or an external launcher) then boots from. It
-// does not start any process.
-func Provision(plan Plan, plugin registry.ChainPlugin, cfg config.Values, keysDir string) error {
+// does not start any process. The per-node config is written through the local
+// driver (the same path Launch routes through a possibly-remote driver), not by
+// a direct file write, so provisioning stays behind the Driver seam.
+func Provision(ctx context.Context, plan Plan, plugin registry.ChainPlugin, cfg config.Values, keysDir string) error {
 	preset, err := keys.LoadPreset(keysDir)
 	if err != nil {
 		return err
@@ -41,12 +48,24 @@ func Provision(plan Plan, plugin registry.ChainPlugin, cfg config.Values, keysDi
 	if err != nil {
 		return err
 	}
-	return provision(plan, plugin, cfg, preset, keysAbs)
+	if err := provision(&plan, plugin, cfg, preset, keysAbs); err != nil {
+		return err
+	}
+	ld := driver.NewLocalDriver()
+	for _, spec := range plan.Nodes {
+		if err := ld.Provision(ctx, spec); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // provision is the shared body used by Provision and Launch (which already holds
-// the loaded preset).
-func provision(plan Plan, plugin registry.ChainPlugin, cfg config.Values, preset keys.Preset, keysAbs string) error {
+// the loaded preset). It writes the network-wide genesis file and fills each
+// node spec's ConfigContent with the rendered TOML; the config bytes are written
+// to their destination by the driver's Provision (local or remote), never here,
+// so a remote launch ships the config over its transport.
+func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, preset keys.Preset, keysAbs string) error {
 	sub := preset.Take(cfg.Int("nodes.validators", len(preset.Validators)))
 	gen, err := genesis.Build(plugin, genesis.Inputs{
 		Validators: sub.Validators,
@@ -73,17 +92,17 @@ func provision(plan Plan, plugin registry.ChainPlugin, cfg config.Values, preset
 		}
 	}
 	ns := plugin.Manifest().Consensus.RPCNamespace
-	for _, spec := range plan.Nodes {
-		toml := nodeconfig.Generate(nodeconfig.Params{
-			Role:         spec.Role,
-			Ports:        spec.Ports,
-			KeystoreDir:  filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
-			RPCNamespace: ns,
-			StaticNodes:  staticNodes,
+	recommit := plugin.Manifest().MinerRecommit
+	for i := range plan.Nodes {
+		spec := &plan.Nodes[i]
+		spec.ConfigContent = nodeconfig.Generate(nodeconfig.Params{
+			Role:          spec.Role,
+			Ports:         spec.Ports,
+			KeystoreDir:   filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
+			RPCNamespace:  ns,
+			MinerRecommit: recommit,
+			StaticNodes:   staticNodes,
 		})
-		if err := os.WriteFile(spec.ConfigPath, toml, 0o644); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -107,7 +126,7 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 	if err != nil {
 		return node.NodeSet{}, err
 	}
-	if err := provision(plan, opts.Plugin, opts.Config, preset, keysAbs); err != nil {
+	if err := provision(&plan, opts.Plugin, opts.Config, preset, keysAbs); err != nil {
 		return node.NodeSet{}, err
 	}
 
@@ -133,7 +152,11 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 		}
 	}
 	plan.Genesis = nil // already written by provision
-	return Run(ctx, plan, driver.NewLocalDriver(), opts.Bus)
+	d := opts.Driver
+	if d == nil {
+		d = driver.NewLocalDriver()
+	}
+	return Run(ctx, plan, d, opts.Bus)
 }
 
 // nodeKeyFor returns the preset node key for a 1-based node index, or nil.

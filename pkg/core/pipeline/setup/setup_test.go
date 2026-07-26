@@ -21,12 +21,17 @@ type fakeDriver struct {
 	mu          sync.Mutex
 	provisioned []int
 	launched    []int
+	configLens  map[int]int // node index -> ConfigContent length seen at Provision
 }
 
 func (f *fakeDriver) Provision(_ context.Context, s driver.NodeSpec) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.provisioned = append(f.provisioned, s.Index)
+	if f.configLens == nil {
+		f.configLens = map[int]int{}
+	}
+	f.configLens[s.Index] = len(s.ConfigContent)
 	return nil
 }
 
@@ -86,6 +91,11 @@ func TestRun_ProvisionsLaunchesWritesGenesisEmitsEvents(t *testing.T) {
 		t.Fatal(err)
 	}
 	plan.Genesis = []byte(`{"config":{"chainId":1}}`)
+	// Config bytes travel to the driver via NodeSpec.ConfigContent, so a remote
+	// driver can ship them; the driver (not setup) writes them.
+	for i := range plan.Nodes {
+		plan.Nodes[i].ConfigContent = []byte("[Node]\n")
+	}
 
 	bus := obs.NewBus()
 	sub := bus.Subscribe()
@@ -116,6 +126,10 @@ func TestRun_ProvisionsLaunchesWritesGenesisEmitsEvents(t *testing.T) {
 	// Driver saw both nodes provisioned then launched.
 	if len(fd.provisioned) != 2 || len(fd.launched) != 2 {
 		t.Errorf("driver calls: provisioned=%v launched=%v", fd.provisioned, fd.launched)
+	}
+	// The config bytes reached the driver (so a remote driver could ship them).
+	if fd.configLens[1] == 0 || fd.configLens[2] == 0 {
+		t.Errorf("driver did not receive ConfigContent: %v", fd.configLens)
 	}
 	// Genesis written to disk.
 	if b, err := os.ReadFile(plan.GenesisPath); err != nil || !strings.Contains(string(b), "chainId") {

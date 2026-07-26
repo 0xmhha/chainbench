@@ -88,7 +88,7 @@ func reportTool() Tool {
 				return "no runs recorded", nil
 			}
 			var b strings.Builder
-			var ok, failed int
+			var ok, failed, skipped int
 			for _, r := range runs {
 				fmt.Fprintf(&b, "%s [%s] %s %s\n", r.ID, r.Phase, r.Chain, r.Status)
 				switch r.Status {
@@ -96,9 +96,11 @@ func reportTool() Tool {
 					ok++
 				case obs.RunFailed:
 					failed++
+				case obs.RunSkipped:
+					skipped++
 				}
 			}
-			fmt.Fprintf(&b, "total=%d ok=%d failed=%d", len(runs), ok, failed)
+			fmt.Fprintf(&b, "total=%d ok=%d failed=%d skipped=%d", len(runs), ok, failed, skipped)
 			return b.String(), nil
 		},
 	}

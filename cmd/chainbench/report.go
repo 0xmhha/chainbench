@@ -31,7 +31,7 @@ func newReportCmd() *cobra.Command {
 			}
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "ID\tPHASE\tCHAIN\tSTATUS")
-			var ok, failed int
+			var ok, failed, skipped int
 			for _, r := range runs {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", r.ID, r.Phase, r.Chain, r.Status)
 				switch r.Status {
@@ -39,12 +39,14 @@ func newReportCmd() *cobra.Command {
 					ok++
 				case obs.RunFailed:
 					failed++
+				case obs.RunSkipped:
+					skipped++
 				}
 			}
 			if err := w.Flush(); err != nil {
 				return err
 			}
-			fmt.Fprintf(out, "\ntotal=%d ok=%d failed=%d\n", len(runs), ok, failed)
+			fmt.Fprintf(out, "\ntotal=%d ok=%d failed=%d skipped=%d\n", len(runs), ok, failed, skipped)
 			return nil
 		},
 	}

@@ -21,8 +21,11 @@ type AccountProvider interface {
 	// SupportsTxType reports whether the chain accepts the given EIP-2718 tx
 	// type byte (e.g. 0x16 fee delegation).
 	SupportsTxType(t byte) bool
-	// HasAccountExtra reports whether the chain uses the stablenet Extra
-	// account-state model (blacklisted/authorized bits).
+	// HasAccountExtra reports whether the chain's account model carries an
+	// extended account-state record beyond the standard nonce/balance (the SDK's
+	// Extra). It is a generic capability predicate; the record's concrete fields
+	// are chain-specific (e.g. stablenet's blacklisted/authorized bits) and are
+	// not part of this contract.
 	HasAccountExtra() bool
 
 	// AddressForKey derives the 0x-prefixed hex address for a private key,

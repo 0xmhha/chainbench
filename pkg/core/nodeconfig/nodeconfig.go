@@ -1,7 +1,8 @@
 // Package nodeconfig generates a per-node geth-family TOML config for the setup
 // phase's environment-build step (requirement #8). It is chain-aware only in
-// the RPC namespace exposed (istanbul vs wemix, from the consensus family) and
-// the miner section (validators only); everything else is shared geth config.
+// the RPC namespace exposed (from the consensus family) and the miner-recommit
+// encoding; both come from the chain manifest (RPCNamespace, MinerRecommit), so
+// no chain name is hardcoded here. Everything else is shared geth config.
 package nodeconfig
 
 import (
@@ -17,14 +18,15 @@ var baseModules = []string{"admin", "eth", "debug", "miner", "net", "txpool", "p
 
 // Params fully describes one node's config.
 type Params struct {
-	Role         node.Role
-	Ports        node.Endpoints
-	KeystoreDir  string
-	RPCNamespace string   // consensus namespace, e.g. "istanbul" or "wemix"
-	HTTPHost     string   // default "0.0.0.0"
-	MetricsHost  string   // default "127.0.0.1"
-	StaticNodes  []string // enode URLs (all nodes, self included; geth ignores self)
-	SyncMode     string   // default "full"
+	Role          node.Role
+	Ports         node.Endpoints
+	KeystoreDir   string
+	RPCNamespace  string   // consensus namespace, e.g. "istanbul" or "wemix"
+	MinerRecommit string   // manifest miner_recommit form: "duration" (default) | "nanos"
+	HTTPHost      string   // default "0.0.0.0"
+	MetricsHost   string   // default "127.0.0.1"
+	StaticNodes   []string // enode URLs (all nodes, self included; geth ignores self)
+	SyncMode      string   // default "full"
 }
 
 // Generate renders the TOML config bytes for one node.
@@ -39,12 +41,14 @@ func Generate(p Params) []byte {
 	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n\n", syncMode)
 
 	if p.Role == node.RoleValidator || p.Role == node.RoleBoot {
-		// miner.Config.Recommit is a time.Duration. The wbft-family binaries
-		// (go-stablenet/go-wbft) decode it from a TOML string ("2s"); the
-		// wemix binary's older go-ethereum decodes it only from an integer
-		// number of nanoseconds. Emit the form the target binary accepts.
+		// miner.Config.Recommit is a time.Duration. Most geth-family binaries
+		// (go-stablenet/go-wbft) decode it from a TOML string ("2s"); the older
+		// go-ethereum in go-wemix decodes it only from an integer number of
+		// nanoseconds. Which form the target binary accepts is a manifest fact
+		// (miner_recommit), threaded in via MinerRecommit — do not re-derive it
+		// from the chain/namespace here.
 		recommit := `"2s"`
-		if p.RPCNamespace == "wemix" {
+		if p.MinerRecommit == "nanos" {
 			recommit = "2000000000" // 2s in nanoseconds
 		}
 		fmt.Fprintf(&b, "[Eth.Miner]\nRecommit = %s\n\n", recommit)

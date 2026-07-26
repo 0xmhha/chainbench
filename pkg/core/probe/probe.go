@@ -83,20 +83,14 @@ func Detect(ctx context.Context, opts Options) (*Result, error) {
 		return result, nil
 	}
 
-	for _, sig := range signatures {
-		if sig.probeMethod == "" {
-			continue
-		}
+	for _, sig := range registrySignatures() {
 		if !probeMethod(ctx, client, opts.RPCURL, sig.probeMethod) {
 			continue
 		}
-		if sig.disambiguate {
-			// Same-family chains share a probe method; require the endpoint's
-			// chain id to match this chain type's registered manifest id.
-			want, ok := manifestChainID(sig.chainType)
-			if !ok || want != chainID {
-				continue
-			}
+		if len(sig.chainIDs) > 0 && !slices.Contains(sig.chainIDs, chainID) {
+			// Same-method chains are disambiguated by the manifest's chain-id
+			// gate: skip unless the endpoint's id is one this chain declares.
+			continue
 		}
 		result.ChainType = sig.chainType
 		result.Namespaces = appendUnique(result.Namespaces, sig.namespace)

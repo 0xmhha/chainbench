@@ -78,11 +78,26 @@ func TestRun_GatingRunningReporting(t *testing.T) {
 	if !rep.Failed() {
 		t.Error("report should be Failed()")
 	}
+	// Coverage: applicable = tr-ok, tr-fail, tr-gated-cap (tr-gated-chain is
+	// chain-incompatible, so excluded); ran = 2 -> 2/3 = 66%.
+	if rep.Applicable != 3 {
+		t.Errorf("applicable: %d, want 3", rep.Applicable)
+	}
+	if got := rep.Coverage(); got != 66 {
+		t.Errorf("coverage: %d%%, want 66%%", got)
+	}
 	// Store got a record per case.
 	if len(store.ListRuns()) != 4 {
 		t.Errorf("store runs: %d, want 4", len(store.ListRuns()))
 	}
 	if r, ok := store.GetRun("test/tr-fail"); !ok || r.Status != obs.RunFailed {
 		t.Errorf("tr-fail record: %+v ok=%v", r, ok)
+	}
+	// A skip is persisted as RunSkipped, never RunSucceeded (no false green).
+	if r, ok := store.GetRun("test/tr-gated-cap"); !ok || r.Status != obs.RunSkipped {
+		t.Errorf("tr-gated-cap record should be RunSkipped: %+v ok=%v", r, ok)
+	}
+	if r, ok := store.GetRun("test/tr-ok"); !ok || r.Status != obs.RunSucceeded {
+		t.Errorf("tr-ok record should be RunSucceeded: %+v ok=%v", r, ok)
 	}
 }

@@ -1,18 +1,21 @@
-package accounts
+// Package govbind is the go-stablenet GovBase binding: calldata builders for the
+// proposal lifecycle (propose -> approve -> execute), the MintProof encoder, and
+// the two decoders needed to drive it (the proposalId from a ProposalCreated log
+// and the status from the proposals() getter). This is stablenet-specific chain
+// knowledge, so it lives under pkg/chains/stablenet — the generic pkg/accounts
+// package holds only the chain-agnostic ABI/event/tx helpers these build on.
+// A live signer path (node-side eth_sendTransaction from unlocked validators,
+// for the multi-signer quorum) is a separate concern, so everything here is
+// pure and unit-testable without a network.
+package govbind
 
 import (
 	"encoding/hex"
 	"math/big"
 	"strings"
-)
 
-// This file is the go-stablenet GovBase binding: calldata builders for the
-// proposal lifecycle (propose -> approve -> execute), the MintProof encoder, and
-// the two decoders needed to drive it (the proposalId from a ProposalCreated log
-// and the status from the proposals() getter). These are the pure pieces the
-// governance write regression cases are built from; a live signer path (node-side
-// eth_sendTransaction from unlocked validators, for the multi-signer quorum) is a
-// separate concern, so everything here is unit-testable without a network.
+	"github.com/0xmhha/chainbench/pkg/accounts"
+)
 
 // ProposalCreatedTopic is topic0 of the GovBase ProposalCreated event; its first
 // indexed field (topics[1]) is the proposalId. The GovBase Solidity is not in
@@ -39,57 +42,57 @@ const (
 // timestamp, depositID, bankReference, memo) — the proofData bytes passed to
 // proposeMint(bytes). Mirrors the regression suite's eth_abi encoding.
 func MintProof(beneficiary string, amount, timestamp *big.Int, depositID, bankReference, memo string) []byte {
-	return EncodeABI(
-		Address(beneficiary),
-		Uint(amount),
-		Uint(timestamp),
-		StringArg(depositID),
-		StringArg(bankReference),
-		StringArg(memo),
+	return accounts.EncodeABI(
+		accounts.Address(beneficiary),
+		accounts.Uint(amount),
+		accounts.Uint(timestamp),
+		accounts.StringArg(depositID),
+		accounts.StringArg(bankReference),
+		accounts.StringArg(memo),
 	)
 }
 
 // ProposeMintCall builds calldata for GovMinter.proposeMint(bytes) wrapping proof
 // (typically from MintProof). Returns 0x-hex.
 func ProposeMintCall(proof []byte) string {
-	return EncodeCallArgs("proposeMint(bytes)", Bytes(proof))
+	return accounts.EncodeCallArgs("proposeMint(bytes)", accounts.Bytes(proof))
 }
 
 // ProposeAddMemberCall builds calldata for a governance
 // proposeAddMember(address,uint32): add member with the new quorum. Returns 0x-hex.
 func ProposeAddMemberCall(member string, newQuorum uint32) string {
-	return EncodeCallArgs("proposeAddMember(address,uint32)",
-		Address(member), Uint(big.NewInt(int64(newQuorum))))
+	return accounts.EncodeCallArgs("proposeAddMember(address,uint32)",
+		accounts.Address(member), accounts.Uint(big.NewInt(int64(newQuorum))))
 }
 
 // ApproveProposalCall builds calldata for approveProposal(uint256). A quorum-th
 // approval auto-executes the proposal inside the approve tx. Returns 0x-hex.
 func ApproveProposalCall(id *big.Int) string {
-	return EncodeCallArgs("approveProposal(uint256)", Uint(id))
+	return accounts.EncodeCallArgs("approveProposal(uint256)", accounts.Uint(id))
 }
 
 // ExecuteProposalCall builds calldata for executeProposal(uint256), the manual
 // execute for proposals that did not auto-execute on the quorum approval.
 func ExecuteProposalCall(id *big.Int) string {
-	return EncodeCallArgs("executeProposal(uint256)", Uint(id))
+	return accounts.EncodeCallArgs("executeProposal(uint256)", accounts.Uint(id))
 }
 
 // ProposalsCall builds calldata for the proposals(uint256) auto-getter, whose
 // return the caller decodes with DecodeProposalStatus.
 func ProposalsCall(id *big.Int) string {
-	return EncodeCallArgs("proposals(uint256)", Uint(id))
+	return accounts.EncodeCallArgs("proposals(uint256)", accounts.Uint(id))
 }
 
 // ExtractProposalID returns the proposalId from the ProposalCreated log among
 // logs (its first indexed field) and whether one was found. It filters by topic0
 // rather than taking the first log, because a payable propose emits Transfer
 // first.
-func ExtractProposalID(logs []Log) (*big.Int, bool) {
-	log, found := FindLog(logs, ProposalCreatedTopic)
+func ExtractProposalID(logs []accounts.Log) (*big.Int, bool) {
+	log, found := accounts.FindLog(logs, ProposalCreatedTopic)
 	if !found || len(log.Topics) < 2 {
 		return nil, false
 	}
-	return WordToBig(log.Topics[1])
+	return accounts.WordToBig(log.Topics[1])
 }
 
 // DecodeProposalStatus decodes the status (10th field, uint8) from a proposals()
