@@ -123,21 +123,39 @@ conventions and the add-a-chain-to-a-test path.
 
 ## Adding a chain
 
-Adding a chain that reuses an existing consensus family (`wbft` or `poa`) is
-data-plus-glue, no core edits:
+There are two ways, depending on whether the chain is first-party or your own
+project's.
 
-1. `manifests/chains/<id>.json` — the declarative manifest (binary, chain id,
-   network id, consensus family, genesis template, probe, tx types, …).
+### Project-supplied (no chainbench change)
+
+If your chain reuses a built-in consensus family (`wbft` or `poa`), point
+chainbench at your own manifest — no code change, no rebuild:
+
+```bash
+chainbench setup \
+  --manifest        ../my-chain/chainbench.json \
+  --genesis-template ../my-chain/genesis.json \
+  --keys-dir ../my-chain/keys --binary ../my-chain/bin/gmychain --launch
+```
+
+The manifest is the same schema as `manifests/chains/*.json`; set `"protocol"`
+to a built-in accounts profile (`stablenet` / `wbft` / `wemix`) to borrow its tx
+types and account model. Only a genuinely new consensus algorithm needs code.
+
+### First-party (embedded in the tool)
+
+To ship a chain with chainbench itself:
+
+1. `manifests/chains/<id>.json` — the declarative manifest.
 2. `manifests/genesis/<id>.json` — the genesis template (for template-based
    families).
 3. `pkg/chains/<id>/<id>.go` — a thin plugin: load the manifest, select the
    family, supply the accounts protocol, and `registry.Register`.
 4. Add a blank import to `pkg/chains/all/all.go`.
 5. Register the chain's accounts protocol from the plugin's `init()`
-   (`protocol.Register`) — no edit to the external accounts SDK is required.
+   (`protocol.Register`) if the SDK does not already know it.
 
-Only a genuinely new consensus algorithm requires a new `pkg/consensus/<family>`.
-Chain-specific bindings (e.g. stablenet governance) live under
+Either way, chain-specific bindings (e.g. stablenet governance) live under
 `pkg/chains/<id>/…`, not in the generic core.
 
 ## Project structure
