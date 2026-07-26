@@ -52,6 +52,9 @@ func Default(name, version string) *Server {
 	s.Register(networkDetachTool())
 	s.Register(remoteRPCTool())
 	s.Register(testListTool())
+	s.Register(consensusStatusTool())
+	s.Register(consensusHealthTool())
+	s.Register(consensusBlockInfoTool())
 	return s
 }
 
