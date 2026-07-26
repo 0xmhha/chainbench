@@ -16,7 +16,7 @@ chain:
   chain_id: 8283
 
 genesis:
-  template: templates/genesis.template.json
+  template: tests/regression/templates/genesis.template.json
   overrides:
     wbft:
       blockPeriodSeconds: 1        # 블록 생성 간격 (초)

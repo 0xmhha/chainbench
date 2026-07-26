@@ -4,9 +4,17 @@
 
 ## 📁 디렉터리 구조
 
+> 이 스위트의 데이터(profiles·templates)는 이 디렉터리 안에 있습니다: `profiles/`
+> (bash 프로파일 default/minimal/large/bft-limit/regression/hardfork-*), `templates/`
+> (genesis/node 템플릿). 저장소 최상위 `profiles/`에는 Go 툴이 쓰는 `wemix-upgrade.yaml`·
+> `remote-example.yaml`만 남습니다. 이 스위트는 Go testkit 포팅 완료 시 이 데이터와 함께
+> 폐기됩니다.
+
 ```
 tests/regression/
 ├── README.md                     (이 파일)
+├── profiles/                     bash 프로파일(레거시 chainbench init --profile)
+├── templates/                    genesis/node 템플릿(레거시)
 ├── lib/
 │   └── common.sh                 공통 헬퍼 (raw tx, receipt, log, eth_call, governance)
 ├── a-ethereum/                   A. 이더리움 기본 기능 (30 파일)
