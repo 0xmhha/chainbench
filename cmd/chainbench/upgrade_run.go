@@ -97,7 +97,7 @@ func newUpgradeRunCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			configPath := filepath.Join(dataDir, "wemix-config.json")
+			configPath := filepath.Join(dataDir, from.Manifest().ID+"-config.json")
 			if err := os.WriteFile(configPath, cfgBytes, 0o644); err != nil {
 				return err
 			}
@@ -139,13 +139,13 @@ func newUpgradeRunCmd() *cobra.Command {
 				FromFamily: from.Family(), ToFamily: to.Family(),
 				Host:          host,
 				ProvisionKeys: provisionKeysFn(prof, preset, order, plan, host, presetDir),
-				ExtraArgs:     extraArgsFn(producerAcct, pwPath),
+				ExtraArgs:     extraArgsFn(producerAcct, pwPath, from.Family().RPCNamespace(), to.Family().RPCNamespace()),
 				WaitReady: func(ctx context.Context, eps []string) error {
 					return upgrade.WaitEndpointsReady(ctx, eps, 30*time.Second)
 				},
 			}
 			bootstrap := func(ctx context.Context, producer node.Node) error {
-				ipc := filepath.Join(dataDir, fmt.Sprintf("node%d", producer.Index+1), "gwemix.ipc")
+				ipc := filepath.Join(dataDir, fmt.Sprintf("node%d", producer.Index+1), filepath.Base(fromBin)+".ipc")
 				if err := waitForIPC(ipc, 20*time.Second); err != nil {
 					return err
 				}
@@ -271,17 +271,17 @@ func provisionKeysFn(prof upgrade.Profile, preset keys.Preset, order []int, plan
 
 // extraArgsFn returns the ExtraArgs hook: --http.api (admin is needed for the
 // mesh's admin_addPeer) on every node, plus the producer's unlock/etherbase.
-func extraArgsFn(producerAcct, pwPath string) func(upgrade.NodeSpec, bool) []string {
+func extraArgsFn(producerAcct, pwPath, fromNS, toNS string) func(upgrade.NodeSpec, bool) []string {
 	return func(_ upgrade.NodeSpec, producer bool) []string {
 		if producer {
 			return []string{
 				"--nat", "none",
-				"--http.api", "eth,net,web3,wemix,admin,miner,txpool,personal",
+				"--http.api", "eth,net,web3," + fromNS + ",admin,miner,txpool,personal",
 				"--miner.etherbase", producerAcct,
 				"--unlock", producerAcct, "--password", pwPath,
 			}
 		}
-		return []string{"--nat", "none", "--http.api", "eth,net,web3,istanbul,admin,miner,txpool"}
+		return []string{"--nat", "none", "--http.api", "eth,net,web3," + toNS + ",admin,miner,txpool"}
 	}
 }
 

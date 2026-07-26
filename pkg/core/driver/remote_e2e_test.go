@@ -75,6 +75,16 @@ func TestRemoteDriver_E2E(t *testing.T) {
 		t.Fatalf("config not written remotely: %q (%v)", res.Stdout, err)
 	}
 
+	// InitDatadir: the genesis is shipped and `init` runs on the remote host
+	// (the fake node's `init` exits 0). Assert the genesis landed remotely.
+	if err := d.InitDatadir(ctx, spec, []byte(`{"config":{"chainId":1}}`)); err != nil {
+		t.Fatalf("init: %v", err)
+	}
+	gen, err := remote.Exec(ctx, creds, hostKey, "cat "+spec.DataDir+"/genesis.json")
+	if err != nil || !strings.Contains(gen.Stdout, "chainId") {
+		t.Fatalf("genesis not shipped remotely: %q (%v)", gen.Stdout, err)
+	}
+
 	// Launch: the fake node runs; its PID is returned.
 	h, err := d.Launch(ctx, spec)
 	if err != nil || h.PID <= 0 {
