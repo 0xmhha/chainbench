@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -11,11 +10,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
-	"github.com/0xmhha/chainbench/pkg/core/driver"
-	"github.com/0xmhha/chainbench/pkg/core/genesis"
-	"github.com/0xmhha/chainbench/pkg/core/keys"
-	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 	"github.com/0xmhha/chainbench/pkg/core/state"
@@ -77,108 +71,32 @@ func newSetupCmd() *cobra.Command {
 				return err
 			}
 
-			// Preset keys drive both the genesis and each node's on-disk
-			// identity (devp2p nodekey + validator keystore); load once so
-			// provisioning and launch share them.
-			var preset keys.Preset
-			keysAbs := keysDir
-			if provision || launch {
-				if keysAbs, err = filepath.Abs(keysDir); err != nil {
-					return err
-				}
-				if preset, err = keys.LoadPreset(keysDir); err != nil {
-					return err
-				}
-			}
-
-			if provision || launch {
-				sub := preset.Take(cfg.Int("nodes.validators", len(preset.Validators)))
-				gen, err := genesis.Build(p, genesis.Inputs{
-					Validators: sub.Validators,
-					BLSKeys:    sub.BLSKeys,
-					ExtraData:  sub.ExtraData,
-					Members:    sub.Members,
-					Alloc:      sub.Alloc,
-				})
-				if err != nil {
-					return err
-				}
-				if err := os.MkdirAll(plan.DataRoot, 0o755); err != nil {
-					return err
-				}
-				if err := os.WriteFile(plan.GenesisPath, gen, 0o644); err != nil {
-					return err
-				}
-				fmt.Fprintf(out, "genesis written: %s (%d validators)\n", plan.GenesisPath, len(sub.Validators))
-
-				// Per-node TOML configs. Static nodes are every preset node's
-				// enode at its planned p2p port.
-				var staticNodes []string
-				for _, spec := range plan.Nodes {
-					if nk := nodeKeyFor(preset, spec.Index); nk != nil {
-						staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, spec.Host, spec.Ports.P2P))
-					}
-				}
-				ns := p.Manifest().Consensus.RPCNamespace
-				for _, spec := range plan.Nodes {
-					toml := nodeconfig.Generate(nodeconfig.Params{
-						Role:         spec.Role,
-						Ports:        spec.Ports,
-						KeystoreDir:  filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
-						RPCNamespace: ns,
-						StaticNodes:  staticNodes,
-					})
-					if err := os.WriteFile(spec.ConfigPath, toml, 0o644); err != nil {
-						return err
-					}
-				}
-				fmt.Fprintf(out, "configs written: %d node TOML files\n", len(plan.Nodes))
-			}
-
 			if launch {
 				bin, err := resolveBinary(binaryPath, p.Manifest().Binary)
 				if err != nil {
 					return err
 				}
-
-				// Install each node's preset identity: the devp2p nodekey so
-				// its enode matches the static-node list (peering), and — for
-				// validators — the account to unlock and seal with (a random
-				// key is otherwise "unauthorized" for wbft consensus).
-				for i := range plan.Nodes {
-					spec := &plan.Nodes[i]
-					nodeDir := filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index))
-					spec.Args = append(spec.Args, "--nodekey", filepath.Join(nodeDir, "nodekey"))
-					if spec.Role == node.RoleValidator {
-						if nk := nodeKeyFor(preset, spec.Index); nk != nil {
-							spec.Args = append(spec.Args,
-								"--unlock", nk.Address,
-								"--password", filepath.Join(keysAbs, "password"),
-								"--miner.etherbase", nk.Address,
-							)
-						}
-					}
-				}
-
-				ctx := cmd.Context()
-				for i := range plan.Nodes {
-					plan.Nodes[i].Binary = bin
-					if err := driver.InitDatadir(ctx, bin, plan.Nodes[i].DataDir, plan.GenesisPath); err != nil {
-						return err
-					}
-				}
-				plan.Genesis = nil // already written by the provision step above
 				bus, closeBus := obsBus()
 				defer closeBus()
-				ns, err := setup.Run(ctx, plan, driver.NewLocalDriver(), bus)
+				ns, err := setup.Launch(cmd.Context(), setup.LaunchOptions{
+					Plugin: p, Config: cfg, DataRoot: root, Binary: bin, KeysDir: keysDir, Bus: bus,
+				})
 				if err != nil {
 					return err
 				}
-				if err := state.SaveNodeSet(plan.DataRoot, ns); err != nil {
+				if err := state.SaveNodeSet(root, ns); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "launched %d node(s); state: %s\n",
-					len(ns.Nodes), filepath.Join(plan.DataRoot, "nodeset.json"))
+					len(ns.Nodes), filepath.Join(root, "nodeset.json"))
+				return nil
+			}
+
+			if provision {
+				if err := setup.Provision(plan, p, cfg, keysDir); err != nil {
+					return err
+				}
+				fmt.Fprintf(out, "provisioned: genesis + %d node config(s) in %s\n", len(plan.Nodes), plan.DataRoot)
 				return nil
 			}
 
@@ -212,14 +130,4 @@ func resolveBinary(explicit, chainBinary string) (string, error) {
 		return "", fmt.Errorf("cannot find node binary %q: %w (build it or pass --binary)", name, err)
 	}
 	return path, nil
-}
-
-// nodeKeyFor returns the preset node key for a 1-based node index, or nil.
-func nodeKeyFor(p keys.Preset, index int) *keys.NodeKey {
-	for i := range p.Nodes {
-		if p.Nodes[i].Index == index {
-			return &p.Nodes[i]
-		}
-	}
-	return nil
 }
