@@ -29,6 +29,11 @@ type Wallet interface {
 	// Execute sends a transaction to a contract with the given calldata (a
 	// state-changing call) and returns the transaction hash. value may be nil.
 	Execute(ctx context.Context, toHex string, data []byte, value *big.Int) (txHash string, err error)
+	// SendFeeDelegated sends a 0x16 fee-delegation transfer: this wallet is the
+	// sender (transfers amountWei) while feePayerKey (a second private key)
+	// covers the gas. Returns the transaction hash. Only meaningful on chains
+	// whose provider reports SupportsTxType(0x16).
+	SendFeeDelegated(ctx context.Context, feePayerKey []byte, toHex string, amountWei *big.Int) (txHash string, err error)
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -71,6 +76,25 @@ func (s sdkWallet) Execute(ctx context.Context, toHex string, data []byte, value
 		return "", fmt.Errorf("accounts: invalid contract address %q: %w", toHex, err)
 	}
 	h, err := s.w.Execute(ctx, to, data, value)
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendFeeDelegated(ctx context.Context, feePayerKey []byte, toHex string, amountWei *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil {
+		return "", fmt.Errorf("accounts: nil amount")
+	}
+	feePayer, err := sdkacct.FromPrivateKeyBytes(feePayerKey)
+	if err != nil {
+		return "", fmt.Errorf("accounts: bad fee-payer key: %w", err)
+	}
+	h, err := s.w.SendFeeDelegated(ctx, feePayer, to, amountWei)
 	if err != nil {
 		return "", err
 	}
