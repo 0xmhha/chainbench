@@ -56,7 +56,8 @@ func newTestCmd() *cobra.Command {
 				return err
 			}
 			pass, fail, skip := rep.Counts()
-			fmt.Fprintf(out, "\npass=%d fail=%d skip=%d\n", pass, fail, skip)
+			fmt.Fprintf(out, "\npass=%d fail=%d skip=%d coverage=%d%% (ran %d of %d applicable)\n",
+				pass, fail, skip, rep.Coverage(), pass+fail, rep.Applicable)
 			if rep.Failed() {
 				return fmt.Errorf("%d test(s) failed", fail)
 			}

@@ -73,13 +73,15 @@ func provision(plan Plan, plugin registry.ChainPlugin, cfg config.Values, preset
 		}
 	}
 	ns := plugin.Manifest().Consensus.RPCNamespace
+	recommit := plugin.Manifest().MinerRecommit
 	for _, spec := range plan.Nodes {
 		toml := nodeconfig.Generate(nodeconfig.Params{
-			Role:         spec.Role,
-			Ports:        spec.Ports,
-			KeystoreDir:  filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
-			RPCNamespace: ns,
-			StaticNodes:  staticNodes,
+			Role:          spec.Role,
+			Ports:         spec.Ports,
+			KeystoreDir:   filepath.Join(keysAbs, fmt.Sprintf("node%d", spec.Index), "keystore"),
+			RPCNamespace:  ns,
+			MinerRecommit: recommit,
+			StaticNodes:   staticNodes,
 		})
 		if err := os.WriteFile(spec.ConfigPath, toml, 0o644); err != nil {
 			return err

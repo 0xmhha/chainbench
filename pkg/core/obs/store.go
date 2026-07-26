@@ -13,6 +13,11 @@ const (
 	RunRunning   RunStatus = "running"
 	RunSucceeded RunStatus = "succeeded"
 	RunFailed    RunStatus = "failed"
+	// RunSkipped is a run that did not execute (e.g. a test case gated out by
+	// chain compatibility or a missing capability). It is distinct from
+	// RunSucceeded so a skipped case is never counted as a pass — the caller
+	// (report/dashboard) can surface coverage rather than false green.
+	RunSkipped RunStatus = "skipped"
 )
 
 // RunRecord is the stored state/result of one pipeline run (a setup, verify, or

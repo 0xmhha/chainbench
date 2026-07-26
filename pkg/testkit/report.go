@@ -29,6 +29,11 @@ type Result struct {
 // Report aggregates case results.
 type Report struct {
 	Results []Result `json:"results"`
+	// Applicable is the number of selected cases compatible with the run's chain
+	// (the coverage denominator). Cases gated out by chain incompatibility are
+	// excluded; capability-gated skips are still applicable. Zero means the
+	// producer did not populate it (coverage then reports 100).
+	Applicable int `json:"applicable,omitempty"`
 }
 
 // Counts returns the number of passed, failed, and skipped results.
@@ -50,6 +55,19 @@ func (r Report) Counts() (pass, fail, skip int) {
 func (r Report) Failed() bool {
 	_, fail, _ := r.Counts()
 	return fail > 0
+}
+
+// Coverage is the percentage of applicable cases that actually ran (passed or
+// failed) — the signal that "0 failures" does not imply "well tested": a chain
+// that gates most cases out has low coverage even with no failures. Returns 100
+// when Applicable is unset (0), i.e. coverage is unknown.
+func (r Report) Coverage() int {
+	if r.Applicable <= 0 {
+		return 100
+	}
+	pass, fail, _ := r.Counts()
+	ran := pass + fail
+	return ran * 100 / r.Applicable
 }
 
 // RunCase executes one case against ns and returns its Result. It recovers both

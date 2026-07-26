@@ -52,19 +52,34 @@ func TestGenerate_EndpointHasNoMiner(t *testing.T) {
 	}
 }
 
-func TestGenerate_WemixMinerRecommitIsInt(t *testing.T) {
+func TestGenerate_NanosMinerRecommit(t *testing.T) {
+	toml := string(Generate(Params{
+		Role:          node.RoleValidator,
+		Ports:         node.Endpoints{P2P: 30301, HTTP: 8501},
+		RPCNamespace:  "wemix",
+		MinerRecommit: "nanos",
+	}))
+	// A "nanos" manifest binary decodes miner.Recommit only from an integer
+	// number of nanoseconds, not a TOML string.
+	if !strings.Contains(toml, "Recommit = 2000000000") {
+		t.Errorf("nanos miner Recommit should be an integer, got:\n%s", toml)
+	}
+	if strings.Contains(toml, `Recommit = "2s"`) {
+		t.Error("nanos miner Recommit must not be a string")
+	}
+}
+
+// The recommit form is driven by the manifest MinerRecommit field, not by the
+// chain/namespace: a "wemix" namespace with no (or "duration") MinerRecommit
+// gets the default string form. This pins the de-hardcoding.
+func TestGenerate_RecommitDecoupledFromNamespace(t *testing.T) {
 	toml := string(Generate(Params{
 		Role:         node.RoleValidator,
 		Ports:        node.Endpoints{P2P: 30301, HTTP: 8501},
-		RPCNamespace: "wemix",
+		RPCNamespace: "wemix", // namespace alone must NOT force nanos
 	}))
-	// The wemix binary decodes miner.Recommit only from an integer number of
-	// nanoseconds, not a TOML string.
-	if !strings.Contains(toml, "Recommit = 2000000000") {
-		t.Errorf("wemix miner Recommit should be an integer, got:\n%s", toml)
-	}
-	if strings.Contains(toml, `Recommit = "2s"`) {
-		t.Error("wemix miner Recommit must not be a string")
+	if !strings.Contains(toml, `Recommit = "2s"`) {
+		t.Errorf("recommit should default to the string form regardless of namespace, got:\n%s", toml)
 	}
 }
 

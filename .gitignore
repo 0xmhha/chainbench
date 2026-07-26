@@ -42,6 +42,8 @@ bin/gstable
 bin/bootnode
 bin/chainbench
 bin/chainbench-net
+bin/chainbench-mcp
+bin/chainbenchd
 
 .claude/settings.local.json
 

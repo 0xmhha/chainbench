@@ -28,3 +28,30 @@ Example: `tests/wbft/consensus/chain_id.go`.
    `RequiresCaps`; the runner skips cases that do not apply instead of failing.
 4. **Drive via `testkit.T`** — use `t.Primary()/t.Node(i)` for RPC, the
    assertion helpers (`NoErr`, `Truef`, `Equalf`), and `WaitFor` for liveness.
+
+## Coverage (why `fail=0` is not enough)
+
+The runner reports `coverage = ran / applicable`: of the cases compatible with
+the run's chain, how many actually executed. A skip is **never** a pass — it is
+persisted as `obs.RunSkipped`, and a chain that gates most cases out shows low
+coverage even with `fail=0`. Read low coverage as "under-tested", not "green".
+
+`applicable` counts cases whose `ChainCompat` includes the run's chain (empty =
+all). Capability-gated skips still count as applicable (they *could* run here),
+so they lower coverage; chain-incompatible cases are excluded from the
+denominator.
+
+## Adding a chain
+
+A chain the registry already supports has **no test home** until cases opt it
+in — it would run only the empty-`ChainCompat` (all-chain) cases and skip the
+rest, which the coverage figure makes visible. To bring an existing case to a
+new chain:
+
+1. Add the chain id to that case's `ChainCompat`.
+2. Provide the fixture it needs **for that chain** — e.g. a genesis-alloc
+   account funded in that chain's preset, not one borrowed from another chain's
+   preset. A borrowed fixture passes only by accident and breaks when the chain
+   has a different alloc.
+3. If the case is chain-specific (system contracts, governance), put it under
+   that chain's family dir rather than widening a generic case's gate.

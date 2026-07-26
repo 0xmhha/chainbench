@@ -1,47 +1,54 @@
 package probe
 
-import "github.com/0xmhha/chainbench/pkg/core/registry"
+import (
+	"sort"
 
-// chainSignature describes how to detect one chain family from an RPC endpoint.
-// Order matters: evaluate top-to-bottom, first match wins. The "istanbul_*"
-// namespace is shared by stablenet and wbft; disambiguate resolves the ambiguity
-// by requiring the endpoint's chain id to equal the chainType's registered
-// manifest chain id (so the id is the manifest's, never a constant here).
+	"github.com/0xmhha/chainbench/pkg/core/registry"
+)
+
+// chainSignature describes how to detect one chain from an RPC endpoint. It is
+// derived from a registered chain's manifest (Probe.Method + Consensus namespace
+// + optional Probe.ChainIDs gate), never hardcoded here — a new chain is
+// detectable purely by adding its manifest.
 type chainSignature struct {
-	chainType    string
-	namespace    string // namespace reported in Result.Namespaces
-	probeMethod  string // RPC method to hit; "" = skip (fallback rule)
-	disambiguate bool   // require endpoint chain id == manifest chain id for chainType
+	chainType   string
+	namespace   string  // namespace reported in Result.Namespaces
+	probeMethod string  // RPC method to hit; "" = not detectable
+	chainIDs    []int64 // non-empty = require endpoint chain id ∈ chainIDs (disambiguation)
 }
 
-var signatures = []chainSignature{
-	{
-		chainType:   "wemix",
-		namespace:   "wemix",
-		probeMethod: "wemix_getReward",
-	},
-	{
-		chainType:    "stablenet",
-		namespace:    "istanbul",
-		probeMethod:  "istanbul_getValidators",
-		disambiguate: true,
-	},
-	{
-		chainType:   "wbft",
-		namespace:   "istanbul",
-		probeMethod: "istanbul_getValidators",
-	},
-	// ethereum: implicit fallback, no probe.
-}
-
-// manifestChainID returns the registered chain's manifest chain id, or (0,
-// false) when the chain type is not registered.
-func manifestChainID(chainType string) (int64, bool) {
-	p, err := registry.Get(chainType)
-	if err != nil {
-		return 0, false
+// registrySignatures builds the ordered detection list from the chain registry.
+// Order matters (first match wins): chains carrying a chain-id gate are tried
+// before ungated ones, so a probe method shared by two chains (e.g.
+// istanbul_getValidators for stablenet+wbft) resolves to the gated chain when
+// the endpoint's id matches. Within a group the order is by chain type, for
+// determinism.
+func registrySignatures() []chainSignature {
+	var sigs []chainSignature
+	for _, name := range registry.Names() {
+		p, err := registry.Get(name)
+		if err != nil {
+			continue
+		}
+		m := p.Manifest()
+		if m.Probe.Method == "" {
+			continue
+		}
+		sigs = append(sigs, chainSignature{
+			chainType:   m.ID,
+			namespace:   m.Consensus.RPCNamespace,
+			probeMethod: m.Probe.Method,
+			chainIDs:    m.Probe.ChainIDs,
+		})
 	}
-	return p.Manifest().ChainID, true
+	sort.SliceStable(sigs, func(i, j int) bool {
+		gi, gj := len(sigs[i].chainIDs) > 0, len(sigs[j].chainIDs) > 0
+		if gi != gj {
+			return gi // gated (specific) before ungated (general)
+		}
+		return sigs[i].chainType < sigs[j].chainType
+	})
+	return sigs
 }
 
 // isKnownOverride reports whether s is a registered chain type (or the implicit

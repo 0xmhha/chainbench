@@ -46,9 +46,13 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options) (testkit.Report, er
 	}
 
 	var rep testkit.Report
+	applicable := 0 // cases selected AND compatible with ns.Chain (the coverage denominator)
 	for _, c := range testkit.Cases() {
 		if !nameSelected(c, opts) {
 			continue
+		}
+		if c.AppliesTo(ns.Chain) {
+			applicable++
 		}
 		if reason := skipReason(c, ns); reason != "" {
 			res := testkit.Result{Name: c.Name, Category: c.Category, Status: testkit.StatusSkip, Message: reason}
@@ -64,9 +68,13 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options) (testkit.Report, er
 		emit(opts.Bus, ns, res)
 	}
 
+	rep.Applicable = applicable
 	pass, fail, skip := rep.Counts()
+	// Coverage (ran / applicable) is the signal that fail=0 does not mean "well
+	// tested": a chain that gates most cases out has low coverage.
 	emit(opts.Bus, ns, testkit.Result{Name: "__summary__", Status: testkit.StatusPass,
-		Message: fmt.Sprintf("pass=%d fail=%d skip=%d", pass, fail, skip)})
+		Message: fmt.Sprintf("pass=%d fail=%d skip=%d applicable=%d ran=%d coverage=%d%%",
+			pass, fail, skip, applicable, pass+fail, rep.Coverage())})
 	return rep, nil
 }
 
@@ -103,7 +111,7 @@ func record(opts Options, ns node.NodeSet, res testkit.Result, now func() time.T
 	case testkit.StatusFail:
 		status = obs.RunFailed
 	case testkit.StatusSkip:
-		status = obs.RunSucceeded // a skip is not a failure
+		status = obs.RunSkipped // a skip is not a pass — keep it distinct
 	}
 	ts := now()
 	_ = opts.Store.SaveRun(obs.RunRecord{
