@@ -18,13 +18,14 @@ import (
 //
 // familyFlags are the consensus family's role flags (e.g. --mine for a
 // producer/validator), supplied by the caller from the node's own chain family
-// so this stays engine-agnostic.
-func LaunchArgs(n NodeSpec, dataDir, configPath string, familyFlags []string) []string {
+// so this stays engine-agnostic. The handoff passes every setting on the command
+// line (no --config file), so the two binaries need no pre-written node config.
+func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string) []string {
 	args := []string{
 		"--datadir", dataDir,
-		"--config", configPath,
 		"--port", strconv.Itoa(n.Ports.P2P),
 		"--http",
+		"--http.addr", "127.0.0.1",
 		"--http.port", strconv.Itoa(n.Ports.HTTP),
 		"--ws",
 		"--ws.port", strconv.Itoa(n.Ports.WS),
