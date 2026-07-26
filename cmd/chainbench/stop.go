@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/pkg/core/driver"
+	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/state"
 )
 
@@ -22,20 +23,11 @@ func newStopCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			d := driver.NewLocalDriver()
-			out := cmd.OutOrStdout()
-			stopped := 0
-			for _, n := range ns.Nodes {
-				if n.PID <= 0 {
-					continue
-				}
-				if err := d.Stop(cmd.Context(), driver.Handle{Index: n.Index, PID: n.PID}); err != nil {
-					fmt.Fprintf(cmd.ErrOrStderr(), "node%d (pid %d): %v\n", n.Index, n.PID, err)
-					continue
-				}
-				stopped++
+			stopped, errs := setup.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
+			for _, e := range errs {
+				fmt.Fprintln(cmd.ErrOrStderr(), e)
 			}
-			fmt.Fprintf(out, "stopped %d node(s)\n", stopped)
+			fmt.Fprintf(cmd.OutOrStdout(), "stopped %d node(s)\n", stopped)
 			return nil
 		},
 	}
