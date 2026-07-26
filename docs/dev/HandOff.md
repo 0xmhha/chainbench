@@ -226,18 +226,22 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    `InitDatadir(spec, genesis)` 구현(local=datadir에 genesis 기록 후 init, remote=genesis
    base64 전송 후 ssh init). setup.Launch가 type-assert로 원격 init까지 태움. provision·
    init·launch·stop 전부 Driver seam 뒤. 원격 명령은 fakeRunner 단위테스트로 검증.
-   ⚠️ 실 원격 E2E(Docker sshd)는 이 환경에서 미실행 — 명령 구성만 검증됨.
+   gated E2E(`remote_e2e_test.go`)에 원격 init 검증 단계 추가. ⚠️ 실 over-SSH 실행은
+   Docker sshd로 시도했으나 이 샌드박스에서 SSH 세션이 hang(컨테이너·TCP는 정상) —
+   실 원격 E2E green은 정상 환경에서 `tests/remote/sshd/run.sh`로 재확인 필요.
 6. ✅ **S6 잔여 정리** (#67 + 후속 PR): hardfork→setup 결합 제거(`LaunchArgs`→`nodeconfig`),
    `pkg/core/node` 테스트 추가, `tests/wbft/accounts` preset 주석 정정(B2), `Node.Auth`
    명명 타입화(`type node.Auth map[string]any` + 문서), 노후 root README를 Go-first·
    다체인 상태로 재작성.
 
 ### 남은 작업 (기존)
-- **A1(경미/부차). 구 binary-swap 하드포크의 target namespace config 재생성**: 검증된
-  핸드오프는 concurrent 모델(`pkg/consensus/upgrade`)이며 `pkg/core/hardfork`는 균질
-  fork용 binary-swap으로 문서화됨. 이 refinement는 우선순위 낮음.
-  → 감사 A5와 동일 범주: `upgrade_run.go`의 `wemix-config.json`/`gwemix.ipc`/http.api
-  하드코딩을 manifest `Binary`/`RPCNamespace`로 소싱. **S3와 함께 처리 가능**.
+- ✅ **A5 upgrade_run 하드코딩 제거**: `upgrade_run.go`의 `wemix-config.json`→
+  `<fromID>-config.json`, `gwemix.ipc`→`<fromBin basename>.ipc`, `--http.api`의
+  `wemix`/`istanbul`→`from/to.Family().RPCNamespace()`로 소싱. launch flag/경로에
+  하드코딩된 chain 리터럴 0건.
+- **A1(경미). 구 binary-swap 하드포크 refinement**: 검증된 핸드오프는 concurrent 모델
+  (`pkg/consensus/upgrade`), `pkg/core/hardfork`는 균질 fork용 binary-swap으로 문서화됨.
+  우선순위 낮음.
 - **A4(부분). accounts governance/token 타입 바인딩** 🟢: ABI/tx/event 바인딩 계층은
   코어에 있음(위). 체인별 거버넌스·토큰의 타입드 프로파일 바인딩은 케이스별 refinement.
   → **S4로 승계**: 바인딩은 완비됐으나 **위치가 generic `pkg/accounts`** — 이전이 선행.
