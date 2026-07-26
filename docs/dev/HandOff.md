@@ -235,6 +235,12 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    다체인 상태로 재작성.
 
 ### 남은 작업 (기존)
+- ✅ **레거시 bash 데이터 재배치(A2)**: bash 스키마 프로파일 9개(default/minimal/large/
+  bft-limit/regression/hardfork-*)와 `templates/`를 `tests/regression/{profiles,templates}/`로
+  이동(git mv, 이력 보존). 최상위 `profiles/`엔 Go 툴용 `wemix-upgrade.yaml`·`remote-example.yaml`·
+  `custom/`만 남김. bash CLI 제거로 이 데이터는 런타임 미해석(주석/메타뿐)이라 이동 안전.
+  `state/` 런타임은 이미 gitignore됨. → 최상위=Go 툴 데이터로 명확화("이게 툴 설정인가
+  회귀 데이터인가" 혼란 해소). 이 데이터는 회귀 포팅 완료 시 tests/regression과 함께 폐기.
 - ✅ **하이브리드 외부 매니페스트(프로젝트별 체인 공급)**: 사용자 결정 — first-party 체인은
   embed 유지하되, 프로젝트가 자기 체인을 `--manifest <path>`/`--genesis-template <path>`로
   공급(기존 family 재사용 시 chainbench 수정 0). `pkg/chains/external.Load`(매니페스트 파싱 →
