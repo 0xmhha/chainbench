@@ -5,12 +5,12 @@
 //	value transfer with a genesis-funded key, submit it, and confirm the
 //	recipient's on-chain balance reflects the transfer.
 //
-// Applies:  stablenet (its preset alloc funds the faucet key below).
+// Applies:  stablenet, wbft (the shared preset alloc funds the faucet key below).
 // Requires: the "rpc" capability.
-// Method:   OpenWallet(faucetKey) -> SendCoin(recipient, amount) via the
+// Method:   OpenWallet(faucetKey) -> SendCoin(recipient, amount) via the chain's
 //
-//	stablenet account provider, then poll eth_getBalance until the
-//	recipient holds exactly the sent amount.
+//	account provider, then poll eth_getBalance until the recipient holds
+//	exactly the sent amount.
 //
 // Pass:     recipient balance == amount within the wait window.
 //
@@ -30,8 +30,9 @@ import (
 )
 
 const (
-	// faucetKeyHex is a genesis-funded key present in the stablenet preset
-	// alloc (keys/preset/metadata.json). TEST FIXTURE ONLY.
+	// faucetKeyHex is a genesis-funded key in the shared preset alloc
+	// (keys/preset/metadata.json) that every chain's local setup provisions
+	// from, so it funds the faucet on each chain in ChainCompat. TEST FIXTURE ONLY.
 	faucetKeyHex = "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"
 	// transferRecipient starts unfunded so its post-transfer balance equals
 	// exactly the amount sent.

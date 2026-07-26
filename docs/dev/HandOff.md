@@ -191,36 +191,44 @@ chainbench stop --data-dir /tmp/d
 > 검증 시 초안 2건 정정: skip은 요약에 정상 집계됨(숨김 아님), MinerRecommit은
 > 死데이터 아님(upgrade 경로는 사용, setup 경로만 무시).
 
-우선순위(재검토된 순서):
+진행 상태: **S1–S5는 #66에서 적용 완료**, S6는 진행 중(hardfork 결합·node 테스트·B2 완료, README 남음).
 
-1. **S1(신규) 테스트 커버리지 신호 + 체인 온보딩** 🟢: `testrun.go:106`이 persist
+1. ✅ **S1 테스트 커버리지 신호 + 체인 온보딩** (#66): `obs.RunSkipped` 신설로 skip을
+   성공과 구분 기록, `chainbench test`·요약이 `coverage=ran/applicable` 노출,
+   `tests/README.md`에 커버리지·온보딩 절차 명문화. — 아래는 착수 당시 분석.
+   `testrun.go:106`이 persist
    RunRecord.Status에서 skip→success로 뭉갬(내부 Result엔 "skip" 보존). 체인별
    기대 커버리지 개념이 없어 대부분 skip인 체인이 fail=0으로 완전커버처럼 보임.
    → skip을 성공과 구분 기록 + 체인별 커버리지 수치, `tests/README.md`에 체인
    온보딩 절차 명문화. 테스트벤치 신뢰성 문제라 최우선.
-2. **S2(신규) Probe·MinerRecommit 데이터화 완결** 🟢: `probe/signatures.go:17-35`가
+2. ✅ **S2 Probe·MinerRecommit 데이터화 완결** (#66): probe가 `Manifest.Probe`(死데이터
+   해소), nodeconfig가 `Manifest.MinerRecommit`을 읽게 전환, `=="wemix"` 제거. — 분석:
+   `probe/signatures.go:17-35`가
    탐지표(namespace·probe method)를 하드코딩하고 `Manifest.Probe`는 死데이터(읽힘 0).
    `nodeconfig.go:47`은 `RPCNamespace=="wemix"`로 recommit 인코딩을 재유도하나
    `Manifest.MinerRecommit`을 무시(반면 upgrade `plan.go:192`는 정상 사용 → 두 경로
    불일치). → probe가 `Manifest.Probe`를, nodeconfig가 `Manifest.MinerRecommit`을
    읽게 하고 문자열 비교 제거. 독립·저위험 → **S1과 한 PR로 묶기 권장**.
-3. **S3(신규) genesis family dispatch를 인터페이스로** 🟢: `genesis.go:13-14,40-64`가
+3. ✅ **S3 genesis family dispatch를 인터페이스로** (#66): `ConsensusFamily.BuildGenesis`
+   +`registry.GenesisParams` 추가, `genesis.Build`는 가상 디스패치 → `pkg/core`가
+   concrete consensus를 import 안 함(경계 회복). — 분석: `genesis.go:13-14,40-64`가
    `pkg/core`에서 유일하게 concrete `pkg/consensus/{poa,wbft}`를 import+switch(레이어
    인버전). → `ConsensusFamily`에 `BuildGenesis` 추가해 가상 디스패치, concrete
    import 제거. 새 합의 family를 플러그인 등록만으로 추가 가능(D9 경계 회복).
-4. **S4(기존 A4 재scope) accounts governance/token을 stablenet 스코프로 이전** 🟢:
-   `pkg/accounts/governance.go` 전체 + `provider.go:24 HasAccountExtra`가 generic
-   경계에 stablenet GovBase 지식을 담음(REDESIGN §11 인정 부채; PR #62/#63/#64가 여기
-   집중). → `pkg/chains/stablenet/...`로 이전, `HasAccountExtra` 일반화. SDK per-chain
-   profile(A0)은 별도 repo. **회귀 write 포팅 재개 전에 이전 먼저.**
-5. **S5(기존 E1 정정) RemoteDriver 배선** 🟢: `pkg/core/driver/remote.go`는 **이미
-   구현·테스트 완료됐으나 배선 0**(driver/ 밖 참조 없음, 전 호출부 `NewLocalDriver()`;
-   `setup.Launch`가 local 하드코딩+provision을 `os.WriteFile`로 우회). → `setup.Launch`가
-   provision/init을 `Driver` 인터페이스로 태우도록 배선 or "보류" 명시. (기존 E1을
-   "미구현"→"구현됨, 배선만 남음"으로 정정.)
-6. **S6(신규·부차) 잔여 정리**: hardfork→setup 상향 결합(`hardfork.go:20`이 stage의
-   `LaunchArgs` 재사용 → 중립 위치로), `pkg/core/node` 테스트 0(fan-in 최다)·`Node.Auth`
-   untyped seam, `tests/wbft/accounts`의 stablenet preset 암묵 결합(B2), 노후 README.
+4. ✅ **S4 accounts governance/token을 stablenet 스코프로 이전** (#66): GovBase 바인딩을
+   `pkg/accounts` → `pkg/chains/stablenet/govbind`로 이전, `HasAccountExtra` doc 일반화.
+   `pkg/accounts`는 generic ABI/event/tx 헬퍼만. SDK per-chain profile(A0)은 별도 repo.
+   이제 회귀 write 포팅 재개 가능(부채 해소).
+5. 🟡 **S5 RemoteDriver 배선** (#66, 부분): config를 `NodeSpec.ConfigContent`로 렌더 →
+   driver의 Provision 경유(local=파일, remote=base64 전송), `LaunchOptions.Driver` 주입
+   필드 추가. config provisioning·launch·stop은 Driver seam 뒤로 들어감.
+   **남음(후속): 원격 genesis 전송 + 원격 datadir `init`** — 바이너리 실행·네트워크 단위
+   파일이라 Docker sshd E2E로 검증 필요(현 환경 미검증). `pkg/core/driver/remote.go`에
+   `InitDatadir` 없음.
+6. 🟡 **S6 잔여 정리**(진행 중): hardfork→setup 결합 제거(`LaunchArgs`를 `nodeconfig`로
+   이동) ✅, `pkg/core/node` 테스트 추가(Offset/Primary/HasCapability) ✅, `tests/wbft/accounts`
+   preset 주석 정정(공유 preset임을 명시, B2) ✅. **남음**: `Node.Auth` untyped seam 타입화,
+   노후 README(root) 갱신(레거시 bash CLI·gstable 단일체인 문서 잔존).
 
 ### 남은 작업 (기존)
 - **A1(경미/부차). 구 binary-swap 하드포크의 target namespace config 재생성**: 검증된
