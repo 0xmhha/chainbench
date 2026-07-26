@@ -156,6 +156,9 @@ chainbench stop --data-dir /tmp/d
 > **2026-07 갱신**: 레거시 3-스택(`network/` wire 모듈, TS `mcp-server/`, bash CLI
 > `lib/`·`chainbench.sh`)이 모두 제거되어 저장소가 **Go-first 단일 아키텍처**로
 > 수렴했다. 아래 A~E의 대부분이 완료됨. PR #30~#53 참조.
+>
+> **2026-07-27 갱신**: 다체인 분리 감사(공통 코어 vs 체인 특화)로 아래 "구조 분리·
+> 데이터화 완결(S1~S6)"을 신규 최우선 블록으로 추가. 기존 A4/E1은 S4/S5로 승계·정정.
 
 ### 완료됨 ✅
 - **B1. `network/` 흡수 → 삭제**: remote RPC auth + SSH 터널(`pkg/core/remote`),
@@ -178,18 +181,65 @@ chainbench stop --data-dir /tmp/d
   카테고리 대표 케이스(node/api/consensus/tx/시스템컨트랙트 read·write·event)를
   `tests/`로 포팅(#44–#53). 원본 bash는 `tests/regression/`에 보존.
 
-### 남은 작업
+### 구조 분리·데이터화 완결 (2026-07-27 다체인 감사, 신규·최우선)
+
+> 사용자 지적("공통 코어 vs 체인 특화가 아직 분리 안 됨")을 코드로 검증한 결과.
+> **아래 S1~S6은 대부분 기존 리스트에 없던 신규 항목**이며, 확장성을 우선하므로
+> 회귀 잔여 포팅보다 앞선다(그 포팅을 계속하면 S4 부채가 커진다).
+> 근본원인: 체인 사실을 Manifest로 **데이터화했으나 일부 code path가 그 필드 대신
+> 하드코딩 문자열을 읽음** → 설계 결함이 아니라 데이터화 완결로 해소.
+> 검증 시 초안 2건 정정: skip은 요약에 정상 집계됨(숨김 아님), MinerRecommit은
+> 死데이터 아님(upgrade 경로는 사용, setup 경로만 무시).
+
+우선순위(재검토된 순서):
+
+1. **S1(신규) 테스트 커버리지 신호 + 체인 온보딩** 🟢: `testrun.go:106`이 persist
+   RunRecord.Status에서 skip→success로 뭉갬(내부 Result엔 "skip" 보존). 체인별
+   기대 커버리지 개념이 없어 대부분 skip인 체인이 fail=0으로 완전커버처럼 보임.
+   → skip을 성공과 구분 기록 + 체인별 커버리지 수치, `tests/README.md`에 체인
+   온보딩 절차 명문화. 테스트벤치 신뢰성 문제라 최우선.
+2. **S2(신규) Probe·MinerRecommit 데이터화 완결** 🟢: `probe/signatures.go:17-35`가
+   탐지표(namespace·probe method)를 하드코딩하고 `Manifest.Probe`는 死데이터(읽힘 0).
+   `nodeconfig.go:47`은 `RPCNamespace=="wemix"`로 recommit 인코딩을 재유도하나
+   `Manifest.MinerRecommit`을 무시(반면 upgrade `plan.go:192`는 정상 사용 → 두 경로
+   불일치). → probe가 `Manifest.Probe`를, nodeconfig가 `Manifest.MinerRecommit`을
+   읽게 하고 문자열 비교 제거. 독립·저위험 → **S1과 한 PR로 묶기 권장**.
+3. **S3(신규) genesis family dispatch를 인터페이스로** 🟢: `genesis.go:13-14,40-64`가
+   `pkg/core`에서 유일하게 concrete `pkg/consensus/{poa,wbft}`를 import+switch(레이어
+   인버전). → `ConsensusFamily`에 `BuildGenesis` 추가해 가상 디스패치, concrete
+   import 제거. 새 합의 family를 플러그인 등록만으로 추가 가능(D9 경계 회복).
+4. **S4(기존 A4 재scope) accounts governance/token을 stablenet 스코프로 이전** 🟢:
+   `pkg/accounts/governance.go` 전체 + `provider.go:24 HasAccountExtra`가 generic
+   경계에 stablenet GovBase 지식을 담음(REDESIGN §11 인정 부채; PR #62/#63/#64가 여기
+   집중). → `pkg/chains/stablenet/...`로 이전, `HasAccountExtra` 일반화. SDK per-chain
+   profile(A0)은 별도 repo. **회귀 write 포팅 재개 전에 이전 먼저.**
+5. **S5(기존 E1 정정) RemoteDriver 배선** 🟢: `pkg/core/driver/remote.go`는 **이미
+   구현·테스트 완료됐으나 배선 0**(driver/ 밖 참조 없음, 전 호출부 `NewLocalDriver()`;
+   `setup.Launch`가 local 하드코딩+provision을 `os.WriteFile`로 우회). → `setup.Launch`가
+   provision/init을 `Driver` 인터페이스로 태우도록 배선 or "보류" 명시. (기존 E1을
+   "미구현"→"구현됨, 배선만 남음"으로 정정.)
+6. **S6(신규·부차) 잔여 정리**: hardfork→setup 상향 결합(`hardfork.go:20`이 stage의
+   `LaunchArgs` 재사용 → 중립 위치로), `pkg/core/node` 테스트 0(fan-in 최다)·`Node.Auth`
+   untyped seam, `tests/wbft/accounts`의 stablenet preset 암묵 결합(B2), 노후 README.
+
+### 남은 작업 (기존)
 - **A1(경미/부차). 구 binary-swap 하드포크의 target namespace config 재생성**: 검증된
   핸드오프는 concurrent 모델(`pkg/consensus/upgrade`)이며 `pkg/core/hardfork`는 균질
   fork용 binary-swap으로 문서화됨. 이 refinement는 우선순위 낮음.
+  → 감사 A5와 동일 범주: `upgrade_run.go`의 `wemix-config.json`/`gwemix.ipc`/http.api
+  하드코딩을 manifest `Binary`/`RPCNamespace`로 소싱. **S3와 함께 처리 가능**.
 - **A4(부분). accounts governance/token 타입 바인딩** 🟢: ABI/tx/event 바인딩 계층은
   코어에 있음(위). 체인별 거버넌스·토큰의 타입드 프로파일 바인딩은 케이스별 refinement.
+  → **S4로 승계**: 바인딩은 완비됐으나 **위치가 generic `pkg/accounts`** — 이전이 선행.
 - **E1(잔여). 노드 lifecycle RemoteDriver** 🟢: 원격 RPC 접근은 됨. ssh로 노드를
-  provision/launch하는 드라이버는 별도.
+  provision/launch하는 드라이버는 별도. → **S5로 승계·정정**(실은 구현·테스트 완료,
+  배선만 남음).
 - **D1. Svelte SPA** 🔴: 프론트 빌드 툴체인 필요. 현재 `pkg/dashboard/index.html`
   (build-free)이 SSE로 동작 — 데이터 계약(SSE Event JSON + `/api/runs`) 확정.
 - **회귀 잔여 포팅**: f-system-contracts 거버넌스 write(mint/burn/proposal 다단계),
   c-anzeon basefee 버스트(타이밍 민감) 등. 바인딩 계층이 완비돼 케이스별 반복 작업.
+  → **S4 이전 후 재개**(그 전에 재개하면 stablenet 부채가 커짐). 원본 bash 스위트는
+  stablenet 고정이라 Go 러너에서 미실행(감사 B4).
 - **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
   REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
 
