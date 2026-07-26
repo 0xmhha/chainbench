@@ -63,9 +63,9 @@ lib/cmd_*.sh     Shell command implementations
 lib/common.sh    Shared utilities (logging, binary resolution)
 lib/profile.sh   YAML profile parser
 profiles/        Built-in and custom profiles
-templates/       Genesis and TOML config templates
-tests/           Built-in test suites
-mcp-server/      TypeScript MCP server for AI integration
+templates/          Genesis and TOML config templates
+tests/              Built-in test suites
+cmd/chainbench-mcp/ Go MCP server for AI integration (single binary)
 ```
 
 ### Adding a CLI Command
@@ -94,9 +94,10 @@ mcp-server/      TypeScript MCP server for AI integration
 
 ### Modifying the MCP Server
 
-1. Edit TypeScript sources in `mcp-server/src/`
-2. Build: `cd mcp-server && npm run build`
-3. Test: restart Claude Code and verify tools work
+1. Edit the Go tool handlers in `pkg/mcp/` (each tool calls the same `pkg/core`
+   packages the CLI uses, so both surfaces stay identical).
+2. Build: `go build -o bin/chainbench-mcp ./cmd/chainbench-mcp`
+3. Test: `go test ./pkg/mcp/...` (tools are covered with httptest/fakes).
 
 ## Conventions
 
