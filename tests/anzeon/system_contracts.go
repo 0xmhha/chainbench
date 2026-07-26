@@ -28,9 +28,6 @@
 package anzeon
 
 import (
-	"math/big"
-	"strings"
-
 	"github.com/0xmhha/chainbench/pkg/accounts"
 	"github.com/0xmhha/chainbench/pkg/testkit"
 )
@@ -75,12 +72,7 @@ func systemContractsDeployed(t *testkit.T) {
 }
 
 func tokenTotalSupplyReadable(t *testkit.T) {
-	data := accounts.EncodeCall("totalSupply()")
-	var ret string
-	t.NoErr(t.Primary().Call(t.Ctx(), "eth_call", &ret,
-		map[string]any{"to": nativeCoinAdapter, "data": data}, "latest"), "eth_call totalSupply")
-	hexWord := strings.TrimPrefix(ret, "0x")
-	t.Truef(len(hexWord) == 64, "totalSupply returns a 32-byte word (got %d hex chars)", len(hexWord))
-	_, ok := new(big.Int).SetString(hexWord, 16)
-	t.Truef(ok, "totalSupply word decodes as a uint256 (%q)", ret)
+	sup, err := accounts.ReadUint(t.Ctx(), caller(t), nativeCoinAdapter, "totalSupply()")
+	t.NoErr(err, "totalSupply")
+	t.Truef(sup.Sign() >= 0, "totalSupply decodes as a non-negative uint256 (got %s)", sup)
 }
