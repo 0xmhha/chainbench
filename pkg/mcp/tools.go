@@ -57,6 +57,7 @@ func Default(name, version string) *Server {
 	s.Register(consensusBlockInfoTool())
 	s.Register(logTimelineTool())
 	s.Register(networkPeersTool())
+	s.Register(networkTopologyTool())
 	return s
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -51,7 +52,7 @@ func remoteRPCTool() Tool {
 			if !ok {
 				return "", fmt.Errorf("network %q has no usable node", name)
 			}
-			hc, err := remotepkg.HTTPClientFromAuth(remotepkg.Auth(n.Auth), os.Getenv)
+			hc, err := httpClientForNode(n)
 			if err != nil {
 				return "", err
 			}
@@ -63,6 +64,13 @@ func remoteRPCTool() Tool {
 			return string(out), nil
 		},
 	}
+}
+
+// httpClientForNode builds an http.Client that reaches a node through its stored
+// auth descriptor (empty auth yields the default client). Shared by the tools
+// that dial a saved network's nodes.
+func httpClientForNode(n node.Node) (*http.Client, error) {
+	return remotepkg.HTTPClientFromAuth(remotepkg.Auth(n.Auth), os.Getenv)
 }
 
 // pickNode returns the node with the given 1-based index, or the primary node
