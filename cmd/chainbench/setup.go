@@ -36,6 +36,9 @@ func newSetupCmd() *cobra.Command {
 		dataDir      string
 		keysDir      string
 		binaryPath   string
+		remoteHost   string
+		remoteUser   string
+		remotePort   int
 		provision    bool
 		launch       bool
 		dryRun       bool
@@ -85,14 +88,27 @@ func newSetupCmd() *cobra.Command {
 			}
 
 			if launch {
-				bin, err := resolveBinary(binaryPath, p.Manifest().Binary)
+				// A remote host routes launch through the SSH RemoteDriver; nil
+				// keeps the default local driver.
+				remoteDrv, err := remoteDriver(remoteHost, remoteUser, remotePort)
 				if err != nil {
 					return err
+				}
+				// For a remote launch the binary path lives on the remote host,
+				// so it is used as-is; only a local launch resolves/stats it.
+				bin := binaryPath
+				if remoteDrv == nil {
+					if bin, err = resolveBinary(binaryPath, p.Manifest().Binary); err != nil {
+						return err
+					}
+				} else if bin == "" {
+					return fmt.Errorf("--binary <remote path> is required with --remote-host")
 				}
 				bus, closeBus := obsBus()
 				defer closeBus()
 				ns, err := setup.Launch(cmd.Context(), setup.LaunchOptions{
 					Plugin: p, Config: cfg, DataRoot: root, Binary: bin, KeysDir: keysDir, Bus: bus,
+					Driver: remoteDrv,
 				})
 				if err != nil {
 					return err
@@ -127,6 +143,9 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
 	cmd.Flags().StringVar(&binaryPath, "binary", "", "node binary path (for --launch); default: chain binary on PATH")
+	cmd.Flags().StringVar(&remoteHost, "remote-host", "", "launch nodes on this SSH host (RemoteDriver); password from CHAINBENCH_REMOTE_PASS env")
+	cmd.Flags().StringVar(&remoteUser, "remote-user", "", "SSH user for --remote-host")
+	cmd.Flags().IntVar(&remotePort, "remote-port", 22, "SSH port for --remote-host")
 	cmd.Flags().BoolVar(&provision, "provision", false, "write genesis.json + node configs from preset keys")
 	cmd.Flags().BoolVar(&launch, "launch", false, "init datadirs and launch the nodes (implies --provision)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true, "plan only; do not launch")

@@ -272,9 +272,18 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   `mint-proposal-executes`(f2-01), `burn-proposal-executes`(f2-02, payable proposeBurn),
   `validator-add-member-executes`(f3-01/02, GovValidator members() 확인). govbind에
   BurnProof/ProposeBurnCall 추가. registration/gating 검증됨. ⚠️ **live-tx라 실 gstable
-  네트워크 없이는 실행 미검증** — quorum 수·proof 포맷은 회귀 f2/f3 앵커. 잔여: blacklist
-  write, c-anzeon basefee 버스트, 나머지 f/e/h/z. 원본 bash는 stablenet 고정이라 Go 러너
+  네트워크 없이는 실행 미검증** — quorum 수·proof 포맷은 회귀 f2/f3 앵커.
+  read 케이스 추가(mock 완전검증): `account-blacklist-readable`(e-07 isBlacklisted),
+  `basefee-minimum`(c-06, baseFeePerGas >= anzeon 최소). 잔여: blacklist write(node측 서명),
+  c-anzeon basefee 버스트(타이밍), 나머지 f/e/h/z. 원본 bash는 stablenet 고정이라 Go 러너
   미실행(감사 B4).
+- ✅ **C2 RemoteDriver CLI 노출**: `setup --remote-host/--remote-user/--remote-port`가
+  RemoteDriver를 빌드·주입(`LaunchOptions.Driver`). **SSH 비밀번호는 `CHAINBENCH_REMOTE_PASS`
+  env 전용**(cmdline 금지, 보안), host-key는 표준 SSH env로 해석. 원격이면 `--binary`는 원격
+  경로(로컬 stat 안 함). end-to-end로 RemoteDriver.InitDatadir가 SSH로 genesis ship까지 도달
+  확인(연결만 실패=예상). 단위테스트: 비밀번호 가드·드라이버 빌드. ⚠️ **잔여: 검증자 identity
+  파일(nodekey/keystore/password)이 launch args의 로컬 경로를 참조 → 원격 호스트로 shipping
+  필요**(원격 검증자 완전동작의 마지막 조각). 실 over-SSH E2E는 정상 환경 필요(S5 참고).
 - **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
   REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
 
