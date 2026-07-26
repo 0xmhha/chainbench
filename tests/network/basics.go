@@ -25,6 +25,19 @@
 //
 // Pass:     every node reports at least one peer.
 //
+// # Test: block-progression
+//
+// Intent:   a launched network must be producing blocks — the head advances and
+//
+//	timestamps do not go backwards (ported from a-ethereum block-period).
+//
+// Applies:  all chains. Requires: the "rpc" capability.
+// Method:   read the head and the two most recent blocks; assert the number
+//
+//	strictly increases and the timestamp is non-decreasing.
+//
+// Pass:     block N has a greater number and a >= timestamp than block N-1.
+//
 // These are chainbench TEST CODE (requirement #16): registered at init and run
 // by the testrun phase against a live NodeSet, not by `go test` (the sibling
 // _test.go validates registration/convention).
@@ -50,6 +63,12 @@ func init() {
 		RequiresCaps: []string{"rpc"},
 		Fn:           peersConnected,
 	})
+	testkit.Register(testkit.Case{
+		Name:         "block-progression",
+		Category:     "network",
+		RequiresCaps: []string{"rpc"},
+		Fn:           blockProgression,
+	})
 }
 
 func genesisHashAgreement(t *testkit.T) {
@@ -73,6 +92,32 @@ func genesisHashAgreement(t *testkit.T) {
 		t.Equalf(blk.Hash, first, "node%d genesis hash matches", n.Index)
 	}
 	t.Truef(answered > 0, "at least one node returned genesis block 0")
+}
+
+func blockProgression(t *testkit.T) {
+	cli := t.Primary()
+	var headHex string
+	t.NoErr(cli.Call(t.Ctx(), "eth_blockNumber", &headHex), "eth_blockNumber")
+	head, err := strconv.ParseUint(strings.TrimPrefix(headHex, "0x"), 16, 64)
+	t.NoErr(err, "parse head")
+	t.Truef(head >= 1, "chain has produced at least one block (head=%d)", head)
+
+	latestNum, latestTS := blockNumTS(t, cli, head)
+	prevNum, prevTS := blockNumTS(t, cli, head-1)
+	t.Truef(latestNum > prevNum, "block number advances (%d > %d)", latestNum, prevNum)
+	t.Truef(latestTS >= prevTS, "block timestamp is non-decreasing (%d >= %d)", latestTS, prevTS)
+}
+
+// blockNumTS reads a block's number and timestamp (as uint64) via eth_getBlockByNumber.
+func blockNumTS(t *testkit.T, cli testkit.Client, n uint64) (uint64, uint64) {
+	var blk struct {
+		Number    string `json:"number"`
+		Timestamp string `json:"timestamp"`
+	}
+	t.NoErr(cli.Call(t.Ctx(), "eth_getBlockByNumber", &blk, "0x"+strconv.FormatUint(n, 16), false), "eth_getBlockByNumber")
+	num, _ := strconv.ParseUint(strings.TrimPrefix(blk.Number, "0x"), 16, 64)
+	ts, _ := strconv.ParseUint(strings.TrimPrefix(blk.Timestamp, "0x"), 16, 64)
+	return num, ts
 }
 
 func peersConnected(t *testkit.T) {
