@@ -322,26 +322,21 @@ AI Agent:
 chainbench/
 ├── install.sh              # Remote installer (curl | bash)
 ├── uninstall.sh            # Uninstaller
-├── setup.sh                # Local setup (MCP build + PATH registration)
-├── chainbench.sh           # Main CLI entry point
-├── lib/                    # CLI command implementations
-│   ├── cmd_init.sh         # Chain initialization
-│   ├── cmd_start.sh        # Node startup with PID tracking
-│   ├── cmd_stop.sh         # Graceful shutdown
-│   ├── cmd_status.sh       # Node status display
-│   ├── cmd_node.sh         # Individual node control
-│   ├── cmd_test.sh         # Test runner
-│   ├── cmd_log.sh          # Log analysis dispatcher
-│   ├── cmd_config.sh       # Local overlay (config set/get/unset/list)
-│   ├── cmd_mcp.sh          # MCP server enable/disable per project
-│   ├── common.sh           # Shared utilities, binary/logrot resolution
-│   └── profile.sh          # YAML profile parser with overlay merge
-├── profiles/               # Test scenario profiles (YAML with inheritance)
-├── keys/preset/            # Pre-generated validator keys (5 nodes)
-├── templates/              # Genesis and TOML config templates
-├── tests/                  # Built-in test suites (basic, fault, stress)
-├── logs/                   # Log analysis tools (parser, timeline, anomaly)
-├── cmd/chainbench-mcp/     # MCP server for AI integration (Go, single binary)
+├── setup.sh                # Local setup (Go build + PATH registration)
+├── cmd/
+│   ├── chainbench/         # Go CLI (cobra commands)
+│   ├── chainbench-mcp/     # MCP server for AI integration (Go, single binary)
+│   └── chainbenchd/        # dashboard daemon
+├── pkg/
+│   ├── core/               # shared core (config, genesis, nodeconfig, driver, rpc, logs, state, ...)
+│   ├── consensus/          # consensus families (wbft, poa) + upgrade orchestration
+│   ├── chains/             # chain plugins (stablenet, wbft, wemix)
+│   ├── mcp/                # MCP tool handlers (call the same core as the CLI)
+│   └── testkit/            # test-case framework
+├── manifests/              # declarative chain manifests + genesis templates
+├── profiles/               # local network profiles (YAML)
+├── keys/preset/            # pre-generated validator keys (5 nodes)
+├── tests/                  # Go test cases (tests/all) + reproduction scripts (tests/repro)
 └── bin/                    # built Go binaries (chainbench, chainbench-mcp, chainbenchd)
 ```
 
@@ -388,15 +383,8 @@ cd chainbench
 
 ### Adding a Test
 
-1. Create a script in `tests/<category>/your-test.sh`
-2. Add a header comment: `# Description: What this test verifies`
-3. Source the libraries:
-   ```bash
-   source "$(dirname "$0")/../lib/rpc.sh"
-   source "$(dirname "$0")/../lib/assert.sh"
-   ```
-4. Use `test_start()` / `test_result()` framing
-5. The test will automatically appear in `chainbench test list`
+1. Add a `testkit.Case` under `tests/<category>/` and register it in `tests/all`.
+2. Run it with `go test ./...` or `chainbench test --rpc <url> --category <cat>`.
 
 ### Adding a Profile
 
