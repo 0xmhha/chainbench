@@ -75,8 +75,8 @@ func TestSetupCmd_ProvisionWritesRealGenesis(t *testing.T) {
 	if err != nil {
 		t.Fatalf("provision: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "genesis written") {
-		t.Errorf("expected genesis written:\n%s", out)
+	if !strings.Contains(out, "provisioned: genesis") {
+		t.Errorf("expected provisioned genesis:\n%s", out)
 	}
 	b, err := os.ReadFile(filepath.Join(dir, "genesis.json"))
 	if err != nil {
@@ -107,7 +107,7 @@ func TestSetupCmd_ProvisionWritesRealGenesis(t *testing.T) {
 	}
 
 	// Per-node TOML configs are written too.
-	if !strings.Contains(out, "configs written") {
+	if !strings.Contains(out, "node config(s)") {
 		t.Errorf("expected node configs written:\n%s", out)
 	}
 	cfg1, err := os.ReadFile(filepath.Join(dir, "config_node1.toml"))
