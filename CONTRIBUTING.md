@@ -59,32 +59,30 @@ Open an issue with the `enhancement` label. Describe:
 ### Project Layout
 
 ```
-lib/cmd_*.sh     Shell command implementations
-lib/common.sh    Shared utilities (logging, binary resolution)
-lib/profile.sh   YAML profile parser
-profiles/        Built-in and custom profiles
-templates/          Genesis and TOML config templates
-tests/              Built-in test suites
+cmd/chainbench/     Go CLI (cobra commands)
 cmd/chainbench-mcp/ Go MCP server for AI integration (single binary)
+cmd/chainbenchd/    Dashboard daemon
+pkg/core/           shared core (config, genesis, nodeconfig, driver, rpc, logs, state, ...)
+pkg/consensus/      consensus families (wbft, poa) + upgrade orchestration
+pkg/chains/         chain plugins (stablenet, wbft, wemix)
+pkg/mcp/            MCP tool handlers (call the same core packages as the CLI)
+pkg/testkit/        test-case framework
+manifests/          declarative chain manifests + genesis templates
+profiles/           local network profiles
+tests/              Go test cases (tests/all) + reproduction scripts (tests/repro)
 ```
 
 ### Adding a CLI Command
 
-1. Create `lib/cmd_<name>.sh`
-2. Register in `chainbench.sh` dispatch case
-3. Add to help text in `_cb_show_usage()`
+1. Add `cmd/chainbench/<name>.go` with a `new<Name>Cmd() *cobra.Command`.
+2. Register it in `cmd/chainbench/root.go` (`root.AddCommand(...)`).
+3. Keep the logic in `pkg/core` so the MCP tool for the same capability can share
+   it (the two surfaces must behave identically).
 
 ### Adding a Test
 
-1. Create `tests/<category>/your-test.sh`
-2. Add header: `# Description: What this test verifies`
-3. Source libraries:
-   ```bash
-   source "$(dirname "$0")/../lib/rpc.sh"
-   source "$(dirname "$0")/../lib/assert.sh"
-   ```
-4. Use `test_start` / `test_result` framing
-5. Tests are auto-discovered by `chainbench test list`
+1. Add a `testkit.Case` under `tests/<category>/` and register it in `tests/all`.
+2. Run with `go test ./...` or `chainbench test --rpc <url> --category <cat>`.
 
 ### Adding a Profile
 
