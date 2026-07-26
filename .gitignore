@@ -55,3 +55,29 @@ profiles/*-auth.yaml
 # Test environment secrets (private keys, SSH credentials, node IP/URL mappings)
 # Defense in depth — tests/env/secret/.gitignore also ignores its own contents.
 tests/env/secret/
+
+# --- Secrets hardening (defense in depth) --------------------------------------
+# NEVER commit real private keys or credentials. The only intentional key
+# material in this repo is keys/preset/ (labeled TEST FIXTURE ONLY) and the
+# public test addresses in tests/env/*.env. Real secrets belong in the
+# gitignored tests/env/secret/ (see docs/SECURITY_KEY_HANDLING.md).
+#
+# Private-key / certificate files (none are tracked; catch new ones).
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.keystore
+# Personal/real env overrides (the tracked tests/env/*.env are public fixtures;
+# a literal ".env" or "*.env.local" is treated as private).
+.env
+.env.*
+*.env.local
+# Runtime devp2p node keys (datadirs live under data/, already ignored; this
+# catches stray copies elsewhere).
+**/geth/nodekey
+**/gwemix/nodekey
