@@ -6,14 +6,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/pkg/core/consensus"
-	"github.com/0xmhha/chainbench/pkg/core/registry"
 	"github.com/0xmhha/chainbench/pkg/core/rpc"
 )
 
 func newConsensusCmd() *cobra.Command {
 	var (
-		chain  string
-		rpcURL string
+		chain        string
+		manifestPath string
+		templatePath string
+		rpcURL       string
 	)
 	cmd := &cobra.Command{
 		Use:   "consensus",
@@ -22,7 +23,7 @@ func newConsensusCmd() *cobra.Command {
 			if rpcURL == "" {
 				return fmt.Errorf("--rpc url is required")
 			}
-			p, err := registry.Get(chain)
+			p, err := resolveChain(chain, manifestPath, templatePath)
 			if err != nil {
 				return err
 			}
@@ -32,14 +33,16 @@ func newConsensusCmd() *cobra.Command {
 				return err
 			}
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "validators (%s via %s): %d\n", chain, method, len(vals))
+			fmt.Fprintf(out, "validators (%s via %s): %d\n", p.Manifest().ID, method, len(vals))
 			for i, v := range vals {
 				fmt.Fprintf(out, "  %d. %s\n", i+1, v)
 			}
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&chain, "chain", "stablenet", "chain id (selects the RPC method)")
+	cmd.Flags().StringVar(&chain, "chain", "stablenet", "embedded chain id; ignored with --manifest")
+	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON")
+	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&rpcURL, "rpc", "", "node RPC URL")
 	return cmd
 }

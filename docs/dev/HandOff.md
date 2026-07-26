@@ -241,8 +241,10 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   family를 이름으로 선택 → `protocol.ByName(manifest.protocol|id)` → 템플릿 로딩 →
   `registry.StaticPlugin`), Manifest에 optional `protocol` 필드(SDK 프로파일 차용), `setup`에
   `--manifest`/`--genesis-template` 배선. core 경계 유지(family switch는 composition 계층).
-  end-to-end 확인(외부 foonet 체인 plan). 잔여: verify/test/faucet 등 다른 명령에도 동일 플래그
-  확대, 새 consensus family는 여전히 플러그인 필요.
+  end-to-end 확인(외부 foonet 체인 plan). parity 확대: `consensus`·`faucet`도 `--manifest`/
+  `--genesis-template` 수용(`resolveChain`/`resolveAccountProvider`); verify/test는 nodeset.json의
+  chain으로 동작(플래그 불필요). 잔여: hardfork/upgrade(복잡한 handoff)는 defer, 새 consensus
+  family는 여전히 플러그인 필요.
 - ✅ **A5 upgrade_run 하드코딩 제거**: `upgrade_run.go`의 `wemix-config.json`→
   `<fromID>-config.json`, `gwemix.ipc`→`<fromBin basename>.ipc`, `--http.api`의
   `wemix`/`istanbul`→`from/to.Family().RPCNamespace()`로 소싱. launch flag/경로에
