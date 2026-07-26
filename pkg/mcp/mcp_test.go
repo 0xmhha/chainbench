@@ -57,8 +57,8 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 25 {
-		t.Fatalf("tools: %d, want 25", len(tools))
+	if len(tools) != 27 {
+		t.Fatalf("tools: %d, want 27", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
