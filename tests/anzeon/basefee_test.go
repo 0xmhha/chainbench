@@ -47,6 +47,27 @@ func TestBasefeeMinimumCase(t *testing.T) {
 	}
 }
 
+func TestBasefeeMaximumCase(t *testing.T) {
+	// 5e13 is within [2e13 floor, 2e16 ceiling].
+	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: blockMock(t, "0x2d79883d2000").URL}})
+	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"basefee-maximum"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusPass {
+		t.Fatalf("basefee-maximum: %+v", rep.Results)
+	}
+}
+
+func TestBasefeeMaximumCase_AboveCeilingFails(t *testing.T) {
+	// 0x1000000000000000 = ~1.15e18, above the 2e16 anzeon ceiling.
+	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: blockMock(t, "0x1000000000000000").URL}})
+	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"basefee-maximum"}})
+	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusFail {
+		t.Fatalf("above-ceiling base fee should fail: %+v", rep.Results)
+	}
+}
+
 func TestBasefeeMinimumCase_BelowFloorFails(t *testing.T) {
 	// A base fee below the anzeon minimum must fail the case.
 	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: blockMock(t, "0x3b9aca00").URL}}) // 1e9
