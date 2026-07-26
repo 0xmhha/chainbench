@@ -39,6 +39,11 @@ type Wallet interface {
 	// to the hex recipient, returning the tx hash. SendCoin uses type 0x02; this
 	// exposes the legacy path for tx-type regression coverage.
 	SendLegacy(ctx context.Context, toHex string, amountWei *big.Int) (txHash string, err error)
+	// SendSetCode sends a type 0x04 (EIP-7702) set-code transaction: this wallet
+	// sponsors the gas, and authorityKey (a DISTINCT account) authorizes
+	// delegating its account code to delegateHex. After it mines, the authority's
+	// code becomes 0xef0100||delegate. Returns the tx hash.
+	SendSetCode(ctx context.Context, authorityKey []byte, delegateHex string) (txHash string, err error)
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -137,6 +142,67 @@ func (s sdkWallet) SendLegacy(ctx context.Context, toHex string, amountWei *big.
 		return "", err
 	}
 	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendSetCode(ctx context.Context, authorityKey []byte, delegateHex string) (string, error) {
+	delegate, err := sdktypes.HexToAddress(delegateHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid delegate %q: %w", delegateHex, err)
+	}
+	authority, err := sdkacct.FromPrivateKeyBytes(authorityKey)
+	if err != nil {
+		return "", fmt.Errorf("accounts: bad authority key: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	// The authority delegates its own code to `delegate`, signed by itself, at
+	// its current nonce.
+	authNonce, err := s.w.Client.Nonce(ctx, authority.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: authority nonce: %w", err)
+	}
+	auth := sdktx.SetCodeAuthorization{ChainID: chainID, Address: delegate, Nonce: authNonce}
+	if err := auth.Sign(authority.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign authorization: %w", err)
+	}
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
+	}
+	tip, err := s.w.Client.MaxPriorityFeePerGas(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: priority fee: %w", err)
+	}
+	gp, err := s.w.Client.GasPrice(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: gas price: %w", err)
+	}
+	t := &sdktx.SetCodeTx{
+		ChainID: chainID, Nonce: nonce, GasTipCap: tip, GasFeeCap: new(big.Int).Add(gp, tip),
+		Gas: 200000, To: s.w.Account.Address(), Value: big.NewInt(0),
+		AuthorizationList: []sdktx.SetCodeAuthorization{auth},
+	}
+	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign set-code tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+// GenerateKey creates a fresh random account, returning its private key bytes and
+// 0x-prefixed address. Useful for tests needing a distinct account (e.g. a
+// set-code authority). TEST/UTILITY use — the key is not persisted.
+func GenerateKey() (privKey []byte, addressHex string, err error) {
+	acct, err := sdkacct.Generate()
+	if err != nil {
+		return nil, "", fmt.Errorf("accounts: generate key: %w", err)
+	}
+	return acct.PrivateKeyBytes(), acct.Address().Hex(), nil
 }
 
 // openWallet builds an SDK-backed wallet for privKey against rpcURL. wallet.New
