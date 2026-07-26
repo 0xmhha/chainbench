@@ -18,9 +18,6 @@ data/
 *.log.*
 
 # MCP server build artifacts
-mcp-server/node_modules/
-mcp-server/dist/
-mcp-server/package-lock.json
 
 # OS
 .DS_Store
