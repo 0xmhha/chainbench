@@ -18,6 +18,7 @@ type NodeKey struct {
 	Index     int    // 1-based node index
 	PublicKey string // 128-hex devp2p public key (no 0x prefix)
 	Address   string // 0x-hex account address
+	Nodekey   string // 64-hex devp2p private key (the file placed in the datadir)
 }
 
 // Preset is a decoded preset key set.
@@ -56,6 +57,7 @@ type metadata struct {
 		Index     int    `json:"index"`
 		PublicKey string `json:"publicKey"`
 		Address   string `json:"address"`
+		Nodekey   string `json:"nodekey"`
 	} `json:"nodes"`
 }
 
@@ -91,7 +93,7 @@ func LoadPreset(dir string) (Preset, error) {
 	}
 	nodes := make([]NodeKey, 0, len(m.Nodes))
 	for _, n := range m.Nodes {
-		nodes = append(nodes, NodeKey{Index: n.Index, PublicKey: n.PublicKey, Address: n.Address})
+		nodes = append(nodes, NodeKey{Index: n.Index, PublicKey: n.PublicKey, Address: n.Address, Nodekey: n.Nodekey})
 	}
 	return Preset{
 		Validators: m.Validators,
@@ -102,6 +104,17 @@ func LoadPreset(dir string) (Preset, error) {
 		Password:   m.Password,
 		Nodes:      nodes,
 	}, nil
+}
+
+// Node returns the preset node with the given 1-based index and whether it was
+// found.
+func (p Preset) Node(index int) (NodeKey, bool) {
+	for _, n := range p.Nodes {
+		if n.Index == index {
+			return n, true
+		}
+	}
+	return NodeKey{}, false
 }
 
 // Take returns the first n validators/BLS keys, for networks smaller than the
