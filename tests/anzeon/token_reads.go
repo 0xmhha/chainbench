@@ -28,9 +28,9 @@ package anzeon
 
 import (
 	"math/big"
-	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/accounts"
+	"github.com/0xmhha/chainbench/pkg/core/rpc"
 	"github.com/0xmhha/chainbench/pkg/testkit"
 )
 
@@ -57,26 +57,23 @@ func init() {
 }
 
 func tokenBalanceReadable(t *testkit.T) {
-	bal := ethCallWord(t, nativeCoinAdapter, accounts.EncodeCall("balanceOf(address)", accounts.AddressArg(sampleAccount)))
-	sup := ethCallWord(t, nativeCoinAdapter, accounts.EncodeCall("totalSupply()"))
+	call := caller(t)
+	bal, err := accounts.ReadUint(t.Ctx(), call, nativeCoinAdapter, "balanceOf(address)", accounts.AddressArg(sampleAccount))
+	t.NoErr(err, "balanceOf")
+	sup, err := accounts.ReadUint(t.Ctx(), call, nativeCoinAdapter, "totalSupply()")
+	t.NoErr(err, "totalSupply")
 	t.Truef(sup.Cmp(bal) >= 0, "totalSupply (%s) >= balance (%s)", sup, bal)
 }
 
 func accountAuthorizationReadable(t *testkit.T) {
-	v := ethCallWord(t, accountManager, accounts.EncodeCall("isAuthorized(address)", accounts.AddressArg(sampleAccount)))
+	v, err := accounts.ReadUint(t.Ctx(), caller(t), accountManager, "isAuthorized(address)", accounts.AddressArg(sampleAccount))
+	t.NoErr(err, "isAuthorized")
 	t.Truef(v.Sign() == 0 || v.Cmp(big.NewInt(1)) == 0, "isAuthorized returns 0 or 1 (got %s)", v)
 }
 
-// ethCallWord performs an eth_call and decodes the returned 32-byte word as a
-// uint256, failing the case if the call errors or the word is malformed.
-func ethCallWord(t *testkit.T, to, data string) *big.Int {
-	var ret string
-	t.NoErr(t.Primary().Call(t.Ctx(), "eth_call", &ret,
-		map[string]any{"to": to, "data": data}, "latest"), "eth_call "+data[:10])
-	v, ok := new(big.Int).SetString(strings.TrimPrefix(ret, "0x"), 16)
-	t.Truef(ok, "eth_call result %q decodes as a uint256", ret)
-	if v == nil {
-		return big.NewInt(0)
-	}
-	return v
+// caller returns an accounts.EthCaller bound to the primary node.
+func caller(t *testkit.T) accounts.EthCaller {
+	p, ok := t.NodeSet().Primary()
+	t.Truef(ok, "node set has no primary node")
+	return rpc.Dial(p.RPCURL).EthCall
 }
