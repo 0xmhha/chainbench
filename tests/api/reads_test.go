@@ -36,6 +36,13 @@ func apiMock(t *testing.T) *httptest.Server {
 			result = map[string]any{"pending": "0x0", "queued": "0x0"}
 		case "eth_syncing":
 			result = false
+		case "eth_estimateGas":
+			result = "0x5208" // 21000
+		case "eth_getLogs":
+			result = []any{map[string]any{
+				"address": "0x00000000000000000000000000000000000000ab",
+				"topics":  []any{hash},
+			}}
 		default:
 			result = nil
 		}
@@ -59,7 +66,7 @@ func run(t *testing.T, name string) testkit.Result {
 }
 
 func TestAPICases(t *testing.T) {
-	for _, name := range []string{"block-by-hash-consistency", "gas-price-positive", "txpool-status", "chain-not-syncing"} {
+	for _, name := range []string{"block-by-hash-consistency", "gas-price-positive", "txpool-status", "chain-not-syncing", "estimate-gas", "logs-query-well-formed"} {
 		if r := run(t, name); r.Status != testkit.StatusPass {
 			t.Errorf("%s: %+v", name, r)
 		}
