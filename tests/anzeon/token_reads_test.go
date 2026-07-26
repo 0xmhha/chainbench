@@ -36,6 +36,8 @@ func selectorMock(t *testing.T) *httptest.Server {
 				result = word(10)
 			case strings.Contains(s, "0xfe9fbb80"): // isAuthorized
 				result = word(1)
+			case strings.Contains(s, "0xfe575a87"): // isBlacklisted
+				result = word(0)
 			default:
 				result = word(0)
 			}
@@ -65,7 +67,7 @@ func leftpad(n int64) string {
 
 func TestTokenReadCases(t *testing.T) {
 	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: selectorMock(t).URL}})
-	for _, name := range []string{"token-balance-readable", "account-authorization-readable"} {
+	for _, name := range []string{"token-balance-readable", "account-authorization-readable", "account-blacklist-readable"} {
 		rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 		if err != nil {
 			t.Fatal(err)
