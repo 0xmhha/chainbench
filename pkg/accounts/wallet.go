@@ -7,6 +7,7 @@ import (
 
 	sdkacct "github.com/0xmhha/accounts/account"
 	sdktransport "github.com/0xmhha/accounts/transport"
+	sdktx "github.com/0xmhha/accounts/tx"
 	sdktypes "github.com/0xmhha/accounts/types"
 	sdkwallet "github.com/0xmhha/accounts/wallet"
 )
@@ -34,6 +35,10 @@ type Wallet interface {
 	// covers the gas. Returns the transaction hash. Only meaningful on chains
 	// whose provider reports SupportsTxType(0x16).
 	SendFeeDelegated(ctx context.Context, feePayerKey []byte, toHex string, amountWei *big.Int) (txHash string, err error)
+	// SendLegacy sends a type 0x00 (EIP-155 legacy) value transfer of amountWei
+	// to the hex recipient, returning the tx hash. SendCoin uses type 0x02; this
+	// exposes the legacy path for tx-type regression coverage.
+	SendLegacy(ctx context.Context, toHex string, amountWei *big.Int) (txHash string, err error)
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -95,6 +100,39 @@ func (s sdkWallet) SendFeeDelegated(ctx context.Context, feePayerKey []byte, toH
 		return "", fmt.Errorf("accounts: bad fee-payer key: %w", err)
 	}
 	h, err := s.w.SendFeeDelegated(ctx, feePayer, to, amountWei)
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendLegacy(ctx context.Context, toHex string, amountWei *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil {
+		return "", fmt.Errorf("accounts: nil amount")
+	}
+	// The SDK wallet's SendCoin is type 0x02; build a legacy tx directly using
+	// the wallet's exported account and client (no SDK change needed).
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
+	}
+	gasPrice, err := s.w.Client.GasPrice(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: gas price: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.LegacyTx{Nonce: nonce, GasPrice: gasPrice, Gas: 21000, To: &to, Value: amountWei}
+	if err := t.Sign(chainID, s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign legacy tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {
 		return "", err
 	}
