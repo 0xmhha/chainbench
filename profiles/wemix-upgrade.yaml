@@ -64,6 +64,9 @@ validators:
     - "0xa63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
   members:                        # anzeon/governance council seeded in the section
     - "0xc17d493883eaa3b4cceb0f214b273392d562f9d8"
+  # RLP validator extra-data for the croissant section (encodes the four
+  # validators + their BLS keys above; the go-wbft template substitutes it).
+  extra_data: "0xf90147808080c0c080c0c086191a20322000f90135f868d994c17d493883eaa3b4cceb0f214b273392d562f9d8831cfde0d9942493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c831cfde0d9948c4a10b9108d49b9d23f764464090831d9c17764831cfde0d9948eb79036bc0f3aba136ef18b3a2fb8c1188939a6831cfde0c480010203f8c4b0a00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556fb0929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449b08c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0b0a63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
 
 data:
   directory: /tmp/wemix-upgrade   # node data root
