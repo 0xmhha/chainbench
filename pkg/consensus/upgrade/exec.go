@@ -32,6 +32,15 @@ type LaunchOptions struct {
 	// binary-specific instance dir, the producer's keystore, static-nodes) is
 	// placed. Optional; nil means the datadir is used as initialized.
 	ProvisionKeys func(ctx context.Context, spec driver.NodeSpec, producer bool) error
+	// ExtraArgs, if set, returns extra launch flags for a node appended after the
+	// standard and family flags. It is where account-specific and RPC-namespace
+	// flags go: the producer's --unlock/--miner.etherbase/--password, and the
+	// --http.api set (admin is required for the mesh's admin_addPeer). Optional.
+	ExtraArgs func(spec NodeSpec, producer bool) []string
+	// WaitReady, if set, is called with the node RPC endpoints after launch and
+	// before the mesh is wired, so wiring does not race the nodes' HTTP servers
+	// coming up. Optional (nil skips the wait; unit tests leave it nil).
+	WaitReady func(ctx context.Context, endpoints []string) error
 }
 
 func (o LaunchOptions) host() string {
@@ -62,6 +71,10 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 		dataDir := filepath.Join(opts.DataRoot, fmt.Sprintf("node%d", num))
 		configPath := filepath.Join(opts.DataRoot, fmt.Sprintf("config_node%d.toml", num))
 		endpoints := node.Endpoints{P2P: n.Ports.P2P, HTTP: n.Ports.HTTP, WS: n.Ports.WS, Auth: n.Ports.Auth}
+		args := LaunchArgs(n, dataDir, fam.StartFlags(n.Role))
+		if opts.ExtraArgs != nil {
+			args = append(args, opts.ExtraArgs(n, n.Producer)...)
+		}
 		specs = append(specs, driver.NodeSpec{
 			Index:      n.Index,
 			Role:       n.Role,
@@ -70,7 +83,7 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 			DataDir:    dataDir,
 			ConfigPath: configPath,
 			LogPath:    filepath.Join(opts.DataRoot, "logs", fmt.Sprintf("node%d.log", num)),
-			Args:       LaunchArgs(n, dataDir, configPath, fam.StartFlags(n.Role)),
+			Args:       args,
 			Ports:      endpoints,
 		})
 	}
@@ -100,6 +113,11 @@ func LaunchHandoff(ctx context.Context, d driver.Driver, plan Plan, opts LaunchO
 	endpoints := make([]string, len(ns.Nodes))
 	for i, n := range ns.Nodes {
 		endpoints[i] = n.RPCURL
+	}
+	if opts.WaitReady != nil {
+		if err := opts.WaitReady(ctx, endpoints); err != nil {
+			return ns, fmt.Errorf("upgrade: nodes not ready for mesh: %w", err)
+		}
 	}
 	if err := WireMesh(ctx, caller, endpoints, plan.Enodes(opts.host())); err != nil {
 		return ns, err

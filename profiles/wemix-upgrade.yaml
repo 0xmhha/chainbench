@@ -43,6 +43,13 @@ roles:
   producers: 1                    # from-chain (go-wemix) producers
   validators: 4                   # to-chain (go-wbft) post-fork validators (>=4)
 
+# plan node k (1-based) -> preset node number that supplies its key material.
+# plan_order[0] is the producer. The framework orders producers first, but the
+# preset carries the producer identity as node5 and the BFT validators as
+# node1-4, so the mapping reorders them.
+identities:
+  plan_order: [5, 1, 2, 3, 4]
+
 # From-chain producer/member addresses (registered as governance members).
 # Must be disjoint from the to-chain validator set below.
 producers:
@@ -52,6 +59,22 @@ producers:
     # the preset's node5 keystore is for this 0xf9593d... account, not node5's
     # own 0x5400... address -- the producer must be allocated + unlock this one.
     - "0xf9593d358b373d354a348c00887b914b408f6984"
+  stake: "2000000000000000000000000000"
+  # wemix governance env the producer's base genesis is generated from.
+  governance:
+    ballot_duration_min: 86400
+    ballot_duration_max: 604800
+    staking_min: "1500000000000000000000000"
+    staking_max: "1500000000000000000000000000"
+    max_idle_block_interval: 5
+    block_creation_time: 1000
+    block_reward_amount: "1000000000000000000"
+    max_priority_fee_per_gas: "100000000000"
+    reward_distribution: [4000, 1000, 2500, 2500]
+    max_base_fee: "50000000000000"
+    block_gas_limit: 105000000
+    base_fee_max_change_rate: 55
+    gas_target_percentage: 30
 
 # To-chain (go-wbft) post-fork validator set: the croissant.init validators the
 # successor chain rotates block production across. Aligned lists.

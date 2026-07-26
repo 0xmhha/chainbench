@@ -3,10 +3,34 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/rpc"
 )
+
+// WaitEndpointsReady polls each RPC endpoint until it answers (eth_blockNumber)
+// or the deadline passes. It is the default LaunchOptions.WaitReady used before
+// mesh wiring so admin_addPeer does not race the nodes' HTTP servers.
+func WaitEndpointsReady(ctx context.Context, endpoints []string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for _, ep := range endpoints {
+		if ep == "" {
+			continue
+		}
+		cli := rpc.Dial(ep)
+		for {
+			if _, err := cli.BlockNumber(ctx); err == nil {
+				break
+			}
+			if time.Now().After(deadline) {
+				return fmt.Errorf("endpoint %s not ready within %s", ep, timeout)
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}
+	return nil
+}
 
 // PeerCaller adds a peer to one node via its RPC endpoint. Abstracted so the
 // mesh wiring can be tested without live nodes.

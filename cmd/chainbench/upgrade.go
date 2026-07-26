@@ -20,7 +20,7 @@ func newUpgradeCmd() *cobra.Command {
 		Use:   "upgrade",
 		Short: "Plan a concurrent consensus-family handoff from a golden profile",
 	}
-	cmd.AddCommand(newUpgradeGenesisCmd())
+	cmd.AddCommand(newUpgradeGenesisCmd(), newUpgradeRunCmd())
 	return cmd
 }
 

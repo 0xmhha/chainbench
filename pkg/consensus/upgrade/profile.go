@@ -33,7 +33,17 @@ type Profile struct {
 	} `yaml:"roles"`
 	Producers struct {
 		Members []string `yaml:"members"`
+		// Stake is the producer's governance stake (wei, decimal string).
+		Stake string `yaml:"stake"`
+		// Governance is the wemix governance env the base genesis is built from.
+		Governance Governance `yaml:"governance"`
 	} `yaml:"producers"`
+	// Identities maps plan nodes to preset node identities. PlanOrder[k-1] is the
+	// preset node number (1-based) that supplies plan node k's key material;
+	// PlanOrder[0] is the producer. Empty means plan order == preset order.
+	Identities struct {
+		PlanOrder []int `yaml:"plan_order"`
+	} `yaml:"identities"`
 	Validators struct {
 		Addresses     []string `yaml:"addresses"`
 		BLSPublicKeys []string `yaml:"bls_public_keys"`
@@ -57,6 +67,39 @@ type ChainBinding struct {
 	BinaryPath string `yaml:"binary_path"`
 	NodekeyDir string `yaml:"nodekey_dir"`
 	Recommit   string `yaml:"miner_recommit"`
+}
+
+// Governance is the wemix governance env (policy parameters) the producer's base
+// genesis is generated from. Large values are decimal strings; the rest are
+// integers. It mirrors the fields `gwemix wemix genesis` consumes.
+type Governance struct {
+	BallotDurationMin    int64  `yaml:"ballot_duration_min"`
+	BallotDurationMax    int64  `yaml:"ballot_duration_max"`
+	StakingMin           string `yaml:"staking_min"`
+	StakingMax           string `yaml:"staking_max"`
+	MaxIdleBlockInterval int64  `yaml:"max_idle_block_interval"`
+	BlockCreationTime    int64  `yaml:"block_creation_time"`
+	BlockRewardAmount    string `yaml:"block_reward_amount"`
+	MaxPriorityFeePerGas string `yaml:"max_priority_fee_per_gas"`
+	RewardDistribution   []int  `yaml:"reward_distribution"`
+	MaxBaseFee           string `yaml:"max_base_fee"`
+	BlockGasLimit        int64  `yaml:"block_gas_limit"`
+	BaseFeeMaxChangeRate int64  `yaml:"base_fee_max_change_rate"`
+	GasTargetPercentage  int64  `yaml:"gas_target_percentage"`
+}
+
+// PlanOrderOrDefault returns the plan-node -> preset-node mapping, defaulting to
+// identity order (plan node k = preset node k) when the profile omits it.
+func (p Profile) PlanOrderOrDefault() []int {
+	if len(p.Identities.PlanOrder) != 0 {
+		return p.Identities.PlanOrder
+	}
+	total := p.Roles.Producers + p.Roles.Validators
+	order := make([]int, total)
+	for i := range order {
+		order[i] = i + 1
+	}
+	return order
 }
 
 // LoadProfile reads and decodes a golden upgrade profile.
