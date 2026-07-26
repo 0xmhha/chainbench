@@ -58,6 +58,28 @@ func ProposeMintCall(proof []byte) string {
 	return accounts.EncodeCallArgs("proposeMint(bytes)", accounts.Bytes(proof))
 }
 
+// BurnProof ABI-encodes a GovMinter BurnProof — abi.encode(from, amount,
+// timestamp, withdrawalID, referenceID, memo) — the proofData bytes passed to
+// proposeBurn(bytes). Same layout as MintProof with `from` (the burn target) in
+// place of the beneficiary.
+func BurnProof(from string, amount, timestamp *big.Int, withdrawalID, referenceID, memo string) []byte {
+	return accounts.EncodeABI(
+		accounts.Address(from),
+		accounts.Uint(amount),
+		accounts.Uint(timestamp),
+		accounts.StringArg(withdrawalID),
+		accounts.StringArg(referenceID),
+		accounts.StringArg(memo),
+	)
+}
+
+// ProposeBurnCall builds calldata for GovMinter.proposeBurn(bytes). The call is
+// payable: msg.value must equal the burn amount, and the proposer must be the
+// proof's `from`. Returns 0x-hex.
+func ProposeBurnCall(proof []byte) string {
+	return accounts.EncodeCallArgs("proposeBurn(bytes)", accounts.Bytes(proof))
+}
+
 // ProposeAddMemberCall builds calldata for a governance
 // proposeAddMember(address,uint32): add member with the new quorum. Returns 0x-hex.
 func ProposeAddMemberCall(member string, newQuorum uint32) string {

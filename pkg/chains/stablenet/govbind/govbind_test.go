@@ -49,6 +49,23 @@ func TestMintProofAndProposeMintCall(t *testing.T) {
 	}
 }
 
+func TestBurnProofAndProposeBurnCall(t *testing.T) {
+	// BurnProof has the same ABI layout as MintProof, so the same inputs encode
+	// identically; the calldata differs only in the proposeBurn selector.
+	burn := govbind.BurnProof("0x00000000000000000000000000000000000000ab",
+		big.NewInt(1000000000000000000), big.NewInt(1700000000), "DEP-1", "BANK-1", "memo")
+	if got := hexString(burn); got != wantProof {
+		t.Errorf("BurnProof:\n got=%s\nwant=%s", got, wantProof)
+	}
+	call := govbind.ProposeBurnCall(burn)
+	wantHead := "0x" + sel4("proposeBurn(bytes)") +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"0000000000000000000000000000000000000000000000000000000000000180"
+	if want := wantHead + wantProof; call != want {
+		t.Errorf("ProposeBurnCall:\n got=%s\nwant=%s", call, want)
+	}
+}
+
 func TestGovernanceCalldataBuilders(t *testing.T) {
 	if got := govbind.ProposeAddMemberCall("0x00000000000000000000000000000000000000ab", 3); got !=
 		"0x"+sel4("proposeAddMember(address,uint32)")+

@@ -260,13 +260,15 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   배선만 남음).
 - **D1. Svelte SPA** 🔴: 프론트 빌드 툴체인 필요. 현재 `pkg/dashboard/index.html`
   (build-free)이 SSE로 동작 — 데이터 계약(SSE Event JSON + `/api/runs`) 확정.
-- **회귀 잔여 포팅**(진행 중): 노드측 서명 인프라 추가 — `rpc.Client.Coinbase`(eth_coinbase)
-  +`SendTransaction`(eth_sendTransaction, httptest 단위검증). 이를 써서 첫 governance
-  write 케이스 `mint-proposal-executes`(f2-01 포팅) 추가: 각 검증자 coinbase로 propose/approve,
-  quorum 도달까지 승인, 수혜자 잔액 증가 확인. govbind + 노드측 서명. registration/gating은
-  검증됨. ⚠️ **live-tx라 실 gstable 네트워크 없이는 이 환경에서 실행 미검증** — quorum 수·
-  proof 포맷은 회귀 f2-01 앵커. 잔여: burn/validator proposal, blacklist write, c-anzeon
-  basefee 버스트. 원본 bash 스위트는 stablenet 고정이라 Go 러너에서 미실행(감사 B4).
+- **회귀 잔여 포팅**(진행 중): 노드측 서명 인프라 — `rpc.Client.Coinbase`+`SendTransaction`
+  (httptest 단위검증). governance write 3종 포팅(공통 헬퍼 `tests/anzeon/gov_common.go`:
+  discoverValidators/extractProposalID/approveToQuorum/proposalExecuted):
+  `mint-proposal-executes`(f2-01), `burn-proposal-executes`(f2-02, payable proposeBurn),
+  `validator-add-member-executes`(f3-01/02, GovValidator members() 확인). govbind에
+  BurnProof/ProposeBurnCall 추가. registration/gating 검증됨. ⚠️ **live-tx라 실 gstable
+  네트워크 없이는 실행 미검증** — quorum 수·proof 포맷은 회귀 f2/f3 앵커. 잔여: blacklist
+  write, c-anzeon basefee 버스트, 나머지 f/e/h/z. 원본 bash는 stablenet 고정이라 Go 러너
+  미실행(감사 B4).
 - **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
   REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
 
