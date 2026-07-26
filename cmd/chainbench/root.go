@@ -26,6 +26,8 @@ func newRootCmd() *cobra.Command {
 		newChainsCmd(),
 		newSetupCmd(),
 		newStopCmd(),
+		newStatusCmd(),
+		newCleanCmd(),
 		newVerifyCmd(),
 		newTestCmd(),
 		newNodeCmd(),
