@@ -175,6 +175,9 @@ func TestBuildPlan_DelayedBohoCapability(t *testing.T) {
 	if hasCap(plain.Capabilities, "delayed-boho") {
 		t.Error("plain network must not advertise delayed-boho")
 	}
+	if !hasCap(plain.Capabilities, "ws") {
+		t.Error("launched network must advertise the ws capability")
+	}
 
 	// genesis.overrides.bohoBlock=10 advertises the delayed-boho capability.
 	cfg := config.Resolve(config.Values{"genesis.overrides.bohoBlock": "10"}, nil)
