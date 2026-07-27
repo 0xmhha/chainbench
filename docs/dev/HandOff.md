@@ -407,9 +407,11 @@ D1(대형·이 환경 검증 불가)뿐.
 - **Tier 1 거버넌스/이벤트(최저비용, councilProposalToQuorum+emittedEventForTarget 재사용)**:
   - ✅ **f5-04/07/08/09 포팅**: `authorized-account-added-event`·`unauthorize-proposal-executes`·
     `address-unblacklisted-event`(fresh target, 상태+GovCouncil 라이프사이클 이벤트).
+  - ✅ **f5-05/f4-04 포팅**: `direct-blacklist-call-rejected`·`non-member-configure-minter-rejected`
+    (fresh funded 비멤버 → 직접 호출 → 제출거부 또는 revert; 성공하면 실패). helper `newFundedWallet`.
   - 잔여: f1-04/05(Mint/Burn Transfer 이벤트), f3-05(proposeGasTip+GasTipUpdated), b-06(gastip→
     header WBFTExtra 동기화+revert), f4-02(remove minter), f4-03(masterminter add/remove member),
-    f5-05(직접 blacklist 호출 거부), f4-04(비멤버 proposeConfigureMinter 거부), f2-03(quorum 미달→Voting).
+    f2-03(quorum 미달→Voting).
 - **Tier 2 tx 거부/영수증**: a2-05a/05b(sub-min tip/feecap 거부), a2-07(gas-limit 초과), a3-06(revert
   status=0), a3-07(out-of-gas), a2-04(nonce 순서), a2-09(replacement tx), d-03/04(sender/feepayer 서명
   무효), d-05(feepayer 잔액부족).
