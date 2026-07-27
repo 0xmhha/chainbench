@@ -397,7 +397,27 @@ D1(대형·이 환경 검증 불가)뿐.
     →`testrun.Options.FundedKey`→`testkit.T.FundedKey()`(NodeSet 미직렬화). key 없으면 `T.Skip`(신규).
     하이브리드 external-manifest 모델의 write 스토리 완성. `layer2-attach.sh`가 키 있으면 write도 실행.
     단위검증: FundedKey/Skip, CLI env 파싱, skip-without-key gating.
-- **미포팅 잔여**: 없음(이 환경 검증 가능한 범위). live 검증은 정상 환경에서 `tests/repro`로.
+### 회귀 커버리지 gap 재분석 (2026-07-27, 참조 인벤토리 대조)
+
+참조(`wemade/packages/chainbench/.../regression`, 111케이스)를 내 포팅분과 1:1 대조한 결과
+**포팅됨 71 / 포팅가능(미포팅) 36 / 블록 3**. "잔여 없음"은 오판이었다 — 아래 36건이 실제 잔여.
+블록 3: A-4-06/07(eth_subscribe WebSocket 클라이언트 부재), B-05(활성 validator 파괴적 제거).
+
+미포팅 36건(tier 순, 전부 기존 인프라로 포팅 가능):
+- **Tier 1 거버넌스/이벤트(최저비용, councilProposalToQuorum+emittedEventForTarget 재사용)**:
+  - ✅ **f5-04/07/08/09 포팅**: `authorized-account-added-event`·`unauthorize-proposal-executes`·
+    `address-unblacklisted-event`(fresh target, 상태+GovCouncil 라이프사이클 이벤트).
+  - 잔여: f1-04/05(Mint/Burn Transfer 이벤트), f3-05(proposeGasTip+GasTipUpdated), b-06(gastip→
+    header WBFTExtra 동기화+revert), f4-02(remove minter), f4-03(masterminter add/remove member),
+    f5-05(직접 blacklist 호출 거부), f4-04(비멤버 proposeConfigureMinter 거부), f2-03(quorum 미달→Voting).
+- **Tier 2 tx 거부/영수증**: a2-05a/05b(sub-min tip/feecap 거부), a2-07(gas-limit 초과), a3-06(revert
+  status=0), a3-07(out-of-gas), a2-04(nonce 순서), a2-09(replacement tx), d-03/04(sender/feepayer 서명
+  무효), d-05(feepayer 잔액부족).
+- **Tier 3 basefee dynamics**: c-03/04/05(repro로 일부 커버; testkit화 검토).
+- **Tier 4 다노드 lifecycle**: b-09/10(round change), a1-04(재시작 재개), b-03(epoch), a1-02/03/06/07
+  (sync 경로 — repro로 일부 커버), b-08(quorum halt, 약한 fidelity), f3-06(proposal expiry, 시간의존).
+
+live 검증은 정상 환경에서 `tests/repro`로.
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
   full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
   단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).
