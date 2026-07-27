@@ -413,7 +413,9 @@ D1(대형·이 환경 검증 불가)뿐.
     `burn-transfer-event`(Transfer→0x0 count 증가). helper `transferLogCount`(topic1/2 nil 필터).
   - ✅ **f3-05/b-06 포팅**: `gastip-governance-updates-header`(GovValidator proposeGasTip→header
     WBFTExtra.GasTip 반영+GasTipUpdated 이벤트+원복, 한 케이스). c-01/c-02가 gasTip 동적 읽기라 무해.
-  - 잔여: f4-02(remove minter), f4-03(masterminter add/remove member), f2-03(quorum 미달→Voting).
+  - ✅ **f4-02/f2-03 포팅**: `remove-minter-executes`(fresh minter 추가→제거→isMinter==0)·
+    `quorum-deficient-stays-voting`(quorum 미달 execute→revert→status==Voting(1)→cleanup approve).
+  - 잔여: f4-03(masterminter add/remove member — memberVersion 증가+quorum 변경으로 가장 fragile, 단독 포팅 예정).
 - **Tier 2 tx 거부/영수증**: a2-05a/05b(sub-min tip/feecap 거부), a2-07(gas-limit 초과), a3-06(revert
   status=0), a3-07(out-of-gas), a2-04(nonce 순서), a2-09(replacement tx), d-03/04(sender/feepayer 서명
   무효), d-05(feepayer 잔액부족).
