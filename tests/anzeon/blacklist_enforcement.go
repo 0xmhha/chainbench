@@ -55,6 +55,29 @@ func init() {
 		RequiresCaps: []string{"rpc"},
 		Fn:           recipientBlacklistedRejected,
 	})
+	testkit.Register(testkit.Case{
+		Name:         "unblacklist-restores",
+		Category:     "system-contracts",
+		ChainCompat:  []string{"stablenet"},
+		RequiresCaps: []string{"rpc"},
+		Fn:           unblacklistRestores,
+	})
+}
+
+// unblacklistRestores blacklists a fresh address, then removes the blacklist via
+// governance and confirms the account manager no longer reports it blacklisted
+// (regression e-04).
+func unblacklistRestores(t *testkit.T) {
+	_, target, err := accounts.GenerateKey()
+	t.NoErr(err, "generate target address")
+	blacklistAndWait(t, target)
+
+	proposer := councilProposalToQuorum(t, "proposeRemoveBlacklist(address)", target)
+	t.WaitFor(func() bool {
+		v, err := accounts.ReadUint(t.Ctx(), proposer.client.EthCall, accountManager,
+			"isBlacklisted(address)", accounts.AddressArg(target))
+		return err == nil && v.Sign() == 0
+	}, 60*time.Second, time.Second, "target is no longer blacklisted")
 }
 
 // blacklistAndWait blacklists target via GovCouncil and waits until the account

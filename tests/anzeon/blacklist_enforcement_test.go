@@ -14,6 +14,8 @@ import (
 var blacklistEnforcementCases = []string{
 	"sender-blacklisted-rejected",
 	"recipient-blacklisted-rejected",
+	"unblacklist-restores",
+	"effective-gas-price-regular",
 }
 
 func TestBlacklistEnforcementCases_Register(t *testing.T) {
