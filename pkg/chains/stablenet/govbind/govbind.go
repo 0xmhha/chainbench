@@ -94,6 +94,13 @@ func ClaimBurnRefundCall() string {
 	return accounts.EncodeCallArgs("claimBurnRefund()")
 }
 
+// DisapproveProposalCall builds calldata for disapproveProposal(uint256): a
+// disapproval vote. A quorum of disapprovals rejects the proposal (making a
+// burn's value refundable). Returns 0x-hex.
+func DisapproveProposalCall(id *big.Int) string {
+	return accounts.EncodeCallArgs("disapproveProposal(uint256)", accounts.Uint(id))
+}
+
 // Burn-refund event topics (GovMinter, Boho v2). Pinned from the regression suite
 // (tests/regression/lib/common.sh) since the GovMinter Solidity is not in this
 // repo. BurnRefundClaimed also derives from EventTopic("BurnRefundClaimed(address,uint256)").

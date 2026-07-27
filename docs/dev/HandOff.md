@@ -261,7 +261,11 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   `boho-chain-config-active`(4종) 포팅(tests/anzeon, mock 검증). 포팅 66 케이스.
   **burn-refund 언블록**: govbind에 `CancelProposalCall`/`ClaimBurnRefundCall` + burn-refund
   이벤트 토픽 추가(단위검증), h-06/09/11 포팅(`burn-cancel-refundable`/`burn-execute-no-refundable`/
-  `claim-zero-refund-reverts`, refundableBalance read + node-side 서명). 포팅 69 케이스.
+  `claim-zero-refund-reverts`, refundableBalance read + node-side 서명). burn-refund 잔여
+  h-07/10/12/13(`DisapproveProposalCall` 바인딩 + burn-reject/claim-succeeds/double-reverts/
+  events, 이벤트 토픽 FindLog) + explicit-gas(wallet에 `SendDynamicFeeGas`/`SendLegacyGas`/
+  `SendAccessListGas` 커스텀 gas 3종 + h-20~24 boundary: exact/above min accept, below min reject)
+  포팅. 포팅 78 케이스.
   **defer(인프라 선행)**: fork-transition before/after(delayed-fork harness 부재),
   h-20~24(커스텀 gasFeeCap send wallet 메서드 필요), h-49~51(빌드체크·체인테스트 아님),
   h-30/33/34(chainbench genesis에 없는 Extra test 계정), h-42~45(effectiveGasPrice/이벤트 순서).

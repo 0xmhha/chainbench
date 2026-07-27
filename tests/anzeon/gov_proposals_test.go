@@ -22,6 +22,10 @@ var govWriteCases = []string{
 	"burn-cancel-refundable",
 	"burn-execute-no-refundable",
 	"claim-zero-refund-reverts",
+	"burn-reject-refundable",
+	"claim-burn-refund-succeeds",
+	"claim-burn-refund-double-reverts",
+	"burn-refund-events",
 }
 
 func TestGovWriteCases_Register(t *testing.T) {
