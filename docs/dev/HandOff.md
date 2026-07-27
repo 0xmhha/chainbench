@@ -421,9 +421,11 @@ D1(대형·이 환경 검증 불가)뿐.
 - **Tier 2 tx 거부/영수증**:
   - ✅ a2-05a(`tipcap-underpriced-rejected`), d-05(`feepayer-insufficient-rejected`). a2-05b는 기존
     `feecap-below-min-rejected`로 이미 커버(중복 스킵).
-  - 잔여(대부분 wallet 명시 nonce/gas-limit 제어 또는 raw tx 조작 인프라 선행): a2-07(gas-limit 초과),
-    a3-06(revert status=0 — Deploy로 가능), a3-07(out-of-gas — gas-limit 제어), a2-04(nonce 순서),
-    a2-09(replacement tx), d-03/04(sender/feepayer 서명 무효 — raw tx 조작).
+  - ✅ **wallet 인프라 + a2-07/a3-06/a3-07 포팅**: `SendDynamicFeeTx`(명시 nonce/gas/data) 추가 →
+    `gaslimit-exceeded-rejected`(gas>블록한도 거부)·`revert-tx-status-zero`(revert 런타임 배포→status 0x0)·
+    `out-of-gas-consumes-all`(loop 런타임→status 0x0+gasUsed==gasLimit). validFees/deployRuntime/waitReceipt 헬퍼.
+  - 잔여: a2-04(nonce 순서), a2-09(replacement tx) — 이제 `SendDynamicFeeTx`의 명시 nonce로 가능.
+    d-03/04(sender/feepayer 서명 무효 — raw tx 조작, 가장 복잡).
 - **Tier 3 basefee dynamics**: c-03/04/05(repro로 일부 커버; testkit화 검토).
 - **Tier 4 다노드 lifecycle**: b-09/10(round change), a1-04(재시작 재개), b-03(epoch), a1-02/03/06/07
   (sync 경로 — repro로 일부 커버), b-08(quorum halt, 약한 fidelity), f3-06(proposal expiry, 시간의존).

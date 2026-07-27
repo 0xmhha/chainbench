@@ -62,6 +62,26 @@ type Wallet interface {
 	// SendAccessListGas sends a type 0x01 transfer (empty access list) with an
 	// EXPLICIT GasPrice.
 	SendAccessListGas(ctx context.Context, toHex string, amountWei, gasPrice *big.Int) (txHash string, err error)
+	// SendDynamicFeeTx sends a fully-specified type-0x02 transaction: explicit
+	// nonce, gas limit, fee caps, recipient, value, and calldata. It is the
+	// low-level path for regression cases that need control the higher-level
+	// helpers do not expose — gas-limit bounds, out-of-gas, revert receipts, nonce
+	// ordering, and replacement transactions.
+	SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (txHash string, err error)
+}
+
+// DynamicTxArgs fully specifies a type-0x02 transaction. A nil Nonce uses the
+// account's next nonce; an empty ToHex is a contract creation. Value, GasFeeCap,
+// and GasTipCap must be non-nil; Gas must be set (no auto-estimation, so a call
+// that would revert or run out of gas still mines with status 0x0).
+type DynamicTxArgs struct {
+	ToHex     string
+	Value     *big.Int
+	Data      []byte
+	Gas       uint64
+	GasFeeCap *big.Int
+	GasTipCap *big.Int
+	Nonce     *uint64
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -253,6 +273,46 @@ func (s sdkWallet) SendDynamicFeeGas(ctx context.Context, toHex string, amountWe
 	t := &sdktx.DynamicFeeTx{
 		ChainID: chainID, Nonce: nonce, GasTipCap: gasTipCap, GasFeeCap: gasFeeCap,
 		Gas: 21000, To: &to, Value: amountWei,
+	}
+	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendDynamicFeeTx(ctx context.Context, args DynamicTxArgs) (string, error) {
+	if args.Value == nil || args.GasFeeCap == nil || args.GasTipCap == nil {
+		return "", fmt.Errorf("accounts: nil value or fee cap")
+	}
+	var toPtr *sdktypes.Address
+	if args.ToHex != "" {
+		to, err := sdktypes.HexToAddress(args.ToHex)
+		if err != nil {
+			return "", fmt.Errorf("accounts: invalid recipient %q: %w", args.ToHex, err)
+		}
+		toPtr = &to
+	}
+	nonce := uint64(0)
+	if args.Nonce != nil {
+		nonce = *args.Nonce
+	} else {
+		n, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+		if err != nil {
+			return "", fmt.Errorf("accounts: nonce: %w", err)
+		}
+		nonce = n
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.DynamicFeeTx{
+		ChainID: chainID, Nonce: nonce, GasTipCap: args.GasTipCap, GasFeeCap: args.GasFeeCap,
+		Gas: args.Gas, To: toPtr, Value: args.Value, Data: args.Data,
 	}
 	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
