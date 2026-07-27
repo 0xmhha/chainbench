@@ -365,8 +365,17 @@ D1(대형·이 환경 검증 불가)뿐.
   gas-policy 8, network 4). CI에서 등록·capability gating 검증(대부분 live-tx는 mock 또는 gating만).
 - **live 검증 경로(repro tier)**: `tests/repro/`에 5개 스크립트 + gated e2e 1개 — 매핑·실행법은
   `tests/repro/README.md`. 실 바이너리(gstable/wemix/wbft) 있는 정상 환경에서 실행.
-- **미포팅 잔여(전부 인프라/키/타이밍 블로커)**: c-02(authorized 키), c-04(stable 밴드 flaky),
-  e-03(feepayer 가드 미검사), e-09(authorized-tx event), z-layer2(5), D1.
+- **분류 정정(2026-07-27 참조구현 재검토)**: 이전에 "authorized 키 부재로 불가"로 본 케이스들은
+  오판이었다. 참조(`wemade/packages/chainbench`)는 **노드 소유 계정에 거버넌스로 상태를 런타임 부여
+  + node-side 서명**으로 처리한다(외부 키 불필요). 우리는 이미 `discoverValidators`+
+  `councilProposalToQuorum(임의 propose sig)`+node-side `SendTransaction`을 보유 → 소규모 gap만 남음.
+  - ✅ **c-02·e-09 포팅**: fresh 계정 생성→faucet 펀딩→`proposeAddAuthorizedAccount` quorum→
+    `SendDynamicFeeGas`(custom tip). `authorized-account-gastip-free`(tip 미강제=custom_tip, `effectiveTip`
+    공용 헬퍼로 inclusion baseFee 정확 비교)·`authorized-tx-executed-event`(AuthorizedTxExecuted topic
+    `0x40e728…0373`). 외부 키 0건. 등록·gating 검증, live는 정상 환경.
+- **미포팅 잔여**: e-03(feepayer — node-side fee-delegate 서명 `personal_signRawFeeDelegateTransaction`
+  RPC 필요, 다음), c-04(basefee stable — basefee-dynamics repro에 추가 예정), z-layer2(참조도 설계
+  doc뿐 — L2 엔드포인트 attach로 재사용), D1(프론트 툴체인).
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
   full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
   단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).

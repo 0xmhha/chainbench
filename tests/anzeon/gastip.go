@@ -72,6 +72,17 @@ func regularAccountGastipForced(t *testkit.T) {
 	hash, err := w.SendDynamicFeeGas(t.Ctx(), gastipRecipient, big.NewInt(1), feeCap, highTip)
 	t.NoErr(err, "send high-tip dynamic-fee tx")
 
+	tipUsed := effectiveTip(t, hash)
+	t.Truef(tipUsed.Cmp(headerTip) == 0,
+		"regular account tip forced to header GasTip %s (charged %s; requested high tip was %s)",
+		headerTip, tipUsed, highTip)
+}
+
+// effectiveTip waits for the tx receipt and returns effectiveGasPrice minus the
+// inclusion block's own baseFee — the priority fee actually charged. Using the
+// inclusion block's baseFee (not a separately-read one) makes the charged tip
+// exact, independent of any baseFee drift between blocks.
+func effectiveTip(t *testkit.T, hash string) *big.Int {
 	var rcpt struct {
 		Status            string `json:"status"`
 		EffectiveGasPrice string `json:"effectiveGasPrice"`
@@ -86,20 +97,14 @@ func regularAccountGastipForced(t *testkit.T) {
 			return false
 		}
 		return json.Unmarshal(raw, &rcpt) == nil && rcpt.Status == "0x1"
-	}, 90*time.Second, time.Second, "high-tip tx receipt with status 0x1")
+	}, 90*time.Second, time.Second, "tx receipt with status 0x1")
 
-	// Subtract the inclusion block's own baseFee (not a separately-read one) so the
-	// tip charged is exact, independent of any baseFee drift between blocks.
 	var block struct {
 		BaseFeePerGas string `json:"baseFeePerGas"`
 	}
 	t.NoErr(t.Primary().Call(t.Ctx(), "eth_getBlockByNumber", &block, rcpt.BlockNumber, false),
 		"eth_getBlockByNumber(inclusion)")
-
 	egp := hexBig(t, rcpt.EffectiveGasPrice, "effectiveGasPrice")
 	inclusionBase := hexBig(t, block.BaseFeePerGas, "baseFeePerGas")
-	tipUsed := new(big.Int).Sub(egp, inclusionBase)
-	t.Truef(tipUsed.Cmp(headerTip) == 0,
-		"regular account tip forced to header GasTip %s (charged %s; requested high tip was %s)",
-		headerTip, tipUsed, highTip)
+	return new(big.Int).Sub(egp, inclusionBase)
 }
