@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/driver"
@@ -76,6 +77,19 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 	})
 	if err != nil {
 		return err
+	}
+	// Apply any genesis config overrides (e.g. a delayed fork:
+	// genesis.overrides.bohoBlock=10 moves Boho off genesis). Validate the fork
+	// ordering of the result so a bad delayed-fork config fails at setup, not at
+	// node boot.
+	if ov := configOverrides(cfg); len(ov) > 0 {
+		gen, err = genesis.ApplyConfigOverrides(gen, ov)
+		if err != nil {
+			return err
+		}
+		if err := genesis.ValidateForks(gen); err != nil {
+			return fmt.Errorf("setup: genesis overrides: %w", err)
+		}
 	}
 	if err := os.MkdirAll(plan.DataRoot, 0o755); err != nil {
 		return err
@@ -220,6 +234,28 @@ func shipIdentities(ctx context.Context, fp driver.FileProvisioner, keysAbs, key
 		}
 	}
 	return nil
+}
+
+// overridePrefix is the config namespace whose keys are merged into the genesis
+// `config` object (e.g. "genesis.overrides.bohoBlock=10"). It mirrors the bash
+// profile schema (genesis.overrides.*), so a delayed-fork profile flattens
+// straight into this namespace.
+const overridePrefix = "genesis.overrides."
+
+// configOverrides collects the genesis config overrides (keys under
+// overridePrefix) into a map of bare config key → value for
+// genesis.ApplyConfigOverrides. It returns nil when none are set.
+func configOverrides(cfg config.Values) map[string]string {
+	var ov map[string]string
+	for k, v := range cfg {
+		if suffix, ok := strings.CutPrefix(k, overridePrefix); ok && suffix != "" {
+			if ov == nil {
+				ov = map[string]string{}
+			}
+			ov[suffix] = v
+		}
+	}
+	return ov
 }
 
 // nodeKeyFor returns the preset node key for a 1-based node index, or nil.

@@ -47,6 +47,47 @@ func TestSetConfigSection_Rejects(t *testing.T) {
 	}
 }
 
+func TestApplyConfigOverrides(t *testing.T) {
+	base := []byte(`{"config":{"petersburgBlock":0,"londonBlock":0},"alloc":{}}`)
+
+	// Empty overrides return the input unchanged (same bytes).
+	if same, err := genesis.ApplyConfigOverrides(base, nil); err != nil || string(same) != string(base) {
+		t.Fatalf("empty overrides changed genesis: %s (%v)", same, err)
+	}
+
+	out, err := genesis.ApplyConfigOverrides(base, map[string]string{"bohoBlock": "10", "engineVer": "v2"})
+	if err != nil {
+		t.Fatalf("ApplyConfigOverrides: %v", err)
+	}
+	var g struct {
+		Config map[string]json.RawMessage `json:"config"`
+		Alloc  json.RawMessage            `json:"alloc"`
+	}
+	if err := json.Unmarshal(out, &g); err != nil {
+		t.Fatalf("parse result: %v", err)
+	}
+	// A numeric-looking value stays a JSON number; a bare string is quoted.
+	if got := string(g.Config["bohoBlock"]); got != "10" {
+		t.Errorf("bohoBlock = %s, want numeric 10", got)
+	}
+	if got := string(g.Config["engineVer"]); got != `"v2"` {
+		t.Errorf("engineVer = %s, want quoted string \"v2\"", got)
+	}
+	// Untouched keys and sibling objects survive.
+	if _, ok := g.Config["petersburgBlock"]; !ok {
+		t.Error("petersburgBlock dropped by override")
+	}
+	if string(g.Alloc) != "{}" {
+		t.Errorf("alloc changed: %s", g.Alloc)
+	}
+
+	// Deterministic: same overrides produce identical bytes.
+	out2, _ := genesis.ApplyConfigOverrides(base, map[string]string{"engineVer": "v2", "bohoBlock": "10"})
+	if string(out) != string(out2) {
+		t.Errorf("ApplyConfigOverrides not deterministic:\n%s\n%s", out, out2)
+	}
+}
+
 func TestValidateForks(t *testing.T) {
 	if err := genesis.ValidateForks([]byte(`{"config":{"croissantBlock":0,"croissant":{}}}`)); err == nil {
 		t.Error("missing petersburg should error")

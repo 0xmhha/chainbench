@@ -158,6 +158,43 @@ func TestBuildPlan_ZeroNodes(t *testing.T) {
 	}
 }
 
+func TestBuildPlan_DelayedBohoCapability(t *testing.T) {
+	p, _ := registry.Get("stablenet")
+
+	// No override: capability set is the manifest's, without "delayed-boho".
+	plain, err := setup.BuildPlan(config.Defaults(), p, "/tmp")
+	if err != nil {
+		t.Fatalf("BuildPlan: %v", err)
+	}
+	if hasCap(plain.Capabilities, "delayed-boho") {
+		t.Error("plain network must not advertise delayed-boho")
+	}
+
+	// genesis.overrides.bohoBlock=10 advertises the delayed-boho capability.
+	cfg := config.Resolve(config.Values{"genesis.overrides.bohoBlock": "10"}, nil)
+	delayed, err := setup.BuildPlan(cfg, p, "/tmp")
+	if err != nil {
+		t.Fatalf("BuildPlan (delayed): %v", err)
+	}
+	if !hasCap(delayed.Capabilities, "delayed-boho") {
+		t.Errorf("delayed network must advertise delayed-boho, got %v", delayed.Capabilities)
+	}
+	// A zero/absent block does not advertise it (Boho at genesis is not delayed).
+	zero, _ := setup.BuildPlan(config.Resolve(config.Values{"genesis.overrides.bohoBlock": "0"}, nil), p, "/tmp")
+	if hasCap(zero.Capabilities, "delayed-boho") {
+		t.Error("bohoBlock=0 must not advertise delayed-boho")
+	}
+}
+
+func hasCap(caps []string, want string) bool {
+	for _, c := range caps {
+		if c == want {
+			return true
+		}
+	}
+	return false
+}
+
 func hasFlag(args []string, flag string) bool {
 	for _, a := range args {
 		if a == flag {

@@ -78,12 +78,20 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 		})
 	}
 
+	// A delayed Boho activation (genesis.overrides.bohoBlock=N>0) is advertised as
+	// a capability so the fork-transition test cases gate on it and skip on a
+	// normal (Boho-at-genesis) network.
+	caps := append([]string(nil), m.Capabilities...)
+	if cfg.Int(overridePrefix+"bohoBlock", 0) > 0 {
+		caps = append(caps, "delayed-boho")
+	}
+
 	return Plan{
 		Chain:        m.ID,
 		Network:      "local",
 		DataRoot:     dataRoot,
 		GenesisPath:  filepath.Join(dataRoot, "genesis.json"),
-		Capabilities: m.Capabilities,
+		Capabilities: caps,
 		Nodes:        nodes,
 	}, nil
 }

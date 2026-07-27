@@ -3,6 +3,8 @@ package genesis
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
 )
 
 // SetConfigSection merges section into a genesis' `config` object under key,
@@ -51,6 +53,48 @@ func ExtractConfigSection(genesisJSON []byte, key string) (json.RawMessage, erro
 		return nil, fmt.Errorf("genesis: parse: %w", err)
 	}
 	return g.Config[key], nil
+}
+
+// ApplyConfigOverrides sets each key→value pair under the genesis `config`
+// object, returning the new genesis bytes. Each value is used as raw JSON when
+// it parses as a JSON value (a number, boolean, or object — e.g. "10" sets a
+// numeric block) and is otherwise quoted as a JSON string (e.g. "v2"). Keys are
+// applied in sorted order so the result is deterministic. Empty overrides return
+// the input unchanged.
+//
+// This is the delayed-fork seam: the setup phase supplies {"bohoBlock":"10"} to
+// move a fork off genesis so a network can be launched with a fork activating at
+// block N. It is engine-agnostic — no fork name is baked in here; the caller
+// (from config `genesis.overrides.*`) names the config keys.
+func ApplyConfigOverrides(genesisJSON []byte, overrides map[string]string) ([]byte, error) {
+	if len(overrides) == 0 {
+		return genesisJSON, nil
+	}
+	keys := make([]string, 0, len(overrides))
+	for k := range overrides {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := genesisJSON
+	for _, k := range keys {
+		next, err := SetConfigSection(out, k, jsonScalar(overrides[k]))
+		if err != nil {
+			return nil, fmt.Errorf("genesis: override %q: %w", k, err)
+		}
+		out = next
+	}
+	return out, nil
+}
+
+// jsonScalar renders a flat config value as raw JSON: a value that is already
+// valid JSON (number/bool/object/quoted string) is used verbatim, so "10" stays
+// the number 10; anything else is quoted as a JSON string, so a bare "v2"
+// becomes "v2".
+func jsonScalar(v string) json.RawMessage {
+	if json.Valid([]byte(v)) {
+		return json.RawMessage(v)
+	}
+	return json.RawMessage(strconv.Quote(v))
 }
 
 // ValidateForks checks a genesis' fork configuration for two consensus-critical
