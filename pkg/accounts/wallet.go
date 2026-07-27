@@ -53,6 +53,15 @@ type Wallet interface {
 	// amountWei to the hex recipient with an empty access list, using legacy-style
 	// GasPrice, returning the tx hash.
 	SendAccessList(ctx context.Context, toHex string, amountWei *big.Int) (txHash string, err error)
+	// SendDynamicFeeGas sends a type 0x02 transfer with an EXPLICIT GasFeeCap and
+	// GasTipCap (no auto-fill), for gas-policy boundary tests. A fee below the
+	// chain minimum is expected to be rejected by the node (a non-nil error).
+	SendDynamicFeeGas(ctx context.Context, toHex string, amountWei, gasFeeCap, gasTipCap *big.Int) (txHash string, err error)
+	// SendLegacyGas sends a type 0x00 transfer with an EXPLICIT GasPrice.
+	SendLegacyGas(ctx context.Context, toHex string, amountWei, gasPrice *big.Int) (txHash string, err error)
+	// SendAccessListGas sends a type 0x01 transfer (empty access list) with an
+	// EXPLICIT GasPrice.
+	SendAccessListGas(ctx context.Context, toHex string, amountWei, gasPrice *big.Int) (txHash string, err error)
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -206,6 +215,93 @@ func (s sdkWallet) SendAccessList(ctx context.Context, toHex string, amountWei *
 	gasPrice, err := s.w.Client.GasPrice(ctx)
 	if err != nil {
 		return "", fmt.Errorf("accounts: gas price: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.AccessListTx{
+		ChainID: chainID, Nonce: nonce, GasPrice: gasPrice, Gas: 21000,
+		To: &to, Value: amountWei, AccessList: sdktx.AccessList{},
+	}
+	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign access-list tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendDynamicFeeGas(ctx context.Context, toHex string, amountWei, gasFeeCap, gasTipCap *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil || gasFeeCap == nil || gasTipCap == nil {
+		return "", fmt.Errorf("accounts: nil amount or fee")
+	}
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.DynamicFeeTx{
+		ChainID: chainID, Nonce: nonce, GasTipCap: gasTipCap, GasFeeCap: gasFeeCap,
+		Gas: 21000, To: &to, Value: amountWei,
+	}
+	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendLegacyGas(ctx context.Context, toHex string, amountWei, gasPrice *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil || gasPrice == nil {
+		return "", fmt.Errorf("accounts: nil amount or gas price")
+	}
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.LegacyTx{Nonce: nonce, GasPrice: gasPrice, Gas: 21000, To: &to, Value: amountWei}
+	if err := t.Sign(chainID, s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign legacy tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendAccessListGas(ctx context.Context, toHex string, amountWei, gasPrice *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil || gasPrice == nil {
+		return "", fmt.Errorf("accounts: nil amount or gas price")
+	}
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
 	}
 	chainID, err := s.w.Client.ChainID(ctx)
 	if err != nil {
