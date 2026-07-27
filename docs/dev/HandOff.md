@@ -379,7 +379,12 @@ D1(대형·이 환경 검증 불가)뿐.
     tx가 노드까지 도달해 거부됨.
   - ✅ **c-04 포팅(repro)**: `stablenet-basefee-dynamics.sh`에 6~20% 밴드 관찰 추가(best-effort —
     밴드 미진입 시 INCONCLUSIVE 보고, silent-pass 없음).
-- **미포팅 잔여**: z-layer2(참조도 설계 doc뿐 — L2 엔드포인트 attach로 기존 케이스 재사용), D1(프론트 툴체인).
+  - ✅ **z-layer2 read-side 포팅**: 상당수 케이스가 이미 chain-agnostic(빈 ChainCompat, rpc-only)이라
+    `chainbench test --rpc <L2> --chain <id>`로 임의 L2 엔드포인트에서 실행됨. repro
+    `tests/repro/layer2-attach.sh`(L2_RPC만 필요, 체인 바이너리 불필요; 10개 read/state 케이스로
+    RT-Z-03/04 커버). write-side(RT-Z-02 send/RT-Z-05 fee-deleg)는 L2 funded key 필요 → 문서화.
+- **미포팅 잔여**: z-layer2 write-side(L2 funded key 확보 시 기존 transfer/fee-deleg 케이스에 L2
+  chain 추가), D1(프론트 빌드 툴체인 — SPA 소스는 작성 가능하나 빌드 검증 불가).
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
   full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
   단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).
