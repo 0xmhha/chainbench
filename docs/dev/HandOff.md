@@ -424,8 +424,9 @@ D1(대형·이 환경 검증 불가)뿐.
   - ✅ **wallet 인프라 + a2-07/a3-06/a3-07 포팅**: `SendDynamicFeeTx`(명시 nonce/gas/data) 추가 →
     `gaslimit-exceeded-rejected`(gas>블록한도 거부)·`revert-tx-status-zero`(revert 런타임 배포→status 0x0)·
     `out-of-gas-consumes-all`(loop 런타임→status 0x0+gasUsed==gasLimit). validFees/deployRuntime/waitReceipt 헬퍼.
-  - 잔여: a2-04(nonce 순서), a2-09(replacement tx) — 이제 `SendDynamicFeeTx`의 명시 nonce로 가능.
-    d-03/04(sender/feepayer 서명 무효 — raw tx 조작, 가장 복잡).
+  - ✅ **a2-04/a2-09 포팅**: `nonce-ordering`(fresh 계정 N+2,N+1,N 역순→오름차순 채굴, nonce==N+3)·
+    `replacement-tx`(동일 nonce feecap +20% 교체→교체본 채굴, 원본 미채굴). readNonce/txMined 헬퍼.
+  - 잔여: d-03/04(sender/feepayer 서명 무효 — raw tx 조작, 가장 복잡).
 - **Tier 3 basefee dynamics**: c-03/04/05(repro로 일부 커버; testkit화 검토).
 - **Tier 4 다노드 lifecycle**: b-09/10(round change), a1-04(재시작 재개), b-03(epoch), a1-02/03/06/07
   (sync 경로 — repro로 일부 커버), b-08(quorum halt, 약한 fidelity), f3-06(proposal expiry, 시간의존).
