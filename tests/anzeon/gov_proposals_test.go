@@ -19,6 +19,9 @@ var govWriteCases = []string{
 	"blacklist-proposal-executes",
 	"authorize-proposal-executes",
 	"configure-minter-proposal-executes",
+	"burn-cancel-refundable",
+	"burn-execute-no-refundable",
+	"claim-zero-refund-reverts",
 }
 
 func TestGovWriteCases_Register(t *testing.T) {

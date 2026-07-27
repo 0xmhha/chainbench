@@ -80,6 +80,28 @@ func ProposeBurnCall(proof []byte) string {
 	return accounts.EncodeCallArgs("proposeBurn(bytes)", accounts.Bytes(proof))
 }
 
+// CancelProposalCall builds calldata for cancelProposal(uint256): the proposer
+// cancels the proposal. For a burn proposal, cancelling makes the burned value
+// refundable to the proposer. Returns 0x-hex.
+func CancelProposalCall(id *big.Int) string {
+	return accounts.EncodeCallArgs("cancelProposal(uint256)", accounts.Uint(id))
+}
+
+// ClaimBurnRefundCall builds calldata for claimBurnRefund() — the caller claims
+// its refundable burn balance into its native balance. No arguments. Returns
+// 0x-hex.
+func ClaimBurnRefundCall() string {
+	return accounts.EncodeCallArgs("claimBurnRefund()")
+}
+
+// Burn-refund event topics (GovMinter, Boho v2). Pinned from the regression suite
+// (tests/regression/lib/common.sh) since the GovMinter Solidity is not in this
+// repo. BurnRefundClaimed also derives from EventTopic("BurnRefundClaimed(address,uint256)").
+const (
+	BurnRefundClaimedTopic   = "0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24"
+	BurnDepositRefundedTopic = "0x334fe3eaa506b12e7e46ba469c310822737a959f2553b3cb38dff68085291aed"
+)
+
 // ProposeAddMemberCall builds calldata for a governance
 // proposeAddMember(address,uint32): add member with the new quorum. Returns 0x-hex.
 func ProposeAddMemberCall(member string, newQuorum uint32) string {
