@@ -350,9 +350,29 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    c-03/05(basefee ±) repro `tests/repro/stablenet-basefee-dynamics.sh`(부하·타이밍 의존 →
    repro tier, `bash -n`까지). **잔여**: c-02(authorized 자유 tip — authorized 계정 키 필요),
    c-04(6~20% stable 밴드 — 정밀 히트 불가로 flaky).
-6. 🔴 **z-layer2-e2e**(5): L2 스택 셋업(대형·효용 불확실).
-7. 🔴 **D1 Svelte SPA**(독립·병렬 가능): 프론트 빌드 툴체인 필요.
-8. 🟢 **마무리**: 최종 커버리지 리포트·핸드오프.
+6. ⏭️ **z-layer2-e2e**(5): L2 스택 셋업 — **defer**(대형·효용 불확실, 이 환경 코드검증도 제한적).
+7. ⏭️ **D1 Svelte SPA**(독립·병렬): 프론트 빌드 툴체인 필요 — **defer**(build-free HTML+SSE로 동작 중).
+8. ✅ **마무리**: 검증 런북 `tests/repro/README.md`(각 repro↔regression 매핑·필요 env·실행법 + gated
+   e2e) 작성, 본 순서 상태 확정. 아래 "최종 상태" 참조.
+
+### 최종 상태 (2026-07-27, 시퀀스 1~5+8 완료)
+
+인프라 없이 포팅 가능한 회귀 케이스는 소진, 인프라 선행분(delayed-fork/account-extra/sync-lifecycle/
+gastip)까지 완료. 남은 것은 (a) 실 gstable로 이미-포팅분 live 검증(B-track, repro), (b) z-layer2·
+D1(대형·이 환경 검증 불가)뿐.
+
+- **testkit 케이스**: 85개 등록(system-contracts 29, accounts 18, consensus 11, api 9, hardfork 8,
+  gas-policy 8, network 4). CI에서 등록·capability gating 검증(대부분 live-tx는 mock 또는 gating만).
+- **live 검증 경로(repro tier)**: `tests/repro/`에 5개 스크립트 + gated e2e 1개 — 매핑·실행법은
+  `tests/repro/README.md`. 실 바이너리(gstable/wemix/wbft) 있는 정상 환경에서 실행.
+- **미포팅 잔여(전부 인프라/키/타이밍 블로커)**: c-02(authorized 키), c-04(stable 밴드 flaky),
+  e-03(feepayer 가드 미검사), e-09(authorized-tx event), a1-03(snap 모드 토글), z-layer2(5), D1.
+- **핵심 원칙(이 세션 확립)**: 3~7의 신규 작업은 이 환경에서 최종 live green 불가 → "코드+단위+
+  gating(+`bash -n`)까지"만 완료로 보고하고 live 검증은 정상 환경 몫으로 명시. 억지 flaky 포팅 대신
+  명시적 defer.
+
+**권장 다음 액션**: 정상 환경에서 `tests/repro/README.md`의 스크립트로 이미-포팅분을 live 검증
+(B-track). 그 결과에 따라 케이스 assertion 미세조정 → 이후에만 z-layer2/D1 착수 판단.
 
 ---
 
