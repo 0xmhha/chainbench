@@ -409,9 +409,10 @@ D1(대형·이 환경 검증 불가)뿐.
     `address-unblacklisted-event`(fresh target, 상태+GovCouncil 라이프사이클 이벤트).
   - ✅ **f5-05/f4-04 포팅**: `direct-blacklist-call-rejected`·`non-member-configure-minter-rejected`
     (fresh funded 비멤버 → 직접 호출 → 제출거부 또는 revert; 성공하면 실패). helper `newFundedWallet`.
-  - 잔여: f1-04/05(Mint/Burn Transfer 이벤트), f3-05(proposeGasTip+GasTipUpdated), b-06(gastip→
-    header WBFTExtra 동기화+revert), f4-02(remove minter), f4-03(masterminter add/remove member),
-    f2-03(quorum 미달→Voting).
+  - ✅ **f1-04/05 포팅**: `mint-transfer-event`(fresh beneficiary → Transfer(0x0→ben))·
+    `burn-transfer-event`(Transfer→0x0 count 증가). helper `transferLogCount`(topic1/2 nil 필터).
+  - 잔여: f3-05(proposeGasTip+GasTipUpdated), b-06(gastip→header WBFTExtra 동기화+revert),
+    f4-02(remove minter), f4-03(masterminter add/remove member), f2-03(quorum 미달→Voting).
 - **Tier 2 tx 거부/영수증**: a2-05a/05b(sub-min tip/feecap 거부), a2-07(gas-limit 초과), a3-06(revert
   status=0), a3-07(out-of-gas), a2-04(nonce 순서), a2-09(replacement tx), d-03/04(sender/feepayer 서명
   무효), d-05(feepayer 잔액부족).
