@@ -21,6 +21,7 @@ type fakeDriver struct {
 	mu          sync.Mutex
 	provisioned []int
 	launched    []int
+	stopped     []int       // handles passed to Stop, by index
 	configLens  map[int]int // node index -> ConfigContent length seen at Provision
 }
 
@@ -42,7 +43,12 @@ func (f *fakeDriver) Launch(_ context.Context, s driver.NodeSpec) (driver.Handle
 	return driver.Handle{Index: s.Index, PID: 1000 + s.Index}, nil
 }
 
-func (f *fakeDriver) Stop(context.Context, driver.Handle) error { return nil }
+func (f *fakeDriver) Stop(_ context.Context, h driver.Handle) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.stopped = append(f.stopped, h.Index)
+	return nil
+}
 
 func TestBuildPlan_RolesAndPorts(t *testing.T) {
 	p, err := registry.Get("stablenet")

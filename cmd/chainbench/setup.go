@@ -117,7 +117,7 @@ func newSetupCmd() *cobra.Command {
 				}
 				bus, closeBus := obsBus()
 				defer closeBus()
-				ns, err := setup.Launch(cmd.Context(), setup.LaunchOptions{
+				ns, specs, err := setup.LaunchWithSpecs(cmd.Context(), setup.LaunchOptions{
 					Plugin: p, Config: cfg, DataRoot: root, Binary: bin, KeysDir: keysDir, Bus: bus,
 					Driver: remoteDrv,
 				})
@@ -125,6 +125,11 @@ func newSetupCmd() *cobra.Command {
 					return err
 				}
 				if err := state.SaveNodeSet(root, ns); err != nil {
+					return err
+				}
+				// Persist the armed specs so `node start --index` can relaunch a
+				// single node after `node stop --index`.
+				if err := state.SaveNodeSpecs(root, specs); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "launched %d node(s); state: %s\n",
