@@ -29,11 +29,19 @@ func apiMock(t *testing.T) *httptest.Server {
 		var result any
 		switch req.Method {
 		case "eth_getBlockByNumber", "eth_getBlockByHash":
-			result = map[string]any{"number": "0x64", "hash": hash}
+			result = map[string]any{"number": "0x64", "hash": hash, "transactions": []any{}}
 		case "eth_gasPrice":
 			result = "0x3b9aca00" // 1 gwei
+		case "eth_feeHistory":
+			result = map[string]any{
+				"oldestBlock":   "0x55",
+				"baseFeePerGas": []any{"0x12309ce54000", "0x12309ce54000"},
+				"gasUsedRatio":  []any{0.0},
+			}
 		case "txpool_status":
 			result = map[string]any{"pending": "0x0", "queued": "0x0"}
+		case "txpool_content":
+			result = map[string]any{"pending": map[string]any{}, "queued": map[string]any{}}
 		case "eth_syncing":
 			result = false
 		case "eth_estimateGas":
@@ -66,7 +74,7 @@ func run(t *testing.T, name string) testkit.Result {
 }
 
 func TestAPICases(t *testing.T) {
-	for _, name := range []string{"block-by-hash-consistency", "gas-price-positive", "txpool-status", "chain-not-syncing", "estimate-gas", "logs-query-well-formed"} {
+	for _, name := range []string{"block-by-hash-consistency", "gas-price-positive", "txpool-status", "chain-not-syncing", "estimate-gas", "logs-query-well-formed", "block-transactions-field", "fee-history-well-formed", "txpool-content-well-formed"} {
 		if r := run(t, name); r.Status != testkit.StatusPass {
 			t.Errorf("%s: %+v", name, r)
 		}
