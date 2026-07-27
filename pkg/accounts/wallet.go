@@ -44,6 +44,15 @@ type Wallet interface {
 	// delegating its account code to delegateHex. After it mines, the authority's
 	// code becomes 0xef0100||delegate. Returns the tx hash.
 	SendSetCode(ctx context.Context, authorityKey []byte, delegateHex string) (txHash string, err error)
+	// SendDynamicFee sends a type 0x02 (EIP-1559 dynamic-fee) value transfer of
+	// amountWei to the hex recipient, returning the tx hash. Fees are auto-filled
+	// (GasTipCap from the node's suggestion, GasFeeCap = gasPrice + tip). This is
+	// the explicit 0x02 path for tx-type regression coverage.
+	SendDynamicFee(ctx context.Context, toHex string, amountWei *big.Int) (txHash string, err error)
+	// SendAccessList sends a type 0x01 (EIP-2930 access-list) value transfer of
+	// amountWei to the hex recipient with an empty access list, using legacy-style
+	// GasPrice, returning the tx hash.
+	SendAccessList(ctx context.Context, toHex string, amountWei *big.Int) (txHash string, err error)
 }
 
 // sdkWallet adapts *sdkwallet.Wallet to the Wallet interface.
@@ -136,6 +145,78 @@ func (s sdkWallet) SendLegacy(ctx context.Context, toHex string, amountWei *big.
 	t := &sdktx.LegacyTx{Nonce: nonce, GasPrice: gasPrice, Gas: 21000, To: &to, Value: amountWei}
 	if err := t.Sign(chainID, s.w.Account.PrivateKey()); err != nil {
 		return "", fmt.Errorf("accounts: sign legacy tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendDynamicFee(ctx context.Context, toHex string, amountWei *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil {
+		return "", fmt.Errorf("accounts: nil amount")
+	}
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
+	}
+	tip, err := s.w.Client.MaxPriorityFeePerGas(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: max priority fee: %w", err)
+	}
+	gasPrice, err := s.w.Client.GasPrice(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: gas price: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.DynamicFeeTx{
+		ChainID: chainID, Nonce: nonce, GasTipCap: tip,
+		GasFeeCap: new(big.Int).Add(gasPrice, tip), Gas: 21000, To: &to, Value: amountWei,
+	}
+	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign dynamic-fee tx: %w", err)
+	}
+	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
+	if err != nil {
+		return "", err
+	}
+	return h.Hex(), nil
+}
+
+func (s sdkWallet) SendAccessList(ctx context.Context, toHex string, amountWei *big.Int) (string, error) {
+	to, err := sdktypes.HexToAddress(toHex)
+	if err != nil {
+		return "", fmt.Errorf("accounts: invalid recipient %q: %w", toHex, err)
+	}
+	if amountWei == nil {
+		return "", fmt.Errorf("accounts: nil amount")
+	}
+	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
+	if err != nil {
+		return "", fmt.Errorf("accounts: nonce: %w", err)
+	}
+	gasPrice, err := s.w.Client.GasPrice(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: gas price: %w", err)
+	}
+	chainID, err := s.w.Client.ChainID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("accounts: chain id: %w", err)
+	}
+	t := &sdktx.AccessListTx{
+		ChainID: chainID, Nonce: nonce, GasPrice: gasPrice, Gas: 21000,
+		To: &to, Value: amountWei, AccessList: sdktx.AccessList{},
+	}
+	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
+		return "", fmt.Errorf("accounts: sign access-list tx: %w", err)
 	}
 	h, err := s.w.Client.SendRawTransaction(ctx, t.Encode())
 	if err != nil {

@@ -258,6 +258,11 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
 - **A1(경미). 구 binary-swap 하드포크 refinement**: 검증된 핸드오프는 concurrent 모델
   (`pkg/consensus/upgrade`), `pkg/core/hardfork`는 균질 fork용 binary-swap으로 문서화됨.
   우선순위 낮음.
+- ✅ **0x1/0x2 tx타입 SDK 바인딩 + a2-02/03 포팅(B-blk2)**: accounts.Wallet에 `SendDynamicFee`
+  (0x02, EIP-1559: tip=MaxPriorityFeePerGas, feeCap=gasPrice+tip)·`SendAccessList`(0x01, EIP-2930,
+  빈 access list, legacy-style gasPrice) 추가(SDK `tx.DynamicFeeTx`/`AccessListTx` 직접 사용,
+  SDK 무변경). validation 단위테스트. 라이브 케이스 `dynamic-fee-tx`·`access-list-tx`(faucet
+  wallet로 typed send → eth_getTransactionByHash.type == 0x2/0x1) 포팅. 포팅 62 케이스.
 - **A4(부분). accounts governance/token 타입 바인딩** 🟢: ABI/tx/event 바인딩 계층은
   코어에 있음(위). 체인별 거버넌스·토큰의 타입드 프로파일 바인딩은 케이스별 refinement.
   → **S4로 승계**: 바인딩은 완비됐으나 **위치가 generic `pkg/accounts`** — 이전이 선행.
