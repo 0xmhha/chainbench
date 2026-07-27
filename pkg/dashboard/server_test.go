@@ -26,6 +26,29 @@ func TestHealthAndIndex(t *testing.T) {
 	}
 }
 
+func TestSPAServed(t *testing.T) {
+	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), obs.NewMemStore()))
+	defer srv.Close()
+
+	// The SPA index loads its bundled module from /app/assets/.
+	if b := get(t, srv.URL+"/app/"); !strings.Contains(b, "chainbench") || !strings.Contains(b, "/app/assets/") {
+		t.Errorf("SPA index missing content: %q", b)
+	}
+	// A hashed asset referenced by the index must be served (non-empty, JS type).
+	idx := get(t, srv.URL+"/app/")
+	start := strings.Index(idx, "/app/assets/")
+	if start < 0 {
+		t.Fatal("no asset ref in SPA index")
+	}
+	end := strings.IndexAny(idx[start:], "\"'")
+	assetPath := idx[start : start+end]
+	resp, err := http.Get(srv.URL + assetPath)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Fatalf("asset %s not served: err=%v status=%v", assetPath, err, resp)
+	}
+	resp.Body.Close()
+}
+
 func TestRunsAPI(t *testing.T) {
 	store := obs.NewMemStore()
 	_ = store.SaveRun(obs.RunRecord{ID: "test/a", Phase: obs.PhaseTest, Status: obs.RunSucceeded})
