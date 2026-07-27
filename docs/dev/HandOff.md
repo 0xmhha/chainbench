@@ -366,7 +366,10 @@ D1(대형·이 환경 검증 불가)뿐.
 - **live 검증 경로(repro tier)**: `tests/repro/`에 5개 스크립트 + gated e2e 1개 — 매핑·실행법은
   `tests/repro/README.md`. 실 바이너리(gstable/wemix/wbft) 있는 정상 환경에서 실행.
 - **미포팅 잔여(전부 인프라/키/타이밍 블로커)**: c-02(authorized 키), c-04(stable 밴드 flaky),
-  e-03(feepayer 가드 미검사), e-09(authorized-tx event), a1-03(snap 모드 토글), z-layer2(5), D1.
+  e-03(feepayer 가드 미검사), e-09(authorized-tx event), z-layer2(5), D1.
+- **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
+  full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
+  단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).
 - **핵심 원칙(이 세션 확립)**: 3~7의 신규 작업은 이 환경에서 최종 live green 불가 → "코드+단위+
   gating(+`bash -n`)까지"만 완료로 보고하고 live 검증은 정상 환경 몫으로 명시. 억지 flaky 포팅 대신
   명시적 defer.

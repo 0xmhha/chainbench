@@ -16,7 +16,7 @@ prints exactly what it needs.
 |--------|-----------|-------|-------|
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay manifests/overlays/stablenet-account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
-| `stablenet-sync-gap.sh` | endpoint re-sync (a1-02 full-sync, a1-06 downloader) | `GSTABLE_BIN`, python3 | `node stop --index` → open a ≥`GAP` block gap → `node start --index` → assert re-sync (head within 2, matching hash, `eth_syncing=false`) |
+| `stablenet-sync-gap.sh` | endpoint re-sync (a1-02 full, a1-06 downloader, a1-03 snap) | `GSTABLE_BIN`, python3 | `node stop --index` → open a ≥`GAP` block gap → `node start --index` → assert re-sync (head within 2, matching hash + stateRoot, state access, `eth_syncing=false`). Snap: `SYNCMODE=snap GAP=150` |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/decrease (c-03/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; idle → assert it fell. Load/timing sensitive (repro-only) |
 | `wemix-wbft-handoff.sh` | go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block |
 
