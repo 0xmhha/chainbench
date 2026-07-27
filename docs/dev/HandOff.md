@@ -344,7 +344,12 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    govCouncil authorized/blacklisted). h-30/33/34 포팅: `authorized-extra-bit-synced`·
    `blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved`(account-extra
    gating). repro `tests/repro/stablenet-account-extra.sh`. ⚠️ 실 gstable 필요(단위·`bash -n`까지).
-5. 🔴 **c-anzeon basefee/gastip dynamics**(c-01~05): 지속 부하 생성기(2의 러너 재사용) + 타이밍 관찰.
+5. 🟡 **c-anzeon basefee/gastip dynamics**(c-01~05): c-01(regular-account-gastip-forced) 결정적
+   testkit 케이스로 포팅 — 고tip 요청이 header GasTip으로 강제됨을 inclusion 블록 baseFee 기준
+   정확 비교(`SendDynamicFeeGas`, istanbul_getWbftExtraInfo). c-06/07(min/max)은 기존 포팅.
+   c-03/05(basefee ±) repro `tests/repro/stablenet-basefee-dynamics.sh`(부하·타이밍 의존 →
+   repro tier, `bash -n`까지). **잔여**: c-02(authorized 자유 tip — authorized 계정 키 필요),
+   c-04(6~20% stable 밴드 — 정밀 히트 불가로 flaky).
 6. 🔴 **z-layer2-e2e**(5): L2 스택 셋업(대형·효용 불확실).
 7. 🔴 **D1 Svelte SPA**(독립·병렬 가능): 프론트 빌드 툴체인 필요.
 8. 🟢 **마무리**: 최종 커버리지 리포트·핸드오프.
