@@ -439,8 +439,12 @@ D1(대형·이 환경 검증 불가)뿐.
   - **defer(다노드 제어+타이밍, repro-tier)**: b-09/10(round change — proposer stop), a1-04(재시작 재개),
     a1-07(block-fetcher), b-08(quorum halt — 약한 fidelity). lifecycle harness(node stop/start)+타이밍
     관찰이라 결정적 testkit화 어려움 → 정상 환경 repro가 적합.
-  - **defer(설정 선행)**: f3-06(proposal expiry) — 기본 expiry 604800s(7일)라 short-expiry genesis
-    overlay(예: govCouncil expiry=60) 선행 필요 + 60s+ 대기. overlay 추가 시 포팅 가능.
+  - ✅ **f3-06 포팅**: `manifests/overlays/stablenet-short-expiry.json`(GovValidator expiry=30s +
+    short-expiry capability) + `proposal-expiry-transitions`(proposeGasTip→35s 대기→expireProposal→
+    status==Expired(5)). repro `stablenet-proposal-expiry.sh`. short-expiry gating.
+
+**결정적으로 testkit화 가능한 gap 전부 소진.** 남은 것(Tier 3 basefee, Tier 4 sync/round/restart/fetcher)은
+모두 (a) 이미 repro로 커버되었거나 (b) 다노드 제어+타이밍 의존이라 repro-tier가 적합 → testkit 중복 미포팅.
 
 live 검증은 정상 환경에서 `tests/repro`로.
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
