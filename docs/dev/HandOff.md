@@ -418,9 +418,12 @@ D1(대형·이 환경 검증 불가)뿐.
   - ✅ **f4-03 포팅 → Tier 1 완결**: `masterminter-member-add-remove`(fresh member 추가 quorum=3→
     isMember/quorum 확인→제거 quorum=2 복원). memberVersion 매 확인 시 재조회, newQuorum은 uint32.
   - **Tier 1 전부 완료**: f5-04/07/08/09, f5-05, f4-04, f1-04/05, b-06/f3-05, f4-02, f2-03, f4-03.
-- **Tier 2 tx 거부/영수증**: a2-05a/05b(sub-min tip/feecap 거부), a2-07(gas-limit 초과), a3-06(revert
-  status=0), a3-07(out-of-gas), a2-04(nonce 순서), a2-09(replacement tx), d-03/04(sender/feepayer 서명
-  무효), d-05(feepayer 잔액부족).
+- **Tier 2 tx 거부/영수증**:
+  - ✅ a2-05a(`tipcap-underpriced-rejected`), d-05(`feepayer-insufficient-rejected`). a2-05b는 기존
+    `feecap-below-min-rejected`로 이미 커버(중복 스킵).
+  - 잔여(대부분 wallet 명시 nonce/gas-limit 제어 또는 raw tx 조작 인프라 선행): a2-07(gas-limit 초과),
+    a3-06(revert status=0 — Deploy로 가능), a3-07(out-of-gas — gas-limit 제어), a2-04(nonce 순서),
+    a2-09(replacement tx), d-03/04(sender/feepayer 서명 무효 — raw tx 조작).
 - **Tier 3 basefee dynamics**: c-03/04/05(repro로 일부 커버; testkit화 검토).
 - **Tier 4 다노드 lifecycle**: b-09/10(round change), a1-04(재시작 재개), b-03(epoch), a1-02/03/06/07
   (sync 경로 — repro로 일부 커버), b-08(quorum halt, 약한 fidelity), f3-06(proposal expiry, 시간의존).
