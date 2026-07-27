@@ -19,7 +19,7 @@ prints exactly what it needs.
 | `stablenet-sync-gap.sh` | endpoint re-sync (a1-02 full, a1-06 downloader, a1-03 snap) | `GSTABLE_BIN`, python3 | `node stop --index` → open a ≥`GAP` block gap → `node start --index` → assert re-sync (head within 2, matching hash + stateRoot, state access, `eth_syncing=false`). Snap: `SYNCMODE=snap GAP=150` |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
 | `wemix-wbft-handoff.sh` | go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block |
-| `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-03/04) | `L2_RPC` (an already-running L2 RPC; no chain binary) | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; fails on any skip. Write ops (RT-Z-02/05) need an L2-funded key |
+| `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-02/03/04/05) | `L2_RPC` (an already-running L2 RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
 `LOCAL-*.sh` are ad-hoc local captures (gitignored pattern aside) and are not part
 of the runbook.
@@ -27,8 +27,10 @@ of the runbook.
 ## Secrets
 
 No private key is committed. Scripts that need a funded sender read it from an env
-var (`FAUCET_PK`), never a literal. The SSH RemoteDriver E2E reads
-`CHAINBENCH_REMOTE_PASS` from the environment only.
+var (`FAUCET_PK`), never a literal. Chain-agnostic write cases read the funded
+account key from `CHAINBENCH_FUNDED_KEY` (env only — the `chainbench test` command
+never takes it as a flag). The SSH RemoteDriver E2E reads `CHAINBENCH_REMOTE_PASS`
+from the environment only.
 
 ## Gated Go E2E
 

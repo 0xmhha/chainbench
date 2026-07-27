@@ -391,8 +391,13 @@ D1(대형·이 환경 검증 불가)뿐.
     연결, POST한 이벤트가 모든 필드로 실시간 렌더링 확인. 이후 `/`를 SPA로 전환(base '/'), interim
     build-free 페이지는 `/legacy` fallback으로 보존. `/events`·`/api/runs`는 더 구체적 라우트로 우선
     매칭(무회귀). favicon 404는 무해.
-- **미포팅 잔여**: z-layer2 write-side(L2 funded key 확보 시 기존 transfer/fee-deleg 케이스에 L2
-  chain 추가) — 실 L2 없이는 speculative.
+  - ✅ **z-layer2 write-side + external-chain write 확장**: chain-agnostic write 케이스
+    (`tests/external`: `external-value-transfer` RT-Z-02, `external-fee-delegated-transfer` RT-Z-05,
+    빈 ChainCompat)가 임의 체인에서 동작. funded key는 `CHAINBENCH_FUNDED_KEY` env 전용(리터럴 없음)
+    →`testrun.Options.FundedKey`→`testkit.T.FundedKey()`(NodeSet 미직렬화). key 없으면 `T.Skip`(신규).
+    하이브리드 external-manifest 모델의 write 스토리 완성. `layer2-attach.sh`가 키 있으면 write도 실행.
+    단위검증: FundedKey/Skip, CLI env 파싱, skip-without-key gating.
+- **미포팅 잔여**: 없음(이 환경 검증 가능한 범위). live 검증은 정상 환경에서 `tests/repro`로.
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
   full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
   단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).

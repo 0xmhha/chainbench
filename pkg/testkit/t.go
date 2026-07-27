@@ -26,23 +26,45 @@ func DefaultFactory(url string) Client { return rpc.Dial(url) }
 // failSentinel is panicked by Fatalf/Fatal and recovered by the runner.
 type failSentinel struct{ msg string }
 
+// skipSentinel is panicked by Skip and recovered by the runner, which records
+// the case as skipped (not a pass or fail).
+type skipSentinel struct{ msg string }
+
 // T is the handle a Case uses to drive one NodeSet and assert on it. Assertions
 // mirror the shape of the standard library's testing.T: Errorf records a
 // failure and continues; Fatalf records and aborts the case.
 type T struct {
-	ctx     context.Context
-	ns      node.NodeSet
-	factory ClientFactory
-	failed  bool
-	msgs    []string
+	ctx       context.Context
+	ns        node.NodeSet
+	factory   ClientFactory
+	fundedKey []byte
+	failed    bool
+	msgs      []string
 }
 
 // newT constructs a T (used by the runner).
-func newT(ctx context.Context, ns node.NodeSet, f ClientFactory) *T {
+func newT(ctx context.Context, ns node.NodeSet, f ClientFactory, fundedKey []byte) *T {
 	if f == nil {
 		f = DefaultFactory
 	}
-	return &T{ctx: ctx, ns: ns, factory: f}
+	return &T{ctx: ctx, ns: ns, factory: f, fundedKey: fundedKey}
+}
+
+// FundedKey returns the caller-supplied funded-account private key and whether
+// one was configured (CHAINBENCH_FUNDED_KEY). Chain-agnostic write cases use it
+// to act on an arbitrary chain — e.g. an external L2 supplied via --manifest —
+// and Skip when it is absent. The key is never serialized: it flows only through
+// the run, never through the NodeSet (which is written to nodeset.json).
+func (t *T) FundedKey() ([]byte, bool) {
+	return t.fundedKey, len(t.fundedKey) > 0
+}
+
+// Skip records the case as skipped with the given reason and aborts it. Use it
+// when a case cannot apply to the current run for a reason not expressible as a
+// static capability (e.g. no funded key configured).
+func (t *T) Skip(format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	panic(skipSentinel{msg: msg})
 }
 
 // Ctx returns the case context.

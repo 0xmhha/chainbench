@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -13,6 +16,22 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/pkg/core/state"
 )
+
+// fundedKeyFromEnv reads an optional funded-account private key from
+// CHAINBENCH_FUNDED_KEY (0x-optional hex). It is env-only — never a flag or a
+// committed literal — so a secret never lands in shell history or the repo. It
+// lets chain-agnostic write cases act on a project-supplied chain (e.g. an L2).
+func fundedKeyFromEnv() ([]byte, error) {
+	v := strings.TrimSpace(os.Getenv("CHAINBENCH_FUNDED_KEY"))
+	if v == "" {
+		return nil, nil
+	}
+	key, err := hex.DecodeString(strings.TrimPrefix(v, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("CHAINBENCH_FUNDED_KEY is not valid hex: %w", err)
+	}
+	return key, nil
+}
 
 func newTestCmd() *cobra.Command {
 	var (
@@ -32,7 +51,11 @@ func newTestCmd() *cobra.Command {
 			}
 			bus, closeBus := obsBus()
 			defer closeBus()
-			opts := testrun.Options{Names: names, Categories: categories, Bus: bus}
+			fundedKey, err := fundedKeyFromEnv()
+			if err != nil {
+				return err
+			}
+			opts := testrun.Options{Names: names, Categories: categories, Bus: bus, FundedKey: fundedKey}
 			// Persist results when a data dir is given, so `report` can read them.
 			if dataDir != "" {
 				store, err := obs.NewFileStore(filepath.Join(dataDir, "runs.json"))

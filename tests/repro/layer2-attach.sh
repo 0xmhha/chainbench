@@ -69,4 +69,27 @@ if echo "$out" | grep -qE 'skip=[1-9]'; then
   echo "FAIL: some L2 cases skipped (endpoint capability problem)"
   exit 1
 fi
-log "PASS: chain-agnostic cases green against the L2 endpoint"
+log "PASS: chain-agnostic read cases green against the L2 endpoint"
+
+# Write side (RT-Z-02 send tx, RT-Z-05 fee delegation): the chain-agnostic write
+# cases need a funded account key on the L2, supplied via CHAINBENCH_FUNDED_KEY
+# (env only — never a literal). Without it, they skip.
+if [ -n "${CHAINBENCH_FUNDED_KEY:-}" ]; then
+  log "run chain-agnostic write cases (funded key present)"
+  if ! wout="$("$CHAINBENCH" test --rpc "$L2_RPC" --chain "$L2_CHAIN" \
+    --name external-value-transfer --name external-fee-delegated-transfer 2>&1)"; then
+    echo "$wout"
+    echo "FAIL: L2 write cases reported failures"
+    exit 1
+  fi
+  echo "$wout"
+  # A skip here means the funded key did not take or 0x16 is unsupported; the
+  # value-transfer case at least must have run.
+  if echo "$wout" | grep -qE 'pass=0'; then
+    echo "FAIL: no write case ran (funded key not applied?)"
+    exit 1
+  fi
+  log "PASS: L2 write cases ran with the funded key"
+else
+  log "SKIP write side: set CHAINBENCH_FUNDED_KEY to run RT-Z-02/RT-Z-05 on the L2"
+fi

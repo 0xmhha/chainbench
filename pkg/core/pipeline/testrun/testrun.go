@@ -30,6 +30,10 @@ type Options struct {
 	Store obs.Store
 	// Now supplies timestamps for records; defaults to time.Now.
 	Now func() time.Time
+	// FundedKey is an optional funded-account private key (from
+	// CHAINBENCH_FUNDED_KEY) that chain-agnostic write cases use to act on an
+	// arbitrary chain. It is passed to cases at run time and never serialized.
+	FundedKey []byte
 }
 
 // Run executes the registered cases against ns and returns the aggregate
@@ -62,7 +66,7 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options) (testkit.Report, er
 			continue
 		}
 
-		res := testkit.RunCase(ctx, c, ns, factory)
+		res := testkit.RunCaseWith(ctx, c, ns, factory, testkit.RunOpts{FundedKey: opts.FundedKey})
 		rep.Results = append(rep.Results, res)
 		record(opts, ns, res, now)
 		emit(opts.Bus, ns, res)
