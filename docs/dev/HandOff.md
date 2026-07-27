@@ -386,10 +386,13 @@ D1(대형·이 환경 검증 불가)뿐.
   - ✅ **D1 Svelte SPA(1차)**: 이 환경에 JS 툴체인(node v22/npm/pnpm)이 있어 빌드·검증 가능
     (이전 "툴체인 부재" 판단은 이 환경엔 오판). `web/`(Svelte 5+Vite) 소스→`npm run build`→
     `pkg/dashboard/spa/`(커밋)→`spa.go` `go:embed`→서버가 `/app/`에 서빙. /events SSE + /api/runs
-    소비. 기존 build-free `/`는 무변경(회귀 0). 서버 테스트로 SPA index+asset 서빙 검증. **잔여**:
-    `/app`→`/` 컷오버는 live 확인 후.
+    소비. 서버 테스트로 SPA index+asset 서빙 검증.
+  - ✅ **D1 컷오버 + live 검증**: Playwright로 실 브라우저에서 검증 — SPA mount, EventSource "live"
+    연결, POST한 이벤트가 모든 필드로 실시간 렌더링 확인. 이후 `/`를 SPA로 전환(base '/'), interim
+    build-free 페이지는 `/legacy` fallback으로 보존. `/events`·`/api/runs`는 더 구체적 라우트로 우선
+    매칭(무회귀). favicon 404는 무해.
 - **미포팅 잔여**: z-layer2 write-side(L2 funded key 확보 시 기존 transfer/fee-deleg 케이스에 L2
-  chain 추가), D1 컷오버(SPA를 `/` 기본으로).
+  chain 추가) — 실 L2 없이는 speculative.
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
   full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
   단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).

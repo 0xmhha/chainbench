@@ -83,3 +83,6 @@ id_ed25519.*
 # catches stray copies elsewhere).
 **/geth/nodekey
 **/gwemix/nodekey
+
+# browser automation artifacts
+.playwright-mcp/

@@ -2,8 +2,9 @@
 // (requirement #19). It streams the obs event bus to browsers over SSE and
 // exposes stored run state as JSON, so a UI can show the three phases
 // (setup/verify/test) live. The realtime contract is SSE (one-way event
-// stream); the served page is an interim build-free UI pending the Svelte SPA
-// (docs/CHAINBENCH_GO_REDESIGN.md §8.2, decision D5).
+// stream); the served page is the built Svelte SPA (decision D5), with the
+// interim build-free page kept at /legacy as a no-JS fallback
+// (docs/CHAINBENCH_GO_REDESIGN.md §8.2).
 package dashboard
 
 import (
@@ -28,26 +29,23 @@ type Server struct {
 // NewServer wires the routes. store may be nil (runs API returns []).
 func NewServer(bus *obs.Bus, store obs.Store) *Server {
 	s := &Server{bus: bus, store: store, mux: http.NewServeMux()}
-	s.mux.HandleFunc("GET /", s.handleIndex)
+	// The built Svelte SPA (decision D5) is served at the root; the more specific
+	// API/stream routes below take precedence over this catch-all. The interim
+	// build-free page remains available at /legacy as a no-JS fallback.
+	s.mux.Handle("GET /", spaHandler())
+	s.mux.HandleFunc("GET /legacy", s.handleLegacy)
 	s.mux.HandleFunc("GET /healthz", s.handleHealth)
 	s.mux.HandleFunc("GET /events", s.handleEvents)
 	s.mux.HandleFunc("GET /api/runs", s.handleRuns)
 	s.mux.HandleFunc("POST /api/events", s.handlePublish)
-	// The built Svelte SPA (decision D5) is served under /app/, alongside the
-	// interim build-free page at /. Both consume /events + /api/runs, so the
-	// cutover to make /app the default is a follow-up once it is verified live.
-	s.mux.Handle("GET /app/", spaHandler())
 	return s
 }
 
 // ServeHTTP implements http.Handler.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) { s.mux.ServeHTTP(w, r) }
 
-func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
+// handleLegacy serves the interim build-free page as a no-JS fallback at /legacy.
+func (s *Server) handleLegacy(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(indexHTML)
 }

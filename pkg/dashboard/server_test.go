@@ -21,22 +21,23 @@ func TestHealthAndIndex(t *testing.T) {
 	if b := get(t, srv.URL+"/healthz"); b != "ok" {
 		t.Errorf("healthz: %q", b)
 	}
-	if b := get(t, srv.URL+"/"); !strings.Contains(b, "chainbench") || !strings.Contains(b, "EventSource") {
-		t.Errorf("index page missing content")
+	// / serves the Svelte SPA index, which loads its bundle from /assets/.
+	if b := get(t, srv.URL+"/"); !strings.Contains(b, "chainbench") || !strings.Contains(b, "/assets/") {
+		t.Errorf("SPA index missing content: %q", b)
+	}
+	// The legacy build-free page remains available as a no-JS fallback.
+	if b := get(t, srv.URL+"/legacy"); !strings.Contains(b, "chainbench") || !strings.Contains(b, "EventSource") {
+		t.Errorf("legacy page missing content")
 	}
 }
 
-func TestSPAServed(t *testing.T) {
+func TestSPAAssetServed(t *testing.T) {
 	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), obs.NewMemStore()))
 	defer srv.Close()
 
-	// The SPA index loads its bundled module from /app/assets/.
-	if b := get(t, srv.URL+"/app/"); !strings.Contains(b, "chainbench") || !strings.Contains(b, "/app/assets/") {
-		t.Errorf("SPA index missing content: %q", b)
-	}
-	// A hashed asset referenced by the index must be served (non-empty, JS type).
-	idx := get(t, srv.URL+"/app/")
-	start := strings.Index(idx, "/app/assets/")
+	// A hashed asset referenced by the SPA index must be served (non-empty).
+	idx := get(t, srv.URL+"/")
+	start := strings.Index(idx, "/assets/")
 	if start < 0 {
 		t.Fatal("no asset ref in SPA index")
 	}
