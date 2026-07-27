@@ -64,6 +64,13 @@ func Generate(p Params) []byte {
 	b.WriteString("HTTPVirtualHosts = [\"*\"]\n")
 	fmt.Fprintf(&b, "HTTPModules = [%s]\n\n", quoteList(modules))
 
+	// WebSocket endpoint (same host/modules as HTTP) so eth_subscribe is served;
+	// the port is also set via the --ws.port launch flag.
+	fmt.Fprintf(&b, "WSHost = %q\n", httpHost)
+	fmt.Fprintf(&b, "WSPort = %d\n", p.Ports.WS)
+	b.WriteString("WSOrigins = [\"*\"]\n")
+	fmt.Fprintf(&b, "WSModules = [%s]\n\n", quoteList(modules))
+
 	b.WriteString("[Node.P2P]\n")
 	fmt.Fprintf(&b, "ListenAddr = \":%d\"\n", p.Ports.P2P)
 	b.WriteString("NoDiscovery = true\n")

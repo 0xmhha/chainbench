@@ -10,7 +10,7 @@ import (
 func TestGenerate_Validator(t *testing.T) {
 	toml := string(Generate(Params{
 		Role:         node.RoleValidator,
-		Ports:        node.Endpoints{P2P: 30301, HTTP: 8501, Auth: 8551, Metrics: 6061},
+		Ports:        node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501, Auth: 8551, Metrics: 6061},
 		KeystoreDir:  "/data/keystores/node1",
 		RPCNamespace: "istanbul",
 		StaticNodes:  []string{"enode://abc@127.0.0.1:30301?discport=0"},
@@ -22,6 +22,8 @@ func TestGenerate_Validator(t *testing.T) {
 		`KeyStoreDir = "/data/keystores/node1"`,
 		"AuthPort = 8551",
 		"HTTPPort = 8501",
+		"WSPort = 9501",   // WebSocket endpoint for eth_subscribe
+		"WSModules = [",   // WS namespaces (same as HTTP, so "eth" is served)
 		`Recommit = "2s"`, // wbft-family binaries decode Recommit from a string
 		`"istanbul"`,      // namespace in HTTPModules
 		`ListenAddr = ":30301"`,

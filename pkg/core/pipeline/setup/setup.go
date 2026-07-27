@@ -85,6 +85,9 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 	// capabilities (config "genesis.capabilities", comma-separated) — e.g. an
 	// account-extra overlay advertises "account-extra".
 	caps := append([]string(nil), m.Capabilities...)
+	// Launched nodes serve a WebSocket endpoint (--ws), so advertise "ws" for the
+	// eth_subscribe cases; attached networks (no known WS port) do not.
+	caps = append(caps, "ws")
 	if cfg.Int(overridePrefix+"bohoBlock", 0) > 0 {
 		caps = append(caps, "delayed-boho")
 	}

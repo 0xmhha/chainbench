@@ -444,9 +444,11 @@ D1(대형·이 환경 검증 불가)뿐.
 
 ### gap 분석 최종 커버리지 (2026-07-28)
 
-참조 회귀 111 케이스 대비: **포팅됨(기존 71) + 이번 세션 신규(testkit 22 + repro-tier)**. gap 분석의
-**포팅가능 36건 전부 처리 완료**(testkit 결정적 케이스 + 부하/타이밍/다노드는 repro-tier). 진짜 블록 3건만
-잔존: A-4-06/07(WebSocket eth_subscribe 클라이언트 부재), B-05(활성 validator 파괴적 제거).
+참조 회귀 111 케이스 대비: **포팅됨(기존 71) + 이번 세션 신규(testkit 24 + repro-tier)**. gap 분석의
+**포팅가능 36건 전부 처리 완료**. ✅ **WebSocket eth_subscribe 지원 신설**로 A-4-06/07도 언블록·포팅
+(gorilla/websocket 의존성 + `rpc.Subscribe` 클라이언트[단위검증] + nodeconfig WS 설정[WSModules incl eth] +
+`ws` capability + `ws-subscribe-new-heads`/`ws-subscribe-logs` 케이스). **진짜 블록은 B-05(활성 validator
+파괴적 제거) 1건만** 잔존(러닝 네트워크 정족수 훼손이라 의도적 미포팅).
 
 - **testkit 신규(결정적)**: Tier1 거버넌스/이벤트 11, Tier2 tx거부/영수증 9, b-03 epoch, f3-06 expiry.
 - **repro tier(부하/타이밍/다노드, `tests/repro/README.md`)**: basefee-dynamics(c-03/04/05),
