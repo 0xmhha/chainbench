@@ -436,9 +436,10 @@ D1(대형·이 환경 검증 불가)뿐.
   - ✅ **b-03 포팅**: `epoch-transition-carries-epoch-info`(epoch 경계 블록의 istanbul_getWbftExtraInfo에
     epochInfo 존재 + validator/candidate set 비어있지 않음; network-agnostic, read-only, epoch 경계까지 대기).
   - **defer(repro 커버)**: a1-02/03/06(sync 경로 — `stablenet-sync-gap.sh`로 커버).
-  - **defer(다노드 제어+타이밍, repro-tier)**: b-09/10(round change — proposer stop), a1-04(재시작 재개),
-    a1-07(block-fetcher), b-08(quorum halt — 약한 fidelity). lifecycle harness(node stop/start)+타이밍
-    관찰이라 결정적 testkit화 어려움 → 정상 환경 repro가 적합.
+  - ✅ **b-08/09/10 + a1-04 repro 포팅**: `stablenet-consensus-lifecycle.sh`(validator 1개 stop→
+    production 계속(b-09)+parentHash 체인 무결(b-10), restart→재개(a1-04), 2개 stop(<quorum)→정지(b-08)+
+    복구). lifecycle harness(node stop/start --index) 활용, repro-tier.
+  - **잔여(repro-tier)**: a1-07(block-fetcher — near-head 전파 타이밍). 남은 것은 repro가 적합.
   - ✅ **f3-06 포팅**: `manifests/overlays/stablenet-short-expiry.json`(GovValidator expiry=30s +
     short-expiry capability) + `proposal-expiry-transitions`(proposeGasTip→35s 대기→expireProposal→
     status==Expired(5)). repro `stablenet-proposal-expiry.sh`. short-expiry gating.
