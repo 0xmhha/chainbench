@@ -70,17 +70,34 @@ func (r Report) Coverage() int {
 	return ran * 100 / r.Applicable
 }
 
-// RunCase executes one case against ns and returns its Result. It recovers both
-// the Fatalf sentinel and any unexpected panic in the case body, so a buggy
+// RunCase executes one case against ns and returns its Result. It recovers the
+// Fatalf/Skip sentinels and any unexpected panic in the case body, so a buggy
 // case fails rather than crashing the runner.
 func RunCase(ctx context.Context, c Case, ns node.NodeSet, f ClientFactory) Result {
-	t := newT(ctx, ns, f)
+	return RunCaseWith(ctx, c, ns, f, RunOpts{})
+}
+
+// RunOpts carries per-run inputs a case may read but that must not live on the
+// (serialized) NodeSet — currently the funded-account key for chain-agnostic
+// write cases.
+type RunOpts struct {
+	FundedKey []byte
+}
+
+// RunCaseWith is RunCase with explicit run options.
+func RunCaseWith(ctx context.Context, c Case, ns node.NodeSet, f ClientFactory, opts RunOpts) Result {
+	t := newT(ctx, ns, f, opts.FundedKey)
 	start := time.Now()
+	skipped := ""
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
 				if _, ok := r.(failSentinel); ok {
 					return // failure already recorded in t.msgs
+				}
+				if s, ok := r.(skipSentinel); ok {
+					skipped = s.msg
+					return
 				}
 				t.failed = true
 				t.msgs = append(t.msgs, fmt.Sprintf("panic: %v", r))
@@ -89,9 +106,13 @@ func RunCase(ctx context.Context, c Case, ns node.NodeSet, f ClientFactory) Resu
 		c.Fn(t)
 	}()
 	res := Result{Name: c.Name, Category: c.Category, Duration: time.Since(start), Message: t.message()}
-	if t.failed {
+	switch {
+	case skipped != "":
+		res.Status = StatusSkip
+		res.Message = skipped
+	case t.failed:
 		res.Status = StatusFail
-	} else {
+	default:
 		res.Status = StatusPass
 	}
 	return res

@@ -6,6 +6,7 @@ package all
 import (
 	_ "github.com/0xmhha/chainbench/tests/anzeon"
 	_ "github.com/0xmhha/chainbench/tests/api"
+	_ "github.com/0xmhha/chainbench/tests/external"
 	_ "github.com/0xmhha/chainbench/tests/network"
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts"
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus"
