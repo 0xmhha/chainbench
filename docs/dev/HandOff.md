@@ -430,9 +430,17 @@ D1(대형·이 환경 검증 불가)뿐.
     또는 feepayer R 조작→raw 인코딩) 추가, `fd-sender-sig-invalid-rejected`·`fd-feepayer-sig-invalid-rejected`
     (eth_sendRawTransaction→거부). tamper 유닛테스트(0x16 envelope).
   - **Tier 2 전부 완료**: a2-05a, d-05, a2-07, a3-06, a3-07, a2-04, a2-09, d-03, d-04(+a2-05b 기존).
-- **Tier 3 basefee dynamics**: c-03/04/05(repro로 일부 커버; testkit화 검토).
-- **Tier 4 다노드 lifecycle**: b-09/10(round change), a1-04(재시작 재개), b-03(epoch), a1-02/03/06/07
-  (sync 경로 — repro로 일부 커버), b-08(quorum halt, 약한 fidelity), f3-06(proposal expiry, 시간의존).
+- **Tier 3 basefee dynamics** (c-03/04/05): **defer — 이미 `stablenet-basefee-dynamics.sh` repro로 커버**.
+  부하·타이밍 의존이라 testkit화하면 flaky만 늘어남(정상 환경 repro가 적합).
+- **Tier 4 다노드 lifecycle**:
+  - ✅ **b-03 포팅**: `epoch-transition-carries-epoch-info`(epoch 경계 블록의 istanbul_getWbftExtraInfo에
+    epochInfo 존재 + validator/candidate set 비어있지 않음; network-agnostic, read-only, epoch 경계까지 대기).
+  - **defer(repro 커버)**: a1-02/03/06(sync 경로 — `stablenet-sync-gap.sh`로 커버).
+  - **defer(다노드 제어+타이밍, repro-tier)**: b-09/10(round change — proposer stop), a1-04(재시작 재개),
+    a1-07(block-fetcher), b-08(quorum halt — 약한 fidelity). lifecycle harness(node stop/start)+타이밍
+    관찰이라 결정적 testkit화 어려움 → 정상 환경 repro가 적합.
+  - **defer(설정 선행)**: f3-06(proposal expiry) — 기본 expiry 604800s(7일)라 short-expiry genesis
+    overlay(예: govCouncil expiry=60) 선행 필요 + 60s+ 대기. overlay 추가 시 포팅 가능.
 
 live 검증은 정상 환경에서 `tests/repro`로.
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
