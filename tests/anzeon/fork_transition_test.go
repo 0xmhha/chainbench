@@ -14,6 +14,8 @@ import (
 var forkTransitionCases = []string{
 	"govminter-code-changes-at-boho",
 	"p256-inactive-before-boho",
+	"anzeon-active-before-boho",
+	"prealloc-preserved-across-boho",
 }
 
 func TestForkTransitionCases_Register(t *testing.T) {

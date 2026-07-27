@@ -34,6 +34,30 @@
 //
 // Pass:     inactive at block 1, active at latest.
 //
+// # Test: anzeon-active-before-boho
+//
+// Intent:   Anzeon activates at genesis independently of the delayed Boho, so
+//
+//	the GovValidator system contract already holds code at block 1 (pre-Boho).
+//
+// Applies:  stablenet. Requires "rpc" and "delayed-boho".
+// Method:   read eth_getCode(GovValidator, 0x1); expect substantial code.
+// Pass:     GovValidator has system-contract code at block 1.
+//
+// # Test: prealloc-preserved-across-boho
+//
+// Intent:   the delayed Boho runtime upgrade (decodePrealloc restoration) must
+//
+//	not wipe genesis alloc state, so an unspent alloc account keeps its funded
+//	balance and zero nonce across the fork.
+//
+// Applies:  stablenet. Requires "rpc" and "delayed-boho".
+// Method:   read the alloc account balance at block 1; cross the fork; assert
+//
+//	its latest balance equals the block-1 balance and its nonce is still 0.
+//
+// Pass:     balance preserved and nonce == 0 after the fork.
+//
 // These are chainbench TEST CODE (requirement #16): they need a live network
 // launched with a delayed fork, so the sibling _test.go validates registration
 // and the capability gating (they skip on a normal Boho-at-genesis network).
@@ -60,26 +84,75 @@ func init() {
 		RequiresCaps: []string{"rpc", "delayed-boho"},
 		Fn:           p256InactiveBeforeBoho,
 	})
+	testkit.Register(testkit.Case{
+		Name:         "anzeon-active-before-boho",
+		Category:     "hardfork",
+		ChainCompat:  []string{"stablenet"},
+		RequiresCaps: []string{"rpc", "delayed-boho"},
+		Fn:           anzeonActiveBeforeBoho,
+	})
+	testkit.Register(testkit.Case{
+		Name:         "prealloc-preserved-across-boho",
+		Category:     "hardfork",
+		ChainCompat:  []string{"stablenet"},
+		RequiresCaps: []string{"rpc", "delayed-boho"},
+		Fn:           preallocPreservedAcrossBoho,
+	})
 }
 
-func govminterCodeChangesAtBoho(t *testkit.T) {
-	// The block-1 code is the pre-Boho (v1) GovMinter; capture it once block 1
-	// exists.
-	var early string
+// preallocUnspent is a genesis-alloc account in the stablenet preset that no
+// test case ever sends from, so its funded balance and zero nonce are stable
+// across the delayed fork — a spend-immune probe for decodePrealloc state
+// preservation.
+const preallocUnspent = "0x71562b71999873db5b286df957af199ec94617f7"
+
+// waitForBohoCrossover captures the pre-Boho GovMinter code (block 1) and waits
+// until the latest GovMinter code differs from it — the delayed v1→v2 swap —
+// returning both. It fails the test if the crossover does not happen in time.
+func waitForBohoCrossover(t *testkit.T) (early, latest string) {
 	t.WaitFor(func() bool {
 		return t.Primary().Call(t.Ctx(), "eth_getCode", &early, govMinter, "0x1") == nil &&
 			early != "" && early != "0x"
 	}, 60*time.Second, time.Second, "GovMinter code at block 1 (pre-Boho v1)")
-
-	// Once the delayed Boho activates, the latest code is the v2 bytecode, which
-	// differs from the block-1 v1 code — wait for that swap (activation block N
-	// need not be known).
-	var latest string
 	t.WaitFor(func() bool {
 		return t.Primary().Call(t.Ctx(), "eth_getCode", &latest, govMinter, "latest") == nil &&
 			latest != "" && latest != "0x" && latest != early
 	}, 120*time.Second, 2*time.Second, "GovMinter code changes across the delayed Boho fork")
+	return early, latest
+}
 
+func anzeonActiveBeforeBoho(t *testkit.T) {
+	// Anzeon activates at genesis independently of the delayed Boho: the
+	// GovValidator system contract already holds code at block 1 (pre-Boho).
+	var code string
+	t.WaitFor(func() bool {
+		return t.Primary().Call(t.Ctx(), "eth_getCode", &code, govValidator, "0x1") == nil &&
+			code != "" && code != "0x"
+	}, 60*time.Second, time.Second, "GovValidator code at block 1 (Anzeon active pre-Boho)")
+	t.Truef(len(code) > 100, "GovValidator carries substantial Anzeon system-contract code at block 1 (got %d hex chars)", len(code))
+}
+
+func preallocPreservedAcrossBoho(t *testkit.T) {
+	// Balance present at block 1 (genesis alloc).
+	var balEarly string
+	t.WaitFor(func() bool {
+		return t.Primary().Call(t.Ctx(), "eth_getBalance", &balEarly, preallocUnspent, "0x1") == nil &&
+			balEarly != "" && balEarly != "0x0"
+	}, 60*time.Second, time.Second, "prealloc account funded at block 1")
+
+	// Cross the delayed Boho, then confirm the alloc state survived the runtime
+	// upgrade (decodePrealloc restoration must not wipe it).
+	waitForBohoCrossover(t)
+
+	var balLatest, nonceLatest string
+	t.NoErr(t.Primary().Call(t.Ctx(), "eth_getBalance", &balLatest, preallocUnspent, "latest"), "eth_getBalance latest")
+	t.NoErr(t.Primary().Call(t.Ctx(), "eth_getTransactionCount", &nonceLatest, preallocUnspent, "latest"), "eth_getTransactionCount latest")
+	t.Truef(balLatest == balEarly, "prealloc balance preserved across Boho (block1=%s latest=%s)", balEarly, balLatest)
+	t.Truef(nonceLatest == "0x0", "prealloc account nonce still 0 after Boho (got %s)", nonceLatest)
+}
+
+func govminterCodeChangesAtBoho(t *testkit.T) {
+	early, latest := waitForBohoCrossover(t)
 	t.Truef(latest != early, "post-Boho v2 code differs from pre-Boho v1 (early=%d latest=%d hex chars)",
 		len(early), len(latest))
 }
