@@ -266,9 +266,15 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   events, 이벤트 토픽 FindLog) + explicit-gas(wallet에 `SendDynamicFeeGas`/`SendLegacyGas`/
   `SendAccessListGas` 커스텀 gas 3종 + h-20~24 boundary: exact/above min accept, below min reject)
   포팅. 포팅 78 케이스.
-  **defer(인프라 선행)**: fork-transition before/after(delayed-fork harness 부재),
-  h-20~24(커스텀 gasFeeCap send wallet 메서드 필요), h-49~51(빌드체크·체인테스트 아님),
-  h-30/33/34(chainbench genesis에 없는 Extra test 계정), h-42~45(effectiveGasPrice/이벤트 순서).
+  **delayed-fork harness 완료(#88)**: setup가 `genesis.overrides.*`(CLI `--set
+  genesis.overrides.bohoBlock=N`)를 genesis config에 병합(`genesis.ApplyConfigOverrides`,
+  engine-agnostic)하고 `bohoBlock>0`이면 `delayed-boho` capability를 부여 → fork-transition
+  케이스가 한 네트워크에서 pre/post-fork state를 관찰(활성블록 N 불필요, crossover 대기).
+  h-15/16/27/29/35 포팅(#88·#89): `govminter-code-changes-at-boho`·`p256-inactive-before-boho`·
+  `anzeon-active-before-boho`·`prealloc-preserved-across-boho`(모두 delayed-boho gating,
+  일반 네트워크에서 skip). 포팅 89 케이스. ⚠️ live fork-crossing은 실 gstable 필요.
+  **defer(인프라 선행)**: h-30/33/34(chainbench genesis에 Extra test 계정 alloc 필요),
+  h-42~45(effectiveGasPrice authorized·이벤트 순서), h-49~51(빌드/버전 체크 — 체인테스트 아님).
 - **A1(경미). 구 binary-swap 하드포크 refinement**: 검증된 핸드오프는 concurrent 모델
   (`pkg/consensus/upgrade`), `pkg/core/hardfork`는 균질 fork용 binary-swap으로 문서화됨.
   우선순위 낮음.
@@ -310,8 +316,29 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   local은 keyBase==keysAbs라 100% 동일. 단위테스트: `RemoteDriver.ProvisionFile`(base64+chmod),
   `shipIdentities`(경로 검증). CLI e2e로 provision→ship identities→init→launch가 SSH까지 도달
   확인. ⚠️ 실 over-SSH E2E green은 정상 환경 필요(S5 참고, 샌드박스 hang).
-- **docs 정리(진행 중)**: 아래 §참고 문서 중 레거시 로드맵(REMAINING_WORK/NEXT_WORK/
-  REFACTORING_PLAN/VISION_AND_ROADMAP)은 superseded 처리, `docs/superpowers/`는 역사 기록.
+- ✅ **docs 정리**: 레거시 로드맵(REMAINING_WORK/NEXT_WORK/REFACTORING_PLAN/VISION_AND_ROADMAP)에
+  SUPERSEDED 배너 부착 완료(현행은 이 HandOff + `CHAINBENCH_GO_REDESIGN.md`). `docs/superpowers/`는
+  역사 기록으로 보존.
+
+### 다음 추천 작업 순서 (2026-07-27)
+
+> 원칙: 검증 가능성·의존성 순 — 싼·안전한 정리 → 검증 경로 확보 → 큰 인프라 → 잔여.
+> 이미 포팅했으나 live 미검증인 케이스(governance write·delayed-fork·blacklist enforcement)가
+> 쌓이고 있어, **새 포팅보다 실 바이너리 검증 경로(2)를 앞세운다.**
+> ⚠️ 3~7은 이 환경에서 최종 live green 불가(실 gstable/다노드/L2/프론트 툴체인 부재) — 각
+> 작업은 "코드+단위+gating까지"만 완료로 보고하고 live 검증은 정상 환경 몫으로 명시한다.
+
+1. ✅ **HandOff 갱신 + legacy docs 정리** — 본 갱신(delayed-fork harness #88/#89 반영, 배너 확인).
+2. 🟢 **실 gstable 스모크 러너**(B-track 준비): `tests/repro/`에 로컬 4-validator +
+   `--set genesis.overrides.bohoBlock=N` 부팅 → delayed-fork/governance 케이스 실행 스크립트 +
+   러너 단위테스트. 스크립트·단위까지 이 환경 가능, 최종 green은 정상 환경.
+3. 🔴 **sync/lifecycle harness + a1-\* 포팅**(A-track 최대 언블록): 런 중 노드 stop/start·다노드
+   sync 제어 seam + a1-02/03/06. 2의 검증경로 의존.
+4. 🔴 **h-hardfork Extra 계정 포팅**: genesis alloc에 Extra 테스트 계정 추가 + h-30/33/34.
+5. 🔴 **c-anzeon basefee/gastip dynamics**(c-01~05): 지속 부하 생성기(2의 러너 재사용) + 타이밍 관찰.
+6. 🔴 **z-layer2-e2e**(5): L2 스택 셋업(대형·효용 불확실).
+7. 🔴 **D1 Svelte SPA**(독립·병렬 가능): 프론트 빌드 툴체인 필요.
+8. 🟢 **마무리**: 최종 커버리지 리포트·핸드오프.
 
 ---
 
