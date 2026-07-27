@@ -16,6 +16,9 @@ import (
 var govWriteCases = []string{
 	"burn-proposal-executes",
 	"validator-add-member-executes",
+	"blacklist-proposal-executes",
+	"authorize-proposal-executes",
+	"configure-minter-proposal-executes",
 }
 
 func TestGovWriteCases_Register(t *testing.T) {

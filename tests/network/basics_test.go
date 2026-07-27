@@ -44,6 +44,8 @@ func mockNode(t *testing.T) *httptest.Server {
 			result = map[string]any{"number": blk, "hash": "0xabc123", "timestamp": blk}
 		case strings.Contains(string(body), "net_peerCount"):
 			result = "0x2"
+		case strings.Contains(string(body), "admin_peers"):
+			result = []map[string]any{{"id": "abc123", "name": "geth"}}
 		default:
 			result = nil
 		}
@@ -72,7 +74,7 @@ func runCase(t *testing.T, name string, endpoints int) testkit.Result {
 }
 
 func TestNetworkCases_Registered(t *testing.T) {
-	want := map[string]bool{"genesis-hash-agreement": false, "peers-connected": false}
+	want := map[string]bool{"genesis-hash-agreement": false, "peers-connected": false, "admin-peers-populated": false}
 	for _, c := range testkit.Cases() {
 		if _, ok := want[c.Name]; ok {
 			want[c.Name] = true
@@ -103,5 +105,11 @@ func TestBlockProgression_Passes(t *testing.T) {
 func TestPeersConnected_Passes(t *testing.T) {
 	if r := runCase(t, "peers-connected", 2); r.Status != testkit.StatusPass {
 		t.Fatalf("peers-connected: %+v", r)
+	}
+}
+
+func TestAdminPeersPopulated_Passes(t *testing.T) {
+	if r := runCase(t, "admin-peers-populated", 2); r.Status != testkit.StatusPass {
+		t.Fatalf("admin-peers-populated: %+v", r)
 	}
 }
