@@ -338,7 +338,12 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    --index`. a1-02(full-sync)/a1-06(downloader-path) 재현: `tests/repro/stablenet-sync-gap.sh`
    (endpoint stop→gap≥12→restart→re-sync/hash일치/eth_syncing=false). ⚠️ 실 gstable 필요 →
    repro는 정상 환경 실행(단위·`bash -n`까지 검증). 잔여 a1-03(snap-sync)은 snap 모드 설정 추가 시.
-4. 🔴 **h-hardfork Extra 계정 포팅**: genesis alloc에 Extra 테스트 계정 추가 + h-30/33/34.
+4. 🟢 **h-hardfork Extra 계정 포팅**: 일반 genesis overlay deep-merge(`genesis.MergeOverride`,
+   engine-agnostic) + `setup --genesis-overlay <file>`({capabilities,genesis} → 병합 + cap 광고).
+   fixture `manifests/overlays/stablenet-account-extra.json`(alloc extra bit 62/63/62+63 +
+   govCouncil authorized/blacklisted). h-30/33/34 포팅: `authorized-extra-bit-synced`·
+   `blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved`(account-extra
+   gating). repro `tests/repro/stablenet-account-extra.sh`. ⚠️ 실 gstable 필요(단위·`bash -n`까지).
 5. 🔴 **c-anzeon basefee/gastip dynamics**(c-01~05): 지속 부하 생성기(2의 러너 재사용) + 타이밍 관찰.
 6. 🔴 **z-layer2-e2e**(5): L2 스택 셋업(대형·효용 불확실).
 7. 🔴 **D1 Svelte SPA**(독립·병렬 가능): 프론트 빌드 툴체인 필요.

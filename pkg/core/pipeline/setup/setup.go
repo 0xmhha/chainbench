@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
 	"github.com/0xmhha/chainbench/pkg/core/driver"
@@ -80,10 +81,17 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 
 	// A delayed Boho activation (genesis.overrides.bohoBlock=N>0) is advertised as
 	// a capability so the fork-transition test cases gate on it and skip on a
-	// normal (Boho-at-genesis) network.
+	// normal (Boho-at-genesis) network. A genesis overlay may declare further
+	// capabilities (config "genesis.capabilities", comma-separated) — e.g. an
+	// account-extra overlay advertises "account-extra".
 	caps := append([]string(nil), m.Capabilities...)
 	if cfg.Int(overridePrefix+"bohoBlock", 0) > 0 {
 		caps = append(caps, "delayed-boho")
+	}
+	for _, c := range strings.Split(cfg.String("genesis.capabilities", ""), ",") {
+		if c = strings.TrimSpace(c); c != "" {
+			caps = append(caps, c)
+		}
 	}
 
 	return Plan{

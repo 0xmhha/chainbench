@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -29,21 +31,22 @@ func resolveChain(chain, manifestPath, templatePath string) (registry.ChainPlugi
 
 func newSetupCmd() *cobra.Command {
 	var (
-		chain        string
-		manifestPath string
-		templatePath string
-		validators   int
-		endpoints    int
-		dataDir      string
-		keysDir      string
-		binaryPath   string
-		remoteHost   string
-		remoteUser   string
-		remotePort   int
-		provision    bool
-		launch       bool
-		dryRun       bool
-		setValues    []string
+		chain          string
+		manifestPath   string
+		templatePath   string
+		validators     int
+		endpoints      int
+		dataDir        string
+		keysDir        string
+		binaryPath     string
+		remoteHost     string
+		remoteUser     string
+		remotePort     int
+		provision      bool
+		launch         bool
+		dryRun         bool
+		setValues      []string
+		genesisOverlay string
 	)
 	cmd := &cobra.Command{
 		Use:   "setup",
@@ -68,6 +71,29 @@ func newSetupCmd() *cobra.Command {
 					return fmt.Errorf("--set expects key=value, got %q", kv)
 				}
 				override[k] = v
+			}
+			// --genesis-overlay <path> supplies a JSON overlay file
+			// {capabilities:[...], genesis:{...}}: the genesis fragment is
+			// deep-merged into the built genesis and the capabilities are advertised
+			// on the NodeSet so overlay-gated cases (e.g. account-extra) run.
+			if genesisOverlay != "" {
+				raw, err := os.ReadFile(genesisOverlay)
+				if err != nil {
+					return err
+				}
+				var ov struct {
+					Capabilities []string        `json:"capabilities"`
+					Genesis      json.RawMessage `json:"genesis"`
+				}
+				if err := json.Unmarshal(raw, &ov); err != nil {
+					return fmt.Errorf("bad --genesis-overlay %q: %w", genesisOverlay, err)
+				}
+				if len(ov.Genesis) > 0 {
+					override["genesis.overlay"] = string(ov.Genesis)
+				}
+				if len(ov.Capabilities) > 0 {
+					override["genesis.capabilities"] = strings.Join(ov.Capabilities, ",")
+				}
 			}
 			cfg := config.Resolve(nil, override)
 
@@ -157,6 +183,7 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().IntVar(&validators, "validators", 0, "override validator count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringArrayVar(&setValues, "set", nil, "override a flat config key (repeatable), e.g. --set genesis.overrides.bohoBlock=10")
+	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis (e.g. manifests/overlays/stablenet-account-extra.json)")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
 	cmd.Flags().StringVar(&binaryPath, "binary", "", "node binary path (for --launch); default: chain binary on PATH")

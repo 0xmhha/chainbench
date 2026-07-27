@@ -1,6 +1,7 @@
 package genesis
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -84,6 +85,70 @@ func ApplyConfigOverrides(genesisJSON []byte, overrides map[string]string) ([]by
 		out = next
 	}
 	return out, nil
+}
+
+// MergeOverride deep-merges overlay into genesisJSON and returns the result.
+// Objects merge key-by-key recursively; a non-object overlay value (scalar,
+// array, or a new key) replaces the base value at that key. This adds genesis
+// fragments — e.g. extra alloc accounts or system-contract params — without
+// disturbing the rest of the genesis. Empty overlay returns the input unchanged.
+// It is engine-agnostic: the overlay is caller-supplied data (a launch overlay
+// file), so no chain-specific structure is baked in here.
+func MergeOverride(genesisJSON, overlay []byte) ([]byte, error) {
+	if len(bytes.TrimSpace(overlay)) == 0 {
+		return genesisJSON, nil
+	}
+	var base, over map[string]json.RawMessage
+	if err := json.Unmarshal(genesisJSON, &base); err != nil {
+		return nil, fmt.Errorf("genesis: parse for overlay: %w", err)
+	}
+	if err := json.Unmarshal(overlay, &over); err != nil {
+		return nil, fmt.Errorf("genesis: parse overlay: %w", err)
+	}
+	merged, err := mergeObjects(base, over)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(merged)
+}
+
+// mergeObjects recursively merges over into base (base is mutated and returned).
+func mergeObjects(base, over map[string]json.RawMessage) (map[string]json.RawMessage, error) {
+	if base == nil {
+		base = map[string]json.RawMessage{}
+	}
+	for k, ov := range over {
+		bv, exists := base[k]
+		bo, bIsObj := asObject(bv)
+		oo, oIsObj := asObject(ov)
+		if exists && bIsObj && oIsObj {
+			m, err := mergeObjects(bo, oo)
+			if err != nil {
+				return nil, err
+			}
+			raw, err := json.Marshal(m)
+			if err != nil {
+				return nil, err
+			}
+			base[k] = raw
+			continue
+		}
+		base[k] = ov // replace: scalar, array, new key, or type change
+	}
+	return base, nil
+}
+
+// asObject reports whether raw is a JSON object and, if so, its decoded form.
+func asObject(raw json.RawMessage) (map[string]json.RawMessage, bool) {
+	t := bytes.TrimSpace(raw)
+	if len(t) == 0 || t[0] != '{' {
+		return nil, false
+	}
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(t, &m); err != nil {
+		return nil, false
+	}
+	return m, true
 }
 
 // jsonScalar renders a flat config value as raw JSON: a value that is already

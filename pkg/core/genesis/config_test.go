@@ -88,6 +88,61 @@ func TestApplyConfigOverrides(t *testing.T) {
 	}
 }
 
+func TestMergeOverride(t *testing.T) {
+	base := []byte(`{"config":{"petersburgBlock":0,"anzeon":{"systemContracts":{"govCouncil":{"params":{"quorum":"2"}}}}},"alloc":{"0xaaa":{"balance":"0x1"}}}`)
+
+	// Empty overlay is a no-op.
+	if out, err := genesis.MergeOverride(base, []byte("  ")); err != nil || string(out) != string(base) {
+		t.Fatalf("empty overlay changed genesis: %s (%v)", out, err)
+	}
+
+	overlay := []byte(`{
+		"alloc": {"0xbbb": {"balance":"0x2","extra":"0x4000000000000000"}},
+		"config": {"anzeon": {"systemContracts": {"govCouncil": {"params": {"authorizedAddresses": ["0xbbb"]}}}}}
+	}`)
+	out, err := genesis.MergeOverride(base, overlay)
+	if err != nil {
+		t.Fatalf("MergeOverride: %v", err)
+	}
+	var g struct {
+		Alloc  map[string]map[string]string `json:"alloc"`
+		Config struct {
+			Petersburg json.RawMessage `json:"petersburgBlock"`
+			Anzeon     struct {
+				SystemContracts struct {
+					GovCouncil struct {
+						Params map[string]json.RawMessage `json:"params"`
+					} `json:"govCouncil"`
+				} `json:"systemContracts"`
+			} `json:"anzeon"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(out, &g); err != nil {
+		t.Fatalf("parse merged: %v", err)
+	}
+	// New alloc entry added; existing one preserved (deep merge, not replace).
+	if g.Alloc["0xbbb"]["extra"] != "0x4000000000000000" || g.Alloc["0xaaa"]["balance"] != "0x1" {
+		t.Errorf("alloc merge wrong: %+v", g.Alloc)
+	}
+	// New nested param added; sibling param (quorum) and sibling fork survive.
+	params := g.Config.Anzeon.SystemContracts.GovCouncil.Params
+	if string(params["authorizedAddresses"]) != `["0xbbb"]` || string(params["quorum"]) != `"2"` {
+		t.Errorf("nested param merge wrong: %v", params)
+	}
+	if len(g.Config.Petersburg) == 0 {
+		t.Error("petersburgBlock lost in merge")
+	}
+
+	// A non-object overlay value replaces (array/scalar), not merges.
+	out2, err := genesis.MergeOverride([]byte(`{"alloc":{"0xaaa":{"balance":"0x1"}}}`), []byte(`{"alloc":{"0xaaa":"0x9"}}`))
+	if err != nil {
+		t.Fatalf("MergeOverride replace: %v", err)
+	}
+	if !strings.Contains(string(out2), `"0xaaa":"0x9"`) {
+		t.Errorf("scalar overlay should replace object value: %s", out2)
+	}
+}
+
 func TestValidateForks(t *testing.T) {
 	if err := genesis.ValidateForks([]byte(`{"config":{"croissantBlock":0,"croissant":{}}}`)); err == nil {
 		t.Error("missing petersburg should error")

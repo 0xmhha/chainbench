@@ -91,6 +91,18 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 			return fmt.Errorf("setup: genesis overrides: %w", err)
 		}
 	}
+	// A genesis overlay (from `setup --genesis-overlay`, carried as a JSON string
+	// in config) deep-merges fragments — e.g. extra alloc accounts with Extra bits
+	// — into the built genesis. Re-validate fork ordering after the merge.
+	if overlay := cfg.String("genesis.overlay", ""); overlay != "" {
+		gen, err = genesis.MergeOverride(gen, []byte(overlay))
+		if err != nil {
+			return err
+		}
+		if err := genesis.ValidateForks(gen); err != nil {
+			return fmt.Errorf("setup: genesis overlay: %w", err)
+		}
+	}
 	if err := os.MkdirAll(plan.DataRoot, 0o755); err != nil {
 		return err
 	}
