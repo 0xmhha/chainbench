@@ -39,6 +39,24 @@ func TestSendAccessList_Validation(t *testing.T) {
 	}
 }
 
+func TestSendDynamicFeeTx_Validation(t *testing.T) {
+	w := sdkWallet{}
+	ctx := context.Background()
+	one := big.NewInt(1)
+
+	// nil value/fee is rejected before any RPC.
+	if _, err := w.SendDynamicFeeTx(ctx, DynamicTxArgs{GasFeeCap: one, GasTipCap: one}); err == nil ||
+		!strings.Contains(err.Error(), "value") {
+		t.Errorf("nil value should error: %v", err)
+	}
+	// bad recipient (with valid value/fees) is rejected.
+	if _, err := w.SendDynamicFeeTx(ctx, DynamicTxArgs{
+		ToHex: "bad", Value: one, GasFeeCap: one, GasTipCap: one, Gas: 21000,
+	}); err == nil || !strings.Contains(err.Error(), "recipient") {
+		t.Errorf("bad recipient should error: %v", err)
+	}
+}
+
 func TestSendExplicitGas_Validation(t *testing.T) {
 	w := sdkWallet{}
 	ctx := context.Background()
