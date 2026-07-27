@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # stablenet-basefee-dynamics.sh — live reproduction of the anzeon baseFee
-# dynamics cases (regression c-anzeon c-03 increase, c-05 decrease), driving the
-# built chainbench CLI against a real gstable binary.
+# dynamics cases (regression c-anzeon c-03 increase, c-04 stable, c-05 decrease),
+# driving the built chainbench CLI against a real gstable binary.
 #
 # baseFee reacts to block gas usage: usage > 20% raises the next block's baseFee
 # (~+2%), usage < 6% lowers it (~-2%). This boots a stablenet, bursts many
@@ -96,21 +96,31 @@ for i in range(n):
           "maxFeePerGas": base + 100_000_000_000_000, "maxPriorityFeePerGas": 27_600_000_000_000, "type": 2}
     w3.eth.send_raw_transaction(acct.sign_transaction(tx).raw_transaction)
 
-# Scan the next blocks for one over 20% usage and check its successor's baseFee.
+# Scan the next blocks: check a >20% block raises the next baseFee (c-03) and,
+# best-effort, that a 6-20% block leaves it unchanged (c-04). The stable band is
+# hard to hit precisely, so c-04 is observed, not required — absence is reported,
+# never silently passed.
 increased = False
+stable_seen = False
 for bn in range(start_block + 1, start_block + 12):
     while w3.eth.block_number < bn + 1:
         time.sleep(1)
     blk = w3.eth.get_block(bn)
     usage = blk["gasUsed"] * 100 / limit
+    nxt = w3.eth.get_block(bn + 1)["baseFeePerGas"]
     if usage > 20:
-        nxt = w3.eth.get_block(bn + 1)["baseFeePerGas"]
-        print(f"block {bn}: usage={usage:.1f}% baseFee {blk['baseFeePerGas']} -> next {nxt}")
+        print(f"block {bn}: usage={usage:.1f}% (>20) baseFee {blk['baseFeePerGas']} -> next {nxt}")
         if nxt > blk["baseFeePerGas"]:
             increased = True
-            break
+    elif 6 <= usage <= 20:
+        print(f"block {bn}: usage={usage:.1f}% (6-20, stable band) baseFee {blk['baseFeePerGas']} -> next {nxt}")
+        assert nxt == blk["baseFeePerGas"], "6-20% usage block changed the next baseFee (stable c-04)"
+        stable_seen = True
+    if increased and stable_seen:
+        break
 assert increased, "no block over 20% usage raised the next baseFee (increase c-03)"
 print("c-03 baseFee increase: OK")
+print("c-04 baseFee stable: OK" if stable_seen else "c-04 baseFee stable: INCONCLUSIVE (no block landed in the 6-20% band)")
 PYEOF
 [ $? -eq 0 ] || {
   echo "FAIL: baseFee increase (c-03)"

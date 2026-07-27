@@ -373,9 +373,13 @@ D1(대형·이 환경 검증 불가)뿐.
     `SendDynamicFeeGas`(custom tip). `authorized-account-gastip-free`(tip 미강제=custom_tip, `effectiveTip`
     공용 헬퍼로 inclusion baseFee 정확 비교)·`authorized-tx-executed-event`(AuthorizedTxExecuted topic
     `0x40e728…0373`). 외부 키 0건. 등록·gating 검증, live는 정상 환경.
-- **미포팅 잔여**: e-03(feepayer — node-side fee-delegate 서명 `personal_signRawFeeDelegateTransaction`
-  RPC 필요, 다음), c-04(basefee stable — basefee-dynamics repro에 추가 예정), z-layer2(참조도 설계
-  doc뿐 — L2 엔드포인트 attach로 재사용), D1(프론트 툴체인).
+  - ✅ **e-03 포팅**: fresh feepayer 생성→faucet 펀딩→`proposeAddBlacklist` quorum→faucet가 그
+    feepayer로 `SendFeeDelegated`→노드가 blacklist 거부. `feepayer-blacklisted-rejected`. 신규 RPC
+    불필요(client-side SendFeeDelegated, feepayer 키를 직접 생성). SDK 가드는 feepayer 미검사라
+    tx가 노드까지 도달해 거부됨.
+  - ✅ **c-04 포팅(repro)**: `stablenet-basefee-dynamics.sh`에 6~20% 밴드 관찰 추가(best-effort —
+    밴드 미진입 시 INCONCLUSIVE 보고, silent-pass 없음).
+- **미포팅 잔여**: z-layer2(참조도 설계 doc뿐 — L2 엔드포인트 attach로 기존 케이스 재사용), D1(프론트 툴체인).
 - **a1-03(snap-sync) 완료**: endpoint syncmode 배선(`nodes.endpoint_syncmode`→nodeconfig, validator는
   full 고정) + `stablenet-sync-gap.sh`에 `SYNCMODE=snap`/stateRoot·state-access 검증 추가. syncModeFor
   단위테스트. live는 정상 환경(`SYNCMODE=snap GAP=150`).
