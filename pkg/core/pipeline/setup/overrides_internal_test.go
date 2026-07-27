@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/pkg/core/config"
+	"github.com/0xmhha/chainbench/pkg/core/node"
 )
 
 // configOverrides must collect only the genesis.overrides.* namespace, stripping
@@ -28,5 +29,20 @@ func TestConfigOverrides(t *testing.T) {
 
 	if ov := configOverrides(config.Values{"nodes.validators": "4"}); ov != nil {
 		t.Errorf("no overrides should return nil, got %v", ov)
+	}
+}
+
+// syncModeFor: validators are always full; endpoints follow
+// nodes.endpoint_syncmode (default full).
+func TestSyncModeFor(t *testing.T) {
+	snap := config.Values{"nodes.endpoint_syncmode": "snap"}
+	if got := syncModeFor(snap, node.RoleValidator); got != "full" {
+		t.Errorf("validator sync mode = %q, want full (must hold full state to seal)", got)
+	}
+	if got := syncModeFor(snap, node.RoleEndpoint); got != "snap" {
+		t.Errorf("endpoint sync mode = %q, want snap", got)
+	}
+	if got := syncModeFor(config.Values{}, node.RoleEndpoint); got != "full" {
+		t.Errorf("endpoint default sync mode = %q, want full", got)
 	}
 }

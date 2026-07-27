@@ -31,6 +31,9 @@ ENDPOINT_IDX="${ENDPOINT_IDX:-5}" # node index of the endpoint to cycle (validat
 GAP="${GAP:-12}"                  # blocks to let the validators advance while node is down
 SETTLE="${SETTLE:-15}"           # seconds to let the network boot + peer
 SYNC_TIMEOUT="${SYNC_TIMEOUT:-60}" # seconds to wait for re-sync after restart
+# Endpoint sync mode: "full" (a1-02/a1-06) or "snap" (a1-03). For snap, use a
+# larger gap (>=128) so the snap pivot triggers, e.g. GAP=150 SYNCMODE=snap.
+SYNCMODE="${SYNCMODE:-full}"
 
 log() { printf '\n=== %s ===\n' "$*"; }
 cleanup() { pkill -9 -f "$WORK" 2>/dev/null || true; }
@@ -64,18 +67,21 @@ head_at() {
   hex="$("$CHAINBENCH" node rpc --rpc "$1" --method eth_blockNumber 2>/dev/null | tr -d '"')" || return 0
   python3 -c "import sys; s='$hex'.strip(); print(int(s,16) if s.startswith('0x') else -1)"
 }
-block_hash() {
+block_hash() { block_field "$1" "$2" hash; }
+# block_field <url> <block-hex> <field> — a header field of the given block.
+block_field() {
   "$CHAINBENCH" node rpc --rpc "$1" --method eth_getBlockByNumber \
-    --params "[\"$2\", false]" 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print((d or {}).get('hash',''))"
+    --params "[\"$2\", false]" 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print((d or {}).get('$3',''))"
 }
 
-log "boot stablenet ($VALIDATORS validators + $ENDPOINTS endpoint)"
+log "boot stablenet ($VALIDATORS validators + $ENDPOINTS endpoint, endpoint syncmode=$SYNCMODE)"
 "$CHAINBENCH" setup --launch \
   --chain stablenet \
   --binary "$GSTABLE_BIN" \
   --data-dir "$WORK" \
   --keys-dir "$REPO/keys/preset" \
-  --validators "$VALIDATORS" --endpoints "$ENDPOINTS" || {
+  --validators "$VALIDATORS" --endpoints "$ENDPOINTS" \
+  --set "nodes.endpoint_syncmode=$SYNCMODE" || {
   echo "setup --launch failed"
   exit 1
 }
@@ -150,6 +156,22 @@ if [ -z "$bp_hash" ] || [ "$bp_hash" != "$en_hash" ]; then
 fi
 log "block $sample hash matches on BP1 and EN$ENDPOINT_IDX: $bp_hash"
 
+# stateRoot agreement + state access (a1-03 snap sync reconstructs the same
+# state). The alloc account is a genesis-funded one that no case spends.
+bp_root="$(block_field "$BP_URL" "$sample_hex" stateRoot)"
+en_root="$(block_field "$EN_URL" "$sample_hex" stateRoot)"
+if [ -z "$bp_root" ] || [ "$bp_root" != "$en_root" ]; then
+  echo "FAIL: block $sample stateRoot mismatch (BP=$bp_root EN=$en_root)"
+  exit 1
+fi
+en_bal="$("$CHAINBENCH" node rpc --rpc "$EN_URL" --method eth_getBalance \
+  --params '["0x71562b71999873db5b286df957af199ec94617f7","latest"]' 2>/dev/null | tr -d '"')"
+if [ -z "$en_bal" ] || [ "$en_bal" = "0x0" ]; then
+  echo "FAIL: endpoint cannot read alloc account state (balance=$en_bal)"
+  exit 1
+fi
+log "endpoint state access OK (stateRoot matches; alloc balance=$en_bal)"
+
 syncing="$("$CHAINBENCH" node rpc --rpc "$EN_URL" --method eth_syncing 2>/dev/null | tr -d '"')"
 if [ "$syncing" != "false" ]; then
   echo "FAIL: endpoint still reports eth_syncing=$syncing"
@@ -157,4 +179,4 @@ if [ "$syncing" != "false" ]; then
 fi
 
 "$CHAINBENCH" stop --data-dir "$WORK" >/dev/null 2>&1 || true
-log "PASS: endpoint full-sync + downloader re-sync green (gap=$gap)"
+log "PASS: endpoint re-sync green (syncmode=$SYNCMODE, gap=$gap, stateRoot matched)"

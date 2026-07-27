@@ -127,6 +127,7 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 			Ports:         spec.Ports,
 			KeystoreDir:   filepath.Join(keyBase, fmt.Sprintf("node%d", spec.Index), "keystore"),
 			RPCNamespace:  ns,
+			SyncMode:      syncModeFor(cfg, spec.Role),
 			MinerRecommit: recommit,
 			StaticNodes:   staticNodes,
 		})
@@ -281,6 +282,17 @@ func configOverrides(cfg config.Values) map[string]string {
 		}
 	}
 	return ov
+}
+
+// syncModeFor returns the geth sync mode for a node's role. Validators always
+// use "full" — they must hold full state to seal blocks — while endpoints may be
+// switched to "snap" (config nodes.endpoint_syncmode) so a large-gap re-sync
+// exercises the snap-sync path (regression a1-03).
+func syncModeFor(cfg config.Values, role node.Role) string {
+	if role == node.RoleEndpoint {
+		return cfg.String("nodes.endpoint_syncmode", "full")
+	}
+	return "full"
 }
 
 // nodeKeyFor returns the preset node key for a 1-based node index, or nil.
