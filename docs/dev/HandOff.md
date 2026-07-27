@@ -332,8 +332,12 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
 2. 🟢 **실 gstable 스모크 러너**(B-track 준비): `tests/repro/`에 로컬 4-validator +
    `--set genesis.overrides.bohoBlock=N` 부팅 → delayed-fork/governance 케이스 실행 스크립트 +
    러너 단위테스트. 스크립트·단위까지 이 환경 가능, 최종 green은 정상 환경.
-3. 🔴 **sync/lifecycle harness + a1-\* 포팅**(A-track 최대 언블록): 런 중 노드 stop/start·다노드
-   sync 제어 seam + a1-02/03/06. 2의 검증경로 의존.
+3. 🟢 **sync/lifecycle harness + a1-\* 포팅**(A-track): per-node lifecycle seam 완료 —
+   `setup.StopNode`/`RelaunchNode`(fakeDriver 단위검증), armed spec 영속화
+   (`state.SaveNodeSpecs`/`LoadNodeSpecs`, setup가 `nodespecs.json` 저장), CLI `node stop/start
+   --index`. a1-02(full-sync)/a1-06(downloader-path) 재현: `tests/repro/stablenet-sync-gap.sh`
+   (endpoint stop→gap≥12→restart→re-sync/hash일치/eth_syncing=false). ⚠️ 실 gstable 필요 →
+   repro는 정상 환경 실행(단위·`bash -n`까지 검증). 잔여 a1-03(snap-sync)은 snap 모드 설정 추가 시.
 4. 🔴 **h-hardfork Extra 계정 포팅**: genesis alloc에 Extra 테스트 계정 추가 + h-30/33/34.
 5. 🔴 **c-anzeon basefee/gastip dynamics**(c-01~05): 지속 부하 생성기(2의 러너 재사용) + 타이밍 관찰.
 6. 🔴 **z-layer2-e2e**(5): L2 스택 셋업(대형·효용 불확실).

@@ -126,20 +126,30 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 // datadirs with the binary, and launches the network, returning the NodeSet. The
 // caller resolves opts.Binary and persists the returned NodeSet (state.SaveNodeSet).
 func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
+	ns, _, err := LaunchWithSpecs(ctx, opts)
+	return ns, err
+}
+
+// LaunchWithSpecs is Launch that also returns the fully-armed node specs (launch
+// args, binary, datadir, config) so the caller can persist them
+// (state.SaveNodeSpecs) and later relaunch a single node with RelaunchNode. The
+// returned NodeSet is what Launch returns; the specs align with ns.Nodes by
+// index.
+func LaunchWithSpecs(ctx context.Context, opts LaunchOptions) (node.NodeSet, []driver.NodeSpec, error) {
 	if opts.Binary == "" {
-		return node.NodeSet{}, fmt.Errorf("setup: launch needs a resolved binary path")
+		return node.NodeSet{}, nil, fmt.Errorf("setup: launch needs a resolved binary path")
 	}
 	plan, err := BuildPlan(opts.Config, opts.Plugin, opts.DataRoot)
 	if err != nil {
-		return node.NodeSet{}, err
+		return node.NodeSet{}, nil, err
 	}
 	preset, err := keys.LoadPreset(opts.KeysDir)
 	if err != nil {
-		return node.NodeSet{}, err
+		return node.NodeSet{}, nil, err
 	}
 	keysAbs, err := filepath.Abs(opts.KeysDir)
 	if err != nil {
-		return node.NodeSet{}, err
+		return node.NodeSet{}, nil, err
 	}
 	d := opts.Driver
 	if d == nil {
@@ -157,11 +167,11 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 	}
 
 	if err := provision(&plan, opts.Plugin, opts.Config, preset, keyBase); err != nil {
-		return node.NodeSet{}, err
+		return node.NodeSet{}, nil, err
 	}
 	if remoteFiles {
 		if err := shipIdentities(ctx, fp, keysAbs, keyBase, plan.Nodes); err != nil {
-			return node.NodeSet{}, err
+			return node.NodeSet{}, nil, err
 		}
 	}
 	initer, canInit := d.(driver.Initializer)
@@ -188,14 +198,17 @@ func Launch(ctx context.Context, opts LaunchOptions) (node.NodeSet, error) {
 		// back to the local init from the on-disk genesis.
 		if canInit {
 			if err := initer.InitDatadir(ctx, *spec, plan.Genesis); err != nil {
-				return node.NodeSet{}, err
+				return node.NodeSet{}, nil, err
 			}
 		} else if err := driver.InitDatadir(ctx, opts.Binary, spec.DataDir, plan.GenesisPath); err != nil {
-			return node.NodeSet{}, err
+			return node.NodeSet{}, nil, err
 		}
 	}
 	plan.Genesis = nil // already written by provision + placed by init
-	return Run(ctx, plan, d, opts.Bus)
+	ns, err := Run(ctx, plan, d, opts.Bus)
+	// plan.Nodes now carries the fully-armed specs (identity args, binary); the
+	// caller persists them so a single node can be relaunched after a stop.
+	return ns, plan.Nodes, err
 }
 
 // shipIdentities copies each node's preset identity files — the devp2p nodekey,
