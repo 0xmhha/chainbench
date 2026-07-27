@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -42,6 +43,7 @@ func newSetupCmd() *cobra.Command {
 		provision    bool
 		launch       bool
 		dryRun       bool
+		setValues    []string
 	)
 	cmd := &cobra.Command{
 		Use:   "setup",
@@ -57,6 +59,15 @@ func newSetupCmd() *cobra.Command {
 			}
 			if cmd.Flags().Changed("endpoints") {
 				override["nodes.endpoints"] = strconv.Itoa(endpoints)
+			}
+			// --set key=value overrides an arbitrary flat config key, e.g.
+			// --set genesis.overrides.bohoBlock=10 for a delayed-fork network.
+			for _, kv := range setValues {
+				k, v, ok := strings.Cut(kv, "=")
+				if !ok || k == "" {
+					return fmt.Errorf("--set expects key=value, got %q", kv)
+				}
+				override[k] = v
 			}
 			cfg := config.Resolve(nil, override)
 
@@ -140,6 +151,7 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().IntVar(&validators, "validators", 0, "override validator count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
+	cmd.Flags().StringArrayVar(&setValues, "set", nil, "override a flat config key (repeatable), e.g. --set genesis.overrides.bohoBlock=10")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
 	cmd.Flags().StringVar(&binaryPath, "binary", "", "node binary path (for --launch); default: chain binary on PATH")
