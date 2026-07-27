@@ -439,7 +439,24 @@ D1(대형·이 환경 검증 불가)뿐.
   - ✅ **b-08/09/10 + a1-04 repro 포팅**: `stablenet-consensus-lifecycle.sh`(validator 1개 stop→
     production 계속(b-09)+parentHash 체인 무결(b-10), restart→재개(a1-04), 2개 stop(<quorum)→정지(b-08)+
     복구). lifecycle harness(node stop/start --index) 활용, repro-tier.
-  - **잔여(repro-tier)**: a1-07(block-fetcher — near-head 전파 타이밍). 남은 것은 repro가 적합.
+  - ✅ **a1-07 repro 포팅**: `stablenet-block-propagation.sh`(여러 라운드에 걸쳐 모든 노드 head가
+    node1과 lag≤2 유지 = NewBlock/NewBlockHashes 실시간 전파).
+
+### gap 분석 최종 커버리지 (2026-07-28)
+
+참조 회귀 111 케이스 대비: **포팅됨(기존 71) + 이번 세션 신규(testkit 22 + repro-tier)**. gap 분석의
+**포팅가능 36건 전부 처리 완료**(testkit 결정적 케이스 + 부하/타이밍/다노드는 repro-tier). 진짜 블록 3건만
+잔존: A-4-06/07(WebSocket eth_subscribe 클라이언트 부재), B-05(활성 validator 파괴적 제거).
+
+- **testkit 신규(결정적)**: Tier1 거버넌스/이벤트 11, Tier2 tx거부/영수증 9, b-03 epoch, f3-06 expiry.
+- **repro tier(부하/타이밍/다노드, `tests/repro/README.md`)**: basefee-dynamics(c-03/04/05),
+  sync-gap(a1-02/03/06), consensus-lifecycle(b-08/09/10, a1-04), block-propagation(a1-07),
+  account-extra·delayed-fork·proposal-expiry·layer2-attach·wemix-handoff.
+- **인프라 신규**: SendDynamicFeeTx(명시 nonce/gas), EncodeFeeDelegatedTampered(서명조작),
+  genesis overlay(account-extra/short-expiry), delayed-fork harness, per-node lifecycle,
+  external funded-key(FundedKey/Skip), Svelte SPA(D1).
+
+남은 것은 **정상 환경에서 repro 9종 live 검증**뿐(코드 아닌 실행 환경). 회귀 포팅은 완결.
   - ✅ **f3-06 포팅**: `manifests/overlays/stablenet-short-expiry.json`(GovValidator expiry=30s +
     short-expiry capability) + `proposal-expiry-transitions`(proposeGasTip→35s 대기→expireProposal→
     status==Expired(5)). repro `stablenet-proposal-expiry.sh`. short-expiry gating.
