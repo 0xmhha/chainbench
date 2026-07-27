@@ -192,6 +192,23 @@ func TestBuildPlan_DelayedBohoCapability(t *testing.T) {
 	}
 }
 
+func TestBuildPlan_OverlayCapabilities(t *testing.T) {
+	p, _ := registry.Get("stablenet")
+	cfg := config.Resolve(config.Values{"genesis.capabilities": "account-extra, extra-two"}, nil)
+	plan, err := setup.BuildPlan(cfg, p, "/tmp")
+	if err != nil {
+		t.Fatalf("BuildPlan: %v", err)
+	}
+	// Comma-separated overlay capabilities are advertised (trimmed); empty entries
+	// are ignored.
+	if !hasCap(plan.Capabilities, "account-extra") || !hasCap(plan.Capabilities, "extra-two") {
+		t.Errorf("overlay capabilities not advertised: %v", plan.Capabilities)
+	}
+	if hasCap(plan.Capabilities, "") {
+		t.Error("empty capability entry advertised")
+	}
+}
+
 func hasCap(caps []string, want string) bool {
 	for _, c := range caps {
 		if c == want {
