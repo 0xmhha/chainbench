@@ -33,6 +33,10 @@ func NewServer(bus *obs.Bus, store obs.Store) *Server {
 	s.mux.HandleFunc("GET /events", s.handleEvents)
 	s.mux.HandleFunc("GET /api/runs", s.handleRuns)
 	s.mux.HandleFunc("POST /api/events", s.handlePublish)
+	// The built Svelte SPA (decision D5) is served under /app/, alongside the
+	// interim build-free page at /. Both consume /events + /api/runs, so the
+	// cutover to make /app the default is a follow-up once it is verified live.
+	s.mux.Handle("GET /app/", spaHandler())
 	return s
 }
 
