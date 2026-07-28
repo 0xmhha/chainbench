@@ -48,7 +48,7 @@ func jsonRPCCall(ctx context.Context, client *http.Client, url, method string, p
 	if err != nil {
 		return nil, fmt.Errorf("rpc http: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxRPCResponseBytes))
 	if err != nil {
 		return nil, fmt.Errorf("read rpc body: %w", err)

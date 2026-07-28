@@ -1,0 +1,29 @@
+# golangci-lint v2 configuration.
+#
+# The CI already runs gofmt, go vet, go build and go test. This adds the
+# static-analysis linters that catch bugs those steps miss (staticcheck,
+# ineffassign, unused, and the deeper errcheck). The whole tree is already
+# clean under the default linter set; the errcheck exclusions below suppress
+# only the conventionally-unactionable console writes so a real unchecked error
+# stands out. Best-effort Close cleanups are marked explicitly with `_ =` at the
+# call site instead, keeping errcheck strict on Close everywhere else.
+version: "2"
+
+linters:
+  # Default set = errcheck, govet, ineffassign, staticcheck, unused.
+  settings:
+    errcheck:
+      exclude-functions:
+        # Writes to stdout/stderr/SSE response writers: a failed console/stream
+        # write is not actionable in this tool.
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*bufio.Writer).Flush
+  exclusions:
+    # golangci-lint's own curated defaults, plus:
+    rules:
+      # Test setup/teardown may leave os.WriteFile and similar unchecked.
+      - path: (_test\.go|^tests/)
+        linters:
+          - errcheck

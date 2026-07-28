@@ -113,13 +113,13 @@ func Exec(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, c
 	if err != nil {
 		return ExecResult{}, err
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	sess, err := c.NewSession()
 	if err != nil {
 		return ExecResult{}, fmt.Errorf("remote: ssh session: %w", err)
 	}
-	defer sess.Close()
+	defer func() { _ = sess.Close() }()
 
 	var stdout, stderr bytes.Buffer
 	sess.Stdout = &stdout
