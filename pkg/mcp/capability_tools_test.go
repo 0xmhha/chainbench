@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/pkg/chains/all"
-	_ "github.com/0xmhha/chainbench/pkg/mcp/features/all"
 
 	"github.com/0xmhha/chainbench/pkg/mcp"
 )

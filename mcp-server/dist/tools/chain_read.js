@@ -1,0 +1,263 @@
+// chain_read.ts — read-only high-level tools (no signer required).
+//
+// Hosts MCP tools that read chain state without spending gas or producing
+// transactions. Sprint 5c.2 final shape: chainbench_account_state,
+// chainbench_contract_call, chainbench_events_get, chainbench_tx_wait.
+//
+// Cross-field validation that zod schemas cannot express cleanly (e.g.
+// fields=['storage'] requires storage_key, contract_call's calldata XOR
+// abi+method+args, or events_get's abi <-> event mutual dependency) lives
+// in the handler so the MCP boundary returns a structured INVALID_ARGS text
+// response instead of a thrown exception.
+import { z } from "zod";
+import { callWire } from "../utils/wire.js";
+import { formatWireResult } from "../utils/wireResult.js";
+import { errorResp } from "../utils/mcpResp.js";
+import { buildWireArgs } from "../utils/wireArgs.js";
+import { HEX_ADDRESS, HEX_DATA, HEX_STORAGE_KEY, HEX_TOPIC, HEX_TX_HASH, } from "../utils/hex.js";
+const FIELD = z.enum(["balance", "nonce", "code", "storage"]);
+export const AccountStateArgs = z.object({
+    network: z
+        .string()
+        .min(1)
+        .describe("Network name (e.g. 'local', 'sepolia')"),
+    node_id: z
+        .string()
+        .optional()
+        .describe("Node ID, default first node"),
+    address: z
+        .string()
+        .regex(HEX_ADDRESS)
+        .describe("Account address (0x-prefixed 40 hex chars)"),
+    fields: z
+        .array(FIELD)
+        .optional()
+        .describe("Default ['balance','nonce','code']. 'storage' requires storage_key."),
+    storage_key: z
+        .string()
+        .regex(HEX_STORAGE_KEY)
+        .optional()
+        .describe("Storage slot, required if fields includes 'storage'"),
+    block_number: z
+        .union([z.string(), z.number()])
+        .optional()
+        .describe("'latest', 'earliest', '0x10', or integer block number"),
+}).strict();
+export async function _accountStateHandler(args) {
+    // Cross-field validation: fields=['storage'] requires storage_key. Zod
+    // schemas can't express this cleanly without forcing the storage_key
+    // field unconditionally, so the check lives here. Returns a structured
+    // INVALID_ARGS response (matching chainbench-net error shape) rather
+    // than throwing — MCP clients see isError:true and a parseable text.
+    if (args.fields?.includes("storage") && !args.storage_key) {
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: "Error (INVALID_ARGS): fields includes 'storage' but storage_key is missing",
+                },
+            ],
+            isError: true,
+        };
+    }
+    // Optional fields are omitted from the envelope when undefined so
+    // chainbench-net applies its own defaults (e.g. fields ->
+    // ['balance','nonce','code']) — the MCP layer stays oblivious to them.
+    const wireArgs = buildWireArgs(args, ["node_id", "fields", "storage_key", "block_number"], { network: args.network, address: args.address });
+    const result = await callWire("node.account_state", wireArgs);
+    return formatWireResult(result);
+}
+export const ContractCallArgs = z.object({
+    network: z
+        .string()
+        .min(1)
+        .describe("Network name (e.g. 'local', 'sepolia')"),
+    node_id: z
+        .string()
+        .optional()
+        .describe("Node ID, default first node"),
+    contract_address: z
+        .string()
+        .regex(HEX_ADDRESS)
+        .describe("Target contract address (0x-prefixed 40 hex chars)"),
+    calldata: z
+        .string()
+        .regex(HEX_DATA)
+        .optional()
+        .describe("Raw, already-encoded calldata (0x-prefixed, even-length hex including " +
+        "the 4-byte selector and ABI-encoded args). Mutually exclusive with " +
+        "abi/method/args."),
+    abi: z
+        .string()
+        .optional()
+        .describe("JSON-encoded contract ABI string. Server-side encoding mode — pair " +
+        "with method (required) and args (optional). Mutually exclusive with " +
+        "calldata."),
+    method: z
+        .string()
+        .optional()
+        .describe("Method name to call. Required when abi is provided."),
+    args: z
+        .array(z.unknown())
+        .optional()
+        .describe("Arguments for the method, ordered by ABI input list. Defaults to " +
+        "empty when omitted. Tuple / nested-array / fixed-bytesN(N!=32) " +
+        "inputs require raw calldata fallback."),
+    block_number: z
+        .union([z.string(), z.number()])
+        .optional()
+        .describe("'latest', 'earliest', '0x10', or integer block number"),
+    from: z
+        .string()
+        .regex(HEX_ADDRESS)
+        .optional()
+        .describe("Optional caller address (0x-prefixed 40 hex chars)"),
+}).strict();
+export async function _contractCallHandler(args) {
+    // Cross-field validation: calldata XOR (abi + method + args). Zod cannot
+    // express the XOR + dependency without a discriminated union that would
+    // sacrifice the .strict() unknown-key rejection, so the check lives here.
+    if (args.calldata !== undefined && args.abi !== undefined) {
+        return errorResp("calldata and abi are mutually exclusive");
+    }
+    if (args.calldata === undefined && args.abi === undefined) {
+        return errorResp("either calldata or (abi + method + args) is required");
+    }
+    if (args.abi !== undefined && args.method === undefined) {
+        return errorResp("abi requires method");
+    }
+    const wireArgs = buildWireArgs(args, ["node_id", "calldata", "abi", "method", "args", "block_number", "from"], { network: args.network, contract_address: args.contract_address });
+    const result = await callWire("node.contract_call", wireArgs);
+    return formatWireResult(result);
+}
+export const EventsGetArgs = z.object({
+    network: z
+        .string()
+        .min(1)
+        .describe("Network name (e.g. 'local', 'sepolia')"),
+    node_id: z
+        .string()
+        .optional()
+        .describe("Node ID, default first node"),
+    address: z
+        .string()
+        .regex(HEX_ADDRESS)
+        .optional()
+        .describe("Optional contract address filter (0x-prefixed 40 hex chars). " +
+        "Omit to fetch logs from any address in the block range."),
+    from_block: z
+        .union([z.string(), z.number()])
+        .optional()
+        .describe("Lower bound (inclusive). 'latest', 'earliest', '0x10', or integer " +
+        "block number. Defaults to chainbench-net's earliest setting when omitted."),
+    to_block: z
+        .union([z.string(), z.number()])
+        .optional()
+        .describe("Upper bound (inclusive). 'latest', 'earliest', '0x10', or integer " +
+        "block number. Defaults to chainbench-net's latest setting when omitted."),
+    topics: z
+        .array(z.union([
+        z.string().regex(HEX_TOPIC),
+        z.array(z.string().regex(HEX_TOPIC)),
+        z.null(),
+    ]))
+        .optional()
+        .describe("Positional EVM topic filter. Each entry is either a single 32-byte " +
+        "hex hash (exact match), an array of hashes (OR-set at that position), " +
+        "or null (wildcard at that position). Position 0 is the event " +
+        "signature hash (keccak256 of 'Transfer(address,address,uint256)' " +
+        "etc.). Positions 1..N match indexed event arguments."),
+    abi: z
+        .string()
+        .optional()
+        .describe("JSON-encoded contract ABI string. When paired with `event`, each " +
+        "log's topics+data are decoded server-side and included as " +
+        "`decoded: {event, args}` on each log entry. Required together with " +
+        "`event` (providing one without the other is INVALID_ARGS)."),
+    event: z
+        .string()
+        .optional()
+        .describe("Event name to decode against (must exist in `abi`). Required " +
+        "together with `abi`."),
+}).strict();
+export async function _eventsGetHandler(args) {
+    // Cross-field validation: abi <-> event are mutually dependent. Providing
+    // one without the other implies a half-formed decode intent that
+    // chainbench-net would reject downstream — surface it at the MCP boundary
+    // as a structured INVALID_ARGS instead of as a wire UPSTREAM_ERROR after a
+    // wasted spawn. Zod could express this as a discriminated union but only
+    // at the cost of .strict() unknown-key rejection on the union members, so
+    // the check lives here (matching contract_call's pattern).
+    if (args.abi !== undefined && args.event === undefined) {
+        return errorResp("abi requires event");
+    }
+    if (args.event !== undefined && args.abi === undefined) {
+        return errorResp("event requires abi");
+    }
+    const wireArgs = buildWireArgs(args, ["node_id", "address", "from_block", "to_block", "topics", "abi", "event"], { network: args.network });
+    const result = await callWire("node.events_get", wireArgs);
+    return formatWireResult(result);
+}
+export const TxWaitArgs = z.object({
+    network: z
+        .string()
+        .min(1)
+        .describe("Network name (e.g. 'local', 'sepolia')"),
+    node_id: z
+        .string()
+        .optional()
+        .describe("Node ID, default first node"),
+    tx_hash: z
+        .string()
+        .regex(HEX_TX_HASH)
+        .describe("Transaction hash to poll for (0x-prefixed 64 hex chars)"),
+    timeout_ms: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Polling deadline in milliseconds. Defaults to chainbench-net's " +
+        "server-side default (60000ms — see defaultTxWaitMs in " +
+        "handlers_node_tx.go). Bounded by the Go handler (1000..600000ms " +
+        "enforced server-side)."),
+}).strict();
+export async function _txWaitHandler(args) {
+    const wireArgs = buildWireArgs(args, ["node_id", "timeout_ms"], {
+        network: args.network,
+        tx_hash: args.tx_hash,
+    });
+    // Wire helper timeout must outlive the caller's polling deadline so the
+    // pending-status path inside chainbench-net gets a chance to fire (and
+    // return {status:"pending", tx_hash}) before the wire helper kills the
+    // spawn with a SIGTERM. Fallback 60000ms matches chainbench-net's
+    // defaultTxWaitMs (handlers_node_tx.go:583); add 5000ms grace so the Go
+    // side always wins the race when the caller omits timeout_ms.
+    const callerTimeoutMs = args.timeout_ms ?? 60000;
+    const wireTimeoutMs = callerTimeoutMs + 5000;
+    const result = await callWire("node.tx_wait", wireArgs, {
+        timeoutMs: wireTimeoutMs,
+    });
+    return formatWireResult(result);
+}
+export function registerChainReadTools(server) {
+    server.tool("chainbench_account_state", "Read account balance/nonce/code/storage from a network. " +
+        "Network can be local or remote (attached). Returns hex-encoded values.", AccountStateArgs.shape, _accountStateHandler);
+    server.tool("chainbench_contract_call", "Read-only contract call (eth_call). Either provide raw `calldata` " +
+        "(0x-prefixed hex, even-length, including 4-byte selector + ABI-encoded " +
+        "args) or provide `abi` + `method` + `args` for server-side encoding. " +
+        "Returns `result_raw` always; `result_decoded` is populated only when " +
+        "ABI mode is used. Tuple / nested-array / fixed-bytesN(N!=32) inputs " +
+        "require raw calldata fallback.", ContractCallArgs.shape, _contractCallHandler);
+    server.tool("chainbench_events_get", "Fetch event logs (eth_getLogs) with optional filtering on address, " +
+        "block range, and topics. Each topic position can be a single 32-byte " +
+        "hex hash, an array of hashes (OR-set), or null (wildcard). When " +
+        "`abi` + `event` are both provided, each log's topics+data are decoded " +
+        "server-side and included as `decoded: {event, args}` on each log entry.", EventsGetArgs.shape, _eventsGetHandler);
+    server.tool("chainbench_tx_wait", "Poll for a transaction receipt with exponential backoff. Returns the " +
+        "receipt fields when the tx is mined: status (success/failed), " +
+        "block_number, block_hash, gas_used, logs_count, contract_address (if " +
+        "a deploy), effective_gas_price. If the tx is still unconfirmed when " +
+        "timeout_ms elapses, returns {status: 'pending', tx_hash}. Default " +
+        "timeout_ms is server-side 60000 (chainbench-net defaultTxWaitMs).", TxWaitArgs.shape, _txWaitHandler);
+    // All 4 read tools landed (Sprint 5c.2 complete on this file).
+}
