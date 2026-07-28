@@ -4,7 +4,7 @@
 # the short-expiry genesis overlay against a real gstable binary.
 #
 # It boots a stablenet with the short-expiry overlay
-# (manifests/overlays/stablenet-short-expiry.json), which sets GovValidator
+# (pkg/chains/stablenet/overlays/short-expiry.json), which sets GovValidator
 # expiry to 30s and advertises the short-expiry capability, then runs the gated
 # case (which proposes, waits past the expiry, and asserts the proposal
 # transitions to Expired). The case waits ~35s in real time, so this run takes a
@@ -22,7 +22,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 GSTABLE_BIN="${GSTABLE_BIN:-$(command -v gstable || true)}"
 CHAINBENCH="${CHAINBENCH:-/tmp/chainbench-proposal-expiry-bin}"
 WORK="${WORK:-/tmp/stablenet-proposal-expiry}"
-OVERLAY="${OVERLAY:-$REPO/manifests/overlays/stablenet-short-expiry.json}"
+OVERLAY="${OVERLAY:-$REPO/pkg/chains/stablenet/overlays/short-expiry.json}"
 VALIDATORS="${VALIDATORS:-4}"
 ENDPOINTS="${ENDPOINTS:-1}"
 SETTLE="${SETTLE:-15}"

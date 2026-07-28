@@ -4,7 +4,7 @@
 # the account-extra genesis overlay against a real gstable binary.
 #
 # It boots a local stablenet with the account-extra overlay
-# (manifests/overlays/stablenet-account-extra.json), which adds three alloc
+# (pkg/chains/stablenet/overlays/account-extra.json), which adds three alloc
 # accounts whose Extra bits seed AccountManager status at genesis-init and
 # advertises the account-extra capability, then runs the gated cases and asserts
 # they PASS (skip=0 — a silent skip means the overlay capability never
@@ -23,7 +23,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 GSTABLE_BIN="${GSTABLE_BIN:-$(command -v gstable || true)}"
 CHAINBENCH="${CHAINBENCH:-/tmp/chainbench-account-extra-bin}"
 WORK="${WORK:-/tmp/stablenet-account-extra}"
-OVERLAY="${OVERLAY:-$REPO/manifests/overlays/stablenet-account-extra.json}"
+OVERLAY="${OVERLAY:-$REPO/pkg/chains/stablenet/overlays/account-extra.json}"
 VALIDATORS="${VALIDATORS:-4}"
 ENDPOINTS="${ENDPOINTS:-1}"
 SETTLE="${SETTLE:-15}"

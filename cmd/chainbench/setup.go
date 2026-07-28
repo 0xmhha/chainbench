@@ -183,7 +183,7 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().IntVar(&validators, "validators", 0, "override validator count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringArrayVar(&setValues, "set", nil, "override a flat config key (repeatable), e.g. --set genesis.overrides.bohoBlock=10")
-	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis (e.g. manifests/overlays/stablenet-account-extra.json)")
+	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis (e.g. pkg/chains/stablenet/overlays/account-extra.json)")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
 	cmd.Flags().StringVar(&binaryPath, "binary", "", "node binary path (for --launch); default: chain binary on PATH")
