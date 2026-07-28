@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0xmhha/chainbench/pkg/mcp/capability"
+	"github.com/0xmhha/chainbench/pkg/core/capability"
 )
 
 // RegisterCapabilities folds the server's built-in flat tools into the
