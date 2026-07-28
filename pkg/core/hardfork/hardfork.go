@@ -58,9 +58,10 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 	}
 	fromBin := from.Manifest().Binary
 	toBin := to.Manifest().Binary
-	if fromBin == toBin {
-		return Plan{}, fmt.Errorf("hardfork: from and to use the same binary %q; nothing to swap", fromBin)
-	}
+	// Note: from and to may share a manifest binary name — a same-chain version
+	// swap (e.g. a pre-fork gstable -> a post-fork gstable) is a valid hardfork.
+	// What must differ is the actual binary the nodes are relaunched on; the CLI
+	// enforces that (a same-chain swap requires an explicit --to-binary path).
 
 	swaps := make([]NodeSwap, 0, len(ns.Nodes))
 	for _, n := range ns.Nodes {

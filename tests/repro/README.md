@@ -10,10 +10,49 @@ Run each from the repo root once you have the relevant node binary. Each script
 guards its requirements and exits `2` if a binary/tool is missing, so a bare run
 prints exactly what it needs.
 
+### Chain-support scenarios
+
+The multi-chain support matrix maps to these scripts:
+
+1. **wemix chain** — `wemix-chain.sh` (pure go-wemix+etcd; tx + contract)
+2. **wemix→wbft hardfork** — `wemix-wbft-handoff.sh` (croissant handoff to go-wbft)
+3. **wbft chain** — `wbft-chain.sh` (fresh go-wbft from genesis; tx + contract)
+4. **stablenet chain** — the `stablenet-*.sh` suite (go-stablenet; block/tx and specific scenarios)
+5. **stablenet hardfork** — `stablenet-hardfork-swap.sh` (binary-swap: pre-fork build → post-fork build in place)
+
+## Run everything: `run-all.sh`
+
+`run-all.sh` is the single entry point. It builds the CLI once, runs every script,
+and classifies each by exit code — `0` PASS, `2` SKIP (a prerequisite was
+missing), anything else FAIL — then prints a summary and exits non-zero **iff**
+something actually failed. Missing binaries never fail the run, so a partial
+environment reports exactly which scenarios it could and could not exercise.
+
+```sh
+# run all the stablenet scenarios a gstable binary can cover:
+GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh
+
+# full sweep (all three chains + hardforks + L2 + funded writes):
+GSTABLE_BIN=/path/to/gstable WEMIX_BIN=/path/to/gwemix WBFT_BIN=/path/to/gwbft \
+  TEMPLATE=/path/to/template.json FAUCET_PK=0x... L2_RPC=http://... \
+  POST_FORK_BIN=/path/to/post-fork/gstable \
+  tests/repro/run-all.sh
+
+# a subset:
+GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh stablenet-sync-gap.sh
+```
+
+Per-script logs land in `LOGDIR` (default `/tmp/chainbench-repro-logs`); a FAIL
+row points at its log. Pass `REBUILD=1` to force a CLI rebuild, or `CHAINBENCH=`
+to reuse a prebuilt binary.
+
 ## Scripts
 
 | Script | Reproduces | Needs | Notes |
 |--------|-----------|-------|-------|
+| `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
+| `wbft-chain.sh` | **fresh wbft chain (scenario 3)** — from genesis, tx + contract | `WBFT_BIN`, `FAUCET_PK`, python3 | boots go-wbft from block 0 (static bootstrap), asserts block production, a value transfer (receipt success + credited), and a returns-42 contract deploy/call |
+| `stablenet-hardfork-swap.sh` | **stablenet binary-swap hardfork (scenario 5)** | `PRE_FORK_BIN` (or `GSTABLE_BIN`), `POST_FORK_BIN`, `FAUCET_PK`, python3 | boots on the pre-fork gstable (`bohoBlock=N`), deploys a contract, then `chainbench hardfork` swaps every node to the post-fork build in place; asserts the fork is crossed, pre-fork contract state survives, and post-fork production + tx continue. Distinct from `delayed-fork` (that is one binary) |
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
 | `stablenet-block-propagation.sh` | block-fetcher near-head propagation (a1-07) | `GSTABLE_BIN`, python3 | over several rounds, asserts every node's lag behind node1's head is <= LAG (real-time NewBlock/NewBlockHashes propagation) |
@@ -48,20 +87,16 @@ CHAINBENCH_REMOTE_USER=chainbench CHAINBENCH_REMOTE_PASS=chainbench \
 go test -tags e2e -run TestRemoteDriver_E2E -v ./pkg/core/driver/
 ```
 
-## Typical run
+## Running scripts individually
+
+Prefer `run-all.sh` (above). To drive one scenario directly — each script
+self-builds the CLI to `/tmp` if `CHAINBENCH` is unset:
 
 ```sh
-# build once; each script also self-builds to /tmp if needed
-go build -o /tmp/chainbench ./cmd/chainbench
+go build -o /tmp/chainbench ./cmd/chainbench   # optional; reused via CHAINBENCH
 
 GSTABLE_BIN=/path/to/gstable CHAINBENCH=/tmp/chainbench \
   tests/repro/stablenet-delayed-fork.sh
-
-GSTABLE_BIN=/path/to/gstable CHAINBENCH=/tmp/chainbench \
-  tests/repro/stablenet-account-extra.sh
-
-GSTABLE_BIN=/path/to/gstable CHAINBENCH=/tmp/chainbench \
-  tests/repro/stablenet-sync-gap.sh
 
 GSTABLE_BIN=/path/to/gstable FAUCET_PK=0x... CHAINBENCH=/tmp/chainbench \
   tests/repro/stablenet-basefee-dynamics.sh
