@@ -38,7 +38,7 @@ func newCapabilitiesCmd() *cobra.Command {
 					fmt.Fprintf(out, "\n[%s]\n", group)
 					lastGroup = group
 				}
-				fmt.Fprintf(out, "  %s\n      %s\n", c.Address(), c.Summary)
+				fmt.Fprintf(out, "  %s\n      %s\n", c.ToolName(), c.Summary)
 				if len(c.Params) > 0 {
 					parts := make([]string, len(c.Params))
 					for i, p := range c.Params {

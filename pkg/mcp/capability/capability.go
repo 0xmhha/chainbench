@@ -42,10 +42,25 @@ type Descriptor struct {
 	Name    string  `json:"name"`  // dotted feature name, e.g. "tx.send"
 	Summary string  `json:"summary"`
 	Params  []Param `json:"params"`
+	// Tool, when set, is the pre-existing MCP tool name that already backs this
+	// capability (e.g. "chainbench_faucet"). Such capabilities are cataloged for
+	// discovery but generate no new tool — they keep their established name. An
+	// empty Tool means the capability is invoked at the generated hierarchical
+	// name (see ToolName).
+	Tool string `json:"tool,omitempty"`
 }
 
 // Address is the hierarchical identifier "<version>.<chain>.<name>".
 func (d Descriptor) Address() string { return d.Version + "." + d.Chain + "." + d.Name }
+
+// ToolName is the name a caller invokes: the pre-existing flat Tool if set,
+// otherwise the generated "chainbench.<address>".
+func (d Descriptor) ToolName() string {
+	if d.Tool != "" {
+		return d.Tool
+	}
+	return "chainbench." + d.Address()
+}
 
 // Handler runs a capability with decoded args, returning agent-readable text.
 type Handler func(ctx context.Context, args map[string]any) (string, error)
@@ -96,14 +111,27 @@ func RegisterHandler(version, chain, name string, h Handler) {
 	handlers[version+"."+chain+"."+name] = h
 }
 
-// All returns every EXPOSED capability (catalog entry with a bound handler),
-// sorted by address for deterministic output.
+// RegisterFlat catalogs a capability that is already backed by a pre-existing
+// MCP tool (its established name), for discovery only. It is idempotent by
+// address. Used to fold the built-in flat tools into the capability catalog
+// without renaming or re-implementing them.
+func RegisterFlat(version, chain, name, tool, summary string, params []Param) {
+	mu.Lock()
+	defer mu.Unlock()
+	d := Descriptor{Version: version, Chain: chain, Name: name, Tool: tool, Summary: summary, Params: params}
+	catalog[d.Address()] = d
+}
+
+// All returns every EXPOSED capability, sorted by address. A capability is
+// exposed if it has a bound handler (a generated tool) OR a pre-existing flat
+// Tool.
 func All() []Capability {
 	mu.Lock()
 	defer mu.Unlock()
 	out := make([]Capability, 0, len(catalog))
 	for addr, d := range catalog {
-		if h, ok := handlers[addr]; ok {
+		h, hasHandler := handlers[addr]
+		if hasHandler || d.Tool != "" {
 			out = append(out, Capability{Descriptor: d, Handler: h})
 		}
 	}
