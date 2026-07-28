@@ -104,7 +104,25 @@ func TestBuildPlan_Errors(t *testing.T) {
 	if _, err := hardfork.BuildPlan(node.NodeSet{Chain: "stablenet"}, sn, wb, 0, "/d"); err == nil {
 		t.Error("expected error for empty node set")
 	}
-	if _, err := hardfork.BuildPlan(nodeSet("stablenet", 1), sn, sn, 0, "/d"); err == nil {
-		t.Error("expected error when from and to share a binary (gstable)")
+	if _, err := hardfork.BuildPlan(nodeSet("stablenet", 1), sn, wb, -1, "/d"); err == nil {
+		t.Error("expected error for negative block")
+	}
+}
+
+// TestBuildPlan_SameChain covers a same-chain version swap (pre-fork gstable ->
+// post-fork gstable): the plan is valid — the manifest binary name matching is
+// not an error, because the swap is defined by the relaunch binary path, which
+// the CLI supplies via --to-binary.
+func TestBuildPlan_SameChain(t *testing.T) {
+	sn, _ := registry.Get("stablenet")
+	plan, err := hardfork.BuildPlan(nodeSet("stablenet", 4), sn, sn, 200, "/data")
+	if err != nil {
+		t.Fatalf("same-chain BuildPlan: %v", err)
+	}
+	if plan.FromChain != "stablenet" || plan.ToChain != "stablenet" {
+		t.Errorf("chains: %s -> %s", plan.FromChain, plan.ToChain)
+	}
+	if plan.Block != 200 || len(plan.Swaps) != 4 {
+		t.Errorf("block=%d swaps=%d", plan.Block, len(plan.Swaps))
 	}
 }

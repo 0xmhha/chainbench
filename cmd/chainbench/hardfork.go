@@ -42,6 +42,13 @@ func newHardforkCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// A same-chain hardfork (e.g. stablenet pre-fork -> stablenet
+			// post-fork) swaps one binary build for another that activates the
+			// fork at --block. Both resolve to the chain's manifest binary name,
+			// so require an explicit post-fork path or there is nothing to swap.
+			if toChain == ns.Chain && toBinary == "" {
+				return fmt.Errorf("same-chain hardfork (%s -> %s) requires --to-binary <post-fork build>", ns.Chain, toChain)
+			}
 			plan, err := hardfork.BuildPlan(ns, from, to, block, dataDir)
 			if err != nil {
 				return err
