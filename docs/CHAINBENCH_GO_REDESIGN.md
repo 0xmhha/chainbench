@@ -118,7 +118,7 @@ chainbench/  (module github.com/0xmhha/chainbench)
 ├── pkg/mcp/                      # MCP 표면 (#14, Go)
 ├── tests/                        # 테스트 코드 (#16, 헬퍼와 분리)
 │   └── <family>/<category>/*_test.go   # 네이밍 규칙 + godoc 헤더 의무
-├── manifests/chains/*.json       # 선언적 체인 매니페스트
+├── pkg/chains/<id>/              # 체인별 자족 폴더: manifest.json + genesis.json + plugin(go:embed)
 ├── dashboard/                    # (#19) Svelte SPA
 └── docs/
 ```
@@ -200,8 +200,8 @@ func Register(p ChainPlugin)     // chains/<x>/init.go 에서 호출
 | RPC 네임스페이스 | 프로빙 골격 | istanbul | wemix | — |
 | tx 규칙·암호 | AccountProvider 계약 | secp256k1 + tx타입 | secp256k1 + tx타입 | 지원 tx타입 |
 
-정적 사실(binary, 네임스페이스, api list, 하드포크, tx타입, probe)은 `manifests/chains/*.json`으로
-데이터화 → 현행 `probe/signatures.go`·`feeDelegationAllowedChains` 하드코딩 제거.
+정적 사실(binary, 네임스페이스, api list, 하드포크, tx타입, probe)은 `pkg/chains/<id>/manifest.json`으로
+데이터화(각 체인 플러그인이 go:embed) → 현행 `probe/signatures.go`·`feeDelegationAllowedChains` 하드코딩 제거.
 
 ---
 
@@ -311,8 +311,8 @@ type Driver interface {
 1. `lib/*.sh` · `mcp-server/`(TS) 폐기, Go 단일 모듈 수렴
 2. `chainbench {setup,verify,test,faucet,attach}`가 wbft/poa 두 family에서 동작
 3. 3단계 파이프라인이 obs 기록, 대시보드 실시간 반영
-4. 새 체인 추가 = `pkg/chains/<x>/`(family 선택 + 파라미터) + `manifests/chains/<x>.json`. 새 합의만 신규
-   `pkg/consensus/<family>/` 추가
+4. 새 체인 추가 = `pkg/chains/<x>/`(family 선택 + 파라미터 + `manifest.json`/`genesis.json`을 go:embed).
+   새 합의만 신규 `pkg/consensus/<family>/` 추가
 5. poa→wbft 하드포크 업그레이드 테스트 통과 (wemix-upgrade 등가)
 
 ---
