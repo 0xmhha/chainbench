@@ -181,6 +181,14 @@ agent by pointing at the built binary:
 { "mcpServers": { "chainbench": { "command": "chainbench-mcp" } } }
 ```
 
+Beyond the built-in tools, chainbench exposes a **layered capability catalog**:
+common features shared by every chain plus chain-specific ones (e.g. stablenet
+governance, wemix bootstrap), addressed as `<version>.<chain>.<name>`. Call the
+`chainbench.capabilities` tool (or `chainbench capabilities [--chain]` on the
+CLI) to discover what a chain supports. Adding a chain's features is data-only —
+a `.jsonl` catalog plus handlers under `pkg/mcp/features/<project>/`; see
+[`pkg/mcp/features/README.md`](pkg/mcp/features/README.md).
+
 ### Dashboard
 
 `chainbenchd` serves a live dashboard: a Server-Sent Events stream at `/events`

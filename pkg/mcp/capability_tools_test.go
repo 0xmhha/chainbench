@@ -47,6 +47,35 @@ func TestCapabilityToolsGenerated(t *testing.T) {
 	}
 }
 
+// TestDiscoveryCoversAllBuiltinTools guards that every built-in flat tool
+// (chainbench_*) is folded into the capability catalog, so discovery never
+// silently omits a tool a future change adds.
+func TestDiscoveryCoversAllBuiltinTools(t *testing.T) {
+	s := mcp.Default("chainbench", "test")
+
+	list := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+	var flat []string
+	for _, tt := range list["result"].(map[string]any)["tools"].([]any) {
+		name := tt.(map[string]any)["name"].(string)
+		if strings.HasPrefix(name, "chainbench_") {
+			flat = append(flat, name)
+		}
+	}
+	if len(flat) < 30 {
+		t.Fatalf("expected >= 30 built-in tools, got %d", len(flat))
+	}
+
+	discovery, isErr := callText(t, s, "chainbench.capabilities", map[string]any{})
+	if isErr {
+		t.Fatalf("discovery errored: %s", discovery)
+	}
+	for _, name := range flat {
+		if !strings.Contains(discovery, name) {
+			t.Errorf("built-in tool %q is missing from capability discovery", name)
+		}
+	}
+}
+
 // TestCapabilitiesFilterByChain confirms a chain sees common + its own only.
 func TestCapabilitiesFilterByChain(t *testing.T) {
 	s := mcp.Default("chainbench", "test")
