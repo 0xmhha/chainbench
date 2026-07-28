@@ -1,0 +1,1 @@
+{"version":"v1","chain":"wemix","name":"bootstrap.plan","summary":"Show the poa (wemix) bring-up sequence: init boot node -> start boot -> deploy governance -> init etcd -> start remaining nodes. wemix-only.","params":[]}

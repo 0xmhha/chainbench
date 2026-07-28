@@ -10,4 +10,5 @@ package all
 import (
 	_ "github.com/0xmhha/chainbench/pkg/mcp/features/common"
 	_ "github.com/0xmhha/chainbench/pkg/mcp/features/stablenet"
+	_ "github.com/0xmhha/chainbench/pkg/mcp/features/wemix"
 )
