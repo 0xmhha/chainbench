@@ -78,9 +78,8 @@ pkg/accounts/        AccountProvider 경계 + 0xmhha/accounts 백엔드(faucet/w
 pkg/testkit/         테스트 헬퍼(Case/T/Report/Register) — 테스트 코드와 분리(#16)
 pkg/mcp/             self-contained MCP JSON-RPC(initialize/tools/list/tools/call) + 7 tools
 pkg/dashboard/       HTTP(/events SSE, /api/runs, POST /api/events) + 임베드 HTML + Forward
-manifests/
-  chains/*.json      선언적 체인 매니페스트(binary/chain_id/family/genesis/consensus/tx_types/probe/caps)
-  genesis/*.json     체인별 genesis 템플릿(stablenet=anzeon, wbft=croissant, wemix=base)
+pkg/chains/<id>/     체인별 자족 폴더(#122): plugin.go(go:embed) + manifest.json + genesis.json
+                     + overlays/ + govbind/ + caps.{go,jsonl}. (구 manifests/ 패키지는 폐기)
 tests/
   wbft/consensus/chain_id.go   테스트 케이스 샘플(네이밍+godoc 규약)
   all/               테스트케이스 등록 blank-import
@@ -340,7 +339,7 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
    repro는 정상 환경 실행(단위·`bash -n`까지 검증). 잔여 a1-03(snap-sync)은 snap 모드 설정 추가 시.
 4. 🟢 **h-hardfork Extra 계정 포팅**: 일반 genesis overlay deep-merge(`genesis.MergeOverride`,
    engine-agnostic) + `setup --genesis-overlay <file>`({capabilities,genesis} → 병합 + cap 광고).
-   fixture `manifests/overlays/stablenet-account-extra.json`(alloc extra bit 62/63/62+63 +
+   fixture `pkg/chains/stablenet/overlays/account-extra.json`(alloc extra bit 62/63/62+63 +
    govCouncil authorized/blacklisted). h-30/33/34 포팅: `authorized-extra-bit-synced`·
    `blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved`(account-extra
    gating). repro `tests/repro/stablenet-account-extra.sh`. ⚠️ 실 gstable 필요(단위·`bash -n`까지).
@@ -459,7 +458,7 @@ D1(대형·이 환경 검증 불가)뿐.
   external funded-key(FundedKey/Skip), Svelte SPA(D1).
 
 남은 것은 **정상 환경에서 repro 9종 live 검증**뿐(코드 아닌 실행 환경). 회귀 포팅은 완결.
-  - ✅ **f3-06 포팅**: `manifests/overlays/stablenet-short-expiry.json`(GovValidator expiry=30s +
+  - ✅ **f3-06 포팅**: `pkg/chains/stablenet/overlays/short-expiry.json`(GovValidator expiry=30s +
     short-expiry capability) + `proposal-expiry-transitions`(proposeGasTip→35s 대기→expireProposal→
     status==Expired(5)). repro `stablenet-proposal-expiry.sh`. short-expiry gating.
 
