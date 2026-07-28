@@ -316,8 +316,12 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   `shipIdentities`(경로 검증). CLI e2e로 provision→ship identities→init→launch가 SSH까지 도달
   확인. ⚠️ 실 over-SSH E2E green은 정상 환경 필요(S5 참고, 샌드박스 hang).
 - ✅ **docs 정리**: 레거시 로드맵(REMAINING_WORK/NEXT_WORK/REFACTORING_PLAN/VISION_AND_ROADMAP)에
-  SUPERSEDED 배너 부착 완료(현행은 이 HandOff + `CHAINBENCH_GO_REDESIGN.md`). `docs/superpowers/`는
-  역사 기록으로 보존.
+  SUPERSEDED 배너 부착 완료(현행은 이 HandOff + `CHAINBENCH_GO_REDESIGN.md`).
+- ✅ **docs 재구성**: bash-era 문서 8종(위 4 + ADAPTER_CONTRACT/HARDCODING_AUDIT/EVALUATION_CAPABILITY/
+  test-env-migration-handoff)을 `docs/legacy/`로 이동(git mv, 이력 보존)하고 나머지 4개에도 배너 부착.
+  `docs/README.md`(현행 인덱스) + `docs/legacy/README.md`(아카이브 설명) 신설 → 상단 docs/에는 현행 문서만.
+  sprint별 plan/spec 원본(`docs/superpowers/`, 64파일)은 재설계로 제거된 아키텍처(`network/`·bash CLI)를
+  기술해 현행과 불일치 → 삭제(git 이력에 보존).
 
 ### 다음 추천 작업 순서 (2026-07-27)
 

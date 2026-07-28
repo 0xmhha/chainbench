@@ -10,7 +10,7 @@
 >
 > 하위/참고:
 > - `docs/CHAIN_EXTENSIBILITY_DESIGN.md` — 어댑터/매니페스트 상세(체인 축)
-> - `docs/VISION_AND_ROADMAP.md` §1 — 모드 (A)/(B) 이중 표면 원칙
+> - `docs/legacy/VISION_AND_ROADMAP.md` §1 — 모드 (A)/(B) 이중 표면 원칙 (아카이브)
 > - **참고 자산**:
 >   - `../accounts` (`github.com/0xmhha/accounts`) — 계정·서명·tx·faucet SDK (다체인 확장 대상)
 >   - `../script/wemix-upgrade` — wemix(poa)/wbft 체인 셋업 + 하드포크 업그레이드 절차 레퍼런스
