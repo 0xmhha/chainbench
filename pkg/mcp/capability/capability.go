@@ -151,6 +151,15 @@ func For(chain string) []Capability {
 	return out
 }
 
+// Get returns the cataloged descriptor at address, whether or not it has a
+// bound handler (i.e. including flat, tool-backed entries).
+func Get(address string) (Descriptor, bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	d, ok := catalog[address]
+	return d, ok
+}
+
 // Lookup returns the exposed capability at address, if any.
 func Lookup(address string) (Capability, bool) {
 	mu.Lock()

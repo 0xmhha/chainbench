@@ -22,6 +22,7 @@ func init() {
 	}
 	capability.RegisterHandler("v1", capability.CommonChain, "chains.list", chainsList)
 	capability.RegisterHandler("v1", capability.CommonChain, "chains.info", chainsInfo)
+	capability.RegisterHandler("v1", capability.CommonChain, "chains.hardforks", chainsHardforks)
 }
 
 func chainsList(_ context.Context, _ map[string]any) (string, error) {
@@ -53,4 +54,20 @@ func chainsInfo(_ context.Context, args map[string]any) (string, error) {
 		m.ID, m.ConsensusFamily, m.Binary, m.ChainID, m.Consensus.RPCNamespace,
 		strings.Join(m.TxTypes, ","), strings.Join(m.Capabilities, ","))
 	return b.String(), nil
+}
+
+func chainsHardforks(_ context.Context, args map[string]any) (string, error) {
+	id := capability.ArgString(args, "chain", "")
+	if id == "" {
+		return "", fmt.Errorf("chain is required")
+	}
+	p, err := registry.Get(id)
+	if err != nil {
+		return "", err
+	}
+	forks := p.Manifest().Genesis.Hardforks
+	if len(forks) == 0 {
+		return fmt.Sprintf("%s: no hardforks declared", id), nil
+	}
+	return fmt.Sprintf("%s hardforks: %s", id, strings.Join(forks, " -> ")), nil
 }
