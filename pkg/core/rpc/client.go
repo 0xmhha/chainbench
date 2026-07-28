@@ -76,7 +76,7 @@ func (c *Client) Call(ctx context.Context, method string, out any, params ...any
 	if err != nil {
 		return fmt.Errorf("rpc: %s: %w", method, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var rr rpcResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rr); err != nil {

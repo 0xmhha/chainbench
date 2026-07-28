@@ -33,7 +33,7 @@ func Subscribe(ctx context.Context, wsURL string, params ...any) (*Subscription,
 	}
 	req := map[string]any{"jsonrpc": "2.0", "id": 1, "method": "eth_subscribe", "params": params}
 	if err := conn.WriteJSON(req); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("rpc: send eth_subscribe: %w", err)
 	}
 	var resp struct {
@@ -43,17 +43,17 @@ func Subscribe(ctx context.Context, wsURL string, params ...any) (*Subscription,
 		} `json:"error"`
 	}
 	if err := conn.ReadJSON(&resp); err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("rpc: read subscribe response: %w", err)
 	}
 	if resp.Error != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("rpc: eth_subscribe rejected: %s", resp.Error.Message)
 	}
 
 	sub := &Subscription{conn: conn, id: resp.Result, notifications: make(chan json.RawMessage, 16)}
 	// Cancelling ctx closes the conn, which unblocks the blocking read below.
-	go func() { <-ctx.Done(); conn.Close() }()
+	go func() { <-ctx.Done(); _ = conn.Close() }()
 	go sub.readLoop()
 	return sub, nil
 }

@@ -90,7 +90,7 @@ func scanFile(path string, node int, opts SearchOpts, re *regexp.Regexp, minRank
 	if err != nil {
 		return nil, fmt.Errorf("logs: open %s: %w", path, err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var out []Match
 	sc := bufio.NewScanner(f)
