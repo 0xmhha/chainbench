@@ -10,7 +10,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/0xmhha/accounts/protocol"
+
 	"github.com/0xmhha/chainbench/pkg/chains/stablenet/govbind"
+	"github.com/0xmhha/chainbench/pkg/core/rpc"
 	"github.com/0xmhha/chainbench/pkg/mcp/capability"
 )
 
@@ -33,6 +36,34 @@ func init() {
 	reg("governance.proposals", byID(govbind.ProposalsCall))
 	reg("governance.propose_add_member", proposeAddMember)
 	reg("governance.claim_burn_refund", claimBurnRefund)
+	reg("governance.proposal_status", proposalStatus)
+}
+
+// proposalStatus reads a proposal's status from a live node: eth_call the
+// GovMinter with the proposals(id) calldata, then decode the status word. This
+// is a node-interacting (RPC) capability, unlike the pure calldata builders.
+func proposalStatus(ctx context.Context, args map[string]any) (string, error) {
+	url := capability.ArgString(args, "rpc", "")
+	if url == "" {
+		return "", fmt.Errorf("rpc is required")
+	}
+	id := capability.ArgBigInt(args, "id")
+	if id == nil {
+		return "", fmt.Errorf("id is required (decimal)")
+	}
+	gov, ok := protocol.StableNet().Contract(protocol.RoleGovMinter)
+	if !ok {
+		return "", fmt.Errorf("stablenet govMinter address unknown")
+	}
+	ret, err := rpc.Dial(url).EthCall(ctx, gov.Hex(), govbind.ProposalsCall(id))
+	if err != nil {
+		return "", err
+	}
+	status, ok := govbind.DecodeProposalStatus(ret)
+	if !ok {
+		return "", fmt.Errorf("could not decode proposal status from %q", ret)
+	}
+	return fmt.Sprintf("proposal %s: status=%d", id, status), nil
 }
 
 func proposeMint(_ context.Context, args map[string]any) (string, error) {
