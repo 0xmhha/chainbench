@@ -15,9 +15,9 @@ prints exactly what it needs.
 The multi-chain support matrix maps to these scripts:
 
 1. **wemix chain** — `wemix-chain.sh` (pure go-wemix+etcd; tx + contract)
-2. **wemix→wbft hardfork** — `wemix-wbft-handoff.sh` (croissant handoff to go-wbft)
+2. **wemix→wbft hardfork** — `wemix-wbft-handoff.sh` (croissant handoff to go-wbft; with `FAUCET_PK`, also asserts pre-fork state survives + post-fork tx/contract)
 3. **wbft chain** — `wbft-chain.sh` (fresh go-wbft from genesis; tx + contract)
-4. **stablenet chain** — the `stablenet-*.sh` suite (go-stablenet; block/tx and specific scenarios)
+4. **stablenet chain** — `stablenet-chain.sh` (basic block/tx/contract) + the specific `stablenet-*.sh` scenarios
 5. **stablenet hardfork** — `stablenet-hardfork-swap.sh` (binary-swap: pre-fork build → post-fork build in place)
 
 ## Run everything: `run-all.sh`
@@ -59,7 +59,8 @@ to reuse a prebuilt binary.
 | `stablenet-consensus-lifecycle.sh` | round-change / quorum-halt / restart (b-08/09/10, a1-04) | `GSTABLE_BIN`, python3 | stop 1 validator → production continues + parentHash chain intact; restart → resumes; stop 2 (below quorum) → production halts; restart → recovers |
 | `stablenet-sync-gap.sh` | endpoint re-sync (a1-02 full, a1-06 downloader, a1-03 snap) | `GSTABLE_BIN`, python3 | `node stop --index` → open a ≥`GAP` block gap → `node start --index` → assert re-sync (head within 2, matching hash + stateRoot, state access, `eth_syncing=false`). Snap: `SYNCMODE=snap GAP=150` |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
-| `wemix-wbft-handoff.sh` | go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block |
+| `wemix-wbft-handoff.sh` | **wemix→wbft hardfork (scenario 2)** — go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl; optional `FAUCET_PK` + web3 | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block. With `FAUCET_PK`, also asserts the funded account's genesis balance survives on the wbft successor and a post-fork tx + contract deploy/call succeed |
+| `stablenet-chain.sh` | **stablenet chain (scenario 4)** — basic block/tx/contract | `GSTABLE_BIN`, `FAUCET_PK`, python3 | boots stablenet, asserts block production, a value transfer (receipt success + credited), and a returns-42 contract deploy/call |
 | `stablenet-proposal-expiry.sh` | proposal expiry → Expired (f3-06) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/short-expiry.json` (GovValidator expiry 30s); runs the `short-expiry`-gated case (proposes, waits ~35s, asserts Expired) |
 | `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-02/03/04/05) | `L2_RPC` (an already-running L2 RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
