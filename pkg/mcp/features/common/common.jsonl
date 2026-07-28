@@ -1,0 +1,2 @@
+{"version":"v1","chain":"common","name":"chains.list","summary":"List the chains chainbench supports (id, consensus family, binary, chain id, RPC namespace).","params":[]}
+{"version":"v1","chain":"common","name":"chains.info","summary":"Show one chain's manifest facts (family, binary, chain id, namespace, capabilities).","params":[{"name":"chain","type":"string","required":true,"desc":"chain id (stablenet|wbft|wemix)"}]}

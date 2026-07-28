@@ -60,6 +60,10 @@ func Default(name, version string) *Server {
 	s.Register(networkTopologyTool())
 	s.Register(startTool())
 	s.Register(stopTool())
+	// Layered capability surface: one tool per registered capability
+	// (chainbench.<version>.<chain>.<name>) + a chainbench.capabilities
+	// discovery tool. Populated only if a features project is imported.
+	s.RegisterCapabilities()
 	return s
 }
 

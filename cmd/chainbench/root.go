@@ -24,6 +24,7 @@ func newRootCmd() *cobra.Command {
 		"chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	root.AddCommand(
 		newChainsCmd(),
+		newCapabilitiesCmd(),
 		newSetupCmd(),
 		newStopCmd(),
 		newStatusCmd(),
