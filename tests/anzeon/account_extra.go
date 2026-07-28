@@ -3,7 +3,7 @@
 // `extra` bitmap whose top bits seed AccountManager status at genesis-init:
 // bit 62 = authorized, bit 63 = blacklisted. These cases run on a network
 // launched with the account-extra overlay
-// (manifests/overlays/stablenet-account-extra.json, which advertises the
+// (pkg/chains/stablenet/overlays/account-extra.json, which advertises the
 // "account-extra" capability), so the three fixture accounts exist.
 //
 // # Test: authorized-extra-bit-synced
@@ -45,7 +45,7 @@ import (
 	"github.com/0xmhha/chainbench/pkg/testkit"
 )
 
-// account-extra fixture addresses (manifests/overlays/stablenet-account-extra.json).
+// account-extra fixture addresses (pkg/chains/stablenet/overlays/account-extra.json).
 const (
 	extraAuthorized  = "0x90F79bf6EB2c4f870365E785982E1f101E93b906" // bit 62
 	extraBlacklisted = "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65" // bit 63

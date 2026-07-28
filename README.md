@@ -216,13 +216,13 @@ chainbench setup \
   --keys-dir ../my-chain/keys --binary ../my-chain/bin/gmychain --launch
 ```
 
-The manifest uses the same schema as [`manifests/chains/*.json`](manifests/chains);
+The manifest uses the same schema as [the built-in chains' `manifest.json`](pkg/chains);
 set `"protocol"` to a built-in accounts profile (`stablenet` / `wbft` / `wemix`)
 to borrow its tx types and account model. The `--manifest` / `--genesis-template`
 flags also work on `consensus` and `faucet`.
 
 **First-party (embedded in the tool).** To ship a chain with chainbench: add
-`manifests/chains/<id>.json` and `manifests/genesis/<id>.json`, a thin plugin at
+`pkg/chains/<id>/manifest.json` and `pkg/chains/<id>/genesis.json`, a thin plugin at
 `pkg/chains/<id>/<id>.go` that registers via `registry.Register`, and a blank
 import in `pkg/chains/all/all.go`. Chain-specific bindings live under
 `pkg/chains/<id>/…`, never in the generic core.
@@ -255,12 +255,12 @@ chainbench/
 │   │                     #   (setup/verify/attach/testrun), driver, genesis,
 │   │                     #   nodeconfig, rpc, obs, probe, remote, portplan, …
 │   ├── consensus/        # consensus families (wbft, poa) + upgrade handoff
-│   ├── chains/           # chain plugins (stablenet, wbft, wemix, external)
+│   ├── chains/           # one folder per chain: plugin + manifest + genesis +
+│   │                     #   bindings + capabilities (stablenet, wbft, wemix, external)
 │   ├── accounts/         # account/tx/ABI boundary over the accounts SDK
 │   ├── mcp/              # MCP tool handlers (same core as the CLI)
 │   ├── dashboard/        # SSE server + embedded Svelte SPA
 │   └── testkit/          # test-case framework (Case / T / Report)
-├── manifests/            # declarative chain manifests + genesis templates
 ├── profiles/             # network + golden upgrade profiles (YAML)
 ├── keys/preset/          # preset validator keys (TEST FIXTURE ONLY)
 ├── tests/                # Go test cases (tests/all) + repro scripts (tests/repro)

@@ -11,7 +11,7 @@ import (
 )
 
 // Manifest is the declarative static profile of one chain, mirroring
-// manifests/chains/<id>.json. It data-izes the facts that were previously
+// pkg/chains/<id>/manifest.json. It data-izes the facts that were previously
 // hardcoded across lib/*.sh and network/internal/probe (binary name, consensus
 // namespace, hardfork fields, supported tx types, probe signature) so adding a
 // chain is mostly data, not code.
@@ -103,7 +103,8 @@ type BuildSpec struct {
 // GenesisSpec describes a chain's genesis structure. EngineField is the config
 // key that carries consensus config ("anzeon" for stablenet, "croissant" for
 // wbft; empty for the poa/registry family whose genesis is deploy-time).
-// Template is the embedded genesis template name under manifests/genesis/.
+// Template names the chain's genesis template (embedded as
+// pkg/chains/<id>/genesis.json by the plugin).
 type GenesisSpec struct {
 	EngineField string   `json:"engine_field"`
 	Hardforks   []string `json:"hardforks"`

@@ -17,7 +17,15 @@ data/
 *.log
 *.log.*
 
-# MCP server build artifacts
+# Removed legacy trees — the Go tool replaced these; never re-add. (They were
+# once accidentally re-committed via `git add -A`; use explicit `git add <path>`.)
+mcp-server/
+network/
+
+# Node.js dependencies and build caches (never commit)
+node_modules/
+**/node_modules/
+*.tsbuildinfo
 
 # OS
 .DS_Store

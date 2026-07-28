@@ -5,7 +5,7 @@
 //
 // The default proposal expiry is 604800s (7 days), too long for a test, so this
 // case runs only on a network launched with the short-expiry overlay
-// (manifests/overlays/stablenet-short-expiry.json, which sets GovValidator
+// (pkg/chains/stablenet/overlays/short-expiry.json, which sets GovValidator
 // expiry=30s and advertises the "short-expiry" capability).
 //
 // # Test: proposal-expiry-transitions
