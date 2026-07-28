@@ -1,5 +1,7 @@
 # chainbench Evaluation Capability Matrix
 
+> **⚠️ SUPERSEDED (2026-07).** 이 매트릭스는 Go 재설계 이전 sprint 로드맵(bash CLI · TS mcp-server) 기준의 능력 추적표다. 이후 저장소가 Go-first 단일 아키텍처로 수렴하고 3표면(CLI/MCP/대시보드)이 완비되었다. 현행 능력·남은 작업은 **dev/HandOff.md**, 아키텍처는 **CHAINBENCH_GO_REDESIGN.md** 참조. 아래는 역사적 기록으로만 유효하다.
+
 > **작성일**: 2026-04-27
 > **Status**: active — sprint 진행마다 cell 갱신
 > **목적**: coding agent 가 chainbench 를 통해 수행할 수 있는 evaluation 시나리오의 현재 능력과 sprint 별 도달 목표 매트릭스. Sprint spec 작성 시 어느 cell 을 채우는지 명시한다.

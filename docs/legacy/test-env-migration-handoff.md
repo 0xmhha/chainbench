@@ -1,5 +1,7 @@
 # 테스트 환경 통합 — 진행 상태 & 남은 작업 (핸드오프)
 
+> **⚠️ SUPERSEDED (2026-07).** bash `feat/unified-test-env` 브랜치의 핸드오프다. 이후 테스트 스택이 Go로 전면 포팅되었고(회귀 스위트 `tests/`, 원본 bash는 `tests/regression/`에 보존), 로컬/원격은 `pkg/core/{node,driver,remote}` seam으로 통합되었다. 현행 상태는 **dev/HandOff.md** 참조. 아래는 역사적 기록으로만 유효하다.
+
 브랜치 `feat/unified-test-env` (worktree `chainbench-test-refactor`). 로컬/폐쇄망을
 **테스트 본문 한 벌 + 런타임 프로파일**로 통합. 설계 배경/비밀경계는
 `packages/chainbench/docs/MIGRATION-unified-test-env.md` 참조.

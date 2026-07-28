@@ -1,5 +1,7 @@
 # Chain Binary Hardcoding Audit
 
+> **⚠️ SUPERSEDED (2026-07).** 이 감사가 대상으로 한 `lib/cmd_*.sh`의 `gstable` 하드코딩은 bash CLI 제거로 소멸했고, 체인 바이너리·네임스페이스 등 정적 사실은 `pkg/chains/<id>/manifest.json`으로 데이터화되었다(하드코딩 0). 현행 아키텍처는 **CHAINBENCH_GO_REDESIGN.md** 참조. 아래는 역사적 기록으로만 유효하다.
+
 > **Status (2026-04-27):** still active baseline. Sprint 4 series (4 / 4b / 4c)
 > built out the Go `network/` tx surface but did NOT touch `lib/cmd_*.sh`; the
 > 9 hits below remain intact. M4 (per VISION §5.12) — `gstable` hardcoding →

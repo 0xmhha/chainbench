@@ -1,5 +1,7 @@
 # Adapter Contract
 
+> **⚠️ SUPERSEDED (2026-07).** 이 문서는 Go 재설계 이전의 bash 어댑터(`lib/adapters/*.sh` · `lib/cmd_*.sh`) 계약을 기술한다. 해당 bash CLI·`network/` wire 모듈은 모두 제거되었고, 체인 사실은 `pkg/core/registry` Manifest + `pkg/chains/<id>/`(family 플러그인)로 데이터화되었다. 현행 아키텍처는 **CHAINBENCH_GO_REDESIGN.md**, 남은 작업은 **dev/HandOff.md** 참조. 아래는 역사적 기록으로만 유효하다.
+
 > **Status (2026-04-27):** active — bash adapter inventory (LocalDriver
 > backing) + Go adapter port progress (Sprint 3c). The bash surface in §1/§2
 > still backs `lib/cmd_*.sh`; the Go track in §4 is the long-term home of the

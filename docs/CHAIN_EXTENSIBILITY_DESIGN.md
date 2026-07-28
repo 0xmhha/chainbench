@@ -9,8 +9,8 @@
 > 상태: **설계 확정(방향) — 구현 미착수**. Phase 별 착수 시 이 문서를 SSoT 로 갱신.
 > 목적: `go-stablenet`(현재) 위에 `go-wbft`, `go-wemix` 를 **저비용으로 추가**할 수 있는
 > 확장 구조를 확정한다. 여러 체인을 하나의 chainbench 표면(CLI/MCP)에서 blind 하게 다룬다.
-> 관련: `docs/VISION_AND_ROADMAP.md` §3·§5.17 · `docs/ADAPTER_CONTRACT.md` ·
-> `docs/HARDCODING_AUDIT.md` · `docs/REFACTORING_PLAN.md` §0
+> 관련(아카이브): `docs/legacy/VISION_AND_ROADMAP.md` §3·§5.17 · `docs/legacy/ADAPTER_CONTRACT.md` ·
+> `docs/legacy/HARDCODING_AUDIT.md` · `docs/legacy/REFACTORING_PLAN.md` §0
 >
 > **대상 체인 소스**:
 > - `/Users/wm-it-25_0220/Work/github/chain/go-stablenet` (gstable, WBFT/anzeon)
