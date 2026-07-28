@@ -48,6 +48,18 @@ require jq; require python3; require curl; require etcd
 [ -x "$WBFT_BIN" ]  || { echo "no wbft binary: $WBFT_BIN"; exit 2; }
 [ -x "$CHAINBENCH" ] || { echo "building chainbench"; (cd "$REPO" && go build -o "$CHAINBENCH" ./cmd/chainbench) || exit 2; }
 
+# Optional (scenario 2 — state preservation + post-fork operation): a funded key.
+# When FAUCET_PK is set its address is funded in genesis (pre-fork state); after
+# the handoff we assert that balance survives on the wbft successor and that the
+# post-fork chain still processes a tx and a contract deploy/call.
+FAUCET_ADDR=""; FAUCET_BAL="$BAL"
+if [ -n "${FAUCET_PK:-}" ]; then
+  python3 -c "import eth_account" 2>/dev/null || { echo "missing python3 web3/eth-account (needed to fund FAUCET_PK)"; exit 2; }
+  FAUCET_ADDR="$(FAUCET_PK="$FAUCET_PK" python3 -c "import os; from eth_account import Account; print(Account.from_key(os.environ['FAUCET_PK']).address)")"
+  echo "faucet address (funded in genesis): $FAUCET_ADDR"
+fi
+RETURNS42="0x600a600c600039600a6000f3602a60005260206000f3"
+
 pkill -9 -f "$WORK" 2>/dev/null; sleep 1
 rm -rf "$WORK"; mkdir -p "$WORK"
 
@@ -63,9 +75,12 @@ preset_nodekey(){ local pk=${PRESET_FOR[$1]}
 # --- 1. wemix governance config (producer = plan node 1 = preset node5) -------
 log "build wemix governance config"
 PROD_ID="0x$(preset_pubkey 1)"
-ACCOUNTS_JSON=$(python3 - <<PY
-import json
+ACCOUNTS_JSON=$(FAUCET_ADDR="$FAUCET_ADDR" python3 - <<PY
+import json, os
 accts=[{"addr":"$PRODUCER_ACCT","balance":$BAL}]
+fa=os.environ.get("FAUCET_ADDR","")
+if fa:
+    accts.append({"addr":fa,"balance":$BAL})
 for n in json.load(open("$PRESET/metadata.json"))["nodes"]:
     accts.append({"addr":n["address"],"balance":$BAL})
 print(json.dumps(accts))
@@ -206,7 +221,40 @@ log "result"
 grep -h "skips mining due to Croissant" "$WORK"/node1/node.log 2>/dev/null | head -1 || echo "(no croissant-skip log on producer yet)"
 echo "final head=$head  post-fork miner=$post_fork_wbft_miner  producer=$PRODUCER_MINER"
 if [ "$head" -gt "$CROISSANT" ] && [ -n "$post_fork_wbft_miner" ]; then
-  echo "PASS: handoff reproduced (chain passed croissant; go-wbft validator produced post-fork)"; exit 0
+  echo "handoff reproduced (chain passed croissant; go-wbft validator produced post-fork)"
+
+  # scenario 2: pre-fork state must survive on the wbft successor, and the
+  # post-fork chain must still process a tx and a contract. Gated on FAUCET_PK.
+  if [ -n "${FAUCET_PK:-}" ]; then
+    WURL="http://127.0.0.1:$PV" # a go-wbft validator (plan node 2)
+    bn_hex(){ "$CHAINBENCH" node rpc --rpc "$1" --method eth_getBalance --params "[\"$2\",\"latest\"]" 2>/dev/null | tr -d '"'; }
+    log "state preservation: faucet genesis balance on the wbft successor"
+    bal=$(python3 -c "s='$(bn_hex "$WURL" "$FAUCET_ADDR")'.strip(); print(int(s,16) if s.startswith('0x') else -1)")
+    if [ "$bal" != "$FAUCET_BAL" ]; then
+      echo "FAIL: pre-fork genesis state not preserved (faucet balance $bal != $FAUCET_BAL)"; exit 1
+    fi
+    echo "state preserved OK (faucet balance intact across handoff)"
+
+    log "post-fork tx on the wbft successor"
+    HASH="$("$CHAINBENCH" tx send --chain wbft --rpc "$WURL" --from-key "$FAUCET_PK" --to 0x000000000000000000000000000000000000dEaD --value 1000000000000000000)" \
+      || { echo "FAIL: post-fork tx send errored"; exit 1; }
+    ST="$("$CHAINBENCH" tx wait --rpc "$WURL" --hash "$HASH" 2>/dev/null | awk '/^status:/{print $2}')"
+    [ "$ST" = "success" ] || { echo "FAIL: post-fork tx status=$ST (want success)"; exit 1; }
+
+    log "post-fork contract deploy/call on the wbft successor"
+    OUT="$("$CHAINBENCH" contract deploy --chain wbft --rpc "$WURL" --from-key "$FAUCET_PK" --bytecode "$RETURNS42")" \
+      || { echo "FAIL: post-fork contract deploy errored"; exit 1; }
+    CADDR="$(echo "$OUT" | awk '/^contract:/{print $2}')"
+    cok=false
+    for _ in $(seq 1 30); do
+      r="$("$CHAINBENCH" contract call --rpc "$WURL" --to "$CADDR" --data 0x 2>/dev/null | tr -d '"')"
+      case "$r" in *2a) cok=true; break;; esac; sleep 3
+    done
+    [ "$cok" = true ] || { echo "FAIL: post-fork contract did not return 42 (last=$r)"; exit 1; }
+    echo "PASS: handoff + pre-fork state preserved + post-fork tx/contract OK"; exit 0
+  fi
+
+  echo "PASS: handoff reproduced (set FAUCET_PK to also verify state preservation + post-fork tx/contract)"; exit 0
 fi
 echo "FAIL: handoff not observed"
 echo "--- producer(node1) tail ---"; tail -25 "$WORK/node1/node.log"
