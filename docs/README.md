@@ -26,5 +26,4 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 |---|---|
 | [`dev/`](dev/) | 개발 핸드오프(`HandOff.md`) + 세션 아카이브(`session-data/`, 원본 transcript). |
 | [`claudedocs/`](claudedocs/) | 외부 컨텍스트 — chainbench가 속한 상위 자동화 시스템의 제안서/지시서(cross-reference). |
-| [`superpowers/`](superpowers/) | sprint별 plan/spec 원본(역사 기록으로 보존). |
 | [`legacy/`](legacy/README.md) | **Go 재설계 이전 아카이브** — bash 로드맵·감사·핸드오프 8종. 전부 SUPERSEDED. |
