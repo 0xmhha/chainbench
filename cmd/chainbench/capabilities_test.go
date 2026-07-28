@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -76,6 +79,34 @@ func TestCapabilitiesCall_GovernanceSuite(t *testing.T) {
 	// id-based capability requires id.
 	if _, err := run(t, "capabilities", "call", "v1.stablenet.governance.approve_proposal"); err == nil {
 		t.Error("approve_proposal without id should error")
+	}
+}
+
+func TestCapabilitiesCall_ProposalStatusRPC(t *testing.T) {
+	// Mock a node: eth_call returns a 10-word ABI blob whose last byte is the
+	// status (govbind.DecodeProposalStatus reads b[10*32-1]).
+	blob := "0x" + strings.Repeat("00", 319) + "02" // 320 bytes, status=2
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if req.Method == "eth_call" {
+			res["result"] = blob
+		}
+		_ = json.NewEncoder(w).Encode(res)
+	}))
+	defer srv.Close()
+
+	out, err := run(t, "capabilities", "call", "v1.stablenet.governance.proposal_status",
+		"--arg", "rpc="+srv.URL, "--arg", "id=7")
+	if err != nil {
+		t.Fatalf("proposal_status: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "proposal 7: status=2") {
+		t.Errorf("expected decoded status, got %q", out)
 	}
 }
 
