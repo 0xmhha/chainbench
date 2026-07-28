@@ -57,14 +57,17 @@ func TestInitializeAndList(t *testing.T) {
 
 	listResp := call(t, s, map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
 	tools := listResp["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 30 {
-		t.Fatalf("tools: %d, want 30", len(tools))
+	// At least the 30 flat tools + the always-added chainbench.capabilities
+	// discovery tool. Per-capability tools add more when a features project is
+	// imported (as this test binary does), so assert a floor + named presence.
+	if len(tools) < 31 {
+		t.Fatalf("tools: %d, want >= 31", len(tools))
 	}
 	names := map[string]bool{}
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}

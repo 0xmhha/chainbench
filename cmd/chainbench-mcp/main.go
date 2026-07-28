@@ -11,6 +11,7 @@ import (
 	"os"
 
 	_ "github.com/0xmhha/chainbench/pkg/chains/all"
+	_ "github.com/0xmhha/chainbench/pkg/mcp/features/all"
 	_ "github.com/0xmhha/chainbench/tests/all"
 
 	"github.com/0xmhha/chainbench/pkg/mcp"
