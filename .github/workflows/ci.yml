@@ -19,6 +19,21 @@ jobs:
       - name: Scan for secrets
         run: bash scripts/check-secrets.sh --all
 
+  # Gate: shell scripts must parse. The tests/repro live-verification harness
+  # can't run in CI (no chain binaries), so a syntax check is the only automated
+  # guard against a broken script reaching main and failing only in a real env.
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n (shell syntax)
+        run: |
+          fail=0
+          while IFS= read -r -d '' f; do
+            bash -n "$f" || { echo "syntax error: $f"; fail=1; }
+          done < <(find scripts tests -name '*.sh' -print0)
+          [ "$fail" -eq 0 ]
+
   # Build, vet, format check, and the full test suite (the gated e2e tests skip
   # without their env, so they do not run here).
   test:
