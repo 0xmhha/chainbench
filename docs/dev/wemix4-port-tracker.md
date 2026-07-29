@@ -87,11 +87,26 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 ## GOV (22)
 
 All GOV cases exercise the **deployed wemix governance** (GovConfig, GovStaking,
-GovNCP, delegation, rewards, emergency mode). A fresh go-wbft testkit network has
-no wemix governance, so these need a wemix→wbft handoff chain (or the remote
-cluster, post-`remote bootstrap`) as the target. **Deferred** as a group until a
-governance-bearing target is wired into the testkit runner. (The anzeon suite
-covers a *different* governance and does not apply.)
+GovNCP, delegation, rewards, emergency mode). Key fact confirmed live: the
+governance system contracts are deployed at the **Croissant fork block**, so they
+live on the **go-wbft successor** chain (the go-wemix producer stops at
+croissant-1 and never sees them) at the fixed addresses `0x..1000` GovConfig /
+`0x..1001` GovStaking / `0x..1002` GovRewardee / `0x..1003` GovNCP. The target is
+therefore the `chainbench upgrade run` handoff (or the remote cluster,
+post-`remote bootstrap`). (The anzeon suite covers a *different* governance and
+does not apply.)
+
+| wemix4 | maps to | status |
+|---|---|---|
+| GOV-001 contract deploy | e2e TestWemixGovernanceE2E | **ported** (e2e) |
+| GOV-002 config params | e2e TestWemixGovernanceE2E | **ported** (e2e) |
+| GOV-003..024 (staking/delegation/rewards/NCP/emergency) | — | deferred (write flows: need the GovStaking/GovNCP ABIs + funded staker/operator keys + multi-step tx flows on the handoff target) |
+
+The read cases (GOV-001/002) are ported as a live e2e on the handoff successor.
+The remaining 20 are governance **write flows** (registerStaker, unstake,
+delegate, claim, proposals, emergency mode) — each a multi-step transaction
+sequence against GovStaking/GovNCP with specific keys; a larger build on top of
+the now-proven governance target.
 
 ## NODE (7)
 
@@ -123,22 +138,29 @@ covers a *different* governance and does not apply.)
   `tests/wbft/accounts/tx_fd_sig.go`. Reuses the existing
   `accounts.EncodeFeeDelegatedTampered` builder (sender/feepayer signature
   corruption) and submits via `eth_sendRawTransaction`, expecting rejection.
-- **Batch 5 (this PR)** — WBFT fault tolerance (the first fault-injection port):
+- **Batch 5** — WBFT fault tolerance (the first fault-injection port):
   `tests/e2e/wbft_fault_test.go` — WBFT-007 (`TestE2E_WbftFaultTolerance`:
   4 validators, stop 1 → 3/4 == quorum → consensus continues, node rejoins and
   re-syncs) and WBFT-008 (`TestE2E_WbftFaultHalt`: stop 2 → 2/4 below quorum →
   production halts, restart resumes). Uses the e2e harness node-stop machinery;
   live-verified against the go-wbft binary. This establishes the fault-injection
   harness the remaining WBFT cases build on.
-- **Batch 6 (this PR)** — WBFT proposer behavior:
+- **Batch 6** — WBFT proposer behavior:
   `tests/e2e/wbft_proposer_test.go` — WBFT-006 (`TestE2E_WbftRoundRobinProposer`:
   the miner rotates across a block window — ≥3 distinct proposers over 16 blocks
   on a 4-validator net) and WBFT-003 (`TestE2E_WbftViewChange`: killing the
   proposer triggers a round change; the chain keeps advancing from a surviving
   validator with parentHash links intact, then the node restarts). Live-verified
   against the go-wbft binary.
+- **Batch 7 (this PR)** — GOV read cases on the handoff successor:
+  `cmd/chainbench/upgrade_gov_e2e_test.go` (`TestWemixGovernanceE2E`) — drives the
+  `upgrade run` handoff and asserts GOV-001 (all four governance contracts carry
+  code at `0x..1000-1003`) and GOV-002 (GovConfig params > 0) on the go-wbft
+  successor. Live-verified: governance is deployed at the fork block, on the
+  successor, not on the wemix producer.
 - **Remaining:** the n-variant quorum cases (WBFT-011/012/013 — same boundary as
   WBFT-007/008 at n=3/6, a mechanical follow-up on the fault harness), the GOV
-  group (needs a deployed-wemix-governance target), and RPC-008/009/019/023 +
-  NODE data-migration/snap-sync/genesis-parse. All WBFT consensus BEHAVIORS are
-  now ported; what is left is n-variant repeats and the governance target.
+  **write flows** (GOV-003..024 — staking/delegation/rewards/NCP/emergency, each
+  a multi-step tx sequence on GovStaking/GovNCP), and RPC-008/009/019/023 + NODE
+  data-migration/snap-sync/genesis-parse. All WBFT consensus behaviors and the GOV
+  reads are ported; the largest remaining chunk is the GOV write flows.
