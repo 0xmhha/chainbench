@@ -71,11 +71,23 @@ func newHardforkCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				newNS, err := plan.Execute(cmd.Context(), driver.NewLocalDriver(), to.Family(), bin)
+				specs, err := state.LoadNodeSpecs(dataDir)
+				if err != nil {
+					return fmt.Errorf("hardfork: load node specs (run setup with --launch first): %w", err)
+				}
+				newNS, err := plan.Execute(cmd.Context(), driver.NewLocalDriver(), specs, bin)
 				if err != nil {
 					return err
 				}
 				if err := state.SaveNodeSet(dataDir, newNS); err != nil {
+					return err
+				}
+				// Keep nodespecs.json consistent so later node/hardfork ops use the
+				// post-fork binary (identity/config args are unchanged).
+				for i := range specs {
+					specs[i].Binary = bin
+				}
+				if err := state.SaveNodeSpecs(dataDir, specs); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "upgraded %d node(s) to %s (%s); state updated\n",

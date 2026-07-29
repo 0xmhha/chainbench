@@ -74,7 +74,15 @@ func TestExecute_StopsAndRelaunches(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	newNS, err := plan.Execute(context.Background(), driver.NewLocalDriver(), to.Family(), bin)
+	// Execute reuses the node's original launch spec (identity-bearing args) and
+	// swaps only the binary — mirror what setup persists to nodespecs.json.
+	specs := []driver.NodeSpec{{
+		Index: 1, Role: node.RoleValidator, Host: "127.0.0.1",
+		Binary: "oldbin", DataDir: dir, LogPath: filepath.Join(dir, "node.log"),
+		Ports: node.Endpoints{HTTP: 8501, P2P: 30301},
+		Args:  []string{"--datadir", dir, "--nodekey", filepath.Join(dir, "nk")},
+	}}
+	newNS, err := plan.Execute(context.Background(), driver.NewLocalDriver(), specs, bin)
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
 	}
