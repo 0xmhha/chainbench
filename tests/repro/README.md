@@ -17,12 +17,14 @@ The multi-chain support matrix maps to these scripts:
 1. **wemix chain** — `wemix-chain.sh` (pure go-wemix+etcd; tx + contract)
 2. **wemix→wbft hardfork** — `wemix-wbft-handoff.sh` (croissant handoff to go-wbft; with `FAUCET_PK`, also asserts pre-fork state survives + post-fork tx/contract)
 3. **wbft chain** — `wbft-chain.sh` (fresh go-wbft from genesis; tx + contract)
-4. **stablenet chain** — migrated to Go: `TestE2E_StablenetChain` in `tests/e2e/` (basic block/tx/contract) + the specific `stablenet-*.sh` scenarios below
-5. **stablenet hardfork** — `stablenet-hardfork-swap.sh` (binary-swap: pre-fork build → post-fork build in place)
+4. **stablenet chain** — migrated to Go: `TestE2E_StablenetChain` in `tests/e2e/`
+5. **stablenet hardfork** — migrated to Go: `TestE2E_StablenetHardforkSwap` in `tests/e2e/` (binary-swap in place)
 
 > **Migration in progress:** these bash scripts are being ported to Go gated e2e
 > tests under `tests/e2e/` (run with `go test -tags e2e`) — no bash/python/web3.
-> Ported so far: scenario 4 (stablenet chain). See `tests/e2e/README.md`.
+> Ported so far: stablenet chain (4), binary-swap hardfork (5), consensus
+> lifecycle, block propagation. See `tests/e2e/README.md`. The scripts below are
+> not yet ported.
 
 ## Run everything: `run-all.sh`
 
@@ -56,11 +58,8 @@ to reuse a prebuilt binary.
 |--------|-----------|-------|-------|
 | `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
 | `wbft-chain.sh` | **fresh wbft chain (scenario 3)** — from genesis, tx + contract | `WBFT_BIN`, `FAUCET_PK`, python3 | boots go-wbft from block 0 (static bootstrap), asserts block production, a value transfer (receipt success + credited), and a returns-42 contract deploy/call |
-| `stablenet-hardfork-swap.sh` | **stablenet binary-swap hardfork (scenario 5)** | `PRE_FORK_BIN` (or `GSTABLE_BIN`), `POST_FORK_BIN`, `FAUCET_PK`, python3 | boots on the pre-fork gstable (`bohoBlock=N`), deploys a contract, then `chainbench hardfork` swaps every node to the post-fork build in place; asserts the fork is crossed, pre-fork contract state survives, and post-fork production + tx continue. Distinct from `delayed-fork` (that is one binary) |
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
-| `stablenet-block-propagation.sh` | block-fetcher near-head propagation (a1-07) | `GSTABLE_BIN`, python3 | over several rounds, asserts every node's lag behind node1's head is <= LAG (real-time NewBlock/NewBlockHashes propagation) |
-| `stablenet-consensus-lifecycle.sh` | round-change / quorum-halt / restart (b-08/09/10, a1-04) | `GSTABLE_BIN`, python3 | stop 1 validator → production continues + parentHash chain intact; restart → resumes; stop 2 (below quorum) → production halts; restart → recovers |
 | `stablenet-sync-gap.sh` | endpoint re-sync (a1-02 full, a1-06 downloader, a1-03 snap) | `GSTABLE_BIN`, python3 | `node stop --index` → open a ≥`GAP` block gap → `node start --index` → assert re-sync (head within 2, matching hash + stateRoot, state access, `eth_syncing=false`). Snap: `SYNCMODE=snap GAP=150` |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
 | `wemix-wbft-handoff.sh` | **wemix→wbft hardfork (scenario 2)** — go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl; optional `FAUCET_PK` + web3 | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block. With `FAUCET_PK`, also asserts the funded account's genesis balance survives on the wbft successor and a post-fork tx + contract deploy/call succeed |
