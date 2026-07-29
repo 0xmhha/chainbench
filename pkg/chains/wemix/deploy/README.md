@@ -5,7 +5,7 @@ chain on a closed network. This is the chainbench-native migration of the
 `wemix4` SSH test suite; the architecture and phasing are in
 [`docs/REMOTE_WEMIX_DEPLOY_DESIGN.md`](../../../../docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 
-## Status: Phases 1-3 — cluster model + key read + provision/launch
+## Status: Phases 1-4 — cluster + key read + provision/launch + governance/etcd
 
 - **`cluster.go`** — declarative server model: `Cluster`/`Server`, roles
   (`wemix_bp` producer / `wbft_bp` validator / `en` endpoint / `pn` bootnode),
@@ -36,8 +36,17 @@ chainbench remote deploy --cluster cluster.yaml --credentials credentials \
   --genesis genesis.json                                           # provision + launch
 ```
 
-Later phases add: governance+etcd bootstrap (register stakers/NCP), the hardfork
-handoff across the cluster, and test-case ports.
+- **`bootstrap.go` + `accounts.go`** — `Bootstrap`: on the boot producer (first
+  `wemix_bp`), ship the wemix governance config (built from `accounts` via
+  `BuildWemixConfig`) and run `poa.DeployGovernance` + `poa.EtcdInit` over an SSH
+  `poa.Runner`. Exposed as `chainbench remote bootstrap`. gwemix embeds etcd.
+
+```sh
+chainbench remote bootstrap --cluster cluster.yaml --credentials credentials \
+  --accounts accounts
+```
+
+Later phases add: the hardfork handoff across the cluster, and test-case ports.
 
 ## Config (sensitive — sample → real, gitignored)
 

@@ -17,8 +17,57 @@ func newRemoteCmd() *cobra.Command {
 		Use:   "remote",
 		Short: "Remote closed-network deployment (wemix+etcd cluster over SSH)",
 	}
-	c.AddCommand(newRemoteKeysCmd(), newRemoteDeployCmd())
+	c.AddCommand(newRemoteKeysCmd(), newRemoteDeployCmd(), newRemoteBootstrapCmd())
 	return c
+}
+
+func newRemoteBootstrapCmd() *cobra.Command {
+	var (
+		clusterPath  string
+		credsPath    string
+		accountsPath string
+	)
+	cmd := &cobra.Command{
+		Use:   "bootstrap",
+		Short: "Deploy governance + initialize etcd on the boot producer",
+		Long: "On the cluster's boot producer (first wemix_bp, already launched by\n" +
+			"`remote deploy`), builds the wemix governance config from the accounts,\n" +
+			"deploys the governance contracts, and initializes the embedded etcd\n" +
+			"cluster. No external etcd — gwemix embeds one.",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c, err := deploy.LoadCluster(clusterPath)
+			if err != nil {
+				return err
+			}
+			cr, err := deploy.LoadCredentials(credsPath)
+			if err != nil {
+				return err
+			}
+			a, err := deploy.LoadAccounts(accountsPath)
+			if err != nil {
+				return err
+			}
+			cfg, err := deploy.BuildWemixConfig(c, a)
+			if err != nil {
+				return err
+			}
+			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			if err != nil {
+				return err
+			}
+			if err := deploy.Bootstrap(cmd.Context(), c, cr, hostKey, cfg, os.Getenv); err != nil {
+				return err
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), "governance deployed, etcd initialized")
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&clusterPath, "cluster", "", "cluster config file (cluster.yaml)")
+	cmd.Flags().StringVar(&credsPath, "credentials", "", "SSH credentials file (or CHAINBENCH_REMOTE_USER / CHAINBENCH_REMOTE_PASS)")
+	cmd.Flags().StringVar(&accountsPath, "accounts", "", "accounts file (validator/producer material)")
+	_ = cmd.MarkFlagRequired("cluster")
+	_ = cmd.MarkFlagRequired("accounts")
+	return cmd
 }
 
 func newRemoteDeployCmd() *cobra.Command {

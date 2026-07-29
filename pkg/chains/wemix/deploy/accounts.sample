@@ -9,6 +9,16 @@
 keystore_dir: ./keystores
 keystore_password_file: ./keystores/.password
 
+# Producers — the wemix governance members (one per wemix_bp server). node_id is
+# the idv5 devp2p pubkey used as the wemix Member ID; addr is the coinbase.
+producers:
+  - server: 1
+    addr: "0x0000000000000000000000000000000000000000"
+    node_id: "0x"    # 128-hex idv5 node id
+    stake: "2000000000000000000000000000"
+  # - server: 2
+  #   ...
+
 # Per-validator material — one block per wbft_bp server (by server index).
 # addr/operator are coinbase/operator addresses; bls/bls_pop come from
 # `bootnode -writeaddress` on the remote (the key-read step will fill these).

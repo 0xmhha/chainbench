@@ -107,6 +107,26 @@ func readRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.H
 	return base64.StdEncoding.DecodeString(strings.TrimSpace(res.Stdout))
 }
 
+// writeRemoteFile writes content to a remote path over SSH (base64-piped),
+// creating the parent directory. The reverse of readRemoteFile.
+func writeRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.HostKeyCallback, remotePath string, content []byte) error {
+	enc := base64.StdEncoding.EncodeToString(content)
+	dir := shellQuote(pathDir(remotePath))
+	cmd := fmt.Sprintf("mkdir -p %s && printf %%s %s | base64 -d > %s", dir, shellQuote(enc), shellQuote(remotePath))
+	if _, err := remote.Exec(ctx, rc, hostKey, cmd); err != nil {
+		return err
+	}
+	return nil
+}
+
+// pathDir returns the directory portion of a slash path (remote paths are POSIX).
+func pathDir(p string) string {
+	if i := strings.LastIndex(p, "/"); i > 0 {
+		return p[:i]
+	}
+	return "."
+}
+
 // shellQuote single-quotes a path for safe remote shell use.
 func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
