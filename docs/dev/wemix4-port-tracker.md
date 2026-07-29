@@ -59,8 +59,8 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | TX-011 insufficient funds | insufficient-funds-rejected | covered |
 | TX-012 gas limit exceeded | gas-limit-exceeds-block-rejected | **ported** |
 | TX-013 tx replacement | same-nonce-replacement | **ported** |
-| TX-014 FD sender sig invalid | — | deferred (needs raw FD-tx signature-tamper machinery) |
-| TX-015 FD feepayer sig invalid | — | deferred (needs raw FD-tx signature-tamper machinery) |
+| TX-014 FD sender sig invalid | fee-delegated-sender-sig-invalid-rejected | **ported** |
+| TX-015 FD feepayer sig invalid | fee-delegated-feepayer-sig-invalid-rejected | **ported** |
 | TX-016 FD feepayer insufficient | fee-delegated-unfunded-feepayer-rejected | **ported** |
 | TX-017 contract revert | eth-call-revert-returns-error | covered |
 | TX-018 contract out-of-gas | tx-errors (partial) | covered |
@@ -119,9 +119,14 @@ covers a *different* governance and does not apply.)
   (same-nonce replacement), TX-016 (unfunded fee payer reject). Built on the
   existing `SendDynamicFeeTx`/`SendDynamicFeeGas`/`SendFeeDelegated` API — no
   new machinery.
-- **Next candidates:** TX-014/015 need raw FD-tx signature-tamper machinery
-  (a Go raw-tx builder + tamper) — a small new helper, then portable. After
-  that, only the fault-injection WBFT cases and the GOV group remain, both
-  blocked on machinery.
+- **Batch 4 (this PR)** — TX-014/015 fee-delegation invalid-signature:
+  `tests/wbft/accounts/tx_fd_sig.go`. Reuses the existing
+  `accounts.EncodeFeeDelegatedTampered` builder (sender/feepayer signature
+  corruption) and submits via `eth_sendRawTransaction`, expecting rejection.
+- **Remaining (blocked on machinery):** the fault-injection WBFT cases
+  (WBFT-003/006/007/008/011/012/013 — node-stop / proposer-stall harness), the
+  GOV group (needs a deployed-wemix-governance target), and RPC-008/009/019/023
+  + NODE data-migration/snap-sync/genesis-parse. With this batch, the
+  **testkit-portable read/tx gaps are exhausted.**
 - **Blocked on machinery:** the fault-injection WBFT cases (node-stop) and the
   GOV group (governance-bearing target).
