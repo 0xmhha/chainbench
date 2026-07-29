@@ -76,13 +76,13 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | WBFT-003 view change | — | deferred (needs proposer-stall fault injection) |
 | WBFT-005 epoch transition | epoch-transition-carries-epoch-info | covered |
 | WBFT-006 round-robin proposer | — | deferred (needs multi-block proposer tracking) |
-| WBFT-007 fault < 1/3 | — | deferred (needs node-stop fault injection) |
-| WBFT-008 fault ≥ 1/3 | — | deferred (needs node-stop fault injection) |
+| WBFT-007 fault < 1/3 | e2e TestE2E_WbftFaultTolerance | **ported** (e2e) |
+| WBFT-008 fault ≥ 1/3 | e2e TestE2E_WbftFaultHalt | **ported** (e2e) |
 | WBFT-009 prev seal | prev-seals-quorum | covered |
 | WBFT-010 randao/mixdigest | randao-and-mixdigest-present | **ported** |
-| WBFT-011 quorum 3 validators | — | deferred (needs fault injection) |
-| WBFT-012 quorum 6, 1 fault | — | deferred (needs fault injection) |
-| WBFT-013 quorum 6, 2 fault | — | deferred (needs fault injection) |
+| WBFT-011 quorum 3 validators | (subsumed by WBFT-007/008 boundary) | deferred (n-variant of the ported quorum boundary) |
+| WBFT-012 quorum 6, 1 fault | (n=6 variant) | deferred (n-variant; harness now exists) |
+| WBFT-013 quorum 6, 2 fault | (n=6 variant) | deferred (n-variant; harness now exists) |
 
 ## GOV (22)
 
@@ -113,20 +113,27 @@ covers a *different* governance and does not apply.)
 - **Batch 2** — WBFT-010 randao/mixDigest:
   `tests/wbft/consensus/randao_mixdigest.go`. Reads the head block's
   `randaoReveal` (WBFT extra) and non-zero `mixHash` (MixDigest).
-- **Batch 3 (this PR)** — TX-policy rejections/ordering:
+- **Batch 3** — TX-policy rejections/ordering:
   `tests/wbft/accounts/tx_rejections.go` — TX-002 (below-basefee reject),
   TX-012 (over-block-gas reject), TX-010 (out-of-order nonces mine), TX-013
   (same-nonce replacement), TX-016 (unfunded fee payer reject). Built on the
   existing `SendDynamicFeeTx`/`SendDynamicFeeGas`/`SendFeeDelegated` API — no
   new machinery.
-- **Batch 4 (this PR)** — TX-014/015 fee-delegation invalid-signature:
+- **Batch 4** — TX-014/015 fee-delegation invalid-signature:
   `tests/wbft/accounts/tx_fd_sig.go`. Reuses the existing
   `accounts.EncodeFeeDelegatedTampered` builder (sender/feepayer signature
   corruption) and submits via `eth_sendRawTransaction`, expecting rejection.
-- **Remaining (blocked on machinery):** the fault-injection WBFT cases
-  (WBFT-003/006/007/008/011/012/013 — node-stop / proposer-stall harness), the
-  GOV group (needs a deployed-wemix-governance target), and RPC-008/009/019/023
-  + NODE data-migration/snap-sync/genesis-parse. With this batch, the
-  **testkit-portable read/tx gaps are exhausted.**
-- **Blocked on machinery:** the fault-injection WBFT cases (node-stop) and the
-  GOV group (governance-bearing target).
+- **Batch 5 (this PR)** — WBFT fault tolerance (the first fault-injection port):
+  `tests/e2e/wbft_fault_test.go` — WBFT-007 (`TestE2E_WbftFaultTolerance`:
+  4 validators, stop 1 → 3/4 == quorum → consensus continues, node rejoins and
+  re-syncs) and WBFT-008 (`TestE2E_WbftFaultHalt`: stop 2 → 2/4 below quorum →
+  production halts, restart resumes). Uses the e2e harness node-stop machinery;
+  live-verified against the go-wbft binary. This establishes the fault-injection
+  harness the remaining WBFT cases build on.
+- **Remaining (blocked on machinery):** the proposer-oriented WBFT cases
+  (WBFT-003 view-change, WBFT-006 round-robin, and the n-variant quorum cases
+  011/012/013 — the fault harness now exists, so these are follow-ups not
+  blockers), the GOV group (needs a deployed-wemix-governance target), and
+  RPC-008/009/019/023 + NODE data-migration/snap-sync/genesis-parse. The
+  **testkit-portable read/tx gaps are exhausted**; what is left is e2e
+  fault/proposer coverage and the governance target.
