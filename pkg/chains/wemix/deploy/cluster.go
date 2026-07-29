@@ -4,11 +4,11 @@
 // closed network. It ports the wemix4 env.conf / node_env.json config into an
 // explicit, chainbench-native model (docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 //
-// Phases 1-4 are here: the config + cluster model (this file), the remote key
+// Phases 1-5 are here: the config + cluster model (this file), the remote key
 // read (keys.go, credentials.go), the provision+launch orchestration (plan.go,
-// orchestrate.go), and the governance+etcd bootstrap on the boot producer
-// (bootstrap.go, accounts.go). The last phase adds the hardfork handoff across
-// the cluster.
+// orchestrate.go), the governance+etcd bootstrap on the boot producer
+// (bootstrap.go, accounts.go), and the hardfork handoff confirmation
+// (handoff.go). The remaining work is porting the wemix4 test cases.
 package deploy
 
 import (

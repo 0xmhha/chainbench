@@ -5,7 +5,7 @@ chain on a closed network. This is the chainbench-native migration of the
 `wemix4` SSH test suite; the architecture and phasing are in
 [`docs/REMOTE_WEMIX_DEPLOY_DESIGN.md`](../../../../docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 
-## Status: Phases 1-4 — cluster + key read + provision/launch + governance/etcd
+## Status: Phases 1-5 — cluster + key read + provision/launch + governance/etcd + handoff
 
 - **`cluster.go`** — declarative server model: `Cluster`/`Server`, roles
   (`wemix_bp` producer / `wbft_bp` validator / `en` endpoint / `pn` bootnode),
@@ -46,7 +46,17 @@ chainbench remote bootstrap --cluster cluster.yaml --credentials credentials \
   --accounts accounts
 ```
 
-Later phases add: the hardfork handoff across the cluster, and test-case ports.
+- **`handoff.go`** — `WaitHandoff`: over an SSH tunnel to a `wbft_bp` validator's
+  RPC (closed network), poll until the chain crosses the Croissant block and the
+  next block is sealed by a validator rather than a wemix producer — proof the
+  wemix→wbft hardfork handoff completed. Exposed as `chainbench remote handoff`.
+
+```sh
+chainbench remote handoff --cluster cluster.yaml --credentials credentials \
+  --accounts accounts --wait 300
+```
+
+The last phase adds the wemix4 test-case ports.
 
 ## Config (sensitive — sample → real, gitignored)
 

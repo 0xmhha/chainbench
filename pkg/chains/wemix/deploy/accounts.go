@@ -51,6 +51,18 @@ func LoadAccounts(path string) (*Accounts, error) {
 	return &a, nil
 }
 
+// ProducerAddrs returns the wemix producer coinbase addresses (to exclude when
+// confirming the hardfork handoff).
+func (a *Accounts) ProducerAddrs() []string {
+	var out []string
+	for _, p := range a.Producers {
+		if p.Addr != "" {
+			out = append(out, p.Addr)
+		}
+	}
+	return out
+}
+
 // defaultBalance is the genesis balance for members/validators (1e27 wei).
 var defaultBalance, _ = new(big.Int).SetString("1000000000000000000000000000", 10)
 

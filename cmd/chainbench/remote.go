@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -17,8 +18,56 @@ func newRemoteCmd() *cobra.Command {
 		Use:   "remote",
 		Short: "Remote closed-network deployment (wemix+etcd cluster over SSH)",
 	}
-	c.AddCommand(newRemoteKeysCmd(), newRemoteDeployCmd(), newRemoteBootstrapCmd())
+	c.AddCommand(newRemoteKeysCmd(), newRemoteDeployCmd(), newRemoteBootstrapCmd(), newRemoteHandoffCmd())
 	return c
+}
+
+func newRemoteHandoffCmd() *cobra.Command {
+	var (
+		clusterPath  string
+		credsPath    string
+		accountsPath string
+		wait         int
+	)
+	cmd := &cobra.Command{
+		Use:   "handoff",
+		Short: "Wait for and confirm the wemix->wbft Croissant handoff",
+		Long: "Polls a go-wbft validator's RPC over an SSH tunnel (closed network)\n" +
+			"until the chain crosses the Croissant block and the next block is sealed\n" +
+			"by a validator rather than a wemix producer — i.e. the hardfork handoff\n" +
+			"completed and go-wbft is producing.",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c, err := deploy.LoadCluster(clusterPath)
+			if err != nil {
+				return err
+			}
+			cr, err := deploy.LoadCredentials(credsPath)
+			if err != nil {
+				return err
+			}
+			a, err := deploy.LoadAccounts(accountsPath)
+			if err != nil {
+				return err
+			}
+			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			if err != nil {
+				return err
+			}
+			miner, err := deploy.WaitHandoff(cmd.Context(), c, cr, hostKey, a.ProducerAddrs(), time.Duration(wait)*time.Second, os.Getenv)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "handoff confirmed: block %d sealed by %s (go-wbft validator)\n", c.CroissantBlock+1, miner)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&clusterPath, "cluster", "", "cluster config file (cluster.yaml)")
+	cmd.Flags().StringVar(&credsPath, "credentials", "", "SSH credentials file (or CHAINBENCH_REMOTE_USER / CHAINBENCH_REMOTE_PASS)")
+	cmd.Flags().StringVar(&accountsPath, "accounts", "", "accounts file (to read the producer addresses to exclude)")
+	cmd.Flags().IntVar(&wait, "wait", 300, "seconds to poll for the handoff")
+	_ = cmd.MarkFlagRequired("cluster")
+	_ = cmd.MarkFlagRequired("accounts")
+	return cmd
 }
 
 func newRemoteBootstrapCmd() *cobra.Command {
