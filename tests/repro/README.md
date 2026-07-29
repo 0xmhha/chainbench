@@ -15,7 +15,7 @@ prints exactly what it needs.
 The multi-chain support matrix maps to these scripts:
 
 1. **wemix chain** — `wemix-chain.sh` (pure go-wemix+etcd; tx + contract)
-2. **wemix→wbft hardfork** — `wemix-wbft-handoff.sh` (croissant handoff to go-wbft; with `FAUCET_PK`, also asserts pre-fork state survives + post-fork tx/contract)
+2. **wemix→wbft hardfork** — migrated to Go: `TestUpgradeRunE2E` in `cmd/chainbench/` (croissant handoff + post-fork state/tx/contract)
 3. **wbft chain** — migrated to Go: `TestE2E_WbftChain` in `tests/e2e/` (fresh go-wbft from genesis)
 4. **stablenet chain** — migrated to Go: `TestE2E_StablenetChain` in `tests/e2e/`
 5. **stablenet hardfork** — migrated to Go: `TestE2E_StablenetHardforkSwap` in `tests/e2e/` (binary-swap in place)
@@ -23,7 +23,7 @@ The multi-chain support matrix maps to these scripts:
 > **Migration in progress:** these bash scripts are being ported to Go gated e2e
 > tests under `tests/e2e/` (run with `go test -tags e2e`) — no bash/python/web3.
 > Ported so far: stablenet chain (4), binary-swap hardfork (5), consensus
-> lifecycle, block propagation, endpoint re-sync, proposal expiry, wbft chain (3). See `tests/e2e/README.md`. The scripts below are
+> lifecycle, block propagation, endpoint re-sync, proposal expiry, wbft chain (3), wemix→wbft handoff (2). See `tests/e2e/README.md`. The scripts below are
 > not yet ported.
 
 ## Run everything: `run-all.sh`
@@ -60,7 +60,6 @@ to reuse a prebuilt binary.
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
-| `wemix-wbft-handoff.sh` | **wemix→wbft hardfork (scenario 2)** — go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl; optional `FAUCET_PK` + web3 | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block. With `FAUCET_PK`, also asserts the funded account's genesis balance survives on the wbft successor and a post-fork tx + contract deploy/call succeed |
 | `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-02/03/04/05) | `L2_RPC` (an already-running L2 RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
 `LOCAL-*.sh` are ad-hoc local captures (gitignored pattern aside) and are not part

@@ -5,8 +5,8 @@
 # initializes etcd, confirms block production, then verifies tx processing and
 # contract deploy/call.
 #
-# This is the wemix half of wemix-wbft-handoff.sh WITHOUT the wbft successor: the
-# producer mines the whole chain (PoA, diff=1). The genesis has no croissant fork,
+# This is the wemix (pure) half without the wbft successor (handoff is covered by
+# cmd/chainbench TestUpgradeRunE2E). The producer mines the whole chain (PoA, diff=1). The genesis has no croissant fork,
 # so the go-wemix engine stays in charge throughout.
 #
 # Requirements (paths/env overridable): WEMIX_BIN, TEMPLATE (wemix genesis
