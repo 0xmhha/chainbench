@@ -464,6 +464,13 @@ func TestHardforkCmd_Execute(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	// hardfork Execute reuses the node's saved launch spec (identity args) and
+	// swaps only the binary, so nodespecs.json must exist (setup writes it).
+	specsJSON := fmt.Sprintf(`[{"Index":1,"Role":"validator","Host":"127.0.0.1","Binary":"oldbin","DataDir":%q,"ConfigPath":"","LogPath":%q,"Args":["--datadir",%q],"Ports":{"http":8501,"p2p":30301}}]`,
+		dir, filepath.Join(dir, "node.log"), dir)
+	if err := os.WriteFile(filepath.Join(dir, "nodespecs.json"), []byte(specsJSON), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	bin := filepath.Join(dir, "faketo")
 	if err := os.WriteFile(bin, []byte("#!/bin/sh\nif [ \"$1\" = \"init\" ]; then exit 0; fi\nsleep 30\n"), 0o755); err != nil {
 		t.Fatal(err)

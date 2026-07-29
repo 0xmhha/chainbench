@@ -49,6 +49,16 @@ head_at() {
   python3 -c "s='$hex'.strip(); print(int(s,16) if s.startswith('0x') else -1)"
 }
 advanced() { local before after; before="$(head_at "$1")"; sleep "$2"; after="$(head_at "$1")"; [ "$after" -gt "$before" ]; }
+wait_advancing() { # <url> <timeout_s> — succeeds as soon as head grows past its first sample
+  local url="$1" timeout="${2:-45}" start end t=0
+  start="$(head_at "$url")"
+  while [ "$t" -lt "$timeout" ]; do
+    sleep 3; t=$((t + 3))
+    end="$(head_at "$url")"
+    [ "$end" -gt "$start" ] && return 0
+  done
+  return 1
+}
 balance_at() {
   local hex
   hex="$("$CHAINBENCH" node rpc --rpc "$1" --method eth_getBalance --params "[\"$2\",\"latest\"]" 2>/dev/null | tr -d '"')"
@@ -67,8 +77,8 @@ URL="$(rpc_url 1)"
 log "settle ${SETTLE}s for boot + peering"
 sleep "$SETTLE"
 
-# 1. block production
-if ! advanced "$URL" "$ADVANCE"; then echo "FAIL: stablenet chain not producing blocks"; exit 1; fi
+# 1. block production (poll — WBFT consensus can take ~10-15s to warm up)
+if ! wait_advancing "$URL" 45; then echo "FAIL: stablenet chain not producing blocks"; exit 1; fi
 log "block production OK (head advancing)"
 
 # 2. transaction processing: value transfer, assert receipt success + credited

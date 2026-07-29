@@ -17,7 +17,6 @@ import (
 
 	"github.com/0xmhha/chainbench/pkg/core/driver"
 	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 )
 
@@ -89,32 +88,33 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 
 // Execute performs the upgrade: it stops each running node (by PID) and
 // relaunches it on binary (the resolved to-chain binary) over the same data
-// directory and config, using the target family's start flags. It continues the
-// same chain data — no re-init — so the fork activates at the plan's block. It
-// returns the new NodeSet (with new PIDs and the to-chain id).
+// directory, reusing the node's ORIGINAL launch spec (from setup's
+// nodespecs.json) and swapping only the binary. It continues the same chain
+// data — no re-init — so the fork activates at the plan's block. It returns the
+// new NodeSet (with new PIDs and the to-chain id).
 //
-// Node config regeneration for the target chain's RPC namespace is a refinement
-// (the existing config launches fine); the datadir, ports, and identity are
-// preserved across the swap.
-func (p Plan) Execute(ctx context.Context, d driver.Driver, toFamily registry.ConsensusFamily, binary string) (node.NodeSet, error) {
+// Reusing the original spec is load-bearing: those args carry the node's
+// validator identity (--nodekey, --unlock, keystore dir) and its static-nodes
+// peering. A homogeneous fork keeps that identity; regenerating generic start
+// flags would drop it and the relaunched node would rejoin WBFT consensus as an
+// unauthorized address, halting block production.
+func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeSpec, binary string) (node.NodeSet, error) {
+	byIndex := make(map[int]driver.NodeSpec, len(specs))
+	for _, s := range specs {
+		byIndex[s.Index] = s
+	}
 	ns := node.NodeSet{Chain: p.ToChain, Network: "local"}
 	for _, s := range p.Swaps {
 		if s.PID > 0 {
 			// Best-effort stop; a node that already exited is fine.
 			_ = d.Stop(ctx, driver.Handle{Index: s.Index, PID: s.PID})
 		}
-		spec := driver.NodeSpec{
-			Index:      s.Index,
-			Role:       s.Role,
-			Host:       "127.0.0.1",
-			Binary:     binary,
-			DataDir:    s.DataDir,
-			ConfigPath: s.ConfigPath,
-			LogPath:    s.LogPath,
-			Ports:      s.Ports,
-			Args:       nodeconfig.LaunchArgs(s.DataDir, s.ConfigPath, s.Ports, toFamily.StartFlags(s.Role)),
+		orig, ok := byIndex[s.Index]
+		if !ok {
+			return ns, fmt.Errorf("hardfork: no saved spec for node%d; run setup so nodespecs.json exists", s.Index)
 		}
-		h, err := d.Launch(ctx, spec)
+		orig.Binary = binary // swap the binary; keep identity/config/peering args
+		h, err := d.Launch(ctx, orig)
 		if err != nil {
 			return ns, fmt.Errorf("hardfork: relaunch node%d on %s: %w", s.Index, binary, err)
 		}

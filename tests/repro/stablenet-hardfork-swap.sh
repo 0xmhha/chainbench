@@ -65,6 +65,23 @@ head_at() {
   python3 -c "s='$hex'.strip(); print(int(s,16) if s.startswith('0x') else -1)"
 }
 advanced() { local before after; before="$(head_at "$1")"; sleep "$2"; after="$(head_at "$1")"; [ "$after" -gt "$before" ]; }
+wait_advancing() { # <url> <timeout_s> — succeeds as soon as head grows past its first sample
+  local url="$1" timeout="${2:-45}" start end t=0
+  start="$(head_at "$url")"
+  while [ "$t" -lt "$timeout" ]; do
+    sleep 3; t=$((t + 3)); end="$(head_at "$url")"
+    [ "$end" -gt "$start" ] && return 0
+  done
+  return 1
+}
+wait_cross() { # <url> <target> <timeout_s> — succeeds when head exceeds target
+  local url="$1" target="$2" timeout="${3:-90}" t=0 h
+  while [ "$t" -lt "$timeout" ]; do
+    h="$(head_at "$url")"; [ "$h" -gt "$target" ] && return 0
+    sleep 3; t=$((t + 3))
+  done
+  return 1
+}
 call42() { # <url> <addr> -> true if eth_call returns 42
   local r; r="$("$CHAINBENCH" contract call --rpc "$1" --to "$2" --data 0x 2>/dev/null | tr -d '"')"
   case "$r" in *2a) return 0;; *) return 1;; esac
@@ -82,8 +99,8 @@ log "boot stablenet on PRE-fork binary (bohoBlock=$BOHO_BLOCK)"
 URL="$(rpc_url 1)"
 log "settle ${SETTLE}s"; sleep "$SETTLE"
 
-# 1. pre-fork block production
-if ! advanced "$URL" "$ADVANCE"; then echo "FAIL: pre-fork chain not producing blocks"; exit 1; fi
+# 1. pre-fork block production (poll — WBFT consensus can take ~10-15s to warm up)
+if ! wait_advancing "$URL" 45; then echo "FAIL: pre-fork chain not producing blocks"; exit 1; fi
 log "pre-fork block production OK"
 
 # 2. deploy a contract BEFORE the swap; its state must survive the binary swap + fork
@@ -113,12 +130,13 @@ log "chainbench hardfork: stop pre-fork binary, relaunch post-fork binary in pla
   --dry-run=false || { echo "FAIL: hardfork swap errored"; exit 1; }
 
 URL="$(rpc_url 1)" # ports preserved, but reload in case
-log "settle ${SETTLE}s for relaunch + fork crossing"; sleep "$SETTLE"
+log "settle for relaunch"; sleep 8
 
-# 5. post-fork block production must continue and cross the fork block
-if ! advanced "$URL" "$((ADVANCE + 10))"; then echo "FAIL: post-fork chain not producing blocks after swap"; exit 1; fi
+# 5. post-fork block production must continue and cross the fork block (poll)
+if ! wait_cross "$URL" "$BOHO_BLOCK" 120; then
+  echo "FAIL: post-fork head did not cross bohoBlock ($BOHO_BLOCK) after swap (last=$(head_at "$URL"))"; exit 1
+fi
 HEAD="$(head_at "$URL")"
-[ "$HEAD" -gt "$BOHO_BLOCK" ] || { echo "FAIL: head ($HEAD) did not cross bohoBlock ($BOHO_BLOCK) after swap"; exit 1; }
 log "post-fork production OK (head=$HEAD > bohoBlock=$BOHO_BLOCK)"
 
 # 6. pre-fork state survives: the contract still returns 42 after the swap + fork
