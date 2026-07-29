@@ -5,17 +5,27 @@ chain on a closed network. This is the chainbench-native migration of the
 `wemix4` SSH test suite; the architecture and phasing are in
 [`docs/REMOTE_WEMIX_DEPLOY_DESIGN.md`](../../../../docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 
-## Status: Phase 1 — config + cluster model
+## Status: Phases 1-2 — cluster model + remote key read
 
-`cluster.go` provides the declarative server model: `Cluster`/`Server`, roles
-(`wemix_bp` producer / `wbft_bp` validator / `en` endpoint / `pn` bootnode),
-`LoadCluster`, per-server SSH port / binary / sync-mode / RPC-URL resolution, and
-role/launch-order helpers. Supports 1 to N servers (count = number of `servers:`
-entries). No network I/O yet.
+- **`cluster.go`** — declarative server model: `Cluster`/`Server`, roles
+  (`wemix_bp` producer / `wbft_bp` validator / `en` endpoint / `pn` bootnode),
+  `LoadCluster`, per-server SSH port / binary / sync-mode / RPC-URL resolution,
+  role/launch-order helpers, and remote key paths. 1 to N servers.
+- **`credentials.go`** — SSH auth from `credentials` (or `CHAINBENCH_REMOTE_USER`
+  / `CHAINBENCH_REMOTE_PASS`), per-server overrides → `remote.Credentials`.
+- **`keys.go`** — the remote key read: derive address + BLS pubkey/PoP via
+  `bootnode -writeaddress` over SSH, pull the coinbase/operator keystores locally,
+  emit an `accounts` fragment. Exposed as `chainbench remote keys read`.
 
-Later phases add: remote key read (`bootnode -writeaddress` + SCP pull), remote
-provision/launch, governance+etcd bootstrap, hardfork handoff, and test-case
-ports.
+```sh
+chainbench remote keys read --cluster cluster.yaml --credentials credentials \
+  --keystore-dir keystores --accounts-out accounts.generated
+# or a single server:
+chainbench remote keys read --cluster cluster.yaml --server 3
+```
+
+Later phases add: remote provision/launch, governance+etcd bootstrap, hardfork
+handoff, and test-case ports.
 
 ## Config (sensitive — sample → real, gitignored)
 

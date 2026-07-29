@@ -24,6 +24,14 @@ wbft_binary: /data/bin/gwemix4    # post-fork WBFT validator binary
 # Default SSH port for all servers (per-server override with `ssh_port`).
 ssh_port: 10022
 
+# Where key material lives on each server (used by `chainbench remote keys read`).
+# Omit any field to use the wemix4 defaults shown here.
+remote_paths:
+  bootnode: bootnode                                   # BLS/address derivation tool
+  nodekey: /data/go-wbft/conf/nodekey
+  coinbase_keystore: /data/go-wbft/conf/keystore/coinbase
+  operator_keystore: /data/go-wbft/conf/keystore/operator
+
 # --- servers: one entry per host, 1 to N. count = number of entries. ---
 # role: wemix_bp (pre-fork producer) | wbft_bp (validator) | en (endpoint) | pn (bootnode)
 servers:

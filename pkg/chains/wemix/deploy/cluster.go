@@ -4,8 +4,9 @@
 // closed network. It ports the wemix4 env.conf / node_env.json config into an
 // explicit, chainbench-native model (docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 //
-// This is Phase 1: the config + cluster model only (no network I/O). Later
-// phases add the remote key read, provisioning, and hardfork orchestration.
+// Phases 1-2 are here: the config + cluster model (this file) and the remote key
+// read (keys.go, credentials.go). Later phases add remote provisioning and the
+// hardfork orchestration.
 package deploy
 
 import (
@@ -50,16 +51,56 @@ type Server struct {
 // node_env.json. SSH auth (user/password/key) and account/keystore material live
 // in separate, gitignored files — never here.
 type Cluster struct {
-	RPCPort          int      `yaml:"rpc_port"`
-	WSPort           int      `yaml:"ws_port"`
-	CroissantBlock   int64    `yaml:"croissant_block"`
-	EpochLength      int      `yaml:"epoch_length"`
-	TargetValidators int      `yaml:"target_validators"`
-	GenesisFile      string   `yaml:"genesis_file"` // remote path to the genesis
-	WemixBinary      string   `yaml:"wemix_binary"` // remote path, pre-fork producer
-	WbftBinary       string   `yaml:"wbft_binary"`  // remote path, post-fork validator
-	SSHPort          int      `yaml:"ssh_port"`     // default SSH port for all servers
-	Servers          []Server `yaml:"servers"`
+	RPCPort          int         `yaml:"rpc_port"`
+	WSPort           int         `yaml:"ws_port"`
+	CroissantBlock   int64       `yaml:"croissant_block"`
+	EpochLength      int         `yaml:"epoch_length"`
+	TargetValidators int         `yaml:"target_validators"`
+	GenesisFile      string      `yaml:"genesis_file"` // remote path to the genesis
+	WemixBinary      string      `yaml:"wemix_binary"` // remote path, pre-fork producer
+	WbftBinary       string      `yaml:"wbft_binary"`  // remote path, post-fork validator
+	SSHPort          int         `yaml:"ssh_port"`     // default SSH port for all servers
+	RemotePaths      RemotePaths `yaml:"remote_paths"` // where keys live on each server
+	Servers          []Server    `yaml:"servers"`
+}
+
+// RemotePaths are the fixed on-server locations the key-read reads from. Empty
+// fields fall back to the wemix4 defaults (see DefaultRemotePaths).
+type RemotePaths struct {
+	Bootnode         string `yaml:"bootnode"`          // node's bootnode tool (BLS derivation)
+	Nodekey          string `yaml:"nodekey"`           // the node's devp2p private key
+	CoinbaseKeystore string `yaml:"coinbase_keystore"` // validator coinbase keystore
+	OperatorKeystore string `yaml:"operator_keystore"` // operator keystore
+}
+
+// DefaultRemotePaths mirrors the wemix4 closed-network layout.
+func DefaultRemotePaths() RemotePaths {
+	return RemotePaths{
+		Bootnode:         "bootnode",
+		Nodekey:          "/data/go-wbft/conf/nodekey",
+		CoinbaseKeystore: "/data/go-wbft/conf/keystore/coinbase",
+		OperatorKeystore: "/data/go-wbft/conf/keystore/operator",
+	}
+}
+
+// Paths returns the cluster's remote paths with defaults applied for any empty
+// field.
+func (c *Cluster) Paths() RemotePaths {
+	d := DefaultRemotePaths()
+	p := c.RemotePaths
+	if p.Bootnode == "" {
+		p.Bootnode = d.Bootnode
+	}
+	if p.Nodekey == "" {
+		p.Nodekey = d.Nodekey
+	}
+	if p.CoinbaseKeystore == "" {
+		p.CoinbaseKeystore = d.CoinbaseKeystore
+	}
+	if p.OperatorKeystore == "" {
+		p.OperatorKeystore = d.OperatorKeystore
+	}
+	return p
 }
 
 // LoadCluster reads and validates a cluster config from path.
