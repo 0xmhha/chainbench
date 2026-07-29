@@ -152,7 +152,9 @@ the multi-server cluster iteration.
    multi-server wemix network (no hardfork yet); confirm block production.
 4. **Governance + etcd bootstrap** remotely; register stakers/NCP.
 5. **Hardfork handoff** across the cluster; post-fork verification.
-6. **Port test cases** (NODE/WBFT/RPC/GOV/TX) to Go testkit/e2e, gated.
+6. **Port test cases** (NODE/WBFT/RPC/GOV/TX) to Go testkit/e2e, gated —
+   gap-analysis driven (much of wemix4 is already covered by the testkit corpus);
+   see [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md).
 
 Each phase is independently useful and testable; 1–2 are pure local/config work,
 3+ need the remote servers.
