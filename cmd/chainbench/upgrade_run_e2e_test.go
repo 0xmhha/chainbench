@@ -7,7 +7,8 @@
 // successor keeps state and processes new transactions/contracts post-fork
 // (scenario 2: state preserved + contracts work across the hardfork).
 //
-// Run it with etcd on PATH and:
+// No external etcd is needed — gwemix embeds an etcd server (admin.etcdInit ->
+// go.etcd.io/etcd/server/v3/embed.StartEtcd). Run it with:
 //
 //	CHAINBENCH_E2E_FROM_BIN=/path/go-wemix/build/bin/gwemix \
 //	CHAINBENCH_E2E_TO_BIN=/path/go-wbft/build/bin/gwemix \

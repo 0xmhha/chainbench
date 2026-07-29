@@ -10,7 +10,7 @@
 # so the go-wemix engine stays in charge throughout.
 #
 # Requirements (paths/env overridable): WEMIX_BIN, TEMPLATE (wemix genesis
-# template), etcd/jq/python3 on PATH, python3 web3/eth-account (to derive and fund
+# template), jq/python3 on PATH (gwemix embeds etcd), python3 web3/eth-account (to derive and fund
 # the FAUCET_PK address), and FAUCET_PK (a private key — env only, never a literal;
 # its address is funded in the genesis so it can send tx / deploy contracts).
 #
@@ -38,7 +38,8 @@ cleanup() { pkill -9 -f "$WORK" 2>/dev/null || true; }
 trap cleanup EXIT
 require() { command -v "$1" >/dev/null 2>&1 || { echo "missing: $1"; exit 2; }; }
 
-require jq; require python3; require etcd
+# No external etcd needed — gwemix embeds an etcd server (admin.etcdInit).
+require jq; require python3
 [ -n "$WEMIX_BIN" ] && [ -x "$WEMIX_BIN" ] || { echo "no wemix binary (set WEMIX_BIN=/path/to/gwemix)"; exit 2; }
 [ -n "$TEMPLATE" ] && [ -f "$TEMPLATE" ] || { echo "set TEMPLATE to the wemix genesis template json"; exit 2; }
 [ -n "${FAUCET_PK:-}" ] || { echo "set FAUCET_PK to a private key (env only; its address is funded in genesis)"; exit 2; }

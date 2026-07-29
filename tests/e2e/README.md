@@ -46,7 +46,7 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 > **Scenario 2 (wemix→wbft handoff)** lives in `cmd/chainbench/upgrade_run_e2e_test.go`
 > (`TestUpgradeRunE2E`) — it drives `chainbench upgrade run` and asserts the
 > croissant handoff plus post-fork state/tx/contract on the wbft successor. Run it
-> with `CHAINBENCH_E2E_FROM_BIN`/`_TO_BIN`/`_TEMPLATE` and etcd on PATH.
+> with `CHAINBENCH_E2E_FROM_BIN`/`_TO_BIN`/`_TEMPLATE`. No external etcd is needed — gwemix embeds one.
 >
 > Migration in progress: the remaining scenarios (1 wemix pure, basefee, and the
 > account-extra / delayed-fork overlay cases — the last two need a gstable build
