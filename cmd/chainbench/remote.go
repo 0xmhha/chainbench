@@ -17,8 +17,64 @@ func newRemoteCmd() *cobra.Command {
 		Use:   "remote",
 		Short: "Remote closed-network deployment (wemix+etcd cluster over SSH)",
 	}
-	c.AddCommand(newRemoteKeysCmd())
+	c.AddCommand(newRemoteKeysCmd(), newRemoteDeployCmd())
 	return c
+}
+
+func newRemoteDeployCmd() *cobra.Command {
+	var (
+		clusterPath string
+		credsPath   string
+		genesisFile string
+		dryRun      bool
+	)
+	cmd := &cobra.Command{
+		Use:   "deploy",
+		Short: "Provision and launch the wemix+etcd cluster over SSH",
+		Long: "Builds the per-server launch plan from the cluster config (binary by\n" +
+			"role, ports, node config), then provisions and launches each server over\n" +
+			"SSH in launch order (endpoints/bootnodes before producers). Keys are read\n" +
+			"from the servers, not shipped. --dry-run prints the plan without connecting.",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			c, err := deploy.LoadCluster(clusterPath)
+			if err != nil {
+				return err
+			}
+			out := cmd.OutOrStdout()
+			if dryRun {
+				fmt.Fprint(out, deploy.Describe(c, deploy.BuildNodeSpecs(c, nil)))
+				return nil
+			}
+			cr, err := deploy.LoadCredentials(credsPath)
+			if err != nil {
+				return err
+			}
+			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			if err != nil {
+				return err
+			}
+			var genesis []byte
+			if genesisFile != "" {
+				if genesis, err = os.ReadFile(genesisFile); err != nil {
+					return fmt.Errorf("read genesis: %w", err)
+				}
+			}
+			nodes, err := deploy.Deploy(cmd.Context(), c, cr, hostKey, genesis, nil, os.Getenv)
+			if err != nil {
+				return err
+			}
+			for _, n := range nodes {
+				fmt.Fprintf(out, "launched node %d  %s  pid=%d\n", n.Index, n.RPCURL, n.PID)
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&clusterPath, "cluster", "", "cluster config file (cluster.yaml)")
+	cmd.Flags().StringVar(&credsPath, "credentials", "", "SSH credentials file (or CHAINBENCH_REMOTE_USER / CHAINBENCH_REMOTE_PASS)")
+	cmd.Flags().StringVar(&genesisFile, "genesis", "", "local genesis file to ship + init on each server (empty: use the server's genesis_file)")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "print the deploy plan without connecting")
+	_ = cmd.MarkFlagRequired("cluster")
+	return cmd
 }
 
 func newRemoteKeysCmd() *cobra.Command {

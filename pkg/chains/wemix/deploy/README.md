@@ -5,7 +5,7 @@ chain on a closed network. This is the chainbench-native migration of the
 `wemix4` SSH test suite; the architecture and phasing are in
 [`docs/REMOTE_WEMIX_DEPLOY_DESIGN.md`](../../../../docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 
-## Status: Phases 1-2 — cluster model + remote key read
+## Status: Phases 1-3 — cluster model + key read + provision/launch
 
 - **`cluster.go`** — declarative server model: `Cluster`/`Server`, roles
   (`wemix_bp` producer / `wbft_bp` validator / `en` endpoint / `pn` bootnode),
@@ -24,8 +24,20 @@ chainbench remote keys read --cluster cluster.yaml --credentials credentials \
 chainbench remote keys read --cluster cluster.yaml --server 3
 ```
 
-Later phases add: remote provision/launch, governance+etcd bootstrap, hardfork
-handoff, and test-case ports.
+- **`plan.go`** — maps each cluster server to a `driver.NodeSpec` (role binary,
+  ports, poa/wemix node config, launch args); `Describe` renders a dry-run plan.
+- **`orchestrate.go`** — `Deploy`: over SSH, provision + init genesis + launch
+  each server in launch order (endpoints/bootnodes first). Keys are read from the
+  servers, not shipped. Exposed as `chainbench remote deploy`.
+
+```sh
+chainbench remote deploy --cluster cluster.yaml --dry-run          # print the plan
+chainbench remote deploy --cluster cluster.yaml --credentials credentials \
+  --genesis genesis.json                                           # provision + launch
+```
+
+Later phases add: governance+etcd bootstrap (register stakers/NCP), the hardfork
+handoff across the cluster, and test-case ports.
 
 ## Config (sensitive — sample → real, gitignored)
 

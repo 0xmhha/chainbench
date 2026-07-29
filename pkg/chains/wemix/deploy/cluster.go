@@ -4,9 +4,11 @@
 // closed network. It ports the wemix4 env.conf / node_env.json config into an
 // explicit, chainbench-native model (docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
 //
-// Phases 1-2 are here: the config + cluster model (this file) and the remote key
-// read (keys.go, credentials.go). Later phases add remote provisioning and the
-// hardfork orchestration.
+// Phases 1-3 are here: the config + cluster model (this file), the remote key
+// read (keys.go, credentials.go), and the provision+launch orchestration
+// (plan.go maps servers to launch specs; orchestrate.go ships/inits/launches
+// them over SSH). Later phases add the governance+etcd bootstrap and the hardfork
+// handoff across the cluster.
 package deploy
 
 import (
@@ -53,6 +55,8 @@ type Server struct {
 type Cluster struct {
 	RPCPort          int         `yaml:"rpc_port"`
 	WSPort           int         `yaml:"ws_port"`
+	P2PPort          int         `yaml:"p2p_port"`  // devp2p port (default 30303)
+	DataRoot         string      `yaml:"data_root"` // remote node datadir (default /data/go-wbft)
 	CroissantBlock   int64       `yaml:"croissant_block"`
 	EpochLength      int         `yaml:"epoch_length"`
 	TargetValidators int         `yaml:"target_validators"`
