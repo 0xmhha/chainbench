@@ -25,7 +25,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | RPC-005 getWbftExtraInfo (normal) | wbft-extra-info-fields | covered |
 | RPC-006 istanbul_status | istanbul-status-fields | covered |
 | RPC-007 getTransactionReceipt | transaction-receipt-fields | covered |
-| RPC-008 wemix_getBriocheBlockReward | — | **deferred** (wemix reward RPC; needs wemix chain) |
+| RPC-008 wemix_getBriocheBlockReward | — | deferred (cross-binary equality go-wemix vs go-wbft; needs the handoff chain, not a fresh go-wbft net) |
 | RPC-009 eth_call governance read | — | deferred (needs deployed wemix governance) |
 | RPC-010 istanbul_nodeAddress | node-address-returned | covered |
 | RPC-011 istanbul_isValidator | is-validator-flags | covered |
@@ -79,7 +79,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | WBFT-007 fault < 1/3 | — | deferred (needs node-stop fault injection) |
 | WBFT-008 fault ≥ 1/3 | — | deferred (needs node-stop fault injection) |
 | WBFT-009 prev seal | prev-seals-quorum | covered |
-| WBFT-010 randao/mixdigest | — | deferred (mixDigest field assertion; small, portable) |
+| WBFT-010 randao/mixdigest | randao-and-mixdigest-present | **ported** |
 | WBFT-011 quorum 3 validators | — | deferred (needs fault injection) |
 | WBFT-012 quorum 6, 1 fault | — | deferred (needs fault injection) |
 | WBFT-013 quorum 6, 2 fault | — | deferred (needs fault injection) |
@@ -107,12 +107,14 @@ covers a *different* governance and does not apply.)
 
 ## Batches
 
-- **Batch 1 (this PR)** — TX-009/019/020 secp256r1 (RIP-7212 P256VERIFY)
-  precompile: `tests/wbft/accounts/secp256r1_precompile.go`. Deterministic,
-  read-only, no funding — genuinely new capability coverage.
-- **Next candidates (testkit-portable, no new machinery):** WBFT-010
-  randao/mixDigest (read-only field assert), RPC-008 brioche reward (read),
-  then the TX send-helper gaps (basefee-reject, gaslimit, replacement, nonce,
-  FD-failure) once a small set of raw-send helpers lands.
+- **Batch 1** — TX-009/019/020 secp256r1 (RIP-7212 P256VERIFY) precompile:
+  `tests/wbft/accounts/secp256r1_precompile.go`. Deterministic, read-only, no
+  funding — genuinely new capability coverage.
+- **Batch 2 (this PR)** — WBFT-010 randao/mixDigest:
+  `tests/wbft/consensus/randao_mixdigest.go`. Reads the head block's
+  `randaoReveal` (WBFT extra) and non-zero `mixHash` (MixDigest).
+- **Next candidates (testkit-portable, no new machinery):** the TX send-helper
+  gaps (basefee-reject, gaslimit, replacement, nonce, FD-failure) once a small
+  set of raw-send helpers lands.
 - **Blocked on machinery:** the fault-injection WBFT cases (node-stop) and the
   GOV group (governance-bearing target).
