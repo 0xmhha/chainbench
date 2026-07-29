@@ -73,9 +73,9 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 |---|---|---|
 | WBFT-001 finalize/committedSeal | wbft-seals-quorum | covered |
 | WBFT-002 block period 1s | block-period-one-second | covered |
-| WBFT-003 view change | — | deferred (needs proposer-stall fault injection) |
+| WBFT-003 view change | e2e TestE2E_WbftViewChange | **ported** (e2e) |
 | WBFT-005 epoch transition | epoch-transition-carries-epoch-info | covered |
-| WBFT-006 round-robin proposer | — | deferred (needs multi-block proposer tracking) |
+| WBFT-006 round-robin proposer | e2e TestE2E_WbftRoundRobinProposer | **ported** (e2e) |
 | WBFT-007 fault < 1/3 | e2e TestE2E_WbftFaultTolerance | **ported** (e2e) |
 | WBFT-008 fault ≥ 1/3 | e2e TestE2E_WbftFaultHalt | **ported** (e2e) |
 | WBFT-009 prev seal | prev-seals-quorum | covered |
@@ -130,10 +130,15 @@ covers a *different* governance and does not apply.)
   production halts, restart resumes). Uses the e2e harness node-stop machinery;
   live-verified against the go-wbft binary. This establishes the fault-injection
   harness the remaining WBFT cases build on.
-- **Remaining (blocked on machinery):** the proposer-oriented WBFT cases
-  (WBFT-003 view-change, WBFT-006 round-robin, and the n-variant quorum cases
-  011/012/013 — the fault harness now exists, so these are follow-ups not
-  blockers), the GOV group (needs a deployed-wemix-governance target), and
-  RPC-008/009/019/023 + NODE data-migration/snap-sync/genesis-parse. The
-  **testkit-portable read/tx gaps are exhausted**; what is left is e2e
-  fault/proposer coverage and the governance target.
+- **Batch 6 (this PR)** — WBFT proposer behavior:
+  `tests/e2e/wbft_proposer_test.go` — WBFT-006 (`TestE2E_WbftRoundRobinProposer`:
+  the miner rotates across a block window — ≥3 distinct proposers over 16 blocks
+  on a 4-validator net) and WBFT-003 (`TestE2E_WbftViewChange`: killing the
+  proposer triggers a round change; the chain keeps advancing from a surviving
+  validator with parentHash links intact, then the node restarts). Live-verified
+  against the go-wbft binary.
+- **Remaining:** the n-variant quorum cases (WBFT-011/012/013 — same boundary as
+  WBFT-007/008 at n=3/6, a mechanical follow-up on the fault harness), the GOV
+  group (needs a deployed-wemix-governance target), and RPC-008/009/019/023 +
+  NODE data-migration/snap-sync/genesis-parse. All WBFT consensus BEHAVIORS are
+  now ported; what is left is n-variant repeats and the governance target.
