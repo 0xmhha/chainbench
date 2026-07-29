@@ -47,7 +47,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | wemix4 | maps to | status |
 |---|---|---|
 | TX-001 normal tx | value-transfer, effective-gas-price | covered |
-| TX-002 basefee-reject | — | deferred (needs sub-basefee send helper) |
+| TX-002 basefee-reject | dynamic-fee-below-basefee-rejected | **ported** |
 | TX-003 dynamic-fee tx | dynamic-fee-tx | covered |
 | TX-004 fee delegation | fee-delegated-transfer | covered |
 | TX-005 contract deploy | contract-roundtrip | covered |
@@ -55,13 +55,13 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | TX-007 access-list tx | access-list-tx | covered |
 | TX-008 setcode tx (7702) | set-code-delegation | covered |
 | TX-009 secp256r1 valid | secp256r1-precompile-valid | **ported** |
-| TX-010 nonce ordering | — | deferred (queued-nonce send helper) |
+| TX-010 nonce ordering | out-of-order-nonces-mine | **ported** |
 | TX-011 insufficient funds | insufficient-funds-rejected | covered |
-| TX-012 gas limit exceeded | — | deferred (over-block-gas send helper) |
-| TX-013 tx replacement | — | deferred (same-nonce replacement helper) |
-| TX-014 FD sender sig invalid | — | deferred (malformed dual-sig helper) |
-| TX-015 FD feepayer sig invalid | — | deferred (malformed dual-sig helper) |
-| TX-016 FD feepayer insufficient | — | deferred (funded second key) |
+| TX-012 gas limit exceeded | gas-limit-exceeds-block-rejected | **ported** |
+| TX-013 tx replacement | same-nonce-replacement | **ported** |
+| TX-014 FD sender sig invalid | — | deferred (needs raw FD-tx signature-tamper machinery) |
+| TX-015 FD feepayer sig invalid | — | deferred (needs raw FD-tx signature-tamper machinery) |
+| TX-016 FD feepayer insufficient | fee-delegated-unfunded-feepayer-rejected | **ported** |
 | TX-017 contract revert | eth-call-revert-returns-error | covered |
 | TX-018 contract out-of-gas | tx-errors (partial) | covered |
 | TX-019 secp256r1 invalid | secp256r1-precompile-invalid | **ported** |
@@ -110,11 +110,18 @@ covers a *different* governance and does not apply.)
 - **Batch 1** — TX-009/019/020 secp256r1 (RIP-7212 P256VERIFY) precompile:
   `tests/wbft/accounts/secp256r1_precompile.go`. Deterministic, read-only, no
   funding — genuinely new capability coverage.
-- **Batch 2 (this PR)** — WBFT-010 randao/mixDigest:
+- **Batch 2** — WBFT-010 randao/mixDigest:
   `tests/wbft/consensus/randao_mixdigest.go`. Reads the head block's
   `randaoReveal` (WBFT extra) and non-zero `mixHash` (MixDigest).
-- **Next candidates (testkit-portable, no new machinery):** the TX send-helper
-  gaps (basefee-reject, gaslimit, replacement, nonce, FD-failure) once a small
-  set of raw-send helpers lands.
+- **Batch 3 (this PR)** — TX-policy rejections/ordering:
+  `tests/wbft/accounts/tx_rejections.go` — TX-002 (below-basefee reject),
+  TX-012 (over-block-gas reject), TX-010 (out-of-order nonces mine), TX-013
+  (same-nonce replacement), TX-016 (unfunded fee payer reject). Built on the
+  existing `SendDynamicFeeTx`/`SendDynamicFeeGas`/`SendFeeDelegated` API — no
+  new machinery.
+- **Next candidates:** TX-014/015 need raw FD-tx signature-tamper machinery
+  (a Go raw-tx builder + tamper) — a small new helper, then portable. After
+  that, only the fault-injection WBFT cases and the GOV group remain, both
+  blocked on machinery.
 - **Blocked on machinery:** the fault-injection WBFT cases (node-stop) and the
   GOV group (governance-bearing target).
