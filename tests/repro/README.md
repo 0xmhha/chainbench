@@ -16,14 +16,14 @@ The multi-chain support matrix maps to these scripts:
 
 1. **wemix chain** — `wemix-chain.sh` (pure go-wemix+etcd; tx + contract)
 2. **wemix→wbft hardfork** — `wemix-wbft-handoff.sh` (croissant handoff to go-wbft; with `FAUCET_PK`, also asserts pre-fork state survives + post-fork tx/contract)
-3. **wbft chain** — `wbft-chain.sh` (fresh go-wbft from genesis; tx + contract)
+3. **wbft chain** — migrated to Go: `TestE2E_WbftChain` in `tests/e2e/` (fresh go-wbft from genesis)
 4. **stablenet chain** — migrated to Go: `TestE2E_StablenetChain` in `tests/e2e/`
 5. **stablenet hardfork** — migrated to Go: `TestE2E_StablenetHardforkSwap` in `tests/e2e/` (binary-swap in place)
 
 > **Migration in progress:** these bash scripts are being ported to Go gated e2e
 > tests under `tests/e2e/` (run with `go test -tags e2e`) — no bash/python/web3.
 > Ported so far: stablenet chain (4), binary-swap hardfork (5), consensus
-> lifecycle, block propagation, endpoint re-sync, proposal expiry. See `tests/e2e/README.md`. The scripts below are
+> lifecycle, block propagation, endpoint re-sync, proposal expiry, wbft chain (3). See `tests/e2e/README.md`. The scripts below are
 > not yet ported.
 
 ## Run everything: `run-all.sh`
@@ -57,7 +57,6 @@ to reuse a prebuilt binary.
 | Script | Reproduces | Needs | Notes |
 |--------|-----------|-------|-------|
 | `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
-| `wbft-chain.sh` | **fresh wbft chain (scenario 3)** — from genesis, tx + contract | `WBFT_BIN`, `FAUCET_PK`, python3 | boots go-wbft from block 0 (static bootstrap), asserts block production, a value transfer (receipt success + credited), and a returns-42 contract deploy/call |
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
