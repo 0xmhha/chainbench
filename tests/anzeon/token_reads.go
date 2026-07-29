@@ -1,5 +1,5 @@
 // This file adds address-argument system-contract read cases (ported from
-// tests/regression f-system-contracts f1-02 balance-of and c-anzeon
+// regression f-system-contracts f1-02 balance-of and c-anzeon
 // authorization), exercising the ABI address-arg encoding in pkg/accounts.
 //
 // # Test: token-balance-readable

@@ -1,4 +1,4 @@
-// This file adds node-status read cases (ported from tests/regression/g-api g4).
+// This file adds node-status read cases (ported from regression/g-api g4).
 //
 // # Test: txpool-status
 //

@@ -1,5 +1,5 @@
 // This file adds two JSON-RPC read cases ported from the legacy bash regression
-// suite (tests/regression a-ethereum a3-04, a4-04).
+// suite (regression a-ethereum a3-04, a4-04).
 //
 // # Test: estimate-gas
 //

@@ -1,5 +1,5 @@
 // Package anzeon holds go-stablenet system-contract test cases (ported from the
-// legacy regression tests/regression/f-system-contracts and c-anzeon), exercised
+// legacy regression regression/f-system-contracts and c-anzeon), exercised
 // through eth_call with the ABI helpers in pkg/accounts.
 //
 // # Test: system-contracts-deployed
@@ -32,7 +32,7 @@ import (
 	"github.com/0xmhha/chainbench/pkg/testkit"
 )
 
-// Fixed anzeon system-contract addresses (tests/regression/lib/common.sh).
+// Fixed anzeon system-contract addresses (regression/lib/common.sh).
 var systemContracts = map[string]string{
 	"native-coin-adapter": "0x0000000000000000000000000000000000001000",
 	"gov-validator":       "0x0000000000000000000000000000000000001001",

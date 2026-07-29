@@ -4,7 +4,7 @@
 //
 //	distinctive tx type where one account transfers value while a second
 //	account pays the gas (dual signature). Ported from the legacy bash
-//	regression suite tests/regression/d-fee-delegation.
+//	regression suite regression/d-fee-delegation.
 //
 // Applies:  stablenet, wbft (the wbft family accepts tx type 0x16; the case also
 //

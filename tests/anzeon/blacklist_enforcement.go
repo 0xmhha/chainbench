@@ -1,4 +1,4 @@
-// This file ports the blacklist-enforcement cases (from tests/regression
+// This file ports the blacklist-enforcement cases (from regression
 // e-blacklist-authorized e-01, e-02): a blacklisted sender or recipient must have
 // its transfer rejected. Each case blacklists a FRESH generated address via
 // governance (non-destructive — no shared fixture account is affected), so it is

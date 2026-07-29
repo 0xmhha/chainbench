@@ -3,7 +3,7 @@
 // Intent:   the block's commit-signer report must name an author and gather a
 //
 //	committer set at or above BFT quorum — proof the block was finalized
-//	by enough validators (ported from tests/regression/g-api/
+//	by enough validators (ported from regression/g-api/
 //	g3-03-get-commit-signers.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc", "consensus".
@@ -18,7 +18,7 @@
 // Intent:   the latest block's committed and prepared seals must each be signed
 //
 //	by a quorum of sealers and carry a non-empty aggregate signature
-//	(ported from tests/regression/b-wbft/b-02-wbft-extra-seal.sh).
+//	(ported from regression/b-wbft/b-02-wbft-extra-seal.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc", "consensus".
 // Method:   istanbul_getWbftExtraInfo("latest"); inspect committedSeal and
@@ -35,7 +35,7 @@
 //
 //	prevCommittedSeal and prevPreparedSeal each gather a quorum of
 //	sealers (block N carries block N-1's seals; ported from
-//	tests/regression/b-wbft/b-11-prev-committed-seal.sh).
+//	regression/b-wbft/b-11-prev-committed-seal.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc", "consensus".
 // Method:   istanbul_getWbftExtraInfo("latest"); inspect prevCommittedSeal and

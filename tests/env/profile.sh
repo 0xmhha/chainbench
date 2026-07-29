@@ -2,7 +2,7 @@
 # tests/env/profile.sh — 테스트 환경 프로파일 로더
 #
 # CHAINBENCH_TEST_ENV=local(기본)|closednet 에 따라 환경 토폴로지/배선을 로드한다.
-#   - 체인 상수(chainId/epoch/gas)는 여기서 다루지 않는다 → 결정#3: tests/regression/lib/constants.sh 공용.
+#   - 체인 상수(chainId/epoch/gas)는 여기서 다루지 않는다(프로파일은 토폴로지/배선만).
 #   - 비밀(private key / SSH / 노드 IP)은 여기서 로드하지 않는다.
 #     서명·노드제어 백엔드가 필요 시점에 secret store(tests/env/secret/)에서 직접 lazy-load 한다.
 #

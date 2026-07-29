@@ -1,4 +1,4 @@
-// This file ports the proposal-expiry case (from tests/regression
+// This file ports the proposal-expiry case (from regression
 // f-system-contracts f3-06). A GovValidator proposal that is not executed before
 // its expiry window can be transitioned to Expired via expireProposal, after
 // which it can no longer execute.

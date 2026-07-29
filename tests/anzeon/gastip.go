@@ -1,4 +1,4 @@
-// This file ports the regular-account gas-tip forcing case (from tests/regression
+// This file ports the regular-account gas-tip forcing case (from regression
 // c-anzeon c-01). Anzeon forces a regular (non-authorized) account's transaction
 // tip down to the header GasTip, regardless of how high a priority fee the sender
 // requests — so the effective tip charged is the header GasTip, not the requested

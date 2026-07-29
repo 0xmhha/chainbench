@@ -1,4 +1,4 @@
-// This file ports the WebSocket subscription cases (from tests/regression
+// This file ports the WebSocket subscription cases (from regression
 // a-ethereum a4-06, a4-07). They open a WebSocket to the node, eth_subscribe to
 // newHeads / logs, and assert notifications stream in. The WS endpoint is derived
 // from the primary node's WS port, so the cases gate on the "ws" capability

@@ -1,5 +1,5 @@
 // This file ports the go-stablenet governance mint-proposal lifecycle (from
-// tests/regression f-system-contracts f2-01), exercising node-side signing (a
+// regression f-system-contracts f2-01), exercising node-side signing (a
 // validator's unlocked coinbase votes) plus the govbind calldata/decoders.
 //
 // # Test: mint-proposal-executes

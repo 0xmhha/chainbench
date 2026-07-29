@@ -1,4 +1,4 @@
-// This file ports the anzeon gas-API read cases (from tests/regression g-api
+// This file ports the anzeon gas-API read cases (from regression g-api
 // g2-01/g2-02/g2-04), which exercise the go-stablenet backend's Anzeon gas-fee
 // branch: eth_gasPrice and eth_maxPriorityFeePerGas are derived from the header
 // WBFTExtra.gasTip reported by istanbul_getWbftExtraInfo.

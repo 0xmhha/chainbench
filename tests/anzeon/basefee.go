@@ -1,5 +1,5 @@
 // This file ports the anzeon base-fee gas policy floor and ceiling (from
-// tests/regression c-anzeon c-06/c-07), read cases over the latest block's base
+// regression c-anzeon c-06/c-07), read cases over the latest block's base
 // fee.
 //
 // # Test: basefee-minimum

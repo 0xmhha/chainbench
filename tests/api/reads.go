@@ -1,5 +1,5 @@
 // Package api holds JSON-RPC read-surface test cases (ported from the legacy
-// bash regression suite tests/regression/g-api).
+// bash regression suite regression/g-api).
 //
 // # Test: block-by-hash-consistency
 //

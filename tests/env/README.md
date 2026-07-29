@@ -1,17 +1,13 @@
 # tests/env — 테스트 환경 프로파일 레이어
 
-로컬/폐쇄망 두 환경을 **테스트 본문 한 벌**로 돌리기 위한 런타임 설정 레이어.
-테스트 본문은 물리값(RPC URL·키·IP) 대신 논리 인덱스(`node 1`, `acct_addr 2`)만 쓰고,
-활성 프로파일이 그것을 환경에 맞게 해석한다.
+로컬/폐쇄망 두 환경을 하나의 설정으로 다루기 위한 런타임 프로파일 레이어와,
+공개 테스트용 `.env` 픽스처 + 비밀 취급 규약을 담는다.
 
-## 사용
-```bash
-# 로컬(기본)
-tests/regression/run-all.sh
-
-# 폐쇄망
-CHAINBENCH_TEST_ENV=closednet tests/regression/run-all.sh
-```
+> **참고:** 이 레이어를 소비하던 bash 회귀 스위트(`tests/regression`·`tests/lib`·
+> `tests/basic`·`tests/fault`·`tests/stress`·`tests/remote`)는 Go testkit(`tests/*`)와
+> 라이브 검증(`tests/repro`)으로 대체되어 폐기되었다. 남은 `.env`/`secret.example`은
+> **공개 테스트 픽스처 + 비밀 경계 예시**로 유지되며, 시크릿 스캐너(`scripts/check-secrets.sh`)가
+> `tests/env/*.env`를 공개 허용목록으로 참조한다.
 
 ## 파일
 - `profile.sh` — `CHAINBENCH_TEST_ENV`에 맞는 `.env`를 로드(common.sh가 source).

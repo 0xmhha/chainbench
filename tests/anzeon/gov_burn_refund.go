@@ -1,4 +1,4 @@
-// This file ports the GovMinter burn-refund lifecycle cases (from tests/regression
+// This file ports the GovMinter burn-refund lifecycle cases (from regression
 // h-hardfork h-06, h-09, h-11), on the Boho v2 GovMinter via node-side signing.
 //
 // # Test: burn-cancel-refundable

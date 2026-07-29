@@ -1,7 +1,7 @@
 // This file ports two transaction/call error-path checks from the legacy bash
 // regression suite: insufficient-funds rejection
-// (tests/regression/a-ethereum/a2-06-insufficient-funds) and eth_call revert
-// surfacing (tests/regression/a-ethereum/a3-05-eth-call-revert). Both assert
+// (regression/a-ethereum/a2-06-insufficient-funds) and eth_call revert
+// surfacing (regression/a-ethereum/a3-05-eth-call-revert). Both assert
 // that the node returns an error rather than silently accepting the request.
 //
 // # Test: insufficient-funds-rejected

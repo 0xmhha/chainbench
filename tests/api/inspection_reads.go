@@ -1,5 +1,5 @@
 // This file adds JSON-RPC inspection read cases ported from the legacy bash
-// regression suite (tests/regression/g-api g1-01, g2-03, g4-03).
+// regression suite (regression/g-api g1-01, g2-03, g4-03).
 //
 // # Test: block-transactions-field
 //

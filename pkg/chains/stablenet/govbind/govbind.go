@@ -19,8 +19,8 @@ import (
 
 // ProposalCreatedTopic is topic0 of the GovBase ProposalCreated event; its first
 // indexed field (topics[1]) is the proposalId. The GovBase Solidity is not in
-// this repo, so this hash is pinned from the regression suite
-// (tests/regression/lib/common.sh PROPOSAL_CREATED_SIG) rather than derived from
+// this repo, so this hash is pinned from the go-stablenet regression suite
+// (lib/common.sh PROPOSAL_CREATED_SIG) rather than derived from
 // a signature string. Filtering on it is required because proposeBurn (payable)
 // emits Transfer before ProposalCreated, so the first log is not the proposal.
 const ProposalCreatedTopic = "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
@@ -101,8 +101,8 @@ func DisapproveProposalCall(id *big.Int) string {
 	return accounts.EncodeCallArgs("disapproveProposal(uint256)", accounts.Uint(id))
 }
 
-// Burn-refund event topics (GovMinter, Boho v2). Pinned from the regression suite
-// (tests/regression/lib/common.sh) since the GovMinter Solidity is not in this
+// Burn-refund event topics (GovMinter, Boho v2). Pinned from the go-stablenet
+// regression suite (lib/common.sh) since the GovMinter Solidity is not in this
 // repo. BurnRefundClaimed also derives from EventTopic("BurnRefundClaimed(address,uint256)").
 const (
 	BurnRefundClaimedTopic   = "0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24"

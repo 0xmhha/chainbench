@@ -1,5 +1,5 @@
 // This file adds the admin_peers network case (ported from the legacy bash
-// regression suite tests/regression/g-api/g4-04-admin-peers.sh).
+// regression suite regression/g-api/g4-04-admin-peers.sh).
 //
 // # Test: admin-peers-populated
 //

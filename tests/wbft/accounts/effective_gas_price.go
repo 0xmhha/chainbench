@@ -1,4 +1,4 @@
-// This file ports the effective-gas-price receipt check (from tests/regression
+// This file ports the effective-gas-price receipt check (from regression
 // a-ethereum a2-08), over the accounts SDK transaction path.
 //
 // # Test: effective-gas-price
