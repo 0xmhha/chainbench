@@ -41,6 +41,7 @@ func newRootCmd() *cobra.Command {
 		newAccountCmd(),
 		newTxCmd(),
 		newContractCmd(),
+		newRemoteCmd(),
 	)
 	return root
 }
