@@ -1,5 +1,5 @@
 // This file ports the EIP-1559 dynamic-fee (0x2) and EIP-2930 access-list (0x1)
-// transaction cases (from tests/regression a-ethereum a2-02, a2-03), over the
+// transaction cases (from regression a-ethereum a2-02, a2-03), over the
 // accounts SDK tx-type methods.
 //
 // # Test: dynamic-fee-tx

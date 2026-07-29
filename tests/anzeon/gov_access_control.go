@@ -1,5 +1,5 @@
 // This file ports the governance access-control rejection cases (from
-// tests/regression f-system-contracts f5-05, f4-04). A non-member account that
+// regression f-system-contracts f5-05, f4-04). A non-member account that
 // calls a member-only system-contract method directly must be rejected — either
 // at submission or by an on-chain revert (status 0x0). The bench uses a FRESH
 // funded account (never a member) as the caller.

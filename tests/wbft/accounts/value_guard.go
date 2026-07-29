@@ -1,4 +1,4 @@
-// This file ports the value-transfer guard cases (from tests/regression
+// This file ports the value-transfer guard cases (from regression
 // e-blacklist-authorized e-05, e-06): the accounts SDK rejects a value transfer
 // to the zero address or to a precompile before submitting it.
 //

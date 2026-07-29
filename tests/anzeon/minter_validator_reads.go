@@ -1,5 +1,5 @@
 // This file ports two multi-call system-contract read cases (from
-// tests/regression f-system-contracts f4-01 minter-status and f3-04
+// regression f-system-contracts f4-01 minter-status and f3-04
 // validator-metadata), exercising uint/bool decoding and dynamic address-array
 // decoding of a GovValidator return.
 //

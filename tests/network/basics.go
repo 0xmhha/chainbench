@@ -1,5 +1,5 @@
 // Package network holds multi-node network test cases (ported from the legacy
-// bash regression suite tests/regression/a-ethereum/a1-*).
+// bash regression suite regression/a-ethereum/a1-*).
 //
 // # Test: genesis-hash-agreement
 //

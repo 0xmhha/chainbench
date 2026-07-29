@@ -1,4 +1,4 @@
-// This file ports the GasTip governance case (from tests/regression b-wbft b-06
+// This file ports the GasTip governance case (from regression b-wbft b-06
 // and f-system-contracts f3-05). Changing the GasTip through GovValidator
 // governance updates the block header's WBFTExtra.GasTip and emits GasTipUpdated;
 // the case then restores the original value. The gastip-read cases (c-01/c-02)

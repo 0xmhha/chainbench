@@ -1,5 +1,5 @@
 // This file ports the GovCouncil authorize/blacklist lifecycle event cases (from
-// tests/regression f-system-contracts f5-04, f5-07, f5-08, f5-09). Each grants a
+// regression f-system-contracts f5-04, f5-07, f5-08, f5-09). Each grants a
 // status to a FRESH generated account via governance, then reverses it, asserting
 // both the AccountManager state and the GovCouncil lifecycle event. Using a fresh
 // target keeps each case independent of the others in a full run.

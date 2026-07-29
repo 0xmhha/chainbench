@@ -1,5 +1,5 @@
 // This file ports the go-stablenet governance burn-proposal lifecycle (from
-// tests/regression f-system-contracts f2-02), a payable proposeBurn on
+// regression f-system-contracts f2-02), a payable proposeBurn on
 // GovMinter via node-side signing.
 //
 // # Test: burn-proposal-executes

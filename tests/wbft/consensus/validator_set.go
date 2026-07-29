@@ -3,7 +3,7 @@
 // Intent:   the wbft-family consensus RPC must report a non-empty validator set
 //
 //	— an empty set means the engine cannot make progress (ported from the
-//	legacy regression tests/regression/b-wbft/b-07-istanbul-get-validators).
+//	legacy regression regression/b-wbft/b-07-istanbul-get-validators).
 //
 // Applies:  stablenet, wbft (the istanbul namespace). Requires: "rpc".
 // Method:   istanbul_getValidators("latest"); assert the returned list is

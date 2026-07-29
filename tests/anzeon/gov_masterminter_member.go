@@ -1,5 +1,5 @@
 // This file ports the GovMasterMinter self-member add/remove case (from
-// tests/regression f-system-contracts f4-03). GovMasterMinter can add and remove
+// regression f-system-contracts f4-03). GovMasterMinter can add and remove
 // its own governance members, changing the quorum. isActiveMember is a modifier
 // (not callable), so membership is read via isMember(address, memberVersion).
 //

@@ -80,7 +80,7 @@ chainbench 는 **3 표면 + 1 기능 코어**로 층화되어 있으나, 기능 
 6. **preset 키가 stablenet 전용** — `keys/preset/metadata.json` 에 BLS 공개키(WBFT 요구). wemix 키 모델 상이.
 7. **프로파일이 체인 중립적이지 않음** — `profiles/default.yaml` 이 `genesis.overrides.wbft`, `anzeon.init`,
    stablenet gov 컨트랙트를 직접 담음.
-8. **테스트가 체인 의미론 전제** — `tests/regression/{b-wbft,c-anzeon,d-fee-delegation}`.
+8. **테스트가 체인 의미론 전제** — go-stablenet 회귀 스위트(b-wbft/c-anzeon/d-fee-delegation)에서 포팅된 Go testkit 케이스(`tests/*`).
    `chain_compat` 프론트매터는 2개 파일에만 존재하고 러너 미배선. (단 `requires_capabilities` 게이트는 동작 — 토대 존재.)
 
 ---

@@ -4,7 +4,7 @@
 //
 //	timestamps must advance by exactly that period, proving steady-state
 //	block production without stalls or bursts (ported from
-//	tests/regression/b-wbft/b-01-block-period.sh).
+//	regression/b-wbft/b-01-block-period.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc".
 // Method:   read a window of consecutive recent blocks via

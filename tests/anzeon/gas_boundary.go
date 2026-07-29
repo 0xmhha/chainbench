@@ -1,4 +1,4 @@
-// This file ports the anzeon minimum-fee boundary cases (from tests/regression
+// This file ports the anzeon minimum-fee boundary cases (from regression
 // h-hardfork h-20..h-24), exercising the explicit-gas wallet sends.
 //
 // # Test: feecap-exact-min-accepted

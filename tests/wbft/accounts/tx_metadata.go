@@ -1,5 +1,5 @@
 // This file ports three post-transfer RPC-metadata checks from the legacy bash
-// regression suite (tests/regression/g-api): the nonce increment
+// regression suite (regression/g-api): the nonce increment
 // (g1-05-get-tx-count), the eth_getTransactionByHash field population
 // (g1-03-get-tx-by-hash), and the eth_getTransactionReceipt field population
 // (g1-04-get-tx-receipt). Each drives one value transfer over the accounts SDK

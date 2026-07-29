@@ -1,5 +1,5 @@
 // This file ports the regular-account effective-gas-price case (from
-// tests/regression h-hardfork h-43).
+// regression h-hardfork h-43).
 //
 // # Test: effective-gas-price-regular
 //

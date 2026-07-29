@@ -1,5 +1,5 @@
 // This file ports the go-stablenet validator add-member governance lifecycle
-// (from tests/regression f-system-contracts f3-01/f3-02), on the GovValidator
+// (from regression f-system-contracts f3-01/f3-02), on the GovValidator
 // system contract via node-side signing.
 //
 // # Test: validator-add-member-executes

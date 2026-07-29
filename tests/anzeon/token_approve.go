@@ -1,5 +1,5 @@
 // This file adds a token approve/allowance write case (ported from
-// tests/regression f-system-contracts f1-03 approve-transferFrom), exercising a
+// regression f-system-contracts f1-03 approve-transferFrom), exercising a
 // state-changing contract call plus the resulting read and event.
 //
 // # Test: token-approve-sets-allowance

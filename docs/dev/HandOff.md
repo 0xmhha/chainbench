@@ -178,7 +178,7 @@ chainbench stop --data-dir /tmp/d
 - **회귀 스위트 Go 포팅(진행 중)**: 바인딩 계층(ABI `Selector`/`EncodeCall`, tx 4종
   `SendLegacy`/`SendCoin`/`SendSetCode`/`SendFeeDelegated`, 이벤트 로그 디코딩) +
   카테고리 대표 케이스(node/api/consensus/tx/시스템컨트랙트 read·write·event)를
-  `tests/`로 포팅(#44–#53). 원본 bash는 `tests/regression/`에 보존.
+  `tests/`로 포팅(#44–#53). 원본 bash 스위트(`tests/regression` 등)는 포팅 완료 후 폐기(git 이력 보존).
 
 ### 구조 분리·데이터화 완결 (2026-07-27 다체인 감사, 신규·최우선)
 
@@ -239,7 +239,7 @@ Docker sshd로 별도 검증 필요), S6 잔여(Node.Auth·README) 완료. 이�
   이동(git mv, 이력 보존). 최상위 `profiles/`엔 Go 툴용 `wemix-upgrade.yaml`·`remote-example.yaml`·
   `custom/`만 남김. bash CLI 제거로 이 데이터는 런타임 미해석(주석/메타뿐)이라 이동 안전.
   `state/` 런타임은 이미 gitignore됨. → 최상위=Go 툴 데이터로 명확화("이게 툴 설정인가
-  회귀 데이터인가" 혼란 해소). 이 데이터는 회귀 포팅 완료 시 tests/regression과 함께 폐기.
+  회귀 데이터인가" 혼란 해소). 이 데이터는 회귀 포팅 완료 후 tests/regression과 함께 폐기됨(git 이력 보존).
 - ✅ **하이브리드 외부 매니페스트(프로젝트별 체인 공급)**: 사용자 결정 — first-party 체인은
   embed 유지하되, 프로젝트가 자기 체인을 `--manifest <path>`/`--genesis-template <path>`로
   공급(기존 family 재사용 시 chainbench 수정 0). `pkg/chains/external.Load`(매니페스트 파싱 →

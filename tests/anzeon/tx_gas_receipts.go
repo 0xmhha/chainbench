@@ -1,4 +1,4 @@
-// This file ports the gas-limit and receipt-status cases (from tests/regression
+// This file ports the gas-limit and receipt-status cases (from regression
 // a-ethereum a2-07, a3-06, a3-07). They drive the low-level SendDynamicFeeTx with
 // an explicit gas limit so a tx that reverts or runs out of gas still mines (the
 // higher-level helpers auto-estimate and would fail at submission instead).

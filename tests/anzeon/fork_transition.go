@@ -1,4 +1,4 @@
-// This file ports the delayed-Boho fork-transition cases (from tests/regression
+// This file ports the delayed-Boho fork-transition cases (from regression
 // h-hardfork h-15, h-16, h-29): on a network launched with Boho delayed to block
 // N (genesis.overrides.bohoBlock=N, which advertises the "delayed-boho"
 // capability), the pre-fork state at an early block differs from the post-fork

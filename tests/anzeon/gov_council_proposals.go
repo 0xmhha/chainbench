@@ -1,5 +1,5 @@
 // This file ports the go-stablenet GovCouncil access-control proposal lifecycles
-// (from tests/regression f-system-contracts f5-01 blacklist and f5-03
+// (from regression f-system-contracts f5-01 blacklist and f5-03
 // authorize), driven through node-side signing (each validator votes from its
 // own unlocked coinbase).
 //

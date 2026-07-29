@@ -1,5 +1,5 @@
 // This file ports the remove-minter and quorum-deficient governance cases (from
-// tests/regression f-system-contracts f4-02, f2-03).
+// regression f-system-contracts f4-02, f2-03).
 //
 // # Test: remove-minter-executes (f4-02)
 //

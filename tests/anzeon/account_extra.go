@@ -1,4 +1,4 @@
-// This file ports the account-Extra bitmap cases (from tests/regression
+// This file ports the account-Extra bitmap cases (from regression
 // h-hardfork h-30, h-33, h-34). A stablenet genesis alloc entry may carry an
 // `extra` bitmap whose top bits seed AccountManager status at genesis-init:
 // bit 62 = authorized, bit 63 = blacklisted. These cases run on a network

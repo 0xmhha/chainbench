@@ -1,4 +1,4 @@
-// This file ports two transaction-rejection cases (from tests/regression
+// This file ports two transaction-rejection cases (from regression
 // a-ethereum a2-05a and d-fee-delegation d-05). Both submit a transaction the
 // node must refuse: an underpriced tip, and a fee-delegated transfer whose fee
 // payer cannot cover the gas.

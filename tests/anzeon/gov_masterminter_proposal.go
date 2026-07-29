@@ -1,5 +1,5 @@
 // This file ports the go-stablenet GovMasterMinter configure-minter proposal
-// lifecycle (from tests/regression f-system-contracts f4-01), driven through
+// lifecycle (from regression f-system-contracts f4-01), driven through
 // node-side signing (each validator votes from its own unlocked coinbase).
 //
 // # Test: configure-minter-proposal-executes

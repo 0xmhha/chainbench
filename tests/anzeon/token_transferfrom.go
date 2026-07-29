@@ -1,5 +1,5 @@
 // This file ports the native-coin adapter approve + transferFrom flow (from
-// tests/regression f-system-contracts f1-03), exercising the ERC-20 allowance
+// regression f-system-contracts f1-03), exercising the ERC-20 allowance
 // path end to end: an owner approves a spender, the spender moves the owner's
 // tokens to a recipient, and the recipient's native balance grows by the amount.
 //

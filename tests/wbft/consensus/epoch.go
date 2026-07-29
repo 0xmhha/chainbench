@@ -1,4 +1,4 @@
-// This file ports the epoch-transition case (from tests/regression b-wbft b-03).
+// This file ports the epoch-transition case (from regression b-wbft b-03).
 // At an epoch boundary block the WBFT extra data carries an epochInfo snapshot
 // (the validator/candidate set for the new epoch); non-boundary blocks do not.
 //

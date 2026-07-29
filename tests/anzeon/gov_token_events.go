@@ -1,5 +1,5 @@
 // This file ports the NativeCoinAdapter mint/burn Transfer-event cases (from
-// tests/regression f-system-contracts f1-04, f1-05). A governance mint emits
+// regression f-system-contracts f1-04, f1-05). A governance mint emits
 // Transfer(0x0 -> beneficiary) and a burn emits Transfer(account -> 0x0) on the
 // NativeCoinAdapter. Each runs the governance flow and asserts the event via
 // eth_getLogs.

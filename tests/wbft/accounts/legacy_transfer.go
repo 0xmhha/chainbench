@@ -3,7 +3,7 @@
 // Intent:   exercise the type 0x00 (EIP-155 legacy) transaction path and confirm
 //
 //	the node reports it as a legacy tx. Ported from the legacy bash
-//	regression tests/regression/a-ethereum/a2-01-legacy-tx.
+//	regression regression/a-ethereum/a2-01-legacy-tx.
 //
 // Applies:  stablenet, wbft. Requires: the "rpc" capability.
 // Method:   open a funded wallet and SendLegacy to a fresh recipient; assert the

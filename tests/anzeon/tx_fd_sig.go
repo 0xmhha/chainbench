@@ -1,4 +1,4 @@
-// This file ports the fee-delegation invalid-signature cases (from tests/regression
+// This file ports the fee-delegation invalid-signature cases (from regression
 // d-fee-delegation d-03, d-04). A 0x16 fee-delegated transfer carries two
 // signatures (sender + fee payer); if either is corrupted the node must reject
 // the transaction. The bench builds a properly-formed tx, corrupts one signature

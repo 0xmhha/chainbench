@@ -1,5 +1,5 @@
 // This file ports the PORTABLE (post-fork state) subset of the go-stablenet
-// h-hardfork regression suite (tests/regression/h-hardfork). chainbench's
+// h-hardfork regression suite (regression/h-hardfork). chainbench's
 // stablenet network activates the Anzeon/Boho hardforks at genesis (block 0), so
 // the post-fork artifacts these cases observe — the P-256 precompile, the
 // GovMinter v2 bytecode, and the anzeon chain config — are already present on a

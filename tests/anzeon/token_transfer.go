@@ -1,5 +1,5 @@
 // This file adds a native-coin (WKRC) transfer + event case (ported from
-// tests/regression f-system-contracts f1-01/f1-04), exercising the full binding
+// regression f-system-contracts f1-01/f1-04), exercising the full binding
 // layer end to end: ABI call encoding, a contract Execute, and event-log
 // decoding.
 //

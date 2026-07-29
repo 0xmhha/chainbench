@@ -3,7 +3,7 @@
 // Intent:   exercise the type 0x04 (EIP-7702 set-code) transaction path: a fresh
 //
 //	authority delegates its account code to a fixed address, sponsored by a
-//	funded wallet. Ported from tests/regression/a-ethereum (a2 set-code) and
+//	funded wallet. Ported from regression/a-ethereum (a2 set-code) and
 //	the accounts SDK's 7702 check.
 //
 // Applies:  stablenet, wbft (all three target chains accept 0x00-0x04 + 0x16).

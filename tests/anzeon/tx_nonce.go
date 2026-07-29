@@ -1,4 +1,4 @@
-// This file ports the nonce-ordering and replacement cases (from tests/regression
+// This file ports the nonce-ordering and replacement cases (from regression
 // a-ethereum a2-04, a2-09). Both drive SendDynamicFeeTx with explicit nonces from
 // a fresh funded account.
 //

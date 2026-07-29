@@ -1,4 +1,4 @@
-// This file ports the authorized-account cases (from tests/regression c-anzeon
+// This file ports the authorized-account cases (from regression c-anzeon
 // c-02 and e-blacklist-authorized e-09). An account authorized in the
 // AccountManager is exempt from anzeon's tip forcing (it may set any priority
 // fee), and every transaction it sends gets an AuthorizedTxExecuted event

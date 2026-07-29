@@ -1,5 +1,5 @@
 // This file ports the fee-delegation signing RPC presence check from the legacy
-// bash regression suite (tests/regression/g-api/g5-01-sign-raw-fee-delegate).
+// bash regression suite (regression/g-api/g5-01-sign-raw-fee-delegate).
 //
 // # Test: fee-delegate-sign-rpc-present
 //

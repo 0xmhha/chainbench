@@ -3,7 +3,7 @@
 // Intent:   every node must expose its own validator-identity address over the
 //
 //	istanbul namespace — the basic per-node identity handle other
-//	consensus queries key off (ported from tests/regression/g-api/
+//	consensus queries key off (ported from regression/g-api/
 //	g3-01-node-address.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc".
@@ -15,7 +15,7 @@
 // Intent:   the WBFT extra header payload must carry its seal/gas-tip fields so
 //
 //	downstream seal-quorum checks have something to read (ported from
-//	tests/regression/g-api/g3-04-get-wbft-extra.sh).
+//	regression/g-api/g3-04-get-wbft-extra.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc".
 // Method:   istanbul_getWbftExtraInfo("latest"); inspect the result object.
@@ -28,7 +28,7 @@
 // Intent:   the istanbul_status range report must expose its sealer-activity /
 //
 //	author / range / round-stats sections (ported from
-//	tests/regression/g-api/g3-05-istanbul-status.sh).
+//	regression/g-api/g3-05-istanbul-status.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc".
 // Method:   istanbul_status(start,end) over a block range; inspect the result.

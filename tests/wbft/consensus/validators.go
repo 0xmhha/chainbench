@@ -3,7 +3,7 @@
 // Intent:   the engine must report at least as many validators as the NodeSet
 //
 //	runs validator-role nodes — a smaller set means a validator dropped
-//	out of consensus (ported from tests/regression/g-api/
+//	out of consensus (ported from regression/g-api/
 //	g3-02-get-validators.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc", "consensus".
@@ -20,7 +20,7 @@
 // Intent:   istanbul_isValidator must agree with each node's declared role: a
 //
 //	validator-role node answers true, a non-validator node answers false
-//	(ported from tests/regression/g-api/g3-06-is-validator.sh).
+//	(ported from regression/g-api/g3-06-is-validator.sh).
 //
 // Applies:  stablenet, wbft. Requires: "rpc", "consensus".
 // Method:   istanbul_isValidator("latest") on every node; compare to its Role.

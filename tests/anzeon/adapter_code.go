@@ -1,4 +1,4 @@
-// This file adds a system-contract bytecode read (ported from tests/regression
+// This file adds a system-contract bytecode read (ported from regression
 // g-api g1-06), completing the readily-portable regression read surface.
 //
 // # Test: native-coin-adapter-code

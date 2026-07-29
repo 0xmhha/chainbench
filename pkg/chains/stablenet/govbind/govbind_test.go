@@ -10,7 +10,7 @@ import (
 )
 
 // canonical vectors from the regression suite's Python eth_abi encoding
-// (tests/regression/f-system-contracts/f2-01-mint-proposal.sh):
+// (regression f-system-contracts/f2-01-mint-proposal.sh):
 //
 //	proof = encode(['address','uint256','uint256','string','string','string'],
 //	               ['0x..ab', 1e18, 1700000000, 'DEP-1', 'BANK-1', 'memo'])

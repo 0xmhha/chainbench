@@ -1,4 +1,4 @@
-// This file ports the blacklisted-fee-payer case (from tests/regression
+// This file ports the blacklisted-fee-payer case (from regression
 // e-blacklist-authorized e-03). In a 0x16 fee-delegation transaction the fee
 // payer is a distinct account; if it is blacklisted the transaction must be
 // rejected. The SDK's static value-transfer guard checks the sender and
