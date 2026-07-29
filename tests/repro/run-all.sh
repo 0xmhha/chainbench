@@ -15,7 +15,7 @@
 #   # everything the environment can run:
 #   GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh
 #   # a subset:
-#   GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh stablenet-sync-gap.sh
+#   GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh stablenet-delayed-fork.sh
 #
 # Env:
 #   CHAINBENCH  reuse a prebuilt CLI (default: build once to /tmp)

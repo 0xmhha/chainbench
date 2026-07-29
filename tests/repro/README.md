@@ -23,7 +23,7 @@ The multi-chain support matrix maps to these scripts:
 > **Migration in progress:** these bash scripts are being ported to Go gated e2e
 > tests under `tests/e2e/` (run with `go test -tags e2e`) — no bash/python/web3.
 > Ported so far: stablenet chain (4), binary-swap hardfork (5), consensus
-> lifecycle, block propagation. See `tests/e2e/README.md`. The scripts below are
+> lifecycle, block propagation, endpoint re-sync. See `tests/e2e/README.md`. The scripts below are
 > not yet ported.
 
 ## Run everything: `run-all.sh`
@@ -45,7 +45,7 @@ GSTABLE_BIN=/path/to/gstable WEMIX_BIN=/path/to/gwemix WBFT_BIN=/path/to/gwbft \
   tests/repro/run-all.sh
 
 # a subset:
-GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh stablenet-sync-gap.sh
+GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh stablenet-delayed-fork.sh
 ```
 
 Per-script logs land in `LOGDIR` (default `/tmp/chainbench-repro-logs`); a FAIL
@@ -60,7 +60,6 @@ to reuse a prebuilt binary.
 | `wbft-chain.sh` | **fresh wbft chain (scenario 3)** — from genesis, tx + contract | `WBFT_BIN`, `FAUCET_PK`, python3 | boots go-wbft from block 0 (static bootstrap), asserts block production, a value transfer (receipt success + credited), and a returns-42 contract deploy/call |
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
-| `stablenet-sync-gap.sh` | endpoint re-sync (a1-02 full, a1-06 downloader, a1-03 snap) | `GSTABLE_BIN`, python3 | `node stop --index` → open a ≥`GAP` block gap → `node start --index` → assert re-sync (head within 2, matching hash + stateRoot, state access, `eth_syncing=false`). Snap: `SYNCMODE=snap GAP=150` |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
 | `wemix-wbft-handoff.sh` | **wemix→wbft hardfork (scenario 2)** — go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl; optional `FAUCET_PK` + web3 | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block. With `FAUCET_PK`, also asserts the funded account's genesis balance survives on the wbft successor and a post-fork tx + contract deploy/call succeed |
 | `stablenet-proposal-expiry.sh` | proposal expiry → Expired (f3-06) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/short-expiry.json` (GovValidator expiry 30s); runs the `short-expiry`-gated case (proposes, waits ~35s, asserts Expired) |

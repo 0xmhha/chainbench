@@ -386,6 +386,28 @@ func envOr(key, def string) string {
 	return def
 }
 
+// envInt returns the env var as int64, or def when unset/unparseable.
+func envInt(key string, def int64) int64 {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+			return n
+		}
+	}
+	return def
+}
+
+// synced reports whether eth_syncing at url is `false` (fully synced). While
+// syncing, eth_syncing returns a progress object (non-bool), so anything but a
+// literal false means "still syncing".
+func synced(url string) bool {
+	var s any
+	if err := rpc.Dial(url).Call(context.Background(), "eth_syncing", &s); err != nil {
+		return false
+	}
+	b, ok := s.(bool)
+	return ok && !b
+}
+
 // timeAfter returns a func reporting whether the timeout has elapsed.
 func timeAfter(d time.Duration) func() bool {
 	end := time.Now().Add(d)
