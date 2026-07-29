@@ -43,10 +43,14 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 | — | endpoint re-sync (a1-02/03/06) | `TestE2E_StablenetSyncGap` | `GSTABLE_BIN` (`SYNCMODE=snap GAP=150` for snap) |
 | — | proposal expiry → Expired (f3-06) | `TestE2E_StablenetProposalExpiry` | `GSTABLE_BIN` (short-expiry overlay) |
 
-> Migration in progress: the remaining scenarios (1 wemix, 2 wemix→wbft handoff,
-> basefee, and the account-extra / delayed-fork overlay cases — the last two need
-> a gstable build matching the fixtures) are being ported here from
-> `tests/repro/*.sh`.
+> **Scenario 2 (wemix→wbft handoff)** lives in `cmd/chainbench/upgrade_run_e2e_test.go`
+> (`TestUpgradeRunE2E`) — it drives `chainbench upgrade run` and asserts the
+> croissant handoff plus post-fork state/tx/contract on the wbft successor. Run it
+> with `CHAINBENCH_E2E_FROM_BIN`/`_TO_BIN`/`_TEMPLATE`. No external etcd is needed — gwemix embeds one.
+>
+> Migration in progress: the remaining scenarios (1 wemix pure, basefee, and the
+> account-extra / delayed-fork overlay cases — the last two need a gstable build
+> matching the fixtures) are being ported from `tests/repro/*.sh`.
 
 ## Harness
 
