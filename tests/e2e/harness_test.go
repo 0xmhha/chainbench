@@ -95,7 +95,15 @@ type network struct {
 // additional `--set key=value` overrides (e.g. "genesis.overrides.bohoBlock=40").
 func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, extraSet ...string) *network {
 	t.Helper()
-	dir := t.TempDir()
+	// Use a SHORT datadir under /tmp, not t.TempDir(): a node's IPC endpoint is a
+	// unix-domain socket at <datadir>/nodeN/<binary>.ipc, and the ~104-byte socket
+	// path limit is easily exceeded by the long t.TempDir() paths (which embed the
+	// full test name) — the node then fails to bind its IPC and never produces.
+	dir, err := os.MkdirTemp("/tmp", "cbe2e")
+	if err != nil {
+		t.Fatalf("mkdir temp datadir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	args := []string{"setup", "--launch",
 		"--chain", chain, "--binary", binary,
 		"--data-dir", dir, "--keys-dir", filepath.Join(repoRoot(t), "keys", "preset"),
@@ -120,6 +128,35 @@ func (n *network) stop() {
 	cmd := exec.Command(n.cli, "stop", "--data-dir", n.dir)
 	cmd.Dir = repoRoot(n.t)
 	_ = cmd.Run()
+}
+
+// run execs a chainbench subcommand against this network, failing on error.
+func (n *network) run(args ...string) string {
+	n.t.Helper()
+	cmd := exec.Command(n.cli, args...)
+	cmd.Dir = repoRoot(n.t)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		n.t.Fatalf("chainbench %v: %v\n%s", args, err, b)
+	}
+	return string(b)
+}
+
+// nodeStop stops node `index`, preserving its datadir for a later nodeStart.
+func (n *network) nodeStop(index int) {
+	n.run("node", "stop", "--data-dir", n.dir, "--index", itoa(index))
+}
+
+// nodeStart relaunches a previously-stopped node `index`.
+func (n *network) nodeStart(index int) {
+	n.run("node", "start", "--data-dir", n.dir, "--index", itoa(index))
+}
+
+// hardfork swaps every node to toBinary (same or different chain) in place at
+// `block`, via `chainbench hardfork --dry-run=false`.
+func (n *network) hardfork(toChain, toBinary string, block int64) string {
+	return n.run("hardfork", "--data-dir", n.dir, "--to-chain", toChain,
+		"--to-binary", toBinary, "--block", strconv.FormatInt(block, 10), "--dry-run=false")
 }
 
 // rpcURLFor reads a node's RPC URL from the persisted nodeset.json.
@@ -171,6 +208,14 @@ func (n *network) waitAdvancing(url string, timeout time.Duration) {
 		}
 	}
 	n.t.Fatalf("chain not producing blocks at %s (head stuck at %d)", url, start)
+}
+
+// grewWithin reports whether the head at url grew over the window — used for the
+// negative check that production has HALTED (expects false).
+func grewWithin(t *testing.T, url string, window time.Duration) bool {
+	before := head(t, url)
+	time.Sleep(window)
+	return head(t, url) > before
 }
 
 // waitCross polls until the head at url exceeds target, or fails after timeout.
@@ -269,6 +314,23 @@ func (n *network) waitReceiptSuccess(url, hash string) {
 	n.t.Fatalf("tx %s never mined", hash)
 }
 
+// hexBlock formats a block height as a 0x-hex ref for eth_getBlockByNumber.
+func hexBlock(n int64) string { return "0x" + strconv.FormatInt(n, 16) }
+
+// blockField reads a string field (e.g. "hash", "parentHash", "stateRoot") from
+// the block at blockRef ("latest" or a 0x-hex height) via eth_getBlockByNumber.
+// Returns "" on error or a missing/non-string field.
+func blockField(url, blockRef, field string) string {
+	var blk map[string]any
+	if err := rpc.Dial(url).Call(context.Background(), "eth_getBlockByNumber", &blk, blockRef, false); err != nil {
+		return ""
+	}
+	if v, ok := blk[field].(string); ok {
+		return v
+	}
+	return ""
+}
+
 // balance returns the wei balance of addr at url.
 func balance(t *testing.T, url, addr string) *big.Int {
 	t.Helper()
@@ -314,6 +376,14 @@ func presetFundedKey(t *testing.T) []byte {
 
 func itoa(n int) string {
 	return strconv.Itoa(n)
+}
+
+// envOr returns the env var value, or def when unset/empty.
+func envOr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
 
 // timeAfter returns a func reporting whether the timeout has elapsed.
