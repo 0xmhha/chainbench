@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -95,6 +96,23 @@ type network struct {
 // additional `--set key=value` overrides (e.g. "genesis.overrides.bohoBlock=40").
 func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, extraSet ...string) *network {
 	t.Helper()
+	extra := make([]string, 0, len(extraSet)*2)
+	for _, s := range extraSet {
+		extra = append(extra, "--set", s)
+	}
+	return launch(t, cli, chain, binary, validators, endpoints, extra)
+}
+
+// bootOverlay is boot with a --genesis-overlay applied (an overlay file adds
+// capabilities + genesis fields deep-merged into the built genesis).
+func bootOverlay(t *testing.T, cli, chain, binary string, validators, endpoints int, overlay string) *network {
+	t.Helper()
+	return launch(t, cli, chain, binary, validators, endpoints, []string{"--genesis-overlay", overlay})
+}
+
+// launch runs `chainbench setup --launch` with extraArgs and registers cleanup.
+func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, extraArgs []string) *network {
+	t.Helper()
 	// Use a SHORT datadir under /tmp, not t.TempDir(): a node's IPC endpoint is a
 	// unix-domain socket at <datadir>/nodeN/<binary>.ipc, and the ~104-byte socket
 	// path limit is easily exceeded by the long t.TempDir() paths (which embed the
@@ -109,9 +127,7 @@ func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, ex
 		"--data-dir", dir, "--keys-dir", filepath.Join(repoRoot(t), "keys", "preset"),
 		"--validators", itoa(validators), "--endpoints", itoa(endpoints),
 	}
-	for _, s := range extraSet {
-		args = append(args, "--set", s)
-	}
+	args = append(args, extraArgs...)
 	cmd := exec.Command(cli, args...)
 	cmd.Dir = repoRoot(t)
 	if b, err := cmd.CombinedOutput(); err != nil {
@@ -122,6 +138,37 @@ func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, ex
 	t.Cleanup(n.stop)
 	return n
 }
+
+// capabilities reads the advertised capability set from the saved nodeset.json.
+func (n *network) capabilities() []string {
+	n.t.Helper()
+	b, err := os.ReadFile(filepath.Join(n.dir, "nodeset.json"))
+	if err != nil {
+		n.t.Fatalf("read nodeset: %v", err)
+	}
+	var ns struct {
+		Capabilities []string `json:"capabilities"`
+	}
+	if err := json.Unmarshal(b, &ns); err != nil {
+		n.t.Fatalf("parse nodeset: %v", err)
+	}
+	return ns.Capabilities
+}
+
+// runCase runs a single gated testkit case against this network via
+// `chainbench test --name`, failing if the case fails (non-zero exit) or is
+// skipped (a gating/capability problem). Returns the command output.
+func (n *network) runCase(name string) string {
+	n.t.Helper()
+	out := n.run("test", "--data-dir", n.dir, "--name", name)
+	if skipRe.MatchString(out) {
+		n.t.Fatalf("case %q was skipped (capability/gating problem):\n%s", name, out)
+	}
+	return out
+}
+
+// skipRe matches a non-zero skip count in `chainbench test` summary output.
+var skipRe = regexp.MustCompile(`skip=[1-9]`)
 
 // stop tears the network down (best-effort).
 func (n *network) stop() {

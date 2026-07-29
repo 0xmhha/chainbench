@@ -40,9 +40,11 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 | — | WBFT consensus lifecycle (b-08/09/10, a1-04) | `TestE2E_StablenetConsensusLifecycle` | `GSTABLE_BIN` |
 | — | near-head block propagation (a1-07) | `TestE2E_StablenetBlockPropagation` | `GSTABLE_BIN` |
 | — | endpoint re-sync (a1-02/03/06) | `TestE2E_StablenetSyncGap` | `GSTABLE_BIN` (`SYNCMODE=snap GAP=150` for snap) |
+| — | proposal expiry → Expired (f3-06) | `TestE2E_StablenetProposalExpiry` | `GSTABLE_BIN` (short-expiry overlay) |
 
 > Migration in progress: the remaining scenarios (1 wemix, 2 wemix→wbft handoff,
-> 3 wbft, plus the basefee / overlay-gated variants) are being ported here from
+> 3 wbft, basefee, and the account-extra / delayed-fork overlay cases — the last
+> two need a gstable build matching the fixtures) are being ported here from
 > `tests/repro/*.sh`.
 
 ## Harness

@@ -23,7 +23,7 @@ The multi-chain support matrix maps to these scripts:
 > **Migration in progress:** these bash scripts are being ported to Go gated e2e
 > tests under `tests/e2e/` (run with `go test -tags e2e`) — no bash/python/web3.
 > Ported so far: stablenet chain (4), binary-swap hardfork (5), consensus
-> lifecycle, block propagation, endpoint re-sync. See `tests/e2e/README.md`. The scripts below are
+> lifecycle, block propagation, endpoint re-sync, proposal expiry. See `tests/e2e/README.md`. The scripts below are
 > not yet ported.
 
 ## Run everything: `run-all.sh`
@@ -62,7 +62,6 @@ to reuse a prebuilt binary.
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
 | `wemix-wbft-handoff.sh` | **wemix→wbft hardfork (scenario 2)** — go-wemix→go-wbft croissant handoff (C1–C3) | `WEMIX_BIN`, `WBFT_BIN`, `TEMPLATE`, etcd/jq/python3/curl; optional `FAUCET_PK` + web3 | passes iff head crosses croissant AND a go-wbft validator mined a post-croissant block. With `FAUCET_PK`, also asserts the funded account's genesis balance survives on the wbft successor and a post-fork tx + contract deploy/call succeed |
-| `stablenet-proposal-expiry.sh` | proposal expiry → Expired (f3-06) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/short-expiry.json` (GovValidator expiry 30s); runs the `short-expiry`-gated case (proposes, waits ~35s, asserts Expired) |
 | `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-02/03/04/05) | `L2_RPC` (an already-running L2 RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
 `LOCAL-*.sh` are ad-hoc local captures (gitignored pattern aside) and are not part
