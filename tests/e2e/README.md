@@ -35,6 +35,7 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 
 | # | Scenario | Test | Binary |
 |---|----------|------|--------|
+| 3 | fresh wbft chain (block/tx/contract) | `TestE2E_WbftChain` | `WBFT_BIN` (go-wbft's `gwemix`) |
 | 4 | stablenet chain (block/tx/contract) | `TestE2E_StablenetChain` | `GSTABLE_BIN` |
 | 5 | stablenet binary-swap hardfork | `TestE2E_StablenetHardforkSwap` | `GSTABLE_BIN` (+ `POST_FORK_BIN`) |
 | — | WBFT consensus lifecycle (b-08/09/10, a1-04) | `TestE2E_StablenetConsensusLifecycle` | `GSTABLE_BIN` |
@@ -43,8 +44,8 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 | — | proposal expiry → Expired (f3-06) | `TestE2E_StablenetProposalExpiry` | `GSTABLE_BIN` (short-expiry overlay) |
 
 > Migration in progress: the remaining scenarios (1 wemix, 2 wemix→wbft handoff,
-> 3 wbft, basefee, and the account-extra / delayed-fork overlay cases — the last
-> two need a gstable build matching the fixtures) are being ported here from
+> basefee, and the account-extra / delayed-fork overlay cases — the last two need
+> a gstable build matching the fixtures) are being ported here from
 > `tests/repro/*.sh`.
 
 ## Harness
