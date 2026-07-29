@@ -1,0 +1,30 @@
+# accounts — validator/operator/test-account material for the cluster.
+# SENSITIVE: cp accounts.sample accounts, then edit (or auto-populate with the
+# remote key-read in a later phase). `accounts` is gitignored. Mirrors wemix4's
+# accounts.env.
+#
+# Keystores are pulled from the remote servers into keystores/ (see
+# keystores/README.md); values below are keystore FILENAMES relative to
+# keystore_dir (absolute paths pass through).
+keystore_dir: ./keystores
+keystore_password_file: ./keystores/.password
+
+# Per-validator material — one block per wbft_bp server (by server index).
+# addr/operator are coinbase/operator addresses; bls/bls_pop come from
+# `bootnode -writeaddress` on the remote (the key-read step will fill these).
+validators:
+  - server: 3
+    addr: "0x0000000000000000000000000000000000000000"
+    operator: "0x0000000000000000000000000000000000000000"
+    bls: "0x"        # 48-byte BLS public key
+    bls_pop: "0x"    # 96-byte BLS proof-of-possession
+    stake: "4000000000000000000000000"   # wei; unique-descending per rank
+  # - server: 4
+  #   ...
+
+# Test accounts used by the tx/gov cases (keystore filenames under keystore_dir).
+test_accounts:
+  account_a: { addr: "0x...", keystore: operator_10 }
+  account_b: { addr: "0x...", keystore: operator_11 }
+  feepayer:  { addr: "0x...", keystore: feepayer }
+  delegator: { addr: "0x...", keystore: delegator }

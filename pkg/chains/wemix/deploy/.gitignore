@@ -1,0 +1,8 @@
+# Real config is sensitive (server IPs, SSH creds, account keys) — never commit.
+# Only the *.sample files and README are tracked.
+cluster.yaml
+credentials
+accounts
+keystores/*
+!keystores/README.md
+.pre_croissant_result.env
