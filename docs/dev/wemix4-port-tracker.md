@@ -105,8 +105,9 @@ does not apply.)
 | GOV-008 NCP self-exit (immediate) | e2e TestWemixGovernanceNCPLifecycleE2E | **ported** (e2e) |
 | GOV-024 NCP staker-only validator | (merged into GOV-009 upstream) | n/a |
 | GOV-003 staker register | e2e TestWemixGovernanceRegisterStakerE2E | **ported** (e2e) |
+| GOV-011 delegation | e2e TestWemixGovernanceDelegateE2E | **ported** (e2e) |
 | GOV-004/005/010-017 (staking/unstake/rewards/emergency) | — | follow-up (build on the registered staker) |
-| GOV-011/013/014 (delegation/claims) | — | follow-up (build on the registered staker) |
+| GOV-013/014 (reward claims) | — | follow-up (need accrued rewards on the registered staker) |
 | GOV-009 validator change | — | follow-up (build on the registered staker) |
 | GOV-020/021 (fee change) | — | follow-up (GovStaking write by the registered staker's operator) |
 | GOV-022/023 (claim theft guard / credential expiry) | — | follow-up |
@@ -139,9 +140,11 @@ nodekeys via the go-wbft `bootnode -writeaddress` tool and now ship in
 `keys/preset/metadata.json` (`blsPublicKey` + `blsPoP`), so tests need no extra
 binary. GOV-003 is ported (`TestWemixGovernanceRegisterStakerE2E`: operator=node2,
 staker=node1, amount=minimumStaking → `isStaker` true, `stakerByOperator` maps
-back). The dependent flows (GOV-004/005/009/010–017 staking/rewards,
-GOV-011/013/014 delegation/claims, GOV-020/021 fee change) now build on a
-registered staker and are follow-ups on this machinery.
+back). GOV-011 delegation builds on it (`TestWemixGovernanceDelegateE2E`: node3
+delegates to the active staker via `delegate(staker,amount)` payable →
+`getDelegatedAmount(staker)` grows by the amount). The remaining dependent flows
+(GOV-004/005/009/010–017 staking/rewards, GOV-013/014 claims, GOV-020/021 fee
+change) build on a registered staker and are follow-ups on this machinery.
 
 ## NODE (7)
 
@@ -205,17 +208,22 @@ registered staker and are follow-ups on this machinery.
   others) and GOV-008 (immediate self-exit), driven as one NCP lifecycle
   (add→add→remove→self-exit) with multi-NCP quorum voting by the preset validator
   accounts. Live-verified against the go-wemix + go-wbft binaries.
-- **Batch 10 (this PR)** — the staking machinery + GOV-003:
+- **Batch 10** — the staking machinery + GOV-003:
   `cmd/chainbench/upgrade_gov_staking_e2e_test.go`
   (`TestWemixGovernanceRegisterStakerE2E`) — `GovStaking.registerStaker` with
   operator=node2, staker=node1, amount=minimumStaking, and the staker's BLS
   pubkey/PoP (now shipped in `keys/preset/metadata.json`). Asserts `isStaker` and
   `stakerByOperator`. Live-verified against the go-wemix + go-wbft binaries. This
   unblocks the dependent staking flows.
+- **Batch 11 (this PR)** — GOV-011 delegation:
+  `TestWemixGovernanceDelegateE2E` (same file) — after registering the staker,
+  node3 delegates to it via `delegate(staker,amount)` payable, and
+  `getDelegatedAmount(staker)` grows by the delegated amount. Reuses the extracted
+  `stakingRegister` helper. Live-verified against the go-wemix + go-wbft binaries.
 - **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV staking
-  **dependents** (GOV-004/005/009/010–017 staking/rewards, GOV-011/013/014
-  delegation/claims, GOV-020/021 fee change, GOV-022/023 guards) — all now
-  follow-ups on the registered-staker machinery — and RPC-008/009/019/023 + the
-  NODE ops cases. The GOV read path, the entire NCP-governance write path, and the
-  foundational staking write are ported; what is left are staking dependents (each
+  **dependents** (GOV-004/005/009/010–017 staking/unstake/rewards, GOV-013/014
+  claims, GOV-020/021 fee change, GOV-022/023 guards) — all follow-ups on the
+  registered-staker machinery — and RPC-008/009/019/023 + the NODE ops cases. The
+  GOV read path, the entire NCP-governance write path, the staking registration
+  and delegation are ported; what is left are the further staking dependents (each
   a multi-step flow on a registered staker) and the misc RPC/NODE ops cases.
