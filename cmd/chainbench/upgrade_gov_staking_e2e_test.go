@@ -137,6 +137,64 @@ func TestWemixGovernanceDelegateE2E(t *testing.T) {
 	}
 }
 
+// TestWemixGovernanceUnstakeE2E ports wemix4 GOV-004 (unstake) on top of the
+// registered staker: the operator unstakes its full stake, which drops the
+// staker's amount to zero and deactivates it (a partial unstake below
+// minimumStaking is rejected, so a full unstake is the deactivation path). The
+// withdrawal credential then matures over the unbonding period, which this test
+// does not wait out.
+//
+//	go test -tags e2e -run TestWemixGovernanceUnstakeE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceUnstakeE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	amount := govConfigUint(t, c, "minimumStaking()")
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+
+	// The registered stake is the staker's own amount.
+	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
+		t.Fatalf("getStakerAmount = %s after register, want %s", staked, amount)
+	}
+	if !stakingIsStaker(t, c, staker) {
+		t.Fatal("staker not registered before unstake")
+	}
+
+	// Full unstake by the operator: staker's amount -> 0.
+	data := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount))
+	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		t.Fatalf("decode calldata: %v", err)
+	}
+	hash, err := operator.Execute(ctx, e2eGovStaking, raw, nil)
+	if err != nil {
+		t.Fatalf("unstake execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
+		t.Fatalf("unstake reverted (status %s)", st)
+	}
+	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Sign() != 0 {
+		t.Fatalf("getStakerAmount = %s after full unstake, want 0", staked)
+	}
+}
+
 // stakingRegister sends registerStaker(amount, staker, staker, 0, blsPK, blsSig)
 // from operator (value=amount) and fails unless it mines successfully.
 func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) {
