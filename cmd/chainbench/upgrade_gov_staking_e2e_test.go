@@ -68,7 +68,79 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 		t.Fatalf("minimumStaking() = %s, want > 0", amount)
 	}
 
-	// registerStaker(amount, staker, feeRecipient, feeRate, blsPK, blsSig), value=amount.
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+
+	// Post-state: the staker is registered and mapped from its operator.
+	if !stakingIsStaker(t, c, staker) {
+		t.Fatalf("isStaker(%s) is false after registration", staker)
+	}
+	if got := stakingStakerByOperator(t, c, operator.Address()); !strings.EqualFold(got, staker) {
+		t.Fatalf("stakerByOperator(%s) = %s, want %s", operator.Address(), got, staker)
+	}
+}
+
+// TestWemixGovernanceDelegateE2E ports wemix4 GOV-011 (delegation) on top of the
+// registered staker: a delegator (node3) delegates value to the active staker
+// (node1), and GovStaking.getDelegatedAmount(staker) grows by the delegated
+// amount. `delegate` is payable and requires the staker to be active.
+//
+//	go test -tags e2e -run TestWemixGovernanceDelegateE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceDelegateE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	// Register staker node1 via operator node2 (precondition), then delegate from
+	// node3.
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
+
+	delegator, err := ap.OpenWallet(ctx, presetNodeKey(t, 3), url)
+	if err != nil {
+		t.Fatalf("open delegator wallet: %v", err)
+	}
+	before := stakingUint(t, c, "getDelegatedAmount(address)", staker)
+
+	// delegate(staker, amount) payable, value == amount. 1e24 wei.
+	amount, _ := new(big.Int).SetString("1000000000000000000000000", 10)
+	data := accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(amount))
+	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		t.Fatalf("decode calldata: %v", err)
+	}
+	hash, err := delegator.Execute(ctx, e2eGovStaking, raw, amount)
+	if err != nil {
+		t.Fatalf("delegate execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
+		t.Fatalf("delegate reverted (status %s)", st)
+	}
+
+	after := stakingUint(t, c, "getDelegatedAmount(address)", staker)
+	if got := new(big.Int).Sub(after, before); got.Cmp(amount) != 0 {
+		t.Fatalf("getDelegatedAmount grew by %s, want %s (before=%s after=%s)", got, amount, before, after)
+	}
+}
+
+// stakingRegister sends registerStaker(amount, staker, staker, 0, blsPK, blsSig)
+// from operator (value=amount) and fails unless it mines successfully.
+func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) {
+	t.Helper()
 	data := accounts.EncodeCallArgs(
 		"registerStaker(uint256,address,address,uint256,bytes,bytes)",
 		accounts.Uint(amount),
@@ -82,21 +154,27 @@ func TestWemixGovernanceRegisterStakerE2E(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode calldata: %v", err)
 	}
-	hash, err := operator.Execute(ctx, e2eGovStaking, raw, amount)
+	hash, err := operator.Execute(context.Background(), e2eGovStaking, raw, amount)
 	if err != nil {
 		t.Fatalf("registerStaker execute: %v", err)
 	}
 	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
 		t.Fatalf("registerStaker reverted (status %s)", st)
 	}
+}
 
-	// Post-state: the staker is registered and mapped from its operator.
-	if !stakingIsStaker(t, c, staker) {
-		t.Fatalf("isStaker(%s) is false after registration", staker)
+// stakingUint reads a GovStaking uint256 getter taking a single address arg.
+func stakingUint(t *testing.T, c *rpc.Client, sig, addr string) *big.Int {
+	t.Helper()
+	out, err := c.EthCall(context.Background(), e2eGovStaking, accounts.EncodeCallArgs(sig, accounts.Address(addr)))
+	if err != nil {
+		t.Fatalf("eth_call GovStaking %s: %v", sig, err)
 	}
-	if got := stakingStakerByOperator(t, c, operator.Address()); !strings.EqualFold(got, staker) {
-		t.Fatalf("stakerByOperator(%s) = %s, want %s", operator.Address(), got, staker)
+	v, ok := new(big.Int).SetString(strings.TrimPrefix(strings.TrimSpace(out), "0x"), 16)
+	if !ok {
+		t.Fatalf("GovStaking.%s not hex: %s", sig, out)
 	}
+	return v
 }
 
 // presetNodeBLS returns node idx's BLS public key and proof-of-possession from
