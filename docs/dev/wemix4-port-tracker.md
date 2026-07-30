@@ -101,22 +101,27 @@ does not apply.)
 | GOV-001 contract deploy | e2e TestWemixGovernanceE2E | **ported** (e2e) |
 | GOV-002 config params | e2e TestWemixGovernanceE2E | **ported** (e2e) |
 | GOV-006 NCP add proposal + vote | e2e TestWemixGovernanceNCPAddE2E | **ported** (e2e) |
+| GOV-007 NCP remove by vote | e2e TestWemixGovernanceNCPLifecycleE2E | **ported** (e2e) |
+| GOV-008 NCP self-exit (immediate) | e2e TestWemixGovernanceNCPLifecycleE2E | **ported** (e2e) |
+| GOV-024 NCP staker-only validator | (merged into GOV-009 upstream) | n/a |
 | GOV-003 staker register | — | blocked (see below) |
 | GOV-004/005/010-017 (staking/unstake/rewards/emergency) | — | blocked (depend on a registered staker) |
 | GOV-011/013/014 (delegation/claims) | — | blocked (depend on a registered staker) |
-| GOV-007/008/009/024 (NCP remove/self-exit/validator change) | — | follow-up (reachable via the NCP write path, like GOV-006) |
-| GOV-020/021 (fee change) | — | follow-up (GovStaking write by an existing staker) |
-| GOV-022/023 (claim theft guard / credential expiry) | — | follow-up |
+| GOV-009 validator change | — | blocked (depends on a registered staker) |
+| GOV-020/021 (fee change) | — | blocked (GovStaking write by a registered staker) |
+| GOV-022/023 (claim theft guard / credential expiry) | — | blocked (depend on a registered staker) |
 
 ### The write path, and what is reachable (confirmed live)
 
-The **GovNCP write path is reachable**: on the handoff successor the sole NCP is
-the **preset node-1 account** (`0xc17d…`), whose **raw key ships in keys/preset**
-(no keystore decryption needed). Quorum is `ceil(2*ncpCount/3)`; with one NCP it
-is 1, so that account can propose and vote a ballot through on its own. GOV-006
-(add-NCP propose→vote→execute) is ported this way and live-verified (ncpCount
-1→2, `isNCP(new)` false→true). The other NCP-governance writes
-(GOV-007/008/009/024) are the same shape and are natural follow-ups.
+The **GovNCP write path is reachable**: on the handoff successor the initial NCP
+is the **preset node-1 account** (`0xc17d…`), whose **raw key ships in keys/preset**
+(no keystore decryption needed); the other preset validator accounts (node2/node3)
+supply additional NCP votes. Quorum is `ceil(2*ncpCount/3)`. The full NCP
+lifecycle is ported and live-verified: GOV-006 add (propose→vote), GOV-007 remove
+by vote of the others, and GOV-008 immediate self-exit (proposing to remove
+oneself executes without a vote) — `add node2 → add node3 → remove node3 → node2
+self-exit`, with `ncpCount` walking 1→2→3→2→1 and `isNCP` flipping at each step.
+GOV-024 is upstream-merged into GOV-009 (a no-op pass) and does not apply.
 
 **Blocked: the staking flows.** `registerStaker(uint256,address,address,uint256,
 bytes,bytes)` reverts for an arbitrary funded EOA — a staker must first be an
@@ -182,10 +187,16 @@ delegation/claims) are blocked on: (1) the add-node-then-register sequence and
   proposes `newProposalToAddNCP`, votes the ballot through (quorum 1), and asserts
   the candidate becomes an NCP (`ncpCount` 1→2, `isNCP` false→true). Live-verified
   against the go-wemix + go-wbft binaries. Proves the GovNCP write path.
-- **Remaining:** the n-variant quorum WBFT cases (011/012/013), the rest of the
-  GOV **write flows** — the NCP-governance ones (GOV-007/008/009/024, same shape
-  as GOV-006) as follow-ups, and the **staking flows** (GOV-003 registerStaker and
-  its dependents) blocked on the add-node-then-register sequence + BLS-PoP
-  derivation (see the GOV section) — plus RPC-008/009/019/023 and the NODE ops
-  cases. The GOV read path and the first write flow are ported; the NCP-governance
-  writes are unblocked follow-ups, the staking writes need more machinery.
+- **Batch 9 (this PR)** — the rest of the reachable NCP write flows:
+  `cmd/chainbench/upgrade_gov_ncp_lifecycle_e2e_test.go`
+  (`TestWemixGovernanceNCPLifecycleE2E`) — GOV-007 (remove an NCP by vote of the
+  others) and GOV-008 (immediate self-exit), driven as one NCP lifecycle
+  (add→add→remove→self-exit) with multi-NCP quorum voting by the preset validator
+  accounts. Live-verified against the go-wemix + go-wbft binaries.
+- **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV **staking
+  flows** (GOV-003 registerStaker and its dependents GOV-004/005/009/010–017/020–023
+  — delegation, rewards, unstake, fee change, emergency) blocked on the
+  add-node-then-register sequence + BLS-PoP derivation (see the GOV section), and
+  RPC-008/009/019/023 + the NODE ops cases. The GOV read path and the entire
+  reachable NCP-governance write path are now ported; the staking writes are the
+  one remaining GOV chunk and need more machinery.
