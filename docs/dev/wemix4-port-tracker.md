@@ -110,7 +110,9 @@ does not apply.)
 | GOV-020 fee change (immediate, no delegators) | e2e TestWemixGovernanceFeeChangeE2E | **ported** (e2e) |
 | GOV-022 claim theft guard | e2e TestWemixGovernanceClaimGuardE2E | **ported** (e2e) |
 | GOV-015 unstake below minimum rejected | e2e TestWemixGovernanceUnstakeMinimumGuardE2E | **ported** (e2e) |
-| GOV-005/010/012/016/017 (validator/staking/stabilization/emergency) | — | follow-up (build on the registered staker) |
+| GOV-016 inactive→active (unstake then re-stake) | e2e TestWemixGovernanceReactivateE2E | **ported** (e2e) |
+| GOV-017 emergency mode blocks staking | e2e TestWemixGovernanceEmergencyModeE2E | **ported** (e2e) |
+| GOV-005/010/012 (validator/stabilization/reward) | — | follow-up (need epoch reflection / accrued rewards) |
 | GOV-021 fee change (delayed, with delegators) | — | follow-up (needs the changeFeeDelay window to execute) |
 | GOV-013/014/023 (reward claims / credential expiry) | — | follow-up (need accrued rewards / a long expiry window) |
 | GOV-013/014 (reward claims) | — | follow-up (need accrued rewards on the registered staker) |
@@ -260,17 +262,30 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
   guard resolves the caller to a user with no stake/pending reward and reverts
   ("no reward to claim"), and the staker's rewardee balance is untouched. Needs no
   accrued rewards. Live-verified against the go-wemix + go-wbft binaries.
-- **Batch 15 (this PR)** — GOV-015 unstake-below-minimum guard:
+- **Batch 15** — GOV-015 unstake-below-minimum guard:
   `TestWemixGovernanceUnstakeMinimumGuardE2E` (same file) — a staker registered at
   exactly `minimumStaking` cannot be partially unstaked; unstaking 1 wei would
   leave `minimumStaking-1` (neither `>= minimum` nor 0), so `unstake` reverts
   ("amount must equal balance to deactivate staker") and the stake is unchanged.
   Live-verified against the go-wemix + go-wbft binaries.
+- **Infra** — after the handoff boot proved flaky (the go-wemix producer's
+  embedded etcd intermittently fails to bootstrap), `runGovHandoff` gained a retry
+  backed by `pkg/core/procman` (tracked-PID, verified teardown → no orphans). All
+  GOV handoff tests route through it. Also added config-driven local topology
+  (`pkg/core/topology`, `setup --topology`).
+- **Batch 16 (this PR)** — GOV-016 + GOV-017 (bundled):
+  `TestWemixGovernanceReactivateE2E` (GOV-016: a full unstake deactivates the
+  staker — `isStaker` false — and `stake()` reactivates it — `isStaker` true, the
+  staker staying registered throughout) and `TestWemixGovernanceEmergencyModeE2E`
+  (GOV-017: the NCP council enters emergency mode via propose+vote, which blocks a
+  guarded `stake()` via `inspectWithCouncil`, then leaves it and the flag clears).
+  Both live-verified on the now-reliable handoff.
 - **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV staking
-  **dependents** (GOV-005/009/010/012/016/017 validator/staking/stabilization,
-  GOV-013/014 reward claims, GOV-021 delayed fee change, GOV-023 credential
-  expiry) — follow-ups on the registered-staker machinery, the remaining ones
-  needing accrued rewards or a long unbonding/fee/expiry delay to fully complete —
-  and RPC-008/009/019/023 + the NODE ops cases. The GOV read path, the
-  NCP-governance write path, and the staking register/delegate/unstake/fee-change
-  writes plus the claim and unstake-minimum guards are ported.
+  **dependents** that need machinery this harness doesn't produce quickly —
+  GOV-005/009 (validator-set reflection, needs an epoch), GOV-010 (stabilization,
+  needs epoch + Stabilizing field), GOV-012/013/014 (block reward + reward claims,
+  need accrued rewards), GOV-021 (delayed fee change) / GOV-023 (credential
+  expiry) (long fee/expiry windows) — and RPC-008/009/019/023 + the NODE ops
+  cases. The GOV read path, the NCP-governance write path, and the staking
+  register/delegate/unstake/fee-change/reactivate writes plus the claim,
+  unstake-minimum, and emergency-mode guards are ported.

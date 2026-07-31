@@ -547,3 +547,165 @@ func stakingWaitStatus(t *testing.T, c *rpc.Client, hash string) string {
 	t.Fatalf("tx %s never mined", hash)
 	return ""
 }
+
+// TestWemixGovernanceReactivateE2E ports wemix4 GOV-016 (inactive -> active): a
+// staker deactivated by a full unstake can be reactivated by staking again.
+// isStaker tracks the active set, so it flips true -> false (full unstake) ->
+// true (re-stake); the staker stays registered throughout, so stake() (which
+// requires a registered staker) reactivates it.
+//
+//	go test -tags e2e -run TestWemixGovernanceReactivateE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceReactivateE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	amount := govConfigUint(t, c, "minimumStaking()")
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+	if !stakingIsStaker(t, c, staker) {
+		t.Fatal("staker not active after register")
+	}
+
+	// Full unstake -> INACTIVE.
+	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(amount)), nil)
+	if stakingIsStaker(t, c, staker) {
+		t.Fatal("staker still active after full unstake")
+	}
+	if v := stakingUint(t, c, "getStakerAmount(address)", staker); v.Sign() != 0 {
+		t.Fatalf("getStakerAmount = %s after full unstake, want 0", v)
+	}
+
+	// Re-stake -> ACTIVE again (stake is payable, value == amount).
+	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), amount)
+	if !stakingIsStaker(t, c, staker) {
+		t.Fatal("staker not reactivated after re-stake")
+	}
+	if v := stakingUint(t, c, "getStakerAmount(address)", staker); v.Cmp(amount) != 0 {
+		t.Fatalf("getStakerAmount = %s after re-stake, want %s", v, amount)
+	}
+}
+
+// TestWemixGovernanceEmergencyModeE2E ports wemix4 GOV-017 (emergency mode): the
+// NCP council can enter emergency mode via a proposal+vote, and while it is on the
+// GovStaking operations it guards are blocked (GovNCP.inspectOperation returns
+// !emergencyMode, so the inspectWithCouncil modifier rejects them). Deactivating
+// emergency mode restores them.
+//
+//	go test -tags e2e -run TestWemixGovernanceEmergencyModeE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceEmergencyModeE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	amount := govConfigUint(t, c, "minimumStaking()")
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+
+	// node1 is the sole NCP; it drives the emergency-mode ballots.
+	ncp, err := ap.OpenWallet(ctx, presetNodeKey(t, 1), url)
+	if err != nil {
+		t.Fatalf("open NCP wallet: %v", err)
+	}
+	if ncpBool(t, c, "emergencyMode()") {
+		t.Fatal("emergencyMode already true before the test")
+	}
+
+	// Enter emergency mode (propose + vote to quorum 1).
+	passNCPBallot(t, c, ncp, accounts.EncodeCallArgs("newProposalEmergencyMode(bool)", accounts.Word([]byte{1})))
+	if !ncpBool(t, c, "emergencyMode()") {
+		t.Fatal("emergencyMode not true after the accepted proposal")
+	}
+
+	// A guarded staking op is now blocked by the council.
+	raw, _ := hex.DecodeString(strings.TrimPrefix(accounts.EncodeCallArgs("stake(uint256)", accounts.Uint(amount)), "0x"))
+	if hash, execErr := operator.Execute(ctx, e2eGovStaking, raw, amount); execErr == nil {
+		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
+			t.Fatal("stake() succeeded during emergency mode — council guard missing")
+		}
+	}
+
+	// Leave emergency mode; the flag clears.
+	passNCPBallot(t, c, ncp, accounts.EncodeCallArgs("newProposalEmergencyMode(bool)", accounts.Word([]byte{0})))
+	if ncpBool(t, c, "emergencyMode()") {
+		t.Fatal("emergencyMode still true after deactivation")
+	}
+}
+
+// stakingSendOK sends calldata to GovStaking from w (with optional value) and
+// fails unless it mines with status 0x1.
+func stakingSendOK(t *testing.T, c *rpc.Client, w accounts.Wallet, data string, value *big.Int) {
+	t.Helper()
+	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		t.Fatalf("decode calldata: %v", err)
+	}
+	hash, err := w.Execute(context.Background(), e2eGovStaking, raw, value)
+	if err != nil {
+		t.Fatalf("GovStaking execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
+		t.Fatalf("GovStaking tx reverted (status %s)", st)
+	}
+}
+
+// ncpBool reads a no-arg bool getter from GovNCP.
+func ncpBool(t *testing.T, c *rpc.Client, sig string) bool {
+	t.Helper()
+	out, err := c.EthCall(context.Background(), e2eGovNCP, accounts.EncodeCallArgs(sig))
+	if err != nil {
+		t.Fatalf("eth_call GovNCP %s: %v", sig, err)
+	}
+	v, _ := new(big.Int).SetString(strings.TrimPrefix(strings.TrimSpace(out), "0x"), 16)
+	return v != nil && v.Sign() > 0
+}
+
+// passNCPBallot submits a GovNCP proposal (its receipt log carries the ballot id)
+// and votes it through as the sole NCP (quorum 1).
+func passNCPBallot(t *testing.T, c *rpc.Client, ncp accounts.Wallet, proposalData string) {
+	t.Helper()
+	rc := ncpExecute(t, c, ncp, proposalData)
+	if rc.Status != "0x1" {
+		t.Fatalf("NCP proposal reverted (status %s)", rc.Status)
+	}
+	if len(rc.Logs) == 0 || len(rc.Logs[0].Topics) < 2 {
+		t.Fatalf("no ballot id in proposal receipt: %+v", rc.Logs)
+	}
+	ballot, ok := new(big.Int).SetString(strings.TrimPrefix(rc.Logs[0].Topics[1], "0x"), 16)
+	if !ok {
+		t.Fatalf("ballot id not hex: %s", rc.Logs[0].Topics[1])
+	}
+	if vr := ncpExecute(t, c, ncp, accounts.EncodeCallArgs("vote(uint256,bool)", accounts.Uint(ballot), accounts.Word([]byte{1}))); vr.Status != "0x1" {
+		t.Fatalf("NCP vote reverted (status %s)", vr.Status)
+	}
+}
