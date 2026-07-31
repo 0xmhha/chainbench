@@ -152,6 +152,22 @@ delegates to the active staker via `delegate(staker,amount)` payable →
 (GOV-004/005/009/010–017 staking/rewards, GOV-013/014 claims, GOV-020/021 fee
 change) build on a registered staker and are follow-ups on this machinery.
 
+### Handoff reliability (test infrastructure)
+
+The GOV/staking e2e all boot a wemix→wbft handoff via `runGovHandoff`. The
+go-wemix producer's embedded etcd intermittently fails to bootstrap — it enters a
+join-failure loop and the chain halts at ~block 10, before the fork — so a single
+launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
+
+- **`pkg/core/procman`** — a process-lifecycle manager that tracks every launched
+  node PID (parsed from the launch output / nodeset.json) and tears them down
+  verifiably (SIGTERM → SIGKILL → confirm gone, reporting any leak). This replaces
+  the best-effort `pkill -f <datadir>` sweeps that were leaving orphans holding
+  etcd's ports and poisoning subsequent boots.
+- **retry in `runGovHandoff`** — up to `govHandoffAttempts` launches; each failed
+  attempt is torn down cleanly via procman (no orphans) before the next. All GOV
+  handoff tests route through it (the earlier inline boots were migrated).
+
 ## NODE (7)
 
 | wemix4 | maps to | status |

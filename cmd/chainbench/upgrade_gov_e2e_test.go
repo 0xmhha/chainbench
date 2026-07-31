@@ -14,11 +14,9 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"math/big"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
 
@@ -41,31 +39,8 @@ func TestWemixGovernanceE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" || template == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
 	}
-	dataDir := t.TempDir()
-	t.Cleanup(func() { _ = exec.Command("pkill", "-9", "-f", dataDir).Run() })
-
-	cmd := newUpgradeRunCmd()
-	cmd.SetArgs([]string{
-		"--profile", "../../profiles/wemix-upgrade.yaml",
-		"--preset", "../../keys/preset",
-		"--from-binary", fromBin,
-		"--to-binary", toBin,
-		"--template", template,
-		"--data-dir", dataDir,
-		"--wait", "150",
-	})
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("upgrade run failed: %v\n%s", err, out.String())
-	}
-	if !strings.Contains(out.String(), "handoff confirmed") {
-		t.Fatalf("handoff not confirmed in output:\n%s", out.String())
-	}
-
 	// Governance lives on the go-wbft successor (deployed at the fork block).
-	c := rpc.Dial(successorRPC(t, out.String()))
+	c := rpc.Dial(runGovHandoff(t, fromBin, toBin, template))
 	ctx := context.Background()
 
 	// GOV-001: all four governance system contracts carry code.
