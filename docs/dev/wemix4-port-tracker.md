@@ -81,8 +81,8 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | WBFT-009 prev seal | prev-seals-quorum | covered |
 | WBFT-010 randao/mixdigest | randao-and-mixdigest-present | **ported** |
 | WBFT-011 quorum 3 validators | e2e TestE2E_WbftQuorumAllRequired | **ported** (e2e) |
-| WBFT-012 quorum 6, 1 fault | (n=6 variant) | deferred (needs a 6+ node preset; current preset has 5) |
-| WBFT-013 quorum 6, 2 fault | (n=6 variant) | deferred (needs a 6+ node preset; current preset has 5) |
+| WBFT-012 quorum 6, 1 fault | e2e TestE2E_WbftQuorum6of6Tolerates1 | **ported** (e2e, generated preset) |
+| WBFT-013 quorum 6, 2 fault | e2e TestE2E_WbftQuorum6of6Halts2 | **ported** (e2e, generated preset) |
 
 ## GOV (22)
 

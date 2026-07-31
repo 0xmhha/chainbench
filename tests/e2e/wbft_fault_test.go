@@ -3,6 +3,8 @@
 package e2e
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 	"time"
 )
@@ -89,4 +91,83 @@ func TestE2E_WbftQuorumAllRequired(t *testing.T) {
 	// Restart it: quorum restored, consensus resumes.
 	n.nodeStart(3)
 	n.waitAdvancing(url, 90*time.Second)
+}
+
+// genPreset generates an n-validator preset via `chainbench keys generate`, using
+// the go-wbft bootnode tool (BOOTNODE_BIN) for address/BLS derivation and the
+// node binary for keystore import. It returns the preset dir, skipping when the
+// bootnode tool is not provided. This unblocks networks larger than the committed
+// 5-node preset.
+func genPreset(t *testing.T, cli, binary string, n int) string {
+	t.Helper()
+	boot := os.Getenv("BOOTNODE_BIN")
+	if boot == "" {
+		t.Skip("set BOOTNODE_BIN=/path/to/go-wbft/build/bin/bootnode to generate larger presets")
+	}
+	if _, err := os.Stat(boot); err != nil {
+		t.Skipf("BOOTNODE_BIN=%s not found", boot)
+	}
+	dir, err := os.MkdirTemp("/tmp", "cbpreset")
+	if err != nil {
+		t.Fatalf("mkdir preset dir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	cmd := exec.Command(cli, "keys", "generate",
+		"--nodes", itoa(n), "--validators", itoa(n),
+		"--bootnode", boot, "--binary", binary, "--out", dir)
+	cmd.Dir = repoRoot(t)
+	if b, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("keys generate: %v\n%s", err, b)
+	}
+	return dir
+}
+
+// TestE2E_WbftQuorum6of6Tolerates1 ports wemix4 WBFT-012 (n=6, one fault): with 6
+// validators the quorum is floor(2*6/3)+1 = 5, so stopping one validator leaves 5
+// == quorum and consensus continues. Needs a generated 6-node preset.
+//
+//	WBFT_BIN=... BOOTNODE_BIN=... go test -tags e2e -run TestE2E_WbftQuorum6of6Tolerates1 -v ./tests/e2e/
+func TestE2E_WbftQuorum6of6Tolerates1(t *testing.T) {
+	bin := requireBinary(t, "WBFT_BIN", "gwbft")
+	cli := buildCLI(t)
+	preset := genPreset(t, cli, bin, 6)
+
+	n := launchPreset(t, cli, "wbft", bin, preset, 6, 0, nil)
+	url := n.rpcURL
+
+	n.waitAdvancing(url, 90*time.Second)
+	// Stop 1 of 6: 5 remain == quorum -> consensus continues.
+	n.nodeStop(6)
+	n.waitAdvancing(url, 90*time.Second)
+	// Restart and confirm it catches up.
+	n.nodeStart(6)
+	target := head(t, url)
+	n.waitCross(n.rpcURLFor(6), target, 120*time.Second)
+}
+
+// TestE2E_WbftQuorum6of6Halts2 ports wemix4 WBFT-013 (n=6, two faults): stopping 2
+// of 6 leaves 4, below the quorum of 5, so block production halts; restarting them
+// resumes it.
+//
+//	WBFT_BIN=... BOOTNODE_BIN=... go test -tags e2e -run TestE2E_WbftQuorum6of6Halts2 -v ./tests/e2e/
+func TestE2E_WbftQuorum6of6Halts2(t *testing.T) {
+	bin := requireBinary(t, "WBFT_BIN", "gwbft")
+	cli := buildCLI(t)
+	preset := genPreset(t, cli, bin, 6)
+
+	n := launchPreset(t, cli, "wbft", bin, preset, 6, 0, nil)
+	url := n.rpcURL
+
+	n.waitAdvancing(url, 90*time.Second)
+	// Stop 2 of 6: only 4 remain, below the quorum of 5.
+	n.nodeStop(5)
+	n.nodeStop(6)
+	time.Sleep(5 * time.Second)
+	if grewWithin(t, url, 20*time.Second) {
+		t.Fatalf("consensus kept producing with 2/6 validators down (quorum 5 not met)")
+	}
+	// Restart both: quorum restored, consensus resumes.
+	n.nodeStart(5)
+	n.nodeStart(6)
+	n.waitAdvancing(url, 120*time.Second)
 }

@@ -42,6 +42,7 @@ func newRootCmd() *cobra.Command {
 		newTxCmd(),
 		newContractCmd(),
 		newRemoteCmd(),
+		newKeysCmd(),
 	)
 	return root
 }
