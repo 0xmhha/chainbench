@@ -36,7 +36,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | RPC-016 eth_gasPrice | gas-price-positive | covered |
 | RPC-017 eth_feeHistory | fee-history-well-formed | covered |
 | RPC-018 txpool_status/content | txpool-status, txpool-content-well-formed | covered |
-| RPC-019 admin_peers | — | deferred (needs a real multi-node peer set) |
+| RPC-019 admin_peers | e2e TestE2E_WbftAdminPeers | **ported** (e2e) |
 | RPC-020 eth_subscribe newHeads | anzeon ws_subscribe (a4-06) | covered |
 | RPC-021 eth_subscribe logs | anzeon ws_subscribe (a4-07) | covered |
 | RPC-022 getWbftExtraInfo (epoch) | epoch-transition-carries-epoch-info | covered |
@@ -80,9 +80,9 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | WBFT-008 fault ≥ 1/3 | e2e TestE2E_WbftFaultHalt | **ported** (e2e) |
 | WBFT-009 prev seal | prev-seals-quorum | covered |
 | WBFT-010 randao/mixdigest | randao-and-mixdigest-present | **ported** |
-| WBFT-011 quorum 3 validators | (subsumed by WBFT-007/008 boundary) | deferred (n-variant of the ported quorum boundary) |
-| WBFT-012 quorum 6, 1 fault | (n=6 variant) | deferred (n-variant; harness now exists) |
-| WBFT-013 quorum 6, 2 fault | (n=6 variant) | deferred (n-variant; harness now exists) |
+| WBFT-011 quorum 3 validators | e2e TestE2E_WbftQuorumAllRequired | **ported** (e2e) |
+| WBFT-012 quorum 6, 1 fault | (n=6 variant) | deferred (needs a 6+ node preset; current preset has 5) |
+| WBFT-013 quorum 6, 2 fault | (n=6 variant) | deferred (needs a 6+ node preset; current preset has 5) |
 
 ## GOV (22)
 
@@ -273,14 +273,21 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
   backed by `pkg/core/procman` (tracked-PID, verified teardown → no orphans). All
   GOV handoff tests route through it. Also added config-driven local topology
   (`pkg/core/topology`, `setup --topology`).
-- **Batch 16 (this PR)** — GOV-016 + GOV-017 (bundled):
+- **Batch 16** — GOV-016 + GOV-017 (bundled):
   `TestWemixGovernanceReactivateE2E` (GOV-016: a full unstake deactivates the
   staker — `isStaker` false — and `stake()` reactivates it — `isStaker` true, the
   staker staying registered throughout) and `TestWemixGovernanceEmergencyModeE2E`
   (GOV-017: the NCP council enters emergency mode via propose+vote, which blocks a
   guarded `stake()` via `inspectWithCouncil`, then leaves it and the flag clears).
   Both live-verified on the now-reliable handoff.
-- **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV staking
+- **Batch 17 (this PR)** — WBFT-011 + RPC-019 (bundled, reliable wbft boot):
+  `TestE2E_WbftQuorumAllRequired` (WBFT-011: at n=3 the quorum is the whole set —
+  wemix WBFT quorum = floor(2n/3)+1 = 3 — so stopping one validator halts
+  production; restarting resumes it; live-confirmed the strict quorum) and
+  `TestE2E_WbftAdminPeers` (RPC-019: on a multi-node network `admin_peers` reports
+  a non-empty peer set). The n=6 quorum variants (WBFT-012/013) stay blocked on a
+  6+ node preset (the current preset ships 5). Both live-verified.
+- **Remaining:** the n=6 quorum WBFT cases (012/013, need a larger preset), the GOV staking
   **dependents** that need machinery this harness doesn't produce quickly —
   GOV-005/009 (validator-set reflection, needs an epoch), GOV-010 (stabilization,
   needs epoch + Stabilizing field), GOV-012/013/014 (block reward + reward claims,
