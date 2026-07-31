@@ -108,8 +108,10 @@ does not apply.)
 | GOV-011 delegation | e2e TestWemixGovernanceDelegateE2E | **ported** (e2e) |
 | GOV-004 unstake | e2e TestWemixGovernanceUnstakeE2E | **ported** (e2e) |
 | GOV-020 fee change (immediate, no delegators) | e2e TestWemixGovernanceFeeChangeE2E | **ported** (e2e) |
+| GOV-022 claim theft guard | e2e TestWemixGovernanceClaimGuardE2E | **ported** (e2e) |
 | GOV-005/010/012/015-017 (validator/staking/stabilization/emergency) | — | follow-up (build on the registered staker) |
 | GOV-021 fee change (delayed, with delegators) | — | follow-up (needs the changeFeeDelay window to execute) |
+| GOV-013/014/023 (reward claims / credential expiry) | — | follow-up (need accrued rewards / a long expiry window) |
 | GOV-013/014 (reward claims) | — | follow-up (need accrued rewards on the registered staker) |
 | GOV-009 validator change | — | follow-up (build on the registered staker) |
 | GOV-020/021 (fee change) | — | follow-up (GovStaking write by the registered staker's operator) |
@@ -229,16 +231,23 @@ change) build on a registered staker and are follow-ups on this machinery.
   unstake below the minimum is rejected, so a full unstake is the deactivation
   path). The withdrawal credential then matures over the unbonding period, which
   the test does not wait out. Live-verified against the go-wemix + go-wbft binaries.
-- **Batch 13 (this PR)** — GOV-020 fee change (immediate path):
+- **Batch 13** — GOV-020 fee change (immediate path):
   `TestWemixGovernanceFeeChangeE2E` (same file) — with no delegators,
   `requestChangingFee(rate)` applies the new fee immediately (with delegators it
   becomes a delayed request). Registers a staker with feeRate 0, the operator
   requests a new rate, and `stakerInfo.feeRate` (word 3 of the struct getter)
   updates at once. Live-verified against the go-wemix + go-wbft binaries.
+- **Batch 14 (this PR)** — GOV-022 claim theft guard:
+  `TestWemixGovernanceClaimGuardE2E` (same file) — a third party (node3) that is
+  neither the staker's operator nor a delegator calls `claim(staker,false)`; the
+  guard resolves the caller to a user with no stake/pending reward and reverts
+  ("no reward to claim"), and the staker's rewardee balance is untouched. Needs no
+  accrued rewards. Live-verified against the go-wemix + go-wbft binaries.
 - **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV staking
   **dependents** (GOV-005/009/010/012/015–017 validator/staking/stabilization,
-  GOV-013/014 reward claims, GOV-021 delayed fee change, GOV-022/023 guards) —
-  follow-ups on the registered-staker machinery, some needing accrued rewards or a
-  long unbonding/fee delay to fully complete — and RPC-008/009/019/023 + the NODE
-  ops cases. The GOV read path, the NCP-governance write path, and the staking
-  register/delegate/unstake/fee-change writes are ported.
+  GOV-013/014 reward claims, GOV-021 delayed fee change, GOV-023 credential
+  expiry) — follow-ups on the registered-staker machinery, the remaining ones
+  needing accrued rewards or a long unbonding/fee/expiry delay to fully complete —
+  and RPC-008/009/019/023 + the NODE ops cases. The GOV read path, the
+  NCP-governance write path, and the staking register/delegate/unstake/fee-change
+  writes plus the claim guard are ported.
