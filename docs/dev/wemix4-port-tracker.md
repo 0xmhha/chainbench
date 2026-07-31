@@ -109,7 +109,8 @@ does not apply.)
 | GOV-004 unstake | e2e TestWemixGovernanceUnstakeE2E | **ported** (e2e) |
 | GOV-020 fee change (immediate, no delegators) | e2e TestWemixGovernanceFeeChangeE2E | **ported** (e2e) |
 | GOV-022 claim theft guard | e2e TestWemixGovernanceClaimGuardE2E | **ported** (e2e) |
-| GOV-005/010/012/015-017 (validator/staking/stabilization/emergency) | — | follow-up (build on the registered staker) |
+| GOV-015 unstake below minimum rejected | e2e TestWemixGovernanceUnstakeMinimumGuardE2E | **ported** (e2e) |
+| GOV-005/010/012/016/017 (validator/staking/stabilization/emergency) | — | follow-up (build on the registered staker) |
 | GOV-021 fee change (delayed, with delegators) | — | follow-up (needs the changeFeeDelay window to execute) |
 | GOV-013/014/023 (reward claims / credential expiry) | — | follow-up (need accrued rewards / a long expiry window) |
 | GOV-013/014 (reward claims) | — | follow-up (need accrued rewards on the registered staker) |
@@ -237,17 +238,23 @@ change) build on a registered staker and are follow-ups on this machinery.
   becomes a delayed request). Registers a staker with feeRate 0, the operator
   requests a new rate, and `stakerInfo.feeRate` (word 3 of the struct getter)
   updates at once. Live-verified against the go-wemix + go-wbft binaries.
-- **Batch 14 (this PR)** — GOV-022 claim theft guard:
+- **Batch 14** — GOV-022 claim theft guard:
   `TestWemixGovernanceClaimGuardE2E` (same file) — a third party (node3) that is
   neither the staker's operator nor a delegator calls `claim(staker,false)`; the
   guard resolves the caller to a user with no stake/pending reward and reverts
   ("no reward to claim"), and the staker's rewardee balance is untouched. Needs no
   accrued rewards. Live-verified against the go-wemix + go-wbft binaries.
+- **Batch 15 (this PR)** — GOV-015 unstake-below-minimum guard:
+  `TestWemixGovernanceUnstakeMinimumGuardE2E` (same file) — a staker registered at
+  exactly `minimumStaking` cannot be partially unstaked; unstaking 1 wei would
+  leave `minimumStaking-1` (neither `>= minimum` nor 0), so `unstake` reverts
+  ("amount must equal balance to deactivate staker") and the stake is unchanged.
+  Live-verified against the go-wemix + go-wbft binaries.
 - **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV staking
-  **dependents** (GOV-005/009/010/012/015–017 validator/staking/stabilization,
+  **dependents** (GOV-005/009/010/012/016/017 validator/staking/stabilization,
   GOV-013/014 reward claims, GOV-021 delayed fee change, GOV-023 credential
   expiry) — follow-ups on the registered-staker machinery, the remaining ones
   needing accrued rewards or a long unbonding/fee/expiry delay to fully complete —
   and RPC-008/009/019/023 + the NODE ops cases. The GOV read path, the
   NCP-governance write path, and the staking register/delegate/unstake/fee-change
-  writes plus the claim guard are ported.
+  writes plus the claim and unstake-minimum guards are ported.

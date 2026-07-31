@@ -195,6 +195,60 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	}
 }
 
+// TestWemixGovernanceUnstakeMinimumGuardE2E ports wemix4 GOV-015 (unstake below
+// minimum is rejected): a staker registered at exactly minimumStaking cannot be
+// partially unstaked, because unstake requires the remaining balance to be either
+// >= minimumStaking or exactly 0 ("amount must equal balance to deactivate
+// staker"). Unstaking 1 wei would leave minimumStaking-1, which is neither, so it
+// reverts and the stake is unchanged.
+//
+//	go test -tags e2e -run TestWemixGovernanceUnstakeMinimumGuardE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceUnstakeMinimumGuardE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	amount := govConfigUint(t, c, "minimumStaking()")
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, amount)
+
+	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
+		t.Fatalf("getStakerAmount = %s after register, want %s", staked, amount)
+	}
+
+	// Unstaking 1 wei leaves minimumStaking-1 (neither >= minimum nor 0) -> revert.
+	data := accounts.EncodeCallArgs("unstake(uint256)", accounts.Uint(big.NewInt(1)))
+	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		t.Fatalf("decode calldata: %v", err)
+	}
+	hash, execErr := operator.Execute(ctx, e2eGovStaking, raw, nil)
+	if execErr == nil {
+		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
+			t.Fatal("partial unstake below minimum succeeded (status 0x1) — guard missing")
+		}
+	}
+	// The reverted unstake left the stake untouched.
+	if staked := stakingUint(t, c, "getStakerAmount(address)", staker); staked.Cmp(amount) != 0 {
+		t.Fatalf("getStakerAmount = %s after rejected partial unstake, want %s (unchanged)", staked, amount)
+	}
+}
+
 // TestWemixGovernanceClaimGuardE2E ports wemix4 GOV-022 (claim theft guard): an
 // account that is neither the staker's operator nor a delegator to it cannot
 // claim that staker's rewards. GovStaking.claim resolves the caller to _user =
