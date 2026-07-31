@@ -195,6 +195,93 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	}
 }
 
+// TestWemixGovernanceClaimGuardE2E ports wemix4 GOV-022 (claim theft guard): an
+// account that is neither the staker's operator nor a delegator to it cannot
+// claim that staker's rewards. GovStaking.claim resolves the caller to _user =
+// (operator match ? staker : msg.sender) and requires that user to have a stake
+// or pending reward, so a third party's claim reverts with "no reward to claim"
+// — the staker's rewardee balance is never touched. This needs no accrued
+// rewards: the guard reverts before any transfer.
+//
+//	go test -tags e2e -run TestWemixGovernanceClaimGuardE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceClaimGuardE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
+
+	// The staker's rewardee (word 1 of the struct) holds any rewards; its balance
+	// must not change on a thief's claim.
+	rewardee := wordToAddr(stakingInfoWord(t, c, staker, 1))
+	balBefore, err := c.BalanceAt(ctx, rewardee)
+	if err != nil {
+		t.Fatalf("balance rewardee: %v", err)
+	}
+
+	// A third party (node3) is neither node1's operator nor a delegator to it.
+	thief, err := ap.OpenWallet(ctx, presetNodeKey(t, 3), url)
+	if err != nil {
+		t.Fatalf("open thief wallet: %v", err)
+	}
+	data := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
+	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		t.Fatalf("decode calldata: %v", err)
+	}
+	hash, execErr := thief.Execute(ctx, e2eGovStaking, raw, nil)
+	if execErr == nil {
+		// The tx was admitted; it must revert (status 0x0), not succeed.
+		if st := stakingWaitStatus(t, c, hash); st == "0x1" {
+			t.Fatal("thief's claim succeeded (status 0x1) — reward theft not prevented")
+		}
+	}
+	// execErr != nil (reverted at estimate) or status 0x0 both mean the guard held.
+
+	balAfter, err := c.BalanceAt(ctx, rewardee)
+	if err != nil {
+		t.Fatalf("balance rewardee after: %v", err)
+	}
+	if balAfter.Cmp(balBefore) < 0 {
+		t.Fatalf("rewardee balance decreased (%s -> %s) — reward stolen", balBefore, balAfter)
+	}
+}
+
+// wordToAddr converts a 32-byte ABI word (right-aligned address) to a 0x address.
+func wordToAddr(w *big.Int) string {
+	b := w.Bytes()
+	if len(b) > 20 {
+		b = b[len(b)-20:]
+	}
+	return "0x" + hex.EncodeToString(leftPad(b, 20))
+}
+
+// leftPad left-pads b to n bytes.
+func leftPad(b []byte, n int) []byte {
+	if len(b) >= n {
+		return b
+	}
+	out := make([]byte, n)
+	copy(out[n-len(b):], b)
+	return out
+}
+
 // TestWemixGovernanceFeeChangeE2E ports wemix4 GOV-020 (fee change, immediate
 // path). When a staker has no delegators, requestChangingFee applies the new fee
 // rate immediately (with delegators it becomes a delayed request). This registers
