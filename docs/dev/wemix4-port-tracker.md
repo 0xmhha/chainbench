@@ -107,7 +107,9 @@ does not apply.)
 | GOV-003 staker register | e2e TestWemixGovernanceRegisterStakerE2E | **ported** (e2e) |
 | GOV-011 delegation | e2e TestWemixGovernanceDelegateE2E | **ported** (e2e) |
 | GOV-004 unstake | e2e TestWemixGovernanceUnstakeE2E | **ported** (e2e) |
+| GOV-020 fee change (immediate, no delegators) | e2e TestWemixGovernanceFeeChangeE2E | **ported** (e2e) |
 | GOV-005/010/012/015-017 (validator/staking/stabilization/emergency) | — | follow-up (build on the registered staker) |
+| GOV-021 fee change (delayed, with delegators) | — | follow-up (needs the changeFeeDelay window to execute) |
 | GOV-013/014 (reward claims) | — | follow-up (need accrued rewards on the registered staker) |
 | GOV-009 validator change | — | follow-up (build on the registered staker) |
 | GOV-020/021 (fee change) | — | follow-up (GovStaking write by the registered staker's operator) |
@@ -221,16 +223,22 @@ change) build on a registered staker and are follow-ups on this machinery.
   node3 delegates to it via `delegate(staker,amount)` payable, and
   `getDelegatedAmount(staker)` grows by the delegated amount. Reuses the extracted
   `stakingRegister` helper. Live-verified against the go-wemix + go-wbft binaries.
-- **Batch 12 (this PR)** — GOV-004 unstake:
+- **Batch 12** — GOV-004 unstake:
   `TestWemixGovernanceUnstakeE2E` (same file) — the operator unstakes its full
   stake; `getStakerAmount(staker)` drops from `minimumStaking` to 0 (a partial
   unstake below the minimum is rejected, so a full unstake is the deactivation
   path). The withdrawal credential then matures over the unbonding period, which
   the test does not wait out. Live-verified against the go-wemix + go-wbft binaries.
+- **Batch 13 (this PR)** — GOV-020 fee change (immediate path):
+  `TestWemixGovernanceFeeChangeE2E` (same file) — with no delegators,
+  `requestChangingFee(rate)` applies the new fee immediately (with delegators it
+  becomes a delayed request). Registers a staker with feeRate 0, the operator
+  requests a new rate, and `stakerInfo.feeRate` (word 3 of the struct getter)
+  updates at once. Live-verified against the go-wemix + go-wbft binaries.
 - **Remaining:** the n-variant quorum WBFT cases (011/012/013), the GOV staking
   **dependents** (GOV-005/009/010/012/015–017 validator/staking/stabilization,
-  GOV-013/014 reward claims, GOV-020/021 fee change, GOV-022/023 guards) — all
+  GOV-013/014 reward claims, GOV-021 delayed fee change, GOV-022/023 guards) —
   follow-ups on the registered-staker machinery, some needing accrued rewards or a
   long unbonding/fee delay to fully complete — and RPC-008/009/019/023 + the NODE
   ops cases. The GOV read path, the NCP-governance write path, and the staking
-  register/delegate/unstake writes are ported.
+  register/delegate/unstake/fee-change writes are ported.
