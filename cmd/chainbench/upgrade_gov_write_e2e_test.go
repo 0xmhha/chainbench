@@ -15,13 +15,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"math/big"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -37,40 +35,7 @@ func TestWemixGovernanceNCPAddE2E(t *testing.T) {
 	if fromBin == "" || toBin == "" || template == "" {
 		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
 	}
-	// A SHORT datadir under /tmp, not t.TempDir(): node1's IPC endpoint is a
-	// unix-domain socket at <datadir>/node1/<binary>.ipc, and the long t.TempDir()
-	// path (which embeds the test name) overruns the ~104-byte socket path limit,
-	// so the producer never binds its IPC and never becomes ready.
-	dataDir, err := os.MkdirTemp("/tmp", "cbgovw")
-	if err != nil {
-		t.Fatalf("mkdir temp datadir: %v", err)
-	}
-	t.Cleanup(func() {
-		_ = exec.Command("pkill", "-9", "-f", dataDir).Run()
-		_ = os.RemoveAll(dataDir)
-	})
-
-	cmd := newUpgradeRunCmd()
-	cmd.SetArgs([]string{
-		"--profile", "../../profiles/wemix-upgrade.yaml",
-		"--preset", "../../keys/preset",
-		"--from-binary", fromBin,
-		"--to-binary", toBin,
-		"--template", template,
-		"--data-dir", dataDir,
-		"--wait", "150",
-	})
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("upgrade run failed: %v\n%s", err, out.String())
-	}
-	if !strings.Contains(out.String(), "handoff confirmed") {
-		t.Fatalf("handoff not confirmed:\n%s", out.String())
-	}
-
-	url := successorRPC(t, out.String())
+	url := runGovHandoff(t, fromBin, toBin, template)
 	c := rpc.Dial(url)
 	ctx := context.Background()
 

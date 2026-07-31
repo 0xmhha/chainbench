@@ -26,11 +26,12 @@ import (
 	"encoding/json"
 	"math/big"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0xmhha/chainbench/pkg/accounts"
+	"github.com/0xmhha/chainbench/pkg/core/procman"
 	"github.com/0xmhha/chainbench/pkg/core/rpc"
 )
 
@@ -140,40 +141,80 @@ func passBallot(t *testing.T, c *rpc.Client, proposer accounts.Wallet, voters []
 	}
 }
 
-// runGovHandoff runs the `upgrade run` handoff and returns a successor RPC URL.
-// It uses a SHORT /tmp datadir so node1's IPC socket path stays under the
-// ~104-byte unix-socket limit (long t.TempDir() paths break the producer's IPC).
+// govHandoffAttempts is how many times runGovHandoff will (re)launch the handoff
+// before giving up. The go-wemix producer's embedded etcd intermittently fails to
+// bootstrap (it enters a join-failure loop and the chain halts before the fork),
+// so a single launch is flaky; each failed attempt is torn down cleanly (via
+// procman, so no orphaned node process survives to hold etcd's ports and poison
+// the next attempt) and retried.
+const govHandoffAttempts = 4
+
+// govHandoffWait is the per-attempt handoff poll (seconds). A healthy producer
+// crosses the fork within ~30s; this bounds how long a halted attempt wastes
+// before the retry.
+const govHandoffWait = "100"
+
+// runGovHandoff launches the `upgrade run` handoff and returns a successor RPC
+// URL, retrying the flaky producer/etcd bootstrap. It uses a SHORT /tmp datadir
+// so node1's IPC socket path stays under the ~104-byte unix-socket limit (long
+// t.TempDir() paths break the producer's IPC), and a procman.Manager so every
+// launched node is tracked and verifiably killed on teardown (between retries and
+// at test end) — no orphans.
 func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
 	t.Helper()
-	dataDir, err := os.MkdirTemp("/tmp", "cbgovlc")
-	if err != nil {
-		t.Fatalf("mkdir temp datadir: %v", err)
-	}
-	t.Cleanup(func() {
-		_ = exec.Command("pkill", "-9", "-f", dataDir).Run()
-		_ = os.RemoveAll(dataDir)
-	})
+	var lastOut string
+	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
+		dataDir, err := os.MkdirTemp("/tmp", "cbgovlc")
+		if err != nil {
+			t.Fatalf("mkdir temp datadir: %v", err)
+		}
+		mgr := procman.New()
 
-	cmd := newUpgradeRunCmd()
-	cmd.SetArgs([]string{
-		"--profile", "../../profiles/wemix-upgrade.yaml",
-		"--preset", "../../keys/preset",
-		"--from-binary", fromBin,
-		"--to-binary", toBin,
-		"--template", template,
-		"--data-dir", dataDir,
-		"--wait", "150",
-	})
-	var out bytes.Buffer
-	cmd.SetOut(&out)
-	cmd.SetErr(&out)
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("upgrade run failed: %v\n%s", err, out.String())
+		cmd := newUpgradeRunCmd()
+		cmd.SetArgs([]string{
+			"--profile", "../../profiles/wemix-upgrade.yaml",
+			"--preset", "../../keys/preset",
+			"--from-binary", fromBin,
+			"--to-binary", toBin,
+			"--template", template,
+			"--data-dir", dataDir,
+			"--wait", govHandoffWait,
+		})
+		var out bytes.Buffer
+		cmd.SetOut(&out)
+		cmd.SetErr(&out)
+		runErr := cmd.Execute()
+		// Track whatever launched (PIDs are printed as `pid=N`, and mirrored into
+		// nodeset.json) so we can guarantee teardown either way.
+		mgr.TrackFromOutput(out.String())
+		mgr.TrackNodeSet(dataDir)
+
+		if runErr == nil && strings.Contains(out.String(), "handoff confirmed") {
+			// Success: keep the nodes running for the test, tear down verifiably at
+			// the end.
+			dir := dataDir
+			t.Cleanup(func() {
+				if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
+					t.Logf("procman: leaked node PIDs after test: %v", leaks)
+				}
+				_ = os.RemoveAll(dir)
+			})
+			if attempt > 1 {
+				t.Logf("handoff confirmed on attempt %d/%d", attempt, govHandoffAttempts)
+			}
+			return successorRPC(t, out.String())
+		}
+
+		// Failure: kill this attempt's nodes cleanly (no orphans) before retrying.
+		lastOut = out.String()
+		if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
+			t.Logf("procman: attempt %d leaked node PIDs %v", attempt, leaks)
+		}
+		_ = os.RemoveAll(dataDir)
+		t.Logf("handoff attempt %d/%d failed (flaky producer/etcd bootstrap); retrying", attempt, govHandoffAttempts)
 	}
-	if !strings.Contains(out.String(), "handoff confirmed") {
-		t.Fatalf("handoff not confirmed:\n%s", out.String())
-	}
-	return successorRPC(t, out.String())
+	t.Fatalf("handoff not confirmed after %d attempts:\n%s", govHandoffAttempts, lastOut)
+	return ""
 }
 
 // presetNodeKey loads node idx's raw private key from keys/preset/metadata.json.
