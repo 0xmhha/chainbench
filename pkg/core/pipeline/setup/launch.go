@@ -127,7 +127,7 @@ func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, prese
 			Ports:         spec.Ports,
 			KeystoreDir:   filepath.Join(keyBase, fmt.Sprintf("node%d", spec.Index), "keystore"),
 			RPCNamespace:  ns,
-			SyncMode:      syncModeFor(cfg, spec.Role),
+			SyncMode:      effectiveSyncMode(cfg, spec),
 			MinerRecommit: recommit,
 			StaticNodes:   staticNodes,
 		})
@@ -282,6 +282,16 @@ func configOverrides(cfg config.Values) map[string]string {
 		}
 	}
 	return ov
+}
+
+// effectiveSyncMode is the node's sync mode: an explicit per-node spec.SyncMode
+// (from a topology config) wins; otherwise it falls back to the role-based
+// default.
+func effectiveSyncMode(cfg config.Values, spec *driver.NodeSpec) string {
+	if spec.SyncMode != "" {
+		return spec.SyncMode
+	}
+	return syncModeFor(cfg, spec.Role)
 }
 
 // syncModeFor returns the geth sync mode for a node's role. Validators always

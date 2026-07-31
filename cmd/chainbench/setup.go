@@ -17,7 +17,25 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
 	"github.com/0xmhha/chainbench/pkg/core/state"
+	"github.com/0xmhha/chainbench/pkg/core/topology"
 )
+
+// saveTopology copies the resolved topology file into the data root as
+// topology.yaml, so the running network's layout is inspectable from its datadir
+// (which node plays which role). A no-op when no topology file was used.
+func saveTopology(root, topologyPath string) error {
+	if topologyPath == "" {
+		return nil
+	}
+	b, err := os.ReadFile(topologyPath)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(root, "topology.yaml"), b, 0o644)
+}
 
 // resolveChain returns the chain plugin for a run: an external, project-supplied
 // manifest when --manifest is given (the hybrid model), otherwise the embedded
@@ -47,11 +65,26 @@ func newSetupCmd() *cobra.Command {
 		dryRun         bool
 		setValues      []string
 		genesisOverlay string
+		topologyPath   string
 	)
 	cmd := &cobra.Command{
 		Use:   "setup",
 		Short: "Plan (and, when wired, launch) a local chain network",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			// An optional topology file gives an explicit per-node layout (role,
+			// sync mode, bootnode) instead of the positional validator/endpoint
+			// counts. Its `chain` selects the chain unless --chain is given.
+			var topo *topology.Topology
+			if topologyPath != "" {
+				loaded, err := topology.Load(topologyPath)
+				if err != nil {
+					return err
+				}
+				topo = &loaded
+				if !cmd.Flags().Changed("chain") && loaded.Chain != "" {
+					chain = loaded.Chain
+				}
+			}
 			p, err := resolveChain(chain, manifestPath, templatePath)
 			if err != nil {
 				return err
@@ -101,7 +134,7 @@ func newSetupCmd() *cobra.Command {
 			if !filepath.IsAbs(root) {
 				root = filepath.Clean(root)
 			}
-			plan, err := setup.BuildPlan(cfg, p, root)
+			plan, err := setup.BuildPlanWithTopology(cfg, p, root, topo)
 			if err != nil {
 				return err
 			}
@@ -115,13 +148,20 @@ func newSetupCmd() *cobra.Command {
 			fmt.Fprintf(out, "genesis:  template=%v (engine=%q)\n", hasTmpl, p.Manifest().Genesis.EngineField)
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NODE\tROLE\tHOST\tP2P\tHTTP\tWS")
+			fmt.Fprintln(w, "NODE\tROLE\tSYNC\tHOST\tP2P\tHTTP\tWS")
 			for _, n := range plan.Nodes {
-				fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%d\t%d\n",
-					n.Index, n.Role, n.Host, n.Ports.P2P, n.Ports.HTTP, n.Ports.WS)
+				sync := n.SyncMode
+				if sync == "" {
+					sync = "-"
+				}
+				fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\t%d\t%d\n",
+					n.Index, n.Role, sync, n.Host, n.Ports.P2P, n.Ports.HTTP, n.Ports.WS)
 			}
 			if err := w.Flush(); err != nil {
 				return err
+			}
+			if topo != nil && topo.BootnodeIndex() > 0 {
+				fmt.Fprintf(out, "bootnode: node %d\n", topo.BootnodeIndex())
 			}
 
 			if launch {
@@ -158,6 +198,9 @@ func newSetupCmd() *cobra.Command {
 				if err := state.SaveNodeSpecs(root, specs); err != nil {
 					return err
 				}
+				if err := saveTopology(root, topologyPath); err != nil {
+					return err
+				}
 				fmt.Fprintf(out, "launched %d node(s); state: %s\n",
 					len(ns.Nodes), filepath.Join(root, "nodeset.json"))
 				return nil
@@ -165,6 +208,9 @@ func newSetupCmd() *cobra.Command {
 
 			if provision {
 				if err := setup.Provision(cmd.Context(), plan, p, cfg, keysDir); err != nil {
+					return err
+				}
+				if err := saveTopology(root, topologyPath); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "provisioned: genesis + %d node config(s) in %s\n", len(plan.Nodes), plan.DataRoot)
@@ -182,6 +228,7 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().IntVar(&validators, "validators", 0, "override validator count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node topology YAML (role/sync-mode/bootnode per node); overrides --validators/--endpoints")
 	cmd.Flags().StringArrayVar(&setValues, "set", nil, "override a flat config key (repeatable), e.g. --set genesis.overrides.bohoBlock=10")
 	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis (e.g. pkg/chains/stablenet/overlays/account-extra.json)")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
