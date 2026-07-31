@@ -22,10 +22,10 @@ tractable first:
 1. ~~NODE-004 snap sync~~ — **ported** (`TestE2E_WbftSnapSync`): wbft boot with a
    `snap`-sync endpoint, open a ~90-block gap, confirm re-sync + matching
    hash/stateRoot + `eth_syncing` false.
-2. **NODE-006 / NODE-007 genesis NCP-parse** — `gwemix init` on a crafted wemix
-   genesis with whitespace-padded / empty NCP addresses; assert it parses (trims)
-   / handles empty. Reliable (init only, no running chain). Needs wemix-genesis
-   NCP-section crafting. *Reachable now.*
+2. ~~NODE-006 / NODE-007 genesis NCP-parse~~ — **ported**
+   (`TestE2E_WbftGenesisNCPWhitespace` / `TestE2E_WbftGenesisEmptyNCP`): `gwemix
+   init` accepts whitespace-padded NCP addresses (trimmed) and rejects an empty
+   NCP list ("govNCP is configured but no initial NCPs provided").
 3. **GOV-012 / GOV-013 / GOV-014 block-reward + reward claims** — need rewards to
    accrue to a registered staker-validator over blocks, then `previewReward` /
    `claim`. Reachable on the handoff but slow (block-waiting) and needs the
@@ -216,8 +216,8 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
 | NODE-003 full sync | e2e sync_gap | covered (e2e) |
 | NODE-004 snap sync | e2e TestE2E_WbftSnapSync | **ported** (e2e) |
 | NODE-005 node restart | e2e sync_gap (restart path) | covered (e2e) |
-| NODE-006 ncp whitespace genesis | — | deferred (genesis-parse unit test) |
-| NODE-007 empty ncp genesis | — | deferred (genesis-parse unit test) |
+| NODE-006 ncp whitespace genesis | e2e TestE2E_WbftGenesisNCPWhitespace | **ported** (e2e) |
+| NODE-007 empty ncp genesis | e2e TestE2E_WbftGenesisEmptyNCP | **ported** (e2e) |
 
 ## Batches
 
