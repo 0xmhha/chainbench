@@ -63,3 +63,30 @@ func TestE2E_WbftFaultHalt(t *testing.T) {
 	n.nodeStart(4)
 	n.waitAdvancing(url, 90*time.Second)
 }
+
+// TestE2E_WbftQuorumAllRequired ports wemix4 WBFT-011 (n=3 quorum). With only 3
+// validators the quorum is the whole set (wemix WBFT quorum = floor(2n/3)+1 = 3
+// for n=3), so stopping a single validator drops the chain below quorum and
+// block production halts; restarting it restores quorum and consensus resumes.
+//
+//	WBFT_BIN=/path/to/go-wbft/build/bin/gwemix go test -tags e2e -run TestE2E_WbftQuorumAllRequired -v ./tests/e2e/
+func TestE2E_WbftQuorumAllRequired(t *testing.T) {
+	bin := requireBinary(t, "WBFT_BIN", "gwbft")
+	cli := buildCLI(t)
+
+	n := boot(t, cli, "wbft", bin, 3, 1)
+	url := n.rpcURL // validator 1 — the observer
+
+	n.waitAdvancing(url, 60*time.Second)
+
+	// Stop validator 3: only 2/3 remain, below the 3-of-3 quorum.
+	n.nodeStop(3)
+	time.Sleep(5 * time.Second)
+	if grewWithin(t, url, 20*time.Second) {
+		t.Fatalf("consensus kept producing with 1/3 validators down (n=3 needs all 3)")
+	}
+
+	// Restart it: quorum restored, consensus resumes.
+	n.nodeStart(3)
+	n.waitAdvancing(url, 90*time.Second)
+}
