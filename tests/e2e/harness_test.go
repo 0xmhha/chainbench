@@ -113,6 +113,13 @@ func bootOverlay(t *testing.T, cli, chain, binary string, validators, endpoints 
 // launch runs `chainbench setup --launch` with extraArgs and registers cleanup.
 func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, extraArgs []string) *network {
 	t.Helper()
+	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), validators, endpoints, extraArgs)
+}
+
+// launchPreset is launch with an explicit preset key set (e.g. a generated one
+// larger than the committed 5-node preset).
+func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, endpoints int, extraArgs []string) *network {
+	t.Helper()
 	// Use a SHORT datadir under /tmp, not t.TempDir(): a node's IPC endpoint is a
 	// unix-domain socket at <datadir>/nodeN/<binary>.ipc, and the ~104-byte socket
 	// path limit is easily exceeded by the long t.TempDir() paths (which embed the
@@ -124,7 +131,7 @@ func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, 
 	t.Cleanup(func() { _ = os.RemoveAll(dir) })
 	args := []string{"setup", "--launch",
 		"--chain", chain, "--binary", binary,
-		"--data-dir", dir, "--keys-dir", filepath.Join(repoRoot(t), "keys", "preset"),
+		"--data-dir", dir, "--keys-dir", keysDir,
 		"--validators", itoa(validators), "--endpoints", itoa(endpoints),
 	}
 	args = append(args, extraArgs...)
