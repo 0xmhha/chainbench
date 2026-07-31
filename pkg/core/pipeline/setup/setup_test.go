@@ -14,7 +14,51 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
+	"github.com/0xmhha/chainbench/pkg/core/topology"
 )
+
+func TestBuildPlanWithTopology_PerNodeRolesAndSync(t *testing.T) {
+	p, _ := registry.Get("wbft")
+	topo := topology.Topology{Chain: "wbft", Nodes: []topology.Node{
+		{Index: 1, Role: "bp", SyncMode: "full"},
+		{Index: 2, Role: "en", SyncMode: "archive"},
+		{Index: 3, Role: "bp"},
+	}}
+	if err := topo.Validate(); err != nil {
+		t.Fatalf("topology invalid: %v", err)
+	}
+	plan, err := setup.BuildPlanWithTopology(config.Defaults(), p, "/tmp/data", &topo)
+	if err != nil {
+		t.Fatalf("BuildPlanWithTopology: %v", err)
+	}
+	if len(plan.Nodes) != 3 {
+		t.Fatalf("got %d nodes, want 3", len(plan.Nodes))
+	}
+	want := []struct {
+		role node.Role
+		sync string
+	}{
+		{node.RoleValidator, "full"},
+		{node.RoleEndpoint, "archive"},
+		{node.RoleValidator, "full"}, // default sync when unset
+	}
+	for i, w := range want {
+		n := plan.Nodes[i]
+		if n.Index != i+1 {
+			t.Errorf("node %d has index %d", i, n.Index)
+		}
+		if n.Role != w.role {
+			t.Errorf("node %d role = %v, want %v", i+1, n.Role, w.role)
+		}
+		if n.SyncMode != w.sync {
+			t.Errorf("node %d sync = %q, want %q", i+1, n.SyncMode, w.sync)
+		}
+	}
+	// Ports still offset per index, exactly as the count-based path.
+	if plan.Nodes[1].Ports.P2P != plan.Nodes[0].Ports.P2P+1 {
+		t.Errorf("ports not offset per index: %d then %d", plan.Nodes[0].Ports.P2P, plan.Nodes[1].Ports.P2P)
+	}
+}
 
 // fakeDriver records provisions/launches without touching the OS.
 type fakeDriver struct {

@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/chainbench/pkg/core/nodeconfig"
 	"github.com/0xmhha/chainbench/pkg/core/obs"
 	"github.com/0xmhha/chainbench/pkg/core/registry"
+	"github.com/0xmhha/chainbench/pkg/core/topology"
 )
 
 // Plan is the fully-resolved setup description: what genesis to write and which
@@ -34,16 +35,44 @@ type Plan struct {
 	Nodes        []driver.NodeSpec
 }
 
+// placement is one node's resolved role + sync mode, in launch order.
+type placement struct {
+	role     node.Role
+	syncMode string // "" -> role-based default
+}
+
 // BuildPlan plans a local setup from resolved config and a chain plugin. Node 1..V
 // are validators, V+1..V+E are endpoints; each node gets ports offset by its
 // zero-based index (requirement #6). Genesis bytes are attached separately (the
 // caller obtains them from the consensus family) so planning stays pure.
 func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) (Plan, error) {
-	validators := cfg.Int("nodes.validators", 0)
-	endpoints := cfg.Int("nodes.endpoints", 0)
-	total := validators + endpoints
+	return BuildPlanWithTopology(cfg, plugin, dataRoot, nil)
+}
+
+// BuildPlanWithTopology is BuildPlan with an optional explicit per-node topology.
+// When topo is nil the positional "nodes.validators + nodes.endpoints" counts
+// drive the layout; when it is set, each node's role and sync mode come from the
+// topology (its Nodes must already be Validate()d). Node index i (1-based) is the
+// i-th entry in launch order.
+func BuildPlanWithTopology(cfg config.Values, plugin registry.ChainPlugin, dataRoot string, topo *topology.Topology) (Plan, error) {
+	var placements []placement
+	if topo != nil {
+		for _, n := range topo.Sorted() {
+			placements = append(placements, placement{role: n.NodeRole(), syncMode: n.EffectiveSyncMode()})
+		}
+	} else {
+		validators := cfg.Int("nodes.validators", 0)
+		endpoints := cfg.Int("nodes.endpoints", 0)
+		for i := 0; i < validators; i++ {
+			placements = append(placements, placement{role: node.RoleValidator})
+		}
+		for i := 0; i < endpoints; i++ {
+			placements = append(placements, placement{role: node.RoleEndpoint})
+		}
+	}
+	total := len(placements)
 	if total < 1 {
-		return Plan{}, fmt.Errorf("setup: need at least one node (validators=%d endpoints=%d)", validators, endpoints)
+		return Plan{}, fmt.Errorf("setup: need at least one node")
 	}
 
 	m := plugin.Manifest()
@@ -59,23 +88,21 @@ func BuildPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot string) 
 
 	nodes := make([]driver.NodeSpec, 0, total)
 	for i := 1; i <= total; i++ {
-		role := node.RoleValidator
-		if i > validators {
-			role = node.RoleEndpoint
-		}
+		p := placements[i-1]
 		ports := node.Offset(base, i-1)
 		dataDir := filepath.Join(dataRoot, fmt.Sprintf("node%d", i))
 		configPath := filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", i))
 		nodes = append(nodes, driver.NodeSpec{
 			Index:      i,
-			Role:       role,
+			Role:       p.role,
+			SyncMode:   p.syncMode,
 			Host:       host,
 			Binary:     m.Binary,
 			DataDir:    dataDir,
 			ConfigPath: configPath,
 			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", i)),
 			Ports:      ports,
-			Args:       nodeconfig.LaunchArgs(dataDir, configPath, ports, fam.StartFlags(role)),
+			Args:       nodeconfig.LaunchArgs(dataDir, configPath, ports, fam.StartFlags(p.role)),
 		})
 	}
 

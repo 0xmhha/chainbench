@@ -27,6 +27,9 @@ type NodeSpec struct {
 	LogPath       string
 	Args          []string // full launch args (excluding the binary itself)
 	Ports         node.Endpoints
+	// SyncMode is the node's sync mode (full|snap|archive); empty means the
+	// pipeline picks a role-based default. Set per-node from a topology config.
+	SyncMode string
 }
 
 // Handle identifies a launched node so it can later be stopped.
