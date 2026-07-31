@@ -144,7 +144,7 @@ does not apply.)
 | GOV-017 emergency mode blocks staking | e2e TestWemixGovernanceEmergencyModeE2E | **ported** (e2e) |
 | GOV-005 staker→validator reflection | — | **blocked by target** (static validator set; see epoch note) |
 | GOV-009 validator change | — | **blocked by target** (static validator set; see epoch note) |
-| GOV-010 stabilization stage | — | **blocked by target** (no epochInfo at epoch boundaries; see epoch note) |
+| GOV-010 stabilization stage (below-threshold branch) | e2e TestWemixGovernanceStabilizingE2E | **ported** (e2e) — epoch-boundary EpochInfo.stabilizing=true tied to the observed staker count (4) < stabilizingStakersThreshold (5). The stabilizing→false transition still needs useNCP + 7 governance NCPs (more funded accounts than the minimal preset carries) |
 | GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
 | GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
 | GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |

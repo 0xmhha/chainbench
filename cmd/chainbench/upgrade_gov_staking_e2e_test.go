@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"math/big"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1085,6 +1086,91 @@ func TestWemixGovernanceCredentialExpiryE2E(t *testing.T) {
 	stakingSendOK(t, c, op, accounts.EncodeCallArgs("withdraw(uint256)", accounts.Uint(big.NewInt(1))), nil)
 	drained(before, balanceOf(t, c, op.Address()), "staker withdraw(1)")
 }
+
+// stabilizingStakersThreshold is the wbft test genesis'
+// croissant.wBFT.stabilizingStakersThreshold — the staker count at or above which
+// the epoch leaves the stabilizing stage. Kept in sync with pkg/chains/wbft/genesis.json.
+const stabilizingStakersThreshold = 5
+
+// TestWemixGovernanceStabilizingE2E ports the reachable core of wemix4 GOV-010
+// (stabilization stage): at an epoch boundary the wbft engine publishes an
+// EpochInfo whose `stabilizing` flag is true while the active staker count is
+// below stabilizingStakersThreshold. The handoff successor starts with the four
+// croissant.init validators as its stakers (4 < threshold 5), so every epoch's
+// EpochInfo.stabilizing must be true, and the observed staker count must indeed
+// be below the configured threshold — tying the flag to the real count rather
+// than asserting it in isolation.
+//
+// EpochInfo is only present on epoch-boundary blocks (multiples of epochLength,
+// which is 10 here; the fork lands on block 20), so this queries a boundary block
+// rather than "latest". The stabilizing->false transition needs the staker count
+// pushed to >= threshold, which in turn needs useNCP-driven validator selection
+// and 7 governance NCPs — more distinct funded accounts than the minimal handoff
+// preset carries — so only the below-threshold branch is ported here.
+//
+//	go test -tags e2e -run TestWemixGovernanceStabilizingE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceStabilizingE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	const epochLength, forkBlock = 10, 20
+
+	// Wait until at least one post-fork epoch boundary has been produced.
+	deadline := time.Now().Add(90 * time.Second)
+	var head uint64
+	for {
+		h, err := c.BlockNumber(ctx)
+		if err == nil {
+			head = h
+		}
+		if head > forkBlock {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("chain did not reach the first post-fork epoch boundary (head=%d)", head)
+		}
+		time.Sleep(2 * time.Second)
+	}
+
+	// Largest epoch boundary strictly below head (so the block is finalized).
+	boundary := (head - 1) / epochLength * epochLength
+	if boundary < forkBlock {
+		boundary = forkBlock
+	}
+
+	var extra struct {
+		EpochInfo struct {
+			Stabilizing bool              `json:"stabilizing"`
+			Stakers     []json.RawMessage `json:"stakers"`
+		} `json:"epochInfo"`
+	}
+	if err := c.Call(ctx, "istanbul_getWbftExtraInfo", &extra, hexUint(boundary)); err != nil {
+		t.Fatalf("istanbul_getWbftExtraInfo(%d): %v", boundary, err)
+	}
+
+	stakerCount := len(extra.EpochInfo.Stakers)
+	if stakerCount == 0 {
+		t.Fatalf("EpochInfo at block %d has no stakers", boundary)
+	}
+	if stakerCount >= stabilizingStakersThreshold {
+		t.Fatalf("staker count %d >= threshold %d — below-threshold branch not exercised", stakerCount, stabilizingStakersThreshold)
+	}
+	if !extra.EpochInfo.Stabilizing {
+		t.Fatalf("EpochInfo.stabilizing = false at block %d with %d stakers (< threshold %d), want true",
+			boundary, stakerCount, stabilizingStakersThreshold)
+	}
+	t.Logf("epoch boundary %d: stabilizing=true with %d stakers (< threshold %d)", boundary, stakerCount, stabilizingStakersThreshold)
+}
+
+// hexUint formats a block number as a 0x-prefixed hex quantity for JSON-RPC.
+func hexUint(n uint64) string { return "0x" + strconv.FormatUint(n, 16) }
 
 // balanceOf reads an account's coin balance at the latest block.
 func balanceOf(t *testing.T, c *rpc.Client, addr string) *big.Int {
