@@ -182,7 +182,7 @@ func generateNode(i int, bootnode, binary, out, pwFile string, basePort int) (ge
 	if err := os.WriteFile(keyFile, []byte(nodekey), 0o600); err != nil {
 		return genNode{}, err
 	}
-	defer os.Remove(keyFile)
+	defer func() { _ = os.Remove(keyFile) }()
 	imp := exec.Command(binary, "account", "import", "--datadir", nodeDir, "--password", pwFile, keyFile)
 	if b, err := imp.CombinedOutput(); err != nil {
 		return genNode{}, fmt.Errorf("account import: %w: %s", err, b)
