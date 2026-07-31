@@ -26,7 +26,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | RPC-006 istanbul_status | istanbul-status-fields | covered |
 | RPC-007 getTransactionReceipt | transaction-receipt-fields | covered |
 | RPC-008 wemix_getBriocheBlockReward | — | deferred (cross-binary equality go-wemix vs go-wbft; needs the handoff chain, not a fresh go-wbft net) |
-| RPC-009 eth_call governance read | — | deferred (needs deployed wemix governance) |
+| RPC-009 eth_call governance read | e2e TestWemixGovernanceE2E (GovStaking.totalStaking) | **ported** (e2e) |
 | RPC-010 istanbul_nodeAddress | node-address-returned | covered |
 | RPC-011 istanbul_isValidator | is-validator-flags | covered |
 | RPC-012 eth_getBalance | genesis-balance | covered |

@@ -70,4 +70,14 @@ func TestWemixGovernanceE2E(t *testing.T) {
 			t.Fatalf("GOV-002: GovConfig.%s must be > 0 (got %q)", sig, out)
 		}
 	}
+
+	// RPC-009: eth_call reaches a second governance contract — GovStaking's
+	// totalStaking() decodes to a non-negative amount (>= 0; no stakers yet).
+	out, err := c.EthCall(ctx, e2eGovStaking, accounts.Selector("totalStaking()"))
+	if err != nil {
+		t.Fatalf("eth_call GovStaking totalStaking(): %v", err)
+	}
+	if _, ok := new(big.Int).SetString(strings.TrimPrefix(strings.TrimSpace(out), "0x"), 16); !ok {
+		t.Fatalf("RPC-009: GovStaking.totalStaking() not a uint (got %q)", out)
+	}
 }
