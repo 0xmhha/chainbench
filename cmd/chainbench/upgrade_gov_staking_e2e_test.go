@@ -195,6 +195,81 @@ func TestWemixGovernanceUnstakeE2E(t *testing.T) {
 	}
 }
 
+// TestWemixGovernanceFeeChangeE2E ports wemix4 GOV-020 (fee change, immediate
+// path). When a staker has no delegators, requestChangingFee applies the new fee
+// rate immediately (with delegators it becomes a delayed request). This registers
+// a staker with feeRate 0, then the operator requests a new rate and the change
+// takes effect at once.
+//
+//	go test -tags e2e -run TestWemixGovernanceFeeChangeE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceFeeChangeE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
+
+	// stakingRegister sets feeRate 0; confirm, then request a new rate.
+	if fee := stakingInfoWord(t, c, staker, 3); fee.Sign() != 0 {
+		t.Fatalf("initial feeRate = %s, want 0", fee)
+	}
+	const newRate = 250 // 2.5% (<= feePrecision 10000)
+	data := accounts.EncodeCallArgs("requestChangingFee(uint256)", accounts.Uint(big.NewInt(newRate)))
+	raw, err := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	if err != nil {
+		t.Fatalf("decode calldata: %v", err)
+	}
+	hash, err := operator.Execute(ctx, e2eGovStaking, raw, nil)
+	if err != nil {
+		t.Fatalf("requestChangingFee execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
+		t.Fatalf("requestChangingFee reverted (status %s)", st)
+	}
+
+	// No delegators -> the fee change is immediate.
+	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
+		t.Fatalf("feeRate = %s after immediate change, want %d", fee, newRate)
+	}
+}
+
+// stakingInfoWord reads word `idx` of GovStaking.stakerInfo(staker). The Staker
+// struct's leading fields are static (operator, rewardee, feeRecipient, feeRate,
+// then an offset to the dynamic blsPubKey), so a static field sits at a fixed
+// 32-byte word regardless of the dynamic tail — feeRate is word 3.
+func stakingInfoWord(t *testing.T, c *rpc.Client, staker string, idx int) *big.Int {
+	t.Helper()
+	out, err := c.EthCall(context.Background(), e2eGovStaking, accounts.EncodeCallArgs("stakerInfo(address)", accounts.Address(staker)))
+	if err != nil {
+		t.Fatalf("eth_call stakerInfo: %v", err)
+	}
+	h := strings.TrimPrefix(strings.TrimSpace(out), "0x")
+	if len(h) < (idx+1)*64 {
+		t.Fatalf("stakerInfo result too short (%d hex chars) for word %d", len(h), idx)
+	}
+	v, ok := new(big.Int).SetString(h[idx*64:(idx+1)*64], 16)
+	if !ok {
+		t.Fatalf("stakerInfo word %d not hex", idx)
+	}
+	return v
+}
+
 // stakingRegister sends registerStaker(amount, staker, staker, 0, blsPK, blsSig)
 // from operator (value=amount) and fails unless it mines successfully.
 func stakingRegister(t *testing.T, c *rpc.Client, operator accounts.Wallet, staker string, blsPK, blsSig []byte, amount *big.Int) {
