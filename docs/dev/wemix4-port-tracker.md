@@ -40,7 +40,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | RPC-020 eth_subscribe newHeads | anzeon ws_subscribe (a4-06) | covered |
 | RPC-021 eth_subscribe logs | anzeon ws_subscribe (a4-07) | covered |
 | RPC-022 getWbftExtraInfo (epoch) | epoch-transition-carries-epoch-info | covered |
-| RPC-023 isValidator after epoch | — | deferred (needs epoch validator-set change) |
+| RPC-023 isValidator after epoch | — | **blocked by target** (validator set is static; see epoch note) |
 
 ## TX (20)
 
@@ -112,13 +112,11 @@ does not apply.)
 | GOV-015 unstake below minimum rejected | e2e TestWemixGovernanceUnstakeMinimumGuardE2E | **ported** (e2e) |
 | GOV-016 inactive→active (unstake then re-stake) | e2e TestWemixGovernanceReactivateE2E | **ported** (e2e) |
 | GOV-017 emergency mode blocks staking | e2e TestWemixGovernanceEmergencyModeE2E | **ported** (e2e) |
-| GOV-005/010/012 (validator/stabilization/reward) | — | follow-up (need epoch reflection / accrued rewards) |
-| GOV-021 fee change (delayed, with delegators) | — | follow-up (needs the changeFeeDelay window to execute) |
-| GOV-013/014/023 (reward claims / credential expiry) | — | follow-up (need accrued rewards / a long expiry window) |
-| GOV-013/014 (reward claims) | — | follow-up (need accrued rewards on the registered staker) |
-| GOV-009 validator change | — | follow-up (build on the registered staker) |
-| GOV-020/021 (fee change) | — | follow-up (GovStaking write by the registered staker's operator) |
-| GOV-022/023 (claim theft guard / credential expiry) | — | follow-up |
+| GOV-005 staker→validator reflection | — | **blocked by target** (static validator set; see epoch note) |
+| GOV-009 validator change | — | **blocked by target** (static validator set; see epoch note) |
+| GOV-010 stabilization stage | — | **blocked by target** (no epochInfo at epoch boundaries; see epoch note) |
+| GOV-012/013/014 (block reward / reward claims) | — | deferred (need reward accrual to a registered staker-validator + block-waiting) |
+| GOV-021 fee change (delayed) / GOV-023 credential expiry | — | deferred (long changeFeeDelay / expiry windows) |
 
 ### The write path, and what is reachable (confirmed live)
 
@@ -150,9 +148,21 @@ binary. GOV-003 is ported (`TestWemixGovernanceRegisterStakerE2E`: operator=node
 staker=node1, amount=minimumStaking → `isStaker` true, `stakerByOperator` maps
 back). GOV-011 delegation builds on it (`TestWemixGovernanceDelegateE2E`: node3
 delegates to the active staker via `delegate(staker,amount)` payable →
-`getDelegatedAmount(staker)` grows by the amount). The remaining dependent flows
-(GOV-004/005/009/010–017 staking/rewards, GOV-013/014 claims, GOV-020/021 fee
-change) build on a registered staker and are follow-ups on this machinery.
+`getDelegatedAmount(staker)` grows by the amount).
+
+### Epoch / validator-set note (why GOV-005/009/010 + RPC-023 are blocked)
+
+Probed live on the handoff successor: `istanbul_getValidators` returns the same
+four croissant.init validators at every block — including across epoch boundaries
+(epochLength 100; checked at blocks 99/100/101 and 199/200/201) — and
+`istanbul_getWbftExtraInfo.epochInfo` is populated only at the fork block (20),
+null at the epoch boundaries. So the chainbench minimal handoff runs a **static
+validator set**; governance staker registration does not add a node to the
+block-producing set, and there is no per-epoch validator rotation to observe.
+GOV-005 (staker→validator), GOV-009 (validator change), GOV-010 (stabilization
+via epochInfo), and RPC-023 (isValidator after epoch) therefore cannot be
+reproduced here — they need a full wemix network where governance drives the
+validator set at epoch transitions.
 
 ### Handoff reliability (test infrastructure)
 
@@ -289,8 +299,8 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
   6+ node preset (the current preset ships 5). Both live-verified.
 - **Remaining:** the n=6 quorum WBFT cases (012/013, need a larger preset), the GOV staking
   **dependents** that need machinery this harness doesn't produce quickly —
-  GOV-005/009 (validator-set reflection, needs an epoch), GOV-010 (stabilization,
-  needs epoch + Stabilizing field), GOV-012/013/014 (block reward + reward claims,
+  GOV-005/009/010 + RPC-023 (validator-set reflection / stabilization) are BLOCKED
+  by the static validator set (see the epoch note), GOV-012/013/014 (block reward + reward claims,
   need accrued rewards), GOV-021 (delayed fee change) / GOV-023 (credential
   expiry) (long fee/expiry windows) — and RPC-008/009/019/023 + the NODE ops
   cases. The GOV read path, the NCP-governance write path, and the staking
