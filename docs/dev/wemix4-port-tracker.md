@@ -149,7 +149,7 @@ does not apply.)
 | GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
 | GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |
 | GOV-021 fee change (delayed, full request→execute) | e2e TestWemixGovernanceFeeChangeDelayedE2E | **ported** (e2e) |
-| GOV-023 credential expiry | — | deferred (needs the unbonding/expiry window to elapse) |
+| GOV-023 credential expiry | e2e TestWemixGovernanceCredentialExpiryE2E | **ported** (e2e) — short unbonding (staker 15s / delegator 5s) in the test genesis makes the per-credential expiry window waitable |
 
 ### The write path, and what is reachable (confirmed live)
 
