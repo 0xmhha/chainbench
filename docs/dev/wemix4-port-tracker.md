@@ -70,7 +70,7 @@ tractable first:
 | RPC-020 eth_subscribe newHeads | anzeon ws_subscribe (a4-06) | covered |
 | RPC-021 eth_subscribe logs | anzeon ws_subscribe (a4-07) | covered |
 | RPC-022 getWbftExtraInfo (epoch) | epoch-transition-carries-epoch-info | covered |
-| RPC-023 isValidator after epoch | — | **blocked by target** (validator set is static; see epoch note) |
+| RPC-023 isValidator (validator vs endpoint) | e2e TestE2E_WbftIsValidator | **ported** (e2e) — standalone wbft network (4 validators + 1 endpoint): a validator node reports istanbul_isValidator=true, the endpoint reports false. (The epoch-driven "after set change" angle still needs the useNCP growth machinery.) |
 
 ## TX (20)
 
