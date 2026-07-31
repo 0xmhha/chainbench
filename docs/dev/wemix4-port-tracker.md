@@ -148,7 +148,7 @@ does not apply.)
 | GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
 | GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
 | GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |
-| GOV-021 fee change (delayed request) | e2e TestWemixGovernanceFeeChangeDelayedE2E | **ported** (e2e) |
+| GOV-021 fee change (delayed, full request→execute) | e2e TestWemixGovernanceFeeChangeDelayedE2E | **ported** (e2e) |
 | GOV-023 credential expiry | — | deferred (needs the unbonding/expiry window to elapse) |
 
 ### The write path, and what is reachable (confirmed live)

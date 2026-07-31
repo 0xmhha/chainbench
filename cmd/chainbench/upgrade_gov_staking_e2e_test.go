@@ -976,4 +976,13 @@ func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
 	if newFee.Cmp(big.NewInt(newRate)) != 0 {
 		t.Fatalf("pending newFeeRate = %s, want %d", newFee, newRate)
 	}
+
+	// After changeFeeDelay elapses (short in the test genesis), executeChangingFee
+	// applies the pending rate. The delay is block.timestamp-based, so wait it out.
+	delay := govConfigUint(t, c, "changeFeeDelay()")
+	time.Sleep(time.Duration(delay.Int64()+3) * time.Second)
+	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("executeChangingFee(address)", accounts.Address(staker)), nil)
+	if fee := stakingInfoWord(t, c, staker, 3); fee.Cmp(big.NewInt(newRate)) != 0 {
+		t.Fatalf("feeRate = %s after executeChangingFee, want %d", fee, newRate)
+	}
 }
