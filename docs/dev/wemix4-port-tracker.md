@@ -26,10 +26,11 @@ tractable first:
    (`TestE2E_WbftGenesisNCPWhitespace` / `TestE2E_WbftGenesisEmptyNCP`): `gwemix
    init` accepts whitespace-padded NCP addresses (trimmed) and rejects an empty
    NCP list ("govNCP is configured but no initial NCPs provided").
-3. **GOV-012 / GOV-013 / GOV-014 block-reward + reward claims** — need rewards to
-   accrue to a registered staker-validator over blocks, then `previewReward` /
-   `claim`. Reachable on the handoff but slow (block-waiting) and needs the
-   staker to be an active reward-earning validator. *Reachable, costly.*
+3. ~~GOV-012 / GOV-013 / GOV-014 block-reward + reward claims~~ — **ported**:
+   register a *producing* validator (node2) as a staker via a distinct operator
+   (node3); `previewReward` grows block over block (GOV-012); the operator claims
+   and its balance rises (GOV-013); a delegator (node4) accrues its share and
+   claims (GOV-014). Live-verified.
 4. **GOV-021 delayed fee change / GOV-023 credential expiry** — need the
    `changeFeeDelay` / credential-expiry time windows to elapse (long). *Deferred.*
 5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — need a full wemix network where
@@ -142,7 +143,9 @@ does not apply.)
 | GOV-005 staker→validator reflection | — | **blocked by target** (static validator set; see epoch note) |
 | GOV-009 validator change | — | **blocked by target** (static validator set; see epoch note) |
 | GOV-010 stabilization stage | — | **blocked by target** (no epochInfo at epoch boundaries; see epoch note) |
-| GOV-012/013/014 (block reward / reward claims) | — | deferred (need reward accrual to a registered staker-validator + block-waiting) |
+| GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
+| GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
+| GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |
 | GOV-021 fee change (delayed) / GOV-023 credential expiry | — | deferred (long changeFeeDelay / expiry windows) |
 
 ### The write path, and what is reachable (confirmed live)

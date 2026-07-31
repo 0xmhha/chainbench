@@ -709,3 +709,206 @@ func passNCPBallot(t *testing.T, c *rpc.Client, ncp accounts.Wallet, proposalDat
 		t.Fatalf("NCP vote reverted (status %s)", vr.Status)
 	}
 }
+
+// stakingPreviewPending reads GovStaking.previewReward(staker, user).pending
+// (word 0 of the 4-word return) — user's accrued, unclaimed reward on staker
+// (pass user == staker for the staker's own reward, or a delegator's address).
+func stakingPreviewPending(t *testing.T, c *rpc.Client, staker, user string) *big.Int {
+	t.Helper()
+	out, err := c.EthCall(context.Background(), e2eGovStaking,
+		accounts.EncodeCallArgs("previewReward(address,address)", accounts.Address(staker), accounts.Address(user)))
+	if err != nil {
+		t.Fatalf("eth_call previewReward: %v", err)
+	}
+	h := strings.TrimPrefix(strings.TrimSpace(out), "0x")
+	if len(h) < 64 {
+		t.Fatalf("previewReward result too short: %q", out)
+	}
+	v, _ := new(big.Int).SetString(h[:64], 16)
+	return v
+}
+
+// registerProducingStaker registers a currently-producing validator (node2) as a
+// staker via a distinct operator (node3), so block rewards accrue to it. Returns
+// the staker address and the operator wallet.
+func registerProducingStaker(t *testing.T, c *rpc.Client, ap accounts.AccountProvider, url string) (string, accounts.Wallet) {
+	t.Helper()
+	ctx := context.Background()
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 3), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 2) // a validator in the block-producing set
+	blsPK, blsSig := presetNodeBLS(t, 2)
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
+	return staker, operator
+}
+
+// TestWemixGovernanceBlockRewardE2E ports wemix4 GOV-012 (block reward accrual):
+// once a producing validator is a registered staker, its unclaimed reward
+// (previewReward) grows block over block as the engine distributes block rewards.
+//
+//	go test -tags e2e -run TestWemixGovernanceBlockRewardE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceBlockRewardE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	staker, _ := registerProducingStaker(t, c, ap, url)
+
+	before := stakingPreviewPending(t, c, staker, staker)
+	start, _ := c.BlockNumber(context.Background())
+	// Wait ~15 blocks for rewards to accrue.
+	deadline := time.Now().Add(90 * time.Second)
+	for {
+		if h, _ := c.BlockNumber(context.Background()); h >= start+15 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("chain did not advance 15 blocks")
+		}
+		time.Sleep(2 * time.Second)
+	}
+	after := stakingPreviewPending(t, c, staker, staker)
+	if after.Cmp(before) <= 0 {
+		t.Fatalf("previewReward did not grow: before=%s after=%s", before, after)
+	}
+}
+
+// TestWemixGovernanceOperatorClaimE2E ports wemix4 GOV-013 (operator claim): the
+// operator claims the staker's accrued reward, which resets the pending amount
+// (claim sets pendingReward = 0 before transferring).
+//
+//	go test -tags e2e -run TestWemixGovernanceOperatorClaimE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceOperatorClaimE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	staker, operator := registerProducingStaker(t, c, ap, url)
+
+	// Wait until a sizeable reward has accrued (rewards grow ~1e18/block, so this
+	// clears the claim's gas cost and the read-timing noise).
+	const threshold = "5000000000000000000" // 5e18
+	want, _ := new(big.Int).SetString(threshold, 10)
+	deadline := time.Now().Add(120 * time.Second)
+	for stakingPreviewPending(t, c, staker, staker).Cmp(want) < 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("reward did not accrue past the claim threshold")
+		}
+		time.Sleep(3 * time.Second)
+	}
+
+	// The operator (msg.sender) receives the reward on a no-restake claim, so its
+	// balance rises by ~the reward minus gas — a clear net increase.
+	opAddr := operator.Address()
+	balBefore, err := c.BalanceAt(ctx, opAddr)
+	if err != nil {
+		t.Fatalf("operator balance: %v", err)
+	}
+	data := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
+	raw, _ := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+	hash, err := operator.Execute(ctx, e2eGovStaking, raw, nil)
+	if err != nil {
+		t.Fatalf("claim execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, hash); st != "0x1" {
+		t.Fatalf("claim reverted (status %s)", st)
+	}
+	balAfter, err := c.BalanceAt(ctx, opAddr)
+	if err != nil {
+		t.Fatalf("operator balance after: %v", err)
+	}
+	if balAfter.Cmp(balBefore) <= 0 {
+		t.Fatalf("operator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
+	}
+}
+
+// TestWemixGovernanceDelegatorClaimE2E ports wemix4 GOV-014 (delegator claim): a
+// delegator to a producing staker accrues its share of block rewards and can
+// claim them — claiming as a non-operator resolves _user to the caller, so the
+// reward (minus fee) is sent to the delegator, raising its balance.
+//
+//	go test -tags e2e -run TestWemixGovernanceDelegatorClaimE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	staker, _ := registerProducingStaker(t, c, ap, url)
+
+	// A delegator (node4) delegates to the producing staker.
+	delegator, err := ap.OpenWallet(ctx, presetNodeKey(t, 4), url)
+	if err != nil {
+		t.Fatalf("open delegator wallet: %v", err)
+	}
+	delegAmount, _ := new(big.Int).SetString("1000000000000000000000000", 10) // 1e24
+	dData := accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(delegAmount))
+	dRaw, _ := hex.DecodeString(strings.TrimPrefix(dData, "0x"))
+	dHash, err := delegator.Execute(ctx, e2eGovStaking, dRaw, delegAmount)
+	if err != nil {
+		t.Fatalf("delegate execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, dHash); st != "0x1" {
+		t.Fatalf("delegate reverted (status %s)", st)
+	}
+
+	// Wait until the delegator's own share of rewards has accrued.
+	deleg := delegator.Address()
+	want, _ := new(big.Int).SetString("2000000000000000000", 10) // 2e18
+	deadline := time.Now().Add(120 * time.Second)
+	for stakingPreviewPending(t, c, staker, deleg).Cmp(want) < 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("delegator reward did not accrue past the claim threshold")
+		}
+		time.Sleep(3 * time.Second)
+	}
+
+	// The delegator claims its share; the reward (minus fee) lands in its balance.
+	balBefore, err := c.BalanceAt(ctx, deleg)
+	if err != nil {
+		t.Fatalf("delegator balance: %v", err)
+	}
+	cData := accounts.EncodeCallArgs("claim(address,bool)", accounts.Address(staker), accounts.Word([]byte{0}))
+	cRaw, _ := hex.DecodeString(strings.TrimPrefix(cData, "0x"))
+	cHash, err := delegator.Execute(ctx, e2eGovStaking, cRaw, nil)
+	if err != nil {
+		t.Fatalf("delegator claim execute: %v", err)
+	}
+	if st := stakingWaitStatus(t, c, cHash); st != "0x1" {
+		t.Fatalf("delegator claim reverted (status %s)", st)
+	}
+	balAfter, err := c.BalanceAt(ctx, deleg)
+	if err != nil {
+		t.Fatalf("delegator balance after: %v", err)
+	}
+	if balAfter.Cmp(balBefore) <= 0 {
+		t.Fatalf("delegator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
+	}
+}
