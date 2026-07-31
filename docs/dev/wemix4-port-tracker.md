@@ -14,6 +14,34 @@ wemix governance).
 Status legend: **covered** (an existing testkit case already asserts it) ·
 **ported** (added in Phase 6) · **deferred** (needs new machinery — see reason).
 
+## Remaining work (prioritized)
+
+Everything else in wemix4 is ported or already covered. What is left, most
+tractable first:
+
+1. **NODE-004 snap sync** — boot the wbft chain with an endpoint in `snap` sync
+   mode (now expressible via the `--topology` config's per-node `sync_mode`),
+   open a block gap, and confirm the snap-syncing node catches up. Reliable
+   (plain wbft boot; no handoff/epoch). *Reachable now.*
+2. **NODE-006 / NODE-007 genesis NCP-parse** — `gwemix init` on a crafted wemix
+   genesis with whitespace-padded / empty NCP addresses; assert it parses (trims)
+   / handles empty. Reliable (init only, no running chain). Needs wemix-genesis
+   NCP-section crafting. *Reachable now.*
+3. **GOV-012 / GOV-013 / GOV-014 block-reward + reward claims** — need rewards to
+   accrue to a registered staker-validator over blocks, then `previewReward` /
+   `claim`. Reachable on the handoff but slow (block-waiting) and needs the
+   staker to be an active reward-earning validator. *Reachable, costly.*
+4. **GOV-021 delayed fee change / GOV-023 credential expiry** — need the
+   `changeFeeDelay` / credential-expiry time windows to elapse (long). *Deferred.*
+5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — need a full wemix network where
+   governance drives the validator set at epoch transitions; the minimal handoff
+   runs a static validator set (see the epoch note). *Blocked by target.*
+6. **NODE-002 data migration** — import a pre-fork wemix datadir fixture and
+   migrate; needs that fixture. *Deferred.*
+7. **RPC-008 wemix_getBriocheBlockReward** — needs the genesis configured with a
+   `brioche` halving object (a dedicated setup, to be provided) and the wemix RPC
+   namespace on a node that has it. **Do LAST.**
+
 ## RPC (23)
 
 | wemix4 | maps to | status |
@@ -25,7 +53,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | RPC-005 getWbftExtraInfo (normal) | wbft-extra-info-fields | covered |
 | RPC-006 istanbul_status | istanbul-status-fields | covered |
 | RPC-007 getTransactionReceipt | transaction-receipt-fields | covered |
-| RPC-008 wemix_getBriocheBlockReward | — | **blocked by target** (the `wemix_getBriocheBlockReward` RPC registers only when `Config().Brioche != nil`, i.e. the genesis has a `brioche` halving-config object — the go-wemix template ships only `briocheBlock`, not the object; and the go-wbft successor exposes the `istanbul` namespace, not `wemix`, so the cross-binary compare is unreachable) |
+| RPC-008 wemix_getBriocheBlockReward | — | **deferred — do LAST** (the `wemix_getBriocheBlockReward` RPC registers only when the genesis carries a `brioche` halving-config object — distinct from the `briocheBlock` fork switch; the go-wemix template ships only `briocheBlock`. There is a dedicated way to configure brioche for this test — pending that setup; lowest priority) |
 | RPC-009 eth_call governance read | e2e TestWemixGovernanceE2E (GovStaking.totalStaking) | **ported** (e2e) |
 | RPC-010 istanbul_nodeAddress | node-address-returned | covered |
 | RPC-011 istanbul_isValidator | is-validator-flags | covered |
