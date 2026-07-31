@@ -25,7 +25,7 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 | RPC-005 getWbftExtraInfo (normal) | wbft-extra-info-fields | covered |
 | RPC-006 istanbul_status | istanbul-status-fields | covered |
 | RPC-007 getTransactionReceipt | transaction-receipt-fields | covered |
-| RPC-008 wemix_getBriocheBlockReward | — | deferred (cross-binary equality go-wemix vs go-wbft; needs the handoff chain, not a fresh go-wbft net) |
+| RPC-008 wemix_getBriocheBlockReward | — | **blocked by target** (the `wemix_getBriocheBlockReward` RPC registers only when `Config().Brioche != nil`, i.e. the genesis has a `brioche` halving-config object — the go-wemix template ships only `briocheBlock`, not the object; and the go-wbft successor exposes the `istanbul` namespace, not `wemix`, so the cross-binary compare is unreachable) |
 | RPC-009 eth_call governance read | e2e TestWemixGovernanceE2E (GovStaking.totalStaking) | **ported** (e2e) |
 | RPC-010 istanbul_nodeAddress | node-address-returned | covered |
 | RPC-011 istanbul_isValidator | is-validator-flags | covered |
