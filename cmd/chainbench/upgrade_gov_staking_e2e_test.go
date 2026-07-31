@@ -912,3 +912,68 @@ func TestWemixGovernanceDelegatorClaimE2E(t *testing.T) {
 		t.Fatalf("delegator balance did not rise after claim: before=%s after=%s", balBefore, balAfter)
 	}
 }
+
+// TestWemixGovernanceFeeChangeDelayedE2E ports wemix4 GOV-021 (fee change,
+// delayed path): when a staker HAS delegators, requestChangingFee does NOT apply
+// the new rate immediately (unlike GOV-020's no-delegator case) — it records a
+// pending request (changingFeeRequests[staker].requestTime != 0) and leaves the
+// current feeRate unchanged until executeChangingFee after changeFeeDelay (which
+// this test, bounded to seconds, does not wait out).
+//
+//	go test -tags e2e -run TestWemixGovernanceFeeChangeDelayedE2E -timeout 8m ./cmd/chainbench
+func TestWemixGovernanceFeeChangeDelayedE2E(t *testing.T) {
+	fromBin := os.Getenv("CHAINBENCH_E2E_FROM_BIN")
+	toBin := os.Getenv("CHAINBENCH_E2E_TO_BIN")
+	template := os.Getenv("CHAINBENCH_E2E_TEMPLATE")
+	if fromBin == "" || toBin == "" || template == "" {
+		t.Skip("set CHAINBENCH_E2E_FROM_BIN, CHAINBENCH_E2E_TO_BIN, CHAINBENCH_E2E_TEMPLATE to run")
+	}
+	url := runGovHandoff(t, fromBin, toBin, template)
+	c := rpc.Dial(url)
+	ctx := context.Background()
+	ap, err := accounts.ForChain("wbft")
+	if err != nil {
+		t.Fatalf("accounts.ForChain(wbft): %v", err)
+	}
+	operator, err := ap.OpenWallet(ctx, presetNodeKey(t, 2), url)
+	if err != nil {
+		t.Fatalf("open operator wallet: %v", err)
+	}
+	staker := presetNodeAddr(t, 1)
+	blsPK, blsSig := presetNodeBLS(t, 1)
+	stakingRegister(t, c, operator, staker, blsPK, blsSig, govConfigUint(t, c, "minimumStaking()"))
+
+	// Give the staker a delegator (node3) so the fee change takes the delayed path.
+	delegator, err := ap.OpenWallet(ctx, presetNodeKey(t, 3), url)
+	if err != nil {
+		t.Fatalf("open delegator wallet: %v", err)
+	}
+	delegAmount, _ := new(big.Int).SetString("1000000000000000000000000", 10)
+	stakingSendOK(t, c, delegator, accounts.EncodeCallArgs("delegate(address,uint256)", accounts.Address(staker), accounts.Uint(delegAmount)), delegAmount)
+
+	// Request a new fee rate; with a delegator present it must NOT apply now.
+	const newRate = 250
+	stakingSendOK(t, c, operator, accounts.EncodeCallArgs("requestChangingFee(uint256)", accounts.Uint(big.NewInt(newRate))), nil)
+
+	if fee := stakingInfoWord(t, c, staker, 3); fee.Sign() != 0 {
+		t.Fatalf("feeRate changed immediately despite a delegator (got %s, want 0 until execute)", fee)
+	}
+	// changingFeeRequests(staker) returns (newFeeRate, requestTime); a non-zero
+	// requestTime (word 1) proves the delayed request was recorded.
+	out, err := c.EthCall(ctx, e2eGovStaking, accounts.EncodeCallArgs("changingFeeRequests(address)", accounts.Address(staker)))
+	if err != nil {
+		t.Fatalf("eth_call changingFeeRequests: %v", err)
+	}
+	h := strings.TrimPrefix(strings.TrimSpace(out), "0x")
+	if len(h) < 128 {
+		t.Fatalf("changingFeeRequests result too short: %q", out)
+	}
+	newFee, _ := new(big.Int).SetString(h[:64], 16)
+	reqTime, _ := new(big.Int).SetString(h[64:128], 16)
+	if reqTime.Sign() == 0 {
+		t.Fatalf("no pending fee-change request recorded (requestTime 0)")
+	}
+	if newFee.Cmp(big.NewInt(newRate)) != 0 {
+		t.Fatalf("pending newFeeRate = %s, want %d", newFee, newRate)
+	}
+}

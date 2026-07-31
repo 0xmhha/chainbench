@@ -31,8 +31,10 @@ tractable first:
    (node3); `previewReward` grows block over block (GOV-012); the operator claims
    and its balance rises (GOV-013); a delegator (node4) accrues its share and
    claims (GOV-014). Live-verified.
-4. **GOV-021 delayed fee change / GOV-023 credential expiry** — need the
-   `changeFeeDelay` / credential-expiry time windows to elapse (long). *Deferred.*
+4. GOV-021 delayed fee change — **ported** (`TestWemixGovernanceFeeChangeDelayedE2E`:
+   with a delegator, requestChangingFee records a pending request and does NOT
+   apply the fee immediately; the execute-after-`changeFeeDelay` half is not
+   waited out). GOV-023 credential expiry still needs the unbonding window. *Partly done.*
 5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — need a full wemix network where
    governance drives the validator set at epoch transitions; the minimal handoff
    runs a static validator set (see the epoch note). *Blocked by target.*
@@ -146,7 +148,8 @@ does not apply.)
 | GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
 | GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
 | GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |
-| GOV-021 fee change (delayed) / GOV-023 credential expiry | — | deferred (long changeFeeDelay / expiry windows) |
+| GOV-021 fee change (delayed request) | e2e TestWemixGovernanceFeeChangeDelayedE2E | **ported** (e2e) |
+| GOV-023 credential expiry | — | deferred (needs the unbonding/expiry window to elapse) |
 
 ### The write path, and what is reachable (confirmed live)
 
