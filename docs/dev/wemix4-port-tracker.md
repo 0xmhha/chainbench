@@ -19,10 +19,9 @@ Status legend: **covered** (an existing testkit case already asserts it) ·
 Everything else in wemix4 is ported or already covered. What is left, most
 tractable first:
 
-1. **NODE-004 snap sync** — boot the wbft chain with an endpoint in `snap` sync
-   mode (now expressible via the `--topology` config's per-node `sync_mode`),
-   open a block gap, and confirm the snap-syncing node catches up. Reliable
-   (plain wbft boot; no handoff/epoch). *Reachable now.*
+1. ~~NODE-004 snap sync~~ — **ported** (`TestE2E_WbftSnapSync`): wbft boot with a
+   `snap`-sync endpoint, open a ~90-block gap, confirm re-sync + matching
+   hash/stateRoot + `eth_syncing` false.
 2. **NODE-006 / NODE-007 genesis NCP-parse** — `gwemix init` on a crafted wemix
    genesis with whitespace-padded / empty NCP addresses; assert it parses (trims)
    / handles empty. Reliable (init only, no running chain). Needs wemix-genesis
@@ -215,7 +214,7 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
 | NODE-001 hardfork transition | e2e stablenet_hardfork_swap, upgrade_run e2e | covered (e2e) |
 | NODE-002 wemix data migration | — | deferred (needs pre-fork datadir fixture) |
 | NODE-003 full sync | e2e sync_gap | covered (e2e) |
-| NODE-004 snap sync | — | deferred (snap-mode e2e variant) |
+| NODE-004 snap sync | e2e TestE2E_WbftSnapSync | **ported** (e2e) |
 | NODE-005 node restart | e2e sync_gap (restart path) | covered (e2e) |
 | NODE-006 ncp whitespace genesis | — | deferred (genesis-parse unit test) |
 | NODE-007 empty ncp genesis | — | deferred (genesis-parse unit test) |
