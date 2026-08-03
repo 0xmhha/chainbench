@@ -35,11 +35,14 @@ tractable first:
    with a delegator, requestChangingFee records a pending request and does NOT
    apply the fee immediately; the execute-after-`changeFeeDelay` half is not
    waited out). GOV-023 credential expiry still needs the unbonding window. *Partly done.*
-5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — need a full wemix network where
-   governance drives the validator set at epoch transitions; the minimal handoff
-   runs a static validator set (see the epoch note). *Blocked by target.*
-6. **NODE-002 data migration** — import a pre-fork wemix datadir fixture and
-   migrate; needs that fixture. *Deferred.*
+5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — **resolved** (all ported). GOV-010
+   (below-threshold stabilizing) and RPC-023 (isValidator) were reachable directly;
+   GOV-005 (staker→validator growth) and GOV-009 (non-NCP staker excluded) are
+   ported on a standalone wbft network with a useNCP genesis overlay that makes
+   governance drive the validator set (see the epoch note). *Done.*
+6. **NODE-002 data migration** — **resolved** (ported): the handoff producer's
+   go-wemix datadir is bridged (geth→gwemix) and reopened by go-wbft, which
+   recognizes the pre-fork blocks (`TestWemixDataMigrationE2E`). *Done.*
 7. **RPC-008 wemix_getBriocheBlockReward** — needs the genesis configured with a
    `brioche` halving object (a dedicated setup, to be provided) and the wemix RPC
    namespace on a node that has it. **Do LAST.**
@@ -142,8 +145,8 @@ does not apply.)
 | GOV-015 unstake below minimum rejected | e2e TestWemixGovernanceUnstakeMinimumGuardE2E | **ported** (e2e) |
 | GOV-016 inactive→active (unstake then re-stake) | e2e TestWemixGovernanceReactivateE2E | **ported** (e2e) |
 | GOV-017 emergency mode blocks staking | e2e TestWemixGovernanceEmergencyModeE2E | **ported** (e2e) |
-| GOV-005 staker→validator reflection | — | **blocked by target** (static validator set; see epoch note) |
-| GOV-009 validator change | — | **blocked by target** (static validator set; see epoch note) |
+| GOV-005 staker→validator reflection | e2e TestE2E_WbftUseNCPValidatorGrowth | **ported** (e2e) — standalone wbft with a useNCP overlay (targetValidators=3, threshold=2, NCP operators = nodes 4-6): registering NCP stakers grows the governance-decided validator set (EpochInfo) 2→3 |
+| GOV-009 non-NCP staker excluded | e2e TestE2E_WbftUseNCPNonNCPExcluded | **ported** (e2e) — a staker registered via a non-NCP operator, even at 5x stake, never becomes a candidate/validator |
 | GOV-010 stabilization stage (below-threshold branch) | e2e TestWemixGovernanceStabilizingE2E | **ported** (e2e) — epoch-boundary EpochInfo.stabilizing=true tied to the observed staker count (4) < stabilizingStakersThreshold (5). The stabilizing→false transition still needs useNCP + 7 governance NCPs (more funded accounts than the minimal preset carries) |
 | GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
 | GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
@@ -183,7 +186,15 @@ back). GOV-011 delegation builds on it (`TestWemixGovernanceDelegateE2E`: node3
 delegates to the active staker via `delegate(staker,amount)` payable →
 `getDelegatedAmount(staker)` grows by the amount).
 
-### Epoch / validator-set note (why GOV-005/009/010 + RPC-023 are blocked)
+### Epoch / validator-set note (how GOV-005/009/010 + RPC-023 were ported)
+
+**Update:** all four are now ported. GOV-010 asserts the epoch-boundary
+`EpochInfo.stabilizing` flag on the handoff successor; RPC-023 checks
+`istanbul_isValidator` on a standalone wbft validator vs endpoint; GOV-005/009
+run on a standalone wbft network with a `useNCP` genesis overlay (targetValidators
++ stabilizingStakersThreshold + an NCP operator set) so governance selection
+drives the validator set. The original blocker (below) applied only to the
+*minimal handoff*, which keeps a static validator set.
 
 Probed live on the handoff successor: `istanbul_getValidators` returns the same
 four croissant.init validators at every block — including across epoch boundaries
