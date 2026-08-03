@@ -40,7 +40,7 @@ func execRunner(ctx context.Context, name string, args ...string) ([]byte, error
 }
 
 func newUpgradeRunCmd() *cobra.Command {
-	var profilePath, presetDir, fromBinary, toBinary, template, dataDir string
+	var profilePath, presetDir, fromBinary, toBinary, template, dataDir, genesisOverlay string
 	var waitFor int
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -128,6 +128,31 @@ func newUpgradeRunCmd() *cobra.Command {
 				return err
 			}
 
+			// 2b. Optional genesis overlay: deep-merge extra genesis fields into the
+			// composed handoff genesis (e.g. croissant.wBFT.useNCP / targetValidators
+			// / stabilizingStakersThreshold, or govContracts.govNCP.params.ncps) so a
+			// full-fidelity wemix4 config can be driven without editing the shared
+			// wbft template. Same file shape as `setup --genesis-overlay`:
+			// {"capabilities":[...], "genesis":{...}}.
+			if genesisOverlay != "" {
+				raw, err := os.ReadFile(genesisOverlay)
+				if err != nil {
+					return err
+				}
+				var ov struct {
+					Genesis json.RawMessage `json:"genesis"`
+				}
+				if err := json.Unmarshal(raw, &ov); err != nil {
+					return fmt.Errorf("bad --genesis-overlay %q: %w", genesisOverlay, err)
+				}
+				if len(ov.Genesis) > 0 {
+					plan.Genesis, err = genesis.MergeOverride(plan.Genesis, ov.Genesis)
+					if err != nil {
+						return fmt.Errorf("apply genesis overlay: %w", err)
+					}
+				}
+			}
+
 			// 3. compose launch options: key provisioning + account/RPC flags.
 			pwPath := filepath.Join(dataDir, "password")
 			if err := os.WriteFile(pwPath, []byte(preset.Password), 0o600); err != nil {
@@ -183,6 +208,7 @@ func newUpgradeRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&fromBinary, "from-binary", "", "from-chain (producer) binary path")
 	cmd.Flags().StringVar(&toBinary, "to-binary", "", "to-chain (validator) binary path")
 	cmd.Flags().StringVar(&template, "template", "", "wemix genesis template path")
+	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "optional genesis overlay file ({\"genesis\":{...}}) deep-merged into the handoff genesis")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "node data root")
 	cmd.Flags().IntVar(&waitFor, "wait", 0, "seconds to poll for the post-fork handoff (0=don't wait)")
 	return cmd
