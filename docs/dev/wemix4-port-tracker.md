@@ -218,7 +218,7 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
 | wemix4 | maps to | status |
 |---|---|---|
 | NODE-001 hardfork transition | e2e stablenet_hardfork_swap, upgrade_run e2e | covered (e2e) |
-| NODE-002 wemix data migration | — | deferred (needs pre-fork datadir fixture) |
+| NODE-002 wemix data migration (chaindata recognition) | e2e TestWemixDataMigrationE2E | **ported** (e2e) — the handoff producer's go-wemix datadir is bridged (geth -> gwemix symlink) and reopened by go-wbft, which recognizes the pre-fork blocks (height carries over) and reads old wpoa block state. "Continue past croissant" (step 7) needs the migrated node to also be a wbft validator, which the producer is not, so it is out of scope. |
 | NODE-003 full sync | e2e sync_gap | covered (e2e) |
 | NODE-004 snap sync | e2e TestE2E_WbftSnapSync | **ported** (e2e) |
 | NODE-005 node restart | e2e sync_gap (restart path) | covered (e2e) |
