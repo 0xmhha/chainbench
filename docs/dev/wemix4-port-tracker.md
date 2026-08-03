@@ -145,9 +145,9 @@ does not apply.)
 | GOV-015 unstake below minimum rejected | e2e TestWemixGovernanceUnstakeMinimumGuardE2E | **ported** (e2e) |
 | GOV-016 inactive→active (unstake then re-stake) | e2e TestWemixGovernanceReactivateE2E | **ported** (e2e) |
 | GOV-017 emergency mode blocks staking | e2e TestWemixGovernanceEmergencyModeE2E | **ported** (e2e) |
-| GOV-005 staker→validator reflection | e2e TestE2E_WbftUseNCPValidatorGrowth | **ported** (e2e) — standalone wbft with a useNCP overlay (targetValidators=3, threshold=2, NCP operators = nodes 4-6): registering NCP stakers grows the governance-decided validator set (EpochInfo) 2→3 |
-| GOV-009 non-NCP staker excluded | e2e TestE2E_WbftUseNCPNonNCPExcluded | **ported** (e2e) — a staker registered via a non-NCP operator, even at 5x stake, never becomes a candidate/validator |
-| GOV-010 stabilization stage (below-threshold branch) | e2e TestWemixGovernanceStabilizingE2E | **ported** (e2e) — epoch-boundary EpochInfo.stabilizing=true tied to the observed staker count (4) < stabilizingStakersThreshold (5). The stabilizing→false transition still needs useNCP + 7 governance NCPs (more funded accounts than the minimal preset carries) |
+| GOV-005 staker→validator reflection | e2e TestWemixGovValidatorSelectionScenarioE2E | **ported** (e2e) — on the wemix→wbft **upgrade** chain with a full-fidelity useNCP genesis overlay (targetValidators=4, threshold=2, permissioned operators funded via the overlay alloc): registering stakers via permissioned operators grows the decided validator set (EpochInfo) 2→3 |
+| GOV-009 non-permissioned staker excluded | e2e TestWemixGovValidatorSelectionScenarioE2E | **ported** (e2e) — a staker whose operator is not in the govNCP permission set, even at 5x stake, never becomes a candidate/validator |
+| GOV-010 stabilization stage | e2e TestWemixGovValidatorSelectionScenarioE2E (+ TestWemixGovernanceStabilizingE2E) | **ported** (e2e) — on the upgrade chain the epoch is stabilizing while candidates < threshold, then leaves the stage once registrations reach it; the standalone test also covers the below-threshold flag on the minimal handoff |
 | GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
 | GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
 | GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |

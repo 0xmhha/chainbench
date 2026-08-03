@@ -161,6 +161,12 @@ const govHandoffWait = "100"
 // launched node is tracked and verifiably killed on teardown (between retries and
 // at test end) — no orphans.
 func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
+	return runGovHandoffArgs(t, fromBin, toBin, template, nil)
+}
+
+// runGovHandoffArgs is runGovHandoff with extra `upgrade run` args (e.g.
+// "--genesis-overlay <path>" to drive a full-fidelity wemix4 config).
+func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs []string) string {
 	t.Helper()
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
@@ -171,7 +177,7 @@ func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
 		mgr := procman.New()
 
 		cmd := newUpgradeRunCmd()
-		cmd.SetArgs([]string{
+		args := []string{
 			"--profile", "../../profiles/wemix-upgrade.yaml",
 			"--preset", "../../keys/preset",
 			"--from-binary", fromBin,
@@ -179,7 +185,9 @@ func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
 			"--template", template,
 			"--data-dir", dataDir,
 			"--wait", govHandoffWait,
-		})
+		}
+		args = append(args, extraArgs...)
+		cmd.SetArgs(args)
 		var out bytes.Buffer
 		cmd.SetOut(&out)
 		cmd.SetErr(&out)
