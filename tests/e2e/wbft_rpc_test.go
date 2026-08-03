@@ -37,6 +37,39 @@ func TestE2E_WbftAdminPeers(t *testing.T) {
 	t.Fatalf("admin_peers reported no peers on a 4-node network (last=%d)", peers)
 }
 
+// TestE2E_WbftIsValidator ports wemix4 RPC-023 (istanbul_isValidator): a node in
+// the active validator set reports true, while a non-validator endpoint node
+// reports false. It boots 4 validators + 1 endpoint and checks a validator's RPC
+// (node 1) against the endpoint's (node 5).
+//
+//	WBFT_BIN=/path/to/go-wbft/build/bin/gwemix go test -tags e2e -run TestE2E_WbftIsValidator -v ./tests/e2e/
+func TestE2E_WbftIsValidator(t *testing.T) {
+	bin := requireBinary(t, "WBFT_BIN", "gwbft")
+	cli := buildCLI(t)
+
+	n := boot(t, cli, "wbft", bin, 4, 1) // 4 validators + 1 endpoint
+	bp := n.rpcURLFor(1)                 // a validator
+	en := n.rpcURLFor(5)                 // the endpoint (non-validator)
+	n.waitAdvancing(bp, 60*time.Second)
+
+	if !isValidator(t, bp) {
+		t.Fatal("validator node reported istanbul_isValidator=false, want true")
+	}
+	if isValidator(t, en) {
+		t.Fatal("endpoint node reported istanbul_isValidator=true, want false")
+	}
+}
+
+// isValidator calls istanbul_isValidator on a node's RPC.
+func isValidator(t *testing.T, url string) bool {
+	t.Helper()
+	var out bool
+	if err := rpc.Dial(url).Call(context.Background(), "istanbul_isValidator", &out); err != nil {
+		t.Fatalf("istanbul_isValidator(%s): %v", url, err)
+	}
+	return out
+}
+
 // adminPeerCount returns the number of peers admin_peers reports (0 on error).
 func adminPeerCount(c *rpc.Client) int {
 	var peers []struct {

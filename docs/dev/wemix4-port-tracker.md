@@ -22,16 +22,19 @@ tractable first:
 1. ~~NODE-004 snap sync~~ — **ported** (`TestE2E_WbftSnapSync`): wbft boot with a
    `snap`-sync endpoint, open a ~90-block gap, confirm re-sync + matching
    hash/stateRoot + `eth_syncing` false.
-2. **NODE-006 / NODE-007 genesis NCP-parse** — `gwemix init` on a crafted wemix
-   genesis with whitespace-padded / empty NCP addresses; assert it parses (trims)
-   / handles empty. Reliable (init only, no running chain). Needs wemix-genesis
-   NCP-section crafting. *Reachable now.*
-3. **GOV-012 / GOV-013 / GOV-014 block-reward + reward claims** — need rewards to
-   accrue to a registered staker-validator over blocks, then `previewReward` /
-   `claim`. Reachable on the handoff but slow (block-waiting) and needs the
-   staker to be an active reward-earning validator. *Reachable, costly.*
-4. **GOV-021 delayed fee change / GOV-023 credential expiry** — need the
-   `changeFeeDelay` / credential-expiry time windows to elapse (long). *Deferred.*
+2. ~~NODE-006 / NODE-007 genesis NCP-parse~~ — **ported**
+   (`TestE2E_WbftGenesisNCPWhitespace` / `TestE2E_WbftGenesisEmptyNCP`): `gwemix
+   init` accepts whitespace-padded NCP addresses (trimmed) and rejects an empty
+   NCP list ("govNCP is configured but no initial NCPs provided").
+3. ~~GOV-012 / GOV-013 / GOV-014 block-reward + reward claims~~ — **ported**:
+   register a *producing* validator (node2) as a staker via a distinct operator
+   (node3); `previewReward` grows block over block (GOV-012); the operator claims
+   and its balance rises (GOV-013); a delegator (node4) accrues its share and
+   claims (GOV-014). Live-verified.
+4. GOV-021 delayed fee change — **ported** (`TestWemixGovernanceFeeChangeDelayedE2E`:
+   with a delegator, requestChangingFee records a pending request and does NOT
+   apply the fee immediately; the execute-after-`changeFeeDelay` half is not
+   waited out). GOV-023 credential expiry still needs the unbonding window. *Partly done.*
 5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — need a full wemix network where
    governance drives the validator set at epoch transitions; the minimal handoff
    runs a static validator set (see the epoch note). *Blocked by target.*
@@ -67,7 +70,7 @@ tractable first:
 | RPC-020 eth_subscribe newHeads | anzeon ws_subscribe (a4-06) | covered |
 | RPC-021 eth_subscribe logs | anzeon ws_subscribe (a4-07) | covered |
 | RPC-022 getWbftExtraInfo (epoch) | epoch-transition-carries-epoch-info | covered |
-| RPC-023 isValidator after epoch | — | **blocked by target** (validator set is static; see epoch note) |
+| RPC-023 isValidator (validator vs endpoint) | e2e TestE2E_WbftIsValidator | **ported** (e2e) — standalone wbft network (4 validators + 1 endpoint): a validator node reports istanbul_isValidator=true, the endpoint reports false. (The epoch-driven "after set change" angle still needs the useNCP growth machinery.) |
 
 ## TX (20)
 
@@ -141,9 +144,12 @@ does not apply.)
 | GOV-017 emergency mode blocks staking | e2e TestWemixGovernanceEmergencyModeE2E | **ported** (e2e) |
 | GOV-005 staker→validator reflection | — | **blocked by target** (static validator set; see epoch note) |
 | GOV-009 validator change | — | **blocked by target** (static validator set; see epoch note) |
-| GOV-010 stabilization stage | — | **blocked by target** (no epochInfo at epoch boundaries; see epoch note) |
-| GOV-012/013/014 (block reward / reward claims) | — | deferred (need reward accrual to a registered staker-validator + block-waiting) |
-| GOV-021 fee change (delayed) / GOV-023 credential expiry | — | deferred (long changeFeeDelay / expiry windows) |
+| GOV-010 stabilization stage (below-threshold branch) | e2e TestWemixGovernanceStabilizingE2E | **ported** (e2e) — epoch-boundary EpochInfo.stabilizing=true tied to the observed staker count (4) < stabilizingStakersThreshold (5). The stabilizing→false transition still needs useNCP + 7 governance NCPs (more funded accounts than the minimal preset carries) |
+| GOV-012 block reward accumulation | e2e TestWemixGovernanceBlockRewardE2E | **ported** (e2e) |
+| GOV-013 operator claim | e2e TestWemixGovernanceOperatorClaimE2E | **ported** (e2e) |
+| GOV-014 delegator claim | e2e TestWemixGovernanceDelegatorClaimE2E | **ported** (e2e) |
+| GOV-021 fee change (delayed, full request→execute) | e2e TestWemixGovernanceFeeChangeDelayedE2E | **ported** (e2e) |
+| GOV-023 credential expiry | e2e TestWemixGovernanceCredentialExpiryE2E | **ported** (e2e) — short unbonding (staker 15s / delegator 5s) in the test genesis makes the per-credential expiry window waitable |
 
 ### The write path, and what is reachable (confirmed live)
 
@@ -216,8 +222,8 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
 | NODE-003 full sync | e2e sync_gap | covered (e2e) |
 | NODE-004 snap sync | e2e TestE2E_WbftSnapSync | **ported** (e2e) |
 | NODE-005 node restart | e2e sync_gap (restart path) | covered (e2e) |
-| NODE-006 ncp whitespace genesis | — | deferred (genesis-parse unit test) |
-| NODE-007 empty ncp genesis | — | deferred (genesis-parse unit test) |
+| NODE-006 ncp whitespace genesis | e2e TestE2E_WbftGenesisNCPWhitespace | **ported** (e2e) |
+| NODE-007 empty ncp genesis | e2e TestE2E_WbftGenesisEmptyNCP | **ported** (e2e) |
 
 ## Batches
 

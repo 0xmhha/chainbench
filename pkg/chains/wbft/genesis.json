@@ -19,11 +19,11 @@
       "wBFT": {
         "requestTimeoutSeconds": 1,
         "blockPeriodSeconds": 1,
-        "epochLength": 100,
+        "epochLength": 10,
         "proposerPolicy": 0,
         "targetValidators": 1,
         "maxRequestTimeoutSeconds": null,
-        "stabilizingStakersThreshold": 1
+        "stabilizingStakersThreshold": 5
       },
       "init": {
         "validators": "__VALIDATORS_JSON__",
@@ -36,10 +36,10 @@
           "params": {
             "minimumStaking": "10000000000000000000000000",
             "maximumStaking": "100000000000000000000000000",
-            "unbondingPeriodStaker": "604800",
-            "unbondingPeriodDelegator": "259200",
+            "unbondingPeriodStaker": "15",
+            "unbondingPeriodDelegator": "5",
             "feePrecision": "10000",
-            "changeFeeDelay": "604800",
+            "changeFeeDelay": "5",
             "govCouncil": "0x0000000000000000000000000000000000001003"
           }
         },
