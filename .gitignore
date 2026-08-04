@@ -13,6 +13,24 @@ state/failures/
 data/
 /tmp/
 
+# chainbench test-framework runtime session artifacts (.chainbench/<session>/…)
+.chainbench/
+
+# Backup copies
+*.bak
+*.bak.*
+
+# Go test coverage / build outputs
+coverage.out
+coverage.html
+*.coverprofile
+/dist/
+
+# Large session transcripts — must NOT be committed (bloats the repo).
+# NOTE: docs/dev/session-data/ is currently TRACKED; run `git rm -r --cached
+# docs/dev/session-data` to stop tracking it (see review notes).
+docs/dev/session-data/
+
 # Logs
 *.log
 *.log.*
@@ -44,14 +62,8 @@ Thumbs.db
 # PID files
 *.pid
 
-# Binaries (platform-specific, not tracked)
-bin/logrot
-bin/gstable
-bin/bootnode
-bin/chainbench
-bin/chainbench-net
-bin/chainbench-mcp
-bin/chainbenchd
+# Binaries (platform-specific, not tracked) — whole dir, incl. *.bak copies
+bin/
 
 .claude/settings.local.json
 
