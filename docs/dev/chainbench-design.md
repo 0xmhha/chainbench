@@ -92,7 +92,7 @@ type TestRecord interface {
 // 산출은 testspec이 담당한다(의존 방향: testspec → session, 순환 없음).
 type Fingerprint string   // = hex(sha256(canonical)) 64자. env.json의 "fingerprint" 필드에 전체 기록.
 ```
-**폴더명 길이(L5):** `Fingerprint`는 sha256 hex **64자**(전체는 env.json `fingerprint`에만 기록). **폴더명 env-id**는 `"env-"+앞 12hex` = **16자**(예: `env-a1b2c3d4e5f6`, 48-bit → 한 세션 내 소수 env에서 충돌 무시가능). 최장 경로 `.chainbench/UTC-YYYYMMDD-HHMMSS(17)/environments/env-xxxxxxxxxxxx(16)/logs/<node>.log` 는 각 컴포넌트 <255(NAME_MAX)·전체 <4096(PATH_MAX)로 안전. **전체 해시를 폴더명으로 쓰지 않는다**(경로 초과 방지).
+**폴더명 길이(L5):** `Fingerprint`는 sha256 hex **64자**(전체는 env.json `fingerprint`에만 기록). **폴더명 env-id**는 `"env-"+앞 12hex` = **16자**(예: `env-a1b2c3d4e5f6`, 48-bit → 한 세션 내 소수 env에서 충돌 무시가능). 최장 경로 `.chainbench/UTC-YYYYMMDD-HHMMSS(19)/environments/env-xxxxxxxxxxxx(16)/logs/<node>.log` 는 각 컴포넌트 <255(NAME_MAX)·전체 <4096(PATH_MAX)로 안전. **전체 해시를 폴더명으로 쓰지 않는다**(경로 초과 방지).
 
 ### 3.2 `testspec` — 정의서 파싱·해석 [NEW · testkit Go-func 대체]
 ```go
@@ -103,7 +103,9 @@ type Spec struct { /* Id, ApplicableChains, Chain, Topology, Hardforks, Placemen
                       DefaultOn, PreActions, Steps, Assertions, PostActions, Timeouts */ }
 
 func Parse(raw []byte) (Spec, error)               // 필수/옵션 검증 + JSON schema
-// Fingerprint는 precedence(flag>config>default)로 **resolved된 선언 config**를 해싱한다(§3.1 주). 체인 미접촉.
+// Fingerprint는 precedence(flag>config>default) 적용된 **선언값 전체**를 해싱한다:
+// binaries+genesis+config+topology+hardforks+placement (§D-2.4). config는 인자(resolved),
+// 나머지는 수신자 s(Topology/Hardforks/Placement/Chain)에서 취한다. 체인 미접촉.
 func (s Spec) Fingerprint(resolved config.Values) session.Fingerprint  // (§D-2.4)
 func (s Spec) Get(dotPath string) (any, bool)      // 닷경로(a.b.c) 리졸버, multiple "," 파서
 
@@ -265,6 +267,7 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
 | **`boot`** | `RoleBoot`("boot") | bootnode — 부트스트랩(wemix governance 배포) |
 > **왜 `bp`/`en` 단축어로 통일하는가:** wemix4 도메인의 표준 명칭이고 대칭적(2글자)이라 정의서 가독성이 높다. `bp`↔`validator`는 약어↔확장이 **아니라** 도메인 어휘와 BFT-코드 어휘의 **동의어**다 — 코드값 "validator"에 맞추면 `en`↔`endpoint`(약어↔확장)와 짝이 안 맞아 비대칭으로 보였다. 해결: **표층(정의서·아티팩트)은 `bp`/`en`으로 통일, enum은 내부에만.**
 > 입력 관용: topology 파서는 `"en"`·`"endpoint"` 둘 다 받아 `RoleEndpoint`로 정규화(topology.go:60-61). `node.RoleEN`("en")은 **dead code** → 제거(refactoring §2).
+> **구현 주의:** `node.Node.Role`의 json 태그는 enum값("validator"/"endpoint")을 낸다. 따라서 env.json은 `node.Node`를 **그대로 marshal하지 않고**, session이 `RoleValidator→"bp"`·`RoleEndpoint→"en"`·`RoleBoot→"boot"`로 매핑한 **전용 레코드**로 기록한다(위 "1회 변환"의 실체).
 
 ---
 
@@ -365,7 +368,7 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
 
 - 공통 절차(접근·upload·download·동일포트)를 **core로 승격**: `driver.RemoteDriver`(+`FileProvisioner`, 기존) + `core/remote`(ssh/auth, 기존) + `place.RemotePerHost` + `keyreg.UploadTo/RemoteDownload`.
 - 체인 특화(wemix etcd/gov)는 `chains/wemix/deploy`에 잔류. 테스트 정의서는 **placement-무관**(local/remote 동일 spec, `placement` 필드만 상이).
-- **SSH 접속 자격증명(L6 · 보안):** remote 접속에 필요한 **ssh 포트·서버 IP 목록·user·password(또는 keyPath)** 는 **정의서에 넣지 않고**, git에 **절대 커밋하지 않는** 별도 파일 `remote-server-config.yaml`을 런타임에 읽어 사용한다. 정의서는 `remote.cluster`로 이 파일을 **참조만** 한다. 파일은 `.gitignore` 처리하고 `remote-server-config.sample.yaml`(더미값)만 추적.
+- **SSH 접속 자격증명(L6b · 보안):** remote 접속에 필요한 **ssh 포트·서버 IP 목록·user·password(또는 keyPath)** 는 **정의서에 넣지 않고**, git에 **절대 커밋하지 않는** 별도 파일 `remote-server-config.yaml`을 런타임에 읽어 사용한다. 정의서는 `remote.cluster`로 이 파일을 **참조만** 한다. 파일은 `.gitignore` 처리하고 `remote-server-config.sample.yaml`(더미값)만 추적.
 ```yaml
 # remote-server-config.yaml (gitignore 대상 — 실값 커밋 금지)
 sshPort: 22
@@ -388,7 +391,7 @@ hosts: [10.0.0.11, 10.0.0.12, 10.0.0.13]   # 1서버=1노드 (동일포트+다�
 - **collector chainstate 저장형식**: 파일(jsonl) vs obs 스트림. → jsonl 파일 + obs 미러(대시보드).
 - **testspec Action/Assertion 레지스트리 범위**: 내장 세트 + 체인별 확장 지점.
 - **`applicableChains` ↔ `chain.name` 관계**: `chain.name`은 이 테스트가 도는 **대상 체인**, `applicableChains`는 **호환 체인 집합**(예: 같은 합의계열 wbft·stablenet). 스위트 실행이 대상 체인을 `applicableChains` 내에서 바꿔 재사용할 수 있는지(체인-스윕) 여부를 F3에서 확정. 미적용이면 SKIP(요구 3).
-- **fingerprint 대상 = resolved config + placement**: precedence(flag>config>default, §B-3) 적용 *후*의 선언값을 해싱해야 재사용 판정이 정확(같은 config 파일+다른 flag=다른 env). **placement(local↔remote)도 포함**(O1) — local로 세운 env를 remote 선언이 오재사용하면 포트/호스트가 어긋난다. env-id 폴더명은 해시 앞 12hex 축약(§3.1·L5). §3.1·§3.2·§D-2.4 반영.
+- **fingerprint 대상 = 선언값 전체**(`binaries+genesis+config+topology+hardforks+placement`, §D-2.4): precedence(flag>config>default, §B-3) 적용 *후*의 선언값을 해싱해야 재사용 판정이 정확(같은 config 파일+다른 flag=다른 env). **placement(local↔remote)도 포함**(O1) — local로 세운 env를 remote 선언이 오재사용하면 포트/호스트가 어긋난다. env-id 폴더명은 해시 앞 12hex 축약(§3.1·L5). §3.1·§3.2·§D-2.4 반영.
 - **MCP/대시보드 seam**: MCP(요구 31)는 세션 아티팩트(status/assert.json)를 읽어 결과 응답; 대시보드(요구 33·34)는 collector의 chainstate + session을 소비. 인터페이스는 F14·F15에서 확정(design은 소비 지점만 명시).
 - 위 항목은 feature-spec(F3·F5·F6·F10·F12·F14·F15)의 AC에서 확정.
 
@@ -402,6 +405,6 @@ hosts: [10.0.0.11, 10.0.0.12, 10.0.0.13]   # 1서버=1노드 (동일포트+다�
 | 기동 소유권 | supervisor.BringUp이 소유(setup=plan+프리미티브) | §3.3 (L6) |
 | etcd 조인 gap | supervisor가 N에서 파생(고정값 아님) | §3.3 (L7) |
 | stale etcd | 내장 etcd는 프로세스 종료로 함께 종료; 문제는 datadir → `Teardown{RemoveDataDir}` 별도 기능 | §3.3 (S2) |
-| SSH 자격증명 | `remote-server-config.yaml`(gitignore) 런타임 로드 | §7 (L6) |
+| SSH 자격증명 | `remote-server-config.yaml`(gitignore) 런타임 로드 | §7 (L6b) |
 | 액션·검증 레지스트리 | 전역 아님 — `Deps.Actions`로 인스턴스 주입 | §3.2 (P1) |
 | 세마포어 상한 | `max(1, min(cores-2,N))` 클램프 | §6 (S1) |

@@ -1,7 +1,7 @@
 # chainbench 리팩토링 감사 — 기존 코드 → 목표 설계 매핑
 
-> 목적: 목표 설계(`chainbench-design.md` 인터페이스·데이터모델, `chainbench-feature-spec.md` F1~F15 동작계약)를 향해, **기존 코드를 무엇을 유지/확장/재구성/교체하고 무엇을 신설**할지 코드 감사 기반으로 확정하고, **구현-ready 작업 단위(WP)** 로 분해한다.
-> 근거: `chainbench-requirements-review.md`(요구/결정) · `chainbench-design.md`(§3 인터페이스·§4 스키마) · `chainbench-feature-spec.md`(F1~F15 AC).
+> 목적: 목표 설계(`chainbench-design.md` 인터페이스·데이터모델, `chainbench-feature-spec.md` F1~F16 동작계약)를 향해, **기존 코드를 무엇을 유지/확장/재구성/교체하고 무엇을 신설**할지 코드 감사 기반으로 확정하고, **구현-ready 작업 단위(WP)** 로 분해한다.
+> 근거: `chainbench-requirements-review.md`(요구/결정) · `chainbench-design.md`(§3 인터페이스·§4 스키마) · `chainbench-feature-spec.md`(F1~F16 AC).
 > 원칙: (1) 견고한 기반 재사용, (2) 인터페이스 우선·하위호환, (3) 점진 이관(기존 pipeline/e2e 공존), (4) 소유권 단일화.
 > 규모: 비-테스트 Go **약 13,478 LOC** (pkg + cmd). 인용한 기존 API는 모두 파일:라인 실존 확인(design §3 검증분).
 
@@ -39,7 +39,7 @@
 | `pipeline/setup` (`Provision`/`Launch`/`Run`) | 노드 **순차** loop | setup은 **Plan 산출 + 동시 provision/launch 프리미티브**(errgroup+semaphore, ctx)만 제공하고, **기동 오케스트레이션·헬스게이트·복구는 supervisor가 소유**(L6·design §3.3). **세션 경로 인지**(D-1), placement 주입(D-4). 공개 `BuildPlan/Run` 시그니처 유지 |
 | `pipeline/verify` (`Run`) | 노드별 **순차** 폴링(verify.go:90) | **노드별 goroutine 팬아웃**(index 쓰기). 결과 Report는 **헬스 게이트**로 승격(D-6) |
 | `consensus/upgrade/exec.go:163` | `for range specs` 순차 init/provision/launch | 동시화 + 리더(producer) 우선 부트스트랩 게이트 |
-| remote (`chains/wemix/deploy` 8파일 + `core/remote` + `driver.RemoteDriver`) | **wemix 전용에 치우침** · SSH 자격증명 로딩 표준 없음 | 체인-무관 remote 절차로 **일반화·승격**(요구 9·10·11·16): 접근·upload·download를 core에서 공용화, deploy는 wemix 특화만. **SSH 접속정보(포트·IP목록·user·password/keyPath)는 `remote-server-config.yaml`(gitignore·`.sample`만 추적)에서 런타임 로드**(L6·design §7) |
+| remote (`chains/wemix/deploy` 8파일 + `core/remote` + `driver.RemoteDriver`) | **wemix 전용에 치우침** · SSH 자격증명 로딩 표준 없음 | 체인-무관 remote 절차로 **일반화·승격**(요구 9·10·11·16): 접근·upload·download를 core에서 공용화, deploy는 wemix 특화만. **SSH 접속정보(포트·IP목록·user·password/keyPath)는 `remote-server-config.yaml`(gitignore·`.sample`만 추적)에서 런타임 로드**(L6b·design §7) |
 | `core/state` (nodeset.json) | 데이터루트 기준 저장 | **세션 레이아웃 하위로 이동**(D-1), env.json과 통합 |
 
 ---
@@ -91,11 +91,11 @@
 
 | WP | 범위(패키지·판정) | design 앵커 | feature-spec | 완료 게이트(AC) |
 |----|-------------------|-------------|--------------|-----------------|
-| **WP1** | `session` [NEW] + `state` 이동 [REFACTOR] | §3.1, §4.1·4.2 | F1 | F1-1..4: 커맨드=세션1, 2축(env/tests) 결정적 경로 |
+| **WP1** | `session` [NEW] + `state` 이동 [REFACTOR] | §3.1, §4.1·4.2 | F1 · **F16**(세션 GC·retention·CI exit code) | F1-1..4: 커맨드=세션1, 2축(env/tests) 결정적 경로 · F16-3·4: `clean --older-than`·exit code |
 | **WP2** | `place` [NEW·CONSOLIDATE portplan+topology] | §3.4 | F12 | F12-1: back-to-back 포트 이중바인드 0 |
-| **WP3** | `testspec`+`testrun` [REPLACE] · 결과모델 `testkit.Report` 재사용 | §3.2, §4.3·4.4 | F3·F4·F5·F6·F11 | F3-1/F11-2·3: 파싱검증·**negative 스텝 시맨틱** |
+| **WP3** | `testspec`+`testrun` [REPLACE] · 결과모델 `testkit.Report` 재사용 | §3.2, §4.3·4.4 | F3·F4·F5·F6·F11 · **F16**(spec schemaVersion) | F3-1/F11-2·3: 파싱검증·**negative 스텝 시맨틱** · F16-1: schemaVersion 거부 |
 | **WP4** | `supervisor` [NEW·기동 소유] + `setup/verify/upgrade` 동시화 [REFACTOR] + `procman` `{PID,datadir}`·etcd관측 [EXTEND] | §3.3, §6, C-etcd | F13 | F13-2·4: Mode 정확·고아 0 · **`make test-race` 통과(O6)** |
-| **WP5** | `keyreg` [NEW·CONSOLIDATE keys+deploy] + `collector` [NEW] + fingerprint 재사용 | §3.5·3.6, §D-2.4 | F2·F7·F8·F10 | F7-1·2: 재사용/재구성 판정, F10-1: 로그 누락 0 |
+| **WP5** | `keyreg` [NEW·CONSOLIDATE keys+deploy] + `collector` [NEW] + fingerprint 재사용 | §3.5·3.6, §D-2.4 | F2·F7·F8·F10 · **F16**(키파일 0600) | F7-1·2: 재사용/재구성 판정, F10-1: 로그 누락 0 · F16-2: `keys/*/private` 0600 |
 | **WP6** | `registry.Capabilities` [EXTEND] + `mcp`·`dashboard` 연동 [EXTEND] | §3.7 | F9·F14·F15 | F14-1·2, F15: 결과·상태 소비 |
 
 - **인터페이스 우선**: 각 WP는 design §3 인터페이스를 먼저 고정(feature-spec AC와 1:1) 후 구현.
@@ -121,7 +121,7 @@
 |------|------|------|
 | `chainbench-requirements-review.md` | 요구 37·사양검토·격차·etcd실체·동시성 | ✅ 정합 |
 | `chainbench-design.md` | 구조·인터페이스(§3)·데이터모델(§4)·동시성(§6) | ✅ 검토·정정 |
-| `chainbench-feature-spec.md` | F1~F15 동작계약·AC | ✅ 정합 |
+| `chainbench-feature-spec.md` | F1~F16 동작계약·AC | ✅ 정합 |
 | `chainbench-refactoring.md` (본 문서) | 기존→목표 매핑·**WP 분해** | ✅ 정련 |
 
 **구현 착수 조건**: 위 4종 확정 + 각 WP의 design 인터페이스 고정. 구현은 WP1(session)부터 §7.1 순서로, 각 WP는 비-e2e 통과 + 해당 F의 AC 라이브 확인을 게이트로 진행.
