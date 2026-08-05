@@ -1,0 +1,20 @@
+# remote-server-config.sample.yaml
+#
+# SSH access config for remote node execution (design docs/dev/chainbench-design.md §7).
+# Copy to `remote-server-config.yaml` (gitignored) and fill in real values.
+# NEVER commit the real file — it holds credentials. Only this .sample is tracked.
+#
+# The test spec references this file via `remote.cluster`; it is NOT embedded in
+# the spec, so credentials never reach the test definitions or git.
+
+sshPort: 22
+user: deploy
+# Provide exactly one of `password` or `keyPath`.
+password: "CHANGE_ME"          # or omit and use keyPath below
+# keyPath: ~/.ssh/id_ed25519
+
+# One host per node (1 server = 1 node): same ports, different IPs (requirement 16).
+hosts:
+  - 10.0.0.11
+  - 10.0.0.12
+  - 10.0.0.13

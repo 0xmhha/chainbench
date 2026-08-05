@@ -65,9 +65,9 @@ type Session interface {
 }
 
 type Environment interface {
-    ID() string                        // env-id (= fingerprint 축약)
+    ID() string                        // env-id = "env-"+fingerprint[:12] (hex 앞 12자, 짧은 폴더명, §D-2.4·L5)
     Dir() string
-    Fingerprint() Fingerprint
+    Fingerprint() Fingerprint          // 전체 해시(env.json 기록) — env-id는 그 앞 12hex 축약
     PopulateNodeTable(ns node.NodeSet) // BringUp 결과(ns)로 node table 채움 → Save 전
     Nodes() []node.Node                // node table (endpoint 해석 근거)
     Resolve(selector string) (node.Node, error)   // "bp1"|"bp:any"|"en:0"
@@ -90,8 +90,9 @@ type TestRecord interface {
 
 // Fingerprint = 정의서 선언값에서 파생(§D-2.4). session은 문자열 타입만 소유하고,
 // 산출은 testspec이 담당한다(의존 방향: testspec → session, 순환 없음).
-type Fingerprint string   // testspec.Spec.Fingerprint() session.Fingerprint 로 계산
+type Fingerprint string   // = hex(sha256(canonical)) 64자. env.json의 "fingerprint" 필드에 전체 기록.
 ```
+**폴더명 길이(L5):** `Fingerprint`는 sha256 hex **64자**(전체는 env.json `fingerprint`에만 기록). **폴더명 env-id**는 `"env-"+앞 12hex` = **16자**(예: `env-a1b2c3d4e5f6`, 48-bit → 한 세션 내 소수 env에서 충돌 무시가능). 최장 경로 `.chainbench/UTC-YYYYMMDD-HHMMSS(17)/environments/env-xxxxxxxxxxxx(16)/logs/<node>.log` 는 각 컴포넌트 <255(NAME_MAX)·전체 <4096(PATH_MAX)로 안전. **전체 해시를 폴더명으로 쓰지 않는다**(경로 초과 방지).
 
 ### 3.2 `testspec` — 정의서 파싱·해석 [NEW · testkit Go-func 대체]
 ```go
@@ -112,8 +113,18 @@ type Deps struct {
     Accounts  accounts.AccountProvider // tx 서명·전송
     RPC       func(url string) *rpc.Client
     Collector collector.Collector      // log 검증·WaitLog(§3.6)
-    Funcs     map[string]AssertFunc    // source:"func" 검증 함수 레지스트리
+    Actions   Registry                 // 액션·검증 레지스트리(**주입** — 전역 상태 배제, 테스트 격리)
 }
+// Registry: 액션/검증 함수 레지스트리. **패키지 전역이 아니라 인스턴스로 주입**(설계원칙 2·소유권 단일화).
+// 내장 세트 + 체인별 확장 지점(§9)을 담고, 테스트마다 독립 인스턴스로 격리 가능.
+type Registry interface {
+    Action(name string) (Action, bool)
+    Assertion(name string) (Assertion, bool)
+    RegisterAction(name string, a Action)         // ensureChain/ensureStaker/tx/wait/unstake/
+                                                  // stopNode/startNode/restartNode/chainMigrate ...
+    RegisterAssertion(name string, a Assertion)   // Equal/NotNil/EqualWith/Len/EqualHashAt ...
+}
+func NewRegistry(withBuiltins bool) Registry      // 내장 액션·검증 세트로 초기화(전역 init 없음)
 // Interpreter: 실행 중인 Environment에 대해 Spec을 원자적 스텝으로 수행. Deps는 생성자에서 주입.
 func NewInterpreter(d Deps) Interpreter
 type Interpreter interface {
@@ -126,10 +137,10 @@ type Action    interface{ Do(ctx context.Context, ac *ActionCtx) error }        
 type Assertion interface{ Check(ctx context.Context, ac *AssertCtx) (AssertResult, error) }
 type ActionCtx struct { Env session.Environment; Deps *Deps; Rec session.TestRecord; Args map[string]any }
 type AssertCtx struct { Env session.Environment; Deps *Deps; On []node.Node; Spec map[string]any }
-func RegisterAction(name string, a Action)          // ensureChain/ensureStaker/tx/wait/unstake/
-                                                    // stopNode/startNode/restartNode/chainMigrate ...
-                                                    // (노드 생명주기 액션은 destructive/fault 테스트용: WBFT-007/008, NODE-005)
-func RegisterAssertion(name string, a Assertion)    // Equal/NotNil/EqualWith/Len/EqualHashAt ...
+// 액션·검증 등록은 **주입된 Registry**(위)로 수행(전역 함수 아님). 노드 생명주기 액션
+// (stopNode/startNode/restartNode/chainMigrate)은 destructive/fault 테스트용(WBFT-007/008, NODE-005).
+// **타입 안전(M1):** ActionCtx.Args·AssertCtx.Spec 의 `any`는 DSL 경계값이며, Parse가 스키마 검증 시
+// 각 액션/검증이 요구하는 필드로 **조기 타입확정**(예: gas int, expected typed)해 강타입 파생값으로 좁힌다.
 ```
 
 ### 3.3 `supervisor` — 헬스 게이트·복구 [NEW · runGovHandoff 재시도 대체]
@@ -137,12 +148,22 @@ func RegisterAssertion(name string, a Assertion)    // Equal/NotNil/EqualWith/Le
 package supervisor
 
 type Supervisor interface {
-    // 노드 기동 + 헬스 게이트(etcd 리더 준비, 포크 도달 등) + 백오프 복구.
+    // **기동 소유자(L6):** setup은 Plan 산출 + 동시 provision/launch **프리미티브**만 제공하고,
+    // 실제 노드 기동·헬스 게이트(etcd 리더 준비, 포크 도달)·백오프 복구는 supervisor가 오케스트레이션한다.
     BringUp(ctx context.Context, plan setup.Plan, opts Options) (node.NodeSet, Diagnosis, error)
+    // Teardown: 프로세스 종료(SIGTERM→SIGKILL, procman)로 **내장 etcd 포함 노드 전체 종료**.
+    // etcd는 별도 프로세스가 아니라 노드 내장이므로 프로세스 종료 시 함께 종료된다(S2).
+    Teardown(ctx context.Context, ns node.NodeSet, opts TeardownOpts) error
+}
+type TeardownOpts struct {
+    RemoveDataDir bool          // 종료와 **별개 기능**(S2): 재-셋업/디스크관리 시 datadir 삭제.
+                                // procman이 노드별 {PID, datadir}를 추적해야 정확한 삭제 가능(§procman EXTEND).
+    Grace         time.Duration // SIGTERM→SIGKILL 유예
 }
 type Options struct {
     LeaderGate   bool          // producer etcd 리더 준비 폴링(C-etcd)
-    StartGap     time.Duration // etcd 조인 슬롯(gap 7/11/17/23s)에 맞춘 시작 정렬
+    AlignJoinGap bool          // etcd 조인 슬롯에 시작 정렬(L7). gap은 supervisor가 **클러스터 크기 N에서 파생**
+                               // (C-etcd: sz≤11→7s, ≤23→11s, ≤41→17s, else 23s) — 호출자가 고정값으로 넘기지 않는다.
     MaxAttempts  int
     Backoff      func(attempt int) time.Duration
     // 하드포크 type-2(동일체인, pre≠post 바이너리, §D-2.8): fork 블록 도달 *전에*
@@ -158,7 +179,8 @@ type Diagnosis struct {
     ProducerLog string        // 최종 실패 시 producer 로그 tail (세션 보존)
 }
 ```
-> etcd: `etcdInit` 후 **리더 준비 확인 게이트** + **stale etcd 정리** + **gap 정렬**로 "바로 연결"(C-etcd §요약). 실패는 분류·기록.
+> etcd: `etcdInit` 후 **리더 준비 확인 게이트** + **재기동 시 datadir 정리** + **gap 정렬**로 "바로 연결"(C-etcd §요약). 실패는 분류·기록.
+> **stale etcd의 실체(S2):** etcd는 노드 내장이므로 프로세스 종료 시 함께 종료된다 — "살아있는 etcd 정리"는 불필요. 문제는 **같은 datadir로 재기동** 시 남은 클러스터 상태(`cannot fetch cluster info`)이며, 해법은 **재-셋업 전 datadir 삭제**(`Teardown{RemoveDataDir:true}`, 종료와 별개 기능).
 > 하드포크는 2종(§D-2.8): **type-1 체인 업그레이드**는 노드별 바이너리 집합(plan.Nodes[].Binary)으로, **type-2 동일체인**은 `ForkSwaps`로 fork 블록 전 바이너리 교체를 supervisor가 오케스트레이션.
 
 ### 3.4 `core/place` — 통합 배치·포트 [NEW · portplan+topology CONSOLIDATE]
@@ -171,13 +193,14 @@ const ( LocalStepped Mode = iota; LocalOSAssigned; RemotePerHost )
 type NodeReq struct { Name string; Role node.Role; Sync string; Binary string }
 type NodePlacement struct {
     Name string; Host string           // local=127.0.0.1 / remote=서버IP
-    Ports node.Endpoints               // p2p/etcd(=p2p+1)/http/ws/auth
+    Ports portplan.Ports               // P2P·**Etcd(=P2P+1, wemix 내장 파생·예약)**·HTTP·WS(=HTTP+1)·Auth(=HTTP+2)
     DataPath string
 }
 type Allocator interface {
     Allocate(reqs []NodeReq, mode Mode) ([]NodePlacement, error)
 }
 ```
+- **포트 타입(L1):** etcd는 wemix **바이너리 내장**이고 그 포트는 바이너리가 `P2P+1`로 파생하므로, launch flag가 아니라 **예약 대상**이다. 이 예약은 기존 `portplan.Ports`(P2P·Etcd·HTTP·WS·Auth, p2pStep≥2·rpcStep≥3로 **P2P 밴드와 RPC 밴드 분리** → 충돌 없음)에 이미 존재하므로 place는 이를 재사용(consolidate)한다. `node.Endpoints`(P2P/HTTP/WS/Auth/**Metrics**, etcd 필드 없음)는 별개 타입 — node table 직렬화용이며 etcd 예약은 `portplan.Ports`가 소유. (place가 두 타입의 필드차이(Metrics↔Etcd)를 흡수.)
 - `LocalStepped`: index 기반 결정적 스텝. `LocalOSAssigned`: `:0` 바인드 후 회수(고정포트 이중바인드 근절, E-3-1). `RemotePerHost`: 동일 포트 + 서버별 IP(요구 16).
 
 ### 3.5 `core/keyreg` — 키 레지스트리 [NEW · keys+deploy/keys CONSOLIDATE]
@@ -209,6 +232,7 @@ type Collector interface {
 type LogMatch struct { File string; Lines [2]int; ByteOffset int64; Text string }  // provenance(§D-2.6)
 ```
 - **append-only tail**(일회성 복사 아님) → 누락 방지. `WaitLog`로 완결성/가독성(§D-2.7). out-of-process·버퍼·레이트리밋(35). remote는 SSH tail.
+- **백프레셔 정책(O7):** 노드 무영향(35)이 최우선이므로 수집기는 **노드를 절대 블로킹하지 않는다**. 두 스트림을 분리 — **① 로그 tail**은 손실 불가(검증 근거)이므로 버퍼 초과 시 **디스크로 스풀**(드롭 금지, "누락 0" 유지). **② chainstate 폴링**은 파생 지표이므로 버퍼 초과 시 **최신값으로 병합/드롭** 허용(카운터로 드롭 수 기록). 어느 경우도 노드 프로세스는 대기하지 않는다.
 
 ### 3.7 확장: `registry.ChainPlugin` capability [EXTEND]
 ```go
@@ -222,6 +246,26 @@ type Capabilities interface {
 ```
 - 해석기는 `Spec.ApplicableChains`/기능요구와 대조해 **미적용은 SKIP**(요구 3, D-3).
 
+### 3.8 genesis 소싱 — 별도 모듈, 4가지 모드 [KEEP · `core/genesis`] (요구 7,17,25 · L3)
+genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서는 `chain.genesis`/`genesisOverlay`로 모드를 선택한다. 4가지:
+| 모드 | 의미 | 기존 함수 |
+|------|------|-----------|
+| **① existing** | 이미 존재하는 genesis 파일을 그대로 사용 | 파일 bytes 로드(빌드 없음) |
+| **② build** | 파라미터로 직접 생성 | `genesis.Build(plugin, Inputs)` → 내부에서 `plugin.Family().BuildGenesis(template, params)` |
+| **③ template+override** | 템플릿을 얹어 수정 | `Build`(템플릿) + `MergeOverride`/`ApplyConfigOverrides`/`SetConfigSection` |
+| **④ upgrade-inherit** | wemix 체인이 쓰던 genesis를 그대로 받아 업그레이드용 항목만 추가 | `MergeOverride(wemixGenesis, upgradeOverlay)` (=`--genesis-overlay`) |
+> 주의: `BuildGenesis`는 **`ConsensusFamily`의 메서드**(`registry.go:46`)이고, genesis 패키지의 진입점은 **`genesis.Build`**(`genesis.go:38`)다 — 이름 혼동 금지. 오버레이는 항상 새 바이트 반환(원본 불변, E-3-3).
+
+### 3.9 역할 용어집 (요구 4 · L2·M2)
+**단일 도메인 어휘 `bp`/`en`/`boot`를 정의서와 아티팩트(env.json) 전반에서 일관 사용**한다. 코드 `node.Role` enum("validator"/"endpoint"/"boot")은 **내부 식별자**이며, session이 env.json 기록 시 도메인 용어로 직렬화한다(단일 소유자에서 1회 변환).
+| 도메인 용어 (정의서·env.json) | 코드 enum (node.Role, 내부) | 의미 |
+|-------------------------------|-----------------------------|------|
+| **`bp`** | `RoleValidator`("validator") | **block producer** — 블록 생성·검증(staking 선정). BFT 코드가 "validator"라 부를 뿐 동일 역할 |
+| **`en`** | `RoleEndpoint`("endpoint") | **endpoint** — 비생성 RPC/싱크 노드 |
+| **`boot`** | `RoleBoot`("boot") | bootnode — 부트스트랩(wemix governance 배포) |
+> **왜 `bp`/`en` 단축어로 통일하는가:** wemix4 도메인의 표준 명칭이고 대칭적(2글자)이라 정의서 가독성이 높다. `bp`↔`validator`는 약어↔확장이 **아니라** 도메인 어휘와 BFT-코드 어휘의 **동의어**다 — 코드값 "validator"에 맞추면 `en`↔`endpoint`(약어↔확장)와 짝이 안 맞아 비대칭으로 보였다. 해결: **표층(정의서·아티팩트)은 `bp`/`en`으로 통일, enum은 내부에만.**
+> 입력 관용: topology 파서는 `"en"`·`"endpoint"` 둘 다 받아 `RoleEndpoint`로 정규화(topology.go:60-61). `node.RoleEN`("en")은 **dead code** → 제거(refactoring §2).
+
 ---
 
 ## 4. 데이터 모델 (아티팩트 스키마)
@@ -234,11 +278,13 @@ type Capabilities interface {
 ```
 ### 4.2 `env.json`
 ```jsonc
-{ "envId":"<fp>", "fingerprint":"<fp>",
+{ "envId":"env-a1b2c3d4e5f6",              // 폴더명 = "env-"+fingerprint[:12] (L5)
+  "fingerprint":"a1b2c3d4e5f6...<64hex>",  // 전체 sha256 (재사용 판정 근거)
   "meta":{"chain":"wbft","binaries":{"producer":"go-wemix@<build>","default":"go-wbft@<build>"}}, // (36)
   "dataPath":"/data/.../<env>",
-  "nodes":[ {"name":"bp1","role":"bp","sync":"archive","binary":"go-wbft","buildVersion":"...",
-             "host":"127.0.0.1","rpc":"http://...:40010","ws":"...","ports":{"p2p":30010,"etcd":30011}} ] }
+  "nodes":[ {"name":"bp1","role":"bp","sync":"archive","binary":"go-wbft","buildVersion":"...", // 도메인 용어 bp/en(§3.9)
+             "host":"127.0.0.1","rpc":"http://...:40010","ws":"...",
+             "ports":{"p2p":30010,"http":40010,"ws":40011,"auth":40012,"metrics":0}} ] } // = node.Endpoints. etcd=p2p+1(30011)는 파생·예약(portplan)이며 별도 저장 안 함
 ```
 ### 4.3 `spec.json` (TestSpec DSL — 정본 §D-2)
 필수: `id, chain(name+binary|binaries), assertions`. 옵션: 그 외.
@@ -286,7 +332,7 @@ type Capabilities interface {
        if !ok:                                                     # 재구성 (없을 때만)
           env  = session.NewEnvironment(fp)                        # 1) 빈 환경 폴더 생성
           plan = setup.BuildPlan(resolved, plugin, env.Dir())      #    실제 3-arg(cfg,plugin,dataRoot); place.Allocate로 포트 결정(§3.4)
-          ns, diag = supervisor.BringUp(ctx, plan, {LeaderGate,StartGap})  # 2) etcd 게이트·복구
+          ns, diag = supervisor.BringUp(ctx, plan, {LeaderGate,AlignJoinGap})  # 2) etcd 게이트·복구(기동 소유·L6)
           if !diag.OK: record(diag); status=BLOCKED; continue
           env.PopulateNodeTable(ns); env.Save()                    # 3) ns→node table 기록(env.json)
           collector.Start(ctx, env)                                # 4) 라이브 수집 시작(dataPath tail)
@@ -305,7 +351,7 @@ type Capabilities interface {
 ## 6. 동시성 모델 (요구 E)
 
 - **범위**: "한 환경 내 N노드" 처리만 동시. 테스트 실행은 직렬(§B-4).
-- **패턴**: `errgroup.Group`(팬아웃, 최초에러 시 ctx 취소) + `semaphore.Weighted(min(cores-2,N))`(자원 상한·성능 35) + `context`(취소 전파) + **index 슬라이스/채널 팬인**(락 없는 수집).
+- **패턴**: `errgroup.Group`(팬아웃, 최초에러 시 ctx 취소) + `semaphore.Weighted(max(1, min(cores-2,N)))`(자원 상한·성능 35 — **1~2코어에서 `cores-2≤0` 언더플로우/데드락 방지 클램프, S1**) + `context`(취소 전파) + **index 슬라이스/채널 팬인**(락 없는 수집).
 - **소유권/락**:
   - `procman.Manager` PID맵 → `sync.Mutex`(기존). remote PID·etcd관측 확장 시 동일.
   - `session` 상태쓰기 → 단일 writer(or flock).
@@ -319,6 +365,14 @@ type Capabilities interface {
 
 - 공통 절차(접근·upload·download·동일포트)를 **core로 승격**: `driver.RemoteDriver`(+`FileProvisioner`, 기존) + `core/remote`(ssh/auth, 기존) + `place.RemotePerHost` + `keyreg.UploadTo/RemoteDownload`.
 - 체인 특화(wemix etcd/gov)는 `chains/wemix/deploy`에 잔류. 테스트 정의서는 **placement-무관**(local/remote 동일 spec, `placement` 필드만 상이).
+- **SSH 접속 자격증명(L6 · 보안):** remote 접속에 필요한 **ssh 포트·서버 IP 목록·user·password(또는 keyPath)** 는 **정의서에 넣지 않고**, git에 **절대 커밋하지 않는** 별도 파일 `remote-server-config.yaml`을 런타임에 읽어 사용한다. 정의서는 `remote.cluster`로 이 파일을 **참조만** 한다. 파일은 `.gitignore` 처리하고 `remote-server-config.sample.yaml`(더미값)만 추적.
+```yaml
+# remote-server-config.yaml (gitignore 대상 — 실값 커밋 금지)
+sshPort: 22
+user: deploy
+password: "<secret>"          # 또는 keyPath: ~/.ssh/id_ed25519
+hosts: [10.0.0.11, 10.0.0.12, 10.0.0.13]   # 1서버=1노드 (동일포트+다른IP, 요구 16)
+```
 
 ---
 
@@ -334,6 +388,20 @@ type Capabilities interface {
 - **collector chainstate 저장형식**: 파일(jsonl) vs obs 스트림. → jsonl 파일 + obs 미러(대시보드).
 - **testspec Action/Assertion 레지스트리 범위**: 내장 세트 + 체인별 확장 지점.
 - **`applicableChains` ↔ `chain.name` 관계**: `chain.name`은 이 테스트가 도는 **대상 체인**, `applicableChains`는 **호환 체인 집합**(예: 같은 합의계열 wbft·stablenet). 스위트 실행이 대상 체인을 `applicableChains` 내에서 바꿔 재사용할 수 있는지(체인-스윕) 여부를 F3에서 확정. 미적용이면 SKIP(요구 3).
-- **fingerprint 대상 = resolved config**: precedence(flag>config>default, §B-3) 적용 *후*의 선언값을 해싱해야 재사용 판정이 정확(같은 config 파일+다른 flag=다른 env). §3.1·§3.2 반영.
+- **fingerprint 대상 = resolved config + placement**: precedence(flag>config>default, §B-3) 적용 *후*의 선언값을 해싱해야 재사용 판정이 정확(같은 config 파일+다른 flag=다른 env). **placement(local↔remote)도 포함**(O1) — local로 세운 env를 remote 선언이 오재사용하면 포트/호스트가 어긋난다. env-id 폴더명은 해시 앞 12hex 축약(§3.1·L5). §3.1·§3.2·§D-2.4 반영.
 - **MCP/대시보드 seam**: MCP(요구 31)는 세션 아티팩트(status/assert.json)를 읽어 결과 응답; 대시보드(요구 33·34)는 collector의 chainstate + session을 소비. 인터페이스는 F14·F15에서 확정(design은 소비 지점만 명시).
 - 위 항목은 feature-spec(F3·F5·F6·F10·F12·F14·F15)의 AC에서 확정.
+
+### 9.1 검토 반영(2차) — 확정 항목
+| 항목 | 결정 | 앵커 |
+|------|------|------|
+| genesis 소싱 | 별도 모듈 4모드(existing/build/template+override/upgrade-inherit); 진입점 `genesis.Build`(≠Family.BuildGenesis) | §3.8 (L3) |
+| 역할 용어 | 표층은 도메인 어휘 `bp`/`en`/`boot` 일관 사용, 코드 enum(validator/endpoint)은 내부; `RoleEN` dead code | §3.9 (L2·M2) |
+| etcd 포트 | wemix 내장, `P2P+1` 예약(`portplan.Ports`), RPC밴드와 분리 | §3.4 (L1) |
+| fingerprint 길이 | 전체 sha256은 env.json에만, 폴더는 `env-`+12hex | §3.1 (L5) |
+| 기동 소유권 | supervisor.BringUp이 소유(setup=plan+프리미티브) | §3.3 (L6) |
+| etcd 조인 gap | supervisor가 N에서 파생(고정값 아님) | §3.3 (L7) |
+| stale etcd | 내장 etcd는 프로세스 종료로 함께 종료; 문제는 datadir → `Teardown{RemoveDataDir}` 별도 기능 | §3.3 (S2) |
+| SSH 자격증명 | `remote-server-config.yaml`(gitignore) 런타임 로드 | §7 (L6) |
+| 액션·검증 레지스트리 | 전역 아님 — `Deps.Actions`로 인스턴스 주입 | §3.2 (P1) |
+| 세마포어 상한 | `max(1, min(cores-2,N))` 클램프 | §6 (S1) |

@@ -75,7 +75,8 @@
   4. `InDelta`가 reward 누적(±gas) 케이스를 tol 내로 pass.
 
 ## F7. fingerprint ↔ preAction  (요구 28 · design §3.1,§3.2)
-- **입력(fingerprint)**: **resolved 선언 config**(flag>config>default 적용 후) = `binaries-set + genesis + config + topology + hardforks`. **입력(preAction)**: 런타임 상태 요구(ensureChain/ensureStaker 등).
+- **입력(fingerprint)**: **resolved 선언 config**(flag>config>default 적용 후) = `binaries-set + genesis + config + topology + hardforks + placement`(local↔remote 포함, O1). **입력(preAction)**: 런타임 상태 요구(ensureChain/ensureStaker 등).
+- **fingerprint 길이(L5)**: 전체 = `hex(sha256)` 64자(env.json `fingerprint`에만 기록). **폴더명 env-id = `"env-"+앞 12hex`(16자)** — 전체 해시를 폴더명으로 쓰면 경로 초과 위험이므로 축약.
 - **동작**: 다음 테스트의 fingerprint를 현재 `environments/<env-id>`와 비교 → 일치=재사용(setup skip), 불일치=새 env-id 재구성. **체인 미접촉**(선언값만). 런타임 상태는 preAction이 **idempotent**하게 RPC 확인 후 없으면 수행.
 - **출력**: env.json의 `fingerprint`; 재사용/재구성 결정 로그.
 - **에러·엣지**: fingerprint는 resolved 값 대상(같은 config파일+다른 flag=다른 env). 런타임 상태를 fingerprint에 **섞지 않음**.
@@ -98,6 +99,8 @@
 ## F9. 바이너리 셋 · 하드포크 2 type  (요구 25,26,36 · design §3.3,§4.2)
 - **입력**: `chain.binary`(단일) 또는 `chain.binaries`(혼합/profile), `hardforks`(이름→블록번호).
 - **동작**: 환경은 `node→(binary, buildVersion)` 집합. **단일 문자열=전 노드 동일**(쉬운 기본), 혼합은 `binaries`/`profile`. **buildVersion 획득**: setup 시 `<binary> version`(geth-family 서브커맨드) 또는 기동 후 `web3_clientVersion` RPC로 조회해 env.json에 기록(36). 하드포크는 config의 `hardforks` 값 유무로 존재 판정, 내용은 기록 수집. **type-1**(체인 업그레이드): 노드별 바이너리 집합으로 동시 실행(handoff). **type-2**(동일체인): fork 블록 **전에** fork-aware 바이너리로 교체(supervisor.ForkSwaps).
+- **genesis 소싱(L3, design §3.8)**: `chain.genesis`/`genesisOverlay`로 4모드 선택 — ① existing(기존 파일 그대로) / ② build(`genesis.Build`) / ③ template+override(`Build`+`MergeOverride`) / ④ **upgrade-inherit**(wemix genesis 그대로 + 업그레이드 항목만 `MergeOverride`). 진입점은 `genesis.Build`(≠`ConsensusFamily.BuildGenesis`).
+- **역할 용어(L2, design §3.9)**: **단일 도메인 어휘 `bp`/`en`/`boot`를 정의서·env.json 전반에 일관 사용**(bp=block producer, en=endpoint). 코드 enum `node.Role`("validator"/"endpoint")은 내부 식별자로만 두고 session이 도메인 용어로 직렬화. topology 파서는 "en"/"endpoint" 둘 다 수용.
 - **출력**: env.json `meta.binaries`(빌드버전 포함); type-2 교체 이벤트 기록.
 - **에러·엣지**: 바이너리 경로/버전 조회 실패 → 구성 실패. type-2 교체가 fork 블록을 넘긴 뒤면 오류.
 - **AC**
@@ -141,16 +144,19 @@
   2. `--ports fixed` → 동일 index 노드가 동일 포트(재현).
   3. remote 3서버 → 동일 포트·서로 다른 IP.
 
-## F13. etcd 리더게이트 · 헬스 복구  (요구 3,12,37 · design §3.3, C-etcd)
-- **입력**: plan, Options{LeaderGate, StartGap, MaxAttempts, Backoff, ForkSwaps}.
-- **동작**: 기동 후 **헬스 게이트**로 실제 상태 확인·분류. etcd: `etcdInit` 후 **리더 준비(`etcdIsReady`/`"*"`) 폴링 확인**, 조인 슬롯 `gap`(7/11/17/23s)에 **시작 정렬**, 재기동 시 **stale etcd 정리**. 실패는 분류(`EtcdJoinFailed/EtcdStale/ForkNotCrossed/QuorumLost/RPCUnready`)하고 사유·producer 로그를 세션 보존. 백오프 재기동 또는 명확한 실패.
+## F13. 기동 소유·etcd 리더게이트·헬스 복구·teardown  (요구 3,12,37 · design §3.3, C-etcd)
+- **입력**: plan, Options{LeaderGate, AlignJoinGap, MaxAttempts, Backoff, ForkSwaps}. remote 시 SSH 접속정보는 **`remote-server-config.yaml`(gitignore)** 에서 로드(L6).
+- **기동 소유(L6)**: **supervisor.BringUp이 노드 기동을 소유**(setup은 Plan+동시 provision/launch 프리미티브만 제공). 기동 후 **헬스 게이트**로 상태 확인·분류.
+- **동작**: etcd: `etcdInit` 후 **리더 준비(`etcdIsReady`/`"*"`) 폴링 확인**, 조인 슬롯에 **시작 정렬**(gap은 supervisor가 **클러스터 크기 N에서 파생** — sz≤11→7s·≤23→11s·≤41→17s·else 23s; 호출자가 고정값 안 넘김, L7). 실패는 분류(`EtcdJoinFailed/EtcdStale/ForkNotCrossed/QuorumLost/RPCUnready`)하고 사유·producer 로그를 세션 보존. 백오프 재기동 또는 명확한 실패.
+- **teardown·datadir(S2)**: 내장 etcd는 **프로세스 종료로 함께 종료**("살아있는 etcd 정리" 불필요). `Teardown{RemoveDataDir}`은 **종료와 별개 기능** — 재-셋업/디스크관리 시 datadir 삭제. procman이 노드별 `{PID, datadir}`를 추적해야 정확한 삭제 가능.
 - **출력**: NodeSet + Diagnosis(OK/Mode/Detail/ProducerLog).
 - **에러·엣지**: 원인 은닉 금지("flaky" 라벨 금지) — 항상 분류된 Mode+Detail. hang 없음(모든 대기 timeout). 실패 시 procman.StopAll로 고아 노드 0.
 - **AC**
   1. producer etcd 리더 준비 전 조인시도 없음(게이트 통과 후 진행).
   2. 실패 시 Diagnosis.Mode가 실제 사유와 일치(예: 로그가 join 실패면 EtcdJoinFailed).
-  3. 재기동(같은 datadir) 시 stale etcd로 인한 `cannot fetch cluster info` 재현 0.
-  4. 어떤 실패에도 잔존 노드 프로세스 0(고아 없음).
+  3. 재기동(같은 datadir) 시 stale etcd로 인한 `cannot fetch cluster info` 재현 0 — **재-셋업 전 `RemoveDataDir`로 datadir 정리**.
+  4. 어떤 실패에도 잔존 노드 프로세스 0(고아 없음). 종료 시 내장 etcd도 함께 종료.
+  5. 노드 종료와 datadir 삭제가 **독립 호출**로 동작(종료만·삭제만 각각 가능).
 
 ## F14. MCP 결과 연동  (요구 31 · design §9)
 - **입력**: 테스트/스위트 실행 요청(MCP tool), 진행/결과 조회 요청.
@@ -172,6 +178,21 @@
   2. 분기 발생 시 대시보드가 분기(노드 hash 불일치)를 표시.
   3. 테스트 완료 후 결과·판정 근거를 대시보드에서 조회.
 
+## F16. 세션 운영·보안 규약  (요구 14,17,37 · design §3.1,§7 · 2차검토 누락보강)
+- **입력**: 세션 실행 결과, 정의서, 키.
+- **동작**
+  - **spec schemaVersion(O2)**: 정의서 최상위에 `schemaVersion`(예: `"1"`) 필수 — 해석기가 버전 불일치 시 명확히 거부(장기 자산 forward-compat).
+  - **키파일 권한(O3)**: `keys/<name>/private`·nodes/keystore는 **0600**, 디렉토리 **0700**으로 생성. private 값은 로그·아티팩트 본문에 노출 금지(경로/주소만). `.chainbench/`·`remote-server-config.yaml`은 gitignore(기존 규약).
+  - **세션 보존/정리(O4)**: `.chainbench/<session>`은 누적되므로 보존정책 제공 — `chainbench clean [--older-than <dur>] [--keep-last N]`로 세션·datadir GC(재-셋업의 datadir 삭제와 동일 경로, F13-S2). 미정리 시 디스크 증가 경고.
+  - **CI 종료코드(O5)**: 세션 커맨드는 **집계 결과를 exit code로 반환** — 전건 pass=`0`, fail 존재=`1`, blocked/인프라오류=`2`. `session.json.summary`와 일치(무인 CI 게이팅).
+- **출력**: 버전거부 오류, 0600 키파일, GC 로그, 프로세스 exit code.
+- **에러·엣지**: 알 수 없는 schemaVersion → 실행 거부(사유 명시). 키파일 권한 설정 실패 → 구성 실패(느슨한 권한으로 진행 금지). clean 대상이 실행중 세션이면 스킵.
+- **AC**
+  1. schemaVersion 누락/미지원 정의서 → 실행 거부(버전 명시).
+  2. 생성된 `keys/*/private` 권한이 0600.
+  3. `chainbench clean --older-than 7d`가 7일 경과 세션만 제거(실행중 세션 보존).
+  4. fail 포함 스위트의 프로세스 exit code == 1(summary와 일치).
+
 ---
 
 ## 부록. 미결의 확정 요약 (design §9 대응)
@@ -180,9 +201,11 @@
 | place 기본 포트 모드 | **LocalOSAssigned 기본**, `--ports fixed`로 stepped (F12) |
 | collector chainstate 저장 | **jsonl 파일 + obs 미러** (F10) |
 | applicableChains↔chain.name | chain.name=대상, applicableChains=호환집합·스윕·미적용 SKIP (F3) |
-| fingerprint 대상 | **resolved config**(flag>config>default 후) (F7) |
+| fingerprint 대상 | **resolved config + placement**(flag>config>default 후), env-id=hash 12hex 축약 (F7) |
 | MCP 응답 스키마 | `{session,tests[],summary}` + assert provenance 링크 (F14) |
 | assert 함수 세트 | testify식 네이밍 + 타입인지 + EqualHashAt (F6) |
 
+**2차 검토 확정(코드 대조 반영):** genesis 4모드·진입점 `genesis.Build`(F9·L3) · 도메인 어휘 `bp`/`en` 표층 일관·enum 내부(F9·§3.9·L2) · etcd=wemix내장 `P2P+1` 예약(F12·L1) · supervisor가 기동 소유(F13·L6) · etcd gap은 N에서 파생(F13·L7) · datadir 삭제=종료와 별개(F13·S2) · SSH 자격증명 `remote-server-config.yaml`(F13·L6) · 액션레지스트리 주입(design §3.2·P1) · 세마포어 `max(1,min(cores-2,N))`(§6·S1) · schemaVersion·키0600·세션GC·exit code(F16·O2~O5).
+
 ## 부록. 요구사항 ↔ F 추적
-1-3→F3,F9 · 4-6→F4,F8,F12 · 7-8→F7 · 9-11,16→F2,F12,F13 · 12→F13 · 13→F4 · 14,33-35→F1,F10,F15 · 15-16→F12 · 17→F2 · 18-26→F9,F13 · 27-28→F7,F11 · 29,30,32→F3,F5,F6 · 31→F14 · 36→F9 · 37→전체.
+1-3→F3,F9 · 4-6→F4,F8,F12 · 7-8→F7 · 9-11,16→F2,F12,F13 · 12→F13 · 13→F4 · 14,33-35→F1,F10,F15,F16 · 15-16→F12 · 17→F2,F16 · 18-26→F9,F13 · 27-28→F7,F11 · 29,30,32→F3,F5,F6 · 31→F14 · 36→F9 · 37→전체(F16 운영·보안).
