@@ -196,9 +196,10 @@ shell의 느슨한 명령 나열을 **트랜잭션적 스텝**(성공/실패 명
 각 플러그인이 `NodeComposition()`·`SupportedForks()`·`SupportedAssertions()`·`TestCapabilities()`를 선언. 해석기가 정의서의 `applicableChains`/기능요구와 대조해 **미적용은 SKIP**(현 `capability` 확장).
 
 ### D-4. 통합 Placement/Port 배치기 (15,16)
-`place.Allocate(nodes, mode)`:
+`place.Allocate(nodes, mode, cap)` (design §3.4, `cap Capacity`로 **용량 사전검증**):
 - `local`: 노드 index 기반 **결정적 포트 스텝** 또는 OS 할당(`:0` 바인드 후 회수) → 고정포트 충돌(현 handoff 문제) 제거.
 - `remote-1-per-host`: **동일 포트 + 서버별 IP**.
+- **용량 검증(fail-fast)**: validators ≥ 4(BFT min) 미달·노드수 > max(local 포트대역 / remote Σ서버슬롯) 초과 → 배치 이전 오류.
 portplan·topology·remote 를 하나의 배치 결과(NodePlacement)로 수렴.
 
 ### D-5. 환경 fingerprint + 재사용 컨트롤러 (28)
