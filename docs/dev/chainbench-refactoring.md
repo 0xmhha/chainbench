@@ -1,7 +1,7 @@
 # chainbench 리팩토링 감사 — 기존 코드 → 목표 설계 매핑
 
-> 목적: 목표 설계(`chainbench-design.md` 인터페이스·데이터모델, `chainbench-feature-spec.md` F1~F15 동작계약)를 향해, **기존 코드를 무엇을 유지/확장/재구성/교체하고 무엇을 신설**할지 코드 감사 기반으로 확정하고, **구현-ready 작업 단위(WP)** 로 분해한다.
-> 근거: `chainbench-requirements-review.md`(요구/결정) · `chainbench-design.md`(§3 인터페이스·§4 스키마) · `chainbench-feature-spec.md`(F1~F15 AC).
+> 목적: 목표 설계(`chainbench-design.md` 인터페이스·데이터모델, `chainbench-feature-spec.md` F1~F16 동작계약)를 향해, **기존 코드를 무엇을 유지/확장/재구성/교체하고 무엇을 신설**할지 코드 감사 기반으로 확정하고, **구현-ready 작업 단위(WP)** 로 분해한다.
+> 근거: `chainbench-requirements-review.md`(요구/결정) · `chainbench-design.md`(§3 인터페이스·§4 스키마) · `chainbench-feature-spec.md`(F1~F16 AC).
 > 원칙: (1) 견고한 기반 재사용, (2) 인터페이스 우선·하위호환, (3) 점진 이관(기존 pipeline/e2e 공존), (4) 소유권 단일화.
 > 규모: 비-테스트 Go **약 13,478 LOC** (pkg + cmd). 인용한 기존 API는 모두 파일:라인 실존 확인(design §3 검증분).
 
@@ -20,9 +20,9 @@
 | `core/driver` (341) `Driver`+`Initializer`+`FileProvisioner` | local/remote 노드 실행·파일배치 | **KEEP** | `FileProvisioner`가 이미 remote 파일 upload를 추상화(요구 11). Launch/Provision/Stop 계약 유지 |
 | `core/config` (152) `Values`(flat map)+`Merge/Resolve/Flatten` | 설정 값 접근 | **KEEP** | **이미 닷키(`a.b.c`)·레이어 병합 지원** → TestSpec 닷경로 리졸버·[7,8] 우선순위(flag>config>default)에 직결 재사용(§D-2) |
 | `accounts` (877) `AccountProvider`·`Wallet` | tx 서명 SDK | **KEEP** | §D-2.2 서명. `AddressForKey`로 키→주소 파생도 존재 |
-| `core/genesis` (239) `MergeOverride/BuildGenesis/ExtractConfigSection` | genesis 합성·오버레이 | **KEEP** | 오버레이 규약(새 바이트 반환) 유지(E-3-3) |
-| `core/node` (115) `Node/NodeSet/Endpoints/Role` | 노드 모델 | **EXTEND** | env.json node table(D-1)이 이를 파생·확장(binary/buildVersion/sync 필드 추가) |
-| `core/procman` (173) | PID 생명주기(mutex) | **EXTEND** | remote PID(ssh) 추적 + **etcd 관측**(RPC/IPC, C-etcd) 추가. 락 규약 유지 |
+| `core/genesis` (239) `Build/MergeOverride/ExtractConfigSection/ApplyConfigOverrides/SetConfigSection` | genesis 합성·오버레이(4모드, design §3.8) | **KEEP** | 진입점은 **`genesis.Build`**(`genesis.go:38`); `BuildGenesis`는 `ConsensusFamily` 메서드(`registry.go:46`)로 `Build`가 위임 — 이름 구분(L3). 오버레이 규약(새 바이트 반환) 유지(E-3-3) |
+| `core/node` (115) `Node/NodeSet/Endpoints/Role` | 노드 모델 | **EXTEND** | env.json node table(D-1)이 이를 파생·확장(binary/buildVersion/sync 필드 추가). **정리: dead 상수 `RoleEN`("en") 제거** — "en"은 topology.go:60-61이 `RoleEndpoint`로 alias, 실사용 없음(design §3.9) |
+| `core/procman` (173) | PID 생명주기(mutex) — 현재 `{PID,Label}`만 | **EXTEND** | 노드별 **`{PID, datadir}` 추적 추가**(S2: 종료 vs datadir 삭제 별개 기능·재-셋업 정리) + remote PID(ssh) 추적 + **etcd 관측**(RPC/IPC, C-etcd). 내장 etcd는 프로세스 종료로 함께 종료. 락 규약 유지 |
 | `core/obs` (336) `Bus`·`Store` | 이벤트 버스(대시보드) | **KEEP** | collector/대시보드 수집의 전송로(item 34) |
 | `core/rpc` (312) | JSON-RPC 클라이언트 | **KEEP** | 검증·endpoint 질의 |
 | `pkg/mcp` (1780, 30 tools) | MCP 표면 | **EXTEND** | 결과 응답 연동(F14, 요구 31) |
@@ -36,10 +36,10 @@
 
 | 대상 | 문제 | 조치 |
 |---|---|---|
-| `pipeline/setup` (`Provision`/`Launch`/`Run`) | 노드 **순차** loop | **동시 provision/launch**(errgroup+semaphore, ctx), **세션 경로 인지**(D-1), placement 주입(D-4). 공개 `BuildPlan/Run` 시그니처는 유지하며 내부만 |
+| `pipeline/setup` (`Provision`/`Launch`/`Run`) | 노드 **순차** loop | setup은 **Plan 산출 + 동시 provision/launch 프리미티브**(errgroup+semaphore, ctx)만 제공하고, **기동 오케스트레이션·헬스게이트·복구는 supervisor가 소유**(L6·design §3.3). **세션 경로 인지**(D-1), placement 주입(D-4). 공개 `BuildPlan/Run` 시그니처 유지 |
 | `pipeline/verify` (`Run`) | 노드별 **순차** 폴링(verify.go:90) | **노드별 goroutine 팬아웃**(index 쓰기). 결과 Report는 **헬스 게이트**로 승격(D-6) |
 | `consensus/upgrade/exec.go:163` | `for range specs` 순차 init/provision/launch | 동시화 + 리더(producer) 우선 부트스트랩 게이트 |
-| remote (`chains/wemix/deploy` 8파일 + `core/remote` + `driver.RemoteDriver`) | **wemix 전용에 치우침** | 체인-무관 remote 절차로 **일반화·승격**(요구 9·10·11·16): 접근·upload·download를 core에서 공용화, deploy는 wemix 특화만 |
+| remote (`chains/wemix/deploy` 8파일 + `core/remote` + `driver.RemoteDriver`) | **wemix 전용에 치우침** · SSH 자격증명 로딩 표준 없음 | 체인-무관 remote 절차로 **일반화·승격**(요구 9·10·11·16): 접근·upload·download를 core에서 공용화, deploy는 wemix 특화만. **SSH 접속정보(포트·IP목록·user·password/keyPath)는 `remote-server-config.yaml`(gitignore·`.sample`만 추적)에서 런타임 로드**(L6b·design §7) |
 | `core/state` (nodeset.json) | 데이터루트 기준 저장 | **세션 레이아웃 하위로 이동**(D-1), env.json과 통합 |
 
 ---
@@ -62,7 +62,7 @@
 |---|---|---|
 | `core/session` | `.chainbench/<session>/` 정본 소유·경로 파생·기록(D-1) | 흩어진 로그/state 경로 로직 |
 | `testspec` | 정의서 파싱·검증(필수/옵션·닷경로·`,`)·해석(§D-2) | testkit Go-func 등록 |
-| `core/place` | 통합 배치·포트(local 결정적/OS할당, remote 동일포트)(D-4) | `portplan`(71)+`topology`(149)+setup 내 배치 로직 **CONSOLIDATE** |
+| `core/place` | 통합 배치·포트(local 결정적/OS할당, remote 동일포트)(D-4) + **용량검증(min≥4·max, C)** | `portplan`(71)·`topology`(149)를 **내부 라이브러리로 재사용**(삭제 아님)하고 setup 내 배치 로직만 흡수해 **단일 seam으로 통합**. (component §1b C8은 portplan을 공유커널로 유지) |
 | `core/keyreg` | 키 레지스트리(생성·복사·다운·업, 이름매핑)(§D-2.2) | `core/keys`(136)+`deploy/{credentials,keys}` **CONSOLIDATE** |
 | `core/collector` | 라이브 로그 tail + chainstate(블록·bp참여·싱크·피어·분기) 수집(D-1, item 34, §D-2.5·2.7) | `probe`(286)+`obs` 확장 |
 | `core/supervisor` | 헬스 게이트·etcd 리더게이트·백오프 복구(C-etcd, D-6) | `runGovHandoff` 재시도(원인은닉) 대체 |
@@ -71,9 +71,9 @@
 
 ## 6. 동시성 리팩토링 지점 (요구 E — 크리티컬)
 
-> 현재 goroutine 5·mutex 6파일뿐(sync 프리미티브 극소수), 노드 기동/검증 순차. **테스트는 항상 직렬(§B-4)**; 동시성은 **한 환경 내 N노드** 처리에만 적용.
+> 현재 비-테스트 프로덕션 goroutine **4곳**·mutex 6파일뿐(sync 프리미티브 극소수), 노드 기동/검증 순차. **테스트는 항상 직렬(§B-4)**; 동시성은 **한 환경 내 N노드** 처리에만 적용.
 
-1. `setup.Provision/Launch`·`upgrade/exec.Launch`: **errgroup 팬아웃 + `semaphore.Weighted(min(cores-2,N))`**(자원 스파이크·성능 35 방지) + **ctx 취소**(실패시 형제 정리→procman.StopAll, 고아 방지).
+1. `setup.Provision/Launch`·`upgrade/exec.Launch`: **errgroup 팬아웃 + `semaphore.Weighted(max(1, min(cores-2,N)))`**(자원 스파이크·성능 35 방지 · 1~2코어 언더플로우 클램프 S1) + **ctx 취소**(실패시 형제 정리→procman.StopAll, 고아 방지).
 2. `verify.Run`: 노드별 팬아웃, **index 슬라이스 쓰기(락 불필요)**.
 3. `collector`: 노드별 tail goroutine → **채널→단일 writer**(파일 레이스 제거) + 버퍼·레이트리밋.
 4. `upgrade` mesh(admin_addPeer N×N): 팬아웃 + ctx.
@@ -85,17 +85,17 @@
 
 - **인터페이스 우선**: session/place/keyreg/collector/supervisor의 **인터페이스를 먼저 확정**(feature-spec의 AC와 1:1), 구현은 그 뒤.
 - **하위호환 병존**: 신규 경로를 별도 커맨드/플래그로 세우고, 기존 `setup/upgrade/test` 경로는 유지 → 회귀 위험 없이 케이스 점진 이관.
-- **검증 게이트**: 각 WP마다 기존 비-e2e 스위트 통과 + 해당 F의 AC 충족(대표 e2e 1건 라이브) 후 다음 WP.
+- **검증 게이트**: 각 WP마다 기존 비-e2e 스위트 통과 + 해당 F의 AC 충족(대표 e2e 1건 라이브) 후 다음 WP. **동시성 도입 WP(WP4 등)는 `make test-race`(`-race`) 통과를 필수 게이트**로 둔다(O6 — 레이스 조기검출).
 
 ### 7.1 작업 단위(WP) — 구현-ready 분해 (로드맵 §F 순서)
 
 | WP | 범위(패키지·판정) | design 앵커 | feature-spec | 완료 게이트(AC) |
 |----|-------------------|-------------|--------------|-----------------|
-| **WP1** | `session` [NEW] + `state` 이동 [REFACTOR] | §3.1, §4.1·4.2 | F1 | F1-1..4: 커맨드=세션1, 2축(env/tests) 결정적 경로 |
-| **WP2** | `place` [NEW·CONSOLIDATE portplan+topology] | §3.4 | F12 | F12-1: back-to-back 포트 이중바인드 0 |
-| **WP3** | `testspec`+`testrun` [REPLACE] · 결과모델 `testkit.Report` 재사용 | §3.2, §4.3·4.4 | F3·F4·F5·F6·F11 | F3-1/F11-2·3: 파싱검증·**negative 스텝 시맨틱** |
-| **WP4** | `supervisor` [NEW] + `setup/verify/upgrade` 동시화 [REFACTOR] + `procman` etcd관측 [EXTEND] | §3.3, §6, C-etcd | F13 | F13-2·4: Mode 정확·고아 0 |
-| **WP5** | `keyreg` [NEW·CONSOLIDATE keys+deploy] + `collector` [NEW] + fingerprint 재사용 | §3.5·3.6, §D-2.4 | F2·F7·F8·F10 | F7-1·2: 재사용/재구성 판정, F10-1: 로그 누락 0 |
+| **WP1** | `session` [NEW] + `state` 이동 [REFACTOR] | §3.1, §4.1·4.2 | F1 · **F16**(세션 GC·retention·CI exit code) | F1-1..4: 커맨드=세션1, 2축(env/tests) 결정적 경로 · F16-3·4: `clean --older-than`·exit code |
+| **WP2** | `place` [NEW·CONSOLIDATE portplan+topology] | §3.4 | F12 | F12-1: 포트 이중바인드 0 · **F12-4: 용량검증(min≥4·max) fail-fast(C)** |
+| **WP3** | `testspec`+`testrun` [REPLACE] · 결과모델 `testkit.Report` 재사용 | §3.2, §4.3·4.4 | F3·F4·F5·F6·F11 · **F16**(spec schemaVersion) | F3-1/F11-2·3: 파싱검증·**negative 스텝 시맨틱** · F16-1: schemaVersion 거부 |
+| **WP4** | `supervisor` [NEW·기동 소유] + `setup/verify/upgrade` 동시화 [REFACTOR] + `procman` `{PID,datadir}`·etcd관측 [EXTEND] | §3.3, §6, C-etcd | F13 | F13-2·4: Mode 정확·고아 0 · **`make test-race` 통과(O6)** |
+| **WP5** | `keyreg` [NEW·CONSOLIDATE keys+deploy] + `collector` [NEW] + fingerprint 재사용 | §3.5·3.6, §D-2.4 | F2·F7·F8·F10 · **F16**(키파일 0600) | F7-1·2: 재사용/재구성 판정, F10-1: 로그 누락 0 · F16-2: `keys/*/private` 0600 |
 | **WP6** | `registry.Capabilities` [EXTEND] + `mcp`·`dashboard` 연동 [EXTEND] | §3.7 | F9·F14·F15 | F14-1·2, F15: 결과·상태 소비 |
 
 - **인터페이스 우선**: 각 WP는 design §3 인터페이스를 먼저 고정(feature-spec AC와 1:1) 후 구현.
@@ -121,7 +121,7 @@
 |------|------|------|
 | `chainbench-requirements-review.md` | 요구 37·사양검토·격차·etcd실체·동시성 | ✅ 정합 |
 | `chainbench-design.md` | 구조·인터페이스(§3)·데이터모델(§4)·동시성(§6) | ✅ 검토·정정 |
-| `chainbench-feature-spec.md` | F1~F15 동작계약·AC | ✅ 정합 |
+| `chainbench-feature-spec.md` | F1~F16 동작계약·AC | ✅ 정합 |
 | `chainbench-refactoring.md` (본 문서) | 기존→목표 매핑·**WP 분해** | ✅ 정련 |
 
 **구현 착수 조건**: 위 4종 확정 + 각 WP의 design 인터페이스 고정. 구현은 WP1(session)부터 §7.1 순서로, 각 WP는 비-e2e 통과 + 해당 F의 AC 라이브 확인을 게이트로 진행.

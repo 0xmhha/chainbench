@@ -78,6 +78,13 @@ profiles/*-auth.yaml
 # Defense in depth — tests/env/secret/.gitignore also ignores its own contents.
 tests/env/secret/
 
+# Remote SSH access config (ssh port / server IP list / user / password|keyPath).
+# NEVER commit real values — only the *.sample template is tracked (design §7).
+remote-server-config.yaml
+remote-server-config.yml
+*remote-server-config.yaml
+!remote-server-config.sample.yaml
+
 # --- Secrets hardening (defense in depth) --------------------------------------
 # NEVER commit real private keys or credentials. The only intentional key
 # material in this repo is keys/preset/ (labeled TEST FIXTURE ONLY) and the

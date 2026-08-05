@@ -70,7 +70,7 @@
 | 4,5,6 역할·저장·혼합 | `topology`가 role + `full/snap/archive` 검증 | 🟡 부분 | live 유사 **혼합 프리셋/강제(6)** 없음; 현 handoff는 1P+4V(EN 없음)로 비-live |
 | 7,8,36 설정소스·우선순위·바이너리메타 | genesis 템플릿 + `profiles` + flag | 🟡 부분 | **우선순위 미정**, 통합 `--config` 없음, **바이너리 빌드버전 메타 기록 없음(36)** |
 | 9,10,11,16 remote | `core/remote`(ssh/auth), `driver.RemoteDriver`, `chains/wemix/deploy` | 🟡 부분 | wemix 전용에 치우침; **모든 체인 일반화**·노드구성 upload 표준화 미흡 |
-| 12 노드관리 | `procman`(PID추적, StopAll 검증) | 🟢 local | **remote 프로세스 관리·검증** 표준화 미흡 |
+| 12 노드관리 | `procman`(PID추적·StopAll 검증 로직 존재) | 🟡 부분 | **StopAll 검증·leak-report 로직은 있으나 프로덕션 stop 경로에 미배선**(실제 stop은 검증 없는 `Kill()`, 테스트 전용)·**로컬 PID만**; remote 프로세스 관리·검증 표준화 미흡 (컴포넌트 §2b) |
 | 13 RPC검증 | `pipeline/verify` + `core/rpc` | 🟢 | 노드별 폴링 **순차**(verify.go:90) |
 | 14,33,34,35 아티팩트·디버깅 | 로그→`<dataRoot>/logs/`, `nodeset.json`, `obs`+`dashboard`(SSE) | 🔴 미흡 | **`.chainbench` 세션 레이아웃 부재**; 테스트별 요청/응답/결과 기록 없음; 블록·bp참여·싱크·분기 수집 **깊이 부족**; remote 무영향 수집 미검증 |
 | 15,16 포트 | `portplan`(스텝) | 🟡 부분 | **handoff는 고정포트(30010 step10)** → 연속/병렬 충돌(이 세션 실측 문제); local스텝·remote동일포트 **단일 배치기 부재** |
@@ -92,9 +92,10 @@
 ## C-etcd. "etcd flaky"의 실체 — go-wemix 내장 etcd 코드 분석 (요구 3)
 
 > "flaky"는 무작위가 아니다. `chain/go-wemix/wemix/etcdutil.go` 를 분석하면 **결정적 타이밍/스케줄 문제**임이 드러난다.
+> **출처(S4):** 아래 go-wemix/go-wbft 내부 분석은 **외부 go-wemix 체크아웃**(예: `packages/` 트리) 기준이며, chainbench repo에는 vendoring되어 있지 않다(라인번호는 그 체크아웃 기준). chainbench repo에서 직접 확인되는 것은 **`admin.etcdInit()` 호출부**(`pkg/consensus/poa/bootstrap_exec.go:44`)와 포트 예약(`portplan`)뿐이다.
 
 **메커니즘**
-- etcd 포트 = `node.Port+1`(peer) / `+2`(client). 클러스터 토큰 = `etcdClusterName` 고정.
+- **etcd peer 포트 = `P2P+1`**(wemix 바이너리가 파생). chainbench는 이를 `portplan.Ports.Etcd`로 예약하며, RPC 밴드(http/ws/auth)와 **분리된 밴드**라 충돌하지 않는다(p2pStep≥2·rpcStep≥3). 클러스터 토큰 = `etcdClusterName` 고정. (client 포트는 go-wemix 내부이며 chainbench가 별도 예약하지 않는다 — peer(+1)만이 충돌-임계 포트.)
 - **부트스트랩** `etcdInit()`(=chainbench의 `admin.etcdInit()`): `newConfig(true)` → `ClusterStateFlagNew + ForceNewCluster` → 새 단일노드 클러스터의 **리더**가 되고, 이후 그 노드의 `MiningPeers`에 `"*"` 표식이 붙는다.
 - **조인** `etcdAutoJoin()`(노드가 주기적으로 자동 수행): 아직 조인 안 한 miner들(`tobes`)을 모아 개수로 `gap`을 정한다 — **sz≤11 → gap=7s, ≤23 → 11s, ≤41 → 17s, 그 외 23s**. 자기 index `ix`에 대해 **시간 슬롯** `t = (ct/tt)*tt + sz + ix*gap ± gap/4` 을 계산하고 **그 슬롯까지 `time.Sleep`**. 슬롯에서 `"*"` 보유 + `up` 상태인 리더를 찾고 — **있으면 join, 없으면 즉시 `"etcd join failed: not found"` (호출 내 재시도 없음)**.
 
@@ -105,10 +106,10 @@
 **chainbench가 해야 할 것 (프로세스/타이밍 관리)**
 - **리더-우선 확정**: producer의 `etcdInit` 호출 후 **etcd 준비(`etcdIsReady`/리더 `"*"`)를 폴링 확인**하고 나서 다음 단계 진행. "호출하고 기대"가 아니라 **확인 게이트**.
 - **시작 간격의 체계적 설정**: 조인이 필요한 구성에서는 **리더 부트스트랩 완료 시점 직후**에 조인 슬롯이 오도록 노드 시작 시각을 `gap`(7/11/17/23s)에 맞춰 정렬 → 슬롯 낭비(`tt`초) 제거. (요구 3의 "연결이 바로 되도록 시작 간격을 체계적으로")
-- **stale etcd 정리**: 재기동 시 `<datadir>/…/etcd` 데이터를 정리하거나, 명시적으로 `newCluster` 재부트스트랩 경로를 강제 → `Existing` 조인 루프 진입 차단.
-- **procman 확장**: etcd는 노드 프로세스 *내부* 고루틴이므로 별도 PID가 없다. 따라서 **etcd 상태를 RPC/IPC(`etcdIsReady`, `getMiners`의 `"*"`)로 관측**해 "정상 부트스트랩/조인" 여부를 lifecycle 관리에 포함해야 한다(요구 12·3).
+- **재기동 시 datadir 정리(S2 정정)**: etcd는 **노드 프로세스 내장**이라 프로세스를 종료하면 **함께 종료**된다("살아있는 etcd 정리"는 불필요). 문제는 **같은 datadir의 낡은 클러스터 상태**뿐이므로, **재-셋업 전 datadir 삭제**로 `Existing` 조인 루프를 차단한다. **노드 종료(kill PID)와 datadir 삭제는 별개 기능**이며, 재-셋업 = StopAll + RemoveDataDir. 정리 안 하면 데이터가 계속 쌓여 디스크 관리가 안 된다(요구 12·D-1 세션 정리).
+- **procman 확장(datadir 추적)**: 현재 procman은 `{PID, Label}`만 추적(`procman.go:22`)하고 **datadir는 추적하지 않는다**. 정확한 종료+정리를 위해 노드별 **`{PID, datadir}`** 를 추적하도록 확장해야 한다. 또한 etcd는 별도 PID가 없으므로 **상태는 RPC/IPC(`etcdIsReady`, `getMiners`의 `"*"`)로 관측**해 lifecycle에 포함(요구 12·3). (chainbench에는 `cmd/chainbench/clean.go`가 `os.RemoveAll(dataDir)`로 루트 삭제를 이미 제공 — 노드별 추적과 연계 필요.)
 
-> 요약: 이전 세션의 "flaky"는 **go-wemix etcd의 슬롯-스케줄 조인 + stale-datadir 재조인** 두 가지이며, chainbench는 (i)리더 준비 확인 게이트, (ii)슬롯(`gap`)에 맞춘 시작 정렬, (iii)재기동 시 etcd 정리로 "바로 연결"을 만들 수 있다. 내가 넣었던 "port-free 폴링"은 이 실체와 무관했다.
+> 요약: 이전 세션의 "flaky"는 **go-wemix etcd의 슬롯-스케줄 조인 + stale-datadir 재조인** 두 가지이며, chainbench는 (i)리더 준비 확인 게이트, (ii)슬롯(`gap`)에 맞춘 시작 정렬, (iii)재기동 시 **datadir 삭제**로 "바로 연결"을 만들 수 있다(내장 etcd는 프로세스 종료로 함께 죽으므로 별도 정리 불필요). 내가 넣었던 "port-free 폴링"은 이 실체와 무관했다.
 
 ---
 
@@ -124,7 +125,7 @@
     session.json                               # 커맨드·시각·테스트 목록/순서·요약결과
     keys/<name>/{private,address,bls?,pop?}    # (a) 키 레지스트리: op1/bp1/acctA→키. 랜덤생성 or 복사 or remote다운로드; remote 실행 시 약속경로로 업로드
     environments/
-      <env-id>/                                # env-id = fingerprint (§D-2.4: 선언값에서 파생)
+      <env-id>/                                # env-id = "env-"+fingerprint[:12] (§D-2.4·L5: 선언값 해시 앞 12hex)
         env.json                               # fingerprint(설정만) + node table + dataPath
         genesis.json  config/                  # 사용된 genesis·config 스냅샷(36 기록)
         nodes/<node>/{nodekey,address,bls,keystore}   # 노드 신원(17) (keys/ 레지스트리 참조)
@@ -142,7 +143,7 @@
 ```jsonc
 "dataPath": "/data/.../<env>",   // (g) 노드 로그가 쌓이는 실제 경로
 "nodes": [
-  {"name":"bp1","role":"bp","sync":"archive","binary":"go-wbft","buildVersion":"...","rpc":"http://IP:PORT","ws":"..."},
+  {"name":"bp1","role":"bp","sync":"archive","binary":"go-wbft","buildVersion":"...","rpc":"http://IP:PORT","ws":"..."}, // 도메인 용어 bp/en (§3.9; 코드 enum은 내부 validator/endpoint)
   {"name":"en1","role":"en","sync":"full",   "binary":"go-wbft","buildVersion":"...","rpc":"http://IP:PORT2","ws":"..."}
 ]   // local=포트 상이 / remote=동일포트+다른IP (15,16)
 ```
@@ -177,7 +178,7 @@ shell의 느슨한 명령 나열을 **트랜잭션적 스텝**(성공/실패 명
 
 **§D-2.3 wait 프리미티브** — `waitReceipt·waitBlocks·waitEpoch·waitSeconds·waitFork`(독립 스텝 또는 `waitFor` modifier). **모든 wait에 timeout 필수**, 초과 시 hang 없이 FAIL/ERROR + 아티팩트(37). 테스트 전체 timeout 별도.
 
-**§D-2.4 fingerprint(선언값) ↔ preAction(런타임)** — env-id = **테스트 정의서에 이미 적는 값에서 파생**: `hash(binaries-set + genesis + config + topology + hardforks)`. 체인을 건드리기 전 **정의서 필드 비교만으로 재사용 판정**(동일=재사용, 상이=재구성). 런타임 상태("staker A 등록됨")는 fingerprint가 **아니라** preAction의 idempotent 가드(RPC 확인 후 있으면 skip). 둘을 섞지 않음.
+**§D-2.4 fingerprint(선언값) ↔ preAction(런타임)** — fingerprint = **테스트 정의서에 이미 적는 값에서 파생**: `sha256(binaries-set + genesis + config + topology + hardforks + placement)`(placement=local↔remote 포함, O1). 체인을 건드리기 전 **정의서 필드 비교만으로 재사용 판정**(동일=재사용, 상이=재구성). **폴더명 env-id = `"env-"+앞 12hex`**(전체 해시는 env.json에만, 경로초과 방지·L5). 런타임 상태("staker A 등록됨")는 fingerprint가 **아니라** preAction의 idempotent 가드(RPC 확인 후 있으면 skip). 둘을 섞지 않음.
 
 **§D-2.5 크로스노드 검증** (4,34) — `istanbul_getCommitSignersFromBlock`로 **bp 참여**, en `eth_blockNumber`로 **싱크 추종**, `onEach`+`EqualHashAt`로 **무분기(전 노드 동일 hash)**.
 
@@ -201,7 +202,7 @@ shell의 느슨한 명령 나열을 **트랜잭션적 스텝**(성공/실패 명
 portplan·topology·remote 를 하나의 배치 결과(NodePlacement)로 수렴.
 
 ### D-5. 환경 fingerprint + 재사용 컨트롤러 (28)
-fingerprint 정의는 **§D-2.4 확정본**: `hash(binaries-set + genesis + config + topology + hardforks)` — **테스트 정의서 선언값에서 파생**(런타임 상태 아님). 다음 테스트의 선언값 fingerprint를 현재 `environments/<env-id>`와 비교해 **일치 시 setup skip(재사용)**, 불일치 시 새 env-id로 재구성. 런타임 상태는 preAction(idempotent RPC 가드)이 담당. (모든 테스트 직렬 — §B-4.)
+fingerprint 정의는 **§D-2.4 확정본**: `sha256(binaries-set + genesis + config + topology + hardforks + placement)` — **테스트 정의서 선언값에서 파생**(런타임 상태 아님). 다음 테스트의 선언값 fingerprint를 현재 `environments/<env-id>`와 비교해 **일치 시 setup skip(재사용)**, 불일치 시 새 env-id로 재구성(폴더명은 12hex 축약·L5). 런타임 상태는 preAction(idempotent RPC 가드)이 담당. (모든 테스트 직렬 — §B-4.)
 
 ### D-6. 헬스 기반 복구 수퍼바이저 (27,35,37)
 현 "재시도+원인은닉"을 대체: launch 후 **진단 게이트**가 실제 실패모드(etcd join 실패 vs fork 미도달)를 분류하고, (a)백오프 재기동 또는 (b)명확한 아티팩트로 실패. 실패원인·producer 로그를 세션에 보존(이번 세션에서 시작한 진단 로깅의 정식화).
@@ -210,12 +211,12 @@ fingerprint 정의는 **§D-2.4 확정본**: `hash(binaries-set + genesis + conf
 
 ## E. 고루틴 동시성 · 뮤텍스/세마포어/락 안전성
 
-> 현재: 노드 기동/검증이 **순차**(exec.go:163, verify.go:90), goroutine 5·mutex 6파일뿐(sync 프리미티브 극소수). 대규모·연속 실행의 병목이자 취약점.
+> 현재: 노드 기동/검증이 **순차**(exec.go:163, verify.go:90), 비-테스트 프로덕션 goroutine **4곳**(local.go:70, subscribe.go:56·57, dashboard/client.go:23)·mutex **6파일**뿐(sync 프리미티브 극소수). 대규모·연속 실행의 병목이자 취약점.
 
 ### E-1. 동시화할 곳 (goroutine + errgroup + 세마포어)
 | 대상 | 현재 | 개선 | 안전장치 |
 |------|------|------|----------|
-| 노드 init/provision/launch | 순차 loop | `errgroup` 팬아웃 | **`semaphore.Weighted`(min(cores-2,N))** 로 동시 기동 상한 → etcd/gwemix 자원 스파이크·성능영향(35) 방지 |
+| 노드 init/provision/launch | 순차 loop | `errgroup` 팬아웃 | **`semaphore.Weighted(max(1, min(cores-2,N)))`** 로 동시 기동 상한(1~2코어 언더플로우 클램프, S1) → etcd/gwemix 자원 스파이크·성능영향(35) 방지 |
 | 노드별 헬스/RPC 폴링(verify) | 순차 | 노드별 goroutine | 결과는 **index 기반 슬라이스 쓰기**(락 불필요) |
 | handoff mesh(admin_addPeer, N×N) | 순차 | 팬아웃 | ctx 취소 전파 |
 | 로그/메트릭 수집(local tail·remote stream) | 미흡 | 노드별 수집 goroutine | **채널→단일 writer** 로 직렬화(파일 쓰기 레이스 제거) + 버퍼·레이트리밋(35) |
@@ -225,7 +226,7 @@ fingerprint 정의는 **§D-2.4 확정본**: `hash(binaries-set + genesis + conf
 ### E-2. 필요한 동기화 프리미티브
 - **`sync.Mutex`**: procman PID 맵(존재, 유지), 세션 결과맵, `env.json`/`session.json` 쓰기.
 - **`sync.RWMutex`(승격 검토)**: 다독 대상. **주의: obs.Bus는 현재 `sync.Mutex`**(bus.go:17)이며, capability 셋도 mutex — 다독이 지배적일 때만 RWMutex로 승격.
-- **`semaphore.Weighted`(x/sync)**: 노드 기동 동시성 상한(35 성능) — 버퍼드 채널로 대체 가능.
+- **`semaphore.Weighted`(x/sync)**: 노드 기동 동시성 상한 `max(1, min(cores-2,N))`(35 성능·S1 클램프) — 버퍼드 채널로 대체 가능.
 - **`errgroup.Group`**: 팬아웃 + **최초 에러 시 ctx 취소** → 형제 노드 정리(고아 방지, procman 연계).
 - **`sync.Once`**: registry/embed 1회 초기화.
 - **`context.Context`**: 전 goroutine에 전파 → 실패/타임아웃 시 일괄 취소·teardown.
