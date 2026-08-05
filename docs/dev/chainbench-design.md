@@ -91,6 +91,16 @@ type TestRecord interface {
 // Fingerprint = 정의서 선언값에서 파생(§D-2.4). session은 문자열 타입만 소유하고,
 // 산출은 testspec이 담당한다(의존 방향: testspec → session, 순환 없음).
 type Fingerprint string   // = hex(sha256(canonical)) 64자. env.json의 "fingerprint" 필드에 전체 기록.
+
+// TestStatus는 typed const enum(status.json의 result). 매직 문자열 금지.
+// 주의: 문자열 const는 iota처럼 타입이 전파되지 않으므로 각 줄에 타입을 반복한다.
+type TestStatus string
+const (
+    StatusPass    TestStatus = "pass"
+    StatusFail    TestStatus = "fail"
+    StatusBlocked TestStatus = "blocked"
+    StatusSkip    TestStatus = "skip"
+)
 ```
 **폴더명 길이(L5):** `Fingerprint`는 sha256 hex **64자**(전체는 env.json `fingerprint`에만 기록). **폴더명 env-id**는 `"env-"+앞 12hex` = **16자**(예: `env-a1b2c3d4e5f6`, 48-bit → 한 세션 내 소수 env에서 충돌 무시가능). 최장 경로 `.chainbench/UTC-YYYYMMDD-HHMMSS(19)/environments/env-xxxxxxxxxxxx(16)/logs/<node>.log` 는 각 컴포넌트 <255(NAME_MAX)·전체 <4096(PATH_MAX)로 안전. **전체 해시를 폴더명으로 쓰지 않는다**(경로 초과 방지).
 
@@ -99,7 +109,7 @@ type Fingerprint string   // = hex(sha256(canonical)) 64자. env.json의 "finger
 package testspec
 
 // Spec = 파싱·검증된 테스트 정의서(전 필드는 §4.3 스키마).
-type Spec struct { /* Id, ApplicableChains, Chain, Topology, Hardforks, Placement,
+type Spec struct { /* SchemaVersion, Id, ApplicableChains, Chain, Topology, Hardforks, Placement,
                       DefaultOn, PreActions, Steps, Assertions, PostActions, Timeouts */ }
 
 func Parse(raw []byte) (Spec, error)               // 필수/옵션 검증 + JSON schema
@@ -181,10 +191,13 @@ type Options struct {
 type ForkSwap struct { Node string; Fork string; ToBinary string }
 type Diagnosis struct {
     OK          bool
-    Mode        FailureMode   // EtcdJoinFailed | EtcdStale | ForkNotCrossed | QuorumLost | RPCUnready
+    Mode        FailureMode   // 분류된 실패모드(아래 typed const)
     Detail      string        // 실제 로그 라인(원인 은닉 금지)
     ProducerLog string        // 최종 실패 시 producer 로그 tail (세션 보존)
 }
+// FailureMode는 typed const enum(매직 문자열 금지). 라벨은 String()으로.
+type FailureMode int
+const ( EtcdJoinFailed FailureMode = iota; EtcdStale; ForkNotCrossed; QuorumLost; RPCUnready )
 ```
 > etcd: `etcdInit` 후 **리더 준비 확인 게이트** + **재기동 시 datadir 정리** + **gap 정렬**로 "바로 연결"(C-etcd §요약). 실패는 분류·기록.
 > **stale etcd의 실체(S2):** etcd는 노드 내장이므로 프로세스 종료 시 함께 종료된다 — "살아있는 etcd 정리"는 불필요. 문제는 **같은 datadir로 재기동** 시 남은 클러스터 상태(`cannot fetch cluster info`)이며, 해법은 **재-셋업 전 datadir 삭제**(`Teardown{RemoveDataDir:true}`, 종료와 별개 기능).
@@ -226,12 +239,13 @@ const ( Random Source = iota; LocalFile; RemoteDownload )
 // BLSDeriver: BLS 공개키·PoP 생성 seam. chainbench에 네이티브 BLS 크립토가 없어
 // **외부 `bootnode` 바이너리에 위임**(§2b·D). 주입식(부재 시 명확 오류) — Random 소스로
 // validator 키를 만들 때 이 Deriver로 BLS/PoP를 채운다(genesis bp-신원 등록에 필요).
-type BLSDeriver interface { Derive(private []byte) (bls, pop []byte, err error) }
+type BLSDeriver interface { Derive(ctx context.Context, private []byte) (bls, pop []byte, err error) } // 외부 bootnode 프로세스 실행 → ctx로 timeout
 
 type Registry interface {
     // opts로 BLSDeriver 주입. Random+validator면 BLS/PoP 생성, 아니면 생략.
-    Ensure(name string, src Source, ref string, opts EnsureOpts) (Key, error) // 생성/복사/다운로드 → 세션 keys/
-    Get(name string) (Key, bool)
+    // ctx: RemoteDownload는 SSH 네트워크 I/O이므로 취소·timeout 전파(첫 인자).
+    Ensure(ctx context.Context, name string, src Source, ref string, opts EnsureOpts) (Key, error) // 생성/복사/다운로드 → 세션 keys/
+    Get(name string) (Key, bool)                          // 인메모리 조회 — ctx 불필요
     UploadTo(ctx context.Context, fp driver.FileProvisioner, names []string, remotePath string) error // 랜덤키→remote
 }
 type EnsureOpts struct { NeedBLS bool; BLS BLSDeriver } // NeedBLS면 BLS 필수 — Deriver 없으면 오류(누출 방지)

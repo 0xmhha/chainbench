@@ -18,15 +18,16 @@
   4. 임의 노드 로그·키·테스트 결과가 session 하위 **결정적 경로**에 존재(경로 규칙 위반 0건).
 
 ## F2. 키 레지스트리  (요구 17,30 · design §3.5)
-- **입력**: 키 이름(op1/bp1/acctA), 소스(Random | LocalFile<path> | RemoteDownload<server,path>), (remote 실행 시) 업로드 대상 경로.
-- **동작**: 이름→키를 `keys/<name>/`에 일원화 저장. Random=생성, LocalFile=복사, RemoteDownload=ssh 다운로드. Random 키를 remote에서 쓰면 약속 경로로 **업로드**(driver.FileProvisioner). 노드키(신원)와 서명키(계정)를 같은 레지스트리에서 이름으로 참조.
-- **출력**: `keys/<name>/{private,address,bls?,pop?}`; 신규 생성 키는 genesis 등록에 사용(요구 17).
-- **에러·엣지**: 이름 충돌 → 오류(덮어쓰기 금지). remote 다운로드 실패 → 명확한 오류(부분 상태 금지). private 키는 로그·아티팩트 본문에 노출 금지(경로/주소만).
+- **입력**: 키 이름(op1/bp1/acctA), 소스(Random | LocalFile<path> | RemoteDownload<server,path>), **`EnsureOpts{NeedBLS, BLS BLSDeriver}`**(validator 키면 BLS/PoP 필요), (remote 실행 시) 업로드 대상 경로. (design §3.5)
+- **동작**: 이름→키를 `keys/<name>/`에 일원화 저장. Random=생성, LocalFile=복사, RemoteDownload=ssh 다운로드. **`NeedBLS`면 주입된 `BLSDeriver`(외부 `bootnode` 위임)로 BLS/PoP 생성 — Deriver 없으면 오류**(누출 방지). Random 키를 remote에서 쓰면 약속 경로로 **업로드**(driver.FileProvisioner). 노드키(신원)와 서명키(계정)를 같은 레지스트리에서 이름으로 참조.
+- **출력**: `keys/<name>/{private,address,bls?,pop?}`(bls/pop은 NeedBLS일 때); 신규 생성 키는 genesis 등록에 사용(요구 17).
+- **에러·엣지**: 이름 충돌 → 오류(덮어쓰기 금지). remote 다운로드 실패 → 명확한 오류(부분 상태 금지). **NeedBLS인데 BLSDeriver/`bootnode` 부재 → 명확 오류**(BLS 없이 진행 금지). private 키는 로그·아티팩트 본문에 노출 금지(경로/주소만).
 - **AC**
-  1. `Ensure("op1", Random)` 두 번 호출 시 동일 키 반환(멱등), `keys/op1/` 1개.
+  1. `Ensure(ctx, "op1", Random, "", {})` 두 번 호출 시 동일 키 반환(멱등), `keys/op1/` 1개.
   2. RemoteDownload한 키의 주소가 remote 원본과 일치.
   3. Random 키로 remote 실행 시 remote 약속 경로에 해당 키 존재.
   4. 서명 시 `keys/`의 이름으로 signer 지정 → 해당 주소로 서명됨.
+  5. `Ensure(ctx, validator키, Random, "", {NeedBLS:true, BLS:deriver})` → BLS/PoP 채워짐; deriver 없으면 오류.
 
 ## F3. TestSpec DSL 스키마  (요구 3,29,30,32 · design §3.2,§4.3)
 - **입력**: JSON 정의서(파일 또는 인라인).
@@ -119,13 +120,14 @@
   2. `WaitLog(pattern)`이 패턴 도착 시 그 파일·라인 반환.
   3. 수집 on/off 시 노드 블록생성 지표(간격) 유의미 변화 없음(무영향 근사).
 
-## F11. pre/post · 스텝 결과 · 복구  (요구 27,32,37 · design §3.2,§3.3)
+## F11. pre/post · 스텝 결과 · 복구  (요구 12,27,32,37 · design §3.2,§3.3)
 - **입력**: preActions/steps/postActions(모두 Action; preActions는 idempotent), 각 tx 스텝의 **결과 기대치**(`expectStatus` 기본 `"0x1"` | `expectRevert:true`), timeouts.
 - **동작**: 순서 `pre → steps → assert → post`.
   - **스텝 결과 시맨틱(중요)**: tx 스텝은 **선언한 기대 결과가 충족되면 성공**이다. 기본 = 채굴+`status 0x1`. **negative 테스트**(예: 최소미달 언스테이킹 revert)는 `expectRevert:true`(또는 `expectStatus:"0x0"`)를 선언하며, 이때 **revert가 곧 성공**이다. 따라서 **tx revert가 스텝 실패인지 여부는 기대치가 결정**한다(기대와 다를 때만 스텝 실패). **인프라 실패**(전송 불가/영수증 timeout)는 기대치와 무관하게 항상 실패. 이로써 design의 "atomic step(부분성공 없음)"은 "선언된 기대 충족 = 원자적 성공"으로 성립.
   - **preAction 실패 → 테스트 미수행(BLOCKED)**. 스텝 기대 불충족 또는 assertion 실패 → 테스트 **FAIL**. **postAction 실패 → 어떤 테스트인지 기록**하되 **판정 집계는 스텝기대+assertion 기준 독립**. 미설정 액션은 skip.
 - **출력**: status.json(pass/fail/blocked), steps.json(각 스텝 기대·실측·충족여부), postaction.json(성공여부·사유).
-  - **노드 생명주기 액션**(요구 12): `stopNode`/`startNode`/`restartNode`(+`chainMigrate`)는 스텝/액션으로 노드를 제어(procman·driver 경유). **destructive/fault 테스트**(WBFT-007/008 노드 중단→쿼럼, NODE-005 재기동→싱크복구, NODE-002 데이터 마이그레이션)에 필수. 중단/재기동 후 상태는 크로스노드 검증(F8)으로 확인.
+  - **노드 생명주기·fault 액션**(요구 12): `stopNode`/`startNode`/`restartNode`/`partition`/`healPartition`(+`chainMigrate`)는 스텝/액션으로 노드를 제어(procman·driver 경유). **destructive/fault 테스트**(WBFT-007/008 노드 중단→쿼럼, NODE-005 재기동→싱크복구, NODE-002 데이터 마이그레이션, **F8 분기=partition 유발**)에 필수.
+  - **자산·컨트랙트 액션**: `faucet`(K) = keyreg 서명키에 gas 자금 공급(genesis alloc 미충전 신규키는 faucet 후 tx 가능). `deployContract`/`registerContract`(F) = 바이트코드 배포→주소 캡처→(bp 등록 필요 시) 컨트랙트에 노드정보 등록(배포 컨트랙트 vs 시스템 컨트랙트 구분, 요구 참조). 모두 design §3.2 액션 레지스트리 소속.
 - **에러·엣지**: pre가 부분 성공 후 실패 → BLOCKED + 상태 기록(복구는 F13). post 실패가 판정을 바꾸지 않음. `expectRevert` 스텝이 오히려 성공(0x1) → 스텝 실패(기대 위반). 노드 중단 후 procman이 프로세스 종료를 검증(고아 0).
 - **AC**
   1. pre 실패 테스트 → status=blocked, steps/assert 미실행.
@@ -133,6 +135,8 @@
   3. **negative 스텝(`expectRevert`)이 revert → 스텝 성공**; 오히려 0x1이면 스텝 FAIL.
   4. post 실패 테스트 → status는 스텝기대+assertion 결과대로, postaction.json에 실패 기록.
   5. 액션 미설정 → 아무 것도 안 하고 다음 단계 진행.
+  6. `faucet(acctX)` 후 acctX 잔액 ≥ 요청액 → 이후 tx가 gas 부족 없이 성공.
+  7. `deployContract(bytecode)` → 영수증의 컨트랙트 주소 캡처, `registerContract`로 bp 등록 후 정상 동작.
 
 ## F12. Placement · Port  (요구 15,16 · design §3.4)
 - **입력**: 노드 목록(역할/sync/binary), 모드(local/remote), 포트 정책.
@@ -209,4 +213,4 @@
 **2차 검토 확정(코드 대조 반영):** genesis 4모드·진입점 `genesis.Build`(F9·L3) · 도메인 어휘 `bp`/`en` 표층 일관·enum 내부(F9·§3.9·L2) · etcd=wemix내장 `P2P+1` 예약(F12·L1) · supervisor가 기동 소유(F13·L6) · etcd gap은 N에서 파생(F13·L7) · datadir 삭제=종료와 별개(F13·S2) · SSH 자격증명 `remote-server-config.yaml`(F13·L6b) · 액션레지스트리 주입(design §3.2·P1) · 세마포어 `max(1,min(cores-2,N))`(§6·S1) · schemaVersion·키0600·세션GC·exit code(F16·O2~O5).
 
 ## 부록. 요구사항 ↔ F 추적
-1-3→F3,F9 · 4-6→F4,F8,F12 · 7-8→F7 · 9-11,16→F2,F12,F13 · 12→F13 · 13→F4 · 14,33-35→F1,F10,F15,F16 · 15-16→F12 · 17→F2,F16 · 18-26→F9,F13 · 27-28→F7,F11 · 29,30,32→F3,F5,F6 · 31→F14 · 36→F9 · 37→전체(F16 운영·보안).
+1-3→F3,F9 · 4-6→F4,F8,F12 · 7-8→F7 · 9-11,16→F2,F12,F13 · 12→F11,F13 · 13→F4 · 14,33-35→F1,F10,F15,F16 · 15-16→F12 · 17→F2,F16 · 18-26→F9,F13 · 27-28→F7,F11 · 29,30,32→F3,F5,F6 · 31→F14 · 36→F9 · 37→전체(F16 운영·보안).
