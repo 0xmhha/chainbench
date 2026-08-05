@@ -24,9 +24,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // eventTopic is the fixed 32-byte topic the test contract logs.

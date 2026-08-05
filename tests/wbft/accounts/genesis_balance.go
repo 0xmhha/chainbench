@@ -25,7 +25,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 func init() {

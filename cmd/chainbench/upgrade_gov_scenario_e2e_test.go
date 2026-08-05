@@ -40,8 +40,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // Deterministic operator private keys (TEST fixtures — funded only on the

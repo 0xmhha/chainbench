@@ -52,7 +52,7 @@ package consensus
 import (
 	"strings"
 
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 func init() {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/chains/wemix/deploy"
-	"github.com/0xmhha/chainbench/pkg/core/remote"
+	"github.com/0xmhha/chainbench/internal/chains/wemix/deploy"
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // newRemoteCmd is the remote closed-network deployment command group (the

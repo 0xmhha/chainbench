@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/core/capability"
+	"github.com/0xmhha/chainbench/internal/core/capability"
 )
 
 func newCapabilitiesCmd() *cobra.Command {

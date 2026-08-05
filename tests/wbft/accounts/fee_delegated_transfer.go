@@ -29,8 +29,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // feeDelegRecipient starts unfunded so its post-transfer balance equals exactly

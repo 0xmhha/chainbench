@@ -32,8 +32,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // xferAmount is a small value transfer (1e15 wei) that leaves headroom for gas.

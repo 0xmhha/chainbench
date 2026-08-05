@@ -32,8 +32,8 @@
 package consensus
 
 import (
-	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 func init() {

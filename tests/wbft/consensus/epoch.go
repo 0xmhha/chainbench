@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // epochLength is the stablenet regression epoch length (genesis anzeon.wbft).

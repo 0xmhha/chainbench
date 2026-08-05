@@ -67,7 +67,7 @@ package anzeon
 import (
 	"math/big"
 
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // p256Precompile is the secp256r1 (RIP-7212) precompile address activated by Boho.

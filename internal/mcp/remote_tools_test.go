@@ -1,0 +1,50 @@
+package mcp_test
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/state"
+)
+
+func TestRemoteRPCTool(t *testing.T) {
+	srv := rpcMock(map[string]any{"eth_blockNumber": "0x2a"})
+	defer srv.Close()
+	dir := t.TempDir()
+	// save a network pointing at the mock endpoint (as attach would).
+	ns := node.NodeSet{
+		Chain: "wbft", Network: "prod",
+		Nodes: []node.Node{{Index: 1, Role: node.RoleEndpoint, RPCURL: srv.URL}},
+	}
+	if err := state.SaveNetwork(dir, ns); err != nil {
+		t.Fatal(err)
+	}
+
+	text, isErr := callText(t, newServer(), "chainbench_remote_rpc", map[string]any{
+		"name": "prod", "state_dir": dir, "method": "eth_blockNumber",
+	})
+	if isErr || !strings.Contains(text, "0x2a") {
+		t.Fatalf("remote_rpc: err=%v text=%s", isErr, text)
+	}
+
+	// unknown network is an error.
+	if _, isErr := callText(t, newServer(), "chainbench_remote_rpc", map[string]any{
+		"name": "nope", "state_dir": dir, "method": "eth_blockNumber",
+	}); !isErr {
+		t.Error("unknown network should error")
+	}
+}
+
+func TestTestListTool(t *testing.T) {
+	// tests/all is imported by the test binary, so at least one case is registered.
+	text, isErr := callText(t, newServer(), "chainbench_test_list", map[string]any{})
+	if isErr || text == "no test cases" || text == "" {
+		t.Fatalf("test_list should list registered cases: err=%v text=%q", isErr, text)
+	}
+	// a category that does not exist yields the empty message.
+	text, _ = callText(t, newServer(), "chainbench_test_list", map[string]any{"category": "does-not-exist"})
+	if text != "no test cases" {
+		t.Errorf("unknown category should be empty: %q", text)
+	}
+}

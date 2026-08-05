@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/consensus/upgrade"
-	"github.com/0xmhha/chainbench/pkg/core/registry"
+	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // newUpgradeCmd drives the concurrent consensus-family handoff (go-wemix+etcd ->

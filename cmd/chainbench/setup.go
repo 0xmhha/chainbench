@@ -12,12 +12,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/chains/external"
-	"github.com/0xmhha/chainbench/pkg/core/config"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/setup"
-	"github.com/0xmhha/chainbench/pkg/core/registry"
-	"github.com/0xmhha/chainbench/pkg/core/state"
-	"github.com/0xmhha/chainbench/pkg/core/topology"
+	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
+	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/topology"
 )
 
 // saveTopology copies the resolved topology file into the data root as

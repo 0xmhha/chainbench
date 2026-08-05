@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/0xmhha/chainbench/pkg/core/obs"
-	"github.com/0xmhha/chainbench/pkg/dashboard"
+	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
 func main() {
