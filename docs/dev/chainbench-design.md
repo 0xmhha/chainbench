@@ -122,8 +122,9 @@ type Deps struct {
 type Registry interface {
     Action(name string) (Action, bool)
     Assertion(name string) (Assertion, bool)
-    RegisterAction(name string, a Action)         // ensureChain/ensureStaker/tx/wait/unstake/
-                                                  // stopNode/startNode/restartNode/chainMigrate ...
+    RegisterAction(name string, a Action)         // ensureChain/ensureStaker/tx/wait/unstake/faucet(K)/
+                                                  // deployContract/registerContract(F)/
+                                                  // stopNode/startNode/restartNode/partition/healPartition(E)/chainMigrate ...
     RegisterAssertion(name string, a Assertion)   // Equal/NotNil/EqualWith/Len/EqualHashAt ...
 }
 func NewRegistry(withBuiltins bool) Registry      // 내장 액션·검증 세트로 초기화(전역 init 없음)
@@ -139,9 +140,13 @@ type Action    interface{ Do(ctx context.Context, ac *ActionCtx) error }        
 type Assertion interface{ Check(ctx context.Context, ac *AssertCtx) (AssertResult, error) }
 type ActionCtx struct { Env session.Environment; Deps *Deps; Rec session.TestRecord; Args map[string]any }
 type AssertCtx struct { Env session.Environment; Deps *Deps; On []node.Node; Spec map[string]any }
-// 액션·검증 등록은 **주입된 Registry**(위)로 수행(전역 함수 아님). 노드 생명주기 액션
-// (stopNode/startNode/restartNode/chainMigrate)은 destructive/fault 테스트용(WBFT-007/008, NODE-005).
-// **타입 안전(M1):** ActionCtx.Args·AssertCtx.Spec 의 `any`는 DSL 경계값이며, Parse가 스키마 검증 시
+// 액션·검증 등록은 **주입된 Registry**(위)로 수행(전역 함수 아님). 노드 생명주기·fault 액션
+// (stopNode/startNode/restartNode/**partition·healPartition**/chainMigrate)은 destructive/fault 테스트용
+// (WBFT-007/008 쿼럼, NODE-005 싱크복구, **F8 AC-2 인위적 분기**=partition으로 유발). partition은
+// network_partition(MCP/driver)로 실현. **faucet**(K): keyreg 서명키(op1/acctA)에 gas 자금 공급 —
+// genesis alloc으로 미리 funded되지 않은 신규 서명키는 faucet 스텝으로 충전 후 tx. **deployContract/
+// registerContract**(F): 바이트코드 배포→주소 캡처→(bp 등록 필요 시) 컨트랙트에 노드정보 등록.
+// **타입 안전(Q1):** ActionCtx.Args·AssertCtx.Spec 의 `any`는 DSL 경계값이며, Parse가 스키마 검증 시
 // 각 액션/검증이 요구하는 필드로 **조기 타입확정**(예: gas int, expected typed)해 강타입 파생값으로 좁힌다.
 ```
 
@@ -199,9 +204,14 @@ type NodePlacement struct {
     DataPath string
 }
 type Allocator interface {
-    Allocate(reqs []NodeReq, mode Mode) ([]NodePlacement, error)
+    // Allocate는 배치 전 **용량 사전검증(fail-fast)** 후 배치한다:
+    //  - min: BFT 블록생성 최소(validators ≥ 4) 미달 → 오류
+    //  - max: local=가용 포트 대역, remote=Σ(서버 슬롯, 서버당 3~4노드) 초과 → 오류
+    Allocate(reqs []NodeReq, mode Mode, cap Capacity) ([]NodePlacement, error)
 }
+type Capacity struct { MinValidators int; Hosts int; SlotsPerHost int; PortBandSize int } // C2 Environment 불변식
 ```
+- **용량 검증(C·요구 5)**: 노드 수가 **min(≥4 BFT)·max(서버×슬롯 or 포트대역)** 를 벗어나면 배치 이전에 실패. 원격 자원 낭비 방지(§0-2-3). `topology`가 개수, `place`가 물리 용량 담당.
 - **포트 타입(L1):** etcd는 wemix **바이너리 내장**이고 그 포트는 바이너리가 `P2P+1`로 파생하므로, launch flag가 아니라 **예약 대상**이다. 이 예약은 기존 `portplan.Ports`(P2P·Etcd·HTTP·WS·Auth, p2pStep≥2·rpcStep≥3로 **P2P 밴드와 RPC 밴드 분리** → 충돌 없음)에 이미 존재하므로 place는 이를 재사용(consolidate)한다. `node.Endpoints`(P2P/HTTP/WS/Auth/**Metrics**, etcd 필드 없음)는 별개 타입 — node table 직렬화용이며 etcd 예약은 `portplan.Ports`가 소유. (place가 두 타입의 필드차이(Metrics↔Etcd)를 흡수.)
 - `LocalStepped`: index 기반 결정적 스텝. `LocalOSAssigned`: `:0` 바인드 후 회수(고정포트 이중바인드 근절, E-3-1). `RemotePerHost`: 동일 포트 + 서버별 IP(요구 16).
 
@@ -213,11 +223,18 @@ type Key struct { Name, Address string; Private []byte; BLS, PoP []byte }
 type Source int
 const ( Random Source = iota; LocalFile; RemoteDownload )
 
+// BLSDeriver: BLS 공개키·PoP 생성 seam. chainbench에 네이티브 BLS 크립토가 없어
+// **외부 `bootnode` 바이너리에 위임**(§2b·D). 주입식(부재 시 명확 오류) — Random 소스로
+// validator 키를 만들 때 이 Deriver로 BLS/PoP를 채운다(genesis bp-신원 등록에 필요).
+type BLSDeriver interface { Derive(private []byte) (bls, pop []byte, err error) }
+
 type Registry interface {
-    Ensure(name string, src Source, ref string) (Key, error)  // 생성/복사/다운로드 → 세션 keys/에 저장
+    // opts로 BLSDeriver 주입. Random+validator면 BLS/PoP 생성, 아니면 생략.
+    Ensure(name string, src Source, ref string, opts EnsureOpts) (Key, error) // 생성/복사/다운로드 → 세션 keys/
     Get(name string) (Key, bool)
     UploadTo(ctx context.Context, fp driver.FileProvisioner, names []string, remotePath string) error // 랜덤키→remote
 }
+type EnsureOpts struct { NeedBLS bool; BLS BLSDeriver } // NeedBLS면 BLS 필수 — Deriver 없으면 오류(누출 방지)
 ```
 - 모든 키(노드키·서명키)를 `keys/<name>/`에 이름매핑 → op1/bp1 매핑(§D-2.2). remote 기존키는 다운로드, 랜덤키 remote 사용 시 업로드(요구 17).
 
@@ -258,7 +275,7 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
 | **④ upgrade-inherit** | wemix 체인이 쓰던 genesis를 그대로 받아 업그레이드용 항목만 추가 | `MergeOverride(wemixGenesis, upgradeOverlay)` (=`--genesis-overlay`) |
 > 주의: `BuildGenesis`는 **`ConsensusFamily`의 메서드**(`registry.go:46`)이고, genesis 패키지의 진입점은 **`genesis.Build`**(`genesis.go:38`)다 — 이름 혼동 금지. 오버레이는 항상 새 바이트 반환(원본 불변, E-3-3).
 
-### 3.9 역할 용어집 (요구 4 · L2·M2)
+### 3.9 역할 용어집 (요구 4 · L2)
 **단일 도메인 어휘 `bp`/`en`/`boot`를 정의서와 아티팩트(env.json) 전반에서 일관 사용**한다. 코드 `node.Role` enum("validator"/"endpoint"/"boot")은 **내부 식별자**이며, session이 env.json 기록 시 도메인 용어로 직렬화한다(단일 소유자에서 1회 변환).
 | 도메인 용어 (정의서·env.json) | 코드 enum (node.Role, 내부) | 의미 |
 |-------------------------------|-----------------------------|------|
@@ -290,9 +307,9 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
              "ports":{"p2p":30010,"http":40010,"ws":40011,"auth":40012,"metrics":0}} ] } // = node.Endpoints. etcd=p2p+1(30011)는 파생·예약(portplan)이며 별도 저장 안 함
 ```
 ### 4.3 `spec.json` (TestSpec DSL — 정본 §D-2)
-필수: `id, chain(name+binary|binaries), assertions`. 옵션: 그 외.
+필수: `schemaVersion, id, chain(name+binary|binaries), assertions`(F16-O2). 옵션: 그 외.
 ```jsonc
-{ "id":"GOV-005", "applicableChains":"wbft",
+{ "schemaVersion":"1", "id":"GOV-005", "applicableChains":"wbft",
   "chain":{"name":"wbft","binary":"go-wbft","config":"...","genesisOverlay":{...}},
   "topology":{"bp":7,"en":5,"sync":{"bp1":"archive","default":"full"},"bootnode":15},
   "hardforks":{"croissant":100,"brioche":50},
@@ -399,7 +416,7 @@ hosts: [10.0.0.11, 10.0.0.12, 10.0.0.13]   # 1서버=1노드 (동일포트+다�
 | 항목 | 결정 | 앵커 |
 |------|------|------|
 | genesis 소싱 | 별도 모듈 4모드(existing/build/template+override/upgrade-inherit); 진입점 `genesis.Build`(≠Family.BuildGenesis) | §3.8 (L3) |
-| 역할 용어 | 표층은 도메인 어휘 `bp`/`en`/`boot` 일관 사용, 코드 enum(validator/endpoint)은 내부; `RoleEN` dead code | §3.9 (L2·M2) |
+| 역할 용어 | 표층은 도메인 어휘 `bp`/`en`/`boot` 일관 사용, 코드 enum(validator/endpoint)은 내부; `RoleEN` dead code | §3.9 (L2) |
 | etcd 포트 | wemix 내장, `P2P+1` 예약(`portplan.Ports`), RPC밴드와 분리 | §3.4 (L1) |
 | fingerprint 길이 | 전체 sha256은 env.json에만, 폴더는 `env-`+12hex | §3.1 (L5) |
 | 기동 소유권 | supervisor.BringUp이 소유(setup=plan+프리미티브) | §3.3 (L6) |

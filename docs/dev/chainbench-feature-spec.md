@@ -30,7 +30,7 @@
 
 ## F3. TestSpec DSL 스키마  (요구 3,29,30,32 · design §3.2,§4.3)
 - **입력**: JSON 정의서(파일 또는 인라인).
-- **동작**: `Parse`가 **필수/옵션** 검증(JSON schema). 필수: `id`, `chain(name + binary|binaries)`, `assertions`. 옵션: 그 외 전부. 값이 multiple이면 `,` 분리, 중첩 접근은 닷경로(`a.b.c`). `applicableChains`로 체인 적용성 선언.
+- **동작**: `Parse`가 **필수/옵션** 검증(JSON schema). 필수: `schemaVersion`(F16-O2), `id`, `chain(name + binary|binaries)`, `assertions`. 옵션: 그 외 전부. 값이 multiple이면 `,` 분리, 중첩 접근은 닷경로(`a.b.c`). `applicableChains`로 체인 적용성 선언.
   - **genesis(요구 7 "필수")**: spec에 별도로 적지 않아도 **chain 플러그인의 `GenesisTemplate()`이 기본 genesis를 제공**하므로 genesis는 **항상 존재**. spec의 `chain.genesisOverlay`/`hardforks`는 그 위에 얹는 **선택적 override**. 즉 "genesis 없음" 상태는 불가.
   - **확정(§9): `chain.name` = 이 테스트가 도는 대상 체인. `applicableChains` = 호환 체인 집합(예: `"wbft,stablenet"` 같은 합의계열).** `chain.name`은 `applicableChains`에 **포함**되어야 하고, `applicableChains` 미지정 시 `[chain.name]`으로 간주. 스위트가 대상 체인을 `applicableChains` 내에서 바꿔 재사용(체인-스윕) 가능. 현재 세션 대상 체인이 `applicableChains`에 없으면 **SKIP**.
 - **출력**: 파싱된 `Spec`; 검증 실패 시 라인/필드가 명시된 오류.
@@ -93,7 +93,7 @@
 - **에러·엣지**: 일부 노드 응답없음 → 그 노드 표시 후 실패. 높이 H 미도달 → wait 후 재시도(timeout).
 - **AC**
   1. 정상망: 전 노드 동일 hash → 무분기 pass.
-  2. 인위적 분기(파티션): 두 노드 hash 상이 → 검증 fail + 어긋난 노드 기록.
+  2. 인위적 분기(파티션): **`partition` 액션(fault, design §3.2)으로 유발** → 두 노드 hash 상이 → 검증 fail + 어긋난 노드 기록. `healPartition`으로 복구.
   3. en이 bp 높이-2 이내 → 싱크 pass.
 
 ## F9. 바이너리 셋 · 하드포크 2 type  (요구 25,26,36 · design §3.3,§4.2)
@@ -143,6 +143,7 @@
   1. 연속 2회 로컬 기동(back-to-back)에서 포트 이중바인드 0건.
   2. `--ports fixed` → 동일 index 노드가 동일 포트(재현).
   3. remote 3서버 → 동일 포트·서로 다른 IP.
+  4. **용량 검증(C·요구 5)**: validators<4 → 배치 전 오류; 노드 수 > 가용 용량(local 포트대역 / remote Σ서버슬롯) → 배치 전 오류(fail-fast).
 
 ## F13. 기동 소유·etcd 리더게이트·헬스 복구·teardown  (요구 3,12,37 · design §3.3, C-etcd)
 - **입력**: plan, Options{LeaderGate, AlignJoinGap, MaxAttempts, Backoff, ForkSwaps}. remote 시 SSH 접속정보는 **`remote-server-config.yaml`(gitignore)** 에서 로드(L6b).

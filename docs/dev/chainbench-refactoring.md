@@ -62,7 +62,7 @@
 |---|---|---|
 | `core/session` | `.chainbench/<session>/` 정본 소유·경로 파생·기록(D-1) | 흩어진 로그/state 경로 로직 |
 | `testspec` | 정의서 파싱·검증(필수/옵션·닷경로·`,`)·해석(§D-2) | testkit Go-func 등록 |
-| `core/place` | 통합 배치·포트(local 결정적/OS할당, remote 동일포트)(D-4) | `portplan`(71)+`topology`(149)+setup 내 배치 로직 **CONSOLIDATE** |
+| `core/place` | 통합 배치·포트(local 결정적/OS할당, remote 동일포트)(D-4) + **용량검증(min≥4·max, C)** | `portplan`(71)·`topology`(149)를 **내부 라이브러리로 재사용**(삭제 아님)하고 setup 내 배치 로직만 흡수해 **단일 seam으로 통합**. (component §1b C8은 portplan을 공유커널로 유지) |
 | `core/keyreg` | 키 레지스트리(생성·복사·다운·업, 이름매핑)(§D-2.2) | `core/keys`(136)+`deploy/{credentials,keys}` **CONSOLIDATE** |
 | `core/collector` | 라이브 로그 tail + chainstate(블록·bp참여·싱크·피어·분기) 수집(D-1, item 34, §D-2.5·2.7) | `probe`(286)+`obs` 확장 |
 | `core/supervisor` | 헬스 게이트·etcd 리더게이트·백오프 복구(C-etcd, D-6) | `runGovHandoff` 재시도(원인은닉) 대체 |
@@ -92,7 +92,7 @@
 | WP | 범위(패키지·판정) | design 앵커 | feature-spec | 완료 게이트(AC) |
 |----|-------------------|-------------|--------------|-----------------|
 | **WP1** | `session` [NEW] + `state` 이동 [REFACTOR] | §3.1, §4.1·4.2 | F1 · **F16**(세션 GC·retention·CI exit code) | F1-1..4: 커맨드=세션1, 2축(env/tests) 결정적 경로 · F16-3·4: `clean --older-than`·exit code |
-| **WP2** | `place` [NEW·CONSOLIDATE portplan+topology] | §3.4 | F12 | F12-1: back-to-back 포트 이중바인드 0 |
+| **WP2** | `place` [NEW·CONSOLIDATE portplan+topology] | §3.4 | F12 | F12-1: 포트 이중바인드 0 · **F12-4: 용량검증(min≥4·max) fail-fast(C)** |
 | **WP3** | `testspec`+`testrun` [REPLACE] · 결과모델 `testkit.Report` 재사용 | §3.2, §4.3·4.4 | F3·F4·F5·F6·F11 · **F16**(spec schemaVersion) | F3-1/F11-2·3: 파싱검증·**negative 스텝 시맨틱** · F16-1: schemaVersion 거부 |
 | **WP4** | `supervisor` [NEW·기동 소유] + `setup/verify/upgrade` 동시화 [REFACTOR] + `procman` `{PID,datadir}`·etcd관측 [EXTEND] | §3.3, §6, C-etcd | F13 | F13-2·4: Mode 정확·고아 0 · **`make test-race` 통과(O6)** |
 | **WP5** | `keyreg` [NEW·CONSOLIDATE keys+deploy] + `collector` [NEW] + fingerprint 재사용 | §3.5·3.6, §D-2.4 | F2·F7·F8·F10 · **F16**(키파일 0600) | F7-1·2: 재사용/재구성 판정, F10-1: 로그 누락 0 · F16-2: `keys/*/private` 0600 |

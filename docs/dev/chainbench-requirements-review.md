@@ -70,7 +70,7 @@
 | 4,5,6 역할·저장·혼합 | `topology`가 role + `full/snap/archive` 검증 | 🟡 부분 | live 유사 **혼합 프리셋/강제(6)** 없음; 현 handoff는 1P+4V(EN 없음)로 비-live |
 | 7,8,36 설정소스·우선순위·바이너리메타 | genesis 템플릿 + `profiles` + flag | 🟡 부분 | **우선순위 미정**, 통합 `--config` 없음, **바이너리 빌드버전 메타 기록 없음(36)** |
 | 9,10,11,16 remote | `core/remote`(ssh/auth), `driver.RemoteDriver`, `chains/wemix/deploy` | 🟡 부분 | wemix 전용에 치우침; **모든 체인 일반화**·노드구성 upload 표준화 미흡 |
-| 12 노드관리 | `procman`(PID추적, StopAll 검증) | 🟢 local | **remote 프로세스 관리·검증** 표준화 미흡 |
+| 12 노드관리 | `procman`(PID추적·StopAll 검증 로직 존재) | 🟡 부분 | **StopAll 검증·leak-report 로직은 있으나 프로덕션 stop 경로에 미배선**(실제 stop은 검증 없는 `Kill()`, 테스트 전용)·**로컬 PID만**; remote 프로세스 관리·검증 표준화 미흡 (컴포넌트 §2b) |
 | 13 RPC검증 | `pipeline/verify` + `core/rpc` | 🟢 | 노드별 폴링 **순차**(verify.go:90) |
 | 14,33,34,35 아티팩트·디버깅 | 로그→`<dataRoot>/logs/`, `nodeset.json`, `obs`+`dashboard`(SSE) | 🔴 미흡 | **`.chainbench` 세션 레이아웃 부재**; 테스트별 요청/응답/결과 기록 없음; 블록·bp참여·싱크·분기 수집 **깊이 부족**; remote 무영향 수집 미검증 |
 | 15,16 포트 | `portplan`(스텝) | 🟡 부분 | **handoff는 고정포트(30010 step10)** → 연속/병렬 충돌(이 세션 실측 문제); local스텝·remote동일포트 **단일 배치기 부재** |
