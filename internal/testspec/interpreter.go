@@ -76,8 +76,9 @@ func NewRegistry(withBuiltins bool) Registry {
 		actions:    make(map[string]Action),
 		assertions: make(map[string]Assertion),
 	}
-	// TODO(T3): seed built-in actions/assertions when withBuiltins is set.
-	_ = withBuiltins
+	if withBuiltins {
+		seedBuiltins(r)
+	}
 	return r
 }
 
