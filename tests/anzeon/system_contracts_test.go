@@ -11,9 +11,9 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/anzeon" // register the cases
 
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // scMock answers eth_getCode with deployed code and eth_call with a 32-byte word.

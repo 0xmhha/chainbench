@@ -29,9 +29,9 @@ package anzeon
 import (
 	"math/big"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 const accountManager = "0x0000000000000000000000000000000000B00003"

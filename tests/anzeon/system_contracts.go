@@ -28,8 +28,8 @@
 package anzeon
 
 import (
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // Fixed anzeon system-contract addresses (regression/lib/common.sh).

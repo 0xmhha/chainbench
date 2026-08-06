@@ -23,9 +23,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // returns42Init is the creation bytecode of a contract whose runtime code

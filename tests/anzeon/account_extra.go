@@ -41,8 +41,8 @@ package anzeon
 import (
 	"math/big"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // account-extra fixture addresses (pkg/chains/stablenet/overlays/account-extra.json).

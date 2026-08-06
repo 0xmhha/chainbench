@@ -14,14 +14,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/consensus/poa"
-	"github.com/0xmhha/chainbench/pkg/consensus/upgrade"
-	"github.com/0xmhha/chainbench/pkg/core/driver"
-	"github.com/0xmhha/chainbench/pkg/core/genesis"
-	"github.com/0xmhha/chainbench/pkg/core/keys"
-	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/core/registry"
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // bigDec parses a decimal wei string into a *big.Int (0 on empty/invalid).

@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/0xmhha/chainbench/pkg/chains/all"
+	_ "github.com/0xmhha/chainbench/internal/chains/all"
 
 	_ "github.com/0xmhha/chainbench/tests/all"
 
-	"github.com/0xmhha/chainbench/pkg/mcp"
+	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
 var version = "0.0.0-dev"

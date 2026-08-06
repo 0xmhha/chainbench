@@ -28,7 +28,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 const zeroHash = "0x0000000000000000000000000000000000000000000000000000000000000000"

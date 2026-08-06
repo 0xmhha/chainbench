@@ -30,7 +30,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // minBaseFeeWei is the anzeon minimum base fee (regression lib/common.sh

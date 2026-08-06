@@ -10,11 +10,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/core/obs"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/pkg/core/state"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
+	"github.com/0xmhha/chainbench/internal/core/state"
 )
 
 // fundedKeyFromEnv reads an optional funded-account private key from

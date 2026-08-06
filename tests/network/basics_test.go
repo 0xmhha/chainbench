@@ -11,9 +11,9 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/network" // register the cases
 
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // mockNode answers eth_getBlockByNumber(0) with a fixed genesis hash and

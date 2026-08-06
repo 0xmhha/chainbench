@@ -6,9 +6,9 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus" // register the cases
 
-	"github.com/0xmhha/chainbench/pkg/core/node"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 var quorumCases = []string{"commit-signers-quorum", "wbft-seals-quorum", "prev-seals-quorum"}

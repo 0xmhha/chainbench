@@ -43,8 +43,8 @@ package accounts
 import (
 	"strings"
 
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // p256VerifyAddr is the RIP-7212 secp256r1 verification precompile address.

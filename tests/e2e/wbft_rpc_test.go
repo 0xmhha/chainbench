@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // TestE2E_WbftAdminPeers ports wemix4 RPC-019 (admin_peers): on a multi-node

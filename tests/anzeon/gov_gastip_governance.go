@@ -25,9 +25,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/0xmhha/chainbench/pkg/accounts"
-	"github.com/0xmhha/chainbench/pkg/core/rpc"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 // Known WBFTExtra GasTip values (wei) from the regression profile.

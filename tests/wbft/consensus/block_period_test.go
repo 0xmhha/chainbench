@@ -9,9 +9,9 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus" // register the case
 
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/attach"
-	"github.com/0xmhha/chainbench/pkg/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/pkg/testkit"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
+	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 func TestBlockPeriodCase_Passes(t *testing.T) {

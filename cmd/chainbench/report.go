@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/obs"
 )
 
 func newReportCmd() *cobra.Command {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/pkg/core/obs"
-	"github.com/0xmhha/chainbench/pkg/dashboard"
+	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
 // dashboardURL is set by the persistent --dashboard flag; when non-empty, a
