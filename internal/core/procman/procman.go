@@ -5,10 +5,16 @@
 // leaks. It exists so test harnesses (and the local driver) stop relying on
 // best-effort `pkill -f <datadir>` sweeps, which leave orphans that hold ports
 // (e.g. the go-wemix producer's embedded etcd) and make subsequent runs flaky.
+//
+// It also tracks each process's data directory and remote host: StopAll stops
+// and verifies local processes, StopRemote stops remote ones via an injected
+// kill, and RemoveDataDirs deletes data directories as a step separate from
+// stopping (design S2).
 package procman
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,31 +28,51 @@ import (
 type Proc struct {
 	PID   int
 	Label string
+	// DataDir is the process's data directory, if known. Removing it is a
+	// separate operation from stopping the process (design S2).
+	DataDir string
+	// Host is the remote host the process runs on; empty for a local process
+	// managed via OS signals.
+	Host string
 }
+
+// IsRemote reports whether the process runs on a remote host.
+func (p Proc) IsRemote() bool { return p.Host != "" }
 
 // Manager tracks a set of launched processes and tears them down verifiably.
 type Manager struct {
 	mu    sync.Mutex
 	procs []Proc
-	seen  map[int]bool
+	seen  map[string]bool
 }
 
 // New returns an empty Manager.
-func New() *Manager { return &Manager{seen: map[int]bool{}} }
+func New() *Manager { return &Manager{seen: map[string]bool{}} }
 
-// Track registers a PID (deduplicated). PIDs <= 1 are ignored (0 = attached /
-// unknown; 1 = init, never ours).
+// procKey deduplicates by host and pid, since a local and a remote process can
+// share a pid number.
+func procKey(host string, pid int) string { return host + ":" + strconv.Itoa(pid) }
+
+// Track registers a local PID (deduplicated). PIDs <= 1 are ignored (0 =
+// attached / unknown; 1 = init, never ours).
 func (m *Manager) Track(pid int, label string) {
-	if pid <= 1 {
+	m.TrackProc(Proc{PID: pid, Label: label})
+}
+
+// TrackProc registers a full process record (deduplicated by host+pid),
+// carrying its data directory and remote host when known.
+func (m *Manager) TrackProc(p Proc) {
+	if p.PID <= 1 {
 		return
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.seen[pid] {
+	key := procKey(p.Host, p.PID)
+	if m.seen[key] {
 		return
 	}
-	m.seen[pid] = true
-	m.procs = append(m.procs, Proc{PID: pid, Label: label})
+	m.seen[key] = true
+	m.procs = append(m.procs, p)
 }
 
 var pidRe = regexp.MustCompile(`pid=(\d+)`)
@@ -115,12 +141,13 @@ func Alive(pid int) bool {
 	return err == nil || err == syscall.EPERM
 }
 
-// StopAll terminates every tracked process and verifies it is gone: it sends
-// SIGTERM, waits up to grace for a clean exit, SIGKILLs any survivor, then polls
-// briefly and returns the PIDs still alive (leaks — expected to be empty). It is
-// safe to call more than once.
+// StopAll terminates every tracked LOCAL process and verifies it is gone: it
+// sends SIGTERM, waits up to grace for a clean exit, SIGKILLs any survivor, then
+// polls briefly and returns the PIDs still alive (leaks — expected to be empty).
+// Remote processes are handled by StopRemote, since their liveness cannot be
+// probed with a local signal. Safe to call more than once.
 func (m *Manager) StopAll(grace time.Duration) []int {
-	procs := m.Tracked()
+	procs := localProcs(m.Tracked())
 
 	// Phase 1: polite SIGTERM to all still-alive.
 	for _, p := range procs {
@@ -170,4 +197,61 @@ func waitAllGone(procs []Proc, timeout time.Duration) bool {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+// localProcs returns the subset of procs that run on the local host.
+func localProcs(all []Proc) []Proc {
+	out := make([]Proc, 0, len(all))
+	for _, p := range all {
+		if !p.IsRemote() {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// StopRemote stops every tracked remote process using kill (e.g. an SSH kill),
+// returning any errors. Remote liveness cannot be probed with a local signal,
+// so this is best-effort by design; the caller verifies via the transport.
+func (m *Manager) StopRemote(kill func(host string, pid int) error) []error {
+	var errs []error
+	for _, p := range m.Tracked() {
+		if !p.IsRemote() {
+			continue
+		}
+		if err := kill(p.Host, p.PID); err != nil {
+			errs = append(errs, fmt.Errorf("procman: stop %s pid %d: %w", p.Host, p.PID, err))
+		}
+	}
+	return errs
+}
+
+// DataDirs returns the unique, non-empty data directories of tracked processes,
+// so they can be removed separately from stopping (design S2).
+func (m *Manager) DataDirs() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	seen := map[string]bool{}
+	var out []string
+	for _, p := range m.procs {
+		if p.DataDir == "" || seen[p.DataDir] {
+			continue
+		}
+		seen[p.DataDir] = true
+		out = append(out, p.DataDir)
+	}
+	return out
+}
+
+// RemoveDataDirs deletes each tracked data directory. Stopping a node and
+// removing its datadir are separate operations; call this only after the nodes
+// are stopped (design S2). It returns any removal errors.
+func (m *Manager) RemoveDataDirs() []error {
+	var errs []error
+	for _, dir := range m.DataDirs() {
+		if err := os.RemoveAll(dir); err != nil {
+			errs = append(errs, fmt.Errorf("procman: remove datadir %s: %w", dir, err))
+		}
+	}
+	return errs
 }
