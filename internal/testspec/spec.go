@@ -4,17 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
-
-// errNotImplemented marks a frozen-but-unimplemented contract (used by the
-// interpreter until its behavior lands).
-var errNotImplemented = errors.New("testspec: not implemented")
 
 // ChainSpec selects the chain, its binary/binaries, and genesis overlay for a
 // test. A single Binary applies to all nodes; Binaries maps roles to binaries

@@ -104,7 +104,3 @@ type interpreter struct {
 func NewInterpreter(d Deps) Interpreter {
 	return &interpreter{deps: d}
 }
-
-func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error) {
-	return session.TestStatus(""), errNotImplemented
-}
