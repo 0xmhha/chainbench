@@ -20,7 +20,7 @@
 | 4 | **procman 배선+확장(M6 핵심)** | 최우선 안전 갭(검증 없는 Kill→고아 위험) | ◐ |
 | 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☑ |
 | 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ☑ |
-| 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ☐ |
+| 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ◐ |
 | 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ☐ |
 | 9 | **★ Engine walking skeleton** | 첫 통합 증명(1체인·local·4노드·tx1) | ☐ |
 | 10+ | Collector 심화 → remote → 업그레이드 → attach → stablenet → wemix4 이관 → 표면 | 수직 슬라이스 확장 | ☐ |
@@ -44,11 +44,11 @@
 
 ### Phase 2 — Transport
 - ☐ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)**(현재 Kill만) + **key_file 인증**(현재 password only).
-- ☐ **T2.2 upload-if-absent** `test -f` 존재확인 → 재사용/업로드(현재 항상-업로드 or 항상-읽기).
+- ☑ **T2.2 upload-if-absent**(로컬·FileSink; 원격 SSH sink는 remote 슬라이스) `test -f` 존재확인 → 재사용/업로드(현재 항상-업로드 or 항상-읽기).
 - **게이트**: 단위(모의) + 통합 1건(로컬 더미 프로세스 검증-종료·고아0).
 
 ### Phase 3 — Middle 통합(라이브)
-- ☐ **T3.1 Provisioner** datadir+키+genesis+config 물질화(local·remote 동일경로)+upload-if-absent.
+- ☑ **T3.1 Provisioner** datadir+키+genesis+config 물질화(local·remote 동일경로)+upload-if-absent.
 - ☐ **T3.2 Supervisor** 4노드 wbft 기동·헬스게이트(블록생성·etcd 리더)·teardown(**고아0+datadir삭제**)·**procman을 실제 stop 경로에 배선**(leak=0).
 - ☐ **T3.3 Collector** 로컬 **live tail**(스캔→tail)+**원격 SSH tail**+RPC 스냅샷+**bp참여·분기(reorg)검출**. attach=RPC-only.
 - ☐ **T3.4 Session 저장·재사용** env.json·fingerprint 재사용·records(spec/steps/assert/status).
