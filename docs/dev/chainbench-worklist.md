@@ -57,6 +57,7 @@
 ### Phase 4 — Walking Skeleton ★
 - ◐ **T4.1 Engine** DI 오케스트레이션(Parse→Applicable skip→fingerprint 기반 env 재사용/BuildEnv→RunSpec→session 저장→종료 시 Teardown) 구현·단위검증 완료. 실제 Place→KeyReg→Genesis→Provision→Supervise→Collect 배선의 **1체인 wbft·local·4노드·tx1** live e2e 는 사용자 환경(체인 바이너리 필요)으로 이월.
 - ◐ **T4.2 빌트인 tx/rpc** `NewRegistry(true)` 시드: 액션 `sendTx`(노드서명 전송+영수증 폴링, `wait:false` 조기반환), 어세션 `chainId`/`blockNumber`/`peerCount`/`balanceAt`/`codeAt`(대상노드 RPC 읽기→assert 프리미티브 비교, `compare` 오버라이드). mock RPC(httptest) 단위검증 완료. 컨트랙트 배포·crosstx 등 심화 액션은 후속.
+- ◐ **T4.3 RunSpec 배선** `engine.NewRunSpec(testspec.Deps)` — 인터프리터를 `Deps.RunSpec` 에 바인딩하는 조립 seam. spec→interpreter→빌트인 어세션→RPC→기록 상태 **실행 수직**을 mock RPC 로 통합검증(pass/fail). BuildEnv 배선(Place→KeyReg→Genesis→Provision→Supervise; 레거시 `pipeline/setup.Plan` 매핑 필요)은 후속.
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
 - ☐ **T5.1 remote**(Transport 교체만) · ☐ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) · ☐ **T5.3 attach** · ☐ **T5.4 stablenet**(ACL 플러그인만·Core 무변경) · ☐ **T5.5 wemix4 이관**(DSL).
