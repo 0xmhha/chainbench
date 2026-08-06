@@ -18,7 +18,7 @@
 | 2 | **Session(M1)** | 모든 기록의 정본, 기반 | ◐ |
 | 3 | **Place(M2)+용량검증** | 배치·포트(고정포트 충돌 제거) | ☑ |
 | 4 | **procman 배선+확장(M6 핵심)** | 최우선 안전 갭(검증 없는 Kill→고아 위험) | ◐ |
-| 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☐ |
+| 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☑ |
 | 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ☐ |
 | 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ☐ |
 | 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ☐ |
@@ -34,7 +34,7 @@
 - ☑ **T0.1** Transport·Allocator(+Capacity)·KeyRegistry(+BLSDeriver)·GenesisBuilder·Provisioner·Supervisor·Collector·Session·Interpreter·Capabilities를 **컴파일되는 Go stub**으로(design §3과 1:1, `internal/` 하위). enum은 typed const(FailureMode/TestStatus/Mode/Source). **게이트**: 컴파일 + 각 인터페이스↔F(AC) 매핑 표.
 
 ### Phase 1 — Low atomic (TDD 먼저, 병렬 가능)
-- ☐ **T1.1 testspec** Parse+필수검증(schemaVersion 등)·**Fingerprint(canonical·키정렬→결정성)**·`Get(dotPath)`·`,`파서. 순수. — F3·F7
+- ☑ **T1.1 testspec** Parse+필수검증(schemaVersion 등)·**Fingerprint(canonical·키정렬→결정성)**·`Get(dotPath)`·`,`파서. 순수. — F3·F7
 - ☐ **T1.2 assert funcs** 타입인지 비교(Equal/Len/EqualHashAt/EqualCI/InDelta …). 순수. — F6
 - ☑ **T1.3 session-path** 결정적 경로·env-id(`env-`+12hex)·레이아웃. — F1
 - ☑ **T1.4 place** portplan(로컬 스텝/OS)+원격 동일포트 **통합 Allocator** + **용량검증(min≥4·max=서버×포트)**. — F12
