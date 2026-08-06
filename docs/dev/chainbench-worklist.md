@@ -21,7 +21,7 @@
 | 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☑ |
 | 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ☑ |
 | 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ☑ |
-| 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ☐ |
+| 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ◐ |
 | 9 | **★ Engine walking skeleton** | 첫 통합 증명(1체인·local·4노드·tx1) | ☐ |
 | 10+ | Collector 심화 → remote → 업그레이드 → attach → stablenet → wemix4 이관 → 표면 | 수직 슬라이스 확장 | ☐ |
 
@@ -50,7 +50,7 @@
 ### Phase 3 — Middle 통합(라이브)
 - ☑ **T3.1 Provisioner** datadir+키+genesis+config 물질화(local·remote 동일경로)+upload-if-absent.
 - ◐ **T3.2 Supervisor**(오케스트레이션·teardown·procman배선 단위완료; 실4노드 라이브 헬스게이트는 Phase4) 4노드 wbft 기동·헬스게이트(블록생성·etcd 리더)·teardown(**고아0+datadir삭제**)·**procman을 실제 stop 경로에 배선**(leak=0).
-- ☐ **T3.3 Collector** 로컬 **live tail**(스캔→tail)+**원격 SSH tail**+RPC 스냅샷+**bp참여·분기(reorg)검출**. attach=RPC-only.
+- ◐ **T3.3 Collector**(RPC 스냅샷·WaitLog poll 단위완료; live tail·bp참여·reorg는 후속) 로컬 **live tail**(스캔→tail)+**원격 SSH tail**+RPC 스냅샷+**bp참여·분기(reorg)검출**. attach=RPC-only.
 - ☐ **T3.4 Session 저장·재사용** env.json·fingerprint 재사용·records(spec/steps/assert/status).
 - **게이트**: 각 컴포넌트 통합테스트 라이브.
 
