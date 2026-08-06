@@ -22,7 +22,7 @@
 | 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ☑ |
 | 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ☑ |
 | 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ☑ |
-| 9 | **★ Engine walking skeleton** | 첫 통합 증명(1체인·local·4노드·tx1) | ☐ |
+| 9 | **★ Engine walking skeleton** | 첫 통합 증명(1체인·local·4노드·tx1) | ◐ |
 | 10+ | Collector 심화 → remote → 업그레이드 → attach → stablenet → wemix4 이관 → 표면 | 수직 슬라이스 확장 | ☐ |
 
 ---
@@ -55,7 +55,7 @@
 - **게이트**: 각 컴포넌트 통합테스트 라이브.
 
 ### Phase 4 — Walking Skeleton ★
-- ☐ **T4.1 Engine** Place→KeyReg→Genesis→Provision→Supervise→Collect→Interpreter 조립 → **1체인 wbft·local·4노드·tx1** e2e·세션 아티팩트 검증.
+- ◐ **T4.1 Engine** DI 오케스트레이션(Parse→Applicable skip→fingerprint 기반 env 재사용/BuildEnv→RunSpec→session 저장→종료 시 Teardown) 구현·단위검증 완료. 실제 Place→KeyReg→Genesis→Provision→Supervise→Collect 배선의 **1체인 wbft·local·4노드·tx1** live e2e 는 사용자 환경(체인 바이너리 필요)으로 이월.
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
 - ☐ **T5.1 remote**(Transport 교체만) · ☐ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) · ☐ **T5.3 attach** · ☐ **T5.4 stablenet**(ACL 플러그인만·Core 무변경) · ☐ **T5.5 wemix4 이관**(DSL).
