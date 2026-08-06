@@ -21,7 +21,7 @@
 | 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☑ |
 | 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ☑ |
 | 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ☑ |
-| 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ◐ |
+| 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ☑ |
 | 9 | **★ Engine walking skeleton** | 첫 통합 증명(1체인·local·4노드·tx1) | ☐ |
 | 10+ | Collector 심화 → remote → 업그레이드 → attach → stablenet → wemix4 이관 → 표면 | 수직 슬라이스 확장 | ☐ |
 
