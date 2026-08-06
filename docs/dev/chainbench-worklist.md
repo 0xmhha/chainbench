@@ -15,7 +15,7 @@
 |------|------|------|------|
 | 0 | **`pkg/` → `internal/` 마이그레이션** | 앱은 internal이 정석(외부 importer 0, 컴파일러 강제 캡슐화); 신규 패키지 전 정리 | ☑ |
 | 1 | **P0 인터페이스 동결** | 전 작업 언블록·병렬 TDD 개방 | ☑ |
-| 2 | **Session(M1)** | 모든 기록의 정본, 기반 | ☐ |
+| 2 | **Session(M1)** | 모든 기록의 정본, 기반 | ◐ |
 | 3 | **Place(M2)+용량검증** | 배치·포트(고정포트 충돌 제거) | ☐ |
 | 4 | **procman 배선+확장(M6 핵심)** | 최우선 안전 갭(검증 없는 Kill→고아 위험) | ☐ |
 | 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☐ |
@@ -36,7 +36,7 @@
 ### Phase 1 — Low atomic (TDD 먼저, 병렬 가능)
 - ☐ **T1.1 testspec** Parse+필수검증(schemaVersion 등)·**Fingerprint(canonical·키정렬→결정성)**·`Get(dotPath)`·`,`파서. 순수. — F3·F7
 - ☐ **T1.2 assert funcs** 타입인지 비교(Equal/Len/EqualHashAt/EqualCI/InDelta …). 순수. — F6
-- ☐ **T1.3 session-path** 결정적 경로·env-id(`env-`+12hex)·레이아웃. — F1
+- ☑ **T1.3 session-path** 결정적 경로·env-id(`env-`+12hex)·레이아웃. — F1
 - ☐ **T1.4 place** portplan(로컬 스텝/OS)+원격 동일포트 **통합 Allocator** + **용량검증(min≥4·max=서버×포트)**. — F12
 - ☐ **T1.5 procman EXTEND** `{PID,datadir}`·원격PID·`Alive`. (stop 경로 배선은 T3.2) — F13
 - ☐ **T1.6 keyreg** 랜덤/기존/원격다운로드 통합 + **BLSDeriver seam**(외부 bootnode 캡슐화, 부재 시 오류). — F2
