@@ -46,7 +46,7 @@ jobs:
           cache: true
       - name: gofmt
         run: |
-          unformatted="$(gofmt -l cmd pkg tests)"
+          unformatted="$(gofmt -l cmd internal tests)"
           if [ -n "$unformatted" ]; then
             echo "These files need gofmt:"; echo "$unformatted"; exit 1
           fi
