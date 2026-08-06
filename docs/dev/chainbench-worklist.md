@@ -19,7 +19,7 @@
 | 3 | **Place(M2)+용량검증** | 배치·포트(고정포트 충돌 제거) | ☑ |
 | 4 | **procman 배선+확장(M6 핵심)** | 최우선 안전 갭(검증 없는 Kill→고아 위험) | ◐ |
 | 5 | **testspec Parse+Fingerprint** | spec 실행·env 재사용 | ☑ |
-| 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ◐ |
+| 6 | **keyreg(M3) + assert funcs** | 신원·검증 | ☑ |
 | 7 | **Provisioner(M5) → Supervisor(M6)** | 물질화·기동·teardown | ☐ |
 | 8 | **Collector RPC-min + Interpreter-min** | 스켈레톤 최소 관측·실행 | ☐ |
 | 9 | **★ Engine walking skeleton** | 첫 통합 증명(1체인·local·4노드·tx1) | ☐ |
@@ -39,7 +39,7 @@
 - ☑ **T1.3 session-path** 결정적 경로·env-id(`env-`+12hex)·레이아웃. — F1
 - ☑ **T1.4 place** portplan(로컬 스텝/OS)+원격 동일포트 **통합 Allocator** + **용량검증(min≥4·max=서버×포트)**. — F12
 - ☑ **T1.5 procman EXTEND** `{PID,datadir}`·원격PID·`Alive`. (stop 경로 배선은 T3.2) — F13
-- ☐ **T1.6 keyreg** 랜덤/기존/원격다운로드 통합 + **BLSDeriver seam**(외부 bootnode 캡슐화, 부재 시 오류). — F2
+- ☑ **T1.6 keyreg** 랜덤/기존/원격다운로드 통합 + **BLSDeriver seam**(외부 bootnode 캡슐화, 부재 시 오류). — F2
 - **게이트**: 단위 100% + 동시 모듈 `-race`.
 
 ### Phase 2 — Transport
