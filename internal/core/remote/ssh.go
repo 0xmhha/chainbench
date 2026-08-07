@@ -28,14 +28,20 @@ const defaultSSHPort = 22
 // golang.org/x/crypto/ssh directly. Build one with ResolveHostKeyCallback.
 type HostKeyCallback = ssh.HostKeyCallback
 
-// Credentials carries the inputs for an SSH dial. Password is read by the caller
-// from the env var named in the node's ssh-password auth; it builds the
-// ssh.AuthMethod and is never logged or returned in errors.
+// Credentials carries the inputs for an SSH dial. Auth is a password and/or a
+// private key; at least one is required. Secrets are read by the caller from the
+// configured source; they build the ssh.AuthMethod and are never logged or
+// returned in errors.
 type Credentials struct {
 	User     string
 	Host     string
 	Port     int
 	Password string
+	// PrivateKey is a PEM-encoded SSH private key, an alternative or addition to
+	// Password. When both are set the key is tried first. Never logged.
+	PrivateKey []byte
+	// Passphrase decrypts an encrypted PrivateKey; empty for an unencrypted key.
+	Passphrase string
 }
 
 // DialTunnelClient opens an SSH connection and returns an *http.Client whose TCP
@@ -68,11 +74,12 @@ func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error
 	if creds.User == "" || creds.Host == "" {
 		return nil, fmt.Errorf("remote: ssh user and host are required")
 	}
-	if creds.Password == "" {
-		return nil, fmt.Errorf("remote: empty SSH password")
-	}
 	if hostKey == nil {
 		return nil, fmt.Errorf("remote: nil host key callback")
+	}
+	auth, err := authMethods(creds)
+	if err != nil {
+		return nil, err
 	}
 	port := creds.Port
 	if port == 0 {
@@ -80,7 +87,7 @@ func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error
 	}
 	cfg := &ssh.ClientConfig{
 		User:            creds.User,
-		Auth:            []ssh.AuthMethod{ssh.Password(creds.Password)},
+		Auth:            auth,
 		HostKeyCallback: hostKey,
 		Timeout:         sshDialTimeout,
 	}
@@ -90,6 +97,67 @@ func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error
 		return nil, fmt.Errorf("remote: ssh dial %s@%s: %w", creds.User, addr, err)
 	}
 	return c, nil
+}
+
+// insecureKeyPermMask flags any group/other permission bit on a private key
+// file (0600 means only the owner may read/write).
+const insecureKeyPermMask = 0o077
+
+// authMethods builds the SSH auth methods from the credentials: a private key
+// (tried first when present) and/or a password. At least one must be supplied.
+// Key/password material never appears in the returned errors.
+func authMethods(creds Credentials) ([]ssh.AuthMethod, error) {
+	var methods []ssh.AuthMethod
+	if len(creds.PrivateKey) > 0 {
+		signer, err := parseSigner(creds.PrivateKey, creds.Passphrase)
+		if err != nil {
+			return nil, err
+		}
+		methods = append(methods, ssh.PublicKeys(signer))
+	}
+	if creds.Password != "" {
+		methods = append(methods, ssh.Password(creds.Password))
+	}
+	if len(methods) == 0 {
+		return nil, fmt.Errorf("remote: no SSH auth provided (set a password or a private key)")
+	}
+	return methods, nil
+}
+
+// parseSigner parses a PEM private key, using passphrase when the key is
+// encrypted. Errors carry no key material.
+func parseSigner(pemKey []byte, passphrase string) (ssh.Signer, error) {
+	if passphrase != "" {
+		signer, err := ssh.ParsePrivateKeyWithPassphrase(pemKey, []byte(passphrase))
+		if err != nil {
+			return nil, fmt.Errorf("remote: parse encrypted private key: %w", err)
+		}
+		return signer, nil
+	}
+	signer, err := ssh.ParsePrivateKey(pemKey)
+	if err != nil {
+		return nil, fmt.Errorf("remote: parse private key: %w", err)
+	}
+	return signer, nil
+}
+
+// LoadPrivateKey reads a PEM-encoded SSH private key file for
+// Credentials.PrivateKey. It rejects a key file that is group- or
+// world-accessible (want 0600), so an exposed key is a fail-fast error rather
+// than a silent security hole.
+func LoadPrivateKey(path string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("remote: stat key file: %w", err)
+	}
+	if info.Mode().Perm()&insecureKeyPermMask != 0 {
+		return nil, fmt.Errorf("remote: key file %s has insecure permissions %#o (want 0600)", path, info.Mode().Perm())
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("remote: read key file: %w", err)
+	}
+	return b, nil
 }
 
 // ExecResult captures a single remote command's output. A non-zero ExitCode is
