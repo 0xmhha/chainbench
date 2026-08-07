@@ -70,12 +70,20 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 	if d == nil {
 		d = driver.NewLocalDriver()
 	}
+	// Init through the driver's Initializer capability when present (both the
+	// local and remote drivers implement it), so a remote driver ships the
+	// genesis and runs init on its host; otherwise fall back to a local init.
+	initer, canInit := d.(driver.Initializer)
 
 	res := supervisor.LaunchResult{Nodes: node.NodeSet{
 		Chain: plan.Chain, Network: plan.Network, Capabilities: plan.Capabilities,
 	}}
 	for _, spec := range specs {
-		if err := driver.InitDatadir(ctx, l.Binary, spec.DataDir, plan.GenesisPath); err != nil {
+		if canInit {
+			if err := initer.InitDatadir(ctx, spec, plan.Genesis); err != nil {
+				return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+			}
+		} else if err := driver.InitDatadir(ctx, l.Binary, spec.DataDir, plan.GenesisPath); err != nil {
 			return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
 		}
 		h, err := d.Launch(ctx, spec)
