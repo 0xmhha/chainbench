@@ -34,6 +34,7 @@ func Default(name, version string) *Server {
 	s.Register(faucetTool())
 	s.Register(verifyTool())
 	s.Register(testTool())
+	s.Register(runTool())
 	s.Register(consensusTool())
 	s.Register(nodeRPCTool())
 	s.Register(reportTool())
