@@ -100,7 +100,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		},
 		BuildEnv:   build,
 		RunSpec:    run,
-		Applicable: applicableTo(cfg.Chain),
+		Applicable: applicableWithCaps(cfg.Chain, localCapabilities(plugin)),
 	}), nil
 }
 

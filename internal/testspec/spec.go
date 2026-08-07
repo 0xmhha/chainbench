@@ -27,6 +27,7 @@ type Spec struct {
 	SchemaVersion    string            `json:"schemaVersion"`
 	ID               string            `json:"id"`
 	ApplicableChains string            `json:"applicableChains,omitempty"`
+	Requires         []string          `json:"requires,omitempty"`
 	Chain            ChainSpec         `json:"chain"`
 	Topology         map[string]any    `json:"topology,omitempty"`
 	Hardforks        map[string]int    `json:"hardforks,omitempty"`

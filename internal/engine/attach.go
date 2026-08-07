@@ -79,6 +79,6 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		},
 		BuildEnv:   NewAttachBuildEnv(cfg.Chain, eps),
 		RunSpec:    run,
-		Applicable: applicableTo(cfg.Chain),
+		Applicable: applicableWithCaps(cfg.Chain, []string{attachCapability}),
 	}), nil
 }

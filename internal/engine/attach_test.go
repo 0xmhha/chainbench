@@ -115,3 +115,41 @@ func TestAttachEngine_SkipsInapplicable(t *testing.T) {
 		t.Fatalf("expected 1 skipped test, got %+v", doc.Summary)
 	}
 }
+
+// TestAttachEngine_SkipsUnmetCapability proves capability gating end to end: an
+// attach network advertises only "rpc", so a spec requiring "ws" is skipped
+// (its failing assertion never runs).
+func TestAttachEngine_SkipsUnmetCapability(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"eth_chainId": "0x1"})
+	eng, err := engine.NewAttachEngine(engine.AttachConfig{
+		Chain:        "stablenet",
+		RPCURLs:      []string{srv.URL},
+		ArtifactRoot: t.TempDir(),
+		Clock:        func() time.Time { return time.Unix(0, 0).UTC() },
+	})
+	if err != nil {
+		t.Fatalf("NewAttachEngine: %v", err)
+	}
+	spec, _ := json.Marshal(map[string]any{
+		"schemaVersion": "1",
+		"id":            "needs-ws",
+		"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"requires":      []string{"ws"},
+		"assertions":    []map[string]any{{"assert": "chainId", "expected": 999}},
+	})
+	root, err := eng.Run(context.Background(), [][]byte{spec})
+	if err != nil {
+		t.Fatalf("Engine.Run: %v", err)
+	}
+	data, _ := os.ReadFile(filepath.Join(root, "session.json"))
+	var doc struct {
+		Summary struct {
+			Fail int `json:"fail"`
+			Skip int `json:"skip"`
+		} `json:"summary"`
+	}
+	_ = json.Unmarshal(data, &doc)
+	if doc.Summary.Fail != 0 || doc.Summary.Skip != 1 {
+		t.Fatalf("ws-requiring spec should skip on an rpc-only attach: %+v", doc.Summary)
+	}
+}
