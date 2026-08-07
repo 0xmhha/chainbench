@@ -1,0 +1,84 @@
+package engine
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/testspec"
+)
+
+// attachNetwork is the network label recorded for an attached NodeSet.
+const attachNetwork = "attached"
+
+// AttachConfig configures an attach-mode Engine: it runs specs against an
+// already-running network addressed by RPC URLs, building and launching nothing.
+type AttachConfig struct {
+	// Chain is the chain label (used for spec applicability and fingerprinting).
+	Chain string
+	// RPCURLs are the endpoints of the running nodes; the first is the primary.
+	RPCURLs []string
+	// ArtifactRoot is the base directory for session artifacts.
+	ArtifactRoot string
+	// Clock supplies the session start time; nil uses time.Now.
+	Clock func() time.Time
+}
+
+// NewAttachBuildEnv returns a BuildEnv that builds the node table from existing
+// RPC endpoints without provisioning or launching anything. Its teardown is nil:
+// attach did not create the nodes, so it must not stop them.
+func NewAttachBuildEnv(chain string, eps []attach.Endpoint) BuildEnvFunc {
+	return func(_ context.Context, _ session.Environment, _ testspec.Spec) (node.NodeSet, TeardownFunc, error) {
+		ns, err := attach.Build(chain, attachNetwork, eps)
+		if err != nil {
+			return node.NodeSet{}, nil, fmt.Errorf("engine: attach: %w", err)
+		}
+		return ns, nil, nil
+	}
+}
+
+// NewAttachEngine composes an Engine that runs specs against a running network.
+// No chain binary or preset is needed — only reachable RPC endpoints — so attach
+// runs anywhere the endpoints are reachable.
+func NewAttachEngine(cfg AttachConfig) (Engine, error) {
+	if cfg.Chain == "" || cfg.ArtifactRoot == "" {
+		return nil, fmt.Errorf("engine: attach config needs chain and artifactRoot")
+	}
+	if len(cfg.RPCURLs) == 0 {
+		return nil, fmt.Errorf("engine: attach config needs at least one RPC URL")
+	}
+	eps := make([]attach.Endpoint, len(cfg.RPCURLs))
+	for i, u := range cfg.RPCURLs {
+		if u == "" {
+			return nil, fmt.Errorf("engine: attach RPC URL %d is empty", i+1)
+		}
+		eps[i] = attach.Endpoint{RPCURL: u}
+	}
+	clock := cfg.Clock
+	if clock == nil {
+		clock = time.Now
+	}
+
+	run := NewRunSpec(testspec.Deps{
+		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
+		Actions: testspec.NewRegistry(true),
+	})
+
+	return New(Deps{
+		Command: engineCommand,
+		NewSession: func(cmd string) (session.Session, error) {
+			return session.New(cfg.ArtifactRoot, cmd, clock(), nil)
+		},
+		Fingerprint: func(s testspec.Spec) session.Fingerprint {
+			return s.Fingerprint(config.Values{})
+		},
+		BuildEnv:   NewAttachBuildEnv(cfg.Chain, eps),
+		RunSpec:    run,
+		Applicable: applicableTo(cfg.Chain),
+	}), nil
+}
