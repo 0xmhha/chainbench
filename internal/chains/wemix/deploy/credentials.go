@@ -10,11 +10,8 @@ import (
 )
 
 // Credentials is the SSH auth for the cluster (the gitignored `credentials`
-// file, copied from credentials.sample). Password auth mirrors wemix4's
-// .credentials; a per-server override map keys off the server index.
-//
-// key_file is reserved for a future phase — the underlying remote.Credentials is
-// password-only today, so key-based auth is not yet wired.
+// file, copied from credentials.sample). Auth is a password and/or a private
+// key (key_file); a per-server override map keys off the server index.
 type Credentials struct {
 	User      string                `yaml:"user"`
 	Password  string                `yaml:"password"`
@@ -43,9 +40,6 @@ func LoadCredentials(path string) (*Credentials, error) {
 	if err := yaml.Unmarshal(b, &cr); err != nil {
 		return nil, fmt.Errorf("deploy: parse credentials: %w", err)
 	}
-	if cr.KeyFile != "" {
-		return nil, fmt.Errorf("deploy: key_file auth is not supported yet (password only); unset key_file")
-	}
 	return &cr, nil
 }
 
@@ -56,6 +50,7 @@ func LoadCredentials(path string) (*Credentials, error) {
 func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remote.Credentials, error) {
 	user := cr.User
 	pass := cr.Password
+	keyFile := cr.KeyFile
 	if o, ok := cr.Overrides[s.Index]; ok {
 		if o.User != "" {
 			user = o.User
@@ -67,6 +62,7 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 	if s.User != "" { // a server-level user in cluster.yaml wins over the global
 		user = s.User
 	}
+	var passphrase string
 	if env != nil {
 		if v := env("CHAINBENCH_REMOTE_USER"); v != "" {
 			user = v
@@ -74,12 +70,26 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 		if v := env("CHAINBENCH_REMOTE_PASS"); v != "" {
 			pass = v
 		}
+		if v := env("CHAINBENCH_REMOTE_KEY_FILE"); v != "" {
+			keyFile = v
+		}
+		passphrase = env("CHAINBENCH_REMOTE_KEY_PASSPHRASE")
 	}
 	if user == "" {
 		return remote.Credentials{}, fmt.Errorf("deploy: no SSH user for server %d (set credentials.user or CHAINBENCH_REMOTE_USER)", s.Index)
 	}
-	if pass == "" {
-		return remote.Credentials{}, fmt.Errorf("deploy: no SSH password for server %d (set credentials.password or CHAINBENCH_REMOTE_PASS)", s.Index)
+
+	rc := remote.Credentials{User: user, Host: s.Host, Port: c.SSHPortFor(s), Password: pass}
+	if keyFile != "" {
+		key, err := remote.LoadPrivateKey(keyFile)
+		if err != nil {
+			return remote.Credentials{}, fmt.Errorf("deploy: server %d: %w", s.Index, err)
+		}
+		rc.PrivateKey = key
+		rc.Passphrase = passphrase
 	}
-	return remote.Credentials{User: user, Host: s.Host, Port: c.SSHPortFor(s), Password: pass}, nil
+	if rc.Password == "" && len(rc.PrivateKey) == 0 {
+		return remote.Credentials{}, fmt.Errorf("deploy: no SSH auth for server %d (set credentials.password/key_file or CHAINBENCH_REMOTE_PASS/CHAINBENCH_REMOTE_KEY_FILE)", s.Index)
+	}
+	return rc, nil
 }
