@@ -12,6 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 )
@@ -19,8 +20,8 @@ import (
 // genesisFilePerm is the genesis.json file mode.
 const genesisFilePerm os.FileMode = 0o644
 
-// dataRootPerm is the data-root directory mode.
-const dataRootPerm os.FileMode = 0o755
+// configFilePerm is the node config file mode.
+const configFilePerm os.FileMode = 0o644
 
 // LocalLauncher arms and launches a plan on the local host from a preset key
 // set. For each node it renders the config, installs the preset identity
@@ -28,6 +29,10 @@ const dataRootPerm os.FileMode = 0o755
 // datadir from the network genesis, and launches the process. It implements the
 // supervisor launch seam, so NewBuildEnv brings a real network up on the
 // allocator-assigned ports.
+//
+// On-disk files (genesis, per-node config) are materialized through a
+// provision.FileSink (upload-if-absent), so a rerun reuses existing files and a
+// remote sink can later ship them to another host without changing this type.
 type LocalLauncher struct {
 	// Plugin is the target chain (supplies the RPC namespace and miner recommit
 	// form for config rendering).
@@ -39,6 +44,8 @@ type LocalLauncher struct {
 	KeysDir string
 	// Driver launches the nodes; nil defaults to the local driver.
 	Driver driver.Driver
+	// Sink materializes on-disk files; nil defaults to the local filesystem.
+	Sink provision.FileSink
 }
 
 // Launch arms and launches every node in plan and returns the running node set
@@ -48,16 +55,16 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 	if err != nil {
 		return supervisor.LaunchResult{}, fmt.Errorf("engine: launcher: %w", err)
 	}
-	if err := os.MkdirAll(plan.DataRoot, dataRootPerm); err != nil {
-		return supervisor.LaunchResult{}, fmt.Errorf("engine: launcher: mkdir data root: %w", err)
-	}
-	if len(plan.Genesis) > 0 {
-		if err := os.WriteFile(plan.GenesisPath, plan.Genesis, genesisFilePerm); err != nil {
-			return supervisor.LaunchResult{}, fmt.Errorf("engine: launcher: write genesis: %w", err)
-		}
-	}
 
 	specs := armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir)
+
+	sink := l.Sink
+	if sink == nil {
+		sink = provision.LocalFileSink{}
+	}
+	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
+		return supervisor.LaunchResult{}, err
+	}
 
 	d := l.Driver
 	if d == nil {
@@ -68,9 +75,6 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 		Chain: plan.Chain, Network: plan.Network, Capabilities: plan.Capabilities,
 	}}
 	for _, spec := range specs {
-		if err := d.Provision(ctx, spec); err != nil {
-			return res, fmt.Errorf("engine: launcher: provision node%d: %w", spec.Index, err)
-		}
 		if err := driver.InitDatadir(ctx, l.Binary, spec.DataDir, plan.GenesisPath); err != nil {
 			return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
 		}
@@ -89,6 +93,35 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 		})
 	}
 	return res, nil
+}
+
+// materialize writes the network genesis and each node's rendered config
+// through the provisioner (upload-if-absent, so a rerun reuses existing files).
+// Identity files (nodekey, keystore, password) already live in the preset dir
+// and are referenced by path rather than copied.
+func materialize(ctx context.Context, pv *provision.Provisioner, plan setup.Plan, specs []driver.NodeSpec) error {
+	if len(plan.Genesis) > 0 {
+		in := provision.NodeInputs{
+			DataDir: plan.DataRoot,
+			Files:   []provision.File{{Path: filepath.Base(plan.GenesisPath), Content: plan.Genesis, Mode: genesisFilePerm}},
+		}
+		if _, err := pv.Provision(ctx, in); err != nil {
+			return fmt.Errorf("engine: launcher: genesis: %w", err)
+		}
+	}
+	for _, spec := range specs {
+		if len(spec.ConfigContent) == 0 {
+			continue
+		}
+		in := provision.NodeInputs{
+			DataDir: filepath.Dir(spec.ConfigPath),
+			Files:   []provision.File{{Path: filepath.Base(spec.ConfigPath), Content: spec.ConfigContent, Mode: configFilePerm}},
+		}
+		if _, err := pv.Provision(ctx, in); err != nil {
+			return fmt.Errorf("engine: launcher: config node%d: %w", spec.Index, err)
+		}
+	}
+	return nil
 }
 
 // armSpecs fills each plan node spec with its rendered config, preset identity
