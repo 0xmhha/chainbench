@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
@@ -21,6 +23,7 @@ func newRunCmd() *cobra.Command {
 		keysDir      string
 		artifactRoot string
 		validators   int
+		dashboardURL string
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
@@ -31,11 +34,31 @@ func newRunCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			eng, err := buildRunEngine(chain, rpcURLs, binary, keysDir, artifactRoot, validators)
+
+			// When a dashboard is given, publish orchestration events to a local
+			// bus and forward them to the running chainbenchd. Emission never
+			// blocks the run; we close the bus and drain the forwarder before
+			// exiting so buffered events are flushed.
+			var bus *obs.Bus
+			var forwardDone <-chan struct{}
+			if dashboardURL != "" {
+				bus = obs.NewBus()
+				forwardDone = dashboard.Forward(bus, dashboardURL, nil)
+			}
+			flush := func() {
+				if bus != nil {
+					bus.Close()
+					<-forwardDone
+				}
+			}
+
+			eng, err := buildRunEngine(chain, rpcURLs, binary, keysDir, artifactRoot, validators, bus)
 			if err != nil {
+				flush()
 				return err
 			}
 			root, err := eng.Run(cmd.Context(), specs)
+			flush()
 			if err != nil {
 				return err
 			}
@@ -48,24 +71,25 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: preset keys directory")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory")
 	cmd.Flags().IntVar(&validators, "validators", 4, "local: validator node count")
+	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	return cmd
 }
 
 // buildRunEngine selects attach mode (when --rpc endpoints are given) or local
-// mode (when --binary is given).
-func buildRunEngine(chain string, rpcURLs []string, binary, keysDir, artifactRoot string, validators int) (engine.Engine, error) {
+// mode (when --binary is given). A non-nil bus streams orchestration events.
+func buildRunEngine(chain string, rpcURLs []string, binary, keysDir, artifactRoot string, validators int, bus *obs.Bus) (engine.Engine, error) {
 	if chain == "" {
 		return nil, fmt.Errorf("run: --chain is required")
 	}
 	switch {
 	case len(rpcURLs) > 0:
 		return engine.NewAttachEngine(engine.AttachConfig{
-			Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot,
+			Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot, Bus: bus,
 		})
 	case binary != "":
 		return engine.NewLocalEngine(engine.LocalConfig{
 			Chain: chain, Binary: binary, KeysDir: keysDir,
-			ArtifactRoot: artifactRoot, Validators: validators,
+			ArtifactRoot: artifactRoot, Validators: validators, Bus: bus,
 		})
 	default:
 		return nil, fmt.Errorf("run: provide --rpc <url> (attach) or --binary <path> (local)")
