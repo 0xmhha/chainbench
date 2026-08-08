@@ -1,11 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -87,31 +85,12 @@ func readSpecFiles(paths []string) ([][]byte, error) {
 	return specs, nil
 }
 
-// sessionSummary mirrors the parts of session.json the CLI reports.
-type sessionSummary struct {
-	Tests []struct {
-		Seq    int    `json:"seq"`
-		ID     string `json:"id"`
-		Status string `json:"status"`
-	} `json:"tests"`
-	Summary struct {
-		Pass    int `json:"pass"`
-		Fail    int `json:"fail"`
-		Blocked int `json:"blocked"`
-		Skip    int `json:"skip"`
-	} `json:"summary"`
-}
-
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
 func printSession(out io.Writer, root string) error {
-	data, err := os.ReadFile(filepath.Join(root, "session.json"))
+	doc, err := engine.ReadSessionSummary(root)
 	if err != nil {
-		return fmt.Errorf("run: read session: %w", err)
-	}
-	var doc sessionSummary
-	if err := json.Unmarshal(data, &doc); err != nil {
-		return fmt.Errorf("run: parse session: %w", err)
+		return err
 	}
 
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
@@ -124,7 +103,7 @@ func printSession(out io.Writer, root string) error {
 	}
 	fmt.Fprintf(out, "\npass=%d fail=%d blocked=%d skip=%d\nsession: %s\n",
 		doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip, root)
-	if doc.Summary.Fail > 0 || doc.Summary.Blocked > 0 {
+	if doc.Failed() {
 		return fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)
 	}
 	return nil
