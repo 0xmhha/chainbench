@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
 // mockRPCNode serves canned JSON-RPC results keyed by method.
@@ -82,6 +85,54 @@ func TestRunCmd_FailingSpecExitsNonZero(t *testing.T) {
 	}
 	if !strings.Contains(out, "fail=1") {
 		t.Fatalf("expected fail=1 in output:\n%s", out)
+	}
+}
+
+// TestRunCmd_DashboardStreamsEvents proves the full T6.3 path end-to-end in CI:
+// the engine emits orchestration events → local bus → dashboard.Forward → a
+// running chainbenchd (dashboard.Server) → its bus. It uses attach mode against
+// a mock RPC node, so no chain binary is needed.
+func TestRunCmd_DashboardStreamsEvents(t *testing.T) {
+	rpc := mockRPCNode(t, map[string]any{
+		"eth_chainId":     "0x539", // 1337
+		"eth_blockNumber": "0x10",
+	})
+
+	// A chainbenchd whose bus we can observe.
+	srvBus := obs.NewBus()
+	defer srvBus.Close()
+	sub := srvBus.Subscribe()
+	dsrv := httptest.NewServer(dashboard.NewServer(srvBus, nil))
+	defer dsrv.Close()
+
+	specPath := writeSpec(t, map[string]any{
+		"schemaVersion": "1",
+		"id":            "dash-smoke",
+		"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions":    []map[string]any{{"assert": "chainId", "expected": 1337}},
+	})
+
+	out, err := run(t, "run", "--chain", "stablenet", "--rpc", rpc.URL,
+		"--dashboard", dsrv.URL, "--artifact-root", t.TempDir(), specPath)
+	if err != nil {
+		t.Fatalf("run: %v\n%s", err, out)
+	}
+
+	// The CLI flushes the forwarder before returning, so every event is already
+	// POSTed and published to srvBus. Drain what the server received.
+	got := map[string]bool{}
+	for draining := true; draining; {
+		select {
+		case e := <-sub:
+			got[e.Message] = true
+		default:
+			draining = false
+		}
+	}
+	for _, want := range []string{"run started", "running spec", "spec pass", "run complete"} {
+		if !got[want] {
+			t.Fatalf("dashboard did not receive %q; got %v", want, got)
+		}
 	}
 }
 

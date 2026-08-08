@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -27,6 +28,9 @@ type AttachConfig struct {
 	ArtifactRoot string
 	// Clock supplies the session start time; nil uses time.Now.
 	Clock func() time.Time
+	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
+	// disables emission.
+	Bus *obs.Bus
 }
 
 // NewAttachBuildEnv returns a BuildEnv that builds the node table from existing
@@ -80,5 +84,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		BuildEnv:   NewAttachBuildEnv(cfg.Chain, eps),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, []string{attachCapability}),
+		Emit:       busEmit(cfg.Bus),
+		Network:    cfg.Chain,
 	}), nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -32,6 +33,11 @@ type Deps struct {
 	Applicable func(spec testspec.Spec) bool
 	// Command is the invoking command string recorded in session.json.
 	Command string
+	// Emit publishes an orchestration event (run/build/spec milestones) for the
+	// dashboard. Nil disables emission — observation never affects the run.
+	Emit func(ev obs.Event)
+	// Network labels emitted events with the target chain/network. Optional.
+	Network string
 }
 
 // engine is the concrete Engine.
@@ -41,6 +47,21 @@ type engine struct {
 
 // New returns an Engine over deps.
 func New(deps Deps) Engine { return &engine{deps: deps} }
+
+// emit publishes ev when a sink is wired, stamping the network label. It is a
+// no-op when Deps.Emit is nil so observation never affects orchestration.
+func (e *engine) emit(phase obs.Phase, kind obs.Kind, msg string, fields map[string]any) {
+	if e.deps.Emit == nil {
+		return
+	}
+	e.deps.Emit(obs.Event{
+		Phase:   phase,
+		Kind:    kind,
+		Network: e.deps.Network,
+		Message: msg,
+		Fields:  fields,
+	})
+}
 
 // Run executes the specs serially: parse, skip if inapplicable, reuse or build
 // an environment by fingerprint, run the test, and record. Environments are torn
@@ -58,6 +79,8 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 	}()
 
+	e.emit(obs.PhaseTest, obs.KindInfo, "run started", map[string]any{"specs": len(specs)})
+
 	for i, raw := range specs {
 		seq := i + 1
 		spec, perr := testspec.Parse(raw)
@@ -65,6 +88,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			rec := sess.Test(seq, fmt.Sprintf("spec-%d", seq))
 			rec.Spec(raw)
 			rec.Status(session.StatusBlocked)
+			e.emit(obs.PhaseTest, obs.KindError, "spec parse failed", map[string]any{"seq": seq})
 			continue
 		}
 
@@ -73,6 +97,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 
 		if e.deps.Applicable != nil && !e.deps.Applicable(spec) {
 			rec.Status(session.StatusSkip)
+			e.emit(obs.PhaseTest, obs.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
 			continue
 		}
 
@@ -82,11 +107,14 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			env, berr = sess.NewEnvironment(e.deps.Fingerprint(spec))
 			if berr != nil {
 				rec.Status(session.StatusBlocked)
+				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID})
 				continue
 			}
+			e.emit(obs.PhaseSetup, obs.KindProgress, "building environment", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
 			ns, td, buildErr := e.deps.BuildEnv(ctx, env, spec)
 			if buildErr != nil {
 				rec.Status(session.StatusBlocked)
+				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
 				continue
 			}
 			env.PopulateNodeTable(ns)
@@ -94,13 +122,21 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			if td != nil {
 				teardowns = append(teardowns, td)
 			}
+		} else {
+			e.emit(obs.PhaseSetup, obs.KindInfo, "environment reused", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
 		}
 
 		rec.SetEnvRef(env.ID())
-		if _, runErr := e.deps.RunSpec(ctx, spec, env, rec); runErr != nil {
+		e.emit(obs.PhaseTest, obs.KindProgress, "running spec", map[string]any{"seq": seq, "id": spec.ID})
+		st, runErr := e.deps.RunSpec(ctx, spec, env, rec)
+		if runErr != nil {
 			rec.Status(session.StatusFail)
+			st = session.StatusFail
 		}
+		e.emit(obs.PhaseTest, obs.KindResult, "spec "+string(st), map[string]any{"seq": seq, "id": spec.ID, "status": string(st)})
 	}
+
+	e.emit(obs.PhaseTest, obs.KindResult, "run complete", nil)
 
 	if err := sess.Save(); err != nil {
 		return sess.Root(), fmt.Errorf("engine: save session: %w", err)
