@@ -3,7 +3,7 @@
 > 목적: 문서·전 코드를 감사해 (1) 프로젝트 방향, (2) 진행 중 리팩토링과 진척도,
 > (3) 완료분의 에러 유무, (4) 미추적 갭의 작업 리스트 반영, (5) 남은 작업을 확정한다.
 > 근거: `chainbench-design.md`·`chainbench-refactoring.md`(WP1~6)·`chainbench-worklist.md`(T0~T6)
-> · git log(#178~#202) · `go build/vet/test ./...` 실행 결과.
+> · git log(#178~#203) · `go build/vet/test ./...` 실행 결과.
 
 ---
 
@@ -21,7 +21,7 @@
 
 권장 행동:
 1. T6.5(문서 경로 정정) 착수 — 후속 마이그레이션 작업 전 혼선 제거.
-2. 다음 크리티컬 패스: **T3.4(session 저장·재사용)** + **T5.1 remote 실 SSH 라이브 e2e**
+2. 다음 크리티컬 패스: **T6.3 dashboard(엔진 obs 이벤트 emit)** + **T5.1 remote 실 SSH 라이브 e2e**
    (코드 완료, 사용자 환경 검증만 남음).
 3. wemix4 full 이관은 **단계 A(handoff `--genesis-overlay` 주입)** 부터 착수.
 
@@ -48,10 +48,10 @@
 | 0 | `pkg/`→`internal/` + 인터페이스 동결 | 완료 | T0.0·T0.1 |
 | 1 | testspec·assert·session-path·place·procman·keyreg | 완료 | #178~183 |
 | 2 | Transport(key_file 인증·kill 검증·upload-if-absent) | 진행 | #199. 남음: driver 위 Transport 타입 형식화 |
-| 3 | Provisioner·Supervisor·Collector | 진행 | #184~186. T3.4 session 저장·재사용 미착수 |
+| 3 | Provisioner·Supervisor·Collector | 진행 | #184~186. T3.1·T3.2·T3.4 완료, T3.3 collector 심화(live tail·reorg)만 남음 |
 | 4 | ★ Engine walking skeleton | 완료 | #191~202. 실 gstable 4노드 라이브 e2e 통과(BuildEnv·RunSpec·FullRun capstone) |
 | 5 | remote·upgrade·attach·stablenet·wemix4 이관 | 부분 | T5.1 RemoteFileSink 완료/실 SSH 라이브 미검증, T5.3 attach 완료, T5.2·5.4·5.5 미착수 |
-| 6 | capability·MCP·dashboard·백프레셔·CLI | 부분 | #202. T6.1·CLI run·-race 게이트 완료, T6.2 MCP·T6.3 dashboard·백프레셔 미착수 |
+| 6 | capability·MCP·dashboard·백프레셔·CLI | 부분 | #202~203. T6.1·T6.2 MCP·CLI run·-race·백프레셔 완료, T6.3 dashboard emit만 남음 |
 
 ---
 
@@ -82,10 +82,10 @@
 
 ## 6. 남은 작업 리스트 (정리)
 
-1. **T3.4** session 저장·재사용(env.json·fingerprint·records) — 미착수, 크리티컬 패스
-2. **T5.1** remote 실 SSH 호스트 라이브 e2e — 코드 완료, 사용자 환경 검증만
-3. **T5.2** 업그레이드 멀티바이너리(wemix+wbft) — 미착수
-4. **T5.4** stablenet(ACL 플러그인) → **T5.5** wemix4 DSL 이관 — 미착수
-5. **T6.2** MCP 결과연동(F14) · **T6.3** dashboard 세션 소비(F15) · **T6.4** 백프레셔(O7) — 미착수
+1. **T6.3** dashboard(F15) — 엔진 obs 이벤트 emit → chainbenchd 포워딩(버스·백프레셔는 완료, 엔진 emit만 남음), 크리티컬 패스
+2. **T3.3** Collector 심화 — live tail·원격 SSH tail·bp참여·reorg 검출(현재 RPC 스냅샷·WaitLog)
+3. **T5.1** remote 실 SSH 호스트 라이브 e2e — 코드 완료, 사용자 환경 검증만
+4. **T5.2** 업그레이드 멀티바이너리(wemix+wbft) — 미착수
+5. **T5.4** stablenet(ACL 플러그인) → **T5.5** wemix4 DSL 이관 — 미착수
 6. **T6.5** 문서 경로 정정 — 신규 추가
-7. repro 잔여 5건 / wemix4 full 이관 — 각 별도 트랙(선행 작업 필요)
+7. 레거시 경로 정리(`pipeline/setup`·`testrun` 완전 대체) / repro 잔여 5건 / wemix4 full 이관 — 각 별도 트랙
