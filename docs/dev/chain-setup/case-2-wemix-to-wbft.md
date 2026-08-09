@@ -2,7 +2,7 @@
 
 > 목표: gwemix(wpoa)가 포크 블록까지 블록을 만들고, 그 이후로는 **같은 체인**을 gwbft 검증자들이
 > 이어서 생성한다.
-> 상태: ⚠️ **부분** — 기동·거버넌스 배포·메시 연결까지 성공. **etcd 클러스터 형성 실패**로 포크 미도달.
+> 상태: ✅ **절차 검증 완료** — 2026-08-09 실 바이너리로 블록 100 인계 확인(§5). 단, **`chain up` 자동화는 아직 옛 순서**라 그대로 돌리면 실패한다(§6).
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
 
 ---
@@ -134,63 +134,102 @@ $CHAIN/go-wemix/build/bin/gwemix attach /tmp/hand/node1/gwemix.ipc \
 
 ---
 
-## 5. 실측 결과 (2026-08-09, 2회 연속 동일)
+## 5. 검증된 절차 (2026-08-09 실 바이너리)
 
-성공한 것:
+참조 구현 `wemix4/envs/default/bootstrap.sh` 의 순서를 그대로 재현해 **핸드오프 성공**을 확인했다.
+공통 부트스트랩 계약은 [README §1b](README.md#1b-governance-etcd-부트스트랩--2-페이즈-순서-실증-확인).
+
+### 5.1 절차
+
+```sh
+CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
+D=/tmp/handoff
+
+# --- 준비: genesis 생성 + 전 노드 datadir init (chain up 이 여기까지 해준다) ---
+chainbench chain up --case wemix-wbft --profile <프로파일> \
+  --from-binary $CHAIN/go-wemix/build/bin/gwemix \
+  --to-binary   $CHAIN/go-wbft/build/bin/gwemix \
+  --template    $CHAIN/go-wemix/wemix/scripts/genesis-template.json \
+  --data-dir $D --stop-after launch
+chainbench chain down --data-dir $D          # datadir 는 남는다
+
+# --- 페이즈 A: 프로듀서 단독 부트스트랩 ---
+<프로듀서 실행 명령>                          # node1 만
+G=$CHAIN/go-wemix/build/bin/gwemix
+KS=$(ls $D/node1/keystore/* | head -1)
+$G wemix deploy-governance --url $D/node1/gwemix.ipc \
+   --password $D/password $D/wemix-config.json $KS
+$G attach $D/node1/gwemix.ipc --exec 'admin.etcdInit()'
+$G attach $D/node1/gwemix.ipc --exec 'JSON.stringify(admin.wemixInfo.etcd)'   # ← 반드시 확인
+pkill -f "datadir $D/node1 "                  # 프로듀서 종료
+
+# --- 페이즈 B: 전체 기동 ---
+# 검증자는 keystore + unlock 이 필요하다 (plan node k+1 <- preset node k)
+for i in 2 3 4 5; do
+  cp keys/preset/node$((i-1))/keystore/* $D/node$i/keystore/
+  <검증자 실행 명령> --unlock <addr> --password $D/password --miner.etherbase <addr>
+done
+<프로듀서 실행 명령>
+# 풀메시 연결 (재기동 뒤이므로 반드시)
+for each node: admin_addPeer(모든 enode)
+```
+
+### 5.2 관측 결과
+
+**페이즈 A5 — etcd 클러스터 형성 (단독이라 성공):**
+
+```json
+{"cluster":"producer=https://127.0.0.1:30011",
+ "leader":{"id":"31f7d7811eac700f","name":"producer"},
+ "members":[{"name":"producer","peerUrls":"https://127.0.0.1:30011",
+             "clientUrls":"http://localhost:30012"}]}
+miners: "producer/up/*"          ← '*' 가 리더 표식
+```
+
+**페이즈 B — 포크 인계:**
 
 ```
-handoff wemix -> wbft at croissant block 20; 5 nodes; launching...
-  node1  http://127.0.0.1:40010  pid=…      ← go-wemix 프로듀서
-  node2..5 http://127.0.0.1:400x0 pid=…     ← go-wbft 검증자
-governance deployed, etcd initialized, mesh wired.
+block  99 (0x63)  miner = 0xf9593d…   ← go-wemix 프로듀서, 포크 직전 마지막
+block 100 (0x64)  miner = 0xc17d49…   ← go-wbft 검증자 1  (인계)
+block 101 (0x65)  miner = 0x2493a8…   ← go-wbft 검증자 2  (라운드로빈)
+
+프로듀서(40010) head = 0x63 에서 정지    ← 정상: 포크를 넘어 생성하지 않는다
+검증자(40020)  head = 0x8a 계속 전진
 ```
-
-`admin.wemixInfo` 확인 — **거버넌스 배포는 진짜 성공**:
-
-```
-governance: 0x0caff8…  registry: 0xb803d9…  staking: 0xd41db9…
-nodes: [{name:"producer", addr:"0xf9593d…", enode:"a172e9…", port:30010}]
-miners: "producer/up"   modifiedblock: 9
-```
-
-실패한 것 — **etcd**:
-
-```
-etcd:  {"cluster":"", "members":null}      ← 클러스터가 비어 있음
-admin.etcdInit()  →  null                  ← 아무것도 하지 않음
-self.miner: false                          ← 마이너로 승격되지 않음
-
-로그: ERROR etcd failed to start error="cannot fetch cluster info from peer urls: …"  (×30)
-      INFO  etcd join failed  name=producer error="not found"
-```
-
-결과: **프로듀서가 블록 10에서 정지**(`eth_blockNumber` = `0xa`), 포크 블록 20 미도달 →
-`handoff not observed within 150s`.
-
-부수 관측: `Unavailable modules in HTTP API list unavailable=[wemix]` — 기동 직후에는 wemix RPC
-네임스페이스가 없다(거버넌스 배포 전이므로 예상된 동작이나, 진단 시 혼동하기 쉬움).
 
 ---
 
-## 6. 분석
+## 6. 왜 기존 경로는 실패했는가
 
-| 관측 | 판정 |
-|---|---|
-| 거버넌스 배포 성공 | chainbench 경로는 정상 |
-| `etcdInit()` → `null`, 클러스터 미형성 | **go-wemix 와의 계약 문제**. 반환값·전제조건이 이 빌드에서 다르다 |
-| `upgrade run` 이 "etcd initialized" 출력 | **chainbench 결함** — 결과를 검증하지 않음(README §5-3). `chain up` 은 verify-etcd 로 해소 |
-| `admin.etcdIsReady` 부재 | **설계 문서 결함** — 설계 §3.3 이 지목한 프로브가 이 빌드에 없음 |
-| 재시도 없음 | **chainbench 결함** — 재시도는 e2e 헬퍼(`runGovHandoff`)에만 있고 CLI 에는 없음 |
+실패 원인은 셋이고, **전부 chainbench 쪽**이다. 각각 변수 하나만 바꿔 확인했다.
 
-`wemix4-port-tracker.md` 는 이 부트스트랩이 "간헐적으로" 실패한다고 기록하지만, **이 환경에서는
-2회 연속 재현**되었다. 간헐이 아니라 결정적일 가능성이 있고, 그렇다면 재시도로는 해결되지 않는다.
+| # | 원인 | 증상 | 확인 방법 |
+|---|---|---|---|
+| 1 | **전체 기동 상태에서 `etcdInit`** | `etcd.cluster` 가 계속 빈 문자열, 로그에 `etcd join failed: not found` | 단독 기동으로 바꾸니 즉시 클러스터 형성 |
+| 2 | **검증자에 keystore·`--unlock`·`--miner.etherbase` 없음** | 포크 블록에서 `Commit new sealing work number=100` 만 반복 | keystore 배치 + unlock 후 봉인 성공 |
+| 3 | **재기동 후 메시 미연결** | 검증자 `peers=1`(프로듀서만), `currentRoundChanges.count=1`(자기 것만) | `admin_addPeer` 풀메시 후 `peers=4`, 즉시 포크 통과 |
+
+배제된 가설:
+
+- **포크 블록이 20이라 너무 이르다** — 100으로 바꿔도 동일하게 실패했다. 다만 20은 별개 문제가
+  있다: 1초 블록이면 20초 만에 프로듀서가 포크에서 멈춰 거버넌스 배포 영수증조차 못 받는다
+  (`context deadline exceeded`). 참조값 100을 쓰는 게 맞다.
+- **`admin.etcdInit()` 이 `null` 을 반환한다** — 실패 신호가 아니다. **성공해도 `null`** 이다.
+  판정은 반드시 `admin.wemixInfo.etcd.cluster` 로 해야 한다.
+
+2·3 은 **static 경로(`engine.armSpecs`)가 이미 올바르게 하는 것**을 핸드오프 경로가 빠뜨린 것이다.
 
 ---
 
-## 7. 착수 순서 (제안)
+## 7. 자동화에 남은 일
 
-1. ~~verify-etcd 단계 추가~~ ☑ 완료 — `chain up --case wemix-wbft` 가 클러스터를 폴링 확인하고, 비면 증거와 함께 실패한다.
-2. `supervisor.Deps.LeaderGate` 를 같은 프로브로 구현·배선(T3.2b 잔여) → `AlignJoinGap` 이 살아난다.
-3. `upgrade run` 에 `MaxAttempts`/`Backoff` 배선 — 재시도 시 datadir 삭제는 supervisor 가 이미 한다.
-4. 위 증거를 근거로 `etcdInit` 전제조건을 go-wemix 쪽에서 확인(멤버 상태? 마이너 승격 순서? 블록 높이?).
-5. 그 뒤에야 T5.2(신규 엔진에 핸드오프 배선)를 진행한다 — 지금 배선하면 깨진 위에 얹는 셈이다.
+절차는 확정됐고, `chain up --case wemix-wbft` 를 그 순서로 재구성하면 된다.
+
+| # | 작업 | 내용 |
+|---|---|---|
+| 1 | 2-페이즈 재구성 | init all → 프로듀서 단독 기동 → deploy-governance → etcdInit → verify-etcd → 프로듀서 종료 → 전체 기동 → 메시 → 포크 대기 |
+| 2 | 검증자 신원 | keystore 배치 + `--unlock`/`--password`/`--miner.etherbase` (`armSpecs` 와 동일) |
+| 3 | 메시 위치 이동 | 최종 기동 뒤로 |
+| 4 | 프로파일 | `fork_block: 20` → `100` |
+| 5 | supervisor 배선 | `Deps.LeaderGate` 를 `admin.wemixInfo.etcd.cluster` 프로브로 (T3.2b 잔여) |
+| 6 | `upgrade run` | 같은 순서로 정렬하거나, `chain up` 으로 대체 |

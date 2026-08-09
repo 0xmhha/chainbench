@@ -1,7 +1,8 @@
 # 케이스 1 — gwemix 단독 체인 구성
 
 > 목표: `gwemix` 만으로 wemix(wpoa) 체인을 세우고 블록을 만들게 한다.
-> 상태: ❌ **미지원** — 프레임워크에 standalone 부트스트랩 경로가 없다. 아래는 *무엇이 필요한지*의 명세다.
+> 상태: ⚠️ **절차 확정, 자동화 미구현** — 부트스트랩 계약이 케이스 2 실증으로 확립됐다(§5).
+> 프레임워크에 standalone 오케스트레이터가 없을 뿐, 재료는 모두 있다.
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
 
 ---
@@ -82,42 +83,68 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 
 ---
 
-## 5. 현재 확인된 차단 사유
+## 5. 확정된 절차
 
-케이스 2 실행에서 관측한 것이 그대로 적용된다(케이스 1은 그 부분집합):
+케이스 2 실증으로 부트스트랩 계약이 확인됐다([README §1b](README.md#1b-governance-etcd-부트스트랩--2-페이즈-순서-실증-확인)).
+wemix 단독은 그 계약에서 **후계 체인만 빼면** 된다 — 포크도, wbft 검증자도 없다.
 
 ```
-# admin.wemixInfo — 거버넌스는 배포됐다
-governance: 0x0caff82e8d4fc5c2e0eb6d01739169a3912c1286
-registry:   0xb803d9c283624c4a7f8a63c6df4381976fd5b300
-staking:    0xd41db91511476705f4d371482c7f107d85b725f8
-nodes:      [{name:"producer", addr:"0xf9593d…", miner:false}]
-miners:     "producer/up"
-
-# 그런데 etcd 는 비어 있다
-etcd: {"cluster":"", "members":null}
-
-# admin.etcdInit() 반환값
-null
-
-# 프로듀서 로그
-ERROR etcd failed to start  error="cannot fetch cluster info from peer urls: …"   (×30)
-INFO  etcd join failed      name=producer error="not found"
+── 페이즈 A: 부트스트랩 (프로듀서 단독) ──
+ A1  wemix-config 작성 → gwemix wemix genesis → 전 노드 datadir init
+ A2  프로듀서(BP1) 1대만 기동
+ A3  gwemix wemix deploy-governance  (IPC)
+ A4  admin.etcdInit()                (IPC)
+ A5  verify: admin.wemixInfo.etcd.cluster 가 비어 있지 않을 것
+ A6  프로듀서 종료
+── 페이즈 B: 운영 ──
+ B1  전 BP 기동
+ B2  풀메시 연결 (admin_addPeer)
+ B3  블록 전진 확인
 ```
 
-`etcdInit` 이 클러스터를 만들지 못하고 **조인 모드로 떨어진다**. 결과적으로 블록 생성이 멈춘다.
+케이스 2와의 유일한 차이:
 
-추가 관측:
-- `admin.etcdIsReady` 는 **이 go-wemix 빌드에 존재하지 않는다** (`TypeError: Object has no member`).
-  설계 §3.3 이 리더게이트 프로브로 지목한 이름이므로, 구현 시 `admin.wemixInfo.etcd.cluster` 로 대체해야 한다.
-- `self.miner == false` — 멤버로는 등록됐으나 마이너로 승격되지 않았다. etcdInit 실패와 인과가 얽혀 있다.
+| | 케이스 1 (wemix 단독) | 케이스 2 (핸드오프) |
+|---|---|---|
+| genesis | croissant 섹션 **없음**, `croissantBlock` 없음 | croissant 섹션 + 포크 블록 병합 |
+| 노드 | wemix BP 만 | wemix 프로듀서 + wbft 검증자 |
+| 페이즈 B 신원 | BP 는 이미 프로듀서로 unlock 됨 | **검증자에도** keystore + unlock 필요 |
+| 종료 조건 | 블록이 계속 전진 | 포크 블록을 후계자가 봉인 |
+
+**BP 를 2대 이상 두려면** 각 BP 를 `poa.Member` 로 등록해야 한다(참조 구현은 `wemix_bp_1`,
+`wemix_bp_2` 2대). 등록되지 않은 노드는 etcd 클러스터에 조인하지 못한다.
 
 ---
 
-## 6. 착수 순서 (제안)
+## 6. 관측된 사실 (케이스 2 실증에서)
 
-1. **`chain up --case wemix` 에 verify-etcd 단계 추가** — 실패를 실패로 보이게 한다(가장 싸고 효과 큼).
-2. wemix 전용 로직을 CLI 에서 **`internal/consensus/poa` 오케스트레이터로 승격** — config 조립·키 배치·IPC 대기·2단계 부트스트랩.
-3. `supervisor.Deps.LeaderGate` 구현체를 `admin.wemixInfo.etcd.cluster` 기준으로 배선(T3.2b 잔여).
-4. 그 위에서 standalone 프로파일(`profiles/wemix-standalone.yaml`) 정의.
-5. `etcdInit` 이 null 을 반환하는 원인 규명 — 이는 chainbench 가 아니라 **go-wemix 와의 계약** 문제이므로, 위 1번이 만들어 줄 증거 위에서 판단한다.
+```
+# 프로듀서 단독 + deploy-governance + etcdInit 후
+governance: 0x0caff82e8d4fc5c2e0eb6d01739169a3912c1286
+registry:   0xb803d9c283624c4a7f8a63c6df4381976fd5b300
+staking:    0xd41db91511476705f4d371482c7f107d85b725f8
+etcd:       {"cluster":"producer=https://127.0.0.1:30011",
+             "leader":{"name":"producer"}, "members":[{"name":"producer",...}]}
+miners:     "producer/up/*"
+```
+
+주의할 두 가지:
+
+- **`admin.etcdInit()` 은 성공해도 `null` 을 반환한다.** 반환값으로 판정하면 안 되고
+  `admin.wemixInfo.etcd.cluster` 를 봐야 한다.
+- **`admin.etcdIsReady` 는 이 go-wemix 빌드에 없다**(`TypeError: Object has no member`).
+  설계 §3.3 이 리더게이트 프로브로 지목한 이름이므로, 구현 시 위 프로브로 대체한다.
+
+---
+
+## 7. 자동화에 남은 일
+
+재료(§3의 4·5·10·11)는 전부 있고, **이들을 §5 순서로 엮는 오케스트레이터만 없다.**
+
+| # | 작업 |
+|---|---|
+| 1 | wemix 전용 로직을 핸드오프 CLI 에서 `internal/consensus/poa` 오케스트레이터로 승격 (config 조립·키 배치·IPC 대기·2단계 부트스트랩·verify) |
+| 2 | `setup` 이 `bootstrap.type == "governance-etcd"` 를 보고 그 오케스트레이터로 분기 |
+| 3 | `chain up --case wemix` 를 §5 순서로 구현 |
+| 4 | standalone 프로파일(`profiles/wemix-standalone.yaml`) 정의 — 포크 없는 wemix 설정 |
+| 5 | `supervisor.Deps.LeaderGate` 를 `admin.wemixInfo.etcd.cluster` 프로브로 배선 |
