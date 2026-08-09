@@ -24,6 +24,8 @@ const (
 	assertPeerCount   = "peerCount"
 	assertBalanceAt   = "balanceAt"
 	assertCodeAt      = "codeAt"
+	assertNonceAt     = "nonceAt"
+	assertCall        = "call"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -52,6 +54,8 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertPeerCount, defaultOp: "GreaterOrEqual", read: readPeerCount},
 		{name: assertBalanceAt, defaultOp: "Equal", read: readBalanceAt},
 		{name: assertCodeAt, defaultOp: "Equal", read: readCodeAt},
+		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
+		{name: assertCall, defaultOp: "Equal", read: readCall},
 	}
 }
 
@@ -193,6 +197,32 @@ func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, e
 		return nil, fmt.Errorf("testspec: codeAt requires \"address\"")
 	}
 	return c.CodeAt(ctx, addr)
+}
+
+func readNonceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	addr, ok := spec["address"].(string)
+	if !ok || addr == "" {
+		return nil, fmt.Errorf("testspec: nonceAt requires \"address\"")
+	}
+	v, err := c.NonceAt(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+	return strconv.FormatUint(v, 10), nil
+}
+
+// readCall runs a read-only contract call (eth_call) and returns the 0x-hex
+// result, for asserting on-chain state (e.g. a governance getter).
+func readCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	to, ok := spec["to"].(string)
+	if !ok || to == "" {
+		return nil, fmt.Errorf("testspec: call requires \"to\"")
+	}
+	data, ok := spec["data"].(string)
+	if !ok || data == "" {
+		return nil, fmt.Errorf("testspec: call requires \"data\"")
+	}
+	return c.EthCall(ctx, to, data)
 }
 
 // clientFor returns an RPC client for url, guarding a missing injected factory.

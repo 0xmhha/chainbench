@@ -167,3 +167,55 @@ func TestNewRegistry_BuiltinsGatedByFlag(t *testing.T) {
 		t.Fatal("built-ins must be seeded when withBuiltins=true")
 	}
 }
+
+func TestBuiltinAssertions_NonceAndCall(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"eth_getTransactionCount": "0x5",  // nonce 5
+		"eth_call":                "0x2a", // call result
+	})
+	d := deps()
+	on := []node.Node{{Index: 1, RPCURL: srv.URL}}
+
+	cases := []struct {
+		name string
+		spec map[string]any
+		pass bool
+	}{
+		{"nonceAt equal", map[string]any{"assert": assertNonceAt, "address": "0xabc", "expected": float64(5)}, true},
+		{"nonceAt mismatch", map[string]any{"assert": assertNonceAt, "address": "0xabc", "expected": float64(4)}, false},
+		{"nonceAt compare ge", map[string]any{"assert": assertNonceAt, "address": "0xabc", "expected": float64(1), "compare": "GreaterOrEqual"}, true},
+		{"call equal", map[string]any{"assert": assertCall, "to": "0xc0", "data": "0xdead", "expected": "0x2a"}, true},
+		{"call mismatch", map[string]any{"assert": assertCall, "to": "0xc0", "data": "0xdead", "expected": "0x2b"}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			as, ok := d.Actions.Assertion(tc.spec["assert"].(string))
+			if !ok {
+				t.Fatalf("assertion %q not registered", tc.spec["assert"])
+			}
+			r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: tc.spec})
+			if err != nil {
+				t.Fatalf("Check: %v", err)
+			}
+			if r.Pass != tc.pass {
+				t.Fatalf("pass = %v, want %v (actual=%v)", r.Pass, tc.pass, r.Actual)
+			}
+		})
+	}
+}
+
+func TestBuiltinAssertions_NonceCallMissingArgs(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"eth_getTransactionCount": "0x1", "eth_call": "0x1"})
+	d := deps()
+	on := []node.Node{{RPCURL: srv.URL}}
+	for _, spec := range []map[string]any{
+		{"assert": assertNonceAt},                // missing address
+		{"assert": assertCall, "to": "0xc0"},     // missing data
+		{"assert": assertCall, "data": "0xdead"}, // missing to
+	} {
+		as, _ := d.Actions.Assertion(spec["assert"].(string))
+		if r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: spec}); err == nil || r.Pass {
+			t.Fatalf("expected error for %v", spec)
+		}
+	}
+}
