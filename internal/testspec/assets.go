@@ -53,6 +53,9 @@ func (faucetAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if g, ok := hexQuantity(ac.Args["gas"]); ok {
 		args.Gas = g
 	}
+	if err := applyFeeArgs(&args, ac.Args); err != nil {
+		return err
+	}
 	receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
 	if err != nil {
 		return fmt.Errorf("testspec: faucet: %w", err)
@@ -96,6 +99,9 @@ func (deployContractAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 	if v, ok := hexQuantity(ac.Args["value"]); ok {
 		args.Value = v
+	}
+	if err := applyFeeArgs(&args, ac.Args); err != nil {
+		return err
 	}
 	receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
 	if err != nil {
@@ -151,6 +157,9 @@ func (registerContractAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if v, ok := hexQuantity(ac.Args["value"]); ok {
 		args.Value = v
 	}
+	if err := applyFeeArgs(&args, ac.Args); err != nil {
+		return err
+	}
 	receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
 	if err != nil {
 		return fmt.Errorf("testspec: registerContract: %w", err)
@@ -193,4 +202,37 @@ func sendAndConfirm(ctx context.Context, c *rpc.Client, args rpc.SendTxArgs, opt
 		return nil, hash, err
 	}
 	return receipt, hash, nil
+}
+
+// applyFeeArgs copies a step's fee and nonce arguments onto a transaction.
+//
+// Fee-policy cases need to set the caps deliberately (a maxFeePerGas below the
+// base fee must be rejected), and nonce cases need to pin the position (submit
+// out of order, or replace a pending transaction at the same nonce). Both are
+// meaningless to a receipt-only view, which is why they belong on the send.
+//
+// The two fee forms are mutually exclusive: a node rejects a transaction that
+// carries both, so catching it here names the mistake instead of surfacing an
+// opaque RPC error.
+func applyFeeArgs(args *rpc.SendTxArgs, in map[string]any) error {
+	gasPrice, hasLegacy := hexQuantity(in["gasPrice"])
+	maxFee, hasMaxFee := hexQuantity(in["maxFeePerGas"])
+	tip, hasTip := hexQuantity(in["maxPriorityFeePerGas"])
+
+	if hasLegacy && (hasMaxFee || hasTip) {
+		return fmt.Errorf("testspec: sendTx: \"gasPrice\" and \"maxFeePerGas\"/\"maxPriorityFeePerGas\" are mutually exclusive")
+	}
+	if hasLegacy {
+		args.GasPrice = gasPrice
+	}
+	if hasMaxFee {
+		args.MaxFeePerGas = maxFee
+	}
+	if hasTip {
+		args.MaxPriorityFeePerGas = tip
+	}
+	if nonce, ok := hexQuantity(in["nonce"]); ok {
+		args.Nonce = nonce
+	}
+	return nil
 }

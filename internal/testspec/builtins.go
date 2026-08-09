@@ -63,6 +63,7 @@ func seedBuiltins(r Registry) {
 	r.RegisterAction(actionRead, readAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
+	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
 	for _, a := range builtinAssertions() {
@@ -266,6 +267,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
 		{name: assertEstimateGas, defaultOp: "GreaterOrEqual", read: readEstimateGas},
 		{name: assertLogs, defaultOp: "Equal", read: readLogs},
+		{name: assertGasPrice, defaultOp: "GreaterOrEqual", read: readGasPrice},
 	}
 }
 
@@ -329,6 +331,9 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 	if g, ok := hexQuantity(ac.Args["gas"]); ok {
 		args.Gas = g
+	}
+	if err := applyFeeArgs(&args, ac.Args); err != nil {
+		return err
 	}
 	hash, err := c.SendTransaction(ctx, args)
 	if err != nil {

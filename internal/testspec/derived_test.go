@@ -1,0 +1,241 @@
+package testspec
+
+import (
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/gorilla/websocket"
+)
+
+func TestGasPriceAssertion(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"eth_gasPrice": "0x3b9aca00"}) // 1 gwei
+	d := deps()
+	as, ok := d.Actions.Assertion(assertGasPrice)
+	if !ok {
+		t.Fatal("gasPrice not registered")
+	}
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{"assert": assertGasPrice, "expected": "1000000000"},
+	})
+	if err != nil {
+		t.Fatalf("gasPrice: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("actual %#v", res.Actual)
+	}
+}
+
+func TestRPCCallAssertion_ReadsAChainSpecificMethod(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"istanbul_getWbftExtraInfo": map[string]any{
+			"gasTip":    "0x64",
+			"epochInfo": map[string]any{"stabilizing": true},
+		},
+	})
+	d := deps()
+	as, ok := d.Actions.Assertion(assertRPCCall)
+	if !ok {
+		t.Fatal("rpcCall not registered")
+	}
+
+	// A top-level field.
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
+			"params": []any{"latest"}, "select": "gasTip", "expected": "0x64",
+		},
+	})
+	if err != nil {
+		t.Fatalf("rpcCall: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("actual %#v", res.Actual)
+	}
+
+	// A nested field, via a dot path.
+	res, err = as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
+			"select": "epochInfo.stabilizing", "expected": true,
+		},
+	})
+	if err != nil {
+		t.Fatalf("rpcCall nested: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("nested actual %#v", res.Actual)
+	}
+}
+
+func TestRPCCallAssertion_MissingSelectPathIsAnError(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"istanbul_status": map[string]any{"a": 1}})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+	_, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{"assert": assertRPCCall, "method": "istanbul_status", "select": "b.c", "expected": 1},
+	})
+	if err == nil {
+		t.Fatal("expected an error for a select path that is not in the result")
+	}
+}
+
+func TestRPCCallAssertion_RequiresAMethod(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+	if _, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, "http://unused"), Deps: &d,
+		Spec: map[string]any{"assert": assertRPCCall, "expected": 1},
+	}); err == nil {
+		t.Fatal("expected an error without a method")
+	}
+}
+
+// wsHeadServer serves eth_subscribe over a WebSocket and pushes n newHeads
+// notifications.
+func wsHeadServer(t *testing.T, n int) *httptest.Server {
+	t.Helper()
+	up := websocket.Upgrader{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := up.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer func() { _ = conn.Close() }()
+		var req struct {
+			ID int `json:"id"`
+		}
+		if err := conn.ReadJSON(&req); err != nil {
+			return
+		}
+		_ = conn.WriteJSON(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0xsub"})
+		for i := 0; i < n; i++ {
+			_ = conn.WriteJSON(map[string]any{
+				"jsonrpc": "2.0", "method": "eth_subscription",
+				"params": map[string]any{"subscription": "0xsub", "result": map[string]any{"number": "0x1"}},
+			})
+		}
+		// Hold the connection open until the client hangs up.
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// envWithWS builds an environment whose node's WS endpoint is the given server.
+func envWithWS(t *testing.T, host string, wsPort int) session.Environment {
+	t.Helper()
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	if err != nil {
+		t.Fatalf("session.New: %v", err)
+	}
+	env, err := sess.NewEnvironment("dddddddddddd0000")
+	if err != nil {
+		t.Fatalf("NewEnvironment: %v", err)
+	}
+	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
+		{Index: 1, Role: node.RoleValidator, Host: host, Ports: node.Endpoints{WS: wsPort}},
+	}})
+	return env
+}
+
+func TestWSSubscribeAssertion_CountsNotifications(t *testing.T) {
+	srv := wsHeadServer(t, 3)
+	host, port := hostPort(t, srv.URL)
+	d := deps()
+	as, ok := d.Actions.Assertion(assertWSSubscribe)
+	if !ok {
+		t.Fatal("wsSubscribe not registered")
+	}
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithWS(t, host, port), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertWSSubscribe, "event": "newHeads",
+			"count": 2, "timeout": "5s", "expected": "2",
+		},
+	})
+	if err != nil {
+		t.Fatalf("wsSubscribe: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("actual %#v (%s)", res.Actual, res.Source)
+	}
+}
+
+func TestWSSubscribeAssertion_TimeoutReportsWhatArrived(t *testing.T) {
+	srv := wsHeadServer(t, 0)
+	host, port := hostPort(t, srv.URL)
+	d := deps()
+	as, _ := d.Actions.Assertion(assertWSSubscribe)
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithWS(t, host, port), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertWSSubscribe, "event": "newHeads",
+			"count": 1, "timeout": "300ms", "expected": "1",
+		},
+	})
+	if err != nil {
+		t.Fatalf("a timeout should be a failed assertion, not an error: %v", err)
+	}
+	if res.Pass {
+		t.Fatal("expected a failure when no notification arrived")
+	}
+	if res.Actual != "0" {
+		t.Fatalf("actual = %#v, want the count that did arrive", res.Actual)
+	}
+}
+
+// hostPort splits an httptest URL into host and port.
+func hostPort(t *testing.T, rawURL string) (string, int) {
+	t.Helper()
+	var host string
+	var port int
+	if _, err := fmtSscan(rawURL, &host, &port); err != nil {
+		t.Fatalf("parse %s: %v", rawURL, err)
+	}
+	return host, port
+}
+
+// fmtSscan parses "http://host:port" into its parts.
+func fmtSscan(rawURL string, host *string, port *int) (int, error) {
+	u := rawURL
+	u = trimPrefix(u, "http://")
+	for i := len(u) - 1; i >= 0; i-- {
+		if u[i] == ':' {
+			*host = u[:i]
+			var err error
+			*port, err = atoi(u[i+1:])
+			return 2, err
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+func trimPrefix(s, p string) string {
+	if len(s) >= len(p) && s[:len(p)] == p {
+		return s[len(p):]
+	}
+	return s
+}
+
+func atoi(s string) (int, error) {
+	var n int
+	if err := json.Unmarshal([]byte(s), &n); err != nil {
+		return 0, err
+	}
+	return n, nil
+}

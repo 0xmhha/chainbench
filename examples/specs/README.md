@@ -37,6 +37,8 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `network-peers.json` | a multi-node check with `onEach` (`bp1`..`bp4`): every validator reports at least one peer — a DSL port of the legacy `tests/network` peers-connected case |
 | `network-health.json` | cross-node `sameBlockHash` (genesis agreement) + `blockAdvance` (head is producing) — DSL ports of the legacy `tests/network` genesis-hash-agreement and block-progression cases |
 | `stablenet-system-contracts.json` | `codeAt` (adapter deployed, `NotEqual` "0x") + `call` reads (balanceOf/isAuthorized) shape-checked with `Regexp` — DSL ports of the legacy `tests/anzeon` adapter-code and readable-getter cases |
+| `gas-policy-derived.json` | derived gas checks: save the base fee and the chain's `gasTip` (via a generic `rpcCall`), then compare `gasPrice` against them |
+| `ws-subscribe-heads.json` | `wsSubscribe` waits for two `newHeads` notifications — proof the WebSocket transport is live, which no HTTP read can show |
 | `stablenet-gas-policy.json` | `baseFee` within the anzeon min/max bounds — DSL port of the legacy `tests/anzeon` basefee-minimum/maximum cases |
 | `stablenet-hardfork.json` | post-Boho artifacts as plain reads: P-256 precompile `call` (valid → success word, corrupted → not), GovMinter `codeAt`, and chainId/blockNumber — DSL port of the legacy `tests/anzeon` hardfork-reads cases |
 | `stablenet-estimate-gas.json` | `estimateGas` for a native-coin `transfer` exceeds the 21000 bare-transfer floor — DSL port of the legacy `tests/anzeon` estimate-gas-token-transfer case |
@@ -130,3 +132,30 @@ Destructive cases need to stop a node or cut the network, not just read from it:
 - An empty string in `topics` is a wildcard for that position.
 - `logs` is also a `read` source, so an event value can be saved and compared
   against a later one.
+
+## Chain-specific reads, and the WebSocket transport
+
+`rpcCall` calls any JSON-RPC method and compares a value from its result:
+
+```jsonc
+{"assert": "rpcCall",
+ "method": "istanbul_getWbftExtraInfo", "params": ["latest"],
+ "select": "gasTip", "expected": "$tip"}
+```
+
+This is how a spec reads a consensus namespace (`istanbul_*`, `wemix_*`) without
+the harness learning about any chain — the chain vocabulary stays in the spec,
+where it belongs. `select` is a dot path into the result; omit it to compare the
+whole result.
+
+`wsSubscribe` opens an `eth_subscribe` stream and waits for notifications:
+
+```jsonc
+{"assert": "wsSubscribe", "on": "bp1", "event": "newHeads", "count": 2, "timeout": "30s"}
+```
+
+A node can answer `eth_blockNumber` perfectly while its WebSocket endpoint is
+misconfigured, so this is the only assertion that proves that transport works.
+Declare `"requires": ["ws"]`. Not receiving enough notifications in time is a
+failed assertion reporting the count that did arrive — not an error, because
+"two heads in thirty seconds" is a claim that can simply be false.

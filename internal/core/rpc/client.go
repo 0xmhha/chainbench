@@ -328,6 +328,17 @@ type SendTxArgs struct {
 	Data  string `json:"data,omitempty"`
 	Value string `json:"value,omitempty"` // 0x-hex wei
 	Gas   string `json:"gas,omitempty"`   // 0x-hex
+	// GasPrice is the legacy (pre-1559) price. Setting it alongside the fee-cap
+	// fields is invalid; the caller picks one form.
+	GasPrice string `json:"gasPrice,omitempty"` // 0x-hex wei
+	// MaxFeePerGas and MaxPriorityFeePerGas are the EIP-1559 fee caps, which
+	// fee-policy tests set deliberately low to be rejected.
+	MaxFeePerGas         string `json:"maxFeePerGas,omitempty"`         // 0x-hex wei
+	MaxPriorityFeePerGas string `json:"maxPriorityFeePerGas,omitempty"` // 0x-hex wei
+	// Nonce pins the transaction's position. Omitted, the node assigns the next
+	// one; set explicitly, a spec can submit out of order or replace a pending
+	// transaction at the same nonce.
+	Nonce string `json:"nonce,omitempty"` // 0x-hex
 }
 
 // SendTransaction submits a node-signed transaction (eth_sendTransaction) and

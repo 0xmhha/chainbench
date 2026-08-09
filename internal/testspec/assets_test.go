@@ -185,3 +185,60 @@ func TestRegisterContractAction_RequiresATarget(t *testing.T) {
 		t.Fatal("expected an error without a target contract")
 	}
 }
+
+func TestSendTx_CarriesFeeCapsAndNonce(t *testing.T) {
+	rpcSrv := &txRPC{coinbase: "0xcoinbase", receipt: map[string]any{"status": "0x1"}}
+	srv := rpcSrv.server(t)
+	d := deps()
+	act, _ := d.Actions.Action(actionSendTx)
+	err := act.Do(context.Background(), &ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
+		"from":                 "0xa",
+		"to":                   "0xb",
+		"maxFeePerGas":         "1000000000",
+		"maxPriorityFeePerGas": "1",
+		"nonce":                7,
+	}})
+	if err != nil {
+		t.Fatalf("sendTx: %v", err)
+	}
+	rpcSrv.mu.Lock()
+	defer rpcSrv.mu.Unlock()
+	tx := rpcSrv.sent[0]
+	if tx["maxFeePerGas"] != "0x3b9aca00" {
+		t.Fatalf("maxFeePerGas = %v", tx["maxFeePerGas"])
+	}
+	if tx["maxPriorityFeePerGas"] != "0x1" {
+		t.Fatalf("maxPriorityFeePerGas = %v", tx["maxPriorityFeePerGas"])
+	}
+	if tx["nonce"] != "0x7" {
+		t.Fatalf("nonce = %v", tx["nonce"])
+	}
+}
+
+func TestSendTx_LegacyGasPrice(t *testing.T) {
+	rpcSrv := &txRPC{coinbase: "0xcoinbase", receipt: map[string]any{"status": "0x1"}}
+	srv := rpcSrv.server(t)
+	d := deps()
+	act, _ := d.Actions.Action(actionSendTx)
+	if err := act.Do(context.Background(), &ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
+		"from": "0xa", "to": "0xb", "gasPrice": "0x10",
+	}}); err != nil {
+		t.Fatalf("sendTx: %v", err)
+	}
+	rpcSrv.mu.Lock()
+	defer rpcSrv.mu.Unlock()
+	if rpcSrv.sent[0]["gasPrice"] != "0x10" {
+		t.Fatalf("gasPrice = %v", rpcSrv.sent[0]["gasPrice"])
+	}
+}
+
+func TestSendTx_RejectsMixedFeeForms(t *testing.T) {
+	d := deps()
+	act, _ := d.Actions.Action(actionSendTx)
+	err := act.Do(context.Background(), &ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d, Args: map[string]any{
+		"from": "0xa", "to": "0xb", "gasPrice": "0x10", "maxFeePerGas": "0x20",
+	}})
+	if err == nil {
+		t.Fatal("expected an error: gasPrice and maxFeePerGas are mutually exclusive")
+	}
+}
