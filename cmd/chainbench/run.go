@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -13,6 +14,13 @@ import (
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
+// runReport is the --json shape for a run: the session path plus the verdict
+// (engine.Summary is embedded so its tests/summary fields flatten in).
+type runReport struct {
+	Session string `json:"session"`
+	engine.Summary
+}
+
 // newRunCmd runs DSL test specs through the redesign engine. With --rpc it
 // attaches to a running network; with --binary it builds a local one.
 func newRunCmd() *cobra.Command {
@@ -24,6 +32,7 @@ func newRunCmd() *cobra.Command {
 		artifactRoot string
 		validators   int
 		dashboardURL string
+		jsonOut      bool
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
@@ -62,7 +71,7 @@ func newRunCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return printSession(cmd.OutOrStdout(), root)
+			return printSession(cmd.OutOrStdout(), root, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet)")
@@ -72,6 +81,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory")
 	cmd.Flags().IntVar(&validators, "validators", 4, "local: validator node count")
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd
 }
 
@@ -111,22 +121,30 @@ func readSpecFiles(paths []string) ([][]byte, error) {
 
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
-func printSession(out io.Writer, root string) error {
+func printSession(out io.Writer, root string, jsonOut bool) error {
 	doc, err := engine.ReadSessionSummary(root)
 	if err != nil {
 		return err
 	}
 
-	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "SEQ\tID\tSTATUS")
-	for _, tst := range doc.Tests {
-		fmt.Fprintf(w, "%d\t%s\t%s\n", tst.Seq, tst.ID, tst.Status)
+	if jsonOut {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(runReport{Session: root, Summary: doc}); err != nil {
+			return err
+		}
+	} else {
+		w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+		fmt.Fprintln(w, "SEQ\tID\tSTATUS")
+		for _, tst := range doc.Tests {
+			fmt.Fprintf(w, "%d\t%s\t%s\n", tst.Seq, tst.ID, tst.Status)
+		}
+		if err := w.Flush(); err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "\npass=%d fail=%d blocked=%d skip=%d\nsession: %s\n",
+			doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip, root)
 	}
-	if err := w.Flush(); err != nil {
-		return err
-	}
-	fmt.Fprintf(out, "\npass=%d fail=%d blocked=%d skip=%d\nsession: %s\n",
-		doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip, root)
 	if doc.Failed() {
 		// Blocked/infrastructure errors are more severe than a plain test
 		// failure, so they map to exit code 2 (F16-O5).
