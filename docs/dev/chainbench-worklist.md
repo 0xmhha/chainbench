@@ -62,7 +62,7 @@
 - ☑ **T1.2 assert funcs** 타입인지 비교(Equal/Len/EqualHashAt/EqualCI/InDelta …). 순수. — F6
 - ☑ **T1.3 session-path** 결정적 경로·env-id(`env-`+12hex)·레이아웃. — F1
 - ☑ **T1.4 place** portplan(로컬 스텝/OS)+원격 동일포트 **통합 Allocator** + **용량검증(min≥4·max=서버×포트)**. — F12
-- ☑ **T1.5 procman EXTEND** `{PID,datadir}`·원격PID·`Alive`. (stop 경로 배선은 T3.2) — F13
+- ☑ **T1.5 procman EXTEND** `{PID,datadir}`·원격PID·`Alive`. (stop 경로 배선은 T3.2) + **`StopOne`**(단일 노드 정지 — fault 스텝용, `StopAll` 은 네트워크 전체를 내려 쿼럼 테스트에 못 씀) + **loopback=local 판정 수정**(라이브 검증에서 발견: 로컬 런처가 `Host:"127.0.0.1"` 을 기록해 `IsRemote()` 가 참이 되어 시그널 대상에서 제외되고 있었음 — teardown 이 동작한 건 `Teardown` 이 빈 Host 로 **중복 track** 하던 우연 덕분) — F13
 - ☑ **T1.6 keyreg** 랜덤/기존/원격다운로드 통합 + **BLSDeriver seam**(외부 bootnode 캡슐화, 부재 시 오류). — F2
 - **게이트**: 단위 100% + 동시 모듈 `-race`.
 

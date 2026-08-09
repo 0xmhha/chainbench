@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,8 +37,22 @@ type Proc struct {
 	Host string
 }
 
-// IsRemote reports whether the process runs on a remote host.
-func (p Proc) IsRemote() bool { return p.Host != "" }
+// localHosts are the host spellings that still mean "this machine". The local
+// launcher records each node's host, and for a local network that is a loopback
+// address — which must not read as remote, or the process would be excluded from
+// every signal-based operation while it is plainly ours to signal.
+var localHosts = map[string]bool{
+	"":          true,
+	"127.0.0.1": true,
+	"localhost": true,
+	"::1":       true,
+	"[::1]":     true,
+	"0.0.0.0":   true,
+}
+
+// IsRemote reports whether the process runs on another machine, and so must be
+// stopped over a transport rather than with a local signal.
+func (p Proc) IsRemote() bool { return !localHosts[strings.ToLower(p.Host)] }
 
 // Manager tracks a set of launched processes and tears them down verifiably.
 type Manager struct {

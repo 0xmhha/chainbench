@@ -11,6 +11,10 @@ type StepResult struct {
 	Gas     string
 	Hash    string
 	Receipt map[string]any
+	// Error is why the step failed, empty when it succeeded. Without it a
+	// failed run records that a step failed but not why, which is the one thing
+	// the reader needs (design: never hide the cause).
+	Error string
 }
 
 // AssertResult records one assertion outcome with its provenance for

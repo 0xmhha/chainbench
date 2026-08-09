@@ -97,24 +97,29 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 	act, ok := i.deps.Actions.Action(name)
 	if !ok {
 		on, _ := argsOf(entry[name])["on"].(string)
-		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on})
+		err := fmt.Errorf("testspec: unknown action %q", name)
 		if name == "" {
-			return fmt.Errorf("testspec: empty action entry")
+			err = fmt.Errorf("testspec: empty action entry")
 		}
-		return fmt.Errorf("testspec: unknown action %q", name)
+		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Error: err.Error()})
+		return err
 	}
 	args, err := resolveArgs(entry[name], binds)
 	if err != nil {
 		// An unbound reference is a step failure, recorded like any other: the
 		// step never runs, so there is no hash or receipt to report.
 		on, _ := argsOf(entry[name])["on"].(string)
-		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on})
+		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Error: err.Error()})
 		return err
 	}
 	on, _ := args["on"].(string)
 	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
 	runErr := act.Do(ctx, ac)
-	rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt})
+	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt}
+	if runErr != nil {
+		step.Error = runErr.Error()
+	}
+	rec.Step(idx, step)
 	if runErr != nil {
 		return runErr
 	}

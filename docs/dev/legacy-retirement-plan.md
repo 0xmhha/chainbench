@@ -51,7 +51,7 @@
 - ☑ 본 은퇴 계획 문서화.
 - ◐ **suite 이관 착수(소스 있음)**: `tests/` Go-func 케이스는 repo 에 존재하므로 DSL 로 포팅 가능(라이브 검증만 바이너리 필요). `onEach` 다중노드 어세션 수정으로 per-node 케이스 표현 가능 → `tests/network` peers-connected 를 `examples/specs/network-peers.json` 으로 포팅(CI validate).
 - ☐ (후속·비파괴) 결과 모델 단일화 검토(testkit.Report ↔ session/engine.Summary 중복 축소).
-- ☐ (후속·블로커 해소 후) 나머지 suite 이관 → test/MCP 이관 → testrun/testkit 제거.
+- ◐ (블로커 해소됨) 나머지 suite 이관 → test/MCP 이관 → testrun/testkit 제거. **DSL 표현력 블로커는 §4.3 대로 해소**됐고, 남은 것은 케이스별 이관 작업량 + 라이브 검증이다.
 
 ### 4.1 이관 중 발견한 DSL 표현력 갭 (신규 빌트인 필요)
 
@@ -73,26 +73,24 @@
 | getter readable | token-balance-readable·account-authorization-readable | `call` + `Regexp`(반환 shape) | ☑ (동 spec) |
 | 하드포크 아티팩트(plain read) | p256-precompile-active/rejects-invalid·govminter-v2-code·boho-chain-config-active | `call`(precompile)·`codeAt`·`chainId`/`blockNumber` | ☑ (`stablenet-hardfork.json`) |
 | getter 값 대조 | token-metadata(name/symbol) | `call` + `Contains`(심볼 바이트) | ☑ (`stablenet-token-metadata.json`) |
-| **교차-call 비교** | totalSupply ≥ balance 등 | 두 `call` 결과 비교 | ☐ 신규 필요(스텝간 값 바인딩 or 전용 어세션) |
-| 헤더 base fee 경계 | basefee-minimum·basefee-maximum | `baseFee`(헤더 `baseFeePerGas` 리드 + 경계 비교) | ☑ (`stablenet-gas-policy.json`) |
-| 가스 추정 | estimate-gas-token-transfer | `estimateGas`(eth_estimateGas + 경계 비교) | ☑ (`stablenet-estimate-gas.json`) |
-| **가스 파생(tip 조합)** | gas-price=basefee+tip·max-priority=gastip | `eth_gasPrice`·WBFTExtra `gasTip` 조합 | ☐ 신규 필요(체인특화 gasTip + 산술 조합 어세션) |
-| 거버넌스 플로우 | gov_*(propose→approve→execute·이벤트) | 다단계 스텝 + 이벤트 로그 디코드·상태 대조 | ☐ 신규 필요(이벤트 어세션·스텝 바인딩) |
-| tx/nonce/영수증 | tx_nonce·tx_gas_receipts | `sendTx`+`nonceAt`+`txStatus` | ◐ 대부분 가능(정밀 가스값은 파생 필요) |
-
+| **교차-call 비교** | totalSupply ≥ balance 등 | `read`+`save` → `$ref` 비교 | ☑ (`stablenet-token-invariants.json`) |
 > 결론: **read-기반 anzeon 케이스(시스템 컨트랙트·getter·base fee·하드포크·estimate-gas·token-metadata)는 포팅 완료**(신규 리드 빌트인 `baseFee`/`estimateGas` + 기존 빌트인). **잔여 anzeon 은 read 1-shot 로 표현 불가**한 범주만 남음:
 
-### 4.3 잔여 anzeon — 대형 DSL 기능 필요 (의사결정 지점)
+### 4.3 잔여 anzeon — **표현력 블로커 해소됨** (2026-08-09)
 
-| 범주 | 예 | 필요 기능 | 비고 |
+§4.3 이 열거했던 6개 범주는 **전부 표현 불가에서 표현 가능으로 바뀌었다**. 각각이 요구하던 "대형 DSL 기능"이 도입됐다:
+
+| 범주 | 요구했던 기능 | 도입 | 상태 |
 |---|---|---|---|
-| 교차-call 비교 | totalSupply ≥ balance | **스텝 값 바인딩**(read A 저장→"B ≥ $A" 비교) | DSL 코어 변경·설계 스펙 없음 |
-| 거버넌스 다단계 | gov_* (propose→approve→execute) | 스텝 바인딩 + **이벤트 로그 어세션**(eth_getLogs 디코드) + 상태 대조 | 최대 범주 |
-| 가스 파생(tip) | gas-price=basefee+tip·max-priority=gastip | 체인특화 `gasTip`(WBFTExtra) + 산술 조합 어세션 | 체인 특화 |
-| fee-cap tx | gas_boundary(feecap min/reject) | `sendTx` 에 maxFeePerGas/maxPriorityFeePerGas 인자 + negative(expectRevert) | tx 인자 확장 |
-| 명시 nonce | tx_nonce(순서/교체) | accounts SDK 명시-nonce/raw-tx 전송(기존 갭, repro 문서와 동일) | SDK 확장 |
-| WS 구독 | ws_subscribe | WS 구독 어세션(`ws` capability 실행) | 신규 전송 |
+| 교차-call 비교 | 스텝 값 바인딩 | **`save` + `$ref`**(design §3.2b) + `read` 액션 | ☑ |
+| 거버넌스 다단계 | 스텝 바인딩 + 이벤트 어세션 | 위 + **`logs`**(eth_getLogs, `select` count/data/topicN) | ☑ |
+| 가스 파생(tip) | 체인특화 gasTip + 조합 | **`gasPrice`** + 범용 **`rpcCall`**(method+params+dot-path select) | ☑ |
+| fee-cap tx | tx 인자 확장 | `sendTx`/`faucet`/`deploy…` 의 **`maxFeePerGas`·`maxPriorityFeePerGas`·`gasPrice`** | ☑ |
+| 명시 nonce | 명시-nonce 전송 | `sendTx` 의 **`nonce`** 인자 | ☑ |
+| WS 구독 | WS 전송 | **`wsSubscribe`**(`rpc.Subscribe` 경유, `ws` capability) | ☑ |
 
-> 이들은 각각 **아키텍처 결정**(스텝 바인딩 DSL 문법·이벤트 어세션 모델 등)을 수반한다. read-기반 포팅으로 커버 못 하는 경계에 도달했으므로, 다음 진행 방향(어떤 대형 기능을 먼저 도입할지)은 우선순위 결정이 필요하다.
+**설계 원칙(중요):** `rpcCall` 은 체인 어휘를 **core 가 아니라 spec 안에** 둔다 — `istanbul_getWbftExtraInfo`·`wemix_*` 는 정의서가 문자열로 지정하고, 하네스는 체인을 계속 모른다(C6 ACL 유지).
+
+**남은 것은 표현력이 아니라 이관 작업량이다.** 각 anzeon/wbft/api 케이스를 실제 spec 으로 옮기고 라이브 검증하는 일이 남았다. 라이브 근거: `TestEngine_Live_NewVocabulary`(GSTABLE_BIN) 가 실 4노드 stablenet 에서 바인딩·`read`·`faucet`·`logs`·`gasPrice`·`rpcCall`·`wsSubscribe`·`stopNode`/`startNode` 를 한 세션으로 통과.
 
 > 원칙: **소비자 이관 전에는 레거시 제거 금지**(회귀 위험). 각 단계는 비-e2e 통과 + 대표 라이브 확인을 게이트로.
