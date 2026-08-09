@@ -65,4 +65,18 @@
 
 > `tests/network` 3케이스 전부 DSL 로 표현·포팅 완료(CI validate). 다음: `tests/anzeon` 등 체인 특화 케이스 이관 시 필요한 빌트인 식별·추가.
 
+### 4.2 `tests/anzeon`(stablenet) 이관 커버리지
+
+| 분류 | 케이스 | DSL 표현 | 상태 |
+|---|---|---|---|
+| 시스템 컨트랙트 코드 | native-coin-adapter-code | `codeAt` + `NotEqual "0x"` | ☑ (`stablenet-system-contracts.json`) |
+| getter readable | token-balance-readable·account-authorization-readable | `call` + `Regexp`(반환 shape) | ☑ (동 spec) |
+| getter 값 대조 | token-metadata(name/symbol) | `call` + `Contains`/`Equal`(ABI 인코딩값) | ◐ 값 확정 시 가능 |
+| **교차-call 비교** | totalSupply ≥ balance 등 | 두 `call` 결과 비교 | ☐ 신규 필요(스텝간 값 바인딩 or 전용 어세션) |
+| **헤더/가스 파생** | gas-price=basefee+tip·max-priority=gastip·estimate-gas | `eth_gasPrice`·헤더 `baseFeePerGas`·WBFTExtra `gasTip`·`eth_estimateGas` | ☐ 신규 빌트인 필요(제네릭 gasPrice/baseFee + 체인특화 gasTip) |
+| 거버넌스 플로우 | gov_*(propose→approve→execute·이벤트) | 다단계 스텝 + 이벤트 로그 디코드·상태 대조 | ☐ 신규 필요(이벤트 어세션·스텝 바인딩) |
+| tx/nonce/영수증 | tx_nonce·tx_gas_receipts | `sendTx`+`nonceAt`+`txStatus` | ◐ 대부분 가능(정밀 가스값은 파생 필요) |
+
+> 결론: **read-shape 계열은 기존 빌트인으로 포팅 가능**(진행), **교차-call 비교·헤더 파생·거버넌스 다단계**는 신규 빌트인(스텝 값 바인딩·이벤트 어세션·gasPrice/baseFee 리드)이 선행돼야 함. 각 신규 빌트인은 CI mock RPC 로 검증하며 순차 추가.
+
 > 원칙: **소비자 이관 전에는 레거시 제거 금지**(회귀 위험). 각 단계는 비-e2e 통과 + 대표 라이브 확인을 게이트로.
