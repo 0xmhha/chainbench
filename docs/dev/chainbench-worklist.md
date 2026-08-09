@@ -76,7 +76,14 @@
 - ☑ **T3.2 Supervisor** 오케스트레이션·teardown·procman배선 단위완료 + **실4노드 라이브 헬스게이트(블록전진 gate)로 Phase4 BuildEnv e2e 에서 검증**(고아0). etcd 리더 게이트는 wemix 계열(gwemix/etcd 필요) 후속.
 - ◐ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 seam)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☐ **원격 SSH tail**(사용자 SSH 환경 필요, T5.1 계열). attach=RPC-only(로컬 로그 없음→tail no-op).
 - ☑ **T3.4 Session 저장·재사용** `session.json`·env fingerprint 재사용(엔진 오케스트레이션이 fingerprint 로 env 재사용)·records(spec/steps/assert/status). 엔진 단위·라이브 e2e·attach e2e 로 검증(summary.pass 판정).
-- ☐ **T3.2b supervisor 선언 논항 방출** (x-bar 정렬 검토 2026-08-09 신규) `supervisor.Options` 가 선언한 **`LeaderGate`·`AlignJoinGap`·`ForkSwaps` 를 `supervisor_impl` 이 읽지 않는다**(111행). `FailureMode` 5종 중 실제 방출은 `RPCUnready` 하나뿐 — 나머지(`EtcdJoinFailed`/`EtcdStale`/`ForkNotCrossed`/`QuorumLost`)는 주입된 `HealthGate` 가 만들어야 하나 프로덕션 게이트(`NewBlockAdvanceGate`)는 블록 전진만 본다. → **F13 AC-1(리더 게이트 후 조인)·AC-2(Mode 정확)·AC-3(stale datadir), F9 AC-3(type-2 포크 전 교체) 미충족**. "원인 은닉 금지"(요구 37)가 아직 코드로 강제되지 않음. **컴파일·vet·test 로는 잡히지 않는 갭**(미사용 필드는 에러가 아님).
+- ☑ **T3.2b supervisor 선언 논항 방출** (x-bar 정렬 검토 2026-08-09) 선언만 되어 있던 `Options` 3개를 실제로 읽는다.
+  - **`LeaderGate`**: `Deps.LeaderGate(ctx, ns, window)` seam 신설 — **HealthGate 보다 먼저** 실행(클러스터에 리더가 없으면 노드는 healthy 일 수 없다). "리더 준비"의 판정은 체인특화(go-wemix 내장 etcd)라 주입식이고, **언제 돌릴지·얼마나 기다릴지·실패를 어떻게 분류할지는 supervisor 가 소유**. **요청했는데 미배선이면 조용히 통과가 아니라 오류**(F13 AC-1).
+  - **`AlignJoinGap`**: `JoinGap(N)`(C-etcd 표: ≤11→7s·≤23→11s·≤41→17s·else 23s)·`JoinWindow(N)=(N+1)*gap` 신설 — 리더 게이트 데드라인을 **클러스터 크기에서 파생**. 고정 타임아웃은 *아직 자기 조인 슬롯이 오지 않은* 노드를 조인 실패로 오판한다(L7).
+  - **`ForkSwaps`**: `Deps.SwapBinary` seam 으로 type-2 스왑 수행. **선언했는데 미배선이면 오류** — 조용히 건너뛰면 체인이 잘못된 바이너리로 포크를 넘어 훨씬 덜 명확한 곳에서 실패한다(F9 AC-3).
+  - **`FailureMode` 분류**: `Classify(err)` 신설(etcd stale/join·quorum·fork·rpc 시그니처) — **launch 실패도 분류**(이전엔 전부 `RPCUnready`), HealthGate 가 Mode 를 안 채우면 에러 텍스트에서 파생, **Gate 가 스스로 분류했으면 보존**. 매칭 없으면 `UnknownFailure` — 그럴듯한 오분류는 읽는 사람을 엉뚱한 로그로 보내므로 정직한 "모름"이 낫다(F13 AC-2).
+  - **enum 0 값 교정**: `EtcdJoinFailed` 가 iota 0 이라 **빈 `Diagnosis` 가 "EtcdJoinFailed" 로 읽히던** 함정 제거 → `UnknownFailure` 를 0 으로.
+  - 재시도 시 `RemoveDataDir:true` 로 stale etcd 상태 정리(F13 AC-3)는 기존 동작 유지·주석 명시. 단위검증 12건.
+  - **잔여**: 실제 etcd 리더 게이트 구현체(wemix 계열)와 `SwapBinary` 구현체 배선은 **T5.2**(gwemix 라이브 필요).
 - **게이트**: 각 컴포넌트 통합테스트 라이브.
 
 ### Phase 4 — Walking Skeleton ★

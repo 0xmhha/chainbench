@@ -40,11 +40,20 @@ type TeardownOpts struct {
 	Grace         time.Duration
 }
 
-// ForkSwap schedules a binary swap on a node before a fork block (type-2).
+// ForkSwap schedules a binary swap on a node before a fork block (type-2
+// hardfork: one chain, different binaries either side of the fork). Type-1 (a
+// chain upgrade / handoff) needs no swap — those nodes run different binaries
+// from the start, via plan.Nodes[].Binary.
 type ForkSwap struct {
-	Node     string
-	Fork     string
+	// Node is the selector of the node to swap ("bp1").
+	Node string
+	// Fork names the hardfork the swap must precede, for diagnostics.
+	Fork string
+	// ToBinary is the fork-aware executable to relaunch with.
 	ToBinary string
+	// AtBlock is the fork's block number. The swap must complete before the
+	// chain reaches it; swapping afterwards is an error, not a late success.
+	AtBlock uint64
 }
 
 // Diagnosis is the classified outcome of a bring-up attempt. On failure, Mode
@@ -60,8 +69,11 @@ type Diagnosis struct {
 type FailureMode int
 
 const (
+	// UnknownFailure is the zero value: no cause has been established. It is
+	// first so an unset Diagnosis cannot masquerade as a real classification.
+	UnknownFailure FailureMode = iota
 	// EtcdJoinFailed means a node could not join the etcd cluster.
-	EtcdJoinFailed FailureMode = iota
+	EtcdJoinFailed
 	// EtcdStale means a stale datadir blocked cluster formation on restart.
 	EtcdStale
 	// ForkNotCrossed means the target fork block was never reached.
@@ -75,6 +87,8 @@ const (
 // String returns the failure-mode label.
 func (m FailureMode) String() string {
 	switch m {
+	case UnknownFailure:
+		return "Unknown"
 	case EtcdJoinFailed:
 		return "EtcdJoinFailed"
 	case EtcdStale:
