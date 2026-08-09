@@ -278,3 +278,21 @@ func TestWaitBlockAction(t *testing.T) {
 		}
 	})
 }
+
+func TestSendTxAction_RevertFailsStep(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"eth_sendTransaction":       "0xhash",
+		"eth_getTransactionReceipt": map[string]any{"status": "0x0"}, // reverted
+	})
+	d := deps()
+	env := envWithNode(t, srv.URL)
+	act, _ := d.Actions.Action(actionSendTx)
+	err := act.Do(context.Background(), &ActionCtx{
+		Env:  env,
+		Deps: &d,
+		Args: map[string]any{"from": "0xabc", "to": "0xdef", "pollInterval": "5ms"},
+	})
+	if err == nil {
+		t.Fatal("a reverted tx must fail the step by default")
+	}
+}

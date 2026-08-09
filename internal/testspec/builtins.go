@@ -135,26 +135,51 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if wait, ok := ac.Args["wait"].(bool); ok && !wait {
 		return nil
 	}
-	return waitReceipt(ctx, c, hash,
+	receipt, err := waitReceipt(ctx, c, hash,
 		durationArg(ac.Args, "timeout", defaultTxTimeout),
 		durationArg(ac.Args, "pollInterval", defaultTxPollInterval))
+	if err != nil {
+		return err
+	}
+	return checkTxOutcome(hash, receipt)
+}
+
+// checkTxOutcome enforces a tx step's expectation: by default the transaction
+// must not revert, so a receipt status of 0x0 fails the step (F11 — a tx step is
+// atomically successful only when its declared expectation is met).
+func checkTxOutcome(hash string, receipt map[string]any) error {
+	if statusReverted(receipt) {
+		return fmt.Errorf("testspec: sendTx %s reverted (status 0x0)", hash)
+	}
+	return nil
+}
+
+// statusReverted reports whether a receipt's status is an explicit revert (0x0).
+// A missing status (legacy pre-Byzantium receipts) is treated as success.
+func statusReverted(receipt map[string]any) bool {
+	status, _ := receipt["status"].(string)
+	return status == "0x0" || status == "0x00"
 }
 
 // waitReceipt polls for a transaction receipt until it appears or ctx/timeout
-// expires. It probes immediately, so a mined transaction returns without any
-// sleep.
-func waitReceipt(ctx context.Context, c *rpc.Client, hash string, timeout, interval time.Duration) error {
+// expires, returning the parsed receipt. It probes immediately, so a mined
+// transaction returns without any sleep.
+func waitReceipt(ctx context.Context, c *rpc.Client, hash string, timeout, interval time.Duration) (map[string]any, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
 		if raw, err := c.TxReceipt(ctx, hash); err == nil && raw != nil {
-			return nil
+			var m map[string]any
+			if uerr := json.Unmarshal(raw, &m); uerr != nil {
+				return nil, fmt.Errorf("testspec: sendTx: parse receipt %s: %w", hash, uerr)
+			}
+			return m, nil
 		}
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("testspec: sendTx: receipt %s: %w", hash, ctx.Err())
+			return nil, fmt.Errorf("testspec: sendTx: receipt %s: %w", hash, ctx.Err())
 		case <-t.C:
 		}
 	}
