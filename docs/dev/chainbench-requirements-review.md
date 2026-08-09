@@ -79,7 +79,7 @@
 | 27 사전/사후 액션 | 없음 | 🔴 없음 | **pre→test→post 생명주기 프레임워크 부재** |
 | 28 재사용·fingerprint | `attach` + `nodeset.json`/`state.json` | 🔴 미흡 | **환경 fingerprint 비교→skip** 없음. e2e 14개 GOV 테스트가 **각자 handoff 부팅**(비효율·비-stateful) |
 | 29,30,32 테스트 DSL | `testkit.Case`(Go 함수) + `Report`(JSON) | 🔴 없음 | **JSON 정의서 DSL·해석기 부재**. 테스트=Go 코드 → shell→go 이관의 핵심 미구현 |
-| 31 MCP | `pkg/mcp` 30 tools | 🟢 | 결과 응답 경로는 dashboard/report와 연결 필요 |
+| 31 MCP | `internal/mcp` 30 tools | 🟢 | 결과 응답 경로는 dashboard/report와 연결 필요 |
 | 37 목적(안정성·복구) | 재시도(runGovHandoff) | 🔴 미흡 | 재시도가 **실패원인 은닉**, 헬스기반 복구 없음. etcd flaky를 "인식·복구"로 다루지 못함 |
 
 **요약된 3대 문제**
@@ -92,7 +92,7 @@
 ## C-etcd. "etcd flaky"의 실체 — go-wemix 내장 etcd 코드 분석 (요구 3)
 
 > "flaky"는 무작위가 아니다. `chain/go-wemix/wemix/etcdutil.go` 를 분석하면 **결정적 타이밍/스케줄 문제**임이 드러난다.
-> **출처(S4):** 아래 go-wemix/go-wbft 내부 분석은 **외부 go-wemix 체크아웃**(예: `packages/` 트리) 기준이며, chainbench repo에는 vendoring되어 있지 않다(라인번호는 그 체크아웃 기준). chainbench repo에서 직접 확인되는 것은 **`admin.etcdInit()` 호출부**(`pkg/consensus/poa/bootstrap_exec.go:44`)와 포트 예약(`portplan`)뿐이다.
+> **출처(S4):** 아래 go-wemix/go-wbft 내부 분석은 **외부 go-wemix 체크아웃**(예: `packages/` 트리) 기준이며, chainbench repo에는 vendoring되어 있지 않다(라인번호는 그 체크아웃 기준). chainbench repo에서 직접 확인되는 것은 **`admin.etcdInit()` 호출부**(`internal/consensus/poa/bootstrap_exec.go:44`)와 포트 예약(`portplan`)뿐이다.
 
 **메커니즘**
 - **etcd peer 포트 = `P2P+1`**(wemix 바이너리가 파생). chainbench는 이를 `portplan.Ports.Etcd`로 예약하며, RPC 밴드(http/ws/auth)와 **분리된 밴드**라 충돌하지 않는다(p2pStep≥2·rpcStep≥3). 클러스터 토큰 = `etcdClusterName` 고정. (client 포트는 go-wemix 내부이며 chainbench가 별도 예약하지 않는다 — peer(+1)만이 충돌-임계 포트.)

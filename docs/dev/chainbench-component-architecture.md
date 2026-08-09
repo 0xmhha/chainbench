@@ -127,7 +127,7 @@
 | genesis 계정·신원 등록 + 초기 balance | ✓ | `wbft/genesis.go:53,93`, `deploy/accounts.go:110` |
 | 시스템컨트랙트 embed / 배포컨트랙트 등록 | ✓ / ✓(셸아웃) | `wbft/genesis.go:41`; `poa/bootstrap_exec.go:31 DeployGovernance`(gwemix 버그 우회) |
 | 포트: 동일머신 스텝(etcd=p2p+1) | ✓ | `portplan.go:27/45` |
-| 포트: 멀티머신 동일포트·다른IP | ✓(wemix deploy) | `wemix/deploy/plan.go:42`; **`pkg/core/place` 없음·poa 하드코딩** |
+| 포트: 멀티머신 동일포트·다른IP | ✓(wemix deploy) | `wemix/deploy/plan.go:42`; **`internal/core/place` 없음·poa 하드코딩** |
 | **노드수 min≥4 / max(서버×포트) 검증** | **✗** | topology엔 없음; `wbftQuorumMin=4`는 upgrade handoff 한정 |
 | config 우선순위 flag>file>default | ✓ | `config.go:64 Resolve=Merge(Defaults,file,override)` |
 | 체인 플러그인 3종(wemix/wbft/stablenet) | ✓ | 3× `init()`+Register, `all_test.go` |
@@ -158,7 +158,7 @@
 
 ### Middle level (역할 완결 컴포넌트) — [ ]안은 실측 격차(§2b)
 - **M1. Session**[NEW] — `.chainbench/<session>/` 정본·경로 파생·env 재사용·기록. (design §3.1) · **미존재**
-- **M2. Place**[NEW·CONSOLIDATE] — host/port/배치. **실측: `pkg/core/place` 없음.** 로컬=`portplan`(스텝, ✓), 원격 동일포트/다른IP=`wemix/deploy`(✓, **단 poa 하드코딩·체인특화**). → **두 구현을 체인무관 core로 통합** + **용량 검증(min≥4·max=서버×포트)은 현재 없음 → 신규**. (design §3.4)
+- **M2. Place**[NEW·CONSOLIDATE] — host/port/배치. **실측: `internal/core/place` 없음.** 로컬=`portplan`(스텝, ✓), 원격 동일포트/다른IP=`wemix/deploy`(✓, **단 poa 하드코딩·체인특화**). → **두 구현을 체인무관 core로 통합** + **용량 검증(min≥4·max=서버×포트)은 현재 없음 → 신규**. (design §3.4)
 - **M3. KeyRegistry**[NEW·CONSOLIDATE keys+deploy/keys] — 노드별 키(랜덤 ✓/기존 ✓/원격다운로드 ✓). **BLS/PoP는 외부 `bootnode` 위임**(✓\*). **랜덤키 원격 업로드는 경로의존(setup ✓ / wemix deploy는 미업로드) → 통일 필요.** (design §3.5)
 - **M4. GenesisBuilder**[EXTEND genesis] — 4모드(✓) + 등록계정·노드정합(✓) + 시스템컨트랙트 embed(✓). **배포컨트랙트 등록은 `gwemix deploy-governance` 셸아웃**(체인특화 → 플러그인 뒤로). (design §3.8)
 - **M5. Provisioner**[REFACTOR setup] — datadir+키+genesis+config **물질화**를 Transport로 통일(로컬 ✓/원격 ✓). **격차: "원격에 파일 있으면 사용, 없으면 업로드"의 조건분기 없음**(현재 항상-업로드 or 항상-읽기) → **신규**.

@@ -2,7 +2,7 @@
 
 Phase 6 of the wemix4 migration ports the `tests/wemix4/{NODE,WBFT,RPC,GOV,TX}`
 shell cases into the chainbench Go **testkit** (`tests/wbft/...`, run by
-`pkg/core/pipeline/testrun`) — NOT a blind 1:1 re-port.
+`internal/core/pipeline/testrun`) — NOT a blind 1:1 re-port.
 
 A large share of wemix4's coverage **already exists** in the testkit corpus
 (`tests/wbft/consensus`, `tests/wbft/accounts`, `tests/api`), ported earlier
@@ -215,7 +215,7 @@ go-wemix producer's embedded etcd intermittently fails to bootstrap — it enter
 join-failure loop and the chain halts at ~block 10, before the fork — so a single
 launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
 
-- **`pkg/core/procman`** — a process-lifecycle manager that tracks every launched
+- **`internal/core/procman`** — a process-lifecycle manager that tracks every launched
   node PID (parsed from the launch output / nodeset.json) and tears them down
   verifiably (SIGTERM → SIGKILL → confirm gone, reporting any leak). This replaces
   the best-effort `pkill -f <datadir>` sweeps that were leaving orphans holding
@@ -324,9 +324,9 @@ launch is flaky (worse on a long-lived machine). Two pieces make it reliable:
   Live-verified against the go-wemix + go-wbft binaries.
 - **Infra** — after the handoff boot proved flaky (the go-wemix producer's
   embedded etcd intermittently fails to bootstrap), `runGovHandoff` gained a retry
-  backed by `pkg/core/procman` (tracked-PID, verified teardown → no orphans). All
+  backed by `internal/core/procman` (tracked-PID, verified teardown → no orphans). All
   GOV handoff tests route through it. Also added config-driven local topology
-  (`pkg/core/topology`, `setup --topology`).
+  (`internal/core/topology`, `setup --topology`).
 - **Batch 16** — GOV-016 + GOV-017 (bundled):
   `TestWemixGovernanceReactivateE2E` (GOV-016: a full unstake deactivates the
   staker — `isStaker` false — and `stake()` reactivates it — `isStaker` true, the

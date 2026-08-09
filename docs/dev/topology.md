@@ -41,7 +41,7 @@ layout is inspectable from its datadir.
 
 ## How it plugs in
 
-- `pkg/core/topology` — the config model: `Load`, `Validate`, role/sync
+- `internal/core/topology` — the config model: `Load`, `Validate`, role/sync
   normalization (`bp`→validator, `en`→endpoint), bootnode/counts helpers.
 - `setup.BuildPlanWithTopology(cfg, plugin, dataRoot, *topology.Topology)` — when
   a topology is supplied it drives each node's role and sync mode; otherwise the
