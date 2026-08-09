@@ -62,6 +62,7 @@ func seedBuiltins(r Registry) {
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
 	r.RegisterAction(actionRead, readAction{})
 	seedFaultBuiltins(r)
+	seedAssetBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
 	for _, a := range builtinAssertions() {

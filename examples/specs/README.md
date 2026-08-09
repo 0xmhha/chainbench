@@ -30,6 +30,7 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `tx-transfer-and-balance.json` | `sendTx` and `waitBlock` steps, then `balanceAt`/`nonceAt` assertions |
 | `negative-revert.json` | a negative tx step (`expectRevert`) — the transaction must revert (F11) |
 | `contract-read-and-tx-status.json` | a read-only contract call (`call`) and a receipt-status check on the transaction the step just sent (`sendTx` + `save`, then `txStatus` on `$sent`) |
+| `contract-deploy-and-register.json` | `faucet` tops up a fresh account, `deployContract` binds the deployed address, `registerContract` calls it, then assertions check the code, the receipt, and the balance (F11 AC-6/7) |
 | `cross-call-comparison.json` | step value binding: `read` two on-chain values, then compare later reads against them (`$totalSupply`, `$holderBalance`) — the cross-call comparison a single assertion cannot express |
 | `stablenet-governance-read.json` | a stablenet-only governance read: `call` with `proposals(uint256)` calldata (`internal/chains/stablenet/govbind`), asserting the ABI-encoded status word |
 | `network-peers.json` | a multi-node check with `onEach` (`bp1`..`bp4`): every validator reports at least one peer — a DSL port of the legacy `tests/network` peers-connected case |
@@ -89,3 +90,22 @@ Destructive cases need to stop a node or cut the network, not just read from it:
   process control, so declare `"requires": ["process"]` — attach mode advertises
   only `rpc` and skips the spec rather than failing it, and a run that somehow
   reaches the action without node control fails with that reason named.
+
+## Funding and contracts
+
+```jsonc
+{"steps": [
+   {"faucet":           {"to": "0x…aa", "amount": "1000000000000000000"}},
+   {"deployContract":   {"bytecode": "0x6080…", "gas": "500000", "save": "contract"}},
+   {"registerContract": {"to": "$contract", "data": "0x1234abcd", "save": "registration"}}]}
+```
+
+- `faucet` funds an address so a key generated at run time — which is not in the
+  genesis alloc, and so cannot pay for its own first transaction — can transact.
+  Without `from` it spends from the target node's unlocked coinbase.
+- `deployContract` is its own action rather than a `sendTx` because a
+  deployment's address exists only in the receipt; it binds that address, so
+  later steps reach the contract as `$contract`.
+- `registerContract` is the intent-revealing form of a call into a deployed
+  contract: `to` is required (a missing one would silently deploy again) and a
+  revert always fails the step.
