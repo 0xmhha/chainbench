@@ -27,9 +27,11 @@
 
 ---
 
-## 1b. 진행 현황 요약 (2026-08-07 기준)
+## 1b. 진행 현황 요약 (2026-08-09 기준)
 
 **walking skeleton 완성 · 재설계 엔진(H1)이 CLI·MCP 양쪽에서 도달 가능 · 실행 수직 전체가 CI(mock/attach)+라이브(gstable) 커버.**
+
+**2026-08-09 x-bar 정렬 검토 후속 (이 브랜치):** 문서 정합(T6.5·T6.5b·audit 스냅샷 강등) → **DSL 보충어 어휘 확장**(스텝 값 바인딩 `save`/`$ref`+`read` · fault 액션 5종 · 자산/컨트랙트 액션 3종 · `logs` 이벤트 어세션 · tx fee-cap/nonce 인자 · `gasPrice`/범용 `rpcCall`/`wsSubscribe`) → **supervisor 선언 논항 방출**(T3.2b) → **원격 SSH tail**(`LogReader` seam). 액션 2개·어세션 12개 → **액션 11개·어세션 16개**. 라이브 증명: `TestEngine_Live_NewVocabulary`(실 gstable 4노드). 부수적으로 **라이브에서만 드러난 결함 2건 수정** — `procman` 이 loopback 호스트를 원격으로 오판(단일 노드 정지 불가), 실패 스텝의 사유가 아티팩트에 기록되지 않음.
 
 **완료 (PR):**
 - Phase 4 walking skeleton — Engine 오케스트레이션·빌트인 tx/rpc·RunSpec·BuildEnv(AssemblePlan/GenesisSource/orchestration)·최상위 `NewLocalEngine`. **실 gstable 4노드 라이브 e2e**(BuildEnv 기동 + RunSpec 실행 + capstone `Engine.Run`) 통과. (#188~#197)
