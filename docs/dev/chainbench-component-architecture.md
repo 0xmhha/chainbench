@@ -4,6 +4,11 @@
 > **컴포넌트 계층(역할 분리)과 구현 순서(TDD·조립)** 관점으로 재정리한 문서. 설계 결정은 앞 4문서와 동일하며,
 > 여기서는 "무엇을 어떤 순서로, 어떻게 원자적으로 만들어 안전하게 합칠까"를 확정한다.
 > 목적(요구 37): 여러 노드를 서로 다른 역할로 실행해 체인 네트워크를 구성하고 tx/블록을 처리하며 테스트한다.
+>
+> **읽는 법(2026-08-09 갱신):** 본 문서는 **구현 착수 전**에 쓰였다. §0·§2 의 서술과 §1b 의 논거는
+> 그 시점의 판단을 보존한다. **현재 상태의 정본은 §2b 의 `현재(#224)` 열과 §3 의 취소선 델타**이며,
+> 작업 상태는 [[chainbench-worklist]] 가 정본이다. §0-1 말미의 "아직 없음" 목록(원격 로그수집·bp참여/
+> 분기 관측·procman 배선·체인무관 place·용량검증)은 **원격 SSH tail 하나만 남기고 모두 해소**됐다.
 
 ---
 
@@ -52,12 +57,12 @@
 
 | # | 바운디드 컨텍스트 | 분류 | Aggregate(root) · VO | 핵심 불변식 | 구성 컴포넌트(레이어) | 상태 |
 |---|-------------------|------|----------------------|-------------|------------------|------|
-| C1 | **테스트 오케스트레이션** | **Core** | `TestRun` | 스텝 원자성(부분성공 없음)·status=assertion 파생·preAction 실패⇒BLOCKED | Interpreter(M8)·testspec·assert | ✗ NEW |
-| C2 | **네트워크 구성** | **Core** | `Environment` · VO: Fingerprint/Ports/Placement | 포트 무충돌·fingerprint 불변·**genesis 등록신원=실제 키 일치**·BFT min≥4 | Place(M2)·KeyReg(M3)·Genesis(M4)·Provision(M5) | △ |
-| C3 | **노드 생명주기** | Supporting | `NodeProcess` | **고아 0**·정지⇒내장 etcd 종료·datadir 삭제=별개 연산 | Supervisor(M6)·procman | △ |
-| C4 | **관측·진단** | Supporting | (읽기 모델) | — | Collector(M7)·verify·logs | △ |
-| C5 | **세션·아티팩트** | Supporting | `Session`(root) | 경로 단일소유·결정적 레이아웃·env 재사용=fingerprint | Session(M1) | ✗ NEW |
-| C6 | **Chain Adapter** | Generic-external · **ACL** | — | **외부 바이너리 quirk를 Core로 누출 금지** | ChainPlugin+Capabilities(H2) | ✓/NEW |
+| C1 | **테스트 오케스트레이션** | **Core** | `TestRun` | 스텝 원자성(부분성공 없음)·status=assertion 파생·preAction 실패⇒BLOCKED | Interpreter(M8)·testspec·assert | ✓ (어휘 △, T4.2b·c) |
+| C2 | **네트워크 구성** | **Core** | `Environment` · VO: Fingerprint/Ports/Placement | 포트 무충돌·fingerprint 불변·**genesis 등록신원=실제 키 일치**·BFT min≥4 | Place(M2)·KeyReg(M3)·Genesis(M4)·Provision(M5) | ✓ |
+| C3 | **노드 생명주기** | Supporting | `NodeProcess` | **고아 0**·정지⇒내장 etcd 종료·datadir 삭제=별개 연산 | Supervisor(M6)·procman | ✓ (게이트 △, T3.2b) |
+| C4 | **관측·진단** | Supporting | (읽기 모델) | — | Collector(M7)·verify·logs | ✓ (원격 tail ✗) |
+| C5 | **세션·아티팩트** | Supporting | `Session`(root) | 경로 단일소유·결정적 레이아웃·env 재사용=fingerprint | Session(M1) | ✓ |
+| C6 | **Chain Adapter** | Generic-external · **ACL** | — | **외부 바이너리 quirk를 Core로 누출 금지** | ChainPlugin+Capabilities(H2) | ✓ |
 | C7 | **Transport** | Generic-infra · Ports&Adapters | — | 상위는 local/remote 무관 | Driver local/remote(M9) | ✓ |
 | C8 | **공유 커널** | Generic | VO 팩토리 | 값 불변 | config·rpc·accounts·node·portplan·nodeconfig | ✓ |
 
@@ -105,47 +110,59 @@
 
 > **원칙: 패키지·`_test.go` 존재 ≠ 기능 지원.** 아래는 실제 코드를 읽어 확인한 결과다.
 > **✓ 구현확인 · ✓\* 조건부(외부도구/경로의존) · △ 부분·미배선 · ✗ 미구현(설계만).**
+>
+> **두 열을 나란히 둔다.** *설계착수* 는 이 문서를 쓴 시점(구현 전)의 판정이고, *현재* 는 `#224` 시점
+> 재실측이다. 이 표는 문서 스스로 "착수 전 기준"이라 선언하므로, **낡은 채로 두면 이미 한 일을 다시
+> 계상하게 만든다** — 그래서 판정을 지우지 않고 델타로 보존한다. (갱신: 2026-08-09, T6.5b)
 
-| 변주/기능 | 상태 | 근거(file:line) · 격차 |
-|-----------|------|------------------------|
-| local provision(datadir/config/genesis/키) | ✓ | `driver/local.go:36`, `setup/launch.go:69` |
-| local launch + PID | ✓ | `local.go:54` `cmd.Process.Pid` |
-| **local stop + 종료검증·leak report** | **△** | stop 경로는 `Kill()`만·검증 없음(`local.go:79`); `procman.StopAll` 검증로직은 **테스트에서만 사용**(프로덕션 미배선) |
-| remote provision over SSH(FileProvisioner/Initializer) | ✓ | `remote.go:55,73,87`, assert `launch.go:177,190` |
-| remote launch over SSH(nohup+echo $!) | ✓ | `remote.go:104` |
-| remote stop by PID | ✓(driver) / **△ CLI미연결** | `remote.go:126`; `stop`/`clean`은 LocalDriver 하드코딩 |
-| **"원격 파일 있으면 사용, 없으면 업로드" 조건분기** | **✗** | 조건분기 없음 — setup은 항상 업로드, wemix deploy는 항상 읽기 |
-| **procman: {PID,datadir}·원격PID 추적** | **△** | 로컬 `{PID,Label}`만·datadir/원격PID 없음·미배선 |
-| attach(rpc-url only) | ✓ | `pipeline/attach/attach.go:25`, `test.go:99` |
-| 통합 Driver seam(local/remote 무관) | ✓ | `driver.go:42/58/67`, 양쪽 impl·type-assert |
-| SSH 입력(host/port/user/pass) | ✓ / **key_file ✗** | flags+env·wemix `cluster.yaml`+gitignore `credentials`; **key_file 인증 미지원(password only)** |
-| 랜덤 키 생성 / 주소파생 / 기존키 로드 | ✓ | `wallet.go:437,461`, `keys.go:77 LoadPreset` |
-| BLS/PoP 생성 | ✓\* | **외부 `bootnode` 위임**·stdout 파싱, 바이너리 없으면 실패 |
-| 원격 키 다운로드(SSH) | ✓ | `wemix/deploy/keys.go:61 ReadServerKeys` |
-| 랜덤키 원격 업로드 | △ | setup `shipIdentities`(✓) / wemix deploy는 의도적 미업로드 |
-| genesis 4모드(existing/build/template/upgrade-inherit) | ✓ | `genesis.go:38`, `config.go:70/97/18`, `upgrade/plan.go:138` |
-| genesis 계정·신원 등록 + 초기 balance | ✓ | `wbft/genesis.go:53,93`, `deploy/accounts.go:110` |
-| 시스템컨트랙트 embed / 배포컨트랙트 등록 | ✓ / ✓(셸아웃) | `wbft/genesis.go:41`; `poa/bootstrap_exec.go:31 DeployGovernance`(gwemix 버그 우회) |
-| 포트: 동일머신 스텝(etcd=p2p+1) | ✓ | `portplan.go:27/45` |
-| 포트: 멀티머신 동일포트·다른IP | ✓(wemix deploy) | `wemix/deploy/plan.go:42`; **`internal/core/place` 없음·poa 하드코딩** |
-| **노드수 min≥4 / max(서버×포트) 검증** | **✗** | topology엔 없음; `wbftQuorumMin=4`는 upgrade handoff 한정 |
-| config 우선순위 flag>file>default | ✓ | `config.go:64 Resolve=Merge(Defaults,file,override)` |
-| 체인 플러그인 3종(wemix/wbft/stablenet) | ✓ | 3× `init()`+Register, `all_test.go` |
-| 업그레이드 멀티바이너리 handoff | ✓ | `upgrade/plan.go:110`, `exec.go:65`; e2e |
-| 결과수집 via RPC(height/sync/peers/validators/receipt) | ✓ | `rpc/client.go`, `verify.go:68` |
-| **로그수집: 로컬** | **△** | `logs.go:46 Search`는 **파일 스캔**(live tail 아님) |
-| **로그수집: 원격(SSH)** | **✗** | 없음 |
-| **chainstate: bp참여·reorg/분기 검출** | **✗** | 미구현(height/sync/peers/validators만); `obs`는 인메모리 |
-| MCP 도구 | ✓(30) | `mcp/tools.go:33` |
+| 변주/기능 | 설계착수 | 현재(#224) | 근거(file:line) · 잔여 격차 |
+|-----------|:---:|:---:|------------------------|
+| local provision(datadir/config/genesis/키) | ✓ | ✓ | `driver/local.go:36`; 신규 경로는 `provision.Provisioner`(T4.6) |
+| local launch + PID | ✓ | ✓ | `local.go:54` `cmd.Process.Pid` |
+| **local stop + 종료검증·leak report** | △ | **✓** | `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)이 **프로덕션 배선됨** — `supervisor.Teardown` 경유, 라이브 e2e 고아0 확인 (T1.5·T3.2) |
+| remote provision over SSH(FileProvisioner/Initializer) | ✓ | ✓ | `remote.go:55,73,87` |
+| remote launch over SSH(nohup+echo $!) | ✓ | ✓ | `remote.go:104` |
+| remote stop by PID | ✓/△ | ✓ / **△ CLI미연결** | `remote.go:126`; 레거시 `stop`/`clean` 은 여전히 `driver.NewLocalDriver()` 하드코딩(`cmd/chainbench/stop.go:26`). 신규 경로(supervisor)는 `procman.Proc.Host` 로 원격 인지 |
+| **"원격 파일 있으면 사용, 없으면 업로드" 조건분기** | ✗ | **✓** | `provision.Provisioner` 가 `FileSink.Exists` 로 분기(`provision.go:52`), `driver.RemoteFileSink.Exists` 는 `test -f`(`remote_sink.go:29`) (T2.2·T5.1) |
+| **procman: {PID,datadir}·원격PID 추적** | △ | **✓** | `procman.Proc{PID,Label,DataDir,Host}`(`procman.go:28-37`) — datadir 삭제는 `RemoveDataDirs()` 로 종료와 분리(S2) |
+| attach(rpc-url only) | ✓ | ✓ | `pipeline/attach/attach.go:25`; 신규 경로는 `engine.NewAttachEngine`(T5.3) |
+| 통합 Driver seam(local/remote 무관) | ✓ | ✓ | `driver.go:42/58/67`, 양쪽 impl·type-assert |
+| SSH 입력(host/port/user/pass) | ✓ / key_file ✗ | **✓** | `remote.Credentials.PrivateKey`+`authMethods`(키 우선), `LoadPrivateKey` 가 0600 강제·insecure perm 거부 (T2.1) |
+| 랜덤 키 생성 / 주소파생 / 기존키 로드 | ✓ | ✓ | `wallet.go:437,461`, `keys.go:77 LoadPreset`; 통합 seam 은 `core/keyreg`(T1.6) |
+| BLS/PoP 생성 | ✓\* | ✓\* | **외부 `bootnode` 위임** — `keyreg.BLSDeriver` 로 캡슐화(부재 시 명확 오류). 의존 자체는 유지 |
+| 원격 키 다운로드(SSH) | ✓ | ✓ | `wemix/deploy/keys.go:61 ReadServerKeys`; `keyreg.RemoteDownload` |
+| 랜덤키 원격 업로드 | △ | ✓ | `keyreg.UploadTo(FileProvisioner)` 로 단일 경로화 (T1.6) |
+| genesis 4모드(existing/build/template/upgrade-inherit) | ✓ | ✓ | `genesis.go:38`, `upgrade/plan.go:138` |
+| genesis 계정·신원 등록 + 초기 balance | ✓ | ✓ | `wbft/genesis.go:53,93`. **주의(T4.4b)**: wbft 계열 검증자셋은 preset 에 baked — 랜덤키만으로는 유효 genesis 불가 |
+| 시스템컨트랙트 embed / 배포컨트랙트 등록 | ✓ / ✓(셸아웃) | ✓ / ✓(셸아웃) | `poa/bootstrap_exec.go:31`(gwemix 버그 우회) |
+| 포트: 동일머신 스텝(etcd=p2p+1) | ✓ | ✓ | `portplan.go:27/45` — `place` 가 내부 재사용 |
+| 포트: 멀티머신 동일포트·다른IP | ✓(wemix deploy) | **✓(체인무관)** | `internal/core/place` 가 `LocalStepped`/`LocalOSAssigned`/`RemotePerHost` 를 단일 `Allocator` 로 통합 (T1.4) |
+| **노드수 min≥4 / max(서버×포트) 검증** | ✗ | **✓** | `place.Capacity{MinValidators,Hosts,SlotsPerHost,PortBandSize}` fail-fast(`allocator.go:52-70`) (T1.4) |
+| config 우선순위 flag>file>default | ✓ | ✓ | `config.go:64` |
+| 체인 플러그인 3종(wemix/wbft/stablenet) | ✓ | ✓ | 3× `init()`+Register |
+| 업그레이드 멀티바이너리 handoff | ✓ | ✓(레거시) / **✗(신규 엔진)** | `upgrade/plan.go:110`; **신규 엔진에는 미배선**(T5.2) — 선행: supervisor `ForkSwaps`(T3.2b) |
+| 결과수집 via RPC(height/sync/peers/validators/receipt) | ✓ | ✓ | `rpc/client.go`; `collector` RPC 스냅샷 |
+| **로그수집: 로컬** | △ | **✓** | 스캔→**live tail** 승격(offset 증분·부분줄 미방출·`OnLine` obs 미러) (T3.3) |
+| **로그수집: 원격(SSH)** | ✗ | **✗** | 여전히 없음 — `collector/docs.go:10` "Remote (SSH) tailing is a follow-up seam" |
+| **chainstate: bp참여·reorg/분기 검출** | ✗ | **✓** | `BPParticipation`(head producer 샘플·bounded prune)·`Forked`(높이별 first-seen hash 불일치); `chainstate/chainstate.jsonl` 영속 + obs 미러 (T3.3) |
+| MCP 도구 | ✓(30) | ✓ | `mcp/tools.go`; DSL 대응은 `chainbench_run`(T6.2) |
+| **DSL 액션 어휘** | — | **△** | `sendTx`·`waitBlock` **2개뿐**. `stopNode`/`partition`/`faucet`/`deployContract` 등 design §3.2 명시분 부재 → **T4.2b·T4.2c** |
+| **supervisor 헬스게이트 분류** | — | **△** | `Options.LeaderGate`/`AlignJoinGap`/`ForkSwaps` 미사용, `FailureMode` 5종 중 `RPCUnready` 만 방출 → **T3.2b** |
 
-**결론(정직한 재평가):** 노드 구성·실행의 **핵심 골격은 실제로 견고**(provision/launch·local/remote seam·genesis 4모드·키·업그레이드·플러그인·RPC수집·attach 모두 ✓). 그러나 제가 초안에서 "✓"로 뭉뚱그린 것 중 **다음은 신규/보강 작업으로 반드시 계상**해야 한다:
-1. **procman 프로덕션 배선 + 종료검증 + 원격 PID + datadir**(현재 stop은 검증 없는 Kill).
-2. **체인무관 `place` 통합**(로컬 portplan + 원격 deploy를 하나로) + **용량검증(min≥4·max)**.
-3. **"원격 파일 존재 시 재사용, 없으면 업로드" 조건분기**.
-4. **원격 로그수집 + live tail**(현재 로컬 스캔만) + **bp참여·분기검출**.
-5. **랜덤키 원격 업로드 경로 통일**(setup·deploy 이원화 해소), **key_file SSH 인증**, **BLS 외부 bootnode 의존 명시**.
+**설계착수 시 지목한 5대 공백의 처리 결과:**
 
-이 5개가 "이름만 보고 있다고 착각하기 쉬운" 실제 공백이며, TDD 플랜(§5)에서 신규 phase로 다룬다.
+| # | 공백 | 결과 |
+|---|------|------|
+| 1 | procman 프로덕션 배선 + 종료검증 + 원격 PID + datadir | **해소** (T1.5·T3.2) |
+| 2 | 체인무관 `place` 통합 + 용량검증(min≥4·max) | **해소** (T1.4) |
+| 3 | "원격 파일 존재 시 재사용, 없으면 업로드" 조건분기 | **해소** (T2.2·T5.1) |
+| 4 | 원격 로그수집 + live tail + bp참여·분기검출 | **부분** — 로컬 tail·bp참여·분기 ✓ / **원격 SSH tail ✗**(T3.3 잔여) |
+| 5 | 랜덤키 원격 업로드 통일 · key_file SSH 인증 · BLS 외부의존 명시 | **해소** (T1.6·T2.1) |
+
+**새로 드러난 공백(2026-08-09 x-bar 정렬 검토):** 위 5개는 "이름만 보고 있다고 착각한" 유형이었다.
+남은 유형은 다르다 — **인터페이스가 선언한 계약이 구현에서 방출되지 않는** 것(T3.2b)과 **보충어(DSL)의
+어휘가 설계보다 얇은** 것(T4.2b·T4.2c)이다. 둘 다 컴파일·vet·test 를 통과하므로 §2b 같은 실측 대조로만
+잡힌다. 향후 실측은 **"선언 ↔ 방출" 대조**를 항목에 포함한다.
 
 ---
 
@@ -158,14 +175,14 @@
 
 ### Middle level (역할 완결 컴포넌트) — [ ]안은 실측 격차(§2b)
 - **M1. Session**[NEW] — `.chainbench/<session>/` 정본·경로 파생·env 재사용·기록. (design §3.1) · **미존재**
-- **M2. Place**[NEW·CONSOLIDATE] — host/port/배치. **실측: `internal/core/place` 없음.** 로컬=`portplan`(스텝, ✓), 원격 동일포트/다른IP=`wemix/deploy`(✓, **단 poa 하드코딩·체인특화**). → **두 구현을 체인무관 core로 통합** + **용량 검증(min≥4·max=서버×포트)은 현재 없음 → 신규**. (design §3.4)
-- **M3. KeyRegistry**[NEW·CONSOLIDATE keys+deploy/keys] — 노드별 키(랜덤 ✓/기존 ✓/원격다운로드 ✓). **BLS/PoP는 외부 `bootnode` 위임**(✓\*). **랜덤키 원격 업로드는 경로의존(setup ✓ / wemix deploy는 미업로드) → 통일 필요.** (design §3.5)
+- **M2. Place**[NEW·CONSOLIDATE] — host/port/배치. ~~실측: `core/place` 없음~~ → **구현됨**(T1.4): `internal/core/place` 가 `portplan`(로컬 스텝)과 원격 동일포트/다른IP를 체인무관 `Allocator` 로 통합하고, **용량검증(min≥4·max=서버×슬롯/포트대역)을 배치 전 fail-fast** 로 수행. (design §3.4)
+- **M3. KeyRegistry**[NEW·CONSOLIDATE keys+deploy/keys] — 노드별 키(랜덤 ✓/기존 ✓/원격다운로드 ✓). **BLS/PoP는 외부 `bootnode` 위임**(✓\*, `BLSDeriver` 로 캡슐화). ~~랜덤키 원격 업로드 경로의존~~ → **`keyreg.UploadTo` 로 단일화**(T1.6). (design §3.5)
 - **M4. GenesisBuilder**[EXTEND genesis] — 4모드(✓) + 등록계정·노드정합(✓) + 시스템컨트랙트 embed(✓). **배포컨트랙트 등록은 `gwemix deploy-governance` 셸아웃**(체인특화 → 플러그인 뒤로). (design §3.8)
-- **M5. Provisioner**[REFACTOR setup] — datadir+키+genesis+config **물질화**를 Transport로 통일(로컬 ✓/원격 ✓). **격차: "원격에 파일 있으면 사용, 없으면 업로드"의 조건분기 없음**(현재 항상-업로드 or 항상-읽기) → **신규**.
-- **M6. Supervisor**[NEW] — N노드 기동(✓)·헬스게이트(블록생성/etcd 리더 ✓ 일부)·teardown·프로세스 제어. **격차: `procman` 종료검증이 프로덕션 미배선(stop은 Kill만)·로컬PID만·원격 stop CLI 미연결 → 배선+검증+원격PID+datadir 필요.** (design §3.3)
-- **M7. Collector**[NEW·probe+obs] — RPC 수집(height/sync/peers/validators ✓). **격차: 원격 로그수집 없음(로컬도 스캔이지 tail 아님)·bp참여/reorg 관측 없음·`obs`는 인메모리 스캐폴딩** → **원격 tail·bp참여·분기검출 신규**. attach=RPC-only 강등. (design §3.6)
-- **M8. Interpreter**[REPLACE testkit] — pre→steps→assert→post, atomic 스텝, provenance. **미존재**(현재 Go-func 테스트). (design §3.2)
-- **M9. Transport**[KEEP·EXTEND driver] — **통합 seam 실측 견고**: 단일 `Driver`(Provision/Launch/Stop) + `Initializer`/`FileProvisioner` type-assert, 로컬·원격 양쪽 구현·CLI 배선(✓). local(loopback)·remote(ssh nohup+PID). **stateless(에이전트 없음, 검증됨)**. 격차: **stop 종료검증·key_file 인증 미지원**.
+- **M5. Provisioner**[REFACTOR setup] — datadir+키+genesis+config **물질화**를 Transport로 통일(로컬 ✓/원격 ✓). ~~격차: upload-if-absent 조건분기 없음~~ → **`provision.Provisioner`+`FileSink.Exists` 로 해소**(로컬 stat / 원격 `test -f`), T2.2·T4.6·T5.1.
+- **M6. Supervisor**[NEW] — N노드 기동(✓)·teardown·프로세스 제어(✓). ~~격차: procman 미배선~~ → **배선 완료**(`Teardown`→`StopAll` 검증·`RemoveDataDirs` 분리, `Proc{PID,DataDir,Host}`). **잔여 격차: 헬스게이트가 블록 전진만 본다 — `Options.LeaderGate`/`AlignJoinGap`/`ForkSwaps` 가 impl 에서 미사용이고 `FailureMode` 5종 중 `RPCUnready` 만 방출**(T3.2b). (design §3.3)
+- **M7. Collector**[NEW·probe+obs] — RPC 수집(✓)·**로컬 live tail(✓)**·**bp참여(✓)**·**fork/reorg 검출(✓)**·chainstate jsonl 영속+obs 미러(✓), T3.3. **잔여 격차: 원격 SSH tail 없음.** attach=RPC-only 강등. (design §3.6)
+- **M8. Interpreter**[REPLACE testkit] — pre→steps→assert→post, atomic 스텝, provenance. ~~미존재~~ → **구현됨**(`internal/testspec`, T1.1·T4.2·T4.3). **잔여 격차: 액션 어휘가 `sendTx`·`waitBlock` 2개뿐**(T4.2b·T4.2c). 레거시 Go-func 경로는 소비자 이관 전까지 병존. (design §3.2)
+- **M9. Transport**[KEEP·EXTEND driver] — **통합 seam 실측 견고**: 단일 `Driver`(Provision/Launch/Stop) + `Initializer`/`FileProvisioner` type-assert, 로컬·원격 양쪽 구현·CLI 배선(✓). local(loopback)·remote(ssh nohup+PID). **stateless(에이전트 없음, 검증됨)**. ~~격차: stop 종료검증·key_file 인증 미지원~~ → **둘 다 해소**(`procman.Alive`/`StopAll`, `remote.Credentials.PrivateKey`; T2.1). 잔여: driver 위 **Transport 타입 형식화**(명명만, 기능은 capability 로 동작 중).
 
 ### Low level (atomic·TDD 먼저)
 > 상태(코드 실측, §2b): **✓ 구현확인** · **✓\* 구현되나 조건부**(외부도구/경로의존) · **△ 부분/미배선** · **NEW 신규**
@@ -173,20 +190,20 @@
 |------|------|--------------|
 | config resolve/merge/flatten | ✓ | 우선순위 병합(flag>config>default) — `config.go:64` |
 | genesis build/merge/override/extract | ✓ | 순수 바이트 변환(원본 불변) — 4모드 전부 실측 |
-| portplan alloc | ✓ | 결정적 포트(etcd=p2p+1) — `portplan.go:27`. **로컬 스텝 전용**(원격 동일포트는 wemix/deploy 별도) |
-| topology parse/validate | ✓ | 역할·sync·개수 검증(roleAliases bp/en). **min≥4·max 용량검증 없음** |
+| portplan alloc | ✓ | 결정적 포트(etcd=p2p+1) — `portplan.go:27`. `place` 가 로컬 스텝/OS할당/원격 동일포트를 통합(T1.4) |
+| topology parse/validate | ✓ | 역할·sync·개수 검증(roleAliases bp/en). 용량검증은 `place.Capacity` 가 담당(T1.4) |
 | nodeconfig generate | ✓ | TOML 생성 |
 | keygen(keypair/addr) | ✓ | 랜덤(crypto/rand)·주소파생 |
 | keygen(BLS/PoP) | ✓\* | **외부 `bootnode` 바이너리에 위임**(stdout regex 파싱; 바이너리 없으면 실패). 네이티브 Go BLS 없음 |
 | accounts sign/derive | ✓ | tx 서명·주소 — `wallet.go:437,461` |
 | rpc call | ✓ | 단건 JSON-RPC — `rpc/client.go` |
-| transport prim(local exec/file/kill) | ✓ | 단일 실행/복사/시그널. **stop 후 종료검증 없음**(Kill만) |
-| transport prim(ssh exec/sftp/kill) | ✓ | nohup+PID·kill·SFTP(stateless) — `remote.go:104`. **key_file 인증 미지원(password only)** |
-| procman(PID track, stop-verify) | △ | 종료검증·leak-report **로직은 있으나 프로덕션 미배선(테스트 전용)**·**로컬 PID만**(datadir·원격PID 없음) → **배선+datadir+원격PID 필요** |
-| **testspec parse/validate/fingerprint** | **NEW** | 순수 파싱·6요소 해시 |
-| **assert funcs(typed)** | **NEW** | wei/addr/hex/bool 비교 |
-| **session path derive** | **NEW** | 결정적 경로·env-id 축약 |
-| log tail prim | △→NEW | **현재는 로컬 파일 스캔**(`logs.Search`, `logs.go:46` — 글롭+파싱, **live tail 아님**). **원격 로그수집 없음**. → live-tail(로컬/원격 SSH) 신규 |
+| transport prim(local exec/file/kill) | ✓ | 단일 실행/복사/시그널. 종료검증은 `procman.Alive`+`StopAll`(T1.5) |
+| transport prim(ssh exec/sftp/kill) | ✓ | nohup+PID·kill·SFTP(stateless) — `remote.go:104`. key_file 인증 지원(T2.1) |
+| procman(PID track, stop-verify) | ✓ | `Proc{PID,Label,DataDir,Host}` · `Alive`(signal 0) · `StopAll`(leak 보고) · `RemoveDataDirs`(종료와 분리). **`supervisor.Teardown` 으로 프로덕션 배선**(T1.5·T3.2) |
+| **testspec parse/validate/fingerprint** | ✓ | 순수 파싱·6요소 해시(T1.1) |
+| **assert funcs(typed)** | ✓ | wei/addr/hex/bool 비교(T1.2) |
+| **session path derive** | ✓ | 결정적 경로·env-id 축약(T1.3) |
+| log tail prim | ✓ / 원격 ✗ | **로컬 live tail 구현**(offset 증분·부분줄 미방출·obs 미러, T3.3). **원격 SSH tail 은 여전히 없음** |
 
 > 관찰: 신규/보강 원자 모듈 = testspec·assert·session-path(순수 신규) + **log tail**(스캔→live-tail·원격 확장) + **procman 배선**(△). 나머지는 EXTEND. 저수준 TDD 부담은 작지만, **"이미 있다"고 착각하기 쉬운 △항목(procman 배선·원격 로그·용량검증·upload-if-absent)** 을 신규 작업으로 반드시 계상해야 한다(§2b).
 
