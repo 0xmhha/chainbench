@@ -76,41 +76,68 @@
 
 ## 4. 체인 CLI 단계별 지원 현황 (지시 4)
 
-| 순서 | 체인 | 진입점 | 상태 |
-|---|---|---|---|
-| 1 | **gstable** | `chain up --case stablenet --binary <gstable>` | ✅ 전 단계 자동 + CI 게이트 |
-| 2 | **gwemix** | `chain up --case wemix`(단독) / `upgrade run`(핸드오프) | ☐ 단독 미구현 / ✅ 핸드오프는 `upgrade run` |
-| 3 | **gwbft** | `chain up --case wbft --binary <go-wbft/.../gwemix>` | ✅ 전 단계 자동(라이브) |
+**목표 재정의(사용자 확정 2026-08-10)**: 지시 4의 CLI 는 **한 번에 자동 실행되는 오케스트레이터가
+아니다.** 체인 구성·테스트 수행의 각 단계를 **독립적으로·수동으로·커스텀 가능하게 실행하고
+단계별로 검증**하는 **원자적·조합가능(composable) CLI** 이며, **동일 기능을 MCP 도구로도 노출**하여
+LLM 이 여러 행동을 자유롭게 조합(자유도 확대)할 수 있게 한다.
 
-**내 머신 환경**: gstable·gwbft·bootnode·go-wemix 바이너리 모두 빌드됨. etcd 는 gwemix 내장(외부 불필요) → wemix 라이브 검증 가능.
+기존 `chain up`(순차 자동)·`setup`(genesis/config/provision 번들)·`upgrade run`(핸드오프 번들)은
+단계가 **묶여** 있어 단계별 커스텀·검증이 어렵다. 필요한 것은 각 단계를 **끊어서** 노출하는 표면이다.
 
-→ 지시 4의 잔여는 **gwemix 단독(B)** 이 핵심. (gstable·gwbft 완료, 핸드오프는 `upgrade run` 으로 동작.)
+### 4.1 원자 명령 표면 (신규 — 공유 워크스페이스 기반)
+
+각 명령은 data-dir 워크스페이스(keys·genesis·config·nodes.json·logs 누적)를 읽고 자기 단계를
+수행한 뒤 되쓴다 → 단계 간 이어짐/재실행/커스텀/검증 가능. 각 CLI 명령 = 대응 MCP 도구.
+
+| 단계 | 명령(제안) | 커스텀 flag | 단계 검증 | 재사용 내부 |
+|---|---|---|---|---|
+| 계정/키 | `chain keys` | `--nodes/--validators/--balance/--password/--preset` | 주소·검증자셋 출력 | `keys generate`, `core/keys` |
+| 배치 | `chain allocate` | `--mode/--base-p2p/--base-rpc/--hosts` | 포트맵 출력 | `core/place` |
+| genesis | `chain genesis` | `--mode(existing\|build\|overlay\|inherit)/--set/--overlay/--template` | genesis 바이트·검증자 치환 | `core/genesis`, `engine.GenesisSource` |
+| config | `chain config` | `--sync-mode/--set/--static-nodes` | 노드별 config 출력 | `core/nodeconfig` |
+| 수집·배치 | `chain provision` | (로컬/원격) `--remote-host/-user/-port/--key-file` | 물질화 파일·upload-if-absent | `core/provision`, `driver.RemoteFileSink` |
+| init | `chain init` | — | datadir chaindata 확인 | `core/driver` |
+| 실행/정지/재실행/삭제 | `chain start`/`stop`/`restart`/`rm` | `--node\|--all/--grace/--data` | PID·head·고아0 | `core/driver`, `core/procman` |
+| 로그 | `chain logs` | `--node/--follow/--since` (로컬/원격 tail) | 최근 라인 | `core/logs`, `driver.RemoteLogReader` |
+| 부트스트랩(poa) | `chain deploy-governance`/`etcd-init`/`verify-etcd` | `--ipc` | `admin.wemixInfo.etcd.cluster` 비어있지 않음 | `consensus/poa` |
+| 테스트 | `chain test` (=`run`) | `--spec/--rpc` | session 판정 | `engine`, 기존 `run` |
+| 검증 | `chain status`/`inspect` | `--data-dir` | 각 단계 결과 | 기존 `chain status` |
+
+**설계 원칙**: 원자 명령은 위 내부 로직을 **얇게 감싸/분해**한다(중복 구현 금지). 오케스트레이터
+(`chain up`, `upgrade run`)는 **원자 명령의 조합 데모**로 남긴다. MCP 미러는 CLI RunE 와 **동일 코어**를
+호출(표면만 둘) — CLI↔MCP 행위 동일.
+
+### 4.2 chain 별 진행
+
+gstable·gwbft(static) 은 원자 명령으로 전 단계 커버가 쉽다(부품 이미 존재). gwemix(governance-etcd)
+는 `deploy-governance`/`etcd-init`/`verify-etcd` 원자 명령 + 2-페이즈 조합으로 달성 — 자동
+오케스트레이터가 아니라 **사용자/LLM 이 단계를 조합**해 세운다.
 
 ---
 
-## 5. 실행 순서 (지시 6 — 단계별 지원)
+## 5. 실행 순서 (지시 6 — 단계별 지원, 개정)
 
-각 페이즈 = 1 브랜치, 작업마다 커밋, 페이즈 완료 시 1 PR(현행 워크플로우). 라이브 검증은 GSTABLE_BIN/GWEMIX_BIN 게이트로 CI green 유지.
+각 페이즈 = 1 브랜치, 작업마다 커밋, 페이즈 완료 시 1 PR. 라이브 검증은 GSTABLE_BIN/GWEMIX_BIN 게이트로 CI green 유지.
 
-### Phase P1 — 문서 정합 + 드리프트 수정 (본 문서 포함)
-- 본 실행계획 문서 추가. §2.4 드리프트 4건 수정(README F16, 이관 카운트 단일화).
+### P1 — 분석 + 본 실행계획 + 드리프트 수정. (본 PR)
 
-### Phase P2 — 케이스 2 핸드오프 `chain up` 2-페이즈화 (task A)
-- `NewLiveHandoff` 를 `upgrade run` 의 phase-correct 순서로 재배열(프로듀서 격리→governance/etcdInit→verify-etcd→전체기동→메시→await-fork). 검증자 keystore/`--unlock`(static `armSpecs` 그대로). fork 20→100.
-- 완료기준: `chain up --case wemix-wbft` 전 단계 OK, 포크 블록 miner 가 검증자.
+### P2 — 워크스페이스 상태 모델 + static 원자 명령 (gstable 먼저)
+- data-dir 워크스페이스 레이아웃 정의·load/save(`internal/chainworkspace` 신규).
+- static 경로 원자 명령: `keys`·`allocate`·`genesis`·`config`·`provision`·`init`·`start`·`stop`·`restart`·`rm`·`logs`·`status`. 각 단계 gstable 라이브 검증(GSTABLE_BIN 게이트) + offline 단위테스트.
 
-### Phase P3 — 케이스 1 gwemix 단독 (task B) ★ 지시4 핵심
-- `poa` 오케스트레이터 승격(config·키배치·IPC대기·2-페이즈·verify), `RunWemix` 10단계 실구현, `setup` 의 `bootstrap.type=="governance-etcd"` 분기, standalone 프로파일.
-- 완료기준: `chain up --case wemix` 전 단계 OK, 블록 지속 전진.
+### P3 — MCP 미러
+- P2 원자 명령을 MCP 도구로 노출(핸들러=CLI 코어). LLM 이 단계 조합 가능.
 
-### Phase P4 — supervisor 잔여 (task C, T3.2b)
-- `LeaderGate` 실배선(`admin.wemixInfo.etcd.cluster`), `SwapBinary` 배선.
+### P4 — governance-etcd 원자 명령 (gwemix)
+- `deploy-governance`/`etcd-init`/`verify-etcd` + 2-페이즈 조합. gwemix 단독·핸드오프를 원자 명령 조합으로 검증. supervisor `LeaderGate` 실배선(task C).
 
-### Phase P5+ — DSL 이관 (지시 5, task D)
-- 지시 4 완료 후 착수. 스위트 단위 배치 이관: hardfork(8)·gas-policy(17)·accounts(35)·system-contracts(46).
-- 어휘 갭이 막는 케이스는 먼저 DSL 어휘 확장(raw-tx·txpool·validator-set 등) → 그 케이스 이관.
-- 각 스위트 이관 시 `tests/specs/README.md` 카운트 갱신, offline `validate` 게이트 + 라이브 `chainbench run` 확인.
-- 이관불가 4건은 사유와 함께 유지(대체 커버리지 명시).
+### P5 — 원격 배포 원자 명령
+- `provision --remote-*`, `start`/`logs` 원격(SSH). RemoteFileSink/RemoteDriver 재사용.
+
+### P6+ — DSL 이관 (지시 5, task D)
+- 원자 CLI 로 체인 구성 전 단계 검증 완료 후 착수. 스위트 배치 이관: hardfork(8)·gas-policy(17)·accounts(35)·system-contracts(46).
+- 어휘 갭이 막는 케이스는 DSL 어휘 확장(raw-tx·txpool·validator-set 등) 먼저.
+- 스위트별 `tests/specs/README.md` 카운트 갱신, offline `validate` 게이트 + 라이브 `chainbench run` 확인. 이관불가 4건은 사유 유지.
 
 ### 검증 게이트 (매 푸시 전)
 ```sh
