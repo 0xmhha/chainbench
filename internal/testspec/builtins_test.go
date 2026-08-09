@@ -6,7 +6,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -353,4 +355,44 @@ func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
 	if !strings.Contains(r.Source, "node2") {
 		t.Fatalf("failure should name the failing node, got Source=%q", r.Source)
 	}
+}
+
+func TestBlockAdvanceAssertion(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertBlockAdvance)
+
+	t.Run("advances", func(t *testing.T) {
+		var mu sync.Mutex
+		var n int
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req struct {
+				ID int `json:"id"`
+			}
+			body, _ := io.ReadAll(r.Body)
+			_ = json.Unmarshal(body, &req)
+			mu.Lock()
+			n++ // 1,2,3,... so the head keeps advancing
+			cur := n
+			mu.Unlock()
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x" + strconv.FormatInt(int64(cur), 16)})
+		}))
+		defer srv.Close()
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
+			Spec: map[string]any{"assert": assertBlockAdvance, "pollInterval": "5ms", "timeout": "2s"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("expected advance pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+		}
+	})
+
+	t.Run("stalled fails", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x5"}) // never changes
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
+			Spec: map[string]any{"assert": assertBlockAdvance, "pollInterval": "5ms", "timeout": "40ms"}})
+		if err != nil {
+			t.Fatalf("stalled should not error: %v", err)
+		}
+		if r.Pass {
+			t.Fatal("a stalled head must fail blockAdvance")
+		}
+	})
 }

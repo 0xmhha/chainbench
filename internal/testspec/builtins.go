@@ -21,14 +21,15 @@ const (
 	actionSendTx    = "sendTx"
 	actionWaitBlock = "waitBlock"
 
-	assertChainID     = "chainId"
-	assertBlockNumber = "blockNumber"
-	assertPeerCount   = "peerCount"
-	assertBalanceAt   = "balanceAt"
-	assertCodeAt      = "codeAt"
-	assertNonceAt     = "nonceAt"
-	assertCall        = "call"
-	assertTxStatus    = "txStatus"
+	assertChainID      = "chainId"
+	assertBlockNumber  = "blockNumber"
+	assertPeerCount    = "peerCount"
+	assertBalanceAt    = "balanceAt"
+	assertCodeAt       = "codeAt"
+	assertNonceAt      = "nonceAt"
+	assertCall         = "call"
+	assertTxStatus     = "txStatus"
+	assertBlockAdvance = "blockAdvance"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -43,13 +44,66 @@ const (
 	defaultWaitBlockPoll    = 500 * time.Millisecond
 )
 
+// Defaults for the blockAdvance assertion poll loop, overridable per spec.
+const (
+	defaultBlockAdvanceTimeout = 30 * time.Second
+	defaultBlockAdvancePoll    = 500 * time.Millisecond
+)
+
 // seedBuiltins registers the built-in tx action and RPC-reading assertions on r.
 // It is called by NewRegistry(true).
 func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
+	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
+	}
+}
+
+// blockAdvanceAssertion passes when the target node's head advances within the
+// poll window — proof the network is producing blocks. Spec: timeout,
+// pollInterval, on. It reads the head once, then polls until a higher head or
+// the timeout.
+type blockAdvanceAssertion struct{}
+
+func (blockAdvanceAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertBlockAdvance, Provenance: ac.Spec}
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("testspec: blockAdvance: no target node RPC URL")
+		res.Actual = err.Error()
+		return res, err
+	}
+	c, err := clientFor(ac.Deps, targets[0].url)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	start, err := c.BlockNumber(ctx)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	res.Expected = "head > " + strconv.FormatUint(start, 10)
+
+	timeout := durationArg(ac.Spec, "timeout", defaultBlockAdvanceTimeout)
+	pctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	t := time.NewTicker(durationArg(ac.Spec, "pollInterval", defaultBlockAdvancePoll))
+	defer t.Stop()
+	for {
+		if cur, err := c.BlockNumber(pctx); err == nil && cur > start {
+			res.Pass, res.Actual = true, cur
+			return res, nil
+		}
+		select {
+		case <-pctx.Done():
+			res.Pass, res.Actual = false, start
+			res.Source = "head did not advance within " + timeout.String()
+			return res, nil
+		case <-t.C:
+		}
 	}
 }
 
