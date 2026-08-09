@@ -220,6 +220,15 @@ chainbench chain status --data-dir /tmp/x   # 살아있는 네트워크 상태(�
 chainbench chain down   --data-dir /tmp/x   # 종료(고아 0 검증)
 ```
 
+**케이스별 실행 진입점** — 어디까지 자동화됐는지가 다르다:
+
+| 케이스 | 진입점 | 비고 |
+|---|---|---|
+| stablenet | `chain up --case stablenet --binary <gstable>` | 전 단계 자동 |
+| wbft | `chain up --case wbft --binary <go-wbft/build/bin/gwemix>` | 전 단계 자동. **`--binary` 절대경로 필수**(이름이 `gwemix`) |
+| wemix-wbft | `scripts/chain-setup/handoff-wemix-wbft.sh <data-dir>` | `chain up` 은 아직 옛 순서라 실패. 스크립트가 2-페이즈 순서를 수행 |
+| wemix | 없음 — [case-1 §5](case-1-wemix.md) 의 수동 절차 | 오케스트레이터 미구현 |
+
 `chain up` 은 **단계마다 PASS/FAIL 과 소요시간을 출력**하고, 실패하면 거기서 멈춘다.
 어느 단계가 깨졌는지가 곧 답이 되도록 만든 것이 이 명령의 목적이다.
 

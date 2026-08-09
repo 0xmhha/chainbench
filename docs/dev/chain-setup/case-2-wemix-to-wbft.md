@@ -139,40 +139,47 @@ $CHAIN/go-wemix/build/bin/gwemix attach /tmp/hand/node1/gwemix.ipc \
 참조 구현 `wemix4/envs/default/bootstrap.sh` 의 순서를 그대로 재현해 **핸드오프 성공**을 확인했다.
 공통 부트스트랩 계약은 [README §1b](README.md#1b-governance-etcd-부트스트랩--2-페이즈-순서-실증-확인).
 
-### 5.1 절차
+### 5.1 절차 — 실행 가능한 스크립트
+
+순서 자체가 요점이라 산문이 아니라 스크립트로 둔다. **실제로 실행해 성공한 그대로**다.
 
 ```sh
-CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
-D=/tmp/handoff
-
-# --- 준비: genesis 생성 + 전 노드 datadir init (chain up 이 여기까지 해준다) ---
-chainbench chain up --case wemix-wbft --profile <프로파일> \
-  --from-binary $CHAIN/go-wemix/build/bin/gwemix \
-  --to-binary   $CHAIN/go-wbft/build/bin/gwemix \
-  --template    $CHAIN/go-wemix/wemix/scripts/genesis-template.json \
-  --data-dir $D --stop-after launch
-chainbench chain down --data-dir $D          # datadir 는 남는다
-
-# --- 페이즈 A: 프로듀서 단독 부트스트랩 ---
-<프로듀서 실행 명령>                          # node1 만
-G=$CHAIN/go-wemix/build/bin/gwemix
-KS=$(ls $D/node1/keystore/* | head -1)
-$G wemix deploy-governance --url $D/node1/gwemix.ipc \
-   --password $D/password $D/wemix-config.json $KS
-$G attach $D/node1/gwemix.ipc --exec 'admin.etcdInit()'
-$G attach $D/node1/gwemix.ipc --exec 'JSON.stringify(admin.wemixInfo.etcd)'   # ← 반드시 확인
-pkill -f "datadir $D/node1 "                  # 프로듀서 종료
-
-# --- 페이즈 B: 전체 기동 ---
-# 검증자는 keystore + unlock 이 필요하다 (plan node k+1 <- preset node k)
-for i in 2 3 4 5; do
-  cp keys/preset/node$((i-1))/keystore/* $D/node$i/keystore/
-  <검증자 실행 명령> --unlock <addr> --password $D/password --miner.etherbase <addr>
-done
-<프로듀서 실행 명령>
-# 풀메시 연결 (재기동 뒤이므로 반드시)
-for each node: admin_addPeer(모든 enode)
+CHAIN_DIR=/Users/0xtopaz/work/github/0xmhha/chain \
+PROFILE=profiles/wemix-upgrade.yaml \
+  scripts/chain-setup/handoff-wemix-wbft.sh /tmp/handoff
 ```
+
+스크립트가 하는 일:
+
+| 구간 | 내용 |
+|---|---|
+| 준비 | `chain up --stop-after launch` 로 genesis 생성 + 전 노드 datadir init, **각 노드 실행 인자를 `ps` 로 캡처**, 전부 종료(datadir 유지) |
+| 페이즈 A | 프로듀서 1대만 기동 → `deploy-governance` → `admin.etcdInit()` → **`admin.wemixInfo.etcd.cluster` 확인(비면 즉시 중단)** → 프로듀서 종료 |
+| 페이즈 B | 검증자에 keystore 복사 + `--unlock`/`--password`/`--miner.etherbase` 부여 → 전체 기동 → `admin_addPeer` 풀메시 → 상태 출력 |
+
+확인은 **검증자에서** 한다 — 프로듀서는 포크 직전에서 멈추는 것이 정상이다.
+
+```sh
+curl -s -X POST -H 'Content-Type: application/json' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"eth_getBlockByNumber","params":["0x64",false]}' \
+  http://127.0.0.1:40020        # fork_block=100 → 0x64 의 miner 가 검증자여야 한다
+```
+
+> **zsh 주의**: `nohup $CMD` 는 동작하지 않는다(zsh 는 `$var` 를 단어 분리하지 않는다).
+> 스크립트는 `nohup $(cat file)` 형태를 쓴다. 직접 옮겨 쓸 때 주의.
+
+### 5.1b 검증자 신원 매핑
+
+프로파일 `identities.plan_order: [5,1,2,3,4]` 가 플랜 순서 ↔ 프리셋 노드를 잇는다.
+페이즈 B에서 각 검증자에 넣어야 할 주소가 이것이다.
+
+| 플랜 노드 | 프리셋 노드 | 주소 | 역할 | 포트(http) |
+|---|---|---|---|---|
+| node1 | preset node5 | `0xf9593d…6984` | 프로듀서(go-wemix) | 40010 |
+| node2 | preset node1 | `0xc17d49…f9d8` | 검증자(go-wbft) | 40020 |
+| node3 | preset node2 | `0x2493a8…8d3c` | 검증자 | 40030 |
+| node4 | preset node3 | `0x8c4a10…7764` | 검증자 | 40040 |
+| node5 | preset node4 | `0x8eb790…39a6` | 검증자 | 40050 |
 
 ### 5.2 관측 결과
 

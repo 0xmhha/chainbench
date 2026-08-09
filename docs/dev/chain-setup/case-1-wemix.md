@@ -42,27 +42,21 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 
 ---
 
-## 3. 필요한 절차 (미구현)
+## 3. 재료의 현황
 
-| # | 단계 | 현재 상태 |
-|---|---|---|
-| 1 | resolve-chain (`wemix`) | ✅ 매니페스트 존재, `bootstrap.type="governance-etcd"` 선언됨 |
-| 2 | resolve-binary | ✅ |
-| 3 | load-preset | ✅ |
-| 4 | **wemix-config 작성** (`poa.Config`: 멤버·스테이크·거버넌스 env·alloc) | ⚠️ 타입은 있으나 **핸드오프 프로파일에서만 조립**(`buildPoAConfig`) — standalone 입력원 없음 |
-| 5 | **base-genesis 생성** (`gwemix wemix genesis --data <cfg> --genesis <template> --out`) | ✅ `poa.GenerateGenesis` 존재. **템플릿은 go-wemix 저장소의 `wemix/scripts/genesis-template.json`** (chainbench 내장 `internal/chains/wemix/genesis.json` 은 `__CHAIN_ID__` 치환용이라 이 명령에 넣으면 실패) |
-| 6 | allocate / plan | ✅ 단, `place` 는 etcd 포트를 `p2p+1` 로 예약만 함 |
-| 7 | provision keys (nodekey → `geth/`, static-nodes, keystore) | ⚠️ `provisionKeysFn` 이 **핸드오프 CLI 안에 하드코딩** — 재사용 불가 |
-| 8 | init + launch (`--mine --unlock --miner.etherbase`) | ✅ |
-| 9 | wait-ipc | ⚠️ 핸드오프 CLI 내부 헬퍼 |
-| 10 | **deploy-governance** | ✅ `poa.DeployGovernance` (2-인자 형태 — 3-인자는 gwemix 버그) |
-| 11 | **etcd-init** | ✅ `poa.EtcdInit` **단, 결과 미검증** |
-| 12 | **verify-etcd** | ❌ **없음** — 이 단계가 없어서 실패가 성공으로 보고된다 |
-| 13 | health-gate (블록 전진) | ✅ 일반 게이트만; etcd 리더 게이트는 seam 만 존재 |
+절차(§5)에 필요한 조각은 대부분 이미 있고, **이들을 엮는 오케스트레이터만 없다.**
 
-**결론:** 재료(4·5·10·11)는 있는데 **standalone 오케스트레이터가 없다**. 지금 이들을 호출하는
-유일한 경로는 `chainbench upgrade run`(케이스 2)뿐이고, 그 안에 wemix 전용 로직이 CLI 계층에
-묶여 있다.
+| 조각 | 상태 |
+|---|---|
+| 체인 플러그인(`registry.Get("wemix")`, `bootstrap.type="governance-etcd"`) | ✅ |
+| `poa.Config`(멤버·스테이크·거버넌스 env·alloc) | ⚠️ 타입은 있으나 **핸드오프 프로파일에서만 조립**(`poaConfig`) — standalone 입력원 없음 |
+| `poa.GenerateGenesis`(`gwemix wemix genesis`) | ✅ **템플릿은 go-wemix 저장소의 `wemix/scripts/genesis-template.json`** (chainbench 내장 `internal/chains/wemix/genesis.json` 은 `__CHAIN_ID__` 치환용이라 이 명령에 넣으면 실패) |
+| 포트 배치(`place`) | ✅ etcd 포트를 `p2p+1` 로 예약 |
+| 키 배치(nodekey → `geth/`, static-nodes, keystore) | ⚠️ `liveHandoff.provisionKeys` 안에 있음 — 재사용 불가 |
+| `poa.DeployGovernance` | ✅ 2-인자 형태(3-인자는 gwemix 버그) |
+| `poa.EtcdInit` | ✅ 단, **결과 미검증** |
+| verify-etcd(`admin.wemixInfo.etcd.cluster`) | ✅ `chainsetup.WaitEtcdCluster` |
+| 블록 전진 헬스게이트 | ✅ |
 
 ---
 
@@ -83,30 +77,62 @@ gwemix wemix genesis     → 검증자 없는 genesis (거버넌스 컨트랙트
 
 ---
 
-## 5. 확정된 절차
+## 5. 절차
 
-케이스 2 실증으로 부트스트랩 계약이 확인됐다([README §1b](README.md#1b-governance-etcd-부트스트랩--2-페이즈-순서-실증-확인)).
+부트스트랩 계약은 케이스 2 실증으로 확인됐다([README §1b](README.md#1b-governance-etcd-부트스트랩--2-페이즈-순서-실증-확인)).
 wemix 단독은 그 계약에서 **후계 체인만 빼면** 된다 — 포크도, wbft 검증자도 없다.
 
-```
-── 페이즈 A: 부트스트랩 (프로듀서 단독) ──
- A1  wemix-config 작성 → gwemix wemix genesis → 전 노드 datadir init
- A2  프로듀서(BP1) 1대만 기동
- A3  gwemix wemix deploy-governance  (IPC)
- A4  admin.etcdInit()                (IPC)
- A5  verify: admin.wemixInfo.etcd.cluster 가 비어 있지 않을 것
- A6  프로듀서 종료
-── 페이즈 B: 운영 ──
- B1  전 BP 기동
- B2  풀메시 연결 (admin_addPeer)
- B3  블록 전진 확인
+> **검증 상태**: 아래 절차는 케이스 2에서 검증된 계약에서 **도출**한 것이며, wemix 단독으로는
+> 아직 실행 검증하지 않았다. 페이즈 A(거버넌스+etcd)는 케이스 2에서 그대로 확인된 부분이고,
+> 검증되지 않은 것은 "후계 체인 없이 페이즈 B를 계속 돌렸을 때"다.
+
+```sh
+CHAIN=/path/to/chain
+G=$CHAIN/go-wemix/build/bin/gwemix
+D=/tmp/wemix            # 짧게: IPC 소켓 경로 104자 제한
+
+# ── A1. genesis ──────────────────────────────────────────────────────────
+# poa.Config JSON 을 쓰고(멤버=각 BP, §4), go-wemix 자체 템플릿으로 생성한다.
+$G wemix genesis --data $D/wemix-config.json \
+   --genesis $CHAIN/go-wemix/wemix/scripts/genesis-template.json \
+   --out $D/genesis.json
+# 케이스 2와 달리 croissant 섹션도 croissantBlock 도 넣지 않는다.
+
+# ── A1. 전 노드 datadir init ─────────────────────────────────────────────
+for i in 1 2; do $G --datadir $D/node$i init $D/genesis.json; done
+# 각 노드의 nodekey 를 <datadir>/geth/nodekey 에, keystore 를 <datadir>/keystore 에 배치
+
+# ── A2. 프로듀서(BP1) 1대만 기동 ─────────────────────────────────────────
+nohup $G --datadir $D/node1 --port 30010 \
+  --http --http.addr 127.0.0.1 --http.port 40010 --ws --ws.port 40011 \
+  --authrpc.port 40012 --networkid <NETWORK_ID> --allow-insecure-unlock --mine --nat none \
+  --http.api eth,net,web3,wemix,admin,miner,txpool,personal \
+  --miner.etherbase <BP1_ADDR> --unlock <BP1_ADDR> --password $D/password \
+  > $D/n1.log 2>&1 &
+until [ -S $D/node1/gwemix.ipc ]; do sleep 1; done
+
+# ── A3~A5. 거버넌스 배포 → etcdInit → 확인 ───────────────────────────────
+KS=$(ls $D/node1/keystore/* | head -1)
+$G wemix deploy-governance --url $D/node1/gwemix.ipc \
+   --password $D/password $D/wemix-config.json $KS
+$G attach $D/node1/gwemix.ipc --exec 'admin.etcdInit()'
+$G attach $D/node1/gwemix.ipc --exec 'JSON.stringify(admin.wemixInfo.etcd)'
+#   기대: {"cluster":"producer=https://127.0.0.1:30011","leader":{...},"members":[...]}
+#   cluster 가 비어 있으면 여기서 멈춘다 (반환값은 성공해도 null 이라 판정 근거가 아니다)
+
+# ── A6. 프로듀서 종료 ────────────────────────────────────────────────────
+pkill -f "datadir $D/node1 "; sleep 3
+
+# ── B1. 전 BP 기동 (위 A2 명령을 노드 수만큼, 포트/주소만 바꿔서) ────────
+# ── B2. 풀메시 연결: 각 노드에서 admin_addPeer(모든 enode)
+# ── B3. 블록 전진 확인
 ```
 
-케이스 2와의 유일한 차이:
+케이스 2와의 차이는 넷뿐이다:
 
 | | 케이스 1 (wemix 단독) | 케이스 2 (핸드오프) |
 |---|---|---|
-| genesis | croissant 섹션 **없음**, `croissantBlock` 없음 | croissant 섹션 + 포크 블록 병합 |
+| genesis | croissant 섹션·`croissantBlock` **없음** | croissant 섹션 + 포크 블록 병합 |
 | 노드 | wemix BP 만 | wemix 프로듀서 + wbft 검증자 |
 | 페이즈 B 신원 | BP 는 이미 프로듀서로 unlock 됨 | **검증자에도** keystore + unlock 필요 |
 | 종료 조건 | 블록이 계속 전진 | 포크 블록을 후계자가 봉인 |
