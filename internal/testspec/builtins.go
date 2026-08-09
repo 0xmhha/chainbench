@@ -132,6 +132,7 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if err != nil {
 		return fmt.Errorf("testspec: sendTx: %w", err)
 	}
+	ac.Hash = hash
 	if wait, ok := ac.Args["wait"].(bool); ok && !wait {
 		return nil
 	}
@@ -141,6 +142,7 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if err != nil {
 		return err
 	}
+	ac.Receipt = receipt
 	return checkTxOutcome(hash, receipt, ac.Args)
 }
 

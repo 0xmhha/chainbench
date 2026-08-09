@@ -74,12 +74,22 @@ func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env s
 	return act.Do(ctx, &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: argsOf(entry[name])})
 }
 
-// runStep runs a step action and records a StepResult, even on failure.
+// runStep runs a step action and records a StepResult (including any tx
+// hash/receipt the action surfaces) even on failure.
 func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any, env session.Environment, rec session.TestRecord) error {
 	name := actionName(entry)
-	err := i.runAction(ctx, entry, env, rec)
 	on, _ := argsOf(entry[name])["on"].(string)
-	rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on})
+	act, ok := i.deps.Actions.Action(name)
+	if !ok {
+		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on})
+		if name == "" {
+			return fmt.Errorf("testspec: empty action entry")
+		}
+		return fmt.Errorf("testspec: unknown action %q", name)
+	}
+	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: argsOf(entry[name])}
+	err := act.Do(ctx, ac)
+	rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt})
 	return err
 }
 

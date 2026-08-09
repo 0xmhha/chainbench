@@ -47,6 +47,10 @@ type ActionCtx struct {
 	Deps *Deps
 	Rec  session.TestRecord
 	Args map[string]any
+	// Hash and Receipt let a tx action surface its result so the interpreter can
+	// record step provenance. They are outputs, set by the action.
+	Hash    string
+	Receipt map[string]any
 }
 
 // AssertCtx gives an assertion access to the environment, deps, and targets.
