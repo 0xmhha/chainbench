@@ -1,10 +1,11 @@
 // Package dashboard is the HTTP backend for the chainbench dashboard
 // (requirement #19). It streams the obs event bus to browsers over SSE and
-// exposes stored run state as JSON, so a UI can show the three phases
-// (setup/verify/test) live. The realtime contract is SSE (one-way event
-// stream); the served page is the built Svelte SPA (decision D5), with the
-// interim build-free page kept at /legacy as a no-JS fallback
-// (docs/CHAINBENCH_GO_REDESIGN.md §8.2).
+// exposes run state as JSON, so a UI can show the three phases
+// (setup/verify/test) live. With an artifact root it also serves completed-run
+// session artifacts from disk (session verdict and chainstate history) under
+// /api/sessions. The realtime contract is SSE (one-way event stream); the served
+// page is the built Svelte SPA (decision D5), with the interim build-free page
+// kept at /legacy as a no-JS fallback (docs/CHAINBENCH_GO_REDESIGN.md §8.2).
 package dashboard
 
 import (
@@ -21,14 +22,28 @@ var indexHTML []byte
 
 // Server serves the dashboard API and page over one http.Handler.
 type Server struct {
-	bus   *obs.Bus
-	store obs.Store
-	mux   *http.ServeMux
+	bus          *obs.Bus
+	store        obs.Store
+	artifactRoot string
+	mux          *http.ServeMux
 }
 
-// NewServer wires the routes. store may be nil (runs API returns []).
-func NewServer(bus *obs.Bus, store obs.Store) *Server {
+// Option configures a Server.
+type Option func(*Server)
+
+// WithArtifactRoot points the session-artifact API at the directory holding
+// `.chainbench` session directories, so completed runs can be queried from disk.
+func WithArtifactRoot(root string) Option {
+	return func(s *Server) { s.artifactRoot = root }
+}
+
+// NewServer wires the routes. store may be nil (runs API returns []). Without
+// WithArtifactRoot the session-artifact API returns empty results.
+func NewServer(bus *obs.Bus, store obs.Store, opts ...Option) *Server {
 	s := &Server{bus: bus, store: store, mux: http.NewServeMux()}
+	for _, opt := range opts {
+		opt(s)
+	}
 	// The built Svelte SPA (decision D5) is served at the root; the more specific
 	// API/stream routes below take precedence over this catch-all. The interim
 	// build-free page remains available at /legacy as a no-JS fallback.
@@ -38,6 +53,9 @@ func NewServer(bus *obs.Bus, store obs.Store) *Server {
 	s.mux.HandleFunc("GET /events", s.handleEvents)
 	s.mux.HandleFunc("GET /api/runs", s.handleRuns)
 	s.mux.HandleFunc("POST /api/events", s.handlePublish)
+	s.mux.HandleFunc("GET /api/sessions", s.handleSessions)
+	s.mux.HandleFunc("GET /api/sessions/{id}", s.handleSession)
+	s.mux.HandleFunc("GET /api/sessions/{id}/chainstate", s.handleSessionChainstate)
 	return s
 }
 
