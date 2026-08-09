@@ -104,3 +104,41 @@ func TestAlive_GonePID(t *testing.T) {
 		t.Fatal("Alive should be false for a killed PID")
 	}
 }
+
+func TestStopOne_TerminatesJustThatProcess(t *testing.T) {
+	m := New()
+	keep := startSleeper(t)
+	target := startSleeper(t)
+	m.Track(keep, "keep")
+	m.Track(target, "target")
+
+	if err := m.StopOne(target, time.Second); err != nil {
+		t.Fatalf("StopOne: %v", err)
+	}
+	if Alive(target) {
+		t.Fatal("target still alive after StopOne")
+	}
+	if !Alive(keep) {
+		t.Fatal("StopOne stopped an untargeted process")
+	}
+	_ = m.StopAll(time.Second)
+}
+
+func TestStopOne_UntrackedPIDIsAnError(t *testing.T) {
+	m := New()
+	if err := m.StopOne(999999, time.Second); err == nil {
+		t.Fatal("expected an error for an untracked pid")
+	}
+}
+
+func TestStopOne_AlreadyGoneIsNotAnError(t *testing.T) {
+	m := New()
+	pid := startSleeper(t)
+	m.Track(pid, "one")
+	if err := m.StopOne(pid, time.Second); err != nil {
+		t.Fatalf("first StopOne: %v", err)
+	}
+	if err := m.StopOne(pid, time.Second); err != nil {
+		t.Fatalf("second StopOne on a stopped process: %v", err)
+	}
+}

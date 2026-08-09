@@ -38,6 +38,8 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `stablenet-gas-policy.json` | `baseFee` within the anzeon min/max bounds — DSL port of the legacy `tests/anzeon` basefee-minimum/maximum cases |
 | `stablenet-hardfork.json` | post-Boho artifacts as plain reads: P-256 precompile `call` (valid → success word, corrupted → not), GovMinter `codeAt`, and chainId/blockNumber — DSL port of the legacy `tests/anzeon` hardfork-reads cases |
 | `stablenet-estimate-gas.json` | `estimateGas` for a native-coin `transfer` exceeds the 21000 bare-transfer floor — DSL port of the legacy `tests/anzeon` estimate-gas-token-transfer case |
+| `fault-node-restart.json` | fault injection: `stopNode` a validator, let the rest produce, `startNode` it again and wait for it to catch up — the DSL form of the legacy quorum/sync-recovery e2e cases |
+| `fault-partition-fork.json` | `partition` splits the validators into two groups that can no longer see each other, then `healPartition` restores the mesh in a post-action (F8 AC-2) |
 | `stablenet-token-metadata.json` | `call` name()/symbol() returns contain the token symbol bytes (`Contains`) — DSL port of the legacy `tests/anzeon` token-metadata case |
 
 ## Step value binding
@@ -64,3 +66,26 @@ value and reference it:
 - `read` takes a `source` naming any of the RPC-reading assertions (`call`,
   `balanceAt`, `codeAt`, `nonceAt`, `blockNumber`, `chainId`, `peerCount`,
   `baseFee`, `estimateGas`, `txStatus`), so there is one vocabulary, not two.
+
+## Fault injection
+
+Destructive cases need to stop a node or cut the network, not just read from it:
+
+```jsonc
+{"steps": [
+   {"stopNode":  {"on": "bp4"}},
+   {"waitBlock": {"on": "bp1", "target": 5, "timeout": "60s"}},
+   {"startNode": {"on": "bp4"}}],
+ "postActions": [{"healPartition": {}}]}
+```
+
+- `stopNode` / `startNode` / `restartNode` act on one node, resolved by the same
+  selectors assertions use (`bp1`, `en:0`, `bp:any`).
+- `partition` takes two or more `groups` of selectors and drops every peer link
+  that crosses a group boundary, from both sides. `healPartition` re-adds every
+  pair; with no `groups` it heals the whole environment, which is what a
+  post-action wants.
+- These need capabilities the run actually has. `stopNode` and friends require
+  process control, so declare `"requires": ["process"]` — attach mode advertises
+  only `rpc` and skips the spec rather than failing it, and a run that somehow
+  reaches the action without node control fails with that reason named.

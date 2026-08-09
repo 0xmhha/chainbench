@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "id": "fault-node-restart",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc", "process"],
+  "topology": { "bp": 4 },
+  "steps": [
+    { "stopNode": { "on": "bp4" } },
+    { "waitBlock": { "on": "bp1", "target": 5, "timeout": "60s" } },
+    { "startNode": { "on": "bp4" } },
+    { "waitBlock": { "on": "bp4", "target": 5, "timeout": "120s" } }
+  ],
+  "assertions": [
+    { "assert": "blockAdvance", "on": "bp1", "timeout": "30s" },
+    { "assert": "sameBlockHash", "onEach": ["bp1", "bp4"], "block": "0x0" }
+  ]
+}

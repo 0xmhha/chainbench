@@ -177,6 +177,42 @@ func (m *Manager) StopAll(grace time.Duration) []int {
 	return leaks
 }
 
+// StopOne terminates a single tracked LOCAL process and verifies it is gone,
+// with the same SIGTERM -> grace -> SIGKILL escalation StopAll uses. It exists
+// for fault injection: a spec that stops one validator to test quorum must not
+// take down the rest of the network, which is all StopAll can do.
+//
+// An untracked pid is an error (chainbench only stops what it started). A
+// process that is already gone is not — stopping twice is idempotent, and a node
+// that crashed on its own should not fail the step that meant to stop it.
+func (m *Manager) StopOne(pid int, grace time.Duration) error {
+	var target Proc
+	found := false
+	for _, p := range m.Tracked() {
+		if p.PID == pid && !p.IsRemote() {
+			target, found = p, true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("procman: pid %d is not a tracked local process", pid)
+	}
+	if !Alive(target.PID) {
+		return nil
+	}
+
+	_ = syscall.Kill(target.PID, syscall.SIGTERM)
+	procs := []Proc{target}
+	if waitAllGone(procs, grace) {
+		return nil
+	}
+	_ = syscall.Kill(target.PID, syscall.SIGKILL)
+	if waitAllGone(procs, 5*time.Second) {
+		return nil
+	}
+	return fmt.Errorf("procman: pid %d (%s) still alive after SIGKILL", target.PID, target.Label)
+}
+
 // waitAllGone polls until every proc is gone or timeout elapses; returns whether
 // all are gone.
 func waitAllGone(procs []Proc, timeout time.Duration) bool {

@@ -196,6 +196,34 @@ func (c *Client) Coinbase(ctx context.Context) (string, error) {
 	return s, nil
 }
 
+// Enode returns the node's own devp2p enode URL (admin_nodeInfo.enode), the
+// address other nodes use to add or drop it as a peer.
+func (c *Client) Enode(ctx context.Context) (string, error) {
+	var info struct {
+		Enode string `json:"enode"`
+	}
+	if err := c.Call(ctx, "admin_nodeInfo", &info); err != nil {
+		return "", err
+	}
+	if info.Enode == "" {
+		return "", fmt.Errorf("rpc: admin_nodeInfo returned no enode")
+	}
+	return info.Enode, nil
+}
+
+// AddPeer asks the node to connect to enode (admin_addPeer).
+func (c *Client) AddPeer(ctx context.Context, enode string) error {
+	var ok bool
+	return c.Call(ctx, "admin_addPeer", &ok, enode)
+}
+
+// RemovePeer asks the node to drop enode (admin_removePeer). It is how a spec
+// severs a link to partition a network.
+func (c *Client) RemovePeer(ctx context.Context, enode string) error {
+	var ok bool
+	return c.Call(ctx, "admin_removePeer", &ok, enode)
+}
+
 // Block is the subset of an Ethereum block chainbench reads. BaseFeePerGas is
 // nil on chains/blocks without EIP-1559.
 type Block struct {

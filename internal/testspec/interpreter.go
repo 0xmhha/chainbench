@@ -19,6 +19,11 @@ type Deps struct {
 	RPC       func(url string) *rpc.Client
 	Collector collector.Collector
 	Actions   Registry
+	// Nodes controls node processes for fault-injection steps (stopNode /
+	// startNode / restartNode). It is nil when the run does not own the node
+	// processes — attach mode — and those actions then fail with a clear reason
+	// rather than silently doing nothing.
+	Nodes NodeControl
 }
 
 // Registry holds action and assertion implementations, injected as an instance
