@@ -171,6 +171,20 @@ func (c *Client) EthCall(ctx context.Context, to, data string) (string, error) {
 	return s, nil
 }
 
+// EstimateGas returns eth_estimateGas for a call to `to` with 0x-hex calldata.
+// from is optional (some contract calls estimate differently per caller).
+func (c *Client) EstimateGas(ctx context.Context, from, to, data string) (uint64, error) {
+	arg := map[string]string{"to": to, "data": data}
+	if from != "" {
+		arg["from"] = from
+	}
+	var s string
+	if err := c.Call(ctx, "eth_estimateGas", &s, arg); err != nil {
+		return 0, err
+	}
+	return parseHexUint(s)
+}
+
 // Coinbase returns the node's etherbase (eth_coinbase) — for a validator node
 // this is its unlocked block-signing account, usable as the `from` of a
 // node-signed transaction.

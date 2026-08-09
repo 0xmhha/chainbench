@@ -32,6 +32,7 @@ const (
 	assertBlockAdvance  = "blockAdvance"
 	assertSameBlockHash = "sameBlockHash"
 	assertBaseFee       = "baseFee"
+	assertEstimateGas   = "estimateGas"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -206,7 +207,27 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertCall, defaultOp: "Equal", read: readCall},
 		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
 		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
+		{name: assertEstimateGas, defaultOp: "GreaterOrEqual", read: readEstimateGas},
 	}
+}
+
+// readEstimateGas returns eth_estimateGas for a call as a decimal string, for
+// gas-cost bounds (e.g. a contract call exceeds the 21000 bare-transfer floor).
+func readEstimateGas(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	to, _ := spec["to"].(string)
+	if to == "" {
+		return nil, fmt.Errorf("testspec: estimateGas requires \"to\"")
+	}
+	data, _ := spec["data"].(string)
+	if data == "" {
+		return nil, fmt.Errorf("testspec: estimateGas requires \"data\"")
+	}
+	from, _ := spec["from"].(string)
+	g, err := c.EstimateGas(ctx, from, to, data)
+	if err != nil {
+		return nil, err
+	}
+	return strconv.FormatUint(g, 10), nil
 }
 
 // readBaseFee returns the latest block's baseFeePerGas as a decimal string, for

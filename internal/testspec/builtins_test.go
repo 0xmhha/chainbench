@@ -449,3 +449,21 @@ func TestBaseFeeAssertion(t *testing.T) {
 		t.Fatalf("baseFee below min should fail: pass=%v", r.Pass)
 	}
 }
+
+func TestEstimateGasAssertion(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"eth_estimateGas": "0x8000"}) // 32768
+	d := deps()
+	as, _ := d.Actions.Assertion(assertEstimateGas)
+	on := []node.Node{{Index: 1, RPCURL: srv.URL}}
+
+	// exceeds 21000
+	spec := map[string]any{"assert": assertEstimateGas, "to": "0xc0", "data": "0xa9059cbb", "expected": float64(21000), "compare": "Greater"}
+	r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: spec})
+	if err != nil || !r.Pass {
+		t.Fatalf("estimateGas > 21000: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+	}
+	// missing data errors
+	if r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertEstimateGas, "to": "0xc0"}}); err == nil || r.Pass {
+		t.Fatal("estimateGas requires data")
+	}
+}
