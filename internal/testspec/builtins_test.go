@@ -425,3 +425,27 @@ func TestSameBlockHashAssertion(t *testing.T) {
 		}
 	})
 }
+
+func TestBaseFeeAssertion(t *testing.T) {
+	// baseFeePerGas = 20000000000000 (0x12309ce54000)
+	srv := mockRPC(t, map[string]any{"eth_getBlockByNumber": map[string]any{"number": "0x1", "hash": "0xh", "baseFeePerGas": "0x12309ce54000"}})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertBaseFee)
+	on := []node.Node{{Index: 1, RPCURL: srv.URL}}
+
+	// >= minimum passes
+	r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "20000000000000"}})
+	if err != nil || !r.Pass {
+		t.Fatalf("baseFee >= min: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+	}
+	// <= maximum passes
+	r, err = as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "20000000000000000", "compare": "LessOrEqual"}})
+	if err != nil || !r.Pass {
+		t.Fatalf("baseFee <= max: pass=%v err=%v", r.Pass, err)
+	}
+	// below a higher minimum fails
+	r, err = as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "99000000000000"}})
+	if err != nil || r.Pass {
+		t.Fatalf("baseFee below min should fail: pass=%v", r.Pass)
+	}
+}
