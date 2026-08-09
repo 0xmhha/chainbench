@@ -4,22 +4,35 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
-// defaultInterval is the chainstate sampling period when Deps.Interval is unset.
-const defaultInterval = time.Second
+const (
+	// defaultInterval is the chainstate sampling period when Deps.Interval is unset.
+	defaultInterval = time.Second
+	// defaultBPWindow is how many recent block heights the bp-participation tally
+	// spans when Deps.BPWindow is unset.
+	defaultBPWindow = 100
+	// tailInterval is how often live tails poll their log file for appended lines.
+	tailInterval = 50 * time.Millisecond
+)
 
-// NodeState is one node's RPC-sampled state.
+// NodeState is one node's RPC-sampled state. HeadHash and HeadMiner describe the
+// node's latest block; they drive bp-participation and fork detection and are
+// optional (an empty HeadHash means the probe supplied height/peers only).
 type NodeState struct {
-	Height uint64
-	Peers  int
+	Height    uint64
+	Peers     int
+	HeadHash  string
+	HeadMiner string
 }
 
 // Deps injects the collector's collaborators so it is testable without live
@@ -30,21 +43,32 @@ type Deps struct {
 	Probe func(ctx context.Context, rpcURL string) (NodeState, error)
 	// Interval is the sampling period (defaults to one second).
 	Interval time.Duration
+	// BPWindow is the number of recent block heights the bp-participation tally
+	// spans (defaults to defaultBPWindow). Older heights are pruned.
+	BPWindow int
+	// OnLine, when set, receives every newly appended log line per node as a live
+	// tail — the seam that mirrors logs to the dashboard (obs). Nil disables
+	// tailing; tailing never blocks a node.
+	OnLine func(nodeName, line string)
 }
 
-// collector samples chainstate over RPC and locates log lines on demand. This
-// is the RPC-minimal build; live log tailing plus bp-participation and reorg
-// detection land in the full collector (T3.3).
+// collector samples chainstate over RPC and locates log lines on demand. It
+// tracks recent (height, producer) pairs for bp-participation and remembers each
+// height's block hash to detect forks/reorgs across samples.
 type collector struct {
 	deps     Deps
 	interval time.Duration
+	bpWindow int
 
 	env  session.Environment
 	stop chan struct{}
-	done chan struct{}
+	wg   sync.WaitGroup
 
-	mu    sync.Mutex
-	state Chainstate
+	mu     sync.Mutex
+	state  Chainstate
+	blocks map[uint64]string // height -> producer (miner) for the bp-participation window
+	hashes map[uint64]string // height -> first-seen block hash, for fork/reorg detection
+	forked bool              // sticky: a divergent hash at a known height was observed
 }
 
 // New returns an RPC-sampling collector.
@@ -53,21 +77,44 @@ func New(deps Deps) Collector {
 	if interval <= 0 {
 		interval = defaultInterval
 	}
-	return &collector{deps: deps, interval: interval}
+	bpWindow := deps.BPWindow
+	if bpWindow <= 0 {
+		bpWindow = defaultBPWindow
+	}
+	return &collector{
+		deps:     deps,
+		interval: interval,
+		bpWindow: bpWindow,
+		blocks:   map[uint64]string{},
+		hashes:   map[uint64]string{},
+	}
 }
 
+// nodeName is the collector's canonical name for a node ("node"+index).
+func nodeName(index int) string { return "node" + strconv.Itoa(index) }
+
 // Start samples the environment's nodes immediately and then every interval,
-// until Stop or ctx cancellation.
+// and (when Deps.OnLine is set) tails each node's log, until Stop or ctx
+// cancellation.
 func (c *collector) Start(ctx context.Context, env session.Environment) error {
 	c.env = env
 	c.stop = make(chan struct{})
-	c.done = make(chan struct{})
+
+	c.wg.Add(1)
 	go c.run(ctx)
+
+	if c.deps.OnLine != nil {
+		for _, n := range env.Nodes() {
+			name := nodeName(n.Index)
+			c.wg.Add(1)
+			go c.tail(ctx, name, c.env.LogPath(name))
+		}
+	}
 	return nil
 }
 
 func (c *collector) run(ctx context.Context) {
-	defer close(c.done)
+	defer c.wg.Done()
 	t := time.NewTicker(c.interval)
 	defer t.Stop()
 
@@ -85,7 +132,8 @@ func (c *collector) run(ctx context.Context) {
 }
 
 // sampleOnce probes every node and replaces the snapshot. A failing probe is
-// skipped so a slow or down node never blocks or corrupts the snapshot.
+// skipped so a slow or down node never blocks or corrupts the snapshot. Recent
+// (height, producer) pairs accumulate for the bp-participation tally.
 func (c *collector) sampleOnce(ctx context.Context) {
 	heights := map[string]uint64{}
 	peers := map[string]int{}
@@ -94,13 +142,82 @@ func (c *collector) sampleOnce(ctx context.Context) {
 		if err != nil {
 			continue
 		}
-		name := "node" + strconv.Itoa(n.Index)
+		name := nodeName(n.Index)
 		heights[name] = st.Height
 		peers[name] = st.Peers
+		c.recordSample(st)
 	}
 	c.mu.Lock()
-	c.state = Chainstate{Heights: heights, Peers: peers}
+	c.state = Chainstate{
+		Heights:         heights,
+		Peers:           peers,
+		BPParticipation: c.tallyBP(),
+		Forked:          c.forked,
+	}
 	c.mu.Unlock()
+}
+
+// recordSample remembers a probed head block's producer and hash, flags a fork
+// when a known height reports a divergent hash (across nodes or across samples,
+// i.e. a reorg), and prunes heights older than the window. Only the sampler
+// goroutine calls it.
+func (c *collector) recordSample(st NodeState) {
+	if st.HeadHash != "" {
+		if prev, ok := c.hashes[st.Height]; ok {
+			if prev != st.HeadHash {
+				c.forked = true
+			}
+		} else {
+			c.hashes[st.Height] = st.HeadHash
+		}
+	}
+	if st.HeadMiner != "" {
+		c.blocks[st.Height] = st.HeadMiner
+	}
+	c.prune()
+}
+
+// prune drops heights older than the window from both tracking maps so a long
+// run stays bounded.
+func (c *collector) prune() {
+	var max uint64
+	for h := range c.blocks {
+		if h > max {
+			max = h
+		}
+	}
+	for h := range c.hashes {
+		if h > max {
+			max = h
+		}
+	}
+	if max <= uint64(c.bpWindow) {
+		return
+	}
+	cutoff := max - uint64(c.bpWindow) + 1
+	for h := range c.blocks {
+		if h < cutoff {
+			delete(c.blocks, h)
+		}
+	}
+	for h := range c.hashes {
+		if h < cutoff {
+			delete(c.hashes, h)
+		}
+	}
+}
+
+// tallyBP counts blocks produced per producer over the current window. It
+// returns nil when no producer has been observed.
+func (c *collector) tallyBP() map[string]int {
+	if len(c.blocks) == 0 {
+		return nil
+	}
+	bp := map[string]int{}
+	for _, miner := range c.blocks {
+		bp[miner]++
+	}
+	return bp
 }
 
 // Snapshot returns the latest sampled chainstate.
@@ -110,15 +227,63 @@ func (c *collector) Snapshot() Chainstate {
 	return c.state
 }
 
-// Stop ends the sampler and waits for it to exit.
+// Stop ends the sampler and any live tails and waits for them to exit.
 func (c *collector) Stop() error {
 	if c.stop == nil {
 		return nil
 	}
 	close(c.stop)
-	<-c.done
+	c.wg.Wait()
 	c.stop = nil
 	return nil
+}
+
+// tail follows path from the start, emitting each complete appended line to
+// Deps.OnLine. It only advances past newline-terminated lines, so a partial
+// final line is re-read once complete. A missing file is retried, so tailing can
+// start before the node writes its first line.
+func (c *collector) tail(ctx context.Context, name, path string) {
+	defer c.wg.Done()
+	t := time.NewTicker(tailInterval)
+	defer t.Stop()
+
+	var offset int64
+	emit := func(line string) { c.deps.OnLine(name, line) }
+	for {
+		offset = readNewLines(path, offset, emit)
+		select {
+		case <-ctx.Done():
+			return
+		case <-c.stop:
+			readNewLines(path, offset, emit) // final drain
+			return
+		case <-t.C:
+		}
+	}
+}
+
+// readNewLines reads complete (newline-terminated) lines from path starting at
+// offset, calling emit for each, and returns the offset past the last complete
+// line. A partial trailing line does not advance the offset.
+func readNewLines(path string, offset int64, emit func(string)) int64 {
+	f, err := os.Open(path)
+	if err != nil {
+		return offset
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return offset
+	}
+	r := bufio.NewReader(f)
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			break // io.EOF or partial line: do not advance past it
+		}
+		offset += int64(len(line))
+		emit(strings.TrimRight(line, "\n"))
+	}
+	return offset
 }
 
 // WaitLog polls the node's log file until pattern matches or timeout elapses.
