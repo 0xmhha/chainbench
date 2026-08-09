@@ -49,7 +49,20 @@
 - ☑ 죽은 레거시 심볼 제거(`testkit.RunCase` 래퍼).
 - ☑ 레거시 패키지 signpost(testkit·testrun package doc — 대체 경로 명시).
 - ☑ 본 은퇴 계획 문서화.
+- ◐ **suite 이관 착수(소스 있음)**: `tests/` Go-func 케이스는 repo 에 존재하므로 DSL 로 포팅 가능(라이브 검증만 바이너리 필요). `onEach` 다중노드 어세션 수정으로 per-node 케이스 표현 가능 → `tests/network` peers-connected 를 `examples/specs/network-peers.json` 으로 포팅(CI validate).
 - ☐ (후속·비파괴) 결과 모델 단일화 검토(testkit.Report ↔ session/engine.Summary 중복 축소).
-- ☐ (후속·블로커 해소 후) suite 이관 → test/MCP 이관 → testrun/testkit 제거.
+- ☐ (후속·블로커 해소 후) 나머지 suite 이관 → test/MCP 이관 → testrun/testkit 제거.
+
+### 4.1 이관 중 발견한 DSL 표현력 갭 (신규 빌트인 필요)
+
+포팅을 진행하며 확인한, 현재 빌트인으로 표현 불가한 패턴:
+
+| 레거시 케이스 | 필요한 빌트인 | 상태 |
+|---|---|---|
+| `network` peers-connected | `peerCount` + onEach | ☑ (onEach 수정) |
+| `network` block-progression | 헤드 전진(연속 두 블록 number↑·timestamp↓ 없음) 어세션 | ☐ 신규 필요(부분: `blockNumber>=1` 만 가능) |
+| `network` genesis-hash-agreement | **노드 간 동일값(no-fork) 어세션**(각 노드 block0 hash 일치) | ☐ 신규 필요(collector fork 검출은 있으나 DSL 어세션 미노출) |
+
+> 이 갭들은 후속 slice 에서 빌트인으로 추가(각각 CI mock RPC 검증 가능) → 나머지 network/anzeon 케이스 이관 진행.
 
 > 원칙: **소비자 이관 전에는 레거시 제거 금지**(회귀 위험). 각 단계는 비-e2e 통과 + 대표 라이브 확인을 게이트로.

@@ -31,3 +31,4 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `negative-revert.json` | a negative tx step (`expectRevert`) — the transaction must revert (F11) |
 | `contract-read-and-tx-status.json` | a read-only contract call (`call`) and a receipt-status check (`txStatus`) |
 | `stablenet-governance-read.json` | a stablenet-only governance read: `call` with `proposals(uint256)` calldata (`internal/chains/stablenet/govbind`), asserting the ABI-encoded status word |
+| `network-peers.json` | a multi-node check with `onEach` (`bp1`..`bp4`): every validator reports at least one peer — a DSL port of the legacy `tests/network` peers-connected case |

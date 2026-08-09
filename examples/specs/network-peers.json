@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "id": "network-peers-connected",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "peerCount", "onEach": ["bp1", "bp2", "bp3", "bp4"], "expected": 1, "compare": "GreaterOrEqual" },
+    { "assert": "blockNumber", "expected": 1, "compare": "GreaterOrEqual" }
+  ]
+}

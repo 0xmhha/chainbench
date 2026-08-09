@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -322,5 +323,34 @@ func TestSendTxAction_ExpectRevert(t *testing.T) {
 	// expect:"revert" alias.
 	if err := run(mk("0x0"), map[string]any{"from": "0xa", "expect": "revert", "pollInterval": "5ms"}); err != nil {
 		t.Fatalf("expect:revert alias should pass on revert: %v", err)
+	}
+}
+
+func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
+	// Two nodes, each with peerCount 2; onEach must check both.
+	srv1 := mockRPC(t, map[string]any{"net_peerCount": "0x2"})
+	srv2 := mockRPC(t, map[string]any{"net_peerCount": "0x2"})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertPeerCount)
+
+	on := []node.Node{{Index: 1, RPCURL: srv1.URL}, {Index: 2, RPCURL: srv2.URL}}
+	spec := map[string]any{"assert": assertPeerCount, "expected": float64(1), "compare": "GreaterOrEqual"}
+	r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: spec})
+	if err != nil || !r.Pass {
+		t.Fatalf("onEach all-pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+	}
+
+	// One node reports 0 peers -> the assertion fails and names that node.
+	srvBad := mockRPC(t, map[string]any{"net_peerCount": "0x0"})
+	onBad := []node.Node{{Index: 1, RPCURL: srv1.URL}, {Index: 2, RPCURL: srvBad.URL}}
+	r, err = as.Check(context.Background(), &AssertCtx{Deps: &d, On: onBad, Spec: spec})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if r.Pass {
+		t.Fatalf("onEach must fail when one node fails: %+v", r)
+	}
+	if !strings.Contains(r.Source, "node2") {
+		t.Fatalf("failure should name the failing node, got Source=%q", r.Source)
 	}
 }

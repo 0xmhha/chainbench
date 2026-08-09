@@ -222,17 +222,7 @@ type rpcAssertion struct {
 // Check reads the value from the target node and compares it to "expected"
 // using the default comparator (or the spec's "compare" override).
 func (a rpcAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
-	res := session.AssertResult{Assert: a.name, Provenance: ac.Spec}
-	c, err := clientFor(ac.Deps, targetURL(ac))
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
-	}
-	actual, err := a.read(ctx, c, ac.Spec)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
-	}
+	res := session.AssertResult{Assert: a.name, Provenance: ac.Spec, Pass: true}
 	op := a.defaultOp
 	if o, ok := ac.Spec["compare"].(string); ok && o != "" {
 		op = o
@@ -242,12 +232,42 @@ func (a rpcAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertR
 		return res, fmt.Errorf("testspec: unknown comparator %q", op)
 	}
 	expected := ac.Spec["expected"]
-	pass, detail := fn(actual, expected)
 	res.Expected = expected
-	res.Actual = actual
-	res.Pass = pass
-	if !pass && detail != "" {
-		res.Source = detail
+
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("testspec: no target node RPC URL")
+		res.Pass, res.Actual = false, err.Error()
+		return res, err
+	}
+
+	// Read and compare on every target node ("on" is one; "onEach" is many). All
+	// must satisfy the comparator; a failure names the node.
+	actuals := make(map[string]any, len(targets))
+	for _, tgt := range targets {
+		c, err := clientFor(ac.Deps, tgt.url)
+		if err != nil {
+			res.Pass, res.Actual = false, err.Error()
+			return res, err
+		}
+		actual, err := a.read(ctx, c, ac.Spec)
+		if err != nil {
+			res.Pass, res.Actual = false, err.Error()
+			return res, err
+		}
+		actuals[tgt.name] = actual
+		if pass, detail := fn(actual, expected); !pass {
+			res.Pass = false
+			if detail == "" {
+				detail = "mismatch"
+			}
+			res.Source = tgt.name + ": " + detail
+		}
+	}
+	if len(targets) == 1 {
+		res.Actual = actuals[targets[0].name] // scalar for the common single-node case
+	} else {
+		res.Actual = actuals
 	}
 	return res, nil
 }
@@ -347,18 +367,28 @@ func clientFor(deps *Deps, url string) (*rpc.Client, error) {
 	return deps.RPC(url), nil
 }
 
-// targetURL is the assertion's target node URL: the first resolved "on" node,
-// else the environment's primary node.
-func targetURL(ac *AssertCtx) string {
+// assertTarget is one node an assertion reads from.
+type assertTarget struct {
+	name string
+	url  string
+}
+
+// assertTargets are the nodes an assertion checks: every resolved "on"/"onEach"
+// node, else the environment's primary node.
+func assertTargets(ac *AssertCtx) []assertTarget {
 	if len(ac.On) > 0 {
-		return ac.On[0].RPCURL
+		out := make([]assertTarget, 0, len(ac.On))
+		for _, n := range ac.On {
+			out = append(out, assertTarget{name: "node" + strconv.Itoa(n.Index), url: n.RPCURL})
+		}
+		return out
 	}
 	if ac.Env != nil {
 		if nodes := ac.Env.Nodes(); len(nodes) > 0 {
-			return nodes[0].RPCURL
+			return []assertTarget{{name: "node" + strconv.Itoa(nodes[0].Index), url: nodes[0].RPCURL}}
 		}
 	}
-	return ""
+	return nil
 }
 
 // selectorTarget resolves an action's "on" selector to a node URL, else the
