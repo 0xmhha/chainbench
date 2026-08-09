@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "id": "contract-read-and-tx-status",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "assertions": [
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000001000",
+      "data": "0x8da5cb5b",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "assert": "txStatus",
+      "hash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "expected": "0x1"
+    }
+  ]
+}
