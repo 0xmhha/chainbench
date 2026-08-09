@@ -47,7 +47,7 @@
 - **T5.5 wemix4 이관**(레거시 스위트 → DSL) — 대규모.
 - **Collector 심화(T3.3)** — ☑ 로컬 live tail(스캔→tail·부분줄 안전)·bp참여 집계(head producer·window prune)·fork/reorg 검출(높이별 hash 불일치)·**엔진 배선**(local/attach 이 `Bus` 설정 시 collection 실행→chainstate·로그를 obs 로 미러, teardown 시 정지)·**chainstate 세션 영속화**(`chainstate/chainstate.jsonl` — F10/F15 jsonl+obs 미러). ☐ 원격 SSH tail(사용자 SSH 환경 필요, T5.1 계열).
 - **실 원격 SSH 호스트 라이브 e2e**(RemoteFileSink+RemoteDriver) — SSH 대상 필요(사용자 환경).
-- **레거시 경로 정리** — `pipeline/setup`·`pipeline/testrun` 등은 아직 CLI 일부(setup/test/verify)와 공존; 신규 엔진으로 완전 대체는 후속.
+- ◐ **레거시 경로 정리** — 착수: 죽은 심볼 제거(`testkit.RunCase`)·레거시 패키지 signpost(testkit·testrun→engine+testspec)·**은퇴 계획 문서**([[legacy-retirement-plan]] = `docs/dev/legacy-retirement-plan.md`: 매핑·순서·블로커). **핵심 블로커**: `tests/` Go-func 스위트를 DSL 로 포팅해야 testkit/testrun 제거 가능(원 시나리오+라이브 바이너리 필요). `test`/MCP/upgrade 가 아직 레거시를 활발히 사용 → 소비자 이관 전 제거 금지.
 
 ---
 

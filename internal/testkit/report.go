@@ -70,13 +70,6 @@ func (r Report) Coverage() int {
 	return ran * 100 / r.Applicable
 }
 
-// RunCase executes one case against ns and returns its Result. It recovers the
-// Fatalf/Skip sentinels and any unexpected panic in the case body, so a buggy
-// case fails rather than crashing the runner.
-func RunCase(ctx context.Context, c Case, ns node.NodeSet, f ClientFactory) Result {
-	return RunCaseWith(ctx, c, ns, f, RunOpts{})
-}
-
 // RunOpts carries per-run inputs a case may read but that must not live on the
 // (serialized) NodeSet — currently the funded-account key for chain-agnostic
 // write cases.
@@ -84,7 +77,9 @@ type RunOpts struct {
 	FundedKey []byte
 }
 
-// RunCaseWith is RunCase with explicit run options.
+// RunCaseWith executes one case against ns with explicit run options and returns
+// its Result. It recovers the Fatalf/Skip sentinels and any unexpected panic in
+// the case body, so a buggy case fails rather than crashing the runner.
 func RunCaseWith(ctx context.Context, c Case, ns node.NodeSet, f ClientFactory, opts RunOpts) Result {
 	t := newT(ctx, ns, f, opts.FundedKey)
 	start := time.Now()

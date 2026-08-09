@@ -4,7 +4,13 @@
 // drive a live NodeSet (RPC clients, assertions, waits), and the Report the
 // runner produces. Test cases are runtime scenarios against a running network,
 // not compile-time go-test units — so they register via init() and are executed
-// by pkg/core/pipeline/testrun (docs/CHAINBENCH_GO_REDESIGN.md §9).
+// by internal/core/pipeline/testrun (docs/CHAINBENCH_GO_REDESIGN.md §9).
+//
+// Legacy: this Go-func case model is being retired in favor of the declarative
+// DSL path (internal/testspec parsed and run by internal/engine, reached via
+// `chainbench run`). The result model (Report/Result/Status) is reused by the
+// new path; the Case/registry authoring surface is what goes away once the
+// suites under tests/ are ported. See docs/dev/legacy-retirement-plan.md.
 package testkit
 
 // CaseFunc is a single test scenario. It drives the network through t and
