@@ -11,6 +11,8 @@
 | gwbft 단독 | [case-3-wbft.md](case-3-wbft.md) | ✅ **동작 확인** (라이브) |
 | gstable 단독 | [case-4-stablenet.md](case-4-stablenet.md) | ✅ **동작 확인** (라이브·CI 게이트) |
 
+**다음 작업을 이어받는다면 → [next-automation.md](next-automation.md)** (컨텍스트 + 남은 작업 리스트)
+
 점검용 CLI: `chainbench chain`. 케이스별 절차를 **단계 단위로 실행·중단·검증**한다 — [§4](#4-cli-로-직접-점검) 참조.
 
 ---
