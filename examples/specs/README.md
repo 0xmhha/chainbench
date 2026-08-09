@@ -36,3 +36,4 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `stablenet-system-contracts.json` | `codeAt` (adapter deployed, `NotEqual` "0x") + `call` reads (balanceOf/isAuthorized) shape-checked with `Regexp` — DSL ports of the legacy `tests/anzeon` adapter-code and readable-getter cases |
 | `stablenet-gas-policy.json` | `baseFee` within the anzeon min/max bounds — DSL port of the legacy `tests/anzeon` basefee-minimum/maximum cases |
 | `stablenet-hardfork.json` | post-Boho artifacts as plain reads: P-256 precompile `call` (valid → success word, corrupted → not), GovMinter `codeAt`, and chainId/blockNumber — DSL port of the legacy `tests/anzeon` hardfork-reads cases |
+| `stablenet-estimate-gas.json` | `estimateGas` for a native-coin `transfer` exceeds the 21000 bare-transfer floor — DSL port of the legacy `tests/anzeon` estimate-gas-token-transfer case |
