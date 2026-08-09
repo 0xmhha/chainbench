@@ -44,6 +44,10 @@ func validateSpecs(out io.Writer, paths []string, chain string) error {
 		caps = plugin.Manifest().Capabilities
 	}
 
+	// Resolve step/assertion names against the built-in registry so typo'd names
+	// are caught offline rather than at run time.
+	reg := testspec.NewRegistry(true)
+
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "SPEC\tID\tRESULT")
 	invalid := 0
@@ -57,6 +61,11 @@ func validateSpecs(out io.Writer, paths []string, chain string) error {
 		s, err := testspec.Parse(raw)
 		if err != nil {
 			fmt.Fprintf(w, "%s\t-\tINVALID: %v\n", p, err)
+			invalid++
+			continue
+		}
+		if unresolved := testspec.Unresolved(s, reg); len(unresolved) > 0 {
+			fmt.Fprintf(w, "%s\t%s\tUNRESOLVED: %s\n", p, s.ID, strings.Join(unresolved, ", "))
 			invalid++
 			continue
 		}

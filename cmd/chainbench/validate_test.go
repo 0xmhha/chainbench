@@ -115,3 +115,21 @@ func TestValidateCmd_ExampleSpecs(t *testing.T) {
 		t.Fatalf("example specs must be valid:\n%s", out)
 	}
 }
+
+func TestValidateCmd_UnresolvedNames(t *testing.T) {
+	// Parses fine, but references an unknown assertion and action.
+	bad := writeSpec(t, map[string]any{
+		"schemaVersion": "1",
+		"id":            "typo",
+		"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"steps":         []map[string]any{{"teleport": map[string]any{}}},
+		"assertions":    []map[string]any{{"assert": "chainId", "expected": 1}, {"assert": "Nonexistent"}},
+	})
+	out, err := run(t, "validate", bad)
+	if exitCode(err) != 1 {
+		t.Fatalf("unresolved spec should exit 1, got %d\n%s", exitCode(err), out)
+	}
+	if !strings.Contains(out, "UNRESOLVED") || !strings.Contains(out, "assert:Nonexistent") || !strings.Contains(out, "action:teleport") {
+		t.Fatalf("expected unresolved names in output:\n%s", out)
+	}
+}
