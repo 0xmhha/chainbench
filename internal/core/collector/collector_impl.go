@@ -59,6 +59,8 @@ type collector struct {
 	mu     sync.Mutex
 	state  Chainstate
 	blocks map[uint64]string // height -> producer (miner) for the bp-participation window
+	hashes map[uint64]string // height -> first-seen block hash, for fork/reorg detection
+	forked bool              // sticky: a divergent hash at a known height was observed
 }
 
 // New returns an RPC-sampling collector.
@@ -71,7 +73,13 @@ func New(deps Deps) Collector {
 	if bpWindow <= 0 {
 		bpWindow = defaultBPWindow
 	}
-	return &collector{deps: deps, interval: interval, bpWindow: bpWindow, blocks: map[uint64]string{}}
+	return &collector{
+		deps:     deps,
+		interval: interval,
+		bpWindow: bpWindow,
+		blocks:   map[uint64]string{},
+		hashes:   map[uint64]string{},
+	}
 }
 
 // nodeName is the collector's canonical name for a node ("node"+index).
@@ -119,27 +127,48 @@ func (c *collector) sampleOnce(ctx context.Context) {
 		name := nodeName(n.Index)
 		heights[name] = st.Height
 		peers[name] = st.Peers
-		c.recordBlock(st)
+		c.recordSample(st)
 	}
 	c.mu.Lock()
 	c.state = Chainstate{
 		Heights:         heights,
 		Peers:           peers,
 		BPParticipation: c.tallyBP(),
+		Forked:          c.forked,
 	}
 	c.mu.Unlock()
 }
 
-// recordBlock remembers the producer of a probed head block and prunes heights
-// older than the bp-participation window. Only the sampler goroutine calls it.
-func (c *collector) recordBlock(st NodeState) {
-	if st.HeadMiner == "" {
-		return
+// recordSample remembers a probed head block's producer and hash, flags a fork
+// when a known height reports a divergent hash (across nodes or across samples,
+// i.e. a reorg), and prunes heights older than the window. Only the sampler
+// goroutine calls it.
+func (c *collector) recordSample(st NodeState) {
+	if st.HeadHash != "" {
+		if prev, ok := c.hashes[st.Height]; ok {
+			if prev != st.HeadHash {
+				c.forked = true
+			}
+		} else {
+			c.hashes[st.Height] = st.HeadHash
+		}
 	}
-	c.blocks[st.Height] = st.HeadMiner
+	if st.HeadMiner != "" {
+		c.blocks[st.Height] = st.HeadMiner
+	}
+	c.prune()
+}
 
+// prune drops heights older than the window from both tracking maps so a long
+// run stays bounded.
+func (c *collector) prune() {
 	var max uint64
 	for h := range c.blocks {
+		if h > max {
+			max = h
+		}
+	}
+	for h := range c.hashes {
 		if h > max {
 			max = h
 		}
@@ -151,6 +180,11 @@ func (c *collector) recordBlock(st NodeState) {
 	for h := range c.blocks {
 		if h < cutoff {
 			delete(c.blocks, h)
+		}
+	}
+	for h := range c.hashes {
+		if h < cutoff {
+			delete(c.hashes, h)
 		}
 	}
 }
