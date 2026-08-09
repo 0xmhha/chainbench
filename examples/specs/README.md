@@ -33,3 +33,4 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `stablenet-governance-read.json` | a stablenet-only governance read: `call` with `proposals(uint256)` calldata (`internal/chains/stablenet/govbind`), asserting the ABI-encoded status word |
 | `network-peers.json` | a multi-node check with `onEach` (`bp1`..`bp4`): every validator reports at least one peer — a DSL port of the legacy `tests/network` peers-connected case |
 | `network-health.json` | cross-node `sameBlockHash` (genesis agreement) + `blockAdvance` (head is producing) — DSL ports of the legacy `tests/network` genesis-hash-agreement and block-progression cases |
+| `stablenet-system-contracts.json` | `codeAt` (adapter deployed, `NotEqual` "0x") + `call` reads (balanceOf/isAuthorized) shape-checked with `Regexp` — DSL ports of the legacy `tests/anzeon` adapter-code and readable-getter cases |
