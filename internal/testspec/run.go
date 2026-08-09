@@ -12,14 +12,20 @@ import (
 // guards), steps (atomic), assertions, then post-actions (recorded but
 // independent of the verdict). It records each step/assertion and the final
 // status, and returns that status.
+//
+// Bindings are scoped to this call: a step that declares "save" binds its result
+// for later steps and assertions to reference as "$name" (see binding.go). The
+// scope is per-run, so nothing leaks between tests and the interpreter itself
+// stays free of shared state.
 func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error) {
 	if i.deps.Actions == nil {
 		return session.StatusFail, fmt.Errorf("testspec: interpreter has no action/assertion registry")
 	}
+	binds := Bindings{}
 
 	// Pre-actions: a failure blocks the test (steps/assertions do not run).
 	for _, pa := range s.PreActions {
-		if err := i.runAction(ctx, pa, env, rec); err != nil {
+		if err := i.runAction(ctx, pa, env, rec, binds); err != nil {
 			rec.Status(session.StatusBlocked)
 			return session.StatusBlocked, nil
 		}
@@ -27,7 +33,7 @@ func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, 
 
 	// Steps: a failed step expectation fails the test.
 	for idx, st := range s.Steps {
-		if err := i.runStep(ctx, idx, st, env, rec); err != nil {
+		if err := i.runStep(ctx, idx, st, env, rec, binds); err != nil {
 			rec.Status(session.StatusFail)
 			return session.StatusFail, nil
 		}
@@ -36,7 +42,7 @@ func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, 
 	// Assertions: all must pass.
 	pass := true
 	for _, as := range s.Assertions {
-		r, err := i.runAssertion(ctx, as, env)
+		r, err := i.runAssertion(ctx, as, env, binds)
 		rec.Assert(r)
 		if err != nil || !r.Pass {
 			pass = false
@@ -50,7 +56,7 @@ func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, 
 	// Post-actions: recorded, but they do not change the verdict.
 	for _, poa := range s.PostActions {
 		name := actionName(poa)
-		if err := i.runAction(ctx, poa, env, rec); err != nil {
+		if err := i.runAction(ctx, poa, env, rec, binds); err != nil {
 			rec.PostAction(session.PostResult{Name: name, OK: false, Detail: err.Error()})
 		} else {
 			rec.PostAction(session.PostResult{Name: name, OK: true})
@@ -61,8 +67,9 @@ func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, 
 	return status, nil
 }
 
-// runAction dispatches a single-key action entry ({name: args}) to the registry.
-func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env session.Environment, rec session.TestRecord) error {
+// runAction dispatches a single-key action entry ({name: args}) to the registry,
+// substituting binding references in its args first.
+func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env session.Environment, rec session.TestRecord, binds Bindings) error {
 	name := actionName(entry)
 	if name == "" {
 		return fmt.Errorf("testspec: empty action entry")
@@ -71,31 +78,55 @@ func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env s
 	if !ok {
 		return fmt.Errorf("testspec: unknown action %q", name)
 	}
-	return act.Do(ctx, &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: argsOf(entry[name])})
+	args, err := resolveArgs(entry[name], binds)
+	if err != nil {
+		return err
+	}
+	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
+	if err := act.Do(ctx, ac); err != nil {
+		return err
+	}
+	bindResult(binds, args, ac)
+	return nil
 }
 
 // runStep runs a step action and records a StepResult (including any tx
 // hash/receipt the action surfaces) even on failure.
-func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any, env session.Environment, rec session.TestRecord) error {
+func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any, env session.Environment, rec session.TestRecord, binds Bindings) error {
 	name := actionName(entry)
-	on, _ := argsOf(entry[name])["on"].(string)
 	act, ok := i.deps.Actions.Action(name)
 	if !ok {
+		on, _ := argsOf(entry[name])["on"].(string)
 		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on})
 		if name == "" {
 			return fmt.Errorf("testspec: empty action entry")
 		}
 		return fmt.Errorf("testspec: unknown action %q", name)
 	}
-	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: argsOf(entry[name])}
-	err := act.Do(ctx, ac)
+	args, err := resolveArgs(entry[name], binds)
+	if err != nil {
+		// An unbound reference is a step failure, recorded like any other: the
+		// step never runs, so there is no hash or receipt to report.
+		on, _ := argsOf(entry[name])["on"].(string)
+		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on})
+		return err
+	}
+	on, _ := args["on"].(string)
+	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
+	runErr := act.Do(ctx, ac)
 	rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt})
-	return err
+	if runErr != nil {
+		return runErr
+	}
+	bindResult(binds, args, ac)
+	return nil
 }
 
 // runAssertion dispatches an assertion entry (its "assert" field names the
-// registered assertion) and returns its recorded result.
-func (i *interpreter) runAssertion(ctx context.Context, entry map[string]any, env session.Environment) (session.AssertResult, error) {
+// registered assertion) and returns its recorded result. Binding references in
+// the entry are substituted first, so an assertion can compare against a value
+// an earlier step saved.
+func (i *interpreter) runAssertion(ctx context.Context, entry map[string]any, env session.Environment, binds Bindings) (session.AssertResult, error) {
 	name, _ := entry["assert"].(string)
 	if name == "" {
 		return session.AssertResult{Pass: false, Provenance: entry}, fmt.Errorf(`testspec: assertion missing "assert"`)
@@ -104,9 +135,41 @@ func (i *interpreter) runAssertion(ctx context.Context, entry map[string]any, en
 	if !ok {
 		return session.AssertResult{Assert: name, Pass: false}, fmt.Errorf("testspec: unknown assertion %q", name)
 	}
-	r, err := as.Check(ctx, &AssertCtx{Env: env, Deps: &i.deps, On: i.resolveOn(entry, env), Spec: entry})
+	resolved, err := resolveRefs(entry, binds)
+	if err != nil {
+		return session.AssertResult{Assert: name, Pass: false, Provenance: entry, Actual: err.Error()}, err
+	}
+	spec := argsOf(resolved)
+	r, err := as.Check(ctx, &AssertCtx{Env: env, Deps: &i.deps, On: i.resolveOn(spec, env), Spec: spec})
 	r.Assert = name
 	return r, err
+}
+
+// resolveArgs substitutes binding references in an action's argument value and
+// returns it as an args map.
+func resolveArgs(v any, binds Bindings) (map[string]any, error) {
+	resolved, err := resolveRefs(v, binds)
+	if err != nil {
+		return nil, err
+	}
+	return argsOf(resolved), nil
+}
+
+// bindResult stores an action's result under the name its args declare via
+// "save". An action that sets no explicit Value binds its tx hash, so a plain
+// sendTx step is referenceable without the action knowing about bindings.
+func bindResult(binds Bindings, args map[string]any, ac *ActionCtx) {
+	name := saveName(args)
+	if name == "" {
+		return
+	}
+	if ac.Value != nil {
+		binds[name] = ac.Value
+		return
+	}
+	if ac.Hash != "" {
+		binds[name] = ac.Hash
+	}
 }
 
 // resolveOn resolves the entry's "on" (single) or "onEach" ([]) selectors to

@@ -160,6 +160,43 @@ type AssertCtx struct { Env session.Environment; Deps *Deps; On []node.Node; Spe
 // 각 액션/검증이 요구하는 필드로 **조기 타입확정**(예: gas int, expected typed)해 강타입 파생값으로 좁힌다.
 ```
 
+### 3.2b 스텝 값 바인딩 (step value binding) — DSL 문법 확정
+정의서는 원래 **1-shot read** 만 표현할 수 있었다(각 어세션이 값을 읽고 리터럴 기대값과 비교). 그래서
+"read A 값을 저장했다가 B와 비교"(교차-call 비교·거버넌스 다단계·방금 보낸 tx의 영수증 확인)는
+표현 불가였다. 이를 최소 문법으로 연다.
+
+```jsonc
+{"steps":[
+   {"read":{"source":"call","to":"0x..1001","data":"0x18160ddd","save":"totalSupply"}},
+   {"sendTx":{"from":"0x..","to":"0x..","value":"1","save":"sent"}}],
+ "assertions":[
+   {"assert":"balanceAt","address":"0x..","compare":"LessOrEqual","expected":"$totalSupply"},
+   {"assert":"txStatus","hash":"$sent","expected":"0x1"}]}
+```
+
+**규칙(3개뿐)**
+1. **`save`** — 어떤 액션이든 `"save":"<name>"` 을 선언하면 그 액션의 결과가 `<name>` 으로 바인딩된다.
+   결과는 `ActionCtx.Value`(액션이 설정)이며, **설정하지 않은 액션은 tx hash 가 대신 바인딩**된다
+   — 그래서 `sendTx` 는 바인딩을 전혀 모르면서도 참조 가능해진다.
+2. **`$name`** — 문자열 **전체**가 참조면 **타입을 보존**한 채 값으로 치환된다(숫자는 숫자로 남아
+   비교자가 그대로 쓴다). **`${name}`** 은 긴 문자열 안에 텍스트로 보간된다(calldata 조립).
+   **`$$`** 는 리터럴 `$`.
+3. **미바인딩 참조는 오류** — 조용한 빈 문자열이 아니다. 오타가 `""` 와 비교되어 통과하는 일이 없다.
+
+**스코프**: 바인딩은 **한 Spec 실행(=한 테스트) 단위**로, `Interpreter.Run` 호출 안에서만 산다.
+테스트 간 누수 없음 · 인터프리터는 무상태 유지(설계원칙 2).
+
+**치환 시점**: 각 액션/어세션 **디스패치 직전**. 파싱된 Spec 은 불변으로 두고 사본에 치환하므로,
+같은 Spec 을 두 번 실행해도 동일하게 동작한다.
+
+**`read` 액션**: `{"read":{"source":"<어세션 이름>", ...}}` 은 어세션의 리더를 **그대로 재사용**해
+값을 읽고 `save` 한다(`call`/`balanceAt`/`codeAt`/`nonceAt`/`blockNumber`/`chainId`/`peerCount`/
+`baseFee`/`estimateGas`/`txStatus`). 어휘를 두 벌 만들지 않기 위해 리더는 단일 소스다.
+
+**오프라인 검증**: `testspec.Unresolved` 가 액션·어세션 이름과 함께 **참조도 검사**한다 —
+실행 순서(pre→steps→assert→post)를 따라가며 **더 앞에서 `save` 되지 않은 `$ref` 는
+`ref:<name>` 으로 보고**한다. `chainbench validate` 가 이를 실행 전에 잡는다.
+
 ### 3.3 `supervisor` — 헬스 게이트·복구 [NEW · runGovHandoff 재시도 대체]
 ```go
 package supervisor

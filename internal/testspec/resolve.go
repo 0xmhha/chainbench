@@ -2,47 +2,57 @@ package testspec
 
 import "sort"
 
-// Unresolved returns the action and assertion names a spec references that are
-// not registered in reg, prefixed "action:" or "assert:" (and sorted, de-duped).
-// A spec names its steps and assertions by string, so an unknown name would fail
-// only at run time; Unresolved surfaces those offline. An empty result means
-// every reference resolves against reg.
+// Unresolved returns the references a spec makes that nothing satisfies:
+// action and assertion names not registered in reg (prefixed "action:" /
+// "assert:"), and binding references no earlier step saved (prefixed "ref:").
+// Results are sorted and de-duplicated.
+//
+// A spec names its steps, assertions, and saved values by string, so every one
+// of these would otherwise fail only at run time — against a live chain, after a
+// network has been brought up. Unresolved surfaces them offline instead, which
+// is what `chainbench validate` reports.
+//
+// Binding references are checked in execution order (pre-actions, then steps,
+// then assertions, then post-actions), so a reference to a value saved *later*
+// is reported too — the interpreter would not have it bound yet.
 func Unresolved(s Spec, reg Registry) []string {
 	seen := map[string]bool{}
-	add := func(name string) {
-		if !seen[name] {
-			seen[name] = true
-		}
-	}
+	bound := map[string]bool{}
 
+	// checkAction validates one action entry and records what it saves.
 	checkAction := func(entry map[string]any) {
 		name := actionName(entry)
 		if name == "" {
-			add("action:(empty)")
+			seen["action:(empty)"] = true
 			return
 		}
 		if _, ok := reg.Action(name); !ok {
-			add("action:" + name)
+			seen["action:"+name] = true
+		}
+		args := argsOf(entry[name])
+		checkRefs(args, bound, seen)
+		if save := saveName(args); save != "" {
+			bound[save] = true
 		}
 	}
+
 	for _, a := range s.PreActions {
 		checkAction(a)
 	}
 	for _, st := range s.Steps {
 		checkAction(st)
 	}
-	for _, po := range s.PostActions {
-		checkAction(po)
-	}
 	for _, as := range s.Assertions {
 		name, _ := as["assert"].(string)
 		if name == "" {
-			add("assert:(missing)")
-			continue
+			seen["assert:(missing)"] = true
+		} else if _, ok := reg.Assertion(name); !ok {
+			seen["assert:"+name] = true
 		}
-		if _, ok := reg.Assertion(name); !ok {
-			add("assert:" + name)
-		}
+		checkRefs(as, bound, seen)
+	}
+	for _, po := range s.PostActions {
+		checkAction(po)
 	}
 
 	out := make([]string, 0, len(seen))
@@ -51,4 +61,13 @@ func Unresolved(s Spec, reg Registry) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// checkRefs records every binding reference in v that is not yet bound.
+func checkRefs(v any, bound, seen map[string]bool) {
+	for _, name := range refNames(v) {
+		if !bound[name] {
+			seen["ref:"+name] = true
+		}
+	}
 }
