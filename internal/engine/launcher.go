@@ -59,22 +59,46 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 // relaunch one node later (fault injection) needs its exact arming — config
 // path, identity flags, datadir — and re-deriving it would risk launching a
 // subtly different node than the one that was stopped.
+//
+// It is the composition of the three exported phases below. They are separate so
+// a caller checking the bring-up can report each one on its own: "which step
+// failed" is a different question from "did it come up", and only the phases
+// answer it.
 func (l LocalLauncher) LaunchArmed(ctx context.Context, plan setup.Plan) (supervisor.LaunchResult, []driver.NodeSpec, error) {
+	specs, err := l.Arm(plan)
+	if err != nil {
+		return supervisor.LaunchResult{}, nil, err
+	}
+	if err := l.Materialize(ctx, plan, specs); err != nil {
+		return supervisor.LaunchResult{}, specs, err
+	}
+	res, err := l.InitAndLaunch(ctx, plan, specs)
+	return res, specs, err
+}
+
+// Arm loads the preset and produces each node's launch spec: rendered config,
+// identity flags, resolved binary. Pure apart from reading the preset.
+func (l LocalLauncher) Arm(plan setup.Plan) ([]driver.NodeSpec, error) {
 	preset, err := keys.LoadPreset(l.KeysDir)
 	if err != nil {
-		return supervisor.LaunchResult{}, nil, fmt.Errorf("engine: launcher: %w", err)
+		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}
+	return armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir), nil
+}
 
-	specs := armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir)
-
+// Materialize writes the genesis and per-node config through the file sink
+// (upload-if-absent), locally or to a remote host.
+func (l LocalLauncher) Materialize(ctx context.Context, plan setup.Plan, specs []driver.NodeSpec) error {
 	sink := l.Sink
 	if sink == nil {
 		sink = provision.LocalFileSink{}
 	}
-	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
-		return supervisor.LaunchResult{}, nil, err
-	}
+	return materialize(ctx, provision.New(sink), plan, specs)
+}
 
+// InitAndLaunch initializes each node's datadir from the shared genesis and
+// starts it, returning the node set and the processes to track.
+func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan setup.Plan, specs []driver.NodeSpec) (supervisor.LaunchResult, error) {
 	d := l.Driver
 	if d == nil {
 		d = driver.NewLocalDriver()
@@ -90,14 +114,14 @@ func (l LocalLauncher) LaunchArmed(ctx context.Context, plan setup.Plan) (superv
 	for _, spec := range specs {
 		if canInit {
 			if err := initer.InitDatadir(ctx, spec, plan.Genesis); err != nil {
-				return res, specs, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+				return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
 			}
 		} else if err := driver.InitDatadir(ctx, l.Binary, spec.DataDir, plan.GenesisPath); err != nil {
-			return res, specs, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+			return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
 		}
 		h, err := d.Launch(ctx, spec)
 		if err != nil {
-			return res, specs, fmt.Errorf("engine: launcher: launch node%d: %w", spec.Index, err)
+			return res, fmt.Errorf("engine: launcher: launch node%d: %w", spec.Index, err)
 		}
 		res.Nodes.Nodes = append(res.Nodes.Nodes, node.Node{
 			Index: spec.Index, Role: spec.Role, Host: spec.Host,
@@ -109,7 +133,7 @@ func (l LocalLauncher) LaunchArmed(ctx context.Context, plan setup.Plan) (superv
 			DataDir: spec.DataDir, Host: spec.Host,
 		})
 	}
-	return res, specs, nil
+	return res, nil
 }
 
 // materialize writes the network genesis and each node's rendered config
