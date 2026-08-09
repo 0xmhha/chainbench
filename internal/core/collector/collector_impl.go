@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,6 +21,8 @@ const (
 	// defaultBPWindow is how many recent block heights the bp-participation tally
 	// spans when Deps.BPWindow is unset.
 	defaultBPWindow = 100
+	// tailInterval is how often live tails poll their log file for appended lines.
+	tailInterval = 50 * time.Millisecond
 )
 
 // NodeState is one node's RPC-sampled state. HeadHash and HeadMiner describe the
@@ -42,6 +46,10 @@ type Deps struct {
 	// BPWindow is the number of recent block heights the bp-participation tally
 	// spans (defaults to defaultBPWindow). Older heights are pruned.
 	BPWindow int
+	// OnLine, when set, receives every newly appended log line per node as a live
+	// tail — the seam that mirrors logs to the dashboard (obs). Nil disables
+	// tailing; tailing never blocks a node.
+	OnLine func(nodeName, line string)
 }
 
 // collector samples chainstate over RPC and locates log lines on demand. It
@@ -54,7 +62,7 @@ type collector struct {
 
 	env  session.Environment
 	stop chan struct{}
-	done chan struct{}
+	wg   sync.WaitGroup
 
 	mu     sync.Mutex
 	state  Chainstate
@@ -86,17 +94,27 @@ func New(deps Deps) Collector {
 func nodeName(index int) string { return "node" + strconv.Itoa(index) }
 
 // Start samples the environment's nodes immediately and then every interval,
-// until Stop or ctx cancellation.
+// and (when Deps.OnLine is set) tails each node's log, until Stop or ctx
+// cancellation.
 func (c *collector) Start(ctx context.Context, env session.Environment) error {
 	c.env = env
 	c.stop = make(chan struct{})
-	c.done = make(chan struct{})
+
+	c.wg.Add(1)
 	go c.run(ctx)
+
+	if c.deps.OnLine != nil {
+		for _, n := range env.Nodes() {
+			name := nodeName(n.Index)
+			c.wg.Add(1)
+			go c.tail(ctx, name, c.env.LogPath(name))
+		}
+	}
 	return nil
 }
 
 func (c *collector) run(ctx context.Context) {
-	defer close(c.done)
+	defer c.wg.Done()
 	t := time.NewTicker(c.interval)
 	defer t.Stop()
 
@@ -209,15 +227,63 @@ func (c *collector) Snapshot() Chainstate {
 	return c.state
 }
 
-// Stop ends the sampler and waits for it to exit.
+// Stop ends the sampler and any live tails and waits for them to exit.
 func (c *collector) Stop() error {
 	if c.stop == nil {
 		return nil
 	}
 	close(c.stop)
-	<-c.done
+	c.wg.Wait()
 	c.stop = nil
 	return nil
+}
+
+// tail follows path from the start, emitting each complete appended line to
+// Deps.OnLine. It only advances past newline-terminated lines, so a partial
+// final line is re-read once complete. A missing file is retried, so tailing can
+// start before the node writes its first line.
+func (c *collector) tail(ctx context.Context, name, path string) {
+	defer c.wg.Done()
+	t := time.NewTicker(tailInterval)
+	defer t.Stop()
+
+	var offset int64
+	emit := func(line string) { c.deps.OnLine(name, line) }
+	for {
+		offset = readNewLines(path, offset, emit)
+		select {
+		case <-ctx.Done():
+			return
+		case <-c.stop:
+			readNewLines(path, offset, emit) // final drain
+			return
+		case <-t.C:
+		}
+	}
+}
+
+// readNewLines reads complete (newline-terminated) lines from path starting at
+// offset, calling emit for each, and returns the offset past the last complete
+// line. A partial trailing line does not advance the offset.
+func readNewLines(path string, offset int64, emit func(string)) int64 {
+	f, err := os.Open(path)
+	if err != nil {
+		return offset
+	}
+	defer func() { _ = f.Close() }()
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return offset
+	}
+	r := bufio.NewReader(f)
+	for {
+		line, err := r.ReadString('\n')
+		if err != nil {
+			break // io.EOF or partial line: do not advance past it
+		}
+		offset += int64(len(line))
+		emit(strings.TrimRight(line, "\n"))
+	}
+	return offset
 }
 
 // WaitLog polls the node's log file until pattern matches or timeout elapses.
