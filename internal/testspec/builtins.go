@@ -2,6 +2,7 @@ package testspec
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -26,6 +27,7 @@ const (
 	assertCodeAt      = "codeAt"
 	assertNonceAt     = "nonceAt"
 	assertCall        = "call"
+	assertTxStatus    = "txStatus"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -56,6 +58,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertCodeAt, defaultOp: "Equal", read: readCodeAt},
 		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
 		{name: assertCall, defaultOp: "Equal", read: readCall},
+		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
 	}
 }
 
@@ -223,6 +226,29 @@ func readCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, err
 		return nil, fmt.Errorf("testspec: call requires \"data\"")
 	}
 	return c.EthCall(ctx, to, data)
+}
+
+// readTxStatus returns a transaction receipt's status ("0x1" success, "0x0"
+// reverted), for asserting positive and negative (expectRevert) tx outcomes.
+func readTxStatus(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	hash, ok := spec["hash"].(string)
+	if !ok || hash == "" {
+		return nil, fmt.Errorf("testspec: txStatus requires \"hash\"")
+	}
+	raw, err := c.TxReceipt(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("testspec: txStatus: no receipt for %s", hash)
+	}
+	var r struct {
+		Status string `json:"status"`
+	}
+	if err := json.Unmarshal(raw, &r); err != nil {
+		return nil, fmt.Errorf("testspec: txStatus: parse receipt: %w", err)
+	}
+	return r.Status, nil
 }
 
 // clientFor returns an RPC client for url, guarding a missing injected factory.

@@ -219,3 +219,32 @@ func TestBuiltinAssertions_NonceCallMissingArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestBuiltinAssertion_TxStatus(t *testing.T) {
+	d := deps()
+	on := func(url string) []node.Node { return []node.Node{{RPCURL: url}} }
+
+	t.Run("success", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x1"}})
+		as, _ := d.Actions.Assertion(assertTxStatus)
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x1"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("want pass, got pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+		}
+	})
+	t.Run("reverted", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x0"}})
+		as, _ := d.Actions.Assertion(assertTxStatus)
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x0"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("want pass for reverted match, got pass=%v err=%v", r.Pass, err)
+		}
+	})
+	t.Run("missing hash", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x1"}})
+		as, _ := d.Actions.Assertion(assertTxStatus)
+		if r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus}}); err == nil || r.Pass {
+			t.Fatal("expected error for missing hash")
+		}
+	})
+}
