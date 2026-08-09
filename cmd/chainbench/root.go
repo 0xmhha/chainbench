@@ -32,6 +32,7 @@ func newRootCmd() *cobra.Command {
 		newVerifyCmd(),
 		newTestCmd(),
 		newRunCmd(),
+		newValidateCmd(),
 		newNodeCmd(),
 		newConsensusCmd(),
 		newHardforkCmd(),
