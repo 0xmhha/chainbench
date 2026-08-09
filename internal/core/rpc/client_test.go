@@ -207,3 +207,12 @@ func TestClient_BlockByNumber_BaseFee(t *testing.T) {
 		t.Fatalf("baseFeePerGas = %v, want 20000000000000", b.BaseFeePerGas)
 	}
 }
+
+func TestClient_EstimateGas(t *testing.T) {
+	srv := rpcServer(t, map[string]any{"eth_estimateGas": "0x8000"}) // 32768
+	defer srv.Close()
+	g, err := Dial(srv.URL).EstimateGas(context.Background(), "0xfrom", "0xto", "0xa9059cbb")
+	if err != nil || g != 32768 {
+		t.Fatalf("EstimateGas: %d, %v", g, err)
+	}
+}
