@@ -57,6 +57,17 @@ func TestParse_InvalidJSON(t *testing.T) {
 	}
 }
 
+func TestParse_UnsupportedSchemaVersion(t *testing.T) {
+	raw := `{"schemaVersion":"99","id":"X","chain":{"name":"wbft","binary":"b"},"assertions":[{"assert":"True"}]}`
+	_, err := testspec.Parse([]byte(raw))
+	if err == nil {
+		t.Fatal("unsupported schemaVersion must be rejected")
+	}
+	if !strings.Contains(err.Error(), "schemaVersion") || !strings.Contains(err.Error(), "99") {
+		t.Fatalf("error should name the rejected version: %v", err)
+	}
+}
+
 func TestFingerprint_Deterministic(t *testing.T) {
 	s, _ := testspec.Parse([]byte(validSpec))
 	cfg := config.Values{"nodes.validators": "7", "chain.id": "111133"}
