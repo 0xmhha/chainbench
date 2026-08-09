@@ -14,9 +14,11 @@ Run a spec against a live network (attach) or a locally built one:
 # offline check (no chain needed)
 chainbench validate examples/specs/*.json
 chainbench validate --chain stablenet examples/specs/smoke-rpc-reads.json
+chainbench validate --json examples/specs/*.json   # machine-readable
 
 # run against a running node
 chainbench run --chain stablenet --rpc http://127.0.0.1:8600 examples/specs/smoke-rpc-reads.json
+chainbench run --json --chain stablenet --rpc http://127.0.0.1:8600 examples/specs/smoke-rpc-reads.json  # JSON verdict for CI
 
 # run against a locally built network
 chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-reads.json
