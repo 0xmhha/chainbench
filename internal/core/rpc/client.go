@@ -182,6 +182,25 @@ func (c *Client) Coinbase(ctx context.Context) (string, error) {
 	return s, nil
 }
 
+// HeadBlock returns the latest block's number, hash, and miner (producer) via
+// eth_getBlockByNumber("latest", false). An empty result yields zero values.
+func (c *Client) HeadBlock(ctx context.Context) (number uint64, hash, miner string, err error) {
+	var b struct {
+		Number string `json:"number"`
+		Hash   string `json:"hash"`
+		Miner  string `json:"miner"`
+	}
+	if err = c.Call(ctx, "eth_getBlockByNumber", &b, "latest", false); err != nil {
+		return 0, "", "", err
+	}
+	if b.Number != "" {
+		if number, err = parseHexUint(b.Number); err != nil {
+			return 0, "", "", fmt.Errorf("rpc: head block number: %w", err)
+		}
+	}
+	return number, b.Hash, b.Miner, nil
+}
+
 // SendTxArgs are the fields of an eth_sendTransaction call (node-side signing).
 // From must be an account the node has unlocked (e.g. a validator coinbase);
 // omitted fields (gas, gas price) are filled by the node.
