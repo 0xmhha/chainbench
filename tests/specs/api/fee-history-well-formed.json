@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "id": "fee-history-well-formed",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "rpcCall", "method": "eth_feeHistory", "params": ["0x10", "latest", []], "select": "oldestBlock", "compare": "Regexp", "expected": "^0x[0-9a-fA-F]+$" },
+    { "assert": "rpcCall", "method": "eth_feeHistory", "params": ["0x10", "latest", []], "select": "baseFeePerGas", "compare": "NotNil", "expected": null }
+  ]
+}

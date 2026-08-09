@@ -268,6 +268,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertEstimateGas, defaultOp: "GreaterOrEqual", read: readEstimateGas},
 		{name: assertLogs, defaultOp: "Equal", read: readLogs},
 		{name: assertGasPrice, defaultOp: "GreaterOrEqual", read: readGasPrice},
+		{name: assertRPCCall, defaultOp: "Equal", read: readRPCCall},
 	}
 }
 

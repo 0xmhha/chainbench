@@ -94,3 +94,30 @@ func TestUnresolved_BoundReferencesAreClean(t *testing.T) {
 		t.Fatalf("Unresolved = %v, want none", got)
 	}
 }
+
+func TestUnresolved_ReportsAnUnknownReadSource(t *testing.T) {
+	reg := testspec.NewRegistry(true)
+	spec := testspec.Spec{
+		Steps: []map[string]any{
+			{"read": map[string]any{"source": "nosuchreader", "save": "v"}},
+		},
+		Assertions: []map[string]any{{"assert": "blockNumber", "expected": "1"}},
+	}
+	got := testspec.Unresolved(spec, reg)
+	if len(got) != 1 || got[0] != "source:nosuchreader" {
+		t.Fatalf("Unresolved = %v, want [source:nosuchreader]", got)
+	}
+}
+
+func TestUnresolved_AcceptsAValidReadSource(t *testing.T) {
+	reg := testspec.NewRegistry(true)
+	spec := testspec.Spec{
+		Steps: []map[string]any{
+			{"read": map[string]any{"source": "rpcCall", "method": "eth_chainId", "save": "v"}},
+		},
+		Assertions: []map[string]any{{"assert": "chainId", "expected": "$v"}},
+	}
+	if got := testspec.Unresolved(spec, reg); len(got) != 0 {
+		t.Fatalf("Unresolved = %v, want none", got)
+	}
+}

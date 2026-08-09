@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "id": "istanbul-status-fields",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "sealerActivity", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "author", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "blockRange", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "roundStats", "compare": "NotNil", "expected": null }
+  ]
+}

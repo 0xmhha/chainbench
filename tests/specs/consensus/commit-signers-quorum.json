@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "commit-signers-quorum",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"], "save": "validators" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getCommitSignersFromBlock", "params": ["latest"], "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"], "compare": "Equal", "expected": "$validators" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "id": "validator-set-nonempty",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"], "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"], "compare": "Len", "expected": 4 }
+  ]
+}

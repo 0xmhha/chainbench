@@ -88,3 +88,20 @@ func (r *recordStub) Step(int, session.StepResult)  {}
 func (r *recordStub) Assert(a session.AssertResult) { r.asserts = append(r.asserts, a) }
 func (r *recordStub) Status(session.TestStatus)     {}
 func (r *recordStub) PostAction(session.PostResult) {}
+
+func TestReaderNames_CoverEveryRPCReadingAssertion(t *testing.T) {
+	// Every assertion that reads one value must be usable as a read source:
+	// they are the same vocabulary, and a name that works in "assert" but not in
+	// "read" is a trap the spec author only hits at run time.
+	d := deps()
+	for _, name := range readerNames() {
+		if _, ok := d.Actions.Assertion(name); !ok {
+			t.Errorf("read source %q is not registered as an assertion", name)
+		}
+	}
+	for _, want := range []string{"rpcCall", "gasPrice", "logs", "call", "balanceAt"} {
+		if _, ok := readerFor(want); !ok {
+			t.Errorf("assertion %q should also be a read source", want)
+		}
+	}
+}

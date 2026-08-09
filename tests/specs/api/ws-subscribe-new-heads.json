@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "id": "ws-subscribe-new-heads",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "ws"],
+  "assertions": [
+    { "assert": "wsSubscribe", "on": "bp1", "event": "newHeads", "count": 1, "timeout": "30s" }
+  ]
+}

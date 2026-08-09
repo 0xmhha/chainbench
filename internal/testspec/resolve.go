@@ -4,8 +4,9 @@ import "sort"
 
 // Unresolved returns the references a spec makes that nothing satisfies:
 // action and assertion names not registered in reg (prefixed "action:" /
-// "assert:"), and binding references no earlier step saved (prefixed "ref:").
-// Results are sorted and de-duplicated.
+// "assert:"), read sources that name no reader (prefixed "source:"), and
+// binding references no earlier step saved (prefixed "ref:"). Results are
+// sorted and de-duplicated.
 //
 // A spec names its steps, assertions, and saved values by string, so every one
 // of these would otherwise fail only at run time — against a live chain, after a
@@ -31,6 +32,16 @@ func Unresolved(s Spec, reg Registry) []string {
 		}
 		args := argsOf(entry[name])
 		checkRefs(args, bound, seen)
+		// A read action names its source by string too, so an unknown one would
+		// only surface once a network is up. Catch it here with the rest.
+		if name == actionRead {
+			source, _ := args["source"].(string)
+			if source == "" {
+				seen["source:(missing)"] = true
+			} else if _, ok := readerFor(source); !ok {
+				seen["source:"+source] = true
+			}
+		}
 		if save := saveName(args); save != "" {
 			bound[save] = true
 		}

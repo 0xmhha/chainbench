@@ -53,6 +53,26 @@
 - ☐ (후속·비파괴) 결과 모델 단일화 검토(testkit.Report ↔ session/engine.Summary 중복 축소).
 - ◐ (블로커 해소됨) 나머지 suite 이관 → test/MCP 이관 → testrun/testkit 제거. **DSL 표현력 블로커는 §4.3 대로 해소**됐고, 남은 것은 케이스별 이관 작업량 + 라이브 검증이다.
 
+### 4.4 이관 진척 (2026-08-09)
+
+레거시 등록 케이스는 **134개**(`testkit.Cases()` 실측, 7개 카테고리). 이관분은 `tests/specs/<category>/<name>.json` 에 두고 CI 가 오프라인 검증한다([[tests-specs-readme]] = `tests/specs/README.md`).
+
+| 카테고리 | 레거시 | 이관 | 라이브 |
+|---|---:|---:|---|
+| api | 11 | **10** | gstable pass=10 |
+| consensus | 13 | **8** | gstable pass=8 · gwbft pass=7/skip=1 |
+| network | 4 | 3 | 선행 이관분(`examples/specs/network-*`) |
+| accounts | 35 | 0 | — |
+| gas-policy | 17 | 0 | — |
+| hardfork | 8 | 0 | — |
+| system-contracts | 46 | 0 | — |
+
+**이관이 레거시의 결함을 드러냈다** — 둘 다 라이브에서만 보이는 것(레거시 유닛테스트는 mock 노드 사용):
+- `wbft-extra-info-fields` 가 `istanbul_getWbftExtraInfo` 를 `"latest"` 로 호출 → 체인이 `block -2 not found` 로 거부. 구체 블록번호 필요.
+- 같은 케이스가 `ChainCompat:[stablenet,wbft]` 인데 `gasTip` 은 **stablenet 전용** → wbft 응답에 없음. 이관본은 공통 필드와 체인특화 필드를 분리했다.
+
+**이관 불가로 남긴 것**(가짜로 만들지 않음): `ws-subscribe-logs`(구독을 스텝보다 먼저 열어야 함 — 순서 표현 불가) · `block-period-one-second`(저장값 간 산술) · `epoch-transition-carries-epoch-info`(조건부 대기) · `validator-set-count`(spec 이 자기 토폴로지를 참조할 수단 없음).
+
 ### 4.1 이관 중 발견한 DSL 표현력 갭 (신규 빌트인 필요)
 
 포팅을 진행하며 확인한, 현재 빌트인으로 표현 불가한 패턴:
