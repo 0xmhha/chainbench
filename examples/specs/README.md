@@ -27,3 +27,4 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `smoke-rpc-reads.json` | RPC-read assertions (`chainId`, `blockNumber`, `peerCount`) with a `compare` override |
 | `tx-transfer-and-balance.json` | `sendTx` and `waitBlock` steps, then `balanceAt`/`nonceAt` assertions |
 | `negative-revert.json` | a negative tx step (`expectRevert`) — the transaction must revert (F11) |
+| `contract-read-and-tx-status.json` | a read-only contract call (`call`) and a receipt-status check (`txStatus`) |
