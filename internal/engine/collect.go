@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // chainstateInterval is how often live collection samples nodes and publishes a
@@ -79,6 +81,34 @@ func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus,
 		err := col.Stop()
 		publishChainstate(bus, col.Snapshot())
 		return err
+	}
+}
+
+// withCollection wraps build so that, when bus is non-nil, a live collector runs
+// for each built environment — mirroring its chainstate and logs to bus — and is
+// torn down as part of the environment teardown. When bus is nil it returns
+// build unchanged, so collection is opt-in and never affects a run without a
+// dashboard. dial nil uses the default RPC dialer.
+func withCollection(build BuildEnvFunc, bus *obs.Bus, dial func(string) *rpc.Client) BuildEnvFunc {
+	if bus == nil {
+		return build
+	}
+	probe := rpcProbe(dial)
+	return func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error) {
+		ns, td, err := build(ctx, env, spec)
+		if err != nil {
+			return ns, td, err
+		}
+		stop := startCollection(ctx, env, bus, probe, chainstateInterval)
+		return ns, func(c context.Context) error {
+			cerr := stop()
+			if td != nil {
+				if terr := td(c); terr != nil {
+					return terr
+				}
+			}
+			return cerr
+		}, nil
 	}
 }
 

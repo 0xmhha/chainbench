@@ -81,7 +81,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
 			return s.Fingerprint(config.Values{})
 		},
-		BuildEnv:   NewAttachBuildEnv(cfg.Chain, eps),
+		BuildEnv:   withCollection(NewAttachBuildEnv(cfg.Chain, eps), cfg.Bus, nil),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, []string{attachCapability}),
 		Emit:       busEmit(cfg.Bus),
