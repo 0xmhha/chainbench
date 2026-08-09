@@ -66,7 +66,7 @@ func TestStartCollection_MirrorsChainstateAndLogs(t *testing.T) {
 
 	var sawChainstate, sawLog bool
 	deadline := time.After(2 * time.Second)
-	for !(sawChainstate && sawLog) {
+	for !sawChainstate || !sawLog {
 		select {
 		case e := <-sub:
 			switch {
