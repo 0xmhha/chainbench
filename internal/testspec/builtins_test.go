@@ -396,3 +396,32 @@ func TestBlockAdvanceAssertion(t *testing.T) {
 		}
 	})
 }
+
+func TestSameBlockHashAssertion(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertSameBlockHash)
+	mk := func(hash string) *httptest.Server {
+		return mockRPC(t, map[string]any{"eth_getBlockByNumber": map[string]any{"number": "0x0", "hash": hash}})
+	}
+
+	t.Run("agree", func(t *testing.T) {
+		a, b := mk("0xsame"), mk("0xsame")
+		on := []node.Node{{Index: 1, RPCURL: a.URL}, {Index: 2, RPCURL: b.URL}}
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("agreeing nodes should pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+		}
+	})
+
+	t.Run("fork", func(t *testing.T) {
+		a, b := mk("0xaaaa"), mk("0xbbbb")
+		on := []node.Node{{Index: 1, RPCURL: a.URL}, {Index: 2, RPCURL: b.URL}}
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
+		if err != nil {
+			t.Fatalf("fork check should not error: %v", err)
+		}
+		if r.Pass {
+			t.Fatalf("divergent hashes must fail: %+v", r)
+		}
+	})
+}
