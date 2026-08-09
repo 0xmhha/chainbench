@@ -167,3 +167,114 @@ func TestNewRegistry_BuiltinsGatedByFlag(t *testing.T) {
 		t.Fatal("built-ins must be seeded when withBuiltins=true")
 	}
 }
+
+func TestBuiltinAssertions_NonceAndCall(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"eth_getTransactionCount": "0x5",  // nonce 5
+		"eth_call":                "0x2a", // call result
+	})
+	d := deps()
+	on := []node.Node{{Index: 1, RPCURL: srv.URL}}
+
+	cases := []struct {
+		name string
+		spec map[string]any
+		pass bool
+	}{
+		{"nonceAt equal", map[string]any{"assert": assertNonceAt, "address": "0xabc", "expected": float64(5)}, true},
+		{"nonceAt mismatch", map[string]any{"assert": assertNonceAt, "address": "0xabc", "expected": float64(4)}, false},
+		{"nonceAt compare ge", map[string]any{"assert": assertNonceAt, "address": "0xabc", "expected": float64(1), "compare": "GreaterOrEqual"}, true},
+		{"call equal", map[string]any{"assert": assertCall, "to": "0xc0", "data": "0xdead", "expected": "0x2a"}, true},
+		{"call mismatch", map[string]any{"assert": assertCall, "to": "0xc0", "data": "0xdead", "expected": "0x2b"}, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			as, ok := d.Actions.Assertion(tc.spec["assert"].(string))
+			if !ok {
+				t.Fatalf("assertion %q not registered", tc.spec["assert"])
+			}
+			r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: tc.spec})
+			if err != nil {
+				t.Fatalf("Check: %v", err)
+			}
+			if r.Pass != tc.pass {
+				t.Fatalf("pass = %v, want %v (actual=%v)", r.Pass, tc.pass, r.Actual)
+			}
+		})
+	}
+}
+
+func TestBuiltinAssertions_NonceCallMissingArgs(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"eth_getTransactionCount": "0x1", "eth_call": "0x1"})
+	d := deps()
+	on := []node.Node{{RPCURL: srv.URL}}
+	for _, spec := range []map[string]any{
+		{"assert": assertNonceAt},                // missing address
+		{"assert": assertCall, "to": "0xc0"},     // missing data
+		{"assert": assertCall, "data": "0xdead"}, // missing to
+	} {
+		as, _ := d.Actions.Assertion(spec["assert"].(string))
+		if r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: spec}); err == nil || r.Pass {
+			t.Fatalf("expected error for %v", spec)
+		}
+	}
+}
+
+func TestBuiltinAssertion_TxStatus(t *testing.T) {
+	d := deps()
+	on := func(url string) []node.Node { return []node.Node{{RPCURL: url}} }
+
+	t.Run("success", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x1"}})
+		as, _ := d.Actions.Assertion(assertTxStatus)
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x1"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("want pass, got pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+		}
+	})
+	t.Run("reverted", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x0"}})
+		as, _ := d.Actions.Assertion(assertTxStatus)
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x0"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("want pass for reverted match, got pass=%v err=%v", r.Pass, err)
+		}
+	})
+	t.Run("missing hash", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x1"}})
+		as, _ := d.Actions.Assertion(assertTxStatus)
+		if r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus}}); err == nil || r.Pass {
+			t.Fatal("expected error for missing hash")
+		}
+	})
+}
+
+func TestWaitBlockAction(t *testing.T) {
+	d := deps()
+
+	t.Run("target reached", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"}) // 16
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitBlock)
+		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(5), "pollInterval": "5ms"}}); err != nil {
+			t.Fatalf("waitBlock: %v", err)
+		}
+	})
+	t.Run("timeout when unreached", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x1"}) // 1
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitBlock)
+		err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
+		if err == nil {
+			t.Fatal("expected timeout error for unreachable target")
+		}
+	})
+	t.Run("requires target", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitBlock)
+		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+			t.Fatal("expected error for missing target")
+		}
+	})
+}
