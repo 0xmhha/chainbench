@@ -143,7 +143,7 @@
 | 업그레이드 멀티바이너리 handoff | ✓ | ✓(레거시) / **✗(신규 엔진)** | `upgrade/plan.go:110`; **신규 엔진에는 미배선**(T5.2) — 선행: supervisor `ForkSwaps`(T3.2b) |
 | 결과수집 via RPC(height/sync/peers/validators/receipt) | ✓ | ✓ | `rpc/client.go`; `collector` RPC 스냅샷 |
 | **로그수집: 로컬** | △ | **✓** | 스캔→**live tail** 승격(offset 증분·부분줄 미방출·`OnLine` obs 미러) (T3.3) |
-| **로그수집: 원격(SSH)** | ✗ | **✗** | 여전히 없음 — `collector/docs.go:10` "Remote (SSH) tailing is a follow-up seam" |
+| **로그수집: 원격(SSH)** | ✗ | **✓** | `collector.LogReader` seam + `driver.RemoteLogReader`(SSH `tail -c +N`). 실 SSH 호스트 라이브 검증만 잔여(C2) |
 | **chainstate: bp참여·reorg/분기 검출** | ✗ | **✓** | `BPParticipation`(head producer 샘플·bounded prune)·`Forked`(높이별 first-seen hash 불일치); `chainstate/chainstate.jsonl` 영속 + obs 미러 (T3.3) |
 | MCP 도구 | ✓(30) | ✓ | `mcp/tools.go`; DSL 대응은 `chainbench_run`(T6.2) |
 | **DSL 액션 어휘** | — | **△** | `sendTx`·`waitBlock` **2개뿐**. `stopNode`/`partition`/`faucet`/`deployContract` 등 design §3.2 명시분 부재 → **T4.2b·T4.2c** |
@@ -156,7 +156,7 @@
 | 1 | procman 프로덕션 배선 + 종료검증 + 원격 PID + datadir | **해소** (T1.5·T3.2) |
 | 2 | 체인무관 `place` 통합 + 용량검증(min≥4·max) | **해소** (T1.4) |
 | 3 | "원격 파일 존재 시 재사용, 없으면 업로드" 조건분기 | **해소** (T2.2·T5.1) |
-| 4 | 원격 로그수집 + live tail + bp참여·분기검출 | **부분** — 로컬 tail·bp참여·분기 ✓ / **원격 SSH tail ✗**(T3.3 잔여) |
+| 4 | 원격 로그수집 + live tail + bp참여·분기검출 | **해소** — 로컬 tail·bp참여·분기 ✓ · 원격 SSH tail ✓(`LogReader` seam). 실 SSH 라이브 검증만 잔여 |
 | 5 | 랜덤키 원격 업로드 통일 · key_file SSH 인증 · BLS 외부의존 명시 | **해소** (T1.6·T2.1) |
 
 **새로 드러난 공백(2026-08-09 x-bar 정렬 검토):** 위 5개는 "이름만 보고 있다고 착각한" 유형이었다.
@@ -180,7 +180,7 @@
 - **M4. GenesisBuilder**[EXTEND genesis] — 4모드(✓) + 등록계정·노드정합(✓) + 시스템컨트랙트 embed(✓). **배포컨트랙트 등록은 `gwemix deploy-governance` 셸아웃**(체인특화 → 플러그인 뒤로). (design §3.8)
 - **M5. Provisioner**[REFACTOR setup] — datadir+키+genesis+config **물질화**를 Transport로 통일(로컬 ✓/원격 ✓). ~~격차: upload-if-absent 조건분기 없음~~ → **`provision.Provisioner`+`FileSink.Exists` 로 해소**(로컬 stat / 원격 `test -f`), T2.2·T4.6·T5.1.
 - **M6. Supervisor**[NEW] — N노드 기동(✓)·teardown·프로세스 제어(✓). ~~격차: procman 미배선~~ → **배선 완료**(`Teardown`→`StopAll` 검증·`RemoveDataDirs` 분리, `Proc{PID,DataDir,Host}`). **잔여 격차: 헬스게이트가 블록 전진만 본다 — `Options.LeaderGate`/`AlignJoinGap`/`ForkSwaps` 가 impl 에서 미사용이고 `FailureMode` 5종 중 `RPCUnready` 만 방출**(T3.2b). (design §3.3)
-- **M7. Collector**[NEW·probe+obs] — RPC 수집(✓)·**로컬 live tail(✓)**·**bp참여(✓)**·**fork/reorg 검출(✓)**·chainstate jsonl 영속+obs 미러(✓), T3.3. **잔여 격차: 원격 SSH tail 없음.** attach=RPC-only 강등. (design §3.6)
+- **M7. Collector**[NEW·probe+obs] — RPC 수집(✓)·**로컬 live tail(✓)**·**원격 SSH tail(✓, `LogReader` seam)**·**bp참여(✓)**·**fork/reorg 검출(✓)**·chainstate jsonl 영속+obs 미러(✓), T3.3. **잔여: 실 SSH 호스트 라이브 검증만.** attach=RPC-only 강등. (design §3.6)
 - **M8. Interpreter**[REPLACE testkit] — pre→steps→assert→post, atomic 스텝, provenance. ~~미존재~~ → **구현됨**(`internal/testspec`, T1.1·T4.2·T4.3). **잔여 격차: 액션 어휘가 `sendTx`·`waitBlock` 2개뿐**(T4.2b·T4.2c). 레거시 Go-func 경로는 소비자 이관 전까지 병존. (design §3.2)
 - **M9. Transport**[KEEP·EXTEND driver] — **통합 seam 실측 견고**: 단일 `Driver`(Provision/Launch/Stop) + `Initializer`/`FileProvisioner` type-assert, 로컬·원격 양쪽 구현·CLI 배선(✓). local(loopback)·remote(ssh nohup+PID). **stateless(에이전트 없음, 검증됨)**. ~~격차: stop 종료검증·key_file 인증 미지원~~ → **둘 다 해소**(`procman.Alive`/`StopAll`, `remote.Credentials.PrivateKey`; T2.1). 잔여: driver 위 **Transport 타입 형식화**(명명만, 기능은 capability 로 동작 중).
 

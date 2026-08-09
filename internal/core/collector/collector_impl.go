@@ -2,13 +2,12 @@ package collector
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"regexp"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -50,6 +49,10 @@ type Deps struct {
 	// tail — the seam that mirrors logs to the dashboard (obs). Nil disables
 	// tailing; tailing never blocks a node.
 	OnLine func(nodeName, line string)
+	// Logs reads a node's log bytes from an offset. Nil uses the local
+	// filesystem; a remote environment supplies an SSH-backed reader so the same
+	// tail loop follows logs on another host (design §3.6).
+	Logs LogReader
 }
 
 // collector samples chainstate over RPC and locates log lines on demand. It
@@ -135,6 +138,10 @@ func (c *collector) run(ctx context.Context) {
 // skipped so a slow or down node never blocks or corrupts the snapshot. Recent
 // (height, producer) pairs accumulate for the bp-participation tally.
 func (c *collector) sampleOnce(ctx context.Context) {
+	if c.deps.Probe == nil {
+		return // log-only collection: nothing to sample, and observation must
+		// never crash the run it is observing
+	}
 	heights := map[string]uint64{}
 	peers := map[string]int{}
 	for _, n := range c.env.Nodes() {
@@ -247,15 +254,19 @@ func (c *collector) tail(ctx context.Context, name, path string) {
 	t := time.NewTicker(tailInterval)
 	defer t.Stop()
 
+	reader := c.deps.Logs
+	if reader == nil {
+		reader = LocalLogReader{}
+	}
 	var offset int64
 	emit := func(line string) { c.deps.OnLine(name, line) }
 	for {
-		offset = readNewLines(path, offset, emit)
+		offset = readNewLines(ctx, reader, path, offset, emit)
 		select {
 		case <-ctx.Done():
 			return
 		case <-c.stop:
-			readNewLines(path, offset, emit) // final drain
+			readNewLines(ctx, reader, path, offset, emit) // final drain
 			return
 		case <-t.C:
 		}
@@ -264,24 +275,21 @@ func (c *collector) tail(ctx context.Context, name, path string) {
 
 // readNewLines reads complete (newline-terminated) lines from path starting at
 // offset, calling emit for each, and returns the offset past the last complete
-// line. A partial trailing line does not advance the offset.
-func readNewLines(path string, offset int64, emit func(string)) int64 {
-	f, err := os.Open(path)
-	if err != nil {
+// line. A partial trailing line does not advance the offset, so it is re-read
+// once the writer finishes it rather than being emitted in halves.
+func readNewLines(ctx context.Context, reader LogReader, path string, offset int64, emit func(string)) int64 {
+	chunk, err := reader.ReadFrom(ctx, path, offset)
+	if err != nil || len(chunk) == 0 {
 		return offset
 	}
-	defer func() { _ = f.Close() }()
-	if _, err := f.Seek(offset, io.SeekStart); err != nil {
-		return offset
-	}
-	r := bufio.NewReader(f)
 	for {
-		line, err := r.ReadString('\n')
-		if err != nil {
-			break // io.EOF or partial line: do not advance past it
+		i := bytes.IndexByte(chunk, '\n')
+		if i < 0 {
+			break // partial line: leave the offset before it
 		}
-		offset += int64(len(line))
-		emit(strings.TrimRight(line, "\n"))
+		emit(string(chunk[:i]))
+		offset += int64(i + 1)
+		chunk = chunk[i+1:]
 	}
 	return offset
 }
