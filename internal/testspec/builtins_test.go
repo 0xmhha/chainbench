@@ -248,3 +248,33 @@ func TestBuiltinAssertion_TxStatus(t *testing.T) {
 		}
 	})
 }
+
+func TestWaitBlockAction(t *testing.T) {
+	d := deps()
+
+	t.Run("target reached", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"}) // 16
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitBlock)
+		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(5), "pollInterval": "5ms"}}); err != nil {
+			t.Fatalf("waitBlock: %v", err)
+		}
+	})
+	t.Run("timeout when unreached", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x1"}) // 1
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitBlock)
+		err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
+		if err == nil {
+			t.Fatal("expected timeout error for unreachable target")
+		}
+	})
+	t.Run("requires target", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitBlock)
+		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+			t.Fatal("expected error for missing target")
+		}
+	})
+}

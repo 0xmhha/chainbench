@@ -18,7 +18,8 @@ import (
 // on). Kept as typed-free string constants so the registry and specs share one
 // source of truth.
 const (
-	actionSendTx = "sendTx"
+	actionSendTx    = "sendTx"
+	actionWaitBlock = "waitBlock"
 
 	assertChainID     = "chainId"
 	assertBlockNumber = "blockNumber"
@@ -36,12 +37,48 @@ const (
 	defaultTxPollInterval = 500 * time.Millisecond
 )
 
+// Defaults for the waitBlock poll loop, overridable per action via args.
+const (
+	defaultWaitBlockTimeout = 60 * time.Second
+	defaultWaitBlockPoll    = 500 * time.Millisecond
+)
+
 // seedBuiltins registers the built-in tx action and RPC-reading assertions on r.
 // It is called by NewRegistry(true).
 func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
+	r.RegisterAction(actionWaitBlock, waitBlockAction{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
+	}
+}
+
+// waitBlockAction blocks until the target node's height reaches "target" (a
+// number) or the timeout elapses. Args: target, on, timeout, pollInterval.
+type waitBlockAction struct{}
+
+func (waitBlockAction) Do(ctx context.Context, ac *ActionCtx) error {
+	target, ok := uintArg(ac.Args["target"])
+	if !ok {
+		return fmt.Errorf("testspec: waitBlock requires a numeric \"target\"")
+	}
+	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, durationArg(ac.Args, "timeout", defaultWaitBlockTimeout))
+	defer cancel()
+	t := time.NewTicker(durationArg(ac.Args, "pollInterval", defaultWaitBlockPoll))
+	defer t.Stop()
+	for {
+		if bn, err := c.BlockNumber(ctx); err == nil && bn >= target {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("testspec: waitBlock: height %d not reached: %w", target, ctx.Err())
+		case <-t.C:
+		}
 	}
 }
 
@@ -328,6 +365,28 @@ func bigString(v *big.Int) string {
 		return "0"
 	}
 	return v.String()
+}
+
+// uintArg normalizes a numeric arg (number or decimal string) to a uint64.
+// ok is false when v is absent, negative, or unparseable.
+func uintArg(v any) (uint64, bool) {
+	switch x := v.(type) {
+	case float64:
+		if x < 0 {
+			return 0, false
+		}
+		return uint64(x), true
+	case int:
+		if x < 0 {
+			return 0, false
+		}
+		return uint64(x), true
+	case string:
+		n, err := strconv.ParseUint(strings.TrimSpace(x), 10, 64)
+		return n, err == nil
+	default:
+		return 0, false
+	}
 }
 
 // durationArg reads a Go duration string arg, falling back to def.
