@@ -173,3 +173,21 @@ func TestClient_SendTransaction(t *testing.T) {
 		t.Errorf("tx args did not travel: %+v", a)
 	}
 }
+
+func TestClient_BlockByNumber(t *testing.T) {
+	srv := rpcServer(t, map[string]any{
+		"eth_getBlockByNumber": map[string]any{
+			"number": "0x0", "hash": "0xgenesis", "miner": "0x0", "timestamp": "0x64",
+		},
+	})
+	defer srv.Close()
+	c := Dial(srv.URL)
+
+	b, err := c.BlockByNumber(context.Background(), "0x0")
+	if err != nil {
+		t.Fatalf("BlockByNumber: %v", err)
+	}
+	if b.Number != 0 || b.Hash != "0xgenesis" || b.Timestamp != 100 {
+		t.Fatalf("block = %+v, want {0, 0xgenesis, ts 100}", b)
+	}
+}
