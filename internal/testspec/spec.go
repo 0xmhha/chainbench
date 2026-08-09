@@ -53,7 +53,13 @@ func Parse(raw []byte) (Spec, error) {
 	return s, nil
 }
 
-// validate reports the first set of missing required fields, naming each.
+// supportedSchemaVersion is the only spec schemaVersion the interpreter accepts.
+// Specs are long-lived assets, so an unknown version is rejected explicitly
+// (forward-compat guard, F16-O2) rather than parsed on a best-effort basis.
+const supportedSchemaVersion = "1"
+
+// validate reports the first set of missing required fields, naming each, then
+// rejects an unsupported schemaVersion.
 func (s Spec) validate() error {
 	var missing []string
 	if s.SchemaVersion == "" {
@@ -73,6 +79,9 @@ func (s Spec) validate() error {
 	}
 	if len(missing) > 0 {
 		return fmt.Errorf("testspec: missing required field(s): %s", strings.Join(missing, ", "))
+	}
+	if s.SchemaVersion != supportedSchemaVersion {
+		return fmt.Errorf("testspec: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
 	}
 	return nil
 }

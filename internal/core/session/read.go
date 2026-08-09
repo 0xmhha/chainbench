@@ -32,6 +32,11 @@ func List(root string) ([]string, error) {
 	return ids, nil
 }
 
+// SessionDir returns a session's directory under root.
+func SessionDir(root, id string) string {
+	return filepath.Join(root, id)
+}
+
 // SessionFilePath returns the path to a session's session.json under root.
 func SessionFilePath(root, id string) string {
 	return filepath.Join(root, id, fileSession)

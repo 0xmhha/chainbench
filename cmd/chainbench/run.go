@@ -128,7 +128,13 @@ func printSession(out io.Writer, root string) error {
 	fmt.Fprintf(out, "\npass=%d fail=%d blocked=%d skip=%d\nsession: %s\n",
 		doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip, root)
 	if doc.Failed() {
-		return fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)
+		// Blocked/infrastructure errors are more severe than a plain test
+		// failure, so they map to exit code 2 (F16-O5).
+		code := 1
+		if doc.Summary.Blocked > 0 {
+			code = 2
+		}
+		return &exitError{code: code, err: fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)}
 	}
 	return nil
 }

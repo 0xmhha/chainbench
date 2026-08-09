@@ -151,3 +151,36 @@ func TestRunCmd_RequiresMode(t *testing.T) {
 		t.Fatal("expected error when --chain is missing")
 	}
 }
+
+func TestRunCmd_ExitCodes(t *testing.T) {
+	srv := mockRPCNode(t, map[string]any{"eth_chainId": "0x539", "eth_blockNumber": "0x10"})
+
+	// pass -> 0
+	passSpec := writeSpec(t, map[string]any{
+		"schemaVersion": "1", "id": "ok",
+		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions": []map[string]any{{"assert": "chainId", "expected": 1337}},
+	})
+	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), passSpec); exitCode(err) != 0 {
+		t.Fatalf("pass exit = %d, want 0 (err=%v)", exitCode(err), err)
+	}
+
+	// fail -> 1
+	failSpec := writeSpec(t, map[string]any{
+		"schemaVersion": "1", "id": "bad",
+		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions": []map[string]any{{"assert": "chainId", "expected": 999}},
+	})
+	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), failSpec); exitCode(err) != 1 {
+		t.Fatalf("fail exit = %d, want 1 (err=%v)", exitCode(err), err)
+	}
+
+	// blocked (malformed spec) -> 2
+	bad := filepath.Join(t.TempDir(), "bad.json")
+	if err := os.WriteFile(bad, []byte("{not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), bad); exitCode(err) != 2 {
+		t.Fatalf("blocked exit = %d, want 2 (err=%v)", exitCode(err), err)
+	}
+}
