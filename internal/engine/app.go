@@ -111,7 +111,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
 			return s.Fingerprint(config.Values{})
 		},
-		BuildEnv:   build,
+		BuildEnv:   withCollection(build, cfg.Bus, nil),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, localCapabilities(plugin)),
 		Emit:       busEmit(cfg.Bus),

@@ -53,6 +53,26 @@ func TestClient_Quantities(t *testing.T) {
 	}
 }
 
+func TestClient_HeadBlock(t *testing.T) {
+	srv := rpcServer(t, map[string]any{
+		"eth_getBlockByNumber": map[string]any{
+			"number": "0x10", // 16
+			"hash":   "0xabc",
+			"miner":  "0xVAL1",
+		},
+	})
+	defer srv.Close()
+	c := Dial(srv.URL)
+
+	num, hash, miner, err := c.HeadBlock(context.Background())
+	if err != nil {
+		t.Fatalf("HeadBlock: %v", err)
+	}
+	if num != 16 || hash != "0xabc" || miner != "0xVAL1" {
+		t.Fatalf("HeadBlock = (%d, %q, %q), want (16, 0xabc, 0xVAL1)", num, hash, miner)
+	}
+}
+
 func TestClient_AccountReads(t *testing.T) {
 	srv := rpcServer(t, map[string]any{
 		"eth_getBalance":          "0xde0b6b3a7640000", // 1e18
