@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "id": "negative-revert",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "sendTx": { "from": "0x0000000000000000000000000000000000000001", "to": "0x0000000000000000000000000000000000000009", "data": "0xdeadbeef", "expectRevert": true } }
+  ],
+  "assertions": [
+    { "assert": "blockNumber", "expected": 1, "compare": "GreaterOrEqual" }
+  ]
+}

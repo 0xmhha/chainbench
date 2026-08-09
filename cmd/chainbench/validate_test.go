@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -92,5 +93,25 @@ func TestValidateCmd_UnknownChain(t *testing.T) {
 	})
 	if _, err := run(t, "validate", "--chain", "nope", p); err == nil {
 		t.Fatal("unknown --chain must error")
+	}
+}
+
+// TestValidateCmd_ExampleSpecs guards the shipped example specs: they must all
+// parse and apply to stablenet, so the DSL docs never drift from the parser.
+func TestValidateCmd_ExampleSpecs(t *testing.T) {
+	paths, err := filepath.Glob("../../examples/specs/*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) == 0 {
+		t.Fatal("no example specs found")
+	}
+	args := append([]string{"validate", "--chain", "stablenet"}, paths...)
+	out, err := run(t, args...)
+	if err != nil {
+		t.Fatalf("example specs failed validation: %v\n%s", err, out)
+	}
+	if strings.Contains(out, "INVALID") || strings.Contains(out, "ERROR") {
+		t.Fatalf("example specs must be valid:\n%s", out)
 	}
 }
