@@ -73,7 +73,8 @@
 | getter readable | token-balance-readable·account-authorization-readable | `call` + `Regexp`(반환 shape) | ☑ (동 spec) |
 | getter 값 대조 | token-metadata(name/symbol) | `call` + `Contains`/`Equal`(ABI 인코딩값) | ◐ 값 확정 시 가능 |
 | **교차-call 비교** | totalSupply ≥ balance 등 | 두 `call` 결과 비교 | ☐ 신규 필요(스텝간 값 바인딩 or 전용 어세션) |
-| **헤더/가스 파생** | gas-price=basefee+tip·max-priority=gastip·estimate-gas | `eth_gasPrice`·헤더 `baseFeePerGas`·WBFTExtra `gasTip`·`eth_estimateGas` | ☐ 신규 빌트인 필요(제네릭 gasPrice/baseFee + 체인특화 gasTip) |
+| 헤더 base fee 경계 | basefee-minimum·basefee-maximum | `baseFee`(헤더 `baseFeePerGas` 리드 + 경계 비교) | ☑ (`stablenet-gas-policy.json`) |
+| **가스 파생** | gas-price=basefee+tip·max-priority=gastip·estimate-gas | `eth_gasPrice`·WBFTExtra `gasTip`·`eth_estimateGas` | ☐ 신규 빌트인 필요(제네릭 gasPrice/estimateGas + 체인특화 gasTip 조합) |
 | 거버넌스 플로우 | gov_*(propose→approve→execute·이벤트) | 다단계 스텝 + 이벤트 로그 디코드·상태 대조 | ☐ 신규 필요(이벤트 어세션·스텝 바인딩) |
 | tx/nonce/영수증 | tx_nonce·tx_gas_receipts | `sendTx`+`nonceAt`+`txStatus` | ◐ 대부분 가능(정밀 가스값은 파생 필요) |
 
