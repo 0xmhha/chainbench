@@ -6,7 +6,7 @@
 > 목적(요구 37): 여러 노드를 서로 다른 역할로 실행해 체인 네트워크를 구성하고 tx/블록을 처리하며 테스트한다.
 >
 > **읽는 법(2026-08-09 갱신):** 본 문서는 **구현 착수 전**에 쓰였다. §0·§2 의 서술과 §1b 의 논거는
-> 그 시점의 판단을 보존한다. **현재 상태의 정본은 §2b 의 `현재(#224)` 열과 §3 의 취소선 델타**이며,
+> 그 시점의 판단을 보존한다. **현재 상태의 정본은 §2b 의 `현재(#225)` 열과 §3 의 취소선 델타**이며,
 > 작업 상태는 [[chainbench-worklist]] 가 정본이다. §0-1 말미의 "아직 없음" 목록(원격 로그수집·bp참여/
 > 분기 관측·procman 배선·체인무관 place·용량검증)은 **원격 SSH tail 하나만 남기고 모두 해소**됐다.
 
@@ -57,10 +57,10 @@
 
 | # | 바운디드 컨텍스트 | 분류 | Aggregate(root) · VO | 핵심 불변식 | 구성 컴포넌트(레이어) | 상태 |
 |---|-------------------|------|----------------------|-------------|------------------|------|
-| C1 | **테스트 오케스트레이션** | **Core** | `TestRun` | 스텝 원자성(부분성공 없음)·status=assertion 파생·preAction 실패⇒BLOCKED | Interpreter(M8)·testspec·assert | ✓ (어휘 △, T4.2b·c) |
+| C1 | **테스트 오케스트레이션** | **Core** | `TestRun` | 스텝 원자성(부분성공 없음)·status=assertion 파생·preAction 실패⇒BLOCKED | Interpreter(M8)·testspec·assert | ✓ (어휘 확장 완료 #225: 액션 11·어세션 16, 스텝 값 바인딩) |
 | C2 | **네트워크 구성** | **Core** | `Environment` · VO: Fingerprint/Ports/Placement | 포트 무충돌·fingerprint 불변·**genesis 등록신원=실제 키 일치**·BFT min≥4 | Place(M2)·KeyReg(M3)·Genesis(M4)·Provision(M5) | ✓ |
-| C3 | **노드 생명주기** | Supporting | `NodeProcess` | **고아 0**·정지⇒내장 etcd 종료·datadir 삭제=별개 연산 | Supervisor(M6)·procman | ✓ (게이트 △, T3.2b) |
-| C4 | **관측·진단** | Supporting | (읽기 모델) | — | Collector(M7)·verify·logs | ✓ (원격 tail ✗) |
+| C3 | **노드 생명주기** | Supporting | `NodeProcess` | **고아 0**·정지⇒내장 etcd 종료·datadir 삭제=별개 연산 | Supervisor(M6)·procman | ✓ (헬스/etcd 리더 게이트 완료 T3.2b #225) |
+| C4 | **관측·진단** | Supporting | (읽기 모델) | — | Collector(M7)·verify·logs | ✓ (원격 SSH tail 완료 #225 `LogReader`, 실 SSH 라이브만 잔여) |
 | C5 | **세션·아티팩트** | Supporting | `Session`(root) | 경로 단일소유·결정적 레이아웃·env 재사용=fingerprint | Session(M1) | ✓ |
 | C6 | **Chain Adapter** | Generic-external · **ACL** | — | **외부 바이너리 quirk를 Core로 누출 금지** | ChainPlugin+Capabilities(H2) | ✓ |
 | C7 | **Transport** | Generic-infra · Ports&Adapters | — | 상위는 local/remote 무관 | Driver local/remote(M9) | ✓ |
@@ -111,11 +111,11 @@
 > **원칙: 패키지·`_test.go` 존재 ≠ 기능 지원.** 아래는 실제 코드를 읽어 확인한 결과다.
 > **✓ 구현확인 · ✓\* 조건부(외부도구/경로의존) · △ 부분·미배선 · ✗ 미구현(설계만).**
 >
-> **두 열을 나란히 둔다.** *설계착수* 는 이 문서를 쓴 시점(구현 전)의 판정이고, *현재* 는 `#224` 시점
+> **두 열을 나란히 둔다.** *설계착수* 는 이 문서를 쓴 시점(구현 전)의 판정이고, *현재* 는 `#225` 시점
 > 재실측이다. 이 표는 문서 스스로 "착수 전 기준"이라 선언하므로, **낡은 채로 두면 이미 한 일을 다시
 > 계상하게 만든다** — 그래서 판정을 지우지 않고 델타로 보존한다. (갱신: 2026-08-09, T6.5b)
 
-| 변주/기능 | 설계착수 | 현재(#224) | 근거(file:line) · 잔여 격차 |
+| 변주/기능 | 설계착수 | 현재(#225) | 근거(file:line) · 잔여 격차 |
 |-----------|:---:|:---:|------------------------|
 | local provision(datadir/config/genesis/키) | ✓ | ✓ | `driver/local.go:36`; 신규 경로는 `provision.Provisioner`(T4.6) |
 | local launch + PID | ✓ | ✓ | `local.go:54` `cmd.Process.Pid` |
