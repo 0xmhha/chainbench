@@ -71,6 +71,7 @@
 |---|---|---|---|
 | 시스템 컨트랙트 코드 | native-coin-adapter-code | `codeAt` + `NotEqual "0x"` | ☑ (`stablenet-system-contracts.json`) |
 | getter readable | token-balance-readable·account-authorization-readable | `call` + `Regexp`(반환 shape) | ☑ (동 spec) |
+| 하드포크 아티팩트(plain read) | p256-precompile-active/rejects-invalid·govminter-v2-code·boho-chain-config-active | `call`(precompile)·`codeAt`·`chainId`/`blockNumber` | ☑ (`stablenet-hardfork.json`) |
 | getter 값 대조 | token-metadata(name/symbol) | `call` + `Contains`/`Equal`(ABI 인코딩값) | ◐ 값 확정 시 가능 |
 | **교차-call 비교** | totalSupply ≥ balance 등 | 두 `call` 결과 비교 | ☐ 신규 필요(스텝간 값 바인딩 or 전용 어세션) |
 | 헤더 base fee 경계 | basefee-minimum·basefee-maximum | `baseFee`(헤더 `baseFeePerGas` 리드 + 경계 비교) | ☑ (`stablenet-gas-policy.json`) |
