@@ -170,11 +170,11 @@ func governanceSteps() []Step {
 		{ID: "base-genesis", Title: "Generate the base genesis", Detail: "gwemix wemix genesis --data <config> --genesis <go-wemix template>", Implemented: false},
 		{ID: "allocate", Title: "Allocate hosts and ports", Detail: "etcd's peer port is reserved as p2p+1", Implemented: false},
 		{ID: "provision-keys", Title: "Place identities", Detail: "nodekey into the binary's instance dir, static-nodes, producer keystore", Implemented: false},
-		{ID: "launch", Title: "Init datadirs and launch", Detail: "--mine --unlock --miner.etherbase on the producer", Implemented: false},
+		{ID: "launch", Title: "Launch the producer alone", Detail: "the bootstrap only forms an etcd cluster when no other node is up", Implemented: false},
 		{ID: "wait-ipc", Title: "Wait for the producer IPC", Detail: "the two bootstrap steps run over IPC, not HTTP", Implemented: false},
 		{ID: "deploy-governance", Title: "Deploy the governance contracts", Detail: "gwemix wemix deploy-governance (two-argument form)", Implemented: false},
-		{ID: "etcd-init", Title: "Initialize the etcd cluster", Detail: "admin.etcdInit() over IPC", Implemented: false},
-		{ID: "verify-etcd", Title: "Verify the cluster formed", Detail: "admin.wemixInfo.etcd.cluster must be non-empty — the step that was missing", Implemented: false},
+		{ID: "etcd-init", Title: "Initialize the etcd cluster", Detail: "admin.etcdInit() over IPC, with the producer still alone", Implemented: false},
+		{ID: "verify-etcd", Title: "Verify the cluster formed", Detail: "admin.wemixInfo.etcd.cluster must be non-empty — the only evidence etcd-init worked", Implemented: false},
 		{ID: "health-gate", Title: "Gate on health", Detail: "poll until the head advances", Implemented: false},
 	}
 }
@@ -183,7 +183,8 @@ func wemixCase() Case {
 	return Case{
 		ID: "wemix", Title: "gwemix only",
 		Bootstrap: "governance-etcd", Support: Unsupported,
-		Note:     "no standalone orchestrator exists: setup never runs the governance-etcd bootstrap, and the only code path that does is the handoff CLI",
+		Note: "the bootstrap sequence is confirmed (see the doc), but no standalone orchestrator composes it: " +
+			"setup never runs the governance-etcd bootstrap, and the only code path that does is the handoff CLI",
 		Binaries: []string{"gwemix from go-wemix (make gwemix USE_ROCKSDB=NO)", "go-wemix wemix/scripts/genesis-template.json"},
 		Doc:      "docs/dev/chain-setup/case-1-wemix.md",
 		Steps:    governanceSteps(),
@@ -194,6 +195,7 @@ func wemixCase() Case {
 			{Name: "alloc", Where: "poa.Account[]", Effect: "initial balances; the producer must be funded and unlockable"},
 			{Name: "genesis template", Where: "--template", Effect: "must be go-wemix's own template, not chainbench's substitution template"},
 			{Name: "etcd join gap", Where: "supervisor.JoinGap(N)", Effect: "how long a join may take before it counts as failed"},
+			{Name: "bootstrap isolation", Where: "phase A of the sequence", Effect: "the producer must be the only node running while governance is deployed and etcd is initialized"},
 		},
 	}
 }
@@ -210,9 +212,9 @@ func handoffSteps() []Step {
 		{ID: "genesis-overlay", Title: "Apply the genesis overlay", Detail: "optional deep merge, e.g. useNCP and the NCP operator set", Implemented: true},
 		{ID: "launch", Title: "Init datadirs and launch both binaries", Detail: "each node inits with its own binary from identical genesis bytes", Implemented: true},
 		{ID: "wire-mesh", Title: "Wire the peer mesh", Detail: "admin_addPeer across every pair, after the HTTP servers are ready", Implemented: true},
-		{ID: "deploy-governance", Title: "Deploy the governance contracts", Detail: "on the producer, over IPC", Implemented: true},
-		{ID: "etcd-init", Title: "Initialize the etcd cluster", Detail: "admin.etcdInit() over IPC", Implemented: true},
-		{ID: "verify-etcd", Title: "Verify the cluster formed", Detail: "admin.wemixInfo.etcd.cluster must be non-empty; this is what etcd-init never checked", Implemented: true},
+		{ID: "deploy-governance", Title: "Deploy the governance contracts", Detail: "on the producer, over IPC. NOTE: must run with the producer alone; running it against a fully launched network leaves the etcd cluster empty", Implemented: true},
+		{ID: "etcd-init", Title: "Initialize the etcd cluster", Detail: "admin.etcdInit() over IPC. Its return value is null even on success, so it proves nothing by itself", Implemented: true},
+		{ID: "verify-etcd", Title: "Verify the cluster formed", Detail: "admin.wemixInfo.etcd.cluster must be non-empty; this is the only evidence etcd-init worked", Implemented: true},
 		{ID: "await-fork", Title: "Wait for the handoff", Detail: "head passes the fork and a successor validator seals the first post-fork block", Implemented: true},
 	}
 }
@@ -221,7 +223,9 @@ func handoffCase() Case {
 	return Case{
 		ID: "wemix-wbft", Title: "gwemix -> gwbft hardfork handoff",
 		Bootstrap: "governance-etcd", Support: Partial,
-		Note:     "launch, governance deploy and mesh succeed; the etcd cluster does not form, so the producer stalls before the fork",
+		Note: "the procedure is verified end to end by hand (block 100 handed over), but this automation still runs the old " +
+			"single-phase order and therefore fails: the bootstrap has to happen with the producer alone, the successor " +
+			"validators need their keystore and --unlock, and the mesh has to be re-wired after the final restart",
 		Binaries: []string{"gwemix from go-wemix (producer)", "gwemix from go-wbft (validators)", "go-wemix wemix/scripts/genesis-template.json"},
 		Doc:      "docs/dev/chain-setup/case-2-wemix-to-wbft.md",
 		Steps:    handoffSteps(),
@@ -236,6 +240,8 @@ func handoffCase() Case {
 			{Name: "validator set", Where: "profile validators.{addresses,bls_public_keys,extra_data}", Effect: "the successor's post-fork validators"},
 			{Name: "genesis overlay", Where: "--genesis-overlay", Effect: "useNCP, targetValidators, stabilizingStakersThreshold, govNCP ncps"},
 			{Name: "ports", Where: "profile ports.*", Effect: "p2p and rpc bases and steps"},
+			{Name: "validator identity", Where: "keystore in the datadir + --unlock/--miner.etherbase", Effect: "without it the successors cannot seal, and the chain stops at the fork block"},
+			{Name: "mesh timing", Where: "after the final launch", Effect: "validators that cannot reach each other never reach quorum"},
 		},
 	}
 }

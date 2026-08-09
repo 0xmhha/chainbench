@@ -6,8 +6,8 @@
 
 | 케이스 | 문서 | 현재 상태 |
 |---|---|---|
-| gwemix 단독 | [case-1-wemix.md](case-1-wemix.md) | ❌ **미지원** — 프레임워크에 standalone 부트스트랩 경로 없음 |
-| gwemix → gwbft 하드포크 핸드오프 | [case-2-wemix-to-wbft.md](case-2-wemix-to-wbft.md) | ⚠️ **부분** — 기동·거버넌스 배포까지 성공, **etcd 클러스터 형성 실패**로 포크 미도달 |
+| gwemix 단독 | [case-1-wemix.md](case-1-wemix.md) | ⚠️ **절차 확정, 자동화 미구현** — 수동 절차는 §1b 로 확립 |
+| gwemix → gwbft 하드포크 핸드오프 | [case-2-wemix-to-wbft.md](case-2-wemix-to-wbft.md) | ✅ **수동 절차 검증 완료** (블록 100 인계 확인) / 자동화는 미구현 |
 | gwbft 단독 | [case-3-wbft.md](case-3-wbft.md) | ✅ **동작 확인** (라이브) |
 | gstable 단독 | [case-4-stablenet.md](case-4-stablenet.md) | ✅ **동작 확인** (라이브·CI 게이트) |
 
@@ -36,16 +36,66 @@
 | 12 | **teardown** | SIGTERM→SIGKILL→고아 검증, datadir 삭제는 **별개 연산** | `core/procman` |
 
 ```
-bootstrap.type = "static"            bootstrap.type = "governance-etcd"
-  (wbft, stablenet)                    (wemix)
-  1..10 그대로                          1..9 → wait-ipc → deploy-governance
-                                        → etcd-init → verify-etcd → 10
+bootstrap.type = "static"          bootstrap.type = "governance-etcd"
+  (wbft, stablenet)                  (wemix)
+  1..10 을 그대로 한 번               §1b 의 2-페이즈 순서 (전혀 다르다)
 ```
 
 **핵심 비대칭:** `static` 체인은 **genesis에 검증자셋이 이미 들어 있어** 기동 즉시 합의가 성립한다.
-`governance-etcd` 체인은 **genesis에는 검증자가 없고**, 기동 후 거버넌스 컨트랙트를 배포하고
-etcd 클러스터를 형성해야 비로소 블록을 만든다. 그래서 11번이 실패하면 체인은 "떠 있지만 멈춘"
-상태가 된다 — 케이스 1·2의 현재 상태가 정확히 이것이다.
+`governance-etcd` 체인은 **genesis에 검증자가 없고**, 기동 후 거버넌스 컨트랙트를 배포하고
+etcd 클러스터를 형성해야 비로소 블록을 만든다. 실패하면 체인은 "떠 있지만 멈춘" 상태가 된다.
+
+---
+
+## 1b. governance-etcd 부트스트랩 — 2-페이즈 순서 (실증 확인)
+
+> 근거: 참조 구현 `stablenet/packages/chainbench/tests/wemix4/envs/default/bootstrap.sh`
+> + 2026-08-09 실 바이너리 재현. **순서를 지키지 않으면 etcd 클러스터가 형성되지 않는다.**
+
+```
+── 페이즈 A: 부트스트랩 (프로듀서 단독) ────────────────────────────
+ A1  genesis 준비 + 전 노드 datadir init
+ A2  프로듀서 1대만 기동            ← 다른 노드는 절대 띄우지 않는다
+ A3  deploy-governance  (IPC)
+ A4  admin.etcdInit()   (IPC)
+ A5  verify-etcd: admin.wemixInfo.etcd.cluster 가 비어 있지 않은지 확인
+ A6  프로듀서 종료
+── 페이즈 B: 운영 (전체) ──────────────────────────────────────────
+ B1  전 노드 기동 (프로듀서 + 후계 검증자)
+ B2  풀메시 연결 (admin_addPeer)     ← 재기동 뒤이므로 다시 해야 한다
+ B3  안정화 대기(~30s) 후 블록 전진 확인
+```
+
+**A2가 핵심이다.** 전체 네트워크가 뜬 상태에서 `etcdInit` 을 호출하면 클러스터가 만들어지지 않는다.
+피어가 보이면 노드가 *bootstrap* 이 아니라 *join* 경로로 들어가는 것으로 보이며, 로그의
+`etcd join failed: not found` 와 일치한다. 단독 상태에서는 즉시 형성된다:
+
+```jsonc
+// A5 에서 관측 (단독)                          // 전체 기동 상태에서 관측
+{"cluster":"producer=https://127.0.0.1:30011",  {"cluster":"", "members":null}
+ "leader":{"name":"producer"},
+ "members":[{"name":"producer", ...}]}
+miners: "producer/up/*"   ← 리더 표식 '*'        miners: "producer/up"
+```
+
+**`admin.etcdInit()` 의 반환값은 판정 근거가 아니다** — 성공해도 `null` 을 반환한다.
+반드시 A5 로 클러스터 상태를 확인해야 한다.
+
+### 후계 검증자에 필요한 것 (페이즈 B)
+
+BFT 검증자는 **자기 서명키가 열려 있어야** 봉인할 수 있다. static 경로(`engine.armSpecs`)는
+검증자마다 아래를 하지만, 핸드오프 경로는 **프로듀서에만** 해서 포크 후 인계가 실패했다.
+
+- datadir 에 **keystore 배치**
+- `--unlock <addr>` · `--password <file>` · `--miner.etherbase <addr>`
+
+이게 없으면 WBFT 는 라운드만 돌고(`Commit new sealing work number=<fork>` 반복) 진행하지 못한다.
+
+### 메시는 최종 기동 뒤에 (페이즈 B2)
+
+A6 에서 프로듀서를 껐다가 B1 에서 다시 켜므로, **B1 뒤에 메시를 다시 연결**해야 한다.
+빠뜨리면 검증자들이 프로듀서하고만 연결되어(`peers=1`) 서로의 합의 메시지를 못 받고,
+ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 
 ---
 
@@ -170,6 +220,15 @@ chainbench chain status --data-dir /tmp/x   # 살아있는 네트워크 상태(�
 chainbench chain down   --data-dir /tmp/x   # 종료(고아 0 검증)
 ```
 
+**케이스별 실행 진입점** — 어디까지 자동화됐는지가 다르다:
+
+| 케이스 | 진입점 | 비고 |
+|---|---|---|
+| stablenet | `chain up --case stablenet --binary <gstable>` | 전 단계 자동 |
+| wbft | `chain up --case wbft --binary <go-wbft/build/bin/gwemix>` | 전 단계 자동. **`--binary` 절대경로 필수**(이름이 `gwemix`) |
+| wemix-wbft | `scripts/chain-setup/handoff-wemix-wbft.sh <data-dir>` | `chain up` 은 아직 옛 순서라 실패. 스크립트가 2-페이즈 순서를 수행 |
+| wemix | 없음 — [case-1 §5](case-1-wemix.md) 의 수동 절차 | 오케스트레이터 미구현 |
+
 `chain up` 은 **단계마다 PASS/FAIL 과 소요시간을 출력**하고, 실패하면 거기서 멈춘다.
 어느 단계가 깨졌는지가 곧 답이 되도록 만든 것이 이 명령의 목적이다.
 
@@ -195,13 +254,17 @@ FAIL 과 TODO 를 나누는 이유는 후속 작업이 서로 다르기 때문�
 
 문서화 과정에서 실측으로 드러난 것.
 
-| # | 결함 | 영향 | 근거 |
+| # | 결함 | 영향 | 조치 |
 |---|---|---|---|
-| 1 | **`setup` 이 `governance-etcd` 부트스트랩을 실행하지 않는다** | 케이스 1(wemix 단독) 불가 | 매니페스트가 타입만 선언하고 `setup.Launch` 에 분기 없음 |
-| 2 | **`admin.etcdInit()` 가 `null` 반환, etcd 클러스터 미형성** | 케이스 2 포크 미도달(블록 10에서 정지) | `admin.wemixInfo.etcd = {"cluster":"","members":null}`, 로그에 `cannot fetch cluster info` 30회 |
-| 3 | **`upgrade run` 이 부트스트랩 성공을 검증하지 않는다** | 실패해도 "governance deployed, etcd initialized" 출력 | `poa.EtcdInit` 은 종료코드만 보고 결과를 안 봄. **`chain up` 에는 verify-etcd 를 넣어 해소** — `upgrade run` 은 아직 그대로 |
-| 4 | **`admin.etcdIsReady` 가 이 go-wemix 빌드에 없다** | 설계 §3.3 의 리더게이트 프로브 이름이 틀림 | `TypeError: Object has no member 'etcdIsReady'` |
-| 5 | `upgrade run` 에 재시도 없음 | e2e 헬퍼(`runGovHandoff`)에만 있음 | CLI 는 1회 시도 후 종료 |
+| 1 | **부트스트랩을 전체 기동 상태에서 실행한다** | etcd 클러스터 미형성 → 체인 정지 | §1b 의 2-페이즈 순서로 재구성 필요 (**미구현**) |
+| 2 | **후계 검증자에 keystore·`--unlock`·`--miner.etherbase` 가 없다** | 포크 후 인계 실패(라운드만 돎) | static 경로와 동일하게 배치 필요 (**미구현**) |
+| 3 | **재기동 후 메시 재연결이 없다** | 검증자끼리 미연결 → 쿼럼 불가 | 페이즈 B1 뒤로 이동 필요 (**미구현**) |
+| 4 | **`setup` 이 `governance-etcd` 부트스트랩을 실행하지 않는다** | 케이스 1 자동화 불가 | 매니페스트가 타입만 선언, `setup.Launch` 에 분기 없음 (**미구현**) |
+| 5 | `upgrade run` 이 부트스트랩 성공을 검증하지 않는다 | 실패해도 "etcd initialized" 출력 | `chain up` 의 **verify-etcd 로 해소**. `upgrade run` 은 그대로 |
+| 6 | `admin.etcdIsReady` 가 이 go-wemix 빌드에 없다 | 설계 §3.3 의 리더게이트 프로브 이름이 틀림 | `admin.wemixInfo.etcd.cluster` 로 대체 확정 |
+| 7 | golden 프로파일 `fork_block: 20` 이 너무 이르다 | 프로듀서가 포크에서 멈춰 거버넌스 배포 영수증도 못 받음 | 참조값 **100** 으로 (**미구현**) |
+| 8 | `upgrade run` 에 재시도 없음 | e2e 헬퍼에만 있음 | (**미구현**) |
 
-1·3·5 는 chainbench 쪽 갭이고, 2·4 는 **go-wemix 바이너리와의 계약 불일치**다.
-`chain` CLI 는 이 다섯을 각각 별도 단계로 노출해 어느 쪽 문제인지 가른다.
+1·2·3·7 이 케이스 2를 막던 실제 원인이고, 넷 다 chainbench 쪽 문제다.
+6 만 go-wemix 와의 계약 차이이며, 2·3 은 static 경로가 이미 올바르게 하는 것을 핸드오프 경로가
+빠뜨린 것이다.
