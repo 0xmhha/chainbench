@@ -4,30 +4,46 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // newValidateCmd parses DSL specs offline and reports which are well-formed,
 // without launching anything — fast feedback while authoring or porting specs.
+// With --chain it also reports whether each spec would run on that chain.
 func newValidateCmd() *cobra.Command {
+	var chain string
 	cmd := &cobra.Command{
 		Use:   "validate [spec.json ...]",
 		Short: "Parse and validate DSL test specs without running them",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return validateSpecs(cmd.OutOrStdout(), args)
+			return validateSpecs(cmd.OutOrStdout(), args, chain)
 		},
 	}
+	cmd.Flags().StringVar(&chain, "chain", "", "also report whether each spec applies to this chain")
 	return cmd
 }
 
-// validateSpecs parses each spec file and prints a per-file result table. It
-// returns exit code 1 when any spec is unreadable or invalid.
-func validateSpecs(out io.Writer, paths []string) error {
+// validateSpecs parses each spec file and prints a per-file result table. When
+// chain is set, a valid spec's result also reflects applicability and required
+// capabilities against that chain. It returns exit code 1 when any spec is
+// unreadable or invalid (applicability/capability outcomes are informational).
+func validateSpecs(out io.Writer, paths []string, chain string) error {
+	var caps []string
+	if chain != "" {
+		plugin, err := registry.Get(chain)
+		if err != nil {
+			return fmt.Errorf("validate: --chain: %w", err)
+		}
+		caps = plugin.Manifest().Capabilities
+	}
+
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "SPEC\tID\tRESULT")
 	invalid := 0
@@ -44,7 +60,7 @@ func validateSpecs(out io.Writer, paths []string) error {
 			invalid++
 			continue
 		}
-		fmt.Fprintf(w, "%s\t%s\tOK\n", p, s.ID)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", p, s.ID, specResult(s, chain, caps))
 	}
 	if err := w.Flush(); err != nil {
 		return err
@@ -53,4 +69,49 @@ func validateSpecs(out io.Writer, paths []string) error {
 		return &exitError{code: 1, err: fmt.Errorf("validate: %d invalid spec(s)", invalid)}
 	}
 	return nil
+}
+
+// specResult describes a parsed spec's status against an optional target chain:
+// plain OK without a chain, else OK / SKIP (not applicable) / SKIP (needs caps).
+func specResult(s testspec.Spec, chain string, caps []string) string {
+	if chain == "" {
+		return "OK"
+	}
+	if !chainApplies(s.ApplicableChains, chain) {
+		return "SKIP (chain not applicable)"
+	}
+	if missing := missingCaps(s.Requires, caps); len(missing) > 0 {
+		return "SKIP (needs caps: " + strings.Join(missing, ",") + ")"
+	}
+	return "OK"
+}
+
+// chainApplies reports whether a spec's applicableChains (comma/space separated,
+// empty = all) includes chain.
+func chainApplies(applicableChains, chain string) bool {
+	list := strings.FieldsFunc(applicableChains, func(r rune) bool { return r == ',' || r == ' ' })
+	if len(list) == 0 {
+		return true
+	}
+	for _, c := range list {
+		if c == chain {
+			return true
+		}
+	}
+	return false
+}
+
+// missingCaps returns the required capabilities not present in have.
+func missingCaps(required, have []string) []string {
+	set := make(map[string]bool, len(have))
+	for _, c := range have {
+		set[c] = true
+	}
+	var missing []string
+	for _, r := range required {
+		if !set[r] {
+			missing = append(missing, r)
+		}
+	}
+	return missing
 }

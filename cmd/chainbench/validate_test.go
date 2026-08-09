@@ -43,3 +43,54 @@ func TestValidateCmd_MissingFile(t *testing.T) {
 		t.Fatalf("missing file should exit 1, got %d", exitCode(err))
 	}
 }
+
+func TestValidateCmd_ChainApplicability(t *testing.T) {
+	base := map[string]any{
+		"schemaVersion": "1",
+		"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions":    []map[string]any{{"assert": "chainId", "expected": 1337}},
+	}
+	spec := func(extra map[string]any) string {
+		m := map[string]any{}
+		for k, v := range base {
+			m[k] = v
+		}
+		for k, v := range extra {
+			m[k] = v
+		}
+		return writeSpec(t, m)
+	}
+
+	// requires a capability stablenet has -> OK.
+	okPath := spec(map[string]any{"id": "needs-rpc", "requires": []string{"rpc"}})
+	if out, err := run(t, "validate", "--chain", "stablenet", okPath); err != nil || !strings.Contains(out, "OK") {
+		t.Fatalf("expected OK for satisfied caps:\n%s (err=%v)", out, err)
+	}
+
+	// requires a capability stablenet lacks -> SKIP (needs caps), still exit 0.
+	needsPath := spec(map[string]any{"id": "needs-archive", "requires": []string{"archive"}})
+	out, err := run(t, "validate", "--chain", "stablenet", needsPath)
+	if err != nil {
+		t.Fatalf("unsatisfied caps must not fail validate: %v", err)
+	}
+	if !strings.Contains(out, "needs caps: archive") {
+		t.Fatalf("expected needs-caps note:\n%s", out)
+	}
+
+	// applicableChains excludes stablenet -> SKIP (not applicable).
+	otherPath := spec(map[string]any{"id": "wbft-only", "applicableChains": "wbft"})
+	if out, err := run(t, "validate", "--chain", "stablenet", otherPath); err != nil || !strings.Contains(out, "not applicable") {
+		t.Fatalf("expected not-applicable note:\n%s (err=%v)", out, err)
+	}
+}
+
+func TestValidateCmd_UnknownChain(t *testing.T) {
+	p := writeSpec(t, map[string]any{
+		"schemaVersion": "1", "id": "x",
+		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions": []map[string]any{{"assert": "chainId", "expected": 1}},
+	})
+	if _, err := run(t, "validate", "--chain", "nope", p); err == nil {
+		t.Fatal("unknown --chain must error")
+	}
+}
