@@ -182,23 +182,47 @@ func (c *Client) Coinbase(ctx context.Context) (string, error) {
 	return s, nil
 }
 
-// HeadBlock returns the latest block's number, hash, and miner (producer) via
-// eth_getBlockByNumber("latest", false). An empty result yields zero values.
-func (c *Client) HeadBlock(ctx context.Context) (number uint64, hash, miner string, err error) {
+// Block is the subset of an Ethereum block chainbench reads.
+type Block struct {
+	Number    uint64
+	Hash      string
+	Miner     string
+	Timestamp uint64
+}
+
+// BlockByNumber fetches a block by tag ("latest", "earliest", or a 0x-hex number
+// like "0x0") via eth_getBlockByNumber(tag, false). An empty result yields a
+// zero Block.
+func (c *Client) BlockByNumber(ctx context.Context, tag string) (Block, error) {
 	var b struct {
-		Number string `json:"number"`
-		Hash   string `json:"hash"`
-		Miner  string `json:"miner"`
+		Number    string `json:"number"`
+		Hash      string `json:"hash"`
+		Miner     string `json:"miner"`
+		Timestamp string `json:"timestamp"`
 	}
-	if err = c.Call(ctx, "eth_getBlockByNumber", &b, "latest", false); err != nil {
-		return 0, "", "", err
+	if err := c.Call(ctx, "eth_getBlockByNumber", &b, tag, false); err != nil {
+		return Block{}, err
 	}
+	blk := Block{Hash: b.Hash, Miner: b.Miner}
+	var err error
 	if b.Number != "" {
-		if number, err = parseHexUint(b.Number); err != nil {
-			return 0, "", "", fmt.Errorf("rpc: head block number: %w", err)
+		if blk.Number, err = parseHexUint(b.Number); err != nil {
+			return Block{}, fmt.Errorf("rpc: block number: %w", err)
 		}
 	}
-	return number, b.Hash, b.Miner, nil
+	if b.Timestamp != "" {
+		if blk.Timestamp, err = parseHexUint(b.Timestamp); err != nil {
+			return Block{}, fmt.Errorf("rpc: block timestamp: %w", err)
+		}
+	}
+	return blk, nil
+}
+
+// HeadBlock returns the latest block's number, hash, and miner (producer). It is
+// a convenience wrapper over BlockByNumber("latest").
+func (c *Client) HeadBlock(ctx context.Context) (number uint64, hash, miner string, err error) {
+	b, err := c.BlockByNumber(ctx, "latest")
+	return b.Number, b.Hash, b.Miner, err
 }
 
 // SendTxArgs are the fields of an eth_sendTransaction call (node-side signing).

@@ -6,7 +6,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -353,4 +355,73 @@ func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
 	if !strings.Contains(r.Source, "node2") {
 		t.Fatalf("failure should name the failing node, got Source=%q", r.Source)
 	}
+}
+
+func TestBlockAdvanceAssertion(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertBlockAdvance)
+
+	t.Run("advances", func(t *testing.T) {
+		var mu sync.Mutex
+		var n int
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req struct {
+				ID int `json:"id"`
+			}
+			body, _ := io.ReadAll(r.Body)
+			_ = json.Unmarshal(body, &req)
+			mu.Lock()
+			n++ // 1,2,3,... so the head keeps advancing
+			cur := n
+			mu.Unlock()
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x" + strconv.FormatInt(int64(cur), 16)})
+		}))
+		defer srv.Close()
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
+			Spec: map[string]any{"assert": assertBlockAdvance, "pollInterval": "5ms", "timeout": "2s"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("expected advance pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+		}
+	})
+
+	t.Run("stalled fails", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x5"}) // never changes
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
+			Spec: map[string]any{"assert": assertBlockAdvance, "pollInterval": "5ms", "timeout": "40ms"}})
+		if err != nil {
+			t.Fatalf("stalled should not error: %v", err)
+		}
+		if r.Pass {
+			t.Fatal("a stalled head must fail blockAdvance")
+		}
+	})
+}
+
+func TestSameBlockHashAssertion(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertSameBlockHash)
+	mk := func(hash string) *httptest.Server {
+		return mockRPC(t, map[string]any{"eth_getBlockByNumber": map[string]any{"number": "0x0", "hash": hash}})
+	}
+
+	t.Run("agree", func(t *testing.T) {
+		a, b := mk("0xsame"), mk("0xsame")
+		on := []node.Node{{Index: 1, RPCURL: a.URL}, {Index: 2, RPCURL: b.URL}}
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
+		if err != nil || !r.Pass {
+			t.Fatalf("agreeing nodes should pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
+		}
+	})
+
+	t.Run("fork", func(t *testing.T) {
+		a, b := mk("0xaaaa"), mk("0xbbbb")
+		on := []node.Node{{Index: 1, RPCURL: a.URL}, {Index: 2, RPCURL: b.URL}}
+		r, err := as.Check(context.Background(), &AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
+		if err != nil {
+			t.Fatalf("fork check should not error: %v", err)
+		}
+		if r.Pass {
+			t.Fatalf("divergent hashes must fail: %+v", r)
+		}
+	})
 }

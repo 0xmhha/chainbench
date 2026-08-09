@@ -21,14 +21,16 @@ const (
 	actionSendTx    = "sendTx"
 	actionWaitBlock = "waitBlock"
 
-	assertChainID     = "chainId"
-	assertBlockNumber = "blockNumber"
-	assertPeerCount   = "peerCount"
-	assertBalanceAt   = "balanceAt"
-	assertCodeAt      = "codeAt"
-	assertNonceAt     = "nonceAt"
-	assertCall        = "call"
-	assertTxStatus    = "txStatus"
+	assertChainID       = "chainId"
+	assertBlockNumber   = "blockNumber"
+	assertPeerCount     = "peerCount"
+	assertBalanceAt     = "balanceAt"
+	assertCodeAt        = "codeAt"
+	assertNonceAt       = "nonceAt"
+	assertCall          = "call"
+	assertTxStatus      = "txStatus"
+	assertBlockAdvance  = "blockAdvance"
+	assertSameBlockHash = "sameBlockHash"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -43,13 +45,119 @@ const (
 	defaultWaitBlockPoll    = 500 * time.Millisecond
 )
 
+// Defaults for the blockAdvance assertion poll loop, overridable per spec.
+const (
+	defaultBlockAdvanceTimeout = 30 * time.Second
+	defaultBlockAdvancePoll    = 500 * time.Millisecond
+)
+
 // seedBuiltins registers the built-in tx action and RPC-reading assertions on r.
 // It is called by NewRegistry(true).
 func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
+	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
+	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
+	}
+}
+
+// sameBlockHashAssertion passes when every target node reports the same hash for
+// a block — a cross-node no-fork / same-chain check. Spec: block (tag, default
+// "latest"; use "0x0" for genesis agreement), onEach. Non-answering nodes are
+// skipped; it fails if no node answers.
+type sameBlockHashAssertion struct{}
+
+func (sameBlockHashAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertSameBlockHash, Provenance: ac.Spec}
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("testspec: sameBlockHash: no target node RPC URL")
+		res.Actual = err.Error()
+		return res, err
+	}
+	tag, _ := ac.Spec["block"].(string)
+	if tag == "" {
+		tag = "latest"
+	}
+	res.Expected = "all nodes agree on block " + tag + " hash"
+
+	var hashes []string
+	perNode := make(map[string]any, len(targets))
+	for _, tgt := range targets {
+		c, err := clientFor(ac.Deps, tgt.url)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		b, err := c.BlockByNumber(ctx, tag)
+		if err != nil {
+			res.Actual = err.Error()
+			return res, err
+		}
+		if b.Hash == "" {
+			continue // node has not produced this block yet
+		}
+		hashes = append(hashes, b.Hash)
+		perNode[tgt.name] = b.Hash
+	}
+	res.Actual = perNode
+	if len(hashes) == 0 {
+		res.Pass, res.Source = false, "no node returned block "+tag
+		return res, nil
+	}
+	pass, detail := assert.HashesEqual(hashes)
+	res.Pass = pass
+	if !pass {
+		res.Source = detail
+	}
+	return res, nil
+}
+
+// blockAdvanceAssertion passes when the target node's head advances within the
+// poll window — proof the network is producing blocks. Spec: timeout,
+// pollInterval, on. It reads the head once, then polls until a higher head or
+// the timeout.
+type blockAdvanceAssertion struct{}
+
+func (blockAdvanceAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertBlockAdvance, Provenance: ac.Spec}
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("testspec: blockAdvance: no target node RPC URL")
+		res.Actual = err.Error()
+		return res, err
+	}
+	c, err := clientFor(ac.Deps, targets[0].url)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	start, err := c.BlockNumber(ctx)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	res.Expected = "head > " + strconv.FormatUint(start, 10)
+
+	timeout := durationArg(ac.Spec, "timeout", defaultBlockAdvanceTimeout)
+	pctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	t := time.NewTicker(durationArg(ac.Spec, "pollInterval", defaultBlockAdvancePoll))
+	defer t.Stop()
+	for {
+		if cur, err := c.BlockNumber(pctx); err == nil && cur > start {
+			res.Pass, res.Actual = true, cur
+			return res, nil
+		}
+		select {
+		case <-pctx.Done():
+			res.Pass, res.Actual = false, start
+			res.Source = "head did not advance within " + timeout.String()
+			return res, nil
+		case <-t.C:
+		}
 	}
 }
 
