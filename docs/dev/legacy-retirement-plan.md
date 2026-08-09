@@ -59,10 +59,10 @@
 
 | 레거시 케이스 | 필요한 빌트인 | 상태 |
 |---|---|---|
-| `network` peers-connected | `peerCount` + onEach | ☑ (onEach 수정) |
-| `network` block-progression | 헤드 전진(연속 두 블록 number↑·timestamp↓ 없음) 어세션 | ☐ 신규 필요(부분: `blockNumber>=1` 만 가능) |
-| `network` genesis-hash-agreement | **노드 간 동일값(no-fork) 어세션**(각 노드 block0 hash 일치) | ☐ 신규 필요(collector fork 검출은 있으나 DSL 어세션 미노출) |
+| `network` peers-connected | `peerCount` + onEach | ☑ (onEach 수정, `network-peers.json`) |
+| `network` block-progression | 헤드 전진 어세션 | ☑ `blockAdvance`(폴링 head 전진, `network-health.json`) |
+| `network` genesis-hash-agreement | 노드 간 동일값(no-fork) 어세션 | ☑ `sameBlockHash`(block:"0x0" onEach, `assert.HashesEqual`, `network-health.json`) |
 
-> 이 갭들은 후속 slice 에서 빌트인으로 추가(각각 CI mock RPC 검증 가능) → 나머지 network/anzeon 케이스 이관 진행.
+> `tests/network` 3케이스 전부 DSL 로 표현·포팅 완료(CI validate). 다음: `tests/anzeon` 등 체인 특화 케이스 이관 시 필요한 빌트인 식별·추가.
 
 > 원칙: **소비자 이관 전에는 레거시 제거 금지**(회귀 위험). 각 단계는 비-e2e 통과 + 대표 라이브 확인을 게이트로.
