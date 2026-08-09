@@ -184,3 +184,30 @@ func TestRunCmd_ExitCodes(t *testing.T) {
 		t.Fatalf("blocked exit = %d, want 2 (err=%v)", exitCode(err), err)
 	}
 }
+
+func TestRunCmd_JSONOutput(t *testing.T) {
+	srv := mockRPCNode(t, map[string]any{"eth_chainId": "0x539", "eth_blockNumber": "0x10"})
+	spec := writeSpec(t, map[string]any{
+		"schemaVersion": "1", "id": "json-smoke",
+		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions": []map[string]any{{"assert": "chainId", "expected": 1337}},
+	})
+	out, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), "--json", spec)
+	if err != nil {
+		t.Fatalf("run --json: %v\n%s", err, out)
+	}
+	var rep struct {
+		Session string `json:"session"`
+		Tests   []struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"tests"`
+		Summary struct{ Pass int } `json:"summary"`
+	}
+	if err := json.Unmarshal([]byte(out), &rep); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
+	}
+	if rep.Summary.Pass != 1 || len(rep.Tests) != 1 || rep.Tests[0].ID != "json-smoke" || rep.Session == "" {
+		t.Fatalf("unexpected JSON report: %+v", rep)
+	}
+}
