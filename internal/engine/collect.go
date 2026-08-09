@@ -99,6 +99,11 @@ func withCollection(build BuildEnvFunc, bus *obs.Bus, dial func(string) *rpc.Cli
 		if err != nil {
 			return ns, td, err
 		}
+		// Populate the node table before starting collection so the collector
+		// samples the built nodes; engine.Run re-populates it (idempotently)
+		// after BuildEnv returns. Without this the collector could sample an
+		// empty table and report no chainstate.
+		env.PopulateNodeTable(ns)
 		stop := startCollection(ctx, env, bus, probe, chainstateInterval)
 		return ns, func(c context.Context) error {
 			cerr := stop()
