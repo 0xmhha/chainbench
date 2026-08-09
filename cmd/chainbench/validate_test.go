@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -167,5 +168,55 @@ func TestValidateCmd_JSONOutput(t *testing.T) {
 	}
 	if results[1].OK || !strings.Contains(results[1].Result, "INVALID") {
 		t.Fatalf("second result should be invalid: %+v", results[1])
+	}
+}
+
+// TestValidateCmd_PortedSpecs guards the specs ported from the legacy Go-func
+// suites: every one must parse and resolve. A ported case that only fails once
+// a network is up would defeat the point of porting it.
+func TestValidateCmd_PortedSpecs(t *testing.T) {
+	paths, err := filepath.Glob("../../tests/specs/*/*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) == 0 {
+		t.Fatal("no ported specs found under tests/specs")
+	}
+	out, err := run(t, append([]string{"validate"}, paths...)...)
+	if err != nil {
+		t.Fatalf("ported specs failed validation: %v\n%s", err, out)
+	}
+	if strings.Contains(out, "INVALID") || strings.Contains(out, "UNRESOLVED") {
+		t.Fatalf("ported specs must parse and resolve:\n%s", out)
+	}
+}
+
+// TestPortedSpecs_IDsAreUnique keeps a ported id from colliding with another,
+// since the session records a test by id and a duplicate would overwrite it.
+func TestPortedSpecs_IDsAreUnique(t *testing.T) {
+	paths, err := filepath.Glob("../../tests/specs/*/*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]string{}
+	for _, p := range paths {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var spec struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(b, &spec); err != nil {
+			t.Fatalf("%s: %v", p, err)
+		}
+		if spec.ID == "" {
+			t.Errorf("%s has no id", p)
+			continue
+		}
+		if prev, dup := seen[spec.ID]; dup {
+			t.Errorf("duplicate spec id %q in %s and %s", spec.ID, prev, p)
+		}
+		seen[spec.ID] = p
 	}
 }

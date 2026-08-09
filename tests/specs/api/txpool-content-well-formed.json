@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "id": "txpool-content-well-formed",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "rpcCall", "method": "txpool_content", "select": "pending", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "txpool_content", "select": "queued", "compare": "NotNil", "expected": null }
+  ]
+}

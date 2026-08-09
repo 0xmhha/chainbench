@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1",
+  "id": "chain-not-syncing",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "rpcCall", "method": "eth_syncing", "expected": false }
+  ]
+}

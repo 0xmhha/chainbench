@@ -23,9 +23,11 @@ const (
 // in the DSL has a timeout; a subscription that never fires must fail, not hang.
 const defaultSubscribeTimeout = 30 * time.Second
 
-// seedDerivedBuiltins registers the derived-value and transport assertions.
+// seedDerivedBuiltins registers the transport assertion. rpcCall is registered
+// through builtinAssertions instead, because it reads one value like the others
+// and therefore has to work as a "read" source too — a name that works in
+// "assert" but not in "read" is a trap the spec author only meets at run time.
 func seedDerivedBuiltins(r Registry) {
-	r.RegisterAssertion(assertRPCCall, rpcCallAssertion{})
 	r.RegisterAssertion(assertWSSubscribe, wsSubscribeAssertion{})
 }
 
@@ -45,21 +47,14 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 	return strconv.FormatUint(n, 10), nil
 }
 
-// rpcCallAssertion calls any JSON-RPC method and compares a value from its
-// result. It exists so chain-specific reads — a consensus namespace's
+// readRPCCall calls any JSON-RPC method and extracts a value from its result. It
+// exists so chain-specific reads — a consensus namespace's
 // getWbftExtraInfo.gasTip, istanbul_getValidators, a wemix_ reward query — are
 // expressible in a spec without the core learning about any chain. The chain
 // vocabulary stays in the spec, where it belongs.
 //
 // Spec: method (required), params ([]any, optional), select (dot path into the
 // result; omitted, the whole result is compared).
-type rpcCallAssertion struct{}
-
-func (rpcCallAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
-	return rpcAssertion{name: assertRPCCall, defaultOp: "Equal", read: readRPCCall}.Check(ctx, ac)
-}
-
-// readRPCCall performs the call and extracts the selected path.
 func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
 	method, _ := spec["method"].(string)
 	if method == "" {

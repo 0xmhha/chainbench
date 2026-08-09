@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1",
+  "id": "logs-query-well-formed",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "logs", "fromBlock": "latest", "toBlock": "latest", "select": "count", "compare": "GreaterOrEqual", "expected": "0" }
+  ]
+}

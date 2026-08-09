@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "wbft-extra-info-fields",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "head" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$head"], "select": "committedSeal", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$head"], "select": "preparedSeal", "compare": "NotNil", "expected": null }
+  ]
+}

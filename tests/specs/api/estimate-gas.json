@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "id": "estimate-gas",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    {
+      "assert": "estimateGas",
+      "to": "0x0000000000000000000000000000000000000001",
+      "data": "0x",
+      "compare": "GreaterOrEqual",
+      "expected": "21000"
+    }
+  ]
+}

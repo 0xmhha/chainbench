@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "id": "stablenet-gastip-field",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "head" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$head"], "select": "gasTip", "compare": "NotNil", "expected": null }
+  ]
+}

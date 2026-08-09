@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "block-by-hash-consistency",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber", "params": ["latest", false], "select": "hash", "save": "hash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber", "params": ["latest", false], "select": "number", "save": "number" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "eth_getBlockByHash", "params": ["$hash", false], "select": "hash", "expected": "$hash" },
+    { "assert": "rpcCall", "method": "eth_getBlockByHash", "params": ["$hash", false], "select": "number", "expected": "$number" }
+  ]
+}

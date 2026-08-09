@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1",
+  "id": "is-validator-flags",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "assertions": [
+    {
+      "assert": "rpcCall",
+      "onEach": ["bp1", "bp2", "bp3", "bp4"],
+      "method": "istanbul_isValidator",
+      "params": ["latest"],
+      "expected": true
+    }
+  ]
+}
