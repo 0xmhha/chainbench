@@ -201,9 +201,8 @@ func TestWaitEtcdCluster_ReportsTheStateItSaw(t *testing.T) {
 
 // fakeHandoff records the order its methods are called in.
 type fakeHandoff struct {
-	calls   []string
-	failAt  string
-	etcdOut string
+	calls  []string
+	failAt string
 }
 
 func (f *fakeHandoff) mark(name string) error {
