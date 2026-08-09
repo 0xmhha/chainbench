@@ -1,5 +1,9 @@
-# chainbench 리팩토링 진행 감사 (2026-08-09)
+# chainbench 리팩토링 진행 감사 (2026-08-09) — **시점 스냅샷 (#204 기준)**
 
+> **지위: 특정 시점의 스냅샷이며 진행 상황의 정본이 아니다.** 진행 상황·작업 상태의 **단일 정본은
+> [[chainbench-worklist]]**(`docs/dev/chainbench-worklist.md`)이며, 본 문서는 그 시점에 수행한
+> 감사 절차와 근거를 보존한다. 본문 §3·§6은 **#204 시점 기준**이고, 그 이후 변경은 **§7 후속 정정**에 기록한다.
+>
 > 목적: 문서·전 코드를 감사해 (1) 프로젝트 방향, (2) 진행 중 리팩토링과 진척도,
 > (3) 완료분의 에러 유무, (4) 미추적 갭의 작업 리스트 반영, (5) 남은 작업을 확정한다.
 > 근거: `chainbench-design.md`·`chainbench-refactoring.md`(WP1~6)·`chainbench-worklist.md`(T0~T6)
@@ -19,7 +23,7 @@
   Go-func 테스트 모델을 DSL(`testspec`) 기반으로 교체하는 WP1~6 리팩토링.
   **Phase 0~4(walking skeleton) 완료, Phase 5~6 진행 중.**
 
-권장 행동:
+권장 행동(**#204 시점** — 1·2는 이후 완료됨, §7 참조):
 1. T6.5(문서 경로 정정) 착수 — 후속 마이그레이션 작업 전 혼선 제거.
 2. 다음 크리티컬 패스: **T6.3 dashboard(엔진 obs 이벤트 emit)** + **T5.1 remote 실 SSH 라이브 e2e**
    (코드 완료, 사용자 환경 검증만 남음).
@@ -80,7 +84,7 @@
 
 ---
 
-## 6. 남은 작업 리스트 (정리)
+## 6. 남은 작업 리스트 (**#204 시점** — 이후 변경은 §7)
 
 1. **T6.3** dashboard(F15) — 엔진 obs 이벤트 emit → chainbenchd 포워딩(버스·백프레셔는 완료, 엔진 emit만 남음), 크리티컬 패스
 2. **T3.3** Collector 심화 — live tail·원격 SSH tail·bp참여·reorg 검출(현재 RPC 스냅샷·WaitLog)
@@ -89,3 +93,31 @@
 5. **T5.4** stablenet(ACL 플러그인) → **T5.5** wemix4 DSL 이관 — 미착수
 6. **T6.5** 문서 경로 정정 — 신규 추가
 7. 레거시 경로 정리(`pipeline/setup`·`testrun` 완전 대체) / repro 잔여 5건 / wemix4 full 이관 — 각 별도 트랙
+
+---
+
+## 7. 후속 정정 (스냅샷 이후 · #205~#224)
+
+본 감사 직후 같은 날 #205~#224가 병합되어 §3·§6의 상당수가 무효화됐다. 정본은 worklist이며,
+아래는 스냅샷 독자가 오판하지 않도록 남기는 델타다.
+
+| §6 항목 | #224 시점 실제 | 근거 |
+|---|---|---|
+| 1. T6.3 dashboard | **완료** — 엔진 obs emit + `run --dashboard` 포워딩 + 완료 세션 디스크 조회(F15 AC3) | #205 · #209 |
+| 2. T3.3 Collector 심화 | **거의 완료** — 로컬 live tail·bp참여·fork/reorg·엔진 배선·chainstate jsonl 영속. 원격 SSH tail만 잔여 | #206 · #207 · #208 |
+| 4. T5.2 업그레이드 멀티바이너리 | 미착수 유지 (선행: supervisor `LeaderGate`/`ForkSwaps` 실구현) | — |
+| 5. T5.4 stablenet | **완료** — 거버넌스 시나리오가 DSL 엔진에서 실행됨(CI) | #215 |
+| 5. T5.5 wemix4 이관 | **부분 착수** — `tests/network` 3케이스 전부 + `tests/anzeon` read 계열 포팅 | #218~#224 |
+| 6. T6.5 문서 경로 정정 | **완료**, 단 스코프가 2문서 6건 → **7문서 20건**으로 확대 | x-bar 정렬 검토 |
+
+### 7.1 이 스냅샷이 놓친 것 (x-bar 정렬 검토에서 추가 발견)
+
+| 갭 | 성격 | 조치 |
+|---|---|---|
+| `supervisor.Options`의 `LeaderGate`·`AlignJoinGap`·`ForkSwaps` 를 `supervisor_impl` 이 **읽지 않음**; `FailureMode` 5종 중 `RPCUnready` 만 방출 | **선언되고 방출되지 않는 논항** — F13 AC-1·2·3, F9 AC-3 미충족 | worklist **T3.2b** 신규 |
+| DSL 액션이 `sendTx`/`waitBlock` **2개뿐** — design §3.2·F11이 명시한 `stopNode`/`startNode`/`restartNode`/`partition`/`healPartition`/`faucet`/`deployContract`/`registerContract` 부재 | **보충어 어휘 갭** — F8 AC-2, F11 AC-6·7 검증 불가 | worklist **T4.2b·T4.2c** 신규 |
+| `component-architecture` §2b 실측 매트릭스의 **판정**이 낡음(place 없음·procman 미배선 등 이미 해소) | 경로가 아니라 판정 드리프트 | worklist **T6.5b** 신규 |
+
+> 본 감사는 "완료분의 무결성"(§4)에는 정확했으나, **인터페이스가 선언한 계약이 구현에서 실제로
+> 방출되는지**는 검사 범위 밖이었다. `go build/vet/test` 통과는 그 갭을 잡지 못한다 — 미사용 필드는
+> 컴파일 에러가 아니기 때문이다. 향후 감사는 **선언 ↔ 방출 대조**를 절차에 포함해야 한다.
