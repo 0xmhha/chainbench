@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/procman"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -15,6 +16,15 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
+
+// busEmit returns an event sink publishing to bus, or nil when bus is nil so the
+// engine's emission stays a no-op.
+func busEmit(bus *obs.Bus) func(obs.Event) {
+	if bus == nil {
+		return nil
+	}
+	return bus.Publish
+}
 
 // Local engine defaults.
 const (
@@ -45,6 +55,9 @@ type LocalConfig struct {
 	// Clock supplies the session start time; nil uses time.Now (injected so
 	// tests are deterministic).
 	Clock func() time.Time
+	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
+	// disables emission.
+	Bus *obs.Bus
 }
 
 // NewLocalEngine composes a runnable Engine for one local chain: it wires the
@@ -101,6 +114,8 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		BuildEnv:   build,
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, localCapabilities(plugin)),
+		Emit:       busEmit(cfg.Bus),
+		Network:    cfg.Chain,
 	}), nil
 }
 
