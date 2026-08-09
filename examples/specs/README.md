@@ -28,3 +28,4 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `tx-transfer-and-balance.json` | `sendTx` and `waitBlock` steps, then `balanceAt`/`nonceAt` assertions |
 | `negative-revert.json` | a negative tx step (`expectRevert`) — the transaction must revert (F11) |
 | `contract-read-and-tx-status.json` | a read-only contract call (`call`) and a receipt-status check (`txStatus`) |
+| `stablenet-governance-read.json` | a stablenet-only governance read: `call` with `proposals(uint256)` calldata (`internal/chains/stablenet/govbind`), asserting the ABI-encoded status word |
