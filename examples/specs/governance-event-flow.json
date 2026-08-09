@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1",
+  "id": "governance-event-flow",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    {
+      "read": {
+        "source": "blockNumber",
+        "save": "before"
+      }
+    },
+    {
+      "sendTx": {
+        "from": "0x0000000000000000000000000000000000000001",
+        "to": "0x0000000000000000000000000000000000001000",
+        "data": "0x1234abcd",
+        "gas": "300000",
+        "save": "proposal"
+      }
+    }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$proposal", "expected": "0x1" },
+    {
+      "assert": "logs",
+      "address": "0x0000000000000000000000000000000000001000",
+      "fromBlock": "$before",
+      "toBlock": "latest",
+      "select": "count",
+      "compare": "GreaterOrEqual",
+      "expected": "1"
+    },
+    {
+      "assert": "logs",
+      "address": "0x0000000000000000000000000000000000001000",
+      "fromBlock": "$before",
+      "toBlock": "latest",
+      "select": "topic0",
+      "compare": "NotEqual",
+      "expected": "0x"
+    }
+  ]
+}

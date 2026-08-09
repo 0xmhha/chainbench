@@ -196,6 +196,48 @@ func (c *Client) Coinbase(ctx context.Context) (string, error) {
 	return s, nil
 }
 
+// LogFilter is an eth_getLogs filter. Empty fields are omitted, so the zero
+// value asks for every log the node will return.
+type LogFilter struct {
+	Address   string   `json:"address,omitempty"`
+	Topics    []string `json:"-"`
+	FromBlock string   `json:"fromBlock,omitempty"`
+	ToBlock   string   `json:"toBlock,omitempty"`
+}
+
+// Logs returns the raw log objects matching filter (eth_getLogs). Decoding is
+// left to the caller: what a log's data means is contract-specific, and the
+// generic client should not pretend to know an ABI.
+func (c *Client) Logs(ctx context.Context, filter LogFilter) ([]map[string]any, error) {
+	arg := map[string]any{}
+	if filter.Address != "" {
+		arg["address"] = filter.Address
+	}
+	if len(filter.Topics) > 0 {
+		topics := make([]any, len(filter.Topics))
+		for i, t := range filter.Topics {
+			// An empty topic position is a wildcard, which JSON-RPC spells null.
+			if t == "" {
+				topics[i] = nil
+				continue
+			}
+			topics[i] = t
+		}
+		arg["topics"] = topics
+	}
+	if filter.FromBlock != "" {
+		arg["fromBlock"] = filter.FromBlock
+	}
+	if filter.ToBlock != "" {
+		arg["toBlock"] = filter.ToBlock
+	}
+	var out []map[string]any
+	if err := c.Call(ctx, "eth_getLogs", &out, arg); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Enode returns the node's own devp2p enode URL (admin_nodeInfo.enode), the
 // address other nodes use to add or drop it as a peer.
 func (c *Client) Enode(ctx context.Context) (string, error) {
