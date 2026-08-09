@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -131,5 +132,40 @@ func TestValidateCmd_UnresolvedNames(t *testing.T) {
 	}
 	if !strings.Contains(out, "UNRESOLVED") || !strings.Contains(out, "assert:Nonexistent") || !strings.Contains(out, "action:teleport") {
 		t.Fatalf("expected unresolved names in output:\n%s", out)
+	}
+}
+
+func TestValidateCmd_JSONOutput(t *testing.T) {
+	good := writeSpec(t, map[string]any{
+		"schemaVersion": "1", "id": "good",
+		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"assertions": []map[string]any{{"assert": "chainId", "expected": 1337}},
+	})
+	bad := writeSpec(t, map[string]any{
+		"schemaVersion": "1", "id": "bad",
+		"chain": map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+	}) // missing assertions
+
+	out, err := run(t, "validate", "--json", good, bad)
+	if exitCode(err) != 1 {
+		t.Fatalf("expected exit 1 with an invalid spec, got %d\n%s", exitCode(err), out)
+	}
+	var results []struct {
+		Spec   string `json:"spec"`
+		ID     string `json:"id"`
+		OK     bool   `json:"ok"`
+		Result string `json:"result"`
+	}
+	if err := json.Unmarshal([]byte(out), &results); err != nil {
+		t.Fatalf("output is not valid JSON: %v\n%s", err, out)
+	}
+	if len(results) != 2 {
+		t.Fatalf("want 2 results, got %d", len(results))
+	}
+	if !results[0].OK || results[0].ID != "good" {
+		t.Fatalf("first result should be OK good: %+v", results[0])
+	}
+	if results[1].OK || !strings.Contains(results[1].Result, "INVALID") {
+		t.Fatalf("second result should be invalid: %+v", results[1])
 	}
 }

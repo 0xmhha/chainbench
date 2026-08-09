@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -17,24 +18,38 @@ import (
 // without launching anything — fast feedback while authoring or porting specs.
 // With --chain it also reports whether each spec would run on that chain.
 func newValidateCmd() *cobra.Command {
-	var chain string
+	var (
+		chain   string
+		jsonOut bool
+	)
 	cmd := &cobra.Command{
 		Use:   "validate [spec.json ...]",
 		Short: "Parse and validate DSL test specs without running them",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return validateSpecs(cmd.OutOrStdout(), args, chain)
+			return validateSpecs(cmd.OutOrStdout(), args, chain, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "also report whether each spec applies to this chain")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit results as JSON instead of a table")
 	return cmd
 }
 
-// validateSpecs parses each spec file and prints a per-file result table. When
-// chain is set, a valid spec's result also reflects applicability and required
-// capabilities against that chain. It returns exit code 1 when any spec is
-// unreadable or invalid (applicability/capability outcomes are informational).
-func validateSpecs(out io.Writer, paths []string, chain string) error {
+// validateResult is one spec's validation outcome (the --json shape). OK is true
+// when the spec parses and all names resolve; Result carries the human detail.
+type validateResult struct {
+	Spec   string `json:"spec"`
+	ID     string `json:"id,omitempty"`
+	OK     bool   `json:"ok"`
+	Result string `json:"result"`
+}
+
+// validateSpecs parses each spec file and reports a per-file result (table, or
+// JSON with --json). When chain is set, a valid spec's result also reflects
+// applicability and required capabilities against that chain. It returns exit
+// code 1 when any spec is unreadable or invalid (applicability/capability
+// outcomes are informational and remain OK).
+func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) error {
 	var caps []string
 	if chain != "" {
 		plugin, err := registry.Get(chain)
@@ -48,36 +63,53 @@ func validateSpecs(out io.Writer, paths []string, chain string) error {
 	// are caught offline rather than at run time.
 	reg := testspec.NewRegistry(true)
 
-	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "SPEC\tID\tRESULT")
+	results := make([]validateResult, 0, len(paths))
 	invalid := 0
 	for _, p := range paths {
+		r := validateResult{Spec: p}
 		raw, err := os.ReadFile(p)
 		if err != nil {
-			fmt.Fprintf(w, "%s\t-\tERROR: %v\n", p, err)
-			invalid++
-			continue
+			r.Result = "ERROR: " + err.Error()
+		} else if s, perr := testspec.Parse(raw); perr != nil {
+			r.Result = "INVALID: " + perr.Error()
+		} else if unresolved := testspec.Unresolved(s, reg); len(unresolved) > 0 {
+			r.ID = s.ID
+			r.Result = "UNRESOLVED: " + strings.Join(unresolved, ", ")
+		} else {
+			r.ID, r.OK, r.Result = s.ID, true, specResult(s, chain, caps)
 		}
-		s, err := testspec.Parse(raw)
-		if err != nil {
-			fmt.Fprintf(w, "%s\t-\tINVALID: %v\n", p, err)
+		if !r.OK {
 			invalid++
-			continue
 		}
-		if unresolved := testspec.Unresolved(s, reg); len(unresolved) > 0 {
-			fmt.Fprintf(w, "%s\t%s\tUNRESOLVED: %s\n", p, s.ID, strings.Join(unresolved, ", "))
-			invalid++
-			continue
-		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", p, s.ID, specResult(s, chain, caps))
+		results = append(results, r)
 	}
-	if err := w.Flush(); err != nil {
+
+	if err := renderValidate(out, results, jsonOut); err != nil {
 		return err
 	}
 	if invalid > 0 {
 		return &exitError{code: 1, err: fmt.Errorf("validate: %d invalid spec(s)", invalid)}
 	}
 	return nil
+}
+
+// renderValidate writes the results as a table or, with jsonOut, as a JSON array.
+func renderValidate(out io.Writer, results []validateResult, jsonOut bool) error {
+	if jsonOut {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		return enc.Encode(results)
+	}
+	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "SPEC\tID\tRESULT")
+	for _, r := range results {
+		id := r.ID
+		if id == "" {
+			id = "-"
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\n", r.Spec, id, r.Result)
+	}
+	return w.Flush()
 }
 
 // specResult describes a parsed spec's status against an optional target chain:
