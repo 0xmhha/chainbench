@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1",
+  "id": "stablenet-nonce-ordering",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    {
+      "read": {
+        "source": "nonceAt",
+        "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "save": "n"
+      }
+    },
+    {
+      "sendTx": {
+        "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "value": "1",
+        "gas": "21000",
+        "nonce": "$n",
+        "save": "first"
+      }
+    }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$first", "expected": "0x1" },
+    {
+      "assert": "nonceAt",
+      "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "Greater",
+      "expected": "$n"
+    }
+  ]
+}

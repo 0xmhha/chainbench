@@ -44,6 +44,9 @@ chainbench run --chain stablenet --binary ./gstable examples/specs/smoke-rpc-rea
 | `stablenet-estimate-gas.json` | `estimateGas` for a native-coin `transfer` exceeds the 21000 bare-transfer floor — DSL port of the legacy `tests/anzeon` estimate-gas-token-transfer case |
 | `fault-node-restart.json` | fault injection: `stopNode` a validator, let the rest produce, `startNode` it again and wait for it to catch up — the DSL form of the legacy quorum/sync-recovery e2e cases |
 | `fault-partition-fork.json` | `partition` splits the validators into two groups that can no longer see each other, then `healPartition` restores the mesh in a post-action (F8 AC-2) |
+| `stablenet-token-invariants.json` | cross-call invariant: save `totalSupply`, then assert a `balanceOf` read is `LessOrEqual` it — a DSL port of the legacy `tests/anzeon` token-balance-readable case |
+| `stablenet-fee-boundary.json` | fee-cap policy: a transaction with an ample `maxFeePerGas` mines, one below the minimum is a declared negative — a port of the legacy fee-boundary cases |
+| `stablenet-nonce-ordering.json` | explicit `nonce`: read the account nonce, pin the transaction to it, and check the nonce advanced |
 | `stablenet-token-metadata.json` | `call` name()/symbol() returns contain the token symbol bytes (`Contains`) — DSL port of the legacy `tests/anzeon` token-metadata case |
 
 ## Step value binding

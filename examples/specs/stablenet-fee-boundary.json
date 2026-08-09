@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1",
+  "id": "stablenet-fee-boundary",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "baseFee", "save": "base" } },
+    {
+      "sendTx": {
+        "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "value": "1",
+        "gas": "21000",
+        "maxFeePerGas": "1000000000000",
+        "maxPriorityFeePerGas": "1",
+        "save": "accepted"
+      }
+    },
+    {
+      "sendTx": {
+        "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "value": "1",
+        "gas": "21000",
+        "maxFeePerGas": "1",
+        "maxPriorityFeePerGas": "1",
+        "expectRevert": true
+      }
+    }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$accepted", "expected": "0x1" },
+    { "assert": "baseFee", "compare": "GreaterOrEqual", "expected": "$base" }
+  ]
+}
