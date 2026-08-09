@@ -278,3 +278,49 @@ func TestWaitBlockAction(t *testing.T) {
 		}
 	})
 }
+
+func TestSendTxAction_RevertFailsStep(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"eth_sendTransaction":       "0xhash",
+		"eth_getTransactionReceipt": map[string]any{"status": "0x0"}, // reverted
+	})
+	d := deps()
+	env := envWithNode(t, srv.URL)
+	act, _ := d.Actions.Action(actionSendTx)
+	err := act.Do(context.Background(), &ActionCtx{
+		Env:  env,
+		Deps: &d,
+		Args: map[string]any{"from": "0xabc", "to": "0xdef", "pollInterval": "5ms"},
+	})
+	if err == nil {
+		t.Fatal("a reverted tx must fail the step by default")
+	}
+}
+
+func TestSendTxAction_ExpectRevert(t *testing.T) {
+	mk := func(status string) *httptest.Server {
+		return mockRPC(t, map[string]any{
+			"eth_sendTransaction":       "0xhash",
+			"eth_getTransactionReceipt": map[string]any{"status": status},
+		})
+	}
+	d := deps()
+	run := func(srv *httptest.Server, args map[string]any) error {
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionSendTx)
+		return act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: args})
+	}
+
+	// expectRevert + revert => step passes.
+	if err := run(mk("0x0"), map[string]any{"from": "0xa", "expectRevert": true, "pollInterval": "5ms"}); err != nil {
+		t.Fatalf("expectRevert on revert should pass: %v", err)
+	}
+	// expectRevert + success => step fails.
+	if err := run(mk("0x1"), map[string]any{"from": "0xa", "expectRevert": true, "pollInterval": "5ms"}); err == nil {
+		t.Fatal("expectRevert on success must fail the step")
+	}
+	// expect:"revert" alias.
+	if err := run(mk("0x0"), map[string]any{"from": "0xa", "expect": "revert", "pollInterval": "5ms"}); err != nil {
+		t.Fatalf("expect:revert alias should pass on revert: %v", err)
+	}
+}

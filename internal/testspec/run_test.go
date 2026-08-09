@@ -33,16 +33,20 @@ func (a fakeAssertion) Check(_ context.Context, _ *testspec.AssertCtx) (session.
 
 // fakeRecord captures TestRecord calls in memory.
 type fakeRecord struct {
-	steps   int
-	asserts []session.AssertResult
-	status  session.TestStatus
-	posts   []session.PostResult
+	steps       int
+	stepResults []session.StepResult
+	asserts     []session.AssertResult
+	status      session.TestStatus
+	posts       []session.PostResult
 }
 
-func (r *fakeRecord) Dir() string                     { return "" }
-func (r *fakeRecord) SetEnvRef(string)                {}
-func (r *fakeRecord) Spec([]byte)                     {}
-func (r *fakeRecord) Step(int, session.StepResult)    { r.steps++ }
+func (r *fakeRecord) Dir() string      { return "" }
+func (r *fakeRecord) SetEnvRef(string) {}
+func (r *fakeRecord) Spec([]byte)      {}
+func (r *fakeRecord) Step(_ int, res session.StepResult) {
+	r.steps++
+	r.stepResults = append(r.stepResults, res)
+}
 func (r *fakeRecord) Assert(a session.AssertResult)   { r.asserts = append(r.asserts, a) }
 func (r *fakeRecord) Status(s session.TestStatus)     { r.status = s }
 func (r *fakeRecord) PostAction(p session.PostResult) { r.posts = append(r.posts, p) }
@@ -135,5 +139,49 @@ func TestRun_UnknownActionFails(t *testing.T) {
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {
 		t.Fatalf("unknown action: status = %v, want fail", status)
+	}
+}
+
+// provenanceAction surfaces a tx hash and receipt for step-provenance recording.
+type provenanceAction struct{}
+
+func (provenanceAction) Do(_ context.Context, ac *testspec.ActionCtx) error {
+	ac.Hash = "0xdeadbeef"
+	ac.Receipt = map[string]any{"status": "0x1"}
+	return nil
+}
+
+func TestRun_StepRecordsProvenance(t *testing.T) {
+	reg := testspec.NewRegistry(false)
+	reg.RegisterAction("tx", provenanceAction{})
+
+	spec := testspec.Spec{Steps: []map[string]any{{"tx": map[string]any{"on": "bp1"}}}}
+	rec := &fakeRecord{}
+	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(rec.stepResults) != 1 {
+		t.Fatalf("want 1 step result, got %d", len(rec.stepResults))
+	}
+	sr := rec.stepResults[0]
+	if sr.Hash != "0xdeadbeef" || sr.On != "bp1" || sr.Receipt["status"] != "0x1" {
+		t.Fatalf("step provenance = %+v", sr)
+	}
+}
+
+func TestRun_UnknownStepActionFails(t *testing.T) {
+	reg := testspec.NewRegistry(false)
+	spec := testspec.Spec{Steps: []map[string]any{{"nope": true}}}
+	rec := &fakeRecord{}
+	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+
+	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
+	if status != session.StatusFail {
+		t.Fatalf("status = %v, want fail for unknown step action", status)
+	}
+	if len(rec.stepResults) != 1 {
+		t.Fatalf("unknown step must still be recorded, got %d", len(rec.stepResults))
 	}
 }
