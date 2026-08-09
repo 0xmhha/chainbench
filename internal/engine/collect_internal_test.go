@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -86,6 +87,15 @@ func TestStartCollection_MirrorsChainstateAndLogs(t *testing.T) {
 		t.Fatalf("stop: %v", err)
 	}
 	bus.Close()
+
+	// Chainstate samples are also persisted to the session as jsonl.
+	recs := readChainstate(t, filepath.Join(env.ChainstateDir(), chainstateFile))
+	if len(recs) == 0 {
+		t.Fatal("expected chainstate.jsonl to have samples")
+	}
+	if recs[len(recs)-1].Heights["node1"] != 7 {
+		t.Fatalf("last persisted sample = %+v, want node1 height 7", recs[len(recs)-1])
+	}
 }
 
 // TestRPCProbe_ReadsNodeState checks the RPC-backed probe maps client reads into

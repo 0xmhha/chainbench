@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"path/filepath"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -37,9 +38,10 @@ func rpcProbe(dial func(string) *rpc.Client) func(context.Context, string) (coll
 }
 
 // startCollection runs a live collector for env, mirroring each node's log lines
-// and a periodic chainstate snapshot to bus so the dashboard shows the network
-// live. It returns a stop function that ends collection after a final snapshot.
-// bus must be non-nil.
+// and a periodic chainstate snapshot to bus (for the live dashboard) and to a
+// jsonl file under the session (so a completed run can be replayed). It returns a
+// stop function that ends collection after a final snapshot. bus must be
+// non-nil; jsonl persistence is best-effort and never blocks the run.
 func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus, probe func(context.Context, string) (collector.NodeState, error), interval time.Duration) func() error {
 	col := collector.New(collector.Deps{
 		Probe:    probe,
@@ -55,6 +57,14 @@ func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus,
 	})
 	_ = col.Start(ctx, env)
 
+	sink, _ := newChainstateSink(filepath.Join(env.ChainstateDir(), chainstateFile))
+
+	record := func() {
+		snap := col.Snapshot()
+		publishChainstate(bus, snap)
+		sink.write(snap)
+	}
+
 	stop := make(chan struct{})
 	done := make(chan struct{})
 	go func() {
@@ -68,7 +78,7 @@ func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus,
 			case <-stop:
 				return
 			case <-t.C:
-				publishChainstate(bus, col.Snapshot())
+				record()
 			}
 		}
 	}()
@@ -77,9 +87,10 @@ func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus,
 		close(stop)
 		<-done
 		// Stop the sampler first so at least one sample has completed, then emit
-		// a final snapshot that reflects it.
+		// and persist a final snapshot that reflects it.
 		err := col.Stop()
-		publishChainstate(bus, col.Snapshot())
+		record()
+		_ = sink.close()
 		return err
 	}
 }
@@ -99,6 +110,10 @@ func withCollection(build BuildEnvFunc, bus *obs.Bus, dial func(string) *rpc.Cli
 		if err != nil {
 			return ns, td, err
 		}
+		// Populate the node table before starting collection so the collector
+		// samples the built nodes; engine.Run re-populates it (idempotently)
+		// after BuildEnv returns.
+		env.PopulateNodeTable(ns)
 		stop := startCollection(ctx, env, bus, probe, chainstateInterval)
 		return ns, func(c context.Context) error {
 			cerr := stop()
