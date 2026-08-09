@@ -31,6 +31,7 @@ const (
 	assertTxStatus      = "txStatus"
 	assertBlockAdvance  = "blockAdvance"
 	assertSameBlockHash = "sameBlockHash"
+	assertBaseFee       = "baseFee"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -204,7 +205,21 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
 		{name: assertCall, defaultOp: "Equal", read: readCall},
 		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
+		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
 	}
+}
+
+// readBaseFee returns the latest block's baseFeePerGas as a decimal string, for
+// gas-policy bounds checks. It errors on a pre-EIP-1559 block (no base fee).
+func readBaseFee(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
+	b, err := c.BlockByNumber(ctx, "latest")
+	if err != nil {
+		return nil, err
+	}
+	if b.BaseFeePerGas == nil {
+		return nil, fmt.Errorf("testspec: baseFee: block has no baseFeePerGas")
+	}
+	return b.BaseFeePerGas.String(), nil
 }
 
 // sendTxAction submits a node-signed transaction and, unless wait:false, polls

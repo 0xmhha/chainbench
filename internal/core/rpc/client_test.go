@@ -191,3 +191,19 @@ func TestClient_BlockByNumber(t *testing.T) {
 		t.Fatalf("block = %+v, want {0, 0xgenesis, ts 100}", b)
 	}
 }
+
+func TestClient_BlockByNumber_BaseFee(t *testing.T) {
+	srv := rpcServer(t, map[string]any{
+		"eth_getBlockByNumber": map[string]any{
+			"number": "0x1", "hash": "0xh", "baseFeePerGas": "0x12309ce54000", // 20000000000000
+		},
+	})
+	defer srv.Close()
+	b, err := Dial(srv.URL).BlockByNumber(context.Background(), "latest")
+	if err != nil {
+		t.Fatalf("BlockByNumber: %v", err)
+	}
+	if b.BaseFeePerGas == nil || b.BaseFeePerGas.String() != "20000000000000" {
+		t.Fatalf("baseFeePerGas = %v, want 20000000000000", b.BaseFeePerGas)
+	}
+}
