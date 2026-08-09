@@ -13,13 +13,22 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
-// defaultInterval is the chainstate sampling period when Deps.Interval is unset.
-const defaultInterval = time.Second
+const (
+	// defaultInterval is the chainstate sampling period when Deps.Interval is unset.
+	defaultInterval = time.Second
+	// defaultBPWindow is how many recent block heights the bp-participation tally
+	// spans when Deps.BPWindow is unset.
+	defaultBPWindow = 100
+)
 
-// NodeState is one node's RPC-sampled state.
+// NodeState is one node's RPC-sampled state. HeadHash and HeadMiner describe the
+// node's latest block; they drive bp-participation and fork detection and are
+// optional (an empty HeadHash means the probe supplied height/peers only).
 type NodeState struct {
-	Height uint64
-	Peers  int
+	Height    uint64
+	Peers     int
+	HeadHash  string
+	HeadMiner string
 }
 
 // Deps injects the collector's collaborators so it is testable without live
@@ -30,21 +39,26 @@ type Deps struct {
 	Probe func(ctx context.Context, rpcURL string) (NodeState, error)
 	// Interval is the sampling period (defaults to one second).
 	Interval time.Duration
+	// BPWindow is the number of recent block heights the bp-participation tally
+	// spans (defaults to defaultBPWindow). Older heights are pruned.
+	BPWindow int
 }
 
-// collector samples chainstate over RPC and locates log lines on demand. This
-// is the RPC-minimal build; live log tailing plus bp-participation and reorg
-// detection land in the full collector (T3.3).
+// collector samples chainstate over RPC and locates log lines on demand. It
+// tracks recent (height, producer) pairs for bp-participation and remembers each
+// height's block hash to detect forks/reorgs across samples.
 type collector struct {
 	deps     Deps
 	interval time.Duration
+	bpWindow int
 
 	env  session.Environment
 	stop chan struct{}
 	done chan struct{}
 
-	mu    sync.Mutex
-	state Chainstate
+	mu     sync.Mutex
+	state  Chainstate
+	blocks map[uint64]string // height -> producer (miner) for the bp-participation window
 }
 
 // New returns an RPC-sampling collector.
@@ -53,8 +67,15 @@ func New(deps Deps) Collector {
 	if interval <= 0 {
 		interval = defaultInterval
 	}
-	return &collector{deps: deps, interval: interval}
+	bpWindow := deps.BPWindow
+	if bpWindow <= 0 {
+		bpWindow = defaultBPWindow
+	}
+	return &collector{deps: deps, interval: interval, bpWindow: bpWindow, blocks: map[uint64]string{}}
 }
+
+// nodeName is the collector's canonical name for a node ("node"+index).
+func nodeName(index int) string { return "node" + strconv.Itoa(index) }
 
 // Start samples the environment's nodes immediately and then every interval,
 // until Stop or ctx cancellation.
@@ -85,7 +106,8 @@ func (c *collector) run(ctx context.Context) {
 }
 
 // sampleOnce probes every node and replaces the snapshot. A failing probe is
-// skipped so a slow or down node never blocks or corrupts the snapshot.
+// skipped so a slow or down node never blocks or corrupts the snapshot. Recent
+// (height, producer) pairs accumulate for the bp-participation tally.
 func (c *collector) sampleOnce(ctx context.Context) {
 	heights := map[string]uint64{}
 	peers := map[string]int{}
@@ -94,13 +116,56 @@ func (c *collector) sampleOnce(ctx context.Context) {
 		if err != nil {
 			continue
 		}
-		name := "node" + strconv.Itoa(n.Index)
+		name := nodeName(n.Index)
 		heights[name] = st.Height
 		peers[name] = st.Peers
+		c.recordBlock(st)
 	}
 	c.mu.Lock()
-	c.state = Chainstate{Heights: heights, Peers: peers}
+	c.state = Chainstate{
+		Heights:         heights,
+		Peers:           peers,
+		BPParticipation: c.tallyBP(),
+	}
 	c.mu.Unlock()
+}
+
+// recordBlock remembers the producer of a probed head block and prunes heights
+// older than the bp-participation window. Only the sampler goroutine calls it.
+func (c *collector) recordBlock(st NodeState) {
+	if st.HeadMiner == "" {
+		return
+	}
+	c.blocks[st.Height] = st.HeadMiner
+
+	var max uint64
+	for h := range c.blocks {
+		if h > max {
+			max = h
+		}
+	}
+	if max <= uint64(c.bpWindow) {
+		return
+	}
+	cutoff := max - uint64(c.bpWindow) + 1
+	for h := range c.blocks {
+		if h < cutoff {
+			delete(c.blocks, h)
+		}
+	}
+}
+
+// tallyBP counts blocks produced per producer over the current window. It
+// returns nil when no producer has been observed.
+func (c *collector) tallyBP() map[string]int {
+	if len(c.blocks) == 0 {
+		return nil
+	}
+	bp := map[string]int{}
+	for _, miner := range c.blocks {
+		bp[miner]++
+	}
+	return bp
 }
 
 // Snapshot returns the latest sampled chainstate.
