@@ -51,9 +51,18 @@ type LocalLauncher struct {
 // Launch arms and launches every node in plan and returns the running node set
 // plus the processes to track for teardown.
 func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.LaunchResult, error) {
+	res, _, err := l.LaunchArmed(ctx, plan)
+	return res, err
+}
+
+// LaunchArmed is Launch plus the armed node specs it used. A caller that has to
+// relaunch one node later (fault injection) needs its exact arming — config
+// path, identity flags, datadir — and re-deriving it would risk launching a
+// subtly different node than the one that was stopped.
+func (l LocalLauncher) LaunchArmed(ctx context.Context, plan setup.Plan) (supervisor.LaunchResult, []driver.NodeSpec, error) {
 	preset, err := keys.LoadPreset(l.KeysDir)
 	if err != nil {
-		return supervisor.LaunchResult{}, fmt.Errorf("engine: launcher: %w", err)
+		return supervisor.LaunchResult{}, nil, fmt.Errorf("engine: launcher: %w", err)
 	}
 
 	specs := armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir)
@@ -63,7 +72,7 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 		sink = provision.LocalFileSink{}
 	}
 	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
-		return supervisor.LaunchResult{}, err
+		return supervisor.LaunchResult{}, nil, err
 	}
 
 	d := l.Driver
@@ -81,14 +90,14 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 	for _, spec := range specs {
 		if canInit {
 			if err := initer.InitDatadir(ctx, spec, plan.Genesis); err != nil {
-				return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+				return res, specs, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
 			}
 		} else if err := driver.InitDatadir(ctx, l.Binary, spec.DataDir, plan.GenesisPath); err != nil {
-			return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+			return res, specs, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
 		}
 		h, err := d.Launch(ctx, spec)
 		if err != nil {
-			return res, fmt.Errorf("engine: launcher: launch node%d: %w", spec.Index, err)
+			return res, specs, fmt.Errorf("engine: launcher: launch node%d: %w", spec.Index, err)
 		}
 		res.Nodes.Nodes = append(res.Nodes.Nodes, node.Node{
 			Index: spec.Index, Role: spec.Role, Host: spec.Host,
@@ -100,7 +109,7 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 			DataDir: spec.DataDir, Host: spec.Host,
 		})
 	}
-	return res, nil
+	return res, specs, nil
 }
 
 // materialize writes the network genesis and each node's rendered config

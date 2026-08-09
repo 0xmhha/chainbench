@@ -104,3 +104,82 @@ func TestAlive_GonePID(t *testing.T) {
 		t.Fatal("Alive should be false for a killed PID")
 	}
 }
+
+func TestStopOne_TerminatesJustThatProcess(t *testing.T) {
+	m := New()
+	keep := startSleeper(t)
+	target := startSleeper(t)
+	m.Track(keep, "keep")
+	m.Track(target, "target")
+
+	if err := m.StopOne(target, time.Second); err != nil {
+		t.Fatalf("StopOne: %v", err)
+	}
+	if Alive(target) {
+		t.Fatal("target still alive after StopOne")
+	}
+	if !Alive(keep) {
+		t.Fatal("StopOne stopped an untargeted process")
+	}
+	_ = m.StopAll(time.Second)
+}
+
+func TestStopOne_UntrackedPIDIsAnError(t *testing.T) {
+	m := New()
+	if err := m.StopOne(999999, time.Second); err == nil {
+		t.Fatal("expected an error for an untracked pid")
+	}
+}
+
+func TestStopOne_AlreadyGoneIsNotAnError(t *testing.T) {
+	m := New()
+	pid := startSleeper(t)
+	m.Track(pid, "one")
+	if err := m.StopOne(pid, time.Second); err != nil {
+		t.Fatalf("first StopOne: %v", err)
+	}
+	if err := m.StopOne(pid, time.Second); err != nil {
+		t.Fatalf("second StopOne on a stopped process: %v", err)
+	}
+}
+
+func TestProc_LoopbackHostIsLocal(t *testing.T) {
+	// The local launcher records each node's host, which for a local network is
+	// the loopback address. Treating that as "remote" would exclude the process
+	// from every signal-based operation while it is plainly ours to signal.
+	local := []string{"", "127.0.0.1", "localhost", "::1", "0.0.0.0"}
+	for _, h := range local {
+		if (Proc{PID: 2, Host: h}).IsRemote() {
+			t.Errorf("Proc{Host: %q}.IsRemote() = true, want false", h)
+		}
+	}
+	for _, h := range []string{"10.0.0.11", "node1.example.com"} {
+		if !(Proc{PID: 2, Host: h}).IsRemote() {
+			t.Errorf("Proc{Host: %q}.IsRemote() = false, want true", h)
+		}
+	}
+}
+
+func TestStopOne_StopsAProcessRecordedWithItsLoopbackHost(t *testing.T) {
+	m := New()
+	pid := startSleeper(t)
+	m.TrackProc(Proc{PID: pid, Label: "node1", Host: "127.0.0.1"})
+	if err := m.StopOne(pid, time.Second); err != nil {
+		t.Fatalf("StopOne on a loopback-hosted process: %v", err)
+	}
+	if Alive(pid) {
+		t.Fatal("process still alive")
+	}
+}
+
+func TestStopAll_StopsLoopbackHostedProcesses(t *testing.T) {
+	m := New()
+	pid := startSleeper(t)
+	m.TrackProc(Proc{PID: pid, Label: "node1", Host: "127.0.0.1"})
+	if leaks := m.StopAll(time.Second); len(leaks) > 0 {
+		t.Fatalf("StopAll reported leaks %v", leaks)
+	}
+	if Alive(pid) {
+		t.Fatal("a loopback-hosted process survived StopAll")
+	}
+}

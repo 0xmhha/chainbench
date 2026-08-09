@@ -42,12 +42,12 @@ govNCP.ncps=7(operator=OP_A~G), GovConfig{minStaking, unbonding 15/5, changeFeeD
 
 | wemix4 구성요소 | chainbench Go 대응 | 상태 |
 |---|---|---|
-| 15서버 토폴로지(node_env.json) | driver(local/remote) + `pkg/core/topology` + preset | 있음 (역할 레이아웃 재구성 필요) |
+| 15서버 토폴로지(node_env.json) | driver(local/remote) + `internal/core/topology` + preset | 있음 (역할 레이아웃 재구성 필요) |
 | `.credentials`/`env.conf`/`accounts.env` | `keys/preset` + `profiles/*.yaml` + genesis 템플릿 | 있음 |
-| `bootstrap.sh`(genesis→setup→init→gov배포→run→pre-croissant→블록100대기) | `chainbench upgrade run` (`pkg/consensus/upgrade`) | 있음 (**minimal 설정**) |
-| `genesis_main_test.md` | `pkg/chains/wbft/genesis.json`(템플릿) + 프로파일 | 있음 (**설정 격차**) |
+| `bootstrap.sh`(genesis→setup→init→gov배포→run→pre-croissant→블록100대기) | `chainbench upgrade run` (`internal/consensus/upgrade`) | 있음 (**minimal 설정**) |
+| `genesis_main_test.md` | `internal/chains/wbft/genesis.json`(템플릿) + 프로파일 | 있음 (**설정 격차**) |
 | `staker_register.sh`(OP가 VAL 등록) | e2e 헬퍼 `registerStakerVia` 등 | 있음 |
-| `lib/common.sh`/`node_ctrl.sh` | `pkg/core/rpc`, `driver`, `procman` | 있음 |
+| `lib/common.sh`/`node_ctrl.sh` | `internal/core/rpc`, `driver`, `procman` | 있음 |
 | Phase 1~17 stateful 순서 | — | **없음** (포팅은 테스트별 독립 네트워크) |
 | 87개 테스트 스크립트 | ~82개 Go e2e 포팅 | 대부분 완료 (독립 실행) |
 
@@ -134,7 +134,7 @@ GOV staking 순서 의존을 재현하는 두 방식 중 택1:
   1. handoff에 useNCP/7-validator 설정 시 **합의 전이 안정성**(validator 세트 변동 중 quorum) — 라이브 검증 필수.
   2. handoff의 flaky etcd(기존 procman 재시도로 완화됨).
   3. operator/coinbase 분리 preset은 keys generate 확장 필요.
-- **비변경 원칙**: 공유 genesis(`pkg/chains/wbft/genesis.json`)는 오버레이로만 조정, 다른 e2e 회귀 방지.
+- **비변경 원칙**: 공유 genesis(`internal/chains/wbft/genesis.json`)는 오버레이로만 조정, 다른 e2e 회귀 방지.
 
 ---
 

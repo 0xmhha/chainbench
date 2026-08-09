@@ -12,6 +12,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/procman"
 )
 
+// defaultLeaderWindow is how long the leader gate may take when the caller did
+// not ask for a cluster-size-derived window.
+const defaultLeaderWindow = 60 * time.Second
+
 // LaunchResult is what a launch produced: the node set and the processes to
 // track (pid + datadir + host) for verified teardown.
 type LaunchResult struct {
@@ -29,6 +33,19 @@ type Deps struct {
 	// HealthGate blocks until the network is healthy, or returns a classified
 	// non-OK Diagnosis (etcd leader, block production, fork crossing).
 	HealthGate func(ctx context.Context, ns node.NodeSet) (Diagnosis, error)
+	// LeaderGate waits for the producer's etcd to have a ready leader, within
+	// the given window. It runs before HealthGate when Options.LeaderGate is
+	// set. What "leader ready" means is chain-specific (go-wemix's embedded
+	// etcd), so the check is injected; the supervisor owns when it runs, how
+	// long it may take, and how a failure is classified. Leaving it nil while
+	// asking for the gate is an error, not a silent pass.
+	LeaderGate func(ctx context.Context, ns node.NodeSet, window time.Duration) (Diagnosis, error)
+	// SwapBinary performs one scheduled fork swap: it must relaunch the named
+	// node on the new binary before the chain reaches the fork block. Like the
+	// leader gate this is injected, because "relaunch on a different binary" is
+	// a launcher concern; the supervisor owns the schedule and the diagnosis.
+	// Declaring Options.ForkSwaps without wiring this is an error.
+	SwapBinary func(ctx context.Context, ns node.NodeSet, swap ForkSwap) error
 	// Procman tracks launched processes for verified teardown.
 	Procman *procman.Manager
 	// Sleep is the backoff sleeper, injected so tests do not wait. Defaults to
@@ -65,20 +82,27 @@ func (s *sup) BringUp(ctx context.Context, plan setup.Plan, opts Options) (node.
 	for attempt := 1; attempt <= attempts; attempt++ {
 		res, err := s.deps.Launch(ctx, plan)
 		if err != nil {
-			last = Diagnosis{Mode: RPCUnready, Detail: err.Error()}
+			// A launch failure is classified from its own text: reporting every
+			// one as RPCUnready hid the etcd problems that cause most of them.
+			last = Diagnosis{Mode: Classify(err), Detail: err.Error()}
 		} else {
 			for _, p := range res.Procs {
 				s.deps.Procman.TrackProc(p)
 			}
-			diag, gateErr := s.deps.HealthGate(ctx, res.Nodes)
+			diag, gateErr := s.gate(ctx, res.Nodes, opts)
 			if gateErr == nil && diag.OK {
 				return res.Nodes, diag, nil
 			}
 			if gateErr != nil {
 				diag.Detail = gateErr.Error()
+				if diag.Mode == UnknownFailure {
+					diag.Mode = Classify(gateErr)
+				}
 			}
 			last = diag
-			// Stop and clean before retrying so ports/datadirs are free.
+			// Stop and clean before retrying so ports/datadirs are free. Removing
+			// the datadir is what clears a stale etcd cluster state, which is the
+			// failure that otherwise repeats on every attempt (design S2).
 			_ = s.Teardown(ctx, res.Nodes, TeardownOpts{RemoveDataDir: true, Grace: graceOr(opts)})
 		}
 
@@ -87,6 +111,60 @@ func (s *sup) BringUp(ctx context.Context, plan setup.Plan, opts Options) (node.
 		}
 	}
 	return node.NodeSet{}, last, fmt.Errorf("supervisor: bring-up failed after %d attempt(s): %s: %s", attempts, last.Mode, last.Detail)
+}
+
+// gate runs the requested gates in order: the etcd leader gate first (a node
+// cannot be healthy before its cluster has a leader), then the general health
+// gate. With AlignJoinGap the leader gate's window is derived from the cluster
+// size, so a join that is merely waiting for its slot is not called a failure.
+func (s *sup) gate(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosis, error) {
+	if opts.LeaderGate {
+		if s.deps.LeaderGate == nil {
+			return Diagnosis{Mode: EtcdJoinFailed},
+				fmt.Errorf("supervisor: LeaderGate was requested but no leader gate is wired")
+		}
+		window := defaultLeaderWindow
+		if opts.AlignJoinGap {
+			window = JoinWindow(len(ns.Nodes))
+		}
+		diag, err := s.deps.LeaderGate(ctx, ns, window)
+		if err != nil || !diag.OK {
+			if err != nil && diag.Mode == UnknownFailure {
+				diag.Mode = Classify(err)
+			}
+			if diag.Mode == UnknownFailure {
+				diag.Mode = EtcdJoinFailed
+			}
+			return diag, err
+		}
+	}
+	if s.deps.HealthGate != nil {
+		if diag, err := s.deps.HealthGate(ctx, ns); err != nil || !diag.OK {
+			return diag, err
+		}
+	}
+	return s.applyForkSwaps(ctx, ns, opts)
+}
+
+// applyForkSwaps performs each declared type-2 binary swap. A declared swap with
+// no implementation wired is a failure: silently skipping it would let the chain
+// cross the fork on the wrong binary and fail later, somewhere less obvious.
+func (s *sup) applyForkSwaps(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosis, error) {
+	if len(opts.ForkSwaps) == 0 {
+		return Diagnosis{OK: true}, nil
+	}
+	if s.deps.SwapBinary == nil {
+		return Diagnosis{Mode: ForkNotCrossed},
+			fmt.Errorf("supervisor: %d fork swap(s) declared but no swap implementation is wired", len(opts.ForkSwaps))
+	}
+	for _, swap := range opts.ForkSwaps {
+		if err := s.deps.SwapBinary(ctx, ns, swap); err != nil {
+			return Diagnosis{Mode: ForkNotCrossed},
+				fmt.Errorf("supervisor: fork swap %s -> %s before %s (block %d): %w",
+					swap.Node, swap.ToBinary, swap.Fork, swap.AtBlock, err)
+		}
+	}
+	return Diagnosis{OK: true}, nil
 }
 
 // Teardown stops the tracked processes (verifying local ones are gone) and, when

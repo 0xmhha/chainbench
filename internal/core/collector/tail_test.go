@@ -84,3 +84,60 @@ func appendFile(t *testing.T, path, s string) {
 		t.Fatal(err)
 	}
 }
+
+// chunkReader serves canned chunks for successive offsets, standing in for a
+// remote reader.
+type chunkReader struct {
+	mu     sync.Mutex
+	chunks map[int64]string
+}
+
+func (r *chunkReader) ReadFrom(_ context.Context, _ string, offset int64) ([]byte, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return []byte(r.chunks[offset]), nil
+}
+
+// TestCollector_TailUsesTheInjectedLogReader proves the tail loop reads through
+// a seam rather than the filesystem, which is what lets a remote reader (SSH)
+// substitute for the local one. The first chunk ends mid-line; the partial must
+// be neither emitted nor lost.
+func TestCollector_TailUsesTheInjectedLogReader(t *testing.T) {
+	reader := &chunkReader{chunks: map[int64]string{
+		0:  "first line\npart",
+		11: "partial line\n",
+	}}
+
+	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"})
+	var mu sync.Mutex
+	var got []string
+	c := collector.New(collector.Deps{
+		Logs:   reader,
+		OnLine: func(_, line string) { mu.Lock(); got = append(got, line); mu.Unlock() },
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := c.Start(ctx, env); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		mu.Lock()
+		n := len(got)
+		mu.Unlock()
+		if n >= 2 || time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	_ = c.Stop()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(got) < 2 {
+		t.Fatalf("lines = %v, want at least 2", got)
+	}
+	if got[0] != "first line" || got[1] != "partial line" {
+		t.Fatalf("lines = %v", got)
+	}
+}

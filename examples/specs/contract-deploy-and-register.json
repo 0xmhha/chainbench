@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1",
+  "id": "contract-deploy-and-register",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    {
+      "faucet": {
+        "to": "0x00000000000000000000000000000000000000aa",
+        "amount": "1000000000000000000"
+      }
+    },
+    {
+      "deployContract": {
+        "bytecode": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea2646970667358221220",
+        "gas": "500000",
+        "save": "contract"
+      }
+    },
+    {
+      "registerContract": {
+        "to": "$contract",
+        "data": "0x1234abcd",
+        "gas": "200000",
+        "save": "registration"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "codeAt",
+      "address": "$contract",
+      "compare": "NotEqual",
+      "expected": "0x"
+    },
+    { "assert": "txStatus", "hash": "$registration", "expected": "0x1" },
+    {
+      "assert": "balanceAt",
+      "address": "0x00000000000000000000000000000000000000aa",
+      "compare": "GreaterOrEqual",
+      "expected": "1000000000000000000"
+    }
+  ]
+}

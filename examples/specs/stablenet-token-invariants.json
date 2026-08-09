@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1",
+  "id": "stablenet-token-invariants",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    {
+      "read": {
+        "source": "call",
+        "to": "0x0000000000000000000000000000000000001000",
+        "data": "0x18160ddd",
+        "save": "totalSupply"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000001000",
+      "data": "0x70a08231000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "LessOrEqual",
+      "expected": "$totalSupply"
+    },
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000B00003",
+      "data": "0xfe575a87000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "Regexp",
+      "expected": "^0x0{63}[01]$"
+    }
+  ]
+}

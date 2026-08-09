@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,8 +37,22 @@ type Proc struct {
 	Host string
 }
 
-// IsRemote reports whether the process runs on a remote host.
-func (p Proc) IsRemote() bool { return p.Host != "" }
+// localHosts are the host spellings that still mean "this machine". The local
+// launcher records each node's host, and for a local network that is a loopback
+// address — which must not read as remote, or the process would be excluded from
+// every signal-based operation while it is plainly ours to signal.
+var localHosts = map[string]bool{
+	"":          true,
+	"127.0.0.1": true,
+	"localhost": true,
+	"::1":       true,
+	"[::1]":     true,
+	"0.0.0.0":   true,
+}
+
+// IsRemote reports whether the process runs on another machine, and so must be
+// stopped over a transport rather than with a local signal.
+func (p Proc) IsRemote() bool { return !localHosts[strings.ToLower(p.Host)] }
 
 // Manager tracks a set of launched processes and tears them down verifiably.
 type Manager struct {
@@ -175,6 +190,42 @@ func (m *Manager) StopAll(grace time.Duration) []int {
 		}
 	}
 	return leaks
+}
+
+// StopOne terminates a single tracked LOCAL process and verifies it is gone,
+// with the same SIGTERM -> grace -> SIGKILL escalation StopAll uses. It exists
+// for fault injection: a spec that stops one validator to test quorum must not
+// take down the rest of the network, which is all StopAll can do.
+//
+// An untracked pid is an error (chainbench only stops what it started). A
+// process that is already gone is not — stopping twice is idempotent, and a node
+// that crashed on its own should not fail the step that meant to stop it.
+func (m *Manager) StopOne(pid int, grace time.Duration) error {
+	var target Proc
+	found := false
+	for _, p := range m.Tracked() {
+		if p.PID == pid && !p.IsRemote() {
+			target, found = p, true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("procman: pid %d is not a tracked local process", pid)
+	}
+	if !Alive(target.PID) {
+		return nil
+	}
+
+	_ = syscall.Kill(target.PID, syscall.SIGTERM)
+	procs := []Proc{target}
+	if waitAllGone(procs, grace) {
+		return nil
+	}
+	_ = syscall.Kill(target.PID, syscall.SIGKILL)
+	if waitAllGone(procs, 5*time.Second) {
+		return nil
+	}
+	return fmt.Errorf("procman: pid %d (%s) still alive after SIGKILL", target.PID, target.Label)
 }
 
 // waitAllGone polls until every proc is gone or timeout elapses; returns whether

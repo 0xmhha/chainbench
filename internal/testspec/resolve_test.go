@@ -45,3 +45,52 @@ func TestUnresolved(t *testing.T) {
 		}
 	})
 }
+
+func TestUnresolved_ReportsUnboundReferences(t *testing.T) {
+	reg := testspec.NewRegistry(true)
+	spec := testspec.Spec{
+		Steps: []map[string]any{
+			{"read": map[string]any{"source": "call", "to": "0xa", "data": "0xb", "save": "supply"}},
+			{"sendTx": map[string]any{"from": "0xa", "to": "$supply"}},
+		},
+		Assertions: []map[string]any{
+			{"assert": "call", "to": "0xa", "data": "0xb", "expected": "$missing"},
+		},
+	}
+	got := testspec.Unresolved(spec, reg)
+	want := []string{"ref:missing"}
+	if len(got) != 1 || got[0] != want[0] {
+		t.Fatalf("Unresolved = %v, want %v", got, want)
+	}
+}
+
+func TestUnresolved_ReferenceMustBeSavedEarlier(t *testing.T) {
+	reg := testspec.NewRegistry(true)
+	// The reference is used in step 0 but only saved in step 1 — ordering matters.
+	spec := testspec.Spec{
+		Steps: []map[string]any{
+			{"sendTx": map[string]any{"from": "0xa", "to": "$later"}},
+			{"read": map[string]any{"source": "call", "to": "0xa", "data": "0xb", "save": "later"}},
+		},
+		Assertions: []map[string]any{{"assert": "blockNumber", "expected": "1"}},
+	}
+	got := testspec.Unresolved(spec, reg)
+	if len(got) != 1 || got[0] != "ref:later" {
+		t.Fatalf("Unresolved = %v, want [ref:later]", got)
+	}
+}
+
+func TestUnresolved_BoundReferencesAreClean(t *testing.T) {
+	reg := testspec.NewRegistry(true)
+	spec := testspec.Spec{
+		Steps: []map[string]any{
+			{"sendTx": map[string]any{"from": "0xa", "to": "0xb", "save": "hash"}},
+		},
+		Assertions: []map[string]any{
+			{"assert": "txStatus", "hash": "$hash", "expected": "0x1"},
+		},
+	}
+	if got := testspec.Unresolved(spec, reg); len(got) != 0 {
+		t.Fatalf("Unresolved = %v, want none", got)
+	}
+}

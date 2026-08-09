@@ -45,7 +45,7 @@ gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
 ### 2. `stablenet-account-extra.sh` — overlay fixture bug
 - Genesis init FAILS: `cannot unmarshal array into … govCouncil.params of type
   string`. Fails on both v1.0.1 and v1.1.0.
-- The overlay `pkg/chains/stablenet/overlays/account-extra.json` merges
+- The overlay `internal/chains/stablenet/overlays/account-extra.json` merges
   `govCouncil.params.{authorizedAddresses,blacklistedAddresses}` (arrays) — but
   the base template's `govCouncil.params` is a flat string-map
   (`members/quorum/expiry/…`). The intent is to seed account **Extra bits
@@ -67,10 +67,10 @@ gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
 ### 4. `wemix-chain.sh` (scenario 1, pure wemix) — framework gap
 - `chainbench setup --launch --chain wemix` does NOT run the governance-etcd
   bootstrap standalone (only the upgrade/handoff path drives poa bootstrap via
-  `pkg/consensus/poa` + a `Bootstrap` callback). The bash script does the raw
+  `internal/consensus/poa` + a `Bootstrap` callback). The bash script does the raw
   wemix genesis + init + launch + `deploy-governance` + `admin.etcdInit()`.
 - **Needed:** wire a standalone wemix bootstrap into `chainbench setup` (drive
-  `pkg/consensus/poa.BootstrapPlan` steps for a non-handoff wemix network), then
+  `internal/consensus/poa.BootstrapPlan` steps for a non-handoff wemix network), then
   port as a Go test. (Lower priority — the handoff test already exercises the
   full wemix+etcd+governance bring-up.)
 

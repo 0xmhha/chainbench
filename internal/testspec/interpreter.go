@@ -19,6 +19,11 @@ type Deps struct {
 	RPC       func(url string) *rpc.Client
 	Collector collector.Collector
 	Actions   Registry
+	// Nodes controls node processes for fault-injection steps (stopNode /
+	// startNode / restartNode). It is nil when the run does not own the node
+	// processes — attach mode — and those actions then fail with a clear reason
+	// rather than silently doing nothing.
+	Nodes NodeControl
 }
 
 // Registry holds action and assertion implementations, injected as an instance
@@ -51,6 +56,12 @@ type ActionCtx struct {
 	// record step provenance. They are outputs, set by the action.
 	Hash    string
 	Receipt map[string]any
+	// Value is the action's result for step value binding: when the step declares
+	// "save", the interpreter binds this under that name for later steps and
+	// assertions to reference as "$name". An action that only sets Hash (a tx)
+	// binds the hash, so submitting and then asserting on a transaction needs no
+	// extra plumbing. It is an output, set by the action.
+	Value any
 }
 
 // AssertCtx gives an assertion access to the environment, deps, and targets.

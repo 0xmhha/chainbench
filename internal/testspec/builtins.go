@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ import (
 const (
 	actionSendTx    = "sendTx"
 	actionWaitBlock = "waitBlock"
+	actionRead      = "read"
 
 	assertChainID       = "chainId"
 	assertBlockNumber   = "blockNumber"
@@ -58,6 +60,10 @@ const (
 func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
+	r.RegisterAction(actionRead, readAction{})
+	seedFaultBuiltins(r)
+	seedAssetBuiltins(r)
+	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
 	for _, a := range builtinAssertions() {
@@ -192,6 +198,58 @@ func (waitBlockAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 }
 
+// readAction reads one RPC value and, with "save", binds it for later steps and
+// assertions to reference as "$name" (design §3.2b). It is how a spec compares
+// two on-chain reads to each other — read the first, then assert the second
+// against "$name" — which a single-shot assertion cannot express.
+//
+// Args: source (one of the RPC-reading assertion names), save, on, plus whatever
+// that source needs (to/data for "call", address for "balanceAt", ...).
+type readAction struct{}
+
+func (readAction) Do(ctx context.Context, ac *ActionCtx) error {
+	source, _ := ac.Args["source"].(string)
+	if source == "" {
+		return fmt.Errorf("testspec: read requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
+	}
+	read, ok := readerFor(source)
+	if !ok {
+		return fmt.Errorf("testspec: read: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
+	}
+	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
+	if err != nil {
+		return err
+	}
+	v, err := read(ctx, c, ac.Args)
+	if err != nil {
+		return fmt.Errorf("testspec: read %s: %w", source, err)
+	}
+	ac.Value = v
+	return nil
+}
+
+// readerFor returns the reader registered under an assertion name, so the read
+// action and the assertions share one vocabulary (no second spelling of "call").
+func readerFor(name string) (reader, bool) {
+	for _, a := range builtinAssertions() {
+		if a.name == name {
+			return a.read, true
+		}
+	}
+	return nil, false
+}
+
+// readerNames lists the sources the read action accepts, for error messages.
+func readerNames() []string {
+	all := builtinAssertions()
+	out := make([]string, 0, len(all))
+	for _, a := range all {
+		out = append(out, a.name)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // builtinAssertions lists the RPC-reading assertions and their default
 // comparator. Each reads one value from a target node and compares it to the
 // spec's "expected" using an assert primitive ("compare" in the spec overrides
@@ -208,6 +266,8 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
 		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
 		{name: assertEstimateGas, defaultOp: "GreaterOrEqual", read: readEstimateGas},
+		{name: assertLogs, defaultOp: "Equal", read: readLogs},
+		{name: assertGasPrice, defaultOp: "GreaterOrEqual", read: readGasPrice},
 	}
 }
 
@@ -271,6 +331,9 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 	if g, ok := hexQuantity(ac.Args["gas"]); ok {
 		args.Gas = g
+	}
+	if err := applyFeeArgs(&args, ac.Args); err != nil {
+		return err
 	}
 	hash, err := c.SendTransaction(ctx, args)
 	if err != nil {

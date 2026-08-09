@@ -25,8 +25,8 @@
 | `core/procman` (173) | PID 생명주기(mutex) — 현재 `{PID,Label}`만 | **EXTEND** | 노드별 **`{PID, datadir}` 추적 추가**(S2: 종료 vs datadir 삭제 별개 기능·재-셋업 정리) + remote PID(ssh) 추적 + **etcd 관측**(RPC/IPC, C-etcd). 내장 etcd는 프로세스 종료로 함께 종료. 락 규약 유지 |
 | `core/obs` (336) `Bus`·`Store` | 이벤트 버스(대시보드) | **KEEP** | collector/대시보드 수집의 전송로(item 34) |
 | `core/rpc` (312) | JSON-RPC 클라이언트 | **KEEP** | 검증·endpoint 질의 |
-| `pkg/mcp` (1780, 30 tools) | MCP 표면 | **EXTEND** | 결과 응답 연동(F14, 요구 31) |
-| `pkg/dashboard` (176) SSE | 대시보드 백엔드 | **EXTEND** | 세션 아티팩트 소비(F15) |
+| `internal/mcp` (1780, 30 tools) | MCP 표면 | **EXTEND** | 결과 응답 연동(F14, 요구 31) |
+| `internal/dashboard` (176) SSE | 대시보드 백엔드 | **EXTEND** | 세션 아티팩트 소비(F15) |
 | `consensus/{poa,wbft,upgrade}` (250/152/693) | 합의·핸드오프 | **KEEP/REFACTOR** | 로직 유지, `upgrade/exec.go` 순차 launch만 동시화(E-1) + etcd 리더게이트(C-etcd) |
 | `chains/{wbft,wemix,stablenet,...}` | 체인 플러그인 | **EXTEND** | capability 선언 추가(D-3) |
 
@@ -48,7 +48,7 @@
 
 | 대상 (LOC) | 현재 | 교체 |
 |---|---|---|
-| `pkg/testkit` (341) `Case`·`CaseFunc`·`Register` | **테스트 = Go 함수** 등록 | **TestSpec DSL 해석**으로 교체(§D-2). 단 **`Report/Result/Status`(결과 모델)는 재사용** — 판정 스키마(§D-2.6)로 확장 |
+| `internal/testkit` (341) `Case`·`CaseFunc`·`Register` | **테스트 = Go 함수** 등록 | **TestSpec DSL 해석**으로 교체(§D-2). 단 **`Report/Result/Status`(결과 모델)는 재사용** — 판정 스키마(§D-2.6)로 확장 |
 | `pipeline/testrun` (`Run`) | Go-func case 실행 | **정의서 해석 실행기로 재작성**: pre→steps→assert→post + 세션 기록(steps/assert/status.json), provenance, **스텝 결과 기대치(positive/negative, F11)**, 실패시맨틱(§D-2.9) |
 
 > 이관 전략: testkit의 Go-func 경로는 **당분간 병존**(기존 e2e/repro 유지)하고, 신규 정의서 경로를 별도로 세운 뒤, 케이스를 점진 이관. 최종적으로 Go-func 등록은 폐기.

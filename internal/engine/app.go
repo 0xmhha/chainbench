@@ -82,11 +82,15 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		clock = time.Now
 	}
 
-	launcher := LocalLauncher{Plugin: plugin, Binary: cfg.Binary, KeysDir: cfg.KeysDir}
+	// The controller fronts the launcher so a fault step can reach an individual
+	// node process later; it shares the supervisor's procman so a node stopped
+	// and restarted mid-test is still torn down at the end.
+	procs := procman.New()
+	controller := NewNodeController(LocalLauncher{Plugin: plugin, Binary: cfg.Binary, KeysDir: cfg.KeysDir}, procs)
 	sup := supervisor.New(supervisor.Deps{
-		Launch:     launcher.Launch,
+		Launch:     controller.Launch,
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
-		Procman:    procman.New(),
+		Procman:    procs,
 	})
 	build := NewBuildEnv(BuildDeps{
 		Plugin:     plugin,
@@ -101,6 +105,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	run := NewRunSpec(testspec.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testspec.NewRegistry(true),
+		Nodes:   controller,
 	})
 
 	return New(Deps{
