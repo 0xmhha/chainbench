@@ -182,12 +182,14 @@ func (c *Client) Coinbase(ctx context.Context) (string, error) {
 	return s, nil
 }
 
-// Block is the subset of an Ethereum block chainbench reads.
+// Block is the subset of an Ethereum block chainbench reads. BaseFeePerGas is
+// nil on chains/blocks without EIP-1559.
 type Block struct {
-	Number    uint64
-	Hash      string
-	Miner     string
-	Timestamp uint64
+	Number        uint64
+	Hash          string
+	Miner         string
+	Timestamp     uint64
+	BaseFeePerGas *big.Int
 }
 
 // BlockByNumber fetches a block by tag ("latest", "earliest", or a 0x-hex number
@@ -195,10 +197,11 @@ type Block struct {
 // zero Block.
 func (c *Client) BlockByNumber(ctx context.Context, tag string) (Block, error) {
 	var b struct {
-		Number    string `json:"number"`
-		Hash      string `json:"hash"`
-		Miner     string `json:"miner"`
-		Timestamp string `json:"timestamp"`
+		Number        string `json:"number"`
+		Hash          string `json:"hash"`
+		Miner         string `json:"miner"`
+		Timestamp     string `json:"timestamp"`
+		BaseFeePerGas string `json:"baseFeePerGas"`
 	}
 	if err := c.Call(ctx, "eth_getBlockByNumber", &b, tag, false); err != nil {
 		return Block{}, err
@@ -214,6 +217,13 @@ func (c *Client) BlockByNumber(ctx context.Context, tag string) (Block, error) {
 		if blk.Timestamp, err = parseHexUint(b.Timestamp); err != nil {
 			return Block{}, fmt.Errorf("rpc: block timestamp: %w", err)
 		}
+	}
+	if b.BaseFeePerGas != "" {
+		v, ok := new(big.Int).SetString(strings.TrimPrefix(b.BaseFeePerGas, "0x"), 16)
+		if !ok {
+			return Block{}, fmt.Errorf("rpc: bad baseFeePerGas %q", b.BaseFeePerGas)
+		}
+		blk.BaseFeePerGas = v
 	}
 	return blk, nil
 }
