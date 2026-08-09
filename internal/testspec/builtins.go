@@ -141,17 +141,38 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	return checkTxOutcome(hash, receipt)
+	return checkTxOutcome(hash, receipt, ac.Args)
 }
 
-// checkTxOutcome enforces a tx step's expectation: by default the transaction
-// must not revert, so a receipt status of 0x0 fails the step (F11 — a tx step is
-// atomically successful only when its declared expectation is met).
-func checkTxOutcome(hash string, receipt map[string]any) error {
-	if statusReverted(receipt) {
+// checkTxOutcome enforces a tx step's declared expectation (F11 — a tx step is
+// atomically successful only when its expectation is met). By default the
+// transaction must not revert. With expectRevert (or expect:"revert") the
+// transaction MUST revert: a success then fails the step, so negative cases are
+// expressed declaratively.
+func checkTxOutcome(hash string, receipt map[string]any, args map[string]any) error {
+	reverted := statusReverted(receipt)
+	if wantRevert(args) {
+		if !reverted {
+			return fmt.Errorf("testspec: sendTx %s expected revert but succeeded", hash)
+		}
+		return nil
+	}
+	if reverted {
 		return fmt.Errorf("testspec: sendTx %s reverted (status 0x0)", hash)
 	}
 	return nil
+}
+
+// wantRevert reports whether a tx step declares that it expects a revert, via
+// expectRevert:true or expect:"revert".
+func wantRevert(args map[string]any) bool {
+	if b, ok := args["expectRevert"].(bool); ok {
+		return b
+	}
+	if s, ok := args["expect"].(string); ok {
+		return strings.EqualFold(s, "revert")
+	}
+	return false
 }
 
 // statusReverted reports whether a receipt's status is an explicit revert (0x0).
