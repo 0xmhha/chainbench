@@ -1,0 +1,52 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"text/tabwriter"
+
+	"github.com/spf13/cobra"
+)
+
+// newNetStatusCmd shows the workspace composition state and which steps have run.
+func newNetStatusCmd() *cobra.Command {
+	var dataDir string
+	var jsonOut bool
+	cmd := &cobra.Command{
+		Use:   "status",
+		Short: "Show the workspace composition state and which steps have run",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ws, err := openWorkspace(dataDir)
+			if err != nil {
+				return err
+			}
+			st := ws.State()
+			out := cmd.OutOrStdout()
+			if jsonOut {
+				enc := json.NewEncoder(out)
+				enc.SetIndent("", "  ")
+				return enc.Encode(st)
+			}
+
+			target := string(st.Target.Kind)
+			if st.Target.IsRemote() {
+				target = fmt.Sprintf("remote %s@%s:%s", st.Target.User, st.Target.Host, st.Target.DataRoot)
+			} else if st.Target.DataRoot != "" {
+				target = "local " + st.Target.DataRoot
+			}
+			fmt.Fprintf(out, "workspace: %s\nchain: %s  binary: %s  keys: %s  validators: %d\ntarget: %s\n",
+				ws.Dir(), st.Chain, orDash(st.Binary), orDash(st.KeysDir), st.Validators, orDash(target))
+
+			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, "STEP\tDONE\tDETAIL")
+			for _, name := range sortedSteps(st) {
+				s := st.Steps[name]
+				fmt.Fprintf(w, "%s\t%v\t%s\n", name, s.Done, s.Detail)
+			}
+			return w.Flush()
+		},
+	}
+	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the workspace state as JSON")
+	return cmd
+}
