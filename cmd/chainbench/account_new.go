@@ -16,7 +16,7 @@ func newAccountNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Create a new account (EOA); optionally store it",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runGenerate(cmd, &sf, &pf, jsonOut)
+			return runGenerate(cmd, &sf, &pf, viewAccount, jsonOut)
 		},
 	}
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the account as JSON")

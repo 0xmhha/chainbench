@@ -16,7 +16,7 @@ func newAccountImportCmd() *cobra.Command {
 		Use:   "import",
 		Short: "Import an account from a private key, mnemonic, or file; optionally store it",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runImport(cmd, &src, &sf, &pf, jsonOut)
+			return runImport(cmd, &src, &sf, &pf, viewAccount, jsonOut)
 		},
 	}
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the result as JSON")

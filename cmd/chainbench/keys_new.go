@@ -14,7 +14,7 @@ func newKeysNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Generate a secp256k1 keypair (optionally store it)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runGenerate(cmd, &sf, &pf, jsonOut)
+			return runGenerate(cmd, &sf, &pf, viewKeys, jsonOut)
 		},
 	}
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the keypair as JSON")

@@ -43,8 +43,8 @@ func TestKeysNew_StoreKeystoreNeedsPassword(t *testing.T) {
 func TestKeysImport_PrivateKeyRoundTrip(t *testing.T) {
 	gen := keyJSON(t, "keys", "new", "--json")
 	imp := keyJSON(t, "keys", "import", "--private-key", gen["privateKey"], "--json")
-	if imp["address"] != gen["address"] {
-		t.Fatalf("round-trip mismatch: %s vs %s", imp["address"], gen["address"])
+	if imp["publicKey"] != gen["publicKey"] {
+		t.Fatalf("round-trip mismatch: %s vs %s", imp["publicKey"], gen["publicKey"])
 	}
 }
 
@@ -52,8 +52,8 @@ func TestKeysImport_MnemonicCoinType(t *testing.T) {
 	const m = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	eth := keyJSON(t, "keys", "import", "--mnemonic", m, "--json")
 	chain := keyJSON(t, "keys", "import", "--mnemonic", m, "--hd-coin-type", "8283", "--json")
-	if eth["address"] == chain["address"] {
-		t.Fatalf("coin type had no effect: both %s", eth["address"])
+	if eth["publicKey"] == chain["publicKey"] {
+		t.Fatalf("coin type had no effect: both %s", eth["publicKey"])
 	}
 }
 
@@ -61,8 +61,8 @@ func TestKeysImport_FileRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	gen := keyJSON(t, "keys", "new", "--out", dir, "--name", "k", "--store", "file", "--json")
 	imp := keyJSON(t, "keys", "import", "--import", filepath.Join(dir, "k.key"), "--json")
-	if imp["address"] != gen["address"] {
-		t.Fatalf("file import mismatch: %s vs %s", imp["address"], gen["address"])
+	if imp["publicKey"] != gen["publicKey"] {
+		t.Fatalf("file import mismatch: %s vs %s", imp["publicKey"], gen["publicKey"])
 	}
 }
 

@@ -131,19 +131,41 @@ func saveKey(sf *storeFlags, pf *passwordFlags, a *account.Account) (string, err
 	return store.Save(sf.out, sf.name, a, pw)
 }
 
-// printKey renders an account. showPrivate includes the private key (for a
-// freshly generated key); an import shows only the address.
-func printKey(out io.Writer, a *account.Account, showPrivate bool, storedPath string, jsonOut bool) error {
-	address := a.Address().Hex()
+// keyView selects what identity a command reports for a key. The `keys` layer
+// deals in raw keypairs, so it shows the public key; the `account`/`validator`
+// layers deal in on-chain identity, so they show the address.
+type keyView int
+
+const (
+	viewKeys    keyView = iota // privateKey + publicKey
+	viewAccount                // privateKey + address
+)
+
+// publicKeyHex is the 64-byte (ethereum-style, uncompressed minus the 0x04 tag)
+// public key as 0x-hex.
+func publicKeyHex(a *account.Account) string {
+	uncompressed := a.PublicKey().SerializeUncompressed() // 0x04 || X(32) || Y(32)
+	return "0x" + hex.EncodeToString(uncompressed[1:])
+}
+
+// printKey renders a key/account. showPrivate includes the private key (for a
+// freshly generated key). view selects publicKey (keys) vs address (account).
+func printKey(out io.Writer, a *account.Account, showPrivate bool, view keyView, storedPath string, jsonOut bool) error {
 	private := "0x" + hex.EncodeToString(a.PrivateKeyBytes())
+	m := map[string]string{}
+	if showPrivate {
+		m["privateKey"] = private
+	}
+	switch view {
+	case viewKeys:
+		m["publicKey"] = publicKeyHex(a)
+	default:
+		m["address"] = a.Address().Hex()
+	}
+	if storedPath != "" {
+		m["stored"] = storedPath
+	}
 	if jsonOut {
-		m := map[string]string{"address": address}
-		if showPrivate {
-			m["privateKey"] = private
-		}
-		if storedPath != "" {
-			m["stored"] = storedPath
-		}
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		return enc.Encode(m)
@@ -151,7 +173,11 @@ func printKey(out io.Writer, a *account.Account, showPrivate bool, storedPath st
 	if showPrivate {
 		fmt.Fprintf(out, "privateKey: %s\n", private)
 	}
-	fmt.Fprintf(out, "address:    %s\n", address)
+	if view == viewKeys {
+		fmt.Fprintf(out, "publicKey:  %s\n", m["publicKey"])
+	} else {
+		fmt.Fprintf(out, "address:    %s\n", m["address"])
+	}
 	if storedPath != "" {
 		fmt.Fprintf(out, "stored:     %s\n", storedPath)
 	}
@@ -160,7 +186,7 @@ func printKey(out io.Writer, a *account.Account, showPrivate bool, storedPath st
 
 // runGenerate generates a fresh account, optionally stores it, and prints it
 // (with the private key). Shared by `keys new` and `account new`.
-func runGenerate(cmd *cobra.Command, sf *storeFlags, pf *passwordFlags, jsonOut bool) error {
+func runGenerate(cmd *cobra.Command, sf *storeFlags, pf *passwordFlags, view keyView, jsonOut bool) error {
 	a, err := keymat.RandomSource{}.Resolve(cmd.Context())
 	if err != nil {
 		return err
@@ -169,13 +195,13 @@ func runGenerate(cmd *cobra.Command, sf *storeFlags, pf *passwordFlags, jsonOut 
 	if err != nil {
 		return err
 	}
-	return printKey(cmd.OutOrStdout(), a, true, path, jsonOut)
+	return printKey(cmd.OutOrStdout(), a, true, view, path, jsonOut)
 }
 
 // runImport resolves an account from the source flags, optionally stores it, and
 // prints it (address only — the caller already holds the secret). Shared by
 // `keys import` and `account import`.
-func runImport(cmd *cobra.Command, src *sourceFlags, sf *storeFlags, pf *passwordFlags, jsonOut bool) error {
+func runImport(cmd *cobra.Command, src *sourceFlags, sf *storeFlags, pf *passwordFlags, view keyView, jsonOut bool) error {
 	source, err := src.source(pf.source())
 	if err != nil {
 		return err
@@ -188,7 +214,7 @@ func runImport(cmd *cobra.Command, src *sourceFlags, sf *storeFlags, pf *passwor
 	if err != nil {
 		return err
 	}
-	return printKey(cmd.OutOrStdout(), a, false, path, jsonOut)
+	return printKey(cmd.OutOrStdout(), a, false, view, path, jsonOut)
 }
 
 // promptPassword reads a password from the terminal without echo.
