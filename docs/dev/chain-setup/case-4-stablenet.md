@@ -53,7 +53,7 @@
 | 저장 방식 | `sync_mode` | `full`\|`snap`\|`archive` |
 | **Boho 하드포크 블록** | `--set genesis.overrides.bohoBlock=N` | 지연 포크 시나리오 |
 | 계정 Extra 비트 | `--genesis-overlay internal/chains/stablenet/overlays/account-extra.json` | authorized/blacklisted 계정 상태 |
-| 프리셋 크기 | `keys generate --nodes 6 --validators 6` | 5노드 초과 네트워크 |
+| 프리셋 크기 | `validator set --nodes 6 --validators 6` | 5노드 초과 네트워크 |
 | 포트 대역 | `ports.base_p2p`/`base_rpc` + step | step 제약(§2.6) 준수 |
 | 아티팩트 | `--artifact-root` | 세션 저장 위치 |
 

@@ -74,7 +74,7 @@
 | 13 RPC검증 | `pipeline/verify` + `core/rpc` | 🟢 | 노드별 폴링 **순차**(verify.go:90) |
 | 14,33,34,35 아티팩트·디버깅 | 로그→`<dataRoot>/logs/`, `nodeset.json`, `obs`+`dashboard`(SSE) | 🔴 미흡 | **`.chainbench` 세션 레이아웃 부재**; 테스트별 요청/응답/결과 기록 없음; 블록·bp참여·싱크·분기 수집 **깊이 부족**; remote 무영향 수집 미검증 |
 | 15,16 포트 | `portplan`(스텝) | 🟡 부분 | **handoff는 고정포트(30010 step10)** → 연속/병렬 충돌(이 세션 실측 문제); local스텝·remote동일포트 **단일 배치기 부재** |
-| 17 키·genesis·다운로드 | `keys generate`(신규 등록), `deploy/credentials·keys`(다운로드) | 🟡 부분 | `.chainbench/<test>/<chain>/<node>/` 표준 위치 미준수 |
+| 17 키·genesis·다운로드 | `validator set`(신규 등록), `deploy/credentials·keys`(다운로드) | 🟡 부분 | `.chainbench/<test>/<chain>/<node>/` 표준 위치 미준수 |
 | 25,26 하드포크 | `core/hardfork`, `consensus/upgrade` | 🟢 | (일반 하드포크 블록번호 주입은 overlay/override로 가능) |
 | 27 사전/사후 액션 | 없음 | 🔴 없음 | **pre→test→post 생명주기 프레임워크 부재** |
 | 28 재사용·fingerprint | `attach` + `nodeset.json`/`state.json` | 🔴 미흡 | **환경 fingerprint 비교→skip** 없음. e2e 14개 GOV 테스트가 **각자 handoff 부팅**(비효율·비-stateful) |

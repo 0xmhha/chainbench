@@ -1,4 +1,10 @@
-# Generating preset key sets (`keys generate`)
+# Generating preset key sets (`validator set`)
+
+> Renamed: this preset/validator-set generator is now `chainbench validator set`
+> (was `chainbench keys generate`). A preset is defined by its validator set, so
+> it lives under `validator`; `keys` now holds raw keypair primitives (`keys new`).
+> The flags are unchanged.
+
 
 The committed `keys/preset` ships 5 nodes, which caps a local network at 5. Some
 cases need more (e.g. the n=6 WBFT quorum tests). `chainbench keys generate`

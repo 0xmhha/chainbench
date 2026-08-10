@@ -91,7 +91,7 @@ LLM 이 여러 행동을 자유롭게 조합(자유도 확대)할 수 있게 한
 
 | 단계 | 명령(제안) | 커스텀 flag | 단계 검증 | 재사용 내부 |
 |---|---|---|---|---|
-| 계정/키 | `chain keys` | `--nodes/--validators/--balance/--password/--preset` | 주소·검증자셋 출력 | `keys generate`, `core/keys` |
+| 계정/키 | `chain keys` | `--nodes/--validators/--balance/--password/--preset` | 주소·검증자셋 출력 | `validator set`, `core/keys` |
 | 배치 | `chain allocate` | `--mode/--base-p2p/--base-rpc/--hosts` | 포트맵 출력 | `core/place` |
 | genesis | `chain genesis` | `--mode(existing\|build\|overlay\|inherit)/--set/--overlay/--template` | genesis 바이트·검증자 치환 | `core/genesis`, `engine.GenesisSource` |
 | config | `chain config` | `--sync-mode/--set/--static-nodes` | 노드별 config 출력 | `core/nodeconfig` |
