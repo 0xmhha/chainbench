@@ -96,15 +96,11 @@ func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey re
 	return info, nil
 }
 
-// readRemoteFile reads a remote file's bytes over SSH (base64-piped to avoid
-// binary/quoting issues), mirroring how the RemoteDriver ships files the other
-// way.
+// readRemoteFile reads a remote file's bytes over SSH. It delegates to
+// remote.ReadFile (the shared primitive) and remains here as the deploy-local
+// name its callers use.
 func readRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.HostKeyCallback, path string) ([]byte, error) {
-	res, err := remote.Exec(ctx, rc, hostKey, "base64 < "+shellQuote(path))
-	if err != nil {
-		return nil, err
-	}
-	return base64.StdEncoding.DecodeString(strings.TrimSpace(res.Stdout))
+	return remote.ReadFile(ctx, rc, hostKey, path)
 }
 
 // writeRemoteFile writes content to a remote path over SSH (base64-piped),

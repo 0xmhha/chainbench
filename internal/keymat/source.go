@@ -10,6 +10,8 @@ import (
 
 	"github.com/0xmhha/accounts/account"
 	"github.com/0xmhha/accounts/hdwallet"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // Source resolves key material to an account, regardless of where it comes from.
@@ -72,16 +74,66 @@ func (s FileSource) Resolve(_ context.Context) (*account.Account, error) {
 	if err != nil {
 		return nil, fmt.Errorf("keymat: read key file: %w", err)
 	}
+	return accountFromKeyBytes(data, s.Password)
+}
+
+// RemoteFileSource imports an account from a key file on a remote SSH host (raw
+// hex or keystore). It reads the file over SSH, then applies the same detection
+// as FileSource. Read is injectable for testing; nil uses the real SSH read with
+// credentials from the environment (via remote.CredentialsFromEnv).
+type RemoteFileSource struct {
+	Host     string
+	Port     int
+	User     string
+	Path     string
+	Password PasswordSource
+	Read     func(ctx context.Context) ([]byte, error)
+	Env      func(string) string
+}
+
+// Resolve reads the remote key file and builds its account.
+func (s RemoteFileSource) Resolve(ctx context.Context) (*account.Account, error) {
+	read := s.Read
+	if read == nil {
+		read = s.sshRead
+	}
+	data, err := read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return accountFromKeyBytes(data, s.Password)
+}
+
+// sshRead reads the remote file over SSH using credentials from the environment.
+func (s RemoteFileSource) sshRead(ctx context.Context) ([]byte, error) {
+	env := s.Env
+	if env == nil {
+		env = os.Getenv
+	}
+	creds, err := remote.CredentialsFromEnv(s.User, s.Host, s.Port, env)
+	if err != nil {
+		return nil, err
+	}
+	hostKey, err := remote.ResolveHostKeyCallback(env)
+	if err != nil {
+		return nil, err
+	}
+	return remote.ReadFile(ctx, creds, hostKey, s.Path)
+}
+
+// accountFromKeyBytes builds an account from raw key-file bytes, detecting a
+// keystore JSON (decrypted with pw) versus a raw hex private key.
+func accountFromKeyBytes(data []byte, pw PasswordSource) (*account.Account, error) {
 	data = bytes.TrimSpace(data)
 	if len(data) > 0 && data[0] == '{' {
-		if s.Password == nil {
-			return nil, fmt.Errorf("keymat: keystore file needs a password")
+		if pw == nil {
+			return nil, fmt.Errorf("keymat: keystore needs a password")
 		}
-		pw, err := s.Password.Password()
+		password, err := pw.Password()
 		if err != nil {
 			return nil, err
 		}
-		return account.FromKeystore(data, pw)
+		return account.FromKeystore(data, password)
 	}
 	return PrivateKeySource{Hex: string(data)}.Resolve(context.Background())
 }

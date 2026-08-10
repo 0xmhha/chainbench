@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -17,36 +18,40 @@ import (
 // sourceFlags select where an imported key comes from — a private key, a BIP-39
 // mnemonic (with a configurable HD path), or a key file. Exactly one must be set.
 type sourceFlags struct {
-	privateKey string
-	mnemonic   string
-	passphrase string
-	importFile string
-	coinType   uint32
-	hdAccount  uint32
-	hdIndex    uint32
+	privateKey   string
+	mnemonic     string
+	passphrase   string
+	importFile   string
+	remoteImport string
+	remotePort   int
+	coinType     uint32
+	hdAccount    uint32
+	hdIndex      uint32
 }
 
 func (f *sourceFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.privateKey, "private-key", "", "import from a 0x-hex private key")
 	cmd.Flags().StringVar(&f.mnemonic, "mnemonic", "", "import from a BIP-39 mnemonic")
 	cmd.Flags().StringVar(&f.passphrase, "passphrase", "", "optional BIP-39 passphrase (with --mnemonic)")
-	cmd.Flags().StringVar(&f.importFile, "import", "", "import from a key file (raw hex or keystore JSON)")
+	cmd.Flags().StringVar(&f.importFile, "import", "", "import from a local key file (raw hex or keystore JSON)")
+	cmd.Flags().StringVar(&f.remoteImport, "remote-import", "", "import from a key file on a remote SSH host: [user@]host:path (creds from CHAINBENCH_REMOTE_*)")
+	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "SSH port for --remote-import (default 22)")
 	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keymat.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
 	cmd.Flags().Uint32Var(&f.hdAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
 	cmd.Flags().Uint32Var(&f.hdIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 }
 
 // source builds the keymat.Source, requiring exactly one origin. pw guards a
-// keystore file import.
+// keystore file import (local or remote).
 func (f *sourceFlags) source(pw keymat.PasswordSource) (keymat.Source, error) {
 	n := 0
-	for _, s := range []string{f.privateKey, f.mnemonic, f.importFile} {
+	for _, s := range []string{f.privateKey, f.mnemonic, f.importFile, f.remoteImport} {
 		if s != "" {
 			n++
 		}
 	}
 	if n != 1 {
-		return nil, fmt.Errorf("provide exactly one of --private-key, --mnemonic, --import")
+		return nil, fmt.Errorf("provide exactly one of --private-key, --mnemonic, --import, --remote-import")
 	}
 	switch {
 	case f.privateKey != "":
@@ -56,9 +61,33 @@ func (f *sourceFlags) source(pw keymat.PasswordSource) (keymat.Source, error) {
 			Mnemonic: f.mnemonic, Passphrase: f.passphrase,
 			Path: keymat.HDPath{CoinType: f.coinType, Account: f.hdAccount, Index: f.hdIndex},
 		}, nil
+	case f.remoteImport != "":
+		user, host, path, err := parseRemoteImport(f.remoteImport)
+		if err != nil {
+			return nil, err
+		}
+		return keymat.RemoteFileSource{Host: host, Port: f.remotePort, User: user, Path: path, Password: pw}, nil
 	default:
 		return keymat.FileSource{Path: f.importFile, Password: pw}, nil
 	}
+}
+
+// parseRemoteImport splits a "[user@]host:path" spec. The user may also come
+// from CHAINBENCH_REMOTE_USER, so it may be empty here.
+func parseRemoteImport(s string) (user, host, path string, err error) {
+	rest := s
+	if at := strings.Index(s, "@"); at >= 0 {
+		user, rest = s[:at], s[at+1:]
+	}
+	colon := strings.Index(rest, ":")
+	if colon < 0 {
+		return "", "", "", fmt.Errorf("--remote-import must be [user@]host:path")
+	}
+	host, path = rest[:colon], rest[colon+1:]
+	if host == "" || path == "" {
+		return "", "", "", fmt.Errorf("--remote-import must be [user@]host:path")
+	}
+	return user, host, path, nil
 }
 
 // storeFlags select whether and how a key is persisted. Storage is off unless

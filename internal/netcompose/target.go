@@ -59,7 +59,7 @@ func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 		if s.Host == "" || s.DataRoot == "" {
 			return nil, fmt.Errorf("netcompose: remote target needs host and dataRoot")
 		}
-		creds, err := remoteCreds(s, env)
+		creds, err := remote.CredentialsFromEnv(s.User, s.Host, s.Port, env)
 		if err != nil {
 			return nil, err
 		}
@@ -72,36 +72,4 @@ func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 	default:
 		return nil, fmt.Errorf("netcompose: unknown target kind %q", s.Kind)
 	}
-}
-
-// remoteCreds assembles SSH credentials from the spec and environment. The env
-// user overrides the spec user; auth is a password or a key file; secrets never
-// touch the workspace state.
-func remoteCreds(s TargetSpec, env func(string) string) (remote.Credentials, error) {
-	if env == nil {
-		env = func(string) string { return "" }
-	}
-	user := s.User
-	if v := env("CHAINBENCH_REMOTE_USER"); v != "" {
-		user = v
-	}
-	creds := remote.Credentials{User: user, Host: s.Host, Port: s.Port}
-	if v := env("CHAINBENCH_REMOTE_PASS"); v != "" {
-		creds.Password = v
-	}
-	if kf := env("CHAINBENCH_REMOTE_KEY_FILE"); kf != "" {
-		key, err := remote.LoadPrivateKey(kf)
-		if err != nil {
-			return remote.Credentials{}, err
-		}
-		creds.PrivateKey = key
-		creds.Passphrase = env("CHAINBENCH_REMOTE_KEY_PASSPHRASE")
-	}
-	if creds.User == "" {
-		return remote.Credentials{}, fmt.Errorf("netcompose: remote target needs a user (--remote-user or CHAINBENCH_REMOTE_USER)")
-	}
-	if creds.Password == "" && len(creds.PrivateKey) == 0 {
-		return remote.Credentials{}, fmt.Errorf("netcompose: remote target needs auth (CHAINBENCH_REMOTE_PASS or CHAINBENCH_REMOTE_KEY_FILE)")
-	}
-	return creds, nil
 }
