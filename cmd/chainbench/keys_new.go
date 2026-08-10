@@ -1,39 +1,34 @@
 package main
 
 import (
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/keymat"
 )
 
-// newKeysNewCmd generates a fresh secp256k1 keypair and its address — the raw
-// key material that an account or validator is then built from. It is the
-// primitive layer: no keystore, no on-chain state, no consensus material.
+// newKeysNewCmd generates a fresh secp256k1 keypair — the raw key material an
+// account or validator is built from — and optionally stores it (--out).
 func newKeysNewCmd() *cobra.Command {
 	var jsonOut bool
+	var sf storeFlags
+	var pf passwordFlags
 	cmd := &cobra.Command{
 		Use:   "new",
-		Short: "Generate a secp256k1 keypair and its address",
+		Short: "Generate a secp256k1 keypair (optionally store it)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			priv, address, err := accounts.GenerateKey()
+			a, err := keymat.RandomSource{}.Resolve(cmd.Context())
 			if err != nil {
 				return err
 			}
-			out := cmd.OutOrStdout()
-			privHex := "0x" + hex.EncodeToString(priv)
-			if jsonOut {
-				enc := json.NewEncoder(out)
-				enc.SetIndent("", "  ")
-				return enc.Encode(map[string]string{"privateKey": privHex, "address": address})
+			path, err := saveKey(&sf, &pf, a)
+			if err != nil {
+				return err
 			}
-			fmt.Fprintf(out, "privateKey: %s\naddress:    %s\n", privHex, address)
-			return nil
+			return printKey(cmd.OutOrStdout(), a, true, path, jsonOut)
 		},
 	}
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the keypair as JSON")
+	sf.bind(cmd)
+	pf.bind(cmd)
 	return cmd
 }

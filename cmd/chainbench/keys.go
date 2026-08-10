@@ -13,6 +13,6 @@ func newKeysCmd() *cobra.Command {
 		Use:   "keys",
 		Short: "Generate and inspect raw key material (keypairs)",
 	}
-	c.AddCommand(newKeysNewCmd())
+	c.AddCommand(newKeysNewCmd(), newKeysImportCmd())
 	return c
 }
