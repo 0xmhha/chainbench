@@ -152,16 +152,11 @@ func generateNode(i int, bootnode, binary, out, pwFile string, basePort int) (No
 		return Node{}, err
 	}
 
-	res, err := exec.Command(bootnode, "-nodekeyhex", nodekey, "-writeaddress").CombinedOutput()
-	if err != nil {
-		return Node{}, fmt.Errorf("bootnode writeaddress: %w: %s", err, res)
-	}
-	n, err := ParseBootnode(string(res))
+	n, err := DeriveIdentity(bootnode, nodekey)
 	if err != nil {
 		return Node{}, err
 	}
 	n.Index = i
-	n.Nodekey = nodekey
 	n.Enode = fmt.Sprintf("enode://%s@127.0.0.1:%d?discport=0", n.PublicKey, basePort+i-1)
 
 	keyFile := filepath.Join(nodeDir, "rawkey")
@@ -179,6 +174,24 @@ func generateNode(i int, bootnode, binary, out, pwFile string, basePort int) (No
 			return Node{}, err
 		}
 	}
+	return n, nil
+}
+
+// DeriveIdentity runs the go-wbft bootnode over a devp2p/account private key
+// (hex, with or without 0x) and returns the derived identity: address, devp2p
+// public key, BLS public key and proof-of-possession. It is how a wbft-family
+// validator gets its BLS material from its key.
+func DeriveIdentity(bootnode, nodekeyHex string) (Node, error) {
+	nodekeyHex = strings.TrimPrefix(strings.TrimSpace(nodekeyHex), "0x")
+	res, err := exec.Command(bootnode, "-nodekeyhex", nodekeyHex, "-writeaddress").CombinedOutput()
+	if err != nil {
+		return Node{}, fmt.Errorf("bootnode writeaddress: %w: %s", err, res)
+	}
+	n, err := ParseBootnode(string(res))
+	if err != nil {
+		return Node{}, err
+	}
+	n.Nodekey = nodekeyHex
 	return n, nil
 }
 
