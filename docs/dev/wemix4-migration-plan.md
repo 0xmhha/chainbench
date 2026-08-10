@@ -86,7 +86,7 @@ govNCP.ncps=7(operator=OP_A~G), GovConfig{minStaking, unbonding 15/5, changeFeeD
 3. govNCP.ncps = operator 집합을 설정으로 주입(= wemix4의 "NCP=OP_A~G 자동 파생" 대응).
 
 ### 단계 B — Preset: validator/operator 신원 분리
-1. `chainbench keys generate`는 현재 validator/non-validator 구분만 지원(operator 역할 없음).
+1. `chainbench validator set`는 현재 validator/non-validator 구분만 지원(operator 역할 없음).
    - wemix4는 각 노드가 **coinbase(VAL_X) + 별도 operator(OP_X)** 를 가짐.
    - 확장: `--operators N`(또는 메타데이터에 operator 키 세트) 추가, govNCP=operator 매핑 생성.
 2. 필요한 funded 신원: 7 validator coinbase + 7 operator (+ EN/producer). 8~15 노드 규모 preset 생성.

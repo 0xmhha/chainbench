@@ -43,7 +43,7 @@
 
 **wbft 의 검증자셋 위치(중요):** 헤더 `extraData` 가 아니라 **genesis config 의 `croissant.init.validators`** 다.
 그래서 `extraData` 는 평범한 32바이트 vanity 이고 **istanbul RLP 인코딩이 필요 없다** — 이것이
-`keys generate` 로 임의 크기 프리셋을 만들 수 있는 이유다(`docs/dev/keys-generate.md`).
+`validator set` 로 임의 크기 프리셋을 만들 수 있는 이유다(`docs/dev/keys-generate.md`).
 
 ---
 
@@ -52,7 +52,7 @@
 | 변곡점 | 설정 | 예 |
 |---|---|---|
 | 검증자 수 | `--validators` / `topology.bp` | n=6 쿼럼 케이스는 6노드 프리셋 필요 |
-| 프리셋 생성 | `keys generate --nodes 6 --validators 6 --bootnode <go-wbft/build/bin/bootnode> --binary <gwemix> --out /tmp/preset6` | 커밋 프리셋은 5노드가 상한 |
+| 프리셋 생성 | `validator set --nodes 6 --validators 6 --bootnode <go-wbft/build/bin/bootnode> --binary <gwemix> --out /tmp/preset6` | 커밋 프리셋은 5노드가 상한 |
 | **useNCP 거버넌스** | `--genesis-overlay` 로 `croissant.wBFT.{useNCP,targetValidators,stabilizingStakersThreshold}` + `govContracts.govNCP.params.ncps` | staking 기반 검증자 선정을 켠다 |
 | 하드포크 블록 | `--set genesis.overrides.<fork>Block=N` | |
 | 에폭 | genesis `croissant.wBFT.epochLength` (overlay) | 에폭 전이 관측 |
@@ -126,5 +126,5 @@ RPC 응답**의 전 구간이 동작한다. 게이트된 회귀 테스트로는 
 | 항목 | 내용 |
 |---|---|
 | 라이브 e2e 고정 | stablenet 과 달리 `GWBFT_BIN` 게이트 회귀 테스트가 없다 — 위 실행을 테스트로 고정할 것 |
-| n=6 쿼럼 | WBFT-012/013 은 6노드 프리셋 필요(`keys generate`) |
+| n=6 쿼럼 | WBFT-012/013 은 6노드 프리셋 필요(`validator set`) |
 | useNCP 시나리오 | 오버레이로 켤 수 있으나 golden 프로파일 없음 |

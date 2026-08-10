@@ -137,9 +137,9 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 | 변곡점 | 설정 위치 | 비고 |
 |---|---|---|
 | 프리셋 경로 | `--keys` / `--keys-dir` (기본 `keys/preset`) | 5노드 커밋본 |
-| 프리셋 생성 | `chainbench keys generate --nodes N --validators V --bootnode <path> --binary <path> --out <dir>` | 5노드 초과 네트워크용 |
-| 계정 잔액 | `keys generate --balance <0x-hex>` | genesis alloc |
-| 키스토어 암호 | `keys generate --password` (기본 `1`) | |
+| 프리셋 생성 | `chainbench validator set --nodes N --validators V --bootnode <path> --binary <path> --out <dir>` | 5노드 초과 네트워크용 |
+| 계정 잔액 | `validator set --balance <0x-hex>` | genesis alloc |
+| 키스토어 암호 | `validator set --password` (기본 `1`) | |
 | **중요 제약** | wbft 계열 검증자셋·BLS 는 **프리셋에 baked** | 랜덤 keyreg 키만으로는 유효 genesis 불가(T4.4b) |
 
 ### 2.5 genesis (단계 5) — 4모드

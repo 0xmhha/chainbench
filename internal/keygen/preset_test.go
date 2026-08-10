@@ -1,4 +1,4 @@
-package main
+package keygen
 
 import (
 	"strings"
@@ -10,9 +10,9 @@ func TestParseBootnode(t *testing.T) {
 		"address: 0xc17d493883eaa3b4cceb0f214b273392d562f9d8\n" +
 		"derived bls public key: 0xa00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556f\n" +
 		"bls PoP (Proof of Possession): 0xa8457c7da3280ac5c6714bcf4d65549f3644e8734fe158fcab352599290fe7671d5afbc1ce9e7e931855b9e08f21d7c40\n"
-	n, err := parseBootnode(out)
+	n, err := ParseBootnode(out)
 	if err != nil {
-		t.Fatalf("parseBootnode: %v", err)
+		t.Fatalf("ParseBootnode: %v", err)
 	}
 	if n.Address != "0xc17d493883eaa3b4cceb0f214b273392d562f9d8" {
 		t.Errorf("address = %q", n.Address)
@@ -29,7 +29,7 @@ func TestParseBootnode(t *testing.T) {
 }
 
 func TestParseBootnode_Incomplete(t *testing.T) {
-	if _, err := parseBootnode("address: 0xabc\n"); err == nil {
+	if _, err := ParseBootnode("address: 0xabc\n"); err == nil {
 		t.Error("expected error for incomplete bootnode output")
 	}
 }
