@@ -12,6 +12,6 @@ func newAccountCmd() *cobra.Command {
 		Use:   "account",
 		Short: "Inspect and manage accounts (EOA); validator identities live under `validator`",
 	}
-	acct.AddCommand(newAccountNewCmd(), newAccountImportCmd(), newAccountStateCmd())
+	acct.AddCommand(newAccountNewCmd(), newAccountImportCmd(), newAccountFundCmd(), newAccountListCmd(), newAccountStateCmd())
 	return acct
 }
