@@ -9,7 +9,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 |---|---|
 | [`dev/chainbench-requirements-review.md`](dev/chainbench-requirements-review.md) | 요구사항 37 · 사양 검토 · 코드 격차 · **etcd flaky 실체** · 동시성/안전성. |
 | [`dev/chainbench-design.md`](dev/chainbench-design.md) | **아키텍처 SSoT** — 구조·패키지 인터페이스(§3)·데이터 모델(§4)·동시성(§6)·마이그레이션. |
-| [`dev/chainbench-feature-spec.md`](dev/chainbench-feature-spec.md) | F1~F15 동작 계약 · 수용기준(AC). |
+| [`dev/chainbench-feature-spec.md`](dev/chainbench-feature-spec.md) | F1~F16 동작 계약 · 수용기준(AC). |
 | [`dev/chainbench-refactoring.md`](dev/chainbench-refactoring.md) | 기존 코드 → 목표 설계 매핑 · **작업 단위(WP) 분해**. |
 
 ## 현행 참고 문서
