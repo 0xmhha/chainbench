@@ -1,0 +1,37 @@
+# Remote server inventory for chainbench fleet operations.
+#
+# Copy this file to `remote-server-config.yaml` (which is gitignored) and fill in
+# your hosts. Commands that fetch a remote key file select a server by index:
+#
+#   chainbench keys import --server 7 --remote-path /keys/node1 \
+#     --out ./local-keys --name node1 --store keystore --password localpw
+#
+# SECURITY: prefer the environment for the SSH password rather than storing it
+# here. Any value set below is overridden by, in order:
+#   CHAINBENCH_REMOTE_USER, CHAINBENCH_REMOTE_PASS,
+#   CHAINBENCH_REMOTE_KEY_FILE (+ CHAINBENCH_REMOTE_KEY_PASSPHRASE)
+# so you can keep this file secret-free and inject the password at run time.
+# Host-key policy is separate: set CHAINBENCH_SSH_KNOWN_HOSTS, or
+# CHAINBENCH_SSH_INSECURE_HOST_KEY=1 for a closed network with no known_hosts.
+
+# File-level defaults — a server inherits any field it omits.
+user: ubuntu
+port: 22
+# password: ""          # prefer CHAINBENCH_REMOTE_PASS
+# key_file: ~/.ssh/id_ed25519
+
+servers:
+  - index: 1
+    host: 10.0.0.1
+  - index: 2
+    host: 10.0.0.2
+  - index: 3
+    host: 10.0.0.3
+  # ... up to your fleet size (e.g. 15)
+  - index: 15
+    host: 10.0.0.15
+    # per-server overrides of the defaults, when a host differs:
+    # user: root
+    # port: 2222
+    # password: ""
+    # key_file: ~/.ssh/id_ed25519_node15

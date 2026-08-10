@@ -14,7 +14,7 @@ func TestRemoteFileSource_InjectedReader(t *testing.T) {
 	a, _ := keymat.RandomSource{}.Resolve(context.Background())
 	rawHex := "0x" + hex.EncodeToString(a.PrivateKeyBytes())
 	src := keymat.RemoteFileSource{
-		Host: "h", Path: "/k",
+		Path: "/k",
 		Read: func(context.Context) ([]byte, error) { return []byte(rawHex), nil },
 	}
 	got, err := src.Resolve(context.Background())
@@ -29,7 +29,7 @@ func TestRemoteFileSource_InjectedReader(t *testing.T) {
 	ksPath, _ := (keymat.KeystoreStore{ScryptN: 1 << 12, ScryptP: 1}).Save(t.TempDir(), "k", a, keymat.StaticPassword("pw"))
 	ksData := mustRead(t, ksPath)
 	ksSrc := keymat.RemoteFileSource{
-		Host: "h", Path: "/k.json", Password: keymat.StaticPassword("pw"),
+		Path: "/k.json", Password: keymat.StaticPassword("pw"),
 		Read: func(context.Context) ([]byte, error) { return ksData, nil },
 	}
 	got2, err := ksSrc.Resolve(context.Background())
@@ -38,7 +38,7 @@ func TestRemoteFileSource_InjectedReader(t *testing.T) {
 	}
 
 	// read error propagates
-	bad := keymat.RemoteFileSource{Host: "h", Path: "/k", Read: func(context.Context) ([]byte, error) { return nil, errors.New("ssh down") }}
+	bad := keymat.RemoteFileSource{Path: "/k", Read: func(context.Context) ([]byte, error) { return nil, errors.New("ssh down") }}
 	if _, err := bad.Resolve(context.Background()); err == nil {
 		t.Fatal("expected read error to propagate")
 	}
