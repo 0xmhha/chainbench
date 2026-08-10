@@ -1,6 +1,7 @@
 package keymat
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -52,7 +53,7 @@ func (RawFileStore) Save(dir, name string, a *account.Account, _ PasswordSource)
 // Load reads the hex private key.
 func (RawFileStore) Load(dir, name string, _ PasswordSource) (*account.Account, error) {
 	path := filepath.Join(dir, name+".key")
-	return FileSource{Path: path}.Resolve(nil)
+	return FileSource{Path: path}.Resolve(context.Background())
 }
 
 // KeystoreStore stores an encrypted keystore JSON in <dir>/<name>.json (0600),
@@ -95,5 +96,5 @@ func (s KeystoreStore) Save(dir, name string, a *account.Account, pw PasswordSou
 // Load decrypts the keystore file.
 func (KeystoreStore) Load(dir, name string, pw PasswordSource) (*account.Account, error) {
 	path := filepath.Join(dir, name+".json")
-	return FileSource{Path: path, Password: pw}.Resolve(nil)
+	return FileSource{Path: path, Password: pw}.Resolve(context.Background())
 }

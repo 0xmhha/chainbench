@@ -55,7 +55,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.state.KeysDir = keysDir
 	w.state.Target = target
 
-	loc := string(target.Kind)
+	var loc string
 	if target.IsRemote() {
 		loc = fmt.Sprintf("remote %s@%s:%s", target.User, target.Host, target.DataRoot)
 	} else {
