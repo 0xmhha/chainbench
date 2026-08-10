@@ -43,12 +43,12 @@ func TestKeysNew_TextAndJSON(t *testing.T) {
 }
 
 func TestValidatorSet_RequiresFlags(t *testing.T) {
-	// Missing required --nodes/--binary/--out.
+	// Missing required --nodes/--out.
 	if _, err := run(t, "validator", "set"); err == nil {
 		t.Fatal("expected error without required flags")
 	}
-	// Bogus bootnode path -> generation error.
-	if _, err := run(t, "validator", "set", "--nodes", "1", "--binary", "/nonexistent/bin", "--out", t.TempDir(), "--bootnode", "/nonexistent/bootnode"); err == nil {
-		t.Fatal("expected error for missing bootnode/binary")
+	// Bogus bootnode path -> generation error (no node binary needed anymore).
+	if _, err := run(t, "validator", "set", "--nodes", "1", "--out", t.TempDir(), "--bootnode", "/nonexistent/bootnode"); err == nil {
+		t.Fatal("expected error for missing bootnode")
 	}
 }

@@ -1,10 +1,10 @@
 // Package keygen generates a network's preset key set — per-node devp2p keys,
 // their derived address and BLS public key/proof-of-possession (via the go-wbft
-// bootnode tool), an encrypted keystore per node (via the node binary's
-// `account import`), and the metadata.json that keys.LoadPreset reads. It is the
-// shared core behind `validator set` (the preset is defined by its validator
-// set) and its MCP mirror; it lives here, not in the CLI, so both surfaces
-// generate identically.
+// bootnode tool), an encrypted keystore per node (via the accounts SDK, no node
+// binary), and the metadata.json that keys.LoadPreset reads. It is the shared
+// core behind `validator set` (the preset is defined by its validator set) and
+// its MCP mirror; it lives here, not in the CLI, so both surfaces generate
+// identically.
 package keygen
 
 import (
@@ -17,6 +17,9 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
+
+	"github.com/0xmhha/accounts/keystore"
 )
 
 // dirPerm and file perms for generated material.
@@ -25,6 +28,14 @@ const (
 	secretPerm  os.FileMode = 0o600
 	publicPerm  os.FileMode = 0o644
 	defaultPort             = 30301
+)
+
+// keystore scrypt parameters. Light (geth's LightScryptN/P) — a preset is a
+// local test fixture, and lighter params keep multi-node generation fast while
+// staying a standard, node-readable v3 keystore.
+const (
+	keystoreScryptN = 1 << 12
+	keystoreScryptP = 6
 )
 
 // Node is one generated node's material.
@@ -57,7 +68,6 @@ type PresetOpts struct {
 	Nodes      int
 	Validators int
 	Bootnode   string
-	Binary     string
 	Out        string
 	Password   string
 	BasePort   int
@@ -82,12 +92,11 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 			return Meta{}, fmt.Errorf("keygen: bootnode %q not found (build go-wbft/cmd/bootnode)", opts.Bootnode)
 		}
 	}
-	if _, err := os.Stat(opts.Binary); err != nil {
-		return Meta{}, fmt.Errorf("keygen: binary %q not found", opts.Binary)
-	}
 	if err := os.MkdirAll(opts.Out, dirPerm); err != nil {
 		return Meta{}, err
 	}
+	// The shared password file is what the node unlocks with at launch
+	// (--password); the keystores below are encrypted with the same password.
 	pwFile := filepath.Join(opts.Out, "password")
 	if err := os.WriteFile(pwFile, []byte(opts.Password), secretPerm); err != nil {
 		return Meta{}, err
@@ -101,7 +110,7 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 		Alloc:       map[string]map[string]any{},
 	}
 	for i := 1; i <= opts.Nodes; i++ {
-		n, err := generateNode(i, opts.Bootnode, opts.Binary, opts.Out, pwFile, opts.BasePort)
+		n, err := generateNode(i, opts.Bootnode, opts.Out, opts.Password, opts.BasePort)
 		if err != nil {
 			return Meta{}, fmt.Errorf("keygen: node %d: %w", i, err)
 		}
@@ -135,9 +144,9 @@ var (
 
 // generateNode creates node i's material: a random nodekey, its derived address
 // + BLS pubkey/PoP + devp2p public key (via bootnode), and an encrypted keystore
-// (via the binary's account import). It writes the per-node dir and returns the
-// node metadata.
-func generateNode(i int, bootnode, binary, out, pwFile string, basePort int) (Node, error) {
+// (via the accounts SDK keystore — no node binary). It writes the per-node dir
+// and returns the node metadata.
+func generateNode(i int, bootnode, out, password string, basePort int) (Node, error) {
 	nodeDir := filepath.Join(out, fmt.Sprintf("node%d", i))
 	if err := os.MkdirAll(nodeDir, dirPerm); err != nil {
 		return Node{}, err
@@ -159,14 +168,19 @@ func generateNode(i int, bootnode, binary, out, pwFile string, basePort int) (No
 	n.Index = i
 	n.Enode = fmt.Sprintf("enode://%s@127.0.0.1:%d?discport=0", n.PublicKey, basePort+i-1)
 
-	keyFile := filepath.Join(nodeDir, "rawkey")
-	if err := os.WriteFile(keyFile, []byte(nodekey), secretPerm); err != nil {
+	// Encrypt the account key into a standard v3 keystore with the SDK and place
+	// it where the node reads it (<datadir>/keystore), matching what the node's
+	// own `account import` used to produce — but with no binary shell-out.
+	keyjson, err := keystore.Encrypt(raw, password, keystoreScryptN, keystoreScryptP)
+	if err != nil {
+		return Node{}, fmt.Errorf("keystore encrypt: %w", err)
+	}
+	ksDir := filepath.Join(nodeDir, "keystore")
+	if err := os.MkdirAll(ksDir, dirPerm); err != nil {
 		return Node{}, err
 	}
-	defer func() { _ = os.Remove(keyFile) }()
-	imp := exec.Command(binary, "account", "import", "--datadir", nodeDir, "--password", pwFile, keyFile)
-	if b, err := imp.CombinedOutput(); err != nil {
-		return Node{}, fmt.Errorf("account import: %w: %s", err, b)
+	if err := os.WriteFile(filepath.Join(ksDir, keystoreFilename(n.Address)), keyjson, secretPerm); err != nil {
+		return Node{}, err
 	}
 
 	for name, val := range map[string]string{"address": n.Address, "pubkey": n.PublicKey, "bls_pubkey": n.BLSPubKey} {
@@ -175,6 +189,13 @@ func generateNode(i int, bootnode, binary, out, pwFile string, basePort int) (No
 		}
 	}
 	return n, nil
+}
+
+// keystoreFilename is the geth-convention keystore file name
+// (UTC--<timestamp>--<address>), which the node's keystore reader accepts.
+func keystoreFilename(address string) string {
+	ts := time.Now().UTC().Format("2006-01-02T15-04-05.000000000Z")
+	return "UTC--" + ts + "--" + strings.TrimPrefix(strings.ToLower(address), "0x")
 }
 
 // DeriveIdentity runs the go-wbft bootnode over a devp2p/account private key
