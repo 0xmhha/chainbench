@@ -2,8 +2,6 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-
-	"github.com/0xmhha/chainbench/internal/keymat"
 )
 
 // newKeysNewCmd generates a fresh secp256k1 keypair — the raw key material an
@@ -16,15 +14,7 @@ func newKeysNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Generate a secp256k1 keypair (optionally store it)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			a, err := keymat.RandomSource{}.Resolve(cmd.Context())
-			if err != nil {
-				return err
-			}
-			path, err := saveKey(&sf, &pf, a)
-			if err != nil {
-				return err
-			}
-			return printKey(cmd.OutOrStdout(), a, true, path, jsonOut)
+			return runGenerate(cmd, &sf, &pf, jsonOut)
 		},
 	}
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the keypair as JSON")

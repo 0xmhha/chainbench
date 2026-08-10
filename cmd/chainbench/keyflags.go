@@ -158,6 +158,39 @@ func printKey(out io.Writer, a *account.Account, showPrivate bool, storedPath st
 	return nil
 }
 
+// runGenerate generates a fresh account, optionally stores it, and prints it
+// (with the private key). Shared by `keys new` and `account new`.
+func runGenerate(cmd *cobra.Command, sf *storeFlags, pf *passwordFlags, jsonOut bool) error {
+	a, err := keymat.RandomSource{}.Resolve(cmd.Context())
+	if err != nil {
+		return err
+	}
+	path, err := saveKey(sf, pf, a)
+	if err != nil {
+		return err
+	}
+	return printKey(cmd.OutOrStdout(), a, true, path, jsonOut)
+}
+
+// runImport resolves an account from the source flags, optionally stores it, and
+// prints it (address only — the caller already holds the secret). Shared by
+// `keys import` and `account import`.
+func runImport(cmd *cobra.Command, src *sourceFlags, sf *storeFlags, pf *passwordFlags, jsonOut bool) error {
+	source, err := src.source(pf.source())
+	if err != nil {
+		return err
+	}
+	a, err := source.Resolve(cmd.Context())
+	if err != nil {
+		return err
+	}
+	path, err := saveKey(sf, pf, a)
+	if err != nil {
+		return err
+	}
+	return printKey(cmd.OutOrStdout(), a, false, path, jsonOut)
+}
+
 // promptPassword reads a password from the terminal without echo.
 func promptPassword() (string, error) {
 	fmt.Fprint(os.Stderr, "password: ")
