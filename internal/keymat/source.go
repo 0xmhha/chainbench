@@ -79,12 +79,12 @@ func (s FileSource) Resolve(_ context.Context) (*account.Account, error) {
 
 // RemoteFileSource imports an account from a key file on a remote SSH host (raw
 // hex or keystore). It reads the file over SSH, then applies the same detection
-// as FileSource. Read is injectable for testing; nil uses the real SSH read with
-// credentials from the environment (via remote.CredentialsFromEnv).
+// as FileSource. Creds are the fully-resolved SSH credentials — the caller
+// resolves them once, from the environment (ad-hoc host:path) or a server
+// inventory (--server N). Read is injectable for testing; nil uses the real SSH
+// read. Env supplies the host-key policy; nil uses os.Getenv.
 type RemoteFileSource struct {
-	Host     string
-	Port     int
-	User     string
+	Creds    remote.Credentials
 	Path     string
 	Password PasswordSource
 	Read     func(ctx context.Context) ([]byte, error)
@@ -104,21 +104,17 @@ func (s RemoteFileSource) Resolve(ctx context.Context) (*account.Account, error)
 	return accountFromKeyBytes(data, s.Password)
 }
 
-// sshRead reads the remote file over SSH using credentials from the environment.
+// sshRead reads the remote file over SSH using the resolved credentials.
 func (s RemoteFileSource) sshRead(ctx context.Context) ([]byte, error) {
 	env := s.Env
 	if env == nil {
 		env = os.Getenv
 	}
-	creds, err := remote.CredentialsFromEnv(s.User, s.Host, s.Port, env)
-	if err != nil {
-		return nil, err
-	}
 	hostKey, err := remote.ResolveHostKeyCallback(env)
 	if err != nil {
 		return nil, err
 	}
-	return remote.ReadFile(ctx, creds, hostKey, s.Path)
+	return remote.ReadFile(ctx, s.Creds, hostKey, s.Path)
 }
 
 // accountFromKeyBytes builds an account from raw key-file bytes, detecting a

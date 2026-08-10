@@ -12,17 +12,25 @@ import (
 	"golang.org/x/term"
 
 	"github.com/0xmhha/accounts/account"
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/keymat"
+	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
 // sourceFlags select where an imported key comes from — a private key, a BIP-39
-// mnemonic (with a configurable HD path), or a key file. Exactly one must be set.
+// mnemonic (with a configurable HD path), a local key file, or a remote key file
+// (addressed inline as host:path, or by index into a server inventory). Exactly
+// one origin must be set.
 type sourceFlags struct {
 	privateKey   string
 	mnemonic     string
 	passphrase   string
 	importFile   string
 	remoteImport string
+	remotePath   string
+	serverConfig string
+	server       int
+	remoteUser   string
 	remotePort   int
 	coinType     uint32
 	hdAccount    uint32
@@ -35,23 +43,32 @@ func (f *sourceFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.passphrase, "passphrase", "", "optional BIP-39 passphrase (with --mnemonic)")
 	cmd.Flags().StringVar(&f.importFile, "import", "", "import from a local key file (raw hex or keystore JSON)")
 	cmd.Flags().StringVar(&f.remoteImport, "remote-import", "", "import from a key file on a remote SSH host: [user@]host:path (creds from CHAINBENCH_REMOTE_*)")
-	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "SSH port for --remote-import (default 22)")
+	cmd.Flags().IntVar(&f.server, "server", 0, "import from a server in "+serverset.DefaultConfigFile+" by index (with --remote-path)")
+	cmd.Flags().StringVar(&f.remotePath, "remote-path", "", "remote key file path on the --server host")
+	cmd.Flags().StringVar(&f.serverConfig, "server-config", serverset.DefaultConfigFile, "server inventory file for --server")
+	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "override the SSH user for --server / --remote-import")
+	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "override the SSH port for --server / --remote-import (default 22)")
 	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keymat.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
 	cmd.Flags().Uint32Var(&f.hdAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
 	cmd.Flags().Uint32Var(&f.hdIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 }
 
 // source builds the keymat.Source, requiring exactly one origin. pw guards a
-// keystore file import (local or remote).
+// keystore file import (local or remote). Production passes os.Getenv.
 func (f *sourceFlags) source(pw keymat.PasswordSource) (keymat.Source, error) {
+	return f.sourceWithEnv(pw, os.Getenv)
+}
+
+// sourceWithEnv is source with an injected environment for the remote SSH creds.
+func (f *sourceFlags) sourceWithEnv(pw keymat.PasswordSource, env func(string) string) (keymat.Source, error) {
 	n := 0
-	for _, s := range []string{f.privateKey, f.mnemonic, f.importFile, f.remoteImport} {
-		if s != "" {
+	for _, set := range []bool{f.privateKey != "", f.mnemonic != "", f.importFile != "", f.remoteImport != "", f.server != 0} {
+		if set {
 			n++
 		}
 	}
 	if n != 1 {
-		return nil, fmt.Errorf("provide exactly one of --private-key, --mnemonic, --import, --remote-import")
+		return nil, fmt.Errorf("provide exactly one of --private-key, --mnemonic, --import, --remote-import, --server")
 	}
 	switch {
 	case f.privateKey != "":
@@ -66,10 +83,46 @@ func (f *sourceFlags) source(pw keymat.PasswordSource) (keymat.Source, error) {
 		if err != nil {
 			return nil, err
 		}
-		return keymat.RemoteFileSource{Host: host, Port: f.remotePort, User: user, Path: path, Password: pw}, nil
+		if f.remoteUser != "" {
+			user = f.remoteUser
+		}
+		creds, err := remote.CredentialsFromEnv(user, host, f.remotePort, env)
+		if err != nil {
+			return nil, err
+		}
+		return keymat.RemoteFileSource{Creds: creds, Path: path, Password: pw, Env: env}, nil
+	case f.server != 0:
+		if f.remotePath == "" {
+			return nil, fmt.Errorf("--server needs --remote-path (the key file path on the server)")
+		}
+		creds, err := f.serverCreds(env)
+		if err != nil {
+			return nil, err
+		}
+		return keymat.RemoteFileSource{Creds: creds, Path: f.remotePath, Password: pw, Env: env}, nil
 	default:
 		return keymat.FileSource{Path: f.importFile, Password: pw}, nil
 	}
+}
+
+// serverCreds resolves the SSH credentials for --server N from the inventory,
+// applying the --remote-user / --remote-port overrides on top of the file.
+func (f *sourceFlags) serverCreds(env func(string) string) (remote.Credentials, error) {
+	cfg, err := serverset.Load(f.serverConfig)
+	if err != nil {
+		return remote.Credentials{}, err
+	}
+	srv, err := cfg.Server(f.server)
+	if err != nil {
+		return remote.Credentials{}, err
+	}
+	if f.remoteUser != "" {
+		srv.User = f.remoteUser
+	}
+	if f.remotePort != 0 {
+		srv.Port = f.remotePort
+	}
+	return srv.Credentials(env)
 }
 
 // parseRemoteImport splits a "[user@]host:path" spec. The user may also come
