@@ -11,9 +11,9 @@ import (
 func newAccountCmd() *cobra.Command {
 	acct := &cobra.Command{
 		Use:   "account",
-		Short: "Inspect account state over RPC",
+		Short: "Inspect and manage accounts (RPC state; chain-aware roster from a key set)",
 	}
-	acct.AddCommand(newAccountStateCmd())
+	acct.AddCommand(newAccountStateCmd(), newAccountRosterCmd())
 	return acct
 }
 

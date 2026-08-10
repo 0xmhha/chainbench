@@ -27,7 +27,7 @@ func newNetCmd() *cobra.Command {
 			"data plane lives on the target (local, or a remote SSH host set at `net new`).\n" +
 			"The same steps are exposed as MCP tools.",
 	}
-	cmd.AddCommand(newNetNewCmd(), newNetKeysCmd(), newNetStatusCmd())
+	cmd.AddCommand(newNetNewCmd(), newNetStatusCmd())
 	return cmd
 }
 

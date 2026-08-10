@@ -8,29 +8,22 @@ import (
 
 func TestNetCmd_ComposeStepByStep(t *testing.T) {
 	dir := t.TempDir()
+	presetDir := filepath.Join("..", "..", "keys", "preset")
 
-	out, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet")
+	out, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet", "--keys", presetDir)
 	if err != nil {
 		t.Fatalf("net new: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "stablenet") || !strings.Contains(out, "chain id 8283") || !strings.Contains(out, "target local") {
+	if !strings.Contains(out, "stablenet") || !strings.Contains(out, "chain id 8283") ||
+		!strings.Contains(out, "target local") || !strings.Contains(out, "keys "+presetDir) {
 		t.Fatalf("net new output: %s", out)
-	}
-
-	presetDir := filepath.Join("..", "..", "keys", "preset")
-	out, err = run(t, "net", "keys", "--data-dir", dir, "--keys", presetDir)
-	if err != nil {
-		t.Fatalf("net keys: %v\n%s", err, out)
-	}
-	if !strings.Contains(out, "4 validator(s)") {
-		t.Fatalf("net keys output: %s", out)
 	}
 
 	out, err = run(t, "net", "status", "--data-dir", dir)
 	if err != nil {
 		t.Fatalf("net status: %v\n%s", err, out)
 	}
-	for _, want := range []string{"chain: stablenet", "target: local", "new", "keys", "true"} {
+	for _, want := range []string{"chain: stablenet", "target: local", "keys: " + presetDir, "new", "true"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("net status missing %q:\n%s", want, out)
 		}

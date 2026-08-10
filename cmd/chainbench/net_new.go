@@ -11,7 +11,7 @@ import (
 // newNetNewCmd initializes a composition workspace: the target chain and where
 // its data plane lives (local, or a remote SSH host).
 func newNetNewCmd() *cobra.Command {
-	var dataDir, chain, binary string
+	var dataDir, chain, binary, keysDir string
 	var tf targetFlags
 	cmd := &cobra.Command{
 		Use:   "new",
@@ -21,7 +21,7 @@ func newNetNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			detail, err := ws.New(netcompose.NewOpts{Chain: chain, Binary: binary, Target: tf.spec()})
+			detail, err := ws.New(netcompose.NewOpts{Chain: chain, Binary: binary, KeysDir: keysDir, Target: tf.spec()})
 			if err != nil {
 				return err
 			}
@@ -35,6 +35,7 @@ func newNetNewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory (keep it short: node IPC sockets have a 104-char limit)")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (may also be set at start)")
+	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from (inspect/manage it with `account`)")
 	tf.bind(cmd)
 	return cmd
 }

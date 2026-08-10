@@ -15,58 +15,36 @@ import (
 
 func fixedClock() func() time.Time { return func() time.Time { return time.Unix(0, 0).UTC() } }
 
-func repoRoot(t *testing.T) string {
-	t.Helper()
-	dir, _ := os.Getwd()
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("go.mod not found")
-		}
-		dir = parent
-	}
-}
-
-func TestWorkspace_NewKeysPersist(t *testing.T) {
+func TestWorkspace_NewPersist(t *testing.T) {
 	dir := t.TempDir()
-	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
 
 	ws, err := netcompose.Open(dir, fixedClock())
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet"}); err != nil {
+	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", KeysDir: "keys/preset"}); err != nil {
 		t.Fatalf("New: %v", err)
-	}
-	res, err := ws.Keys(netcompose.KeysOpts{KeysDir: presetDir})
-	if err != nil {
-		t.Fatalf("Keys: %v", err)
-	}
-	if res.Validators != 4 || res.Nodes < 4 || len(res.Addresses) != 4 {
-		t.Fatalf("unexpected keys result: %+v", res)
 	}
 	if err := ws.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	// Reopen: state must round-trip, and both steps must be recorded. A default
-	// local target's data root is the workspace dir.
+	// Reopen: state must round-trip. A default local target's data root is the
+	// workspace dir; the keys pointer is recorded (account inspection is the
+	// `account` subcommand's job, not net's).
 	ws2, err := netcompose.Open(dir, fixedClock())
 	if err != nil {
 		t.Fatalf("reopen: %v", err)
 	}
 	st := ws2.State()
-	if st.Chain != "stablenet" || st.Validators != 4 || st.KeysDir != presetDir {
+	if st.Chain != "stablenet" || st.KeysDir != "keys/preset" {
 		t.Fatalf("state did not persist: %+v", st)
 	}
 	if st.Target.Kind != netcompose.TargetLocal || st.Target.DataRoot != dir {
 		t.Fatalf("local target default wrong: %+v", st.Target)
 	}
-	if !st.Steps["new"].Done || !st.Steps["keys"].Done {
-		t.Fatalf("steps not recorded: %+v", st.Steps)
+	if !st.Steps["new"].Done {
+		t.Fatalf("new step not recorded: %+v", st.Steps)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "workspace.json")); err != nil {
 		t.Fatalf("workspace.json not written: %v", err)
@@ -78,16 +56,12 @@ func TestWorkspace_Validation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
-	if _, err := ws.Keys(netcompose.KeysOpts{}); err == nil {
-		t.Fatal("expected error running keys before new")
-	}
 	if _, err := ws.New(netcompose.NewOpts{Chain: "nope"}); err == nil {
 		t.Fatal("expected error for unknown chain")
 	}
 	if _, err := netcompose.Open("", fixedClock()); err == nil {
 		t.Fatal("expected error for empty data dir")
 	}
-	// remote target without host/dataRoot -> error at New.
 	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Target: netcompose.TargetSpec{Kind: netcompose.TargetRemote}}); err == nil {
 		t.Fatal("expected error for incomplete remote target")
 	}
@@ -125,7 +99,6 @@ func TestTargetResolve(t *testing.T) {
 		t.Fatalf("remote driver type = %T", remoteTgt.Driver)
 	}
 
-	// Remote with no auth in env -> error.
 	if _, err := (netcompose.TargetSpec{Kind: netcompose.TargetRemote, Host: "h", User: "u", DataRoot: "/d"}).Resolve(func(string) string { return "" }); err == nil {
 		t.Fatal("expected error for remote target without auth")
 	}
