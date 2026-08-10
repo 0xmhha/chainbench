@@ -34,6 +34,7 @@ func newRootCmd() *cobra.Command {
 		newTestCmd(),
 		newRunCmd(),
 		newNetCmd(),
+		newValidatorCmd(),
 		newValidateCmd(),
 		newNodeCmd(),
 		newConsensusCmd(),

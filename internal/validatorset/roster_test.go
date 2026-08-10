@@ -1,11 +1,11 @@
-package accountset_test
+package validatorset_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/accountset"
+	"github.com/0xmhha/chainbench/internal/validatorset"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
 )
@@ -27,7 +27,7 @@ func preset(t *testing.T) string {
 }
 
 func TestRoster_WbftFamilyHasValidators(t *testing.T) {
-	r, err := accountset.Load("stablenet", preset(t))
+	r, err := validatorset.Load("stablenet", preset(t))
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -37,14 +37,14 @@ func TestRoster_WbftFamilyHasValidators(t *testing.T) {
 	var validators, nodes, gov int
 	for _, a := range r.Accounts {
 		switch a.Role {
-		case accountset.RoleValidator:
+		case validatorset.RoleValidator:
 			validators++
 			if a.Detail != "BLS present" {
 				t.Fatalf("stablenet validator should have BLS: %+v", a)
 			}
-		case accountset.RoleNode:
+		case validatorset.RoleNode:
 			nodes++
-		case accountset.RoleGovernance:
+		case validatorset.RoleGovernance:
 			gov++
 		}
 	}
@@ -54,7 +54,7 @@ func TestRoster_WbftFamilyHasValidators(t *testing.T) {
 }
 
 func TestRoster_PoaFamilyNoGenesisValidators(t *testing.T) {
-	r, err := accountset.Load("wemix", preset(t))
+	r, err := validatorset.Load("wemix", preset(t))
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestRoster_PoaFamilyNoGenesisValidators(t *testing.T) {
 		t.Fatalf("family = %q, want poa", r.Family)
 	}
 	for _, a := range r.Accounts {
-		if a.Role == accountset.RoleValidator {
+		if a.Role == validatorset.RoleValidator {
 			t.Fatalf("poa chain should not list genesis validators: %+v", a)
 		}
 	}
@@ -72,7 +72,7 @@ func TestRoster_PoaFamilyNoGenesisValidators(t *testing.T) {
 }
 
 func TestRoster_UnknownChain(t *testing.T) {
-	if _, err := accountset.Load("nope", preset(t)); err == nil {
+	if _, err := validatorset.Load("nope", preset(t)); err == nil {
 		t.Fatal("expected error for unknown chain")
 	}
 }

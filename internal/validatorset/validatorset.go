@@ -1,11 +1,12 @@
-// Package accountset presents the accounts a chain needs, by role, from a key
-// set. The roles differ by consensus family: a wbft-family chain (stablenet,
-// wbft) carries its validators (with baked BLS keys) and — for anzeon system
-// contracts — a governance council in genesis; a poa-family chain (wemix) has
-// no validators in genesis (they are registered at the governance/etcd
-// bootstrap), so its key set only fixes node identities. This is the shared
-// core behind the `account` CLI subcommand and its MCP mirror.
-package accountset
+// Package validatorset presents a chain's consensus identities — its validator
+// set and related roles — from a key set. The roles differ by consensus family:
+// a wbft-family chain (stablenet, wbft) carries its validators (with baked BLS
+// keys) and — for anzeon system contracts — a governance council in genesis; a
+// poa-family chain (wemix) has no validators in genesis (they are registered at
+// the governance/etcd bootstrap), so its key set only fixes node identities.
+// This is the shared core behind the `validator` CLI subcommand and its MCP
+// mirror. Plain (EOA) account concerns live under the `account` surface instead.
+package validatorset
 
 import (
 	"fmt"

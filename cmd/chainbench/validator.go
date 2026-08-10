@@ -7,24 +7,37 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/accountset"
+	"github.com/0xmhha/chainbench/internal/validatorset"
 )
 
-// newAccountRosterCmd lists the accounts a chain needs, by role, from a key set.
-// The roles are chain-aware (validators + governance council for wbft-family
-// chains; node identities only for poa/wemix, whose validators are set at
-// bootstrap).
-func newAccountRosterCmd() *cobra.Command {
+// newValidatorCmd is the validator-identity surface: a validator is an account
+// plus consensus-specific material (BLS keys for wbft; governance/stake
+// registration for poa), so it gets its own subcommand rather than living under
+// `account`. Today it inspects the validator set; generation lands here too.
+func newValidatorCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validator",
+		Short: "Inspect and manage validator identities (chain-aware consensus roles)",
+	}
+	cmd.AddCommand(newValidatorRosterCmd())
+	return cmd
+}
+
+// newValidatorRosterCmd lists a chain's validator set (and related consensus
+// roles) from a key set. Chain-aware: validators carry BLS for wbft-family
+// chains and the anzeon governance council; a poa chain (wemix) has no genesis
+// validators (they are registered at bootstrap).
+func newValidatorRosterCmd() *cobra.Command {
 	var chain, keysDir string
 	var jsonOut bool
 	cmd := &cobra.Command{
 		Use:   "roster",
-		Short: "List a chain's accounts by role (validators, governance, nodes) from a key set",
+		Short: "List a chain's validator set and consensus roles from a key set",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if chain == "" {
 				return fmt.Errorf("--chain is required")
 			}
-			r, err := accountset.Load(chain, keysDir)
+			r, err := validatorset.Load(chain, keysDir)
 			if err != nil {
 				return err
 			}
