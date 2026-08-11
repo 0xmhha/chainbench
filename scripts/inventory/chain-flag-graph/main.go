@@ -82,26 +82,31 @@ func main() {
 }
 
 func scanDir(dir string, g *Graph) error {
-	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, dir, func(fi os.FileInfo) bool {
-		return !strings.HasSuffix(fi.Name(), "_test.go")
-	}, parser.ParseComments)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
-	for _, pkg := range pkgs {
-		for path, f := range pkg.Files {
-			base := filepath.Base(path)
-			ast.Inspect(f, func(n ast.Node) bool {
-				switch v := n.(type) {
-				case *ast.ValueSpec:
-					collectValueSpec(v, base, g)
-				case *ast.AssignStmt:
-					collectAssign(v, base, g)
-				}
-				return true
-			})
+	fset := token.NewFileSet()
+	for _, e := range entries {
+		name := e.Name()
+		if e.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
 		}
+		path := filepath.Join(dir, name)
+		f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+		if err != nil {
+			return err
+		}
+		base := filepath.Base(path)
+		ast.Inspect(f, func(n ast.Node) bool {
+			switch v := n.(type) {
+			case *ast.ValueSpec:
+				collectValueSpec(v, base, g)
+			case *ast.AssignStmt:
+				collectAssign(v, base, g)
+			}
+			return true
+		})
 	}
 	return nil
 }
