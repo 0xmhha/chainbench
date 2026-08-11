@@ -34,7 +34,7 @@ type harness struct {
 func (h *harness) deps(t *testing.T) engine.Deps {
 	return engine.Deps{
 		Command: "test",
-		NewSession: func(cmd string) (session.Session, error) {
+		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
 			return session.New(t.TempDir(), cmd, time.Unix(0, 0).UTC(), nil)
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {

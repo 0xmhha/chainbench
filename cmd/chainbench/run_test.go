@@ -211,3 +211,65 @@ func TestRunCmd_JSONOutput(t *testing.T) {
 		t.Fatalf("unexpected JSON report: %+v", rep)
 	}
 }
+
+func TestKeySource_FlagMapping(t *testing.T) {
+	cases := []struct {
+		name    string
+		opts    runOpts
+		want    string
+		wantErr string
+	}{
+		{
+			name: "default is the reproducible preset",
+			opts: runOpts{keysDir: "keys/preset"},
+			want: "preset:keys/preset",
+		},
+		{
+			name: "explicit preset",
+			opts: runOpts{keysDir: "k", keysSource: "preset"},
+			want: "preset:k",
+		},
+		{
+			name: "generate needs a bootnode for BLS material",
+			opts: runOpts{keysDir: "k", keysSource: "generate"},
+			// Silently generating a set without BLS keys would produce a chain
+			// that fails much later, so this must be refused up front.
+			wantErr: "--bootnode",
+		},
+		{
+			name: "generate with a bootnode",
+			opts: runOpts{keysDir: "k", keysSource: "generate", bootnode: "/bin/bootnode"},
+			want: "generated:k",
+		},
+		{
+			name:    "unknown source is rejected",
+			opts:    runOpts{keysDir: "k", keysSource: "borrow"},
+			wantErr: "unknown --keys-source",
+		},
+		{
+			name:    "a local run needs a key directory",
+			opts:    runOpts{keysSource: "preset"},
+			wantErr: "--keys is required",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			src, err := keySource(tc.opts)
+			if tc.wantErr != "" {
+				if err == nil {
+					t.Fatalf("want an error containing %q", tc.wantErr)
+				}
+				if !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("error = %v, want it to contain %q", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("keySource: %v", err)
+			}
+			if got := src.Describe(); got != tc.want {
+				t.Errorf("Describe() = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}

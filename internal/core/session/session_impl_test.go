@@ -1,12 +1,14 @@
 package session_test
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -192,5 +194,36 @@ func TestSave_WritesJSON(t *testing.T) {
 	}
 	if sesDoc["id"] != "UTC-20260806-143005" {
 		t.Fatalf("session.json id = %v", sesDoc["id"])
+	}
+}
+
+func TestNewWithKeys_RegistryIsRootedInTheSession(t *testing.T) {
+	base := t.TempDir()
+	s, err := session.NewWithKeys(base, "chainbench run", fixedTime, keyreg.Deps{
+		Generate: func() ([]byte, string, error) { return []byte{0x01, 0x02}, "0xabc", nil },
+	})
+	if err != nil {
+		t.Fatalf("NewWithKeys: %v", err)
+	}
+	reg := s.Keys()
+	if reg == nil {
+		t.Fatal("Keys() is nil — the session did not build a registry")
+	}
+
+	if _, err := reg.Ensure(context.Background(), "op1", keyreg.Random, "", keyreg.EnsureOpts{}); err != nil {
+		t.Fatalf("Ensure: %v", err)
+	}
+	// The point of session-owned keys is that callers never derive the path:
+	// material must land inside this session's tree.
+	addr := filepath.Join(s.Root(), "keys", "op1", "address")
+	if _, err := os.Stat(addr); err != nil {
+		t.Fatalf("key was not persisted under the session: %v", err)
+	}
+}
+
+func TestNew_WithoutKeysLeavesRegistryNil(t *testing.T) {
+	s := newSession(t)
+	if s.Keys() != nil {
+		t.Error("New(..., nil) should leave the registry unset")
 	}
 }

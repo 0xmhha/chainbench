@@ -17,8 +17,10 @@ type TeardownFunc func(ctx context.Context) error
 // without real components. A production wiring composes place/keyreg/genesis/
 // provision/supervisor in BuildEnv and collector/interpreter in RunSpec.
 type Deps struct {
-	// NewSession creates the artifact session for one command.
-	NewSession func(command string) (session.Session, error)
+	// NewSession creates the artifact session for one command. It takes a
+	// context because a wiring may have to materialize key material (generating
+	// identities shells out to an external binary) before the session is usable.
+	NewSession func(ctx context.Context, command string) (session.Session, error)
 	// Fingerprint derives an environment reuse key from a spec (resolved config
 	// is applied by the wiring).
 	Fingerprint func(spec testspec.Spec) session.Fingerprint
@@ -67,7 +69,7 @@ func (e *engine) emit(phase obs.Phase, kind obs.Kind, msg string, fields map[str
 // an environment by fingerprint, run the test, and record. Environments are torn
 // down at the end. It returns the session root.
 func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
-	sess, err := e.deps.NewSession(e.deps.Command)
+	sess, err := e.deps.NewSession(ctx, e.deps.Command)
 	if err != nil {
 		return "", fmt.Errorf("engine: new session: %w", err)
 	}

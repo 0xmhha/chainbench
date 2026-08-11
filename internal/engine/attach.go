@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
@@ -67,6 +69,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if clock == nil {
 		clock = time.Now
 	}
+	accts, err := accounts.ForChain(cfg.Chain)
+	if err != nil {
+		return nil, fmt.Errorf("engine: attach engine: %w", err)
+	}
+	keyDeps := keyreg.Deps{DeriveAddress: accts.AddressForKey}
 
 	run := NewRunSpec(testspec.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
@@ -75,8 +82,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 
 	return New(Deps{
 		Command: engineCommand,
-		NewSession: func(cmd string) (session.Session, error) {
-			return session.New(cfg.ArtifactRoot, cmd, clock(), nil)
+		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
+			// Attach owns no node identities, but a spec may still generate keys
+			// mid-run, so the session gets a registry rooted in its own keys/
+			// directory rather than nothing.
+			return session.NewWithKeys(cfg.ArtifactRoot, cmd, clock(), keyDeps)
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
 			return s.Fingerprint(config.Values{})
