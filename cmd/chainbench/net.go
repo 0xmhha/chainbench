@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/spf13/cobra"
@@ -27,16 +26,14 @@ func newNetCmd() *cobra.Command {
 			"data plane lives on the target (local, or a remote SSH host set at `net new`).\n" +
 			"The same steps are exposed as MCP tools.",
 	}
-	cmd.AddCommand(newNetNewCmd(), newNetStatusCmd())
+	cmd.AddCommand(
+		newNetNewCmd(), newNetStatusCmd(),
+		newNetKeysCmd(), newNetAllocateCmd(), newNetGenesisCmd(), newNetConfigCmd(),
+		newNetLaunchOptsCmd(), newNetProvisionCmd(),
+		newNetInitCmd(), newNetStartCmd(), newNetStopCmd(), newNetRestartCmd(),
+		newNetRmCmd(), newNetLogsCmd(), newNetHealthCmd(),
+	)
 	return cmd
-}
-
-// openWorkspace opens the local data-dir workspace for a step command.
-func openWorkspace(dataDir string) (*netcompose.Workspace, error) {
-	if dataDir == "" {
-		return nil, fmt.Errorf("--data-dir is required")
-	}
-	return netcompose.Open(dataDir, nil)
 }
 
 // targetFlags holds the compose-target selection shared by commands that set it.

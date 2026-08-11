@@ -187,8 +187,6 @@ func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, 
 	}
 
 	m := plugin.Manifest()
-	fam := plugin.Family()
-	dialect := launchopt.DialectFor(m.ID)
 	out := make([]driver.NodeSpec, len(plan.Nodes))
 	for i, spec := range plan.Nodes {
 		nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
@@ -202,30 +200,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, 
 			StaticNodes:   staticNodes,
 		})
 
-		policy, err := launchopt.ParseFamilyFlags(fam.StartFlags(spec.Role))
-		if err != nil {
-			return nil, fmt.Errorf("engine: launcher: node%d: %w", spec.Index, err)
-		}
-		id := launchopt.Identity{
-			NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
-			AllowInsecureUnlock: policy.AllowInsecureUnlock,
-		}
-		if spec.Role == node.RoleValidator {
-			if nk, ok := preset.Node(spec.Index); ok {
-				id.Unlock = nk.Address
-				id.PasswordFile = filepath.Join(keysDir, "password")
-				id.Etherbase = nk.Address
-			}
-		}
-		args, err := launchopt.New(dialect,
-			id,
-			launchopt.Storage{DataDir: spec.DataDir, ConfigFile: spec.ConfigPath},
-			launchopt.P2P{Port: spec.Ports.P2P},
-			launchopt.HTTPRPC{Enabled: true, Port: spec.Ports.HTTP},
-			launchopt.WSRPC{Enabled: true, Port: spec.Ports.WS},
-			launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
-			launchopt.Mining{Mine: policy.Mine},
-		).WithOverrides(overrides...).Build()
+		args, err := NodeLaunchArgs(plugin, preset, spec, keysDir, overrides)
 		if err != nil {
 			return nil, fmt.Errorf("engine: launcher: node%d: %w", spec.Index, err)
 		}
@@ -234,4 +209,37 @@ func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, 
 		out[i] = spec
 	}
 	return out, nil
+}
+
+// NodeLaunchArgs assembles one node's full launch argv through the launchopt
+// Builder. This is THE argv assembly site (docs/dev/architecture/code-graph.md
+// §3): armSpecs uses it for engine runs, and the netcompose step surface uses
+// it for `net launchopts`/`net start`, so a step-composed node launches with
+// exactly the argv an engine run would produce.
+func NodeLaunchArgs(plugin registry.ChainPlugin, preset keys.Preset, spec driver.NodeSpec, keysDir string, overrides []launchopt.Override) ([]string, error) {
+	policy, err := launchopt.ParseFamilyFlags(plugin.Family().StartFlags(spec.Role))
+	if err != nil {
+		return nil, err
+	}
+	nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
+	id := launchopt.Identity{
+		NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
+		AllowInsecureUnlock: policy.AllowInsecureUnlock,
+	}
+	if spec.Role == node.RoleValidator {
+		if nk, ok := preset.Node(spec.Index); ok {
+			id.Unlock = nk.Address
+			id.PasswordFile = filepath.Join(keysDir, "password")
+			id.Etherbase = nk.Address
+		}
+	}
+	return launchopt.New(launchopt.DialectFor(plugin.Manifest().ID),
+		id,
+		launchopt.Storage{DataDir: spec.DataDir, ConfigFile: spec.ConfigPath},
+		launchopt.P2P{Port: spec.Ports.P2P},
+		launchopt.HTTPRPC{Enabled: true, Port: spec.Ports.HTTP},
+		launchopt.WSRPC{Enabled: true, Port: spec.Ports.WS},
+		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
+		launchopt.Mining{Mine: policy.Mine},
+	).WithOverrides(overrides...).Build()
 }

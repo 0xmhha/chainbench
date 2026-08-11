@@ -37,17 +37,36 @@ type Step struct {
 	At     string `json:"at,omitempty"`
 }
 
+// NodeState is one composed node's resolved assignment: its role, target-side
+// paths, allocated ports, the assembled launch argv (once `launchopts` ran),
+// and the live PID (once `start` ran; 0 = stopped).
+type NodeState struct {
+	Index      int      `json:"index"`
+	Role       string   `json:"role"`
+	DataDir    string   `json:"dataDir"`
+	ConfigPath string   `json:"configPath"`
+	LogPath    string   `json:"logPath"`
+	P2P        int      `json:"p2p"`
+	HTTP       int      `json:"http"`
+	WS         int      `json:"ws"`
+	Auth       int      `json:"auth"`
+	Args       []string `json:"args,omitempty"`
+	PID        int      `json:"pid,omitempty"`
+}
+
 // State is the persisted composition state accumulated across step commands. It
 // grows as later steps land (placements, genesis path, node table); each field
 // is optional so a partially-composed workspace round-trips. It holds no
 // secrets — remote credentials live only in the environment.
 type State struct {
-	Chain      string          `json:"chain"`
-	Binary     string          `json:"binary,omitempty"`
-	KeysDir    string          `json:"keysDir,omitempty"`
-	Validators int             `json:"validators,omitempty"`
-	Target     TargetSpec      `json:"target"`
-	Steps      map[string]Step `json:"steps"`
+	Chain       string          `json:"chain"`
+	Binary      string          `json:"binary,omitempty"`
+	KeysDir     string          `json:"keysDir,omitempty"`
+	Validators  int             `json:"validators,omitempty"`
+	Target      TargetSpec      `json:"target"`
+	GenesisPath string          `json:"genesisPath,omitempty"`
+	Nodes       []NodeState     `json:"nodes,omitempty"`
+	Steps       map[string]Step `json:"steps"`
 }
 
 // Workspace is an open composition workspace rooted at a local control directory.
@@ -55,6 +74,7 @@ type Workspace struct {
 	dir   string
 	state State
 	now   func() time.Time
+	env   func(string) string
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
@@ -69,7 +89,7 @@ func Open(dir string, now func() time.Time) (*Workspace, error) {
 	if err := os.MkdirAll(dir, dirPerm); err != nil {
 		return nil, fmt.Errorf("netcompose: mkdir %s: %w", dir, err)
 	}
-	ws := &Workspace{dir: dir, now: now, state: State{Steps: map[string]Step{}}}
+	ws := &Workspace{dir: dir, now: now, env: os.Getenv, state: State{Steps: map[string]Step{}}}
 	if b, err := os.ReadFile(filepath.Join(dir, workspaceFile)); err == nil {
 		if err := json.Unmarshal(b, &ws.state); err != nil {
 			return nil, fmt.Errorf("netcompose: parse %s: %w", workspaceFile, err)
@@ -85,6 +105,14 @@ func Open(dir string, now func() time.Time) (*Workspace, error) {
 
 // Dir is the workspace's local control directory.
 func (w *Workspace) Dir() string { return w.dir }
+
+// SetEnv overrides the environment reader used when resolving a remote target
+// (credentials). Nil is ignored; the default is os.Getenv.
+func (w *Workspace) SetEnv(fn func(string) string) {
+	if fn != nil {
+		w.env = fn
+	}
+}
 
 // State returns a copy of the current composition state.
 func (w *Workspace) State() State { return w.state }
