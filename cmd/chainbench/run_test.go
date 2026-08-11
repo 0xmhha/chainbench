@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -271,5 +272,25 @@ func TestKeySource_FlagMapping(t *testing.T) {
 				t.Errorf("Describe() = %s, want %s", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestParseLaunchOverrides(t *testing.T) {
+	got, err := parseLaunchOverrides([]string{"networkid=4242", "nodiscover", "http.api=eth,net"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 3 {
+		t.Fatalf("overrides = %d, want 3", len(got))
+	}
+	if got[0].Key != launchopt.KeyNetworkID || got[0].Value != "4242" {
+		t.Errorf("override[0] = %+v", got[0])
+	}
+	if got[1].Key != launchopt.KeyNoDiscover || got[1].Value != "" {
+		t.Errorf("bare boolean key: %+v", got[1])
+	}
+
+	if _, err := parseLaunchOverrides([]string{"=oops"}); err == nil {
+		t.Fatal("empty key must be rejected at the CLI boundary")
 	}
 }

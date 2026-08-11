@@ -6,7 +6,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/portplan"
@@ -37,7 +36,6 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 		return setup.Plan{}, fmt.Errorf("engine: assemble plan: no nodes")
 	}
 	m := plugin.Manifest()
-	fam := plugin.Family()
 
 	specs := make([]driver.NodeSpec, 0, len(placed))
 	for i, pn := range placed {
@@ -52,6 +50,9 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 		if binary == "" {
 			binary = m.Binary
 		}
+		// Args are deliberately not assembled here: the launch argv is
+		// single-sited in the launcher's arming step (launchopt Builder), which
+		// also holds the identity flags this function cannot know.
 		specs = append(specs, driver.NodeSpec{
 			Index:      idx,
 			Role:       pn.Req.Role,
@@ -62,7 +63,6 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 			ConfigPath: configPath,
 			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", idx)),
 			Ports:      ports,
-			Args:       nodeconfig.LaunchArgs(dataDir, configPath, ports, fam.StartFlags(pn.Req.Role)),
 		})
 	}
 

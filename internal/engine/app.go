@@ -3,12 +3,14 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/keyreg"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/place"
@@ -60,6 +62,15 @@ type LocalConfig struct {
 	ArtifactRoot string
 	// Validators is the validator node count; <=0 uses the default.
 	Validators int
+	// ChainID, when non-zero, overrides the manifest chain id in the built
+	// genesis. The network id follows the chain id unless NetworkID also set.
+	ChainID int64
+	// NetworkID, when non-zero, pins the devp2p network id on every node's
+	// command line (--networkid).
+	NetworkID int64
+	// LaunchOverrides are high-precedence launch knobs applied to every node's
+	// argv through the launchopt Builder (env.launch / case layers).
+	LaunchOverrides []launchopt.Override
 	// Clock supplies the session start time; nil uses time.Now (injected so
 	// tests are deterministic).
 	Clock func() time.Time
@@ -109,8 +120,18 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	// The controller fronts the launcher so a fault step can reach an individual
 	// node process later; it shares the supervisor's procman so a node stopped
 	// and restarted mid-test is still torn down at the end.
+	// A pinned network id rides the same override layer as user launch knobs,
+	// so every node's argv carries it uniformly.
+	overrides := cfg.LaunchOverrides
+	if cfg.NetworkID != 0 {
+		overrides = append([]launchopt.Override{
+			{Key: launchopt.KeyNetworkID, Value: strconv.FormatInt(cfg.NetworkID, 10), Layer: launchopt.LayerEnv},
+		}, overrides...)
+	}
 	procs := procman.New()
-	controller := NewNodeController(LocalLauncher{Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir}, procs)
+	controller := NewNodeController(LocalLauncher{
+		Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir, LaunchOverrides: overrides,
+	}, procs)
 	sup := supervisor.New(supervisor.Deps{
 		Launch:     controller.Launch,
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
@@ -119,7 +140,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	build := NewBuildEnv(BuildDeps{
 		Plugin:     plugin,
 		Allocator:  place.New(place.Config{P2PBase: localP2PBase, P2PStep: localPortStep, RPCBase: localRPCBase, RPCStep: localPortStep}),
-		Genesis:    PresetGenesisSource{KeysDir: keysDir},
+		Genesis:    PresetGenesisSource{KeysDir: keysDir, ChainID: cfg.ChainID},
 		Supervisor: sup,
 		Mode:       place.LocalStepped,
 		Capacity:   place.Capacity{MinValidators: 1, PortBandSize: defaultPortBand},

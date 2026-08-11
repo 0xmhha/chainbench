@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -160,7 +161,7 @@ func (h *liveHandoff) Launch(ctx context.Context, o HandoffOptions) (node.NodeSe
 		FromFamily: h.from.Family(), ToFamily: h.to.Family(),
 		Host:          defaultHost,
 		ProvisionKeys: h.provisionKeys(o),
-		ExtraArgs:     extraArgs(producerAcct, h.pwPath, h.from.Family().RPCNamespace(), h.to.Family().RPCNamespace()),
+		Overrides:     handoffOverrides(producerAcct, h.pwPath, h.from.Family().RPCNamespace(), h.to.Family().RPCNamespace()),
 	}
 	return upgrade.Launch(ctx, driver.NewLocalDriver(), h.plan, opts)
 }
@@ -246,19 +247,23 @@ func (h *liveHandoff) provisionKeys(o HandoffOptions) func(context.Context, driv
 	}
 }
 
-// extraArgs adds the account and RPC-namespace flags. admin is required on every
-// node because the mesh is wired with admin_addPeer.
-func extraArgs(producerAcct, pwPath, fromNS, toNS string) func(upgrade.NodeSpec, bool) []string {
-	return func(_ upgrade.NodeSpec, producer bool) []string {
+// handoffOverrides adds the account and RPC-namespace knobs. admin is required
+// on every node because the mesh is wired with admin_addPeer.
+func handoffOverrides(producerAcct, pwPath, fromNS, toNS string) func(upgrade.NodeSpec, bool) []launchopt.Override {
+	return func(_ upgrade.NodeSpec, producer bool) []launchopt.Override {
 		if producer {
-			return []string{
-				"--nat", "none",
-				"--http.api", "eth,net,web3," + fromNS + ",admin,miner,txpool,personal",
-				"--miner.etherbase", producerAcct,
-				"--unlock", producerAcct, "--password", pwPath,
+			return []launchopt.Override{
+				{Key: launchopt.KeyNAT, Value: "none"},
+				{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + fromNS + ",admin,miner,txpool,personal"},
+				{Key: launchopt.KeyEtherbase, Value: producerAcct},
+				{Key: launchopt.KeyUnlock, Value: producerAcct},
+				{Key: launchopt.KeyPassword, Value: pwPath},
 			}
 		}
-		return []string{"--nat", "none", "--http.api", "eth,net,web3," + toNS + ",admin,miner,txpool"}
+		return []launchopt.Override{
+			{Key: launchopt.KeyNAT, Value: "none"},
+			{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + toNS + ",admin,miner,txpool"},
+		}
 	}
 }
 

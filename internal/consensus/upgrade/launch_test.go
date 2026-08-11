@@ -13,7 +13,11 @@ func TestLaunchArgs(t *testing.T) {
 		NetworkID: 8285,
 		Ports:     portplan.Ports{P2P: 30011, Etcd: 30012, HTTP: 40011, WS: 40012, Auth: 40013},
 	}
-	got := strings.Join(upgrade.LaunchArgs(n, "/data/node1", []string{"--mine"}), " ")
+	args, err := upgrade.LaunchArgs(n, "/data/node1", []string{"--mine"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(args, " ")
 
 	// the two handoff-critical flags must be present with the node's own values.
 	for _, want := range []string{

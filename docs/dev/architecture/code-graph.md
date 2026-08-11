@@ -81,26 +81,36 @@ removes.
 
 ## 4. Execution work list for the launchopt branch
 
-Ordered so every step keeps `go test -race ./...` green and the launch argv
-byte-identical (golden-gated):
+Ordered so every step keeps `go test -race ./...` green, each conversion gated
+by an equivalence test against the legacy argv:
 
 1. **`internal/core/launchopt`** — `Dialect` tables ×2 (`geth114`,
    `geth110-wemix`), typed `Key` set, 10 concern modules, `Builder` with
    layered precedence (`family default < role < env.launch < case override`)
    and tri-state unsupported handling (skip / error / mapped). Pure functions,
-   unit TDD; golden tests reproduce today's argv from sites 1–4 byte-for-byte.
-2. **Golden conversion of site 1+2** — `engine/plan.go` and
-   `engine/launcher.go armSpecs` build through the Builder. Behavior change
-   zero; the golden tests are the gate.
-3. **Golden conversion of site 4** — `upgrade.LaunchArgs` becomes a Builder
-   profile (handoff layer sets `http.addr`, `authrpc.port`, `networkid`).
-4. **Customization seams** — chainId / networkId / genesis overlay / keys
-   already have owners (`genesis` builder, `netid`, `keyreg`, T7.1 KeySource);
-   expose the remaining launch knobs (`env.launch`-shaped overrides) through
-   the Builder's override layer and the local engine config.
-5. **Config/flag boundary** (§3.4 of the flag-graph review) — drop the
-   endpoint duplication from `nodeconfig.Generate` only if the golden e2e
-   proves both surfaces agree; otherwise record and defer.
+   unit TDD.
+2. **Conversion of sites 1+2** — argv assembly single-sited in
+   `engine/launcher.go armSpecs` through the Builder; `engine/plan.go` no
+   longer pre-assembles Args.
+3. **Conversion of sites 4+5** — `upgrade.LaunchArgs` builds through the
+   Builder; the two duplicated `ExtraArgs` closures (chainsetup + cmd) become
+   typed `Overrides`.
+4. **Customization seams** — `genesis.Inputs.ChainID` override,
+   `LocalConfig.ChainID/NetworkID/LaunchOverrides`, CLI
+   `--chain-id/--network-id/--launch-opt`.
+5. **Config/flag boundary** (§3.4 of the flag-graph review) — deferred: the
+   TOML endpoint entries stay until an e2e proves both surfaces agree.
+
+**Gate note.** The worklist's original "byte-identical" gate is structurally
+unsatisfiable: the legacy argv interleaves Identity and Mining flags twice
+(`--allow-insecure-unlock … --mine … --nodekey --unlock`), which
+concern-contiguous emission cannot reproduce. The implemented gate is
+flag-pair equality against the legacy composition
+(`TestArmSpecsLaunchoptEquivalence`) plus a canonical-order snapshot
+(`TestBuildWbftValidatorSnapshot`); geth-family flag parsing is
+position-independent, so pair equality is the semantic contract.
 
 Out of scope on this branch: remote execution paths (tested on a separate
-machine), legacy stack A removal (T7.11), DSL v2 (T7.8).
+machine), legacy stack A removal (T7.11) — `core/pipeline/setup` and
+`chains/wemix/deploy` still call `nodeconfig.LaunchArgs` and migrate when
+their stacks do — and DSL v2 (T7.8).

@@ -1,14 +1,14 @@
 package upgrade
 
 import (
-	"strconv"
-
-	"github.com/0xmhha/chainbench/internal/core/netid"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 )
 
 // LaunchArgs builds the full launch argv (excluding the binary itself) for one
-// node of a handoff network. It differs from the plain setup launch args in the
-// two ways the live handoff proved to require:
+// node of a handoff network, through the launchopt Builder (the single argv
+// assembly seam — docs/dev/architecture/code-graph.md §3). It differs from the
+// plain setup launch profile in the two ways the live handoff proved to
+// require:
 //
 //   - --networkid is set explicitly on every node. go-wemix otherwise defaults
 //     its devp2p network id (independent of chain id) while go-wbft derives it
@@ -18,19 +18,24 @@ import (
 //
 // familyFlags are the consensus family's role flags (e.g. --mine for a
 // producer/validator), supplied by the caller from the node's own chain family
-// so this stays engine-agnostic. The handoff passes every setting on the command
-// line (no --config file), so the two binaries need no pre-written node config.
-func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string) []string {
-	args := []string{
-		"--datadir", dataDir,
-		"--port", strconv.Itoa(n.Ports.P2P),
-		"--http",
-		"--http.addr", "127.0.0.1",
-		"--http.port", strconv.Itoa(n.Ports.HTTP),
-		"--ws",
-		"--ws.port", strconv.Itoa(n.Ports.WS),
-		"--authrpc.port", strconv.Itoa(n.Ports.Auth),
+// so this stays engine-agnostic; they must fit the closed vocabulary
+// launchopt.ParseFamilyFlags accepts. overrides are the per-node high-precedence
+// knobs (the handoff's account and RPC-namespace layer). The handoff passes
+// every setting on the command line (no --config file), so the two binaries
+// need no pre-written node config.
+func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string, overrides ...launchopt.Override) ([]string, error) {
+	policy, err := launchopt.ParseFamilyFlags(familyFlags)
+	if err != nil {
+		return nil, err
 	}
-	args = append(args, netid.Flag(n.NetworkID)...)
-	return append(args, familyFlags...)
+	return launchopt.New(launchopt.DialectFor(n.Chain),
+		launchopt.Identity{AllowInsecureUnlock: policy.AllowInsecureUnlock},
+		launchopt.Storage{DataDir: dataDir},
+		launchopt.P2P{Port: n.Ports.P2P, NetworkID: n.NetworkID},
+		launchopt.HTTPRPC{Enabled: true, Addr: "127.0.0.1", Port: n.Ports.HTTP},
+		launchopt.WSRPC{Enabled: true, Port: n.Ports.WS},
+		launchopt.AuthIPC{AuthPort: n.Ports.Auth},
+		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
+		launchopt.Mining{Mine: policy.Mine},
+	).WithOverrides(overrides...).Build()
 }

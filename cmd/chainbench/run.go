@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/engine"
@@ -33,6 +35,9 @@ func newRunCmd() *cobra.Command {
 		bootnode     string
 		artifactRoot string
 		validators   int
+		chainID      int64
+		networkID    int64
+		launchOpts   []string
 		dashboardURL string
 		jsonOut      bool
 	)
@@ -66,7 +71,9 @@ func newRunCmd() *cobra.Command {
 			eng, err := buildRunEngine(runOpts{
 				chain: chain, rpcURLs: rpcURLs, binary: binary,
 				keysDir: keysDir, keysSource: keysSource, bootnode: bootnode,
-				artifactRoot: artifactRoot, validators: validators, bus: bus,
+				artifactRoot: artifactRoot, validators: validators,
+				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
+				bus: bus,
 			})
 			if err != nil {
 				flush()
@@ -89,6 +96,10 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "local: bootnode binary used to derive BLS material when --keys-source=generate")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory")
 	cmd.Flags().IntVar(&validators, "validators", 4, "local: validator node count")
+	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "local: override the manifest chain id in the built genesis (0 = manifest)")
+	cmd.Flags().Int64Var(&networkID, "network-id", 0, "local: pin the devp2p network id on every node (0 = binary default)")
+	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
+		"local: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd
@@ -118,6 +129,9 @@ type runOpts struct {
 	bootnode     string
 	artifactRoot string
 	validators   int
+	chainID      int64
+	networkID    int64
+	launchOpts   []string
 	bus          *obs.Bus
 }
 
@@ -137,9 +151,15 @@ func buildRunEngine(o runOpts) (engine.Engine, error) {
 		if err != nil {
 			return nil, err
 		}
+		overrides, err := parseLaunchOverrides(o.launchOpts)
+		if err != nil {
+			return nil, err
+		}
 		return engine.NewLocalEngine(engine.LocalConfig{
 			Chain: o.chain, Binary: o.binary, Keys: src,
-			ArtifactRoot: o.artifactRoot, Validators: o.validators, Bus: o.bus,
+			ArtifactRoot: o.artifactRoot, Validators: o.validators,
+			ChainID: o.chainID, NetworkID: o.networkID, LaunchOverrides: overrides,
+			Bus: o.bus,
 		})
 	default:
 		return nil, fmt.Errorf("run: provide --rpc <url> (attach) or --binary <path> (local)")
@@ -165,6 +185,22 @@ func keySource(o runOpts) (engine.KeySource, error) {
 		return nil, fmt.Errorf("run: unknown --keys-source %q (want %s or %s)",
 			o.keysSource, keysSourcePreset, keysSourceGenerate)
 	}
+}
+
+// parseLaunchOverrides maps --launch-opt key=value pairs onto typed launchopt
+// overrides. Keys are the chain-agnostic knob names (launchopt.Key); whether a
+// key exists for the target binary is checked at assembly time by the Builder,
+// which classifies an unsupported knob as an error rather than dropping it.
+func parseLaunchOverrides(opts []string) ([]launchopt.Override, error) {
+	out := make([]launchopt.Override, 0, len(opts))
+	for _, o := range opts {
+		k, v, _ := strings.Cut(o, "=")
+		if k == "" {
+			return nil, fmt.Errorf("run: bad --launch-opt %q (want key=value or a bare boolean key)", o)
+		}
+		out = append(out, launchopt.Override{Key: launchopt.Key(k), Value: v})
+	}
+	return out, nil
 }
 
 // readSpecFiles reads each spec file into raw JSON bytes.

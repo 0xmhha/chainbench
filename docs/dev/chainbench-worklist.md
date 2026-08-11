@@ -79,8 +79,8 @@
 | # | 작업 | 왜 이 순서인가 | 상태 |
 |---|---|---|---|
 | **T7.2** | **wbft extraData RLP 산출** — 검증자 주소·BLS 에서 extra-data 를 계산해 `GeneratedKeySource` 가 유효 genesis 를 낼 수 있게 | T7.1 이 연 "랜덤 키셋" 경로의 유일한 잔여 블로커. 이것 없이는 `--keys-source=generate` 가 wbft 계열에서 반쪽 | ☐ |
-| **T7.3** | **`internal/core/launchopt`** — Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder(cross-module 검증) | 배경 2·알고리즘 7 미충족. 현재 launch args 가 5곳 분산 | ☐ |
-| **T7.4** | **launchopt 골든 전환** — `armSpecs`·`nodeconfig.LaunchArgs`·`StartFlags`·`handoff_driver` 를 Builder 로 흡수, 출력 바이트 동일 게이트 | 5곳 → 1곳. 동작 변화 0 이 조건 | ☐ |
+| **T7.3** | **`internal/core/launchopt`** — Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder(cross-module 검증) | 배경 2·알고리즘 7 미충족. 현재 launch args 가 5곳 분산 | ☑ |
+| **T7.4** | **launchopt 전환** — `armSpecs`(engine)·`upgrade.LaunchArgs`·`ExtraArgs` 클로저 2곳(chainsetup·cmd)을 Builder 로 흡수 + CLI `--chain-id/--network-id/--launch-opt` 커스텀 심. 게이트는 flag-pair 동등성(레거시 argv 가 관심사를 2회 교차 배치해 바이트 동일은 구조적으로 불가 — `architecture/code-graph.md` §4). 잔여: legacy stack A 의 `nodeconfig.LaunchArgs` 호출 2곳은 T7.11 에서 스택과 함께 이관 | 5곳 → 1곳(레거시 스택 제외) | ☑ |
 | **T7.5** | **`internal/app` 유스케이스 층** — CLI RunE 와 MCP 핸들러가 같은 함수를 호출 | 지금 `mcp` 의 fan-out 이 19(=engine 과 동급). 원자 CLI 확장 전에 세우지 않으면 스텝마다 로직이 복제된다 | ☐ |
 | **T7.6** | **`net` 원자 스텝 잔여** — `keys`/`allocate`/`genesis`/`config`/`launchopts`/`provision`/`init`/`start`/`stop`/`restart`/`rm`/`logs`/`health` | `net new`·`net status` 만 존재. 각 스텝 = MCP 도구 1:1 | ☐ |
 | **T7.7** | **`netcompose.Workspace` → `core/session` 흡수** | 상태 저장소 3개(state / session / Workspace) 중 하나 제거. 지금은 필드 6개라 비용 0, 노드 테이블이 들어가면 완전 중복 | ☐ |

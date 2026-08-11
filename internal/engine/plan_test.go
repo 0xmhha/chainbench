@@ -1,7 +1,6 @@
 package engine_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -66,8 +65,10 @@ func TestAssemblePlan_UsesAllocatorPorts(t *testing.T) {
 	if n1.DataDir != "/data/node1" {
 		t.Fatalf("node1 DataDir = %q", n1.DataDir)
 	}
-	if len(n1.Args) == 0 || !argsReference(n1.Args, "/data/node1") {
-		t.Fatalf("node1 Args should reference its datadir: %v", n1.Args)
+	// Argv assembly is single-sited in the launcher's arming step (launchopt
+	// Builder); the plan deliberately carries no Args.
+	if len(n1.Args) != 0 {
+		t.Fatalf("plan must not pre-assemble Args (moved to arming): %v", n1.Args)
 	}
 
 	// node2 must carry the placement's non-stepped ports, proving allocator-driven.
@@ -108,13 +109,4 @@ func TestAssemblePlan_NoNodes(t *testing.T) {
 	if _, err := engine.AssemblePlan(wbftPlugin(t), nil, nil, "/d", nil); err == nil {
 		t.Fatal("expected error for empty placements")
 	}
-}
-
-func argsReference(args []string, substr string) bool {
-	for _, a := range args {
-		if strings.Contains(a, substr) {
-			return true
-		}
-	}
-	return false
 }
