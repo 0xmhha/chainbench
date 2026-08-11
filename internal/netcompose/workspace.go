@@ -11,31 +11,21 @@
 // SSH host); see target.go. Step functions use the Target's FileSink/Driver and
 // never branch on local vs remote.
 //
-// The CLI and MCP surfaces are thin wrappers over the step functions here, so
-// both drive the exact same behavior.
+// Persistence belongs to core/session (Composition — the long-lived
+// environment mode); this package owns only the domain state and the step
+// functions. The CLI and MCP surfaces are thin wrappers over the app layer,
+// which calls the step functions here, so both drive the exact same behavior.
 package netcompose
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
-	"path/filepath"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
-// workspaceFile is the composition-state manifest at the data-dir root.
-const workspaceFile = "workspace.json"
-
-// dirPerm is the permission for the data directory.
-const dirPerm os.FileMode = 0o755
-
-// Step records that one composition step ran, with a human-readable detail and
-// the (injected) timestamp it completed.
-type Step struct {
-	Done   bool   `json:"done"`
-	Detail string `json:"detail,omitempty"`
-	At     string `json:"at,omitempty"`
-}
+// Step is a completed composition step (persistence model owned by session).
+type Step = session.Step
 
 // NodeState is one composed node's resolved assignment: its role, target-side
 // paths, allocated ports, the assembled launch argv (once `launchopts` ran),
@@ -69,42 +59,34 @@ type State struct {
 	Steps       map[string]Step `json:"steps"`
 }
 
-// Workspace is an open composition workspace rooted at a local control directory.
+// Workspace is an open composition workspace: the session-owned persistence
+// (control directory + manifest + step stamps) plus the netcompose domain
+// state the steps accumulate.
 type Workspace struct {
-	dir   string
+	comp  session.Composition
 	state State
-	now   func() time.Time
 	env   func(string) string
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
 // deterministic timestamps; nil uses time.Now.
 func Open(dir string, now func() time.Time) (*Workspace, error) {
-	if dir == "" {
-		return nil, fmt.Errorf("netcompose: data dir is required")
+	comp, err := session.OpenComposition(dir, now)
+	if err != nil {
+		return nil, err
 	}
-	if now == nil {
-		now = time.Now
+	ws := &Workspace{comp: comp, env: os.Getenv, state: State{Steps: map[string]Step{}}}
+	if err := comp.Load(&ws.state); err != nil {
+		return nil, err
 	}
-	if err := os.MkdirAll(dir, dirPerm); err != nil {
-		return nil, fmt.Errorf("netcompose: mkdir %s: %w", dir, err)
-	}
-	ws := &Workspace{dir: dir, now: now, env: os.Getenv, state: State{Steps: map[string]Step{}}}
-	if b, err := os.ReadFile(filepath.Join(dir, workspaceFile)); err == nil {
-		if err := json.Unmarshal(b, &ws.state); err != nil {
-			return nil, fmt.Errorf("netcompose: parse %s: %w", workspaceFile, err)
-		}
-		if ws.state.Steps == nil {
-			ws.state.Steps = map[string]Step{}
-		}
-	} else if !os.IsNotExist(err) {
-		return nil, fmt.Errorf("netcompose: read %s: %w", workspaceFile, err)
+	if ws.state.Steps == nil {
+		ws.state.Steps = map[string]Step{}
 	}
 	return ws, nil
 }
 
 // Dir is the workspace's local control directory.
-func (w *Workspace) Dir() string { return w.dir }
+func (w *Workspace) Dir() string { return w.comp.Dir() }
 
 // SetEnv overrides the environment reader used when resolving a remote target
 // (credentials). Nil is ignored; the default is os.Getenv.
@@ -119,17 +101,8 @@ func (w *Workspace) State() State { return w.state }
 
 // markStep records that step ran with detail, stamping the completion time.
 func (w *Workspace) markStep(step, detail string) {
-	w.state.Steps[step] = Step{Done: true, Detail: detail, At: w.now().UTC().Format(time.RFC3339)}
+	w.state.Steps[step] = w.comp.StepMark(detail)
 }
 
-// Save writes the composition state to workspace.json.
-func (w *Workspace) Save() error {
-	b, err := json.MarshalIndent(w.state, "", "  ")
-	if err != nil {
-		return fmt.Errorf("netcompose: marshal state: %w", err)
-	}
-	if err := os.WriteFile(filepath.Join(w.dir, workspaceFile), b, 0o644); err != nil {
-		return fmt.Errorf("netcompose: write %s: %w", workspaceFile, err)
-	}
-	return nil
-}
+// Save writes the composition state to the manifest.
+func (w *Workspace) Save() error { return w.comp.Save(w.state) }
