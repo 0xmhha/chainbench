@@ -72,13 +72,13 @@
   - `Deps.NewSession` 이 ctx 를 받는다 — 키 생성이 외부 `bootnode` 프로세스를 부르므로 취소·timeout 이 전파돼야 한다.
   - CLI: `run --keys-source preset|generate --bootnode <path>`.
   - 검증: keyreg 단위 3건(Literal·ExpectAddress 4케이스·거부 시 미저장) · session 2건 · engine 6건 · **e2e 2건**(바이너리 없이 `Run` → `<session>/keys/node<i>/address` 생성 확인, 키셋보다 큰 토폴로지 거부) · CLI 6케이스. `go test -race ./...` green.
-  - **한계(정직하게)**: `GeneratedKeySource` 는 `keygen` 이 extraData 를 0-placeholder 로 쓰므로, **extraData 에서 검증자셋을 읽는 wbft 계열 genesis 는 아직 생성 키셋으로 성립하지 않는다**(T4.4b 제약 그대로). 코드 주석·doc 에 명시. 해소는 T7.2.
+  - ~~한계: `keygen` 이 extraData 를 0-placeholder 로 씀~~ → **T7.2 에서 해소**: `keygen.WBFTExtraData` 가 생성 검증자셋에서 extra-data RLP 를 계산한다.
 
 ### 잔여 (우선순위 순)
 
 | # | 작업 | 왜 이 순서인가 | 상태 |
 |---|---|---|---|
-| **T7.2** | **wbft extraData RLP 산출** — 검증자 주소·BLS 에서 extra-data 를 계산해 `GeneratedKeySource` 가 유효 genesis 를 낼 수 있게 | T7.1 이 연 "랜덤 키셋" 경로의 유일한 잔여 블로커. 이것 없이는 `--keys-source=generate` 가 wbft 계열에서 반쪽 | ☐ |
+| **T7.2** | **wbft extraData RLP 산출** — `keygen.WBFTExtraData`: WBFTExtra(10필드) RLP 를 자체 최소 인코더로 계산(geth 의존성 없음). 게이트: 배포된 preset 의 extra-data 를 자기 메타데이터에서 바이트 동일 재현. GasTip=InitialGasTip·Diligence=DefaultDiligence 는 체인 소스 대조 확인 | T7.1 이 연 "랜덤 키셋" 경로의 유일한 잔여 블로커였음 | ☑ |
 | **T7.3** | **`internal/core/launchopt`** — Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder(cross-module 검증) | 배경 2·알고리즘 7 미충족. 현재 launch args 가 5곳 분산 | ☑ |
 | **T7.4** | **launchopt 전환** — `armSpecs`(engine)·`upgrade.LaunchArgs`·`ExtraArgs` 클로저 2곳(chainsetup·cmd)을 Builder 로 흡수 + CLI `--chain-id/--network-id/--launch-opt` 커스텀 심. 게이트는 flag-pair 동등성(레거시 argv 가 관심사를 2회 교차 배치해 바이트 동일은 구조적으로 불가 — `architecture/code-graph.md` §4). 잔여: legacy stack A 의 `nodeconfig.LaunchArgs` 호출 2곳은 T7.11 에서 스택과 함께 이관 | 5곳 → 1곳(레거시 스택 제외) | ☑ |
 | **T7.5** | **`internal/app` 유스케이스 층** — CLI RunE 와 MCP 핸들러가 같은 함수를 호출 | 지금 `mcp` 의 fan-out 이 19(=engine 과 동급). 원자 CLI 확장 전에 세우지 않으면 스텝마다 로직이 복제된다 | ☐ |

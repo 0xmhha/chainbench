@@ -77,11 +77,10 @@ func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
 // required and a missing binary is a clear error rather than a key set that is
 // silently short of the material a wbft-family genesis needs.
 //
-// Note the resulting genesis extra-data: keygen writes a zero placeholder, so a
-// chain whose consensus reads the validator set out of extra-data will not
-// accept a generated set until that RLP is computed. Use this source for
-// endpoint-heavy or non-wbft topologies, or supply the extra-data by other
-// means; PresetKeySource remains the path proven against a live chain.
+// The genesis extra-data is computed from the generated validator set
+// (keygen.WBFTExtraData, T7.2), so a chain whose consensus reads the validator
+// set out of extra-data accepts a generated set. PresetKeySource remains the
+// path proven against a live chain.
 type GeneratedKeySource struct {
 	// Path is the directory the generated set is written to.
 	Path string

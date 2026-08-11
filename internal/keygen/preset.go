@@ -106,7 +106,6 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 		Description: fmt.Sprintf("Generated preset: %d nodes (%d validators). chainbench validator set.", opts.Nodes, opts.Validators),
 		Warning:     "TEST FIXTURE ONLY — do not import to mainnet/testnet.",
 		Password:    opts.Password,
-		ExtraData:   "0x" + strings.Repeat("00", 32),
 		Alloc:       map[string]map[string]any{},
 	}
 	for i := 1; i <= opts.Nodes; i++ {
@@ -126,6 +125,15 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 	}
 	meta.SystemContractMembers = strings.Join(meta.Validators, ",")
 	meta.SystemContractBLSKeys = strings.Join(meta.BLSPublicKeys, ",")
+
+	// The wbft family reads the validator set out of extra-data, so compute it
+	// from the generated validators (T7.2). Previously a zero placeholder,
+	// which made a generated set unusable on wbft-family chains.
+	extra, err := WBFTExtraData(meta.Validators, meta.BLSPublicKeys)
+	if err != nil {
+		return Meta{}, fmt.Errorf("keygen: extra-data: %w", err)
+	}
+	meta.ExtraData = extra
 
 	b, err := json.MarshalIndent(meta, "", "  ")
 	if err != nil {
@@ -220,7 +228,7 @@ func DeriveIdentity(bootnode, nodekeyHex string) (Node, error) {
 // from `bootnode -writeaddress` output.
 func ParseBootnode(out string) (Node, error) {
 	var n Node
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		low := strings.ToLower(strings.TrimSpace(line))
 		switch {
 		case strings.HasPrefix(low, "public key:"):

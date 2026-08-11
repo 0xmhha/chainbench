@@ -147,25 +147,23 @@ graph LR
   REG -.->|ExpectAddress 대조| INV["C2 불변식<br/>등록신원 = 실제 키"]
 ```
 
-> **제약**: `GeneratedKeySource` 는 extraData 를 0-placeholder 로 남긴다. extraData 에서 검증자셋을 읽는
-> wbft 계열 genesis 는 생성 키셋으로 아직 성립하지 않는다(worklist T7.2 가 해소 대상).
+> **해소됨(T7.2)**: `keygen.WBFTExtraData` 가 생성 검증자셋·BLS 키에서 extra-data RLP 를 계산하므로,
+> extraData 에서 검증자셋을 읽는 wbft 계열 genesis 도 생성 키셋으로 성립한다.
 
 ---
 
-## 6. 실행옵션(launch args) — 현재와 목표
+## 6. 실행옵션(launch args) — 단일 조립 심 (T7.3·T7.4 적용됨)
 
-**현재**: 노드 실행 인자가 5곳에서 조립된다.
+`core/launchopt` 가 Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder 로
+노드 실행 인자를 단일 조립한다. 프로덕션 경로는 `engine.armSpecs` 한 곳에서 Builder 를
+호출하고, 핸드오프(`upgrade.LaunchArgs` + `Overrides`)도 같은 Builder 를 지난다.
+가족(StartFlags)은 `launchopt.ParseFamilyFlags` 로 typed policy 가 되어 들어온다.
 
-| 위치 | 붙이는 것 |
-|---|---|
-| `nodeconfig.LaunchArgs` | `--datadir --config --port --http --http.port --ws --ws.port` |
-| `wbft.Family.StartFlags` | `--allow-insecure-unlock --rpc.enabledeprecatedpersonal --rpc.allow-unprotected-txs` (+`--mine`) |
-| `poa.Family.StartFlags` | `--allow-insecure-unlock` (+`--mine`) |
-| `engine.armSpecs` | `--nodekey` (+validator: `--unlock --password --miner.etherbase`) |
-| `chainsetup/handoff_driver` | 핸드오프 전용 하드코딩 |
+**잔여(레거시 스택 A, T7.11 에서 이관)**: `core/pipeline/setup`·`chains/wemix/deploy` 의
+`nodeconfig.LaunchArgs` 호출 2곳.
 
-**목표**(worklist T7.3·T7.4): `core/launchopt` 이 Dialect 2장 + 관심사 모듈 10 + Builder 로 단일화.
-근거·비판적 검토는 [`../chain-binary-flag-graph.md`](../chain-binary-flag-graph.md).
+근거·비판적 검토는 [`../chain-binary-flag-graph.md`](../chain-binary-flag-graph.md),
+실측은 [`code-graph.md`](code-graph.md) §3–4.
 
 ---
 
