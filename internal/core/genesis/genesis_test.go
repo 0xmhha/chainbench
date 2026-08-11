@@ -115,6 +115,23 @@ type scView struct {
 	Params  map[string]string `json:"params"`
 }
 
+func TestBuild_ChainIDOverride(t *testing.T) {
+	p, _ := registry.Get("stablenet")
+	in := testInputs
+	in.ChainID = 9999
+	b, err := genesis.Build(p, in)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	var g genesisView
+	if err := json.Unmarshal(b, &g); err != nil {
+		t.Fatalf("invalid genesis JSON: %v", err)
+	}
+	if g.Config.ChainID != 9999 {
+		t.Errorf("chainId: %d, want the 9999 override (manifest is 8283)", g.Config.ChainID)
+	}
+}
+
 func TestBuild_WbftIsCroissant(t *testing.T) {
 	p, _ := registry.Get("wbft")
 	b, err := genesis.Build(p, testInputs)

@@ -29,6 +29,9 @@ type PresetGenesisSource struct {
 	// KeysDir holds the preset metadata.json (validator addresses, BLS public
 	// keys, and RLP extra-data).
 	KeysDir string
+	// ChainID, when non-zero, overrides the manifest chain id in the built
+	// genesis (the custom-chain-id seam; the DSL env layer sets it).
+	ChainID int64
 }
 
 // Genesis loads the preset, takes the first `validators` entries, and delegates
@@ -46,6 +49,7 @@ func (s PresetGenesisSource) Genesis(_ context.Context, plugin registry.ChainPlu
 		ExtraData:  sub.ExtraData,
 		Members:    sub.Members,
 		Alloc:      sub.Alloc,
+		ChainID:    s.ChainID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("engine: genesis source: %w", err)

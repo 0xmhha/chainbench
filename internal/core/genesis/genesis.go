@@ -29,6 +29,9 @@ type Inputs struct {
 	Members    []string        // governance council addresses (0x-hex) — anzeon system contracts
 	Alloc      json.RawMessage // raw genesis pre-funded accounts (address -> account) — wbft family
 	Coinbase   string          // block coinbase (0x-hex) — poa family; default zero
+	// ChainID, when non-zero, overrides the manifest chain id — the seam that
+	// lets a test run a chain under a custom id without editing the manifest.
+	ChainID int64
 }
 
 // Build produces the genesis.json bytes for a chain plugin by delegating to its
@@ -41,8 +44,12 @@ func Build(p registry.ChainPlugin, in Inputs) ([]byte, error) {
 	if len(tmpl) == 0 {
 		return nil, fmt.Errorf("genesis: chain %q (%s) has no template: %w", m.ID, m.ConsensusFamily, ErrNoStaticGenesis)
 	}
+	chainID := m.ChainID
+	if in.ChainID != 0 {
+		chainID = in.ChainID
+	}
 	return p.Family().BuildGenesis(tmpl, registry.GenesisParams{
-		ChainID:    m.ChainID,
+		ChainID:    chainID,
 		Validators: in.Validators,
 		BLSKeys:    in.BLSKeys,
 		ExtraData:  in.ExtraData,

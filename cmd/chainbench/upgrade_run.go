@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -164,7 +165,7 @@ func newUpgradeRunCmd() *cobra.Command {
 				FromFamily: from.Family(), ToFamily: to.Family(),
 				Host:          host,
 				ProvisionKeys: provisionKeysFn(prof, preset, order, plan, host, presetDir),
-				ExtraArgs:     extraArgsFn(producerAcct, pwPath, from.Family().RPCNamespace(), to.Family().RPCNamespace()),
+				Overrides:     overridesFn(producerAcct, pwPath, from.Family().RPCNamespace(), to.Family().RPCNamespace()),
 				WaitReady: func(ctx context.Context, eps []string) error {
 					return upgrade.WaitEndpointsReady(ctx, eps, 30*time.Second)
 				},
@@ -295,19 +296,23 @@ func provisionKeysFn(prof upgrade.Profile, preset keys.Preset, order []int, plan
 	}
 }
 
-// extraArgsFn returns the ExtraArgs hook: --http.api (admin is needed for the
+// overridesFn returns the Overrides hook: http.api (admin is needed for the
 // mesh's admin_addPeer) on every node, plus the producer's unlock/etherbase.
-func extraArgsFn(producerAcct, pwPath, fromNS, toNS string) func(upgrade.NodeSpec, bool) []string {
-	return func(_ upgrade.NodeSpec, producer bool) []string {
+func overridesFn(producerAcct, pwPath, fromNS, toNS string) func(upgrade.NodeSpec, bool) []launchopt.Override {
+	return func(_ upgrade.NodeSpec, producer bool) []launchopt.Override {
 		if producer {
-			return []string{
-				"--nat", "none",
-				"--http.api", "eth,net,web3," + fromNS + ",admin,miner,txpool,personal",
-				"--miner.etherbase", producerAcct,
-				"--unlock", producerAcct, "--password", pwPath,
+			return []launchopt.Override{
+				{Key: launchopt.KeyNAT, Value: "none"},
+				{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + fromNS + ",admin,miner,txpool,personal"},
+				{Key: launchopt.KeyEtherbase, Value: producerAcct},
+				{Key: launchopt.KeyUnlock, Value: producerAcct},
+				{Key: launchopt.KeyPassword, Value: pwPath},
 			}
 		}
-		return []string{"--nat", "none", "--http.api", "eth,net,web3," + toNS + ",admin,miner,txpool"}
+		return []launchopt.Override{
+			{Key: launchopt.KeyNAT, Value: "none"},
+			{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + toNS + ",admin,miner,txpool"},
+		}
 	}
 }
 

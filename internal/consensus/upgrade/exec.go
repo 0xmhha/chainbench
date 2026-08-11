@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -32,11 +33,13 @@ type LaunchOptions struct {
 	// binary-specific instance dir, the producer's keystore, static-nodes) is
 	// placed. Optional; nil means the datadir is used as initialized.
 	ProvisionKeys func(ctx context.Context, spec driver.NodeSpec, producer bool) error
-	// ExtraArgs, if set, returns extra launch flags for a node appended after the
-	// standard and family flags. It is where account-specific and RPC-namespace
-	// flags go: the producer's --unlock/--miner.etherbase/--password, and the
-	// --http.api set (admin is required for the mesh's admin_addPeer). Optional.
-	ExtraArgs func(spec NodeSpec, producer bool) []string
+	// Overrides, if set, returns a node's high-precedence launch knobs, applied
+	// through the launchopt Builder after the standard and family layers. It is
+	// where account-specific and RPC-namespace knobs go: the producer's
+	// unlock/etherbase/password, and the http.api set (admin is required for the
+	// mesh's admin_addPeer). Typed keys, so an unsupported knob is a classified
+	// assembly error instead of a silently ignored flag. Optional.
+	Overrides func(spec NodeSpec, producer bool) []launchopt.Override
 	// WaitReady, if set, is called with the node RPC endpoints after launch and
 	// before the mesh is wired, so wiring does not race the nodes' HTTP servers
 	// coming up. Optional (nil skips the wait; unit tests leave it nil).
@@ -71,9 +74,13 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 		dataDir := filepath.Join(opts.DataRoot, fmt.Sprintf("node%d", num))
 		configPath := filepath.Join(opts.DataRoot, fmt.Sprintf("config_node%d.toml", num))
 		endpoints := node.Endpoints{P2P: n.Ports.P2P, HTTP: n.Ports.HTTP, WS: n.Ports.WS, Auth: n.Ports.Auth}
-		args := LaunchArgs(n, dataDir, fam.StartFlags(n.Role))
-		if opts.ExtraArgs != nil {
-			args = append(args, opts.ExtraArgs(n, n.Producer)...)
+		var overrides []launchopt.Override
+		if opts.Overrides != nil {
+			overrides = opts.Overrides(n, n.Producer)
+		}
+		args, err := LaunchArgs(n, dataDir, fam.StartFlags(n.Role), overrides...)
+		if err != nil {
+			return nil, fmt.Errorf("upgrade: node%d: %w", num, err)
 		}
 		specs = append(specs, driver.NodeSpec{
 			Index:      n.Index,

@@ -3,13 +3,16 @@ package engine
 import (
 	"context"
 	"io/fs"
+	"strconv"
 	"strings"
 	"testing"
 
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -101,7 +104,10 @@ func TestArmSpecs(t *testing.T) {
 		},
 	}
 
-	specs := armSpecs(plugin, preset, plan, "go-stablenet", "/keys")
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", nil)
+	if err != nil {
+		t.Fatalf("armSpecs: %v", err)
+	}
 	if len(specs) != 2 {
 		t.Fatalf("specs = %d, want 2", len(specs))
 	}
@@ -146,4 +152,133 @@ func argsHas(args []string, vals ...string) bool {
 		}
 	}
 	return true
+}
+
+// TestArmSpecsOverrides pins the customization seam: a network id pin and a
+// user launch knob flow through the Builder's override layer into every
+// node's argv.
+func TestArmSpecsOverrides(t *testing.T) {
+	plugin := registry.StaticPlugin{
+		M: registry.Manifest{
+			ID: "stablenet", Binary: "go-stablenet", MinerRecommit: "duration",
+			Consensus: registry.ConsensusSpec{RPCNamespace: "istanbul"},
+		},
+		Fam: wbftfam.New(),
+	}
+	preset := keys.Preset{Nodes: []keys.NodeKey{{Index: 1, PublicKey: "aa11", Address: "0xval1"}}}
+	plan := setup.Plan{
+		DataRoot: "/d",
+		Nodes: []driver.NodeSpec{
+			{Index: 1, Role: node.RoleEndpoint, Host: "127.0.0.1", DataDir: "/d/node1",
+				ConfigPath: "/d/c1.toml", Ports: node.Endpoints{P2P: 31000, HTTP: 8600, WS: 8700}},
+		},
+	}
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", []launchopt.Override{
+		{Key: launchopt.KeyNetworkID, Value: "4242"},
+		{Key: launchopt.KeyMaxPeers, Value: "7"},
+	})
+	if err != nil {
+		t.Fatalf("armSpecs: %v", err)
+	}
+	if !argsHas(specs[0].Args, "--networkid", "4242", "--maxpeers", "7") {
+		t.Fatalf("overrides missing from argv: %v", specs[0].Args)
+	}
+
+	// An override the dialect cannot express must fail assembly, not vanish.
+	_, err = armSpecs(plugin, preset, plan, "go-stablenet", "/keys", []launchopt.Override{
+		{Key: launchopt.KeyBlockInterval, Value: "1"},
+	})
+	if err == nil {
+		t.Fatal("wemix-only knob on geth114 must fail arming")
+	}
+}
+
+// TestArmSpecsLaunchoptEquivalence is the golden gate for the launchopt
+// conversion: for every role, the Builder's argv must carry exactly the same
+// flag/value pairs as the legacy composition (nodeconfig.LaunchArgs + family
+// StartFlags + armSpecs identity appends). Order is not compared — the legacy
+// argv interleaved identity and mining flags twice, which concern-contiguous
+// emission cannot reproduce, and geth-family flag parsing is
+// position-independent. Pair equality is the semantic contract.
+func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
+	plugin := registry.StaticPlugin{
+		M: registry.Manifest{
+			ID: "stablenet", Binary: "go-stablenet", MinerRecommit: "duration",
+			Consensus: registry.ConsensusSpec{RPCNamespace: "istanbul"},
+		},
+		Fam: wbftfam.New(),
+	}
+	preset := keys.Preset{
+		Validators: []string{"0xval1"},
+		Nodes: []keys.NodeKey{
+			{Index: 1, PublicKey: "aa11", Address: "0xval1"},
+			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
+		},
+	}
+	plan := setup.Plan{
+		DataRoot: "/d",
+		Nodes: []driver.NodeSpec{
+			{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", DataDir: "/d/node1",
+				ConfigPath: "/d/config_node1.toml", Ports: node.Endpoints{P2P: 31000, HTTP: 8600, WS: 8700}},
+			{Index: 2, Role: node.RoleEndpoint, Host: "127.0.0.1", DataDir: "/d/node2",
+				ConfigPath: "/d/config_node2.toml", Ports: node.Endpoints{P2P: 31010, HTTP: 8610, WS: 8710}},
+		},
+	}
+
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", nil)
+	if err != nil {
+		t.Fatalf("armSpecs: %v", err)
+	}
+
+	fam := plugin.Family()
+	for i, spec := range plan.Nodes {
+		legacy := nodeconfig.LaunchArgs(spec.DataDir, spec.ConfigPath, spec.Ports, fam.StartFlags(spec.Role))
+		legacy = append(legacy, "--nodekey", "/keys/node"+strconv.Itoa(spec.Index)+"/nodekey")
+		if spec.Role == node.RoleValidator {
+			if nk, ok := preset.Node(spec.Index); ok {
+				legacy = append(legacy,
+					"--unlock", nk.Address,
+					"--password", "/keys/password",
+					"--miner.etherbase", nk.Address,
+				)
+			}
+		}
+		if diff := pairDiff(legacy, specs[i].Args); diff != "" {
+			t.Fatalf("node%d argv pairs diverge from legacy:\n%s\nlegacy: %v\n   new: %v",
+				spec.Index, diff, legacy, specs[i].Args)
+		}
+	}
+}
+
+// pairDiff compares two argvs as flag->value maps (bool flags map to "").
+// Returns "" when equal, else a description of the first difference.
+func pairDiff(a, b []string) string {
+	pa, pb := pairsOf(a), pairsOf(b)
+	for k, v := range pa {
+		if w, ok := pb[k]; !ok {
+			return "missing " + k
+		} else if v != w {
+			return k + " = " + w + ", want " + v
+		}
+	}
+	for k := range pb {
+		if _, ok := pa[k]; !ok {
+			return "extra " + k
+		}
+	}
+	return ""
+}
+
+func pairsOf(args []string) map[string]string {
+	out := map[string]string{}
+	for i := 0; i < len(args); i++ {
+		flag := args[i]
+		if i+1 < len(args) && !strings.HasPrefix(args[i+1], "--") {
+			out[flag] = args[i+1]
+			i++
+		} else {
+			out[flag] = ""
+		}
+	}
+	return out
 }

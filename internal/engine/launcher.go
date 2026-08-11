@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
@@ -46,6 +47,9 @@ type LocalLauncher struct {
 	Driver driver.Driver
 	// Sink materializes on-disk files; nil defaults to the local filesystem.
 	Sink provision.FileSink
+	// LaunchOverrides are high-precedence launch knobs (env.launch / case
+	// layers) applied to every node's argv after the role-derived modules.
+	LaunchOverrides []launchopt.Override
 }
 
 // Launch arms and launches every node in plan and returns the running node set
@@ -83,7 +87,7 @@ func (l LocalLauncher) Arm(plan setup.Plan) ([]driver.NodeSpec, error) {
 	if err != nil {
 		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}
-	return armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir), nil
+	return armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir, l.LaunchOverrides)
 }
 
 // Materialize writes the genesis and per-node config through the file sink
@@ -165,12 +169,16 @@ func materialize(ctx context.Context, pv *provision.Provisioner, plan setup.Plan
 	return nil
 }
 
-// armSpecs fills each plan node spec with its rendered config, preset identity
-// launch args, and resolved binary. It is pure (no I/O) so the arming — the
-// part most prone to mistakes (wrong static-node ports, missing unlock) — is
+// armSpecs fills each plan node spec with its rendered config, its full launch
+// argv, and its resolved binary. It is pure (no I/O) so the arming — the part
+// most prone to mistakes (wrong static-node ports, missing unlock) — is
 // unit-testable. Static-node enodes use the plan's (allocator-assigned) p2p
 // ports so peering matches the launched layout.
-func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, binary, keysDir string) []driver.NodeSpec {
+//
+// The argv is assembled here and only here (launchopt Builder), replacing the
+// previous split between AssemblePlan's common flags and this function's
+// identity appends — see docs/dev/architecture/code-graph.md §3.
+func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, binary, keysDir string, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
 	staticNodes := make([]string, 0, len(plan.Nodes))
 	for _, spec := range plan.Nodes {
 		if nk, ok := preset.Node(spec.Index); ok {
@@ -179,6 +187,8 @@ func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, 
 	}
 
 	m := plugin.Manifest()
+	fam := plugin.Family()
+	dialect := launchopt.DialectFor(m.ID)
 	out := make([]driver.NodeSpec, len(plan.Nodes))
 	for i, spec := range plan.Nodes {
 		nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
@@ -191,18 +201,37 @@ func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, 
 			SyncMode:      spec.SyncMode,
 			StaticNodes:   staticNodes,
 		})
-		spec.Args = append(spec.Args, "--nodekey", filepath.Join(nodeDir, "nodekey"))
+
+		policy, err := launchopt.ParseFamilyFlags(fam.StartFlags(spec.Role))
+		if err != nil {
+			return nil, fmt.Errorf("engine: launcher: node%d: %w", spec.Index, err)
+		}
+		id := launchopt.Identity{
+			NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
+			AllowInsecureUnlock: policy.AllowInsecureUnlock,
+		}
 		if spec.Role == node.RoleValidator {
 			if nk, ok := preset.Node(spec.Index); ok {
-				spec.Args = append(spec.Args,
-					"--unlock", nk.Address,
-					"--password", filepath.Join(keysDir, "password"),
-					"--miner.etherbase", nk.Address,
-				)
+				id.Unlock = nk.Address
+				id.PasswordFile = filepath.Join(keysDir, "password")
+				id.Etherbase = nk.Address
 			}
 		}
+		args, err := launchopt.New(dialect,
+			id,
+			launchopt.Storage{DataDir: spec.DataDir, ConfigFile: spec.ConfigPath},
+			launchopt.P2P{Port: spec.Ports.P2P},
+			launchopt.HTTPRPC{Enabled: true, Port: spec.Ports.HTTP},
+			launchopt.WSRPC{Enabled: true, Port: spec.Ports.WS},
+			launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
+			launchopt.Mining{Mine: policy.Mine},
+		).WithOverrides(overrides...).Build()
+		if err != nil {
+			return nil, fmt.Errorf("engine: launcher: node%d: %w", spec.Index, err)
+		}
+		spec.Args = args
 		spec.Binary = binary
 		out[i] = spec
 	}
-	return out
+	return out, nil
 }
