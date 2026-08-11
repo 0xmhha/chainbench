@@ -28,6 +28,23 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/keys-generate.md`](dev/keys-generate.md) · [`dev/topology.md`](dev/topology.md) | 프리셋 키 생성 · 로컬 토폴로지 설정 가이드. |
 | [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) · [`dev/wemix4-migration-plan.md`](dev/wemix4-migration-plan.md) · [`dev/repro-migration-remaining.md`](dev/repro-migration-remaining.md) | wemix4 테스트 포팅·마이그레이션 추적. |
 
+### `dev/architecture/` — 아키텍처 · 다이어그램 (현재 코드 기준)
+
+| 문서 | 내용 |
+|---|---|
+| [`dev/architecture/software-architecture.md`](dev/architecture/software-architecture.md) | 전체 소프트웨어 아키텍처 — 계층·컨텍스트·실행모델·환경 5요소·검증원·동시성. |
+| [`dev/architecture/component-diagram.md`](dev/architecture/component-diagram.md) | 컴포넌트 맵 · C4 컨테이너 뷰 · 키 소싱 컴포넌트 · 목표 델타. |
+| [`dev/architecture/sequence-diagrams.md`](dev/architecture/sequence-diagrams.md) | 전체 run · BuildEnv · Interpreter · 원자 스텝 CLI · 원격 SSH · 실패 경로. |
+| [`dev/architecture/state-diagrams.md`](dev/architecture/state-diagrams.md) | TestRun · Environment · NodeProcess · Session/키 · 워크스페이스 스텝. |
+
+### 2026-08-11 재설계 검토 3종 (제안 — 미확정)
+
+| 문서 | 내용 |
+|---|---|
+| [`dev/dsl-v2-proposal.md`](dev/dsl-v2-proposal.md) | DSL v2 문법 제안 + x-bar 정렬 갭 분석(G1~G7). |
+| [`dev/structure-and-atomic-cli-proposal.md`](dev/structure-and-atomic-cli-proposal.md) | import 그래프 실측 · 오케스트레이션 3스택 문제 · `internal/app` 제안 · 원자 CLI 스텝 카탈로그. |
+| [`dev/chain-binary-flag-graph.md`](dev/chain-binary-flag-graph.md) | 3체인 바이너리 CLI 그래프(AST 추출) · 실행옵션 모듈+builder 설계 비판 검토. |
+
 > `dev/session-data/`(원본 세션 transcript)는 검증용 로컬 자료로 **git 미추적**(`.gitignore`).
 
 ## 하위 디렉토리
