@@ -26,6 +26,10 @@ const (
 	LocalFile
 	// RemoteDownload reads an existing key from a remote host over SSH (ref).
 	RemoteDownload
+	// Literal registers key material the caller already holds, with ref as the
+	// hex private key. It is how an existing key set the caller has decoded —
+	// a preset's node identities — enters the registry without a second read.
+	Literal
 )
 
 // BLSDeriver derives a BLS public key and proof-of-possession from a private
@@ -40,6 +44,12 @@ type BLSDeriver interface {
 type EnsureOpts struct {
 	NeedBLS bool
 	BLS     BLSDeriver
+	// ExpectAddress, when set, is the address the caller believes this key
+	// belongs to (0x-hex, case-insensitive). Ensure derives the address from the
+	// private key and fails on a mismatch, so a key set whose declared identity
+	// has drifted from its key material is caught before a node launches with
+	// one identity while the genesis registers another.
+	ExpectAddress string
 }
 
 // Registry stores named keys for a session and materializes them on demand.

@@ -141,3 +141,65 @@ func TestUploadTo(t *testing.T) {
 		t.Fatal("upload of unknown key must error")
 	}
 }
+
+func TestEnsure_LiteralRegistersHeldMaterial(t *testing.T) {
+	r := keyreg.New(t.TempDir(), fakeDeps())
+
+	k, err := r.Ensure(context.Background(), "node1", keyreg.Literal, "0x0102", keyreg.EnsureOpts{})
+	if err != nil {
+		t.Fatalf("Ensure: %v", err)
+	}
+	if got := hex.EncodeToString(k.Private); got != "0102" {
+		t.Errorf("private = %s, want 0102", got)
+	}
+	if k.Address != "0xADDR_0102" {
+		t.Errorf("address = %s, want 0xADDR_0102", k.Address)
+	}
+}
+
+func TestEnsure_ExpectAddress(t *testing.T) {
+	cases := []struct {
+		name    string
+		expect  string
+		wantErr bool
+	}{
+		{name: "match", expect: "0xADDR_0102"},
+		{name: "match is case-insensitive", expect: "0xaddr_0102"},
+		{name: "unset skips the check", expect: ""},
+		{name: "mismatch is an error", expect: "0xADDR_dead", wantErr: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := keyreg.New(t.TempDir(), fakeDeps())
+			_, err := r.Ensure(context.Background(), "node1", keyreg.Literal, "0102",
+				keyreg.EnsureOpts{ExpectAddress: tc.expect})
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("want an error for a declared address that the key does not derive")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Ensure: %v", err)
+			}
+		})
+	}
+}
+
+func TestEnsure_MismatchedAddressIsNotPersisted(t *testing.T) {
+	dir := t.TempDir()
+	r := keyreg.New(dir, fakeDeps())
+
+	if _, err := r.Ensure(context.Background(), "node1", keyreg.Literal, "0102",
+		keyreg.EnsureOpts{ExpectAddress: "0xADDR_dead"}); err == nil {
+		t.Fatal("want an error")
+	}
+	// A rejected key must leave nothing behind: a later run reading the session
+	// keys directory would otherwise find material the registry refused.
+	if _, err := os.Stat(filepath.Join(dir, "node1")); !os.IsNotExist(err) {
+		t.Errorf("rejected key left a directory behind (stat err = %v)", err)
+	}
+	if _, ok := r.Get("node1"); ok {
+		t.Error("rejected key is readable from the registry")
+	}
+}

@@ -55,6 +55,47 @@
 
 ---
 
+## 1c. 재계획 (2026-08-11) — 배경요구 재대조 후 잔여 작업
+
+> 근거: [[dsl-v2-proposal]] · [[structure-and-atomic-cli-proposal]] · [[chain-binary-flag-graph]] (2026-08-11 검토 3종).
+> 이 절은 §2 의 Phase 목록을 대체하지 않고, **배경 요구(체인 구성 5요소 · 실행옵션 · 3-검증원)** 대조에서
+> 새로 드러난 갭과 그 순서를 얹는다. §2 의 미완 항목(T5.2·T5.5·레거시 제거)은 그대로 유효하다.
+
+### 완료
+
+- ☑ **T7.1 keyreg 프로덕션 배선** — `keyreg.New` 의 프로덕션 호출 지점이 0 이던 문제(배경 1.4·1.5 / 알고리즘 2·3 미구현)를 해소.
+  - `session.NewWithKeys(baseDir, cmd, at, keyreg.Deps)` 신설 — **레지스트리 경로를 session 이 소유**(design §3.1). `New(..., nil)` 은 테스트용으로 병존.
+  - `keyreg.Literal` 소스 신설 — 호출자가 이미 들고 있는 키 자료(preset 노드 신원)가 재-읽기 없이 레지스트리로 들어오는 경로.
+  - `keyreg.EnsureOpts.ExpectAddress` 신설 — 등록 시 **개인키에서 주소를 재유도해 선언값과 대조**. C2 불변식("genesis 등록신원 = 실제 키 일치")을 등록 시점에 강제한다. 불일치 시 키는 저장되지 않는다(디스크·메모리 모두).
+  - `engine.KeySource` seam — `PresetKeySource`(기존 세트 사용) / `GeneratedKeySource`(`keygen.GeneratePreset` 로 신규 생성, idempotent 재사용). `Dir()` 이 구성 시점에 알려지므로 launcher·genesis source 배선은 그대로.
+  - `engine.RegisterIdentities` — 세션 레지스트리에 `node1..nodeN` 등록. `sess.Keys()` 의 **첫 실소비자**.
+  - `Deps.NewSession` 이 ctx 를 받는다 — 키 생성이 외부 `bootnode` 프로세스를 부르므로 취소·timeout 이 전파돼야 한다.
+  - CLI: `run --keys-source preset|generate --bootnode <path>`.
+  - 검증: keyreg 단위 3건(Literal·ExpectAddress 4케이스·거부 시 미저장) · session 2건 · engine 6건 · **e2e 2건**(바이너리 없이 `Run` → `<session>/keys/node<i>/address` 생성 확인, 키셋보다 큰 토폴로지 거부) · CLI 6케이스. `go test -race ./...` green.
+  - **한계(정직하게)**: `GeneratedKeySource` 는 `keygen` 이 extraData 를 0-placeholder 로 쓰므로, **extraData 에서 검증자셋을 읽는 wbft 계열 genesis 는 아직 생성 키셋으로 성립하지 않는다**(T4.4b 제약 그대로). 코드 주석·doc 에 명시. 해소는 T7.2.
+
+### 잔여 (우선순위 순)
+
+| # | 작업 | 왜 이 순서인가 | 상태 |
+|---|---|---|---|
+| **T7.2** | **wbft extraData RLP 산출** — 검증자 주소·BLS 에서 extra-data 를 계산해 `GeneratedKeySource` 가 유효 genesis 를 낼 수 있게 | T7.1 이 연 "랜덤 키셋" 경로의 유일한 잔여 블로커. 이것 없이는 `--keys-source=generate` 가 wbft 계열에서 반쪽 | ☐ |
+| **T7.3** | **`internal/core/launchopt`** — Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder(cross-module 검증) | 배경 2·알고리즘 7 미충족. 현재 launch args 가 5곳 분산 | ☐ |
+| **T7.4** | **launchopt 골든 전환** — `armSpecs`·`nodeconfig.LaunchArgs`·`StartFlags`·`handoff_driver` 를 Builder 로 흡수, 출력 바이트 동일 게이트 | 5곳 → 1곳. 동작 변화 0 이 조건 | ☐ |
+| **T7.5** | **`internal/app` 유스케이스 층** — CLI RunE 와 MCP 핸들러가 같은 함수를 호출 | 지금 `mcp` 의 fan-out 이 19(=engine 과 동급). 원자 CLI 확장 전에 세우지 않으면 스텝마다 로직이 복제된다 | ☐ |
+| **T7.6** | **`net` 원자 스텝 잔여** — `keys`/`allocate`/`genesis`/`config`/`launchopts`/`provision`/`init`/`start`/`stop`/`restart`/`rm`/`logs`/`health` | `net new`·`net status` 만 존재. 각 스텝 = MCP 도구 1:1 | ☐ |
+| **T7.7** | **`netcompose.Workspace` → `core/session` 흡수** | 상태 저장소 3개(state / session / Workspace) 중 하나 제거. 지금은 필드 6개라 비용 0, 노드 테이블이 들어가면 완전 중복 | ☐ |
+| **T7.8** | **DSL v2** — env/case 분리 · `do`/`expect` 통일 · `keys`/`genesis` 4모드/`launch` 선언 · JSON Schema 정본화 + v1 desugar | T7.1·T7.3 이 표현 대상을 실재화한 뒤 문법 확정 | ☐ |
+| **T7.9** | **metric 검증원** — collector 가 `--metrics` 엔드포인트를 스크레이프, `expect:"metric"` 어세션 | 배경 3 의 3-검증원 중 1개 미구현 | ☐ |
+| **T7.10** | **단일 경로 문법** — `--target user@host:/path` 로 `--remote-host/-user/-port/--target-dir` 4개를 접기 | key point 2. `netcompose.TargetSpec` 이 이미 유사 모델 | ☐ |
+| **T7.11** | **레거시 스택 A 제거** — `core/state`·`core/pipeline/*`·`testkit`·`core/probe` | 소비자(`mcp` 5파일 + `cmd` 7파일) 이관 후. T7.5 선행 | ☐ |
+| — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☐ |
+
+> **여전히 미배선인 선언 1건**: `testspec.Deps.Keys` 는 타입으로만 존재하고 소비자가 없다.
+> 현재 `sendTx` 는 노드측 unlocked 계정으로 서명하므로(`eth_sendTransaction`) 로컬 서명키를 쓰지 않는다.
+> **소비자가 생길 때(로컬 서명 tx 액션) 배선한다** — 소비자 없이 값을 넣으면 T3.2b 가 고친 "선언만 하고 방출 안 함"을 되풀이하게 된다.
+
+---
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결

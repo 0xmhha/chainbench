@@ -1,11 +1,14 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/place"
@@ -47,7 +50,12 @@ type LocalConfig struct {
 	// Binary is the node executable path.
 	Binary string
 	// KeysDir is the preset directory (metadata.json + node<i>/ + password).
+	// Ignored when Keys is set.
 	KeysDir string
+	// Keys selects where the node identities come from — an existing set, or a
+	// freshly generated one (algorithm steps 2-3). Nil uses
+	// PresetKeySource{KeysDir}, the reproducible default.
+	Keys KeySource
 	// ArtifactRoot is the base directory for session artifacts.
 	ArtifactRoot string
 	// Validators is the validator node count; <=0 uses the default.
@@ -66,9 +74,17 @@ type LocalConfig struct {
 // the CLI/MCP entrypoints call — the seam where the live-proven components come
 // together behind Engine.Run.
 func NewLocalEngine(cfg LocalConfig) (Engine, error) {
-	if cfg.Chain == "" || cfg.Binary == "" || cfg.KeysDir == "" || cfg.ArtifactRoot == "" {
-		return nil, fmt.Errorf("engine: local config needs chain, binary, keysDir, and artifactRoot")
+	if cfg.Chain == "" || cfg.Binary == "" || cfg.ArtifactRoot == "" {
+		return nil, fmt.Errorf("engine: local config needs chain, binary, and artifactRoot")
 	}
+	keySrc := cfg.Keys
+	if keySrc == nil {
+		if cfg.KeysDir == "" {
+			return nil, fmt.Errorf("engine: local config needs keysDir or a key source")
+		}
+		keySrc = PresetKeySource{Path: cfg.KeysDir}
+	}
+	keysDir := keySrc.Dir()
 	plugin, err := registry.Get(cfg.Chain)
 	if err != nil {
 		return nil, fmt.Errorf("engine: local engine: %w", err)
@@ -81,12 +97,20 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	if clock == nil {
 		clock = time.Now
 	}
+	// The registry derives an address for every key it takes in, which is how
+	// RegisterIdentities checks a key set's declared identities against its key
+	// material. Chain-specific because address derivation is a protocol fact.
+	accts, err := accounts.ForChain(cfg.Chain)
+	if err != nil {
+		return nil, fmt.Errorf("engine: local engine: %w", err)
+	}
+	keyDeps := keyreg.Deps{DeriveAddress: accts.AddressForKey}
 
 	// The controller fronts the launcher so a fault step can reach an individual
 	// node process later; it shares the supervisor's procman so a node stopped
 	// and restarted mid-test is still torn down at the end.
 	procs := procman.New()
-	controller := NewNodeController(LocalLauncher{Plugin: plugin, Binary: cfg.Binary, KeysDir: cfg.KeysDir}, procs)
+	controller := NewNodeController(LocalLauncher{Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir}, procs)
 	sup := supervisor.New(supervisor.Deps{
 		Launch:     controller.Launch,
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
@@ -95,7 +119,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	build := NewBuildEnv(BuildDeps{
 		Plugin:     plugin,
 		Allocator:  place.New(place.Config{P2PBase: localP2PBase, P2PStep: localPortStep, RPCBase: localRPCBase, RPCStep: localPortStep}),
-		Genesis:    PresetGenesisSource{KeysDir: cfg.KeysDir},
+		Genesis:    PresetGenesisSource{KeysDir: keysDir},
 		Supervisor: sup,
 		Mode:       place.LocalStepped,
 		Capacity:   place.Capacity{MinValidators: 1, PortBandSize: defaultPortBand},
@@ -110,8 +134,22 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 
 	return New(Deps{
 		Command: engineCommand,
-		NewSession: func(cmd string) (session.Session, error) {
-			return session.New(cfg.ArtifactRoot, cmd, clock(), nil)
+		NewSession: func(ctx context.Context, cmd string) (session.Session, error) {
+			// Materialize the identities first: generating them can fail (no
+			// bootnode binary) and there is no point creating a session tree for
+			// a run that cannot start.
+			ks, err := keySrc.Ensure(ctx, validators)
+			if err != nil {
+				return nil, err
+			}
+			sess, err := session.NewWithKeys(cfg.ArtifactRoot, cmd, clock(), keyDeps)
+			if err != nil {
+				return nil, err
+			}
+			if err := RegisterIdentities(ctx, sess.Keys(), ks, validators); err != nil {
+				return nil, err
+			}
+			return sess, nil
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
 			return s.Fingerprint(config.Values{})

@@ -71,6 +71,9 @@ func (r *reg) Ensure(ctx context.Context, name string, src Source, ref string, o
 	if err != nil {
 		return Key{}, fmt.Errorf("keyreg: ensure %q: %w", name, err)
 	}
+	if want := opts.ExpectAddress; want != "" && !strings.EqualFold(want, addr) {
+		return Key{}, fmt.Errorf("keyreg: ensure %q: key derives address %s but %s was declared", name, addr, want)
+	}
 	k := Key{Name: name, Address: addr, Private: priv}
 
 	if opts.NeedBLS {
@@ -110,6 +113,8 @@ func (r *reg) materialize(ctx context.Context, src Source, ref string) (priv []b
 			return nil, "", err
 		}
 		return r.fromExisting(raw)
+	case Literal:
+		return r.fromExisting([]byte(ref))
 	default:
 		return nil, "", fmt.Errorf("unknown source %d", src)
 	}

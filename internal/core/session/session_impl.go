@@ -73,6 +73,23 @@ type sess struct {
 // session. startedAt is injected (not read from the clock) for reproducibility.
 // A disk-write failure aborts session start.
 func New(baseDir, command string, startedAt time.Time, keys keyreg.Registry) (Session, error) {
+	return newSession(baseDir, command, startedAt, func(string) keyreg.Registry { return keys })
+}
+
+// NewWithKeys creates the session and its key registry rooted in the session's
+// own keys/ directory. It exists so callers do not have to reconstruct that
+// path: session owns the artifact layout, so it is also what decides where a
+// run's key material lands (design §3.1, single ownership).
+func NewWithKeys(baseDir, command string, startedAt time.Time, deps keyreg.Deps) (Session, error) {
+	return newSession(baseDir, command, startedAt, func(keysDir string) keyreg.Registry {
+		return keyreg.New(keysDir, deps)
+	})
+}
+
+// newSession creates the session tree and binds its key registry. newKeys
+// receives the session's keys/ path so a registry can be rooted there without
+// the layout leaking to callers.
+func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) keyreg.Registry) (Session, error) {
 	id := SessionID(startedAt)
 	root := filepath.Join(baseDir, id)
 	dirs := []struct {
@@ -94,7 +111,7 @@ func New(baseDir, command string, startedAt time.Time, keys keyreg.Registry) (Se
 		root:      root,
 		command:   command,
 		startedAt: startedAt,
-		keys:      keys,
+		keys:      newKeys(filepath.Join(root, dirKeys)),
 		envs:      make(map[Fingerprint]*env),
 	}, nil
 }

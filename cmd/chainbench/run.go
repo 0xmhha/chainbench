@@ -29,6 +29,8 @@ func newRunCmd() *cobra.Command {
 		rpcURLs      []string
 		binary       string
 		keysDir      string
+		keysSource   string
+		bootnode     string
 		artifactRoot string
 		validators   int
 		dashboardURL string
@@ -61,7 +63,11 @@ func newRunCmd() *cobra.Command {
 				}
 			}
 
-			eng, err := buildRunEngine(chain, rpcURLs, binary, keysDir, artifactRoot, validators, bus)
+			eng, err := buildRunEngine(runOpts{
+				chain: chain, rpcURLs: rpcURLs, binary: binary,
+				keysDir: keysDir, keysSource: keysSource, bootnode: bootnode,
+				artifactRoot: artifactRoot, validators: validators, bus: bus,
+			})
 			if err != nil {
 				flush()
 				return err
@@ -77,7 +83,10 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet)")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
 	cmd.Flags().StringVar(&binary, "binary", "", "local: node binary path — builds a network")
-	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: preset keys directory")
+	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: key set directory (read with --keys-source preset, written with generate)")
+	cmd.Flags().StringVar(&keysSource, "keys-source", string(keysSourcePreset),
+		"local: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
+	cmd.Flags().StringVar(&bootnode, "bootnode", "", "local: bootnode binary used to derive BLS material when --keys-source=generate")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory")
 	cmd.Flags().IntVar(&validators, "validators", 4, "local: validator node count")
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
@@ -85,24 +94,76 @@ func newRunCmd() *cobra.Command {
 	return cmd
 }
 
+// keysSourceKind names where a local run's node identities come from. Typed so
+// the accepted values live in one place instead of as literals at the parse site.
+type keysSourceKind string
+
+const (
+	// keysSourcePreset uses the --keys directory exactly as it is on disk: the
+	// same identities, and therefore the same chain, on every run.
+	keysSourcePreset keysSourceKind = "preset"
+	// keysSourceGenerate creates a fresh random identity set in --keys the first
+	// time and reuses it afterwards.
+	keysSourceGenerate keysSourceKind = "generate"
+)
+
+// runOpts are the resolved flags for one `run` invocation. Grouped into a struct
+// because the option count had outgrown a readable parameter list.
+type runOpts struct {
+	chain        string
+	rpcURLs      []string
+	binary       string
+	keysDir      string
+	keysSource   string
+	bootnode     string
+	artifactRoot string
+	validators   int
+	bus          *obs.Bus
+}
+
 // buildRunEngine selects attach mode (when --rpc endpoints are given) or local
 // mode (when --binary is given). A non-nil bus streams orchestration events.
-func buildRunEngine(chain string, rpcURLs []string, binary, keysDir, artifactRoot string, validators int, bus *obs.Bus) (engine.Engine, error) {
-	if chain == "" {
+func buildRunEngine(o runOpts) (engine.Engine, error) {
+	if o.chain == "" {
 		return nil, fmt.Errorf("run: --chain is required")
 	}
 	switch {
-	case len(rpcURLs) > 0:
+	case len(o.rpcURLs) > 0:
 		return engine.NewAttachEngine(engine.AttachConfig{
-			Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot, Bus: bus,
+			Chain: o.chain, RPCURLs: o.rpcURLs, ArtifactRoot: o.artifactRoot, Bus: o.bus,
 		})
-	case binary != "":
+	case o.binary != "":
+		src, err := keySource(o)
+		if err != nil {
+			return nil, err
+		}
 		return engine.NewLocalEngine(engine.LocalConfig{
-			Chain: chain, Binary: binary, KeysDir: keysDir,
-			ArtifactRoot: artifactRoot, Validators: validators, Bus: bus,
+			Chain: o.chain, Binary: o.binary, Keys: src,
+			ArtifactRoot: o.artifactRoot, Validators: o.validators, Bus: o.bus,
 		})
 	default:
 		return nil, fmt.Errorf("run: provide --rpc <url> (attach) or --binary <path> (local)")
+	}
+}
+
+// keySource maps --keys-source to the engine seam that materializes identities.
+func keySource(o runOpts) (engine.KeySource, error) {
+	if o.keysDir == "" {
+		return nil, fmt.Errorf("run: --keys is required for a local run")
+	}
+	switch keysSourceKind(o.keysSource) {
+	case "", keysSourcePreset:
+		return engine.PresetKeySource{Path: o.keysDir}, nil
+	case keysSourceGenerate:
+		if o.bootnode == "" {
+			return nil, fmt.Errorf("run: --keys-source=generate needs --bootnode (BLS material is derived by that binary)")
+		}
+		return engine.GeneratedKeySource{
+			Path: o.keysDir, Bootnode: o.bootnode, Validators: o.validators,
+		}, nil
+	default:
+		return nil, fmt.Errorf("run: unknown --keys-source %q (want %s or %s)",
+			o.keysSource, keysSourcePreset, keysSourceGenerate)
 	}
 }
 
