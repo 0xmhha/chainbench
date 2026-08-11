@@ -36,6 +36,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/architecture/component-diagram.md`](dev/architecture/component-diagram.md) | 컴포넌트 맵 · C4 컨테이너 뷰 · 키 소싱 컴포넌트 · 목표 델타. |
 | [`dev/architecture/sequence-diagrams.md`](dev/architecture/sequence-diagrams.md) | 전체 run · BuildEnv · Interpreter · 원자 스텝 CLI · 원격 SSH · 실패 경로. |
 | [`dev/architecture/state-diagrams.md`](dev/architecture/state-diagrams.md) | TestRun · Environment · NodeProcess · Session/키 · 워크스페이스 스텝. |
+| [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) | AST 실측 패키지 그래프 — 계층 검증 · fan-in/out · launch-args 분산 5지점 · launchopt 실행 순서. |
 
 ### 2026-08-11 재설계 검토 3종 (제안 — 미확정)
 
