@@ -5,11 +5,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newNetNewCmd initializes a composition workspace: the target chain and where
-// its data plane lives (local, or a remote SSH host).
+// its data plane lives (local, or a remote SSH host). Flag binding + app.NetNew
+// + output — the logic lives in the app layer, shared with the MCP tool.
 func newNetNewCmd() *cobra.Command {
 	var dataDir, chain, binary, keysDir string
 	var tf targetFlags
@@ -17,18 +18,16 @@ func newNetNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Initialize a composition workspace for a chain (and its target)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			ws, err := openWorkspace(dataDir)
+			if dataDir == "" {
+				return fmt.Errorf("--data-dir is required")
+			}
+			out, err := app.NetNew(cmd.Context(), app.Deps{}, app.NetNewIn{
+				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: tf.spec(),
+			})
 			if err != nil {
 				return err
 			}
-			detail, err := ws.New(netcompose.NewOpts{Chain: chain, Binary: binary, KeysDir: keysDir, Target: tf.spec()})
-			if err != nil {
-				return err
-			}
-			if err := ws.Save(); err != nil {
-				return err
-			}
-			fmt.Fprintln(cmd.OutOrStdout(), detail)
+			fmt.Fprintln(cmd.OutOrStdout(), out.Detail)
 			return nil
 		},
 	}

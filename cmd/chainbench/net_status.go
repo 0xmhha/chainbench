@@ -6,9 +6,13 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newNetStatusCmd shows the workspace composition state and which steps have run.
+// newNetStatusCmd shows the workspace composition state and which steps have
+// run. Rendering only — the read goes through app.NetStatus, shared with the
+// MCP tool.
 func newNetStatusCmd() *cobra.Command {
 	var dataDir string
 	var jsonOut bool
@@ -16,11 +20,14 @@ func newNetStatusCmd() *cobra.Command {
 		Use:   "status",
 		Short: "Show the workspace composition state and which steps have run",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			ws, err := openWorkspace(dataDir)
+			if dataDir == "" {
+				return fmt.Errorf("--data-dir is required")
+			}
+			res, err := app.NetStatus(cmd.Context(), app.Deps{}, app.NetStatusIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
-			st := ws.State()
+			st := res.State
 			out := cmd.OutOrStdout()
 			if jsonOut {
 				enc := json.NewEncoder(out)
@@ -35,7 +42,7 @@ func newNetStatusCmd() *cobra.Command {
 				target = "local " + st.Target.DataRoot
 			}
 			fmt.Fprintf(out, "workspace: %s\nchain: %s  binary: %s  keys: %s  validators: %d\ntarget: %s\n",
-				ws.Dir(), st.Chain, orDash(st.Binary), orDash(st.KeysDir), st.Validators, orDash(target))
+				res.Dir, st.Chain, orDash(st.Binary), orDash(st.KeysDir), st.Validators, orDash(target))
 
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "STEP\tDONE\tDETAIL")

@@ -58,6 +58,8 @@ func Default(name, version string) *Server {
 	s.Register(consensusBlockInfoTool())
 	s.Register(logTimelineTool())
 	s.Register(networkPeersTool())
+	s.Register(netNewTool())
+	s.Register(netStatusTool())
 	s.Register(networkTopologyTool())
 	s.Register(startTool())
 	s.Register(stopTool())
