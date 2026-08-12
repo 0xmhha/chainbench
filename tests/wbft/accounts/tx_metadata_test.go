@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -34,7 +34,7 @@ func TestTxMetadataCases_Register(t *testing.T) {
 }
 
 func TestTxMetadataCases_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wemix", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wemix", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: txMetadataCases})
 	if len(rep.Results) != len(txMetadataCases) {
 		t.Fatalf("expected %d results, got %+v", len(txMetadataCases), rep.Results)

@@ -1,4 +1,4 @@
-package verify_test
+package health_test
 
 import (
 	"context"
@@ -6,9 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/health"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/verify"
 )
 
 // fakeProber returns fixed info and an incrementing block height so the
@@ -36,17 +35,17 @@ func (f *fakeProber) PeerCount(context.Context) (uint64, error) { return f.peers
 func (f *fakeProber) Syncing(context.Context) (bool, error)     { return false, nil }
 
 func TestRun_ProducingAndInfo(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{
 		{RPCURL: "http://n1"}, {RPCURL: "http://n2"},
 	})
 
 	block := &atomic.Uint64{}
-	opts := verify.Options{
-		Dial:          func(string) verify.Prober { return &fakeProber{chainID: 8283, peers: 2, block: block} },
+	opts := health.Options{
+		Dial:          func(string) health.Prober { return &fakeProber{chainID: 8283, peers: 2, block: block} },
 		ProgressDelay: time.Millisecond,
 		Sleep:         func(time.Duration) {}, // no real waiting
 	}
-	rep, err := verify.Run(context.Background(), ns, opts, nil)
+	rep, err := health.Run(context.Background(), ns, opts, nil)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -64,12 +63,12 @@ func TestRun_ProducingAndInfo(t *testing.T) {
 }
 
 func TestRun_NodeFailureRecorded(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://dead"}})
-	opts := verify.Options{
-		Dial:  func(string) verify.Prober { return &fakeProber{failAll: true, block: &atomic.Uint64{}} },
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://dead"}})
+	opts := health.Options{
+		Dial:  func(string) health.Prober { return &fakeProber{failAll: true, block: &atomic.Uint64{}} },
 		Sleep: func(time.Duration) {},
 	}
-	rep, err := verify.Run(context.Background(), ns, opts, nil)
+	rep, err := health.Run(context.Background(), ns, opts, nil)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -82,14 +81,14 @@ func TestRun_NodeFailureRecorded(t *testing.T) {
 }
 
 func TestRun_NotProducingWhenStatic(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://n1"}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://n1"}})
 	// static prober: block never changes.
 	staticProber := &staticBlock{height: 100, chainID: 1}
-	opts := verify.Options{
-		Dial:  func(string) verify.Prober { return staticProber },
+	opts := health.Options{
+		Dial:  func(string) health.Prober { return staticProber },
 		Sleep: func(time.Duration) {},
 	}
-	rep, _ := verify.Run(context.Background(), ns, opts, nil)
+	rep, _ := health.Run(context.Background(), ns, opts, nil)
 	if rep.Producing {
 		t.Error("static height should report Producing=false")
 	}
@@ -102,14 +101,14 @@ func TestRun_NotProducingWhenStatic(t *testing.T) {
 // that stays static for a few samples (peering not yet converged) then starts
 // producing. With ReadyTimeout>0 verify keeps polling and reports true.
 func TestRun_WaitsForProductionWithinTimeout(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://n1"}})
-	opts := verify.Options{
-		Dial:          func(string) verify.Prober { return &delayedProber{riseAt: 4, lo: 10, hi: 11} },
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://n1"}})
+	opts := health.Options{
+		Dial:          func(string) health.Prober { return &delayedProber{riseAt: 4, lo: 10, hi: 11} },
 		ProgressDelay: time.Millisecond,
 		ReadyTimeout:  time.Second,
 		Sleep:         func(time.Duration) {},
 	}
-	rep, _ := verify.Run(context.Background(), ns, opts, nil)
+	rep, _ := health.Run(context.Background(), ns, opts, nil)
 	if !rep.Producing {
 		t.Error("expected Producing=true once height advances within the timeout")
 	}
@@ -118,14 +117,14 @@ func TestRun_WaitsForProductionWithinTimeout(t *testing.T) {
 // TestRun_ReadyTimeoutBoundedWhenStatic ensures the polling loop terminates and
 // reports false when the height never advances within ReadyTimeout.
 func TestRun_ReadyTimeoutBoundedWhenStatic(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://n1"}})
-	opts := verify.Options{
-		Dial:          func(string) verify.Prober { return &staticBlock{height: 100, chainID: 1} },
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://n1"}})
+	opts := health.Options{
+		Dial:          func(string) health.Prober { return &staticBlock{height: 100, chainID: 1} },
 		ProgressDelay: time.Millisecond,
 		ReadyTimeout:  10 * time.Millisecond,
 		Sleep:         func(time.Duration) {},
 	}
-	rep, _ := verify.Run(context.Background(), ns, opts, nil)
+	rep, _ := health.Run(context.Background(), ns, opts, nil)
 	if rep.Producing {
 		t.Error("permanently static height must report Producing=false")
 	}

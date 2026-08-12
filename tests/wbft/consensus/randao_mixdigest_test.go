@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus" // register the case
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -37,7 +37,7 @@ func TestRandaoMixDigestCase_Pass(t *testing.T) {
 		t.Fatal("randao-and-mixdigest-present not registered")
 	}
 	url := randaoMock(t, "0xabcd", testMixHash)
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: url}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: url}})
 	if r := runCase(t, ns, "randao-and-mixdigest-present"); r.Status != testkit.StatusPass {
 		t.Fatalf("status %s (%s)", r.Status, r.Message)
 	}
@@ -46,7 +46,7 @@ func TestRandaoMixDigestCase_Pass(t *testing.T) {
 // A zero mixHash means no randao mix was derived -> the case must fail.
 func TestRandaoMixDigestCase_FailsOnZeroMix(t *testing.T) {
 	url := randaoMock(t, "0xabcd", zeroMixHash)
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: url}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: url}})
 	if r := runCase(t, ns, "randao-and-mixdigest-present"); r.Status != testkit.StatusFail {
 		t.Fatalf("expected fail on zero mixHash, got %s", r.Status)
 	}
@@ -55,14 +55,14 @@ func TestRandaoMixDigestCase_FailsOnZeroMix(t *testing.T) {
 // An empty randaoReveal means the WBFT randomness field is absent -> fail.
 func TestRandaoMixDigestCase_FailsOnEmptyRandao(t *testing.T) {
 	url := randaoMock(t, "0x", testMixHash)
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: url}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: url}})
 	if r := runCase(t, ns, "randao-and-mixdigest-present"); r.Status != testkit.StatusFail {
 		t.Fatalf("expected fail on empty randaoReveal, got %s", r.Status)
 	}
 }
 
 func TestRandaoMixDigestCase_SkipsForeignChain(t *testing.T) {
-	ns, _ := attach.Build("ethereum", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("ethereum", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"randao-and-mixdigest-present"}})
 	for _, r := range rep.Results {
 		if r.Status != testkit.StatusSkip {

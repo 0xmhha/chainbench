@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/api" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -62,7 +62,7 @@ func apiMock(t *testing.T) *httptest.Server {
 
 func run(t *testing.T, name string) testkit.Result {
 	t.Helper()
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: apiMock(t).URL}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: apiMock(t).URL}})
 	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 	if err != nil {
 		t.Fatal(err)

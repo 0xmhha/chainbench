@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/verify"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 func newVerifyCmd() *cobra.Command {
@@ -28,13 +28,16 @@ func newVerifyCmd() *cobra.Command {
 			}
 			bus, closeBus := obsBus()
 			defer closeBus()
-			rep, err := verify.Run(cmd.Context(), ns, verify.Options{
+			res, err := app.VerifyNetwork(cmd.Context(), app.Deps{}, app.VerifyNetworkIn{
+				Nodes:         ns,
 				ProgressDelay: delay,
 				ReadyTimeout:  readyTimeout,
-			}, bus)
+				Bus:           bus,
+			})
 			if err != nil {
 				return err
 			}
+			rep := res.Report
 
 			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "producing: %v\n", rep.Producing)

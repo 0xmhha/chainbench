@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus" // register the case
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -30,7 +30,7 @@ func TestValidatorSetCase_Passes(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: srv.URL}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: srv.URL}})
 	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"validator-set-nonempty"}})
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +41,7 @@ func TestValidatorSetCase_Passes(t *testing.T) {
 }
 
 func TestValidatorSetCase_SkipsForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wemix", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wemix", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"validator-set-nonempty"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusSkip {
 		t.Fatalf("expected skip on wemix, got %+v", rep.Results)

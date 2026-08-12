@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -31,7 +31,7 @@ func TestFDSigCases_Register(t *testing.T) {
 // These cases submit a live raw tx and assert rejection, so they are only
 // meaningful against a real wbft node. Off a foreign chain they must gate out.
 func TestFDSigCases_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("ethereum", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("ethereum", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: fdSigCases})
 	if len(rep.Results) != len(fdSigCases) {
 		t.Fatalf("ran %d, want %d", len(rep.Results), len(fdSigCases))

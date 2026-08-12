@@ -12,15 +12,14 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/consensus"
 	"github.com/0xmhha/chainbench/internal/core/logs"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/verify"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/state"
@@ -266,10 +265,11 @@ func verifyTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			rep, err := verify.Run(ctx, ns, verify.Options{}, nil)
+			res, err := app.VerifyNetwork(ctx, app.Deps{}, app.VerifyNetworkIn{Nodes: ns})
 			if err != nil {
 				return "", err
 			}
+			rep := res.Report
 			var b strings.Builder
 			fmt.Fprintf(&b, "producing: %v\n", rep.Producing)
 			for _, n := range rep.Nodes {
@@ -686,11 +686,11 @@ func hexCount(s string) uint64 {
 // (a setup's saved state).
 func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
 	if urls := argStrings(args, "rpc"); len(urls) > 0 {
-		eps := make([]attach.Endpoint, len(urls))
+		eps := make([]node.RPCEndpoint, len(urls))
 		for i, u := range urls {
-			eps[i] = attach.Endpoint{RPCURL: u}
+			eps[i] = node.RPCEndpoint{RPCURL: u}
 		}
-		return attach.Build(argString(args, "chain", ""), "attached", eps)
+		return node.AttachedSet(argString(args, "chain", ""), "attached", eps)
 	}
 	if dir := argString(args, "data_dir", ""); dir != "" {
 		return state.LoadNodeSet(dir)

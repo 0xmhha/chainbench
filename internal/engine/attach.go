@@ -10,7 +10,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec"
@@ -38,9 +37,9 @@ type AttachConfig struct {
 // NewAttachBuildEnv returns a BuildEnv that builds the node table from existing
 // RPC endpoints without provisioning or launching anything. Its teardown is nil:
 // attach did not create the nodes, so it must not stop them.
-func NewAttachBuildEnv(chain string, eps []attach.Endpoint) BuildEnvFunc {
+func NewAttachBuildEnv(chain string, eps []node.RPCEndpoint) BuildEnvFunc {
 	return func(_ context.Context, _ session.Environment, _ testspec.Spec) (node.NodeSet, TeardownFunc, error) {
-		ns, err := attach.Build(chain, attachNetwork, eps)
+		ns, err := node.AttachedSet(chain, attachNetwork, eps)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: attach: %w", err)
 		}
@@ -58,12 +57,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if len(cfg.RPCURLs) == 0 {
 		return nil, fmt.Errorf("engine: attach config needs at least one RPC URL")
 	}
-	eps := make([]attach.Endpoint, len(cfg.RPCURLs))
+	eps := make([]node.RPCEndpoint, len(cfg.RPCURLs))
 	for i, u := range cfg.RPCURLs {
 		if u == "" {
 			return nil, fmt.Errorf("engine: attach RPC URL %d is empty", i+1)
 		}
-		eps[i] = attach.Endpoint{RPCURL: u}
+		eps[i] = node.RPCEndpoint{RPCURL: u}
 	}
 	clock := cfg.Clock
 	if clock == nil {

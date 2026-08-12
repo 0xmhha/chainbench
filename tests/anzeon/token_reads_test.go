@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -66,7 +66,7 @@ func leftpad(n int64) string {
 }
 
 func TestTokenReadCases(t *testing.T) {
-	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: selectorMock(t).URL}})
+	ns, _ := node.AttachedSet("stablenet", "local", []node.RPCEndpoint{{RPCURL: selectorMock(t).URL}})
 	for _, name := range []string{"token-balance-readable", "account-authorization-readable", "account-blacklist-readable"} {
 		rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 		if err != nil {

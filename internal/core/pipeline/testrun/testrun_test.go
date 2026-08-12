@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -41,7 +41,7 @@ func init() {
 }
 
 func TestRun_GatingRunningReporting(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	// attach sets Capabilities ["rpc"]; "consensus" is absent -> tr-gated-cap skips.
 
 	store := obs.NewMemStore()

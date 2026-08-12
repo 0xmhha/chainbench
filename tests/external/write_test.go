@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/external" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -32,7 +32,7 @@ func TestExternalCases_Register(t *testing.T) {
 // though they are rpc-only and chain-agnostic, so they would otherwise "run".
 // They skip before any RPC call, so no live endpoint is needed here.
 func TestExternalCases_SkipWithoutFundedKey(t *testing.T) {
-	ns, _ := attach.Build("layer2", "attached", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("layer2", "attached", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: externalCases}) // no FundedKey
 	if len(rep.Results) != len(externalCases) {
 		t.Fatalf("ran %d, want %d", len(rep.Results), len(externalCases))

@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/network" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -58,11 +58,11 @@ func mockNode(t *testing.T) *httptest.Server {
 func runCase(t *testing.T, name string, endpoints int) testkit.Result {
 	t.Helper()
 	srv := mockNode(t)
-	eps := make([]attach.Endpoint, endpoints)
+	eps := make([]node.RPCEndpoint, endpoints)
 	for i := range eps {
-		eps[i] = attach.Endpoint{RPCURL: srv.URL}
+		eps[i] = node.RPCEndpoint{RPCURL: srv.URL}
 	}
-	ns, _ := attach.Build("wbft", "local", eps)
+	ns, _ := node.AttachedSet("wbft", "local", eps)
 	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 	if err != nil {
 		t.Fatal(err)
