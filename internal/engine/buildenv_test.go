@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -56,7 +56,7 @@ func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, validat
 // synthesizes a node set from the plan and always reports healthy.
 func fakeSupervisor() supervisor.Supervisor {
 	return supervisor.New(supervisor.Deps{
-		Launch: func(_ context.Context, plan setup.Plan) (supervisor.LaunchResult, error) {
+		Launch: func(_ context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
 			var ns node.NodeSet
 			for _, s := range plan.Nodes {
 				ns.Nodes = append(ns.Nodes, node.Node{
@@ -98,7 +98,7 @@ func fourNodeReqs() []place.NodeReq {
 func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 	alloc := &fakeAllocator{}
 	gen := &fakeGenesis{bytes: []byte(`{"genesis":true}`)}
-	var gotPlan setup.Plan
+	var gotPlan driver.Plan
 	provisionCalled := false
 
 	build := engine.NewBuildEnv(engine.BuildDeps{
@@ -108,7 +108,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 		Supervisor: fakeSupervisor(),
 		Caps:       []string{"ws"},
 		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },
-		Provision: func(_ context.Context, plan setup.Plan) error {
+		Provision: func(_ context.Context, plan driver.Plan) error {
 			provisionCalled = true
 			gotPlan = plan
 			return nil
@@ -175,7 +175,7 @@ func TestNewBuildEnv_ProvisionError(t *testing.T) {
 		Genesis:    &fakeGenesis{bytes: []byte("{}")},
 		Supervisor: fakeSupervisor(),
 		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },
-		Provision:  func(context.Context, setup.Plan) error { return errors.New("disk full") },
+		Provision:  func(context.Context, driver.Plan) error { return errors.New("disk full") },
 	})
 	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {
 		t.Fatal("expected provision error to propagate")

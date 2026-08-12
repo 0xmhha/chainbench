@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 )
 
 // Supervisor owns node bring-up: setup produces the plan and concurrent
@@ -14,7 +14,7 @@ import (
 type Supervisor interface {
 	// BringUp launches the plan's nodes behind a health gate and returns the
 	// resulting node set and a classified diagnosis.
-	BringUp(ctx context.Context, plan setup.Plan, opts Options) (node.NodeSet, Diagnosis, error)
+	BringUp(ctx context.Context, plan driver.Plan, opts Options) (node.NodeSet, Diagnosis, error)
 	// Teardown stops the nodes (SIGTERM then SIGKILL), which also stops each
 	// node's embedded etcd. It removes the datadir only when opts requests it.
 	Teardown(ctx context.Context, ns node.NodeSet, opts TeardownOpts) error

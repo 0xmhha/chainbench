@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/procman"
 )
 
@@ -29,7 +29,7 @@ type LaunchResult struct {
 type Deps struct {
 	// Launch starts the plan's nodes and returns the node set plus the
 	// processes to track.
-	Launch func(ctx context.Context, plan setup.Plan) (LaunchResult, error)
+	Launch func(ctx context.Context, plan driver.Plan) (LaunchResult, error)
 	// HealthGate blocks until the network is healthy, or returns a classified
 	// non-OK Diagnosis (etcd leader, block production, fork crossing).
 	HealthGate func(ctx context.Context, ns node.NodeSet) (Diagnosis, error)
@@ -72,7 +72,7 @@ func New(deps Deps) Supervisor {
 // BringUp launches the plan and gates on health, retrying with backoff. On
 // success it returns the node set and an OK diagnosis; on exhaustion it tears
 // down and returns the last classified diagnosis and an error.
-func (s *sup) BringUp(ctx context.Context, plan setup.Plan, opts Options) (node.NodeSet, Diagnosis, error) {
+func (s *sup) BringUp(ctx context.Context, plan driver.Plan, opts Options) (node.NodeSet, Diagnosis, error) {
 	attempts := opts.MaxAttempts
 	if attempts < 1 {
 		attempts = 1

@@ -13,7 +13,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -39,7 +38,7 @@ func (s *recordingSink) Write(_ context.Context, path string, content []byte, _ 
 }
 
 func TestMaterialize(t *testing.T) {
-	plan := setup.Plan{
+	plan := driver.Plan{
 		DataRoot:    "/d",
 		GenesisPath: "/d/genesis.json",
 		Genesis:     []byte(`{"g":1}`),
@@ -96,7 +95,7 @@ func TestArmSpecs(t *testing.T) {
 			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
 		},
 	}
-	plan := setup.Plan{
+	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
 			{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", DataDir: "/d/node1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}},
@@ -166,7 +165,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 		Fam: wbftfam.New(),
 	}
 	preset := keys.Preset{Nodes: []keys.NodeKey{{Index: 1, PublicKey: "aa11", Address: "0xval1"}}}
-	plan := setup.Plan{
+	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
 			{Index: 1, Role: node.RoleEndpoint, Host: "127.0.0.1", DataDir: "/d/node1",
@@ -215,7 +214,7 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
 		},
 	}
-	plan := setup.Plan{
+	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
 			{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", DataDir: "/d/node1",

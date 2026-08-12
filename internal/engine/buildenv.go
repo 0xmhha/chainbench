@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -48,7 +48,7 @@ type BuildDeps struct {
 	// Provision materializes the plan's on-disk files (genesis, per-node config,
 	// keys). It is injected because file content is chain/preset-specific; nil
 	// skips provisioning (e.g. an attach-only or test build).
-	Provision func(ctx context.Context, plan setup.Plan) error
+	Provision func(ctx context.Context, plan driver.Plan) error
 }
 
 // NewBuildEnv composes the network build: allocate placements, source genesis,
