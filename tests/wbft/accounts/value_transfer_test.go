@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts" // register the case
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -29,7 +29,7 @@ func TestValueTransferCase_Registers(t *testing.T) {
 // TestValueTransferCase_SkipsForeignChain confirms chain_compat gating: the
 // case does not run outside its ChainCompat (the wbft family), e.g. on wemix.
 func TestValueTransferCase_SkipsForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wemix", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wemix", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"value-transfer"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusSkip {
 		t.Fatalf("expected skip on foreign chain, got %+v", rep.Results)

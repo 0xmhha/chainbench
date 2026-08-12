@@ -12,7 +12,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/state"
 )
@@ -99,11 +98,11 @@ func newTestCmd() *cobra.Command {
 // setup's saved nodeset.json.
 func resolveNodeSet(dataDir, chain string, rpcURLs []string) (node.NodeSet, error) {
 	if len(rpcURLs) > 0 {
-		eps := make([]attach.Endpoint, len(rpcURLs))
+		eps := make([]node.RPCEndpoint, len(rpcURLs))
 		for i, u := range rpcURLs {
-			eps[i] = attach.Endpoint{RPCURL: u}
+			eps[i] = node.RPCEndpoint{RPCURL: u}
 		}
-		return attach.Build(chain, "attached", eps)
+		return node.AttachedSet(chain, "attached", eps)
 	}
 	if dataDir != "" {
 		return state.LoadNodeSet(dataDir)

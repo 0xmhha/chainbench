@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -57,7 +57,7 @@ func runP256Case(t *testing.T, name string) testkit.Result {
 	srv := p256Mock(t)
 	t.Cleanup(srv.Close)
 
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: srv.URL}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: srv.URL}})
 	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 	if err != nil {
 		t.Fatal(err)
@@ -110,7 +110,7 @@ func TestSecp256r1Valid_FailsWhenPrecompileMissing(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: srv.URL}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: srv.URL}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"secp256r1-precompile-valid"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusFail {
 		t.Fatalf("expected fail when precompile missing, got %+v", rep.Results)

@@ -1,9 +1,18 @@
-// Package verify is the second pipeline phase (requirement #9): given a NodeSet
-// (from setup or attach), it confirms over RPC that the chain is producing
-// blocks and gathers per-node info (chain id, height, peers, sync state). It is
-// the gate before the test phase and the entry point for attached networks
-// (docs/CHAINBENCH_GO_REDESIGN.md §3).
-package verify
+// Package health answers "is this network producing, and what state is each
+// node in" (requirement #9): given a NodeSet, it samples every node over RPC
+// and returns a report — chain id, height, peers, sync state, plus the
+// producing verdict from the primary node's height advancing.
+//
+// This is the INSPECTION read, used by `chainbench verify` and its MCP mirror.
+// It is deliberately not the same code as engine's launch gate
+// (NewBlockAdvanceGate), which polls one node to a target height as a
+// supervisor precondition: one produces a report about every node, the other
+// blocks a bring-up on one node, and merging them would bend both.
+//
+// It was core/pipeline/verify; the move out of the pipeline tree is part of
+// retiring legacy stack A (worklist T7.11) — the code is sound, only its home
+// was legacy.
+package health
 
 import (
 	"context"

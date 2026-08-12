@@ -1,4 +1,15 @@
-package state
+// Package netreg is the registry of named networks chainbench knows about:
+// attached (already-running) networks recorded under a state directory, one
+// JSON file per name, so a later command or MCP call can address a network by
+// name instead of repeating its endpoints.
+//
+// It was part of core/state, alongside the legacy setup command's data-dir
+// files. It is not legacy — it backs the live network attach/list/info/detach
+// surface — so retiring stack A (worklist T7.11) splits it out rather than
+// letting it die with the code around it. Its lifetime is also different: a
+// session is one run's artifacts, a composition is one workspace, and this is
+// a machine-wide inventory keyed by name.
+package netreg
 
 import (
 	"encoding/json"

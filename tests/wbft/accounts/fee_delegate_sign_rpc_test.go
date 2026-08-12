@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts" // register the case
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -41,7 +41,7 @@ func feeDelegateSignMock(t *testing.T, errCode int, errMsg string) *httptest.Ser
 
 func runFeeDelegateSign(t *testing.T, url string) testkit.Result {
 	t.Helper()
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: url}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: url}})
 	rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"fee-delegate-sign-rpc-present"}})
 	if err != nil {
 		t.Fatal(err)
@@ -82,7 +82,7 @@ func TestFeeDelegateSignPresent_Registers(t *testing.T) {
 }
 
 func TestFeeDelegateSignPresent_SkipsForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wemix", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wemix", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"fee-delegate-sign-rpc-present"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusSkip {
 		t.Fatalf("expected skip on wemix, got %+v", rep.Results)

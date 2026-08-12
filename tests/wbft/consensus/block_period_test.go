@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/consensus" // register the case
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -34,7 +34,7 @@ func TestBlockPeriodCase_Passes(t *testing.T) {
 			return nil
 		}
 	})
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: srv.URL}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: srv.URL}})
 
 	if !registered("block-period-one-second") {
 		t.Fatal("block-period-one-second not registered")
@@ -45,7 +45,7 @@ func TestBlockPeriodCase_Passes(t *testing.T) {
 }
 
 func TestBlockPeriodCase_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("ethereum", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("ethereum", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"block-period-one-second"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusSkip {
 		t.Fatalf("expected skip on ethereum, got %+v", rep.Results)

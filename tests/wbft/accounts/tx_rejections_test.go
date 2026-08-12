@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/wbft/accounts" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -34,7 +34,7 @@ func TestTxRejectionCases_Register(t *testing.T) {
 // These cases drive real rejections/mining, so they are only meaningful against
 // a live wbft node. Off a foreign chain they must gate out cleanly.
 func TestTxRejectionCases_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("ethereum", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("ethereum", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: txRejectionCases})
 	if len(rep.Results) != len(txRejectionCases) {
 		t.Fatalf("ran %d, want %d", len(rep.Results), len(txRejectionCases))

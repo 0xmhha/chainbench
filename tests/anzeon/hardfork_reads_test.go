@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/anzeon" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -69,7 +69,7 @@ func hardforkMock(t *testing.T) *httptest.Server {
 }
 
 func TestHardforkReadCases(t *testing.T) {
-	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: hardforkMock(t).URL}})
+	ns, _ := node.AttachedSet("stablenet", "local", []node.RPCEndpoint{{RPCURL: hardforkMock(t).URL}})
 	for _, name := range []string{
 		"p256-precompile-active",
 		"p256-rejects-invalid",
@@ -87,7 +87,7 @@ func TestHardforkReadCases(t *testing.T) {
 }
 
 func TestHardforkReadCases_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	names := []string{"p256-precompile-active", "govminter-v2-code", "boho-chain-config-active"}
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: names})
 	if len(rep.Results) != len(names) {

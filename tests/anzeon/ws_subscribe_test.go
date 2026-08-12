@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/anzeon" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -31,7 +31,7 @@ func TestWsSubscribeCases_Register(t *testing.T) {
 // A pure-attach network exposes only "rpc" (no known WS port), so the WS cases
 // must skip.
 func TestWsSubscribeCases_SkipWithoutWSCap(t *testing.T) {
-	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("stablenet", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: wsSubscribeCases})
 	if len(rep.Results) != len(wsSubscribeCases) {
 		t.Fatalf("ran %d, want %d", len(rep.Results), len(wsSubscribeCases))

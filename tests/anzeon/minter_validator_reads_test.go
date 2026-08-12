@@ -13,7 +13,7 @@ import (
 	_ "github.com/0xmhha/chainbench/tests/anzeon" // register the cases
 
 	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -60,7 +60,7 @@ func minterValidatorMock(t *testing.T) *httptest.Server {
 }
 
 func TestMinterValidatorReadCases(t *testing.T) {
-	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: minterValidatorMock(t).URL}})
+	ns, _ := node.AttachedSet("stablenet", "local", []node.RPCEndpoint{{RPCURL: minterValidatorMock(t).URL}})
 	for _, name := range []string{"minter-status-readable", "validator-metadata-readable"} {
 		rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 		if err != nil {
@@ -73,7 +73,7 @@ func TestMinterValidatorReadCases(t *testing.T) {
 }
 
 func TestMinterValidatorReadCases_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"validator-metadata-readable"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusSkip {
 		t.Fatalf("expected skip on wbft, got %+v", rep.Results)

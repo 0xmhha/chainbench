@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/tests/anzeon" // register the cases
 
-	"github.com/0xmhha/chainbench/internal/core/pipeline/attach"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -49,7 +49,7 @@ func gasMock(t *testing.T) *httptest.Server {
 }
 
 func TestGasReadCases(t *testing.T) {
-	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: gasMock(t).URL}})
+	ns, _ := node.AttachedSet("stablenet", "local", []node.RPCEndpoint{{RPCURL: gasMock(t).URL}})
 	for _, name := range []string{
 		"gas-price-equals-basefee-plus-tip",
 		"max-priority-fee-equals-gastip",
@@ -94,7 +94,7 @@ func gasMismatchMock(t *testing.T) *httptest.Server {
 }
 
 func TestGasPriceCase_MismatchFails(t *testing.T) {
-	ns, _ := attach.Build("stablenet", "local", []attach.Endpoint{{RPCURL: gasMismatchMock(t).URL}})
+	ns, _ := node.AttachedSet("stablenet", "local", []node.RPCEndpoint{{RPCURL: gasMismatchMock(t).URL}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"gas-price-equals-basefee-plus-tip"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusFail {
 		t.Fatalf("mismatched gasPrice should fail: %+v", rep.Results)
@@ -102,7 +102,7 @@ func TestGasPriceCase_MismatchFails(t *testing.T) {
 }
 
 func TestGasReadCases_SkipForeignChain(t *testing.T) {
-	ns, _ := attach.Build("wbft", "local", []attach.Endpoint{{RPCURL: "http://x"}})
+	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{"gas-price-equals-basefee-plus-tip"}})
 	if len(rep.Results) != 1 || rep.Results[0].Status != testkit.StatusSkip {
 		t.Fatalf("expected skip on wbft, got %+v", rep.Results)
