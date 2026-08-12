@@ -31,18 +31,27 @@ func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, 
 		}
 	}
 
-	// Steps: a failed step expectation fails the test.
-	for idx, st := range s.Steps {
-		if err := i.runStep(ctx, idx, st, env, rec, binds); err != nil {
-			rec.Status(session.StatusFail)
-			return session.StatusFail, nil
-		}
-	}
-
-	// Assertions: all must pass.
+	// The unified statement sequence: do statements fail fast (a broken step
+	// invalidates everything after it), expect statements record and continue
+	// (all verifications report). v1 specs desugar to [do... expect...], which
+	// reproduces the historical steps-then-assertions behavior exactly; v2
+	// interleaves freely (proposal G7).
 	pass := true
-	for _, as := range s.Assertions {
-		r, err := i.runAssertion(ctx, as, env, binds)
+	stepIdx := 0
+	for _, st := range sequenceOf(s) {
+		if st.Do != "" {
+			if err := i.runStep(ctx, stepIdx, statementStep(st), env, rec, binds); err != nil {
+				// A failed do statement invalidates everything after it:
+				// on-fail diagnostics run, post-actions do not (the v1
+				// contract — cleanup assumes the steps it undoes happened).
+				i.runRecorded(ctx, s.OnFailActions, env, rec, binds)
+				rec.Status(session.StatusFail)
+				return session.StatusFail, nil
+			}
+			stepIdx++
+			continue
+		}
+		r, err := i.runAssertion(ctx, statementAssertion(st), env, binds)
 		rec.Assert(r)
 		if err != nil || !r.Pass {
 			pass = false
@@ -51,20 +60,53 @@ func (i *interpreter) Run(ctx context.Context, s Spec, env session.Environment, 
 	status := session.StatusPass
 	if !pass {
 		status = session.StatusFail
+		// On-fail hooks: diagnostics for a failed case, recorded like
+		// post-actions.
+		i.runRecorded(ctx, s.OnFailActions, env, rec, binds)
 	}
 
 	// Post-actions: recorded, but they do not change the verdict.
-	for _, poa := range s.PostActions {
-		name := actionName(poa)
-		if err := i.runAction(ctx, poa, env, rec, binds); err != nil {
+	i.runRecorded(ctx, s.PostActions, env, rec, binds)
+
+	rec.Status(status)
+	return status, nil
+}
+
+// sequenceOf returns the spec's unified statement sequence, deriving it from
+// the legacy steps/assertions fields when the parser did not populate it
+// (tests construct Spec directly).
+func sequenceOf(s Spec) []Statement {
+	if len(s.Sequence) > 0 {
+		return s.Sequence
+	}
+	out := make([]Statement, 0, len(s.Steps)+len(s.Assertions))
+	for _, st := range s.Steps {
+		out = append(out, Statement{Do: actionName(st), Args: argsOf(st[actionName(st)])})
+	}
+	for _, as := range s.Assertions {
+		name, _ := as["assert"].(string)
+		args := make(map[string]any, len(as))
+		for k, v := range as {
+			if k != "assert" {
+				args[k] = v
+			}
+		}
+		out = append(out, Statement{Expect: name, Args: args})
+	}
+	return out
+}
+
+// runRecorded runs hook actions whose outcome is recorded but never changes
+// the verdict.
+func (i *interpreter) runRecorded(ctx context.Context, actions []map[string]any, env session.Environment, rec session.TestRecord, binds Bindings) {
+	for _, a := range actions {
+		name := actionName(a)
+		if err := i.runAction(ctx, a, env, rec, binds); err != nil {
 			rec.PostAction(session.PostResult{Name: name, OK: false, Detail: err.Error()})
 		} else {
 			rec.PostAction(session.PostResult{Name: name, OK: true})
 		}
 	}
-
-	rec.Status(status)
-	return status, nil
 }
 
 // runAction dispatches a single-key action entry ({name: args}) to the registry,
