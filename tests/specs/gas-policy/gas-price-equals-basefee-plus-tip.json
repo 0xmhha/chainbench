@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1",
+  "id": "gas-price-equals-basefee-plus-tip",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "gasPrice", "save": "gp" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["latest", false], "select": "number", "save": "n" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$n", false], "select": "baseFeePerGas", "save": "base" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$n"], "select": "gasTip", "save": "tip" } }
+  ],
+  "assertions": [
+    {
+      "assert": "derive", "op": "sum", "of": ["$base", "$tip"],
+      "compare": "Equal", "expected": "$gp"
+    }
+  ]
+}
