@@ -41,7 +41,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 		target.Kind = TargetLocal
 	}
 	if target.Kind == TargetLocal && target.DataRoot == "" {
-		target.DataRoot = w.dir
+		target.DataRoot = w.comp.Dir()
 	}
 	// Validate the target resolves (remote needs host + reachable auth later,
 	// but structural validation happens here); env is nil so no live SSH dial.

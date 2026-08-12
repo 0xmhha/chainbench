@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // runReport is the --json shape for a run: the session path plus the verdict
@@ -68,13 +70,13 @@ func newRunCmd() *cobra.Command {
 				}
 			}
 
-			eng, err := buildRunEngine(runOpts{
+			eng, err := buildRunEngine(foldSpecEnv(runOpts{
 				chain: chain, rpcURLs: rpcURLs, binary: binary,
 				keysDir: keysDir, keysSource: keysSource, bootnode: bootnode,
 				artifactRoot: artifactRoot, validators: validators,
 				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
 				bus: bus,
-			})
+			}, specs))
 			if err != nil {
 				flush()
 				return err
@@ -203,7 +205,9 @@ func parseLaunchOverrides(opts []string) ([]launchopt.Override, error) {
 	return out, nil
 }
 
-// readSpecFiles reads each spec file into raw JSON bytes.
+// readSpecFiles reads each spec file into raw JSON bytes, resolving a v2
+// case's "env": "<id>" reference against the case file's directory
+// (<dir>/<id>.env.json, then <dir>/env/<id>.env.json).
 func readSpecFiles(paths []string) ([][]byte, error) {
 	specs := make([][]byte, 0, len(paths))
 	for _, p := range paths {
@@ -211,9 +215,61 @@ func readSpecFiles(paths []string) ([][]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("run: read spec %s: %w", p, err)
 		}
+		dir := filepath.Dir(p)
+		b, err = testspec.InlineEnv(b, func(id string) ([]byte, error) {
+			for _, cand := range []string{
+				filepath.Join(dir, id+".env.json"),
+				filepath.Join(dir, "env", id+".env.json"),
+			} {
+				if eb, err := os.ReadFile(cand); err == nil {
+					return eb, nil
+				}
+			}
+			return nil, fmt.Errorf("no %s.env.json next to %s (or in its env/ subdirectory)", id, p)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("run: %w", err)
+		}
 		specs = append(specs, b)
 	}
 	return specs, nil
+}
+
+// foldSpecEnv folds a single spec's v2 env declarations (keys, launch) into
+// the run options where the CLI did not already decide: explicit flags win
+// over the spec, and multiple specs get no folding (their envs could
+// disagree; the engine seams are per-invocation).
+func foldSpecEnv(o runOpts, specs [][]byte) runOpts {
+	if len(specs) != 1 {
+		return o
+	}
+	s, err := testspec.Parse(specs[0])
+	if err != nil {
+		return o // the engine reports the parse error with full context
+	}
+	if k := s.EnvKeys; k != nil {
+		if o.keysSource == "" || o.keysSource == string(keysSourcePreset) {
+			o.keysSource = k.Source
+		}
+		if o.keysDir == "" || o.keysDir == "keys/preset" {
+			if k.Ref != "" {
+				o.keysDir = k.Ref
+			}
+		}
+		if o.bootnode == "" {
+			o.bootnode = k.Bootnode
+		}
+	}
+	if len(s.EnvLaunch) > 0 && len(o.launchOpts) == 0 {
+		for _, kv := range s.EnvLaunch {
+			if kv.Value == "" || kv.Value == "true" {
+				o.launchOpts = append(o.launchOpts, kv.Key)
+			} else {
+				o.launchOpts = append(o.launchOpts, kv.Key+"="+kv.Value)
+			}
+		}
+	}
+	return o
 }
 
 // printSession reads the saved session and prints a table plus a summary,

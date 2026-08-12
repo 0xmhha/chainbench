@@ -113,3 +113,10 @@ id_ed25519.*
 
 # browser automation artifacts
 .playwright-mcp/
+
+# go build artifacts at the repo root
+/chainbench
+/chainbench-mcp
+/chainbenchd
+/chain-flag-graph
+/code-graph

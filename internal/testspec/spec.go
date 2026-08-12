@@ -22,6 +22,13 @@ type ChainSpec struct {
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
 }
 
+// LaunchKV is one env.launch knob carried from a v2 declaration for the
+// surface to fold into the engine's launch-override seam.
+type LaunchKV struct {
+	Key   string
+	Value string
+}
+
 // Spec is a parsed, validated test definition (schema in design §4.3).
 type Spec struct {
 	SchemaVersion    string            `json:"schemaVersion"`
@@ -38,11 +45,27 @@ type Spec struct {
 	Assertions       []map[string]any  `json:"assertions"`
 	PostActions      []map[string]any  `json:"postActions,omitempty"`
 	Timeouts         map[string]string `json:"timeouts,omitempty"`
+
+	// Sequence is the unified statement list (v2 steps; v1 desugars its steps
+	// then assertions into it). Runtime-only — never serialized.
+	Sequence []Statement `json:"-"`
+	// OnFailActions run when the case fails (v2 hooks.onFail). Runtime-only.
+	OnFailActions []map[string]any `json:"-"`
+	// EnvKeys is the v2 env's node-key source declaration, for the surface to
+	// fold into the engine's KeySource seam. Runtime-only.
+	EnvKeys *KeySourceV2 `json:"-"`
+	// EnvLaunch are the v2 env.launch knobs (the "all" scope), for the
+	// surface to fold into the engine's launch-override seam. Runtime-only.
+	EnvLaunch []LaunchKV `json:"-"`
 }
 
-// Parse unmarshals raw JSON into a Spec and validates the required fields
-// (schemaVersion, id, chain name + binary|binaries, assertions).
+// Parse routes raw JSON to its grammar (v1, or v2 by schemaVersion sniff),
+// validates it, and returns the executable Spec. A v2 case referencing an env
+// by id must be resolved with InlineEnv first — the caller owns file lookup.
 func Parse(raw []byte) (Spec, error) {
+	if IsV2(raw) {
+		return ParseV2(raw)
+	}
 	var s Spec
 	if err := json.Unmarshal(raw, &s); err != nil {
 		return Spec{}, fmt.Errorf("testspec: parse: %w", err)

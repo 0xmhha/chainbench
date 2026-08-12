@@ -18,6 +18,12 @@ type Ports struct {
 	HTTP int
 	WS   int // = HTTP + 1
 	Auth int // = HTTP + 2 (engine auth-rpc)
+	// Metrics is the node's metrics endpoint (= HTTP + 3). It is only
+	// assigned when the rpc step leaves room for it (rpcStep >= 4); a plan
+	// with a tighter step simply has no metrics port (0), which downstream
+	// treats as metrics-off rather than an error, so existing 3-step profiles
+	// keep working.
+	Metrics int
 }
 
 // Plan computes node index's ports (index is 1-based). p2p ports advance by
@@ -36,7 +42,11 @@ func Plan(index, p2pBase, p2pStep, rpcBase, rpcStep int) (Ports, error) {
 	}
 	p2p := p2pBase + (index-1)*p2pStep
 	http := rpcBase + (index-1)*rpcStep
-	return Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2}, nil
+	p := Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2}
+	if rpcStep >= 4 {
+		p.Metrics = http + 3
+	}
+	return p, nil
 }
 
 // Validate confirms no two ports collide across the whole network, including
@@ -61,7 +71,13 @@ func Validate(ports []Ports) error {
 			{n.HTTP, fmt.Sprintf("node%d.http", i+1)},
 			{n.WS, fmt.Sprintf("node%d.ws", i+1)},
 			{n.Auth, fmt.Sprintf("node%d.auth", i+1)},
+			{n.Metrics, fmt.Sprintf("node%d.metrics", i+1)},
 		} {
+			// 0 = unassigned (metrics on a tight rpc step); only assigned
+			// ports can collide. Plan never yields 0 for the required ports.
+			if c.port == 0 {
+				continue
+			}
 			if err := claim(c.port, c.name); err != nil {
 				return err
 			}

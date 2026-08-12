@@ -77,9 +77,10 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 	}, nil
 }
 
-// endpointsFrom maps allocator ports (portplan) to the launch endpoint set. Etcd
-// is derived by the wemix binary as P2P+1 and is not a launch endpoint, so it is
-// intentionally dropped; Metrics is not allocated by portplan and stays zero.
+// endpointsFrom maps allocator ports (portplan) to the launch endpoint set.
+// Etcd is derived by the wemix binary as P2P+1 and is not a launch endpoint,
+// so it is intentionally dropped. Metrics (0 on tight rpc steps) makes the
+// node's scrape endpoint reachable for the metric verification source.
 func endpointsFrom(p portplan.Ports) node.Endpoints {
-	return node.Endpoints{P2P: p.P2P, HTTP: p.HTTP, WS: p.WS, Auth: p.Auth}
+	return node.Endpoints{P2P: p.P2P, HTTP: p.HTTP, WS: p.WS, Auth: p.Auth, Metrics: p.Metrics}
 }

@@ -185,3 +185,81 @@ func TestRun_UnknownStepActionFails(t *testing.T) {
 		t.Fatalf("unknown step must still be recorded, got %d", len(rec.stepResults))
 	}
 }
+
+// TestRun_InterleavedSequence pins the v2 unified-sequence semantics: an
+// expect failure records and continues (later statements still run), a do
+// failure stops the sequence, and onFail hooks run on a failed case.
+func TestRun_InterleavedSequence(t *testing.T) {
+	reg := testspec.NewRegistry(false)
+	laterRan, onFailRan := false, false
+	reg.RegisterAction("tx", fakeAction{})
+	reg.RegisterAction("later", fakeAction{ran: &laterRan})
+	reg.RegisterAction("diag", fakeAction{ran: &onFailRan})
+	reg.RegisterAssertion("failing", fakeAssertion{pass: false})
+	reg.RegisterAssertion("passing", fakeAssertion{pass: true})
+
+	spec := testspec.Spec{
+		Sequence: []testspec.Statement{
+			{Do: "tx", Args: map[string]any{}},
+			{Expect: "failing", Args: map[string]any{}}, // records, continues
+			{Do: "later", Args: map[string]any{}},       // still runs
+			{Expect: "passing", Args: map[string]any{}},
+		},
+		OnFailActions: []map[string]any{{"diag": true}},
+	}
+	rec := &fakeRecord{}
+	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+
+	status, err := it.Run(context.Background(), spec, testEnv(t), rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status != session.StatusFail {
+		t.Fatalf("status = %v, want fail", status)
+	}
+	if !laterRan {
+		t.Fatal("an expect failure must not stop later statements")
+	}
+	if !onFailRan {
+		t.Fatal("onFail hooks must run on a failed case")
+	}
+	if len(rec.asserts) != 2 {
+		t.Fatalf("asserts recorded = %d, want 2", len(rec.asserts))
+	}
+}
+
+// TestRun_DoFailureStopsSequence pins fail-fast for do statements: later
+// statements are skipped and post actions do not run (the v1 contract).
+func TestRun_DoFailureStopsSequence(t *testing.T) {
+	reg := testspec.NewRegistry(false)
+	laterRan, postRan, onFailRan := false, false, false
+	reg.RegisterAction("boom", fakeAction{err: errors.New("broken")})
+	reg.RegisterAction("later", fakeAction{ran: &laterRan})
+	reg.RegisterAction("cleanup", fakeAction{ran: &postRan})
+	reg.RegisterAction("diag", fakeAction{ran: &onFailRan})
+
+	spec := testspec.Spec{
+		Sequence: []testspec.Statement{
+			{Do: "boom", Args: map[string]any{}},
+			{Do: "later", Args: map[string]any{}},
+		},
+		PostActions:   []map[string]any{{"cleanup": true}},
+		OnFailActions: []map[string]any{{"diag": true}},
+	}
+	rec := &fakeRecord{}
+	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+
+	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
+	if status != session.StatusFail {
+		t.Fatalf("status = %v, want fail", status)
+	}
+	if laterRan {
+		t.Fatal("a do failure must stop the sequence")
+	}
+	if postRan {
+		t.Fatal("post actions must not run after a do failure (v1 contract)")
+	}
+	if !onFailRan {
+		t.Fatal("onFail diagnostics must run after a do failure")
+	}
+}

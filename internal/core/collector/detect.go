@@ -5,7 +5,7 @@
 // chain-id disambiguation are sourced from the chain registry, and the endpoint
 // can be reached through any http.Client — including the auth/SSH-tunnel clients
 // from pkg/core/remote.
-package probe
+package collector
 
 import (
 	"context"

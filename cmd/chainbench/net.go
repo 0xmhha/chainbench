@@ -27,20 +27,21 @@ func newNetCmd() *cobra.Command {
 			"data plane lives on the target (local, or a remote SSH host set at `net new`).\n" +
 			"The same steps are exposed as MCP tools.",
 	}
-	cmd.AddCommand(newNetNewCmd(), newNetStatusCmd())
+	cmd.AddCommand(
+		newNetNewCmd(), newNetStatusCmd(),
+		newNetKeysCmd(), newNetAllocateCmd(), newNetGenesisCmd(), newNetConfigCmd(),
+		newNetLaunchOptsCmd(), newNetProvisionCmd(),
+		newNetInitCmd(), newNetStartCmd(), newNetStopCmd(), newNetRestartCmd(),
+		newNetRmCmd(), newNetLogsCmd(), newNetHealthCmd(),
+	)
 	return cmd
 }
 
-// openWorkspace opens the local data-dir workspace for a step command.
-func openWorkspace(dataDir string) (*netcompose.Workspace, error) {
-	if dataDir == "" {
-		return nil, fmt.Errorf("--data-dir is required")
-	}
-	return netcompose.Open(dataDir, nil)
-}
-
-// targetFlags holds the compose-target selection shared by commands that set it.
+// targetFlags holds the compose-target selection shared by commands that set
+// it: the single-path --target syntax (preferred), or the legacy four-flag
+// form.
 type targetFlags struct {
+	target     string
 	remoteHost string
 	remoteUser string
 	remotePort int
@@ -49,23 +50,32 @@ type targetFlags struct {
 
 // bind attaches the target flags to a command.
 func (f *targetFlags) bind(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.remoteHost, "remote-host", "", "run the data plane on this SSH host (empty = local)")
-	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "SSH user (or CHAINBENCH_REMOTE_USER)")
-	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "SSH port (default 22)")
-	cmd.Flags().StringVar(&f.targetDir, "target-dir", "", "data-root path ON the target (required for remote; defaults to the workspace dir for local)")
+	cmd.Flags().StringVar(&f.target, "target", "",
+		"where the data plane lives, as one path: /local/path | user@host:/path | ssh://user@host:port/path (folds the four flags below)")
+	cmd.Flags().StringVar(&f.remoteHost, "remote-host", "", "legacy: run the data plane on this SSH host (prefer --target)")
+	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "legacy: SSH user (prefer --target)")
+	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "legacy: SSH port (prefer --target)")
+	cmd.Flags().StringVar(&f.targetDir, "target-dir", "", "legacy: data-root path ON the target (prefer --target)")
 }
 
-// spec builds a TargetSpec from the flags: remote when --remote-host is set,
-// else local. Secrets are never captured here — they come from the environment
-// when the target is resolved.
-func (f *targetFlags) spec() netcompose.TargetSpec {
+// spec builds a TargetSpec from the flags. --target wins; mixing it with the
+// legacy flags is ambiguous and refused. Secrets are never captured here —
+// they come from the environment when the target is resolved.
+func (f *targetFlags) spec() (netcompose.TargetSpec, error) {
+	if f.target != "" {
+		if f.remoteHost != "" || f.remoteUser != "" || f.remotePort != 0 || f.targetDir != "" {
+			return netcompose.TargetSpec{}, fmt.Errorf(
+				"--target and the legacy --remote-host/--remote-user/--remote-port/--target-dir flags cannot be mixed")
+		}
+		return netcompose.ParseTarget(f.target)
+	}
 	if f.remoteHost == "" {
-		return netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: f.targetDir}
+		return netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: f.targetDir}, nil
 	}
 	return netcompose.TargetSpec{
 		Kind: netcompose.TargetRemote, Host: f.remoteHost, User: f.remoteUser,
 		Port: f.remotePort, DataRoot: f.targetDir,
-	}
+	}, nil
 }
 
 func orDash(s string) string {

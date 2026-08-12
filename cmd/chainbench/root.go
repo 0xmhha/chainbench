@@ -36,6 +36,7 @@ func newRootCmd() *cobra.Command {
 		newNetCmd(),
 		newValidatorCmd(),
 		newValidateCmd(),
+		newMigrateSpecCmd(),
 		newNodeCmd(),
 		newConsensusCmd(),
 		newHardforkCmd(),

@@ -66,6 +66,7 @@ func seedBuiltins(r Registry) {
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
+	r.RegisterAssertion(assertMetric, metricAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
 	}
