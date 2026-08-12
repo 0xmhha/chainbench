@@ -21,8 +21,12 @@ func newNetNewCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
+			target, err := tf.spec()
+			if err != nil {
+				return err
+			}
 			out, err := app.NetNew(cmd.Context(), app.Deps{}, app.NetNewIn{
-				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: tf.spec(),
+				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 			})
 			if err != nil {
 				return err

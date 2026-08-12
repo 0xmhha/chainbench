@@ -103,3 +103,35 @@ func TestTargetResolve(t *testing.T) {
 		t.Fatal("expected error for remote target without auth")
 	}
 }
+
+func TestParseTarget(t *testing.T) {
+	cases := []struct {
+		in   string
+		want netcompose.TargetSpec
+	}{
+		{"/data/net1", netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: "/data/net1"}},
+		{"rel/dir", netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: "rel/dir"}},
+		{"alice@10.0.0.5:/data/net1", netcompose.TargetSpec{
+			Kind: netcompose.TargetRemote, User: "alice", Host: "10.0.0.5", DataRoot: "/data/net1"}},
+		{"ssh://bob@host9:2222/data/n", netcompose.TargetSpec{
+			Kind: netcompose.TargetRemote, User: "bob", Host: "host9", Port: 2222, DataRoot: "/data/n"}},
+		{"ssh://carol@host9/data/n", netcompose.TargetSpec{
+			Kind: netcompose.TargetRemote, User: "carol", Host: "host9", DataRoot: "/data/n"}},
+	}
+	for _, tc := range cases {
+		got, err := netcompose.ParseTarget(tc.in)
+		if err != nil {
+			t.Errorf("%q: %v", tc.in, err)
+			continue
+		}
+		if got != tc.want {
+			t.Errorf("%q = %+v, want %+v", tc.in, got, tc.want)
+		}
+	}
+
+	for _, bad := range []string{"", "user@host", "user@:/path", "ssh://host-only"} {
+		if _, err := netcompose.ParseTarget(bad); err == nil {
+			t.Errorf("%q must fail", bad)
+		}
+	}
+}

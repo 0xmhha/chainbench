@@ -2,6 +2,9 @@ package netcompose
 
 import (
 	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/provision"
@@ -36,6 +39,50 @@ type TargetSpec struct {
 
 // IsRemote reports whether the target is a remote SSH host.
 func (s TargetSpec) IsRemote() bool { return s.Kind == TargetRemote }
+
+// ParseTarget parses the single-path target syntax (key point 2: the upper
+// layers see one "path", local or remote):
+//
+//	/data/net1                        local path
+//	user@host:/data/net1              remote over SSH (port 22 / env)
+//	ssh://user@host:2222/data/net1    remote with an explicit port
+//
+// Credentials never appear in the syntax — they come from the environment
+// when the target is resolved (see TargetSpec).
+func ParseTarget(s string) (TargetSpec, error) {
+	if s == "" {
+		return TargetSpec{}, fmt.Errorf("netcompose: empty target")
+	}
+	if strings.HasPrefix(s, "ssh://") {
+		u, err := url.Parse(s)
+		if err != nil {
+			return TargetSpec{}, fmt.Errorf("netcompose: bad target %q: %w", s, err)
+		}
+		if u.Host == "" || u.Path == "" {
+			return TargetSpec{}, fmt.Errorf("netcompose: target %q needs a host and a path", s)
+		}
+		port := 0
+		if p := u.Port(); p != "" {
+			n, err := strconv.Atoi(p)
+			if err != nil {
+				return TargetSpec{}, fmt.Errorf("netcompose: bad port in target %q", s)
+			}
+			port = n
+		}
+		return TargetSpec{
+			Kind: TargetRemote, Host: u.Hostname(), User: u.User.Username(),
+			Port: port, DataRoot: u.Path,
+		}, nil
+	}
+	if user, rest, ok := strings.Cut(s, "@"); ok {
+		host, path, ok := strings.Cut(rest, ":")
+		if !ok || host == "" || path == "" {
+			return TargetSpec{}, fmt.Errorf("netcompose: bad target %q (want user@host:/path)", s)
+		}
+		return TargetSpec{Kind: TargetRemote, Host: host, User: user, DataRoot: path}, nil
+	}
+	return TargetSpec{Kind: TargetLocal, DataRoot: s}, nil
+}
 
 // Target is the resolved data plane: step functions materialize files through
 // Sink and run processes through Driver at DataRoot, without branching on local

@@ -27,20 +27,25 @@ func netNewTool() Tool {
 				"chain":      map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix)"},
 				"binary":     map[string]any{"type": "string", "description": "node binary path (may also be set at start)"},
 				"keys":       map[string]any{"type": "string", "description": "key set directory (default keys/preset)"},
-				"remoteHost": map[string]any{"type": "string", "description": "SSH host for a remote data plane (empty = local)"},
-				"remoteUser": map[string]any{"type": "string", "description": "SSH user"},
-				"remotePort": map[string]any{"type": "number", "description": "SSH port (default 22)"},
-				"targetDir":  map[string]any{"type": "string", "description": "data root ON the target"},
+				"target":     map[string]any{"type": "string", "description": "data plane as one path: /local/path | user@host:/path | ssh://user@host:port/path"},
+				"remoteHost": map[string]any{"type": "string", "description": "legacy: SSH host for a remote data plane (prefer target)"},
+				"remoteUser": map[string]any{"type": "string", "description": "legacy: SSH user (prefer target)"},
+				"remotePort": map[string]any{"type": "number", "description": "legacy: SSH port (prefer target)"},
+				"targetDir":  map[string]any{"type": "string", "description": "legacy: data root ON the target (prefer target)"},
 			},
 			"required": []string{"dataDir", "chain"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			target, err := targetSpecFromArgs(args)
+			if err != nil {
+				return "", err
+			}
 			out, err := app.NetNew(ctx, app.Deps{}, app.NetNewIn{
 				DataDir: argString(args, "dataDir", ""),
 				Chain:   argString(args, "chain", ""),
 				Binary:  argString(args, "binary", ""),
 				KeysDir: argString(args, "keys", ""),
-				Target:  targetSpecFromArgs(args),
+				Target:  target,
 			})
 			if err != nil {
 				return "", err
@@ -313,16 +318,25 @@ func netHealthTool() Tool {
 	}
 }
 
-// targetSpecFromArgs maps the shared remote-target arguments onto a TargetSpec:
-// remote when remoteHost is set, else local. Mirrors the CLI's targetFlags.
-func targetSpecFromArgs(args map[string]any) netcompose.TargetSpec {
+// targetSpecFromArgs maps the target arguments onto a TargetSpec. The
+// single-path "target" argument wins and cannot be mixed with the legacy
+// four-argument form. Mirrors the CLI's targetFlags.
+func targetSpecFromArgs(args map[string]any) (netcompose.TargetSpec, error) {
 	host := argString(args, "remoteHost", "")
+	if t := argString(args, "target", ""); t != "" {
+		if host != "" || argString(args, "remoteUser", "") != "" ||
+			argInt(args, "remotePort", 0) != 0 || argString(args, "targetDir", "") != "" {
+			return netcompose.TargetSpec{}, fmt.Errorf(
+				"mcp: target and the legacy remoteHost/remoteUser/remotePort/targetDir arguments cannot be mixed")
+		}
+		return netcompose.ParseTarget(t)
+	}
 	if host == "" {
-		return netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: argString(args, "targetDir", "")}
+		return netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: argString(args, "targetDir", "")}, nil
 	}
 	return netcompose.TargetSpec{
 		Kind: netcompose.TargetRemote, Host: host,
 		User: argString(args, "remoteUser", ""), Port: argInt(args, "remotePort", 0),
 		DataRoot: argString(args, "targetDir", ""),
-	}
+	}, nil
 }
