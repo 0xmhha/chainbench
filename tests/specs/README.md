@@ -29,7 +29,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `consensus` | 13 | **8** | ✅ 라이브 통과 (gstable·gwbft) |
 | `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분) |
 | `accounts` | 35 | 0 | ☐ |
-| `gas-policy` | 17 | 0 | ☐ (표현력은 확보됨 — `examples/specs/stablenet-*` 참조) |
+| `gas-policy` | 17 | **3** | ◐ `read/assert:"derive"`(sum/diff) 추가로 정확 산술 비교 가능 — 근사가 아닌 `gasPrice == baseFee + gasTip` 그대로. 라이브 검증 대기 |
 | `hardfork` | 8 | 0 | ☐ |
 | `system-contracts` | 46 | 0 | ☐ |
 
@@ -57,7 +57,7 @@ consensus  ( 8 spec) → gstable 4노드: pass=8 fail=0
 | 레거시 케이스 | 왜 |
 |---|---|
 | `ws-subscribe-logs` | **구독을 먼저 열고 그 다음 로그를 유발**해야 하는데, 어세션은 스텝 뒤에 실행되므로 이미 늦다. 현재 DSL 로는 순서를 표현할 수 없다 — 가짜로 만들지 않고 갭으로 남긴다 |
-| `block-period-one-second` | 두 블록의 timestamp **차이**를 계산해야 한다. 저장값 간 산술 비교가 없다 |
+| `block-period-one-second` | ~~저장값 간 산술 비교가 없다~~ → `derive`(diff) 추가로 **표현 가능해짐** — 이관 대기 |
 | `epoch-transition-carries-epoch-info` | 에폭 경계까지 대기 후 그 블록을 조회해야 한다. 조건부 대기 표현이 없다 |
 | `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다) |
 

@@ -10,7 +10,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keys"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/procman"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -79,7 +78,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 		preset keys.Preset
 		places []place.NodePlacement
 		gen    []byte
-		plan   setup.Plan
+		plan   driver.Plan
 		specs  []driver.NodeSpec
 		launch engine.LocalLauncher
 		nodes  node.NodeSet

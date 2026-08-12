@@ -8,7 +8,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/procman"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/testspec"
@@ -52,7 +51,7 @@ func NewNodeController(launcher LocalLauncher, procs *procman.Manager) *NodeCont
 
 // Launch implements the supervisor launch seam, recording each node's arming and
 // pid on the way through.
-func (c *NodeController) Launch(ctx context.Context, plan setup.Plan) (supervisor.LaunchResult, error) {
+func (c *NodeController) Launch(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
 	res, specs, err := c.launcher.LaunchArmed(ctx, plan)
 	c.record(res, specs)
 	return res, err

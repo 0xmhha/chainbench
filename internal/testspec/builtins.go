@@ -270,6 +270,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertLogs, defaultOp: "Equal", read: readLogs},
 		{name: assertGasPrice, defaultOp: "GreaterOrEqual", read: readGasPrice},
 		{name: assertRPCCall, defaultOp: "Equal", read: readRPCCall},
+		{name: assertDerive, defaultOp: "Equal", read: readDerive},
 	}
 }
 

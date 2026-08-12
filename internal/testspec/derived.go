@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ const (
 	assertGasPrice    = "gasPrice"
 	assertRPCCall     = "rpcCall"
 	assertWSSubscribe = "wsSubscribe"
+	assertDerive      = "derive"
 )
 
 // defaultSubscribeTimeout bounds a WebSocket subscription assertion. Every wait
@@ -185,4 +187,65 @@ func wsTarget(ac *AssertCtx) (string, error) {
 		host = "127.0.0.1"
 	}
 	return fmt.Sprintf("ws://%s:%d", host, n.Ports.WS), nil
+}
+
+// readDerive computes an arithmetic combination of already-bound values —
+// the saved-value arithmetic the migration ledger recorded as a gap
+// (gasPrice == baseFee + gasTip; block-period timestamp diffs). Spec:
+// op (sum | diff), of (values or "$bindings"; hex 0x or decimal strings, or
+// numbers). diff subtracts the rest from the first. The result is a decimal
+// string, comparable with the numeric assert primitives.
+func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
+	op, _ := spec["op"].(string)
+	raw, ok := spec["of"].([]any)
+	if !ok || len(raw) == 0 {
+		return nil, fmt.Errorf("testspec: derive requires \"of\" (a list of values)")
+	}
+	vals := make([]*big.Int, len(raw))
+	for i, v := range raw {
+		n, err := parseBigValue(v)
+		if err != nil {
+			return nil, fmt.Errorf("testspec: derive: of[%d]: %w", i, err)
+		}
+		vals[i] = n
+	}
+	acc := new(big.Int).Set(vals[0])
+	for _, v := range vals[1:] {
+		switch op {
+		case "sum":
+			acc.Add(acc, v)
+		case "diff":
+			acc.Sub(acc, v)
+		default:
+			return nil, fmt.Errorf("testspec: derive: unknown op %q (want sum or diff)", op)
+		}
+	}
+	return acc.String(), nil
+}
+
+// parseBigValue converts a spec value (0x-hex string, decimal string, or JSON
+// number) to a big integer.
+func parseBigValue(v any) (*big.Int, error) {
+	switch x := v.(type) {
+	case string:
+		s := strings.TrimSpace(x)
+		if h, ok := strings.CutPrefix(s, "0x"); ok {
+			n, good := new(big.Int).SetString(h, 16)
+			if !good {
+				return nil, fmt.Errorf("bad hex %q", x)
+			}
+			return n, nil
+		}
+		n, good := new(big.Int).SetString(s, 10)
+		if !good {
+			return nil, fmt.Errorf("bad number %q", x)
+		}
+		return n, nil
+	case float64:
+		return big.NewInt(int64(x)), nil
+	case int:
+		return big.NewInt(int64(x)), nil
+	default:
+		return nil, fmt.Errorf("unsupported value type %T", v)
+	}
 }

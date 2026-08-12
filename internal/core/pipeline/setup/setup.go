@@ -22,18 +22,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/topology"
 )
 
-// Plan is the fully-resolved setup description: what genesis to write and which
-// nodes to provision/launch. Building a Plan performs no I/O, so it is unit
-// testable and inspectable before anything runs.
-type Plan struct {
-	Chain        string
-	Network      string
-	DataRoot     string
-	GenesisPath  string
-	Genesis      []byte // genesis.json bytes (supplied by the consensus family)
-	Capabilities []string
-	Nodes        []driver.NodeSpec
-}
+// Plan is the fully-resolved setup description. The type moved to
+// driver.Plan (next to NodeSpec — worklist T7.11); this alias keeps the
+// legacy cmd/mcp consumers compiling until they migrate off this package.
+type Plan = driver.Plan
 
 // placement is one node's resolved role + sync mode, in launch order.
 type placement struct {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -21,7 +20,7 @@ type PlacedNode struct {
 	Placement place.NodePlacement
 }
 
-// AssemblePlan builds a setup.Plan from allocator-resolved placements and
+// AssemblePlan builds a driver.Plan from allocator-resolved placements and
 // pre-built genesis bytes. It is the place-driven equivalent of setup.BuildPlan,
 // which instead derives ports positionally via node.Offset from a fixed base:
 // here the ports come from the allocator, so OS-assigned and remote-per-host
@@ -31,9 +30,9 @@ type PlacedNode struct {
 // Each node's launch order (1-based Index) is its slice position. genesis is the
 // already-built genesis.json content (the caller obtains it from the consensus
 // family); caps are the advertised capabilities.
-func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []byte, dataRoot string, caps []string) (setup.Plan, error) {
+func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []byte, dataRoot string, caps []string) (driver.Plan, error) {
 	if len(placed) == 0 {
-		return setup.Plan{}, fmt.Errorf("engine: assemble plan: no nodes")
+		return driver.Plan{}, fmt.Errorf("engine: assemble plan: no nodes")
 	}
 	m := plugin.Manifest()
 
@@ -66,7 +65,7 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 		})
 	}
 
-	return setup.Plan{
+	return driver.Plan{
 		Chain:        m.ID,
 		Network:      "local",
 		DataRoot:     dataRoot,

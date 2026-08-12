@@ -11,7 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/procman"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -54,7 +53,7 @@ type LocalLauncher struct {
 
 // Launch arms and launches every node in plan and returns the running node set
 // plus the processes to track for teardown.
-func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.LaunchResult, error) {
+func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
 	res, _, err := l.LaunchArmed(ctx, plan)
 	return res, err
 }
@@ -68,7 +67,7 @@ func (l LocalLauncher) Launch(ctx context.Context, plan setup.Plan) (supervisor.
 // a caller checking the bring-up can report each one on its own: "which step
 // failed" is a different question from "did it come up", and only the phases
 // answer it.
-func (l LocalLauncher) LaunchArmed(ctx context.Context, plan setup.Plan) (supervisor.LaunchResult, []driver.NodeSpec, error) {
+func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, []driver.NodeSpec, error) {
 	specs, err := l.Arm(plan)
 	if err != nil {
 		return supervisor.LaunchResult{}, nil, err
@@ -82,7 +81,7 @@ func (l LocalLauncher) LaunchArmed(ctx context.Context, plan setup.Plan) (superv
 
 // Arm loads the preset and produces each node's launch spec: rendered config,
 // identity flags, resolved binary. Pure apart from reading the preset.
-func (l LocalLauncher) Arm(plan setup.Plan) ([]driver.NodeSpec, error) {
+func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 	preset, err := keys.LoadPreset(l.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("engine: launcher: %w", err)
@@ -92,7 +91,7 @@ func (l LocalLauncher) Arm(plan setup.Plan) ([]driver.NodeSpec, error) {
 
 // Materialize writes the genesis and per-node config through the file sink
 // (upload-if-absent), locally or to a remote host.
-func (l LocalLauncher) Materialize(ctx context.Context, plan setup.Plan, specs []driver.NodeSpec) error {
+func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
 	sink := l.Sink
 	if sink == nil {
 		sink = provision.LocalFileSink{}
@@ -102,7 +101,7 @@ func (l LocalLauncher) Materialize(ctx context.Context, plan setup.Plan, specs [
 
 // InitAndLaunch initializes each node's datadir from the shared genesis and
 // starts it, returning the node set and the processes to track.
-func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan setup.Plan, specs []driver.NodeSpec) (supervisor.LaunchResult, error) {
+func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) (supervisor.LaunchResult, error) {
 	d := l.Driver
 	if d == nil {
 		d = driver.NewLocalDriver()
@@ -144,7 +143,7 @@ func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan setup.Plan, specs
 // through the provisioner (upload-if-absent, so a rerun reuses existing files).
 // Identity files (nodekey, keystore, password) already live in the preset dir
 // and are referenced by path rather than copied.
-func materialize(ctx context.Context, pv *provision.Provisioner, plan setup.Plan, specs []driver.NodeSpec) error {
+func materialize(ctx context.Context, pv *provision.Provisioner, plan driver.Plan, specs []driver.NodeSpec) error {
 	if len(plan.Genesis) > 0 {
 		in := provision.NodeInputs{
 			DataDir: plan.DataRoot,
@@ -178,7 +177,7 @@ func materialize(ctx context.Context, pv *provision.Provisioner, plan setup.Plan
 // The argv is assembled here and only here (launchopt Builder), replacing the
 // previous split between AssemblePlan's common flags and this function's
 // identity appends — see docs/dev/architecture/code-graph.md §3.
-func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan setup.Plan, binary, keysDir string, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
+func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan driver.Plan, binary, keysDir string, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
 	staticNodes := make([]string, 0, len(plan.Nodes))
 	for _, spec := range plan.Nodes {
 		if nk, ok := preset.Node(spec.Index); ok {

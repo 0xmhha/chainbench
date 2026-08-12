@@ -239,3 +239,33 @@ func atoi(s string) (int, error) {
 	}
 	return n, nil
 }
+
+func TestReadDerive(t *testing.T) {
+	cases := []struct {
+		spec map[string]any
+		want string
+	}{
+		{map[string]any{"op": "sum", "of": []any{"0x10", "0x6"}}, "22"},
+		{map[string]any{"op": "sum", "of": []any{"100", float64(11)}}, "111"},
+		{map[string]any{"op": "diff", "of": []any{"0x64", "40", "0x4"}}, "56"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, tc.spec)
+		if err != nil {
+			t.Fatalf("%v: %v", tc.spec, err)
+		}
+		if got != tc.want {
+			t.Errorf("%v = %v, want %v", tc.spec, got, tc.want)
+		}
+	}
+
+	for name, bad := range map[string]map[string]any{
+		"no of":      {"op": "sum"},
+		"unknown op": {"op": "mul", "of": []any{"1", "2"}},
+		"bad value":  {"op": "sum", "of": []any{"zzz"}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}

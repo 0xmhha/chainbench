@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1",
+  "id": "max-priority-fee-equals-gastip",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_maxPriorityFeePerGas",
+                "params": [], "save": "mpf" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["latest", false], "select": "number", "save": "n" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$n"], "select": "gasTip", "save": "tip" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$tip"], "save": "tipDec" } }
+  ],
+  "assertions": [
+    {
+      "assert": "derive", "op": "sum", "of": ["$mpf"],
+      "compare": "Equal", "expected": "$tipDec"
+    }
+  ]
+}
