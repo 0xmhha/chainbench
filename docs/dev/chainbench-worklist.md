@@ -81,13 +81,13 @@
 | **T7.2** | **wbft extraData RLP 산출** — `keygen.WBFTExtraData`: WBFTExtra(10필드) RLP 를 자체 최소 인코더로 계산(geth 의존성 없음). 게이트: 배포된 preset 의 extra-data 를 자기 메타데이터에서 바이트 동일 재현. GasTip=InitialGasTip·Diligence=DefaultDiligence 는 체인 소스 대조 확인 | T7.1 이 연 "랜덤 키셋" 경로의 유일한 잔여 블로커였음 | ☑ |
 | **T7.3** | **`internal/core/launchopt`** — Dialect 2장(geth114 / geth110-wemix) + 관심사 모듈 10 + Builder(cross-module 검증) | 배경 2·알고리즘 7 미충족. 현재 launch args 가 5곳 분산 | ☑ |
 | **T7.4** | **launchopt 전환** — `armSpecs`(engine)·`upgrade.LaunchArgs`·`ExtraArgs` 클로저 2곳(chainsetup·cmd)을 Builder 로 흡수 + CLI `--chain-id/--network-id/--launch-opt` 커스텀 심. 게이트는 flag-pair 동등성(레거시 argv 가 관심사를 2회 교차 배치해 바이트 동일은 구조적으로 불가 — `architecture/code-graph.md` §4). 잔여: legacy stack A 의 `nodeconfig.LaunchArgs` 호출 2곳은 T7.11 에서 스택과 함께 이관 | 5곳 → 1곳(레거시 스택 제외) | ☑ |
-| **T7.5** | **`internal/app` 유스케이스 층** — CLI RunE 와 MCP 핸들러가 같은 함수를 호출 | 지금 `mcp` 의 fan-out 이 19(=engine 과 동급). 원자 CLI 확장 전에 세우지 않으면 스텝마다 로직이 복제된다 | ☐ |
-| **T7.6** | **`net` 원자 스텝 잔여** — `keys`/`allocate`/`genesis`/`config`/`launchopts`/`provision`/`init`/`start`/`stop`/`restart`/`rm`/`logs`/`health` | `net new`·`net status` 만 존재. 각 스텝 = MCP 도구 1:1 | ☐ |
-| **T7.7** | **`netcompose.Workspace` → `core/session` 흡수** | 상태 저장소 3개(state / session / Workspace) 중 하나 제거. 지금은 필드 6개라 비용 0, 노드 테이블이 들어가면 완전 중복 | ☐ |
-| **T7.8** | **DSL v2** — env/case 분리 · `do`/`expect` 통일 · `keys`/`genesis` 4모드/`launch` 선언 · JSON Schema 정본화 + v1 desugar | T7.1·T7.3 이 표현 대상을 실재화한 뒤 문법 확정 | ☐ |
-| **T7.9** | **metric 검증원** — collector 가 `--metrics` 엔드포인트를 스크레이프, `expect:"metric"` 어세션 | 배경 3 의 3-검증원 중 1개 미구현 | ☐ |
-| **T7.10** | **단일 경로 문법** — `--target user@host:/path` 로 `--remote-host/-user/-port/--target-dir` 4개를 접기 | key point 2. `netcompose.TargetSpec` 이 이미 유사 모델 | ☐ |
-| **T7.11** | **레거시 스택 A 제거** — `core/state`·`core/pipeline/*`·`testkit`·`core/probe` | 소비자(`mcp` 5파일 + `cmd` 7파일) 이관 후. T7.5 선행 | ☐ |
+| **T7.5** | **`internal/app` 유스케이스 층** — 유스케이스 1개=함수 1개, cobra·MCP 타입 무지. NetNew/NetStatus + net 스텝 전체가 이 층 경유 | fan-out 축소는 소비자 이관에 비례(레거시 소비자는 T7.11 잔여) | ☑ |
+| **T7.6** | **`net` 원자 스텝** — keys/allocate/genesis/config/launchopts/provision/init/start/stop/restart/rm/logs/health. 각 스텝 = app 함수 1 + CLI 서브커맨드 1 + MCP 도구 1. keys 는 engine.KeySource, argv 는 engine.NodeLaunchArgs(단일 조립 지점) 재사용 | 로컬 타깃 완성; 원격 rm/logs 는 명시적 미지원 오류 | ☑ |
+| **T7.7** | **`netcompose.Workspace` → `core/session` 흡수** — `session.Composition`(장수명 환경 모드)이 디렉토리·manifest·스텝 스탬프를 소유, Workspace 는 도메인 상태만 | 잔여 저장소 `core/state` 는 T7.11 에서 스택과 함께 | ☑ |
+| **T7.8** | **DSL v2** — env/case 분리, do/expect 통일 문장형(v1 은 같은 시퀀스로 desugar — 실행 경로 1개), strict 파싱, keys/launch/genesis(set·overlay) 선언, schema/v2.schema.json 정본, `migrate-spec`(라운드트립 게이트), hooks.onFail | 미배선 선언은 이름 붙여 거부: genesis existing/build/inherit·role-scoped launch·override hook(G5) | ☑ |
+| **T7.9** | **metric 검증원** — portplan 이 metrics 포트(HTTP+3, rpcStep≥4) 할당, collector.ScrapeMetrics(Prometheus 텍스트), `expect:"metric"` 어세션(기본 GreaterOrEqual). metrics 포트 없는 노드는 명시적 실패 | 3-검증원(log·rpc·metric) 완성 | ☑ |
+| **T7.10** | **단일 경로 문법** — `netcompose.ParseTarget`: `/local/path` · `user@host:/path` · `ssh://user@host:port/path`. `net new --target` + MCP `target` 인자; 레거시 4-플래그는 유지하되 혼용 거부 | setup 명령의 4-플래그는 T7.11 에서 스택과 함께 | ☑ |
+| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe` 는 `core/collector` 로 흡수 완료(Detect). **잔여 실측**: `core/state` 소비자 = cmd 7파일(clean/test/stop/status/hardfork/setup/node) + mcp 1; `core/pipeline/setup` 의 `Plan` 타입은 supervisor·engine·chainsetup 이 쓰는 **현행 하중 지지 타입**(단순 삭제 불가 — plan 타입의 engine 이전 선행); `testkit` 은 레거시 케이스 레지스트리(케이스 이관 전제) | 나머지는 cmd/mcp 표면을 app 층으로 재작성하는 독립 작업 — 라이브 검증 경로라 기계적 삭제 금지 | ◐ |
 | — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☐ |
 
 > **여전히 미배선인 선언 1건**: `testspec.Deps.Keys` 는 타입으로만 존재하고 소비자가 없다.

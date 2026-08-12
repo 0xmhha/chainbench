@@ -6,8 +6,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/probe"
+
 	"github.com/0xmhha/chainbench/internal/core/state"
 )
 
@@ -41,7 +42,7 @@ func networkAttachTool() Tool {
 			if !state.IsValidNetworkName(name) {
 				return "", fmt.Errorf("invalid network name %q (must match [a-z0-9][a-z0-9_-]* and not be 'local')", name)
 			}
-			res, err := probe.Detect(ctx, probe.Options{RPCURL: rpc, Override: argString(args, "override", "")})
+			res, err := collector.Detect(ctx, collector.Options{RPCURL: rpc, Override: argString(args, "override", "")})
 			if err != nil {
 				return "", err
 			}
