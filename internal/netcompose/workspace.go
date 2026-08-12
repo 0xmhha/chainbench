@@ -40,6 +40,7 @@ type NodeState struct {
 	HTTP       int      `json:"http"`
 	WS         int      `json:"ws"`
 	Auth       int      `json:"auth"`
+	Metrics    int      `json:"metrics,omitempty"`
 	Args       []string `json:"args,omitempty"`
 	PID        int      `json:"pid,omitempty"`
 }

@@ -132,7 +132,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			DataDir:    filepath.Join(root, fmt.Sprintf("node%d", idx)),
 			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
 			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
-			P2P:        p.Ports.P2P, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth,
+			P2P:        p.Ports.P2P, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
 		}
 	}
 	w.state.Nodes = nodes
@@ -222,7 +222,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	for _, ns := range w.state.Nodes {
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
-			Ports:         node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth},
+			Ports:         node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
 			KeystoreDir:   filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index), "keystore"),
 			RPCNamespace:  m.Consensus.RPCNamespace,
 			MinerRecommit: m.MinerRecommit,
@@ -343,6 +343,6 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 		ConfigPath: ns.ConfigPath,
 		LogPath:    ns.LogPath,
 		Args:       ns.Args,
-		Ports:      node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth},
+		Ports:      node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
 	}
 }
