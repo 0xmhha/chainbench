@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "id": "randao-and-mixdigest-present",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$n"],
+      "select": "randaoReveal", "compare": "NotEqual", "expected": "0x" },
+    { "assert": "rpcCall", "method": "eth_getBlockByNumber", "params": ["$n", false],
+      "select": "mixHash", "compare": "NotEqual",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000000" }
+  ]
+}

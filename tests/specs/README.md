@@ -26,8 +26,8 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | 카테고리 | 레거시 | 이관 | 상태 |
 |---|---:|---:|---|
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
-| `consensus` | 13 | **8** | ✅ 라이브 통과 (gstable·gwbft) |
-| `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분) |
+| `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
+| `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분). 잔여 1건 `admin-peers-populated` 갭(아래) |
 | `accounts` | 35 | 0 | ☐ |
 | `gas-policy` | 17 | **9** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 8건은 문법 갭(아래) |
 | `hardfork` | 8 | 0 | ☐ |
@@ -46,6 +46,10 @@ consensus  ( 8 spec) → gstable 4노드: pass=8 fail=0
 ```
 gas-policy ( 9 spec) → gstable 5노드(스크래치, 8601-8605): pass=9 fail=0
                      read 3 + tx-flow 6. sendTx→receipt→derive 산술비교, feeCap 주입 모두 라이브 확인
+consensus  (+3 spec) → gstable 5노드(스크래치, 8601-8605):
+                     randao-and-mixdigest-present pass, block-period-one-second pass (attach 모드)
+                     wbft-seals-quorum 은 attach 모드가 rpc cap 만 광고해 skip →
+                     committedSeal/preparedSeal.signature(194자 hex, ≠"0x") 직접 RPC 로 확인
 ```
 
 ## 이관하면서 드러난 레거시 케이스의 결함
@@ -64,9 +68,11 @@ gas-policy ( 9 spec) → gstable 5노드(스크래치, 8601-8605): pass=9 fail=0
 | 레거시 케이스 | 왜 |
 |---|---|
 | `ws-subscribe-logs` | **구독을 먼저 열고 그 다음 로그를 유발**해야 하는데, 어세션은 스텝 뒤에 실행되므로 이미 늦다. 현재 DSL 로는 순서를 표현할 수 없다 — 가짜로 만들지 않고 갭으로 남긴다 |
-| `block-period-one-second` | ~~저장값 간 산술 비교가 없다~~ → `derive`(diff) 추가로 **표현 가능해짐** — 이관 대기 |
+| ~~`block-period-one-second`~~ | ✅ **이관 완료** — `parentHash` 로 헤드에서 두 단계 되짚어 인접 블록 타임스탬프를 얻고 `derive`(diff)==blockPeriod(1) 로 검증. 파생 블록번호를 hex RPC 파라미터로 되먹일 수 없는 갭을 hash 워크로 우회 |
 | `epoch-transition-carries-epoch-info` | 에폭 경계까지 대기 후 그 블록을 조회해야 한다. 조건부 대기 표현이 없다 |
 | `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다) |
+| `prev-seals-quorum` | prevCommitted/prevPrepared seal 의 **sealer 수 >= quorum(ceil 2N/3)** 만 검사한다(서명 필드 없음). 배열 길이 비교 연산자도, 토폴로지 파생 quorum 산술도 없다. `NotNil` 은 빈 배열에도 통과하므로 의미가 없다 — 갭 |
+| `admin-peers-populated` (network) | `admin_peers` 결과가 **>=1 엔트리**이고 첫 피어 `id` 가 비어있지 않은지 검사. `select` 는 맵만 walk 하고 **배열 인덱스(`0.id`)를 못 짚으며**, 배열 길이>=N 비교 연산자도 없다 — 갭 |
 
 ### gas-policy 잔여 8건과 필요한 문법 확장
 

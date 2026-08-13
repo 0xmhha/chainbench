@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1",
+  "id": "wbft-seals-quorum",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$n"],
+      "select": "committedSeal.signature", "compare": "NotEqual", "expected": "0x" },
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$n"],
+      "select": "preparedSeal.signature", "compare": "NotEqual", "expected": "0x" }
+  ]
+}
