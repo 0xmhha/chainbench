@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "id": "basefee-maximum",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "baseFee", "compare": "LessOrEqual", "expected": "20000000000000000" }
+  ]
+}

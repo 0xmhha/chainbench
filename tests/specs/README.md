@@ -29,7 +29,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `consensus` | 13 | **8** | ✅ 라이브 통과 (gstable·gwbft) |
 | `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분) |
 | `accounts` | 35 | 0 | ☐ |
-| `gas-policy` | 17 | **3** | ◐ `read/assert:"derive"`(sum/diff) 추가로 정확 산술 비교 가능 — 근사가 아닌 `gasPrice == baseFee + gasTip` 그대로. 라이브 검증 대기 |
+| `gas-policy` | 17 | **9** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 8건은 문법 갭(아래) |
 | `hardfork` | 8 | 0 | ☐ |
 | `system-contracts` | 46 | 0 | ☐ |
 
@@ -39,6 +39,13 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 api        (10 spec) → gstable 4노드: pass=10 fail=0
 consensus  ( 8 spec) → gstable 4노드: pass=8 fail=0
                      → gwbft   4노드: pass=7 fail=0 skip=1  (stablenet 전용 1건 정상 skip)
+```
+
+### 라이브 검증 근거 (2026-08-13)
+
+```
+gas-policy ( 9 spec) → gstable 5노드(스크래치, 8601-8605): pass=9 fail=0
+                     read 3 + tx-flow 6. sendTx→receipt→derive 산술비교, feeCap 주입 모두 라이브 확인
 ```
 
 ## 이관하면서 드러난 레거시 케이스의 결함
@@ -60,6 +67,18 @@ consensus  ( 8 spec) → gstable 4노드: pass=8 fail=0
 | `block-period-one-second` | ~~저장값 간 산술 비교가 없다~~ → `derive`(diff) 추가로 **표현 가능해짐** — 이관 대기 |
 | `epoch-transition-carries-epoch-info` | 에폭 경계까지 대기 후 그 블록을 조회해야 한다. 조건부 대기 표현이 없다 |
 | `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다) |
+
+### gas-policy 잔여 8건과 필요한 문법 확장
+
+tx-flow 6건은 이관 완료. 나머지 8건은 아래 3가지 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+
+| 레거시 케이스 | 갭 | 필요 확장 |
+|---|---|---|
+| `feecap-below-min-rejected` · `legacy-gasprice-below-min-rejected` · `tipcap-underpriced-rejected` | **풀 진입 거부**(eth_sendTransaction 이 에러 반환, 해시 없음). DSL 은 제출 에러를 스텝 실패로 처리할 뿐 부정 기대가 없다. `expectRevert` 는 *채굴 후 status 0x0* 만 표현 | (B) `expectReject`/`expectSubmitError` — 제출 자체가 실패해야 통과. + 이 체인의 below-min 이 제출거부인지 채굴-revert 인지 **라이브 확정** 필요(`examples/specs/stablenet-fee-boundary.json` 은 expectRevert 를 쓰는데 실제 거부면 실패함) |
+| `accesslist-gasprice-below-min-rejected` | 위 + **access-list(0x01) 트랜잭션 타입** 미지원 | (B) + (C) sendTx accessList 필드 |
+| `gaslimit-exceeded-rejected` | intrinsic-gas 초과 → 제출 거부 추정 | (B) (라이브 확정) |
+| `revert-tx-status-zero` · `out-of-gas-consumes-all` | 되돌아가는/가스소진 **컨트랙트 자산**과 gasUsed==gasLimit 판정이 필요 | 컨트랙트 바이트코드 자산 + receipt `gasUsed`/`gasLimit` read (부분 표현 가능, 자산 확보 선행) |
+| `authorized-account-gastip-free` | **거버넌스 쿼럼 흐름**(proposeAddAuthorizedAccount → 승인) 을 먼저 태워야 한다 | system-contracts 배치와 함께 — 거버넌스 스텝 표현 확보 후 |
 
 ## 규약
 

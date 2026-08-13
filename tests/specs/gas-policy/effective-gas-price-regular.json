@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1",
+  "id": "effective-gas-price-regular",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE11",
+                  "value": "1", "gas": "21000", "save": "hash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$hash"], "select": "effectiveGasPrice", "save": "egp" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$hash"], "select": "blockNumber", "save": "blk" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$blk", false], "select": "baseFeePerGas", "save": "base" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$blk"], "select": "gasTip", "save": "tip" } }
+  ],
+  "assertions": [
+    { "assert": "derive", "op": "sum", "of": ["$base", "$tip"],
+      "compare": "Equal", "expected": "$egp" }
+  ]
+}
