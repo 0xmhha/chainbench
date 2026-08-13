@@ -108,6 +108,66 @@ func TestBuild_StablenetIsAnzeon(t *testing.T) {
 	}
 }
 
+func TestBuildNetwork_PlainBuildMatchesBuild(t *testing.T) {
+	p, _ := registry.Get("stablenet")
+	want, err := genesis.Build(p, testInputs)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	// A zero-option BuildNetwork must be byte-identical to a plain Build (and
+	// skip fork validation, exactly as the setup path does for an untransformed
+	// genesis).
+	got, err := genesis.BuildNetwork(p, testInputs, genesis.NetworkOptions{})
+	if err != nil {
+		t.Fatalf("BuildNetwork: %v", err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Errorf("plain BuildNetwork diverged from Build")
+	}
+}
+
+func TestBuildNetwork_AppliesOverridesAndOverlay(t *testing.T) {
+	p, _ := registry.Get("stablenet")
+	overlay := []byte(`{"alloc":{"00000000000000000000000000000000000000ff":{"balance":"0x2a"}}}`)
+	b, err := genesis.BuildNetwork(p, testInputs, genesis.NetworkOptions{
+		ConfigOverrides: map[string]string{"bohoBlock": "10"},
+		Overlay:         overlay,
+	})
+	if err != nil {
+		t.Fatalf("BuildNetwork: %v", err)
+	}
+	var g struct {
+		Config map[string]json.RawMessage `json:"config"`
+		Alloc  map[string]struct {
+			Balance string `json:"balance"`
+		} `json:"alloc"`
+	}
+	if err := json.Unmarshal(b, &g); err != nil {
+		t.Fatalf("invalid genesis: %v", err)
+	}
+	if string(g.Config["bohoBlock"]) != "10" {
+		t.Errorf("bohoBlock override not applied: %q", g.Config["bohoBlock"])
+	}
+	// The overlay adds an alloc account without disturbing the substituted one.
+	if acct, ok := g.Alloc["00000000000000000000000000000000000000ff"]; !ok || acct.Balance != "0x2a" {
+		t.Errorf("overlay alloc not merged: %+v", g.Alloc)
+	}
+	if _, ok := g.Alloc["c17d493883eaa3b4cceb0f214b273392d562f9d8"]; !ok {
+		t.Error("overlay merge dropped the base alloc account")
+	}
+}
+
+func TestBuildNetwork_RejectsBadForkOrdering(t *testing.T) {
+	p, _ := registry.Get("stablenet")
+	// A croissantBlock with no croissant section fails ValidateForks; the launch
+	// must fail at build time, not at node boot.
+	if _, err := genesis.BuildNetwork(p, testInputs, genesis.NetworkOptions{
+		ConfigOverrides: map[string]string{"croissantBlock": "20"},
+	}); err == nil {
+		t.Fatal("BuildNetwork should reject a croissantBlock with no croissant section")
+	}
+}
+
 // scView decodes one system contract for assertions.
 type scView struct {
 	Address string            `json:"address"`

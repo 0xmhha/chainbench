@@ -68,40 +68,23 @@ func Provision(ctx context.Context, plan Plan, plugin registry.ChainPlugin, cfg 
 // so a remote launch ships the config over its transport.
 func provision(plan *Plan, plugin registry.ChainPlugin, cfg config.Values, preset keys.Preset, keyBase string) error {
 	sub := preset.Take(cfg.Int("nodes.validators", len(preset.Validators)))
-	gen, err := genesis.Build(plugin, genesis.Inputs{
+	// Build the genesis and apply any launch config overrides (a delayed fork,
+	// e.g. genesis.overrides.bohoBlock=10, moving Boho off genesis) and overlay
+	// (genesis.overlay, extra alloc accounts / system-contract fragments); fork
+	// ordering is revalidated after each transform so a bad config fails at setup,
+	// not at node boot.
+	gen, err := genesis.BuildNetwork(plugin, genesis.Inputs{
 		Validators: sub.Validators,
 		BLSKeys:    sub.BLSKeys,
 		ExtraData:  sub.ExtraData,
 		Members:    sub.Members,
 		Alloc:      sub.Alloc,
+	}, genesis.NetworkOptions{
+		ConfigOverrides: configOverrides(cfg),
+		Overlay:         []byte(cfg.String("genesis.overlay", "")),
 	})
 	if err != nil {
 		return err
-	}
-	// Apply any genesis config overrides (e.g. a delayed fork:
-	// genesis.overrides.bohoBlock=10 moves Boho off genesis). Validate the fork
-	// ordering of the result so a bad delayed-fork config fails at setup, not at
-	// node boot.
-	if ov := configOverrides(cfg); len(ov) > 0 {
-		gen, err = genesis.ApplyConfigOverrides(gen, ov)
-		if err != nil {
-			return err
-		}
-		if err := genesis.ValidateForks(gen); err != nil {
-			return fmt.Errorf("setup: genesis overrides: %w", err)
-		}
-	}
-	// A genesis overlay (from `setup --genesis-overlay`, carried as a JSON string
-	// in config) deep-merges fragments — e.g. extra alloc accounts with Extra bits
-	// — into the built genesis. Re-validate fork ordering after the merge.
-	if overlay := cfg.String("genesis.overlay", ""); overlay != "" {
-		gen, err = genesis.MergeOverride(gen, []byte(overlay))
-		if err != nil {
-			return err
-		}
-		if err := genesis.ValidateForks(gen); err != nil {
-			return fmt.Errorf("setup: genesis overlay: %w", err)
-		}
 	}
 	if err := os.MkdirAll(plan.DataRoot, 0o755); err != nil {
 		return err
