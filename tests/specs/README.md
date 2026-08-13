@@ -30,7 +30,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분). 잔여 1건 `admin-peers-populated` 갭(아래) |
 | `accounts` | 35 | **12** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 23건은 문법 갭(아래) |
 | `gas-policy` | 17 | **9** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 8건은 문법 갭(아래) |
-| `hardfork` | 8 | 0 | ☐ |
+| `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
 | `system-contracts` | 46 | 0 | ☐ |
 
 ### 라이브 검증 근거 (2026-08-09)
@@ -56,6 +56,13 @@ accounts   ( 9 spec) → gstable 5노드(스크래치, 8601-8605): pass=9 fail=0
                      secp256r1 precompile 3건은 gstable 에 P256VERIFY(0x100) 미탑재
                      (valid 벡터가 "0x" 반환) → wbft 전용이라 skip. gwbft 바이너리 부재로
                      라이브 미검증, 오프라인 validate + 레거시 자체 테스트 벡터로 이관
+hardfork   ( 2 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=2 fail=0
+                     boho-chain-config-active(blockNumber/chainId/baseFee 모두 >0),
+                     govminter-v2-code(getCode 0x..1003 = 38250 hex chars, ≠"0x") 라이브 확인.
+                     hardfork p256 2건은 라이브 반증: gstable 의 0x100 이 valid/corrupt/short
+                     세 벡터 모두 "0x" 반환 → 이 빌드에 P256VERIFY 미탑재. accounts 결과와 일치.
+                     레거시 소스(hardfork_reads.go)는 Boho-genesis 로 P256 활성을 단언하나
+                     실제 바이너리와 불일치 — 갭으로 남김(아래)
 ```
 
 ## 이관하면서 드러난 레거시 케이스의 결함
@@ -66,6 +73,7 @@ accounts   ( 9 spec) → gstable 5노드(스크래치, 8601-8605): pass=9 fail=0
 |---|---|---|
 | `wbft-extra-info-fields` | `istanbul_getWbftExtraInfo` 를 **`"latest"` 태그로 호출** — 체인이 `block -2 not found` 로 거부한다. 구체적 블록 번호가 필요 | 헤드를 먼저 읽어(`read` + `$head`) 넘긴다 |
 | `wbft-extra-info-fields` | `ChainCompat: [stablenet, wbft]` 인데 **`gasTip` 은 stablenet 전용** — wbft 응답에 그 필드가 없다 | 공통 필드(`committedSeal`·`preparedSeal`)만 양 체인 대상으로 남기고, `gasTip` 은 `stablenet-gastip-field.json` 으로 분리 |
+| `p256-precompile-active` (hardfork) | 소스는 "stablenet 이 Boho 를 genesis 활성 → 0x100 P256VERIFY 가 valid 벡터에 `0x..01` 반환"을 단언하나, **실제 gstable 빌드는 0x100 에 대해 `"0x"` 반환** — precompile 미탑재. accounts secp256r1 3건과 동일 증상 | 라이브 반증으로 이관 보류. Boho/P256 탑재 바이너리 확보 여부를 체인팀에 확인 후 재분류 |
 
 두 건 모두 **라이브에서만** 드러난다. 레거시 유닛 테스트는 mock 노드를 쓰기 때문이다.
 
@@ -109,6 +117,15 @@ tx-flow 6건은 이관 완료. 나머지 8건은 아래 3가지 갭에 막혀 �
 | `fee-delegate-sign-rpc-present` | `eth_signRawFeeDelegateTransaction` 가 **method-not-found(-32601) 이 아님**을 확인(오류는 나도 됨). rpcCall assertion 은 RPC 오류를 스텝 실패로 처리 → "오류지만 not-found 는 아님" 을 표현 못함 | 메서드 존재 프로브(오류 코드 구분) |
 | `eth-call-revert-returns-error` | eth_call 이 **revert 오류를 반환**해야 통과. `call` assertion 은 호출 오류를 스텝 실패로 처리할 뿐 부정 기대가 없다 | `call` 부정 기대(expectCallError) |
 | `contract-event-emitted` | receipt `logs` 배열의 첫 로그 `topics[0]` 를 검사. `select` 는 **배열 인덱스(`logs.0.topics.0`)를 못 짚고**, 로그 토픽 존재 판정 연산자도 없다 | select 배열 인덱싱 + 로그 매칭 |
+
+### hardfork 잔여 6건과 필요한 문법 확장
+
+2건은 이관 완료(라이브). 나머지 6건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+
+| 레거시 케이스 | 갭 | 필요 확장 |
+|---|---|---|
+| `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
+| `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
 
 ## 규약
 
