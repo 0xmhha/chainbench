@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1",
+  "id": "transaction-receipt-fields",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE06",
+                  "value": "1", "gas": "21000", "save": "hash" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "eth_getTransactionReceipt", "params": ["$hash"],
+      "select": "status", "compare": "Equal", "expected": "0x1" },
+    { "assert": "rpcCall", "method": "eth_getTransactionReceipt", "params": ["$hash"],
+      "select": "effectiveGasPrice", "compare": "NotNil" },
+    { "assert": "rpcCall", "method": "eth_getTransactionReceipt", "params": ["$hash"],
+      "select": "logs", "compare": "NotNil" }
+  ]
+}
