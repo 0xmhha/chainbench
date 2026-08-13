@@ -1,4 +1,4 @@
-package setup
+package engine
 
 import (
 	"context"
@@ -7,6 +7,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
+
+// The functions here operate a standing local network read back from its
+// persisted record (session nodeset.json/nodespecs.json), across separate CLI
+// invocations. They are stateless, unlike NodeController, which tracks a single
+// run's processes in memory: `chainbench node stop --index N` is a fresh process
+// that loads the node set and stops one PID, with no run to attach to.
 
 // StopNode stops the single node with the given 1-based index in ns through the
 // driver. It errors if the index is not in the set or the node has no live PID
@@ -18,11 +24,11 @@ func StopNode(ctx context.Context, d driver.Driver, ns node.NodeSet, index int) 
 			continue
 		}
 		if n.PID <= 0 {
-			return fmt.Errorf("setup: node%d has no live PID to stop", index)
+			return fmt.Errorf("engine: node%d has no live PID to stop", index)
 		}
 		return d.Stop(ctx, driver.Handle{Index: index, PID: n.PID})
 	}
-	return fmt.Errorf("setup: node%d not found in node set", index)
+	return fmt.Errorf("engine: node%d not found in node set", index)
 }
 
 // RelaunchNode brings one stopped node back from its spec and returns the
@@ -32,11 +38,11 @@ func StopNode(ctx context.Context, d driver.Driver, ns node.NodeSet, index int) 
 // bytes) so a remote driver reships it, mirroring the launch path.
 func RelaunchNode(ctx context.Context, d driver.Driver, spec driver.NodeSpec) (node.Node, error) {
 	if err := d.Provision(ctx, spec); err != nil {
-		return node.Node{}, fmt.Errorf("setup: reprovision node%d: %w", spec.Index, err)
+		return node.Node{}, fmt.Errorf("engine: reprovision node%d: %w", spec.Index, err)
 	}
 	h, err := d.Launch(ctx, spec)
 	if err != nil {
-		return node.Node{}, fmt.Errorf("setup: relaunch node%d: %w", spec.Index, err)
+		return node.Node{}, fmt.Errorf("engine: relaunch node%d: %w", spec.Index, err)
 	}
 	return node.Node{
 		Index:  spec.Index,

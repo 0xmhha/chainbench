@@ -25,15 +25,24 @@ func (s *fakeSink) Write(_ context.Context, path string, _ []byte, _ fs.FileMode
 	return nil
 }
 
-// fakeDriver records init and launch calls; it implements driver.Driver and
-// driver.Initializer, standing in for a local or remote driver.
+// fakeDriver records provision, init, launch, and stop calls; it implements
+// driver.Driver and driver.Initializer, standing in for a local or remote
+// driver.
 type fakeDriver struct {
-	inited   []int
-	launched []int
+	provisioned []int
+	inited      []int
+	launched    []int
+	stopped     []int
 }
 
-func (d *fakeDriver) Provision(context.Context, driver.NodeSpec) error { return nil }
-func (d *fakeDriver) Stop(context.Context, driver.Handle) error        { return nil }
+func (d *fakeDriver) Provision(_ context.Context, spec driver.NodeSpec) error {
+	d.provisioned = append(d.provisioned, spec.Index)
+	return nil
+}
+func (d *fakeDriver) Stop(_ context.Context, h driver.Handle) error {
+	d.stopped = append(d.stopped, h.Index)
+	return nil
+}
 func (d *fakeDriver) InitDatadir(_ context.Context, spec driver.NodeSpec, _ []byte) error {
 	d.inited = append(d.inited, spec.Index)
 	return nil

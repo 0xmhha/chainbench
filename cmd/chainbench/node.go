@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 func newNodeCmd() *cobra.Command {
@@ -39,7 +39,7 @@ func newNodeStopCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := setup.StopNode(cmd.Context(), driver.NewLocalDriver(), ns, index); err != nil {
+			if err := engine.StopNode(cmd.Context(), driver.NewLocalDriver(), ns, index); err != nil {
 				return err
 			}
 			// Record the node as stopped (PID cleared) so status/start are accurate.
@@ -93,7 +93,7 @@ func newNodeStartCmd() *cobra.Command {
 			if !found {
 				return fmt.Errorf("no saved spec for node%d in %s", index, dataDir)
 			}
-			refreshed, err := setup.RelaunchNode(cmd.Context(), driver.NewLocalDriver(), spec)
+			refreshed, err := engine.RelaunchNode(cmd.Context(), driver.NewLocalDriver(), spec)
 			if err != nil {
 				return err
 			}

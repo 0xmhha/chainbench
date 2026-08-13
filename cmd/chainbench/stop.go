@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 func newStopCmd() *cobra.Command {
@@ -23,7 +23,7 @@ func newStopCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			stopped, errs := setup.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
+			stopped, errs := engine.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
 			for _, e := range errs {
 				fmt.Fprintln(cmd.ErrOrStderr(), e)
 			}

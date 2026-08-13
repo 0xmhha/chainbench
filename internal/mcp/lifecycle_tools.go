@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // startTool provisions and launches a local chain network, then persists its
@@ -97,7 +98,7 @@ func stopTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			stopped, errs := setup.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
+			stopped, errs := engine.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
 			var b strings.Builder
 			fmt.Fprintf(&b, "stopped %d node(s)", stopped)
 			for _, e := range errs {

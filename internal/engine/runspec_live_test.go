@@ -67,7 +67,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 		KeysDir:  presetDir,
 	})
 	t.Cleanup(func() {
-		_, errs := setup.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
+		_, errs := engine.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
 		for _, e := range errs {
 			t.Logf("teardown: %v", e)
 		}
