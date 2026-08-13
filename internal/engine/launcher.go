@@ -80,23 +80,111 @@ func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan) (super
 }
 
 // Arm loads the preset and produces each node's launch spec: rendered config,
-// identity flags, resolved binary. Pure apart from reading the preset.
+// identity flags, resolved binary. Pure apart from reading the preset. Identity
+// paths (nodekey, keystore, password) are rooted at keyBase(plan): the local
+// KeysDir for a local launch, or the remote keys dir a remote launch ships them
+// to.
 func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 	preset, err := keys.LoadPreset(l.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}
-	return armSpecs(l.Plugin, preset, plan, l.Binary, l.KeysDir, l.LaunchOverrides)
+	return armSpecs(l.Plugin, preset, plan, l.Binary, l.keyBase(plan), l.LaunchOverrides)
 }
 
 // Materialize writes the genesis and per-node config through the file sink
-// (upload-if-absent), locally or to a remote host.
+// (upload-if-absent), locally or to a remote host. When the driver ships files
+// to another host (a FileProvisioner), each node's preset identity files are
+// also shipped to the remote keys dir the armed specs reference.
 func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
 	sink := l.Sink
 	if sink == nil {
 		sink = provision.LocalFileSink{}
 	}
-	return materialize(ctx, provision.New(sink), plan, specs)
+	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
+		return err
+	}
+	if fp, remote := l.fileProvisioner(); remote {
+		if err := shipIdentities(ctx, fp, l.KeysDir, l.keyBase(plan), specs); err != nil {
+			return fmt.Errorf("engine: launcher: ship identities: %w", err)
+		}
+	}
+	return nil
+}
+
+// Provision arms the plan and materializes its on-disk files (genesis, per-node
+// config, and — for a remote driver — the shipped identities) without
+// initializing datadirs or launching. It is the provision-only path behind
+// `setup --provision`. The returned specs are the armed specs materialize wrote.
+func (l LocalLauncher) Provision(ctx context.Context, plan driver.Plan) ([]driver.NodeSpec, error) {
+	specs, err := l.Arm(plan)
+	if err != nil {
+		return nil, err
+	}
+	if err := l.Materialize(ctx, plan, specs); err != nil {
+		return specs, err
+	}
+	return specs, nil
+}
+
+// fileProvisioner reports whether the launcher's driver ships files to another
+// host (the remote-launch case) and, if so, returns that capability.
+func (l LocalLauncher) fileProvisioner() (driver.FileProvisioner, bool) {
+	if l.Driver == nil {
+		return nil, false
+	}
+	fp, ok := l.Driver.(driver.FileProvisioner)
+	return fp, ok
+}
+
+// keyBase is where a node's identity files (nodekey, keystore, password) live at
+// launch: the local KeysDir for a local launch, or a keys/ dir under the data
+// root for a remote launch (where shipIdentities places them, and where the
+// remote config keystore and launch args then point).
+func (l LocalLauncher) keyBase(plan driver.Plan) string {
+	if _, remote := l.fileProvisioner(); remote {
+		return filepath.Join(plan.DataRoot, "keys")
+	}
+	return l.KeysDir
+}
+
+// shipIdentities copies each node's preset identity files — the devp2p nodekey,
+// the validator keystore, and the shared password — from the local keysDir to
+// keyBase on the driver's host via the FileProvisioner, so a remote launch finds
+// them at the paths its config keystore and launch args reference. A local
+// launch never calls it (keyBase == keysDir).
+func shipIdentities(ctx context.Context, fp driver.FileProvisioner, keysDir, keyBase string, specs []driver.NodeSpec) error {
+	if pw, err := os.ReadFile(filepath.Join(keysDir, "password")); err == nil {
+		if err := fp.ProvisionFile(ctx, filepath.Join(keyBase, "password"), pw, 0o600); err != nil {
+			return err
+		}
+	}
+	for _, spec := range specs {
+		src := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
+		dst := filepath.Join(keyBase, fmt.Sprintf("node%d", spec.Index))
+		if nk, err := os.ReadFile(filepath.Join(src, "nodekey")); err == nil {
+			if err := fp.ProvisionFile(ctx, filepath.Join(dst, "nodekey"), nk, 0o600); err != nil {
+				return err
+			}
+		}
+		entries, err := os.ReadDir(filepath.Join(src, "keystore"))
+		if err != nil {
+			continue // no keystore (e.g. an endpoint node)
+		}
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			b, err := os.ReadFile(filepath.Join(src, "keystore", e.Name()))
+			if err != nil {
+				return err
+			}
+			if err := fp.ProvisionFile(ctx, filepath.Join(dst, "keystore", e.Name()), b, 0o600); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // InitAndLaunch initializes each node's datadir from the shared genesis and

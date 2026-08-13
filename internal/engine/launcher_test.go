@@ -52,14 +52,35 @@ func (d *fakeDriver) Launch(_ context.Context, spec driver.NodeSpec) (driver.Han
 	return driver.Handle{Index: spec.Index, PID: 1000 + spec.Index}, nil
 }
 
-func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
-	plugin := registry.StaticPlugin{
+// fakeRemoteDriver is a fakeDriver that also ships files (FileProvisioner), so
+// the launcher treats it as a remote host: identity paths root at the remote
+// keys dir and Materialize ships the preset identities there.
+type fakeRemoteDriver struct {
+	fakeDriver
+	shipped map[string]int
+}
+
+func (d *fakeRemoteDriver) ProvisionFile(_ context.Context, path string, _ []byte, _ fs.FileMode) error {
+	if d.shipped == nil {
+		d.shipped = map[string]int{}
+	}
+	d.shipped[path]++
+	return nil
+}
+
+// launcherTestPlugin is the stablenet-family plugin used across launcher tests.
+func launcherTestPlugin() registry.ChainPlugin {
+	return registry.StaticPlugin{
 		M: registry.Manifest{
 			ID: "stablenet", Binary: "go-stablenet", ChainID: 1, MinerRecommit: "duration",
 			Consensus: registry.ConsensusSpec{RPCNamespace: "istanbul"},
 		},
 		Fam: wbftfam.New(),
 	}
+}
+
+func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
+	plugin := launcherTestPlugin()
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
 
 	placed := []engine.PlacedNode{
@@ -101,5 +122,74 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 	}
 	if res.Nodes.Nodes[0].PID == 0 {
 		t.Fatal("node PID not set from launch handle")
+	}
+}
+
+func TestLocalLauncher_ProvisionOnlyDoesNotLaunch(t *testing.T) {
+	plugin := launcherTestPlugin()
+	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
+	placed := []engine.PlacedNode{
+		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: place.NodePlacement{Host: "127.0.0.1", Ports: portplan.Ports{P2P: 31000, HTTP: 8600}, DataPath: "/d/node1"}},
+		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: place.NodePlacement{Host: "127.0.0.1", Ports: portplan.Ports{P2P: 31010, HTTP: 8610}, DataPath: "/d/node2"}},
+	}
+	plan, err := engine.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
+	if err != nil {
+		t.Fatalf("AssemblePlan: %v", err)
+	}
+
+	sink := &fakeSink{written: map[string]int{}}
+	drv := &fakeDriver{}
+	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Sink: sink}
+
+	specs, err := l.Provision(context.Background(), plan)
+	if err != nil {
+		t.Fatalf("Provision: %v", err)
+	}
+	// Genesis + configs are materialized...
+	if sink.written[filepath.Join("/d", "genesis.json")] != 1 {
+		t.Fatalf("genesis not materialized: %v", sink.written)
+	}
+	if sink.written["/d/config_node1.toml"] != 1 || sink.written["/d/config_node2.toml"] != 1 {
+		t.Fatalf("configs not materialized: %v", sink.written)
+	}
+	// ...but nothing is initialized or launched.
+	if len(drv.inited) != 0 || len(drv.launched) != 0 {
+		t.Fatalf("provision-only must not init/launch: inited=%v launched=%v", drv.inited, drv.launched)
+	}
+	if len(specs) != 2 {
+		t.Fatalf("armed specs = %d, want 2", len(specs))
+	}
+}
+
+func TestLocalLauncher_RemoteShipsIdentities(t *testing.T) {
+	plugin := launcherTestPlugin()
+	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
+	placed := []engine.PlacedNode{
+		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: place.NodePlacement{Host: "127.0.0.1", Ports: portplan.Ports{P2P: 31000, HTTP: 8600}, DataPath: "/d/node1"}},
+		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: place.NodePlacement{Host: "127.0.0.1", Ports: portplan.Ports{P2P: 31010, HTTP: 8610}, DataPath: "/d/node2"}},
+	}
+	plan, err := engine.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
+	if err != nil {
+		t.Fatalf("AssemblePlan: %v", err)
+	}
+
+	sink := &fakeSink{written: map[string]int{}}
+	drv := &fakeRemoteDriver{}
+	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Sink: sink}
+
+	// Materialize (via Provision) must ship each node's preset identity to the
+	// remote keys dir under the data root — the shared password and both nodekeys.
+	if _, err := l.Provision(context.Background(), plan); err != nil {
+		t.Fatalf("Provision: %v", err)
+	}
+	keyBase := filepath.Join("/d", "keys")
+	for _, want := range []string{
+		filepath.Join(keyBase, "password"),
+		filepath.Join(keyBase, "node1", "nodekey"),
+		filepath.Join(keyBase, "node2", "nodekey"),
+	} {
+		if drv.shipped[want] != 1 {
+			t.Fatalf("identity %q not shipped once: %v", want, drv.shipped)
+		}
 	}
 }
