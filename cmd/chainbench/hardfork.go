@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 func newHardforkCmd() *cobra.Command {
@@ -30,7 +30,7 @@ func newHardforkCmd() *cobra.Command {
 			if toChain == "" {
 				return fmt.Errorf("--to-chain is required")
 			}
-			ns, err := state.LoadNodeSet(dataDir)
+			ns, err := session.LoadLocalNodeSet(dataDir)
 			if err != nil {
 				return err
 			}
@@ -71,7 +71,7 @@ func newHardforkCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				specs, err := state.LoadNodeSpecs(dataDir)
+				specs, err := session.LoadLocalNodeSpecs(dataDir)
 				if err != nil {
 					return fmt.Errorf("hardfork: load node specs (run setup with --launch first): %w", err)
 				}
@@ -79,7 +79,7 @@ func newHardforkCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := state.SaveNodeSet(dataDir, newNS); err != nil {
+				if err := session.SaveLocalNodeSet(dataDir, newNS); err != nil {
 					return err
 				}
 				// Keep nodespecs.json consistent so later node/hardfork ops use the
@@ -87,7 +87,7 @@ func newHardforkCmd() *cobra.Command {
 				for i := range specs {
 					specs[i].Binary = bin
 				}
-				if err := state.SaveNodeSpecs(dataDir, specs); err != nil {
+				if err := session.SaveLocalNodeSpecs(dataDir, specs); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "upgraded %d node(s) to %s (%s); state updated\n",

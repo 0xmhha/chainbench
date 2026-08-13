@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 func newNodeCmd() *cobra.Command {
@@ -35,7 +35,7 @@ func newNodeStopCmd() *cobra.Command {
 			if dataDir == "" || index <= 0 {
 				return fmt.Errorf("--data-dir and --index (1-based) are required")
 			}
-			ns, err := state.LoadNodeSet(dataDir)
+			ns, err := session.LoadLocalNodeSet(dataDir)
 			if err != nil {
 				return err
 			}
@@ -48,7 +48,7 @@ func newNodeStopCmd() *cobra.Command {
 					ns.Nodes[i].PID = 0
 				}
 			}
-			if err := state.SaveNodeSet(dataDir, ns); err != nil {
+			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "stopped node%d\n", index)
@@ -74,11 +74,11 @@ func newNodeStartCmd() *cobra.Command {
 			if dataDir == "" || index <= 0 {
 				return fmt.Errorf("--data-dir and --index (1-based) are required")
 			}
-			ns, err := state.LoadNodeSet(dataDir)
+			ns, err := session.LoadLocalNodeSet(dataDir)
 			if err != nil {
 				return err
 			}
-			specs, err := state.LoadNodeSpecs(dataDir)
+			specs, err := session.LoadLocalNodeSpecs(dataDir)
 			if err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func newNodeStartCmd() *cobra.Command {
 			if !replaced {
 				ns.Nodes = append(ns.Nodes, refreshed)
 			}
-			if err := state.SaveNodeSet(dataDir, ns); err != nil {
+			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "started node%d (pid %d)\n", index, refreshed.PID)

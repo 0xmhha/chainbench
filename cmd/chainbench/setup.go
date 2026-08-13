@@ -16,7 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 )
 
@@ -190,12 +190,12 @@ func newSetupCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := state.SaveNodeSet(root, ns); err != nil {
+				if err := session.SaveLocalNodeSet(root, ns); err != nil {
 					return err
 				}
 				// Persist the armed specs so `node start --index` can relaunch a
 				// single node after `node stop --index`.
-				if err := state.SaveNodeSpecs(root, specs); err != nil {
+				if err := session.SaveLocalNodeSpecs(root, specs); err != nil {
 					return err
 				}
 				if err := saveTopology(root, topologyPath); err != nil {
