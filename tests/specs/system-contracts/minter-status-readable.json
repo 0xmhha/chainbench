@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "id": "minter-status-readable",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "call", "to": "0x0000000000000000000000000000000000001000",
+      "data": "0xaa271e1a000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "NotEqual", "expected": "0x" },
+    { "assert": "call", "to": "0x0000000000000000000000000000000000001000",
+      "data": "0x8a6db9c3000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "NotEqual", "expected": "0x" }
+  ]
+}

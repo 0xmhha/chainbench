@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "id": "account-authorization-readable",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
+      "data": "0xfe9fbb80000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "NotEqual", "expected": "0x" }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "id": "native-coin-adapter-code",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001000", "compare": "NotEqual", "expected": "0x" }
+  ]
+}

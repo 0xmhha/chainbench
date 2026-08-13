@@ -31,7 +31,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `accounts` | 35 | **12** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 23건은 문법 갭(아래) |
 | `gas-policy` | 17 | **9** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 8건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | 0 | ☐ |
+| `system-contracts` | 46 | **9** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata. read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 37건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -63,6 +63,14 @@ hardfork   ( 2 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
                      세 벡터 모두 "0x" 반환 → 이 빌드에 P256VERIFY 미탑재. accounts 결과와 일치.
                      레거시 소스(hardfork_reads.go)는 Boho-genesis 로 P256 활성을 단언하나
                      실제 바이너리와 불일치 — 갭으로 남김(아래)
+system-contracts (9 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=9 fail=0
+                     EVM 거버넌스 5종(0x1000-0x1004) codeAt≠"0x", adapter code, token-metadata
+                     (name/symbol == "WKRC" ABI 정확 일치), totalSupply/balanceOf readable,
+                     totalSupply≥balanceOf(read source `call`→$bal, assert `call` GreaterOrEqual $bal),
+                     account authorization/blacklist/minter readable, validatorList readable 모두 라이브.
+                     system-contracts-deployed 는 처음 8종 전체 codeAt 로 라이브 fail →
+                     0xB00001-3(bls-pop·native-coin-manager·account-manager)은 getCode="0x" 인
+                     네이티브 precompile(eth_call 은 응답)로 판명, EVM 5종만 남기고 재범위. 갭 아래
 ```
 
 ## 이관하면서 드러난 레거시 케이스의 결함
@@ -74,6 +82,7 @@ hardfork   ( 2 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
 | `wbft-extra-info-fields` | `istanbul_getWbftExtraInfo` 를 **`"latest"` 태그로 호출** — 체인이 `block -2 not found` 로 거부한다. 구체적 블록 번호가 필요 | 헤드를 먼저 읽어(`read` + `$head`) 넘긴다 |
 | `wbft-extra-info-fields` | `ChainCompat: [stablenet, wbft]` 인데 **`gasTip` 은 stablenet 전용** — wbft 응답에 그 필드가 없다 | 공통 필드(`committedSeal`·`preparedSeal`)만 양 체인 대상으로 남기고, `gasTip` 은 `stablenet-gastip-field.json` 으로 분리 |
 | `p256-precompile-active` (hardfork) | 소스는 "stablenet 이 Boho 를 genesis 활성 → 0x100 P256VERIFY 가 valid 벡터에 `0x..01` 반환"을 단언하나, **실제 gstable 빌드는 0x100 에 대해 `"0x"` 반환** — precompile 미탑재. accounts secp256r1 3건과 동일 증상 | 라이브 반증으로 이관 보류. Boho/P256 탑재 바이너리 확보 여부를 체인팀에 확인 후 재분류 |
+| `system-contracts-deployed` (system-contracts) | `eth_getCode ≠ "0x"` 를 **8개 시스템 주소 전체**에 걸었으나, `0xB00001-3`(bls-pop·native-coin-manager·account-manager)은 **네이티브 precompile** — `getCode` 는 `"0x"`(빈 코드)를 반환하고 `eth_call` 로만 응답한다. getCode 로 "배포" 여부를 판정하는 건 precompile 엔 부적절 | EVM 바이트코드 계약 5종(0x1000-0x1004)만 codeAt 로 판정. precompile 은 각자의 read 케이스(account-*-readable 등)로 활성 확인 |
 
 두 건 모두 **라이브에서만** 드러난다. 레거시 유닛 테스트는 mock 노드를 쓰기 때문이다.
 
@@ -126,6 +135,23 @@ tx-flow 6건은 이관 완료. 나머지 8건은 아래 3가지 갭에 막혀 �
 |---|---|---|
 | `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
 | `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
+
+### system-contracts 잔여 37건과 필요한 문법 확장
+
+9건은 이관 완료(모두 라이브). 나머지 37건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+압도적 다수(≈30건)가 **거버넌스 쿼럼 흐름**(propose → 검증자 N명 approve → 정족수 자동 execute)에
+의존하는데, DSL 에는 이 다단계 서명 흐름을 태울 스텝 프리미티브가 없다. 이것이 이 배치의 핵심 갭이다.
+
+| 레거시 케이스 (건수) | 갭 | 필요 확장 |
+|---|---|---|
+| `burn-proposal-executes`·`mint-proposal-executes`·`configure-minter-proposal-executes`·`gastip-governance-updates-header`·`blacklist-proposal-executes`·`authorize-proposal-executes`·`validator-add-member-executes`·`masterminter-member-add-remove`·`remove-minter-executes`·`unblacklist-restores`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events`·`authorized-account-added-event`·`unauthorize-proposal-executes`·`address-unblacklisted-event`·`mint-transfer-event`·`burn-transfer-event` (20) | **거버넌스 쿼럼 흐름** — propose(payable 포함)→검증자 N명 approve→정족수 execute→상태/이벤트 확인. DSL sendTx 는 단일 노드서명 tx 만 태우고, propose/approve/execute·정족수·검증자 셋 순회를 표현할 수 없다. 다수는 추가로 이벤트 로그(Transfer/AddressBlacklisted 등) 확인 필요 | (G) 거버넌스 스텝 프리미티브(propose/approve/execute + quorum) + 이벤트 로그 매칭 |
+| `quorum-deficient-stays-voting`·`claim-zero-refund-reverts`·`claim-burn-refund-double-reverts`·`direct-blacklist-call-rejected`·`non-member-configure-minter-rejected` (5) | 위 (G) + **부정 기대**(정족수 미달 execute revert / 이중 claim revert / 비회원 호출 reject-or-revert). DSL 은 제출에러를 스텝 실패로 처리할 뿐 부정 기대가 없다 | (G) + (B) `expectReject`/채굴후 status 0x0 기대 (accounts·gas-policy 와 동일) |
+| `sender-blacklisted-rejected`·`recipient-blacklisted-rejected` (2) | 거버넌스 blacklist 후 **제출 거부**(에러 메시지 "blacklist"). 거버넌스 + 제출거부 부정기대 | (G) + (B) |
+| `feepayer-blacklisted-rejected` (1) | 위 + **fee-delegation(0x16)** tx (feePayer 이중서명) 미지원 | (G) + (B) + (D) sendTx feePayer |
+| `authorized-tx-executed-event` (1) | **런타임 키 생성 + faucet 펀딩 + 거버넌스 authorize** 후 tx 의 AuthorizedTxExecuted 로그 확인. 키 생성·env 주입·거버넌스·로그매칭 모두 부재 | (G) + 키 생성 소스 + 로그 매칭 |
+| `authorized-extra-bit-synced`·`blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved` (4) | 순수 read(isAuthorized/isBlacklisted/getBalance)라 **표현 자체는 가능**하나 fixture 계정이 **`account-extra` 제네시스 오버레이**에서만 존재/설정됨. 표준 stablenet 엔 없어 라이브 미검증 | `account-extra` cap 오버레이 기동으로 라이브 검증 후 이관(현재는 표현 가능·미기동) |
+| `proposal-expiry-transitions` (1) | **`short-expiry` 오버레이 + 만료 시간 대기**(35s) 후 expireProposal. 조건부/시간 대기 표현 없음 | `short-expiry` cap + 시간/조건 대기 |
+| `token-approve-sets-allowance`·`token-transfer-emits-event`·`token-transfer-from-moves-balance` (3) | 토큰 write(approve/transfer/transferFrom)의 **이벤트 로그 topic 인덱싱**(`Approval`/`Transfer` 의 topics[2]==spender/recipient) 확인. `select` 는 배열/topic 인덱스를 못 짚는다. transferFrom 은 owner≠spender **2계정** 필요 | select 배열/topic 인덱싱 + 로그 매칭 (+ transferFrom 은 다중 서명자) |
 
 ## 규약
 

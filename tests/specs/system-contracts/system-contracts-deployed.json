@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "system-contracts-deployed",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001000", "compare": "NotEqual", "expected": "0x" },
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001001", "compare": "NotEqual", "expected": "0x" },
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001002", "compare": "NotEqual", "expected": "0x" },
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001003", "compare": "NotEqual", "expected": "0x" },
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001004", "compare": "NotEqual", "expected": "0x" }
+  ]
+}

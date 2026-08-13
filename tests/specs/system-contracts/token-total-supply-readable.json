@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "id": "token-total-supply-readable",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "call", "to": "0x0000000000000000000000000000000000001000",
+      "data": "0x18160ddd", "compare": "NotEqual", "expected": "0x" }
+  ]
+}
