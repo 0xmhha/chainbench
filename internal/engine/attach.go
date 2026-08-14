@@ -27,6 +27,12 @@ type AttachConfig struct {
 	RPCURLs []string
 	// ArtifactRoot is the base directory for session artifacts.
 	ArtifactRoot string
+	// Caps are extra capabilities the operator asserts the attached network
+	// provides, beyond the implicit "rpc". An attached net that was launched
+	// with a genesis overlay (e.g. account-extra, short-expiry) carries caps
+	// that attach cannot detect from RPC alone, so the operator names them here
+	// to let the gated specs run instead of skipping.
+	Caps []string
 	// Clock supplies the session start time; nil uses time.Now.
 	Clock func() time.Time
 	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
@@ -93,7 +99,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		},
 		BuildEnv:   withCollection(NewAttachBuildEnv(cfg.Chain, eps), cfg.Bus, nil),
 		RunSpec:    run,
-		Applicable: applicableWithCaps(cfg.Chain, []string{attachCapability}),
+		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
 		Emit:       busEmit(cfg.Bus),
 		Network:    cfg.Chain,
 	}), nil

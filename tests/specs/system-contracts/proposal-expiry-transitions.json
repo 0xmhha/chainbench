@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1",
+  "id": "proposal-expiry-transitions",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "short-expiry"],
+  "steps": [
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0xeeaf6816", "of": ["30000000000001"], "save": "propData" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x0000000000000000000000000000000000001001",
+                  "gas": "0x16e360",
+                  "data": "$propData", "save": "propHash" } },
+    { "read": { "source": "receiptLog", "hash": "$propHash",
+                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+                "topic": 1, "save": "pid" } },
+
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber", "params": ["@latest", false], "select": "timestamp", "save": "t0" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$t0", "40"], "save": "expiryTarget" } },
+    { "waitFor": { "source": "rpcCall", "method": "eth_getBlockByNumber", "params": ["@latest", false],
+                   "select": "timestamp", "compare": "GreaterOrEqual", "expected": "$expiryTarget",
+                   "timeout": "90s", "pollInterval": "2s" } },
+
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0xe1b526b0", "of": ["$pid"], "save": "expData" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x0000000000000000000000000000000000001001",
+                  "gas": "0x16e360",
+                  "data": "$expData", "save": "expHash" } },
+
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x013cf08b", "of": ["$pid"], "save": "proposalsCall" } },
+    { "read": { "source": "call", "to": "0x0000000000000000000000000000000000001001",
+                "data": "$proposalsCall", "save": "proposalsRet" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$propHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$expHash", "expected": "0x1" },
+    { "assert": "derive", "op": "word", "index": 9, "of": ["$proposalsRet"],
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000005" }
+  ]
+}

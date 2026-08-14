@@ -31,6 +31,7 @@ func newRunCmd() *cobra.Command {
 	var (
 		chain        string
 		rpcURLs      []string
+		caps         []string
 		binary       string
 		keysDir      string
 		keysSource   string
@@ -71,7 +72,7 @@ func newRunCmd() *cobra.Command {
 			}
 
 			eng, err := buildRunEngine(foldSpecEnv(runOpts{
-				chain: chain, rpcURLs: rpcURLs, binary: binary,
+				chain: chain, rpcURLs: rpcURLs, caps: caps, binary: binary,
 				keysDir: keysDir, keysSource: keysSource, bootnode: bootnode,
 				artifactRoot: artifactRoot, validators: validators,
 				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
@@ -91,6 +92,7 @@ func newRunCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet)")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
+	cmd.Flags().StringArrayVar(&caps, "cap", nil, "attach: capability the target net provides beyond \"rpc\" (repeatable), e.g. account-extra — lets overlay-gated specs run instead of skipping")
 	cmd.Flags().StringVar(&binary, "binary", "", "local: node binary path — builds a network")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: key set directory (read with --keys-source preset, written with generate)")
 	cmd.Flags().StringVar(&keysSource, "keys-source", string(keysSourcePreset),
@@ -125,6 +127,7 @@ const (
 type runOpts struct {
 	chain        string
 	rpcURLs      []string
+	caps         []string
 	binary       string
 	keysDir      string
 	keysSource   string
@@ -146,7 +149,7 @@ func buildRunEngine(o runOpts) (engine.Engine, error) {
 	switch {
 	case len(o.rpcURLs) > 0:
 		return engine.NewAttachEngine(engine.AttachConfig{
-			Chain: o.chain, RPCURLs: o.rpcURLs, ArtifactRoot: o.artifactRoot, Bus: o.bus,
+			Chain: o.chain, RPCURLs: o.rpcURLs, Caps: o.caps, ArtifactRoot: o.artifactRoot, Bus: o.bus,
 		})
 	case o.binary != "":
 		src, err := keySource(o)

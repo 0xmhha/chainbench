@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "id": "authorized-extra-bit-synced",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "account-extra"],
+  "steps": [
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0xfe9fbb80", "of": ["0x90F79bf6EB2c4f870365E785982E1f101E93b906"], "save": "isAuthData" } }
+  ],
+  "assertions": [
+    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$isAuthData", "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+  ]
+}
