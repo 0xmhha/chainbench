@@ -219,6 +219,9 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 	if op == "abiCall" {
 		return deriveAbiCall(spec)
 	}
+	if op == "word" {
+		return deriveWord(spec)
+	}
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("testspec: derive requires \"of\" (a list of values)")
@@ -279,6 +282,38 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 		}
 	}
 	return b.String(), nil
+}
+
+// deriveWord extracts the index-th 32-byte (64-hex) word from a 0x-hex blob —
+// the inverse of abiCall's word packing. It closes the gap the migration ledger
+// recorded for governance execution checks: proposals(id) returns a fixed-layout
+// tuple whose status is word[9], but the whole-blob `call` assertion cannot pick
+// one field out of a return that also carries volatile fields (timestamps, the
+// proposer address). Spec: op ("word"), index (0-based word, default 0), of (a
+// single 0x-hex value or "$binding"). The result is a 0x-prefixed 64-hex word,
+// comparable with the assert primitives.
+func deriveWord(spec map[string]any) (any, error) {
+	raw, ok := spec["of"].([]any)
+	if !ok || len(raw) != 1 {
+		return nil, fmt.Errorf("testspec: derive word requires \"of\" with exactly one hex value")
+	}
+	s, ok := raw[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("testspec: derive word: of[0] must be a 0x-hex string, got %T", raw[0])
+	}
+	h := strings.TrimPrefix(strings.TrimSpace(s), "0x")
+	if _, err := hex.DecodeString(h); err != nil {
+		return nil, fmt.Errorf("testspec: derive word: of[0] is not valid hex: %w", err)
+	}
+	idx := 0
+	if n, ok := uintArg(spec["index"]); ok {
+		idx = int(n)
+	}
+	start := idx * 64
+	if start+64 > len(h) {
+		return nil, fmt.Errorf("testspec: derive word: index %d out of range for a %d-hex-char blob", idx, len(h))
+	}
+	return "0x" + h[start:start+64], nil
 }
 
 // parseBigValue converts a spec value (0x-hex string, decimal string, or JSON

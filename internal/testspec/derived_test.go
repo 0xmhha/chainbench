@@ -362,3 +362,46 @@ func TestReadDerive_AbiCall(t *testing.T) {
 		}
 	}
 }
+
+func TestReadDerive_Word(t *testing.T) {
+	// A proposals() return: three words, the third (index 2) an executed status.
+	blob := "0x" +
+		"00000000000000000000000000000000000000000000000000000000000000aa" +
+		"00000000000000000000000000000000000000000000000000000000000000bb" +
+		"0000000000000000000000000000000000000000000000000000000000000003"
+	cases := []struct {
+		spec map[string]any
+		want string
+	}{
+		// Default index is the first word.
+		{map[string]any{"op": "word", "of": []any{blob}},
+			"0x00000000000000000000000000000000000000000000000000000000000000aa"},
+		// A numeric index picks a later word (the status field).
+		{map[string]any{"op": "word", "index": 2, "of": []any{blob}},
+			"0x0000000000000000000000000000000000000000000000000000000000000003"},
+		// index may arrive as a decimal string (JSON binding interpolation).
+		{map[string]any{"op": "word", "index": "1", "of": []any{blob}},
+			"0x00000000000000000000000000000000000000000000000000000000000000bb"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, tc.spec)
+		if err != nil {
+			t.Fatalf("%v: %v", tc.spec, err)
+		}
+		if got != tc.want {
+			t.Errorf("%v =\n %v\nwant\n %v", tc.spec, got, tc.want)
+		}
+	}
+
+	for name, bad := range map[string]map[string]any{
+		"no of":         {"op": "word"},
+		"two of":        {"op": "word", "of": []any{blob, blob}},
+		"non-string of": {"op": "word", "of": []any{42}},
+		"bad hex":       {"op": "word", "of": []any{"0xzz"}},
+		"out of range":  {"op": "word", "index": 9, "of": []any{blob}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}
