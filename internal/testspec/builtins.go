@@ -21,6 +21,7 @@ import (
 const (
 	actionSendTx     = "sendTx"
 	actionWaitBlock  = "waitBlock"
+	actionWaitFor    = "waitFor"
 	actionRead       = "read"
 	actionNewAccount = "newAccount"
 
@@ -62,6 +63,7 @@ const (
 func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
+	r.RegisterAction(actionWaitFor, waitForAction{})
 	r.RegisterAction(actionRead, readAction{})
 	r.RegisterAction(actionNewAccount, newAccountAction{})
 	seedFaultBuiltins(r)

@@ -142,6 +142,71 @@ func (readAction) Do(ctx context.Context, ac *ActionCtx) error {
 	return nil
 }
 
+// Defaults for the waitFor poll loop, overridable per action via args.
+const (
+	defaultWaitForTimeout = 30 * time.Second
+	defaultWaitForPoll    = 500 * time.Millisecond
+)
+
+// waitForAction polls a read source until its value satisfies a comparator, or
+// the timeout elapses. It composes the reader vocabulary (the same "source"
+// names as read/assert) with the assert comparators, so a spec can wait on any
+// readable value — a header field governance updates, a proposal status — not
+// just block height (waitBlock is the special case source:blockNumber
+// compare:GreaterOrEqual). Args: source (required), compare (default "Equal"),
+// expected (required), on, timeout, pollInterval, plus the source's own args.
+// The satisfying value is bound under "save" like a read.
+type waitForAction struct{}
+
+func (waitForAction) Do(ctx context.Context, ac *ActionCtx) error {
+	source, _ := ac.Args["source"].(string)
+	if source == "" {
+		return fmt.Errorf("testspec: waitFor requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
+	}
+	read, ok := readerFor(source)
+	if !ok {
+		return fmt.Errorf("testspec: waitFor: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
+	}
+	op, _ := ac.Args["compare"].(string)
+	if op == "" {
+		op = "Equal"
+	}
+	cmp, ok := assert.Lookup(op)
+	if !ok {
+		return fmt.Errorf("testspec: waitFor: unknown comparator %q", op)
+	}
+	expected := ac.Args["expected"]
+	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, durationArg(ac.Args, "timeout", defaultWaitForTimeout))
+	defer cancel()
+	t := time.NewTicker(durationArg(ac.Args, "pollInterval", defaultWaitForPoll))
+	defer t.Stop()
+	var lastActual any
+	var lastErr error
+	for {
+		if v, rerr := read(ctx, c, ac.Args); rerr == nil {
+			lastActual, lastErr = v, nil
+			if pass, _ := cmp(v, expected); pass {
+				ac.Value = v
+				return nil
+			}
+		} else {
+			lastErr = rerr
+		}
+		select {
+		case <-ctx.Done():
+			if lastErr != nil {
+				return fmt.Errorf("testspec: waitFor %s: condition unmet (last read error: %v): %w", source, lastErr, ctx.Err())
+			}
+			return fmt.Errorf("testspec: waitFor %s: %v did not satisfy %s %v within timeout: %w", source, lastActual, op, expected, ctx.Err())
+		case <-t.C:
+		}
+	}
+}
+
 // readerFor returns the reader registered under an assertion name, so the read
 // action and the assertions share one vocabulary (no second spelling of "call").
 func readerFor(name string) (reader, bool) {

@@ -377,6 +377,52 @@ func TestWaitBlockAction(t *testing.T) {
 	})
 }
 
+func TestWaitForAction(t *testing.T) {
+	d := deps()
+
+	t.Run("condition met", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"}) // 16
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		ac := &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+			"source": assertBlockNumber, "compare": "GreaterOrEqual", "expected": float64(5), "pollInterval": "5ms"}}
+		if err := act.Do(context.Background(), ac); err != nil {
+			t.Fatalf("waitFor: %v", err)
+		}
+		if ac.Value != "16" {
+			t.Fatalf("bound value = %v, want the satisfying read \"16\"", ac.Value)
+		}
+	})
+	t.Run("timeout when unmet", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x1"}) // 1
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+			"source": assertBlockNumber, "compare": "GreaterOrEqual", "expected": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
+		if err == nil {
+			t.Fatal("expected timeout error for a condition that never holds")
+		}
+	})
+	t.Run("requires source", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+			t.Fatal("expected error for missing source")
+		}
+	})
+	t.Run("unknown comparator", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+			"source": assertBlockNumber, "compare": "Nonsense", "expected": float64(1)}})
+		if err == nil {
+			t.Fatal("expected error for an unknown comparator")
+		}
+	})
+}
+
 func TestSendTxAction_RevertFailsStep(t *testing.T) {
 	srv := mockRPC(t, map[string]any{
 		"eth_sendTransaction":       "0xhash",
