@@ -181,9 +181,11 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 // sendTxLocal signs and submits a transaction locally with the given private
 // key (hex, optional 0x prefix), routing the outcome through the same
 // reject/wait/revert logic as the node-signed path. It uses the injected
-// account provider's Wallet: Execute when a "data" payload is present, SendCoin
-// for a value-only transfer. The target node RPC comes from the usual "on"
-// selector so the wallet dials the same endpoint the node-signed path would.
+// account provider's Wallet: a "feePayerKey" arg makes it a 0x16 fee-delegated
+// transfer (the "key" account is the sender, feePayerKey covers the gas),
+// Execute when a "data" payload is present, else SendCoin for a value-only
+// transfer. The target node RPC comes from the usual "on" selector so the wallet
+// dials the same endpoint the node-signed path would.
 func sendTxLocal(ctx context.Context, ac *ActionCtx, keyHex string) error {
 	if ac.Deps == nil || ac.Deps.Accounts == nil {
 		return fmt.Errorf("testspec: sendTx key: no account provider")
@@ -205,14 +207,31 @@ func sendTxLocal(ctx context.Context, ac *ActionCtx, keyHex string) error {
 	if err != nil {
 		return err
 	}
+	feePayerKey, _ := ac.Args["feePayerKey"].(string)
+	data, _ := ac.Args["data"].(string)
 	var hash string
-	if data, ok := ac.Args["data"].(string); ok && data != "" && data != "0x" {
+	switch {
+	// A "feePayerKey" arg makes this a 0x16 fee-delegated transfer: the "key"
+	// account signs as the sender (moves value) while feePayerKey covers the gas.
+	// It is the only way to exercise a blacklisted-fee-payer rejection — the SDK's
+	// static value-transfer guard checks sender and recipient but not the fee
+	// payer, so the tx reaches the node, which is what does the rejecting.
+	case feePayerKey != "":
+		fp, ferr := hex.DecodeString(strings.TrimPrefix(feePayerKey, "0x"))
+		if ferr != nil {
+			return fmt.Errorf("testspec: sendTx feePayerKey: decode: %w", ferr)
+		}
+		if value == nil {
+			value = new(big.Int)
+		}
+		hash, err = w.SendFeeDelegated(ctx, fp, to, value)
+	case data != "" && data != "0x":
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
 			return fmt.Errorf("testspec: sendTx: data: %w", derr)
 		}
 		hash, err = w.Execute(ctx, to, b, value)
-	} else {
+	default:
 		if value == nil {
 			value = new(big.Int)
 		}
