@@ -31,7 +31,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `accounts` | 35 | **17** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
 | `gas-policy` | 17 | **13** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | **21** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 9건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 25건 갭(아래) |
+| `system-contracts` | 46 | **22** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 10건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 24건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -247,9 +247,32 @@ system-contracts (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach):
 
 > **스크래치넷 가스 감쇠 경고**: 이 8601-8605 넷은 idle 블록마다 가스한도가 ≈1/1024 씩 내려간다
 > (921k→529k→469k→399k, 2026-08-14 관측). burn(750k)·remove-minter(500k) 캡은 검증 당시엔 한도 아래였으나
-> **현재 한도(≈399k)에선 재실행 불가**다. mint/burn **실행** tx(≈455k)는 이제 이 넷에 안 들어간다.
-> 남은 거버넌스 실행 케이스(mint-transfer-event 등)의 라이브 검증은 **가스한도가 높은 fresh 넷**을 요한다.
+> **감쇠 넷(≈399k)에선 재실행 불가**였다. mint/burn **실행** tx(≈455k)는 감쇠 넷에 안 들어간다.
+> → **해결**: 동일 genesis(gasLimit 20M)로 5노드를 재-init·재기동해 한도를 20M 로 리셋(genesis 에 거버넌스
+> 상태가 baked-in 이라 재기동만으로 council/quorum 복원). fresh 넷 window(~1h) 안에 실행 케이스를 검증한다.
 > 이관된 spec 의 캡 값 자체는 정상(healthy/fresh 넷 기준 적정)이며, 감쇠는 넷 상태의 문제다.
+
+### 라이브 검증 근거 — mint-transfer-event (2026-08-14, fresh 넷)
+
+감쇠 넷을 20M 로 재기동한 뒤 mint **실행** 케이스를 라이브 확정했다. mint-proposal-executes 와 같은
+proposeMint→approve 자동 execute 패턴에 **Transfer 이벤트 로그 확인**을 더한 것이다. mint 은 native-coin
+발행이라 NativeCoinAdapter(0x1000)가 `Transfer(0x0 → 수취인)` 을 emit 한다.
+
+```
+system-contracts (+1 spec) → gstable 5노드(재기동 fresh, 8601-8605): pass=1 fail=0
+  mint-transfer-event: balanceAt(C0FFEE30) $b0 → derive sum($b0,1e18)=$want →
+                       proposeMint(C0FFEE30, 1e18, deposit DSL-MINT-EVT) $propHash →
+                       receiptLog proposalId $pid → derive abiCall approve → en2 approve(자동 execute) →
+                       rpcCall receipt.blockNumber $apBlk →
+                       assert txStatus 둘 다 0x1 & balanceAt(C0FFEE30)==$want &
+                       logs(0x1000, [Transfer, from=0x0, to=C0FFEE30], fromBlock=toBlock=$apBlk) count≥1.
+```
+
+- **5-엔드포인트 필수**: approve 는 `en2`(node2, 0x2493) 로 서명하므로 `--rpc` 를 5개(8601-8605) 모두 넘겨야
+  en1/en2 가 해소된다. 1개만 넘기면 `testspec: no target node RPC URL` 로 approve 스텝이 실패한다.
+- **deposit 유일성은 propose 시점 강제**: GovMinter 는 (depositID+bank+ts) 재제안을 **propose 단계에서** revert
+  (status 0x0)한다 — 이미 실행된 게 아니라 **미실행 대기(Voting) 제안이 있어도** 중복을 막는다. 따라서 부분
+  실패로 dangling 제안이 남으면 같은 deposit 재실행 불가 → fresh 넷에서 단발로 통과시킨다(DSL-MINT-EVT 전용 예약).
 
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
@@ -323,9 +346,9 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 | `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
 | `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
 
-### system-contracts 잔여 25건과 필요한 문법 확장
+### system-contracts 잔여 24건과 필요한 문법 확장
 
-21건 커버 완료(라이브 — read 9 + 토큰 write+event 2 + 거버넌스 쿼럼 9, +unblacklist-restores 는 address-unblacklisted-event 로 중복 커버). 나머지 25건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+22건 커버 완료(라이브 — read 9 + 토큰 write+event 2 + 거버넌스 쿼럼 10, +unblacklist-restores 는 address-unblacklisted-event 로 중복 커버). 나머지 24건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
 잔여 다수(≈12건)가 여전히 **거버넌스 쿼럼 흐름**에 의존하나, `(G)` 프리미티브(`receiptLog` + `derive abiCall`)로
 이 흐름을 표현할 수 있음은 이미 8건으로 입증됐다(위 배치 근거). 남은 갭은 케이스별로 다르다:
 ① 실행 결과를 **proposals() 상태 워드 디코드**로만 확인하는 케이스(자연스러운 `call`/이벤트 side-effect 부재) —
@@ -337,9 +360,11 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 
 | 레거시 케이스 (건수) | 갭 | 필요 확장 |
 |---|---|---|
-| `gastip-governance-updates-header`·`validator-add-member-executes`·`masterminter-member-add-remove`·`mint-transfer-event` (4) | `(G)`+`(H)` 로 표현은 가능하나 **넷 상태에 막힘**: validator/masterminter 는 검증자셋·정족수 변경(파괴적, 공유 넷 오염), gastip·mint-transfer 실행 tx(≈455k)는 현재 감쇠 넷(≈399k)에 안 들어감 → **fresh 넷 필요**. calldata·흐름은 확보 | (G)+(H)(확보) + 가스한도 높은 fresh 넷 + (파괴적 케이스) 격리 넷 |
+| `gastip-governance-updates-header` (1) | `(G)` 로 propose→approve 흐름은 표현 가능하나 **시간 대기 갭**: proposeGasTip 실행 후 header WBFTExtra.GasTip 이 **후속 블록에 걸쳐 반영**돼 레거시는 `WaitFor`(≤60s) 로 폴링한다. DSL 어세션은 스텝 뒤 1회만 실행돼 전파 완료를 기다릴 수 없다. 게다가 header GasTip 을 교란(자기복원하나 순서 민감)한다. header 읽기는 `istanbul_getWbftExtraInfo(blockNum).gasTip`(구체 블록번호 필요, "latest" 는 `block -2 not found`) | 조건부/시간 대기(WaitFor) + 공유상태 교란 격리 |
+| `validator-add-member-executes`·`masterminter-member-add-remove` (2) | `(G)`+`(H)` 로 흐름·calldata 는 확보했으나 **파괴적**: 검증자셋·정족수를 변경(add 후 quorum 상승/검증자 추가)해 공유 넷을 오염시키고 이후 spec 의 정족수 가정을 깬다 | (G)+(H)(확보) + 전용 격리 넷(다른 spec 과 분리 실행) |
 | ~~`burn-proposal-executes`~~ ✅ **이관 완료**(라이브) — payable proposeBurn→approve→`(H) derive word` status==Executed(3) | — | — |
 | ~~`remove-minter-executes`~~ ✅ **이관 완료**(라이브) — configure→approve→`(H) derive word` 로 중간 isMinter==1 확인→remove→approve→`call` isMinter==0 | — | — |
+| ~~`mint-transfer-event`~~ ✅ **이관 완료**(라이브, fresh 넷) — proposeMint(C0FFEE30)→approve 자동 execute→`balanceAt`==1e18 & NativeCoinAdapter Transfer(0x0→C0FFEE30) `logs`. 감쇠 넷 재기동(20M) 후 검증 | — | — |
 | ~~`unblacklist-restores`~~ ✅ **커버 완료**(중복) — address-unblacklisted-event 가 add→approve→remove→approve→isBlacklisted==0 을 이미 전량 포함(이벤트 확인만 추가) | — | — |
 | `burn-transfer-event`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events` (6) | **payable proposeBurn**(확보) + refund 라이프사이클(cancel/disapprove/claim) + refundableBalance 관찰. 재사용 넷에서 refundableBalance 가 제안자별 누적 → `>0`/`==0` 어세션 간섭(순서 위험) | (G)+sendTx `value`+`(H)`(확보) + cancel/disapprove/claim selector + fresh-net 격리(제안자 분리) |
 | `quorum-deficient-stays-voting`·`claim-zero-refund-reverts`·`claim-burn-refund-double-reverts`·`direct-blacklist-call-rejected`·`non-member-configure-minter-rejected` (5) | 위 (G) + **부정 기대**(정족수 미달 execute revert / 이중 claim revert / 비회원 호출 reject-or-revert). DSL 은 제출에러를 스텝 실패로 처리할 뿐 부정 기대가 없다 | (G) + (B) `expectReject`/채굴후 status 0x0 기대 (accounts·gas-policy 와 동일) |
