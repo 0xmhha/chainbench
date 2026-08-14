@@ -136,6 +136,61 @@ func TestSendTxAction_SendsAndWaits(t *testing.T) {
 	}
 }
 
+func TestSendTxAction_PassesAccessList(t *testing.T) {
+	// The empty access list [] is the case a []T-with-omitempty field would drop.
+	// Capture the outgoing eth_sendTransaction arg and assert it survived as [].
+	var mu sync.Mutex
+	var gotParams []json.RawMessage
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var req struct {
+			ID     int               `json:"id"`
+			Method string            `json:"method"`
+			Params []json.RawMessage `json:"params"`
+		}
+		_ = json.Unmarshal(body, &req)
+		if req.Method == "eth_sendTransaction" {
+			mu.Lock()
+			gotParams = req.Params
+			mu.Unlock()
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0xhash"})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID,
+			"result": map[string]any{"status": "0x1", "blockNumber": "0x2"}})
+	}))
+	t.Cleanup(srv.Close)
+
+	d := deps()
+	act, _ := d.Actions.Action(actionSendTx)
+	err := act.Do(context.Background(), &ActionCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Args: map[string]any{
+			"from": "0xabc", "to": "0xdef", "value": "1", "gasPrice": "1000000000",
+			"accessList": []any{}, "pollInterval": "5ms",
+		},
+	})
+	if err != nil {
+		t.Fatalf("sendTx: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(gotParams) == 0 {
+		t.Fatal("no eth_sendTransaction params captured")
+	}
+	var arg map[string]any
+	if err := json.Unmarshal(gotParams[0], &arg); err != nil {
+		t.Fatalf("unmarshal tx arg: %v", err)
+	}
+	al, ok := arg["accessList"]
+	if !ok {
+		t.Fatalf("accessList was dropped from the tx arg: %v", arg)
+	}
+	if _, ok := al.([]any); !ok {
+		t.Fatalf("accessList should serialize as an array, got %T", al)
+	}
+}
+
 func TestSendTxAction_RequiresFrom(t *testing.T) {
 	srv := mockRPC(t, map[string]any{})
 	d := deps()

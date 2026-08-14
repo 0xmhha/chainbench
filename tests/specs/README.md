@@ -28,8 +28,8 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
 | `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
 | `network` | 4 | **4** | ✅ `examples/specs/network-*.json`(선행 이관분) 3건 + **admin-peers-populated** 라이브(gstable) — `rpcCall admin_peers` 를 `select:"#"`(배열 길이)≥1 & `select:"0.id"`(배열 인덱싱) NotEqual "" 로 검증. 갭 없음 |
-| `accounts` | 35 | **16** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 19건은 문법 갭(아래) |
-| `gas-policy` | 17 | **12** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 3건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 5건은 문법 갭(아래) |
+| `accounts` | 35 | **17** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
+| `gas-policy` | 17 | **13** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
 | `system-contracts` | 46 | **11** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 35건 갭(아래) |
 
@@ -122,6 +122,24 @@ network    (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
                      레거시처럼 vacuous 이나 다노드 스크래치넷에서 실질 검증.
 ```
 
+### 라이브 검증 근거 — access-list(0x01) 배치 (2026-08-14)
+
+`(C)` sendTx 에 **`accessList` 필드**를 추가(`internal/core/rpc/client.go` `SendTxArgs.AccessList any` +
+`internal/testspec/builtins.go` 패스스루). 빈 리스트 `[]` 도 EIP-2930 type 0x01 을 선택하므로 —
+`[]AccessTuple` + `omitempty` 였다면 빈 케이스가 조용히 legacy 로 강등된다 — `any` 로 선언해 verbatim 전달한다.
+
+```
+accounts   (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=1 fail=0
+                     access-list-tx: baseFee 읽어 gasPrice=2×base 주입, accessList:[] + gasPrice →
+                     eth_getTransactionByHash type==0x1 라이브 확인(빈 리스트가 typed 봉투를 선택).
+gas-policy (+1 spec) → 같은 스크래치넷: pass=1 fail=0
+                     accesslist-gasprice-below-min-rejected: accessList:[] + gasPrice=1(<min) → 제출거부.
+```
+
+주의: 이 배치의 첫 라이브 실행은 type 0x0(legacy)로 실패했는데, 원인은 코드가 아니라 **attach-run 이 쓰는
+`/tmp/cb` 바이너리가 accessList 패스스루 커밋 이전 것(stale)** 이었다. 유닛 테스트(직접 Args 주입)는 통과했으나
+DSL 라이브 경로는 옛 바이너리를 실행했다. 재빌드 후 양쪽 pass — 인터폴레이션/`omitempty` 는 무관했다.
+
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
 이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
@@ -157,28 +175,27 @@ network    (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
 | `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다). 배열 길이 자체는 이제 `select:"#"` 로 얻지만, 비교 대상 quorum/검증자수를 토폴로지에서 파생하는 수단이 없다 |
 | `prev-seals-quorum` | prevCommitted/prevPrepared seal 의 **sealer 수 >= quorum(ceil 2N/3)** 만 검사한다(서명 필드 없음). 배열 길이 비교는 이제 `select:"#"`+`GreaterOrEqual` 로 가능하나, **토폴로지 파생 quorum 산술**(ceil 2N/3)이 없다 — 그 갭으로 남긴다 |
 
-### gas-policy 잔여 5건과 필요한 문법 확장
+### gas-policy 잔여 4건과 필요한 문법 확장
 
-tx-flow 6 + 제출거부 3(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded)건은 이관 완료.
-`(B) expect:"reject"` 프리미티브(F1)로 제출거부 3건이 라이브 확정됐다. 나머지 5건은 아래 갭에 막혀
+tx-flow 6 + 제출거부 4(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min)건은 이관 완료.
+`(B) expect:"reject"` 프리미티브(F1)로 제출거부가 라이브 확정됐고, `(C) accessList` 필드로
+access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭에 막혀
 있다 — 가짜로 만들지 않고 남긴다. (`tipcap-underpriced-rejected` 는 라이브 반증으로 보류 — 결함 표 참조.)
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
-| `accesslist-gasprice-below-min-rejected` | (B) 는 확보됐으나 **access-list(0x01) 트랜잭션 타입** 미지원 | (C) sendTx accessList 필드 |
 | `revert-tx-status-zero` · `out-of-gas-consumes-all` | 되돌아가는/가스소진 **컨트랙트 자산**과 gasUsed==gasLimit 판정이 필요 | 컨트랙트 바이트코드 자산 + receipt `gasUsed`/`gasLimit` read (부분 표현 가능, 자산 확보 선행) |
 | `authorized-account-gastip-free` | **거버넌스 쿼럼 흐름**(proposeAddAuthorizedAccount → 승인) 을 먼저 태워야 한다 | system-contracts 배치와 함께 — 거버넌스 스텝 표현 확보 후 |
 
-### accounts 잔여 19건과 필요한 문법 확장
+### accounts 잔여 18건과 필요한 문법 확장
 
-16건은 이관 완료(9 라이브 + 제출거부 3 라이브 + contract-event-emitted 라이브 + secp256r1 3 오프라인). 나머지 19건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+17건은 이관 완료(9 라이브 + 제출거부 3 라이브 + contract-event-emitted 라이브 + access-list-tx 라이브 + secp256r1 3 오프라인). 나머지 18건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
 | `feepayer-insufficient-rejected` · `fee-delegated-unfunded-feepayer-rejected` | (B) `expect:"reject"` 는 확보됐으나 **fee-delegation(0x16)** tx(feePayer 이중서명) 미지원 — 제출거부 자체는 표현 가능하나 0x16 를 조립할 수단이 없다 | (D) sendTx feePayer + 0x16 인코딩 |
 | `fd-sender-sig-invalid-rejected` · `fd-feepayer-sig-invalid-rejected` · `fee-delegated-sender-sig-invalid-rejected` · `fee-delegated-feepayer-sig-invalid-rejected` | 위 (B) + **손상된 이중서명 raw 트랜잭션 조립**(EncodeFeeDelegatedTampered) 을 spec 에서 만들 수단이 없다 | (B) + raw 서명 조립 자산 |
 | `fee-delegated-transfer` · `external-fee-delegated-transfer` | **fee-delegation(0x16) 트랜잭션** — sendTx 에 feePayer(이중서명) 필드가 없다 | (D) sendTx feePayer + 0x16 인코딩 |
-| `access-list-tx` | **access-list(0x01) 트랜잭션 타입** 미지원 | (C) sendTx accessList 필드 |
 | `set-code-delegation` | **EIP-7702(0x04) set-code** — authorization 리스트/authority 서명 미지원 | (E) sendTx authorizationList + 신규 키 생성 |
 | `nonce-ordering` · `replacement-tx` · `out-of-order-nonces-mine` · `same-nonce-replacement` | sendTx 가 **제출 후 receipt 동기 대기** → gap 난 nonce(N+1) 를 큐잉만 하고 나중에 채굴시킬 수 없고, "tx1 은 채굴되면 안 된다" 는 **부정 채굴 기대**도 없다 | 비동기 제출(대기 안 함) + 부정 채굴 assertion |
 | `zero-address-transfer-blocked` · `precompile-transfer-blocked` | accounts SDK 의 **클라이언트측 정적 가드**(제출 전 거부)를 검사. DSL sendTx 는 노드로 직행하므로 이 가드를 태우지 못한다(의미가 다름) | SDK 가드 경로는 DSL 로 표현 대상 아님 — 갭으로 남김 |

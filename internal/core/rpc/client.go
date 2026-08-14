@@ -339,6 +339,12 @@ type SendTxArgs struct {
 	// one; set explicitly, a spec can submit out of order or replace a pending
 	// transaction at the same nonce.
 	Nonce string `json:"nonce,omitempty"` // 0x-hex
+	// AccessList, when present, selects a typed transaction (EIP-2930 type 0x01
+	// with GasPrice, or type 0x02 with the fee caps). It is [{address,
+	// storageKeys:[...]}] — the empty list [] is valid and still selects a typed
+	// envelope, so it is passed through as-is: a []AccessTuple with omitempty
+	// would silently drop the empty case and downgrade the tx to legacy.
+	AccessList any `json:"accessList,omitempty"`
 }
 
 // SendTransaction submits a node-signed transaction (eth_sendTransaction) and

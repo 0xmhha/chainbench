@@ -332,6 +332,11 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if data, ok := ac.Args["data"].(string); ok {
 		args.Data = data
 	}
+	// An access list (even []) selects a typed transaction: [] + gasPrice is an
+	// EIP-2930 type 0x01. Passed through verbatim so the empty list survives.
+	if al, ok := ac.Args["accessList"]; ok {
+		args.AccessList = al
+	}
 	if v, ok := hexQuantity(ac.Args["value"]); ok {
 		args.Value = v
 	}
