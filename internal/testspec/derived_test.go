@@ -101,6 +101,59 @@ func TestRPCCallAssertion_RequiresAMethod(t *testing.T) {
 	}
 }
 
+func TestRPCCallAssertion_IndexesArraysAndReportsLength(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"admin_peers": []any{
+			map[string]any{"id": "enode://abc"},
+			map[string]any{"id": "enode://def"},
+		},
+	})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+
+	// "#" yields the array length (decimal), so an "at least one" check works.
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "admin_peers",
+			"select": "#", "compare": "GreaterOrEqual", "expected": "1",
+		},
+	})
+	if err != nil {
+		t.Fatalf("length select: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("length actual %#v", res.Actual)
+	}
+
+	// A numeric segment indexes into the array, then walks into the element.
+	res, err = as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "admin_peers",
+			"select": "0.id", "compare": "NotEqual", "expected": "",
+		},
+	})
+	if err != nil {
+		t.Fatalf("index select: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("index actual %#v", res.Actual)
+	}
+}
+
+func TestRPCCallAssertion_OutOfRangeIndexIsAnError(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"admin_peers": []any{}})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+	if _, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{"assert": assertRPCCall, "method": "admin_peers", "select": "0.id", "expected": "x"},
+	}); err == nil {
+		t.Fatal("expected an error indexing an empty array")
+	}
+}
+
 // wsHeadServer serves eth_subscribe over a WebSocket and pushes n newHeads
 // notifications.
 func wsHeadServer(t *testing.T, n int) *httptest.Server {

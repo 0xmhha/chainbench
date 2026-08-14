@@ -27,7 +27,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 |---|---:|---:|---|
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
 | `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
-| `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분). 잔여 1건 `admin-peers-populated` 갭(아래) |
+| `network` | 4 | **4** | ✅ `examples/specs/network-*.json`(선행 이관분) 3건 + **admin-peers-populated** 라이브(gstable) — `rpcCall admin_peers` 를 `select:"#"`(배열 길이)≥1 & `select:"0.id"`(배열 인덱싱) NotEqual "" 로 검증. 갭 없음 |
 | `accounts` | 35 | **16** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 19건은 문법 갭(아래) |
 | `gas-policy` | 17 | **12** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 3건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 5건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
@@ -109,6 +109,19 @@ accounts   (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
                      logs(address=$addr, select topic0==0x1111..1111). sendTx 컨트랙트 생성 라이브 확인.
 ```
 
+### 라이브 검증 근거 — 배열 인덱싱 배치 (2026-08-14)
+
+`rpcCall` 의 `select` dot-path 에 **배열 인덱싱**(숫자 세그먼트 `peers.0.id`)과 **길이**(`#` 세그먼트,
+십진 반환)를 추가(`internal/testspec/derived.go` `dotPath`). 배열을 반환하는 RPC 결과에서 "최소 N개"와
+"N번째 엔트리의 필드"를 표현할 수 있게 됐다.
+
+```
+network    (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=1 fail=0
+                     admin-peers-populated: admin_peers 실제 3피어 반환(RPC 직접 확인),
+                     select:"#"≥1 & select:"0.id" NotEqual "" 모두 통과. 단일노드면 피어 부재라
+                     레거시처럼 vacuous 이나 다노드 스크래치넷에서 실질 검증.
+```
+
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
 이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
@@ -141,9 +154,8 @@ accounts   (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
 | `ws-subscribe-logs` | **구독을 먼저 열고 그 다음 로그를 유발**해야 하는데, 어세션은 스텝 뒤에 실행되므로 이미 늦다. 현재 DSL 로는 순서를 표현할 수 없다 — 가짜로 만들지 않고 갭으로 남긴다 |
 | ~~`block-period-one-second`~~ | ✅ **이관 완료** — `parentHash` 로 헤드에서 두 단계 되짚어 인접 블록 타임스탬프를 얻고 `derive`(diff)==blockPeriod(1) 로 검증. 파생 블록번호를 hex RPC 파라미터로 되먹일 수 없는 갭을 hash 워크로 우회 |
 | `epoch-transition-carries-epoch-info` | 에폭 경계까지 대기 후 그 블록을 조회해야 한다. 조건부 대기 표현이 없다 |
-| `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다) |
-| `prev-seals-quorum` | prevCommitted/prevPrepared seal 의 **sealer 수 >= quorum(ceil 2N/3)** 만 검사한다(서명 필드 없음). 배열 길이 비교 연산자도, 토폴로지 파생 quorum 산술도 없다. `NotNil` 은 빈 배열에도 통과하므로 의미가 없다 — 갭 |
-| `admin-peers-populated` (network) | `admin_peers` 결과가 **>=1 엔트리**이고 첫 피어 `id` 가 비어있지 않은지 검사. `select` 는 맵만 walk 하고 **배열 인덱스(`0.id`)를 못 짚으며**, 배열 길이>=N 비교 연산자도 없다 — 갭 |
+| `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다). 배열 길이 자체는 이제 `select:"#"` 로 얻지만, 비교 대상 quorum/검증자수를 토폴로지에서 파생하는 수단이 없다 |
+| `prev-seals-quorum` | prevCommitted/prevPrepared seal 의 **sealer 수 >= quorum(ceil 2N/3)** 만 검사한다(서명 필드 없음). 배열 길이 비교는 이제 `select:"#"`+`GreaterOrEqual` 로 가능하나, **토폴로지 파생 quorum 산술**(ceil 2N/3)이 없다 — 그 갭으로 남긴다 |
 
 ### gas-policy 잔여 5건과 필요한 문법 확장
 

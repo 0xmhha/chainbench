@@ -37,8 +37,9 @@ docs/dev/session-data/
 
 # Removed legacy trees — the Go tool replaced these; never re-add. (They were
 # once accidentally re-committed via `git add -A`; use explicit `git add <path>`.)
-mcp-server/
-network/
+# Anchored to repo root so unrelated dirs (e.g. tests/specs/network/) aren't swallowed.
+/mcp-server/
+/network/
 
 # Node.js dependencies and build caches (never commit)
 node_modules/

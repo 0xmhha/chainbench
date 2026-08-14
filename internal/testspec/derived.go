@@ -56,7 +56,8 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 // vocabulary stays in the spec, where it belongs.
 //
 // Spec: method (required), params ([]any, optional), select (dot path into the
-// result; omitted, the whole result is compared).
+// result — numeric segments index arrays and a "#" segment yields a length;
+// omitted, the whole result is compared).
 func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
 	method, _ := spec["method"].(string)
 	if method == "" {
@@ -81,16 +82,33 @@ func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 	return v, nil
 }
 
-// dotPath walks a decoded JSON value by an "a.b.c" path.
+// dotPath walks a decoded JSON value by an "a.b.c" path. A numeric segment
+// indexes into an array ("peers.0.id"), and a "#" segment yields the length of
+// the array or object it lands on (decimal, so it compares as a number) — the
+// two pieces an "at least one entry" check needs from a JSON array result.
 func dotPath(v any, path string) (any, bool) {
 	cur := v
 	for _, part := range strings.Split(path, ".") {
-		m, ok := cur.(map[string]any)
-		if !ok {
-			return nil, false
-		}
-		cur, ok = m[part]
-		if !ok {
+		switch c := cur.(type) {
+		case map[string]any:
+			if part == "#" {
+				return strconv.Itoa(len(c)), true
+			}
+			next, ok := c[part]
+			if !ok {
+				return nil, false
+			}
+			cur = next
+		case []any:
+			if part == "#" {
+				return strconv.Itoa(len(c)), true
+			}
+			idx, err := strconv.Atoi(part)
+			if err != nil || idx < 0 || idx >= len(c) {
+				return nil, false
+			}
+			cur = c[idx]
+		default:
 			return nil, false
 		}
 	}
