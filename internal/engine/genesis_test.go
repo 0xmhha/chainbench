@@ -76,6 +76,34 @@ func TestPresetGenesisSource_TakeLimitsValidators(t *testing.T) {
 	}
 }
 
+func TestPresetGenesisSource_AppliesOverridesAndOverlay(t *testing.T) {
+	dir := writePreset(t, `{
+		"validators": ["0xaaaa"],
+		"blsPublicKeys": ["0x01"],
+		"extraData": "0xdeadbeef",
+		"alloc": {}
+	}`)
+	// The source must thread ConfigOverrides and Overlay into BuildNetwork.
+	// petersburgBlock is included so the post-transform fork validation passes on
+	// the minimal test template.
+	src := engine.PresetGenesisSource{
+		KeysDir:         dir,
+		ConfigOverrides: map[string]string{"petersburgBlock": "0", "bohoBlock": "10"},
+		Overlay:         []byte(`{"alloc":{"00000000000000000000000000000000000000ff":{"balance":"0x2a"}}}`),
+	}
+	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), 0)
+	if err != nil {
+		t.Fatalf("Genesis: %v", err)
+	}
+	out := string(gen)
+	if !strings.Contains(out, `"bohoBlock":10`) {
+		t.Errorf("config override not applied:\n%s", out)
+	}
+	if !strings.Contains(out, "00000000000000000000000000000000000000ff") {
+		t.Errorf("overlay not merged:\n%s", out)
+	}
+}
+
 func TestPresetGenesisSource_MissingPreset(t *testing.T) {
 	src := engine.PresetGenesisSource{KeysDir: t.TempDir()} // no metadata.json
 	if _, err := src.Genesis(context.Background(), wbftTestPlugin(), 0); err == nil {

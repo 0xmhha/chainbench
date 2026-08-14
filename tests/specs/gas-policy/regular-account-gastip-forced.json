@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1",
+  "id": "regular-account-gastip-forced",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$n"], "select": "gasTip", "save": "htip" } },
+    { "read": { "source": "derive", "op": "sum",
+                "of": ["$htip", "$htip", "$htip", "$htip", "$htip"], "save": "hightip" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                  "value": "1", "gas": "21000",
+                  "maxFeePerGas": "1000000000000000", "maxPriorityFeePerGas": "$hightip",
+                  "save": "hash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$hash"], "select": "effectiveGasPrice", "save": "egp" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$hash"], "select": "blockNumber", "save": "blk" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$blk", false], "select": "baseFeePerGas", "save": "base" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$blk"], "select": "gasTip", "save": "itip" } }
+  ],
+  "assertions": [
+    { "assert": "derive", "op": "diff", "of": ["$egp", "$base"],
+      "compare": "Equal", "expected": "$itip" }
+  ]
+}

@@ -101,12 +101,14 @@ func DisapproveProposalCall(id *big.Int) string {
 	return accounts.EncodeCallArgs("disapproveProposal(uint256)", accounts.Uint(id))
 }
 
-// Burn-refund event topics (GovMinter, Boho v2). Pinned from the go-stablenet
-// regression suite (lib/common.sh) since the GovMinter Solidity is not in this
-// repo. BurnRefundClaimed also derives from EventTopic("BurnRefundClaimed(address,uint256)").
+// Burn-refund event topics (GovMinter, Boho v2). Both derive from their event
+// signatures; the govbind unit test pins each against EventTopic(). The signatures
+// were confirmed against a live Boho-v2 net: a cancelled burn proposal emits
+// BurnDepositRefunded(proposalId, from, amount) and claimBurnRefund emits
+// BurnRefundClaimed(claimant, amount).
 const (
 	BurnRefundClaimedTopic   = "0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24"
-	BurnDepositRefundedTopic = "0x334fe3eaa506b12e7e46ba469c310822737a959f2553b3cb38dff68085291aed"
+	BurnDepositRefundedTopic = "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062"
 )
 
 // ProposeAddMemberCall builds calldata for a governance

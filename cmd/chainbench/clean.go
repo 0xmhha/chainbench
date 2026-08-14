@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 func newCleanCmd() *cobra.Command {
@@ -41,7 +41,7 @@ func newCleanCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			// Stop any running nodes first (best-effort).
 			if ns, err := session.LoadLocalNodeSet(dataDir); err == nil {
-				stopped, errs := setup.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
+				stopped, errs := engine.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
 				for _, e := range errs {
 					fmt.Fprintln(cmd.ErrOrStderr(), e)
 				}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "id": "insufficient-funds-rejected",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "balanceAt",
+                "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "save": "bal" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$bal", "1000000000000000000"], "save": "over" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE07",
+                  "value": "$over", "gas": "21000",
+                  "expect": "reject" } }
+  ],
+  "assertions": [
+    { "assert": "blockNumber", "compare": "GreaterOrEqual", "expected": "0x1" }
+  ]
+}

@@ -2,6 +2,7 @@ package testspec
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -56,7 +58,8 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 // vocabulary stays in the spec, where it belongs.
 //
 // Spec: method (required), params ([]any, optional), select (dot path into the
-// result; omitted, the whole result is compared).
+// result — numeric segments index arrays and a "#" segment yields a length;
+// omitted, the whole result is compared).
 func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
 	method, _ := spec["method"].(string)
 	if method == "" {
@@ -65,6 +68,15 @@ func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 	var params []any
 	if raw, ok := spec["params"].([]any); ok {
 		params = raw
+	}
+	// Resolve the "@latest" params sentinel to the head block number at call time.
+	// Unlike a "$head" binding (frozen when the step's args are resolved), this
+	// re-resolves on every call, so a waitFor polling a block-scoped method that
+	// rejects the "latest" tag (istanbul_getWbftExtraInfo) tracks the advancing
+	// head instead of one fixed block.
+	params, err := resolveLatestParams(ctx, c, params)
+	if err != nil {
+		return nil, err
 	}
 	var result any
 	if err := c.Call(ctx, method, &result, params...); err != nil {
@@ -81,16 +93,70 @@ func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 	return v, nil
 }
 
-// dotPath walks a decoded JSON value by an "a.b.c" path.
+// latestBlockParam is the params sentinel readRPCCall replaces, at call time,
+// with the current head block number (0x-hex). A spec passes it to a method that
+// requires a concrete numeric block and rejects the "latest" tag, and — inside
+// waitFor — gets it re-resolved each poll so the read follows the head.
+const latestBlockParam = "@latest"
+
+// resolveLatestParams returns params with every latestBlockParam sentinel
+// replaced by the current head block number, reading the head only if a sentinel
+// is present. It never mutates the input slice: waitFor calls the reader
+// repeatedly with the same args, so the sentinel must survive to be re-resolved.
+func resolveLatestParams(ctx context.Context, c *rpc.Client, params []any) ([]any, error) {
+	has := false
+	for _, p := range params {
+		if s, ok := p.(string); ok && s == latestBlockParam {
+			has = true
+			break
+		}
+	}
+	if !has {
+		return params, nil
+	}
+	bn, err := c.BlockNumber(ctx)
+	if err != nil {
+		return nil, err
+	}
+	head := "0x" + strconv.FormatUint(bn, 16)
+	out := make([]any, len(params))
+	for i, p := range params {
+		if s, ok := p.(string); ok && s == latestBlockParam {
+			out[i] = head
+		} else {
+			out[i] = p
+		}
+	}
+	return out, nil
+}
+
+// dotPath walks a decoded JSON value by an "a.b.c" path. A numeric segment
+// indexes into an array ("peers.0.id"), and a "#" segment yields the length of
+// the array or object it lands on (decimal, so it compares as a number) — the
+// two pieces an "at least one entry" check needs from a JSON array result.
 func dotPath(v any, path string) (any, bool) {
 	cur := v
 	for _, part := range strings.Split(path, ".") {
-		m, ok := cur.(map[string]any)
-		if !ok {
-			return nil, false
-		}
-		cur, ok = m[part]
-		if !ok {
+		switch c := cur.(type) {
+		case map[string]any:
+			if part == "#" {
+				return strconv.Itoa(len(c)), true
+			}
+			next, ok := c[part]
+			if !ok {
+				return nil, false
+			}
+			cur = next
+		case []any:
+			if part == "#" {
+				return strconv.Itoa(len(c)), true
+			}
+			idx, err := strconv.Atoi(part)
+			if err != nil || idx < 0 || idx >= len(c) {
+				return nil, false
+			}
+			cur = c[idx]
+		default:
 			return nil, false
 		}
 	}
@@ -197,6 +263,12 @@ func wsTarget(ac *AssertCtx) (string, error) {
 // string, comparable with the numeric assert primitives.
 func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
 	op, _ := spec["op"].(string)
+	if op == "abiCall" {
+		return deriveAbiCall(spec)
+	}
+	if op == "word" {
+		return deriveWord(spec)
+	}
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("testspec: derive requires \"of\" (a list of values)")
@@ -221,6 +293,74 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 		}
 	}
 	return acc.String(), nil
+}
+
+// deriveAbiCall builds contract calldata from a 4-byte selector and a list of
+// scalar arguments, each ABI-encoded as a left-padded 32-byte word. It closes
+// the governance gap the migration ledger recorded: approve/execute calldata
+// splices a proposalId that is only known at run time (extracted from a
+// ProposalCreated log via the receiptLog source) into the call. Addresses and
+// uint256 both encode as a right-aligned 32-byte word, so both flow through
+// parseBigValue. Spec: op ("abiCall"), selector (0x + 8 hex chars), of (the
+// argument values or "$bindings"). The result is 0x-hex calldata for sendTx.
+func deriveAbiCall(spec map[string]any) (any, error) {
+	sel := strings.TrimPrefix(strings.TrimSpace(fmt.Sprint(spec["selector"])), "0x")
+	if len(sel) != 8 {
+		return nil, fmt.Errorf("testspec: derive abiCall requires \"selector\" of 4 bytes (8 hex chars), got %q", spec["selector"])
+	}
+	if _, err := hex.DecodeString(sel); err != nil {
+		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
+	}
+	selBytes, err := hex.DecodeString(sel)
+	if err != nil {
+		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
+	}
+	var args []accounts.Arg
+	if raw, ok := spec["of"].([]any); ok {
+		args = make([]accounts.Arg, 0, len(raw))
+		for i, v := range raw {
+			n, err := parseBigValue(v)
+			if err != nil {
+				return nil, fmt.Errorf("testspec: derive abiCall: of[%d]: %w", i, err)
+			}
+			if n.Sign() < 0 || n.BitLen() > 256 {
+				return nil, fmt.Errorf("testspec: derive abiCall: of[%d] does not fit in a 32-byte word", i)
+			}
+			args = append(args, accounts.Uint(n))
+		}
+	}
+	return "0x" + hex.EncodeToString(append(selBytes, accounts.EncodeABI(args...)...)), nil
+}
+
+// deriveWord extracts the index-th 32-byte (64-hex) word from a 0x-hex blob —
+// the inverse of abiCall's word packing. It closes the gap the migration ledger
+// recorded for governance execution checks: proposals(id) returns a fixed-layout
+// tuple whose status is word[9], but the whole-blob `call` assertion cannot pick
+// one field out of a return that also carries volatile fields (timestamps, the
+// proposer address). Spec: op ("word"), index (0-based word, default 0), of (a
+// single 0x-hex value or "$binding"). The result is a 0x-prefixed 64-hex word,
+// comparable with the assert primitives.
+func deriveWord(spec map[string]any) (any, error) {
+	raw, ok := spec["of"].([]any)
+	if !ok || len(raw) != 1 {
+		return nil, fmt.Errorf("testspec: derive word requires \"of\" with exactly one hex value")
+	}
+	s, ok := raw[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("testspec: derive word: of[0] must be a 0x-hex string, got %T", raw[0])
+	}
+	if _, err := hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(s), "0x")); err != nil {
+		return nil, fmt.Errorf("testspec: derive word: of[0] is not valid hex: %w", err)
+	}
+	idx := 0
+	if n, ok := uintArg(spec["index"]); ok {
+		idx = int(n)
+	}
+	word, ok := accounts.WordAt(s, idx)
+	if !ok {
+		return nil, fmt.Errorf("testspec: derive word: index %d out of range", idx)
+	}
+	return word, nil
 }
 
 // parseBigValue converts a spec value (0x-hex string, decimal string, or JSON

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1",
+  "id": "sender-blacklisted-rejected",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$acct",
+                  "value": "10000000000000000000", "gas": "21000",
+                  "save": "fundHash" } },
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x0d321273", "of": ["$acct"], "save": "addBlData" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x0000000000000000000000000000000000001004",
+                  "gas": "0x16e360",
+                  "data": "$addBlData",
+                  "save": "addHash" } },
+    { "read": { "source": "receiptLog", "hash": "$addHash",
+                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+                "topic": 1, "save": "addPid" } },
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$addPid"], "save": "addApprove" } },
+    { "sendTx": { "on": "en2",
+                  "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+                  "to": "0x0000000000000000000000000000000000001004",
+                  "gas": "0x16e360",
+                  "data": "$addApprove",
+                  "save": "addApHash" } },
+    { "sendTx": { "on": "en1",
+                  "key": "$acctKey",
+                  "to": "0x00000000000000000000000000000000C0FFEE10",
+                  "value": "1",
+                  "expect": "reject", "reason": "blacklist" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$addApHash", "expected": "0x1" }
+  ]
+}

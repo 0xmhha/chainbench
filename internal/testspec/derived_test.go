@@ -101,6 +101,110 @@ func TestRPCCallAssertion_RequiresAMethod(t *testing.T) {
 	}
 }
 
+func TestRPCCallAssertion_IndexesArraysAndReportsLength(t *testing.T) {
+	srv := mockRPC(t, map[string]any{
+		"admin_peers": []any{
+			map[string]any{"id": "enode://abc"},
+			map[string]any{"id": "enode://def"},
+		},
+	})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+
+	// "#" yields the array length (decimal), so an "at least one" check works.
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "admin_peers",
+			"select": "#", "compare": "GreaterOrEqual", "expected": "1",
+		},
+	})
+	if err != nil {
+		t.Fatalf("length select: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("length actual %#v", res.Actual)
+	}
+
+	// A numeric segment indexes into the array, then walks into the element.
+	res, err = as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "admin_peers",
+			"select": "0.id", "compare": "NotEqual", "expected": "",
+		},
+	})
+	if err != nil {
+		t.Fatalf("index select: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("index actual %#v", res.Actual)
+	}
+}
+
+func TestRPCCallAssertion_OutOfRangeIndexIsAnError(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"admin_peers": []any{}})
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+	if _, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{"assert": assertRPCCall, "method": "admin_peers", "select": "0.id", "expected": "x"},
+	}); err == nil {
+		t.Fatal("expected an error indexing an empty array")
+	}
+}
+
+// TestRPCCall_LatestParamSentinel verifies readRPCCall replaces the "@latest"
+// params sentinel with the current head block number at call time (not the
+// literal string), so a block-scoped method that rejects the "latest" tag gets a
+// concrete number.
+func TestRPCCall_LatestParamSentinel(t *testing.T) {
+	var gotParam any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+			Params []any  `json:"params"`
+		}
+		_ = json.Unmarshal(body, &req)
+		var result any
+		switch req.Method {
+		case "eth_blockNumber":
+			result = "0x2a" // 42
+		case "istanbul_getWbftExtraInfo":
+			if len(req.Params) > 0 {
+				gotParam = req.Params[0]
+			}
+			result = map[string]any{"gasTip": "0x64"}
+		default:
+			http.Error(w, "unknown method "+req.Method, http.StatusBadRequest)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
+	}))
+	t.Cleanup(srv.Close)
+
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
+			"params": []any{"@latest"}, "select": "gasTip", "expected": "0x64",
+		},
+	})
+	if err != nil {
+		t.Fatalf("rpcCall @latest: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("actual %#v", res.Actual)
+	}
+	if gotParam != "0x2a" {
+		t.Fatalf("block param = %#v, want the resolved head \"0x2a\"", gotParam)
+	}
+}
+
 // wsHeadServer serves eth_subscribe over a WebSocket and pushes n newHeads
 // notifications.
 func wsHeadServer(t *testing.T, n int) *httptest.Server {
@@ -263,6 +367,89 @@ func TestReadDerive(t *testing.T) {
 		"no of":      {"op": "sum"},
 		"unknown op": {"op": "mul", "of": []any{"1", "2"}},
 		"bad value":  {"op": "sum", "of": []any{"zzz"}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}
+
+func TestReadDerive_AbiCall(t *testing.T) {
+	cases := []struct {
+		spec map[string]any
+		want string
+	}{
+		// approveProposal(1): selector + a single left-padded uint256 word.
+		{map[string]any{"op": "abiCall", "selector": "0x98951b56", "of": []any{"1"}},
+			"0x98951b560000000000000000000000000000000000000000000000000000000000000001"},
+		// A 32-byte 0x-hex topic (as receiptLog yields) parses to the same word.
+		{map[string]any{"op": "abiCall", "selector": "0x0d61b519",
+			"of": []any{"0x0000000000000000000000000000000000000000000000000000000000000002"}},
+			"0x0d61b5190000000000000000000000000000000000000000000000000000000000000002"},
+		// An address argument is right-aligned in its word, same as a uint.
+		{map[string]any{"op": "abiCall", "selector": "0xa9059cbb",
+			"of": []any{"0x00000000000000000000000000000000c0ffee05", "1"}},
+			"0xa9059cbb00000000000000000000000000000000000000000000000000000000c0ffee050000000000000000000000000000000000000000000000000000000000000001"},
+		// No args is a bare selector.
+		{map[string]any{"op": "abiCall", "selector": "0x12345678"}, "0x12345678"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, tc.spec)
+		if err != nil {
+			t.Fatalf("%v: %v", tc.spec, err)
+		}
+		if got != tc.want {
+			t.Errorf("%v =\n %v\nwant\n %v", tc.spec, got, tc.want)
+		}
+	}
+
+	for name, bad := range map[string]map[string]any{
+		"no selector":    {"op": "abiCall", "of": []any{"1"}},
+		"short selector": {"op": "abiCall", "selector": "0x1234"},
+		"bad arg":        {"op": "abiCall", "selector": "0x98951b56", "of": []any{"zzz"}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}
+
+func TestReadDerive_Word(t *testing.T) {
+	// A proposals() return: three words, the third (index 2) an executed status.
+	blob := "0x" +
+		"00000000000000000000000000000000000000000000000000000000000000aa" +
+		"00000000000000000000000000000000000000000000000000000000000000bb" +
+		"0000000000000000000000000000000000000000000000000000000000000003"
+	cases := []struct {
+		spec map[string]any
+		want string
+	}{
+		// Default index is the first word.
+		{map[string]any{"op": "word", "of": []any{blob}},
+			"0x00000000000000000000000000000000000000000000000000000000000000aa"},
+		// A numeric index picks a later word (the status field).
+		{map[string]any{"op": "word", "index": 2, "of": []any{blob}},
+			"0x0000000000000000000000000000000000000000000000000000000000000003"},
+		// index may arrive as a decimal string (JSON binding interpolation).
+		{map[string]any{"op": "word", "index": "1", "of": []any{blob}},
+			"0x00000000000000000000000000000000000000000000000000000000000000bb"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, tc.spec)
+		if err != nil {
+			t.Fatalf("%v: %v", tc.spec, err)
+		}
+		if got != tc.want {
+			t.Errorf("%v =\n %v\nwant\n %v", tc.spec, got, tc.want)
+		}
+	}
+
+	for name, bad := range map[string]map[string]any{
+		"no of":         {"op": "word"},
+		"two of":        {"op": "word", "of": []any{blob, blob}},
+		"non-string of": {"op": "word", "of": []any{42}},
+		"bad hex":       {"op": "word", "of": []any{"0xzz"}},
+		"out of range":  {"op": "word", "index": 9, "of": []any{blob}},
 	} {
 		if _, err := readDerive(context.Background(), nil, bad); err == nil {
 			t.Errorf("%s must fail", name)

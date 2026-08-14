@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1",
+  "id": "non-member-configure-minter-rejected",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$acct",
+                  "value": "10000000000000000000", "gas": "21000",
+                  "save": "fundHash" } },
+    { "sendTx": { "on": "en1",
+                  "key": "$acctKey",
+                  "to": "0x0000000000000000000000000000000000001002",
+                  "data": "0x898420a900000000000000000000000000000000000000000000000000000000c0ffee410000000000000000000000000000000000000000000000008ac7230489e80000",
+                  "expect": "reject" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" }
+  ]
+}

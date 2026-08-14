@@ -2,26 +2,28 @@ package testspec
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec/assert"
 )
 
 // Built-in action and assertion names (the DSL keys the interpreter dispatches
 // on). Kept as typed-free string constants so the registry and specs share one
 // source of truth.
 const (
-	actionSendTx    = "sendTx"
-	actionWaitBlock = "waitBlock"
-	actionRead      = "read"
+	actionSendTx     = "sendTx"
+	actionWaitBlock  = "waitBlock"
+	actionWaitFor    = "waitFor"
+	actionRead       = "read"
+	actionNewAccount = "newAccount"
 
 	assertChainID       = "chainId"
 	assertBlockNumber   = "blockNumber"
@@ -31,6 +33,7 @@ const (
 	assertNonceAt       = "nonceAt"
 	assertCall          = "call"
 	assertTxStatus      = "txStatus"
+	assertReceiptLog    = "receiptLog"
 	assertBlockAdvance  = "blockAdvance"
 	assertSameBlockHash = "sameBlockHash"
 	assertBaseFee       = "baseFee"
@@ -60,7 +63,9 @@ const (
 func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
+	r.RegisterAction(actionWaitFor, waitForAction{})
 	r.RegisterAction(actionRead, readAction{})
+	r.RegisterAction(actionNewAccount, newAccountAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
@@ -69,104 +74,6 @@ func seedBuiltins(r Registry) {
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
-	}
-}
-
-// sameBlockHashAssertion passes when every target node reports the same hash for
-// a block — a cross-node no-fork / same-chain check. Spec: block (tag, default
-// "latest"; use "0x0" for genesis agreement), onEach. Non-answering nodes are
-// skipped; it fails if no node answers.
-type sameBlockHashAssertion struct{}
-
-func (sameBlockHashAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
-	res := session.AssertResult{Assert: assertSameBlockHash, Provenance: ac.Spec}
-	targets := assertTargets(ac)
-	if len(targets) == 0 {
-		err := fmt.Errorf("testspec: sameBlockHash: no target node RPC URL")
-		res.Actual = err.Error()
-		return res, err
-	}
-	tag, _ := ac.Spec["block"].(string)
-	if tag == "" {
-		tag = "latest"
-	}
-	res.Expected = "all nodes agree on block " + tag + " hash"
-
-	var hashes []string
-	perNode := make(map[string]any, len(targets))
-	for _, tgt := range targets {
-		c, err := clientFor(ac.Deps, tgt.url)
-		if err != nil {
-			res.Actual = err.Error()
-			return res, err
-		}
-		b, err := c.BlockByNumber(ctx, tag)
-		if err != nil {
-			res.Actual = err.Error()
-			return res, err
-		}
-		if b.Hash == "" {
-			continue // node has not produced this block yet
-		}
-		hashes = append(hashes, b.Hash)
-		perNode[tgt.name] = b.Hash
-	}
-	res.Actual = perNode
-	if len(hashes) == 0 {
-		res.Pass, res.Source = false, "no node returned block "+tag
-		return res, nil
-	}
-	pass, detail := assert.HashesEqual(hashes)
-	res.Pass = pass
-	if !pass {
-		res.Source = detail
-	}
-	return res, nil
-}
-
-// blockAdvanceAssertion passes when the target node's head advances within the
-// poll window — proof the network is producing blocks. Spec: timeout,
-// pollInterval, on. It reads the head once, then polls until a higher head or
-// the timeout.
-type blockAdvanceAssertion struct{}
-
-func (blockAdvanceAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
-	res := session.AssertResult{Assert: assertBlockAdvance, Provenance: ac.Spec}
-	targets := assertTargets(ac)
-	if len(targets) == 0 {
-		err := fmt.Errorf("testspec: blockAdvance: no target node RPC URL")
-		res.Actual = err.Error()
-		return res, err
-	}
-	c, err := clientFor(ac.Deps, targets[0].url)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
-	}
-	start, err := c.BlockNumber(ctx)
-	if err != nil {
-		res.Actual = err.Error()
-		return res, err
-	}
-	res.Expected = "head > " + strconv.FormatUint(start, 10)
-
-	timeout := durationArg(ac.Spec, "timeout", defaultBlockAdvanceTimeout)
-	pctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	t := time.NewTicker(durationArg(ac.Spec, "pollInterval", defaultBlockAdvancePoll))
-	defer t.Stop()
-	for {
-		if cur, err := c.BlockNumber(pctx); err == nil && cur > start {
-			res.Pass, res.Actual = true, cur
-			return res, nil
-		}
-		select {
-		case <-pctx.Done():
-			res.Pass, res.Actual = false, start
-			res.Source = "head did not advance within " + timeout.String()
-			return res, nil
-		case <-t.C:
-		}
 	}
 }
 
@@ -199,121 +106,25 @@ func (waitBlockAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 }
 
-// readAction reads one RPC value and, with "save", binds it for later steps and
-// assertions to reference as "$name" (design §3.2b). It is how a spec compares
-// two on-chain reads to each other — read the first, then assert the second
-// against "$name" — which a single-shot assertion cannot express.
-//
-// Args: source (one of the RPC-reading assertion names), save, on, plus whatever
-// that source needs (to/data for "call", address for "balanceAt", ...).
-type readAction struct{}
-
-func (readAction) Do(ctx context.Context, ac *ActionCtx) error {
-	source, _ := ac.Args["source"].(string)
-	if source == "" {
-		return fmt.Errorf("testspec: read requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
-	}
-	read, ok := readerFor(source)
-	if !ok {
-		return fmt.Errorf("testspec: read: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
-	}
-	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
-	if err != nil {
-		return err
-	}
-	v, err := read(ctx, c, ac.Args)
-	if err != nil {
-		return fmt.Errorf("testspec: read %s: %w", source, err)
-	}
-	ac.Value = v
-	return nil
-}
-
-// readerFor returns the reader registered under an assertion name, so the read
-// action and the assertions share one vocabulary (no second spelling of "call").
-func readerFor(name string) (reader, bool) {
-	for _, a := range builtinAssertions() {
-		if a.name == name {
-			return a.read, true
-		}
-	}
-	return nil, false
-}
-
-// readerNames lists the sources the read action accepts, for error messages.
-func readerNames() []string {
-	all := builtinAssertions()
-	out := make([]string, 0, len(all))
-	for _, a := range all {
-		out = append(out, a.name)
-	}
-	sort.Strings(out)
-	return out
-}
-
-// builtinAssertions lists the RPC-reading assertions and their default
-// comparator. Each reads one value from a target node and compares it to the
-// spec's "expected" using an assert primitive ("compare" in the spec overrides
-// the default).
-func builtinAssertions() []rpcAssertion {
-	return []rpcAssertion{
-		{name: assertChainID, defaultOp: "Equal", read: readChainID},
-		{name: assertBlockNumber, defaultOp: "GreaterOrEqual", read: readBlockNumber},
-		{name: assertPeerCount, defaultOp: "GreaterOrEqual", read: readPeerCount},
-		{name: assertBalanceAt, defaultOp: "Equal", read: readBalanceAt},
-		{name: assertCodeAt, defaultOp: "Equal", read: readCodeAt},
-		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
-		{name: assertCall, defaultOp: "Equal", read: readCall},
-		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
-		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
-		{name: assertEstimateGas, defaultOp: "GreaterOrEqual", read: readEstimateGas},
-		{name: assertLogs, defaultOp: "Equal", read: readLogs},
-		{name: assertGasPrice, defaultOp: "GreaterOrEqual", read: readGasPrice},
-		{name: assertRPCCall, defaultOp: "Equal", read: readRPCCall},
-		{name: assertDerive, defaultOp: "Equal", read: readDerive},
-	}
-}
-
-// readEstimateGas returns eth_estimateGas for a call as a decimal string, for
-// gas-cost bounds (e.g. a contract call exceeds the 21000 bare-transfer floor).
-func readEstimateGas(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
-	to, _ := spec["to"].(string)
-	if to == "" {
-		return nil, fmt.Errorf("testspec: estimateGas requires \"to\"")
-	}
-	data, _ := spec["data"].(string)
-	if data == "" {
-		return nil, fmt.Errorf("testspec: estimateGas requires \"data\"")
-	}
-	from, _ := spec["from"].(string)
-	g, err := c.EstimateGas(ctx, from, to, data)
-	if err != nil {
-		return nil, err
-	}
-	return strconv.FormatUint(g, 10), nil
-}
-
-// readBaseFee returns the latest block's baseFeePerGas as a decimal string, for
-// gas-policy bounds checks. It errors on a pre-EIP-1559 block (no base fee).
-func readBaseFee(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
-	b, err := c.BlockByNumber(ctx, "latest")
-	if err != nil {
-		return nil, err
-	}
-	if b.BaseFeePerGas == nil {
-		return nil, fmt.Errorf("testspec: baseFee: block has no baseFeePerGas")
-	}
-	return b.BaseFeePerGas.String(), nil
-}
-
 // sendTxAction submits a node-signed transaction and, unless wait:false, polls
 // for its receipt before returning.
 type sendTxAction struct{}
 
 // Do resolves the target node, sends the transaction, and waits for the
 // receipt. Args: on (selector, default primary), from, to, value, gas, wait
-// (default true), timeout, pollInterval.
+// (default true), timeout, pollInterval. A negative expectation short-circuits
+// the wait: expect:"reject" requires the submit itself to fail (see
+// checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
+// status 0x0 (see checkTxOutcome).
 func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
+	// A "key" arg switches to local signing: the tx is signed offline with that
+	// private key and submitted via eth_sendRawTransaction, rather than
+	// eth_sendTransaction against a node's keystore. This lets a spec send from a
+	// non-node, non-governance account — the only way to exercise member-only
+	// guards and blacklisted-sender paths, since every node coinbase is a member.
+	if keyHex, ok := ac.Args["key"].(string); ok && keyHex != "" {
+		return sendTxLocal(ctx, ac, keyHex)
+	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -329,6 +140,11 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if data, ok := ac.Args["data"].(string); ok {
 		args.Data = data
 	}
+	// An access list (even []) selects a typed transaction: [] + gasPrice is an
+	// EIP-2930 type 0x01. Passed through verbatim so the empty list survives.
+	if al, ok := ac.Args["accessList"]; ok {
+		args.AccessList = al
+	}
 	if v, ok := hexQuantity(ac.Args["value"]); ok {
 		args.Value = v
 	}
@@ -339,6 +155,12 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 		return err
 	}
 	hash, err := c.SendTransaction(ctx, args)
+	// An expect:"reject" step inverts the submit outcome: the node must refuse
+	// the transaction at submit time (no hash). It is checked before the receipt
+	// wait because a rejected tx never enters a block.
+	if wantReject(ac.Args) {
+		return checkSubmitRejected(hash, err, ac)
+	}
 	if err != nil {
 		return fmt.Errorf("testspec: sendTx: %w", err)
 	}
@@ -354,6 +176,130 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 	ac.Receipt = receipt
 	return checkTxOutcome(hash, receipt, ac.Args)
+}
+
+// sendTxLocal signs and submits a transaction locally with the given private
+// key (hex, optional 0x prefix), routing the outcome through the same
+// reject/wait/revert logic as the node-signed path. It uses the injected
+// account provider's Wallet: a "feePayerKey" arg makes it a 0x16 fee-delegated
+// transfer (the "key" account is the sender, feePayerKey covers the gas),
+// Execute when a "data" payload is present, else SendCoin for a value-only
+// transfer. The target node RPC comes from the usual "on" selector so the wallet
+// dials the same endpoint the node-signed path would.
+func sendTxLocal(ctx context.Context, ac *ActionCtx, keyHex string) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("testspec: sendTx key: no account provider")
+	}
+	priv, err := hex.DecodeString(strings.TrimPrefix(keyHex, "0x"))
+	if err != nil {
+		return fmt.Errorf("testspec: sendTx key: decode: %w", err)
+	}
+	rpcURL := selectorTarget(ac.Env, ac.Args)
+	w, err := ac.Deps.Accounts.OpenWallet(ctx, priv, rpcURL)
+	if err != nil {
+		return fmt.Errorf("testspec: sendTx: open wallet: %w", err)
+	}
+	to, _ := ac.Args["to"].(string)
+	if to == "" {
+		return fmt.Errorf("testspec: sendTx key requires \"to\"")
+	}
+	value, err := parseValueWei(ac.Args["value"])
+	if err != nil {
+		return err
+	}
+	feePayerKey, _ := ac.Args["feePayerKey"].(string)
+	data, _ := ac.Args["data"].(string)
+	var hash string
+	switch {
+	// A "feePayerKey" arg makes this a 0x16 fee-delegated transfer: the "key"
+	// account signs as the sender (moves value) while feePayerKey covers the gas.
+	// It is the only way to exercise a blacklisted-fee-payer rejection — the SDK's
+	// static value-transfer guard checks sender and recipient but not the fee
+	// payer, so the tx reaches the node, which is what does the rejecting.
+	case feePayerKey != "":
+		fp, ferr := hex.DecodeString(strings.TrimPrefix(feePayerKey, "0x"))
+		if ferr != nil {
+			return fmt.Errorf("testspec: sendTx feePayerKey: decode: %w", ferr)
+		}
+		if value == nil {
+			value = new(big.Int)
+		}
+		hash, err = w.SendFeeDelegated(ctx, fp, to, value)
+	case data != "" && data != "0x":
+		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+		if derr != nil {
+			return fmt.Errorf("testspec: sendTx: data: %w", derr)
+		}
+		hash, err = w.Execute(ctx, to, b, value)
+	default:
+		if value == nil {
+			value = new(big.Int)
+		}
+		hash, err = w.SendCoin(ctx, to, value)
+	}
+	if wantReject(ac.Args) {
+		return checkSubmitRejected(hash, err, ac)
+	}
+	if err != nil {
+		return fmt.Errorf("testspec: sendTx: %w", err)
+	}
+	ac.Hash = hash
+	if wait, ok := ac.Args["wait"].(bool); ok && !wait {
+		return nil
+	}
+	c, err := clientFor(ac.Deps, rpcURL)
+	if err != nil {
+		return err
+	}
+	receipt, err := waitReceipt(ctx, c, hash,
+		durationArg(ac.Args, "timeout", defaultTxTimeout),
+		durationArg(ac.Args, "pollInterval", defaultTxPollInterval))
+	if err != nil {
+		return err
+	}
+	ac.Receipt = receipt
+	return checkTxOutcome(hash, receipt, ac.Args)
+}
+
+// parseValueWei reads a tx "value" arg (decimal or 0x-hex wei) as a big.Int,
+// returning nil when absent. It reuses hexQuantity so the accepted forms match
+// the node-signed path exactly.
+func parseValueWei(v any) (*big.Int, error) {
+	q, ok := hexQuantity(v)
+	if !ok {
+		return nil, nil
+	}
+	bi, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
+	if !ok {
+		return nil, fmt.Errorf("testspec: sendTx: bad value %v", v)
+	}
+	return bi, nil
+}
+
+// newAccountAction generates a fresh key pair off-chain and binds it for later
+// steps: the address under "save" (referenceable as "$name") and the private
+// key hex under "saveKey". The key is an ephemeral, throwaway test key — a spec
+// funds it from a node account, then uses it as sendTx "key" to sign locally.
+type newAccountAction struct{}
+
+// Do generates a key pair and records the address as the step value plus the
+// private key under the "saveKey" binding. Args: save (address binding, the
+// usual step "save"), saveKey (private-key binding name, required).
+func (newAccountAction) Do(_ context.Context, ac *ActionCtx) error {
+	keyName, _ := ac.Args["saveKey"].(string)
+	if keyName == "" {
+		return fmt.Errorf("testspec: newAccount requires \"saveKey\"")
+	}
+	priv, addr, err := accounts.GenerateKey()
+	if err != nil {
+		return fmt.Errorf("testspec: newAccount: %w", err)
+	}
+	ac.Value = addr
+	if ac.Extra == nil {
+		ac.Extra = map[string]any{}
+	}
+	ac.Extra[keyName] = hex.EncodeToString(priv)
+	return nil
 }
 
 // checkTxOutcome enforces a tx step's declared expectation (F11 — a tx step is
@@ -387,6 +333,39 @@ func wantRevert(args map[string]any) bool {
 	return false
 }
 
+// wantReject reports whether a tx step declares that it expects a submit-time
+// rejection, via expectReject:true or expect:"reject". A rejection (the node
+// refuses the transaction before it is mined) is distinct from a revert (the
+// transaction is mined with status 0x0, handled by wantRevert).
+func wantReject(args map[string]any) bool {
+	if b, ok := args["expectReject"].(bool); ok {
+		return b
+	}
+	if s, ok := args["expect"].(string); ok {
+		return strings.EqualFold(s, "reject")
+	}
+	return false
+}
+
+// checkSubmitRejected enforces an expect:"reject" step: the node must refuse the
+// transaction at submit time (SendTransaction returns an error and no hash). An
+// accepted submit fails the step. An optional "reason" (case-insensitive
+// substring) tightens the check to a specific rejection message, so a spec can
+// require e.g. an "insufficient funds" rejection rather than any error.
+func checkSubmitRejected(hash string, submitErr error, ac *ActionCtx) error {
+	if submitErr == nil {
+		return fmt.Errorf("testspec: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
+	}
+	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
+		if !strings.Contains(strings.ToLower(submitErr.Error()), strings.ToLower(reason)) {
+			return fmt.Errorf("testspec: sendTx was rejected but not for %q: %v", reason, submitErr)
+		}
+	}
+	// Bind the rejection message so a "save" can surface it to a later assertion.
+	ac.Value = submitErr.Error()
+	return nil
+}
+
 // statusReverted reports whether a receipt's status is an explicit revert (0x0).
 // A missing status (legacy pre-Byzantium receipts) is treated as success.
 func statusReverted(receipt map[string]any) bool {
@@ -416,154 +395,6 @@ func waitReceipt(ctx context.Context, c *rpc.Client, hash string, timeout, inter
 		case <-t.C:
 		}
 	}
-}
-
-// reader reads one value from a node for an assertion. The value is returned in
-// a form the assert primitives compare (decimal string or 0x-hex).
-type reader func(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error)
-
-// rpcAssertion compares one RPC-read value to the spec's expected value.
-type rpcAssertion struct {
-	name      string
-	defaultOp string
-	read      reader
-}
-
-// Check reads the value from the target node and compares it to "expected"
-// using the default comparator (or the spec's "compare" override).
-func (a rpcAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
-	res := session.AssertResult{Assert: a.name, Provenance: ac.Spec, Pass: true}
-	op := a.defaultOp
-	if o, ok := ac.Spec["compare"].(string); ok && o != "" {
-		op = o
-	}
-	fn, ok := assert.Lookup(op)
-	if !ok {
-		return res, fmt.Errorf("testspec: unknown comparator %q", op)
-	}
-	expected := ac.Spec["expected"]
-	res.Expected = expected
-
-	targets := assertTargets(ac)
-	if len(targets) == 0 {
-		err := fmt.Errorf("testspec: no target node RPC URL")
-		res.Pass, res.Actual = false, err.Error()
-		return res, err
-	}
-
-	// Read and compare on every target node ("on" is one; "onEach" is many). All
-	// must satisfy the comparator; a failure names the node.
-	actuals := make(map[string]any, len(targets))
-	for _, tgt := range targets {
-		c, err := clientFor(ac.Deps, tgt.url)
-		if err != nil {
-			res.Pass, res.Actual = false, err.Error()
-			return res, err
-		}
-		actual, err := a.read(ctx, c, ac.Spec)
-		if err != nil {
-			res.Pass, res.Actual = false, err.Error()
-			return res, err
-		}
-		actuals[tgt.name] = actual
-		if pass, detail := fn(actual, expected); !pass {
-			res.Pass = false
-			if detail == "" {
-				detail = "mismatch"
-			}
-			res.Source = tgt.name + ": " + detail
-		}
-	}
-	if len(targets) == 1 {
-		res.Actual = actuals[targets[0].name] // scalar for the common single-node case
-	} else {
-		res.Actual = actuals
-	}
-	return res, nil
-}
-
-func readChainID(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
-	v, err := c.ChainID(ctx)
-	return strconv.FormatUint(v, 10), err
-}
-
-func readBlockNumber(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
-	v, err := c.BlockNumber(ctx)
-	return strconv.FormatUint(v, 10), err
-}
-
-func readPeerCount(ctx context.Context, c *rpc.Client, _ map[string]any) (any, error) {
-	v, err := c.PeerCount(ctx)
-	return strconv.FormatUint(v, 10), err
-}
-
-func readBalanceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
-	addr, ok := spec["address"].(string)
-	if !ok || addr == "" {
-		return nil, fmt.Errorf("testspec: balanceAt requires \"address\"")
-	}
-	v, err := c.BalanceAt(ctx, addr)
-	if err != nil {
-		return nil, err
-	}
-	return bigString(v), nil
-}
-
-func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
-	addr, ok := spec["address"].(string)
-	if !ok || addr == "" {
-		return nil, fmt.Errorf("testspec: codeAt requires \"address\"")
-	}
-	return c.CodeAt(ctx, addr)
-}
-
-func readNonceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
-	addr, ok := spec["address"].(string)
-	if !ok || addr == "" {
-		return nil, fmt.Errorf("testspec: nonceAt requires \"address\"")
-	}
-	v, err := c.NonceAt(ctx, addr)
-	if err != nil {
-		return nil, err
-	}
-	return strconv.FormatUint(v, 10), nil
-}
-
-// readCall runs a read-only contract call (eth_call) and returns the 0x-hex
-// result, for asserting on-chain state (e.g. a governance getter).
-func readCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
-	to, ok := spec["to"].(string)
-	if !ok || to == "" {
-		return nil, fmt.Errorf("testspec: call requires \"to\"")
-	}
-	data, ok := spec["data"].(string)
-	if !ok || data == "" {
-		return nil, fmt.Errorf("testspec: call requires \"data\"")
-	}
-	return c.EthCall(ctx, to, data)
-}
-
-// readTxStatus returns a transaction receipt's status ("0x1" success, "0x0"
-// reverted), for asserting positive and negative (expectRevert) tx outcomes.
-func readTxStatus(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
-	hash, ok := spec["hash"].(string)
-	if !ok || hash == "" {
-		return nil, fmt.Errorf("testspec: txStatus requires \"hash\"")
-	}
-	raw, err := c.TxReceipt(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-	if raw == nil {
-		return nil, fmt.Errorf("testspec: txStatus: no receipt for %s", hash)
-	}
-	var r struct {
-		Status string `json:"status"`
-	}
-	if err := json.Unmarshal(raw, &r); err != nil {
-		return nil, fmt.Errorf("testspec: txStatus: parse receipt: %w", err)
-	}
-	return r.Status, nil
 }
 
 // clientFor returns an RPC client for url, guarding a missing injected factory.

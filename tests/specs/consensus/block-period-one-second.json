@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1",
+  "id": "block-period-one-second",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$n", false], "select": "timestamp", "save": "t1" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$n", false], "select": "parentHash", "save": "ph1" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByHash",
+                "params": ["$ph1", false], "select": "timestamp", "save": "t0" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByHash",
+                "params": ["$ph1", false], "select": "parentHash", "save": "ph0" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByHash",
+                "params": ["$ph0", false], "select": "timestamp", "save": "tm1" } }
+  ],
+  "assertions": [
+    { "assert": "derive", "op": "diff", "of": ["$t1", "$t0"], "compare": "Equal", "expected": "1" },
+    { "assert": "derive", "op": "diff", "of": ["$t0", "$tm1"], "compare": "Equal", "expected": "1" }
+  ]
+}

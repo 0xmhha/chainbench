@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "id": "govminter-v2-code",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "codeAt", "address": "0x0000000000000000000000000000000000001003",
+      "compare": "NotEqual", "expected": "0x" }
+  ]
+}

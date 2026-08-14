@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "id": "boho-chain-config-active",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "blockNumber", "compare": "Greater", "expected": "0" },
+    { "assert": "chainId", "compare": "Greater", "expected": "0" },
+    { "assert": "baseFee", "compare": "Greater", "expected": "0" }
+  ]
+}

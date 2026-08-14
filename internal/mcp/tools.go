@@ -18,11 +18,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/logs"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // Default returns a Server with the built-in chainbench tools registered. Chain
@@ -370,7 +370,7 @@ func setupPlanTool() Tool {
 				"nodes.validators": strconv.Itoa(argInt(args, "validators", 4)),
 				"nodes.endpoints":  strconv.Itoa(argInt(args, "endpoints", 1)),
 			}
-			plan, err := setup.BuildPlan(config.Resolve(nil, override), p, argString(args, "data_dir", "data"))
+			plan, err := engine.BuildLocalPlan(config.Resolve(nil, override), p, argString(args, "data_dir", "data"), nil)
 			if err != nil {
 				return "", err
 			}

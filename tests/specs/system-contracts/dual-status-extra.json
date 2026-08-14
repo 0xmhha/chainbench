@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1",
+  "id": "dual-status-extra",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "account-extra"],
+  "steps": [
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0xfe9fbb80", "of": ["0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"], "save": "isAuthData" } },
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0xfe575a87", "of": ["0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"], "save": "isBlData" } }
+  ],
+  "assertions": [
+    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$isAuthData", "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" },
+    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$isBlData", "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+  ]
+}

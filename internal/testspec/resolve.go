@@ -45,6 +45,10 @@ func Unresolved(s Spec, reg Registry) []string {
 		if save := saveName(args); save != "" {
 			bound[save] = true
 		}
+		// newAccount binds a second name (the generated private key) via "saveKey".
+		if sk, _ := args["saveKey"].(string); sk != "" {
+			bound[sk] = true
+		}
 	}
 
 	for _, a := range s.PreActions {

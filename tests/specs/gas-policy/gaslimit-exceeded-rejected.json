@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1",
+  "id": "gaslimit-exceeded-rejected",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "go-stablenet" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$n", false], "select": "baseFeePerGas", "save": "base" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$n"], "select": "gasTip", "save": "tip" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$base", "$tip"], "save": "feecap" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$n", false], "select": "gasLimit", "save": "gl" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$gl", "1"], "save": "over" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE0E",
+                  "value": "1", "gas": "$over",
+                  "maxFeePerGas": "$feecap", "maxPriorityFeePerGas": "$tip",
+                  "expect": "reject" } }
+  ],
+  "assertions": [
+    { "assert": "blockNumber", "compare": "GreaterOrEqual", "expected": "0x1" }
+  ]
+}

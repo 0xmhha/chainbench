@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1",
+  "id": "authorized-tx-executed-event",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$acct",
+                  "value": "10000000000000000000", "gas": "21000",
+                  "save": "fundHash" } },
+
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x93a8bb99", "of": ["$acct"], "save": "authData" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x0000000000000000000000000000000000001004",
+                  "gas": "0x16e360",
+                  "data": "$authData",
+                  "save": "authHash" } },
+    { "read": { "source": "receiptLog", "hash": "$authHash",
+                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+                "topic": 1, "save": "authPid" } },
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$authPid"], "save": "authApprove" } },
+    { "sendTx": { "on": "en2",
+                  "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+                  "to": "0x0000000000000000000000000000000000001004",
+                  "gas": "0x16e360",
+                  "data": "$authApprove",
+                  "save": "authApHash" } },
+
+    { "sendTx": { "on": "en1",
+                  "key": "$acctKey",
+                  "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+                  "value": "1",
+                  "save": "txHash" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$authApHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$txHash", "expected": "0x1" },
+    { "assert": "receiptLog", "hash": "$txHash",
+      "topic0": "0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3ed4607b94d3a1e6a3e0373",
+      "topic": 0,
+      "expected": "0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3ed4607b94d3a1e6a3e0373" }
+  ]
+}

@@ -136,6 +136,61 @@ func TestSendTxAction_SendsAndWaits(t *testing.T) {
 	}
 }
 
+func TestSendTxAction_PassesAccessList(t *testing.T) {
+	// The empty access list [] is the case a []T-with-omitempty field would drop.
+	// Capture the outgoing eth_sendTransaction arg and assert it survived as [].
+	var mu sync.Mutex
+	var gotParams []json.RawMessage
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var req struct {
+			ID     int               `json:"id"`
+			Method string            `json:"method"`
+			Params []json.RawMessage `json:"params"`
+		}
+		_ = json.Unmarshal(body, &req)
+		if req.Method == "eth_sendTransaction" {
+			mu.Lock()
+			gotParams = req.Params
+			mu.Unlock()
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0xhash"})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID,
+			"result": map[string]any{"status": "0x1", "blockNumber": "0x2"}})
+	}))
+	t.Cleanup(srv.Close)
+
+	d := deps()
+	act, _ := d.Actions.Action(actionSendTx)
+	err := act.Do(context.Background(), &ActionCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Args: map[string]any{
+			"from": "0xabc", "to": "0xdef", "value": "1", "gasPrice": "1000000000",
+			"accessList": []any{}, "pollInterval": "5ms",
+		},
+	})
+	if err != nil {
+		t.Fatalf("sendTx: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(gotParams) == 0 {
+		t.Fatal("no eth_sendTransaction params captured")
+	}
+	var arg map[string]any
+	if err := json.Unmarshal(gotParams[0], &arg); err != nil {
+		t.Fatalf("unmarshal tx arg: %v", err)
+	}
+	al, ok := arg["accessList"]
+	if !ok {
+		t.Fatalf("accessList was dropped from the tx arg: %v", arg)
+	}
+	if _, ok := al.([]any); !ok {
+		t.Fatalf("accessList should serialize as an array, got %T", al)
+	}
+}
+
 func TestSendTxAction_RequiresFrom(t *testing.T) {
 	srv := mockRPC(t, map[string]any{})
 	d := deps()
@@ -252,6 +307,46 @@ func TestBuiltinAssertion_TxStatus(t *testing.T) {
 	})
 }
 
+func TestReadReceiptLog(t *testing.T) {
+	// A receipt with two logs: a ProposalCreated (topic0=created, topic1=id 1)
+	// and an unrelated one, so filtering by topic0/address is exercised.
+	created := "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+	other := "0x82b8cb75fd367be519fd5f57abcb2dbb773381c00082e94059c4713c4dfdfc05"
+	id1 := "0x0000000000000000000000000000000000000000000000000000000000000001"
+	receipt := map[string]any{"status": "0x1", "logs": []any{
+		map[string]any{"address": "0x0000000000000000000000000000000000001003",
+			"topics": []any{created, id1, "0xdeadbeef"}, "data": "0xabcd"},
+		map[string]any{"address": "0x0000000000000000000000000000000000001003",
+			"topics": []any{other, id1}, "data": "0x00"},
+	}}
+	srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": receipt})
+	c := rpc.Dial(srv.URL)
+
+	// Default: log 0, topic 1 — the proposalId.
+	got, err := readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh"})
+	if err != nil || got != id1 {
+		t.Fatalf("default topic1: got %v err %v", got, err)
+	}
+	// topic0 filter selects the ProposalCreated log regardless of order.
+	got, err = readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "topic0": created, "topic": float64(1)})
+	if err != nil || got != id1 {
+		t.Fatalf("topic0 filter: got %v err %v", got, err)
+	}
+	// select:"data" returns the log data.
+	got, err = readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "select": "data"})
+	if err != nil || got != "0xabcd" {
+		t.Fatalf("select data: got %v err %v", got, err)
+	}
+	// A topic index past the end is an error, not a panic.
+	if _, err := readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "topic0": other, "topic": float64(5)}); err == nil {
+		t.Fatal("out-of-range topic must fail")
+	}
+	// Missing hash is an error.
+	if _, err := readReceiptLog(context.Background(), c, map[string]any{}); err == nil {
+		t.Fatal("missing hash must fail")
+	}
+}
+
 func TestWaitBlockAction(t *testing.T) {
 	d := deps()
 
@@ -278,6 +373,52 @@ func TestWaitBlockAction(t *testing.T) {
 		act, _ := d.Actions.Action(actionWaitBlock)
 		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
 			t.Fatal("expected error for missing target")
+		}
+	})
+}
+
+func TestWaitForAction(t *testing.T) {
+	d := deps()
+
+	t.Run("condition met", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"}) // 16
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		ac := &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+			"source": assertBlockNumber, "compare": "GreaterOrEqual", "expected": float64(5), "pollInterval": "5ms"}}
+		if err := act.Do(context.Background(), ac); err != nil {
+			t.Fatalf("waitFor: %v", err)
+		}
+		if ac.Value != "16" {
+			t.Fatalf("bound value = %v, want the satisfying read \"16\"", ac.Value)
+		}
+	})
+	t.Run("timeout when unmet", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x1"}) // 1
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+			"source": assertBlockNumber, "compare": "GreaterOrEqual", "expected": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
+		if err == nil {
+			t.Fatal("expected timeout error for a condition that never holds")
+		}
+	})
+	t.Run("requires source", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		if err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+			t.Fatal("expected error for missing source")
+		}
+	})
+	t.Run("unknown comparator", func(t *testing.T) {
+		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionWaitFor)
+		err := act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+			"source": assertBlockNumber, "compare": "Nonsense", "expected": float64(1)}})
+		if err == nil {
+			t.Fatal("expected error for an unknown comparator")
 		}
 	})
 }
@@ -325,6 +466,89 @@ func TestSendTxAction_ExpectRevert(t *testing.T) {
 	// expect:"revert" alias.
 	if err := run(mk("0x0"), map[string]any{"from": "0xa", "expect": "revert", "pollInterval": "5ms"}); err != nil {
 		t.Fatalf("expect:revert alias should pass on revert: %v", err)
+	}
+}
+
+// mockRPCReject serves a JSON-RPC error for eth_sendTransaction, simulating a
+// node that refuses the transaction at submit time (no hash returned).
+func mockRPCReject(t *testing.T, message string) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.Unmarshal(body, &req)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jsonrpc": "2.0", "id": req.ID,
+			"error": map[string]any{"code": -32000, "message": message},
+		})
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestSendTxAction_ExpectReject(t *testing.T) {
+	d := deps()
+	run := func(srv *httptest.Server, args map[string]any) error {
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionSendTx)
+		return act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: args})
+	}
+
+	// expect:"reject" + submit error => step passes.
+	rej := mockRPCReject(t, "insufficient funds for gas * price + value")
+	if err := run(rej, map[string]any{"from": "0xa", "expect": "reject"}); err != nil {
+		t.Fatalf("expect:reject on a rejected submit should pass: %v", err)
+	}
+
+	// expectReject:true alias, same rejection => passes.
+	if err := run(rej, map[string]any{"from": "0xa", "expectReject": true}); err != nil {
+		t.Fatalf("expectReject alias should pass on a rejected submit: %v", err)
+	}
+
+	// expect:"reject" but the node accepts the tx => step fails.
+	ok := mockRPC(t, map[string]any{"eth_sendTransaction": "0xhash"})
+	if err := run(ok, map[string]any{"from": "0xa", "expect": "reject", "wait": false}); err == nil {
+		t.Fatal("expect:reject must fail the step when the submit is accepted")
+	}
+
+	// reason substring matches the rejection message => passes.
+	if err := run(rej, map[string]any{"from": "0xa", "expect": "reject", "reason": "insufficient funds"}); err != nil {
+		t.Fatalf("matching reason should pass: %v", err)
+	}
+
+	// reason substring does not match => step fails (rejected, wrong reason).
+	if err := run(rej, map[string]any{"from": "0xa", "expect": "reject", "reason": "nonce too low"}); err == nil {
+		t.Fatal("a non-matching reason must fail the step")
+	}
+}
+
+func TestNewAccountAction_BindsAddressAndKey(t *testing.T) {
+	d := deps()
+	act, ok := d.Actions.Action(actionNewAccount)
+	if !ok {
+		t.Fatal("newAccount not registered")
+	}
+	ac := &ActionCtx{Args: map[string]any{"save": "acct", "saveKey": "acctKey"}}
+	if err := act.Do(context.Background(), ac); err != nil {
+		t.Fatalf("newAccount: %v", err)
+	}
+	addr, _ := ac.Value.(string)
+	if !strings.HasPrefix(addr, "0x") || len(addr) != 42 {
+		t.Fatalf("address = %q, want 0x + 40 hex", addr)
+	}
+	key, _ := ac.Extra["acctKey"].(string)
+	if len(key) != 64 {
+		t.Fatalf("private key hex = %q (len %d), want 64", key, len(key))
+	}
+}
+
+func TestNewAccountAction_RequiresSaveKey(t *testing.T) {
+	d := deps()
+	act, _ := d.Actions.Action(actionNewAccount)
+	if err := act.Do(context.Background(), &ActionCtx{Args: map[string]any{"save": "acct"}}); err == nil {
+		t.Fatal("newAccount without saveKey must error")
 	}
 }
 

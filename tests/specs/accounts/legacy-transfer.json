@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1",
+  "id": "legacy-transfer",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
+                "params": ["$n", false], "select": "baseFeePerGas", "save": "base" } },
+    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
+                "params": ["$n"], "select": "gasTip", "save": "tip" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$base", "$base", "$tip"], "save": "gp" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBalance",
+                "params": ["0x00000000000000000000000000000000C0FFEE03", "latest"], "save": "before" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE03",
+                  "value": "1000000000000000000", "gas": "21000",
+                  "gasPrice": "$gp", "save": "hash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBalance",
+                "params": ["0x00000000000000000000000000000000C0FFEE03", "latest"], "save": "after" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
+    { "assert": "rpcCall", "method": "eth_getTransactionByHash", "params": ["$hash"],
+      "select": "type", "compare": "Equal", "expected": "0x0" },
+    { "assert": "derive", "op": "diff", "of": ["$after", "$before"],
+      "compare": "Equal", "expected": "1000000000000000000" }
+  ]
+}

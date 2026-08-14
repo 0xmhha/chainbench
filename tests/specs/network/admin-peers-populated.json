@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "id": "admin-peers-populated",
+  "applicableChains": "stablenet,wbft,wemix",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "assertions": [
+    { "assert": "rpcCall", "method": "admin_peers",
+      "select": "#", "compare": "GreaterOrEqual", "expected": "1" },
+    { "assert": "rpcCall", "method": "admin_peers",
+      "select": "0.id", "compare": "NotEqual", "expected": "" }
+  ]
+}

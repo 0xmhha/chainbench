@@ -14,10 +14,10 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // saveTopology copies the resolved topology file into the data root as
@@ -134,7 +134,7 @@ func newSetupCmd() *cobra.Command {
 			if !filepath.IsAbs(root) {
 				root = filepath.Clean(root)
 			}
-			plan, err := setup.BuildPlanWithTopology(cfg, p, root, topo)
+			plan, err := engine.BuildLocalPlan(cfg, p, root, topo)
 			if err != nil {
 				return err
 			}
@@ -165,9 +165,10 @@ func newSetupCmd() *cobra.Command {
 			}
 
 			if launch {
-				// A remote host routes launch through the SSH RemoteDriver; nil
-				// keeps the default local driver.
-				remoteDrv, err := remoteDriver(remoteHost, remoteUser, remotePort)
+				// A remote host routes launch through the SSH RemoteDriver + a
+				// matching remote file sink; nil keeps the default local driver and
+				// local filesystem.
+				remoteDrv, sink, err := remoteDriver(remoteHost, remoteUser, remotePort)
 				if err != nil {
 					return err
 				}
@@ -181,12 +182,17 @@ func newSetupCmd() *cobra.Command {
 				} else if bin == "" {
 					return fmt.Errorf("--binary <remote path> is required with --remote-host")
 				}
-				bus, closeBus := obsBus()
-				defer closeBus()
-				ns, specs, err := setup.LaunchWithSpecs(cmd.Context(), setup.LaunchOptions{
-					Plugin: p, Config: cfg, DataRoot: root, Binary: bin, KeysDir: keysDir, Bus: bus,
-					Driver: remoteDrv,
-				})
+				// Absolute keys dir so the launch argv's identity paths resolve
+				// independently of the node process cwd (a remote launch ships them
+				// from here to a keys/ dir under the remote data root).
+				keysAbs, err := filepath.Abs(keysDir)
+				if err != nil {
+					return err
+				}
+				ns, specs, err := engine.LocalSetup{
+					Plugin: p, Config: cfg, KeysDir: keysAbs, Binary: bin,
+					Driver: remoteDrv, Sink: sink,
+				}.Launch(cmd.Context(), plan)
 				if err != nil {
 					return err
 				}
@@ -207,7 +213,11 @@ func newSetupCmd() *cobra.Command {
 			}
 
 			if provision {
-				if err := setup.Provision(cmd.Context(), plan, p, cfg, keysDir); err != nil {
+				keysAbs, err := filepath.Abs(keysDir)
+				if err != nil {
+					return err
+				}
+				if _, err := (engine.LocalSetup{Plugin: p, Config: cfg, KeysDir: keysAbs}).Provision(cmd.Context(), plan); err != nil {
 					return err
 				}
 				if err := saveTopology(root, topologyPath); err != nil {

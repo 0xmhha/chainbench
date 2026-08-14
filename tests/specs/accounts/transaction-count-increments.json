@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1",
+  "id": "transaction-count-increments",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionCount",
+                "params": ["0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "latest"], "save": "before" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE04",
+                  "value": "1", "gas": "21000", "save": "hash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionCount",
+                "params": ["0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "latest"], "save": "after" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
+    { "assert": "derive", "op": "diff", "of": ["$after", "$before"],
+      "compare": "Equal", "expected": "1" }
+  ]
+}

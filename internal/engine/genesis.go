@@ -32,25 +32,34 @@ type PresetGenesisSource struct {
 	// ChainID, when non-zero, overrides the manifest chain id in the built
 	// genesis (the custom-chain-id seam; the DSL env layer sets it).
 	ChainID int64
+	// ConfigOverrides sets keys in the genesis `config` object after the build —
+	// the delayed-fork seam (e.g. {"bohoBlock":"10"} from
+	// `setup --set genesis.overrides.*`). Empty applies none.
+	ConfigOverrides map[string]string
+	// Overlay is a JSON genesis fragment deep-merged into the built genesis
+	// (extra alloc or system-contract params, from `setup --genesis-overlay`).
+	// Empty applies none.
+	Overlay []byte
 }
 
 // Genesis loads the preset, takes the first `validators` entries, and delegates
-// to the chain's consensus family to build the genesis. ctx is accepted for
-// future remote preset sources; the local metadata read does not use it.
+// to the chain's consensus family to build the genesis, applying any launch
+// config overrides and overlay. ctx is accepted for future remote preset
+// sources; the local metadata read does not use it.
 func (s PresetGenesisSource) Genesis(_ context.Context, plugin registry.ChainPlugin, validators int) ([]byte, error) {
 	preset, err := keys.LoadPreset(s.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("engine: genesis source: %w", err)
 	}
 	sub := preset.Take(validators)
-	gen, err := genesis.Build(plugin, genesis.Inputs{
+	gen, err := genesis.BuildNetwork(plugin, genesis.Inputs{
 		Validators: sub.Validators,
 		BLSKeys:    sub.BLSKeys,
 		ExtraData:  sub.ExtraData,
 		Members:    sub.Members,
 		Alloc:      sub.Alloc,
 		ChainID:    s.ChainID,
-	})
+	}, genesis.NetworkOptions{ConfigOverrides: s.ConfigOverrides, Overlay: s.Overlay})
 	if err != nil {
 		return nil, fmt.Errorf("engine: genesis source: %w", err)
 	}

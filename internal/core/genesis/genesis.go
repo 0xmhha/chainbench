@@ -58,3 +58,48 @@ func Build(p registry.ChainPlugin, in Inputs) ([]byte, error) {
 		Coinbase:   in.Coinbase,
 	})
 }
+
+// NetworkOptions are the optional post-Build genesis transforms a network launch
+// applies: config overrides (the delayed-fork seam, e.g. {"bohoBlock":"10"}) and
+// a deep-merge overlay (extra alloc or system-contract fragments). A zero value
+// applies neither.
+type NetworkOptions struct {
+	// ConfigOverrides sets keys in the genesis `config` object. Empty applies
+	// none.
+	ConfigOverrides map[string]string
+	// Overlay is a JSON fragment deep-merged into the built genesis. Empty
+	// applies none.
+	Overlay []byte
+}
+
+// BuildNetwork builds a chain's genesis and applies a launch's optional config
+// overrides and overlay, revalidating fork ordering after each transform so a
+// bad delayed-fork or overlay fails at build time rather than at node boot. Fork
+// ordering is checked only after a transform — a plain build is passed through
+// untouched. It is the single genesis composition the setup path and the engine
+// launch path share.
+func BuildNetwork(p registry.ChainPlugin, in Inputs, opts NetworkOptions) ([]byte, error) {
+	gen, err := Build(p, in)
+	if err != nil {
+		return nil, err
+	}
+	if len(opts.ConfigOverrides) > 0 {
+		gen, err = ApplyConfigOverrides(gen, opts.ConfigOverrides)
+		if err != nil {
+			return nil, err
+		}
+		if err := ValidateForks(gen); err != nil {
+			return nil, fmt.Errorf("genesis: overrides: %w", err)
+		}
+	}
+	if len(opts.Overlay) > 0 {
+		gen, err = MergeOverride(gen, opts.Overlay)
+		if err != nil {
+			return nil, err
+		}
+		if err := ValidateForks(gen); err != nil {
+			return nil, fmt.Errorf("genesis: overlay: %w", err)
+		}
+	}
+	return gen, nil
+}

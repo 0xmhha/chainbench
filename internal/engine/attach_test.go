@@ -153,3 +153,43 @@ func TestAttachEngine_SkipsUnmetCapability(t *testing.T) {
 		t.Fatalf("ws-requiring spec should skip on an rpc-only attach: %+v", doc.Summary)
 	}
 }
+
+// TestAttachEngine_AdvertisesConfiguredCaps proves the operator-asserted Caps
+// let an overlay-gated spec run: a net launched with the account-extra overlay
+// carries a capability attach cannot detect over RPC, so naming it in Caps must
+// make the gated spec run (its assertion executes and passes) rather than skip.
+func TestAttachEngine_AdvertisesConfiguredCaps(t *testing.T) {
+	srv := mockRPC(t, map[string]any{"eth_chainId": "0x1"})
+	eng, err := engine.NewAttachEngine(engine.AttachConfig{
+		Chain:        "stablenet",
+		RPCURLs:      []string{srv.URL},
+		Caps:         []string{"account-extra"},
+		ArtifactRoot: t.TempDir(),
+		Clock:        func() time.Time { return time.Unix(0, 0).UTC() },
+	})
+	if err != nil {
+		t.Fatalf("NewAttachEngine: %v", err)
+	}
+	spec, _ := json.Marshal(map[string]any{
+		"schemaVersion": "1",
+		"id":            "needs-account-extra",
+		"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
+		"requires":      []string{"rpc", "account-extra"},
+		"assertions":    []map[string]any{{"assert": "chainId", "expected": 1}},
+	})
+	root, err := eng.Run(context.Background(), [][]byte{spec})
+	if err != nil {
+		t.Fatalf("Engine.Run: %v", err)
+	}
+	data, _ := os.ReadFile(filepath.Join(root, "session.json"))
+	var doc struct {
+		Summary struct {
+			Pass int `json:"pass"`
+			Skip int `json:"skip"`
+		} `json:"summary"`
+	}
+	_ = json.Unmarshal(data, &doc)
+	if doc.Summary.Pass != 1 || doc.Summary.Skip != 0 {
+		t.Fatalf("account-extra spec should run when the cap is advertised: %+v", doc.Summary)
+	}
+}

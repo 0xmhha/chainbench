@@ -3,14 +3,15 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // startTool provisions and launches a local chain network, then persists its
@@ -52,13 +53,18 @@ func startTool() Tool {
 			if v := argInt(args, "endpoints", -1); v >= 0 {
 				override["nodes.endpoints"] = strconv.Itoa(v)
 			}
-			ns, err := setup.Launch(ctx, setup.LaunchOptions{
-				Plugin:   p,
-				Config:   config.Resolve(nil, override),
-				DataRoot: dataDir,
-				Binary:   binary,
-				KeysDir:  argString(args, "keys_dir", "keys/preset"),
-			})
+			cfg := config.Resolve(nil, override)
+			keysAbs, err := filepath.Abs(argString(args, "keys_dir", "keys/preset"))
+			if err != nil {
+				return "", err
+			}
+			plan, err := engine.BuildLocalPlan(cfg, p, dataDir, nil)
+			if err != nil {
+				return "", err
+			}
+			ns, _, err := engine.LocalSetup{
+				Plugin: p, Config: cfg, KeysDir: keysAbs, Binary: binary,
+			}.Launch(ctx, plan)
 			if err != nil {
 				return "", err
 			}
@@ -97,7 +103,7 @@ func stopTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			stopped, errs := setup.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
+			stopped, errs := engine.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
 			var b strings.Builder
 			fmt.Fprintf(&b, "stopped %d node(s)", stopped)
 			for _, e := range errs {

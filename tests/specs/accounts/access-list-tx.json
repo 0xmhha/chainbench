@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1",
+  "id": "access-list-tx",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "baseFee", "save": "base" } },
+    { "read": { "source": "derive", "op": "sum", "of": ["$base", "$base"], "save": "gp" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x00000000000000000000000000000000C0FFEE0D",
+                  "value": "1", "gas": "21000",
+                  "gasPrice": "$gp", "accessList": [], "save": "hash" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
+    { "assert": "rpcCall", "method": "eth_getTransactionByHash", "params": ["$hash"],
+      "select": "type", "compare": "Equal", "expected": "0x1" }
+  ]
+}
