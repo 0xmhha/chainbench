@@ -8,7 +8,7 @@
     { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "h0" } },
     { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$h0"], "select": "gasTip", "save": "orig" } },
 
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0xeeaf6816", "of": ["30000000000000"], "save": "propData" } },
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0xeeaf6816", "of": ["25000000000000"], "save": "propData" } },
     { "sendTx": { "on": "en1",
                   "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
                   "to": "0x0000000000000000000000000000000000001001",
@@ -24,7 +24,7 @@
                   "gas": "0x16e360",
                   "data": "$approveData", "save": "apHash" } },
     { "waitFor": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["@latest"],
-                   "select": "gasTip", "compare": "Equal", "expected": "30000000000000",
+                   "select": "gasTip", "compare": "Equal", "expected": "25000000000000",
                    "timeout": "60s", "pollInterval": "1s" } },
 
     { "read": { "source": "derive", "op": "abiCall", "selector": "0xeeaf6816", "of": ["$orig"], "save": "restoreData" } },
