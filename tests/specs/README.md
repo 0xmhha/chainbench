@@ -28,10 +28,10 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
 | `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
 | `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분). 잔여 1건 `admin-peers-populated` 갭(아래) |
-| `accounts` | 35 | **15** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 20건은 문법 갭(아래) |
+| `accounts` | 35 | **16** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 19건은 문법 갭(아래) |
 | `gas-policy` | 17 | **12** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 3건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 5건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | **9** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata. read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 37건 갭(아래) |
+| `system-contracts` | 46 | **11** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 35건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -91,6 +91,34 @@ accounts   (+3 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
 examples   (fee-boundary) → 수정 후 pass. 아래 결함 표 참조.
 ```
 
+### 라이브 검증 근거 — 이벤트 로그 배치 (2026-08-14)
+
+`logs` 어세션이 이미 topic 필터(와일드카드 위치 포함)·`select:topicN`·`index` 를 지원한다는 사실을
+재확인(아래 "재분류" 참조). eth_getLogs 로 이벤트를 검증하는 케이스가 신규 문법 없이 표현 가능했다.
+추가로 sendTx 가 **컨트랙트 생성**(`to` 생략)을 지원함을 라이브로 확인했다.
+
+```
+system-contracts (+2 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=2 fail=0
+                     token-transfer-emits-event: sendTx(0x1000, transfer(recip,1) calldata)→
+                     logs(address=0x1000, topics=[Transfer,·,recipTopic], select count≥1 & data==1).
+                     token-approve-sets-allowance: sendTx(approve(spender,100))→
+                     logs(Approval topic 매칭) + allowance(owner,spender) `call`==100.
+accounts   (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=1 fail=0
+                     contract-event-emitted: sendTx(data=LOG1 컨트랙트 initcode, to 생략=생성)→
+                     receipt.contractAddress 읽어 $addr→sendTx(to=$addr) execute→
+                     logs(address=$addr, select topic0==0x1111..1111). sendTx 컨트랙트 생성 라이브 확인.
+```
+
+### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
+
+이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
+"`select` 가 배열/topic 인덱스를 못 짚는다"는 갭으로 분류했으나, **이는 혼동이었다**. `logs` 어세션(`internal/testspec/logs.go`)은
+실제로 (1) `topics` 필터에 위치별 매칭(문자열=정확 매칭, null/비문자열=와일드카드)을, (2) `select:topicN`(topic0..N)
+으로 특정 topic 추출을, (3) `index` 로 매칭 로그 중 N번째 선택을 **이미 지원**한다. 따라서 위 3건은 **신규 문법 없이**
+표현 가능했고 라이브 통과했다. (진짜 갭인 "`select` 배열 인덱싱"은 `resolve.go` 의 JSON-path 배열 인덱싱 — 별개 사안이며
+`admin-peers-populated`·`prev-seals-quorum` 등에 여전히 적용된다.) 남은 `token-transfer-from-moves-balance` 는
+로그 갭이 아니라 **2-계정 서명** 갭이다.
+
 ## 이관하면서 드러난 레거시 케이스의 결함
 
 포팅은 케이스를 다시 읽게 만들고, 그 과정에서 원본의 오류가 드러났다.
@@ -129,9 +157,9 @@ tx-flow 6 + 제출거부 3(feecap-below-min·legacy-gasprice-below-min·gaslimit
 | `revert-tx-status-zero` · `out-of-gas-consumes-all` | 되돌아가는/가스소진 **컨트랙트 자산**과 gasUsed==gasLimit 판정이 필요 | 컨트랙트 바이트코드 자산 + receipt `gasUsed`/`gasLimit` read (부분 표현 가능, 자산 확보 선행) |
 | `authorized-account-gastip-free` | **거버넌스 쿼럼 흐름**(proposeAddAuthorizedAccount → 승인) 을 먼저 태워야 한다 | system-contracts 배치와 함께 — 거버넌스 스텝 표현 확보 후 |
 
-### accounts 잔여 20건과 필요한 문법 확장
+### accounts 잔여 19건과 필요한 문법 확장
 
-15건은 이관 완료(9 라이브 + 제출거부 3 라이브 + secp256r1 3 오프라인). 나머지 20건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+16건은 이관 완료(9 라이브 + 제출거부 3 라이브 + contract-event-emitted 라이브 + secp256r1 3 오프라인). 나머지 19건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
@@ -145,7 +173,6 @@ tx-flow 6 + 제출거부 3(feecap-below-min·legacy-gasprice-below-min·gaslimit
 | `external-value-transfer` | **operator 공급 funded 키**(CHAINBENCH_FUNDED_KEY)와 **런타임 신규 수취인 생성**이 필요. DSL 은 env 키 주입/키 생성 수단이 없다 | env 키 바인딩 + 키 생성 소스 |
 | `fee-delegate-sign-rpc-present` | `eth_signRawFeeDelegateTransaction` 가 **method-not-found(-32601) 이 아님**을 확인(오류는 나도 됨). rpcCall assertion 은 RPC 오류를 스텝 실패로 처리 → "오류지만 not-found 는 아님" 을 표현 못함 | 메서드 존재 프로브(오류 코드 구분) |
 | `eth-call-revert-returns-error` | eth_call 이 **revert 오류를 반환**해야 통과. `call` assertion 은 호출 오류를 스텝 실패로 처리할 뿐 부정 기대가 없다 | `call` 부정 기대(expectCallError) |
-| `contract-event-emitted` | receipt `logs` 배열의 첫 로그 `topics[0]` 를 검사. `select` 는 **배열 인덱스(`logs.0.topics.0`)를 못 짚고**, 로그 토픽 존재 판정 연산자도 없다 | select 배열 인덱싱 + 로그 매칭 |
 
 ### hardfork 잔여 6건과 필요한 문법 확장
 
@@ -156,9 +183,9 @@ tx-flow 6 + 제출거부 3(feecap-below-min·legacy-gasprice-below-min·gaslimit
 | `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
 | `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
 
-### system-contracts 잔여 37건과 필요한 문법 확장
+### system-contracts 잔여 35건과 필요한 문법 확장
 
-9건은 이관 완료(모두 라이브). 나머지 37건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+11건은 이관 완료(모두 라이브 — read 9 + 토큰 write+event 2). 나머지 35건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
 압도적 다수(≈30건)가 **거버넌스 쿼럼 흐름**(propose → 검증자 N명 approve → 정족수 자동 execute)에
 의존하는데, DSL 에는 이 다단계 서명 흐름을 태울 스텝 프리미티브가 없다. 이것이 이 배치의 핵심 갭이다.
 
@@ -171,7 +198,7 @@ tx-flow 6 + 제출거부 3(feecap-below-min·legacy-gasprice-below-min·gaslimit
 | `authorized-tx-executed-event` (1) | **런타임 키 생성 + faucet 펀딩 + 거버넌스 authorize** 후 tx 의 AuthorizedTxExecuted 로그 확인. 키 생성·env 주입·거버넌스·로그매칭 모두 부재 | (G) + 키 생성 소스 + 로그 매칭 |
 | `authorized-extra-bit-synced`·`blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved` (4) | 순수 read(isAuthorized/isBlacklisted/getBalance)라 **표현 자체는 가능**하나 fixture 계정이 **`account-extra` 제네시스 오버레이**에서만 존재/설정됨. 표준 stablenet 엔 없어 라이브 미검증 | `account-extra` cap 오버레이 기동으로 라이브 검증 후 이관(현재는 표현 가능·미기동) |
 | `proposal-expiry-transitions` (1) | **`short-expiry` 오버레이 + 만료 시간 대기**(35s) 후 expireProposal. 조건부/시간 대기 표현 없음 | `short-expiry` cap + 시간/조건 대기 |
-| `token-approve-sets-allowance`·`token-transfer-emits-event`·`token-transfer-from-moves-balance` (3) | 토큰 write(approve/transfer/transferFrom)의 **이벤트 로그 topic 인덱싱**(`Approval`/`Transfer` 의 topics[2]==spender/recipient) 확인. `select` 는 배열/topic 인덱스를 못 짚는다. transferFrom 은 owner≠spender **2계정** 필요 | select 배열/topic 인덱싱 + 로그 매칭 (+ transferFrom 은 다중 서명자) |
+| `token-transfer-from-moves-balance` (1) | transferFrom 은 owner≠spender **2계정**(owner approve → spender 가 대신 transferFrom)이 필요하다. DSL sendTx 는 단일 노드서명 계정만 태운다. (approve/transfer 이벤트 로그 검증분은 이관 완료 — `logs` 가 topic 필터·`select:topicN`·`index` 를 이미 지원함을 재확인) | 2-계정 서명(별도 서명자 키) |
 
 ## 규약
 

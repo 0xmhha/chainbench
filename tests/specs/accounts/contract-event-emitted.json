@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1",
+  "id": "contract-event-emitted",
+  "applicableChains": "stablenet,wbft",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "data": "0x6027600c60003960276000f37f111111111111111111111111111111111111111111111111111111111111111160006000a100",
+                  "gas": "200000", "save": "dhash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$dhash"], "select": "contractAddress", "save": "addr" } },
+    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$addr", "gas": "100000", "save": "ehash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$ehash"], "select": "blockNumber", "save": "blk" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$ehash", "expected": "0x1" },
+    { "assert": "logs",
+      "address": "$addr",
+      "topics": ["0x1111111111111111111111111111111111111111111111111111111111111111"],
+      "fromBlock": "$blk", "toBlock": "$blk",
+      "select": "topic0", "compare": "Equal",
+      "expected": "0x1111111111111111111111111111111111111111111111111111111111111111" }
+  ]
+}
