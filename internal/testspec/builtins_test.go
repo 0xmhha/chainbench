@@ -307,6 +307,46 @@ func TestBuiltinAssertion_TxStatus(t *testing.T) {
 	})
 }
 
+func TestReadReceiptLog(t *testing.T) {
+	// A receipt with two logs: a ProposalCreated (topic0=created, topic1=id 1)
+	// and an unrelated one, so filtering by topic0/address is exercised.
+	created := "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+	other := "0x82b8cb75fd367be519fd5f57abcb2dbb773381c00082e94059c4713c4dfdfc05"
+	id1 := "0x0000000000000000000000000000000000000000000000000000000000000001"
+	receipt := map[string]any{"status": "0x1", "logs": []any{
+		map[string]any{"address": "0x0000000000000000000000000000000000001003",
+			"topics": []any{created, id1, "0xdeadbeef"}, "data": "0xabcd"},
+		map[string]any{"address": "0x0000000000000000000000000000000000001003",
+			"topics": []any{other, id1}, "data": "0x00"},
+	}}
+	srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": receipt})
+	c := rpc.Dial(srv.URL)
+
+	// Default: log 0, topic 1 — the proposalId.
+	got, err := readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh"})
+	if err != nil || got != id1 {
+		t.Fatalf("default topic1: got %v err %v", got, err)
+	}
+	// topic0 filter selects the ProposalCreated log regardless of order.
+	got, err = readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "topic0": created, "topic": float64(1)})
+	if err != nil || got != id1 {
+		t.Fatalf("topic0 filter: got %v err %v", got, err)
+	}
+	// select:"data" returns the log data.
+	got, err = readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "select": "data"})
+	if err != nil || got != "0xabcd" {
+		t.Fatalf("select data: got %v err %v", got, err)
+	}
+	// A topic index past the end is an error, not a panic.
+	if _, err := readReceiptLog(context.Background(), c, map[string]any{"hash": "0xh", "topic0": other, "topic": float64(5)}); err == nil {
+		t.Fatal("out-of-range topic must fail")
+	}
+	// Missing hash is an error.
+	if _, err := readReceiptLog(context.Background(), c, map[string]any{}); err == nil {
+		t.Fatal("missing hash must fail")
+	}
+}
+
 func TestWaitBlockAction(t *testing.T) {
 	d := deps()
 

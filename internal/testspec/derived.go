@@ -2,6 +2,7 @@ package testspec
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -215,6 +216,9 @@ func wsTarget(ac *AssertCtx) (string, error) {
 // string, comparable with the numeric assert primitives.
 func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, error) {
 	op, _ := spec["op"].(string)
+	if op == "abiCall" {
+		return deriveAbiCall(spec)
+	}
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("testspec: derive requires \"of\" (a list of values)")
@@ -239,6 +243,42 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 		}
 	}
 	return acc.String(), nil
+}
+
+// deriveAbiCall builds contract calldata from a 4-byte selector and a list of
+// scalar arguments, each ABI-encoded as a left-padded 32-byte word. It closes
+// the governance gap the migration ledger recorded: approve/execute calldata
+// splices a proposalId that is only known at run time (extracted from a
+// ProposalCreated log via the receiptLog source) into the call. Addresses and
+// uint256 both encode as a right-aligned 32-byte word, so both flow through
+// parseBigValue. Spec: op ("abiCall"), selector (0x + 8 hex chars), of (the
+// argument values or "$bindings"). The result is 0x-hex calldata for sendTx.
+func deriveAbiCall(spec map[string]any) (any, error) {
+	sel := strings.TrimPrefix(strings.TrimSpace(fmt.Sprint(spec["selector"])), "0x")
+	if len(sel) != 8 {
+		return nil, fmt.Errorf("testspec: derive abiCall requires \"selector\" of 4 bytes (8 hex chars), got %q", spec["selector"])
+	}
+	if _, err := hex.DecodeString(sel); err != nil {
+		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
+	}
+	var b strings.Builder
+	b.WriteString("0x")
+	b.WriteString(sel)
+	if raw, ok := spec["of"].([]any); ok {
+		for i, v := range raw {
+			n, err := parseBigValue(v)
+			if err != nil {
+				return nil, fmt.Errorf("testspec: derive abiCall: of[%d]: %w", i, err)
+			}
+			if n.Sign() < 0 || n.BitLen() > 256 {
+				return nil, fmt.Errorf("testspec: derive abiCall: of[%d] does not fit in a 32-byte word", i)
+			}
+			word := make([]byte, 32)
+			n.FillBytes(word)
+			b.WriteString(hex.EncodeToString(word))
+		}
+	}
+	return b.String(), nil
 }
 
 // parseBigValue converts a spec value (0x-hex string, decimal string, or JSON

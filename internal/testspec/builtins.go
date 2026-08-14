@@ -31,6 +31,7 @@ const (
 	assertNonceAt       = "nonceAt"
 	assertCall          = "call"
 	assertTxStatus      = "txStatus"
+	assertReceiptLog    = "receiptLog"
 	assertBlockAdvance  = "blockAdvance"
 	assertSameBlockHash = "sameBlockHash"
 	assertBaseFee       = "baseFee"
@@ -265,6 +266,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
 		{name: assertCall, defaultOp: "Equal", read: readCall},
 		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
+		{name: assertReceiptLog, defaultOp: "Equal", read: readReceiptLog},
 		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
 		{name: assertEstimateGas, defaultOp: "GreaterOrEqual", read: readEstimateGas},
 		{name: assertLogs, defaultOp: "Equal", read: readLogs},
@@ -611,6 +613,69 @@ func readTxStatus(ctx context.Context, c *rpc.Client, spec map[string]any) (any,
 		return nil, fmt.Errorf("testspec: txStatus: parse receipt: %w", err)
 	}
 	return r.Status, nil
+}
+
+// readReceiptLog extracts one field from a transaction receipt's event logs so a
+// value emitted at run time — the classic case is a governance proposalId, an
+// indexed topic on a ProposalCreated log — can be bound and spliced into later
+// calldata (via derive abiCall). Spec: hash (required); address / topic0
+// (optional filters, hex-case-insensitive); index (which matching log, default
+// 0); topic (which topic to return, default 1) or select:"data" for the log
+// data. The returned 32-byte 0x-hex is directly usable as an abiCall argument.
+func readReceiptLog(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	hash, ok := spec["hash"].(string)
+	if !ok || hash == "" {
+		return nil, fmt.Errorf("testspec: receiptLog requires \"hash\"")
+	}
+	raw, err := c.TxReceipt(ctx, hash)
+	if err != nil {
+		return nil, err
+	}
+	if raw == nil {
+		return nil, fmt.Errorf("testspec: receiptLog: no receipt for %s", hash)
+	}
+	var r struct {
+		Logs []struct {
+			Address string   `json:"address"`
+			Topics  []string `json:"topics"`
+			Data    string   `json:"data"`
+		} `json:"logs"`
+	}
+	if err := json.Unmarshal(raw, &r); err != nil {
+		return nil, fmt.Errorf("testspec: receiptLog: parse receipt: %w", err)
+	}
+
+	wantAddr, _ := spec["address"].(string)
+	wantTopic0, _ := spec["topic0"].(string)
+	idx := 0
+	if n, ok := uintArg(spec["index"]); ok {
+		idx = int(n)
+	}
+	seen := 0
+	for _, lg := range r.Logs {
+		if wantAddr != "" && !strings.EqualFold(lg.Address, wantAddr) {
+			continue
+		}
+		if wantTopic0 != "" && (len(lg.Topics) == 0 || !strings.EqualFold(lg.Topics[0], wantTopic0)) {
+			continue
+		}
+		if seen != idx {
+			seen++
+			continue
+		}
+		if sel, _ := spec["select"].(string); sel == "data" {
+			return lg.Data, nil
+		}
+		topic := 1
+		if n, ok := uintArg(spec["topic"]); ok {
+			topic = int(n)
+		}
+		if topic < 0 || topic >= len(lg.Topics) {
+			return nil, fmt.Errorf("testspec: receiptLog: log has no topic %d (has %d)", topic, len(lg.Topics))
+		}
+		return lg.Topics[topic], nil
+	}
+	return nil, fmt.Errorf("testspec: receiptLog: no matching log in receipt for %s", hash)
 }
 
 // clientFor returns an RPC client for url, guarding a missing injected factory.

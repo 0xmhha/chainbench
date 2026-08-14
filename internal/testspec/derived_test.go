@@ -322,3 +322,43 @@ func TestReadDerive(t *testing.T) {
 		}
 	}
 }
+
+func TestReadDerive_AbiCall(t *testing.T) {
+	cases := []struct {
+		spec map[string]any
+		want string
+	}{
+		// approveProposal(1): selector + a single left-padded uint256 word.
+		{map[string]any{"op": "abiCall", "selector": "0x98951b56", "of": []any{"1"}},
+			"0x98951b560000000000000000000000000000000000000000000000000000000000000001"},
+		// A 32-byte 0x-hex topic (as receiptLog yields) parses to the same word.
+		{map[string]any{"op": "abiCall", "selector": "0x0d61b519",
+			"of": []any{"0x0000000000000000000000000000000000000000000000000000000000000002"}},
+			"0x0d61b5190000000000000000000000000000000000000000000000000000000000000002"},
+		// An address argument is right-aligned in its word, same as a uint.
+		{map[string]any{"op": "abiCall", "selector": "0xa9059cbb",
+			"of": []any{"0x00000000000000000000000000000000c0ffee05", "1"}},
+			"0xa9059cbb00000000000000000000000000000000000000000000000000000000c0ffee050000000000000000000000000000000000000000000000000000000000000001"},
+		// No args is a bare selector.
+		{map[string]any{"op": "abiCall", "selector": "0x12345678"}, "0x12345678"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, tc.spec)
+		if err != nil {
+			t.Fatalf("%v: %v", tc.spec, err)
+		}
+		if got != tc.want {
+			t.Errorf("%v =\n %v\nwant\n %v", tc.spec, got, tc.want)
+		}
+	}
+
+	for name, bad := range map[string]map[string]any{
+		"no selector":    {"op": "abiCall", "of": []any{"1"}},
+		"short selector": {"op": "abiCall", "selector": "0x1234"},
+		"bad arg":        {"op": "abiCall", "selector": "0x98951b56", "of": []any{"zzz"}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}
