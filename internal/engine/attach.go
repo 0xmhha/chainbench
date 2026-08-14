@@ -75,8 +75,9 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	keyDeps := keyreg.Deps{DeriveAddress: accts.AddressForKey}
 
 	run := NewRunSpec(testspec.Deps{
-		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions: testspec.NewRegistry(true),
+		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
+		Actions:  testspec.NewRegistry(true),
+		Accounts: accts,
 	})
 
 	return New(Deps{

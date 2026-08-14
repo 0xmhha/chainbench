@@ -2,6 +2,7 @@ package testspec
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec/assert"
@@ -19,9 +21,10 @@ import (
 // on). Kept as typed-free string constants so the registry and specs share one
 // source of truth.
 const (
-	actionSendTx    = "sendTx"
-	actionWaitBlock = "waitBlock"
-	actionRead      = "read"
+	actionSendTx     = "sendTx"
+	actionWaitBlock  = "waitBlock"
+	actionRead       = "read"
+	actionNewAccount = "newAccount"
 
 	assertChainID       = "chainId"
 	assertBlockNumber   = "blockNumber"
@@ -62,6 +65,7 @@ func seedBuiltins(r Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
 	r.RegisterAction(actionRead, readAction{})
+	r.RegisterAction(actionNewAccount, newAccountAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
@@ -319,6 +323,14 @@ type sendTxAction struct{}
 // checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
 // status 0x0 (see checkTxOutcome).
 func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
+	// A "key" arg switches to local signing: the tx is signed offline with that
+	// private key and submitted via eth_sendRawTransaction, rather than
+	// eth_sendTransaction against a node's keystore. This lets a spec send from a
+	// non-node, non-governance account — the only way to exercise member-only
+	// guards and blacklisted-sender paths, since every node coinbase is a member.
+	if keyHex, ok := ac.Args["key"].(string); ok && keyHex != "" {
+		return sendTxLocal(ctx, ac, keyHex)
+	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
 		return err
@@ -370,6 +382,111 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 	ac.Receipt = receipt
 	return checkTxOutcome(hash, receipt, ac.Args)
+}
+
+// sendTxLocal signs and submits a transaction locally with the given private
+// key (hex, optional 0x prefix), routing the outcome through the same
+// reject/wait/revert logic as the node-signed path. It uses the injected
+// account provider's Wallet: Execute when a "data" payload is present, SendCoin
+// for a value-only transfer. The target node RPC comes from the usual "on"
+// selector so the wallet dials the same endpoint the node-signed path would.
+func sendTxLocal(ctx context.Context, ac *ActionCtx, keyHex string) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("testspec: sendTx key: no account provider")
+	}
+	priv, err := hex.DecodeString(strings.TrimPrefix(keyHex, "0x"))
+	if err != nil {
+		return fmt.Errorf("testspec: sendTx key: decode: %w", err)
+	}
+	rpcURL := selectorTarget(ac.Env, ac.Args)
+	w, err := ac.Deps.Accounts.OpenWallet(ctx, priv, rpcURL)
+	if err != nil {
+		return fmt.Errorf("testspec: sendTx: open wallet: %w", err)
+	}
+	to, _ := ac.Args["to"].(string)
+	if to == "" {
+		return fmt.Errorf("testspec: sendTx key requires \"to\"")
+	}
+	value, err := parseValueWei(ac.Args["value"])
+	if err != nil {
+		return err
+	}
+	var hash string
+	if data, ok := ac.Args["data"].(string); ok && data != "" && data != "0x" {
+		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
+		if derr != nil {
+			return fmt.Errorf("testspec: sendTx: data: %w", derr)
+		}
+		hash, err = w.Execute(ctx, to, b, value)
+	} else {
+		if value == nil {
+			value = new(big.Int)
+		}
+		hash, err = w.SendCoin(ctx, to, value)
+	}
+	if wantReject(ac.Args) {
+		return checkSubmitRejected(hash, err, ac)
+	}
+	if err != nil {
+		return fmt.Errorf("testspec: sendTx: %w", err)
+	}
+	ac.Hash = hash
+	if wait, ok := ac.Args["wait"].(bool); ok && !wait {
+		return nil
+	}
+	c, err := clientFor(ac.Deps, rpcURL)
+	if err != nil {
+		return err
+	}
+	receipt, err := waitReceipt(ctx, c, hash,
+		durationArg(ac.Args, "timeout", defaultTxTimeout),
+		durationArg(ac.Args, "pollInterval", defaultTxPollInterval))
+	if err != nil {
+		return err
+	}
+	ac.Receipt = receipt
+	return checkTxOutcome(hash, receipt, ac.Args)
+}
+
+// parseValueWei reads a tx "value" arg (decimal or 0x-hex wei) as a big.Int,
+// returning nil when absent. It reuses hexQuantity so the accepted forms match
+// the node-signed path exactly.
+func parseValueWei(v any) (*big.Int, error) {
+	q, ok := hexQuantity(v)
+	if !ok {
+		return nil, nil
+	}
+	bi, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
+	if !ok {
+		return nil, fmt.Errorf("testspec: sendTx: bad value %v", v)
+	}
+	return bi, nil
+}
+
+// newAccountAction generates a fresh key pair off-chain and binds it for later
+// steps: the address under "save" (referenceable as "$name") and the private
+// key hex under "saveKey". The key is an ephemeral, throwaway test key — a spec
+// funds it from a node account, then uses it as sendTx "key" to sign locally.
+type newAccountAction struct{}
+
+// Do generates a key pair and records the address as the step value plus the
+// private key under the "saveKey" binding. Args: save (address binding, the
+// usual step "save"), saveKey (private-key binding name, required).
+func (newAccountAction) Do(_ context.Context, ac *ActionCtx) error {
+	keyName, _ := ac.Args["saveKey"].(string)
+	if keyName == "" {
+		return fmt.Errorf("testspec: newAccount requires \"saveKey\"")
+	}
+	priv, addr, err := accounts.GenerateKey()
+	if err != nil {
+		return fmt.Errorf("testspec: newAccount: %w", err)
+	}
+	ac.Value = addr
+	if ac.Extra == nil {
+		ac.Extra = map[string]any{}
+	}
+	ac.Extra[keyName] = hex.EncodeToString(priv)
+	return nil
 }
 
 // checkTxOutcome enforces a tx step's declared expectation (F11 — a tx step is

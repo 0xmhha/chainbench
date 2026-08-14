@@ -62,6 +62,12 @@ type ActionCtx struct {
 	// binds the hash, so submitting and then asserting on a transaction needs no
 	// extra plumbing. It is an output, set by the action.
 	Value any
+	// Extra holds additional named bindings an action produces beyond the primary
+	// "save" value — keyed by binding name. newAccount uses it to bind a freshly
+	// generated private key under "saveKey" alongside the address under "save".
+	// It is an output, set by the action; the interpreter merges it into the run
+	// bindings after Value/Hash.
+	Extra map[string]any
 }
 
 // AssertCtx gives an assertion access to the environment, deps, and targets.

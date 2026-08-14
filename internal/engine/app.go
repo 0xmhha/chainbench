@@ -148,9 +148,10 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		Reqs:       validatorReqs(validators),
 	})
 	run := NewRunSpec(testspec.Deps{
-		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions: testspec.NewRegistry(true),
-		Nodes:   controller,
+		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
+		Actions:  testspec.NewRegistry(true),
+		Nodes:    controller,
+		Accounts: accts,
 	})
 
 	return New(Deps{

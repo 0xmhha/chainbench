@@ -95,6 +95,20 @@ func TestUnresolved_BoundReferencesAreClean(t *testing.T) {
 	}
 }
 
+func TestUnresolved_SaveKeyBindsReference(t *testing.T) {
+	reg := testspec.NewRegistry(true)
+	spec := testspec.Spec{
+		Steps: []map[string]any{
+			{"newAccount": map[string]any{"save": "acct", "saveKey": "acctKey"}},
+			{"sendTx": map[string]any{"key": "$acctKey", "to": "0xb", "expect": "reject"}},
+		},
+		Assertions: []map[string]any{},
+	}
+	if got := testspec.Unresolved(spec, reg); len(got) != 0 {
+		t.Fatalf("Unresolved = %v, want none (saveKey should bind $acctKey)", got)
+	}
+}
+
 func TestUnresolved_ReportsAnUnknownReadSource(t *testing.T) {
 	reg := testspec.NewRegistry(true)
 	spec := testspec.Spec{

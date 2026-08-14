@@ -478,6 +478,34 @@ func TestSendTxAction_ExpectReject(t *testing.T) {
 	}
 }
 
+func TestNewAccountAction_BindsAddressAndKey(t *testing.T) {
+	d := deps()
+	act, ok := d.Actions.Action(actionNewAccount)
+	if !ok {
+		t.Fatal("newAccount not registered")
+	}
+	ac := &ActionCtx{Args: map[string]any{"save": "acct", "saveKey": "acctKey"}}
+	if err := act.Do(context.Background(), ac); err != nil {
+		t.Fatalf("newAccount: %v", err)
+	}
+	addr, _ := ac.Value.(string)
+	if !strings.HasPrefix(addr, "0x") || len(addr) != 42 {
+		t.Fatalf("address = %q, want 0x + 40 hex", addr)
+	}
+	key, _ := ac.Extra["acctKey"].(string)
+	if len(key) != 64 {
+		t.Fatalf("private key hex = %q (len %d), want 64", key, len(key))
+	}
+}
+
+func TestNewAccountAction_RequiresSaveKey(t *testing.T) {
+	d := deps()
+	act, _ := d.Actions.Action(actionNewAccount)
+	if err := act.Do(context.Background(), &ActionCtx{Args: map[string]any{"save": "acct"}}); err == nil {
+		t.Fatal("newAccount without saveKey must error")
+	}
+}
+
 func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
 	// Two nodes, each with peerCount 2; onEach must check both.
 	srv1 := mockRPC(t, map[string]any{"net_peerCount": "0x2"})

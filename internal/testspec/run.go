@@ -206,6 +206,9 @@ func resolveArgs(v any, binds Bindings) (map[string]any, error) {
 // "save". An action that sets no explicit Value binds its tx hash, so a plain
 // sendTx step is referenceable without the action knowing about bindings.
 func bindResult(binds Bindings, args map[string]any, ac *ActionCtx) {
+	for k, v := range ac.Extra {
+		binds[k] = v
+	}
 	name := saveName(args)
 	if name == "" {
 		return
