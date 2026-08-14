@@ -154,6 +154,57 @@ func TestRPCCallAssertion_OutOfRangeIndexIsAnError(t *testing.T) {
 	}
 }
 
+// TestRPCCall_LatestParamSentinel verifies readRPCCall replaces the "@latest"
+// params sentinel with the current head block number at call time (not the
+// literal string), so a block-scoped method that rejects the "latest" tag gets a
+// concrete number.
+func TestRPCCall_LatestParamSentinel(t *testing.T) {
+	var gotParam any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+			Params []any  `json:"params"`
+		}
+		_ = json.Unmarshal(body, &req)
+		var result any
+		switch req.Method {
+		case "eth_blockNumber":
+			result = "0x2a" // 42
+		case "istanbul_getWbftExtraInfo":
+			if len(req.Params) > 0 {
+				gotParam = req.Params[0]
+			}
+			result = map[string]any{"gasTip": "0x64"}
+		default:
+			http.Error(w, "unknown method "+req.Method, http.StatusBadRequest)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
+	}))
+	t.Cleanup(srv.Close)
+
+	d := deps()
+	as, _ := d.Actions.Assertion(assertRPCCall)
+	res, err := as.Check(context.Background(), &AssertCtx{
+		Env: envWithNode(t, srv.URL), Deps: &d,
+		Spec: map[string]any{
+			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
+			"params": []any{"@latest"}, "select": "gasTip", "expected": "0x64",
+		},
+	})
+	if err != nil {
+		t.Fatalf("rpcCall @latest: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("actual %#v", res.Actual)
+	}
+	if gotParam != "0x2a" {
+		t.Fatalf("block param = %#v, want the resolved head \"0x2a\"", gotParam)
+	}
+}
+
 // wsHeadServer serves eth_subscribe over a WebSocket and pushes n newHeads
 // notifications.
 func wsHeadServer(t *testing.T, n int) *httptest.Server {

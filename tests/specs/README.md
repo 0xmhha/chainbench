@@ -453,7 +453,7 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 
 | 레거시 케이스 (건수) | 갭 | 필요 확장 |
 |---|---|---|
-| `gastip-governance-updates-header` (1) | `(G)` 로 propose→approve 흐름은 표현 가능하나 **시간 대기 갭**: proposeGasTip 실행 후 header WBFTExtra.GasTip 이 **후속 블록에 걸쳐 반영**돼 레거시는 `WaitFor`(≤60s) 로 폴링한다. DSL 어세션은 스텝 뒤 1회만 실행돼 전파 완료를 기다릴 수 없다. 게다가 header GasTip 을 교란(자기복원하나 순서 민감)한다. header 읽기는 `istanbul_getWbftExtraInfo(blockNum).gasTip`(구체 블록번호 필요, "latest" 는 `block -2 not found`) | 조건부/시간 대기(WaitFor) + 공유상태 교란 격리 |
+| `gastip-governance-updates-header` (1) | 🟡 **스펙 작성 + 오프라인 검증 완료, 라이브 검증 대기** — 두 갭을 신규 프리미티브로 해소: (1) 시간 대기 → `waitFor`(source+comparator 폴링, `waitBlock` 일반화); (2) 폴링마다 최신 블록 재확인 → `rpcCall` params `"@latest"` 센티넬(호출 시점 `eth_blockNumber` 로 치환, `$head` 고정과 달리 매 폴링 재해석)로 `istanbul_getWbftExtraInfo("@latest").gasTip` 를 추적. 흐름: proposeGasTip(en1)→approve(en2 자동 execute)→`waitFor gasTip==30000000000000`→`$orig` 로 복원. GasTipUpdated 방출은 `logs` count≥1. **가정**: fresh 넷 기본 gasTip=27600000000000(=$orig≠target). 라이브 검증은 governance 가능한 stablenet 넷 필요 | ✅ (G)+`waitFor`+`@latest` (확보) |
 | `validator-add-member-executes`·`masterminter-member-add-remove` (2) | `(G)`+`(H)` 로 흐름·calldata 는 확보했으나 **파괴적**: 검증자셋·정족수를 변경(add 후 quorum 상승/검증자 추가)해 공유 넷을 오염시키고 이후 spec 의 정족수 가정을 깬다 | (G)+(H)(확보) + 전용 격리 넷(다른 spec 과 분리 실행) |
 | ~~`burn-proposal-executes`~~ ✅ **이관 완료**(라이브) — payable proposeBurn→approve→`(H) derive word` status==Executed(3) | — | — |
 | ~~`remove-minter-executes`~~ ✅ **이관 완료**(라이브) — configure→approve→`(H) derive word` 로 중간 isMinter==1 확인→remove→approve→`call` isMinter==0 | — | — |

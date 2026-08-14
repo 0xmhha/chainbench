@@ -69,6 +69,15 @@ func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 	if raw, ok := spec["params"].([]any); ok {
 		params = raw
 	}
+	// Resolve the "@latest" params sentinel to the head block number at call time.
+	// Unlike a "$head" binding (frozen when the step's args are resolved), this
+	// re-resolves on every call, so a waitFor polling a block-scoped method that
+	// rejects the "latest" tag (istanbul_getWbftExtraInfo) tracks the advancing
+	// head instead of one fixed block.
+	params, err := resolveLatestParams(ctx, c, params)
+	if err != nil {
+		return nil, err
+	}
 	var result any
 	if err := c.Call(ctx, method, &result, params...); err != nil {
 		return nil, err
@@ -82,6 +91,43 @@ func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 		return nil, fmt.Errorf("testspec: rpcCall %s: no %q in the result", method, sel)
 	}
 	return v, nil
+}
+
+// latestBlockParam is the params sentinel readRPCCall replaces, at call time,
+// with the current head block number (0x-hex). A spec passes it to a method that
+// requires a concrete numeric block and rejects the "latest" tag, and — inside
+// waitFor — gets it re-resolved each poll so the read follows the head.
+const latestBlockParam = "@latest"
+
+// resolveLatestParams returns params with every latestBlockParam sentinel
+// replaced by the current head block number, reading the head only if a sentinel
+// is present. It never mutates the input slice: waitFor calls the reader
+// repeatedly with the same args, so the sentinel must survive to be re-resolved.
+func resolveLatestParams(ctx context.Context, c *rpc.Client, params []any) ([]any, error) {
+	has := false
+	for _, p := range params {
+		if s, ok := p.(string); ok && s == latestBlockParam {
+			has = true
+			break
+		}
+	}
+	if !has {
+		return params, nil
+	}
+	bn, err := c.BlockNumber(ctx)
+	if err != nil {
+		return nil, err
+	}
+	head := "0x" + strconv.FormatUint(bn, 16)
+	out := make([]any, len(params))
+	for i, p := range params {
+		if s, ok := p.(string); ok && s == latestBlockParam {
+			out[i] = head
+		} else {
+			out[i] = p
+		}
+	}
+	return out, nil
 }
 
 // dotPath walks a decoded JSON value by an "a.b.c" path. A numeric segment
