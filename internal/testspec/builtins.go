@@ -312,7 +312,10 @@ type sendTxAction struct{}
 
 // Do resolves the target node, sends the transaction, and waits for the
 // receipt. Args: on (selector, default primary), from, to, value, gas, wait
-// (default true), timeout, pollInterval.
+// (default true), timeout, pollInterval. A negative expectation short-circuits
+// the wait: expect:"reject" requires the submit itself to fail (see
+// checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
+// status 0x0 (see checkTxOutcome).
 func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -339,6 +342,12 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 		return err
 	}
 	hash, err := c.SendTransaction(ctx, args)
+	// An expect:"reject" step inverts the submit outcome: the node must refuse
+	// the transaction at submit time (no hash). It is checked before the receipt
+	// wait because a rejected tx never enters a block.
+	if wantReject(ac.Args) {
+		return checkSubmitRejected(hash, err, ac)
+	}
 	if err != nil {
 		return fmt.Errorf("testspec: sendTx: %w", err)
 	}
@@ -385,6 +394,39 @@ func wantRevert(args map[string]any) bool {
 		return strings.EqualFold(s, "revert")
 	}
 	return false
+}
+
+// wantReject reports whether a tx step declares that it expects a submit-time
+// rejection, via expectReject:true or expect:"reject". A rejection (the node
+// refuses the transaction before it is mined) is distinct from a revert (the
+// transaction is mined with status 0x0, handled by wantRevert).
+func wantReject(args map[string]any) bool {
+	if b, ok := args["expectReject"].(bool); ok {
+		return b
+	}
+	if s, ok := args["expect"].(string); ok {
+		return strings.EqualFold(s, "reject")
+	}
+	return false
+}
+
+// checkSubmitRejected enforces an expect:"reject" step: the node must refuse the
+// transaction at submit time (SendTransaction returns an error and no hash). An
+// accepted submit fails the step. An optional "reason" (case-insensitive
+// substring) tightens the check to a specific rejection message, so a spec can
+// require e.g. an "insufficient funds" rejection rather than any error.
+func checkSubmitRejected(hash string, submitErr error, ac *ActionCtx) error {
+	if submitErr == nil {
+		return fmt.Errorf("testspec: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
+	}
+	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
+		if !strings.Contains(strings.ToLower(submitErr.Error()), strings.ToLower(reason)) {
+			return fmt.Errorf("testspec: sendTx was rejected but not for %q: %v", reason, submitErr)
+		}
+	}
+	// Bind the rejection message so a "save" can surface it to a later assertion.
+	ac.Value = submitErr.Error()
+	return nil
 }
 
 // statusReverted reports whether a receipt's status is an explicit revert (0x0).

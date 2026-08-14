@@ -328,6 +328,61 @@ func TestSendTxAction_ExpectRevert(t *testing.T) {
 	}
 }
 
+// mockRPCReject serves a JSON-RPC error for eth_sendTransaction, simulating a
+// node that refuses the transaction at submit time (no hash returned).
+func mockRPCReject(t *testing.T, message string) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		var req struct {
+			ID int `json:"id"`
+		}
+		_ = json.Unmarshal(body, &req)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jsonrpc": "2.0", "id": req.ID,
+			"error": map[string]any{"code": -32000, "message": message},
+		})
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestSendTxAction_ExpectReject(t *testing.T) {
+	d := deps()
+	run := func(srv *httptest.Server, args map[string]any) error {
+		env := envWithNode(t, srv.URL)
+		act, _ := d.Actions.Action(actionSendTx)
+		return act.Do(context.Background(), &ActionCtx{Env: env, Deps: &d, Args: args})
+	}
+
+	// expect:"reject" + submit error => step passes.
+	rej := mockRPCReject(t, "insufficient funds for gas * price + value")
+	if err := run(rej, map[string]any{"from": "0xa", "expect": "reject"}); err != nil {
+		t.Fatalf("expect:reject on a rejected submit should pass: %v", err)
+	}
+
+	// expectReject:true alias, same rejection => passes.
+	if err := run(rej, map[string]any{"from": "0xa", "expectReject": true}); err != nil {
+		t.Fatalf("expectReject alias should pass on a rejected submit: %v", err)
+	}
+
+	// expect:"reject" but the node accepts the tx => step fails.
+	ok := mockRPC(t, map[string]any{"eth_sendTransaction": "0xhash"})
+	if err := run(ok, map[string]any{"from": "0xa", "expect": "reject", "wait": false}); err == nil {
+		t.Fatal("expect:reject must fail the step when the submit is accepted")
+	}
+
+	// reason substring matches the rejection message => passes.
+	if err := run(rej, map[string]any{"from": "0xa", "expect": "reject", "reason": "insufficient funds"}); err != nil {
+		t.Fatalf("matching reason should pass: %v", err)
+	}
+
+	// reason substring does not match => step fails (rejected, wrong reason).
+	if err := run(rej, map[string]any{"from": "0xa", "expect": "reject", "reason": "nonce too low"}); err == nil {
+		t.Fatal("a non-matching reason must fail the step")
+	}
+}
+
 func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
 	// Two nodes, each with peerCount 2; onEach must check both.
 	srv1 := mockRPC(t, map[string]any{"net_peerCount": "0x2"})

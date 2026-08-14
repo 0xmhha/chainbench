@@ -28,8 +28,8 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
 | `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
 | `network` | 4 | 3 | ✅ `examples/specs/network-*.json` (선행 이관분). 잔여 1건 `admin-peers-populated` 갭(아래) |
-| `accounts` | 35 | **12** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 23건은 문법 갭(아래) |
-| `gas-policy` | 17 | **9** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 8건은 문법 갭(아래) |
+| `accounts` | 35 | **15** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 20건은 문법 갭(아래) |
+| `gas-policy` | 17 | **12** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 3건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 5건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
 | `system-contracts` | 46 | **9** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata. read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 37건 갭(아래) |
 
@@ -73,6 +73,24 @@ system-contracts (9 spec) → gstable 5노드(스크래치, 8601-8605, attach): 
                      네이티브 precompile(eth_call 은 응답)로 판명, EVM 5종만 남기고 재범위. 갭 아래
 ```
 
+### 라이브 검증 근거 — 제출거부 배치 (2026-08-13)
+
+`expect:"reject"` 프리미티브(F1) 신규. sendTx 스텝이 노드의 **제출 시점 거부**(eth_sendTransaction 이
+해시 없이 에러 반환)를 통과 조건으로 삼는다 — 채굴 후 status 0x0 인 `expect:"revert"`/`expectRevert`
+와 구분된다. 부정 스텝(do)이 통과/실패로 판정을 내리고, 스키마상 필요한 어세션은 라이브 응답성
+대조(blockNumber ≥ 0x1)로 채운다.
+
+```
+gas-policy (+3 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=3 fail=0
+                     feecap-below-min(maxFeePerGas=1)·legacy-gasprice-below-min(gasPrice=1)·
+                     gaslimit-exceeded(gas=blockGasLimit+1, derive sum) 모두 제출거부 확인.
+accounts   (+3 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=3 fail=0
+                     insufficient-funds(balance+1e18, balanceAt→derive sum→value 주입)·
+                     dynamic-fee-below-basefee(maxFeePerGas=1)·gas-limit-exceeds-block(gas=gasLimit+1)
+                     모두 제출거부 확인.
+examples   (fee-boundary) → 수정 후 pass. 아래 결함 표 참조.
+```
+
 ## 이관하면서 드러난 레거시 케이스의 결함
 
 포팅은 케이스를 다시 읽게 만들고, 그 과정에서 원본의 오류가 드러났다.
@@ -83,6 +101,8 @@ system-contracts (9 spec) → gstable 5노드(스크래치, 8601-8605, attach): 
 | `wbft-extra-info-fields` | `ChainCompat: [stablenet, wbft]` 인데 **`gasTip` 은 stablenet 전용** — wbft 응답에 그 필드가 없다 | 공통 필드(`committedSeal`·`preparedSeal`)만 양 체인 대상으로 남기고, `gasTip` 은 `stablenet-gastip-field.json` 으로 분리 |
 | `p256-precompile-active` (hardfork) | 소스는 "stablenet 이 Boho 를 genesis 활성 → 0x100 P256VERIFY 가 valid 벡터에 `0x..01` 반환"을 단언하나, **실제 gstable 빌드는 0x100 에 대해 `"0x"` 반환** — precompile 미탑재. accounts secp256r1 3건과 동일 증상 | 라이브 반증으로 이관 보류. Boho/P256 탑재 바이너리 확보 여부를 체인팀에 확인 후 재분류 |
 | `system-contracts-deployed` (system-contracts) | `eth_getCode ≠ "0x"` 를 **8개 시스템 주소 전체**에 걸었으나, `0xB00001-3`(bls-pop·native-coin-manager·account-manager)은 **네이티브 precompile** — `getCode` 는 `"0x"`(빈 코드)를 반환하고 `eth_call` 로만 응답한다. getCode 로 "배포" 여부를 판정하는 건 precompile 엔 부적절 | EVM 바이트코드 계약 5종(0x1000-0x1004)만 codeAt 로 판정. precompile 은 각자의 read 케이스(account-*-readable 등)로 활성 확인 |
+| `tipcap-underpriced-rejected` (gas-policy) | 소스는 "유효 feeCap + tipCap=1 wei 는 MinTip 미만 → ErrUnderpriced 로 제출거부"를 단언하나, **실제 gstable 빌드는 이 tx 를 수락·채굴**(블록 0x18, status 0x1, maxPriorityFeePerGas=0x1). 이 빌드는 제출 시점에 MinTip 을 강제하지 않는다 — p256 3건과 동일한 라이브 반증 유형 | 이관 보류(삭제). MinTip 강제 빌드/설정 확보 여부를 체인팀에 확인 후 재분류. 현 빌드로는 표현해도 무의미 |
+| `stablenet-fee-boundary` (examples, 문법예시) | ① below-min tx 에 `expectRevert:true` 를 썼으나 실제로는 **제출거부**(채굴 후 revert 아님) — feecap-below-min-rejected 로 라이브 확정. ② "accepted" tx 가 feeCap 을 1e12 로 하드코딩했는데 이 네트워크 최소치는 2e13 이라 **이것마저 거부**됨 | ① `expect:"reject"` 로 교정. ② baseFee 를 읽어 `derive sum [$base,$base]` 로 feeCap 을 산출해 주입 → 수정 후 라이브 pass |
 
 두 건 모두 **라이브에서만** 드러난다. 레거시 유닛 테스트는 mock 노드를 쓰기 때문이다.
 
@@ -97,25 +117,25 @@ system-contracts (9 spec) → gstable 5노드(스크래치, 8601-8605, attach): 
 | `prev-seals-quorum` | prevCommitted/prevPrepared seal 의 **sealer 수 >= quorum(ceil 2N/3)** 만 검사한다(서명 필드 없음). 배열 길이 비교 연산자도, 토폴로지 파생 quorum 산술도 없다. `NotNil` 은 빈 배열에도 통과하므로 의미가 없다 — 갭 |
 | `admin-peers-populated` (network) | `admin_peers` 결과가 **>=1 엔트리**이고 첫 피어 `id` 가 비어있지 않은지 검사. `select` 는 맵만 walk 하고 **배열 인덱스(`0.id`)를 못 짚으며**, 배열 길이>=N 비교 연산자도 없다 — 갭 |
 
-### gas-policy 잔여 8건과 필요한 문법 확장
+### gas-policy 잔여 5건과 필요한 문법 확장
 
-tx-flow 6건은 이관 완료. 나머지 8건은 아래 3가지 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+tx-flow 6 + 제출거부 3(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded)건은 이관 완료.
+`(B) expect:"reject"` 프리미티브(F1)로 제출거부 3건이 라이브 확정됐다. 나머지 5건은 아래 갭에 막혀
+있다 — 가짜로 만들지 않고 남긴다. (`tipcap-underpriced-rejected` 는 라이브 반증으로 보류 — 결함 표 참조.)
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
-| `feecap-below-min-rejected` · `legacy-gasprice-below-min-rejected` · `tipcap-underpriced-rejected` | **풀 진입 거부**(eth_sendTransaction 이 에러 반환, 해시 없음). DSL 은 제출 에러를 스텝 실패로 처리할 뿐 부정 기대가 없다. `expectRevert` 는 *채굴 후 status 0x0* 만 표현 | (B) `expectReject`/`expectSubmitError` — 제출 자체가 실패해야 통과. + 이 체인의 below-min 이 제출거부인지 채굴-revert 인지 **라이브 확정** 필요(`examples/specs/stablenet-fee-boundary.json` 은 expectRevert 를 쓰는데 실제 거부면 실패함) |
-| `accesslist-gasprice-below-min-rejected` | 위 + **access-list(0x01) 트랜잭션 타입** 미지원 | (B) + (C) sendTx accessList 필드 |
-| `gaslimit-exceeded-rejected` | intrinsic-gas 초과 → 제출 거부 추정 | (B) (라이브 확정) |
+| `accesslist-gasprice-below-min-rejected` | (B) 는 확보됐으나 **access-list(0x01) 트랜잭션 타입** 미지원 | (C) sendTx accessList 필드 |
 | `revert-tx-status-zero` · `out-of-gas-consumes-all` | 되돌아가는/가스소진 **컨트랙트 자산**과 gasUsed==gasLimit 판정이 필요 | 컨트랙트 바이트코드 자산 + receipt `gasUsed`/`gasLimit` read (부분 표현 가능, 자산 확보 선행) |
 | `authorized-account-gastip-free` | **거버넌스 쿼럼 흐름**(proposeAddAuthorizedAccount → 승인) 을 먼저 태워야 한다 | system-contracts 배치와 함께 — 거버넌스 스텝 표현 확보 후 |
 
-### accounts 잔여 23건과 필요한 문법 확장
+### accounts 잔여 20건과 필요한 문법 확장
 
-12건은 이관 완료(9 라이브 + secp256r1 3 오프라인). 나머지 23건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+15건은 이관 완료(9 라이브 + 제출거부 3 라이브 + secp256r1 3 오프라인). 나머지 20건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
-| `insufficient-funds-rejected` · `dynamic-fee-below-basefee-rejected` · `gas-limit-exceeds-block-rejected` · `feepayer-insufficient-rejected` · `fee-delegated-unfunded-feepayer-rejected` | **제출 거부**(eth_sendTransaction/RawTransaction 이 에러 반환). DSL 은 제출 에러를 스텝 실패로 처리할 뿐 부정 기대가 없다 | (B) `expectReject`/`expectSubmitError` — gas-policy 갭과 동일 |
+| `feepayer-insufficient-rejected` · `fee-delegated-unfunded-feepayer-rejected` | (B) `expect:"reject"` 는 확보됐으나 **fee-delegation(0x16)** tx(feePayer 이중서명) 미지원 — 제출거부 자체는 표현 가능하나 0x16 를 조립할 수단이 없다 | (D) sendTx feePayer + 0x16 인코딩 |
 | `fd-sender-sig-invalid-rejected` · `fd-feepayer-sig-invalid-rejected` · `fee-delegated-sender-sig-invalid-rejected` · `fee-delegated-feepayer-sig-invalid-rejected` | 위 (B) + **손상된 이중서명 raw 트랜잭션 조립**(EncodeFeeDelegatedTampered) 을 spec 에서 만들 수단이 없다 | (B) + raw 서명 조립 자산 |
 | `fee-delegated-transfer` · `external-fee-delegated-transfer` | **fee-delegation(0x16) 트랜잭션** — sendTx 에 feePayer(이중서명) 필드가 없다 | (D) sendTx feePayer + 0x16 인코딩 |
 | `access-list-tx` | **access-list(0x01) 트랜잭션 타입** 미지원 | (C) sendTx accessList 필드 |
