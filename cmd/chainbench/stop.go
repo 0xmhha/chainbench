@@ -7,7 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 func newStopCmd() *cobra.Command {
@@ -19,7 +19,7 @@ func newStopCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir with a setup's nodeset.json is required")
 			}
-			ns, err := state.LoadNodeSet(dataDir)
+			ns, err := session.LoadLocalNodeSet(dataDir)
 			if err != nil {
 				return err
 			}

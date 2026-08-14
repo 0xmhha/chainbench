@@ -13,7 +13,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/state"
 )
 
 func newCleanCmd() *cobra.Command {
@@ -41,7 +40,7 @@ func newCleanCmd() *cobra.Command {
 			}
 			out := cmd.OutOrStdout()
 			// Stop any running nodes first (best-effort).
-			if ns, err := state.LoadNodeSet(dataDir); err == nil {
+			if ns, err := session.LoadLocalNodeSet(dataDir); err == nil {
 				stopped, errs := setup.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
 				for _, e := range errs {
 					fmt.Fprintln(cmd.ErrOrStderr(), e)

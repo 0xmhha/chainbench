@@ -22,7 +22,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // Default returns a Server with the built-in chainbench tools registered. Chain
@@ -334,7 +334,7 @@ func statusTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("data_dir is required")
 			}
-			ns, err := state.LoadNodeSet(dir)
+			ns, err := session.LoadLocalNodeSet(dir)
 			if err != nil {
 				return "", err
 			}
@@ -693,7 +693,7 @@ func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
 		return node.AttachedSet(argString(args, "chain", ""), "attached", eps)
 	}
 	if dir := argString(args, "data_dir", ""); dir != "" {
-		return state.LoadNodeSet(dir)
+		return session.LoadLocalNodeSet(dir)
 	}
 	return node.NodeSet{}, fmt.Errorf("provide rpc (array) or data_dir")
 }

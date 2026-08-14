@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 func newStatusCmd() *cobra.Command {
@@ -18,7 +18,7 @@ func newStatusCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir with a setup's nodeset.json is required")
 			}
-			ns, err := state.LoadNodeSet(dataDir)
+			ns, err := session.LoadLocalNodeSet(dataDir)
 			if err != nil {
 				return err
 			}

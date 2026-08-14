@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // startTool provisions and launches a local chain network, then persists its
@@ -62,7 +62,7 @@ func startTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			if err := state.SaveNodeSet(dataDir, ns); err != nil {
+			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
 				return "", err
 			}
 			var b strings.Builder
@@ -93,7 +93,7 @@ func stopTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("data_dir is required")
 			}
-			ns, err := state.LoadNodeSet(dir)
+			ns, err := session.LoadLocalNodeSet(dir)
 			if err != nil {
 				return "", err
 			}
