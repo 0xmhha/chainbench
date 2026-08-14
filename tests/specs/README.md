@@ -373,8 +373,8 @@ system-contracts (+8 spec) → gstable 5노드(Boho-v2 fresh, 8611-8615): 각 pa
 실제로 (1) `topics` 필터에 위치별 매칭(문자열=정확 매칭, null/비문자열=와일드카드)을, (2) `select:topicN`(topic0..N)
 으로 특정 topic 추출을, (3) `index` 로 매칭 로그 중 N번째 선택을 **이미 지원**한다. 따라서 위 3건은 **신규 문법 없이**
 표현 가능했고 라이브 통과했다. (진짜 갭인 "`select` 배열 인덱싱"은 `resolve.go` 의 JSON-path 배열 인덱싱 — 별개 사안이며
-`admin-peers-populated`·`prev-seals-quorum` 등에 여전히 적용된다.) 남은 `token-transfer-from-moves-balance` 는
-로그 갭이 아니라 **2-계정 서명** 갭이다.
+`admin-peers-populated`·`prev-seals-quorum` 등에 여전히 적용된다.) `token-transfer-from-moves-balance` 도
+`sendTx key:`(로컬 서명) + multi-arg `derive abiCall` 만으로 표현 가능했다 — 별도 2-계정 서명 Go 프리미티브는 불필요.
 
 ## 이관하면서 드러난 레거시 케이스의 결함
 
@@ -469,7 +469,7 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 | ~~`authorized-tx-executed-event`~~ 🟡 **이관 완료(오프라인 validate·라이브 미검증)** — 신규 DSL 코드 불필요(기존 프리미티브 조합): `newAccount`→node1 펀딩→GovCouncil(0x…1004) `proposeAddAuthorizedAccount(0x93a8bb99)`→en2 approve(자동 execute)로 fresh 계정 authorize→그 계정 로컬서명(`sendTx key`)으로 값 전송→그 tx 영수증에 AccountManager 의 **AuthorizedTxExecuted** 로그(topic0 `0x40e728a8…`)가 붙는지 `receiptLog` **어세션**(topic:0, expected=topic0 자기자신 → 존재 시 Equal 통과, 부재 시 no-matching-log 오류)으로 확인. (G) 실증 | fresh 넷 라이브 pass 확인 | — |
 | `authorized-extra-bit-synced`·`blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved` (4) | 순수 read(isAuthorized/isBlacklisted/getBalance)라 **표현 자체는 가능**하나 fixture 계정이 **`account-extra` 제네시스 오버레이**에서만 존재/설정됨. 표준 stablenet 엔 없어 라이브 미검증 | `account-extra` cap 오버레이 기동으로 라이브 검증 후 이관(현재는 표현 가능·미기동) |
 | `proposal-expiry-transitions` (1) | **`short-expiry` 오버레이 + 만료 시간 대기**(35s) 후 expireProposal. 조건부/시간 대기 표현 없음 | `short-expiry` cap + 시간/조건 대기 |
-| `token-transfer-from-moves-balance` (1) | transferFrom 은 owner≠spender **2계정**(owner approve → spender 가 대신 transferFrom)이 필요하다. DSL sendTx 는 단일 노드서명 계정만 태운다. (approve/transfer 이벤트 로그 검증분은 이관 완료 — `logs` 가 topic 필터·`select:topicN`·`index` 를 이미 지원함을 재확인) | 2-계정 서명(별도 서명자 키) |
+| ~~`token-transfer-from-moves-balance`~~ ✅ **이관 완료(라이브 pass)** — transferFrom 은 owner≠spender **2계정**(owner approve → spender 가 대신 transferFrom)이 필요하다. **갭 노트는 stale 였다**: `sendTx key:` 로컬서명(feepayer 케이스에서 추가)이 호출마다 별도 지갑을 열어 임의 키로 서명하므로, 한 spec 안에서 owner·spender 두 계정이 각자 서명 가능 — **신규 Go 프리미티브 불필요**. 흐름: `newAccount`×3(owner·spender·recipient)→owner·spender 를 node1 펀딩(spender 는 이 넷 고 gasPrice 로 transferFrom 가스가 ~7 ether 라 10 ether 펀딩)→`derive abiCall(0x095ea7b3 approve,[$spender,1000000])` 을 owner 키로 서명→`derive abiCall(0x23b872dd transferFrom,[$owner,$recipient,1000000])` 을 spender 키로 서명→`derive abiCall(0x70a08231 balanceOf,[$recipient])` calldata 로 `call`==0xf4240 확인. 토큰 0x1000(네이티브코인 어댑터) balanceOf==네이티브 잔고 실측 확인. fresh 계정이라 재실행 멱등 | ✅ (기존) `sendTx key:` + multi-arg `derive abiCall` (신규 불필요) |
 
 ## 규약
 

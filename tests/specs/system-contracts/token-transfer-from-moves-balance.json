@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1",
+  "id": "token-transfer-from-moves-balance",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "newAccount": { "save": "owner", "saveKey": "ownerKey" } },
+    { "newAccount": { "save": "spender", "saveKey": "spenderKey" } },
+    { "newAccount": { "save": "recipient", "saveKey": "recipientKey" } },
+
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$owner", "value": "5000000000000000000", "gas": "21000",
+                  "save": "fundOwnerHash" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$spender", "value": "10000000000000000000", "gas": "21000",
+                  "save": "fundSpenderHash" } },
+
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x095ea7b3", "of": ["$spender", "1000000"], "save": "approveData" } },
+    { "sendTx": { "on": "en1", "key": "$ownerKey",
+                  "to": "0x0000000000000000000000000000000000001000",
+                  "data": "$approveData", "save": "approveHash" } },
+
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x23b872dd", "of": ["$owner", "$recipient", "1000000"], "save": "transferFromData" } },
+    { "sendTx": { "on": "en1", "key": "$spenderKey",
+                  "to": "0x0000000000000000000000000000000000001000",
+                  "data": "$transferFromData", "save": "transferFromHash" } },
+
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x70a08231", "of": ["$recipient"], "save": "balOfRecipient" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$fundOwnerHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$fundSpenderHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$approveHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$transferFromHash", "expected": "0x1" },
+    { "assert": "call",
+      "to": "0x0000000000000000000000000000000000001000",
+      "data": "$balOfRecipient",
+      "compare": "Equal",
+      "expected": "0x00000000000000000000000000000000000000000000000000000000000f4240" }
+  ]
+}
