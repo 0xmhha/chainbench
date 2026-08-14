@@ -82,6 +82,19 @@ func padWord32(b []byte) []byte {
 	return w
 }
 
+// WordAt returns the index-th 32-byte word (0x-hex, 64 chars) of a 0x-hex blob
+// and whether it exists. It is the inverse of the head-word packing EncodeABI
+// does: pulling one fixed-layout field (a proposal status, a proposalId) out of
+// an eth_call return or event data. Bounds-only; the caller validates hex.
+func WordAt(hexBlob string, index int) (string, bool) {
+	h := strings.TrimPrefix(strings.TrimSpace(hexBlob), "0x")
+	start := index * 64
+	if index < 0 || start+64 > len(h) {
+		return "", false
+	}
+	return "0x" + h[start:start+64], true
+}
+
 // EncodeCallArgs builds eth_call/tx calldata: the 4-byte selector of methodSig
 // followed by EncodeABI(args...). Returns 0x-hex. Unlike EncodeCall (fixed words
 // only), this supports dynamic bytes/string arguments.

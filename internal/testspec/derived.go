@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -264,10 +265,13 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 	if _, err := hex.DecodeString(sel); err != nil {
 		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
 	}
-	var b strings.Builder
-	b.WriteString("0x")
-	b.WriteString(sel)
+	selBytes, err := hex.DecodeString(sel)
+	if err != nil {
+		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
+	}
+	var args []accounts.Arg
 	if raw, ok := spec["of"].([]any); ok {
+		args = make([]accounts.Arg, 0, len(raw))
 		for i, v := range raw {
 			n, err := parseBigValue(v)
 			if err != nil {
@@ -276,12 +280,10 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 			if n.Sign() < 0 || n.BitLen() > 256 {
 				return nil, fmt.Errorf("testspec: derive abiCall: of[%d] does not fit in a 32-byte word", i)
 			}
-			word := make([]byte, 32)
-			n.FillBytes(word)
-			b.WriteString(hex.EncodeToString(word))
+			args = append(args, accounts.Uint(n))
 		}
 	}
-	return b.String(), nil
+	return "0x" + hex.EncodeToString(append(selBytes, accounts.EncodeABI(args...)...)), nil
 }
 
 // deriveWord extracts the index-th 32-byte (64-hex) word from a 0x-hex blob —
@@ -301,19 +303,18 @@ func deriveWord(spec map[string]any) (any, error) {
 	if !ok {
 		return nil, fmt.Errorf("testspec: derive word: of[0] must be a 0x-hex string, got %T", raw[0])
 	}
-	h := strings.TrimPrefix(strings.TrimSpace(s), "0x")
-	if _, err := hex.DecodeString(h); err != nil {
+	if _, err := hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(s), "0x")); err != nil {
 		return nil, fmt.Errorf("testspec: derive word: of[0] is not valid hex: %w", err)
 	}
 	idx := 0
 	if n, ok := uintArg(spec["index"]); ok {
 		idx = int(n)
 	}
-	start := idx * 64
-	if start+64 > len(h) {
-		return nil, fmt.Errorf("testspec: derive word: index %d out of range for a %d-hex-char blob", idx, len(h))
+	word, ok := accounts.WordAt(s, idx)
+	if !ok {
+		return nil, fmt.Errorf("testspec: derive word: index %d out of range", idx)
 	}
-	return "0x" + h[start:start+64], nil
+	return word, nil
 }
 
 // parseBigValue converts a spec value (0x-hex string, decimal string, or JSON

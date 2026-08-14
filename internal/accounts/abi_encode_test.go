@@ -69,6 +69,34 @@ func TestEncodeABI_NestedBytesPayload(t *testing.T) {
 	}
 }
 
+func TestWordAt(t *testing.T) {
+	// A two-word blob: word[0] = 1, word[1] = 0xab. WordAt is the inverse of the
+	// head-word packing EncodeABI does.
+	blob := "0x" + z64[:63] + "1" + z64[:62] + "ab"
+	if w, ok := accounts.WordAt(blob, 0); !ok || w != "0x"+z64[:63]+"1" {
+		t.Errorf("WordAt(blob,0) = %q,%v want word[0]", w, ok)
+	}
+	if w, ok := accounts.WordAt(blob, 1); !ok || w != "0x"+z64[:62]+"ab" {
+		t.Errorf("WordAt(blob,1) = %q,%v want word[1]", w, ok)
+	}
+	// out of range and negative index -> not found.
+	if _, ok := accounts.WordAt(blob, 2); ok {
+		t.Errorf("WordAt accepted an out-of-range index")
+	}
+	if _, ok := accounts.WordAt(blob, -1); ok {
+		t.Errorf("WordAt accepted a negative index")
+	}
+	// round-trip: WordAt(EncodeABI(Uint(n))) recovers n.
+	raw := accounts.EncodeABI(accounts.Uint(big.NewInt(0xbeef)))
+	w, ok := accounts.WordAt("0x"+hexOf(raw), 0)
+	if !ok {
+		t.Fatalf("WordAt on a packed word returned not-ok")
+	}
+	if n, good := accounts.WordToBig(w); !good || n.Int64() != 0xbeef {
+		t.Errorf("round-trip WordToBig(WordAt(pack(0xbeef))) = %v,%v", n, good)
+	}
+}
+
 func sel4(sig string) string { return strings.TrimPrefix(accounts.Selector(sig), "0x") }
 func hexOf(b []byte) string {
 	var s strings.Builder
