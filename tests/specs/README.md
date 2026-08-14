@@ -31,7 +31,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `accounts` | 35 | **17** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
 | `gas-policy` | 17 | **13** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | **12** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 1건**(mint-proposal-executes: propose→`receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve calldata 조립→정족수 자동 execute→잔고 증가). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 34건 갭(아래) |
+| `system-contracts` | 46 | **18** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 7건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event 단일 라운드 + unauthorize·address-unblacklisted 2-라운드: `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve calldata 조립→정족수 자동 execute→`call` 상태/`logs` 이벤트 확인). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 28건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -176,6 +176,35 @@ system-contracts (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach):
 **attach 모드 노드 셀렉터 주의**: attach 모드에선 모든 노드가 RoleEndpoint 로 잡히므로(chainbench 가 실제
 consensus role 을 알 수 없음) sendTx `on` 은 실제 역할과 무관하게 `en1`/`en2`/... 로 지정한다.
 
+### 라이브 검증 근거 — 거버넌스 쿼럼(G) 확장 배치 (2026-08-14)
+
+`(G)` 프리미티브(`receiptLog` + `derive abiCall`)만으로 GovCouncil(0x1004)·GovMasterMinter(0x1002) 흐름
+6건을 추가 이관·라이브 확정했다. propose calldata 는 정적(selector + 고정 인자)이라 하드코딩하고, 런타임
+proposalId 만 `receiptLog` 로 추출해 approve calldata 를 `derive abiCall` 로 조립한다. 2-라운드 케이스는
+propose→approve 사이클을 두 번(add→remove) 이어 붙인다.
+
+```
+system-contracts (+6 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=6 fail=0
+  단일 라운드:
+    blacklist-proposal-executes:  proposeAddBlacklist(C0FFEE06)→approve→
+                                  AccountManager.isBlacklisted==1 & GovCouncil AddressBlacklisted 로그.
+    authorize-proposal-executes:  proposeAddAuthorizedAccount(C0FFEE0A)→approve→isAuthorized==1.
+    configure-minter-proposal-executes: proposeConfigureMinter(C0FFEE07,10코인)→approve→
+                                  NativeCoinAdapter.minterAllowance==10e18 (`call` Equal 전체 워드).
+    authorized-account-added-event: proposeAddAuthorizedAccount(C0FFEE11)→approve→isAuthorized==1 &
+                                  AuthorizedAccountAdded 로그.
+  2-라운드(add→remove):
+    unauthorize-proposal-executes: authorize(C0FFEE12)→approve→removeAuthorizedAccount→approve→
+                                  isAuthorized==0 & AuthorizedAccountRemoved 로그.
+    address-unblacklisted-event:   blacklist(C0FFEE13)→approve→removeBlacklist→approve→
+                                  isBlacklisted==0 & AddressUnblacklisted 로그.
+```
+
+계약별 selector/이벤트 topic0 은 `accounts.EncodeCallArgs`/`EventTopic` 으로 오프라인 산출해 spec 에 고정.
+상태 확인은 AccountManager(0x1003→isAuthorized/isBlacklisted는 0xB00003)·NativeCoinAdapter(0x1000) 의 read
+getter 를 `call` 어세션으로 조회한다. 대상 주소는 케이스마다 전용 fixture(C0FFEE06/0A/07/11/12/13)를 예약해
+서로 충돌하지 않는다(fresh-net 가정 유지).
+
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
 이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
@@ -248,16 +277,20 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 | `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
 | `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
 
-### system-contracts 잔여 34건과 필요한 문법 확장
+### system-contracts 잔여 28건과 필요한 문법 확장
 
-12건은 이관 완료(모두 라이브 — read 9 + 토큰 write+event 2 + 거버넌스 쿼럼 1). 나머지 34건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
-잔여 다수(≈19건)가 **거버넌스 쿼럼 흐름**(propose → 검증자 N명 approve → 정족수 자동 execute)에
-의존한다. `(G)` 프리미티브(`receiptLog` read + `derive abiCall`)로 이 흐름을 표현할 수 있음을
-mint-proposal-executes 로 라이브 확정했고(위 배치 근거 참조), 나머지는 케이스별 calldata/예약 예치 + 라이브 검증만 남았다.
+18건은 이관 완료(모두 라이브 — read 9 + 토큰 write+event 2 + 거버넌스 쿼럼 7). 나머지 28건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+잔여 다수(≈13건)가 여전히 **거버넌스 쿼럼 흐름**에 의존하나, `(G)` 프리미티브(`receiptLog` + `derive abiCall`)로
+이 흐름을 표현할 수 있음은 이미 7건으로 입증됐다(위 배치 근거). 남은 갭은 케이스별로 다르다:
+① 실행 결과를 **proposals() 상태 워드 디코드**로만 확인하는 케이스(자연스러운 `call`/이벤트 side-effect 부재) —
+`(H) derive op:"word"`(hex blob 의 N번째 32바이트 워드 추출)로 status==Executed(3) 를 표현하면 해소.
+② **payable proposeBurn + 예약 인출증명** 필요 케이스. ③ **부정 기대**(정족수 미달/이중 claim/비회원 호출).
+④ **fee-delegation·키생성·2계정 서명·시간대기** 등 기존 갭.
 
 | 레거시 케이스 (건수) | 갭 | 필요 확장 |
 |---|---|---|
-| `burn-proposal-executes`·`configure-minter-proposal-executes`·`gastip-governance-updates-header`·`blacklist-proposal-executes`·`authorize-proposal-executes`·`validator-add-member-executes`·`masterminter-member-add-remove`·`remove-minter-executes`·`unblacklist-restores`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events`·`authorized-account-added-event`·`unauthorize-proposal-executes`·`address-unblacklisted-event`·`mint-transfer-event`·`burn-transfer-event` (19) | **거버넌스 쿼럼 흐름** — propose(payable 포함)→검증자 N명 approve→정족수 execute→상태/이벤트 확인. `(G)` 프리미티브로 표현 가능(mint-proposal-executes 로 입증)하나, 케이스별 propose calldata·예약 예치·이벤트 로그(Transfer/AddressBlacklisted 등) 매칭을 각각 조립+라이브 검증해야 한다 | (G) `receiptLog`+`derive abiCall` (확보) + 케이스별 calldata + 이벤트 로그 매칭 |
+| `gastip-governance-updates-header`·`validator-add-member-executes`·`masterminter-member-add-remove`·`remove-minter-executes`·`unblacklist-restores`·`mint-transfer-event` (6) | `(G)` 로 흐름은 표현 가능하나, **실행 확인**이 proposals() 상태/멤버 tuple 워드 디코드 또는 검증자셋 quorum 변경(파괴적)에 의존. 대부분 케이스별 calldata + side-effect 관찰 수단만 남음 | (G)(확보) + `(H) derive op:"word"` 상태 워드 디코드 + 케이스별 calldata |
+| `burn-proposal-executes`·`burn-transfer-event`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events` (7) | **payable proposeBurn** (msg.value==amount, 제안자=burn 대상) + 예약 인출증명 + refund 라이프사이클(cancel/disapprove/claim) + 상태/이벤트 확인 | (G)(확보) + sendTx `value`(확보) + 예약 BurnProof calldata + `(H)` 상태 워드 |
 | `quorum-deficient-stays-voting`·`claim-zero-refund-reverts`·`claim-burn-refund-double-reverts`·`direct-blacklist-call-rejected`·`non-member-configure-minter-rejected` (5) | 위 (G) + **부정 기대**(정족수 미달 execute revert / 이중 claim revert / 비회원 호출 reject-or-revert). DSL 은 제출에러를 스텝 실패로 처리할 뿐 부정 기대가 없다 | (G) + (B) `expectReject`/채굴후 status 0x0 기대 (accounts·gas-policy 와 동일) |
 | `sender-blacklisted-rejected`·`recipient-blacklisted-rejected` (2) | 거버넌스 blacklist 후 **제출 거부**(에러 메시지 "blacklist"). 거버넌스 + 제출거부 부정기대 | (G) + (B) |
 | `feepayer-blacklisted-rejected` (1) | 위 + **fee-delegation(0x16)** tx (feePayer 이중서명) 미지원 | (G) + (B) + (D) sendTx feePayer |
