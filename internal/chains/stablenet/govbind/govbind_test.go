@@ -76,12 +76,12 @@ func TestBurnRefundBuilders(t *testing.T) {
 	if got := govbind.DisapproveProposalCall(big.NewInt(7)); got != "0x"+sel4("disapproveProposal(uint256)")+z64[:63]+"7" {
 		t.Errorf("DisapproveProposalCall = %s", got)
 	}
-	// BurnRefundClaimed derives from its signature; BurnDepositRefunded is pinned.
+	// Both burn-refund topics derive from their event signatures (live-verified).
 	if govbind.BurnRefundClaimedTopic != accounts.EventTopic("BurnRefundClaimed(address,uint256)") {
 		t.Errorf("BurnRefundClaimedTopic does not match the derived topic")
 	}
-	if len(govbind.BurnDepositRefundedTopic) != 66 {
-		t.Errorf("BurnDepositRefundedTopic malformed: %q", govbind.BurnDepositRefundedTopic)
+	if govbind.BurnDepositRefundedTopic != accounts.EventTopic("BurnDepositRefunded(uint256,address,uint256)") {
+		t.Errorf("BurnDepositRefundedTopic does not match the derived topic")
 	}
 }
 

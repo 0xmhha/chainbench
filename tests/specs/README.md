@@ -31,7 +31,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `accounts` | 35 | **17** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
 | `gas-policy` | 17 | **13** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | **27** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. **비회원 로컬서명 3건**(direct-blacklist·non-member-configure-minter·sender-blacklisted rejected — `newAccount`+`sendTx key` 로컬서명). 잔여 19건 갭(아래) |
+| `system-contracts` | 46 | **35** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. **비회원 로컬서명 3건**(direct-blacklist·non-member-configure-minter·sender-blacklisted rejected — `newAccount`+`sendTx key` 로컬서명) + **burn-refund 라이프사이클 8건**(burn-transfer-event·burn-cancel-refundable·burn-execute-no-refundable·burn-reject-refundable·claim-burn-refund-succeeds·burn-refund-events·claim-zero-refund-reverts·claim-burn-refund-double-reverts — **Boho-v2 넷**(genesis 오버레이)에서 proposeBurn→cancel/disapprove/claim + refundableBalance **전후 델타**(`derive diff`) 어세션으로 재사용 넷 누적 간섭 회피). 잔여 11건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -328,6 +328,44 @@ system-contracts (+3 spec) → gstable 5노드(fresh, 8601-8605): 각 pass=1 fai
 - **엔진 배선**: `AccountProvider` 를 `internal/engine/{app,attach}.go` 의 `testspec.Deps.Accounts` 로 주입한다
   (기존엔 미배선이라 `key` 사용 시 "no account provider" 로 실패했다).
 
+### 라이브 검증 근거 — burn-refund 라이프사이클 8건 (2026-08-14, Boho-v2 넷)
+
+refund 함수(`claimBurnRefund` 0x936834b9, `refundableBalance` 0xb03d36cd)는 **v2 GovMinter(Boho 하드포크
+업그레이드 계약)에만** 존재한다. chainbench 의 stablenet genesis 템플릿엔 `boho` 섹션이 없어 어떤 넷에서도
+기본 활성되지 않으므로, **`--genesis-overlay`**(`{"genesis":{"config":{"bohoBlock":2,"boho":{"systemContracts":
+{"govMinter":{"address":"0x…1003","version":"v2"}}}}}}`)로 별도 넷(8611-8615)을 기동해 검증했다. 8601-8605
+운영 넷은 건드리지 않았다.
+
+```
+system-contracts (+8 spec) → gstable 5노드(Boho-v2 fresh, 8611-8615): 각 pass=1 fail=0
+  burn-cancel-refundable: refBefore(refundableBalance[node2]) → node2 proposeBurn(en2,value 1e18) →
+                       receiptLog $pid → derive abiCall cancelProposal(0xe0a8f6f5) → node2 cancel →
+                       refAfter → assert derive diff(refAfter,refBefore)==1e18.
+  burn-execute-no-refundable: proposeBurn(node1,en1)→approve(en2 자동 execute)→proposals()[9]==Executed(3)
+                       & refundableBalance 델타==0 (실행은 refund 미발생).
+  burn-reject-refundable: proposeBurn(node3,en3)→비제안자 node1/2/4 disapprove(0xc8541fe0, en1/2/4) →
+                       proposals()[9]==Rejected(7) & refundableBalance[node3] 델타==1e18
+                       (maxRejections=memberCount-quorum=4-2=2, disapproval>2 즉 3건에서 Rejected).
+  burn-transfer-event: proposeBurn(node1,en1) → logs(0x1000,[Transfer,from=node1,to=0x1003]) count≥1.
+  claim-burn-refund-succeeds: propose→cancel(refMid 델타==1e18)→claim(0x936834b9)→refAfter 절대 0
+                       (claim 은 msg.sender 전액을 0 으로).
+  burn-refund-events: propose→cancel→claim; cancel 블록 logs(0x1003, BurnDepositRefunded) count≥1 &
+                       claim 블록 logs(0x1003, BurnRefundClaimed) count≥1.
+  claim-zero-refund-reverts: newAccount(refundable 0)→node1 펀딩→로컬서명 claim `expect:"revert"`(gas 명시).
+  claim-burn-refund-double-reverts: node2 propose→cancel→claim1 성공(전액 0화)→claim2 `expect:"revert"`.
+```
+
+- **누적 간섭 회피 = 전후 델타**: refundableBalance 는 재사용 넷에서 제안자별로 **누적**된다. 절대값
+  어세션(`>0`/`==0`)은 실행 순서에 취약하므로, cancel/reject 는 `derive diff(refAfter,refBefore)==1e18`
+  로 **증분**만 검사한다. claim 후 잔액은 claim 이 전액을 0 으로 만드니 **절대 0** 이 순서와 무관하게 성립한다.
+- **제안자↔RPC 짝**: 멤버 키는 각자 노드에만 unlock 돼 있어 `from`=멤버는 **자기 노드 RPC**(en1..en4=node1..4)
+  로 보내야 한다. proposeBurn 은 payable(msg.value==amount) + from==msg.sender + onlyActiveMember.
+- **withdrawalId 유일성**: proposeBurn 은 (withdrawalId, proofHash) 재사용을 propose 단계에서 revert 한다.
+  각 spec 은 고유 wid(wd-xfer/wd-execute/wd-cancel/wd-reject/wd-claim/wd-events2/wd-double)를 쓰며,
+  **fresh Boho-v2 넷에서 단발 통과**를 전제로 한다(같은 넷 재실행 시 wid 소진으로 propose fail — 다른 spec 과 동일).
+- **레거시 상수 결함 동시 수정**: `govbind.BurnDepositRefundedTopic` 이 틀린 파라미터 순서로 pin 돼 있었다
+  (위 "레거시 결함" 표 참조). 라이브 방출 topic `0x116044c8…` 으로 교체.
+
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
 이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
@@ -347,6 +385,7 @@ system-contracts (+3 spec) → gstable 5노드(fresh, 8601-8605): 각 pass=1 fai
 | `wbft-extra-info-fields` | `istanbul_getWbftExtraInfo` 를 **`"latest"` 태그로 호출** — 체인이 `block -2 not found` 로 거부한다. 구체적 블록 번호가 필요 | 헤드를 먼저 읽어(`read` + `$head`) 넘긴다 |
 | `wbft-extra-info-fields` | `ChainCompat: [stablenet, wbft]` 인데 **`gasTip` 은 stablenet 전용** — wbft 응답에 그 필드가 없다 | 공통 필드(`committedSeal`·`preparedSeal`)만 양 체인 대상으로 남기고, `gasTip` 은 `stablenet-gastip-field.json` 으로 분리 |
 | `p256-precompile-active` (hardfork) | 소스는 "stablenet 이 Boho 를 genesis 활성 → 0x100 P256VERIFY 가 valid 벡터에 `0x..01` 반환"을 단언하나, **실제 gstable 빌드는 0x100 에 대해 `"0x"` 반환** — precompile 미탑재. accounts secp256r1 3건과 동일 증상 | 라이브 반증으로 이관 보류. Boho/P256 탑재 바이너리 확보 여부를 체인팀에 확인 후 재분류 |
+| `govbind.BurnDepositRefundedTopic` (binding) | 상수가 `0x334fe3ea…`(=`BurnDepositRefunded(address,uint256,uint256)`)로 **파라미터 순서가 틀렸다**. 라이브 v2 넷에서 cancel 은 `0x116044c8…`(=`BurnDepositRefunded(uint256,address,uint256)` — proposalId 가 첫 indexed)을 방출. 레거시 `tests/anzeon/gov_burn_refund.go:197` 이 이 상수로 cancel 영수증을 검사하므로 v2 넷 대상 실행 시 실패했을 것 | 라이브로 확인한 `0x116044c8…` 으로 상수 교체 + 유닛테스트를 `EventTopic("BurnDepositRefunded(uint256,address,uint256)")` 파생 검증으로 강화(len==66 → 정확 매칭). BurnRefundClaimed 는 기존 그대로 정확 |
 | `system-contracts-deployed` (system-contracts) | `eth_getCode ≠ "0x"` 를 **8개 시스템 주소 전체**에 걸었으나, `0xB00001-3`(bls-pop·native-coin-manager·account-manager)은 **네이티브 precompile** — `getCode` 는 `"0x"`(빈 코드)를 반환하고 `eth_call` 로만 응답한다. getCode 로 "배포" 여부를 판정하는 건 precompile 엔 부적절 | EVM 바이트코드 계약 5종(0x1000-0x1004)만 codeAt 로 판정. precompile 은 각자의 read 케이스(account-*-readable 등)로 활성 확인 |
 | `tipcap-underpriced-rejected` (gas-policy) | 소스는 "유효 feeCap + tipCap=1 wei 는 MinTip 미만 → ErrUnderpriced 로 제출거부"를 단언하나, **실제 gstable 빌드는 이 tx 를 수락·채굴**(블록 0x18, status 0x1, maxPriorityFeePerGas=0x1). 이 빌드는 제출 시점에 MinTip 을 강제하지 않는다 — p256 3건과 동일한 라이브 반증 유형 | 이관 보류(삭제). MinTip 강제 빌드/설정 확보 여부를 체인팀에 확인 후 재분류. 현 빌드로는 표현해도 무의미 |
 | `stablenet-fee-boundary` (examples, 문법예시) | ① below-min tx 에 `expectRevert:true` 를 썼으나 실제로는 **제출거부**(채굴 후 revert 아님) — feecap-below-min-rejected 로 라이브 확정. ② "accepted" tx 가 feeCap 을 1e12 로 하드코딩했는데 이 네트워크 최소치는 2e13 이라 **이것마저 거부**됨 | ① `expect:"reject"` 로 교정. ② baseFee 를 읽어 `derive sum [$base,$base]` 로 feeCap 을 산출해 주입 → 수정 후 라이브 pass |
@@ -402,7 +441,7 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 
 ### system-contracts 잔여 21건과 필요한 문법 확장
 
-25건 커버 완료(라이브 — read 9 + 토큰 write+event 2 + 거버넌스 쿼럼 10 + 비회원 로컬서명 3, +unblacklist-restores 는 address-unblacklisted-event 로 중복 커버). 나머지 21건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
+33건 커버 완료(라이브 — read 9 + 토큰 write+event 2 + 거버넌스 쿼럼 10 + 비회원 로컬서명 3 + burn-refund 라이프사이클 8, +unblacklist-restores 는 address-unblacklisted-event 로 중복 커버). 나머지 13건은 아래 갭에 막혀 있다 — 가짜로 만들지 않고 남긴다.
 잔여 다수(≈9건)가 여전히 **거버넌스 쿼럼 흐름**에 의존하나, `(G)` 프리미티브(`receiptLog` + `derive abiCall`)로
 이 흐름을 표현할 수 있음은 이미 8건으로 입증됐다(위 배치 근거). 남은 갭은 케이스별로 다르다:
 ① 실행 결과를 **proposals() 상태 워드 디코드**로만 확인하는 케이스(자연스러운 `call`/이벤트 side-effect 부재) —
@@ -420,10 +459,10 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 | ~~`remove-minter-executes`~~ ✅ **이관 완료**(라이브) — configure→approve→`(H) derive word` 로 중간 isMinter==1 확인→remove→approve→`call` isMinter==0 | — | — |
 | ~~`mint-transfer-event`~~ ✅ **이관 완료**(라이브, fresh 넷) — proposeMint(C0FFEE30)→approve 자동 execute→`balanceAt`==1e18 & NativeCoinAdapter Transfer(0x0→C0FFEE30) `logs`. 감쇠 넷 재기동(20M) 후 검증 | — | — |
 | ~~`unblacklist-restores`~~ ✅ **커버 완료**(중복) — address-unblacklisted-event 가 add→approve→remove→approve→isBlacklisted==0 을 이미 전량 포함(이벤트 확인만 추가) | — | — |
-| `burn-transfer-event`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events` (6) | **payable proposeBurn**(확보) + refund 라이프사이클(cancel/disapprove/claim) + refundableBalance 관찰. 재사용 넷에서 refundableBalance 가 제안자별 누적 → `>0`/`==0` 어세션 간섭(순서 위험) | (G)+sendTx `value`+`(H)`(확보) + cancel/disapprove/claim selector + fresh-net 격리(제안자 분리) |
+| ~~`burn-transfer-event`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events`~~ ✅ **이관 완료**(라이브, Boho-v2 넷) — proposeBurn→cancel/disapprove/claim. 누적 간섭은 **refundableBalance 전후 델타**(`derive diff` before/after==1e18, execute==0, claim 후 절대 0)로 회피. reject 는 비제안자 3명 disapprove(maxRejections=2, >2 에서 Rejected)→상태워드[9]==7. transfer-event=NativeCoinAdapter Transfer, refund-event=BurnDepositRefunded+BurnRefundClaimed `logs` | — | — |
 | ~~`quorum-deficient-stays-voting`~~ ✅ **이관 완료**(라이브 pass) — proposeMint→정족수 미달 executeProposal 을 `expect:"revert"`(채굴후 status 0x0)로 확정→proposals() 상태워드[9]==Voting(1)→cleanup approve. (B) `expect:"revert"` 프리미티브 실증 | — | — |
 | ~~`direct-blacklist-call-rejected`·`non-member-configure-minter-rejected`~~ ✅ **이관 완료**(라이브 pass) — `newAccount`(런타임 키생성)→node1(멤버) 펀딩→비회원 로컬서명(`sendTx key`)으로 member-only 가드(AccountManager.blacklist / GovMasterMinter.proposeConfigureMinter)를 호출 시 `expect:"reject"` 제출거부 확정. (E) 비회원 로컬서명 프리미티브 실증 | — | — |
-| `claim-zero-refund-reverts`·`claim-burn-refund-double-reverts` (2) | 부정기대(이중/영 claim revert)는 확보됐으나 refund 라이프사이클(claim selector + refundableBalance 누적)에 종속 — 아래 burn-refund 배치와 함께 | (G) + (B)(확보) + claim/refund selector + fresh-net 격리 |
+| ~~`claim-zero-refund-reverts`·`claim-burn-refund-double-reverts`~~ ✅ **이관 완료**(라이브, Boho-v2 넷) — zero=`newAccount`(refundable 0)→로컬서명 claim `expect:"revert"`; double=cancel 로 refundable 적립→claim1 성공(전액 0화)→claim2 `expect:"revert"`. gas 명시로 제출→채굴 status 0x0 | — | — |
 | ~~`recipient-blacklisted-rejected`~~ ✅ **이관 완료**(라이브 pass) — GovCouncil 로 fresh 수취인 blacklist→ 노드(멤버)가 그 주소로 전송 시 `expect:"reject" reason:"blacklist"` 로 제출거부 확정→cleanup unblacklist. (G)+(B) 실증 | — | — |
 | ~~`sender-blacklisted-rejected`~~ ✅ **이관 완료**(라이브 pass) — `newAccount`→node1 펀딩→GovCouncil 로 그 주소 blacklist(자동 execute)→비회원 로컬서명 전송 시 `expect:"reject" reason:"blacklist"` 제출거부 확정. (E)+(G) 실증 | — | — |
 | `feepayer-blacklisted-rejected` (1) | 위 + **fee-delegation(0x16)** tx (feePayer 이중서명) 미지원 | (G) + (B) + (D) sendTx feePayer |
