@@ -31,7 +31,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `accounts` | 35 | **17** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
 | `gas-policy` | 17 | **13** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
 | `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | **22** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 10건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 24건 갭(아래) |
+| `system-contracts` | 46 | **24** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. 잔여 22건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -274,6 +274,33 @@ system-contracts (+1 spec) → gstable 5노드(재기동 fresh, 8601-8605): pass
   (status 0x0)한다 — 이미 실행된 게 아니라 **미실행 대기(Voting) 제안이 있어도** 중복을 막는다. 따라서 부분
   실패로 dangling 제안이 남으면 같은 deposit 재실행 불가 → fresh 넷에서 단발로 통과시킨다(DSL-MINT-EVT 전용 예약).
 
+### 라이브 검증 근거 — 부정기대 2건 (2026-08-14, fresh 넷)
+
+`expect:"revert"`(채굴후 status 0x0)·`expect:"reject"`(제출거부) 프리미티브(F1/F11, 이미 구현·커밋)를
+거버넌스 부정 케이스에 실증했다. 둘 다 노드(=거버넌스 멤버) 서명만으로 표현 가능해 **비회원 로컬서명 갭과 무관**하다.
+
+```
+system-contracts (+2 spec) → gstable 5노드(fresh, 8601-8605): 각 pass=1 fail=0
+  quorum-deficient-stays-voting: proposeMint(C0FFEE31, deposit DSL-QD-*) $propHash →
+                       receiptLog $pid → derive abiCall executeProposal(0x0d61b519) [$pid] →
+                       en1 executeProposal `expect:"revert"`(정족수 미달 → status 0x0) →
+                       call proposals($pid) $proposalsRet(cleanup 전 read) → en2 approve cleanup →
+                       assert txStatus $propHash==0x1 & derive word[9]($proposalsRet)==Voting(1) & 
+                       txStatus $apHash==0x1.
+  recipient-blacklisted-rejected: en1 proposeAddBlacklist(C0FFEE32,0x0d321273)→en2 approve(자동 execute) →
+                       call isBlacklisted(C0FFEE32,0xfe575a87 on 0xB00003) $isBl →
+                       en1 send→C0FFEE32 `expect:"reject" reason:"blacklist"`(제출거부) →
+                       en1 proposeRemoveBlacklist(0x3d4c0452)→en2 approve cleanup →
+                       assert txStatus add-approve==0x1 & derive word[0]($isBl)==1 & rm-approve==0x1.
+```
+
+- **부정 스텝이 fail-fast 로 검증을 담보**: `expect:"revert"`/`expect:"reject"` 스텝은 기대가 어긋나면
+  (revert 인데 성공, reject 인데 수락) 스텝이 실패→스펙 전체 fail. 따라서 pass 는 "정족수 미달 execute 가
+  실제 revert" · "blacklist 수취인 전송이 실제 제출거부"를 원자적으로 확정한다.
+- **cleanup 은 assertion 이전(step) 에 실행**: v1 은 steps→assertions 순서라, 상태워드/isBlacklisted 는
+  cleanup **직전** step 에서 read 해 저장(`$proposalsRet`/`$isBl`)한 뒤 assertion 이 그 값을 비교한다.
+  cleanup(approve/unblacklist)은 dangling 제안·잔존 blacklist 를 제거해 재사용 넷 오염을 막는다.
+
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
 이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
@@ -367,8 +394,11 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 | ~~`mint-transfer-event`~~ ✅ **이관 완료**(라이브, fresh 넷) — proposeMint(C0FFEE30)→approve 자동 execute→`balanceAt`==1e18 & NativeCoinAdapter Transfer(0x0→C0FFEE30) `logs`. 감쇠 넷 재기동(20M) 후 검증 | — | — |
 | ~~`unblacklist-restores`~~ ✅ **커버 완료**(중복) — address-unblacklisted-event 가 add→approve→remove→approve→isBlacklisted==0 을 이미 전량 포함(이벤트 확인만 추가) | — | — |
 | `burn-transfer-event`·`burn-cancel-refundable`·`burn-execute-no-refundable`·`burn-reject-refundable`·`claim-burn-refund-succeeds`·`burn-refund-events` (6) | **payable proposeBurn**(확보) + refund 라이프사이클(cancel/disapprove/claim) + refundableBalance 관찰. 재사용 넷에서 refundableBalance 가 제안자별 누적 → `>0`/`==0` 어세션 간섭(순서 위험) | (G)+sendTx `value`+`(H)`(확보) + cancel/disapprove/claim selector + fresh-net 격리(제안자 분리) |
-| `quorum-deficient-stays-voting`·`claim-zero-refund-reverts`·`claim-burn-refund-double-reverts`·`direct-blacklist-call-rejected`·`non-member-configure-minter-rejected` (5) | 위 (G) + **부정 기대**(정족수 미달 execute revert / 이중 claim revert / 비회원 호출 reject-or-revert). DSL 은 제출에러를 스텝 실패로 처리할 뿐 부정 기대가 없다 | (G) + (B) `expectReject`/채굴후 status 0x0 기대 (accounts·gas-policy 와 동일) |
-| `sender-blacklisted-rejected`·`recipient-blacklisted-rejected` (2) | 거버넌스 blacklist 후 **제출 거부**(에러 메시지 "blacklist"). 거버넌스 + 제출거부 부정기대 | (G) + (B) |
+| ~~`quorum-deficient-stays-voting`~~ ✅ **이관 완료**(라이브 pass) — proposeMint→정족수 미달 executeProposal 을 `expect:"revert"`(채굴후 status 0x0)로 확정→proposals() 상태워드[9]==Voting(1)→cleanup approve. (B) `expect:"revert"` 프리미티브 실증 | — | — |
+| `direct-blacklist-call-rejected`·`non-member-configure-minter-rejected` (2) | **비회원 발신자** 필요 — member-only 가드(onlyActiveMember)를 비회원이 호출해야 revert 하는데, DSL `sendTx` 는 노드 키스토어(=거버넌스 멤버) 서명만 가능. reject/revert 부정기대는 확보됐으나 **비회원 계정 생성·faucet 펀딩·로컬 서명** 수단이 없다 | (E) 비회원 로컬서명 발신자(키생성+faucet 펀딩+`eth_sendRawTransaction`) |
+| `claim-zero-refund-reverts`·`claim-burn-refund-double-reverts` (2) | 부정기대(이중/영 claim revert)는 확보됐으나 refund 라이프사이클(claim selector + refundableBalance 누적)에 종속 — 아래 burn-refund 배치와 함께 | (G) + (B)(확보) + claim/refund selector + fresh-net 격리 |
+| ~~`recipient-blacklisted-rejected`~~ ✅ **이관 완료**(라이브 pass) — GovCouncil 로 fresh 수취인 blacklist→ 노드(멤버)가 그 주소로 전송 시 `expect:"reject" reason:"blacklist"` 로 제출거부 확정→cleanup unblacklist. (G)+(B) 실증 | — | — |
+| `sender-blacklisted-rejected` (1) | 거버넌스 blacklist 후 **그 계정이 발신** → 제출거부. 수취인 케이스와 달리 **발신자가 blacklist 대상**이라 노드 코인베이스를 blacklist(파괴적)하거나 fresh 계정 로컬서명이 필요 | (G) + (B)(확보) + (E) 비회원 로컬서명 발신자 |
 | `feepayer-blacklisted-rejected` (1) | 위 + **fee-delegation(0x16)** tx (feePayer 이중서명) 미지원 | (G) + (B) + (D) sendTx feePayer |
 | `authorized-tx-executed-event` (1) | **런타임 키 생성 + faucet 펀딩 + 거버넌스 authorize** 후 tx 의 AuthorizedTxExecuted 로그 확인. 키 생성·env 주입·거버넌스·로그매칭 모두 부재 | (G) + 키 생성 소스 + 로그 매칭 |
 | `authorized-extra-bit-synced`·`blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved` (4) | 순수 read(isAuthorized/isBlacklisted/getBalance)라 **표현 자체는 가능**하나 fixture 계정이 **`account-extra` 제네시스 오버레이**에서만 존재/설정됨. 표준 stablenet 엔 없어 라이브 미검증 | `account-extra` cap 오버레이 기동으로 라이브 검증 후 이관(현재는 표현 가능·미기동) |
