@@ -23,6 +23,12 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 
 레거시 등록 케이스 **134개** 기준.
 
+> **분모 주의 (2026-08-18 실측)**: `tests/` 의 `testkit.Register` 호출은 **112건**이다
+> (`anzeon` 61 · `wbft` 36 · `api` 9 · `network` 4 · `external` 2).
+> 아래 표의 134 와 [[chainbench-worklist]] 가 인용하던 103 은 모두 낡았다.
+> 표의 카테고리는 디렉토리가 아니라 논리 분류라 1:1 대응하지 않으므로, 재집계 전까지는
+> **112 를 분모로** 읽을 것. 이관분은 `tests/specs` 21건 + `examples/specs` 의 network 3건.
+
 | 카테고리 | 레거시 | 이관 | 상태 |
 |---|---:|---:|---|
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |

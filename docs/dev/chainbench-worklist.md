@@ -87,8 +87,41 @@
 | **T7.8** | **DSL v2** — env/case 분리, do/expect 통일 문장형(v1 은 같은 시퀀스로 desugar — 실행 경로 1개), strict 파싱, keys/launch/genesis(set·overlay) 선언, schema/v2.schema.json 정본, `migrate-spec`(라운드트립 게이트), hooks.onFail | 미배선 선언은 이름 붙여 거부: genesis existing/build/inherit·role-scoped launch·override hook(G5) | ☑ |
 | **T7.9** | **metric 검증원** — portplan 이 metrics 포트(HTTP+3, rpcStep≥4) 할당, collector.ScrapeMetrics(Prometheus 텍스트), `expect:"metric"` 어세션(기본 GreaterOrEqual). metrics 포트 없는 노드는 명시적 실패 | 3-검증원(log·rpc·metric) 완성 | ☑ |
 | **T7.10** | **단일 경로 문법** — `netcompose.ParseTarget`: `/local/path` · `user@host:/path` · `ssh://user@host:port/path`. `net new --target` + MCP `target` 인자; 레거시 4-플래그는 유지하되 혼용 거부 | setup 명령의 4-플래그는 T7.11 에서 스택과 함께 | ☑ |
-| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **`core/state` 완전 제거**: 네트워크 레지스트리(활성 MCP 표면)는 `core/netreg` 로, 나머지 `nodeset/nodespecs` 88줄은 **`core/session`(standing 로컬 네트워크 store — `SaveLocalNodeSet`/`LoadLocalNodeSet`/`…Specs`)** 로 흡수(소비자 10곳 이관: cmd setup/node/stop/clean/status/test/hardfork + mcp start/stop/tools). on-disk 레이아웃 불변(nodeset.json/nodespecs.json). **`pipeline/setup` 완전 제거**: launch/provision 를 `engine.LocalSetup`(topology 인지 `BuildLocalPlan` + `PresetGenesisSource` + `LocalLauncher`, 단일 launchopt argv) 로 재배선 후 삭제 — cmd setup/mcp start/tools 이관, 원격은 `remoteDriver`→`RemoteFileSink` 로 genesis/config SSH 전송, genesis validator 수를 `planValidatorCount` 로 산정(구 --launch 가 --topology 무시하던 잠복 버그 동시 수정). 실 gstable 바이너리로 라이브 검증(genesis chainId·블록 생성·validator/endpoint 별 argv 분기). pipeline 4/5 소멸. **잔여**: `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 103건 선행**) | 나머지는 cmd/mcp 표면을 engine/app 층으로 재작성하는 독립 작업 — 라이브 검증 경로라 기계적 삭제 금지 | ◐ |
+| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료(T7.11a~d)** — 아래 §1d. **잔여**: 패키지 실삭제(`pipeline/setup` 566줄 · `core/state` 88줄) + `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 완료 — 남은 건 패키지 이동/삭제(독립) 와 케이스 이관(작업량) | ◐ |
 | — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☐ |
+
+---
+
+## 1d. T7.11a — 레거시 스택 A 표면 이관 (2026-08-18 완료)
+
+> 목표: 레거시 패키지를 **삭제하는 것**이 아니라, 삭제를 기계적으로 만드는 것.
+> 착수 전 실측: `pipeline/setup` 소비자 7파일 · `core/state` 소비자 9파일이 각자
+> `state.Load → setup.X → state.Save` 를 반복하고 있었다. 이 중복이 삭제 불가의 실제 원인이었다.
+
+| # | 작업 | 결과 |
+|---|---|---|
+| **T7.11a-1** | 네트워크 수명주기 유스케이스 | `driver.StopNode/RelaunchNode/StopNodeSet` 흡수(`Plan`→driver 와 동일 근거) · `app.NetworkStatus/NetworkStop/NodeStop/NodeStart/NetworkRemove` + `app.GCSessions` 신설 · `Deps.Driver` seam(프로세스 없이 테스트, 원격 라우팅) · cmd status/stop/node/clean + stop MCP 도구 이관 |
+| **T7.11a-2** | 네트워크 기동 유스케이스 | `app.NetworkPlan/NetworkProvision/NetworkLaunch`(단일 `NetworkSpecIn`) + `app.ResolveChain` 신설 · cmd setup 258→175줄(플래그 바인딩·렌더링만) · start MCP 도구가 같은 함수 경유 |
+| **T7.11b** | 체인 업그레이드 | `app.HardforkPlan/HardforkExecute` 신설(계획/실행 분리) · cmd hardfork 이관 |
+| **T7.11c** | MCP 잔여 표면 | mcp status·setup_plan·resolveNodeSet + cmd test 의 노드셋 해석을 app 경유로 |
+
+**소비자 수렴**: `pipeline/setup` 7파일 → **app + 라이브테스트 1건**, `core/state` 9파일 → **app 전용**.
+`cmd/chainbench` 는 두 레거시 패키지를 더 이상 import 하지 않는다.
+
+**이관이 드러낸 결함 2건**(둘 다 테스트가 없어 보이지 않던 것):
+- start MCP 도구가 `nodespecs.json` 을 저장하지 않아, MCP 로 띄운 네트워크에서는 `node start` 가 동작하지 않았다 → `NetworkLaunch` 경유로 해소.
+- `--endpoints 0` 이 "미지정"과 구분되지 않았다(둘 다 0) → `*int` 로 교정하고 테스트 추가.
+
+**동작 변경 1건(의도)**: 토폴로지 파일의 `chain` 이 `--chain` 을 조용히 덮어쓰던 것을,
+사용자가 명시한 경우에는 덮어쓰지 않도록 바꿨다(`ChainExplicit`).
+
+**검증**: `go build/vet ./...` · `go test ./...` · 영향 패키지 `-race` 전부 통과. 신규 단위 테스트 27건.
+
+**남은 것(별건)**: 두 패키지의 **실삭제**는 (a) `pipeline/setup` 566줄을 `internal/core/` 로 이동하거나
+(b) netcompose 스택이 setup 을 대체할 때 가능하다. app 은 유스케이스 층이라 그 566줄의 종착지가 아니다.
+`core/state` 는 app 전용이 됐으므로 언제든 흡수 가능하지만, nodeset.json 포맷 자체는 setup 스택과 함께 사라진다.
+
+---
 
 > **여전히 미배선인 선언 1건**: `testspec.Deps.Keys` 는 타입으로만 존재하고 소비자가 없다.
 > 현재 `sendTx` 는 노드측 unlocked 계정으로 서명하므로(`eth_sendTransaction`) 로컬 서명키를 쓰지 않는다.
