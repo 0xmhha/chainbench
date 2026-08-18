@@ -142,9 +142,9 @@ keyring show --keyring ./keys/dev --name node1       상세 (address·pubkey·en
 keyring show --keyring ./keys/dev --json             전체를 기계 판독 형식으로
 
 # 가져오기 / 내보내기
-keyring import --keyring ./keys/dev --hex 0x…      --name node5
-keyring import --keyring ./keys/dev --keystore f.json --name node5
-keyring import --keyring ./keys/dev --server 3 --remote-path /keys/node1
+keyring import --keyring ./keys/dev --hex 0x…               --name node5
+keyring import --keyring ./keys/dev --keystore f.json       --name node5
+keyring import --keyring ./keys/dev --from <경로>           --name node5   # §4.3
 keyring export --keyring ./keys/dev --name node1
 ```
 
