@@ -155,23 +155,39 @@ for _, ns := range w.state.Nodes { staticNodes = append(staticNodes, enode(ns)) 
 **proxy 토폴로지는 정확히 이것을 하지 않는 구조다.** pn 이 존재하는 이유가 bp 를 외부에서
 가리는 것이므로, bp 가 모두를 직접 알면 pn 은 의미가 없다.
 
-| 그래프 | 언제 | bp 는 누구를 아는가 | pn 은 | en 은 |
+| 그래프 | 언제 | bp 가 아는 것 | pn 이 아는 것 | en 이 아는 것 |
 |---|---|---|---|---|
 | **mesh** (기본) | pn 이 없을 때 | 전 노드 | — | 전 노드 |
-| **proxied** | pn 이 하나라도 있을 때 | **pn 만** | bp + pn + en | pn (+en) |
+| **proxied** | pn 이 하나라도 있을 때 | **pn 만** | bp + pn + en | **pn 만** |
 
-> **확인 필요**: proxied 그래프의 정확한 규칙(en 이 bp 를 직접 알아도 되는가, pn 끼리 메시인가)은
-> 운영 정책이다. 위 표는 sentry 패턴의 통상 형태이고, **체인 팀 확인 후 확정**한다.
-> 구조적으로 중요한 것은 **그래프가 역할에서 파생되고 선언 가능해야 한다**는 점이다:
->
-> ```yaml
-> peering: mesh        # 기본. pn 이 있으면 proxied 가 기본이 된다
-> # peering: proxied
-> # peering: {custom: {bp1: [pn1, pn2], en1: [pn1]}}   # 최후 수단
-> ```
+**규칙은 한 문장이다: `bp ↔ pn ↔ en`.**
+**en 은 bp 를 직접 알지 못한다** — pn 을 통해서만 도달한다. 이것이 pn 이 존재하는 이유이고,
+en 이 bp 를 알면 프록시 계층이 우회되어 무의미해진다.
 
-wemix(poa)는 static-nodes 를 쓰지 않고 거버넌스 member 목록으로 연결하므로,
-**pn 을 wemix 에 적용하려면 member 등록 대상과 피어링 대상이 분리돼야 한다** — 미해결 질문이다.
+```yaml
+peering: mesh        # 기본. pn 이 하나라도 있으면 proxied 가 기본이 된다
+# peering: proxied
+# peering: {custom: {bp1: [pn1, pn2], en1: [pn1]}}   # 최후 수단
+```
+
+#### wemix(poa)는 pn 을 쓰지 않는다 — etcd 가 그 자리다
+
+wemix 는 static-nodes 대신 **거버넌스 member 목록 + etcd 클러스터**로 연결되고,
+프록시 계층의 역할을 **etcd 가 대신한다.** 따라서:
+
+- **poa 패밀리에서 `pn` 은 적용 대상이 아니다.**
+- 청사진이 poa 체인에 `pn` 을 선언하면 **오류**다. 조용히 무시하면 사용자는 프록시 계층이
+  선 줄 알지만 실제로는 없는 네트워크를 얻는다 — 이 프로젝트가 `LeaderGate`·`Action` 에
+  이미 쓰는 계약("선언했는데 미배선이면 오류")과 같은 이유다.
+- `peering` 은 poa 에서 **선언 자체가 무의미**하므로 마찬가지로 거부한다.
+
+이것을 `Family` 가 말한다:
+
+```go
+// ConsensusFamily gains:
+//   SupportsRole(node.Role) bool     // poa: pn -> false
+//   SupportsPeeringGraph() bool      // poa: false (etcd 가 연결을 소유)
+```
 
 ---
 
@@ -374,8 +390,8 @@ Blueprint 관점에서 보면 **체인 특화는 두 곳뿐**이다.
 
 1. ~~`pn` 역할을 도입할 것인가~~ → **확정: `bp·en·pn` 3종, `boot` 은 속성**(§2.1b).
    `pn`=proxy, `en`=endpoint. **실행 옵션 차이는 없다** — 세 체인에 proxy 모드 플래그가 없다(실측).
-   남은 것은 **proxied 피어링 그래프의 정확한 규칙**(§2.3 C5)과, **wemix 에서 member 등록과
-   피어링 대상을 어떻게 분리할 것인가**다.
+   ~~proxied 그래프 규칙~~ → **확정: `bp ↔ pn ↔ en`, en 은 bp 를 직접 알지 못한다.**
+   ~~wemix 의 pn~~ → **확정: poa 는 pn 을 쓰지 않는다(etcd 가 그 자리). 선언하면 오류.**
 2. **Blueprint 를 어디에 둘 것인가.** 노드 IP·포트를 담으므로 [[server-inventory]] 와 같은 민감도다.
    서버 인벤토리를 참조만 하고(`server: local`) 자신은 IP 를 담지 않게 하면 커밋 가능해진다 —
    **그 편이 낫다고 본다.**

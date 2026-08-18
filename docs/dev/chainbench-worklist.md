@@ -231,7 +231,7 @@ B 는 F 와 병행 가능하다.
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
 | **N0** | 역할을 `bp·en·pn` 3종으로 정리, `boot` 은 속성으로 강등 | `validator→bp`·`endpoint→en` 이관 · `pn` 신설 · 기존 토폴로지 호환 | ☐ |
-| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `pn` 이 있으면 bp 는 pn 만 안다 | mesh 는 현행과 동일 argv · proxied 는 bp 의 static-nodes 에 pn 만 | ☐ |
+| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | mesh 는 현행과 동일 argv · proxied 는 bp/en 의 static-nodes 에 pn 만 · **poa 에 `pn` 선언 시 오류** | ☐ |
 | **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
 | **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
 | **N3** | **raw 경로 완성** — 노드별 nodekey·계정·포트·서버·바이너리 오버라이드 선언 | **preset 없이** 손으로 쓴 청사진만으로 3체인 4노드 기동(라이브) | ☐ |
@@ -244,8 +244,10 @@ B 는 F 와 병행 가능하다.
 **BLS 는 선언 필드가 아니다** — 선언하면 nodekey 와 어긋날 수 있고, 그 불일치는 합의에서 터진다.
 
 **`pn` 주의**(N0b): 세 체인에 proxy 모드 플래그가 **없다**(실측). `pn` 은 argv 가 아니라
-**static-nodes 그래프**로 표현된다. 현재 구현은 풀메시라 pn 을 두어도 bp 가 전 노드를 직접 알게 되어
-proxy 의 목적이 사라진다. wemix 는 static-nodes 대신 거버넌스 member 를 쓰므로 별도 검토가 필요하다.
+**static-nodes 그래프**로 표현된다 — `bp ↔ pn ↔ en`, en 은 bp 를 직접 알지 못한다.
+현재 구현은 풀메시라 pn 을 두어도 효과가 없다.
+**poa(wemix)는 pn 을 쓰지 않는다** — etcd 가 그 자리다. 선언하면 조용히 무시하지 말고 **오류**로
+거부한다(`Family.SupportsRole`).
 
 **N 과 F 의 관계**: F4(`GenesisArtifacts`)·F3(`BringUpPhases`)는 `ResolvedNetwork` 를 입력으로 받는다.
 **N1·N2 를 먼저** 해야 F 가 조각을 다시 모으지 않는다.
