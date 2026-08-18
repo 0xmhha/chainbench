@@ -3,7 +3,10 @@ package netcompose
 import (
 	"context"
 	"fmt"
+	"maps"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -98,7 +101,25 @@ type AllocateOpts struct {
 	Validators int
 	// Endpoints is the non-validator (endpoint) node count.
 	Endpoints int
+	// EndpointSyncMode is the geth sync mode endpoints render into their config
+	// ("snap" or "archive" instead of the default "full"), so a re-sync test can
+	// exercise a path other than full sync. Validators ignore it: a node that
+	// seals blocks must hold full state.
+	EndpointSyncMode string
 }
+
+// syncModeFor returns the sync mode a node of this role renders. Only endpoints
+// are configurable — see AllocateOpts.EndpointSyncMode.
+func syncModeFor(role node.Role, endpointMode string) string {
+	if role == node.RoleEndpoint && endpointMode != "" {
+		return endpointMode
+	}
+	return syncModeFull
+}
+
+// syncModeFull is the sync mode every validator uses and the default for
+// endpoints.
+const syncModeFull = "full"
 
 // Allocate builds the node table: roles, target-side paths, and deterministic
 // stepped ports on 127.0.0.1 through the same allocator the engine uses.
@@ -129,6 +150,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		nodes[i] = NodeState{
 			Index:      idx,
 			Role:       string(reqs[i].Role),
+			SyncMode:   syncModeFor(reqs[i].Role, opts.EndpointSyncMode),
 			DataDir:    filepath.Join(root, fmt.Sprintf("node%d", idx)),
 			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
 			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
@@ -148,6 +170,18 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 type GenesisOpts struct {
 	// ChainID, when non-zero, overrides the manifest chain id.
 	ChainID int64
+	// Overrides sets bare keys in the genesis `config` object, e.g.
+	// {"bohoBlock": "10"} to move a fork off genesis. The fork ordering of the
+	// result is validated, so a bad delayed-fork request fails here rather than
+	// at node boot.
+	Overrides map[string]string
+	// Overlay is a genesis JSON fragment deep-merged into the built genesis
+	// (extra alloc accounts, config bits). Fork ordering is re-validated after
+	// the merge.
+	Overlay []byte
+	// Capabilities are advertised alongside the network so capability-gated
+	// cases run — an overlay declares what it enables.
+	Capabilities []string
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -177,6 +211,10 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", err
 	}
+	gen, err = customizeGenesis(gen, opts)
+	if err != nil {
+		return "", err
+	}
 	t, err := w.state.Target.Resolve(w.env)
 	if err != nil {
 		return "", err
@@ -186,13 +224,68 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", fmt.Errorf("netcompose: genesis: write: %w", err)
 	}
 	w.state.GenesisPath = path
+	w.state.Capabilities = networkCapabilities(p.Manifest().Capabilities, opts)
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.Validators)
 	if opts.ChainID != 0 {
 		detail += fmt.Sprintf(", chain id %d (override)", opts.ChainID)
 	}
+	if len(opts.Overrides) > 0 {
+		detail += fmt.Sprintf(", %d config override(s)", len(opts.Overrides))
+	}
+	if len(opts.Overlay) > 0 {
+		detail += ", overlay merged"
+	}
 	w.markStep("genesis", detail)
 	return detail, nil
+}
+
+// delayedForkSuffix marks a config override that moves a fork off genesis. Such
+// a network is advertised as delayed-<fork> so the fork-transition cases gate on
+// it and skip on a normal network where the fork is active at genesis.
+const delayedForkSuffix = "Block"
+
+// customizeGenesis applies the config overrides and the overlay, re-validating
+// fork ordering after each so a bad request fails while composing rather than
+// when a node refuses to boot.
+func customizeGenesis(gen []byte, opts GenesisOpts) ([]byte, error) {
+	var err error
+	if len(opts.Overrides) > 0 {
+		if gen, err = genesis.ApplyConfigOverrides(gen, opts.Overrides); err != nil {
+			return nil, fmt.Errorf("netcompose: genesis overrides: %w", err)
+		}
+		if err := genesis.ValidateForks(gen); err != nil {
+			return nil, fmt.Errorf("netcompose: genesis overrides: %w", err)
+		}
+	}
+	if len(opts.Overlay) > 0 {
+		if gen, err = genesis.MergeOverride(gen, opts.Overlay); err != nil {
+			return nil, fmt.Errorf("netcompose: genesis overlay: %w", err)
+		}
+		if err := genesis.ValidateForks(gen); err != nil {
+			return nil, fmt.Errorf("netcompose: genesis overlay: %w", err)
+		}
+	}
+	return gen, nil
+}
+
+// networkCapabilities is what the composed network advertises: the chain's own
+// capabilities, "ws" (composed nodes always serve a WebSocket endpoint), a
+// delayed-<fork> marker per fork moved off genesis, and whatever the caller
+// declared for its overlay.
+func networkCapabilities(manifest []string, opts GenesisOpts) []string {
+	caps := append([]string(nil), manifest...)
+	caps = append(caps, "ws")
+	for _, key := range slices.Sorted(maps.Keys(opts.Overrides)) {
+		fork, ok := strings.CutSuffix(key, delayedForkSuffix)
+		if !ok || fork == "" {
+			continue
+		}
+		if n, err := strconv.Atoi(opts.Overrides[key]); err == nil && n > 0 {
+			caps = append(caps, "delayed-"+strings.ToLower(fork))
+		}
+	}
+	return append(caps, opts.Capabilities...)
 }
 
 // Config renders each node's TOML config and writes it to the target.
@@ -225,6 +318,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 			Ports:         node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
 			KeystoreDir:   filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index), "keystore"),
 			RPCNamespace:  m.Consensus.RPCNamespace,
+			SyncMode:      ns.SyncMode,
 			MinerRecommit: m.MinerRecommit,
 			StaticNodes:   staticNodes,
 		})

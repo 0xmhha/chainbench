@@ -31,8 +31,13 @@ type Step = session.Step
 // paths, allocated ports, the assembled launch argv (once `launchopts` ran),
 // and the live PID (once `start` ran; 0 = stopped).
 type NodeState struct {
-	Index      int      `json:"index"`
-	Role       string   `json:"role"`
+	Index int    `json:"index"`
+	Role  string `json:"role"`
+	// SyncMode is the geth sync mode this node's config renders. Validators are
+	// always "full" — they must hold full state to seal — while an endpoint may
+	// be switched to "snap" or "archive" so a large-gap re-sync exercises that
+	// path. Empty means the config's own default.
+	SyncMode   string   `json:"syncMode,omitempty"`
 	DataDir    string   `json:"dataDir"`
 	ConfigPath string   `json:"configPath"`
 	LogPath    string   `json:"logPath"`
@@ -58,6 +63,11 @@ type State struct {
 	GenesisPath string          `json:"genesisPath,omitempty"`
 	Nodes       []NodeState     `json:"nodes,omitempty"`
 	Steps       map[string]Step `json:"steps"`
+	// Capabilities is what the composed network advertises to capability-gated
+	// test cases (chain manifest + ws + delayed-fork markers + overlay claims).
+	// The genesis step derives it, since that is where the customizations that
+	// change what the network can do are applied.
+	Capabilities []string `json:"capabilities,omitempty"`
 }
 
 // Workspace is an open composition workspace: the session-owned persistence
