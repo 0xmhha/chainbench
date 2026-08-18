@@ -9,14 +9,21 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
-// Lifecycle use cases for a network launched by the setup stack. Their state is
-// the data root: nodeset.json records the running endpoints and PIDs,
-// nodespecs.json records how to bring one node back. Reading and writing that
-// pair is the part every surface used to repeat, so it lives here once and the
-// CLI commands and MCP tools call these functions (worklist T7.11).
+// Lifecycle use cases for a launched network. Reading and writing its state is
+// the part every surface used to repeat, so it lives here once and the CLI
+// commands and MCP tools call these functions (worklist T7.11).
+//
+// Two stacks persist that state differently: the setup stack writes
+// nodeset.json (running endpoints and PIDs) plus nodespecs.json (how to bring
+// one node back), while the step stack keeps a composition workspace. The
+// read and teardown paths resolve either, so a caller with a data dir need not
+// know which produced it. Per-node stop/start still requires the setup stack's
+// saved specs — the step stack expresses that as `net restart`.
 
 // NetworkStatusIn identifies the launched network to read.
 type NetworkStatusIn struct {
@@ -27,18 +34,38 @@ type NetworkStatusIn struct {
 // NetworkStatusOut is the recorded node set.
 type NetworkStatusOut struct {
 	Nodes node.NodeSet
+	// Composed reports which stack the directory holds: true for a step-composed
+	// workspace, false for a setup-launched data root.
+	Composed bool
 }
 
-// NetworkStatus reads the launched network's node set. Read-only.
-func NetworkStatus(_ context.Context, _ Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
+// NetworkStatus reads a network's node set from whichever stack composed it —
+// a step workspace or a setup's data root. Both persist different state, but
+// every consumer downstream speaks NodeSet, so resolving it once here is what
+// lets the two stacks be used interchangeably. Read-only.
+func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
 	if in.DataDir == "" {
 		return NetworkStatusOut{}, errNoDataDir
+	}
+	if isComposition(in.DataDir) {
+		ws, err := netcompose.Open(in.DataDir, d.Clock)
+		if err != nil {
+			return NetworkStatusOut{}, err
+		}
+		return NetworkStatusOut{Nodes: ws.NodeSet(), Composed: true}, nil
 	}
 	ns, err := state.LoadNodeSet(in.DataDir)
 	if err != nil {
 		return NetworkStatusOut{}, err
 	}
 	return NetworkStatusOut{Nodes: ns}, nil
+}
+
+// isComposition reports whether dir holds a step-composed workspace. Its state
+// manifest is the marker, and session owns where that lives.
+func isComposition(dir string) bool {
+	_, err := os.Stat(session.CompositionFilePath(dir))
+	return err == nil
 }
 
 // NetworkStopIn identifies the launched network to stop.
@@ -56,17 +83,42 @@ type NetworkStopOut struct {
 	Failed []error
 }
 
-// NetworkStop terminates every node the setup launched, by the PIDs its node
-// set records.
+// NetworkStop terminates every node of a launched network by its recorded PID.
+// A composed workspace stops through its own step, which also clears the PIDs
+// it recorded; a setup data root stops through the driver.
 func NetworkStop(ctx context.Context, d Deps, in NetworkStopIn) (NetworkStopOut, error) {
 	if in.DataDir == "" {
 		return NetworkStopOut{}, errNoDataDir
+	}
+	if isComposition(in.DataDir) {
+		// Counted before the step runs: it stops every node that still has a
+		// PID, and clears them, so afterwards there is nothing left to count.
+		var running int
+		_, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
+			running = withPID(ws.NodeSet())
+			return ws.Stop(ctx)
+		})
+		if err != nil {
+			return NetworkStopOut{}, err
+		}
+		return NetworkStopOut{Stopped: running}, nil
 	}
 	ns, err := state.LoadNodeSet(in.DataDir)
 	if err != nil {
 		return NetworkStopOut{}, err
 	}
 	return stopAll(ctx, d, ns)
+}
+
+// withPID counts the nodes chainbench has a live process id for.
+func withPID(ns node.NodeSet) int {
+	n := 0
+	for _, nd := range ns.Nodes {
+		if nd.PID > 0 {
+			n++
+		}
+	}
+	return n
 }
 
 // stopAll resolves the driver and stops every launched node in ns.

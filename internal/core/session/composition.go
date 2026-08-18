@@ -88,3 +88,10 @@ func (c Composition) Save(state any) error {
 func (c Composition) StepMark(detail string) Step {
 	return Step{Done: true, Detail: detail, At: c.now().UTC().Format(time.RFC3339)}
 }
+
+// CompositionFilePath is where a composition's state manifest lives under dir.
+// Exported because session owns the artifact layout: a caller asking "is this
+// directory a composition?" must not hard-code the file name.
+func CompositionFilePath(dir string) string {
+	return filepath.Join(dir, compositionFile)
+}

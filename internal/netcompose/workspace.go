@@ -18,9 +18,11 @@
 package netcompose
 
 import (
+	"fmt"
 	"os"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -126,3 +128,51 @@ func (w *Workspace) markStep(step, detail string) {
 
 // Save writes the composition state to the manifest.
 func (w *Workspace) Save() error { return w.comp.Save(w.state) }
+
+// localHost is the address a locally-composed node is reachable at.
+const localHost = "127.0.0.1"
+
+// RPCHost is the address this composition's nodes are reachable at: this
+// machine for a local target, the SSH host for a remote one. Ports are the
+// same either way — the allocator assigns them on the target.
+func (w *Workspace) RPCHost() string {
+	if w.state.Target.IsRemote() && w.state.Target.Host != "" {
+		return w.state.Target.Host
+	}
+	return localHost
+}
+
+// NodeSet renders the composition as the chain-agnostic node model the rest of
+// chainbench consumes (health probes, DSL runs, stop). It is the bridge that
+// lets a composed network be used wherever a setup-launched one can: the two
+// stacks persist different state, but every consumer downstream of them speaks
+// NodeSet.
+//
+// PIDs are whatever the last lifecycle step recorded, so a node that has not
+// been started reports 0 — the same convention as an attached node chainbench
+// did not launch.
+func (w *Workspace) NodeSet() node.NodeSet {
+	host := w.RPCHost()
+	ns := node.NodeSet{
+		Chain:        w.state.Chain,
+		Network:      string(w.state.Target.Kind),
+		Capabilities: w.state.Capabilities,
+		Nodes:        make([]node.Node, 0, len(w.state.Nodes)),
+	}
+	if ns.Network == "" {
+		ns.Network = string(TargetLocal)
+	}
+	for _, n := range w.state.Nodes {
+		ns.Nodes = append(ns.Nodes, node.Node{
+			Index:  n.Index,
+			Role:   node.Role(n.Role),
+			Host:   host,
+			RPCURL: fmt.Sprintf("http://%s:%d", host, n.HTTP),
+			Ports: node.Endpoints{
+				P2P: n.P2P, HTTP: n.HTTP, WS: n.WS, Auth: n.Auth, Metrics: n.Metrics,
+			},
+			PID: n.PID,
+		})
+	}
+	return ns
+}

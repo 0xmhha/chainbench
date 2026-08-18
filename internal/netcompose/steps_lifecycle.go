@@ -262,7 +262,7 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	out := make([]NodeHealth, len(w.state.Nodes))
 	for i, ns := range w.state.Nodes {
 		h := NodeHealth{Index: ns.Index, PID: ns.PID}
-		c := rpc.Dial(fmt.Sprintf("http://127.0.0.1:%d", ns.HTTP))
+		c := rpc.Dial(fmt.Sprintf("http://%s:%d", w.RPCHost(), ns.HTTP))
 		if bn, err := c.BlockNumber(ctx); err != nil {
 			h.Err = err.Error()
 		} else {

@@ -341,3 +341,65 @@ func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
 		t.Error("want an error with neither a chain nor a manifest")
 	}
 }
+
+func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
+	// Every consumer downstream of a bring-up speaks NodeSet, so a composed
+	// network has to be readable through the same call a setup one is.
+	dir, d := composed(t, app.NetAllocateIn{Validators: 2, Endpoints: 1})
+	if _, err := app.NetGenesis(context.Background(), d, app.NetGenesisIn{DataDir: dir}); err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+
+	out, err := app.NetworkStatus(context.Background(), d, app.NetworkStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("NetworkStatus: %v", err)
+	}
+	if !out.Composed {
+		t.Error("a workspace directory should report as composed")
+	}
+	if out.Nodes.Chain != "stablenet" || len(out.Nodes.Nodes) != 3 {
+		t.Fatalf("node set = %+v", out.Nodes)
+	}
+	first := out.Nodes.Nodes[0]
+	if first.RPCURL == "" || !strings.HasPrefix(first.RPCURL, "http://127.0.0.1:") {
+		t.Errorf("node1 rpc url = %q", first.RPCURL)
+	}
+	if first.Ports.HTTP == 0 || first.Ports.P2P == 0 {
+		t.Errorf("node1 ports not carried over: %+v", first.Ports)
+	}
+	// A network that has never been started reports no PIDs, the same
+	// convention as an attached node chainbench did not launch.
+	if first.PID != 0 {
+		t.Errorf("node1 PID = %d, want 0 before start", first.PID)
+	}
+	if !hasCapability(out.Nodes.Capabilities, "ws") {
+		t.Errorf("capabilities did not survive the bridge: %v", out.Nodes.Capabilities)
+	}
+}
+
+func TestNetworkStatus_StillReadsASetupDataRoot(t *testing.T) {
+	// The bridge must not shadow the stack it is meant to coexist with.
+	dir, _, deps := launchedNetwork(t)
+	out, err := app.NetworkStatus(context.Background(), deps, app.NetworkStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("NetworkStatus: %v", err)
+	}
+	if out.Composed {
+		t.Error("a setup data root must not report as composed")
+	}
+	if len(out.Nodes.Nodes) != 2 {
+		t.Errorf("node set = %+v", out.Nodes)
+	}
+}
+
+func TestNetworkStop_OnAComposedWorkspaceWithNothingRunning(t *testing.T) {
+	dir, d := composed(t, app.NetAllocateIn{Validators: 2})
+
+	out, err := app.NetworkStop(context.Background(), d, app.NetworkStopIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("NetworkStop: %v", err)
+	}
+	if out.Stopped != 0 {
+		t.Errorf("stopped = %d, want 0 (nothing was started)", out.Stopped)
+	}
+}
