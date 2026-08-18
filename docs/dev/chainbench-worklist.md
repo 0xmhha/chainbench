@@ -234,9 +234,15 @@ B 는 F 와 병행 가능하다.
 | **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
 | **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
 | **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
+| **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | `keymat` 의 자체 SSH 읽기 소멸 · 로컬/원격 한 통로 | ☐ |
+| **K7** | `keyring --from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | 세 형태를 같은 코드로 · **명령줄에 IP 없음** · `--server`+`--remote-path` 두 플래그 대체 | ☐ |
 
 **의존성 추가**: `github.com/supranational/blst v0.3.16` — BLS12-381 표준 구현체,
 **go-wbft 자신이 같은 버전 사용**. 오타 낚시 아님, 이더리움 합의 클라이언트 전반 사용.
+
+**K6 이 keyring 을 넘어선다**: `FileSink` 에 읽기가 없어서 `keymat` 이 자체 SSH 읽기를 따로 만들었다 —
+추상화가 한쪽 방향만 있으면 반대 방향은 옆에 새로 생긴다. 넓히면 청사진 읽기·genesis 확인·
+산출물 검증이 전부 같은 통로를 쓴다.
 
 **DST 주의**(K0): PoP 서명의 DST 를 빼면 **형식은 멀쩡한데 검증 실패하는 PoP** 이 나온다.
 실제로 첫 파생 시도에서 그렇게 됐다 — 골든 테스트로 고정한다.

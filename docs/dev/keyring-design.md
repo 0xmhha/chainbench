@@ -152,7 +152,61 @@ keyring export --keyring ./keys/dev --name node1
 **`--with-bls` 는 wbft 계열에서만 의미가 있고, 붙이지 않으면 BLS 를 만들지 않는다** —
 wemix 는 BLS 를 쓰지 않으므로 불필요한 계산을 하지 않는다.
 
-### 4.3 디스크 형태 (기존과 동일)
+### 4.3 링의 위치는 로컬이든 원격이든 같은 규격이다
+
+이미 만들어 둔 단일 경로 문법([[server-inventory]] · T7.10 `netcompose.ParseTarget`)을 그대로 쓴다.
+원 요구의 key point 2 — *상위 레이어는 하나의 "경로"만 본다* — 가 정확히 이것이다.
+
+```
+/srv/keys/node1                  로컬 (맨 경로)
+srv://bp1/srv/keys/node1         인벤토리 항목 "bp1"        ← 권장
+user@host:/srv/keys/node1        raw 원격
+ssh://user@host:2222/srv/keys/…  포트 명시
+```
+
+**로컬에 루프백 표기를 강제하지 않는다.** `localhost:/path` 를 매번 쓰게 하면 로컬이 예외처럼
+느껴진다. 맨 경로가 로컬이고, 그것이 기본이다.
+
+**`srv://` 를 더하는 이유는 보안이다.** `user@host:/path` 를 쓰면 명령줄과 스크립트에 내부 IP 가
+박힌다 — 서버 인벤토리를 gitignore 에 둔 이유와 정면으로 충돌한다. 인벤토리가 호스트·포트·
+자격증명을 이미 갖고 있으므로 **명령은 이름만 쓴다.**
+
+```sh
+keyring import --from srv://bp1/srv/keys/node1 --name bp1
+keyring import --from /mnt/backup/keys/node1   --name bp1
+keyring list   --keyring srv://bp1/srv/keys/dev        # 링 자체가 원격일 수도 있다
+```
+
+현재의 두 플래그(`--server 3 --remote-path /keys/node1`)는 `--from` 하나로 접힌다 —
+`net new --target` 이 레거시 4플래그를 접은 것과 같은 정리다.
+
+#### 이를 위해 `FileSink` 가 읽기를 가져야 한다
+
+```go
+// 지금 — 쓰기만 있다
+type FileSink interface {
+    Exists(ctx, path) (bool, error)
+    Write(ctx, path, content []byte, mode fs.FileMode) error
+}
+```
+
+**읽기가 없어서 `keymat.RemoteFileSource` 가 자체 SSH 읽기를 따로 구현했다**(`sshRead` →
+`remote.ReadFile`). 키가 자기만의 원격 경로를 갖게 된 원인이 이 비대칭이다 —
+추상화가 한쪽 방향만 있으면 반대 방향은 옆에 새로 생긴다.
+
+```go
+// 목표 — 타깃 파일에 대한 양방향 통로
+type FileStore interface {
+    Exists(ctx context.Context, path string) (bool, error)
+    Read(ctx context.Context, path string) ([]byte, error)   // 추가
+    Write(ctx context.Context, path string, content []byte, mode fs.FileMode) error
+}
+```
+
+읽기 구현은 이미 있다(`remote.ReadFile`, 로컬은 `os.ReadFile`) — **묶기만 하면 된다.**
+이 변경은 keyring 을 넘어선다: 청사진 읽기·genesis 확인·산출물 검증이 전부 같은 통로를 쓰게 된다.
+
+### 4.4 디스크 형태 (기존과 동일)
 
 ```
 keys/dev/                ← 링 하나
@@ -177,3 +231,5 @@ keys/dev/                ← 링 하나
 | K4 | `keyring new` 가 **어떤 체인 바이너리도 실행하지 않는다** (프로세스 실행 0회) |
 | K5 | 기존 `keys/preset/metadata.json` 을 읽어 `nodes[]` 를 그대로 복원 |
 | K6 | 파서 fuzz (metadata.json) |
+| K7 | `--from` 이 로컬·`srv://`·`user@host:` 세 형태를 같은 코드로 처리 (원격은 SSH 게이트) |
+| K8 | `srv://` 가 **인벤토리에서 호스트·포트·자격증명을 가져온다** — 명령줄에 IP 가 없다 |
