@@ -1,51 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/topology"
-	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/driver"
 )
-
-// saveTopology copies the resolved topology file into the data root as
-// topology.yaml, so the running network's layout is inspectable from its datadir
-// (which node plays which role). A no-op when no topology file was used.
-func saveTopology(root, topologyPath string) error {
-	if topologyPath == "" {
-		return nil
-	}
-	b, err := os.ReadFile(topologyPath)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(root, 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(root, "topology.yaml"), b, 0o644)
-}
-
-// resolveChain returns the chain plugin for a run: an external, project-supplied
-// manifest when --manifest is given (the hybrid model), otherwise the embedded
-// chain registered for the --chain id.
-func resolveChain(chain, manifestPath, templatePath string) (registry.ChainPlugin, error) {
-	if manifestPath != "" {
-		return external.Load(manifestPath, templatePath)
-	}
-	return registry.Get(chain)
-}
 
 func newSetupCmd() *cobra.Command {
 	var (
@@ -71,164 +36,77 @@ func newSetupCmd() *cobra.Command {
 		Use:   "setup",
 		Short: "Plan (and, when wired, launch) a local chain network",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			// An optional topology file gives an explicit per-node layout (role,
-			// sync mode, bootnode) instead of the positional validator/endpoint
-			// counts. Its `chain` selects the chain unless --chain is given.
-			var topo *topology.Topology
-			if topologyPath != "" {
-				loaded, err := topology.Load(topologyPath)
-				if err != nil {
-					return err
-				}
-				topo = &loaded
-				if !cmd.Flags().Changed("chain") && loaded.Chain != "" {
-					chain = loaded.Chain
-				}
+			spec := app.NetworkSpecIn{
+				Chain:              chain,
+				ChainExplicit:      cmd.Flags().Changed("chain"),
+				ManifestPath:       manifestPath,
+				TemplatePath:       templatePath,
+				TopologyPath:       topologyPath,
+				DataDir:            dataDir,
+				Set:                setValues,
+				GenesisOverlayPath: genesisOverlay,
 			}
-			p, err := resolveChain(chain, manifestPath, templatePath)
-			if err != nil {
-				return err
-			}
-			override := config.Values{}
+			// A zero count is a meaningful request, so only a flag the user
+			// actually set overrides the configured value.
 			if cmd.Flags().Changed("validators") {
-				override["nodes.validators"] = strconv.Itoa(validators)
+				spec.Validators = &validators
 			}
 			if cmd.Flags().Changed("endpoints") {
-				override["nodes.endpoints"] = strconv.Itoa(endpoints)
+				spec.Endpoints = &endpoints
 			}
-			// --set key=value overrides an arbitrary flat config key, e.g.
-			// --set genesis.overrides.bohoBlock=10 for a delayed-fork network.
-			for _, kv := range setValues {
-				k, v, ok := strings.Cut(kv, "=")
-				if !ok || k == "" {
-					return fmt.Errorf("--set expects key=value, got %q", kv)
-				}
-				override[k] = v
-			}
-			// --genesis-overlay <path> supplies a JSON overlay file
-			// {capabilities:[...], genesis:{...}}: the genesis fragment is
-			// deep-merged into the built genesis and the capabilities are advertised
-			// on the NodeSet so overlay-gated cases (e.g. account-extra) run.
-			if genesisOverlay != "" {
-				raw, err := os.ReadFile(genesisOverlay)
-				if err != nil {
-					return err
-				}
-				var ov struct {
-					Capabilities []string        `json:"capabilities"`
-					Genesis      json.RawMessage `json:"genesis"`
-				}
-				if err := json.Unmarshal(raw, &ov); err != nil {
-					return fmt.Errorf("bad --genesis-overlay %q: %w", genesisOverlay, err)
-				}
-				if len(ov.Genesis) > 0 {
-					override["genesis.overlay"] = string(ov.Genesis)
-				}
-				if len(ov.Capabilities) > 0 {
-					override["genesis.capabilities"] = strings.Join(ov.Capabilities, ",")
-				}
-			}
-			cfg := config.Resolve(nil, override)
 
-			root := dataDir
-			if !filepath.IsAbs(root) {
-				root = filepath.Clean(root)
+			deps := app.Deps{}
+			if remoteHost != "" {
+				deps.Driver = func() (driver.Driver, error) {
+					return remoteDriver(remoteHost, remoteUser, remotePort)
+				}
 			}
-			plan, err := engine.BuildLocalPlan(cfg, p, root, topo)
+
+			planned, err := app.NetworkPlan(cmd.Context(), deps, spec)
 			if err != nil {
 				return err
 			}
+			printPlan(cmd, planned)
 
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "chain:    %s (family %s, binary %s, chain_id %d)\n",
-				p.Manifest().ID, p.Manifest().ConsensusFamily, p.Manifest().Binary, p.Manifest().ChainID)
-			fmt.Fprintf(out, "network:  %s\n", plan.Network)
-			fmt.Fprintf(out, "dataRoot: %s\n", plan.DataRoot)
-			hasTmpl := len(p.GenesisTemplate()) > 0
-			fmt.Fprintf(out, "genesis:  template=%v (engine=%q)\n", hasTmpl, p.Manifest().Genesis.EngineField)
-
-			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "NODE\tROLE\tSYNC\tHOST\tP2P\tHTTP\tWS")
-			for _, n := range plan.Nodes {
-				sync := n.SyncMode
-				if sync == "" {
-					sync = "-"
-				}
-				fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\t%d\t%d\n",
-					n.Index, n.Role, sync, n.Host, n.Ports.P2P, n.Ports.HTTP, n.Ports.WS)
-			}
-			if err := w.Flush(); err != nil {
-				return err
-			}
-			if topo != nil && topo.BootnodeIndex() > 0 {
-				fmt.Fprintf(out, "bootnode: node %d\n", topo.BootnodeIndex())
-			}
-
-			if launch {
-				// A remote host routes launch through the SSH RemoteDriver + a
-				// matching remote file sink; nil keeps the default local driver and
-				// local filesystem.
-				remoteDrv, sink, err := remoteDriver(remoteHost, remoteUser, remotePort)
-				if err != nil {
-					return err
-				}
+			switch {
+			case launch:
 				// For a remote launch the binary path lives on the remote host,
-				// so it is used as-is; only a local launch resolves/stats it.
+				// so it is used as-is; only a local launch resolves it on PATH.
 				bin := binaryPath
-				if remoteDrv == nil {
-					if bin, err = resolveBinary(binaryPath, p.Manifest().Binary); err != nil {
+				if remoteHost == "" {
+					if bin, err = resolveBinary(binaryPath, planned.Plugin.Manifest().Binary); err != nil {
 						return err
 					}
 				} else if bin == "" {
 					return fmt.Errorf("--binary <remote path> is required with --remote-host")
 				}
-				// Absolute keys dir so the launch argv's identity paths resolve
-				// independently of the node process cwd (a remote launch ships them
-				// from here to a keys/ dir under the remote data root).
-				keysAbs, err := filepath.Abs(keysDir)
+				bus, closeBus := obsBus()
+				defer closeBus()
+				res, err := app.NetworkLaunch(cmd.Context(), deps, app.NetworkLaunchIn{
+					Spec: spec, KeysDir: keysDir, Binary: bin, Bus: bus,
+				})
 				if err != nil {
-					return err
-				}
-				ns, specs, err := engine.LocalSetup{
-					Plugin: p, Config: cfg, KeysDir: keysAbs, Binary: bin,
-					Driver: remoteDrv, Sink: sink,
-				}.Launch(cmd.Context(), plan)
-				if err != nil {
-					return err
-				}
-				if err := session.SaveLocalNodeSet(root, ns); err != nil {
-					return err
-				}
-				// Persist the armed specs so `node start --index` can relaunch a
-				// single node after `node stop --index`.
-				if err := session.SaveLocalNodeSpecs(root, specs); err != nil {
-					return err
-				}
-				if err := saveTopology(root, topologyPath); err != nil {
 					return err
 				}
 				fmt.Fprintf(out, "launched %d node(s); state: %s\n",
-					len(ns.Nodes), filepath.Join(root, "nodeset.json"))
+					len(res.Nodes.Nodes), filepath.Join(res.Plan.DataRoot, "nodeset.json"))
 				return nil
-			}
 
-			if provision {
-				keysAbs, err := filepath.Abs(keysDir)
+			case provision:
+				res, err := app.NetworkProvision(cmd.Context(), deps, app.NetworkProvisionIn{
+					Spec: spec, KeysDir: keysDir,
+				})
 				if err != nil {
 					return err
 				}
-				if _, err := (engine.LocalSetup{Plugin: p, Config: cfg, KeysDir: keysAbs}).Provision(cmd.Context(), plan); err != nil {
-					return err
-				}
-				if err := saveTopology(root, topologyPath); err != nil {
-					return err
-				}
-				fmt.Fprintf(out, "provisioned: genesis + %d node config(s) in %s\n", len(plan.Nodes), plan.DataRoot)
+				fmt.Fprintf(out, "provisioned: genesis + %d node config(s) in %s\n",
+					len(res.Plan.Plan.Nodes), res.Plan.DataRoot)
 				return nil
-			}
 
-			if !dryRun {
-				return fmt.Errorf("live launch needs --launch (with --binary or a %s on PATH). Use --provision to write artifacts, --dry-run to plan", p.Manifest().Binary)
+			case !dryRun:
+				return fmt.Errorf("live launch needs --launch (with --binary or a %s on PATH). Use --provision to write artifacts, --dry-run to plan",
+					planned.Plugin.Manifest().Binary)
 			}
 			return nil
 		},
@@ -240,7 +118,7 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "override endpoint count")
 	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node topology YAML (role/sync-mode/bootnode per node); overrides --validators/--endpoints")
 	cmd.Flags().StringArrayVar(&setValues, "set", nil, "override a flat config key (repeatable), e.g. --set genesis.overrides.bohoBlock=10")
-	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis (e.g. pkg/chains/stablenet/overlays/account-extra.json)")
+	cmd.Flags().StringVar(&genesisOverlay, "genesis-overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis (e.g. internal/chains/stablenet/overlays/account-extra.json)")
 	cmd.Flags().StringVar(&dataDir, "data-dir", "data", "data root directory")
 	cmd.Flags().StringVar(&keysDir, "keys-dir", "keys/preset", "preset keys directory (for --provision)")
 	cmd.Flags().StringVar(&binaryPath, "binary", "", "node binary path (for --launch); default: chain binary on PATH")
@@ -251,6 +129,35 @@ func newSetupCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&launch, "launch", false, "init datadirs and launch the nodes (implies --provision)")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", true, "plan only; do not launch")
 	return cmd
+}
+
+// printPlan renders the resolved plan: the chain identity, then one row per
+// planned node.
+func printPlan(cmd *cobra.Command, planned app.NetworkPlanOut) {
+	out := cmd.OutOrStdout()
+	m := planned.Plugin.Manifest()
+	fmt.Fprintf(out, "chain:    %s (family %s, binary %s, chain_id %d)\n",
+		m.ID, m.ConsensusFamily, m.Binary, m.ChainID)
+	fmt.Fprintf(out, "network:  %s\n", planned.Plan.Network)
+	fmt.Fprintf(out, "dataRoot: %s\n", planned.Plan.DataRoot)
+	fmt.Fprintf(out, "genesis:  template=%v (engine=%q)\n",
+		len(planned.Plugin.GenesisTemplate()) > 0, m.Genesis.EngineField)
+
+	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "NODE\tROLE\tSYNC\tHOST\tP2P\tHTTP\tWS")
+	for _, n := range planned.Plan.Nodes {
+		sync := n.SyncMode
+		if sync == "" {
+			sync = "-"
+		}
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d\t%d\t%d\n",
+			n.Index, n.Role, sync, n.Host, n.Ports.P2P, n.Ports.HTTP, n.Ports.WS)
+	}
+	// The plan is advisory output; a rendering failure must not fail the setup.
+	_ = w.Flush()
+	if planned.BootnodeIndex > 0 {
+		fmt.Fprintf(out, "bootnode: node %d\n", planned.BootnodeIndex)
+	}
 }
 
 // resolveBinary returns the executable path for launch: the explicit path if

@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/consensus"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -23,7 +24,7 @@ func newConsensusCmd() *cobra.Command {
 			if rpcURL == "" {
 				return fmt.Errorf("--rpc url is required")
 			}
-			p, err := resolveChain(chain, manifestPath, templatePath)
+			p, err := app.ResolveChain(chain, manifestPath, templatePath)
 			if err != nil {
 				return err
 			}

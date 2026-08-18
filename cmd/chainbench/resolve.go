@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
@@ -17,7 +18,7 @@ import (
 // path.
 func resolveAccountProvider(chain, manifestPath, templatePath string) (accounts.AccountProvider, error) {
 	if manifestPath != "" {
-		p, err := resolveChain(chain, manifestPath, templatePath)
+		p, err := app.ResolveChain(chain, manifestPath, templatePath)
 		if err != nil {
 			return nil, err
 		}
