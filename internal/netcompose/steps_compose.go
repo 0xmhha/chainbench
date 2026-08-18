@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keys"
@@ -17,6 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
@@ -37,10 +39,10 @@ const (
 
 // plugin resolves the workspace's chain plugin, requiring `new` to have run.
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
-	if w.state.Chain == "" {
+	if w.state.Chain == "" && w.state.ManifestPath == "" {
 		return nil, fmt.Errorf("netcompose: no chain set — run `net new` first")
 	}
-	return registry.Get(w.state.Chain)
+	return external.ResolveChain(w.state.Chain, w.state.ManifestPath, w.state.TemplatePath)
 }
 
 // KeysOpts selects where node identities come from (algorithm steps 2-3).
@@ -106,6 +108,47 @@ type AllocateOpts struct {
 	// exercise a path other than full sync. Validators ignore it: a node that
 	// seals blocks must hold full state.
 	EndpointSyncMode string
+	// Topology, when set, gives the layout explicitly — one entry per node, in
+	// launch order, each with its own role and sync mode. It replaces the
+	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
+	// per-node choice. Its Nodes must already be Validate()d.
+	Topology *topology.Topology
+}
+
+// placements resolves the requested layout into one placement request per node,
+// in launch order. A topology is authoritative when given; otherwise the counts
+// produce validators first, then endpoints.
+func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
+	if o.Topology != nil {
+		sorted := o.Topology.Sorted()
+		if len(sorted) == 0 {
+			return nil, nil, fmt.Errorf("netcompose: allocate: topology has no nodes")
+		}
+		reqs := make([]place.NodeReq, len(sorted))
+		modes := make([]string, len(sorted))
+		for i, n := range sorted {
+			role := n.NodeRole()
+			reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: role}
+			// A topology's per-node mode wins; a validator is still pinned to
+			// full, since the topology cannot make a sealing node stateless.
+			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
+		}
+		return reqs, modes, nil
+	}
+	if o.Validators < 1 {
+		return nil, nil, fmt.Errorf("netcompose: allocate: at least one validator is required")
+	}
+	reqs := make([]place.NodeReq, 0, o.Validators+o.Endpoints)
+	modes := make([]string, 0, cap(reqs))
+	for i := 0; i < o.Validators; i++ {
+		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("val%d", i+1), Role: node.RoleValidator})
+		modes = append(modes, syncModeFull)
+	}
+	for i := 0; i < o.Endpoints; i++ {
+		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("ep%d", i+1), Role: node.RoleEndpoint})
+		modes = append(modes, syncModeFor(node.RoleEndpoint, o.EndpointSyncMode))
+	}
+	return reqs, modes, nil
 }
 
 // syncModeFor returns the sync mode a node of this role renders. Only endpoints
@@ -127,15 +170,9 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if _, err := w.plugin(); err != nil {
 		return "", err
 	}
-	if opts.Validators < 1 {
-		return "", fmt.Errorf("netcompose: allocate: at least one validator is required")
-	}
-	reqs := make([]place.NodeReq, 0, opts.Validators+opts.Endpoints)
-	for i := 0; i < opts.Validators; i++ {
-		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("val%d", i+1), Role: node.RoleValidator})
-	}
-	for i := 0; i < opts.Endpoints; i++ {
-		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("ep%d", i+1), Role: node.RoleEndpoint})
+	reqs, modes, err := opts.placements()
+	if err != nil {
+		return "", err
 	}
 	alloc := place.New(place.Config{P2PBase: localP2PBase, P2PStep: localPortStep, RPCBase: localRPCBase, RPCStep: localPortStep})
 	placements, err := alloc.Allocate(reqs, place.LocalStepped, place.Capacity{MinValidators: 1, PortBandSize: portBandSize})
@@ -145,12 +182,16 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 
 	root := w.state.Target.DataRoot
 	nodes := make([]NodeState, len(placements))
+	validators := 0
 	for i, p := range placements {
 		idx := i + 1
+		if reqs[i].Role == node.RoleValidator {
+			validators++
+		}
 		nodes[i] = NodeState{
 			Index:      idx,
 			Role:       string(reqs[i].Role),
-			SyncMode:   syncModeFor(reqs[i].Role, opts.EndpointSyncMode),
+			SyncMode:   modes[i],
 			DataDir:    filepath.Join(root, fmt.Sprintf("node%d", idx)),
 			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
 			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
@@ -158,10 +199,18 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		}
 	}
 	w.state.Nodes = nodes
-	w.state.Validators = opts.Validators
+	// Counted from the resolved placements, not the requested count: a topology
+	// decides the validator set, and the genesis step sizes itself from this.
+	w.state.Validators = validators
+	if opts.Topology != nil {
+		w.state.Bootnode = opts.Topology.BootnodeIndex()
+	}
 
 	detail := fmt.Sprintf("%d node(s): %d validator(s) + %d endpoint(s); p2p from %d, http from %d",
-		len(nodes), opts.Validators, opts.Endpoints, nodes[0].P2P, nodes[0].HTTP)
+		len(nodes), validators, len(nodes)-validators, nodes[0].P2P, nodes[0].HTTP)
+	if opts.Topology != nil {
+		detail += " (topology)"
+	}
 	w.markStep("allocate", detail)
 	return detail, nil
 }

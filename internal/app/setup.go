@@ -216,14 +216,12 @@ func resolveTopology(in NetworkSpecIn) (string, *topology.Topology, error) {
 }
 
 // ResolveChain returns the chain plugin: an external, project-supplied manifest
-// when one is named (the hybrid model), otherwise the embedded chain
-// registered for the id. Exported because every surface that acts on a chain —
-// setup, consensus queries, account providers — resolves it the same way.
+// when one is named (the hybrid model), otherwise the embedded chain registered
+// for the id. Exported because every surface that acts on a chain resolves it
+// the same way; the implementation lives in chains/external, which is the one
+// package that knows both halves.
 func ResolveChain(chain, manifestPath, templatePath string) (registry.ChainPlugin, error) {
-	if manifestPath != "" {
-		return external.Load(manifestPath, templatePath)
-	}
-	return registry.Get(chain)
+	return external.ResolveChain(chain, manifestPath, templatePath)
 }
 
 // overrides folds the node counts, the flat --set pairs, and the genesis

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -64,14 +65,25 @@ type NetAllocateIn struct {
 	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
 	// re-sync test can exercise that path. Empty leaves every node on full.
 	EndpointSyncMode string
+	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
+	// replaces the counts, which cannot express a per-node choice.
+	TopologyPath string
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
 func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
+	var topo *topology.Topology
+	if in.TopologyPath != "" {
+		loaded, err := topology.Load(in.TopologyPath)
+		if err != nil {
+			return StepOut{}, err
+		}
+		topo = &loaded
+	}
 	detail, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
 		return ws.Allocate(netcompose.AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
-			EndpointSyncMode: in.EndpointSyncMode,
+			EndpointSyncMode: in.EndpointSyncMode, Topology: topo,
 		})
 	})
 	return StepOut{Detail: detail}, err

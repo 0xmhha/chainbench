@@ -55,14 +55,23 @@ type NodeState struct {
 // is optional so a partially-composed workspace round-trips. It holds no
 // secrets — remote credentials live only in the environment.
 type State struct {
-	Chain       string          `json:"chain"`
-	Binary      string          `json:"binary,omitempty"`
-	KeysDir     string          `json:"keysDir,omitempty"`
-	Validators  int             `json:"validators,omitempty"`
-	Target      TargetSpec      `json:"target"`
-	GenesisPath string          `json:"genesisPath,omitempty"`
-	Nodes       []NodeState     `json:"nodes,omitempty"`
-	Steps       map[string]Step `json:"steps"`
+	Chain string `json:"chain"`
+	// ManifestPath and TemplatePath name an external, project-supplied chain
+	// manifest. When set they win over Chain, so a workspace composed for a
+	// project's own chain resolves the same plugin on every later step.
+	ManifestPath string          `json:"manifestPath,omitempty"`
+	TemplatePath string          `json:"templatePath,omitempty"`
+	Binary       string          `json:"binary,omitempty"`
+	KeysDir      string          `json:"keysDir,omitempty"`
+	Validators   int             `json:"validators,omitempty"`
+	Target       TargetSpec      `json:"target"`
+	GenesisPath  string          `json:"genesisPath,omitempty"`
+	Nodes        []NodeState     `json:"nodes,omitempty"`
+	Steps        map[string]Step `json:"steps"`
+	// Bootnode is the 1-based index of the topology's bootnode, or 0 when the
+	// layout came from plain counts. Informational: every composed node lists
+	// every other as a static node, so peering does not depend on it.
+	Bootnode int `json:"bootnode,omitempty"`
 	// Capabilities is what the composed network advertises to capability-gated
 	// test cases (chain manifest + ws + delayed-fork markers + overlay claims).
 	// The genesis step derives it, since that is where the customizations that

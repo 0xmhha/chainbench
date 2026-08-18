@@ -12,7 +12,7 @@ import (
 // its data plane lives (local, or a remote SSH host). Flag binding + app.NetNew
 // + output — the logic lives in the app layer, shared with the MCP tool.
 func newNetNewCmd() *cobra.Command {
-	var dataDir, chain, binary, keysDir string
+	var dataDir, chain, binary, keysDir, manifestPath, templatePath string
 	var tf targetFlags
 	cmd := &cobra.Command{
 		Use:   "new",
@@ -27,6 +27,7 @@ func newNetNewCmd() *cobra.Command {
 			}
 			out, err := app.NetNew(cmd.Context(), app.Deps{}, app.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
+				ManifestPath: manifestPath, TemplatePath: templatePath,
 			})
 			if err != nil {
 				return err
@@ -36,7 +37,9 @@ func newNetNewCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory (keep it short: node IPC sockets have a 104-char limit)")
-	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
+	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
+	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
+	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (may also be set at start)")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from (inspect/manage it with `account`)")
 	tf.bind(cmd)

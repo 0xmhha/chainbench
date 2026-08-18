@@ -3,13 +3,18 @@ package netcompose
 import (
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/chains/external"
 )
 
 // NewOpts initializes a workspace's chain identity, key set, and compose target.
 type NewOpts struct {
 	Chain  string
 	Binary string
+	// ManifestPath selects an external, project-supplied chain manifest instead
+	// of an embedded chain; TemplatePath is its genesis template. When set, the
+	// chain id is taken from the manifest.
+	ManifestPath string
+	TemplatePath string
 	// KeysDir is the key set the network composes from (default keys/preset).
 	// Account management/inspection is the `account` subcommand's job; net only
 	// records which key set to use.
@@ -24,10 +29,10 @@ type NewOpts struct {
 // first step; later steps read these from the workspace. A local target with no
 // data root defaults to the workspace directory.
 func (w *Workspace) New(opts NewOpts) (string, error) {
-	if opts.Chain == "" {
-		return "", fmt.Errorf("netcompose: --chain is required")
+	if opts.Chain == "" && opts.ManifestPath == "" {
+		return "", fmt.Errorf("netcompose: --chain or --manifest is required")
 	}
-	p, err := registry.Get(opts.Chain)
+	p, err := external.ResolveChain(opts.Chain, opts.ManifestPath, opts.TemplatePath)
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +55,11 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	}
 
 	m := p.Manifest()
-	w.state.Chain = opts.Chain
+	// An external manifest names its own chain; recording it keeps status and
+	// later steps reporting one id rather than an empty one.
+	w.state.Chain = p.Manifest().ID
+	w.state.ManifestPath = opts.ManifestPath
+	w.state.TemplatePath = opts.TemplatePath
 	w.state.Binary = opts.Binary
 	w.state.KeysDir = keysDir
 	w.state.Target = target

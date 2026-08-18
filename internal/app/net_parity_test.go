@@ -186,3 +186,158 @@ func genesisConfig(t *testing.T, path string) map[string]any {
 	}
 	return gen.Config
 }
+
+func TestNetAllocate_TopologyDrivesRolesAndSyncModes(t *testing.T) {
+	dir := t.TempDir()
+	d := app.Deps{Clock: fixedClock}
+	keysAbs, err := filepath.Abs(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+
+	topo := filepath.Join(t.TempDir(), "topology.yaml")
+	if err := os.WriteFile(topo, []byte(`chain: stablenet
+nodes:
+  - index: 1
+    role: bp
+    bootnode: true
+  - index: 2
+    role: en
+    sync_mode: archive
+  - index: 3
+    role: bp
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, TopologyPath: topo})
+	if err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	if !strings.Contains(out.Detail, "topology") {
+		t.Errorf("detail should say the layout came from a topology, got %q", out.Detail)
+	}
+
+	st := stateOf(t, dir, d)
+	want := []struct{ role, sync string }{
+		{"validator", "full"},
+		{"endpoint", "archive"},
+		{"validator", "full"},
+	}
+	if len(st.Nodes) != len(want) {
+		t.Fatalf("got %d nodes, want %d", len(st.Nodes), len(want))
+	}
+	for i, w := range want {
+		if st.Nodes[i].Role != w.role || st.Nodes[i].SyncMode != w.sync {
+			t.Errorf("node%d = %s/%s, want %s/%s", i+1, st.Nodes[i].Role, st.Nodes[i].SyncMode, w.role, w.sync)
+		}
+	}
+	// The validator count comes from the resolved layout, not a requested
+	// number, so the genesis step sizes its validator set correctly.
+	if st.Validators != 2 {
+		t.Errorf("validators = %d, want 2 from the topology", st.Validators)
+	}
+	if st.Bootnode != 1 {
+		t.Errorf("bootnode = %d, want 1", st.Bootnode)
+	}
+}
+
+func TestNetAllocate_TopologyCannotMakeAValidatorStateless(t *testing.T) {
+	// A sealing node must hold full state; a topology asking otherwise is
+	// overridden rather than silently producing a network that cannot seal.
+	dir := t.TempDir()
+	d := app.Deps{Clock: fixedClock}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	topo := filepath.Join(t.TempDir(), "topology.yaml")
+	if err := os.WriteFile(topo, []byte(`chain: stablenet
+nodes:
+  - index: 1
+    role: bp
+    sync_mode: snap
+  - index: 2
+    role: bp
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	for _, n := range stateOf(t, dir, d).Nodes {
+		if n.SyncMode != "full" {
+			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
+		}
+	}
+}
+
+func TestNetAllocate_MissingTopologyFileIsAnError(t *testing.T) {
+	dir, d := composed(t, app.NetAllocateIn{Validators: 1})
+	if _, err := app.NetAllocate(context.Background(), d, app.NetAllocateIn{
+		DataDir: dir, TopologyPath: "/nonexistent/topology.yaml",
+	}); err == nil {
+		t.Error("want an error for a missing topology file")
+	}
+}
+
+func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
+	// A project-supplied chain has to resolve on every later step, not just at
+	// `new`: the workspace records the manifest, not only the id.
+	dir := t.TempDir()
+	d := app.Deps{Clock: fixedClock}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+
+	manifestDir := t.TempDir()
+	manifest := filepath.Join(manifestDir, "manifest.json")
+	if err := os.WriteFile(manifest, []byte(`{
+		"id": "foonet", "binary": "gfoo", "chain_id": 9999, "network_id": 9999,
+		"miner_recommit": "duration", "bootstrap": {"type": "static"},
+		"consensus_family": "wbft", "protocol": "stablenet",
+		"genesis": {"template": "foonet-genesis"},
+		"consensus": {"rpc_namespace": "istanbul", "validators_method": "istanbul_getValidators"},
+		"probe": {"method": "istanbul_getValidators"}
+	}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	template := filepath.Join(manifestDir, "genesis.json")
+	if err := os.WriteFile(template, []byte(`{"config":{"chainId":9999},"extraData":"0x0"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{
+		DataDir: dir, KeysDir: keysAbs, ManifestPath: manifest, TemplatePath: template,
+	}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	// The manifest's own id is recorded, so status reports a real chain.
+	if got := stateOf(t, dir, d).Chain; got != "foonet" {
+		t.Errorf("chain = %q, want foonet from the manifest", got)
+	}
+
+	// A later step must resolve the same plugin — registry.Get("foonet") would
+	// fail, since it is not an embedded chain.
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
+		t.Fatalf("allocate on an external chain: %v", err)
+	}
+	if _, err := app.NetGenesis(ctx, d, app.NetGenesisIn{DataDir: dir}); err != nil {
+		t.Fatalf("genesis on an external chain: %v", err)
+	}
+	if got := genesisConfig(t, filepath.Join(dir, "genesis.json"))["chainId"]; got != float64(9999) {
+		t.Errorf("genesis chainId = %v, want the manifest's 9999", got)
+	}
+}
+
+func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
+	if _, err := app.NetNew(context.Background(), app.Deps{Clock: fixedClock},
+		app.NetNewIn{DataDir: t.TempDir()}); err == nil {
+		t.Error("want an error with neither a chain nor a manifest")
+	}
+}

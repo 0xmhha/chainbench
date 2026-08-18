@@ -56,18 +56,19 @@ func newNetKeysCmd() *cobra.Command {
 
 func newNetAllocateCmd() *cobra.Command {
 	var validators, endpoints int
-	var endpointSyncMode string
+	var endpointSyncMode, topologyPath string
 	cmd, _ := stepCmd("allocate", "Build the node table: roles, paths, deterministic ports",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := app.NetAllocate(cmd.Context(), app.Deps{}, app.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
-				EndpointSyncMode: endpointSyncMode,
+				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath,
 			})
 			return out.Detail, err
 		})
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode); overrides --validators/--endpoints")
 	return cmd
 }
 
