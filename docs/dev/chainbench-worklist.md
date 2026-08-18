@@ -87,7 +87,7 @@
 | **T7.8** | **DSL v2** — env/case 분리, do/expect 통일 문장형(v1 은 같은 시퀀스로 desugar — 실행 경로 1개), strict 파싱, keys/launch/genesis(set·overlay) 선언, schema/v2.schema.json 정본, `migrate-spec`(라운드트립 게이트), hooks.onFail | 미배선 선언은 이름 붙여 거부: genesis existing/build/inherit·role-scoped launch·override hook(G5) | ☑ |
 | **T7.9** | **metric 검증원** — portplan 이 metrics 포트(HTTP+3, rpcStep≥4) 할당, collector.ScrapeMetrics(Prometheus 텍스트), `expect:"metric"` 어세션(기본 GreaterOrEqual). metrics 포트 없는 노드는 명시적 실패 | 3-검증원(log·rpc·metric) 완성 | ☑ |
 | **T7.10** | **단일 경로 문법** — `netcompose.ParseTarget`: `/local/path` · `user@host:/path` · `ssh://user@host:port/path`. `net new --target` + MCP `target` 인자; 레거시 4-플래그는 유지하되 혼용 거부 | setup 명령의 4-플래그는 T7.11 에서 스택과 함께 | ☑ |
-| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료(T7.11a~d)** — 아래 §1d. **잔여**: 패키지 실삭제(`pipeline/setup` 566줄 · `core/state` 88줄) + `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 완료 — 남은 건 패키지 이동/삭제(독립) 와 케이스 이관(작업량) | ◐ |
+| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료**(§1d) · **패키지 이동 완료**(§1e: `pipeline/setup`→`core/bringup`) · **netcompose 대체 진행 중**(§1f: b-1~b-4 완료, b-5·b-6 은 라이브 검증 선행). **잔여**: `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 — 남은 건 라이브 검증 후 전환·삭제, 그리고 케이스 이관(작업량) | ◐ |
 | — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☐ |
 
 ---
@@ -117,9 +117,49 @@
 
 **검증**: `go build/vet ./...` · `go test ./...` · 영향 패키지 `-race` 전부 통과. 신규 단위 테스트 27건.
 
-**남은 것(별건)**: 두 패키지의 **실삭제**는 (a) `pipeline/setup` 566줄을 `internal/core/` 로 이동하거나
-(b) netcompose 스택이 setup 을 대체할 때 가능하다. app 은 유스케이스 층이라 그 566줄의 종착지가 아니다.
-`core/state` 는 app 전용이 됐으므로 언제든 흡수 가능하지만, nodeset.json 포맷 자체는 setup 스택과 함께 사라진다.
+---
+
+## 1e. (a) 패키지 이동 — 완료
+
+`core/pipeline/setup` → **`core/bringup`**(패키지명 `setup`→`bringup`), 죽은 `Plan = driver.Plan` 별칭 제거,
+에러 접두사 정리, `core/state` package doc 에 단일 소유자·수명 명시. **순수 이동 — 동작·시그니처 변경 없음.**
+`core/pipeline/` 에는 `testrun` 만 남았고, 그것은 레거시 스택 B 와 함께 사라진다.
+
+이동한 이유: 3-phase pipeline 프레이밍은 이미 소멸했는데(verify→`core/health`, attach→`node.AttachedSet`,
+`Plan`→`core/driver`) 이름만 남아 존재하지 않는 phase 를 암시했고, `cmd setup`·`internal/chainsetup` 과 3중 충돌했다.
+
+---
+
+## 1f. (b) netcompose 가 bringup 을 대체 — 진행 중
+
+착수 전 실측한 두 스택의 격차. netcompose 는 launch argv(`engine.NodeLaunchArgs`)·포트 할당(`place`)·
+키 소스(`engine.KeySource`)를 이미 엔진과 공유하고 있었으나, **네트워크를 기술하는 방법**에 구멍이 있었다.
+
+| # | 작업 | 내용 | 상태 |
+|---|---|---|---|
+| **b-1** | 구성 패리티(결함) | **syncMode 미렌더 수정** — `Config` 이 `nodeconfig.Params.SyncMode` 를 채우지 않아 모든 노드가 `full` 이었다(steps 로 구성한 snap-sync 테스트가 조용히 full sync 를 돌고 있었음). `--endpoint-syncmode` 신설, validator 는 항상 full. + genesis `--set` 오버라이드·`--overlay` 딥머지(양쪽 fork 순서 재검증) + capabilities 파생(manifest+ws+`delayed-<fork>`+overlay) | ☑ |
+| **b-2** | 토폴로지·외부 매니페스트 | `allocate --topology`(노드별 role/sync_mode/bootnode; validator 수는 **요청값이 아니라 해석된 배치**에서 셈 — genesis 가 이 값으로 검증자셋을 만든다) · `new --manifest/--genesis-template`(워크스페이스에 기록 → 이후 모든 스텝이 같은 플러그인 해석) · 체인 해석을 `chains/external.ResolveChain` 1곳으로 | ☑ |
+| **b-3** | NodeSet 브릿지 | `Workspace.NodeSet()`/`RPCHost()` + `app.NetworkStatus`/`NetworkStop` 이 **디렉토리의 상태 매니페스트로 스택을 판별**해 양쪽을 읽는다 → `status`/`stop`·MCP 도구가 워크스페이스에서 그대로 동작. 부수 수정: health 스텝이 target 무관하게 `127.0.0.1` 을 찌르던 원격 버그 | ☑ |
+| **b-4** | `net up` 매크로 | 9개 스텝을 순서대로 실행하는 유스케이스 1개 + CLI. `--stage provision\|start`. 실패 시에도 성공한 스텝을 출력(워크스페이스는 그 지점부터 손으로 재개 가능). **`--stage=provision` 로 end-to-end 실증**(genesis·config 3개·argv·노드 테이블) | ☑ |
+| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체 | ☐ **라이브 검증 선행** |
+| **b-6** | `bringup`·`core/state` 삭제 | b-5 검증 후 | ☐ |
+
+### b-5 를 지금 하지 않은 이유
+
+`--stage=start` 는 실제 프로세스를 띄우므로 **체인 바이너리 없이는 검증할 수 없다.** 그리고 전환은
+관측 가능한 변화를 동반한다 — **포트 대역이 달라진다**(bringup: `ports.base_*` = http 8501·p2p 30301 /
+netcompose: `place` 할당 = http 8600·p2p 31000, step 10). 기존 절차 문서·라이브 스크립트가 이 번호에
+의존한다면 함께 갱신해야 한다.
+
+**검증 절차(바이너리 보유 환경)**:
+```sh
+chainbench net up --data-dir /tmp/n1 --chain stablenet --binary $GSTABLE_BIN \
+  --keys keys/preset --validators 4
+chainbench net health --data-dir /tmp/n1     # 블록 전진 확인
+chainbench run --data-dir /tmp/n1 tests/specs/api/*.json
+chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
+```
+이것이 통과하면 b-5(내부 교체)는 작은 변경이고, b-6(삭제)이 뒤따른다.
 
 ---
 
