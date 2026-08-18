@@ -225,17 +225,25 @@ B 는 F 와 병행 가능하다.
 > 어느 것도 전체를 말하지 못한다. **preset 이 선택이 아니라 전제**이고(`keys.LoadPreset` 필수),
 > 바이너리 경로가 **20개 파일**에 분산돼 있다. 노드별 nodekey·계정·포트·서버를 지정할 수단이 없다.
 
+> **원칙: raw 가 먼저, preset 은 나중.** 손으로 쓴 값만으로 네트워크가 서는 것을 먼저 만들고,
+> 그 위에 preset 을 **생성기**로 얹는다. 반대로 하면 preset 이 다시 전제가 된다.
+
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **N0** | `blueprint` 선언 스키마 + 파서(L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 | ☐ |
-| **N1** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장)과 `Sources` 기록 | 같은 청사진이 항상 같은 `ResolvedNetwork` (결정성) | ☐ |
-| **N2** | `net blueprint --from-preset` — preset 을 **생성기**로 강등 | preset 산출 청사진으로 3체인 구성 재현 | ☐ |
-| **N3** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
-| **N4** | 노드별 지정 지원 (nodekey·계정·포트·서버·바이너리 오버라이드) | **preset 없이** 수동 청사진만으로 4노드 기동 | ☐ |
-| **N5** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
+| **N0** | 역할을 `bp·en·pn` 3종으로 정리, `boot` 은 속성으로 강등 | `validator→bp`·`endpoint→en` 이관 · `pn` 신설 · 기존 토폴로지 호환 | ☐ |
+| **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
+| **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
+| **N3** | **raw 경로 완성** — 노드별 nodekey·계정·포트·서버·바이너리 오버라이드 선언 | **preset 없이** 손으로 쓴 청사진만으로 3체인 4노드 기동(라이브) | ☐ |
+| **N4** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
+| **N5** | **그 다음** preset 지원 — `net blueprint --from-preset` 이 청사진을 **생성** | preset 산출 청사진이 N3 경로와 동일 결과 | ☐ |
+| **N6** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
+
+**키 파생 주의**(N3): wbft 계열은 nodekey 하나에서 계정·BLS 가 파생되므로 `bootnode` 바이너리가
+필수다. poa 는 계정이 nodekey 와 독립이라 `account:` 를 따로 선언해야 한다.
+**BLS 는 선언 필드가 아니다** — 선언하면 nodekey 와 어긋날 수 있고, 그 불일치는 합의에서 터진다.
 
 **N 과 F 의 관계**: F4(`GenesisArtifacts`)·F3(`BringUpPhases`)는 `ResolvedNetwork` 를 입력으로 받는다.
-**N0·N1 을 먼저** 해야 F 가 조각을 다시 모으지 않는다.
+**N1·N2 를 먼저** 해야 F 가 조각을 다시 모으지 않는다.
 
 ### S — 표면 통일 (CLI/MCP/DSL 을 한 레지스트리로)
 

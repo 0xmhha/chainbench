@@ -61,6 +61,26 @@ preset, err := keys.LoadPreset(w.state.KeysDir)   // ← 없으면 진행 불가
 | N13 | **거버넌스 정책** (blockCreationTime·stakingMin…) | poa | `poa.Env` | wemix 전용 |
 | N14 | **부트노드 선정** | ✅ | `topology.bootnode` | poa 는 필수, 현재 `BootRole` 이 부정확 |
 
+### 2.1b 노드 역할 — bp · en · pn (확정)
+
+역할은 **세 가지**다. `boot` 은 역할이 아니라 **속성**이다 — 한 노드가 bp 이면서 부트노드일 수 있다.
+
+| 역할 | 하는 일 | 합의 참여 | 필요한 키 |
+|---|---|---|---|
+| **bp** | 블록 생성(봉인) | ✅ | nodekey + 계정 (+BLS, wbft 계열) |
+| **en** | RPC 엔드포인트 | ❌ | nodekey |
+| **pn** | 비생성 노드 (en 과 실행 옵션이 다름) | ❌ | nodekey |
+| *(속성)* `bootnode: true` | 최초 기동·거버넌스 배포 지점 | — | 해당 노드의 키 |
+
+> **확인 필요**: `pn` 의 정확한 역할 정의(프록시/퍼블릭)와 en 과의 실행 옵션 차이는 체인 팀 확인이 필요하다.
+> 구조상으로는 "합의에 참여하지 않는 두 번째 종류"로 자리를 잡아 두고, 차이는
+> `launchopt` 의 역할별 플래그로 표현한다(`Family.StartFlags(role)` 이 이미 역할을 받는다).
+
+**현재 코드와의 차이**: 지금은 `validator·endpoint·boot·en` 4종이고 `pn` 이 없다.
+이관은 `validator→bp`, `endpoint→en`, `boot→(속성으로 강등)`, `pn` 신설이다.
+
+---
+
 ### 2.2 노드 수준 — **누락이 가장 심한 부분**
 
 | # | 요소 | 필수 | 지금 어디에 | 비고 |
@@ -72,15 +92,39 @@ preset, err := keys.LoadPreset(w.state.KeysDir)   // ← 없으면 진행 불가
 | P5 | 포트 (p2p·http·ws·auth·metrics) | ✅ | `portplan` 파생 | **개별 지정 불가** |
 | P6 | ↳ 파생 포트 (etcd peer·client) | poa | 예약만 | |
 | P7 | **nodekey** (devp2p 신원) | ✅ **전 노드** | preset | **개별 지정 불가** |
-| P8 | **합의 계정** (unlock·etherbase) | **BP만** | preset | **개별 지정 불가** |
-| P9 | keystore 파일 · password | BP만 | preset | |
-| P10 | BLS 키 · PoP | wbft | preset | |
+| P8 | **합의 계정** (unlock·etherbase) | **bp만** | preset | **개별 지정 불가**. wbft 계열은 P7 에서 파생 |
+| P9 | keystore 파일 · password | bp만 | preset | poa 는 P7 과 **독립된 키** |
+| P10 | **BLS 공개키 · PoP** | **wbft 계열만** | preset | **P7 에서 파생** — 별도 선언 대상이 아니다 |
 | P11 | sync mode | | `topology.sync_mode` | |
 | P12 | datadir 경로(타깃 기준) | ✅ | 파생 | |
 | P13 | 노드별 launch 옵션 | | `--launch-opt`(전역만) | **노드별 불가** |
 
 **P7·P8 이 핵심 정정**: nodekey 는 devp2p 신원이라 **BP·EN 모두** 필요하고,
 합의 계정은 **BP 에만** 필요하다. 개수가 다르다.
+
+### 2.2b 키 파생 — 무엇을 선언하고 무엇이 파생되는가 (실측)
+
+`bootnode -nodekeyhex <nodekey> -writeaddress` 는 **address · devp2p publicKey · BLS publicKey ·
+BLS PoP** 를 전부 뱉는다. 즉 wbft 계열에서 **nodekey 하나가 루트 시크릿**이다.
+
+| | nodekey | 합의 계정 | BLS |
+|---|---|---|---|
+| **stablenet · wbft** | 노드당 1개 (선언 대상) | **nodekey 에서 파생** | **nodekey 에서 파생** |
+| **wemix (poa)** | 노드당 1개 (선언 대상) | **별도 keystore** (`wemix new-account`) | **사용 안 함** (`consensus/poa` BLS 참조 0건) |
+
+**설계 귀결 3가지**
+
+1. **BLS 는 Blueprint 의 선언 필드가 아니다.** nodekey 를 선언하면 따라온다.
+   선언 필드로 두면 nodekey 와 어긋날 수 있고, 그 불일치는 genesis 를 통과한 뒤 합의에서 터진다.
+2. **계정 선언 필요 여부가 패밀리마다 다르다.** wbft 계열은 nodekey 만으로 충분하고,
+   poa 는 `account:` 를 따로 선언해야 한다. Blueprint 는 둘 다 받고, **패밀리가 무엇을 요구하는지 검증**한다.
+3. **BLS 파생에는 외부 바이너리가 필요하다**(`bootnode`). 이미 `keyreg.BLSDeriver` seam 이 그 경계이고,
+   `binaries.bootnode` 가 그 입력이다 — wbft 계열에서 nodekey 를 직접 선언하면 이 바이너리가 필수가 된다.
+
+genesis 는 **검증자의 BLS 만** 소비한다(`len(Validators) == len(BLSKeys)` 강제).
+preset 이 전 노드에 BLS 를 주는 것은 노드가 나중에 검증자로 승격될 수 있기 때문이고, 낭비가 아니다.
+
+---
 
 ### 2.3 연결 구성 — 노드들이 서로를 찾는 방법
 
@@ -118,7 +162,7 @@ wbft 는 static-nodes 목록, wemix 는 거버넌스 member 목록 + etcd. 이�
 ### 3.1 Blueprint — 하나의 선언 문서
 
 ```yaml
-# network.yaml — 이 네트워크의 전부. 모든 필드는 선택이며, 없으면 §3.3 순서로 채워진다.
+# network.yaml — 이 네트워크의 전부. 모든 필드는 선택이며, 없으면 §3.4 순서로 채워진다.
 version: 1
 chain: wemix                        # 또는 manifest: ./my-chain.json
 
@@ -166,7 +210,20 @@ governance:                         # N12·N13 — poa 패밀리만. 다른 체�
 2. **명시가 항상 이긴다.** 값을 쓰면 그 값이 쓰인다 — preset 도 생성기도 덮지 못한다.
 3. **참조가 가능하다.** `alloc[].account: bp1` 처럼 노드 이름으로 가리킨다. 주소를 두 번 쓰지 않는다.
 
-### 3.2 preset 은 Blueprint 의 **생성기**다
+### 3.2 raw 가 먼저, preset 은 나중 (순서가 설계다)
+
+**손으로 쓴 값만으로 네트워크가 서는 것을 먼저 만든다.** 그 다음에 preset 을 얹는다.
+반대로 하면 preset 이 다시 전제가 되고, 지금과 같은 자리로 돌아온다.
+
+```
+1단계  raw 청사진만으로 3체인 기동         ← 여기가 완성돼야
+2단계  preset 이 그 청사진을 생성            ← 이것이 순수한 시간 단축이 된다
+```
+
+`net up --blueprint network.yaml` 이 **preset 디렉토리 없이** 동작하는 것이 1단계의 게이트다.
+지금은 `keys.LoadPreset` 이 필수라 이것이 불가능하다.
+
+### 3.3 preset 은 Blueprint 의 **생성기**다
 
 ```sh
 # preset 에서 청사진을 만든다 — 이후 손으로 고칠 수 있다
@@ -179,7 +236,7 @@ chainbench net up --blueprint network.yaml
 이 뒤집기가 핵심이다. 지금은 `preset → (내부 조립) → 네트워크` 라서 중간을 볼 수도 고칠 수도 없다.
 바뀌면 `preset → 청사진(볼 수 있음·고칠 수 있음) → 네트워크` 가 된다.
 
-### 3.3 필드가 채워지는 순서 (Resolve)
+### 3.4 필드가 채워지는 순서 (Resolve)
 
 각 필드마다 **출처 사슬**이 고정된다. 이것이 "자유도는 높되 역할은 분명"의 구현이다.
 
@@ -195,7 +252,7 @@ chainbench net up --blueprint network.yaml
 **출처를 기록한다.** `ResolvedNetwork` 는 값과 함께 "어디서 왔는지"를 남긴다 —
 [[server-inventory]] 에서 포트 출처를 표시한 것과 같은 이유로, 값의 유래가 추측 대상이면 안 된다.
 
-### 3.4 ResolvedNetwork — 확정된 스냅샷
+### 3.5 ResolvedNetwork — 확정된 스냅샷
 
 ```go
 // internal/core/blueprint (L1: 선언 파싱) / internal/app (L5: 해석)
@@ -228,7 +285,7 @@ type ResolvedNode struct {
 
 **불변이다.** 만들어진 뒤 아무도 고치지 않는다. 고쳐야 하면 Blueprint 를 고치고 다시 Resolve 한다.
 
-### 3.5 Materialize — 산출물은 노드별 묶음이다
+### 3.6 Materialize — 산출물은 노드별 묶음이다
 
 ```
 ResolvedNetwork
@@ -279,8 +336,8 @@ Blueprint 관점에서 보면 **체인 특화는 두 곳뿐**이다.
 
 ## 6. 남은 결정
 
-1. **`pn` 역할을 도입할 것인가.** 현재 역할은 `validator·endpoint·boot·en` 4종이고 `pn` 은 없다.
-   wemix 에서 EN/PN 을 구분해야 한다면 역할 표를 넓혀야 한다 — **체인 팀 확인 필요.**
+1. ~~`pn` 역할을 도입할 것인가~~ → **확정: `bp·en·pn` 3종, `boot` 은 속성**(§2.1b).
+   남은 것은 `pn` 과 `en` 의 **실행 옵션 차이**가 무엇인가뿐이다 — 체인 팀 확인 필요.
 2. **Blueprint 를 어디에 둘 것인가.** 노드 IP·포트를 담으므로 [[server-inventory]] 와 같은 민감도다.
    서버 인벤토리를 참조만 하고(`server: local`) 자신은 IP 를 담지 않게 하면 커밋 가능해진다 —
    **그 편이 낫다고 본다.**
