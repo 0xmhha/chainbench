@@ -218,6 +218,26 @@ B 는 F 와 병행 가능하다.
 파급된다. `nodes=nil → 전체` 규약이면 이관은 기계적이고, wbft 계열은 argv·순서가 바이트 동일하게
 유지되므로 stablenet/wbft 회귀를 §1f b-5 절차로 즉시 확인할 수 있다.
 
+### S — 표면 통일 (CLI/MCP/DSL 을 한 레지스트리로)
+
+> 근거: [[surface-unification-design]](surface-unification-design.md).
+> 실측 문제: `cmd/chainbench` 4,569줄 중 **21파일이 `app` 을 우회**해 L1~L4 를 직접 부른다.
+> MCP 도구 46개 중 **34개가 JSON 스키마 손작성**. DSL 은 또 다른 레지스트리를 갖는다 —
+> **기능 목록이 세 벌**이고 실제로 갈라졌다(`faucet`·`verify` 는 DSL 에 없다).
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **S0** | `app/feature` 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 | 기존 동작 무변경 · 미등록 기능 카운트 테스트 | ☐ |
+| **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☐ |
+| **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
+| **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인 | ☐ |
+| **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
+| **S5** | `cmd/` 규칙 위반 21파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄 | ☐ |
+| **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
+
+**F 계열과의 순서**: 독립이지만 `net start` 를 둘 다 건드린다 — **F3(페이즈 구조)을 먼저** 하고
+S1 에서 등록해야 두 번 등록하지 않는다.
+
 ### 결정이 필요한 열린 질문
 
 [[family-bringup-design]] §9 참조. 요약: (1) `Phase.Actions` 를 문자열로 둘지 타입 상수로 둘지,
