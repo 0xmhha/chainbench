@@ -39,6 +39,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/architecture/sequence-diagrams.md`](dev/architecture/sequence-diagrams.md) | 전체 run · BuildEnv · Interpreter · 원자 스텝 CLI · 원격 SSH · 실패 경로. |
 | [`dev/architecture/state-diagrams.md`](dev/architecture/state-diagrams.md) | TestRun · Environment · NodeProcess · Session/키 · 워크스페이스 스텝. |
 | [`dev/architecture/layers.md`](dev/architecture/layers.md) | **레이어 아키텍처** — L0~L6 정의 · 57개 패키지 전수 배치 · 의존 규칙(상향 0건 실측) · **상태 소유 규칙**(control plane=session / data plane=FileSink)과 위반 6곳 · 규칙 강제 테스트 제안. |
+| [`dev/architecture/module-responsibilities.md`](dev/architecture/module-responsibilities.md) | **관심사별 소유 모듈**(체인구성 5요소·노드생명주기·DSL 등 16개) · 현재 소유자 부재 실측(genesis 17곳·키 17곳·노드 11곳) · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 3분할 제안. |
 | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) | AST 실측 패키지 그래프 — 계층 검증 · fan-in/out · launch-args 분산 5지점 · launchopt 실행 순서. |
 
 ### 2026-08-11 재설계 검토 3종 (제안 — 미확정)
