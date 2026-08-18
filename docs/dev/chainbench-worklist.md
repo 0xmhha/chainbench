@@ -218,6 +218,29 @@ B 는 F 와 병행 가능하다.
 파급된다. `nodes=nil → 전체` 규약이면 이관은 기계적이고, wbft 계열은 argv·순서가 바이트 동일하게
 유지되므로 stablenet/wbft 회귀를 §1f b-5 절차로 즉시 확인할 수 있다.
 
+### K — keyring (첫 착수 대상)
+
+> 근거: [[keyring-design]](keyring-design.md).
+> **키는 세 체인이 동일하다**(실증: 같은 nodekey → 세 체인 동일한 address·pubkey, BLS 도 Go 파생이
+> `bootnode` 출력과 바이트 동일). 그래서 여기부터 정리하면 위쪽이 단순해진다.
+> 실측 문제: 키 관심사가 **5패키지 1,236줄**에 흩어져 있고(읽기 `keys`/쓰기 `keygen`/저장 `keymat`/
+> 런타임 `keyreg`), preset 이 **신원·네트워크 결정·파생 산출물 셋을 섞어** 담아 preset 을 전제로 만든다.
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **K0** | `core/keyring` 신설 — 생성·파생(Go+blst)·백엔드·링·색인 | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) | ☐ |
+| **K1** | `--bootnode` 제거 — BLS 를 blst 로 자체 파생 | `keyring new` 가 **체인 바이너리를 0회 실행** | ☐ |
+| **K2** | `keygen.WBFTExtraData` → `consensus/wbft` 이전 | genesis 자료는 genesis 쪽으로. 기존 골든 테스트 유지 | ☐ |
+| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
+| **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
+| **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
+
+**의존성 추가**: `github.com/supranational/blst v0.3.16` — BLS12-381 표준 구현체,
+**go-wbft 자신이 같은 버전 사용**. 오타 낚시 아님, 이더리움 합의 클라이언트 전반 사용.
+
+**DST 주의**(K0): PoP 서명의 DST 를 빼면 **형식은 멀쩡한데 검증 실패하는 PoP** 이 나온다.
+실제로 첫 파생 시도에서 그렇게 됐다 — 골든 테스트로 고정한다.
+
 ### N — 네트워크 청사진 (구성 정보를 하나의 선언으로)
 
 > 근거: [[network-blueprint-design]](network-blueprint-design.md).
