@@ -1,20 +1,90 @@
-# remote-server-config.sample.yaml
+# remote-server-config.sample.yaml — server inventory template
 #
-# SSH access config for remote node execution (design docs/dev/chainbench-design.md §7).
 # Copy to `remote-server-config.yaml` (gitignored) and fill in real values.
-# NEVER commit the real file — it holds credentials. Only this .sample is tracked.
+# NEVER commit the real file. Host addresses, port assignments, and credentials
+# are site-specific and sensitive; only this template is tracked.
 #
-# The test spec references this file via `remote.cluster`; it is NOT embedded in
-# the spec, so credentials never reach the test definitions or git.
+#   cp remote-server-config.sample.yaml remote-server-config.yaml
+#
+# One entry shape describes this machine and a remote host. Only `kind` and the
+# `ssh` block differ, so a command that composes a network reads the same
+# structure either way:
+#
+#   chainbench net up --data-dir /tmp/n1 --chain stablenet \
+#     --binary /path/to/gstable --server local
+#
+#   chainbench net up --data-dir /tmp/n1 --chain stablenet \
+#     --binary /srv/bin/gstable --server bp1
+#
+# With no --server (or no config file at all) chainbench falls back to built-in
+# ports and says so, so where a port came from is never a guess.
 
-sshPort: 22
-user: deploy
-# Provide exactly one of `password` or `keyPath`.
-password: "CHANGE_ME"          # or omit and use keyPath below
-# keyPath: ~/.ssh/id_ed25519
+version: 1
 
-# One host per node (1 server = 1 node): same ports, different IPs (requirement 16).
-hosts:
-  - 10.0.0.11
-  - 10.0.0.12
-  - 10.0.0.13
+# Every server inherits any field it does not set.
+defaults:
+  # How many nodes one server may host.
+  slots: 1
+
+  # Where a node's data plane lives ON the server (datadirs, genesis, configs,
+  # logs). A remote server's path is a path on that host.
+  dataRoot: /var/lib/chainbench
+
+  # Node listening ports. Two disjoint bands, each advancing per node:
+  #   p2p:  p2pBase + (node-1) * p2pStep      etcd is derived as p2p+1
+  #   http: rpcBase + (node-1) * rpcStep      ws = http+1, auth = http+2
+  #                                           metrics = http+3 (needs rpcStep >= 4)
+  # p2pStep must be >= 2 so etcd never lands on the next node's p2p port —
+  # that collision stalls block production with no obvious cause.
+  ports:
+    p2pBase: 30303
+    p2pStep: 10
+    rpcBase: 8545
+    rpcStep: 10
+
+  # SSH access, used only by servers with `kind: remote`.
+  # PREFER THE ENVIRONMENT for secrets — anything set here is overridden by:
+  #   CHAINBENCH_REMOTE_USER, CHAINBENCH_REMOTE_PASS,
+  #   CHAINBENCH_REMOTE_KEY_FILE (+ CHAINBENCH_REMOTE_KEY_PASSPHRASE)
+  # so this file can stay secret-free. Host-key policy is separate:
+  #   CHAINBENCH_SSH_KNOWN_HOSTS, or CHAINBENCH_SSH_INSECURE_HOST_KEY=1 on a
+  #   closed network with no known_hosts.
+  ssh:
+    user: ubuntu
+    port: 22
+    # password: ""              # prefer CHAINBENCH_REMOTE_PASS
+    # key_file: ~/.ssh/id_ed25519
+
+servers:
+  # This machine. No ssh block is consulted for a local server.
+  - index: 1
+    name: local
+    kind: local
+    host: 127.0.0.1
+    slots: 8                    # one host, several nodes on stepped ports
+    dataRoot: /tmp/chainbench/net1
+
+  # A remote fleet: one node per host, every host on the same ports.
+  - index: 2
+    name: bp1
+    kind: remote
+    host: 10.0.0.11
+
+  - index: 3
+    name: bp2
+    kind: remote
+    host: 10.0.0.12
+
+  - index: 4
+    name: bp3
+    kind: remote
+    host: 10.0.0.13
+    # Per-server overrides of any default:
+    # slots: 2
+    # dataRoot: /srv/chainbench
+    # ports:
+    #   rpcBase: 9545
+    # ssh:
+    #   user: root
+    #   port: 2222
+    #   key_file: ~/.ssh/id_ed25519_bp3

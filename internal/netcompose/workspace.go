@@ -39,7 +39,11 @@ type NodeState struct {
 	// always "full" — they must hold full state to seal — while an endpoint may
 	// be switched to "snap" or "archive" so a large-gap re-sync exercises that
 	// path. Empty means the config's own default.
-	SyncMode   string   `json:"syncMode,omitempty"`
+	SyncMode string `json:"syncMode,omitempty"`
+	// Host is the address this node is reachable at. It comes from the
+	// allocator, so a remote placement records the server's address rather than
+	// this machine's.
+	Host       string   `json:"host,omitempty"`
 	DataDir    string   `json:"dataDir"`
 	ConfigPath string   `json:"configPath"`
 	LogPath    string   `json:"logPath"`
@@ -74,6 +78,10 @@ type State struct {
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.
 	Bootnode int `json:"bootnode,omitempty"`
+	// PortSource names where the port plan came from (a server inventory entry,
+	// or the built-in defaults), so an operator reading the state never has to
+	// guess why a node listens where it does.
+	PortSource string `json:"portSource,omitempty"`
 	// Capabilities is what the composed network advertises to capability-gated
 	// test cases (chain manifest + ws + delayed-fork markers + overlay claims).
 	// The genesis step derives it, since that is where the customizations that
@@ -163,11 +171,17 @@ func (w *Workspace) NodeSet() node.NodeSet {
 		ns.Network = string(TargetLocal)
 	}
 	for _, n := range w.state.Nodes {
+		// A node's own recorded host wins: a fleet placement puts each node on
+		// a different address, which the target-level host cannot express.
+		nodeHost := n.Host
+		if nodeHost == "" {
+			nodeHost = host
+		}
 		ns.Nodes = append(ns.Nodes, node.Node{
 			Index:  n.Index,
 			Role:   node.Role(n.Role),
-			Host:   host,
-			RPCURL: fmt.Sprintf("http://%s:%d", host, n.HTTP),
+			Host:   nodeHost,
+			RPCURL: fmt.Sprintf("http://%s:%d", nodeHost, n.HTTP),
 			Ports: node.Endpoints{
 				P2P: n.P2P, HTTP: n.HTTP, WS: n.WS, Auth: n.Auth, Metrics: n.Metrics,
 			},

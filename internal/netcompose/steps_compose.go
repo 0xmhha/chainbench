@@ -20,6 +20,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
 // Composition steps: keys, allocate, genesis, config, launchopts, provision.
@@ -28,13 +29,12 @@ import (
 // uses, and records itself in the step table. Lifecycle steps (init, start,
 // stop, ...) live in steps_lifecycle.go.
 
-// Port allocation mirrors the local engine's constants so a step-composed
-// network and an engine run land on the same layout.
+// Placement bounds applied when the caller did not supply a server inventory.
+// The port bands themselves live in serverset (built-in defaults, or the
+// operator's gitignored inventory) — never here.
 const (
-	localP2PBase  = 31000
-	localRPCBase  = 8600
-	localPortStep = 10
-	portBandSize  = 100
+	portBandSize              = 100
+	minValidatorsForPlacement = 1
 )
 
 // plugin resolves the workspace's chain plugin, requiring `new` to have run.
@@ -113,6 +113,11 @@ type AllocateOpts struct {
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
 	// per-node choice. Its Nodes must already be Validate()d.
 	Topology *topology.Topology
+	// Placement decides the port bands, the addressing mode, and the capacity
+	// bound. Its zero value is the built-in local plan; a caller that read a
+	// server inventory passes that server's placement instead, which is the
+	// only way site-specific ports enter the composition.
+	Placement serverset.Placement
 }
 
 // placements resolves the requested layout into one placement request per node,
@@ -174,13 +179,22 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	alloc := place.New(place.Config{P2PBase: localP2PBase, P2PStep: localPortStep, RPCBase: localRPCBase, RPCStep: localPortStep})
-	placements, err := alloc.Allocate(reqs, place.LocalStepped, place.Capacity{MinValidators: 1, PortBandSize: portBandSize})
+	pl := opts.Placement
+	if pl.Source == "" {
+		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
+	}
+	placements, err := place.New(pl.Config).Allocate(reqs, pl.Mode, pl.Capacity)
 	if err != nil {
 		return "", err
 	}
 
+	// A server inventory naming a data root wins over the workspace default:
+	// it is where that machine keeps node data.
 	root := w.state.Target.DataRoot
+	if pl.DataRoot != "" {
+		root = pl.DataRoot
+		w.state.Target.DataRoot = root
+	}
 	nodes := make([]NodeState, len(placements))
 	validators := 0
 	for i, p := range placements {
@@ -195,6 +209,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			DataDir:    filepath.Join(root, fmt.Sprintf("node%d", idx)),
 			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
 			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
+			Host:       p.Host,
 			P2P:        p.Ports.P2P, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
 		}
 	}
@@ -206,8 +221,10 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		w.state.Bootnode = opts.Topology.BootnodeIndex()
 	}
 
-	detail := fmt.Sprintf("%d node(s): %d validator(s) + %d endpoint(s); p2p from %d, http from %d",
-		len(nodes), validators, len(nodes)-validators, nodes[0].P2P, nodes[0].HTTP)
+	w.state.PortSource = pl.Source
+
+	detail := fmt.Sprintf("%d node(s): %d validator(s) + %d endpoint(s); ports: %s; p2p from %d, http from %d",
+		len(nodes), validators, len(nodes)-validators, pl.Source, nodes[0].P2P, nodes[0].HTTP)
 	if opts.Topology != nil {
 		detail += " (topology)"
 	}

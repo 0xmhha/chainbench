@@ -50,6 +50,9 @@ type NetUpIn struct {
 	Endpoints        int
 	EndpointSyncMode string
 	TopologyPath     string
+	// Server selects where the nodes run and on what ports, from the server
+	// inventory. Its zero value uses the built-in local plan.
+	Server ServerRef
 
 	// Identities (step: keys).
 	KeysSource string
@@ -122,6 +125,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
+				Server: in.Server,
 			})
 			return r.Detail, err
 		}},
