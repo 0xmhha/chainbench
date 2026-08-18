@@ -26,6 +26,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 |---|---|
 | `dev/chainbench-*.md` | 위 설계 SSoT 4종. |
 | [`dev/keys-generate.md`](dev/keys-generate.md) · [`dev/topology.md`](dev/topology.md) | 프리셋 키 생성 · 로컬 토폴로지 설정 가이드. |
+| [`dev/family-bringup-design.md`](dev/family-bringup-design.md) | **패밀리별 기동 설계 제안** — 상위 일관/하위 특화. 3체인 차이 실측표 · 4 seam(BringUpPhases·Action·GenesisArtifacts·PortReservation) · 작업순서 F1~F6 · 열린 질문. |
 | [`dev/server-inventory.md`](dev/server-inventory.md) | **서버 인벤토리** — 노드 포트·호스트·접속 정보의 단일 출처(`remote-server-config.yaml`, gitignore). local/remote 동일 구조·포트 규칙·자격증명 취급. |
 | [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) · [`dev/wemix4-migration-plan.md`](dev/wemix4-migration-plan.md) · [`dev/repro-migration-remaining.md`](dev/repro-migration-remaining.md) | wemix4 테스트 포팅·마이그레이션 추적. |
 
