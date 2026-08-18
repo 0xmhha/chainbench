@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
+	"github.com/0xmhha/chainbench/internal/serverset"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
@@ -36,10 +37,8 @@ const (
 	defaultValidators    = 4
 	defaultHealthTimeout = 90 * time.Second
 	defaultPortBand      = 100
-
-	localP2PBase  = 31000
-	localRPCBase  = 8600
-	localPortStep = 10
+	// minValidators is the BFT floor the allocator checks before placing.
+	minValidators = 1
 
 	engineCommand = "chainbench"
 )
@@ -71,6 +70,11 @@ type LocalConfig struct {
 	// LaunchOverrides are high-precedence launch knobs applied to every node's
 	// argv through the launchopt Builder (env.launch / case layers).
 	LaunchOverrides []launchopt.Override
+	// Placement decides the port bands, addressing mode, and capacity bound.
+	// Its zero value is the built-in local plan; a caller that read the
+	// operator's server inventory passes that server's placement, which is how
+	// site-specific ports reach a run without ever entering a spec.
+	Placement serverset.Placement
 	// Clock supplies the session start time; nil uses time.Now (injected so
 	// tests are deterministic).
 	Clock func() time.Time
@@ -137,13 +141,17 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
 		Procman:    procs,
 	})
+	pl := cfg.Placement
+	if pl.Source == "" {
+		pl = serverset.Builtin(minValidators, defaultPortBand)
+	}
 	build := NewBuildEnv(BuildDeps{
 		Plugin:     plugin,
-		Allocator:  place.New(place.Config{P2PBase: localP2PBase, P2PStep: localPortStep, RPCBase: localRPCBase, RPCStep: localPortStep}),
+		Allocator:  place.New(pl.Config),
 		Genesis:    PresetGenesisSource{KeysDir: keysDir, ChainID: cfg.ChainID},
 		Supervisor: sup,
-		Mode:       place.LocalStepped,
-		Capacity:   place.Capacity{MinValidators: 1, PortBandSize: defaultPortBand},
+		Mode:       pl.Mode,
+		Capacity:   pl.Capacity,
 		Caps:       []string{"ws"},
 		Reqs:       validatorReqs(validators),
 	})

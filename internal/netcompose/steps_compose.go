@@ -170,7 +170,8 @@ func syncModeFor(role node.Role, endpointMode string) string {
 const syncModeFull = "full"
 
 // Allocate builds the node table: roles, target-side paths, and deterministic
-// stepped ports on 127.0.0.1 through the same allocator the engine uses.
+// ports through the same allocator the engine uses. Where the nodes land and on
+// what ports comes from the placement, not from this package.
 func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if _, err := w.plugin(); err != nil {
 		return "", err
@@ -370,7 +371,10 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	staticNodes := make([]string, 0, len(w.state.Nodes))
 	for _, ns := range w.state.Nodes {
 		if nk, ok := preset.Node(ns.Index); ok {
-			staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, "127.0.0.1", ns.P2P))
+			// The node's own recorded address: on a fleet each node lives on a
+			// different host, and a static-node list pointing at this machine
+			// would leave every node unable to find its peers.
+			staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, nodeHost(ns), ns.P2P))
 		}
 	}
 	t, err := w.state.Target.Resolve(w.env)
@@ -492,13 +496,23 @@ func ParseOverrides(sets []string) ([]launchopt.Override, error) {
 	return out, nil
 }
 
+// nodeHost is the address a composed node is reachable at: the one the
+// allocator recorded, falling back to this machine for a plan that predates
+// per-node hosts.
+func nodeHost(ns NodeState) string {
+	if ns.Host != "" {
+		return ns.Host
+	}
+	return localHost
+}
+
 // driverSpec maps a persisted node row onto the driver spec shape the argv
 // assembly and lifecycle steps consume.
 func driverSpec(ns NodeState) driver.NodeSpec {
 	return driver.NodeSpec{
 		Index:      ns.Index,
 		Role:       node.Role(ns.Role),
-		Host:       "127.0.0.1",
+		Host:       nodeHost(ns),
 		DataDir:    ns.DataDir,
 		ConfigPath: ns.ConfigPath,
 		LogPath:    ns.LogPath,

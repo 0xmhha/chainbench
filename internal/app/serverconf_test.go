@@ -196,3 +196,53 @@ func TestResolveServer_NoSelectionFallsBackToTheBuiltins(t *testing.T) {
 		t.Errorf("source = %q", out.Placement.Source)
 	}
 }
+
+func TestNetAllocate_FleetRecordsEachNodesOwnHost(t *testing.T) {
+	// The per-node host is what the config's static-node list and the launch
+	// specs derive from. If every node recorded this machine instead, a fleet's
+	// nodes could not find their peers and the failure would look like a
+	// consensus problem rather than an addressing one.
+	//
+	// Writing a fleet's configs needs a reachable SSH host, so this asserts the
+	// node table the writers read rather than the written files.
+	dir := t.TempDir()
+	d := app.Deps{Clock: fixedClock}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	inv := writeInventory(t, `
+version: 1
+defaults:
+  dataRoot: /srv/cb
+  ports: {p2pBase: 30303, p2pStep: 10, rpcBase: 8545, rpcStep: 10}
+  ssh: {user: deploy}
+servers:
+  - name: bp1
+    kind: remote
+    host: 10.0.0.11
+  - name: bp2
+    kind: remote
+    host: 10.0.0.12
+`)
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
+		DataDir: dir, Validators: 2,
+		Server: app.ServerRef{ConfigPath: inv, Fleet: true},
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+
+	nodes := stateOf(t, dir, d).Nodes
+	if len(nodes) != 2 {
+		t.Fatalf("got %d nodes, want 2", len(nodes))
+	}
+	if nodes[0].Host != "10.0.0.11" || nodes[1].Host != "10.0.0.12" {
+		t.Errorf("node hosts = %q, %q; want the inventory's", nodes[0].Host, nodes[1].Host)
+	}
+	for _, n := range nodes {
+		if n.Host == "127.0.0.1" {
+			t.Errorf("node%d recorded this machine instead of its server", n.Index)
+		}
+	}
+}
