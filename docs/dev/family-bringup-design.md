@@ -183,21 +183,11 @@ internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
 
 ---
 
-## 7. 작업 순서 (각 단계 독립 green)
+## 7. 작업 순서
 
-| # | 작업 | 게이트 | 리스크 |
-|---|---|---|---|
-| **F1** | `PortReservation` — 패밀리별 대역 검증, `serverset` 전역 상수 제거 | 단위: poa 는 p2pStep 2 를 거부, wbft 는 허용 | 낮음 |
-| **F2** | `--networkid` 방출 (poa 다이얼렉트) | 단위: argv 비교 | 낮음 |
-| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | 단위: wbft 는 1페이즈·현행과 동일 argv / 미배선 액션은 오류 | **중** — supervisor 시그니처 변경 |
-| **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | 단위: wbft `Extra` nil · poa config.json 이 `Validate()` 통과 | 중 |
-| **F5** | poa 액션 배선 + `app` 유스케이스 수렴(3곳 → 1곳) | **라이브: wemix 4노드 블록 생성 · 4노드 sealing 로테이션** | 중 |
-| **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | 라이브 재현 | 낮음 |
-
-**F3 이 유일한 실질 리스크다.** `Deps.Launch` 시그니처가 바뀌면 기존 호출자(engine·netcompose·
-chainsetup)가 전부 영향을 받는다. 다만 `nodes=nil → 전체` 규약이면 이관은 기계적이고,
-wbft 계열은 argv·순서가 바이트 동일하게 유지되므로 **stablenet/wbft 회귀를 라이브로 즉시 확인**할 수 있다
-(어제 절차 그대로).
+> **작업 순서와 상태는 [[chainbench-worklist]](chainbench-worklist.md) §1g 에서 관리한다.**
+> 이 문서는 *무엇을 왜* 를 정하고, 트래커는 *언제 어디까지* 를 기록한다.
+> 순서를 여기 두면 두 곳이 갈라진다.
 
 ---
 

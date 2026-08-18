@@ -169,6 +169,63 @@ chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
 
 ---
 
+## 1g. 아키텍처 정합 · 패밀리 기동 (2026-08-18 착수 예정)
+
+> 설계 근거: [[layers]](architecture/layers.md) · [[module-responsibilities]](architecture/module-responsibilities.md) ·
+> [[family-bringup-design]](family-bringup-design.md).
+> **작업 상태는 이 절에서만 관리한다** — 설계 문서는 *무엇을 왜*, 이 절은 *언제 어디까지*.
+
+세 갈래가 있고 서로 독립이다. A(규칙) → B(파서) → F(패밀리 기동) 순으로 착수하되,
+B 는 F 와 병행 가능하다.
+
+### A — 규칙을 코드로 (설계가 썩지 않게)
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **A1** | 레이어 검사 테스트 — [[layers]] §3 배치표가 정본. `go list` 엣지 대조, 배치표에 없는 신규 패키지는 실패 | 상향 의존 0건 유지 · 미등록 패키지 거부 | ☐ |
+| **A2** | 상태 쓰기 허용목록 테스트 — `os.WriteFile`/`MkdirAll` 호출 패키지가 목록 밖이면 실패 | 현재 위반 6곳이 목록에 예외로 명시되고, 신규 위반은 차단 | ☐ |
+| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileSink` 경유로 | L5 가 파일 경로를 모르게 | ☐ |
+| **A4** | `chainsetup`·`chains/wemix/deploy`·`consensus/upgrade` 를 Sink 경유로 | 원격/로컬 분기 제거 | ☐ |
+| **A5** | `core/bringup`·`core/state`·`testkit`·`core/pipeline/testrun` 삭제 | L4 레거시 4개 소멸. §1f b-5 라이브 검증 선행 | ☐ |
+| **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
+
+**A1·A2 를 먼저 하는 이유**: 이후 모든 작업(B·F 포함)이 규칙 위반을 자동으로 잡힌다.
+설계를 지키는 일을 사람의 주의력에 맡기지 않는다.
+
+### B — DSL 파서를 모듈로
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **B1** | `testspec` 3분할 — `testspec/spec`(구문, L1 순수) · `testspec/assert`(비교, L1 순수) · `testspec`(실행, L3) | `chainbench validate` 가 rpc/session/collector 를 링크하지 않음 · 파서 fuzz 가능 | ☐ |
+
+현재 `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 해서
+**순수해야 할 파서가 L3 로 끌려 올라가 있다**([[module-responsibilities]] §3).
+
+### F — 패밀리별 기동 (wemix 를 Go 로)
+
+| # | 작업 | 게이트 | 리스크 | 상태 |
+|---|---|---|---|---|
+| **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | poa 는 step 2 를 거부, wbft 는 허용 | 낮음 | ☐ |
+| **F2** | `--networkid` 방출 (poa 다이얼렉트) | argv 비교 | 낮음 | ☐ |
+| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | wbft 는 1페이즈·현행 argv 동일 / 미배선 액션은 오류 | **중** | ☐ |
+| **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | wbft `Extra` nil · poa config 가 `Validate()` 통과 | 중 | ☐ |
+| **F5** | poa 액션 배선 + 유스케이스 수렴(3곳→1곳) | **라이브: wemix 4노드 블록 생성 · sealing 로테이션** | 중 | ☐ |
+| **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | 라이브 재현 | 낮음 | ☐ |
+
+**F1 은 버그 수정이다** — 현재 `p2pStep>=2` 는 wemix 에서 틀렸다(etcd 가 p2p+1 peer·p2p+2 client 둘을 쓴다).
+
+**F3 이 유일한 실질 리스크다.** `Deps.Launch` 시그니처 변경이 engine·netcompose·chainsetup 에
+파급된다. `nodes=nil → 전체` 규약이면 이관은 기계적이고, wbft 계열은 argv·순서가 바이트 동일하게
+유지되므로 stablenet/wbft 회귀를 §1f b-5 절차로 즉시 확인할 수 있다.
+
+### 결정이 필요한 열린 질문
+
+[[family-bringup-design]] §9 참조. 요약: (1) `Phase.Actions` 를 문자열로 둘지 타입 상수로 둘지,
+(2) 부트노드 선정 기준(현 `poa.BootRole` 은 4검증자면 전부 참이라 기준이 못 된다 → 토폴로지
+`bootnode: true` 권장), (3) wemix `config.json` 의 `env` 정책값을 어디서 받을지.
+
+---
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
@@ -290,6 +347,7 @@ internal/                     # 전 구현 패키지(외부 import 컴파일러 
 ---
 
 ## 4. 진행 규칙
+- **작업 순서·상태의 단일 출처는 이 문서다.** 설계 문서([[layers]]·[[module-responsibilities]]·[[family-bringup-design]]·[[dsl-v2-proposal]] 등)는 *무엇을 왜* 만 담고, 순서표를 복제하지 않는다 — 복제하면 갈라진다(2026-08-18 실측: 착수 순서가 3문서에 중복돼 있었다).
 - **TDD**: Low는 RED→GREEN 단위테스트 먼저. 동시성은 `-race`. 통합은 라이브(실 노드).
 - **Go 품질**: [[go-code-quality-guidelines]](const화·DI·typed enum·ctx 전파·docs.go 등) 준수.
 - **PR 단위**: Task 1개 ≈ PR 1개. 커밋은 [[commit-message-rules]]·[[pr-body-no-emoji-no-claude]]·[[git-add-explicit]].
