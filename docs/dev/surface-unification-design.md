@@ -125,13 +125,106 @@ type NetGenesisIn struct {
 
 ---
 
-## 4. `cmd/` 의 목표 형태
+## 4. 명령 표면 설계
+
+### 4.1 지금 — 72개 엔드포인트, 겹침 심함
+
+최상위 **26** + 서브커맨드 **46**. 같은 일을 하는 명령이 여럿이다.
+
+| 하는 일 | 오늘 이걸로도 되고 | 저걸로도 된다 |
+|---|---|---|
+| 네트워크 기동 | `setup --launch` | `net up` · `chain up` · `remote deploy` |
+| 정지 | `stop` | `net stop` · `chain down` |
+| 상태 | `status` | `net status` · `chain status` |
+| 노드 재기동 | `node start/stop` | `net restart` |
+| 헬스 | `verify` | `net health` |
+| 로그 | `log` | `net logs` |
+| 정리 | `clean` | `net rm` |
+
+**이것이 "기능이 산재한다"의 사용자 쪽 얼굴이다.** 어느 것을 써야 하는지 코드도 문서도 답하지 못한다.
+
+### 4.2 목표 — 명사를 모델에 맞춘다
+
+청사진 모델의 명사가 곧 명령이다: **네트워크 · 테스트 · 리포트**, 그리고 그것들이 참조하는
+**체인 · 서버 · 키 · 스펙**.
+
+```
+① Compose ─ net       청사진 → 확정 → 산출 → 기동
+② Test    ─ test/tx/faucet/contract
+③ Report  ─ report
+참조      ─ chain · server · key
+```
+
+#### ① `net` — 네트워크 (청사진 파이프라인이 그대로 명령이 된다)
+
+| 명령 | 하는 일 | I/O |
+|---|---|---|
+| `net init` | 청사진 스캐폴드 생성 | 파일 1개 |
+| `net resolve` | 청사진 → `ResolvedNetwork`. **값과 출처를 보여준다** | **없음** (순수) |
+| `net build` | 산출물 생성(genesis·config·argv) → 타깃 | 파일만 |
+| `net up` | resolve + build + start | 프로세스 |
+| `net start` · `stop` · `restart` | 프로세스 수명주기 | 프로세스 |
+| `net rm` | 데이터 플레인 제거 | 파일 |
+| `net status` · `health` · `logs` | 관측 | 읽기 |
+| `net hardfork` · `upgrade` | 실행 중 네트워크의 바이너리/체인 변경 | 프로세스 |
+
+**`net resolve` 가 핵심이다.** 아무것도 만들지 않고 "이 청사진이면 이런 네트워크가 된다"를
+출처와 함께 보여준다 — 지금은 이걸 볼 방법이 없어서 띄워 봐야 안다.
+
+**옛 9스텝은 명령이 아니라 필터가 된다.** `net build --only genesis` 처럼.
+9스텝은 상태가 점증하던 모델의 산물이었고, 청사진에서는 resolve·build 두 단계로 접힌다.
+
+#### ② `test` · `tx` · `faucet` · `contract`
+
+| 명령 | 하는 일 |
+|---|---|
+| `test run` | DSL spec 실행 |
+| `test validate` | spec 오프라인 검증 |
+| `test migrate` | v1 → v2 변환 |
+| `tx send` · `tx wait` | 단건 tx |
+| `faucet` | 자금 공급 |
+| `contract deploy` · `call` | 컨트랙트 |
+
+`tx`·`faucet`·`contract` 는 **DSL 액션의 CLI 대응**이다(`sendTx`·`faucet`·`deployContract`).
+같은 기능 레지스트리에서 나오므로 세 표면이 자동으로 같아진다(§3).
+
+#### ③ `report`
+
+`report show`(세션 판정) · `report list` · `report gc`
+
+#### 참조 명령
+
+`chain list|info` (플러그인·capability) · `server list|check` (인벤토리 검증) ·
+`key new|import|show|set` (키 자료 — 현재 `keys`·`validator`·`account` 셋으로 갈라진 것을 통합)
+
+### 4.3 사라지는 것
+
+| 삭제 | 어디로 |
+|---|---|
+| `setup` | `net` |
+| `chain up/down/status` | `net` (`cases`·`steps` 는 문서로) |
+| `remote deploy/bootstrap` | `net` (타깃이 remote 면 같은 경로) |
+| `status`·`stop`·`node`·`verify`·`log`·`clean` | `net status/stop/restart/health/logs/rm` |
+| `test`(레거시 Go-func) | `test run` (케이스 이관 후) |
+| `chains`·`capabilities` | `chain list/info` |
+| `consensus` | `net status --consensus` |
+| `keys`·`validator`·`account` | `key` |
+| `migrate-spec` | `test migrate` |
+
+**26 → 9 최상위, 72 → 약 32 엔드포인트.**
+
+> 이행 중에는 옛 명령을 **deprecated 별칭**으로 남기고 안내를 출력한다. 한 번에 끊지 않는다.
+
+---
+
+## 4b. `cmd/` 의 목표 형태
 
 ```
 cmd/chainbench/
   main.go          진입점
   root.go          전역 플래그 · 명령 등록
-  <group>.go       그룹당 1파일 — 명령 정의 + 플래그 바인딩 + 출력 렌더
+  net.go test.go report.go chain.go server.go key.go
+                   명사당 1파일 — 명령 정의 + 플래그 바인딩 + 출력 렌더
 ```
 
 **규칙 3개**
@@ -144,6 +237,55 @@ cmd/chainbench/
 `chain.go`(271)·`remote.go`(263)·`net_steps.go`(249) 가 규칙 3 위반.
 
 목표: **4,569줄 → 대략 1,800줄** (바인딩+렌더만 남는 분량).
+
+---
+
+## 4c. 모듈 — 어떤 기능을 누가 지원하는가
+
+### 신설 (5개)
+
+| 모듈 | 층 | 담당 | 왜 신설인가 |
+|---|---|---|---|
+| `core/blueprint` | L1 | 선언 스키마·파싱·구조 검증 (순수) | 지금은 선언 형식 자체가 없다 |
+| `core/peering` | L1 | 연결 그래프 계산 — mesh / proxied (순수) | 지금은 풀메시가 코드에 박혀 있다 |
+| `core/resolve` | L3 | 청사진+인벤토리+플러그인+키셋 → `ResolvedNetwork` (+출처) | 지금은 스텝마다 흩어져 재조립된다 |
+| `core/materialize` | L3 | `ResolvedNetwork` → 산출물 → `Sink` | 지금은 스텝마다 다르게 쓴다 |
+| `app/feature` | L5 | 기능 레지스트리 (§3) | 표면 3개가 각자 목록을 갖는다 |
+
+### 변경 (6개)
+
+| 모듈 | 무엇을 더하나 |
+|---|---|
+| `core/registry` | `BringUpPhases` · `PortReservation` · `SupportsRole` · `SupportsPeeringGraph` |
+| `core/portplan` | 패밀리 `Reservation` 기반 검증 (전역 `p2pStep>=2` 제거) |
+| `core/supervisor` | `Launch(plan, nodes)` · `Deps.Action` |
+| `consensus/poa` | 액션 배선 · `PrepareTemplate` (현 `BuildGenesis` 재배치) |
+| `consensus/wbft` | `BringUpPhases` 1페이즈 반환 |
+| `testspec` | 구문(L1) / 실행(L3) 분리 |
+
+### 흡수·삭제 (6개)
+
+| 모듈 | 어디로 |
+|---|---|
+| `netcompose` | resolve·materialize 로 분해, 얇은 오케스트레이터만 잔류 |
+| `chainsetup` | `app` 유스케이스로 |
+| `chains/wemix/deploy` | 타깃이 remote 인 **일반 경로**로 흡수 (전용 경로 소멸) |
+| `core/bringup` · `core/state` | 삭제 (§1f b-6) |
+| `testkit` · `core/pipeline/testrun` | 삭제 (케이스 이관 후) |
+
+### 기능 → 모듈 한눈
+
+```
+청사진 선언       blueprint(L1)
+  ↓ 해석          resolve(L3) ← serverset·place·portplan·peering·keys·registry
+  ↓ 산출          materialize(L3) → nodeconfig·launchopt·genesis·(family)
+  ↓ 배치          provision.FileSink(L1)  [local | ssh]
+  ↓ 기동          supervisor(L3) → driver(L1) → procman(L1)
+  ↓ 관측          collector·health(L3) → session(L3)
+  ↓ 실행          testspec(L1 구문 / L3 실행)
+  ↓ 판정          session(L3)
+전 구간 노출      app/feature(L5) → cmd · mcp · dsl(L6)
+```
 
 ---
 

@@ -27,7 +27,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | `dev/chainbench-*.md` | 위 설계 SSoT 4종. |
 | [`dev/keys-generate.md`](dev/keys-generate.md) · [`dev/topology.md`](dev/topology.md) | 프리셋 키 생성 · 로컬 토폴로지 설정 가이드. |
 | [`dev/network-blueprint-design.md`](dev/network-blueprint-design.md) | **네트워크 청사진** — 구성 요소 전수(네트워크 14 · 노드 13 · 연결 4)와 누락 지점 · 선언→해석→물질화 3단계 · preset 을 전제에서 **생성기**로 강등 · 출처 사슬. 작업 순서는 worklist §1g. |
-| [`dev/surface-unification-design.md`](dev/surface-unification-design.md) | **표면 통일 리팩토링** — 기능을 한 번 등록하면 CLI/MCP/DSL 이 렌더링. `cmd/` 박막화(4,569줄 중 21파일이 app 우회) · 3단계 골격(Compose/Test/Report) · **3체인 구성요소 8개와 스텝 9개의 공통/특화 분리**(특화는 5지점뿐). 작업 순서는 worklist §1g. |
+| [`dev/surface-unification-design.md`](dev/surface-unification-design.md) | **표면 통일 리팩토링** — 기능을 한 번 등록하면 CLI/MCP/DSL 이 렌더링. **명령 표면 재설계**(72 엔드포인트 → 약 32, 최상위 26 → 9) · `cmd/` 박막화(4,569줄 중 21파일이 app 우회) · **모듈 인벤토리**(신설 5·변경 6·삭제 6) · 3단계 골격(Compose/Test/Report) · **3체인 구성요소 8개와 스텝 9개의 공통/특화 분리**(특화는 5지점뿐). 작업 순서는 worklist §1g. |
 | [`dev/family-bringup-design.md`](dev/family-bringup-design.md) | **패밀리별 기동 설계 제안** — 상위 일관/하위 특화. 3체인 차이 실측표 · 4 seam(BringUpPhases·Action·GenesisArtifacts·PortReservation) · 비목표 · 열린 질문. 작업 순서는 worklist §1g. |
 | [`dev/server-inventory.md`](dev/server-inventory.md) | **서버 인벤토리** — 노드 포트·호스트·접속 정보의 단일 출처(`remote-server-config.yaml`, gitignore). local/remote 동일 구조·포트 규칙·자격증명 취급. |
 | [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) · [`dev/wemix4-migration-plan.md`](dev/wemix4-migration-plan.md) · [`dev/repro-migration-remaining.md`](dev/repro-migration-remaining.md) | wemix4 테스트 포팅·마이그레이션 추적. |
