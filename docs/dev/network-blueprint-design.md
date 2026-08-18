@@ -122,8 +122,30 @@ BLS PoP** 를 전부 뱉는다. 즉 wbft 계열에서 **nodekey 하나가 루트
    선언 필드로 두면 nodekey 와 어긋날 수 있고, 그 불일치는 genesis 를 통과한 뒤 합의에서 터진다.
 2. **계정 선언 필요 여부가 패밀리마다 다르다.** wbft 계열은 nodekey 만으로 충분하고,
    poa 는 `account:` 를 따로 선언해야 한다. Blueprint 는 둘 다 받고, **패밀리가 무엇을 요구하는지 검증**한다.
-3. **BLS 파생에는 외부 바이너리가 필요하다**(`bootnode`). 이미 `keyreg.BLSDeriver` seam 이 그 경계이고,
-   `binaries.bootnode` 가 그 입력이다 — wbft 계열에서 nodekey 를 직접 선언하면 이 바이너리가 필수가 된다.
+3. ~~BLS 파생에는 외부 바이너리가 필요하다~~ → **필요 없다 (2026-08-18 실증).**
+   go-wbft 의 파생은 전부 표준 알고리즘이다:
+
+   ```go
+   bls.DeriveFromECDSA(priv) = blst.KeyGen(nodekey32)                   // EIP-2333
+   pop                       = sk.Sign(pub, DST="BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_")
+   ```
+
+   `github.com/supranational/blst` 로 chainbench 가 직접 파생할 수 있고, **실제로 바이트 동일함을 확인했다**
+   (`bootnode -writeaddress` 출력과 pubkey·PoP 모두 일치). 따라서 `--bootnode` 옵션은 사라지고
+   `key new --with-bls` 가 그 자리를 대신한다.
+
+**그래서 키 생성 전 과정이 외부 바이너리 없이 가능하다.**
+
+```
+nodekey (32B secp256k1, crypto/rand)
+  ├─ address        keccak(pubkey)[12:]                 accounts.AddressForKey  (기존)
+  ├─ devp2p pubkey  secp256k1 uncompressed 128hex       Go 내장
+  ├─ BLS pubkey     blst.KeyGen(nodekey) → G1 48B       blst
+  └─ BLS PoP        Sign(pubkey, DST=…_POP_) → G2 96B   blst
+```
+
+이것이 [[chainbench-worklist]] §1g 의 "raw 가 먼저" 를 실제로 가능하게 한다 —
+새 키셋을 만드는 데 **어떤 체인 바이너리도 필요 없다.**
 
 genesis 는 **검증자의 BLS 만** 소비한다(`len(Validators) == len(BLSKeys)` 강제).
 preset 이 전 노드에 BLS 를 주는 것은 노드가 나중에 검증자로 승격될 수 있기 때문이고, 낭비가 아니다.
