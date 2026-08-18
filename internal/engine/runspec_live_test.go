@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -58,16 +59,15 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	cfg := config.Resolve(nil, config.Values{"nodes.validators": "4"})
-	plan, err := engine.BuildLocalPlan(cfg, plugin, dataRoot, nil)
-	if err != nil {
-		t.Fatalf("build local plan: %v", err)
-	}
-	ns, _, err := engine.LocalSetup{
-		Plugin: plugin, Config: cfg, KeysDir: presetDir, Binary: bin,
-	}.Launch(ctx, plan)
+	ns, err := setup.Launch(ctx, setup.LaunchOptions{
+		Plugin:   plugin,
+		Config:   config.Resolve(nil, config.Values{"nodes.validators": "4"}),
+		DataRoot: dataRoot,
+		Binary:   bin,
+		KeysDir:  presetDir,
+	})
 	t.Cleanup(func() {
-		_, errs := engine.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
+		_, errs := driver.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
 		for _, e := range errs {
 			t.Logf("teardown: %v", e)
 		}

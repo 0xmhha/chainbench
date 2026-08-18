@@ -3,15 +3,14 @@ package mcp
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/core/state"
 )
 
 // startTool provisions and launches a local chain network, then persists its
@@ -53,22 +52,17 @@ func startTool() Tool {
 			if v := argInt(args, "endpoints", -1); v >= 0 {
 				override["nodes.endpoints"] = strconv.Itoa(v)
 			}
-			cfg := config.Resolve(nil, override)
-			keysAbs, err := filepath.Abs(argString(args, "keys_dir", "keys/preset"))
+			ns, err := setup.Launch(ctx, setup.LaunchOptions{
+				Plugin:   p,
+				Config:   config.Resolve(nil, override),
+				DataRoot: dataDir,
+				Binary:   binary,
+				KeysDir:  argString(args, "keys_dir", "keys/preset"),
+			})
 			if err != nil {
 				return "", err
 			}
-			plan, err := engine.BuildLocalPlan(cfg, p, dataDir, nil)
-			if err != nil {
-				return "", err
-			}
-			ns, _, err := engine.LocalSetup{
-				Plugin: p, Config: cfg, KeysDir: keysAbs, Binary: binary,
-			}.Launch(ctx, plan)
-			if err != nil {
-				return "", err
-			}
-			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
+			if err := state.SaveNodeSet(dataDir, ns); err != nil {
 				return "", err
 			}
 			var b strings.Builder
@@ -82,9 +76,9 @@ func startTool() Tool {
 }
 
 // stopTool stops the nodes of a launched local network, reading their PIDs from
-// the setup's nodeset.json and stopping each through the driver. It exposes the
-// same core StopNodeSet the CLI stop command uses, so an agent can tear a network
-// down after a test run.
+// the setup's nodeset.json and stopping each through the driver. It calls the
+// same app.NetworkStop the CLI stop command does, so an agent tearing a network
+// down after a test run gets identical behaviour.
 func stopTool() Tool {
 	return Tool{
 		Name:        "chainbench_stop",
@@ -99,14 +93,13 @@ func stopTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("data_dir is required")
 			}
-			ns, err := session.LoadLocalNodeSet(dir)
+			res, err := app.NetworkStop(ctx, app.Deps{}, app.NetworkStopIn{DataDir: dir})
 			if err != nil {
 				return "", err
 			}
-			stopped, errs := engine.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
 			var b strings.Builder
-			fmt.Fprintf(&b, "stopped %d node(s)", stopped)
-			for _, e := range errs {
+			fmt.Fprintf(&b, "stopped %d node(s)", res.Stopped)
+			for _, e := range res.Failed {
 				fmt.Fprintf(&b, "\n  %v", e)
 			}
 			return b.String(), nil
