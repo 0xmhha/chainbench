@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/bringup"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/state"
 	"github.com/0xmhha/chainbench/internal/core/topology"
@@ -98,7 +98,7 @@ func NetworkPlan(_ context.Context, _ Deps, in NetworkSpecIn) (NetworkPlanOut, e
 	}
 	cfg := config.Resolve(nil, override)
 	root := filepath.Clean(in.DataDir)
-	plan, err := setup.BuildPlanWithTopology(cfg, plugin, root, topo)
+	plan, err := bringup.BuildPlanWithTopology(cfg, plugin, root, topo)
 	if err != nil {
 		return NetworkPlanOut{}, err
 	}
@@ -129,7 +129,7 @@ func NetworkProvision(ctx context.Context, d Deps, in NetworkProvisionIn) (Netwo
 	if err != nil {
 		return NetworkProvisionOut{}, err
 	}
-	if err := setup.Provision(ctx, planned.Plan, planned.Plugin, planned.Config, in.KeysDir); err != nil {
+	if err := bringup.Provision(ctx, planned.Plan, planned.Plugin, planned.Config, in.KeysDir); err != nil {
 		return NetworkProvisionOut{}, err
 	}
 	if err := saveTopology(planned.DataRoot, in.Spec.TopologyPath); err != nil {
@@ -178,7 +178,7 @@ func NetworkLaunch(ctx context.Context, d Deps, in NetworkLaunchIn) (NetworkLaun
 			return NetworkLaunchOut{}, err
 		}
 	}
-	ns, specs, err := setup.LaunchWithSpecs(ctx, setup.LaunchOptions{
+	ns, specs, err := bringup.LaunchWithSpecs(ctx, bringup.LaunchOptions{
 		Plugin: planned.Plugin, Config: planned.Config, DataRoot: planned.DataRoot,
 		Binary: in.Binary, KeysDir: in.KeysDir, Bus: in.Bus, Driver: dr,
 	})

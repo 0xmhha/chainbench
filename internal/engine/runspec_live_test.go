@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/bringup"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keys"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/setup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -59,7 +59,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	ns, err := setup.Launch(ctx, setup.LaunchOptions{
+	ns, err := bringup.Launch(ctx, bringup.LaunchOptions{
 		Plugin:   plugin,
 		Config:   config.Resolve(nil, config.Values{"nodes.validators": "4"}),
 		DataRoot: dataRoot,
