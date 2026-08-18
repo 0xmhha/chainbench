@@ -270,3 +270,5 @@ FAIL 과 TODO 를 나누는 이유는 후속 작업이 서로 다르기 때문�
 1·2·3·7 이 케이스 2를 막던 실제 원인이고, 넷 다 chainbench 쪽 문제다.
 6 만 go-wemix 와의 계약 차이이며, 2·3 은 static 경로가 이미 올바르게 하는 것을 핸드오프 경로가
 빠뜨린 것이다.
+
+- [`cli-steps.md`](cli-steps.md) — **CLI 기준 3체인 구동 절차 대조.** 공통 9스텝 · 체인별 함정 · wemix 갭 6개와 그것이 `net genesis`/`net start` 두 스텝으로 흡수되는 방식.
