@@ -28,6 +28,7 @@ func newNetCmd() *cobra.Command {
 			"The same steps are exposed as MCP tools.",
 	}
 	cmd.AddCommand(
+		newNetUpCmd(),
 		newNetNewCmd(), newNetStatusCmd(),
 		newNetKeysCmd(), newNetAllocateCmd(), newNetGenesisCmd(), newNetConfigCmd(),
 		newNetLaunchOptsCmd(), newNetProvisionCmd(),
