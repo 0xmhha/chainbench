@@ -13,7 +13,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/consensus"
 	"github.com/0xmhha/chainbench/internal/core/logs"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -21,8 +20,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+<<<<<<< HEAD
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/engine"
+=======
+>>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 )
 
 // Default returns a Server with the built-in chainbench tools registered. Chain
@@ -329,15 +331,20 @@ func statusTool() Tool {
 			},
 			"required": []string{"data_dir"},
 		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			dir := argString(args, "data_dir", "")
 			if dir == "" {
 				return "", fmt.Errorf("data_dir is required")
 			}
+<<<<<<< HEAD
 			ns, err := session.LoadLocalNodeSet(dir)
+=======
+			res, err := app.NetworkStatus(ctx, app.Deps{}, app.NetworkStatusIn{DataDir: dir})
+>>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 			if err != nil {
 				return "", err
 			}
+			ns := res.Nodes
 			var b strings.Builder
 			fmt.Fprintf(&b, "chain=%s network=%s nodes=%d\n", ns.Chain, ns.Network, len(ns.Nodes))
 			for _, n := range ns.Nodes {
@@ -361,6 +368,7 @@ func setupPlanTool() Tool {
 				"data_dir":   map[string]any{"type": "string"},
 			},
 		},
+<<<<<<< HEAD
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
 			p, err := registry.Get(argString(args, "chain", "stablenet"))
 			if err != nil {
@@ -371,9 +379,22 @@ func setupPlanTool() Tool {
 				"nodes.endpoints":  strconv.Itoa(argInt(args, "endpoints", 1)),
 			}
 			plan, err := engine.BuildLocalPlan(config.Resolve(nil, override), p, argString(args, "data_dir", "data"), nil)
+=======
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			validators := argInt(args, "validators", 4)
+			endpoints := argInt(args, "endpoints", 1)
+			planned, err := app.NetworkPlan(ctx, app.Deps{}, app.NetworkSpecIn{
+				Chain:         argString(args, "chain", "stablenet"),
+				ChainExplicit: true,
+				DataDir:       argString(args, "data_dir", "data"),
+				Validators:    &validators,
+				Endpoints:     &endpoints,
+			})
+>>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 			if err != nil {
 				return "", err
 			}
+			plan := planned.Plan
 			var b strings.Builder
 			fmt.Fprintf(&b, "chain=%s network=%s dataRoot=%s genesis=%s\n",
 				plan.Chain, plan.Network, plan.DataRoot, plan.GenesisPath)
@@ -693,7 +714,12 @@ func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
 		return node.AttachedSet(argString(args, "chain", ""), "attached", eps)
 	}
 	if dir := argString(args, "data_dir", ""); dir != "" {
+<<<<<<< HEAD
 		return session.LoadLocalNodeSet(dir)
+=======
+		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dir})
+		return res.Nodes, err
+>>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 	}
 	return node.NodeSet{}, fmt.Errorf("provide rpc (array) or data_dir")
 }
