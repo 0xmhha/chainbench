@@ -65,16 +65,20 @@ preset, err := keys.LoadPreset(w.state.KeysDir)   // ← 없으면 진행 불가
 
 역할은 **세 가지**다. `boot` 은 역할이 아니라 **속성**이다 — 한 노드가 bp 이면서 부트노드일 수 있다.
 
-| 역할 | 하는 일 | 합의 참여 | 필요한 키 |
-|---|---|---|---|
-| **bp** | 블록 생성(봉인) | ✅ | nodekey + 계정 (+BLS, wbft 계열) |
-| **en** | RPC 엔드포인트 | ❌ | nodekey |
-| **pn** | 비생성 노드 (en 과 실행 옵션이 다름) | ❌ | nodekey |
-| *(속성)* `bootnode: true` | 최초 기동·거버넌스 배포 지점 | — | 해당 노드의 키 |
+| 역할 | 하는 일 | 합의 | RPC 제공 | 필요한 키 |
+|---|---|---|---|---|
+| **bp** | 블록 생성(봉인) | ✅ | 보통 비공개 | nodekey + 계정 (+BLS, wbft 계열) |
+| **en** | endpoint node — 사용자에게 RPC 제공 | ❌ | ✅ | nodekey |
+| **pn** | **proxy node** — bp 를 외부에서 가리고 p2p 를 중계 | ❌ | ❌(보통) | nodekey |
+| *(속성)* `bootnode: true` | 최초 기동·거버넌스 배포 지점 | — | — | 해당 노드의 키 |
 
-> **확인 필요**: `pn` 의 정확한 역할 정의(프록시/퍼블릭)와 en 과의 실행 옵션 차이는 체인 팀 확인이 필요하다.
-> 구조상으로는 "합의에 참여하지 않는 두 번째 종류"로 자리를 잡아 두고, 차이는
-> `launchopt` 의 역할별 플래그로 표현한다(`Family.StartFlags(role)` 이 이미 역할을 받는다).
+**`pn` 은 바이너리 모드가 아니다 (실측).** 세 체인 어디에도 proxy/sentry 노드 개념이 없다 —
+`--proxy` 같은 플래그가 존재하지 않는다. `pn` 을 표현하는 것은 **연결 그래프**이고,
+그것을 쓰는 수단은 범용 피어링 플래그(`--nodiscover`·`--netrestrict`·`--maxpeers`)와
+**static-nodes 목록**뿐이다.
+
+> 그래서 `pn` 은 `Family.StartFlags(role)` 이 아니라 **§2.3 연결 구성**에서 다뤄야 한다.
+> 역할이 argv 를 바꾸는 것이 아니라 **누가 누구의 static-nodes 에 들어가는가**를 바꾼다.
 
 **현재 코드와의 차이**: 지금은 `validator·endpoint·boot·en` 4종이고 `pn` 이 없다.
 이관은 `validator→bp`, `endpoint→en`, `boot→(속성으로 강등)`, `pn` 신설이다.
@@ -139,6 +143,36 @@ preset 이 전 노드에 BLS 를 주는 것은 노드가 나중에 검증자로 
 wbft 는 static-nodes 목록, wemix 는 거버넌스 member 목록 + etcd. 이것이 C1~C4 를
 청사진에서 **파생**시켜야 하는 이유다(사람이 enode 를 손으로 쓰면 안 된다).
 
+#### C5 — 피어링 그래프는 역할에 따라 달라진다 (신규)
+
+현재 구현은 **풀메시**다. 전 노드가 전 노드를 static-nodes 에 넣는다.
+
+```go
+// netcompose.Config — 오늘
+for _, ns := range w.state.Nodes { staticNodes = append(staticNodes, enode(ns)) }
+```
+
+**proxy 토폴로지는 정확히 이것을 하지 않는 구조다.** pn 이 존재하는 이유가 bp 를 외부에서
+가리는 것이므로, bp 가 모두를 직접 알면 pn 은 의미가 없다.
+
+| 그래프 | 언제 | bp 는 누구를 아는가 | pn 은 | en 은 |
+|---|---|---|---|---|
+| **mesh** (기본) | pn 이 없을 때 | 전 노드 | — | 전 노드 |
+| **proxied** | pn 이 하나라도 있을 때 | **pn 만** | bp + pn + en | pn (+en) |
+
+> **확인 필요**: proxied 그래프의 정확한 규칙(en 이 bp 를 직접 알아도 되는가, pn 끼리 메시인가)은
+> 운영 정책이다. 위 표는 sentry 패턴의 통상 형태이고, **체인 팀 확인 후 확정**한다.
+> 구조적으로 중요한 것은 **그래프가 역할에서 파생되고 선언 가능해야 한다**는 점이다:
+>
+> ```yaml
+> peering: mesh        # 기본. pn 이 있으면 proxied 가 기본이 된다
+> # peering: proxied
+> # peering: {custom: {bp1: [pn1, pn2], en1: [pn1]}}   # 최후 수단
+> ```
+
+wemix(poa)는 static-nodes 를 쓰지 않고 거버넌스 member 목록으로 연결하므로,
+**pn 을 wemix 에 적용하려면 member 등록 대상과 피어링 대상이 분리돼야 한다** — 미해결 질문이다.
+
 ---
 
 ## 3. 설계 — 선언 → 해석 → 물질화
@@ -185,6 +219,8 @@ nodes:                              # P1~P13. 개수가 곧 네트워크 크기�
     syncmode: full                  # P11
     launch: {maxtxsperblock: 1000}  # P13 — 이 노드만
   - {name: en1, role: en, server: srv2}
+
+peering: mesh                       # C5 — mesh | proxied | {custom: …}
 
 validators:                         # N9·N10
   from: role                        # role=bp 인 노드 (기본) | explicit: [bp1, bp2]
@@ -337,7 +373,9 @@ Blueprint 관점에서 보면 **체인 특화는 두 곳뿐**이다.
 ## 6. 남은 결정
 
 1. ~~`pn` 역할을 도입할 것인가~~ → **확정: `bp·en·pn` 3종, `boot` 은 속성**(§2.1b).
-   남은 것은 `pn` 과 `en` 의 **실행 옵션 차이**가 무엇인가뿐이다 — 체인 팀 확인 필요.
+   `pn`=proxy, `en`=endpoint. **실행 옵션 차이는 없다** — 세 체인에 proxy 모드 플래그가 없다(실측).
+   남은 것은 **proxied 피어링 그래프의 정확한 규칙**(§2.3 C5)과, **wemix 에서 member 등록과
+   피어링 대상을 어떻게 분리할 것인가**다.
 2. **Blueprint 를 어디에 둘 것인가.** 노드 IP·포트를 담으므로 [[server-inventory]] 와 같은 민감도다.
    서버 인벤토리를 참조만 하고(`server: local`) 자신은 IP 를 담지 않게 하면 커밋 가능해진다 —
    **그 편이 낫다고 본다.**
