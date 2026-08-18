@@ -149,61 +149,14 @@ cmd/chainbench/
 
 ## 5. 3체인 구성 요소 — 공통과 특화
 
-### 5.1 체인을 구성하는 데 필요한 요소 (원 요구의 5요소 + 실측 3)
-
-| # | 요소 | stablenet | wbft | wemix |
-|---|---|---|---|---|
-| 1 | **실행 바이너리** | `gstable` | `gwemix`(이름 주의) | `gwemix` |
-| 2 | **노드 신원** (nodekey) | preset `nodekey` 64hex | 동일 | **동일** |
-| 3 | **계정** (keystore) | preset keystore + password | 동일 | **동일** |
-| 4 | **검증자 선언** | genesis `extraData` = RLP | 동일 | **`config.json` 의 `members[]`** |
-| 5 | **genesis** | 템플릿 + 치환 (Go) | 동일 | **바이너리가 생성** |
-| 6 | **노드 config** | `config.toml` (nodeconfig 렌더) | 동일 | 동일 |
-| 7 | **배치·포트** | p2p 대역 + rpc 대역 | 동일 | **PORT 하나가 http/p2p/ws 결정** |
-| 8 | **부트스트랩** | 없음 | 없음 | **거버넌스 배포 + etcd 초기화** |
-
-**2·3·6 은 세 체인이 완전히 동일하다.** 그리고 이게 설계상 가장 큰 이득이다 —
-`keys/preset` 의 `publicKey`(128hex)가 wemix 의 `idv5` 와 같은 값이라 **신원 생성기가 하나로 족하다.**
-
-### 5.2 스텝별 공통/특화
-
-`net` 9스텝 중 **7개가 완전 공통**이고, 2개만 갈린다.
-
-| 스텝 | 공통 부분 | 체인 특화 부분 | 특화가 사는 곳 |
-|---|---|---|---|
-| 1 new | 워크스페이스·타깃·체인 해석 | — | — |
-| 2 allocate | 역할·경로·포트 계산 | **포트 예약 폭** (wbft 2칸 / poa 3칸) | `Family.PortReservation()` |
-| 3 keys | 키셋 확보·검증 | — | — |
-| 4 **genesis** | overlay 병합·override·fork 검증·기록 | **생성 방식**: RLP 치환 vs 바이너리 호출 + 부산물(`config.json`) | `Family.BuildGenesis` / `GenesisArtifacts` |
-| 5 config | TOML 렌더 | RPC 네임스페이스(`istanbul`/`wemix`) — **이미 매니페스트 값** | `Manifest.Consensus` |
-| 6 launchopts | argv 조립 | 다이얼렉트 · `--networkid` 방출 | `launchopt.Dialect` |
-| 7 provision | 타깃 물질화·skip-if-exists | — | — |
-| 8 init | `<binary> init` | — | — |
-| 9 **start** | 기동·헬스·진단·재시도·teardown | **페이즈 수와 사이 액션**: 1페이즈 vs 2페이즈+액션2 | `Family.BringUpPhases()` + `Deps.Action` |
-
-### 5.3 특화가 사는 곳 — 5개 지점뿐
-
-```
-Family.PortReservation()   포트 예약 폭          L1 선언 / L2a 구현
-Family.BuildGenesis()      genesis 생성 방식      L1 선언 / L2a 구현
-Family.BringUpPhases()     기동 순서             L1 선언 / L2a 구현
-Deps.Action(name, node)    부트스트랩 액션        L3 호출 / L2a 구현
-launchopt.Dialect          argv 방언             L1 테이블
-```
-
-**상위 레이어(L3 이상)는 이 다섯을 통해서만 체인을 만난다.** 전부 인터페이스이고,
-전부 "선언은 아래(L1), 구현은 위(L2a)" 형태다 — `registry.ChainPlugin` 이 이미 쓰는 패턴이다.
-
-### 5.4 그래서 상위에서 본 세 체인
-
-```
-Compose(chain, N, target):
-    for step in [new, allocate, keys, genesis, config, launchopts, provision, init, start]:
-        step.Run(ctx, deps, in)          ← 세 체인 같은 코드
-                                            genesis·start 만 Family 에 물어본다
-```
-
-체인 이름은 1번 스텝에서 `ChainPlugin` 으로 바뀌고, 그 뒤로는 **어느 체인인지 아무도 모른다.**
+> **이 절은 [[network-blueprint-design]](network-blueprint-design.md) 로 옮겼다.**
+> 여기 있던 8요소·9스텝 표는 **누락이 많았다** — 노드별 nodekey/계정 지정, BP 수와 역할 배정,
+> alloc 잔액, 검증자 집합 선언, 바이너리의 노드별 오버라이드, 연결 구성(static-nodes vs
+> 거버넌스 member + etcd)이 빠져 있었다. 전수 목록(N1~N14 · P1~P13 · C1~C4)과
+> 선언→해석→물질화 구조는 그 문서에 있다.
+>
+> 요약만 남기면: **특화는 6개 요소이며 전부 poa(wemix) 한 패밀리에 속한다.**
+> 나머지는 세 체인이 같은 코드를 탄다.
 
 ---
 

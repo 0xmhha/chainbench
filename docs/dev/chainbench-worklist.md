@@ -218,6 +218,25 @@ B 는 F 와 병행 가능하다.
 파급된다. `nodes=nil → 전체` 규약이면 이관은 기계적이고, wbft 계열은 argv·순서가 바이트 동일하게
 유지되므로 stablenet/wbft 회귀를 §1f b-5 절차로 즉시 확인할 수 있다.
 
+### N — 네트워크 청사진 (구성 정보를 하나의 선언으로)
+
+> 근거: [[network-blueprint-design]](network-blueprint-design.md).
+> 실측 문제: 구성 정보가 **4조각**(`topology.yaml`·`serverset`·`keys/preset`·`poa.Config`)으로 흩어져
+> 어느 것도 전체를 말하지 못한다. **preset 이 선택이 아니라 전제**이고(`keys.LoadPreset` 필수),
+> 바이너리 경로가 **20개 파일**에 분산돼 있다. 노드별 nodekey·계정·포트·서버를 지정할 수단이 없다.
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **N0** | `blueprint` 선언 스키마 + 파서(L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 | ☐ |
+| **N1** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장)과 `Sources` 기록 | 같은 청사진이 항상 같은 `ResolvedNetwork` (결정성) | ☐ |
+| **N2** | `net blueprint --from-preset` — preset 을 **생성기**로 강등 | preset 산출 청사진으로 3체인 구성 재현 | ☐ |
+| **N3** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
+| **N4** | 노드별 지정 지원 (nodekey·계정·포트·서버·바이너리 오버라이드) | **preset 없이** 수동 청사진만으로 4노드 기동 | ☐ |
+| **N5** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
+
+**N 과 F 의 관계**: F4(`GenesisArtifacts`)·F3(`BringUpPhases`)는 `ResolvedNetwork` 를 입력으로 받는다.
+**N0·N1 을 먼저** 해야 F 가 조각을 다시 모으지 않는다.
+
 ### S — 표면 통일 (CLI/MCP/DSL 을 한 레지스트리로)
 
 > 근거: [[surface-unification-design]](surface-unification-design.md).
