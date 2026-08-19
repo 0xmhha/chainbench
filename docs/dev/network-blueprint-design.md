@@ -408,6 +408,187 @@ Blueprint 관점에서 보면 **체인 특화는 두 곳뿐**이다.
 
 ---
 
+## 6. 요구 1~12 → 설계 반영 (2026-08-19)
+
+세 체인을 실제로 구성해 본 기록에서 다시 도출한 요구다. 각 항목이 **어느 모듈의 책임**인지 못박는다.
+
+| # | 요구 | 책임 모듈 | 상태 |
+|---|---|---|---|
+| 1 | 로컬: 동일 IP(127.0.0.1) + 서로 다른 포트 | `netmap` ← `place`·`portplan` | 있음(포트) / **라벨 관리 없음** |
+| 2 | 원격: IP 목록·가용 포트 목록을 **별도 파일**로. 어떤 노드가 어떤 ip·port 를 쓰는지 관리 | `serverset`(풀 선언) + `netmap`(배정·조회) | 인벤토리 있음 / **풀·조회 없음** |
+| 3 | DSL 이 bp/en/pn 을 지정. **라벨 ↔ ip·port 양방향 조회** | `netmap` | **없음 — 신설** |
+| 4 | bp·en·pn 모두 nodekey 필요. enode = nodekey + ip + port → **설정에 순서가 있다** | `keyring` → `netmap` → `enode` | §6.2 |
+| 5 | 연결: static enode / bootnode discovery / (wemix) etcd | `peering` + `Family` | 코드 확인 완료 §6.3 |
+| 6 | genesis 에 bp 기입 + 거버넌스 등록. **faucet 계정 1개 상시**. `account1` 라벨 ↔ 실주소·개인키 | `keyring`(라벨·키) + 청사진(alloc) | **라벨 관리 없음** |
+| 7 | config 로 체인 설정. genesis·config 는 **생성 또는 기존 사용**. config 가 **여러 개**이고 중간에 재시작 | `genesis`(SourceMode 있음) + `nodeconfig` + DSL 스키마 | **다중 config 없음** |
+| 8 | 다중 config 는 **특정 노드에만**. DSL = 구성 정의 + 테스트 정의(pre/do/post) | 청사진(구성) + DSL v2(테스트) | **훅 미배선** |
+| 9 | do-test 액션·기대값 비교. 실패 시 기록·로그 수집 | `dsl/interp` + `session` + `collector` | 대부분 있음 |
+| 10 | 미지원 기능은 **문법 오류가 아니라 사유를 남기고 미수행** | `capability` (존재) | 있음 — 배선 확인 필요 |
+| 11 | 로컬/원격을 IP 기반 HTTP 로 동일 스택 처리 | `target` + `netcompose` | 있음 |
+| 12 | 신규 생성 일반화 + preset 지원. **내용이 같으면 deploy skip** | `provision`(Exists 있음) + **내용 비교 추가** | 존재 확인만 있음 |
+
+### 6.1 신설이 필요한 것은 하나뿐 — `netmap`
+
+요구 1·2·3·4·6 이 전부 같은 것을 가리킨다: **라벨과 엔드포인트의 관계를 소유하는 모듈.**
+
+```go
+// core/netmap (L1) — 라벨 ↔ 엔드포인트. 불변이며 resolve 가 만든다.
+
+// Label is how a blueprint and a DSL case name a thing without knowing its
+// address: "bp01" · "en01" · "pn01" · "account1". Every downstream artifact
+// (enode, genesis member, static-nodes, tx sender) resolves through a label,
+// so an address never appears in a test definition.
+type Label string
+
+// Endpoint is where a labeled node actually listens.
+type Endpoint struct {
+    Host  string          // 127.0.0.1 (로컬) | 10.0.0.11 (원격)
+    Ports node.Endpoints  // p2p · http · ws · auth · metrics
+}
+
+// Map answers both directions. The reverse direction is not a convenience:
+// it is how a port collision is caught before launch, and how an operator
+// reading a log line finds which node it came from.
+type Map struct { … }
+
+func (m Map) Endpoint(Label) (Endpoint, bool)   // 라벨 → 주소
+func (m Map) LabelsOn(host string) []Label      // IP → 라벨들
+func (m Map) LabelAt(host string, port int) (Label, bool)  // 포트 → 라벨
+func (m Map) Enode(Label) (string, error)       // nodekey + host + p2p
+```
+
+**역방향이 있어야 하는 이유가 둘이다.** (a) 같은 서버에 여러 노드를 두면 포트 충돌이
+기동 전에 잡혀야 한다. (b) 로그·오류에서 `10.0.0.11:8545` 를 보고 어느 노드인지 즉시 알아야 한다.
+
+**가용 자원은 인벤토리가 선언한다** — `netmap` 은 배정 결과를 소유하고, 풀은 `serverset` 이 갖는다.
+
+```yaml
+servers:
+  - name: srv1
+    host: 10.0.0.11
+    slots: 4                       # 이 서버가 감당할 노드 수
+    ports:
+      p2pBase: 30303   p2pStep: 10
+      rpcBase: 8545    rpcStep: 10
+      # 또는 명시적 풀:
+      # pool: {p2p: [30303-30400], rpc: [8545-8600]}
+```
+
+- **로컬**(요구 1): 서버 1개, `slots` 큼 → 같은 host, 포트가 step 만큼 증가
+- **원격, 서버당 1노드**(요구 2): 서버 N개, `slots: 1` → host 다름, 포트 동일 가능
+- **원격, 서버당 여러 노드**(요구 2): 서버 M개, `slots > 1` → 같은 host 안에서 포트 증가
+
+**세 경우가 같은 코드다.** 다른 것은 인벤토리 데이터뿐이다.
+
+### 6.2 설정에는 순서가 있다 (요구 4)
+
+enode 는 **키와 주소가 모두 정해진 뒤에만** 만들 수 있다. 그래서 resolve 가 이 순서를 강제한다.
+
+```
+① keyring     라벨별 nodekey · 계정          (주소를 모른다)
+② netmap      라벨별 host · port 배정         (키를 모른다)
+③ enode       ① + ② 를 합쳐야 만들어진다
+④ genesis     bp 목록 · 거버넌스 member · alloc   ← ③ 을 쓴다(wemix member.enode)
+⑤ config      static-nodes · peering          ← ③ 을 쓴다
+```
+
+**③ 이전에 ④·⑤ 를 만들 수 없다.** 지금 코드가 스텝마다 조각을 다시 모으는 이유가 이 순서를
+명시하지 않았기 때문이다. `ResolvedNetwork` 는 ①②③ 이 끝난 상태이고, ④⑤ 는 그것만 읽는다.
+
+### 6.3 연결 메커니즘 — 코드로 확인 (요구 5)
+
+| 체인 | 메커니즘 | 근거 |
+|---|---|---|
+| wbft · stablenet | `p2p.Config` 의 `StaticNodes`·`BootstrapNodes`·`TrustedNodes`, 또는 datadir `static-nodes.json` | `p2p/server.go:106-121` · `node/config.go:39` |
+| wemix (poa) | 거버넌스 member(`enode·ip·port`)를 읽어 **노드가 스스로** `admin_addPeer` | `wemix/admin.go:566-576` |
+
+wemix 는 chainbench 가 피어를 붙일 필요가 없다 — 라이브 실행에서 static-nodes 없이,
+수동 addPeer 없이 4노드가 연결됐다. **그래서 `peering` 선언은 wbft 계열에만 의미가 있다.**
+
+### 6.4 계정 라벨 (요구 6)
+
+테스트는 주소를 쓰지 않는다. `account1` 같은 라벨을 쓰고, **개인키를 아는 쪽이 서명한다.**
+
+```yaml
+accounts:                       # 청사진
+  - {label: faucet,   balance: 1000000000000000000000000}   # 항상 하나 있어야 한다
+  - {label: account1, balance: 1000000000000000000000}
+  - {label: account2, balance: 0}
+```
+
+- **라벨 → 주소·개인키**: `keyring` 이 소유 (nodekey 와 같은 링, 다른 이름 공간)
+- **주소 → genesis alloc**: 청사진이 선언, resolve 가 확정
+- **faucet 은 생략할 수 없다** — 잔액 0 인 계정으로 tx 를 보내려면 가스가 필요하고,
+  그 자금원이 없으면 테스트가 조용히 실패한다. 청사진에 없으면 **오류**로 만든다.
+
+### 6.5 config 는 여러 개이고, 노드마다 다르다 (요구 7·8)
+
+한 테스트가 config A 로 띄웠다가 멈추고 config B 로 다시 띄우는 경우가 있고,
+**전 노드가 아니라 일부 노드만** 그렇게 한다.
+
+```yaml
+nodes:
+  - name: bp01
+    role: bp
+    config: cfgA                 # 이름으로 참조
+  - name: bp02
+    role: bp
+    config: cfgA
+
+configs:                          # 이름 → 내용(또는 파일)
+  cfgA: {file: ./conf/a.toml}
+  cfgB: {template: default, set: {syncmode: snap}}
+```
+
+DSL 테스트 정의 쪽에서 전환을 명령한다:
+
+```yaml
+steps:
+  - restartNodes: {nodes: [bp02], config: cfgB}    # bp02 만 cfgB 로 재기동
+```
+
+**genesis 와 동일하게 config 도 "생성 또는 기존"이다.** `genesis.SourceMode` 가 이미
+`ModeExisting`·`ModeBuild`·`ModeTemplateOverride`·`ModeUpgradeInherit` 를 정의해 두었고,
+config 에도 같은 축(`file` | `template`+`set`)이 필요하다.
+
+### 6.6 DSL 은 구성 정의와 테스트 정의로 나뉜다 (요구 8)
+
+```
+env      구성 정의 — 체인·노드·역할·config·키·genesis      (= 청사진, 또는 청사진 참조)
+case     테스트 정의
+  pre-test    준비 훅 — 환경 스캔·자금 공급 등
+  do-test     본 테스트 — 액션 + 기대값 비교
+  post-test   정리 훅 — 수집·복구
+```
+
+**pre-test 이전에 환경이 정상인지 스캔하는 책임**이 있어야 한다(요구 8) —
+블록이 전진하는지, 전 노드가 같은 높이인지, 피어가 붙었는지. `health`·`collector` 가 그 재료를
+갖고 있고, 스캔을 **게이트로 강제**하는 것은 엔진의 몫이다.
+
+### 6.7 미지원 기능은 조용히 실패하지 않는다 (요구 10)
+
+체인마다 지원 기능이 다르다. 미지원 기능을 만나면 **문법 오류로 처리하지 않고**,
+무엇이 왜 지원되지 않는지 남기고 그 케이스를 수행하지 않는다.
+
+`capability` 패키지가 이미 있고, spec 의 `requires`·`applicableChains` 로 skip 하는 경로도 있다.
+필요한 것은 **사유를 기록에 남기는 것**이다 — 지금은 `skip` 으로만 표시된다.
+
+### 6.8 deploy skip 은 존재가 아니라 내용으로 판단한다 (요구 12)
+
+원격에 이미 바이너리·nodekey·계정이 올라가 있으면 배포 단계를 건너뛸 수 있다.
+그러나 **파일이 있다는 것만으로 건너뛰면 안 된다** — 내용이 다르면 다른 네트워크가 된다.
+
+```
+① 대상 경로에 파일이 있는가            provision.Exists  (있음)
+② 내용이 우리가 보낼 것과 같은가        해시 비교         (없음 — 추가)
+   같으면 skip, 다르면 덮어쓰기(또는 오류)
+```
+
+현재 `upload-if-absent` 는 ①만 본다. **②를 더해야 요구 12 가 성립한다.**
+해시는 `FileStore.Read` 로 얻는다(§4.3 에서 이미 필요하다고 판단한 그 읽기다).
+
+---
+
 ## 6. 남은 결정
 
 1. ~~`pn` 역할을 도입할 것인가~~ → **확정: `bp·en·pn` 3종, `boot` 은 속성**(§2.1b).

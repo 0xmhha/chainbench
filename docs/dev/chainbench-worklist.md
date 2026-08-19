@@ -277,6 +277,16 @@ B 는 F 와 병행 가능하다.
 | **N4** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
 | **N5** | **그 다음** preset 지원 — `net blueprint --from-preset` 이 청사진을 **생성** | preset 산출 청사진이 N3 경로와 동일 결과 | ☐ |
 | **N6** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
+| **N7** | **`core/netmap` 신설** — 라벨 ↔ 엔드포인트 양방향. `Endpoint(label)` · `LabelsOn(host)` · `LabelAt(host,port)` · `Enode(label)` | 포트 충돌이 **기동 전에** 잡힘 · 로그의 `host:port` 로 노드 역추적 | ☐ |
+| **N8** | `serverset` 에 **가용 자원 풀** 선언 (`slots` · 포트 밴드/풀) | 로컬·원격1노드·원격다노드 **세 경우가 같은 코드**, 다른 건 데이터뿐 | ☐ |
+| **N9** | **해석 순서 강제** — ① keyring → ② netmap → ③ enode → ④ genesis ⑤ config | ③ 이전에 ④⑤ 를 만들 수 없다(컴파일 타임 또는 명시적 오류) | ☐ |
+| **N10** | **계정 라벨** — `account1` ↔ 주소·개인키. **faucet 누락은 오류** | 테스트 정의에 주소가 등장하지 않음 · 잔액 0 계정의 가스 자금원 보장 | ☐ |
+| **N11** | **다중 config** — 이름으로 참조, 노드별 지정, `restartNodes{nodes,config}` 로 전환 | 일부 노드만 다른 config 로 재기동 | ☐ |
+| **N12** | **deploy skip 을 내용 해시로** (현재는 존재 여부만) | 같은 경로에 **다른 내용**이면 skip 하지 않음 | ☐ |
+
+**N7~N12 는 2026-08-19 요구 재도출분**([[network-blueprint-design]] §6). 세 체인을 실제로 구성한
+기록에서 다시 뽑았고, 다섯 요구(로컬 포트·원격 IP풀·라벨 지정·enode 순서·계정 라벨)가 전부
+**같은 것 하나**를 가리켜 `netmap` 으로 모았다.
 
 **키 파생 주의**(N3): wbft 계열은 nodekey 하나에서 계정·BLS 가 파생되므로 `bootnode` 바이너리가
 필수다. poa 는 계정이 nodekey 와 독립이라 `account:` 를 따로 선언해야 한다.

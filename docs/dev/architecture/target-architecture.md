@@ -86,41 +86,75 @@ flowchart TD
 
 ---
 
-## 3. 체인 구성 파이프라인 — 선언 → 해석 → 물질화
+## 3. 체인 구성 파이프라인 — 순서가 있다
+
+**enode 는 키와 주소가 모두 정해진 뒤에만 만들어진다.** 그래서 해석에는 강제된 순서가 있고,
+genesis·config 는 그 뒤에만 만들 수 있다. 지금 코드가 스텝마다 조각을 다시 모으는 이유가
+이 순서를 명시하지 않았기 때문이다.
 
 ```mermaid
 flowchart TD
-    bp["network.yaml<br/>청사진 (선언)"]
-    inv["remote-server-config.yaml<br/>서버 인벤토리"]
-    ring["keyring<br/>신원"]
-    plug["ChainPlugin<br/>체인 · 패밀리"]
+    bp["network.yaml<br/>청사진"]
+    inv["서버 인벤토리<br/>IP · 포트 풀 · slots"]
+    plug["ChainPlugin"]
 
-    bp --> resolve["resolve (L3)<br/>출처 사슬로 모든 값 확정"]
-    inv --> resolve
-    ring --> resolve
-    plug --> resolve
+    bp --> r1
+    plug --> r1
+    inv --> r2
 
-    resolve --> rn["ResolvedNetwork<br/>불변 스냅샷 + Sources"]
+    r1["① keyring<br/>라벨별 nodekey · 계정<br/>주소를 모른다"]
+    r2["② netmap<br/>라벨별 host · port 배정<br/>키를 모른다"]
+    r3["③ enode<br/>① + ② 를 합쳐야 만들어진다"]
+
+    r1 --> r3
+    r2 --> r3
+
+    r3 --> r4["④ genesis<br/>bp 목록 · 거버넌스 member · alloc"]
+    r3 --> r5["⑤ config<br/>static-nodes · peering"]
+
+    r4 --> rn["ResolvedNetwork<br/>불변 스냅샷 + Sources"]
+    r5 --> rn
     rn --> mat["materialize (L3)"]
 
-    mat --> gen["genesis.json"]
-    mat --> cfg["config_nodeN.toml"]
-    mat --> ident["nodekey · keystore"]
+    mat --> sink["provision.FileStore<br/>local | ssh<br/>내용 해시가 같으면 skip"]
     mat --> argv["launch argv"]
-
-    gen --> sink["provision.FileStore<br/>local | ssh"]
-    cfg --> sink
-    ident --> sink
-    argv --> sup["supervisor (L3)<br/>페이즈 실행"]
-    sink --> sup
+    sink --> sup["supervisor (L3)<br/>페이즈 실행"]
+    argv --> sup
     sup --> drv["driver (L1)"]
 ```
 
-**`ResolvedNetwork` 가 못이다.** 만들어진 뒤 아무도 고치지 않고, 그 뒤 모든 것이 이것만 읽는다.
+**`ResolvedNetwork` 가 못이다.** ①②③ 이 끝난 상태이고, ④⑤ 와 그 아래 전부가 이것만 읽는다.
 고쳐야 하면 청사진을 고치고 다시 해석한다.
 
 출처 사슬: `청사진 명시값 > 인벤토리 > 키셋 > 체인 플러그인 > 패밀리 기본 > 내장 기본`.
 어느 단계에서 왔는지를 `Sources` 에 기록한다 — 값의 유래가 추측 대상이면 안 된다.
+
+### 3-B. 라벨이 주소를 대신한다
+
+```mermaid
+flowchart LR
+    dslfile["DSL / 청사진<br/>bp01 · en01 · account1"]
+    nm["netmap (L1)<br/>라벨 ↔ 엔드포인트"]
+    kr["keyring (L1)<br/>라벨 ↔ 키 · 주소"]
+
+    dslfile -->|라벨로 지칭| nm
+    dslfile -->|라벨로 지칭| kr
+    nm -->|"라벨 → host:port"| enode["enode"]
+    kr -->|"라벨 → nodekey"| enode
+    nm -->|"host:port → 라벨"| diag["충돌 검출 · 로그 역추적"]
+```
+
+**테스트 정의에 주소가 등장하지 않는다.** `account1` 로 tx 를 보내고, `bp01` 을 재기동한다.
+역방향(`10.0.0.11:8545` → `bp01`)이 있어야 포트 충돌이 기동 전에 잡히고,
+로그 한 줄에서 어느 노드인지 즉시 안다.
+
+세 배치가 **같은 코드**이며 다른 것은 인벤토리 데이터뿐이다:
+
+| 경우 | 인벤토리 | 결과 |
+|---|---|---|
+| 로컬 | 서버 1개, `slots` 큼 | 같은 host(127.0.0.1), 포트 증가 |
+| 원격 · 서버당 1노드 | 서버 N개, `slots: 1` | host 다름, 포트 동일 가능 |
+| 원격 · 서버당 여러 노드 | 서버 M개, `slots > 1` | host 안에서 포트 증가 |
 
 ---
 
