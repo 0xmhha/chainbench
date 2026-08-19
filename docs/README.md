@@ -41,6 +41,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/architecture/component-diagram.md`](dev/architecture/component-diagram.md) | 컴포넌트 맵 · C4 컨테이너 뷰 · 키 소싱 컴포넌트 · 목표 델타. |
 | [`dev/architecture/sequence-diagrams.md`](dev/architecture/sequence-diagrams.md) | 전체 run · BuildEnv · Interpreter · 원자 스텝 CLI · 원격 SSH · 실패 경로. |
 | [`dev/architecture/state-diagrams.md`](dev/architecture/state-diagrams.md) | TestRun · Environment · NodeProcess · Session/키 · 워크스페이스 스텝. |
+| [`dev/architecture/target-architecture.md`](dev/architecture/target-architecture.md) | **목표 아키텍처 다이어그램 8종** — 디렉토리/호출 두 축 분리 · 레이어 · 청사진 파이프라인 · 패밀리 분기 2곳 · 키 파생 · 피어링 그래프 · 표면 통일. 산문 결정을 그림으로 검토하는 용도. |
 | [`dev/architecture/layers.md`](dev/architecture/layers.md) | **레이어 아키텍처** — L0~L6 정의 · 57개 패키지 전수 배치 · 의존 규칙(상향 0건 실측) · **상태 소유 규칙**(control plane=session / data plane=FileSink)과 위반 6곳 · 규칙 강제 테스트 제안. 작업 순서는 worklist §1g. |
 | [`dev/architecture/module-responsibilities.md`](dev/architecture/module-responsibilities.md) | **관심사별 소유 모듈**(체인구성 5요소·노드생명주기·DSL 등 16개) · 현재 소유자 부재 실측(genesis 17곳·키 17곳·노드 11곳) · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 3분할 제안. 작업 순서는 worklist §1g. |
 | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) | AST 실측 패키지 그래프 — 계층 검증 · fan-in/out · launch-args 분산 5지점 · launchopt 실행 순서. |
