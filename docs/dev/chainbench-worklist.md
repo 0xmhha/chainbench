@@ -1,5 +1,8 @@
 # chainbench 구현 작업 트래커 — 작업 리스트 · 우선순위 · 폴더 트리 예상도
 
+> **[정본]** **작업 순서·상태의 단일 출처.**
+> 이 문서는 *무엇을 만들어야 하는가* 를 정한다. 설계 제안이 여기와 어긋나면 **제안을 고친다.**
+
 > 근거: `chainbench-component-architecture.md`(§2b 실측·§3 컴포넌트·§5 Phase·§1b DDD) · `chainbench-design.md`(§3 인터페이스) ·
 > `chainbench-feature-spec.md`(F1~F16 AC) · `chainbench-refactoring.md`(WP1~6).
 > 원칙: **Low는 TDD 먼저 → walking skeleton으로 조기 통합 → 수직 슬라이스 확장**(big-bang 금지). 코드는 [[go-code-quality-guidelines]] 준수.
@@ -57,7 +60,8 @@
 
 ## 1c. 재계획 (2026-08-11) — 배경요구 재대조 후 잔여 작업
 
-> 근거: [[dsl-v2-proposal]] · [[structure-and-atomic-cli-proposal]] · [[chain-binary-flag-graph]] (2026-08-11 검토 3종).
+> 근거: [[dsl-v2-proposal]] · [[chain-binary-flag-graph]] · `archive/structure-and-atomic-cli-proposal`
+> (2026-08-11 검토 3종 — 셋째는 제안분이 구현되어 [[archive/README|archive]] 로 이동했다).
 > 이 절은 §2 의 Phase 목록을 대체하지 않고, **배경 요구(체인 구성 5요소 · 실행옵션 · 3-검증원)** 대조에서
 > 새로 드러난 갭과 그 순서를 얹는다. §2 의 미완 항목(T5.2·T5.5·레거시 제거)은 그대로 유효하다.
 

@@ -1,5 +1,9 @@
 # chainbench 소프트웨어 아키텍처
 
+> **[이력]** 2026-08-11 시점 아키텍처.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > 지위: **현재 코드 기준 아키텍처 서술**(2026-08-11, 커밋 `2181191` + keyreg 배선).
 > 설계 의도의 정본은 [`../chainbench-design.md`](../chainbench-design.md), 진행 상태의 정본은
 > [`../chainbench-worklist.md`](../chainbench-worklist.md) 다. 이 문서는 **지금 코드가 실제로 어떤 모양인가**를

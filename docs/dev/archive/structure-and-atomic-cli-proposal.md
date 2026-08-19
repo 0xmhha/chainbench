@@ -1,5 +1,8 @@
 # 코드 구조 AST 검토 · 원자 CLI 모듈 구성 제안
 
+> **[대체됨]** 제안분(internal/app · core/launchopt)은 **구현 완료**. 남은 논의는 [[surface-unification-design]] 로 대체.
+> **새 작업의 근거로 쓰지 말 것.** 기록으로만 남긴다.
+
 > 지시 2(AST 기반 구조 분류·검토·제안) · 지시 3(MCP 이전 단계의 원자 CLI 모듈화) 응답.
 > 작성: 2026-08-11 · 기준 커밋 `2181191` · 총 55,148 LOC / `internal` 55 패키지 / `cmd/chainbench` 44 파일 4,179 LOC.
 > 방법: `go list -json ./internal/...` 로 패키지 import 그래프를 만들고 fan-in/fan-out·계층 위반·
@@ -115,7 +118,7 @@ test      (A: testkit Go-func)                                      ↔  run (B:
 | 패키지 | 역할 | 근거 |
 |---|---|---|
 | `internal/app` [NEW] | 유스케이스 함수 집합. CLI RunE 와 MCP 핸들러가 **같은 함수**를 호출 | 지시 3 의 "CLI ↔ MCP 행위 동일" 요구, chain-cli-execution-plan §4.1 |
-| `internal/core/launchopt` [NEW] | 실행옵션 모듈 + Dialect + Builder | [`chain-binary-flag-graph.md`](chain-binary-flag-graph.md) §3.3 |
+| `internal/core/launchopt` [NEW] | 실행옵션 모듈 + Dialect + Builder | [`chain-binary-flag-graph.md`](../chain-binary-flag-graph.md) §3.3 |
 
 **흡수/폐기 (신규 작업 아님 — 소비자 이관 후 삭제):**
 
@@ -284,7 +287,7 @@ argv 를 그대로 출력하고, `net start` 는 같은 결과를 실행한다.
 | P3 | MCP 미러(=app 재사용) | CLI↔MCP 동일 출력 테스트 |
 | P4 | governance-etcd 스텝(gwemix) | `admin.wemixInfo.etcd.cluster` 검증 |
 | P5 | 원격(`--target user@host:/path`) | 실 SSH 라이브 |
-| P6 | DSL v2 + 스위트 이관 | [`dsl-v2-proposal.md`](dsl-v2-proposal.md) §4 |
+| P6 | DSL v2 + 스위트 이관 | [`dsl-v2-proposal.md`](../dsl-v2-proposal.md) §4 |
 | P7 | 레거시 스택 A 제거(`state`/`pipeline`/`testkit`/`probe`) | 소비자 0 확인 후 |
 
 **P2′ 를 앞으로 당긴 이유**: 원자 스텝의 2·3번(키 소싱)이 곧 알고리즘의 2·3번이다. 이것 없이

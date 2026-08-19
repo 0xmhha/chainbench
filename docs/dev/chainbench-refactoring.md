@@ -1,5 +1,9 @@
 # chainbench 리팩토링 감사 — 기존 코드 → 목표 설계 매핑
 
+> **[이력]** pkg→internal 시기 감사(WP1~6). 대부분 완료.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > 목적: 목표 설계(`chainbench-design.md` 인터페이스·데이터모델, `chainbench-feature-spec.md` F1~F16 동작계약)를 향해, **기존 코드를 무엇을 유지/확장/재구성/교체하고 무엇을 신설**할지 코드 감사 기반으로 확정하고, **구현-ready 작업 단위(WP)** 로 분해한다.
 > 근거: `chainbench-requirements-review.md`(요구/결정) · `chainbench-design.md`(§3 인터페이스·§4 스키마) · `chainbench-feature-spec.md`(F1~F16 AC).
 > 원칙: (1) 견고한 기반 재사용, (2) 인터페이스 우선·하위호환, (3) 점진 이관(기존 pipeline/e2e 공존), (4) 소유권 단일화.

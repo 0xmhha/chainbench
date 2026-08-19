@@ -3,6 +3,25 @@
 chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**다. 이 디렉토리는
 현행 설계·운영 문서를 둔다. (Go 재설계 이전 bash/TS 아카이브와 구 재설계 SSoT는 정리되었다.)
 
+## 문서 등급과 권위 순서
+
+문서끼리 어긋날 때 **무엇이 이기는지**를 먼저 정한다. `dev/` 의 모든 문서는 제목 바로
+아래에 자기 등급을 선언한다.
+
+| 등급 | 무엇을 말하는가 | 어긋나면 |
+|---|---|---|
+| **[정본]** | *무엇을 만들어야 하는가* — 요구·계약·인터페이스·작업 순서 | **정본이 이긴다.** 설계 제안을 고친다. |
+| **[현행 설계]** | *지금 어떻게 만들 것인가* — 목표 구조 | 정본에 진다. 코드에 이긴다(코드가 아직 안 따라온 것). |
+| **[이력]** | *그때 무엇을 측정·결정했는가* | **현재 상태를 말하지 않는다.** 근거로 인용할 수 없다. |
+| **[대체됨]** | 제안이 구현됐거나 다른 문서로 옮겨감 | [`dev/archive/`](dev/archive/) 로 이동. 새 작업의 근거 금지. |
+
+정본은 4종뿐이다 — `chainbench-requirements-review` (요구·결정) ·
+`chainbench-feature-spec` (동작 계약) · `chainbench-design` (인터페이스·데이터 모델) ·
+`chainbench-worklist` (**작업 순서·상태의 단일 출처**).
+
+> 문서를 오래됐다고 지우지 않는다. 지우면 근거가 사라진다. 위험한 것은 오래된 문서가
+> 아니라 **오래됐다고 표시되지 않은 문서**다 — 등급 표기가 그 표시다.
+
 ## 설계 SSoT — 여기서 시작 (`docs/dev/`, 4종 세트)
 
 | 문서 | 성격 |
@@ -46,13 +65,19 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/architecture/module-responsibilities.md`](dev/architecture/module-responsibilities.md) | **관심사별 소유 모듈**(체인구성 5요소·노드생명주기·DSL 등 16개) · 현재 소유자 부재 실측(genesis 17곳·키 17곳·노드 11곳) · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 4분할 제안(dsl · assert · bind · interp). 작업 순서는 worklist §1g. |
 | [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) | AST 실측 패키지 그래프 — 계층 검증 · fan-in/out · launch-args 분산 5지점 · launchopt 실행 순서. |
 
-### 2026-08-11 재설계 검토 3종 (제안 — 미확정)
+### 2026-08-11 재설계 검토
 
-| 문서 | 내용 |
+| 문서 | 등급 | 내용 |
+|---|---|---|
+| [`dev/dsl-v2-proposal.md`](dev/dsl-v2-proposal.md) | 현행 설계 | DSL v2 문법 + x-bar 정렬 갭 분석(G1~G7). T7.8 에서 구현됨. |
+| [`dev/chain-binary-flag-graph.md`](dev/chain-binary-flag-graph.md) | 이력 | 3체인 바이너리 CLI 그래프(AST 추출) · 실행옵션 모듈+builder 설계 비판 검토. |
+
+### [`dev/archive/`](dev/archive/) — 대체됨
+
+| 문서 | 무엇으로 대체됐나 |
 |---|---|
-| [`dev/dsl-v2-proposal.md`](dev/dsl-v2-proposal.md) | DSL v2 문법 제안 + x-bar 정렬 갭 분석(G1~G7). |
-| [`dev/structure-and-atomic-cli-proposal.md`](dev/structure-and-atomic-cli-proposal.md) | import 그래프 실측 · 오케스트레이션 3스택 문제 · `internal/app` 제안 · 원자 CLI 스텝 카탈로그. |
-| [`dev/chain-binary-flag-graph.md`](dev/chain-binary-flag-graph.md) | 3체인 바이너리 CLI 그래프(AST 추출) · 실행옵션 모듈+builder 설계 비판 검토. |
+| `structure-and-atomic-cli-proposal.md` | 제안한 `internal/app` · `internal/core/launchopt` 는 **구현 완료**. 남은 표면 논의는 `surface-unification-design`. |
+| `chain-cli-execution-plan.md` | 자체 헤더가 "진행 정본은 worklist" 라고 선언한다. 순서는 worklist §1g. |
 
 > `dev/session-data/`(원본 세션 transcript)는 검증용 로컬 자료로 **git 미추적**(`.gitignore`).
 

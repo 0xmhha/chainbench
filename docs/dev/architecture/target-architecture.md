@@ -1,5 +1,9 @@
 # 목표 아키텍처 — 다이어그램
 
+> **[현행 설계]** 목표 다이어그램.
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+
 > 산문으로 흩어진 결정을 **그림 하나로 검토**하기 위한 문서.
 > 각 결정의 근거와 실측은 아래 문서에 있고, 여기서는 반복하지 않는다.
 >

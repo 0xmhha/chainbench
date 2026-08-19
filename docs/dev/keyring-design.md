@@ -1,5 +1,9 @@
 # keyring — 키 자료의 단일 소유자
 
+> **[현행 설계]** 키 자료.
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+
 > 첫 착수 대상. 키는 세 체인이 **동일하므로** 여기부터 정리하면 위쪽이 단순해진다.
 >
 > 실측: 2026-08-18. 관련: [[network-blueprint-design]](network-blueprint-design.md) ·

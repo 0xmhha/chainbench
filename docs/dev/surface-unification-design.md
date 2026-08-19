@@ -1,5 +1,9 @@
 # 표면 통일 리팩토링 — Feature 레지스트리 · cmd 박막화 · 체인 공통/특화 분리
 
+> **[현행 설계]** 표면 통일·명령 표면.
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+
 > 문제: 같은 기능이 CLI·MCP·DSL 세 곳에 각각 구현돼 있고, `cmd/` 가 CLI 가 아니라 오케스트레이터가 돼 있다.
 > 목표: **기능을 한 번 등록하면 세 표면이 그것을 렌더링**하게 한다. `cmd/` 는 바인딩과 출력만 남긴다.
 >

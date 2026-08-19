@@ -1,5 +1,9 @@
 # 체인 패밀리별 기동 설계 — 상위 일관 · 하위 특화
 
+> **[현행 설계]** 패밀리 기동.
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+
 > 목표: go-wemix / go-wbft / go-stablenet 을 **스크립트 없이 Go 함수 조합으로** 기동한다.
 > 상위 레이어는 세 체인에 대해 동일하게 동작하고, 차이는 하위 레이어에만 존재한다.
 >

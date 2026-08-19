@@ -1,5 +1,9 @@
 # Code graph — AST-measured package structure
 
+> **[이력]** AST 실측 스냅샷. 측정 시점 이후 코드가 바뀌었다.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > Generated from `scripts/inventory/code-graph` (go/ast, no build required).
 > Regenerate with `go run ./scripts/inventory/code-graph . > graph.json` after
 > structural refactors; do not hand-edit the numbers here.

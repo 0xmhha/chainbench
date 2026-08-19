@@ -1,5 +1,9 @@
 # DSL v2 문법 제안 · x-bar 정렬 갭 분석
 
+> **[현행 설계]** DSL v2 문법(T7.8 구현됨).
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+
 > 지시 1(DSL 문법 신규 제안) · 지시 4(x-bar 기반 문서 대조·갭) 응답. 작성: 2026-08-11 · 기준 커밋 `2181191`.
 > 대조 대상: [`chainbench-design.md`](chainbench-design.md) §3.2·§4.3 · [`chainbench-feature-spec.md`](chainbench-feature-spec.md) ·
 > [`chainbench-component-architecture.md`](chainbench-component-architecture.md) · 구현 정본 `internal/testspec/spec.go`.
