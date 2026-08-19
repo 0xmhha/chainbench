@@ -28,8 +28,17 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 > `keys/preset/`, in profiles, in manifests, or in tests — on any production,
 > mainnet, testnet, staging, or shared network.** They are for disposable, local
 > throwaway networks ONLY. Any funds or authority assigned to them are
-> unrecoverable and controllable by anyone. See
-> [`keys/preset/README.md`](keys/preset/README.md).
+> unrecoverable and controllable by anyone.
+>
+> This includes **plaintext private keys written inline in test source** (the
+> genesis-funded faucet key is the upstream go-ethereum test key, already public
+> in every geth fork). A secret scanner run over this repository **will report
+> findings, and those findings are expected** — every one of them is a fixture,
+> and the fixtures are public by design so local runs stay reproducible. Treat a
+> finding as real only if it is outside `keys/preset/` and outside test code.
+>
+> See [`keys/preset/README.md`](keys/preset/README.md) and
+> [`docs/SECURITY_KEY_HANDLING.md`](docs/SECURITY_KEY_HANDLING.md).
 
 ## Table of contents
 
