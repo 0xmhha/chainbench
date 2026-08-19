@@ -61,7 +61,7 @@
 ### 3.2 형태
 
 ```go
-// internal/app/feature (L5)
+// internal/feature (L5)
 
 // Stage is which of the three phases a feature belongs to. It is what a
 // surface groups by: CLI command groups, DSL sections, MCP namespaces.
@@ -166,7 +166,7 @@ type NetGenesisIn struct {
 | `net start` · `stop` · `restart` | 프로세스 수명주기 | 프로세스 |
 | `net rm` | 데이터 플레인 제거 | 파일 |
 | `net status` · `health` · `logs` | 관측 | 읽기 |
-| `net hardfork` · `upgrade` | 실행 중 네트워크의 바이너리/체인 변경 | 프로세스 |
+| `net hardfork` | 실행 중 네트워크의 포크 — 바이너리 스왑(type-2)과 체인 핸드오프(type-1)를 **한 명령**이 덮는다 | 프로세스 |
 
 **`net resolve` 가 핵심이다.** 아무것도 만들지 않고 "이 청사진이면 이런 네트워크가 된다"를
 출처와 함께 보여준다 — 지금은 이걸 볼 방법이 없어서 띄워 봐야 안다.
@@ -250,7 +250,7 @@ cmd/chainbench/
 | `core/peering` | L1 | 연결 그래프 계산 — mesh / proxied (순수) | 지금은 풀메시가 코드에 박혀 있다 |
 | `core/resolve` | L3 | 청사진+인벤토리+플러그인+키셋 → `ResolvedNetwork` (+출처) | 지금은 스텝마다 흩어져 재조립된다 |
 | `core/materialize` | L3 | `ResolvedNetwork` → 산출물 → `Sink` | 지금은 스텝마다 다르게 쓴다 |
-| `app/feature` | L5 | 기능 레지스트리 (§3) | 표면 3개가 각자 목록을 갖는다 |
+| `internal/feature` | L5 | 기능 레지스트리 (§3). `Deps` 를 소유한다 — `app/feature` 로 두면 `app` 과 참조 순환 | 표면 3개가 각자 목록을 갖는다 |
 
 ### 변경 (6개)
 
@@ -284,7 +284,7 @@ cmd/chainbench/
   ↓ 관측          collector·health(L3) → session(L3)
   ↓ 실행          testspec(L1 구문 / L3 실행)
   ↓ 판정          session(L3)
-전 구간 노출      app/feature(L5) → cmd · mcp · dsl(L6)
+전 구간 노출      feature(L5) → cmd · mcp 는 읽고, dsl/interp 는 주입받는다
 ```
 
 ---

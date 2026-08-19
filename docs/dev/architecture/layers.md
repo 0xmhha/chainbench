@@ -273,7 +273,21 @@ flowchart TD
 
 **앞서 나는 `hardfork` 를 "같은 체인"으로 좁히자고 적었다. 틀렸다.**
 바이너리가 바뀌고 그 시점부터 합의가 달라지면 **전부 하드포크**이고,
-go-wemix → go-wbft 도 그중 하나다. 코드가 이미 그렇게 말하고 있었다:
+go-wemix → go-wbft 도 그중 하나다.
+
+**이것은 새 판단이 아니다 — 이 프로젝트의 요구 문서가 처음부터 그렇게 정의했다:**
+
+```
+chainbench-requirements-review.md §D-2.8
+  "하드포크 2종: ① 체인 업그레이드(go-wemix→go-wbft, 서로 다른 바이너리 동시=handoff)
+                ② 동일체인 하드포크(fork 블록 전에 fork-aware 바이너리로 교체)"
+  "환경은 node→(binary, buildVersion) 집합"
+
+chainbench-feature-spec.md
+  "type-1(체인 업그레이드) / type-2(동일체인, supervisor.ForkSwaps)"
+```
+
+코드 주석도 같다:
 
 ```go
 // consensus/upgrade/plan.go — 패키지 자신의 설명
@@ -319,6 +333,9 @@ func (h Hardfork) IsHandoff() bool
 | gstable v1→v2 @N | `{bp01..04: v2}` | 없음 | type-2 스왑 |
 | wemix→wbft @100 | 없음(v01 이 처음부터 gwbft) | `[v01..04]` | type-1 핸드오프 |
 | boho @10 | 없음 | 없음 | 하드포크 선언 대상 아님 → genesis 설정 |
+
+아래 통합안은 **새 제안이 아니라 §D-2.8 을 자료구조로 옮긴 것**이다.
+`node→(binary, buildVersion)` 집합이 곧 `BinaryAfter` 이고, handoff/swap 구분이 곧 파생 규칙이다.
 
 **통합이 낫다고 보는 근거 넷**: (1) 선언이 하나로 접힌다 — 지금은 명령 둘에 플래그가 다르다.
 (2) 파생 로직이 "바이너리가 바뀌나 / 생산자가 바뀌나" 두 질문뿐이라 작고 테스트 가능하다.
