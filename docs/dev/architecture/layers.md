@@ -98,7 +98,8 @@ flowchart TD
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
-| `core/keys` · `core/keyreg` · `keygen` · `keymat` | 키 자료 |
+| **`core/keyring`** | **키 자료의 소유자** — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) |
+| `core/keys` · `core/keyreg` · `keygen` · `keymat` | 키 자료 — **`core/keyring` 으로 흡수 중**(K3) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` · `serverset` | 토폴로지 YAML · **서버 인벤토리(포트·호스트)** |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |

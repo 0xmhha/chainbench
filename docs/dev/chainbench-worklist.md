@@ -283,7 +283,7 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **K0** | `core/keyring` 신설 — 생성·파생(Go+blst)·백엔드·링·색인 | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) | ☐ |
+| **K0** | `core/keyring` 신설 — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) · `CGO_ENABLED=0` · fuzz | ☑ |
 | **K1** | `--bootnode` 제거 — BLS 를 blst 로 자체 파생 | `keyring new` 가 **체인 바이너리를 0회 실행** | ☐ |
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft` 이전 | genesis 자료는 genesis 쪽으로. 기존 골든 테스트 유지 | ☐ |
 | **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
@@ -292,8 +292,9 @@ K0·S0 가 추측 위에 서게 된다.
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | `keymat` 의 자체 SSH 읽기 소멸 · 로컬/원격 한 통로 | ☐ |
 | **K7** | `keyring --from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | 세 형태를 같은 코드로 · **명령줄에 IP 없음** · `--server`+`--remote-path` 두 플래그 대체 | ☐ |
 
-**의존성 추가**: `github.com/supranational/blst v0.3.16` — BLS12-381 표준 구현체,
-**go-wbft 자신이 같은 버전 사용**. 오타 낚시 아님, 이더리움 합의 클라이언트 전반 사용.
+**의존성 추가**(K0 에서 완료): `github.com/kilic/bls12-381 v0.1.0` — **순수 Go** BLS12-381.
+당초 적었던 `supranational/blst` 는 **CGO 라 `CGO_ENABLED=0` 빌드를 깬다**. kilic 은 go-wbft 의
+`go.sum` 과 **모듈 해시가 동일**하다. `decred/…/secp256k1/v4` 는 이미 간접 의존성이었고 직접으로 승격.
 
 **K6 이 keyring 을 넘어선다**: `FileSink` 에 읽기가 없어서 `keymat` 이 자체 SSH 읽기를 따로 만들었다 —
 추상화가 한쪽 방향만 있으면 반대 방향은 옆에 새로 생긴다. 넓히면 청사진 읽기·genesis 확인·
