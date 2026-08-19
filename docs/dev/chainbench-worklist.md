@@ -196,10 +196,15 @@ B 는 F 와 병행 가능하다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **B1** | `testspec` 3분할 — `testspec/spec`(구문, L1 순수) · `testspec/assert`(비교, L1 순수) · `testspec`(실행, L3) | `chainbench validate` 가 rpc/session/collector 를 링크하지 않음 · 파서 fuzz 가능 | ☐ |
+| **B1** | **`testspec`(2,998줄) 4분할** — `dsl`(L1 구문 689) · `dsl/assert`(L1 368) · `dsl/bind`(L1 259) · `dsl/engine`(L3 2,050) | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ☐ |
+| **B2** | `Spec.Fingerprint()` 가 `string` 반환 (현재 `session.Fingerprint`) | **구문이 L3 에 묶인 유일한 이유**가 이 타입 하나다 — B1 의 선행 조건 | ☐ |
 
 현재 `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 해서
 **순수해야 할 파서가 L3 로 끌려 올라가 있다**([[module-responsibilities]] §3).
+
+**레지스트리는 import 가 아니라 주입이다.** 엔진(L3)이 기능 레지스트리(L5)를 import 하면 상향이지만,
+`interpreter.go` 가 이미 `Registry`·`Action`·`Assertion`·`Deps` 를 **스스로 정의**하고 L5 가 구현체를
+넘긴다 — 값 전달이라 층을 거스르지 않는다. 코드 변경이 아니라 문서 문구 문제였다.
 
 ### F — 패밀리별 기동 (wemix 를 Go 로)
 
@@ -290,13 +295,17 @@ B 는 F 와 병행 가능하다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **S0** | `app/feature` 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 | 기존 동작 무변경 · 미등록 기능 카운트 테스트 | ☐ |
+| **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 | 기존 동작 무변경 · 미등록 기능 카운트 테스트 | ☐ |
 | **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☐ |
 | **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
 | **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인 | ☐ |
 | **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
 | **S5** | `cmd/` 규칙 위반 21파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄 | ☐ |
 | **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
+
+**`internal/feature` 를 별도 패키지로 두는 이유**: `app/feature` 로 하면 `Invoke(ctx, Deps, in)` 의
+`Deps` 가 `app` 에 있어 `app → app/feature → app` **참조 순환**이 된다. 순환은 발생해서는 안 되며,
+발생했다는 것 자체가 설계 미흡의 증거다. `feature` 가 `Deps` 를 소유하고 `app` 이 그것을 import 한다.
 
 **F 계열과의 순서**: 독립이지만 `net start` 를 둘 다 건드린다 — **F3(페이즈 구조)을 먼저** 하고
 S1 에서 등록해야 두 번 등록하지 않는다.

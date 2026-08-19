@@ -76,13 +76,32 @@
 
 그 결과 **순수해야 할 파서가 L3 로 끌려 올라간다** — `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 하기 때문이다.
 
-### 제안: 3분할
+### 제안: 4분할 — 이름이 무엇인지 말하게 한다
 
-| 새 패키지 | 층 | 담는 것 | import |
-|---|---|---|---|
-| `testspec/spec` | **L1** | `Spec` 모델 · `Parse`/`ParseV2` · 스키마 · `migrate` | 없음(순수) |
-| `testspec/assert` | **L1** | 타입인지 비교 함수 (이미 분리됨) | 없음(순수) |
-| `testspec` | **L3** | 인터프리터 · 액션 · 바인딩 · 어세션 배선 | rpc · session · collector · keyreg |
+`testspec` 은 **2,998줄**(+`assert` 368)이고, 이름이 *무엇인지*를 말하지 않는다.
+DSL 이 있으므로 **언어(구문)와 그것을 실행하는 엔진**이 갈라져야 한다.
+
+| 새 패키지 | 층 | 담는 것 | 줄 | import |
+|---|---|---|---:|---|
+| `internal/dsl` | **L1** | `Spec` 모델 · `Parse`/`ParseV2` · `migrate` · 스키마 | 689 | 없음(순수)* |
+| `internal/dsl/assert` | **L1** | 타입인지 비교 함수 | 368 | 없음(순수) |
+| `internal/dsl/bind` | **L1** | 값 바인딩 · `$ref` 해석 | 259 | 없음(순수) |
+| `internal/dsl/engine` | **L3** | 인터프리터 · 액션/어세션 · 빌트인 · 실행 | 2,050 | rpc · session · keyreg |
+
+\* **구문을 순수하게 만드는 데 필요한 변경은 하나뿐이다**: `Spec.Fingerprint()` 가
+`session.Fingerprint`(L3) 대신 `string` 을 반환하고 호출자가 변환한다.
+지금 구문이 L3 에 묶인 유일한 이유가 **그 타입 하나**다 (실측).
+
+> **분류 정정**: 앞서 `derived.go`(251)를 "의미(순수)"로 적었으나 `rpc`·`session` 을 6곳에서
+> 쓴다 — **실행**이다.
+
+### 레지스트리는 import 가 아니라 주입이다
+
+엔진(L3)이 기능 레지스트리(L5)를 import 하면 상향이라 불가능하다.
+그런데 **이미 올바른 모양이다** — `interpreter.go` 가 `Registry`·`Action`·`Assertion`·`Deps` 를
+**스스로 정의**하고, L5 가 구현체를 만들어 `Deps` 로 넘긴다. 값 전달이므로 층을 거스르지 않는다.
+
+따라서 "세 표면이 레지스트리를 읽는다"가 아니라 **"CLI·MCP 는 읽고, 엔진은 주입받는다"**이다.
 
 **효과 3가지**
 1. `chainbench validate`(오프라인 검증)가 실행 스택 전체를 링크하지 않는다.
@@ -195,7 +214,7 @@ L3  core/session 이 전 과정의 스텝 스탬프를 기록                   
 
 | # | 보정 |
 |---|---|
-| B1 | **`testspec` 은 L1(구문) + L3(실행)로 쪼개져야 한다.** 현재 한 패키지라 순수 파서가 L3 에 묶여 있다 |
+| B1 | **`testspec`(2,998줄)을 `dsl`(L1 구문) · `dsl/assert`(L1) · `dsl/bind`(L1) · `dsl/engine`(L3)로 4분할.** 이름이 무엇인지 말하지 않는 것도 문제다 |
 | B2 | **노드 생명주기에 명시적 소유자를 세운다** — `driver`(#8) 실행 / `procman`(#9) 추적 / `supervisor`(#10) 순서. 지금은 11곳이 각자 부른다 |
 | B3 | 레이어표에 **관심사 열**을 붙인다. 패키지 이름만으로는 "genesis 담당"이 안 보인다 |
 
