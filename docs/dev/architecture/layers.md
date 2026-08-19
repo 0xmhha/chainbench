@@ -257,12 +257,11 @@ flowchart TD
 |---|---|---|
 | `place.NodeReq.Name` · `NodePlacement.Name` | `netmap.NodeLabel` | 노드를 지칭하는 유일한 이름. 계정 라벨과 타입으로 구분 |
 | (없음) | `netmap.AcctLabel` | `account1`·`faucet` — tx 의 from/to 에 쓰인다 |
-| `hardfork.Plan{FromChain,ToChain}` | **`hardfork` 는 동일 체인만** | 아래 §5b.3a |
+| `hardfork.Plan` + `upgrade.Plan` | `hardfork.Plan` 하나 | 아래 §5b.3a·b |
 | `keygen.Node` | `keyring.Identity` | 키 신원이지 노드가 아니다 |
 | `topology.Node` | `blueprint.NodeSpec` | 선언이지 실행 중 노드가 아니다 |
 | `driver.Plan` | `driver.LaunchPlan` | 무엇의 계획인지 |
-| `hardfork.Plan` | `hardfork.SwapPlan` | 같은 체인 · 바이너리 교체 (§5b.3a) |
-| `upgrade.Plan` | `upgrade.HandoffPlan` | 다른 체인으로 넘김 |
+| `hardfork.Plan` · `upgrade.Plan` | **`hardfork.Plan` 하나로 통합** | `upgrade` 는 hardfork 의 한 종류다 (§5b.3a·b) |
 | `poa.Config` | `poa.Governance` | 거버넌스 설정이다 |
 | `place.Config` | `place.Bands` | 포트 밴드다 |
 | `serverset.Config` | `serverset.Inventory` | 파일 이름과도 맞는다 |
@@ -270,28 +269,63 @@ flowchart TD
 | `core/capability` | `feature`(카탈로그) | `engine/capability`(게이팅)와 무관하다 |
 | `testspec` | `dsl` + `dsl/interp` | 언어와 엔진 |
 
-#### 5b.3a `hardfork` 와 `upgrade` 의 범위가 흐려져 있다 (실측)
+#### 5b.3a `hardfork` 는 상위 범주다 — `upgrade` 는 그 한 종류 (정정)
 
-용어는 명확하다:
+**앞서 나는 `hardfork` 를 "같은 체인"으로 좁히자고 적었다. 틀렸다.**
+바이너리가 바뀌고 그 시점부터 합의가 달라지면 **전부 하드포크**이고,
+go-wemix → go-wbft 도 그중 하나다. 코드가 이미 그렇게 말하고 있었다:
 
-| 용어 | 뜻 |
-|---|---|
-| **hardfork** | **같은 체인**, 새 버전 바이너리로 교체 |
-| **upgrade** | **다른 체인**으로 넘김 (wemix → wbft) |
+```go
+// consensus/upgrade/plan.go — 패키지 자신의 설명
+// "a single, validated launch plan for a hardfork handoff"
 
-그런데 코드가 지키지 않는다:
-
+// supervisor.go
+// ForkSwaps schedules same-chain (type-2) binary swaps before a fork block.
+// Type-1 (a chain upgrade / handoff) needs no swap — those nodes run
+// different binaries from the start.
 ```
-hardfork.Plan{FromChain, ToChain}                      ← 다른 체인으로도 간다
-cmd hardfork --to-chain "target chain id to upgrade to" ← 도움말이 스스로 "upgrade" 라 한다
-consensus/upgrade                                       ← 그런데 upgrade 는 따로 있다
+
+| 종류 | 무엇이 바뀌나 | 재기동 | 사전조건 |
+|---|---|---|---|
+| **type-2 스왑** | 같은 노드가 바이너리 교체 | **필요** — 포크 블록 **전에** 끝나야 하고, 늦으면 실패다 | — |
+| **type-1 핸드오프** | 후계자가 **처음부터 다른 바이너리**로 동시 기동, 포크에서 생산 주체가 넘어감 | 없음 | 후계자가 동기화 + unlock |
+| *(설정만)* | 바이너리 그대로, genesis 의 포크 블록만 이동 | 없음 | — |
+
+세 번째는 `hardfork:` 선언 대상이 아니다 — **하나의 바이너리가 양쪽 규칙을 다 알기 때문**이고,
+`genesis.overrides.<fork>Block` 이 이미 그 자리다.
+
+#### 5b.3b 통합안 — 선언은 하나, 메커니즘은 파생
+
+실행 방식은 실제로 다르지만 그것은 **선언이 아니라 실행의 차이**다.
+이 프로젝트는 같은 문제를 `Family.BringUpPhases` 로 이미 풀었다 — **데이터로 선언하고 페이즈를 파생**한다.
+
+```go
+type Hardfork struct {
+    Name    string                       // "croissant" · "boho"
+    AtBlock uint64
+    BinaryAfter    map[NodeLabel]string  // 포크 이후 바이너리. 전과 같으면 스왑 없음
+    ProducersAfter []NodeLabel           // 포크 이후 생산 주체. 비면 순수 스왑
+}
+
+// 메커니즘은 파생이다 — 선언하지 않는다.
+func (h Hardfork) Swaps(pre map[NodeLabel]string) []Swap
+func (h Hardfork) IsHandoff() bool
 ```
 
-**`hardfork` 가 `upgrade` 의 일까지 겸한다.** 두 명령이 겹치는 것은 이 리팩토링이 없애려는
-바로 그 패턴이다.
+실제 사례 대입:
 
-**정리 방향**: `hardfork` 에서 `ToChain` 을 없애고 **같은 체인 + 새 바이너리**로 한정한다.
-체인이 바뀌는 경우는 `upgrade` 하나가 맡는다. 이름이 곧 범위가 된다.
+| 사례 | `BinaryAfter` | `ProducersAfter` | 파생 |
+|---|---|---|---|
+| gstable v1→v2 @N | `{bp01..04: v2}` | 없음 | type-2 스왑 |
+| wemix→wbft @100 | 없음(v01 이 처음부터 gwbft) | `[v01..04]` | type-1 핸드오프 |
+| boho @10 | 없음 | 없음 | 하드포크 선언 대상 아님 → genesis 설정 |
+
+**통합이 낫다고 보는 근거 넷**: (1) 선언이 하나로 접힌다 — 지금은 명령 둘에 플래그가 다르다.
+(2) 파생 로직이 "바이너리가 바뀌나 / 생산자가 바뀌나" 두 질문뿐이라 작고 테스트 가능하다.
+(3) 코드 자신의 표현과 일치한다. (4) `hardfork --to-chain` 은 겹침이 아니라
+**같은 것의 두 모습**이었으므로 겹침 자체가 소멸한다.
+
+실행 분기는 남지만 **다른 모든 패밀리 분기가 이미 가 있는 자리(페이즈 목록)로** 옮겨갈 뿐이다.
 
 > 개명은 **한 번에 하지 않는다.** 각 리팩토링 항목이 자기 범위의 이름을 함께 고친다 —
 > 개명만 하는 커밋은 리뷰가 어렵고, 동작 변경과 섞이면 더 어렵다.

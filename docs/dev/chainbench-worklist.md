@@ -188,7 +188,7 @@ B 는 F 와 병행 가능하다.
 | **A4** | `chainsetup`·`chains/wemix/deploy`·`consensus/upgrade` 를 Sink 경유로 | 원격/로컬 분기 제거 | ☐ |
 | **A5** | `core/bringup`·`core/state`·`testkit`·`core/pipeline/testrun` 삭제 | L4 레거시 4개 소멸. §1f b-5 라이브 검증 선행 | ☐ |
 | **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
-| **A7b** | **`hardfork` 범위 축소** — `ToChain` 제거, 같은 체인+새 바이너리로 한정. 체인 변경은 `upgrade` 가 맡음 | 두 명령의 겹침 소멸 · 도움말이 "upgrade to" 라 하지 않음 | ☐ |
+| **A7b** | **`hardfork` 와 `upgrade` 통합** — hardfork 가 상위 범주, upgrade 는 type-1 핸드오프. 선언은 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 하나, **메커니즘(스왑/핸드오프)은 파생** | 세 사례(같은체인 스왑 · wemix→wbft 핸드오프 · genesis 전용 포크)가 한 선언에서 갈림 · 명령 둘 → 하나 | ☐ |
 | **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측: `Node`×3 · `Plan`×4 · `Config`×3 · `Step`×4 · `Name string`×12 | ☐ |
 
 **이름은 각 항목이 자기 범위에서 함께 고친다**([[layers]] §5b). 개명만 하는 커밋은 리뷰가 어렵고
