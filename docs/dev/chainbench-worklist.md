@@ -145,8 +145,24 @@
 | **b-2** | 토폴로지·외부 매니페스트 | `allocate --topology`(노드별 role/sync_mode/bootnode; validator 수는 **요청값이 아니라 해석된 배치**에서 셈 — genesis 가 이 값으로 검증자셋을 만든다) · `new --manifest/--genesis-template`(워크스페이스에 기록 → 이후 모든 스텝이 같은 플러그인 해석) · 체인 해석을 `chains/external.ResolveChain` 1곳으로 | ☑ |
 | **b-3** | NodeSet 브릿지 | `Workspace.NodeSet()`/`RPCHost()` + `app.NetworkStatus`/`NetworkStop` 이 **디렉토리의 상태 매니페스트로 스택을 판별**해 양쪽을 읽는다 → `status`/`stop`·MCP 도구가 워크스페이스에서 그대로 동작. 부수 수정: health 스텝이 target 무관하게 `127.0.0.1` 을 찌르던 원격 버그 | ☑ |
 | **b-4** | `net up` 매크로 | 9개 스텝을 순서대로 실행하는 유스케이스 1개 + CLI. `--stage provision\|start`. 실패 시에도 성공한 스텝을 출력(워크스페이스는 그 지점부터 손으로 재개 가능). **`--stage=provision` 로 end-to-end 실증**(genesis·config 3개·argv·노드 테이블) | ☑ |
-| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체 | ☐ **라이브 검증 선행** |
+| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체 | ☐ **wbft 계열 검증 완료 · wemix 는 F4/F5 대기** |
 | **b-6** | `bringup`·`core/state` 삭제 | b-5 검증 후 | ☐ |
+
+### 라이브 검증 결과 (2026-08-18, 실제 바이너리)
+
+| 체인 | `net up` | 블록 전진 | `run` api 9건 | 고아 |
+|---|---|---|---|---|
+| stablenet | 성공 | 97 → 110 → 122 | 9/9 | 0 |
+| wbft | 성공 | 24 → 36 → 48 | 9/9 | 0 |
+| **wemix** | **실패 — 블록 0** | 정지 | — | 0 |
+
+wemix 실패의 원인은 `net up` 이 아니라 **`poa.BuildGenesis` 가 템플릿 치환을 하기 때문**이다 —
+`alloc:{}`·`minerNodeId:"0x0"` 인 죽은 genesis 가 나오고 노드가 ethash 로 돈다. 같은 4노드를
+**실제 절차대로 손으로** 띄우면 정상이다(거버넌스 컨트랙트 5개 · etcd 4멤버 · 블록 238→268 ·
+4노드 전부 sealing, 20블록에서 5/6/5/4). 즉 **F4(`GenesisArtifacts`)·F5(poa 액션 배선)가 이 결함의
+수정분**이고, b-5 의 wemix 몫은 그것을 기다린다.
+
+wbft 계열은 게이트를 통과했으므로 b-5 를 stablenet/wbft 한정으로 먼저 끊을 수 있다.
 
 ### b-5 를 지금 하지 않은 이유
 
@@ -173,7 +189,7 @@ chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
 
 ---
 
-## 1g. 아키텍처 정합 · 패밀리 기동 (2026-08-18 착수 예정)
+## 1g. 아키텍처 정합 · 패밀리 기동 (사전 작업 완료 · K0 부터 착수)
 
 > 설계 근거: [[layers]](architecture/layers.md) · [[module-responsibilities]](architecture/module-responsibilities.md) ·
 > [[family-bringup-design]](family-bringup-design.md).
@@ -181,6 +197,26 @@ chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
 
 세 갈래가 있고 서로 독립이다. A(규칙) → B(파서) → F(패밀리 기동) 순으로 착수하되,
 B 는 F 와 병행 가능하다.
+
+### 완료 — 착수 전 사전 작업 (2026-08-18~19)
+
+코드 갈래에 들어가기 전에 **가정을 사실로 바꾸는 일**만 먼저 했다. 아래 셋이 없으면
+K0·S0 가 추측 위에 서게 된다.
+
+| # | 작업 | 무엇이 확정됐나 | 상태 |
+|---|---|---|---|
+| **P-1** | BLS 파생을 순수 Go 로 실증 | `kilic/bls12-381` + stdlib `crypto/hkdf` 로 **preset node1~5 의 BLS 공개키·PoP 이 바이트 동일**하게 재현됨, `CGO_ENABLED=0` 에서. → **K1(`--bootnode` 제거)이 가능하다는 것이 증명됨.** 함정 둘: PoP 의 DST(`..._POP_`) 누락 시 형식은 멀쩡한데 검증 실패 · `blst_keygen` v4 는 salt 를 루프 **이전에** 한 번 해시 | ☑ |
+| **P-2** | `netcompose/target.go` → `core/target` 이동 | L4 에 있던 타깃 해석이 L1 로 내려감(`driver`/`provision`/`remote` 만 import). S 계열의 선행 조건 | ☑ |
+| **P-3** | **문서 통치 구조** — 전 문서에 등급(정본/현행 설계/이력/대체됨) 표기 + `docs/README.md` 에 권위 순서 + 대체된 2건 `dev/archive/` 이동 | 문서끼리 어긋날 때 **무엇이 이기는지**가 정해짐. 이걸 한 이유는 아래 참조 | ☑ |
+
+**P-3 을 한 이유**는 낡은 문서가 아니라 **등급이 없는 문서**였다. 23개 `dev/` 문서 중 자기 지위를
+밝힌 것이 4개뿐이어서, 정본인 [[chainbench-requirements-review]] §D-2.8 을 제안 문서로 오인해
+건너뛰었고 그 결과 하드포크 분류를 반대로 잡았다(A7b 가 그 정정분이다). 문서를 지웠다면
+**정답이 든 문서가 사라졌을 것**이므로, 삭제가 아니라 등급 표기로 해결했다.
+
+부수 정리: 저장소의 키가 전부 테스트 픽스처임을 루트 `README.md`·`tests/README.md` 에 명시하고
+(스캐너 검출 32건이 정상 상태임과 **진짜 유출을 가려내는 기준**을 함께 적음), 파일명 오탐용
+`.precommit-allow` 를 도입했다(면제는 파일명 검사에만, 내용 스캔은 그대로).
 
 ### A — 규칙을 코드로 (설계가 썩지 않게)
 
