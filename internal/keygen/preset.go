@@ -1,25 +1,27 @@
 // Package keygen generates a network's preset key set — per-node devp2p keys,
-// their derived address and BLS public key/proof-of-possession (via the go-wbft
-// bootnode tool), an encrypted keystore per node (via the accounts SDK, no node
-// binary), and the metadata.json that keys.LoadPreset reads. It is the shared
-// core behind `validator set` (the preset is defined by its validator set) and
-// its MCP mirror; it lives here, not in the CLI, so both surfaces generate
-// identically.
+// their derived address and BLS public key/proof-of-possession, an encrypted
+// keystore per node (via the accounts SDK), and the metadata.json that
+// keys.LoadPreset reads. It is the shared core behind `validator set` (the
+// preset is defined by its validator set) and its MCP mirror; it lives here,
+// not in the CLI, so both surfaces generate identically.
+//
+// Generation runs entirely in process: identity derivation is
+// [keyring.Derive], so no chain binary has to be built or on PATH. This
+// package is being absorbed into core/keyring (worklist K3).
 package keygen
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/accounts/keystore"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // dirPerm and file perms for generated material.
@@ -67,7 +69,6 @@ type Meta struct {
 type PresetOpts struct {
 	Nodes      int
 	Validators int
-	Bootnode   string
 	Out        string
 	Password   string
 	BasePort   int
@@ -87,11 +88,6 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 	if opts.BasePort == 0 {
 		opts.BasePort = defaultPort
 	}
-	if _, err := exec.LookPath(opts.Bootnode); err != nil {
-		if _, e2 := os.Stat(opts.Bootnode); e2 != nil {
-			return Meta{}, fmt.Errorf("keygen: bootnode %q not found (build go-wbft/cmd/bootnode)", opts.Bootnode)
-		}
-	}
 	if err := os.MkdirAll(opts.Out, dirPerm); err != nil {
 		return Meta{}, err
 	}
@@ -109,7 +105,7 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 		Alloc:       map[string]map[string]any{},
 	}
 	for i := 1; i <= opts.Nodes; i++ {
-		n, err := generateNode(i, opts.Bootnode, opts.Out, opts.Password, opts.BasePort)
+		n, err := generateNode(i, opts.Out, opts.Password, opts.BasePort)
 		if err != nil {
 			return Meta{}, fmt.Errorf("keygen: node %d: %w", i, err)
 		}
@@ -145,35 +141,31 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 	return meta, nil
 }
 
-var (
-	bnHexRe  = regexp.MustCompile(`0x[0-9a-fA-F]+`)
-	bnBareRe = regexp.MustCompile(`[0-9a-fA-F]{40,}`)
-)
-
 // generateNode creates node i's material: a random nodekey, its derived address
-// + BLS pubkey/PoP + devp2p public key (via bootnode), and an encrypted keystore
-// (via the accounts SDK keystore — no node binary). It writes the per-node dir
-// and returns the node metadata.
-func generateNode(i int, bootnode, out, password string, basePort int) (Node, error) {
+// + devp2p public key + BLS pubkey/PoP, and an encrypted keystore (via the
+// accounts SDK keystore). It writes the per-node dir and returns the node
+// metadata. No external process is run.
+func generateNode(i int, out, password string, basePort int) (Node, error) {
 	nodeDir := filepath.Join(out, fmt.Sprintf("node%d", i))
 	if err := os.MkdirAll(nodeDir, dirPerm); err != nil {
 		return Node{}, err
 	}
 
-	raw := make([]byte, 32)
-	if _, err := rand.Read(raw); err != nil {
+	key, err := keyring.NewNodekey(rand.Reader)
+	if err != nil {
 		return Node{}, err
 	}
-	nodekey := hex.EncodeToString(raw)
+	nodekey := key.Hex()
 	if err := os.WriteFile(filepath.Join(nodeDir, "nodekey"), []byte(nodekey), secretPerm); err != nil {
 		return Node{}, err
 	}
 
-	n, err := DeriveIdentity(bootnode, nodekey)
+	n, err := DeriveIdentity(nodekey)
 	if err != nil {
 		return Node{}, err
 	}
 	n.Index = i
+	raw := key.Bytes()
 	n.Enode = fmt.Sprintf("enode://%s@127.0.0.1:%d?discport=0", n.PublicKey, basePort+i-1)
 
 	// Encrypt the account key into a standard v3 keystore with the SDK and place
@@ -206,43 +198,28 @@ func keystoreFilename(address string) string {
 	return "UTC--" + ts + "--" + strings.TrimPrefix(strings.ToLower(address), "0x")
 }
 
-// DeriveIdentity runs the go-wbft bootnode over a devp2p/account private key
-// (hex, with or without 0x) and returns the derived identity: address, devp2p
-// public key, BLS public key and proof-of-possession. It is how a wbft-family
-// validator gets its BLS material from its key.
-func DeriveIdentity(bootnode, nodekeyHex string) (Node, error) {
-	nodekeyHex = strings.TrimPrefix(strings.TrimSpace(nodekeyHex), "0x")
-	res, err := exec.Command(bootnode, "-nodekeyhex", nodekeyHex, "-writeaddress").CombinedOutput()
+// DeriveIdentity returns the identity a devp2p/account private key (hex, with
+// or without 0x) implies: address, devp2p public key, BLS public key and
+// proof-of-possession. It is how a wbft-family validator gets its BLS material
+// from its key.
+//
+// It used to shell out to the go-wbft bootnode tool. It no longer does — the
+// derivation is [keyring.Derive], verified byte for byte against the shipped
+// preset — so a key set can be generated with no chain build present.
+func DeriveIdentity(nodekeyHex string) (Node, error) {
+	key, err := keyring.ParseNodekey(nodekeyHex)
 	if err != nil {
-		return Node{}, fmt.Errorf("bootnode writeaddress: %w: %s", err, res)
+		return Node{}, fmt.Errorf("keygen: %w", err)
 	}
-	n, err := ParseBootnode(string(res))
+	id, err := keyring.Derive(key, keyring.WithBLS)
 	if err != nil {
-		return Node{}, err
+		return Node{}, fmt.Errorf("keygen: %w", err)
 	}
-	n.Nodekey = nodekeyHex
-	return n, nil
-}
-
-// ParseBootnode extracts the address, devp2p public key, BLS public key and PoP
-// from `bootnode -writeaddress` output.
-func ParseBootnode(out string) (Node, error) {
-	var n Node
-	for line := range strings.SplitSeq(out, "\n") {
-		low := strings.ToLower(strings.TrimSpace(line))
-		switch {
-		case strings.HasPrefix(low, "public key:"):
-			n.PublicKey = strings.TrimPrefix(bnBareRe.FindString(line), "0x")
-		case strings.HasPrefix(low, "address:"):
-			n.Address = bnHexRe.FindString(line)
-		case strings.Contains(low, "bls pop"), strings.Contains(low, "proof of possession"):
-			n.BLSPoP = bnHexRe.FindString(line)
-		case strings.Contains(low, "bls public key"):
-			n.BLSPubKey = bnHexRe.FindString(line)
-		}
-	}
-	if n.Address == "" || n.PublicKey == "" || n.BLSPubKey == "" || n.BLSPoP == "" {
-		return n, fmt.Errorf("incomplete bootnode output:\n%s", out)
-	}
-	return n, nil
+	return Node{
+		Nodekey:   key.Hex(),
+		PublicKey: id.PublicKey,
+		Address:   id.Address,
+		BLSPubKey: id.BLS.PublicKey,
+		BLSPoP:    id.BLS.PoP,
+	}, nil
 }

@@ -49,7 +49,6 @@ type StepOut struct {
 type NetKeysIn struct {
 	DataDir    string
 	Source     string // preset (default) | generate
-	Bootnode   string
 	Nodes      int
 	Validators int
 }
@@ -58,7 +57,7 @@ type NetKeysIn struct {
 func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 	detail, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
 		return ws.Keys(ctx, netcompose.KeysOpts{
-			Source: in.Source, Bootnode: in.Bootnode, Nodes: in.Nodes, Validators: in.Validators,
+			Source: in.Source, Nodes: in.Nodes, Validators: in.Validators,
 		})
 	})
 	return StepOut{Detail: detail}, err

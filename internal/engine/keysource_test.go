@@ -46,14 +46,27 @@ func TestPresetKeySource_LoadsAndChecksCapacity(t *testing.T) {
 	}
 }
 
-func TestGeneratedKeySource_RequiresBootnode(t *testing.T) {
+// TestGeneratedKeySource_NeedsNoExternalBinary is the K1 gate at the engine
+// level. Generating a set used to require the go-wbft bootnode tool, which is
+// what made the committed preset the only practical way to start a network.
+// PATH is emptied so a surviving shell-out fails instead of quietly finding a
+// binary the developer happens to have.
+func TestGeneratedKeySource_NeedsNoExternalBinary(t *testing.T) {
+	t.Setenv("PATH", "")
+	const nodes = 2
 	src := engine.GeneratedKeySource{Path: t.TempDir()}
-	_, err := src.Ensure(context.Background(), 4)
-	if err == nil {
-		t.Fatal("want an error when no bootnode binary is configured")
+	ks, err := src.Ensure(context.Background(), nodes)
+	if err != nil {
+		t.Fatalf("Ensure with no PATH: %v", err)
 	}
-	if !strings.Contains(err.Error(), "bootnode") {
-		t.Errorf("error should name the missing bootnode, got: %v", err)
+	if len(ks.Preset.Nodes) != nodes {
+		t.Fatalf("got %d identities, want %d", len(ks.Preset.Nodes), nodes)
+	}
+	// A wbft-family genesis reads the validator set out of extra-data, so a
+	// generated set is only usable if the BLS material came with it.
+	if len(ks.Preset.BLSKeys) != nodes || ks.Preset.ExtraData == "" {
+		t.Errorf("generated set is missing BLS material: %d bls keys, extraData=%q",
+			len(ks.Preset.BLSKeys), ks.Preset.ExtraData)
 	}
 }
 

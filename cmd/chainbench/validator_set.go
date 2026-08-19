@@ -18,7 +18,7 @@ func newValidatorSetCmd() *cobra.Command {
 		Use:   "set",
 		Short: "Generate a validator set / preset key bundle (nodekeys, BLS, keystores, metadata)",
 		Long: "Generates the preset key set the harness consumes (keys.LoadPreset): per-node\n" +
-			"nodekeys, their derived address + BLS public key/PoP (via the go-wbft bootnode\n" +
+			"nodekeys, their derived address + BLS public key/PoP (derived in process\n" +
 			"tool), an encrypted keystore per node (via the accounts SDK — no node binary),\n" +
 			"and a metadata.json. Use it to build validator sets larger than the committed\n" +
 			"5-node preset (e.g. the n=6 quorum cases).",
@@ -34,7 +34,6 @@ func newValidatorSetCmd() *cobra.Command {
 	}
 	cmd.Flags().IntVar(&opts.Nodes, "nodes", 0, "total nodes to generate")
 	cmd.Flags().IntVar(&opts.Validators, "validators", 0, "how many nodes are validators (default: all)")
-	cmd.Flags().StringVar(&opts.Bootnode, "bootnode", "bootnode", "path to the go-wbft bootnode tool (address+BLS derivation)")
 	cmd.Flags().StringVar(&opts.Out, "out", "", "output preset directory")
 	cmd.Flags().StringVar(&opts.Password, "password", "1", "keystore password")
 	cmd.Flags().IntVar(&opts.BasePort, "base-p2p", 30301, "base p2p port for enode URLs")

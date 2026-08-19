@@ -28,10 +28,10 @@ func newValidatorCmd() *cobra.Command {
 
 // runValidator resolves a key, attaches the chain's consensus material, and
 // prints the validator identity. For a wbft-family chain it derives the BLS key
-// and proof-of-possession from the key via the bootnode; a poa chain has no
-// genesis validator material (validators are registered at bootstrap), so it
-// only reports the account with a note.
-func runValidator(cmd *cobra.Command, chain, bootnode string, source keymat.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
+// and proof-of-possession from the key in process; a poa chain has no genesis
+// validator material (validators are registered at bootstrap), so it only
+// reports the account with a note.
+func runValidator(cmd *cobra.Command, chain string, source keymat.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("--chain is required")
 	}
@@ -56,10 +56,7 @@ func runValidator(cmd *cobra.Command, chain, bootnode string, source keymat.Sour
 	}
 	switch family {
 	case "wbft":
-		if bootnode == "" {
-			return fmt.Errorf("a %s validator needs --bootnode to derive its BLS key", family)
-		}
-		id, err := keygen.DeriveIdentity(bootnode, hex.EncodeToString(a.PrivateKeyBytes()))
+		id, err := keygen.DeriveIdentity(hex.EncodeToString(a.PrivateKeyBytes()))
 		if err != nil {
 			return err
 		}

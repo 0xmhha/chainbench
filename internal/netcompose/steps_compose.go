@@ -49,8 +49,6 @@ func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 type KeysOpts struct {
 	// Source is "preset" (default) or "generate".
 	Source string
-	// Bootnode is the external bootnode binary (required for generate).
-	Bootnode string
 	// Nodes is how many identities the set must cover; <=0 uses the node table
 	// length, falling back to the validator count.
 	Nodes int
@@ -81,10 +79,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	case "", "preset":
 		src = engine.PresetKeySource{Path: w.state.KeysDir}
 	case "generate":
-		if opts.Bootnode == "" {
-			return "", fmt.Errorf("netcompose: keys: --keys-source=generate needs --bootnode (BLS derivation)")
-		}
-		src = engine.GeneratedKeySource{Path: w.state.KeysDir, Bootnode: opts.Bootnode, Validators: opts.Validators}
+		src = engine.GeneratedKeySource{Path: w.state.KeysDir, Validators: opts.Validators}
 	default:
 		return "", fmt.Errorf("netcompose: keys: unknown source %q (want preset or generate)", opts.Source)
 	}

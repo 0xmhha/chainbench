@@ -233,13 +233,8 @@ func TestKeySource_FlagMapping(t *testing.T) {
 		{
 			name: "generate needs a bootnode for BLS material",
 			opts: runOpts{keysDir: "k", keysSource: "generate"},
-			// Silently generating a set without BLS keys would produce a chain
-			// that fails much later, so this must be refused up front.
-			wantErr: "--bootnode",
-		},
-		{
-			name: "generate with a bootnode",
-			opts: runOpts{keysDir: "k", keysSource: "generate", bootnode: "/bin/bootnode"},
+			// Generation needs no external binary: BLS material is derived in
+			// process, which is what lets a network start without a preset.
 			want: "generated:k",
 		},
 		{

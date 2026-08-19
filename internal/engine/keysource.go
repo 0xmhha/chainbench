@@ -72,10 +72,11 @@ func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
 
 // GeneratedKeySource generates a fresh random key set into Path on first use.
 //
-// BLS public keys and proofs-of-possession cannot be derived in Go here — they
-// come from the external bootnode binary (design §3.5) — so Bootnode is
-// required and a missing binary is a clear error rather than a key set that is
-// silently short of the material a wbft-family genesis needs.
+// Every identity — address, devp2p public key, BLS public key and
+// proof-of-possession — is derived in process (keyring.Derive), so generating a
+// key set needs no chain binary. It used to require the go-wbft bootnode tool,
+// which is what made the committed preset the only practical way to start a
+// network.
 //
 // The genesis extra-data is computed from the generated validator set
 // (keygen.WBFTExtraData, T7.2), so a chain whose consensus reads the validator
@@ -84,8 +85,6 @@ func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
 type GeneratedKeySource struct {
 	// Path is the directory the generated set is written to.
 	Path string
-	// Bootnode is the external bootnode binary used to derive BLS material.
-	Bootnode string
 	// Password encrypts the generated keystores; empty uses a default.
 	Password string
 	// Balance pre-funds each generated account in the genesis alloc (0x-hex
@@ -105,16 +104,12 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 	if _, err := os.Stat(filepath.Join(s.Path, "metadata.json")); err == nil {
 		return PresetKeySource{Path: s.Path}.Ensure(ctx, n)
 	}
-	if s.Bootnode == "" {
-		return KeySet{}, fmt.Errorf("engine: key source: generating a key set needs a bootnode binary (BLS derivation)")
-	}
 	if err := ctx.Err(); err != nil {
 		return KeySet{}, err
 	}
 	opts := keygen.PresetOpts{
 		Nodes:      n,
 		Validators: s.Validators,
-		Bootnode:   s.Bootnode,
 		Out:        s.Path,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),

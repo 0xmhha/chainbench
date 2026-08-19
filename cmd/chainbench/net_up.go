@@ -43,8 +43,8 @@ func newNetUpCmd() *cobra.Command {
 				Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath,
 				Server:     sf.ref(),
-				KeysSource: keysSource, Bootnode: bootnode,
-				ChainID: chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
+				KeysSource: keysSource,
+				ChainID:    chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
 				LaunchSet: launchSet,
 			})
 			// The steps that did run are worth printing even when a later one
@@ -69,7 +69,8 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
 	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode); overrides --validators/--endpoints")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "", "preset (default) or generate")
-	cmd.Flags().StringVar(&bootnode, "bootnode", "", "bootnode binary (required for --keys-source=generate)")
+	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
+	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "override the manifest chain id (0 = manifest)")
 	cmd.Flags().StringArrayVar(&genesisSet, "set", nil, "override a genesis config key (repeatable), e.g. --set bohoBlock=10")
 	cmd.Flags().StringVar(&overlayPath, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")

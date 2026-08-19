@@ -284,7 +284,7 @@ K0·S0 가 추측 위에 서게 된다.
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
 | **K0** | `core/keyring` 신설 — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) · `CGO_ENABLED=0` · fuzz | ☑ |
-| **K1** | `--bootnode` 제거 — BLS 를 blst 로 자체 파생 | `keyring new` 가 **체인 바이너리를 0회 실행** | ☐ |
+| **K1** | `--bootnode` 제거 — BLS 를 자체 파생 | **`PATH` 를 비운 채 4노드 키셋 생성 성공** · 세 계층(keygen·engine·CLI)에 각각 게이트 테스트 | ☑ |
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft` 이전 | genesis 자료는 genesis 쪽으로. 기존 골든 테스트 유지 | ☐ |
 | **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
 | **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
@@ -295,6 +295,11 @@ K0·S0 가 추측 위에 서게 된다.
 **의존성 추가**(K0 에서 완료): `github.com/kilic/bls12-381 v0.1.0` — **순수 Go** BLS12-381.
 당초 적었던 `supranational/blst` 는 **CGO 라 `CGO_ENABLED=0` 빌드를 깬다**. kilic 은 go-wbft 의
 `go.sum` 과 **모듈 해시가 동일**하다. `decred/…/secp256k1/v4` 는 이미 간접 의존성이었고 직접으로 승격.
+
+**K1 이 남긴 것 하나**: `chains/wemix/deploy.ReadServerKeys` 는 여전히 **원격 서버에서** `bootnode`
+를 실행한다(`ssh … bootnode -nodekey <경로> -writeaddress`). 그 nodekey 는 그 서버에만 있고
+로컬에 없어서 파생할 대상이 없기 때문이다 — **K6(`FileStore.Read`)이 원격 nodekey 를 읽어오면**
+이 경로도 로컬 파생으로 접힌다. K1 의 범위는 로컬 생성 경로였다.
 
 **K6 이 keyring 을 넘어선다**: `FileSink` 에 읽기가 없어서 `keymat` 이 자체 SSH 읽기를 따로 만들었다 —
 추상화가 한쪽 방향만 있으면 반대 방향은 옆에 새로 생긴다. 넓히면 청사진 읽기·genesis 확인·

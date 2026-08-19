@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"os"
 	"strings"
 	"testing"
 )
@@ -33,9 +32,20 @@ func TestValidatorNew_PoaNoBLS(t *testing.T) {
 	}
 }
 
-func TestValidatorNew_WbftNeedsBootnode(t *testing.T) {
-	if _, err := run(t, "validator", "new", "--chain", "stablenet"); err == nil {
-		t.Fatal("expected error: wbft validator needs --bootnode")
+// TestValidatorNew_WbftDerivesBLSWithoutABinary is the K1 gate at the CLI. A
+// wbft validator used to be refused without --bootnode; the material is now
+// derived in process, so the command must succeed with nothing on PATH.
+func TestValidatorNew_WbftDerivesBLSWithoutABinary(t *testing.T) {
+	t.Setenv("PATH", "")
+	v := validatorJSON(t, "validator", "new", "--chain", "stablenet", "--json")
+	if v.Family != "wbft" {
+		t.Fatalf("family = %q", v.Family)
+	}
+	if !strings.HasPrefix(v.BLSPublicKey, "0x") || len(v.BLSPublicKey) != blsPubKeyHexLen {
+		t.Errorf("BLS public key not derived: %q", v.BLSPublicKey)
+	}
+	if !strings.HasPrefix(v.BLSPoP, "0x") || len(v.BLSPoP) != blsPoPHexLen {
+		t.Errorf("BLS PoP not derived: %q", v.BLSPoP)
 	}
 }
 
@@ -53,21 +63,9 @@ func TestValidatorImport_PoaPrivateKey(t *testing.T) {
 	}
 }
 
-// TestValidatorNew_WbftLiveBLS derives a real BLS key via the go-wbft bootnode.
-// Gated on BOOTNODE_BIN; skips in CI (no binary).
-func TestValidatorNew_WbftLiveBLS(t *testing.T) {
-	bn := os.Getenv("BOOTNODE_BIN")
-	if bn == "" {
-		t.Skip("set BOOTNODE_BIN to the go-wbft bootnode to derive a real validator BLS key")
-	}
-	v := validatorJSON(t, "validator", "new", "--chain", "stablenet", "--bootnode", bn, "--json")
-	if v.Family != "wbft" {
-		t.Fatalf("family = %q", v.Family)
-	}
-	if !strings.HasPrefix(v.BLSPublicKey, "0x") || len(v.BLSPublicKey) < 90 {
-		t.Fatalf("BLS public key not derived: %q", v.BLSPublicKey)
-	}
-	if !strings.HasPrefix(v.BLSPoP, "0x") {
-		t.Fatalf("BLS PoP not derived: %q", v.BLSPoP)
-	}
-}
+// BLS material is fixed-width: a compressed G1 point and a compressed G2
+// signature, both 0x-prefixed.
+const (
+	blsPubKeyHexLen = 2 + 48*2
+	blsPoPHexLen    = 2 + 96*2
+)
