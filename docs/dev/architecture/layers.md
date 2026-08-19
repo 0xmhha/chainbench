@@ -209,6 +209,72 @@ flowchart TD
 
 ---
 
+## 5b. 이름 규칙 — 세 번째 규칙
+
+> **규칙: 한 개념은 한 이름, 다른 개념은 다른 이름, 식별자는 명명된 타입.**
+
+의존 방향과 상태 소유를 정해도, 이름이 겹치면 읽는 사람이 매번 문맥을 추론해야 한다.
+이 프로젝트가 "유사하면서 다른 코드"를 반복 생산한 원인 중 하나가 이름이다.
+
+### 5b.1 실측 — 지금 무엇이 겹치는가
+
+| 겹치는 이름 | 개수 | 서로 다른 것들 |
+|---|---:|---|
+| `Node` | 3 | `node.Node`(런타임 노드) · `keygen.Node`(키 신원) · `topology.Node`(선언) |
+| `Plan` | 4 | `driver.Plan`(기동) · `hardfork.Plan`(스왑) · `upgrade.Plan`(핸드오프) · … |
+| `Config` | 3 | `poa.Config`(거버넌스) · `place.Config`(포트 밴드) · `serverset.Config`(인벤토리) |
+| `Step` | 4 | `session.Step`(스탬프) · `poa.Step`(부트스트랩 단계) · … |
+| `capability` | 2 **패키지** | `engine/capability`(DSL 게이팅) · `core/capability`(표면 카탈로그) |
+| `Name string` | **12 필드** | 노드 라벨 · 키 이름 · 서버 이름 · 테스트 이름 · 기능 이름 … |
+
+`Name string` 12곳이 가장 나쁘다. **전부 무명 `string`** 이라 타입이 아무것도 구분해 주지 않고,
+호출부에서 노드 라벨 자리에 계정 라벨을 넣어도 컴파일러가 잡지 못한다.
+
+### 5b.2 규칙
+
+1. **식별자는 명명된 타입으로 만든다.** `Name string` 이 아니라 `NodeLabel`·`AcctLabel`.
+   [[go-code-quality-guidelines]] 의 "도메인 값은 typed const/newtype" 과 같은 이유다 —
+   **잘못된 조합을 컴파일 타임에 막는다.**
+2. **한 개념 = 한 단어.** 같은 것을 `Name`/`Label`/`ID` 로 번갈아 부르지 않는다.
+3. **다른 개념 = 다른 단어.** `Plan` 이 셋을 뜻하면 각각 무엇의 계획인지 이름에 넣는다.
+4. **`Config`·`Options`·`Data` 처럼 아무것도 말하지 않는 이름을 피한다.**
+   `poa.Config` 가 거버넌스 설정이면 `poa.Governance`.
+5. **패키지 이름이 역할을 말한다.** `core`·`testspec` 처럼 무엇인지 모르는 이름은 리팩토링 대상이다.
+
+### 5b.3 리팩토링에서의 개명 (제안)
+
+| 지금 | 제안 | 왜 |
+|---|---|---|
+| `place.NodeReq.Name` · `NodePlacement.Name` | `netmap.NodeLabel` | 노드를 지칭하는 유일한 이름. 계정 라벨과 타입으로 구분 |
+| (없음) | `netmap.AcctLabel` | `account1`·`faucet` — tx 의 from/to 에 쓰인다 |
+| `keygen.Node` | `keyring.Identity` | 키 신원이지 노드가 아니다 |
+| `topology.Node` | `blueprint.NodeSpec` | 선언이지 실행 중 노드가 아니다 |
+| `driver.Plan` | `driver.LaunchPlan` | 무엇의 계획인지 |
+| `hardfork.Plan` | `hardfork.SwapPlan` | |
+| `upgrade.Plan` | `upgrade.HandoffPlan` | |
+| `poa.Config` | `poa.Governance` | 거버넌스 설정이다 |
+| `place.Config` | `place.Bands` | 포트 밴드다 |
+| `serverset.Config` | `serverset.Inventory` | 파일 이름과도 맞는다 |
+| `poa.Step` | `poa.BootstrapStep` | `session.Step` 과 구분 |
+| `core/capability` | `feature`(카탈로그) | `engine/capability`(게이팅)와 무관하다 |
+| `testspec` | `dsl` + `dsl/interp` | 언어와 엔진 |
+
+> 개명은 **한 번에 하지 않는다.** 각 리팩토링 항목이 자기 범위의 이름을 함께 고친다 —
+> 개명만 하는 커밋은 리뷰가 어렵고, 동작 변경과 섞이면 더 어렵다.
+
+### 5b.4 강제
+
+이름 규칙은 의미를 다루므로 완전 자동화는 안 된다. 다만 **겹침 검출은 가능하다**:
+
+```
+exported 식별자가 2개 이상 패키지에 같은 이름으로 존재하면 보고한다.
+허용 목록(New · Deps · Options 등 관용)은 명시한다.
+```
+
+A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
+
+---
+
 ## 6. 패밀리 기동 설계가 앉는 자리
 
 [[family-bringup-design]] 의 4 seam 을 레이어에 매핑하면 **새 패키지가 왜 0개인지** 드러난다.
