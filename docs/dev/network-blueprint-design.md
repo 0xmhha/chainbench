@@ -415,21 +415,30 @@ Blueprint 관점에서 보면 **체인 특화는 두 곳뿐**이다.
 | # | 요구 | 책임 모듈 | 상태 |
 |---|---|---|---|
 | 1 | 로컬: 동일 IP(127.0.0.1) + 서로 다른 포트 | `netmap` ← `place`·`portplan` | 있음(포트) / **라벨 관리 없음** |
-| 2 | 원격: IP 목록·가용 포트 목록을 **별도 파일**로. 어떤 노드가 어떤 ip·port 를 쓰는지 관리 | `serverset`(풀 선언) + `netmap`(배정·조회) | 인벤토리 있음 / **풀·조회 없음** |
-| 3 | DSL 이 bp/en/pn 을 지정. **라벨 ↔ ip·port 양방향 조회** | `netmap` | **없음 — 신설** |
+| 2 | 원격: IP 목록·가용 포트 목록을 **별도 파일**로. 어떤 노드가 어떤 ip·port 를 쓰는지 관리 | `serverset`(풀 선언) + `netmap`(배정·조회) | 인벤토리·`slots`·포트밴드 **있음** / **조회 없음** |
+| 3 | DSL 이 bp/en/pn 을 지정. **라벨 ↔ ip·port 양방향 조회** | `netmap` | 정방향 **있음**(`place.NodePlacement.Name`) / **버려짐**·역방향 없음 |
 | 4 | bp·en·pn 모두 nodekey 필요. enode = nodekey + ip + port → **설정에 순서가 있다** | `keyring` → `netmap` → `enode` | §6.2 |
 | 5 | 연결: static enode / bootnode discovery / (wemix) etcd | `peering` + `Family` | 코드 확인 완료 §6.3 |
 | 6 | genesis 에 bp 기입 + 거버넌스 등록. **faucet 계정 1개 상시**. `account1` 라벨 ↔ 실주소·개인키 | `keyring`(라벨·키) + 청사진(alloc) | **라벨 관리 없음** |
 | 7 | config 로 체인 설정. genesis·config 는 **생성 또는 기존 사용**. config 가 **여러 개**이고 중간에 재시작 | `genesis`(SourceMode 있음) + `nodeconfig` + DSL 스키마 | **다중 config 없음** |
 | 8 | 다중 config 는 **특정 노드에만**. DSL = 구성 정의 + 테스트 정의(pre/do/post) | 청사진(구성) + DSL v2(테스트) | **훅 미배선** |
 | 9 | do-test 액션·기대값 비교. 실패 시 기록·로그 수집 | `dsl/interp` + `session` + `collector` | 대부분 있음 |
-| 10 | 미지원 기능은 **문법 오류가 아니라 사유를 남기고 미수행** | `capability` (존재) | 있음 — 배선 확인 필요 |
+| 10 | 미지원 기능은 **문법 오류가 아니라 사유를 남기고 미수행** | `engine/capability`(게이팅) | 게이팅 있음 / **사유 미기록** |
 | 11 | 로컬/원격을 IP 기반 HTTP 로 동일 스택 처리 | `target` + `netcompose` | 있음 |
 | 12 | 신규 생성 일반화 + preset 지원. **내용이 같으면 deploy skip** | `provision`(Exists 있음) + **내용 비교 추가** | 존재 확인만 있음 |
 
 ### 6.1 신설이 필요한 것은 하나뿐 — `netmap`
 
 요구 1·2·3·4·6 이 전부 같은 것을 가리킨다: **라벨과 엔드포인트의 관계를 소유하는 모듈.**
+
+> **정정 (검토 중 발견)**: 처음에 "라벨 관리가 없다"고 적었으나 **틀렸다.**
+> `place.NodeReq{Name}` → `place.NodePlacement{Name, Host, Ports}` 로 **정방향 매핑은 이미 만들어진다.**
+> 실제 문제는 다르다 — **그 라벨이 생성 직후 버려진다.** `netcompose.NodeState` 에는 `Name` 필드가
+> 아예 없고(`grep -c Name` = 0), `Index` 와 `Role` 만 저장된다. 즉 `val1`·`ep1` 이라는 이름이
+> 한 함수 호출 동안만 존재하고 워크스페이스에 남지 않는다.
+>
+> 따라서 `netmap` 이 더할 것은 세 가지다: **(a) 라벨의 영속**, **(b) 역방향 조회**,
+> **(c) 노드 아닌 라벨(계정)까지 포함.** 정방향 계산 자체는 재발명하지 않는다.
 
 ```go
 // core/netmap (L1) — 라벨 ↔ 엔드포인트. 불변이며 resolve 가 만든다.
@@ -461,6 +470,8 @@ func (m Map) Enode(Label) (string, error)       // nodekey + host + p2p
 기동 전에 잡혀야 한다. (b) 로그·오류에서 `10.0.0.11:8545` 를 보고 어느 노드인지 즉시 알아야 한다.
 
 **가용 자원은 인벤토리가 선언한다** — `netmap` 은 배정 결과를 소유하고, 풀은 `serverset` 이 갖는다.
+`slots` 와 포트 밴드는 **이미 구현돼 있다**(2026-08-18). 명시적 범위 풀(`pool:`)은 밴드로 덮이지
+않는 경우에만 더한다 — 지금 필요하다는 근거는 없다.
 
 ```yaml
 servers:
@@ -488,9 +499,13 @@ enode 는 **키와 주소가 모두 정해진 뒤에만** 만들 수 있다. 그
 ① keyring     라벨별 nodekey · 계정          (주소를 모른다)
 ② netmap      라벨별 host · port 배정         (키를 모른다)
 ③ enode       ① + ② 를 합쳐야 만들어진다
-④ genesis     bp 목록 · 거버넌스 member · alloc   ← ③ 을 쓴다(wemix member.enode)
+④ genesis     bp 목록 · 거버넌스 member · alloc   ← ③ 의 재료(id·ip·port)를 쓴다
 ⑤ config      static-nodes · peering          ← ③ 을 쓴다
 ```
+
+> **정확히**: wemix `poa.Member` 는 `ID`·`IP`·`Port` 를 따로 갖고 enode 문자열은 갖지 않는다
+> (런타임 `wemixNode` 가 `enode://Id@Ip:Port` 로 조립한다). 즉 ④ 는 ③ 의 **재료**를 쓴다.
+> wbft 계열의 static-nodes 는 완성된 enode 문자열을 쓴다.
 
 **③ 이전에 ④·⑤ 를 만들 수 없다.** 지금 코드가 스텝마다 조각을 다시 모으는 이유가 이 순서를
 명시하지 않았기 때문이다. `ResolvedNetwork` 는 ①②③ 이 끝난 상태이고, ④⑤ 는 그것만 읽는다.
@@ -544,8 +559,11 @@ DSL 테스트 정의 쪽에서 전환을 명령한다:
 
 ```yaml
 steps:
-  - restartNodes: {nodes: [bp02], config: cfgB}    # bp02 만 cfgB 로 재기동
+  - restartNode: {node: bp02, config: cfgB}    # bp02 만 cfgB 로 재기동
 ```
+
+> `restartNode`·`stopNode`·`startNode` 액션은 **이미 있다**(`testspec/fault.go`).
+> 새로 필요한 것은 **`config:` 인자 하나**이지 새 액션이 아니다.
 
 **genesis 와 동일하게 config 도 "생성 또는 기존"이다.** `genesis.SourceMode` 가 이미
 `ModeExisting`·`ModeBuild`·`ModeTemplateOverride`·`ModeUpgradeInherit` 를 정의해 두었고,
@@ -570,8 +588,19 @@ case     테스트 정의
 체인마다 지원 기능이 다르다. 미지원 기능을 만나면 **문법 오류로 처리하지 않고**,
 무엇이 왜 지원되지 않는지 남기고 그 케이스를 수행하지 않는다.
 
-`capability` 패키지가 이미 있고, spec 의 `requires`·`applicableChains` 로 skip 하는 경로도 있다.
-필요한 것은 **사유를 기록에 남기는 것**이다 — 지금은 `skip` 으로만 표시된다.
+**주의: "capability" 라는 이름이 둘이다** (검토 중 발견 — 이 프로젝트가 반복해 온 패턴).
+
+| 이름 | 하는 일 | 쓰는 곳 |
+|---|---|---|
+| `internal/engine/capability.go` | spec 의 `requires` 를 체인 제공집합과 대조해 **skip 판정** | 엔진 (DSL 게이팅) |
+| `internal/core/capability` | `Catalog`·`Descriptor`·`Handler` — **MCP/CLI 기능 카탈로그** | `cmd capabilities` · `mcp` · `chains/*/caps.go` |
+
+**서로 무관하다.** DSL 게이팅은 앞의 것이고, 뒤의 것은 표면 카탈로그다.
+S 계열(표면 통일)에서 뒤의 것이 `feature` 레지스트리와 겹치므로 함께 정리해야 한다.
+
+게이팅 자체는 동작한다(`satisfies`·`applicableWithCaps`). 없는 것은 **사유 기록**이다 —
+`session.TestRecord.Status(s TestStatus)` 에 사유 인자가 없어(`record_impl.go:79`)
+"왜 skip 됐는지"가 아티팩트에 남지 않는다.
 
 ### 6.8 deploy skip 은 존재가 아니라 내용으로 판단한다 (요구 12)
 
