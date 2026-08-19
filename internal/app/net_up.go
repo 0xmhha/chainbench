@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
 // NetUp composes a whole network in one call by running the step use cases in
@@ -40,7 +40,7 @@ type NetUpIn struct {
 	ManifestPath string
 	TemplatePath string
 	KeysDir      string
-	Target       netcompose.TargetSpec
+	Target       target.TargetSpec
 	// Binary is the node executable. Required for UpStart; for a remote target
 	// it is a path on that host.
 	Binary string

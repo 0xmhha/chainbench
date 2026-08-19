@@ -6,8 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
@@ -40,7 +39,7 @@ func TestWorkspace_NewPersist(t *testing.T) {
 	if st.Chain != "stablenet" || st.KeysDir != "keys/preset" {
 		t.Fatalf("state did not persist: %+v", st)
 	}
-	if st.Target.Kind != netcompose.TargetLocal || st.Target.DataRoot != dir {
+	if st.Target.Kind != target.TargetLocal || st.Target.DataRoot != dir {
 		t.Fatalf("local target default wrong: %+v", st.Target)
 	}
 	if !st.Steps["new"].Done {
@@ -62,76 +61,7 @@ func TestWorkspace_Validation(t *testing.T) {
 	if _, err := netcompose.Open("", fixedClock()); err == nil {
 		t.Fatal("expected error for empty data dir")
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Target: netcompose.TargetSpec{Kind: netcompose.TargetRemote}}); err == nil {
+	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Target: target.TargetSpec{Kind: target.TargetRemote}}); err == nil {
 		t.Fatal("expected error for incomplete remote target")
-	}
-}
-
-// TestTargetResolve checks the location abstraction: a local spec yields the
-// local filesystem sink + driver; a remote spec yields SSH-backed ones, reading
-// creds from env (no live dial).
-func TestTargetResolve(t *testing.T) {
-	local, err := netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: "/tmp/x"}.Resolve(nil)
-	if err != nil {
-		t.Fatalf("local resolve: %v", err)
-	}
-	if _, ok := local.Sink.(provision.LocalFileSink); !ok {
-		t.Fatalf("local sink type = %T", local.Sink)
-	}
-	if _, ok := local.Driver.(*driver.LocalDriver); !ok {
-		t.Fatalf("local driver type = %T", local.Driver)
-	}
-
-	env := map[string]string{
-		"CHAINBENCH_REMOTE_PASS":           "pw",
-		"CHAINBENCH_SSH_INSECURE_HOST_KEY": "1",
-	}
-	remoteTgt, err := netcompose.TargetSpec{
-		Kind: netcompose.TargetRemote, Host: "10.0.0.1", User: "ubuntu", DataRoot: "/tmp/net",
-	}.Resolve(func(k string) string { return env[k] })
-	if err != nil {
-		t.Fatalf("remote resolve: %v", err)
-	}
-	if _, ok := remoteTgt.Sink.(driver.RemoteFileSink); !ok {
-		t.Fatalf("remote sink type = %T", remoteTgt.Sink)
-	}
-	if _, ok := remoteTgt.Driver.(*driver.RemoteDriver); !ok {
-		t.Fatalf("remote driver type = %T", remoteTgt.Driver)
-	}
-
-	if _, err := (netcompose.TargetSpec{Kind: netcompose.TargetRemote, Host: "h", User: "u", DataRoot: "/d"}).Resolve(func(string) string { return "" }); err == nil {
-		t.Fatal("expected error for remote target without auth")
-	}
-}
-
-func TestParseTarget(t *testing.T) {
-	cases := []struct {
-		in   string
-		want netcompose.TargetSpec
-	}{
-		{"/data/net1", netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: "/data/net1"}},
-		{"rel/dir", netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: "rel/dir"}},
-		{"alice@10.0.0.5:/data/net1", netcompose.TargetSpec{
-			Kind: netcompose.TargetRemote, User: "alice", Host: "10.0.0.5", DataRoot: "/data/net1"}},
-		{"ssh://bob@host9:2222/data/n", netcompose.TargetSpec{
-			Kind: netcompose.TargetRemote, User: "bob", Host: "host9", Port: 2222, DataRoot: "/data/n"}},
-		{"ssh://carol@host9/data/n", netcompose.TargetSpec{
-			Kind: netcompose.TargetRemote, User: "carol", Host: "host9", DataRoot: "/data/n"}},
-	}
-	for _, tc := range cases {
-		got, err := netcompose.ParseTarget(tc.in)
-		if err != nil {
-			t.Errorf("%q: %v", tc.in, err)
-			continue
-		}
-		if got != tc.want {
-			t.Errorf("%q = %+v, want %+v", tc.in, got, tc.want)
-		}
-	}
-
-	for _, bad := range []string{"", "user@host", "user@:/path", "ssh://host-only"} {
-		if _, err := netcompose.ParseTarget(bad); err == nil {
-			t.Errorf("%q must fail", bad)
-		}
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
 // Ports and host addresses are site-specific and must come from the operator's
@@ -106,7 +106,7 @@ servers:
 		t.Fatalf("allocate: %v", err)
 	}
 	st := stateOf(t, dir, d)
-	if st.Target.Kind != netcompose.TargetRemote || st.Target.Host != "10.0.0.11" {
+	if st.Target.Kind != target.TargetRemote || st.Target.Host != "10.0.0.11" {
 		t.Fatalf("target = %+v, want the inventory's remote host", st.Target)
 	}
 	if st.Target.User != "deploy" || st.Target.Port != 2222 {

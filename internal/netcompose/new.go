@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
 // NewOpts initializes a workspace's chain identity, key set, and compose target.
@@ -21,7 +22,7 @@ type NewOpts struct {
 	KeysDir string
 	// Target is where the network's data plane lives. A zero Target defaults to
 	// a local target whose data root is the workspace directory.
-	Target TargetSpec
+	Target target.TargetSpec
 }
 
 // New records the target chain, optional binary, key set, and compose target on
@@ -41,16 +42,16 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 		keysDir = "keys/preset"
 	}
 
-	target := opts.Target
-	if target.Kind == "" {
-		target.Kind = TargetLocal
+	tgt := opts.Target
+	if tgt.Kind == "" {
+		tgt.Kind = target.TargetLocal
 	}
-	if target.Kind == TargetLocal && target.DataRoot == "" {
-		target.DataRoot = w.comp.Dir()
+	if tgt.Kind == target.TargetLocal && tgt.DataRoot == "" {
+		tgt.DataRoot = w.comp.Dir()
 	}
 	// Validate the target resolves (remote needs host + reachable auth later,
 	// but structural validation happens here); env is nil so no live SSH dial.
-	if target.IsRemote() && (target.Host == "" || target.DataRoot == "") {
+	if tgt.IsRemote() && (tgt.Host == "" || tgt.DataRoot == "") {
 		return "", fmt.Errorf("netcompose: remote target needs --remote-host and --target-dir")
 	}
 
@@ -62,13 +63,13 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.state.TemplatePath = opts.TemplatePath
 	w.state.Binary = opts.Binary
 	w.state.KeysDir = keysDir
-	w.state.Target = target
+	w.state.Target = tgt
 
 	var loc string
-	if target.IsRemote() {
-		loc = fmt.Sprintf("remote %s@%s:%s", target.User, target.Host, target.DataRoot)
+	if tgt.IsRemote() {
+		loc = fmt.Sprintf("remote %s@%s:%s", tgt.User, tgt.Host, tgt.DataRoot)
 	} else {
-		loc = fmt.Sprintf("local %s", target.DataRoot)
+		loc = fmt.Sprintf("local %s", tgt.DataRoot)
 	}
 	detail := fmt.Sprintf("%s: family %s, chain id %d, bootstrap %s; keys %s; target %s",
 		m.ID, m.ConsensusFamily, m.ChainID, m.Bootstrap.Type, keysDir, loc)
@@ -81,14 +82,14 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 // decides both the host and the data root, and that decision arrives with the
 // placement rather than at `new`. A target with no data root keeps the current
 // one, so naming only a host does not blank the path.
-func (w *Workspace) Retarget(t TargetSpec) error {
+func (w *Workspace) Retarget(t target.TargetSpec) error {
 	if t.Kind == "" {
 		return nil
 	}
 	if t.DataRoot == "" {
 		t.DataRoot = w.state.Target.DataRoot
 	}
-	if t.Kind == TargetRemote && (t.Host == "" || t.DataRoot == "") {
+	if t.Kind == target.TargetRemote && (t.Host == "" || t.DataRoot == "") {
 		return fmt.Errorf("netcompose: remote target needs a host and a data root")
 	}
 	w.state.Target = t

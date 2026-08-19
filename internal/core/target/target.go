@@ -1,4 +1,17 @@
-package netcompose
+// Package target owns the single-path syntax that lets every layer name a
+// location without branching on local versus remote: a bare path is this
+// machine, user@host:/path is an SSH host.
+//
+// It lives at the primitive layer because the callers span the whole stack —
+// the composition steps, the app use cases, and the keyring, which reads key
+// material from wherever it already exists. Parsing a path must not require
+// importing an orchestration package (worklist §1g F2).
+//
+// Resolve turns a spec into the live pair a caller actually works through: a
+// FileStore for the files and a Driver for the processes. Credentials never
+// appear in the syntax — they come from the environment at resolve time.
+
+package target
 
 import (
 	"fmt"
@@ -51,21 +64,21 @@ func (s TargetSpec) IsRemote() bool { return s.Kind == TargetRemote }
 // when the target is resolved (see TargetSpec).
 func ParseTarget(s string) (TargetSpec, error) {
 	if s == "" {
-		return TargetSpec{}, fmt.Errorf("netcompose: empty target")
+		return TargetSpec{}, fmt.Errorf("target: empty target")
 	}
 	if strings.HasPrefix(s, "ssh://") {
 		u, err := url.Parse(s)
 		if err != nil {
-			return TargetSpec{}, fmt.Errorf("netcompose: bad target %q: %w", s, err)
+			return TargetSpec{}, fmt.Errorf("target: bad target %q: %w", s, err)
 		}
 		if u.Host == "" || u.Path == "" {
-			return TargetSpec{}, fmt.Errorf("netcompose: target %q needs a host and a path", s)
+			return TargetSpec{}, fmt.Errorf("target: target %q needs a host and a path", s)
 		}
 		port := 0
 		if p := u.Port(); p != "" {
 			n, err := strconv.Atoi(p)
 			if err != nil {
-				return TargetSpec{}, fmt.Errorf("netcompose: bad port in target %q", s)
+				return TargetSpec{}, fmt.Errorf("target: bad port in target %q", s)
 			}
 			port = n
 		}
@@ -77,7 +90,7 @@ func ParseTarget(s string) (TargetSpec, error) {
 	if user, rest, ok := strings.Cut(s, "@"); ok {
 		host, path, ok := strings.Cut(rest, ":")
 		if !ok || host == "" || path == "" {
-			return TargetSpec{}, fmt.Errorf("netcompose: bad target %q (want user@host:/path)", s)
+			return TargetSpec{}, fmt.Errorf("target: bad target %q (want user@host:/path)", s)
 		}
 		return TargetSpec{Kind: TargetRemote, Host: host, User: user, DataRoot: path}, nil
 	}
@@ -104,7 +117,7 @@ func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 		return &Target{Spec: s, DataRoot: s.DataRoot, Sink: provision.LocalFileSink{}, Driver: driver.NewLocalDriver()}, nil
 	case TargetRemote:
 		if s.Host == "" || s.DataRoot == "" {
-			return nil, fmt.Errorf("netcompose: remote target needs host and dataRoot")
+			return nil, fmt.Errorf("target: remote target needs host and dataRoot")
 		}
 		creds, err := remote.CredentialsFromEnv(s.User, s.Host, s.Port, env)
 		if err != nil {
@@ -117,6 +130,6 @@ func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 		run := driver.SSHRunner(creds, hostKey)
 		return &Target{Spec: s, DataRoot: s.DataRoot, Sink: driver.NewRemoteFileSink(run), Driver: driver.NewRemoteDriver(run)}, nil
 	default:
-		return nil, fmt.Errorf("netcompose: unknown target kind %q", s.Kind)
+		return nil, fmt.Errorf("target: unknown target kind %q", s.Kind)
 	}
 }
