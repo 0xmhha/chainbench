@@ -196,11 +196,16 @@ B 는 F 와 병행 가능하다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **B1** | **`testspec`(2,998줄) 4분할** — `dsl`(L1 구문 689) · `dsl/assert`(L1 368) · `dsl/bind`(L1 259) · `dsl/engine`(L3 2,050) | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ☐ |
+| **B1** | **`testspec`(2,998줄) 4분할** — `dsl`(L1 구문 689) · `dsl/assert`(L1 368) · `dsl/bind`(L1 259) · `dsl/interp`(L3 2,050) | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ☐ |
 | **B2** | `Spec.Fingerprint()` 가 `string` 반환 (현재 `session.Fingerprint`) | **구문이 L3 에 묶인 유일한 이유**가 이 타입 하나다 — B1 의 선행 조건 | ☐ |
 
 현재 `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 해서
 **순수해야 할 파서가 L3 로 끌려 올라가 있다**([[module-responsibilities]] §3).
+
+**이름 주의**: 인터프리터를 `dsl/engine` 으로 두면 `internal/engine`(테스트벤치 엔진)과 겹친다.
+**`engine` 은 하나뿐이어야 한다** — 주도하는 쪽이다. 인터프리터는 `dsl/interp`.
+이 구조(엔진이 파싱→환경준비→인터프리터 순차실행→기록을 주도)는 **이미 코드에 있다**
+(`engine.Run` + `engine/wire.go`의 `NewRunSpec`).
 
 **레지스트리는 import 가 아니라 주입이다.** 엔진(L3)이 기능 레지스트리(L5)를 import 하면 상향이지만,
 `interpreter.go` 가 이미 `Registry`·`Action`·`Assertion`·`Deps` 를 **스스로 정의**하고 L5 가 구현체를

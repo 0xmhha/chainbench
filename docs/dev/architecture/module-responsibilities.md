@@ -86,7 +86,40 @@ DSL 이 있으므로 **언어(구문)와 그것을 실행하는 엔진**이 갈�
 | `internal/dsl` | **L1** | `Spec` 모델 · `Parse`/`ParseV2` · `migrate` · 스키마 | 689 | 없음(순수)* |
 | `internal/dsl/assert` | **L1** | 타입인지 비교 함수 | 368 | 없음(순수) |
 | `internal/dsl/bind` | **L1** | 값 바인딩 · `$ref` 해석 | 259 | 없음(순수) |
-| `internal/dsl/engine` | **L3** | 인터프리터 · 액션/어세션 · 빌트인 · 실행 | 2,050 | rpc · session · keyreg |
+| `internal/dsl/interp` | **L3** | 인터프리터 · 액션/어세션 · 빌트인 · 실행 | 2,050 | rpc · session · keyreg |
+
+> **`engine` 이라는 이름을 다시 쓰지 않는다.** `internal/dsl/engine` 으로 두면
+> `internal/engine`(테스트벤치 엔진)과 이름이 겹쳐, 이 프로젝트가 반복해 온
+> "유사하면서 다른 이름"이 하나 더 는다. **`engine` 은 하나뿐이어야 한다.**
+
+### DSL 은 인터프리터이고, 테스트벤치 엔진이 그것을 주도한다
+
+이 구조는 **이미 코드에 있다** — 이름이 그것을 말하지 않았을 뿐이다.
+
+```go
+// internal/engine — 주도
+func (e *engine) Run(ctx, specs [][]byte) {
+    sess := NewSession(...)                          // 세션 개시
+    for each raw {
+        spec := dsl.Parse(raw)                       // ① 파싱          (L1)
+        env  := sess.Environment(fp) or BuildEnv(…)  // ② 환경 준비/재사용
+        st   := e.deps.RunSpec(ctx, spec, env, rec)  // ③ 순차 실행     (L3 인터프리터)
+        rec.Status(st)                               // ④ 기록
+    }
+    sess.Save()                                      // 판정
+}
+
+// internal/engine/wire.go — 인터프리터를 엔진에 묶는 seam (현존)
+func NewRunSpec(deps Deps) RunSpecFunc {
+    interp := NewInterpreter(deps)
+    return func(...) { return interp.Run(ctx, spec, env, rec) }
+}
+```
+
+```
+engine(L4) ──주도──▶ dsl/interp(L3) ──사용──▶ dsl(L1) · dsl/bind(L1) · dsl/assert(L1)
+   └─ 파싱은 engine 이 직접 한다 (L4→L1 은 하향이라 층 위반이 아니다)
+```
 
 \* **구문을 순수하게 만드는 데 필요한 변경은 하나뿐이다**: `Spec.Fingerprint()` 가
 `session.Fingerprint`(L3) 대신 `string` 을 반환하고 호출자가 변환한다.
