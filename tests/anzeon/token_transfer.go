@@ -35,7 +35,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
-// faucetKeyHex is a genesis-funded key in the stablenet preset alloc.
+// faucetKeyHex is a genesis-funded key in the stablenet preset alloc
+// (keys/preset/metadata.json). TEST FIXTURE ONLY — it is the upstream
+// go-ethereum test key and is public knowledge.
 const faucetKeyHex = "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291"
 
 // tokenRecipient starts unfunded so the transfer is unambiguous.
