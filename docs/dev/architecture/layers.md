@@ -232,9 +232,19 @@ flowchart TD
 
 ### 5b.2 규칙
 
-1. **식별자는 명명된 타입으로 만든다.** `Name string` 이 아니라 `NodeLabel`·`AcctLabel`.
-   [[go-code-quality-guidelines]] 의 "도메인 값은 typed const/newtype" 과 같은 이유다 —
-   **잘못된 조합을 컴파일 타임에 막는다.**
+1. **경계를 넘거나 map 키가 되는 식별자는 명명 타입으로 만든다.**
+   구조체 안에 머물며 통째로만 쓰이면 `Name` 도 무방하다 — `Server.Name` 은 문맥 안에서 모호하지 않다.
+   **문제는 단어가 아니라 무명 `string`** 이다: 값이 홀로 돌아다니는 순간 무엇의 이름인지 사라진다.
+
+   ```go
+   func Endpoint(s string) …      // 무엇의 string 인가
+   func Endpoint(n NodeLabel) …   // 명확
+   Fund(node NodeLabel, acct AcctLabel)   // 뒤바꾸면 컴파일 실패
+   ```
+
+   이 기준으로 실측 12곳을 나누면 — `place.NodeReq.Name`(netmap 으로 넘어가고 키가 됨) ·
+   `serverset.Server.Name`(`--server` 조회 키) · `capability.Name`(레지스트리 키)은 **타입 필요**,
+   `session.record.Name`(기록 안에 머묾)은 **그대로 둬도 된다.**
 2. **한 개념 = 한 단어.** 같은 것을 `Name`/`Label`/`ID` 로 번갈아 부르지 않는다.
 3. **다른 개념 = 다른 단어.** `Plan` 이 셋을 뜻하면 각각 무엇의 계획인지 이름에 넣는다.
 4. **`Config`·`Options`·`Data` 처럼 아무것도 말하지 않는 이름을 피한다.**
@@ -247,17 +257,41 @@ flowchart TD
 |---|---|---|
 | `place.NodeReq.Name` · `NodePlacement.Name` | `netmap.NodeLabel` | 노드를 지칭하는 유일한 이름. 계정 라벨과 타입으로 구분 |
 | (없음) | `netmap.AcctLabel` | `account1`·`faucet` — tx 의 from/to 에 쓰인다 |
+| `hardfork.Plan{FromChain,ToChain}` | **`hardfork` 는 동일 체인만** | 아래 §5b.3a |
 | `keygen.Node` | `keyring.Identity` | 키 신원이지 노드가 아니다 |
 | `topology.Node` | `blueprint.NodeSpec` | 선언이지 실행 중 노드가 아니다 |
 | `driver.Plan` | `driver.LaunchPlan` | 무엇의 계획인지 |
-| `hardfork.Plan` | `hardfork.SwapPlan` | |
-| `upgrade.Plan` | `upgrade.HandoffPlan` | |
+| `hardfork.Plan` | `hardfork.SwapPlan` | 같은 체인 · 바이너리 교체 (§5b.3a) |
+| `upgrade.Plan` | `upgrade.HandoffPlan` | 다른 체인으로 넘김 |
 | `poa.Config` | `poa.Governance` | 거버넌스 설정이다 |
 | `place.Config` | `place.Bands` | 포트 밴드다 |
 | `serverset.Config` | `serverset.Inventory` | 파일 이름과도 맞는다 |
 | `poa.Step` | `poa.BootstrapStep` | `session.Step` 과 구분 |
 | `core/capability` | `feature`(카탈로그) | `engine/capability`(게이팅)와 무관하다 |
 | `testspec` | `dsl` + `dsl/interp` | 언어와 엔진 |
+
+#### 5b.3a `hardfork` 와 `upgrade` 의 범위가 흐려져 있다 (실측)
+
+용어는 명확하다:
+
+| 용어 | 뜻 |
+|---|---|
+| **hardfork** | **같은 체인**, 새 버전 바이너리로 교체 |
+| **upgrade** | **다른 체인**으로 넘김 (wemix → wbft) |
+
+그런데 코드가 지키지 않는다:
+
+```
+hardfork.Plan{FromChain, ToChain}                      ← 다른 체인으로도 간다
+cmd hardfork --to-chain "target chain id to upgrade to" ← 도움말이 스스로 "upgrade" 라 한다
+consensus/upgrade                                       ← 그런데 upgrade 는 따로 있다
+```
+
+**`hardfork` 가 `upgrade` 의 일까지 겸한다.** 두 명령이 겹치는 것은 이 리팩토링이 없애려는
+바로 그 패턴이다.
+
+**정리 방향**: `hardfork` 에서 `ToChain` 을 없애고 **같은 체인 + 새 바이너리**로 한정한다.
+체인이 바뀌는 경우는 `upgrade` 하나가 맡는다. 이름이 곧 범위가 된다.
 
 > 개명은 **한 번에 하지 않는다.** 각 리팩토링 항목이 자기 범위의 이름을 함께 고친다 —
 > 개명만 하는 커밋은 리뷰가 어렵고, 동작 변경과 섞이면 더 어렵다.
