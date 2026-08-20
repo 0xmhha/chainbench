@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
@@ -160,5 +161,59 @@ func TestRing_AddPropagatesSourceErrors(t *testing.T) {
 	}
 	if _, ok := ring.Get("bad"); ok {
 		t.Error("a failed Add left an entry behind")
+	}
+}
+
+// TestNetworkFor_DoesNotAliasThePreset is a regression: the narrowed result
+// resliced the preset's own array, so appending to it rewrote the preset.
+func TestNetworkFor_DoesNotAliasThePreset(t *testing.T) {
+	p, err := keyring.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
+	if err != nil {
+		t.Fatalf("LoadPreset: %v", err)
+	}
+	if len(p.Network.Validators) < 3 {
+		t.Skip("the shipped preset declares too few validators for this check")
+	}
+	third := p.Network.Validators[2]
+
+	net := p.NetworkFor(2)
+	net.Validators = append(net.Validators, "0xdeadbeef")
+
+	if p.Network.Validators[2] != third {
+		t.Errorf("appending to the narrowed set rewrote the preset: %s -> %s",
+			third, p.Network.Validators[2])
+	}
+}
+
+// TestRing_AddIsSafeUnderConcurrency checks that one label yields one identity
+// even when several callers race, and that a slow source does not serialize
+// the others behind it.
+func TestRing_AddIsSafeUnderConcurrency(t *testing.T) {
+	ring := keyring.NewRing(t.TempDir())
+
+	const callers = 8
+	var wg sync.WaitGroup
+	got := make([]string, callers)
+	for i := range callers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.AccountOnly)
+			if err != nil {
+				t.Errorf("Add: %v", err)
+				return
+			}
+			got[i] = e.Address
+		}()
+	}
+	wg.Wait()
+
+	for i, addr := range got {
+		if addr != got[0] {
+			t.Fatalf("caller %d was handed a different identity: %s vs %s", i, addr, got[0])
+		}
+	}
+	if len(ring.Labels()) != 1 {
+		t.Errorf("ring holds %v, want one label", ring.Labels())
 	}
 }

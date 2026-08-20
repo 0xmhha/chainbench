@@ -259,3 +259,59 @@ func jsonPart(out string) string {
 	}
 	return out
 }
+
+// TestKeyring_NewRefusesToOverwriteARing is a regression: creating over an
+// existing ring replaced identities that a genesis, a datadir, or a test was
+// already referring to, and the keys behind them were unrecoverable.
+func TestKeyring_NewRefusesToOverwriteARing(t *testing.T) {
+	dir := newRing(t)
+	before := listAddresses(t, dir)
+
+	_, err := run(t, "keyring", "new", "--keyring", dir, "--count", "2")
+	if err == nil {
+		t.Fatal("keyring new overwrote an existing ring")
+	}
+	if !strings.Contains(err.Error(), "already holds a ring") {
+		t.Errorf("error should say the ring exists, got: %v", err)
+	}
+
+	after := listAddresses(t, dir)
+	if len(after) != len(before) {
+		t.Fatalf("the ring changed: %d identities, was %d", len(after), len(before))
+	}
+	for i := range before {
+		if after[i] != before[i] {
+			t.Errorf("identity %d was replaced: %s -> %s", i+1, before[i], after[i])
+		}
+	}
+}
+
+// TestKeyring_ImportIsVisibleAfterwards is a regression: an imported key was
+// written to a directory beside the ring's index, so `list` and `show` could
+// not see it and a network could not use it.
+func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
+	dir := newRing(t)
+	key := exportKey(t, dir, "node1")
+
+	if _, err := run(t, "keyring", "import", "--keyring", dir,
+		"--name", "faucet", "--private-key", key); err != nil {
+		t.Fatalf("keyring import: %v", err)
+	}
+
+	out, err := run(t, "keyring", "show", "--keyring", dir, "--name", "faucet", "--json")
+	if err != nil {
+		t.Fatalf("the imported identity is not visible: %v", err)
+	}
+	var e entryView
+	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	if e.Label != "faucet" {
+		t.Errorf("the imported identity lost its label: %q", e.Label)
+	}
+	// It survives a reload, which means it is in the index and not just in
+	// memory for the length of one command.
+	if got := len(listAddresses(t, dir)); got != 4 {
+		t.Errorf("ring holds %d identities after import, want 4", got)
+	}
+}

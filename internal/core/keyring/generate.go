@@ -3,8 +3,10 @@ package keyring
 import (
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,6 +69,12 @@ type GenerateOpts struct {
 // generated with no chain binary built or on PATH. That is what lets a network
 // be declared from scratch rather than starting from a committed fixture.
 func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
+	// Creating over a ring that already exists would replace identities a
+	// genesis, a datadir, or a test is already referring to, and the keys behind
+	// them cannot be recovered. Adding to a ring is a different verb.
+	if _, err := os.Stat(filepath.Join(opts.Out, PresetFile)); err == nil {
+		return Preset{}, fmt.Errorf("keyring: %s already holds a ring; add to it instead of creating over it", opts.Out)
+	}
 	switch {
 	case opts.Validators == NoValidators:
 		opts.Validators = 0
@@ -98,6 +106,40 @@ func Extend(opts GenerateOpts, progress func(string)) (Preset, error) {
 		return Preset{}, fmt.Errorf("keyring: extend: %w", err)
 	}
 	return generate(existing, opts, progress)
+}
+
+// Import adds a key the caller already holds to the ring in dir, under label.
+//
+// It writes the entry into the ring's index, not into a directory beside it: an
+// identity that the index does not list is one that `list` and `show` cannot
+// see and a network cannot use, which is worse than not importing it at all.
+func Import(dir string, label Label, key PrivateKey, d Derivation) (Entry, error) {
+	if label == "" {
+		return Entry{}, fmt.Errorf("keyring: import needs a label")
+	}
+	set, err := LoadPreset(dir)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return Entry{}, err
+	}
+	for _, e := range set.Nodes {
+		if e.Label == label {
+			return Entry{}, fmt.Errorf("keyring: %s already holds %q", dir, label)
+		}
+	}
+
+	id, err := Derive(key, d)
+	if err != nil {
+		return Entry{}, err
+	}
+	e := Entry{Label: label, Index: len(set.Nodes) + 1, Nodekey: key, Identity: id}
+	if err := writeEntryDir(filepath.Join(dir, string(label)), key, id, set.Password); err != nil {
+		return Entry{}, err
+	}
+	set.Nodes = append(set.Nodes, e)
+	if err := writePreset(GenerateOpts{Out: dir}, set); err != nil {
+		return Entry{}, err
+	}
+	return e, nil
 }
 
 func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
@@ -189,6 +231,9 @@ func writePreset(opts GenerateOpts, set Preset) error {
 			PublicKey: e.PublicKey,
 			Address:   e.Address,
 		}
+		if e.Label != nodeLabel(e.Index) {
+			n.Label = string(e.Label)
+		}
 		if e.BLS != nil {
 			n.BLSPublicKey, n.BLSPoP = e.BLS.PublicKey, e.BLS.PoP
 		}
@@ -206,10 +251,6 @@ func writePreset(opts GenerateOpts, set Preset) error {
 // an operator reading the directory by hand.
 func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 	nodeDir := filepath.Join(opts.Out, fmt.Sprintf("node%d", i))
-	if err := os.MkdirAll(nodeDir, dirPerm); err != nil {
-		return Entry{}, err
-	}
-
 	key, err := NewPrivateKey(opts.Rand)
 	if err != nil {
 		return Entry{}, err
@@ -218,22 +259,35 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 	if err != nil {
 		return Entry{}, err
 	}
-	if err := os.WriteFile(filepath.Join(nodeDir, "nodekey"), []byte(key.Hex()), secretPerm); err != nil {
+	if err := writeEntryDir(nodeDir, key, id, opts.Password); err != nil {
 		return Entry{}, err
 	}
-	if err := writeKeystore(nodeDir, key, id.Address, opts.Password); err != nil {
-		return Entry{}, err
+	return Entry{Label: nodeLabel(i), Index: i, Nodekey: key, Identity: id}, nil
+}
+
+// writeEntryDir lays out one identity's directory: the key, an encrypted
+// keystore, and the derived public fields as plain files for an operator
+// reading the directory by hand.
+func writeEntryDir(dir string, key PrivateKey, id Identity, password string) error {
+	if err := os.MkdirAll(dir, dirPerm); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, "nodekey"), []byte(key.Hex()), secretPerm); err != nil {
+		return err
+	}
+	if err := writeKeystore(dir, key, id.Address, password); err != nil {
+		return err
 	}
 	public := map[string]string{"address": id.Address, "pubkey": id.PublicKey}
 	if id.BLS != nil {
 		public["bls_pubkey"] = id.BLS.PublicKey
 	}
 	for name, val := range public {
-		if err := os.WriteFile(filepath.Join(nodeDir, name), []byte(val), publicPerm); err != nil {
-			return Entry{}, err
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(val), publicPerm); err != nil {
+			return err
 		}
 	}
-	return Entry{Label: nodeLabel(i), Index: i, Nodekey: key, Identity: id}, nil
+	return nil
 }
 
 // decodeAlloc reads back an existing alloc so extending a ring keeps the

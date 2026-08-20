@@ -93,7 +93,12 @@ type presetFile struct {
 
 // presetNode is one node as the file records it.
 type presetNode struct {
-	Index        int    `json:"index"`
+	Index int `json:"index"`
+	// Label is the name this identity carries. It is omitted for the numbered
+	// identities a generated ring holds, whose label follows from the index; an
+	// imported one ("faucet") records its own, because nothing else could
+	// recover it.
+	Label        string `json:"label,omitempty"`
 	Nodekey      string `json:"nodekey"`
 	PublicKey    string `json:"publicKey"`
 	Address      string `json:"address"`
@@ -138,11 +143,14 @@ func LoadPreset(dir string) (Preset, error) {
 		if err != nil {
 			return Preset{}, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}
+		label := Label(n.Label)
+		if label == "" {
+			// A numbered identity's label follows from its index, so reading a
+			// ring and generating one name entries the same way.
+			label = nodeLabel(n.Index)
+		}
 		e := Entry{
-			// A file records an index, not a label; the label a numbered set
-			// uses is derived from it so that reading a ring and generating one
-			// produce entries that name themselves the same way.
-			Label:   nodeLabel(n.Index),
+			Label:   label,
 			Index:   n.Index,
 			Nodekey: key,
 			Identity: Identity{
@@ -201,7 +209,10 @@ func (p Preset) NetworkFor(n int) Network {
 	if len(p.Network.Validators) > 0 {
 		out := p.Network
 		if n > 0 && n < len(out.Validators) {
-			out.Validators = out.Validators[:n]
+			// Copied, not resliced. A truncated slice shares its array, so a
+			// caller appending to the result would write over the preset's own
+			// validator list.
+			out.Validators = truncate(out.Validators, n)
 			out.BLSKeys = truncate(out.BLSKeys, n)
 			out.ExtraData = ""
 		}
@@ -230,13 +241,16 @@ func (p Preset) NetworkFor(n int) Network {
 	return out
 }
 
-// truncate shortens s to n, tolerating a shorter slice so a set with no BLS
-// keys narrows without a bounds check at every call site.
+// truncate returns the first n of s as a new slice, tolerating a shorter s so a
+// set with no BLS keys narrows without a bounds check at every call site.
+//
+// It copies rather than reslices: the result outlives this call, and a shared
+// array is how an append on the result silently rewrites the original.
 func truncate(s []string, n int) []string {
 	if n >= len(s) {
-		return s
+		return append([]string(nil), s...)
 	}
-	return s[:n]
+	return append([]string(nil), s[:n]...)
 }
 
 // Verify reports whether an entry's recorded public fields match what its

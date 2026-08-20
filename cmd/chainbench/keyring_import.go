@@ -2,29 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
-
-// Permissions for an imported identity: the key is owner-only, the derived
-// public fields are readable so an operator can see what a directory holds
-// without decoding anything.
-const (
-	keyDirMode     os.FileMode = 0o700
-	keyFileMode    os.FileMode = 0o600
-	publicFileMode os.FileMode = 0o644
-)
-
-// importedFile is one file written for an imported identity.
-type importedFile struct {
-	name    string
-	content string
-	perm    os.FileMode
-}
 
 // newKeyringImportCmd brings a key that already exists into a ring.
 //
@@ -63,22 +45,16 @@ func newKeyringImportCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			id, err := keyring.Derive(key, derivation.derivation())
-			if err != nil {
-				return err
-			}
-			entry := keyring.Entry{Label: keyring.Label(name), Identity: id, Nodekey: key}
-
-			stored, err := writeImported(dir, entry)
+			entry, err := keyring.Import(dir, keyring.Label(name), key, derivation.derivation())
 			if err != nil {
 				return err
 			}
 			v := viewOf(entry)
-			v.Stored = stored
+			v.Stored = entryDir(dir, entry)
 			if jsonOut {
 				return encodeJSON(out, v)
 			}
-			fmt.Fprintf(out, "imported %s -> %s\n", v.Label, stored)
+			fmt.Fprintf(out, "imported %s -> %s\n", v.Label, v.Stored)
 			fmt.Fprintf(out, "address:    %s\n", v.Address)
 			if v.BLSPubKey != "" {
 				fmt.Fprintf(out, "blsPubKey:  %s\n", v.BLSPubKey)
@@ -94,34 +70,4 @@ func newKeyringImportCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the result as JSON")
 	_ = cmd.MarkFlagRequired("name")
 	return cmd
-}
-
-// writeImported writes an imported identity into the ring under its label,
-// refusing to overwrite one that is already there.
-//
-// Silently replacing an identity is the worst outcome available here: whatever
-// referenced the old one — a genesis, a datadir, a test — keeps referring to an
-// address that no longer has a key behind it.
-func writeImported(ring string, e keyring.Entry) (string, error) {
-	dir := entryDir(ring, e)
-	if _, err := os.Stat(dir); err == nil {
-		return "", fmt.Errorf("%s already exists in %s; remove it or choose another --name", e.Label, ring)
-	}
-	if err := os.MkdirAll(dir, keyDirMode); err != nil {
-		return "", err
-	}
-	files := []importedFile{
-		{"nodekey", e.Nodekey.Hex(), keyFileMode},
-		{"address", e.Address, publicFileMode},
-		{"pubkey", e.PublicKey, publicFileMode},
-	}
-	if e.BLS != nil {
-		files = append(files, importedFile{"bls_pubkey", e.BLS.PublicKey, publicFileMode})
-	}
-	for _, f := range files {
-		if err := os.WriteFile(filepath.Join(dir, f.name), []byte(f.content), f.perm); err != nil {
-			return "", err
-		}
-	}
-	return dir, nil
 }

@@ -70,12 +70,13 @@ func (r *Ring) Dir() string { return r.dir }
 // an entry with no BLS material, rather than one with a zero key that reads
 // like a real one.
 func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (Entry, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if e, ok := r.entries[label]; ok {
+	if e, ok := r.Get(label); ok {
 		return e, nil
 	}
+
+	// Resolving may read a file on another host, and deriving is arithmetic on
+	// a curve; neither is done under the lock. Holding a mutex across network
+	// I/O would serialize every other caller behind one slow host.
 	key, err := src.Resolve(ctx)
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
@@ -85,6 +86,15 @@ func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
 	e := Entry{Label: label, Nodekey: key, Identity: id}
+
+	// Two callers may have raced to here. The first to take the lock wins, and
+	// the loser discards its key rather than replacing an identity another
+	// caller has already been handed.
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if held, ok := r.entries[label]; ok {
+		return held, nil
+	}
 	if err := r.write(e); err != nil {
 		return Entry{}, err
 	}

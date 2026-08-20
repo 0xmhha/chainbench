@@ -5,15 +5,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/provision"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
@@ -166,55 +163,6 @@ func (f *sourceFlags) serverConfigPath() string {
 		return f.serverConfig
 	}
 	return serverset.DefaultConfigFile
-}
-
-// remoteFiles opens the file store for a host. The host-key policy is resolved
-// here rather than inside the key source, so a key source is only ever told
-// *where* a file is, never how to reach it.
-func remoteFiles(creds remote.Credentials, env func(string) string) (provision.FileStore, error) {
-	hostKey, err := remote.ResolveHostKeyCallback(env)
-	if err != nil {
-		return nil, err
-	}
-	return driver.NewRemoteFileStore(driver.SSHRunner(creds, hostKey)), nil
-}
-
-// serverCreds resolves the SSH credentials for --server N from the inventory,
-// applying the --remote-user / --remote-port overrides on top of the file.
-func (f *sourceFlags) serverCreds(env func(string) string) (remote.Credentials, error) {
-	cfg, err := serverset.Load(f.serverConfig)
-	if err != nil {
-		return remote.Credentials{}, err
-	}
-	srv, err := cfg.Server(f.server)
-	if err != nil {
-		return remote.Credentials{}, err
-	}
-	if f.remoteUser != "" {
-		srv.SSH.User = f.remoteUser
-	}
-	if f.remotePort != 0 {
-		srv.SSH.Port = f.remotePort
-	}
-	return srv.Credentials(env)
-}
-
-// parseRemoteImport splits a "[user@]host:path" spec. The user may also come
-// from CHAINBENCH_REMOTE_USER, so it may be empty here.
-func parseRemoteImport(s string) (user, host, path string, err error) {
-	rest := s
-	if at := strings.Index(s, "@"); at >= 0 {
-		user, rest = s[:at], s[at+1:]
-	}
-	colon := strings.Index(rest, ":")
-	if colon < 0 {
-		return "", "", "", fmt.Errorf("--remote-import must be [user@]host:path")
-	}
-	host, path = rest[:colon], rest[colon+1:]
-	if host == "" || path == "" {
-		return "", "", "", fmt.Errorf("--remote-import must be [user@]host:path")
-	}
-	return user, host, path, nil
 }
 
 // storeFlags select whether and how a key is persisted. Storage is off unless
