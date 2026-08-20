@@ -103,7 +103,7 @@ func TestRegisterIdentities_RegistersEachNode(t *testing.T) {
 	// so this test covers registration; the mismatch path is the next test.
 	byKey := map[string]string{}
 	for _, n := range ks.Preset.Nodes {
-		byKey[strings.TrimPrefix(n.Nodekey, "0x")] = n.Address
+		byKey[n.Nodekey.Hex()] = n.Address
 	}
 	reg := keyreg.New(t.TempDir(), derivingDeps(func(priv []byte) (string, error) {
 		return byKey[hexOf(priv)], nil

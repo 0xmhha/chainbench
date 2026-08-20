@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/keygen"
 	"github.com/0xmhha/chainbench/internal/keymat"
 )
 
@@ -56,12 +56,16 @@ func runValidator(cmd *cobra.Command, chain string, source keymat.Source, sf *st
 	}
 	switch family {
 	case "wbft":
-		id, err := keygen.DeriveIdentity(hex.EncodeToString(a.PrivateKeyBytes()))
+		key, err := keyring.ParseNodekey(hex.EncodeToString(a.PrivateKeyBytes()))
 		if err != nil {
 			return err
 		}
-		v.BLSPublicKey = id.BLSPubKey
-		v.BLSPoP = id.BLSPoP
+		id, err := keyring.Derive(key, keyring.WithBLS)
+		if err != nil {
+			return err
+		}
+		v.BLSPublicKey = id.BLS.PublicKey
+		v.BLSPoP = id.BLS.PoP
 	case "poa":
 		v.Note = "poa: this validator is registered at the governance/etcd bootstrap, not in genesis; no BLS material."
 	default:

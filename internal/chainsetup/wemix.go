@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -46,7 +46,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[2], func() (string, error) {
-		p, err := keys.LoadPreset(o.KeysDir)
+		p, err := keyring.LoadPreset(o.KeysDir)
 		if err != nil {
 			return "", err
 		}

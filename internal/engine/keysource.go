@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/keyreg"
-	"github.com/0xmhha/chainbench/internal/core/keys"
-	"github.com/0xmhha/chainbench/internal/keygen"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // Default material for a generated key set.
@@ -28,7 +27,7 @@ type KeySet struct {
 	Dir string
 	// Preset is the decoded metadata: validator addresses, BLS keys, extra-data,
 	// alloc, and the per-node devp2p identities.
-	Preset keys.Preset
+	Preset keyring.Preset
 }
 
 // KeySource decides where a run's node identities come from — algorithm steps 2
@@ -59,7 +58,7 @@ func (s PresetKeySource) Describe() string { return "preset:" + s.Path }
 
 // Ensure loads the preset and checks it covers n nodes.
 func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
-	p, err := keys.LoadPreset(s.Path)
+	p, err := keyring.LoadPreset(s.Path)
 	if err != nil {
 		return KeySet{}, fmt.Errorf("engine: key source: %w", err)
 	}
@@ -78,10 +77,10 @@ func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
 // which is what made the committed preset the only practical way to start a
 // network.
 //
-// The genesis extra-data is computed from the generated validator set
-// (keygen.WBFTExtraData, T7.2), so a chain whose consensus reads the validator
-// set out of extra-data accepts a generated set. PresetKeySource remains the
-// path proven against a live chain.
+// The genesis extra-data is not stored with the set: the wbft family derives it
+// from the validator set at genesis time, so a generated set cannot carry one
+// that contradicts its own validators. PresetKeySource remains the path proven
+// against a live chain.
 type GeneratedKeySource struct {
 	// Path is the directory the generated set is written to.
 	Path string
@@ -107,14 +106,14 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 	if err := ctx.Err(); err != nil {
 		return KeySet{}, err
 	}
-	opts := keygen.PresetOpts{
+	opts := keyring.GenerateOpts{
 		Nodes:      n,
 		Validators: s.Validators,
 		Out:        s.Path,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}
-	if _, err := keygen.GeneratePreset(opts, nil); err != nil {
+	if _, err := keyring.Generate(opts, nil); err != nil {
 		return KeySet{}, fmt.Errorf("engine: key source: generate: %w", err)
 	}
 	return PresetKeySource{Path: s.Path}.Ensure(ctx, n)
@@ -147,7 +146,7 @@ func RegisterIdentities(ctx context.Context, reg keyreg.Registry, ks KeySet, n i
 			return fmt.Errorf("engine: key set %s has no identity for node%d", ks.Dir, i)
 		}
 		name := fmt.Sprintf("node%d", i)
-		if _, err := reg.Ensure(ctx, name, keyreg.Literal, nk.Nodekey, keyreg.EnsureOpts{
+		if _, err := reg.Ensure(ctx, name, keyreg.Literal, nk.Nodekey.Hex(), keyreg.EnsureOpts{
 			ExpectAddress: nk.Address,
 		}); err != nil {
 			return fmt.Errorf("engine: register identity %s: %w", name, err)

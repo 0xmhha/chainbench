@@ -10,7 +10,7 @@ import (
 
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -97,11 +97,11 @@ func TestArmSpecs(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keys.Preset{
+	preset := keyring.Preset{
 		Validators: []string{"0xval1"},
-		Nodes: []keys.NodeKey{
-			{Index: 1, PublicKey: "aa11", Address: "0xval1"},
-			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
+		Nodes: []keyring.Entry{
+			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{
@@ -173,7 +173,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keys.Preset{Nodes: []keys.NodeKey{{Index: 1, PublicKey: "aa11", Address: "0xval1"}}}
+	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}}}}
 	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
@@ -216,11 +216,11 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keys.Preset{
+	preset := keyring.Preset{
 		Validators: []string{"0xval1"},
-		Nodes: []keys.NodeKey{
-			{Index: 1, PublicKey: "aa11", Address: "0xval1"},
-			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
+		Nodes: []keyring.Entry{
+			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{

@@ -18,7 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -61,7 +61,7 @@ func newUpgradeRunCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			preset, err := keys.LoadPreset(presetDir)
+			preset, err := keyring.LoadPreset(presetDir)
 			if err != nil {
 				return err
 			}
@@ -218,7 +218,7 @@ func newUpgradeRunCmd() *cobra.Command {
 // buildPoAConfig assembles the wemix governance config: a single producer member
 // (its unlockable account + devp2p id), the governance env from the profile, and
 // an alloc funding the producer and every validator.
-func buildPoAConfig(prof upgrade.Profile, preset keys.Preset, producerAcct string, prod keys.NodeKey, host string) poa.Config {
+func buildPoAConfig(prof upgrade.Profile, preset keyring.Preset, producerAcct string, prod keyring.Entry, host string) poa.Config {
 	g := prof.Producers.Governance
 	env := poa.Env{
 		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
@@ -262,7 +262,7 @@ func forceForkPrereqs(path string, networkID int64) ([]byte, error) {
 // provisionKeysFn returns the ProvisionKeys hook: it places each node's node key
 // in the binary-specific instance dir, writes static-nodes, and copies the
 // producer's keystore.
-func provisionKeysFn(prof upgrade.Profile, preset keys.Preset, order []int, plan upgrade.Plan, host, presetDir string) func(context.Context, driver.NodeSpec, bool) error {
+func provisionKeysFn(prof upgrade.Profile, preset keyring.Preset, order []int, plan upgrade.Plan, host, presetDir string) func(context.Context, driver.NodeSpec, bool) error {
 	enodes := plan.Enodes(host)
 	staticNodes, _ := json.MarshalIndent(enodes, "", "  ")
 	return func(_ context.Context, spec driver.NodeSpec, producer bool) error {
@@ -279,7 +279,7 @@ func provisionKeysFn(prof upgrade.Profile, preset keys.Preset, order []int, plan
 		if err := os.MkdirAll(instDir, 0o755); err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(instDir, "nodekey"), []byte(nk.Nodekey), 0o600); err != nil {
+		if err := os.WriteFile(filepath.Join(instDir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
 			return err
 		}
 		if err := os.WriteFile(filepath.Join(instDir, "static-nodes.json"), staticNodes, 0o644); err != nil {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -47,7 +47,7 @@ type PresetGenesisSource struct {
 // config overrides and overlay. ctx is accepted for future remote preset
 // sources; the local metadata read does not use it.
 func (s PresetGenesisSource) Genesis(_ context.Context, plugin registry.ChainPlugin, validators int) ([]byte, error) {
-	preset, err := keys.LoadPreset(s.KeysDir)
+	preset, err := keyring.LoadPreset(s.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("engine: genesis source: %w", err)
 	}

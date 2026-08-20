@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -257,7 +257,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if w.state.Validators <= 0 {
 		return "", fmt.Errorf("netcompose: genesis: no validators — run `net allocate` first")
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: genesis: %w", err)
 	}
@@ -359,7 +359,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: config: no node table — run `net allocate` first")
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
@@ -414,7 +414,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: launchopts: no node table — run `net allocate` first")
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: launchopts: %w", err)
 	}
