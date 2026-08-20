@@ -127,7 +127,8 @@ CoinbaseKeystore: "/data/go-wbft/conf/keystore/coinbase"
 
 1. **명사로 소유한다.** 패키지는 동사(읽기/쓰기/저장)가 아니라 명사(키·자료)로 나눈다.
 2. **로컬과 원격은 표기의 차이다.** 상위 레이어에 분기가 없다.
-3. **불변 자료는 내용으로 식별한다.** 이름이 같으면 내용이 같다.
+3. **이름은 선언에서 온다.** 사람이 읽는 이름(`env.id`)이 경로가 되고, 내용 동일성은
+   해시로 *검사*한다 — 해시를 이름으로 쓰지 않는다.
 4. **휘발 자료와 불변 자료를 섞지 않는다.** datadir 은 지워지고, 자료는 남는다.
 5. **비밀은 타입이 가린다.** [[keyring-design]] 의 `Nodekey` 규칙을 유지한다.
 
@@ -206,23 +207,52 @@ type FileStore interface {
 지금은 둘이 같은 디렉토리에 섞여 있어서, datadir 을 지우려면 자료도 같이 지워진다. 그래서 매번
 다시 올린다.
 
-### 4.2 레이아웃
+### 4.2 이름은 이미 정해져 있다 — DSL 의 `env.id`
+
+자료의 이름을 새로 만들 필요가 없다. **DSL 이 이미 이름을 선언한다.**
+
+```go
+// internal/testspec/spec_v2.go — EnvV2 는 "재사용 단위" 로 정의돼 있다
+type EnvV2 struct {
+    ID      string   `json:"id"`                // ← 이 환경의 이름
+    Chain   string   `json:"chain"`
+    Config  string   `json:"config,omitempty"`  // ← 어떤 config 를 쓰는가
+    ...
+}
+```
+
+테스트도 이미 약속된 이름을 갖는다 — `tests/specs/consensus/istanbul-status-fields.json` 의
+`id` 는 `istanbul-status-fields` 다. 자료 경로는 **그 이름을 그대로 쓴다.**
+
+런타임은 그 이름과 서버 정보를 조합해 실제 경로를 만든다. 선언에는 경로가 없고, 경로에는
+호스트가 없다 — 어느 쪽도 상대를 알 필요가 없다.
+
+```
+DSL:      { "id": "delayed-fork-4bp", "chain": "stablenet", "config": "delayed-fork-4bp" }
+인벤토리:  bp1 → 호스트·자격증명·destination 루트
+─────────────────────────────────────────────────────────────────
+런타임:    <destination>/material/stablenet/config/delayed-fork-4bp/node1.toml
+```
+
+### 4.3 레이아웃
 
 ```
 <destination>/                      운영자 지정. 서버마다 같은 구조
 ├── bin/
-│   └── <chain>/<build>/            체인 · 빌드 식별자별 실행 바이너리
-│       └── gstable                 하드포크 테스트는 두 빌드가 동시에 필요하다
+│   └── <chain>/<build>/            체인 · 빌드별 실행 바이너리
+│       └── gstable                 하드포크는 두 빌드가 동시에 필요하다
 │
-├── material/                       불변. 내용으로 이름이 정해진다
+├── material/                       불변. 이름은 선언에서 온다
 │   └── <chain>/
-│       ├── genesis/<digest>.json
-│       ├── config/<digest>/node1.toml …
-│       ├── nodekey/<digest>/node1 …          0600
-│       └── keystore/<digest>/node1/UTC--… …  0600
+│       ├── genesis/<env-id>.json
+│       ├── config/<env-id>/node1.toml …
+│       ├── nodekey/<keyset>/node1 …          0600
+│       └── keystore/<keyset>/node1/UTC--… …  0600
 │
-└── run/
-    └── <run-id>/node<N>/           datadir. 시작 전 삭제·재생성
+├── run/
+│   └── <run-id>/node<N>/           datadir. 시작 전 삭제·재생성
+│
+└── .material.json                  업로드 대장 (§4.4)
 ```
 
 **`<chain>` 을 최상위로 두는 이유**: 세 체인이 한 서버에 공존할 수 있고(하드포크 핸드오프는
@@ -231,24 +261,47 @@ type FileStore interface {
 **`<build>` 를 바이너리 경로에 두는 이유**: 하드포크 테스트는 **같은 서버에서 두 바이너리가
 동시에** 필요하다([[chainbench-requirements-review]] §D-2.8). 경로가 하나면 표현할 수 없다.
 
-### 4.3 `<digest>` — 재업로드 방지와 오류 방지를 동시에 푼다
+**`config/` 아래에 분류 폴더(`api/`·`consensus/`…)를 두지 않는다.** `env-id` 만으로 이미
+유일하고, 분류를 넣으면 런타임이 경로를 만들기 위해 **선언에 없는 정보(어느 분류인가)를 따로
+알아야 한다.** 분류는 저장소의 `tests/specs/<분류>/` 가 갖고, 배치는 이름만 갖는다.
+분류가 정말로 경로에 필요해지면 그때 `env.id` 에 접두사를 넣는 편이 낫다 — 선언 안에 남는다.
 
-`<digest>` 는 **그 자료의 내용 해시 앞 12자**다. 이것이 §1.5 의 답이다.
+**`<keyset>`** 은 키셋의 이름이다(`preset`·`dev4`·운영자가 정한 이름). 키는 env 보다 수명이
+길다 — 여러 env 가 같은 키셋을 공유하므로 env-id 로 묶으면 같은 키를 여러 번 올리게 된다.
 
+### 4.4 이름이 같은데 내용이 바뀐 경우 — 대장으로 잡는다
+
+이름을 쓰면 §1.5 의 결함이 그대로 남는다. `delayed-fork-4bp` 의 genesis 를 고쳤는데 서버에
+같은 이름의 옛 파일이 있으면, `Exists` 는 참이고 **옛 것이 그대로 쓰인다.**
+
+그래서 **내용 해시를 이름이 아니라 데이터로** 쓴다. destination 루트에 대장 하나를 둔다.
+
+```json
+// <destination>/.material.json
+{
+  "material/stablenet/genesis/delayed-fork-4bp.json": {
+    "sha256": "a3f9c1e0…", "size": 4211, "uploadedAt": "2026-08-20T04:11:03Z"
+  }
+}
 ```
-material/stablenet/genesis/a3f9c1e07b25.json
-                          └─ 이 파일의 내용이 곧 이 이름이다
-```
 
-- **같은 내용 → 같은 경로 → `Exists` 가 참 → 업로드 생략.** 반복 실행이 빨라진다.
-- **다른 내용 → 다른 경로.** 다른 테스트의 genesis 를 조용히 재사용하는 일이 **구조적으로
-  불가능**해진다. 경로 충돌 자체가 없다.
+업로드 판정은 두 조건을 **모두** 본다.
 
-즉 내용 주소화가 "존재 확인"과 "내용 확인"을 **같은 질문으로** 만든다. 별도의 해시 비교 단계나
-매니페스트가 필요 없다.
+| 대장의 해시 | 파일 존재 | 판정 |
+|---|---|---|
+| 같음 | 있음 | **생략** — 반복 실행이 빨라진다 |
+| 다름 | 있음 | **올린다** — 고친 자료가 반영된다 |
+| — | 없음 | 올린다 (손으로 지웠거나 첫 실행) |
 
-> 지금의 `provision.Provision` 은 고정 경로에 `Exists` 를 물어 skip 한다. 경로가 내용에서
-> 나오면 **그 코드는 그대로 두고도 올바르게 동작한다** — 고칠 것은 skip 로직이 아니라 경로다.
+대장 읽기는 세션당 한 번, 작은 파일 하나다. 파일마다 원격을 읽어 비교하는 것과 달리 왕복이
+늘지 않는다.
+
+> **이것이 digest 를 경로에 넣지 않고도 안전한 이유다.** 해시는 *식별자*가 아니라 *검사값*으로
+> 쓰인다 — 사람이 읽는 이름은 선언에서 오고, 기계가 보는 동일성은 대장이 판정한다.
+
+> **동시 실행 주의**: 같은 `env-id` 로 내용이 다른 두 실행이 겹치면 나중 것이 이긴다. 대장에
+> 그 사실이 남으므로 조용히 틀리지는 않지만, 막지도 못한다. 동시 실행이 필요해지면 `env-id` 를
+> 실행마다 다르게 짓는 것이 답이고, 경로 규칙은 그대로 둔다.
 
 ### 4.4 datadir 은 material 을 **참조**한다
 
@@ -257,14 +310,14 @@ material/stablenet/genesis/a3f9c1e07b25.json
 ```
 run/<run-id>/node1/          ← 지워도 되는 것만 들어간다
   geth/                        chaindata
-  nodekey                    → material/stablenet/nodekey/<digest>/node1
-  keystore/                  → material/stablenet/keystore/<digest>/node1/
+  nodekey                    → material/stablenet/nodekey/<keyset>/node1
+  keystore/                  → material/stablenet/keystore/<keyset>/node1/
 ```
 
 genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필요 없다.**
 
 ```
---datadir run/<run-id>/node1  --config material/stablenet/config/<digest>/node1.toml
+--datadir run/<run-id>/node1  --config material/stablenet/config/<env-id>/node1.toml
 ```
 
 그래서 "테스트마다 다른 자료를 쓰되 업로드는 한 번" 이 성립한다 — 경로만 바꿔 지정한다.
@@ -290,7 +343,7 @@ genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필
 | **K6** | `FileSink` → `FileStore`(읽기 추가). `keymat.sshRead`·`deploy.readRemoteFile` 흡수 | 로컬·원격이 같은 코드 |
 | **K7** | `keyring import --from` — 로컬·`srv://`·`user@host:` 한 코드로 | **명령줄에 IP 가 없다** · 원격 nodekey → 로컬 파생 |
 | **K7b** | `deploy.ReadServerKeys` 를 K7 위에 재구성 | `ParseBootnodeOutput`·`NodeKeyInfo` 소멸 · 서버에 bootnode 불필요 |
-| **M1** | `material` 레이아웃 + `<digest>` 경로 | 같은 자료 재업로드 0회 · **다른 자료가 같은 경로에 오지 않음** |
+| **M1** | `material` 레이아웃(`env-id` 이름) + 업로드 대장 | 같은 자료 재업로드 0회 · **이름이 같고 내용이 다르면 반드시 다시 올린다** |
 | **M2** | `run/<run-id>` 분리 + datadir 재생성 | datadir 삭제가 자료를 건드리지 않음 |
 | **M3** | `bin/<chain>/<build>` | 한 서버에 두 빌드 공존(하드포크) |
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft` | genesis 자료는 genesis 쪽으로 |
@@ -307,7 +360,7 @@ genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필
 
 | # | 질문 |
 |---|---|
-| M-a | `<digest>` 의 입력 — 파일 내용만인가, 생성 인자(체인·노드수·검증자)까지 포함인가 |
+| M-a | 대장(`.material.json`)의 위치 — destination 루트인가, 서버별 상태 디렉토리인가 |
 | M-b | material 의 회수 정책 — 무한히 쌓인다. `gc` 대상인가, 운영자 책임인가 |
 | M-c | datadir 의 material 참조 — 심볼릭 링크인가 복사인가 (원격 파일시스템·컨테이너에서 링크가 안 될 수 있다) |
 | M-d | `<build>` 식별자 — 바이너리 내용 해시인가, 운영자가 붙인 이름인가 |
