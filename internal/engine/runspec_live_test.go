@@ -61,13 +61,13 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	cfg := config.Resolve(nil, config.Values{"nodes.validators": "4"})
 	plan, err := engine.BuildLocalPlan(cfg, plugin, dataRoot, nil)
 	if err != nil {
-		t.Fatalf("build local plan: %v", err)
+		t.Fatalf("build plan: %v", err)
 	}
 	ns, _, err := engine.LocalSetup{
-		Plugin: plugin, Config: cfg, KeysDir: presetDir, Binary: bin,
+		Plugin: plugin, Config: cfg, Binary: bin, KeysDir: presetDir,
 	}.Launch(ctx, plan)
 	t.Cleanup(func() {
-		_, errs := engine.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
+		_, errs := driver.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
 		for _, e := range errs {
 			t.Logf("teardown: %v", e)
 		}

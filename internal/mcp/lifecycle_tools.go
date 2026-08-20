@@ -3,20 +3,14 @@ package mcp
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strconv"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // startTool provisions and launches a local chain network, then persists its
-// nodeset. It exposes the same core setup.Launch the CLI's `setup --launch`
-// uses, so an agent can spin a network up (and later stop it with
+// nodeset. It calls the same app.NetworkLaunch the CLI's `setup --launch`
+// does, so an agent can spin a network up (and later stop it with
 // chainbench_stop). It needs a built node binary path.
 func startTool() Tool {
 	return Tool{
@@ -42,38 +36,26 @@ func startTool() Tool {
 			if chain == "" || binary == "" || dataDir == "" {
 				return "", fmt.Errorf("chain, binary, and data_dir are required")
 			}
-			p, err := registry.Get(chain)
-			if err != nil {
-				return "", err
-			}
-			override := config.Values{}
+			spec := app.NetworkSpecIn{Chain: chain, ChainExplicit: true, DataDir: dataDir}
 			if v := argInt(args, "validators", 0); v > 0 {
-				override["nodes.validators"] = strconv.Itoa(v)
+				spec.Validators = &v
 			}
+			// Zero endpoints is a valid request, so the sentinel for "not given"
+			// has to sit below it.
 			if v := argInt(args, "endpoints", -1); v >= 0 {
-				override["nodes.endpoints"] = strconv.Itoa(v)
+				spec.Endpoints = &v
 			}
-			cfg := config.Resolve(nil, override)
-			keysAbs, err := filepath.Abs(argString(args, "keys_dir", "keys/preset"))
+			res, err := app.NetworkLaunch(ctx, app.Deps{}, app.NetworkLaunchIn{
+				Spec:    spec,
+				KeysDir: argString(args, "keys_dir", "keys/preset"),
+				Binary:  binary,
+			})
 			if err != nil {
-				return "", err
-			}
-			plan, err := engine.BuildLocalPlan(cfg, p, dataDir, nil)
-			if err != nil {
-				return "", err
-			}
-			ns, _, err := engine.LocalSetup{
-				Plugin: p, Config: cfg, KeysDir: keysAbs, Binary: binary,
-			}.Launch(ctx, plan)
-			if err != nil {
-				return "", err
-			}
-			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
 				return "", err
 			}
 			var b strings.Builder
-			fmt.Fprintf(&b, "launched %s: %d node(s)\n", chain, len(ns.Nodes))
-			for _, n := range ns.Nodes {
+			fmt.Fprintf(&b, "launched %s: %d node(s)\n", chain, len(res.Nodes.Nodes))
+			for _, n := range res.Nodes.Nodes {
 				fmt.Fprintf(&b, "  node%d %s %s pid=%d\n", n.Index, n.Role, n.RPCURL, n.PID)
 			}
 			return strings.TrimRight(b.String(), "\n"), nil
@@ -82,9 +64,9 @@ func startTool() Tool {
 }
 
 // stopTool stops the nodes of a launched local network, reading their PIDs from
-// the setup's nodeset.json and stopping each through the driver. It exposes the
-// same core StopNodeSet the CLI stop command uses, so an agent can tear a network
-// down after a test run.
+// the setup's nodeset.json and stopping each through the driver. It calls the
+// same app.NetworkStop the CLI stop command does, so an agent tearing a network
+// down after a test run gets identical behaviour.
 func stopTool() Tool {
 	return Tool{
 		Name:        "chainbench_stop",
@@ -99,14 +81,13 @@ func stopTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("data_dir is required")
 			}
-			ns, err := session.LoadLocalNodeSet(dir)
+			res, err := app.NetworkStop(ctx, app.Deps{}, app.NetworkStopIn{DataDir: dir})
 			if err != nil {
 				return "", err
 			}
-			stopped, errs := engine.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
 			var b strings.Builder
-			fmt.Fprintf(&b, "stopped %d node(s)", stopped)
-			for _, e := range errs {
+			fmt.Fprintf(&b, "stopped %d node(s)", res.Stopped)
+			for _, e := range res.Failed {
 				fmt.Fprintf(&b, "\n  %v", e)
 			}
 			return b.String(), nil

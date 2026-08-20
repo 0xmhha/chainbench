@@ -56,28 +56,36 @@ func newNetKeysCmd() *cobra.Command {
 
 func newNetAllocateCmd() *cobra.Command {
 	var validators, endpoints int
+	var endpointSyncMode, topologyPath string
 	cmd, _ := stepCmd("allocate", "Build the node table: roles, paths, deterministic ports",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := app.NetAllocate(cmd.Context(), app.Deps{}, app.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
+				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath,
 			})
 			return out.Detail, err
 		})
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
+	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode); overrides --validators/--endpoints")
 	return cmd
 }
 
 func newNetGenesisCmd() *cobra.Command {
 	var chainID int64
+	var sets []string
+	var overlay string
 	cmd, _ := stepCmd("genesis", "Build the genesis from the key set and write it to the target",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := app.NetGenesis(cmd.Context(), app.Deps{}, app.NetGenesisIn{
-				DataDir: dataDir, ChainID: chainID,
+				DataDir: dataDir, ChainID: chainID, Set: sets, OverlayPath: overlay,
 			})
 			return out.Detail, err
 		})
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "override the manifest chain id (0 = manifest)")
+	cmd.Flags().StringArrayVar(&sets, "set", nil, "override a genesis config key (repeatable), e.g. --set bohoBlock=10")
+	cmd.Flags().StringVar(&overlay, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")
 	return cmd
 }
 

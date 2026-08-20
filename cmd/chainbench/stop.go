@@ -5,9 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 func newStopCmd() *cobra.Command {
@@ -16,21 +14,23 @@ func newStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop the nodes a setup launched (from nodeset.json PIDs)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if dataDir == "" {
-				return fmt.Errorf("--data-dir with a setup's nodeset.json is required")
-			}
-			ns, err := session.LoadLocalNodeSet(dataDir)
+			res, err := app.NetworkStop(cmd.Context(), app.Deps{}, app.NetworkStopIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
-			stopped, errs := engine.StopNodeSet(cmd.Context(), driver.NewLocalDriver(), ns)
-			for _, e := range errs {
-				fmt.Fprintln(cmd.ErrOrStderr(), e)
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "stopped %d node(s)\n", stopped)
+			printStopFailures(cmd, res.Failed)
+			fmt.Fprintf(cmd.OutOrStdout(), "stopped %d node(s)\n", res.Stopped)
 			return nil
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with nodeset.json")
 	return cmd
+}
+
+// printStopFailures reports the per-node stop errors on stderr. They are
+// diagnostics, not a failed command: the rest of the network still stopped.
+func printStopFailures(cmd *cobra.Command, failed []error) {
+	for _, e := range failed {
+		fmt.Fprintln(cmd.ErrOrStderr(), e)
+	}
 }

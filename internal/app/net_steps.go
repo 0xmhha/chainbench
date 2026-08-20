@@ -2,7 +2,12 @@ package app
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -57,12 +62,29 @@ type NetAllocateIn struct {
 	DataDir    string
 	Validators int
 	Endpoints  int
+	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
+	// re-sync test can exercise that path. Empty leaves every node on full.
+	EndpointSyncMode string
+	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
+	// replaces the counts, which cannot express a per-node choice.
+	TopologyPath string
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
 func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
+	var topo *topology.Topology
+	if in.TopologyPath != "" {
+		loaded, err := topology.Load(in.TopologyPath)
+		if err != nil {
+			return StepOut{}, err
+		}
+		topo = &loaded
+	}
 	detail, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
-		return ws.Allocate(netcompose.AllocateOpts{Validators: in.Validators, Endpoints: in.Endpoints})
+		return ws.Allocate(netcompose.AllocateOpts{
+			Validators: in.Validators, Endpoints: in.Endpoints,
+			EndpointSyncMode: in.EndpointSyncMode, Topology: topo,
+		})
 	})
 	return StepOut{Detail: detail}, err
 }
@@ -71,14 +93,57 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 type NetGenesisIn struct {
 	DataDir string
 	ChainID int64
+	// Set carries genesis config overrides as key=value on the bare config key,
+	// e.g. "bohoBlock=10" to move a fork off genesis.
+	Set []string
+	// OverlayPath is a JSON overlay file {capabilities, genesis}: the genesis
+	// fragment is deep-merged and the capabilities are advertised.
+	OverlayPath string
 }
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
 func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 	detail, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
-		return ws.Genesis(ctx, netcompose.GenesisOpts{ChainID: in.ChainID})
+		opts, err := genesisOpts(in)
+		if err != nil {
+			return "", err
+		}
+		return ws.Genesis(ctx, opts)
 	})
 	return StepOut{Detail: detail}, err
+}
+
+// genesisOpts folds the flag-shaped genesis inputs into the step options: the
+// key=value overrides and the overlay file's two halves.
+func genesisOpts(in NetGenesisIn) (netcompose.GenesisOpts, error) {
+	opts := netcompose.GenesisOpts{ChainID: in.ChainID}
+	for _, kv := range in.Set {
+		k, v, ok := strings.Cut(kv, "=")
+		if !ok || k == "" {
+			return opts, fmt.Errorf("app: genesis override expects key=value, got %q", kv)
+		}
+		if opts.Overrides == nil {
+			opts.Overrides = map[string]string{}
+		}
+		opts.Overrides[k] = v
+	}
+	if in.OverlayPath == "" {
+		return opts, nil
+	}
+	raw, err := os.ReadFile(in.OverlayPath)
+	if err != nil {
+		return opts, err
+	}
+	var overlay struct {
+		Capabilities []string        `json:"capabilities"`
+		Genesis      json.RawMessage `json:"genesis"`
+	}
+	if err := json.Unmarshal(raw, &overlay); err != nil {
+		return opts, fmt.Errorf("app: bad genesis overlay %q: %w", in.OverlayPath, err)
+	}
+	opts.Overlay = overlay.Genesis
+	opts.Capabilities = overlay.Capabilities
+	return opts, nil
 }
 
 // NetConfigIn identifies the workspace.

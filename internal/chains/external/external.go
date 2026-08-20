@@ -72,3 +72,18 @@ func familyByName(name string) (registry.ConsensusFamily, error) {
 			"(a new family needs a pkg/consensus/* plugin); built-in: wbft|poa", name)
 	}
 }
+
+// ResolveChain returns the plugin a caller means: the external, project-supplied
+// manifest when one is named (the hybrid model), otherwise the embedded chain
+// registered for the id.
+//
+// It lives here because this is the only package that already knows both halves
+// — registry.Get for embedded chains and Load for manifests — and putting it in
+// registry would make registry depend on the loaders that register into it.
+// Every surface that acts on a chain resolves it through this one function.
+func ResolveChain(chain, manifestPath, templatePath string) (registry.ChainPlugin, error) {
+	if manifestPath != "" {
+		return Load(manifestPath, templatePath)
+	}
+	return registry.Get(chain)
+}

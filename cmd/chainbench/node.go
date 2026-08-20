@@ -6,10 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 func newNodeCmd() *cobra.Command {
@@ -32,23 +30,7 @@ func newNodeStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop a single launched node by index (--data-dir from setup)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if dataDir == "" || index <= 0 {
-				return fmt.Errorf("--data-dir and --index (1-based) are required")
-			}
-			ns, err := session.LoadLocalNodeSet(dataDir)
-			if err != nil {
-				return err
-			}
-			if err := engine.StopNode(cmd.Context(), driver.NewLocalDriver(), ns, index); err != nil {
-				return err
-			}
-			// Record the node as stopped (PID cleared) so status/start are accurate.
-			for i := range ns.Nodes {
-				if ns.Nodes[i].Index == index {
-					ns.Nodes[i].PID = 0
-				}
-			}
-			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
+			if err := app.NodeStop(cmd.Context(), app.Deps{}, app.NodeStopIn{DataDir: dataDir, Index: index}); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "stopped node%d\n", index)
@@ -71,46 +53,11 @@ func newNodeStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Relaunch a single stopped node by index (--data-dir from setup)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if dataDir == "" || index <= 0 {
-				return fmt.Errorf("--data-dir and --index (1-based) are required")
-			}
-			ns, err := session.LoadLocalNodeSet(dataDir)
+			res, err := app.NodeStart(cmd.Context(), app.Deps{}, app.NodeStartIn{DataDir: dataDir, Index: index})
 			if err != nil {
 				return err
 			}
-			specs, err := session.LoadLocalNodeSpecs(dataDir)
-			if err != nil {
-				return err
-			}
-			var spec driver.NodeSpec
-			found := false
-			for _, s := range specs {
-				if s.Index == index {
-					spec, found = s, true
-					break
-				}
-			}
-			if !found {
-				return fmt.Errorf("no saved spec for node%d in %s", index, dataDir)
-			}
-			refreshed, err := engine.RelaunchNode(cmd.Context(), driver.NewLocalDriver(), spec)
-			if err != nil {
-				return err
-			}
-			replaced := false
-			for i := range ns.Nodes {
-				if ns.Nodes[i].Index == index {
-					ns.Nodes[i] = refreshed
-					replaced = true
-				}
-			}
-			if !replaced {
-				ns.Nodes = append(ns.Nodes, refreshed)
-			}
-			if err := session.SaveLocalNodeSet(dataDir, ns); err != nil {
-				return err
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "started node%d (pid %d)\n", index, refreshed.PID)
+			fmt.Fprintf(cmd.OutOrStdout(), "started node%d (pid %d)\n", index, res.Node.PID)
 			return nil
 		},
 	}

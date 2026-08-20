@@ -6,10 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/hardfork"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 func newHardforkCmd() *cobra.Command {
@@ -24,35 +21,13 @@ func newHardforkCmd() *cobra.Command {
 		Use:   "hardfork",
 		Short: "Plan a chain upgrade (swap binary at a fork block, keeping node data)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if dataDir == "" {
-				return fmt.Errorf("--data-dir with a setup's nodeset.json is required")
-			}
-			if toChain == "" {
-				return fmt.Errorf("--to-chain is required")
-			}
-			ns, err := session.LoadLocalNodeSet(dataDir)
+			planned, err := app.HardforkPlan(cmd.Context(), app.Deps{}, app.HardforkPlanIn{
+				DataDir: dataDir, ToChain: toChain, ToBinary: toBinary, Block: block,
+			})
 			if err != nil {
 				return err
 			}
-			from, err := registry.Get(ns.Chain)
-			if err != nil {
-				return fmt.Errorf("from-chain %q: %w", ns.Chain, err)
-			}
-			to, err := registry.Get(toChain)
-			if err != nil {
-				return err
-			}
-			// A same-chain hardfork (e.g. stablenet pre-fork -> stablenet
-			// post-fork) swaps one binary build for another that activates the
-			// fork at --block. Both resolve to the chain's manifest binary name,
-			// so require an explicit post-fork path or there is nothing to swap.
-			if toChain == ns.Chain && toBinary == "" {
-				return fmt.Errorf("same-chain hardfork (%s -> %s) requires --to-binary <post-fork build>", ns.Chain, toChain)
-			}
-			plan, err := hardfork.BuildPlan(ns, from, to, block, dataDir)
-			if err != nil {
-				return err
-			}
+			plan := planned.Plan
 
 			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "hardfork: %s -> %s  (binary %s -> %s)  at block %d\n",
@@ -66,33 +41,21 @@ func newHardforkCmd() *cobra.Command {
 				return err
 			}
 
-			if !dryRun {
-				bin, err := resolveBinary(toBinary, to.Manifest().Binary)
-				if err != nil {
-					return err
-				}
-				specs, err := session.LoadLocalNodeSpecs(dataDir)
-				if err != nil {
-					return fmt.Errorf("hardfork: load node specs (run setup with --launch first): %w", err)
-				}
-				newNS, err := plan.Execute(cmd.Context(), driver.NewLocalDriver(), specs, bin)
-				if err != nil {
-					return err
-				}
-				if err := session.SaveLocalNodeSet(dataDir, newNS); err != nil {
-					return err
-				}
-				// Keep nodespecs.json consistent so later node/hardfork ops use the
-				// post-fork binary (identity/config args are unchanged).
-				for i := range specs {
-					specs[i].Binary = bin
-				}
-				if err := session.SaveLocalNodeSpecs(dataDir, specs); err != nil {
-					return err
-				}
-				fmt.Fprintf(out, "upgraded %d node(s) to %s (%s); state updated\n",
-					len(newNS.Nodes), plan.ToChain, plan.ToBinary)
+			if dryRun {
+				return nil
 			}
+			bin, err := resolveBinary(toBinary, planned.To.Manifest().Binary)
+			if err != nil {
+				return err
+			}
+			res, err := app.HardforkExecute(cmd.Context(), app.Deps{}, app.HardforkExecuteIn{
+				Plan: planned, DataDir: dataDir, Binary: bin,
+			})
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(out, "upgraded %d node(s) to %s (%s); state updated\n",
+				len(res.Nodes.Nodes), plan.ToChain, plan.ToBinary)
 			return nil
 		},
 	}

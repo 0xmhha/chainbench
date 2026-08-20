@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -10,10 +11,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
-	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // fundedKeyFromEnv reads an optional funded-account private key from
@@ -105,7 +106,8 @@ func resolveNodeSet(dataDir, chain string, rpcURLs []string) (node.NodeSet, erro
 		return node.AttachedSet(chain, "attached", eps)
 	}
 	if dataDir != "" {
-		return session.LoadLocalNodeSet(dataDir)
+		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dataDir})
+		return res.Nodes, err
 	}
 	return node.NodeSet{}, fmt.Errorf("provide --rpc <url> or --data-dir <dir> (from a setup)")
 }

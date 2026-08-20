@@ -15,6 +15,10 @@ type NetNewIn struct {
 	Chain string
 	// Binary is the node binary path (may also be set at start).
 	Binary string
+	// ManifestPath selects an external, project-supplied chain manifest instead
+	// of an embedded chain; TemplatePath is its genesis template.
+	ManifestPath string
+	TemplatePath string
 	// KeysDir is the key set the network composes from ("" = keys/preset).
 	KeysDir string
 	// Target is where the data plane lives; zero value = local, rooted at the
@@ -37,6 +41,7 @@ func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
 	}
 	detail, err := ws.New(netcompose.NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
+		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
 	})
 	if err != nil {
 		return NetNewOut{}, err
