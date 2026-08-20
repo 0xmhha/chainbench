@@ -25,7 +25,7 @@ func TestAccountNew_StoreKeystoreRoundTrip(t *testing.T) {
 		t.Fatalf("stored = %q", gen["stored"])
 	}
 	// Import it back from the keystore file.
-	imp := keyJSON(t, "account", "import", "--import", gen["stored"], "--password", "pw", "--json")
+	imp := keyJSON(t, "account", "import", "--from", gen["stored"], "--password", "pw", "--json")
 	if imp["address"] != gen["address"] {
 		t.Fatalf("keystore import mismatch: %s vs %s", imp["address"], gen["address"])
 	}

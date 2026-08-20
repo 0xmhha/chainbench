@@ -290,7 +290,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
 | **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keymat.FileSource` 가 로컬·원격 겸용 | ☑ |
-| **K7** | `keyring --from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | 세 형태를 같은 코드로 · **명령줄에 IP 없음** · `--server`+`--remote-path` 두 플래그 대체 | ☐ |
+| **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 
 **의존성 추가**(K0 에서 완료): `github.com/kilic/bls12-381 v0.1.0` — **순수 Go** BLS12-381.
 당초 적었던 `supranational/blst` 는 **CGO 라 `CGO_ENABLED=0` 빌드를 깬다**. kilic 은 go-wbft 의

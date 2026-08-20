@@ -1,6 +1,7 @@
 package target_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -74,5 +75,97 @@ func TestParseTarget(t *testing.T) {
 		if _, err := target.ParseTarget(bad); err == nil {
 			t.Errorf("%q must fail", bad)
 		}
+	}
+}
+
+// TestParseTarget_Syntaxes pins the whole single-path grammar in one table, so
+// that adding a form cannot quietly change how an existing one parses.
+func TestParseTarget_Syntaxes(t *testing.T) {
+	cases := []struct {
+		name    string
+		in      string
+		want    target.TargetSpec
+		wantErr bool
+	}{
+		{
+			name: "bare path is local",
+			in:   "/data/net1",
+			want: target.TargetSpec{Kind: target.TargetLocal, DataRoot: "/data/net1"},
+		},
+		{
+			name: "relative path is local",
+			in:   "keys/preset",
+			want: target.TargetSpec{Kind: target.TargetLocal, DataRoot: "keys/preset"},
+		},
+		{
+			// The point of srv://: the address is not here.
+			name: "inventory entry",
+			in:   "srv://bp1/data/go-wbft/conf/nodekey",
+			want: target.TargetSpec{
+				Kind: target.TargetServer, Server: "bp1",
+				DataRoot: "/data/go-wbft/conf/nodekey",
+			},
+		},
+		{
+			name: "host and path, no user",
+			in:   "10.0.0.1:/keys/node1",
+			want: target.TargetSpec{Kind: target.TargetRemote, Host: "10.0.0.1", DataRoot: "/keys/node1"},
+		},
+		{
+			name: "user, host and path",
+			in:   "ubuntu@host:/k",
+			want: target.TargetSpec{Kind: target.TargetRemote, Host: "host", User: "ubuntu", DataRoot: "/k"},
+		},
+		{
+			name: "ssh url with a port",
+			in:   "ssh://ubuntu@host:2222/data/net1",
+			want: target.TargetSpec{
+				Kind: target.TargetRemote, Host: "host", User: "ubuntu",
+				Port: 2222, DataRoot: "/data/net1",
+			},
+		},
+		{
+			// A colon in a local path must not be read as a host separator.
+			name: "local path containing a colon",
+			in:   "./notes:draft/key",
+			want: target.TargetSpec{Kind: target.TargetLocal, DataRoot: "./notes:draft/key"},
+		},
+		{name: "empty", in: "", wantErr: true},
+		{name: "srv with no path", in: "srv://bp1", wantErr: true},
+		{name: "srv with no entry", in: "srv:///k", wantErr: true},
+		{name: "user with no host", in: "user@:/k", wantErr: true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := target.ParseTarget(tc.in)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("accepted %q as %+v", tc.in, got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ParseTarget(%q): %v", tc.in, err)
+			}
+			if got != tc.want {
+				t.Errorf("got %+v\nwant %+v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestResolve_ServerNeedsAnInventory keeps an srv:// target from silently
+// degrading into something else when no inventory was supplied.
+func TestResolve_ServerNeedsAnInventory(t *testing.T) {
+	spec, err := target.ParseTarget("srv://bp1/k")
+	if err != nil {
+		t.Fatalf("ParseTarget: %v", err)
+	}
+	_, err = spec.Resolve(func(string) string { return "" })
+	if err == nil {
+		t.Fatal("resolved an srv:// target with no inventory")
+	}
+	if !strings.Contains(err.Error(), "bp1") {
+		t.Errorf("error should name the entry, got: %v", err)
 	}
 }
