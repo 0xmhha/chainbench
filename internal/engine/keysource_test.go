@@ -2,25 +2,19 @@ package engine_test
 
 import (
 	"context"
-	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // presetDir is the repository's shipped key set, used as a realistic fixture.
 const presetDir = "../../keys/preset"
-
-// derivingDeps derives an address deterministically from the key bytes so the
-// identity check can be exercised without real crypto.
-func derivingDeps(addrFor func(priv []byte) (string, error)) keyreg.Deps {
-	return keyreg.Deps{DeriveAddress: addrFor}
-}
 
 func TestPresetKeySource_LoadsAndChecksCapacity(t *testing.T) {
 	src := engine.PresetKeySource{Path: presetDir}
@@ -99,44 +93,41 @@ func TestRegisterIdentities_RegistersEachNode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
-	// Address derivation is stubbed to return exactly what the metadata declares,
-	// so this test covers registration; the mismatch path is the next test.
-	byKey := map[string]string{}
-	for _, n := range ks.Preset.Nodes {
-		byKey[n.Nodekey.Hex()] = n.Address
-	}
-	reg := keyreg.New(t.TempDir(), derivingDeps(func(priv []byte) (string, error) {
-		return byKey[hexOf(priv)], nil
-	}))
-
-	if err := engine.RegisterIdentities(context.Background(), reg, ks, 4); err != nil {
+	ring := keyring.NewRing(t.TempDir())
+	if err := engine.RegisterIdentities(context.Background(), ring, ks, 4); err != nil {
 		t.Fatalf("RegisterIdentities: %v", err)
 	}
 	for i := 1; i <= 4; i++ {
-		name := nodeName(i)
-		k, ok := reg.Get(name)
+		label := keyring.Label(nodeName(i))
+		e, ok := ring.Get(label)
 		if !ok {
-			t.Fatalf("%s was not registered", name)
+			t.Fatalf("%s was not registered", label)
 		}
 		want, _ := ks.Preset.Node(i)
-		if !strings.EqualFold(k.Address, want.Address) {
-			t.Errorf("%s address = %s, want %s", name, k.Address, want.Address)
+		if !strings.EqualFold(e.Address, want.Address) {
+			t.Errorf("%s address = %s, want %s", label, e.Address, want.Address)
+		}
+		// The registered entry carries the same BLS material the set declares,
+		// so a wbft genesis and the running node agree.
+		if (e.BLS == nil) != (want.BLS == nil) {
+			t.Errorf("%s BLS presence differs from the key set", label)
 		}
 	}
 }
 
 func TestRegisterIdentities_RejectsDriftedIdentity(t *testing.T) {
-	ks, err := engine.PresetKeySource{Path: presetDir}.Ensure(context.Background(), 4)
+	// A key set whose declared address no longer matches its key material would
+	// launch nodes signing as one address while the genesis registers another.
+	// Drift is introduced in the file rather than by stubbing derivation, so the
+	// real derivation is what catches it.
+	dir := t.TempDir()
+	copyPresetWithAddress(t, presetDir, dir, "0x00000000000000000000000000000000deadbeef")
+
+	ks, err := engine.PresetKeySource{Path: dir}.Ensure(context.Background(), 4)
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
-	// A key set whose declared address no longer matches its key material would
-	// launch nodes signing as one address while the genesis registers another.
-	reg := keyreg.New(t.TempDir(), derivingDeps(func([]byte) (string, error) {
-		return "0x00000000000000000000000000000000deadbeef", nil
-	}))
-
-	err = engine.RegisterIdentities(context.Background(), reg, ks, 4)
+	err = engine.RegisterIdentities(context.Background(), keyring.NewRing(t.TempDir()), ks, 4)
 	if err == nil {
 		t.Fatal("want an error when a declared identity does not match its key")
 	}
@@ -145,21 +136,45 @@ func TestRegisterIdentities_RejectsDriftedIdentity(t *testing.T) {
 	}
 }
 
-func TestRegisterIdentities_NilRegistryIsANoOp(t *testing.T) {
+// copyPresetWithAddress copies a preset, overwriting node 1's declared address
+// so it no longer matches its own key.
+func copyPresetWithAddress(t *testing.T, from, to, addr string) {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join(from, "metadata.json"))
+	if err != nil {
+		t.Fatalf("read preset metadata: %v", err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatalf("parse preset metadata: %v", err)
+	}
+	nodes, _ := doc["nodes"].([]any)
+	if len(nodes) == 0 {
+		t.Fatal("preset has no nodes")
+	}
+	first, _ := nodes[0].(map[string]any)
+	first["address"] = addr
+	out, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(to, "metadata.json"), out, 0o644); err != nil {
+		t.Fatalf("write metadata: %v", err)
+	}
+}
+
+func TestRegisterIdentities_NilKeyringIsANoOp(t *testing.T) {
 	ks, err := engine.PresetKeySource{Path: presetDir}.Ensure(context.Background(), 4)
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
 	if err := engine.RegisterIdentities(context.Background(), nil, ks, 4); err != nil {
-		t.Errorf("nil registry should be a no-op, got: %v", err)
+		t.Errorf("a nil keyring should be a no-op, got: %v", err)
 	}
 }
 
-// nodeName is the registry name for a node identity.
+// nodeName is the ring label for a node identity.
 func nodeName(i int) string { return fmt.Sprintf("node%d", i) }
-
-// hexOf renders key bytes the way the metadata stores them.
-func hexOf(b []byte) string { return hex.EncodeToString(b) }
 
 // copyPreset seeds to with the metadata a key set is loaded from.
 func copyPreset(t *testing.T, from, to string) {

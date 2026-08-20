@@ -7,7 +7,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -74,11 +73,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if clock == nil {
 		clock = time.Now
 	}
-	accts, err := accounts.ForChain(cfg.Chain)
-	if err != nil {
+	// The account provider's value is unused now that identity derivation lives
+	// in keyring; the call stays because it is what rejects a chain the accounts
+	// SDK does not know, before a run gets far enough to fail obscurely.
+	if _, err := accounts.ForChain(cfg.Chain); err != nil {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
-	keyDeps := keyreg.Deps{DeriveAddress: accts.AddressForKey}
 
 	run := NewRunSpec(testspec.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
@@ -90,9 +90,9 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Command: engineCommand,
 		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
 			// Attach owns no node identities, but a spec may still generate keys
-			// mid-run, so the session gets a registry rooted in its own keys/
+			// mid-run, so the session gets a keyring rooted in its own keys/
 			// directory rather than nothing.
-			return session.NewWithKeys(cfg.ArtifactRoot, cmd, clock(), keyDeps)
+			return session.New(cfg.ArtifactRoot, cmd, clock())
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
 			return s.Fingerprint(config.Values{})

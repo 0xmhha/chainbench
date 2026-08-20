@@ -18,7 +18,11 @@ const PresetFile = "metadata.json"
 // BLS, a write-side Node with it, and a registry Key with yet another field set
 // — none of which converted to another.
 type Entry struct {
-	// Index is the 1-based node number within the ring.
+	// Label names this entry within a ring. A preset entry is labelled by its
+	// index ("node1"); a ring built by a command labels its own.
+	Label Label
+	// Index is the 1-based node number within the ring, or 0 when the entry did
+	// not come from a numbered set.
 	Index int
 	// Nodekey is the secret. It redacts itself when formatted; reaching the
 	// hex takes an explicit Hex call.

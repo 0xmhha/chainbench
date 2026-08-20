@@ -9,7 +9,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
@@ -112,14 +111,12 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	if clock == nil {
 		clock = time.Now
 	}
-	// The registry derives an address for every key it takes in, which is how
-	// RegisterIdentities checks a key set's declared identities against its key
-	// material. Chain-specific because address derivation is a protocol fact.
-	accts, err := accounts.ForChain(cfg.Chain)
-	if err != nil {
+	// The account provider's value is unused now that identity derivation lives
+	// in keyring; the call stays because it is what rejects a chain the accounts
+	// SDK does not know, before a run gets far enough to fail obscurely.
+	if _, err := accounts.ForChain(cfg.Chain); err != nil {
 		return nil, fmt.Errorf("engine: local engine: %w", err)
 	}
-	keyDeps := keyreg.Deps{DeriveAddress: accts.AddressForKey}
 
 	// The controller fronts the launcher so a fault step can reach an individual
 	// node process later; it shares the supervisor's procman so a node stopped
@@ -172,7 +169,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 			if err != nil {
 				return nil, err
 			}
-			sess, err := session.NewWithKeys(cfg.ArtifactRoot, cmd, clock(), keyDeps)
+			sess, err := session.New(cfg.ArtifactRoot, cmd, clock())
 			if err != nil {
 				return nil, err
 			}

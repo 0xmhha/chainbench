@@ -85,7 +85,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 		},
 	})
 
-	sess, err := session.New(sessRoot, "live", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(sessRoot, "live", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

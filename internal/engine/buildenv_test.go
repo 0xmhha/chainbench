@@ -75,7 +75,7 @@ func fakeSupervisor() supervisor.Supervisor {
 
 func buildEnvSession(t *testing.T) session.Environment {
 	t.Helper()
-	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

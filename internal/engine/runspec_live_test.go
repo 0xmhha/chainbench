@@ -85,7 +85,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	}
 
 	// Build the session environment over the running nodes and run the spec.
-	sess, err := session.New(t.TempDir(), "live", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "live", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

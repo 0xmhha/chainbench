@@ -15,9 +15,9 @@
 
 | 타입 | 어디 | 담는 것 |
 |---|---|---|
-| `keys.NodeKey` | `core/keys` | index · pubkey · address · nodekey |
-| `keygen.Node` | `keygen` | 위 + BLS · PoP · enode |
-| `keyreg.Key` | `core/keyreg` | name · address · private · BLS · PoP |
+| ~~`keys.NodeKey`~~ | `core/keys` | **K3 에서 제거** |
+| ~~`keygen.Node`~~ | `keygen` | **K3 에서 제거** |
+| ~~`keyreg.Key`~~ | `core/keyreg` | **K3 에서 제거** — `keyring.Entry` 가 대신한다 |
 | ~~`deploy.NodeKeyInfo`~~ | `chains/wemix/deploy` | **K7b 에서 제거** — `ServerIdentity` 가 `keyring.Identity` 를 임베드한다 |
 | `keyring.Identity` | `core/keyring` | pubkey · address · BLS *(신규)* |
 
@@ -347,7 +347,7 @@ genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필
 | **M2** | `run/<run-id>` 분리 + datadir 재생성 | datadir 삭제가 자료를 건드리지 않음 |
 | **M3** | `bin/<chain>/<build>` | 한 서버에 두 빌드 공존(하드포크) |
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 파생값은 저장하지 않는다 — `BuildGenesis` 가 계산 |
-| **K3** | `keys`·`keygen`·`keymat`·`keyreg` → `keyring` | 6패키지 → 1 · 신원 타입 5 → 1 |
+| **K3** | `keys`·`keygen`·`keymat`·`keyreg` → `keyring` | ☑ 5패키지 → 1 · 신원 타입 5 → 1 |
 | **K4** | `keyring` 명령 (new/add/list/show/import/export) | `keys`·`validator`·`account` 대체 |
 | **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만 | 기존 파일 호환 |
 

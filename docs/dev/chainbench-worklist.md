@@ -286,7 +286,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **K0** | `core/keyring` 신설 — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) · `CGO_ENABLED=0` · fuzz | ☑ |
 | **K1** | `--bootnode` 제거 — BLS 를 자체 파생 | **`PATH` 를 비운 채 4노드 키셋 생성 성공** · 세 계층(keygen·engine·CLI)에 각각 게이트 테스트 | ☑ |
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 골든 유지 · **`BuildGenesis` 가 비어 있으면 파생** · `Take` 의 stale extraData 결함 수정 · keygen 의 잔여 import 0 |
-| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
+| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | ☑ **5패키지 → 1**(1,565줄 4개 → `core/keyring` 1,275줄) · **신원 타입 5 → 1** · `Nodekey` → `PrivateKey`(역할이 아니라 실체로 명명) |
 | **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
 | **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keymat.FileSource` 가 로컬·원격 겸용 | ☑ |

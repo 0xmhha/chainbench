@@ -47,7 +47,7 @@ func (c *fakeNodeControl) Start(_ context.Context, n node.Node) error {
 // envWithNodes builds an environment of n validator nodes pointed at url.
 func envWithNodes(t *testing.T, n int, url string) session.Environment {
 	t.Helper()
-	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}
@@ -177,7 +177,7 @@ func (p *peerRPC) server(t *testing.T, enode string) *httptest.Server {
 // envFromURLs builds an environment whose node i points at urls[i-1].
 func envFromURLs(t *testing.T, urls []string) session.Environment {
 	t.Helper()
-	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

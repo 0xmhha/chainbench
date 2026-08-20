@@ -19,7 +19,7 @@ import (
 // returns its id.
 func writeSession(t *testing.T, root string) string {
 	t.Helper()
-	s, err := session.New(root, "run", time.Unix(0, 0).UTC(), nil)
+	s, err := session.New(root, "run", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

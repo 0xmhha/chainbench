@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
@@ -127,17 +126,17 @@ func orDefault(v, def string) string {
 	return v
 }
 
-// RegisterIdentities records a key set's node identities in the session key
-// registry under the names "node1".."nodeN".
+// RegisterIdentities records a key set's node identities in the session's
+// keyring under the labels "node1".."nodeN".
 //
-// Registration is not bookkeeping: it re-derives each address from the private
-// key the node will actually run with and fails when that disagrees with the
-// address the metadata declares. A key set whose declared identity has drifted
-// from its key material produces a chain whose genesis registers one address
-// while the node signs with another — a failure that otherwise surfaces much
-// later as an unexplained consensus stall.
-func RegisterIdentities(ctx context.Context, reg keyreg.Registry, ks KeySet, n int) error {
-	if reg == nil {
+// Registration is not bookkeeping: each address is re-derived from the private
+// key the node will actually run with and checked against the one the metadata
+// declares. A key set whose declared identity has drifted from its key material
+// produces a chain whose genesis registers one address while the node signs
+// with another — a failure that otherwise surfaces much later as an unexplained
+// consensus stall.
+func RegisterIdentities(ctx context.Context, ring *keyring.Ring, ks KeySet, n int) error {
+	if ring == nil {
 		return nil
 	}
 	for i := 1; i <= n; i++ {
@@ -145,11 +144,16 @@ func RegisterIdentities(ctx context.Context, reg keyreg.Registry, ks KeySet, n i
 		if !ok {
 			return fmt.Errorf("engine: key set %s has no identity for node%d", ks.Dir, i)
 		}
-		name := fmt.Sprintf("node%d", i)
-		if _, err := reg.Ensure(ctx, name, keyreg.Literal, nk.Nodekey.Hex(), keyreg.EnsureOpts{
-			ExpectAddress: nk.Address,
-		}); err != nil {
-			return fmt.Errorf("engine: register identity %s: %w", name, err)
+		label := keyring.Label(fmt.Sprintf("node%d", i))
+		// Ask for exactly what the set claims to hold: a poa identity has no BLS
+		// material, and deriving some would invent a key it never had.
+		d := keyring.AccountOnly
+		if nk.BLS != nil {
+			d = keyring.WithBLS
+		}
+		src := keyring.PrivateKeySource{Hex: nk.Nodekey.Hex()}
+		if _, err := ring.AddExpecting(ctx, label, src, d, nk.Address); err != nil {
+			return fmt.Errorf("engine: register identity %s: %w", label, err)
 		}
 	}
 	return nil
