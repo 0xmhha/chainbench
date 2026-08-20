@@ -18,7 +18,7 @@
 | `keys.NodeKey` | `core/keys` | index · pubkey · address · nodekey |
 | `keygen.Node` | `keygen` | 위 + BLS · PoP · enode |
 | `keyreg.Key` | `core/keyreg` | name · address · private · BLS · PoP |
-| `deploy.NodeKeyInfo` | `chains/wemix/deploy` | server · address · BLS · PoP |
+| ~~`deploy.NodeKeyInfo`~~ | `chains/wemix/deploy` | **K7b 에서 제거** — `ServerIdentity` 가 `keyring.Identity` 를 임베드한다 |
 | `keyring.Identity` | `core/keyring` | pubkey · address · BLS *(신규)* |
 
 다섯 개가 **같은 것의 부분집합**이다. 어느 것도 전체가 아니고, 어느 것도 다른 것으로 변환되지
@@ -340,9 +340,9 @@ genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필
 
 | # | 작업 | 게이트 |
 |---|---|---|
-| **K6** | `FileSink` → `FileStore`(읽기 추가). `keymat.sshRead`·`deploy.readRemoteFile` 흡수 | 로컬·원격이 같은 코드 |
-| **K7** | `keyring import --from` — 로컬·`srv://`·`user@host:` 한 코드로 | **명령줄에 IP 가 없다** · 원격 nodekey → 로컬 파생 |
-| **K7b** | `deploy.ReadServerKeys` 를 K7 위에 재구성 | `ParseBootnodeOutput`·`NodeKeyInfo` 소멸 · 서버에 bootnode 불필요 |
+| **K6** | `FileSink` → `FileStore`(읽기 추가). `keymat.sshRead`·`deploy.readRemoteFile` 흡수 | ☑ 자체 SSH 파일 I/O 9곳 → 0 |
+| **K7** | `--from` — 로컬·`srv://`·`user@host:`·`ssh://` 한 코드로 | ☑ **명령줄에 IP 가 없다** · 플래그 4 → 1 |
+| **K7b** | `deploy.ReadServerKeys` 를 K7 위에 재구성 | ☑ `ParseBootnodeOutput`·`NodeKeyInfo` 소멸 · 서버에 bootnode 불필요 · 신원 타입 5 → 3 |
 | **M1** | `material` 레이아웃(`env-id` 이름) + 업로드 대장 | 같은 자료 재업로드 0회 · **이름이 같고 내용이 다르면 반드시 다시 올린다** |
 | **M2** | `run/<run-id>` 분리 + datadir 재생성 | datadir 삭제가 자료를 건드리지 않음 |
 | **M3** | `bin/<chain>/<build>` | 한 서버에 두 빌드 공존(하드포크) |

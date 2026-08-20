@@ -191,12 +191,13 @@ func newRemoteKeysReadCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "read",
-		Short: "Read each server's address/BLS keys (bootnode) and pull keystores",
-		Long: "Reads validator identity from the remote servers over SSH: derives the\n" +
-			"address + BLS public key/PoP via `bootnode -writeaddress`, and (with\n" +
-			"--keystore-dir) pulls the coinbase/operator keystores locally. No external\n" +
-			"etcd is needed (gwemix embeds it). SSH password comes from the credentials\n" +
-			"file or CHAINBENCH_REMOTE_PASS. This automates wemix4's manual key read.",
+		Short: "Read each server's node identity and pull keystores",
+		Long: "Reads validator identity from the remote servers over SSH: fetches each\n" +
+			"node's key and derives its address + BLS public key/PoP locally, and (with\n" +
+			"--keystore-dir) pulls the coinbase/operator keystores down. The servers need\n" +
+			"no bootnode binary. No external etcd is needed (gwemix embeds it). SSH\n" +
+			"password comes from the credentials file or CHAINBENCH_REMOTE_PASS. This\n" +
+			"automates wemix4's manual key read.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			c, err := deploy.LoadCluster(clusterPath)
 			if err != nil {
@@ -224,17 +225,21 @@ func newRemoteKeysReadCmd() *cobra.Command {
 			}
 
 			out := cmd.OutOrStdout()
-			var infos []deploy.NodeKeyInfo
+			var ids []deploy.ServerIdentity
 			for _, s := range targets {
-				info, err := deploy.ReadServerKeys(cmd.Context(), c, cr, hostKey, s, keystoreDir, os.Getenv)
+				id, err := deploy.ReadServerKeys(cmd.Context(), c, cr, hostKey, s, keystoreDir, os.Getenv)
 				if err != nil {
 					return err
 				}
-				infos = append(infos, info)
-				fmt.Fprintf(out, "server %d (%s): addr=%s bls=%s\n", info.Server, s.Host, info.Address, short(info.BLSPubKey))
+				ids = append(ids, id)
+				bls := ""
+				if id.BLS != nil {
+					bls = short(id.BLS.PublicKey)
+				}
+				fmt.Fprintf(out, "server %d (%s): addr=%s bls=%s\n", id.Server, s.Host, id.Address, bls)
 			}
 
-			frag := deploy.FormatAccountsFragment(infos)
+			frag := deploy.FormatAccountsFragment(ids)
 			if accountsOut != "" {
 				if err := os.WriteFile(accountsOut, []byte(frag), 0o600); err != nil {
 					return err

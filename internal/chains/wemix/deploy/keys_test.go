@@ -3,43 +3,38 @@ package deploy
 import (
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
-func TestParseBootnodeOutput(t *testing.T) {
-	out := `Some log line
-address: 0x1234567890abcdef1234567890abcdef12345678
-derived bls public key: 0xaaaabbbbccccdddd
-bls PoP (Proof of Possession): 0x1111222233334444
-`
-	info, err := ParseBootnodeOutput(out)
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	if info.Address != "0x1234567890abcdef1234567890abcdef12345678" {
-		t.Errorf("address = %q", info.Address)
-	}
-	if info.BLSPubKey != "0xaaaabbbbccccdddd" {
-		t.Errorf("bls pubkey = %q", info.BLSPubKey)
-	}
-	if info.BLSPoP != "0x1111222233334444" {
-		t.Errorf("bls pop = %q", info.BLSPoP)
-	}
-}
-
-func TestParseBootnodeOutput_NoAddress(t *testing.T) {
-	if _, err := ParseBootnodeOutput("no useful lines here\n"); err == nil {
-		t.Error("expected error when no address present")
-	}
-}
-
 func TestFormatAccountsFragment(t *testing.T) {
-	frag := FormatAccountsFragment([]NodeKeyInfo{
-		{Server: 3, Address: "0xabc", BLSPubKey: "0xbbb", BLSPoP: "0xppp"},
-	})
+	frag := FormatAccountsFragment([]ServerIdentity{{
+		Server: 3,
+		Identity: keyring.Identity{
+			Address: "0xabc",
+			BLS:     &keyring.BLS{PublicKey: "0xbbb", PoP: "0xppp"},
+		},
+	}})
 	for _, want := range []string{"validators:", "server: 3", `addr: "0xabc"`, `bls: "0xbbb"`, `bls_pop: "0xppp"`} {
 		if !strings.Contains(frag, want) {
 			t.Errorf("fragment missing %q:\n%s", want, frag)
 		}
+	}
+}
+
+// TestFormatAccountsFragment_NoBLS covers a poa server, whose identity has no
+// BLS material: the fragment must omit the keys rather than emit empty ones a
+// reader would take for real values.
+func TestFormatAccountsFragment_NoBLS(t *testing.T) {
+	frag := FormatAccountsFragment([]ServerIdentity{{
+		Server:   1,
+		Identity: keyring.Identity{Address: "0xabc"},
+	}})
+	if strings.Contains(frag, "bls:") || strings.Contains(frag, "bls_pop:") {
+		t.Errorf("fragment emitted empty BLS fields:\n%s", frag)
+	}
+	if !strings.Contains(frag, `addr: "0xabc"`) {
+		t.Errorf("fragment lost the address:\n%s", frag)
 	}
 }
 
@@ -56,7 +51,7 @@ func TestShellQuote(t *testing.T) {
 func TestPaths_Defaults(t *testing.T) {
 	c := &Cluster{}
 	p := c.Paths()
-	if p.Nodekey != "/data/go-wbft/conf/nodekey" || p.Bootnode != "bootnode" {
+	if p.Nodekey != "/data/go-wbft/conf/nodekey" {
 		t.Errorf("default paths: %+v", p)
 	}
 	c2 := &Cluster{RemotePaths: RemotePaths{Nodekey: "/custom/nodekey"}}
