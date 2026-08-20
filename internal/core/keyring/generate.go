@@ -41,6 +41,10 @@ type GenerateOpts struct {
 	// Balance pre-funds each generated account in the genesis alloc (0x-hex
 	// wei).
 	Balance string
+	// Derive selects how much of each identity to compute. BLS material is only
+	// used by the wbft family, and asking for it where it is not used produces
+	// keys nobody reads.
+	Derive Derivation
 	// Rand supplies the entropy. Nil uses crypto/rand; a test passes its own so
 	// generation is reproducible.
 	Rand io.Reader
@@ -53,11 +57,39 @@ type GenerateOpts struct {
 // generated with no chain binary built or on PATH. That is what lets a network
 // be declared from scratch rather than starting from a committed fixture.
 func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
-	if opts.Nodes < 1 {
-		return Preset{}, fmt.Errorf("keyring: nodes must be >= 1")
-	}
+	// A new ring exists to be a network's validator set, so leaving Validators
+	// unset means all of them.
 	if opts.Validators < 1 || opts.Validators > opts.Nodes {
 		opts.Validators = opts.Nodes
+	}
+	return generate(Preset{}, opts, progress)
+}
+
+// Extend adds opts.Nodes entries to the ring already in opts.Out, keeping the
+// ones that are there.
+//
+// Extending rather than regenerating matters because identities are referenced
+// elsewhere the moment they exist — in a genesis, in a running datadir, in a
+// test's declaration. Regenerating would silently replace them.
+//
+// opts.Validators is how many of the *new* entries join the validator set, and
+// it defaults to none. Changing who validates changes what the chain is, so it
+// is asked for rather than inferred from a count.
+func Extend(opts GenerateOpts, progress func(string)) (Preset, error) {
+	if opts.Validators > opts.Nodes {
+		return Preset{}, fmt.Errorf("keyring: extend: %d new validators from %d new nodes",
+			opts.Validators, opts.Nodes)
+	}
+	existing, err := LoadPreset(opts.Out)
+	if err != nil {
+		return Preset{}, fmt.Errorf("keyring: extend: %w", err)
+	}
+	return generate(existing, opts, progress)
+}
+
+func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
+	if opts.Nodes < 1 {
+		return Preset{}, fmt.Errorf("keyring: nodes must be >= 1")
 	}
 	if opts.Rand == nil {
 		opts.Rand = rand.Reader
@@ -71,25 +103,35 @@ func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
 		return Preset{}, err
 	}
 
-	set := Preset{Password: opts.Password}
-	alloc := map[string]map[string]any{}
+	set := existing
+	set.Password = opts.Password
+	alloc, err := decodeAlloc(existing.Alloc)
+	if err != nil {
+		return Preset{}, err
+	}
 
-	for i := 1; i <= opts.Nodes; i++ {
+	first := len(existing.Nodes) + 1
+	for i := first; i < first+opts.Nodes; i++ {
 		e, err := generateEntry(i, opts)
 		if err != nil {
 			return Preset{}, fmt.Errorf("keyring: node %d: %w", i, err)
 		}
 		set.Nodes = append(set.Nodes, e)
 		alloc[strings.TrimPrefix(e.Address, "0x")] = map[string]any{"balance": opts.Balance}
-		if i <= opts.Validators {
+		if len(set.Validators)-len(existing.Validators) < opts.Validators {
 			set.Validators = append(set.Validators, e.Address)
-			set.BLSKeys = append(set.BLSKeys, e.BLS.PublicKey)
+			if e.BLS != nil {
+				set.BLSKeys = append(set.BLSKeys, e.BLS.PublicKey)
+			}
 		}
 		if progress != nil {
-			progress(fmt.Sprintf("node %d  %s  bls=%s…", i, e.Address, shortHex(e.BLS.PublicKey)))
+			progress(describeEntry(e))
 		}
 	}
 	set.Members = append([]string(nil), set.Validators...)
+	// Extra-data is derived from the validator set, so it cannot survive a
+	// change to that set.
+	set.ExtraData = ""
 
 	raw, err := json.Marshal(alloc)
 	if err != nil {
@@ -152,7 +194,7 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 	if err != nil {
 		return Entry{}, err
 	}
-	id, err := Derive(key, WithBLS)
+	id, err := Derive(key, opts.Derive)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -162,16 +204,37 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 	if err := writeKeystore(nodeDir, key, id.Address, opts.Password); err != nil {
 		return Entry{}, err
 	}
-	for name, val := range map[string]string{
-		"address":    id.Address,
-		"pubkey":     id.PublicKey,
-		"bls_pubkey": id.BLS.PublicKey,
-	} {
+	public := map[string]string{"address": id.Address, "pubkey": id.PublicKey}
+	if id.BLS != nil {
+		public["bls_pubkey"] = id.BLS.PublicKey
+	}
+	for name, val := range public {
 		if err := os.WriteFile(filepath.Join(nodeDir, name), []byte(val), publicPerm); err != nil {
 			return Entry{}, err
 		}
 	}
-	return Entry{Index: i, Nodekey: key, Identity: id}, nil
+	return Entry{Label: nodeLabel(i), Index: i, Nodekey: key, Identity: id}, nil
+}
+
+// decodeAlloc reads back an existing alloc so extending a ring keeps the
+// balances already granted.
+func decodeAlloc(raw json.RawMessage) (map[string]map[string]any, error) {
+	out := map[string]map[string]any{}
+	if len(raw) == 0 {
+		return out, nil
+	}
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("keyring: existing alloc: %w", err)
+	}
+	return out, nil
+}
+
+// describeEntry is the progress line for one generated entry.
+func describeEntry(e Entry) string {
+	if e.BLS == nil {
+		return fmt.Sprintf("node %d  %s", e.Index, e.Address)
+	}
+	return fmt.Sprintf("node %d  %s  bls=%s…", e.Index, e.Address, shortHex(e.BLS.PublicKey))
 }
 
 // writeKeystore encrypts the account key into a standard v3 keystore where the

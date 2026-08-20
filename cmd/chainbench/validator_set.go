@@ -27,6 +27,9 @@ func newValidatorSetCmd() *cobra.Command {
 			"5-node preset (e.g. the n=6 quorum cases).",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
+			// `validator set` builds a wbft validator set, which is defined by its
+			// BLS keys; `keyring new` is where BLS became opt-in.
+			opts.Derive = keyring.WithBLS
 			meta, err := keyring.Generate(opts, func(line string) { fmt.Fprintln(out, line) })
 			if err != nil {
 				return err

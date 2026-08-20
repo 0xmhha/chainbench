@@ -272,7 +272,8 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	written, err := keyring.Generate(keyring.GenerateOpts{
 		Nodes: nodes, Validators: 2, Out: dir, Password: "1", Balance: "0x1",
-		Rand: bytes.NewReader(bytes.Repeat([]byte{0x7f}, nodes*keyring.PrivateKeyLen)),
+		Derive: keyring.WithBLS,
+		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x7f}, nodes*keyring.PrivateKeyLen)),
 	}, nil)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)

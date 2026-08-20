@@ -109,6 +109,7 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 		Nodes:      n,
 		Validators: s.Validators,
 		Out:        s.Path,
+		Derive:     keyring.WithBLS,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}

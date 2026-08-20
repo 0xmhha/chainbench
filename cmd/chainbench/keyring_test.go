@@ -1,0 +1,261 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// newRing creates a ring in a temp dir and returns its path.
+func newRing(t *testing.T, args ...string) string {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "ring")
+	base := []string{"keyring", "new", "--keyring", dir, "--count", "3"}
+	if _, err := run(t, append(base, args...)...); err != nil {
+		t.Fatalf("keyring new: %v", err)
+	}
+	return dir
+}
+
+// TestKeyring_NewCreatesAUsableRing covers the whole shape a chain consumes.
+func TestKeyring_NewCreatesAUsableRing(t *testing.T) {
+	dir := newRing(t, "--with-bls", "--validators", "2")
+
+	out, err := run(t, "keyring", "list", "--keyring", dir, "--json")
+	if err != nil {
+		t.Fatalf("keyring list: %v\n%s", err, out)
+	}
+	var entries []entryView
+	if err := json.Unmarshal([]byte(jsonPart(out)), &entries); err != nil {
+		t.Fatalf("list output not JSON: %v\n%s", err, out)
+	}
+	if len(entries) != 3 {
+		t.Fatalf("got %d identities, want 3", len(entries))
+	}
+	for _, e := range entries {
+		if e.Label == "" || e.Address == "" || e.PublicKey == "" {
+			t.Errorf("incomplete identity: %+v", e)
+		}
+		if e.BLSPubKey == "" {
+			t.Errorf("%s has no BLS material despite --with-bls", e.Label)
+		}
+		if e.Nodekey != "" {
+			t.Errorf("%s leaked its private key into a listing", e.Label)
+		}
+	}
+
+	// The key file a node launches with is owner-only.
+	info, err := os.Stat(filepath.Join(dir, "node1", "nodekey"))
+	if err != nil {
+		t.Fatalf("stat nodekey: %v", err)
+	}
+	if perm := info.Mode().Perm(); perm != 0o600 {
+		t.Errorf("nodekey mode = %o, want 600", perm)
+	}
+}
+
+// TestKeyring_WithoutBLSOmitsIt is the wemix case: BLS is absent, not empty.
+func TestKeyring_WithoutBLSOmitsIt(t *testing.T) {
+	dir := newRing(t)
+	out, err := run(t, "keyring", "show", "--keyring", dir, "--name", "node1", "--json")
+	if err != nil {
+		t.Fatalf("keyring show: %v\n%s", err, out)
+	}
+	var e entryView
+	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	if e.BLSPubKey != "" || e.BLSPoP != "" {
+		t.Errorf("BLS material derived without --with-bls: %+v", e)
+	}
+	if e.Address == "" {
+		t.Error("an account-only identity should still have an address")
+	}
+}
+
+// TestKeyring_AddKeepsExistingIdentities is the point of add over new: whatever
+// already referenced an identity keeps working.
+func TestKeyring_AddKeepsExistingIdentities(t *testing.T) {
+	dir := newRing(t, "--with-bls")
+	before := listAddresses(t, dir)
+
+	if _, err := run(t, "keyring", "add", "--keyring", dir, "--count", "2", "--with-bls"); err != nil {
+		t.Fatalf("keyring add: %v", err)
+	}
+	after := listAddresses(t, dir)
+
+	if len(after) != len(before)+2 {
+		t.Fatalf("got %d identities, want %d", len(after), len(before)+2)
+	}
+	for i, addr := range before {
+		if after[i] != addr {
+			t.Errorf("identity %d changed: %s -> %s", i+1, addr, after[i])
+		}
+	}
+}
+
+// TestKeyring_AddDoesNotPromoteToValidator keeps two decisions separate: adding
+// an identity, and changing who validates.
+func TestKeyring_AddDoesNotPromoteToValidator(t *testing.T) {
+	dir := newRing(t, "--with-bls", "--validators", "2")
+	if _, err := run(t, "keyring", "add", "--keyring", dir, "--count", "2", "--with-bls"); err != nil {
+		t.Fatalf("keyring add: %v", err)
+	}
+	out, err := run(t, "keyring", "list", "--keyring", dir)
+	if err != nil {
+		t.Fatalf("keyring list: %v", err)
+	}
+	if !strings.Contains(out, "5 identities, 2 validators") {
+		t.Errorf("add changed the validator set:\n%s", out)
+	}
+}
+
+// TestKeyring_ExportRequiresConfirmation keeps a secret out of scrollback by
+// accident, and out of a listing entirely.
+func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
+	dir := newRing(t)
+
+	if _, err := run(t, "keyring", "export", "--keyring", dir, "--name", "node1"); err == nil {
+		t.Fatal("export printed a private key without --yes")
+	}
+
+	out, err := run(t, "keyring", "export", "--keyring", dir, "--name", "node1", "--yes", "--json")
+	if err != nil {
+		t.Fatalf("keyring export: %v\n%s", err, out)
+	}
+	var e entryView
+	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	if !strings.HasPrefix(e.Nodekey, "0x") || len(e.Nodekey) != 66 {
+		t.Errorf("exported key looks wrong: %q", e.Nodekey)
+	}
+}
+
+// TestKeyring_ReportsWhichRingItUsed is the K3 gate from the design: a command
+// that fell back to a default must say so, or an operator inspects one ring and
+// launches from another.
+func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
+	dir := newRing(t)
+
+	out, err := run(t, "keyring", "list", "--keyring", dir)
+	if err != nil {
+		t.Fatalf("keyring list: %v", err)
+	}
+	if !strings.Contains(out, "keyring: "+dir+" (--keyring)") {
+		t.Errorf("the flag source was not reported:\n%s", out)
+	}
+
+	t.Setenv(KeyringEnv, dir)
+	out, err = run(t, "keyring", "list")
+	if err != nil {
+		t.Fatalf("keyring list via env: %v", err)
+	}
+	if !strings.Contains(out, "("+KeyringEnv+")") {
+		t.Errorf("the environment source was not reported:\n%s", out)
+	}
+
+	// With nothing naming a ring, the error says where it looked and why.
+	t.Setenv(KeyringEnv, "")
+	_, err = run(t, "keyring", "list")
+	if err == nil {
+		t.Fatal("expected an error when the default ring does not exist")
+	}
+	if !strings.Contains(err.Error(), DefaultKeyringDir) || !strings.Contains(err.Error(), "default") {
+		t.Errorf("error should name the ring and why it was chosen: %v", err)
+	}
+}
+
+// TestKeyring_ImportRefusesToOverwrite keeps an identity from being replaced
+// under a name something else already refers to.
+func TestKeyring_ImportRefusesToOverwrite(t *testing.T) {
+	dir := newRing(t)
+	exported := exportKey(t, dir, "node1")
+
+	if _, err := run(t, "keyring", "import", "--keyring", dir,
+		"--name", "imported", "--private-key", exported); err != nil {
+		t.Fatalf("keyring import: %v", err)
+	}
+	if _, err := run(t, "keyring", "import", "--keyring", dir,
+		"--name", "imported", "--private-key", exported); err == nil {
+		t.Fatal("import overwrote an existing identity")
+	}
+}
+
+// TestKeyring_VerifyCatchesDrift checks the shipped ring and then a tampered
+// copy, so the check is shown to fail as well as pass.
+func TestKeyring_VerifyCatchesDrift(t *testing.T) {
+	if _, err := run(t, "keyring", "list", "--keyring", "../../keys/preset", "--verify"); err != nil {
+		t.Fatalf("the shipped ring did not verify: %v", err)
+	}
+
+	dir := newRing(t)
+	tamper(t, filepath.Join(dir, "metadata.json"))
+	if _, err := run(t, "keyring", "list", "--keyring", dir, "--verify"); err == nil {
+		t.Fatal("verify accepted an identity its key does not derive")
+	}
+}
+
+func listAddresses(t *testing.T, dir string) []string {
+	t.Helper()
+	out, err := run(t, "keyring", "list", "--keyring", dir, "--json")
+	if err != nil {
+		t.Fatalf("keyring list: %v\n%s", err, out)
+	}
+	var entries []entryView
+	if err := json.Unmarshal([]byte(jsonPart(out)), &entries); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	addrs := make([]string, 0, len(entries))
+	for _, e := range entries {
+		addrs = append(addrs, e.Address)
+	}
+	return addrs
+}
+
+func exportKey(t *testing.T, dir, name string) string {
+	t.Helper()
+	out, err := run(t, "keyring", "export", "--keyring", dir, "--name", name, "--yes", "--json")
+	if err != nil {
+		t.Fatalf("keyring export: %v\n%s", err, out)
+	}
+	var e entryView
+	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	return e.Nodekey
+}
+
+// tamper rewrites node 1's address so it no longer matches its own key.
+func tamper(t *testing.T, path string) {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatalf("parse %s: %v", path, err)
+	}
+	nodes, _ := doc["nodes"].([]any)
+	first, _ := nodes[0].(map[string]any)
+	first["address"] = "0x00000000000000000000000000000000deadbeef"
+	out, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if err := os.WriteFile(path, out, 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+}
+
+// jsonPart strips the "keyring: <dir> (<source>)" banner that precedes JSON
+// output, which exists so the ring in use is never a guess.
+func jsonPart(out string) string {
+	if i := strings.IndexAny(out, "[{"); i >= 0 {
+		return out[i:]
+	}
+	return out
+}

@@ -18,7 +18,7 @@ import (
 func newValidatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator",
-		Short: "Inspect and manage validator identities (chain-aware consensus roles)",
+		Short: "Inspect and manage validator identities; key material lives under `keyring`",
 	}
 	cmd.AddCommand(newValidatorNewCmd(), newValidatorImportCmd(), newValidatorRosterCmd(), newValidatorSetCmd())
 	return cmd

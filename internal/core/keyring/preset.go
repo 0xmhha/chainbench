@@ -110,7 +110,10 @@ func LoadPreset(dir string) (Preset, error) {
 	if len(f.Validators) == 0 {
 		return Preset{}, fmt.Errorf("keyring: %s has no validators", path)
 	}
-	if len(f.Validators) != len(f.BLSPublicKeys) {
+	// BLS keys are optional as a set — the poa family has none — but if any are
+	// present they are read positionally against the validators, so a partial
+	// list would silently attach one validator's key to another.
+	if len(f.BLSPublicKeys) != 0 && len(f.BLSPublicKeys) != len(f.Validators) {
 		return Preset{}, fmt.Errorf("keyring: %s has %d validators but %d BLS keys",
 			path, len(f.Validators), len(f.BLSPublicKeys))
 	}
@@ -122,6 +125,10 @@ func LoadPreset(dir string) (Preset, error) {
 			return Preset{}, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}
 		e := Entry{
+			// A file records an index, not a label; the label a numbered set
+			// uses is derived from it so that reading a ring and generating one
+			// produce entries that name themselves the same way.
+			Label:   nodeLabel(n.Index),
 			Index:   n.Index,
 			Nodekey: key,
 			Identity: Identity{
@@ -145,6 +152,9 @@ func LoadPreset(dir string) (Preset, error) {
 		Password:   f.Password,
 	}, nil
 }
+
+// nodeLabel is the label a numbered identity carries: node1, node2, ...
+func nodeLabel(index int) Label { return Label(fmt.Sprintf("node%d", index)) }
 
 // Node returns the entry with the given 1-based index and whether it was found.
 func (p Preset) Node(index int) (Entry, bool) {
