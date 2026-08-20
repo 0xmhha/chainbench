@@ -79,11 +79,13 @@ profiles/*-auth.yaml
 # Defense in depth — tests/env/secret/.gitignore also ignores its own contents.
 tests/env/secret/
 
-# Remote SSH access config (ssh port / server IP list / user / password|keyPath).
-# NEVER commit real values — only the *.sample template is tracked (design §7).
+# Server inventory: host addresses, node port assignments, data roots, and SSH
+# access. All of it is site-specific and sensitive — NEVER commit real values.
+# Only remote-server-config.sample.yaml is tracked (design §7).
 remote-server-config.yaml
 remote-server-config.yml
 *remote-server-config.yaml
+*remote-server-config.yml
 !remote-server-config.sample.yaml
 
 # --- Secrets hardening (defense in depth) --------------------------------------

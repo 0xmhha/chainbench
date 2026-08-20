@@ -63,7 +63,7 @@ func writeServerConfig(t *testing.T, body string) string {
 }
 
 func TestKeysImport_ServerSource(t *testing.T) {
-	cfg := writeServerConfig(t, "user: ubuntu\npassword: pw\nservers:\n  - index: 3\n    host: 10.0.0.3\n")
+	cfg := writeServerConfig(t, "version: 1\ndefaults:\n  ssh: {user: ubuntu, password: pw}\nservers:\n  - index: 3\n    kind: remote\n    host: 10.0.0.3\n")
 
 	// --server counts as a source: combining with --private-key is an error.
 	if _, err := run(t, "keys", "import", "--server", "3", "--server-config", cfg, "--private-key", "0x01"); err == nil {

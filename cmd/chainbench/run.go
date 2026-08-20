@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
@@ -43,6 +44,7 @@ func newRunCmd() *cobra.Command {
 		launchOpts   []string
 		dashboardURL string
 		jsonOut      bool
+		sf           serverFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
@@ -76,7 +78,7 @@ func newRunCmd() *cobra.Command {
 				keysDir: keysDir, keysSource: keysSource, bootnode: bootnode,
 				artifactRoot: artifactRoot, validators: validators,
 				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
-				bus: bus,
+				server: sf.ref(), bus: bus,
 			}, specs))
 			if err != nil {
 				flush()
@@ -104,6 +106,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "local: pin the devp2p network id on every node (0 = binary default)")
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
 		"local: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
+	sf.bind(cmd)
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd
@@ -137,7 +140,10 @@ type runOpts struct {
 	chainID      int64
 	networkID    int64
 	launchOpts   []string
-	bus          *obs.Bus
+	// server selects the node placement (ports, host, capacity) from the
+	// operator's inventory; its zero value uses the built-in local plan.
+	server app.ServerRef
+	bus    *obs.Bus
 }
 
 // buildRunEngine selects attach mode (when --rpc endpoints are given) or local
@@ -160,16 +166,26 @@ func buildRunEngine(o runOpts) (engine.Engine, error) {
 		if err != nil {
 			return nil, err
 		}
+		placement, err := app.ResolveServer(app.Deps{}, o.server, runMinValidators, runPortBand)
+		if err != nil {
+			return nil, err
+		}
 		return engine.NewLocalEngine(engine.LocalConfig{
 			Chain: o.chain, Binary: o.binary, Keys: src,
 			ArtifactRoot: o.artifactRoot, Validators: o.validators,
 			ChainID: o.chainID, NetworkID: o.networkID, LaunchOverrides: overrides,
-			Bus: o.bus,
+			Placement: placement.Placement, Bus: o.bus,
 		})
 	default:
 		return nil, fmt.Errorf("run: provide --rpc <url> (attach) or --binary <path> (local)")
 	}
 }
+
+// Placement bounds for a local run: a BFT floor and the local port band.
+const (
+	runMinValidators = 1
+	runPortBand      = 100
+)
 
 // keySource maps --keys-source to the engine seam that materializes identities.
 func keySource(o runOpts) (engine.KeySource, error) {

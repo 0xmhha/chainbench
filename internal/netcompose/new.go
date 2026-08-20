@@ -75,3 +75,22 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.markStep("new", detail)
 	return detail, nil
 }
+
+// Retarget replaces where the network's data plane lives, after `new` recorded
+// a default. It exists for the server inventory: the entry an operator selects
+// decides both the host and the data root, and that decision arrives with the
+// placement rather than at `new`. A target with no data root keeps the current
+// one, so naming only a host does not blank the path.
+func (w *Workspace) Retarget(t TargetSpec) error {
+	if t.Kind == "" {
+		return nil
+	}
+	if t.DataRoot == "" {
+		t.DataRoot = w.state.Target.DataRoot
+	}
+	if t.Kind == TargetRemote && (t.Host == "" || t.DataRoot == "") {
+		return fmt.Errorf("netcompose: remote target needs a host and a data root")
+	}
+	w.state.Target = t
+	return nil
+}

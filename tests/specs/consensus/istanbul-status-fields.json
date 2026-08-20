@@ -5,9 +5,9 @@
   "chain": { "name": "stablenet", "binary": "gstable" },
   "requires": ["rpc"],
   "assertions": [
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "sealerActivity", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "author", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "blockRange", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "latest"], "select": "roundStats", "compare": "NotNil", "expected": null }
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "sealerActivity", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "author", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "blockRange", "compare": "NotNil", "expected": null },
+    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "roundStats", "compare": "NotNil", "expected": null }
   ]
 }

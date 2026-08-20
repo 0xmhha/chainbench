@@ -23,6 +23,7 @@ func newNetUpCmd() *cobra.Command {
 		genesisSet, launchSet                 []string
 		overlayPath                           string
 		tf                                    targetFlags
+		sf                                    serverFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "up",
@@ -41,6 +42,7 @@ func newNetUpCmd() *cobra.Command {
 				KeysDir: keysDir, Target: target, Binary: binary,
 				Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath,
+				Server:     sf.ref(),
 				KeysSource: keysSource, Bootnode: bootnode,
 				ChainID: chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
 				LaunchSet: launchSet,
@@ -73,6 +75,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&overlayPath, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
 	tf.bind(cmd)
+	sf.bind(cmd)
 	return cmd
 }
 

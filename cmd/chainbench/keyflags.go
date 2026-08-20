@@ -117,10 +117,10 @@ func (f *sourceFlags) serverCreds(env func(string) string) (remote.Credentials, 
 		return remote.Credentials{}, err
 	}
 	if f.remoteUser != "" {
-		srv.User = f.remoteUser
+		srv.SSH.User = f.remoteUser
 	}
 	if f.remotePort != 0 {
-		srv.Port = f.remotePort
+		srv.SSH.Port = f.remotePort
 	}
 	return srv.Credentials(env)
 }

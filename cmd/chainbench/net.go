@@ -6,7 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
 // newNetCmd is the composable step surface: it composes a chain network for
@@ -93,4 +95,27 @@ func sortedSteps(st netcompose.State) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+// serverFlags holds the server-inventory selection shared by the commands that
+// place nodes. Host addresses and ports live in the inventory file, never on
+// the command line.
+type serverFlags struct {
+	config string
+	server string
+	index  int
+	fleet  bool
+}
+
+// bind registers the inventory flags on cmd.
+func (f *serverFlags) bind(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&f.config, "server-config", "", "server inventory file (default: "+serverset.DefaultConfigFile+" when present)")
+	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the inventory")
+	cmd.Flags().IntVar(&f.index, "server-index", 0, "server to place nodes on, by index from the inventory")
+	cmd.Flags().BoolVar(&f.fleet, "fleet", false, "spread the network across every server in the inventory, one node per host")
+}
+
+// ref is the app-layer selection.
+func (f *serverFlags) ref() app.ServerRef {
+	return app.ServerRef{ConfigPath: f.config, Name: f.server, Index: f.index, Fleet: f.fleet}
 }

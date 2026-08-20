@@ -33,6 +33,13 @@ func withWorkspace(d Deps, dataDir string, fn func(*netcompose.Workspace) (strin
 	return detail, nil
 }
 
+// Placement bounds shared by the composition steps: a BFT network needs at
+// least one validator, and a local port band holds this many nodes.
+const (
+	minValidators = 1
+	portBand      = 100
+)
+
 // StepOut is the common result of one mutating step: its recorded detail line.
 type StepOut struct {
 	Detail string
@@ -68,6 +75,9 @@ type NetAllocateIn struct {
 	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
 	// replaces the counts, which cannot express a per-node choice.
 	TopologyPath string
+	// Server selects where the nodes are placed and on what ports, from the
+	// operator's server inventory. Its zero value uses the built-in local plan.
+	Server ServerRef
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
@@ -80,10 +90,20 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		}
 		topo = &loaded
 	}
+	resolved, err := ResolveServer(d, in.Server, minValidators, portBand)
+	if err != nil {
+		return StepOut{}, err
+	}
 	detail, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
+		if resolved.HasTarget {
+			if err := ws.Retarget(resolved.Target); err != nil {
+				return "", err
+			}
+		}
 		return ws.Allocate(netcompose.AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo,
+			Placement: resolved.Placement,
 		})
 	})
 	return StepOut{Detail: detail}, err
