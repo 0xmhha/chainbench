@@ -59,14 +59,17 @@ func Load(chainID, keysDir string) (Roster, error) {
 
 	switch family {
 	case "wbft":
-		for i, addr := range preset.Validators {
+		// A ring that declares no validator set means the network chooses, so
+		// the roster shows what a full-size network would use.
+		net := preset.NetworkFor(0)
+		for i, addr := range net.Validators {
 			detail := "no BLS"
-			if i < len(preset.BLSKeys) && preset.BLSKeys[i] != "" {
+			if i < len(net.BLSKeys) && net.BLSKeys[i] != "" {
 				detail = "BLS present"
 			}
 			r.Accounts = append(r.Accounts, Account{Role: RoleValidator, Index: i + 1, Address: addr, Detail: detail})
 		}
-		for _, addr := range preset.Members {
+		for _, addr := range net.Members {
 			r.Accounts = append(r.Accounts, Account{Role: RoleGovernance, Address: addr, Detail: "system-contract council"})
 		}
 	case "poa":

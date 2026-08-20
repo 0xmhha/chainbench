@@ -98,7 +98,7 @@ func TestArmSpecs(t *testing.T) {
 		Fam: wbftfam.New(),
 	}
 	preset := keyring.Preset{
-		Validators: []string{"0xval1"},
+		Network: keyring.Network{Validators: []string{"0xval1"}},
 		Nodes: []keyring.Entry{
 			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
 			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
@@ -217,7 +217,7 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 		Fam: wbftfam.New(),
 	}
 	preset := keyring.Preset{
-		Validators: []string{"0xval1"},
+		Network: keyring.Network{Validators: []string{"0xval1"}},
 		Nodes: []keyring.Entry{
 			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
 			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},

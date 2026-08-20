@@ -116,10 +116,10 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 // id and that the head has advanced.
 func liveSpec(t *testing.T, chainID int64, preset keyring.Preset) testspec.Spec {
 	t.Helper()
-	from := preset.Validators[0]
+	from := preset.Network.Validators[0]
 	to := from
-	if len(preset.Validators) > 1 {
-		to = preset.Validators[1]
+	if len(preset.Network.Validators) > 1 {
+		to = preset.Network.Validators[1]
 	}
 	raw, _ := json.Marshal(map[string]any{
 		"schemaVersion": "1",

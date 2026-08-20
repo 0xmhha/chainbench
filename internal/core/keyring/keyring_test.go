@@ -215,11 +215,11 @@ func TestLoadPreset_ShippedFixture(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
-	if len(p.Nodes) == 0 || len(p.Validators) == 0 {
-		t.Fatalf("empty preset: %d nodes, %d validators", len(p.Nodes), len(p.Validators))
+	if len(p.Nodes) == 0 || len(p.Network.Validators) == 0 {
+		t.Fatalf("empty preset: %d nodes, %d validators", len(p.Nodes), len(p.Network.Validators))
 	}
-	if len(p.Validators) != len(p.BLSKeys) {
-		t.Errorf("%d validators but %d BLS keys", len(p.Validators), len(p.BLSKeys))
+	if len(p.Network.Validators) != len(p.Network.BLSKeys) {
+		t.Errorf("%d validators but %d BLS keys", len(p.Network.Validators), len(p.Network.BLSKeys))
 	}
 	// Every entry carries its secret and its public identity in one value.
 	for _, e := range p.Nodes {
@@ -238,29 +238,26 @@ func TestLoadPreset_ShippedFixture(t *testing.T) {
 	}
 }
 
-// TestPreset_TakeDropsExtraData pins the fix for a defect a narrowed set used
-// to carry: extra-data encodes the validator set, so the full set's copy names
-// validators a smaller network never starts.
-func TestPreset_TakeDropsExtraData(t *testing.T) {
+// TestPreset_NetworkForNarrowsAndDropsExtraData pins the fix for a defect a
+// narrowed set used to carry: extra-data encodes the validator set, so the full
+// set's copy names validators a smaller network never starts.
+func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
 	p, err := keyring.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
-	if p.ExtraData == "" {
+	if p.Network.ExtraData == "" {
 		t.Skip("the shipped preset records no extra-data")
 	}
-	two := p.Take(2)
+	two := p.NetworkFor(2)
 	if len(two.Validators) != 2 || len(two.BLSKeys) != 2 {
-		t.Fatalf("Take(2): %d validators, %d BLS keys", len(two.Validators), len(two.BLSKeys))
+		t.Fatalf("NetworkFor(2): %d validators, %d BLS keys", len(two.Validators), len(two.BLSKeys))
 	}
 	if two.ExtraData != "" {
-		t.Errorf("Take(2) kept the full set's extraData: %q", two.ExtraData)
+		t.Errorf("NetworkFor(2) kept the full set's extraData: %q", two.ExtraData)
 	}
-	if len(two.Nodes) != len(p.Nodes) {
-		t.Errorf("Take(2) dropped node identities: %d of %d", len(two.Nodes), len(p.Nodes))
-	}
-	if p.Take(0).ExtraData == "" || p.Take(99).ExtraData == "" {
-		t.Error("taking the whole set should keep its extra-data")
+	if p.NetworkFor(0).ExtraData == "" || p.NetworkFor(99).ExtraData == "" {
+		t.Error("asking for the whole set should keep its extra-data")
 	}
 }
 
@@ -283,8 +280,8 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
-	if len(read.Nodes) != nodes || len(read.Validators) != 2 {
-		t.Fatalf("read back %d nodes / %d validators", len(read.Nodes), len(read.Validators))
+	if len(read.Nodes) != nodes || len(read.Network.Validators) != 2 {
+		t.Fatalf("read back %d nodes / %d validators", len(read.Nodes), len(read.Network.Validators))
 	}
 	for i, want := range written.Nodes {
 		got := read.Nodes[i]
@@ -297,8 +294,8 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	}
 	// Derived values are not stored: extra-data is computed at genesis time for
 	// whatever validator set is actually used.
-	if read.ExtraData != "" {
-		t.Errorf("generated set stored extra-data: %q", read.ExtraData)
+	if read.Network.ExtraData != "" {
+		t.Errorf("generated set stored extra-data: %q", read.Network.ExtraData)
 	}
 	// The nodekey file a node launches with must match the index.
 	onDisk, err := os.ReadFile(filepath.Join(dir, "node1", "nodekey"))

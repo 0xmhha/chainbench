@@ -26,7 +26,7 @@ func TestPresetKeySource_LoadsAndChecksCapacity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
-	if len(ks.Preset.Validators) == 0 {
+	if len(ks.Preset.Network.Validators) == 0 {
 		t.Error("preset carries no validators")
 	}
 	if _, ok := ks.Preset.Node(1); !ok {
@@ -59,11 +59,11 @@ func TestGeneratedKeySource_NeedsNoExternalBinary(t *testing.T) {
 	// A wbft-family genesis reads the validator set out of extra-data, which is
 	// derived from the BLS keys at genesis time — so what the generated set
 	// must carry is the BLS material, not a precomputed extra-data.
-	if len(ks.Preset.BLSKeys) != nodes {
-		t.Errorf("generated set has %d BLS keys, want %d", len(ks.Preset.BLSKeys), nodes)
+	if len(ks.Preset.Network.BLSKeys) != nodes {
+		t.Errorf("generated set has %d BLS keys, want %d", len(ks.Preset.Network.BLSKeys), nodes)
 	}
-	if ks.Preset.ExtraData != "" {
-		t.Errorf("generated set stored a derived extraData: %q", ks.Preset.ExtraData)
+	if ks.Preset.Network.ExtraData != "" {
+		t.Errorf("generated set stored a derived extraData: %q", ks.Preset.Network.ExtraData)
 	}
 }
 

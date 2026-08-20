@@ -34,7 +34,7 @@ func newValidatorSetCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(out, "wrote %d-node preset (%d validators) to %s\n", len(meta.Nodes), len(meta.Validators), opts.Out)
+			fmt.Fprintf(out, "wrote %d-node preset (%d validators) to %s\n", len(meta.Nodes), len(meta.Network.Validators), opts.Out)
 			return nil
 		},
 	}

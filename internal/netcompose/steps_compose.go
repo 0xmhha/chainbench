@@ -87,7 +87,8 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	detail := fmt.Sprintf("%s: %d identities, %d validators", src.Describe(), len(ks.Preset.Nodes), len(ks.Preset.Validators))
+	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
+		src.Describe(), len(ks.Preset.Nodes), len(ks.Preset.Network.Validators))
 	w.markStep("keys", detail)
 	return detail, nil
 }
@@ -261,13 +262,13 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("netcompose: genesis: %w", err)
 	}
-	sub := preset.Take(w.state.Validators)
+	net := preset.NetworkFor(w.state.Validators)
 	gen, err := genesis.Build(p, genesis.Inputs{
-		Validators: sub.Validators,
-		BLSKeys:    sub.BLSKeys,
-		ExtraData:  sub.ExtraData,
-		Members:    sub.Members,
-		Alloc:      sub.Alloc,
+		Validators: net.Validators,
+		BLSKeys:    net.BLSKeys,
+		ExtraData:  net.ExtraData,
+		Members:    net.Members,
+		Alloc:      net.Alloc,
 		ChainID:    opts.ChainID,
 	})
 	if err != nil {

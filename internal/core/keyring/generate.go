@@ -28,11 +28,21 @@ const (
 	keystoreScryptP = 6
 )
 
+// NoValidators asks [Generate] to declare no validator set: the ring holds
+// identities, and a network says which of them validate.
+//
+// It is a sentinel rather than 0 because 0 is what an unset field looks like,
+// and "the caller said nothing" has to keep meaning "all of them" for the rings
+// that already exist.
+const NoValidators = -1
+
 // GenerateOpts configures ring generation.
 type GenerateOpts struct {
 	// Nodes is how many identities to create.
 	Nodes int
-	// Validators is how many of them join the validator set; <=0 means all.
+	// Validators is how many of them join the validator set. Unset means all of
+	// them for a new ring and none for an extended one; [NoValidators] declares
+	// none explicitly.
 	Validators int
 	// Out is the ring directory.
 	Out string
@@ -57,9 +67,12 @@ type GenerateOpts struct {
 // generated with no chain binary built or on PATH. That is what lets a network
 // be declared from scratch rather than starting from a committed fixture.
 func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
-	// A new ring exists to be a network's validator set, so leaving Validators
-	// unset means all of them.
-	if opts.Validators < 1 || opts.Validators > opts.Nodes {
+	switch {
+	case opts.Validators == NoValidators:
+		opts.Validators = 0
+	case opts.Validators < 1 || opts.Validators > opts.Nodes:
+		// A ring generated without saying otherwise is a network's validator
+		// set, which is what every existing preset is.
 		opts.Validators = opts.Nodes
 	}
 	return generate(Preset{}, opts, progress)
@@ -105,7 +118,7 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 
 	set := existing
 	set.Password = opts.Password
-	alloc, err := decodeAlloc(existing.Alloc)
+	alloc, err := decodeAlloc(existing.Network.Alloc)
 	if err != nil {
 		return Preset{}, err
 	}
@@ -118,26 +131,26 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 		}
 		set.Nodes = append(set.Nodes, e)
 		alloc[strings.TrimPrefix(e.Address, "0x")] = map[string]any{"balance": opts.Balance}
-		if len(set.Validators)-len(existing.Validators) < opts.Validators {
-			set.Validators = append(set.Validators, e.Address)
+		if len(set.Network.Validators)-len(existing.Network.Validators) < opts.Validators {
+			set.Network.Validators = append(set.Network.Validators, e.Address)
 			if e.BLS != nil {
-				set.BLSKeys = append(set.BLSKeys, e.BLS.PublicKey)
+				set.Network.BLSKeys = append(set.Network.BLSKeys, e.BLS.PublicKey)
 			}
 		}
 		if progress != nil {
 			progress(describeEntry(e))
 		}
 	}
-	set.Members = append([]string(nil), set.Validators...)
+	set.Network.Members = append([]string(nil), set.Network.Validators...)
 	// Extra-data is derived from the validator set, so it cannot survive a
 	// change to that set.
-	set.ExtraData = ""
+	set.Network.ExtraData = ""
 
 	raw, err := json.Marshal(alloc)
 	if err != nil {
 		return Preset{}, err
 	}
-	set.Alloc = raw
+	set.Network.Alloc = raw
 
 	if err := writePreset(opts, set); err != nil {
 		return Preset{}, err
@@ -145,22 +158,29 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 	return set, nil
 }
 
-// writePreset renders the index file. No extra-data is written: it encodes the
-// validator set, so a stored copy goes stale as soon as a network runs a subset
-// of these validators — and a genesis whose extra-data disagrees with its
-// validator set is accepted, then fails in consensus. The family derives it at
-// genesis time.
+// writePreset renders the index file.
+//
+// No extra-data is written: it encodes the validator set, so a stored copy goes
+// stale as soon as a network runs a subset of these validators — and a genesis
+// whose extra-data disagrees with its validator set is accepted, then fails in
+// consensus. The family derives it at genesis time.
+//
+// The alloc is written even for a ring that declares no validator set, and it
+// is the one network decision that survives here. Generated identities are in
+// no existing genesis, so without a balance their first transaction cannot pay
+// for gas, and nothing else can supply one until the blueprint declares
+// accounts (worklist N10).
 func writePreset(opts GenerateOpts, set Preset) error {
 	f := presetFile{
 		Description: fmt.Sprintf("Generated ring: %d nodes (%d validators). chainbench keyring.",
-			len(set.Nodes), len(set.Validators)),
+			len(set.Nodes), len(set.Network.Validators)),
 		Warning:               "TEST FIXTURE ONLY — do not import to mainnet/testnet.",
 		Password:              set.Password,
-		Validators:            set.Validators,
-		BLSPublicKeys:         set.BLSKeys,
-		SystemContractMembers: strings.Join(set.Members, ","),
-		SystemContractBLSKeys: strings.Join(set.BLSKeys, ","),
-		Alloc:                 set.Alloc,
+		Validators:            set.Network.Validators,
+		BLSPublicKeys:         set.Network.BLSKeys,
+		SystemContractMembers: strings.Join(set.Network.Members, ","),
+		SystemContractBLSKeys: strings.Join(set.Network.BLSKeys, ","),
+		Alloc:                 set.Network.Alloc,
 	}
 	for _, e := range set.Nodes {
 		n := presetNode{

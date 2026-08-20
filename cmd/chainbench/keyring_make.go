@@ -21,12 +21,17 @@ type makeFlags struct {
 	password   string
 	balance    string
 	derivation derivationFlag
+
+	// validatorsSet distinguishes "--validators 0" from an unset flag. They mean
+	// opposite things on `new`: none, versus all of them.
+	validatorsSet bool
 }
 
 // validatorsFlagHelp reads correctly for both verbs: `new` defaults to all of
 // them, `add` defaults to none, because adding an identity and promoting one to
-// validator are different decisions.
-const validatorsFlagHelp = "how many join the validator set (new: default all; add: default none)"
+// validator are different decisions. `--validators 0` on `new` declares none at
+// all, which is a ring that is identities and nothing else.
+const validatorsFlagHelp = "how many join the validator set (new: default all, 0 declares none; add: default none)"
 
 func (f *makeFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&f.count, "count", 0, "how many identities to create")
@@ -37,10 +42,22 @@ func (f *makeFlags) bind(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired("count")
 }
 
+// record captures whether --validators was typed, which the flag value alone
+// cannot say.
+func (f *makeFlags) record(cmd *cobra.Command) {
+	f.validatorsSet = cmd.Flags().Changed("validators")
+}
+
 func (f *makeFlags) opts(dir string) keyring.GenerateOpts {
+	validators := f.validators
+	if f.validatorsSet && validators == 0 {
+		// Declare no validator set at all: the ring holds identities, and the
+		// network says which of them validate.
+		validators = keyring.NoValidators
+	}
 	return keyring.GenerateOpts{
 		Nodes:      f.count,
-		Validators: f.validators,
+		Validators: validators,
 		Out:        dir,
 		Password:   f.password,
 		Balance:    f.balance,
@@ -64,6 +81,7 @@ func newKeyringNewCmd() *cobra.Command {
 			"network is started from scratch rather than from a committed fixture.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
+			mk.record(cmd)
 			dir, source := ring.resolve(env())
 			fmt.Fprintf(out, "keyring: %s (%s)\n", dir, source)
 
@@ -71,8 +89,13 @@ func newKeyringNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if len(set.Network.Validators) == 0 {
+				fmt.Fprintf(out, "created %d identities in %s; the network declares which validate\n",
+					len(set.Nodes), dir)
+				return nil
+			}
 			fmt.Fprintf(out, "created %d identities (%d validators) in %s\n",
-				len(set.Nodes), len(set.Validators), dir)
+				len(set.Nodes), len(set.Network.Validators), dir)
 			return nil
 		},
 	}

@@ -112,7 +112,8 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 			return "", err
 		}
 		preset = p
-		return fmt.Sprintf("%d node identities, %d validators from %s", len(preset.Nodes), len(preset.Validators), o.KeysDir), nil
+		return fmt.Sprintf("%d node identities, %d declared validators from %s",
+			len(preset.Nodes), len(preset.Network.Validators), o.KeysDir), nil
 	})
 
 	t.do(c.Steps[3], func() (string, error) {

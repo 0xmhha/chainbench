@@ -288,7 +288,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 골든 유지 · **`BuildGenesis` 가 비어 있으면 파생** · `Take` 의 stale extraData 결함 수정 · keygen 의 잔여 import 0 |
 | **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | ☑ **5패키지 → 1**(1,565줄 4개 → `core/keyring` 1,275줄) · **신원 타입 5 → 1** · `Nodekey` → `PrivateKey`(역할이 아니라 실체로 명명) |
 | **K4** | `keyring` 명령 — new/add/list/show/import/export | ☑ `--keyring` 출처 표기(플래그/env/기본) · `--with-bls` 선택 · `export` 는 `--yes` 필수 · `list --verify` · `add` 는 검증자 승격 안 함 · 기존 3개 그룹 유지(deprecated) |
-| **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
+| **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | ☑ `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 |
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keymat.FileSource` 가 로컬·원격 겸용 | ☑ |
 | **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 

@@ -31,36 +31,46 @@ type Entry struct {
 	Identity
 }
 
-// Preset is a decoded key set: node identities, plus the network decisions the
-// file has historically carried alongside them.
+// Network is what a *network* decides about a ring's identities: which of them
+// validate, which seed the governance council, and who starts with a balance.
 //
-// The second half does not belong to a keyring — who validates and who holds a
-// balance are properties of a network, not of a key — and moves to the network
-// blueprint (worklist K5). The fields stay for now so existing presets keep
-// working unchanged.
-type Preset struct {
-	// Nodes are the per-node identities. This is the keyring proper.
-	Nodes []Entry
-
+// None of it is a property of a key. Two networks can run from one ring with
+// different validator sets, and a ring generated for one network is usable by
+// another only because these answers are not baked into it.
+//
+// A preset file may record them, because presets predate the blueprint that
+// owns them. [Preset.NetworkFor] is how a caller asks the question without
+// caring whether the file had an answer.
+type Network struct {
 	// Validators are the validator addresses (0x-hex), in genesis order.
 	Validators []string
 	// BLSKeys are the validators' BLS public keys (0x-hex), aligned with
-	// Validators.
+	// Validators. Empty for a family that does not use BLS.
 	BLSKeys []string
-	// ExtraData is the RLP-encoded validator extra-data (0x-hex) recorded in
-	// the file, if any.
-	//
-	// It is derived from the validator set, so it is only valid for the whole
-	// set: [Preset.Take] drops it, and the genesis builder recomputes one for
-	// the set it is actually given.
+	// ExtraData is the RLP-encoded validator extra-data (0x-hex), when the file
+	// recorded one for exactly this set. It is derived from the validator set,
+	// so it is only ever carried for the set it was computed from; the genesis
+	// builder recomputes it whenever it is empty.
 	ExtraData string
-	// Members are the governance council member addresses (0x-hex) that seed
-	// the wbft-family system contracts. For the stablenet preset these equal
-	// the validators; empty for families with no system contracts.
+	// Members are the governance council addresses (0x-hex) that seed the
+	// wbft-family system contracts. Empty for families with no system contracts.
 	Members []string
-	// Alloc is the raw genesis pre-funded accounts object (address -> account)
-	// exactly as it appears in the file, or nil when it funds no accounts.
+	// Alloc is the raw genesis pre-funded accounts object (address -> account),
+	// or nil when the network funds no accounts.
 	Alloc json.RawMessage
+}
+
+// Preset is a decoded ring: the identities it holds, and — for a file that
+// still carries them — the network decisions recorded beside them.
+//
+// A ring that declares no validator set is the point: it is identities and
+// nothing more, so what a network does with them is the network's to say.
+type Preset struct {
+	// Nodes are the per-node identities. This is the keyring proper.
+	Nodes []Entry
+	// Network holds the decisions the file recorded, if any. It is empty for a
+	// ring that declares only identities.
+	Network Network
 	// Password unlocks the keystores in this ring.
 	Password string
 }
@@ -107,12 +117,16 @@ func LoadPreset(dir string) (Preset, error) {
 	if err := json.Unmarshal(b, &f); err != nil {
 		return Preset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
 	}
-	if len(f.Validators) == 0 {
-		return Preset{}, fmt.Errorf("keyring: %s has no validators", path)
+	// A ring may hold identities and declare no validator set (the network
+	// decides), or declare a set whose keys it does not hold (a network you did
+	// not create). A file that does neither says nothing at all.
+	if len(f.Nodes) == 0 && len(f.Validators) == 0 {
+		return Preset{}, fmt.Errorf("keyring: %s holds no identities and declares no validators", path)
 	}
-	// BLS keys are optional as a set — the poa family has none — but if any are
-	// present they are read positionally against the validators, so a partial
-	// list would silently attach one validator's key to another.
+	// A ring need not declare a validator set at all — that is a network's
+	// decision, and a ring exists to hold identities. What is rejected is a
+	// half-declared one: BLS keys are read positionally against the validators,
+	// so a partial list would silently attach one validator's key to another.
 	if len(f.BLSPublicKeys) != 0 && len(f.BLSPublicKeys) != len(f.Validators) {
 		return Preset{}, fmt.Errorf("keyring: %s has %d validators but %d BLS keys",
 			path, len(f.Validators), len(f.BLSPublicKeys))
@@ -143,13 +157,15 @@ func LoadPreset(dir string) (Preset, error) {
 	}
 
 	return Preset{
-		Nodes:      nodes,
-		Validators: f.Validators,
-		BLSKeys:    f.BLSPublicKeys,
-		ExtraData:  f.ExtraData,
-		Members:    splitCSV(f.SystemContractMembers),
-		Alloc:      f.Alloc,
-		Password:   f.Password,
+		Nodes: nodes,
+		Network: Network{
+			Validators: f.Validators,
+			BLSKeys:    f.BLSPublicKeys,
+			ExtraData:  f.ExtraData,
+			Members:    splitCSV(f.SystemContractMembers),
+			Alloc:      f.Alloc,
+		},
+		Password: f.Password,
 	}, nil
 }
 
@@ -166,26 +182,61 @@ func (p Preset) Node(index int) (Entry, bool) {
 	return Entry{}, false
 }
 
-// Take returns the first n validators and their BLS keys, for a network smaller
-// than the set. n<=0 or n>=len returns the whole set.
+// NetworkFor answers who validates in a network of n validators.
 //
-// ExtraData is dropped from a narrowed set on purpose: it encodes the validator
-// set, so the file's copy describes all of them. Carrying it through would hand
-// the genesis builder a validator set contradicting Validators, and the chain
-// reads the extra-data, not the list.
+// When the ring's file recorded a validator set, the first n of it are taken.
+// When it recorded none — a ring that is identities and nothing else — the
+// first n identities are used. Either way the caller asks the same question and
+// does not have to know which kind of ring it was handed.
 //
-// Node identities and the governance council are preserved in full: a
-// two-validator network still runs on nodes drawn from the whole ring, and the
-// council is independent of how many validators are active.
-func (p Preset) Take(n int) Preset {
-	if n <= 0 || n >= len(p.Validators) {
-		return p
+// n<=0 or n beyond what is available means "all of them".
+//
+// ExtraData survives only when the whole recorded set is used. It encodes the
+// validator set, so a narrowed one would describe validators the network never
+// starts; the genesis builder recomputes it from the set it is given.
+//
+// The governance council is not narrowed: it is independent of how many
+// validators are active.
+func (p Preset) NetworkFor(n int) Network {
+	if len(p.Network.Validators) > 0 {
+		out := p.Network
+		if n > 0 && n < len(out.Validators) {
+			out.Validators = out.Validators[:n]
+			out.BLSKeys = truncate(out.BLSKeys, n)
+			out.ExtraData = ""
+		}
+		return out
 	}
-	out := p
-	out.Validators = p.Validators[:n]
-	out.BLSKeys = p.BLSKeys[:n]
-	out.ExtraData = ""
+
+	// A ring with no declared set: the network's validators are its first n
+	// identities, in ring order.
+	out := p.Network
+	limit := len(p.Nodes)
+	if n > 0 && n < limit {
+		limit = n
+	}
+	for _, e := range p.Nodes[:limit] {
+		out.Validators = append(out.Validators, e.Address)
+		if e.BLS != nil {
+			out.BLSKeys = append(out.BLSKeys, e.BLS.PublicKey)
+		}
+	}
+	if len(out.Members) == 0 {
+		// A governance council with no members cannot pass anything, so a
+		// network that needs one and was told nothing seats its validators —
+		// which is what every existing preset records anyway.
+		out.Members = append([]string(nil), out.Validators...)
+	}
 	return out
+}
+
+// truncate shortens s to n, tolerating a shorter slice so a set with no BLS
+// keys narrows without a bounds check at every call site.
+func truncate(s []string, n int) []string {
+	if n >= len(s) {
+		return s
+	}
+	return s[:n]
 }
 
 // Verify reports whether an entry's recorded public fields match what its

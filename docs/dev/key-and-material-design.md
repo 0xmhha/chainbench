@@ -349,7 +349,7 @@ genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필
 | **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 파생값은 저장하지 않는다 — `BuildGenesis` 가 계산 |
 | **K3** | `keys`·`keygen`·`keymat`·`keyreg` → `keyring` | ☑ 5패키지 → 1 · 신원 타입 5 → 1 |
 | **K4** | `keyring` 명령 (new/add/list/show/import/export) | `keys`·`validator`·`account` 대체 |
-| **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만 | 기존 파일 호환 |
+| **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | ☑ `Network` 를 별도 타입으로 · 선언 없는 링이 동작 |
 
 **K6·K7 을 K2·K3 보다 먼저** 하는 이유: K3 는 `keymat`·`keyreg` 를 흡수하는데, 그 둘이 가진
 원격 읽기가 K6 에서 정리되지 않으면 **정리되지 않은 채로 흡수**된다. 흡수 전에 접어야 한다.

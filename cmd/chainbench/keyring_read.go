@@ -71,7 +71,7 @@ func verifyAll(set keyring.Preset) error {
 // writeTable renders the human listing.
 func writeTable(out io.Writer, set keyring.Preset, views []entryView) error {
 	validators := map[string]bool{}
-	for _, a := range set.Validators {
+	for _, a := range set.Network.Validators {
 		validators[strings.ToLower(a)] = true
 	}
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
@@ -90,7 +90,7 @@ func writeTable(out io.Writer, set keyring.Preset, views []entryView) error {
 	if err := w.Flush(); err != nil {
 		return err
 	}
-	fmt.Fprintf(out, "\n%d identities, %d validators\n", len(views), len(set.Validators))
+	fmt.Fprintf(out, "\n%d identities, %d validators\n", len(views), len(set.Network.Validators))
 	return nil
 }
 

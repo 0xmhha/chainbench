@@ -281,7 +281,7 @@ func poaConfig(prof upgrade.Profile, preset keyring.Preset, producerAcct string,
 	}
 	bal := dec("1000000000000000000000000000")
 	accounts := []poa.Account{{Addr: producerAcct, Balance: bal}}
-	for _, v := range preset.Validators {
+	for _, v := range preset.NetworkFor(0).Validators {
 		accounts = append(accounts, poa.Account{Addr: v, Balance: bal})
 	}
 	return poa.Config{
