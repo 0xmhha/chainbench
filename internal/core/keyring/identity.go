@@ -49,7 +49,7 @@ type BLS struct {
 	PoP string
 }
 
-// Identity is everything public that derives from one [Nodekey]. It holds no
+// Identity is everything public that derives from one [PrivateKey]. It holds no
 // secret, so it is safe to log, serialize, and pass across hosts.
 type Identity struct {
 	// PublicKey is the 128-hex devp2p public key, without a 0x prefix — the
@@ -67,7 +67,7 @@ type Identity struct {
 // Everything is computed in process: no chain binary is executed, so this works
 // with no build of go-wbft present and with CGO disabled. The result is checked
 // byte for byte against the shipped keys/preset fixture.
-func Derive(k Nodekey, d Derivation) (Identity, error) {
+func Derive(k PrivateKey, d Derivation) (Identity, error) {
 	raw := k.Bytes()
 
 	address, err := accounts.AddressForKey(raw)

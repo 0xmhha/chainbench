@@ -43,7 +43,7 @@ func newAccountFundCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			hash, err := ap.Faucet(cmd.Context(), funder.PrivateKeyBytes(), to, amt, rpcURL)
+			hash, err := ap.Faucet(cmd.Context(), funder.Bytes(), to, amt, rpcURL)
 			if err != nil {
 				return err
 			}

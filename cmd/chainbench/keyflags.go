@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,12 +10,11 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/0xmhha/accounts/account"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/target"
-	"github.com/0xmhha/chainbench/internal/keymat"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -67,37 +65,37 @@ func (f *sourceFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.serverConfig, "server-config", serverset.DefaultConfigFile, "server inventory file for srv:// targets")
 	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "override the SSH user for a host named directly in --from")
 	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "override the SSH port for a host named directly in --from (default 22)")
-	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keymat.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
+	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keyring.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
 	cmd.Flags().Uint32Var(&f.hdAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
 	cmd.Flags().Uint32Var(&f.hdIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 }
 
-// source builds the keymat.Source, requiring exactly one origin. pw guards a
+// source builds the keyring.Source, requiring exactly one origin. pw guards a
 // keystore file import (local or remote). Production passes os.Getenv.
-func (f *sourceFlags) source(pw keymat.PasswordSource) (keymat.Source, error) {
+func (f *sourceFlags) source(pw keyring.PasswordSource) (keyring.Source, error) {
 	return f.sourceWithEnv(pw, os.Getenv)
 }
 
 // sourceWithEnv is source with an injected environment for the remote SSH creds.
-func (f *sourceFlags) sourceWithEnv(pw keymat.PasswordSource, env func(string) string) (keymat.Source, error) {
+func (f *sourceFlags) sourceWithEnv(pw keyring.PasswordSource, env func(string) string) (keyring.Source, error) {
 	path, err := f.fromPath()
 	if err != nil {
 		return nil, err
 	}
 	switch {
 	case f.privateKey != "":
-		return keymat.PrivateKeySource{Hex: f.privateKey}, nil
+		return keyring.PrivateKeySource{Hex: f.privateKey}, nil
 	case f.mnemonic != "":
-		return keymat.MnemonicSource{
+		return keyring.MnemonicSource{
 			Mnemonic: f.mnemonic, Passphrase: f.passphrase,
-			Path: keymat.HDPath{CoinType: f.coinType, Account: f.hdAccount, Index: f.hdIndex},
+			Path: keyring.HDPath{CoinType: f.coinType, Account: f.hdAccount, Index: f.hdIndex},
 		}, nil
 	default:
 		files, keyPath, err := f.openFrom(path, env)
 		if err != nil {
 			return nil, err
 		}
-		return keymat.FileSource{Files: files, Path: keyPath, Password: pw}, nil
+		return keyring.FileSource{Files: files, Path: keyPath, Password: pw}, nil
 	}
 }
 
@@ -235,12 +233,12 @@ func (f *storeFlags) bind(cmd *cobra.Command) {
 
 func (f *storeFlags) enabled() bool { return f.out != "" }
 
-func (f *storeFlags) build() (keymat.Store, error) {
+func (f *storeFlags) build() (keyring.Backend, error) {
 	switch f.store {
 	case "keystore":
-		return keymat.KeystoreStore{}, nil
+		return keyring.KeystoreBackend{}, nil
 	case "file":
-		return keymat.RawFileStore{}, nil
+		return keyring.RawFileBackend{}, nil
 	default:
 		return nil, fmt.Errorf("--store must be keystore or file")
 	}
@@ -259,22 +257,22 @@ func (f *passwordFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.passwordOnce, "password-once", "", "prompt for the password once, store it at this path, and reuse it without asking")
 }
 
-func (f *passwordFlags) source() keymat.PasswordSource {
+func (f *passwordFlags) source() keyring.PasswordSource {
 	switch {
 	case f.password != "":
-		return keymat.StaticPassword(f.password)
+		return keyring.StaticPassword(f.password)
 	case f.passwordFile != "":
-		return keymat.FilePassword{Path: f.passwordFile}
+		return keyring.FilePassword{Path: f.passwordFile}
 	case f.passwordOnce != "":
-		return keymat.OnceThenFile{Path: f.passwordOnce, Prompt: promptPassword}
+		return keyring.OnceThenFile{Path: f.passwordOnce, Prompt: promptPassword}
 	default:
 		return nil
 	}
 }
 
-// saveKey persists a per the store/password flags, returning the file path, or
+// saveKey persists the key per the store/password flags, returning the file path, or
 // "" when storage is disabled. A keystore store requires a password.
-func saveKey(sf *storeFlags, pf *passwordFlags, a *account.Account) (string, error) {
+func saveKey(sf *storeFlags, pf *passwordFlags, key keyring.PrivateKey) (string, error) {
 	if !sf.enabled() {
 		return "", nil
 	}
@@ -283,10 +281,10 @@ func saveKey(sf *storeFlags, pf *passwordFlags, a *account.Account) (string, err
 		return "", err
 	}
 	pw := pf.source()
-	if _, isKeystore := store.(keymat.KeystoreStore); isKeystore && pw == nil {
+	if _, isKeystore := store.(keyring.KeystoreBackend); isKeystore && pw == nil {
 		return "", fmt.Errorf("keystore storage needs a password (--password / --password-file / --password-once)")
 	}
-	return store.Save(sf.out, sf.name, a, pw)
+	return store.Save(sf.out, sf.name, key, pw)
 }
 
 // keyView selects what identity a command reports for a key. The `keys` layer
@@ -299,26 +297,22 @@ const (
 	viewAccount                // privateKey + address
 )
 
-// publicKeyHex is the 64-byte (ethereum-style, uncompressed minus the 0x04 tag)
-// public key as 0x-hex.
-func publicKeyHex(a *account.Account) string {
-	uncompressed := a.PublicKey().SerializeUncompressed() // 0x04 || X(32) || Y(32)
-	return "0x" + hex.EncodeToString(uncompressed[1:])
-}
-
 // printKey renders a key/account. showPrivate includes the private key (for a
 // freshly generated key). view selects publicKey (keys) vs address (account).
-func printKey(out io.Writer, a *account.Account, showPrivate bool, view keyView, storedPath string, jsonOut bool) error {
-	private := "0x" + hex.EncodeToString(a.PrivateKeyBytes())
+func printKey(out io.Writer, key keyring.PrivateKey, showPrivate bool, view keyView, storedPath string, jsonOut bool) error {
+	id, err := keyring.Derive(key, keyring.AccountOnly)
+	if err != nil {
+		return err
+	}
 	m := map[string]string{}
 	if showPrivate {
-		m["privateKey"] = private
+		m["privateKey"] = "0x" + key.Hex()
 	}
 	switch view {
 	case viewKeys:
-		m["publicKey"] = publicKeyHex(a)
+		m["publicKey"] = "0x" + id.PublicKey
 	default:
-		m["address"] = a.Address().Hex()
+		m["address"] = id.Address
 	}
 	if storedPath != "" {
 		m["stored"] = storedPath
@@ -329,7 +323,7 @@ func printKey(out io.Writer, a *account.Account, showPrivate bool, view keyView,
 		return enc.Encode(m)
 	}
 	if showPrivate {
-		fmt.Fprintf(out, "privateKey: %s\n", private)
+		fmt.Fprintf(out, "privateKey: %s\n", m["privateKey"])
 	}
 	if view == viewKeys {
 		fmt.Fprintf(out, "publicKey:  %s\n", m["publicKey"])
@@ -345,7 +339,7 @@ func printKey(out io.Writer, a *account.Account, showPrivate bool, view keyView,
 // runGenerate generates a fresh account, optionally stores it, and prints it
 // (with the private key). Shared by `keys new` and `account new`.
 func runGenerate(cmd *cobra.Command, sf *storeFlags, pf *passwordFlags, view keyView, jsonOut bool) error {
-	a, err := keymat.RandomSource{}.Resolve(cmd.Context())
+	a, err := keyring.RandomSource{}.Resolve(cmd.Context())
 	if err != nil {
 		return err
 	}

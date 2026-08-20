@@ -22,7 +22,7 @@ type Entry struct {
 	Index int
 	// Nodekey is the secret. It redacts itself when formatted; reaching the
 	// hex takes an explicit Hex call.
-	Nodekey Nodekey
+	Nodekey PrivateKey
 	// Identity is everything public that derives from Nodekey.
 	Identity
 }
@@ -113,7 +113,7 @@ func LoadPreset(dir string) (Preset, error) {
 
 	nodes := make([]Entry, 0, len(f.Nodes))
 	for _, n := range f.Nodes {
-		key, err := ParseNodekey(n.Nodekey)
+		key, err := ParsePrivateKey(n.Nodekey)
 		if err != nil {
 			return Preset{}, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}

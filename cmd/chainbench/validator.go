@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/keymat"
 )
 
 // newValidatorCmd is the validator-identity group. A validator is an account
@@ -31,7 +29,7 @@ func newValidatorCmd() *cobra.Command {
 // and proof-of-possession from the key in process; a poa chain has no genesis
 // validator material (validators are registered at bootstrap), so it only
 // reports the account with a note.
-func runValidator(cmd *cobra.Command, chain string, source keymat.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
+func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("--chain is required")
 	}
@@ -41,29 +39,27 @@ func runValidator(cmd *cobra.Command, chain string, source keymat.Source, sf *st
 	}
 	family := p.Manifest().ConsensusFamily
 
-	a, err := source.Resolve(cmd.Context())
+	key, err := source.Resolve(cmd.Context())
 	if err != nil {
 		return err
 	}
-	path, err := saveKey(sf, pf, a)
+	path, err := saveKey(sf, pf, key)
+	if err != nil {
+		return err
+	}
+	// A wbft validator's BLS material comes from the same key as its address,
+	// so ask for it up front and let the family decide whether it is used.
+	id, err := keyring.Derive(key, derivationFor(family))
 	if err != nil {
 		return err
 	}
 
-	v := validatorOut{Chain: chain, Family: family, Address: a.Address().Hex(), Stored: path}
+	v := validatorOut{Chain: chain, Family: family, Address: id.Address, Stored: path}
 	if showPrivate {
-		v.PrivateKey = "0x" + hex.EncodeToString(a.PrivateKeyBytes())
+		v.PrivateKey = "0x" + key.Hex()
 	}
 	switch family {
 	case "wbft":
-		key, err := keyring.ParseNodekey(hex.EncodeToString(a.PrivateKeyBytes()))
-		if err != nil {
-			return err
-		}
-		id, err := keyring.Derive(key, keyring.WithBLS)
-		if err != nil {
-			return err
-		}
 		v.BLSPublicKey = id.BLS.PublicKey
 		v.BLSPoP = id.BLS.PoP
 	case "poa":
@@ -72,6 +68,15 @@ func runValidator(cmd *cobra.Command, chain string, source keymat.Source, sf *st
 		v.Note = fmt.Sprintf("unknown consensus family %q", family)
 	}
 	return printValidator(cmd.OutOrStdout(), v, jsonOut)
+}
+
+// derivationFor asks for BLS material only where a family uses it, so a poa
+// validator does not pay for a computation whose result it would discard.
+func derivationFor(family string) keyring.Derivation {
+	if family == "wbft" {
+		return keyring.WithBLS
+	}
+	return keyring.AccountOnly
 }
 
 // validatorOut is a validator identity for display.

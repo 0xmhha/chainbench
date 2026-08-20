@@ -41,7 +41,7 @@ const (
 // tool byte for byte. The subtle part is version 4 of that implementation: the
 // salt is hashed once *before* the first iteration, not only between retries.
 // Getting that wrong yields a well-formed key that no wbft node will accept.
-func deriveBLS(k Nodekey) (BLS, error) {
+func deriveBLS(k PrivateKey) (BLS, error) {
 	secret, err := blsKeyGen(k.Bytes())
 	if err != nil {
 		return BLS{}, err

@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/accounts/types"
-	"github.com/0xmhha/chainbench/internal/keymat"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // newAccountListCmd lists the accounts stored in a directory (as produced by
@@ -86,9 +86,11 @@ func listStoredAccounts(dir string) ([]storedAccount, error) {
 				out = append(out, storedAccount{Name: name, Type: "keystore", Address: normalizeAddress(ks.Address)})
 			}
 		case strings.HasSuffix(name, ".key"):
-			a, err := keymat.FileSource{Path: path}.Resolve(context.Background())
+			key, err := keyring.FileSource{Path: path}.Resolve(context.Background())
 			if err == nil {
-				out = append(out, storedAccount{Name: name, Type: "raw", Address: a.Address().Hex()})
+				if id, dErr := keyring.Derive(key, keyring.AccountOnly); dErr == nil {
+					out = append(out, storedAccount{Name: name, Type: "raw", Address: id.Address})
+				}
 			}
 		}
 	}

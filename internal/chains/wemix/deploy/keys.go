@@ -54,7 +54,7 @@ func readServerKeysFrom(ctx context.Context, files provision.FileStore, p Remote
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d read nodekey: %w", server, err)
 	}
-	key, err := keyring.ParseNodekey(string(raw))
+	key, err := keyring.ParsePrivateKey(string(raw))
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d nodekey at %s: %w", server, p.Nodekey, err)
 	}

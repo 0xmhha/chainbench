@@ -3,7 +3,7 @@
 // those identities.
 //
 // Key material is the same on all three chains chainbench drives. The same
-// nodekey yields the same address and the same devp2p public key under
+// private key yields the same address and the same devp2p public key under
 // go-stablenet, go-wbft, and go-wemix; only two things differ, and neither is
 // the key's structure:
 //

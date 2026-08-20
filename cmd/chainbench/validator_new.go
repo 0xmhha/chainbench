@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/keymat"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // newValidatorNewCmd generates a new validator identity for a chain: a fresh
@@ -19,7 +19,7 @@ func newValidatorNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Generate a new validator identity for a chain (chain-aware consensus material)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runValidator(cmd, chain, keymat.RandomSource{}, &sf, &pf, true, jsonOut)
+			return runValidator(cmd, chain, keyring.RandomSource{}, &sf, &pf, true, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")

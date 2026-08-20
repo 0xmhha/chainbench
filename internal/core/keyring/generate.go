@@ -148,7 +148,7 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 		return Entry{}, err
 	}
 
-	key, err := NewNodekey(opts.Rand)
+	key, err := NewPrivateKey(opts.Rand)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -177,7 +177,7 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 // writeKeystore encrypts the account key into a standard v3 keystore where the
 // node reads it (<datadir>/keystore), which is what the node's own `account
 // import` used to produce — without shelling out to it.
-func writeKeystore(nodeDir string, key Nodekey, address, password string) error {
+func writeKeystore(nodeDir string, key PrivateKey, address, password string) error {
 	keyjson, err := keystore.Encrypt(key.Bytes(), password, keystoreScryptN, keystoreScryptP)
 	if err != nil {
 		return fmt.Errorf("keystore encrypt: %w", err)
