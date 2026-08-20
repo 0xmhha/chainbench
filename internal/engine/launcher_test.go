@@ -17,7 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
-// fakeSink records materialized files without touching disk.
+// fakeStore records materialized files without touching disk.
 type fakeStore struct {
 	written map[string]int
 	content map[string][]byte
@@ -153,20 +153,20 @@ func TestLocalLauncher_ProvisionOnlyDoesNotLaunch(t *testing.T) {
 		t.Fatalf("AssemblePlan: %v", err)
 	}
 
-	sink := &fakeSink{written: map[string]int{}}
+	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeDriver{}
-	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Sink: sink}
+	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
 	specs, err := l.Provision(context.Background(), plan)
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
 	}
 	// Genesis + configs are materialized...
-	if sink.written[filepath.Join("/d", "genesis.json")] != 1 {
-		t.Fatalf("genesis not materialized: %v", sink.written)
+	if store.written[filepath.Join("/d", "genesis.json")] != 1 {
+		t.Fatalf("genesis not materialized: %v", store.written)
 	}
-	if sink.written["/d/config_node1.toml"] != 1 || sink.written["/d/config_node2.toml"] != 1 {
-		t.Fatalf("configs not materialized: %v", sink.written)
+	if store.written["/d/config_node1.toml"] != 1 || store.written["/d/config_node2.toml"] != 1 {
+		t.Fatalf("configs not materialized: %v", store.written)
 	}
 	// ...but nothing is initialized or launched.
 	if len(drv.inited) != 0 || len(drv.launched) != 0 {
@@ -189,9 +189,9 @@ func TestLocalLauncher_RemoteShipsIdentities(t *testing.T) {
 		t.Fatalf("AssemblePlan: %v", err)
 	}
 
-	sink := &fakeSink{written: map[string]int{}}
+	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeRemoteDriver{}
-	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Sink: sink}
+	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
 	// Materialize (via Provision) must ship each node's preset identity to the
 	// remote keys dir under the data root — the shared password and both nodekeys.

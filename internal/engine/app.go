@@ -111,10 +111,12 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	if clock == nil {
 		clock = time.Now
 	}
-	// The account provider's value is unused now that identity derivation lives
-	// in keyring; the call stays because it is what rejects a chain the accounts
-	// SDK does not know, before a run gets far enough to fail obscurely.
-	if _, err := accounts.ForChain(cfg.Chain); err != nil {
+	// The provider is what the interpreter signs and reads accounts with, and
+	// resolving it here is also what rejects a chain the accounts SDK does not
+	// know before a run gets far enough to fail obscurely. It no longer supplies
+	// identity derivation, which keyring does in process.
+	accts, err := accounts.ForChain(cfg.Chain)
+	if err != nil {
 		return nil, fmt.Errorf("engine: local engine: %w", err)
 	}
 
