@@ -2,13 +2,14 @@ package deploy
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -84,7 +85,7 @@ func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey re
 			{p.CoinbaseKeystore, fmt.Sprintf("keystore_%d", s.Index)},
 			{p.OperatorKeystore, fmt.Sprintf("operator_%d", s.Index)},
 		} {
-			data, err := readRemoteFile(ctx, rc, hostKey, ks.remote)
+			data, err := serverFiles(rc, hostKey).Read(ctx, ks.remote)
 			if err != nil {
 				return info, fmt.Errorf("deploy: server %d read %s: %w", s.Index, ks.remote, err)
 			}
@@ -96,31 +97,11 @@ func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey re
 	return info, nil
 }
 
-// readRemoteFile reads a remote file's bytes over SSH. It delegates to
-// remote.ReadFile (the shared primitive) and remains here as the deploy-local
-// name its callers use.
-func readRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.HostKeyCallback, path string) ([]byte, error) {
-	return remote.ReadFile(ctx, rc, hostKey, path)
-}
-
-// writeRemoteFile writes content to a remote path over SSH (base64-piped),
-// creating the parent directory. The reverse of readRemoteFile.
-func writeRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.HostKeyCallback, remotePath string, content []byte) error {
-	enc := base64.StdEncoding.EncodeToString(content)
-	dir := shellQuote(pathDir(remotePath))
-	cmd := fmt.Sprintf("mkdir -p %s && printf %%s %s | base64 -d > %s", dir, shellQuote(enc), shellQuote(remotePath))
-	if _, err := remote.Exec(ctx, rc, hostKey, cmd); err != nil {
-		return err
-	}
-	return nil
-}
-
-// pathDir returns the directory portion of a slash path (remote paths are POSIX).
-func pathDir(p string) string {
-	if i := strings.LastIndex(p, "/"); i > 0 {
-		return p[:i]
-	}
-	return "."
+// serverFiles opens the file store for one server. Reads and writes on that
+// host go through it, so the deploy no longer carries its own SSH file I/O
+// beside the shared one.
+func serverFiles(rc remote.Credentials, hostKey remote.HostKeyCallback) provision.FileStore {
+	return driver.NewRemoteFileStore(driver.SSHRunner(rc, hostKey))
 }
 
 // shellQuote single-quotes a path for safe remote shell use.

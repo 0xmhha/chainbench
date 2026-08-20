@@ -31,7 +31,7 @@ const configFilePerm os.FileMode = 0o644
 // allocator-assigned ports.
 //
 // On-disk files (genesis, per-node config) are materialized through a
-// provision.FileSink (upload-if-absent), so a rerun reuses existing files and a
+// provision.FileStore (upload-if-absent), so a rerun reuses existing files and a
 // remote sink can later ship them to another host without changing this type.
 type LocalLauncher struct {
 	// Plugin is the target chain (supplies the RPC namespace and miner recommit
@@ -44,8 +44,8 @@ type LocalLauncher struct {
 	KeysDir string
 	// Driver launches the nodes; nil defaults to the local driver.
 	Driver driver.Driver
-	// Sink materializes on-disk files; nil defaults to the local filesystem.
-	Sink provision.FileSink
+	// Files materializes on-disk files; nil defaults to the local filesystem.
+	Files provision.FileStore
 	// LaunchOverrides are high-precedence launch knobs (env.launch / case
 	// layers) applied to every node's argv after the role-derived modules.
 	LaunchOverrides []launchopt.Override
@@ -97,9 +97,9 @@ func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 // to another host (a FileProvisioner), each node's preset identity files are
 // also shipped to the remote keys dir the armed specs reference.
 func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
-	sink := l.Sink
+	sink := l.Files
 	if sink == nil {
-		sink = provision.LocalFileSink{}
+		sink = provision.LocalFileStore{}
 	}
 	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
 		return err

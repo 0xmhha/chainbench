@@ -98,23 +98,23 @@ func ParseTarget(s string) (TargetSpec, error) {
 }
 
 // Target is the resolved data plane: step functions materialize files through
-// Sink and run processes through Driver at DataRoot, without branching on local
+// Files and run processes through Driver at DataRoot, without branching on local
 // vs remote. This is the one seam that hides the location difference.
 type Target struct {
 	Spec     TargetSpec
 	DataRoot string
-	Sink     provision.FileSink
+	Files    provision.FileStore
 	Driver   driver.Driver
 }
 
 // Resolve builds the live Target from its spec. A local target uses the local
-// filesystem and driver; a remote target opens an SSH-backed FileSink and driver,
+// filesystem and driver; a remote target opens an SSH-backed FileStore and driver,
 // reading credentials from env. The host-key policy comes from
 // remote.ResolveHostKeyCallback (known_hosts, or the loud insecure opt-in).
 func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 	switch s.Kind {
 	case "", TargetLocal:
-		return &Target{Spec: s, DataRoot: s.DataRoot, Sink: provision.LocalFileSink{}, Driver: driver.NewLocalDriver()}, nil
+		return &Target{Spec: s, DataRoot: s.DataRoot, Files: provision.LocalFileStore{}, Driver: driver.NewLocalDriver()}, nil
 	case TargetRemote:
 		if s.Host == "" || s.DataRoot == "" {
 			return nil, fmt.Errorf("target: remote target needs host and dataRoot")
@@ -128,7 +128,7 @@ func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 			return nil, err
 		}
 		run := driver.SSHRunner(creds, hostKey)
-		return &Target{Spec: s, DataRoot: s.DataRoot, Sink: driver.NewRemoteFileSink(run), Driver: driver.NewRemoteDriver(run)}, nil
+		return &Target{Spec: s, DataRoot: s.DataRoot, Files: driver.NewRemoteFileStore(run), Driver: driver.NewRemoteDriver(run)}, nil
 	default:
 		return nil, fmt.Errorf("target: unknown target kind %q", s.Kind)
 	}

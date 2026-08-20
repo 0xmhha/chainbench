@@ -5,13 +5,12 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/0xmhha/accounts/account"
 	"github.com/0xmhha/accounts/hdwallet"
 
-	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // Source resolves key material to an account, regardless of where it comes from.
@@ -61,60 +60,37 @@ func (s MnemonicSource) Resolve(context.Context) (*account.Account, error) {
 	return w.Derive(s.Path.String())
 }
 
-// FileSource imports an account from a local file: a raw hex private key, or an
+// FileSource imports an account from a key file — a raw hex private key or an
 // encrypted keystore JSON (decrypted with Password).
+//
+// The file may live on this machine or on a host reached over SSH: Files
+// decides which, and nothing above this type has to know. A nil Files reads
+// locally, so the common case stays a two-field literal.
+//
+// This replaces the former FileSource/RemoteFileSource pair. They differed only
+// in how the bytes arrived, and keeping two types meant keeping two code paths
+// that could drift — the remote one had grown its own SSH read.
 type FileSource struct {
-	Path     string
+	// Files is where the key file lives. Nil means the local filesystem.
+	Files provision.FileStore
+	// Path is the key file's path on that store.
+	Path string
+	// Password decrypts a keystore; unused for a raw hex key.
 	Password PasswordSource
 }
 
-// Resolve reads the file and detects its form (keystore JSON vs raw hex).
-func (s FileSource) Resolve(_ context.Context) (*account.Account, error) {
-	data, err := os.ReadFile(s.Path)
+// Resolve reads the key file and builds its account, detecting a keystore JSON
+// versus a raw hex private key.
+func (s FileSource) Resolve(ctx context.Context) (*account.Account, error) {
+	files := s.Files
+	if files == nil {
+		files = provision.LocalFileStore{}
+	}
+	data, err := files.Read(ctx, s.Path)
 	if err != nil {
 		return nil, fmt.Errorf("keymat: read key file: %w", err)
 	}
 	return accountFromKeyBytes(data, s.Password)
-}
-
-// RemoteFileSource imports an account from a key file on a remote SSH host (raw
-// hex or keystore). It reads the file over SSH, then applies the same detection
-// as FileSource. Creds are the fully-resolved SSH credentials — the caller
-// resolves them once, from the environment (ad-hoc host:path) or a server
-// inventory (--server N). Read is injectable for testing; nil uses the real SSH
-// read. Env supplies the host-key policy; nil uses os.Getenv.
-type RemoteFileSource struct {
-	Creds    remote.Credentials
-	Path     string
-	Password PasswordSource
-	Read     func(ctx context.Context) ([]byte, error)
-	Env      func(string) string
-}
-
-// Resolve reads the remote key file and builds its account.
-func (s RemoteFileSource) Resolve(ctx context.Context) (*account.Account, error) {
-	read := s.Read
-	if read == nil {
-		read = s.sshRead
-	}
-	data, err := read(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return accountFromKeyBytes(data, s.Password)
-}
-
-// sshRead reads the remote file over SSH using the resolved credentials.
-func (s RemoteFileSource) sshRead(ctx context.Context) ([]byte, error) {
-	env := s.Env
-	if env == nil {
-		env = os.Getenv
-	}
-	hostKey, err := remote.ResolveHostKeyCallback(env)
-	if err != nil {
-		return nil, err
-	}
-	return remote.ReadFile(ctx, s.Creds, hostKey, s.Path)
 }
 
 // accountFromKeyBytes builds an account from raw key-file bytes, detecting a

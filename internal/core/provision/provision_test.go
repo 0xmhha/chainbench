@@ -2,6 +2,7 @@ package provision_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,7 +23,7 @@ func node(dataDir string) provision.NodeInputs {
 
 func TestProvision_WritesFiles(t *testing.T) {
 	base := t.TempDir()
-	p := provision.New(provision.LocalFileSink{})
+	p := provision.New(provision.LocalFileStore{})
 	res, err := p.Provision(context.Background(), node(base))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
@@ -49,7 +50,7 @@ func TestProvision_SkipsExisting(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(base, "genesis.json"), []byte("EXISTING"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	p := provision.New(provision.LocalFileSink{})
+	p := provision.New(provision.LocalFileStore{})
 	res, err := p.Provision(context.Background(), node(base))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
@@ -63,25 +64,38 @@ func TestProvision_SkipsExisting(t *testing.T) {
 }
 
 // fakeSink drives the upload-if-absent branch deterministically.
-type fakeSink struct {
+type fakeStore struct {
 	present map[string]bool
+	content map[string][]byte
 	written []string
 }
 
-func (f *fakeSink) Exists(_ context.Context, path string) (bool, error) {
+func (f *fakeStore) Exists(_ context.Context, path string) (bool, error) {
 	return f.present[path], nil
 }
 
-func (f *fakeSink) Write(_ context.Context, path string, _ []byte, _ os.FileMode) error {
+func (f *fakeStore) Read(_ context.Context, path string) ([]byte, error) {
+	b, ok := f.content[path]
+	if !ok {
+		return nil, fmt.Errorf("not found: %s", path)
+	}
+	return b, nil
+}
+
+func (f *fakeStore) Write(_ context.Context, path string, content []byte, _ os.FileMode) error {
 	f.written = append(f.written, path)
+	if f.content == nil {
+		f.content = map[string][]byte{}
+	}
+	f.content[path] = content
 	return nil
 }
 
 func TestProvision_UploadIfAbsent(t *testing.T) {
-	sink := &fakeSink{present: map[string]bool{
+	store := &fakeStore{present: map[string]bool{
 		filepath.Join("/remote/n1", "genesis.json"): true, // already on the server
 	}}
-	p := provision.New(sink)
+	p := provision.New(store)
 	res, err := p.Provision(context.Background(), node("/remote/n1"))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
@@ -89,7 +103,7 @@ func TestProvision_UploadIfAbsent(t *testing.T) {
 	if res.Written != 2 || res.Skipped != 1 {
 		t.Fatalf("result = %+v, want 2 written 1 skipped", res)
 	}
-	for _, w := range sink.written {
+	for _, w := range store.written {
 		if filepath.Base(w) == "genesis.json" {
 			t.Fatal("present remote file must not be re-uploaded")
 		}

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -17,7 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// recordingSink is a provision.FileSink capturing writes and reporting a
+// recordingSink is a provision.FileStore capturing writes and reporting a
 // preset existing set (to exercise upload-if-absent) in memory.
 type recordingSink struct {
 	written  map[string][]byte
@@ -30,6 +31,14 @@ func newRecordingSink() *recordingSink {
 
 func (s *recordingSink) Exists(_ context.Context, path string) (bool, error) {
 	return s.existing[path], nil
+}
+
+func (s *recordingSink) Read(_ context.Context, path string) ([]byte, error) {
+	b, ok := s.written[path]
+	if !ok {
+		return nil, fmt.Errorf("not found: %s", path)
+	}
+	return b, nil
 }
 
 func (s *recordingSink) Write(_ context.Context, path string, content []byte, _ fs.FileMode) error {

@@ -16,8 +16,8 @@ func TestTargetResolve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("local resolve: %v", err)
 	}
-	if _, ok := local.Sink.(provision.LocalFileSink); !ok {
-		t.Fatalf("local sink type = %T", local.Sink)
+	if _, ok := local.Files.(provision.LocalFileStore); !ok {
+		t.Fatalf("local sink type = %T", local.Files)
 	}
 	if _, ok := local.Driver.(*driver.LocalDriver); !ok {
 		t.Fatalf("local driver type = %T", local.Driver)
@@ -33,8 +33,8 @@ func TestTargetResolve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("remote resolve: %v", err)
 	}
-	if _, ok := remoteTgt.Sink.(driver.RemoteFileSink); !ok {
-		t.Fatalf("remote sink type = %T", remoteTgt.Sink)
+	if _, ok := remoteTgt.Files.(driver.RemoteFileStore); !ok {
+		t.Fatalf("remote file store type = %T", remoteTgt.Files)
 	}
 	if _, ok := remoteTgt.Driver.(*driver.RemoteDriver); !ok {
 		t.Fatalf("remote driver type = %T", remoteTgt.Driver)

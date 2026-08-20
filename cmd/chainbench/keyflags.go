@@ -12,6 +12,8 @@ import (
 	"golang.org/x/term"
 
 	"github.com/0xmhha/accounts/account"
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/keymat"
 	"github.com/0xmhha/chainbench/internal/serverset"
@@ -90,7 +92,11 @@ func (f *sourceFlags) sourceWithEnv(pw keymat.PasswordSource, env func(string) s
 		if err != nil {
 			return nil, err
 		}
-		return keymat.RemoteFileSource{Creds: creds, Path: path, Password: pw, Env: env}, nil
+		files, err := remoteFiles(creds, env)
+		if err != nil {
+			return nil, err
+		}
+		return keymat.FileSource{Files: files, Path: path, Password: pw}, nil
 	case f.server != 0:
 		if f.remotePath == "" {
 			return nil, fmt.Errorf("--server needs --remote-path (the key file path on the server)")
@@ -99,10 +105,25 @@ func (f *sourceFlags) sourceWithEnv(pw keymat.PasswordSource, env func(string) s
 		if err != nil {
 			return nil, err
 		}
-		return keymat.RemoteFileSource{Creds: creds, Path: f.remotePath, Password: pw, Env: env}, nil
+		files, err := remoteFiles(creds, env)
+		if err != nil {
+			return nil, err
+		}
+		return keymat.FileSource{Files: files, Path: f.remotePath, Password: pw}, nil
 	default:
 		return keymat.FileSource{Path: f.importFile, Password: pw}, nil
 	}
+}
+
+// remoteFiles opens the file store for a host. The host-key policy is resolved
+// here rather than inside the key source, so a key source is only ever told
+// *where* a file is, never how to reach it.
+func remoteFiles(creds remote.Credentials, env func(string) string) (provision.FileStore, error) {
+	hostKey, err := remote.ResolveHostKeyCallback(env)
+	if err != nil {
+		return nil, err
+	}
+	return driver.NewRemoteFileStore(driver.SSHRunner(creds, hostKey)), nil
 }
 
 // serverCreds resolves the SSH credentials for --server N from the inventory,

@@ -282,7 +282,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	path := filepath.Join(t.DataRoot, "genesis.json")
-	if err := t.Sink.Write(ctx, path, gen, 0o644); err != nil {
+	if err := t.Files.Write(ctx, path, gen, 0o644); err != nil {
 		return "", fmt.Errorf("netcompose: genesis: write: %w", err)
 	}
 	w.state.GenesisPath = path
@@ -387,7 +387,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 			MinerRecommit: m.MinerRecommit,
 			StaticNodes:   staticNodes,
 		})
-		if err := t.Sink.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
+		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
 			return "", fmt.Errorf("netcompose: config: node%d: %w", ns.Index, err)
 		}
 	}
@@ -453,7 +453,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	}
 	present := 0
 	check := func(ctx context.Context, path string) error {
-		exists, err := t.Sink.Exists(ctx, path)
+		exists, err := t.Files.Exists(ctx, path)
 		if err != nil {
 			return err
 		}

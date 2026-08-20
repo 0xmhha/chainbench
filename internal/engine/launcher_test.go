@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"sort"
@@ -17,11 +18,26 @@ import (
 )
 
 // fakeSink records materialized files without touching disk.
-type fakeSink struct{ written map[string]int }
+type fakeStore struct {
+	written map[string]int
+	content map[string][]byte
+}
 
-func (s *fakeSink) Exists(context.Context, string) (bool, error) { return false, nil }
-func (s *fakeSink) Write(_ context.Context, path string, _ []byte, _ fs.FileMode) error {
+func (s *fakeStore) Exists(context.Context, string) (bool, error) { return false, nil }
+func (s *fakeStore) Read(_ context.Context, path string) ([]byte, error) {
+	b, ok := s.content[path]
+	if !ok {
+		return nil, fmt.Errorf("not found: %s", path)
+	}
+	return b, nil
+}
+
+func (s *fakeStore) Write(_ context.Context, path string, content []byte, _ fs.FileMode) error {
 	s.written[path]++
+	if s.content == nil {
+		s.content = map[string][]byte{}
+	}
+	s.content[path] = content
 	return nil
 }
 
@@ -92,9 +108,9 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 		t.Fatalf("AssemblePlan: %v", err)
 	}
 
-	sink := &fakeSink{written: map[string]int{}}
+	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeDriver{}
-	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Sink: sink}
+	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
 	res, err := l.Launch(context.Background(), plan)
 	if err != nil {
@@ -102,11 +118,11 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 	}
 
 	// Materialized: genesis + one config per node.
-	if sink.written[filepath.Join("/d", "genesis.json")] != 1 {
-		t.Fatalf("genesis not materialized: %v", sink.written)
+	if store.written[filepath.Join("/d", "genesis.json")] != 1 {
+		t.Fatalf("genesis not materialized: %v", store.written)
 	}
-	if sink.written["/d/config_node1.toml"] != 1 || sink.written["/d/config_node2.toml"] != 1 {
-		t.Fatalf("configs not materialized: %v", sink.written)
+	if store.written["/d/config_node1.toml"] != 1 || store.written["/d/config_node2.toml"] != 1 {
+		t.Fatalf("configs not materialized: %v", store.written)
 	}
 	// Init routed through the driver's Initializer, then launched.
 	sort.Ints(drv.inited)
