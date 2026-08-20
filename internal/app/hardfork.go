@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // Chain-upgrade use cases: plan a binary swap at a fork block over a running
@@ -48,7 +48,7 @@ func HardforkPlan(_ context.Context, _ Deps, in HardforkPlanIn) (HardforkPlanOut
 	if in.ToChain == "" {
 		return HardforkPlanOut{}, errors.New("app: hardfork needs a target chain")
 	}
-	ns, err := state.LoadNodeSet(in.DataDir)
+	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
 		return HardforkPlanOut{}, err
 	}
@@ -94,7 +94,7 @@ func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (Hardfor
 	if in.Binary == "" {
 		return HardforkExecuteOut{}, errors.New("app: hardfork needs a resolved post-fork binary path")
 	}
-	specs, err := state.LoadNodeSpecs(in.DataDir)
+	specs, err := session.LoadLocalNodeSpecs(in.DataDir)
 	if err != nil {
 		return HardforkExecuteOut{}, fmt.Errorf("app: load node specs (launch the network first): %w", err)
 	}
@@ -106,13 +106,13 @@ func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (Hardfor
 	if err != nil {
 		return HardforkExecuteOut{}, err
 	}
-	if err := state.SaveNodeSet(in.DataDir, ns); err != nil {
+	if err := session.SaveLocalNodeSet(in.DataDir, ns); err != nil {
 		return HardforkExecuteOut{}, err
 	}
 	for i := range specs {
 		specs[i].Binary = in.Binary
 	}
-	if err := state.SaveNodeSpecs(in.DataDir, specs); err != nil {
+	if err := session.SaveLocalNodeSpecs(in.DataDir, specs); err != nil {
 		return HardforkExecuteOut{}, err
 	}
 	return HardforkExecuteOut{Nodes: ns}, nil

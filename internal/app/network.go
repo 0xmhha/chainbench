@@ -10,7 +10,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/state"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -54,7 +53,7 @@ func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatus
 		}
 		return NetworkStatusOut{Nodes: ws.NodeSet(), Composed: true}, nil
 	}
-	ns, err := state.LoadNodeSet(in.DataDir)
+	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
 		return NetworkStatusOut{}, err
 	}
@@ -103,7 +102,7 @@ func NetworkStop(ctx context.Context, d Deps, in NetworkStopIn) (NetworkStopOut,
 		}
 		return NetworkStopOut{Stopped: running}, nil
 	}
-	ns, err := state.LoadNodeSet(in.DataDir)
+	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
 		return NetworkStopOut{}, err
 	}
@@ -145,7 +144,7 @@ func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	if in.DataDir == "" || in.Index <= 0 {
 		return errNoDataDirAndIndex
 	}
-	ns, err := state.LoadNodeSet(in.DataDir)
+	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
 		return err
 	}
@@ -161,7 +160,7 @@ func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 			ns.Nodes[i].PID = 0
 		}
 	}
-	return state.SaveNodeSet(in.DataDir, ns)
+	return session.SaveLocalNodeSet(in.DataDir, ns)
 }
 
 // NodeStartIn selects one stopped node of a launched network.
@@ -182,11 +181,11 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error
 	if in.DataDir == "" || in.Index <= 0 {
 		return NodeStartOut{}, errNoDataDirAndIndex
 	}
-	ns, err := state.LoadNodeSet(in.DataDir)
+	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
 		return NodeStartOut{}, err
 	}
-	specs, err := state.LoadNodeSpecs(in.DataDir)
+	specs, err := session.LoadLocalNodeSpecs(in.DataDir)
 	if err != nil {
 		return NodeStartOut{}, err
 	}
@@ -203,7 +202,7 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error
 		return NodeStartOut{}, err
 	}
 	ns.Nodes = replaceNode(ns.Nodes, refreshed)
-	if err := state.SaveNodeSet(in.DataDir, ns); err != nil {
+	if err := session.SaveLocalNodeSet(in.DataDir, ns); err != nil {
 		return NodeStartOut{}, err
 	}
 	return NodeStartOut{Node: refreshed}, nil
@@ -239,7 +238,7 @@ func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (NetworkRemo
 	out := NetworkRemoveOut{Removed: in.DataDir}
 	// Best-effort: a data root that was provisioned but never launched has no
 	// node set, and removing it is still the right thing to do.
-	if ns, err := state.LoadNodeSet(in.DataDir); err == nil {
+	if ns, err := session.LoadLocalNodeSet(in.DataDir); err == nil {
 		stop, serr := stopAll(ctx, d, ns)
 		if serr != nil {
 			return NetworkRemoveOut{}, serr

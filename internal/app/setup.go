@@ -11,14 +11,14 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/bringup"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
+	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // Bring-up use cases for the setup stack: resolve a chain and a layout into a
@@ -98,7 +98,7 @@ func NetworkPlan(_ context.Context, _ Deps, in NetworkSpecIn) (NetworkPlanOut, e
 	}
 	cfg := config.Resolve(nil, override)
 	root := filepath.Clean(in.DataDir)
-	plan, err := bringup.BuildPlanWithTopology(cfg, plugin, root, topo)
+	plan, err := engine.BuildLocalPlan(cfg, plugin, root, topo)
 	if err != nil {
 		return NetworkPlanOut{}, err
 	}
@@ -129,7 +129,10 @@ func NetworkProvision(ctx context.Context, d Deps, in NetworkProvisionIn) (Netwo
 	if err != nil {
 		return NetworkProvisionOut{}, err
 	}
-	if err := bringup.Provision(ctx, planned.Plan, planned.Plugin, planned.Config, in.KeysDir); err != nil {
+	setup := engine.LocalSetup{
+		Plugin: planned.Plugin, Config: planned.Config, KeysDir: in.KeysDir,
+	}
+	if _, err := setup.Provision(ctx, planned.Plan); err != nil {
 		return NetworkProvisionOut{}, err
 	}
 	if err := saveTopology(planned.DataRoot, in.Spec.TopologyPath); err != nil {
@@ -178,17 +181,17 @@ func NetworkLaunch(ctx context.Context, d Deps, in NetworkLaunchIn) (NetworkLaun
 			return NetworkLaunchOut{}, err
 		}
 	}
-	ns, specs, err := bringup.LaunchWithSpecs(ctx, bringup.LaunchOptions{
-		Plugin: planned.Plugin, Config: planned.Config, DataRoot: planned.DataRoot,
-		Binary: in.Binary, KeysDir: in.KeysDir, Bus: in.Bus, Driver: dr,
-	})
+	ns, specs, err := engine.LocalSetup{
+		Plugin: planned.Plugin, Config: planned.Config, KeysDir: in.KeysDir,
+		Binary: in.Binary, Driver: dr, Bus: in.Bus,
+	}.Launch(ctx, planned.Plan)
 	if err != nil {
 		return NetworkLaunchOut{}, err
 	}
-	if err := state.SaveNodeSet(planned.DataRoot, ns); err != nil {
+	if err := session.SaveLocalNodeSet(planned.DataRoot, ns); err != nil {
 		return NetworkLaunchOut{}, err
 	}
-	if err := state.SaveNodeSpecs(planned.DataRoot, specs); err != nil {
+	if err := session.SaveLocalNodeSpecs(planned.DataRoot, specs); err != nil {
 		return NetworkLaunchOut{}, err
 	}
 	if err := saveTopology(planned.DataRoot, in.Spec.TopologyPath); err != nil {

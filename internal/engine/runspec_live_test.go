@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/bringup"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keys"
@@ -59,13 +58,14 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	ns, err := bringup.Launch(ctx, bringup.LaunchOptions{
-		Plugin:   plugin,
-		Config:   config.Resolve(nil, config.Values{"nodes.validators": "4"}),
-		DataRoot: dataRoot,
-		Binary:   bin,
-		KeysDir:  presetDir,
-	})
+	cfg := config.Resolve(nil, config.Values{"nodes.validators": "4"})
+	plan, err := engine.BuildLocalPlan(cfg, plugin, dataRoot, nil)
+	if err != nil {
+		t.Fatalf("build plan: %v", err)
+	}
+	ns, _, err := engine.LocalSetup{
+		Plugin: plugin, Config: cfg, Binary: bin, KeysDir: presetDir,
+	}.Launch(ctx, plan)
 	t.Cleanup(func() {
 		_, errs := driver.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
 		for _, e := range errs {

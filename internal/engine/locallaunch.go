@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -39,6 +40,10 @@ type LocalSetup struct {
 	// Sink materializes on-disk files; nil defaults to the local filesystem. Set a
 	// driver.RemoteFileSink to ship genesis + config to a remote host.
 	Sink provision.FileSink
+	// Bus receives setup progress; nil drops the events. It exists because the
+	// dashboard shows a bring-up as it happens, and a launch that reports
+	// nothing until it finishes looks indistinguishable from one that hung.
+	Bus *obs.Bus
 }
 
 // Launch attaches the network genesis to plan and brings every node up through
@@ -52,8 +57,24 @@ func (s LocalSetup) Launch(ctx context.Context, plan driver.Plan) (node.NodeSet,
 	if err := s.attachGenesis(ctx, &plan); err != nil {
 		return node.NodeSet{}, nil, err
 	}
+	s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
+		Message: "launching", Fields: map[string]any{"nodes": len(plan.Nodes)}})
 	res, specs, err := s.launcher().LaunchArmed(ctx, plan)
+	if err != nil {
+		s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindError, Network: plan.Network,
+			Message: "launch failed", Fields: map[string]any{"error": err.Error()}})
+		return res.Nodes, specs, err
+	}
+	s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
+		Message: "nodes launched", Fields: map[string]any{"nodes": len(res.Nodes.Nodes)}})
 	return res.Nodes, specs, err
+}
+
+// emit publishes an event when a bus is attached.
+func (s LocalSetup) emit(e obs.Event) {
+	if s.Bus != nil {
+		s.Bus.Publish(e)
+	}
 }
 
 // Provision attaches the network genesis to plan and materializes its on-disk
@@ -64,7 +85,13 @@ func (s LocalSetup) Provision(ctx context.Context, plan driver.Plan) ([]driver.N
 	if err := s.attachGenesis(ctx, &plan); err != nil {
 		return nil, err
 	}
-	return s.launcher().Provision(ctx, plan)
+	specs, err := s.launcher().Provision(ctx, plan)
+	if err != nil {
+		return nil, err
+	}
+	s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
+		Message: "genesis and config written", Fields: map[string]any{"path": plan.GenesisPath}})
+	return specs, nil
 }
 
 // launcher builds the LocalLauncher backing this setup.

@@ -20,11 +20,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-<<<<<<< HEAD
-	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/engine"
-=======
->>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 )
 
 // Default returns a Server with the built-in chainbench tools registered. Chain
@@ -336,11 +331,7 @@ func statusTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("data_dir is required")
 			}
-<<<<<<< HEAD
-			ns, err := session.LoadLocalNodeSet(dir)
-=======
 			res, err := app.NetworkStatus(ctx, app.Deps{}, app.NetworkStatusIn{DataDir: dir})
->>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 			if err != nil {
 				return "", err
 			}
@@ -368,18 +359,6 @@ func setupPlanTool() Tool {
 				"data_dir":   map[string]any{"type": "string"},
 			},
 		},
-<<<<<<< HEAD
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
-			p, err := registry.Get(argString(args, "chain", "stablenet"))
-			if err != nil {
-				return "", err
-			}
-			override := config.Values{
-				"nodes.validators": strconv.Itoa(argInt(args, "validators", 4)),
-				"nodes.endpoints":  strconv.Itoa(argInt(args, "endpoints", 1)),
-			}
-			plan, err := engine.BuildLocalPlan(config.Resolve(nil, override), p, argString(args, "data_dir", "data"), nil)
-=======
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			validators := argInt(args, "validators", 4)
 			endpoints := argInt(args, "endpoints", 1)
@@ -390,7 +369,6 @@ func setupPlanTool() Tool {
 				Validators:    &validators,
 				Endpoints:     &endpoints,
 			})
->>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 			if err != nil {
 				return "", err
 			}
@@ -714,12 +692,8 @@ func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
 		return node.AttachedSet(argString(args, "chain", ""), "attached", eps)
 	}
 	if dir := argString(args, "data_dir", ""); dir != "" {
-<<<<<<< HEAD
-		return session.LoadLocalNodeSet(dir)
-=======
 		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dir})
 		return res.Nodes, err
->>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 	}
 	return node.NodeSet{}, fmt.Errorf("provide rpc (array) or data_dir")
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // stubDriver stands in for node processes: it records what it was asked to do
@@ -48,14 +48,14 @@ func launchedNetwork(t *testing.T) (dir string, d *stubDriver, deps app.Deps) {
 			{Index: 2, Role: node.RoleValidator, Host: "127.0.0.1", RPCURL: "http://127.0.0.1:8610", PID: 1002},
 		},
 	}
-	if err := state.SaveNodeSet(dir, ns); err != nil {
+	if err := session.SaveLocalNodeSet(dir, ns); err != nil {
 		t.Fatalf("seed node set: %v", err)
 	}
 	specs := []driver.NodeSpec{
 		{Index: 1, Role: node.RoleValidator, Host: "127.0.0.1", Ports: node.Endpoints{HTTP: 8600}},
 		{Index: 2, Role: node.RoleValidator, Host: "127.0.0.1", Ports: node.Endpoints{HTTP: 8610}},
 	}
-	if err := state.SaveNodeSpecs(dir, specs); err != nil {
+	if err := session.SaveLocalNodeSpecs(dir, specs); err != nil {
 		t.Fatalf("seed node specs: %v", err)
 	}
 	d = &stubDriver{}
@@ -121,7 +121,7 @@ func TestNodeStop_ClearsThePID(t *testing.T) {
 		t.Errorf("stopped the wrong node: %v", d.stopped)
 	}
 	// The cleared PID is what makes a later status or start accurate.
-	ns, err := state.LoadNodeSet(dir)
+	ns, err := session.LoadLocalNodeSet(dir)
 	if err != nil {
 		t.Fatalf("reload: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestNodeStart_RelaunchesFromTheSavedSpec(t *testing.T) {
 		t.Errorf("refreshed node = %+v", out.Node)
 	}
 	// The new PID must be persisted, or a later stop has nothing to reach.
-	ns, err := state.LoadNodeSet(dir)
+	ns, err := session.LoadLocalNodeSet(dir)
 	if err != nil {
 		t.Fatalf("reload: %v", err)
 	}

@@ -15,10 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
-<<<<<<< HEAD
-	"github.com/0xmhha/chainbench/internal/core/session"
-=======
->>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 )
 
 // fundedKeyFromEnv reads an optional funded-account private key from
@@ -110,12 +106,8 @@ func resolveNodeSet(dataDir, chain string, rpcURLs []string) (node.NodeSet, erro
 		return node.AttachedSet(chain, "attached", eps)
 	}
 	if dataDir != "" {
-<<<<<<< HEAD
-		return session.LoadLocalNodeSet(dataDir)
-=======
 		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dataDir})
 		return res.Nodes, err
->>>>>>> d7e9167 (refactor(mcp): route the remaining status and plan tools through app)
 	}
 	return node.NodeSet{}, fmt.Errorf("provide --rpc <url> or --data-dir <dir> (from a setup)")
 }

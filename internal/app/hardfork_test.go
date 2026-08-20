@@ -8,7 +8,7 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/state"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 func TestHardforkPlan_ReadsTheFromChainFromTheNetwork(t *testing.T) {
@@ -86,7 +86,7 @@ func TestHardforkExecute_RewritesTheSavedSpecsToThePostForkBinary(t *testing.T) 
 	}
 	// A later single-node restart must start from the binary the network is
 	// actually running, not the one it was launched with.
-	specs, err := state.LoadNodeSpecs(dir)
+	specs, err := session.LoadLocalNodeSpecs(dir)
 	if err != nil {
 		t.Fatalf("reload specs: %v", err)
 	}
