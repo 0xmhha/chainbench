@@ -38,8 +38,20 @@ func TestTake(t *testing.T) {
 	if len(two.Validators) != 2 || len(two.BLSKeys) != 2 {
 		t.Errorf("Take(2): %d/%d", len(two.Validators), len(two.BLSKeys))
 	}
-	if two.ExtraData != p.ExtraData {
-		t.Error("Take should preserve extraData")
+	// The preset's extra-data encodes all of its validators, so a narrowed set
+	// must not carry it: a genesis whose extra-data names five validators while
+	// its validator set names two is accepted and then stalls in consensus.
+	// The genesis builder derives it from the fields above instead.
+	if two.ExtraData != "" {
+		t.Errorf("Take(2) kept the full set's extraData: %q", two.ExtraData)
+	}
+	if p.ExtraData == "" {
+		t.Error("the untouched preset should still report its own extraData")
+	}
+	// Node identities are not narrowed — a two-validator network still runs on
+	// nodes drawn from the whole set.
+	if len(two.Nodes) != len(p.Nodes) {
+		t.Errorf("Take(2) dropped node identities: %d of %d", len(two.Nodes), len(p.Nodes))
 	}
 	if len(p.Take(0).Validators) != 4 || len(p.Take(99).Validators) != 4 {
 		t.Error("Take(0)/Take(overflow) should return full set")

@@ -1,4 +1,4 @@
-package keygen
+package wbft
 
 import (
 	"encoding/hex"
@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-// WBFT genesis extra-data (worklist T7.2).
+// WBFT genesis extra-data.
 //
 // The wbft family reads its validator set out of the genesis extra-data: an
-// RLP-encoded WBFTExtra (go-stablenet core/types/istanbul.go). A generated key
-// set therefore needs this computed from its own validators and BLS keys, or
-// the chain rejects the genesis — the T4.4b constraint that kept
-// --keys-source=generate half-usable on wbft chains.
+// RLP-encoded WBFTExtra (go-stablenet core/types/istanbul.go). It is therefore
+// consensus-critical and it belongs to this family — it used to live in the
+// key generator, which meant a package about key material decided what a
+// genesis says about block production.
 //
 // Genesis shape (verified byte-for-byte against keys/preset and against the
 // chain's own simulated backend genExtraData):
@@ -41,15 +41,19 @@ const (
 	addressLen = 20
 )
 
-// WBFTExtraData computes the genesis extra-data for a wbft-family chain from
-// the validator addresses and their BLS public keys (0x-hex, index-aligned).
-// The result is 0x-hex RLP.
-func WBFTExtraData(validators, blsKeys []string) (string, error) {
+// ExtraData computes the genesis extra-data for a wbft-family chain from the
+// validator addresses and their BLS public keys (0x-hex, index-aligned). The
+// result is 0x-hex RLP.
+//
+// It is derived, never declared: extra-data that disagrees with the validator
+// set passes genesis validation and then fails in consensus, where the cause is
+// far from the symptom. [BuildGenesis] computes it rather than accepting one.
+func ExtraData(validators, blsKeys []string) (string, error) {
 	if len(validators) == 0 {
-		return "", fmt.Errorf("keygen: extradata: no validators")
+		return "", fmt.Errorf("wbft: extradata: no validators")
 	}
 	if len(validators) != len(blsKeys) {
-		return "", fmt.Errorf("keygen: extradata: %d validators but %d BLS keys",
+		return "", fmt.Errorf("wbft: extradata: %d validators but %d BLS keys",
 			len(validators), len(blsKeys))
 	}
 	candidates := make([]any, len(validators))
@@ -58,11 +62,11 @@ func WBFTExtraData(validators, blsKeys []string) (string, error) {
 	for i, v := range validators {
 		addr, err := hexBytes(v, addressLen)
 		if err != nil {
-			return "", fmt.Errorf("keygen: extradata: validator %d: %w", i, err)
+			return "", fmt.Errorf("wbft: extradata: validator %d: %w", i, err)
 		}
 		bls, err := hexBytes(blsKeys[i], blsPubKeyLen)
 		if err != nil {
-			return "", fmt.Errorf("keygen: extradata: BLS key %d: %w", i, err)
+			return "", fmt.Errorf("wbft: extradata: BLS key %d: %w", i, err)
 		}
 		candidates[i] = []any{addr, uint64(defaultDiligence)}
 		indices[i] = uint64(i)

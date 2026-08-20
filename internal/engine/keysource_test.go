@@ -62,11 +62,14 @@ func TestGeneratedKeySource_NeedsNoExternalBinary(t *testing.T) {
 	if len(ks.Preset.Nodes) != nodes {
 		t.Fatalf("got %d identities, want %d", len(ks.Preset.Nodes), nodes)
 	}
-	// A wbft-family genesis reads the validator set out of extra-data, so a
-	// generated set is only usable if the BLS material came with it.
-	if len(ks.Preset.BLSKeys) != nodes || ks.Preset.ExtraData == "" {
-		t.Errorf("generated set is missing BLS material: %d bls keys, extraData=%q",
-			len(ks.Preset.BLSKeys), ks.Preset.ExtraData)
+	// A wbft-family genesis reads the validator set out of extra-data, which is
+	// derived from the BLS keys at genesis time — so what the generated set
+	// must carry is the BLS material, not a precomputed extra-data.
+	if len(ks.Preset.BLSKeys) != nodes {
+		t.Errorf("generated set has %d BLS keys, want %d", len(ks.Preset.BLSKeys), nodes)
+	}
+	if ks.Preset.ExtraData != "" {
+		t.Errorf("generated set stored a derived extraData: %q", ks.Preset.ExtraData)
 	}
 }
 

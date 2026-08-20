@@ -17,7 +17,12 @@ type GenesisParams struct {
 	ChainID    int64
 	Validators []string // validator addresses (0x-hex)
 	BLSKeys    []string // BLS public keys (0x-hex), aligned with Validators
-	ExtraData  string   // RLP-encoded validator extra-data (0x-hex)
+	// ExtraData is the RLP-encoded validator extra-data (0x-hex). Leave it
+	// empty and BuildGenesis derives it from Validators and BLSKeys, which is
+	// the right thing in every case except reproducing a specific historical
+	// genesis. A supplied value that disagrees with the validator set is
+	// accepted at genesis and fails later, in consensus.
+	ExtraData string
 	// Members are the governance council addresses (0x-hex) that seed the
 	// anzeon system contracts (stablenet). Required only when the template
 	// carries the system-contract placeholders; empty for templates (e.g.
@@ -58,6 +63,15 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 		return nil, fmt.Errorf("wbft genesis: %d validators but %d BLS keys", len(p.Validators), len(p.BLSKeys))
 	}
 
+	extraData := p.ExtraData
+	if extraData == "" {
+		derived, err := ExtraData(p.Validators, p.BLSKeys)
+		if err != nil {
+			return nil, fmt.Errorf("wbft genesis: %w", err)
+		}
+		extraData = derived
+	}
+
 	valsJSON, err := json.Marshal(p.Validators)
 	if err != nil {
 		return nil, fmt.Errorf("wbft genesis: marshal validators: %w", err)
@@ -82,8 +96,8 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 	out = strings.ReplaceAll(out, phValidators, string(valsJSON))
 	out = strings.ReplaceAll(out, `"`+phBLSKeys+`"`, string(blsJSON))
 	out = strings.ReplaceAll(out, phBLSKeys, string(blsJSON))
-	out = strings.ReplaceAll(out, `"`+phExtraData+`"`, strconv.Quote(p.ExtraData))
-	out = strings.ReplaceAll(out, phExtraData, p.ExtraData)
+	out = strings.ReplaceAll(out, `"`+phExtraData+`"`, strconv.Quote(extraData))
+	out = strings.ReplaceAll(out, phExtraData, extraData)
 
 	// System-contract list placeholders (bare, inside JSON string values).
 	out = strings.ReplaceAll(out, phSCValidators, strings.Join(p.Validators, ","))

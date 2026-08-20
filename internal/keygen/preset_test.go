@@ -105,10 +105,9 @@ func TestGeneratePreset_RunsNoExternalProcess(t *testing.T) {
 	if len(meta.Nodes) != nodes || len(meta.Validators) != nodes {
 		t.Fatalf("got %d nodes / %d validators", len(meta.Nodes), len(meta.Validators))
 	}
-	if meta.ExtraData == "" {
-		t.Error("no genesis extra-data computed")
-	}
-
+	// Extra-data is not stored: it encodes the validator set and would go stale
+	// the moment a network used a subset of it.
+	//
 	// Every generated node must re-derive from the nodekey written to disk, or
 	// the metadata and the datadir describe different identities.
 	for _, n := range meta.Nodes {

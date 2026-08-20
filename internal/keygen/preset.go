@@ -58,7 +58,6 @@ type Meta struct {
 	Password              string                    `json:"password"`
 	Validators            []string                  `json:"validators"`
 	BLSPublicKeys         []string                  `json:"blsPublicKeys"`
-	ExtraData             string                    `json:"extraData"`
 	SystemContractMembers string                    `json:"systemContractMembers"`
 	SystemContractBLSKeys string                    `json:"systemContractBlsKeys"`
 	Alloc                 map[string]map[string]any `json:"alloc"`
@@ -122,14 +121,10 @@ func GeneratePreset(opts PresetOpts, progress func(string)) (Meta, error) {
 	meta.SystemContractMembers = strings.Join(meta.Validators, ",")
 	meta.SystemContractBLSKeys = strings.Join(meta.BLSPublicKeys, ",")
 
-	// The wbft family reads the validator set out of extra-data, so compute it
-	// from the generated validators (T7.2). Previously a zero placeholder,
-	// which made a generated set unusable on wbft-family chains.
-	extra, err := WBFTExtraData(meta.Validators, meta.BLSPublicKeys)
-	if err != nil {
-		return Meta{}, fmt.Errorf("keygen: extra-data: %w", err)
-	}
-	meta.ExtraData = extra
+	// No extra-data is written. It encodes the validator set, so a stored copy
+	// goes stale the moment a network uses a subset of these validators — and a
+	// genesis whose extra-data disagrees with its validator set is accepted and
+	// then fails in consensus. The wbft family derives it at genesis time.
 
 	b, err := json.MarshalIndent(meta, "", "  ")
 	if err != nil {

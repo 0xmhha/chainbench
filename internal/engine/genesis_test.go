@@ -60,9 +60,15 @@ func TestPresetGenesisSource_BuildsGenesis(t *testing.T) {
 }
 
 func TestPresetGenesisSource_TakeLimitsValidators(t *testing.T) {
+	// Full-length values: narrowing the set drops the preset's extra-data, so
+	// the builder derives a fresh one and needs real 20-byte addresses and
+	// 48-byte BLS keys to do it.
 	dir := writePreset(t, `{
-		"validators": ["0xaaaa", "0xbbbb"],
-		"blsPublicKeys": ["0x01", "0x02"],
+		"validators": ["0xaaaa000000000000000000000000000000000001", "0xbbbb000000000000000000000000000000000002"],
+		"blsPublicKeys": [
+			"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		],
 		"extraData": "0xdeadbeef",
 		"alloc": {}
 	}`)
@@ -71,8 +77,13 @@ func TestPresetGenesisSource_TakeLimitsValidators(t *testing.T) {
 		t.Fatalf("Genesis: %v", err)
 	}
 	out := string(gen)
-	if !strings.Contains(out, "0xaaaa") || strings.Contains(out, "0xbbbb") {
+	if !strings.Contains(out, "0xaaaa0000") || strings.Contains(out, "0xbbbb0000") {
 		t.Fatalf("Take(1) should keep only the first validator:\n%s", out)
+	}
+	// The preset's stored extra-data described both validators, so it must not
+	// survive into a one-validator genesis.
+	if strings.Contains(out, "0xdeadbeef") {
+		t.Fatalf("narrowed genesis reused the full set's extraData:\n%s", out)
 	}
 }
 

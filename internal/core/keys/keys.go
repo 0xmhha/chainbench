@@ -121,6 +121,12 @@ func (p Preset) Node(index int) (NodeKey, bool) {
 // preset. n<=0 or n>=len returns the full set. The governance Members (system
 // contract council) are independent of the active validator count and are
 // preserved in full.
+//
+// ExtraData is dropped from a narrowed set on purpose. It encodes the validator
+// set, so the preset's copy describes all of them; carrying it through would
+// hand the genesis builder a validator set that contradicts Validators, and the
+// chain reads the extra-data. The builder derives it from the fields above when
+// it is empty.
 func (p Preset) Take(n int) Preset {
 	if n <= 0 || n >= len(p.Validators) {
 		return p
@@ -128,9 +134,9 @@ func (p Preset) Take(n int) Preset {
 	return Preset{
 		Validators: p.Validators[:n],
 		BLSKeys:    p.BLSKeys[:n],
-		ExtraData:  p.ExtraData,
 		Members:    p.Members,
 		Alloc:      p.Alloc,
 		Password:   p.Password,
+		Nodes:      p.Nodes,
 	}
 }

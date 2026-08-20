@@ -346,7 +346,7 @@ genesis 와 config 는 **argv 로 경로를 가리키므로 복사가 아예 필
 | **M1** | `material` 레이아웃(`env-id` 이름) + 업로드 대장 | 같은 자료 재업로드 0회 · **이름이 같고 내용이 다르면 반드시 다시 올린다** |
 | **M2** | `run/<run-id>` 분리 + datadir 재생성 | datadir 삭제가 자료를 건드리지 않음 |
 | **M3** | `bin/<chain>/<build>` | 한 서버에 두 빌드 공존(하드포크) |
-| **K2** | `keygen.WBFTExtraData` → `consensus/wbft` | genesis 자료는 genesis 쪽으로 |
+| **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 파생값은 저장하지 않는다 — `BuildGenesis` 가 계산 |
 | **K3** | `keys`·`keygen`·`keymat`·`keyreg` → `keyring` | 6패키지 → 1 · 신원 타입 5 → 1 |
 | **K4** | `keyring` 명령 (new/add/list/show/import/export) | `keys`·`validator`·`account` 대체 |
 | **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만 | 기존 파일 호환 |
