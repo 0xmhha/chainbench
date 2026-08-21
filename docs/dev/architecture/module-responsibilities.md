@@ -7,7 +7,7 @@
 > [[layers]](layers.md) 는 **패키지가 어느 층인지**를 답한다. 이 문서는 그 다음 질문에 답한다 —
 > **"이 관심사의 주인이 누구인가."** 그리고 세 체인을 실제로 기동할 때 모듈을 어떻게 타는지 추적한다.
 >
-> 실측 기준: 2026-08-18. 관련: [[family-bringup-design]](../family-bringup-design.md)
+> 실측 기준: §2 소유자 표는 2026-08-21 재측정(K 계열 병합 후), 나머지는 2026-08-18. 관련: [[family-bringup-design]](../family-bringup-design.md)
 
 ---
 
@@ -18,10 +18,10 @@
 
 | 관심사 | 만지는 패키지 수 | 실측 |
 |---|---:|---|
-| **genesis** | **17** | app · chains/{external,stablenet,wbft,wemix} · chainsetup · consensus/{poa,upgrade,wbft} · core/{bringup,driver,preflight,registry} · engine · mcp · netcompose · testspec |
-| **key / nodekey** | **17** | chains/wemix/deploy · chainsetup · consensus/upgrade · core/{bringup,config,driver,genesis,hardfork,keyreg,keys,launchopt,session} · engine · keygen · netcompose · testspec · validatorset |
-| **노드 생명주기** | **11** | app · chains/wemix/deploy · chainsetup · consensus/upgrade · core/{bringup,driver,hardfork,supervisor} · engine · mcp · netcompose |
-| **config.toml 렌더** | 5 | chains/wemix/deploy · consensus/upgrade · core/bringup · engine · netcompose |
+| **genesis** | **19** | app · chains/{external,stablenet,wbft,wemix} · chainsetup · consensus/{poa,upgrade,wbft} · core/{driver,genesis,preflight,registry} · engine · mcp · netcompose · testspec |
+| **key / nodekey** | **1 소유자 + 8 소비자** | 소유: `core/keyring`. 소비: cmd · chains/wemix/deploy · chainsetup · core/session · engine · netcompose · testspec · validatorset |
+| **노드 생명주기** | **12** | app · chains/wemix/deploy · chainsetup · consensus/upgrade · core/{driver,hardfork,provision,supervisor} · engine · mcp · netcompose · testspec |
+| **config.toml 렌더** | 5 | chains/wemix/deploy · consensus/upgrade · core/driver · engine · netcompose |
 
 **노드를 관리하는 컴포넌트는 있다. 다만 11곳에 흩어져 있고, 그중 무엇이 "주인"인지 코드가 말하지 않는다.**
 이것이 레이어를 지켜도 복잡도가 줄지 않는 이유다 — 레이어는 *방향*을 정하지 *책임*을 정하지 않는다.
@@ -39,7 +39,7 @@
 | 1 | **바이너리** | `registry.Manifest.Binary` + 표면의 경로 해석 | L1/L6 | 어떤 실행파일인지 선언 | 빌드하지 않는다 |
 | 2 | **배치·포트** | `serverset` → `place` → `portplan` | L1 | 인벤토리에서 노드별 host/포트 확정 | 파일을 쓰지 않는다 |
 | 3 | **키셋(계정·nodekey)** | `engine.KeySource` | L4 | 키셋 확보(preset 사용 / 신규 생성) | 키를 *등록*하지 않는다 |
-| 3b | **키 레지스트리** | `core/keyreg` | L1 | 실행이 쓰는 신원 등록·주소 대조·0600 | 키셋을 만들지 않는다 |
+| 3b | **키 레지스트리** | `core/keyring.Ring` | L1 | 실행이 쓰는 신원 등록·주소 대조·0600 | ☑ `core/keyring` 안으로 흡수됨 |
 | 4 | **genesis** | `engine.GenesisSource` | L4 | 패밀리에 위임해 genesis(+부산물) 생성 | 파일을 쓰지 않는다 → Sink 로 넘긴다 |
 | 4a | ↳ 패밀리 구현 | `consensus/{wbft,poa}` | L2a | wbft: extraData RLP / poa: 바이너리 호출 | 배치·포트를 모른다 |
 | 4b | ↳ 공통 변형 | `core/genesis` | L1 | overlay 병합 · config override · fork 순서 검증 | 체인을 모른다 |
@@ -60,7 +60,6 @@
 
 | 어기는 곳 | 무엇을 | 왜 문제인가 |
 |---|---|---|
-| `core/bringup` | genesis 를 직접 `os.WriteFile` | #7 Sink 우회 (레거시, 삭제 예정) |
 | `app` | `topology.yaml` 직접 쓰기 | #16 이 파일 경로를 안다 |
 | `consensus/upgrade` | 파일 쓰기 + 노드 기동 | L2 가 #7·#8 을 겸한다 |
 | `chains/wemix/deploy` | 원격 파일 쓰기 + 기동 | 같은 이유 |
@@ -78,7 +77,7 @@
 실행(I/O)    interpreter.go · run.go · builtins.go · fault.go · logs.go · metric.go · assets.go
 ```
 
-그 결과 **순수해야 할 파서가 L3 로 끌려 올라간다** — `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 하기 때문이다.
+그 결과 **순수해야 할 파서가 L3 로 끌려 올라간다** — `testspec` 이 `collector`·`session`·`rpc`·`keyring`·`accounts` 를 import 하기 때문이다.
 
 ### 제안: 4분할 — 이름이 무엇인지 말하게 한다
 
@@ -90,7 +89,7 @@ DSL 이 있으므로 **언어(구문)와 그것을 실행하는 엔진**이 갈�
 | `internal/dsl` | **L1** | `Spec` 모델 · `Parse`/`ParseV2` · `migrate` · 스키마 | 689 | 없음(순수)* |
 | `internal/dsl/assert` | **L1** | 타입인지 비교 함수 | 368 | 없음(순수) |
 | `internal/dsl/bind` | **L1** | 값 바인딩 · `$ref` 해석 | 259 | 없음(순수) |
-| `internal/dsl/interp` | **L3** | 인터프리터 · 액션/어세션 · 빌트인 · 실행 | 2,050 | rpc · session · keyreg |
+| `internal/dsl/interp` | **L3** | 인터프리터 · 액션/어세션 · 빌트인 · 실행 | 2,050 | rpc · session · keyring |
 
 > **`engine` 이라는 이름을 다시 쓰지 않는다.** `internal/dsl/engine` 으로 두면
 > `internal/engine`(테스트벤치 엔진)과 이름이 겹쳐, 이 프로젝트가 반복해 온
@@ -161,7 +160,7 @@ L5  app.NetUp                                   9개 스텝을 순서대로
      ├─ NetAllocate   → app.ResolveServer       → serverset.Placement   (#2 배치·포트)
      │                  netcompose.Allocate     → place.Allocate → portplan.Plan
      ├─ NetKeys       → netcompose.Keys         → engine.KeySource      (#3 키셋)
-     │                                            └ keys.LoadPreset | keygen.GeneratePreset
+     │                                            └ keyring.LoadPreset | keyring.Generate
      ├─ NetGenesis    → netcompose.Genesis      → engine.GenesisSource  (#4 genesis)
      │                                            └ ★ 패밀리 분기 ★
      │                                          → core/genesis (overlay·override·fork검증)
