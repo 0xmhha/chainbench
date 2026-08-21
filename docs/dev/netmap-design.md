@@ -97,14 +97,14 @@ L1  core/netmap    어디에 어떻게 있는가 ← 이 문서
 
 ```
 core/netmap
-├─ Role        bp | en | pn — 어휘의 단일 정의 (N0)
-│              legacy 매핑: validator→bp, endpoint→en (읽기 호환)
+├─ (Role)      bp | en | pn — 상수는 **`core/node` 에 추가**된다(§2.5). netmap 은
+│              재정의하지 않고 legacy 매핑(validator→bp, endpoint→en)만 소유
 ├─ Ports       P2P·Etcd·HTTP·WS·Auth·Metrics — portplan.Ports 승격
 ├─ Pool        가용 자원: IP 목록 × 포트베이스 목록 (인벤토리에서 읽음, §2.2a)
 ├─ Assign      Pool 을 소비해 노드별 (IP, 포트집합) 을 결정적으로 할당 (§2.2b)
-├─ Placement   Label → {Role, Host, Ports, DataDir}  (정방향 — Assign 의 산출)
-│              Host:Port → Label                      (역방향, N7)
-├─ Vocabulary  노드 라벨 규칙·역할 상수 — DSL 이 import 하는 쪽 (§2.5)
+├─ NodeLabel   "node1"·"bp1" — 노드를 지칭하는 명명된 타입 + 규칙 함수 (§2.5)
+├─ Map         NodeLabel → Placement{Role, Host, Ports, DataDir}  (정방향)
+│              Host:Port → NodeLabel                               (역방향, N7)
 ├─ Peering     역할에서 파생되는 그래프 (N0b)
 │              mesh    — 현행과 동일 (기본)
 │              proxied — bp↔pn↔en, en 은 bp 를 모른다
@@ -175,7 +175,7 @@ keyring 의 것이다. netmap 이 keyring 을 import 하면 배치가 신원에 
 | `portplan.Ports` | `netmap.Ports` | **이동**. `portplan` 은 계산 함수(`Plan`·`Validate`)만 남기고 타입은 netmap 이 소유 |
 | `node.Endpoints` | `netmap.Ports` | **대체**. Etcd 누락 해소. `node.Node.Ports` 의 타입이 바뀐다 |
 | `node.RoleEN` | 삭제 | `en` 은 `RoleEndpoint` 의 새 철자가 아니라 중복이었다 |
-| `place.NodePlacement.Name` | `netmap.Label` | 명명된 타입으로 승격 (keyring.Label 과 **별개 타입** — 노드 라벨과 링 항목 라벨은 우연히 겹칠 뿐 같은 개념이 아니다) |
+| `place.NodePlacement.Name` | `netmap.NodeLabel` | 명명된 타입으로 승격. `keyring.Label` 과 이름부터 다르게 — 노드 라벨과 링 항목은 다른 개념이다 |
 | static-nodes 조립 4곳 | `netmap.StaticNodes` | engine·netcompose·upgrade.mesh·chainsetup 이 호출자로 |
 | `upgrade.NodeSpec`·`deploy.Server` 의 배치 필드 | netmap 참조 | **F4·F5 때** — A4b 와 같은 이유로 핸드오프 코드는 그때 함께 |
 
@@ -192,39 +192,61 @@ DSL 이 노드를 지칭하는 라벨과 netmap 의 라벨이 **같은 문자열
 `"node" + strconv.Itoa(n.Index)` 를 **자체 하드코딩**한다(`testspec/builtins.go:423`) —
 netmap 이 라벨 규칙을 바꾸면 DSL 이 조용히 어긋난다.
 
-공유 방향은 레이어가 정한다: `testspec` 은 L3, `netmap` 은 L1 이므로 **netmap 이 어휘를
-소유하고 DSL 이 import 한다.** (반대는 상향 의존 — A1 이 거부한다.)
+공유 방향은 레이어가 정한다 — 단, 소유자는 둘로 갈린다:
+
+- **역할 상수는 `core/node`(L0) 에.** `node.Role` 이 이미 어휘의 거처이고 fan-in 25 다.
+  netmap(L1) 이 재정의하면 `Role` 타입이 세 벌이 되고, L0 인 `node` 는 그것을 import 할
+  수도 없다. bp/en/pn 은 기존 `node.Role` 의 새 값으로 들어가고, `RoleEN`/`RoleEndpoint`
+  중복은 이때 해소된다(N0).
+- **라벨 규칙은 `netmap`(L1) 에.** `NodeLabel` 타입과 규칙 함수를 netmap 이 소유하고,
+  DSL(L3)·엔진이 import 한다.
 
 ```go
-// netmap 이 소유
-func NodeLabel(index int) Label      // "node1" — 지금 DSL 이 하드코딩하는 규칙
-const RoleBP, RoleEN, RolePN Role    // DSL 의 role 선택자가 같은 상수를 참조
+// core/node — 어휘 (DSL 은 이미 이 패키지를 import 한다)
+const RoleBP, RoleEN, RolePN Role
+
+// core/netmap — 라벨
+type NodeLabel string
+func LabelFor(index int) NodeLabel   // "node1" — 지금 DSL 이 하드코딩하는 규칙
 ```
 
 DSL 의 `on:"node1"`·역할 셀렉터가 이 함수·상수를 쓰게 되면, 라벨 규칙의 변경은 한 곳이고
-DSL 은 따라온다.
+DSL 은 따라온다. `keyring.Label`(링 항목)과는 **타입도 이름도 다르다** — 겹치면 이름
+규칙(다른 개념=다른 이름)을 어긴다.
 
-### 2.6 체인별 차이 — 패밀리 포트 프로필
+### 2.6 체인별 차이 — 새 타입이 아니라 기존 두 seam
 
-노드가 소비하는 포트 묶음은 패밀리마다 다르다. 이것이 F1(PortReservation)의 실체이고,
-netmap 의 seam 으로 들어온다.
+초안은 `PortProfile{NeedsEtcd, AllowsPN}` 하나를 뒀는데, **이름이 어색한 이유는 두 개념을
+한 타입에 넣었기 때문**이었다. 포트 요구(파생·검증의 입력)와 역할 허용(선언의 검증)은
+성격이 다르고 — 그리고 둘 다 **이미 이름이 있다.**
+
+| 질문 | 기존 seam | 어디에 |
+|---|---|---|
+| 이 패밀리 노드가 요구하는 포트 span 은? | `PortReservation() portplan.Reservation` | [[family-bringup-design]] §seam |
+| 이 역할이 이 패밀리에서 유효한가? | `SupportsRole(Role) bool` | [[chainbench-worklist]] N0b |
+
+netmap 은 새 타입을 만들지 않고 이 둘을 **소비**한다: Assign 이 `PortReservation` 으로
+베이스 간격을 검증하고(wemix 는 etcd=p2p+1 이라 span 2 이상), Peering 이 `SupportsRole` 로
+poa+pn 선언을 거부한다. `serverset` 의 전역 `p2pStep>=2` 강제는 이렇게 패밀리 seam 으로
+옮겨져 F1 게이트("poa 는 step 2 거부, wbft 는 허용")가 닫힌다.
 
 | | wbft 계열 | poa(wemix) |
 |---|---|---|
-| etcd | 안 씀 | **p2p+1 로 유도** — 베이스 간격의 이유 |
-| pn 역할 | static-nodes 그래프로 표현 | **없음** — etcd 가 그 자리. 선언 시 오류 |
-| 베이스 최소 간격 | 2 (p2p, 여유) | 2 이상 (p2p + etcd) |
+| etcd | 안 씀 | **p2p+1 로 유도** — span 요구의 이유 |
+| pn 역할 | static-nodes 그래프로 표현 | **없음** — `SupportsRole(pn)=false`, 선언 시 오류 |
 
-```go
-// 패밀리가 자기 요구를 선언하고, Assign/Validate 가 그것으로 검증한다
-type PortProfile struct {
-    NeedsEtcd bool     // 베이스 검증과 Ports 파생에 반영
-    AllowsPN  bool     // false 면 pn 선언이 오류
-}
-```
+### 2.7 이름 충돌 검증 — AST 실측
 
-현재 `serverset` 의 전역 `p2pStep>=2` 강제는 이 프로필로 옮겨진다 — wbft 만 있는 배치에서
-과잉 제약을 걸지 않게 되고, F1 의 "poa 는 step 2 거부, wbft 는 허용" 게이트가 여기서 닫힌다.
+이 설계가 도입하는 이름을 기존 타입 선언 전수와 대조했다([[layers]] §5b 규칙 적용).
+
+| 초안 이름 | 충돌 | 확정 | 근거 |
+|---|---|---|---|
+| `PortProfile` | (신조어) | **폐기** → `PortReservation` + `SupportsRole` | 두 개념 한 타입이 어색함의 뿌리. 둘 다 기존 설계 어휘가 있다 |
+| `netmap.Label` | `keyring.Label` | `netmap.NodeLabel` | 다른 개념은 다른 이름. blueprint 원안 복귀 |
+| `netmap.Role` | `node.Role`·`deploy.Role` ×2 존재 | **정의하지 않음** — 상수를 `node.Role` 에 | 세 번째 Role 을 만들지 않는다. L0 이 어휘 거처 |
+| `netmap.Placement`(맵) | `serverset.Placement` | 맵=`netmap.Map`, 항목=`netmap.Placement` | serverset.Placement 은 Assign 에 흡수·소멸(NM1b) — 이행기만 공존 |
+| `netmap.Ports` | `serverset.Ports`(밴드) | 유지 | 충돌 상대(밴드)가 v2 `pool.portBases` 로 소멸 |
+| `Vocabulary`(서브모듈) | — | **삭제** | 아무것도 말하지 않는 이름. `NodeLabel` 함수 + `node.Role` 상수로 족하다 |
 
 ---
 
@@ -248,9 +270,9 @@ keyring 때처럼 유스케이스는 `app` 에, 표면은 바인딩·렌더링�
 
 | # | 작업 | 게이트 |
 |---|---|---|
-| **NM1** | `core/netmap` 신설 — Role(bp/en/pn)·Ports(Etcd 포함)·Placement·Vocabulary·legacy 매핑 | 기존 topology/NodeState 를 **읽기 호환**으로 흡수 · 문자열 역할이 남지 않음 · DSL 의 `"node"+i` 하드코딩이 `netmap.NodeLabel` 로 |
+| **NM1** | `core/netmap` 신설 — node.Role 에 bp/en/pn 추가·Ports(Etcd 포함)·Map/Placement·NodeLabel·legacy 매핑 | 기존 topology/NodeState 를 **읽기 호환**으로 흡수 · 문자열 역할이 남지 않음 · DSL 의 `"node"+i` 하드코딩이 `netmap.NodeLabel` 로 |
 | **NM1b** | Pool + Assign — 인벤토리 v2 스키마(hosts×portBases·sudo·dataRoot) + 결정적 할당 | §2.2b 예시(5 IP × 4 베이스 × 15노드)가 테이블 테스트로 · 초과는 부족 수를 말하며 거부 · `place` 2모드가 특수형으로 흡수 · v1 읽기 호환 |
-| **NM2** | Peering 파생 + `StaticNodes` + PortProfile — mesh 는 **현행 argv 와 바이트 동일** | proxied: en 의 목록에 bp 가 없음 · poa+pn 오류 · 골든 비교 · `serverset` 전역 `p2pStep>=2` 가 패밀리 프로필로 (F1) |
+| **NM2** | Peering 파생 + `StaticNodes` + PortProfile — mesh 는 **현행 argv 와 바이트 동일** | proxied: en 의 목록에 bp 가 없음 · poa+pn 오류 · 골든 비교 · `serverset` 전역 `p2pStep>=2` 가 `PortReservation` seam 으로 (F1) |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) | 앞 2곳 전환 후 `net up` 라이브 재검증(stablenet·wbft) |
 | **NM4** | 표면 — allocate 산출 강화 · `--peering` · 역방향 조회 | CLI/MCP 동일 출력 · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
@@ -264,7 +286,7 @@ N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
 
 | # | 질문 | 기울기 |
 |---|---|---|
-| NM-a | `netmap.Label` 과 `keyring.Label` — 별개 타입 유지? | 별개. 노드 라벨(`node1`)과 링 항목(`faucet`)은 다른 공간 |
+| NM-a | ~~`netmap.Label` vs `keyring.Label`~~ | 해소 — `NodeLabel` 로 이름부터 분리(§2.5) |
 | NM-b | `node.Node.Ports` 타입 교체는 파급이 크다(25 fan-in). 단계적으로? | NM1 에서 alias 로 시작, NM3 에서 교체 |
 | NM-c | proxied 에서 pn 이 없으면? | 오류 — mesh 로 조용히 강등하지 않는다 |
 | NM-d | 역할별 IP 선호(예: bp 는 앞쪽 IP 고정)가 필요한가? | 당장은 아니오 — 순서 결정성으로 충분. 근거가 생기면 Assign 에 정책 주입 |
