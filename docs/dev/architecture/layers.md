@@ -14,14 +14,17 @@
 
 ## 1. 진단 — 복잡도가 어디서 오는가
 
-레이어 자체는 거의 지켜지고 있다. **상향 의존은 1건이며, 그 하나는 삭제 대기 중인
-레거시다** — `core/pipeline/testrun`(L3) 이 `testkit`(L5) 의 `Report`·`ClientFactory` 를
-import 한다. 둘 다 A5 의 잔여 삭제 대상이고, 케이스 이관이 선행 조건이다.
+레이어 자체는 지켜지고 있다. **상향 의존은 0건이다** — §3 의 배치를 정본으로 삼아
+`internal/` 52개 패키지의 import 그래프를 대조한 결과이며, 그 대조는 이제 테스트다
+(A1, `internal/arch`).
 
-> 이 1건은 2026-08-21 재측정에서 드러났다. 그 전에 "0건"이라고 적혀 있었던 것은 측정
-> 스크립트의 배치 맵에 두 패키지가 빠져 있었기 때문이다 — 검사가 자기가 모르는 것을
-> 통과시켰다. A1(레이어 검사 테스트)이 **배치표에 없는 패키지를 실패로 처리**해야 하는
-> 이유가 이것이다.
+> 이 숫자는 두 번 잘못 보고됐다. 두 번 다 원인이 같다 — 검사하는 쪽이 **이 문서를 읽지 않고
+> 자기 배치 맵을 따로 들고 있었고**, 그 맵이 문서와 달랐다. 한 번은 없는 위반을 만들어냈고
+> (`testkit` 을 L5 로 잘못 두어 `core/pipeline/testrun`→`testkit` 이 상향으로 보였다),
+> 한 번은 맵에 없는 패키지를 조용히 건너뛰었다.
+>
+> 그래서 A1 은 배치를 코드에 복제하지 않고 **이 문서의 §3 표를 파싱한다.** 정본이 하나면
+> 검사와 문서가 어긋날 수 없다. 표에 없는 패키지는 통과가 아니라 실패다.
 
 문제는 두 가지다.
 
@@ -103,6 +106,7 @@ flowchart TD
 | `core/procman` | PID 추적 · 검증된 종료 |
 | `core/provision` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
+| `core/target` | 단일 경로 문법 — 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
 | `core/keyring` | **키 자료의 단일 소유자** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·백엔드·링·색인 |
@@ -124,7 +128,12 @@ flowchart TD
 
 ### L2b 체인 어댑터 — 체인 특화
 
-`chains/{stablenet,wbft,wemix}` (+`wemix/deploy`, `stablenet/govbind`) · `chains/external`(외부 매니페스트) · `chains/all`(등록 집합) · `chains/common`
+| 패키지 | 담는 것 |
+|---|---|
+| `chains/stablenet` · `chains/wbft` · `chains/wemix` | 체인 플러그인 |
+| `chains/wemix/deploy` · `chains/stablenet/govbind` | 체인 특화 하위 기능 |
+| `chains/external` | 외부 매니페스트 |
+| `chains/all` · `chains/common` | 등록 집합 · 공통 헬퍼 |
 
 ### L3 도메인 서비스 — 정책
 
@@ -136,23 +145,47 @@ flowchart TD
 | `core/supervisor` | 기동 순서 · 헬스 게이트 · 진단 · 재시도 · teardown |
 | `core/hardfork` | 업그레이드 계획/실행 |
 | `core/netreg` | 네트워크 레지스트리 |
-| `testspec` (+`assert`) | DSL 파싱 · 인터프리터 · 어세션 |
+| `testspec` · `testspec/assert` | DSL 파싱 · 인터프리터 · 어세션 |
 | `validatorset` | 검증자셋 계산 |
 
 ### L4 오케스트레이션
 
-`engine`(엔진 조립 · 로컬 plan/provision/launch) · `netcompose`(스텝 컴포지션) · `chainsetup` · `testkit`**(레거시)** · `core/pipeline/testrun`**(레거시)**
+| 패키지 | 담는 것 |
+|---|---|
+| `engine` | 엔진 조립 · 로컬 plan/provision/launch |
+| `netcompose` | 스텝 컴포지션 |
+| `chainsetup` | 체인별 셋업 절차 |
+| `testkit` | **(레거시)** 케이스 레지스트리 |
+| `core/pipeline/testrun` | **(레거시)** 케이스 실행 |
 
-### L5 유스케이스 — `app`
+### L5 유스케이스
 
-### L6 표면 — `cmd/{chainbench,chainbench-mcp,chainbenchd}` · `mcp` · `dashboard`
+| 패키지 | 담는 것 |
+|---|---|
+| `app` | 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다 |
+
+### L6 표면
+
+| 패키지 | 담는 것 |
+|---|---|
+| `mcp` | MCP 도구 — 스키마 바인딩과 렌더링 |
+| `dashboard` | 대시보드 데몬 |
+
+### 규칙 자체
+
+| 패키지 | 담는 것 |
+|---|---|
+| `arch` | 이 문서의 규칙을 강제하는 테스트. 프로덕션 코드가 없고 무엇도 import 하지 않으므로 층이 없다 |
+
+> `cmd/{chainbench,chainbench-mcp,chainbenchd}` 도 L6 이지만 표에 없다. 배치 검사는
+> `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고, 무엇이든 import 할 수 있다.
 
 ---
 
 ## 4. 실측 결과
 
 ```
-상향 의존(위 레이어를 import): 1건 — `core/pipeline/testrun`(L3) → `testkit`(L5), 둘 다 삭제 대기
+상향 의존(위 레이어를 import): 0건 — A1 이 매 테스트마다 재확인한다
 ```
 
 같은 층 참조 31건은 전부 정당한 하위 구조다.
@@ -186,7 +219,7 @@ flowchart TD
 
 이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `Sink` 에 쓰고, 어느 머신인지는 `Target` 이 안다.
 
-### 현재 위반 (실측 14곳 중 8곳)
+### 파일을 쓰는 패키지 (A2 가 이 표를 강제한다)
 
 | 패키지 | 무엇을 쓰나 | 판정 |
 |---|---|---|
@@ -196,13 +229,22 @@ flowchart TD
 | `core/keyring` | 키 자료(0600) · 생성한 링 | ✅ 키는 별도 소유자가 정당(보안 권한) |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
+| `engine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
 | **`app`** | `topology.yaml` | ❌ **유스케이스 층이 파일 경로를 안다** |
 | **`chainsetup`** | 자체 아티팩트 | ❌ |
 | **`chains/wemix/deploy`** | 원격 config | ❌ 자체 원격 쓰기 |
 | **`consensus/upgrade`** | 자체 아티팩트 | ❌ L2 가 파일을 쓴다 |
 
-**❌ 6곳이 정리 대상이다.** 이 중 `bringup`·`state` 는 이미 삭제 일정이 있고([[chainbench-worklist]] §1f b-6),
-`app`·`chainsetup`·`wemix/deploy`·`upgrade` 는 `Sink` 경유로 바꾸는 독립 작업이다.
+**❌ 4곳이 정리 대상이다** — `app`·`chainsetup`·`wemix/deploy`·`upgrade` 를 `FileStore` 경유로
+바꾸는 독립 작업(A3·A4). `core/bringup`·`core/state` 는 이미 삭제됐다.
+
+> `engine` 은 A2 가 찾아냈다. 이전 실측이 `os.WriteFile`·`os.MkdirAll` 만 세고 `os.Create` 를
+> 빠뜨려서, 표에 오르지 못한 채 3주를 지났다. 사람이 고른 패턴으로 한 번 세는 것과 매 테스트
+> 재는 것의 차이가 이것이다.
+>
+> 이 표는 목록이 아니라 **허용목록**이다. 표에 없는 패키지가 파일을 쓰면 A2 가 실패한다.
+> ❌ 는 알려진 위반이므로 통과하지만, 지워질 때 표에서도 지워야 한다 — 남아 있으면 A2 가
+> "존재하지 않는 패키지"로 잡는다.
 
 ### 인메모리 가변 상태
 
