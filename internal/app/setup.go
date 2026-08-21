@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
@@ -129,13 +131,22 @@ func NetworkProvision(ctx context.Context, d Deps, in NetworkProvisionIn) (Netwo
 	if err != nil {
 		return NetworkProvisionOut{}, err
 	}
+	files, err := d.files()
+	if err != nil {
+		return NetworkProvisionOut{}, err
+	}
+	dr, err := d.nodeDriver()
+	if err != nil {
+		return NetworkProvisionOut{}, err
+	}
 	setup := engine.LocalSetup{
 		Plugin: planned.Plugin, Config: planned.Config, KeysDir: in.KeysDir,
+		Driver: dr, Files: files,
 	}
 	if _, err := setup.Provision(ctx, planned.Plan); err != nil {
 		return NetworkProvisionOut{}, err
 	}
-	if err := saveTopology(planned.DataRoot, in.Spec.TopologyPath); err != nil {
+	if err := saveTopology(ctx, files, planned.DataRoot, in.Spec.TopologyPath); err != nil {
 		return NetworkProvisionOut{}, err
 	}
 	return NetworkProvisionOut{Plan: planned}, nil
@@ -181,9 +192,13 @@ func NetworkLaunch(ctx context.Context, d Deps, in NetworkLaunchIn) (NetworkLaun
 			return NetworkLaunchOut{}, err
 		}
 	}
+	files, err := d.files()
+	if err != nil {
+		return NetworkLaunchOut{}, err
+	}
 	ns, specs, err := engine.LocalSetup{
 		Plugin: planned.Plugin, Config: planned.Config, KeysDir: in.KeysDir,
-		Binary: in.Binary, Driver: dr, Bus: in.Bus,
+		Binary: in.Binary, Driver: dr, Files: files, Bus: in.Bus,
 	}.Launch(ctx, planned.Plan)
 	if err != nil {
 		return NetworkLaunchOut{}, err
@@ -194,7 +209,7 @@ func NetworkLaunch(ctx context.Context, d Deps, in NetworkLaunchIn) (NetworkLaun
 	if err := session.SaveLocalNodeSpecs(planned.DataRoot, specs); err != nil {
 		return NetworkLaunchOut{}, err
 	}
-	if err := saveTopology(planned.DataRoot, in.Spec.TopologyPath); err != nil {
+	if err := saveTopology(ctx, files, planned.DataRoot, in.Spec.TopologyPath); err != nil {
 		return NetworkLaunchOut{}, err
 	}
 	return NetworkLaunchOut{Plan: planned, Nodes: ns}, nil
@@ -270,7 +285,12 @@ func overrides(in NetworkSpecIn) (config.Values, error) {
 // saveTopology copies the resolved topology into the data root so the running
 // network's layout — which node plays which role — is readable from its own
 // directory. A no-op when no topology file was used.
-func saveTopology(root, topologyPath string) error {
+//
+// It goes through the file store rather than writing directly, so that it lands
+// beside the genesis and configs it describes. Written directly it always
+// landed on the operator's machine, which for a remote network meant a layout
+// file describing nodes that were somewhere else.
+func saveTopology(ctx context.Context, files provision.FileStore, root, topologyPath string) error {
 	if topologyPath == "" {
 		return nil
 	}
@@ -278,8 +298,8 @@ func saveTopology(root, topologyPath string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(root, 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(root, topologyFile), b, 0o644)
+	return files.Write(ctx, filepath.Join(root, topologyFile), b, topologyPerm)
 }
+
+// topologyPerm keeps the saved layout readable: it names roles, not secrets.
+const topologyPerm fs.FileMode = 0o644

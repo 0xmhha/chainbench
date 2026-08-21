@@ -230,13 +230,29 @@ flowchart TD
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | `engine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
-| **`app`** | `topology.yaml` | ❌ **유스케이스 층이 파일 경로를 안다** |
 | **`chainsetup`** | 자체 아티팩트 | ❌ |
-| **`chains/wemix/deploy`** | 원격 config | ❌ 자체 원격 쓰기 |
 | **`consensus/upgrade`** | 자체 아티팩트 | ❌ L2 가 파일을 쓴다 |
 
-**❌ 4곳이 정리 대상이다** — `app`·`chainsetup`·`wemix/deploy`·`upgrade` 를 `FileStore` 경유로
-바꾸는 독립 작업(A3·A4). `core/bringup`·`core/state` 는 이미 삭제됐다.
+**❌ 2곳이 남았다** — `chainsetup`·`consensus/upgrade`. 둘 다 wemix 핸드오프 경로이고,
+[[chainbench-worklist]] F4·F5 가 같은 코드를 다시 쓰므로 그때 함께 `FileStore` 로 옮긴다.
+지금 바꾸고 F4 에서 또 고치면 같은 코드를 두 번 만지게 된다.
+
+`app`(A3)·`chains/wemix/deploy` 는 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
+
+### A3 이 드러낸 것 — 원격 프로비전이 로컬에 쓰고 있었다
+
+`app` 이 파일 경로를 아는 것은 층 위반이자 **동작 결함**이었다. 원격 타깃으로 네트워크를
+구성하면 이렇게 갈렸다.
+
+| 무엇 | 어디로 갔나 |
+|---|---|
+| 신원(nodekey·keystore·password) | 원격 — 런처가 드라이버에게 직접 보낸다 |
+| **genesis · config.toml · topology.yaml** | **로컬** — 파일 seam 에 저장소가 주어진 적이 없어 기본값(이 머신)이 쓰였다 |
+
+원격 노드는 genesis 없는 datadir 로 기동하게 된다. `app.Deps` 에 `Files` seam 을 더하고,
+저장소를 명시하지 않았지만 드라이버가 파일을 보낼 수 있으면 **그 드라이버가 저장소**가 되게
+했다 — 프로세스를 원격으로 보내면서 파일에 대해 아무 말도 하지 않았다면, 파일도 따라가라는
+뜻이다.
 
 > `engine` 은 A2 가 찾아냈다. 이전 실측이 `os.WriteFile`·`os.MkdirAll` 만 세고 `os.Create` 를
 > 빠뜨려서, 표에 오르지 못한 채 3주를 지났다. 사람이 고른 패턴으로 한 번 세는 것과 매 테스트

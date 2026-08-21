@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -43,13 +42,13 @@ func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey re
 	if err != nil {
 		return ServerIdentity{}, err
 	}
-	return readServerKeysFrom(ctx, serverFiles(rc, hostKey), c.Paths(), s.Index, localKeystoreDir)
+	return readServerKeysFrom(ctx, serverFiles(rc, hostKey), provision.LocalFileStore{}, c.Paths(), s.Index, localKeystoreDir)
 }
 
 // readServerKeysFrom is ReadServerKeys with the store already open. Opening it
 // needs credentials and a host; everything after that is just files, so the
 // split is what makes the read and the derivation testable without a host.
-func readServerKeysFrom(ctx context.Context, files provision.FileStore, p RemotePaths, server int, localKeystoreDir string) (ServerIdentity, error) {
+func readServerKeysFrom(ctx context.Context, files, dest provision.FileStore, p RemotePaths, server int, localKeystoreDir string) (ServerIdentity, error) {
 	raw, err := files.Read(ctx, p.Nodekey)
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d read nodekey: %w", server, err)
@@ -67,28 +66,29 @@ func readServerKeysFrom(ctx context.Context, files provision.FileStore, p Remote
 	if localKeystoreDir == "" {
 		return out, nil
 	}
-	if err := pullKeystores(ctx, files, p, server, localKeystoreDir); err != nil {
+	if err := pullKeystores(ctx, files, dest, p, server, localKeystoreDir); err != nil {
 		return out, err
 	}
 	return out, nil
 }
 
-// pullKeystores copies the server's coinbase and operator keystores to the
-// local directory. They are encrypted key material, so the directory and the
-// files stay owner-only.
-func pullKeystores(ctx context.Context, files provision.FileStore, p RemotePaths, server int, localDir string) error {
-	if err := os.MkdirAll(localDir, keystoreDirPerm); err != nil {
-		return err
-	}
+// pullKeystores copies the server's coinbase and operator keystores into dest.
+// They are encrypted key material, so they are written owner-only.
+//
+// Both sides go through a file store: from is the host they come off, dest is
+// where they land. Writing the destination directly would have fixed it to this
+// machine, which is the assumption the file seam exists to remove — the same
+// one that left a remote network's genesis on the operator's disk.
+func pullKeystores(ctx context.Context, from, dest provision.FileStore, p RemotePaths, server int, destDir string) error {
 	for _, ks := range []struct{ remote, local string }{
 		{p.CoinbaseKeystore, fmt.Sprintf("keystore_%d", server)},
 		{p.OperatorKeystore, fmt.Sprintf("operator_%d", server)},
 	} {
-		data, err := files.Read(ctx, ks.remote)
+		data, err := from.Read(ctx, ks.remote)
 		if err != nil {
 			return fmt.Errorf("deploy: server %d read %s: %w", server, ks.remote, err)
 		}
-		if err := os.WriteFile(filepath.Join(localDir, ks.local), data, keystoreFilePerm); err != nil {
+		if err := dest.Write(ctx, filepath.Join(destDir, ks.local), data, keystoreFilePerm); err != nil {
 			return err
 		}
 	}

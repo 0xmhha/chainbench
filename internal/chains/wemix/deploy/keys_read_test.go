@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // fileMap is a file store standing in for a server. It is the seam that
@@ -77,7 +79,7 @@ func TestReadServerKeys_DerivesLocally(t *testing.T) {
 	}}
 
 	local := filepath.Join(t.TempDir(), "keystores")
-	got, err := readServerKeysFrom(context.Background(), store, paths, 3, local)
+	got, err := readServerKeysFrom(context.Background(), store, provision.LocalFileStore{}, paths, 3, local)
 	if err != nil {
 		t.Fatalf("readServerKeysFrom: %v", err)
 	}
@@ -129,7 +131,7 @@ func TestReadServerKeys_Failures(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := readServerKeysFrom(context.Background(), tc.store, paths, 1, "")
+			_, err := readServerKeysFrom(context.Background(), tc.store, provision.LocalFileStore{}, paths, 1, "")
 			if err == nil {
 				t.Fatal("expected an error")
 			}
