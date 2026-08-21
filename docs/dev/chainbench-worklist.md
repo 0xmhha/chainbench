@@ -134,7 +134,7 @@
 
 ---
 
-## 1f. (b) netcompose 가 bringup 을 대체 — 진행 중
+## 1f. (b) netcompose 가 레거시 setup 스택을 대체 — 진행 중
 
 착수 전 실측한 두 스택의 격차. netcompose 는 launch argv(`engine.NodeLaunchArgs`)·포트 할당(`place`)·
 키 소스(`engine.KeySource`)를 이미 엔진과 공유하고 있었으나, **네트워크를 기술하는 방법**에 구멍이 있었다.
@@ -145,8 +145,28 @@
 | **b-2** | 토폴로지·외부 매니페스트 | `allocate --topology`(노드별 role/sync_mode/bootnode; validator 수는 **요청값이 아니라 해석된 배치**에서 셈 — genesis 가 이 값으로 검증자셋을 만든다) · `new --manifest/--genesis-template`(워크스페이스에 기록 → 이후 모든 스텝이 같은 플러그인 해석) · 체인 해석을 `chains/external.ResolveChain` 1곳으로 | ☑ |
 | **b-3** | NodeSet 브릿지 | `Workspace.NodeSet()`/`RPCHost()` + `app.NetworkStatus`/`NetworkStop` 이 **디렉토리의 상태 매니페스트로 스택을 판별**해 양쪽을 읽는다 → `status`/`stop`·MCP 도구가 워크스페이스에서 그대로 동작. 부수 수정: health 스텝이 target 무관하게 `127.0.0.1` 을 찌르던 원격 버그 | ☑ |
 | **b-4** | `net up` 매크로 | 9개 스텝을 순서대로 실행하는 유스케이스 1개 + CLI. `--stage provision\|start`. 실패 시에도 성공한 스텝을 출력(워크스페이스는 그 지점부터 손으로 재개 가능). **`--stage=provision` 로 end-to-end 실증**(genesis·config 3개·argv·노드 테이블) | ☑ |
-| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체 | ☐ **wbft 계열 검증 완료 · wemix 는 F4/F5 대기** |
-| **b-6** | `bringup`·`core/state` 삭제 | b-5 검증 후 | ☐ |
+| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체. **전제가 바뀌었다**: b-6 이 먼저 일어나 `setup` 은 이미 `engine.LocalSetup` 위에 있다. 남은 것은 두 경로(`setup` / `net up`)를 하나로 합칠지의 판단이며, 그 자체가 S 계열(표면 통일)의 문제다 | ◐ **재검토 필요** |
+| **b-6** | `core/bringup`·`core/state` 삭제 | ☑ **완료** — #241 병합 시 `engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴하며 두 패키지가 소멸했다(§1f-x) | ☑ |
+
+### 1f-x. 병합에서 달라진 것 (2026-08-21)
+
+이 절이 계획한 것과 **실제로 병합된 것이 다르다.** 브랜치가 열려 있는 동안 main 에
+#239·#240 이 들어와 `core/pipeline/setup` 과 `core/state` 를 먼저 지웠고, 그 자리를
+`engine.LocalSetup`·`engine.BuildLocalPlan`·`session.SaveLocalNodeSet` 이 채웠다.
+
+이 브랜치는 같은 결론에 다른 경로로 도달해 있었으므로(§1e 는 `pipeline/setup` 을
+`core/bringup` 으로 **옮겼을 뿐**이고, 실측 파일 유사도 80~99%), 병합 시 셋 중 둘은
+main 쪽을 채택했다.
+
+| 쟁점 | 채택 | 근거 |
+|---|---|---|
+| nodeset 영속 | `session.SaveLocalNodeSet` (main) | [[layers]] 가 `core/state` 를 ❌ 레거시로, `core/session` 을 ✅ 소유자로 판정 |
+| plan/provision/launch | `engine.LocalSetup` (main) | `core/bringup` 이 genesis 를 `os.WriteFile` 로 직접 써 파일 통로를 우회 |
+| `StopNode`·`RelaunchNode`·`StopNodeSet` | **`core/driver` (이 브랜치)** | `driver.Driver`·`node.NodeSet` 만 쓴다. `engine` 에 두면 노드 하나 멈추는 데 내부 24패키지 import(vs 2) |
+
+조용히 사라질 뻔한 것 하나를 옮겼다: `bringup.Run` 은 setup 진행 이벤트를 발행했으나
+`engine.LocalSetup` 은 하지 않았다. 끝날 때까지 아무것도 보고하지 않는 기동은 멈춘 것과
+구분되지 않으므로 `LocalSetup` 에 `Bus` 를 더했다.
 
 ### 라이브 검증 결과 (2026-08-18, 실제 바이너리)
 
@@ -222,14 +242,14 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **A1** | 레이어 검사 테스트 — [[layers]] §3 배치표가 정본. `go list` 엣지 대조, 배치표에 없는 신규 패키지는 실패 | 상향 의존 0건 유지 · 미등록 패키지 거부 | ☐ |
-| **A2** | 상태 쓰기 허용목록 테스트 — `os.WriteFile`/`MkdirAll` 호출 패키지가 목록 밖이면 실패 | 현재 위반 6곳이 목록에 예외로 명시되고, 신규 위반은 차단 | ☐ |
-| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileSink` 경유로 | L5 가 파일 경로를 모르게 | ☐ |
+| **A1** | 레이어 검사 테스트 — [[layers]] §3 배치표가 정본. `go list` 엣지 대조, 배치표에 없는 신규 패키지는 실패 | **알려진 위반 1건**(`core/pipeline/testrun`→`testkit`, 둘 다 삭제 대기)을 예외로 명시하고 신규 위반 차단 · **미등록 패키지 거부**(08-21 측정에서 맵 누락으로 위반을 놓친 적이 있다) | ☐ |
+| **A2** | 상태 쓰기 허용목록 테스트 — `os.WriteFile`/`MkdirAll` 호출 패키지가 목록 밖이면 실패 | 현재 위반 **4곳**(app · chainsetup · chains/wemix/deploy · consensus/upgrade)이 목록에 예외로 명시되고, 신규 위반은 차단 | ☐ |
+| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileStore` 경유로 | L5 가 파일 경로를 모르게 | ☐ |
 | **A4** | `chainsetup`·`chains/wemix/deploy`·`consensus/upgrade` 를 Sink 경유로 | 원격/로컬 분기 제거 | ☐ |
-| **A5** | `core/bringup`·`core/state`·`testkit`·`core/pipeline/testrun` 삭제 | L4 레거시 4개 소멸. §1f b-5 라이브 검증 선행 | ☐ |
+| **A5** | ~~`core/bringup`·`core/state`~~ 삭제 완료 · `testkit`·`core/pipeline/testrun` 잔여 | 앞 둘은 #241 에서 소멸(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘은 **케이스 이관 선행** | ◐ |
 | **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
 | **A7b** | **`hardfork` 와 `upgrade` 통합** — hardfork 가 상위 범주, upgrade 는 type-1 핸드오프. 선언은 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 하나, **메커니즘(스왑/핸드오프)은 파생** | 세 사례(같은체인 스왑 · wemix→wbft 핸드오프 · genesis 전용 포크)가 한 선언에서 갈림 · 명령 둘 → 하나 | ☐ |
-| **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측: `Node`×3 · `Plan`×4 · `Config`×3 · `Step`×4 · `Name string`×12 | ☐ |
+| **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측(08-21): `Identity`×2 · `Plan`×4 · `Config`×3 · `Step`×4. `Node`×3 은 K3 에서 ×2 로 줄었다 | ☐ |
 
 **이름은 각 항목이 자기 범위에서 함께 고친다**([[layers]] §5b). 개명만 하는 커밋은 리뷰가 어렵고
 동작 변경과 섞이면 더 어렵다. 규칙: **한 개념 = 한 이름, 다른 개념 = 다른 이름, 식별자는 명명된 타입.**
@@ -285,11 +305,12 @@ K0·S0 가 추측 위에 서게 된다.
 |---|---|---|---|
 | **K0** | `core/keyring` 신설 — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) · `CGO_ENABLED=0` · fuzz | ☑ |
 | **K1** | `--bootnode` 제거 — BLS 를 자체 파생 | **`PATH` 를 비운 채 4노드 키셋 생성 성공** · 세 계층(keygen·engine·CLI)에 각각 게이트 테스트 | ☑ |
-| **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 골든 유지 · **`BuildGenesis` 가 비어 있으면 파생** · `Take` 의 stale extraData 결함 수정 · keygen 의 잔여 import 0 |
-| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | ☑ **5패키지 → 1**(1,565줄 4개 → `core/keyring` 1,275줄) · **신원 타입 5 → 1** · `Nodekey` → `PrivateKey`(역할이 아니라 실체로 명명) |
-| **K4** | `keyring` 명령 — new/add/list/show/import/export | ☑ `--keyring` 출처 표기(플래그/env/기본) · `--with-bls` 선택 · `export` 는 `--yes` 필수 · `list --verify` · `add` 는 검증자 승격 안 함 · 기존 3개 그룹 유지(deprecated) |
-| **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | ☑ `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 |
-| **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keymat.FileSource` 가 로컬·원격 겸용 | ☑ |
+| **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | 골든 유지 · **`BuildGenesis` 가 비어 있으면 파생** · `Take` 의 stale extraData 결함 수정 | ☑ |
+| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | **4패키지 → 1**(1,565줄 → `core/keyring` 1,497줄) · **신원 타입 5 → 1** · `Nodekey` → `PrivateKey`(역할이 아니라 실체로 명명) | ☑ |
+| **K4** | `keyring` 명령 — new/add/list/show/import/export | `--keyring` 출처 표기(플래그/env/기본) · `--with-bls` 선택 · `export` 는 `--yes` 필수 · `list --verify` · `add` 는 검증자 승격 안 함 · 기존 3개 그룹 유지(deprecated) | ☑ |
+| **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 | ☑ |
+| **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keyring.FileSource` 가 로컬·원격 겸용 | ☑ |
+| **K8** | **표면 통일** — 유스케이스를 `internal/app` 으로, CLI·MCP 는 노출 수단으로 | CLI 로 만든 링을 MCP 가 읽음(실증) · MCP 도구 5개(`new`/`add`/`list`/`show`/`import`) · **`export` 는 의도적 부재**(비밀이 에이전트 기록에 남지 않도록, 부재를 테스트로 고정) · `GenerateOpts.Validators` 를 `*int` 로 바꿔 "미설정"과 "없음"을 타입으로 구분 | ☑ |
 | **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 
 **의존성 추가**(K0 에서 완료): `github.com/kilic/bls12-381 v0.1.0` — **순수 Go** BLS12-381.
@@ -361,7 +382,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 | 기존 동작 무변경 · 미등록 기능 카운트 테스트 | ☐ |
 | **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☐ |
 | **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
-| **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인 | ☐ |
+| **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인. **선례: keyring(K8)** 이 같은 형태로 끝났다 — 유스케이스는 `app`, 표면은 바인딩과 렌더링만 | ☐ |
 | **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
 | **S5** | `cmd/` 규칙 위반 21파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄 | ☐ |
 | **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |

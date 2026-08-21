@@ -30,22 +30,18 @@ const (
 	keystoreScryptP = 6
 )
 
-// NoValidators asks [Generate] to declare no validator set: the ring holds
-// identities, and a network says which of them validate.
-//
-// It is a sentinel rather than 0 because 0 is what an unset field looks like,
-// and "the caller said nothing" has to keep meaning "all of them" for the rings
-// that already exist.
-const NoValidators = -1
-
 // GenerateOpts configures ring generation.
 type GenerateOpts struct {
 	// Nodes is how many identities to create.
 	Nodes int
-	// Validators is how many of them join the validator set. Unset means all of
-	// them for a new ring and none for an extended one; [NoValidators] declares
-	// none explicitly.
-	Validators int
+	// Validators is how many identities join the validator set.
+	//
+	// It is a pointer so that "the caller said nothing" and "the caller said
+	// none" are different values rather than both being zero. They mean opposite
+	// things, and each verb resolves an unset count its own way — [Generate]
+	// takes all of them, [Extend] takes none — so no caller can pre-resolve it
+	// without getting one of the two wrong.
+	Validators *int
 	// Out is the ring directory.
 	Out string
 	// Password encrypts the keystores.
@@ -75,14 +71,16 @@ func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
 	if _, err := os.Stat(filepath.Join(opts.Out, PresetFile)); err == nil {
 		return Preset{}, fmt.Errorf("keyring: %s already holds a ring; add to it instead of creating over it", opts.Out)
 	}
-	switch {
-	case opts.Validators == NoValidators:
-		opts.Validators = 0
-	case opts.Validators < 1 || opts.Validators > opts.Nodes:
-		// A ring generated without saying otherwise is a network's validator
-		// set, which is what every existing preset is.
-		opts.Validators = opts.Nodes
+	// A ring generated without saying otherwise is a network's validator set,
+	// which is what every existing preset is.
+	want := opts.Nodes
+	if opts.Validators != nil {
+		want = *opts.Validators
 	}
+	if want < 0 || want > opts.Nodes {
+		want = opts.Nodes
+	}
+	opts.Validators = &want
 	return generate(Preset{}, opts, progress)
 }
 
@@ -97,10 +95,17 @@ func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
 // it defaults to none. Changing who validates changes what the chain is, so it
 // is asked for rather than inferred from a count.
 func Extend(opts GenerateOpts, progress func(string)) (Preset, error) {
-	if opts.Validators > opts.Nodes {
-		return Preset{}, fmt.Errorf("keyring: extend: %d new validators from %d new nodes",
-			opts.Validators, opts.Nodes)
+	// Extending without saying otherwise promotes nobody: adding an identity and
+	// changing who validates are different decisions.
+	want := 0
+	if opts.Validators != nil {
+		want = *opts.Validators
 	}
+	if want > opts.Nodes {
+		return Preset{}, fmt.Errorf("keyring: extend: %d new validators from %d new nodes",
+			want, opts.Nodes)
+	}
+	opts.Validators = &want
 	existing, err := LoadPreset(opts.Out)
 	if err != nil {
 		return Preset{}, fmt.Errorf("keyring: extend: %w", err)
@@ -149,23 +154,41 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 	if opts.Rand == nil {
 		opts.Rand = rand.Reader
 	}
-	if err := os.MkdirAll(opts.Out, dirPerm); err != nil {
+	if err := prepareRingDir(opts); err != nil {
 		return Preset{}, err
 	}
-	// The shared password file is what a node unlocks with at launch
-	// (--password); the keystores below use the same password.
-	if err := os.WriteFile(filepath.Join(opts.Out, "password"), []byte(opts.Password), secretPerm); err != nil {
+	set, err := appendEntries(existing, opts, progress)
+	if err != nil {
 		return Preset{}, err
 	}
+	if err := writePreset(opts, set); err != nil {
+		return Preset{}, err
+	}
+	return set, nil
+}
 
-	set := existing
-	set.Password = opts.Password
+// prepareRingDir creates the ring directory and the shared password file, which
+// is what a node unlocks with at launch (--password); the keystores use the
+// same password.
+func prepareRingDir(opts GenerateOpts) error {
+	if err := os.MkdirAll(opts.Out, dirPerm); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(opts.Out, "password"), []byte(opts.Password), secretPerm)
+}
+
+// appendEntries creates opts.Nodes identities after the ones already in
+// existing, and folds each into the ring's network decisions.
+func appendEntries(existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
 	alloc, err := decodeAlloc(existing.Network.Alloc)
 	if err != nil {
 		return Preset{}, err
 	}
+	set := existing
+	set.Password = opts.Password
 
 	first := len(existing.Nodes) + 1
+	promoted := 0
 	for i := first; i < first+opts.Nodes; i++ {
 		e, err := generateEntry(i, opts)
 		if err != nil {
@@ -173,16 +196,15 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 		}
 		set.Nodes = append(set.Nodes, e)
 		alloc[strings.TrimPrefix(e.Address, "0x")] = map[string]any{"balance": opts.Balance}
-		if len(set.Network.Validators)-len(existing.Network.Validators) < opts.Validators {
-			set.Network.Validators = append(set.Network.Validators, e.Address)
-			if e.BLS != nil {
-				set.Network.BLSKeys = append(set.Network.BLSKeys, e.BLS.PublicKey)
-			}
+		if promoted < *opts.Validators {
+			set.Network = promote(set.Network, e)
+			promoted++
 		}
 		if progress != nil {
 			progress(describeEntry(e))
 		}
 	}
+
 	set.Network.Members = append([]string(nil), set.Network.Validators...)
 	// Extra-data is derived from the validator set, so it cannot survive a
 	// change to that set.
@@ -193,11 +215,17 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 		return Preset{}, err
 	}
 	set.Network.Alloc = raw
-
-	if err := writePreset(opts, set); err != nil {
-		return Preset{}, err
-	}
 	return set, nil
+}
+
+// promote adds one identity to the network's validator set, carrying its BLS
+// key when it has one so the two lists stay index-aligned.
+func promote(net Network, e Entry) Network {
+	net.Validators = append(net.Validators, e.Address)
+	if e.BLS != nil {
+		net.BLSKeys = append(net.BLSKeys, e.BLS.PublicKey)
+	}
+	return net
 }
 
 // writePreset renders the index file.

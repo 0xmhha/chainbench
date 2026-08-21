@@ -71,3 +71,11 @@ func argInt(args map[string]any, key string, def int) int {
 	}
 	return def
 }
+
+// argBool returns a boolean argument or def if absent/not a boolean.
+func argBool(args map[string]any, key string, def bool) bool {
+	if v, ok := args[key].(bool); ok {
+		return v
+	}
+	return def
+}

@@ -70,6 +70,10 @@ func Default(name, version string) *Server {
 	s.Register(netLogsTool())
 	s.Register(netHealthTool())
 	s.Register(networkTopologyTool())
+	// Key material. Registered as a group so adding a verb touches one place.
+	for _, t := range keyringTools() {
+		s.Register(t)
+	}
 	s.Register(startTool())
 	s.Register(stopTool())
 	// Layered capability surface: one tool per registered capability

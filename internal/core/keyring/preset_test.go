@@ -13,8 +13,9 @@ import (
 // and no validator set.
 func bareRing(t *testing.T, nodes int) keyring.Preset {
 	t.Helper()
+	none := 0
 	set, err := keyring.Generate(keyring.GenerateOpts{
-		Nodes: nodes, Validators: keyring.NoValidators,
+		Nodes: nodes, Validators: &none,
 		Out: t.TempDir(), Password: "1", Balance: "0x1",
 		Derive: keyring.WithBLS,
 		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x5a}, nodes*keyring.PrivateKeyLen)),
@@ -101,5 +102,81 @@ func TestLoadPreset_RejectsAFileThatSaysNothing(t *testing.T) {
 	}
 	if _, err := keyring.LoadPreset(dir); err == nil {
 		t.Fatal("loaded a ring that holds no identities and declares no validators")
+	}
+}
+
+// TestValidatorCount_UnsetMeansOppositeThingsPerVerb pins the one decision that
+// has been got wrong twice: what an unset validator count means.
+//
+// It means all of them when a ring is created and none when one is extended,
+// and the two live here rather than in a caller — a caller that resolves it has
+// to know which verb it is about to call, and will eventually resolve it for
+// the wrong one. The field is a pointer so that "unset" is not the same value
+// as "none".
+func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
+	none, two := 0, 2
+
+	cases := []struct {
+		name       string
+		validators *int
+		// wantNew is the validator count after creating a 3-identity ring.
+		wantNew int
+		// wantAdded is how many validators adding 2 identities appends.
+		wantAdded int
+	}{
+		{name: "unset", validators: nil, wantNew: 3, wantAdded: 0},
+		{name: "explicitly none", validators: &none, wantNew: 0, wantAdded: 0},
+		{name: "explicitly two", validators: &two, wantNew: 2, wantAdded: 2},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			created, err := keyring.Generate(keyring.GenerateOpts{
+				Nodes: 3, Validators: tc.validators, Out: dir,
+				Password: "1", Balance: "0x1", Derive: keyring.WithBLS,
+				Rand: bytes.NewReader(bytes.Repeat([]byte{0x33}, 3*keyring.PrivateKeyLen)),
+			}, nil)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if got := len(created.Network.Validators); got != tc.wantNew {
+				t.Errorf("new: %d validators, want %d", got, tc.wantNew)
+			}
+
+			extended, err := keyring.Extend(keyring.GenerateOpts{
+				Nodes: 2, Validators: tc.validators, Out: dir,
+				Password: "1", Balance: "0x1", Derive: keyring.WithBLS,
+				Rand: bytes.NewReader(bytes.Repeat([]byte{0x44}, 2*keyring.PrivateKeyLen)),
+			}, nil)
+			if err != nil {
+				t.Fatalf("Extend: %v", err)
+			}
+			if got := len(extended.Nodes); got != 5 {
+				t.Fatalf("extend: %d identities, want 5", got)
+			}
+			added := len(extended.Network.Validators) - len(created.Network.Validators)
+			if added != tc.wantAdded {
+				t.Errorf("extend promoted %d identities, want %d", added, tc.wantAdded)
+			}
+		})
+	}
+}
+
+// TestExtend_RejectsMoreValidatorsThanIdentities keeps a count that cannot be
+// satisfied from silently promoting fewer.
+func TestExtend_RejectsMoreValidatorsThanIdentities(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := keyring.Generate(keyring.GenerateOpts{
+		Nodes: 2, Out: dir, Password: "1", Balance: "0x1",
+		Rand: bytes.NewReader(bytes.Repeat([]byte{0x55}, 2*keyring.PrivateKeyLen)),
+	}, nil); err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	tooMany := 3
+	_, err := keyring.Extend(keyring.GenerateOpts{
+		Nodes: 1, Validators: &tooMany, Out: dir, Password: "1", Balance: "0x1",
+	}, nil)
+	if err == nil {
+		t.Fatal("Extend accepted 3 new validators from 1 new identity")
 	}
 }

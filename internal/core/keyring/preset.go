@@ -122,26 +122,51 @@ func LoadPreset(dir string) (Preset, error) {
 	if err := json.Unmarshal(b, &f); err != nil {
 		return Preset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
 	}
+	if err := f.validate(path); err != nil {
+		return Preset{}, err
+	}
+	nodes, err := f.entries(path)
+	if err != nil {
+		return Preset{}, err
+	}
+	return Preset{
+		Nodes: nodes,
+		Network: Network{
+			Validators: f.Validators,
+			BLSKeys:    f.BLSPublicKeys,
+			ExtraData:  f.ExtraData,
+			Members:    splitCSV(f.SystemContractMembers),
+			Alloc:      f.Alloc,
+		},
+		Password: f.Password,
+	}, nil
+}
+
+// validate rejects a file that cannot describe a usable ring.
+func (f presetFile) validate(path string) error {
 	// A ring may hold identities and declare no validator set (the network
 	// decides), or declare a set whose keys it does not hold (a network you did
 	// not create). A file that does neither says nothing at all.
 	if len(f.Nodes) == 0 && len(f.Validators) == 0 {
-		return Preset{}, fmt.Errorf("keyring: %s holds no identities and declares no validators", path)
+		return fmt.Errorf("keyring: %s holds no identities and declares no validators", path)
 	}
-	// A ring need not declare a validator set at all — that is a network's
-	// decision, and a ring exists to hold identities. What is rejected is a
-	// half-declared one: BLS keys are read positionally against the validators,
-	// so a partial list would silently attach one validator's key to another.
+	// BLS keys are optional as a set — the poa family has none — but if any are
+	// present they are read positionally against the validators, so a partial
+	// list would silently attach one validator's key to another.
 	if len(f.BLSPublicKeys) != 0 && len(f.BLSPublicKeys) != len(f.Validators) {
-		return Preset{}, fmt.Errorf("keyring: %s has %d validators but %d BLS keys",
+		return fmt.Errorf("keyring: %s has %d validators but %d BLS keys",
 			path, len(f.Validators), len(f.BLSPublicKeys))
 	}
+	return nil
+}
 
-	nodes := make([]Entry, 0, len(f.Nodes))
+// entries decodes the file's identities.
+func (f presetFile) entries(path string) ([]Entry, error) {
+	out := make([]Entry, 0, len(f.Nodes))
 	for _, n := range f.Nodes {
 		key, err := ParsePrivateKey(n.Nodekey)
 		if err != nil {
-			return Preset{}, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
+			return nil, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}
 		label := Label(n.Label)
 		if label == "" {
@@ -161,20 +186,9 @@ func LoadPreset(dir string) (Preset, error) {
 		if n.BLSPublicKey != "" {
 			e.BLS = &BLS{PublicKey: n.BLSPublicKey, PoP: n.BLSPoP}
 		}
-		nodes = append(nodes, e)
+		out = append(out, e)
 	}
-
-	return Preset{
-		Nodes: nodes,
-		Network: Network{
-			Validators: f.Validators,
-			BLSKeys:    f.BLSPublicKeys,
-			ExtraData:  f.ExtraData,
-			Members:    splitCSV(f.SystemContractMembers),
-			Alloc:      f.Alloc,
-		},
-		Password: f.Password,
-	}, nil
+	return out, nil
 }
 
 // nodeLabel is the label a numbered identity carries: node1, node2, ...

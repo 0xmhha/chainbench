@@ -14,7 +14,14 @@
 
 ## 1. 진단 — 복잡도가 어디서 오는가
 
-레이어 자체는 이미 거의 지켜지고 있다. **상향 의존은 0건이다.**
+레이어 자체는 거의 지켜지고 있다. **상향 의존은 1건이며, 그 하나는 삭제 대기 중인
+레거시다** — `core/pipeline/testrun`(L3) 이 `testkit`(L5) 의 `Report`·`ClientFactory` 를
+import 한다. 둘 다 A5 의 잔여 삭제 대상이고, 케이스 이관이 선행 조건이다.
+
+> 이 1건은 2026-08-21 재측정에서 드러났다. 그 전에 "0건"이라고 적혀 있었던 것은 측정
+> 스크립트의 배치 맵에 두 패키지가 빠져 있었기 때문이다 — 검사가 자기가 모르는 것을
+> 통과시켰다. A1(레이어 검사 테스트)이 **배치표에 없는 패키지를 실패로 처리**해야 하는
+> 이유가 이것이다.
 
 문제는 두 가지다.
 
@@ -26,9 +33,9 @@
 
 ```
 파일을 쓰는 패키지 14개:
-  app · chainsetup · chains/wemix/deploy · consensus/upgrade · core/bringup
-  core/driver · core/keyreg · core/netreg · core/obs · core/provision
-  core/session · core/state · keygen · keymat
+  app · chainsetup · chains/wemix/deploy · consensus/upgrade
+  core/driver · core/keyring · core/netreg · core/obs · core/provision
+  core/session
 ```
 
 ---
@@ -98,8 +105,7 @@ flowchart TD
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
-| **`core/keyring`** | **키 자료의 소유자** — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) |
-| `core/keys` · `core/keyreg` · `keygen` · `keymat` | 키 자료 — **`core/keyring` 으로 흡수 중**(K3) |
+| `core/keyring` | **키 자료의 단일 소유자** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·백엔드·링·색인 |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` · `serverset` | 토폴로지 YAML · **서버 인벤토리(포트·호스트)** |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
@@ -129,13 +135,13 @@ flowchart TD
 | `core/health` | 블록 전진 판정 |
 | `core/supervisor` | 기동 순서 · 헬스 게이트 · 진단 · 재시도 · teardown |
 | `core/hardfork` | 업그레이드 계획/실행 |
-| `core/netreg` · `core/state` | 네트워크 레지스트리 · **(레거시)** nodeset.json |
+| `core/netreg` | 네트워크 레지스트리 |
 | `testspec` (+`assert`) | DSL 파싱 · 인터프리터 · 어세션 |
 | `validatorset` | 검증자셋 계산 |
 
 ### L4 오케스트레이션
 
-`engine`(엔진 조립) · `netcompose`(스텝 컴포지션) · `core/bringup`**(레거시)** · `chainsetup` · `testkit`**(레거시)** · `core/pipeline/testrun`**(레거시)**
+`engine`(엔진 조립 · 로컬 plan/provision/launch) · `netcompose`(스텝 컴포지션) · `chainsetup` · `testkit`**(레거시)** · `core/pipeline/testrun`**(레거시)**
 
 ### L5 유스케이스 — `app`
 
@@ -146,7 +152,7 @@ flowchart TD
 ## 4. 실측 결과
 
 ```
-상향 의존(위 레이어를 import): 0건
+상향 의존(위 레이어를 import): 1건 — `core/pipeline/testrun`(L3) → `testkit`(L5), 둘 다 삭제 대기
 ```
 
 같은 층 참조 31건은 전부 정당한 하위 구조다.
@@ -187,16 +193,13 @@ flowchart TD
 | `core/session` | 세션·컴포지션 매니페스트 | ✅ 소유자 |
 | `core/provision` | 타깃 파일 | ✅ 소유자 |
 | `core/driver` | config·log (LocalDriver) | ✅ 전송 계층, Sink 의 구현 짝 |
-| `core/keyreg` | 키 자료(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
-| `keygen` · `keymat` | 생성한 키 | ✅ 생산물 |
+| `core/keyring` | 키 자료(0600) · 생성한 링 | ✅ 키는 별도 소유자가 정당(보안 권한) |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | **`app`** | `topology.yaml` | ❌ **유스케이스 층이 파일 경로를 안다** |
-| **`core/bringup`** | `genesis.json` 직접 쓰기 | ❌ Sink 우회 (레거시) |
 | **`chainsetup`** | 자체 아티팩트 | ❌ |
 | **`chains/wemix/deploy`** | 원격 config | ❌ 자체 원격 쓰기 |
 | **`consensus/upgrade`** | 자체 아티팩트 | ❌ L2 가 파일을 쓴다 |
-| **`core/state`** | `nodeset.json` | ❌ 레거시, 삭제 예정 |
 
 **❌ 6곳이 정리 대상이다.** 이 중 `bringup`·`state` 는 이미 삭제 일정이 있고([[chainbench-worklist]] §1f b-6),
 `app`·`chainsetup`·`wemix/deploy`·`upgrade` 는 `Sink` 경유로 바꾸는 독립 작업이다.
@@ -208,7 +211,7 @@ flowchart TD
 | `core/procman` | PID 테이블 | ✅ 프로세스 소유자 |
 | `core/obs` | 이벤트 버퍼(bounded) | ✅ |
 | `core/collector` | 샘플 윈도우 | ✅ |
-| `core/session` · `core/keyreg` · `core/capability` | 각자 소유 | ✅ |
+| `core/session` · `core/keyring` · `core/capability` | 각자 소유 | ✅ |
 | `engine` | 조립 시 캐시 | ◐ 검토 |
 | `testkit` | 레거시 전역 케이스 레지스트리 | ❌ 삭제 예정 |
 
@@ -225,7 +228,7 @@ flowchart TD
 
 | 겹치는 이름 | 개수 | 서로 다른 것들 |
 |---|---:|---|
-| `Node` | 3 | `node.Node`(런타임 노드) · `keygen.Node`(키 신원) · `topology.Node`(선언) |
+| `Node` | 2 | `node.Node`(런타임 노드) · `topology.Node`(선언). `keygen.Node` 는 `keyring.Entry` 로 통합됨 |
 | `Plan` | 4 | `driver.Plan`(기동) · `hardfork.Plan`(스왑) · `upgrade.Plan`(핸드오프) · … |
 | `Config` | 3 | `poa.Config`(거버넌스) · `place.Config`(포트 밴드) · `serverset.Config`(인벤토리) |
 | `Step` | 4 | `session.Step`(스탬프) · `poa.Step`(부트스트랩 단계) · … |
@@ -263,7 +266,7 @@ flowchart TD
 | `place.NodeReq.Name` · `NodePlacement.Name` | `netmap.NodeLabel` | 노드를 지칭하는 유일한 이름. 계정 라벨과 타입으로 구분 |
 | (없음) | `netmap.AcctLabel` | `account1`·`faucet` — tx 의 from/to 에 쓰인다 |
 | `hardfork.Plan` + `upgrade.Plan` | `hardfork.Plan` 하나 | 아래 §5b.3a·b |
-| `keygen.Node` | `keyring.Identity` | 키 신원이지 노드가 아니다 |
+| ~~`keygen.Node`~~ | `keyring.Entry` | ☑ **완료** — 신원 타입 5개가 하나로 |
 | `topology.Node` | `blueprint.NodeSpec` | 선언이지 실행 중 노드가 아니다 |
 | `driver.Plan` | `driver.LaunchPlan` | 무엇의 계획인지 |
 | `hardfork.Plan` · `upgrade.Plan` | **`hardfork.Plan` 하나로 통합** | `upgrade` 는 hardfork 의 한 종류다 (§5b.3a·b) |
@@ -409,4 +412,5 @@ func TestLayering(t *testing.T) { ... }
 > 순서를 여기 두면 두 곳이 갈라진다.
 
 > A1(레이어 검사 테스트)·A2(상태 쓰기 허용목록 테스트)가 이 문서를 실행 가능하게 만든다 —
-> 그것이 없으면 "상향 의존 0건"은 오늘의 사실일 뿐 내일의 보증이 아니다.
+> 그것이 없으면 "상향 의존 1건"은 오늘의 측정일 뿐 내일의 보증이 아니며, 측정 자체가
+> 자기 맵에 없는 패키지를 조용히 건너뛴다.

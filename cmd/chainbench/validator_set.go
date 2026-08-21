@@ -14,8 +14,9 @@ import (
 // preset is defined by its validator set, not by raw keys.
 func newValidatorSetCmd() *cobra.Command {
 	var (
-		opts     keyring.GenerateOpts
-		basePort int // superseded; see below
+		opts       keyring.GenerateOpts
+		validators int
+		basePort   int // superseded; see below
 	)
 	cmd := &cobra.Command{
 		Use:   "set",
@@ -30,6 +31,12 @@ func newValidatorSetCmd() *cobra.Command {
 			// `validator set` builds a wbft validator set, which is defined by its
 			// BLS keys; `keyring new` is where BLS became opt-in.
 			opts.Derive = keyring.WithBLS
+			// This command's zero has always meant "all of them"; pass it as
+			// absent rather than as a declared zero, which now means a ring
+			// that declares no validators at all.
+			if validators > 0 {
+				opts.Validators = &validators
+			}
 			meta, err := keyring.Generate(opts, func(line string) { fmt.Fprintln(out, line) })
 			if err != nil {
 				return err
@@ -39,7 +46,7 @@ func newValidatorSetCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVar(&opts.Nodes, "nodes", 0, "total nodes to generate")
-	cmd.Flags().IntVar(&opts.Validators, "validators", 0, "how many nodes are validators (default: all)")
+	cmd.Flags().IntVar(&validators, "validators", 0, "how many nodes are validators (default: all)")
 	cmd.Flags().StringVar(&opts.Out, "out", "", "output preset directory")
 	cmd.Flags().StringVar(&opts.Password, "password", "1", "keystore password")
 	// The generated metadata used to carry an enode per node, built from this

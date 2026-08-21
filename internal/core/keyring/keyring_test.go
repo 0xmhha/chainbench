@@ -266,9 +266,10 @@ func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
 // between. Entropy is injected so the run is reproducible.
 func TestGenerate_RoundTrips(t *testing.T) {
 	const nodes = 3
+	validators := 2
 	dir := t.TempDir()
 	written, err := keyring.Generate(keyring.GenerateOpts{
-		Nodes: nodes, Validators: 2, Out: dir, Password: "1", Balance: "0x1",
+		Nodes: nodes, Validators: &validators, Out: dir, Password: "1", Balance: "0x1",
 		Derive: keyring.WithBLS,
 		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x7f}, nodes*keyring.PrivateKeyLen)),
 	}, nil)

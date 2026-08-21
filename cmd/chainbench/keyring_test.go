@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newRing creates a ring in a temp dir and returns its path.
@@ -27,7 +29,7 @@ func TestKeyring_NewCreatesAUsableRing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("keyring list: %v\n%s", err, out)
 	}
-	var entries []entryView
+	var entries []app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &entries); err != nil {
 		t.Fatalf("list output not JSON: %v\n%s", err, out)
 	}
@@ -41,7 +43,7 @@ func TestKeyring_NewCreatesAUsableRing(t *testing.T) {
 		if e.BLSPubKey == "" {
 			t.Errorf("%s has no BLS material despite --with-bls", e.Label)
 		}
-		if e.Nodekey != "" {
+		if e.PrivateKey != "" {
 			t.Errorf("%s leaked its private key into a listing", e.Label)
 		}
 	}
@@ -63,7 +65,7 @@ func TestKeyring_WithoutBLSOmitsIt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("keyring show: %v\n%s", err, out)
 	}
-	var e entryView
+	var e app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -125,12 +127,12 @@ func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("keyring export: %v\n%s", err, out)
 	}
-	var e entryView
+	var e app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
-	if !strings.HasPrefix(e.Nodekey, "0x") || len(e.Nodekey) != 66 {
-		t.Errorf("exported key looks wrong: %q", e.Nodekey)
+	if !strings.HasPrefix(e.PrivateKey, "0x") || len(e.PrivateKey) != 66 {
+		t.Errorf("exported key looks wrong: %q", e.PrivateKey)
 	}
 }
 
@@ -148,22 +150,22 @@ func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
 		t.Errorf("the flag source was not reported:\n%s", out)
 	}
 
-	t.Setenv(KeyringEnv, dir)
+	t.Setenv(app.RingEnv, dir)
 	out, err = run(t, "keyring", "list")
 	if err != nil {
 		t.Fatalf("keyring list via env: %v", err)
 	}
-	if !strings.Contains(out, "("+KeyringEnv+")") {
+	if !strings.Contains(out, "("+app.RingEnv+")") {
 		t.Errorf("the environment source was not reported:\n%s", out)
 	}
 
 	// With nothing naming a ring, the error says where it looked and why.
-	t.Setenv(KeyringEnv, "")
+	t.Setenv(app.RingEnv, "")
 	_, err = run(t, "keyring", "list")
 	if err == nil {
 		t.Fatal("expected an error when the default ring does not exist")
 	}
-	if !strings.Contains(err.Error(), DefaultKeyringDir) || !strings.Contains(err.Error(), "default") {
+	if !strings.Contains(err.Error(), app.DefaultRingDir) || !strings.Contains(err.Error(), "default") {
 		t.Errorf("error should name the ring and why it was chosen: %v", err)
 	}
 }
@@ -204,7 +206,7 @@ func listAddresses(t *testing.T, dir string) []string {
 	if err != nil {
 		t.Fatalf("keyring list: %v\n%s", err, out)
 	}
-	var entries []entryView
+	var entries []app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &entries); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -221,11 +223,11 @@ func exportKey(t *testing.T, dir, name string) string {
 	if err != nil {
 		t.Fatalf("keyring export: %v\n%s", err, out)
 	}
-	var e entryView
+	var e app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
-	return e.Nodekey
+	return e.PrivateKey
 }
 
 // tamper rewrites node 1's address so it no longer matches its own key.
@@ -302,7 +304,7 @@ func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the imported identity is not visible: %v", err)
 	}
-	var e entryView
+	var e app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
