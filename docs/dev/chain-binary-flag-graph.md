@@ -1,5 +1,9 @@
 # 체인 바이너리 CLI 그래프 · 실행옵션 모듈 설계 검토
 
+> **[이력]** 체인 바이너리 플래그 AST 실측.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > 지시 5 응답. 작성: 2026-08-11 · 기준: `go-stablenet@0937ac5c9` · `go-wbft@f6515366b` · `go-wemix@1350376a6`
 > 근거 데이터는 AST 추출기 [`scripts/inventory/chain-flag-graph`](../../scripts/inventory/chain-flag-graph/main.go) 로 재생성 가능:
 > ```sh

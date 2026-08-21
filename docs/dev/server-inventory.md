@@ -1,5 +1,9 @@
 # 서버 인벤토리 — 포트·호스트·접속 정보 (`remote-server-config.yaml`)
 
+> **[현행 설계]** 서버 인벤토리.
+> 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
+> 작업 순서는 [[chainbench-worklist]] §1g 다.
+
 > 노드가 **어디서** 뜨고 **어떤 포트로** 듣는지를 결정하는 단일 출처.
 > 실제 파일은 **git 에 절대 올라가지 않는다**(gitignore). 추적되는 것은 템플릿
 > `remote-server-config.sample.yaml` 하나뿐이다.

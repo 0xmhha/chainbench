@@ -1,5 +1,9 @@
 # chainbench 컴포넌트 아키텍처 — High/Middle/Low 계층 · TDD 구현 플랜
 
+> **[이력]** §2b 실측 매트릭스는 측정 시점 기준.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > 지위: `chainbench-design.md`(인터페이스)·`chainbench-feature-spec.md`(F1~F16)·`chainbench-refactoring.md`(WP)를
 > **컴포넌트 계층(역할 분리)과 구현 순서(TDD·조립)** 관점으로 재정리한 문서. 설계 결정은 앞 4문서와 동일하며,
 > 여기서는 "무엇을 어떤 순서로, 어떻게 원자적으로 만들어 안전하게 합칠까"를 확정한다.

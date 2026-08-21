@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -34,7 +34,7 @@ type ResolveServerOut struct {
 	Placement serverset.Placement
 	// Target is where the data plane lives. It is the zero value when no
 	// inventory applied, leaving the workspace's own target in place.
-	Target netcompose.TargetSpec
+	Target target.TargetSpec
 	// HasTarget reports whether Target should replace the workspace's.
 	HasTarget bool
 }
@@ -79,10 +79,10 @@ func ResolveServer(d Deps, ref ServerRef, minValidators, portBand int) (ResolveS
 // serverTarget describes where one server's data plane lives. The local and
 // remote cases differ only in the kind and the host, which is the point of the
 // inventory carrying both in one shape.
-func serverTarget(s serverset.Server) netcompose.TargetSpec {
-	spec := netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: s.DataRoot}
+func serverTarget(s serverset.Server) target.TargetSpec {
+	spec := target.TargetSpec{Kind: target.TargetLocal, DataRoot: s.DataRoot}
 	if s.IsRemote() {
-		spec.Kind = netcompose.TargetRemote
+		spec.Kind = target.TargetRemote
 		spec.Host = s.Host
 		spec.User = s.SSH.User
 		spec.Port = s.SSH.Port
@@ -92,10 +92,10 @@ func serverTarget(s serverset.Server) netcompose.TargetSpec {
 
 // fleetTarget describes a fleet's data plane. Its host is the first server's:
 // the per-node addresses live on the node table, which the allocator fills.
-func fleetTarget(pl serverset.Placement) netcompose.TargetSpec {
-	spec := netcompose.TargetSpec{Kind: netcompose.TargetLocal, DataRoot: pl.DataRoot}
+func fleetTarget(pl serverset.Placement) target.TargetSpec {
+	spec := target.TargetSpec{Kind: target.TargetLocal, DataRoot: pl.DataRoot}
 	if pl.Remote {
-		spec.Kind = netcompose.TargetRemote
+		spec.Kind = target.TargetRemote
 		if len(pl.Config.Hosts) > 0 {
 			spec.Host = pl.Config.Hosts[0]
 		}

@@ -1,5 +1,8 @@
 # chainbench 설계 문서 — 구조 · 인터페이스 · 데이터 모델
 
+> **[정본]** 인터페이스·데이터 모델.
+> 이 문서는 *무엇을 만들어야 하는가* 를 정한다. 설계 제안이 여기와 어긋나면 **제안을 고친다.**
+
 > 지위: 구현 전 확정 설계(HOW). 근거: `chainbench-requirements-review.md`(요구/결정), `chainbench-refactoring.md`(기존→목표 매핑).
 > 원칙: 인터페이스 우선 · 하위호환 병존 · 소유권 단일화 · 취소(ctx) 우선 · 테스트는 항상 직렬(§B-4).
 > 표기: Go 시그니처는 계약(contract)이며 필드/에러는 구현 시 미세조정 가능. 기존 타입(`config.Values`, `driver.Driver`, `node.NodeSet`, `registry.ChainPlugin`, `accounts.AccountProvider`, `genesis.MergeOverride`, `procman.Manager`, `obs.Bus`)은 그대로 참조·재사용.

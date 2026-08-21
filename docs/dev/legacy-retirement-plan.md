@@ -1,5 +1,9 @@
 # 레거시 경로 은퇴 계획 (legacy retirement)
 
+> **[이력]** 레거시 은퇴 계획. 진행은 worklist.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > 목적: 재설계 엔진(`internal/engine`) + DSL(`internal/testspec`)이 완성되어 `chainbench run`
 > 으로 도달 가능해진 지금, **레거시 Go-func 테스트 경로**(`internal/testkit` +
 > `internal/core/pipeline/testrun`)와 그 주변을 안전하게 은퇴시키는 순서·매핑·블로커를 확정한다.

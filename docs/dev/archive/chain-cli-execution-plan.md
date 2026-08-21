@@ -1,11 +1,14 @@
 # 체인 CLI · DSL 이관 실행 계획 (6-지시 통합)
 
+> **[대체됨]** 2026-08-10 실행 계획. 순서는 [[chainbench-worklist]] §1g 로 대체.
+> **새 작업의 근거로 쓰지 말 것.** 기록으로만 남긴다.
+
 > 목적: "docs 분석 → 코드 대조 → 미구현 수집 → 체인 CLI 단계별 지원(gstable→gwemix→gwbft) →
 > DSL 이관 → 문서화" 6개 지시를 **현재 상태 ↔ 순서화된 다음 단계**로 매핑한다.
 > 작성: 2026-08-10 · 기준 커밋: main `2424ccc`. 이 문서는 정본을 **중복하지 않고 참조**한다:
-> 진행 정본은 [`chainbench-worklist.md`](chainbench-worklist.md), 부트스트랩 인수인계는
-> [`chain-setup/next-automation.md`](chain-setup/next-automation.md), DSL 이관은
-> [`../../tests/specs/README.md`](../../tests/specs/README.md).
+> 진행 정본은 [`chainbench-worklist.md`](../chainbench-worklist.md), 부트스트랩 인수인계는
+> [`chain-setup/next-automation.md`](../chain-setup/next-automation.md), DSL 이관은
+> [`../../tests/specs/README.md`](../../../tests/specs/README.md).
 
 ---
 

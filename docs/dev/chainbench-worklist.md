@@ -1,5 +1,8 @@
 # chainbench 구현 작업 트래커 — 작업 리스트 · 우선순위 · 폴더 트리 예상도
 
+> **[정본]** **작업 순서·상태의 단일 출처.**
+> 이 문서는 *무엇을 만들어야 하는가* 를 정한다. 설계 제안이 여기와 어긋나면 **제안을 고친다.**
+
 > 근거: `chainbench-component-architecture.md`(§2b 실측·§3 컴포넌트·§5 Phase·§1b DDD) · `chainbench-design.md`(§3 인터페이스) ·
 > `chainbench-feature-spec.md`(F1~F16 AC) · `chainbench-refactoring.md`(WP1~6).
 > 원칙: **Low는 TDD 먼저 → walking skeleton으로 조기 통합 → 수직 슬라이스 확장**(big-bang 금지). 코드는 [[go-code-quality-guidelines]] 준수.
@@ -57,7 +60,8 @@
 
 ## 1c. 재계획 (2026-08-11) — 배경요구 재대조 후 잔여 작업
 
-> 근거: [[dsl-v2-proposal]] · [[structure-and-atomic-cli-proposal]] · [[chain-binary-flag-graph]] (2026-08-11 검토 3종).
+> 근거: [[dsl-v2-proposal]] · [[chain-binary-flag-graph]] · `archive/structure-and-atomic-cli-proposal`
+> (2026-08-11 검토 3종 — 셋째는 제안분이 구현되어 [[archive/README|archive]] 로 이동했다).
 > 이 절은 §2 의 Phase 목록을 대체하지 않고, **배경 요구(체인 구성 5요소 · 실행옵션 · 3-검증원)** 대조에서
 > 새로 드러난 갭과 그 순서를 얹는다. §2 의 미완 항목(T5.2·T5.5·레거시 제거)은 그대로 유효하다.
 
@@ -141,8 +145,24 @@
 | **b-2** | 토폴로지·외부 매니페스트 | `allocate --topology`(노드별 role/sync_mode/bootnode; validator 수는 **요청값이 아니라 해석된 배치**에서 셈 — genesis 가 이 값으로 검증자셋을 만든다) · `new --manifest/--genesis-template`(워크스페이스에 기록 → 이후 모든 스텝이 같은 플러그인 해석) · 체인 해석을 `chains/external.ResolveChain` 1곳으로 | ☑ |
 | **b-3** | NodeSet 브릿지 | `Workspace.NodeSet()`/`RPCHost()` + `app.NetworkStatus`/`NetworkStop` 이 **디렉토리의 상태 매니페스트로 스택을 판별**해 양쪽을 읽는다 → `status`/`stop`·MCP 도구가 워크스페이스에서 그대로 동작. 부수 수정: health 스텝이 target 무관하게 `127.0.0.1` 을 찌르던 원격 버그 | ☑ |
 | **b-4** | `net up` 매크로 | 9개 스텝을 순서대로 실행하는 유스케이스 1개 + CLI. `--stage provision\|start`. 실패 시에도 성공한 스텝을 출력(워크스페이스는 그 지점부터 손으로 재개 가능). **`--stage=provision` 로 end-to-end 실증**(genesis·config 3개·argv·노드 테이블) | ☑ |
-| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체 | ☐ **라이브 검증 선행** |
+| **b-5** | `setup` → `net up` 전환 | `setup --launch/--provision` 내부를 `NetUp` 으로 교체 | ☐ **wbft 계열 검증 완료 · wemix 는 F4/F5 대기** |
 | **b-6** | `bringup`·`core/state` 삭제 | b-5 검증 후 | ☐ |
+
+### 라이브 검증 결과 (2026-08-18, 실제 바이너리)
+
+| 체인 | `net up` | 블록 전진 | `run` api 9건 | 고아 |
+|---|---|---|---|---|
+| stablenet | 성공 | 97 → 110 → 122 | 9/9 | 0 |
+| wbft | 성공 | 24 → 36 → 48 | 9/9 | 0 |
+| **wemix** | **실패 — 블록 0** | 정지 | — | 0 |
+
+wemix 실패의 원인은 `net up` 이 아니라 **`poa.BuildGenesis` 가 템플릿 치환을 하기 때문**이다 —
+`alloc:{}`·`minerNodeId:"0x0"` 인 죽은 genesis 가 나오고 노드가 ethash 로 돈다. 같은 4노드를
+**실제 절차대로 손으로** 띄우면 정상이다(거버넌스 컨트랙트 5개 · etcd 4멤버 · 블록 238→268 ·
+4노드 전부 sealing, 20블록에서 5/6/5/4). 즉 **F4(`GenesisArtifacts`)·F5(poa 액션 배선)가 이 결함의
+수정분**이고, b-5 의 wemix 몫은 그것을 기다린다.
+
+wbft 계열은 게이트를 통과했으므로 b-5 를 stablenet/wbft 한정으로 먼저 끊을 수 있다.
 
 ### b-5 를 지금 하지 않은 이유
 
@@ -166,6 +186,197 @@ chainbench net stop --data-dir /tmp/n1       # 고아 0 확인
 > **여전히 미배선인 선언 1건**: `testspec.Deps.Keys` 는 타입으로만 존재하고 소비자가 없다.
 > 현재 `sendTx` 는 노드측 unlocked 계정으로 서명하므로(`eth_sendTransaction`) 로컬 서명키를 쓰지 않는다.
 > **소비자가 생길 때(로컬 서명 tx 액션) 배선한다** — 소비자 없이 값을 넣으면 T3.2b 가 고친 "선언만 하고 방출 안 함"을 되풀이하게 된다.
+
+---
+
+## 1g. 아키텍처 정합 · 패밀리 기동 (사전 작업 완료 · K0 부터 착수)
+
+> 설계 근거: [[layers]](architecture/layers.md) · [[module-responsibilities]](architecture/module-responsibilities.md) ·
+> [[family-bringup-design]](family-bringup-design.md).
+> **작업 상태는 이 절에서만 관리한다** — 설계 문서는 *무엇을 왜*, 이 절은 *언제 어디까지*.
+
+세 갈래가 있고 서로 독립이다. A(규칙) → B(파서) → F(패밀리 기동) 순으로 착수하되,
+B 는 F 와 병행 가능하다.
+
+### 완료 — 착수 전 사전 작업 (2026-08-18~19)
+
+코드 갈래에 들어가기 전에 **가정을 사실로 바꾸는 일**만 먼저 했다. 아래 셋이 없으면
+K0·S0 가 추측 위에 서게 된다.
+
+| # | 작업 | 무엇이 확정됐나 | 상태 |
+|---|---|---|---|
+| **P-1** | BLS 파생을 순수 Go 로 실증 | `kilic/bls12-381` + stdlib `crypto/hkdf` 로 **preset node1~5 의 BLS 공개키·PoP 이 바이트 동일**하게 재현됨, `CGO_ENABLED=0` 에서. → **K1(`--bootnode` 제거)이 가능하다는 것이 증명됨.** 함정 둘: PoP 의 DST(`..._POP_`) 누락 시 형식은 멀쩡한데 검증 실패 · `blst_keygen` v4 는 salt 를 루프 **이전에** 한 번 해시 | ☑ |
+| **P-2** | `netcompose/target.go` → `core/target` 이동 | L4 에 있던 타깃 해석이 L1 로 내려감(`driver`/`provision`/`remote` 만 import). S 계열의 선행 조건 | ☑ |
+| **P-3** | **문서 통치 구조** — 전 문서에 등급(정본/현행 설계/이력/대체됨) 표기 + `docs/README.md` 에 권위 순서 + 대체된 2건 `dev/archive/` 이동 | 문서끼리 어긋날 때 **무엇이 이기는지**가 정해짐. 이걸 한 이유는 아래 참조 | ☑ |
+
+**P-3 을 한 이유**는 낡은 문서가 아니라 **등급이 없는 문서**였다. 23개 `dev/` 문서 중 자기 지위를
+밝힌 것이 4개뿐이어서, 정본인 [[chainbench-requirements-review]] §D-2.8 을 제안 문서로 오인해
+건너뛰었고 그 결과 하드포크 분류를 반대로 잡았다(A7b 가 그 정정분이다). 문서를 지웠다면
+**정답이 든 문서가 사라졌을 것**이므로, 삭제가 아니라 등급 표기로 해결했다.
+
+부수 정리: 저장소의 키가 전부 테스트 픽스처임을 루트 `README.md`·`tests/README.md` 에 명시하고
+(스캐너 검출 32건이 정상 상태임과 **진짜 유출을 가려내는 기준**을 함께 적음), 파일명 오탐용
+`.precommit-allow` 를 도입했다(면제는 파일명 검사에만, 내용 스캔은 그대로).
+
+### A — 규칙을 코드로 (설계가 썩지 않게)
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **A1** | 레이어 검사 테스트 — [[layers]] §3 배치표가 정본. `go list` 엣지 대조, 배치표에 없는 신규 패키지는 실패 | 상향 의존 0건 유지 · 미등록 패키지 거부 | ☐ |
+| **A2** | 상태 쓰기 허용목록 테스트 — `os.WriteFile`/`MkdirAll` 호출 패키지가 목록 밖이면 실패 | 현재 위반 6곳이 목록에 예외로 명시되고, 신규 위반은 차단 | ☐ |
+| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileSink` 경유로 | L5 가 파일 경로를 모르게 | ☐ |
+| **A4** | `chainsetup`·`chains/wemix/deploy`·`consensus/upgrade` 를 Sink 경유로 | 원격/로컬 분기 제거 | ☐ |
+| **A5** | `core/bringup`·`core/state`·`testkit`·`core/pipeline/testrun` 삭제 | L4 레거시 4개 소멸. §1f b-5 라이브 검증 선행 | ☐ |
+| **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
+| **A7b** | **`hardfork` 와 `upgrade` 통합** — hardfork 가 상위 범주, upgrade 는 type-1 핸드오프. 선언은 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 하나, **메커니즘(스왑/핸드오프)은 파생** | 세 사례(같은체인 스왑 · wemix→wbft 핸드오프 · genesis 전용 포크)가 한 선언에서 갈림 · 명령 둘 → 하나 | ☐ |
+| **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측: `Node`×3 · `Plan`×4 · `Config`×3 · `Step`×4 · `Name string`×12 | ☐ |
+
+**이름은 각 항목이 자기 범위에서 함께 고친다**([[layers]] §5b). 개명만 하는 커밋은 리뷰가 어렵고
+동작 변경과 섞이면 더 어렵다. 규칙: **한 개념 = 한 이름, 다른 개념 = 다른 이름, 식별자는 명명된 타입.**
+
+**A1·A2 를 먼저 하는 이유**: 이후 모든 작업(B·F 포함)이 규칙 위반을 자동으로 잡힌다.
+설계를 지키는 일을 사람의 주의력에 맡기지 않는다.
+
+### B — DSL 파서를 모듈로
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **B1** | **`testspec`(2,998줄) 4분할** — `dsl`(L1 구문 689) · `dsl/assert`(L1 368) · `dsl/bind`(L1 259) · `dsl/interp`(L3 2,050) | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ☐ |
+| **B2** | `Spec.Fingerprint()` 가 `string` 반환 (현재 `session.Fingerprint`) | **구문이 L3 에 묶인 유일한 이유**가 이 타입 하나다 — B1 의 선행 조건 | ☐ |
+
+현재 `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 해서
+**순수해야 할 파서가 L3 로 끌려 올라가 있다**([[module-responsibilities]] §3).
+
+**이름 주의**: 인터프리터를 `dsl/engine` 으로 두면 `internal/engine`(테스트벤치 엔진)과 겹친다.
+**`engine` 은 하나뿐이어야 한다** — 주도하는 쪽이다. 인터프리터는 `dsl/interp`.
+이 구조(엔진이 파싱→환경준비→인터프리터 순차실행→기록을 주도)는 **이미 코드에 있다**
+(`engine.Run` + `engine/wire.go`의 `NewRunSpec`).
+
+**레지스트리는 import 가 아니라 주입이다.** 엔진(L3)이 기능 레지스트리(L5)를 import 하면 상향이지만,
+`interpreter.go` 가 이미 `Registry`·`Action`·`Assertion`·`Deps` 를 **스스로 정의**하고 L5 가 구현체를
+넘긴다 — 값 전달이라 층을 거스르지 않는다. 코드 변경이 아니라 문서 문구 문제였다.
+
+### F — 패밀리별 기동 (wemix 를 Go 로)
+
+| # | 작업 | 게이트 | 리스크 | 상태 |
+|---|---|---|---|---|
+| **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | poa 는 step 2 를 거부, wbft 는 허용 | 낮음 | ☐ |
+| **F2** | `--networkid` 방출 (poa 다이얼렉트) | argv 비교 | 낮음 | ☐ |
+| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | wbft 는 1페이즈·현행 argv 동일 / 미배선 액션은 오류 | **중** | ☐ |
+| **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | wbft `Extra` nil · poa config 가 `Validate()` 통과 | 중 | ☐ |
+| **F5** | poa 액션 배선 + 유스케이스 수렴(3곳→1곳) | **라이브: wemix 4노드 블록 생성 · sealing 로테이션** | 중 | ☐ |
+| **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | 라이브 재현 | 낮음 | ☐ |
+
+**F1 은 버그 수정이다** — 현재 `p2pStep>=2` 는 wemix 에서 틀렸다(etcd 가 p2p+1 peer·p2p+2 client 둘을 쓴다).
+
+**F3 이 유일한 실질 리스크다.** `Deps.Launch` 시그니처 변경이 engine·netcompose·chainsetup 에
+파급된다. `nodes=nil → 전체` 규약이면 이관은 기계적이고, wbft 계열은 argv·순서가 바이트 동일하게
+유지되므로 stablenet/wbft 회귀를 §1f b-5 절차로 즉시 확인할 수 있다.
+
+### K — keyring (첫 착수 대상)
+
+> 근거: [[keyring-design]](keyring-design.md).
+> **키는 세 체인이 동일하다**(실증: 같은 nodekey → 세 체인 동일한 address·pubkey, BLS 도 Go 파생이
+> `bootnode` 출력과 바이트 동일). 그래서 여기부터 정리하면 위쪽이 단순해진다.
+> 실측 문제: 키 관심사가 **5패키지 1,236줄**에 흩어져 있고(읽기 `keys`/쓰기 `keygen`/저장 `keymat`/
+> 런타임 `keyreg`), preset 이 **신원·네트워크 결정·파생 산출물 셋을 섞어** 담아 preset 을 전제로 만든다.
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **K0** | `core/keyring` 신설 — 생성·파생(Go+blst)·백엔드·링·색인 | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) | ☐ |
+| **K1** | `--bootnode` 제거 — BLS 를 blst 로 자체 파생 | `keyring new` 가 **체인 바이너리를 0회 실행** | ☐ |
+| **K2** | `keygen.WBFTExtraData` → `consensus/wbft` 이전 | genesis 자료는 genesis 쪽으로. 기존 골든 테스트 유지 | ☐ |
+| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
+| **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
+| **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
+| **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | `keymat` 의 자체 SSH 읽기 소멸 · 로컬/원격 한 통로 | ☐ |
+| **K7** | `keyring --from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | 세 형태를 같은 코드로 · **명령줄에 IP 없음** · `--server`+`--remote-path` 두 플래그 대체 | ☐ |
+
+**의존성 추가**: `github.com/supranational/blst v0.3.16` — BLS12-381 표준 구현체,
+**go-wbft 자신이 같은 버전 사용**. 오타 낚시 아님, 이더리움 합의 클라이언트 전반 사용.
+
+**K6 이 keyring 을 넘어선다**: `FileSink` 에 읽기가 없어서 `keymat` 이 자체 SSH 읽기를 따로 만들었다 —
+추상화가 한쪽 방향만 있으면 반대 방향은 옆에 새로 생긴다. 넓히면 청사진 읽기·genesis 확인·
+산출물 검증이 전부 같은 통로를 쓴다.
+
+**DST 주의**(K0): PoP 서명의 DST 를 빼면 **형식은 멀쩡한데 검증 실패하는 PoP** 이 나온다.
+실제로 첫 파생 시도에서 그렇게 됐다 — 골든 테스트로 고정한다.
+
+### N — 네트워크 청사진 (구성 정보를 하나의 선언으로)
+
+> 근거: [[network-blueprint-design]](network-blueprint-design.md).
+> 실측 문제: 구성 정보가 **4조각**(`topology.yaml`·`serverset`·`keys/preset`·`poa.Config`)으로 흩어져
+> 어느 것도 전체를 말하지 못한다. **preset 이 선택이 아니라 전제**이고(`keys.LoadPreset` 필수),
+> 바이너리 경로가 **20개 파일**에 분산돼 있다. 노드별 nodekey·계정·포트·서버를 지정할 수단이 없다.
+
+> **원칙: raw 가 먼저, preset 은 나중.** 손으로 쓴 값만으로 네트워크가 서는 것을 먼저 만들고,
+> 그 위에 preset 을 **생성기**로 얹는다. 반대로 하면 preset 이 다시 전제가 된다.
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **N0** | 역할을 `bp·en·pn` 3종으로 정리, `boot` 은 속성으로 강등 | `validator→bp`·`endpoint→en` 이관 · `pn` 신설 · 기존 토폴로지 호환 | ☐ |
+| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | mesh 는 현행과 동일 argv · proxied 는 bp/en 의 static-nodes 에 pn 만 · **poa 에 `pn` 선언 시 오류** | ☐ |
+| **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
+| **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
+| **N3** | **raw 경로 완성** — 노드별 nodekey·계정·포트·서버·바이너리 오버라이드 선언 | **preset 없이** 손으로 쓴 청사진만으로 3체인 4노드 기동(라이브) | ☐ |
+| **N4** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
+| **N5** | **그 다음** preset 지원 — `net blueprint --from-preset` 이 청사진을 **생성** | preset 산출 청사진이 N3 경로와 동일 결과 | ☐ |
+| **N6** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
+| **N7** | **`core/netmap`** — 라벨의 **영속** + **역방향 조회** + 계정 라벨. 정방향(`place.NodePlacement.Name`)은 이미 있으므로 재발명하지 않는다 | 포트 충돌이 **기동 전에** 잡힘 · 로그의 `host:port` 로 노드 역추적 · 라벨이 워크스페이스에 남음 | ☐ |
+| **N8** | ~~`serverset` 가용 자원 풀~~ → **이미 있음**(`slots`·포트 밴드, 2026-08-18). 명시적 범위 풀은 근거 생기면 | — | ☑ |
+| **N9** | **해석 순서 강제** — ① keyring → ② netmap → ③ enode → ④ genesis ⑤ config | ③ 이전에 ④⑤ 를 만들 수 없다(컴파일 타임 또는 명시적 오류) | ☐ |
+| **N10** | **계정 라벨** — `account1` ↔ 주소·개인키. **faucet 누락은 오류** | 테스트 정의에 주소가 등장하지 않음 · 잔액 0 계정의 가스 자금원 보장 | ☐ |
+| **N11** | **다중 config** — 이름으로 참조, 노드별 지정. `restartNode` 액션은 **이미 있고** `config:` 인자만 추가 | 일부 노드만 다른 config 로 재기동 | ☐ |
+| **N12** | **deploy skip 을 내용 해시로** (현재는 존재 여부만) | 같은 경로에 **다른 내용**이면 skip 하지 않음 | ☐ |
+| **N13** | **skip 사유 기록** — `TestRecord.Status(s)` 에 사유가 없어 "왜 skip 됐는지"가 아티팩트에 안 남는다 | 미지원 기능으로 건너뛴 케이스의 사유가 세션에 기록됨 | ☐ |
+| **N14** | **`capability` 이름 충돌 정리** — `engine/capability`(DSL 게이팅)와 `core/capability`(표면 카탈로그)가 무관한데 같은 이름 | S 계열의 `feature` 레지스트리와 함께 정리 | ☐ |
+
+**N7~N14 는 2026-08-19 요구 재도출분**([[network-blueprint-design]] §6). 세 체인을 실제로 구성한
+기록에서 다시 뽑았고, 다섯 요구(로컬 포트·원격 IP풀·라벨 지정·enode 순서·계정 라벨)가 전부
+**같은 것 하나**를 가리켜 `netmap` 으로 모았다.
+
+**키 파생 주의**(N3): wbft 계열은 nodekey 하나에서 계정·BLS 가 파생되므로 `bootnode` 바이너리가
+필수다. poa 는 계정이 nodekey 와 독립이라 `account:` 를 따로 선언해야 한다.
+**BLS 는 선언 필드가 아니다** — 선언하면 nodekey 와 어긋날 수 있고, 그 불일치는 합의에서 터진다.
+
+**`pn` 주의**(N0b): 세 체인에 proxy 모드 플래그가 **없다**(실측). `pn` 은 argv 가 아니라
+**static-nodes 그래프**로 표현된다 — `bp ↔ pn ↔ en`, en 은 bp 를 직접 알지 못한다.
+현재 구현은 풀메시라 pn 을 두어도 효과가 없다.
+**poa(wemix)는 pn 을 쓰지 않는다** — etcd 가 그 자리다. 선언하면 조용히 무시하지 말고 **오류**로
+거부한다(`Family.SupportsRole`).
+
+**N 과 F 의 관계**: F4(`GenesisArtifacts`)·F3(`BringUpPhases`)는 `ResolvedNetwork` 를 입력으로 받는다.
+**N1·N2 를 먼저** 해야 F 가 조각을 다시 모으지 않는다.
+
+### S — 표면 통일 (CLI/MCP/DSL 을 한 레지스트리로)
+
+> 근거: [[surface-unification-design]](surface-unification-design.md).
+> 실측 문제: `cmd/chainbench` 4,569줄 중 **21파일이 `app` 을 우회**해 L1~L4 를 직접 부른다.
+> MCP 도구 46개 중 **34개가 JSON 스키마 손작성**. DSL 은 또 다른 레지스트리를 갖는다 —
+> **기능 목록이 세 벌**이고 실제로 갈라졌다(`faucet`·`verify` 는 DSL 에 없다).
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 | 기존 동작 무변경 · 미등록 기능 카운트 테스트 | ☐ |
+| **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☐ |
+| **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
+| **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인 | ☐ |
+| **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
+| **S5** | `cmd/` 규칙 위반 21파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄 | ☐ |
+| **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
+
+**`internal/feature` 를 별도 패키지로 두는 이유**: `app/feature` 로 하면 `Invoke(ctx, Deps, in)` 의
+`Deps` 가 `app` 에 있어 `app → app/feature → app` **참조 순환**이 된다. 순환은 발생해서는 안 되며,
+발생했다는 것 자체가 설계 미흡의 증거다. `feature` 가 `Deps` 를 소유하고 `app` 이 그것을 import 한다.
+
+**F 계열과의 순서**: 독립이지만 `net start` 를 둘 다 건드린다 — **F3(페이즈 구조)을 먼저** 하고
+S1 에서 등록해야 두 번 등록하지 않는다.
+
+### 결정이 필요한 열린 질문
+
+[[family-bringup-design]] §9 참조. 요약: (1) `Phase.Actions` 를 문자열로 둘지 타입 상수로 둘지,
+(2) 부트노드 선정 기준(현 `poa.BootRole` 은 4검증자면 전부 참이라 기준이 못 된다 → 토폴로지
+`bootnode: true` 권장), (3) wemix `config.json` 의 `env` 정책값을 어디서 받을지.
 
 ---
 
@@ -290,6 +501,7 @@ internal/                     # 전 구현 패키지(외부 import 컴파일러 
 ---
 
 ## 4. 진행 규칙
+- **작업 순서·상태의 단일 출처는 이 문서다.** 설계 문서([[layers]]·[[module-responsibilities]]·[[family-bringup-design]]·[[dsl-v2-proposal]] 등)는 *무엇을 왜* 만 담고, 순서표를 복제하지 않는다 — 복제하면 갈라진다(2026-08-18 실측: 착수 순서가 3문서에 중복돼 있었다).
 - **TDD**: Low는 RED→GREEN 단위테스트 먼저. 동시성은 `-race`. 통합은 라이브(실 노드).
 - **Go 품질**: [[go-code-quality-guidelines]](const화·DI·typed enum·ctx 전파·docs.go 등) 준수.
 - **PR 단위**: Task 1개 ≈ PR 1개. 커밋은 [[commit-message-rules]]·[[pr-body-no-emoji-no-claude]]·[[git-add-explicit]].

@@ -24,6 +24,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
 // Step is a completed composition step (persistence model owned by session).
@@ -65,15 +66,15 @@ type State struct {
 	// ManifestPath and TemplatePath name an external, project-supplied chain
 	// manifest. When set they win over Chain, so a workspace composed for a
 	// project's own chain resolves the same plugin on every later step.
-	ManifestPath string          `json:"manifestPath,omitempty"`
-	TemplatePath string          `json:"templatePath,omitempty"`
-	Binary       string          `json:"binary,omitempty"`
-	KeysDir      string          `json:"keysDir,omitempty"`
-	Validators   int             `json:"validators,omitempty"`
-	Target       TargetSpec      `json:"target"`
-	GenesisPath  string          `json:"genesisPath,omitempty"`
-	Nodes        []NodeState     `json:"nodes,omitempty"`
-	Steps        map[string]Step `json:"steps"`
+	ManifestPath string            `json:"manifestPath,omitempty"`
+	TemplatePath string            `json:"templatePath,omitempty"`
+	Binary       string            `json:"binary,omitempty"`
+	KeysDir      string            `json:"keysDir,omitempty"`
+	Validators   int               `json:"validators,omitempty"`
+	Target       target.TargetSpec `json:"target"`
+	GenesisPath  string            `json:"genesisPath,omitempty"`
+	Nodes        []NodeState       `json:"nodes,omitempty"`
+	Steps        map[string]Step   `json:"steps"`
 	// Bootnode is the 1-based index of the topology's bootnode, or 0 when the
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.
@@ -168,7 +169,7 @@ func (w *Workspace) NodeSet() node.NodeSet {
 		Nodes:        make([]node.Node, 0, len(w.state.Nodes)),
 	}
 	if ns.Network == "" {
-		ns.Network = string(TargetLocal)
+		ns.Network = string(target.TargetLocal)
 	}
 	for _, n := range w.state.Nodes {
 		// A node's own recorded host wins: a fleet placement puts each node on

@@ -1,5 +1,9 @@
 # 상태 다이어그램
 
+> **[이력]** 2026-08-11 시점.
+> **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
+> 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
+
 > 2026-08-11 코드 실측. 자매 문서: [아키텍처](software-architecture.md) · [컴포넌트](component-diagram.md) · [시퀀스](sequence-diagrams.md)
 > 대상 Aggregate: `TestRun`(C1) · `Environment`(C2) · `NodeProcess`(C3) · `Session`(C5) + 워크스페이스 스텝.
 

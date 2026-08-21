@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -23,7 +24,7 @@ type NetNewIn struct {
 	KeysDir string
 	// Target is where the data plane lives; zero value = local, rooted at the
 	// workspace directory.
-	Target netcompose.TargetSpec
+	Target target.TargetSpec
 }
 
 // NetNewOut reports what the workspace was initialized to.

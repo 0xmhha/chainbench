@@ -55,3 +55,19 @@ new chain:
    has a different alloc.
 3. If the case is chain-specific (system contracts, governance), put it under
    that chain's family dir rather than widening a generic case's gate.
+
+## Keys in test source — TEST FIXTURE ONLY
+
+Cases here hold **plaintext private keys inline** (`faucetKeyHex` and friends).
+That is deliberate: a case must fund a transfer without a key-management step,
+and the value must be reproducible across runs.
+
+Every such key is a fixture from `keys/preset/` — the faucet key is the upstream
+go-ethereum test key, public in every geth fork. **Never move one of these keys,
+or an address derived from one, onto a shared network.** A secret scanner over
+this directory reports them, and those reports are expected; see the caution
+block in the [root README](../README.md).
+
+When a new case needs a funded account, take it from the chain's preset alloc.
+Do not generate a fresh key and commit it — a committed key that is *not* a
+known fixture is indistinguishable from a real leak to anyone reading the diff.
