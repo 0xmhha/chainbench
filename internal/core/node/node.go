@@ -11,11 +11,28 @@ package node
 // governance). Roles are orthogonal facts a driver may key launch flags off.
 type Role string
 
+// The canonical vocabulary is bp / en / pn (worklist N0). The two legacy
+// spellings survive because they are written into persisted state
+// (workspace.json, topology files) and launch flows; netmap.NormalizeRole folds
+// them onto the canonical three, and new code should not emit them.
 const (
-	RoleValidator Role = "validator" // produces blocks (BFT) / staked producer
-	RoleEndpoint  Role = "endpoint"  // non-producing RPC endpoint
-	RoleBoot      Role = "boot"      // bootstrap node (wemix: governance deploy)
-	RoleEN        Role = "en"        // wemix explorer/endpoint node
+	// RoleBP is a block producer: a BFT validator, or a staked poa producer.
+	RoleBP Role = "bp"
+	// RoleEN is a non-producing RPC endpoint.
+	RoleEN Role = "en"
+	// RolePN is a peer node: the proxy tier between producers and endpoints.
+	// It is expressed through the static-nodes graph, not a binary flag, and
+	// the poa family does not have it (etcd takes that place).
+	RolePN Role = "pn"
+
+	// RoleValidator is the legacy spelling of RoleBP.
+	RoleValidator Role = "validator"
+	// RoleEndpoint is the legacy spelling of RoleEN.
+	RoleEndpoint Role = "endpoint"
+	// RoleBoot marks the node that runs the poa governance bootstrap. In the
+	// target model (N0) this is an attribute of a bp, not a role of its own;
+	// it remains a role until the poa bring-up moves to that model.
+	RoleBoot Role = "boot"
 )
 
 // Endpoints holds a node's reachable ports on its host. For nodes on the same

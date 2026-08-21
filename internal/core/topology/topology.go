@@ -17,6 +17,7 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -52,16 +53,6 @@ func Load(path string) (Topology, error) {
 	return t, nil
 }
 
-// roleAliases maps the config's role words to a canonical node.Role. "bp" (block
-// producer) is the wemix-flavored name for a validator; "en" is an endpoint.
-var roleAliases = map[string]node.Role{
-	"bp":        node.RoleValidator,
-	"validator": node.RoleValidator,
-	"en":        node.RoleEndpoint,
-	"endpoint":  node.RoleEndpoint,
-	"boot":      node.RoleBoot,
-}
-
 var validSyncModes = map[string]bool{"": true, "full": true, "snap": true, "archive": true}
 
 // Validate checks the topology is internally consistent: at least one node, a
@@ -77,14 +68,14 @@ func (t Topology) Validate() error {
 	idx := make([]int, 0, len(t.Nodes))
 	producers, bootnodes := 0, 0
 	for _, n := range t.Nodes {
-		role, ok := roleAliases[n.Role]
-		if !ok {
+		role, err := netmap.NormalizeRole(n.Role)
+		if err != nil {
 			return fmt.Errorf("topology: node %d has unknown role %q (want bp|validator, en|endpoint, boot)", n.Index, n.Role)
 		}
 		if !validSyncModes[n.SyncMode] {
 			return fmt.Errorf("topology: node %d has unknown sync_mode %q (want full, snap, archive)", n.Index, n.SyncMode)
 		}
-		if role == node.RoleValidator {
+		if role == node.RoleBP {
 			producers++
 		}
 		if n.Bootnode {
@@ -107,8 +98,17 @@ func (t Topology) Validate() error {
 	return nil
 }
 
-// NodeRole returns the canonical node.Role for n (validated by Validate).
-func (n Node) NodeRole() node.Role { return roleAliases[n.Role] }
+// NodeRole returns the node.Role for n (validated by Validate), in the legacy
+// spelling the composition still persists and compares. The alias table this
+// package used to keep is gone — netmap owns the folding, and this method
+// switches to the canonical spelling when the launch flows do (NM3).
+func (n Node) NodeRole() node.Role {
+	role, err := netmap.NormalizeRole(n.Role)
+	if err != nil {
+		return "" // unreachable after Validate; an invalid role never launches
+	}
+	return netmap.LegacySpelling(role)
+}
 
 // EffectiveSyncMode returns n's sync mode, defaulting an unset value to "full".
 func (n Node) EffectiveSyncMode() string {
