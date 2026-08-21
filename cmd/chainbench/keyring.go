@@ -1,22 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"strings"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-)
-
-// DefaultKeyringDir is the ring a command uses when none is named, and
-// KeyringEnv overrides it. A ring is just a directory, so keys/preset is not a
-// special thing — it is one ring that happens to be committed.
-const (
-	DefaultKeyringDir = "keys/default"
-	KeyringEnv        = "CHAINBENCH_KEYRING"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newKeyringCmd is the keyring group: create, inspect, and move key material.
@@ -24,14 +17,17 @@ const (
 // It replaces three groups that split the same material by what it was going to
 // be used for — `keys` for raw keypairs, `account` for on-chain identity,
 // `validator` for consensus identity. They are the same key: on the wbft family
-// a node's address and its BLS material derive from one secret. Splitting by
-// role meant three ways to make a key and three shapes to read one back.
+// a node's address and its BLS material derive from one secret.
+//
+// Every subcommand is flags plus rendering. What a keyring does lives in
+// internal/app, so the MCP tools drive the same use cases and the two surfaces
+// cannot answer differently.
 func newKeyringCmd() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "keyring",
 		Short: "Create, inspect, and move key material",
 		Long: "A keyring is a directory of node identities. Every command names one with\n" +
-			"--keyring (or " + KeyringEnv + "), and reports which one it used, so the\n" +
+			"--keyring (or " + app.RingEnv + "), and reports which one it used, so the\n" +
 			"path a key came from is never a guess.\n\n" +
 			"Identities are derived in process: no chain binary has to be built or on\n" +
 			"PATH to make a ring.",
@@ -47,93 +43,125 @@ func newKeyringCmd() *cobra.Command {
 	return c
 }
 
-// ringFlags names the ring a command works on.
+// ringFlags name the ring a command works on.
 type ringFlags struct {
-	dir string
+	dir          string
+	serverConfig string
 }
 
 func (f *ringFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.dir, "keyring", "",
-		"ring directory (default "+DefaultKeyringDir+", or "+KeyringEnv+")")
+		"ring directory (default "+app.DefaultRingDir+", or "+app.RingEnv+")")
 }
 
-// resolve returns the ring directory and where that choice came from. The
-// source is reported rather than assumed: a command that silently fell back to
-// a default ring is how an operator ends up inspecting one ring and launching
-// from another.
-func (f *ringFlags) resolve(env func(string) string) (dir, source string) {
-	if f.dir != "" {
-		return f.dir, "--keyring"
-	}
-	if v := env(KeyringEnv); v != "" {
-		return v, KeyringEnv
-	}
-	return DefaultKeyringDir, "default"
+// bindWithInventory adds the inventory flag, for the commands that can read a
+// key from a host named in it.
+func (f *ringFlags) bindWithInventory(cmd *cobra.Command) {
+	f.bind(cmd)
+	cmd.Flags().StringVar(&f.serverConfig, "server-config", "",
+		"server inventory file for an srv:// source")
 }
 
-// open resolves the ring, loads it, and announces which one it used.
-func (f *ringFlags) open(out io.Writer) (keyring.Preset, string, error) {
-	dir, source := f.resolve(os.Getenv)
-	set, err := keyring.LoadPreset(dir)
-	if err != nil {
-		// The source matters more than the path in an error: "keys/default is
-		// missing" is confusing until you know nothing named it.
-		return keyring.Preset{}, dir, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
-	}
-	fmt.Fprintf(out, "keyring: %s (%s)\n", dir, source)
-	return set, dir, nil
+func (f *ringFlags) ref() app.RingRef {
+	return app.RingRef{Dir: f.dir, ServerConfig: f.serverConfig}
 }
 
-// derivationFlag is the --with-bls opt-in.
+// announce prints which ring was used and why, before anything else, so the
+// path is never a guess — including when the command then fails.
+//
+// The use case reports a surface-neutral source ("explicit"); here it is named
+// in this surface's own vocabulary, because an operator asking "why that ring?"
+// wants the flag they typed.
+func announce(out io.Writer, r app.RingOut) {
+	fmt.Fprintf(out, "keyring: %s (%s)\n", r.Dir, ringSourceName(r.Source))
+}
+
+// ringSourceName renders a use-case source as a CLI reason.
+func ringSourceName(source string) string {
+	if source == "explicit" {
+		return "--keyring"
+	}
+	return source
+}
+
+// renderEntries writes the human listing.
+func renderEntries(out io.Writer, r app.RingOut) error {
+	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "LABEL\tADDRESS\tROLE\tBLS")
+	for _, e := range r.Entries {
+		role, bls := "-", "-"
+		if e.Validator {
+			role = "validator"
+		}
+		if e.BLSPubKey != "" {
+			bls = "yes"
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", e.Label, e.Address, role, bls)
+	}
+	if err := w.Flush(); err != nil {
+		return err
+	}
+	fmt.Fprintf(out, "\n%d identities, %d validators\n", len(r.Entries), r.Validators)
+	return nil
+}
+
+// renderEntry writes one identity. The private key is printed only when the use
+// case supplied one, which only export does.
+func renderEntry(out io.Writer, e app.EntryOut) {
+	fmt.Fprintf(out, "label:      %s\n", e.Label)
+	fmt.Fprintf(out, "address:    %s\n", e.Address)
+	if e.PublicKey != "" {
+		fmt.Fprintf(out, "publicKey:  %s\n", e.PublicKey)
+	}
+	if e.BLSPubKey != "" {
+		fmt.Fprintf(out, "blsPubKey:  %s\n", e.BLSPubKey)
+		fmt.Fprintf(out, "blsPoP:     %s\n", e.BLSPoP)
+	}
+	if e.PrivateKey != "" {
+		fmt.Fprintf(out, "privateKey: %s\n", e.PrivateKey)
+	}
+}
+
+// emitJSON writes v as indented JSON.
+func emitJSON(out io.Writer, v any) error {
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	return enc.Encode(v)
+}
+
+// jsonFlag is the shared --json switch.
+type jsonFlag struct{ on bool }
+
+func (f *jsonFlag) bind(cmd *cobra.Command, what string) {
+	cmd.Flags().BoolVar(&f.on, "json", false, "emit "+what+" as JSON")
+}
+
+// blsFlag is the --with-bls opt-in.
 //
 // BLS material is only read by the wbft family, so it is asked for rather than
-// assumed; a ring for wemix that carried BLS keys would carry keys nobody uses.
-// An entry generated without it has no BLS material at all, which is a
-// different thing from having an empty one.
-type derivationFlag struct {
-	withBLS bool
-}
+// assumed; a ring for wemix carrying BLS keys would carry keys nobody reads. An
+// identity made without it has no BLS material at all, which is a different
+// thing from having an empty one.
+type blsFlag struct{ on bool }
 
-func (f *derivationFlag) bind(cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&f.withBLS, "with-bls", false,
+func (f *blsFlag) bind(cmd *cobra.Command) {
+	cmd.Flags().BoolVar(&f.on, "with-bls", false,
 		"also derive BLS material (required for the wbft family: stablenet, wbft)")
 }
 
-func (f *derivationFlag) derivation() keyring.Derivation {
-	if f.withBLS {
-		return keyring.WithBLS
-	}
-	return keyring.AccountOnly
+// labelFlag names one identity in a ring.
+type labelFlag struct{ name string }
+
+func (f *labelFlag) bind(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&f.name, "name", "", "identity label (e.g. node1)")
+	_ = cmd.MarkFlagRequired("name")
 }
 
-// entryView is one entry as the keyring commands report it. Secrets are absent
-// unless a command sets them, so printing an entry cannot leak by default.
-type entryView struct {
-	Label     string `json:"label"`
-	Index     int    `json:"index,omitempty"`
-	Address   string `json:"address"`
-	PublicKey string `json:"publicKey,omitempty"`
-	BLSPubKey string `json:"blsPublicKey,omitempty"`
-	BLSPoP    string `json:"blsPoP,omitempty"`
-	Nodekey   string `json:"nodekey,omitempty"`
-	Stored    string `json:"stored,omitempty"`
-}
-
-// viewOf renders an entry without its secret.
-func viewOf(e keyring.Entry) entryView {
-	v := entryView{
-		Label:     string(e.Label),
-		Index:     e.Index,
-		Address:   e.Address,
-		PublicKey: e.PublicKey,
+// shortHex abbreviates a 0x-hex value for a progress line.
+func shortHex(s string) string {
+	const shown = 14
+	if len(s) <= shown {
+		return s
 	}
-	if e.BLS != nil {
-		v.BLSPubKey, v.BLSPoP = e.BLS.PublicKey, e.BLS.PoP
-	}
-	return v
-}
-
-// entryDir is where one entry's files live inside a ring.
-func entryDir(ring string, e keyring.Entry) string {
-	return filepath.Join(ring, string(e.Label))
+	return strings.TrimSpace(s[:shown]) + "…"
 }

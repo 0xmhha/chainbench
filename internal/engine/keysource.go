@@ -106,8 +106,11 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 		return KeySet{}, err
 	}
 	opts := keyring.GenerateOpts{
-		Nodes:      n,
-		Validators: s.Validators,
+		Nodes: n,
+		// A zero here has always meant "all of them" on this seam, so it is
+		// passed as absent rather than as a declared zero, which would now mean
+		// a ring that declares no validators at all.
+		Validators: validatorCount(s.Validators),
 		Out:        s.Path,
 		Derive:     keyring.WithBLS,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
@@ -117,6 +120,14 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 		return KeySet{}, fmt.Errorf("engine: key source: generate: %w", err)
 	}
 	return PresetKeySource{Path: s.Path}.Ensure(ctx, n)
+}
+
+// validatorCount renders a legacy zero-means-all count as an absent one.
+func validatorCount(n int) *int {
+	if n <= 0 {
+		return nil
+	}
+	return &n
 }
 
 // orDefault returns v, or def when v is empty.

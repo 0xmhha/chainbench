@@ -1,0 +1,354 @@
+// Keyring use cases: create a ring, add to it, read it, and bring an existing
+// key into it.
+//
+// They live here rather than in the CLI because a keyring is not a
+// command-line concept. An agent driving the MCP surface and an operator typing
+// a command must create the same ring from the same inputs; the moment the flow
+// lives in one surface, the other grows its own copy and the two drift.
+
+package app
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/serverset"
+)
+
+// DefaultRingDir is the ring a caller gets when it names none, and RingEnv
+// overrides it. A ring is a directory, so the committed keys/preset is not a
+// special thing — it is one ring that happens to be in the repository.
+const (
+	DefaultRingDir = "keys/default"
+	RingEnv        = "CHAINBENCH_KEYRING"
+)
+
+// RingRef names the ring a use case works on.
+type RingRef struct {
+	// Dir is the ring directory; empty falls back to the environment and then
+	// to DefaultRingDir.
+	Dir string
+	// ServerConfig is the inventory consulted for an srv:// source; empty uses
+	// the default inventory file.
+	ServerConfig string
+}
+
+// resolve returns the ring directory and where that choice came from.
+//
+// The source travels with the answer because a use case that quietly fell back
+// to a default is how an operator ends up inspecting one ring and launching
+// from another.
+func (r RingRef) resolve(env func(string) string) (dir, source string) {
+	if r.Dir != "" {
+		return r.Dir, "explicit"
+	}
+	if env != nil {
+		if v := env(RingEnv); v != "" {
+			return v, RingEnv
+		}
+	}
+	return DefaultRingDir, "default"
+}
+
+// RingOut reports which ring a use case acted on, and what it holds afterwards.
+type RingOut struct {
+	// Dir is the resolved ring directory.
+	Dir string
+	// Source is where that directory came from: explicit, the environment
+	// variable's name, or "default".
+	Source string
+	// Entries are the ring's identities, public material only.
+	Entries []EntryOut
+	// Validators is how many identities the ring declares as validators. Zero
+	// means the ring declares no validator set and a network decides.
+	Validators int
+}
+
+// EntryOut is one identity as a surface reports it.
+//
+// The private key is absent unless a use case was asked for it explicitly, so
+// listing or showing a ring cannot leak by construction.
+type EntryOut struct {
+	Label      string `json:"label"`
+	Index      int    `json:"index,omitempty"`
+	Address    string `json:"address"`
+	PublicKey  string `json:"publicKey,omitempty"`
+	BLSPubKey  string `json:"blsPublicKey,omitempty"`
+	BLSPoP     string `json:"blsPoP,omitempty"`
+	Validator  bool   `json:"validator"`
+	PrivateKey string `json:"privateKey,omitempty"`
+}
+
+// RingCreateIn creates a ring.
+type RingCreateIn struct {
+	Ring RingRef
+	// Count is how many identities to create.
+	Count int
+	// Validators is how many identities join the validator set. Nil is "the
+	// caller said nothing", which each verb reads its own way; a pointer to 0
+	// declares none, a ring of identities and nothing else. The two cannot be
+	// one value, because zero is also what an unset field looks like.
+	Validators *int
+	// WithBLS derives BLS material, which only the wbft family reads.
+	WithBLS bool
+	// Password encrypts the generated keystores.
+	Password string
+	// Balance pre-funds each identity in the genesis alloc (0x-hex wei).
+	Balance string
+}
+
+// KeyringNew creates a ring of fresh identities.
+func KeyringNew(_ context.Context, d Deps, in RingCreateIn) (RingOut, error) {
+	dir, source := in.Ring.resolve(d.env())
+	set, err := keyring.Generate(in.opts(dir), nil)
+	if err != nil {
+		return RingOut{Dir: dir, Source: source}, err
+	}
+	return ringOut(dir, source, set), nil
+}
+
+// KeyringAdd adds identities to a ring that already exists.
+func KeyringAdd(_ context.Context, d Deps, in RingCreateIn) (RingOut, error) {
+	dir, source := in.Ring.resolve(d.env())
+	set, err := keyring.Extend(in.opts(dir), nil)
+	if err != nil {
+		return RingOut{Dir: dir, Source: source}, err
+	}
+	return ringOut(dir, source, set), nil
+}
+
+// opts renders the generation options.
+//
+// The validator count is passed through untouched, including its absence. Each
+// verb resolves an unset count its own way — creating a ring takes all of them,
+// extending one takes none — so resolving it here would have to know which verb
+// called and would get the other wrong. It did, once.
+func (in RingCreateIn) opts(dir string) keyring.GenerateOpts {
+	derive := keyring.AccountOnly
+	if in.WithBLS {
+		derive = keyring.WithBLS
+	}
+	return keyring.GenerateOpts{
+		Nodes: in.Count, Validators: in.Validators, Out: dir,
+		Password: in.Password, Balance: in.Balance, Derive: derive,
+	}
+}
+
+// RingListIn reads a ring.
+type RingListIn struct {
+	Ring RingRef
+	// Verify re-derives every identity from its own key and fails on a
+	// mismatch, which is how a ring whose records have drifted from its key
+	// material is caught before a network runs on it.
+	Verify bool
+}
+
+// KeyringList reports what a ring holds.
+func KeyringList(_ context.Context, d Deps, in RingListIn) (RingOut, error) {
+	dir, source, set, err := openRing(in.Ring, d)
+	if err != nil {
+		return RingOut{Dir: dir, Source: source}, err
+	}
+	if in.Verify {
+		for _, e := range set.Nodes {
+			if err := e.Verify(); err != nil {
+				return RingOut{Dir: dir, Source: source}, err
+			}
+		}
+	}
+	return ringOut(dir, source, set), nil
+}
+
+// RingEntryIn names one identity in a ring.
+type RingEntryIn struct {
+	Ring RingRef
+	// Label is the identity's name, e.g. "node1" or "faucet".
+	Label string
+}
+
+// KeyringShow reports one identity's public material.
+func KeyringShow(_ context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
+	_, _, set, err := openRing(in.Ring, d)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	e, err := findEntry(set, in.Label)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	return entryOut(e, validatorSet(set)), nil
+}
+
+// KeyringExport reports one identity including its private key.
+//
+// It is a separate use case from Show rather than a flag on it, so that
+// disclosing a secret is a call a reader can find, and so a surface can offer
+// one without offering the other.
+func KeyringExport(_ context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
+	out, err := KeyringShow(context.Background(), d, in)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	_, _, set, err := openRing(in.Ring, d)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	e, err := findEntry(set, in.Label)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	out.PrivateKey = "0x" + e.Nodekey.Hex()
+	return out, nil
+}
+
+// RingImportIn brings a key that already exists into a ring.
+type RingImportIn struct {
+	Ring RingRef
+	// Label is the name to store the identity under.
+	Label string
+	// From names the key file with the single path syntax: a local path,
+	// srv://<server>/path, [user@]host:path, or ssh://user@host:port/path.
+	// Prefer srv://, which keeps the host address in the inventory rather than
+	// in a command line or an agent's transcript.
+	From string
+	// PrivateKey is a key the caller already holds (0x-hex), as an alternative
+	// to From.
+	PrivateKey string
+	// Password decrypts a keystore named by From.
+	Password string
+	// WithBLS derives BLS material for the imported key.
+	WithBLS bool
+}
+
+// KeyringImport writes an existing key into a ring's index.
+func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, error) {
+	dir, _ := in.Ring.resolve(d.env())
+	src, err := in.source(d, in.Ring.ServerConfig)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	key, err := src.Resolve(ctx)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	derive := keyring.AccountOnly
+	if in.WithBLS {
+		derive = keyring.WithBLS
+	}
+	e, err := keyring.Import(dir, keyring.Label(in.Label), key, derive)
+	if err != nil {
+		return EntryOut{}, err
+	}
+	return entryOut(e, nil), nil
+}
+
+// source turns the two ways of naming a key into one keyring.Source. Where a
+// file sits is a property of its path, so a remote import is not a different
+// kind of import.
+func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) {
+	switch {
+	case in.PrivateKey != "" && in.From != "":
+		return nil, fmt.Errorf("app: provide either a private key or a path, not both")
+	case in.PrivateKey != "":
+		return keyring.PrivateKeySource{Hex: in.PrivateKey}, nil
+	case in.From == "":
+		return nil, fmt.Errorf("app: import needs a private key or a path")
+	}
+
+	spec, err := target.ParseTarget(in.From)
+	if err != nil {
+		return nil, err
+	}
+	tgt, err := spec.ResolveWith(d.env(), serverset.InventoryLookup(inventory))
+	if err != nil {
+		return nil, err
+	}
+	var pw keyring.PasswordSource
+	if in.Password != "" {
+		pw = keyring.StaticPassword(in.Password)
+	}
+	return keyring.FileSource{Files: tgt.Files, Path: tgt.DataRoot, Password: pw}, nil
+}
+
+// openRing resolves and loads a ring, naming the source in the error so that a
+// missing default ring is not a mystery.
+func openRing(ref RingRef, d Deps) (dir, source string, set keyring.Preset, err error) {
+	dir, source = ref.resolve(d.env())
+	set, err = keyring.LoadPreset(dir)
+	if err != nil {
+		return dir, source, keyring.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
+	}
+	return dir, source, set, nil
+}
+
+// findEntry looks up an identity by label, listing what the ring holds when the
+// name is not one of them.
+func findEntry(set keyring.Preset, label string) (keyring.Entry, error) {
+	for _, e := range set.Nodes {
+		if string(e.Label) == label {
+			return e, nil
+		}
+	}
+	have := make([]string, 0, len(set.Nodes))
+	for _, e := range set.Nodes {
+		have = append(have, string(e.Label))
+	}
+	return keyring.Entry{}, fmt.Errorf("no identity named %q (have: %v)", label, have)
+}
+
+// validatorSet indexes the ring's declared validators by lowercase address.
+func validatorSet(set keyring.Preset) map[string]bool {
+	out := make(map[string]bool, len(set.Network.Validators))
+	for _, a := range set.Network.Validators {
+		out[lower(a)] = true
+	}
+	return out
+}
+
+// ringOut renders a whole ring.
+func ringOut(dir, source string, set keyring.Preset) RingOut {
+	vals := validatorSet(set)
+	out := RingOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
+	for _, e := range set.Nodes {
+		out.Entries = append(out.Entries, entryOut(e, vals))
+	}
+	return out
+}
+
+// entryOut renders one identity without its secret.
+func entryOut(e keyring.Entry, validators map[string]bool) EntryOut {
+	out := EntryOut{
+		Label:     string(e.Label),
+		Index:     e.Index,
+		Address:   e.Address,
+		PublicKey: e.PublicKey,
+		Validator: validators[lower(e.Address)],
+	}
+	if e.BLS != nil {
+		out.BLSPubKey, out.BLSPoP = e.BLS.PublicKey, e.BLS.PoP
+	}
+	return out
+}
+
+// lower folds an address for comparison; a file and a derivation may disagree
+// on case without disagreeing on the address.
+func lower(s string) string {
+	b := []byte(s)
+	for i, c := range b {
+		if c >= 'A' && c <= 'Z' {
+			b[i] = c + ('a' - 'A')
+		}
+	}
+	return string(b)
+}
+
+// env resolves the environment lookup, defaulting to the process environment.
+func (d Deps) env() func(string) string {
+	if d.Env == nil {
+		return os.Getenv
+	}
+	return d.Env
+}
