@@ -242,8 +242,8 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **A1** | 레이어 검사 테스트 — [[layers]] §3 배치표가 정본. `go list` 엣지 대조, 배치표에 없는 신규 패키지는 실패 | **알려진 위반 1건**(`core/pipeline/testrun`→`testkit`, 둘 다 삭제 대기)을 예외로 명시하고 신규 위반 차단 · **미등록 패키지 거부**(08-21 측정에서 맵 누락으로 위반을 놓친 적이 있다) | ☐ |
-| **A2** | 상태 쓰기 허용목록 테스트 — `os.WriteFile`/`MkdirAll` 호출 패키지가 목록 밖이면 실패 | 현재 위반 **4곳**(app · chainsetup · chains/wemix/deploy · consensus/upgrade)이 목록에 예외로 명시되고, 신규 위반은 차단 | ☐ |
+| **A1** | 레이어 검사 테스트 (`internal/arch`) — [[layers]] §3 표를 **파싱**한다(코드에 복제하지 않음) | ☑ 상향 의존 **0건** · 미배치 패키지 거부 · 유령 항목 거부 · 네 실패 경로를 실제로 확인 |
+| **A2** | 상태 쓰기 허용목록 테스트 (`internal/arch`) — [[layers]] §5 표가 정본 | ☑ ❌ 4곳(app·chainsetup·wemix/deploy·upgrade)은 예외로 명시 · 신규 위반 차단 · **stale 예외도 차단** · `os.Create` 를 세면서 미기재였던 `engine` 을 찾아냄 |
 | **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileStore` 경유로 | L5 가 파일 경로를 모르게 | ☐ |
 | **A4** | `chainsetup`·`chains/wemix/deploy`·`consensus/upgrade` 를 Sink 경유로 | 원격/로컬 분기 제거 | ☐ |
 | **A5** | ~~`core/bringup`·`core/state`~~ 삭제 완료 · `testkit`·`core/pipeline/testrun` 잔여 | 앞 둘은 #241 에서 소멸(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘은 **케이스 이관 선행** | ◐ |
