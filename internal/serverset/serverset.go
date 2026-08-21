@@ -80,6 +80,9 @@ type SSH struct {
 	Port     int    `yaml:"port,omitempty"`
 	Password string `yaml:"password,omitempty"`
 	KeyFile  string `yaml:"key_file,omitempty"`
+	// Sudo records whether this user may escalate. netmap and the inventory
+	// only carry the fact; acting on it is the bring-up procedure's business.
+	Sudo bool `yaml:"sudo,omitempty"`
 }
 
 // Defaults are the file-level values every server inherits for the fields it
@@ -109,19 +112,38 @@ type Server struct {
 	SSH      SSH    `yaml:"ssh,omitempty"`
 }
 
-// Config is the parsed inventory.
+// PoolSpec is the v2 inventory's assignable address space: hosts × port bases,
+// consumed by netmap.Assign. See docs/dev/netmap-design.md §2.2a.
+type PoolSpec struct {
+	Hosts     []string `yaml:"hosts"`
+	PortBases []int    `yaml:"portBases"`
+}
+
+// Config is the parsed inventory. v1 describes servers one by one (bands and
+// slots); v2 describes a pool the assignment walks. The two are exclusive —
+// a file that mixes them is refused rather than half-read.
 type Config struct {
 	// Version is the file format version, so a later change can reject an old
 	// file by name instead of by a confusing field error.
 	Version  int      `yaml:"version"`
 	Defaults Defaults `yaml:"defaults,omitempty"`
-	Servers  []Server `yaml:"servers"`
+	Servers  []Server `yaml:"servers,omitempty"`
+
+	// Pool, SSHConf and DataRoot are the v2 fields: one pool, one credential
+	// block, one server-side root for the whole inventory.
+	Pool     *PoolSpec `yaml:"pool,omitempty"`
+	SSHConf  *SSH      `yaml:"ssh,omitempty"`
+	DataRoot string    `yaml:"dataRoot,omitempty"`
 	// path is where this config was read from, for provenance in messages.
 	path string
 }
 
-// SupportedVersion is the inventory format this build reads.
-const SupportedVersion = 1
+// SupportedVersion is the per-server inventory format; PoolVersion is the
+// pooled one.
+const (
+	SupportedVersion = 1
+	PoolVersion      = 2
+)
 
 // Path is the file this config came from, for reporting where a port plan
 // originated.
@@ -175,8 +197,17 @@ func legacyHint(b []byte) string {
 // validate enforces a usable inventory: a supported version, unique selectors,
 // a host per server, and port steps that cannot produce colliding ports.
 func (c *Config) validate() error {
-	if c.Version != SupportedVersion {
-		return fmt.Errorf("serverset: %s has version %d, want %d (see %s)", c.path, c.Version, SupportedVersion, DefaultSampleFile)
+	switch c.Version {
+	case PoolVersion:
+		return c.validatePool()
+	case SupportedVersion:
+		// fall through to the per-server checks below
+	default:
+		return fmt.Errorf("serverset: %s has version %d, want %d or %d (see %s)",
+			c.path, c.Version, SupportedVersion, PoolVersion, DefaultSampleFile)
+	}
+	if c.Pool != nil {
+		return fmt.Errorf("serverset: %s mixes a v1 server list with a v2 pool; pick one (pool needs version: %d)", c.path, PoolVersion)
 	}
 	if len(c.Servers) == 0 {
 		return fmt.Errorf("serverset: %s configures no servers", c.path)
