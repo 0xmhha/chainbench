@@ -24,6 +24,7 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
 // DefaultConfigFile is the inventory path used when --server-config is omitted.
@@ -408,4 +409,29 @@ func (s Server) Credentials(env func(string) string) (remote.Credentials, error)
 			"serverset: server %s has no SSH auth (set defaults.ssh.password/key_file or CHAINBENCH_REMOTE_PASS/CHAINBENCH_REMOTE_KEY_FILE)", s.label(0))
 	}
 	return rc, nil
+}
+
+// InventoryLookup returns a target.Inventory backed by the inventory file at
+// path (empty uses DefaultConfigFile). It is how an srv://<name>/path target
+// gets its host, port and credentials without any of those appearing in a
+// command line, a spec file, or a persisted workspace.
+//
+// The file is opened on each lookup rather than cached: a lookup happens once
+// per target, and an operator editing the inventory mid-session should not have
+// to reason about which copy is in effect.
+func InventoryLookup(path string) target.Inventory {
+	return func(name string, env func(string) string) (remote.Credentials, error) {
+		if path == "" {
+			path = DefaultConfigFile
+		}
+		cfg, err := Load(path)
+		if err != nil {
+			return remote.Credentials{}, fmt.Errorf("serverset: %q needs the inventory: %w", name, err)
+		}
+		s, err := cfg.ByName(name)
+		if err != nil {
+			return remote.Credentials{}, err
+		}
+		return s.Credentials(env)
+	}
 }

@@ -8,7 +8,7 @@
 // workspace.json (chain, keys, placements, node table, step-tracking) — always
 // lives locally on the operator's machine. The DATA plane — genesis, configs,
 // datadirs, logs — lives on a Target (this machine's filesystem, or a remote
-// SSH host); see target.go. Step functions use the Target's FileSink/Driver and
+// SSH host); see target.go. Step functions use the Target's FileStore/Driver and
 // never branch on local vs remote.
 //
 // Persistence belongs to core/session (Composition — the long-lived

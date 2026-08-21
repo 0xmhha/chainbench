@@ -60,7 +60,7 @@ func TestKeysImport_MnemonicCoinType(t *testing.T) {
 func TestKeysImport_FileRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	gen := keyJSON(t, "keys", "new", "--out", dir, "--name", "k", "--store", "file", "--json")
-	imp := keyJSON(t, "keys", "import", "--import", filepath.Join(dir, "k.key"), "--json")
+	imp := keyJSON(t, "keys", "import", "--from", filepath.Join(dir, "k.key"), "--json")
 	if imp["publicKey"] != gen["publicKey"] {
 		t.Fatalf("file import mismatch: %s vs %s", imp["publicKey"], gen["publicKey"])
 	}

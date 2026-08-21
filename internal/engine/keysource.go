@@ -6,9 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
-	"github.com/0xmhha/chainbench/internal/core/keys"
-	"github.com/0xmhha/chainbench/internal/keygen"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // Default material for a generated key set.
@@ -28,7 +26,7 @@ type KeySet struct {
 	Dir string
 	// Preset is the decoded metadata: validator addresses, BLS keys, extra-data,
 	// alloc, and the per-node devp2p identities.
-	Preset keys.Preset
+	Preset keyring.Preset
 }
 
 // KeySource decides where a run's node identities come from — algorithm steps 2
@@ -59,7 +57,7 @@ func (s PresetKeySource) Describe() string { return "preset:" + s.Path }
 
 // Ensure loads the preset and checks it covers n nodes.
 func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
-	p, err := keys.LoadPreset(s.Path)
+	p, err := keyring.LoadPreset(s.Path)
 	if err != nil {
 		return KeySet{}, fmt.Errorf("engine: key source: %w", err)
 	}
@@ -72,20 +70,19 @@ func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
 
 // GeneratedKeySource generates a fresh random key set into Path on first use.
 //
-// BLS public keys and proofs-of-possession cannot be derived in Go here — they
-// come from the external bootnode binary (design §3.5) — so Bootnode is
-// required and a missing binary is a clear error rather than a key set that is
-// silently short of the material a wbft-family genesis needs.
+// Every identity — address, devp2p public key, BLS public key and
+// proof-of-possession — is derived in process (keyring.Derive), so generating a
+// key set needs no chain binary. It used to require the go-wbft bootnode tool,
+// which is what made the committed preset the only practical way to start a
+// network.
 //
-// The genesis extra-data is computed from the generated validator set
-// (keygen.WBFTExtraData, T7.2), so a chain whose consensus reads the validator
-// set out of extra-data accepts a generated set. PresetKeySource remains the
-// path proven against a live chain.
+// The genesis extra-data is not stored with the set: the wbft family derives it
+// from the validator set at genesis time, so a generated set cannot carry one
+// that contradicts its own validators. PresetKeySource remains the path proven
+// against a live chain.
 type GeneratedKeySource struct {
 	// Path is the directory the generated set is written to.
 	Path string
-	// Bootnode is the external bootnode binary used to derive BLS material.
-	Bootnode string
 	// Password encrypts the generated keystores; empty uses a default.
 	Password string
 	// Balance pre-funds each generated account in the genesis alloc (0x-hex
@@ -105,21 +102,18 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 	if _, err := os.Stat(filepath.Join(s.Path, "metadata.json")); err == nil {
 		return PresetKeySource{Path: s.Path}.Ensure(ctx, n)
 	}
-	if s.Bootnode == "" {
-		return KeySet{}, fmt.Errorf("engine: key source: generating a key set needs a bootnode binary (BLS derivation)")
-	}
 	if err := ctx.Err(); err != nil {
 		return KeySet{}, err
 	}
-	opts := keygen.PresetOpts{
+	opts := keyring.GenerateOpts{
 		Nodes:      n,
 		Validators: s.Validators,
-		Bootnode:   s.Bootnode,
 		Out:        s.Path,
+		Derive:     keyring.WithBLS,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}
-	if _, err := keygen.GeneratePreset(opts, nil); err != nil {
+	if _, err := keyring.Generate(opts, nil); err != nil {
 		return KeySet{}, fmt.Errorf("engine: key source: generate: %w", err)
 	}
 	return PresetKeySource{Path: s.Path}.Ensure(ctx, n)
@@ -133,17 +127,17 @@ func orDefault(v, def string) string {
 	return v
 }
 
-// RegisterIdentities records a key set's node identities in the session key
-// registry under the names "node1".."nodeN".
+// RegisterIdentities records a key set's node identities in the session's
+// keyring under the labels "node1".."nodeN".
 //
-// Registration is not bookkeeping: it re-derives each address from the private
-// key the node will actually run with and fails when that disagrees with the
-// address the metadata declares. A key set whose declared identity has drifted
-// from its key material produces a chain whose genesis registers one address
-// while the node signs with another — a failure that otherwise surfaces much
-// later as an unexplained consensus stall.
-func RegisterIdentities(ctx context.Context, reg keyreg.Registry, ks KeySet, n int) error {
-	if reg == nil {
+// Registration is not bookkeeping: each address is re-derived from the private
+// key the node will actually run with and checked against the one the metadata
+// declares. A key set whose declared identity has drifted from its key material
+// produces a chain whose genesis registers one address while the node signs
+// with another — a failure that otherwise surfaces much later as an unexplained
+// consensus stall.
+func RegisterIdentities(ctx context.Context, ring *keyring.Ring, ks KeySet, n int) error {
+	if ring == nil {
 		return nil
 	}
 	for i := 1; i <= n; i++ {
@@ -151,11 +145,16 @@ func RegisterIdentities(ctx context.Context, reg keyreg.Registry, ks KeySet, n i
 		if !ok {
 			return fmt.Errorf("engine: key set %s has no identity for node%d", ks.Dir, i)
 		}
-		name := fmt.Sprintf("node%d", i)
-		if _, err := reg.Ensure(ctx, name, keyreg.Literal, nk.Nodekey, keyreg.EnsureOpts{
-			ExpectAddress: nk.Address,
-		}); err != nil {
-			return fmt.Errorf("engine: register identity %s: %w", name, err)
+		label := keyring.Label(fmt.Sprintf("node%d", i))
+		// Ask for exactly what the set claims to hold: a poa identity has no BLS
+		// material, and deriving some would invent a key it never had.
+		d := keyring.AccountOnly
+		if nk.BLS != nil {
+			d = keyring.WithBLS
+		}
+		src := keyring.PrivateKeySource{Hex: nk.Nodekey.Hex()}
+		if _, err := ring.AddExpecting(ctx, label, src, d, nk.Address); err != nil {
+			return fmt.Errorf("engine: register identity %s: %w", label, err)
 		}
 	}
 	return nil

@@ -283,17 +283,18 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **K0** | `core/keyring` 신설 — 생성·파생(Go+blst)·백엔드·링·색인 | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) | ☐ |
-| **K1** | `--bootnode` 제거 — BLS 를 blst 로 자체 파생 | `keyring new` 가 **체인 바이너리를 0회 실행** | ☐ |
-| **K2** | `keygen.WBFTExtraData` → `consensus/wbft` 이전 | genesis 자료는 genesis 쪽으로. 기존 골든 테스트 유지 | ☐ |
-| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | 5패키지 → 1 | ☐ |
-| **K4** | `keyring` 명령 — new/add/list/show/import/export, `--keyring` 위치 명시 | `keys`·`validator`·`account` 대체(별칭 유지) | ☐ |
-| **K5** | preset 분해 — `metadata.json` 은 `nodes[]` 만, 나머지는 청사진으로 | **기존 preset 파일을 깨지 않는다**(읽기 호환) | ☐ |
-| **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | `keymat` 의 자체 SSH 읽기 소멸 · 로컬/원격 한 통로 | ☐ |
-| **K7** | `keyring --from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | 세 형태를 같은 코드로 · **명령줄에 IP 없음** · `--server`+`--remote-path` 두 플래그 대체 | ☐ |
+| **K0** | `core/keyring` 신설 — nodekey 생성 · 신원 파생(주소·devp2p 공개키·BLS·PoP, 전부 in-process) | 배포 preset 의 node1..5 를 nodekey 만으로 **바이트 동일 재현**(골든) · `CGO_ENABLED=0` · fuzz | ☑ |
+| **K1** | `--bootnode` 제거 — BLS 를 자체 파생 | **`PATH` 를 비운 채 4노드 키셋 생성 성공** · 세 계층(keygen·engine·CLI)에 각각 게이트 테스트 | ☑ |
+| **K2** | `keygen.WBFTExtraData` → `consensus/wbft.ExtraData` | ☑ 골든 유지 · **`BuildGenesis` 가 비어 있으면 파생** · `Take` 의 stale extraData 결함 수정 · keygen 의 잔여 import 0 |
+| **K3** | `core/keys`·`keygen`·`keymat`·`core/keyreg` 흡수 | ☑ **5패키지 → 1**(1,565줄 4개 → `core/keyring` 1,275줄) · **신원 타입 5 → 1** · `Nodekey` → `PrivateKey`(역할이 아니라 실체로 명명) |
+| **K4** | `keyring` 명령 — new/add/list/show/import/export | ☑ `--keyring` 출처 표기(플래그/env/기본) · `--with-bls` 선택 · `export` 는 `--yes` 필수 · `list --verify` · `add` 는 검증자 승격 안 함 · 기존 3개 그룹 유지(deprecated) |
+| **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | ☑ `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 |
+| **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keymat.FileSource` 가 로컬·원격 겸용 | ☑ |
+| **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 
-**의존성 추가**: `github.com/supranational/blst v0.3.16` — BLS12-381 표준 구현체,
-**go-wbft 자신이 같은 버전 사용**. 오타 낚시 아님, 이더리움 합의 클라이언트 전반 사용.
+**의존성 추가**(K0 에서 완료): `github.com/kilic/bls12-381 v0.1.0` — **순수 Go** BLS12-381.
+당초 적었던 `supranational/blst` 는 **CGO 라 `CGO_ENABLED=0` 빌드를 깬다**. kilic 은 go-wbft 의
+`go.sum` 과 **모듈 해시가 동일**하다. `decred/…/secp256k1/v4` 는 이미 간접 의존성이었고 직접으로 승격.
 
 **K6 이 keyring 을 넘어선다**: `FileSink` 에 읽기가 없어서 `keymat` 이 자체 SSH 읽기를 따로 만들었다 —
 추상화가 한쪽 방향만 있으면 반대 방향은 옆에 새로 생긴다. 넓히면 청사진 읽기·genesis 확인·

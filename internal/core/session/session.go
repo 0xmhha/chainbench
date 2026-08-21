@@ -1,7 +1,7 @@
 package session
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -29,7 +29,7 @@ const (
 type Session interface {
 	ID() string
 	Root() string
-	Keys() keyreg.Registry
+	Keys() *keyring.Ring
 	// Environment returns an existing environment with the given fingerprint,
 	// or ok=false if none exists yet (drives reuse).
 	Environment(fp Fingerprint) (Environment, bool)

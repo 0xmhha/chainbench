@@ -12,10 +12,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
-// RemoteFileSink must satisfy the provision.FileSink seam a launcher plugs into.
-var _ provision.FileSink = driver.RemoteFileSink{}
+// RemoteFileStore must satisfy the provision.FileStore seam a launcher plugs into.
+var _ provision.FileStore = driver.RemoteFileStore{}
 
-func TestRemoteFileSink_Exists(t *testing.T) {
+func TestRemoteFileStore_Exists(t *testing.T) {
 	cases := []struct {
 		name    string
 		exit    int
@@ -34,7 +34,7 @@ func TestRemoteFileSink_Exists(t *testing.T) {
 				gotCmd = cmd
 				return remote.ExecResult{ExitCode: tc.exit}, tc.runErr
 			}
-			ok, err := driver.NewRemoteFileSink(run).Exists(context.Background(), "/data/genesis.json")
+			ok, err := driver.NewRemoteFileStore(run).Exists(context.Background(), "/data/genesis.json")
 			if tc.wantErr {
 				if err == nil {
 					t.Fatal("expected error")
@@ -54,13 +54,13 @@ func TestRemoteFileSink_Exists(t *testing.T) {
 	}
 }
 
-func TestRemoteFileSink_Write(t *testing.T) {
+func TestRemoteFileStore_Write(t *testing.T) {
 	var cmds []string
 	run := func(_ context.Context, cmd string) (remote.ExecResult, error) {
 		cmds = append(cmds, cmd)
 		return remote.ExecResult{ExitCode: 0}, nil
 	}
-	if err := driver.NewRemoteFileSink(run).Write(context.Background(), "/data/config.toml", []byte("hello"), 0o644); err != nil {
+	if err := driver.NewRemoteFileStore(run).Write(context.Background(), "/data/config.toml", []byte("hello"), 0o644); err != nil {
 		t.Fatalf("Write: %v", err)
 	}
 	joined := strings.Join(cmds, "\n")

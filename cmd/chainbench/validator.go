@@ -1,16 +1,14 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/keygen"
-	"github.com/0xmhha/chainbench/internal/keymat"
 )
 
 // newValidatorCmd is the validator-identity group. A validator is an account
@@ -20,7 +18,7 @@ import (
 func newValidatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator",
-		Short: "Inspect and manage validator identities (chain-aware consensus roles)",
+		Short: "Inspect and manage validator identities; key material lives under `keyring`",
 	}
 	cmd.AddCommand(newValidatorNewCmd(), newValidatorImportCmd(), newValidatorRosterCmd(), newValidatorSetCmd())
 	return cmd
@@ -28,10 +26,10 @@ func newValidatorCmd() *cobra.Command {
 
 // runValidator resolves a key, attaches the chain's consensus material, and
 // prints the validator identity. For a wbft-family chain it derives the BLS key
-// and proof-of-possession from the key via the bootnode; a poa chain has no
-// genesis validator material (validators are registered at bootstrap), so it
-// only reports the account with a note.
-func runValidator(cmd *cobra.Command, chain, bootnode string, source keymat.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
+// and proof-of-possession from the key in process; a poa chain has no genesis
+// validator material (validators are registered at bootstrap), so it only
+// reports the account with a note.
+func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("--chain is required")
 	}
@@ -41,36 +39,44 @@ func runValidator(cmd *cobra.Command, chain, bootnode string, source keymat.Sour
 	}
 	family := p.Manifest().ConsensusFamily
 
-	a, err := source.Resolve(cmd.Context())
+	key, err := source.Resolve(cmd.Context())
 	if err != nil {
 		return err
 	}
-	path, err := saveKey(sf, pf, a)
+	path, err := saveKey(sf, pf, key)
+	if err != nil {
+		return err
+	}
+	// A wbft validator's BLS material comes from the same key as its address,
+	// so ask for it up front and let the family decide whether it is used.
+	id, err := keyring.Derive(key, derivationFor(family))
 	if err != nil {
 		return err
 	}
 
-	v := validatorOut{Chain: chain, Family: family, Address: a.Address().Hex(), Stored: path}
+	v := validatorOut{Chain: chain, Family: family, Address: id.Address, Stored: path}
 	if showPrivate {
-		v.PrivateKey = "0x" + hex.EncodeToString(a.PrivateKeyBytes())
+		v.PrivateKey = "0x" + key.Hex()
 	}
 	switch family {
 	case "wbft":
-		if bootnode == "" {
-			return fmt.Errorf("a %s validator needs --bootnode to derive its BLS key", family)
-		}
-		id, err := keygen.DeriveIdentity(bootnode, hex.EncodeToString(a.PrivateKeyBytes()))
-		if err != nil {
-			return err
-		}
-		v.BLSPublicKey = id.BLSPubKey
-		v.BLSPoP = id.BLSPoP
+		v.BLSPublicKey = id.BLS.PublicKey
+		v.BLSPoP = id.BLS.PoP
 	case "poa":
 		v.Note = "poa: this validator is registered at the governance/etcd bootstrap, not in genesis; no BLS material."
 	default:
 		v.Note = fmt.Sprintf("unknown consensus family %q", family)
 	}
 	return printValidator(cmd.OutOrStdout(), v, jsonOut)
+}
+
+// derivationFor asks for BLS material only where a family uses it, so a poa
+// validator does not pay for a computation whose result it would discard.
+func derivationFor(family string) keyring.Derivation {
+	if family == "wbft" {
+		return keyring.WithBLS
+	}
+	return keyring.AccountOnly
 }
 
 // validatorOut is a validator identity for display.

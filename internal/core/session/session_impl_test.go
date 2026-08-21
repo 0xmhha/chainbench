@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -18,7 +18,7 @@ var fixedTime = time.Date(2026, 8, 6, 14, 30, 5, 0, time.UTC)
 
 func newSession(t *testing.T) session.Session {
 	t.Helper()
-	s, err := session.New(t.TempDir(), "chainbench test --suite gov", fixedTime, nil)
+	s, err := session.New(t.TempDir(), "chainbench test --suite gov", fixedTime)
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -197,33 +197,43 @@ func TestSave_WritesJSON(t *testing.T) {
 	}
 }
 
-func TestNewWithKeys_RegistryIsRootedInTheSession(t *testing.T) {
-	base := t.TempDir()
-	s, err := session.NewWithKeys(base, "chainbench run", fixedTime, keyreg.Deps{
-		Generate: func() ([]byte, string, error) { return []byte{0x01, 0x02}, "0xabc", nil },
-	})
+// TestKeyring_IsRootedInTheSession is the point of session-owned keys: a caller
+// never derives the path, so material cannot land outside the session's tree.
+func TestKeyring_IsRootedInTheSession(t *testing.T) {
+	s, err := session.New(t.TempDir(), "chainbench run", fixedTime)
 	if err != nil {
-		t.Fatalf("NewWithKeys: %v", err)
+		t.Fatalf("New: %v", err)
 	}
-	reg := s.Keys()
-	if reg == nil {
-		t.Fatal("Keys() is nil — the session did not build a registry")
+	ring := s.Keys()
+	if ring == nil {
+		t.Fatal("Keys() is nil — the session did not build a keyring")
 	}
 
-	if _, err := reg.Ensure(context.Background(), "op1", keyreg.Random, "", keyreg.EnsureOpts{}); err != nil {
-		t.Fatalf("Ensure: %v", err)
+	e, err := ring.Add(context.Background(), "op1", keyring.RandomSource{}, keyring.AccountOnly)
+	if err != nil {
+		t.Fatalf("Add: %v", err)
 	}
-	// The point of session-owned keys is that callers never derive the path:
-	// material must land inside this session's tree.
-	addr := filepath.Join(s.Root(), "keys", "op1", "address")
-	if _, err := os.Stat(addr); err != nil {
-		t.Fatalf("key was not persisted under the session: %v", err)
+	if e.Address == "" {
+		t.Error("the added entry has no address")
 	}
-}
+	// A second Add under the same label returns the first entry rather than
+	// generating a competing identity.
+	again, err := ring.Add(context.Background(), "op1", keyring.RandomSource{}, keyring.AccountOnly)
+	if err != nil {
+		t.Fatalf("Add again: %v", err)
+	}
+	if again.Address != e.Address {
+		t.Error("a repeated Add produced a different identity")
+	}
 
-func TestNew_WithoutKeysLeavesRegistryNil(t *testing.T) {
-	s := newSession(t)
-	if s.Keys() != nil {
-		t.Error("New(..., nil) should leave the registry unset")
+	for _, name := range []string{"address", "private"} {
+		p := filepath.Join(s.Root(), "keys", "op1", name)
+		info, err := os.Stat(p)
+		if err != nil {
+			t.Fatalf("key was not persisted under the session: %v", err)
+		}
+		if name == "private" && info.Mode().Perm() != 0o600 {
+			t.Errorf("private key mode = %o, want 600", info.Mode().Perm())
+		}
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
@@ -84,7 +84,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: start: %w", err)
 	}

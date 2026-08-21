@@ -3,12 +3,18 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"path"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
+
+// wemixConfigPerm is the mode of the governance config shipped to the boot
+// producer. It carries members and stakes, which are on-chain anyway, so it is
+// world-readable — unlike key material, which the file store writes at 0600.
+const wemixConfigPerm fs.FileMode = 0o644
 
 // poaCommand renders the shell command a poa.Runner step runs on the remote
 // host: the binary followed by its (shell-quoted) args.
@@ -69,12 +75,13 @@ func Bootstrap(ctx context.Context, c *Cluster, cr *Credentials, hostKey remote.
 	passwordPath := path.Join(dd, "conf", "keystore", ".password")
 	binary := c.BinaryFor(boot)
 
-	// Ship the governance config to the boot producer.
+	// Ship the governance config to the boot producer. It is not secret — the
+	// members and their stakes are on-chain — so it is world-readable.
 	cfgJSON, err := cfg.JSON()
 	if err != nil {
 		return err
 	}
-	if err := writeRemoteFile(ctx, rc, hostKey, configPath, cfgJSON); err != nil {
+	if err := serverFiles(rc, hostKey).Write(ctx, configPath, cfgJSON, wemixConfigPerm); err != nil {
 		return fmt.Errorf("deploy: ship wemix config: %w", err)
 	}
 

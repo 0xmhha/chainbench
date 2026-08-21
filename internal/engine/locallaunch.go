@@ -20,7 +20,7 @@ import (
 // init → launch), replacing the retired pipeline/setup Launch/Provision surface.
 //
 // A remote host is driven by setting Driver to a RemoteDriver and Sink to a
-// driver.RemoteFileSink over the same transport: the launcher then ships the
+// driver.RemoteFileStore over the same transport: the launcher then ships the
 // genesis, per-node config, and preset identities to that host.
 type LocalSetup struct {
 	// Plugin is the target chain (genesis template, RPC namespace, binary name).
@@ -37,9 +37,9 @@ type LocalSetup struct {
 	Binary string
 	// Driver launches the nodes; nil defaults to the local driver.
 	Driver driver.Driver
-	// Sink materializes on-disk files; nil defaults to the local filesystem. Set a
-	// driver.RemoteFileSink to ship genesis + config to a remote host.
-	Sink provision.FileSink
+	// Files materializes on-disk files; nil defaults to the local filesystem. Set a
+	// driver.RemoteFileStore to ship genesis + config to a remote host.
+	Files provision.FileStore
 	// Bus receives setup progress; nil drops the events. It exists because the
 	// dashboard shows a bring-up as it happens, and a launch that reports
 	// nothing until it finishes looks indistinguishable from one that hung.
@@ -98,7 +98,7 @@ func (s LocalSetup) Provision(ctx context.Context, plan driver.Plan) ([]driver.N
 func (s LocalSetup) launcher() LocalLauncher {
 	return LocalLauncher{
 		Plugin: s.Plugin, Binary: s.Binary, KeysDir: s.KeysDir,
-		Driver: s.Driver, Sink: s.Sink,
+		Driver: s.Driver, Files: s.Files,
 	}
 }
 

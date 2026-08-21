@@ -13,7 +13,7 @@ func TestList_And_ChainstatePaths(t *testing.T) {
 	root := t.TempDir()
 
 	// A real session with one environment holding a chainstate file.
-	s, err := session.New(root, "run", time.Unix(0, 0).UTC(), nil)
+	s, err := session.New(root, "run", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}

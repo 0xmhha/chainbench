@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -9,7 +10,7 @@ import (
 
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -17,7 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// recordingSink is a provision.FileSink capturing writes and reporting a
+// recordingSink is a provision.FileStore capturing writes and reporting a
 // preset existing set (to exercise upload-if-absent) in memory.
 type recordingSink struct {
 	written  map[string][]byte
@@ -30,6 +31,14 @@ func newRecordingSink() *recordingSink {
 
 func (s *recordingSink) Exists(_ context.Context, path string) (bool, error) {
 	return s.existing[path], nil
+}
+
+func (s *recordingSink) Read(_ context.Context, path string) ([]byte, error) {
+	b, ok := s.written[path]
+	if !ok {
+		return nil, fmt.Errorf("not found: %s", path)
+	}
+	return b, nil
 }
 
 func (s *recordingSink) Write(_ context.Context, path string, content []byte, _ fs.FileMode) error {
@@ -88,11 +97,11 @@ func TestArmSpecs(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keys.Preset{
-		Validators: []string{"0xval1"},
-		Nodes: []keys.NodeKey{
-			{Index: 1, PublicKey: "aa11", Address: "0xval1"},
-			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
+	preset := keyring.Preset{
+		Network: keyring.Network{Validators: []string{"0xval1"}},
+		Nodes: []keyring.Entry{
+			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{
@@ -164,7 +173,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keys.Preset{Nodes: []keys.NodeKey{{Index: 1, PublicKey: "aa11", Address: "0xval1"}}}
+	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}}}}
 	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
@@ -207,11 +216,11 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keys.Preset{
-		Validators: []string{"0xval1"},
-		Nodes: []keys.NodeKey{
-			{Index: 1, PublicKey: "aa11", Address: "0xval1"},
-			{Index: 2, PublicKey: "bb22", Address: "0xen2"},
+	preset := keyring.Preset{
+		Network: keyring.Network{Validators: []string{"0xval1"}},
+		Nodes: []keyring.Entry{
+			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{

@@ -41,7 +41,7 @@ func mockRPC(t *testing.T, results map[string]any) *httptest.Server {
 // envWithNode builds a real session environment whose primary node points at url.
 func envWithNode(t *testing.T, url string) session.Environment {
 	t.Helper()
-	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

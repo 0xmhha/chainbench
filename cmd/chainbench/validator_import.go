@@ -6,9 +6,9 @@ import (
 
 // newValidatorImportCmd imports an existing key as a validator identity for a
 // chain — from a private key, mnemonic, or file — and attaches the chain's
-// consensus material (BLS/PoP for wbft via --bootnode).
+// consensus material (BLS/PoP for wbft, derived in process).
 func newValidatorImportCmd() *cobra.Command {
-	var chain, bootnode string
+	var chain string
 	var jsonOut bool
 	var src sourceFlags
 	var sf storeFlags
@@ -21,11 +21,10 @@ func newValidatorImportCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return runValidator(cmd, chain, bootnode, source, &sf, &pf, false, jsonOut)
+			return runValidator(cmd, chain, source, &sf, &pf, false, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
-	cmd.Flags().StringVar(&bootnode, "bootnode", "", "go-wbft bootnode tool (required for wbft BLS derivation)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the validator identity as JSON")
 	src.bind(cmd)
 	sf.bind(cmd)

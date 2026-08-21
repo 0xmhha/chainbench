@@ -15,7 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -31,7 +31,7 @@ func defaultExec(ctx context.Context, name string, args ...string) ([]byte, erro
 // RunHandoff stays readable.
 type liveHandoff struct {
 	profile upgrade.Profile
-	preset  keys.Preset
+	preset  keyring.Preset
 	from    registry.ChainPlugin
 	to      registry.ChainPlugin
 	plan    upgrade.Plan
@@ -54,7 +54,7 @@ func (h *liveHandoff) Prepare(_ context.Context, o HandoffOptions) (string, erro
 	if err != nil {
 		return "", err
 	}
-	preset, err := keys.LoadPreset(o.PresetDir)
+	preset, err := keyring.LoadPreset(o.PresetDir)
 	if err != nil {
 		return "", err
 	}
@@ -233,7 +233,7 @@ func (h *liveHandoff) provisionKeys(o HandoffOptions) func(context.Context, driv
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(dir, "nodekey"), []byte(nk.Nodekey), 0o600); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
 			return err
 		}
 		if err := os.WriteFile(filepath.Join(dir, "static-nodes.json"), staticNodes, 0o644); err != nil {
@@ -268,7 +268,7 @@ func handoffOverrides(producerAcct, pwPath, fromNS, toNS string) func(upgrade.No
 }
 
 // poaConfig assembles the wemix governance config from the profile.
-func poaConfig(prof upgrade.Profile, preset keys.Preset, producerAcct string, prod keys.NodeKey, host string) poa.Config {
+func poaConfig(prof upgrade.Profile, preset keyring.Preset, producerAcct string, prod keyring.Entry, host string) poa.Config {
 	g := prof.Producers.Governance
 	env := poa.Env{
 		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
@@ -281,7 +281,7 @@ func poaConfig(prof upgrade.Profile, preset keys.Preset, producerAcct string, pr
 	}
 	bal := dec("1000000000000000000000000000")
 	accounts := []poa.Account{{Addr: producerAcct, Balance: bal}}
-	for _, v := range preset.Validators {
+	for _, v := range preset.NetworkFor(0).Validators {
 		accounts = append(accounts, poa.Account{Addr: v, Balance: bal})
 	}
 	return poa.Config{

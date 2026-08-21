@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // Layout names for the .chainbench/<session>/ tree (design §D-1). Kept as
@@ -62,7 +62,7 @@ type sess struct {
 	root      string
 	command   string
 	startedAt time.Time
-	keys      keyreg.Registry
+	keys      *keyring.Ring
 
 	mu    sync.Mutex
 	envs  map[Fingerprint]*env
@@ -70,26 +70,20 @@ type sess struct {
 }
 
 // New creates the .chainbench/<session>/ tree under baseDir and returns the
-// session. startedAt is injected (not read from the clock) for reproducibility.
-// A disk-write failure aborts session start.
-func New(baseDir, command string, startedAt time.Time, keys keyreg.Registry) (Session, error) {
-	return newSession(baseDir, command, startedAt, func(string) keyreg.Registry { return keys })
+// session, with its keyring rooted in the session's own keys/ directory.
+// startedAt is injected (not read from the clock) for reproducibility. A
+// disk-write failure aborts session start.
+//
+// The session decides where key material lands because it owns the artifact
+// layout (design §3.1, single ownership); a caller never reconstructs that path.
+func New(baseDir, command string, startedAt time.Time) (Session, error) {
+	return newSession(baseDir, command, startedAt, keyring.NewRing)
 }
 
-// NewWithKeys creates the session and its key registry rooted in the session's
-// own keys/ directory. It exists so callers do not have to reconstruct that
-// path: session owns the artifact layout, so it is also what decides where a
-// run's key material lands (design §3.1, single ownership).
-func NewWithKeys(baseDir, command string, startedAt time.Time, deps keyreg.Deps) (Session, error) {
-	return newSession(baseDir, command, startedAt, func(keysDir string) keyreg.Registry {
-		return keyreg.New(keysDir, deps)
-	})
-}
-
-// newSession creates the session tree and binds its key registry. newKeys
-// receives the session's keys/ path so a registry can be rooted there without
-// the layout leaking to callers.
-func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) keyreg.Registry) (Session, error) {
+// newSession creates the session tree and binds its keyring. newKeys receives
+// the session's keys/ path so the ring can be rooted there without the layout
+// leaking to callers.
+func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) *keyring.Ring) (Session, error) {
 	id := SessionID(startedAt)
 	root := filepath.Join(baseDir, id)
 	dirs := []struct {
@@ -116,9 +110,9 @@ func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysD
 	}, nil
 }
 
-func (s *sess) ID() string            { return s.id }
-func (s *sess) Root() string          { return s.root }
-func (s *sess) Keys() keyreg.Registry { return s.keys }
+func (s *sess) ID() string          { return s.id }
+func (s *sess) Root() string        { return s.root }
+func (s *sess) Keys() *keyring.Ring { return s.keys }
 
 // Environment returns an existing environment for fp, or ok=false when none
 // exists yet.

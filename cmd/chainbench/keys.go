@@ -10,8 +10,9 @@ import (
 // here. The preset/validator-set bundle generator moved to `validator set`.
 func newKeysCmd() *cobra.Command {
 	c := &cobra.Command{
-		Use:   "keys",
-		Short: "Generate and inspect raw key material (keypairs)",
+		Use:        "keys",
+		Short:      "Generate and inspect raw key material (keypairs)",
+		Deprecated: "use `chainbench keyring` — one group for key material, whatever it will be used for",
 	}
 	c.AddCommand(newKeysNewCmd(), newKeysImportCmd())
 	return c

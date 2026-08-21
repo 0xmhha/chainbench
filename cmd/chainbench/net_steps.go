@@ -43,12 +43,13 @@ func newNetKeysCmd() *cobra.Command {
 	cmd, _ := stepCmd("keys", "Ensure the key set exists and covers the node count (preset or generate)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := app.NetKeys(cmd.Context(), app.Deps{}, app.NetKeysIn{
-				DataDir: dataDir, Source: source, Bootnode: bootnode, Nodes: nodes, Validators: validators,
+				DataDir: dataDir, Source: source, Nodes: nodes, Validators: validators,
 			})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&source, "keys-source", "preset", "preset (use the recorded key set) | generate (create a fresh set)")
-	cmd.Flags().StringVar(&bootnode, "bootnode", "", "bootnode binary for BLS derivation (generate)")
+	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
+	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
 	cmd.Flags().IntVar(&nodes, "nodes", 0, "identities the set must cover (default: the allocated node count)")
 	cmd.Flags().IntVar(&validators, "validators", 0, "identities joining the validator set (generate; 0 = all)")
 	return cmd

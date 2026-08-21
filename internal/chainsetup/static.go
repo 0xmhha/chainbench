@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/procman"
@@ -75,7 +75,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 
 	var (
 		plugin registry.ChainPlugin
-		preset keys.Preset
+		preset keyring.Preset
 		places []place.NodePlacement
 		gen    []byte
 		plan   driver.Plan
@@ -107,12 +107,13 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[2], func() (string, error) {
-		p, err := keys.LoadPreset(o.KeysDir)
+		p, err := keyring.LoadPreset(o.KeysDir)
 		if err != nil {
 			return "", err
 		}
 		preset = p
-		return fmt.Sprintf("%d node identities, %d validators from %s", len(preset.Nodes), len(preset.Validators), o.KeysDir), nil
+		return fmt.Sprintf("%d node identities, %d declared validators from %s",
+			len(preset.Nodes), len(preset.Network.Validators), o.KeysDir), nil
 	})
 
 	t.do(c.Steps[3], func() (string, error) {

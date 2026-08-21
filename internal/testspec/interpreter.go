@@ -5,7 +5,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/keyreg"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -14,7 +14,7 @@ import (
 // Deps are the collaborators an interpreter needs, injected at construction so
 // no package-global state is used and tests stay isolated.
 type Deps struct {
-	Keys      keyreg.Registry
+	Keys      *keyring.Ring
 	Accounts  accounts.AccountProvider
 	RPC       func(url string) *rpc.Client
 	Collector collector.Collector

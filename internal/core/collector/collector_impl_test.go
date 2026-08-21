@@ -14,7 +14,7 @@ import (
 // envWithNodes builds a real session Environment holding the given nodes.
 func envWithNodes(t *testing.T, nodes ...node.Node) session.Environment {
 	t.Helper()
-	s, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	s, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

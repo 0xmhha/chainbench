@@ -41,7 +41,7 @@ func mockRPC(t *testing.T, results map[string]any) *httptest.Server {
 // returns a fresh test record to run against.
 func runEnv(t *testing.T, url string) (session.Environment, session.TestRecord) {
 	t.Helper()
-	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

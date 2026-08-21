@@ -35,7 +35,7 @@ func (h *harness) deps(t *testing.T) engine.Deps {
 	return engine.Deps{
 		Command: "test",
 		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
-			return session.New(t.TempDir(), cmd, time.Unix(0, 0).UTC(), nil)
+			return session.New(t.TempDir(), cmd, time.Unix(0, 0).UTC())
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
 			return h.fpByChain[s.Chain.Name]

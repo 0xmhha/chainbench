@@ -243,7 +243,7 @@ func wsHeadServer(t *testing.T, n int) *httptest.Server {
 // envWithWS builds an environment whose node's WS endpoint is the given server.
 func envWithWS(t *testing.T, host string, wsPort int) session.Environment {
 	t.Helper()
-	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}

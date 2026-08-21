@@ -32,11 +32,10 @@ func newRunCmd() *cobra.Command {
 	var (
 		chain        string
 		rpcURLs      []string
-		caps         []string
 		binary       string
 		keysDir      string
 		keysSource   string
-		bootnode     string
+		bootnode     string // deprecated, ignored
 		artifactRoot string
 		validators   int
 		chainID      int64
@@ -74,8 +73,8 @@ func newRunCmd() *cobra.Command {
 			}
 
 			eng, err := buildRunEngine(foldSpecEnv(runOpts{
-				chain: chain, rpcURLs: rpcURLs, caps: caps, binary: binary,
-				keysDir: keysDir, keysSource: keysSource, bootnode: bootnode,
+				chain: chain, rpcURLs: rpcURLs, binary: binary,
+				keysDir: keysDir, keysSource: keysSource,
 				artifactRoot: artifactRoot, validators: validators,
 				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
 				server: sf.ref(), bus: bus,
@@ -94,12 +93,12 @@ func newRunCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet)")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
-	cmd.Flags().StringArrayVar(&caps, "cap", nil, "attach: capability the target net provides beyond \"rpc\" (repeatable), e.g. account-extra — lets overlay-gated specs run instead of skipping")
 	cmd.Flags().StringVar(&binary, "binary", "", "local: node binary path — builds a network")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: key set directory (read with --keys-source preset, written with generate)")
 	cmd.Flags().StringVar(&keysSource, "keys-source", string(keysSourcePreset),
 		"local: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
-	cmd.Flags().StringVar(&bootnode, "bootnode", "", "local: bootnode binary used to derive BLS material when --keys-source=generate")
+	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
+	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory")
 	cmd.Flags().IntVar(&validators, "validators", 4, "local: validator node count")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "local: override the manifest chain id in the built genesis (0 = manifest)")
@@ -130,11 +129,9 @@ const (
 type runOpts struct {
 	chain        string
 	rpcURLs      []string
-	caps         []string
 	binary       string
 	keysDir      string
 	keysSource   string
-	bootnode     string
 	artifactRoot string
 	validators   int
 	chainID      int64
@@ -155,7 +152,7 @@ func buildRunEngine(o runOpts) (engine.Engine, error) {
 	switch {
 	case len(o.rpcURLs) > 0:
 		return engine.NewAttachEngine(engine.AttachConfig{
-			Chain: o.chain, RPCURLs: o.rpcURLs, Caps: o.caps, ArtifactRoot: o.artifactRoot, Bus: o.bus,
+			Chain: o.chain, RPCURLs: o.rpcURLs, ArtifactRoot: o.artifactRoot, Bus: o.bus,
 		})
 	case o.binary != "":
 		src, err := keySource(o)
@@ -196,11 +193,8 @@ func keySource(o runOpts) (engine.KeySource, error) {
 	case "", keysSourcePreset:
 		return engine.PresetKeySource{Path: o.keysDir}, nil
 	case keysSourceGenerate:
-		if o.bootnode == "" {
-			return nil, fmt.Errorf("run: --keys-source=generate needs --bootnode (BLS material is derived by that binary)")
-		}
 		return engine.GeneratedKeySource{
-			Path: o.keysDir, Bootnode: o.bootnode, Validators: o.validators,
+			Path: o.keysDir, Validators: o.validators,
 		}, nil
 	default:
 		return nil, fmt.Errorf("run: unknown --keys-source %q (want %s or %s)",
@@ -274,9 +268,6 @@ func foldSpecEnv(o runOpts, specs [][]byte) runOpts {
 			if k.Ref != "" {
 				o.keysDir = k.Ref
 			}
-		}
-		if o.bootnode == "" {
-			o.bootnode = k.Bootnode
 		}
 	}
 	if len(s.EnvLaunch) > 0 && len(o.launchOpts) == 0 {

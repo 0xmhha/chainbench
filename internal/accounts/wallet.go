@@ -458,6 +458,13 @@ func openWallet(ctx context.Context, privKey []byte, rpcURL string) (Wallet, err
 }
 
 // addressForKey derives the 0x-prefixed hex address for a private key, offline.
+// AddressForKey derives the 0x-prefixed hex address for a private key, offline.
+// It is the free-function form of [AccountProvider.AddressForKey], for callers
+// that hold key material but no chain: address derivation is identical on every
+// chain chainbench drives, so requiring a provider would force a caller to
+// name a chain it does not have.
+func AddressForKey(privKey []byte) (string, error) { return addressForKey(privKey) }
+
 func addressForKey(privKey []byte) (string, error) {
 	acct, err := sdkacct.FromPrivateKeyBytes(privKey)
 	if err != nil {

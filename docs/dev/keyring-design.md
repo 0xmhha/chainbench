@@ -33,17 +33,29 @@
 ```
 nodekey (32B secp256k1, crypto/rand)
   ├─ address        keccak(pubkey)[12:]                    accounts.AddressForKey (기존)
-  ├─ devp2p pubkey  secp256k1 uncompressed (128 hex)       Go 내장
-  ├─ BLS pubkey     blst.KeyGen(nodekey) → G1 (48B)        blst
-  └─ BLS PoP        Sign(pubkey, DST) → G2 (96B)           blst
+  ├─ devp2p pubkey  secp256k1 uncompressed (128 hex)       decred/…/secp256k1
+  ├─ BLS pubkey     KeyGen(nodekey) → G1 압축 (48B)        kilic/bls12-381 + stdlib crypto/hkdf
+  └─ BLS PoP        Sign(pubkey, DST) → G2 압축 (96B)      동일
                     DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"
 ```
 
-> **DST 주의**: 빼먹으면 **형식은 멀쩡한데 검증에 실패하는 PoP** 이 나온다. 실제로 첫 시도에서
-> 그렇게 됐다. 골든 테스트(배포된 preset 재현)로 고정한다.
+> **함정 둘. 실제로 둘 다 밟았다.**
+> 1. **DST 누락** — 형식은 멀쩡한데 **검증에 실패하는 PoP** 이 나온다.
+> 2. **salt 해시 시점** — `blst_keygen` version 4 는 salt 를 재시도 사이가 아니라
+>    **첫 루프 이전에 한 번** 해시한다. 재시도에만 넣으면 전혀 다른 키가 나온다.
+>
+> 둘 다 조용히 틀리는 종류라 골든 테스트(배포 preset 재현)로 고정했다.
 
-의존성 `github.com/supranational/blst v0.3.16` — BLS12-381 표준 구현체이고,
-**go-wbft 자신이 같은 버전을 쓴다**. 오타 낚시가 아니며 이더리움 합의 클라이언트 전반이 사용한다.
+**의존성은 `github.com/kilic/bls12-381 v0.1.0` 이다 — blst 가 아니다.**
+
+당초 `supranational/blst` 를 적었으나 **blst 는 CGO 구현이라 `CGO_ENABLED=0` 빌드가 깨진다.**
+kilic 은 순수 Go 이고, **go-wbft 의 `go.sum` 과 모듈 해시가 동일**하다
+(`h1:encrdjqKMEvabVQ7qYOKu1OvhqpK4s47wDYtNiPtlp4=`) — 체인 자신이 의존하는 바로 그 모듈이다.
+키 파생은 구성 시점에 노드 수만큼만 도는 경로라 blst 의 속도 이점이 의미가 없고,
+`CGO_ENABLED=0` 로 돌아가는 쪽이 배포에 훨씬 이롭다.
+
+`secp256k1` 은 `github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1` — **이미 간접 의존성이었고**
+go-wbft 도 같은 버전·같은 해시를 쓴다. 직접 의존성으로 승격만 했다.
 
 **결과: `--bootnode` 플래그가 사라진다.** 새 키셋 생성에 어떤 체인 바이너리도 필요 없다 —
 이것이 §1g 의 "raw 가 먼저" 를 실제로 가능하게 한다.

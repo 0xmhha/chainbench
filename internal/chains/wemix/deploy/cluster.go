@@ -70,8 +70,11 @@ type Cluster struct {
 
 // RemotePaths are the fixed on-server locations the key-read reads from. Empty
 // fields fall back to the wemix4 defaults (see DefaultRemotePaths).
+//
+// A `bootnode:` key in an existing cluster file is accepted and ignored: the
+// servers no longer need that tool, because identity is derived here from the
+// nodekey rather than by running a binary on the host.
 type RemotePaths struct {
-	Bootnode         string `yaml:"bootnode"`          // node's bootnode tool (BLS derivation)
 	Nodekey          string `yaml:"nodekey"`           // the node's devp2p private key
 	CoinbaseKeystore string `yaml:"coinbase_keystore"` // validator coinbase keystore
 	OperatorKeystore string `yaml:"operator_keystore"` // operator keystore
@@ -80,7 +83,6 @@ type RemotePaths struct {
 // DefaultRemotePaths mirrors the wemix4 closed-network layout.
 func DefaultRemotePaths() RemotePaths {
 	return RemotePaths{
-		Bootnode:         "bootnode",
 		Nodekey:          "/data/go-wbft/conf/nodekey",
 		CoinbaseKeystore: "/data/go-wbft/conf/keystore/coinbase",
 		OperatorKeystore: "/data/go-wbft/conf/keystore/operator",
@@ -92,9 +94,6 @@ func DefaultRemotePaths() RemotePaths {
 func (c *Cluster) Paths() RemotePaths {
 	d := DefaultRemotePaths()
 	p := c.RemotePaths
-	if p.Bootnode == "" {
-		p.Bootnode = d.Bootnode
-	}
 	if p.Nodekey == "" {
 		p.Nodekey = d.Nodekey
 	}

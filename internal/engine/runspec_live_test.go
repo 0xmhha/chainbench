@@ -10,7 +10,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -42,7 +42,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 		t.Fatalf("registry.Get(stablenet): %v", err)
 	}
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
-	preset, err := keys.LoadPreset(presetDir)
+	preset, err := keyring.LoadPreset(presetDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	}
 
 	// Build the session environment over the running nodes and run the spec.
-	sess, err := session.New(t.TempDir(), "live", time.Unix(0, 0).UTC(), nil)
+	sess, err := session.New(t.TempDir(), "live", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatalf("session.New: %v", err)
 	}
@@ -114,12 +114,12 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 
 // liveSpec builds a smoke spec: send one node-signed tx, then assert the chain
 // id and that the head has advanced.
-func liveSpec(t *testing.T, chainID int64, preset keys.Preset) testspec.Spec {
+func liveSpec(t *testing.T, chainID int64, preset keyring.Preset) testspec.Spec {
 	t.Helper()
-	from := preset.Validators[0]
+	from := preset.Network.Validators[0]
 	to := from
-	if len(preset.Validators) > 1 {
-		to = preset.Validators[1]
+	if len(preset.Network.Validators) > 1 {
+		to = preset.Network.Validators[1]
 	}
 	raw, _ := json.Marshal(map[string]any{
 		"schemaVersion": "1",

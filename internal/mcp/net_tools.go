@@ -96,18 +96,16 @@ func dataDirSchema(extra map[string]any) map[string]any {
 func netKeysTool() Tool {
 	return Tool{
 		Name:        "chainbench_net_keys",
-		Description: "Ensure the workspace's key set exists and covers the node count (preset, or generate a fresh set via a bootnode binary).",
+		Description: "Ensure the workspace's key set exists and covers the node count (preset, or generate a fresh set in process).",
 		InputSchema: dataDirSchema(map[string]any{
 			"source":     map[string]any{"type": "string", "description": "preset (default) | generate"},
-			"bootnode":   map[string]any{"type": "string", "description": "bootnode binary for BLS derivation (generate)"},
 			"nodes":      map[string]any{"type": "number", "description": "identities the set must cover (default: allocated node count)"},
 			"validators": map[string]any{"type": "number", "description": "identities joining the validator set (generate; 0 = all)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			out, err := app.NetKeys(ctx, app.Deps{}, app.NetKeysIn{
 				DataDir: argString(args, "dataDir", ""), Source: argString(args, "source", ""),
-				Bootnode: argString(args, "bootnode", ""),
-				Nodes:    argInt(args, "nodes", 0), Validators: argInt(args, "validators", 0),
+				Nodes: argInt(args, "nodes", 0), Validators: argInt(args, "validators", 0),
 			})
 			return out.Detail, err
 		},

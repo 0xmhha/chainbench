@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -49,8 +49,6 @@ func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 type KeysOpts struct {
 	// Source is "preset" (default) or "generate".
 	Source string
-	// Bootnode is the external bootnode binary (required for generate).
-	Bootnode string
 	// Nodes is how many identities the set must cover; <=0 uses the node table
 	// length, falling back to the validator count.
 	Nodes int
@@ -81,10 +79,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	case "", "preset":
 		src = engine.PresetKeySource{Path: w.state.KeysDir}
 	case "generate":
-		if opts.Bootnode == "" {
-			return "", fmt.Errorf("netcompose: keys: --keys-source=generate needs --bootnode (BLS derivation)")
-		}
-		src = engine.GeneratedKeySource{Path: w.state.KeysDir, Bootnode: opts.Bootnode, Validators: opts.Validators}
+		src = engine.GeneratedKeySource{Path: w.state.KeysDir, Validators: opts.Validators}
 	default:
 		return "", fmt.Errorf("netcompose: keys: unknown source %q (want preset or generate)", opts.Source)
 	}
@@ -92,7 +87,8 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	detail := fmt.Sprintf("%s: %d identities, %d validators", src.Describe(), len(ks.Preset.Nodes), len(ks.Preset.Validators))
+	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
+		src.Describe(), len(ks.Preset.Nodes), len(ks.Preset.Network.Validators))
 	w.markStep("keys", detail)
 	return detail, nil
 }
@@ -262,17 +258,17 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if w.state.Validators <= 0 {
 		return "", fmt.Errorf("netcompose: genesis: no validators — run `net allocate` first")
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: genesis: %w", err)
 	}
-	sub := preset.Take(w.state.Validators)
+	net := preset.NetworkFor(w.state.Validators)
 	gen, err := genesis.Build(p, genesis.Inputs{
-		Validators: sub.Validators,
-		BLSKeys:    sub.BLSKeys,
-		ExtraData:  sub.ExtraData,
-		Members:    sub.Members,
-		Alloc:      sub.Alloc,
+		Validators: net.Validators,
+		BLSKeys:    net.BLSKeys,
+		ExtraData:  net.ExtraData,
+		Members:    net.Members,
+		Alloc:      net.Alloc,
 		ChainID:    opts.ChainID,
 	})
 	if err != nil {
@@ -287,7 +283,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	path := filepath.Join(t.DataRoot, "genesis.json")
-	if err := t.Sink.Write(ctx, path, gen, 0o644); err != nil {
+	if err := t.Files.Write(ctx, path, gen, 0o644); err != nil {
 		return "", fmt.Errorf("netcompose: genesis: write: %w", err)
 	}
 	w.state.GenesisPath = path
@@ -364,7 +360,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: config: no node table — run `net allocate` first")
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
@@ -392,7 +388,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 			MinerRecommit: m.MinerRecommit,
 			StaticNodes:   staticNodes,
 		})
-		if err := t.Sink.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
+		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
 			return "", fmt.Errorf("netcompose: config: node%d: %w", ns.Index, err)
 		}
 	}
@@ -419,7 +415,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: launchopts: no node table — run `net allocate` first")
 	}
-	preset, err := keys.LoadPreset(w.state.KeysDir)
+	preset, err := keyring.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: launchopts: %w", err)
 	}
@@ -458,7 +454,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	}
 	present := 0
 	check := func(ctx context.Context, path string) error {
-		exists, err := t.Sink.Exists(ctx, path)
+		exists, err := t.Files.Exists(ctx, path)
 		if err != nil {
 			return err
 		}

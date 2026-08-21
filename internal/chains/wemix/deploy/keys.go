@@ -2,125 +2,111 @@ package deploy
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
-// NodeKeyInfo is the identity material read from one server: the validator
-// coinbase address plus the wemix BLS public key and proof-of-possession,
-// derived on the server by `bootnode -nodekey <path> -writeaddress`.
-type NodeKeyInfo struct {
-	Server    int
-	Address   string
-	BLSPubKey string // 48-byte hex
-	BLSPoP    string // 96-byte hex
+// ServerIdentity is one server's node identity: which server it is, and the
+// public material its nodekey implies.
+//
+// The identity itself is keyring.Identity — the same type every other part of
+// chainbench uses — so nothing here has to be converted before it can be
+// registered, written into a genesis, or compared with a declaration. This
+// package used to carry its own NodeKeyInfo, which held a subset of the same
+// fields under different names.
+type ServerIdentity struct {
+	// Server is the cluster server index this identity belongs to.
+	Server int
+	keyring.Identity
 }
 
-var hexRe = regexp.MustCompile(`0x[0-9a-fA-F]+`)
-
-// ParseBootnodeOutput parses the three lines `bootnode -writeaddress` prints:
+// ReadServerKeys reads one server's identity: it fetches the node's key over
+// SSH and derives the address and BLS material from it locally, and (when
+// localKeystoreDir is non-empty) pulls the coinbase and operator keystores to
+// localKeystoreDir/keystore_<i> and operator_<i>. env sources the SSH auth
+// fallbacks (nil = no env).
 //
-//	address: 0x...
-//	derived bls public key: 0x...
-//	bls PoP (Proof of Possession): 0x...
-//
-// It tolerates ordering, extra log lines, and stdout/stderr interleaving.
-func ParseBootnodeOutput(out string) (NodeKeyInfo, error) {
-	var info NodeKeyInfo
-	for _, line := range strings.Split(out, "\n") {
-		low := strings.ToLower(strings.TrimSpace(line))
-		hex := hexRe.FindString(line)
-		if hex == "" {
-			continue
-		}
-		switch {
-		case strings.Contains(low, "bls pop"), strings.Contains(low, "proof of possession"):
-			info.BLSPoP = hex
-		case strings.Contains(low, "bls public key"):
-			info.BLSPubKey = hex
-		case strings.HasPrefix(low, "address:"), strings.Contains(low, " address:"):
-			info.Address = hex
-		}
-	}
-	if info.Address == "" {
-		return info, fmt.Errorf("deploy: no address in bootnode output:\n%s", out)
-	}
-	return info, nil
-}
-
-// ReadServerKeys reads one server's identity over SSH: it derives the address +
-// BLS material via bootnode, and (when localKeystoreDir is non-empty) pulls the
-// coinbase and operator keystores to localKeystoreDir/keystore_<i> and
-// operator_<i>. env sources the SSH auth fallbacks (nil = no env).
-func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey remote.HostKeyCallback, s Server, localKeystoreDir string, env func(string) string) (NodeKeyInfo, error) {
+// It used to run `bootnode -writeaddress` on the server and scrape the
+// addresses out of its output. Deriving here instead means the servers need no
+// bootnode binary installed, and the identity comes from the same code that
+// produced it — a text format between two machines was the fragile part.
+func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey remote.HostKeyCallback, s Server, localKeystoreDir string, env func(string) string) (ServerIdentity, error) {
 	rc, err := cr.For(c, s, env)
 	if err != nil {
-		return NodeKeyInfo{}, err
+		return ServerIdentity{}, err
 	}
-	p := c.Paths()
-
-	cmd := fmt.Sprintf("%s -nodekey %s -writeaddress", p.Bootnode, shellQuote(p.Nodekey))
-	res, err := remote.Exec(ctx, rc, hostKey, cmd)
-	if err != nil {
-		return NodeKeyInfo{}, fmt.Errorf("deploy: server %d bootnode: %w", s.Index, err)
-	}
-	info, err := ParseBootnodeOutput(res.Stdout + "\n" + res.Stderr)
-	if err != nil {
-		return NodeKeyInfo{}, err
-	}
-	info.Server = s.Index
-
-	if localKeystoreDir != "" {
-		if err := os.MkdirAll(localKeystoreDir, 0o700); err != nil {
-			return info, err
-		}
-		for _, ks := range []struct{ remote, local string }{
-			{p.CoinbaseKeystore, fmt.Sprintf("keystore_%d", s.Index)},
-			{p.OperatorKeystore, fmt.Sprintf("operator_%d", s.Index)},
-		} {
-			data, err := readRemoteFile(ctx, rc, hostKey, ks.remote)
-			if err != nil {
-				return info, fmt.Errorf("deploy: server %d read %s: %w", s.Index, ks.remote, err)
-			}
-			if err := os.WriteFile(filepath.Join(localKeystoreDir, ks.local), data, 0o600); err != nil {
-				return info, err
-			}
-		}
-	}
-	return info, nil
+	return readServerKeysFrom(ctx, serverFiles(rc, hostKey), c.Paths(), s.Index, localKeystoreDir)
 }
 
-// readRemoteFile reads a remote file's bytes over SSH. It delegates to
-// remote.ReadFile (the shared primitive) and remains here as the deploy-local
-// name its callers use.
-func readRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.HostKeyCallback, path string) ([]byte, error) {
-	return remote.ReadFile(ctx, rc, hostKey, path)
+// readServerKeysFrom is ReadServerKeys with the store already open. Opening it
+// needs credentials and a host; everything after that is just files, so the
+// split is what makes the read and the derivation testable without a host.
+func readServerKeysFrom(ctx context.Context, files provision.FileStore, p RemotePaths, server int, localKeystoreDir string) (ServerIdentity, error) {
+	raw, err := files.Read(ctx, p.Nodekey)
+	if err != nil {
+		return ServerIdentity{}, fmt.Errorf("deploy: server %d read nodekey: %w", server, err)
+	}
+	key, err := keyring.ParsePrivateKey(string(raw))
+	if err != nil {
+		return ServerIdentity{}, fmt.Errorf("deploy: server %d nodekey at %s: %w", server, p.Nodekey, err)
+	}
+	id, err := keyring.Derive(key, keyring.WithBLS)
+	if err != nil {
+		return ServerIdentity{}, fmt.Errorf("deploy: server %d derive identity: %w", server, err)
+	}
+	out := ServerIdentity{Server: server, Identity: id}
+
+	if localKeystoreDir == "" {
+		return out, nil
+	}
+	if err := pullKeystores(ctx, files, p, server, localKeystoreDir); err != nil {
+		return out, err
+	}
+	return out, nil
 }
 
-// writeRemoteFile writes content to a remote path over SSH (base64-piped),
-// creating the parent directory. The reverse of readRemoteFile.
-func writeRemoteFile(ctx context.Context, rc remote.Credentials, hostKey remote.HostKeyCallback, remotePath string, content []byte) error {
-	enc := base64.StdEncoding.EncodeToString(content)
-	dir := shellQuote(pathDir(remotePath))
-	cmd := fmt.Sprintf("mkdir -p %s && printf %%s %s | base64 -d > %s", dir, shellQuote(enc), shellQuote(remotePath))
-	if _, err := remote.Exec(ctx, rc, hostKey, cmd); err != nil {
+// pullKeystores copies the server's coinbase and operator keystores to the
+// local directory. They are encrypted key material, so the directory and the
+// files stay owner-only.
+func pullKeystores(ctx context.Context, files provision.FileStore, p RemotePaths, server int, localDir string) error {
+	if err := os.MkdirAll(localDir, keystoreDirPerm); err != nil {
 		return err
+	}
+	for _, ks := range []struct{ remote, local string }{
+		{p.CoinbaseKeystore, fmt.Sprintf("keystore_%d", server)},
+		{p.OperatorKeystore, fmt.Sprintf("operator_%d", server)},
+	} {
+		data, err := files.Read(ctx, ks.remote)
+		if err != nil {
+			return fmt.Errorf("deploy: server %d read %s: %w", server, ks.remote, err)
+		}
+		if err := os.WriteFile(filepath.Join(localDir, ks.local), data, keystoreFilePerm); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// pathDir returns the directory portion of a slash path (remote paths are POSIX).
-func pathDir(p string) string {
-	if i := strings.LastIndex(p, "/"); i > 0 {
-		return p[:i]
-	}
-	return "."
+// Permissions for the keystores pulled down from a server. They are encrypted,
+// but the password travels with the cluster, so they are treated as secrets.
+const (
+	keystoreDirPerm  fs.FileMode = 0o700
+	keystoreFilePerm fs.FileMode = 0o600
+)
+
+// serverFiles opens the file store for one server. Reads and writes on that
+// host go through it, so the deploy no longer carries its own SSH file I/O
+// beside the shared one.
+func serverFiles(rc remote.Credentials, hostKey remote.HostKeyCallback) provision.FileStore {
+	return driver.NewRemoteFileStore(driver.SSHRunner(rc, hostKey))
 }
 
 // shellQuote single-quotes a path for safe remote shell use.
@@ -130,16 +116,18 @@ func shellQuote(s string) string {
 
 // FormatAccountsFragment renders a `validators:` YAML fragment for the accounts
 // file from read key info, so the operator does not transcribe by hand.
-func FormatAccountsFragment(infos []NodeKeyInfo) string {
+func FormatAccountsFragment(ids []ServerIdentity) string {
 	var b strings.Builder
 	b.WriteString("# generated by `chainbench remote keys read` — fill stake amounts.\n")
 	b.WriteString("validators:\n")
-	for _, in := range infos {
-		fmt.Fprintf(&b, "  - server: %d\n", in.Server)
-		fmt.Fprintf(&b, "    addr: %q\n", in.Address)
-		fmt.Fprintf(&b, "    operator: %q\n", in.Address) // operator addr filled after operator keystore decode
-		fmt.Fprintf(&b, "    bls: %q\n", in.BLSPubKey)
-		fmt.Fprintf(&b, "    bls_pop: %q\n", in.BLSPoP)
+	for _, id := range ids {
+		fmt.Fprintf(&b, "  - server: %d\n", id.Server)
+		fmt.Fprintf(&b, "    addr: %q\n", id.Address)
+		fmt.Fprintf(&b, "    operator: %q\n", id.Address) // operator addr filled after operator keystore decode
+		if id.BLS != nil {
+			fmt.Fprintf(&b, "    bls: %q\n", id.BLS.PublicKey)
+			fmt.Fprintf(&b, "    bls_pop: %q\n", id.BLS.PoP)
+		}
 	}
 	return b.String()
 }

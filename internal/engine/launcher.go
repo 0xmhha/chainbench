@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keys"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -31,7 +31,7 @@ const configFilePerm os.FileMode = 0o644
 // allocator-assigned ports.
 //
 // On-disk files (genesis, per-node config) are materialized through a
-// provision.FileSink (upload-if-absent), so a rerun reuses existing files and a
+// provision.FileStore (upload-if-absent), so a rerun reuses existing files and a
 // remote sink can later ship them to another host without changing this type.
 type LocalLauncher struct {
 	// Plugin is the target chain (supplies the RPC namespace and miner recommit
@@ -44,8 +44,8 @@ type LocalLauncher struct {
 	KeysDir string
 	// Driver launches the nodes; nil defaults to the local driver.
 	Driver driver.Driver
-	// Sink materializes on-disk files; nil defaults to the local filesystem.
-	Sink provision.FileSink
+	// Files materializes on-disk files; nil defaults to the local filesystem.
+	Files provision.FileStore
 	// LaunchOverrides are high-precedence launch knobs (env.launch / case
 	// layers) applied to every node's argv after the role-derived modules.
 	LaunchOverrides []launchopt.Override
@@ -85,7 +85,7 @@ func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan) (super
 // KeysDir for a local launch, or the remote keys dir a remote launch ships them
 // to.
 func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
-	preset, err := keys.LoadPreset(l.KeysDir)
+	preset, err := keyring.LoadPreset(l.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}
@@ -97,9 +97,9 @@ func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 // to another host (a FileProvisioner), each node's preset identity files are
 // also shipped to the remote keys dir the armed specs reference.
 func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
-	sink := l.Sink
+	sink := l.Files
 	if sink == nil {
-		sink = provision.LocalFileSink{}
+		sink = provision.LocalFileStore{}
 	}
 	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
 		return err
@@ -265,7 +265,7 @@ func materialize(ctx context.Context, pv *provision.Provisioner, plan driver.Pla
 // The argv is assembled here and only here (launchopt Builder), replacing the
 // previous split between AssemblePlan's common flags and this function's
 // identity appends — see docs/dev/architecture/code-graph.md §3.
-func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan driver.Plan, binary, keysDir string, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
+func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
 	staticNodes := make([]string, 0, len(plan.Nodes))
 	for _, spec := range plan.Nodes {
 		if nk, ok := preset.Node(spec.Index); ok {
@@ -303,7 +303,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keys.Preset, plan driver.Plan,
 // §3): armSpecs uses it for engine runs, and the netcompose step surface uses
 // it for `net launchopts`/`net start`, so a step-composed node launches with
 // exactly the argv an engine run would produce.
-func NodeLaunchArgs(plugin registry.ChainPlugin, preset keys.Preset, spec driver.NodeSpec, keysDir string, overrides []launchopt.Override) ([]string, error) {
+func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec driver.NodeSpec, keysDir string, overrides []launchopt.Override) ([]string, error) {
 	policy, err := launchopt.ParseFamilyFlags(plugin.Family().StartFlags(spec.Role))
 	if err != nil {
 		return nil, err

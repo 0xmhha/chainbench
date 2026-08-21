@@ -53,7 +53,7 @@ func (r *fakeRecord) PostAction(p session.PostResult) { r.posts = append(r.posts
 
 func testEnv(t *testing.T) session.Environment {
 	t.Helper()
-	s, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC(), nil)
+	s, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
 	if err != nil {
 		t.Fatal(err)
 	}

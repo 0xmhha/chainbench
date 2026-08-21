@@ -56,7 +56,6 @@ type NetUpIn struct {
 
 	// Identities (step: keys).
 	KeysSource string
-	Bootnode   string
 
 	// Genesis customization (step: genesis).
 	ChainID     int64
@@ -131,7 +130,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 		}},
 		{"keys", func() (string, error) {
 			r, err := NetKeys(ctx, d, NetKeysIn{
-				DataDir: in.DataDir, Source: in.KeysSource, Bootnode: in.Bootnode,
+				DataDir: in.DataDir, Source: in.KeysSource,
 			})
 			return r.Detail, err
 		}},

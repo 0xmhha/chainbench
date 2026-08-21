@@ -1,4 +1,4 @@
-package keygen
+package wbft
 
 import (
 	"strings"
@@ -24,8 +24,8 @@ var presetBLSKeys = []string{
 
 const presetExtraData = "0xf90147808080c0c080c0c086191a20322000f90135f868d994c17d493883eaa3b4cceb0f214b273392d562f9d8831cfde0d9942493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c831cfde0d9948c4a10b9108d49b9d23f764464090831d9c17764831cfde0d9948eb79036bc0f3aba136ef18b3a2fb8c1188939a6831cfde0c480010203f8c4b0a00eb14731965f294993a2df1cf09e5b826193a41853fd9aaa7195922b8461c97b215a1181d4ddecc9f5981fdd47556fb0929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449b08c7faed16ab71ca6a3f8d82d643f6502e4c2dc3ecf48e86ed4d5dba42e67240313b84e911ad1bbf5783263284f09c1d0b0a63e51dd59a291b3cef9804c0790a0f95285297fb4fe141a587c6dda0784822c27e6e6b9404754e679ae4cca62d0ce4a"
 
-func TestWBFTExtraData_GoldenAgainstShippedPreset(t *testing.T) {
-	got, err := WBFTExtraData(presetValidators, presetBLSKeys)
+func TestExtraData_GoldenAgainstShippedPreset(t *testing.T) {
+	got, err := ExtraData(presetValidators, presetBLSKeys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,8 +34,8 @@ func TestWBFTExtraData_GoldenAgainstShippedPreset(t *testing.T) {
 	}
 }
 
-func TestWBFTExtraData_SingleValidator(t *testing.T) {
-	got, err := WBFTExtraData(presetValidators[:1], presetBLSKeys[:1])
+func TestExtraData_SingleValidator(t *testing.T) {
+	got, err := ExtraData(presetValidators[:1], presetBLSKeys[:1])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,17 +53,17 @@ func TestWBFTExtraData_SingleValidator(t *testing.T) {
 	}
 }
 
-func TestWBFTExtraData_Rejects(t *testing.T) {
-	if _, err := WBFTExtraData(nil, nil); err == nil {
+func TestExtraData_Rejects(t *testing.T) {
+	if _, err := ExtraData(nil, nil); err == nil {
 		t.Fatal("no validators must fail")
 	}
-	if _, err := WBFTExtraData(presetValidators, presetBLSKeys[:2]); err == nil {
+	if _, err := ExtraData(presetValidators, presetBLSKeys[:2]); err == nil {
 		t.Fatal("count mismatch must fail")
 	}
-	if _, err := WBFTExtraData([]string{"0x1234"}, presetBLSKeys[:1]); err == nil {
+	if _, err := ExtraData([]string{"0x1234"}, presetBLSKeys[:1]); err == nil {
 		t.Fatal("short address must fail")
 	}
-	if _, err := WBFTExtraData(presetValidators[:1], []string{"0xdead"}); err == nil {
+	if _, err := ExtraData(presetValidators[:1], []string{"0xdead"}); err == nil {
 		t.Fatal("short BLS key must fail")
 	}
 }
