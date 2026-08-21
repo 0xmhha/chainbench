@@ -88,3 +88,20 @@ servers:
     #   user: root
     #   port: 2222
     #   key_file: ~/.ssh/id_ed25519_bp3
+
+# ── Alternative: schema v2 (pooled) ─────────────────────────────────────────
+# Instead of describing servers one by one, v2 declares the usable address
+# space and lets the assignment walk it: node1 takes hosts in order, and when
+# hosts run out the next port base is used on the same hosts. Port bases must
+# be at least 6 apart (one node spans p2p, etcd, http, ws, auth, metrics).
+# A file is either v1 (servers:) or v2 (pool:) — never both.
+#
+# version: 2
+# pool:
+#   hosts: [10.0.0.1, 10.0.0.2, 10.0.0.3]
+#   portBases: [8080, 8180, 8280]
+# ssh:
+#   user: ops
+#   port: 22
+#   sudo: true            # whether this user may escalate (bring-up reads it)
+# dataRoot: /data/chainbench   # node datadirs are created under this root
