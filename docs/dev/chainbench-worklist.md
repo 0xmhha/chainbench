@@ -244,8 +244,9 @@ K0·S0 가 추측 위에 서게 된다.
 |---|---|---|---|
 | **A1** | 레이어 검사 테스트 (`internal/arch`) — [[layers]] §3 표를 **파싱**한다(코드에 복제하지 않음) | ☑ 상향 의존 **0건** · 미배치 패키지 거부 · 유령 항목 거부 · 네 실패 경로를 실제로 확인 |
 | **A2** | 상태 쓰기 허용목록 테스트 (`internal/arch`) — [[layers]] §5 표가 정본 | ☑ ❌ 4곳(app·chainsetup·wemix/deploy·upgrade)은 예외로 명시 · 신규 위반 차단 · **stale 예외도 차단** · `os.Create` 를 세면서 미기재였던 `engine` 을 찾아냄 |
-| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileStore` 경유로 | L5 가 파일 경로를 모르게 | ☐ |
-| **A4** | `chainsetup`·`chains/wemix/deploy`·`consensus/upgrade` 를 Sink 경유로 | 원격/로컬 분기 제거 | ☐ |
+| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileStore` 경유로 | ☑ **정리가 아니라 결함 수정이었다** — 원격 프로비전이 genesis·config 를 조작자 머신에 쓰고 있었다(신원만 원격으로 갔다). `Deps.Files` seam 추가 · 드라이버가 파일을 보낼 수 있으면 그것이 기본 저장소 · 회귀 테스트 3건 |
+| **A4** | `chains/wemix/deploy` 를 `FileStore` 경유로 | ☑ `pullKeystores` 가 읽기·쓰기 양쪽 모두 store 경유. 직접 파일 쓰기 0건 |
+| **A4b** | `chainsetup`(8곳)·`consensus/upgrade`(2곳)를 `FileStore` 경유로 | **F4·F5 와 함께.** 둘 다 wemix 핸드오프 경로이고 F4(`GenesisArtifacts`)·F5(poa 액션 배선)가 같은 코드를 다시 쓴다 — 지금 바꾸면 두 번 만진다 | ☐ |
 | **A5** | ~~`core/bringup`·`core/state`~~ 삭제 완료 · `testkit`·`core/pipeline/testrun` 잔여 | 앞 둘은 #241 에서 소멸(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘은 **케이스 이관 선행** | ◐ |
 | **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
 | **A7b** | **`hardfork` 와 `upgrade` 통합** — hardfork 가 상위 범주, upgrade 는 type-1 핸드오프. 선언은 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 하나, **메커니즘(스왑/핸드오프)은 파생** | 세 사례(같은체인 스왑 · wemix→wbft 핸드오프 · genesis 전용 포크)가 한 선언에서 갈림 · 명령 둘 → 하나 | ☐ |
