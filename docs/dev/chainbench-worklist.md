@@ -336,7 +336,7 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **N0** | 역할을 `bp·en·pn` 3종으로 정리, `boot` 은 속성으로 강등 | `validator→bp`·`endpoint→en` 이관 · `pn` 신설 · 기존 토폴로지 호환 | ☐ |
+| **N0** | 역할을 `bp·en·pn` 3종으로 정리 — **NM1 로 흡수**([[netmap-design]] §4) | `validator→bp`·`endpoint→en` 이관 · `node.RoleEN`/`RoleEndpoint` 중복 해소 · 기존 토폴로지 호환 | ☐ |
 | **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | mesh 는 현행과 동일 argv · proxied 는 bp/en 의 static-nodes 에 pn 만 · **poa 에 `pn` 선언 시 오류** | ☐ |
 | **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
 | **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
@@ -344,7 +344,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **N4** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
 | **N5** | **그 다음** preset 지원 — `net blueprint --from-preset` 이 청사진을 **생성** | preset 산출 청사진이 N3 경로와 동일 결과 | ☐ |
 | **N6** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
-| **N7** | **`core/netmap`** — 라벨의 **영속** + **역방향 조회** + 계정 라벨. 정방향(`place.NodePlacement.Name`)은 이미 있으므로 재발명하지 않는다 | 포트 충돌이 **기동 전에** 잡힘 · 로그의 `host:port` 로 노드 역추적 · 라벨이 워크스페이스에 남음 | ☐ |
+| **N7** | **`core/netmap`** — 설계 확정([[netmap-design]]). NM1~NM5 로 분해: 타입 통일(NM1) · 피어링 파생(NM2) · 조립 4곳 전환(NM3) · 표면(NM4) · 라벨 영속(NM5) | 실측: 배치 타입 8개 · 포트 표현 3벌(**etcd 가 런타임에서 소실**) · 역할 어휘 3벌 · static-nodes 조립 4벌 전부 풀메시 | ☐ |
 | **N8** | ~~`serverset` 가용 자원 풀~~ → **이미 있음**(`slots`·포트 밴드, 2026-08-18). 명시적 범위 풀은 근거 생기면 | — | ☑ |
 | **N9** | **해석 순서 강제** — ① keyring → ② netmap → ③ enode → ④ genesis ⑤ config | ③ 이전에 ④⑤ 를 만들 수 없다(컴파일 타임 또는 명시적 오류) | ☐ |
 | **N10** | **계정 라벨** — `account1` ↔ 주소·개인키. **faucet 누락은 오류** | 테스트 정의에 주소가 등장하지 않음 · 잔액 0 계정의 가스 자금원 보장 | ☐ |
