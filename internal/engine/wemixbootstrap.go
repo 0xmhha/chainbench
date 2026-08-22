@@ -17,6 +17,15 @@ import (
 // startup.
 const ipcWait = 30 * time.Second
 
+// producingWait is how long a bootstrap waits for the chain to start sealing
+// before it sends a transaction into it.
+const producingWait = 60 * time.Second
+
+// etcdFormWait is how long the cluster has to appear after the init call. The
+// call returns before the embedded server is up, so this is a wait, not a
+// retry-on-error.
+const etcdFormWait = 30 * time.Second
+
 // WemixBootstrap executes the bring-up actions a poa network names between its
 // phases: deploy the governance contracts, form the etcd cluster, and confirm
 // it formed.
@@ -59,6 +68,14 @@ func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Pla
 	if err := poa.WaitForIPC(ctx, ipc, ipcWait); err != nil {
 		return fmt.Errorf("engine: wemix bootstrap: %q: %w", name, err)
 	}
+	// The governance deploy is a transaction and waits for its receipt, so the
+	// chain has to be sealing before it runs. The IPC socket appears about a
+	// second into start-up and says nothing about that.
+	if name == poa.ActionDeployGovernance {
+		if err := poa.WaitProducing(ctx, run, binary, ipc, producingWait); err != nil {
+			return fmt.Errorf("engine: wemix bootstrap: %q: %w", name, err)
+		}
+	}
 
 	switch name {
 	case poa.ActionDeployGovernance:
@@ -79,7 +96,7 @@ func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Pla
 	case poa.ActionEtcdInit:
 		return poa.EtcdInit(ctx, run, binary, ipc)
 	case poa.ActionVerifyEtcd:
-		return poa.VerifyEtcd(ctx, run, binary, ipc)
+		return poa.VerifyEtcd(ctx, run, binary, ipc, etcdFormWait)
 	default:
 		// An action nobody implements is a gap in the bring-up, not something
 		// to skip: the phase that named it expects it to have happened.
