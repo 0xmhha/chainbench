@@ -1,0 +1,1736 @@
+# CLI surface of gwemix, captured from the built binary.
+#
+# chain repo:   /Users/0xtopaz/work/github/0xmhha/chain/go-wemix
+# chain commit: 1350376a6 (2026-07-28)
+# captured:     2026-08-22T12:38:05Z
+#
+# Regenerate with scripts/chain-analysis/capture-cli.sh. If the chain
+# commit above is not the one you are building against, this file is
+# stale and so is anything derived from it.
+
+## version
+    Gwemix
+    Version: 0.10.14-stable
+    Git Commit: 1350376a680489298b3203a44d9ebddb7747f9cc
+    Git Commit Date: 20260728
+    Architecture: arm64
+    Go Version: go1.25.2
+    Operating System: darwin
+    GOPATH=/Users/0xtopaz/.gvm/pkgsets/go1.25.2/global
+    GOROOT=/Users/0xtopaz/.gvm/gos/go1.25.2
+
+## top level
+    NAME:
+       gwemix - the go-wemix command line interface
+    
+       Copyright 2013-2022 The go-ethereum / go-metadium / go-wemix Authors
+    
+    USAGE:
+       gwemix [options] [command] [command options] [arguments...]
+       
+    VERSION:
+       0.10.14-stable-1350376a
+       
+    COMMANDS:
+       account                            Manage accounts
+       attach                             Start an interactive JavaScript environment (connect to node)
+       console                            Start an interactive JavaScript environment
+       db                                 Low level database operations
+       dump                               Dump a specific block from storage
+       dumpconfig                         Show configuration values
+       dumpgenesis                        Dumps genesis block JSON configuration to stdout
+       export                             Export blockchain into file
+       export-preimages                   Export the preimage database into an RLP stream
+       import                             Import a blockchain file
+       import-preimages                   Import the preimage database from an RLP stream
+       init                               Bootstrap and initialize a new genesis block
+       js                                 Execute the specified JavaScript files
+       license                            Display license information
+       makecache                          Generate ethash verification cache (for testing)
+       makedag                            Generate ethash mining DAG (for testing)
+       removedb                           Remove blockchain and state databases
+       show-deprecated-flags              Show flags that have been deprecated
+       snapshot                           A set of commands based on the snapshot
+       version                            Print version numbers
+       version-check                      Checks (online) whether the current version suffers from any known security vulnerabilities
+       wallet                             Manage Ethereum presale wallets
+       wemix                              Wemix helper commands
+       help, h                            Shows a list of commands or help for one command
+       
+    ETHEREUM OPTIONS:
+      --config value                      TOML configuration file
+      --datadir.minfreedisk value         Minimum free disk space in MB, once reached triggers auto shut down (default = --cache.gc converted to MB, 0 = disabled)
+      --keystore value                    Directory for the keystore (default = inside the datadir)
+      --usb                               Enable monitoring and management of USB hardware wallets
+      --pcscdpath value                   Path to the smartcard daemon (pcscd) socket file
+      --networkid value                   Explicitly set network id (integer, 1111=WemixMainnet , 1112=WemixTestnet)(For testnets: use --wemix-testnet --ropsten, --rinkeby, --goerli instead) (default: 1111)
+      --syncmode value                    Blockchain sync mode ("snap", "full" or "light") (default: snap)
+      --exitwhensynced                    Exits after block synchronisation completes
+      --gcmode value                      Blockchain garbage collection mode ("full", "archive") (default: "full")
+      --txlookuplimit value               Number of recent blocks to maintain transactions index for (default = about one year, 0 = entire chain) (default: 31536000)
+      --ethstats value                    Reporting URL of a ethstats service (nodename:secret@host:port)
+      --identity value                    Custom node name
+      --lightkdf                          Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+      --eth.requiredblocks value          Comma separated block number-to-hash mappings to require for peering (<number>=<hash>)
+      --mainnet                           Ethereum mainnet
+      --wemix-testnet                     Wemix test network: pre-configured wemix test network
+      --ropsten                           Ropsten network: pre-configured proof-of-work test network
+      --rinkeby                           Rinkeby network: pre-configured proof-of-authority test network
+      --goerli                            Görli network: pre-configured proof-of-authority test network
+      --sepolia                           Sepolia network: pre-configured proof-of-work test network
+      --kiln                              Kiln network: pre-configured proof-of-work to proof-of-stake test network
+      --datadir value                     Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+      --datadir.ancient value             Data directory for ancient chain segments (default = inside chaindata)
+      --remotedb value                    URL for remote database
+      
+    LIGHT CLIENT OPTIONS:
+      --light.serve value                 Maximum percentage of time allowed for serving LES requests (multi-threaded processing allows values over 100) (default: 0)
+      --light.ingress value               Incoming bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+      --light.egress value                Outgoing bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+      --light.maxpeers value              Maximum number of light clients to serve, or light servers to attach to (default: 100)
+      --ulc.servers value                 List of trusted ultra-light servers
+      --ulc.fraction value                Minimum % of trusted ultra-light servers required to announce a new head (default: 75)
+      --ulc.onlyannounce                  Ultra light server sends announcements only
+      --light.nopruning                   Disable ancient light chain data pruning
+      --light.nosyncserve                 Enables serving light clients before syncing
+      
+    DEVELOPER CHAIN OPTIONS:
+      --dev                               Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled
+      --dev.period value                  Block period to use in developer mode (0 = mine only if transaction pending) (default: 0)
+      --dev.gaslimit value                Initial block gas limit (default: 11500000)
+      
+    ETHASH OPTIONS:
+      --ethash.cachedir value             Directory to store the ethash verification caches (default = inside the datadir)
+      --ethash.cachesinmem value          Number of recent ethash caches to keep in memory (16MB each) (default: 2)
+      --ethash.cachesondisk value         Number of recent ethash caches to keep on disk (16MB each) (default: 3)
+      --ethash.cacheslockmmap             Lock memory maps of recent ethash caches
+      --ethash.dagdir value               Directory to store the ethash mining DAGs (default: "/Users/0xtopaz/Library/Ethash")
+      --ethash.dagsinmem value            Number of recent ethash mining DAGs to keep in memory (1+GB each) (default: 1)
+      --ethash.dagsondisk value           Number of recent ethash mining DAGs to keep on disk (1+GB each) (default: 2)
+      --ethash.dagslockmmap               Lock memory maps for recent ethash mining DAGs
+      
+    TRANSACTION POOL OPTIONS:
+      --txpool.locals value               Comma separated accounts to treat as locals (no flush, priority inclusion)
+      --txpool.nolocals                   Disables price exemptions for locally submitted transactions
+      --txpool.journal value              Disk journal for local transaction to survive node restarts (default: "transactions.rlp")
+      --txpool.rejournal value            Time interval to regenerate the local transaction journal (default: 1h0m0s)
+      --txpool.pricelimit value           Minimum gas price limit to enforce for acceptance into the pool (default: 1)
+      --txpool.pricebump value            Price bump percentage to replace an already existing transaction (default: 10)
+      --txpool.accountslots value         Minimum number of executable transaction slots guaranteed per account (default: 100000)
+      --txpool.globalslots value          Maximum number of executable transaction slots for all accounts (default: 500000)
+      --txpool.accountqueue value         Maximum number of non-executable transaction slots permitted per account (default: 100000)
+      --txpool.globalqueue value          Maximum number of non-executable transaction slots for all accounts (default: 500000)
+      --txpool.lifetime value             Maximum amount of time non-executable transaction are queued (default: 3h0m0s)
+      
+    PERFORMANCE TUNING OPTIONS:
+      --cache value                       Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+      --cache.database value              Percentage of cache memory allowance to use for database io (default: 50)
+      --cache.trie value                  Percentage of cache memory allowance to use for trie caching (default = 15% full mode, 30% archive mode) (default: 15)
+      --cache.trie.journal value          Disk journal directory for trie cache to survive node restarts (default: "triecache")
+      --cache.trie.rejournal value        Time interval to regenerate the trie cache journal (default: 1h0m0s)
+      --cache.gc value                    Percentage of cache memory allowance to use for trie pruning (default = 25% full mode, 0% archive mode) (default: 25)
+      --cache.snapshot value              Percentage of cache memory allowance to use for snapshot caching (default = 10% full mode, 20% archive mode) (default: 10)
+      --cache.noprefetch                  Disable heuristic state prefetch during block import (less CPU and disk IO, more time waiting for data)
+      --cache.preimages                   Enable recording the SHA3/keccak preimages of trie keys
+      --cache.triesinmemory value         Number of block states (tries) to keep in memory (default = 128) (default: 128)
+      --fdlimit value                     Raise the open file descriptor resource limit (default = system fd limit) (default: 0)
+      
+    ACCOUNT OPTIONS:
+      --unlock value                      Comma separated list of accounts to unlock
+      --password value                    Password file to use for non-interactive password input
+      --signer value                      External signer (url or path to ipc file)
+      --allow-insecure-unlock             Allow insecure account unlocking when account-related RPCs are exposed by http
+      
+    API AND CONSOLE OPTIONS:
+      --ipcdisable                        Disable the IPC-RPC server
+      --ipcpath value                     Filename for IPC socket/pipe within the datadir (explicit paths escape it)
+      --http                              Enable the HTTP-RPC server
+      --http.addr value                   HTTP-RPC server listening interface (default: "localhost")
+      --http.port value                   HTTP-RPC server listening port (default: 8588)
+      --http.api value                    API's offered over the HTTP-RPC interface
+      --http.rpcprefix value              HTTP path path prefix on which JSON-RPC is served. Use '/' to serve on all paths.
+      --http.corsdomain value             Comma separated list of domains from which to accept cross origin requests (browser enforced)
+      --http.vhosts value                 Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+      --ws                                Enable the WS-RPC server
+      --ws.addr value                     WS-RPC server listening interface (default: "localhost")
+      --ws.port value                     WS-RPC server listening port (default: 8598)
+      --ws.api value                      API's offered over the WS-RPC interface
+      --ws.rpcprefix value                HTTP path prefix on which JSON-RPC is served. Use '/' to serve on all paths.
+      --ws.origins value                  Origins from which to accept websockets requests
+      --authrpc.jwtsecret value           Path to a JWT secret to use for authenticated RPC endpoints
+      --authrpc.addr value                Listening address for authenticated APIs (default: "localhost")
+      --authrpc.port value                Listening port for authenticated APIs (default: 8551)
+      --authrpc.vhosts value              Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+      --graphql                           Enable GraphQL on the HTTP-RPC server. Note that GraphQL can only be started if an HTTP server is started as well.
+      --graphql.corsdomain value          Comma separated list of domains from which to accept cross origin requests (browser enforced)
+      --graphql.vhosts value              Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+      --rpc.gascap value                  Sets a cap on gas that can be used in eth_call/estimateGas (0=infinite) (default: 0)
+      --rpc.evmtimeout value              Sets a timeout used for eth_call (0=infinite) (default: 5s)
+      --rpc.txfeecap value                Sets a cap on transaction fee (in ether) that can be sent via the RPC APIs (0 = no cap) (default: 0)
+      --rpc.allow-unprotected-txs         Allow for unprotected (non EIP155 signed) transactions to be submitted via RPC
+      --jspath loadScript                 JavaScript root path for loadScript (default: ".")
+      --exec value                        Execute JavaScript statement
+      --preload value                     Comma separated list of JavaScript files to preload into the console
+      
+    NETWORKING OPTIONS:
+      --bootnodes value                   Comma separated enode URLs for P2P discovery bootstrap
+      --discovery.dns value               Sets DNS discovery entry points (use "" to disable DNS)
+      --port value                        Network listening port (default: 8589)
+      --maxpeers value                    Maximum number of network peers (network disabled if set to 0) (default: 25)
+      --maxpendpeers value                Maximum number of pending connection attempts (defaults used if set to 0) (default: 0)
+      --nat value                         NAT port mapping mechanism (any|none|upnp|pmp|extip:<IP>) (default: "any")
+      --nodiscover                        Disables the peer discovery mechanism (manual peer addition)
+      --v5disc                            Enables the experimental RLPx V5 (Topic Discovery) mechanism
+      --netrestrict value                 Restricts network communication to the given IP networks (CIDR masks)
+      --nodekey value                     P2P node key file
+      --nodekeyhex value                  P2P node key as hex (for testing)
+      
+    MINER OPTIONS:
+      --mine                              Enable mining
+      --miner.threads value               Number of CPU threads to use for mining (default: 0)
+      --miner.notify value                Comma separated HTTP URL list to notify of new work packages
+      --miner.notify.full                 Notify with pending block headers instead of work packages
+      --miner.gasprice value              Minimum gas price for mining a transaction (default: 1000000000)
+      --miner.gaslimit value              Target gas ceiling for mined blocks (default: 30000000)
+      --miner.etherbase value             Public address for block mining rewards (default = first account) (default: "0")
+      --miner.extradata value             Block extra data set by the miner (default = client version)
+      --miner.recommit value              Time interval to recreate the block being mined (default: 3s)
+      --miner.noverify                    Disable remote sealing verification
+      
+    GAS PRICE ORACLE OPTIONS:
+      --gpo.blocks value                  Number of recent blocks to check for gas prices (default: 20)
+      --gpo.percentile value              Suggested gas price is the given percentile of a set of recent transaction gas prices (default: 60)
+      --gpo.maxprice value                Maximum transaction priority fee (or gasprice before London fork) to be recommended by gpo (default: 500000000000)
+      --gpo.ignoreprice value             Gas price below which gpo will ignore transactions (default: 2)
+      
+    VIRTUAL MACHINE OPTIONS:
+      --vmdebug                           Record information useful for VM and contract debugging
+      
+    LOGGING AND DEBUGGING OPTIONS:
+      --fakepow                           Disables proof-of-work verification
+      --nocompaction                      Disables db compaction after import
+      --verbosity value                   Logging verbosity: 0=silent, 1=error, 2=warn, 3=info, 4=debug, 5=detail (default: 3)
+      --vmodule value                     Per-module verbosity: comma-separated list of <pattern>=<level> (e.g. eth/*=5,p2p=4)
+      --log.json                          Format logs with JSON
+      --log.backtrace value               Request a stack trace at a specific logging statement (e.g. "block.go:271")
+      --log.debug                         Prepends log messages with call-site location (file and line number)
+      --pprof                             Enable the pprof HTTP server
+      --pprof.addr value                  pprof HTTP server listening interface (default: "127.0.0.1")
+      --pprof.port value                  pprof HTTP server listening port (default: 6060)
+      --pprof.memprofilerate value        Turn on memory profiling with the given rate (default: 524288)
+      --pprof.blockprofilerate value      Turn on block profiling with the given rate (default: 0)
+      --pprof.cpuprofile value            Write CPU profile to the given file
+      --trace value                       Write execution trace to the given file
+      
+    METRICS AND STATS OPTIONS:
+      --metrics                              Enable metrics collection and reporting
+      --metrics.expensive                    Enable expensive metrics collection and reporting
+      --metrics.addr value                   Enable stand-alone metrics HTTP server listening interface (default: "127.0.0.1")
+      --metrics.port value                   Metrics HTTP server listening port (default: 6060)
+      --metrics.influxdb                     Enable metrics export/push to an external InfluxDB database
+      --metrics.influxdb.endpoint value      InfluxDB API endpoint to report metrics to (default: "http://localhost:8086")
+      --metrics.influxdb.database value      InfluxDB database name to push reported metrics to (default: "geth")
+      --metrics.influxdb.username value      Username to authorize access to the database (default: "test")
+      --metrics.influxdb.password value      Password to authorize access to the database (default: "test")
+      --metrics.influxdb.tags value          Comma-separated InfluxDB tags (key/values) attached to all measurements (default: "host=localhost")
+      --metrics.influxdbv2                   Enable metrics export/push to an external InfluxDB v2 database
+      --metrics.influxdb.token value         Token to authorize access to the database (v2 only) (default: "test")
+      --metrics.influxdb.bucket value        InfluxDB bucket name to push reported metrics to (v2 only) (default: "geth")
+      --metrics.influxdb.organization value  InfluxDB organization name (v2 only) (default: "geth")
+      
+    WEMIX OPTIONS:
+      --consensusmethod value             Wemix consensus method (integer, 1=PoW, 2=PoA, 3=ETCD, 4=PBFT) (default: 2)
+      --fixeddifficulty value             Fixed difficulty to disable PoW (default: 1)
+      --fixedgaslimit value               Fixed gas limit to control block size better (default: 0)
+      --maxidleblockinterval value        Interval to generate empty block (default: 600)
+      --blocksperturn value               Number of blocks per turn for PoA (default: 100)
+      --noncelimit value                  Nonce limit for non-governing accounts (default: 0)
+      --userocksdb value                  LevelDB (0) or RocksDB (1) (default: 1)
+      --prefetchcount value               Transaction prefetch count for faster db read (default: 0)
+      --log value                         Rotating log file: <file-name>,<count>,<size> (default: "log,5,10M")
+      --maxtxsperblock value              Max # of transactions in a block (default: 5000)
+      --hub value                         Id of message hub
+      --wemix.block.interval value        Block generation interval in seconds (default: 1)
+      --wemix.block.timeadjblocks value   Block interval to ajdust timestamp (default: 120)
+      --wemix.block.minbuildtime value    Minimum block generation time in ms (default: 300)
+      --wemix.block.minbuildtxs value     Minimum txs in a block with pending txs (default: 2500)
+      --wemix.block.trailtime value       Time to leave for block data transfer in ms (default: 300)
+      --wemix.publicrequests.cache value  Public requests cache location
+      --wemix.publicrequests.max value    Max # of concurrent public requests (default: 100)
+      --wemix.bootnodecount value         Default bootnode peer count (default: 3)
+      
+    ALIASED (deprecated) OPTIONS:
+      --nousb                             Disables monitoring for and managing USB hardware wallets (deprecated)
+      --whitelist value                   Comma separated block number-to-hash mappings to enforce (<number>=<hash>) (deprecated in favor of --eth.requiredblocks)
+      
+    MISC OPTIONS:
+      --snapshot                                Enables snapshot-database mode (default = enable)
+      --bloomfilter.size value                  Megabytes of memory allocated to bloom-filter for pruning (default: 2048)
+      --help, -h                                show help
+      --override.arrowglacier value             Manually specify Arrow Glacier fork-block, overriding the bundled setting (default: 0)
+      --override.terminaltotaldifficulty value  Manually specify TerminalTotalDifficulty, overriding the bundled setting (default: <nil>)
+      
+    
+    COPYRIGHT:
+       Copyright 2013-2022 The go-ethereum / go-metadium / go-wemix Authors
+       
+
+## account
+    NAME:
+       gwemix account - 
+    
+    Manage accounts, list all existing accounts, import a private key into a new
+    account, create a new account or update an existing account.
+    
+    It supports interactive mode, when you are prompted for password as well as
+    non-interactive mode where passwords are supplied via a given password file.
+    Non-interactive mode is only meant for scripted use on test networks or known
+    safe environments.
+    
+    Make sure you remember the password you gave when creating a new account (with
+    either new or import). Without it you are not able to unlock your account.
+    
+    Note that exporting your key in unencrypted format is NOT supported.
+    
+    Keys are stored under <DATADIR>/keystore.
+    It is safe to transfer the entire directory or the individual keys therein
+    between ethereum nodes by simply copying.
+    
+    Make sure you backup your keys regularly.
+    
+    USAGE:
+       gwemix account command [command options] [arguments...]
+    
+    COMMANDS:
+         list                             Print summary of existing accounts
+         new                              Create a new account
+         update                           Update an existing account
+         import                           Import a private key into a new account
+    
+    OPTIONS:
+       --help, -h                         show help
+       
+
+## account import
+    import [command options] <keyFile>
+    
+        geth account import <keyfile>
+    
+    Imports an unencrypted private key from <keyfile> and creates a new account.
+    Prints the address.
+    
+    The keyfile is assumed to contain an unencrypted private key in hexadecimal format.
+    
+    The account is saved in encrypted format, you are prompted for a password.
+    
+    You must remember this password to unlock your account in the future.
+    
+    For non-interactive use the password can be specified with the -password flag:
+    
+        geth account import [options] <keyfile>
+    
+    Note:
+    As you can directly copy your encrypted accounts to another ethereum instance,
+    this import mechanism is not needed when you transfer an account between
+    nodes.
+    
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+    
+    ACCOUNT OPTIONS:
+                                          --password value                      Password file to use for non-interactive password input
+    
+
+## account list
+    list [command options] 
+    
+    Print a short summary of all accounts
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+    
+
+## account new
+    new [command options] 
+    
+        geth account new
+    
+    Creates a new account and prints the address.
+    
+    The account is saved in encrypted format, you are prompted for a password.
+    
+    You must remember this password to unlock your account in the future.
+    
+    For non-interactive use the password can be specified with the --password flag:
+    
+    Note, this is meant to be used for testing only, it is a bad idea to save your
+    password to file or expose in any other way.
+    
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+    
+    ACCOUNT OPTIONS:
+                                          --password value                      Password file to use for non-interactive password input
+    
+
+## account update
+    update [command options] <address>
+    
+        geth account update <address>
+    
+    Update an existing account.
+    
+    The account is saved in the newest version in encrypted format, you are prompted
+    for a password to unlock the account and another to save the updated file.
+    
+    This same command can therefore be used to migrate an account of a deprecated
+    format to the newest format or change the password for an account.
+    
+    For non-interactive use the password can be specified with the --password flag:
+    
+        geth account update [options] <address>
+    
+    Since only one password can be given, only format update can be performed,
+    changing your password is only possible interactively.
+    
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+    
+
+## attach
+    attach [command options] [endpoint]
+    
+    The Geth console is an interactive shell for the JavaScript runtime environment
+    which exposes a node admin interface as well as the Ðapp JavaScript API.
+    See https://geth.ethereum.org/docs/interface/javascript-console.
+    This command allows to open a console on a running geth node.
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+    
+    API AND CONSOLE OPTIONS:
+                                          --jspath loadScript                   JavaScript root path for loadScript (default: ".")
+                                          --exec value                          Execute JavaScript statement
+                                          --preload value                       Comma separated list of JavaScript files to preload into the console
+    
+
+## console
+    console [command options] 
+    
+    The Geth console is an interactive shell for the JavaScript runtime environment
+    which exposes a node admin interface as well as the Ðapp JavaScript API.
+    See https://geth.ethereum.org/docs/interface/javascript-console.
+    
+    NETWORKING OPTIONS:
+                                          --bootnodes value                     Comma separated enode URLs for P2P discovery bootstrap
+                                          --port value                          Network listening port (default: 8589)
+                                          --maxpeers value                      Maximum number of network peers (network disabled if set to 0) (default: 25)
+                                          --maxpendpeers value                  Maximum number of pending connection attempts (defaults used if set to 0) (default: 0)
+                                          --nat value                           NAT port mapping mechanism (any|none|upnp|pmp|extip:<IP>) (default: "any")
+                                          --nodiscover                          Disables the peer discovery mechanism (manual peer addition)
+                                          --v5disc                              Enables the experimental RLPx V5 (Topic Discovery) mechanism
+                                          --netrestrict value                   Restricts network communication to the given IP networks (CIDR masks)
+                                          --nodekey value                       P2P node key file
+                                          --nodekeyhex value                    P2P node key as hex (for testing)
+                                          --discovery.dns value                 Sets DNS discovery entry points (use "" to disable DNS)
+    
+    VIRTUAL MACHINE OPTIONS:
+                                          --vmdebug                             Record information useful for VM and contract debugging
+    
+    GAS PRICE ORACLE OPTIONS:
+                                          --gpo.blocks value                    Number of recent blocks to check for gas prices (default: 20)
+                                          --gpo.percentile value                Suggested gas price is the given percentile of a set of recent transaction gas prices (default: 60)
+                                          --gpo.maxprice value                  Maximum transaction priority fee (or gasprice before London fork) to be recommended by gpo (default: 500000000000)
+                                          --gpo.ignoreprice value               Gas price below which gpo will ignore transactions (default: 2)
+    
+    ETHEREUM OPTIONS:
+                                          --identity value                      Custom node name
+                                          --datadir.minfreedisk value           Minimum free disk space in MB, once reached triggers auto shut down (default = --cache.gc converted to MB, 0 = disabled)
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --usb                                 Enable monitoring and management of USB hardware wallets
+                                          --pcscdpath value                     Path to the smartcard daemon (pcscd) socket file
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --exitwhensynced                      Exits after block synchronisation completes
+                                          --gcmode value                        Blockchain garbage collection mode ("full", "archive") (default: "full")
+                                          --txlookuplimit value                 Number of recent blocks to maintain transactions index for (default = about one year, 0 = entire chain) (default: 31536000)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+                                          --eth.requiredblocks value            Comma separated block number-to-hash mappings to require for peering (<number>=<hash>)
+                                          --networkid value                     Explicitly set network id (integer, 1111=WemixMainnet , 1112=WemixTestnet)(For testnets: use --wemix-testnet --ropsten, --rinkeby, --goerli instead) (default: 1111)
+                                          --ethstats value                      Reporting URL of a ethstats service (nodename:secret@host:port)
+                                          --config value                        TOML configuration file
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+    ACCOUNT OPTIONS:
+                                          --unlock value                        Comma separated list of accounts to unlock
+                                          --password value                      Password file to use for non-interactive password input
+                                          --signer value                        External signer (url or path to ipc file)
+                                          --allow-insecure-unlock               Allow insecure account unlocking when account-related RPCs are exposed by http
+    
+    MISC OPTIONS:
+                                          --override.arrowglacier value             Manually specify Arrow Glacier fork-block, overriding the bundled setting (default: 0)
+                                          --override.terminaltotaldifficulty value  Manually specify TerminalTotalDifficulty, overriding the bundled setting (default: <nil>)
+                                          --snapshot                                Enables snapshot-database mode (default = enable)
+                                          --bloomfilter.size value                  Megabytes of memory allocated to bloom-filter for pruning (default: 2048)
+                                          --miner.gastarget value                   Target gas floor for mined blocks (deprecated) (default: 0)
+    
+    ETHASH OPTIONS:
+                                          --ethash.cachedir value               Directory to store the ethash verification caches (default = inside the datadir)
+                                          --ethash.cachesinmem value            Number of recent ethash caches to keep in memory (16MB each) (default: 2)
+                                          --ethash.cachesondisk value           Number of recent ethash caches to keep on disk (16MB each) (default: 3)
+                                          --ethash.cacheslockmmap               Lock memory maps of recent ethash caches
+                                          --ethash.dagdir value                 Directory to store the ethash mining DAGs (default: "/Users/0xtopaz/Library/Ethash")
+                                          --ethash.dagsinmem value              Number of recent ethash mining DAGs to keep in memory (1+GB each) (default: 1)
+                                          --ethash.dagsondisk value             Number of recent ethash mining DAGs to keep on disk (1+GB each) (default: 2)
+                                          --ethash.dagslockmmap                 Lock memory maps for recent ethash mining DAGs
+    
+    MINER OPTIONS:
+                                          --mine                                Enable mining
+                                          --miner.threads value                 Number of CPU threads to use for mining (default: 0)
+                                          --miner.notify value                  Comma separated HTTP URL list to notify of new work packages
+                                          --miner.gaslimit value                Target gas ceiling for mined blocks (default: 30000000)
+                                          --miner.gasprice value                Minimum gas price for mining a transaction (default: 1000000000)
+                                          --miner.etherbase value               Public address for block mining rewards (default = first account) (default: "0")
+                                          --miner.extradata value               Block extra data set by the miner (default = client version)
+                                          --miner.recommit value                Time interval to recreate the block being mined (default: 3s)
+                                          --miner.noverify                      Disable remote sealing verification
+                                          --miner.notify.full                   Notify with pending block headers instead of work packages
+    
+    DEVELOPER CHAIN OPTIONS:
+                                          --dev                                 Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled
+                                          --dev.period value                    Block period to use in developer mode (0 = mine only if transaction pending) (default: 0)
+                                          --dev.gaslimit value                  Initial block gas limit (default: 11500000)
+    
+    LOGGING AND DEBUGGING OPTIONS:
+                                          --fakepow                             Disables proof-of-work verification
+                                          --nocompaction                        Disables db compaction after import
+    
+    API AND CONSOLE OPTIONS:
+                                          --http                                Enable the HTTP-RPC server
+                                          --http.addr value                     HTTP-RPC server listening interface (default: "localhost")
+                                          --http.port value                     HTTP-RPC server listening port (default: 8588)
+                                          --http.corsdomain value               Comma separated list of domains from which to accept cross origin requests (browser enforced)
+                                          --authrpc.addr value                  Listening address for authenticated APIs (default: "localhost")
+                                          --authrpc.port value                  Listening port for authenticated APIs (default: 8551)
+                                          --authrpc.vhosts value                Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+                                          --authrpc.jwtsecret value             Path to a JWT secret to use for authenticated RPC endpoints
+                                          --http.vhosts value                   Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+                                          --graphql                             Enable GraphQL on the HTTP-RPC server. Note that GraphQL can only be started if an HTTP server is started as well.
+                                          --graphql.corsdomain value            Comma separated list of domains from which to accept cross origin requests (browser enforced)
+                                          --graphql.vhosts value                Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+                                          --http.api value                      API's offered over the HTTP-RPC interface
+                                          --http.rpcprefix value                HTTP path path prefix on which JSON-RPC is served. Use '/' to serve on all paths.
+                                          --ws                                  Enable the WS-RPC server
+                                          --ws.addr value                       WS-RPC server listening interface (default: "localhost")
+                                          --ws.port value                       WS-RPC server listening port (default: 8598)
+                                          --ws.api value                        API's offered over the WS-RPC interface
+                                          --ws.origins value                    Origins from which to accept websockets requests
+                                          --ws.rpcprefix value                  HTTP path prefix on which JSON-RPC is served. Use '/' to serve on all paths.
+                                          --ipcdisable                          Disable the IPC-RPC server
+                                          --ipcpath value                       Filename for IPC socket/pipe within the datadir (explicit paths escape it)
+                                          --rpc.gascap value                    Sets a cap on gas that can be used in eth_call/estimateGas (0=infinite) (default: 0)
+                                          --rpc.evmtimeout value                Sets a timeout used for eth_call (0=infinite) (default: 5s)
+                                          --rpc.txfeecap value                  Sets a cap on transaction fee (in ether) that can be sent via the RPC APIs (0 = no cap) (default: 0)
+                                          --rpc.allow-unprotected-txs           Allow for unprotected (non EIP155 signed) transactions to be submitted via RPC
+                                          --jspath loadScript                   JavaScript root path for loadScript (default: ".")
+                                          --exec value                          Execute JavaScript statement
+                                          --preload value                       Comma separated list of JavaScript files to preload into the console
+    
+    ALIASED (deprecated) OPTIONS:
+                                          --nousb                               Disables monitoring for and managing USB hardware wallets (deprecated)
+                                          --whitelist value                     Comma separated block number-to-hash mappings to enforce (<number>=<hash>) (deprecated in favor of --eth.requiredblocks)
+    
+    TRANSACTION POOL OPTIONS:
+                                          --txpool.locals value                 Comma separated accounts to treat as locals (no flush, priority inclusion)
+                                          --txpool.nolocals                     Disables price exemptions for locally submitted transactions
+                                          --txpool.journal value                Disk journal for local transaction to survive node restarts (default: "transactions.rlp")
+                                          --txpool.rejournal value              Time interval to regenerate the local transaction journal (default: 1h0m0s)
+                                          --txpool.pricelimit value             Minimum gas price limit to enforce for acceptance into the pool (default: 1)
+                                          --txpool.pricebump value              Price bump percentage to replace an already existing transaction (default: 10)
+                                          --txpool.accountslots value           Minimum number of executable transaction slots guaranteed per account (default: 100000)
+                                          --txpool.globalslots value            Maximum number of executable transaction slots for all accounts (default: 500000)
+                                          --txpool.accountqueue value           Maximum number of non-executable transaction slots permitted per account (default: 100000)
+                                          --txpool.globalqueue value            Maximum number of non-executable transaction slots for all accounts (default: 500000)
+                                          --txpool.lifetime value               Maximum amount of time non-executable transaction are queued (default: 3h0m0s)
+    
+    LIGHT CLIENT OPTIONS:
+                                          --light.serve value                   Maximum percentage of time allowed for serving LES requests (multi-threaded processing allows values over 100) (default: 0)
+                                          --light.ingress value                 Incoming bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+                                          --light.egress value                  Outgoing bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+                                          --light.maxpeers value                Maximum number of light clients to serve, or light servers to attach to (default: 100)
+                                          --light.nopruning                     Disable ancient light chain data pruning
+                                          --ulc.servers value                   List of trusted ultra-light servers
+                                          --ulc.fraction value                  Minimum % of trusted ultra-light servers required to announce a new head (default: 75)
+                                          --ulc.onlyannounce                    Ultra light server sends announcements only
+                                          --light.nosyncserve                   Enables serving light clients before syncing
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+                                          --cache.database value                Percentage of cache memory allowance to use for database io (default: 50)
+                                          --cache.trie value                    Percentage of cache memory allowance to use for trie caching (default = 15% full mode, 30% archive mode) (default: 15)
+                                          --cache.trie.journal value            Disk journal directory for trie cache to survive node restarts (default: "triecache")
+                                          --cache.trie.rejournal value          Time interval to regenerate the trie cache journal (default: 1h0m0s)
+                                          --cache.gc value                      Percentage of cache memory allowance to use for trie pruning (default = 25% full mode, 0% archive mode) (default: 25)
+                                          --cache.snapshot value                Percentage of cache memory allowance to use for snapshot caching (default = 10% full mode, 20% archive mode) (default: 10)
+                                          --cache.noprefetch                    Disable heuristic state prefetch during block import (less CPU and disk IO, more time waiting for data)
+                                          --cache.preimages                     Enable recording the SHA3/keccak preimages of trie keys
+                                          --cache.triesinmemory value           Number of block states (tries) to keep in memory (default = 128) (default: 128)
+                                          --fdlimit value                       Raise the open file descriptor resource limit (default = system fd limit) (default: 0)
+    
+
+## db
+    NAME:
+       gwemix db - Low level database operations
+    
+    USAGE:
+       gwemix db command [command options] [arguments...]
+    
+    COMMANDS:
+         inspect                          Inspect the storage size for each type of data in the database
+         stats                            Print leveldb statistics
+         compact                          Compact leveldb database. WARNING: May take a very long time
+         get                              Show the value of a database key
+         delete                           Delete a database key (WARNING: may corrupt your database)
+         put                              Set the value of a database key (WARNING: may corrupt your database)
+         dumptrie                         Show the storage key/values of a given storage trie
+         freezer-index                    Dump out the index of a given freezer type
+         import                           Imports leveldb-data from an exported RLP dump.
+         export                           Exports the chain data into an RLP dump. If the <dumpfile> has .gz suffix, gzip compression will be used.
+         metadata                         Shows metadata about the chain status.
+         freezer-migrate                  Migrate legacy parts of the freezer. (WARNING: may take a long time)
+         check-state-content              Verify that state data is cryptographically correct
+    
+    OPTIONS:
+       --help, -h                         show help
+       
+
+## db check-state-content
+    check-state-content [command options] <start (optional)>
+    This command iterates the entire database for 32-byte keys, looking for rlp-encoded trie nodes.
+    For each trie node encountered, it checks that the key corresponds to the keccak256(value). If this is not true, this indicates
+    a data corruption.
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db compact
+    compact [command options] 
+    This command performs a database compaction. 
+    WARNING: This operation may take a very long time to finish, and may cause database
+    corruption if it is aborted during execution'!
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+                                          --cache.database value                Percentage of cache memory allowance to use for database io (default: 50)
+    
+
+## db delete
+    delete [command options] <hex-encoded key>
+    This command deletes the specified database key from the database. 
+    WARNING: This is a low-level operation which may cause database corruption!
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db dumptrie
+    dumptrie [command options] <hex-encoded storage trie root> <hex-encoded start (optional)> <int max elements (optional)>
+    This command looks up the specified database key from the database.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db export
+    export [command options] <type> <dumpfile>
+    Exports the specified chain data to an RLP encoded stream, optionally gzip-compressed.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db freezer-index
+    freezer-index [command options] <type> <start (int)> <end (int)>
+    This command displays information about the freezer index.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db freezer-migrate
+    freezer-migrate [command options] 
+    The freezer-migrate command checks your database for receipts in a legacy format and updates those.
+    WARNING: please back-up the receipt files in your ancients before running this command.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db get
+    get [command options] <hex-encoded key>
+    This command looks up the specified database key from the database.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db import
+    import [command options] <dumpfile> <start (optional)
+    The import command imports the specific chain data from an RLP encoded stream.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db inspect
+    inspect [command options] <prefix> <start>
+    This commands iterates the entire database. If the optional 'prefix' and 'start' arguments are provided, then the iteration is limited to the given subset of data.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db metadata
+    metadata [command options] 
+    Shows metadata about the chain status.
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db put
+    put [command options] <hex-encoded key> <hex-encoded value>
+    This command sets a given database key to the given value. 
+    WARNING: This is a low-level operation which may cause database corruption!
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## db stats
+    stats [command options] 
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## dump
+    dump [command options] [? <blockHash> | <blockNum>]
+    
+    This command dumps out the state for a given block (or latest, if none provided).
+    
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+    
+    MISC OPTIONS:
+                                          --iterative                           Print streaming JSON iteratively, delimited by newlines
+                                          --nocode                              Exclude contract code (save db lookups)
+                                          --nostorage                           Exclude storage entries (save db lookups)
+                                          --incompletes                         Include accounts for which we don't have the address (missing preimage)
+                                          --start value                         Start position. Either a hash or address (default: "0x0000000000000000000000000000000000000000000000000000000000000000")
+                                          --limit value                         Max number of elements (0 = no limit) (default: 0)
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## dumpconfig
+    dumpconfig [command options] 
+    The dumpconfig command shows configuration values.
+    
+    MISC OPTIONS:
+                                          --override.arrowglacier value             Manually specify Arrow Glacier fork-block, overriding the bundled setting (default: 0)
+                                          --override.terminaltotaldifficulty value  Manually specify TerminalTotalDifficulty, overriding the bundled setting (default: <nil>)
+                                          --snapshot                                Enables snapshot-database mode (default = enable)
+                                          --bloomfilter.size value                  Megabytes of memory allocated to bloom-filter for pruning (default: 2048)
+                                          --miner.gastarget value                   Target gas floor for mined blocks (deprecated) (default: 0)
+    
+    LIGHT CLIENT OPTIONS:
+                                          --light.serve value                   Maximum percentage of time allowed for serving LES requests (multi-threaded processing allows values over 100) (default: 0)
+                                          --light.ingress value                 Incoming bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+                                          --light.egress value                  Outgoing bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+                                          --light.maxpeers value                Maximum number of light clients to serve, or light servers to attach to (default: 100)
+                                          --light.nopruning                     Disable ancient light chain data pruning
+                                          --ulc.servers value                   List of trusted ultra-light servers
+                                          --ulc.fraction value                  Minimum % of trusted ultra-light servers required to announce a new head (default: 75)
+                                          --ulc.onlyannounce                    Ultra light server sends announcements only
+                                          --light.nosyncserve                   Enables serving light clients before syncing
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+                                          --cache.database value                Percentage of cache memory allowance to use for database io (default: 50)
+                                          --cache.trie value                    Percentage of cache memory allowance to use for trie caching (default = 15% full mode, 30% archive mode) (default: 15)
+                                          --cache.trie.journal value            Disk journal directory for trie cache to survive node restarts (default: "triecache")
+                                          --cache.trie.rejournal value          Time interval to regenerate the trie cache journal (default: 1h0m0s)
+                                          --cache.gc value                      Percentage of cache memory allowance to use for trie pruning (default = 25% full mode, 0% archive mode) (default: 25)
+                                          --cache.snapshot value                Percentage of cache memory allowance to use for snapshot caching (default = 10% full mode, 20% archive mode) (default: 10)
+                                          --cache.noprefetch                    Disable heuristic state prefetch during block import (less CPU and disk IO, more time waiting for data)
+                                          --cache.preimages                     Enable recording the SHA3/keccak preimages of trie keys
+                                          --cache.triesinmemory value           Number of block states (tries) to keep in memory (default = 128) (default: 128)
+                                          --fdlimit value                       Raise the open file descriptor resource limit (default = system fd limit) (default: 0)
+    
+    LOGGING AND DEBUGGING OPTIONS:
+                                          --fakepow                             Disables proof-of-work verification
+                                          --nocompaction                        Disables db compaction after import
+    
+    GAS PRICE ORACLE OPTIONS:
+                                          --gpo.blocks value                    Number of recent blocks to check for gas prices (default: 20)
+                                          --gpo.percentile value                Suggested gas price is the given percentile of a set of recent transaction gas prices (default: 60)
+                                          --gpo.maxprice value                  Maximum transaction priority fee (or gasprice before London fork) to be recommended by gpo (default: 500000000000)
+                                          --gpo.ignoreprice value               Gas price below which gpo will ignore transactions (default: 2)
+    
+    ETHEREUM OPTIONS:
+                                          --identity value                      Custom node name
+                                          --datadir.minfreedisk value           Minimum free disk space in MB, once reached triggers auto shut down (default = --cache.gc converted to MB, 0 = disabled)
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --usb                                 Enable monitoring and management of USB hardware wallets
+                                          --pcscdpath value                     Path to the smartcard daemon (pcscd) socket file
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --exitwhensynced                      Exits after block synchronisation completes
+                                          --gcmode value                        Blockchain garbage collection mode ("full", "archive") (default: "full")
+                                          --txlookuplimit value                 Number of recent blocks to maintain transactions index for (default = about one year, 0 = entire chain) (default: 31536000)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+                                          --eth.requiredblocks value            Comma separated block number-to-hash mappings to require for peering (<number>=<hash>)
+                                          --networkid value                     Explicitly set network id (integer, 1111=WemixMainnet , 1112=WemixTestnet)(For testnets: use --wemix-testnet --ropsten, --rinkeby, --goerli instead) (default: 1111)
+                                          --ethstats value                      Reporting URL of a ethstats service (nodename:secret@host:port)
+                                          --config value                        TOML configuration file
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+    ACCOUNT OPTIONS:
+                                          --unlock value                        Comma separated list of accounts to unlock
+                                          --password value                      Password file to use for non-interactive password input
+                                          --signer value                        External signer (url or path to ipc file)
+                                          --allow-insecure-unlock               Allow insecure account unlocking when account-related RPCs are exposed by http
+    
+    ETHASH OPTIONS:
+                                          --ethash.cachedir value               Directory to store the ethash verification caches (default = inside the datadir)
+                                          --ethash.cachesinmem value            Number of recent ethash caches to keep in memory (16MB each) (default: 2)
+                                          --ethash.cachesondisk value           Number of recent ethash caches to keep on disk (16MB each) (default: 3)
+                                          --ethash.cacheslockmmap               Lock memory maps of recent ethash caches
+                                          --ethash.dagdir value                 Directory to store the ethash mining DAGs (default: "/Users/0xtopaz/Library/Ethash")
+                                          --ethash.dagsinmem value              Number of recent ethash mining DAGs to keep in memory (1+GB each) (default: 1)
+                                          --ethash.dagsondisk value             Number of recent ethash mining DAGs to keep on disk (1+GB each) (default: 2)
+                                          --ethash.dagslockmmap                 Lock memory maps for recent ethash mining DAGs
+    
+    DEVELOPER CHAIN OPTIONS:
+                                          --dev                                 Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled
+                                          --dev.period value                    Block period to use in developer mode (0 = mine only if transaction pending) (default: 0)
+                                          --dev.gaslimit value                  Initial block gas limit (default: 11500000)
+    
+    VIRTUAL MACHINE OPTIONS:
+                                          --vmdebug                             Record information useful for VM and contract debugging
+    
+    API AND CONSOLE OPTIONS:
+                                          --http                                Enable the HTTP-RPC server
+                                          --http.addr value                     HTTP-RPC server listening interface (default: "localhost")
+                                          --http.port value                     HTTP-RPC server listening port (default: 8588)
+                                          --http.corsdomain value               Comma separated list of domains from which to accept cross origin requests (browser enforced)
+                                          --authrpc.addr value                  Listening address for authenticated APIs (default: "localhost")
+                                          --authrpc.port value                  Listening port for authenticated APIs (default: 8551)
+                                          --authrpc.vhosts value                Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+                                          --authrpc.jwtsecret value             Path to a JWT secret to use for authenticated RPC endpoints
+                                          --http.vhosts value                   Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+                                          --graphql                             Enable GraphQL on the HTTP-RPC server. Note that GraphQL can only be started if an HTTP server is started as well.
+                                          --graphql.corsdomain value            Comma separated list of domains from which to accept cross origin requests (browser enforced)
+                                          --graphql.vhosts value                Comma separated list of virtual hostnames from which to accept requests (server enforced). Accepts '*' wildcard. (default: "localhost")
+                                          --http.api value                      API's offered over the HTTP-RPC interface
+                                          --http.rpcprefix value                HTTP path path prefix on which JSON-RPC is served. Use '/' to serve on all paths.
+                                          --ws                                  Enable the WS-RPC server
+                                          --ws.addr value                       WS-RPC server listening interface (default: "localhost")
+                                          --ws.port value                       WS-RPC server listening port (default: 8598)
+                                          --ws.api value                        API's offered over the WS-RPC interface
+                                          --ws.origins value                    Origins from which to accept websockets requests
+                                          --ws.rpcprefix value                  HTTP path prefix on which JSON-RPC is served. Use '/' to serve on all paths.
+                                          --ipcdisable                          Disable the IPC-RPC server
+                                          --ipcpath value                       Filename for IPC socket/pipe within the datadir (explicit paths escape it)
+                                          --rpc.gascap value                    Sets a cap on gas that can be used in eth_call/estimateGas (0=infinite) (default: 0)
+                                          --rpc.evmtimeout value                Sets a timeout used for eth_call (0=infinite) (default: 5s)
+                                          --rpc.txfeecap value                  Sets a cap on transaction fee (in ether) that can be sent via the RPC APIs (0 = no cap) (default: 0)
+                                          --rpc.allow-unprotected-txs           Allow for unprotected (non EIP155 signed) transactions to be submitted via RPC
+    
+    NETWORKING OPTIONS:
+                                          --bootnodes value                     Comma separated enode URLs for P2P discovery bootstrap
+                                          --port value                          Network listening port (default: 8589)
+                                          --maxpeers value                      Maximum number of network peers (network disabled if set to 0) (default: 25)
+                                          --maxpendpeers value                  Maximum number of pending connection attempts (defaults used if set to 0) (default: 0)
+                                          --nat value                           NAT port mapping mechanism (any|none|upnp|pmp|extip:<IP>) (default: "any")
+                                          --nodiscover                          Disables the peer discovery mechanism (manual peer addition)
+                                          --v5disc                              Enables the experimental RLPx V5 (Topic Discovery) mechanism
+                                          --netrestrict value                   Restricts network communication to the given IP networks (CIDR masks)
+                                          --nodekey value                       P2P node key file
+                                          --nodekeyhex value                    P2P node key as hex (for testing)
+                                          --discovery.dns value                 Sets DNS discovery entry points (use "" to disable DNS)
+    
+    TRANSACTION POOL OPTIONS:
+                                          --txpool.locals value                 Comma separated accounts to treat as locals (no flush, priority inclusion)
+                                          --txpool.nolocals                     Disables price exemptions for locally submitted transactions
+                                          --txpool.journal value                Disk journal for local transaction to survive node restarts (default: "transactions.rlp")
+                                          --txpool.rejournal value              Time interval to regenerate the local transaction journal (default: 1h0m0s)
+                                          --txpool.pricelimit value             Minimum gas price limit to enforce for acceptance into the pool (default: 1)
+                                          --txpool.pricebump value              Price bump percentage to replace an already existing transaction (default: 10)
+                                          --txpool.accountslots value           Minimum number of executable transaction slots guaranteed per account (default: 100000)
+                                          --txpool.globalslots value            Maximum number of executable transaction slots for all accounts (default: 500000)
+                                          --txpool.accountqueue value           Maximum number of non-executable transaction slots permitted per account (default: 100000)
+                                          --txpool.globalqueue value            Maximum number of non-executable transaction slots for all accounts (default: 500000)
+                                          --txpool.lifetime value               Maximum amount of time non-executable transaction are queued (default: 3h0m0s)
+    
+    MINER OPTIONS:
+                                          --mine                                Enable mining
+                                          --miner.threads value                 Number of CPU threads to use for mining (default: 0)
+                                          --miner.notify value                  Comma separated HTTP URL list to notify of new work packages
+                                          --miner.gaslimit value                Target gas ceiling for mined blocks (default: 30000000)
+                                          --miner.gasprice value                Minimum gas price for mining a transaction (default: 1000000000)
+                                          --miner.etherbase value               Public address for block mining rewards (default = first account) (default: "0")
+                                          --miner.extradata value               Block extra data set by the miner (default = client version)
+                                          --miner.recommit value                Time interval to recreate the block being mined (default: 3s)
+                                          --miner.noverify                      Disable remote sealing verification
+                                          --miner.notify.full                   Notify with pending block headers instead of work packages
+    
+    ALIASED (deprecated) OPTIONS:
+                                          --nousb                               Disables monitoring for and managing USB hardware wallets (deprecated)
+                                          --whitelist value                     Comma separated block number-to-hash mappings to enforce (<number>=<hash>) (deprecated in favor of --eth.requiredblocks)
+    
+
+## dumpgenesis
+    dumpgenesis [command options] 
+    
+    The dumpgenesis command dumps the genesis block configuration in JSON format to stdout.
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+    
+
+## export
+    export [command options] <filename> [<blockNumFirst> <blockNumLast>]
+    
+    Requires a first argument of the file to write to.
+    Optional second and third arguments control the first and
+    last block to write. In this mode, the file will be appended
+    if already existing. If the file ends with .gz, the output will
+    be gzipped.
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## export-preimages
+    export-preimages [command options] <dumpfile>
+    
+    The export-preimages command exports hash preimages to an RLP encoded stream.
+    It's deprecated, please use "geth db export" instead.
+    
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## help
+    help [command]
+
+## import
+    import [command options] <filename> (<filename 2> ... <filename N>) 
+    
+    The import command imports blocks from an RLP-encoded form. The form can be one file
+    with several RLP-encoded blocks, or several files can be used.
+    
+    If only one file is used, import error will result in failure. If several files are used,
+    processing will proceed even if an individual RLP-file import failure occurs.
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+                                          --cache.database value                Percentage of cache memory allowance to use for database io (default: 50)
+                                          --cache.gc value                      Percentage of cache memory allowance to use for trie pruning (default = 25% full mode, 0% archive mode) (default: 25)
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --gcmode value                        Blockchain garbage collection mode ("full", "archive") (default: "full")
+                                          --txlookuplimit value                 Number of recent blocks to maintain transactions index for (default = about one year, 0 = entire chain) (default: 31536000)
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+    MISC OPTIONS:
+                                          --snapshot                            Enables snapshot-database mode (default = enable)
+    
+    METRICS AND STATS OPTIONS:
+                                          --metrics                              Enable metrics collection and reporting
+                                          --metrics.expensive                    Enable expensive metrics collection and reporting
+                                          --metrics.addr value                   Enable stand-alone metrics HTTP server listening interface (default: "127.0.0.1")
+                                          --metrics.port value                   Metrics HTTP server listening port (default: 6060)
+                                          --metrics.influxdb                     Enable metrics export/push to an external InfluxDB database
+                                          --metrics.influxdbv2                   Enable metrics export/push to an external InfluxDB v2 database
+                                          --metrics.influxdb.endpoint value      InfluxDB API endpoint to report metrics to (default: "http://localhost:8086")
+                                          --metrics.influxdb.database value      InfluxDB database name to push reported metrics to (default: "geth")
+                                          --metrics.influxdb.username value      Username to authorize access to the database (default: "test")
+                                          --metrics.influxdb.password value      Password to authorize access to the database (default: "test")
+                                          --metrics.influxdb.tags value          Comma-separated InfluxDB tags (key/values) attached to all measurements (default: "host=localhost")
+                                          --metrics.influxdb.token value         Token to authorize access to the database (v2 only) (default: "test")
+                                          --metrics.influxdb.bucket value        InfluxDB bucket name to push reported metrics to (v2 only) (default: "geth")
+                                          --metrics.influxdb.organization value  InfluxDB organization name (v2 only) (default: "geth")
+    
+
+## import-preimages
+    import-preimages [command options] <datafile>
+    
+    The import-preimages command imports hash preimages from an RLP encoded stream.
+    It's deprecated, please use "geth db import" instead.
+    
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+    
+    ETHEREUM OPTIONS:
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## init
+    init [command options] <genesisPath>
+    
+    The init command initializes a new genesis block and definition for the network.
+    This is a destructive action and changes the network in which you will be
+    participating.
+    
+    It expects the genesis file as argument.
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## js
+    js [command options] <jsfile> [jsfile...]
+    
+    The JavaScript VM exposes a node admin interface as well as the Ðapp
+    JavaScript API. See https://geth.ethereum.org/docs/interface/javascript-console
+    
+    ACCOUNT OPTIONS:
+                                          --unlock value                        Comma separated list of accounts to unlock
+                                          --password value                      Password file to use for non-interactive password input
+                                          --signer value                        External signer (url or path to ipc file)
+    
+    ETHASH OPTIONS:
+                                          --ethash.cachedir value               Directory to store the ethash verification caches (default = inside the datadir)
+                                          --ethash.cachesinmem value            Number of recent ethash caches to keep in memory (16MB each) (default: 2)
+                                          --ethash.cachesondisk value           Number of recent ethash caches to keep on disk (16MB each) (default: 3)
+                                          --ethash.cacheslockmmap               Lock memory maps of recent ethash caches
+                                          --ethash.dagdir value                 Directory to store the ethash mining DAGs (default: "/Users/0xtopaz/Library/Ethash")
+                                          --ethash.dagsinmem value              Number of recent ethash mining DAGs to keep in memory (1+GB each) (default: 1)
+                                          --ethash.dagsondisk value             Number of recent ethash mining DAGs to keep on disk (1+GB each) (default: 2)
+                                          --ethash.dagslockmmap                 Lock memory maps for recent ethash mining DAGs
+    
+    MINER OPTIONS:
+                                          --mine                                Enable mining
+                                          --miner.threads value                 Number of CPU threads to use for mining (default: 0)
+                                          --miner.notify value                  Comma separated HTTP URL list to notify of new work packages
+                                          --miner.gaslimit value                Target gas ceiling for mined blocks (default: 30000000)
+                                          --miner.gasprice value                Minimum gas price for mining a transaction (default: 1000000000)
+                                          --miner.etherbase value               Public address for block mining rewards (default = first account) (default: "0")
+                                          --miner.extradata value               Block extra data set by the miner (default = client version)
+                                          --miner.recommit value                Time interval to recreate the block being mined (default: 3s)
+                                          --miner.noverify                      Disable remote sealing verification
+                                          --miner.notify.full                   Notify with pending block headers instead of work packages
+    
+    VIRTUAL MACHINE OPTIONS:
+                                          --vmdebug                             Record information useful for VM and contract debugging
+    
+    ETHEREUM OPTIONS:
+                                          --identity value                      Custom node name
+                                          --datadir.minfreedisk value           Minimum free disk space in MB, once reached triggers auto shut down (default = --cache.gc converted to MB, 0 = disabled)
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --usb                                 Enable monitoring and management of USB hardware wallets
+                                          --pcscdpath value                     Path to the smartcard daemon (pcscd) socket file
+                                          --syncmode value                      Blockchain sync mode ("snap", "full" or "light") (default: snap)
+                                          --exitwhensynced                      Exits after block synchronisation completes
+                                          --gcmode value                        Blockchain garbage collection mode ("full", "archive") (default: "full")
+                                          --txlookuplimit value                 Number of recent blocks to maintain transactions index for (default = about one year, 0 = entire chain) (default: 31536000)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+                                          --eth.requiredblocks value            Comma separated block number-to-hash mappings to require for peering (<number>=<hash>)
+                                          --networkid value                     Explicitly set network id (integer, 1111=WemixMainnet , 1112=WemixTestnet)(For testnets: use --wemix-testnet --ropsten, --rinkeby, --goerli instead) (default: 1111)
+                                          --ethstats value                      Reporting URL of a ethstats service (nodename:secret@host:port)
+                                          --config value                        TOML configuration file
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+    TRANSACTION POOL OPTIONS:
+                                          --txpool.locals value                 Comma separated accounts to treat as locals (no flush, priority inclusion)
+                                          --txpool.nolocals                     Disables price exemptions for locally submitted transactions
+                                          --txpool.journal value                Disk journal for local transaction to survive node restarts (default: "transactions.rlp")
+                                          --txpool.rejournal value              Time interval to regenerate the local transaction journal (default: 1h0m0s)
+                                          --txpool.pricelimit value             Minimum gas price limit to enforce for acceptance into the pool (default: 1)
+                                          --txpool.pricebump value              Price bump percentage to replace an already existing transaction (default: 10)
+                                          --txpool.accountslots value           Minimum number of executable transaction slots guaranteed per account (default: 100000)
+                                          --txpool.globalslots value            Maximum number of executable transaction slots for all accounts (default: 500000)
+                                          --txpool.accountqueue value           Maximum number of non-executable transaction slots permitted per account (default: 100000)
+                                          --txpool.globalqueue value            Maximum number of non-executable transaction slots for all accounts (default: 500000)
+                                          --txpool.lifetime value               Maximum amount of time non-executable transaction are queued (default: 3h0m0s)
+    
+    NETWORKING OPTIONS:
+                                          --bootnodes value                     Comma separated enode URLs for P2P discovery bootstrap
+                                          --port value                          Network listening port (default: 8589)
+                                          --maxpeers value                      Maximum number of network peers (network disabled if set to 0) (default: 25)
+                                          --maxpendpeers value                  Maximum number of pending connection attempts (defaults used if set to 0) (default: 0)
+                                          --nat value                           NAT port mapping mechanism (any|none|upnp|pmp|extip:<IP>) (default: "any")
+                                          --nodiscover                          Disables the peer discovery mechanism (manual peer addition)
+                                          --v5disc                              Enables the experimental RLPx V5 (Topic Discovery) mechanism
+                                          --netrestrict value                   Restricts network communication to the given IP networks (CIDR masks)
+                                          --nodekey value                       P2P node key file
+                                          --nodekeyhex value                    P2P node key as hex (for testing)
+                                          --discovery.dns value                 Sets DNS discovery entry points (use "" to disable DNS)
+    
+    MISC OPTIONS:
+                                          --override.arrowglacier value             Manually specify Arrow Glacier fork-block, overriding the bundled setting (default: 0)
+                                          --override.terminaltotaldifficulty value  Manually specify TerminalTotalDifficulty, overriding the bundled setting (default: <nil>)
+                                          --snapshot                                Enables snapshot-database mode (default = enable)
+                                          --bloomfilter.size value                  Megabytes of memory allocated to bloom-filter for pruning (default: 2048)
+                                          --miner.gastarget value                   Target gas floor for mined blocks (deprecated) (default: 0)
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache value                         Megabytes of memory allocated to internal caching (default = 4096 mainnet full node, 128 light mode) (default: 1024)
+                                          --cache.database value                Percentage of cache memory allowance to use for database io (default: 50)
+                                          --cache.trie value                    Percentage of cache memory allowance to use for trie caching (default = 15% full mode, 30% archive mode) (default: 15)
+                                          --cache.trie.journal value            Disk journal directory for trie cache to survive node restarts (default: "triecache")
+                                          --cache.trie.rejournal value          Time interval to regenerate the trie cache journal (default: 1h0m0s)
+                                          --cache.gc value                      Percentage of cache memory allowance to use for trie pruning (default = 25% full mode, 0% archive mode) (default: 25)
+                                          --cache.snapshot value                Percentage of cache memory allowance to use for snapshot caching (default = 10% full mode, 20% archive mode) (default: 10)
+                                          --cache.noprefetch                    Disable heuristic state prefetch during block import (less CPU and disk IO, more time waiting for data)
+                                          --cache.preimages                     Enable recording the SHA3/keccak preimages of trie keys
+                                          --cache.triesinmemory value           Number of block states (tries) to keep in memory (default = 128) (default: 128)
+                                          --fdlimit value                       Raise the open file descriptor resource limit (default = system fd limit) (default: 0)
+    
+    LOGGING AND DEBUGGING OPTIONS:
+                                          --fakepow                             Disables proof-of-work verification
+                                          --nocompaction                        Disables db compaction after import
+    
+    GAS PRICE ORACLE OPTIONS:
+                                          --gpo.blocks value                    Number of recent blocks to check for gas prices (default: 20)
+                                          --gpo.percentile value                Suggested gas price is the given percentile of a set of recent transaction gas prices (default: 60)
+                                          --gpo.maxprice value                  Maximum transaction priority fee (or gasprice before London fork) to be recommended by gpo (default: 500000000000)
+                                          --gpo.ignoreprice value               Gas price below which gpo will ignore transactions (default: 2)
+    
+    API AND CONSOLE OPTIONS:
+                                          --jspath loadScript                   JavaScript root path for loadScript (default: ".")
+                                          --exec value                          Execute JavaScript statement
+                                          --preload value                       Comma separated list of JavaScript files to preload into the console
+    
+    ALIASED (deprecated) OPTIONS:
+                                          --nousb                               Disables monitoring for and managing USB hardware wallets (deprecated)
+                                          --whitelist value                     Comma separated block number-to-hash mappings to enforce (<number>=<hash>) (deprecated in favor of --eth.requiredblocks)
+    
+    LIGHT CLIENT OPTIONS:
+                                          --light.serve value                   Maximum percentage of time allowed for serving LES requests (multi-threaded processing allows values over 100) (default: 0)
+                                          --light.ingress value                 Incoming bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+                                          --light.egress value                  Outgoing bandwidth limit for serving light clients (kilobytes/sec, 0 = unlimited) (default: 0)
+                                          --light.maxpeers value                Maximum number of light clients to serve, or light servers to attach to (default: 100)
+                                          --light.nopruning                     Disable ancient light chain data pruning
+                                          --ulc.servers value                   List of trusted ultra-light servers
+                                          --ulc.fraction value                  Minimum % of trusted ultra-light servers required to announce a new head (default: 75)
+                                          --ulc.onlyannounce                    Ultra light server sends announcements only
+                                          --light.nosyncserve                   Enables serving light clients before syncing
+    
+    DEVELOPER CHAIN OPTIONS:
+                                          --dev                                 Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled
+                                          --dev.period value                    Block period to use in developer mode (0 = mine only if transaction pending) (default: 0)
+                                          --dev.gaslimit value                  Initial block gas limit (default: 11500000)
+    
+
+## license
+    license  
+
+## makecache
+    makecache <blockNum> <outputDir>
+    
+    The makecache command generates an ethash cache in <outputDir>.
+    
+    This command exists to support the system testing project.
+    Regular users do not need to execute it.
+    
+
+## makedag
+    makedag <blockNum> <outputDir>
+    
+    The makedag command generates an ethash DAG in <outputDir>.
+    
+    This command exists to support the system testing project.
+    Regular users do not need to execute it.
+    
+
+## removedb
+    removedb [command options] 
+    
+    Remove blockchain and state databases
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## show-deprecated-flags
+    show-deprecated-flags  
+    Show flags that have been deprecated and will soon be removed
+
+## snapshot
+    NAME:
+       gwemix snapshot - A set of commands based on the snapshot
+    
+    USAGE:
+       gwemix snapshot command [command options] [arguments...]
+    
+    COMMANDS:
+       MISCELLANEOUS COMMANDS:
+         prune-state                      Prune stale ethereum state data based on the snapshot
+         verify-state                     Recalculate state hash based on the snapshot for verification
+         check-dangling-storage           Check that there is no 'dangling' snap storage
+         traverse-state                   Traverse the state with given root hash for verification
+         traverse-rawstate                Traverse the state with given root hash for verification
+         dump                             Dump a specific block from storage (same as 'geth dump' but using snapshots)
+    
+    OPTIONS:
+       --help, -h                         show help
+       
+
+## snapshot check-dangling-storage
+    check-dangling-storage [command options] <root>
+    
+    geth snapshot check-dangling-storage <state-root> traverses the snap storage 
+    data, and verifies that all snapshot storage data has a corresponding account. 
+    
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## snapshot dump
+    dump [command options] [? <blockHash> | <blockNum>]
+    
+    This command is semantically equivalent to 'geth dump', but uses the snapshots
+    as the backend data source, making this command a lot faster. 
+    
+    The argument is interpreted as block number or hash. If none is provided, the latest
+    block is used.
+    
+    
+    MISC OPTIONS:
+                                          --nocode                              Exclude contract code (save db lookups)
+                                          --nostorage                           Exclude storage entries (save db lookups)
+                                          --start value                         Start position. Either a hash or address (default: "0x0000000000000000000000000000000000000000000000000000000000000000")
+                                          --limit value                         Max number of elements (0 = no limit) (default: 0)
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## snapshot prune-state
+    prune-state [command options] <root>
+    
+    geth snapshot prune-state <state-root>
+    will prune historical state data with the help of the state snapshot.
+    All trie nodes and contract codes that do not belong to the specified
+    version state will be deleted from the database. After pruning, only
+    two version states are available: genesis and the specific one.
+    
+    The default pruning target is the HEAD-127 state.
+    
+    WARNING: It's necessary to delete the trie clean cache after the pruning.
+    If you specify another directory for the trie clean cache via "--cache.trie.journal"
+    during the use of Geth, please also specify it here for correct deletion. Otherwise
+    the trie clean cache with default directory will be deleted.
+    
+    
+    PERFORMANCE TUNING OPTIONS:
+                                          --cache.trie.journal value            Disk journal directory for trie cache to survive node restarts (default: "triecache")
+    
+    MISC OPTIONS:
+                                          --bloomfilter.size value              Megabytes of memory allocated to bloom-filter for pruning (default: 2048)
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## snapshot traverse-rawstate
+    traverse-rawstate [command options] <root>
+    
+    geth snapshot traverse-rawstate <state-root>
+    will traverse the whole state from the given root and will abort if any referenced
+    trie node or contract code is missing. This command can be used for state integrity
+    verification. The default checking target is the HEAD state. It's basically identical
+    to traverse-state, but the check granularity is smaller. 
+    
+    It's also usable without snapshot enabled.
+    
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## snapshot traverse-state
+    traverse-state [command options] <root>
+    
+    geth snapshot traverse-state <state-root>
+    will traverse the whole state from the given state root and will abort if any
+    referenced trie node or contract code is missing. This command can be used for
+    state integrity verification. The default checking target is the HEAD state.
+    
+    It's also usable without snapshot enabled.
+    
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## snapshot verify-state
+    verify-state [command options] <root>
+    
+    geth snapshot verify-state <state-root>
+    will traverse the whole accounts and storages set based on the specified
+    snapshot and recalculate the root hash of state for verification.
+    In other words, this command does the snapshot to trie conversion.
+    
+    
+    ETHEREUM OPTIONS:
+                                          --mainnet                             Ethereum mainnet
+                                          --wemix-testnet                       Wemix test network: pre-configured wemix test network
+                                          --ropsten                             Ropsten network: pre-configured proof-of-work test network
+                                          --rinkeby                             Rinkeby network: pre-configured proof-of-authority test network
+                                          --goerli                              Görli network: pre-configured proof-of-authority test network
+                                          --sepolia                             Sepolia network: pre-configured proof-of-work test network
+                                          --kiln                                Kiln network: pre-configured proof-of-work to proof-of-stake test network
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --datadir.ancient value               Data directory for ancient chain segments (default = inside chaindata)
+                                          --remotedb value                      URL for remote database
+    
+
+## version
+    version  
+    
+    The output of this command is supposed to be machine-readable.
+    
+
+## version-check
+    version-check [command options] <versionstring (optional)>
+    
+    The version-check command fetches vulnerability-information from https://geth.ethereum.org/docs/vulnerabilities/vulnerabilities.json, 
+    and displays information about any security vulnerabilities that affect the currently executing version.
+    
+    
+    MISC OPTIONS:
+                                          --check.url value                     URL to use when checking vulnerabilities (default: "https://geth.ethereum.org/docs/vulnerabilities/vulnerabilities.json")
+                                          --check.version value                 Version to check (default: "Geth/v0.10.14-stable-1350376a/darwin-arm64/go1.25.2")
+    
+
+## wallet
+    NAME:
+       gwemix wallet - 
+        geth wallet import /path/to/my/presale.wallet
+    
+    will prompt for your password and imports your ether presale account.
+    It can be used non-interactively with the --password option taking a
+    passwordfile as argument containing the wallet password in plaintext.
+    
+    USAGE:
+       gwemix wallet command [command options] [arguments...]
+    
+    COMMANDS:
+       ACCOUNT COMMANDS:
+         import                           Import Ethereum presale wallet
+    
+    OPTIONS:
+       --help, -h                         show help
+       
+
+## wallet import
+    import [command options] <keyFile>
+    
+                                          geth wallet [options] /path/to/my/presale.wallet
+    
+    will prompt for your password and imports your ether presale account.
+    It can be used non-interactively with the --password option taking a
+    passwordfile as argument containing the wallet password in plaintext.
+    
+    ETHEREUM OPTIONS:
+                                          --datadir value                       Data directory for the databases and keystore (default: "/Users/0xtopaz/Library/Ethereum")
+                                          --keystore value                      Directory for the keystore (default = inside the datadir)
+                                          --lightkdf                            Reduce key-derivation RAM & CPU usage at some expense of KDF strength
+    
+    ACCOUNT OPTIONS:
+                                          --password value                      Password file to use for non-interactive password input
+    
+
+## wemix
+    NAME:
+       gwemix wemix - 
+    
+    Wemix helper commands, create a new account, a new node id, a new genesis file, or a new admin contract file.
+    
+    USAGE:
+       gwemix wemix command [command options] [arguments...]
+    
+    COMMANDS:
+         new-account                      Create a new account
+         new-nodekey                      Create a new node key
+         nodeid                           Print node id from node key
+         genesis                          Create a new genesis file
+         admin-contract                   Create an admin contract
+         deploy-contract                  Deploy a contract
+         download-genesis                 Download genesis file a peer
+         deploy-governance                Deploy governance contracts
+    
+    OPTIONS:
+       --help, -h                         show help
+       
+
+## wemix admin-contract
+    admin-contract [command options] 
+    
+        geth wemix admin-contract [--data <file> --admin <file> --out <file>]
+    
+    Generate a new admin contract file from a template.
+    
+    Stdin is used when --data is missing, and stdout is used for --out.
+    
+    Data consists of "<account> <balance> <tokens>" or "<node id>".
+    The first account becomes the coinbase of the genesis block, and the creator of the admin contract.
+    The first node becomes the boot miner who's allowed to generate blocks before admin contract gets created.
+    
+    MISC OPTIONS:
+                                          --data value                          data file
+                                          --admin value                         admin contract template file
+                                          --out value                           out file
+    
+
+## wemix deploy-contract
+    deploy-contract [command options] 
+    
+        geth wemix deploy-contract [--password value --url <url> --gas <gas> --gasprice <gas-price>] <account-file> <contract-name> <contract-file.[js|json]>
+    
+    Deploy a contract from a contract file in .js or .json format.
+    
+    ACCOUNT OPTIONS:
+                                          --password value                      Password file to use for non-interactive password input
+    
+    MISC OPTIONS:
+                                          --url value                           url of gwemix node
+                                          --gas value                           gas amount (default: 0)
+                                          --gasprice value                      gas price (default: 0)
+    
+
+## wemix deploy-governance
+    deploy-governance [command options] 
+    
+        geth wemix deploy-governance [--password value] [--url <url>] [--gas <gas>] [--gasprice <gas-price>] <config.js> <account-file> <lockAmount>
+    
+    Deploy governance contracts.
+    To give password in command line, use "--password <(echo <password>)".
+    
+    
+    ACCOUNT OPTIONS:
+                                          --password value                      Password file to use for non-interactive password input
+    
+    MISC OPTIONS:
+                                          --url value                           url of gwemix node
+                                          --gas value                           gas amount (default: 0)
+                                          --gasprice value                      gas price (default: 0)
+    
+
+## wemix download-genesis
+    download-genesis [command options] 
+    
+        geth wemix download-genesis [--url <url>] [--out <file-name>]
+    
+    Download a genesis file from a peer to initialize.
+    
+    MISC OPTIONS:
+                                          --url value                           url of gwemix node
+                                          --out value                           out file
+    
+
+## wemix genesis
+    genesis [command options] <file-name>
+    
+        geth wemix genesis [--data <file> --genesis <file> --out <file>]
+    
+    Generate a new genesis file from a template.
+    
+    Stdin is used when --data is missing, and stdout is used for --out.
+    
+    Data consists of "<account> <tokens>" or "<node id>".
+    
+    MISC OPTIONS:
+                                          --data value                          data file
+                                          --genesis value                       genesis template file
+                                          --out value                           out file
+    
+
+## wemix new-account
+    new-account [command options] 
+    
+        geth wemix new-account --out <file>
+    
+    Creates a new account and saves it in the given file name.
+    To give password in command line, use "--password <(echo <password>)".
+    
+    
+    ACCOUNT OPTIONS:
+                                          --password value                      Password file to use for non-interactive password input
+    
+    MISC OPTIONS:
+                                          --out value                           out file
+    
+
+## wemix new-nodekey
+    new-nodekey [command options] 
+    
+        geth wemix new-nodekey --out <file>
+    
+    Creates a new node key and saves it in the given file name.
+    
+    
+    MISC OPTIONS:
+                                          --out value                           out file
+    
+
+## wemix nodeid
+    nodeid 
+    
+        geth wemix new-nodekey <file>
+    
+    Print node id from node key.
+    
