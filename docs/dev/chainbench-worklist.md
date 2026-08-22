@@ -338,7 +338,7 @@ K0·S0 가 추측 위에 서게 된다.
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
 | **N0** | 역할을 `bp·en·pn` 3종으로 정리 — **NM1 로 흡수**([[netmap-design]] §4) | `validator→bp`·`endpoint→en` 이관 · `node.RoleEN`/`RoleEndpoint` 중복 해소 · 기존 토폴로지 호환 | ◐ NM1·NM1c 완료, 방출 전환은 NM3 |
-| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | mesh 는 현행과 동일 argv · proxied 는 bp/en 의 static-nodes 에 pn 만 · **poa 에 `pn` 선언 시 오류** | ☐ |
+| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | ☑ **NM2 완료** — mesh 골든 동일 · proxied 는 bp/en 의 목록에 pn 만 · poa+pn 은 `SupportsRole` 로 거부. 조립 4곳의 **전환**은 NM3 | ☑ |
 | **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
 | **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
 | **N3** | **raw 경로 완성** — 노드별 nodekey·계정·포트·서버·바이너리 오버라이드 선언 | **preset 없이** 손으로 쓴 청사진만으로 3체인 4노드 기동(라이브) | ☐ |
@@ -402,6 +402,15 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | D1 | **노드는 이름 둘을 갖는다** — 신원 `node7`(=`Index`, 저장·경로·keyring), 별칭 `en2`(역할 내 서수, 정의서 주소지정). **개명 없음** | 영속 식별자는 이미 라벨이 아니라 `Index int` 라 표기·주소지정 문제였다. spec 은 여러 토폴로지에서 도는데 `node7` 은 넷마다 다른 노드를 가리킨다 ([[netmap-design]] §2.5a) |
 | D2 | **`--peering proxied` 는 필수** | 메인넷이 bp–pn–en 이고 **트랜잭션이 en 을 거쳐 전파**된다. mesh 만으로는 실제 전파 경로를 태우지 못한다 |
 | D3 | **인벤토리 v2 단독** (v1 호환 없음) | 실제 파일은 gitignore 라 배포본이 확인되지 않는다 — 지금이 전환 비용 최저. 호환 로더는 다섯 번째 폴딩표가 된다 |
+
+**NM2 완료 (2026-08-22)** — 피어링이 역할에서 파생된다. `mesh` 는 현행과 바이트 동일(골든:
+`armSpecs` 가 렌더한 config 의 enode 목록 == `netmap.Mesh`, **self 항목 포함까지**; self 를 뺀
+변형으로 실패를 확인), `proxied` 는 bp↔pn↔en 이라 **en 의 목록에 bp 가 없다**. pn 없는 proxied 와
+poa+pn 은 거부한다 — `ConsensusFamily.SupportsRole` 신설(구현 2곳뿐이라 값싼 seam).
+**동시에 고친 잠복 결함**: 두 패밀리의 `StartFlags` 가 `--mine` 을 `RoleValidator` 철자에만
+걸고 있었다. NM3 이 정규 철자를 방출하면 **프로듀서가 --mine 없이 떠서 체인이 멈춘다** —
+NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생성 자체를 좌우한다. 이제 두 철자
+모두 `netmap.NormalizeRole` 로 접는다. N0b 가 닫혔다.
 
 **NM1b 완료 (2026-08-22)** — `netmap.Pool`/`Assign` 이 자원 격자(hosts × slots)를 결정적으로
 할당하고, 인벤토리가 v2(pool) 단독이 됐다. `place` 의 두 결정적 모드는 이 격자의 특수해임을

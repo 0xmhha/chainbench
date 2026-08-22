@@ -74,3 +74,34 @@ func TestFamily_StaticFacts(t *testing.T) {
 		t.Error("BootRole classification wrong")
 	}
 }
+
+// TestSupportsRole_PoaHasNoProxyTier: etcd occupies that place, so a pn here is
+// a declaration that would never be honoured.
+func TestSupportsRole_PoaHasNoProxyTier(t *testing.T) {
+	f := Family{}
+	if f.SupportsRole(node.RolePN) {
+		t.Error("poa must not claim a proxy tier")
+	}
+	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleEN, node.RoleBoot} {
+		if !f.SupportsRole(role) {
+			t.Errorf("poa should run %q", role)
+		}
+	}
+}
+
+// TestStartFlags_MineFollowsTheRoleNotItsSpelling mirrors the wbft case: the
+// producer and the bootstrap node both seal, under either spelling.
+func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
+	f := Family{}
+	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleBoot} {
+		found := false
+		for _, fl := range f.StartFlags(role) {
+			if fl == "--mine" {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatalf("role %q must seal: %v", role, f.StartFlags(role))
+		}
+	}
+}

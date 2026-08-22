@@ -6,6 +6,7 @@
 package wbft
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -41,8 +42,27 @@ func (Family) StartFlags(role node.Role) []string {
 		"--rpc.enabledeprecatedpersonal",
 		"--rpc.allow-unprotected-txs",
 	}
-	if role == node.RoleValidator {
+	// Both spellings of the producing role seal. Comparing against one of them
+	// makes --mine depend on which word the composition happened to record,
+	// and a producer launched without it stalls the chain.
+	if canonical, err := netmap.NormalizeRole(string(role)); err == nil && canonical == node.RoleBP {
 		flags = append(flags, "--mine")
 	}
 	return flags
+}
+
+// SupportsRole: the wbft family runs producers, endpoints, and a proxy tier
+// between them. It has no governance bootstrap, so "boot" is not one of its
+// roles.
+func (Family) SupportsRole(role node.Role) bool {
+	canonical, err := netmap.NormalizeRole(string(role))
+	if err != nil {
+		return false
+	}
+	switch canonical {
+	case node.RoleBP, node.RoleEN, node.RolePN:
+		return true
+	default:
+		return false
+	}
 }

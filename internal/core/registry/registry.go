@@ -40,6 +40,11 @@ type ConsensusFamily interface {
 	ValidatorsMethod() string
 	// StartFlags returns the node launch flags for a given role.
 	StartFlags(role node.Role) []string
+	// SupportsRole reports whether this family can run a role. The proxy tier
+	// (pn) is the case that matters: poa has no such tier — etcd occupies that
+	// place — so a topology declaring one is asking for something that will not
+	// exist, and only the family can say so (netmap-design 2.6).
+	SupportsRole(role node.Role) bool
 	// BuildGenesis substitutes the family's placeholders in template with
 	// params and returns the genesis.json bytes. This is the dispatch seam that
 	// lets pkg/core/genesis build a genesis without importing any family.

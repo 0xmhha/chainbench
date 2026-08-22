@@ -7,6 +7,7 @@
 package poa
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -33,8 +34,28 @@ func (Family) StartFlags(role node.Role) []string {
 	flags := []string{
 		"--allow-insecure-unlock",
 	}
-	if role == node.RoleValidator || role == node.RoleBoot {
+	// Both spellings of the producing role seal (see the wbft family): a
+	// producer launched without --mine stalls the chain, and which word the
+	// composition recorded must not decide that.
+	canonical, err := netmap.NormalizeRole(string(role))
+	if err == nil && (canonical == node.RoleBP || canonical == node.RoleBoot) {
 		flags = append(flags, "--mine")
 	}
 	return flags
+}
+
+// SupportsRole: poa produces blocks and serves endpoints, and one producer
+// carries the governance bootstrap. It has no proxy tier — etcd occupies that
+// place — so a pn declared here is refused rather than quietly ignored.
+func (Family) SupportsRole(role node.Role) bool {
+	canonical, err := netmap.NormalizeRole(string(role))
+	if err != nil {
+		return false
+	}
+	switch canonical {
+	case node.RoleBP, node.RoleEN, node.RoleBoot:
+		return true
+	default:
+		return false
+	}
 }

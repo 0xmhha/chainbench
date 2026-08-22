@@ -343,13 +343,13 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM1** | `core/netmap` 신설 — node.Role 에 bp/en/pn 추가·Ports(Etcd 포함)·Map/Placement·NodeLabel·legacy 매핑 | 기존 topology/NodeState 를 **읽기 호환**으로 흡수 · 문자열 역할이 남지 않음 · DSL 의 `"node"+i` 하드코딩이 `netmap.NodeLabel` 로 |
 | **NM1c** | **선행 결함 수정** — 셀렉터 폴딩표를 `netmap.NormalizeRole` 경유로 · 신원/별칭 두 표기(§2.5a) | ☑ **완료 2026-08-22.** `on:"bp1"` 이 `RoleBP`·`RoleValidator` 양쪽에 매칭 · `pn` 셀렉터 · `on:"node7"`(신원) 해석 · `RoleLabel`/`ParseRoleLabel` · `Placement{Index, Ord}` |
 | **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
-| **NM2** | Peering 파생 + `StaticNodes` + PortProfile — mesh 는 **현행 argv 와 바이트 동일** | proxied: en 의 목록에 bp 가 없음 · poa+pn 오류 · 골든 비교 · `serverset` 전역 `p2pStep>=2` 가 `PortReservation` seam 으로 (F1) |
+| **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | 앞 2곳 전환 후 `net up` 라이브 재검증(stablenet·wbft) · 살아있는 wemix 노드의 etcd 포트를 조회할 수 있다 |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
 
-**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → NM2 → NM2b → NM3 → NM4 → NM5.
+**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → **NM2 ☑** → → NM2b → NM3 → NM4 → NM5.
 NM1c 를 앞세운 이유는 §2.5a 의 결함이 NM3 에서 터지기 때문이다 — 그 시점엔 배치·persist·argv 가
 함께 움직여 원인이 셋으로 갈린다. NM2b(Layout)를 NM3 앞에 두는 이유는, NM3 이 만지는 32곳에
 경로 파생이 섞여 있어 Layout 이 없으면 같은 파일을 두 번 고치게 되기 때문이다.
@@ -365,7 +365,8 @@ N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
 |---|---|---|
 | NM-a | ~~`netmap.Label` vs `keyring.Label`~~ | 해소 — `NodeLabel` 로 이름부터 분리(§2.5) |
 | NM-b | `node.Node.Ports` 타입 교체는 파급이 크다(25 fan-in). 단계적으로? | NM1 에서 alias 로 시작, NM3 에서 교체 |
-| NM-c | proxied 에서 pn 이 없으면? | 오류 — mesh 로 조용히 강등하지 않는다 |
+| ~~NM-c~~ | ~~proxied 에서 pn 이 없으면?~~ | **해소** — 오류(NM2 구현). mesh 로 조용히 강등하지 않는다 |
+| NM-i | proxied 에서 bp 는 다른 bp 를 직접 아는가? | **아니오**(NM2 구현) — bp 는 pn 만 다이얼하고 bp↔bp 는 pn 을 거친다(센트리 구조). 합의가 pn 경유 전파로 충분한지는 라이브(NM3 이후)에서 확인 |
 | ~~NM-f~~ | ~~라벨을 `node7` 로 둘지 `en2` 로 둘지~~ | **해소 (2026-08-22)** — 둘 다. 신원=`Index`, 별칭=역할 라벨(§2.5a). 개명 없음 |
 | ~~NM-g~~ | ~~인벤토리 v1 호환 기간~~ | **해소 (2026-08-22)** — v2 단독(§2.2a) |
 | ~~NM-h~~ | ~~proxied 를 실제로 쓰는가~~ | **해소 (2026-08-22)** — 쓴다. 메인넷이 bp–pn–en 이고 tx 가 en 경유(§2.6) |
