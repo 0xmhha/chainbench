@@ -335,3 +335,38 @@ func TestLayout_NamesEveryPathAfterTheNode(t *testing.T) {
 		t.Fatal("two nodes must not share a datadir")
 	}
 }
+
+// TestAssign_IsDeterministic: the same pool and the same requests must yield
+// the same map. A layout that drifts between runs would make every artifact
+// derived from it — static-nodes, genesis, a saved session — disagree with the
+// network it describes.
+func TestAssign_IsDeterministic(t *testing.T) {
+	pool := netmap.Pool{
+		Hosts: []netmap.Host{{Addr: "10.0.0.1"}, {Addr: "10.0.0.2"}, {Addr: "10.0.0.3"}},
+		Slots: 3,
+		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+	}
+	reqs := []netmap.Request{
+		{Role: node.RoleBP}, {Role: node.RoleBP}, {Role: node.RoleBP},
+		{Role: node.RolePN}, {Role: node.RoleEN},
+	}
+
+	first, err := netmap.Assign(pool, reqs)
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	second, err := netmap.Assign(pool, reqs)
+	if err != nil {
+		t.Fatalf("Assign (again): %v", err)
+	}
+
+	a, b := first.Placements(), second.Placements()
+	if len(a) != len(b) {
+		t.Fatalf("placement count drifted: %d then %d", len(a), len(b))
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			t.Fatalf("placement %d drifted:\n first  %+v\n second %+v", i, a[i], b[i])
+		}
+	}
+}
