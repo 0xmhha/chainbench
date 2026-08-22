@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/netcompose"
@@ -25,6 +27,9 @@ type NetMapIn struct {
 	// Port selects whichever node listens on a port — the reverse question an
 	// address in a log line or an error message asks.
 	Port int
+	// Addr is the same question in the form a log line actually prints it,
+	// "host:port", so it can be pasted rather than split by hand.
+	Addr string
 }
 
 // MapEntry is one node's placement as an operator reads it. Both names are
@@ -102,13 +107,27 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 // that asks two questions at once rather than silently honouring one.
 func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) {
 	given := 0
-	for _, on := range []bool{in.Node > 0, in.Label != "", in.Host != "", in.Port > 0} {
+	for _, on := range []bool{in.Node > 0, in.Label != "", in.Host != "", in.Port > 0, in.Addr != ""} {
 		if on {
 			given++
 		}
 	}
 	if given > 1 {
-		return nil, fmt.Errorf("app: net map: give at most one of --node, --label, --host, --port")
+		return nil, fmt.Errorf("app: net map: give at most one of --node, --label, --host, --port, --addr")
+	}
+	if in.Addr != "" {
+		host, portStr, err := net.SplitHostPort(in.Addr)
+		if err != nil {
+			return nil, fmt.Errorf("app: net map: %q is not host:port: %w", in.Addr, err)
+		}
+		port, err := strconv.Atoi(portStr)
+		if err != nil {
+			return nil, fmt.Errorf("app: net map: %q has no port number", in.Addr)
+		}
+		if label, ok := m.At(host, port); ok {
+			return func(p netmap.Placement) bool { return p.Label == label }, nil
+		}
+		return func(netmap.Placement) bool { return false }, nil
 	}
 	switch {
 	case in.Node > 0:

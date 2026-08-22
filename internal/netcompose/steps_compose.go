@@ -134,7 +134,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: role}
+			reqs[i] = place.NodeReq{Role: role}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -147,11 +147,11 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 	reqs := make([]place.NodeReq, 0, o.Validators+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < o.Validators; i++ {
-		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("val%d", i+1), Role: node.RoleValidator})
+		reqs = append(reqs, place.NodeReq{Role: node.RoleValidator})
 		modes = append(modes, syncModeFull)
 	}
 	for i := 0; i < o.Endpoints; i++ {
-		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("ep%d", i+1), Role: node.RoleEndpoint})
+		reqs = append(reqs, place.NodeReq{Role: node.RoleEndpoint})
 		modes = append(modes, syncModeFor(node.RoleEndpoint, o.EndpointSyncMode))
 	}
 	return reqs, modes, nil
@@ -202,20 +202,21 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		root = pl.DataRoot
 		w.state.Target.DataRoot = root
 	}
+	layout := netmap.Layout{Root: root}
 	nodes := make([]NodeState, len(placements))
 	validators := 0
 	for i, p := range placements {
-		idx := i + 1
-		if netmap.Is(reqs[i].Role, node.RoleBP) {
+		if netmap.Is(p.Role, node.RoleBP) {
 			validators++
 		}
 		nodes[i] = NodeState{
-			Index:      idx,
+			Index:      p.Index,
+			Label:      string(p.Label),
 			Role:       string(reqs[i].Role),
 			SyncMode:   modes[i],
-			DataDir:    filepath.Join(root, fmt.Sprintf("node%d", idx)),
-			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
-			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
+			DataDir:    layout.DataDir(p.Label),
+			ConfigPath: layout.ConfigPath(p.Label),
+			LogPath:    layout.LogPath(p.Label),
 			Host:       p.Host,
 			Endpoints:  p.Ports,
 		}
@@ -408,7 +409,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	}
 	m := p.Manifest()
 	for _, ns := range w.state.Nodes {
-		staticNodes, err := peering.StaticNodes(placed, netmap.LabelFor(ns.Index), enode)
+		staticNodes, err := peering.StaticNodes(placed, ns.NodeLabel(), enode)
 		if err != nil {
 			return "", fmt.Errorf("netcompose: config: node%d peers: %w", ns.Index, err)
 		}
@@ -564,7 +565,7 @@ func (w *Workspace) Netmap() (*netmap.Map, error) {
 		ordinals[role]++
 		placements = append(placements, netmap.Placement{
 			Index:   ns.Index,
-			Label:   netmap.LabelFor(ns.Index),
+			Label:   ns.NodeLabel(),
 			Role:    role,
 			Ord:     ordinals[role],
 			Host:    nodeHost(ns),

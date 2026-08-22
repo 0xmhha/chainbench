@@ -126,6 +126,7 @@ func netMapTool() Tool {
 			"label": map[string]any{"type": "string", "description": "select by identity (node7) or role alias (en2)"},
 			"host":  map[string]any{"type": "string", "description": "select every node on an address"},
 			"port":  map[string]any{"type": "number", "description": "select whichever node listens on a port (p2p, etcd, http, ws, auth, metrics)"},
+			"addr":  map[string]any{"type": "string", "description": "select by an address as a log line prints it (host:port)"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			res, err := app.NetMap(ctx, app.Deps{}, app.NetMapIn{
@@ -134,6 +135,7 @@ func netMapTool() Tool {
 				Label:   argString(args, "label", ""),
 				Host:    argString(args, "host", ""),
 				Port:    argInt(args, "port", 0),
+				Addr:    argString(args, "addr", ""),
 			})
 			if err != nil {
 				return "", err

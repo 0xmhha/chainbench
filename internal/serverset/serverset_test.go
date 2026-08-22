@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -140,30 +139,32 @@ func TestSelect_ByNameByIndexAndTheLoneHost(t *testing.T) {
 	}
 }
 
+// TestPlacement_LocalAndRemoteReadTheSameFields: local and remote differ in the
+// address and in whether the data plane is reached over SSH — nothing else. The
+// pool is read from the same fields either way, which is why composing a
+// network does not branch on it.
 func TestPlacement_LocalAndRemoteReadTheSameFields(t *testing.T) {
 	cfg := load(t, sample)
 
 	local, _ := cfg.ByName("local")
 	lp := cfg.Placement(local, 1, 100)
-	if lp.Mode != place.LocalStepped || lp.Remote {
-		t.Errorf("local placement mode = %v remote=%v", lp.Mode, lp.Remote)
+	if lp.Remote {
+		t.Errorf("a loopback address must not be remote: %+v", lp)
 	}
-	if lp.Capacity.SlotsPerHost != 8 || lp.DataRoot != "/var/lib/chainbench" {
+	if lp.Pool.Slots != 8 || lp.DataRoot != "/var/lib/chainbench" {
 		t.Errorf("local placement = %+v", lp)
 	}
 
 	remoteSrv, _ := cfg.ByName("bp1")
 	rp := cfg.Placement(remoteSrv, 1, 100)
-	if rp.Mode != place.RemotePerHost || !rp.Remote {
-		t.Errorf("remote placement mode = %v remote=%v", rp.Mode, rp.Remote)
+	if !rp.Remote {
+		t.Errorf("a routable address must be remote: %+v", rp)
 	}
-	// The port plan is read from the same fields either way — only the mode
-	// and the host differ.
-	if lp.Config.RPCBase != rp.Config.RPCBase || lp.Config.P2PStep != rp.Config.P2PStep {
-		t.Errorf("port plans diverged: local=%+v remote=%+v", lp.Config, rp.Config)
+	if lp.Pool.Ports != rp.Pool.Ports {
+		t.Errorf("port bands diverged: local=%+v remote=%+v", lp.Pool.Ports, rp.Pool.Ports)
 	}
-	if len(rp.Config.Hosts) != 1 || rp.Config.Hosts[0] != "10.0.0.1" {
-		t.Errorf("remote placement hosts = %v", rp.Config.Hosts)
+	if len(rp.Pool.Hosts) != 1 || rp.Pool.Hosts[0].Addr != "10.0.0.1" {
+		t.Errorf("remote placement hosts = %v", rp.Pool.Hosts)
 	}
 	for _, p := range []serverset.Placement{lp, rp} {
 		if !strings.Contains(p.Source, "remote-server-config.yaml") {
@@ -176,14 +177,14 @@ func TestBuiltin_NamesItselfAsTheSource(t *testing.T) {
 	// Where a port came from must never be a guess, including when no file
 	// was involved.
 	p := serverset.Builtin(1, 100)
-	if p.Mode != place.LocalStepped || p.Remote {
+	if p.Remote {
 		t.Errorf("builtin placement = %+v", p)
 	}
 	if !strings.Contains(p.Source, "built-in") {
 		t.Errorf("source = %q, want it to say built-in", p.Source)
 	}
-	if p.Config.RPCBase != serverset.BuiltinPorts().RPCBase {
-		t.Errorf("builtin ports not used: %+v", p.Config)
+	if p.Pool.Ports.RPCBase != serverset.BuiltinPorts().RPCBase {
+		t.Errorf("builtin ports not used: %+v", p.Pool.Ports)
 	}
 
 	pool := serverset.BuiltinPool(4)
@@ -204,11 +205,11 @@ ssh: {user: ubuntu}
 	if err != nil {
 		t.Fatalf("Fleet: %v", err)
 	}
-	if p.Mode != place.RemotePerHost || len(p.Config.Hosts) != 3 {
+	if !p.Remote || len(p.Pool.Hosts) != 3 {
 		t.Errorf("fleet placement = %+v", p)
 	}
-	if p.Capacity.Hosts != 3 || p.Capacity.SlotsPerHost != 1 {
-		t.Errorf("fleet capacity = %+v", p.Capacity)
+	if p.Pool.Slots != 1 || p.Pool.Cap() != 3 {
+		t.Errorf("fleet pool = %d hosts x %d slots", len(p.Pool.Hosts), p.Pool.Slots)
 	}
 }
 

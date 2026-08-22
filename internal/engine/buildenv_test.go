@@ -77,10 +77,10 @@ func buildEnvSession(t *testing.T) session.Environment {
 
 func fourNodeReqs() []place.NodeReq {
 	return []place.NodeReq{
-		{Name: "node1", Role: node.RoleValidator, Binary: "go-wbft"},
-		{Name: "node2", Role: node.RoleValidator, Binary: "go-wbft"},
-		{Name: "node3", Role: node.RoleValidator, Binary: "go-wbft"},
-		{Name: "node4", Role: node.RoleEndpoint, Binary: "go-wbft"},
+		{Role: node.RoleValidator, Binary: "go-wbft"},
+		{Role: node.RoleValidator, Binary: "go-wbft"},
+		{Role: node.RoleValidator, Binary: "go-wbft"},
+		{Role: node.RoleEndpoint, Binary: "go-wbft"},
 	}
 }
 

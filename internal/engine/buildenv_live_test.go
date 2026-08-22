@@ -82,7 +82,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 		Reqs: func(testspec.Spec) []place.NodeReq {
 			reqs := make([]place.NodeReq, 4)
 			for i := range reqs {
-				reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: node.RoleValidator, Binary: "go-stablenet"}
+				reqs[i] = place.NodeReq{Role: node.RoleValidator, Binary: "go-stablenet"}
 			}
 			return reqs
 		},

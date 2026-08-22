@@ -192,7 +192,7 @@ keyring 의 것이다. netmap 이 keyring 을 import 하면 배치가 신원에 
 | `portplan.Ports` | `netmap.Ports` | **이동**. `portplan` 은 계산 함수(`Plan`·`Validate`)만 남기고 타입은 netmap 이 소유 |
 | `node.Endpoints` | (그대로, `Etcd` 추가) | **정정**: 대체가 아니라 **정본이 됐다**. `portplan.Ports`·`netmap.Ports` 가 이것의 별칭이다 — L0 가 L1 을 import 할 수 없으므로 어휘가 아래로 내려가는 것이 유일한 무순환 해법 |
 | `node.RoleEN` | 삭제 | `en` 은 `RoleEndpoint` 의 새 철자가 아니라 중복이었다 |
-| `place.NodePlacement.Name` | `netmap.NodeLabel` | 명명된 타입으로 승격. `keyring.Label` 과 이름부터 다르게 — 노드 라벨과 링 항목은 다른 개념이다 |
+| ~~`place.NodePlacement.Name`~~ | `netmap.NodeLabel` | ☑ 승격 완료. 원본은 **5곳에서 4가지 철자로 만들어지고 아무도 읽지 않던 필드**였다(실측) — 그래서 이동이 아니라 삭제였고, 라벨은 이제 배정 시 한 번 정해져 워크스페이스에 남는다 |
 | static-nodes 조립 4곳 | `netmap.StaticNodes` | engine·netcompose·upgrade.mesh·chainsetup 이 호출자로 |
 | `upgrade.NodeSpec`·`deploy.Server` 의 배치 필드 | netmap 참조 | **F4·F5 때** — A4b 와 같은 이유로 핸드오프 코드는 그때 함께 |
 
@@ -362,9 +362,9 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **포트 타입 통합 완료**: 표현 3벌 → **1벌**. 단, 방향은 설계와 반대다 — `node`(L0)는 `netmap`(L1)을 import 할 수 없으므로 **어휘를 L0 에 두고** `portplan.Ports`·`netmap.Ports` 가 `node.Endpoints` 의 별칭이 됐다. `Etcd` 가 런타임·워크스페이스까지 살아남는다(`"etcd": 31001` 실측). ☑ |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + `--peering` (§3) | ☑ **완료 2026-08-22.** `app.NetMap`/`NetPool` 유스케이스 1개씩 → CLI 1개 + MCP 1개(K8 선례) · 4방향 조회(node·label(신원/별칭)·host·port) · 선택자 2개는 거부 · 무응답은 "nothing matches" 로 명시 · **`NetPoolOut` 에 자격증명 필드 부재를 리플렉션 테스트로 고정** |
-| **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
+| **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | ☑ **완료 2026-08-22.** `NodeState.Label` 영속(구 워크스페이스는 index 폴백) · `netmap.Layout` 이 datadir·config·log 경로를 라벨에서 파생(6곳의 `fmt.Sprintf("node%d")` 대체) · `Request.Label` 로 운영자 지정 이름 보존 · `net map --addr host:port` 로 로그 한 줄을 노드로 · **`place` 할당기 삭제**(`Allocator`·`NodePlacement`·`Mode`·`Capacity` 소비자 0) |
 
-**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → **NM2 ☑** → **NM3 ☑** → **NM4 ☑** → → NM2b → NM3 → NM4 → NM5.
+**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → **NM2 ☑** → **NM3 ☑** → **NM4 ☑** → **NM5 ☑ (완료)** → NM2b → NM3 → NM4 → NM5.
 NM1c 를 앞세운 이유는 §2.5a 의 결함이 NM3 에서 터지기 때문이다 — 그 시점엔 배치·persist·argv 가
 함께 움직여 원인이 셋으로 갈린다. NM2b(Layout)를 NM3 앞에 두는 이유는, NM3 이 만지는 32곳에
 경로 파생이 섞여 있어 Layout 이 없으면 같은 파일을 두 번 고치게 되기 때문이다.

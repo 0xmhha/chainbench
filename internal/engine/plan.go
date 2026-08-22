@@ -34,15 +34,20 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 	}
 	m := plugin.Manifest()
 
+	layout := netmap.Layout{Root: dataRoot}
 	specs := make([]driver.NodeSpec, 0, len(placed))
 	for i, pn := range placed {
 		idx := i + 1
+		label := pn.Placement.Label
+		if label == "" {
+			label = netmap.LabelFor(idx)
+		}
 		ports := pn.Placement.Ports
 		dataDir := pn.Placement.DataDir
 		if dataDir == "" {
-			dataDir = filepath.Join(dataRoot, fmt.Sprintf("node%d", idx))
+			dataDir = layout.DataDir(label)
 		}
-		configPath := filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", idx))
+		configPath := layout.ConfigPath(label)
 		binary := pn.Req.Binary
 		if binary == "" {
 			binary = m.Binary
@@ -58,7 +63,7 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 			Binary:     binary,
 			DataDir:    dataDir,
 			ConfigPath: configPath,
-			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", idx)),
+			LogPath:    layout.LogPath(label),
 			Ports:      ports,
 		})
 	}

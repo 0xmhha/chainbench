@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -142,4 +143,63 @@ func hasField(v any, name string) bool {
 		}
 	}
 	return false
+}
+
+// TestNetMap_TracesAnAddressFromALogLine is the question a map exists to
+// answer: a bind failure or a peer error prints host:port, and that has to lead
+// back to a node without the operator matching numbers by eye. It answers for
+// the derived etcd port too, which is exactly the one a wemix bind failure
+// names and the one nothing could resolve before.
+func TestNetMap_TracesAnAddressFromALogLine(t *testing.T) {
+	dir := composeForQuery(t)
+	ctx := context.Background()
+	d := app.Deps{Clock: fixedClock}
+
+	all, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("map: %v", err)
+	}
+	want := all.Entries[1]
+	addr := fmt.Sprintf("%s:%d", want.Host, want.Etcd)
+
+	got, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Addr: addr})
+	if err != nil {
+		t.Fatalf("map by addr %s: %v", addr, err)
+	}
+	if len(got.Entries) != 1 || got.Entries[0].Node != want.Node {
+		t.Fatalf("addr %s = %+v, want node%d", addr, got.Entries, want.Node)
+	}
+	// A malformed address says so rather than matching nothing quietly.
+	if _, err := app.NetMap(ctx, d, app.NetMapIn{DataDir: dir, Addr: "127.0.0.1"}); err == nil {
+		t.Fatal("an address without a port must be refused")
+	}
+}
+
+// TestNetAllocate_PersistsTheLabel: the label is stored, and every path is
+// named after it. Deriving it at each read is how four different spellings of a
+// node's name came to exist.
+func TestNetAllocate_PersistsTheLabel(t *testing.T) {
+	dir := composeForQuery(t)
+	out, err := app.NetStatus(context.Background(), app.Deps{Clock: fixedClock}, app.NetStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("status: %v", err)
+	}
+	for _, n := range out.State.Nodes {
+		if n.Label == "" {
+			t.Fatalf("node%d has no persisted label", n.Index)
+		}
+		if !strings.HasSuffix(n.DataDir, n.Label) {
+			t.Fatalf("node%d datadir %q is not named after %q", n.Index, n.DataDir, n.Label)
+		}
+		if !strings.HasSuffix(n.LogPath, n.Label+".log") {
+			t.Fatalf("node%d log %q is not named after %q", n.Index, n.LogPath, n.Label)
+		}
+	}
+	// A workspace written before the field still resolves: the label falls back
+	// to the conventional one for its index.
+	old := out.State.Nodes[0]
+	old.Label = ""
+	if got := old.NodeLabel(); got != "node1" {
+		t.Fatalf("fallback label = %q, want node1", got)
+	}
 }

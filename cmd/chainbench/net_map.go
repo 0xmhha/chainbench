@@ -15,7 +15,7 @@ import (
 // a step: it changes nothing, which is why it is not part of the composed
 // sequence even though it reads the same workspace.
 func newNetMapCmd() *cobra.Command {
-	var dataDir, label, host string
+	var dataDir, label, host, addr string
 	var nodeIdx, port int
 	var asJSON bool
 	cmd := &cobra.Command{
@@ -32,7 +32,7 @@ func newNetMapCmd() *cobra.Command {
 				return fmt.Errorf("--data-dir is required")
 			}
 			out, err := app.NetMap(cmd.Context(), app.Deps{}, app.NetMapIn{
-				DataDir: dataDir, Node: nodeIdx, Label: label, Host: host, Port: port,
+				DataDir: dataDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr,
 			})
 			if err != nil {
 				return err
@@ -49,6 +49,7 @@ func newNetMapCmd() *cobra.Command {
 	cmd.Flags().StringVar(&label, "label", "", "select by identity (node7) or role alias (en2)")
 	cmd.Flags().StringVar(&host, "host", "", "select every node on an address")
 	cmd.Flags().IntVar(&port, "port", 0, "select whichever node listens on a port (p2p, etcd, http, ws, auth or metrics)")
+	cmd.Flags().StringVar(&addr, "addr", "", "select by an address as a log line prints it (host:port)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the map as JSON")
 	return cmd
 }

@@ -196,7 +196,7 @@ func validatorReqs(n int) func(testspec.Spec) []place.NodeReq {
 	return func(testspec.Spec) []place.NodeReq {
 		reqs := make([]place.NodeReq, n)
 		for i := range reqs {
-			reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: node.RoleValidator}
+			reqs[i] = place.NodeReq{Role: node.RoleValidator}
 		}
 		return reqs
 	}

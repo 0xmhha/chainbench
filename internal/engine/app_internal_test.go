@@ -38,8 +38,5 @@ func TestValidatorReqs(t *testing.T) {
 		if r.Role != node.RoleValidator {
 			t.Fatalf("req %d role = %q, want validator", i, r.Role)
 		}
-		if r.Name == "" {
-			t.Fatalf("req %d has no name", i)
-		}
 	}
 }

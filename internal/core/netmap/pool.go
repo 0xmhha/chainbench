@@ -73,10 +73,19 @@ func (p Pool) Validate() error {
 	return nil
 }
 
-// Request is one node to place. Only the role is needed: position comes from
-// the request's order, which is also the node's identity.
+// Request is one node to place.
+//
+// The role is required; the label is not. Position in the request list is the
+// node's identity, and LabelFor spells it — but an operator who names a node
+// should have that name kept, because the name is how they will refer to it in
+// a log, a path, and a test definition. The previous placement type carried a
+// name too, invented in four different spellings by different callers and then
+// read by none.
 type Request struct {
 	Role node.Role
+	// Label overrides the conventional identity label for this node. Empty
+	// takes LabelFor(position).
+	Label NodeLabel
 }
 
 // Assign allocates the pool to the requests, deterministically: node i takes
@@ -123,9 +132,13 @@ func Assign(pool Pool, reqs []Request) (*Map, error) {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}
 		ordinals[role]++
+		label := r.Label
+		if label == "" {
+			label = LabelFor(i + 1)
+		}
 		placements = append(placements, Placement{
 			Index: i + 1,
-			Label: LabelFor(i + 1),
+			Label: label,
 			Role:  role,
 			Ord:   ordinals[role],
 			Host:  pool.Hosts[i%hosts].Addr,

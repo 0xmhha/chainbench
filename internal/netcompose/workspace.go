@@ -22,6 +22,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/target"
@@ -34,7 +35,15 @@ type Step = session.Step
 // paths, allocated ports, the assembled launch argv (once `launchopts` ran),
 // and the live PID (once `start` ran; 0 = stopped).
 type NodeState struct {
-	Index int    `json:"index"`
+	Index int `json:"index"`
+	// Label is the node's identity: the name its datadir, config and log file
+	// carry, and the name an operator uses to address it. It is stored rather
+	// than derived so that a name, once given, survives — the placement type
+	// this replaced also carried a name, and it was thrown away.
+	//
+	// A workspace written before this field falls back to the conventional
+	// label for its index, so nothing has to be migrated.
+	Label string `json:"label,omitempty"`
 	Role  string `json:"role"`
 	// SyncMode is the geth sync mode this node's config renders. Validators are
 	// always "full" — they must hold full state to seal — while an endpoint may
@@ -195,4 +204,13 @@ func (w *Workspace) NodeSet() node.NodeSet {
 		})
 	}
 	return ns
+}
+
+// NodeLabel is the node's identity, falling back to the conventional label for
+// workspaces written before the field existed.
+func (n NodeState) NodeLabel() netmap.NodeLabel {
+	if n.Label != "" {
+		return netmap.NodeLabel(n.Label)
+	}
+	return netmap.LabelFor(n.Index)
 }

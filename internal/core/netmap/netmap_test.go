@@ -286,3 +286,52 @@ func TestPool_ValidateRejects(t *testing.T) {
 		}
 	}
 }
+
+// TestAssign_KeepsAGivenLabel: a name an operator chose has to survive, since
+// it is what they will read in a path, a log file and a test definition. The
+// placement type this replaced also carried a name — invented in four spellings
+// by different callers, then read by none.
+func TestAssign_KeepsAGivenLabel(t *testing.T) {
+	pool := netmap.Pool{
+		Hosts: []netmap.Host{{Addr: "127.0.0.1"}},
+		Slots: 4,
+		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+	}
+	m, err := netmap.Assign(pool, []netmap.Request{
+		{Role: node.RoleBP, Label: "seoul-bp"},
+		{Role: node.RoleBP}, // unnamed: takes the conventional identity
+	})
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	named, ok := m.Lookup("seoul-bp")
+	if !ok {
+		t.Fatalf("the given label was not kept: %v", m.Labels())
+	}
+	if named.Index != 1 || named.RoleLabel() != "bp1" {
+		t.Fatalf("a named node keeps its position and alias: %+v", named)
+	}
+	if _, ok := m.Lookup("node2"); !ok {
+		t.Fatalf("an unnamed node takes the conventional label: %v", m.Labels())
+	}
+}
+
+// TestLayout_NamesEveryPathAfterTheNode fixes the derivation that was spelled
+// out with fmt.Sprintf at six call sites, each free to disagree.
+func TestLayout_NamesEveryPathAfterTheNode(t *testing.T) {
+	l := netmap.Layout{Root: "/srv/cb"}
+	for _, c := range []struct{ got, want string }{
+		{l.DataDir("bp1"), "/srv/cb/bp1"},
+		{l.ConfigPath("bp1"), "/srv/cb/config_bp1.toml"},
+		{l.LogPath("bp1"), "/srv/cb/logs/bp1.log"},
+		{l.GenesisPath(), "/srv/cb/genesis.json"},
+	} {
+		if c.got != c.want {
+			t.Errorf("path = %q, want %q", c.got, c.want)
+		}
+	}
+	// The label is the only thing that varies, so two nodes never share a path.
+	if l.DataDir("node1") == l.DataDir("node2") {
+		t.Fatal("two nodes must not share a datadir")
+	}
+}

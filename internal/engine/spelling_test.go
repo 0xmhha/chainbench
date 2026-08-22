@@ -77,10 +77,10 @@ func TestArmSpecs_CanonicalRolesLaunchIdentically(t *testing.T) {
 // producers.
 func TestCountValidators_CanonicalSpelling(t *testing.T) {
 	reqs := []place.NodeReq{
-		{Name: "node1", Role: node.RoleBP},
-		{Name: "node2", Role: node.RoleValidator},
-		{Name: "node3", Role: node.RoleEN},
-		{Name: "node4", Role: node.RolePN},
+		{Role: node.RoleBP},
+		{Role: node.RoleValidator},
+		{Role: node.RoleEN},
+		{Role: node.RolePN},
 	}
 	if got := countValidators(reqs); got != 2 {
 		t.Fatalf("countValidators = %d, want 2 (both spellings of the producing role)", got)
