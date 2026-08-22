@@ -80,6 +80,66 @@ const (
 	KeyMetricsAddr Key = "metrics.addr" // --metrics.addr <ip>
 	KeyMetricsPort Key = "metrics.port" // --metrics.port <n>
 
+	// Txpool — mempool admission and retention. These decide whether a
+	// transaction a test submits is kept, replaced or dropped, so a test that
+	// exercises nonce gaps or replacement needs to say what the pool does
+	// rather than hope the default suits it.
+	KeyTxPoolLocals       Key = "txpool.locals"       // --txpool.locals <addrs>
+	KeyTxPoolNoLocals     Key = "txpool.nolocals"     // --txpool.nolocals
+	KeyTxPoolJournal      Key = "txpool.journal"      // --txpool.journal <path>
+	KeyTxPoolRejournal    Key = "txpool.rejournal"    // --txpool.rejournal <dur>
+	KeyTxPoolPriceLimit   Key = "txpool.pricelimit"   // --txpool.pricelimit <n>
+	KeyTxPoolPriceBump    Key = "txpool.pricebump"    // --txpool.pricebump <n>
+	KeyTxPoolAccountSlots Key = "txpool.accountslots" // --txpool.accountslots <n>
+	KeyTxPoolGlobalSlots  Key = "txpool.globalslots"  // --txpool.globalslots <n>
+	KeyTxPoolAccountQueue Key = "txpool.accountqueue" // --txpool.accountqueue <n>
+	KeyTxPoolGlobalQueue  Key = "txpool.globalqueue"  // --txpool.globalqueue <n>
+	KeyTxPoolLifetime     Key = "txpool.lifetime"     // --txpool.lifetime <dur>
+
+	// Cache — memory split across database, trie, pruning and snapshots. A
+	// sync or pruning test that does not set these is measuring the default.
+	KeyCache           Key = "cache"            // --cache <mb>
+	KeyCacheDatabase   Key = "cache.database"   // --cache.database <pct>
+	KeyCacheTrie       Key = "cache.trie"       // --cache.trie <pct>
+	KeyCacheGC         Key = "cache.gc"         // --cache.gc <pct>
+	KeyCacheSnapshot   Key = "cache.snapshot"   // --cache.snapshot <pct>
+	KeyCacheNoPrefetch Key = "cache.noprefetch" // --cache.noprefetch
+	KeyCachePreimages  Key = "cache.preimages"  // --cache.preimages
+
+	// GPO — the gas price oracle behind eth_gasPrice and eth_maxPriorityFee.
+	// The gas-policy suite asserts on those answers, and they come from here.
+	KeyGPOBlocks      Key = "gpo.blocks"      // --gpo.blocks <n>
+	KeyGPOPercentile  Key = "gpo.percentile"  // --gpo.percentile <n>
+	KeyGPOMaxPrice    Key = "gpo.maxprice"    // --gpo.maxprice <wei>
+	KeyGPOIgnorePrice Key = "gpo.ignoreprice" // --gpo.ignoreprice <wei>
+
+	// State — what the node keeps and for how long. Archive-vs-pruned changes
+	// which historical reads answer at all.
+	KeySnapshot       Key = "snapshot"        // --snapshot
+	KeyDataDirAncient Key = "datadir.ancient" // --datadir.ancient <path>
+	KeyTxLookupLimit  Key = "txlookuplimit"   // --txlookuplimit <n>
+
+	// Peering shape beyond the port: how many pending peers, which networks
+	// may connect, where discovery looks.
+	KeyMaxPendPeers  Key = "maxpendpeers"   // --maxpendpeers <n>
+	KeyNetRestrict   Key = "netrestrict"    // --netrestrict <cidr>
+	KeyDiscoveryDNS  Key = "discovery.dns"  // --discovery.dns <url>
+	KeyDiscoveryPort Key = "discovery.port" // geth114 --discovery.port <n>
+
+	// Dev mode — a single-node chain that seals on demand. Useful for tests
+	// that need a chain and not a network.
+	KeyDev         Key = "dev"          // --dev
+	KeyDevPeriod   Key = "dev.period"   // --dev.period <s>
+	KeyDevGasLimit Key = "dev.gaslimit" // --dev.gaslimit <n>
+
+	// Miner extras beyond the ones the Mining module already owns.
+	KeyMinerExtraData Key = "miner.extradata" // --miner.extradata <bytes>
+
+	// History pruning (geth114 generation only).
+	KeyHistoryState        Key = "history.state"        // --history.state <n>
+	KeyHistoryTransactions Key = "history.transactions" // --history.transactions <n>
+	KeyCacheBlockLogs      Key = "cache.blocklogs"      // --cache.blocklogs <n>
+
 	// ChainExt — generation-specific consensus knobs. geth114 has none of
 	// these; requesting one there is a classified error, never a silent skip.
 	KeyConsensusMethod   Key = "chain.consensusmethod"    // gwemix --consensusmethod
@@ -90,6 +150,12 @@ const (
 	KeyBlockTimeAdj      Key = "chain.block.timeadj"      // gwemix --wemix.block.timeadjblocks
 	KeyBlockMinBuildTime Key = "chain.block.minbuildtime" // gwemix --wemix.block.minbuildtime
 	KeyBlockMinBuildTxs  Key = "chain.block.minbuildtxs"  // gwemix --wemix.block.minbuildtxs
+	KeyBlockTrailTime    Key = "chain.block.trailtime"    // gwemix --wemix.block.trailtime
+	KeyBootnodeCount     Key = "chain.bootnodecount"      // gwemix --wemix.bootnodecount
+	KeyMaxIdleBlock      Key = "chain.maxidleblock"       // gwemix --maxidleblockinterval
+	KeyFixedDifficulty   Key = "chain.fixeddifficulty"    // gwemix --fixeddifficulty
+	KeyFixedGasLimit     Key = "chain.fixedgaslimit"      // gwemix --fixedgaslimit
+	KeyMinerGasTarget    Key = "miner.gastarget"          // gwemix --miner.gastarget
 )
 
 // Layer names one precedence level of the value stack. A later layer setting
@@ -184,6 +250,54 @@ func geth114Common() map[Key]flagSpec {
 		KeyMetrics:     {"--metrics", true},
 		KeyMetricsAddr: {"--metrics.addr", false},
 		KeyMetricsPort: {"--metrics.port", false},
+
+		// Spellings and value/boolean kinds below are read from the captured
+		// binary surfaces, not from memory — docs/chain-analysis/*/cli-surface.txt.
+		// TestDialectSpellingsExistInTheBinaries holds the table to them.
+		KeyTxPoolLocals:       {"--txpool.locals", false},
+		KeyTxPoolNoLocals:     {"--txpool.nolocals", true},
+		KeyTxPoolJournal:      {"--txpool.journal", false},
+		KeyTxPoolRejournal:    {"--txpool.rejournal", false},
+		KeyTxPoolPriceLimit:   {"--txpool.pricelimit", false},
+		KeyTxPoolPriceBump:    {"--txpool.pricebump", false},
+		KeyTxPoolAccountSlots: {"--txpool.accountslots", false},
+		KeyTxPoolGlobalSlots:  {"--txpool.globalslots", false},
+		KeyTxPoolAccountQueue: {"--txpool.accountqueue", false},
+		KeyTxPoolGlobalQueue:  {"--txpool.globalqueue", false},
+		KeyTxPoolLifetime:     {"--txpool.lifetime", false},
+
+		KeyCache:           {"--cache", false},
+		KeyCacheDatabase:   {"--cache.database", false},
+		KeyCacheTrie:       {"--cache.trie", false},
+		KeyCacheGC:         {"--cache.gc", false},
+		KeyCacheSnapshot:   {"--cache.snapshot", false},
+		KeyCacheNoPrefetch: {"--cache.noprefetch", true},
+		KeyCachePreimages:  {"--cache.preimages", true},
+
+		KeyGPOBlocks:      {"--gpo.blocks", false},
+		KeyGPOPercentile:  {"--gpo.percentile", false},
+		KeyGPOMaxPrice:    {"--gpo.maxprice", false},
+		KeyGPOIgnorePrice: {"--gpo.ignoreprice", false},
+
+		KeySnapshot:       {"--snapshot", true},
+		KeyDataDirAncient: {"--datadir.ancient", false},
+		KeyTxLookupLimit:  {"--txlookuplimit", false},
+
+		KeyMaxPendPeers: {"--maxpendpeers", false},
+		KeyNetRestrict:  {"--netrestrict", false},
+		KeyDiscoveryDNS: {"--discovery.dns", false},
+
+		KeyDev:         {"--dev", true},
+		KeyDevPeriod:   {"--dev.period", false},
+		KeyDevGasLimit: {"--dev.gaslimit", false},
+
+		KeyMinerExtraData: {"--miner.extradata", false},
+
+		// Present in the geth114 generation only; removed for wemix below.
+		KeyHistoryState:        {"--history.state", false},
+		KeyHistoryTransactions: {"--history.transactions", false},
+		KeyCacheBlockLogs:      {"--cache.blocklogs", false},
+		KeyDiscoveryPort:       {"--discovery.port", false},
 	}
 }
 
@@ -197,8 +311,13 @@ func Geth114() Dialect {
 // AST-verified against docs/chain-analysis/gwemix/cli-graph.md.
 func Geth110Wemix() Dialect {
 	f := geth114Common()
-	// Not present in the go-wemix generation.
+	// Not present in the go-wemix generation. Each deletion is a measured
+	// absence from docs/chain-analysis/gwemix/cli-flags.txt, not a guess.
 	delete(f, KeyRPCDeprecatedPersonal)
+	delete(f, KeyHistoryState)
+	delete(f, KeyHistoryTransactions)
+	delete(f, KeyCacheBlockLogs)
+	delete(f, KeyDiscoveryPort)
 	// wemix consensus knobs (ChainExt module).
 	f[KeyConsensusMethod] = flagSpec{"--consensusmethod", false}
 	f[KeyBlocksPerTurn] = flagSpec{"--blocksperturn", false}
@@ -208,6 +327,12 @@ func Geth110Wemix() Dialect {
 	f[KeyBlockTimeAdj] = flagSpec{"--wemix.block.timeadjblocks", false}
 	f[KeyBlockMinBuildTime] = flagSpec{"--wemix.block.minbuildtime", false}
 	f[KeyBlockMinBuildTxs] = flagSpec{"--wemix.block.minbuildtxs", false}
+	f[KeyBlockTrailTime] = flagSpec{"--wemix.block.trailtime", false}
+	f[KeyBootnodeCount] = flagSpec{"--wemix.bootnodecount", false}
+	f[KeyMaxIdleBlock] = flagSpec{"--maxidleblockinterval", false}
+	f[KeyFixedDifficulty] = flagSpec{"--fixeddifficulty", false}
+	f[KeyFixedGasLimit] = flagSpec{"--fixedgaslimit", false}
+	f[KeyMinerGasTarget] = flagSpec{"--miner.gastarget", false}
 	return Dialect{ID: "geth110-wemix", flags: f}
 }
 

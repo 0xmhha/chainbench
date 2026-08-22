@@ -69,9 +69,9 @@ scripts/chain-analysis/verify-docs.sh $CHAIN/go-wemix/build/bin/gwemix     docs/
 
 | 체인 | 바이너리 | 체인 커밋 | 명령 표면 | 플래그(help + 숨김) | **우리가 방출 가능** |
 |---|---|---|---|---:|---:|
-| stablenet | `gstable` | `0937ac5c9` | 80 | 179 + 2 = **181** | **42 (23%)** |
-| wbft | `gwemix`(go-wbft) | `7af50e45d` | 78 | 177 + 3 = **180** | **42 (23%)** |
-| wemix | `gwemix`(go-wemix) | `1350376a6` | 58 | 195 + 0 = **195** | **49 (25%)** |
+| stablenet | `gstable` | `0937ac5c9` | 80 | 179 + 2 = **181** | **78 (43%)** |
+| wbft | `gwemix`(go-wbft) | `7af50e45d` | 78 | 177 + 3 = **180** | **78 (43%)** |
+| wemix | `gwemix`(go-wemix) | `1350376a6` | 58 | 195 + 0 = **195** | **87 (44%)** |
 
 > 검증 상태(2026-08-22): 3체인 모두 **ABSENT 0 · 잘못된 주석 0**. 숨겨진 플래그는 문서가
 > 이미 `*(hidden)*` 로 표시하고 있었다.
@@ -82,6 +82,17 @@ scripts/chain-analysis/verify-docs.sh $CHAIN/go-wemix/build/bin/gwemix     docs/
 
 이 수치가 "DSL 로 체인 구성을 자유롭게 지원한다"의 현재 위치다. 무엇을 먼저 늘릴지는
 `cli-flags.txt` 와 launchopt 키를 차집합으로 놓고 고르면 된다.
+
+**테이블은 이 캡처에 묶여 있다.** `TestDialectSpellingsExistInTheBinaries`(launchopt)가 모든
+dialect 항목의 철자와 값/boolean 여부를 위 `cli-surface.txt` 와 대조한다 — 틀린 철자나 그 세대에
+없는 플래그는 **프로비저닝과 datadir 초기화를 다 마친 뒤** 노드가 거절하는 형태로 터지므로,
+테이블에 넣는 시점에 잡는다. 체인을 다시 캡처하면 이 테스트가 낡은 항목을 바로 지목한다.
+
+2026-08-23 확장분(구성에 유의미한 그룹만): txpool 11 · cache 7(+geth114 전용 `cache.blocklogs`) ·
+gpo 4 · dev 3 · state(snapshot·datadir.ancient·txlookuplimit) · 피어링(maxpendpeers·netrestrict·
+discovery.dns[+port]) · history 2(geth114) · `miner.extradata` · wemix 전용 6.
+관측·프로파일링(log·metrics.influxdb·pprof)과 미사용 계열(ethash·light·ulc·graphql)은 **의도적으로
+제외**했다 — 테이블은 "이 도구가 지원한다고 약속하는 표면"이고, 검증하지 않은 약속은 늘리지 않는다.
 
 ## 우리 저장소의 코드 분석은 어디에
 
