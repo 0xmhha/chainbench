@@ -93,6 +93,16 @@ func (m *Map) Labels() []NodeLabel {
 	return append([]NodeLabel(nil), m.order...)
 }
 
+// Placements returns every placement in label order, so a caller rendering the
+// map or feeding it to the launch flow sees nodes in their identity order.
+func (m *Map) Placements() []Placement {
+	out := make([]Placement, 0, len(m.order))
+	for _, l := range m.order {
+		out = append(out, m.byLabel[l])
+	}
+	return out
+}
+
 // portsOf flattens a port set for collision checking. A port the set does not
 // use stays zero and is skipped by the caller.
 func portsOf(p Ports) []int {

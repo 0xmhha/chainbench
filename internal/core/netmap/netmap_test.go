@@ -163,3 +163,126 @@ func TestPlacement_CarriesBothNames(t *testing.T) {
 		t.Fatalf("role label = %q, want en2", p.RoleLabel())
 	}
 }
+
+// TestAssign_ConsumesHostsBeforeSlots is the allocation rule stated as a table:
+// five addresses and four port slots hold twenty nodes, and node6 comes back to
+// the first address on the next slot rather than colliding on the first.
+func TestAssign_ConsumesHostsBeforeSlots(t *testing.T) {
+	pool := netmap.Pool{
+		Hosts: []netmap.Host{{Addr: "10.0.0.1"}, {Addr: "10.0.0.2"}, {Addr: "10.0.0.3"}, {Addr: "10.0.0.4"}, {Addr: "10.0.0.5"}},
+		Slots: 4,
+		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+	}
+	if got := pool.Cap(); got != 20 {
+		t.Fatalf("Cap() = %d, want 20", got)
+	}
+
+	reqs := make([]netmap.Request, 15)
+	for i := range reqs {
+		reqs[i] = netmap.Request{Role: node.RoleBP}
+	}
+	m, err := netmap.Assign(pool, reqs)
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+
+	for _, c := range []struct {
+		label    netmap.NodeLabel
+		host     string
+		p2p, rpc int
+	}{
+		{"node1", "10.0.0.1", 31000, 8600},
+		{"node5", "10.0.0.5", 31000, 8600},
+		{"node6", "10.0.0.1", 31010, 8610}, // wraps to the first host, next slot
+		{"node10", "10.0.0.5", 31010, 8610},
+		{"node11", "10.0.0.1", 31020, 8620},
+		{"node15", "10.0.0.5", 31020, 8620},
+	} {
+		p, ok := m.Lookup(c.label)
+		if !ok {
+			t.Fatalf("%s not placed", c.label)
+		}
+		if p.Host != c.host || p.Ports.P2P != c.p2p || p.Ports.HTTP != c.rpc {
+			t.Fatalf("%s = %s p2p=%d http=%d, want %s p2p=%d http=%d",
+				c.label, p.Host, p.Ports.P2P, p.Ports.HTTP, c.host, c.p2p, c.rpc)
+		}
+		// The etcd port travels with the node; losing it is what NM1 fixed.
+		if p.Ports.Etcd != p.Ports.P2P+1 {
+			t.Fatalf("%s etcd = %d, want %d", c.label, p.Ports.Etcd, p.Ports.P2P+1)
+		}
+	}
+}
+
+// TestAssign_OverCapacityNamesTheShortfall: wrapping onto ports already handed
+// out produces a network where two nodes cannot both bind, found much later.
+func TestAssign_OverCapacityNamesTheShortfall(t *testing.T) {
+	pool := netmap.Pool{
+		Hosts: []netmap.Host{{Addr: "10.0.0.1"}, {Addr: "10.0.0.2"}},
+		Slots: 2,
+		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+	}
+	reqs := make([]netmap.Request, 6)
+	for i := range reqs {
+		reqs[i] = netmap.Request{Role: node.RoleBP}
+	}
+	_, err := netmap.Assign(pool, reqs)
+	if err == nil {
+		t.Fatal("over-capacity assignment must fail")
+	}
+	for _, want := range []string{"6 nodes", "2 host", "2 slot", "4", "2 short"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error %q should name %q", err, want)
+		}
+	}
+}
+
+func TestAssign_RolesAndOrdinals(t *testing.T) {
+	pool := netmap.Pool{
+		Hosts: []netmap.Host{{Addr: "127.0.0.1"}},
+		Slots: 8,
+		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+	}
+	// Roles interleave on purpose: a topology owns launch order (poa needs its
+	// producer first), so the ordinal follows index order within a role rather
+	// than requiring roles to be contiguous.
+	m, err := netmap.Assign(pool, []netmap.Request{
+		{Role: node.RoleBP},
+		{Role: node.RoleEndpoint}, // legacy spelling folds
+		{Role: node.RoleBP},
+		{Role: node.RolePN},
+		{Role: node.RoleEN},
+	})
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	want := map[netmap.NodeLabel]netmap.NodeLabel{
+		"node1": "bp1", "node2": "en1", "node3": "bp2", "node4": "pn1", "node5": "en2",
+	}
+	for identity, alias := range want {
+		p, ok := m.Lookup(identity)
+		if !ok {
+			t.Fatalf("%s not placed", identity)
+		}
+		if p.RoleLabel() != alias {
+			t.Fatalf("%s alias = %q, want %q", identity, p.RoleLabel(), alias)
+		}
+	}
+	if n := len(m.Placements()); n != 5 {
+		t.Fatalf("Placements() = %d, want 5", n)
+	}
+}
+
+func TestPool_ValidateRejects(t *testing.T) {
+	base := netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10}
+	for name, p := range map[string]netmap.Pool{
+		"no hosts":     {Slots: 1, Ports: base},
+		"no address":   {Hosts: []netmap.Host{{Name: "bp1"}}, Slots: 1, Ports: base},
+		"no slots":     {Hosts: []netmap.Host{{Addr: "10.0.0.1"}}, Ports: base},
+		"p2p step 1":   {Hosts: []netmap.Host{{Addr: "10.0.0.1"}}, Slots: 2, Ports: netmap.Bands{P2PBase: 31000, P2PStep: 1, RPCBase: 8600, RPCStep: 10}},
+		"rpc step two": {Hosts: []netmap.Host{{Addr: "10.0.0.1"}}, Slots: 2, Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 2}},
+	} {
+		if err := p.Validate(); err == nil {
+			t.Fatalf("%s: Validate must reject", name)
+		}
+	}
+}
