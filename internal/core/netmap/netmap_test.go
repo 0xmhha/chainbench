@@ -101,3 +101,65 @@ func TestMap_RejectsDuplicateLabels(t *testing.T) {
 		t.Fatal("a duplicate label was accepted")
 	}
 }
+
+// TestRoleLabel_RoundTrip covers the alias spelling a test definition uses to
+// address a node by role. The identity ("node7") is deliberately not a role
+// label: "node" is not a role, and inventing one would let a typo resolve.
+func TestRoleLabel_RoundTrip(t *testing.T) {
+	for _, c := range []struct {
+		role node.Role
+		ord  int
+		want netmap.NodeLabel
+	}{
+		{node.RoleBP, 1, "bp1"},
+		{node.RoleEN, 2, "en2"},
+		{node.RolePN, 10, "pn10"},
+	} {
+		got := netmap.RoleLabel(c.role, c.ord)
+		if got != c.want {
+			t.Fatalf("RoleLabel(%q, %d) = %q, want %q", c.role, c.ord, got, c.want)
+		}
+		role, ord, err := netmap.ParseRoleLabel(got)
+		if err != nil {
+			t.Fatalf("ParseRoleLabel(%q): %v", got, err)
+		}
+		if role != c.role || ord != c.ord {
+			t.Fatalf("ParseRoleLabel(%q) = (%q, %d), want (%q, %d)", got, role, ord, c.role, c.ord)
+		}
+	}
+}
+
+func TestParseRoleLabel_FoldsLegacyAndRejectsTheRest(t *testing.T) {
+	// A legacy spelling folds onto the canonical role, like everywhere else.
+	for _, in := range []netmap.NodeLabel{"validator1", "endpoint3"} {
+		role, ord, err := netmap.ParseRoleLabel(in)
+		if err != nil {
+			t.Fatalf("ParseRoleLabel(%q): %v", in, err)
+		}
+		if role != node.RoleBP && role != node.RoleEN {
+			t.Fatalf("ParseRoleLabel(%q) role = %q, want a canonical role", in, role)
+		}
+		if ord < 1 {
+			t.Fatalf("ParseRoleLabel(%q) ord = %d, want >= 1", in, ord)
+		}
+	}
+	// Not role labels: an identity label, a role with no ordinal, a zero
+	// ordinal (labels are 1-based), and a word that is not a role.
+	for _, in := range []netmap.NodeLabel{"node7", "en", "en0", "xyz1", "1"} {
+		if _, _, err := netmap.ParseRoleLabel(in); err == nil {
+			t.Fatalf("ParseRoleLabel(%q) must error", in)
+		}
+	}
+}
+
+// TestPlacement_CarriesBothNames fixes the decision that a node has one
+// identity and one alias: the index reaches disk, the role label addresses it.
+func TestPlacement_CarriesBothNames(t *testing.T) {
+	p := netmap.Placement{Index: 7, Label: netmap.LabelFor(7), Role: node.RoleEN, Ord: 2}
+	if p.Label != "node7" {
+		t.Fatalf("identity label = %q, want node7", p.Label)
+	}
+	if p.RoleLabel() != "en2" {
+		t.Fatalf("role label = %q, want en2", p.RoleLabel())
+	}
+}

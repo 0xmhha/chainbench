@@ -73,7 +73,7 @@ type Environment interface {
     Fingerprint() Fingerprint          // 전체 해시(env.json 기록) — env-id는 그 앞 12hex 축약
     PopulateNodeTable(ns node.NodeSet) // BringUp 결과(ns)로 node table 채움 → Save 전
     Nodes() []node.Node                // node table (endpoint 해석 근거)
-    Resolve(selector string) (node.Node, error)   // "bp1"|"bp:any"|"en:0"
+    Resolve(selector string) (node.Node, error)   // "node7"|"bp1"|"bp:any"|"en:0"
     ResolveEach(selectors []string) ([]node.Node, error)
     DataPath() string                  // 노드 로그가 쌓이는 실제 경로(§3.6)
     LogPath(nodeName string) string    // environments/<env>/logs/<node>.log

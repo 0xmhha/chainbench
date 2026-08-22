@@ -107,7 +107,7 @@ core/netmap
 │              Host:Port → NodeLabel                               (역방향, N7)
 ├─ Peering     역할에서 파생되는 그래프 (N0b)
 │              mesh    — 현행과 동일 (기본)
-│              proxied — bp↔pn↔en, en 은 bp 를 모른다
+│              proxied — bp↔pn↔en, en 은 bp 를 모른다  ← **실사용 요구**
 │              poa 에 pn 선언 시 **오류** (조용한 무시 금지)
 └─ StaticNodes(label, pubkeyOf) → []enode
                "이 노드가 다이얼할 목록" — 4벌의 정책이 이 한 함수로
@@ -136,7 +136,11 @@ dataRoot: /data/chainbench   # 설정 관리 루트. 노드 datadir 은 이 **�
   `portplan.Plan` 이 이미 갖고 있고, 베이스 간 간격 검증(`p2pStep>=2` 등)은 로더가 한다.
 - `dataRoot` 는 노드 datadir 이 아니다 — 설정·산출물이 놓이는 서버 쪽 루트이고,
   노드별 datadir 은 `<dataRoot>/<label>/` 로 그 하위에 생긴다.
-- 기존 v1 스키마(서버별 항목)는 읽기 호환으로 유지한다 — v1 항목 하나 = 풀의 (host 1 × 밴드 1).
+- **v2 단독으로 간다** (확정 2026-08-22). v1(서버별 항목) 호환을 두지 않는 이유: 실제 인벤토리
+  파일은 gitignore 라 저장소에 없고 이 시점에 배포된 파일이 확인되지 않는다 — 전환 비용이 가장
+  싼 때다. 호환 코드는 두 스키마를 아는 로더를 남기고, 그 로더가 곧 다섯 번째 폴딩표가 된다.
+  `remote-server-config.sample.yaml` 을 v2 로 교체하고, v1 파일을 만나면 **무엇을 어떻게 고쳐야
+  하는지 말하며 거부**한다(조용한 강등 금지).
 
 ### 2.2b Assign — 풀을 소비하는 결정적 할당
 
@@ -207,12 +211,47 @@ const RoleBP, RoleEN, RolePN Role
 
 // core/netmap — 라벨
 type NodeLabel string
-func LabelFor(index int) NodeLabel   // "node1" — 지금 DSL 이 하드코딩하는 규칙
+func LabelFor(index int) NodeLabel              // "node7"  신원
+func RoleLabel(role node.Role, ord int) NodeLabel  // "en2"   별칭
+func ParseRoleLabel(NodeLabel) (node.Role, int, error)
 ```
 
-DSL 의 `on:"node1"`·역할 셀렉터가 이 함수·상수를 쓰게 되면, 라벨 규칙의 변경은 한 곳이고
-DSL 은 따라온다. `keyring.Label`(링 항목)과는 **타입도 이름도 다르다** — 겹치면 이름
-규칙(다른 개념=다른 이름)을 어긴다.
+`keyring.Label`(링 항목)과는 **타입도 이름도 다르다** — 겹치면 이름 규칙(다른 개념=다른 이름)을
+어긴다.
+
+#### 2.5a 신원과 별칭 — 노드는 두 이름을 갖는다 (확정 2026-08-22)
+
+노드를 **번호로** 부를지(`node7`) **역할로** 부를지(`en2`)는 하나를 고르는 문제가 아니었다.
+두 표기는 **청중이 다르다**.
+
+| | 신원 (identity) | 별칭 (alias) |
+|---|---|---|
+| 형태 | `node7` — 전역 1-based | `en2` — 역할 내 서수 |
+| 답하는 질문 | "지금 몇 개가 떠 있고 이건 몇 번인가" | "엔드포인트 하나에 보내라" |
+| 저장 | ✅ `Index int` (워크스페이스·세션 — **현행 그대로**) | ❌ 배치에서 파생 |
+| 디스크 | ✅ `logs/node7.log` · `<root>/node7/` | — |
+| keyring 링 항목 | ✅ 일치 (`node7`) | — |
+| DSL `on:` | ✅ 받음 | ✅ 받음 (`en2`·`en:1`·`en:any`) |
+
+**신원을 `Index` 로 두는 이유** 셋: (1) 운영자가 전체를 세고 순회하는 단위가 번호다.
+(2) keyring 링 항목이 이미 `node1..nodeN` 이라, 역할 라벨을 신원으로 삼으면 enode 조립
+(`StaticNodes(label, pubkeyOf)`)에 `bp1 → node3 → pubkey` 번역기가 끼어든다 — 배치와 신원
+사이에 번역이 생기는 건 지금 없애려는 부채다. (3) 디스크 경로가 이미 번호 파생이라 개명이
+곧 마이그레이션이 된다.
+
+**별칭이 필요한 이유**는 운영자 조망이 아니라 **정의서의 이식성**이다. spec 은 한 번 쓰고
+여러 토폴로지에서 돈다. `en1` 은 4노드 넷에서도 40노드 넷에서도 "첫 엔드포인트"지만,
+`node7` 은 넷이 바뀌면 다른 노드다. 메인넷 구성이 bp–pn–en 이고 **트랜잭션이 en 을 거쳐
+전파**되므로, 정의서는 "en 에 보낸다"를 말할 수 있어야 한다.
+
+**따라서 개명은 없다.** 영속되는 식별자는 이미 라벨 문자열이 아니라 `Index int` 이고,
+라벨은 표시·주소지정 시점의 파생이다. 필요한 것은 두 표기를 **둘 다 받는 것**뿐이다.
+
+**역할 연속성은 강제하지 않는다.** 카운트 경로는 bp 를 먼저 배치하지만, 토폴로지 파일은
+사용자의 `Index` 순서가 권한을 갖는다 — poa 부트스트랩은 프로듀서가 **먼저 떠야** 하므로
+정렬을 강제하면 그 요구와 충돌한다. 대신 `Ord`(역할 내 서수)를 **Index 오름차순으로 결정**해,
+역할이 섞여 있어도 `en1` 은 언제나 "가장 앞선 en" 이다. 전체 조망은 `net map` 이 역할별
+집계를 함께 찍어 해결한다.
 
 ### 2.6 체인별 차이 — 새 타입이 아니라 기존 두 seam
 
@@ -235,6 +274,10 @@ poa+pn 선언을 거부한다. `serverset` 의 전역 `p2pStep>=2` 강제는 이
 | etcd | 안 씀 | **p2p+1 로 유도** — span 요구의 이유 |
 | pn 역할 | static-nodes 그래프로 표현 | **없음** — `SupportsRole(pn)=false`, 선언 시 오류 |
 
+**proxied 는 선택 기능이 아니다** (확정 2026-08-22): 운영 중인 메인넷 구성이 **bp – pn – en**
+이고 **트랜잭션이 en 을 거쳐 전파**된다 — bp 로 직접 보내지 않는다. 재현 대상이 그 구조이므로
+mesh 만으로는 실제 전파 경로를 태우지 못하며, proxied 는 NM2 의 게이트에 포함된다.
+
 ### 2.7 이름 충돌 검증 — AST 실측
 
 이 설계가 도입하는 이름을 기존 타입 선언 전수와 대조했다([[layers]] §5b 규칙 적용).
@@ -252,17 +295,36 @@ poa+pn 선언을 거부한다. `serverset` 의 전역 `p2pStep>=2` 강제는 이
 
 ## 3. 표면 — cmd 와 MCP
 
-새 명령을 만들지 않는다. **`net allocate` 의 산출물이 netmap 이다** — 지금도 그 명령이
-노드 테이블을 만들고 있고, 바뀌는 것은 산출물의 소유자와 표현이다.
+**스텝은 늘리지 않는다.** `net allocate` 의 산출물이 netmap 이고, 바뀌는 것은 산출물의 소유자와
+표현이다. 다만 **조회는 스텝이 아니다** — 스텝은 상태를 바꾸고 조회는 바꾸지 않는다. 그래서
+조회 명령 둘(`net map`·`net pool`)을 더한다. `net pool` 이 특히 필요한 이유: **"15노드를
+요청했는데 왜 거부됐는가"를 명령 하나로 답할 수 있어야** 한다(§2.2b 의 초과 거부).
 
 | 표면 | 지금 | 후 |
 |---|---|---|
 | `net allocate` | 노드 테이블 생성(NodeState 평면) | 동일 명령, 산출 = netmap. 출력에 **역할·호스트·포트 전부**(etcd 포함) |
 | `net allocate --peering` | (없음 — 항상 풀메시) | `mesh`(기본) \| `proxied`. poa+pn 은 오류 |
+| **`net map`** ★신규 | (없음) | 대장 조회. `--node 7` · `--label en1` · `--host <ip>` · `--port 8080` — **네 방향** · `--json` |
+| **`net pool`** ★신규 | (없음) | 가용 자원 요약: 출처 · hosts×bases · **cap** · 현재 사용량. **자격증명은 출력하지 않는다** |
 | `net status` / MCP `chainbench_net_status` | 포트 일부 표시 | netmap 조회 — 역방향(host:port→label) 포함 |
 | MCP `chainbench_network_topology` | 런타임 피어 조회 | 유지. **계획된** 그래프는 allocate 출력이 답한다 |
 
-keyring 때처럼 유스케이스는 `app` 에, 표면은 바인딩·렌더링만 (K8 선례).
+keyring 때처럼 유스케이스는 `app` 에, 표면은 바인딩·렌더링만 (K8 선례):
+`app.NetMap`·`app.NetPool` 하나씩, CLI 명령 하나씩, MCP 도구 하나씩
+(`chainbench_net_map`·`chainbench_net_pool`).
+
+**MCP 의 비밀 취급** — keyring 이 `export` 를 MCP 에 **의도적으로 노출하지 않은** 판단(K8)을
+그대로 잇는다. SSH user/password/key_file 은 **어떤 도구도 반환하지 않으며**, 그 부재를
+테스트로 고정한다. 호스트 주소는 반환한다(노드를 지목하려면 필요하고 `net status` 가 이미
+준다). `net pool` 은 자원의 **개수와 출처**를 말하되 인벤토리 경로 이상은 말하지 않는다.
+
+**netmap 이 소유하지 않는 것 — SSH 자격증명** (확정 2026-08-22). 접속 수단의 주인은 이미
+셋이다: `serverset`(인벤토리 읽기)·`core/remote`(전송)·`core/target`(해석). netmap 이 넷째가
+되면 지금 없애려는 파편화를 재생산한다. 그리고 비밀이 대장 구조체에 섞이면 **대장 자체를
+출력·직렬화할 수 없게 된다** — `net map`·MCP 응답·세션 아티팩트가 전부 마스킹 대상이 된다.
+netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속이 필요한 순간
+`target.Resolve` 가 자격증명을 env/인벤토리에서 가져온다. **netmap 은 어디에 있는지를 알고,
+어떻게 들어가는지는 모른다.** `sudo` 도 같다 — 보관·전달만 하고 소비는 기동 절차가 한다(NM-e).
 
 ---
 
@@ -271,11 +333,18 @@ keyring 때처럼 유스케이스는 `app` 에, 표면은 바인딩·렌더링�
 | # | 작업 | 게이트 |
 |---|---|---|
 | **NM1** | `core/netmap` 신설 — node.Role 에 bp/en/pn 추가·Ports(Etcd 포함)·Map/Placement·NodeLabel·legacy 매핑 | 기존 topology/NodeState 를 **읽기 호환**으로 흡수 · 문자열 역할이 남지 않음 · DSL 의 `"node"+i` 하드코딩이 `netmap.NodeLabel` 로 |
-| **NM1b** | Pool + Assign — 인벤토리 v2 스키마(hosts×portBases·sudo·dataRoot) + 결정적 할당 | §2.2b 예시(5 IP × 4 베이스 × 15노드)가 테이블 테스트로 · 초과는 부족 수를 말하며 거부 · `place` 2모드가 특수형으로 흡수 · v1 읽기 호환 |
+| **NM1c** | **선행 결함 수정** — 셀렉터 폴딩표를 `netmap.NormalizeRole` 경유로 · 신원/별칭 두 표기(§2.5a) | ☑ **완료 2026-08-22.** `on:"bp1"` 이 `RoleBP`·`RoleValidator` 양쪽에 매칭 · `pn` 셀렉터 · `on:"node7"`(신원) 해석 · `RoleLabel`/`ParseRoleLabel` · `Placement{Index, Ord}` |
+| **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×portBases·sudo·dataRoot) + 결정적 할당 | §2.2b 예시(5 IP × 4 베이스 × 15노드)가 테이블 테스트로 · 초과는 부족 수를 말하며 거부 · `place` 2모드가 특수형으로 흡수 · **v1 은 고칠 방법을 말하며 거부** |
 | **NM2** | Peering 파생 + `StaticNodes` + PortProfile — mesh 는 **현행 argv 와 바이트 동일** | proxied: en 의 목록에 bp 가 없음 · poa+pn 오류 · 골든 비교 · `serverset` 전역 `p2pStep>=2` 가 `PortReservation` seam 으로 (F1) |
-| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) | 앞 2곳 전환 후 `net up` 라이브 재검증(stablenet·wbft) |
-| **NM4** | 표면 — allocate 산출 강화 · `--peering` · 역방향 조회 | CLI/MCP 동일 출력 · A2 표 갱신 |
+| **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
+| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | 앞 2곳 전환 후 `net up` 라이브 재검증(stablenet·wbft) · 살아있는 wemix 노드의 etcd 포트를 조회할 수 있다 |
+| **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
+
+**순서**: NM1 ☑ → **NM1c ☑** → NM1b → NM2 → NM2b → NM3 → NM4 → NM5.
+NM1c 를 앞세운 이유는 §2.5a 의 결함이 NM3 에서 터지기 때문이다 — 그 시점엔 배치·persist·argv 가
+함께 움직여 원인이 셋으로 갈린다. NM2b(Layout)를 NM3 앞에 두는 이유는, NM3 이 만지는 32곳에
+경로 파생이 섞여 있어 Layout 이 없으면 같은 파일을 두 번 고치게 되기 때문이다.
 
 **N 계열과의 관계**: NM1~5 = N7 + N0 + N0b. 완료 시 워크리스트의 세 항목이 닫히고,
 N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
@@ -289,5 +358,8 @@ N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
 | NM-a | ~~`netmap.Label` vs `keyring.Label`~~ | 해소 — `NodeLabel` 로 이름부터 분리(§2.5) |
 | NM-b | `node.Node.Ports` 타입 교체는 파급이 크다(25 fan-in). 단계적으로? | NM1 에서 alias 로 시작, NM3 에서 교체 |
 | NM-c | proxied 에서 pn 이 없으면? | 오류 — mesh 로 조용히 강등하지 않는다 |
+| ~~NM-f~~ | ~~라벨을 `node7` 로 둘지 `en2` 로 둘지~~ | **해소 (2026-08-22)** — 둘 다. 신원=`Index`, 별칭=역할 라벨(§2.5a). 개명 없음 |
+| ~~NM-g~~ | ~~인벤토리 v1 호환 기간~~ | **해소 (2026-08-22)** — v2 단독(§2.2a) |
+| ~~NM-h~~ | ~~proxied 를 실제로 쓰는가~~ | **해소 (2026-08-22)** — 쓴다. 메인넷이 bp–pn–en 이고 tx 가 en 경유(§2.6) |
 | NM-d | 역할별 IP 선호(예: bp 는 앞쪽 IP 고정)가 필요한가? | 당장은 아니오 — 순서 결정성으로 충분. 근거가 생기면 Assign 에 정책 주입 |
 | NM-e | sudo 는 어디가 소비하나? | 기동 절차(driver/bringup). netmap 은 보관·전달만 — 실행하지 않는다 |

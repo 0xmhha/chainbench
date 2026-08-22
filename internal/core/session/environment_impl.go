@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -50,11 +51,25 @@ func (e *env) Nodes() []node.Node {
 	return append([]node.Node(nil), e.nodes...)
 }
 
-// Resolve maps a selector to a node. Forms: "bp1"/"en2" (role + 1-based
-// ordinal), "bp:any" (first of role), "en:0" (role + 0-based index).
+// Resolve maps a selector to a node. Forms: "node7" (identity), "bp1"/"en2"
+// (role alias, 1-based ordinal), "bp:any" (first of role), "en:0" (role +
+// 0-based index).
+//
+// Both spellings resolve because they answer different questions — see
+// netmap.RoleLabel. The identity form is checked first: "node" is not a role,
+// so the two grammars cannot collide.
 func (e *env) Resolve(selector string) (node.Node, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+
+	if idx, err := netmap.NodeLabel(selector).Index(); err == nil {
+		for _, n := range e.nodes {
+			if n.Index == idx {
+				return n, nil
+			}
+		}
+		return node.Node{}, fmt.Errorf("session: selector %q names node %d, which this environment does not have (%d nodes)", selector, idx, len(e.nodes))
+	}
 
 	token, idx, anyForm, err := parseSelector(selector)
 	if err != nil {
@@ -143,15 +158,20 @@ func parseSelector(sel string) (token string, index int, anyForm bool, err error
 
 // rolesForToken maps a DSL role token to the node roles it selects. Returns nil
 // for an unknown token.
+// rolesForToken folds a selector's role word onto every spelling a node may
+// actually carry. The folding itself belongs to netmap — this function only
+// adds the legacy spelling, because a running network can hold either while
+// NM3 is in flight: a node composed today records "validator", one composed
+// after the switch records "bp", and a selector has to match both or a spec
+// silently addresses nothing.
 func rolesForToken(tok string) map[node.Role]bool {
-	switch tok {
-	case "bp", "validator":
-		return map[node.Role]bool{node.RoleValidator: true}
-	case "en", "endpoint":
-		return map[node.Role]bool{node.RoleEN: true, node.RoleEndpoint: true}
-	case "boot":
-		return map[node.Role]bool{node.RoleBoot: true}
-	default:
+	canonical, err := netmap.NormalizeRole(tok)
+	if err != nil {
 		return nil
 	}
+	roles := map[node.Role]bool{canonical: true}
+	if legacy := netmap.LegacySpelling(canonical); legacy != canonical {
+		roles[legacy] = true
+	}
+	return roles
 }
