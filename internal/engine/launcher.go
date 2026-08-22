@@ -343,7 +343,14 @@ func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec dri
 	return launchopt.New(launchopt.DialectFor(plugin.Manifest().ID),
 		id,
 		launchopt.Storage{DataDir: spec.DataDir, ConfigFile: spec.ConfigPath},
-		launchopt.P2P{Port: spec.Ports.P2P},
+		// The manifest's network id is emitted rather than left to the
+		// binary's default. It was never emitted at all, so a chain whose
+		// devp2p network id differs from its genesis chain id — which the
+		// handoff produces, since it forces the chain id — ran on whichever
+		// the binary inferred. Setting it from the manifest makes the argv say
+		// what the chain declares; an operator's --network-id still wins,
+		// because that override arrives on a later layer.
+		launchopt.P2P{Port: spec.Ports.P2P, NetworkID: plugin.Manifest().NetworkID},
 		launchopt.HTTPRPC{Enabled: true, Port: spec.Ports.HTTP},
 		launchopt.WSRPC{Enabled: true, Port: spec.Ports.WS},
 		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
