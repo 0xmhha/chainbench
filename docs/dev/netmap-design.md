@@ -123,7 +123,10 @@ core/netmap
 version: 2
 pool:
   hosts: [<ip1>, <ip2>, <ip3>, <ip4>, <ip5>]   # 가용 IP 목록
-  portBases: [8080, 8180, 8280, 8380]           # 노드 1개가 소비하는 포트 묶음의 베이스
+  slots: 4                                      # 한 호스트가 담을 포트 슬롯 수
+  ports:                                        # 슬롯이 밟는 두 대역 (구현형)
+    p2p: { base: 31000, step: 10 }
+    rpc: { base: 8600,  step: 10 }
 ssh:
   port: 22
   user: <user>          # 비밀은 env 가 이긴다 (기존 규칙 유지)
@@ -131,9 +134,12 @@ ssh:
 dataRoot: /data/chainbench   # 설정 관리 루트. 노드 datadir 은 이 **하위**에 생성
 ```
 
-- `portBases` 가 개별 포트가 아니라 **베이스**인 이유: 노드 하나는 포트 하나가 아니라
-  묶음(P2P·Etcd·HTTP·WS·Auth·Metrics)을 쓴다. 베이스에서 묶음을 파생하는 계산은
-  `portplan.Plan` 이 이미 갖고 있고, 베이스 간 간격 검증(`p2pStep>=2` 등)은 로더가 한다.
+- **초안의 `portBases: [8080, 8180, …]`(단일 숫자 목록)은 구현에서 두 대역으로 바뀌었다.**
+  노드 하나는 포트 하나가 아니라 묶음(P2P·Etcd·HTTP·WS·Auth·Metrics)을 쓰는데, 그 묶음은
+  `portplan` 이 **겹치지 않는 두 대역**(p2p / rpc)에서 파생한다 — p2p 를 1 간격으로 채우면
+  wemix 가 유도하는 etcd(p2p+1)가 다음 노드의 p2p 를 덮는다. 단일 목록으로는 그 규칙을
+  표현할 수 없고, 무엇보다 **현행 배치를 재현하지 못해** NM3 이 모든 넷의 포트를 옮기게 된다.
+  슬롯 n 의 포트 = `portplan.Plan(n, p2p.base, p2p.step, rpc.base, rpc.step)`.
 - `dataRoot` 는 노드 datadir 이 아니다 — 설정·산출물이 놓이는 서버 쪽 루트이고,
   노드별 datadir 은 `<dataRoot>/<label>/` 로 그 하위에 생긴다.
 - **v2 단독으로 간다** (확정 2026-08-22). v1(서버별 항목) 호환을 두지 않는 이유: 실제 인벤토리
@@ -144,23 +150,25 @@ dataRoot: /data/chainbench   # 설정 관리 루트. 노드 datadir 은 이 **�
 
 ### 2.2b Assign — 풀을 소비하는 결정적 할당
 
-노드가 가용 IP 보다 많을 수 있다. 그때 **IP 를 재사용하되 포트베이스로 구분**한다.
+노드가 가용 IP 보다 많을 수 있다. 그때 **IP 를 재사용하되 포트 슬롯으로 구분**한다.
 
-할당 순서는 **IP 먼저, 그다음 포트베이스**다: node1 부터 순서대로 IP 목록을 소비하고,
-IP 가 소진되면 포트베이스 인덱스를 올려 첫 IP 부터 다시 돈다.
+할당 순서는 **IP 먼저, 그다음 슬롯**이다: node1 부터 순서대로 IP 목록을 소비하고,
+IP 가 소진되면 슬롯 인덱스를 올려 첫 IP 부터 다시 돈다. 다섯 주소를 적었다는 것은
+네트워크를 그 다섯 대에 **펼치겠다**는 뜻이고, 첫 대를 채우고 넘어가려면 그렇게 적어야 한다.
 
 ```
-hosts = [ip1..ip5], portBases = [8080, 8180, 8280, 8380], 노드 15개
+hosts = [ip1..ip5], slots = 4, p2p 31000/10 · rpc 8600/10, 노드 15개
+슬롯 n 의 포트 = portplan.Plan(n, …)  →  slot1 p2p 31000/http 8600, slot2 31010/8610, …
 
-node1  → (ip1, 8080)    node6  → (ip1, 8180)    node11 → (ip1, 8280)
-node2  → (ip2, 8080)    node7  → (ip2, 8180)    node12 → (ip2, 8280)
-node3  → (ip3, 8080)    node8  → (ip3, 8180)    ...
-node4  → (ip4, 8080)    node9  → (ip4, 8180)    node15 → (ip5, 8280)
-node5  → (ip5, 8080)    node10 → (ip5, 8180)
+node1  → (ip1, slot1)   node6  → (ip1, slot2)   node11 → (ip1, slot3)
+node2  → (ip2, slot1)   node7  → (ip2, slot2)   node12 → (ip2, slot3)
+node3  → (ip3, slot1)   node8  → (ip3, slot2)   ...
+node4  → (ip4, slot1)   node9  → (ip4, slot2)   node15 → (ip5, slot3)
+node5  → (ip5, slot1)   node10 → (ip5, slot2)
 ```
 
 - **결정적이다**: 같은 풀 + 같은 노드 수 → 항상 같은 할당. 재실행이 다른 배치를 만들지 않는다.
-- **초과는 오류다**: 노드 수 > |hosts| × |portBases| 면 몇 개가 부족한지 말하고 거부한다.
+- **초과는 오류다**: 노드 수 > |hosts| × slots 면 몇 개가 부족한지 말하고 거부한다.
   조용히 겹치는 (ip, port) 를 만드는 것이 최악의 결과다.
 - 같은 IP 의 두 노드는 포트베이스가 다르므로 (ip, port) 조합은 항상 유일하다 —
   `portplan.Validate` 가 최종 확인한다.
@@ -288,7 +296,7 @@ mesh 만으로는 실제 전파 경로를 태우지 못하며, proxied 는 NM2 �
 | `netmap.Label` | `keyring.Label` | `netmap.NodeLabel` | 다른 개념은 다른 이름. blueprint 원안 복귀 |
 | `netmap.Role` | `node.Role`·`deploy.Role` ×2 존재 | **정의하지 않음** — 상수를 `node.Role` 에 | 세 번째 Role 을 만들지 않는다. L0 이 어휘 거처 |
 | `netmap.Placement`(맵) | `serverset.Placement` | 맵=`netmap.Map`, 항목=`netmap.Placement` | serverset.Placement 은 Assign 에 흡수·소멸(NM1b) — 이행기만 공존 |
-| `netmap.Ports` | `serverset.Ports`(밴드) | 유지 | 충돌 상대(밴드)가 v2 `pool.portBases` 로 소멸 |
+| `netmap.Ports` | `serverset.Ports`(밴드) | 유지 | 충돌 상대는 v2 `pool.ports` 로 이동, `serverset.Ports` 는 파생 뷰로만 잔존(NM3 에서 소멸) |
 | `Vocabulary`(서브모듈) | — | **삭제** | 아무것도 말하지 않는 이름. `NodeLabel` 함수 + `node.Role` 상수로 족하다 |
 
 ---
@@ -334,14 +342,14 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 |---|---|---|
 | **NM1** | `core/netmap` 신설 — node.Role 에 bp/en/pn 추가·Ports(Etcd 포함)·Map/Placement·NodeLabel·legacy 매핑 | 기존 topology/NodeState 를 **읽기 호환**으로 흡수 · 문자열 역할이 남지 않음 · DSL 의 `"node"+i` 하드코딩이 `netmap.NodeLabel` 로 |
 | **NM1c** | **선행 결함 수정** — 셀렉터 폴딩표를 `netmap.NormalizeRole` 경유로 · 신원/별칭 두 표기(§2.5a) | ☑ **완료 2026-08-22.** `on:"bp1"` 이 `RoleBP`·`RoleValidator` 양쪽에 매칭 · `pn` 셀렉터 · `on:"node7"`(신원) 해석 · `RoleLabel`/`ParseRoleLabel` · `Placement{Index, Ord}` |
-| **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×portBases·sudo·dataRoot) + 결정적 할당 | §2.2b 예시(5 IP × 4 베이스 × 15노드)가 테이블 테스트로 · 초과는 부족 수를 말하며 거부 · `place` 2모드가 특수형으로 흡수 · **v1 은 고칠 방법을 말하며 거부** |
+| **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
 | **NM2** | Peering 파생 + `StaticNodes` + PortProfile — mesh 는 **현행 argv 와 바이트 동일** | proxied: en 의 목록에 bp 가 없음 · poa+pn 오류 · 골든 비교 · `serverset` 전역 `p2pStep>=2` 가 `PortReservation` seam 으로 (F1) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | 앞 2곳 전환 후 `net up` 라이브 재검증(stablenet·wbft) · 살아있는 wemix 노드의 etcd 포트를 조회할 수 있다 |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
 
-**순서**: NM1 ☑ → **NM1c ☑** → NM1b → NM2 → NM2b → NM3 → NM4 → NM5.
+**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → NM2 → NM2b → NM3 → NM4 → NM5.
 NM1c 를 앞세운 이유는 §2.5a 의 결함이 NM3 에서 터지기 때문이다 — 그 시점엔 배치·persist·argv 가
 함께 움직여 원인이 셋으로 갈린다. NM2b(Layout)를 NM3 앞에 두는 이유는, NM3 이 만지는 32곳에
 경로 파생이 섞여 있어 Layout 이 없으면 같은 파일을 두 번 고치게 되기 때문이다.

@@ -19,43 +19,26 @@ func write(t *testing.T, body string) string {
 	return p
 }
 
-// sample is a mixed inventory: this machine hosting several nodes, and two
-// remote hosts, one of which overrides the defaults.
+// sample is a mixed pool: this machine and two remote hosts. Whether a host is
+// reached over SSH is derived from its address, so the file never says "local"
+// beside a remote IP.
 const sample = `
-version: 1
-defaults:
-  slots: 1
-  dataRoot: /var/lib/chainbench
+version: 2
+pool:
+  hosts:
+    - { name: local, addr: 127.0.0.1 }
+    - { name: bp1, addr: 10.0.0.1 }
+    - 10.0.0.7
+  slots: 8
   ports:
-    p2pBase: 30303
-    p2pStep: 10
-    rpcBase: 8545
-    rpcStep: 10
-  ssh:
-    user: ubuntu
-    port: 22
-    password: filepass
-servers:
-  - index: 1
-    name: local
-    kind: local
-    host: 127.0.0.1
-    slots: 8
-    dataRoot: /tmp/cb
-  - index: 2
-    name: bp1
-    kind: remote
-    host: 10.0.0.1
-  - index: 7
-    name: bp7
-    kind: remote
-    host: 10.0.0.7
-    dataRoot: /srv/chainbench
-    ports:
-      rpcBase: 9545
-    ssh:
-      user: root
-      port: 2222
+    p2p: { base: 30303, step: 10 }
+    rpc: { base: 8545, step: 10 }
+ssh:
+  user: ubuntu
+  port: 22
+  password: filepass
+  sudo: true
+dataRoot: /var/lib/chainbench
 `
 
 func load(t *testing.T, body string) *serverset.Config {
@@ -67,63 +50,93 @@ func load(t *testing.T, body string) *serverset.Config {
 	return cfg
 }
 
-func TestServer_InheritsDefaultsAndAppliesOverrides(t *testing.T) {
-	cfg := load(t, sample)
-
-	bp1, err := cfg.Server(2)
-	if err != nil {
-		t.Fatalf("Server(2): %v", err)
+// TestPool_ReadsTheGrid: the file's subject is the resource, and the pool is
+// what the allocator is handed.
+func TestPool_ReadsTheGrid(t *testing.T) {
+	p := load(t, sample).Pool()
+	if len(p.Hosts) != 3 || p.Slots != 8 {
+		t.Fatalf("pool = %d hosts x %d slots", len(p.Hosts), p.Slots)
 	}
-	if bp1.DataRoot != "/var/lib/chainbench" || bp1.Ports.RPCBase != 8545 || bp1.Slots != 1 {
-		t.Errorf("bp1 did not inherit the defaults: %+v", bp1)
+	if p.Cap() != 24 {
+		t.Errorf("Cap() = %d, want 24", p.Cap())
 	}
-
-	bp7, err := cfg.Server(7)
-	if err != nil {
-		t.Fatalf("Server(7): %v", err)
+	if p.Ports.P2PBase != 30303 || p.Ports.RPCBase != 8545 {
+		t.Errorf("bands = %+v", p.Ports)
 	}
-	// An override replaces only the field it names; the rest still inherits.
-	if bp7.Ports.RPCBase != 9545 {
-		t.Errorf("bp7 rpcBase = %d, want the override 9545", bp7.Ports.RPCBase)
+	if err := p.Validate(); err != nil {
+		t.Errorf("pool from a valid file must validate: %v", err)
 	}
-	if bp7.Ports.P2PBase != 30303 || bp7.Ports.RPCStep != 10 {
-		t.Errorf("bp7 lost the inherited port fields: %+v", bp7.Ports)
+	// A bare address names itself, so it can still be selected and referenced.
+	if p.Hosts[2].Name != "10.0.0.7" {
+		t.Errorf("unnamed host = %q, want it named by its address", p.Hosts[2].Name)
 	}
-	if bp7.DataRoot != "/srv/chainbench" {
-		t.Errorf("bp7 dataRoot = %q", bp7.DataRoot)
-	}
-}
-
-func TestServer_UnsetPortsFallBackToTheBuiltins(t *testing.T) {
-	// An inventory that names only hosts still yields a usable plan, so a
-	// config file is never a wall of ports an operator has to copy.
-	cfg := load(t, "version: 1\nservers:\n  - name: local\n    host: 127.0.0.1\n")
-	s, err := cfg.ByName("local")
-	if err != nil {
-		t.Fatalf("ByName: %v", err)
-	}
-	if s.Ports != serverset.BuiltinPorts() {
-		t.Errorf("ports = %+v, want the built-ins %+v", s.Ports, serverset.BuiltinPorts())
+	// Where a port came from is never a guess.
+	if !strings.Contains(p.Source, "remote-server-config.yaml") {
+		t.Errorf("source = %q, want it to name the file", p.Source)
 	}
 }
 
-func TestSelect_ByNameByIndexAndTheLoneServer(t *testing.T) {
+// TestPool_UnsetBandsFallBackToTheBuiltins keeps a minimal inventory usable:
+// an operator listing addresses should not have to restate the ports.
+func TestPool_UnsetBandsFallBackToTheBuiltins(t *testing.T) {
+	p := load(t, "version: 2\npool:\n  hosts: [127.0.0.1]\n").Pool()
+	b := serverset.BuiltinPorts()
+	if p.Ports.P2PBase != b.P2PBase || p.Ports.RPCStep != b.RPCStep {
+		t.Errorf("bands = %+v, want the built-ins %+v", p.Ports, b)
+	}
+	if p.Slots != 1 {
+		t.Errorf("slots = %d, want 1 by default", p.Slots)
+	}
+}
+
+// TestServers_DerivedFromTheHostAddress: SSH is decided by the address, not by
+// a field that can disagree with the address it sits next to.
+func TestServers_DerivedFromTheHostAddress(t *testing.T) {
 	cfg := load(t, sample)
 
-	if s, err := cfg.Select("bp7", 0); err != nil || s.Host != "10.0.0.7" {
+	local, err := cfg.ByName("local")
+	if err != nil {
+		t.Fatalf("ByName(local): %v", err)
+	}
+	if local.IsRemote() {
+		t.Error("a loopback address must not be reached over SSH")
+	}
+	remote, err := cfg.ByName("bp1")
+	if err != nil {
+		t.Fatalf("ByName(bp1): %v", err)
+	}
+	if !remote.IsRemote() {
+		t.Error("a routable address must be reached over SSH")
+	}
+	// The pool's slots, bands, data root and access reach every host: the pool
+	// is one resource, not a list of individually-configured machines.
+	for _, s := range []serverset.Server{local, remote} {
+		if s.Slots != 8 || s.DataRoot != "/var/lib/chainbench" || s.Ports.RPCBase != 8545 {
+			t.Errorf("%s did not inherit the pool: %+v", s.Name, s)
+		}
+	}
+	if !remote.SSH.Sudo {
+		t.Error("sudo is carried through to the host that may need it")
+	}
+}
+
+func TestSelect_ByNameByIndexAndTheLoneHost(t *testing.T) {
+	cfg := load(t, sample)
+
+	if s, err := cfg.Select("10.0.0.7", 0); err != nil || s.Host != "10.0.0.7" {
 		t.Errorf("Select by name = %+v, %v", s, err)
 	}
 	if s, err := cfg.Select("", 1); err != nil || s.Name != "local" {
 		t.Errorf("Select by index = %+v, %v", s, err)
 	}
-	// With several servers and no selector, the caller has to say which.
+	// With several hosts and no selector, the caller has to say which.
 	if _, err := cfg.Select("", 0); err == nil {
-		t.Error("want an error selecting nothing from a multi-server inventory")
+		t.Error("want an error selecting nothing from a multi-host pool")
 	}
 	// With exactly one, there is nothing to disambiguate.
-	one := load(t, "version: 1\nservers:\n  - name: only\n    host: 127.0.0.1\n")
+	one := load(t, "version: 2\npool:\n  hosts: [{name: only, addr: 127.0.0.1}]\n")
 	if s, err := one.Select("", 0); err != nil || s.Name != "only" {
-		t.Errorf("Select on a lone server = %+v, %v", s, err)
+		t.Errorf("Select on a lone host = %+v, %v", s, err)
 	}
 }
 
@@ -135,7 +148,7 @@ func TestPlacement_LocalAndRemoteReadTheSameFields(t *testing.T) {
 	if lp.Mode != place.LocalStepped || lp.Remote {
 		t.Errorf("local placement mode = %v remote=%v", lp.Mode, lp.Remote)
 	}
-	if lp.Capacity.SlotsPerHost != 8 || lp.DataRoot != "/tmp/cb" {
+	if lp.Capacity.SlotsPerHost != 8 || lp.DataRoot != "/var/lib/chainbench" {
 		t.Errorf("local placement = %+v", lp)
 	}
 
@@ -152,7 +165,6 @@ func TestPlacement_LocalAndRemoteReadTheSameFields(t *testing.T) {
 	if len(rp.Config.Hosts) != 1 || rp.Config.Hosts[0] != "10.0.0.1" {
 		t.Errorf("remote placement hosts = %v", rp.Config.Hosts)
 	}
-	// Both name where the plan came from.
 	for _, p := range []serverset.Placement{lp, rp} {
 		if !strings.Contains(p.Source, "remote-server-config.yaml") {
 			t.Errorf("source does not name the file: %q", p.Source)
@@ -173,23 +185,20 @@ func TestBuiltin_NamesItselfAsTheSource(t *testing.T) {
 	if p.Config.RPCBase != serverset.BuiltinPorts().RPCBase {
 		t.Errorf("builtin ports not used: %+v", p.Config)
 	}
+
+	pool := serverset.BuiltinPool(4)
+	if len(pool.Hosts) != 1 || pool.Slots != 4 || !strings.Contains(pool.Source, "built-in") {
+		t.Errorf("builtin pool = %+v", pool)
+	}
 }
 
 func TestFleet_SpreadsOneNodePerHost(t *testing.T) {
 	cfg := load(t, `
-version: 1
-defaults:
-  ssh: {user: ubuntu}
-servers:
-  - name: bp1
-    kind: remote
-    host: 10.0.0.1
-  - name: bp2
-    kind: remote
-    host: 10.0.0.2
-  - name: bp3
-    kind: remote
-    host: 10.0.0.3
+version: 2
+pool:
+  hosts: [10.0.0.1, 10.0.0.2, 10.0.0.3]
+  slots: 1
+ssh: {user: ubuntu}
 `)
 	p, err := cfg.Fleet(1, 100)
 	if err != nil {
@@ -240,92 +249,78 @@ func TestCredentials_LocalServerHasNone(t *testing.T) {
 }
 
 func TestCredentials_NoAuthErrors(t *testing.T) {
-	cfg := load(t, "version: 1\nservers:\n  - name: r\n    kind: remote\n    host: h\n    ssh: {user: ubuntu}\n")
-	s, _ := cfg.ByName("r")
+	cfg := load(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu}\n")
+	s, _ := cfg.ByName("10.0.0.9")
 	if _, err := s.Credentials(func(string) string { return "" }); err == nil {
 		t.Fatal("want a no-auth error")
 	}
 }
 
 func TestLoad_RejectsBadInventories(t *testing.T) {
-	cases := []struct {
-		name, body, want string
-	}{
-		{"unknown field", "version: 1\nservers:\n  - name: a\n    host: h\n    passwrd: x\n", "passwrd"},
-		{"duplicate index", "version: 1\nservers:\n  - index: 1\n    host: a\n  - index: 1\n    host: b\n", "duplicate server index"},
-		{"duplicate name", "version: 1\nservers:\n  - name: a\n    host: x\n  - name: a\n    host: y\n", "duplicate server name"},
-		{"no host", "version: 1\nservers:\n  - index: 1\n", "no host"},
-		{"no selector", "version: 1\nservers:\n  - host: h\n", "index or a name"},
-		{"empty inventory", "version: 1\nservers: []\n", "no servers"},
-		{"bad kind", "version: 1\nservers:\n  - name: a\n    host: h\n    kind: sideways\n", "want local or remote"},
-		{"wrong version", "version: 99\nservers:\n  - name: a\n    host: h\n", "version 99"},
-		// A p2p step of 1 puts the derived etcd port on the next node's p2p
-		// port; that stalls block production with no obvious cause.
-		{"p2p step too small", "version: 1\ndefaults:\n  ports: {p2pStep: 1}\nservers:\n  - name: a\n    host: h\n", "p2pStep"},
-		{"rpc step too small", "version: 1\ndefaults:\n  ports: {rpcStep: 2}\nservers:\n  - name: a\n    host: h\n", "rpcStep"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			_, err := serverset.Load(write(t, tc.body))
+	for _, c := range []struct{ name, body, want string }{
+		{"unknown field", "version: 2\npool:\n  hosts: [h]\n  slotz: 2\n", "slotz"},
+		{"no hosts", "version: 2\npool:\n  hosts: []\n", "no pool hosts"},
+		{"host without address", "version: 2\npool:\n  hosts: [{name: bp1}]\n", "no addr"},
+		{"wrong version", "version: 99\npool:\n  hosts: [h]\n", "version 99"},
+		{"p2p step too small", "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30303, step: 1}, rpc: {base: 8545, step: 10}}\n", "p2pStep"},
+		{"rpc step too small", "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 2}}\n", "rpcStep"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := serverset.Load(write(t, c.body))
 			if err == nil {
-				t.Fatalf("want an error for %s", tc.name)
+				t.Fatalf("want an error mentioning %q", c.want)
 			}
-			if !strings.Contains(err.Error(), tc.want) {
-				t.Errorf("error = %v, want it to mention %q", err, tc.want)
+			if !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("error = %v, want it to mention %q", err, c.want)
 			}
 		})
 	}
 }
 
 func TestLoad_MissingFilePointsAtTheSample(t *testing.T) {
-	_, err := serverset.Load(filepath.Join(t.TempDir(), "missing.yaml"))
+	_, err := serverset.Load(filepath.Join(t.TempDir(), "absent.yaml"))
 	if err == nil {
-		t.Fatal("want a not-found error")
+		t.Fatal("want an error for a missing file")
 	}
 	if !strings.Contains(err.Error(), serverset.DefaultSampleFile) {
-		t.Errorf("error should point at the sample, got: %v", err)
+		t.Errorf("error = %v, want it to point at the sample", err)
 	}
 }
 
-func TestLoad_LegacyFormatSaysHowToMigrate(t *testing.T) {
-	// The decoder's own "field not found" says nothing useful about a file
-	// written for the previous format.
-	_, err := serverset.Load(write(t, "user: ubuntu\nport: 22\nservers:\n  - index: 1\n    host: h\n"))
+// TestLoad_V1FormatSaysHowToMigrate: v2 dropped the server list, and a file
+// written for v1 must be told what changed rather than failing on a field name.
+func TestLoad_V1FormatSaysHowToMigrate(t *testing.T) {
+	_, err := serverset.Load(write(t, "version: 1\nservers:\n  - name: bp1\n    host: 10.0.0.1\n"))
 	if err == nil {
-		t.Fatal("want an error for the pre-v1 format")
+		t.Fatal("want an error for the v1 format")
 	}
-	for _, want := range []string{"defaults.ssh", "version: 1", "kind:"} {
+	for _, want := range []string{"pool.hosts", "slots", "ssh", DefaultSample} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("migration hint missing %q: %v", want, err)
 		}
 	}
 }
 
+// DefaultSample is spelled out so the hint keeps pointing at a file that exists.
+const DefaultSample = "remote-server-config.sample.yaml"
+
 func TestPorts_MetricsNeedsRoomInTheStep(t *testing.T) {
-	tight := serverset.Ports{P2PBase: 1, P2PStep: 2, RPCBase: 1, RPCStep: 3}
-	if tight.HasMetrics() {
-		t.Error("an rpc step of 3 has no room for metrics")
+	if !(serverset.Ports{RPCStep: 4}).HasMetrics() {
+		t.Error("a step of 4 leaves room for metrics")
 	}
-	if !serverset.BuiltinPorts().HasMetrics() {
-		t.Error("the built-in plan should leave room for metrics")
+	if (serverset.Ports{RPCStep: 3}).HasMetrics() {
+		t.Error("a step of 3 has no room for metrics")
 	}
 }
 
-// TestSampleFileParses keeps the tracked template honest: an operator copies it
-// verbatim, so it has to load.
 func TestSampleFileParses(t *testing.T) {
+	// The tracked template must stay loadable: it is the first thing an
+	// operator copies.
 	cfg, err := serverset.Load(filepath.Join("..", "..", serverset.DefaultSampleFile))
 	if err != nil {
 		t.Fatalf("the tracked sample does not load: %v", err)
 	}
-	local, err := cfg.ByName("local")
-	if err != nil {
-		t.Fatalf("sample has no local server: %v", err)
-	}
-	if local.IsRemote() {
-		t.Error("the sample's local server reports as remote")
-	}
-	if _, err := cfg.ByName("bp1"); err != nil {
-		t.Errorf("sample has no remote server: %v", err)
+	if err := cfg.Pool().Validate(); err != nil {
+		t.Fatalf("the tracked sample's pool does not validate: %v", err)
 	}
 }
