@@ -403,6 +403,20 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | D2 | **`--peering proxied` 는 필수** | 메인넷이 bp–pn–en 이고 **트랜잭션이 en 을 거쳐 전파**된다. mesh 만으로는 실제 전파 경로를 태우지 못한다 |
 | D3 | **인벤토리 v2 단독** (v1 호환 없음) | 실제 파일은 gitignore 라 배포본이 확인되지 않는다 — 지금이 전환 비용 최저. 호환 로더는 다섯 번째 폴딩표가 된다 |
 
+**NM3 부분 완료 (2026-08-22)** — static-nodes 조립이 세 벌에서 한 곳(`netmap.Peering`)으로
+모였다. engine·netcompose 가 이를 경유하고 `--peering` 이 CLI·MCP 에 노출된다. 착수 전
+**전수 조사**로 역할 철자를 하나만 비교하던 9곳을 `netmap.Is` 로 접었다(NM3 part 1) — 그 목록에
+genesis 검증자 수·`--unlock` 무장·BFT 최소치가 들어 있어, 정규 철자를 방출하는 순간 전부
+오동작했을 자리다.
+
+**라이브가 설계를 정정했다**: 초안의 proxied(= bp 가 pn 만 다이얼)로 5노드를 띄우자 **블록이
+0에서 멈췄다.** 모든 bp 가 `ROUND-CHANGE` 를 자기 것만 세며 반복했고(`currentRoundChanges.count=1`),
+pn 로그의 WBFT 라인은 2줄뿐이었다 — **pn 은 검증자가 아니라 합의 트래픽을 중계하지 않는다.**
+확정형은 **bp↔bp 직결 + bp↔pn + pn↔en**(en 은 여전히 bp 를 모른다). 정정 후 재검증:
+stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet proxied 5노드 블록 전진 +
+피어 4 + api 9/9, 세 경우 모두 고아 0.
+**잔여**: 할당 경로(`place.Allocate`→`netmap.Assign`)와 `node.Endpoints`→`netmap.Ports`(etcd 부활).
+
 **NM2 완료 (2026-08-22)** — 피어링이 역할에서 파생된다. `mesh` 는 현행과 바이트 동일(골든:
 `armSpecs` 가 렌더한 config 의 enode 목록 == `netmap.Mesh`, **self 항목 포함까지**; self 를 뺀
 변형으로 실패를 확인), `proxied` 는 bp↔pn↔en 이라 **en 의 목록에 bp 가 없다**. pn 없는 proxied 와

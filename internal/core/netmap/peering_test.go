@@ -66,8 +66,12 @@ func TestPeering_ProxiedKeepsEndpointsAwayFromProducers(t *testing.T) {
 	m := tiered(t)
 
 	// node1/node2 are bp, node3 is pn, node4/node5 are en.
-	if got := labels(t, m, netmap.Proxied, "node1"); strings.Join(got, ",") != "node3" {
-		t.Fatalf("bp peers = %v, want only the pn", got)
+	//
+	// A producer keeps its peers among the other producers plus the tier. It
+	// was measured: with the pn as a bp's only peer, consensus never forms —
+	// a pn is not a validator and does not carry consensus traffic.
+	if got := labels(t, m, netmap.Proxied, "node1"); strings.Join(got, ",") != "node2,node3" {
+		t.Fatalf("bp peers = %v, want the other producer and the pn", got)
 	}
 	if got := labels(t, m, netmap.Proxied, "node4"); strings.Join(got, ",") != "node3" {
 		t.Fatalf("en peers = %v, want only the pn", got)

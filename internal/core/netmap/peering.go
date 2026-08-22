@@ -93,15 +93,25 @@ func (p Peering) Peers(m *Map, label NodeLabel) ([]NodeLabel, error) {
 		return out, nil
 	}
 
-	// Proxied: each tier sees only its neighbours. pn is the only role that
-	// sees both sides, which is what makes it the tier.
+	// Proxied: endpoints are kept away from producers, and producers stay
+	// connected to each other.
+	//
+	// The second half is not symmetry for its own sake — it was measured. A
+	// graph where each bp dialled only the pn left every producer broadcasting
+	// ROUND-CHANGE and seeing nothing but its own message (round 5, sequence 1,
+	// currentRoundChanges.count=1, no block ever sealed): a pn is not a
+	// validator, so it does not carry consensus traffic between the nodes that
+	// are. The tier proxies transactions and blocks, not consensus.
+	//
+	// So bp <-> bp is direct, bp <-> pn and pn <-> en go through the tier, and
+	// en never learns a producer — which is the property the shape exists for.
 	var wants func(node.Role) bool
-	switch self.Role {
-	case node.RoleBP, node.RoleValidator:
-		wants = func(r node.Role) bool { return r == node.RolePN }
-	case node.RoleEN, node.RoleEndpoint:
-		wants = func(r node.Role) bool { return r == node.RolePN }
-	case node.RolePN:
+	switch {
+	case Is(self.Role, node.RoleBP):
+		wants = func(r node.Role) bool { return Is(r, node.RoleBP) || Is(r, node.RolePN) }
+	case Is(self.Role, node.RoleEN):
+		wants = func(r node.Role) bool { return Is(r, node.RolePN) }
+	case Is(self.Role, node.RolePN):
 		wants = func(node.Role) bool { return true }
 	default:
 		return nil, fmt.Errorf("netmap: peering %q has no place for role %q (%s)", p, self.Role, label)

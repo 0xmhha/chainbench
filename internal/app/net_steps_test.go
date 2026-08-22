@@ -137,3 +137,103 @@ func TestNetStepPrerequisites(t *testing.T) {
 		t.Fatal("health before allocate must fail")
 	}
 }
+
+// TestNetAllocate_ProxiedKeepsEndpointsAwayFromProducers composes the graph a
+// production network runs and checks it where it actually takes effect: the
+// config each node is handed. Transactions arrive at an endpoint and travel
+// inward, so an endpoint must not hold a route to a producer.
+func TestNetAllocate_ProxiedKeepsEndpointsAwayFromProducers(t *testing.T) {
+	dir := t.TempDir()
+	ctx := context.Background()
+	d := app.Deps{Clock: fixedClock}
+	keysAbs, err := filepath.Abs(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	topo := filepath.Join(dir, "topology.yaml")
+	if err := os.WriteFile(topo, []byte(`chain: stablenet
+nodes:
+  - {index: 1, role: bp}
+  - {index: 2, role: bp}
+  - {index: 3, role: pn}
+  - {index: 4, role: en}
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, TopologyPath: topo, Peering: "proxied"}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	if _, err := app.NetKeys(ctx, d, app.NetKeysIn{DataDir: dir}); err != nil {
+		t.Fatalf("keys: %v", err)
+	}
+	if _, err := app.NetGenesis(ctx, d, app.NetGenesisIn{DataDir: dir}); err != nil {
+		t.Fatalf("genesis: %v", err)
+	}
+	if _, err := app.NetConfig(ctx, d, app.NetConfigIn{DataDir: dir}); err != nil {
+		t.Fatalf("config: %v", err)
+	}
+
+	// node3 is the proxy tier: it is the only node the others may dial, and the
+	// only one that sees both sides.
+	pn := readConfig(t, dir, 3)
+	for _, n := range []int{1, 2, 4} {
+		if !strings.Contains(pn, portOf(t, dir, n)) {
+			t.Fatalf("pn config should list node%d:\n%s", n, pn)
+		}
+	}
+	en := readConfig(t, dir, 4)
+	for _, bp := range []int{1, 2} {
+		if strings.Contains(en, portOf(t, dir, bp)) {
+			t.Fatalf("endpoint lists producer node%d — proxied means it must not:\n%s", bp, en)
+		}
+	}
+	if !strings.Contains(en, portOf(t, dir, 3)) {
+		t.Fatalf("endpoint should dial the proxy tier:\n%s", en)
+	}
+
+	// An impossible graph is refused where the layout is chosen, not later.
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, Validators: 2, Peering: "starfish"}); err == nil {
+		t.Fatal("an unknown peering must be refused")
+	}
+}
+
+// readConfig returns one node's rendered config from the workspace.
+func readConfig(t *testing.T, dir string, index int) string {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join(dir, "config_node"+itoa(index)+".toml"))
+	if err != nil {
+		t.Fatalf("read node%d config: %v", index, err)
+	}
+	return string(b)
+}
+
+// portOf returns the "@host:p2p" fragment identifying a node inside an enode.
+func portOf(t *testing.T, dir string, index int) string {
+	t.Helper()
+	out, err := app.NetStatus(context.Background(), app.Deps{}, app.NetStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("status: %v", err)
+	}
+	for _, n := range out.State.Nodes {
+		if n.Index == index {
+			return ":" + itoa(n.P2P) + "?"
+		}
+	}
+	t.Fatalf("node%d not in the workspace", index)
+	return ""
+}
+
+func itoa(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	var b []byte
+	for ; n > 0; n /= 10 {
+		b = append([]byte{byte('0' + n%10)}, b...)
+	}
+	return string(b)
+}

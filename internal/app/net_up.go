@@ -50,6 +50,8 @@ type NetUpIn struct {
 	Endpoints        int
 	EndpointSyncMode string
 	TopologyPath     string
+	// Peering is the peer graph to wire ("mesh" default, "proxied").
+	Peering string
 	// Server selects where the nodes run and on what ports, from the server
 	// inventory. Its zero value uses the built-in local plan.
 	Server ServerRef
@@ -123,7 +125,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 		{"allocate", func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
-				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
+				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath, Peering: in.Peering,
 				Server: in.Server,
 			})
 			return r.Detail, err

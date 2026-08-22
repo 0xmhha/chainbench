@@ -68,6 +68,8 @@ type NetAllocateIn struct {
 	DataDir    string
 	Validators int
 	Endpoints  int
+	// Peering is the peer graph ("mesh" default, "proxied").
+	Peering string
 	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
 	// re-sync test can exercise that path. Empty leaves every node on full.
 	EndpointSyncMode string
@@ -101,7 +103,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		}
 		return ws.Allocate(netcompose.AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
-			EndpointSyncMode: in.EndpointSyncMode, Topology: topo,
+			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
 			Placement: resolved.Placement,
 		})
 	})

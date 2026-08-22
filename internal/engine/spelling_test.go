@@ -42,11 +42,11 @@ func TestArmSpecs_CanonicalRolesLaunchIdentically(t *testing.T) {
 		}
 	}
 
-	legacy, err := armSpecs(plugin, preset, plan(node.RoleValidator, node.RoleEndpoint), "go-stablenet", "/keys", nil)
+	legacy, err := armSpecs(plugin, preset, plan(node.RoleValidator, node.RoleEndpoint), "go-stablenet", "/keys", "", nil)
 	if err != nil {
 		t.Fatalf("armSpecs(legacy): %v", err)
 	}
-	canonical, err := armSpecs(plugin, preset, plan(node.RoleBP, node.RoleEN), "go-stablenet", "/keys", nil)
+	canonical, err := armSpecs(plugin, preset, plan(node.RoleBP, node.RoleEN), "go-stablenet", "/keys", "", nil)
 	if err != nil {
 		t.Fatalf("armSpecs(canonical): %v", err)
 	}

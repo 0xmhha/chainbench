@@ -17,15 +17,16 @@ import (
 
 var enodeLine = regexp.MustCompile(`"(enode://[^"]+)"`)
 
-// TestArmSpecs_StaticNodesMatchNetmapMesh is the golden the peering work is
-// held to: what the launcher writes today and what netmap.Mesh derives must be
-// the same list, in the same order, for every node.
+// TestArmSpecs_StaticNodesMatchNetmapMesh held the launcher's own assembly
+// against netmap.Mesh while the two coexisted; the launcher now calls netmap,
+// so what it pins today is the contract on the far side of the rendering: the
+// config a node is handed still carries the whole network, in map order, with
+// the node's own entry included.
 //
-// The list is in each node's config, so it is in the launched network's
-// behaviour. If netmap disagreed by one entry or one position, NM3 would change
-// how every existing network peers while presenting itself as a refactor — and
-// the change would show up as nodes that cannot find each other, far from the
-// commit that caused it.
+// That list is the launched network's peering. A change of one entry or one
+// position shows up as nodes that cannot find each other, far from the commit
+// that caused it — which is why it is asserted against the rendered config
+// rather than against the slice that produced it.
 func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 	const n = 4
 	plugin := registry.StaticPlugin{
@@ -53,7 +54,7 @@ func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 		})
 	}
 
-	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", nil)
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", nil)
 	if err != nil {
 		t.Fatalf("armSpecs: %v", err)
 	}

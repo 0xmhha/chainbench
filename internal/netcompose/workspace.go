@@ -75,6 +75,10 @@ type State struct {
 	GenesisPath  string            `json:"genesisPath,omitempty"`
 	Nodes        []NodeState       `json:"nodes,omitempty"`
 	Steps        map[string]Step   `json:"steps"`
+	// Peering is the peer graph the composition wires ("mesh" default,
+	// "proxied" for bp <-> pn <-> en). Empty means mesh, so a workspace written
+	// before the field keeps the graph it was composed with.
+	Peering string `json:"peering,omitempty"`
 	// Bootnode is the 1-based index of the topology's bootnode, or 0 when the
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.

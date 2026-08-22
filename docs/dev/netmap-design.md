@@ -107,7 +107,7 @@ core/netmap
 │              Host:Port → NodeLabel                               (역방향, N7)
 ├─ Peering     역할에서 파생되는 그래프 (N0b)
 │              mesh    — 현행과 동일 (기본)
-│              proxied — bp↔pn↔en, en 은 bp 를 모른다  ← **실사용 요구**
+│              proxied — bp↔bp 직결 + bp↔pn↔en, en 은 bp 를 모른다  ← **실사용 요구**
 │              poa 에 pn 선언 시 **오류** (조용한 무시 금지)
 └─ StaticNodes(label, pubkeyOf) → []enode
                "이 노드가 다이얼할 목록" — 4벌의 정책이 이 한 함수로
@@ -286,6 +286,16 @@ poa+pn 선언을 거부한다. `serverset` 의 전역 `p2pStep>=2` 강제는 이
 이고 **트랜잭션이 en 을 거쳐 전파**된다 — bp 로 직접 보내지 않는다. 재현 대상이 그 구조이므로
 mesh 만으로는 실제 전파 경로를 태우지 못하며, proxied 는 NM2 의 게이트에 포함된다.
 
+**proxied 의 정확한 형태는 라이브가 정정했다** (2026-08-22, 실 gstable 5노드):
+초안대로 **bp 가 pn 만 다이얼하게** 하면 **블록이 하나도 생성되지 않는다.** 모든 bp 가
+`ROUND-CHANGE` 를 브로드캐스트하며 `currentRoundChanges.count=1`(자기 것만)에 머물렀고,
+pn 로그에는 WBFT 라인이 2줄뿐이었다 — **pn 은 검증자가 아니라 합의 트래픽을 중계하지 않는다.**
+프록시 계층이 나르는 것은 트랜잭션과 블록이지 합의 메시지가 아니다.
+
+따라서 확정형은 **bp↔bp 직결 + bp↔pn + pn↔en** 이다. `en` 이 bp 를 모른다는 성질(이 구조가
+존재하는 이유)은 그대로 유지된다. 정정 후 같은 토폴로지로 재기동해 **블록 전진·피어 4·api 9/9
+pass·고아 0** 을 확인했다.
+
 ### 2.7 이름 충돌 검증 — AST 실측
 
 이 설계가 도입하는 이름을 기존 타입 선언 전수와 대조했다([[layers]] §5b 규칙 적용).
@@ -345,7 +355,7 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
 | **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
-| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | 앞 2곳 전환 후 `net up` 라이브 재검증(stablenet·wbft) · 살아있는 wemix 노드의 etcd 포트를 조회할 수 있다 |
+| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **잔여**: 할당 경로(`place`→`Assign`)와 `node.Endpoints`→`netmap.Ports` |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
 
@@ -366,7 +376,7 @@ N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
 | NM-a | ~~`netmap.Label` vs `keyring.Label`~~ | 해소 — `NodeLabel` 로 이름부터 분리(§2.5) |
 | NM-b | `node.Node.Ports` 타입 교체는 파급이 크다(25 fan-in). 단계적으로? | NM1 에서 alias 로 시작, NM3 에서 교체 |
 | ~~NM-c~~ | ~~proxied 에서 pn 이 없으면?~~ | **해소** — 오류(NM2 구현). mesh 로 조용히 강등하지 않는다 |
-| NM-i | proxied 에서 bp 는 다른 bp 를 직접 아는가? | **아니오**(NM2 구현) — bp 는 pn 만 다이얼하고 bp↔bp 는 pn 을 거친다(센트리 구조). 합의가 pn 경유 전파로 충분한지는 라이브(NM3 이후)에서 확인 |
+| ~~NM-i~~ | ~~proxied 에서 bp 는 다른 bp 를 직접 아는가?~~ | **해소 — 그렇다** (라이브 2026-08-22). pn 경유 전파로는 합의가 형성되지 않는다(§2.6). bp↔bp 직결 |
 | ~~NM-f~~ | ~~라벨을 `node7` 로 둘지 `en2` 로 둘지~~ | **해소 (2026-08-22)** — 둘 다. 신원=`Index`, 별칭=역할 라벨(§2.5a). 개명 없음 |
 | ~~NM-g~~ | ~~인벤토리 v1 호환 기간~~ | **해소 (2026-08-22)** — v2 단독(§2.2a) |
 | ~~NM-h~~ | ~~proxied 를 실제로 쓰는가~~ | **해소 (2026-08-22)** — 쓴다. 메인넷이 bp–pn–en 이고 tx 가 en 경유(§2.6) |

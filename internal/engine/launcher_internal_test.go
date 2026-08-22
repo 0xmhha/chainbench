@@ -112,7 +112,7 @@ func TestArmSpecs(t *testing.T) {
 		},
 	}
 
-	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", nil)
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", nil)
 	if err != nil {
 		t.Fatalf("armSpecs: %v", err)
 	}
@@ -181,7 +181,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 				ConfigPath: "/d/c1.toml", Ports: node.Endpoints{P2P: 31000, HTTP: 8600, WS: 8700}},
 		},
 	}
-	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", []launchopt.Override{
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", []launchopt.Override{
 		{Key: launchopt.KeyNetworkID, Value: "4242"},
 		{Key: launchopt.KeyMaxPeers, Value: "7"},
 	})
@@ -193,7 +193,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 	}
 
 	// An override the dialect cannot express must fail assembly, not vanish.
-	_, err = armSpecs(plugin, preset, plan, "go-stablenet", "/keys", []launchopt.Override{
+	_, err = armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", []launchopt.Override{
 		{Key: launchopt.KeyBlockInterval, Value: "1"},
 	})
 	if err == nil {
@@ -233,7 +233,7 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 		},
 	}
 
-	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", nil)
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", nil)
 	if err != nil {
 		t.Fatalf("armSpecs: %v", err)
 	}

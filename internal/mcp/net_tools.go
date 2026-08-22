@@ -120,11 +120,17 @@ func netAllocateTool() Tool {
 		InputSchema: dataDirSchema(map[string]any{
 			"validators": map[string]any{"type": "number", "description": "validator node count (default 4)"},
 			"endpoints":  map[string]any{"type": "number", "description": "endpoint node count"},
+			"peering": map[string]any{
+				"type":        "string",
+				"enum":        []string{"mesh", "proxied"},
+				"description": "peer graph: mesh (default, every node dials every other) or proxied (bp <-> pn <-> en; endpoints never dial a producer)",
+			},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			out, err := app.NetAllocate(ctx, app.Deps{}, app.NetAllocateIn{
 				DataDir:    argString(args, "dataDir", ""),
 				Validators: argInt(args, "validators", 4), Endpoints: argInt(args, "endpoints", 0),
+				Peering: argString(args, "peering", ""),
 			})
 			return out.Detail, err
 		},

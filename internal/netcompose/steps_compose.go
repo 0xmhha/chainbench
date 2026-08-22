@@ -100,6 +100,10 @@ type AllocateOpts struct {
 	Validators int
 	// Endpoints is the non-validator (endpoint) node count.
 	Endpoints int
+	// Peering is the peer graph to wire ("mesh" default, "proxied" for
+	// bp <-> pn <-> en). It is recorded now and consumed by the config step,
+	// so the graph a network runs is decided where its layout is.
+	Peering string
 	// EndpointSyncMode is the geth sync mode endpoints render into their config
 	// ("snap" or "archive" instead of the default "full"), so a re-sync test can
 	// exercise a path other than full sync. Validators ignore it: a node that
@@ -211,6 +215,13 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			P2P:        p.Ports.P2P, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
 		}
 	}
+	// Reject an impossible graph here rather than at config time: the operator
+	// is choosing the layout in this step.
+	peering, err := netmap.ParsePeering(opts.Peering)
+	if err != nil {
+		return "", err
+	}
+	w.state.Peering = string(peering)
 	w.state.Nodes = nodes
 	// Counted from the resolved placements, not the requested count: a topology
 	// decides the validator set, and the genesis step sizes itself from this.
@@ -365,14 +376,26 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
-	staticNodes := make([]string, 0, len(w.state.Nodes))
-	for _, ns := range w.state.Nodes {
-		if nk, ok := preset.Node(ns.Index); ok {
-			// The node's own recorded address: on a fleet each node lives on a
-			// different host, and a static-node list pointing at this machine
-			// would leave every node unable to find its peers.
-			staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, nodeHost(ns), ns.P2P))
+	placed, err := w.netmap()
+	if err != nil {
+		return "", fmt.Errorf("netcompose: config: %w", err)
+	}
+	peering, err := netmap.ParsePeering(w.state.Peering)
+	if err != nil {
+		return "", fmt.Errorf("netcompose: config: %w", err)
+	}
+	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
+		return "", fmt.Errorf("netcompose: config: %w", err)
+	}
+	// The peer's own recorded address: on a fleet each node lives on a
+	// different host, and a static-node list pointing at this machine would
+	// leave every node unable to find its peers.
+	enode := func(pl netmap.Placement) (string, bool) {
+		nk, ok := preset.Node(pl.Index)
+		if !ok {
+			return "", false
 		}
+		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
 	}
 	t, err := w.state.Target.Resolve(w.env)
 	if err != nil {
@@ -380,6 +403,10 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	}
 	m := p.Manifest()
 	for _, ns := range w.state.Nodes {
+		staticNodes, err := peering.StaticNodes(placed, netmap.LabelFor(ns.Index), enode)
+		if err != nil {
+			return "", fmt.Errorf("netcompose: config: node%d peers: %w", ns.Index, err)
+		}
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
 			Ports:         node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
@@ -516,4 +543,29 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 		Args:       ns.Args,
 		Ports:      node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
 	}
+}
+
+// netmap reads the workspace's node table as a placement map, so the peer
+// policy and the address lookups run off one representation. The host is the
+// node's own recorded address, which on a fleet is not this machine.
+func (w *Workspace) netmap() (*netmap.Map, error) {
+	placements := make([]netmap.Placement, 0, len(w.state.Nodes))
+	ordinals := map[node.Role]int{}
+	for _, ns := range w.state.Nodes {
+		role, err := netmap.NormalizeRole(ns.Role)
+		if err != nil {
+			return nil, fmt.Errorf("node%d: %w", ns.Index, err)
+		}
+		ordinals[role]++
+		placements = append(placements, netmap.Placement{
+			Index:   ns.Index,
+			Label:   netmap.LabelFor(ns.Index),
+			Role:    role,
+			Ord:     ordinals[role],
+			Host:    nodeHost(ns),
+			Ports:   netmap.Ports{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+			DataDir: ns.DataDir,
+		})
+	}
+	return netmap.NewMap(placements)
 }
