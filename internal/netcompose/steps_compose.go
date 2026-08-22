@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
@@ -285,19 +286,15 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("netcompose: genesis: %w", err)
 	}
-	net := preset.NetworkFor(w.state.Validators)
-	gen, err := genesis.Build(p, genesis.Inputs{
-		Validators: net.Validators,
-		BLSKeys:    net.BLSKeys,
-		ExtraData:  net.ExtraData,
-		Members:    net.Members,
-		Alloc:      net.Alloc,
-		ChainID:    opts.ChainID,
-	})
+	// A family whose genesis its binary writes takes a different source: the
+	// generic dispatch builds a genesis by substituting a template, and for
+	// wemix that produces a file that initializes cleanly and runs the wrong
+	// consensus.
+	art, err := w.genesisArtifacts(ctx, p, preset, opts)
 	if err != nil {
 		return "", err
 	}
-	gen, err = customizeGenesis(gen, opts)
+	gen, err := customizeGenesis(art.Genesis, opts)
 	if err != nil {
 		return "", err
 	}
@@ -308,6 +305,13 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	path := filepath.Join(t.DataRoot, "genesis.json")
 	if err := t.Files.Write(ctx, path, gen, 0o644); err != nil {
 		return "", fmt.Errorf("netcompose: genesis: write: %w", err)
+	}
+	// The step's by-products go to the target beside the genesis: a wemix
+	// bring-up reads its governance config back during deploy-governance.
+	for name, content := range art.Extra {
+		if err := t.Files.Write(ctx, filepath.Join(t.DataRoot, name), content, 0o644); err != nil {
+			return "", fmt.Errorf("netcompose: genesis: write %s: %w", name, err)
+		}
 	}
 	w.state.GenesisPath = path
 	w.state.Capabilities = networkCapabilities(p.Manifest().Capabilities, opts)
@@ -590,4 +594,35 @@ func netmapRequests(reqs []place.NodeReq) []netmap.Request {
 		out = append(out, netmap.Request{Role: r.Role})
 	}
 	return out
+}
+
+// genesisArtifacts builds the genesis through the source the family needs. The
+// wemix source runs the chain binary, so it also needs the placement: the
+// governance config names the producer by host and p2p port.
+func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, opts GenesisOpts) (engine.GenesisArtifacts, error) {
+	if p.Family().ID() == poa.FamilyID {
+		placed, err := w.Netmap()
+		if err != nil {
+			return engine.GenesisArtifacts{}, fmt.Errorf("netcompose: genesis: %w", err)
+		}
+		src := engine.WemixGenesisSource{
+			KeysDir: w.state.KeysDir,
+			Binary:  w.state.Binary,
+			ChainID: opts.ChainID,
+		}
+		return src.Genesis(ctx, p, engine.GenesisRequest{Validators: w.state.Validators, Nodes: placed})
+	}
+	net := preset.NetworkFor(w.state.Validators)
+	gen, err := genesis.Build(p, genesis.Inputs{
+		Validators: net.Validators,
+		BLSKeys:    net.BLSKeys,
+		ExtraData:  net.ExtraData,
+		Members:    net.Members,
+		Alloc:      net.Alloc,
+		ChainID:    opts.ChainID,
+	})
+	if err != nil {
+		return engine.GenesisArtifacts{}, err
+	}
+	return engine.GenesisArtifacts{Genesis: gen}, nil
 }

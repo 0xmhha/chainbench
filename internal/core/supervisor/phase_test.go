@@ -71,7 +71,7 @@ func TestBringUp_PhasesLaunchInOrderAndRunActionsBetween(t *testing.T) {
 
 	s := New(Deps{
 		Launch: launchRecorder(&launches),
-		Action: func(_ context.Context, name string, on node.Node) error {
+		Action: func(_ context.Context, name string, _ driver.Plan, on node.Node) error {
 			actions = append(actions, name)
 			actionSawNodes = on.Index
 			return nil
@@ -128,7 +128,7 @@ func TestBringUp_ActionFailureStopsTheBringUp(t *testing.T) {
 	var launches [][]int
 	s := New(Deps{
 		Launch:     launchRecorder(&launches),
-		Action:     func(context.Context, string, node.Node) error { return errors.New("etcd cluster empty") },
+		Action:     func(context.Context, string, driver.Plan, node.Node) error { return errors.New("etcd cluster empty") },
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
 		Procman:    procman.New(),
 	})
@@ -141,5 +141,36 @@ func TestBringUp_ActionFailureStopsTheBringUp(t *testing.T) {
 	}
 	if len(launches) != 1 {
 		t.Fatalf("the second phase must not launch after a failed action: %v", launches)
+	}
+}
+
+// TestBringUp_FailedLaunchLeavesNothingRunning: a bring-up that fails part way
+// through still started processes, and with phases it always has — the group
+// before the failing one is up. Leaving them holds the ports the next attempt
+// needs, so the retry fails for a reason unrelated to the first, and an
+// operator reading "address already in use" is looking at the wrong problem.
+func TestBringUp_FailedLaunchLeavesNothingRunning(t *testing.T) {
+	var launches [][]int
+	var stopped []node.NodeSet
+	s := New(Deps{
+		Launch: launchRecorder(&launches),
+		Action: func(context.Context, string, driver.Plan, node.Node) error {
+			return errors.New("etcd cluster empty")
+		},
+		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
+		Procman:    procman.New(),
+	})
+	sup := s.(*sup)
+	sup.teardownHook = func(ns node.NodeSet) { stopped = append(stopped, ns) }
+
+	_, _, err := s.BringUp(context.Background(), phasePlan(3), Options{Phases: []registry.Phase{
+		{Name: "boot", Nodes: []int{1}, Actions: []string{"etcd-init"}},
+		{Name: "rest", Nodes: []int{2, 3}},
+	}})
+	if err == nil {
+		t.Fatal("the bring-up must fail")
+	}
+	if len(stopped) != 1 || len(stopped[0].Nodes) != 1 || stopped[0].Nodes[0].Index != 1 {
+		t.Fatalf("teardown saw %v, want the one node the boot phase started", stopped)
 	}
 }

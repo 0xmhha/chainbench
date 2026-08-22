@@ -64,5 +64,10 @@ type TestRecord interface {
 	Step(i int, r StepResult)
 	Assert(r AssertResult)
 	Status(s TestStatus)
+	// Reason records why a test ended the way it did, for the verdicts where
+	// the status alone does not say: a blocked test failed to get an
+	// environment, a skipped one did not apply. Without it an artifact records
+	// that something went wrong and not what.
+	Reason(why string)
 	PostAction(r PostResult)
 }

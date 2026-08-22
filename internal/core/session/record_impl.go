@@ -20,9 +20,10 @@ const (
 // writes them under tests/<NNN>_<id>/. Write errors are collected and surfaced
 // by the owning session's Save rather than silently dropped.
 type record struct {
-	dir string
-	seq int
-	id  string
+	reason string
+	dir    string
+	seq    int
+	id     string
 
 	mu      sync.Mutex
 	envRef  string
@@ -73,6 +74,7 @@ type statusDoc struct {
 	Seq    int    `json:"seq"`
 	Result string `json:"result"`
 	Env    string `json:"env,omitempty"`
+	Reason string `json:"reason,omitempty"`
 }
 
 // Status records the terminal verdict as status.json.
@@ -80,11 +82,25 @@ func (r *record) Status(s TestStatus) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.status = s
+	r.writeStatus()
+}
+
+// Reason records why, and rewrites the status so the two travel together.
+func (r *record) Reason(why string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.reason = why
+	r.writeStatus()
+}
+
+// writeStatus persists the verdict and its reason. The caller holds the lock.
+func (r *record) writeStatus() {
 	r.capture(writeJSON(filepath.Join(r.dir, fileStatus), statusDoc{
 		ID:     r.id,
 		Seq:    r.seq,
-		Result: string(s),
+		Result: string(r.status),
 		Env:    r.envRef,
+		Reason: r.reason,
 	}))
 }
 

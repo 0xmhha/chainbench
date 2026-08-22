@@ -38,7 +38,7 @@ type Deps struct {
 	// wiring this is an error — the same contract as LeaderGate and
 	// SwapBinary, because a bootstrap that is quietly skipped produces a
 	// network that starts and then does nothing.
-	Action func(ctx context.Context, name string, on node.Node) error
+	Action func(ctx context.Context, name string, plan driver.Plan, on node.Node) error
 	// HealthGate blocks until the network is healthy, or returns a classified
 	// non-OK Diagnosis (etcd leader, block production, fork crossing).
 	HealthGate func(ctx context.Context, ns node.NodeSet) (Diagnosis, error)
@@ -64,7 +64,10 @@ type Deps struct {
 
 // sup is the concrete Supervisor.
 type sup struct {
-	deps Deps
+	// teardownHook observes teardowns in tests. Production leaves it nil: the
+	// real evidence is that no process survives, which a unit test cannot see.
+	teardownHook func(node.NodeSet)
+	deps         Deps
 }
 
 // New returns a Supervisor over deps.
@@ -94,6 +97,17 @@ func (s *sup) BringUp(ctx context.Context, plan driver.Plan, opts Options) (node
 			// A launch failure is classified from its own text: reporting every
 			// one as RPCUnready hid the etcd problems that cause most of them.
 			last = Diagnosis{Mode: Classify(err), Detail: err.Error()}
+			// Whatever did start is torn down. A launch that fails part way
+			// through still leaves processes — with phases it always does, since
+			// the group before the failing one is already up — and leaving them
+			// holds the ports the next attempt needs, which then fails for a
+			// reason that has nothing to do with the first.
+			for _, pr := range res.Procs {
+				s.deps.Procman.TrackProc(pr)
+			}
+			if len(res.Nodes.Nodes) > 0 {
+				_ = s.Teardown(ctx, res.Nodes, TeardownOpts{RemoveDataDir: true, Grace: graceOr(opts)})
+			}
 		} else {
 			for _, p := range res.Procs {
 				s.deps.Procman.TrackProc(p)
@@ -179,6 +193,9 @@ func (s *sup) applyForkSwaps(ctx context.Context, ns node.NodeSet, opts Options)
 // Teardown stops the tracked processes (verifying local ones are gone) and, when
 // requested, removes their data directories.
 func (s *sup) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) error {
+	if s.teardownHook != nil {
+		s.teardownHook(ns)
+	}
 	// Track the node set's local pids too, so a standalone Teardown still acts.
 	for _, n := range ns.Nodes {
 		s.deps.Procman.TrackProc(procman.Proc{PID: n.PID, Label: "node" + strconv.Itoa(n.Index)})
@@ -227,7 +244,7 @@ func (s *sup) launchPhases(ctx context.Context, plan driver.Plan, opts Options) 
 			if !ok {
 				return all, fmt.Errorf("supervisor: phase %q needs action %q but launched no node to run it on", phase.Name, name)
 			}
-			if err := s.deps.Action(ctx, name, on); err != nil {
+			if err := s.deps.Action(ctx, name, plan, on); err != nil {
 				return all, fmt.Errorf("supervisor: phase %q action %q: %w", phase.Name, name, err)
 			}
 		}

@@ -21,7 +21,11 @@ type Family struct{}
 // New returns the poa consensus family.
 func New() Family { return Family{} }
 
-func (Family) ID() string               { return "poa" }
+// FamilyID names this consensus family. It is exported so a caller can branch
+// on the family it composed without spelling the string itself.
+const FamilyID = "poa"
+
+func (Family) ID() string               { return FamilyID }
 func (Family) RPCNamespace() string     { return "wemix" }
 func (Family) ValidatorsMethod() string { return "wemix_getValidators" }
 

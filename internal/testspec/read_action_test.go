@@ -87,6 +87,7 @@ func (r *recordStub) Spec([]byte)                   {}
 func (r *recordStub) Step(int, session.StepResult)  {}
 func (r *recordStub) Assert(a session.AssertResult) { r.asserts = append(r.asserts, a) }
 func (r *recordStub) Status(session.TestStatus)     {}
+func (r *recordStub) Reason(string)                 {}
 func (r *recordStub) PostAction(session.PostResult) {}
 
 func TestReaderNames_CoverEveryRPCReadingAssertion(t *testing.T) {

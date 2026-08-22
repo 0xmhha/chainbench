@@ -90,7 +90,8 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			rec := sess.Test(seq, fmt.Sprintf("spec-%d", seq))
 			rec.Spec(raw)
 			rec.Status(session.StatusBlocked)
-			e.emit(obs.PhaseTest, obs.KindError, "spec parse failed", map[string]any{"seq": seq})
+			rec.Reason(perr.Error())
+			e.emit(obs.PhaseTest, obs.KindError, "spec parse failed", map[string]any{"seq": seq, "error": perr.Error()})
 			continue
 		}
 
@@ -99,6 +100,9 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 
 		if e.deps.Applicable != nil && !e.deps.Applicable(spec) {
 			rec.Status(session.StatusSkip)
+			// A skip with no reason reads as "this did not matter"; it usually
+			// means a capability the target does not advertise.
+			rec.Reason("does not apply to this target (chain or required capabilities)")
 			e.emit(obs.PhaseTest, obs.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
 			continue
 		}
@@ -109,14 +113,18 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			env, berr = sess.NewEnvironment(e.deps.Fingerprint(spec))
 			if berr != nil {
 				rec.Status(session.StatusBlocked)
-				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID})
+				rec.Reason(berr.Error())
+				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "error": berr.Error()})
 				continue
 			}
 			e.emit(obs.PhaseSetup, obs.KindProgress, "building environment", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
 			ns, td, buildErr := e.deps.BuildEnv(ctx, env, spec)
 			if buildErr != nil {
+				// The reason travels with the verdict: "blocked" on its own
+				// sends the reader to the logs of a network that never started.
 				rec.Status(session.StatusBlocked)
-				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
+				rec.Reason(buildErr.Error())
+				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID(), "error": buildErr.Error()})
 				continue
 			}
 			env.PopulateNodeTable(ns)
