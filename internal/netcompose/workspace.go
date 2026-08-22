@@ -48,17 +48,14 @@ type NodeState struct {
 	DataDir    string `json:"dataDir"`
 	ConfigPath string `json:"configPath"`
 	LogPath    string `json:"logPath"`
-	P2P        int    `json:"p2p"`
-	// Etcd is derived by the wemix binary as P2P+1. It is recorded so a
-	// composed network can be asked for it: it used to be dropped here and was
-	// then unknowable for the rest of the network's life.
-	Etcd    int      `json:"etcd,omitempty"`
-	HTTP    int      `json:"http"`
-	WS      int      `json:"ws"`
-	Auth    int      `json:"auth"`
-	Metrics int      `json:"metrics,omitempty"`
-	Args    []string `json:"args,omitempty"`
-	PID     int      `json:"pid,omitempty"`
+	// Endpoints is embedded rather than copied field by field: its keys inline
+	// into this object, so the persisted shape does not change, and a port can
+	// no longer be dropped in a conversion. That is how the etcd port went
+	// missing between the plan and the running network, and the first attempt
+	// at restoring it dropped the port again in one of the three copies.
+	node.Endpoints
+	Args []string `json:"args,omitempty"`
+	PID  int      `json:"pid,omitempty"`
 }
 
 // State is the persisted composition state accumulated across step commands. It

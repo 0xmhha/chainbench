@@ -217,7 +217,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
 			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
 			Host:       p.Host,
-			P2P:        p.Ports.P2P, Etcd: p.Ports.Etcd, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
+			Endpoints:  p.Ports,
 		}
 	}
 	// Reject an impossible graph here rather than at config time: the operator
@@ -381,7 +381,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
-	placed, err := w.netmap()
+	placed, err := w.Netmap()
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
@@ -414,7 +414,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		}
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
-			Ports:         node.Endpoints{P2P: ns.P2P, Etcd: ns.Etcd, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+			Ports:         ns.Endpoints,
 			KeystoreDir:   filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index), "keystore"),
 			RPCNamespace:  m.Consensus.RPCNamespace,
 			SyncMode:      ns.SyncMode,
@@ -546,14 +546,14 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 		ConfigPath: ns.ConfigPath,
 		LogPath:    ns.LogPath,
 		Args:       ns.Args,
-		Ports:      node.Endpoints{P2P: ns.P2P, Etcd: ns.Etcd, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+		Ports:      ns.Endpoints,
 	}
 }
 
-// netmap reads the workspace's node table as a placement map, so the peer
+// Netmap reads the workspace's node table as a placement map, so the peer
 // policy and the address lookups run off one representation. The host is the
 // node's own recorded address, which on a fleet is not this machine.
-func (w *Workspace) netmap() (*netmap.Map, error) {
+func (w *Workspace) Netmap() (*netmap.Map, error) {
 	placements := make([]netmap.Placement, 0, len(w.state.Nodes))
 	ordinals := map[node.Role]int{}
 	for _, ns := range w.state.Nodes {
@@ -568,7 +568,7 @@ func (w *Workspace) netmap() (*netmap.Map, error) {
 			Role:    role,
 			Ord:     ordinals[role],
 			Host:    nodeHost(ns),
-			Ports:   netmap.Ports{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+			Ports:   ns.Endpoints,
 			DataDir: ns.DataDir,
 		})
 	}

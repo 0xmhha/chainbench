@@ -112,6 +112,74 @@ func netKeysTool() Tool {
 	}
 }
 
+// netMapTool answers where nodes are, in both directions. It is the tool an
+// agent reaches for instead of reading the workspace file and parsing it:
+// "which node owns port 8610", "what runs on this host", "where is en2".
+func netMapTool() Tool {
+	return Tool{
+		Name: "chainbench_net_map",
+		Description: "Look up the composed network's placement. With no selector, the whole map; " +
+			"with one, that question answered — including the reverse ones (which node owns a port, " +
+			"what runs on an address). Each node has an identity (node7) and a role alias (en2).",
+		InputSchema: dataDirSchema(map[string]any{
+			"node":  map[string]any{"type": "number", "description": "select by identity (1-based node number)"},
+			"label": map[string]any{"type": "string", "description": "select by identity (node7) or role alias (en2)"},
+			"host":  map[string]any{"type": "string", "description": "select every node on an address"},
+			"port":  map[string]any{"type": "number", "description": "select whichever node listens on a port (p2p, etcd, http, ws, auth, metrics)"},
+		}),
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			res, err := app.NetMap(ctx, app.Deps{}, app.NetMapIn{
+				DataDir: argString(args, "dataDir", ""),
+				Node:    argInt(args, "node", 0),
+				Label:   argString(args, "label", ""),
+				Host:    argString(args, "host", ""),
+				Port:    argInt(args, "port", 0),
+			})
+			if err != nil {
+				return "", err
+			}
+			b, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return "", fmt.Errorf("mcp: net map: %w", err)
+			}
+			return string(b), nil
+		},
+	}
+}
+
+// netPoolTool reports what a network may be composed from, so an agent sizing
+// one can ask instead of guessing — and can explain a refusal.
+//
+// It returns no credentials, and that absence is fixed by a test: the pool says
+// where nodes may run, and how to log in is not something an agent transcript
+// should carry (the keyring's missing export tool is the same judgement).
+func netPoolTool() Tool {
+	return Tool{
+		Name: "chainbench_net_pool",
+		Description: "Show the addresses and port slots a network may be composed from: hosts, slots per host, " +
+			"total capacity, how many a workspace already uses, and where the port plan came from.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"dataDir": map[string]any{"type": "string", "description": "workspace to count used slots from (optional)"},
+			},
+		},
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			res, err := app.NetPool(ctx, app.Deps{}, app.NetPoolIn{
+				DataDir: argString(args, "dataDir", ""),
+			})
+			if err != nil {
+				return "", err
+			}
+			b, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				return "", fmt.Errorf("mcp: net pool: %w", err)
+			}
+			return string(b), nil
+		},
+	}
+}
+
 // netAllocateTool builds the node table.
 func netAllocateTool() Tool {
 	return Tool{

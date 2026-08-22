@@ -56,6 +56,8 @@ func Default(name, version string) *Server {
 	s.Register(networkPeersTool())
 	s.Register(netNewTool())
 	s.Register(netStatusTool())
+	s.Register(netMapTool())
+	s.Register(netPoolTool())
 	s.Register(netKeysTool())
 	s.Register(netAllocateTool())
 	s.Register(netGenesisTool())

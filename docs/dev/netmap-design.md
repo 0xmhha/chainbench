@@ -361,10 +361,10 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **포트 타입 통합 완료**: 표현 3벌 → **1벌**. 단, 방향은 설계와 반대다 — `node`(L0)는 `netmap`(L1)을 import 할 수 없으므로 **어휘를 L0 에 두고** `portplan.Ports`·`netmap.Ports` 가 `node.Endpoints` 의 별칭이 됐다. `Etcd` 가 런타임·워크스페이스까지 살아남는다(`"etcd": 31001` 실측). ☑ |
-| **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
+| **NM4** | 표면 — `net map`·`net pool` 신설 + `--peering` (§3) | ☑ **완료 2026-08-22.** `app.NetMap`/`NetPool` 유스케이스 1개씩 → CLI 1개 + MCP 1개(K8 선례) · 4방향 조회(node·label(신원/별칭)·host·port) · 선택자 2개는 거부 · 무응답은 "nothing matches" 로 명시 · **`NetPoolOut` 에 자격증명 필드 부재를 리플렉션 테스트로 고정** |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
 
-**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → **NM2 ☑** → → NM2b → NM3 → NM4 → NM5.
+**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → **NM2 ☑** → **NM3 ☑** → **NM4 ☑** → → NM2b → NM3 → NM4 → NM5.
 NM1c 를 앞세운 이유는 §2.5a 의 결함이 NM3 에서 터지기 때문이다 — 그 시점엔 배치·persist·argv 가
 함께 움직여 원인이 셋으로 갈린다. NM2b(Layout)를 NM3 앞에 두는 이유는, NM3 이 만지는 32곳에
 경로 파생이 섞여 있어 Layout 이 없으면 같은 파일을 두 번 고치게 되기 때문이다.
