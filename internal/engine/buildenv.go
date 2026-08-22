@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -106,7 +107,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 func countValidators(reqs []place.NodeReq) int {
 	n := 0
 	for _, r := range reqs {
-		if r.Role == node.RoleValidator {
+		if netmap.Is(r.Role, node.RoleBP) {
 			n++
 		}
 	}

@@ -47,3 +47,23 @@ func LegacySpelling(r node.Role) node.Role {
 		return r
 	}
 }
+
+// Is reports whether role names canonical under any spelling — Is(r, node.RoleBP)
+// is true for "bp" and for the legacy "validator".
+//
+// Every decision that turns on a role has to ask this way. Comparing against
+// one spelling is how a producer came to be launched without --mine and how a
+// selector came to resolve to the wrong node: both compared against the word
+// they happened to know, and neither failed until something else emitted the
+// other word.
+func Is(role, canonical node.Role) bool {
+	got, err := NormalizeRole(string(role))
+	if err != nil {
+		return false
+	}
+	want, err := NormalizeRole(string(canonical))
+	if err != nil {
+		return false
+	}
+	return got == want
+}

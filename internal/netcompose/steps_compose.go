@@ -14,6 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/place"
@@ -155,7 +156,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 // syncModeFor returns the sync mode a node of this role renders. Only endpoints
 // are configurable — see AllocateOpts.EndpointSyncMode.
 func syncModeFor(role node.Role, endpointMode string) string {
-	if role == node.RoleEndpoint && endpointMode != "" {
+	if netmap.Is(role, node.RoleEN) && endpointMode != "" {
 		return endpointMode
 	}
 	return syncModeFull
@@ -196,7 +197,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	validators := 0
 	for i, p := range placements {
 		idx := i + 1
-		if reqs[i].Role == node.RoleValidator {
+		if netmap.Is(reqs[i].Role, node.RoleBP) {
 			validators++
 		}
 		nodes[i] = NodeState{

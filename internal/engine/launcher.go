@@ -9,6 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/procman"
@@ -313,7 +314,7 @@ func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec dri
 		NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
 		AllowInsecureUnlock: policy.AllowInsecureUnlock,
 	}
-	if spec.Role == node.RoleValidator {
+	if netmap.Is(spec.Role, node.RoleBP) {
 		if nk, ok := preset.Node(spec.Index); ok {
 			id.Unlock = nk.Address
 			id.PasswordFile = filepath.Join(keysDir, "password")
