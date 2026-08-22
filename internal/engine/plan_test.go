@@ -3,9 +3,9 @@ package engine_test
 import (
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/engine"
 
@@ -24,10 +24,10 @@ func wbftPlugin(t *testing.T) registry.ChainPlugin {
 func placed(role node.Role, host string, p2p, http int, dataPath string) engine.PlacedNode {
 	return engine.PlacedNode{
 		Req: place.NodeReq{Role: role, Binary: "go-wbft"},
-		Placement: place.NodePlacement{
-			Host:     host,
-			Ports:    portplan.Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
-			DataPath: dataPath,
+		Placement: netmap.Placement{
+			Host:    host,
+			Ports:   netmap.Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
+			DataDir: dataPath,
 		},
 	}
 }
@@ -80,7 +80,7 @@ func TestAssemblePlan_UsesAllocatorPorts(t *testing.T) {
 func TestAssemblePlan_BinaryFallsBackToManifest(t *testing.T) {
 	pn := engine.PlacedNode{
 		Req:       place.NodeReq{Role: node.RoleValidator}, // no Binary
-		Placement: place.NodePlacement{Host: "127.0.0.1", Ports: portplan.Ports{P2P: 30301, HTTP: 8501}, DataPath: "/d/node1"},
+		Placement: netmap.Placement{Host: "127.0.0.1", Ports: netmap.Ports{P2P: 30301, HTTP: 8501}, DataDir: "/d/node1"},
 	}
 	plan, err := engine.AssemblePlan(wbftPlugin(t), []engine.PlacedNode{pn}, nil, "/d", nil)
 	if err != nil {
@@ -94,7 +94,7 @@ func TestAssemblePlan_BinaryFallsBackToManifest(t *testing.T) {
 func TestAssemblePlan_DataDirDefault(t *testing.T) {
 	pn := engine.PlacedNode{
 		Req:       place.NodeReq{Role: node.RoleValidator, Binary: "go-wbft"},
-		Placement: place.NodePlacement{Host: "127.0.0.1", Ports: portplan.Ports{P2P: 30301, HTTP: 8501}}, // no DataPath
+		Placement: netmap.Placement{Host: "127.0.0.1", Ports: netmap.Ports{P2P: 30301, HTTP: 8501}}, // no DataPath
 	}
 	plan, err := engine.AssemblePlan(wbftPlugin(t), []engine.PlacedNode{pn}, nil, "/root", nil)
 	if err != nil {

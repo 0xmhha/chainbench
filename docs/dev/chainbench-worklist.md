@@ -415,7 +415,12 @@ pn 로그의 WBFT 라인은 2줄뿐이었다 — **pn 은 검증자가 아니라
 확정형은 **bp↔bp 직결 + bp↔pn + pn↔en**(en 은 여전히 bp 를 모른다). 정정 후 재검증:
 stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet proxied 5노드 블록 전진 +
 피어 4 + api 9/9, 세 경우 모두 고아 0.
-**잔여**: 할당 경로(`place.Allocate`→`netmap.Assign`)와 `node.Endpoints`→`netmap.Ports`(etcd 부활).
+**할당 경로도 전환됐다**: engine·netcompose·chainsetup 이 `netmap.Assign` 을 쓰고
+`place.Allocator` 의 프로덕션 호출은 **0**이다. 전환하며 실측한 두 가지: `LocalOSAssigned` 는
+소비자가 없었고(격자로 흡수되지 않는 별개 전략), `MinValidators` 는 전 호출지에서 1이었다 —
+"프로듀서 최소 하나"는 `Assign` 이 직접 거부한다. 라이브 재확인: 포트 동일(8600·31000 대역),
+api 9/9, 고아 0.
+**잔여**: `node.Endpoints`→`netmap.Ports`(fan-in 25, etcd 부활) 하나.
 
 **NM2 완료 (2026-08-22)** — 피어링이 역할에서 파생된다. `mesh` 는 현행과 바이트 동일(골든:
 `armSpecs` 가 렌더한 config 의 enode 목록 == `netmap.Mesh`, **self 항목 포함까지**; self 를 뺀

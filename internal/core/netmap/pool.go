@@ -88,6 +88,10 @@ type Request struct {
 // produce the same map, so re-running a composition does not silently move a
 // node to a different address, and a recorded placement can be reproduced.
 //
+// A request list with no producing node is refused: a network where nothing
+// seals never advances, and that is far easier to read here than as a chain
+// that starts and then does nothing.
+//
 // Requests beyond the pool's capacity are an error naming the shortfall. The
 // alternative — wrapping onto ports already handed out — produces a network
 // where two nodes cannot both bind, discovered much later and much less

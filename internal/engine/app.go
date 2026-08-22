@@ -146,11 +146,9 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	}
 	build := NewBuildEnv(BuildDeps{
 		Plugin:     plugin,
-		Allocator:  place.New(pl.Config),
+		Pool:       pl.Pool,
 		Genesis:    PresetGenesisSource{KeysDir: keysDir, ChainID: cfg.ChainID},
 		Supervisor: sup,
-		Mode:       pl.Mode,
-		Capacity:   pl.Capacity,
 		Caps:       []string{"ws"},
 		Reqs:       validatorReqs(validators),
 	})

@@ -185,10 +185,15 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if pl.Source == "" {
 		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
 	}
-	placements, err := place.New(pl.Config).Allocate(reqs, pl.Mode, pl.Capacity)
+	pool := pl.Pool
+	if pool.Slots < 1 {
+		pool.Slots = 1
+	}
+	assigned, err := netmap.Assign(pool, netmapRequests(reqs))
 	if err != nil {
 		return "", err
 	}
+	placements := assigned.Placements()
 
 	// A server inventory naming a data root wins over the workspace default:
 	// it is where that machine keeps node data.
@@ -568,4 +573,15 @@ func (w *Workspace) netmap() (*netmap.Map, error) {
 		})
 	}
 	return netmap.NewMap(placements)
+}
+
+// netmapRequests turns the composed node list into placement requests. Only the
+// role travels: position comes from the order, which is also the node's
+// identity.
+func netmapRequests(reqs []place.NodeReq) []netmap.Request {
+	out := make([]netmap.Request, 0, len(reqs))
+	for _, r := range reqs {
+		out = append(out, netmap.Request{Role: r.Role})
+	}
+	return out
 }

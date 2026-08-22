@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
@@ -18,27 +19,15 @@ import (
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
-// fakeAllocator returns one placement per request with stepped fake ports.
-type fakeAllocator struct {
-	gotReqs []place.NodeReq
-	err     error
-}
-
-func (a *fakeAllocator) Allocate(reqs []place.NodeReq, _ place.Mode, _ place.Capacity) ([]place.NodePlacement, error) {
-	a.gotReqs = reqs
-	if a.err != nil {
-		return nil, a.err
+// testPool is the resource the build allocates from: one host with room for a
+// development-sized network. Allocation is no longer injectable — netmap.Assign
+// is deterministic, so a fake would only restate it less accurately.
+func testPool() netmap.Pool {
+	return netmap.Pool{
+		Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+		Slots: 8,
+		Ports: netmap.Bands{P2PBase: 30301, P2PStep: 10, RPCBase: 8501, RPCStep: 10},
 	}
-	out := make([]place.NodePlacement, len(reqs))
-	for i := range reqs {
-		p2p, http := 30301+i, 8501+i
-		out[i] = place.NodePlacement{
-			Name:  reqs[i].Name,
-			Host:  "127.0.0.1",
-			Ports: portplan.Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
-		}
-	}
-	return out, nil
 }
 
 // fakeGenesis records the requested validator count and returns fixed bytes.
@@ -96,14 +85,13 @@ func fourNodeReqs() []place.NodeReq {
 }
 
 func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
-	alloc := &fakeAllocator{}
 	gen := &fakeGenesis{bytes: []byte(`{"genesis":true}`)}
 	var gotPlan driver.Plan
 	provisionCalled := false
 
 	build := engine.NewBuildEnv(engine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
-		Allocator:  alloc,
+		Pool:       testPool(),
 		Genesis:    gen,
 		Supervisor: fakeSupervisor(),
 		Caps:       []string{"ws"},
@@ -145,7 +133,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 func TestNewBuildEnv_NoNodes(t *testing.T) {
 	build := engine.NewBuildEnv(engine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
-		Allocator:  &fakeAllocator{},
+		Pool:       testPool(),
 		Genesis:    &fakeGenesis{},
 		Supervisor: fakeSupervisor(),
 		Reqs:       func(testspec.Spec) []place.NodeReq { return nil },
@@ -155,23 +143,32 @@ func TestNewBuildEnv_NoNodes(t *testing.T) {
 	}
 }
 
-func TestNewBuildEnv_AllocatorError(t *testing.T) {
+// TestNewBuildEnv_PoolTooSmall: a network that does not fit must fail before
+// anything is provisioned, naming the shortfall — the alternative is two nodes
+// handed the same port and a bind failure much later.
+func TestNewBuildEnv_PoolTooSmall(t *testing.T) {
+	small := testPool()
+	small.Slots = 2
 	build := engine.NewBuildEnv(engine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
-		Allocator:  &fakeAllocator{err: errors.New("no capacity")},
+		Pool:       small,
 		Genesis:    &fakeGenesis{},
 		Supervisor: fakeSupervisor(),
 		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },
 	})
-	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {
-		t.Fatal("expected allocator error to propagate")
+	_, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{})
+	if err == nil {
+		t.Fatal("expected the over-capacity assignment to fail")
+	}
+	if !strings.Contains(err.Error(), "short") {
+		t.Fatalf("error %q should name the shortfall", err)
 	}
 }
 
 func TestNewBuildEnv_ProvisionError(t *testing.T) {
 	build := engine.NewBuildEnv(engine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
-		Allocator:  &fakeAllocator{},
+		Pool:       testPool(),
 		Genesis:    &fakeGenesis{bytes: []byte("{}")},
 		Supervisor: fakeSupervisor(),
 		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },

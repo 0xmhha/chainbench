@@ -180,6 +180,11 @@ node5  → (ip5, slot1)   node10 → (ip5, slot2)
 keyring 의 것이다. netmap 이 keyring 을 import 하면 배치가 신원에 묶인다. 호출자(엔진·컴포즈)가
 `func(Label) (pubkey string, ok bool)` 을 주입하면 두 소유자가 서로를 모른 채 조합된다.
 
+> **`place.LocalOSAssigned` 는 실측상 프로덕션 소비자가 0이다**(2026-08-22). OS 가 빈 포트를
+> 고르는 전략이라 격자로 흡수되지 않으며, 아무도 부르지 않으므로 `place` 잔여분과 함께 정리
+> 대상이다. `MinValidators` 도 전 호출지에서 값이 1이었고, "프로듀서가 최소 하나"라는 규칙은
+> `Assign` 이 직접 강제한다 — 블록을 만들 노드가 없는 네트워크는 어느 패밀리에서도 전진하지 않는다.
+
 ### 2.3 흡수·이동 목록
 
 | 지금 | 어디로 | 방식 |
@@ -355,7 +360,7 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
 | **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
-| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **잔여**: 할당 경로(`place`→`Assign`)와 `node.Endpoints`→`netmap.Ports` |
+| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **잔여**: `node.Endpoints`→`netmap.Ports`(fan-in 25, etcd 부활) |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
 

@@ -5,19 +5,19 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// PlacedNode pairs a node's placement request with its allocator-resolved host
-// and ports, so plan assembly has both the role/binary (from the request) and
-// the network location (from the allocator). place.NodePlacement intentionally
-// carries no role — the role lives in the request.
+// PlacedNode pairs a node's placement request with its resolved location, so
+// plan assembly has both the binary/sync choices (from the request) and the
+// address and ports (from netmap).
 type PlacedNode struct {
 	Req       place.NodeReq
-	Placement place.NodePlacement
+	Placement netmap.Placement
 }
 
 // AssemblePlan builds a driver.Plan from allocator-resolved placements and
@@ -40,7 +40,7 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 	for i, pn := range placed {
 		idx := i + 1
 		ports := endpointsFrom(pn.Placement.Ports)
-		dataDir := pn.Placement.DataPath
+		dataDir := pn.Placement.DataDir
 		if dataDir == "" {
 			dataDir = filepath.Join(dataRoot, fmt.Sprintf("node%d", idx))
 		}

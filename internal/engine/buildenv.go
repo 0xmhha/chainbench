@@ -31,15 +31,13 @@ type BuildEnvFunc func(ctx context.Context, env session.Environment, spec testsp
 type BuildDeps struct {
 	// Plugin is the target chain.
 	Plugin registry.ChainPlugin
-	// Allocator resolves per-node host+ports.
-	Allocator place.Allocator
+	// Pool is the resource the network is allocated from (addresses x port
+	// slots). netmap.Assign consumes it.
+	Pool netmap.Pool
 	// Genesis sources the network genesis bytes.
 	Genesis GenesisSource
 	// Supervisor brings the network up behind a health gate and tears it down.
 	Supervisor supervisor.Supervisor
-	// Mode and Capacity parameterize allocation.
-	Mode     place.Mode
-	Capacity place.Capacity
 	// Options tunes bring-up (health gating, retries).
 	Options supervisor.Options
 	// Caps are the advertised capabilities recorded on the plan.
@@ -63,10 +61,11 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: spec resolved to no nodes")
 		}
 
-		placements, err := d.Allocator.Allocate(reqs, d.Mode, d.Capacity)
+		assigned, err := netmap.Assign(d.Pool, netmapRequests(reqs))
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocate: %w", err)
 		}
+		placements := assigned.Placements()
 		if len(placements) != len(reqs) {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocator returned %d placements for %d requests", len(placements), len(reqs))
 		}
@@ -112,4 +111,14 @@ func countValidators(reqs []place.NodeReq) int {
 		}
 	}
 	return n
+}
+
+// netmapRequests turns placement requests into netmap's: only the role travels,
+// since position comes from the order and that order is the node's identity.
+func netmapRequests(reqs []place.NodeReq) []netmap.Request {
+	out := make([]netmap.Request, 0, len(reqs))
+	for _, r := range reqs {
+		out = append(out, netmap.Request{Role: r.Role})
+	}
+	return out
 }
