@@ -7,24 +7,23 @@
 // (bands + steps); there is no code default.
 package portplan
 
-import "fmt"
+import (
+	"fmt"
 
-// Ports is one node's listening ports. Etcd is not a launch flag — it is
-// derived by the wemix binary as P2P+1 and is tracked here only so collisions
-// are caught up front.
-type Ports struct {
-	P2P  int
-	Etcd int // = P2P + 1 (wemix), reserved so no other service may use it
-	HTTP int
-	WS   int // = HTTP + 1
-	Auth int // = HTTP + 2 (engine auth-rpc)
-	// Metrics is the node's metrics endpoint (= HTTP + 3). It is only
-	// assigned when the rpc step leaves room for it (rpcStep >= 4); a plan
-	// with a tighter step simply has no metrics port (0), which downstream
-	// treats as metrics-off rather than an error, so existing 3-step profiles
-	// keep working.
-	Metrics int
-}
+	"github.com/0xmhha/chainbench/internal/core/node"
+)
+
+// Ports is one node's listening ports: P2P (with Etcd derived at P2P+1), HTTP,
+// WS (HTTP+1), Auth (HTTP+2) and Metrics (HTTP+3, only when the rpc step
+// leaves room — a tighter step simply has no metrics port, which downstream
+// reads as metrics-off rather than an error).
+//
+// It is an alias, not a copy. There used to be three representations of a
+// node's ports and two of them dropped the etcd port on the way to runtime, so
+// a live wemix node could not be asked which port its etcd was on — the one
+// port whose collision rule exists because the binary derives it. One type,
+// living in the vocabulary package, is what stops that happening again.
+type Ports = node.Endpoints
 
 // Plan computes node index's ports (index is 1-based). p2p ports advance by
 // p2pStep from p2pBase (etcd = p2p+1); rpc ports advance by rpcStep from

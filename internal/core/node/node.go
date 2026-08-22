@@ -39,7 +39,12 @@ const (
 // host these are offset per node; across hosts they may repeat while Host
 // varies (docs §7, requirement #6).
 type Endpoints struct {
-	P2P     int `json:"p2p"`
+	P2P int `json:"p2p"`
+	// Etcd is not a launch flag: the wemix binary derives it as P2P+1. It is
+	// carried so a running node can be asked for it and so collision checks
+	// see it — the port whose rule (p2pStep >= 2) exists because of it used to
+	// disappear the moment a plan became a running network.
+	Etcd    int `json:"etcd,omitempty"`
 	HTTP    int `json:"http"`
 	WS      int `json:"ws"`
 	Auth    int `json:"auth"`

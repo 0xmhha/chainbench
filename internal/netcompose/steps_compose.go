@@ -217,7 +217,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
 			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
 			Host:       p.Host,
-			P2P:        p.Ports.P2P, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
+			P2P:        p.Ports.P2P, Etcd: p.Ports.Etcd, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
 		}
 	}
 	// Reject an impossible graph here rather than at config time: the operator
@@ -414,7 +414,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		}
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
-			Ports:         node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+			Ports:         node.Endpoints{P2P: ns.P2P, Etcd: ns.Etcd, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
 			KeystoreDir:   filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index), "keystore"),
 			RPCNamespace:  m.Consensus.RPCNamespace,
 			SyncMode:      ns.SyncMode,
@@ -546,7 +546,7 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 		ConfigPath: ns.ConfigPath,
 		LogPath:    ns.LogPath,
 		Args:       ns.Args,
-		Ports:      node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+		Ports:      node.Endpoints{P2P: ns.P2P, Etcd: ns.Etcd, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
 	}
 }
 

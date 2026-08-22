@@ -237,3 +237,32 @@ func itoa(n int) string {
 	}
 	return string(b)
 }
+
+// TestNetAllocate_RecordsTheEtcdPort: the composed network must be able to say
+// which port a node's etcd is on. It is derived by the binary (p2p+1) and is
+// the reason the port plan reserves a step of two, but the workspace used to
+// drop it — so the rule protected a value nothing could read back.
+func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
+	dir := t.TempDir()
+	ctx := context.Background()
+	d := app.Deps{Clock: fixedClock}
+	keysAbs, err := filepath.Abs(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	out, err := app.NetStatus(ctx, d, app.NetStatusIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("status: %v", err)
+	}
+	for _, n := range out.State.Nodes {
+		if n.Etcd != n.P2P+1 {
+			t.Fatalf("node%d: etcd = %d, want p2p+1 (%d)", n.Index, n.Etcd, n.P2P+1)
+		}
+	}
+}

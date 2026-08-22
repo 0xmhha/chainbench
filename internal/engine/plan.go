@@ -6,9 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -39,7 +37,7 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 	specs := make([]driver.NodeSpec, 0, len(placed))
 	for i, pn := range placed {
 		idx := i + 1
-		ports := endpointsFrom(pn.Placement.Ports)
+		ports := pn.Placement.Ports
 		dataDir := pn.Placement.DataDir
 		if dataDir == "" {
 			dataDir = filepath.Join(dataRoot, fmt.Sprintf("node%d", idx))
@@ -74,12 +72,4 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 		Capabilities: caps,
 		Nodes:        specs,
 	}, nil
-}
-
-// endpointsFrom maps allocator ports (portplan) to the launch endpoint set.
-// Etcd is derived by the wemix binary as P2P+1 and is not a launch endpoint,
-// so it is intentionally dropped. Metrics (0 on tight rpc steps) makes the
-// node's scrape endpoint reachable for the metric verification source.
-func endpointsFrom(p portplan.Ports) node.Endpoints {
-	return node.Endpoints{P2P: p.P2P, HTTP: p.HTTP, WS: p.WS, Auth: p.Auth, Metrics: p.Metrics}
 }

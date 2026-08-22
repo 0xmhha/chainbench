@@ -190,7 +190,7 @@ keyring 의 것이다. netmap 이 keyring 을 import 하면 배치가 신원에 
 | 지금 | 어디로 | 방식 |
 |---|---|---|
 | `portplan.Ports` | `netmap.Ports` | **이동**. `portplan` 은 계산 함수(`Plan`·`Validate`)만 남기고 타입은 netmap 이 소유 |
-| `node.Endpoints` | `netmap.Ports` | **대체**. Etcd 누락 해소. `node.Node.Ports` 의 타입이 바뀐다 |
+| `node.Endpoints` | (그대로, `Etcd` 추가) | **정정**: 대체가 아니라 **정본이 됐다**. `portplan.Ports`·`netmap.Ports` 가 이것의 별칭이다 — L0 가 L1 을 import 할 수 없으므로 어휘가 아래로 내려가는 것이 유일한 무순환 해법 |
 | `node.RoleEN` | 삭제 | `en` 은 `RoleEndpoint` 의 새 철자가 아니라 중복이었다 |
 | `place.NodePlacement.Name` | `netmap.NodeLabel` | 명명된 타입으로 승격. `keyring.Label` 과 이름부터 다르게 — 노드 라벨과 링 항목은 다른 개념이다 |
 | static-nodes 조립 4곳 | `netmap.StaticNodes` | engine·netcompose·upgrade.mesh·chainsetup 이 호출자로 |
@@ -360,7 +360,7 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
 | **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
-| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **잔여**: `node.Endpoints`→`netmap.Ports`(fan-in 25, etcd 부활) |
+| **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **포트 타입 통합 완료**: 표현 3벌 → **1벌**. 단, 방향은 설계와 반대다 — `node`(L0)는 `netmap`(L1)을 import 할 수 없으므로 **어휘를 L0 에 두고** `portplan.Ports`·`netmap.Ports` 가 `node.Endpoints` 의 별칭이 됐다. `Etcd` 가 런타임·워크스페이스까지 살아남는다(`"etcd": 31001` 실측). ☑ |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + allocate 산출 강화 + `--peering` (§3) | CLI/MCP 동일 출력 · **자격증명 미노출을 테스트로 고정** · A2 표 갱신 |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | `place.NodePlacement.Name` 이 버려지지 않음 (N7 의 원래 동기) |
 
@@ -379,7 +379,7 @@ N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
 | # | 질문 | 기울기 |
 |---|---|---|
 | NM-a | ~~`netmap.Label` vs `keyring.Label`~~ | 해소 — `NodeLabel` 로 이름부터 분리(§2.5) |
-| NM-b | `node.Node.Ports` 타입 교체는 파급이 크다(25 fan-in). 단계적으로? | NM1 에서 alias 로 시작, NM3 에서 교체 |
+| ~~NM-b~~ | ~~`node.Node.Ports` 타입 교체는 파급이 크다(25 fan-in)~~ | **해소 (2026-08-22)** — 교체가 아니라 **역방향 별칭**으로 끝났다. `node`(L0)가 `netmap`(L1)을 import 하면 상향이라, 포트 집합의 정본을 L0 에 두고 `portplan`/`netmap` 이 별칭을 노출한다. fan-in 25는 그대로 두고 표현만 하나가 됐다 |
 | ~~NM-c~~ | ~~proxied 에서 pn 이 없으면?~~ | **해소** — 오류(NM2 구현). mesh 로 조용히 강등하지 않는다 |
 | ~~NM-i~~ | ~~proxied 에서 bp 는 다른 bp 를 직접 아는가?~~ | **해소 — 그렇다** (라이브 2026-08-22). pn 경유 전파로는 합의가 형성되지 않는다(§2.6). bp↔bp 직결 |
 | ~~NM-f~~ | ~~라벨을 `node7` 로 둘지 `en2` 로 둘지~~ | **해소 (2026-08-22)** — 둘 다. 신원=`Index`, 별칭=역할 라벨(§2.5a). 개명 없음 |

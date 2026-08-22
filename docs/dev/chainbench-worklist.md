@@ -420,7 +420,12 @@ stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet proxi
 소비자가 없었고(격자로 흡수되지 않는 별개 전략), `MinValidators` 는 전 호출지에서 1이었다 —
 "프로듀서 최소 하나"는 `Assign` 이 직접 거부한다. 라이브 재확인: 포트 동일(8600·31000 대역),
 api 9/9, 고아 0.
-**잔여**: `node.Endpoints`→`netmap.Ports`(fan-in 25, etcd 부활) 하나.
+**포트 표현도 하나가 됐다** — 3벌 → 1벌. 설계는 `node.Endpoints` 를 `netmap.Ports` 로 *대체*
+한다고 했으나 그 방향은 **상향 의존**이다(`node` 는 L0, `netmap` 은 L1). 어휘를 아래에 두는 것이
+유일한 무순환 해법이라, `node.Endpoints` 가 `Etcd` 를 갖고 `portplan.Ports`·`netmap.Ports` 가
+그 별칭이 됐다. 결과: **etcd 포트가 런타임·워크스페이스까지 살아남는다**(`"etcd": 31001` 실측).
+그 포트는 `p2pStep>=2` 규칙이 존재하는 이유인데, 규칙이 지키는 값을 정작 아무도 되읽을 수
+없던 상태였다. **NM3 완료.**
 
 **NM2 완료 (2026-08-22)** — 피어링이 역할에서 파생된다. `mesh` 는 현행과 바이트 동일(골든:
 `armSpecs` 가 렌더한 config 의 enode 목록 == `netmap.Mesh`, **self 항목 포함까지**; self 를 뺀
