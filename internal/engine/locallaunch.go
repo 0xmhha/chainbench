@@ -112,11 +112,11 @@ func (s LocalSetup) attachGenesis(ctx context.Context, plan *driver.Plan) error 
 		ConfigOverrides: genesisConfigOverrides(s.Config),
 		Overlay:         []byte(s.Config.String("genesis.overlay", "")),
 	}
-	gen, err := src.Genesis(ctx, s.Plugin, planValidatorCount(*plan))
+	gen, err := src.Genesis(ctx, s.Plugin, GenesisRequest{Validators: planValidatorCount(*plan)})
 	if err != nil {
 		return err
 	}
-	plan.Genesis = gen
+	plan.Genesis = gen.Genesis
 	return nil
 }
 

@@ -136,12 +136,12 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 
 	t.do(c.Steps[4], func() (string, error) {
 		src := engine.PresetGenesisSource{KeysDir: o.KeysDir}
-		b, err := src.Genesis(ctx, plugin, o.Validators)
+		b, err := src.Genesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators})
 		if err != nil {
 			return "", err
 		}
-		gen = b
-		return fmt.Sprintf("%d bytes, %d validator(s) substituted", len(b), o.Validators), nil
+		gen = b.Genesis
+		return fmt.Sprintf("%d bytes, %d validator(s) substituted", len(b.Genesis), o.Validators), nil
 	})
 
 	t.do(c.Steps[5], func() (string, error) {

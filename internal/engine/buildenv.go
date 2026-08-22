@@ -48,6 +48,9 @@ type BuildDeps struct {
 	// keys). It is injected because file content is chain/preset-specific; nil
 	// skips provisioning (e.g. an attach-only or test build).
 	Provision func(ctx context.Context, plan driver.Plan) error
+	// ProvisionExtra writes the genesis step's by-products to the target,
+	// keyed by the name they take there. A family with none never calls it.
+	ProvisionExtra func(ctx context.Context, plan driver.Plan, files map[string][]byte) error
 }
 
 // NewBuildEnv composes the network build: allocate placements, source genesis,
@@ -70,7 +73,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocator returned %d placements for %d requests", len(placements), len(reqs))
 		}
 
-		gen, err := d.Genesis.Genesis(ctx, d.Plugin, countValidators(reqs))
+		gen, err := d.Genesis.Genesis(ctx, d.Plugin, GenesisRequest{Validators: countValidators(reqs), Nodes: assigned})
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis: %w", err)
 		}
@@ -79,7 +82,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 		for i := range reqs {
 			placed[i] = PlacedNode{Req: reqs[i], Placement: placements[i]}
 		}
-		plan, err := AssemblePlan(d.Plugin, placed, gen, env.DataPath(), d.Caps)
+		plan, err := AssemblePlan(d.Plugin, placed, gen.Genesis, env.DataPath(), d.Caps)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: plan: %w", err)
 		}
@@ -87,6 +90,15 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 		if d.Provision != nil {
 			if err := d.Provision(ctx, plan); err != nil {
 				return node.NodeSet{}, nil, fmt.Errorf("engine: build env: provision: %w", err)
+			}
+		}
+		// The genesis step's by-products go to the target beside the genesis:
+		// a wemix bring-up reads its governance config back during
+		// deploy-governance, and reconstructing it there is how two steps come
+		// to disagree about what the network was configured with.
+		if len(gen.Extra) > 0 && d.ProvisionExtra != nil {
+			if err := d.ProvisionExtra(ctx, plan, gen.Extra); err != nil {
+				return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis artifacts: %w", err)
 			}
 		}
 

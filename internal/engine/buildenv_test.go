@@ -33,12 +33,13 @@ func testPool() netmap.Pool {
 // fakeGenesis records the requested validator count and returns fixed bytes.
 type fakeGenesis struct {
 	bytes         []byte
+	extra         map[string][]byte
 	gotValidators int
 }
 
-func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, validators int) ([]byte, error) {
-	g.gotValidators = validators
-	return g.bytes, nil
+func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, req engine.GenesisRequest) (engine.GenesisArtifacts, error) {
+	g.gotValidators = req.Validators
+	return engine.GenesisArtifacts{Genesis: g.bytes, Extra: g.extra}, nil
 }
 
 // fakeSupervisor is a real supervisor whose launch/health seams are fakes: it

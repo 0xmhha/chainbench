@@ -11,8 +11,8 @@ import (
 
 const wemixTmpl = `{"config":{"chainId":__CHAIN_ID__,"istanbulBlock":0},"coinbase":"__COINBASE__","alloc":{}}`
 
-func TestBuildGenesis(t *testing.T) {
-	out, err := BuildGenesis([]byte(wemixTmpl), 8285, "0xb4388353fd0f3b3a017e09f2b857052ff219e663")
+func TestPrepareTemplate(t *testing.T) {
+	out, err := PrepareTemplate([]byte(wemixTmpl), 8285, "0xb4388353fd0f3b3a017e09f2b857052ff219e663")
 	if err != nil {
 		t.Fatalf("BuildGenesis: %v", err)
 	}
@@ -33,8 +33,8 @@ func TestBuildGenesis(t *testing.T) {
 	}
 }
 
-func TestBuildGenesis_DefaultCoinbase(t *testing.T) {
-	out, err := BuildGenesis([]byte(wemixTmpl), 8285, "")
+func TestPrepareTemplate_DefaultCoinbase(t *testing.T) {
+	out, err := PrepareTemplate([]byte(wemixTmpl), 8285, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,8 +43,8 @@ func TestBuildGenesis_DefaultCoinbase(t *testing.T) {
 	}
 }
 
-func TestBuildGenesis_InvalidChainID(t *testing.T) {
-	if _, err := BuildGenesis([]byte(wemixTmpl), 0, ""); err == nil {
+func TestPrepareTemplate_InvalidChainID(t *testing.T) {
+	if _, err := PrepareTemplate([]byte(wemixTmpl), 0, ""); err == nil {
 		t.Error("expected error for chainId 0")
 	}
 }
