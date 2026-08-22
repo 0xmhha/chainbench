@@ -143,6 +143,34 @@ func (s WemixGenesisSource) config(preset keyring.Preset, req GenesisRequest) (p
 		}
 		accounts = append(accounts, poa.Account{Addr: v, Balance: poa.DefaultAccountBalance()})
 	}
+	// Every producer is a member, not just the boot node.
+	//
+	// Measured: with only the boot node in the member list the cluster forms
+	// and the chain runs, and every block is sealed by that one node — the
+	// others join the p2p network, never join etcd, and never enter the
+	// rotation. Membership is what makes a producer produce.
+	members := make([]poa.Member, 0, 4)
+	for _, p := range req.Nodes.Placements() {
+		if !netmap.Is(p.Role, node.RoleBoot) && !netmap.Is(p.Role, node.RoleBP) {
+			continue
+		}
+		e, ok := preset.Node(p.Index)
+		if !ok {
+			return poa.Config{}, fmt.Errorf("engine: wemix genesis: the key set has no identity for node%d", p.Index)
+		}
+		members = append(members, poa.Member{
+			Addr:  e.Address,
+			Stake: env.StakingMin,
+			Name:  string(p.Label),
+			ID:    "0x" + e.PublicKey,
+			IP:    p.Host,
+			Port:  p.Ports.P2P,
+			// Exactly one bootnode: the config is rejected otherwise, and the
+			// bring-up's first phase launches that node alone.
+			Bootnode: p.Index == boot.Index,
+		})
+	}
+
 	return poa.Config{
 		ExtraData:    "chainbench",
 		Staker:       entry.Address,
@@ -150,16 +178,8 @@ func (s WemixGenesisSource) config(preset keyring.Preset, req GenesisRequest) (p
 		Maintenance:  entry.Address,
 		FeeCollector: entry.Address,
 		Env:          env,
-		Members: []poa.Member{{
-			Addr:     entry.Address,
-			Stake:    env.StakingMin,
-			Name:     string(boot.Label),
-			ID:       "0x" + entry.PublicKey,
-			IP:       boot.Host,
-			Port:     boot.Ports.P2P,
-			Bootnode: true,
-		}},
-		Accounts: accounts,
+		Members:      members,
+		Accounts:     accounts,
 	}, nil
 }
 
