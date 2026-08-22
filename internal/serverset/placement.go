@@ -3,7 +3,7 @@ package serverset
 import (
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/place"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 )
 
 // The inventory's whole point downstream is this file: it turns a server entry
@@ -30,15 +30,14 @@ const (
 // builtinSource is what Placement.Source reports when no inventory was loaded.
 const builtinSource = "built-in defaults (no server config)"
 
-// Placement is everything the allocator needs plus where it came from, so a
-// surface can report which file decided the ports rather than leaving an
-// operator to guess.
+// Placement is the resource a network is composed on plus where that came
+// from, so a surface can report which file decided the ports rather than
+// leaving an operator to guess.
 type Placement struct {
-	// Config and Mode drive place.New / Allocate.
-	Config place.Config
-	Mode   place.Mode
-	// Capacity bounds how many nodes may be placed.
-	Capacity place.Capacity
+	// Pool is the resource netmap allocates from. It is what new callers use;
+	// Config/Mode/Capacity describe the same thing for the allocator being
+	// retired, and go with it.
+	Pool netmap.Pool
 	// DataRoot is where the nodes' data plane lives on the target.
 	DataRoot string
 	// Remote reports whether the nodes run over SSH.
@@ -50,40 +49,27 @@ type Placement struct {
 // Builtin is the placement used with no inventory: this machine, stepped ports,
 // no data root of its own (the caller's workspace decides).
 func Builtin(minValidators, portBand int) Placement {
-	p := BuiltinPorts()
 	return Placement{
-		Config:   place.Config{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep},
-		Mode:     place.LocalStepped,
-		Capacity: place.Capacity{MinValidators: minValidators, PortBandSize: portBand},
-		Source:   builtinSource,
+		Pool:   BuiltinPool(portBand),
+		Source: builtinSource,
 	}
 }
 
-// Placement resolves one server into allocator inputs. A local server hosts
-// several nodes on stepped ports; a remote one hosts its slots' worth on the
-// same ports as its peers, which is why the mode differs while everything else
-// is read from the same fields.
+// Placement resolves one server into the pool a network is allocated from.
+// Local and remote read the same fields: the difference survives as the address
+// and as whether the data plane is reached over SSH, not as a mode.
 func (c *Config) Placement(s Server, minValidators, portBand int) Placement {
-	mode := place.LocalStepped
-	if s.IsRemote() {
-		mode = place.RemotePerHost
-	}
+	source := fmt.Sprintf("%s[%s]", c.path, s.label(0))
 	return Placement{
-		Config: place.Config{
-			P2PBase: s.Ports.P2PBase, P2PStep: s.Ports.P2PStep,
-			RPCBase: s.Ports.RPCBase, RPCStep: s.Ports.RPCStep,
-			Hosts: []string{s.Host},
-		},
-		Mode: mode,
-		Capacity: place.Capacity{
-			MinValidators: minValidators,
-			Hosts:         1,
-			SlotsPerHost:  s.Slots,
-			PortBandSize:  portBand,
+		Pool: netmap.Pool{
+			Hosts:  []netmap.Host{{Name: s.Name, Addr: s.Host}},
+			Slots:  s.Slots,
+			Ports:  bandsOf(s.Ports),
+			Source: source,
 		},
 		DataRoot: s.DataRoot,
 		Remote:   s.IsRemote(),
-		Source:   fmt.Sprintf("%s[%s]", c.path, s.label(0)),
+		Source:   source,
 	}
 }
 
@@ -107,25 +93,26 @@ func (c *Config) Fleet(minValidators, portBand int) (Placement, error) {
 		hosts = append(hosts, s.Host)
 		slots += s.Slots
 	}
-	mode := place.LocalStepped
-	if first.IsRemote() {
-		mode = place.RemotePerHost
+	fleetSource := fmt.Sprintf("%s[fleet of %d]", c.path, len(hosts))
+	poolHosts := make([]netmap.Host, 0, len(c.Servers))
+	for _, raw := range c.Servers {
+		srv := c.resolve(raw)
+		poolHosts = append(poolHosts, netmap.Host{Name: srv.Name, Addr: srv.Host})
 	}
 	return Placement{
-		Config: place.Config{
-			P2PBase: first.Ports.P2PBase, P2PStep: first.Ports.P2PStep,
-			RPCBase: first.Ports.RPCBase, RPCStep: first.Ports.RPCStep,
-			Hosts: hosts,
-		},
-		Mode: mode,
-		Capacity: place.Capacity{
-			MinValidators: minValidators,
-			Hosts:         len(hosts),
-			SlotsPerHost:  slots / len(hosts),
-			PortBandSize:  portBand,
+		Pool: netmap.Pool{
+			Hosts:  poolHosts,
+			Slots:  slots / len(hosts),
+			Ports:  bandsOf(first.Ports),
+			Source: fleetSource,
 		},
 		DataRoot: first.DataRoot,
 		Remote:   first.IsRemote(),
-		Source:   fmt.Sprintf("%s[fleet of %d]", c.path, len(hosts)),
+		Source:   fleetSource,
 	}, nil
+}
+
+// bandsOf converts an inventory port plan into the bands netmap steps through.
+func bandsOf(p Ports) netmap.Bands {
+	return netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep}
 }

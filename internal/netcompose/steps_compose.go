@@ -10,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/place"
@@ -99,6 +101,10 @@ type AllocateOpts struct {
 	Validators int
 	// Endpoints is the non-validator (endpoint) node count.
 	Endpoints int
+	// Peering is the peer graph to wire ("mesh" default, "proxied" for
+	// bp <-> pn <-> en). It is recorded now and consumed by the config step,
+	// so the graph a network runs is decided where its layout is.
+	Peering string
 	// EndpointSyncMode is the geth sync mode endpoints render into their config
 	// ("snap" or "archive" instead of the default "full"), so a re-sync test can
 	// exercise a path other than full sync. Validators ignore it: a node that
@@ -129,7 +135,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: role}
+			reqs[i] = place.NodeReq{Role: role}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -142,11 +148,11 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 	reqs := make([]place.NodeReq, 0, o.Validators+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < o.Validators; i++ {
-		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("val%d", i+1), Role: node.RoleValidator})
+		reqs = append(reqs, place.NodeReq{Role: node.RoleValidator})
 		modes = append(modes, syncModeFull)
 	}
 	for i := 0; i < o.Endpoints; i++ {
-		reqs = append(reqs, place.NodeReq{Name: fmt.Sprintf("ep%d", i+1), Role: node.RoleEndpoint})
+		reqs = append(reqs, place.NodeReq{Role: node.RoleEndpoint})
 		modes = append(modes, syncModeFor(node.RoleEndpoint, o.EndpointSyncMode))
 	}
 	return reqs, modes, nil
@@ -155,7 +161,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 // syncModeFor returns the sync mode a node of this role renders. Only endpoints
 // are configurable — see AllocateOpts.EndpointSyncMode.
 func syncModeFor(role node.Role, endpointMode string) string {
-	if role == node.RoleEndpoint && endpointMode != "" {
+	if netmap.Is(role, node.RoleEN) && endpointMode != "" {
 		return endpointMode
 	}
 	return syncModeFull
@@ -169,7 +175,8 @@ const syncModeFull = "full"
 // ports through the same allocator the engine uses. Where the nodes land and on
 // what ports comes from the placement, not from this package.
 func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
-	if _, err := w.plugin(); err != nil {
+	plugin, err := w.plugin()
+	if err != nil {
 		return "", err
 	}
 	reqs, modes, err := opts.placements()
@@ -180,10 +187,19 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if pl.Source == "" {
 		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
 	}
-	placements, err := place.New(pl.Config).Allocate(reqs, pl.Mode, pl.Capacity)
+	pool := pl.Pool
+	if pool.Slots < 1 {
+		pool.Slots = 1
+	}
+	// The family says how much room a node needs; a wemix node's embedded etcd
+	// takes two ports beyond p2p, and sizing the step for a wbft node would put
+	// the next node on top of it.
+	pool.Reservation = plugin.Family().PortReservation()
+	assigned, err := netmap.Assign(pool, netmapRequests(reqs))
 	if err != nil {
 		return "", err
 	}
+	placements := assigned.Placements()
 
 	// A server inventory naming a data root wins over the workspace default:
 	// it is where that machine keeps node data.
@@ -192,24 +208,32 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		root = pl.DataRoot
 		w.state.Target.DataRoot = root
 	}
+	layout := netmap.Layout{Root: root}
 	nodes := make([]NodeState, len(placements))
 	validators := 0
 	for i, p := range placements {
-		idx := i + 1
-		if reqs[i].Role == node.RoleValidator {
+		if netmap.Is(p.Role, node.RoleBP) {
 			validators++
 		}
 		nodes[i] = NodeState{
-			Index:      idx,
+			Index:      p.Index,
+			Label:      string(p.Label),
 			Role:       string(reqs[i].Role),
 			SyncMode:   modes[i],
-			DataDir:    filepath.Join(root, fmt.Sprintf("node%d", idx)),
-			ConfigPath: filepath.Join(root, fmt.Sprintf("config_node%d.toml", idx)),
-			LogPath:    filepath.Join(root, "logs", fmt.Sprintf("node%d.log", idx)),
+			DataDir:    layout.DataDir(p.Label),
+			ConfigPath: layout.ConfigPath(p.Label),
+			LogPath:    layout.LogPath(p.Label),
 			Host:       p.Host,
-			P2P:        p.Ports.P2P, HTTP: p.Ports.HTTP, WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
+			Endpoints:  p.Ports,
 		}
 	}
+	// Reject an impossible graph here rather than at config time: the operator
+	// is choosing the layout in this step.
+	peering, err := netmap.ParsePeering(opts.Peering)
+	if err != nil {
+		return "", err
+	}
+	w.state.Peering = string(peering)
 	w.state.Nodes = nodes
 	// Counted from the resolved placements, not the requested count: a topology
 	// decides the validator set, and the genesis step sizes itself from this.
@@ -262,19 +286,15 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("netcompose: genesis: %w", err)
 	}
-	net := preset.NetworkFor(w.state.Validators)
-	gen, err := genesis.Build(p, genesis.Inputs{
-		Validators: net.Validators,
-		BLSKeys:    net.BLSKeys,
-		ExtraData:  net.ExtraData,
-		Members:    net.Members,
-		Alloc:      net.Alloc,
-		ChainID:    opts.ChainID,
-	})
+	// A family whose genesis its binary writes takes a different source: the
+	// generic dispatch builds a genesis by substituting a template, and for
+	// wemix that produces a file that initializes cleanly and runs the wrong
+	// consensus.
+	art, err := w.genesisArtifacts(ctx, p, preset, opts)
 	if err != nil {
 		return "", err
 	}
-	gen, err = customizeGenesis(gen, opts)
+	gen, err := customizeGenesis(art.Genesis, opts)
 	if err != nil {
 		return "", err
 	}
@@ -285,6 +305,13 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	path := filepath.Join(t.DataRoot, "genesis.json")
 	if err := t.Files.Write(ctx, path, gen, 0o644); err != nil {
 		return "", fmt.Errorf("netcompose: genesis: write: %w", err)
+	}
+	// The step's by-products go to the target beside the genesis: a wemix
+	// bring-up reads its governance config back during deploy-governance.
+	for name, content := range art.Extra {
+		if err := t.Files.Write(ctx, filepath.Join(t.DataRoot, name), content, 0o644); err != nil {
+			return "", fmt.Errorf("netcompose: genesis: write %s: %w", name, err)
+		}
 	}
 	w.state.GenesisPath = path
 	w.state.Capabilities = networkCapabilities(p.Manifest().Capabilities, opts)
@@ -364,14 +391,26 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
-	staticNodes := make([]string, 0, len(w.state.Nodes))
-	for _, ns := range w.state.Nodes {
-		if nk, ok := preset.Node(ns.Index); ok {
-			// The node's own recorded address: on a fleet each node lives on a
-			// different host, and a static-node list pointing at this machine
-			// would leave every node unable to find its peers.
-			staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, nodeHost(ns), ns.P2P))
+	placed, err := w.Netmap()
+	if err != nil {
+		return "", fmt.Errorf("netcompose: config: %w", err)
+	}
+	peering, err := netmap.ParsePeering(w.state.Peering)
+	if err != nil {
+		return "", fmt.Errorf("netcompose: config: %w", err)
+	}
+	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
+		return "", fmt.Errorf("netcompose: config: %w", err)
+	}
+	// The peer's own recorded address: on a fleet each node lives on a
+	// different host, and a static-node list pointing at this machine would
+	// leave every node unable to find its peers.
+	enode := func(pl netmap.Placement) (string, bool) {
+		nk, ok := preset.Node(pl.Index)
+		if !ok {
+			return "", false
 		}
+		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
 	}
 	t, err := w.state.Target.Resolve(w.env)
 	if err != nil {
@@ -379,9 +418,13 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	}
 	m := p.Manifest()
 	for _, ns := range w.state.Nodes {
+		staticNodes, err := peering.StaticNodes(placed, ns.NodeLabel(), enode)
+		if err != nil {
+			return "", fmt.Errorf("netcompose: config: node%d peers: %w", ns.Index, err)
+		}
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
-			Ports:         node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+			Ports:         ns.Endpoints,
 			KeystoreDir:   filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index), "keystore"),
 			RPCNamespace:  m.Consensus.RPCNamespace,
 			SyncMode:      ns.SyncMode,
@@ -513,6 +556,73 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 		ConfigPath: ns.ConfigPath,
 		LogPath:    ns.LogPath,
 		Args:       ns.Args,
-		Ports:      node.Endpoints{P2P: ns.P2P, HTTP: ns.HTTP, WS: ns.WS, Auth: ns.Auth, Metrics: ns.Metrics},
+		Ports:      ns.Endpoints,
 	}
+}
+
+// Netmap reads the workspace's node table as a placement map, so the peer
+// policy and the address lookups run off one representation. The host is the
+// node's own recorded address, which on a fleet is not this machine.
+func (w *Workspace) Netmap() (*netmap.Map, error) {
+	placements := make([]netmap.Placement, 0, len(w.state.Nodes))
+	ordinals := map[node.Role]int{}
+	for _, ns := range w.state.Nodes {
+		role, err := netmap.NormalizeRole(ns.Role)
+		if err != nil {
+			return nil, fmt.Errorf("node%d: %w", ns.Index, err)
+		}
+		ordinals[role]++
+		placements = append(placements, netmap.Placement{
+			Index:   ns.Index,
+			Label:   ns.NodeLabel(),
+			Role:    role,
+			Ord:     ordinals[role],
+			Host:    nodeHost(ns),
+			Ports:   ns.Endpoints,
+			DataDir: ns.DataDir,
+		})
+	}
+	return netmap.NewMap(placements)
+}
+
+// netmapRequests turns the composed node list into placement requests. Only the
+// role travels: position comes from the order, which is also the node's
+// identity.
+func netmapRequests(reqs []place.NodeReq) []netmap.Request {
+	out := make([]netmap.Request, 0, len(reqs))
+	for _, r := range reqs {
+		out = append(out, netmap.Request{Role: r.Role})
+	}
+	return out
+}
+
+// genesisArtifacts builds the genesis through the source the family needs. The
+// wemix source runs the chain binary, so it also needs the placement: the
+// governance config names the producer by host and p2p port.
+func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, opts GenesisOpts) (engine.GenesisArtifacts, error) {
+	if p.Family().ID() == poa.FamilyID {
+		placed, err := w.Netmap()
+		if err != nil {
+			return engine.GenesisArtifacts{}, fmt.Errorf("netcompose: genesis: %w", err)
+		}
+		src := engine.WemixGenesisSource{
+			KeysDir: w.state.KeysDir,
+			Binary:  w.state.Binary,
+			ChainID: opts.ChainID,
+		}
+		return src.Genesis(ctx, p, engine.GenesisRequest{Validators: w.state.Validators, Nodes: placed})
+	}
+	net := preset.NetworkFor(w.state.Validators)
+	gen, err := genesis.Build(p, genesis.Inputs{
+		Validators: net.Validators,
+		BLSKeys:    net.BLSKeys,
+		ExtraData:  net.ExtraData,
+		Members:    net.Members,
+		Alloc:      net.Alloc,
+		ChainID:    opts.ChainID,
+	})
+	if err != nil {
+		return engine.GenesisArtifacts{}, err
+	}
+	return engine.GenesisArtifacts{Genesis: gen}, nil
 }

@@ -162,6 +162,11 @@ poa.GenerateGenesis(binary, config.json, 준비된 템플릿)  // 바이너리�
 라이브에서 확인: `wemix genesis` 는 템플릿의 `config` 를 그대로 통과시키므로, 먼저 chainId 를
 박아 넣으면 매니페스트의 8285 가 반영된다(현재는 템플릿 기본값 1111 로 떴다).
 
+**F4 구현 후 실측 (2026-08-22, 실 gwemix)**: 생성된 genesis 의 `alloc` 4계정·`extraData` 실값·
+`chainId` 8285 확인, `gwemix init` 수용. 단, **`minerNodeId: "0x0"` 은 결함이 아니었다** —
+`wemix/scripts/genesis-template.json:16` 이 그렇게 배포하고 이는 블록 헤더 필드라 genesis 블록엔
+없는 것이 정상이다. 죽은 genesis 의 실제 증상은 `alloc:{}` 와 빈 `extraData` 다.
+
 ### `--networkid` 미방출
 
 조립된 argv 에 없다. launchopt 의 poa 다이얼렉트에서 매니페스트 `network_id` 를 방출한다.

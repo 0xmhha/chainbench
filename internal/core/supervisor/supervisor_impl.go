@@ -28,8 +28,17 @@ type LaunchResult struct {
 // launcher and an RPC/etcd health gate.
 type Deps struct {
 	// Launch starts the plan's nodes and returns the node set plus the
-	// processes to track.
-	Launch func(ctx context.Context, plan driver.Plan) (LaunchResult, error)
+	// processes to track. nodes lists the 1-based indices to start; nil or
+	// empty means the whole plan, so a caller with nothing to phase passes nil
+	// and keeps the behaviour it had.
+	Launch func(ctx context.Context, plan driver.Plan, nodes []int) (LaunchResult, error)
+	// Action performs one named bring-up action against a node, between two
+	// phases. What a name means is chain-specific; the supervisor owns when it
+	// runs and how a failure is classified. Naming an action in a phase without
+	// wiring this is an error — the same contract as LeaderGate and
+	// SwapBinary, because a bootstrap that is quietly skipped produces a
+	// network that starts and then does nothing.
+	Action func(ctx context.Context, name string, plan driver.Plan, on node.Node) error
 	// HealthGate blocks until the network is healthy, or returns a classified
 	// non-OK Diagnosis (etcd leader, block production, fork crossing).
 	HealthGate func(ctx context.Context, ns node.NodeSet) (Diagnosis, error)
@@ -55,7 +64,10 @@ type Deps struct {
 
 // sup is the concrete Supervisor.
 type sup struct {
-	deps Deps
+	// teardownHook observes teardowns in tests. Production leaves it nil: the
+	// real evidence is that no process survives, which a unit test cannot see.
+	teardownHook func(node.NodeSet)
+	deps         Deps
 }
 
 // New returns a Supervisor over deps.
@@ -80,11 +92,22 @@ func (s *sup) BringUp(ctx context.Context, plan driver.Plan, opts Options) (node
 
 	var last Diagnosis
 	for attempt := 1; attempt <= attempts; attempt++ {
-		res, err := s.deps.Launch(ctx, plan)
+		res, err := s.launchPhases(ctx, plan, opts)
 		if err != nil {
 			// A launch failure is classified from its own text: reporting every
 			// one as RPCUnready hid the etcd problems that cause most of them.
 			last = Diagnosis{Mode: Classify(err), Detail: err.Error()}
+			// Whatever did start is torn down. A launch that fails part way
+			// through still leaves processes — with phases it always does, since
+			// the group before the failing one is already up — and leaving them
+			// holds the ports the next attempt needs, which then fails for a
+			// reason that has nothing to do with the first.
+			for _, pr := range res.Procs {
+				s.deps.Procman.TrackProc(pr)
+			}
+			if len(res.Nodes.Nodes) > 0 {
+				_ = s.Teardown(ctx, res.Nodes, TeardownOpts{RemoveDataDir: true, Grace: graceOr(opts)})
+			}
 		} else {
 			for _, p := range res.Procs {
 				s.deps.Procman.TrackProc(p)
@@ -170,6 +193,9 @@ func (s *sup) applyForkSwaps(ctx context.Context, ns node.NodeSet, opts Options)
 // Teardown stops the tracked processes (verifying local ones are gone) and, when
 // requested, removes their data directories.
 func (s *sup) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) error {
+	if s.teardownHook != nil {
+		s.teardownHook(ns)
+	}
 	// Track the node set's local pids too, so a standalone Teardown still acts.
 	for _, n := range ns.Nodes {
 		s.deps.Procman.TrackProc(procman.Proc{PID: n.PID, Label: "node" + strconv.Itoa(n.Index)})
@@ -187,3 +213,50 @@ func (s *sup) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) er
 
 // graceOr returns a sane teardown grace for retries.
 func graceOr(_ Options) time.Duration { return 5 * time.Second }
+
+// launchPhases starts the plan in the order the family declared, running the
+// actions between groups. With no phases — or one phase that names no nodes —
+// it is the single launch it replaced.
+//
+// Each phase's nodes join the accumulated set, so a later phase's health is
+// judged against the whole network rather than against itself.
+func (s *sup) launchPhases(ctx context.Context, plan driver.Plan, opts Options) (LaunchResult, error) {
+	phases := opts.Phases
+	if len(phases) == 0 {
+		return s.deps.Launch(ctx, plan, nil)
+	}
+	var all LaunchResult
+	for _, phase := range phases {
+		res, err := s.deps.Launch(ctx, plan, phase.Nodes)
+		if err != nil {
+			return all, fmt.Errorf("supervisor: phase %q: %w", phase.Name, err)
+		}
+		all.Nodes.Chain = res.Nodes.Chain
+		all.Nodes.Network = res.Nodes.Network
+		all.Nodes.Nodes = append(all.Nodes.Nodes, res.Nodes.Nodes...)
+		all.Procs = append(all.Procs, res.Procs...)
+
+		for _, name := range phase.Actions {
+			if s.deps.Action == nil {
+				return all, fmt.Errorf("supervisor: phase %q needs action %q but no action executor is wired", phase.Name, name)
+			}
+			on, ok := firstNode(res.Nodes)
+			if !ok {
+				return all, fmt.Errorf("supervisor: phase %q needs action %q but launched no node to run it on", phase.Name, name)
+			}
+			if err := s.deps.Action(ctx, name, plan, on); err != nil {
+				return all, fmt.Errorf("supervisor: phase %q action %q: %w", phase.Name, name, err)
+			}
+		}
+	}
+	return all, nil
+}
+
+// firstNode returns the node a phase's actions run against: the first one the
+// phase launched, which for the bootstrap phase is the producer that is alone.
+func firstNode(ns node.NodeSet) (node.Node, bool) {
+	if len(ns.Nodes) == 0 {
+		return node.Node{}, false
+	}
+	return ns.Nodes[0], true
+}

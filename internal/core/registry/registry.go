@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/accounts/protocol"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // GenesisParams are the per-network genesis values a family's BuildGenesis
@@ -40,10 +41,48 @@ type ConsensusFamily interface {
 	ValidatorsMethod() string
 	// StartFlags returns the node launch flags for a given role.
 	StartFlags(role node.Role) []string
+	// BringUpPhases orders the launch: which nodes start together, and what
+	// must complete between one group and the next.
+	//
+	// Only one upper-layer assumption actually differs between the families —
+	// that every node in a plan starts at once. A wemix network cannot: its
+	// etcd cluster only forms while the producer is alone, so the bootstrap
+	// runs in the gap between two groups. Saying that as data keeps the
+	// supervisor's ownership intact: it still decides timing, retries and how a
+	// failure is classified, and only asks the family for the order.
+	//
+	// Actions are names, not functions. The core does not know what
+	// "deploy-governance" is, for the same reason the DSL puts chain vocabulary
+	// in the spec rather than in the interpreter.
+	BringUpPhases(roles []node.Role) []Phase
+	// PortReservation is how many consecutive ports one of this family's nodes
+	// needs from each band. It is asked rather than assumed because the answer
+	// differs: a wemix node's embedded etcd listens on two ports beyond p2p,
+	// and a global rule sized for one of them is wrong for the other.
+	PortReservation() portplan.Reservation
+	// SupportsRole reports whether this family can run a role. The proxy tier
+	// (pn) is the case that matters: poa has no such tier — etcd occupies that
+	// place — so a topology declaring one is asking for something that will not
+	// exist, and only the family can say so (netmap-design 2.6).
+	SupportsRole(role node.Role) bool
 	// BuildGenesis substitutes the family's placeholders in template with
 	// params and returns the genesis.json bytes. This is the dispatch seam that
 	// lets pkg/core/genesis build a genesis without importing any family.
 	BuildGenesis(template []byte, params GenesisParams) ([]byte, error)
+}
+
+// Phase is one ordered group of a bring-up: nodes that start together, then
+// the actions that must complete before the next group may start.
+type Phase struct {
+	// Name identifies the phase in diagnostics ("all", "boot", "rest").
+	Name string
+	// Nodes are the 1-based indices launched in this phase. Empty means every
+	// node, which is what a single-phase family declares.
+	Nodes []int
+	// Actions are the named bring-up steps that run after this phase's nodes
+	// are up, before the next phase starts. An action a phase names but that
+	// the caller has not wired is an error, not a silent pass.
+	Actions []string
 }
 
 // ChainPlugin is one chain's registration. Most of a chain is data (Manifest)

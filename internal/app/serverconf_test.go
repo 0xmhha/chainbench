@@ -27,14 +27,11 @@ func writeInventory(t *testing.T, body string) string {
 }
 
 const localInventory = `
-version: 1
-defaults:
-  ports: {p2pBase: 30303, p2pStep: 10, rpcBase: 8545, rpcStep: 10}
-servers:
-  - name: local
-    kind: local
-    host: 127.0.0.1
-    slots: 8
+version: 2
+pool:
+  hosts: [{name: local, addr: 127.0.0.1}]
+  slots: 8
+  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 `
 
 func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
@@ -88,15 +85,12 @@ func TestNetAllocate_RemoteServerRetargetsTheDataPlane(t *testing.T) {
 		t.Fatalf("new: %v", err)
 	}
 	inv := writeInventory(t, `
-version: 1
-defaults:
-  dataRoot: /srv/chainbench
-  ports: {p2pBase: 30303, p2pStep: 10, rpcBase: 8545, rpcStep: 10}
-  ssh: {user: deploy, port: 2222}
-servers:
-  - name: bp1
-    kind: remote
-    host: 10.0.0.11
+version: 2
+pool:
+  hosts: [{name: bp1, addr: 10.0.0.11}]
+  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
+ssh: {user: deploy, port: 2222}
+dataRoot: /srv/chainbench
 `)
 
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
@@ -135,21 +129,13 @@ func TestNetAllocate_FleetSpreadsOneNodePerHost(t *testing.T) {
 		t.Fatalf("new: %v", err)
 	}
 	inv := writeInventory(t, `
-version: 1
-defaults:
-  dataRoot: /srv/cb
-  ports: {p2pBase: 30303, p2pStep: 10, rpcBase: 8545, rpcStep: 10}
-  ssh: {user: deploy}
-servers:
-  - name: bp1
-    kind: remote
-    host: 10.0.0.11
-  - name: bp2
-    kind: remote
-    host: 10.0.0.12
-  - name: bp3
-    kind: remote
-    host: 10.0.0.13
+version: 2
+pool:
+  hosts: [{name: bp1, addr: 10.0.0.11}, {name: bp2, addr: 10.0.0.12}, {name: bp3, addr: 10.0.0.13}]
+  slots: 1
+  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
+ssh: {user: deploy}
+dataRoot: /srv/cb
 `)
 
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
@@ -213,18 +199,13 @@ func TestNetAllocate_FleetRecordsEachNodesOwnHost(t *testing.T) {
 		t.Fatalf("new: %v", err)
 	}
 	inv := writeInventory(t, `
-version: 1
-defaults:
-  dataRoot: /srv/cb
-  ports: {p2pBase: 30303, p2pStep: 10, rpcBase: 8545, rpcStep: 10}
-  ssh: {user: deploy}
-servers:
-  - name: bp1
-    kind: remote
-    host: 10.0.0.11
-  - name: bp2
-    kind: remote
-    host: 10.0.0.12
+version: 2
+pool:
+  hosts: [{name: bp1, addr: 10.0.0.11}, {name: bp2, addr: 10.0.0.12}, {name: bp3, addr: 10.0.0.13}]
+  slots: 1
+  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
+ssh: {user: deploy}
+dataRoot: /srv/cb
 `)
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
 		DataDir: dir, Validators: 2,

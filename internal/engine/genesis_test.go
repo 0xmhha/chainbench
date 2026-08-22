@@ -47,11 +47,11 @@ func TestPresetGenesisSource_BuildsGenesis(t *testing.T) {
 	}`)
 	src := engine.PresetGenesisSource{KeysDir: dir}
 
-	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), 0) // whole preset
+	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), engine.GenesisRequest{Validators: 0}) // whole preset
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
-	out := string(gen)
+	out := string(gen.Genesis)
 	for _, want := range []string{"1337", "0xaaaa", "0xbbbb", "0xdeadbeef"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("genesis missing %q:\n%s", want, out)
@@ -72,11 +72,11 @@ func TestPresetGenesisSource_TakeLimitsValidators(t *testing.T) {
 		"extraData": "0xdeadbeef",
 		"alloc": {}
 	}`)
-	gen, err := engine.PresetGenesisSource{KeysDir: dir}.Genesis(context.Background(), wbftTestPlugin(), 1)
+	gen, err := engine.PresetGenesisSource{KeysDir: dir}.Genesis(context.Background(), wbftTestPlugin(), engine.GenesisRequest{Validators: 1})
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
-	out := string(gen)
+	out := string(gen.Genesis)
 	if !strings.Contains(out, "0xaaaa0000") || strings.Contains(out, "0xbbbb0000") {
 		t.Fatalf("Take(1) should keep only the first validator:\n%s", out)
 	}
@@ -102,11 +102,11 @@ func TestPresetGenesisSource_AppliesOverridesAndOverlay(t *testing.T) {
 		ConfigOverrides: map[string]string{"petersburgBlock": "0", "bohoBlock": "10"},
 		Overlay:         []byte(`{"alloc":{"00000000000000000000000000000000000000ff":{"balance":"0x2a"}}}`),
 	}
-	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), 0)
+	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), engine.GenesisRequest{Validators: 0})
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
-	out := string(gen)
+	out := string(gen.Genesis)
 	if !strings.Contains(out, `"bohoBlock":10`) {
 		t.Errorf("config override not applied:\n%s", out)
 	}
@@ -117,7 +117,7 @@ func TestPresetGenesisSource_AppliesOverridesAndOverlay(t *testing.T) {
 
 func TestPresetGenesisSource_MissingPreset(t *testing.T) {
 	src := engine.PresetGenesisSource{KeysDir: t.TempDir()} // no metadata.json
-	if _, err := src.Genesis(context.Background(), wbftTestPlugin(), 0); err == nil {
+	if _, err := src.Genesis(context.Background(), wbftTestPlugin(), engine.GenesisRequest{Validators: 0}); err == nil {
 		t.Fatal("expected error when preset metadata is absent")
 	}
 }

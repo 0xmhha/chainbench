@@ -237,3 +237,69 @@ func TestKeyring_IsRootedInTheSession(t *testing.T) {
 		}
 	}
 }
+
+// TestEnvironment_Resolve_CanonicalAndLegacyRoles pins the fold that NM1c
+// added. Before it, "bp" mapped to RoleValidator alone, so a node recorded with
+// the canonical role netmap normalizes to did not match its own selector.
+// Measured against the old table, this case resolved bp1 to the second node —
+// the failure was a spec silently running on a node it did not name, not an
+// error. A network mid-transition holds both spellings, so both must resolve.
+func TestEnvironment_Resolve_CanonicalAndLegacyRoles(t *testing.T) {
+	s := newSession(t)
+	env, _ := s.NewEnvironment(session.Fingerprint("eeeeeeeeeeee5555"))
+	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
+		{Index: 1, Role: node.RoleBP, RPCURL: "http://canonical-bp"},
+		{Index: 2, Role: node.RoleValidator, RPCURL: "http://legacy-bp"},
+		{Index: 3, Role: node.RoleEN, RPCURL: "http://canonical-en"},
+		{Index: 4, Role: node.RoleEndpoint, RPCURL: "http://legacy-en"},
+		{Index: 5, Role: node.RolePN, RPCURL: "http://pn"},
+	}})
+
+	cases := []struct{ sel, want string }{
+		{"bp1", "http://canonical-bp"},
+		{"bp2", "http://legacy-bp"},
+		{"validator1", "http://canonical-bp"}, // legacy word, same set
+		{"en1", "http://canonical-en"},
+		{"en2", "http://legacy-en"},
+		{"endpoint1", "http://canonical-en"},
+		{"pn1", "http://pn"},
+		{"pn:any", "http://pn"},
+	}
+	for _, c := range cases {
+		n, err := env.Resolve(c.sel)
+		if err != nil {
+			t.Fatalf("Resolve(%q): %v", c.sel, err)
+		}
+		if n.RPCURL != c.want {
+			t.Fatalf("Resolve(%q) = %q, want %q", c.sel, n.RPCURL, c.want)
+		}
+	}
+}
+
+// TestEnvironment_Resolve_IdentityLabel covers the other spelling a node
+// answers to. The identity is what reaches disk (datadir, log file, keyring
+// entry), so an operator reading an artifact must be able to address the node
+// by the name they just read.
+func TestEnvironment_Resolve_IdentityLabel(t *testing.T) {
+	s := newSession(t)
+	env, _ := s.NewEnvironment(session.Fingerprint("ffffffffffff6666"))
+	env.PopulateNodeTable(node.NodeSet{Nodes: []node.Node{
+		{Index: 1, Role: node.RoleBP, RPCURL: "http://a"},
+		{Index: 2, Role: node.RoleEN, RPCURL: "http://b"},
+	}})
+
+	for sel, want := range map[string]string{"node1": "http://a", "node2": "http://b"} {
+		n, err := env.Resolve(sel)
+		if err != nil {
+			t.Fatalf("Resolve(%q): %v", sel, err)
+		}
+		if n.RPCURL != want {
+			t.Fatalf("Resolve(%q) = %q, want %q", sel, n.RPCURL, want)
+		}
+	}
+	// An index the network does not have is an error naming the shortfall, not
+	// a fallback to some other node.
+	if _, err := env.Resolve("node9"); err == nil {
+		t.Fatal("an absent node index must error")
+	}
+}

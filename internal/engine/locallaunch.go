@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/provision"
@@ -59,7 +60,7 @@ func (s LocalSetup) Launch(ctx context.Context, plan driver.Plan) (node.NodeSet,
 	}
 	s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
 		Message: "launching", Fields: map[string]any{"nodes": len(plan.Nodes)}})
-	res, specs, err := s.launcher().LaunchArmed(ctx, plan)
+	res, specs, err := s.launcher().LaunchArmed(ctx, plan, nil)
 	if err != nil {
 		s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindError, Network: plan.Network,
 			Message: "launch failed", Fields: map[string]any{"error": err.Error()}})
@@ -111,11 +112,11 @@ func (s LocalSetup) attachGenesis(ctx context.Context, plan *driver.Plan) error 
 		ConfigOverrides: genesisConfigOverrides(s.Config),
 		Overlay:         []byte(s.Config.String("genesis.overlay", "")),
 	}
-	gen, err := src.Genesis(ctx, s.Plugin, planValidatorCount(*plan))
+	gen, err := src.Genesis(ctx, s.Plugin, GenesisRequest{Validators: planValidatorCount(*plan)})
 	if err != nil {
 		return err
 	}
-	plan.Genesis = gen
+	plan.Genesis = gen.Genesis
 	return nil
 }
 
@@ -126,7 +127,7 @@ func (s LocalSetup) attachGenesis(ctx context.Context, plan *driver.Plan) error 
 func planValidatorCount(plan driver.Plan) int {
 	n := 0
 	for _, spec := range plan.Nodes {
-		if spec.Role == node.RoleValidator {
+		if netmap.Is(spec.Role, node.RoleBP) {
 			n++
 		}
 	}

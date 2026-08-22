@@ -1,6 +1,9 @@
 package poa
 
-import "github.com/0xmhha/chainbench/internal/core/node"
+import (
+	"github.com/0xmhha/chainbench/internal/core/netmap"
+	"github.com/0xmhha/chainbench/internal/core/node"
+)
 
 // Step is one action in the poa (wemix) bootstrap sequence.
 type Step struct {
@@ -31,5 +34,5 @@ func BootstrapPlan() []Step {
 // BootRole reports whether a role acts as the wemix boot node (governance
 // deploy + etcd init happen here).
 func BootRole(r node.Role) bool {
-	return r == node.RoleBoot || r == node.RoleValidator
+	return netmap.Is(r, node.RoleBoot) || netmap.Is(r, node.RoleBP)
 }

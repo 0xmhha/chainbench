@@ -40,14 +40,14 @@ func TestPresetGenesisSource_Live_GstableInit(t *testing.T) {
 		t.Fatalf("registry.Get(stablenet): %v", err)
 	}
 
-	gen, err := engine.PresetGenesisSource{KeysDir: presetDir}.Genesis(context.Background(), plugin, 4)
+	gen, err := engine.PresetGenesisSource{KeysDir: presetDir}.Genesis(context.Background(), plugin, engine.GenesisRequest{Validators: 4})
 	if err != nil {
 		t.Fatalf("build genesis: %v", err)
 	}
 
 	dataDir := t.TempDir()
 	genesisPath := filepath.Join(dataDir, "genesis.json")
-	if err := os.WriteFile(genesisPath, gen, 0o644); err != nil {
+	if err := os.WriteFile(genesisPath, gen.Genesis, 0o644); err != nil {
 		t.Fatalf("write genesis: %v", err)
 	}
 

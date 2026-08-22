@@ -5,19 +5,17 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// PlacedNode pairs a node's placement request with its allocator-resolved host
-// and ports, so plan assembly has both the role/binary (from the request) and
-// the network location (from the allocator). place.NodePlacement intentionally
-// carries no role — the role lives in the request.
+// PlacedNode pairs a node's placement request with its resolved location, so
+// plan assembly has both the binary/sync choices (from the request) and the
+// address and ports (from netmap).
 type PlacedNode struct {
 	Req       place.NodeReq
-	Placement place.NodePlacement
+	Placement netmap.Placement
 }
 
 // AssemblePlan builds a driver.Plan from allocator-resolved placements and
@@ -36,15 +34,20 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 	}
 	m := plugin.Manifest()
 
+	layout := netmap.Layout{Root: dataRoot}
 	specs := make([]driver.NodeSpec, 0, len(placed))
 	for i, pn := range placed {
 		idx := i + 1
-		ports := endpointsFrom(pn.Placement.Ports)
-		dataDir := pn.Placement.DataPath
-		if dataDir == "" {
-			dataDir = filepath.Join(dataRoot, fmt.Sprintf("node%d", idx))
+		label := pn.Placement.Label
+		if label == "" {
+			label = netmap.LabelFor(idx)
 		}
-		configPath := filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", idx))
+		ports := pn.Placement.Ports
+		dataDir := pn.Placement.DataDir
+		if dataDir == "" {
+			dataDir = layout.DataDir(label)
+		}
+		configPath := layout.ConfigPath(label)
 		binary := pn.Req.Binary
 		if binary == "" {
 			binary = m.Binary
@@ -60,7 +63,7 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 			Binary:     binary,
 			DataDir:    dataDir,
 			ConfigPath: configPath,
-			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", idx)),
+			LogPath:    layout.LogPath(label),
 			Ports:      ports,
 		})
 	}
@@ -74,12 +77,4 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 		Capabilities: caps,
 		Nodes:        specs,
 	}, nil
-}
-
-// endpointsFrom maps allocator ports (portplan) to the launch endpoint set.
-// Etcd is derived by the wemix binary as P2P+1 and is not a launch endpoint,
-// so it is intentionally dropped. Metrics (0 on tight rpc steps) makes the
-// node's scrape endpoint reachable for the metric verification source.
-func endpointsFrom(p portplan.Ports) node.Endpoints {
-	return node.Endpoints{P2P: p.P2P, HTTP: p.HTTP, WS: p.WS, Auth: p.Auth, Metrics: p.Metrics}
 }

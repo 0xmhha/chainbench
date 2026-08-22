@@ -26,33 +26,44 @@ remote-server-config.yaml          gitignore — 실제 값
 
 ---
 
-## 2. local 과 remote 가 같은 구조인 이유
+## 2. v2 — 파일의 주어는 서버 목록이 아니라 **자원 풀**이다 (2026-08-22)
 
-한 항목이 이 머신과 원격 호스트를 **동일한 필드로** 기술한다. 다른 것은 `kind` 와
-`ssh` 블록뿐이다.
+v1 은 서버를 하나씩 나열하고 각 서버가 자기 포트·슬롯·접속을 가졌다. v2 는 **가용 자원**을
+선언하고, 배치는 할당기가 정한다 — 운영자가 고르던 두 배치 모드가 실은 같은 격자였기 때문이다
+([[netmap-design]] §2.2a).
 
 ```yaml
-servers:
-  - name: local
-    kind: local          # ssh 블록은 참조되지 않음
-    host: 127.0.0.1
-    slots: 8             # 한 호스트에 여러 노드 → 포트가 step 만큼 벌어짐
-
-  - name: bp1
-    kind: remote         # ssh 블록으로 접속
-    host: 10.0.0.11
-                         # slots 기본 1 → 호스트당 1노드, 모든 호스트 동일 포트
+version: 2
+pool:
+  hosts:                       # 소비 순서. 문자열이면 주소가 곧 이름
+    - { name: local, addr: 127.0.0.1 }
+    # - { name: bp1, addr: 10.0.0.11 }
+  slots: 8                     # 한 호스트가 담을 포트 슬롯 수(기본 1)
+  ports:                       # 두 개의 겹치지 않는 대역(생략 시 내장 기본값)
+    p2p: { base: 31000, step: 10 }
+    rpc: { base: 8600,  step: 10 }
+ssh:                           # 루프백이 아닌 호스트에 공통 적용
+  port: 22
+  sudo: false                  # 보관·전달만 — 소비는 기동 절차가 한다
+dataRoot: /var/lib/chainbench  # 대상 위 데이터 플레인 루트
 ```
 
-덕분에 네트워크를 구성하는 쪽은 **분기하지 않는다.** local/remote 차이는
-`serverset.Placement` 가 흡수해 allocator 입력(`place.Config`·mode·capacity)으로만
-드러난다.
+**호스트 먼저, 슬롯 나중**으로 소비한다. 5주소 × 4슬롯이면 node1~5 가 서로 다른 머신에
+놓이고 node6 이 첫 주소로 돌아와 **다음 슬롯**을 받는다(포트가 겹치지 않는다). 한 호스트 ×
+여러 슬롯은 이 머신 위의 네트워크, 여러 호스트 × 1슬롯은 fleet 이다 — **같은 격자를 달리 읽은
+것**이라 구성하는 쪽은 분기하지 않는다.
 
-| | local | remote |
+**local/remote 는 선언하지 않는다 — 주소가 정한다.** 루프백이면 이 머신, 아니면 SSH.
+`kind` 필드는 옆에 있는 주소와 어긋날 수 있고, 그러면 파일이 두 가지를 말하게 된다.
+
+| | 루프백 주소 | 그 외 주소 |
 |---|---|---|
-| 배치 모드 | `LocalStepped` — 한 호스트, 포트를 step 만큼 증가 | `RemotePerHost` — 호스트마다 1노드, 포트 동일 |
 | 데이터 플레인 | 이 머신의 `dataRoot` | 그 호스트의 `dataRoot` |
 | 접속 | 없음 | `ssh` (자격증명은 env 우선) |
+
+> **v2 가 잃은 것**: 호스트별 개별 설정(호스트마다 다른 포트 대역·SSH 사용자·dataRoot).
+> 풀은 균질하다. 이질적인 서버가 실제로 필요해지면 `hosts[]` 항목에 선택적 오버라이드를
+> 얹는다 — 근거가 생길 때.
 
 ---
 
@@ -77,10 +88,11 @@ http  = rpcBase + (node-1) * rpcStep      ws = http+1, auth = http+2
 ## 4. 상속과 폴백
 
 ```
-서버 항목  →  defaults  →  내장 기본값
+pool.ports  →  내장 기본값
 ```
 
-세 단계다. 인벤토리는 **바꿀 값만** 적으면 된다.
+두 단계다. 인벤토리는 **바꿀 값만** 적으면 된다 — 주소만 나열하고 포트를 생략하면 내장
+대역(p2p 31000/10, rpc 8600/10)을 쓴다.
 
 **인벤토리 파일이 없으면** 내장 기본값(p2p 31000 / http 8600, step 10)으로 동작하되,
 스텝 출력이 출처를 밝힌다 — 포트가 왜 그 값인지는 추측 대상이 아니다.
@@ -138,6 +150,17 @@ chainbench run --chain stablenet --binary $GSTABLE --keys keys/preset \
 `--server <name>` · `--server-index <n>` · `--fleet`.
 
 ---
+
+## 6b. v1 파일은 거부한다
+
+v1(`servers:` 목록)을 만나면 **무엇을 어떻게 고쳐야 하는지 말하며 거부**한다 — 조용히
+기본값으로 강등하면 운영자가 의도한 포트가 아닌 곳에서 네트워크가 뜬다.
+
+```
+serverset: <path> looks like the pre-v2 format: v2 replaced the server list with a pool:
+put every address under `pool.hosts`, move `slots` and `ports` up to `pool`, and lift
+`ssh`/`dataRoot` to the top level (see remote-server-config.sample.yaml)
+```
 
 ## 7. 아직 인벤토리를 읽지 않는 경로
 

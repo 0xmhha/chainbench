@@ -46,7 +46,7 @@
   4. 동일 정의서 2회 파싱 → 동일 `Spec`(결정적).
 
 ## F4. Endpoint(target) 선택  (요구 4,13,15,16 · design §3.1)
-- **입력**: 셀렉터(이름 `bp1` / 역할+index `{role,index}` / `bp:any`·`en:any`), 스텝의 `on`, 검증의 `on`/`onEach`, 스펙의 `defaultOn`.
+- **입력**: 셀렉터(신원 `node7` / 역할 별칭 `bp1` / 역할+index `{role,index}` / `bp:any`·`en:any` — 신원과 별칭은 같은 노드의 두 표기, [[netmap-design]] §2.5a), 스텝의 `on`, 검증의 `on`/`onEach`, 스펙의 `defaultOn`.
 - **동작**: 스텝 `on`=tx 제출 노드, 검증 `on`=조회 노드, `onEach`=다중 노드. 미지정 시 `defaultOn`. 해석기가 셀렉터를 `env.json.nodes[].rpc`로 해석(local=포트상이/remote=동일포트+다른IP).
 - **출력**: 해석된 rpc url(들).
 - **에러·엣지**: 매칭 노드 없음 → 오류(어느 셀렉터가 실패인지). `bp:any`는 활성 bp 중 택1(결정적: 최소 index).

@@ -17,12 +17,14 @@ package serverset
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/target"
 )
@@ -80,8 +82,9 @@ type SSH struct {
 	Port     int    `yaml:"port,omitempty"`
 	Password string `yaml:"password,omitempty"`
 	KeyFile  string `yaml:"key_file,omitempty"`
-	// Sudo records whether this user may escalate. netmap and the inventory
-	// only carry the fact; acting on it is the bring-up procedure's business.
+	// Sudo reports whether the login may elevate. It is carried, not consumed:
+	// the bring-up decides whether a step needs it, and netmap only passes it
+	// along (netmap-design NM-e).
 	Sudo bool `yaml:"sudo,omitempty"`
 }
 
@@ -112,38 +115,90 @@ type Server struct {
 	SSH      SSH    `yaml:"ssh,omitempty"`
 }
 
-// PoolSpec is the v2 inventory's assignable address space: hosts × port bases,
-// consumed by netmap.Assign. See docs/dev/netmap-design.md §2.2a.
-type PoolSpec struct {
-	Hosts     []string `yaml:"hosts"`
-	PortBases []int    `yaml:"portBases"`
+// BandSpec is one port band: where it starts and how far apart consecutive
+// slots sit.
+type BandSpec struct {
+	Base int `yaml:"base"`
+	Step int `yaml:"step"`
 }
 
-// Config is the parsed inventory. v1 describes servers one by one (bands and
-// slots); v2 describes a pool the assignment walks. The two are exclusive —
-// a file that mixes them is refused rather than half-read.
+// BandsSpec is the two disjoint bands a slot draws from.
+type BandsSpec struct {
+	P2P BandSpec `yaml:"p2p,omitempty"`
+	RPC BandSpec `yaml:"rpc,omitempty"`
+}
+
+// HostSpec is one address the pool may place nodes on. It accepts either a
+// bare address or a named entry, because most sites have nothing to say about
+// a host beyond where it is, while a named one can be referenced as
+// srv://<name>/path.
+//
+//	hosts: [10.0.0.11, 10.0.0.12]
+//	hosts:
+//	  - { name: bp1, addr: 10.0.0.11 }
+type HostSpec struct {
+	Name string `yaml:"name,omitempty"`
+	Addr string `yaml:"addr"`
+}
+
+// UnmarshalYAML accepts the scalar shorthand as well as the mapping.
+func (h *HostSpec) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		var addr string
+		if err := value.Decode(&addr); err != nil {
+			return err
+		}
+		h.Addr, h.Name = addr, addr
+		return nil
+	}
+	type plain HostSpec // avoid recursing into this method
+	var out plain
+	if err := value.Decode(&out); err != nil {
+		return err
+	}
+	*h = HostSpec(out)
+	if h.Name == "" {
+		h.Name = h.Addr
+	}
+	return nil
+}
+
+// PoolSpec is the resource the network is allocated from: the addresses in the
+// order they are consumed, how many port slots each may hold, and the bands the
+// slots step through.
+type PoolSpec struct {
+	Hosts []HostSpec `yaml:"hosts"`
+	Slots int        `yaml:"slots,omitempty"`
+	Ports BandsSpec  `yaml:"ports,omitempty"`
+}
+
+// Config is the parsed inventory.
 type Config struct {
 	// Version is the file format version, so a later change can reject an old
 	// file by name instead of by a confusing field error.
-	Version  int      `yaml:"version"`
-	Defaults Defaults `yaml:"defaults,omitempty"`
-	Servers  []Server `yaml:"servers,omitempty"`
+	Version int `yaml:"version"`
+	// PoolSpec is the declared resource (v2's single subject).
+	PoolSpec PoolSpec `yaml:"pool"`
+	// SSH reaches every non-loopback host in the pool.
+	SSH SSH `yaml:"ssh,omitempty"`
+	// DataRoot is where a node's data plane lives on the target.
+	DataRoot string `yaml:"dataRoot,omitempty"`
 
-	// Pool, SSHConf and DataRoot are the v2 fields: one pool, one credential
-	// block, one server-side root for the whole inventory.
-	Pool     *PoolSpec `yaml:"pool,omitempty"`
-	SSHConf  *SSH      `yaml:"ssh,omitempty"`
-	DataRoot string    `yaml:"dataRoot,omitempty"`
+	// Defaults and Servers are derived from the pool, not parsed: the surfaces
+	// that select "a server" predate the pool and still read them. They lose
+	// their last callers in NM3/NM4, and the derivation goes with them.
+	Defaults Defaults `yaml:"-"`
+	Servers  []Server `yaml:"-"`
 	// path is where this config was read from, for provenance in messages.
 	path string
 }
 
-// SupportedVersion is the per-server inventory format; PoolVersion is the
-// pooled one.
-const (
-	SupportedVersion = 1
-	PoolVersion      = 2
-)
+// SupportedVersion is the inventory format this build reads. v2 replaced the
+// list of servers with a pool: the two allocation shapes an operator used to
+// choose between (this machine with stepped ports, one node per host) are the
+// same grid, so the file describes resources and the allocator decides
+// placement (netmap-design 2.2a).
+const SupportedVersion = 2
 
 // Path is the file this config came from, for reporting where a port plan
 // originated.
@@ -169,10 +224,98 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("serverset: parse %s: %w", path, err)
 	}
 	c.path = path
+	c.expand()
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
 	return &c, nil
+}
+
+// loopback reports whether nodes on addr run on this machine. It is what
+// decides SSH, and it is derived rather than declared: a "kind" field can
+// disagree with the address it sits next to, and then the file says two things.
+func loopback(addr string) bool {
+	if addr == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(addr)
+	return ip != nil && ip.IsLoopback()
+}
+
+// expand derives the server view from the pool. Every host becomes one entry
+// carrying the pool's slots, bands, data root and access, so the selection
+// surfaces keep working while the pool becomes the thing that is actually
+// declared.
+func (c *Config) expand() {
+	slots := c.PoolSpec.Slots
+	if slots < 1 {
+		slots = 1
+	}
+	ports := Ports{
+		P2PBase: c.PoolSpec.Ports.P2P.Base, P2PStep: c.PoolSpec.Ports.P2P.Step,
+		RPCBase: c.PoolSpec.Ports.RPC.Base, RPCStep: c.PoolSpec.Ports.RPC.Step,
+	}
+	builtin := BuiltinPorts()
+	if ports.P2PBase == 0 {
+		ports.P2PBase = builtin.P2PBase
+	}
+	if ports.P2PStep == 0 {
+		ports.P2PStep = builtin.P2PStep
+	}
+	if ports.RPCBase == 0 {
+		ports.RPCBase = builtin.RPCBase
+	}
+	if ports.RPCStep == 0 {
+		ports.RPCStep = builtin.RPCStep
+	}
+	c.Defaults = Defaults{Slots: slots, DataRoot: c.DataRoot, Ports: ports, SSH: c.SSH}
+	c.Servers = make([]Server, 0, len(c.PoolSpec.Hosts))
+	for i, h := range c.PoolSpec.Hosts {
+		kind := KindRemote
+		if loopback(h.Addr) {
+			kind = KindLocal
+		}
+		name := h.Name
+		if name == "" {
+			name = h.Addr
+		}
+		c.Servers = append(c.Servers, Server{
+			Index: i + 1, Name: name, Kind: kind, Host: h.Addr,
+			Slots: slots, DataRoot: c.DataRoot, Ports: ports, SSH: c.SSH,
+		})
+	}
+}
+
+// Pool is the inventory as netmap allocates from it.
+func (c *Config) Pool() netmap.Pool {
+	hosts := make([]netmap.Host, 0, len(c.Servers))
+	for _, s := range c.Servers {
+		hosts = append(hosts, netmap.Host{Name: s.Name, Addr: s.Host})
+	}
+	return netmap.Pool{
+		Hosts: hosts,
+		Slots: c.Defaults.Slots,
+		Ports: netmap.Bands{
+			P2PBase: c.Defaults.Ports.P2PBase, P2PStep: c.Defaults.Ports.P2PStep,
+			RPCBase: c.Defaults.Ports.RPCBase, RPCStep: c.Defaults.Ports.RPCStep,
+		},
+		Source: c.path,
+	}
+}
+
+// BuiltinPool is the pool used when no inventory names one: this machine, the
+// built-in bands, and room for a development-sized network.
+func BuiltinPool(slots int) netmap.Pool {
+	p := BuiltinPorts()
+	if slots < 1 {
+		slots = 1
+	}
+	return netmap.Pool{
+		Hosts:  []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+		Slots:  slots,
+		Ports:  netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep},
+		Source: builtinSource,
+	}
 }
 
 // legacyHint recognizes the flat pre-v1 inventory (top-level ssh fields, no
@@ -180,6 +323,11 @@ func Load(path string) (*Config, error) {
 // error does not.
 func legacyHint(b []byte) string {
 	text := string(b)
+	if strings.Contains("\n"+text, "\nservers:") {
+		return fmt.Sprintf("v%d replaced the server list with a pool: put every address under "+
+			"`pool.hosts`, move `slots` and `ports` up to `pool`, and lift `ssh`/`dataRoot` to the "+
+			"top level (see %s)", SupportedVersion, DefaultSampleFile)
+	}
 	hasTopLevelSSH := false
 	for _, k := range []string{"\nuser:", "\nport:", "\npassword:", "\nkey_file:", "\nsshPort:", "\nhosts:"} {
 		if strings.Contains("\n"+text, k) {
@@ -197,20 +345,19 @@ func legacyHint(b []byte) string {
 // validate enforces a usable inventory: a supported version, unique selectors,
 // a host per server, and port steps that cannot produce colliding ports.
 func (c *Config) validate() error {
-	switch c.Version {
-	case PoolVersion:
-		return c.validatePool()
-	case SupportedVersion:
-		// fall through to the per-server checks below
-	default:
-		return fmt.Errorf("serverset: %s has version %d, want %d or %d (see %s)",
-			c.path, c.Version, SupportedVersion, PoolVersion, DefaultSampleFile)
+	if c.Version != SupportedVersion {
+		return fmt.Errorf("serverset: %s has version %d, want %d (see %s)", c.path, c.Version, SupportedVersion, DefaultSampleFile)
 	}
-	if c.Pool != nil {
-		return fmt.Errorf("serverset: %s mixes a v1 server list with a v2 pool; pick one (pool needs version: %d)", c.path, PoolVersion)
+	if len(c.PoolSpec.Hosts) == 0 {
+		return fmt.Errorf("serverset: %s declares no pool hosts", c.path)
 	}
-	if len(c.Servers) == 0 {
-		return fmt.Errorf("serverset: %s configures no servers", c.path)
+	for i, h := range c.PoolSpec.Hosts {
+		if h.Addr == "" {
+			return fmt.Errorf("serverset: pool host %d (%q) has no addr", i+1, h.Name)
+		}
+	}
+	if c.PoolSpec.Slots < 0 {
+		return fmt.Errorf("serverset: %s declares %d slots per host, want >= 1", c.path, c.PoolSpec.Slots)
 	}
 	seenIndex := map[int]bool{}
 	seenName := map[string]bool{}

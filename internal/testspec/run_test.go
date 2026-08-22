@@ -33,6 +33,7 @@ func (a fakeAssertion) Check(_ context.Context, _ *testspec.AssertCtx) (session.
 
 // fakeRecord captures TestRecord calls in memory.
 type fakeRecord struct {
+	reason      string
 	steps       int
 	stepResults []session.StepResult
 	asserts     []session.AssertResult
@@ -49,6 +50,7 @@ func (r *fakeRecord) Step(_ int, res session.StepResult) {
 }
 func (r *fakeRecord) Assert(a session.AssertResult)   { r.asserts = append(r.asserts, a) }
 func (r *fakeRecord) Status(s session.TestStatus)     { r.status = s }
+func (r *fakeRecord) Reason(why string)               { r.reason = why }
 func (r *fakeRecord) PostAction(p session.PostResult) { r.posts = append(r.posts, p) }
 
 func testEnv(t *testing.T) session.Environment {

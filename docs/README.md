@@ -88,4 +88,5 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 
 | 경로 | 내용 |
 |---|---|
+| [`chain-analysis/`](chain-analysis/) | **[정본] 체인 바이너리의 CLI 표면과 배선** — 실행 옵션 질문은 체인 소스를 읽기 전에 여기부터. 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. |
 | [`claudedocs/`](claudedocs/) | 외부 컨텍스트 — chainbench가 속한 상위 자동화 시스템의 제안서/지시서(cross-reference). |

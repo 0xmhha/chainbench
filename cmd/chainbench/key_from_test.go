@@ -17,10 +17,12 @@ func writeServerConfig(t *testing.T, body string) string {
 	return p
 }
 
-const twoServerInventory = "version: 1\n" +
-	"defaults:\n  ssh: {user: ubuntu, password: pw}\n" +
-	"servers:\n" +
-	"  - index: 3\n    name: bp1\n    kind: remote\n    host: 10.0.0.3\n"
+// A pool whose third host is the named one, so index selection still has an
+// index to hit (v2 numbers hosts by position) and index 9 is still missing.
+const twoServerInventory = "version: 2\n" +
+	"pool:\n" +
+	"  hosts: [10.0.0.1, 10.0.0.2, {name: bp1, addr: 10.0.0.3}]\n" +
+	"ssh: {user: ubuntu, password: pw}\n"
 
 func TestKeyFrom_ExactlyOneOrigin(t *testing.T) {
 	cases := []struct {

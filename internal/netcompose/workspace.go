@@ -22,6 +22,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/target"
@@ -34,7 +35,15 @@ type Step = session.Step
 // paths, allocated ports, the assembled launch argv (once `launchopts` ran),
 // and the live PID (once `start` ran; 0 = stopped).
 type NodeState struct {
-	Index int    `json:"index"`
+	Index int `json:"index"`
+	// Label is the node's identity: the name its datadir, config and log file
+	// carry, and the name an operator uses to address it. It is stored rather
+	// than derived so that a name, once given, survives — the placement type
+	// this replaced also carried a name, and it was thrown away.
+	//
+	// A workspace written before this field falls back to the conventional
+	// label for its index, so nothing has to be migrated.
+	Label string `json:"label,omitempty"`
 	Role  string `json:"role"`
 	// SyncMode is the geth sync mode this node's config renders. Validators are
 	// always "full" — they must hold full state to seal — while an endpoint may
@@ -44,17 +53,18 @@ type NodeState struct {
 	// Host is the address this node is reachable at. It comes from the
 	// allocator, so a remote placement records the server's address rather than
 	// this machine's.
-	Host       string   `json:"host,omitempty"`
-	DataDir    string   `json:"dataDir"`
-	ConfigPath string   `json:"configPath"`
-	LogPath    string   `json:"logPath"`
-	P2P        int      `json:"p2p"`
-	HTTP       int      `json:"http"`
-	WS         int      `json:"ws"`
-	Auth       int      `json:"auth"`
-	Metrics    int      `json:"metrics,omitempty"`
-	Args       []string `json:"args,omitempty"`
-	PID        int      `json:"pid,omitempty"`
+	Host       string `json:"host,omitempty"`
+	DataDir    string `json:"dataDir"`
+	ConfigPath string `json:"configPath"`
+	LogPath    string `json:"logPath"`
+	// Endpoints is embedded rather than copied field by field: its keys inline
+	// into this object, so the persisted shape does not change, and a port can
+	// no longer be dropped in a conversion. That is how the etcd port went
+	// missing between the plan and the running network, and the first attempt
+	// at restoring it dropped the port again in one of the three copies.
+	node.Endpoints
+	Args []string `json:"args,omitempty"`
+	PID  int      `json:"pid,omitempty"`
 }
 
 // State is the persisted composition state accumulated across step commands. It
@@ -75,6 +85,10 @@ type State struct {
 	GenesisPath  string            `json:"genesisPath,omitempty"`
 	Nodes        []NodeState       `json:"nodes,omitempty"`
 	Steps        map[string]Step   `json:"steps"`
+	// Peering is the peer graph the composition wires ("mesh" default,
+	// "proxied" for bp <-> pn <-> en). Empty means mesh, so a workspace written
+	// before the field keeps the graph it was composed with.
+	Peering string `json:"peering,omitempty"`
 	// Bootnode is the 1-based index of the topology's bootnode, or 0 when the
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.
@@ -190,4 +204,13 @@ func (w *Workspace) NodeSet() node.NodeSet {
 		})
 	}
 	return ns
+}
+
+// NodeLabel is the node's identity, falling back to the conventional label for
+// workspaces written before the field existed.
+func (n NodeState) NodeLabel() netmap.NodeLabel {
+	if n.Label != "" {
+		return netmap.NodeLabel(n.Label)
+	}
+	return netmap.LabelFor(n.Index)
 }

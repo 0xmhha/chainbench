@@ -62,7 +62,7 @@ func TestFailureMode_ZeroValueIsUnknownNotAnEtcdFailure(t *testing.T) {
 func TestBringUp_LeaderGateRunsBeforeTheHealthGate(t *testing.T) {
 	var order []string
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			order = append(order, "launch")
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
@@ -88,7 +88,7 @@ func TestBringUp_LeaderGateRunsBeforeTheHealthGate(t *testing.T) {
 func TestBringUp_LeaderGateSkippedWhenNotRequested(t *testing.T) {
 	called := false
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		LeaderGate: func(context.Context, node.NodeSet, time.Duration) (Diagnosis, error) {
@@ -108,7 +108,7 @@ func TestBringUp_LeaderGateSkippedWhenNotRequested(t *testing.T) {
 
 func TestBringUp_LeaderGateRequestedButNotWiredIsAnError(t *testing.T) {
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
@@ -130,7 +130,7 @@ func TestBringUp_AlignJoinGapSizesTheLeaderGateWindow(t *testing.T) {
 		nodes[i] = node.Node{Index: i + 1}
 	}
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: nodes}}, nil
 		},
 		LeaderGate: func(_ context.Context, _ node.NodeSet, w time.Duration) (Diagnosis, error) {
@@ -152,7 +152,7 @@ func TestBringUp_AlignJoinGapSizesTheLeaderGateWindow(t *testing.T) {
 
 func TestBringUp_LaunchErrorIsClassified(t *testing.T) {
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{}, errors.New("node1: cannot fetch cluster info from peer urls")
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
@@ -169,7 +169,7 @@ func TestBringUp_LaunchErrorIsClassified(t *testing.T) {
 
 func TestBringUp_HealthGateErrorWithoutAModeIsClassified(t *testing.T) {
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) {
@@ -188,7 +188,7 @@ func TestBringUp_HealthGateErrorWithoutAModeIsClassified(t *testing.T) {
 
 func TestBringUp_ExplicitGateModeIsPreserved(t *testing.T) {
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) {
@@ -204,7 +204,7 @@ func TestBringUp_ExplicitGateModeIsPreserved(t *testing.T) {
 
 func TestBringUp_ForkSwapsRequestedButNotWiredIsAnError(t *testing.T) {
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
@@ -225,7 +225,7 @@ func TestBringUp_ForkSwapsRequestedButNotWiredIsAnError(t *testing.T) {
 func TestBringUp_ForkSwapsAreScheduledBeforeTheForkBlock(t *testing.T) {
 	var swapped []ForkSwap
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
@@ -246,7 +246,7 @@ func TestBringUp_ForkSwapsAreScheduledBeforeTheForkBlock(t *testing.T) {
 
 func TestBringUp_ForkSwapFailureIsClassified(t *testing.T) {
 	sup := New(Deps{
-		Launch: func(context.Context, driver.Plan) (LaunchResult, error) {
+		Launch: func(context.Context, driver.Plan, []int) (LaunchResult, error) {
 			return LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1}}}}, nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },

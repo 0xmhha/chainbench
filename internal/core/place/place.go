@@ -1,51 +1,23 @@
+// Package place holds the request that describes a node to be launched.
+//
+// It used to own allocation as well — an Allocator with three modes deciding
+// which host and ports each node took. netmap.Assign replaced that: the two
+// deterministic modes turned out to be one grid of addresses and port slots
+// read two ways, and the third asked the OS for free ports and had no callers.
+// What remains is the request itself, which is a launch concern (role, sync
+// mode, binary) rather than a placement one.
 package place
 
-import (
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
-)
+import "github.com/0xmhha/chainbench/internal/core/node"
 
-// Mode selects the addressing and port strategy.
-type Mode int
-
-const (
-	// LocalStepped assigns deterministic stepped ports on 127.0.0.1.
-	LocalStepped Mode = iota
-	// LocalOSAssigned binds :0 then reclaims, avoiding fixed-port double-binds.
-	LocalOSAssigned
-	// RemotePerHost uses identical ports on distinct server IPs (one node per host).
-	RemotePerHost
-)
-
-// NodeReq is one node's placement request.
+// NodeReq is one node to launch: its role, and the launch choices that are not
+// derivable from the network's shape.
+//
+// It carries no name. The name a node answers to is netmap's — it used to be
+// invented here in four different spellings by different callers and read by
+// none, which is why a node's label is now assigned once and persisted.
 type NodeReq struct {
-	Name   string
 	Role   node.Role
 	Sync   string
 	Binary string
-}
-
-// NodePlacement is the resolved host and reserved ports for one node. Ports is
-// portplan.Ports, which reserves the wemix-derived etcd port (P2P+1).
-type NodePlacement struct {
-	Name     string
-	Host     string
-	Ports    portplan.Ports
-	DataPath string
-}
-
-// Capacity bounds the node count: the minimum validators for a BFT quorum and
-// the maximum the target can host (local port band, or remote hosts x slots).
-type Capacity struct {
-	MinValidators int
-	Hosts         int
-	SlotsPerHost  int
-	PortBandSize  int
-}
-
-// Allocator resolves node placements, validating capacity first (fail-fast):
-// too few validators for a BFT quorum, or more nodes than the target can host,
-// is an error returned before any placement is produced.
-type Allocator interface {
-	Allocate(reqs []NodeReq, mode Mode, capacity Capacity) ([]NodePlacement, error)
 }

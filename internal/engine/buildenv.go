@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -30,15 +31,13 @@ type BuildEnvFunc func(ctx context.Context, env session.Environment, spec testsp
 type BuildDeps struct {
 	// Plugin is the target chain.
 	Plugin registry.ChainPlugin
-	// Allocator resolves per-node host+ports.
-	Allocator place.Allocator
+	// Pool is the resource the network is allocated from (addresses x port
+	// slots). netmap.Assign consumes it.
+	Pool netmap.Pool
 	// Genesis sources the network genesis bytes.
 	Genesis GenesisSource
 	// Supervisor brings the network up behind a health gate and tears it down.
 	Supervisor supervisor.Supervisor
-	// Mode and Capacity parameterize allocation.
-	Mode     place.Mode
-	Capacity place.Capacity
 	// Options tunes bring-up (health gating, retries).
 	Options supervisor.Options
 	// Caps are the advertised capabilities recorded on the plan.
@@ -49,6 +48,9 @@ type BuildDeps struct {
 	// keys). It is injected because file content is chain/preset-specific; nil
 	// skips provisioning (e.g. an attach-only or test build).
 	Provision func(ctx context.Context, plan driver.Plan) error
+	// ProvisionExtra writes the genesis step's by-products to the target,
+	// keyed by the name they take there. A family with none never calls it.
+	ProvisionExtra func(ctx context.Context, plan driver.Plan, files map[string][]byte) error
 }
 
 // NewBuildEnv composes the network build: allocate placements, source genesis,
@@ -62,15 +64,16 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: spec resolved to no nodes")
 		}
 
-		placements, err := d.Allocator.Allocate(reqs, d.Mode, d.Capacity)
+		assigned, err := netmap.Assign(d.Pool, netmapRequests(reqs))
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocate: %w", err)
 		}
+		placements := assigned.Placements()
 		if len(placements) != len(reqs) {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocator returned %d placements for %d requests", len(placements), len(reqs))
 		}
 
-		gen, err := d.Genesis.Genesis(ctx, d.Plugin, countValidators(reqs))
+		gen, err := d.Genesis.Genesis(ctx, d.Plugin, GenesisRequest{Validators: countValidators(reqs), Nodes: assigned})
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis: %w", err)
 		}
@@ -79,7 +82,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 		for i := range reqs {
 			placed[i] = PlacedNode{Req: reqs[i], Placement: placements[i]}
 		}
-		plan, err := AssemblePlan(d.Plugin, placed, gen, env.DataPath(), d.Caps)
+		plan, err := AssemblePlan(d.Plugin, placed, gen.Genesis, env.DataPath(), d.Caps)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: plan: %w", err)
 		}
@@ -89,8 +92,29 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 				return node.NodeSet{}, nil, fmt.Errorf("engine: build env: provision: %w", err)
 			}
 		}
+		// The genesis step's by-products go to the target beside the genesis:
+		// a wemix bring-up reads its governance config back during
+		// deploy-governance, and reconstructing it there is how two steps come
+		// to disagree about what the network was configured with.
+		if len(gen.Extra) > 0 && d.ProvisionExtra != nil {
+			if err := d.ProvisionExtra(ctx, plan, gen.Extra); err != nil {
+				return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis artifacts: %w", err)
+			}
+		}
 
-		ns, diag, err := d.Supervisor.BringUp(ctx, plan, d.Options)
+		// The family orders the bring-up. A wbft network declares one phase
+		// and launches exactly as it did before; a poa network puts its
+		// producer first so the etcd cluster can form while it is alone.
+		opts := d.Options
+		if len(opts.Phases) == 0 {
+			roles := make([]node.Role, 0, len(plan.Nodes))
+			for _, spec := range plan.Nodes {
+				roles = append(roles, spec.Role)
+			}
+			opts.Phases = d.Plugin.Family().BringUpPhases(roles)
+		}
+
+		ns, diag, err := d.Supervisor.BringUp(ctx, plan, opts)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: bring up (%s): %w", diag.Mode, err)
 		}
@@ -106,9 +130,19 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 func countValidators(reqs []place.NodeReq) int {
 	n := 0
 	for _, r := range reqs {
-		if r.Role == node.RoleValidator {
+		if netmap.Is(r.Role, node.RoleBP) {
 			n++
 		}
 	}
 	return n
+}
+
+// netmapRequests turns placement requests into netmap's: only the role travels,
+// since position comes from the order and that order is the node's identity.
+func netmapRequests(reqs []place.NodeReq) []netmap.Request {
+	out := make([]netmap.Request, 0, len(reqs))
+	for _, r := range reqs {
+		out = append(out, netmap.Request{Role: r.Role})
+	}
+	return out
 }

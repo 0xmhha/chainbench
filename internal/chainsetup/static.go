@@ -9,6 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/procman"
@@ -76,7 +77,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	var (
 		plugin registry.ChainPlugin
 		preset keyring.Preset
-		places []place.NodePlacement
+		places []netmap.Placement
 		gen    []byte
 		plan   driver.Plan
 		specs  []driver.NodeSpec
@@ -117,28 +118,30 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[3], func() (string, error) {
-		alloc := place.New(place.Config{
-			P2PBase: defaultP2PBase, P2PStep: defaultStep,
-			RPCBase: defaultRPCBase, RPCStep: defaultStep,
-		})
-		ps, err := alloc.Allocate(reqs, place.LocalStepped, place.Capacity{
-			MinValidators: 1, PortBandSize: defaultPortBand,
-		})
+		pool := netmap.Pool{
+			Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+			Slots: defaultPortBand,
+			Ports: netmap.Bands{
+				P2PBase: defaultP2PBase, P2PStep: defaultStep,
+				RPCBase: defaultRPCBase, RPCStep: defaultStep,
+			},
+		}
+		assigned, err := netmap.Assign(pool, netmapRequests(reqs))
 		if err != nil {
 			return "", err
 		}
-		places = ps
-		return fmt.Sprintf("%d node(s); node1 p2p=%d http=%d", len(ps), ps[0].Ports.P2P, ps[0].Ports.HTTP), nil
+		places = assigned.Placements()
+		return fmt.Sprintf("%d node(s); node1 p2p=%d http=%d", len(places), places[0].Ports.P2P, places[0].Ports.HTTP), nil
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
 		src := engine.PresetGenesisSource{KeysDir: o.KeysDir}
-		b, err := src.Genesis(ctx, plugin, o.Validators)
+		b, err := src.Genesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators})
 		if err != nil {
 			return "", err
 		}
-		gen = b
-		return fmt.Sprintf("%d bytes, %d validator(s) substituted", len(b), o.Validators), nil
+		gen = b.Genesis
+		return fmt.Sprintf("%d bytes, %d validator(s) substituted", len(b.Genesis), o.Validators), nil
 	})
 
 	t.do(c.Steps[5], func() (string, error) {
@@ -206,7 +209,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 func validatorReqs(n int) []place.NodeReq {
 	reqs := make([]place.NodeReq, n)
 	for i := range reqs {
-		reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: node.RoleValidator}
+		reqs[i] = place.NodeReq{Role: node.RoleValidator}
 	}
 	return reqs
 }
@@ -251,4 +254,14 @@ func saveState(dataDir string, ns node.NodeSet) error {
 		return err
 	}
 	return writeNodeSet(filepath.Join(dataDir, stateFile), ns)
+}
+
+// netmapRequests turns placement requests into netmap's: only the role travels,
+// since position comes from the order.
+func netmapRequests(reqs []place.NodeReq) []netmap.Request {
+	out := make([]netmap.Request, 0, len(reqs))
+	for _, r := range reqs {
+		out = append(out, netmap.Request{Role: r.Role})
+	}
+	return out
 }

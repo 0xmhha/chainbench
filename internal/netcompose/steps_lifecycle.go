@@ -8,7 +8,10 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
@@ -88,27 +91,30 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: start: %w", err)
 	}
+	// The family orders the launch. A wbft network declares one phase and this
+	// is the loop it always was; a wemix network starts its producer alone so
+	// the etcd cluster can form, and the bootstrap runs in the gap before the
+	// rest join. Launching everything at once produced a network that came up
+	// and never agreed on anything.
+	roles := make([]node.Role, 0, len(w.state.Nodes))
+	for _, ns := range w.state.Nodes {
+		roles = append(roles, node.Role(ns.Role))
+	}
+	phases := p.Family().BringUpPhases(roles)
+
 	started := 0
-	for i, ns := range w.state.Nodes {
-		if ns.PID > 0 {
-			continue // already running; `net restart` bounces one node
-		}
-		spec := driverSpec(ns)
-		spec.Binary = bin
-		if len(spec.Args) == 0 {
-			args, err := engine.NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
-			if err != nil {
-				return "", fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
-			}
-			spec.Args = args
-			w.state.Nodes[i].Args = args
-		}
-		h, err := t.Driver.Launch(ctx, spec)
+	for _, phase := range phases {
+		launched, err := w.startPhase(ctx, t, p, preset, bin, phase)
 		if err != nil {
-			return "", fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+			return "", err
 		}
-		w.state.Nodes[i].PID = h.PID
-		started++
+		started += launched
+		if len(phase.Actions) == 0 {
+			continue
+		}
+		if err := w.runPhaseActions(ctx, bin, phase); err != nil {
+			return "", err
+		}
 	}
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
@@ -271,4 +277,84 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 		out[i] = h
 	}
 	return out, nil
+}
+
+// startPhase launches one phase's nodes, or every stopped node when the phase
+// names none. A node already running is left alone: `net restart` bounces one,
+// and re-running `net start` should not double-launch the rest.
+func (w *Workspace) startPhase(ctx context.Context, t *target.Target, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+	started := 0
+	for i, ns := range w.state.Nodes {
+		if ns.PID > 0 || !phaseHasNode(phase, ns.Index) {
+			continue
+		}
+		spec := driverSpec(ns)
+		spec.Binary = bin
+		if len(spec.Args) == 0 {
+			args, err := engine.NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
+			if err != nil {
+				return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+			}
+			spec.Args = args
+			w.state.Nodes[i].Args = args
+		}
+		h, err := t.Driver.Launch(ctx, spec)
+		if err != nil {
+			return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+		}
+		w.state.Nodes[i].PID = h.PID
+		started++
+	}
+	return started, nil
+}
+
+// runPhaseActions performs the bring-up steps a phase names, against the first
+// node it launched. An action with no executor is an error, not a skip — the
+// phase that named it expects it to have happened, and a bootstrap quietly
+// skipped is a network that starts and then does nothing.
+func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase registry.Phase) error {
+	specs := make([]driver.NodeSpec, 0, len(w.state.Nodes))
+	for _, ns := range w.state.Nodes {
+		spec := driverSpec(ns)
+		spec.Binary = bin
+		specs = append(specs, spec)
+	}
+	plan := driver.Plan{DataRoot: w.state.Target.DataRoot, Nodes: specs}
+
+	on, ok := phaseFirstNode(w.state.Nodes, phase)
+	if !ok {
+		return fmt.Errorf("netcompose: start: phase %q names actions but launched no node to run them on", phase.Name)
+	}
+	exec := engine.WemixBootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	for _, name := range phase.Actions {
+		if err := exec.Action(ctx, name, plan, on); err != nil {
+			return fmt.Errorf("netcompose: start: phase %q: %w", phase.Name, err)
+		}
+	}
+	return nil
+}
+
+// phaseHasNode reports whether a phase covers a node. A phase naming no nodes
+// covers all of them, which is what a single-phase family declares.
+func phaseHasNode(phase registry.Phase, index int) bool {
+	if len(phase.Nodes) == 0 {
+		return true
+	}
+	for _, i := range phase.Nodes {
+		if i == index {
+			return true
+		}
+	}
+	return false
+}
+
+// phaseFirstNode is the node a phase's actions run against: the first one it
+// covers, which for a bootstrap phase is the producer that is alone.
+func phaseFirstNode(nodes []NodeState, phase registry.Phase) (node.Node, bool) {
+	for _, ns := range nodes {
+		if phaseHasNode(phase, ns.Index) {
+			return node.Node{Index: ns.Index, Role: node.Role(ns.Role), Host: nodeHost(ns), Ports: ns.Endpoints}, true
+		}
+	}
+	return node.Node{}, false
 }

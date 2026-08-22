@@ -176,7 +176,7 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 	ports := make([]portplan.Ports, 0, total)
 	netids := make([]int64, 0, total)
 	for i := 0; i < total; i++ {
-		p, err := portplan.Plan(i+1, in.P2PBase, in.P2PStep, in.RPCBase, in.RPCStep)
+		p, err := portplan.Plan(i+1, in.P2PBase, in.P2PStep, in.RPCBase, in.RPCStep, portplan.DefaultReservation)
 		if err != nil {
 			return Plan{}, fmt.Errorf("upgrade: port plan node %d: %w", i, err)
 		}

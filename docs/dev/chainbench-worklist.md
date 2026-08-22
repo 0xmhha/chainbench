@@ -281,11 +281,11 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 리스크 | 상태 |
 |---|---|---|---|---|
-| **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | poa 는 step 2 를 거부, wbft 는 허용 | 낮음 | ☐ |
-| **F2** | `--networkid` 방출 (poa 다이얼렉트) | argv 비교 | 낮음 | ☐ |
-| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | wbft 는 1페이즈·현행 argv 동일 / 미배선 액션은 오류 | **중** | ☐ |
-| **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | wbft `Extra` nil · poa config 가 `Validate()` 통과 | 중 | ☐ |
-| **F5** | poa 액션 배선 + 유스케이스 수렴(3곳→1곳) | **라이브: wemix 4노드 블록 생성 · sealing 로테이션** | 중 | ☐ |
+| **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | ☑ **완료 2026-08-22.** poa {3,3}·wbft {2,3} · poa 는 step 2 를 거부 · wemix 노드가 **etcd client(p2p+2)까지 예약**(실측: workspace `etcdClient: 31002`) · stablenet 포트 불변 | 낮음 | ☑ |
+| **F2** | `--networkid` 방출 | ☑ **완료 2026-08-22.** 다이얼렉트가 아니라 **매니페스트 사실**이라 모든 체인에 방출(argv 실측 `--networkid 8283`) · `--network-id` 오버라이드는 상위 레이어라 그대로 이김 · stablenet 4노드 라이브 블록 전진 | 낮음 | ☑ |
+| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | ☑ **완료 2026-08-22.** wbft 는 1페이즈(노드 목록 없음 = 전체) — stablenet 4노드 라이브 불변 · poa 는 boot(deploy-governance·etcd-init·verify-etcd) → rest · **미배선 액션은 오류**(LeaderGate·SwapBinary 와 동일 계약) · 액션 실패 시 다음 페이즈 미기동 | **중** | ☑ |
+| **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | ☑ **완료 2026-08-22.** wbft `Extra` nil · poa config `Validate()` 통과 · `poa.Family.BuildGenesis` 는 이제 **거부**(치환 템플릿을 genesis 로 돌려주던 자리) · **라이브(실 gwemix)**: alloc 4계정·extraData 실값·chainId 8285(매니페스트)·`gwemix init` 수용 | 중 | ☑ |
+| **F5** | poa 액션 배선 + 유스케이스 수렴(3곳→1곳) | ☑ **라이브 통과 2026-08-22** — wemix 4노드가 **일반 엔진 경로**로 뜬다: 바이너리 생성 genesis → boot 페이즈(프로듀서 단독) → deploy-governance(컨트랙트 5종) → etcd-init → **verify-etcd 가 클러스터 확인** → rest 페이즈 → 블록 전진. `TestWemix_Live_BringUp`(GWEMIX_BIN 게이트). **스텝 경로도 페이즈를 태운다**(2026-08-23): `net up`/`net start` 가 패밀리 페이즈 순서로 기동하고 사이에 부트스트랩 액션을 실행한다 — wemix 가 엔진·스텝 양쪽에서 뜬다. **잔여(F5b)**: **다중 프로듀서 sealing 로테이션**. 4 BP 를 전부 거버넌스 멤버로 등록하면 `miners` 가 넷을 다 보고(`node1/up/* node2/up node3/up node4/up`) 부트 노드가 봉인하지만, **나머지 멤버의 etcd 조인이 실패**한다(`cannot fetch cluster info from peer urls`). 리더의 `admin_etcdAddMember('node2')` 는 멤버 목록에 추가는 되나(`node2=https://127.0.0.1:31011` — F1 예약 라이브 확인) 조인은 성사되지 않는다. 요구사항 문서가 말한 **etcd flaky 영역**이며, 가설은 순서다(조인 노드 기동 **전에** 멤버를 추가). | 중 | ◐ |
 | **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | 라이브 재현 | 낮음 | ☐ |
 
 **F1 은 버그 수정이다** — 현재 `p2pStep>=2` 는 wemix 에서 틀렸다(etcd 가 p2p+1 peer·p2p+2 client 둘을 쓴다).
@@ -337,15 +337,15 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **N0** | 역할을 `bp·en·pn` 3종으로 정리 — **NM1 로 흡수**([[netmap-design]] §4) | `validator→bp`·`endpoint→en` 이관 · `node.RoleEN`/`RoleEndpoint` 중복 해소 · 기존 토폴로지 호환 | ☐ |
-| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | mesh 는 현행과 동일 argv · proxied 는 bp/en 의 static-nodes 에 pn 만 · **poa 에 `pn` 선언 시 오류** | ☐ |
+| **N0** | 역할을 `bp·en·pn` 3종으로 정리 — **NM1 로 흡수**([[netmap-design]] §4) | `validator→bp`·`endpoint→en` 이관 · `node.RoleEN`/`RoleEndpoint` 중복 해소 · 기존 토폴로지 호환 | ◐ NM1·NM1c 완료, 방출 전환은 NM3 |
+| **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | ☑ **NM2 완료** — mesh 골든 동일 · proxied 는 bp/en 의 목록에 pn 만 · poa+pn 은 `SupportsRole` 로 거부. 조립 4곳의 **전환**은 NM3 | ☑ |
 | **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
 | **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
 | **N3** | **raw 경로 완성** — 노드별 nodekey·계정·포트·서버·바이너리 오버라이드 선언 | **preset 없이** 손으로 쓴 청사진만으로 3체인 4노드 기동(라이브) | ☐ |
 | **N4** | `Materialize` — 노드별 산출물 묶음 → Sink | 로컬/원격 분기 없음 | ☐ |
 | **N5** | **그 다음** preset 지원 — `net blueprint --from-preset` 이 청사진을 **생성** | preset 산출 청사진이 N3 경로와 동일 결과 | ☐ |
 | **N6** | `topology.yaml` 흡수 (이관 기간 병존, 혼용 거부) | | ☐ |
-| **N7** | **`core/netmap`** — 설계 확정([[netmap-design]]). NM1~NM5 로 분해: 타입 통일(NM1) · 피어링 파생(NM2) · 조립 4곳 전환(NM3) · 표면(NM4) · 라벨 영속(NM5) | 실측: 배치 타입 8개 · 포트 표현 3벌(**etcd 가 런타임에서 소실**) · 역할 어휘 3벌 · static-nodes 조립 4벌 전부 풀메시 | ☐ |
+| **N7** | **`core/netmap`** — ☑ **완료 2026-08-22** (NM1·NM1c·NM1b·NM2·NM3·NM4·NM5). 배치의 단일 소유자가 섰다: 자원 풀·결정적 할당·양방향 대장·라벨·피어링·경로. `place` 할당기 소멸 | 실측(착수 전): 배치 타입 8개 · 포트 표현 3벌(etcd 소실) · 역할 어휘 4벌 · static-nodes 조립 4벌 전부 풀메시 · `"node%d"` 라벨 파생 32곳. **종료 시**: 포트 1벌(etcd 보존) · 역할 폴딩 1곳 · 피어링 1곳(mesh/proxied) · 경로 파생 1곳 | ☑ |
 | **N8** | ~~`serverset` 가용 자원 풀~~ → **이미 있음**(`slots`·포트 밴드, 2026-08-18). 명시적 범위 풀은 근거 생기면 | — | ☑ |
 | **N9** | **해석 순서 강제** — ① keyring → ② netmap → ③ enode → ④ genesis ⑤ config | ③ 이전에 ④⑤ 를 만들 수 없다(컴파일 타임 또는 명시적 오류) | ☐ |
 | **N10** | **계정 라벨** — `account1` ↔ 주소·개인키. **faucet 누락은 오류** | 테스트 정의에 주소가 등장하지 않음 · 잔액 0 계정의 가스 자금원 보장 | ☐ |
@@ -394,6 +394,81 @@ K0·S0 가 추측 위에 서게 된다.
 
 **F 계열과의 순서**: 독립이지만 `net start` 를 둘 다 건드린다 — **F3(페이즈 구조)을 먼저** 하고
 S1 에서 등록해야 두 번 등록하지 않는다.
+
+### 확정된 결정 (2026-08-22)
+
+| # | 결정 | 근거 |
+|---|---|---|
+| D1 | **노드는 이름 둘을 갖는다** — 신원 `node7`(=`Index`, 저장·경로·keyring), 별칭 `en2`(역할 내 서수, 정의서 주소지정). **개명 없음** | 영속 식별자는 이미 라벨이 아니라 `Index int` 라 표기·주소지정 문제였다. spec 은 여러 토폴로지에서 도는데 `node7` 은 넷마다 다른 노드를 가리킨다 ([[netmap-design]] §2.5a) |
+| D2 | **`--peering proxied` 는 필수** | 메인넷이 bp–pn–en 이고 **트랜잭션이 en 을 거쳐 전파**된다. mesh 만으로는 실제 전파 경로를 태우지 못한다 |
+| D3 | **인벤토리 v2 단독** (v1 호환 없음) | 실제 파일은 gitignore 라 배포본이 확인되지 않는다 — 지금이 전환 비용 최저. 호환 로더는 다섯 번째 폴딩표가 된다 |
+
+**NM5 완료 (2026-08-22) — netmap 트랙 종료.** 라벨이 파생값에서 **데이터**가 됐다:
+워크스페이스가 `label` 을 저장하고(구 워크스페이스는 index 폴백), `netmap.Layout` 이
+datadir·config·log 경로를 그 라벨에서 파생한다 — `fmt.Sprintf("node%d")` 로 흩어져 있던 6곳이
+한 함수가 됐다. `Request.Label` 로 운영자가 지은 이름이 보존되고, `net map --addr 127.0.0.1:31021`
+로 **로그 한 줄의 주소를 노드로 되짚는다**(파생 etcd 포트 포함).
+
+**`place` 의 할당기를 삭제했다** — `Allocator`·`NodePlacement`·`Mode`·`Capacity` 모두 소비자 0.
+`NodeReq`(역할·sync·binary)만 남고, 그것은 배치가 아니라 기동 입력이다. N7 이 겨눴던
+"`NodePlacement.Name` 이 버려진다"는 **필드 자체를 지워서** 닫혔다 — 5곳에서 4가지 철자로
+만들어지고 아무도 읽지 않던 값이었다. **N7 완료.**
+
+**NM4 완료 (2026-08-22)** — 조회 표면. `net map` 은 네 방향으로 답한다(노드 번호·라벨(신원 또는
+별칭)·호스트·포트) — **포트로 노드를 되찾는 것**이 원래 동기였고, 이제 파생 etcd 포트로도 된다.
+`net pool` 은 "왜 15개가 거부됐는가"를 명령 하나로 답한다(호스트×슬롯=용량, 사용/여유, 출처).
+유스케이스는 `app` 에 하나씩, CLI·MCP 는 바인딩만(K8 선례). **자격증명은 어느 쪽에도 없고**,
+`NetPoolOut` 에 그런 필드가 없다는 것을 리플렉션 테스트로 고정했다 — 유출은 조용하기 때문이다.
+
+**NM4 를 하다 같은 결함을 한 번 더 잡았다**: `net map` 이 etcd 를 `-` 로 찍길래 보니
+워크스페이스→netmap 변환이 또 그 필드를 빠뜨리고 있었다(손복사 4곳 중 하나). 필드별 복사를
+없애고 `NodeState` 가 `node.Endpoints` 를 **임베드**하도록 바꿨다 — JSON 키는 그대로 인라인되어
+영속 형식이 변하지 않으면서, 복사가 사라지니 빠뜨릴 필드도 없다.
+
+**NM3 부분 완료 (2026-08-22)** — static-nodes 조립이 세 벌에서 한 곳(`netmap.Peering`)으로
+모였다. engine·netcompose 가 이를 경유하고 `--peering` 이 CLI·MCP 에 노출된다. 착수 전
+**전수 조사**로 역할 철자를 하나만 비교하던 9곳을 `netmap.Is` 로 접었다(NM3 part 1) — 그 목록에
+genesis 검증자 수·`--unlock` 무장·BFT 최소치가 들어 있어, 정규 철자를 방출하는 순간 전부
+오동작했을 자리다.
+
+**라이브가 설계를 정정했다**: 초안의 proxied(= bp 가 pn 만 다이얼)로 5노드를 띄우자 **블록이
+0에서 멈췄다.** 모든 bp 가 `ROUND-CHANGE` 를 자기 것만 세며 반복했고(`currentRoundChanges.count=1`),
+pn 로그의 WBFT 라인은 2줄뿐이었다 — **pn 은 검증자가 아니라 합의 트래픽을 중계하지 않는다.**
+확정형은 **bp↔bp 직결 + bp↔pn + pn↔en**(en 은 여전히 bp 를 모른다). 정정 후 재검증:
+stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet proxied 5노드 블록 전진 +
+피어 4 + api 9/9, 세 경우 모두 고아 0.
+**할당 경로도 전환됐다**: engine·netcompose·chainsetup 이 `netmap.Assign` 을 쓰고
+`place.Allocator` 의 프로덕션 호출은 **0**이다. 전환하며 실측한 두 가지: `LocalOSAssigned` 는
+소비자가 없었고(격자로 흡수되지 않는 별개 전략), `MinValidators` 는 전 호출지에서 1이었다 —
+"프로듀서 최소 하나"는 `Assign` 이 직접 거부한다. 라이브 재확인: 포트 동일(8600·31000 대역),
+api 9/9, 고아 0.
+**포트 표현도 하나가 됐다** — 3벌 → 1벌. 설계는 `node.Endpoints` 를 `netmap.Ports` 로 *대체*
+한다고 했으나 그 방향은 **상향 의존**이다(`node` 는 L0, `netmap` 은 L1). 어휘를 아래에 두는 것이
+유일한 무순환 해법이라, `node.Endpoints` 가 `Etcd` 를 갖고 `portplan.Ports`·`netmap.Ports` 가
+그 별칭이 됐다. 결과: **etcd 포트가 런타임·워크스페이스까지 살아남는다**(`"etcd": 31001` 실측).
+그 포트는 `p2pStep>=2` 규칙이 존재하는 이유인데, 규칙이 지키는 값을 정작 아무도 되읽을 수
+없던 상태였다. **NM3 완료.**
+
+**NM2 완료 (2026-08-22)** — 피어링이 역할에서 파생된다. `mesh` 는 현행과 바이트 동일(골든:
+`armSpecs` 가 렌더한 config 의 enode 목록 == `netmap.Mesh`, **self 항목 포함까지**; self 를 뺀
+변형으로 실패를 확인), `proxied` 는 bp↔pn↔en 이라 **en 의 목록에 bp 가 없다**. pn 없는 proxied 와
+poa+pn 은 거부한다 — `ConsensusFamily.SupportsRole` 신설(구현 2곳뿐이라 값싼 seam).
+**동시에 고친 잠복 결함**: 두 패밀리의 `StartFlags` 가 `--mine` 을 `RoleValidator` 철자에만
+걸고 있었다. NM3 이 정규 철자를 방출하면 **프로듀서가 --mine 없이 떠서 체인이 멈춘다** —
+NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생성 자체를 좌우한다. 이제 두 철자
+모두 `netmap.NormalizeRole` 로 접는다. N0b 가 닫혔다.
+
+**NM1b 완료 (2026-08-22)** — `netmap.Pool`/`Assign` 이 자원 격자(hosts × slots)를 결정적으로
+할당하고, 인벤토리가 v2(pool) 단독이 됐다. `place` 의 두 결정적 모드는 이 격자의 특수해임을
+**등가 테스트로 고정**했다(라벨·호스트·전 포트 비교) — 없으면 NM3 이 리팩터를 자처하며 모든
+넷의 포트를 옮긴다. v2 는 호스트별 개별 설정을 잃었다(풀은 균질); 근거가 생기면 `hosts[]`
+오버라이드로 얹는다. `--peering`·`net map`·`net pool` 은 NM2·NM4.
+
+**NM1c 완료 (2026-08-22)** — D1 의 코드 반영이자 NM3 의 선행 조건. 셀렉터의 역할 폴딩표가
+`netmap.NormalizeRole` 을 경유하고, 신원 라벨(`node7`)도 셀렉터로 해석된다.
+**고친 결함**: `session.rolesForToken` 이 `"bp"` 를 `RoleValidator` 에만 매핑해, 정규 역할
+`bp` 를 가진 노드가 자기 셀렉터에 매칭되지 않았다. 두 철자가 섞인 넷에서는 **`bp1` 이 두 번째
+노드로 조용히 해석**된다(옛 표로 실측). NM3 이 정규 철자를 방출하기 시작하면 터질 자리였다.
 
 ### 결정이 필요한 열린 질문
 

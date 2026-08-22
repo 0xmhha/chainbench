@@ -22,6 +22,7 @@ func newNetUpCmd() *cobra.Command {
 		chainID                               int64
 		genesisSet, launchSet                 []string
 		overlayPath                           string
+		peering                               string
 		tf                                    targetFlags
 		sf                                    serverFlags
 	)
@@ -41,7 +42,7 @@ func newNetUpCmd() *cobra.Command {
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
 				Validators: validators, Endpoints: endpoints,
-				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath,
+				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Server:     sf.ref(),
 				KeysSource: keysSource,
 				ChainID:    chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
@@ -68,6 +69,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
 	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode); overrides --validators/--endpoints")
+	cmd.Flags().StringVar(&peering, "peering", "", "peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "", "preset (default) or generate")
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
 	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")

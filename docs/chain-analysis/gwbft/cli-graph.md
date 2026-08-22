@@ -541,3 +541,16 @@ Grouping uses each flag's urfave `Category:` field. Usage strings are verbatim (
 | `--remove.chain` | If set, selects the state data for removal | cmd/gwemix/dbcmd.go:51 | `removedb` |
 
 > Notes: (1) There is **no dedicated WBFT/Croissant CLI flag group** — Wemix-specific behavior is keyed off `--mainnet` (usage "Wemix mainnet") and `--testnet` (`WemixTestnetFlag`) plus genesis config, not standalone consensus flags. (2) `--config` (§4a) is command-local to node/console/dumpconfig but carries `EthCategory`. (3) All flags in `flags.Merge(...)` gain auto env-vars prefixed `GWEMIX_` (`cmd/gwemix/main.go:252`).
+
+## Flags this binary does NOT accept
+
+Machine-readable, and checked: `scripts/chain-analysis/verify-docs.sh` reads
+this list and fails if the binary actually accepts one of them. A flag can be
+defined in the source and still be unusable — defined, even read, but never
+added to any command's flag list — and source-only analysis lists it as if it
+worked.
+
+```not-accepted
+--chainid  # chain id comes from the genesis `config.chainId`; `--networkid` sets only the p2p network id
+--docroot  # defined in `cmd/utils/flags.go` and read when set, but registered on no command — the binary rejects it
+```

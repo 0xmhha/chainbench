@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // Supervisor owns node bring-up: setup produces the plan and concurrent
@@ -22,6 +23,11 @@ type Supervisor interface {
 
 // Options tunes bring-up: health gating and fork-aware binary swaps.
 type Options struct {
+	// Phases orders the bring-up when the chain family declares one. Empty
+	// launches the whole plan at once, which is what every wbft-family network
+	// does.
+	Phases []registry.Phase
+
 	// LeaderGate polls the producer's etcd until a leader is ready.
 	LeaderGate bool
 	// AlignJoinGap aligns node start times to the etcd join slot; the gap is

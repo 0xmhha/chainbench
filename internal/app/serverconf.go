@@ -96,8 +96,8 @@ func fleetTarget(pl serverset.Placement) target.TargetSpec {
 	spec := target.TargetSpec{Kind: target.TargetLocal, DataRoot: pl.DataRoot}
 	if pl.Remote {
 		spec.Kind = target.TargetRemote
-		if len(pl.Config.Hosts) > 0 {
-			spec.Host = pl.Config.Hosts[0]
+		if len(pl.Pool.Hosts) > 0 {
+			spec.Host = pl.Pool.Hosts[0].Addr
 		}
 	}
 	return spec

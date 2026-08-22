@@ -139,9 +139,9 @@ func (t Topology) BootnodeIndex() int {
 func (t Topology) Counts() (producers, endpoints int) {
 	for _, n := range t.Nodes {
 		switch n.NodeRole() {
-		case node.RoleValidator:
+		case node.RoleValidator, node.RoleBP:
 			producers++
-		case node.RoleEndpoint:
+		case node.RoleEndpoint, node.RoleEN:
 			endpoints++
 		}
 	}

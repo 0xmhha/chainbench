@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/procman"
@@ -69,17 +70,19 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 	})
 
 	build := engine.NewBuildEnv(engine.BuildDeps{
-		Plugin:     plugin,
-		Allocator:  place.New(place.Config{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10}),
+		Plugin: plugin,
+		Pool: netmap.Pool{
+			Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+			Slots: 8,
+			Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+		},
 		Genesis:    engine.PresetGenesisSource{KeysDir: presetDir},
 		Supervisor: sup,
-		Mode:       place.LocalStepped,
-		Capacity:   place.Capacity{MinValidators: 1, PortBandSize: 100},
 		Caps:       []string{"ws"},
 		Reqs: func(testspec.Spec) []place.NodeReq {
 			reqs := make([]place.NodeReq, 4)
 			for i := range reqs {
-				reqs[i] = place.NodeReq{Name: fmt.Sprintf("node%d", i+1), Role: node.RoleValidator, Binary: "go-stablenet"}
+				reqs[i] = place.NodeReq{Role: node.RoleValidator, Binary: "go-stablenet"}
 			}
 			return reqs
 		},

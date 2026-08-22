@@ -73,7 +73,7 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 		num := n.Index + 1
 		dataDir := filepath.Join(opts.DataRoot, fmt.Sprintf("node%d", num))
 		configPath := filepath.Join(opts.DataRoot, fmt.Sprintf("config_node%d.toml", num))
-		endpoints := node.Endpoints{P2P: n.Ports.P2P, HTTP: n.Ports.HTTP, WS: n.Ports.WS, Auth: n.Ports.Auth}
+		endpoints := n.Ports
 		var overrides []launchopt.Override
 		if opts.Overrides != nil {
 			overrides = opts.Overrides(n, n.Producer)

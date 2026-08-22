@@ -9,6 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/procman"
@@ -34,6 +35,11 @@ const configFilePerm os.FileMode = 0o644
 // provision.FileStore (upload-if-absent), so a rerun reuses existing files and a
 // remote sink can later ship them to another host without changing this type.
 type LocalLauncher struct {
+	// Peering selects the peer graph the nodes are wired into. The zero value
+	// is netmap.Mesh, which is what every composition did before the policy had
+	// a name.
+	Peering netmap.Peering
+
 	// Plugin is the target chain (supplies the RPC namespace and miner recommit
 	// form for config rendering).
 	Plugin registry.ChainPlugin
@@ -53,8 +59,8 @@ type LocalLauncher struct {
 
 // Launch arms and launches every node in plan and returns the running node set
 // plus the processes to track for teardown.
-func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
-	res, _, err := l.LaunchArmed(ctx, plan)
+func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, error) {
+	res, _, err := l.LaunchArmed(ctx, plan, nodes)
 	return res, err
 }
 
@@ -67,16 +73,46 @@ func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan) (supervisor
 // a caller checking the bring-up can report each one on its own: "which step
 // failed" is a different question from "did it come up", and only the phases
 // answer it.
-func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, []driver.NodeSpec, error) {
+func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, []driver.NodeSpec, error) {
 	specs, err := l.Arm(plan)
 	if err != nil {
 		return supervisor.LaunchResult{}, nil, err
 	}
+	// Every node's files are written even when only some are started: a later
+	// phase launches against inputs that must already be on the target, and a
+	// node's config names peers that do not exist yet either way.
 	if err := l.Materialize(ctx, plan, specs); err != nil {
 		return supervisor.LaunchResult{}, specs, err
 	}
-	res, err := l.InitAndLaunch(ctx, plan, specs)
+	starting, err := selectSpecs(specs, nodes)
+	if err != nil {
+		return supervisor.LaunchResult{}, specs, err
+	}
+	res, err := l.InitAndLaunch(ctx, plan, starting)
 	return res, specs, err
+}
+
+// selectSpecs picks the specs a phase starts. An empty selection is every node,
+// which is what a family with nothing to phase asks for. An index the plan does
+// not have is an error: silently starting fewer nodes than the phase named
+// would leave a network short of quorum with nothing saying why.
+func selectSpecs(specs []driver.NodeSpec, nodes []int) ([]driver.NodeSpec, error) {
+	if len(nodes) == 0 {
+		return specs, nil
+	}
+	byIndex := make(map[int]driver.NodeSpec, len(specs))
+	for _, s := range specs {
+		byIndex[s.Index] = s
+	}
+	out := make([]driver.NodeSpec, 0, len(nodes))
+	for _, i := range nodes {
+		s, ok := byIndex[i]
+		if !ok {
+			return nil, fmt.Errorf("engine: launcher: phase names node%d, which the plan does not have", i)
+		}
+		out = append(out, s)
+	}
+	return out, nil
 }
 
 // Arm loads the preset and produces each node's launch spec: rendered config,
@@ -89,7 +125,7 @@ func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 	if err != nil {
 		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}
-	return armSpecs(l.Plugin, preset, plan, l.Binary, l.keyBase(plan), l.LaunchOverrides)
+	return armSpecs(l.Plugin, preset, plan, l.Binary, l.keyBase(plan), l.Peering, l.LaunchOverrides)
 }
 
 // Materialize writes the genesis and per-node config through the file sink
@@ -265,17 +301,31 @@ func materialize(ctx context.Context, pv *provision.Provisioner, plan driver.Pla
 // The argv is assembled here and only here (launchopt Builder), replacing the
 // previous split between AssemblePlan's common flags and this function's
 // identity appends — see docs/dev/architecture/code-graph.md §3.
-func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
-	staticNodes := make([]string, 0, len(plan.Nodes))
-	for _, spec := range plan.Nodes {
-		if nk, ok := preset.Node(spec.Index); ok {
-			staticNodes = append(staticNodes, nodeconfig.Enode(nk.PublicKey, spec.Host, spec.Ports.P2P))
+func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, peering netmap.Peering, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
+	// Who a node dials is netmap's policy now; this function only knows how to
+	// spell a peer, because an enode needs key material and netmap holds none.
+	placed, err := PlanMap(plan)
+	if err != nil {
+		return nil, fmt.Errorf("engine: launcher: %w", err)
+	}
+	if peering == "" {
+		peering = netmap.Mesh
+	}
+	enode := func(pl netmap.Placement) (string, bool) {
+		nk, ok := preset.Node(pl.Index)
+		if !ok {
+			return "", false
 		}
+		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
 	}
 
 	m := plugin.Manifest()
 	out := make([]driver.NodeSpec, len(plan.Nodes))
 	for i, spec := range plan.Nodes {
+		staticNodes, err := peering.StaticNodes(placed, netmap.LabelFor(spec.Index), enode)
+		if err != nil {
+			return nil, fmt.Errorf("engine: launcher: node%d peers: %w", spec.Index, err)
+		}
 		nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
 		spec.ConfigContent = nodeconfig.Generate(nodeconfig.Params{
 			Role:          spec.Role,
@@ -313,7 +363,7 @@ func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec dri
 		NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
 		AllowInsecureUnlock: policy.AllowInsecureUnlock,
 	}
-	if spec.Role == node.RoleValidator {
+	if netmap.Is(spec.Role, node.RoleBP) {
 		if nk, ok := preset.Node(spec.Index); ok {
 			id.Unlock = nk.Address
 			id.PasswordFile = filepath.Join(keysDir, "password")
@@ -323,10 +373,49 @@ func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec dri
 	return launchopt.New(launchopt.DialectFor(plugin.Manifest().ID),
 		id,
 		launchopt.Storage{DataDir: spec.DataDir, ConfigFile: spec.ConfigPath},
-		launchopt.P2P{Port: spec.Ports.P2P},
+		// The manifest's network id is emitted rather than left to the
+		// binary's default. It was never emitted at all, so a chain whose
+		// devp2p network id differs from its genesis chain id — which the
+		// handoff produces, since it forces the chain id — ran on whichever
+		// the binary inferred. Setting it from the manifest makes the argv say
+		// what the chain declares; an operator's --network-id still wins,
+		// because that override arrives on a later layer.
+		launchopt.P2P{Port: spec.Ports.P2P, NetworkID: plugin.Manifest().NetworkID},
 		launchopt.HTTPRPC{Enabled: true, Port: spec.Ports.HTTP},
 		launchopt.WSRPC{Enabled: true, Port: spec.Ports.WS},
 		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
 		launchopt.Mining{Mine: policy.Mine},
 	).WithOverrides(overrides...).Build()
+}
+
+// PlanMap reads a launch plan as a placement map, so the peering policy and the
+// address lookups run off one representation instead of each caller walking
+// plan.Nodes its own way.
+//
+// The plan's port set has no etcd port (node.Endpoints predates netmap.Ports,
+// NM-b), so the map carries what the plan knows and no more — the derived etcd
+// port arrives when the port type is swapped.
+func PlanMap(plan driver.Plan) (*netmap.Map, error) {
+	placements := make([]netmap.Placement, 0, len(plan.Nodes))
+	ordinals := map[node.Role]int{}
+	for _, spec := range plan.Nodes {
+		role, err := netmap.NormalizeRole(string(spec.Role))
+		if err != nil {
+			return nil, fmt.Errorf("node%d: %w", spec.Index, err)
+		}
+		ordinals[role]++
+		placements = append(placements, netmap.Placement{
+			Index: spec.Index,
+			Label: netmap.LabelFor(spec.Index),
+			Role:  role,
+			Ord:   ordinals[role],
+			Host:  spec.Host,
+			Ports: netmap.Ports{
+				P2P: spec.Ports.P2P, HTTP: spec.Ports.HTTP, WS: spec.Ports.WS,
+				Auth: spec.Ports.Auth, Metrics: spec.Ports.Metrics,
+			},
+			DataDir: spec.DataDir,
+		})
+	}
+	return netmap.NewMap(placements)
 }
