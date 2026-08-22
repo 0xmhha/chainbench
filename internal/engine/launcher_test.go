@@ -112,7 +112,7 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 	drv := &fakeDriver{}
 	l := engine.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
-	res, err := l.Launch(context.Background(), plan)
+	res, err := l.Launch(context.Background(), plan, nil)
 	if err != nil {
 		t.Fatalf("Launch: %v", err)
 	}

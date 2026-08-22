@@ -71,3 +71,19 @@ func TestPortReservation_KeepsTheSpacingNetworksAlreadyRun(t *testing.T) {
 		t.Fatalf("wbft should not reserve an etcd client port, got %d", p.EtcdClient)
 	}
 }
+
+// TestBringUpPhases_OneGroupNoActions: the wbft families start every node at
+// once. A phase naming no nodes is the whole plan, so this is the launch that
+// existed before phases did.
+func TestBringUpPhases_OneGroupNoActions(t *testing.T) {
+	phases := wbft.New().BringUpPhases([]node.Role{node.RoleBP, node.RoleBP, node.RoleEN})
+	if len(phases) != 1 {
+		t.Fatalf("phases = %d, want one", len(phases))
+	}
+	if len(phases[0].Nodes) != 0 {
+		t.Fatalf("phase names %v, want the whole plan", phases[0].Nodes)
+	}
+	if len(phases[0].Actions) != 0 {
+		t.Fatalf("wbft needs no bring-up actions, got %v", phases[0].Actions)
+	}
+}

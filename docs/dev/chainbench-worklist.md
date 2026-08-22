@@ -283,7 +283,7 @@ K0·S0 가 추측 위에 서게 된다.
 |---|---|---|---|---|
 | **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | ☑ **완료 2026-08-22.** poa {3,3}·wbft {2,3} · poa 는 step 2 를 거부 · wemix 노드가 **etcd client(p2p+2)까지 예약**(실측: workspace `etcdClient: 31002`) · stablenet 포트 불변 | 낮음 | ☑ |
 | **F2** | `--networkid` 방출 | ☑ **완료 2026-08-22.** 다이얼렉트가 아니라 **매니페스트 사실**이라 모든 체인에 방출(argv 실측 `--networkid 8283`) · `--network-id` 오버라이드는 상위 레이어라 그대로 이김 · stablenet 4노드 라이브 블록 전진 | 낮음 | ☑ |
-| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | wbft 는 1페이즈·현행 argv 동일 / 미배선 액션은 오류 | **중** | ☐ |
+| **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | ☑ **완료 2026-08-22.** wbft 는 1페이즈(노드 목록 없음 = 전체) — stablenet 4노드 라이브 불변 · poa 는 boot(deploy-governance·etcd-init·verify-etcd) → rest · **미배선 액션은 오류**(LeaderGate·SwapBinary 와 동일 계약) · 액션 실패 시 다음 페이즈 미기동 | **중** | ☑ |
 | **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | wbft `Extra` nil · poa config 가 `Validate()` 통과 | 중 | ☐ |
 | **F5** | poa 액션 배선 + 유스케이스 수렴(3곳→1곳) | **라이브: wemix 4노드 블록 생성 · sealing 로테이션** | 중 | ☐ |
 | **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | 라이브 재현 | 낮음 | ☐ |

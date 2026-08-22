@@ -60,7 +60,7 @@ func (s LocalSetup) Launch(ctx context.Context, plan driver.Plan) (node.NodeSet,
 	}
 	s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindProgress, Network: plan.Network,
 		Message: "launching", Fields: map[string]any{"nodes": len(plan.Nodes)}})
-	res, specs, err := s.launcher().LaunchArmed(ctx, plan)
+	res, specs, err := s.launcher().LaunchArmed(ctx, plan, nil)
 	if err != nil {
 		s.emit(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindError, Network: plan.Network,
 			Message: "launch failed", Fields: map[string]any{"error": err.Error()}})

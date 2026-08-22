@@ -90,7 +90,19 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			}
 		}
 
-		ns, diag, err := d.Supervisor.BringUp(ctx, plan, d.Options)
+		// The family orders the bring-up. A wbft network declares one phase
+		// and launches exactly as it did before; a poa network puts its
+		// producer first so the etcd cluster can form while it is alone.
+		opts := d.Options
+		if len(opts.Phases) == 0 {
+			roles := make([]node.Role, 0, len(plan.Nodes))
+			for _, spec := range plan.Nodes {
+				roles = append(roles, spec.Role)
+			}
+			opts.Phases = d.Plugin.Family().BringUpPhases(roles)
+		}
+
+		ns, diag, err := d.Supervisor.BringUp(ctx, plan, opts)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: bring up (%s): %w", diag.Mode, err)
 		}

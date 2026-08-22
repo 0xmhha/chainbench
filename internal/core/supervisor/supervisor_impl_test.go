@@ -29,7 +29,7 @@ func TestBringUp_Success(t *testing.T) {
 	pm := procman.New()
 	launched := nodeSet(4001, 4002)
 	deps := supervisor.Deps{
-		Launch: func(_ context.Context, _ driver.Plan) (supervisor.LaunchResult, error) {
+		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
 			return supervisor.LaunchResult{
 				Nodes: launched,
 				Procs: []procman.Proc{{PID: 4001, DataDir: "/d/1"}, {PID: 4002, DataDir: "/d/2"}},
@@ -59,7 +59,7 @@ func TestBringUp_RetryThenFail(t *testing.T) {
 	pm := procman.New()
 	attempts := 0
 	deps := supervisor.Deps{
-		Launch: func(_ context.Context, _ driver.Plan) (supervisor.LaunchResult, error) {
+		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
 			attempts++
 			return supervisor.LaunchResult{Nodes: nodeSet(5001), Procs: []procman.Proc{{PID: 5001, DataDir: t.TempDir()}}}, nil
 		},
@@ -85,7 +85,7 @@ func TestBringUp_RetryThenFail(t *testing.T) {
 
 func TestBringUp_LaunchError(t *testing.T) {
 	s := supervisor.New(supervisor.Deps{
-		Launch: func(_ context.Context, _ driver.Plan) (supervisor.LaunchResult, error) {
+		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
 			return supervisor.LaunchResult{}, errors.New("exec failed")
 		},
 		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {

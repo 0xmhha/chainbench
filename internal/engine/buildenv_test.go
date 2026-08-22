@@ -45,7 +45,7 @@ func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, validat
 // synthesizes a node set from the plan and always reports healthy.
 func fakeSupervisor() supervisor.Supervisor {
 	return supervisor.New(supervisor.Deps{
-		Launch: func(_ context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
+		Launch: func(_ context.Context, plan driver.Plan, _ []int) (supervisor.LaunchResult, error) {
 			var ns node.NodeSet
 			for _, s := range plan.Nodes {
 				ns.Nodes = append(ns.Nodes, node.Node{

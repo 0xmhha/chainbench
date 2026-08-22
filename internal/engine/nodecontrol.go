@@ -51,8 +51,8 @@ func NewNodeController(launcher LocalLauncher, procs *procman.Manager) *NodeCont
 
 // Launch implements the supervisor launch seam, recording each node's arming and
 // pid on the way through.
-func (c *NodeController) Launch(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
-	res, specs, err := c.launcher.LaunchArmed(ctx, plan)
+func (c *NodeController) Launch(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, error) {
+	res, specs, err := c.launcher.LaunchArmed(ctx, plan, nodes)
 	c.record(res, specs)
 	return res, err
 }

@@ -131,3 +131,32 @@ func TestPortReservation_LeavesRoomForBothEtcdPorts(t *testing.T) {
 		t.Fatalf("etcd ports = peer %d client %d, want %d/%d", p.Etcd, p.EtcdClient, p.P2P+1, p.P2P+2)
 	}
 }
+
+// TestBringUpPhases_ProducerFirstThenTheRest is the order that makes a wemix
+// network possible at all: the etcd cluster forms while the producer is alone,
+// and the remaining nodes join it. Started together, the cluster stays empty
+// and the chain never produces.
+func TestBringUpPhases_ProducerFirstThenTheRest(t *testing.T) {
+	phases := Family{}.BringUpPhases([]node.Role{node.RoleBP, node.RoleBP, node.RoleEN})
+	if len(phases) != 2 {
+		t.Fatalf("phases = %d, want boot then rest", len(phases))
+	}
+	boot := phases[0]
+	if len(boot.Nodes) != 1 || boot.Nodes[0] != 1 {
+		t.Fatalf("boot phase = %v, want only the first producer", boot.Nodes)
+	}
+	// The init's return value proves nothing, so the verification is part of
+	// the phase rather than left to whoever wires it.
+	want := []string{ActionDeployGovernance, ActionEtcdInit, ActionVerifyEtcd}
+	if len(boot.Actions) != len(want) {
+		t.Fatalf("boot actions = %v, want %v", boot.Actions, want)
+	}
+	for i, a := range want {
+		if boot.Actions[i] != a {
+			t.Fatalf("boot actions = %v, want %v", boot.Actions, want)
+		}
+	}
+	if len(phases[1].Nodes) != 2 || phases[1].Nodes[0] != 2 {
+		t.Fatalf("rest phase = %v, want the remaining nodes", phases[1].Nodes)
+	}
+}

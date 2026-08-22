@@ -59,8 +59,8 @@ type LocalLauncher struct {
 
 // Launch arms and launches every node in plan and returns the running node set
 // plus the processes to track for teardown.
-func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, error) {
-	res, _, err := l.LaunchArmed(ctx, plan)
+func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, error) {
+	res, _, err := l.LaunchArmed(ctx, plan, nodes)
 	return res, err
 }
 
@@ -73,16 +73,46 @@ func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan) (supervisor
 // a caller checking the bring-up can report each one on its own: "which step
 // failed" is a different question from "did it come up", and only the phases
 // answer it.
-func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan) (supervisor.LaunchResult, []driver.NodeSpec, error) {
+func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, []driver.NodeSpec, error) {
 	specs, err := l.Arm(plan)
 	if err != nil {
 		return supervisor.LaunchResult{}, nil, err
 	}
+	// Every node's files are written even when only some are started: a later
+	// phase launches against inputs that must already be on the target, and a
+	// node's config names peers that do not exist yet either way.
 	if err := l.Materialize(ctx, plan, specs); err != nil {
 		return supervisor.LaunchResult{}, specs, err
 	}
-	res, err := l.InitAndLaunch(ctx, plan, specs)
+	starting, err := selectSpecs(specs, nodes)
+	if err != nil {
+		return supervisor.LaunchResult{}, specs, err
+	}
+	res, err := l.InitAndLaunch(ctx, plan, starting)
 	return res, specs, err
+}
+
+// selectSpecs picks the specs a phase starts. An empty selection is every node,
+// which is what a family with nothing to phase asks for. An index the plan does
+// not have is an error: silently starting fewer nodes than the phase named
+// would leave a network short of quorum with nothing saying why.
+func selectSpecs(specs []driver.NodeSpec, nodes []int) ([]driver.NodeSpec, error) {
+	if len(nodes) == 0 {
+		return specs, nil
+	}
+	byIndex := make(map[int]driver.NodeSpec, len(specs))
+	for _, s := range specs {
+		byIndex[s.Index] = s
+	}
+	out := make([]driver.NodeSpec, 0, len(nodes))
+	for _, i := range nodes {
+		s, ok := byIndex[i]
+		if !ok {
+			return nil, fmt.Errorf("engine: launcher: phase names node%d, which the plan does not have", i)
+		}
+		out = append(out, s)
+	}
+	return out, nil
 }
 
 // Arm loads the preset and produces each node's launch spec: rendered config,

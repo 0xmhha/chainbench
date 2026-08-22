@@ -45,6 +45,62 @@ func (Family) StartFlags(role node.Role) []string {
 	return flags
 }
 
+// BringUpPhases: the producer starts alone, carries the governance deploy and
+// the etcd init, and only then do the rest join.
+//
+// The order is not a preference. The bootstrap forms an etcd cluster of one and
+// the remaining nodes join it; run with everything already up, the cluster
+// stays empty and the chain never produces — the failure that made this family
+// impossible to bring up through the ordinary path.
+//
+// The boot node is the first producer in the plan. Actions are named here and
+// executed by whoever wired them: this package says what must happen between
+// the groups, not how.
+func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
+	boot := 0
+	for i, r := range roles {
+		if netmap.Is(r, node.RoleBoot) || netmap.Is(r, node.RoleBP) {
+			boot = i + 1
+			break
+		}
+	}
+	if boot == 0 {
+		// No producer to bootstrap from; let the caller's own validation say
+		// so rather than inventing a phase over an empty group.
+		return []registry.Phase{{Name: "all"}}
+	}
+	rest := make([]int, 0, len(roles))
+	for i := range roles {
+		if i+1 != boot {
+			rest = append(rest, i+1)
+		}
+	}
+	phases := []registry.Phase{{
+		Name:    "boot",
+		Nodes:   []int{boot},
+		Actions: []string{ActionDeployGovernance, ActionEtcdInit, ActionVerifyEtcd},
+	}}
+	if len(rest) > 0 {
+		phases = append(phases, registry.Phase{Name: "rest", Nodes: rest})
+	}
+	return phases
+}
+
+// The bring-up actions this family names. They are strings at the seam because
+// the core does not know what they mean; these constants exist so the family
+// and whoever wires the executor agree on the spelling.
+const (
+	// ActionDeployGovernance deploys the governance contracts over the
+	// producer's IPC.
+	ActionDeployGovernance = "deploy-governance"
+	// ActionEtcdInit forms the etcd cluster. Its return value proves nothing —
+	// it is null on success — so it is always followed by a verification.
+	ActionEtcdInit = "etcd-init"
+	// ActionVerifyEtcd confirms the cluster formed: admin.wemixInfo.etcd.cluster
+	// must be non-empty, which is the only evidence the init worked.
+	ActionVerifyEtcd = "verify-etcd"
+)
+
 // PortReservation: a poa node embeds etcd, which listens on two further ports
 // — peer at p2p+1 and client at p2p+2 (go-wemix wemix/etcdutil.go). Three is
 // the span, and a step of two — which the previous global rule accepted — puts

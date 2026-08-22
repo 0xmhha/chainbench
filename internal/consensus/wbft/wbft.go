@@ -52,6 +52,13 @@ func (Family) StartFlags(role node.Role) []string {
 	return flags
 }
 
+// BringUpPhases: every wbft node starts at once and nothing has to happen in
+// between. One phase with no node list means the whole plan, so this is the
+// launch that existed before phases did — byte for byte.
+func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
+	return []registry.Phase{{Name: "all"}}
+}
+
 // PortReservation: wbft nodes listen on p2p, http, ws and auth. The second
 // p2p-side port stays reserved rather than reclaimed — every network composed
 // so far is running on that spacing, and moving it would change ports for a
