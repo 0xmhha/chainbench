@@ -8,6 +8,7 @@ package wbft
 import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -49,6 +50,14 @@ func (Family) StartFlags(role node.Role) []string {
 		flags = append(flags, "--mine")
 	}
 	return flags
+}
+
+// PortReservation: wbft nodes listen on p2p, http, ws and auth. The second
+// p2p-side port stays reserved rather than reclaimed — every network composed
+// so far is running on that spacing, and moving it would change ports for a
+// port nobody needs.
+func (Family) PortReservation() portplan.Reservation {
+	return portplan.Reservation{P2PSpan: 2, RPCSpan: 3}
 }
 
 // SupportsRole: the wbft family runs producers, endpoints, and a proxy tier

@@ -25,23 +25,61 @@ import (
 // living in the vocabulary package, is what stops that happening again.
 type Ports = node.Endpoints
 
+// Reservation is how many consecutive ports one node needs from each band. It
+// is a family fact, not a global one: the wbft binaries listen on p2p alone,
+// while a wemix node's embedded etcd takes two more — peer at p2p+1 and client
+// at p2p+2 (go-wemix wemix/etcdutil.go). A step smaller than the span puts the
+// next node's p2p port on top of this node's etcd, and the chain stalls with
+// no obvious cause, which is the failure this type exists to make impossible.
+type Reservation struct {
+	// P2PSpan is how many ports the p2p side consumes, p2p included.
+	P2PSpan int
+	// RPCSpan is how many the rpc side consumes, http included.
+	RPCSpan int
+}
+
+// DefaultReservation is what a caller that has not asked a family gets: room
+// for the etcd peer port, which is what every plan reserved before families
+// could speak for themselves.
+var DefaultReservation = Reservation{P2PSpan: 2, RPCSpan: 3}
+
+// withDefaults fills a zero reservation, so a caller may pass one it has not
+// filled in and still get the historical behaviour.
+func (r Reservation) withDefaults() Reservation {
+	if r.P2PSpan < 1 {
+		r.P2PSpan = DefaultReservation.P2PSpan
+	}
+	if r.RPCSpan < 1 {
+		r.RPCSpan = DefaultReservation.RPCSpan
+	}
+	return r
+}
+
 // Plan computes node index's ports (index is 1-based). p2p ports advance by
-// p2pStep from p2pBase (etcd = p2p+1); rpc ports advance by rpcStep from
-// rpcBase (ws = http+1, auth = http+2). It requires p2pStep >= 2 (to leave room
-// for etcd) and rpcStep >= 3 (http, ws, auth).
-func Plan(index, p2pBase, p2pStep, rpcBase, rpcStep int) (Ports, error) {
+// p2pStep from p2pBase; rpc ports advance by rpcStep from rpcBase (ws = http+1,
+// auth = http+2, metrics = http+3 when the step allows). The reservation says
+// how much room each band must leave, and which derived ports exist at all.
+func Plan(index, p2pBase, p2pStep, rpcBase, rpcStep int, res Reservation) (Ports, error) {
 	if index < 1 {
 		return Ports{}, fmt.Errorf("portplan: node index must be >= 1, got %d", index)
 	}
-	if p2pStep < 2 {
-		return Ports{}, fmt.Errorf("portplan: p2p_step must be >= 2 to reserve etcd=p2p+1, got %d", p2pStep)
+	res = res.withDefaults()
+	if p2pStep < res.P2PSpan {
+		return Ports{}, fmt.Errorf("portplan: p2p_step must be >= %d for this chain family (it reserves %d consecutive p2p-side ports), got %d",
+			res.P2PSpan, res.P2PSpan, p2pStep)
 	}
-	if rpcStep < 3 {
-		return Ports{}, fmt.Errorf("portplan: rpc_step must be >= 3 for http/ws/auth, got %d", rpcStep)
+	if rpcStep < res.RPCSpan {
+		return Ports{}, fmt.Errorf("portplan: rpc_step must be >= %d for http/ws/auth, got %d", res.RPCSpan, rpcStep)
 	}
 	p2p := p2pBase + (index-1)*p2pStep
 	http := rpcBase + (index-1)*rpcStep
-	p := Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2}
+	p := Ports{P2P: p2p, HTTP: http, WS: http + 1, Auth: http + 2}
+	if res.P2PSpan >= 2 {
+		p.Etcd = p2p + 1
+	}
+	if res.P2PSpan >= 3 {
+		p.EtcdClient = p2p + 2
+	}
 	if rpcStep >= 4 {
 		p.Metrics = http + 3
 	}

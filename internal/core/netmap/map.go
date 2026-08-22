@@ -106,7 +106,7 @@ func (m *Map) Placements() []Placement {
 // portsOf flattens a port set for collision checking. A port the set does not
 // use stays zero and is skipped by the caller.
 func portsOf(p Ports) []int {
-	return []int{p.P2P, p.Etcd, p.HTTP, p.WS, p.Auth, p.Metrics}
+	return []int{p.P2P, p.Etcd, p.EtcdClient, p.HTTP, p.WS, p.Auth, p.Metrics}
 }
 
 // RoleLabel is the placement's role-scoped alias ("en2"). See netmap.RoleLabel

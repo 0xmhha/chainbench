@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/0xmhha/chainbench/internal/core/netmap"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -36,17 +37,16 @@ type NetMapIn struct {
 // present because they answer different questions: the identity is what
 // reaches disk, the alias is what a test definition addresses.
 type MapEntry struct {
-	Node    int    `json:"node"`
-	Label   string `json:"label"`
-	Alias   string `json:"alias"`
-	Role    string `json:"role"`
-	Host    string `json:"host"`
-	P2P     int    `json:"p2p"`
-	Etcd    int    `json:"etcd,omitempty"`
-	HTTP    int    `json:"http"`
-	WS      int    `json:"ws,omitempty"`
-	Auth    int    `json:"auth,omitempty"`
-	Metrics int    `json:"metrics,omitempty"`
+	Node  int    `json:"node"`
+	Label string `json:"label"`
+	Alias string `json:"alias"`
+	Role  string `json:"role"`
+	Host  string `json:"host"`
+	// Endpoints is embedded rather than listed field by field. Writing the
+	// ports out is how this projection came to omit the etcd client port the
+	// moment a family started reserving one — the fifth time in this series
+	// that a hand-written copy of a port set lost a member of it.
+	node.Endpoints
 	DataDir string `json:"dataDir,omitempty"`
 }
 
@@ -92,9 +92,7 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 		out.Entries = append(out.Entries, MapEntry{
 			Node: p.Index, Label: string(p.Label), Alias: string(p.RoleLabel()),
 			Role: string(p.Role), Host: p.Host,
-			P2P: p.Ports.P2P, Etcd: p.Ports.Etcd, HTTP: p.Ports.HTTP,
-			WS: p.Ports.WS, Auth: p.Ports.Auth, Metrics: p.Ports.Metrics,
-			DataDir: p.DataDir,
+			Endpoints: p.Ports, DataDir: p.DataDir,
 		})
 	}
 	if len(out.Entries) == 0 {
@@ -147,7 +145,7 @@ func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) 
 		return func(p netmap.Placement) bool { return p.Host == in.Host }, nil
 	case in.Port > 0:
 		return func(p netmap.Placement) bool {
-			for _, port := range []int{p.Ports.P2P, p.Ports.Etcd, p.Ports.HTTP, p.Ports.WS, p.Ports.Auth, p.Ports.Metrics} {
+			for _, port := range []int{p.Ports.P2P, p.Ports.Etcd, p.Ports.EtcdClient, p.Ports.HTTP, p.Ports.WS, p.Ports.Auth, p.Ports.Metrics} {
 				if port != 0 && port == in.Port {
 					return true
 				}

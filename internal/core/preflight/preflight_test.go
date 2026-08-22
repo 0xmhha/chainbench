@@ -11,7 +11,7 @@ import (
 func goldenPorts(n int) []portplan.Ports {
 	var ps []portplan.Ports
 	for i := 1; i <= n; i++ {
-		p, _ := portplan.Plan(i, 30010, 10, 40010, 10)
+		p, _ := portplan.Plan(i, 30010, 10, 40010, 10, portplan.DefaultReservation)
 		ps = append(ps, p)
 	}
 	return ps

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 const wemixTmpl = `{"config":{"chainId":__CHAIN_ID__,"istanbulBlock":0},"coinbase":"__COINBASE__","alloc":{}}`
@@ -103,5 +104,30 @@ func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
 		if !found {
 			t.Fatalf("role %q must seal: %v", role, f.StartFlags(role))
 		}
+	}
+}
+
+// TestPortReservation_LeavesRoomForBothEtcdPorts is the rule the previous
+// global check got wrong. A wemix node's embedded etcd listens on p2p+1 (peer)
+// and p2p+2 (client), so three consecutive ports belong to one node. The old
+// rule allowed a step of two, which put the next node's p2p port on this node's
+// etcd client — a bind failure that stalls block production with no obvious
+// cause, which is the failure the rule was written to prevent in the first
+// place.
+func TestPortReservation_LeavesRoomForBothEtcdPorts(t *testing.T) {
+	res := Family{}.PortReservation()
+	if res.P2PSpan != 3 {
+		t.Fatalf("p2p span = %d, want 3 (p2p, etcd peer, etcd client)", res.P2PSpan)
+	}
+	// A step of two is refused, and a plan with room assigns both etcd ports.
+	if _, err := portplan.Plan(1, 30010, 2, 40010, 10, res); err == nil {
+		t.Fatal("a step of two is one short for an etcd family")
+	}
+	p, err := portplan.Plan(1, 30010, 10, 40010, 10, res)
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	if p.Etcd != p.P2P+1 || p.EtcdClient != p.P2P+2 {
+		t.Fatalf("etcd ports = peer %d client %d, want %d/%d", p.Etcd, p.EtcdClient, p.P2P+1, p.P2P+2)
 	}
 }

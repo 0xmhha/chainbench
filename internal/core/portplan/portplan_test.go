@@ -7,27 +7,46 @@ import (
 
 func TestPlan(t *testing.T) {
 	// golden bands: p2p 30010,30020,.. (etcd=+1) ; rpc 40010,40020,.. (ws+1,auth+2)
-	p, err := Plan(1, 30010, 10, 40010, 10)
+	p, err := Plan(1, 30010, 10, 40010, 10, DefaultReservation)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if p.P2P != 30010 || p.Etcd != 30011 || p.HTTP != 40010 || p.WS != 40011 || p.Auth != 40012 {
 		t.Errorf("node1 ports: %+v", p)
 	}
-	p2, _ := Plan(2, 30010, 10, 40010, 10)
+	p2, _ := Plan(2, 30010, 10, 40010, 10, DefaultReservation)
 	if p2.P2P != 30020 || p2.Etcd != 30021 || p2.HTTP != 40020 {
 		t.Errorf("node2 ports: %+v", p2)
 	}
 }
 
 func TestPlan_Rejects(t *testing.T) {
-	if _, err := Plan(0, 30010, 10, 40010, 10); err == nil {
+	if _, err := Plan(0, 30010, 10, 40010, 10, DefaultReservation); err == nil {
 		t.Error("index 0 should error")
 	}
-	if _, err := Plan(1, 30010, 1, 40010, 10); err == nil {
+	if _, err := Plan(1, 30010, 1, 40010, 10, DefaultReservation); err == nil {
 		t.Error("p2p_step 1 leaves no room for etcd; should error")
 	}
-	if _, err := Plan(1, 30010, 10, 40010, 2); err == nil {
+	// A family whose nodes embed etcd needs three consecutive ports (p2p, the
+	// etcd peer at +1, the client at +2). A step of two passed the old global
+	// rule and put the next node's p2p on this node's etcd client.
+	poa := Reservation{P2PSpan: 3, RPCSpan: 3}
+	if _, err := Plan(1, 30010, 2, 40010, 10, poa); err == nil {
+		t.Error("p2p_step 2 is one short for an etcd family; should error")
+	}
+	if p, err := Plan(1, 30010, 10, 40010, 10, poa); err != nil {
+		t.Errorf("etcd family with room: %v", err)
+	} else if p.Etcd != 30011 || p.EtcdClient != 30012 {
+		t.Errorf("etcd ports = peer %d client %d, want 30011/30012", p.Etcd, p.EtcdClient)
+	}
+	// A family that does not embed etcd reserves nothing for it.
+	wbftOnly := Reservation{P2PSpan: 1, RPCSpan: 3}
+	if p, err := Plan(1, 30010, 1, 40010, 10, wbftOnly); err != nil {
+		t.Errorf("a one-port family should accept step 1: %v", err)
+	} else if p.Etcd != 0 || p.EtcdClient != 0 {
+		t.Errorf("no etcd ports expected, got peer %d client %d", p.Etcd, p.EtcdClient)
+	}
+	if _, err := Plan(1, 30010, 10, 40010, 2, DefaultReservation); err == nil {
 		t.Error("rpc_step 2 has no room for auth; should error")
 	}
 }
@@ -36,7 +55,7 @@ func TestValidate(t *testing.T) {
 	// golden: disjoint bands, step 10 -> no collision across 5 nodes.
 	var golden []Ports
 	for i := 1; i <= 5; i++ {
-		p, _ := Plan(i, 30010, 10, 40010, 10)
+		p, _ := Plan(i, 30010, 10, 40010, 10, DefaultReservation)
 		golden = append(golden, p)
 	}
 	if err := Validate(golden); err != nil {

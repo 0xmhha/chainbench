@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // composeForQuery builds a small mixed network to ask questions about.
@@ -202,4 +203,22 @@ func TestNetAllocate_PersistsTheLabel(t *testing.T) {
 	if got := old.NodeLabel(); got != "node1" {
 		t.Fatalf("fallback label = %q, want node1", got)
 	}
+}
+
+// TestMapEntry_EmbedsThePortSet guards a mistake this series made five times:
+// a hand-written copy of a node's ports that omits one. Every previous instance
+// was found by an operator noticing a missing number, once in this very type —
+// it dropped the etcd client port the moment a family started reserving one.
+//
+// Embedding is what makes the omission impossible, so the embedding is what is
+// asserted. Listing the fields again would restore the failure mode.
+func TestMapEntry_EmbedsThePortSet(t *testing.T) {
+	et := reflect.TypeOf(app.MapEntry{})
+	for i := 0; i < et.NumField(); i++ {
+		f := et.Field(i)
+		if f.Anonymous && f.Type == reflect.TypeOf(node.Endpoints{}) {
+			return
+		}
+	}
+	t.Fatal("MapEntry must embed node.Endpoints — a copied port list will lose a port")
 }

@@ -174,7 +174,8 @@ const syncModeFull = "full"
 // ports through the same allocator the engine uses. Where the nodes land and on
 // what ports comes from the placement, not from this package.
 func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
-	if _, err := w.plugin(); err != nil {
+	plugin, err := w.plugin()
+	if err != nil {
 		return "", err
 	}
 	reqs, modes, err := opts.placements()
@@ -189,6 +190,10 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
+	// The family says how much room a node needs; a wemix node's embedded etcd
+	// takes two ports beyond p2p, and sizing the step for a wbft node would put
+	// the next node on top of it.
+	pool.Reservation = plugin.Family().PortReservation()
 	assigned, err := netmap.Assign(pool, netmapRequests(reqs))
 	if err != nil {
 		return "", err

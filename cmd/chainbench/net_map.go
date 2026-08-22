@@ -62,6 +62,11 @@ func printMap(cmd *cobra.Command, out app.NetMapOut) {
 		if e.Etcd != 0 {
 			etcd = fmt.Sprint(e.Etcd)
 		}
+		// A family that embeds etcd listens on two ports; showing one would
+		// hide the other from the operator reading a bind failure.
+		if e.EtcdClient != 0 {
+			etcd += "/" + fmt.Sprint(e.EtcdClient)
+		}
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\t%d\t%s\n",
 			e.Label, e.Role, e.Alias, e.Host, e.P2P, etcd, e.HTTP, e.DataDir)
 	}

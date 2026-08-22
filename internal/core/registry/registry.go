@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/accounts/protocol"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // GenesisParams are the per-network genesis values a family's BuildGenesis
@@ -40,6 +41,11 @@ type ConsensusFamily interface {
 	ValidatorsMethod() string
 	// StartFlags returns the node launch flags for a given role.
 	StartFlags(role node.Role) []string
+	// PortReservation is how many consecutive ports one of this family's nodes
+	// needs from each band. It is asked rather than assumed because the answer
+	// differs: a wemix node's embedded etcd listens on two ports beyond p2p,
+	// and a global rule sized for one of them is wrong for the other.
+	PortReservation() portplan.Reservation
 	// SupportsRole reports whether this family can run a role. The proxy tier
 	// (pn) is the case that matters: poa has no such tier — etcd occupies that
 	// place — so a topology declaring one is asking for something that will not

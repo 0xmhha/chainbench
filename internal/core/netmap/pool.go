@@ -42,6 +42,11 @@ type Pool struct {
 	Slots int
 	// Ports are the bands each slot steps through.
 	Ports Bands
+	// Reservation is how many consecutive ports one node needs, which the
+	// chain family decides — a wemix node's embedded etcd takes two more than
+	// a wbft one. The zero value takes portplan's default, so a caller that
+	// has not asked a family still gets a usable plan.
+	Reservation portplan.Reservation
 	// Source names where the pool was read from, so a port number is never a
 	// guess ("remote-server-config.yaml", "built-in defaults").
 	Source string
@@ -67,7 +72,7 @@ func (p Pool) Validate() error {
 	}
 	// The last slot is the one that can run off the end of a band, so checking
 	// it checks every earlier one.
-	if _, err := portplan.Plan(p.Slots, p.Ports.P2PBase, p.Ports.P2PStep, p.Ports.RPCBase, p.Ports.RPCStep); err != nil {
+	if _, err := portplan.Plan(p.Slots, p.Ports.P2PBase, p.Ports.P2PStep, p.Ports.RPCBase, p.Ports.RPCStep, p.Reservation); err != nil {
 		return fmt.Errorf("netmap: pool ports: %w", err)
 	}
 	return nil
@@ -127,7 +132,7 @@ func Assign(pool Pool, reqs []Request) (*Map, error) {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}
 		slot := i/hosts + 1 // 1-based: portplan counts slots from one
-		ports, err := portplan.Plan(slot, pool.Ports.P2PBase, pool.Ports.P2PStep, pool.Ports.RPCBase, pool.Ports.RPCStep)
+		ports, err := portplan.Plan(slot, pool.Ports.P2PBase, pool.Ports.P2PStep, pool.Ports.RPCBase, pool.Ports.RPCStep, pool.Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}

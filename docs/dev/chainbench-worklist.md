@@ -281,7 +281,7 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 리스크 | 상태 |
 |---|---|---|---|---|
-| **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | poa 는 step 2 를 거부, wbft 는 허용 | 낮음 | ☐ |
+| **F1** | `PortReservation` — 패밀리별 포트 대역. `serverset` 전역 `p2pStep>=2` 제거 | ☑ **완료 2026-08-22.** poa {3,3}·wbft {2,3} · poa 는 step 2 를 거부 · wemix 노드가 **etcd client(p2p+2)까지 예약**(실측: workspace `etcdClient: 31002`) · stablenet 포트 불변 | 낮음 | ☑ |
 | **F2** | `--networkid` 방출 (poa 다이얼렉트) | argv 비교 | 낮음 | ☐ |
 | **F3** | `BringUpPhases` + `Deps.Launch(nodes)` + `Deps.Action` | wbft 는 1페이즈·현행 argv 동일 / 미배선 액션은 오류 | **중** | ☐ |
 | **F4** | `GenesisArtifacts` + `WemixGenesisSource`(`poa.PrepareTemplate`→`GenerateGenesis`) | wbft `Extra` nil · poa config 가 `Validate()` 통과 | 중 | ☐ |

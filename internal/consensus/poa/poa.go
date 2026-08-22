@@ -9,6 +9,7 @@ package poa
 import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -42,6 +43,14 @@ func (Family) StartFlags(role node.Role) []string {
 		flags = append(flags, "--mine")
 	}
 	return flags
+}
+
+// PortReservation: a poa node embeds etcd, which listens on two further ports
+// — peer at p2p+1 and client at p2p+2 (go-wemix wemix/etcdutil.go). Three is
+// the span, and a step of two — which the previous global rule accepted — puts
+// the next node's p2p port on this node's etcd client.
+func (Family) PortReservation() portplan.Reservation {
+	return portplan.Reservation{P2PSpan: 3, RPCSpan: 3}
 }
 
 // SupportsRole: poa produces blocks and serves endpoints, and one producer

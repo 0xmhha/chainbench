@@ -40,15 +40,20 @@ const (
 // varies (docs §7, requirement #6).
 type Endpoints struct {
 	P2P int `json:"p2p"`
-	// Etcd is not a launch flag: the wemix binary derives it as P2P+1. It is
-	// carried so a running node can be asked for it and so collision checks
-	// see it — the port whose rule (p2pStep >= 2) exists because of it used to
-	// disappear the moment a plan became a running network.
-	Etcd    int `json:"etcd,omitempty"`
-	HTTP    int `json:"http"`
-	WS      int `json:"ws"`
-	Auth    int `json:"auth"`
-	Metrics int `json:"metrics"`
+	// Etcd is not a launch flag: a wemix node's embedded etcd derives its peer
+	// port as P2P+1 and its client port as P2P+2. Both are carried so a running
+	// node can be asked for them and so collision checks see them — the ports
+	// whose step rule exists because of them used to disappear the moment a
+	// plan became a running network.
+	//
+	// A family that does not embed etcd leaves them zero rather than reserving
+	// ports it will not listen on.
+	Etcd       int `json:"etcd,omitempty"`
+	EtcdClient int `json:"etcdClient,omitempty"`
+	HTTP       int `json:"http"`
+	WS         int `json:"ws"`
+	Auth       int `json:"auth"`
+	Metrics    int `json:"metrics"`
 }
 
 // Node is one chain node, whether locally launched, remotely launched, or

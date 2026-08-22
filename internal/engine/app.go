@@ -144,9 +144,11 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	if pl.Source == "" {
 		pl = serverset.Builtin(minValidators, defaultPortBand)
 	}
+	pool := pl.Pool
+	pool.Reservation = plugin.Family().PortReservation()
 	build := NewBuildEnv(BuildDeps{
 		Plugin:     plugin,
-		Pool:       pl.Pool,
+		Pool:       pool,
 		Genesis:    PresetGenesisSource{KeysDir: keysDir, ChainID: cfg.ChainID},
 		Supervisor: sup,
 		Caps:       []string{"ws"},

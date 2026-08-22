@@ -5,6 +5,7 @@ import (
 
 	wbft "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // TestStartFlags_MineFollowsTheRoleNotItsSpelling: --mine was gated on the
@@ -47,4 +48,26 @@ func hasFlag(flags []string, want string) bool {
 		}
 	}
 	return false
+}
+
+// TestPortReservation_KeepsTheSpacingNetworksAlreadyRun: wbft has no etcd, but
+// the second p2p-side port stays reserved. Reclaiming it would move every
+// existing network's ports for the sake of a port nobody listens on.
+func TestPortReservation_KeepsTheSpacingNetworksAlreadyRun(t *testing.T) {
+	res := wbft.New().PortReservation()
+	if res.P2PSpan != 2 || res.RPCSpan != 3 {
+		t.Fatalf("reservation = %+v, want {2, 3}", res)
+	}
+	p, err := portplan.Plan(1, 31000, 10, 8600, 10, res)
+	if err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	// The ports a composed stablenet network is running on today.
+	if p.P2P != 31000 || p.HTTP != 8600 || p.WS != 8601 || p.Auth != 8602 || p.Metrics != 8603 {
+		t.Fatalf("ports moved: %+v", p)
+	}
+	// No etcd client is reserved for a family that does not embed etcd.
+	if p.EtcdClient != 0 {
+		t.Fatalf("wbft should not reserve an etcd client port, got %d", p.EtcdClient)
+	}
 }
