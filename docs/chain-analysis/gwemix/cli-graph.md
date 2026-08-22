@@ -594,3 +594,15 @@ Only bound to `wemix` subcommands (genesis/admin-contract/deploy-contract/deploy
 | `--nocode` | Exclude contract code (save db lookups) | cmd/utils/flags.go:214 |
 | `--start` | Start position. Either a hash or address | cmd/utils/flags.go:218 |
 | `--limit` | Max number of elements (0 = no limit) | cmd/utils/flags.go:223 |
+
+## Flags this binary does NOT accept
+
+Machine-readable, and checked: `scripts/chain-analysis/verify-docs.sh` reads
+this list and fails if the binary actually accepts one of them. A flag can be
+defined in the source and still be unusable — defined, even read, but never
+added to any command's flag list — and source-only analysis lists it as if it
+worked.
+
+```not-accepted
+--docroot  # defined in `cmd/utils/flags.go` and read when set, but registered on no command — the binary rejects it
+```

@@ -534,3 +534,16 @@ Source files (flag counts): `cmd/utils/flags.go` (142), `internal/debug/flags.go
 | `--limit` | Max number of elements (0 = no limit) | `cmd/utils/flags.go:222` |
 
 <!-- documented rows: 179 -->
+
+## Flags this binary does NOT accept
+
+Machine-readable, and checked: `scripts/chain-analysis/verify-docs.sh` reads
+this list and fails if the binary actually accepts one of them. A flag can be
+defined in the source and still be unusable — defined, even read, but never
+added to any command's flag list — and source-only analysis lists it as if it
+worked.
+
+```not-accepted
+--chainid  # chain id comes from the genesis `config.chainId`; `--networkid` sets only the p2p network id
+--docroot  # defined at `cmd/utils/flags.go:187` and read at `:1726`, but registered on no command — the binary rejects it
+```
