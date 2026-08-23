@@ -70,6 +70,14 @@ jobs:
       # The version is read from .golangci-version rather than written here, so
       # `make lint` and this job cannot disagree about which linter is the
       # authority. An older one reports findings the pinned one does not.
+      #
+      # This job downloads the upstream release binary rather than building it.
+      # That binary must itself have been compiled with Go >= go.mod's target,
+      # because the linter parses our source: one built with an older Go cannot
+      # read language features from a newer one. v2.12.2 is built with go1.26
+      # and clears 1.25 comfortably. (Our code still targets 1.25 — see
+      # setup-go above; a local `make lint` builds the linter from source with
+      # whatever toolchain is installed.)
       - name: Read the pinned linter version
         id: linter
         run: echo "version=$(cat .golangci-version)" >> "$GITHUB_OUTPUT"
