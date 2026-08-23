@@ -160,3 +160,33 @@ func TestBringUpPhases_ProducerFirstThenTheRest(t *testing.T) {
 		t.Fatalf("rest phase = %v, want the remaining nodes", phases[1].Nodes)
 	}
 }
+
+// TestBringUpPhases_TheRestJoinTheClusterTheBootNodeFormed: a producer that is
+// not in the etcd cluster never takes a turn at sealing, so the rest phase is
+// not merely "launch the others" — it carries the join, and the join is
+// directed at the boot node rather than at the nodes the phase launched.
+func TestBringUpPhases_TheRestJoinTheClusterTheBootNodeFormed(t *testing.T) {
+	phases := Family{}.BringUpPhases([]node.Role{node.RoleBP, node.RoleBP, node.RoleBP, node.RoleEN})
+	if len(phases) != 2 {
+		t.Fatalf("phases = %d, want boot then rest", len(phases))
+	}
+	rest := phases[1]
+	if len(rest.Actions) != 1 || rest.Actions[0] != ActionEtcdJoin {
+		t.Fatalf("rest actions = %v, want [%s]", rest.Actions, ActionEtcdJoin)
+	}
+	// Without this the executor would have to work out which node formed the
+	// cluster, which is the family's rule and belongs here.
+	if rest.ActionsOn != phases[0].Nodes[0] {
+		t.Fatalf("rest actions run on node%d, want the boot node (node%d)", rest.ActionsOn, phases[0].Nodes[0])
+	}
+}
+
+// TestBringUpPhases_LoneProducerHasNothingToJoin: one producer is a cluster of
+// one, already verified by the boot phase. There is no rest phase to carry a
+// join, and inventing one would ask a node to join itself.
+func TestBringUpPhases_LoneProducerHasNothingToJoin(t *testing.T) {
+	phases := Family{}.BringUpPhases([]node.Role{node.RoleBP})
+	if len(phases) != 1 {
+		t.Fatalf("phases = %d, want the boot phase alone", len(phases))
+	}
+}

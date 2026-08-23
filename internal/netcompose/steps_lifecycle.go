@@ -321,7 +321,7 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 	}
 	plan := driver.Plan{DataRoot: w.state.Target.DataRoot, Nodes: specs}
 
-	on, ok := phaseFirstNode(w.state.Nodes, phase)
+	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {
 		return fmt.Errorf("netcompose: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
@@ -348,13 +348,20 @@ func phaseHasNode(phase registry.Phase, index int) bool {
 	return false
 }
 
-// phaseFirstNode is the node a phase's actions run against: the first one it
-// covers, which for a bootstrap phase is the producer that is alone.
-func phaseFirstNode(nodes []NodeState, phase registry.Phase) (node.Node, bool) {
+// phaseActionNode is the node a phase's actions run against. A phase that
+// names one gets it — the rest phase's join concerns the boot node, which it
+// did not launch. Otherwise it is the first node the phase covers, which for a
+// bootstrap phase is the producer that is alone.
+func phaseActionNode(nodes []NodeState, phase registry.Phase) (node.Node, bool) {
 	for _, ns := range nodes {
-		if phaseHasNode(phase, ns.Index) {
-			return node.Node{Index: ns.Index, Role: node.Role(ns.Role), Host: nodeHost(ns), Ports: ns.Endpoints}, true
+		if phase.ActionsOn > 0 {
+			if ns.Index != phase.ActionsOn {
+				continue
+			}
+		} else if !phaseHasNode(phase, ns.Index) {
+			continue
 		}
+		return node.Node{Index: ns.Index, Role: node.Role(ns.Role), Host: nodeHost(ns), Ports: ns.Endpoints}, true
 	}
 	return node.Node{}, false
 }

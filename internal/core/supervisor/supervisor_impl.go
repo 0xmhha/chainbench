@@ -10,6 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // defaultLeaderWindow is how long the leader gate may take when the caller did
@@ -240,7 +241,7 @@ func (s *sup) launchPhases(ctx context.Context, plan driver.Plan, opts Options) 
 			if s.deps.Action == nil {
 				return all, fmt.Errorf("supervisor: phase %q needs action %q but no action executor is wired", phase.Name, name)
 			}
-			on, ok := firstNode(res.Nodes)
+			on, ok := actionNode(phase, res.Nodes, all.Nodes)
 			if !ok {
 				return all, fmt.Errorf("supervisor: phase %q needs action %q but launched no node to run it on", phase.Name, name)
 			}
@@ -252,11 +253,22 @@ func (s *sup) launchPhases(ctx context.Context, plan driver.Plan, opts Options) 
 	return all, nil
 }
 
-// firstNode returns the node a phase's actions run against: the first one the
-// phase launched, which for the bootstrap phase is the producer that is alone.
-func firstNode(ns node.NodeSet) (node.Node, bool) {
-	if len(ns.Nodes) == 0 {
+// actionNode is the node a phase's actions run against. A phase that names one
+// gets that node, looked up among everything launched so far — the phase whose
+// actions concern the boot node runs after the boot node's own phase, so it is
+// there. Otherwise it is the first node this phase launched, which for a
+// bootstrap phase is the producer that is alone.
+func actionNode(phase registry.Phase, launched, sofar node.NodeSet) (node.Node, bool) {
+	if phase.ActionsOn > 0 {
+		for _, n := range sofar.Nodes {
+			if n.Index == phase.ActionsOn {
+				return n, true
+			}
+		}
 		return node.Node{}, false
 	}
-	return ns.Nodes[0], true
+	if len(launched.Nodes) == 0 {
+		return node.Node{}, false
+	}
+	return launched.Nodes[0], true
 }

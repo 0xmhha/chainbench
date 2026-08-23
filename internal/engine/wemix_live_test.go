@@ -22,6 +22,12 @@ import (
 // back to ethash and advances the chain happily, which is why the etcd cluster
 // is checked too.
 //
+// With four validators the gate also covers the join. The rest phase asks each
+// remaining producer to join the cluster the boot node formed and refuses to
+// continue unless the cluster names all four, so a network that comes up here
+// is one where every producer can take a turn at sealing — the state a
+// single-member cluster silently denies.
+//
 // Gated on GWEMIX_BIN; CI has no chain binary and skips.
 func TestWemix_Live_BringUp(t *testing.T) {
 	bin := os.Getenv("GWEMIX_BIN")
