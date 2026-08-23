@@ -3,12 +3,12 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -44,6 +44,19 @@ type LaunchOptions struct {
 	// before the mesh is wired, so wiring does not race the nodes' HTTP servers
 	// coming up. Optional (nil skips the wait; unit tests leave it nil).
 	WaitReady func(ctx context.Context, endpoints []string) error
+	// Files is where the shared genesis is written. Nil is the local
+	// filesystem, which is what a local handoff wants and what this used to do
+	// unconditionally — the seam exists so a caller running against a remote
+	// target can send the genesis where the nodes are rather than to the
+	// machine driving them (the defect A3 found on the other path).
+	Files provision.FileStore
+}
+
+func (o LaunchOptions) files() provision.FileStore {
+	if o.Files == nil {
+		return provision.LocalFileStore{}
+	}
+	return o.Files
 }
 
 func (o LaunchOptions) host() string {
@@ -155,11 +168,9 @@ func Launch(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions)
 	}
 	ns := node.NodeSet{Chain: plan.To.ID, Network: "local"}
 
-	if err := os.MkdirAll(opts.DataRoot, 0o755); err != nil {
-		return ns, fmt.Errorf("upgrade: data root: %w", err)
-	}
+	// Write creates the parents, so the data root needs no separate mkdir.
 	genesisPath := filepath.Join(opts.DataRoot, "genesis.json")
-	if err := os.WriteFile(genesisPath, plan.Genesis, 0o644); err != nil {
+	if err := opts.files().Write(ctx, genesisPath, plan.Genesis, 0o644); err != nil {
 		return ns, fmt.Errorf("upgrade: write genesis: %w", err)
 	}
 

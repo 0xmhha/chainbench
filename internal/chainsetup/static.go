@@ -13,6 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/engine"
@@ -49,6 +50,16 @@ type Options struct {
 	HealthTimeout time.Duration
 	// StopAfter ends the run once that step completes.
 	StopAfter string
+	// Files is where this run's artifacts are written. Nil is the local
+	// filesystem; see HandoffOptions.Files for why the seam is here.
+	Files provision.FileStore
+}
+
+func (o Options) files() provision.FileStore {
+	if o.Files == nil {
+		return provision.LocalFileStore{}
+	}
+	return o.Files
 }
 
 // RunStatic brings up a static-bootstrap chain (wbft, stablenet) step by step,
@@ -199,7 +210,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	run.Results = t.results
-	if err := saveState(o.DataDir, nodes); err != nil && !t.halted() {
+	if err := saveState(ctx, o.files(), o.DataDir, nodes); err != nil && !t.halted() {
 		return run, err
 	}
 	return run, nil
@@ -246,14 +257,12 @@ func waitHead(ctx context.Context, url string, target uint64, timeout time.Durat
 
 // saveState writes the node set so `chain status` and `chain down` can find the
 // network after the bring-up command exits.
-func saveState(dataDir string, ns node.NodeSet) error {
+func saveState(ctx context.Context, files provision.FileStore, dataDir string, ns node.NodeSet) error {
 	if len(ns.Nodes) == 0 {
 		return nil
 	}
-	if err := os.MkdirAll(dataDir, 0o755); err != nil {
-		return err
-	}
-	return writeNodeSet(filepath.Join(dataDir, stateFile), ns)
+	// The store creates the parents, so the data root needs no separate mkdir.
+	return writeNodeSet(ctx, files, filepath.Join(dataDir, stateFile), ns)
 }
 
 // netmapRequests turns placement requests into netmap's: only the role travels,

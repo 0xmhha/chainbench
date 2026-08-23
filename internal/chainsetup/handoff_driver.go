@@ -18,6 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -73,7 +74,7 @@ func (h *liveHandoff) Prepare(_ context.Context, o HandoffOptions) (string, erro
 		prof.Upgrade.ForkBlock, prof.Roles.Producers, prof.Roles.Validators), nil
 }
 
-func (h *liveHandoff) Config(_ context.Context, o HandoffOptions) (string, error) {
+func (h *liveHandoff) Config(ctx context.Context, o HandoffOptions) (string, error) {
 	prod, ok := h.preset.Node(h.order[0])
 	if !ok {
 		return "", fmt.Errorf("preset has no node %d (the producer)", h.order[0])
@@ -84,7 +85,7 @@ func (h *liveHandoff) Config(_ context.Context, o HandoffOptions) (string, error
 		return "", err
 	}
 	path := filepath.Join(o.DataDir, h.from.Manifest().ID+"-config.json")
-	if err := os.WriteFile(path, b, 0o644); err != nil {
+	if err := o.files().Write(ctx, path, b, 0o644); err != nil {
 		return "", err
 	}
 	return path, nil
@@ -151,7 +152,7 @@ func (h *liveHandoff) Overlay(_ context.Context, o HandoffOptions) (string, erro
 
 func (h *liveHandoff) Launch(ctx context.Context, o HandoffOptions) (node.NodeSet, error) {
 	h.pwPath = filepath.Join(o.DataDir, "password")
-	if err := os.WriteFile(h.pwPath, []byte(h.preset.Password), 0o600); err != nil {
+	if err := o.files().Write(ctx, h.pwPath, []byte(h.preset.Password), 0o600); err != nil {
 		return node.NodeSet{}, err
 	}
 	producerAcct := h.profile.Producers.Members[0]
@@ -220,7 +221,7 @@ const defaultHost = "127.0.0.1"
 func (h *liveHandoff) provisionKeys(o HandoffOptions) func(context.Context, driver.NodeSpec, bool) error {
 	enodes := h.plan.Enodes(defaultHost)
 	staticNodes, _ := json.MarshalIndent(enodes, "", "  ")
-	return func(_ context.Context, spec driver.NodeSpec, producer bool) error {
+	return func(ctx context.Context, spec driver.NodeSpec, producer bool) error {
 		inst := h.profile.Chains.To.NodekeyDir
 		if producer {
 			inst = h.profile.Chains.From.NodekeyDir
@@ -229,21 +230,19 @@ func (h *liveHandoff) provisionKeys(o HandoffOptions) func(context.Context, driv
 		if !ok {
 			return fmt.Errorf("preset node %d missing", h.order[spec.Index])
 		}
+		// The store creates the instance dir along with the first file in it.
 		dir := filepath.Join(spec.DataDir, inst)
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := o.files().Write(ctx, filepath.Join(dir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(dir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
-			return err
-		}
-		if err := os.WriteFile(filepath.Join(dir, "static-nodes.json"), staticNodes, 0o644); err != nil {
+		if err := o.files().Write(ctx, filepath.Join(dir, "static-nodes.json"), staticNodes, 0o644); err != nil {
 			return err
 		}
 		if !producer {
 			return nil
 		}
 		src := filepath.Join(o.PresetDir, fmt.Sprintf("node%d", h.order[spec.Index]), "keystore")
-		return copyFiles(src, filepath.Join(spec.DataDir, "keystore"))
+		return copyFiles(ctx, o.files(), src, filepath.Join(spec.DataDir, "keystore"))
 	}
 }
 
@@ -345,10 +344,12 @@ func firstEntry(dir string) (string, error) {
 }
 
 // copyFiles copies the regular files of src into dst.
-func copyFiles(src, dst string) error {
-	if err := os.MkdirAll(dst, 0o755); err != nil {
-		return err
-	}
+//
+// src is read from this machine — the key preset is the operator's — while dst
+// is written through the seam, because that side is the target. The asymmetry
+// is the point: it is what lets the same call place a keystore on a remote
+// node instead of beside the preset it came from.
+func copyFiles(ctx context.Context, files provision.FileStore, src, dst string) error {
 	ents, err := os.ReadDir(src)
 	if err != nil {
 		return err
@@ -361,7 +362,7 @@ func copyFiles(src, dst string) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(dst, e.Name()), b, 0o600); err != nil {
+		if err := files.Write(ctx, filepath.Join(dst, e.Name()), b, 0o600); err != nil {
 			return err
 		}
 	}

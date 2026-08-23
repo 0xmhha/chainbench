@@ -231,14 +231,16 @@ flowchart TD
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | `engine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
-| **`chainsetup`** | 자체 아티팩트 | ❌ |
-| **`consensus/upgrade`** | 자체 아티팩트 | ❌ L2 가 파일을 쓴다 |
+**❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
+같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
+`provision.FileStore` 경유가 되어 두 패키지는 이 표에서 내려갔다.
 
-**❌ 2곳이 남았다** — `chainsetup`·`consensus/upgrade`. 둘 다 wemix 핸드오프 경로이고,
-[[chainbench-worklist]] F4·F5 가 같은 코드를 다시 쓰므로 그때 함께 `FileStore` 로 옮긴다.
-지금 바꾸고 F4 에서 또 고치면 같은 코드를 두 번 만지게 된다.
+`os.MkdirAll` 이 대부분 사라진 것은 부수효과가 아니다. `FileStore.Write` 가 부모 디렉토리를
+만들므로, 디렉토리를 미리 만드는 코드는 **경로를 아는 코드**였고 그게 층 위반의 실체였다.
+남은 읽기(`os.ReadDir`/`os.ReadFile`)는 조작자 머신의 키 preset 을 읽는 쪽이라 그대로다 —
+`copyFiles` 가 **로컬에서 읽어 seam 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
 
-`app`(A3)·`chains/wemix/deploy` 는 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
+`app`(A3)·`chains/wemix/deploy`(A4) 는 앞서 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
 
 ### A3 이 드러낸 것 — 원격 프로비전이 로컬에 쓰고 있었다
 

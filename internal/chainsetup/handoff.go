@@ -3,12 +3,12 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -35,6 +35,18 @@ type HandoffOptions struct {
 	StopAfter string
 	// Exec runs a binary; nil uses os/exec.
 	Exec Runner
+	// Files is where this run's artifacts are written. Nil is the local
+	// filesystem. The seam exists so the package stops owning the question of
+	// where state lands — the rule is that a step describes what to write and
+	// the target decides where (layers §5).
+	Files provision.FileStore
+}
+
+func (o HandoffOptions) files() provision.FileStore {
+	if o.Files == nil {
+		return provision.LocalFileStore{}
+	}
+	return o.Files
 }
 
 // HandoffDriver performs the parts of the handoff that need the upgrade
@@ -92,9 +104,9 @@ func RunHandoff(ctx context.Context, c Case, o HandoffOptions, d HandoffDriver, 
 	if o.Exec == nil {
 		o.Exec = defaultExec
 	}
-	if err := os.MkdirAll(o.DataDir, 0o755); err != nil {
-		return Run{Case: c}, err
-	}
+	// No mkdir here: a store Write creates the parents, and the first thing
+	// this run writes is the governance config under DataDir. The binary that
+	// writes base-genesis into the same directory runs after that step.
 
 	t := newTracker(report, o.StopAfter)
 	run := Run{Case: c, DataDir: o.DataDir}
@@ -142,7 +154,7 @@ func RunHandoff(ctx context.Context, c Case, o HandoffOptions, d HandoffDriver, 
 			return "", fmt.Errorf("launch produced no nodes")
 		}
 		producer = ns.Nodes[0]
-		_ = saveState(o.DataDir, ns)
+		_ = saveState(ctx, o.files(), o.DataDir, ns)
 		return fmt.Sprintf("%d node(s); producer %s", len(ns.Nodes), producer.RPCURL), nil
 	})
 
