@@ -97,7 +97,15 @@ func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 		Actions: []string{ActionDeployGovernance, ActionEtcdInit, ActionVerifyEtcd},
 	}}
 	if len(rest) > 0 {
-		phases = append(phases, registry.Phase{Name: "rest", Nodes: rest})
+		// The rest phase's action concerns the boot node, not the nodes it
+		// launched: the joiners ask it for the cluster, and the cluster is
+		// read back there. Hence ActionsOn.
+		phases = append(phases, registry.Phase{
+			Name:      "rest",
+			Nodes:     rest,
+			Actions:   []string{ActionEtcdJoin},
+			ActionsOn: boot,
+		})
 	}
 	return phases
 }
@@ -115,6 +123,17 @@ const (
 	// ActionVerifyEtcd confirms the cluster formed: admin.wemixInfo.etcd.cluster
 	// must be non-empty, which is the only evidence the init worked.
 	ActionVerifyEtcd = "verify-etcd"
+	// ActionEtcdJoin brings the remaining producers into the cluster the boot
+	// node formed. It is not optional decoration: a producer outside the
+	// cluster stays out of the sealing rotation, so a network without it has
+	// one node writing every block while the others merely follow.
+	//
+	// The chain's own join is a handshake over the eth wire protocol, not a
+	// local call — the joiner asks a peer (admin.etcdJoin names the peer to
+	// ask, not the joiner), that peer adds it and replies with the cluster
+	// string, and the joiner starts its embedded server against it. Both ends
+	// must be governance members for the handshake to be answered at all.
+	ActionEtcdJoin = "etcd-join"
 )
 
 // PortReservation: a poa node embeds etcd, which listens on two further ports

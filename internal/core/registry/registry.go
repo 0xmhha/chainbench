@@ -83,6 +83,16 @@ type Phase struct {
 	// are up, before the next phase starts. An action a phase names but that
 	// the caller has not wired is an error, not a silent pass.
 	Actions []string
+	// ActionsOn is the 1-based node the phase's actions run against. Zero
+	// means the first node this phase launched, which is what a bootstrap
+	// phase wants.
+	//
+	// A phase whose actions concern a node it did not launch names it here.
+	// The rest joining the cluster the boot node formed is that case: without
+	// this, every executor would re-derive which node the boot node was, and
+	// a rule copied into three places is the shape of bug this package exists
+	// to remove.
+	ActionsOn int
 }
 
 // ChainPlugin is one chain's registration. Most of a chain is data (Manifest)

@@ -137,3 +137,109 @@ func WaitProducing(ctx context.Context, r Runner, binary, ipc string, timeout ti
 		}
 	}
 }
+
+// EtcdJoin brings one producer into an existing cluster by asking a peer for
+// it. The name is the peer to ask — the node that already has the cluster —
+// not the node doing the joining: the chain resolves it against the governance
+// member list and sends it a wire-protocol request, and the reply carries the
+// cluster string the joiner starts its embedded server against.
+//
+// Calling it with the joiner's own name is the mistake that looks like it
+// works: the call returns without error and nothing joins, because a node
+// asking itself for a cluster it does not have gets nothing back.
+func EtcdJoin(ctx context.Context, r Runner, binary, ipc, peer string) error {
+	out, err := r(ctx, binary, "attach", ipc, "--exec", fmt.Sprintf("admin.etcdJoin(%q)", peer))
+	if err != nil {
+		return fmt.Errorf("poa: etcdJoin(%s): %w: %s", peer, err, out)
+	}
+	// The console prints the thrown error rather than failing the process, so
+	// an error in the output is the failure. A successful join prints null.
+	if s := strings.TrimSpace(string(out)); strings.Contains(s, "Error") || strings.Contains(s, "error") {
+		return fmt.Errorf("poa: etcdJoin(%s): %s", peer, s)
+	}
+	return nil
+}
+
+// WaitForMember blocks until the node knows the named governance member.
+//
+// A node learns the member list by reading the governance contract off the
+// chain, so a producer that has just started knows nobody: asking it to join
+// before then fails with "not found", which reads like a wrong name rather
+// than a node that has not caught up yet. This is the wait that makes the
+// difference legible.
+func WaitForMember(ctx context.Context, r Runner, binary, ipc, name string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	want := fmt.Sprintf("%q:%q", "name", name)
+	for {
+		out, err := r(ctx, binary, "attach", ipc, "--exec", "JSON.stringify(admin.wemixInfo.nodes)")
+		if err == nil && strings.Contains(strings.ReplaceAll(string(out), "\\", ""), want) {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("poa: %s never appeared in this node's governance member list within %s — it cannot join a cluster it does not know the members of", name, timeout)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+}
+
+// EtcdCluster reads the cluster as one node sees it: name=url pairs, or empty
+// when no cluster has formed there.
+func EtcdCluster(ctx context.Context, r Runner, binary, ipc string) (string, error) {
+	out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
+	if err != nil {
+		return "", fmt.Errorf("poa: read etcd cluster: %w: %s", err, out)
+	}
+	got := strings.Trim(strings.TrimSpace(string(out)), `"`)
+	switch got {
+	case "null", "undefined", "<nil>":
+		return "", nil
+	}
+	return got, nil
+}
+
+// ClusterNames reports whether a cluster string names a member.
+func ClusterNames(cluster, member string) bool {
+	return strings.Contains(cluster, member+"=")
+}
+
+// VerifyEtcdMembers confirms the cluster names every member it should. It reads
+// the same string VerifyEtcd does, but a non-empty cluster is not the question
+// here — a cluster of one is non-empty, and that is exactly the state where a
+// single producer seals every block.
+//
+// Members are the node names as governance knows them, which is how the chain
+// spells them in the cluster string (name=url,name=url).
+func VerifyEtcdMembers(ctx context.Context, r Runner, binary, ipc string, members []string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	var got string
+	for {
+		out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
+		if err == nil {
+			got = strings.TrimSpace(string(out))
+			missing := make([]string, 0, len(members))
+			for _, m := range members {
+				if !strings.Contains(got, m+"=") {
+					missing = append(missing, m)
+				}
+			}
+			if len(missing) == 0 {
+				return nil
+			}
+			if time.Now().After(deadline) {
+				return fmt.Errorf("poa: verify etcd members: %s after joining, the cluster still does not name %s (admin.wemixInfo.etcd.cluster = %s) — a producer outside the cluster takes no turn at sealing",
+					timeout, strings.Join(missing, ", "), got)
+			}
+		} else if time.Now().After(deadline) {
+			return fmt.Errorf("poa: verify etcd members: could not read the cluster within %s: %w", timeout, err)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+}
