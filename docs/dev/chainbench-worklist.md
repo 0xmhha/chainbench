@@ -353,7 +353,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **N10** | **계정 라벨** — `account1` ↔ 주소·개인키. **faucet 누락은 오류** | 테스트 정의에 주소가 등장하지 않음 · 잔액 0 계정의 가스 자금원 보장 | ☐ |
 | **N11** | **다중 config** — 이름으로 참조, 노드별 지정. `restartNode` 액션은 **이미 있고** `config:` 인자만 추가 | 일부 노드만 다른 config 로 재기동 | ☐ |
 | **N12** | **deploy skip 을 내용 해시로** (현재는 존재 여부만) | 같은 경로에 **다른 내용**이면 skip 하지 않음 | ☐ |
-| **N13** | **skip 사유 기록** — `TestRecord.Status(s)` 에 사유가 없어 "왜 skip 됐는지"가 아티팩트에 안 남는다 | 미지원 기능으로 건너뛴 케이스의 사유가 세션에 기록됨 | ☐ |
+| **N13** | **skip 사유 기록** — `TestRecord.Status(s)` 에 사유가 없어 "왜 skip 됐는지"가 아티팩트에 안 남는다 | ☑ **F5 와 함께 완료 2026-08-22** — `TestRecord.Reason(why)` + `statusDoc.Reason`. 적용 4곳: 파싱 실패·미적용(`does not apply to this target (chain or required capabilities)`)·blocked 2종. 이유 없는 blocked 하나가 `chain.binary` 누락을 찾는 데 한 세션을 썼다 | ☑ |
 | **N14** | **`capability` 이름 충돌 정리** — `engine/capability`(DSL 게이팅)와 `core/capability`(표면 카탈로그)가 무관한데 같은 이름 | S 계열의 `feature` 레지스트리와 함께 정리 | ☐ |
 
 **N7~N14 는 2026-08-19 요구 재도출분**([[network-blueprint-design]] §6). 세 체인을 실제로 구성한
