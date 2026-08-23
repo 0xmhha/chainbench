@@ -158,7 +158,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 		// genesis, because a deploy that rebuilt it could disagree with the
 		// genesis the network actually started from.
 		for name, content := range art.Extra {
-			if err := os.WriteFile(filepath.Join(plan.DataRoot, name), content, 0o644); err != nil {
+			if err := o.files().Write(ctx, filepath.Join(plan.DataRoot, name), content, 0o644); err != nil {
 				return "", fmt.Errorf("write %s: %w", name, err)
 			}
 		}
@@ -239,7 +239,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	run.Results = t.results
-	if err := saveState(o.DataDir, nodes); err != nil && !t.halted() {
+	if err := saveState(ctx, o.files(), o.DataDir, nodes); err != nil && !t.halted() {
 		return run, err
 	}
 	return run, nil

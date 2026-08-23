@@ -11,6 +11,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -21,13 +22,13 @@ const stateFile = "chain-network.json"
 // teardownGrace is how long a stop waits for a clean exit before escalating.
 const teardownGrace = 5 * time.Second
 
-// writeNodeSet persists a node set.
-func writeNodeSet(path string, ns node.NodeSet) error {
+// writeNodeSet persists a node set through the file seam.
+func writeNodeSet(ctx context.Context, files provision.FileStore, path string, ns node.NodeSet) error {
 	b, err := json.MarshalIndent(ns, "", "  ")
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, b, 0o644)
+	return files.Write(ctx, path, b, 0o644)
 }
 
 // LoadNetwork reads the node set a bring-up left under dataDir.
