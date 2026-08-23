@@ -161,30 +161,39 @@ func wbftCase() Case {
 // governanceSteps is the bring-up for a chain whose genesis carries no validator
 // set: the nodes start idle and only produce once governance is deployed and the
 // embedded etcd cluster forms.
+//
+// The order is the procedure's, not a tidier one. Placement comes before the
+// genesis because a governance member carries the address and port it will be
+// reachable at, so a genesis built first would name places nothing was put. And
+// the producer launches alone, because the cluster forms from a node that is by
+// itself; the rest arrive afterwards and join it.
+//
+// The four action steps are named by the consensus family, not here — see
+// TestGovernanceSteps_MatchTheFamilysActions.
 func governanceSteps() []Step {
 	return []Step{
 		{ID: "resolve-chain", Title: "Resolve the chain plugin", Detail: "registry.Get: wemix manifest (bootstrap.type governance-etcd)", Implemented: true},
 		{ID: "resolve-binary", Title: "Resolve the node binary", Detail: "go-wemix gwemix (embeds etcd; no separate process)", Implemented: true},
-		{ID: "load-preset", Title: "Load the key preset", Detail: "producer identity + unlockable account", Implemented: true},
-		{ID: "wemix-config", Title: "Assemble the governance config", Detail: "poa.Config: members, stake, governance env, alloc", Implemented: false},
-		{ID: "base-genesis", Title: "Generate the base genesis", Detail: "gwemix wemix genesis --data <config> --genesis <go-wemix template>", Implemented: false},
-		{ID: "allocate", Title: "Allocate hosts and ports", Detail: "etcd's peer port is reserved as p2p+1", Implemented: false},
-		{ID: "provision-keys", Title: "Place identities", Detail: "nodekey into the binary's instance dir, static-nodes, producer keystore", Implemented: false},
-		{ID: "launch", Title: "Launch the producer alone", Detail: "the bootstrap only forms an etcd cluster when no other node is up", Implemented: false},
-		{ID: "wait-ipc", Title: "Wait for the producer IPC", Detail: "the two bootstrap steps run over IPC, not HTTP", Implemented: false},
-		{ID: "deploy-governance", Title: "Deploy the governance contracts", Detail: "gwemix wemix deploy-governance (two-argument form)", Implemented: false},
-		{ID: "etcd-init", Title: "Initialize the etcd cluster", Detail: "admin.etcdInit() over IPC, with the producer still alone", Implemented: false},
-		{ID: "verify-etcd", Title: "Verify the cluster formed", Detail: "admin.wemixInfo.etcd.cluster must be non-empty — the only evidence etcd-init worked", Implemented: false},
-		{ID: "health-gate", Title: "Gate on health", Detail: "poll until the head advances", Implemented: false},
+		{ID: "load-preset", Title: "Load the key preset", Detail: "producer identities + unlockable accounts", Implemented: true},
+		{ID: "allocate", Title: "Allocate hosts and ports", Detail: "netmap.Assign against the family's reservation: etcd peer is p2p+1, client p2p+2", Implemented: true},
+		{ID: "wemix-genesis", Title: "Generate the genesis from a governance config", Detail: "poa.Config (every producer a member, addresses from the placement) then gwemix wemix genesis", Implemented: true},
+		{ID: "assemble-plan", Title: "Assemble the launch plan", Detail: "engine.AssemblePlan: per-node datadir, config path, launch args", Implemented: true},
+		{ID: "arm", Title: "Arm each node", Detail: "render config, install identity flags, resolve the binary per node", Implemented: true},
+		{ID: "provision", Title: "Materialize files", Detail: "genesis + per-node config + the governance config deploy-governance reads back", Implemented: true},
+		{ID: "launch-boot", Title: "Launch the producer alone", Detail: "the cluster only forms while no other node is up", Implemented: true},
+		{ID: "deploy-governance", Title: "Deploy the governance contracts", Detail: "over the producer's IPC, once it is sealing", Implemented: true},
+		{ID: "etcd-init", Title: "Initialize the etcd cluster", Detail: "admin.etcdInit() over IPC, with the producer still alone", Implemented: true},
+		{ID: "verify-etcd", Title: "Verify the cluster formed", Detail: "admin.wemixInfo.etcd.cluster must be non-empty — the only evidence etcd-init worked", Implemented: true},
+		{ID: "launch-rest", Title: "Launch the remaining nodes", Detail: "the rest of the network, against files already on the target", Implemented: true},
+		{ID: "etcd-join", Title: "Join the remaining producers", Detail: "each asks the boot node for the cluster; a producer outside it takes no turn at sealing", Implemented: true},
+		{ID: "health-gate", Title: "Gate on health", Detail: "poll until the head advances", Implemented: true},
 	}
 }
 
 func wemixCase() Case {
 	return Case{
 		ID: "wemix", Title: "gwemix only",
-		Bootstrap: "governance-etcd", Support: Unsupported,
-		Note: "the bootstrap sequence is confirmed (see the doc), but no standalone orchestrator composes it: " +
-			"setup never runs the governance-etcd bootstrap, and the only code path that does is the handoff CLI",
+		Bootstrap: "governance-etcd", Support: Supported,
 		Binaries: []string{"gwemix from go-wemix (make gwemix USE_ROCKSDB=NO)", "go-wemix wemix/scripts/genesis-template.json"},
 		Doc:      "docs/dev/chain-setup/case-1-wemix.md",
 		Steps:    governanceSteps(),
@@ -194,7 +203,7 @@ func wemixCase() Case {
 			{Name: "role accounts", Where: "poa.Config", Effect: "staker, ecosystem, maintenance, feeCollector"},
 			{Name: "alloc", Where: "poa.Account[]", Effect: "initial balances; the producer must be funded and unlockable"},
 			{Name: "genesis template", Where: "--template", Effect: "must be go-wemix's own template, not chainbench's substitution template"},
-			{Name: "etcd join gap", Where: "supervisor.JoinGap(N)", Effect: "how long a join may take before it counts as failed"},
+			{Name: "etcd join", Where: "the rest phase's etcd-join action", Effect: "each remaining producer asks the boot node for the cluster; without it one node seals every block"},
 			{Name: "bootstrap isolation", Where: "phase A of the sequence", Effect: "the producer must be the only node running while governance is deployed and etcd is initialized"},
 		},
 	}
