@@ -288,7 +288,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **F5** | poa 액션 배선 + 유스케이스 수렴(3곳→1곳) | ☑ **라이브 통과 2026-08-22** — wemix 4노드가 **일반 엔진 경로**로 뜬다: 바이너리 생성 genesis → boot 페이즈(프로듀서 단독) → deploy-governance(컨트랙트 5종) → etcd-init → **verify-etcd 가 클러스터 확인** → rest 페이즈 → 블록 전진. `TestWemix_Live_BringUp`(GWEMIX_BIN 게이트). **스텝 경로도 페이즈를 태운다**(2026-08-23): `net up`/`net start` 가 패밀리 페이즈 순서로 기동하고 사이에 부트스트랩 액션을 실행한다 — wemix 가 엔진·스텝 양쪽에서 뜬다. **F5b 완료 — 다중 프로듀서 sealing 로테이션**(2026-08-23): `net up --validators 4` 46초, 클러스터가 넷을 다 담고(`node1..node4`) **최근 25블록 봉인자 4명(8/6/6/5)**. 조인은 rest 페이즈의 `etcd-join` 액션이 수행한다.
 
 가설(순서)은 **틀렸다**. go-wemix 소스가 말하는 실제 계약은 둘이다. ① **`admin.etcdJoin(name)` 의 인자는 조인할 노드가 아니라 물어볼 상대**다 — 조이너가 eth 와이어(`EtcdAddMemberMsg 0x14`)로 피어에게 요청하면 피어가 클러스터 문자열로 답하고 조이너가 그걸로 자기 서버를 띄운다(`wemix/etcdutil.go:1289`, `eth/protocols/eth/wemix_handlers.go:77`). 자기 이름을 넘기면 **에러 없이 아무 일도 안 일어난다** — 앞선 세션이 여기서 막혔다. ② 조이너는 거버넌스 멤버 목록을 **체인에서 읽어** 알게 되므로, 방금 뜬 노드는 아무도 몰라 `not found` 로 거절한다. 그래서 `admin.wemixInfo.nodes` 에 상대가 보일 때까지 기다린 뒤 조인한다. 또 조인이 **null 을 반환하고도 클러스터에 안 들어가는 경우**(4대 중 1대)가 실측돼, 반환값이 아니라 **클러스터를 증거로** 재시도한다. | 중 | ☑ |
-| **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | 라이브 재현 | 낮음 | ☐ |
+| **F6** | `chainsetup/wemix.go` 의 `NotImplemented` 제거 | ☑ **라이브 통과 2026-08-23** — `chain up --case wemix --validators 4` 가 **15스텝 전부 OK**(deploy-governance 12.3s · etcd-join 37.6s · head 22), 25블록 봉인자 4명. wemix 케이스는 `Supported`. 절차 자체도 정정했다: **선언된 순서가 틀려 있었다**(genesis 가 allocate 앞 — 거버넌스 멤버는 배치에서 나오는 ip/port 를 담는다), 그리고 `launch-rest`·`etcd-join` 이 아예 빠져 있었다. 러너는 절차 사본을 갖지 않고 netmap·WemixGenesisSource·패밀리 페이즈·WemixBootstrap 을 그대로 조립한다. 스텝 id 와 패밀리 액션 이름이 어긋나면 테스트가 막는다. | 낮음 | ☑ |
 
 **F1 은 버그 수정이다** — 현재 `p2pStep>=2` 는 wemix 에서 틀렸다(etcd 가 p2p+1 peer·p2p+2 client 둘을 쓴다).
 

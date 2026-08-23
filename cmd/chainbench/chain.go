@@ -136,7 +136,8 @@ func newChainUpCmd() *cobra.Command {
 				}, report)
 			case "wemix":
 				run, err = chainsetup.RunWemix(cmd.Context(), c, chainsetup.Options{
-					Binary: binary, KeysDir: keysDir, DataDir: dataDir, StopAfter: stopAfter,
+					Binary: binary, KeysDir: keysDir, DataDir: dataDir,
+					Validators: validators, HealthTimeout: healthTimeout, StopAfter: stopAfter,
 				}, report)
 			default:
 				run, err = chainsetup.RunHandoff(cmd.Context(), c, chainsetup.HandoffOptions{
