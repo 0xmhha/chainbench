@@ -7,11 +7,16 @@ VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev
 LDFLAGS  := -ldflags "-X main.version=$(VERSION)"
 PKGS     ?= ./...
 CMDS     := chainbench chainbenchd chainbench-mcp
-GOLANGCI ?= golangci-lint
+# The linter is pinned so a local run and CI reach the same verdict. The version
+# lives in one file that both this and .github/workflows/ci.yml read: an older
+# golangci-lint reported three findings here that the pinned one does not, and
+# chasing a difference like that is time spent on the tool rather than the code.
+GOLANGCI_VERSION := $(shell cat .golangci-version 2>/dev/null)
+GOLANGCI ?= $(BIN_DIR)/golangci-lint
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build $(CMDS) test test-race test-e2e cover lint fmt fmt-check vet tidy secrets check clean
+.PHONY: help build $(CMDS) test test-race test-e2e cover lint lint-tool fmt fmt-check vet tidy secrets check clean
 
 help: ## 사용 가능한 타깃 목록
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -38,9 +43,18 @@ cover: ## 커버리지 → coverage.html
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
 ## --- lint / fmt / vet ----------------------------------------------------
-lint: ## golangci-lint 실행 (.golangci.yml)
-	@command -v $(GOLANGCI) >/dev/null || { echo "golangci-lint 미설치 — https://golangci-lint.run/usage/install/"; exit 1; }
+lint: lint-tool ## golangci-lint 실행 (.golangci.yml) — CI 와 같은 핀 버전으로
 	$(GOLANGCI) run
+
+lint-tool: ## .golangci-version 의 golangci-lint 를 bin/ 에 설치 (버전이 맞으면 건너뜀)
+	@if [ -z "$(GOLANGCI_VERSION)" ]; then echo ".golangci-version 이 없다"; exit 1; fi; \
+	have=$$($(GOLANGCI) version 2>/dev/null | sed -n 's/.*version \([0-9][^ ]*\).*/v\1/p'); \
+	if [ "$$have" = "$(GOLANGCI_VERSION)" ]; then \
+	  echo "golangci-lint $(GOLANGCI_VERSION) ($(GOLANGCI))"; \
+	else \
+	  echo "golangci-lint $${have:-미설치} → $(GOLANGCI_VERSION) 설치"; \
+	  GOBIN=$(abspath $(BIN_DIR)) $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION); \
+	fi
 
 fmt: ## gofmt -w (코드 포맷 적용)
 	gofmt -w .
