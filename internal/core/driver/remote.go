@@ -159,6 +159,49 @@ func launchCommand(spec NodeSpec) string {
 		" > " + shq(spec.LogPath) + " 2>&1 < /dev/null & echo $!"
 }
 
+// PortProber reports which of a host's ports something is already listening
+// on, asked FROM WHERE THE ANSWER IS TRUE. For a remote target that is the
+// target itself: probing from the operator's machine lies in both directions —
+// a loopback-bound listener (wemix's etcd client) is invisible from outside,
+// and a docker-published port is "open" on the operator's machine even when
+// nothing inside the container listens, because the publish forwarder itself
+// accepts the connection.
+type PortProber interface {
+	ProbePorts(ctx context.Context, host string, ports []int) ([]int, error)
+}
+
+// ProbePorts dials each port on the remote host FROM the remote host, via
+// bash's /dev/tcp, and returns the ports that accepted. Both faces are tried —
+// loopback and the host's own address — because a listener may be bound to
+// either; a connection on either face means the port is taken.
+func (d *RemoteDriver) ProbePorts(ctx context.Context, host string, ports []int) ([]int, error) {
+	if len(ports) == 0 {
+		return nil, nil
+	}
+	list := make([]string, 0, len(ports))
+	for _, p := range ports {
+		list = append(list, strconv.Itoa(p))
+	}
+	// One round trip for the whole set. /dev/tcp needs bash, which sshd's
+	// exec gives us on the fleets this targets; the redirect failing is
+	// "closed", so only open ports reach stdout.
+	script := "for p in " + strings.Join(list, " ") + "; do " +
+		"(exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && echo $p; " +
+		"(exec 3<>/dev/tcp/" + host + "/$p) 2>/dev/null && echo $p; " +
+		"done | sort -un; true"
+	out, err := d.sh(ctx, "bash -c "+shq(script))
+	if err != nil {
+		return nil, fmt.Errorf("driver: remote port probe: %w", err)
+	}
+	var open []int
+	for _, line := range strings.Fields(out) {
+		if p, err := strconv.Atoi(line); err == nil {
+			open = append(open, p)
+		}
+	}
+	return open, nil
+}
+
 // Stop terminates the remote node by PID. A process that has already exited is
 // not an error.
 func (d *RemoteDriver) Stop(ctx context.Context, h Handle) error {
