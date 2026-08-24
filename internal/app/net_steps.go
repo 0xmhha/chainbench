@@ -16,19 +16,33 @@ import (
 // tool call. Read-only steps (logs, health) do not save.
 
 // withWorkspace opens the workspace with the injected deps, runs one mutating
-// step, and saves the state when it succeeded.
+// step, and saves the state — whether or not the step succeeded.
+//
+// Saving on the failure path is the point. A step that launches nodes and then
+// fails (or is interrupted) has already changed the world: those processes are
+// running and hold ports. Discarding the state because the step returned an
+// error discards their pids with it, and pids nobody recorded are orphans —
+// `net stop` finds nothing, the next run fails with "address already in use",
+// and there is no record of who left them.
+//
+// A save failure on the error path is reported alongside the original error
+// rather than replacing it: the step's failure is what the caller asked about,
+// and losing the record is a second, separate problem.
 func withWorkspace(d Deps, dataDir string, fn func(*netcompose.Workspace) (string, error)) (string, error) {
 	ws, err := netcompose.Open(dataDir, d.Clock)
 	if err != nil {
 		return "", err
 	}
 	ws.SetEnv(d.Env)
-	detail, err := fn(ws)
-	if err != nil {
-		return "", err
-	}
-	if err := ws.Save(); err != nil {
-		return "", err
+	detail, stepErr := fn(ws)
+	saveErr := ws.Save()
+	switch {
+	case stepErr != nil && saveErr != nil:
+		return "", fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
+	case stepErr != nil:
+		return "", stepErr
+	case saveErr != nil:
+		return "", saveErr
 	}
 	return detail, nil
 }
