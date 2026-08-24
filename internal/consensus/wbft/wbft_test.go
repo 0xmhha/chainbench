@@ -10,8 +10,8 @@ import (
 
 // TestStartFlags_MineFollowsTheRoleNotItsSpelling: --mine was gated on the
 // legacy word alone. A producer recorded with the canonical role would have
-// launched without it and the chain would stall — the same latent break NM1c
-// found in the selector, in the flag that decides whether blocks get made.
+// launched without it and the chain would stall — the same latent break the
+// selector had, this time in the flag that decides whether blocks get made.
 func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
 	f := wbft.New()
 	for _, role := range []node.Role{node.RoleBP, node.RoleValidator} {

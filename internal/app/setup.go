@@ -26,7 +26,7 @@ import (
 // Bring-up use cases for the setup stack: resolve a chain and a layout into a
 // plan, then either write its artifacts or launch it. The CLI's `setup` command
 // and the start MCP tool are two renderings of these three functions, so they
-// cannot drift (worklist T7.11).
+// cannot drift.
 
 // topologyFile is the copy of the resolved topology kept in the data root, so a
 // running network's layout is inspectable from its own directory.

@@ -12,8 +12,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// TestArmSpecs_CanonicalRolesLaunchIdentically is the gate NM3 needs before it
-// may emit the canonical spelling: a plan written with bp/en must produce the
+// TestArmSpecs_CanonicalRolesLaunchIdentically is the gate the spelling
+// migration must pass before the composition may emit the canonical role
+// words: a plan written with bp/en must produce the
 // same launch arguments and the same config as the same plan written with
 // validator/endpoint. Anything that differs is a decision still keyed on a word
 // rather than on the role.

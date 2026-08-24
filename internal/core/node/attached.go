@@ -6,7 +6,7 @@ import "fmt"
 // so there is nothing to plan, provision, or launch — only RPC endpoints to
 // address. Building the NodeSet is a pure constructor over this package's own
 // types, which is why it lives here rather than in the launch pipeline it used
-// to sit in (worklist T7.11).
+// to sit in.
 
 // RPCEndpoint is one already-running node addressed by its RPC URL. It is
 // named for the JSON-RPC endpoint to keep it distinct from Endpoints, this

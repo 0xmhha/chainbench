@@ -1,6 +1,5 @@
 // Package app is the use-case layer between the two user surfaces (CLI, MCP)
-// and the orchestration/core packages (worklist T7.5,
-// structure-and-atomic-cli-proposal §2.2).
+// and the orchestration/core packages.
 //
 // One use case = one function. Inputs and outputs are plain structs that both
 // cobra flag binding and MCP JSON-schema binding can target, so the two

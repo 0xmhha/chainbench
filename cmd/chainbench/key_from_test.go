@@ -66,7 +66,7 @@ func TestKeyFrom_DirectHostNeedsCredentials(t *testing.T) {
 	}
 }
 
-// TestKeyFrom_ServerNameComesFromInventory is the K7 gate: the command line
+// TestKeyFrom_ServerNameComesFromInventory pins the inventory contract: the command line
 // carries a name, and the host address is only ever in the inventory file.
 func TestKeyFrom_ServerNameComesFromInventory(t *testing.T) {
 	cfg := writeServerConfig(t, twoServerInventory)

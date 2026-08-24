@@ -10,8 +10,7 @@ import (
 // Node-process control over an already-launched NodeSet. These live here — next
 // to Driver and NodeSpec, the contract they drive — rather than in the legacy
 // pipeline package that used to own them, so the surfaces that control a running
-// network (app use cases, live-test fixtures) do not depend on it (worklist
-// T7.11).
+// network (app use cases, live-test fixtures) do not depend on it.
 //
 // They operate on the PIDs a NodeSet records, so they only reach nodes
 // chainbench launched; an attached node (PID 0) is not ours to stop.

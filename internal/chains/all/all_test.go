@@ -56,7 +56,7 @@ func TestAllChainsRegistered(t *testing.T) {
 }
 
 // TestAccountProvider_FeeDelegationEverywhere pins that the AccountProvider
-// boundary reports 0x16 support for all chains (A0 finding) and Extra only for
+// boundary reports 0x16 support for all chains (a measured baseline) and Extra only for
 // stablenet.
 func TestAccountProvider_FeeDelegationEverywhere(t *testing.T) {
 	for _, id := range registry.Names() {

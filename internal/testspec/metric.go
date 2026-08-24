@@ -11,7 +11,7 @@ import (
 )
 
 // assertMetric is the metric-source assertion name — the third verification
-// source next to log and rpc (background requirement #3, worklist T7.9).
+// source next to log and rpc (background requirement #3).
 const assertMetric = "metric"
 
 // metricAssertion scrapes a node's --metrics endpoint and compares one sample

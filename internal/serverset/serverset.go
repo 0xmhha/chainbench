@@ -185,8 +185,9 @@ type Config struct {
 	DataRoot string `yaml:"dataRoot,omitempty"`
 
 	// Defaults and Servers are derived from the pool, not parsed: the surfaces
-	// that select "a server" predate the pool and still read them. They lose
-	// their last callers in NM3/NM4, and the derivation goes with them.
+	// that select "a server" (--server, --fleet, srv://) predate the pool and
+	// still read them. When those surfaces move onto the pool, the derivation
+	// goes with them.
 	Defaults Defaults `yaml:"-"`
 	Servers  []Server `yaml:"-"`
 	// path is where this config was read from, for provenance in messages.

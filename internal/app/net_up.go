@@ -11,7 +11,7 @@ import (
 // NetUp composes a whole network in one call by running the step use cases in
 // order. It is the step stack's answer to `setup --launch`: the same nine steps
 // an operator can run one at a time, driven end to end, so there is one
-// bring-up implementation rather than two (worklist T7.11, step 4).
+// bring-up implementation rather than two.
 //
 // Every step still records itself in the workspace, so a run that fails part
 // way leaves an inspectable composition the operator can resume by hand.

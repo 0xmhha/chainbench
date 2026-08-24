@@ -89,7 +89,7 @@ func TestRunCmd_FailingSpecExitsNonZero(t *testing.T) {
 	}
 }
 
-// TestRunCmd_DashboardStreamsEvents proves the full T6.3 path end-to-end in CI:
+// TestRunCmd_DashboardStreamsEvents proves the full dashboard path end-to-end in CI:
 // the engine emits orchestration events → local bus → dashboard.Forward → a
 // running chainbenchd (dashboard.Server) → its bus. It uses attach mode against
 // a mock RPC node, so no chain binary is needed.

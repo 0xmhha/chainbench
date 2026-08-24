@@ -6,8 +6,8 @@ package driver
 //
 // It lives here — next to NodeSpec, the per-node half of the same contract —
 // so the packages that execute plans (supervisor, engine, chainsetup) do not
-// depend on the legacy pipeline package that used to declare it (worklist
-// T7.11; core/pipeline/setup keeps a type alias for its remaining legacy
+// depend on the legacy pipeline package that used to declare it
+// (core/pipeline/setup keeps a type alias for its remaining legacy
 // consumers until they migrate).
 type Plan struct {
 	Chain        string

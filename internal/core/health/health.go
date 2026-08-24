@@ -10,7 +10,7 @@
 // blocks a bring-up on one node, and merging them would bend both.
 //
 // It was core/pipeline/verify; the move out of the pipeline tree is part of
-// retiring legacy stack A (worklist T7.11) — the code is sound, only its home
+// the legacy-pipeline retirement — the code is sound, only its home
 // was legacy.
 package health
 

@@ -18,7 +18,7 @@ import (
 // network without re-specifying it: nodeset.json holds the running endpoints
 // and PIDs, nodespecs.json the fully-armed launch specs needed to relaunch one
 // node. It keyed the retired core/state package; the code is sound, only its
-// legacy-tree home was (worklist T7.11), so it moves here rather than dying
+// legacy-tree home was, so it moves here rather than dying
 // with the stack around it.
 //
 // It is deliberately small: one JSON file per data root, no naming or

@@ -136,7 +136,7 @@ func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
 	}
 }
 
-// TestKeyring_ReportsWhichRingItUsed is the K3 gate from the design: a command
+// TestKeyring_ReportsWhichRingItUsed pins a reporting contract: a command
 // that fell back to a default must say so, or an operator inspects one ring and
 // launches from another.
 func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {

@@ -26,7 +26,7 @@ func bareRing(t *testing.T, nodes int) keyring.Preset {
 	return set
 }
 
-// TestNetworkFor_BareRingIsIdentitiesOnly is the K5 gate: a ring can hold
+// TestNetworkFor_BareRingIsIdentitiesOnly pins the bare-ring contract: a ring can hold
 // identities and say nothing about a network, so a preset is a choice rather
 // than a premise.
 func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {

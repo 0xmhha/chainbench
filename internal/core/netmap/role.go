@@ -7,7 +7,7 @@ import (
 )
 
 // NormalizeRole folds a role spelling onto the canonical vocabulary
-// (bp / en / pn, worklist N0). The legacy spellings keep working because they
+// (bp / en / pn). The legacy spellings keep working because they
 // are written into persisted workspaces and topology files; unknown spellings
 // are an error rather than a silently-invented role.
 //
@@ -23,7 +23,7 @@ func NormalizeRole(s string) (node.Role, error) {
 	case node.RolePN:
 		return node.RolePN, nil
 	case node.RoleBoot:
-		// Still a role until the poa bring-up treats boot as an attribute (N0).
+		// Still a role until the poa bring-up treats boot as an attribute.
 		return node.RoleBoot, nil
 	default:
 		return "", fmt.Errorf("netmap: unknown role %q (want bp, en, pn, or a legacy spelling)", s)
@@ -34,10 +34,11 @@ func NormalizeRole(s string) (node.Role, error) {
 // and the launch flows still carry ("bp" → "validator").
 //
 // It exists only for the transition: the composition still writes and compares
-// the legacy words. Flipping them is NM6 — split out of NM3 because netmap.Is
-// made both spellings safe to compare, while the flip itself changes argv and
-// persisted workspaces and so needs its own live re-verification. When NM6
-// lands, this function goes with it.
+// the legacy words. Flipping them is a migration of its own — deferred because
+// netmap.Is makes both spellings safe to compare, while the flip changes argv
+// and persisted workspaces and so needs its own live re-verification (tracked
+// as NM6 in docs/dev/netmap-design.md). When that migration lands, this
+// function goes with it.
 func LegacySpelling(r node.Role) node.Role {
 	switch r {
 	case node.RoleBP:

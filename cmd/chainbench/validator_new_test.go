@@ -32,7 +32,7 @@ func TestValidatorNew_PoaNoBLS(t *testing.T) {
 	}
 }
 
-// TestValidatorNew_WbftDerivesBLSWithoutABinary is the K1 gate at the CLI. A
+// TestValidatorNew_WbftDerivesBLSWithoutABinary guards the in-process derivation at the CLI. A
 // wbft validator used to be refused without --bootnode; the material is now
 // derived in process, so the command must succeed with nothing on PATH.
 func TestValidatorNew_WbftDerivesBLSWithoutABinary(t *testing.T) {

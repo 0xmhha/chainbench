@@ -238,8 +238,8 @@ func TestKeyring_IsRootedInTheSession(t *testing.T) {
 	}
 }
 
-// TestEnvironment_Resolve_CanonicalAndLegacyRoles pins the fold that NM1c
-// added. Before it, "bp" mapped to RoleValidator alone, so a node recorded with
+// TestEnvironment_Resolve_CanonicalAndLegacyRoles pins the selector's role
+// fold. Before it, "bp" mapped to RoleValidator alone, so a node recorded with
 // the canonical role netmap normalizes to did not match its own selector.
 // Measured against the old table, this case resolved bp1 to the second node —
 // the failure was a spec silently running on a node it did not name, not an
