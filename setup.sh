@@ -36,15 +36,15 @@ mkdir -p "${BIN_DIR}"
 cd "${CHAINBENCH_DIR}"
 go build -o "${BIN_DIR}/chainbench"     ./cmd/chainbench
 go build -o "${BIN_DIR}/chainbench-mcp" ./cmd/chainbench-mcp
-go build -o "${BIN_DIR}/chainbenchd"    ./cmd/chainbenchd
+go build -o "${BIN_DIR}/chainbench-dashboard"    ./cmd/chainbench-dashboard
 
-for b in chainbench chainbench-mcp chainbenchd; do
+for b in chainbench chainbench-mcp chainbench-dashboard; do
   if [[ ! -x "${BIN_DIR}/${b}" ]]; then
     echo "ERROR: build failed: ${BIN_DIR}/${b}"
     exit 1
   fi
 done
-echo "  [OK] Built: chainbench, chainbench-mcp, chainbenchd"
+echo "  [OK] Built: chainbench, chainbench-mcp, chainbench-dashboard"
 
 # ---- Register chainbench in PATH ---------------------------------------------
 

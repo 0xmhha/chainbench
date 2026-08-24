@@ -11,7 +11,7 @@ import (
 )
 
 // dashboardURL is set by the persistent --dashboard flag; when non-empty, a
-// command's obs events are forwarded to a running chainbenchd.
+// command's obs events are forwarded to a running chainbench-dashboard.
 var dashboardURL string
 
 func newRootCmd() *cobra.Command {
@@ -22,7 +22,7 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors: true,
 	}
 	root.PersistentFlags().StringVar(&dashboardURL, "dashboard", "",
-		"chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
+		"chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	root.AddCommand(
 		newChainsCmd(),
 		newCapabilitiesCmd(),
@@ -56,7 +56,7 @@ func newRootCmd() *cobra.Command {
 }
 
 // obsBus returns an event bus and a cleanup func. When --dashboard is set, bus
-// events are forwarded to that chainbenchd; cleanup closes the bus and waits
+// events are forwarded to that chainbench-dashboard; cleanup closes the bus and waits
 // for the forwarder to flush.
 func obsBus() (*obs.Bus, func()) {
 	bus := obs.NewBus()

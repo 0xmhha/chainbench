@@ -31,7 +31,7 @@
 ## 2. 대상 아키텍처 (현 6-layer + 신규)
 
 ```
-┌ Entrypoints ─ cmd/{chainbench, chainbenchd, chainbench-mcp}
+┌ Entrypoints ─ cmd/{chainbench, chainbench-dashboard, chainbench-mcp}
 │                     │ (test 정의서 실행 커맨드)
 ├ Session ──────  core/session      ← .chainbench/<session>/ 정본 소유 [NEW]
 │                     │

@@ -35,7 +35,7 @@ type RunRecord struct {
 }
 
 // Store persists run records. G0 ships an in-memory implementation; a
-// file/embedded-KV backing lands with chainbenchd (G8) behind this same
+// file/embedded-KV backing lands with chainbench-dashboard (G8) behind this same
 // interface.
 type Store interface {
 	SaveRun(r RunRecord) error

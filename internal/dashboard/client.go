@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/obs"
 )
 
-// Forward subscribes to bus and POSTs every event to a running chainbenchd's
+// Forward subscribes to bus and POSTs every event to a running chainbench-dashboard's
 // /api/events, so a CLI (or any producer) can feed the dashboard live. It
 // returns a channel closed when forwarding finishes (after the bus is closed
 // and its buffered events are drained), so callers can flush before exiting.

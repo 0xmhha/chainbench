@@ -1,4 +1,4 @@
-// Command chainbenchd is the dashboard daemon (requirement #19): it hosts the
+// Command chainbench-dashboard is the dashboard daemon (requirement #19): it hosts the
 // obs event bus and run store behind an HTTP + SSE API and serves the dashboard
 // page. Pipeline runs feed it live by POSTing obs events to /api/events; with
 // -artifact-root it also serves completed-run session artifacts from disk.
@@ -29,9 +29,9 @@ func main() {
 	}
 	srv := dashboard.NewServer(bus, store, opts...)
 
-	fmt.Fprintf(os.Stderr, "chainbenchd listening on http://%s\n", *addr)
+	fmt.Fprintf(os.Stderr, "chainbench-dashboard listening on http://%s\n", *addr)
 	if err := http.ListenAndServe(*addr, srv); err != nil {
-		fmt.Fprintln(os.Stderr, "chainbenchd:", err)
+		fmt.Fprintln(os.Stderr, "chainbench-dashboard:", err)
 		os.Exit(1)
 	}
 }

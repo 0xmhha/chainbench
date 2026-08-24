@@ -178,7 +178,7 @@ flowchart TD
 |---|---|
 | `arch` | 이 문서의 규칙을 강제하는 테스트. 프로덕션 코드가 없고 무엇도 import 하지 않으므로 층이 없다 |
 
-> `cmd/{chainbench,chainbench-mcp,chainbenchd}` 도 L6 이지만 표에 없다. 배치 검사는
+> `cmd/{chainbench,chainbench-mcp,chainbench-dashboard}` 도 L6 이지만 표에 없다. 배치 검사는
 > `internal/` 만 대상으로 한다 — `cmd` 는 정의상 최상위이고, 무엇이든 import 할 수 있다.
 
 ---

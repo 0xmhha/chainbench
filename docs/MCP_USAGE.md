@@ -21,7 +21,7 @@ tx 전송, 컨트랙트 배포·호출, 로그/이벤트 조회, 원격·SSH 네
 cd <chainbench-checkout>
 bash setup.sh
 ```
-- `[1/3]` Go 바이너리 빌드: `chainbench`(CLI), `chainbench-mcp`(MCP stdio 서버), `chainbenchd`(대시보드) → `bin/`
+- `[1/3]` Go 바이너리 빌드: `chainbench`(CLI), `chainbench-mcp`(MCP stdio 서버), `chainbench-dashboard`(대시보드) → `bin/`
 - `[2/3]` `chainbench`, `chainbench-mcp` 를 `/usr/local/bin` 에 심링크 등록
 - `[3/3]` 완료
 

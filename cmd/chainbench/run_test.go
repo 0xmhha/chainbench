@@ -91,7 +91,7 @@ func TestRunCmd_FailingSpecExitsNonZero(t *testing.T) {
 
 // TestRunCmd_DashboardStreamsEvents proves the full dashboard path end-to-end in CI:
 // the engine emits orchestration events → local bus → dashboard.Forward → a
-// running chainbenchd (dashboard.Server) → its bus. It uses attach mode against
+// running chainbench-dashboard (dashboard.Server) → its bus. It uses attach mode against
 // a mock RPC node, so no chain binary is needed.
 func TestRunCmd_DashboardStreamsEvents(t *testing.T) {
 	rpc := mockRPCNode(t, map[string]any{
@@ -99,7 +99,7 @@ func TestRunCmd_DashboardStreamsEvents(t *testing.T) {
 		"eth_blockNumber": "0x10",
 	})
 
-	// A chainbenchd whose bus we can observe.
+	// A chainbench-dashboard whose bus we can observe.
 	srvBus := obs.NewBus()
 	defer srvBus.Close()
 	sub := srvBus.Subscribe()
