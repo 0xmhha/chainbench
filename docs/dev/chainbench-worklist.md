@@ -409,6 +409,20 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | D2 | 완료 세션 화면 — 있는 `/api/sessions`·chainstate API 에 화면 소비자를 만든다 | 완료 세션의 판정·체인 상태 이력이 브라우저에서 열람 | 미착수 |
 | D3 | 로그 연계 — 차트·이벤트 시점에서 해당 노드 로그로 점프 | collector tail 배관 재사용 | 미착수 |
 
+### R — 로컬 docker 를 원격 서버처럼 (원격 경로 검증)
+
+> 근거: [[docker-remote-design]](docker-remote-design.md). 실 원격 서버 없이 Rancher 의
+> ubuntu 컨테이너를 가상 서버로 쓴다. 인벤토리는 실주소를 유지하고, 하네스가 접속하는
+> 최하위 4곳(dialSSH + RPC 조립 3곳)에서만 `AddrMap` 이 loopback 퍼블리시 포트로 치환.
+> 선례: `~/Work/github/packages/wemix-bp-test` 의 LocalMap (동작 검증 완료).
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **R1** | `AddrMap` seam — 매핑 파일(gitignore) 로드 + 접속 경계 주입 + 적용 보고 | 매핑 없으면 항등 · loopback 판정은 매핑 전 주소로(P1) · 산출물에 매핑 주소 미영속(P2) | 미착수 |
+| R2 | docker 가상 서버 생성 스크립트 — compose + 인벤토리 v2 + localmap 자동 생성 | 한 번에 N 대 기동, ssh 키 인증 접속 확인 | 미착수 |
+| R3 | keyring 원격 경로 라이브 — `import --from srv://`, 서버 경로 설치 | docker 서버 대상 왕복 성공 | 미착수 |
+| R4 | `net up --target` 원격 조립 라이브 | provision·기동이 docker 서버에서 수행, 산출물에 loopback 없음 | 미착수 |
+
 ### 확정된 결정 (2026-08-22)
 
 | # | 결정 | 근거 |
