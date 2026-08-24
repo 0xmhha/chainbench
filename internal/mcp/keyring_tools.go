@@ -151,6 +151,8 @@ func keyringImportTool() Tool {
 				"description": "key file path: /local/path | srv://<server>/path | [user@]host:path | ssh://user@host:port/path",
 			},
 			"password":     map[string]any{"type": "string", "description": "password for a keystore named by from"},
+			"mnemonic":     map[string]any{"type": "string", "description": "derive the key from a BIP-39 mnemonic (alternative to from)"},
+			"passphrase":   map[string]any{"type": "string", "description": "optional BIP-39 passphrase (with mnemonic)"},
 			"withBls":      map[string]any{"type": "boolean", "description": "also derive BLS material"},
 			"serverConfig": map[string]any{"type": "string", "description": "inventory file for an srv:// source"},
 			"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate this dial via the localmap next to the inventory"},
@@ -159,8 +161,10 @@ func keyringImportTool() Tool {
 			e, err := app.KeyringImport(ctx, app.Deps{}, app.RingImportIn{
 				Ring: ringRef(args), Label: argString(args, "name", ""),
 				From: argString(args, "from", ""), Password: argString(args, "password", ""),
-				WithBLS: argBool(args, "withBls", false),
-				Docker:  argBool(args, "docker", false),
+				Mnemonic:   argString(args, "mnemonic", ""),
+				Passphrase: argString(args, "passphrase", ""),
+				WithBLS:    argBool(args, "withBls", false),
+				Docker:     argBool(args, "docker", false),
 			})
 			if err != nil {
 				return "", err

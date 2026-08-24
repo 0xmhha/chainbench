@@ -213,6 +213,21 @@ func (s TargetSpec) ResolveWithMap(env func(string) string, inv Inventory, m rem
 	}
 }
 
+// mapCredentials applies the dial-time address translation to SSH credentials.
+// The default port is resolved BEFORE mapping: a map keyed on 22 must match a
+// dial that was going to use 22. Left at zero, the directly named host form
+// slipped past the map and dialed the default port on the substitute address.
+func mapCredentials(creds remote.Credentials, m remote.AddrMap) remote.Credentials {
+	if m == nil {
+		return creds
+	}
+	if creds.Port == 0 {
+		creds.Port = remote.DefaultSSHPort
+	}
+	creds.Host, creds.Port = m(creds.Host, creds.Port)
+	return creds
+}
+
 // resolveOver builds the SSH-backed target for already-resolved credentials.
 // Both remote forms end here, so they cannot drift apart — and so the dial-time
 // address translation cannot be applied to one form and missed on the other.
@@ -220,9 +235,7 @@ func (s TargetSpec) resolveOver(creds remote.Credentials, env func(string) strin
 	if s.DataRoot == "" {
 		return nil, fmt.Errorf("target: remote target needs a path")
 	}
-	if m != nil {
-		creds.Host, creds.Port = m(creds.Host, creds.Port)
-	}
+	creds = mapCredentials(creds, m)
 	hostKey, err := remote.ResolveHostKeyCallback(env)
 	if err != nil {
 		return nil, err

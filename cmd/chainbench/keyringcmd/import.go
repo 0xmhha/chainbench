@@ -55,6 +55,11 @@ func newKeyringImportCmd() *cobra.Command {
 	cmd.Flags().StringVar(&in.From, "from", "",
 		"key file path: /local/path | srv://<server>/path | [user@]host:path | ssh://user@host:port/path")
 	cmd.Flags().StringVar(&in.PrivateKey, "private-key", "", "import a key the caller already holds (0x-hex)")
+	cmd.Flags().StringVar(&in.Mnemonic, "mnemonic", "", "derive the key from a BIP-39 mnemonic")
+	cmd.Flags().StringVar(&in.Passphrase, "passphrase", "", "optional BIP-39 passphrase (with --mnemonic)")
+	cmd.Flags().Uint32Var(&in.HDCoinType, "hd-coin-type", 0, "BIP-44 coin type for --mnemonic (default 60, Ethereum)")
+	cmd.Flags().Uint32Var(&in.HDAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
+	cmd.Flags().Uint32Var(&in.HDIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 	cmd.Flags().StringVar(&in.Password, "password", "", "password for a keystore named by --from")
 	cmd.Flags().BoolVar(&in.Docker, "docker", false,
 		"the server is a local docker container: translate this dial via the localmap next to the inventory (addresses only — docker itself is not touched)")
