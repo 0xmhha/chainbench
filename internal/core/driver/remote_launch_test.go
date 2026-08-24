@@ -28,3 +28,18 @@ func TestLaunchCommand_BackgroundsOnlyTheNode(t *testing.T) {
 		}
 	}
 }
+
+// TestSudoWrap_KeepsThePasswordOffTheCommandLine pins the sudo shaping: the
+// password travels on stdin (-S), never in the line; every command
+// re-authenticates (-k); and the inner command survives quoting intact.
+func TestSudoWrap_KeepsThePasswordOffTheCommandLine(t *testing.T) {
+	cmd := sudoWrap(`mkdir -p '/data/it''s here' && echo done`)
+	for _, want := range []string{"sudo -S -k -p ''", "/bin/sh -c "} {
+		if !strings.Contains(cmd, want) {
+			t.Fatalf("sudo wrap lost %q:\n%s", want, cmd)
+		}
+	}
+	if strings.Contains(cmd, "chainbench\n") || strings.Contains(cmd, "--password") {
+		t.Fatalf("a password reached the command line:\n%s", cmd)
+	}
+}

@@ -126,6 +126,6 @@ wemix-bp-test 의 `env/local` 패턴을 차용한다. ubuntu 이미지는 이미
 | # | 질문 | 기울기 |
 |---|---|---|
 | DR-a | 매핑 파일 이름과 위치 | 참조와 같은 `localmap.yaml`, 인벤토리 옆, gitignore. 활성화는 파일이 아니라 `--docker` 옵션(§3.2a) |
-| DR-b | 인증 방식 | 키 파일(v2 `ssh.key_file`) — 참조 구현도 키 인증. 패스워드는 컨테이너에 넣지 않는다 |
+| DR-b | 인증 방식 | **해소 (2026-08-24) — 사용자 id + 비밀번호로 변경.** 초안은 키였으나 실서버 함대가 id+password 이고 sudo 가 그 비밀번호를 요구한다는 운영 사실이 확인되어, 함대도 같은 모양으로 재구성했다(키 로그인·root 로그인 없음, sudo 는 비밀번호 요구). 실행 메커니즘은 `driver.SSHSudoRunner`(sudo -S -k, 비밀번호는 stdin — 명령줄·프로세스 목록에 남지 않음). 라이브 증명: password 로그인 = chainbench, sudo whoami = root, root 전용 쓰기 성공(`serverset` 의 게이트된 `Live_Sudo` 테스트) |
 | DR-c | AddrMap 을 serverset 이 소유하나, 별도 패키지인가 | 인벤토리와 함께 읽히므로 serverset 소유 기울기. 단 core/remote 가 serverset 을 모르는 층위라면 Deps 주입으로 전달 |
 | DR-d | bridge 고정 주소 vs 컨테이너 이름 | 참조는 고정 주소(172.28.0.x). enode 에 IP 가 필요하므로 고정 주소 기울기 |
