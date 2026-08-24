@@ -104,6 +104,7 @@ flowchart TD
 | `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
 | `core/rpc` | JSON-RPC 클라이언트 |
 | `core/procman` | PID 추적 · 검증된 종료 |
+| `core/occupancy` | **기동 전 포트 점유 조회** — 로컬은 bind 두 형태(루프백·와일드카드) 모두 시도, 원격은 dial |
 | `core/provision` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
 | `core/netmap` | **노드 배치의 소유자** — NodeLabel · 역할 정규화 · Map(정/역방향) ([[netmap-design]]) |

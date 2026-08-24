@@ -31,7 +31,7 @@ func newNetMapCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			out, err := app.NetMap(cmd.Context(), app.Deps{}, app.NetMapIn{
+			out, err := app.NetMap(cmd.Context(), cliDeps(cmd), app.NetMapIn{
 				DataDir: dataDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr,
 			})
 			if err != nil {
@@ -106,7 +106,7 @@ func newNetPoolCmd() *cobra.Command {
 			"uses. Credentials are never part of the answer — the pool says where nodes\n" +
 			"may run, not how to log in.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			out, err := app.NetPool(cmd.Context(), app.Deps{}, app.NetPoolIn{
+			out, err := app.NetPool(cmd.Context(), cliDeps(cmd), app.NetPoolIn{
 				DataDir: dataDir, Server: sf.ref(),
 			})
 			if err != nil {

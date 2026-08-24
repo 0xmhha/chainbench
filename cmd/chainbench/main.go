@@ -14,7 +14,17 @@ import (
 )
 
 func main() {
-	if err := newRootCmd().Execute(); err != nil {
+	// The context is cancellable so an interrupt reaches the run rather than
+	// only the shell: a command that started nodes gets the chance to stop
+	// them. See interrupt.go.
+	ctx, stop := interruptible(os.Stderr)
+	defer stop()
+
+	if err := newRootCmd().ExecuteContext(ctx); err != nil {
+		if interrupted(ctx, err) {
+			fmt.Fprintln(os.Stderr, "interrupted")
+			os.Exit(interruptExitCode)
+		}
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(exitCode(err))
 	}

@@ -42,7 +42,7 @@ func newNetKeysCmd() *cobra.Command {
 	var nodes, validators int
 	cmd, _ := stepCmd("keys", "Ensure the key set exists and covers the node count (preset or generate)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetKeys(cmd.Context(), app.Deps{}, app.NetKeysIn{
+			out, err := app.NetKeys(cmd.Context(), cliDeps(cmd), app.NetKeysIn{
 				DataDir: dataDir, Source: source, Nodes: nodes, Validators: validators,
 			})
 			return out.Detail, err
@@ -61,7 +61,7 @@ func newNetAllocateCmd() *cobra.Command {
 	var sf serverFlags
 	cmd, _ := stepCmd("allocate", "Build the node table: roles, paths, deterministic ports",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetAllocate(cmd.Context(), app.Deps{}, app.NetAllocateIn{
+			out, err := app.NetAllocate(cmd.Context(), cliDeps(cmd), app.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Server: sf.ref(),
@@ -83,7 +83,7 @@ func newNetGenesisCmd() *cobra.Command {
 	var overlay string
 	cmd, _ := stepCmd("genesis", "Build the genesis from the key set and write it to the target",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetGenesis(cmd.Context(), app.Deps{}, app.NetGenesisIn{
+			out, err := app.NetGenesis(cmd.Context(), cliDeps(cmd), app.NetGenesisIn{
 				DataDir: dataDir, ChainID: chainID, Set: sets, OverlayPath: overlay,
 			})
 			return out.Detail, err
@@ -97,7 +97,7 @@ func newNetGenesisCmd() *cobra.Command {
 func newNetConfigCmd() *cobra.Command {
 	cmd, _ := stepCmd("config", "Render and write each node's TOML config",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetConfig(cmd.Context(), app.Deps{}, app.NetConfigIn{DataDir: dataDir})
+			out, err := app.NetConfig(cmd.Context(), cliDeps(cmd), app.NetConfigIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -113,7 +113,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			out, err := app.NetLaunchOpts(cmd.Context(), app.Deps{}, app.NetLaunchOptsIn{
+			out, err := app.NetLaunchOpts(cmd.Context(), cliDeps(cmd), app.NetLaunchOptsIn{
 				DataDir: dataDir, Set: sets,
 			})
 			if err != nil {
@@ -135,7 +135,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 func newNetProvisionCmd() *cobra.Command {
 	cmd, _ := stepCmd("provision", "Verify the launch inputs are present on the target (skip-if-exists)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetProvision(cmd.Context(), app.Deps{}, app.NetProvisionIn{DataDir: dataDir})
+			out, err := app.NetProvision(cmd.Context(), cliDeps(cmd), app.NetProvisionIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -145,7 +145,7 @@ func newNetInitCmd() *cobra.Command {
 	var binary string
 	cmd, _ := stepCmd("init", "Initialize each node's datadir from the built genesis",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetInit(cmd.Context(), app.Deps{}, app.NetInitIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetInit(cmd.Context(), cliDeps(cmd), app.NetInitIn{DataDir: dataDir, Binary: binary})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the workspace's)")
@@ -156,7 +156,7 @@ func newNetStartCmd() *cobra.Command {
 	var binary string
 	cmd, _ := stepCmd("start", "Launch every stopped node and record its PID",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetStart(cmd.Context(), app.Deps{}, app.NetStartIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetStart(cmd.Context(), cliDeps(cmd), app.NetStartIn{DataDir: dataDir, Binary: binary})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the workspace's)")
@@ -166,7 +166,7 @@ func newNetStartCmd() *cobra.Command {
 func newNetStopCmd() *cobra.Command {
 	cmd, _ := stepCmd("stop", "Stop every running node by its recorded PID",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetStop(cmd.Context(), app.Deps{}, app.NetStopIn{DataDir: dataDir})
+			out, err := app.NetStop(cmd.Context(), cliDeps(cmd), app.NetStopIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -176,7 +176,7 @@ func newNetRestartCmd() *cobra.Command {
 	var nodeIdx int
 	cmd, _ := stepCmd("restart", "Stop and relaunch one node with its recorded arming",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetRestart(cmd.Context(), app.Deps{}, app.NetRestartIn{DataDir: dataDir, Node: nodeIdx})
+			out, err := app.NetRestart(cmd.Context(), cliDeps(cmd), app.NetRestartIn{DataDir: dataDir, Node: nodeIdx})
 			return out.Detail, err
 		})
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based)")
@@ -186,7 +186,7 @@ func newNetRestartCmd() *cobra.Command {
 func newNetRmCmd() *cobra.Command {
 	cmd, _ := stepCmd("rm", "Remove the composed data plane (stopped nodes only)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetRm(cmd.Context(), app.Deps{}, app.NetRmIn{DataDir: dataDir})
+			out, err := app.NetRm(cmd.Context(), cliDeps(cmd), app.NetRmIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -202,7 +202,7 @@ func newNetLogsCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			out, err := app.NetLogs(cmd.Context(), app.Deps{}, app.NetLogsIn{
+			out, err := app.NetLogs(cmd.Context(), cliDeps(cmd), app.NetLogsIn{
 				DataDir: dataDir, Node: nodeIdx, Lines: lines,
 			})
 			if err != nil {
@@ -228,7 +228,7 @@ func newNetHealthCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			out, err := app.NetHealth(cmd.Context(), app.Deps{}, app.NetHealthIn{DataDir: dataDir})
+			out, err := app.NetHealth(cmd.Context(), cliDeps(cmd), app.NetHealthIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}

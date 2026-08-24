@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
@@ -16,19 +17,48 @@ import (
 // tool call. Read-only steps (logs, health) do not save.
 
 // withWorkspace opens the workspace with the injected deps, runs one mutating
-// step, and saves the state when it succeeded.
+// step, and saves the state — whether or not the step succeeded.
+//
+// Saving on the failure path is the point. A step that launches nodes and then
+// fails (or is interrupted) has already changed the world: those processes are
+// running and hold ports. Discarding the state because the step returned an
+// error discards their pids with it, and pids nobody recorded are orphans —
+// `net stop` finds nothing, the next run fails with "address already in use",
+// and there is no record of who left them.
+//
+// A save failure on the error path is reported alongside the original error
+// rather than replacing it: the step's failure is what the caller asked about,
+// and losing the record is a second, separate problem.
 func withWorkspace(d Deps, dataDir string, fn func(*netcompose.Workspace) (string, error)) (string, error) {
 	ws, err := netcompose.Open(dataDir, d.Clock)
 	if err != nil {
 		return "", err
 	}
 	ws.SetEnv(d.Env)
-	detail, err := fn(ws)
-	if err != nil {
-		return "", err
+
+	// One run at a time per workspace. A second run would compose over the
+	// first's half-built network and blame the collision on the chain; the
+	// refusal names who holds it instead. A lock left by a run that died is
+	// taken over — that run is gone, and its wreckage is what the operator is
+	// here to clear — but never in silence.
+	held, prev, state, lerr := ws.Acquire(d.command())
+	if lerr != nil {
+		return "", lerr
 	}
-	if err := ws.Save(); err != nil {
-		return "", err
+	defer func() { _ = held.Release() }()
+	if state == session.LockStale {
+		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `net status` shows what is there", prev.Describe())
+	}
+
+	detail, stepErr := fn(ws)
+	saveErr := ws.Save()
+	switch {
+	case stepErr != nil && saveErr != nil:
+		return "", fmt.Errorf("%w (and the workspace could not be saved: %v — processes this step started may not be recorded)", stepErr, saveErr)
+	case stepErr != nil:
+		return "", stepErr
+	case saveErr != nil:
+		return "", saveErr
 	}
 	return detail, nil
 }

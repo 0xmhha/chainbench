@@ -15,21 +15,42 @@ type ExecFn func(ctx context.Context, name string, arg ...string) *exec.Cmd
 
 // LocalDriver launches nodes as subprocesses on the local host.
 type LocalDriver struct {
+	// execFn builds short-lived commands, which the caller waits for. Their
+	// context bounds them, and cancelling it should stop them.
 	execFn ExecFn
+	// launchFn builds the node process, which is the opposite case: a node
+	// outlives the call that starts it. The caller owns it from then on,
+	// through Stop and procman, and the workspace records its pid so a later
+	// invocation can stop it.
+	//
+	// The two are separate because binding a node to the request context ends
+	// the node when the request ends. That was invisible while the root
+	// context was never cancelled; the moment an interrupt could cancel it,
+	// `net up` returned "4 node(s) started" and left three running.
+	launchFn ExecFn
 }
 
 // NewLocalDriver returns a LocalDriver using os/exec.
 func NewLocalDriver() *LocalDriver {
-	return &LocalDriver{execFn: defaultExec}
+	return &LocalDriver{execFn: defaultExec, launchFn: detachedExec}
 }
 
-// NewLocalDriverWithExec returns a LocalDriver using a custom exec factory (tests).
+// NewLocalDriverWithExec returns a LocalDriver using a custom exec factory
+// (tests). The one factory serves both roles, so a test keeps full control of
+// every process the driver starts.
 func NewLocalDriverWithExec(fn ExecFn) *LocalDriver {
-	return &LocalDriver{execFn: fn}
+	return &LocalDriver{execFn: fn, launchFn: fn}
 }
 
 func defaultExec(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	return exec.CommandContext(ctx, name, arg...)
+}
+
+// detachedExec builds a command whose lifetime is not the caller's. The context
+// still governs how long the caller waits to start it — Start returns at once —
+// but not how long the process lives.
+func detachedExec(_ context.Context, name string, arg ...string) *exec.Cmd {
+	return exec.Command(name, arg...)
 }
 
 // Provision creates the data dir and writes the node config file if provided.
@@ -59,7 +80,7 @@ func (d *LocalDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error)
 	if err != nil {
 		return Handle{}, fmt.Errorf("driver: open log: %w", err)
 	}
-	cmd := d.execFn(ctx, spec.Binary, spec.Args...)
+	cmd := d.launch(ctx, spec.Binary, spec.Args...)
 	cmd.Stdout = logf
 	cmd.Stderr = logf
 	if err := cmd.Start(); err != nil {
@@ -72,6 +93,15 @@ func (d *LocalDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error)
 		_ = logf.Close()
 	}()
 	return Handle{Index: spec.Index, PID: pid}, nil
+}
+
+// launch builds the node command, falling back to the short-lived factory when
+// a caller constructed the driver with a zero value.
+func (d *LocalDriver) launch(ctx context.Context, name string, arg ...string) *exec.Cmd {
+	if d.launchFn != nil {
+		return d.launchFn(ctx, name, arg...)
+	}
+	return detachedExec(ctx, name, arg...)
 }
 
 // Stop sends SIGTERM (via Process) to the handle's PID. A process that has

@@ -38,7 +38,7 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetUp(cmd.Context(), app.Deps{}, app.NetUpIn{
+			out, err := app.NetUp(cmd.Context(), cliDeps(cmd), app.NetUpIn{
 				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
