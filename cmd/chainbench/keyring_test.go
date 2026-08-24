@@ -332,3 +332,39 @@ func TestKeyringImport_DockerNeedsTheLocalmap(t *testing.T) {
 		t.Fatalf("the refusal should name the option demanding the file: %v", err)
 	}
 }
+
+// TestKeyringImport_MnemonicGolden pins BIP-39/BIP-44 derivation against the
+// ecosystem's best-known vector: the "test … junk" development mnemonic's
+// first account. A drift here means every mnemonic import derives the wrong
+// identity while looking perfectly healthy.
+func TestKeyringImport_MnemonicGolden(t *testing.T) {
+	const devMnemonic = "test test test test test test test test test test test junk"
+	const wantAddr = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+	dir := filepath.Join(t.TempDir(), "ring")
+	if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "hd0",
+		"--mnemonic", devMnemonic); err != nil {
+		t.Fatalf("mnemonic import: %v", err)
+	}
+	if got := addressOf(t, dir, "hd0"); !strings.EqualFold(got, wantAddr) {
+		t.Fatalf("derived %s, want %s", got, wantAddr)
+	}
+}
+
+// TestKeyringImport_RefusesMixedSources pins that exactly one origin is
+// accepted: a command naming two keys cannot silently prefer one.
+func TestKeyringImport_RefusesMixedSources(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "ring")
+	// The refusal fires before any key is parsed, so the value only has to be
+	// key-shaped — a synthetic constant, not anyone's published dev key.
+	synthetic := "0x" + strings.Repeat("11", 32)
+	_, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+		"--mnemonic", "test test test test test test test test test test test junk",
+		"--private-key", synthetic)
+	if err == nil {
+		t.Fatal("import accepted two key origins at once")
+	}
+	if !strings.Contains(err.Error(), "exactly one") {
+		t.Fatalf("the refusal should say what is allowed: %v", err)
+	}
+}

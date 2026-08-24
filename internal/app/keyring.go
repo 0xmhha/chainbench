@@ -218,6 +218,14 @@ type RingImportIn struct {
 	// PrivateKey is a key the caller already holds (0x-hex), as an alternative
 	// to From.
 	PrivateKey string
+	// Mnemonic derives the key from a BIP-39 mnemonic, as an alternative to
+	// From and PrivateKey. Passphrase is the optional "25th word", and the HD
+	// fields select the BIP-44 path (zero values are m/44'/60'/0'/0/0).
+	Mnemonic   string
+	Passphrase string
+	HDCoinType uint32
+	HDAccount  uint32
+	HDIndex    uint32
 	// Password decrypts a keystore named by From.
 	Password string
 	// WithBLS derives BLS material for the imported key.
@@ -251,17 +259,29 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 	return entryOut(e, nil), nil
 }
 
-// source turns the two ways of naming a key into one keyring.Source. Where a
-// file sits is a property of its path, so a remote import is not a different
-// kind of import.
+// source turns the ways of naming a key into one keyring.Source. Where a file
+// sits is a property of its path, so a remote import is not a different kind
+// of import; a mnemonic is a different origin, so it is its own input.
 func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) {
+	given := 0
+	for _, set := range []bool{in.PrivateKey != "", in.From != "", in.Mnemonic != ""} {
+		if set {
+			given++
+		}
+	}
 	switch {
-	case in.PrivateKey != "" && in.From != "":
-		return nil, fmt.Errorf("app: provide either a private key or a path, not both")
+	case given > 1:
+		return nil, fmt.Errorf("app: provide exactly one of a private key, a mnemonic, or a path")
 	case in.PrivateKey != "":
 		return keyring.PrivateKeySource{Hex: in.PrivateKey}, nil
+	case in.Mnemonic != "":
+		path := keyring.HDPath{CoinType: in.HDCoinType, Account: in.HDAccount, Index: in.HDIndex}
+		if path.CoinType == 0 {
+			path.CoinType = keyring.DefaultCoinType
+		}
+		return keyring.MnemonicSource{Mnemonic: in.Mnemonic, Passphrase: in.Passphrase, Path: path}, nil
 	case in.From == "":
-		return nil, fmt.Errorf("app: import needs a private key or a path")
+		return nil, fmt.Errorf("app: import needs a private key, a mnemonic, or a path")
 	}
 
 	spec, err := target.ParseTarget(in.From)

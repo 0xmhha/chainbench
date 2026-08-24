@@ -21,7 +21,10 @@ import (
 // tunneled calls separately.
 const sshDialTimeout = 15 * time.Second
 
-const defaultSSHPort = 22
+// DefaultSSHPort is the port an SSH dial assumes when none was named. It is
+// exported so the layer applying a dial-time AddrMap can resolve the default
+// BEFORE mapping — a map keyed on port 22 must match a dial that will use 22.
+const DefaultSSHPort = 22
 
 // HostKeyCallback is the SSH host-key verification policy (an alias for
 // ssh.HostKeyCallback), re-exported so callers can name it without importing
@@ -83,7 +86,7 @@ func dialSSH(creds Credentials, hostKey ssh.HostKeyCallback) (*ssh.Client, error
 	}
 	port := creds.Port
 	if port == 0 {
-		port = defaultSSHPort
+		port = DefaultSSHPort
 	}
 	cfg := &ssh.ClientConfig{
 		User:            creds.User,
