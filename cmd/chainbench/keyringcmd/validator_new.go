@@ -1,4 +1,4 @@
-package main
+package keyringcmd
 
 import (
 	"github.com/spf13/cobra"
@@ -14,7 +14,7 @@ func newValidatorNewCmd() *cobra.Command {
 	var chain string
 	var jsonOut bool
 	var sf storeFlags
-	var pf passwordFlags
+	var pf PasswordFlags
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "Generate a new validator identity for a chain (chain-aware consensus material)",
@@ -25,6 +25,6 @@ func newValidatorNewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the validator identity as JSON")
 	sf.bind(cmd)
-	pf.bind(cmd)
+	pf.Bind(cmd)
 	return cmd
 }

@@ -1,4 +1,4 @@
-package main
+package keyringcmd_test
 
 import (
 	"encoding/json"
@@ -6,13 +6,25 @@ import (
 	"testing"
 )
 
-func validatorJSON(t *testing.T, args ...string) validatorOut {
+// validatorView mirrors the command's JSON output from the outside — these
+// tests assert the surface, not the internal type.
+type validatorView struct {
+	Chain        string `json:"chain"`
+	Family       string `json:"family"`
+	Address      string `json:"address"`
+	BLSPublicKey string `json:"blsPublicKey"`
+	BLSPoP       string `json:"blsPoP"`
+	Stored       string `json:"stored"`
+	Note         string `json:"note"`
+}
+
+func validatorJSON(t *testing.T, args ...string) validatorView {
 	t.Helper()
 	out, err := run(t, args...)
 	if err != nil {
 		t.Fatalf("%v: %v\n%s", args, err, out)
 	}
-	var v validatorOut
+	var v validatorView
 	if err := json.Unmarshal([]byte(out), &v); err != nil {
 		t.Fatalf("%v not JSON: %v\n%s", args, err, out)
 	}
@@ -56,8 +68,8 @@ func TestValidatorNew_RequiresChain(t *testing.T) {
 }
 
 func TestValidatorImport_PoaPrivateKey(t *testing.T) {
-	gen := keyJSON(t, "keys", "new", "--json")
-	v := validatorJSON(t, "validator", "import", "--chain", "wemix", "--private-key", gen["privateKey"], "--json")
+	ring := newRing(t)
+	v := validatorJSON(t, "validator", "import", "--chain", "wemix", "--private-key", exportKey(t, ring, "node1"), "--json")
 	if v.Family != "poa" || v.Address == "" {
 		t.Fatalf("import poa validator: %+v", v)
 	}

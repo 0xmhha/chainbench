@@ -1,4 +1,4 @@
-package main
+package keyringcmd_test
 
 import (
 	"encoding/json"
@@ -189,7 +189,7 @@ func TestKeyring_ImportRefusesToOverwrite(t *testing.T) {
 // TestKeyring_VerifyCatchesDrift checks the shipped ring and then a tampered
 // copy, so the check is shown to fail as well as pass.
 func TestKeyring_VerifyCatchesDrift(t *testing.T) {
-	if _, err := run(t, "keyring", "list", "--keyring", "../../keys/preset", "--verify"); err != nil {
+	if _, err := run(t, "keyring", "list", "--keyring", "../../../keys/preset", "--verify"); err != nil {
 		t.Fatalf("the shipped ring did not verify: %v", err)
 	}
 
@@ -366,5 +366,24 @@ func TestKeyringImport_RefusesMixedSources(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "exactly one") {
 		t.Fatalf("the refusal should say what is allowed: %v", err)
+	}
+}
+
+// TestKeyringImport_CoinTypeChangesTheKey pins that the BIP-44 coin type is
+// honoured: the same mnemonic on a different coin type is a different key —
+// silently ignoring the knob would derive the wrong identity for chains that
+// registered their own coin type.
+func TestKeyringImport_CoinTypeChangesTheKey(t *testing.T) {
+	const m = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+	a := filepath.Join(t.TempDir(), "a")
+	b := filepath.Join(t.TempDir(), "b")
+	if _, err := run(t, "keyring", "import", "--keyring", a, "--name", "k", "--mnemonic", m); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := run(t, "keyring", "import", "--keyring", b, "--name", "k", "--mnemonic", m, "--hd-coin-type", "8283"); err != nil {
+		t.Fatal(err)
+	}
+	if addressOf(t, a, "k") == addressOf(t, b, "k") {
+		t.Fatal("coin type had no effect on derivation")
 	}
 }

@@ -38,6 +38,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`REMOTE_WEMIX_DEPLOY_DESIGN.md`](REMOTE_WEMIX_DEPLOY_DESIGN.md) | remote wemix+etcd 배포 설계(현행 remote 경로). |
 | [`MCP_USAGE.md`](MCP_USAGE.md) | chainbench MCP 서버 사용 가이드(도구 호출, `.mcp.json` 등록). |
 | [`SECURITY_KEY_HANDLING.md`](SECURITY_KEY_HANDLING.md) | 키 취급 보안 정책·위협 모델. 프리셋 키는 **테스트 픽스처 전용**. |
+| [`KEYRING_USAGE.md`](KEYRING_USAGE.md) | **keyring 사용 설명서** — 링 개념·명령 전부·가져오기 출처(니모닉/파일/srv://)·원격 환경변수·`--docker` 모드 · **수동 검증 체크리스트**(자동 테스트와 1:1 대응). |
 
 ## `dev/` 개발 문서
 

@@ -1,4 +1,4 @@
-package main
+package keyringcmd_test
 
 import (
 	"context"

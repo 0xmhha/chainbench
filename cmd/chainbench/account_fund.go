@@ -5,6 +5,8 @@ import (
 	"math/big"
 
 	"github.com/spf13/cobra"
+
+	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 )
 
 // newAccountFundCmd funds an account: it sends amount wei to a recipient from a
@@ -21,8 +23,8 @@ func newAccountFundCmd() *cobra.Command {
 		to           string
 		amount       string
 	)
-	var src sourceFlags
-	var pf passwordFlags
+	var src keyringcmd.SourceFlags
+	var pf keyringcmd.PasswordFlags
 	cmd := &cobra.Command{
 		Use:   "fund",
 		Short: "Send funds to an account from a funding key (private key, mnemonic, or file)",
@@ -31,7 +33,7 @@ func newAccountFundCmd() *cobra.Command {
 			if !ok {
 				return fmt.Errorf("bad --amount %q (decimal wei expected)", amount)
 			}
-			source, err := src.source(pf.source())
+			source, err := src.Source(pf.Source())
 			if err != nil {
 				return err
 			}
@@ -60,7 +62,7 @@ func newAccountFundCmd() *cobra.Command {
 	_ = cmd.MarkFlagRequired("rpc")
 	_ = cmd.MarkFlagRequired("to")
 	_ = cmd.MarkFlagRequired("amount")
-	src.bind(cmd)
-	pf.bind(cmd)
+	src.Bind(cmd)
+	pf.Bind(cmd)
 	return cmd
 }
