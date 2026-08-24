@@ -329,13 +329,13 @@ type NetLogsOut struct {
 }
 
 // NetLogs returns the last N lines of one node's log. Read-only.
-func NetLogs(_ context.Context, d Deps, in NetLogsIn) (NetLogsOut, error) {
+func NetLogs(ctx context.Context, d Deps, in NetLogsIn) (NetLogsOut, error) {
 	ws, err := netcompose.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetLogsOut{}, err
 	}
 	ws.SetEnv(d.Env)
-	text, err := ws.Logs(in.Node, in.Lines)
+	text, err := ws.Logs(ctx, in.Node, in.Lines)
 	return NetLogsOut{Text: text}, err
 }
 

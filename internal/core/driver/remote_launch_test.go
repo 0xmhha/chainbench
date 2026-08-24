@@ -1,8 +1,11 @@
 package driver
 
 import (
+	"context"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // TestLaunchCommand_BackgroundsOnlyTheNode pins the shell grammar the remote
@@ -41,5 +44,29 @@ func TestSudoWrap_KeepsThePasswordOffTheCommandLine(t *testing.T) {
 	}
 	if strings.Contains(cmd, "chainbench\n") || strings.Contains(cmd, "--password") {
 		t.Fatalf("a password reached the command line:\n%s", cmd)
+	}
+}
+
+// TestProbePorts_AsksBothFacesFromTheTarget pins the remote occupancy probe:
+// the question runs ON the target (bash /dev/tcp), tries loopback AND the
+// host's own address — a listener may be bound to either — and parses only
+// the ports that accepted.
+func TestProbePorts_AsksBothFacesFromTheTarget(t *testing.T) {
+	var got string
+	d := NewRemoteDriver(func(_ context.Context, cmd string) (remote.ExecResult, error) {
+		got = cmd
+		return remote.ExecResult{Stdout: "8600\n31000\n"}, nil
+	})
+	open, err := d.ProbePorts(context.Background(), "172.30.0.11", []int{8600, 8610, 31000})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"/dev/tcp/127.0.0.1/$p", "/dev/tcp/172.30.0.11/$p", "8600 8610 31000"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("probe script lost %q:\n%s", want, got)
+		}
+	}
+	if len(open) != 2 || open[0] != 8600 || open[1] != 31000 {
+		t.Fatalf("open = %v, want [8600 31000]", open)
 	}
 }

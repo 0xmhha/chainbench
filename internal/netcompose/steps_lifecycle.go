@@ -3,11 +3,8 @@ package netcompose
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
@@ -244,16 +241,21 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// Logs returns the last n lines of one node's log (local target).
-func (w *Workspace) Logs(index, n int) (string, error) {
-	if w.state.Target.IsRemote() {
-		return "", fmt.Errorf("netcompose: logs: remote log tailing is not supported yet")
+// Logs returns the last n lines of one node's log. The log lives on the
+// target, so it is read through the target's file store — the same seam that
+// wrote it — which is what makes a remote node's log one call instead of a
+// branch. (The collector's live tail has its own byte-offset reader; this is
+// the step surface's one-shot read.)
+func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
+	t, err := w.resolveTarget()
+	if err != nil {
+		return "", err
 	}
 	for _, ns := range w.state.Nodes {
 		if ns.Index != index {
 			continue
 		}
-		b, err := os.ReadFile(ns.LogPath)
+		b, err := t.Files.Read(ctx, ns.LogPath)
 		if err != nil {
 			return "", fmt.Errorf("netcompose: logs: %w", err)
 		}
@@ -332,11 +334,10 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 			addrs = append(addrs, occupancy.Addr{Host: host, Port: port, Node: ns.Index, Purpose: purpose})
 		}
 	}
-	dial, err := w.probeDial()
+	busy, err := w.scanOccupancy(ctx, addrs)
 	if err != nil {
 		return err
 	}
-	busy := occupancy.Scan(ctx, addrs, dial)
 	if len(busy) == 0 {
 		return nil
 	}
@@ -368,27 +369,52 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 	return fmt.Errorf("netcompose: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint)
 }
 
-// probeDial reaches an address the way this workspace's own steps would. A
-// docker-backed target publishes its containers on loopback ports, and probing
-// the container's real address would find nothing and report every port free.
-func (w *Workspace) probeDial() (occupancy.DialFunc, error) {
-	m, err := w.addrMap()
+// scanOccupancy asks whether the plan's ports are taken, from where the
+// answer is true. A local target asks this machine's kernel (occupancy.Scan's
+// bind probe). A remote target is asked ON the target through the driver's
+// PortProber: probing from here lies in both directions — a loopback-bound
+// listener on the server is invisible from outside, and a docker-published
+// port is "open" from here even when nothing inside the container listens,
+// because the publish forwarder itself accepts the connection (measured: an
+// idle fleet reported every node port busy).
+func (w *Workspace) scanOccupancy(ctx context.Context, addrs []occupancy.Addr) ([]occupancy.Addr, error) {
+	if !w.state.Target.IsRemote() {
+		return occupancy.Scan(ctx, addrs, nil), nil
+	}
+	t, err := w.resolveTarget()
 	if err != nil {
 		return nil, err
 	}
-	if m == nil {
+	prober, ok := t.Driver.(driver.PortProber)
+	if !ok {
+		// A remote driver that cannot probe reports nothing rather than
+		// guessing from the wrong side; the launch finds a collision the
+		// old way ("address already in use").
 		return nil, nil
 	}
-	return func(ctx context.Context, hostPort string) (net.Conn, error) {
-		host, portStr, serr := net.SplitHostPort(hostPort)
-		if serr != nil {
-			return nil, serr
+	byHost := map[string][]int{}
+	for _, a := range addrs {
+		if a.Port > 0 {
+			byHost[a.Host] = append(byHost[a.Host], a.Port)
 		}
-		port, _ := strconv.Atoi(portStr)
-		h, p := m(host, port)
-		d := net.Dialer{Timeout: 300 * time.Millisecond}
-		return d.DialContext(ctx, "tcp", net.JoinHostPort(h, strconv.Itoa(p)))
-	}, nil
+	}
+	var busy []occupancy.Addr
+	for host, ports := range byHost {
+		open, err := prober.ProbePorts(ctx, host, ports)
+		if err != nil {
+			return nil, fmt.Errorf("netcompose: port probe on %s: %w", host, err)
+		}
+		taken := map[int]bool{}
+		for _, p := range open {
+			taken[p] = true
+		}
+		for _, a := range addrs {
+			if a.Host == host && taken[a.Port] {
+				busy = append(busy, a)
+			}
+		}
+	}
+	return busy, nil
 }
 
 // recordedLeftovers maps a port to what this workspace knows about the node
