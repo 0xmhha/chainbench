@@ -3,12 +3,16 @@ package netcompose
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/occupancy"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/target"
@@ -38,6 +42,14 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	}
 	if w.state.GenesisPath == "" {
 		return "", fmt.Errorf("netcompose: init: no genesis — run `net genesis` first")
+	}
+	// Before writing anything to the target. A datadir whose node is still
+	// running is refused by the binary here anyway ("datadir already used by
+	// another process"), but only after the step has begun and only about the
+	// datadir; asking first says which ports, on which host, and whether they
+	// are this workspace's own.
+	if err := w.checkVacant(ctx, registry.Phase{}); err != nil {
+		return "", err
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
@@ -298,7 +310,122 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 // startPhase launches one phase's nodes, or every stopped node when the phase
 // names none. A node already running is left alone: `net restart` bounces one,
 // and re-running `net start` should not double-launch the rest.
+// checkVacant refuses to launch onto ports something is already listening on.
+//
+// Without it the collision is discovered by the node, which dies with "address
+// already in use" partway through a bring-up, and the operator has to work out
+// which of three situations they are in. This says which: a port held by a node
+// this workspace recorded is its own leftover and `net stop` clears it; anything
+// else belongs to something this workspace did not start, and guessing would be
+// worse than refusing.
+func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
+	var addrs []occupancy.Addr
+	for _, ns := range w.state.Nodes {
+		if ns.PID > 0 || !phaseHasNode(phase, ns.Index) {
+			continue
+		}
+		host := nodeHost(ns)
+		for purpose, port := range map[string]int{
+			"p2p": ns.P2P, "etcd": ns.Etcd, "etcd-client": ns.EtcdClient,
+			"http": ns.HTTP, "ws": ns.WS, "auth": ns.Auth, "metrics": ns.Metrics,
+		} {
+			addrs = append(addrs, occupancy.Addr{Host: host, Port: port, Node: ns.Index, Purpose: purpose})
+		}
+	}
+	dial, err := w.probeDial()
+	if err != nil {
+		return err
+	}
+	busy := occupancy.Scan(ctx, addrs, dial)
+	if len(busy) == 0 {
+		return nil
+	}
+	mine := w.recordedLeftovers()
+	lines := make([]string, 0, len(busy))
+	var recoverable, byHand bool
+	for _, b := range busy {
+		who, ok := mine[b.Port]
+		switch {
+		case ok && who.pid > 0:
+			recoverable = true
+			lines = append(lines, fmt.Sprintf("  %s — this workspace's node%d (pid %d)", b, who.node, who.pid))
+		case ok:
+			byHand = true
+			lines = append(lines, fmt.Sprintf("  %s — this workspace's node%d, but no pid was recorded", b, who.node))
+		default:
+			byHand = true
+			lines = append(lines, fmt.Sprintf("  %s — not started by this workspace", b))
+		}
+	}
+	var hints []string
+	if recoverable {
+		hints = append(hints, "`net stop --data-dir "+w.Dir()+"` stops the ones with a recorded pid")
+	}
+	if byHand {
+		hints = append(hints, "the rest hold ports this workspace planned but cannot address — find and stop them by hand")
+	}
+	hint := strings.Join(hints, "; ")
+	return fmt.Errorf("netcompose: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint)
+}
+
+// probeDial reaches an address the way this workspace's own steps would. A
+// docker-backed target publishes its containers on loopback ports, and probing
+// the container's real address would find nothing and report every port free.
+func (w *Workspace) probeDial() (occupancy.DialFunc, error) {
+	m, err := w.addrMap()
+	if err != nil {
+		return nil, err
+	}
+	if m == nil {
+		return nil, nil
+	}
+	return func(ctx context.Context, hostPort string) (net.Conn, error) {
+		host, portStr, serr := net.SplitHostPort(hostPort)
+		if serr != nil {
+			return nil, serr
+		}
+		port, _ := strconv.Atoi(portStr)
+		h, p := m(host, port)
+		d := net.Dialer{Timeout: 300 * time.Millisecond}
+		return d.DialContext(ctx, "tcp", net.JoinHostPort(h, strconv.Itoa(p)))
+	}, nil
+}
+
+// recordedLeftovers maps a port to what this workspace knows about the node
+// that owns it, so a collision with our own earlier run reads as that rather
+// than as a stranger.
+//
+// Every node in the table counts, not only the ones with a pid. A workspace
+// that lost its pids — the interrupted run, the run whose state file was
+// removed while its nodes kept running — still owns the layout, and telling the
+// operator that their own ports belong to somebody else is the least useful
+// thing this check could say.
+func (w *Workspace) recordedLeftovers() map[int]owner {
+	out := map[int]owner{}
+	for _, ns := range w.state.Nodes {
+		o := owner{node: ns.Index, pid: ns.PID}
+		for _, port := range []int{ns.P2P, ns.Etcd, ns.EtcdClient, ns.HTTP, ns.WS, ns.Auth, ns.Metrics} {
+			if port > 0 {
+				out[port] = o
+			}
+		}
+	}
+	return out
+}
+
+// owner is what this workspace knows about the node that planned a port: which
+// node it is, and whether a pid was ever recorded for it. The difference
+// decides the remedy — a recorded pid can be stopped, and a missing one means
+// the run that started it never got to write it down.
+type owner struct {
+	node int
+	pid  int
+}
+
 func (w *Workspace) startPhase(ctx context.Context, t *target.Target, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+	if err := w.checkVacant(ctx, phase); err != nil {
+		return 0, err
+	}
 	started := 0
 	for i, ns := range w.state.Nodes {
 		if ns.PID > 0 || !phaseHasNode(phase, ns.Index) {
