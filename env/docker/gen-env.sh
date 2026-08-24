@@ -14,11 +14,13 @@ cd "$(dirname "$0")"
 
 # ---- knobs ---------------------------------------------------------------
 SERVERS="${SERVERS:-15}"          # server1..serverN (server15 is meant for pn)
+SLOTS="${SLOTS:-4}"               # port slots per server (nodes one host may hold)
 SUBNET_PREFIX="172.30.0"          # server i lives at .$((ADDR_OFFSET+i))
 ADDR_OFFSET=10
 SSH_PUB_BASE=2200                 # server i's sshd published at 127.0.0.1:$((base+i))
-RPC_PUB_BASE=18600                # server i's http rpc (8600) published at $((base+i))
-RPC_PORT=8600                     # the fleet slot's http port (rpc band base)
+RPC_PUB_BASE=18600                # slot s of server i published at $((base + 100*s + i))
+RPC_PORT=8600                     # the rpc band base (slot s listens on base + 10*s)
+RPC_STEP=10
 IMAGE="chainbench-server:ubuntu24"
 DATA_ROOT="/data/chainbench"
 # --------------------------------------------------------------------------
@@ -59,7 +61,11 @@ EOF
     ports:
       # published on loopback only: nothing outside this machine can reach them
       - "127.0.0.1:$((SSH_PUB_BASE + i)):22"
-      - "127.0.0.1:$((RPC_PUB_BASE + i)):${RPC_PORT}"
+EOF
+        for s in $(seq 0 $((SLOTS - 1))); do
+            echo "      - \"127.0.0.1:$((RPC_PUB_BASE + 100 * s + i)):$((RPC_PORT + RPC_STEP * s))\""
+        done
+        cat <<EOF
     volumes:
       - ./ssh/authorized_keys:/etc/chainbench/authorized_keys:ro
     command:
@@ -89,7 +95,7 @@ EOF
         echo "    - { name: server${i}, addr: $(addr "$i") }"
     done
     cat <<EOF
-  slots: 1
+  slots: ${SLOTS}
 
 ssh:
   user: root
@@ -110,10 +116,14 @@ EOF
 hosts:
 EOF
     for i in $(seq 1 "$SERVERS"); do
+        ports="22: $((SSH_PUB_BASE + i))"
+        for s in $(seq 0 $((SLOTS - 1))); do
+            ports="${ports}, $((RPC_PORT + RPC_STEP * s)): $((RPC_PUB_BASE + 100 * s + i))"
+        done
         cat <<EOF
   $(addr "$i"):
     host: 127.0.0.1
-    ports: { 22: $((SSH_PUB_BASE + i)), ${RPC_PORT}: $((RPC_PUB_BASE + i)) }
+    ports: { ${ports} }
 EOF
     done
 } > "$BUILD/localmap.yaml"

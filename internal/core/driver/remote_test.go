@@ -60,7 +60,10 @@ func TestRemoteDriver_ProvisionLaunchStop(t *testing.T) {
 		t.Errorf("launch handle = %+v, want pid 12345 index 1", h)
 	}
 	launch := f.last()
-	for _, want := range []string{"nohup '/opt/gwbft'", "'--datadir' '/data/node1' '--mine'", "> '/data/logs/node1.log' 2>&1 &", "echo $!"} {
+	// The `|| exit 1;` before nohup is load-bearing: joined with && the whole
+	// list is backgrounded and a subshell holds the SSH session open while it
+	// waits on the node (see launchCommand).
+	for _, want := range []string{"|| exit 1; nohup '/opt/gwbft'", "'--datadir' '/data/node1' '--mine'", "> '/data/logs/node1.log' 2>&1 < /dev/null &", "echo $!"} {
 		if !strings.Contains(launch, want) {
 			t.Errorf("launch command missing %q:\n%s", want, launch)
 		}

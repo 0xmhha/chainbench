@@ -20,6 +20,7 @@ package netcompose
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/netmap"
@@ -155,6 +156,19 @@ func (w *Workspace) SetEnv(fn func(string) string) {
 
 // State returns a copy of the current composition state.
 func (w *Workspace) State() State { return w.state }
+
+// keysBase is where a node's identity files (nodekey, keystore, password)
+// live at launch, from the target's point of view: the local key set for a
+// local target, or keys/ under the data root for a remote one — where the
+// provision step ships them, and where the rendered config and launch argv
+// then point. Baking the operator-side path into a remote config was how a
+// remote node came to look for its nodekey on a machine it cannot see.
+func (w *Workspace) keysBase() string {
+	if w.state.Target.IsRemote() {
+		return filepath.Join(w.state.Target.DataRoot, "keys")
+	}
+	return w.state.KeysDir
+}
 
 // addrMap returns the dial-time address translation for a docker-mode
 // composition, or nil when the workspace targets real servers. The localmap

@@ -51,7 +51,10 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if !ok {
 		return "", fmt.Errorf("netcompose: init: target driver cannot initialize datadirs")
 	}
-	gen, err := os.ReadFile(w.state.GenesisPath)
+	// GenesisPath is a path on the target: the genesis step wrote it through
+	// the target's file store, so it is read back the same way. A direct
+	// os.ReadFile here worked only while the target was this machine.
+	gen, err := t.Files.Read(ctx, w.state.GenesisPath)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: init: read genesis: %w", err)
 	}

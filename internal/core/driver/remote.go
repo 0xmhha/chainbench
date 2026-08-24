@@ -102,15 +102,7 @@ func (d *RemoteDriver) InitDatadir(ctx context.Context, spec NodeSpec, genesis [
 // Launch starts the node in the background on the remote host, redirecting
 // output to the log file, and returns its PID.
 func (d *RemoteDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error) {
-	parts := make([]string, 0, len(spec.Args)+1)
-	parts = append(parts, shq(spec.Binary))
-	for _, a := range spec.Args {
-		parts = append(parts, shq(a))
-	}
-	cmd := "mkdir -p " + shq(path.Dir(spec.LogPath)) +
-		" && nohup " + strings.Join(parts, " ") +
-		" > " + shq(spec.LogPath) + " 2>&1 & echo $!"
-	out, err := d.sh(ctx, cmd)
+	out, err := d.sh(ctx, launchCommand(spec))
 	if err != nil {
 		return Handle{}, fmt.Errorf("driver: remote launch node%d: %w", spec.Index, err)
 	}
@@ -119,6 +111,28 @@ func (d *RemoteDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error
 		return Handle{}, fmt.Errorf("driver: remote launch node%d returned no pid (%q)", spec.Index, out)
 	}
 	return Handle{Index: spec.Index, PID: pid}, nil
+}
+
+// launchCommand renders the shell line that starts a node in the background
+// and echoes its PID.
+//
+// The grammar is load-bearing. `mkdir && nohup CMD … &` backgrounds the WHOLE
+// `mkdir && nohup CMD` list: the shell forks a subshell, the redirections bind
+// only to CMD inside it, and the subshell — still holding the SSH session's
+// output pipes — waits on CMD in its foreground. The session then never sees
+// EOF and Launch never returns. It went unnoticed while launched nodes crashed
+// at startup (a dead subshell closes the pipes); the first node that lived
+// hung the harness. `mkdir || exit 1; nohup CMD … &` backgrounds only CMD.
+// stdin is redirected away so the node never holds the session's stdin either.
+func launchCommand(spec NodeSpec) string {
+	parts := make([]string, 0, len(spec.Args)+1)
+	parts = append(parts, shq(spec.Binary))
+	for _, a := range spec.Args {
+		parts = append(parts, shq(a))
+	}
+	return "mkdir -p " + shq(path.Dir(spec.LogPath)) +
+		" || exit 1; nohup " + strings.Join(parts, " ") +
+		" > " + shq(spec.LogPath) + " 2>&1 < /dev/null & echo $!"
 }
 
 // Stop terminates the remote node by PID. A process that has already exited is
