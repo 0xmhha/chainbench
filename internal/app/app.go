@@ -41,11 +41,25 @@ type Deps struct {
 	// is how a remote provision came to write its genesis and configs to the
 	// operator's own disk while shipping only the identities.
 	Files func() (provision.FileStore, error)
+	// Command is what the operator typed, recorded in the workspace lock so a
+	// run that finds the workspace busy can say what is using it. Injected
+	// rather than read from os.Args: a use case must not depend on how the
+	// process was started.
+	Command string
 	// Logf reports operational side notes a caller should see as they happen —
 	// today, the dial-address translations --docker applies. Nil discards them.
 	// It is not a result channel: anything a caller acts on belongs in the
 	// use case's returned value.
 	Logf func(format string, args ...any)
+}
+
+// command is what the operator typed, or a placeholder when nothing was
+// injected (an MCP call, a test).
+func (d Deps) command() string {
+	if d.Command == "" {
+		return "(command not recorded)"
+	}
+	return d.Command
 }
 
 // logf reports through the injected logger; nil discards.

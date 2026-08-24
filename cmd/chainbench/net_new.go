@@ -26,7 +26,7 @@ func newNetNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetNew(cmd.Context(), app.Deps{}, app.NetNewIn{
+			out, err := app.NetNew(cmd.Context(), cliDeps(cmd), app.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
 			})

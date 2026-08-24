@@ -23,7 +23,7 @@ func newNetStatusCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			res, err := app.NetStatus(cmd.Context(), app.Deps{}, app.NetStatusIn{DataDir: dataDir})
+			res, err := app.NetStatus(cmd.Context(), cliDeps(cmd), app.NetStatusIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}

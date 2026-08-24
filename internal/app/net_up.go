@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
 // NetUp composes a whole network in one call by running the step use cases in
@@ -101,6 +103,24 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	}
 	if stage == UpStart && in.Binary == "" {
 		return NetUpOut{}, errors.New("app: net up --stage=start needs a node binary")
+	}
+
+	// The composite holds the workspace for its whole run. Each step it calls
+	// takes the lock too, but a run cannot conflict with itself (session
+	// Acquire is re-entrant per process); what this closes is the gap between
+	// steps, where another run used to slip in and compose over a half-built
+	// network.
+	lockWS, err := netcompose.Open(in.DataDir, d.Clock)
+	if err != nil {
+		return NetUpOut{}, err
+	}
+	held, prev, lockState, err := lockWS.Acquire(d.command())
+	if err != nil {
+		return NetUpOut{}, err
+	}
+	defer func() { _ = held.Release() }()
+	if lockState == session.LockStale {
+		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up", prev.Describe())
 	}
 
 	var out NetUpOut

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
@@ -34,6 +35,21 @@ func withWorkspace(d Deps, dataDir string, fn func(*netcompose.Workspace) (strin
 		return "", err
 	}
 	ws.SetEnv(d.Env)
+
+	// One run at a time per workspace. A second run would compose over the
+	// first's half-built network and blame the collision on the chain; the
+	// refusal names who holds it instead. A lock left by a run that died is
+	// taken over — that run is gone, and its wreckage is what the operator is
+	// here to clear — but never in silence.
+	held, prev, state, lerr := ws.Acquire(d.command())
+	if lerr != nil {
+		return "", lerr
+	}
+	defer func() { _ = held.Release() }()
+	if state == session.LockStale {
+		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `net status` shows what is there", prev.Describe())
+	}
+
 	detail, stepErr := fn(ws)
 	saveErr := ws.Save()
 	switch {

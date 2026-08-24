@@ -146,6 +146,15 @@ func Open(dir string, now func() time.Time) (*Workspace, error) {
 // Dir is the workspace's local control directory.
 func (w *Workspace) Dir() string { return w.comp.Dir() }
 
+// Acquire takes the workspace's lock for this run, reporting the previous
+// holder and what it was. See session.Composition.Acquire.
+func (w *Workspace) Acquire(command string) (*session.Held, session.Lock, session.LockState, error) {
+	return w.comp.Acquire(command)
+}
+
+// Lock reports who holds the workspace without taking it.
+func (w *Workspace) Lock() (session.Lock, session.LockState, error) { return w.comp.Lock() }
+
 // SetEnv overrides the environment reader used when resolving a remote target
 // (credentials). Nil is ignored; the default is os.Getenv.
 func (w *Workspace) SetEnv(fn func(string) string) {
