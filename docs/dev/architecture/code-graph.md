@@ -33,7 +33,7 @@ and `tests/` and emits:
 
 ```mermaid
 flowchart TD
-    entry[entry: cmd/chainbench · chainbenchd · chainbench-mcp]
+    entry[entry: cmd/chainbench · chainbench-dashboard · chainbench-mcp]
     orch[orchestration: engine · mcp · testspec · chainsetup · netcompose]
     domain[domain: chains · consensus · validatorset · accounts]
     core[core: 31 packages]

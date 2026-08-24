@@ -187,7 +187,7 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 | 변곡점 | 설정 위치 |
 |---|---|
 | 세션 아티팩트 | `--artifact-root` (기본 `chainbench-out`) |
-| 라이브 대시보드 | `run --dashboard <chainbenchd URL>` |
+| 라이브 대시보드 | `run --dashboard <chainbench-dashboard URL>` |
 | 로그 tail | 로컬 파일 / 원격 `driver.RemoteLogReader`(SSH `tail -c +N`) |
 | chainstate | `chainstate/chainstate.jsonl` + obs 미러 |
 

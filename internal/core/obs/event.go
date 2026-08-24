@@ -5,7 +5,7 @@
 // consumes obs to build reports; it does not own storage
 // (docs/CHAINBENCH_GO_REDESIGN.md §8).
 //
-// The event bus feeds the dashboard (requirement #19) via chainbenchd; its wire
+// The event bus feeds the dashboard (requirement #19) via chainbench-dashboard; its wire
 // format is deferred to the dashboard phase (G8).
 package obs
 

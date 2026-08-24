@@ -61,7 +61,7 @@ Open an issue with the `enhancement` label. Describe:
 ```
 cmd/chainbench/     Go CLI (cobra commands)
 cmd/chainbench-mcp/ Go MCP server for AI integration (single binary)
-cmd/chainbenchd/    Dashboard daemon
+cmd/chainbench-dashboard/    Dashboard daemon
 pkg/core/           shared core (config, genesis, nodeconfig, driver, rpc, logs, state, ...)
 pkg/consensus/      consensus families (wbft, poa) + upgrade orchestration
 pkg/chains/         chain plugins (stablenet, wbft, wemix)

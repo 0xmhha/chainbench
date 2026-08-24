@@ -67,7 +67,7 @@ graph TD
   classDef core fill:#fef7e0,stroke:#c99a1e
   classDef acl fill:#fce8e6,stroke:#c5392e
 
-  S["<b>Surfaces</b><br/>cmd/chainbench · cmd/chainbench-mcp · cmd/chainbenchd<br/>internal/mcp · internal/dashboard"]:::surface
+  S["<b>Surfaces</b><br/>cmd/chainbench · cmd/chainbench-mcp · cmd/chainbench-dashboard<br/>internal/mcp · internal/dashboard"]:::surface
   O["<b>Orchestration</b><br/>internal/engine (H1) · internal/testspec (C1)"]:::orch
   M["<b>Core — 역할 완결</b><br/>session · place · keyreg · genesis · provision<br/>supervisor · procman · collector · driver"]:::core
   L["<b>Core — atomic</b><br/>config · node · rpc · nodeconfig · portplan · topology<br/>obs · logs · remote · registry · capability"]:::core

@@ -6,7 +6,7 @@ BIN_DIR  ?= bin
 VERSION  ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS  := -ldflags "-X main.version=$(VERSION)"
 PKGS     ?= ./...
-CMDS     := chainbench chainbenchd chainbench-mcp
+CMDS     := chainbench chainbench-dashboard chainbench-mcp
 # The linter is pinned so a local run and CI reach the same verdict. The version
 # lives in one file that both this and .github/workflows/ci.yml read: an older
 # golangci-lint reported three findings here that the pinned one does not, and

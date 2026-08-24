@@ -23,7 +23,7 @@ graph TB
   subgraph SURF["Surfaces — 얇은 어댑터"]
     CLI["cmd/chainbench<br/>60 commands"]:::surface
     MCP["internal/mcp<br/>~50 tools"]:::surface
-    DASH["internal/dashboard<br/>+ cmd/chainbenchd"]:::surface
+    DASH["internal/dashboard<br/>+ cmd/chainbench-dashboard"]:::surface
   end
 
   subgraph ORCH["Orchestration"]
@@ -106,7 +106,7 @@ graph LR
   U(["개발자 / LLM"])
   CLIC["chainbench<br/>CLI 바이너리"]:::c
   MCPC["chainbench-mcp<br/>MCP 서버"]:::c
-  DC["chainbenchd<br/>대시보드 서버"]:::c
+  DC["chainbench-dashboard<br/>대시보드 서버"]:::c
   FS[("세션 아티팩트<br/>.chainbench/&lt;session&gt;/")]:::c
   WS[("워크스페이스<br/>&lt;data-dir&gt;/state.json")]:::c
 

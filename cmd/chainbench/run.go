@@ -56,7 +56,7 @@ func newRunCmd() *cobra.Command {
 			}
 
 			// When a dashboard is given, publish orchestration events to a local
-			// bus and forward them to the running chainbenchd. Emission never
+			// bus and forward them to the running chainbench-dashboard. Emission never
 			// blocks the run; we close the bus and drain the forwarder before
 			// exiting so buffered events are flushed.
 			var bus *obs.Bus
@@ -106,7 +106,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
 		"local: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
 	sf.bind(cmd)
-	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbenchd URL to stream run events to (e.g. http://127.0.0.1:8787)")
+	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd
 }

@@ -61,7 +61,7 @@ a live PoA→BFT hardfork handoff (`wemix` → `wbft`).
 ## Features
 
 - **One core, three surfaces** — a CLI (`chainbench`), an MCP server
-  (`chainbench-mcp`) for AI agents, and a dashboard daemon (`chainbenchd`) all
+  (`chainbench-mcp`) for AI agents, and a dashboard daemon (`chainbench-dashboard`) all
   call the same Go core, so every surface stays behaviorally identical.
 - **Consensus-family plugins** — the primary extension axis is the consensus
   algorithm (`wbft`, `poa`); a chain is a thin plugin that selects a family and
@@ -101,7 +101,7 @@ cd chainbench
 # build the three binaries
 go build -o bin/chainbench     ./cmd/chainbench
 go build -o bin/chainbench-mcp ./cmd/chainbench-mcp
-go build -o bin/chainbenchd    ./cmd/chainbenchd
+go build -o bin/chainbench-dashboard    ./cmd/chainbench-dashboard
 
 # ...or build all + register on $PATH for local use
 ./setup.sh
@@ -157,7 +157,7 @@ Run `chainbench <command> --help` for the full flag set of any command.
 | `upgrade genesis \| run` | concurrent consensus-family handoff (see below) |
 
 A persistent `--dashboard <url>` flag forwards `setup` / `verify` / `test` events
-to a running `chainbenchd` over SSE.
+to a running `chainbench-dashboard` over SSE.
 
 ### Consensus-family upgrade
 
@@ -200,12 +200,12 @@ a `.jsonl` catalog plus handlers under `pkg/mcp/features/<project>/`; see
 
 ### Dashboard
 
-`chainbenchd` serves a live dashboard: a Server-Sent Events stream at `/events`
+`chainbench-dashboard` serves a live dashboard: a Server-Sent Events stream at `/events`
 and run state at `/api/runs`, with a built Svelte SPA under `/app/`. Point CLI
 runs at it with `--dashboard`:
 
 ```bash
-chainbenchd --addr 127.0.0.1:8787 &
+chainbench-dashboard --addr 127.0.0.1:8787 &
 chainbench verify --data-dir /tmp/cb --dashboard http://127.0.0.1:8787
 ```
 
@@ -258,7 +258,7 @@ chainbench/
 ├── cmd/
 │   ├── chainbench/       # CLI (cobra)
 │   ├── chainbench-mcp/   # MCP server (single binary)
-│   └── chainbenchd/      # dashboard daemon (HTTP/SSE)
+│   └── chainbench-dashboard/      # dashboard daemon (HTTP/SSE)
 ├── pkg/
 │   ├── core/             # chain-agnostic core: registry, config, pipeline
 │   │                     #   (setup/verify/attach/testrun), driver, genesis,
