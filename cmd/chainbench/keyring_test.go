@@ -317,3 +317,18 @@ func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 		t.Errorf("ring holds %d identities after import, want 4", got)
 	}
 }
+
+// TestKeyringImport_DockerNeedsTheLocalmap pins the --docker activation rule
+// end to end: the option without the mapping file refuses with the fix named,
+// before any dial is attempted.
+func TestKeyringImport_DockerNeedsTheLocalmap(t *testing.T) {
+	dir := newRing(t)
+	out, err := run(t, "keyring", "import", "--keyring", dir, "--name", "srvkey",
+		"--from", "srv://server1/data/chainbench/nodekey", "--docker")
+	if err == nil {
+		t.Fatalf("import --docker without a localmap should refuse:\n%s", out)
+	}
+	if !strings.Contains(err.Error(), "--docker") {
+		t.Fatalf("the refusal should name the option demanding the file: %v", err)
+	}
+}

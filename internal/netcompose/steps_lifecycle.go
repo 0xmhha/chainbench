@@ -43,7 +43,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +51,10 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if !ok {
 		return "", fmt.Errorf("netcompose: init: target driver cannot initialize datadirs")
 	}
-	gen, err := os.ReadFile(w.state.GenesisPath)
+	// GenesisPath is a path on the target: the genesis step wrote it through
+	// the target's file store, so it is read back the same way. A direct
+	// os.ReadFile here worked only while the target was this machine.
+	gen, err := t.Files.Read(ctx, w.state.GenesisPath)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: init: read genesis: %w", err)
 	}
@@ -83,7 +86,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -124,7 +127,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.
 func (w *Workspace) Stop(ctx context.Context) (string, error) {
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -166,7 +169,7 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -265,10 +268,23 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	if len(w.state.Nodes) == 0 {
 		return nil, fmt.Errorf("netcompose: health: no node table — run `net allocate` first")
 	}
+	m, err := w.addrMap()
+	if err != nil {
+		return nil, err
+	}
 	out := make([]NodeHealth, len(w.state.Nodes))
 	for i, ns := range w.state.Nodes {
 		h := NodeHealth{Index: ns.Index, PID: ns.PID}
-		c := rpc.Dial(fmt.Sprintf("http://%s:%d", w.RPCHost(), ns.HTTP))
+		// A fleet places each node on its own address, so the probe asks the
+		// node's recorded host, not the target-level one.
+		host, port := ns.Host, ns.HTTP
+		if host == "" {
+			host = w.RPCHost()
+		}
+		if m != nil {
+			host, port = m(host, port)
+		}
+		c := rpc.Dial(fmt.Sprintf("http://%s:%d", host, port))
 		if bn, err := c.BlockNumber(ctx); err != nil {
 			h.Err = err.Error()
 		} else {

@@ -23,6 +23,10 @@ type NewOpts struct {
 	// Target is where the network's data plane lives. A zero Target defaults to
 	// a local target whose data root is the workspace directory.
 	Target target.TargetSpec
+	// Docker treats the composition's servers as local docker containers: the
+	// harness's dials are translated through the localmap next to the server
+	// inventory. Recorded once here so every later step follows it.
+	Docker bool
 }
 
 // New records the target chain, optional binary, key set, and compose target on
@@ -64,12 +68,16 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.state.Binary = opts.Binary
 	w.state.KeysDir = keysDir
 	w.state.Target = tgt
+	w.state.Docker = opts.Docker
 
 	var loc string
 	if tgt.IsRemote() {
 		loc = fmt.Sprintf("remote %s@%s:%s", tgt.User, tgt.Host, tgt.DataRoot)
 	} else {
 		loc = fmt.Sprintf("local %s", tgt.DataRoot)
+	}
+	if opts.Docker {
+		loc += " (docker: dials translated via localmap)"
 	}
 	detail := fmt.Sprintf("%s: family %s, chain id %d, bootstrap %s; keys %s; target %s",
 		m.ID, m.ConsensusFamily, m.ChainID, m.Bootstrap.Type, keysDir, loc)

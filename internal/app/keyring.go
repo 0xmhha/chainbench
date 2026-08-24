@@ -14,6 +14,7 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
@@ -221,6 +222,11 @@ type RingImportIn struct {
 	Password string
 	// WithBLS derives BLS material for the imported key.
 	WithBLS bool
+	// Docker treats the servers as local docker containers: the harness's own
+	// dials are translated through the localmap file next to the inventory.
+	// The flag is the power switch — a leftover mapping file alone activates
+	// nothing, and the flag without the file is an error.
+	Docker bool
 }
 
 // KeyringImport writes an existing key into a ring's index.
@@ -262,7 +268,15 @@ func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) 
 	if err != nil {
 		return nil, err
 	}
-	tgt, err := spec.ResolveWith(d.env(), serverset.InventoryLookup(inventory))
+	var m remote.AddrMap
+	if in.Docker {
+		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inventory))
+		if err != nil {
+			return nil, err
+		}
+		m = lm.AddrMap(func(from, to string) { d.logf("docker: dialing %s as %s", from, to) })
+	}
+	tgt, err := spec.ResolveWithMap(d.env(), serverset.InventoryLookup(inventory), m)
 	if err != nil {
 		return nil, err
 	}

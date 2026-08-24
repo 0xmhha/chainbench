@@ -13,6 +13,7 @@ import (
 // + output — the logic lives in the app layer, shared with the MCP tool.
 func newNetNewCmd() *cobra.Command {
 	var dataDir, chain, binary, keysDir, manifestPath, templatePath string
+	var docker bool
 	var tf targetFlags
 	cmd := &cobra.Command{
 		Use:   "new",
@@ -27,7 +28,7 @@ func newNetNewCmd() *cobra.Command {
 			}
 			out, err := app.NetNew(cmd.Context(), app.Deps{}, app.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
-				ManifestPath: manifestPath, TemplatePath: templatePath,
+				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
 			})
 			if err != nil {
 				return err
@@ -42,6 +43,8 @@ func newNetNewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (may also be set at start)")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from (inspect/manage it with `account`)")
+	cmd.Flags().BoolVar(&docker, "docker", false,
+		"servers are local docker containers: translate this tool's dials via the localmap next to the inventory (addresses only — docker itself is not touched)")
 	tf.bind(cmd)
 	return cmd
 }

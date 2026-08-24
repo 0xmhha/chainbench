@@ -32,6 +32,7 @@ func netNewTool() Tool {
 				"remoteUser": map[string]any{"type": "string", "description": "legacy: SSH user (prefer target)"},
 				"remotePort": map[string]any{"type": "number", "description": "legacy: SSH port (prefer target)"},
 				"targetDir":  map[string]any{"type": "string", "description": "legacy: data root ON the target (prefer target)"},
+				"docker":     map[string]any{"type": "boolean", "description": "servers are local docker containers: translate this tool's dials via the localmap next to the inventory"},
 			},
 			"required": []string{"dataDir", "chain"},
 		},
@@ -46,6 +47,7 @@ func netNewTool() Tool {
 				Binary:  argString(args, "binary", ""),
 				KeysDir: argString(args, "keys", ""),
 				Target:  target,
+				Docker:  argBool(args, "docker", false),
 			})
 			if err != nil {
 				return "", err

@@ -153,12 +153,14 @@ func keyringImportTool() Tool {
 			"password":     map[string]any{"type": "string", "description": "password for a keystore named by from"},
 			"withBls":      map[string]any{"type": "boolean", "description": "also derive BLS material"},
 			"serverConfig": map[string]any{"type": "string", "description": "inventory file for an srv:// source"},
+			"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate this dial via the localmap next to the inventory"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			e, err := app.KeyringImport(ctx, app.Deps{}, app.RingImportIn{
 				Ring: ringRef(args), Label: argString(args, "name", ""),
 				From: argString(args, "from", ""), Password: argString(args, "password", ""),
 				WithBLS: argBool(args, "withBls", false),
+				Docker:  argBool(args, "docker", false),
 			})
 			if err != nil {
 				return "", err

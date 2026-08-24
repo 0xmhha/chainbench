@@ -23,6 +23,7 @@ func newNetUpCmd() *cobra.Command {
 		genesisSet, launchSet                 []string
 		overlayPath                           string
 		peering                               string
+		docker                                bool
 		tf                                    targetFlags
 		sf                                    serverFlags
 	)
@@ -44,6 +45,7 @@ func newNetUpCmd() *cobra.Command {
 				Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Server:     sf.ref(),
+				Docker:     docker,
 				KeysSource: keysSource,
 				ChainID:    chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
 				LaunchSet: launchSet,
@@ -77,6 +79,8 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringArrayVar(&genesisSet, "set", nil, "override a genesis config key (repeatable), e.g. --set bohoBlock=10")
 	cmd.Flags().StringVar(&overlayPath, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
+	cmd.Flags().BoolVar(&docker, "docker", false,
+		"servers are local docker containers: translate this tool's dials via the localmap next to the inventory (addresses only — docker itself is not touched)")
 	tf.bind(cmd)
 	sf.bind(cmd)
 	return cmd

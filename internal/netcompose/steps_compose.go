@@ -3,7 +3,9 @@ package netcompose
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"maps"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -20,6 +22,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/engine"
 	"github.com/0xmhha/chainbench/internal/serverset"
@@ -120,6 +123,9 @@ type AllocateOpts struct {
 	// server inventory passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
 	Placement serverset.Placement
+	// ConfigPath is the inventory file Placement came from, persisted so later
+	// steps resolve the same file (and, in docker mode, its sibling localmap).
+	ConfigPath string
 }
 
 // placements resolves the requested layout into one placement request per node,
@@ -186,6 +192,9 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	pl := opts.Placement
 	if pl.Source == "" {
 		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
+	}
+	if opts.ConfigPath != "" {
+		w.state.ServerConfig = opts.ConfigPath
 	}
 	pool := pl.Pool
 	if pool.Slots < 1 {
@@ -298,7 +307,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", err
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -412,7 +421,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		}
 		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -425,7 +434,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
 			Ports:         ns.Endpoints,
-			KeystoreDir:   filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index), "keystore"),
+			KeystoreDir:   filepath.Join(w.keysBase(), fmt.Sprintf("node%d", ns.Index), "keystore"),
 			RPCNamespace:  m.Consensus.RPCNamespace,
 			SyncMode:      ns.SyncMode,
 			MinerRecommit: m.MinerRecommit,
@@ -467,7 +476,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		return "", err
 	}
 	for i, ns := range w.state.Nodes {
-		args, err := engine.NodeLaunchArgs(p, preset, driverSpec(ns), w.state.KeysDir, overrides)
+		args, err := engine.NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
 		if err != nil {
 			return "", fmt.Errorf("netcompose: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -491,7 +500,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: provision: no node table — run `net allocate` first")
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -515,9 +524,75 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 			return "", err
 		}
 	}
+	shipped, err := w.shipIdentities(ctx, t)
+	if err != nil {
+		return "", err
+	}
 	detail := fmt.Sprintf("%d launch input(s) present on the target (reused, not rewritten)", present)
+	if shipped > 0 {
+		detail += fmt.Sprintf(", %d identity file(s) shipped to %s", shipped, w.keysBase())
+	}
 	w.markStep("provision", detail)
 	return detail, nil
+}
+
+// shipIdentities uploads each node's identity files — the devp2p nodekey, the
+// validator keystore, and the shared password — from the local key set to
+// keysBase on a remote target, upload-if-absent like the rest of provision.
+// The rendered config and the launch argv point at keysBase, so without this
+// a remote node would look for its keys on the operator's machine. A local
+// target ships nothing: keysBase is the key set itself.
+func (w *Workspace) shipIdentities(ctx context.Context, t *target.Target) (int, error) {
+	if !w.state.Target.IsRemote() {
+		return 0, nil
+	}
+	shipped := 0
+	put := func(src, dst string, mode fs.FileMode) error {
+		b, err := os.ReadFile(src)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil // e.g. an endpoint node with no keystore
+			}
+			return err
+		}
+		exists, err := t.Files.Exists(ctx, dst)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return nil
+		}
+		if err := t.Files.Write(ctx, dst, b, mode); err != nil {
+			return err
+		}
+		shipped++
+		return nil
+	}
+	base := w.keysBase()
+	if err := put(filepath.Join(w.state.KeysDir, "password"), filepath.Join(base, "password"), 0o600); err != nil {
+		return shipped, fmt.Errorf("netcompose: provision: password: %w", err)
+	}
+	for _, ns := range w.state.Nodes {
+		src := filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index))
+		dst := filepath.Join(base, fmt.Sprintf("node%d", ns.Index))
+		if err := put(filepath.Join(src, "nodekey"), filepath.Join(dst, "nodekey"), 0o600); err != nil {
+			return shipped, fmt.Errorf("netcompose: provision: node%d nodekey: %w", ns.Index, err)
+		}
+		entries, err := os.ReadDir(filepath.Join(src, "keystore"))
+		if err != nil {
+			continue // no keystore for this node
+		}
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			if err := put(filepath.Join(src, "keystore", e.Name()),
+				filepath.Join(dst, "keystore", e.Name()), 0o600); err != nil {
+				return shipped, fmt.Errorf("netcompose: provision: node%d keystore: %w", ns.Index, err)
+			}
+		}
+	}
+	return shipped, nil
 }
 
 // ParseOverrides maps "key=value" strings (bare key for booleans) onto typed
