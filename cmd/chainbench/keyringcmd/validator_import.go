@@ -1,4 +1,4 @@
-package main
+package keyringcmd
 
 import (
 	"github.com/spf13/cobra"
@@ -10,14 +10,14 @@ import (
 func newValidatorImportCmd() *cobra.Command {
 	var chain string
 	var jsonOut bool
-	var src sourceFlags
+	var src SourceFlags
 	var sf storeFlags
-	var pf passwordFlags
+	var pf PasswordFlags
 	cmd := &cobra.Command{
 		Use:   "import",
 		Short: "Import a key as a validator identity for a chain",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			source, err := src.source(pf.source())
+			source, err := src.Source(pf.Source())
 			if err != nil {
 				return err
 			}
@@ -26,8 +26,8 @@ func newValidatorImportCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the validator identity as JSON")
-	src.bind(cmd)
+	src.Bind(cmd)
 	sf.bind(cmd)
-	pf.bind(cmd)
+	pf.Bind(cmd)
 	return cmd
 }

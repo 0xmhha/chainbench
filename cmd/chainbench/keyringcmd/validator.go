@@ -1,4 +1,4 @@
-package main
+package keyringcmd
 
 import (
 	"encoding/json"
@@ -11,11 +11,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// newValidatorCmd is the validator-identity group. A validator is an account
+// NewValidator builds the validator-identity group. A validator is an account
 // plus consensus-specific material (BLS keys for wbft; governance/stake
 // registration for poa), so it gets its own command rather than living under
 // `account`. Subcommands live in the validator_*.go files and are composed here.
-func newValidatorCmd() *cobra.Command {
+func NewValidator() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validator",
 		Short: "Inspect and manage validator identities; key material lives under `keyring`",
@@ -29,7 +29,7 @@ func newValidatorCmd() *cobra.Command {
 // and proof-of-possession from the key in process; a poa chain has no genesis
 // validator material (validators are registered at bootstrap), so it only
 // reports the account with a note.
-func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *storeFlags, pf *passwordFlags, showPrivate, jsonOut bool) error {
+func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *storeFlags, pf *PasswordFlags, showPrivate, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("--chain is required")
 	}

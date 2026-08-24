@@ -35,7 +35,7 @@ func newRootCmd() *cobra.Command {
 		newTestCmd(),
 		newRunCmd(),
 		newNetCmd(),
-		newValidatorCmd(),
+		keyringcmd.NewValidator(),
 		newValidateCmd(),
 		newMigrateSpecCmd(),
 		newNodeCmd(),
@@ -49,7 +49,6 @@ func newRootCmd() *cobra.Command {
 		newTxCmd(),
 		newContractCmd(),
 		newRemoteCmd(),
-		newKeysCmd(),
 		keyringcmd.New(),
 	)
 	return root

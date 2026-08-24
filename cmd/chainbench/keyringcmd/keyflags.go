@@ -1,9 +1,7 @@
-package main
+package keyringcmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -15,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
-// sourceFlags select where an imported key comes from — a private key, a BIP-39
+// SourceFlags select where an imported key comes from — a private key, a BIP-39
 // mnemonic (with a configurable HD path), or a key file named with the single
 // path syntax. Exactly one origin must be set.
 //
@@ -23,7 +21,7 @@ import (
 // sits is a property of its path and not a different kind of import. It
 // replaces --import, --remote-import, and the --server/--remote-path pair,
 // which were three spellings of one idea and grew apart.
-type sourceFlags struct {
+type SourceFlags struct {
 	privateKey string
 	mnemonic   string
 	passphrase string
@@ -43,7 +41,7 @@ type sourceFlags struct {
 	hdIndex      uint32
 }
 
-func (f *sourceFlags) bind(cmd *cobra.Command) {
+func (f *SourceFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.privateKey, "private-key", "", "import from a 0x-hex private key")
 	cmd.Flags().StringVar(&f.mnemonic, "mnemonic", "", "import from a BIP-39 mnemonic")
 	cmd.Flags().StringVar(&f.passphrase, "passphrase", "", "optional BIP-39 passphrase (with --mnemonic)")
@@ -69,12 +67,12 @@ func (f *sourceFlags) bind(cmd *cobra.Command) {
 
 // source builds the keyring.Source, requiring exactly one origin. pw guards a
 // keystore file import (local or remote). Production passes os.Getenv.
-func (f *sourceFlags) source(pw keyring.PasswordSource) (keyring.Source, error) {
+func (f *SourceFlags) Source(pw keyring.PasswordSource) (keyring.Source, error) {
 	return f.sourceWithEnv(pw, os.Getenv)
 }
 
 // sourceWithEnv is source with an injected environment for the remote SSH creds.
-func (f *sourceFlags) sourceWithEnv(pw keyring.PasswordSource, env func(string) string) (keyring.Source, error) {
+func (f *SourceFlags) sourceWithEnv(pw keyring.PasswordSource, env func(string) string) (keyring.Source, error) {
 	path, err := f.fromPath()
 	if err != nil {
 		return nil, err
@@ -99,7 +97,7 @@ func (f *sourceFlags) sourceWithEnv(pw keyring.PasswordSource, env func(string) 
 // fromPath folds the superseded flags into the one --from spelling and enforces
 // that exactly one origin was named. Doing the fold here means the rest of the
 // command works in a single vocabulary regardless of which flag was typed.
-func (f *sourceFlags) fromPath() (string, error) {
+func (f *SourceFlags) fromPath() (string, error) {
 	path := f.from
 	switch {
 	case f.importFile != "":
@@ -139,7 +137,7 @@ func (f *sourceFlags) fromPath() (string, error) {
 // openFrom resolves a --from path to the store that holds it and the path on
 // that store. Local, inventory-named, and directly-addressed hosts all end up
 // here, so none of them can grow its own read.
-func (f *sourceFlags) openFrom(path string, env func(string) string) (provision.FileStore, string, error) {
+func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.FileStore, string, error) {
 	spec, err := target.ParseTarget(path)
 	if err != nil {
 		return nil, "", err
@@ -158,7 +156,7 @@ func (f *sourceFlags) openFrom(path string, env func(string) string) (provision.
 }
 
 // serverConfigPath is the inventory file to consult, defaulting when unset.
-func (f *sourceFlags) serverConfigPath() string {
+func (f *SourceFlags) serverConfigPath() string {
 	if f.serverConfig != "" {
 		return f.serverConfig
 	}
@@ -192,20 +190,20 @@ func (f *storeFlags) build() (keyring.Backend, error) {
 	}
 }
 
-// passwordFlags select how the keystore password is supplied.
-type passwordFlags struct {
+// PasswordFlags select how the keystore password is supplied.
+type PasswordFlags struct {
 	password     string
 	passwordFile string
 	passwordOnce string
 }
 
-func (f *passwordFlags) bind(cmd *cobra.Command) {
+func (f *PasswordFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.password, "password", "", "keystore password (inline)")
 	cmd.Flags().StringVar(&f.passwordFile, "password-file", "", "read the keystore password from a file")
 	cmd.Flags().StringVar(&f.passwordOnce, "password-once", "", "prompt for the password once, store it at this path, and reuse it without asking")
 }
 
-func (f *passwordFlags) source() keyring.PasswordSource {
+func (f *PasswordFlags) Source() keyring.PasswordSource {
 	switch {
 	case f.password != "":
 		return keyring.StaticPassword(f.password)
@@ -220,7 +218,7 @@ func (f *passwordFlags) source() keyring.PasswordSource {
 
 // saveKey persists the key per the store/password flags, returning the file path, or
 // "" when storage is disabled. A keystore store requires a password.
-func saveKey(sf *storeFlags, pf *passwordFlags, key keyring.PrivateKey) (string, error) {
+func saveKey(sf *storeFlags, pf *PasswordFlags, key keyring.PrivateKey) (string, error) {
 	if !sf.enabled() {
 		return "", nil
 	}
@@ -228,93 +226,11 @@ func saveKey(sf *storeFlags, pf *passwordFlags, key keyring.PrivateKey) (string,
 	if err != nil {
 		return "", err
 	}
-	pw := pf.source()
+	pw := pf.Source()
 	if _, isKeystore := store.(keyring.KeystoreBackend); isKeystore && pw == nil {
 		return "", fmt.Errorf("keystore storage needs a password (--password / --password-file / --password-once)")
 	}
 	return store.Save(sf.out, sf.name, key, pw)
-}
-
-// keyView selects what identity a command reports for a key. The `keys` layer
-// deals in raw keypairs, so it shows the public key; the `account`/`validator`
-// layers deal in on-chain identity, so they show the address.
-type keyView int
-
-const (
-	viewKeys    keyView = iota // privateKey + publicKey
-	viewAccount                // privateKey + address
-)
-
-// printKey renders a key/account. showPrivate includes the private key (for a
-// freshly generated key). view selects publicKey (keys) vs address (account).
-func printKey(out io.Writer, key keyring.PrivateKey, showPrivate bool, view keyView, storedPath string, jsonOut bool) error {
-	id, err := keyring.Derive(key, keyring.AccountOnly)
-	if err != nil {
-		return err
-	}
-	m := map[string]string{}
-	if showPrivate {
-		m["privateKey"] = "0x" + key.Hex()
-	}
-	switch view {
-	case viewKeys:
-		m["publicKey"] = "0x" + id.PublicKey
-	default:
-		m["address"] = id.Address
-	}
-	if storedPath != "" {
-		m["stored"] = storedPath
-	}
-	if jsonOut {
-		enc := json.NewEncoder(out)
-		enc.SetIndent("", "  ")
-		return enc.Encode(m)
-	}
-	if showPrivate {
-		fmt.Fprintf(out, "privateKey: %s\n", m["privateKey"])
-	}
-	if view == viewKeys {
-		fmt.Fprintf(out, "publicKey:  %s\n", m["publicKey"])
-	} else {
-		fmt.Fprintf(out, "address:    %s\n", m["address"])
-	}
-	if storedPath != "" {
-		fmt.Fprintf(out, "stored:     %s\n", storedPath)
-	}
-	return nil
-}
-
-// runGenerate generates a fresh account, optionally stores it, and prints it
-// (with the private key). Shared by `keys new` and `account new`.
-func runGenerate(cmd *cobra.Command, sf *storeFlags, pf *passwordFlags, view keyView, jsonOut bool) error {
-	a, err := keyring.RandomSource{}.Resolve(cmd.Context())
-	if err != nil {
-		return err
-	}
-	path, err := saveKey(sf, pf, a)
-	if err != nil {
-		return err
-	}
-	return printKey(cmd.OutOrStdout(), a, true, view, path, jsonOut)
-}
-
-// runImport resolves an account from the source flags, optionally stores it, and
-// prints it (address only — the caller already holds the secret). Shared by
-// `keys import` and `account import`.
-func runImport(cmd *cobra.Command, src *sourceFlags, sf *storeFlags, pf *passwordFlags, view keyView, jsonOut bool) error {
-	source, err := src.source(pf.source())
-	if err != nil {
-		return err
-	}
-	a, err := source.Resolve(cmd.Context())
-	if err != nil {
-		return err
-	}
-	path, err := saveKey(sf, pf, a)
-	if err != nil {
-		return err
-	}
-	return printKey(cmd.OutOrStdout(), a, false, view, path, jsonOut)
 }
 
 // promptPassword reads a password from the terminal without echo.
