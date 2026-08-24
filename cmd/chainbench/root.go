@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -49,7 +50,7 @@ func newRootCmd() *cobra.Command {
 		newContractCmd(),
 		newRemoteCmd(),
 		newKeysCmd(),
-		newKeyringCmd(),
+		keyringcmd.New(),
 	)
 	return root
 }
