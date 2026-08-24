@@ -83,6 +83,11 @@ type Descriptor struct {
     Name    string   // "net.genesis" · "tx.send" · "report.session"
     Stage   Stage
     Summary string
+    // ReadOnly declares that invoking this feature changes nothing: no file,
+    // no process, no chain state, and no secret in the output. It is a
+    // declaration, not an inference — keyring's export prints a private key
+    // and must NOT carry it. §4.4 is what this attribute buys.
+    ReadOnly bool
     // Input returns a fresh zero input. A surface fills it — cobra from flags,
     // MCP from JSON, the DSL from step arguments — and hands it to Invoke.
     Input  func() any
@@ -218,6 +223,27 @@ type NetGenesisIn struct {
 **26 → 9 최상위, 72 → 약 32 엔드포인트.**
 
 > 이행 중에는 옛 명령을 **deprecated 별칭**으로 남기고 안내를 출력한다. 한 번에 끊지 않는다.
+
+### 4.4 `query` — 조회 전용 투영 (확정 2026-08-25)
+
+**결정**: 최상위에 `query` 그룹을 둔다. 단, 손으로 만들지 않는다 — 레지스트리에서
+`ReadOnly` 로 선언된 기능들의 **자동 생성 투영**이다. `query keyring list` 는
+`keyring list` 와 **같은 등록의 두 번째 렌더링**이라 두 철자가 갈라질 수 없다.
+
+**동기**: "무엇을 볼 수 있는가"가 한 자리에 모이고(kubectl `get` 계열의 동사 우선
+조회 선례), 조회는 안전하니 탐색 중인 운영자가 `query` 안에서만 움직여도 사고가
+없다. 반면 지금 손으로 파면 같은 기능의 철자가 두 벌이 되어, keyring 통합이 없앤
+"같은 일을 하는 여러 방법"이 조회에서 부활한다 — 그래서 시점을 S0 에 묶는다.
+
+**규칙 세 개**:
+
+1. `ReadOnly` 는 **선언이지 추론이 아니다**. 파일·프로세스·체인 상태를 바꾸지 않고
+   출력에 비밀이 없어야 한다. `keyring export` 는 비밀키를 찍으므로 자격이 없다 —
+   손 분류가 아니라 등록 시 선언으로 강제되는 것이 이 속성의 존재 이유다.
+2. 정본 자리는 여전히 **명사 그룹**이다. `query` 는 투영이고, 문서·예제는 명사
+   그룹 철자를 가르친다.
+3. MCP 는 같은 속성으로 **조회 전용 도구 목록**을 얻는다 — 에이전트에게 안전한
+   도구 집합을 알려 주는 데 그대로 쓰인다.
 
 ---
 
