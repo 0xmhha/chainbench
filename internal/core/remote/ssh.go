@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -179,6 +180,14 @@ type ExecResult struct {
 // password. ctx is accepted for symmetry; ssh.Session.Run is not ctx-cancelable,
 // so the dial timeout bounds the connection.
 func Exec(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, command string) (ExecResult, error) {
+	return ExecWithInput(ctx, creds, hostKey, command, "")
+}
+
+// ExecWithInput is Exec with data supplied on the remote command's stdin.
+// It exists for commands that read a secret interactively — sudo -S reads the
+// password from stdin — where putting the value in the command line would
+// leave it in the remote host's process list and shell history.
+func ExecWithInput(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, command, stdin string) (ExecResult, error) {
 	_ = ctx
 	c, err := dialSSH(creds, hostKey)
 	if err != nil {
@@ -195,6 +204,9 @@ func Exec(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCallback, c
 	var stdout, stderr bytes.Buffer
 	sess.Stdout = &stdout
 	sess.Stderr = &stderr
+	if stdin != "" {
+		sess.Stdin = strings.NewReader(stdin)
+	}
 
 	runErr := sess.Run(command)
 	res := ExecResult{Stdout: stdout.String(), Stderr: stderr.String()}

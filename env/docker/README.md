@@ -4,8 +4,10 @@
 설계와 근거는 [`docs/dev/docker-remote-design.md`](../../docs/dev/docker-remote-design.md),
 작업 상태는 worklist §1g R 트랙.
 
-- 컨테이너 = 빈 ubuntu 서버 + sshd(키 인증만). 체인 바이너리는 넣지 않는다 —
-  실서버처럼 provision 이 올린다.
+- 컨테이너 = 빈 ubuntu 서버 + sshd. **접근은 실서버와 같은 모양**이다:
+  사용자 `chainbench` + 비밀번호(개발 전용 고정값 `chainbench`), 키 로그인 없음,
+  root 로그인 없음, **sudo 는 그 비밀번호를 요구**한다(NOPASSWD 아님 — 그 흐름을
+  검증하는 것이 목적이므로). 체인 바이너리는 넣지 않는다 — 실서버처럼 provision 이 올린다.
 - 기본 15대(`server1`~`server15`). **server15 는 pn 노드를 띄울 예정**이지만 서버
   계층에서는 구분하지 않는다 — 역할은 netmap 할당이 정한다.
 - 퍼블리시 포트는 **127.0.0.1 에만** 바인딩된다. 이 머신 밖에서는 닿을 수 없다.
@@ -17,7 +19,7 @@ cd env/docker
 ./gen-env.sh                                   # build/ 에 전부 생성 (손으로 쓰는 파일 0)
 docker build -t chainbench-server:ubuntu24 .
 docker compose -f build/docker-compose.yml up -d
-ssh -i build/ssh/id_ed25519 -p 2201 root@127.0.0.1 hostname   # -> server1
+ssh -p 2201 chainbench@127.0.0.1 hostname   # password: chainbench -> server1
 ```
 
 생성물(`build/`, gitignore):
@@ -27,7 +29,6 @@ ssh -i build/ssh/id_ed25519 -p 2201 root@127.0.0.1 hostname   # -> server1
 | `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 22→2201+, rpc 8600→18601+ |
 | `remote-server-config.yaml` | **인벤토리 v2, 실주소 기재** — 운영 인벤토리와 같은 모양 |
 | `localmap.yaml` | 실주소→loopback 퍼블리시 포트 대응표. `--docker` 일 때만 적용(R1) |
-| `ssh/` | 개발 전용 ed25519 키쌍 + authorized_keys |
 
 대수를 바꾸려면 `SERVERS=20 ./gen-env.sh` 후 compose 를 다시 올린다.
 

@@ -28,7 +28,14 @@ func fleetBuildDir(t *testing.T) string {
 		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running (env/docker/gen-env.sh)")
 	}
 	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
-	t.Setenv("CHAINBENCH_REMOTE_KEY_FILE", filepath.Join(build, "ssh", "id_ed25519"))
+	// Access mirrors the real fleet: user + password. The srv:// path reads
+	// them from the inventory; the direct user@host form reads the password
+	// from the environment, so it is exported here from the same file.
+	if cfg, err := serverset.Load(filepath.Join(build, "remote-server-config.yaml")); err == nil {
+		if srv, err := cfg.ByName("server1"); err == nil {
+			t.Setenv("CHAINBENCH_REMOTE_PASS", srv.SSH.Password)
+		}
+	}
 	return build
 }
 
@@ -52,7 +59,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 		t.Fatal(err)
 	}
 	spec := target.TargetSpec{
-		Kind: target.TargetRemote, User: "root", Host: srv.Host, DataRoot: "/data/chainbench",
+		Kind: target.TargetRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench",
 	}
 	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
 	if err != nil {

@@ -27,6 +27,30 @@ func SSHRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Runner 
 	}
 }
 
+// SSHSudoRunner is SSHRunner with every command elevated through sudo, the
+// way a real fleet's operator account works: the login is an ordinary user,
+// and sudo asks for that user's password. The password is the credentials'
+// own and travels on stdin (sudo -S), never in the command line — a command
+// line is visible in the remote process list and shell history.
+//
+// The inventory's ssh.sudo says whether a server PERMITS elevation; whether a
+// given step NEEDS it stays the step's decision, which is why this is a
+// separate Runner rather than a mode on SSHRunner.
+func SSHSudoRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Runner {
+	return func(ctx context.Context, command string) (remote.ExecResult, error) {
+		return remote.ExecWithInput(ctx, creds, hostKey, sudoWrap(command), creds.Password+"\n")
+	}
+}
+
+// sudoWrap renders a shell line so it runs under sudo with the password read
+// from stdin. -S takes the password from stdin, -k drops any cached
+// credential first (every command re-authenticates, so behavior does not
+// depend on what ran before), and -p ” silences the prompt that would
+// otherwise interleave with the command's own stderr.
+func sudoWrap(command string) string {
+	return "sudo -S -k -p '' /bin/sh -c " + shq(command)
+}
+
 // RemoteDriver provisions, launches, and stops nodes on a remote host by running
 // shell commands over the injected Runner. It is the remote counterpart of
 // LocalDriver, built on the SSH access absorbed into pkg/core/remote.
