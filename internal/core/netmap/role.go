@@ -34,9 +34,10 @@ func NormalizeRole(s string) (node.Role, error) {
 // and the launch flows still carry ("bp" → "validator").
 //
 // It exists only for the transition: the composition still writes and compares
-// the legacy words, and flipping them is NM3's job because it changes argv and
-// persisted workspaces and needs the live re-verification that goes with that.
-// When NM3 lands, this function goes with it.
+// the legacy words. Flipping them is NM6 — split out of NM3 because netmap.Is
+// made both spellings safe to compare, while the flip itself changes argv and
+// persisted workspaces and so needs its own live re-verification. When NM6
+// lands, this function goes with it.
 func LegacySpelling(r node.Role) node.Role {
 	switch r {
 	case node.RoleBP:

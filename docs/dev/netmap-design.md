@@ -359,18 +359,19 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM1c** | **선행 결함 수정** — 셀렉터 폴딩표를 `netmap.NormalizeRole` 경유로 · 신원/별칭 두 표기(§2.5a) | ☑ **완료 2026-08-22.** `on:"bp1"` 이 `RoleBP`·`RoleValidator` 양쪽에 매칭 · `pn` 셀렉터 · `on:"node7"`(신원) 해석 · `RoleLabel`/`ParseRoleLabel` · `Placement{Index, Ord}` |
 | **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
 | **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
-| **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | 같은 함수가 로컬 워크스페이스와 서버 destination 양쪽 경로를 만든다 · 파일 쓰기 0건 · [[key-and-material-design]] §4.3 레이아웃(`bin`/`material`/`run`)의 구현체 |
+| **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | ☑ **완료 2026-08-22 — 구현은 NM5 에서 `netmap.Layout` 으로 함께 들어왔다.** 노드 경로 4종(datadir·config·log·genesis)을 라벨에서 파생하고, 파일 쓰기는 0건이다. Root 만 바꾸면 로컬 워크스페이스와 서버 destination 에 같은 파생이 쓰인다. [[key-and-material-design]] §4.3 의 `bin`/`material`/`run` 구획은 이 단계의 범위가 아니다 — 자료 업로드 작업과 함께 간다 |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **포트 타입 통합 완료**: 표현 3벌 → **1벌**. 단, 방향은 설계와 반대다 — `node`(L0)는 `netmap`(L1)을 import 할 수 없으므로 **어휘를 L0 에 두고** `portplan.Ports`·`netmap.Ports` 가 `node.Endpoints` 의 별칭이 됐다. `Etcd` 가 런타임·워크스페이스까지 살아남는다(`"etcd": 31001` 실측). ☑ |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + `--peering` (§3) | ☑ **완료 2026-08-22.** `app.NetMap`/`NetPool` 유스케이스 1개씩 → CLI 1개 + MCP 1개(K8 선례) · 4방향 조회(node·label(신원/별칭)·host·port) · 선택자 2개는 거부 · 무응답은 "nothing matches" 로 명시 · **`NetPoolOut` 에 자격증명 필드 부재를 리플렉션 테스트로 고정** |
 | **NM5** | 라벨 영속 — 워크스페이스에 Label 기록, 로그의 host:port 역추적 | ☑ **완료 2026-08-22.** `NodeState.Label` 영속(구 워크스페이스는 index 폴백) · `netmap.Layout` 이 datadir·config·log 경로를 라벨에서 파생(6곳의 `fmt.Sprintf("node%d")` 대체) · `Request.Label` 로 운영자 지정 이름 보존 · `net map --addr host:port` 로 로그 한 줄을 노드로 · **`place` 할당기 삭제**(`Allocator`·`NodePlacement`·`Mode`·`Capacity` 소비자 0) |
+| **NM6** | **정규 철자 방출 전환** — 조립이 기록·비교하는 역할 값을 `validator`/`endpoint` 에서 `bp`/`en` 으로 바꾼다 · `LegacySpelling` 삭제 (원래 NM3 의 범위였으나 2026-08-24 에 분리 — `netmap.Is` 가 두 철자를 다 안전하게 만들어 급하지 않게 됐고, 전환 자체는 argv 와 영속 워크스페이스를 바꾸는 별개 작업이라서다) | argv 와 워크스페이스가 정규 철자를 담는다 · `LegacySpelling` 소비자 0 → 함수 삭제(topology.NodeRole·session 포함) · 구 워크스페이스·토폴로지 파일은 `NormalizeRole` 로 읽기 호환 유지 · **라이브 재검증 필수** — argv 가 바뀌므로 §1f 절차대로 실제 네트워크로 확인한다 |
 
-**순서**: NM1 ☑ → **NM1c ☑** → **NM1b ☑** → **NM2 ☑** → **NM3 ☑** → **NM4 ☑** → **NM5 ☑ (완료)** → NM2b → NM3 → NM4 → NM5.
-NM1c 를 앞세운 이유는 §2.5a 의 결함이 NM3 에서 터지기 때문이다 — 그 시점엔 배치·persist·argv 가
-함께 움직여 원인이 셋으로 갈린다. NM2b(Layout)를 NM3 앞에 두는 이유는, NM3 이 만지는 32곳에
-경로 파생이 섞여 있어 Layout 이 없으면 같은 파일을 두 번 고치게 되기 때문이다.
+**순서**: NM1 → NM1c → NM1b → NM2 → NM3 → NM4 → NM5 까지 전부 ☑ 이다
+(NM2b 의 Layout 은 계획과 달리 NM5 에서 함께 들어왔다). **잔여는 NM6 하나다.**
+NM1c 를 앞세운 이유는 §2.5a 의 결함이 철자 전환 시점에 터지기 때문이다 — 그때는
+배치·persist·argv 가 함께 움직여 원인이 셋으로 갈린다.
 
-**N 계열과의 관계**: NM1~5 = N7 + N0 + N0b. 완료 시 워크리스트의 세 항목이 닫히고,
-N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
+**N 계열과의 관계**: NM1~5 = N7 + N0b, NM6 = N0 의 잔여다. N7 과 N0b 는 닫혔고,
+N0 은 NM6 이 끝나야 닫힌다. N1(청사진 선언)은 netmap 을 산출 타입으로 삼는다.
 
 ---
 
