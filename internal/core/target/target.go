@@ -176,6 +176,14 @@ func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 // comes from remote.ResolveHostKeyCallback (known_hosts, or the loud insecure
 // opt-in) in both cases.
 func (s TargetSpec) ResolveWith(env func(string) string, inv Inventory) (*Target, error) {
+	return s.ResolveWithMap(env, inv, nil)
+}
+
+// ResolveWithMap is ResolveWith with a dial-time address translation (--docker:
+// local containers posing as servers). The map touches only the credentials the
+// SSH transport dials; the spec, the data root, and everything composed onto
+// the target keep the real addresses. Nil is no translation.
+func (s TargetSpec) ResolveWithMap(env func(string) string, inv Inventory, m remote.AddrMap) (*Target, error) {
 	switch s.Kind {
 	case "", TargetLocal:
 		return &Target{Spec: s, DataRoot: s.DataRoot, Files: provision.LocalFileStore{}, Driver: driver.NewLocalDriver()}, nil
@@ -188,7 +196,7 @@ func (s TargetSpec) ResolveWith(env func(string) string, inv Inventory) (*Target
 		if err != nil {
 			return nil, err
 		}
-		return s.resolveOver(creds, env)
+		return s.resolveOver(creds, env, m)
 
 	case TargetRemote:
 		if s.Host == "" || s.DataRoot == "" {
@@ -198,7 +206,7 @@ func (s TargetSpec) ResolveWith(env func(string) string, inv Inventory) (*Target
 		if err != nil {
 			return nil, err
 		}
-		return s.resolveOver(creds, env)
+		return s.resolveOver(creds, env, m)
 
 	default:
 		return nil, fmt.Errorf("target: unknown target kind %q", s.Kind)
@@ -206,10 +214,14 @@ func (s TargetSpec) ResolveWith(env func(string) string, inv Inventory) (*Target
 }
 
 // resolveOver builds the SSH-backed target for already-resolved credentials.
-// Both remote forms end here, so they cannot drift apart.
-func (s TargetSpec) resolveOver(creds remote.Credentials, env func(string) string) (*Target, error) {
+// Both remote forms end here, so they cannot drift apart — and so the dial-time
+// address translation cannot be applied to one form and missed on the other.
+func (s TargetSpec) resolveOver(creds remote.Credentials, env func(string) string, m remote.AddrMap) (*Target, error) {
 	if s.DataRoot == "" {
 		return nil, fmt.Errorf("target: remote target needs a path")
+	}
+	if m != nil {
+		creds.Host, creds.Port = m(creds.Host, creds.Port)
 	}
 	hostKey, err := remote.ResolveHostKeyCallback(env)
 	if err != nil {

@@ -104,7 +104,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		return ws.Allocate(netcompose.AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
-			Placement: resolved.Placement,
+			Placement: resolved.Placement, ConfigPath: in.Server.ConfigPath,
 		})
 	})
 	return StepOut{Detail: detail}, err

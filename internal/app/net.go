@@ -25,6 +25,10 @@ type NetNewIn struct {
 	// Target is where the data plane lives; zero value = local, rooted at the
 	// workspace directory.
 	Target target.TargetSpec
+	// Docker treats the servers as local docker containers: the harness's own
+	// dials are translated through the localmap next to the server inventory.
+	// Recorded on the workspace so every later step follows it.
+	Docker bool
 }
 
 // NetNewOut reports what the workspace was initialized to.
@@ -42,7 +46,7 @@ func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
 	}
 	detail, err := ws.New(netcompose.NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
-		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
+		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
 	})
 	if err != nil {
 		return NetNewOut{}, err

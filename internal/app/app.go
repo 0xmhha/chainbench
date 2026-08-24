@@ -41,6 +41,18 @@ type Deps struct {
 	// is how a remote provision came to write its genesis and configs to the
 	// operator's own disk while shipping only the identities.
 	Files func() (provision.FileStore, error)
+	// Logf reports operational side notes a caller should see as they happen —
+	// today, the dial-address translations --docker applies. Nil discards them.
+	// It is not a result channel: anything a caller acts on belongs in the
+	// use case's returned value.
+	Logf func(format string, args ...any)
+}
+
+// logf reports through the injected logger; nil discards.
+func (d Deps) logf(format string, args ...any) {
+	if d.Logf != nil {
+		d.Logf(format, args...)
+	}
 }
 
 // now reports the current time through the injected clock.

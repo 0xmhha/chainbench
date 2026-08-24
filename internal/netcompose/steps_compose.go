@@ -120,6 +120,9 @@ type AllocateOpts struct {
 	// server inventory passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
 	Placement serverset.Placement
+	// ConfigPath is the inventory file Placement came from, persisted so later
+	// steps resolve the same file (and, in docker mode, its sibling localmap).
+	ConfigPath string
 }
 
 // placements resolves the requested layout into one placement request per node,
@@ -186,6 +189,9 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	pl := opts.Placement
 	if pl.Source == "" {
 		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
+	}
+	if opts.ConfigPath != "" {
+		w.state.ServerConfig = opts.ConfigPath
 	}
 	pool := pl.Pool
 	if pool.Slots < 1 {
@@ -298,7 +304,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", err
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -412,7 +418,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		}
 		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -491,7 +497,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: provision: no node table — run `net allocate` first")
 	}
-	t, err := w.state.Target.Resolve(w.env)
+	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}

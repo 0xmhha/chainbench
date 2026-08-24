@@ -24,8 +24,10 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
 // Step is a completed composition step (persistence model owned by session).
@@ -97,6 +99,16 @@ type State struct {
 	// or the built-in defaults), so an operator reading the state never has to
 	// guess why a node listens where it does.
 	PortSource string `json:"portSource,omitempty"`
+	// ServerConfig is the inventory file the placement came from, recorded so
+	// later steps resolve the same file — and, in docker mode, find the
+	// localmap next to it.
+	ServerConfig string `json:"serverConfig,omitempty"`
+	// Docker records that this composition treats its servers as local docker
+	// containers: the harness's own dials are translated through the localmap
+	// next to ServerConfig. It is recorded once at `net new --docker` so a
+	// multi-step run cannot be half-mapped, and it never changes what is
+	// composed — genesis, static-nodes and the node table keep real addresses.
+	Docker bool `json:"docker,omitempty"`
 	// Capabilities is what the composed network advertises to capability-gated
 	// test cases (chain manifest + ws + delayed-fork markers + overlay claims).
 	// The genesis step derives it, since that is where the customizations that
@@ -143,6 +155,32 @@ func (w *Workspace) SetEnv(fn func(string) string) {
 
 // State returns a copy of the current composition state.
 func (w *Workspace) State() State { return w.state }
+
+// addrMap returns the dial-time address translation for a docker-mode
+// composition, or nil when the workspace targets real servers. The localmap
+// is read on each call (it is one small file) so an operator regenerating the
+// fleet does not have to reason about which copy is in effect.
+func (w *Workspace) addrMap() (remote.AddrMap, error) {
+	if !w.state.Docker {
+		return nil, nil
+	}
+	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(w.state.ServerConfig))
+	if err != nil {
+		return nil, err
+	}
+	return lm.AddrMap(nil), nil
+}
+
+// resolveTarget builds the live target for a step, applying the docker-mode
+// dial translation when the workspace recorded it. Every step resolves through
+// here so a multi-step run cannot be half-mapped.
+func (w *Workspace) resolveTarget() (*target.Target, error) {
+	m, err := w.addrMap()
+	if err != nil {
+		return nil, err
+	}
+	return w.state.Target.ResolveWithMap(w.env, nil, m)
+}
 
 // markStep records that step ran with detail, stamping the completion time.
 func (w *Workspace) markStep(step, detail string) {

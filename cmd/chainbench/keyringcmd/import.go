@@ -33,7 +33,10 @@ func newKeyringImportCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
 			in.Ring, in.Label, in.WithBLS = ring.ref(), label.name, bls.on
-			e, err := app.KeyringImport(cmd.Context(), app.Deps{}, in)
+			d := app.Deps{Logf: func(format string, args ...any) {
+				fmt.Fprintf(out, format+"\n", args...)
+			}}
+			e, err := app.KeyringImport(cmd.Context(), d, in)
 			if err != nil {
 				return err
 			}
@@ -53,5 +56,7 @@ func newKeyringImportCmd() *cobra.Command {
 		"key file path: /local/path | srv://<server>/path | [user@]host:path | ssh://user@host:port/path")
 	cmd.Flags().StringVar(&in.PrivateKey, "private-key", "", "import a key the caller already holds (0x-hex)")
 	cmd.Flags().StringVar(&in.Password, "password", "", "password for a keystore named by --from")
+	cmd.Flags().BoolVar(&in.Docker, "docker", false,
+		"the server is a local docker container: translate this dial via the localmap next to the inventory (addresses only — docker itself is not touched)")
 	return cmd
 }

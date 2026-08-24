@@ -55,6 +55,9 @@ type NetUpIn struct {
 	// Server selects where the nodes run and on what ports, from the server
 	// inventory. Its zero value uses the built-in local plan.
 	Server ServerRef
+	// Docker treats the servers as local docker containers (dials translated
+	// through the localmap next to the inventory); recorded at the new step.
+	Docker bool
 
 	// Identities (step: keys).
 	KeysSource string
@@ -117,6 +120,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 			r, err := NetNew(ctx, d, NetNewIn{
 				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
 				Target: in.Target, ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
+				Docker: in.Docker,
 			})
 			return r.Detail, err
 		}},
