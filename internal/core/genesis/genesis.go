@@ -83,6 +83,22 @@ func BuildNetwork(p registry.ChainPlugin, in Inputs, opts NetworkOptions) ([]byt
 	if err != nil {
 		return nil, err
 	}
+	return Customize(gen, opts)
+}
+
+// Customize applies a caller's genesis changes to an already-built genesis:
+// bare config overrides first, then the overlay fragment, re-validating fork
+// ordering after each so a bad request fails while composing rather than when a
+// node refuses to boot.
+//
+// It is separate from Build because a genesis is not always built the same way.
+// A family whose genesis its own binary writes produces bytes that Build never
+// touches, and those bytes still have to accept the same overrides and the same
+// overlay. Keeping the customization in Build meant only the families that went
+// through Build could be customized — and a second copy of these very steps
+// grew in the step surface to cover the other one.
+func Customize(gen []byte, opts NetworkOptions) ([]byte, error) {
+	var err error
 	if len(opts.ConfigOverrides) > 0 {
 		gen, err = ApplyConfigOverrides(gen, opts.ConfigOverrides)
 		if err != nil {

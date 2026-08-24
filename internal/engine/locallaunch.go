@@ -107,12 +107,12 @@ func (s LocalSetup) launcher() LocalLauncher {
 // validator count, with the config's overrides/overlay applied — and sets
 // plan.Genesis so the launcher can materialize it and init datadirs from it.
 func (s LocalSetup) attachGenesis(ctx context.Context, plan *driver.Plan) error {
-	src := PresetGenesisSource{
+	gen, err := BuildGenesis(ctx, s.Plugin, GenesisRequest{Validators: planValidatorCount(*plan)}, GenesisConfig{
 		KeysDir:         s.KeysDir,
+		Binary:          s.Binary,
 		ConfigOverrides: genesisConfigOverrides(s.Config),
 		Overlay:         []byte(s.Config.String("genesis.overlay", "")),
-	}
-	gen, err := src.Genesis(ctx, s.Plugin, GenesisRequest{Validators: planValidatorCount(*plan)})
+	})
 	if err != nil {
 		return err
 	}

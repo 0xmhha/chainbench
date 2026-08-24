@@ -146,8 +146,8 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
-		src := engine.PresetGenesisSource{KeysDir: o.KeysDir}
-		b, err := src.Genesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators})
+		b, err := engine.BuildGenesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators},
+			engine.GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
 		if err != nil {
 			return "", err
 		}
