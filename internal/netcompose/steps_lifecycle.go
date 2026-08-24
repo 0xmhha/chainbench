@@ -241,16 +241,21 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// Logs returns the last n lines of one node's log (local target).
-func (w *Workspace) Logs(index, n int) (string, error) {
-	if w.state.Target.IsRemote() {
-		return "", fmt.Errorf("netcompose: logs: remote log tailing is not supported yet")
+// Logs returns the last n lines of one node's log. The log lives on the
+// target, so it is read through the target's file store — the same seam that
+// wrote it — which is what makes a remote node's log one call instead of a
+// branch. (The collector's live tail has its own byte-offset reader; this is
+// the step surface's one-shot read.)
+func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
+	t, err := w.resolveTarget()
+	if err != nil {
+		return "", err
 	}
 	for _, ns := range w.state.Nodes {
 		if ns.Index != index {
 			continue
 		}
-		b, err := os.ReadFile(ns.LogPath)
+		b, err := t.Files.Read(ctx, ns.LogPath)
 		if err != nil {
 			return "", fmt.Errorf("netcompose: logs: %w", err)
 		}
