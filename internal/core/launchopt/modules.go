@@ -18,7 +18,7 @@ type Module interface {
 
 // unixSocketPathMax is the kernel limit on a unix socket path; an ipcpath at or
 // beyond it fails at bind time with a message that hides the cause (hit for
-// real in T4.4e).
+// real with a deeply nested session directory).
 const unixSocketPathMax = 104
 
 // Identity owns who the node is: its devp2p key and the account it signs with.

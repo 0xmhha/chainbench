@@ -13,7 +13,7 @@ import (
 
 // Chain-upgrade use cases: plan a binary swap at a fork block over a running
 // network, and execute it. Planning is separate from executing so a surface can
-// show what will happen before anything is swapped (worklist T7.11).
+// show what will happen before anything is swapped.
 
 // HardforkPlanIn describes the upgrade of an already-launched network.
 type HardforkPlanIn struct {

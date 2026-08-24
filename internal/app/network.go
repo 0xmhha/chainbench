@@ -15,7 +15,7 @@ import (
 
 // Lifecycle use cases for a launched network. Reading and writing its state is
 // the part every surface used to repeat, so it lives here once and the CLI
-// commands and MCP tools call these functions (worklist T7.11).
+// commands and MCP tools call these functions.
 //
 // Two stacks persist that state differently: the setup stack writes
 // nodeset.json (running endpoints and PIDs) plus nodespecs.json (how to bring

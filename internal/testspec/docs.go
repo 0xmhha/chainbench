@@ -3,7 +3,4 @@
 // fingerprint from declared values, and runs pre-actions, steps, assertions,
 // and post-actions as atomic steps with recorded provenance. It replaces the
 // Go-function testkit as the way tests are expressed.
-//
-// Status: interface freeze only (T0.1). Parse/Fingerprint/interpreter bodies
-// land in T1.1 and T3/T4.
 package testspec

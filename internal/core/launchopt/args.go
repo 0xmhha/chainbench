@@ -27,7 +27,7 @@ func NewArgs(d Dialect) *Args {
 }
 
 // Set records a valued knob. An unsupported key is a classified problem —
-// requested features are never silently skipped (the T3.2b discipline).
+// requested features are never silently skipped.
 func (a *Args) Set(k Key, v string, l Layer) {
 	name, ok := a.dialect.Spelling(k)
 	if !ok {

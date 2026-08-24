@@ -238,8 +238,8 @@ func promote(net Network, e Entry) Network {
 // The alloc is written even for a ring that declares no validator set, and it
 // is the one network decision that survives here. Generated identities are in
 // no existing genesis, so without a balance their first transaction cannot pay
-// for gas, and nothing else can supply one until the blueprint declares
-// accounts (worklist N10).
+// for gas, and nothing else can supply one until the network blueprint can
+// declare accounts of its own.
 func writePreset(opts GenerateOpts, set Preset) error {
 	f := presetFile{
 		Description: fmt.Sprintf("Generated ring: %d nodes (%d validators). chainbench keyring.",

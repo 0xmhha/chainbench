@@ -105,7 +105,7 @@ type FamilyPolicy struct {
 //
 // Transitional: this shim exists so registry.ChainPlugin keeps its StartFlags
 // signature during the golden conversion. It goes away when families declare
-// a FamilyPolicy directly (DSL v2 wiring, worklist T7.8).
+// a FamilyPolicy directly.
 func ParseFamilyFlags(flags []string) (FamilyPolicy, error) {
 	var p FamilyPolicy
 	for _, f := range flags {

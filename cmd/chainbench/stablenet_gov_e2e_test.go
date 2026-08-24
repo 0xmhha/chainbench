@@ -9,7 +9,7 @@ import (
 )
 
 // TestStablenetGovernance_DSL_E2E verifies that a stablenet governance scenario
-// runs through the redesign DSL engine with no core changes (T5.4): it builds the
+// runs through the redesign DSL engine with no core changes: it builds the
 // real proposals(uint256) calldata via govbind, serves a canned ABI-encoded
 // status from a mock node, and runs a spec whose `call` assertion reads it —
 // proving the DSL expresses and the engine executes stablenet ACL reads.

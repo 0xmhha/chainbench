@@ -3,6 +3,4 @@
 // classifies failures instead of labeling them "flaky", and tears down without
 // leaving orphan processes. Stopping a node also stops its embedded etcd;
 // removing the datadir is a separate operation.
-//
-// Status: interface freeze only (T0.1). Implementation lands in T3.2.
 package supervisor

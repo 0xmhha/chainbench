@@ -160,10 +160,10 @@ func parseSelector(sel string) (token string, index int, anyForm bool, err error
 // for an unknown token.
 // rolesForToken folds a selector's role word onto every spelling a node may
 // actually carry. The folding itself belongs to netmap — this function only
-// adds the legacy spelling, because a running network can hold either while
-// NM3 is in flight: a node composed today records "validator", one composed
-// after the switch records "bp", and a selector has to match both or a spec
-// silently addresses nothing.
+// adds the legacy spelling, because a running network can hold either until
+// the migration to the canonical spelling is complete: a node composed today
+// records "validator", one composed after the switch records "bp", and a
+// selector has to match both or a spec silently addresses nothing.
 func rolesForToken(tok string) map[node.Role]bool {
 	canonical, err := netmap.NormalizeRole(tok)
 	if err != nil {

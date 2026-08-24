@@ -36,7 +36,7 @@ func TestNormalizeRole_FoldsEverySpelling(t *testing.T) {
 		{"bp", node.RoleBP}, {"validator", node.RoleBP},
 		{"en", node.RoleEN}, {"endpoint", node.RoleEN},
 		{"pn", node.RolePN},
-		{"boot", node.RoleBoot}, // a role until N0 demotes it to an attribute
+		{"boot", node.RoleBoot}, // a role until the poa bring-up demotes it to an attribute
 	}
 	for _, tc := range cases {
 		got, err := netmap.NormalizeRole(tc.in)
@@ -48,7 +48,7 @@ func TestNormalizeRole_FoldsEverySpelling(t *testing.T) {
 		t.Error("an unknown role was accepted")
 	}
 	// The transition mapping goes back exactly, so behaviour is unchanged
-	// until NM3 flips the persisted spelling deliberately.
+	// until the migration flips the persisted spelling deliberately.
 	if netmap.LegacySpelling(node.RoleBP) != node.RoleValidator ||
 		netmap.LegacySpelling(node.RoleEN) != node.RoleEndpoint ||
 		netmap.LegacySpelling(node.RolePN) != node.RolePN {
@@ -206,7 +206,8 @@ func TestAssign_ConsumesHostsBeforeSlots(t *testing.T) {
 			t.Fatalf("%s = %s p2p=%d http=%d, want %s p2p=%d http=%d",
 				c.label, p.Host, p.Ports.P2P, p.Ports.HTTP, c.host, c.p2p, c.rpc)
 		}
-		// The etcd port travels with the node; losing it is what NM1 fixed.
+		// The etcd port travels with the node; before this package the port
+		// representations dropped it on the way to runtime.
 		if p.Ports.Etcd != p.Ports.P2P+1 {
 			t.Fatalf("%s etcd = %d, want %d", c.label, p.Ports.Etcd, p.Ports.P2P+1)
 		}

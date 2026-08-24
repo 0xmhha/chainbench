@@ -10,8 +10,8 @@ import (
 // remote. Local uses exec/os/signals on the loopback address; remote uses
 // SSH/SFTP. It is stateless: no remote agent is deployed.
 //
-// Status: interface freeze only (T0.1). It formalizes the existing Driver plus
-// its Initializer/FileProvisioner capabilities; implementations land in T2.1.
+// It formalizes the existing Driver plus its Initializer/FileProvisioner
+// capabilities.
 type Transport interface {
 	// Exec runs cmd (nohup for launches) and returns its stdout and the PID.
 	Exec(ctx context.Context, cmd string) (stdout string, pid int, err error)

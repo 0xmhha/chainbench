@@ -16,7 +16,7 @@ import (
 //go:embed schema/v2.schema.json
 var SchemaV2 []byte
 
-// DSL v2 (worklist T7.8, docs/dev/dsl-v2-proposal.md). v2 separates the
+// DSL v2 (docs/dev/dsl-v2-proposal.md). v2 separates the
 // declaration (env — the fingerprint/reuse unit) from the scenario (case), and
 // projects every predicate through one statement form:
 //

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Metric verification source (worklist T7.9, background requirement #3): the
+// Metric verification source (background requirement #3): the
 // third of the three verification sources (log, rpc, metric). A node started
 // with --metrics serves Prometheus text at /debug/metrics/prometheus; Scrape
 // reads it into name -> value samples an assertion can compare.

@@ -13,7 +13,7 @@ import (
 
 // Net step tools — the MCP mirrors of `chainbench net <step>`. Each handler is
 // schema decoding + one app-layer call: the same function the CLI subcommand
-// binds, so the two surfaces cannot drift (worklist T7.5).
+// binds, so the two surfaces cannot drift.
 
 // netNewTool initializes a composition workspace.
 func netNewTool() Tool {

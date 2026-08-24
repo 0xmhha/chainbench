@@ -339,7 +339,7 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **N0** | 역할을 `bp·en·pn` 3종으로 정리 — **NM1 로 흡수**([[netmap-design]] §4) | `validator→bp`·`endpoint→en` 이관 · `node.RoleEN`/`RoleEndpoint` 중복 해소 · 기존 토폴로지 호환 | ◐ NM1·NM1c 완료, 방출 전환은 NM3 |
+| **N0** | 역할을 `bp·en·pn` 3종으로 정리 — **NM1 로 흡수**([[netmap-design]] §4) | `validator→bp`·`endpoint→en` 이관 · `node.RoleEN`/`RoleEndpoint` 중복 해소 · 기존 토폴로지 호환 | ◐ NM1·NM1c 완료. 남은 것은 **방출 전환 = NM6**([[netmap-design]] §4) — 조립이 기록하는 역할 값을 `bp/en` 으로 바꾸고 `LegacySpelling` 을 지우는 일이다. NM3 에서 분리했다(`netmap.Is` 로 두 철자가 다 안전해져 급하지 않고, argv 가 바뀌어 라이브 재검증이 따로 필요하다) |
 | **N0b** | **피어링 그래프를 역할에서 파생** — 현재는 풀메시 고정. `bp ↔ pn ↔ en`(en 은 bp 를 직접 모른다) | ☑ **NM2 완료** — mesh 골든 동일 · proxied 는 bp/en 의 목록에 pn 만 · poa+pn 은 `SupportsRole` 로 거부. 조립 4곳의 **전환**은 NM3 | ☑ |
 | **N1** | `blueprint` 선언 스키마 + 파서 (L1 순수) | 부분 청사진 round-trip · 미지 필드 거부 · fuzz | ☐ |
 | **N2** | `Resolve` — 출처 사슬(명시>인벤토리>키셋>플러그인>패밀리>내장) + `Sources` 기록 | 같은 청사진 → 항상 같은 `ResolvedNetwork`(결정성) | ☐ |
@@ -405,7 +405,8 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | D2 | **`--peering proxied` 는 필수** | 메인넷이 bp–pn–en 이고 **트랜잭션이 en 을 거쳐 전파**된다. mesh 만으로는 실제 전파 경로를 태우지 못한다 |
 | D3 | **인벤토리 v2 단독** (v1 호환 없음) | 실제 파일은 gitignore 라 배포본이 확인되지 않는다 — 지금이 전환 비용 최저. 호환 로더는 다섯 번째 폴딩표가 된다 |
 
-**NM5 완료 (2026-08-22) — netmap 트랙 종료.** 라벨이 파생값에서 **데이터**가 됐다:
+**NM5 완료 (2026-08-22) — netmap 본 트랙 종료.** 잔여는 NM6(철자 방출 전환, 2026-08-24 에
+NM3 에서 분리 — N0 행과 [[netmap-design]] §4) 하나다. 라벨이 파생값에서 **데이터**가 됐다:
 워크스페이스가 `label` 을 저장하고(구 워크스페이스는 index 폴백), `netmap.Layout` 이
 datadir·config·log 경로를 그 라벨에서 파생한다 — `fmt.Sprintf("node%d")` 로 흩어져 있던 6곳이
 한 함수가 됐다. `Request.Label` 로 운영자가 지은 이름이 보존되고, `net map --addr 127.0.0.1:31021`
@@ -449,7 +450,8 @@ api 9/9, 고아 0.
 유일한 무순환 해법이라, `node.Endpoints` 가 `Etcd` 를 갖고 `portplan.Ports`·`netmap.Ports` 가
 그 별칭이 됐다. 결과: **etcd 포트가 런타임·워크스페이스까지 살아남는다**(`"etcd": 31001` 실측).
 그 포트는 `p2pStep>=2` 규칙이 존재하는 이유인데, 규칙이 지키는 값을 정작 아무도 되읽을 수
-없던 상태였다. **NM3 완료.**
+없던 상태였다. **NM3 완료** — 단, 원래 범위에 있던 철자 방출 전환은 여기서 하지 않았고,
+**NM6 으로 분리**해 남겼다(2026-08-24 검토에서 확정. N0 행이 추적한다).
 
 **NM2 완료 (2026-08-22)** — 피어링이 역할에서 파생된다. `mesh` 는 현행과 바이트 동일(골든:
 `armSpecs` 가 렌더한 config 의 enode 목록 == `netmap.Mesh`, **self 항목 포함까지**; self 를 뺀

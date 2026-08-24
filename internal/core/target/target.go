@@ -5,7 +5,7 @@
 // It lives at the primitive layer because the callers span the whole stack —
 // the composition steps, the app use cases, and the keyring, which reads key
 // material from wherever it already exists. Parsing a path must not require
-// importing an orchestration package (worklist §1g F2).
+// importing an orchestration package.
 //
 // Resolve turns a spec into the live pair a caller actually works through: a
 // FileStore for the files and a Driver for the processes. Credentials never

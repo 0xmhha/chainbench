@@ -36,7 +36,7 @@ func (s stubStore) Read(_ context.Context, path string) ([]byte, error) {
 
 func (s stubStore) Write(context.Context, string, []byte, fs.FileMode) error { return nil }
 
-// TestSources_AllYieldAPrivateKey is the K3 gate for the absorbed key sources:
+// TestSources_AllYieldAPrivateKey pins the contract of the absorbed key sources:
 // every origin produces the same type, so what a key means is decided once, by
 // Derive, and not separately per source.
 func TestSources_AllYieldAPrivateKey(t *testing.T) {

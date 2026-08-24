@@ -11,7 +11,7 @@ package node
 // governance). Roles are orthogonal facts a driver may key launch flags off.
 type Role string
 
-// The canonical vocabulary is bp / en / pn (worklist N0). The two legacy
+// The canonical vocabulary is bp / en / pn. The two legacy
 // spellings survive because they are written into persisted state
 // (workspace.json, topology files) and launch flows; netmap.NormalizeRole folds
 // them onto the canonical three, and new code should not emit them.
@@ -30,7 +30,7 @@ const (
 	// RoleEndpoint is the legacy spelling of RoleEN.
 	RoleEndpoint Role = "endpoint"
 	// RoleBoot marks the node that runs the poa governance bootstrap. In the
-	// target model (N0) this is an attribute of a bp, not a role of its own;
+	// target model this is an attribute of a bp, not a role of its own;
 	// it remains a role until the poa bring-up moves to that model.
 	RoleBoot Role = "boot"
 )

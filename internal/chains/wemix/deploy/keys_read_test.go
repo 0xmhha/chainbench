@@ -67,7 +67,7 @@ func presetNode1(t *testing.T) (nodekey, address, blsPubKey, blsPoP string) {
 	return n.Nodekey, n.Address, n.BLSPublicKey, n.BLSPoP
 }
 
-// TestReadServerKeys_DerivesLocally is the K7b gate: the server supplies only
+// TestReadServerKeys_DerivesLocally pins the import contract: the server supplies only
 // its nodekey file, and the identity is computed here.
 func TestReadServerKeys_DerivesLocally(t *testing.T) {
 	nodekey, wantAddr, wantBLS, wantPoP := presetNode1(t)

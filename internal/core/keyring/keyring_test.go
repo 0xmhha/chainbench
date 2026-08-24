@@ -45,7 +45,7 @@ func loadPresetNodes(t *testing.T) []presetNode {
 	return meta.Nodes
 }
 
-// TestDerive_GoldenAgainstShippedPreset is the K0 gate: every field of the
+// TestDerive_GoldenAgainstShippedPreset is the golden gate: every field of the
 // shipped preset must be reproducible from its nodekey alone, byte for byte.
 // It is what lets `keyring new` stop shelling out to the go-wbft bootnode
 // binary — the derivation is only a drop-in replacement if it is exact.
@@ -82,7 +82,7 @@ func TestDerive_GoldenAgainstShippedPreset(t *testing.T) {
 	}
 }
 
-// TestDerive_AccountOnlyOmitsBLS is the K2 gate. wemix does not use BLS, so
+// TestDerive_AccountOnlyOmitsBLS pins account-only derivation. wemix does not use BLS, so
 // deriving without it must leave the material *absent* rather than zeroed — a
 // zero-valued BLS key would be indistinguishable from a real one downstream.
 func TestDerive_AccountOnlyOmitsBLS(t *testing.T) {
@@ -261,7 +261,7 @@ func TestPreset_NetworkForNarrowsAndDropsExtraData(t *testing.T) {
 	}
 }
 
-// TestGenerate_RoundTrips is the K3 gate for the merged package: what Generate
+// TestGenerate_RoundTrips pins the merged package's round trip: what Generate
 // writes is exactly what LoadPreset reads back, with no second shape in
 // between. Entropy is injected so the run is reproducible.
 func TestGenerate_RoundTrips(t *testing.T) {

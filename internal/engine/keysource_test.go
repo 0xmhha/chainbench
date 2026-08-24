@@ -40,8 +40,8 @@ func TestPresetKeySource_LoadsAndChecksCapacity(t *testing.T) {
 	}
 }
 
-// TestGeneratedKeySource_NeedsNoExternalBinary is the K1 gate at the engine
-// level. Generating a set used to require the go-wbft bootnode tool, which is
+// TestGeneratedKeySource_NeedsNoExternalBinary guards the in-process derivation
+// at the engine level. Generating a set used to require the go-wbft bootnode tool, which is
 // what made the committed preset the only practical way to start a network.
 // PATH is emptied so a surviving shell-out fails instead of quietly finding a
 // binary the developer happens to have.

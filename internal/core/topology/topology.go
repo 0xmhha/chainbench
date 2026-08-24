@@ -101,7 +101,7 @@ func (t Topology) Validate() error {
 // NodeRole returns the node.Role for n (validated by Validate), in the legacy
 // spelling the composition still persists and compares. The alias table this
 // package used to keep is gone — netmap owns the folding, and this method
-// switches to the canonical spelling when the launch flows do (NM3).
+// switches to the canonical spelling when the launch flows migrate to it.
 func (n Node) NodeRole() node.Role {
 	role, err := netmap.NormalizeRole(n.Role)
 	if err != nil {
