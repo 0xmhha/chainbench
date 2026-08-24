@@ -123,3 +123,6 @@ id_ed25519.*
 /chainbenchd
 /chain-flag-graph
 /code-graph
+
+# local docker fleet artifacts (keys, generated inventory/map)
+env/docker/build/
