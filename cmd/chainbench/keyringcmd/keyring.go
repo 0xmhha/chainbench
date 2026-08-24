@@ -1,4 +1,4 @@
-package main
+package keyringcmd
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newKeyringCmd is the keyring group: create, inspect, and move key material.
+// New builds the keyring group: create, inspect, and move key material.
 //
 // It replaces three groups that split the same material by what it was going to
 // be used for — `keys` for raw keypairs, `account` for on-chain identity,
@@ -22,7 +22,7 @@ import (
 // Every subcommand is flags plus rendering. What a keyring does lives in
 // internal/app, so the MCP tools drive the same use cases and the two surfaces
 // cannot answer differently.
-func newKeyringCmd() *cobra.Command {
+func New() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "keyring",
 		Short: "Create, inspect, and move key material",
