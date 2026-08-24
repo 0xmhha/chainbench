@@ -422,6 +422,18 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | **A3** | 기동 전 포트 점유 조회 (`core/occupancy`) | ☑ **완료 2026-08-25.** `init` 직전(타깃에 쓰기 전) 전 노드 포트를 조회해 거부하고, **우리 것인지 남의 것인지** 분류한다. **dial 로는 못 잡는다**: 노드가 와일드카드 소켓에 바인드하면 루프백 dial 이 거부된다(lsof `*:8600` 점유 중 dial 실패 실측). bind 도 한 형태로는 부족 — 실측: 8600(와일드카드 점유)은 `127.0.0.1` bind 성공/`:` bind 실패, 8603(루프백 점유)은 정반대. **둘 다 성공해야 비어 있는 것**으로 판정하니 20개 리슨 소켓을 20개로 정확히 잡는다 | ☑ |
 | A4 | 원격/fleet 점유 조회 — 모든 서버 대상(요구 ⑩의 "모든 서버") | dial 경로는 있으나 fleet 다중 호스트는 R5 선행 | ☐ |
 
+### G — genesis 정리 (리팩토링 순서 ③)
+
+> 순서: keyring ☑ → netmap ☑ → **genesis** → config. 실측(2026-08-25): genesis 를
+> 만드는 진입점이 흩어져 있고, 그 결과 경로마다 기능이 달랐다.
+
+| # | 작업 | 게이트 | 상태 |
+|---|---|---|---|
+| **G1** | **조립 지점 단일화** — `engine.BuildGenesis`(소스 선택 + 커스터마이즈)를 모든 경로가 부른다 | ☑ **완료 2026-08-25.** 소스 선택이 **5곳 → 1곳**(엔진·스텝 두 경로가 `poa.FamilyID` 로 분기 + 세 곳이 하드코딩). 커스터마이즈를 소스 **밖으로** 빼서 `netcompose.customizeGenesis`(=`genesis.BuildNetwork` 의 옵션 처리를 줄 단위로 재구현한 사본) 소멸. 라이브: stablenet 4노드 · `chain up --case wemix` 15/15 | ☑ |
+| **G1a** | 닫힌 격차 — **wemix + overlay** | ☑ genesis overlay 가 스텝 경로에선 반영되고 엔진 경로에선 **말없이 버려지던** 분기. 커스터마이즈가 소스 안(한 패밀리만 쓰는 곳)에 있었던 탓. 이제 패밀리가 만든 base 위에 동일하게 적용된다 | ☑ |
+| G2 | `chainsetup/handoff_driver` 의 자체 genesis 조립(`BaseGenesis` + `MergeOverride`)도 같은 조립으로 | 핸드오프 경로는 `BringUpPhases` 도 안 쓴다 — 함께 처리 | ☐ |
+| G3 | genesis 산출물의 by-product(`Extra`) 배치 규칙 정리 — 지금은 소비자마다 따로 쓴다 | | ☐ |
+
 ### R — 로컬 docker 를 원격 서버처럼 (원격 경로 검증)
 
 > 근거: [[docker-remote-design]](docker-remote-design.md). 실 원격 서버 없이 Rancher 의

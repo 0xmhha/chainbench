@@ -14,7 +14,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
@@ -291,22 +290,15 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if w.state.Validators <= 0 {
 		return "", fmt.Errorf("netcompose: genesis: no validators — run `net allocate` first")
 	}
-	preset, err := keyring.LoadPreset(w.state.KeysDir)
-	if err != nil {
-		return "", fmt.Errorf("netcompose: genesis: %w", err)
-	}
 	// A family whose genesis its binary writes takes a different source: the
 	// generic dispatch builds a genesis by substituting a template, and for
 	// wemix that produces a file that initializes cleanly and runs the wrong
 	// consensus.
-	art, err := w.genesisArtifacts(ctx, p, preset, opts)
+	art, err := w.genesisArtifacts(ctx, p, opts)
 	if err != nil {
 		return "", err
 	}
-	gen, err := customizeGenesis(art.Genesis, opts)
-	if err != nil {
-		return "", err
-	}
+	gen := art.Genesis
 	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
@@ -343,30 +335,6 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 // a network is advertised as delayed-<fork> so the fork-transition cases gate on
 // it and skip on a normal network where the fork is active at genesis.
 const delayedForkSuffix = "Block"
-
-// customizeGenesis applies the config overrides and the overlay, re-validating
-// fork ordering after each so a bad request fails while composing rather than
-// when a node refuses to boot.
-func customizeGenesis(gen []byte, opts GenesisOpts) ([]byte, error) {
-	var err error
-	if len(opts.Overrides) > 0 {
-		if gen, err = genesis.ApplyConfigOverrides(gen, opts.Overrides); err != nil {
-			return nil, fmt.Errorf("netcompose: genesis overrides: %w", err)
-		}
-		if err := genesis.ValidateForks(gen); err != nil {
-			return nil, fmt.Errorf("netcompose: genesis overrides: %w", err)
-		}
-	}
-	if len(opts.Overlay) > 0 {
-		if gen, err = genesis.MergeOverride(gen, opts.Overlay); err != nil {
-			return nil, fmt.Errorf("netcompose: genesis overlay: %w", err)
-		}
-		if err := genesis.ValidateForks(gen); err != nil {
-			return nil, fmt.Errorf("netcompose: genesis overlay: %w", err)
-		}
-	}
-	return gen, nil
-}
 
 // networkCapabilities is what the composed network advertises: the chain's own
 // capabilities, "ws" (composed nodes always serve a WebSocket endpoint), a
@@ -671,33 +639,23 @@ func netmapRequests(reqs []place.NodeReq) []netmap.Request {
 	return out
 }
 
-// genesisArtifacts builds the genesis through the source the family needs. The
-// wemix source runs the chain binary, so it also needs the placement: the
-// governance config names the producer by host and p2p port.
-func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, opts GenesisOpts) (engine.GenesisArtifacts, error) {
+// genesisArtifacts builds the genesis through the one composition every surface
+// uses. The wemix source runs the chain binary, so the request also carries the
+// placement: the governance config names the producer by host and p2p port.
+func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) (engine.GenesisArtifacts, error) {
+	req := engine.GenesisRequest{Validators: w.state.Validators}
 	if p.Family().ID() == poa.FamilyID {
 		placed, err := w.Netmap()
 		if err != nil {
 			return engine.GenesisArtifacts{}, fmt.Errorf("netcompose: genesis: %w", err)
 		}
-		src := engine.WemixGenesisSource{
-			KeysDir: w.state.KeysDir,
-			Binary:  w.state.Binary,
-			ChainID: opts.ChainID,
-		}
-		return src.Genesis(ctx, p, engine.GenesisRequest{Validators: w.state.Validators, Nodes: placed})
+		req.Nodes = placed
 	}
-	net := preset.NetworkFor(w.state.Validators)
-	gen, err := genesis.Build(p, genesis.Inputs{
-		Validators: net.Validators,
-		BLSKeys:    net.BLSKeys,
-		ExtraData:  net.ExtraData,
-		Members:    net.Members,
-		Alloc:      net.Alloc,
-		ChainID:    opts.ChainID,
+	return engine.BuildGenesis(ctx, p, req, engine.GenesisConfig{
+		KeysDir:         w.state.KeysDir,
+		Binary:          w.state.Binary,
+		ChainID:         opts.ChainID,
+		ConfigOverrides: opts.Overrides,
+		Overlay:         opts.Overlay,
 	})
-	if err != nil {
-		return engine.GenesisArtifacts{}, err
-	}
-	return engine.GenesisArtifacts{Genesis: gen}, nil
 }

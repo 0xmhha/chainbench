@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
@@ -67,14 +68,6 @@ type PresetGenesisSource struct {
 	// ChainID, when non-zero, overrides the manifest chain id in the built
 	// genesis (the custom-chain-id seam; the DSL env layer sets it).
 	ChainID int64
-	// ConfigOverrides sets keys in the genesis `config` object after the build —
-	// the delayed-fork seam (e.g. {"bohoBlock":"10"} from
-	// `setup --set genesis.overrides.*`). Empty applies none.
-	ConfigOverrides map[string]string
-	// Overlay is a JSON genesis fragment deep-merged into the built genesis
-	// (extra alloc or system-contract params, from `setup --genesis-overlay`).
-	// Empty applies none.
-	Overlay []byte
 }
 
 // Genesis loads the preset, takes the first `validators` entries, and delegates
@@ -88,18 +81,77 @@ func (s PresetGenesisSource) Genesis(_ context.Context, plugin registry.ChainPlu
 		return GenesisArtifacts{}, fmt.Errorf("engine: genesis source: %w", err)
 	}
 	net := preset.NetworkFor(validators)
-	gen, err := genesis.BuildNetwork(plugin, genesis.Inputs{
+	gen, err := genesis.Build(plugin, genesis.Inputs{
 		Validators: net.Validators,
 		BLSKeys:    net.BLSKeys,
 		ExtraData:  net.ExtraData,
 		Members:    net.Members,
 		Alloc:      net.Alloc,
 		ChainID:    s.ChainID,
-	}, genesis.NetworkOptions{ConfigOverrides: s.ConfigOverrides, Overlay: s.Overlay})
+	})
 	if err != nil {
 		return GenesisArtifacts{}, fmt.Errorf("engine: genesis source: %w", err)
 	}
 	// A wbft-family network is one file: the validator set is inside the
 	// genesis, so nothing else has to reach a later step.
 	return GenesisArtifacts{Genesis: gen}, nil
+}
+
+// GenesisConfig is everything a caller can say about how a network's genesis is
+// produced. It is the same set for every family; which of it a particular
+// family's source consumes is that family's business.
+type GenesisConfig struct {
+	// KeysDir is the key set the network's identities come from.
+	KeysDir string
+	// Binary is the node executable, for a family whose genesis its own binary
+	// writes.
+	Binary string
+	// ChainID overrides the manifest's chain id when non-zero.
+	ChainID int64
+	// ConfigOverrides sets bare keys in the genesis `config` object.
+	ConfigOverrides map[string]string
+	// Overlay is a genesis JSON fragment deep-merged into the built genesis.
+	Overlay []byte
+}
+
+// BuildGenesis produces a network's genesis: the family's own base, then the
+// caller's customizations.
+//
+// It exists so that "which source does this family need" is answered once. That
+// question was being answered in five places — two composition paths branching
+// on the family id and three more hardcoding a source — and the answers had
+// already drifted: a genesis overlay reached a wemix network through the step
+// surface and was dropped on the engine one, because the customization lived
+// inside the source that only one family uses.
+//
+// Customizing here rather than inside a source is what closes that: the base
+// genesis is the family's, and the caller's changes are applied the same way to
+// whatever it produced.
+func BuildGenesis(ctx context.Context, plugin registry.ChainPlugin, req GenesisRequest, cfg GenesisConfig) (GenesisArtifacts, error) {
+	art, err := GenesisSourceFor(plugin, cfg).Genesis(ctx, plugin, req)
+	if err != nil {
+		return GenesisArtifacts{}, err
+	}
+	gen, err := genesis.Customize(art.Genesis, genesis.NetworkOptions{
+		ConfigOverrides: cfg.ConfigOverrides,
+		Overlay:         cfg.Overlay,
+	})
+	if err != nil {
+		return GenesisArtifacts{}, err
+	}
+	art.Genesis = gen
+	return art, nil
+}
+
+// GenesisSourceFor returns the source a chain's family builds its genesis with.
+//
+// A family whose genesis carries the validator set is built by substituting a
+// template; one whose genesis its binary writes from a governance config is
+// not, and substituting for it produces a file that initializes cleanly and
+// runs the wrong consensus.
+func GenesisSourceFor(plugin registry.ChainPlugin, cfg GenesisConfig) GenesisSource {
+	if plugin.Family().ID() == poa.FamilyID {
+		return WemixGenesisSource{KeysDir: cfg.KeysDir, Binary: cfg.Binary, ChainID: cfg.ChainID}
+	}
+	return PresetGenesisSource{KeysDir: cfg.KeysDir, ChainID: cfg.ChainID}
 }

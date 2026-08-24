@@ -94,17 +94,18 @@ func TestPresetGenesisSource_AppliesOverridesAndOverlay(t *testing.T) {
 		"extraData": "0xdeadbeef",
 		"alloc": {}
 	}`)
-	// The source must thread ConfigOverrides and Overlay into BuildNetwork.
-	// petersburgBlock is included so the post-transform fork validation passes on
-	// the minimal test template.
-	src := engine.PresetGenesisSource{
-		KeysDir:         dir,
-		ConfigOverrides: map[string]string{"petersburgBlock": "0", "bohoBlock": "10"},
-		Overlay:         []byte(`{"alloc":{"00000000000000000000000000000000000000ff":{"balance":"0x2a"}}}`),
-	}
-	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), engine.GenesisRequest{Validators: 0})
+	// The composition must apply ConfigOverrides and Overlay to whatever the
+	// family's source produced. petersburgBlock is included so the
+	// post-transform fork validation passes on the minimal test template.
+	gen, err := engine.BuildGenesis(context.Background(), wbftTestPlugin(),
+		engine.GenesisRequest{Validators: 0},
+		engine.GenesisConfig{
+			KeysDir:         dir,
+			ConfigOverrides: map[string]string{"petersburgBlock": "0", "bohoBlock": "10"},
+			Overlay:         []byte(`{"alloc":{"00000000000000000000000000000000000000ff":{"balance":"0x2a"}}}`),
+		})
 	if err != nil {
-		t.Fatalf("Genesis: %v", err)
+		t.Fatalf("BuildGenesis: %v", err)
 	}
 	out := string(gen.Genesis)
 	if !strings.Contains(out, `"bohoBlock":10`) {

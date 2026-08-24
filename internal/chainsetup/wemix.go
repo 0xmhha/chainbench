@@ -117,8 +117,8 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
-		src := engine.WemixGenesisSource{KeysDir: o.KeysDir, Binary: o.Binary}
-		a, err := src.Genesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators, Nodes: assign})
+		a, err := engine.BuildGenesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators, Nodes: assign},
+			engine.GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
 		if err != nil {
 			return "", err
 		}
