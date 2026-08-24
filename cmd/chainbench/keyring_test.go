@@ -355,9 +355,12 @@ func TestKeyringImport_MnemonicGolden(t *testing.T) {
 // accepted: a command naming two keys cannot silently prefer one.
 func TestKeyringImport_RefusesMixedSources(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
+	// The refusal fires before any key is parsed, so the value only has to be
+	// key-shaped — a synthetic constant, not anyone's published dev key.
+	synthetic := "0x" + strings.Repeat("11", 32)
 	_, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
 		"--mnemonic", "test test test test test test test test test test test junk",
-		"--private-key", "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d")
+		"--private-key", synthetic)
 	if err == nil {
 		t.Fatal("import accepted two key origins at once")
 	}
