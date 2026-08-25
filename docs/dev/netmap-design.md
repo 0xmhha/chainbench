@@ -327,14 +327,22 @@ pass·고아 0** 을 확인했다.
 |---|---|---|
 | `net allocate` | 노드 테이블 생성(NodeState 평면) | 동일 명령, 산출 = netmap. 출력에 **역할·호스트·포트 전부**(etcd 포함) |
 | `net allocate --peering` | (없음 — 항상 풀메시) | `mesh`(기본) \| `proxied`. poa+pn 은 오류 |
-| **`net map`** ★신규 | (없음) | 대장 조회. `--node 7` · `--label en1` · `--host <ip>` · `--port 8080` — **네 방향** · `--json` |
-| **`net pool`** ★신규 | (없음) | 가용 자원 요약: 출처 · hosts×bases · **cap** · 현재 사용량. **자격증명은 출력하지 않는다** |
+| **`netmap show`** ★신규 | (없음) | 대장 조회. `--node 7` · `--label en1` · `--host <ip>` · `--port 8080` — **네 방향** · `--json` |
+| **`netmap pool`** ★신규 | (없음) | 가용 자원 요약: 출처 · hosts×bases · **cap** · 현재 사용량. **자격증명은 출력하지 않는다** |
+| **`netmap plan`** ★신규 | (없음) | 할당기를 질문으로 실행: 인벤토리(또는 내장 풀) + 형태(validators/endpoints) → 배치표. **워크스페이스 없음, 아무것도 쓰지 않음** |
 | `net status` / MCP `chainbench_net_status` | 포트 일부 표시 | netmap 조회 — 역방향(host:port→label) 포함 |
 | MCP `chainbench_network_topology` | 런타임 피어 조회 | 유지. **계획된** 그래프는 allocate 출력이 답한다 |
 
 keyring 때처럼 유스케이스는 `app` 에, 표면은 바인딩·렌더링만 (K8 선례):
-`app.NetMap`·`app.NetPool` 하나씩, CLI 명령 하나씩, MCP 도구 하나씩
-(`chainbench_net_map`·`chainbench_net_pool`).
+`app.NetMap`·`app.NetPool`·`app.NetPlan` 하나씩, CLI 명령 하나씩, MCP 도구 하나씩
+(`chainbench_netmap_show`·`chainbench_netmap_pool`·`chainbench_netmap_plan`).
+
+**조회는 `netmap` 그룹이 소유한다** (사용자 결정 2026-08-25). 배치 조회를 `net` 의
+하위에 두면 조회가 조합(compose) 기능과 한 그룹에 묶여, netmap 모듈만 고쳤을 때
+그 부분만 검증할 수 없다. 그래서 조회 동사는 모듈 이름 그대로의 최상위 그룹
+`netmap`(show·pool·plan)에 두고, `net` 은 상태를 바꾸는 조합 단계만 갖는다.
+`plan` 이 그 분리의 증명이다: 워크스페이스 없이 할당기를 그대로 실행하므로,
+배치 로직의 변경을 조합 없이 CLI 에서 바로 검증한다.
 
 **MCP 의 비밀 취급** — keyring 이 `export` 를 MCP 에 **의도적으로 노출하지 않은** 판단(K8)을
 그대로 잇는다. SSH user/password/key_file 은 **어떤 도구도 반환하지 않으며**, 그 부재를

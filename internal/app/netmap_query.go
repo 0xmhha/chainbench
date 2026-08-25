@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -72,7 +73,7 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 	}
 	all := m.Placements()
 	if len(all) == 0 {
-		return NetMapOut{}, fmt.Errorf("app: net map: no node table — run `net allocate` first")
+		return NetMapOut{}, fmt.Errorf("app: netmap show: no node table — run `net allocate` first")
 	}
 
 	roles := map[string]int{}
@@ -96,7 +97,7 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 		})
 	}
 	if len(out.Entries) == 0 {
-		return NetMapOut{}, fmt.Errorf("app: net map: nothing matches (the network has %d node(s))", len(all))
+		return NetMapOut{}, fmt.Errorf("app: netmap show: nothing matches (the network has %d node(s))", len(all))
 	}
 	return out, nil
 }
@@ -111,16 +112,16 @@ func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) 
 		}
 	}
 	if given > 1 {
-		return nil, fmt.Errorf("app: net map: give at most one of --node, --label, --host, --port, --addr")
+		return nil, fmt.Errorf("app: netmap show: give at most one of --node, --label, --host, --port, --addr")
 	}
 	if in.Addr != "" {
 		host, portStr, err := net.SplitHostPort(in.Addr)
 		if err != nil {
-			return nil, fmt.Errorf("app: net map: %q is not host:port: %w", in.Addr, err)
+			return nil, fmt.Errorf("app: netmap show: %q is not host:port: %w", in.Addr, err)
 		}
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
-			return nil, fmt.Errorf("app: net map: %q has no port number", in.Addr)
+			return nil, fmt.Errorf("app: netmap show: %q has no port number", in.Addr)
 		}
 		if label, ok := m.At(host, port); ok {
 			return func(p netmap.Placement) bool { return p.Label == label }, nil
@@ -138,7 +139,7 @@ func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) 
 		// Not an identity, so read it as a role alias ("en2").
 		role, ord, err := netmap.ParseRoleLabel(want)
 		if err != nil {
-			return nil, fmt.Errorf("app: net map: %q is neither a node in this network nor a role label: %w", in.Label, err)
+			return nil, fmt.Errorf("app: netmap show: %q is neither a node in this network nor a role label: %w", in.Label, err)
 		}
 		return func(p netmap.Placement) bool { return netmap.Is(p.Role, role) && p.Ord == ord }, nil
 	case in.Host != "":
@@ -203,6 +204,64 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 		if ws, err := netcompose.Open(in.DataDir, d.Clock); err == nil {
 			out.Used = len(ws.State().Nodes)
 		}
+	}
+	return out, nil
+}
+
+// NetPlanIn asks what placement a network of this shape would get, before any
+// workspace exists. The chain matters because a family reserves a different
+// number of ports per node; the default is stablenet.
+type NetPlanIn struct {
+	Chain      string
+	Validators int
+	Endpoints  int
+	Server     ServerRef
+}
+
+// NetPlan runs the allocator as a question: the same deterministic assignment
+// a composition would record, computed from the inventory (or the built-in
+// pool) and the requested shape, with nothing written anywhere. It is how a
+// placement change is inspected — and tested — without composing a network.
+func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
+	if in.Validators < 1 {
+		return NetMapOut{}, fmt.Errorf("app: netmap plan: a network needs at least one validator — nothing seals without one")
+	}
+	chain := in.Chain
+	if chain == "" {
+		chain = "stablenet"
+	}
+	plugin, err := registry.Get(chain)
+	if err != nil {
+		return NetMapOut{}, err
+	}
+	resolved, err := ResolveServer(d, in.Server, in.Validators, defaultPortBand)
+	if err != nil {
+		return NetMapOut{}, err
+	}
+	pool := resolved.Placement.Pool
+	if pool.Slots < 1 {
+		pool.Slots = 1
+	}
+	pool.Reservation = plugin.Family().PortReservation()
+	reqs := make([]netmap.Request, 0, in.Validators+in.Endpoints)
+	for range in.Validators {
+		reqs = append(reqs, netmap.Request{Role: node.RoleBP})
+	}
+	for range in.Endpoints {
+		reqs = append(reqs, netmap.Request{Role: node.RoleEN})
+	}
+	m, err := netmap.Assign(pool, reqs)
+	if err != nil {
+		return NetMapOut{}, err
+	}
+	all := m.Placements()
+	out := NetMapOut{Roles: map[string]int{}, Total: len(all)}
+	for _, p := range all {
+		out.Roles[string(p.Role)]++
+		out.Entries = append(out.Entries, MapEntry{
+			Node: p.Index, Label: string(p.Label), Alias: string(p.RoleLabel()),
+			Role: string(p.Role), Host: p.Host, Endpoints: p.Ports,
+		})
 	}
 	return out, nil
 }
