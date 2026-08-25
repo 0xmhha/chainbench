@@ -540,6 +540,58 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 
 ---
 
+## 1h. 아키텍처 v2 — 모듈 재편 (사용자 결정 2026-08-25)
+
+> 결정 요지. **CLI 는 core 를 직접 호출**한다(기능 동작 확인 용도). **MCP 는 app 을
+> 경유**하며, app 은 워크플로 층이다(DSL 파싱 → chainsetup → testengine → 수집 → 레포트).
+> **netmap** 이 서버 정보 관리·자원 분배(ip·port)·enode 생성(공개키는 입력)·low level
+> 접근 wrapper(유일 통로)를 소유한다. low level(machine·process·FileStore·driver·SSH)은
+> 필요 정보를 전부 파라미터로 받는 순수 기능으로 남는다. 경계마다 **소비자 측 작은
+> interface** 로만 노출한다. 상세 설계는 V0.1 에서 architecture 문서로 기록한다.
+
+**모듈 네이밍 규칙** (새 모듈·개명 시 이 표로 판정):
+
+1. 소문자 한 덩어리 — 하이픈·언더스코어·대문자 금지, 폴더명 = 패키지명
+2. 소유하는 명사로 짓는다 — 동작이 역할이면 "대상+동작명사" 합성 최대 2단어 (`chainsetup`)
+3. 덤핑 단어 금지 — util·common·helpers·shared·misc·base·manager (관리자는 타입으로: `process.Manager`)
+4. stutter 금지 — `machine.Spec` ○ / `machine.Machine` ✗ (현 `target.Target` 이 위반 사례)
+5. 단수형 — 집합이 주제일 때만 집합 명사 (`serverset` ○, 현 `accounts` 위반)
+6. 계층은 경로가 말한다 — 이름에 core·app 접두어 금지
+7. 약어는 업계 표준만 — rpc·ssh·mcp·dsl ○ / `netreg` ✗
+
+**빌드 안전 순서 원칙**: 모든 이동은 신설(추가만) → 소비자 전환 → 구코드 제거의
+세 단계로 하고, 태스크 하나 = PR 하나 = 빌드·테스트·lint 통과 상태다. 개명은 한 PR
+안에서 원자적으로 끝낸다(별칭 잔류 금지). 선행 열이 비면 착수 가능.
+
+| # | 작업 | 선행 | 게이트 | 상태 |
+|---|---|---|---|---|
+| **V0.1** | 아키텍처 v2 결정 기록 — 레이어 그림·모듈 책임·CLI/MCP 비대칭·네이밍 규칙을 architecture 문서로 | — | 문서 등급 표기(현행 설계) + docs/README 권위 순서 반영 | ☐ |
+| **V0.2** | AST 전수 측정 — app·netcompose·engine·target·driver 함수별 이동표(현 위치 → 목표 칸) | — | 이동표가 V1~V6 각 태스크의 대상 파일을 명시 | ☐ |
+| **V1.1** | `core/target` → `core/machine` 개명 — `machine.Spec`/`machine.Access`(stutter 해소), 소비자 일괄 전환 | V0.2 | 한 PR 원자 개명 · 전 소비자 컴파일 · 기존 테스트 무변경 통과 | ☐ |
+| **V1.2** | 무분기 감사 — machine 소비자의 local/remote 분기 전수 검사, 분기는 machine 내부로 | V1.1 | 소비자 코드에 Kind 분기 0건(테스트로 고정) | ☐ |
+| **V2.1** | netmap 접근 wrapper 신설 — 서버 이름 → 능력 손잡이(FileStore·Driver), `--docker` 치환·치환 보고·자격 결합 내장. 추가만, 기존 코드 무변경 | V1.1 | 단위: 치환·보고·자격이 wrapper 한 곳에서 재현 | ☐ |
+| **V2.2** | keyring 소비 전환 — `RingRef.open` 의 개별 배선을 wrapper 호출로 교체 | V2.1 | keyring 라이브 스위트(원격 링·복제) 통과 | ☐ |
+| **V2.3** | netcompose 소비 전환 — `resolveTarget` 을 wrapper 로 교체(서버 세트 nil 전달 결함 구조적 해소) | V2.1 | 원격 net 단계가 env 변수 없이 서버 세트만으로 동작(라이브) | ☐ |
+| **V2.4** | serverset 흡수 — netmap 이 서버 정보 관리를 소유(패키지 이동 또는 내부화) | V2.2, V2.3 | 외부에서 serverset 직접 import 0건 | ☐ |
+| **V2.5** | enode 생성 이관 — netcompose 의 enode·static-nodes 조합을 netmap 으로(공개키는 입력 파라미터) | V2.3 | 기존 enode 골든 값 바이트 동일 | ☐ |
+| **V3.1** | `keyring/store` 분리 — 링 저장·읽기(레이아웃·metadata·암호화 파일)를 하위 패키지로, 키 역학은 keyring 에 잔류 | V0.2 | 한 PR 내 소비자 전환 · 전 테스트 통과 | ☐ |
+| **V3.2** | 링 위치 해석 이동 — `--keyring-dir` 우선순위(플래그>env>기본)를 store 로 | V3.1 | 위치 보고(`keyring: <dir> (<source>)`) 동작 유지 | ☐ |
+| **V3.3** | app keyring 슬림화 + CLI 직접 호출 — keyringcmd 가 core(store·netmap wrapper)를 직접 호출, app 은 MCP 용 얇은 함수만 | V2.2, V3.2 | CLI 전 명령 동작 동일(테스트) · app keyring 은 호출만 | ☐ |
+| **V4.1** | driver 조회 보강 — 머신에서 바이너리/pid 실행 여부·포트 사용·명령 수행(결과 회수) 원시 기능 채움 | V1.1 | 단위 + docker 라이브(양면 프로브 유지) | ☐ |
+| **V4.2** | `core/process` 신설 — `process.Manager` 실행 대장: 어떤 머신·어떤 바이너리·어떤 명령·pid | V4.1 | 단위: 기록·조회·이중 기동 감지 | ☐ |
+| **V4.3** | pid 기록 전환 — netcompose 워크스페이스의 pid 관리를 process 대장으로 | V4.2 | start→stop→고아 0 라이브 재검증 | ☐ |
+| **V5.1** | chainsetup 수렴 — netcompose 의 순차 진행을 chainsetup 으로 이동, 단계 내용은 기능 모듈로 분리. 역할 정의: 체인을 구성해 블록 생성 상태까지 | V2.3, V4.3 | 기존 net up 전 단계 라이브 통과 · netcompose 잔여 코드 0 | ☐ |
+| **V5.2** | 실행 기록 폴더 — 지정 폴더 아래 실행마다 폴더: 체인 id·입력 사본·배치표·genesis·실행 명령. **서버 세트 ssh 절 제외**(테스트로 고정) | V5.1 | 기록에서 자격증명 grep 0건 테스트 | ☐ |
+| **V5.3** | 사전 점검 배선 — 구성 전 process 대장으로 기동 중 노드 검사, 케이스별 함수 분리·조립(전체 셋업·부분 재시작·점검만) | V5.1 | 이미 도는 노드 위 재구성 거부 라이브 | ☐ |
+| **V5.4** | CLI `netcmd` 추출 — net 그룹 6파일을 패키지로, chainsetup 직접 호출 (serverFlags 중복 해소 포함) | V5.1 | keyringcmd 패턴 준수 · 도움말 무손실 | ☐ |
+| **V6.1** | engine → `testengine` — 구성 책임 제거, "구성된 체인 위에서 테스트만 일관 수행" 으로 축소·개명 | V5.1 | 기존 테스트 스위트 결과 동일 | ☐ |
+| **V6.2** | app 워크플로 — DSL 파싱 → chainsetup → testengine → 수집 → 레포트를 app 이 한 흐름으로 제공 | V6.1 | e2e: DSL 입력 하나로 셋업+테스트+레포트 산출 | ☐ |
+| **V6.3** | MCP 전환 — MCP 도구가 app 워크플로·얇은 app 함수만 경유(CLI 는 core 직접 유지) | V6.2 | MCP 도구 전수: app 외 import 0건 | ☐ |
+| **V7** | 기회 개명 백로그 — `netreg`(규칙 7)·`accounts`(규칙 5)는 해당 모듈을 손댈 때 개명 | 해당 트랙 | 네이밍 규칙 표 판정 통과 | ☐ |
+
+각 태스크 마무리마다: 해당 경계에 소비자 측 interface 수립 · 네이밍 규칙 판정 ·
+빌드·테스트·lint·(원격이면) docker 라이브 게이트.
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
