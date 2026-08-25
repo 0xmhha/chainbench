@@ -117,6 +117,7 @@ flowchart TD
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
 | `netmap/internal/serverset` | **서버 세트(포트·호스트)** — netmap 모듈의 내부 데이터 형식. 컴파일러가 외부 import 를 차단한다 |
+| `keyring` | **keyring 모듈 표면** — 링에 대한 동사(new·add·import·list·show·export·링 복제)를 모델(core/keyring)+저장(store)+netmap 으로 조립. CLI 가 직접 호출, app 은 MCP 용으로 얇게 위임 ([[architecture-v2]]) |
 | `netmap` | **netmap 모듈 표면** — 서버 이름을 능력 손잡이로 여는 유일 통로(Opener: 서버 세트 결합 · --docker 치환 · 치환 보고). 할당 코어(core/netmap)와 서버 세트를 low level 에 묶는다 ([[architecture-v2]]) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
