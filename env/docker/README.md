@@ -5,9 +5,11 @@
 작업 상태는 worklist §1g R 트랙.
 
 - 컨테이너 = 빈 ubuntu 서버 + sshd. **접근은 실서버와 같은 모양**이다:
-  사용자 `chainbench` + 비밀번호(개발 전용 고정값 `chainbench`), 키 로그인 없음,
+  `accounts.env` 의 첫 계정(기본 `devuser1`) + 공용 비밀번호, 키 로그인 없음,
   root 로그인 없음, **sudo 는 그 비밀번호를 요구**한다(NOPASSWD 아님 — 그 흐름을
-  검증하는 것이 목적이므로). 체인 바이너리는 넣지 않는다 — 실서버처럼 provision 이 올린다.
+  검증하는 것이 목적이므로). 실서버도 provision 된 dev 계정으로 접속하므로 같은
+  모양이다. 체인 바이너리는 넣지 않는다 — 실서버처럼 provision 이 올린다.
+  이미지에는 계정이 하나도 없다 — 모든 계정은 시작 시 주입된다.
 - 기본 15대(`server1`~`server15`). **server15 는 pn 노드를 띄울 예정**이지만 서버
   계층에서는 구분하지 않는다 — 역할은 netmap 할당이 정한다.
 - 퍼블리시 포트는 **127.0.0.1 에만** 바인딩된다. 이 머신 밖에서는 닿을 수 없다.
@@ -16,11 +18,16 @@
 
 ```bash
 cd env/docker
+cp accounts.env.sample accounts.env            # 열어서 실제 비밀번호로 바꾼다
 ./gen-env.sh                                   # build/ 에 전부 생성 (손으로 쓰는 파일 0)
 docker build -t chainbench-server:ubuntu24 .
 docker compose -f build/docker-compose.yml up -d
-ssh -p 2201 chainbench@127.0.0.1 hostname   # password: chainbench -> server1
+ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server1
 ```
+
+`accounts.env` 없이(또는 비밀번호가 sample 값 그대로인 채로) `gen-env.sh` 를
+실행하면 안내와 함께 멈춘다 — placeholder 비밀번호로 sudo 계정을 띄우지 않기
+위해서다.
 
 생성물(`build/`, gitignore):
 
@@ -31,6 +38,21 @@ ssh -p 2201 chainbench@127.0.0.1 hostname   # password: chainbench -> server1
 | `localmap.yaml` | 실주소→loopback 퍼블리시 포트 대응표. `--docker` 일 때만 적용(R1) |
 
 대수를 바꾸려면 `SERVERS=20 ./gen-env.sh` 후 compose 를 다시 올린다.
+
+## 개발 계정 주입 (accounts.env)
+
+공용 개발 계정은 `accounts.env`(gitignore, `accounts.env.sample` 을 복사해
+만든다)에 `name:uid` 목록 + 공용 비밀번호로 적는다. 컨테이너가 시작할
+때마다 `setup-accounts.sh` 가 이 파일을 읽어 계정을 만든다(compose command 에
+연결). 값을 바꾸면 `./gen-env.sh` 로 다시 생성한 뒤 `docker compose -f
+build/docker-compose.yml up -d` 로 재생성해야 반영된다 — `restart` 는 예전
+compose 명령을 그대로 다시 돌리므로 계정 이름 변경을 적용하지 못한다(비밀번호만
+바꿨다면 restart 로도 충분하다). 이미지 재빌드는 어느 쪽이든 필요 없다. 다른
+도구가 같은 계정 정보를 쓸 때도 이 파일을 읽는다.
+
+하네스 로그인도 이 파일에서 나온다: `gen-env.sh` 가 **첫 계정**을 인벤토리
+(`build/remote-server-config.yaml`)의 `ssh: user/password` 로 찍어내고,
+dataRoot 도 그 계정 소유로 만든다. 계정 정보의 출처는 이 파일 하나다.
 
 정리:
 

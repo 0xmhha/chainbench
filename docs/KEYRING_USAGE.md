@@ -154,7 +154,9 @@ bin/chainbench keyring import --keyring-dir ./keys/pulled \
 실서버 없이 원격 경로를 검증할 때 쓴다. 준비는 한 번:
 
 ```
-cd env/docker && ./gen-env.sh
+cd env/docker
+cp accounts.env.sample accounts.env    # 열어서 실제 비밀번호로 바꾼다
+./gen-env.sh
 docker build -t chainbench-server:ubuntu24 .
 docker compose -f build/docker-compose.yml up -d
 ```
@@ -167,9 +169,9 @@ docker compose -f build/docker-compose.yml up -d
 | `--docker` + localmap 없음 | 오류 (생성 방법 안내) |
 | 옵션 없음 + 파일 있음 | 무시 — 진짜 원격 모드 오염 없음 |
 
-함대의 접근은 **실서버와 같은 모양**이다: 사용자 `chainbench` + 비밀번호(개발 전용
-고정값 `chainbench`), sudo 는 그 비밀번호를 요구한다. srv:// 경로는 자격을 생성된
-인벤토리에서 읽으므로, 켤 환경변수는 호스트키 예외 하나뿐이다.
+함대의 접근은 **실서버와 같은 모양**이다: `env/docker/accounts.env` 의 첫 계정
+(기본 `devuser1`) + 공용 비밀번호, sudo 는 그 비밀번호를 요구한다. srv:// 경로는
+자격을 생성된 인벤토리에서 읽으므로, 켤 환경변수는 호스트키 예외 하나뿐이다.
 
 ```
 CHAINBENCH_SSH_INSECURE_HOST_KEY=1 \
@@ -179,7 +181,7 @@ bin/chainbench keyring import --keyring-dir /tmp/r --name srv1 \
 ```
 
 직접 표기(`user@host:path`)를 쓸 때만 비밀번호를 env 로 준다:
-`CHAINBENCH_REMOTE_PASS=chainbench`.
+`CHAINBENCH_REMOTE_PASS=<accounts.env 의 비밀번호>`.
 
 산출물(genesis·static-nodes·워크스페이스)에는 치환 주소가 절대 들어가지 않는다 —
 노드끼리는 실주소로 통신한다.

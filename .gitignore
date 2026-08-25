@@ -131,3 +131,6 @@ id_ed25519.*
 
 # local docker fleet artifacts (keys, generated inventory/map)
 env/docker/build/
+# dev accounts injected into the fleet (name:uid list + shared password);
+# only accounts.env.sample is tracked
+env/docker/accounts.env
