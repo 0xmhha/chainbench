@@ -1,4 +1,4 @@
-package netcompose_test
+package chainsetup_test
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // TestOpen_ReadsTheLegacyServerConfigKey keeps a workspace composed before the
@@ -26,7 +26,7 @@ func TestOpen_ReadsTheLegacyServerConfigKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ws, err := netcompose.Open(dir, nil)
+	ws, err := chainsetup.Open(dir, nil)
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // The step stack has to be able to compose every network the setup stack can,
@@ -41,7 +41,7 @@ func composed(t *testing.T, alloc app.NetAllocateIn) (dir string, d app.Deps) {
 }
 
 // stateOf reads the persisted composition state.
-func stateOf(t *testing.T, dir string, d app.Deps) netcompose.State {
+func stateOf(t *testing.T, dir string, d app.Deps) chainsetup.State {
 	t.Helper()
 	out, err := app.NetStatus(context.Background(), d, app.NetStatusIn{DataDir: dir})
 	if err != nil {

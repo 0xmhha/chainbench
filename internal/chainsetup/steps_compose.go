@@ -1,4 +1,4 @@
-package netcompose
+package chainsetup
 
 import (
 	"context"
@@ -44,7 +44,7 @@ const (
 // plugin resolves the workspace's chain plugin, requiring `new` to have run.
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 	if w.state.Chain == "" && w.state.ManifestPath == "" {
-		return nil, fmt.Errorf("netcompose: no chain set — run `net new` first")
+		return nil, fmt.Errorf("chainsetup: no chain set — run `net new` first")
 	}
 	return external.ResolveChain(w.state.Chain, w.state.ManifestPath, w.state.TemplatePath)
 }
@@ -75,7 +75,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		n = opts.Validators
 	}
 	if n <= 0 {
-		return "", fmt.Errorf("netcompose: keys: node count unknown — run `net allocate` first or pass --nodes")
+		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `net allocate` first or pass --nodes")
 	}
 
 	var src engine.KeySource
@@ -85,7 +85,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	case "generate":
 		src = engine.GeneratedKeySource{Path: w.state.KeysDir, Validators: opts.Validators}
 	default:
-		return "", fmt.Errorf("netcompose: keys: unknown source %q (want preset or generate)", opts.Source)
+		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset or generate)", opts.Source)
 	}
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
@@ -134,7 +134,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 	if o.Topology != nil {
 		sorted := o.Topology.Sorted()
 		if len(sorted) == 0 {
-			return nil, nil, fmt.Errorf("netcompose: allocate: topology has no nodes")
+			return nil, nil, fmt.Errorf("chainsetup: allocate: topology has no nodes")
 		}
 		reqs := make([]place.NodeReq, len(sorted))
 		modes := make([]string, len(sorted))
@@ -148,7 +148,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 		return reqs, modes, nil
 	}
 	if o.Validators < 1 {
-		return nil, nil, fmt.Errorf("netcompose: allocate: at least one validator is required")
+		return nil, nil, fmt.Errorf("chainsetup: allocate: at least one validator is required")
 	}
 	reqs := make([]place.NodeReq, 0, o.Validators+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
@@ -288,7 +288,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	if w.state.Validators <= 0 {
-		return "", fmt.Errorf("netcompose: genesis: no validators — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: genesis: no validators — run `net allocate` first")
 	}
 	// A family whose genesis its binary writes takes a different source: the
 	// generic dispatch builds a genesis by substituting a template, and for
@@ -305,13 +305,13 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	}
 	path := filepath.Join(t.DataRoot, "genesis.json")
 	if err := t.Files.Write(ctx, path, gen, 0o644); err != nil {
-		return "", fmt.Errorf("netcompose: genesis: write: %w", err)
+		return "", fmt.Errorf("chainsetup: genesis: write: %w", err)
 	}
 	// The step's by-products go to the target beside the genesis: a wemix
 	// bring-up reads its governance config back during deploy-governance.
 	for name, content := range art.Extra {
 		if err := t.Files.Write(ctx, filepath.Join(t.DataRoot, name), content, 0o644); err != nil {
-			return "", fmt.Errorf("netcompose: genesis: write %s: %w", name, err)
+			return "", fmt.Errorf("chainsetup: genesis: write %s: %w", name, err)
 		}
 	}
 	w.state.GenesisPath = path
@@ -362,22 +362,22 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("netcompose: config: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: config: no node table — run `net allocate` first")
 	}
 	preset, err := store.LoadPreset(w.state.KeysDir)
 	if err != nil {
-		return "", fmt.Errorf("netcompose: config: %w", err)
+		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
 	placed, err := w.Netmap()
 	if err != nil {
-		return "", fmt.Errorf("netcompose: config: %w", err)
+		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
 	peering, err := netmap.ParsePeering(w.state.Peering)
 	if err != nil {
-		return "", fmt.Errorf("netcompose: config: %w", err)
+		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
-		return "", fmt.Errorf("netcompose: config: %w", err)
+		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
 	// The peer's own recorded address: on a fleet each node lives on a
 	// different host, and a static-node list pointing at this machine would
@@ -398,7 +398,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	for _, ns := range w.state.Nodes {
 		staticNodes, err := netmapmod.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
-			return "", fmt.Errorf("netcompose: config: node%d peers: %w", ns.Index, err)
+			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
 		content := nodeconfig.Generate(nodeconfig.Params{
 			Role:          node.Role(ns.Role),
@@ -410,7 +410,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 			StaticNodes:   staticNodes,
 		})
 		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
-			return "", fmt.Errorf("netcompose: config: node%d: %w", ns.Index, err)
+			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
 	}
 	detail := fmt.Sprintf("%d config(s) under %s", len(w.state.Nodes), t.DataRoot)
@@ -434,11 +434,11 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		return "", err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("netcompose: launchopts: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: launchopts: no node table — run `net allocate` first")
 	}
 	preset, err := store.LoadPreset(w.state.KeysDir)
 	if err != nil {
-		return "", fmt.Errorf("netcompose: launchopts: %w", err)
+		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
 	overrides, err := ParseOverrides(opts.Set)
 	if err != nil {
@@ -447,7 +447,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	for i, ns := range w.state.Nodes {
 		args, err := engine.NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
 		if err != nil {
-			return "", fmt.Errorf("netcompose: launchopts: node%d: %w", ns.Index, err)
+			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
 		w.state.Nodes[i].Args = args
 	}
@@ -464,10 +464,10 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 // the per-node configs. Re-running it reuses what already exists.
 func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	if w.state.GenesisPath == "" {
-		return "", fmt.Errorf("netcompose: provision: no genesis — run `net genesis` first")
+		return "", fmt.Errorf("chainsetup: provision: no genesis — run `net genesis` first")
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("netcompose: provision: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: provision: no node table — run `net allocate` first")
 	}
 	t, err := w.resolveTarget()
 	if err != nil {
@@ -480,7 +480,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 			return err
 		}
 		if !exists {
-			return fmt.Errorf("netcompose: provision: %s missing — run the genesis/config steps first", path)
+			return fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path)
 		}
 		present++
 		return nil
@@ -539,13 +539,13 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access) (int,
 	}
 	base := w.keysBase()
 	if err := put(filepath.Join(w.state.KeysDir, "password"), filepath.Join(base, "password"), 0o600); err != nil {
-		return shipped, fmt.Errorf("netcompose: provision: password: %w", err)
+		return shipped, fmt.Errorf("chainsetup: provision: password: %w", err)
 	}
 	for _, ns := range w.state.Nodes {
 		src := filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index))
 		dst := filepath.Join(base, fmt.Sprintf("node%d", ns.Index))
 		if err := put(filepath.Join(src, "nodekey"), filepath.Join(dst, "nodekey"), 0o600); err != nil {
-			return shipped, fmt.Errorf("netcompose: provision: node%d nodekey: %w", ns.Index, err)
+			return shipped, fmt.Errorf("chainsetup: provision: node%d nodekey: %w", ns.Index, err)
 		}
 		entries, err := os.ReadDir(filepath.Join(src, "keystore"))
 		if err != nil {
@@ -557,7 +557,7 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access) (int,
 			}
 			if err := put(filepath.Join(src, "keystore", e.Name()),
 				filepath.Join(dst, "keystore", e.Name()), 0o600); err != nil {
-				return shipped, fmt.Errorf("netcompose: provision: node%d keystore: %w", ns.Index, err)
+				return shipped, fmt.Errorf("chainsetup: provision: node%d keystore: %w", ns.Index, err)
 			}
 		}
 	}
@@ -572,7 +572,7 @@ func ParseOverrides(sets []string) ([]launchopt.Override, error) {
 	for _, s := range sets {
 		k, v, _ := strings.Cut(s, "=")
 		if k == "" {
-			return nil, fmt.Errorf("netcompose: bad --set %q (want key=value or a bare boolean key)", s)
+			return nil, fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s)
 		}
 		out = append(out, launchopt.Override{Key: launchopt.Key(k), Value: v})
 	}
@@ -648,7 +648,7 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 	if p.Family().ID() == poa.FamilyID {
 		placed, err := w.Netmap()
 		if err != nil {
-			return engine.GenesisArtifacts{}, fmt.Errorf("netcompose: genesis: %w", err)
+			return engine.GenesisArtifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
 		}
 		req.Nodes = placed
 	}

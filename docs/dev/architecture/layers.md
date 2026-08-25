@@ -63,7 +63,7 @@
 flowchart TD
     L6["L6 표면<br/>cmd · mcp · dashboard"]
     L5["L5 유스케이스<br/>app"]
-    L4["L4 오케스트레이션<br/>engine · netcompose · bringup · chainsetup"]
+    L4["L4 오케스트레이션<br/>engine · bringup · chainsetup"]
     L3["L3 도메인 서비스<br/>session · collector · health · supervisor · testspec"]
     L2b["L2b 체인 어댑터<br/>chains/*"]
     L2a["L2a 합의 패밀리<br/>consensus/*"]
@@ -160,7 +160,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `engine` | 엔진 조립 · 로컬 plan/provision/launch |
-| `netcompose` | 스텝 컴포지션 |
+| `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 레거시 wemix 사례(T7.11 은퇴 예정) |
 | `chainsetup` | 체인별 셋업 절차 |
 | `testkit` | **(레거시)** 케이스 레지스트리 |
 | `core/pipeline/testrun` | **(레거시)** 케이스 실행 |
@@ -202,7 +202,7 @@ flowchart TD
 | L1 | 10 | `place→portplan`, `driver→remote` 등 — 프리미티브 간 세분화 |
 | L2 | 11 | `chains/*→consensus/*` (L2b→L2a, 실제로는 하향) + 등록 집합 |
 | L3 | 4 | `testspec→collector/session` |
-| L4 | 3 | `netcompose→engine`, `chainsetup→engine` — 조립 공유 |
+| L4 | 3 | `chainsetup→engine` — 조립 공유 |
 | L6 | 3 | `cmd→mcp/dashboard` |
 
 **L2 의 11건 중 7건은 L2b→L2a 로 사실상 하향이다.** 그래서 L2 를 a/b 로 쪼개 표기했다.

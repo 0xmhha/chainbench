@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -157,7 +157,7 @@ const govHandoffWait = "100"
 // runGovHandoff launches the `upgrade run` handoff and returns a successor RPC
 // URL, retrying the flaky producer/etcd bootstrap. It uses a SHORT /tmp datadir
 // so node1's IPC socket path stays under the ~104-byte unix-socket limit (long
-// t.TempDir() paths break the producer's IPC), and a procman.Manager so every
+// t.TempDir() paths break the producer's IPC), and a process.Manager so every
 // launched node is tracked and verifiably killed on teardown (between retries and
 // at test end) — no orphans.
 func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
@@ -174,7 +174,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		if err != nil {
 			t.Fatalf("mkdir temp datadir: %v", err)
 		}
-		mgr := procman.New()
+		mgr := process.New()
 
 		cmd := newUpgradeRunCmd()
 		args := []string{
@@ -203,7 +203,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 			dir := dataDir
 			t.Cleanup(func() {
 				if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
-					t.Logf("procman: leaked node PIDs after test: %v", leaks)
+					t.Logf("process: leaked node PIDs after test: %v", leaks)
 				}
 				_ = os.RemoveAll(dir)
 			})
@@ -216,7 +216,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		// Failure: kill this attempt's nodes cleanly (no orphans) before retrying.
 		lastOut = out.String()
 		if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
-			t.Logf("procman: attempt %d leaked node PIDs %v", attempt, leaks)
+			t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
 		}
 		_ = os.RemoveAll(dataDir)
 		t.Logf("handoff attempt %d/%d failed (flaky producer/etcd bootstrap); retrying", attempt, govHandoffAttempts)

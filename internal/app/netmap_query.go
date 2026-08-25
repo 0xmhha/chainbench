@@ -6,10 +6,10 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
 // defaultPortBand is how many port slots a host is assumed to offer when no
@@ -63,7 +63,7 @@ type NetMapOut struct {
 // address to label. It reads the composed workspace and never dials — a node
 // that is not running still has a place in the map.
 func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
-	ws, err := netcompose.Open(in.DataDir, d.Clock)
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetMapOut{}, err
 	}
@@ -201,7 +201,7 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 	// A workspace is optional: reporting the resource is useful before one
 	// exists, which is exactly when an operator is sizing a network.
 	if in.DataDir != "" {
-		if ws, err := netcompose.Open(in.DataDir, d.Clock); err == nil {
+		if ws, err := chainsetup.Open(in.DataDir, d.Clock); err == nil {
 			out.Used = len(ws.State().Nodes)
 		}
 	}

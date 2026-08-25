@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed.
@@ -21,11 +21,11 @@ import (
 // nodes running and the workspace holding four null pids.
 func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 	dir := t.TempDir()
-	ws, err := netcompose.Open(dir, nil)
+	ws, err := chainsetup.Open(dir, nil)
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet"}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	if err := ws.Save(); err != nil {
@@ -35,8 +35,8 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 	// The step allocates (which writes the node table) and then fails, standing
 	// in for a start that launched nodes and was then interrupted.
 	boom := errors.New("the step failed after starting something")
-	_, err = withWorkspace(Deps{}, dir, func(ws *netcompose.Workspace) (string, error) {
-		if _, aerr := ws.Allocate(netcompose.AllocateOpts{Validators: 2}); aerr != nil {
+	_, err = withWorkspace(Deps{}, dir, func(ws *chainsetup.Workspace) (string, error) {
+		if _, aerr := ws.Allocate(chainsetup.AllocateOpts{Validators: 2}); aerr != nil {
 			return "", aerr
 		}
 		return "", boom
@@ -45,7 +45,7 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 		t.Fatalf("err = %v, want the step's own error", err)
 	}
 
-	reopened, err := netcompose.Open(dir, nil)
+	reopened, err := chainsetup.Open(dir, nil)
 	if err != nil {
 		t.Fatalf("reopen: %v", err)
 	}

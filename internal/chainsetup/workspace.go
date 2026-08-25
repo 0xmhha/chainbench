@@ -15,7 +15,7 @@
 // environment mode); this package owns only the domain state and the step
 // functions. The CLI and MCP surfaces are thin wrappers over the app layer,
 // which calls the step functions here, so both drive the exact same behavior.
-package netcompose
+package chainsetup
 
 import (
 	"fmt"

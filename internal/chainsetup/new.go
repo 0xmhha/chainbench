@@ -1,4 +1,4 @@
-package netcompose
+package chainsetup
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ type NewOpts struct {
 // data root defaults to the workspace directory.
 func (w *Workspace) New(opts NewOpts) (string, error) {
 	if opts.Chain == "" && opts.ManifestPath == "" {
-		return "", fmt.Errorf("netcompose: --chain or --manifest is required")
+		return "", fmt.Errorf("chainsetup: --chain or --manifest is required")
 	}
 	p, err := external.ResolveChain(opts.Chain, opts.ManifestPath, opts.TemplatePath)
 	if err != nil {
@@ -56,7 +56,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	// Structural validation happens here (no live SSH dial); what a spec
 	// needs to resolve is the machine module's knowledge, not this caller's.
 	if err := tgt.Validate(); err != nil {
-		return "", fmt.Errorf("netcompose: %w", err)
+		return "", fmt.Errorf("chainsetup: %w", err)
 	}
 
 	m := p.Manifest()
@@ -98,7 +98,7 @@ func (w *Workspace) Retarget(t machine.Spec) error {
 		t.DataRoot = w.state.Target.DataRoot
 	}
 	if t.Kind == machine.KindRemote && (t.Host == "" || t.DataRoot == "") {
-		return fmt.Errorf("netcompose: remote target needs a host and a data root")
+		return fmt.Errorf("chainsetup: remote target needs a host and a data root")
 	}
 	w.state.Target = t
 	return nil
