@@ -16,7 +16,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/occupancy"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // Lifecycle steps: init, start, stop, restart, rm, logs, health. They act on
@@ -85,7 +84,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 
 // Start launches every stopped node. Argv comes from the launchopts step when
 // it ran; otherwise it is assembled here through the same single site
-// (engine.NodeLaunchArgs) with no overrides.
+// (NodeLaunchArgs) with no overrides.
 func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error) {
 	p, err := w.plugin()
 	if err != nil {
@@ -528,7 +527,7 @@ func (w *Workspace) startPhase(ctx context.Context, t *machine.Access, p registr
 		spec := driverSpec(ns)
 		spec.Binary = bin
 		if len(spec.Args) == 0 {
-			args, err := engine.NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
+			args, err := NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
@@ -564,7 +563,7 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 	if !ok {
 		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
-	exec := engine.WemixBootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	exec := WemixBootstrap{Binary: bin, KeysDir: w.state.KeysDir}
 	for _, name := range phase.Actions {
 		if err := exec.Action(ctx, name, plan, on); err != nil {
 			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)

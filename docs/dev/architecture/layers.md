@@ -63,7 +63,7 @@
 flowchart TD
     L6["L6 표면<br/>cmd · mcp · dashboard"]
     L5["L5 유스케이스<br/>app"]
-    L4["L4 오케스트레이션<br/>engine · bringup · chainsetup"]
+    L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup"]
     L3["L3 도메인 서비스<br/>session · collector · health · supervisor · testspec"]
     L2b["L2b 체인 어댑터<br/>chains/*"]
     L2a["L2a 합의 패밀리<br/>consensus/*"]
@@ -159,7 +159,7 @@ flowchart TD
 
 | 패키지 | 담는 것 |
 |---|---|
-| `engine` | 엔진 조립 · 로컬 plan/provision/launch |
+| `testengine` | 테스트 엔진 — 구성된 체인 위에서 테스트 수행·수집·요약 (구성 책임은 chainsetup 으로 이관) |
 | `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 레거시 wemix 사례(T7.11 은퇴 예정) |
 | `chainsetup` | 체인별 셋업 절차 |
 | `testkit` | **(레거시)** 케이스 레지스트리 |
@@ -202,7 +202,7 @@ flowchart TD
 | L1 | 10 | `place→portplan`, `driver→remote` 등 — 프리미티브 간 세분화 |
 | L2 | 11 | `chains/*→consensus/*` (L2b→L2a, 실제로는 하향) + 등록 집합 |
 | L3 | 4 | `testspec→collector/session` |
-| L4 | 3 | `chainsetup→engine` — 조립 공유 |
+| L4 | 3 | `testengine→chainsetup` — 러너가 환경 구축을 셋업 모듈에 위탁 (V6.2 에서 워크플로가 위에서 조립하면 소멸 검토) |
 | L6 | 3 | `cmd→mcp/dashboard` |
 
 **L2 의 11건 중 7건은 L2b→L2a 로 사실상 하향이다.** 그래서 L2 를 a/b 로 쪼개 표기했다.
@@ -238,7 +238,8 @@ flowchart TD
 | `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
-| `engine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
+| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
+| `chainsetup` | 실행 기록(`runs/`) · 로컬 조립 산출물(구 engine 이관분) | ✅ 셋업 오케스트레이터 — 원격은 파일 seam 경유 |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
 `provision.FileStore` 경유가 되어 두 패키지는 이 표에서 내려갔다.
@@ -265,7 +266,7 @@ flowchart TD
 했다 — 프로세스를 원격으로 보내면서 파일에 대해 아무 말도 하지 않았다면, 파일도 따라가라는
 뜻이다.
 
-> `engine` 은 A2 가 찾아냈다. 이전 실측이 `os.WriteFile`·`os.MkdirAll` 만 세고 `os.Create` 를
+> `testengine`(구 engine) 은 A2 가 찾아냈다. 이전 실측이 `os.WriteFile`·`os.MkdirAll` 만 세고 `os.Create` 를
 > 빠뜨려서, 표에 오르지 못한 채 3주를 지났다. 사람이 고른 패턴으로 한 번 세는 것과 매 테스트
 > 재는 것의 차이가 이것이다.
 >
@@ -281,7 +282,7 @@ flowchart TD
 | `core/obs` | 이벤트 버퍼(bounded) | ✅ |
 | `core/collector` | 샘플 윈도우 | ✅ |
 | `core/session` · `core/keyring` · `core/capability` | 각자 소유 | ✅ |
-| `engine` | 조립 시 캐시 | ◐ 검토 |
+| `testengine` | 조립 시 캐시 | ◐ 검토 |
 | `testkit` | 레거시 전역 케이스 레지스트리 | ❌ 삭제 예정 |
 
 ---
@@ -301,7 +302,7 @@ flowchart TD
 | `Plan` | 4 | `driver.Plan`(기동) · `hardfork.Plan`(스왑) · `upgrade.Plan`(핸드오프) · … |
 | `Config` | 3 | `poa.Config`(거버넌스) · `place.Config`(포트 밴드) · `serverset.Config`(인벤토리) |
 | `Step` | 4 | `session.Step`(스탬프) · `poa.Step`(부트스트랩 단계) · … |
-| `capability` | 2 **패키지** | `engine/capability`(DSL 게이팅) · `core/capability`(표면 카탈로그) |
+| `capability` | 2 **패키지** | `testengine/capability`(DSL 게이팅) · `core/capability`(표면 카탈로그) |
 | `Name string` | **12 필드** | 노드 라벨 · 키 이름 · 서버 이름 · 테스트 이름 · 기능 이름 … |
 
 `Name string` 12곳이 가장 나쁘다. **전부 무명 `string`** 이라 타입이 아무것도 구분해 주지 않고,
@@ -343,7 +344,7 @@ flowchart TD
 | `place.Config` | `place.Bands` | 포트 밴드다 |
 | `serverset.Config` | `serverset.Inventory` | 파일 이름과도 맞는다 |
 | `poa.Step` | `poa.BootstrapStep` | `session.Step` 과 구분 |
-| `core/capability` | `feature`(카탈로그) | `engine/capability`(게이팅)와 무관하다 |
+| `core/capability` | `feature`(카탈로그) | `testengine/capability`(게이팅)와 무관하다 |
 | `testspec` | `dsl` + `dsl/interp` | 언어와 엔진 |
 
 #### 5b.3a `hardfork` 는 상위 범주다 — `upgrade` 는 그 한 종류 (정정)

@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // runTool runs DSL test specs through the redesign engine in attach mode against
@@ -42,7 +42,7 @@ func runTool() Tool {
 			if err != nil {
 				return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
 			}
-			eng, err := engine.NewAttachEngine(engine.AttachConfig{
+			eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 				Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot,
 			})
 			if err != nil {
@@ -74,7 +74,7 @@ func collectSpecs(args map[string]any) [][]byte {
 
 // formatRunSummary renders the session verdict as agent-readable text.
 func formatRunSummary(root string) (string, error) {
-	doc, err := engine.ReadSessionSummary(root)
+	doc, err := testengine.ReadSessionSummary(root)
 	if err != nil {
 		return "", err
 	}

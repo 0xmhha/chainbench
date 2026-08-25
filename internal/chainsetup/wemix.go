@@ -15,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // RunWemix walks the standalone wemix bring-up, reporting each step.
@@ -50,10 +49,10 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 		plugin registry.ChainPlugin
 		preset keyring.Preset
 		assign *netmap.Map
-		art    engine.GenesisArtifacts
+		art    GenesisArtifacts
 		plan   driver.Plan
 		specs  []driver.NodeSpec
-		launch engine.LocalLauncher
+		launch LocalLauncher
 		phases []registry.Phase
 		nodes  node.NodeSet
 		boot   node.Node
@@ -118,8 +117,8 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
-		a, err := engine.BuildGenesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators, Nodes: assign},
-			engine.GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
+		a, err := BuildGenesis(ctx, plugin, GenesisRequest{Validators: o.Validators, Nodes: assign},
+			GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
 		if err != nil {
 			return "", err
 		}
@@ -128,11 +127,11 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[5], func() (string, error) {
-		placed := make([]engine.PlacedNode, 0, o.Validators)
+		placed := make([]PlacedNode, 0, o.Validators)
 		for i, p := range assign.Placements() {
-			placed = append(placed, engine.PlacedNode{Req: place.NodeReq{Role: roles[i]}, Placement: p})
+			placed = append(placed, PlacedNode{Req: place.NodeReq{Role: roles[i]}, Placement: p})
 		}
-		p, err := engine.AssemblePlan(plugin, placed, art.Genesis, o.DataDir, plugin.Manifest().Capabilities)
+		p, err := AssemblePlan(plugin, placed, art.Genesis, o.DataDir, plugin.Manifest().Capabilities)
 		if err != nil {
 			return "", err
 		}
@@ -141,7 +140,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[6], func() (string, error) {
-		launch = engine.LocalLauncher{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
+		launch = LocalLauncher{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
 		s, err := launch.Arm(plan)
 		if err != nil {
 			return "", err
@@ -167,7 +166,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	procs := process.New()
-	bootstrap := engine.WemixBootstrap{Binary: o.Binary, KeysDir: o.KeysDir}
+	bootstrap := WemixBootstrap{Binary: o.Binary, KeysDir: o.KeysDir}
 
 	t.do(c.Steps[8], func() (string, error) {
 		phases = plugin.Family().BringUpPhases(roles)

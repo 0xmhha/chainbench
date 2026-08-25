@@ -23,7 +23,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
-	"github.com/0xmhha/chainbench/internal/engine"
 	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
@@ -62,7 +61,7 @@ type KeysOpts struct {
 }
 
 // Keys ensures the workspace's key set exists and covers the requested node
-// count, through the same engine.KeySource seam `chainbench run` uses.
+// count, through the same KeySource seam `chainbench run` uses.
 func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	if _, err := w.plugin(); err != nil {
 		return "", err
@@ -78,12 +77,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `net allocate` first or pass --nodes")
 	}
 
-	var src engine.KeySource
+	var src KeySource
 	switch opts.Source {
 	case "", "preset":
-		src = engine.PresetKeySource{Path: w.state.KeysDir}
+		src = PresetKeySource{Path: w.state.KeysDir}
 	case "generate":
-		src = engine.GeneratedKeySource{Path: w.state.KeysDir, Validators: opts.Validators}
+		src = GeneratedKeySource{Path: w.state.KeysDir, Validators: opts.Validators}
 	default:
 		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset or generate)", opts.Source)
 	}
@@ -425,7 +424,7 @@ type LaunchOptsOpts struct {
 	Set []string
 }
 
-// LaunchOpts assembles each node's launch argv through engine.NodeLaunchArgs —
+// LaunchOpts assembles each node's launch argv through NodeLaunchArgs —
 // the single argv assembly site — and records it in the node table, so `start`
 // launches exactly what this step showed.
 func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
@@ -445,7 +444,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		return "", err
 	}
 	for i, ns := range w.state.Nodes {
-		args, err := engine.NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
+		args, err := NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -643,16 +642,16 @@ func netmapRequests(reqs []place.NodeReq) []netmap.Request {
 // genesisArtifacts builds the genesis through the one composition every surface
 // uses. The wemix source runs the chain binary, so the request also carries the
 // placement: the governance config names the producer by host and p2p port.
-func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) (engine.GenesisArtifacts, error) {
-	req := engine.GenesisRequest{Validators: w.state.Validators}
+func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) (GenesisArtifacts, error) {
+	req := GenesisRequest{Validators: w.state.Validators}
 	if p.Family().ID() == poa.FamilyID {
 		placed, err := w.Netmap()
 		if err != nil {
-			return engine.GenesisArtifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
+			return GenesisArtifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
 		}
 		req.Nodes = placed
 	}
-	return engine.BuildGenesis(ctx, p, req, engine.GenesisConfig{
+	return BuildGenesis(ctx, p, req, GenesisConfig{
 		KeysDir:         w.state.KeysDir,
 		Binary:          w.state.Binary,
 		ChainID:         opts.ChainID,
