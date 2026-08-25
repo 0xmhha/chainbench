@@ -93,7 +93,7 @@ func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string
 		}
 		m.Nodes = append(m.Nodes, runNode{
 			Label: string(ns.NodeLabel()), Role: ns.Role, Host: nodeHost(ns),
-			P2P: ns.Endpoints.P2P, HTTP: ns.Endpoints.HTTP, PID: ns.PID, Command: cmd,
+			P2P: ns.P2P, HTTP: ns.HTTP, PID: ns.PID, Command: cmd,
 		})
 		if cmd != "" {
 			commands = append(commands, cmd)

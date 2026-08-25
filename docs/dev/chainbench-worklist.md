@@ -580,10 +580,10 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **V4.1** | driver 조회 보강 — 머신에서 바이너리/pid 실행 여부·포트 사용·명령 수행(결과 회수) 원시 기능 채움 | V1.1 | 단위 + docker 라이브(양면 프로브 유지) | ☑ (`ProcessInspector`·`Commander` 양쪽 드라이버. 원격 pid 는 `/proc` — 비특권 로그인에서 kill -0 의 EPERM 이 부재로 읽히는 함정 회피) |
 | **V4.2** | `core/process` 신설 — `process.Manager` 실행 대장: 어떤 머신·어떤 바이너리·어떤 명령·pid | V4.1 | 단위: 기록·조회·이중 기동 감지 | ☑ (기존 procman 흡수·개명. 영속 `Ledger` 신설: Record 가 이중 기동을 두 pid 명시로 거부, 재열람 왕복 고정) |
 | **V4.3** | pid 기록 전환 — netcompose 워크스페이스의 pid 관리를 process 대장으로 | V4.2 | start→stop→고아 0 라이브 재검증 | ☑ (`process.json` 이 정본, NodeState.PID 는 열람 뷰로 동기화. 라이브: 4노드 기동→블록 26→stop→서버 고아 0·대장 0건) |
-| **V5.1** | chainsetup 수렴 — netcompose 의 순차 진행을 chainsetup 으로 이동, 단계 내용은 기능 모듈로 분리. 역할 정의: 체인을 구성해 블록 생성 상태까지 | V2.3, V4.3 | 기존 net up 전 단계 라이브 통과 · netcompose 잔여 코드 0 | ☐ |
-| **V5.2** | 실행 기록 폴더 — 지정 폴더 아래 실행마다 폴더: 체인 id·입력 사본·배치표·genesis·실행 명령. **서버 세트 ssh 절 제외**(테스트로 고정) | V5.1 | 기록에서 자격증명 grep 0건 테스트 | ☐ |
-| **V5.3** | 사전 점검 배선 — 구성 전 process 대장으로 기동 중 노드 검사, 케이스별 함수 분리·조립(전체 셋업·부분 재시작·점검만) | V5.1 | 이미 도는 노드 위 재구성 거부 라이브 | ☐ |
-| **V5.4** | CLI `netcmd` 추출 — net 그룹 6파일을 패키지로, chainsetup 직접 호출 (serverFlags 중복 해소 포함) | V5.1 | keyringcmd 패턴 준수 · 도움말 무손실 | ☐ |
+| **V5.1** | chainsetup 수렴 — netcompose 의 순차 진행을 chainsetup 으로 이동, 단계 내용은 기능 모듈로 분리. 역할 정의: 체인을 구성해 블록 생성 상태까지 | V2.3, V4.3 | 기존 net up 전 단계 라이브 통과 · netcompose 잔여 코드 0 | ☑ (패키지 해체 완료 — 레거시 사례 러너는 T7.11 은퇴까지 동거, Step→CaseStep. 단계 내용의 기능 모듈 분리는 이미 경계에 있는 것 유지) |
+| **V5.2** | 실행 기록 폴더 — 지정 폴더 아래 실행마다 폴더: 체인 id·입력 사본·배치표·genesis·실행 명령. **서버 세트 ssh 절 제외**(테스트로 고정) | V5.1 | 기록에서 자격증명 grep 0건 테스트 | ☑ (`runs/<stamp>/` — manifest·genesis 회수·launch-commands. 카나리 비밀번호 테스트로 값 비노출 고정; "password" 단어는 argv 의 파일 경로로 정당) |
+| **V5.3** | 사전 점검 배선 — 구성 전 process 대장으로 기동 중 노드 검사, 케이스별 함수 분리·조립(전체 셋업·부분 재시작·점검만) | V5.1 | 이미 도는 노드 위 재구성 거부 라이브 | ☑ (포트 충돌은 init 의 기존 점검, 포트가 비어도 같은 바이너리가 돌면 start 가 pid 지목 거부 — `checkUnmanaged`+`Preflight`(점검만 진입점). 라이브 양쪽 재현) |
+| **V5.4** | CLI `netcmd` 추출 — net 그룹 6파일을 패키지로, chainsetup 직접 호출 (serverFlags 중복 해소 포함) | V5.1 | keyringcmd 패턴 준수 · 도움말 무손실 | ☐ (**별도 PR** — app 의 net 유스케이스 20개를 모듈 동사로 올리는 keyring 식 이동이 선행이라 분리) |
 | **V6.1** | engine → `testengine` — 구성 책임 제거, "구성된 체인 위에서 테스트만 일관 수행" 으로 축소·개명 | V5.1 | 기존 테스트 스위트 결과 동일 | ☐ |
 | **V6.2** | app 워크플로 — DSL 파싱 → chainsetup → testengine → 수집 → 레포트를 app 이 한 흐름으로 제공 | V6.1 | e2e: DSL 입력 하나로 셋업+테스트+레포트 산출 | ☐ |
 | **V6.3** | MCP 전환 — MCP 도구가 app 워크플로·얇은 app 함수만 경유(CLI 는 core 직접 유지) | V6.2 | MCP 도구 전수: app 외 import 0건 | ☐ |
