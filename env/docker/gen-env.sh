@@ -27,12 +27,42 @@ RPC_PORT=8600                     # the rpc band base (slot s listens on base + 
 RPC_STEP=10
 IMAGE="chainbench-server:ubuntu24"
 DATA_ROOT="/data/chainbench"
-SSH_USER=chainbench               # created by the Dockerfile
-SSH_PASSWORD=chainbench           # dev-only; sudo asks for this same password
+ACCOUNTS_ENV=accounts.env         # dev accounts injected at container start
 # --------------------------------------------------------------------------
 
 BUILD=build
 mkdir -p "$BUILD"
+
+die() { echo "gen-env: $*" >&2; exit 1; }
+
+# Dev accounts (name:uid pairs + shared password) live in a gitignored file so
+# nothing is hardcoded here or in the Dockerfile; setup-accounts.sh reads the
+# same file inside each container at start. The copy is deliberate — silently
+# seeding the sample would hand sudo-capable accounts the tracked placeholder
+# password, so refuse to run until a real file with a real password exists.
+[ -f "$ACCOUNTS_ENV" ] || die "$ACCOUNTS_ENV not found. Run:
+  cp ${ACCOUNTS_ENV}.sample $ACCOUNTS_ENV   # then set a real password in it"
+. "./$ACCOUNTS_ENV"
+[ -n "${DEV_ACCOUNTS:-}" ] || die "DEV_ACCOUNTS is empty in $ACCOUNTS_ENV"
+case "${DEV_ACCOUNTS_PASSWORD:-}" in
+    '' | change-me) die "set a real DEV_ACCOUNTS_PASSWORD in $ACCOUNTS_ENV (not the sample placeholder)" ;;
+esac
+
+# The harness login is the FIRST account in accounts.env — the real fleet is
+# reached with a provisioned dev account, not a baked-in image user, so the
+# docker fleet mirrors that. setup-accounts.sh is what creates the accounts,
+# hence no override knob: an inventory user it does not create is a dead login.
+first_account=${DEV_ACCOUNTS%% *}
+case $first_account in
+    ?*:*) ;;
+    *) die "first DEV_ACCOUNTS entry '$first_account' is not name:uid" ;;
+esac
+SSH_USER=${first_account%%:*}
+SSH_PASSWORD=$DEV_ACCOUNTS_PASSWORD
+
+# Single-quote a scalar for YAML: '' escapes an embedded quote. Without this a
+# password containing ': ', ' #', or a leading indicator corrupts the inventory.
+yaml_sq() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/''/g")"; }
 
 addr() { echo "${SUBNET_PREFIX}.$((ADDR_OFFSET + $1))"; }
 
@@ -66,11 +96,16 @@ EOF
             echo "      - \"127.0.0.1:$((RPC_PUB_BASE + 100 * s + i)):$((RPC_PORT + RPC_STEP * s))\""
         done
         cat <<EOF
+    volumes:
+      # dev accounts: created at start by setup-accounts.sh from accounts.env
+      - ../${ACCOUNTS_ENV}:/etc/chainbench/accounts.env:ro
+      - ../setup-accounts.sh:/usr/local/lib/chainbench/setup-accounts.sh:ro
     command:
       - /bin/sh
       - -c
       - >-
-        mkdir -p ${DATA_ROOT}
+        sh /usr/local/lib/chainbench/setup-accounts.sh
+        && mkdir -p ${DATA_ROOT}
         && chown ${SSH_USER}:${SSH_USER} ${DATA_ROOT}
         && exec /usr/sbin/sshd -D -e
 EOF
@@ -95,11 +130,11 @@ EOF
   slots: ${SLOTS}
 
 ssh:
-  user: ${SSH_USER}
+  user: $(yaml_sq "$SSH_USER")
   port: 22
   # Dev-only credential for loopback-published containers; a production
   # inventory would leave this out and use CHAINBENCH_REMOTE_PASS.
-  password: ${SSH_PASSWORD}
+  password: $(yaml_sq "$SSH_PASSWORD")
   sudo: true
 
 dataRoot: ${DATA_ROOT}

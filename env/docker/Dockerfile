@@ -9,13 +9,11 @@ RUN apt-get update \
         openssh-server sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# The login mirrors production shape: a named user with a password, in the
-# sudo group, and sudo REQUIRES the password (ubuntu's default) — that is the
-# path the harness has to prove, so NOPASSWD would defeat the purpose. The
-# password is a fixed dev-only value on a loopback-published container.
-RUN useradd -m -s /bin/bash chainbench \
-    && echo 'chainbench:chainbench' | chpasswd \
-    && usermod -aG sudo chainbench
+# No accounts are baked in: every login (including the harness's) comes from
+# env/docker/accounts.env, injected at container start by setup-accounts.sh —
+# same shape as the real fleet, where access is a provisioned dev account.
+# sudo REQUIRES the password (ubuntu's default): that flow is what the
+# harness has to prove, so NOPASSWD would defeat the purpose.
 
 # Password login only, no root: the same surface a hardened real host offers.
 RUN mkdir -p /run/sshd \
