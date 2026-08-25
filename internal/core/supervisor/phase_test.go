@@ -8,7 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -47,7 +47,7 @@ func TestBringUp_NoPhasesLaunchesEverythingAtOnce(t *testing.T) {
 	s := New(Deps{
 		Launch:     launchRecorder(&launches),
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
-		Procman:    procman.New(),
+		Procman:    process.New(),
 	})
 	ns, _, err := s.BringUp(context.Background(), phasePlan(4), Options{})
 	if err != nil {
@@ -77,7 +77,7 @@ func TestBringUp_PhasesLaunchInOrderAndRunActionsBetween(t *testing.T) {
 			return nil
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
-		Procman:    procman.New(),
+		Procman:    process.New(),
 	})
 	ns, _, err := s.BringUp(context.Background(), phasePlan(4), Options{Phases: []registry.Phase{
 		{Name: "boot", Nodes: []int{1}, Actions: []string{"deploy-governance", "etcd-init"}},
@@ -111,7 +111,7 @@ func TestBringUp_UnwiredActionIsAnError(t *testing.T) {
 	s := New(Deps{
 		Launch:     launchRecorder(&launches),
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
-		Procman:    procman.New(),
+		Procman:    process.New(),
 	})
 	_, _, err := s.BringUp(context.Background(), phasePlan(2), Options{Phases: []registry.Phase{
 		{Name: "boot", Nodes: []int{1}, Actions: []string{"deploy-governance"}},
@@ -130,7 +130,7 @@ func TestBringUp_ActionFailureStopsTheBringUp(t *testing.T) {
 		Launch:     launchRecorder(&launches),
 		Action:     func(context.Context, string, driver.Plan, node.Node) error { return errors.New("etcd cluster empty") },
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
-		Procman:    procman.New(),
+		Procman:    process.New(),
 	})
 	_, _, err := s.BringUp(context.Background(), phasePlan(3), Options{Phases: []registry.Phase{
 		{Name: "boot", Nodes: []int{1}, Actions: []string{"etcd-init"}},
@@ -158,7 +158,7 @@ func TestBringUp_FailedLaunchLeavesNothingRunning(t *testing.T) {
 			return errors.New("etcd cluster empty")
 		},
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
-		Procman:    procman.New(),
+		Procman:    process.New(),
 	})
 	sup := s.(*sup)
 	sup.teardownHook = func(ns node.NodeSet) { stopped = append(stopped, ns) }

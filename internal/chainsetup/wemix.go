@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
@@ -166,7 +166,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 		return fmt.Sprintf("genesis + %d config(s) + %d by-product(s) under %s", len(specs), len(art.Extra), plan.DataRoot), nil
 	})
 
-	procs := procman.New()
+	procs := process.New()
 	bootstrap := engine.WemixBootstrap{Binary: o.Binary, KeysDir: o.KeysDir}
 
 	t.do(c.Steps[8], func() (string, error) {

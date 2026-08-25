@@ -17,7 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -135,7 +135,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 			{Key: launchopt.KeyNetworkID, Value: strconv.FormatInt(cfg.NetworkID, 10), Layer: launchopt.LayerEnv},
 		}, overrides...)
 	}
-	procs := procman.New()
+	procs := process.New()
 	controller := NewNodeController(LocalLauncher{
 		Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir, LaunchOverrides: overrides,
 	}, procs)

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -66,7 +66,7 @@ func Status(ctx context.Context, dataDir string) ([]NodeStatus, error) {
 	}
 	out := make([]NodeStatus, 0, len(ns.Nodes))
 	for _, n := range ns.Nodes {
-		st := NodeStatus{Index: n.Index, RPCURL: n.RPCURL, PID: n.PID, Alive: procman.Alive(n.PID)}
+		st := NodeStatus{Index: n.Index, RPCURL: n.RPCURL, PID: n.PID, Alive: process.Alive(n.PID)}
 		c := rpc.Dial(n.RPCURL)
 		if h, err := c.BlockNumber(ctx); err == nil {
 			st.Head = h
@@ -92,9 +92,9 @@ func Down(dataDir string, removeData bool) ([]int, error) {
 	if err != nil {
 		return nil, err
 	}
-	m := procman.New()
+	m := process.New()
 	for _, n := range ns.Nodes {
-		m.TrackProc(procman.Proc{PID: n.PID, Label: fmt.Sprintf("node%d", n.Index), DataDir: dataDir, Host: n.Host})
+		m.TrackProc(process.Proc{PID: n.PID, Label: fmt.Sprintf("node%d", n.Index), DataDir: dataDir, Host: n.Host})
 	}
 	leaks := m.StopAll(teardownGrace)
 	if removeData {

@@ -1,4 +1,4 @@
-package procman_test
+package process_test
 
 import (
 	"os"
@@ -7,15 +7,15 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
 func TestTrackProc_DataDirsUnique(t *testing.T) {
-	m := procman.New()
-	m.TrackProc(procman.Proc{PID: 1001, Label: "node1", DataDir: "/data/a"})
-	m.TrackProc(procman.Proc{PID: 1002, Label: "node2", DataDir: "/data/b"})
-	m.TrackProc(procman.Proc{PID: 1003, Label: "node3", DataDir: "/data/a"}) // dup dir
-	m.TrackProc(procman.Proc{PID: 1004, Label: "node4"})                     // no dir
+	m := process.New()
+	m.TrackProc(process.Proc{PID: 1001, Label: "node1", DataDir: "/data/a"})
+	m.TrackProc(process.Proc{PID: 1002, Label: "node2", DataDir: "/data/b"})
+	m.TrackProc(process.Proc{PID: 1003, Label: "node3", DataDir: "/data/a"}) // dup dir
+	m.TrackProc(process.Proc{PID: 1004, Label: "node4"})                     // no dir
 
 	got := m.DataDirs()
 	sort.Strings(got)
@@ -34,9 +34,9 @@ func TestRemoveDataDirs(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	m := procman.New()
-	m.TrackProc(procman.Proc{PID: 2001, DataDir: dirA})
-	m.TrackProc(procman.Proc{PID: 2002, DataDir: dirB})
+	m := process.New()
+	m.TrackProc(process.Proc{PID: 2001, DataDir: dirA})
+	m.TrackProc(process.Proc{PID: 2002, DataDir: dirB})
 
 	if errs := m.RemoveDataDirs(); len(errs) != 0 {
 		t.Fatalf("RemoveDataDirs errors: %v", errs)
@@ -49,10 +49,10 @@ func TestRemoveDataDirs(t *testing.T) {
 }
 
 func TestStopRemote_RemoteOnly(t *testing.T) {
-	m := procman.New()
-	m.TrackProc(procman.Proc{PID: 3001, Label: "local"})                // local
-	m.TrackProc(procman.Proc{PID: 3002, Label: "r1", Host: "10.0.0.1"}) // remote
-	m.TrackProc(procman.Proc{PID: 3003, Label: "r2", Host: "10.0.0.2"}) // remote
+	m := process.New()
+	m.TrackProc(process.Proc{PID: 3001, Label: "local"})                // local
+	m.TrackProc(process.Proc{PID: 3002, Label: "r1", Host: "10.0.0.1"}) // remote
+	m.TrackProc(process.Proc{PID: 3003, Label: "r2", Host: "10.0.0.2"}) // remote
 
 	var killed []string
 	errs := m.StopRemote(func(host string, pid int) error {
@@ -70,10 +70,10 @@ func TestStopRemote_RemoteOnly(t *testing.T) {
 }
 
 func TestDedup_HostPidComposite(t *testing.T) {
-	m := procman.New()
-	m.TrackProc(procman.Proc{PID: 4000, Label: "local"})                  // local pid 4000
-	m.TrackProc(procman.Proc{PID: 4000, Label: "remote", Host: "h1"})     // remote pid 4000 (distinct)
-	m.TrackProc(procman.Proc{PID: 4000, Label: "dup-remote", Host: "h1"}) // dup of remote
+	m := process.New()
+	m.TrackProc(process.Proc{PID: 4000, Label: "local"})                  // local pid 4000
+	m.TrackProc(process.Proc{PID: 4000, Label: "remote", Host: "h1"})     // remote pid 4000 (distinct)
+	m.TrackProc(process.Proc{PID: 4000, Label: "dup-remote", Host: "h1"}) // dup of remote
 	if m.Count() != 2 {
 		t.Fatalf("Count = %d, want 2 (local+remote pid 4000 distinct, dup collapsed)", m.Count())
 	}

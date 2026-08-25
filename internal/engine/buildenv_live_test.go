@@ -11,7 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
@@ -66,7 +66,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 			}
 			return supervisor.Diagnosis{OK: true}, nil
 		},
-		Procman: procman.New(),
+		Procman: process.New(),
 	})
 
 	build := engine.NewBuildEnv(engine.BuildDeps{
