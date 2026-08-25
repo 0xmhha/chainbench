@@ -18,6 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
+	"strings"
 )
 
 // DefaultRingDir is the ring a caller gets when it names none, and RingEnv
@@ -290,10 +291,22 @@ type RingImportIn struct {
 	// The flag is the power switch — a leftover mapping file alone activates
 	// nothing, and the flag without the file is an error.
 	Docker bool
+	// ExpectAddress, when set, is the address the imported key must derive;
+	// a mismatch is refused before anything is written. It is how a caller
+	// who knows what the key should be makes the transfer prove it.
+	ExpectAddress string
+	// FromRing imports a whole ring instead of one key: every identity with
+	// its label, and the network declaration (validators, BLS set, alloc).
+	// Each entry is verified against the source index before anything is
+	// written. Mutually exclusive with the single-key origins and Label.
+	FromRing string
 }
 
 // KeyringImport writes an existing key into a ring's index.
 func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, error) {
+	if in.FromRing != "" {
+		return EntryOut{}, fmt.Errorf("app: a whole-ring import returns a ring — use KeyringImportRing")
+	}
 	files, dir, _, err := in.Ring.open(d)
 	if err != nil {
 		return EntryOut{}, err
@@ -310,11 +323,51 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 	if in.WithBLS {
 		derive = keyring.WithBLS
 	}
+	if in.ExpectAddress != "" {
+		id, err := keyring.Derive(key, keyring.AccountOnly)
+		if err != nil {
+			return EntryOut{}, err
+		}
+		if !strings.EqualFold(id.Address, in.ExpectAddress) {
+			return EntryOut{}, fmt.Errorf("app: the key derives %s, not the expected %s — refusing to import a different identity",
+				id.Address, in.ExpectAddress)
+		}
+	}
 	e, err := keyring.ImportAt(ctx, files, dir, keyring.Label(in.Label), key, derive)
 	if err != nil {
 		return EntryOut{}, err
 	}
 	return entryOut(e, nil), nil
+}
+
+// KeyringImportRing clones a whole ring named by in.FromRing (a local path or
+// target syntax) into in.Ring: every identity with its label, and the network
+// declaration. Each entry is verified against the source index before anything
+// is written — the key must still derive the address, devp2p key and BLS
+// material the index records — so a transfer that changed anything is refused
+// whole rather than materialized broken.
+func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, error) {
+	if in.FromRing == "" {
+		return RingOut{}, fmt.Errorf("app: import-ring needs --from-ring")
+	}
+	srcRef := RingRef{Dir: in.FromRing, ServerConfig: in.Ring.ServerConfig, Docker: in.Docker || in.Ring.Docker}
+	srcFiles, srcDir, _, err := srcRef.open(d)
+	if err != nil {
+		return RingOut{}, err
+	}
+	srcSet, err := keyring.LoadPresetAt(ctx, srcFiles, srcDir)
+	if err != nil {
+		return RingOut{}, fmt.Errorf("app: import-ring: read source %s: %w", in.FromRing, err)
+	}
+	dstFiles, dstDir, source, err := in.Ring.open(d)
+	if err != nil {
+		return RingOut{}, err
+	}
+	set, err := keyring.ImportRing(ctx, dstFiles, dstDir, srcSet, in.Password)
+	if err != nil {
+		return RingOut{Dir: displayRing(in.Ring, dstDir), Source: source}, err
+	}
+	return ringOut(displayRing(in.Ring, dstDir), source, set), nil
 }
 
 // source turns the ways of naming a key into one keyring.Source. Where a file

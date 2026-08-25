@@ -29,14 +29,32 @@ func newKeyringImportCmd() *cobra.Command {
 			"or on another host — and writes it into the ring's index under --name.\n\n" +
 			"  --from /srv/keys/node1              this machine\n" +
 			"  --from srv://bp1/srv/keys/node1     the inventory entry \"bp1\"\n" +
-			"  --from ubuntu@host:/srv/keys/node1  a host named directly\n",
+			"  --from ubuntu@host:/srv/keys/node1  a host named directly\n\n" +
+			"With --from-ring the unit is the whole ring, not one key: every identity\n" +
+			"keeps its label, the validator declaration travels with the keys, and each\n" +
+			"entry is verified against the source index before anything is written.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
+			in.Ring, in.WithBLS = ring.ref(), bls.on
+			in.Docker = ring.docker
+			if in.FromRing != "" {
+				if label.name != "" || in.From != "" || in.PrivateKey != "" || in.Mnemonic != "" {
+					return fmt.Errorf("--from-ring copies a whole ring, labels and all — it cannot be combined with --name or a single-key origin")
+				}
+				r, err := app.KeyringImportRing(cmd.Context(), deps(cmd), in)
+				if err != nil {
+					return err
+				}
+				if jsonF.on {
+					return emitJSON(out, r)
+				}
+				announce(out, r)
+				return renderEntries(out, r)
+			}
 			if err := label.require("import"); err != nil {
 				return err
 			}
-			in.Ring, in.Label, in.WithBLS = ring.ref(), label.name, bls.on
-			in.Docker = ring.docker
+			in.Label = label.name
 			e, err := app.KeyringImport(cmd.Context(), deps(cmd), in)
 			if err != nil {
 				return err
@@ -62,6 +80,10 @@ func newKeyringImportCmd() *cobra.Command {
 	cmd.Flags().Uint32Var(&in.HDAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
 	cmd.Flags().Uint32Var(&in.HDChange, "hd-change", 0, "BIP-44 change level for --mnemonic (0 external, 1 internal)")
 	cmd.Flags().Uint32Var(&in.HDIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
-	cmd.Flags().StringVar(&in.Password, "password", "", "password for a keystore named by --from")
+	cmd.Flags().StringVar(&in.Password, "password", "", "password for a keystore named by --from (with --from-ring: re-encrypt with this password; default keeps the source's)")
+	cmd.Flags().StringVar(&in.ExpectAddress, "expect-address", "",
+		"refuse the import unless the key derives exactly this address")
+	cmd.Flags().StringVar(&in.FromRing, "from-ring", "",
+		"clone a whole ring instead of one key: same path syntax as --keyring-dir; labels, validator declaration, and alloc are copied, and every entry is verified against the source index")
 	return cmd
 }

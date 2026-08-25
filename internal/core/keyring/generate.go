@@ -397,3 +397,50 @@ func shortHex(s string) string {
 	}
 	return s[:shown]
 }
+
+// ImportRing clones a whole ring — every identity, its labels, and the
+// network declaration (validators, BLS set, alloc) — into dir, re-encrypting
+// keystores with password (empty keeps the source ring's).
+//
+// Every entry is verified before anything is written: the key must re-derive
+// the address, devp2p public key and BLS material the source index records.
+// That is the transfer's integrity check, and it is stronger than a checksum —
+// a checksum proves the bytes arrived, this proves the keys still ARE the
+// identities the index claims.
+//
+// The destination must not already hold a ring, for the same reason Generate
+// refuses one: silently replacing referenced identities is unrecoverable.
+func ImportRing(ctx context.Context, files provision.FileStore, dir string, src Preset, password string) (Preset, error) {
+	if files == nil {
+		files = provision.LocalFileStore{}
+	}
+	if len(src.Nodes) == 0 {
+		return Preset{}, fmt.Errorf("keyring: import-ring: the source ring holds no identities")
+	}
+	if exists, err := files.Exists(ctx, filepath.Join(dir, PresetFile)); err == nil && exists {
+		return Preset{}, fmt.Errorf("keyring: %s already holds a ring; add to it instead of creating over it", dir)
+	}
+	for _, e := range src.Nodes {
+		if err := e.Verify(); err != nil {
+			return Preset{}, fmt.Errorf("keyring: import-ring: source entry %q failed verification: %w", e.Label, err)
+		}
+	}
+	if password == "" {
+		password = src.Password
+	}
+	if err := files.Write(ctx, filepath.Join(dir, "password"), []byte(password), secretPerm); err != nil {
+		return Preset{}, err
+	}
+	for _, e := range src.Nodes {
+		entryDir := filepath.Join(dir, string(e.Label))
+		if err := writeEntryDir(ctx, files, entryDir, e.Nodekey, e.Identity, password); err != nil {
+			return Preset{}, fmt.Errorf("keyring: import-ring: %q: %w", e.Label, err)
+		}
+	}
+	set := src
+	set.Password = password
+	if err := writePreset(ctx, GenerateOpts{Out: dir, Files: files}, set); err != nil {
+		return Preset{}, err
+	}
+	return set, nil
+}

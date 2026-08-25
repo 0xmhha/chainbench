@@ -112,6 +112,28 @@ bin/chainbench keyring import --keyring-dir /tmp/r --name hd0 \
 - 니모닉의 표준 파생(m/44'/60'/0'/0/0)은 개발용 니모닉 → `0xf39F…92266` 골든
   벡터로 고정되어 있다. `--hd-coin-type` 을 바꾸면 다른 키가 나온다(체인 등록
   코인타입 사용 시 필수).
+- `--expect-address 0x…` 를 주면 가져온 키가 **정확히 그 주소를 파생하는지**
+  먼저 확인하고, 다르면 아무것도 쓰지 않고 거부한다. 어떤 키여야 하는지 아는
+  호출자가 전송 무결성을 증명시키는 방법이다.
+
+### import --from-ring — 링 전체를 통째로
+
+단건 대신 **링 전체**를 복제한다. 경로 문법은 `--keyring-dir` 와 같다
+(로컬 경로, `srv://server1/…`, `user@host:/…`).
+
+```
+bin/chainbench keyring import --keyring-dir ./keys/pulled \
+    --from-ring srv://server1/data/chainbench/ring \
+    --server-config env/docker/build/remote-server-config.yaml --docker
+```
+
+| 항목 | 동작 |
+|---|---|
+| 신원 | 라벨·순번 그대로 전부 복제 |
+| validator 선언 | 원본의 선언(BLS 목록·alloc 포함)을 그대로 가져온다 — 단건 N회 복제와 달리 잃지 않는다 |
+| 무결성 | 항목마다 키에서 주소·공개키·BLS 를 **재파생해 원본 인덱스와 대조**하고, 하나라도 다르면 전체를 거부한다 |
+| 비밀번호 | 기본은 원본 링의 것을 유지, `--password` 로 재암호화 |
+| 목적지 | 이미 링이 있으면 거부 (new 와 같은 규칙) |
 
 ## 4. 원격에서 가져오기 — 접속은 환경이 결정한다
 
@@ -221,6 +243,7 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 | B4 | B2 명령에서 `--docker` 만 제거 | 실주소(172.30.0.x)로 dial 하다 timeout | (설계 증명 — 수동) |
 | B5 | `--docker` 인데 localmap 삭제 | 생성 방법을 안내하는 오류 | DockerNeedsTheLocalmap |
 | B6 | `keyring new --keyring-dir srv://server1/<경로> --docker --count 2 --with-bls` → `list --verify` | 서버 위에 링 생성(치환 보고 출력), 원격 검증 통과. `--docker` 를 빼면 실주소 dial | Live_…CreatesARingOnAServer |
+| B7 | `import --from-ring srv://server1/<경로> --docker` 로 서버 링을 로컬로 | 라벨·validator 선언 그대로, 항목별 재파생 대조 후 기록. 원본 인덱스를 1바이트 변조하면 전체 거부 | Live_…ClonesARingFromAServer, …Import_FromRing |
 
 C. **net 과의 결합**(참고): `net up --keys <ring> --keys-source generate --server server1
 --docker` 가 링 생성→배송→기동까지 잇는다. R4 라이브로 검증된 경로다.

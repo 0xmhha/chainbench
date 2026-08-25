@@ -2,6 +2,7 @@ package keyring_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -320,5 +321,53 @@ func TestEntry_VerifyCatchesDrift(t *testing.T) {
 	drifted.Address = p.Nodes[1].Address
 	if err := drifted.Verify(); err == nil {
 		t.Fatal("Verify accepted an address that the key does not derive")
+	}
+}
+
+// TestImportRing_ClonesDeclarationAndRefusesTamper pins the whole-ring
+// import: labels and the validator declaration travel with the keys, and a
+// source whose index no longer matches its keys is refused before anything
+// is written — the integrity check the transfer exists to provide.
+func TestImportRing_ClonesDeclarationAndRefusesTamper(t *testing.T) {
+	srcDir := filepath.Join(t.TempDir(), "src")
+	two := 2
+	src, err := keyring.Generate(keyring.GenerateOpts{
+		Nodes: 3, Validators: &two, Out: srcDir, Password: "pw",
+		Derive: keyring.WithBLS,
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dstDir := filepath.Join(t.TempDir(), "dst")
+	got, err := keyring.ImportRing(context.Background(), nil, dstDir, src, "")
+	if err != nil {
+		t.Fatalf("import-ring: %v", err)
+	}
+	if len(got.Nodes) != 3 || len(got.Network.Validators) != 2 {
+		t.Fatalf("clone lost shape: %d nodes, %d validators", len(got.Nodes), len(got.Network.Validators))
+	}
+	back, err := keyring.LoadPreset(dstDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range src.Nodes {
+		if back.Nodes[i].Address != src.Nodes[i].Address || back.Nodes[i].Label != src.Nodes[i].Label {
+			t.Fatalf("entry %d changed in transit: %+v", i, back.Nodes[i])
+		}
+	}
+	if len(back.Network.Validators) != 2 {
+		t.Fatalf("validator declaration not carried: %v", back.Network.Validators)
+	}
+
+	// A tampered source is refused whole: flip one recorded address.
+	src.Nodes[1].Address = src.Nodes[0].Address
+	if _, err := keyring.ImportRing(context.Background(), nil, filepath.Join(t.TempDir(), "d2"), src, ""); err == nil {
+		t.Fatal("import-ring accepted a source whose index does not match its keys")
+	}
+
+	// A second import onto the same destination is refused.
+	if _, err := keyring.ImportRing(context.Background(), nil, dstDir, got, ""); err == nil {
+		t.Fatal("import-ring overwrote an existing ring")
 	}
 }
