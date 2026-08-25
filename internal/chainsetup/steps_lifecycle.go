@@ -132,6 +132,12 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
 	w.markStep("start", detail)
+	if dir, err := w.recordRun(ctx, t, bin); err == nil {
+		detail += fmt.Sprintf("; run recorded at %s", dir)
+	} else {
+		// The record must never take the network it records down with it.
+		detail += fmt.Sprintf("; run record failed: %v", err)
+	}
 	return detail, nil
 }
 
