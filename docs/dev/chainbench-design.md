@@ -439,9 +439,9 @@ genesis 합성은 **독립 모듈**(`core/genesis`)이 소유하며, 정의서�
 
 - 공통 절차(접근·upload·download·동일포트)를 **core로 승격**: `driver.RemoteDriver`(+`FileProvisioner`, 기존) + `core/remote`(ssh/auth, 기존) + `place.RemotePerHost` + `keyreg.UploadTo/RemoteDownload`.
 - 체인 특화(wemix etcd/gov)는 `chains/wemix/deploy`에 잔류. 테스트 정의서는 **placement-무관**(local/remote 동일 spec, `placement` 필드만 상이).
-- **SSH 접속 자격증명(L6b · 보안):** remote 접속에 필요한 **ssh 포트·서버 IP 목록·user·password(또는 keyPath)** 는 **정의서에 넣지 않고**, git에 **절대 커밋하지 않는** 별도 파일 `remote-server-config.yaml`을 런타임에 읽어 사용한다. 정의서는 `remote.cluster`로 이 파일을 **참조만** 한다. 파일은 `.gitignore` 처리하고 `remote-server-config.sample.yaml`(더미값)만 추적.
+- **SSH 접속 자격증명(L6b · 보안):** remote 접속에 필요한 **ssh 포트·서버 IP 목록·user·password(또는 keyPath)** 는 **정의서에 넣지 않고**, git에 **절대 커밋하지 않는** 별도 파일 `server-set.yaml`을 런타임에 읽어 사용한다. 정의서는 `remote.cluster`로 이 파일을 **참조만** 한다. 파일은 `.gitignore` 처리하고 `server-set.sample.yaml`(더미값)만 추적.
 ```yaml
-# remote-server-config.yaml (gitignore 대상 — 실값 커밋 금지)
+# server-set.yaml (gitignore 대상 — 실값 커밋 금지)
 sshPort: 22
 user: deploy
 password: "<secret>"          # 또는 keyPath: ~/.ssh/id_ed25519
@@ -476,6 +476,6 @@ hosts: [10.0.0.11, 10.0.0.12, 10.0.0.13]   # 1서버=1노드 (동일포트+다�
 | 기동 소유권 | supervisor.BringUp이 소유(setup=plan+프리미티브) | §3.3 (L6) |
 | etcd 조인 gap | supervisor가 N에서 파생(고정값 아님) | §3.3 (L7) |
 | stale etcd | 내장 etcd는 프로세스 종료로 함께 종료; 문제는 datadir → `Teardown{RemoveDataDir}` 별도 기능 | §3.3 (S2) |
-| SSH 자격증명 | `remote-server-config.yaml`(gitignore) 런타임 로드 | §7 (L6b) |
+| SSH 자격증명 | `server-set.yaml`(gitignore) 런타임 로드 | §7 (L6b) |
 | 액션·검증 레지스트리 | 전역 아님 — `Deps.Actions`로 인스턴스 주입 | §3.2 (P1) |
 | 세마포어 상한 | `max(1, min(cores-2,N))` 클램프 | §6 (S1) |

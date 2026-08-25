@@ -87,9 +87,9 @@ func TestLocalMap_ReportsEachTranslationOnce(t *testing.T) {
 	}
 }
 
-// TestLocalMapNear derives the map's path from the inventory it translates.
+// TestLocalMapNear derives the map's path from the server set it translates.
 func TestLocalMapNear(t *testing.T) {
-	got := serverset.LocalMapNear("env/docker/build/remote-server-config.yaml")
+	got := serverset.LocalMapNear("env/docker/build/server-set.yaml")
 	if got != filepath.Join("env/docker/build", serverset.LocalMapFile) {
 		t.Fatalf("LocalMapNear = %s", got)
 	}

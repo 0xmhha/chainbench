@@ -1,12 +1,12 @@
-# 서버 인벤토리 — 포트·호스트·접속 정보 (`remote-server-config.yaml`)
+# 서버 세트 — 포트·호스트·접속 정보 (`server-set.yaml`)
 
-> **[현행 설계]** 서버 인벤토리.
+> **[현행 설계]** 서버 세트.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
 > 작업 순서는 [[chainbench-worklist]] §1g 다.
 
 > 노드가 **어디서** 뜨고 **어떤 포트로** 듣는지를 결정하는 단일 출처.
 > 실제 파일은 **git 에 절대 올라가지 않는다**(gitignore). 추적되는 것은 템플릿
-> `remote-server-config.sample.yaml` 하나뿐이다.
+> `server-set.sample.yaml` 하나뿐이다.
 
 ---
 
@@ -18,11 +18,11 @@
 따라서 이 값들은 **데이터**이고, 그 데이터는 운영자의 로컬 파일에만 존재한다.
 
 ```
-remote-server-config.sample.yaml   추적됨 — 형식만 담은 템플릿
-remote-server-config.yaml          gitignore — 실제 값
+server-set.sample.yaml   추적됨 — 형식만 담은 템플릿
+server-set.yaml          gitignore — 실제 값
 ```
 
-`.gitignore` 는 `*remote-server-config.yaml` / `.yml` 을 막고 `.sample.yaml` 만 예외로 둔다.
+`.gitignore` 는 `*server-set.yaml` / `.yml` 을 막고 `.sample.yaml` 만 예외로 둔다.
 
 ---
 
@@ -91,18 +91,18 @@ http  = rpcBase + (node-1) * rpcStep      ws = http+1, auth = http+2
 pool.ports  →  내장 기본값
 ```
 
-두 단계다. 인벤토리는 **바꿀 값만** 적으면 된다 — 주소만 나열하고 포트를 생략하면 내장
+두 단계다. 서버 세트는 **바꿀 값만** 적으면 된다 — 주소만 나열하고 포트를 생략하면 내장
 대역(p2p 31000/10, rpc 8600/10)을 쓴다.
 
-**인벤토리 파일이 없으면** 내장 기본값(p2p 31000 / http 8600, step 10)으로 동작하되,
+**서버 세트 파일이 없으면** 내장 기본값(p2p 31000 / http 8600, step 10)으로 동작하되,
 스텝 출력이 출처를 밝힌다 — 포트가 왜 그 값인지는 추측 대상이 아니다.
 
 ```
 allocate: 4 node(s); ports: built-in defaults (no server config); p2p from 31000, http from 8600
-allocate: 4 node(s); ports: remote-server-config.yaml[local]; p2p from 30303, http from 8545
+allocate: 4 node(s); ports: server-set.yaml[local]; p2p from 30303, http from 8545
 ```
 
-단, **`--server` 로 서버를 지정했는데 인벤토리가 없으면 오류다.** 운영자가 고른
+단, **`--server` 로 서버를 지정했는데 서버 세트가 없으면 오류다.** 운영자가 고른
 서버를 조용히 무시하고 다른 포트로 띄우면 안 된다.
 
 ---
@@ -110,7 +110,7 @@ allocate: 4 node(s); ports: remote-server-config.yaml[local]; p2p from 30303, ht
 ## 5. 자격증명은 파일이 아니라 환경에서
 
 `ssh.password` / `ssh.key_file` 을 파일에 쓸 수는 있지만, **환경변수가 항상 이긴다.**
-그래야 인벤토리 파일 자체를 secret-free 로 유지할 수 있다.
+그래야 서버 세트 파일 자체를 secret-free 로 유지할 수 있다.
 
 ```
 CHAINBENCH_REMOTE_USER
@@ -126,8 +126,8 @@ CHAINBENCH_REMOTE_KEY_FILE  (+ CHAINBENCH_REMOTE_KEY_PASSPHRASE)
 ## 6. 사용
 
 ```sh
-cp remote-server-config.sample.yaml remote-server-config.yaml
-$EDITOR remote-server-config.yaml        # 실제 호스트·포트 기입
+cp server-set.sample.yaml server-set.yaml
+$EDITOR server-set.yaml        # 실제 호스트·포트 기입
 
 # 이 머신에서
 chainbench net up --data-dir /tmp/n1 --chain stablenet \
@@ -137,16 +137,16 @@ chainbench net up --data-dir /tmp/n1 --chain stablenet \
 chainbench net up --data-dir /tmp/n1 --chain stablenet \
   --binary /srv/bin/gstable --server bp1
 
-# 인벤토리 전체에 한 노드씩 펼쳐서
+# 서버 세트 전체에 한 노드씩 펼쳐서
 chainbench net up --data-dir /tmp/n1 --chain stablenet \
   --binary /srv/bin/gstable --fleet
 
-# DSL 실행도 같은 인벤토리를 읽는다
+# DSL 실행도 같은 서버 세트를 읽는다
 chainbench run --chain stablenet --binary $GSTABLE --keys keys/preset \
   --server local tests/specs/api/*.json
 ```
 
-선택 플래그: `--server-config <path>`(기본 `remote-server-config.yaml`) ·
+선택 플래그: `--server-set <path>`(기본 `server-set.yaml`) ·
 `--server <name>` · `--server-index <n>` · `--fleet`.
 
 ---
@@ -159,10 +159,10 @@ v1(`servers:` 목록)을 만나면 **무엇을 어떻게 고쳐야 하는지 말
 ```
 serverset: <path> looks like the pre-v2 format: v2 replaced the server list with a pool:
 put every address under `pool.hosts`, move `slots` and `ports` up to `pool`, and lift
-`ssh`/`dataRoot` to the top level (see remote-server-config.sample.yaml)
+`ssh`/`dataRoot` to the top level (see server-set.sample.yaml)
 ```
 
-## 7. 아직 인벤토리를 읽지 않는 경로
+## 7. 아직 서버 세트를 읽지 않는 경로
 
 `core/config` 의 `ports.base_*` 와 이를 쓰는 `core/bringup`(레거시 `setup` 명령)은
 여전히 자체 기본값을 쓴다. 이 스택은 netcompose 전환이 라이브 검증되면 삭제된다

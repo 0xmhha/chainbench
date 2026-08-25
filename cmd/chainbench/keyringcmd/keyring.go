@@ -44,12 +44,12 @@ func New() *cobra.Command {
 }
 
 // ringFlags name the ring a command works on. The ring may live on a server
-// (srv://<server>/path in --keyring-dir), so the inventory and the docker
+// (srv://<server>/path in --keyring-dir), so the server set and the docker
 // translation are part of naming it — on every verb, not just import.
 type ringFlags struct {
-	dir          string
-	serverConfig string
-	docker       bool
+	dir       string
+	serverSet string
+	docker    bool
 }
 
 func (f *ringFlags) bind(cmd *cobra.Command) {
@@ -57,14 +57,14 @@ func (f *ringFlags) bind(cmd *cobra.Command) {
 		"ring directory — identities are created in and read from here; a plain path is this machine, "+
 			"srv://<server>/path places the ring on that server (default "+
 			app.DefaultRingDir+", or "+app.RingEnv+")")
-	cmd.Flags().StringVar(&f.serverConfig, "server-config", "",
-		"server inventory file for srv:// paths")
+	cmd.Flags().StringVar(&f.serverSet, "server-set", "",
+		"server-set file for srv:// paths: which servers exist and how to reach them")
 	cmd.Flags().BoolVar(&f.docker, "docker", false,
-		"the server is a local docker container: translate this tool's dials via the localmap next to the inventory (addresses only — docker itself is not touched)")
+		"the server is a local docker container: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
 }
 
 func (f *ringFlags) ref() app.RingRef {
-	return app.RingRef{Dir: f.dir, ServerConfig: f.serverConfig, Docker: f.docker}
+	return app.RingRef{Dir: f.dir, ServerSet: f.serverSet, Docker: f.docker}
 }
 
 // deps is the Deps every keyring verb runs with: operational side notes —

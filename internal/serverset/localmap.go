@@ -14,12 +14,12 @@ import (
 )
 
 // LocalMapFile is the mapping file's conventional name, looked for next to
-// the server inventory it translates.
+// the server set it translates.
 const LocalMapFile = "localmap.yaml"
 
 // LocalMap translates servers' real addresses onto addresses this machine can
-// dial — loopback-published docker ports. The inventory keeps the real
-// addresses (the file has the same shape a production inventory has, and the
+// dial — loopback-published docker ports. The server set keeps the real
+// addresses (the file has the same shape a production server set has, and the
 // nodes use those addresses to reach each other); this map applies only to
 // the harness's own dials, and only when the operator passes --docker.
 //
@@ -39,13 +39,13 @@ type HostPorts struct {
 	Ports map[int]int `yaml:"ports"`
 }
 
-// LocalMapNear returns the mapping file's path next to the inventory at
-// inventoryPath (empty means the default inventory location).
-func LocalMapNear(inventoryPath string) string {
-	if inventoryPath == "" {
-		inventoryPath = DefaultConfigFile
+// LocalMapNear returns the mapping file's path next to the server set at
+// setPath (empty means the default server-set location).
+func LocalMapNear(setPath string) string {
+	if setPath == "" {
+		setPath = DefaultConfigFile
 	}
-	return filepath.Join(filepath.Dir(inventoryPath), LocalMapFile)
+	return filepath.Join(filepath.Dir(setPath), LocalMapFile)
 }
 
 // LoadLocalMap reads the mapping file. A missing file is an error: the caller

@@ -138,7 +138,7 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
   // ── Specifier: 이 환경이 어디에 있는가 (G6 — 단일 경로 문법)
   "target": "local:.chainbench/work",
   //  "target": "deploy@10.0.0.11:/srv/chainbench",     // remote
-  //  "target": { "path": "deploy@10.0.0.11:/srv/chainbench", "cluster": "remote-server-config.yaml" },
+  //  "target": { "path": "deploy@10.0.0.11:/srv/chainbench", "cluster": "server-set.yaml" },
   //  cluster 파일은 gitignore 대상. spec 은 참조만 한다(design §7 L6b 유지).
 
   // ── Head: 어느 체인인가

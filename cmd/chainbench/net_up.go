@@ -80,7 +80,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&overlayPath, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
 	cmd.Flags().BoolVar(&docker, "docker", false,
-		"servers are local docker containers: translate this tool's dials via the localmap next to the inventory (addresses only — docker itself is not touched)")
+		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
 	tf.bind(cmd)
 	sf.bind(cmd)
 	return cmd

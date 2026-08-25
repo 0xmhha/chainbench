@@ -79,7 +79,7 @@ func netmapPoolTool() Tool {
 }
 
 // netmapPlanTool runs the allocator as a question: the placement a network of
-// this shape would get, from the inventory (or the built-in pool), with
+// this shape would get, from the server set (or the built-in pool), with
 // nothing written anywhere.
 func netmapPlanTool() Tool {
 	return Tool{
@@ -93,12 +93,12 @@ func netmapPlanTool() Tool {
 				"chain":      map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix); default stablenet"},
 				"validators": map[string]any{"type": "number", "description": "validator node count (default 4)"},
 				"endpoints":  map[string]any{"type": "number", "description": "endpoint node count"},
-				"serverConfig": map[string]any{
+				"serverSet": map[string]any{
 					"type":        "string",
-					"description": "server inventory file (default: remote-server-config.yaml when present)",
+					"description": "server-set file (default: server-set.yaml when present)",
 				},
-				"server": map[string]any{"type": "string", "description": "server to place nodes on, by name from the inventory"},
-				"fleet":  map[string]any{"type": "boolean", "description": "spread across every server in the inventory"},
+				"server": map[string]any{"type": "string", "description": "server to place nodes on, by name from the server set"},
+				"fleet":  map[string]any{"type": "boolean", "description": "spread across every server in the server set"},
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -111,9 +111,9 @@ func netmapPlanTool() Tool {
 				Validators: validators,
 				Endpoints:  argInt(args, "endpoints", 0),
 				Server: app.ServerRef{
-					ConfigPath: argString(args, "serverConfig", ""),
-					Name:       argString(args, "server", ""),
-					Fleet:      argBool(args, "fleet", false),
+					SetPath: argString(args, "serverSet", ""),
+					Name:    argString(args, "server", ""),
+					Fleet:   argBool(args, "fleet", false),
 				},
 			})
 			if err != nil {

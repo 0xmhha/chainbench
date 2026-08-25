@@ -219,4 +219,4 @@ internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
    4검증자면 전부 참이라 선정 기준이 되지 못한다. 토폴로지의 `bootnode: true`(이미 `State.Bootnode` 로
    기록 중)를 정본으로 삼는 편이 맞다.
 3. **`config.json` 의 `env` 정책값**(blockCreationTime·stakingMin 등)을 어디서 받을 것인가.
-   DSL `env` 선언 / 서버 인벤토리 / 패밀리 기본값 중 어디에 두느냐는 사용자 결정 사항.
+   DSL `env` 선언 / 서버 세트 / 패밀리 기본값 중 어디에 두느냐는 사용자 결정 사항.

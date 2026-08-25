@@ -33,7 +33,7 @@ func SSHRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Runner 
 // own and travels on stdin (sudo -S), never in the command line — a command
 // line is visible in the remote process list and shell history.
 //
-// The inventory's ssh.sudo says whether a server PERMITS elevation; whether a
+// The server set's ssh.sudo says whether a server PERMITS elevation; whether a
 // given step NEEDS it stays the step's decision, which is why this is a
 // separate Runner rather than a mode on SSHRunner.
 func SSHSudoRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Runner {

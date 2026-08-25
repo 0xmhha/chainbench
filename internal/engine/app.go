@@ -75,7 +75,7 @@ type LocalConfig struct {
 	LaunchOverrides []launchopt.Override
 	// Placement decides the port bands, addressing mode, and capacity bound.
 	// Its zero value is the built-in local plan; a caller that read the
-	// operator's server inventory passes that server's placement, which is how
+	// operator's server server set passes that server's placement, which is how
 	// site-specific ports reach a run without ever entering a spec.
 	Placement serverset.Placement
 	// Clock supplies the session start time; nil uses time.Now (injected so

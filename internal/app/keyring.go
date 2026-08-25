@@ -34,11 +34,11 @@ type RingRef struct {
 	// Dir is the ring directory; empty falls back to the environment and then
 	// to DefaultRingDir.
 	Dir string
-	// ServerConfig is the inventory consulted for an srv:// source; empty uses
-	// the default inventory file.
-	ServerConfig string
+	// ServerSet is the server-set file consulted for an srv:// source; empty uses
+	// the default server-set file.
+	ServerSet string
 	// Docker treats the ring's server as a local docker container: the dial is
-	// translated through the localmap next to the inventory. The flag is the
+	// translated through the localmap next to the server set. The flag is the
 	// power switch; a leftover mapping file alone activates nothing.
 	Docker bool
 }
@@ -77,13 +77,13 @@ func (r RingRef) open(d Deps) (files provision.FileStore, dir, source string, er
 	}
 	var m remote.AddrMap
 	if r.Docker {
-		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(r.ServerConfig))
+		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(r.ServerSet))
 		if err != nil {
 			return nil, dir, source, err
 		}
 		m = lm.AddrMap(func(from, to string) { d.logf("docker: dialing %s as %s", from, to) })
 	}
-	tgt, err := spec.ResolveWithMap(d.env(), serverset.InventoryLookup(r.ServerConfig), m)
+	tgt, err := spec.ResolveWithMap(d.env(), serverset.SetLookup(r.ServerSet), m)
 	if err != nil {
 		return nil, dir, source, err
 	}
@@ -267,7 +267,7 @@ type RingImportIn struct {
 	Label string
 	// From names the key file with the single path syntax: a local path,
 	// srv://<server>/path, [user@]host:path, or ssh://user@host:port/path.
-	// Prefer srv://, which keeps the host address in the inventory rather than
+	// Prefer srv://, which keeps the host address in the server set rather than
 	// in a command line or an agent's transcript.
 	From string
 	// PrivateKey is a key the caller already holds (0x-hex), as an alternative
@@ -287,7 +287,7 @@ type RingImportIn struct {
 	// WithBLS derives BLS material for the imported key.
 	WithBLS bool
 	// Docker treats the servers as local docker containers: the harness's own
-	// dials are translated through the localmap file next to the inventory.
+	// dials are translated through the localmap file next to the server set.
 	// The flag is the power switch — a leftover mapping file alone activates
 	// nothing, and the flag without the file is an error.
 	Docker bool
@@ -311,7 +311,7 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 	if err != nil {
 		return EntryOut{}, err
 	}
-	src, err := in.source(d, in.Ring.ServerConfig)
+	src, err := in.source(d, in.Ring.ServerSet)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -350,7 +350,7 @@ func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, e
 	if in.FromRing == "" {
 		return RingOut{}, fmt.Errorf("app: import-ring needs --from-ring")
 	}
-	srcRef := RingRef{Dir: in.FromRing, ServerConfig: in.Ring.ServerConfig, Docker: in.Docker || in.Ring.Docker}
+	srcRef := RingRef{Dir: in.FromRing, ServerSet: in.Ring.ServerSet, Docker: in.Docker || in.Ring.Docker}
 	srcFiles, srcDir, _, err := srcRef.open(d)
 	if err != nil {
 		return RingOut{}, err
@@ -373,7 +373,7 @@ func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, e
 // source turns the ways of naming a key into one keyring.Source. Where a file
 // sits is a property of its path, so a remote import is not a different kind
 // of import; a mnemonic is a different origin, so it is its own input.
-func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) {
+func (in RingImportIn) source(d Deps, serverSet string) (keyring.Source, error) {
 	given := 0
 	for _, set := range []bool{in.PrivateKey != "", in.From != "", in.Mnemonic != ""} {
 		if set {
@@ -409,13 +409,13 @@ func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) 
 	}
 	var m remote.AddrMap
 	if in.Docker {
-		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inventory))
+		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(serverSet))
 		if err != nil {
 			return nil, err
 		}
 		m = lm.AddrMap(func(from, to string) { d.logf("docker: dialing %s as %s", from, to) })
 	}
-	tgt, err := spec.ResolveWithMap(d.env(), serverset.InventoryLookup(inventory), m)
+	tgt, err := spec.ResolveWithMap(d.env(), serverset.SetLookup(serverSet), m)
 	if err != nil {
 		return nil, err
 	}

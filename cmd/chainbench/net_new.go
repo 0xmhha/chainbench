@@ -44,7 +44,7 @@ func newNetNewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (may also be set at start)")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from (inspect/manage it with `account`)")
 	cmd.Flags().BoolVar(&docker, "docker", false,
-		"servers are local docker containers: translate this tool's dials via the localmap next to the inventory (addresses only — docker itself is not touched)")
+		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
 	tf.bind(cmd)
 	return cmd
 }

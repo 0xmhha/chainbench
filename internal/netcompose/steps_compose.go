@@ -33,9 +33,9 @@ import (
 // uses, and records itself in the step table. Lifecycle steps (init, start,
 // stop, ...) live in steps_lifecycle.go.
 
-// Placement bounds applied when the caller did not supply a server inventory.
+// Placement bounds applied when the caller did not supply a server set.
 // The port bands themselves live in serverset (built-in defaults, or the
-// operator's gitignored inventory) — never here.
+// operator's gitignored server set) — never here.
 const (
 	portBandSize              = 100
 	minValidatorsForPlacement = 1
@@ -119,12 +119,12 @@ type AllocateOpts struct {
 	Topology *topology.Topology
 	// Placement decides the port bands, the addressing mode, and the capacity
 	// bound. Its zero value is the built-in local plan; a caller that read a
-	// server inventory passes that server's placement instead, which is the
+	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
 	Placement serverset.Placement
-	// ConfigPath is the inventory file Placement came from, persisted so later
+	// SetPath is the server-set file Placement came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
-	ConfigPath string
+	SetPath string
 }
 
 // placements resolves the requested layout into one placement request per node,
@@ -192,8 +192,8 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if pl.Source == "" {
 		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
 	}
-	if opts.ConfigPath != "" {
-		w.state.ServerConfig = opts.ConfigPath
+	if opts.SetPath != "" {
+		w.state.ServerSet = opts.SetPath
 	}
 	pool := pl.Pool
 	if pool.Slots < 1 {
@@ -209,7 +209,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	placements := assigned.Placements()
 
-	// A server inventory naming a data root wins over the workspace default:
+	// A server set naming a data root wins over the workspace default:
 	// it is where that machine keeps node data.
 	root := w.state.Target.DataRoot
 	if pl.DataRoot != "" {

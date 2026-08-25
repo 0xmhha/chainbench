@@ -280,7 +280,7 @@ sequenceDiagram
     autonumber
     participant UP as Provisioner / Supervisor / Collector
     participant D as driver.RemoteDriver
-    participant CFG as remote-server-config.yaml
+    participant CFG as server-set.yaml
     participant H as 원격 호스트
 
     note over UP: 상위는 local/remote 를 모른다

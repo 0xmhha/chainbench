@@ -1,10 +1,10 @@
-# remote-server-config.sample.yaml — server inventory template (v2)
+# server-set.sample.yaml — server set template (v2)
 #
-# Copy to `remote-server-config.yaml` (gitignored) and fill in real values.
+# Copy to `server-set.yaml` (gitignored) and fill in real values.
 # NEVER commit the real file. Host addresses, port assignments, and credentials
 # are site-specific and sensitive; only this template is tracked.
 #
-#   cp remote-server-config.sample.yaml remote-server-config.yaml
+#   cp server-set.sample.yaml server-set.yaml
 #
 # The file declares a POOL of resources, not a list of servers: the addresses
 # chainbench may use and how many port slots each may hold. The allocator
@@ -48,10 +48,11 @@ pool:
 
 # How every non-loopback host in the pool is reached.
 #
-# Secrets are better left out of this file: the environment always wins.
-#   CHAINBENCH_REMOTE_USER
-#   CHAINBENCH_REMOTE_PASS
-#   CHAINBENCH_REMOTE_KEY_FILE  (+ CHAINBENCH_REMOTE_KEY_PASSPHRASE)
+# This file is the single source for a named server's login — the environment
+# is never consulted, so a variable left over from another environment cannot
+# silently redirect a dial. To keep the secret itself out of this file, point
+# password_file (or key_passphrase_file) at a separate one-line file, 0600 —
+# the shape a secret manager renders to disk.
 #
 # Host key policy is separate:
 #   CHAINBENCH_SSH_KNOWN_HOSTS, or CHAINBENCH_SSH_INSECURE_HOST_KEY=1 on a
@@ -60,7 +61,8 @@ ssh:
   port: 22
   # user: chainbench
   # key_file: ~/.ssh/id_ed25519
-  # password: ...            # prefer CHAINBENCH_REMOTE_PASS
+  # password: ...             # or reference a secret file instead:
+  # password_file: /etc/chainbench/ssh-pass   # one line, 0600
 
   # Whether the login may elevate. It is carried, not consumed: the bring-up
   # decides whether a step needs it.

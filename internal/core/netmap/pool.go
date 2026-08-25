@@ -48,7 +48,7 @@ type Pool struct {
 	// has not asked a family still gets a usable plan.
 	Reservation portplan.Reservation
 	// Source names where the pool was read from, so a port number is never a
-	// guess ("remote-server-config.yaml", "built-in defaults").
+	// guess ("server-set.yaml", "built-in defaults").
 	Source string
 }
 
@@ -56,7 +56,7 @@ type Pool struct {
 func (p Pool) Cap() int { return len(p.Hosts) * p.Slots }
 
 // Validate rejects a pool that cannot produce a usable placement. The port
-// rules are portplan's, checked here so the operator hears about the inventory
+// rules are portplan's, checked here so the operator hears about the server set
 // rather than about a node that failed to bind.
 func (p Pool) Validate() error {
 	if len(p.Hosts) == 0 {

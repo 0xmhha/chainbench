@@ -7,7 +7,7 @@ import (
 )
 
 // newPlanCmd runs the allocator as a question: the placement a network of this
-// shape would get, computed from the inventory (or the built-in pool) with
+// shape would get, computed from the server set (or the built-in pool) with
 // nothing written anywhere. It exists so a placement change can be inspected —
 // and tested — without composing a network.
 func newPlanCmd() *cobra.Command {

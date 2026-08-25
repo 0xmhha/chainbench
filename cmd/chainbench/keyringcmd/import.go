@@ -12,7 +12,7 @@ import (
 //
 // The key may be here or on another host; --from says where with one path
 // syntax, so importing from a server is not a different command. Prefer
-// srv://<server>/path, which keeps the host address in the gitignored inventory
+// srv://<server>/path, which keeps the host address in the gitignored server set
 // instead of the command line.
 func newKeyringImportCmd() *cobra.Command {
 	var (
@@ -28,7 +28,7 @@ func newKeyringImportCmd() *cobra.Command {
 		Long: "Imports a key that already exists — held as hex, or read from a file here\n" +
 			"or on another host — and writes it into the ring's index under --name.\n\n" +
 			"  --from /srv/keys/node1              this machine\n" +
-			"  --from srv://bp1/srv/keys/node1     the inventory entry \"bp1\"\n" +
+			"  --from srv://bp1/srv/keys/node1     the server set entry \"bp1\"\n" +
 			"  --from ubuntu@host:/srv/keys/node1  a host named directly\n\n" +
 			"With --from-ring the unit is the whole ring, not one key: every identity\n" +
 			"keeps its label, the validator declaration travels with the keys, and each\n" +

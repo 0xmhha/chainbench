@@ -10,7 +10,7 @@ import (
 )
 
 // newPoolCmd reports the resource a network may be allocated from. It is what
-// answers "why was that refused" without the operator reading the inventory
+// answers "why was that refused" without the operator reading the server set
 // and doing the arithmetic.
 func newPoolCmd() *cobra.Command {
 	var dataDir string

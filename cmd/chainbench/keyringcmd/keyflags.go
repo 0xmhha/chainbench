@@ -33,12 +33,12 @@ type SourceFlags struct {
 	remotePath   string
 	server       int
 
-	serverConfig string
-	remoteUser   string
-	remotePort   int
-	coinType     uint32
-	hdAccount    uint32
-	hdIndex      uint32
+	serverSet  string
+	remoteUser string
+	remotePort int
+	coinType   uint32
+	hdAccount  uint32
+	hdIndex    uint32
 }
 
 func (f *SourceFlags) Bind(cmd *cobra.Command) {
@@ -57,7 +57,7 @@ func (f *SourceFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.remotePath, "remote-path", "", "deprecated: use --from srv://<server>/path")
 	_ = cmd.Flags().MarkDeprecated("remote-path", "use --from srv://<server>/path")
 
-	cmd.Flags().StringVar(&f.serverConfig, "server-config", serverset.DefaultConfigFile, "server inventory file for srv:// targets")
+	cmd.Flags().StringVar(&f.serverSet, "server-set", serverset.DefaultConfigFile, "server-set file for srv:// targets")
 	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "override the SSH user for a host named directly in --from")
 	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "override the SSH port for a host named directly in --from (default 22)")
 	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keyring.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
@@ -108,10 +108,10 @@ func (f *SourceFlags) fromPath() (string, error) {
 		if f.remotePath == "" {
 			return "", fmt.Errorf("--server needs --remote-path; prefer --from srv://<server>/path")
 		}
-		// --server took an index; --from names the entry. The inventory answers
+		// --server took an index; --from names the entry. The server set answers
 		// both, so translate here rather than teaching the path syntax about
 		// indexes — a number is not a name.
-		cfg, err := serverset.Load(f.serverConfigPath())
+		cfg, err := serverset.Load(f.serverSetPath())
 		if err != nil {
 			return "", err
 		}
@@ -135,7 +135,7 @@ func (f *SourceFlags) fromPath() (string, error) {
 }
 
 // openFrom resolves a --from path to the store that holds it and the path on
-// that store. Local, inventory-named, and directly-addressed hosts all end up
+// that store. Local, server set-named, and directly-addressed hosts all end up
 // here, so none of them can grow its own read.
 func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.FileStore, string, error) {
 	spec, err := target.ParseTarget(path)
@@ -148,17 +148,17 @@ func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.
 	if f.remotePort != 0 && spec.Kind == target.TargetRemote {
 		spec.Port = f.remotePort
 	}
-	t, err := spec.ResolveWith(env, serverset.InventoryLookup(f.serverConfigPath()))
+	t, err := spec.ResolveWith(env, serverset.SetLookup(f.serverSetPath()))
 	if err != nil {
 		return nil, "", err
 	}
 	return t.Files, t.DataRoot, nil
 }
 
-// serverConfigPath is the inventory file to consult, defaulting when unset.
-func (f *SourceFlags) serverConfigPath() string {
-	if f.serverConfig != "" {
-		return f.serverConfig
+// serverSetPath is the server-set file to consult, defaulting when unset.
+func (f *SourceFlags) serverSetPath() string {
+	if f.serverSet != "" {
+		return f.serverSet
 	}
 	return serverset.DefaultConfigFile
 }

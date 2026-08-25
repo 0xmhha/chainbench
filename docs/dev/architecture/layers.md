@@ -8,7 +8,7 @@
 > 상태를 쓸 수 있는 곳을 한정한다.
 >
 > 실측 기준: 2026-08-18, 내부 패키지 **57개** / 패키지 간 의존 엣지 전수 조사(`go list`).
-> 관련: [[family-bringup-design]](../family-bringup-design.md) · [[server-inventory]](../server-inventory.md) · [[code-graph]](code-graph.md)
+> 관련: [[family-bringup-design]](../family-bringup-design.md) · [[server-set]](../server-set.md) · [[code-graph]](code-graph.md)
 
 ---
 
@@ -113,7 +113,7 @@ flowchart TD
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
 | `core/keyring` | **키 자료의 단일 소유자** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·백엔드·링·색인 |
 | `accounts` | tx 서명(외부 SDK 래핑) |
-| `core/topology` · `serverset` | 토폴로지 YAML · **서버 인벤토리(포트·호스트)** |
+| `core/topology` · `serverset` | 토폴로지 YAML · **서버 세트(포트·호스트)** |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
 

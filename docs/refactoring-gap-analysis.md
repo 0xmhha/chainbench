@@ -6,7 +6,7 @@
 
 ## 한 줄 결론
 
-목표 아키텍처의 **빌딩블록은 대부분 이미 존재**한다(genesis-builder, key-manager, deploy skip-if-exists, procman, 세션 지문 재사용, DSL의 pre/post hook·genesis overlay, RemoteDriver, `place.RemotePerHost`). 실제 갭은 **DSL→엔진→원격 실행의 배선**과 **`remote-server-config.yaml`(serverset)을 노드 구동 경로에 연결**, 그리고 **local/remote를 하나의 "경로(path)"로 다루는 1급 추상**과 **원격 프로세스 종료 검증**에 집중된다.
+목표 아키텍처의 **빌딩블록은 대부분 이미 존재**한다(genesis-builder, key-manager, deploy skip-if-exists, procman, 세션 지문 재사용, DSL의 pre/post hook·genesis overlay, RemoteDriver, `place.RemotePerHost`). 실제 갭은 **DSL→엔진→원격 실행의 배선**과 **`server-set.yaml`(serverset)을 노드 구동 경로에 연결**, 그리고 **local/remote를 하나의 "경로(path)"로 다루는 1급 추상**과 **원격 프로세스 종료 검증**에 집중된다.
 
 ## 1. 요구사항 ↔ 기존 모듈 매핑
 
@@ -27,7 +27,7 @@
 | key-point 2 로컬/원격 드라이버 | `internal/core/driver`(Local/Remote), `RemoteDriver` (`driver/remote.go:38`) | ✅ 충족 |
 | key-point 2 원격 배치 모드 | `internal/core/place` `RemotePerHost` (`place/place.go:16`) | ✅ 충족(모드 존재) |
 | **key-point 2 DSL의 target-machine(local/remote) 선택** | `Spec.Placement string`(`spec.go:34`) 존재하나 → `place.Mode` 매핑 부재 | ⚠️ **갭** |
-| **key-point 4 `remote-server-config.yaml`을 노드 구동에 사용** | `serverset`는 `keys import`만 소비(엔진 미연결) | ⚠️ **갭** |
+| **key-point 4 `server-set.yaml`을 노드 구동에 사용** | `serverset`는 `keys import`만 소비(엔진 미연결) | ⚠️ **갭** |
 | **key-point 2 통합 "경로"(local dir / `user@host:dir`) 1급 추상** | ad-hoc 파싱만(`remote.CredentialsFromEnv`), plan `Network:"local"` 하드코딩(`engine/plan.go:71`) | ⚠️ **갭** |
 | **algo 15 원격 프로세스 종료·검증** | `RemoteDriver.Stop`은 `kill PID || true`로 검증 없음(`driver/remote.go:126-134`) | ⚠️ **갭** |
 | **key-point 2 local+remote 프로세스 통합 관리** | `procman.Manager`는 `syscall.Kill`(로컬 시그널) 기반; 원격 PID는 별도 transport 필요(주석 `procman.go:54`) | ⚠️ **갭** |
@@ -37,7 +37,7 @@
 | ID | 심각도 | 위치(근거) | 문제 | 수정 방향 |
 |---|---|---|---|---|
 | G1 | High | `internal/engine/app.go:100`, `internal/chainsetup/static.go:124` | 엔진/정적 셋업이 `place.LocalStepped`를 **하드코딩** → DSL이 remote를 요구해도 로컬로만 구동 | `Spec.Placement`(및 신규 `targetMachine`) → `place.Mode` 리졸버 도입, 엔진 `BuildEnv.Mode`/`Capacity`를 스펙에서 주입 |
-| G2 | High | `serverset` grep 결과 소비처가 `cmd/chainbench/keyflags.go`뿐 | `remote-server-config.yaml`이 **노드 구동/배포 경로와 미연결**(keys import 전용) | `serverset.Server.Credentials`→`driver.SSHRunner`→`RemoteDriver`를 엔진 셋업에서 사용; `--server`/스펙 target을 launcher까지 전달 |
+| G2 | High | `serverset` grep 결과 소비처가 `cmd/chainbench/keyflags.go`뿐 | `server-set.yaml`이 **노드 구동/배포 경로와 미연결**(keys import 전용) | `serverset.Server.Credentials`→`driver.SSHRunner`→`RemoteDriver`를 엔진 셋업에서 사용; `--server`/스펙 target을 launcher까지 전달 |
 | G3 | Med | `cmd/chainbench/resolve.go:31-50` | 원격 setup이 **단일 host/env(`CHAINBENCH_REMOTE_PASS`)** 기반이라 인벤토리(다중 서버)와 분리됨 | resolve 경로를 `serverset` 인벤토리 기반으로 통합(인덱스/`user@host:dir`로 다중 노드 배치) |
 | G4 | Med | `internal/engine/plan.go:71` (`Network:"local"`), `place.NodePlacement.DataPath string` | local/remote를 **하나의 경로 타입으로 다루지 않음**(문자열·하드코딩) | 1급 `Location`/`Path` 타입 도입(local dir vs `user@host:dir`)해 plan/provision/driver를 관통시킴 (key-point 2) |
 | G5 | Med | `internal/core/driver/remote.go:126-134` | `RemoteDriver.Stop`이 kill 후 **종료 확인 없음** → algo 15의 "정상 종료 검증" 미충족 | kill 후 `kill -0`/재조회로 종료 검증, 미종료 시 SIGKILL 에스컬레이션(로컬 `StopAll` 패턴 대칭) |
@@ -49,7 +49,7 @@
 | 구분 | 내용 | 확신도 |
 |---|---|---|
 | Fact | 엔진·정적 셋업이 `place.LocalStepped`를 하드코딩(app.go:100, static.go:124) | None |
-| Fact | `serverset`(remote-server-config)는 `keys import` 경로에서만 소비됨(grep 결과 그 외 없음) | None |
+| Fact | `serverset`(server-set)는 `keys import` 경로에서만 소비됨(grep 결과 그 외 없음) | None |
 | Fact | `provision.Provision`은 존재 파일 skip(재사용) 구현(provision.go:46-57) | None |
 | Fact | 로컬 `procman.StopAll`은 SIGTERM→SIGKILL→`Alive` 생존 검증 수행(procman.go:164-190) | None |
 | Fact | `RemoteDriver.Stop`은 `kill PID 2>/dev/null || true`만 수행, 검증 없음(remote.go:126-134) | None |

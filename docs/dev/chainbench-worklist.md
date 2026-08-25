@@ -315,7 +315,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 | ☑ |
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keyring.FileSource` 가 로컬·원격 겸용 | ☑ |
 | **K8** | **표면 통일** — 유스케이스를 `internal/app` 으로, CLI·MCP 는 노출 수단으로 | CLI 로 만든 링을 MCP 가 읽음(실증) · MCP 도구 5개(`new`/`add`/`list`/`show`/`import`) · **`export` 는 의도적 부재**(비밀이 에이전트 기록에 남지 않도록, 부재를 테스트로 고정) · `GenerateOpts.Validators` 를 `*int` 로 바꿔 "미설정"과 "없음"을 타입으로 구분 | ☑ |
-| **K9** | **원격 링** (사용자 결정 2026-08-25) — `--keyring-dir` 이 target 문법(`srv://…`)을 수용, 링의 생성·조회·가져오기가 **파일 seam 경유로 서버 위에서** 동작(`GenerateAt/ExtendAt/ImportAt/LoadPresetAt`, 로컬 래퍼 유지로 기존 18개 호출처 무변경). `--server-config`·`--docker` 는 전 동사 공통 플래그로 승격. **수정된 선재 결함**: 원격형 경로를 로컬 폴더 *이름*으로 취급해 운영자 머신에 조용히 생성하던 오배치 | 라이브(함대): 서버 위 생성·add 비승격·`list --verify` 원격 통과·중복 생성 원격 존재 검사로 거부·`--docker` 부재 시 실주소 timeout · 게이트 스위트 `Live_…CreatesARingOnAServer` 상설화 | ☑ |
+| **K9** | **원격 링** (사용자 결정 2026-08-25) — `--keyring-dir` 이 target 문법(`srv://…`)을 수용, 링의 생성·조회·가져오기가 **파일 seam 경유로 서버 위에서** 동작(`GenerateAt/ExtendAt/ImportAt/LoadPresetAt`, 로컬 래퍼 유지로 기존 18개 호출처 무변경). `--server-set`·`--docker` 는 전 동사 공통 플래그로 승격. **수정된 선재 결함**: 원격형 경로를 로컬 폴더 *이름*으로 취급해 운영자 머신에 조용히 생성하던 오배치 | 라이브(함대): 서버 위 생성·add 비승격·`list --verify` 원격 통과·중복 생성 원격 존재 검사로 거부·`--docker` 부재 시 실주소 timeout · 게이트 스위트 `Live_…CreatesARingOnAServer` 상설화 | ☑ |
 | **K10** | **링 통째 가져오기 + 무결성 게이트** (사용자 결정 2026-08-25) — `import --from-ring <target>` 이 원격/로컬 링 전체를 한 명령으로 복제: 라벨·순번·validator 선언(BLS 목록·alloc 포함) 그대로, 항목마다 키에서 재파생해 원본 인덱스와 대조(`Entry.Verify`) 후 하나라도 다르면 전체 거부, 목적지에 링이 있으면 거부, 비밀번호는 원본 유지 또는 `--password` 재암호화. 단건 import 는 `--expect-address` 로 같은 대조를 호출자가 걸 수 있다. MCP `keyring_import` 에 `fromRing`/`expectAddress` 동일 노출 | 단위(복제가 선언 보존·변조 원본 거부·목적지 점유 거부) + CLI(선언 동반·플래그 혼용 거부·주소 불일치 거부) + 라이브 `Live_…ClonesARingFromAServer`(서버 링 → 로컬, 치환 보고·양측 주소 일치·로컬 재검증) | ☑ |
 | **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 
@@ -394,6 +394,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
 | **S7** | **`query` 조회 투영** — `ReadOnly` 기능들을 최상위 `query <명사> <동사>` 로 **자동 생성**(손 트리 금지, [[surface-unification-design]] §4.4, 확정 2026-08-25). 정본 철자는 명사 그룹, `query` 는 같은 등록의 두 번째 렌더링. MCP 는 같은 속성으로 조회 전용 도구 목록을 얻는다 | `query keyring list` == `keyring list` (같은 등록 실증) · 비-ReadOnly 기능이 query 에 나타나면 테스트 실패 | ☐ |
 | **S8** | **netmap 조회의 자기 그룹 독립** (사용자 결정 2026-08-25) — 배치 조회를 `net` 에서 분리해 모듈 이름 그대로의 최상위 그룹 `netmap`(show·pool·plan)으로. 동기: 조회가 조합 그룹에 묶여 있으면 netmap 모듈만 고쳤을 때 그 부분만 테스트할 수 없다. `plan` 신설 = 할당기를 질문으로 실행(인벤토리+형태→배치표, 워크스페이스 없음·무기록) → 배치 변경을 조합 없이 검증하는 통로. MCP 도 동일 이동(`chainbench_netmap_show/pool/plan`). `net` 은 상태를 바꾸는 조합 단계만 소유 | CLI 테스트 7건(plan 결정성·무기록·producer 0 거부·인벤토리 반영·자격 비노출, show 양방향·워크스페이스 요구, pool used 집계) — netmap 만 대상으로 실행 가능 | ☑ |
+| **S9** | **서버 세트 단일화** (사용자 결정 2026-08-25) — ① 용어: 서버 목록 파일을 "서버 세트"로 통일(파일 `server-set.yaml`, 플래그 `--server-set`, 코드 `serverset` 패키지와 일치; "inventory" 는 Ansible 미경험자에게 낯설고, "server config" 는 노드 config 와 충돌). ② 자격 단일화: 이름 붙은 서버의 SSH 자격은 **서버 세트 파일이 유일한 출처** — 환경변수 참조 제거(남은 export 가 접속을 조용히 바꾸는 사고 차단). 비밀을 파일 밖에 두려면 `ssh.password_file`/`key_passphrase_file` 로 한 줄짜리 0600 파일 참조(시크릿 매니저가 내려주는 형태). `CHAINBENCH_REMOTE_*` 는 참조할 파일이 없는 직접 표기(`user@host:/path`) 전용으로 축소 | 단위: 환경변수를 켜도 파일 값이 이기는 것·password_file 판독(개행 절사)·password/password_file 동시 지정 거부·빈 시크릿 파일 거부. 라이브: docker 서버들에서 keyring 전체 스위트 재통과 | ☑ |
 
 **`internal/feature` 를 별도 패키지로 두는 이유**: `app/feature` 로 하면 `Invoke(ctx, Deps, in)` 의
 `Deps` 가 `app` 에 있어 `app → app/feature → app` **참조 순환**이 된다. 순환은 발생해서는 안 되며,
@@ -648,7 +649,7 @@ internal/                     # 전 구현 패키지(외부 import 컴파일러 
   dashboard/           [EXT]   H3 · 세션 소비
   testkit/             [REPL]  · Go-func→DSL (Report 결과모델은 재사용)
 루트:
-  remote-server-config.sample.yaml  [KEEP]  · 실파일은 gitignore(SSH 자격증명)
+  server-set.sample.yaml  [KEEP]  · 실파일은 gitignore(SSH 자격증명)
   .chainbench/<session>/            (런타임 산출·gitignore) · session이 소유
 ```
 

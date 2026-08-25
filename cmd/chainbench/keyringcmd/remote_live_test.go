@@ -30,9 +30,9 @@ func fleetBuildDir(t *testing.T) string {
 	}
 	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
 	// Access mirrors the real fleet: user + password. The srv:// path reads
-	// them from the inventory; the direct user@host form reads the password
+	// them from the server set; the direct user@host form reads the password
 	// from the environment, so it is exported here from the same file.
-	if cfg, err := serverset.Load(filepath.Join(build, "remote-server-config.yaml")); err == nil {
+	if cfg, err := serverset.Load(filepath.Join(build, "server-set.yaml")); err == nil {
 		if srv, err := cfg.ByName("server1"); err == nil {
 			t.Setenv("CHAINBENCH_REMOTE_PASS", srv.SSH.Password)
 		}
@@ -46,7 +46,7 @@ func fleetBuildDir(t *testing.T) string {
 // write direction.
 func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 	t.Helper()
-	inv := filepath.Join(build, "remote-server-config.yaml")
+	inv := filepath.Join(build, "server-set.yaml")
 	cfg, err := serverset.Load(inv)
 	if err != nil {
 		t.Fatalf("load inventory: %v", err)
@@ -77,7 +77,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 // ring, so the imported address has a known right answer.
 func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 	build := fleetBuildDir(t)
-	inv := filepath.Join(build, "remote-server-config.yaml")
+	inv := filepath.Join(build, "server-set.yaml")
 
 	local := newRing(t)
 	want := addressOf(t, local, "node1")
@@ -87,7 +87,7 @@ func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
 	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "fromsrv",
 		"--from", "srv://server1/data/chainbench/live-test/rawkey",
-		"--server-config", inv, "--docker")
+		"--server-set", inv, "--docker")
 	if err != nil {
 		t.Fatalf("srv:// import: %v\n%s", err, out)
 	}
@@ -103,7 +103,7 @@ func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 // keystore JSON on the server, decrypted with --password on import.
 func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
 	build := fleetBuildDir(t)
-	inv := filepath.Join(build, "remote-server-config.yaml")
+	inv := filepath.Join(build, "server-set.yaml")
 
 	local := newRing(t) // keystores encrypted with the default password "1"
 	want := addressOf(t, local, "node1")
@@ -121,7 +121,7 @@ func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
 	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "fromks",
 		"--from", "srv://server1/data/chainbench/live-test/keystore.json",
-		"--password", "1", "--server-config", inv, "--docker")
+		"--password", "1", "--server-set", inv, "--docker")
 	if err != nil {
 		t.Fatalf("keystore import: %v\n%s", err, out)
 	}
@@ -151,11 +151,11 @@ func addressOf(t *testing.T, ring, name string) string {
 // collide with a leftover index.
 func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	build := fleetBuildDir(t)
-	inv := filepath.Join(build, "remote-server-config.yaml")
+	inv := filepath.Join(build, "server-set.yaml")
 	onServer := fmt.Sprintf("/data/chainbench/live-ring-%d", os.Getpid())
 	ring := "srv://server1" + onServer
 
-	out, err := run(t, "keyring", "new", "--keyring-dir", ring, "--server-config", inv, "--docker",
+	out, err := run(t, "keyring", "new", "--keyring-dir", ring, "--server-set", inv, "--docker",
 		"--count", "2", "--with-bls")
 	if err != nil {
 		t.Fatalf("remote ring new: %v\n%s", err, out)
@@ -188,7 +188,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	}
 
 	// Read back and verify remotely: derivation must match what was written.
-	if out, err := run(t, "keyring", "list", "--keyring-dir", ring, "--server-config", inv, "--docker", "--verify"); err != nil {
+	if out, err := run(t, "keyring", "list", "--keyring-dir", ring, "--server-set", inv, "--docker", "--verify"); err != nil {
 		t.Fatalf("remote list --verify: %v\n%s", err, out)
 	}
 }
@@ -199,11 +199,11 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 // against the server's index before anything lands locally.
 func TestLive_KeyringClonesARingFromAServer(t *testing.T) {
 	build := fleetBuildDir(t)
-	inv := filepath.Join(build, "remote-server-config.yaml")
+	inv := filepath.Join(build, "server-set.yaml")
 	onServer := fmt.Sprintf("/data/chainbench/live-clone-src-%d", os.Getpid())
 	remote := "srv://server1" + onServer
 
-	out, err := run(t, "keyring", "new", "--keyring-dir", remote, "--server-config", inv, "--docker",
+	out, err := run(t, "keyring", "new", "--keyring-dir", remote, "--server-set", inv, "--docker",
 		"--count", "3", "--validators", "2", "--with-bls")
 	if err != nil {
 		t.Fatalf("seed remote ring: %v\n%s", err, out)
@@ -211,7 +211,7 @@ func TestLive_KeyringClonesARingFromAServer(t *testing.T) {
 
 	local := filepath.Join(t.TempDir(), "pulled")
 	out, err = run(t, "keyring", "import", "--keyring-dir", local,
-		"--from-ring", remote, "--server-config", inv, "--docker")
+		"--from-ring", remote, "--server-set", inv, "--docker")
 	if err != nil {
 		t.Fatalf("clone from server: %v\n%s", err, out)
 	}
@@ -236,7 +236,7 @@ func TestLive_KeyringClonesARingFromAServer(t *testing.T) {
 
 func addressOfRemote(t *testing.T, ring, inv, name string) string {
 	t.Helper()
-	out, err := run(t, "keyring", "show", "--keyring-dir", ring, "--server-config", inv, "--docker",
+	out, err := run(t, "keyring", "show", "--keyring-dir", ring, "--server-set", inv, "--docker",
 		"--name", name, "--json")
 	if err != nil {
 		t.Fatalf("remote keyring show: %v\n%s", err, out)

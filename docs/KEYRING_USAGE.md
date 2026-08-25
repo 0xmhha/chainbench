@@ -28,7 +28,7 @@
 - 링의 기본 위치는 **운영자 머신**이다. `--keyring-dir` 에 target 문법을 쓰면
   **서버 위에 링을 만들 수도 있다**: `srv://server1/data/chainbench/ring` 처럼
   지정하면 생성·조회·가져오기 전부 그 서버의 경로에서 일어난다(파일 seam 경유,
-  docker 함대에서는 `--docker` 와 함께). 네트워크 기동용 배송은 여전히
+  docker 서버들에서는 `--docker` 와 함께). 네트워크 기동용 배송은 여전히
   `net provision` 의 몫이다.
 - 체인 바이너리는 전혀 필요 없다. BLS 파생까지 인프로세스다.
 
@@ -36,7 +36,7 @@
 
 우선순위: `--keyring-dir <dir>` > 환경변수 `CHAINBENCH_KEYRING` > 기본값 `./keys/default`.
 경로는 로컬 디렉토리 또는 target 문법(`srv://<서버>/경로`, `user@host:/경로`)이다 —
-서버 경로면 `--server-config`(인벤토리)와, docker 함대라면 `--docker` 를 함께 쓴다.
+서버 경로면 `--server-set`(서버 세트)와, docker 서버들라면 `--docker` 를 함께 쓴다.
 모든 명령이 첫 줄에 **어떤 링을 왜 골랐는지** 보고하므로 경로를 추측할 일이 없다.
 
 ```
@@ -99,7 +99,7 @@ bin/chainbench keyring export --keyring-dir /tmp/r --name node1 --yes
 | 16진 비밀키 | `--private-key 0x…` |
 | BIP-39 니모닉 | `--mnemonic "word × 12/24" [--passphrase w25] [--hd-coin-type 60] [--hd-account 0] [--hd-change 0] [--hd-index 0]` |
 | 로컬 파일 | `--from /path/key` — raw hex 또는 키스토어 JSON(`--password` 필요) |
-| 인벤토리 서버 | `--from srv://server1/data/…/nodekey` (`--server-config` 는 모든 동사 공통 플래그) |
+| 서버 세트 서버 | `--from srv://server1/data/…/nodekey` (`--server-set` 는 모든 동사 공통 플래그) |
 | 직접 호스트 | `--from user@10.0.0.7:/path/key` 또는 `ssh://user@host:port/path` |
 
 ```
@@ -124,7 +124,7 @@ bin/chainbench keyring import --keyring-dir /tmp/r --name hd0 \
 ```
 bin/chainbench keyring import --keyring-dir ./keys/pulled \
     --from-ring srv://server1/data/chainbench/ring \
-    --server-config env/docker/build/remote-server-config.yaml --docker
+    --server-set env/docker/build/server-set.yaml --docker
 ```
 
 | 항목 | 동작 |
@@ -135,18 +135,23 @@ bin/chainbench keyring import --keyring-dir ./keys/pulled \
 | 비밀번호 | 기본은 원본 링의 것을 유지, `--password` 로 재암호화 |
 | 목적지 | 이미 링이 있으면 거부 (new 와 같은 규칙) |
 
-## 4. 원격에서 가져오기 — 접속은 환경이 결정한다
+## 4. 원격에서 가져오기 — 서버 세트가 접속을 결정한다
 
-주소·자격증명은 명령줄이 아니라 인벤토리와 환경에 둔다.
+주소와 자격증명은 명령줄이 아니라 서버 세트 파일에 둔다. 서버 세트에 이름이
+있는 서버는 **파일이 유일한 출처**다. 환경변수는 보지 않으므로, 다른 작업에서
+export 해 둔 값이 접속을 조용히 바꾸는 일이 없다. 비밀번호를 파일에 직접 적기
+싫으면 `ssh.password_file: <경로>` 로 한 줄짜리 0600 파일을 참조한다.
+
+환경변수는 두 경우에만 쓰인다.
 
 | 환경변수 | 의미 |
 |---|---|
-| `CHAINBENCH_REMOTE_USER` / `_PASS` / `_KEY_FILE` (+`_KEY_PASSPHRASE`) | SSH 자격 (인벤토리 값을 이김) |
+| `CHAINBENCH_REMOTE_USER` / `_PASS` / `_KEY_FILE` (+`_KEY_PASSPHRASE`) | **직접 표기(`user@host:/path`) 전용** SSH 자격 — 참조할 서버 세트가 없는 형태라서다 |
 | `CHAINBENCH_SSH_KNOWN_HOSTS` | known_hosts 경로 (기본 `~/.ssh/known_hosts`) |
 | `CHAINBENCH_SSH_INSECURE_HOST_KEY=1` | 호스트키 검증 생략 — **폐쇄망·일회용 서버 전용** |
 
-`srv://<이름>/경로` 는 인벤토리(`remote-server-config.yaml`, 기본 위치 또는
-`--server-config`)에서 이름을 찾는다. 모르는 이름·없는 인벤토리는 dial 전에
+`srv://<이름>/경로` 는 서버 세트(`server-set.yaml`, 기본 위치 또는
+`--server-set`)에서 이름을 찾는다. 모르는 이름·없는 서버 세트는 dial 전에
 명확한 오류로 거부한다.
 
 ## 5. docker 가상 서버 모드 (`--docker`)
@@ -169,15 +174,15 @@ docker compose -f build/docker-compose.yml up -d
 | `--docker` + localmap 없음 | 오류 (생성 방법 안내) |
 | 옵션 없음 + 파일 있음 | 무시 — 진짜 원격 모드 오염 없음 |
 
-함대의 접근은 **실서버와 같은 모양**이다: `env/docker/accounts.env` 의 첫 계정
+서버들의 접근은 **실서버와 같은 모양**이다: `env/docker/accounts.env` 의 첫 계정
 (기본 `devuser1`) + 공용 비밀번호, sudo 는 그 비밀번호를 요구한다. srv:// 경로는
-자격을 생성된 인벤토리에서 읽으므로, 켤 환경변수는 호스트키 예외 하나뿐이다.
+자격을 생성된 서버 세트에서 읽으므로, 켤 환경변수는 호스트키 예외 하나뿐이다.
 
 ```
 CHAINBENCH_SSH_INSECURE_HOST_KEY=1 \
 bin/chainbench keyring import --keyring-dir /tmp/r --name srv1 \
     --from srv://server1/data/chainbench/live-test/rawkey \
-    --server-config env/docker/build/remote-server-config.yaml --docker
+    --server-set env/docker/build/server-set.yaml --docker
 ```
 
 직접 표기(`user@host:path`)를 쓸 때만 비밀번호를 env 로 준다:
@@ -235,7 +240,7 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 | A9 | `import --mnemonic … --private-key …` 동시 | 거부 ("exactly one") | RefusesMixedSources / ExactlyOneOrigin |
 | A10 | `CHAINBENCH_KEYRING=/tmp/r keyring list` | env 출처 보고 | ReportsWhichRingItUsed |
 
-**B. 원격 (docker 함대)** — §5 의 준비 후, §5 의 환경변수 두 개를 켠 상태로
+**B. 원격 (docker 서버들)** — §5 의 준비 후, 호스트키 예외 환경변수를 켠 상태로
 
 | # | 할 일 | 기대 결과 | 자동 테스트 |
 |---|---|---|---|

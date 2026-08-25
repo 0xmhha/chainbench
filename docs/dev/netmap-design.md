@@ -40,7 +40,7 @@
 | `node.Endpoints` | P2P·HTTP·WS·Auth·Metrics | **Etcd 가 없다** |
 | `netcompose.NodeState` | P2P·HTTP·WS·Auth·Metrics (개별 int) | Etcd 가 없다 |
 
-etcd 포트는 wemix 계열에서 합의에 필수이고(바이너리가 `p2p+1` 로 유도, [[server-inventory]] §3),
+etcd 포트는 wemix 계열에서 합의에 필수이고(바이너리가 `p2p+1` 로 유도, [[server-set]] §3),
 `p2pStep>=2` 규칙이 존재하는 이유 그 자체다. 그런데 **런타임 표현으로 넘어오는 순간 사라진다**
 — 살아 있는 wemix 노드의 etcd 포트를 물어볼 방법이 없다.
 
@@ -115,11 +115,11 @@ core/netmap
 
 ### 2.2a Pool — 가용 IP·포트는 목록이고, 민감정보다
 
-호스트 주소와 포트는 [[server-inventory]] 의 원칙 그대로 **gitignore 된 설정 파일에서만**
+호스트 주소와 포트는 [[server-set]] 의 원칙 그대로 **gitignore 된 설정 파일에서만**
 온다. 파일이 주는 것은 개별 서버 항목이 아니라 **가용 자원의 풀**이다.
 
 ```yaml
-# remote-server-config.yaml (gitignore) — 스키마 확장
+# server-set.yaml (gitignore) — 스키마 확장
 version: 2
 pool:
   hosts: [<ip1>, <ip2>, <ip3>, <ip4>, <ip5>]   # 가용 IP 목록
@@ -145,7 +145,7 @@ dataRoot: /data/chainbench   # 설정 관리 루트. 노드 datadir 은 이 **�
 - **v2 단독으로 간다** (확정 2026-08-22). v1(서버별 항목) 호환을 두지 않는 이유: 실제 인벤토리
   파일은 gitignore 라 저장소에 없고 이 시점에 배포된 파일이 확인되지 않는다 — 전환 비용이 가장
   싼 때다. 호환 코드는 두 스키마를 아는 로더를 남기고, 그 로더가 곧 다섯 번째 폴딩표가 된다.
-  `remote-server-config.sample.yaml` 을 v2 로 교체하고, v1 파일을 만나면 **무엇을 어떻게 고쳐야
+  `server-set.sample.yaml` 을 v2 로 교체하고, v1 파일을 만나면 **무엇을 어떻게 고쳐야
   하는지 말하며 거부**한다(조용한 강등 금지).
 
 ### 2.2b Assign — 풀을 소비하는 결정적 할당
