@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -115,6 +117,9 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	}
 	phases := p.Family().BringUpPhases(roles)
 
+	if err := w.checkUnmanaged(ctx, bin); err != nil {
+		return "", err
+	}
 	started := 0
 	for _, phase := range phases {
 		launched, err := w.startPhase(ctx, t, p, preset, bin, phase)
@@ -329,6 +334,60 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 // this workspace recorded is its own leftover and `net stop` clears it; anything
 // else belongs to something this workspace did not start, and guessing would be
 // worse than refusing.
+// Preflight is the check-only entry: the same pre-launch inspection Start
+// runs, callable without composing anything. It answers "may a network of
+// this shape start here right now?" with the refusal Start would give — port
+// occupancy plus unmanaged copies of the binary already on the machine.
+func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
+	if len(w.state.Nodes) == 0 {
+		return fmt.Errorf("chainsetup: preflight: no node table — run `net allocate` first")
+	}
+	bin, err := w.binary(binaryArg)
+	if err != nil {
+		return err
+	}
+	if err := w.checkUnmanaged(ctx, bin); err != nil {
+		return err
+	}
+	return w.checkVacant(ctx, registry.Phase{})
+}
+
+// checkUnmanaged asks the machine (through the driver's inspector) whether
+// the binary about to be launched is already running OUTSIDE the run ledger.
+// A pid the ledger knows is this workspace's and is handled per node; a pid
+// it does not know belongs to someone — another workspace, an operator's
+// hand-started node — and composing on top of it is refused by name.
+func (w *Workspace) checkUnmanaged(ctx context.Context, bin string) error {
+	t, err := w.resolveTarget()
+	if err != nil {
+		return err
+	}
+	insp, ok := t.Driver.(driver.ProcessInspector)
+	if !ok {
+		return nil
+	}
+	name := filepath.Base(bin)
+	pids, err := insp.FindBinary(ctx, name)
+	if err != nil {
+		return fmt.Errorf("chainsetup: process check: %w", err)
+	}
+	known := map[int]bool{}
+	for _, p := range w.ledger.Recorded() {
+		known[p.PID] = true
+	}
+	var strays []string
+	for _, pid := range pids {
+		if !known[pid] {
+			strays = append(strays, strconv.Itoa(pid))
+		}
+	}
+	if len(strays) > 0 {
+		return fmt.Errorf("chainsetup: %s is already running on the machine outside this workspace (pid %s) — stop it, or compose on a different server",
+			name, strings.Join(strays, ", "))
+	}
+	return nil
+}
+
 func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
 	var addrs []occupancy.Addr
 	for _, ns := range w.state.Nodes {
