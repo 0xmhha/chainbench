@@ -20,14 +20,13 @@ import (
 // to the worklist task that dissolves it. The list may only shrink: an entry
 // whose file no longer branches fails the test until it is removed here.
 var machineBranchAllowed = map[string]string{
-	"internal/app/serverconf.go":            "constructs Specs from server-set entries (stating a kind is not branching on one)",
-	"internal/serverset":                    "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
-	"internal/netcompose":                   "deferred: dissolves into chainsetup/netmap at V2.3 and V5.1",
-	"internal/mcp/net_tools.go":             "deferred: renders the recorded target kind; goes with V6.3",
-	"cmd/chainbench/net.go":                 "constructs Specs from the legacy remote flags",
-	"cmd/chainbench/net_status.go":          "deferred: renders the recorded target kind; goes with V5.4",
-	"cmd/chainbench/keyringcmd/keyflags.go": "deferred: remote-only flag overrides move into the netmap wrapper at V2.2",
-	"internal/core/machine":                 "the module itself",
+	"internal/core/procman":        "Proc.IsRemote is procman's own host notion, not machine.Kind (reconciled at V4)",
+	"internal/app/serverconf.go":   "constructs Specs from server-set entries (stating a kind is not branching on one)",
+	"internal/serverset":           "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
+	"internal/netcompose":          "deferred: dissolves into chainsetup/netmap at V2.3 and V5.1",
+	"internal/mcp/net_tools.go":    "deferred: renders the recorded target kind; goes with V6.3",
+	"cmd/chainbench/net.go":        "constructs Specs from the legacy remote flags",
+	"cmd/chainbench/net_status.go": "deferred: renders the recorded target kind; goes with V5.4",
 }
 
 // TestMachineConsumersDoNotBranchOnKind walks every non-test Go file and
@@ -58,17 +57,13 @@ func TestMachineConsumersDoNotBranchOnKind(t *testing.T) {
 		if !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "cmd/") {
 			return nil
 		}
-		if allowed(rel) {
-			seen[allowKey(rel)] = true
-			return nil
-		}
-
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			return err
 		}
 		machineAlias := importAlias(f, "github.com/0xmhha/chainbench/internal/core/machine")
+		found := 0
 		ast.Inspect(f, func(n ast.Node) bool {
 			sel, ok := n.(*ast.SelectorExpr)
 			if !ok {
@@ -76,13 +71,26 @@ func TestMachineConsumersDoNotBranchOnKind(t *testing.T) {
 			}
 			if x, ok := sel.X.(*ast.Ident); ok && machineAlias != "" && x.Name == machineAlias &&
 				strings.HasPrefix(sel.Sel.Name, "Kind") && sel.Sel.Name != "Kind" {
-				offenders = append(offenders, rel+": uses "+machineAlias+"."+sel.Sel.Name)
+				found++
+				if !allowed(rel) {
+					offenders = append(offenders, rel+": uses "+machineAlias+"."+sel.Sel.Name)
+				}
 			}
-			if sel.Sel.Name == "IsRemote" && machineAlias != "" {
-				offenders = append(offenders, rel+": calls IsRemote while importing core/machine")
+			// IsRemote is flagged regardless of imports: the branch a method
+			// call expresses does not need the machine package in scope.
+			if sel.Sel.Name == "IsRemote" {
+				found++
+				if !allowed(rel) {
+					offenders = append(offenders, rel+": calls IsRemote")
+				}
 			}
 			return true
 		})
+		// An allowlisted file counts as seen only while it still branches, so
+		// an entry whose branches were removed fails below until deleted.
+		if found > 0 && allowed(rel) {
+			seen[allowKey(rel)] = true
+		}
 		return nil
 	})
 	if err != nil {

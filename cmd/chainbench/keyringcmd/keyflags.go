@@ -10,6 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/netmap"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -142,13 +143,17 @@ func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.
 	if err != nil {
 		return nil, "", err
 	}
-	if f.remoteUser != "" && spec.Kind == machine.KindRemote {
+	// The overrides only mean anything for a directly-named host — a local
+	// path has no user, a server-set entry gets both from the set — so
+	// setting them unconditionally changes nothing there and keeps this
+	// consumer free of kind branches.
+	if f.remoteUser != "" {
 		spec.User = f.remoteUser
 	}
-	if f.remotePort != 0 && spec.Kind == machine.KindRemote {
+	if f.remotePort != 0 {
 		spec.Port = f.remotePort
 	}
-	t, err := spec.ResolveWith(env, serverset.SetLookup(f.serverSetPath()))
+	t, err := netmap.Opener{ServerSet: f.serverSetPath(), Env: env}.Open(spec)
 	if err != nil {
 		return nil, "", err
 	}

@@ -14,10 +14,8 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
-	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap"
 	"strings"
 )
 
@@ -68,27 +66,23 @@ func (r RingRef) resolve(env func(string) string) (dir, source string) {
 // machine, which is worse than a refusal.
 func (r RingRef) open(d Deps) (files provision.FileStore, dir, source string, err error) {
 	dir, source = r.resolve(d.env())
-	spec, err := machine.Parse(dir)
-	if err != nil {
-		return nil, dir, source, err
-	}
-	// One path for every kind: the resolver hands back local handles for a
-	// local spec, so this consumer never branches on where the ring lives.
-	// --docker stays the power switch either way — the flag without the
-	// localmap is an error, local ring or not.
-	var m remote.AddrMap
-	if r.Docker {
-		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(r.ServerSet))
-		if err != nil {
-			return nil, dir, source, err
-		}
-		m = lm.AddrMap(func(from, to string) { d.logf("docker: dialing %s as %s", from, to) })
-	}
-	tgt, err := spec.ResolveWithMap(d.env(), serverset.SetLookup(r.ServerSet), m)
+	// The netmap module is the one dial-wiring point: server-set lookup,
+	// --docker translation, and the translation report all live there, so
+	// this consumer cannot diverge from any other.
+	tgt, err := r.opener(d).OpenPath(dir)
 	if err != nil {
 		return nil, dir, source, err
 	}
 	return tgt.Files, tgt.DataRoot, source, nil
+}
+
+// opener binds this ring's server-set and docker choices to the netmap
+// module's single wiring point.
+func (r RingRef) opener(d Deps) netmap.Opener {
+	return netmap.Opener{
+		ServerSet: r.ServerSet, Docker: r.Docker,
+		Env: d.env(), Report: d.logf,
+	}
 }
 
 // RingOut reports which ring a use case acted on, and what it holds afterwards.
@@ -404,19 +398,8 @@ func (in RingImportIn) source(d Deps, serverSet string) (keyring.Source, error) 
 		return nil, fmt.Errorf("app: import needs a private key, a mnemonic, or a path")
 	}
 
-	spec, err := machine.Parse(in.From)
-	if err != nil {
-		return nil, err
-	}
-	var m remote.AddrMap
-	if in.Docker {
-		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(serverSet))
-		if err != nil {
-			return nil, err
-		}
-		m = lm.AddrMap(func(from, to string) { d.logf("docker: dialing %s as %s", from, to) })
-	}
-	tgt, err := spec.ResolveWithMap(d.env(), serverset.SetLookup(serverSet), m)
+	o := netmap.Opener{ServerSet: serverSet, Docker: in.Docker, Env: d.env(), Report: d.logf}
+	tgt, err := o.OpenPath(in.From)
 	if err != nil {
 		return nil, err
 	}
