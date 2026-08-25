@@ -27,7 +27,7 @@ func New() *cobra.Command {
 		Use:   "keyring",
 		Short: "Create, inspect, and move key material",
 		Long: "A keyring is a directory of node identities. Every command names one with\n" +
-			"--keyring (or " + app.RingEnv + "), and reports which one it used, so the\n" +
+			"--keyring-dir (or " + app.RingEnv + "), and reports which one it used, so the\n" +
 			"path a key came from is never a guess.\n\n" +
 			"Identities are derived in process: no chain binary has to be built or on\n" +
 			"PATH to make a ring.",
@@ -50,8 +50,9 @@ type ringFlags struct {
 }
 
 func (f *ringFlags) bind(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.dir, "keyring", "",
-		"ring directory (default "+app.DefaultRingDir+", or "+app.RingEnv+")")
+	cmd.Flags().StringVar(&f.dir, "keyring-dir", "",
+		"ring directory — identities are created in and read from here (default "+
+			app.DefaultRingDir+", or "+app.RingEnv+")")
 }
 
 // bindWithInventory adds the inventory flag, for the commands that can read a
@@ -79,7 +80,7 @@ func announce(out io.Writer, r app.RingOut) {
 // ringSourceName renders a use-case source as a CLI reason.
 func ringSourceName(source string) string {
 	if source == "explicit" {
-		return "--keyring"
+		return "--keyring-dir"
 	}
 	return source
 }

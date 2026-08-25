@@ -14,7 +14,7 @@ import (
 func newRing(t *testing.T, args ...string) string {
 	t.Helper()
 	dir := filepath.Join(t.TempDir(), "ring")
-	base := []string{"keyring", "new", "--keyring", dir, "--count", "3"}
+	base := []string{"keyring", "new", "--keyring-dir", dir, "--count", "3"}
 	if _, err := run(t, append(base, args...)...); err != nil {
 		t.Fatalf("keyring new: %v", err)
 	}
@@ -25,7 +25,7 @@ func newRing(t *testing.T, args ...string) string {
 func TestKeyring_NewCreatesAUsableRing(t *testing.T) {
 	dir := newRing(t, "--with-bls", "--validators", "2")
 
-	out, err := run(t, "keyring", "list", "--keyring", dir, "--json")
+	out, err := run(t, "keyring", "list", "--keyring-dir", dir, "--json")
 	if err != nil {
 		t.Fatalf("keyring list: %v\n%s", err, out)
 	}
@@ -61,7 +61,7 @@ func TestKeyring_NewCreatesAUsableRing(t *testing.T) {
 // TestKeyring_WithoutBLSOmitsIt is the wemix case: BLS is absent, not empty.
 func TestKeyring_WithoutBLSOmitsIt(t *testing.T) {
 	dir := newRing(t)
-	out, err := run(t, "keyring", "show", "--keyring", dir, "--name", "node1", "--json")
+	out, err := run(t, "keyring", "show", "--keyring-dir", dir, "--name", "node1", "--json")
 	if err != nil {
 		t.Fatalf("keyring show: %v\n%s", err, out)
 	}
@@ -83,7 +83,7 @@ func TestKeyring_AddKeepsExistingIdentities(t *testing.T) {
 	dir := newRing(t, "--with-bls")
 	before := listAddresses(t, dir)
 
-	if _, err := run(t, "keyring", "add", "--keyring", dir, "--count", "2", "--with-bls"); err != nil {
+	if _, err := run(t, "keyring", "add", "--keyring-dir", dir, "--count", "2", "--with-bls"); err != nil {
 		t.Fatalf("keyring add: %v", err)
 	}
 	after := listAddresses(t, dir)
@@ -102,10 +102,10 @@ func TestKeyring_AddKeepsExistingIdentities(t *testing.T) {
 // an identity, and changing who validates.
 func TestKeyring_AddDoesNotPromoteToValidator(t *testing.T) {
 	dir := newRing(t, "--with-bls", "--validators", "2")
-	if _, err := run(t, "keyring", "add", "--keyring", dir, "--count", "2", "--with-bls"); err != nil {
+	if _, err := run(t, "keyring", "add", "--keyring-dir", dir, "--count", "2", "--with-bls"); err != nil {
 		t.Fatalf("keyring add: %v", err)
 	}
-	out, err := run(t, "keyring", "list", "--keyring", dir)
+	out, err := run(t, "keyring", "list", "--keyring-dir", dir)
 	if err != nil {
 		t.Fatalf("keyring list: %v", err)
 	}
@@ -119,11 +119,11 @@ func TestKeyring_AddDoesNotPromoteToValidator(t *testing.T) {
 func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
 	dir := newRing(t)
 
-	if _, err := run(t, "keyring", "export", "--keyring", dir, "--name", "node1"); err == nil {
+	if _, err := run(t, "keyring", "export", "--keyring-dir", dir, "--name", "node1"); err == nil {
 		t.Fatal("export printed a private key without --yes")
 	}
 
-	out, err := run(t, "keyring", "export", "--keyring", dir, "--name", "node1", "--yes", "--json")
+	out, err := run(t, "keyring", "export", "--keyring-dir", dir, "--name", "node1", "--yes", "--json")
 	if err != nil {
 		t.Fatalf("keyring export: %v\n%s", err, out)
 	}
@@ -142,11 +142,11 @@ func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
 func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
 	dir := newRing(t)
 
-	out, err := run(t, "keyring", "list", "--keyring", dir)
+	out, err := run(t, "keyring", "list", "--keyring-dir", dir)
 	if err != nil {
 		t.Fatalf("keyring list: %v", err)
 	}
-	if !strings.Contains(out, "keyring: "+dir+" (--keyring)") {
+	if !strings.Contains(out, "keyring: "+dir+" (--keyring-dir)") {
 		t.Errorf("the flag source was not reported:\n%s", out)
 	}
 
@@ -176,11 +176,11 @@ func TestKeyring_ImportRefusesToOverwrite(t *testing.T) {
 	dir := newRing(t)
 	exported := exportKey(t, dir, "node1")
 
-	if _, err := run(t, "keyring", "import", "--keyring", dir,
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dir,
 		"--name", "imported", "--private-key", exported); err != nil {
 		t.Fatalf("keyring import: %v", err)
 	}
-	if _, err := run(t, "keyring", "import", "--keyring", dir,
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dir,
 		"--name", "imported", "--private-key", exported); err == nil {
 		t.Fatal("import overwrote an existing identity")
 	}
@@ -189,20 +189,20 @@ func TestKeyring_ImportRefusesToOverwrite(t *testing.T) {
 // TestKeyring_VerifyCatchesDrift checks the shipped ring and then a tampered
 // copy, so the check is shown to fail as well as pass.
 func TestKeyring_VerifyCatchesDrift(t *testing.T) {
-	if _, err := run(t, "keyring", "list", "--keyring", "../../../keys/preset", "--verify"); err != nil {
+	if _, err := run(t, "keyring", "list", "--keyring-dir", "../../../keys/preset", "--verify"); err != nil {
 		t.Fatalf("the shipped ring did not verify: %v", err)
 	}
 
 	dir := newRing(t)
 	tamper(t, filepath.Join(dir, "metadata.json"))
-	if _, err := run(t, "keyring", "list", "--keyring", dir, "--verify"); err == nil {
+	if _, err := run(t, "keyring", "list", "--keyring-dir", dir, "--verify"); err == nil {
 		t.Fatal("verify accepted an identity its key does not derive")
 	}
 }
 
 func listAddresses(t *testing.T, dir string) []string {
 	t.Helper()
-	out, err := run(t, "keyring", "list", "--keyring", dir, "--json")
+	out, err := run(t, "keyring", "list", "--keyring-dir", dir, "--json")
 	if err != nil {
 		t.Fatalf("keyring list: %v\n%s", err, out)
 	}
@@ -219,7 +219,7 @@ func listAddresses(t *testing.T, dir string) []string {
 
 func exportKey(t *testing.T, dir, name string) string {
 	t.Helper()
-	out, err := run(t, "keyring", "export", "--keyring", dir, "--name", name, "--yes", "--json")
+	out, err := run(t, "keyring", "export", "--keyring-dir", dir, "--name", name, "--yes", "--json")
 	if err != nil {
 		t.Fatalf("keyring export: %v\n%s", err, out)
 	}
@@ -269,7 +269,7 @@ func TestKeyring_NewRefusesToOverwriteARing(t *testing.T) {
 	dir := newRing(t)
 	before := listAddresses(t, dir)
 
-	_, err := run(t, "keyring", "new", "--keyring", dir, "--count", "2")
+	_, err := run(t, "keyring", "new", "--keyring-dir", dir, "--count", "2")
 	if err == nil {
 		t.Fatal("keyring new overwrote an existing ring")
 	}
@@ -295,12 +295,12 @@ func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 	dir := newRing(t)
 	key := exportKey(t, dir, "node1")
 
-	if _, err := run(t, "keyring", "import", "--keyring", dir,
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dir,
 		"--name", "faucet", "--private-key", key); err != nil {
 		t.Fatalf("keyring import: %v", err)
 	}
 
-	out, err := run(t, "keyring", "show", "--keyring", dir, "--name", "faucet", "--json")
+	out, err := run(t, "keyring", "show", "--keyring-dir", dir, "--name", "faucet", "--json")
 	if err != nil {
 		t.Fatalf("the imported identity is not visible: %v", err)
 	}
@@ -323,7 +323,7 @@ func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 // before any dial is attempted.
 func TestKeyringImport_DockerNeedsTheLocalmap(t *testing.T) {
 	dir := newRing(t)
-	out, err := run(t, "keyring", "import", "--keyring", dir, "--name", "srvkey",
+	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "srvkey",
 		"--from", "srv://server1/data/chainbench/nodekey", "--docker")
 	if err == nil {
 		t.Fatalf("import --docker without a localmap should refuse:\n%s", out)
@@ -342,7 +342,7 @@ func TestKeyringImport_MnemonicGolden(t *testing.T) {
 	const wantAddr = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 	dir := filepath.Join(t.TempDir(), "ring")
-	if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "hd0",
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "hd0",
 		"--mnemonic", devMnemonic); err != nil {
 		t.Fatalf("mnemonic import: %v", err)
 	}
@@ -358,7 +358,7 @@ func TestKeyringImport_RefusesMixedSources(t *testing.T) {
 	// The refusal fires before any key is parsed, so the value only has to be
 	// key-shaped — a synthetic constant, not anyone's published dev key.
 	synthetic := "0x" + strings.Repeat("11", 32)
-	_, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
 		"--mnemonic", "test test test test test test test test test test test junk",
 		"--private-key", synthetic)
 	if err == nil {
@@ -377,10 +377,10 @@ func TestKeyringImport_CoinTypeChangesTheKey(t *testing.T) {
 	const m = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 	a := filepath.Join(t.TempDir(), "a")
 	b := filepath.Join(t.TempDir(), "b")
-	if _, err := run(t, "keyring", "import", "--keyring", a, "--name", "k", "--mnemonic", m); err != nil {
+	if _, err := run(t, "keyring", "import", "--keyring-dir", a, "--name", "k", "--mnemonic", m); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := run(t, "keyring", "import", "--keyring", b, "--name", "k", "--mnemonic", m, "--hd-coin-type", "8283"); err != nil {
+	if _, err := run(t, "keyring", "import", "--keyring-dir", b, "--name", "k", "--mnemonic", m, "--hd-coin-type", "8283"); err != nil {
 		t.Fatal(err)
 	}
 	if addressOf(t, a, "k") == addressOf(t, b, "k") {
@@ -393,7 +393,7 @@ func TestKeyringImport_CoinTypeChangesTheKey(t *testing.T) {
 // it — creation is not export.
 func TestKeyringNew_JSON(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
-	out, err := run(t, "keyring", "new", "--keyring", dir, "--count", "2", "--json")
+	out, err := run(t, "keyring", "new", "--keyring-dir", dir, "--count", "2", "--json")
 	if err != nil {
 		t.Fatalf("new --json: %v\n%s", err, out)
 	}
@@ -414,7 +414,7 @@ func TestKeyringNew_JSON(t *testing.T) {
 // offers both instead of cobra's bare "required flag not set".
 func TestKeyringShow_MissingNameOffersTheWayOut(t *testing.T) {
 	dir := newRing(t)
-	_, err := run(t, "keyring", "show", "--keyring", dir)
+	_, err := run(t, "keyring", "show", "--keyring-dir", dir)
 	if err == nil {
 		t.Fatal("show without --name should refuse")
 	}
@@ -428,11 +428,11 @@ func TestKeyringShow_MissingNameOffersTheWayOut(t *testing.T) {
 // --mnemonic must not import a different key than asked.
 func TestKeyringImport_RefusesOrphanQualifiers(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
-	if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
 		"--private-key", "0x"+strings.Repeat("22", 32), "--hd-index", "3"); err == nil {
 		t.Fatal("--hd-index without --mnemonic should refuse")
 	}
-	if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
 		"--private-key", "0x"+strings.Repeat("22", 32), "--password", "pw"); err == nil {
 		t.Fatal("--password without --from should refuse")
 	}
@@ -443,10 +443,10 @@ func TestKeyringImport_RefusesOrphanQualifiers(t *testing.T) {
 func TestKeyringImport_HDChangeChangesTheKey(t *testing.T) {
 	const m = "test test test test test test test test test test test junk"
 	a, b := filepath.Join(t.TempDir(), "a"), filepath.Join(t.TempDir(), "b")
-	if _, err := run(t, "keyring", "import", "--keyring", a, "--name", "k", "--mnemonic", m); err != nil {
+	if _, err := run(t, "keyring", "import", "--keyring-dir", a, "--name", "k", "--mnemonic", m); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := run(t, "keyring", "import", "--keyring", b, "--name", "k", "--mnemonic", m, "--hd-change", "1"); err != nil {
+	if _, err := run(t, "keyring", "import", "--keyring-dir", b, "--name", "k", "--mnemonic", m, "--hd-change", "1"); err != nil {
 		t.Fatal(err)
 	}
 	if addressOf(t, a, "k") == addressOf(t, b, "k") {

@@ -40,7 +40,7 @@ func TestKeyringImport_ExactlyOneOrigin(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := filepath.Join(t.TempDir(), "ring")
-			args := append([]string{"keyring", "import", "--keyring", dir, "--name", "x"}, tc.args...)
+			args := append([]string{"keyring", "import", "--keyring-dir", dir, "--name", "x"}, tc.args...)
 			if _, err := run(t, args...); err == nil {
 				t.Fatal("expected an exactly-one-origin error")
 			}
@@ -54,7 +54,7 @@ func TestKeyringImport_RejectsMalformedPaths(t *testing.T) {
 	for _, bad := range []string{"srv://", "srv://bp1", "user@:/k", "ssh://"} {
 		t.Run(bad, func(t *testing.T) {
 			dir := filepath.Join(t.TempDir(), "ring")
-			if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x", "--from", bad); err == nil {
+			if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x", "--from", bad); err == nil {
 				t.Errorf("accepted malformed path %q", bad)
 			}
 		})
@@ -68,7 +68,7 @@ func TestKeyringImport_DirectHostNeedsCredentials(t *testing.T) {
 	t.Setenv("CHAINBENCH_REMOTE_PASS", "")
 	t.Setenv("CHAINBENCH_REMOTE_KEY_FILE", "")
 	dir := filepath.Join(t.TempDir(), "ring")
-	_, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x", "--from", "10.0.0.1:/k")
+	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x", "--from", "10.0.0.1:/k")
 	if err == nil || !strings.Contains(err.Error()+" ", "SSH") {
 		t.Fatalf("expected an SSH credential error, got %v", err)
 	}
@@ -82,14 +82,14 @@ func TestKeyringImport_ServerNameComesFromInventory(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
 
 	// An unknown entry fails by name, before any dial.
-	_, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
 		"--from", "srv://nope/k", "--server-config", cfg)
 	if err == nil || !strings.Contains(err.Error(), "nope") {
 		t.Fatalf("expected an unknown-entry error naming it, got %v", err)
 	}
 
 	// A missing inventory is a clear error rather than a silent local read.
-	_, err = run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+	_, err = run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
 		"--from", "srv://bp1/k", "--server-config", filepath.Join(t.TempDir(), "nope.yaml"))
 	if err == nil || !strings.Contains(err.Error(), "not found") {
 		t.Fatalf("expected an inventory-not-found error, got %v", err)

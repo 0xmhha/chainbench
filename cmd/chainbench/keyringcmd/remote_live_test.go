@@ -84,7 +84,7 @@ func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 		[]byte(strings.TrimPrefix(exportKey(t, local, "node1"), "0x")))
 
 	dir := filepath.Join(t.TempDir(), "ring")
-	out, err := run(t, "keyring", "import", "--keyring", dir, "--name", "fromsrv",
+	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "fromsrv",
 		"--from", "srv://server1/data/chainbench/live-test/rawkey",
 		"--server-config", inv, "--docker")
 	if err != nil {
@@ -118,7 +118,7 @@ func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
 	plantOnServer1(t, build, "/data/chainbench/live-test/keystore.json", ks)
 
 	dir := filepath.Join(t.TempDir(), "ring")
-	out, err := run(t, "keyring", "import", "--keyring", dir, "--name", "fromks",
+	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "fromks",
 		"--from", "srv://server1/data/chainbench/live-test/keystore.json",
 		"--password", "1", "--server-config", inv, "--docker")
 	if err != nil {
@@ -131,7 +131,7 @@ func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
 
 func addressOf(t *testing.T, ring, name string) string {
 	t.Helper()
-	out, err := run(t, "keyring", "show", "--keyring", ring, "--name", name, "--json")
+	out, err := run(t, "keyring", "show", "--keyring-dir", ring, "--name", name, "--json")
 	if err != nil {
 		t.Fatalf("keyring show: %v\n%s", err, out)
 	}
