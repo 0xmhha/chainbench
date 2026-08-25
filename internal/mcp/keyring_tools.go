@@ -28,7 +28,7 @@ func keyringTools() []Tool {
 // ringSchema is the argument every keyring tool shares.
 func ringSchema(extra map[string]any) map[string]any {
 	props := map[string]any{
-		"keyring": map[string]any{
+		"keyringDir": map[string]any{
 			"type": "string",
 			"description": "ring directory; omit for " + app.DefaultRingDir +
 				" or the " + app.RingEnv + " environment variable",
@@ -41,7 +41,7 @@ func ringSchema(extra map[string]any) map[string]any {
 // ringRef reads the shared arguments.
 func ringRef(args map[string]any) app.RingRef {
 	return app.RingRef{
-		Dir:          argString(args, "keyring", ""),
+		Dir:          argString(args, "keyringDir", ""),
 		ServerConfig: argString(args, "serverConfig", ""),
 	}
 }

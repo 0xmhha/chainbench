@@ -55,7 +55,7 @@ func TestKeyringTools_DriveTheSameUseCases(t *testing.T) {
 
 	var created ringResult
 	call(t, "chainbench_keyring_new", map[string]any{
-		"keyring": dir, "count": float64(3), "validators": float64(2), "withBls": true,
+		"keyringDir": dir, "count": float64(3), "validators": float64(2), "withBls": true,
 	}, &created)
 
 	if len(created.Entries) != 3 || created.Validators != 2 {
@@ -76,7 +76,7 @@ func TestKeyringTools_DriveTheSameUseCases(t *testing.T) {
 	// Adding does not promote: the defect this suite exists to catch.
 	var extended ringResult
 	call(t, "chainbench_keyring_add", map[string]any{
-		"keyring": dir, "count": float64(2), "withBls": true,
+		"keyringDir": dir, "count": float64(2), "withBls": true,
 	}, &extended)
 	if len(extended.Entries) != 5 {
 		t.Fatalf("add: %d identities, want 5", len(extended.Entries))
@@ -86,7 +86,7 @@ func TestKeyringTools_DriveTheSameUseCases(t *testing.T) {
 	}
 
 	var listed ringResult
-	call(t, "chainbench_keyring_list", map[string]any{"keyring": dir, "verify": true}, &listed)
+	call(t, "chainbench_keyring_list", map[string]any{"keyringDir": dir, "verify": true}, &listed)
 	if len(listed.Entries) != 5 {
 		t.Errorf("list: %d identities, want 5", len(listed.Entries))
 	}
@@ -96,10 +96,10 @@ func TestKeyringTools_DriveTheSameUseCases(t *testing.T) {
 // agent's transcript.
 func TestKeyringTools_ShowNeverReturnsASecret(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "ring")
-	call(t, "chainbench_keyring_new", map[string]any{"keyring": dir, "count": float64(1)}, nil)
+	call(t, "chainbench_keyring_new", map[string]any{"keyringDir": dir, "count": float64(1)}, nil)
 
 	out, err := tool(t, "chainbench_keyring_show").Handler(context.Background(),
-		map[string]any{"keyring": dir, "name": "node1"})
+		map[string]any{"keyringDir": dir, "name": "node1"})
 	if err != nil {
 		t.Fatalf("show: %v", err)
 	}

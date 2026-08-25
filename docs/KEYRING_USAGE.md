@@ -31,12 +31,12 @@
 
 ## 2. 어느 링을 쓰는가
 
-우선순위: `--keyring <dir>` > 환경변수 `CHAINBENCH_KEYRING` > 기본값 `./keys/default`.
+우선순위: `--keyring-dir <dir>` > 환경변수 `CHAINBENCH_KEYRING` > 기본값 `./keys/default`.
 모든 명령이 첫 줄에 **어떤 링을 왜 골랐는지** 보고하므로 경로를 추측할 일이 없다.
 
 ```
-$ bin/chainbench keyring list --keyring /tmp/myring
-keyring: /tmp/myring (--keyring)
+$ bin/chainbench keyring list --keyring-dir /tmp/myring
+keyring: /tmp/myring (--keyring-dir)
 ```
 
 ## 3. 명령
@@ -45,7 +45,7 @@ keyring: /tmp/myring (--keyring)
 
 ```
 bin/chainbench keyring new --count 3 [--json]                 # ./keys/default 에
-bin/chainbench keyring new --keyring /tmp/r --count 5 \
+bin/chainbench keyring new --keyring-dir /tmp/r --count 5 \
     --with-bls --validators 3                                 # 지정 경로, wbft 용
 ```
 
@@ -61,7 +61,7 @@ bin/chainbench keyring new --keyring /tmp/r --count 5 \
 ### add — 신원 추가
 
 ```
-bin/chainbench keyring add --keyring /tmp/r --count 2 --with-bls
+bin/chainbench keyring add --keyring-dir /tmp/r --count 2 --with-bls
 ```
 
 기존 신원과 주소는 그대로 유지되고, **추가분은 검증자로 승격되지 않는다**
@@ -70,8 +70,8 @@ bin/chainbench keyring add --keyring /tmp/r --count 2 --with-bls
 ### list / show — 조회
 
 ```
-bin/chainbench keyring list --keyring /tmp/r [--verify] [--json]
-bin/chainbench keyring show --keyring /tmp/r --name node1 [--json]
+bin/chainbench keyring list --keyring-dir /tmp/r [--verify] [--json]
+bin/chainbench keyring show --keyring-dir /tmp/r --name node1 [--json]
 ```
 
 목록·조회에는 **비밀키가 절대 나오지 않는다**. `--verify` 는 저장된 주소·BLS 가
@@ -80,7 +80,7 @@ bin/chainbench keyring show --keyring /tmp/r --name node1 [--json]
 ### export — 비밀키 출력
 
 ```
-bin/chainbench keyring export --keyring /tmp/r --name node1 --yes
+bin/chainbench keyring export --keyring-dir /tmp/r --name node1 --yes
 ```
 
 `--yes` 없이는 거부한다 — 스크롤백에 비밀키가 우연히 남는 것을 막는 장치다.
@@ -98,8 +98,8 @@ bin/chainbench keyring export --keyring /tmp/r --name node1 --yes
 | 직접 호스트 | `--from user@10.0.0.7:/path/key` 또는 `ssh://user@host:port/path` |
 
 ```
-bin/chainbench keyring import --keyring /tmp/r --name faucet --private-key 0x…
-bin/chainbench keyring import --keyring /tmp/r --name hd0 \
+bin/chainbench keyring import --keyring-dir /tmp/r --name faucet --private-key 0x…
+bin/chainbench keyring import --keyring-dir /tmp/r --name hd0 \
     --mnemonic "test test test test test test test test test test test junk"
 ```
 
@@ -146,7 +146,7 @@ docker compose -f build/docker-compose.yml up -d
 
 ```
 CHAINBENCH_SSH_INSECURE_HOST_KEY=1 \
-bin/chainbench keyring import --keyring /tmp/r --name srv1 \
+bin/chainbench keyring import --keyring-dir /tmp/r --name srv1 \
     --from srv://server1/data/chainbench/live-test/rawkey \
     --server-config env/docker/build/remote-server-config.yaml --docker
 ```
@@ -196,7 +196,7 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 | # | 할 일 | 기대 결과 | 자동 테스트 |
 |---|---|---|---|
 | A1 | `keyring new --count 2` (지정 없음) | `keys/default` 생성, `keyring: keys/default (default)` 보고 | ReportsWhichRingItUsed |
-| A2 | `keyring new --keyring /tmp/r --count 3 --with-bls --validators 2` | 3신원·2검증자, BLS yes | NewCreatesAUsableRing |
+| A2 | `keyring new --keyring-dir /tmp/r --count 3 --with-bls --validators 2` | 3신원·2검증자, BLS yes | NewCreatesAUsableRing |
 | A3 | 같은 경로에 다시 `new` | 거부 (add 안내) | (core) Generate 거부 |
 | A4 | `add --count 1 --with-bls` | 4신원·**여전히 2검증자**, 기존 주소 불변 | AddDoesNotPromote / AddKeeps |
 | A5 | `list --verify` | 통과. metadata.json 한 글자 변조 후 재실행 → 실패 | VerifyCatchesDrift |
