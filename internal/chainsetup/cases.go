@@ -20,8 +20,8 @@ const (
 	Unsupported Support = "unsupported"
 )
 
-// Step is one action in a case's bring-up sequence.
-type Step struct {
+// CaseStep is one action in a case's bring-up sequence.
+type CaseStep struct {
 	// ID is the stable identifier used by --stop-after and in reports.
 	ID string
 	// Title is a short imperative description.
@@ -55,7 +55,7 @@ type Case struct {
 	Binaries []string
 	// Doc is the companion document under docs/dev/chain-setup/.
 	Doc   string
-	Steps []Step
+	Steps []CaseStep
 	Knobs []Knob
 }
 
@@ -96,8 +96,8 @@ func IDs() []string {
 
 // staticSteps is the bring-up shared by chains whose genesis already carries the
 // validator set, so consensus holds the moment the nodes start.
-func staticSteps() []Step {
-	return []Step{
+func staticSteps() []CaseStep {
+	return []CaseStep{
 		{ID: "resolve-chain", Title: "Resolve the chain plugin", Detail: "registry.Get: manifest, chain id, consensus family, capabilities", Implemented: true},
 		{ID: "resolve-binary", Title: "Resolve the node binary", Detail: "explicit --binary, else the manifest binary on PATH", Implemented: true},
 		{ID: "load-preset", Title: "Load the key preset", Detail: "keys.LoadPreset: nodekeys, keystores, validator set, BLS keys, alloc", Implemented: true},
@@ -170,8 +170,8 @@ func wbftCase() Case {
 //
 // The four action steps are named by the consensus family, not here — see
 // TestGovernanceSteps_MatchTheFamilysActions.
-func governanceSteps() []Step {
-	return []Step{
+func governanceSteps() []CaseStep {
+	return []CaseStep{
 		{ID: "resolve-chain", Title: "Resolve the chain plugin", Detail: "registry.Get: wemix manifest (bootstrap.type governance-etcd)", Implemented: true},
 		{ID: "resolve-binary", Title: "Resolve the node binary", Detail: "go-wemix gwemix (embeds etcd; no separate process)", Implemented: true},
 		{ID: "load-preset", Title: "Load the key preset", Detail: "producer identities + unlockable accounts", Implemented: true},
@@ -211,8 +211,8 @@ func wemixCase() Case {
 
 // handoffSteps is the type-1 upgrade: producer and successor run different
 // binaries from the start, concurrently, on one chain.
-func handoffSteps() []Step {
-	return []Step{
+func handoffSteps() []CaseStep {
+	return []CaseStep{
 		{ID: "load-profile", Title: "Load the upgrade profile", Detail: "roles, fork, network id, ports, governance env, validator set", Implemented: true},
 		{ID: "load-preset", Title: "Load the key preset", Detail: "plan_order maps plan position to preset node", Implemented: true},
 		{ID: "wemix-config", Title: "Assemble the governance config", Detail: "producer member + governance env + alloc", Implemented: true},

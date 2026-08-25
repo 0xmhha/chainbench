@@ -1,11 +1,11 @@
-package netcompose_test
+package chainsetup_test
 
 import (
 	"context"
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // TestWorkspace_DockerModePersists pins that the mode is recorded once at
@@ -13,18 +13,18 @@ import (
 // requiring the flag on every step would allow a half-mapped run.
 func TestWorkspace_DockerModePersists(t *testing.T) {
 	dir := t.TempDir()
-	ws, err := netcompose.Open(dir, fixedClock())
+	ws, err := chainsetup.Open(dir, fixedClock())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Docker: true}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", Docker: true}); err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	if err := ws.Save(); err != nil {
 		t.Fatal(err)
 	}
 
-	reopened, err := netcompose.Open(dir, fixedClock())
+	reopened, err := chainsetup.Open(dir, fixedClock())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,15 +39,15 @@ func TestWorkspace_DockerModePersists(t *testing.T) {
 // where the refusal must surface.
 func TestWorkspace_DockerWithoutLocalmapRefusesLoudly(t *testing.T) {
 	dir := t.TempDir()
-	ws, err := netcompose.Open(dir, fixedClock())
+	ws, err := chainsetup.Open(dir, fixedClock())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Docker: true}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", Docker: true}); err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	// A minimal node table so Health reaches the address resolution.
-	if _, err := ws.Allocate(netcompose.AllocateOpts{Validators: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 1}); err != nil {
 		t.Fatalf("Allocate: %v", err)
 	}
 	_, err = ws.Health(context.Background())

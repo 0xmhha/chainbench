@@ -63,7 +63,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestTracker_StopsAtTheFirstFailure(t *testing.T) {
-	steps := []Step{
+	steps := []CaseStep{
 		{ID: "a", Detail: "a", Implemented: true},
 		{ID: "b", Detail: "b", Implemented: true},
 		{ID: "c", Detail: "c", Implemented: true},
@@ -80,7 +80,7 @@ func TestTracker_StopsAtTheFirstFailure(t *testing.T) {
 
 func TestTracker_UnimplementedStepIsDistinctFromFailure(t *testing.T) {
 	tr := newTracker(nil, "")
-	tr.do(Step{ID: "todo", Detail: "d"}, nil)
+	tr.do(CaseStep{ID: "todo", Detail: "d"}, nil)
 	if tr.results[0].Outcome != NotImplemented {
 		t.Fatalf("outcome = %s, want %s", tr.results[0].Outcome, NotImplemented)
 	}
@@ -91,8 +91,8 @@ func TestTracker_UnimplementedStepIsDistinctFromFailure(t *testing.T) {
 
 func TestTracker_StopAfterEndsTheRun(t *testing.T) {
 	tr := newTracker(nil, "a")
-	tr.do(Step{ID: "a", Detail: "a", Implemented: true}, func() (string, error) { return "", nil })
-	tr.do(Step{ID: "b", Detail: "b", Implemented: true}, func() (string, error) { t.Fatal("ran past --stop-after"); return "", nil })
+	tr.do(CaseStep{ID: "a", Detail: "a", Implemented: true}, func() (string, error) { return "", nil })
+	tr.do(CaseStep{ID: "b", Detail: "b", Implemented: true}, func() (string, error) { t.Fatal("ran past --stop-after"); return "", nil })
 	if tr.results[1].Outcome != Skipped {
 		t.Fatalf("outcome = %s, want SKIP", tr.results[1].Outcome)
 	}
@@ -113,9 +113,9 @@ func TestValidateStopAfter(t *testing.T) {
 
 func TestRun_FirstProblem(t *testing.T) {
 	r := Run{Results: []Result{
-		{Step: Step{ID: "a"}, Outcome: OK},
-		{Step: Step{ID: "b"}, Outcome: Failed, Detail: "why"},
-		{Step: Step{ID: "c"}, Outcome: Skipped},
+		{Step: CaseStep{ID: "a"}, Outcome: OK},
+		{Step: CaseStep{ID: "b"}, Outcome: Failed, Detail: "why"},
+		{Step: CaseStep{ID: "c"}, Outcome: Skipped},
 	}}
 	if !r.Failed() {
 		t.Fatal("Failed() = false")

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
 // NetUp composes a whole network in one call by running the step use cases in
@@ -110,7 +110,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	// Acquire is re-entrant per process); what this closes is the gap between
 	// steps, where another run used to slip in and compose over a half-built
 	// network.
-	lockWS, err := netcompose.Open(in.DataDir, d.Clock)
+	lockWS, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetUpOut{}, err
 	}

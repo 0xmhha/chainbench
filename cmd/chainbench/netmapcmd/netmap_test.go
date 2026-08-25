@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/netmapcmd"
-	"github.com/0xmhha/chainbench/internal/netcompose"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins, as package main does
 )
@@ -119,14 +119,14 @@ func TestPlan_ReadsTheInventory(t *testing.T) {
 func composedWorkspace(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	ws, err := netcompose.Open(dir, time.Now)
+	ws, err := chainsetup.Open(dir, time.Now)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet"}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.Allocate(netcompose.AllocateOpts{Validators: 2, Endpoints: 1}); err != nil {
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 2, Endpoints: 1}); err != nil {
 		t.Fatal(err)
 	}
 	if err := ws.Save(); err != nil {

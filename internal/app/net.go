@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
 // NetNewIn initializes a composition workspace: the chain identity and where
@@ -40,11 +40,11 @@ type NetNewOut struct {
 // NetNew initializes (or re-targets) the composition workspace — the `net new`
 // step, shared verbatim by the CLI subcommand and the MCP tool.
 func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
-	ws, err := netcompose.Open(in.DataDir, d.Clock)
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetNewOut{}, err
 	}
-	detail, err := ws.New(netcompose.NewOpts{
+	detail, err := ws.New(chainsetup.NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
 		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
 	})
@@ -67,12 +67,12 @@ type NetStatusOut struct {
 	// Dir is the workspace control directory.
 	Dir string
 	// State is the persisted composition state (chain, target, step table).
-	State netcompose.State
+	State chainsetup.State
 }
 
 // NetStatus reads the workspace composition state — the `net status` step.
 func NetStatus(_ context.Context, d Deps, in NetStatusIn) (NetStatusOut, error) {
-	ws, err := netcompose.Open(in.DataDir, d.Clock)
+	ws, err := chainsetup.Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetStatusOut{}, err
 	}

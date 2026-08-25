@@ -265,13 +265,3 @@ func saveState(ctx context.Context, files provision.FileStore, dataDir string, n
 	// The store creates the parents, so the data root needs no separate mkdir.
 	return writeNodeSet(ctx, files, filepath.Join(dataDir, stateFile), ns)
 }
-
-// netmapRequests turns placement requests into netmap's: only the role travels,
-// since position comes from the order.
-func netmapRequests(reqs []place.NodeReq) []netmap.Request {
-	out := make([]netmap.Request, 0, len(reqs))
-	for _, r := range reqs {
-		out = append(out, netmap.Request{Role: r.Role})
-	}
-	return out
-}

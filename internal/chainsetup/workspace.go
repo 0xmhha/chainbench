@@ -15,7 +15,7 @@
 // environment mode); this package owns only the domain state and the step
 // functions. The CLI and MCP surfaces are thin wrappers over the app layer,
 // which calls the step functions here, so both drive the exact same behavior.
-package netcompose
+package chainsetup
 
 import (
 	"fmt"
@@ -134,6 +134,7 @@ type Workspace struct {
 	comp   session.Composition
 	state  State
 	env    func(string) string
+	now    func() time.Time
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
@@ -166,11 +167,14 @@ func Open(dir string, now func() time.Time) (*Workspace, error) {
 }
 
 func open(dir string, now func() time.Time) (*Workspace, error) {
+	if now == nil {
+		now = time.Now
+	}
 	comp, err := session.OpenComposition(dir, now)
 	if err != nil {
 		return nil, err
 	}
-	ws := &Workspace{comp: comp, env: os.Getenv, state: State{Steps: map[string]Step{}}}
+	ws := &Workspace{comp: comp, env: os.Getenv, now: now, state: State{Steps: map[string]Step{}}}
 	if err := comp.Load(&ws.state); err != nil {
 		return nil, err
 	}

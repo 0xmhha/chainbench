@@ -24,7 +24,7 @@ const (
 
 // Result records one executed step.
 type Result struct {
-	Step     Step
+	Step     CaseStep
 	Outcome  Outcome
 	Detail   string
 	Duration time.Duration
@@ -86,7 +86,7 @@ func newTracker(report Reporter, stopAfter string) *tracker {
 }
 
 // do runs one step unless the tracker has already stopped.
-func (t *tracker) do(step Step, run stepRunner) {
+func (t *tracker) do(step CaseStep, run stepRunner) {
 	if t.stopped {
 		t.add(Result{Step: step, Outcome: Skipped})
 		return

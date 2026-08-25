@@ -1,9 +1,11 @@
-package netcompose
+package chainsetup
 
 import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -29,17 +31,17 @@ func (w *Workspace) binary(arg string) (string, error) {
 	if w.state.Binary != "" {
 		return w.state.Binary, nil
 	}
-	return "", fmt.Errorf("netcompose: a node binary is required (--binary, or set it at `net new`)")
+	return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `net new`)")
 }
 
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("netcompose: init: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: init: no node table — run `net allocate` first")
 	}
 	if w.state.GenesisPath == "" {
-		return "", fmt.Errorf("netcompose: init: no genesis — run `net genesis` first")
+		return "", fmt.Errorf("chainsetup: init: no genesis — run `net genesis` first")
 	}
 	// Before writing anything to the target. A datadir whose node is still
 	// running is refused by the binary here anyway ("datadir already used by
@@ -59,20 +61,20 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	}
 	initer, ok := t.Driver.(driver.Initializer)
 	if !ok {
-		return "", fmt.Errorf("netcompose: init: target driver cannot initialize datadirs")
+		return "", fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
 	}
 	// GenesisPath is a path on the target: the genesis step wrote it through
 	// the target's file store, so it is read back the same way. A direct
 	// os.ReadFile here worked only while the target was this machine.
 	gen, err := t.Files.Read(ctx, w.state.GenesisPath)
 	if err != nil {
-		return "", fmt.Errorf("netcompose: init: read genesis: %w", err)
+		return "", fmt.Errorf("chainsetup: init: read genesis: %w", err)
 	}
 	for _, ns := range w.state.Nodes {
 		spec := driverSpec(ns)
 		spec.Binary = bin
 		if err := initer.InitDatadir(ctx, spec, gen); err != nil {
-			return "", fmt.Errorf("netcompose: init: node%d: %w", ns.Index, err)
+			return "", fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 		}
 	}
 	w.state.Binary = bin
@@ -90,7 +92,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 		return "", err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("netcompose: start: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: start: no node table — run `net allocate` first")
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
@@ -102,7 +104,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	}
 	preset, err := store.LoadPreset(w.state.KeysDir)
 	if err != nil {
-		return "", fmt.Errorf("netcompose: start: %w", err)
+		return "", fmt.Errorf("chainsetup: start: %w", err)
 	}
 	// The family orders the launch. A wbft network declares one phase and this
 	// is the loop it always was; a wemix network starts its producer alone so
@@ -115,6 +117,9 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	}
 	phases := p.Family().BringUpPhases(roles)
 
+	if err := w.checkUnmanaged(ctx, bin); err != nil {
+		return "", err
+	}
 	started := 0
 	for _, phase := range phases {
 		launched, err := w.startPhase(ctx, t, p, preset, bin, phase)
@@ -132,6 +137,12 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
 	w.markStep("start", detail)
+	if dir, err := w.recordRun(ctx, t, bin); err == nil {
+		detail += fmt.Sprintf("; run recorded at %s", dir)
+	} else {
+		// The record must never take the network it records down with it.
+		detail += fmt.Sprintf("; run record failed: %v", err)
+	}
 	return detail, nil
 }
 
@@ -155,7 +166,7 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 		stopped++
 	}
 	if len(errs) > 0 {
-		return "", fmt.Errorf("netcompose: stop: %s", strings.Join(errs, "; "))
+		return "", fmt.Errorf("chainsetup: stop: %s", strings.Join(errs, "; "))
 	}
 	detail := fmt.Sprintf("%d node(s) stopped", stopped)
 	w.markStep("stop", detail)
@@ -173,7 +184,7 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 		}
 	}
 	if ni < 0 {
-		return "", fmt.Errorf("netcompose: restart: no node %d in the table", index)
+		return "", fmt.Errorf("chainsetup: restart: no node %d in the table", index)
 	}
 	bin, err := w.binary("")
 	if err != nil {
@@ -186,21 +197,21 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	ns := w.state.Nodes[ni]
 	if ns.PID > 0 {
 		if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
-			return "", fmt.Errorf("netcompose: restart: stop node%d: %w", ns.Index, err)
+			return "", fmt.Errorf("chainsetup: restart: stop node%d: %w", ns.Index, err)
 		}
 		w.clearPID(ni)
 	}
 	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("netcompose: restart: node%d has no recorded argv — run `net start` first", index)
+		return "", fmt.Errorf("chainsetup: restart: node%d has no recorded argv — run `net start` first", index)
 	}
 	spec := driverSpec(ns)
 	spec.Binary = bin
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
-		return "", fmt.Errorf("netcompose: restart: node%d: %w", ns.Index, err)
+		return "", fmt.Errorf("chainsetup: restart: node%d: %w", ns.Index, err)
 	}
 	if err := w.recordLaunch(ni, h.PID, bin); err != nil {
-		return "", fmt.Errorf("netcompose: restart: node%d: %w", index, err)
+		return "", fmt.Errorf("chainsetup: restart: node%d: %w", index, err)
 	}
 	detail := fmt.Sprintf("node%d restarted (pid %d)", index, h.PID)
 	w.markStep("restart", detail)
@@ -212,11 +223,11 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	for _, ns := range w.state.Nodes {
 		if ns.PID > 0 {
-			return "", fmt.Errorf("netcompose: rm: node%d is running (pid %d) — run `net stop` first", ns.Index, ns.PID)
+			return "", fmt.Errorf("chainsetup: rm: node%d is running (pid %d) — run `net stop` first", ns.Index, ns.PID)
 		}
 	}
 	if w.state.Target.IsRemote() {
-		return "", fmt.Errorf("netcompose: rm: remote data-plane removal is not supported yet")
+		return "", fmt.Errorf("chainsetup: rm: remote data-plane removal is not supported yet")
 	}
 	removed := 0
 	for _, ns := range w.state.Nodes {
@@ -225,14 +236,14 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 				continue
 			}
 			if err := os.RemoveAll(path); err != nil {
-				return "", fmt.Errorf("netcompose: rm: %s: %w", path, err)
+				return "", fmt.Errorf("chainsetup: rm: %s: %w", path, err)
 			}
 			removed++
 		}
 	}
 	if w.state.GenesisPath != "" {
 		if err := os.RemoveAll(w.state.GenesisPath); err != nil {
-			return "", fmt.Errorf("netcompose: rm: %s: %w", w.state.GenesisPath, err)
+			return "", fmt.Errorf("chainsetup: rm: %s: %w", w.state.GenesisPath, err)
 		}
 		removed++
 	}
@@ -260,7 +271,7 @@ func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
 		}
 		b, err := t.Files.Read(ctx, ns.LogPath)
 		if err != nil {
-			return "", fmt.Errorf("netcompose: logs: %w", err)
+			return "", fmt.Errorf("chainsetup: logs: %w", err)
 		}
 		lines := strings.Split(strings.TrimRight(string(b), "\n"), "\n")
 		if n > 0 && len(lines) > n {
@@ -268,7 +279,7 @@ func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
 		}
 		return strings.Join(lines, "\n"), nil
 	}
-	return "", fmt.Errorf("netcompose: logs: no node %d in the table", index)
+	return "", fmt.Errorf("chainsetup: logs: no node %d in the table", index)
 }
 
 // NodeHealth is one node's health probe result.
@@ -283,7 +294,7 @@ type NodeHealth struct {
 // mark a step — it is a read, re-runnable at any time.
 func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	if len(w.state.Nodes) == 0 {
-		return nil, fmt.Errorf("netcompose: health: no node table — run `net allocate` first")
+		return nil, fmt.Errorf("chainsetup: health: no node table — run `net allocate` first")
 	}
 	m, err := w.opener().AddrMap()
 	if err != nil {
@@ -323,6 +334,60 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 // this workspace recorded is its own leftover and `net stop` clears it; anything
 // else belongs to something this workspace did not start, and guessing would be
 // worse than refusing.
+// Preflight is the check-only entry: the same pre-launch inspection Start
+// runs, callable without composing anything. It answers "may a network of
+// this shape start here right now?" with the refusal Start would give — port
+// occupancy plus unmanaged copies of the binary already on the machine.
+func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
+	if len(w.state.Nodes) == 0 {
+		return fmt.Errorf("chainsetup: preflight: no node table — run `net allocate` first")
+	}
+	bin, err := w.binary(binaryArg)
+	if err != nil {
+		return err
+	}
+	if err := w.checkUnmanaged(ctx, bin); err != nil {
+		return err
+	}
+	return w.checkVacant(ctx, registry.Phase{})
+}
+
+// checkUnmanaged asks the machine (through the driver's inspector) whether
+// the binary about to be launched is already running OUTSIDE the run ledger.
+// A pid the ledger knows is this workspace's and is handled per node; a pid
+// it does not know belongs to someone — another workspace, an operator's
+// hand-started node — and composing on top of it is refused by name.
+func (w *Workspace) checkUnmanaged(ctx context.Context, bin string) error {
+	t, err := w.resolveTarget()
+	if err != nil {
+		return err
+	}
+	insp, ok := t.Driver.(driver.ProcessInspector)
+	if !ok {
+		return nil
+	}
+	name := filepath.Base(bin)
+	pids, err := insp.FindBinary(ctx, name)
+	if err != nil {
+		return fmt.Errorf("chainsetup: process check: %w", err)
+	}
+	known := map[int]bool{}
+	for _, p := range w.ledger.Recorded() {
+		known[p.PID] = true
+	}
+	var strays []string
+	for _, pid := range pids {
+		if !known[pid] {
+			strays = append(strays, strconv.Itoa(pid))
+		}
+	}
+	if len(strays) > 0 {
+		return fmt.Errorf("chainsetup: %s is already running on the machine outside this workspace (pid %s) — stop it, or compose on a different server",
+			name, strings.Join(strays, ", "))
+	}
+	return nil
+}
+
 func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
 	var addrs []occupancy.Addr
 	for _, ns := range w.state.Nodes {
@@ -369,7 +434,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 		hints = append(hints, "the rest hold ports this workspace planned but cannot address — find and stop them by hand")
 	}
 	hint := strings.Join(hints, "; ")
-	return fmt.Errorf("netcompose: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint)
+	return fmt.Errorf("chainsetup: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint)
 }
 
 // scanOccupancy asks whether the plan's ports are taken, from where the
@@ -405,7 +470,7 @@ func (w *Workspace) scanOccupancy(ctx context.Context, addrs []occupancy.Addr) (
 	for host, ports := range byHost {
 		open, err := prober.ProbePorts(ctx, host, ports)
 		if err != nil {
-			return nil, fmt.Errorf("netcompose: port probe on %s: %w", host, err)
+			return nil, fmt.Errorf("chainsetup: port probe on %s: %w", host, err)
 		}
 		taken := map[int]bool{}
 		for _, p := range open {
@@ -465,17 +530,17 @@ func (w *Workspace) startPhase(ctx context.Context, t *machine.Access, p registr
 		if len(spec.Args) == 0 {
 			args, err := engine.NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
 			if err != nil {
-				return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
 			spec.Args = args
 			w.state.Nodes[i].Args = args
 		}
 		h, err := t.Driver.Launch(ctx, spec)
 		if err != nil {
-			return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
 		if err := w.recordLaunch(i, h.PID, bin); err != nil {
-			return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
 		started++
 	}
@@ -497,12 +562,12 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {
-		return fmt.Errorf("netcompose: start: phase %q names actions but launched no node to run them on", phase.Name)
+		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
 	exec := engine.WemixBootstrap{Binary: bin, KeysDir: w.state.KeysDir}
 	for _, name := range phase.Actions {
 		if err := exec.Action(ctx, name, plan, on); err != nil {
-			return fmt.Errorf("netcompose: start: phase %q: %w", phase.Name, err)
+			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)
 		}
 	}
 	return nil

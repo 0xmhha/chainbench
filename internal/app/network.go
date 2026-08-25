@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
 // Lifecycle use cases for a launched network. Reading and writing its state is
@@ -47,7 +47,7 @@ func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatus
 		return NetworkStatusOut{}, errNoDataDir
 	}
 	if isComposition(in.DataDir) {
-		ws, err := netcompose.Open(in.DataDir, d.Clock)
+		ws, err := chainsetup.Open(in.DataDir, d.Clock)
 		if err != nil {
 			return NetworkStatusOut{}, err
 		}
@@ -93,7 +93,7 @@ func NetworkStop(ctx context.Context, d Deps, in NetworkStopIn) (NetworkStopOut,
 		// Counted before the step runs: it stops every node that still has a
 		// PID, and clears them, so afterwards there is nothing left to count.
 		var running int
-		_, err := withWorkspace(d, in.DataDir, func(ws *netcompose.Workspace) (string, error) {
+		_, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
 			running = withPID(ws.NodeSet())
 			return ws.Stop(ctx)
 		})

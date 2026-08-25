@@ -33,7 +33,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -60,7 +60,7 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 
 	// 2. Stop every handoff node so node1's chaindata is closed and reopenable.
 	if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
-		t.Logf("procman: leaked handoff PIDs before migration: %v", leaks)
+		t.Logf("process: leaked handoff PIDs before migration: %v", leaks)
 	}
 	// Give the OS a moment to release the DB lock.
 	time.Sleep(2 * time.Second)
@@ -124,10 +124,10 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 }
 
 // runHandoffKeepDatadir runs the handoff like runGovHandoff but returns the data
-// root, the producer (node1) RPC URL, and the procman.Manager tracking the nodes
+// root, the producer (node1) RPC URL, and the process.Manager tracking the nodes
 // (the caller stops them) instead of auto-tearing-down. It retries the flaky
 // producer/etcd bootstrap.
-func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (string, string, *procman.Manager) {
+func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (string, string, *process.Manager) {
 	t.Helper()
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
@@ -135,7 +135,7 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (strin
 		if err != nil {
 			t.Fatalf("mkdir temp datadir: %v", err)
 		}
-		mgr := procman.New()
+		mgr := process.New()
 
 		cmd := newUpgradeRunCmd()
 		cmd.SetArgs([]string{
@@ -163,7 +163,7 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (strin
 
 		lastOut = out.String()
 		if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
-			t.Logf("procman: attempt %d leaked node PIDs %v", attempt, leaks)
+			t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
 		}
 		_ = os.RemoveAll(dataDir)
 		t.Logf("handoff attempt %d/%d failed (flaky producer/etcd bootstrap); retrying", attempt, govHandoffAttempts)

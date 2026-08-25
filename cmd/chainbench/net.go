@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/netcompose"
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
@@ -89,7 +89,7 @@ func orDash(s string) string {
 	return s
 }
 
-func sortedSteps(st netcompose.State) []string {
+func sortedSteps(st chainsetup.State) []string {
 	names := make([]string, 0, len(st.Steps))
 	for n := range st.Steps {
 		names = append(names, n)
