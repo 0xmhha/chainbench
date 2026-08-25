@@ -14,28 +14,33 @@ import (
 // first transaction cannot pay for gas.
 const defaultRingBalance = "0x200000000000000000000000000000000000000000000000000000000000000"
 
-// validatorsFlagHelp reads correctly for both verbs: `new` defaults to all of
-// them, `add` defaults to none, because adding an identity and promoting one to
-// validator are different decisions. `--validators 0` on `new` declares none at
-// all, which is a ring of identities and nothing else.
-const validatorsFlagHelp = "how many join the validator set (new: default all, 0 declares none; add: default none)"
+// The --validators default differs per verb — `new` promotes all, `add`
+// promotes none, because adding an identity and promoting one to validator
+// are different decisions — so each verb hands bind its own wording rather
+// than one string explaining both to a reader who typed only one.
+const (
+	validatorsHelpNew = "how many join the validator set (default: all; 0 declares none at all)"
+	validatorsHelpAdd = "how many of the ADDED identities join the validator set (default: none)"
+)
 
 // makeFlags are shared by `keyring new` and `keyring add`, which differ only in
 // whether the ring has to exist.
 type makeFlags struct {
 	ring       ringFlags
 	bls        blsFlag
+	jsonF      jsonFlag
 	count      int
 	validators int
 	password   string
 	balance    string
 }
 
-func (f *makeFlags) bind(cmd *cobra.Command) {
+func (f *makeFlags) bind(cmd *cobra.Command, validatorsHelp string) {
 	f.ring.bind(cmd)
 	f.bls.bind(cmd)
+	f.jsonF.bind(cmd, "the created ring")
 	cmd.Flags().IntVar(&f.count, "count", 0, "how many identities to create")
-	cmd.Flags().IntVar(&f.validators, "validators", 0, validatorsFlagHelp)
+	cmd.Flags().IntVar(&f.validators, "validators", 0, validatorsHelp)
 	cmd.Flags().StringVar(&f.password, "password", "1", "password for the generated keystores")
 	cmd.Flags().StringVar(&f.balance, "balance", defaultRingBalance, "genesis balance per identity (0x-hex wei)")
 	_ = cmd.MarkFlagRequired("count")
@@ -68,10 +73,10 @@ func newKeyringNewCmd() *cobra.Command {
 			"Nothing is executed — no chain binary needs to exist — so this is how a\n" +
 			"network is started from scratch rather than from a committed fixture.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRingCreate(cmd, app.KeyringNew, mk.in(cmd))
+			return runRingCreate(cmd, app.KeyringNew, &mk)
 		},
 	}
-	mk.bind(cmd)
+	mk.bind(cmd, validatorsHelpNew)
 	return cmd
 }
 
@@ -85,10 +90,10 @@ func newKeyringAddCmd() *cobra.Command {
 			"referenced the moment they exist — in a genesis, in a running datadir, in\n" +
 			"a test's declaration — so they are never regenerated.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRingCreate(cmd, app.KeyringAdd, mk.in(cmd))
+			return runRingCreate(cmd, app.KeyringAdd, &mk)
 		},
 	}
-	mk.bind(cmd)
+	mk.bind(cmd, validatorsHelpAdd)
 	return cmd
 }
 
@@ -97,9 +102,15 @@ type ringCreateFunc func(context.Context, app.Deps, app.RingCreateIn) (app.RingO
 
 // runRingCreate calls the use case and renders it. The two verbs differ in
 // which function they call, not in what they print.
-func runRingCreate(cmd *cobra.Command, use ringCreateFunc, in app.RingCreateIn) error {
+func runRingCreate(cmd *cobra.Command, use ringCreateFunc, mk *makeFlags) error {
 	out := cmd.OutOrStdout()
-	r, err := use(cmd.Context(), app.Deps{}, in)
+	r, err := use(cmd.Context(), app.Deps{}, mk.in(cmd))
+	if mk.jsonF.on {
+		if err != nil {
+			return err
+		}
+		return emitJSON(out, r)
+	}
 	announce(out, r)
 	if err != nil {
 		return err

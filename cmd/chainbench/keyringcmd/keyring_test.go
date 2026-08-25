@@ -387,3 +387,69 @@ func TestKeyringImport_CoinTypeChangesTheKey(t *testing.T) {
 		t.Fatal("coin type had no effect on derivation")
 	}
 }
+
+// TestKeyringNew_JSON pins the creation verbs' machine-readable output: the
+// full ring comes back as JSON with no second command, and no private key in
+// it — creation is not export.
+func TestKeyringNew_JSON(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "ring")
+	out, err := run(t, "keyring", "new", "--keyring", dir, "--count", "2", "--json")
+	if err != nil {
+		t.Fatalf("new --json: %v\n%s", err, out)
+	}
+	var r app.RingOut
+	if err := json.Unmarshal([]byte(jsonPart(out)), &r); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	if len(r.Entries) != 2 || r.Entries[0].Address == "" {
+		t.Fatalf("unexpected ring: %+v", r)
+	}
+	if strings.Contains(out, "privateKey") {
+		t.Fatal("creation output leaked a private key field")
+	}
+}
+
+// TestKeyringShow_MissingNameOffersTheWayOut pins the guidance: the operator
+// who forgot --name wanted one identity or the whole ring, and the error
+// offers both instead of cobra's bare "required flag not set".
+func TestKeyringShow_MissingNameOffersTheWayOut(t *testing.T) {
+	dir := newRing(t)
+	_, err := run(t, "keyring", "show", "--keyring", dir)
+	if err == nil {
+		t.Fatal("show without --name should refuse")
+	}
+	if !strings.Contains(err.Error(), "keyring list") {
+		t.Fatalf("the refusal should point at `keyring list`: %v", err)
+	}
+}
+
+// TestKeyringImport_RefusesOrphanQualifiers pins that an option qualifying an
+// absent origin is refused, not silently ignored — a typo that drops
+// --mnemonic must not import a different key than asked.
+func TestKeyringImport_RefusesOrphanQualifiers(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "ring")
+	if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+		"--private-key", "0x"+strings.Repeat("22", 32), "--hd-index", "3"); err == nil {
+		t.Fatal("--hd-index without --mnemonic should refuse")
+	}
+	if _, err := run(t, "keyring", "import", "--keyring", dir, "--name", "x",
+		"--private-key", "0x"+strings.Repeat("22", 32), "--password", "pw"); err == nil {
+		t.Fatal("--password without --from should refuse")
+	}
+}
+
+// TestKeyringImport_HDChangeChangesTheKey pins the fourth BIP-44 level: the
+// internal-chain address differs from the external one.
+func TestKeyringImport_HDChangeChangesTheKey(t *testing.T) {
+	const m = "test test test test test test test test test test test junk"
+	a, b := filepath.Join(t.TempDir(), "a"), filepath.Join(t.TempDir(), "b")
+	if _, err := run(t, "keyring", "import", "--keyring", a, "--name", "k", "--mnemonic", m); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := run(t, "keyring", "import", "--keyring", b, "--name", "k", "--mnemonic", m, "--hd-change", "1"); err != nil {
+		t.Fatal(err)
+	}
+	if addressOf(t, a, "k") == addressOf(t, b, "k") {
+		t.Fatal("hd-change had no effect on derivation")
+	}
+}

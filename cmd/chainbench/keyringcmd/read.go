@@ -53,6 +53,9 @@ func newKeyringShowCmd() *cobra.Command {
 			"use `keyring export` to ask for it on purpose.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
+			if err := label.require("show"); err != nil {
+				return err
+			}
 			e, err := app.KeyringShow(cmd.Context(), app.Deps{},
 				app.RingEntryIn{Ring: ring.ref(), Label: label.name})
 			if err != nil {
@@ -90,6 +93,9 @@ func newKeyringExportCmd() *cobra.Command {
 				return fmt.Errorf("export prints a private key to stdout; pass --yes to confirm")
 			}
 			out := cmd.OutOrStdout()
+			if err := label.require("export"); err != nil {
+				return err
+			}
 			e, err := app.KeyringExport(cmd.Context(), app.Deps{},
 				app.RingEntryIn{Ring: ring.ref(), Label: label.name})
 			if err != nil {
