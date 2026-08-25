@@ -131,9 +131,9 @@ type Workspace struct {
 	// under which command, as which pid. It is the source of truth for PIDs;
 	// NodeState.PID is the in-memory view, synced from here on Open.
 	ledger *process.Ledger
-	comp  session.Composition
-	state State
-	env   func(string) string
+	comp   session.Composition
+	state  State
+	env    func(string) string
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
