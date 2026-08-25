@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	chainsetupmod "github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -20,7 +21,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
-	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // Bring-up use cases for the setup stack: resolve a chain and a layout into a
@@ -100,7 +100,7 @@ func NetworkPlan(_ context.Context, _ Deps, in NetworkSpecIn) (NetworkPlanOut, e
 	}
 	cfg := config.Resolve(nil, override)
 	root := filepath.Clean(in.DataDir)
-	plan, err := engine.BuildLocalPlan(cfg, plugin, root, topo)
+	plan, err := chainsetupmod.BuildLocalPlan(cfg, plugin, root, topo)
 	if err != nil {
 		return NetworkPlanOut{}, err
 	}
@@ -139,7 +139,7 @@ func NetworkProvision(ctx context.Context, d Deps, in NetworkProvisionIn) (Netwo
 	if err != nil {
 		return NetworkProvisionOut{}, err
 	}
-	setup := engine.LocalSetup{
+	setup := chainsetupmod.LocalSetup{
 		Plugin: planned.Plugin, Config: planned.Config, KeysDir: in.KeysDir,
 		Driver: dr, Files: files,
 	}
@@ -196,7 +196,7 @@ func NetworkLaunch(ctx context.Context, d Deps, in NetworkLaunchIn) (NetworkLaun
 	if err != nil {
 		return NetworkLaunchOut{}, err
 	}
-	ns, specs, err := engine.LocalSetup{
+	ns, specs, err := chainsetupmod.LocalSetup{
 		Plugin: planned.Plugin, Config: planned.Config, KeysDir: in.KeysDir,
 		Binary: in.Binary, Driver: dr, Files: files, Bus: in.Bus,
 	}.Launch(ctx, planned.Plan)

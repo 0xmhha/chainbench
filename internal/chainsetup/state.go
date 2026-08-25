@@ -19,9 +19,6 @@ import (
 // teardown work from a later process.
 const stateFile = "chain-network.json"
 
-// teardownGrace is how long a stop waits for a clean exit before escalating.
-const teardownGrace = 5 * time.Second
-
 // writeNodeSet persists a node set through the file seam.
 func writeNodeSet(ctx context.Context, files provision.FileStore, path string, ns node.NodeSet) error {
 	b, err := json.MarshalIndent(ns, "", "  ")

@@ -17,7 +17,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/engine"
 )
 
 // Local port layout for a bring-up. The steps clear the derived reservations:
@@ -93,7 +92,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 		gen    []byte
 		plan   driver.Plan
 		specs  []driver.NodeSpec
-		launch engine.LocalLauncher
+		launch LocalLauncher
 		nodes  node.NodeSet
 	)
 	reqs := validatorReqs(o.Validators)
@@ -147,8 +146,8 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
-		b, err := engine.BuildGenesis(ctx, plugin, engine.GenesisRequest{Validators: o.Validators},
-			engine.GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
+		b, err := BuildGenesis(ctx, plugin, GenesisRequest{Validators: o.Validators},
+			GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
 		if err != nil {
 			return "", err
 		}
@@ -157,11 +156,11 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[5], func() (string, error) {
-		placed := make([]engine.PlacedNode, len(reqs))
+		placed := make([]PlacedNode, len(reqs))
 		for i := range reqs {
-			placed[i] = engine.PlacedNode{Req: reqs[i], Placement: places[i]}
+			placed[i] = PlacedNode{Req: reqs[i], Placement: places[i]}
 		}
-		p, err := engine.AssemblePlan(plugin, placed, gen, o.DataDir, plugin.Manifest().Capabilities)
+		p, err := AssemblePlan(plugin, placed, gen, o.DataDir, plugin.Manifest().Capabilities)
 		if err != nil {
 			return "", err
 		}
@@ -170,7 +169,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[6], func() (string, error) {
-		launch = engine.LocalLauncher{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
+		launch = LocalLauncher{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
 		s, err := launch.Arm(plan)
 		if err != nil {
 			return "", err

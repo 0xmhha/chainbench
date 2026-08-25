@@ -584,7 +584,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **V5.2** | 실행 기록 폴더 — 지정 폴더 아래 실행마다 폴더: 체인 id·입력 사본·배치표·genesis·실행 명령. **서버 세트 ssh 절 제외**(테스트로 고정) | V5.1 | 기록에서 자격증명 grep 0건 테스트 | ☑ (`runs/<stamp>/` — manifest·genesis 회수·launch-commands. 카나리 비밀번호 테스트로 값 비노출 고정; "password" 단어는 argv 의 파일 경로로 정당) |
 | **V5.3** | 사전 점검 배선 — 구성 전 process 대장으로 기동 중 노드 검사, 케이스별 함수 분리·조립(전체 셋업·부분 재시작·점검만) | V5.1 | 이미 도는 노드 위 재구성 거부 라이브 | ☑ (포트 충돌은 init 의 기존 점검, 포트가 비어도 같은 바이너리가 돌면 start 가 pid 지목 거부 — `checkUnmanaged`+`Preflight`(점검만 진입점). 라이브 양쪽 재현) |
 | **V5.4** | CLI `netcmd` 추출 — net 그룹 6파일을 패키지로, chainsetup 직접 호출 (serverFlags 중복 해소 포함) | V5.1 | keyringcmd 패턴 준수 · 도움말 무손실 | ☑ (선행으로 net·network·hardfork 동사 23개를 chainsetup 모듈로 이동(app 은 위임만), 테스트 동반 이동. 서버 선택 플래그는 `cmd/chainbench/internal/serverflag` 하나로 — netcmd·netmapcmd·run 공용) |
-| **V6.1** | engine → `testengine` — 구성 책임 제거, "구성된 체인 위에서 테스트만 일관 수행" 으로 축소·개명 | V5.1 | 기존 테스트 스위트 결과 동일 | ☐ |
+| **V6.1** | engine → `testengine` — 구성 책임 제거, "구성된 체인 위에서 테스트만 일관 수행" 으로 축소·개명 | V5.1 | 기존 테스트 스위트 결과 동일 | ☑ (구성 파일 10개(빌드환경·genesis·keysource·launcher·plan·nodecontrol·wemix 계열)와 테스트가 chainsetup 으로, 러너는 setup_bridge 한 파일로 위탁 — 의존 방향 chainsetup→engine 이 testengine→chainsetup 으로 역전, 순환 0) |
 | **V6.2** | app 워크플로 — DSL 파싱 → chainsetup → testengine → 수집 → 레포트를 app 이 한 흐름으로 제공 | V6.1 | e2e: DSL 입력 하나로 셋업+테스트+레포트 산출 | ☐ |
 | **V6.3** | MCP 전환 — MCP 도구가 app 워크플로·얇은 app 함수만 경유(CLI 는 core 직접 유지) | V6.2 | MCP 도구 전수: app 외 import 0건 | ☐ |
 | **V7** | 기회 개명 백로그 — `netreg`(규칙 7)·`accounts`(규칙 5)는 해당 모듈을 손댈 때 개명 | 해당 트랙 | 네이밍 규칙 표 판정 통과 | ☐ |

@@ -16,18 +16,18 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
-	"github.com/0xmhha/chainbench/internal/engine"
+	"github.com/0xmhha/chainbench/internal/testengine"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // runReport is the --json shape for a run: the session path plus the verdict
-// (engine.Summary is embedded so its tests/summary fields flatten in).
+// (testengine.Summary is embedded so its tests/summary fields flatten in).
 type runReport struct {
 	Session string `json:"session"`
-	engine.Summary
+	testengine.Summary
 }
 
-// newRunCmd runs DSL test specs through the redesign engine. With --rpc it
+// newRunCmd runs DSL test specs through the redesign testengine. With --rpc it
 // attaches to a running network; with --binary it builds a local one.
 func newRunCmd() *cobra.Command {
 	var (
@@ -146,13 +146,13 @@ type runOpts struct {
 
 // buildRunEngine selects attach mode (when --rpc endpoints are given) or local
 // mode (when --binary is given). A non-nil bus streams orchestration events.
-func buildRunEngine(o runOpts) (engine.Engine, error) {
+func buildRunEngine(o runOpts) (testengine.Engine, error) {
 	if o.chain == "" {
 		return nil, fmt.Errorf("run: --chain is required")
 	}
 	switch {
 	case len(o.rpcURLs) > 0:
-		return engine.NewAttachEngine(engine.AttachConfig{
+		return testengine.NewAttachEngine(testengine.AttachConfig{
 			Chain: o.chain, RPCURLs: o.rpcURLs, ArtifactRoot: o.artifactRoot, Bus: o.bus,
 		})
 	case o.binary != "":
@@ -168,7 +168,7 @@ func buildRunEngine(o runOpts) (engine.Engine, error) {
 		if err != nil {
 			return nil, err
 		}
-		return engine.NewLocalEngine(engine.LocalConfig{
+		return testengine.NewLocalEngine(testengine.LocalConfig{
 			Chain: o.chain, Binary: o.binary, Keys: src,
 			ArtifactRoot: o.artifactRoot, Validators: o.validators,
 			ChainID: o.chainID, NetworkID: o.networkID, LaunchOverrides: overrides,
@@ -186,15 +186,15 @@ const (
 )
 
 // keySource maps --keys-source to the engine seam that materializes identities.
-func keySource(o runOpts) (engine.KeySource, error) {
+func keySource(o runOpts) (testengine.KeySource, error) {
 	if o.keysDir == "" {
 		return nil, fmt.Errorf("run: --keys is required for a local run")
 	}
 	switch keysSourceKind(o.keysSource) {
 	case "", keysSourcePreset:
-		return engine.PresetKeySource{Path: o.keysDir}, nil
+		return testengine.PresetKeySource{Path: o.keysDir}, nil
 	case keysSourceGenerate:
-		return engine.GeneratedKeySource{
+		return testengine.GeneratedKeySource{
 			Path: o.keysDir, Validators: o.validators,
 		}, nil
 	default:
@@ -286,7 +286,7 @@ func foldSpecEnv(o runOpts, specs [][]byte) runOpts {
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
 func printSession(out io.Writer, root string, jsonOut bool) error {
-	doc, err := engine.ReadSessionSummary(root)
+	doc, err := testengine.ReadSessionSummary(root)
 	if err != nil {
 		return err
 	}
