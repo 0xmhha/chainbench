@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -24,7 +24,7 @@ type NetNewIn struct {
 	KeysDir string
 	// Target is where the data plane lives; zero value = local, rooted at the
 	// workspace directory.
-	Target target.TargetSpec
+	Target machine.Spec
 	// Docker treats the servers as local docker containers: the harness's own
 	// dials are translated through the localmap next to the server set.
 	// Recorded on the workspace so every later step follows it.

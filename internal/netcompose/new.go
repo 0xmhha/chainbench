@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 )
 
 // NewOpts initializes a workspace's chain identity, key set, and compose target.
@@ -22,7 +22,7 @@ type NewOpts struct {
 	KeysDir string
 	// Target is where the network's data plane lives. A zero Target defaults to
 	// a local target whose data root is the workspace directory.
-	Target target.TargetSpec
+	Target machine.Spec
 	// Docker treats the composition's servers as local docker containers: the
 	// harness's dials are translated through the localmap next to the server
 	// server set. Recorded once here so every later step follows it.
@@ -48,9 +48,9 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 
 	tgt := opts.Target
 	if tgt.Kind == "" {
-		tgt.Kind = target.TargetLocal
+		tgt.Kind = machine.KindLocal
 	}
-	if tgt.Kind == target.TargetLocal && tgt.DataRoot == "" {
+	if tgt.Kind == machine.KindLocal && tgt.DataRoot == "" {
 		tgt.DataRoot = w.comp.Dir()
 	}
 	// Validate the target resolves (remote needs host + reachable auth later,
@@ -90,14 +90,14 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 // decides both the host and the data root, and that decision arrives with the
 // placement rather than at `new`. A target with no data root keeps the current
 // one, so naming only a host does not blank the path.
-func (w *Workspace) Retarget(t target.TargetSpec) error {
+func (w *Workspace) Retarget(t machine.Spec) error {
 	if t.Kind == "" {
 		return nil
 	}
 	if t.DataRoot == "" {
 		t.DataRoot = w.state.Target.DataRoot
 	}
-	if t.Kind == target.TargetRemote && (t.Host == "" || t.DataRoot == "") {
+	if t.Kind == machine.KindRemote && (t.Host == "" || t.DataRoot == "") {
 		return fmt.Errorf("netcompose: remote target needs a host and a data root")
 	}
 	w.state.Target = t

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
@@ -39,7 +39,7 @@ func TestWorkspace_NewPersist(t *testing.T) {
 	if st.Chain != "stablenet" || st.KeysDir != "keys/preset" {
 		t.Fatalf("state did not persist: %+v", st)
 	}
-	if st.Target.Kind != target.TargetLocal || st.Target.DataRoot != dir {
+	if st.Target.Kind != machine.KindLocal || st.Target.DataRoot != dir {
 		t.Fatalf("local target default wrong: %+v", st.Target)
 	}
 	if !st.Steps["new"].Done {
@@ -61,7 +61,7 @@ func TestWorkspace_Validation(t *testing.T) {
 	if _, err := netcompose.Open("", fixedClock()); err == nil {
 		t.Fatal("expected error for empty data dir")
 	}
-	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Target: target.TargetSpec{Kind: target.TargetRemote}}); err == nil {
+	if _, err := ws.New(netcompose.NewOpts{Chain: "stablenet", Target: machine.Spec{Kind: machine.KindRemote}}); err == nil {
 		t.Fatal("expected error for incomplete remote target")
 	}
 }

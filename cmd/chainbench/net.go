@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
@@ -65,19 +65,19 @@ func (f *targetFlags) bind(cmd *cobra.Command) {
 // spec builds a TargetSpec from the flags. --target wins; mixing it with the
 // legacy flags is ambiguous and refused. Secrets are never captured here —
 // they come from the environment when the target is resolved.
-func (f *targetFlags) spec() (target.TargetSpec, error) {
+func (f *targetFlags) spec() (machine.Spec, error) {
 	if f.target != "" {
 		if f.remoteHost != "" || f.remoteUser != "" || f.remotePort != 0 || f.targetDir != "" {
-			return target.TargetSpec{}, fmt.Errorf(
+			return machine.Spec{}, fmt.Errorf(
 				"--target and the legacy --remote-host/--remote-user/--remote-port/--target-dir flags cannot be mixed")
 		}
-		return target.ParseTarget(f.target)
+		return machine.Parse(f.target)
 	}
 	if f.remoteHost == "" {
-		return target.TargetSpec{Kind: target.TargetLocal, DataRoot: f.targetDir}, nil
+		return machine.Spec{Kind: machine.KindLocal, DataRoot: f.targetDir}, nil
 	}
-	return target.TargetSpec{
-		Kind: target.TargetRemote, Host: f.remoteHost, User: f.remoteUser,
+	return machine.Spec{
+		Kind: machine.KindRemote, Host: f.remoteHost, User: f.remoteUser,
 		Port: f.remotePort, DataRoot: f.targetDir,
 	}, nil
 }

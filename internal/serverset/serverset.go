@@ -26,9 +26,9 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
 // DefaultConfigFile is the server-set path used when --server-set is omitted.
@@ -702,7 +702,7 @@ func readSecretFile(path string) (string, error) {
 	return v, nil
 }
 
-// SetLookup returns a target.ServerLookup backed by the server set at
+// SetLookup returns a machine.Lookup backed by the server set at
 // path (empty uses DefaultConfigFile). It is how an srv://<name>/path target
 // gets its host, port and credentials without any of those appearing in a
 // command line, a spec file, or a persisted workspace.
@@ -710,7 +710,7 @@ func readSecretFile(path string) (string, error) {
 // The file is opened on each lookup rather than cached: a lookup happens once
 // per target, and an operator editing the server set mid-session should not have
 // to reason about which copy is in effect.
-func SetLookup(path string) target.ServerLookup {
+func SetLookup(path string) machine.Lookup {
 	return func(name string) (remote.Credentials, error) {
 		if path == "" {
 			path = DefaultConfigFile

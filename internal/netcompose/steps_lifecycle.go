@@ -8,11 +8,11 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/occupancy"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/engine"
 )
 
@@ -448,7 +448,7 @@ type owner struct {
 	pid  int
 }
 
-func (w *Workspace) startPhase(ctx context.Context, t *target.Target, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+func (w *Workspace) startPhase(ctx context.Context, t *machine.Access, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}

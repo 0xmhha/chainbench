@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/netcompose"
 )
 
@@ -42,7 +42,7 @@ type NetUpIn struct {
 	ManifestPath string
 	TemplatePath string
 	KeysDir      string
-	Target       target.TargetSpec
+	Target       machine.Spec
 	// Binary is the node executable. Required for UpStart; for a remote target
 	// it is a path on that host.
 	Binary string

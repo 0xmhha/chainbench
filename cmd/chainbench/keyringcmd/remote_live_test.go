@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -59,8 +59,8 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	spec := target.TargetSpec{
-		Kind: target.TargetRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench",
+	spec := machine.Spec{
+		Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench",
 	}
 	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
 	if err != nil {
@@ -177,7 +177,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	spec := target.TargetSpec{Kind: target.TargetRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench"}
+	spec := machine.Spec{Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench"}
 	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
 	if err != nil {
 		t.Fatal(err)

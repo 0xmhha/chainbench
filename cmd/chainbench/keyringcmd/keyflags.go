@@ -8,8 +8,8 @@ import (
 	"golang.org/x/term"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
-	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -138,14 +138,14 @@ func (f *SourceFlags) fromPath() (string, error) {
 // that store. Local, server set-named, and directly-addressed hosts all end up
 // here, so none of them can grow its own read.
 func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.FileStore, string, error) {
-	spec, err := target.ParseTarget(path)
+	spec, err := machine.Parse(path)
 	if err != nil {
 		return nil, "", err
 	}
-	if f.remoteUser != "" && spec.Kind == target.TargetRemote {
+	if f.remoteUser != "" && spec.Kind == machine.KindRemote {
 		spec.User = f.remoteUser
 	}
-	if f.remotePort != 0 && spec.Kind == target.TargetRemote {
+	if f.remotePort != 0 && spec.Kind == machine.KindRemote {
 		spec.Port = f.remotePort
 	}
 	t, err := spec.ResolveWith(env, serverset.SetLookup(f.serverSetPath()))

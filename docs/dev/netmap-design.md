@@ -350,7 +350,7 @@ keyring 때처럼 유스케이스는 `app` 에, 표면은 바인딩·렌더링�
 준다). `net pool` 은 자원의 **개수와 출처**를 말하되 인벤토리 경로 이상은 말하지 않는다.
 
 **netmap 이 소유하지 않는 것 — SSH 자격증명** (확정 2026-08-22). 접속 수단의 주인은 이미
-셋이다: `serverset`(인벤토리 읽기)·`core/remote`(전송)·`core/target`(해석). netmap 이 넷째가
+셋이다: `serverset`(인벤토리 읽기)·`core/remote`(전송)·`core/machine`(해석). netmap 이 넷째가
 되면 지금 없애려는 파편화를 재생산한다. 그리고 비밀이 대장 구조체에 섞이면 **대장 자체를
 출력·직렬화할 수 없게 된다** — `net map`·MCP 응답·세션 아티팩트가 전부 마스킹 대상이 된다.
 netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속이 필요한 순간

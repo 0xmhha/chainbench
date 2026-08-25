@@ -109,7 +109,7 @@ flowchart TD
 | `core/provision` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
 | `core/netmap` | **노드 배치의 소유자** — NodeLabel · 역할 정규화 · Map(정/역방향) ([[netmap-design]]) |
-| `core/target` | 단일 경로 문법 — 로컬/원격을 한 표기로 |
+| `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
 | `core/keyring` | **키 자료의 단일 소유자** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·백엔드·링·색인 |
