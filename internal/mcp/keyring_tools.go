@@ -30,9 +30,12 @@ func ringSchema(extra map[string]any) map[string]any {
 	props := map[string]any{
 		"keyringDir": map[string]any{
 			"type": "string",
-			"description": "ring directory; omit for " + app.DefaultRingDir +
+			"description": "ring directory; a plain path is the operator machine, srv://<server>/path " +
+				"places the ring on that server; omit for " + app.DefaultRingDir +
 				" or the " + app.RingEnv + " environment variable",
 		},
+		"serverConfig": map[string]any{"type": "string", "description": "server inventory file for srv:// paths"},
+		"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate dials via the localmap next to the inventory"},
 	}
 	maps.Copy(props, extra)
 	return map[string]any{"type": "object", "properties": props}
@@ -43,6 +46,7 @@ func ringRef(args map[string]any) app.RingRef {
 	return app.RingRef{
 		Dir:          argString(args, "keyringDir", ""),
 		ServerConfig: argString(args, "serverConfig", ""),
+		Docker:       argBool(args, "docker", false),
 	}
 }
 
@@ -150,30 +154,45 @@ func keyringImportTool() Tool {
 				"type":        "string",
 				"description": "key file path: /local/path | srv://<server>/path | [user@]host:path | ssh://user@host:port/path",
 			},
-			"password":     map[string]any{"type": "string", "description": "password for a keystore named by from"},
-			"mnemonic":     map[string]any{"type": "string", "description": "derive the key from a BIP-39 mnemonic (alternative to from)"},
-			"passphrase":   map[string]any{"type": "string", "description": "optional BIP-39 passphrase (with mnemonic)"},
-			"hdCoinType":   map[string]any{"type": "number", "description": "BIP-44 coin type for mnemonic (default 60)"},
-			"hdAccount":    map[string]any{"type": "number", "description": "BIP-44 account index for mnemonic"},
-			"hdChange":     map[string]any{"type": "number", "description": "BIP-44 change level for mnemonic (0 external, 1 internal)"},
-			"hdIndex":      map[string]any{"type": "number", "description": "BIP-44 address index for mnemonic"},
-			"withBls":      map[string]any{"type": "boolean", "description": "also derive BLS material"},
+			"password":   map[string]any{"type": "string", "description": "password for a keystore named by from"},
+			"mnemonic":   map[string]any{"type": "string", "description": "derive the key from a BIP-39 mnemonic (alternative to from)"},
+			"passphrase": map[string]any{"type": "string", "description": "optional BIP-39 passphrase (with mnemonic)"},
+			"hdCoinType": map[string]any{"type": "number", "description": "BIP-44 coin type for mnemonic (default 60)"},
+			"hdAccount":  map[string]any{"type": "number", "description": "BIP-44 account index for mnemonic"},
+			"hdChange":   map[string]any{"type": "number", "description": "BIP-44 change level for mnemonic (0 external, 1 internal)"},
+			"hdIndex":    map[string]any{"type": "number", "description": "BIP-44 address index for mnemonic"},
+			"withBls":    map[string]any{"type": "boolean", "description": "also derive BLS material"},
+			"expectAddress": map[string]any{
+				"type":        "string",
+				"description": "refuse the import unless the key derives exactly this address",
+			},
+			"fromRing": map[string]any{
+				"type": "string",
+				"description": "clone a whole ring instead of one key (same path syntax as keyringDir); " +
+					"labels and the validator declaration are copied, every entry verified against the source index",
+			},
 			"serverConfig": map[string]any{"type": "string", "description": "inventory file for an srv:// source"},
 			"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate this dial via the localmap next to the inventory"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			e, err := app.KeyringImport(ctx, app.Deps{}, app.RingImportIn{
+			in := app.RingImportIn{
 				Ring: ringRef(args), Label: argString(args, "name", ""),
 				From: argString(args, "from", ""), Password: argString(args, "password", ""),
-				Mnemonic:   argString(args, "mnemonic", ""),
-				Passphrase: argString(args, "passphrase", ""),
-				HDCoinType: uint32(argInt(args, "hdCoinType", 0)),
-				HDAccount:  uint32(argInt(args, "hdAccount", 0)),
-				HDChange:   uint32(argInt(args, "hdChange", 0)),
-				HDIndex:    uint32(argInt(args, "hdIndex", 0)),
-				WithBLS:    argBool(args, "withBls", false),
-				Docker:     argBool(args, "docker", false),
-			})
+				Mnemonic:      argString(args, "mnemonic", ""),
+				Passphrase:    argString(args, "passphrase", ""),
+				HDCoinType:    uint32(argInt(args, "hdCoinType", 0)),
+				HDAccount:     uint32(argInt(args, "hdAccount", 0)),
+				HDChange:      uint32(argInt(args, "hdChange", 0)),
+				HDIndex:       uint32(argInt(args, "hdIndex", 0)),
+				WithBLS:       argBool(args, "withBls", false),
+				Docker:        argBool(args, "docker", false),
+				ExpectAddress: argString(args, "expectAddress", ""),
+				FromRing:      argString(args, "fromRing", ""),
+			}
+			if in.FromRing != "" {
+				return renderRing(app.KeyringImportRing(ctx, app.Deps{}, in))
+			}
+			e, err := app.KeyringImport(ctx, app.Deps{}, in)
 			if err != nil {
 				return "", err
 			}

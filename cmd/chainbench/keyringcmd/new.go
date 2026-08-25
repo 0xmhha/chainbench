@@ -104,7 +104,7 @@ type ringCreateFunc func(context.Context, app.Deps, app.RingCreateIn) (app.RingO
 // which function they call, not in what they print.
 func runRingCreate(cmd *cobra.Command, use ringCreateFunc, mk *makeFlags) error {
 	out := cmd.OutOrStdout()
-	r, err := use(cmd.Context(), app.Deps{}, mk.in(cmd))
+	r, err := use(cmd.Context(), deps(cmd), mk.in(cmd))
 	if mk.jsonF.on {
 		if err != nil {
 			return err

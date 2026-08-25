@@ -14,9 +14,11 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
+	"strings"
 )
 
 // DefaultRingDir is the ring a caller gets when it names none, and RingEnv
@@ -35,6 +37,10 @@ type RingRef struct {
 	// ServerConfig is the inventory consulted for an srv:// source; empty uses
 	// the default inventory file.
 	ServerConfig string
+	// Docker treats the ring's server as a local docker container: the dial is
+	// translated through the localmap next to the inventory. The flag is the
+	// power switch; a leftover mapping file alone activates nothing.
+	Docker bool
 }
 
 // resolve returns the ring directory and where that choice came from.
@@ -52,6 +58,36 @@ func (r RingRef) resolve(env func(string) string) (dir, source string) {
 		}
 	}
 	return DefaultRingDir, "default"
+}
+
+// open resolves the ring to a file store and a directory on it. A plain path
+// is this machine; the target syntax (srv://<server>/path, user@host:/path,
+// ssh://…) places the ring on a server through the same seam provision uses.
+// Before this, a remote-looking ring path was treated as a local directory
+// NAME — a ring created "on the server" landed silently on the operator's
+// machine, which is worse than a refusal.
+func (r RingRef) open(d Deps) (files provision.FileStore, dir, source string, err error) {
+	dir, source = r.resolve(d.env())
+	spec, err := target.ParseTarget(dir)
+	if err != nil {
+		return nil, dir, source, err
+	}
+	if !spec.IsRemote() {
+		return provision.LocalFileStore{}, dir, source, nil
+	}
+	var m remote.AddrMap
+	if r.Docker {
+		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(r.ServerConfig))
+		if err != nil {
+			return nil, dir, source, err
+		}
+		m = lm.AddrMap(func(from, to string) { d.logf("docker: dialing %s as %s", from, to) })
+	}
+	tgt, err := spec.ResolveWithMap(d.env(), serverset.InventoryLookup(r.ServerConfig), m)
+	if err != nil {
+		return nil, dir, source, err
+	}
+	return tgt.Files, tgt.DataRoot, source, nil
 }
 
 // RingOut reports which ring a use case acted on, and what it holds afterwards.
@@ -102,23 +138,42 @@ type RingCreateIn struct {
 }
 
 // KeyringNew creates a ring of fresh identities.
-func KeyringNew(_ context.Context, d Deps, in RingCreateIn) (RingOut, error) {
-	dir, source := in.Ring.resolve(d.env())
-	set, err := keyring.Generate(in.opts(dir), nil)
+func KeyringNew(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
+	files, dir, source, err := in.Ring.open(d)
 	if err != nil {
-		return RingOut{Dir: dir, Source: source}, err
+		return RingOut{Dir: in.Ring.Dir, Source: source}, err
 	}
-	return ringOut(dir, source, set), nil
+	opts := in.opts(dir)
+	opts.Files = files
+	set, err := keyring.GenerateAt(ctx, opts, nil)
+	if err != nil {
+		return RingOut{Dir: displayRing(in.Ring, dir), Source: source}, err
+	}
+	return ringOut(displayRing(in.Ring, dir), source, set), nil
 }
 
 // KeyringAdd adds identities to a ring that already exists.
-func KeyringAdd(_ context.Context, d Deps, in RingCreateIn) (RingOut, error) {
-	dir, source := in.Ring.resolve(d.env())
-	set, err := keyring.Extend(in.opts(dir), nil)
+func KeyringAdd(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
+	files, dir, source, err := in.Ring.open(d)
 	if err != nil {
-		return RingOut{Dir: dir, Source: source}, err
+		return RingOut{Dir: in.Ring.Dir, Source: source}, err
 	}
-	return ringOut(dir, source, set), nil
+	opts := in.opts(dir)
+	opts.Files = files
+	set, err := keyring.ExtendAt(ctx, opts, nil)
+	if err != nil {
+		return RingOut{Dir: displayRing(in.Ring, dir), Source: source}, err
+	}
+	return ringOut(displayRing(in.Ring, dir), source, set), nil
+}
+
+// displayRing is what a report calls the ring: the spelling the operator gave
+// (srv://server1/path) rather than the bare on-target path it resolved to.
+func displayRing(ref RingRef, resolved string) string {
+	if ref.Dir != "" && ref.Dir != resolved {
+		return ref.Dir
+	}
+	return resolved
 }
 
 // opts renders the generation options.
@@ -148,8 +203,8 @@ type RingListIn struct {
 }
 
 // KeyringList reports what a ring holds.
-func KeyringList(_ context.Context, d Deps, in RingListIn) (RingOut, error) {
-	dir, source, set, err := openRing(in.Ring, d)
+func KeyringList(ctx context.Context, d Deps, in RingListIn) (RingOut, error) {
+	dir, source, set, err := openRing(ctx, in.Ring, d)
 	if err != nil {
 		return RingOut{Dir: dir, Source: source}, err
 	}
@@ -171,8 +226,8 @@ type RingEntryIn struct {
 }
 
 // KeyringShow reports one identity's public material.
-func KeyringShow(_ context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
-	_, _, set, err := openRing(in.Ring, d)
+func KeyringShow(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
+	_, _, set, err := openRing(ctx, in.Ring, d)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -188,12 +243,12 @@ func KeyringShow(_ context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
 // It is a separate use case from Show rather than a flag on it, so that
 // disclosing a secret is a call a reader can find, and so a surface can offer
 // one without offering the other.
-func KeyringExport(_ context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
-	out, err := KeyringShow(context.Background(), d, in)
+func KeyringExport(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
+	out, err := KeyringShow(ctx, d, in)
 	if err != nil {
 		return EntryOut{}, err
 	}
-	_, _, set, err := openRing(in.Ring, d)
+	_, _, set, err := openRing(ctx, in.Ring, d)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -236,11 +291,26 @@ type RingImportIn struct {
 	// The flag is the power switch — a leftover mapping file alone activates
 	// nothing, and the flag without the file is an error.
 	Docker bool
+	// ExpectAddress, when set, is the address the imported key must derive;
+	// a mismatch is refused before anything is written. It is how a caller
+	// who knows what the key should be makes the transfer prove it.
+	ExpectAddress string
+	// FromRing imports a whole ring instead of one key: every identity with
+	// its label, and the network declaration (validators, BLS set, alloc).
+	// Each entry is verified against the source index before anything is
+	// written. Mutually exclusive with the single-key origins and Label.
+	FromRing string
 }
 
 // KeyringImport writes an existing key into a ring's index.
 func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, error) {
-	dir, _ := in.Ring.resolve(d.env())
+	if in.FromRing != "" {
+		return EntryOut{}, fmt.Errorf("app: a whole-ring import returns a ring — use KeyringImportRing")
+	}
+	files, dir, _, err := in.Ring.open(d)
+	if err != nil {
+		return EntryOut{}, err
+	}
 	src, err := in.source(d, in.Ring.ServerConfig)
 	if err != nil {
 		return EntryOut{}, err
@@ -253,11 +323,51 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 	if in.WithBLS {
 		derive = keyring.WithBLS
 	}
-	e, err := keyring.Import(dir, keyring.Label(in.Label), key, derive)
+	if in.ExpectAddress != "" {
+		id, err := keyring.Derive(key, keyring.AccountOnly)
+		if err != nil {
+			return EntryOut{}, err
+		}
+		if !strings.EqualFold(id.Address, in.ExpectAddress) {
+			return EntryOut{}, fmt.Errorf("app: the key derives %s, not the expected %s — refusing to import a different identity",
+				id.Address, in.ExpectAddress)
+		}
+	}
+	e, err := keyring.ImportAt(ctx, files, dir, keyring.Label(in.Label), key, derive)
 	if err != nil {
 		return EntryOut{}, err
 	}
 	return entryOut(e, nil), nil
+}
+
+// KeyringImportRing clones a whole ring named by in.FromRing (a local path or
+// target syntax) into in.Ring: every identity with its label, and the network
+// declaration. Each entry is verified against the source index before anything
+// is written — the key must still derive the address, devp2p key and BLS
+// material the index records — so a transfer that changed anything is refused
+// whole rather than materialized broken.
+func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, error) {
+	if in.FromRing == "" {
+		return RingOut{}, fmt.Errorf("app: import-ring needs --from-ring")
+	}
+	srcRef := RingRef{Dir: in.FromRing, ServerConfig: in.Ring.ServerConfig, Docker: in.Docker || in.Ring.Docker}
+	srcFiles, srcDir, _, err := srcRef.open(d)
+	if err != nil {
+		return RingOut{}, err
+	}
+	srcSet, err := keyring.LoadPresetAt(ctx, srcFiles, srcDir)
+	if err != nil {
+		return RingOut{}, fmt.Errorf("app: import-ring: read source %s: %w", in.FromRing, err)
+	}
+	dstFiles, dstDir, source, err := in.Ring.open(d)
+	if err != nil {
+		return RingOut{}, err
+	}
+	set, err := keyring.ImportRing(ctx, dstFiles, dstDir, srcSet, in.Password)
+	if err != nil {
+		return RingOut{Dir: displayRing(in.Ring, dstDir), Source: source}, err
+	}
+	return ringOut(displayRing(in.Ring, dstDir), source, set), nil
 }
 
 // source turns the ways of naming a key into one keyring.Source. Where a file
@@ -318,9 +428,13 @@ func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) 
 
 // openRing resolves and loads a ring, naming the source in the error so that a
 // missing default ring is not a mystery.
-func openRing(ref RingRef, d Deps) (dir, source string, set keyring.Preset, err error) {
-	dir, source = ref.resolve(d.env())
-	set, err = keyring.LoadPreset(dir)
+func openRing(ctx context.Context, ref RingRef, d Deps) (dir, source string, set keyring.Preset, err error) {
+	files, dir, source, err := ref.open(d)
+	if err != nil {
+		return displayRing(ref, dir), source, keyring.Preset{}, err
+	}
+	set, err = keyring.LoadPresetAt(ctx, files, dir)
+	dir = displayRing(ref, dir)
 	if err != nil {
 		return dir, source, keyring.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
 	}

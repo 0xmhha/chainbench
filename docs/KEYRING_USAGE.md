@@ -25,13 +25,18 @@
 
 - **파생값은 저장하지 않는다.** 주소·BLS·extraData 는 비밀키에서 매번 파생한다.
   `--verify` 가 그 일치를 검사한다.
-- 링은 항상 **운영자 머신(control plane)** 에 있다. 서버(data plane)로는
-  `net provision` 이 필요한 파일만 배송한다 — 링을 서버에 두는 verb 는 없다(의도).
+- 링의 기본 위치는 **운영자 머신**이다. `--keyring-dir` 에 target 문법을 쓰면
+  **서버 위에 링을 만들 수도 있다**: `srv://server1/data/chainbench/ring` 처럼
+  지정하면 생성·조회·가져오기 전부 그 서버의 경로에서 일어난다(파일 seam 경유,
+  docker 함대에서는 `--docker` 와 함께). 네트워크 기동용 배송은 여전히
+  `net provision` 의 몫이다.
 - 체인 바이너리는 전혀 필요 없다. BLS 파생까지 인프로세스다.
 
 ## 2. 어느 링을 쓰는가
 
 우선순위: `--keyring-dir <dir>` > 환경변수 `CHAINBENCH_KEYRING` > 기본값 `./keys/default`.
+경로는 로컬 디렉토리 또는 target 문법(`srv://<서버>/경로`, `user@host:/경로`)이다 —
+서버 경로면 `--server-config`(인벤토리)와, docker 함대라면 `--docker` 를 함께 쓴다.
 모든 명령이 첫 줄에 **어떤 링을 왜 골랐는지** 보고하므로 경로를 추측할 일이 없다.
 
 ```
@@ -94,7 +99,7 @@ bin/chainbench keyring export --keyring-dir /tmp/r --name node1 --yes
 | 16진 비밀키 | `--private-key 0x…` |
 | BIP-39 니모닉 | `--mnemonic "word × 12/24" [--passphrase w25] [--hd-coin-type 60] [--hd-account 0] [--hd-change 0] [--hd-index 0]` |
 | 로컬 파일 | `--from /path/key` — raw hex 또는 키스토어 JSON(`--password` 필요) |
-| 인벤토리 서버 | `--from srv://server1/data/…/nodekey [--server-config <파일>]` |
+| 인벤토리 서버 | `--from srv://server1/data/…/nodekey` (`--server-config` 는 모든 동사 공통 플래그) |
 | 직접 호스트 | `--from user@10.0.0.7:/path/key` 또는 `ssh://user@host:port/path` |
 
 ```
@@ -107,6 +112,28 @@ bin/chainbench keyring import --keyring-dir /tmp/r --name hd0 \
 - 니모닉의 표준 파생(m/44'/60'/0'/0/0)은 개발용 니모닉 → `0xf39F…92266` 골든
   벡터로 고정되어 있다. `--hd-coin-type` 을 바꾸면 다른 키가 나온다(체인 등록
   코인타입 사용 시 필수).
+- `--expect-address 0x…` 를 주면 가져온 키가 **정확히 그 주소를 파생하는지**
+  먼저 확인하고, 다르면 아무것도 쓰지 않고 거부한다. 어떤 키여야 하는지 아는
+  호출자가 전송 무결성을 증명시키는 방법이다.
+
+### import --from-ring — 링 전체를 통째로
+
+단건 대신 **링 전체**를 복제한다. 경로 문법은 `--keyring-dir` 와 같다
+(로컬 경로, `srv://server1/…`, `user@host:/…`).
+
+```
+bin/chainbench keyring import --keyring-dir ./keys/pulled \
+    --from-ring srv://server1/data/chainbench/ring \
+    --server-config env/docker/build/remote-server-config.yaml --docker
+```
+
+| 항목 | 동작 |
+|---|---|
+| 신원 | 라벨·순번 그대로 전부 복제 |
+| validator 선언 | 원본의 선언(BLS 목록·alloc 포함)을 그대로 가져온다 — 단건 N회 복제와 달리 잃지 않는다 |
+| 무결성 | 항목마다 키에서 주소·공개키·BLS 를 **재파생해 원본 인덱스와 대조**하고, 하나라도 다르면 전체를 거부한다 |
+| 비밀번호 | 기본은 원본 링의 것을 유지, `--password` 로 재암호화 |
+| 목적지 | 이미 링이 있으면 거부 (new 와 같은 규칙) |
 
 ## 4. 원격에서 가져오기 — 접속은 환경이 결정한다
 
@@ -215,6 +242,8 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 | B3 | 키스토어 파일을 server1 에 두고 `--from srv://… --password 1` | 같은 주소 복원 | Live_…KeystoreFromAServer |
 | B4 | B2 명령에서 `--docker` 만 제거 | 실주소(172.30.0.x)로 dial 하다 timeout | (설계 증명 — 수동) |
 | B5 | `--docker` 인데 localmap 삭제 | 생성 방법을 안내하는 오류 | DockerNeedsTheLocalmap |
+| B6 | `keyring new --keyring-dir srv://server1/<경로> --docker --count 2 --with-bls` → `list --verify` | 서버 위에 링 생성(치환 보고 출력), 원격 검증 통과. `--docker` 를 빼면 실주소 dial | Live_…CreatesARingOnAServer |
+| B7 | `import --from-ring srv://server1/<경로> --docker` 로 서버 링을 로컬로 | 라벨·validator 선언 그대로, 항목별 재파생 대조 후 기록. 원본 인덱스를 1바이트 변조하면 전체 거부 | Live_…ClonesARingFromAServer, …Import_FromRing |
 
 C. **net 과의 결합**(참고): `net up --keys <ring> --keys-source generate --server server1
 --docker` 가 링 생성→배송→기동까지 잇는다. R4 라이브로 검증된 경로다.

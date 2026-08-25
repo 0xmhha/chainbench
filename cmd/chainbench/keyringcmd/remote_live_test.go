@@ -3,6 +3,7 @@ package keyringcmd_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -134,6 +135,111 @@ func addressOf(t *testing.T, ring, name string) string {
 	out, err := run(t, "keyring", "show", "--keyring-dir", ring, "--name", name, "--json")
 	if err != nil {
 		t.Fatalf("keyring show: %v\n%s", err, out)
+	}
+	var e app.EntryOut
+	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	return e.Address
+}
+
+// TestLive_KeyringCreatesARingOnAServer pins the remote ring end to end: a
+// ring named srv://server1/... is created ON the server through the file
+// seam, its files land there (checked through the same remote stack), and it
+// reads back and verifies remotely — the same contracts the local ring
+// holds, at a different location. The path is per-process so reruns never
+// collide with a leftover index.
+func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
+	build := fleetBuildDir(t)
+	inv := filepath.Join(build, "remote-server-config.yaml")
+	onServer := fmt.Sprintf("/data/chainbench/live-ring-%d", os.Getpid())
+	ring := "srv://server1" + onServer
+
+	out, err := run(t, "keyring", "new", "--keyring-dir", ring, "--server-config", inv, "--docker",
+		"--count", "2", "--with-bls")
+	if err != nil {
+		t.Fatalf("remote ring new: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "docker: dialing") {
+		t.Errorf("the applied translation was not reported:\n%s", out)
+	}
+
+	// The key material exists ON the server, checked through the same stack.
+	cfg, err := serverset.Load(inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, err := cfg.ByName("server1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec := target.TargetSpec{Kind: target.TargetRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench"}
+	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	exists, err := tgt.Files.Exists(context.Background(), onServer+"/node1/nodekey")
+	if err != nil || !exists {
+		t.Fatalf("node1 nodekey not on the server (exists=%v err=%v)", exists, err)
+	}
+
+	// Read back and verify remotely: derivation must match what was written.
+	if out, err := run(t, "keyring", "list", "--keyring-dir", ring, "--server-config", inv, "--docker", "--verify"); err != nil {
+		t.Fatalf("remote list --verify: %v\n%s", err, out)
+	}
+}
+
+// TestLive_KeyringClonesARingFromAServer pins the whole-ring pull: a ring is
+// created ON the server, then --from-ring clones it here in one command —
+// labels intact, validator declaration carried, and every entry verified
+// against the server's index before anything lands locally.
+func TestLive_KeyringClonesARingFromAServer(t *testing.T) {
+	build := fleetBuildDir(t)
+	inv := filepath.Join(build, "remote-server-config.yaml")
+	onServer := fmt.Sprintf("/data/chainbench/live-clone-src-%d", os.Getpid())
+	remote := "srv://server1" + onServer
+
+	out, err := run(t, "keyring", "new", "--keyring-dir", remote, "--server-config", inv, "--docker",
+		"--count", "3", "--validators", "2", "--with-bls")
+	if err != nil {
+		t.Fatalf("seed remote ring: %v\n%s", err, out)
+	}
+
+	local := filepath.Join(t.TempDir(), "pulled")
+	out, err = run(t, "keyring", "import", "--keyring-dir", local,
+		"--from-ring", remote, "--server-config", inv, "--docker")
+	if err != nil {
+		t.Fatalf("clone from server: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "docker: dialing") {
+		t.Errorf("the applied translation was not reported:\n%s", out)
+	}
+	if !strings.Contains(out, "2 validators") {
+		t.Errorf("validator declaration did not travel:\n%s", out)
+	}
+
+	// Same identities on both sides, and the local copy self-verifies.
+	for _, name := range []string{"node1", "node2", "node3"} {
+		want := addressOfRemote(t, remote, inv, name)
+		if got := addressOf(t, local, name); !strings.EqualFold(got, want) {
+			t.Errorf("%s: local %s != remote %s", name, got, want)
+		}
+	}
+	if out, err := run(t, "keyring", "list", "--keyring-dir", local, "--verify"); err != nil {
+		t.Fatalf("local verify after clone: %v\n%s", err, out)
+	}
+}
+
+func addressOfRemote(t *testing.T, ring, inv, name string) string {
+	t.Helper()
+	out, err := run(t, "keyring", "show", "--keyring-dir", ring, "--server-config", inv, "--docker",
+		"--name", name, "--json")
+	if err != nil {
+		t.Fatalf("remote keyring show: %v\n%s", err, out)
 	}
 	var e app.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {

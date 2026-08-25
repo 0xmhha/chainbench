@@ -95,3 +95,95 @@ func TestKeyringImport_ServerNameComesFromInventory(t *testing.T) {
 		t.Fatalf("expected an inventory-not-found error, got %v", err)
 	}
 }
+
+// TestKeyringImport_FromRing pins the whole-ring clone: labels and the
+// validator declaration travel with the keys, a tampered source index is
+// refused whole, and --from-ring cannot be mixed with single-key flags.
+func TestKeyringImport_FromRing(t *testing.T) {
+	src := filepath.Join(t.TempDir(), "src")
+	if _, err := run(t, "keyring", "new", "--keyring-dir", src, "--count", "3", "--validators", "2"); err != nil {
+		t.Fatalf("seed source ring: %v", err)
+	}
+
+	t.Run("clone carries the declaration", func(t *testing.T) {
+		dst := filepath.Join(t.TempDir(), "dst")
+		out, err := run(t, "keyring", "import", "--keyring-dir", dst, "--from-ring", src)
+		if err != nil {
+			t.Fatalf("clone: %v", err)
+		}
+		for _, want := range []string{"node1", "node2", "node3", "2 validators"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("clone output lost %q:\n%s", want, out)
+			}
+		}
+		if lst, err := run(t, "keyring", "list", "--keyring-dir", dst, "--verify"); err != nil {
+			t.Errorf("cloned ring fails verification: %v\n%s", lst, err)
+		}
+	})
+
+	t.Run("refuses a single-key flag alongside", func(t *testing.T) {
+		dst := filepath.Join(t.TempDir(), "dst")
+		if _, err := run(t, "keyring", "import", "--keyring-dir", dst, "--from-ring", src, "--name", "x"); err == nil {
+			t.Fatal("accepted --from-ring with --name")
+		}
+	})
+
+	t.Run("refuses a tampered source", func(t *testing.T) {
+		bad := filepath.Join(t.TempDir(), "bad")
+		if _, err := run(t, "keyring", "new", "--keyring-dir", bad, "--count", "1"); err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+		meta := filepath.Join(bad, "metadata.json")
+		raw, err := os.ReadFile(meta)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Flip the recorded address so the key no longer derives it.
+		tampered := strings.Replace(string(raw), `"address": "0x`, `"address": "0xdead`, 1)
+		if tampered == string(raw) {
+			t.Fatal("tamper did not apply")
+		}
+		if err := os.WriteFile(meta, []byte(tampered), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		dst := filepath.Join(t.TempDir(), "dst")
+		if _, err := run(t, "keyring", "import", "--keyring-dir", dst, "--from-ring", bad); err == nil {
+			t.Fatal("cloned a ring whose index does not match its keys")
+		}
+	})
+}
+
+// TestKeyringImport_ExpectAddress pins the single-key integrity gate: the
+// caller states what the key must be, and a different key is refused.
+func TestKeyringImport_ExpectAddress(t *testing.T) {
+	src := filepath.Join(t.TempDir(), "src")
+	if _, err := run(t, "keyring", "new", "--keyring-dir", src, "--count", "1"); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	show, err := run(t, "keyring", "show", "--keyring-dir", src, "--name", "node1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var addr string
+	for _, line := range strings.Split(show, "\n") {
+		if i := strings.Index(line, "0x"); i >= 0 && strings.Contains(line, "address") {
+			addr = strings.TrimSpace(line[i:])
+			break
+		}
+	}
+	if addr == "" {
+		t.Fatalf("no address in show output:\n%s", show)
+	}
+	keyfile := filepath.Join(src, "node1", "nodekey")
+
+	dst := filepath.Join(t.TempDir(), "dst")
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dst, "--name", "a",
+		"--from", keyfile, "--expect-address", addr); err != nil {
+		t.Fatalf("matching expect-address refused: %v", err)
+	}
+	wrong := "0x" + strings.Repeat("11", 20)
+	if _, err := run(t, "keyring", "import", "--keyring-dir", dst, "--name", "b",
+		"--from", keyfile, "--expect-address", wrong); err == nil {
+		t.Fatal("imported a key that derives a different address than expected")
+	}
+}

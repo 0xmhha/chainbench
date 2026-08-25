@@ -43,28 +43,38 @@ func New() *cobra.Command {
 	return c
 }
 
-// ringFlags name the ring a command works on.
+// ringFlags name the ring a command works on. The ring may live on a server
+// (srv://<server>/path in --keyring-dir), so the inventory and the docker
+// translation are part of naming it — on every verb, not just import.
 type ringFlags struct {
 	dir          string
 	serverConfig string
+	docker       bool
 }
 
 func (f *ringFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.dir, "keyring-dir", "",
-		"ring directory — identities are created in and read from here (default "+
+		"ring directory — identities are created in and read from here; a plain path is this machine, "+
+			"srv://<server>/path places the ring on that server (default "+
 			app.DefaultRingDir+", or "+app.RingEnv+")")
-}
-
-// bindWithInventory adds the inventory flag, for the commands that can read a
-// key from a host named in it.
-func (f *ringFlags) bindWithInventory(cmd *cobra.Command) {
-	f.bind(cmd)
 	cmd.Flags().StringVar(&f.serverConfig, "server-config", "",
-		"server inventory file for an srv:// source")
+		"server inventory file for srv:// paths")
+	cmd.Flags().BoolVar(&f.docker, "docker", false,
+		"the server is a local docker container: translate this tool's dials via the localmap next to the inventory (addresses only — docker itself is not touched)")
 }
 
 func (f *ringFlags) ref() app.RingRef {
-	return app.RingRef{Dir: f.dir, ServerConfig: f.serverConfig}
+	return app.RingRef{Dir: f.dir, ServerConfig: f.serverConfig, Docker: f.docker}
+}
+
+// deps is the Deps every keyring verb runs with: operational side notes —
+// today, the dial translations --docker applies — print as they happen, so a
+// remote ring is never reached silently.
+func deps(cmd *cobra.Command) app.Deps {
+	out := cmd.OutOrStdout()
+	return app.Deps{Logf: func(format string, args ...any) {
+		fmt.Fprintf(out, format+"\n", args...)
+	}}
 }
 
 // announce prints which ring was used and why, before anything else, so the
