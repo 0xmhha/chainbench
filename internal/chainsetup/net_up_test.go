@@ -1,16 +1,16 @@
-package app_test
+package chainsetup_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+
 	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// NetUp is the whole point of the step stack replacing the setup stack: one
+// chainsetup.NetUp is the whole point of the step stack replacing the setup stack: one
 // call has to compose what nine hand-run steps do. These cover the composition
 // half — everything up to (not including) launching processes, which needs a
 // real node binary.
@@ -22,14 +22,14 @@ func TestNetUp_ProvisionStageComposesEverything(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out, err := app.NetUp(context.Background(), app.Deps{Clock: fixedClock}, app.NetUpIn{
-		DataDir: dir, Stage: app.UpProvision,
+	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
+		DataDir: dir, Stage: chainsetup.UpProvision,
 		Chain: "stablenet", KeysDir: keysAbs,
 		Validators: 2, Endpoints: 1,
 		LaunchSet: []string{"networkid=4242"},
 	})
 	if err != nil {
-		t.Fatalf("NetUp: %v", err)
+		t.Fatalf("chainsetup.NetUp: %v", err)
 	}
 
 	// Every composition step ran, in order, and each recorded something.
@@ -59,7 +59,7 @@ func TestNetUp_ProvisionStageComposesEverything(t *testing.T) {
 		}
 	}
 	// The launch override reached the assembled argv.
-	st := stateOf(t, dir, app.Deps{Clock: fixedClock})
+	st := stateOf(t, dir, chainsetup.Deps{Clock: fixedClock()})
 	if !strings.Contains(strings.Join(st.Nodes[0].Args, " "), "4242") {
 		t.Errorf("launch override missing from argv: %v", st.Nodes[0].Args)
 	}
@@ -69,14 +69,14 @@ func TestNetUp_CarriesTheGenesisAndLayoutCustomizations(t *testing.T) {
 	dir := t.TempDir()
 	keysAbs, _ := filepath.Abs(presetDir)
 
-	out, err := app.NetUp(context.Background(), app.Deps{Clock: fixedClock}, app.NetUpIn{
-		DataDir: dir, Stage: app.UpProvision,
+	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
+		DataDir: dir, Stage: chainsetup.UpProvision,
 		Chain: "stablenet", KeysDir: keysAbs,
 		Validators: 2, Endpoints: 1, EndpointSyncMode: "snap",
 		ChainID: 7777, GenesisSet: []string{"bohoBlock=10"},
 	})
 	if err != nil {
-		t.Fatalf("NetUp: %v", err)
+		t.Fatalf("chainsetup.NetUp: %v", err)
 	}
 	cfg := genesisConfig(t, filepath.Join(dir, "genesis.json"))
 	if cfg["chainId"] != float64(7777) || cfg["bohoBlock"] != float64(10) {
@@ -85,7 +85,7 @@ func TestNetUp_CarriesTheGenesisAndLayoutCustomizations(t *testing.T) {
 	if !hasCapability(out.Nodes.Nodes.Capabilities, "delayed-boho") {
 		t.Errorf("capabilities = %v, want delayed-boho", out.Nodes.Nodes.Capabilities)
 	}
-	st := stateOf(t, dir, app.Deps{Clock: fixedClock})
+	st := stateOf(t, dir, chainsetup.Deps{Clock: fixedClock()})
 	if st.Nodes[2].SyncMode != "snap" {
 		t.Errorf("endpoint sync mode = %q, want snap", st.Nodes[2].SyncMode)
 	}
@@ -94,7 +94,7 @@ func TestNetUp_CarriesTheGenesisAndLayoutCustomizations(t *testing.T) {
 func TestNetUp_StartStageNeedsABinary(t *testing.T) {
 	// The stage that runs processes cannot guess the executable, and for a
 	// remote target it would not be a local path anyway.
-	_, err := app.NetUp(context.Background(), app.Deps{Clock: fixedClock}, app.NetUpIn{
+	_, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
 		DataDir: t.TempDir(), Chain: "stablenet", Validators: 1,
 	})
 	if err == nil {
@@ -111,8 +111,8 @@ func TestNetUp_StopsAtTheFirstFailingStepAndReportsProgress(t *testing.T) {
 	dir := t.TempDir()
 	keysAbs, _ := filepath.Abs(presetDir)
 
-	out, err := app.NetUp(context.Background(), app.Deps{Clock: fixedClock}, app.NetUpIn{
-		DataDir: dir, Stage: app.UpProvision,
+	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
+		DataDir: dir, Stage: chainsetup.UpProvision,
 		Chain: "stablenet", KeysDir: keysAbs, Validators: 2,
 		GenesisSet: []string{"malformed-no-value"},
 	})
@@ -129,7 +129,7 @@ func TestNetUp_StopsAtTheFirstFailingStepAndReportsProgress(t *testing.T) {
 }
 
 func TestNetUp_RejectsAnUnknownStage(t *testing.T) {
-	_, err := app.NetUp(context.Background(), app.Deps{Clock: fixedClock}, app.NetUpIn{
+	_, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
 		DataDir: t.TempDir(), Stage: "halfway", Chain: "stablenet",
 	})
 	if err == nil {
@@ -138,7 +138,7 @@ func TestNetUp_RejectsAnUnknownStage(t *testing.T) {
 }
 
 func TestNetUp_NeedsAWorkspaceDirectory(t *testing.T) {
-	if _, err := app.NetUp(context.Background(), app.Deps{}, app.NetUpIn{Chain: "stablenet"}); err == nil {
+	if _, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{}, chainsetup.NetUpIn{Chain: "stablenet"}); err == nil {
 		t.Error("want an error without a data dir")
 	}
 }

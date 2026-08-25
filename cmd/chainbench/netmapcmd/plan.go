@@ -3,6 +3,8 @@ package netmapcmd
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -14,7 +16,7 @@ func newPlanCmd() *cobra.Command {
 	var chain string
 	var validators, endpoints int
 	var asJSON bool
-	var sf serverFlags
+	var sf serverflag.Flags
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "Compute the placement a network of this shape would get, without composing it",
@@ -25,7 +27,7 @@ func newPlanCmd() *cobra.Command {
 			"Nothing is written: no workspace, no files on any server.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out, err := app.NetPlan(cmd.Context(), deps(cmd), app.NetPlanIn{
-				Chain: chain, Validators: validators, Endpoints: endpoints, Server: sf.ref(),
+				Chain: chain, Validators: validators, Endpoints: endpoints, Server: sf.Ref(),
 			})
 			if err != nil {
 				return err
@@ -41,6 +43,6 @@ func newPlanCmd() *cobra.Command {
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the plan as JSON")
-	sf.bind(cmd)
+	sf.Bind(cmd)
 	return cmd
 }

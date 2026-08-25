@@ -1,15 +1,14 @@
-package main
+package netcmd
 
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // newNetCmd is the composable step surface: it composes a chain network for
@@ -20,6 +19,30 @@ import (
 // The workspace (control state) is always local; a step's files/processes live
 // on the target — this machine or a remote SSH host — selected once at `net new`
 // (see targetFlags). Subcommands live in the net_*.go files.
+// New builds the net command group.
+func New() *cobra.Command { return newNetCmd() }
+
+// deps is what every net verb hands the chainsetup module: the operator's
+// command line for the workspace lock's owner note, and side notes to stderr.
+func deps(cmd *cobra.Command) chainsetup.Deps {
+	err := cmd.ErrOrStderr()
+	return chainsetup.Deps{
+		Command: commandLine(cmd),
+		Report: func(format string, args ...any) {
+			fmt.Fprintf(err, format+"\n", args...)
+		},
+	}
+}
+
+// commandLine renders this invocation the way the operator typed it.
+func commandLine(cmd *cobra.Command) string {
+	parts := []string{"chainbench"}
+	for c := cmd; c != nil && c.Name() != "chainbench"; c = c.Parent() {
+		parts = append(parts[:1], append([]string{c.Name()}, parts[1:]...)...)
+	}
+	return strings.Join(parts, " ")
+}
+
 func newNetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "net",
@@ -96,27 +119,4 @@ func sortedSteps(st chainsetup.State) []string {
 	}
 	sort.Strings(names)
 	return names
-}
-
-// serverFlags holds the server-set selection shared by the commands that
-// place nodes. Host addresses and ports live in the server-set file, never on
-// the command line.
-type serverFlags struct {
-	config string
-	server string
-	index  int
-	fleet  bool
-}
-
-// bind registers the server set flags on cmd.
-func (f *serverFlags) bind(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.config, "server-set", "", "server-set file: which servers exist and how to reach them (default: "+netmap.DefaultSetFile+" when present)")
-	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the server set")
-	cmd.Flags().IntVar(&f.index, "server-index", 0, "server to place nodes on, by index from the server set")
-	cmd.Flags().BoolVar(&f.fleet, "fleet", false, "spread the network across every server in the set, one node per host")
-}
-
-// ref is the app-layer selection.
-func (f *serverFlags) ref() app.ServerRef {
-	return app.ServerRef{SetPath: f.config, Name: f.server, Index: f.index, Fleet: f.fleet}
 }

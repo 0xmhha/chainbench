@@ -1,13 +1,13 @@
-package app
+package chainsetup
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 	"os"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 )
@@ -29,8 +29,8 @@ import (
 // A save failure on the error path is reported alongside the original error
 // rather than replacing it: the step's failure is what the caller asked about,
 // and losing the record is a second, separate problem.
-func withWorkspace(d Deps, dataDir string, fn func(*chainsetup.Workspace) (string, error)) (string, error) {
-	ws, err := chainsetup.Open(dataDir, d.Clock)
+func withWorkspace(d Deps, dataDir string, fn func(*Workspace) (string, error)) (string, error) {
+	ws, err := Open(dataDir, d.Clock)
 	if err != nil {
 		return "", err
 	}
@@ -85,8 +85,8 @@ type NetKeysIn struct {
 
 // NetKeys ensures the workspace's key set exists and covers the node count.
 func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		return ws.Keys(ctx, chainsetup.KeysOpts{
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		return ws.Keys(ctx, KeysOpts{
 			Source: in.Source, Nodes: in.Nodes, Validators: in.Validators,
 		})
 	})
@@ -108,7 +108,7 @@ type NetAllocateIn struct {
 	TopologyPath string
 	// Server selects where the nodes are placed and on what ports, from the
 	// operator's server set. Its zero value uses the built-in local plan.
-	Server ServerRef
+	Server netmapmod.ServerRef
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
@@ -121,17 +121,17 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		}
 		topo = &loaded
 	}
-	resolved, err := ResolveServer(d, in.Server, minValidators, portBand)
+	resolved, err := netmapmod.ResolveServer(in.Server, minValidators, portBand)
 	if err != nil {
 		return StepOut{}, err
 	}
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		if resolved.HasTarget {
 			if err := ws.Retarget(resolved.Target); err != nil {
 				return "", err
 			}
 		}
-		return ws.Allocate(chainsetup.AllocateOpts{
+		return ws.Allocate(AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
 			Placement: resolved.Placement, SetPath: in.Server.SetPath,
@@ -154,7 +154,7 @@ type NetGenesisIn struct {
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
 func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		opts, err := genesisOpts(in)
 		if err != nil {
 			return "", err
@@ -166,12 +166,12 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 
 // genesisOpts folds the flag-shaped genesis inputs into the step options: the
 // key=value overrides and the overlay file's two halves.
-func genesisOpts(in NetGenesisIn) (chainsetup.GenesisOpts, error) {
-	opts := chainsetup.GenesisOpts{ChainID: in.ChainID}
+func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
+	opts := GenesisOpts{ChainID: in.ChainID}
 	for _, kv := range in.Set {
 		k, v, ok := strings.Cut(kv, "=")
 		if !ok || k == "" {
-			return opts, fmt.Errorf("app: genesis override expects key=value, got %q", kv)
+			return opts, fmt.Errorf("chainsetup: genesis override expects key=value, got %q", kv)
 		}
 		if opts.Overrides == nil {
 			opts.Overrides = map[string]string{}
@@ -190,7 +190,7 @@ func genesisOpts(in NetGenesisIn) (chainsetup.GenesisOpts, error) {
 		Genesis      json.RawMessage `json:"genesis"`
 	}
 	if err := json.Unmarshal(raw, &overlay); err != nil {
-		return opts, fmt.Errorf("app: bad genesis overlay %q: %w", in.OverlayPath, err)
+		return opts, fmt.Errorf("chainsetup: bad genesis overlay %q: %w", in.OverlayPath, err)
 	}
 	opts.Overlay = overlay.Genesis
 	opts.Capabilities = overlay.Capabilities
@@ -204,7 +204,7 @@ type NetConfigIn struct {
 
 // NetConfig renders and writes each node's TOML config.
 func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Config(ctx)
 	})
 	return StepOut{Detail: detail}, err
@@ -219,15 +219,15 @@ type NetLaunchOptsIn struct {
 // NetLaunchOptsOut is the assembled per-node argv table.
 type NetLaunchOptsOut struct {
 	Detail string
-	Nodes  []chainsetup.NodeState
+	Nodes  []NodeState
 }
 
 // NetLaunchOpts assembles each node's launch argv (the single assembly site)
 // and records it, returning the table so the surface can render the commands.
 func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
-	var nodes []chainsetup.NodeState
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
-		det, err := ws.LaunchOpts(chainsetup.LaunchOptsOpts{Set: in.Set})
+	var nodes []NodeState
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		det, err := ws.LaunchOpts(LaunchOptsOpts{Set: in.Set})
 		nodes = ws.State().Nodes
 		return det, err
 	})
@@ -242,7 +242,7 @@ type NetProvisionIn struct {
 // NetProvision verifies the launch inputs are present on the target
 // (skip-if-exists semantics: present files are reused, missing ones are named).
 func NetProvision(ctx context.Context, d Deps, in NetProvisionIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Provision(ctx)
 	})
 	return StepOut{Detail: detail}, err
@@ -256,7 +256,7 @@ type NetInitIn struct {
 
 // NetInit runs `<binary> init` for each node's datadir from the built genesis.
 func NetInit(ctx context.Context, d Deps, in NetInitIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Init(ctx, in.Binary)
 	})
 	return StepOut{Detail: detail}, err
@@ -270,7 +270,7 @@ type NetStartIn struct {
 
 // NetStart launches every stopped node and records the PIDs.
 func NetStart(ctx context.Context, d Deps, in NetStartIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Start(ctx, in.Binary)
 	})
 	return StepOut{Detail: detail}, err
@@ -283,7 +283,7 @@ type NetStopIn struct {
 
 // NetStop terminates every running node by its recorded PID.
 func NetStop(ctx context.Context, d Deps, in NetStopIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Stop(ctx)
 	})
 	return StepOut{Detail: detail}, err
@@ -297,7 +297,7 @@ type NetRestartIn struct {
 
 // NetRestart stops and relaunches one node with its recorded arming.
 func NetRestart(ctx context.Context, d Deps, in NetRestartIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Restart(ctx, in.Node)
 	})
 	return StepOut{Detail: detail}, err
@@ -310,7 +310,7 @@ type NetRmIn struct {
 
 // NetRm removes the composed data plane (stopped nodes only).
 func NetRm(ctx context.Context, d Deps, in NetRmIn) (StepOut, error) {
-	detail, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		return ws.Rm(ctx)
 	})
 	return StepOut{Detail: detail}, err
@@ -330,7 +330,7 @@ type NetLogsOut struct {
 
 // NetLogs returns the last N lines of one node's log. Read-only.
 func NetLogs(ctx context.Context, d Deps, in NetLogsIn) (NetLogsOut, error) {
-	ws, err := chainsetup.Open(in.DataDir, d.Clock)
+	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetLogsOut{}, err
 	}
@@ -346,12 +346,12 @@ type NetHealthIn struct {
 
 // NetHealthOut is the per-node probe table.
 type NetHealthOut struct {
-	Nodes []chainsetup.NodeHealth
+	Nodes []NodeHealth
 }
 
 // NetHealth probes every node's HTTP RPC for its latest block. Read-only.
 func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (NetHealthOut, error) {
-	ws, err := chainsetup.Open(in.DataDir, d.Clock)
+	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetHealthOut{}, err
 	}

@@ -62,13 +62,6 @@ func (d Deps) command() string {
 	return d.Command
 }
 
-// logf reports through the injected logger; nil discards.
-func (d Deps) logf(format string, args ...any) {
-	if d.Logf != nil {
-		d.Logf(format, args...)
-	}
-}
-
 // now reports the current time through the injected clock.
 func (d Deps) now() time.Time {
 	if d.Clock == nil {

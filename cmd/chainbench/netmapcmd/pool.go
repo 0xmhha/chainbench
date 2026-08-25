@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -15,7 +17,7 @@ import (
 func newPoolCmd() *cobra.Command {
 	var dataDir string
 	var asJSON bool
-	var sf serverFlags
+	var sf serverflag.Flags
 	cmd := &cobra.Command{
 		Use:   "pool",
 		Short: "Show the addresses and port slots a network may be composed from",
@@ -25,7 +27,7 @@ func newPoolCmd() *cobra.Command {
 			"may run, not how to log in.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out, err := app.NetPool(cmd.Context(), deps(cmd), app.NetPoolIn{
-				DataDir: dataDir, Server: sf.ref(),
+				DataDir: dataDir, Server: sf.Ref(),
 			})
 			if err != nil {
 				return err
@@ -47,6 +49,6 @@ func newPoolCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "workspace to count used slots from (optional)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the pool as JSON")
-	sf.bind(cmd)
+	sf.Bind(cmd)
 	return cmd
 }

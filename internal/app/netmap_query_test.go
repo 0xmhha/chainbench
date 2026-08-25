@@ -12,6 +12,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
+const presetDir = "../../keys/preset"
+
 // composeForQuery builds a small mixed network to ask questions about.
 func composeForQuery(t *testing.T) string {
 	t.Helper()

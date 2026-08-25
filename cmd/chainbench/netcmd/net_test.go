@@ -1,14 +1,36 @@
-package main
+package netcmd_test
 
 import (
+	"bytes"
+	"context"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
+
+	"github.com/0xmhha/chainbench/cmd/chainbench/netcmd"
+
+	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins, as package main does
 )
+
+// run executes a net command line the way an operator types it, on a bare
+// root that mounts exactly what the real root mounts.
+func run(t *testing.T, args ...string) (string, error) {
+	t.Helper()
+	root := &cobra.Command{Use: "chainbench", SilenceUsage: true, SilenceErrors: true}
+	root.AddCommand(netcmd.New())
+	var buf bytes.Buffer
+	root.SetOut(&buf)
+	root.SetErr(&buf)
+	root.SetArgs(args)
+	err := root.ExecuteContext(context.Background())
+	return buf.String(), err
+}
 
 func TestNetCmd_ComposeStepByStep(t *testing.T) {
 	dir := t.TempDir()
-	presetDir := filepath.Join("..", "..", "keys", "preset")
+	presetDir := filepath.Join("..", "..", "..", "keys", "preset")
 
 	out, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet", "--keys", presetDir)
 	if err != nil {

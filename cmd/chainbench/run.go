@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
 	"io"
 	"os"
 	"path/filepath"
@@ -43,7 +44,7 @@ func newRunCmd() *cobra.Command {
 		launchOpts   []string
 		dashboardURL string
 		jsonOut      bool
-		sf           serverFlags
+		sf           serverflag.Flags
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
@@ -77,7 +78,7 @@ func newRunCmd() *cobra.Command {
 				keysDir: keysDir, keysSource: keysSource,
 				artifactRoot: artifactRoot, validators: validators,
 				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
-				server: sf.ref(), bus: bus,
+				server: sf.Ref(), bus: bus,
 			}, specs))
 			if err != nil {
 				flush()
@@ -105,7 +106,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "local: pin the devp2p network id on every node (0 = binary default)")
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
 		"local: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
-	sf.bind(cmd)
+	sf.Bind(cmd)
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd

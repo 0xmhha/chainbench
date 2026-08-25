@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // New builds the netmap command group.
@@ -36,28 +35,6 @@ func New() *cobra.Command {
 	}
 	cmd.AddCommand(newShowCmd(), newPoolCmd(), newPlanCmd())
 	return cmd
-}
-
-// serverFlags is the server-set selection shared by the verbs that read one.
-// Host addresses and ports live in the server-set file, never on the command
-// line.
-type serverFlags struct {
-	config string
-	server string
-	index  int
-	fleet  bool
-}
-
-func (f *serverFlags) bind(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.config, "server-set", "",
-		"server-set file: which servers exist and how to reach them (default: "+netmap.DefaultSetFile+" when present)")
-	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the server set")
-	cmd.Flags().IntVar(&f.index, "server-index", 0, "server to place nodes on, by index from the server set")
-	cmd.Flags().BoolVar(&f.fleet, "fleet", false, "spread the network across every server in the set, one node per host")
-}
-
-func (f *serverFlags) ref() app.ServerRef {
-	return app.ServerRef{SetPath: f.config, Name: f.server, Index: f.index, Fleet: f.fleet}
 }
 
 // deps is the Deps every netmap verb runs with: operational side notes print

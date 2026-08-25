@@ -1,4 +1,4 @@
-package main
+package netcmd
 
 import (
 	"encoding/json"
@@ -7,11 +7,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // newNetStatusCmd shows the workspace composition state and which steps have
-// run. Rendering only — the read goes through app.NetStatus, shared with the
+// run. Rendering only — the read goes through chainsetup.NetStatus, shared with the
 // MCP tool.
 func newNetStatusCmd() *cobra.Command {
 	var dataDir string
@@ -23,7 +23,7 @@ func newNetStatusCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			res, err := app.NetStatus(cmd.Context(), cliDeps(cmd), app.NetStatusIn{DataDir: dataDir})
+			res, err := chainsetup.NetStatus(cmd.Context(), deps(cmd), chainsetup.NetStatusIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
