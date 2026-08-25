@@ -250,7 +250,8 @@ K0·S0 가 추측 위에 서게 된다.
 | **A5** | ~~`core/bringup`·`core/state`~~ 삭제 완료 · `testkit`·`core/pipeline/testrun` 잔여 | 앞 둘은 #241 에서 소멸(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘은 **케이스 이관 선행** | ◐ |
 | **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
 | **A7b** | **`hardfork` 와 `upgrade` 통합** — hardfork 가 상위 범주, upgrade 는 type-1 핸드오프. 선언은 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 하나, **메커니즘(스왑/핸드오프)은 파생** | 세 사례(같은체인 스왑 · wemix→wbft 핸드오프 · genesis 전용 포크)가 한 선언에서 갈림 · 명령 둘 → 하나 | ☐ |
-| **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측(08-21): `Identity`×2 · `Plan`×4 · `Config`×3 · `Step`×4. `Node`×3 은 K3 에서 ×2 로 줄었다 | ☐ |
+| **A8** | **외부 소비자 0 인 공개 심볼 정리** — AST 전수(08-25): 함수·상수 531개 중 **230개가 다른 패키지에서 셀렉터로 한 번도 참조되지 않음**(레지스트리 디스패치는 미탐 — testspec/assert 류는 거짓 양성). 대부분 삭제가 아니라 **비공개화** 후보(예: `engine.New`·`mcp.NewServer`·`testspec.ParseV2` 는 패키지 안에서만 소비); `chains/wemix/deploy`·`chainsetup` 의 군집은 레거시 은퇴(T7.11 계열)와 함께 소멸 | 비공개화 후 A7 테스트가 충돌 표면 축소를 확인 | ☐ |
+| **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측(08-21): `Identity`×2 · `Plan`×4 · `Config`×3 · `Step`×4. **재실측(08-25, AST 전수)**: 3+ 패키지 충돌 11개 이름(`New`×10 · `Deps`×5 · `Options`×5 · `Plan`×4 · `Load`×4 · `Result`×4 · `Server`×4 · `Step`×4 · `Ports`×3 · `Run`×3 · `Runner`×3), 2패키지 43건 — 표면이 커지고 있다. 진짜 신호 둘: `serverset.Ports`(NM3 에서 소멸 예정이라던 파생 뷰가 잔존) · `Runner`×3(의미 다른 동명: driver/chainsetup/poa) | ☐ |
 
 **이름은 각 항목이 자기 범위에서 함께 고친다**([[layers]] §5b). 개명만 하는 커밋은 리뷰가 어렵고
 동작 변경과 섞이면 더 어렵다. 규칙: **한 개념 = 한 이름, 다른 개념 = 다른 이름, 식별자는 명명된 타입.**
@@ -387,7 +388,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
 | **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인. **선례: keyring(K8)** 이 같은 형태로 끝났다 — 유스케이스는 `app`, 표면은 바인딩과 렌더링만 | ☐ |
 | **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
-| **S5** | `cmd/` 규칙 위반 21파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄 | ☐ |
+| **S5** | `cmd/` 규칙 위반 파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄. 실측 추이: 21파일(08-21) → **24파일(08-25)** — 착수 전까지 증식 중 | ☐ |
 | **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
 | **S7** | **`query` 조회 투영** — `ReadOnly` 기능들을 최상위 `query <명사> <동사>` 로 **자동 생성**(손 트리 금지, [[surface-unification-design]] §4.4, 확정 2026-08-25). 정본 철자는 명사 그룹, `query` 는 같은 등록의 두 번째 렌더링. MCP 는 같은 속성으로 조회 전용 도구 목록을 얻는다 | `query keyring list` == `keyring list` (같은 등록 실증) · 비-ReadOnly 기능이 query 에 나타나면 테스트 실패 | ☐ |
 
