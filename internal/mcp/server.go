@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 // protocolVersion is the MCP revision this server implements.
@@ -104,11 +105,32 @@ func (s *Server) callTool(ctx context.Context, req rpcRequest) []byte {
 	if params.Arguments == nil {
 		params.Arguments = map[string]any{}
 	}
+	if err := rejectRetiredArgs(params.Arguments); err != nil {
+		return s.result(req.ID, toolContent("error: "+err.Error(), true))
+	}
 	text, err := tool.Handler(ctx, params.Arguments)
 	if err != nil {
 		return s.result(req.ID, toolContent("error: "+err.Error(), true))
 	}
 	return s.result(req.ID, toolContent(text, false))
+}
+
+// retiredArgs maps tool arguments that were renamed to their current name.
+// Handlers read arguments permissively (an unknown key is ignored), so without
+// this check a caller built against the old schema would have its value
+// silently dropped — and a dropped server-set path means credentials resolve
+// from a different file than the caller named.
+var retiredArgs = map[string]string{"serverConfig": "serverSet"}
+
+// rejectRetiredArgs fails a call that uses a renamed argument, naming the
+// replacement, instead of silently ignoring the value.
+func rejectRetiredArgs(args map[string]any) error {
+	for old, now := range retiredArgs {
+		if _, ok := args[old]; ok {
+			return fmt.Errorf("mcp: argument %q was renamed to %q", old, now)
+		}
+	}
+	return nil
 }
 
 func toolContent(text string, isError bool) map[string]any {

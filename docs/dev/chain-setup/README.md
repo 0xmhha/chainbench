@@ -170,7 +170,7 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 | 로컬 | 기본 |
 | 원격 SSH | `setup --remote-host --remote-user --remote-port`, `CHAINBENCH_REMOTE_PASS` |
 | SSH 키인증 | `CHAINBENCH_REMOTE_KEY_FILE` / `_PASSPHRASE` (0600 강제) |
-| 접속정보 파일 | `remote-server-config.yaml` (**gitignore**, `.sample` 만 추적) |
+| 접속정보 파일 | `server-set.yaml` (**gitignore**, `.sample` 만 추적) |
 
 ### 2.8 헬스 게이트 (단계 10)
 

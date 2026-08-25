@@ -100,11 +100,16 @@ dataRoot: /srv/chainbench
 		t.Fatalf("allocate: %v", err)
 	}
 	st := stateOf(t, dir, d)
-	if st.Target.Kind != target.TargetRemote || st.Target.Host != "10.0.0.11" {
-		t.Fatalf("target = %+v, want the server set's remote host", st.Target)
+	// The target names the set entry rather than flattening its login: the
+	// server set stays the single credential source for every later step.
+	if st.Target.Kind != target.TargetServer || st.Target.Server != "bp1" {
+		t.Fatalf("target = %+v, want a server-set target naming bp1", st.Target)
 	}
-	if st.Target.User != "deploy" || st.Target.Port != 2222 {
-		t.Errorf("ssh access not carried to the target: %+v", st.Target)
+	if st.Target.Host != "10.0.0.11" {
+		t.Errorf("host not carried for addressing: %+v", st.Target)
+	}
+	if st.Target.User != "" || st.Target.Port != 0 {
+		t.Errorf("login fields must stay in the server set, not the spec: %+v", st.Target)
 	}
 	if st.Target.DataRoot != "/srv/chainbench" {
 		t.Errorf("data root = %q, want the server set's", st.Target.DataRoot)

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -219,6 +220,9 @@ func Load(path string) (*Config, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
+			if hint := LegacyNameHint(path); hint != "" {
+				return nil, fmt.Errorf("serverset: config %s not found — %s", path, hint)
+			}
 			return nil, fmt.Errorf("serverset: config %s not found (copy %s and fill it in)", path, DefaultSampleFile)
 		}
 		return nil, fmt.Errorf("serverset: read %s: %w", path, err)
@@ -233,11 +237,57 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("serverset: parse %s: %w", path, err)
 	}
 	c.path = path
+	if err := c.SSH.resolveSecretPaths(filepath.Dir(path)); err != nil {
+		return nil, fmt.Errorf("serverset: %s: %w", path, err)
+	}
 	c.expand()
 	if err := c.validate(); err != nil {
 		return nil, err
 	}
 	return &c, nil
+}
+
+// legacyConfigFile is the server set's pre-rename filename. It is recognized
+// only to say "rename it" — silently reading it would leave two names alive.
+const legacyConfigFile = "remote-server-config.yaml"
+
+// LegacyNameHint reports whether the old-name file sits where the new-name file
+// was looked for, so a missing server-set.yaml after an upgrade fails with the
+// migration step instead of a generic not-found. Empty means no old file is in
+// the way.
+func LegacyNameHint(path string) string {
+	if filepath.Base(path) != DefaultConfigFile {
+		return ""
+	}
+	old := filepath.Join(filepath.Dir(path), legacyConfigFile)
+	if _, err := os.Stat(old); err != nil {
+		return ""
+	}
+	return fmt.Sprintf("found %s (the old name); rename it: mv %s %s", old, old, path)
+}
+
+// resolveSecretPaths canonicalizes the file-reference fields so they mean the
+// same thing wherever the command runs: a leading ~ expands to the home
+// directory, and a relative path is anchored to the server-set file's own
+// directory (dir), not the process working directory.
+func (s *SSH) resolveSecretPaths(dir string) error {
+	for _, f := range []*string{&s.PasswordFile, &s.KeyFile, &s.KeyPassphraseFile} {
+		if *f == "" {
+			continue
+		}
+		p := *f
+		if p == "~" || strings.HasPrefix(p, "~/") {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return fmt.Errorf("expand %s: %w", p, err)
+			}
+			p = filepath.Join(home, strings.TrimPrefix(strings.TrimPrefix(p, "~"), "/"))
+		} else if !filepath.IsAbs(p) {
+			p = filepath.Join(dir, p)
+		}
+		*f = p
+	}
+	return nil
 }
 
 // loopback reports whether nodes on addr run on this machine. It is what
@@ -398,6 +448,22 @@ func (c *Config) validate() error {
 		if err := c.resolve(s).Ports.validate(where); err != nil {
 			return err
 		}
+	}
+	if err := c.SSH.validateFields(); err != nil {
+		return fmt.Errorf("serverset: %s: %w", c.path, err)
+	}
+	return nil
+}
+
+// validateFields enforces the ssh block's cross-field rules at load time — a
+// bad combination must fail when the file is read (Load's fail-loud policy),
+// not when the server is first dialed mid-run.
+func (s SSH) validateFields() error {
+	if s.Password != "" && s.PasswordFile != "" {
+		return fmt.Errorf("ssh sets both password and password_file — keep exactly one")
+	}
+	if s.KeyPassphraseFile != "" && s.KeyFile == "" {
+		return fmt.Errorf("ssh sets key_passphrase_file without key_file — the passphrase has no key to unlock")
 	}
 	return nil
 }
@@ -598,6 +664,12 @@ func (s Server) Credentials() (remote.Credentials, error) {
 			}
 			rc.Passphrase = v
 		}
+		// An encrypted key with no passphrase would only fail at dial time
+		// with a bare parse error; name the missing field here instead.
+		if rc.Passphrase == "" && remote.KeyNeedsPassphrase(key) {
+			return remote.Credentials{}, fmt.Errorf(
+				"serverset: server %s: key %s is passphrase-protected — set ssh.key_passphrase_file", s.label(0), s.SSH.KeyFile)
+		}
 	}
 	if rc.Password == "" && len(rc.PrivateKey) == 0 {
 		return remote.Credentials{}, fmt.Errorf(
@@ -607,9 +679,18 @@ func (s Server) Credentials() (remote.Credentials, error) {
 }
 
 // readSecretFile reads a one-line secret referenced from the server set,
-// trimming the trailing newline an editor leaves. The value never appears in
-// an error: a failure names the path, not the content.
+// trimming the trailing newline an editor leaves. It enforces the same 0600
+// rule the key-file path does — the plaintext password deserves no weaker a
+// check than the key. The value never appears in an error: a failure names
+// the path, not the content.
 func readSecretFile(path string) (string, error) {
+	insecure, perm, err := remote.InsecureFilePerm(path)
+	if err != nil {
+		return "", fmt.Errorf("stat secret file: %w", err)
+	}
+	if insecure {
+		return "", fmt.Errorf("secret file %s has insecure permissions %#o (want 0600)", path, perm)
+	}
 	b, err := os.ReadFile(path)
 	if err != nil {
 		return "", fmt.Errorf("read secret file: %w", err)
@@ -630,7 +711,7 @@ func readSecretFile(path string) (string, error) {
 // per target, and an operator editing the server set mid-session should not have
 // to reason about which copy is in effect.
 func SetLookup(path string) target.ServerLookup {
-	return func(name string, env func(string) string) (remote.Credentials, error) {
+	return func(name string) (remote.Credentials, error) {
 		if path == "" {
 			path = DefaultConfigFile
 		}
@@ -642,7 +723,6 @@ func SetLookup(path string) target.ServerLookup {
 		if err != nil {
 			return remote.Credentials{}, err
 		}
-		_ = env // the server set is the single credential source for named servers
 		return s.Credentials()
 	}
 }
