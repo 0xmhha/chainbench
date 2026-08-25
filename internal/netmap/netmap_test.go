@@ -12,6 +12,23 @@ import (
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
+// hermeticEnv pins the host-key policy to an empty known_hosts inside the
+// test's own directory: resolving builds the SSH handles without dialing, but
+// it must not depend on whatever ~/.ssh the machine running the tests has.
+func hermeticEnv(t *testing.T) func(string) string {
+	t.Helper()
+	kh := filepath.Join(t.TempDir(), "known_hosts")
+	if err := os.WriteFile(kh, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return func(k string) string {
+		if k == "CHAINBENCH_SSH_KNOWN_HOSTS" {
+			return kh
+		}
+		return ""
+	}
+}
+
 // fixture writes a server set and its localmap side by side, returning the
 // set's path. The addresses are documentation examples, not live hosts —
 // nothing here dials.
@@ -44,7 +61,7 @@ func TestOpener_TranslatesAndReportsInOnePlace(t *testing.T) {
 	set := fixture(t)
 	var notes []string
 	o := netmap.Opener{
-		ServerSet: set, Docker: true,
+		ServerSet: set, Docker: true, Env: hermeticEnv(t),
 		Report: func(f string, a ...any) { notes = append(notes, fmt.Sprintf(f, a...)) },
 	}
 	acc, err := o.OpenPath("srv://box1/data/cb/ring")
@@ -69,12 +86,12 @@ func TestOpener_DockerIsThePowerSwitch(t *testing.T) {
 	if err := os.WriteFile(bare, raw, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := (netmap.Opener{ServerSet: bare, Docker: true}).OpenPath("srv://box1/x"); err == nil {
+	if _, err := (netmap.Opener{ServerSet: bare, Docker: true, Env: hermeticEnv(t)}).OpenPath("srv://box1/x"); err == nil {
 		t.Fatal("docker mode accepted a missing localmap")
 	}
 
 	var notes []string
-	o := netmap.Opener{ServerSet: set, Report: func(f string, a ...any) { notes = append(notes, f) }}
+	o := netmap.Opener{ServerSet: set, Env: hermeticEnv(t), Report: func(f string, a ...any) { notes = append(notes, f) }}
 	if _, err := o.OpenPath("srv://box1/x"); err != nil {
 		t.Fatalf("open without docker: %v", err)
 	}
@@ -87,12 +104,12 @@ func TestOpener_DockerIsThePowerSwitch(t *testing.T) {
 // lookup, and a local path resolves to local handles through the same call.
 func TestOpener_CredentialsComeFromTheSet(t *testing.T) {
 	set := fixture(t)
-	if _, err := (netmap.Opener{ServerSet: set}).OpenPath("srv://ghost/x"); err == nil {
+	if _, err := (netmap.Opener{ServerSet: set, Env: hermeticEnv(t)}).OpenPath("srv://ghost/x"); err == nil {
 		t.Fatal("unknown server name was accepted")
 	}
 
 	local := t.TempDir()
-	acc, err := (netmap.Opener{ServerSet: set}).OpenPath(local)
+	acc, err := (netmap.Opener{ServerSet: set, Env: hermeticEnv(t)}).OpenPath(local)
 	if err != nil {
 		t.Fatalf("local open: %v", err)
 	}
