@@ -24,7 +24,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/engine"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // Composition steps: keys, allocate, genesis, config, launchopts, provision.
@@ -121,7 +121,7 @@ type AllocateOpts struct {
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
-	Placement serverset.Placement
+	Placement netmapmod.Placement
 	// SetPath is the server-set file Placement came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
 	SetPath string
@@ -190,7 +190,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	pl := opts.Placement
 	if pl.Source == "" {
-		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
+		pl = netmapmod.Builtin(minValidatorsForPlacement, portBandSize)
 	}
 	if opts.SetPath != "" {
 		w.state.ServerSet = opts.SetPath
@@ -381,13 +381,14 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	}
 	// The peer's own recorded address: on a fleet each node lives on a
 	// different host, and a static-node list pointing at this machine would
-	// leave every node unable to find its peers.
-	enode := func(pl netmap.Placement) (string, bool) {
-		nk, ok := preset.Node(pl.Index)
+	// leave every node unable to find its peers. Keys reach the composition
+	// as inputs — the netmap module joins them to placements.
+	pubkey := func(index int) (string, bool) {
+		nk, ok := preset.Node(index)
 		if !ok {
 			return "", false
 		}
-		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
+		return nk.PublicKey, true
 	}
 	t, err := w.resolveTarget()
 	if err != nil {
@@ -395,7 +396,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	}
 	m := p.Manifest()
 	for _, ns := range w.state.Nodes {
-		staticNodes, err := peering.StaticNodes(placed, ns.NodeLabel(), enode)
+		staticNodes, err := netmapmod.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
 			return "", fmt.Errorf("netcompose: config: node%d peers: %w", ns.Index, err)
 		}

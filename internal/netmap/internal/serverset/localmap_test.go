@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
 func writeLocalMap(t *testing.T, dir string) string {

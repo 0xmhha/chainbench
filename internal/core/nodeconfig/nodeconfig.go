@@ -100,11 +100,6 @@ func Generate(p Params) []byte {
 	return []byte(b.String())
 }
 
-// Enode builds a static-node enode URL from a devp2p public key and p2p port.
-func Enode(publicKey, host string, p2pPort int) string {
-	return fmt.Sprintf("enode://%s@%s:%d?discport=0", publicKey, host, p2pPort)
-}
-
 // LaunchArgs assembles the common geth-family node launch flags (datadir, config,
 // and the port flags) plus the family-specific flags. These are geth-family
 // conventions shared by both consensus families and by the binary-swap hardfork,

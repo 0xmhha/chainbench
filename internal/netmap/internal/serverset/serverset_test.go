@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
 func write(t *testing.T, body string) string {
@@ -358,7 +358,7 @@ func TestPorts_MetricsNeedsRoomInTheStep(t *testing.T) {
 func TestSampleFileParses(t *testing.T) {
 	// The tracked template must stay loadable: it is the first thing an
 	// operator copies.
-	cfg, err := serverset.Load(filepath.Join("..", "..", serverset.DefaultSampleFile))
+	cfg, err := serverset.Load(filepath.Join("..", "..", "..", "..", serverset.DefaultSampleFile))
 	if err != nil {
 		t.Fatalf("the tracked sample does not load: %v", err)
 	}

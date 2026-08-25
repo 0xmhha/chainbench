@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // SourceFlags select where an imported key comes from — a private key, a BIP-39
@@ -57,7 +57,7 @@ func (f *SourceFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.remotePath, "remote-path", "", "deprecated: use --from srv://<server>/path")
 	_ = cmd.Flags().MarkDeprecated("remote-path", "use --from srv://<server>/path")
 
-	cmd.Flags().StringVar(&f.serverSet, "server-set", serverset.DefaultConfigFile, "server-set file for srv:// targets")
+	cmd.Flags().StringVar(&f.serverSet, "server-set", netmap.DefaultSetFile, "server-set file for srv:// targets")
 	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "override the SSH user for a host named directly in --from")
 	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "override the SSH port for a host named directly in --from (default 22)")
 	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keyring.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
@@ -111,7 +111,7 @@ func (f *SourceFlags) fromPath() (string, error) {
 		// --server took an index; --from names the entry. The server set answers
 		// both, so translate here rather than teaching the path syntax about
 		// indexes — a number is not a name.
-		cfg, err := serverset.Load(f.serverSetPath())
+		cfg, err := netmap.LoadSet(f.serverSetPath())
 		if err != nil {
 			return "", err
 		}
@@ -142,13 +142,17 @@ func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.
 	if err != nil {
 		return nil, "", err
 	}
-	if f.remoteUser != "" && spec.Kind == machine.KindRemote {
+	// The overrides only mean anything for a directly-named host — a local
+	// path has no user, a server-set entry gets both from the set — so
+	// setting them unconditionally changes nothing there and keeps this
+	// consumer free of kind branches.
+	if f.remoteUser != "" {
 		spec.User = f.remoteUser
 	}
-	if f.remotePort != 0 && spec.Kind == machine.KindRemote {
+	if f.remotePort != 0 {
 		spec.Port = f.remotePort
 	}
-	t, err := spec.ResolveWith(env, serverset.SetLookup(f.serverSetPath()))
+	t, err := netmap.Opener{ServerSet: f.serverSetPath(), Env: env}.Open(spec)
 	if err != nil {
 		return nil, "", err
 	}
@@ -160,7 +164,7 @@ func (f *SourceFlags) serverSetPath() string {
 	if f.serverSet != "" {
 		return f.serverSet
 	}
-	return serverset.DefaultConfigFile
+	return netmap.DefaultSetFile
 }
 
 // storeFlags select whether and how a key is persisted. Storage is off unless
