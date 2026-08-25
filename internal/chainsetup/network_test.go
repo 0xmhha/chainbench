@@ -1,4 +1,4 @@
-package app_test
+package chainsetup_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -38,7 +38,7 @@ func (s *stubDriver) Stop(_ context.Context, h driver.Handle) error {
 }
 
 // launchedNetwork seeds a data root with the state a launch leaves behind.
-func launchedNetwork(t *testing.T) (dir string, d *stubDriver, deps app.Deps) {
+func launchedNetwork(t *testing.T) (dir string, d *stubDriver, deps chainsetup.Deps) {
 	t.Helper()
 	dir = t.TempDir()
 	ns := node.NodeSet{
@@ -59,14 +59,14 @@ func launchedNetwork(t *testing.T) (dir string, d *stubDriver, deps app.Deps) {
 		t.Fatalf("seed node specs: %v", err)
 	}
 	d = &stubDriver{}
-	deps = app.Deps{Driver: func() (driver.Driver, error) { return d, nil }}
+	deps = chainsetup.Deps{Driver: func() (driver.Driver, error) { return d, nil }}
 	return dir, d, deps
 }
 
 func TestNetworkStatus_ReadsTheLaunchedSet(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
 
-	out, err := app.NetworkStatus(context.Background(), deps, app.NetworkStatusIn{DataDir: dir})
+	out, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkStatus: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestNetworkStatus_ReadsTheLaunchedSet(t *testing.T) {
 }
 
 func TestNetworkStatus_RequiresADataDir(t *testing.T) {
-	if _, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{}); err == nil {
+	if _, err := chainsetup.NetworkStatus(context.Background(), chainsetup.Deps{}, chainsetup.NetworkStatusIn{}); err == nil {
 		t.Error("want an error without a data dir")
 	}
 }
@@ -84,7 +84,7 @@ func TestNetworkStatus_RequiresADataDir(t *testing.T) {
 func TestNetworkStop_StopsEveryLaunchedNode(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 
-	out, err := app.NetworkStop(context.Background(), deps, app.NetworkStopIn{DataDir: dir})
+	out, err := chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkStop: %v", err)
 	}
@@ -102,7 +102,7 @@ func TestNetworkStop_ReportsFailuresWithoutFailingTheCall(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 	d.stopErr = errors.New("no such process")
 
-	out, err := app.NetworkStop(context.Background(), deps, app.NetworkStopIn{DataDir: dir})
+	out, err := chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkStop should not fail on a per-node error: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestNetworkStop_ReportsFailuresWithoutFailingTheCall(t *testing.T) {
 func TestNodeStop_ClearsThePID(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 
-	if err := app.NodeStop(context.Background(), deps, app.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
+	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
 		t.Fatalf("NodeStop: %v", err)
 	}
 	if len(d.stopped) != 1 || d.stopped[0] != 2 {
@@ -137,21 +137,21 @@ func TestNodeStop_ClearsThePID(t *testing.T) {
 
 func TestNodeStop_RequiresADataDirAndIndex(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
-	if err := app.NodeStop(context.Background(), deps, app.NodeStopIn{DataDir: dir}); err == nil {
+	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{DataDir: dir}); err == nil {
 		t.Error("want an error without an index")
 	}
-	if err := app.NodeStop(context.Background(), deps, app.NodeStopIn{Index: 1}); err == nil {
+	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{Index: 1}); err == nil {
 		t.Error("want an error without a data dir")
 	}
 }
 
 func TestNodeStart_RelaunchesFromTheSavedSpec(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
-	if err := app.NodeStop(context.Background(), deps, app.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
+	if err := chainsetup.NodeStop(context.Background(), deps, chainsetup.NodeStopIn{DataDir: dir, Index: 2}); err != nil {
 		t.Fatalf("NodeStop: %v", err)
 	}
 
-	out, err := app.NodeStart(context.Background(), deps, app.NodeStartIn{DataDir: dir, Index: 2})
+	out, err := chainsetup.NodeStart(context.Background(), deps, chainsetup.NodeStartIn{DataDir: dir, Index: 2})
 	if err != nil {
 		t.Fatalf("NodeStart: %v", err)
 	}
@@ -176,7 +176,7 @@ func TestNodeStart_RelaunchesFromTheSavedSpec(t *testing.T) {
 func TestNodeStart_WithoutASavedSpecNamesTheNode(t *testing.T) {
 	dir, _, deps := launchedNetwork(t)
 
-	_, err := app.NodeStart(context.Background(), deps, app.NodeStartIn{DataDir: dir, Index: 9})
+	_, err := chainsetup.NodeStart(context.Background(), deps, chainsetup.NodeStartIn{DataDir: dir, Index: 9})
 	if err == nil {
 		t.Fatal("want an error for a node with no saved spec")
 	}
@@ -188,7 +188,7 @@ func TestNodeStart_WithoutASavedSpecNamesTheNode(t *testing.T) {
 func TestNetworkRemove_StopsThenDeletes(t *testing.T) {
 	dir, d, deps := launchedNetwork(t)
 
-	out, err := app.NetworkRemove(context.Background(), deps, app.NetworkRemoveIn{DataDir: dir})
+	out, err := chainsetup.NetworkRemove(context.Background(), deps, chainsetup.NetworkRemoveIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkRemove: %v", err)
 	}
@@ -208,7 +208,7 @@ func TestNetworkRemove_RefusesADirectoryWithNoSetupArtifact(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := app.NetworkRemove(context.Background(), app.Deps{}, app.NetworkRemoveIn{DataDir: dir})
+	_, err := chainsetup.NetworkRemove(context.Background(), chainsetup.Deps{}, chainsetup.NetworkRemoveIn{DataDir: dir})
 	if err == nil {
 		t.Fatal("want a refusal for a non-data-dir")
 	}
@@ -225,7 +225,7 @@ func TestNetworkRemove_ProvisionedButNeverLaunchedIsRemovable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out, err := app.NetworkRemove(context.Background(), app.Deps{}, app.NetworkRemoveIn{DataDir: dir})
+	out, err := chainsetup.NetworkRemove(context.Background(), chainsetup.Deps{}, chainsetup.NetworkRemoveIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("NetworkRemove: %v", err)
 	}

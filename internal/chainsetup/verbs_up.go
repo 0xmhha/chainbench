@@ -1,11 +1,11 @@
-package app
+package chainsetup
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -56,7 +56,7 @@ type NetUpIn struct {
 	Peering string
 	// Server selects where the nodes run and on what ports, from the server
 	// server set. Its zero value uses the built-in local plan.
-	Server ServerRef
+	Server netmapmod.ServerRef
 	// Docker treats the servers as local docker containers (dials translated
 	// through the localmap next to the server set); recorded at the new step.
 	Docker bool
@@ -92,17 +92,17 @@ type upStep struct {
 // NetUp runs the composition steps in order and returns what each recorded.
 func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	if in.DataDir == "" {
-		return NetUpOut{}, errors.New("app: net up needs a workspace directory")
+		return NetUpOut{}, errors.New("chainsetup: net up needs a workspace directory")
 	}
 	stage := in.Stage
 	if stage == "" {
 		stage = UpStart
 	}
 	if stage != UpProvision && stage != UpStart {
-		return NetUpOut{}, fmt.Errorf("app: unknown stage %q (want %s or %s)", stage, UpProvision, UpStart)
+		return NetUpOut{}, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, UpProvision, UpStart)
 	}
 	if stage == UpStart && in.Binary == "" {
-		return NetUpOut{}, errors.New("app: net up --stage=start needs a node binary")
+		return NetUpOut{}, errors.New("chainsetup: net up --stage=start needs a node binary")
 	}
 
 	// The composite holds the workspace for its whole run. Each step it calls
@@ -110,7 +110,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	// Acquire is re-entrant per process); what this closes is the gap between
 	// steps, where another run used to slip in and compose over a half-built
 	// network.
-	lockWS, err := chainsetup.Open(in.DataDir, d.Clock)
+	lockWS, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetUpOut{}, err
 	}
@@ -129,7 +129,7 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	record := func(name string, fn func() (string, error)) error {
 		detail, err := fn()
 		if err != nil {
-			return fmt.Errorf("app: net up: %s: %w", name, err)
+			return fmt.Errorf("chainsetup: net up: %s: %w", name, err)
 		}
 		out.Steps = append(out.Steps, name+": "+detail)
 		return nil

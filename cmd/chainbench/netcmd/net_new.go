@@ -1,15 +1,15 @@
-package main
+package netcmd
 
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // newNetNewCmd initializes a composition workspace: the target chain and where
-// its data plane lives (local, or a remote SSH host). Flag binding + app.NetNew
+// its data plane lives (local, or a remote SSH host). Flag binding + chainsetup.NetNew
 // + output — the logic lives in the app layer, shared with the MCP tool.
 func newNetNewCmd() *cobra.Command {
 	var dataDir, chain, binary, keysDir, manifestPath, templatePath string
@@ -26,7 +26,7 @@ func newNetNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetNew(cmd.Context(), cliDeps(cmd), app.NetNewIn{
+			out, err := chainsetup.NetNew(cmd.Context(), deps(cmd), chainsetup.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
 			})

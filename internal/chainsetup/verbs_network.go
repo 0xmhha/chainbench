@@ -1,4 +1,4 @@
-package app
+package chainsetup
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -44,10 +43,10 @@ type NetworkStatusOut struct {
 // lets the two stacks be used interchangeably. Read-only.
 func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatusOut, error) {
 	if in.DataDir == "" {
-		return NetworkStatusOut{}, errNoDataDir
+		return NetworkStatusOut{}, ErrNoDataDir
 	}
 	if isComposition(in.DataDir) {
-		ws, err := chainsetup.Open(in.DataDir, d.Clock)
+		ws, err := Open(in.DataDir, d.Clock)
 		if err != nil {
 			return NetworkStatusOut{}, err
 		}
@@ -87,13 +86,13 @@ type NetworkStopOut struct {
 // it recorded; a setup data root stops through the driver.
 func NetworkStop(ctx context.Context, d Deps, in NetworkStopIn) (NetworkStopOut, error) {
 	if in.DataDir == "" {
-		return NetworkStopOut{}, errNoDataDir
+		return NetworkStopOut{}, ErrNoDataDir
 	}
 	if isComposition(in.DataDir) {
 		// Counted before the step runs: it stops every node that still has a
 		// PID, and clears them, so afterwards there is nothing left to count.
 		var running int
-		_, err := withWorkspace(d, in.DataDir, func(ws *chainsetup.Workspace) (string, error) {
+		_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 			running = withPID(ws.NodeSet())
 			return ws.Stop(ctx)
 		})
@@ -142,7 +141,7 @@ type NodeStopIn struct {
 // PID is what makes a later status or start accurate.
 func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	if in.DataDir == "" || in.Index <= 0 {
-		return errNoDataDirAndIndex
+		return ErrNoDataDirAndIndex
 	}
 	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
@@ -179,7 +178,7 @@ type NodeStartOut struct {
 // PID.
 func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error) {
 	if in.DataDir == "" || in.Index <= 0 {
-		return NodeStartOut{}, errNoDataDirAndIndex
+		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
 	ns, err := session.LoadLocalNodeSet(in.DataDir)
 	if err != nil {
@@ -191,7 +190,7 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error
 	}
 	spec, ok := specFor(specs, in.Index)
 	if !ok {
-		return NodeStartOut{}, fmt.Errorf("app: no saved spec for node%d in %s", in.Index, in.DataDir)
+		return NodeStartOut{}, fmt.Errorf("chainsetup: no saved spec for node%d in %s", in.Index, in.DataDir)
 	}
 	dr, err := d.nodeDriver()
 	if err != nil {
@@ -229,11 +228,11 @@ type NetworkRemoveOut struct {
 // something unrelated.
 func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (NetworkRemoveOut, error) {
 	if in.DataDir == "" {
-		return NetworkRemoveOut{}, errNoDataDir
+		return NetworkRemoveOut{}, ErrNoDataDir
 	}
 	if !isDataRoot(in.DataDir) {
 		return NetworkRemoveOut{}, fmt.Errorf(
-			"app: %q does not look like a chainbench data dir (no nodeset.json/genesis.json); refusing to remove", in.DataDir)
+			"chainsetup: %q does not look like a chainbench data dir (no nodeset.json/genesis.json); refusing to remove", in.DataDir)
 	}
 	out := NetworkRemoveOut{Removed: in.DataDir}
 	// Best-effort: a data root that was provisioned but never launched has no
@@ -246,7 +245,7 @@ func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (NetworkRemo
 		out.Stopped, out.Failed = stop.Stopped, stop.Failed
 	}
 	if err := os.RemoveAll(in.DataDir); err != nil {
-		return NetworkRemoveOut{}, fmt.Errorf("app: remove %s: %w", in.DataDir, err)
+		return NetworkRemoveOut{}, fmt.Errorf("chainsetup: remove %s: %w", in.DataDir, err)
 	}
 	return out, nil
 }
@@ -289,6 +288,7 @@ func replaceNode(nodes []node.Node, n node.Node) []node.Node {
 }
 
 var (
-	errNoDataDir         = errors.New("app: a data dir with the setup's nodeset.json is required")
-	errNoDataDirAndIndex = errors.New("app: a data dir and a 1-based node index are required")
+	// ErrNoDataDir refuses a verb that needs a workspace but was given none.
+	ErrNoDataDir         = errors.New("chainsetup: a data dir with the setup's nodeset.json is required")
+	ErrNoDataDirAndIndex = errors.New("chainsetup: a data dir and a 1-based node index are required")
 )

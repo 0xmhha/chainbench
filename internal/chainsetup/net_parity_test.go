@@ -1,15 +1,14 @@
-package app_test
+package chainsetup_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+
 	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
 // The step stack has to be able to compose every network the setup stack can,
@@ -18,32 +17,32 @@ import (
 // genesis overlay with its capability claims.
 
 // composed runs new + allocate + keys on a fresh workspace and returns it.
-func composed(t *testing.T, alloc app.NetAllocateIn) (dir string, d app.Deps) {
+func composed(t *testing.T, alloc chainsetup.NetAllocateIn) (dir string, d chainsetup.Deps) {
 	t.Helper()
 	dir = t.TempDir()
-	d = app.Deps{Clock: fixedClock}
+	d = chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, err := filepath.Abs(presetDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	alloc.DataDir = dir
-	if _, err := app.NetAllocate(ctx, d, alloc); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, alloc); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
-	if _, err := app.NetKeys(ctx, d, app.NetKeysIn{DataDir: dir}); err != nil {
+	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
 		t.Fatalf("keys: %v", err)
 	}
 	return dir, d
 }
 
 // stateOf reads the persisted composition state.
-func stateOf(t *testing.T, dir string, d app.Deps) chainsetup.State {
+func stateOf(t *testing.T, dir string, d chainsetup.Deps) chainsetup.State {
 	t.Helper()
-	out, err := app.NetStatus(context.Background(), d, app.NetStatusIn{DataDir: dir})
+	out, err := chainsetup.NetStatus(context.Background(), d, chainsetup.NetStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}
@@ -53,11 +52,11 @@ func stateOf(t *testing.T, dir string, d app.Deps) chainsetup.State {
 func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 	// Every node rendered "full" before this: a snap-sync re-sync test composed
 	// through the steps was silently running full sync instead.
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2, Endpoints: 1, EndpointSyncMode: "snap"})
-	if _, err := app.NetGenesis(context.Background(), d, app.NetGenesisIn{DataDir: dir}); err != nil {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, Endpoints: 1, EndpointSyncMode: "snap"})
+	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
-	if _, err := app.NetConfig(context.Background(), d, app.NetConfigIn{DataDir: dir}); err != nil {
+	if _, err := chainsetup.NetConfig(context.Background(), d, chainsetup.NetConfigIn{DataDir: dir}); err != nil {
 		t.Fatalf("config: %v", err)
 	}
 
@@ -82,7 +81,7 @@ func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 	// A sealing node must hold full state, so the knob must not reach it even
 	// when the caller sets it.
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2, EndpointSyncMode: "snap"})
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, EndpointSyncMode: "snap"})
 	for _, n := range stateOf(t, dir, d).Nodes {
 		if n.SyncMode != "full" {
 			t.Errorf("validator node%d sync mode = %q, want full", n.Index, n.SyncMode)
@@ -91,9 +90,9 @@ func TestNetAllocate_ValidatorsIgnoreTheEndpointSyncMode(t *testing.T) {
 }
 
 func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
 
-	out, err := app.NetGenesis(context.Background(), d, app.NetGenesisIn{
+	out, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=10"},
 	})
 	if err != nil {
@@ -113,9 +112,9 @@ func TestNetGenesis_ConfigOverrideDelaysTheFork(t *testing.T) {
 }
 
 func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
 
-	if _, err := app.NetGenesis(context.Background(), d, app.NetGenesisIn{
+	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{
 		DataDir: dir, Set: []string{"bohoBlock=0"},
 	}); err != nil {
 		t.Fatalf("genesis: %v", err)
@@ -131,13 +130,13 @@ func TestNetGenesis_ForkAtGenesisIsNotAdvertisedAsDelayed(t *testing.T) {
 }
 
 func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
 	overlay := filepath.Join(t.TempDir(), "overlay.json")
 	if err := os.WriteFile(overlay, []byte(`{"capabilities":["account-extra"],"genesis":{"config":{"chainId":4242}}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	out, err := app.NetGenesis(context.Background(), d, app.NetGenesisIn{DataDir: dir, OverlayPath: overlay})
+	out, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: overlay})
 	if err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
@@ -153,20 +152,20 @@ func TestNetGenesis_OverlayMergesAndDeclaresCapabilities(t *testing.T) {
 }
 
 func TestNetGenesis_MalformedInputsAreRejected(t *testing.T) {
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
 	ctx := context.Background()
 
-	if _, err := app.NetGenesis(ctx, d, app.NetGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, Set: []string{"novalue"}}); err == nil {
 		t.Error("want an error for an override without a value")
 	}
-	if _, err := app.NetGenesis(ctx, d, app.NetGenesisIn{DataDir: dir, OverlayPath: "/nonexistent/overlay.json"}); err == nil {
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: "/nonexistent/overlay.json"}); err == nil {
 		t.Error("want an error for a missing overlay file")
 	}
 	bad := filepath.Join(t.TempDir(), "bad.json")
 	if err := os.WriteFile(bad, []byte(`{not json`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.NetGenesis(ctx, d, app.NetGenesisIn{DataDir: dir, OverlayPath: bad}); err == nil {
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, OverlayPath: bad}); err == nil {
 		t.Error("want an error for an unparseable overlay")
 	}
 }
@@ -189,13 +188,13 @@ func genesisConfig(t *testing.T, path string) map[string]any {
 
 func TestNetAllocate_TopologyDrivesRolesAndSyncModes(t *testing.T) {
 	dir := t.TempDir()
-	d := app.Deps{Clock: fixedClock}
+	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, err := filepath.Abs(presetDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 
@@ -214,7 +213,7 @@ nodes:
 		t.Fatal(err)
 	}
 
-	out, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, TopologyPath: topo})
+	out, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, TopologyPath: topo})
 	if err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -250,10 +249,10 @@ func TestNetAllocate_TopologyCannotMakeAValidatorStateless(t *testing.T) {
 	// A sealing node must hold full state; a topology asking otherwise is
 	// overridden rather than silently producing a network that cannot seal.
 	dir := t.TempDir()
-	d := app.Deps{Clock: fixedClock}
+	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	topo := filepath.Join(t.TempDir(), "topology.yaml")
@@ -268,7 +267,7 @@ nodes:
 		t.Fatal(err)
 	}
 
-	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, TopologyPath: topo}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	for _, n := range stateOf(t, dir, d).Nodes {
@@ -279,8 +278,8 @@ nodes:
 }
 
 func TestNetAllocate_MissingTopologyFileIsAnError(t *testing.T) {
-	dir, d := composed(t, app.NetAllocateIn{Validators: 1})
-	if _, err := app.NetAllocate(context.Background(), d, app.NetAllocateIn{
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 1})
+	if _, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
 		DataDir: dir, TopologyPath: "/nonexistent/topology.yaml",
 	}); err == nil {
 		t.Error("want an error for a missing topology file")
@@ -291,7 +290,7 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 	// A project-supplied chain has to resolve on every later step, not just at
 	// `new`: the workspace records the manifest, not only the id.
 	dir := t.TempDir()
-	d := app.Deps{Clock: fixedClock}
+	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
 
@@ -312,7 +311,7 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := app.NetNew(ctx, d, app.NetNewIn{
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{
 		DataDir: dir, KeysDir: keysAbs, ManifestPath: manifest, TemplatePath: template,
 	}); err != nil {
 		t.Fatalf("new: %v", err)
@@ -324,10 +323,10 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 
 	// A later step must resolve the same plugin — registry.Get("foonet") would
 	// fail, since it is not an embedded chain.
-	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
 		t.Fatalf("allocate on an external chain: %v", err)
 	}
-	if _, err := app.NetGenesis(ctx, d, app.NetGenesisIn{DataDir: dir}); err != nil {
+	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis on an external chain: %v", err)
 	}
 	if got := genesisConfig(t, filepath.Join(dir, "genesis.json"))["chainId"]; got != float64(9999) {
@@ -336,8 +335,8 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 }
 
 func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
-	if _, err := app.NetNew(context.Background(), app.Deps{Clock: fixedClock},
-		app.NetNewIn{DataDir: t.TempDir()}); err == nil {
+	if _, err := chainsetup.NetNew(context.Background(), chainsetup.Deps{Clock: fixedClock()},
+		chainsetup.NetNewIn{DataDir: t.TempDir()}); err == nil {
 		t.Error("want an error with neither a chain nor a manifest")
 	}
 }
@@ -345,14 +344,14 @@ func TestNetNew_NeedsAChainOrAManifest(t *testing.T) {
 func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 	// Every consumer downstream of a bring-up speaks NodeSet, so a composed
 	// network has to be readable through the same call a setup one is.
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2, Endpoints: 1})
-	if _, err := app.NetGenesis(context.Background(), d, app.NetGenesisIn{DataDir: dir}); err != nil {
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2, Endpoints: 1})
+	if _, err := chainsetup.NetGenesis(context.Background(), d, chainsetup.NetGenesisIn{DataDir: dir}); err != nil {
 		t.Fatalf("genesis: %v", err)
 	}
 
-	out, err := app.NetworkStatus(context.Background(), d, app.NetworkStatusIn{DataDir: dir})
+	out, err := chainsetup.NetworkStatus(context.Background(), d, chainsetup.NetworkStatusIn{DataDir: dir})
 	if err != nil {
-		t.Fatalf("NetworkStatus: %v", err)
+		t.Fatalf("chainsetup.NetworkStatus: %v", err)
 	}
 	if !out.Composed {
 		t.Error("a workspace directory should report as composed")
@@ -380,9 +379,9 @@ func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 func TestNetworkStatus_StillReadsASetupDataRoot(t *testing.T) {
 	// The bridge must not shadow the stack it is meant to coexist with.
 	dir, _, deps := launchedNetwork(t)
-	out, err := app.NetworkStatus(context.Background(), deps, app.NetworkStatusIn{DataDir: dir})
+	out, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
 	if err != nil {
-		t.Fatalf("NetworkStatus: %v", err)
+		t.Fatalf("chainsetup.NetworkStatus: %v", err)
 	}
 	if out.Composed {
 		t.Error("a setup data root must not report as composed")
@@ -393,13 +392,23 @@ func TestNetworkStatus_StillReadsASetupDataRoot(t *testing.T) {
 }
 
 func TestNetworkStop_OnAComposedWorkspaceWithNothingRunning(t *testing.T) {
-	dir, d := composed(t, app.NetAllocateIn{Validators: 2})
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 2})
 
-	out, err := app.NetworkStop(context.Background(), d, app.NetworkStopIn{DataDir: dir})
+	out, err := chainsetup.NetworkStop(context.Background(), d, chainsetup.NetworkStopIn{DataDir: dir})
 	if err != nil {
-		t.Fatalf("NetworkStop: %v", err)
+		t.Fatalf("chainsetup.NetworkStop: %v", err)
 	}
 	if out.Stopped != 0 {
 		t.Errorf("stopped = %d, want 0 (nothing was started)", out.Stopped)
 	}
+}
+
+// hasCapability reports whether want is among caps.
+func hasCapability(caps []string, want string) bool {
+	for _, c := range caps {
+		if c == want {
+			return true
+		}
+	}
+	return false
 }
