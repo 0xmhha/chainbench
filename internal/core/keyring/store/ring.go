@@ -1,4 +1,4 @@
-package keyring
+package store
 
 import (
 	"context"
@@ -11,15 +11,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // Label names one entry in a ring: "node1", "bp1", "faucet".
 //
 // It is a named type because it crosses package boundaries and is a map key.
-// A label is how a network's declaration refers to an identity without knowing
-// its address, which is what lets a test say "bp1" and never carry a key.
-type Label string
 
 // File names inside an entry's directory.
 const (
@@ -81,7 +79,7 @@ func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
-	id, err := Derive(key, d)
+	id, err := keyring.Derive(key, d)
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}

@@ -112,10 +112,12 @@ flowchart TD
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
-| `core/keyring` | **키 자료의 단일 소유자** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·백엔드·링·색인 |
+| `core/keyring` | **키 모델과 역학** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·출처·검증. 저장은 하위 store 가 |
+| `core/keyring/store` | **링 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드·Ring 컨테이너, 파일 seam 경유 |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
 | `netmap/internal/serverset` | **서버 세트(포트·호스트)** — netmap 모듈의 내부 데이터 형식. 컴파일러가 외부 import 를 차단한다 |
+| `keyring` | **keyring 모듈 표면** — 링에 대한 동사(new·add·import·list·show·export·링 복제)를 모델(core/keyring)+저장(store)+netmap 으로 조립. CLI 가 직접 호출, app 은 MCP 용으로 얇게 위임 ([[architecture-v2]]) |
 | `netmap` | **netmap 모듈 표면** — 서버 이름을 능력 손잡이로 여는 유일 통로(Opener: 서버 세트 결합 · --docker 치환 · 치환 보고). 할당 코어(core/netmap)와 서버 세트를 low level 에 묶는다 ([[architecture-v2]]) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
@@ -231,7 +233,8 @@ flowchart TD
 | `core/session` | 세션·컴포지션 매니페스트 | ✅ 소유자 |
 | `core/provision` | 타깃 파일 | ✅ 소유자 |
 | `core/driver` | config·log (LocalDriver) | ✅ 전송 계층, Sink 의 구현 짝 |
-| `core/keyring` | 키 자료(0600) · 생성한 링 | ✅ 키는 별도 소유자가 정당(보안 권한) |
+| `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
+| `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 seam 경유 |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | `engine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |

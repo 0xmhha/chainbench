@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -122,7 +123,7 @@ func selectSpecs(specs []driver.NodeSpec, nodes []int) ([]driver.NodeSpec, error
 // KeysDir for a local launch, or the remote keys dir a remote launch ships them
 // to.
 func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
-	preset, err := keyring.LoadPreset(l.KeysDir)
+	preset, err := store.LoadPreset(l.KeysDir)
 	if err != nil {
 		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}

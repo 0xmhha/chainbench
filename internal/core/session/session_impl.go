@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
 // Layout names for the .chainbench/<session>/ tree (design §D-1). Kept as
@@ -62,7 +62,7 @@ type sess struct {
 	root      string
 	command   string
 	startedAt time.Time
-	keys      *keyring.Ring
+	keys      *store.Ring
 
 	mu    sync.Mutex
 	envs  map[Fingerprint]*env
@@ -77,13 +77,13 @@ type sess struct {
 // The session decides where key material lands because it owns the artifact
 // layout (design §3.1, single ownership); a caller never reconstructs that path.
 func New(baseDir, command string, startedAt time.Time) (Session, error) {
-	return newSession(baseDir, command, startedAt, keyring.NewRing)
+	return newSession(baseDir, command, startedAt, store.NewRing)
 }
 
 // newSession creates the session tree and binds its keyring. newKeys receives
 // the session's keys/ path so the ring can be rooted there without the layout
 // leaking to callers.
-func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) *keyring.Ring) (Session, error) {
+func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysDir string) *store.Ring) (Session, error) {
 	id := SessionID(startedAt)
 	root := filepath.Join(baseDir, id)
 	dirs := []struct {
@@ -110,9 +110,9 @@ func newSession(baseDir, command string, startedAt time.Time, newKeys func(keysD
 	}, nil
 }
 
-func (s *sess) ID() string          { return s.id }
-func (s *sess) Root() string        { return s.root }
-func (s *sess) Keys() *keyring.Ring { return s.keys }
+func (s *sess) ID() string        { return s.id }
+func (s *sess) Root() string      { return s.root }
+func (s *sess) Keys() *store.Ring { return s.keys }
 
 // Environment returns an existing environment for fp, or ok=false when none
 // exists yet.

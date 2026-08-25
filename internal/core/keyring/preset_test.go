@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
 // bareRing generates a ring that declares nothing about a network: identities
@@ -14,10 +15,10 @@ import (
 func bareRing(t *testing.T, nodes int) keyring.Preset {
 	t.Helper()
 	none := 0
-	set, err := keyring.Generate(keyring.GenerateOpts{
+	set, err := store.Generate(store.GenerateOpts{
 		Nodes: nodes, Validators: &none,
 		Out: t.TempDir(), Password: "1", Balance: "0x1",
-		Derive: keyring.WithBLS,
+		Derive: store.WithBLS,
 		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x5a}, nodes*keyring.PrivateKeyLen)),
 	}, nil)
 	if err != nil {
@@ -74,7 +75,7 @@ func TestNetworkFor_BareRingIsIdentitiesOnly(t *testing.T) {
 // TestNetworkFor_DeclaredSetWins keeps an existing preset's answer: a file that
 // says who validates is not second-guessed.
 func TestNetworkFor_DeclaredSetWins(t *testing.T) {
-	p, err := keyring.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -97,10 +98,10 @@ func TestNetworkFor_DeclaredSetWins(t *testing.T) {
 // an empty ring, which would produce a genesis with no producers.
 func TestLoadPreset_RejectsAFileThatSaysNothing(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, keyring.PresetFile), []byte(`{"password":"1"}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, store.PresetFile), []byte(`{"password":"1"}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := keyring.LoadPreset(dir); err == nil {
+	if _, err := store.LoadPreset(dir); err == nil {
 		t.Fatal("loaded a ring that holds no identities and declares no validators")
 	}
 }
@@ -131,9 +132,9 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
-			created, err := keyring.Generate(keyring.GenerateOpts{
+			created, err := store.Generate(store.GenerateOpts{
 				Nodes: 3, Validators: tc.validators, Out: dir,
-				Password: "1", Balance: "0x1", Derive: keyring.WithBLS,
+				Password: "1", Balance: "0x1", Derive: store.WithBLS,
 				Rand: bytes.NewReader(bytes.Repeat([]byte{0x33}, 3*keyring.PrivateKeyLen)),
 			}, nil)
 			if err != nil {
@@ -143,9 +144,9 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 				t.Errorf("new: %d validators, want %d", got, tc.wantNew)
 			}
 
-			extended, err := keyring.Extend(keyring.GenerateOpts{
+			extended, err := store.Extend(store.GenerateOpts{
 				Nodes: 2, Validators: tc.validators, Out: dir,
-				Password: "1", Balance: "0x1", Derive: keyring.WithBLS,
+				Password: "1", Balance: "0x1", Derive: store.WithBLS,
 				Rand: bytes.NewReader(bytes.Repeat([]byte{0x44}, 2*keyring.PrivateKeyLen)),
 			}, nil)
 			if err != nil {
@@ -166,14 +167,14 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 // satisfied from silently promoting fewer.
 func TestExtend_RejectsMoreValidatorsThanIdentities(t *testing.T) {
 	dir := t.TempDir()
-	if _, err := keyring.Generate(keyring.GenerateOpts{
+	if _, err := store.Generate(store.GenerateOpts{
 		Nodes: 2, Out: dir, Password: "1", Balance: "0x1",
 		Rand: bytes.NewReader(bytes.Repeat([]byte{0x55}, 2*keyring.PrivateKeyLen)),
 	}, nil); err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
 	tooMany := 3
-	_, err := keyring.Extend(keyring.GenerateOpts{
+	_, err := store.Extend(store.GenerateOpts{
 		Nodes: 1, Validators: &tooMany, Out: dir, Password: "1", Balance: "0x1",
 	}, nil)
 	if err == nil {

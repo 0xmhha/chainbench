@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/app"
+	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
 )
 
 // newRing creates a ring in a temp dir and returns its path.
@@ -29,7 +29,7 @@ func TestKeyring_NewCreatesAUsableRing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("keyring list: %v\n%s", err, out)
 	}
-	var entries []app.EntryOut
+	var entries []keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &entries); err != nil {
 		t.Fatalf("list output not JSON: %v\n%s", err, out)
 	}
@@ -65,7 +65,7 @@ func TestKeyring_WithoutBLSOmitsIt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("keyring show: %v\n%s", err, out)
 	}
-	var e app.EntryOut
+	var e keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -127,7 +127,7 @@ func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("keyring export: %v\n%s", err, out)
 	}
-	var e app.EntryOut
+	var e keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -150,22 +150,22 @@ func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
 		t.Errorf("the flag source was not reported:\n%s", out)
 	}
 
-	t.Setenv(app.RingEnv, dir)
+	t.Setenv(keyringmod.RingEnv, dir)
 	out, err = run(t, "keyring", "list")
 	if err != nil {
 		t.Fatalf("keyring list via env: %v", err)
 	}
-	if !strings.Contains(out, "("+app.RingEnv+")") {
+	if !strings.Contains(out, "("+keyringmod.RingEnv+")") {
 		t.Errorf("the environment source was not reported:\n%s", out)
 	}
 
 	// With nothing naming a ring, the error says where it looked and why.
-	t.Setenv(app.RingEnv, "")
+	t.Setenv(keyringmod.RingEnv, "")
 	_, err = run(t, "keyring", "list")
 	if err == nil {
 		t.Fatal("expected an error when the default ring does not exist")
 	}
-	if !strings.Contains(err.Error(), app.DefaultRingDir) || !strings.Contains(err.Error(), "default") {
+	if !strings.Contains(err.Error(), keyringmod.DefaultRingDir) || !strings.Contains(err.Error(), "default") {
 		t.Errorf("error should name the ring and why it was chosen: %v", err)
 	}
 }
@@ -206,7 +206,7 @@ func listAddresses(t *testing.T, dir string) []string {
 	if err != nil {
 		t.Fatalf("keyring list: %v\n%s", err, out)
 	}
-	var entries []app.EntryOut
+	var entries []keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &entries); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -223,7 +223,7 @@ func exportKey(t *testing.T, dir, name string) string {
 	if err != nil {
 		t.Fatalf("keyring export: %v\n%s", err, out)
 	}
-	var e app.EntryOut
+	var e keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -304,7 +304,7 @@ func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the imported identity is not visible: %v", err)
 	}
-	var e app.EntryOut
+	var e keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -397,7 +397,7 @@ func TestKeyringNew_JSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new --json: %v\n%s", err, out)
 	}
-	var r app.RingOut
+	var r keyringmod.RingOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &r); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}

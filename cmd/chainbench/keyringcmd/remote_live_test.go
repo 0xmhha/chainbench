@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/machine"
+	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
 	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
@@ -135,7 +135,7 @@ func addressOf(t *testing.T, ring, name string) string {
 	if err != nil {
 		t.Fatalf("keyring show: %v\n%s", err, out)
 	}
-	var e app.EntryOut
+	var e keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
@@ -236,7 +236,7 @@ func addressOfRemote(t *testing.T, ring, inv, name string) string {
 	if err != nil {
 		t.Fatalf("remote keyring show: %v\n%s", err, out)
 	}
-	var e app.EntryOut
+	var e keyringmod.EntryOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &e); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}

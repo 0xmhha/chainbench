@@ -10,6 +10,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -53,7 +54,7 @@ func (s WemixGenesisSource) Genesis(ctx context.Context, plugin registry.ChainPl
 	if req.Nodes == nil {
 		return GenesisArtifacts{}, fmt.Errorf("engine: wemix genesis: no placement — the governance config names the producer's host and p2p port, so the network has to be placed first")
 	}
-	preset, err := keyring.LoadPreset(s.KeysDir)
+	preset, err := store.LoadPreset(s.KeysDir)
 	if err != nil {
 		return GenesisArtifacts{}, fmt.Errorf("engine: wemix genesis: %w", err)
 	}

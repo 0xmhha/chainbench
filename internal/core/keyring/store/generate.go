@@ -1,4 +1,4 @@
-package keyring
+package store
 
 import (
 	"context"
@@ -8,23 +8,17 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/accounts/keystore"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // File and directory permissions for a generated ring.
-const (
-	dirPerm    os.FileMode = 0o755
-	secretPerm os.FileMode = 0o600
-	publicPerm os.FileMode = 0o644
-)
-
 // Keystore scrypt parameters. Light (geth's LightScryptN/P): a generated ring
 // is a local test fixture, and lighter parameters keep multi-node generation
 // fast while still producing a standard, node-readable v3 keystore.
@@ -167,7 +161,7 @@ func ImportAt(ctx context.Context, files provision.FileStore, dir string, label 
 		}
 	}
 
-	id, err := Derive(key, d)
+	id, err := keyring.Derive(key, d)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -313,11 +307,11 @@ func writePreset(ctx context.Context, opts GenerateOpts, set Preset) error {
 // an operator reading the directory by hand.
 func generateEntry(ctx context.Context, i int, opts GenerateOpts) (Entry, error) {
 	nodeDir := filepath.Join(opts.Out, fmt.Sprintf("node%d", i))
-	key, err := NewPrivateKey(opts.Rand)
+	key, err := keyring.NewPrivateKey(opts.Rand)
 	if err != nil {
 		return Entry{}, err
 	}
-	id, err := Derive(key, opts.Derive)
+	id, err := keyring.Derive(key, opts.Derive)
 	if err != nil {
 		return Entry{}, err
 	}

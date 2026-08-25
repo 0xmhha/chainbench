@@ -1,4 +1,4 @@
-package keyring_test
+package store_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
@@ -16,7 +17,7 @@ import (
 // resolved once keeps its identity, instead of a second run producing a
 // competing key for the same name.
 func TestRing_AddIsIdempotent(t *testing.T) {
-	ring := keyring.NewRing(t.TempDir())
+	ring := store.NewRing(t.TempDir())
 	first, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
@@ -39,7 +40,7 @@ func TestRing_AddIsIdempotent(t *testing.T) {
 // TestRing_DerivationIsPerEntry covers the poa case: an entry asked for without
 // BLS has none, rather than a zero key that reads like a real one.
 func TestRing_DerivationIsPerEntry(t *testing.T) {
-	ring := keyring.NewRing(t.TempDir())
+	ring := store.NewRing(t.TempDir())
 	bp, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
 	if err != nil {
 		t.Fatalf("Add bp1: %v", err)
@@ -59,11 +60,11 @@ func TestRing_DerivationIsPerEntry(t *testing.T) {
 // TestRing_AddExpectingCatchesDrift is the check that keeps a declared identity
 // and its key from parting ways unnoticed.
 func TestRing_AddExpectingCatchesDrift(t *testing.T) {
-	known := loadPresetNodes(t)[0]
-	ring := keyring.NewRing(t.TempDir())
-	src := keyring.PrivateKeySource{Hex: known.Nodekey}
+	entry := presetEntry(t)
+	ring := store.NewRing(t.TempDir())
+	src := keyring.PrivateKeySource{Hex: entry.Nodekey.Hex()}
 
-	if _, err := ring.AddExpecting(context.Background(), "ok", src, keyring.AccountOnly, known.Address); err != nil {
+	if _, err := ring.AddExpecting(context.Background(), "ok", src, keyring.AccountOnly, entry.Address); err != nil {
 		t.Fatalf("AddExpecting with the right address: %v", err)
 	}
 	_, err := ring.AddExpecting(context.Background(), "drifted", src, keyring.AccountOnly,
@@ -77,7 +78,7 @@ func TestRing_AddExpectingCatchesDrift(t *testing.T) {
 // is owner-only, the derived fields are readable, and nothing lands outside.
 func TestRing_WritesUnderItsDirectory(t *testing.T) {
 	dir := t.TempDir()
-	ring := keyring.NewRing(dir)
+	ring := store.NewRing(dir)
 	if _, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS); err != nil {
 		t.Fatalf("Add: %v", err)
 	}
@@ -104,7 +105,7 @@ func TestRing_WritesUnderItsDirectory(t *testing.T) {
 // TestRing_Install ships only the secret. Everything else derives from it, and
 // shipping a derived value is how a node and its genesis come to disagree.
 func TestRing_Install(t *testing.T) {
-	ring := keyring.NewRing(t.TempDir())
+	ring := store.NewRing(t.TempDir())
 	e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
@@ -130,7 +131,7 @@ func TestRing_Install(t *testing.T) {
 
 // TestRing_Labels keeps listing output stable between runs.
 func TestRing_Labels(t *testing.T) {
-	ring := keyring.NewRing(t.TempDir())
+	ring := store.NewRing(t.TempDir())
 	for _, l := range []keyring.Label{"en1", "bp2", "bp1"} {
 		if _, err := ring.Add(context.Background(), l, keyring.RandomSource{}, keyring.AccountOnly); err != nil {
 			t.Fatalf("Add %s: %v", l, err)
@@ -151,7 +152,7 @@ func TestRing_Labels(t *testing.T) {
 // TestRing_AddPropagatesSourceErrors keeps a failed resolve from being recorded
 // as an entry.
 func TestRing_AddPropagatesSourceErrors(t *testing.T) {
-	ring := keyring.NewRing(t.TempDir())
+	ring := store.NewRing(t.TempDir())
 	_, err := ring.Add(context.Background(), "bad", keyring.PrivateKeySource{Hex: "zz"}, keyring.AccountOnly)
 	if err == nil {
 		t.Fatal("expected an error")
@@ -167,7 +168,7 @@ func TestRing_AddPropagatesSourceErrors(t *testing.T) {
 // TestNetworkFor_DoesNotAliasThePreset is a regression: the narrowed result
 // resliced the preset's own array, so appending to it rewrote the preset.
 func TestNetworkFor_DoesNotAliasThePreset(t *testing.T) {
-	p, err := keyring.LoadPreset(filepath.Join("..", "..", "..", "keys", "preset"))
+	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -189,7 +190,7 @@ func TestNetworkFor_DoesNotAliasThePreset(t *testing.T) {
 // even when several callers race, and that a slow source does not serialize
 // the others behind it.
 func TestRing_AddIsSafeUnderConcurrency(t *testing.T) {
-	ring := keyring.NewRing(t.TempDir())
+	ring := store.NewRing(t.TempDir())
 
 	const callers = 8
 	var wg sync.WaitGroup
@@ -216,4 +217,15 @@ func TestRing_AddIsSafeUnderConcurrency(t *testing.T) {
 	if len(ring.Labels()) != 1 {
 		t.Errorf("ring holds %v, want one label", ring.Labels())
 	}
+}
+
+// presetEntry returns the shipped preset's first entry — a published test
+// fixture, reused so no key literal appears in source.
+func presetEntry(t *testing.T) keyring.Entry {
+	t.Helper()
+	set, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	if err != nil {
+		t.Fatalf("read shipped preset: %v", err)
+	}
+	return set.Nodes[0]
 }

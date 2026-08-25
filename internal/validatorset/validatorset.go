@@ -11,7 +11,7 @@ package validatorset
 import (
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -49,7 +49,7 @@ func Load(chainID, keysDir string) (Roster, error) {
 	if keysDir == "" {
 		keysDir = "keys/preset"
 	}
-	preset, err := keyring.LoadPreset(keysDir)
+	preset, err := store.LoadPreset(keysDir)
 	if err != nil {
 		return Roster{}, err
 	}

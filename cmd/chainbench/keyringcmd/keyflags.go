@@ -8,6 +8,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/netmap"
@@ -183,12 +184,12 @@ func (f *storeFlags) bind(cmd *cobra.Command) {
 
 func (f *storeFlags) enabled() bool { return f.out != "" }
 
-func (f *storeFlags) build() (keyring.Backend, error) {
+func (f *storeFlags) build() (store.Backend, error) {
 	switch f.store {
 	case "keystore":
-		return keyring.KeystoreBackend{}, nil
+		return store.KeystoreBackend{}, nil
 	case "file":
-		return keyring.RawFileBackend{}, nil
+		return store.RawFileBackend{}, nil
 	default:
 		return nil, fmt.Errorf("--store must be keystore or file")
 	}
@@ -226,15 +227,15 @@ func saveKey(sf *storeFlags, pf *PasswordFlags, key keyring.PrivateKey) (string,
 	if !sf.enabled() {
 		return "", nil
 	}
-	store, err := sf.build()
+	backend, err := sf.build()
 	if err != nil {
 		return "", err
 	}
 	pw := pf.Source()
-	if _, isKeystore := store.(keyring.KeystoreBackend); isKeystore && pw == nil {
+	if _, isKeystore := backend.(store.KeystoreBackend); isKeystore && pw == nil {
 		return "", fmt.Errorf("keystore storage needs a password (--password / --password-file / --password-once)")
 	}
-	return store.Save(sf.out, sf.name, key, pw)
+	return backend.Save(sf.out, sf.name, key, pw)
 }
 
 // promptPassword reads a password from the terminal without echo.

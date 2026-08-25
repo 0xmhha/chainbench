@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/validatorset"
 )
@@ -222,14 +223,14 @@ func newValidatorRosterCmd() *cobra.Command {
 // preset is defined by its validator set, not by raw keys.
 func newValidatorSetCmd() *cobra.Command {
 	var (
-		opts       keyring.GenerateOpts
+		opts       store.GenerateOpts
 		validators int
 		basePort   int // superseded; see below
 	)
 	cmd := &cobra.Command{
 		Use:   "set",
 		Short: "Generate a validator set / preset key bundle (nodekeys, BLS, keystores, metadata)",
-		Long: "Generates the preset key set the harness consumes (keyring.LoadPreset): per-node\n" +
+		Long: "Generates the preset key set the harness consumes (store.LoadPreset): per-node\n" +
 			"nodekeys, their derived address + BLS public key/PoP (derived in process),\n" +
 			"an encrypted keystore per node (via the accounts SDK — no node binary),\n" +
 			"and a metadata.json. Use it to build validator sets larger than the committed\n" +
@@ -245,7 +246,7 @@ func newValidatorSetCmd() *cobra.Command {
 			if validators > 0 {
 				opts.Validators = &validators
 			}
-			meta, err := keyring.Generate(opts, func(line string) { fmt.Fprintln(out, line) })
+			meta, err := store.Generate(opts, func(line string) { fmt.Fprintln(out, line) })
 			if err != nil {
 				return err
 			}
