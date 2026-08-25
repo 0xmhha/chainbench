@@ -24,7 +24,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/engine"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // Composition steps: keys, allocate, genesis, config, launchopts, provision.
@@ -121,7 +121,7 @@ type AllocateOpts struct {
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
-	Placement serverset.Placement
+	Placement netmapmod.Placement
 	// SetPath is the server-set file Placement came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
 	SetPath string
@@ -190,7 +190,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	pl := opts.Placement
 	if pl.Source == "" {
-		pl = serverset.Builtin(minValidatorsForPlacement, portBandSize)
+		pl = netmapmod.Builtin(minValidatorsForPlacement, portBandSize)
 	}
 	if opts.SetPath != "" {
 		w.state.ServerSet = opts.SetPath

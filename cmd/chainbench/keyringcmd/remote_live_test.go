@@ -11,7 +11,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // The remote half of the keyring verification matrix, live against the local
@@ -32,7 +32,7 @@ func fleetBuildDir(t *testing.T) string {
 	// Access mirrors the real fleet: user + password. The srv:// path reads
 	// them from the server set; the direct user@host form reads the password
 	// from the environment, so it is exported here from the same file.
-	if cfg, err := serverset.Load(filepath.Join(build, "server-set.yaml")); err == nil {
+	if cfg, err := netmapmod.LoadSet(filepath.Join(build, "server-set.yaml")); err == nil {
 		if srv, err := cfg.ByName("server1"); err == nil {
 			t.Setenv("CHAINBENCH_REMOTE_PASS", srv.SSH.Password)
 		}
@@ -47,22 +47,21 @@ func fleetBuildDir(t *testing.T) string {
 func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 	t.Helper()
 	inv := filepath.Join(build, "server-set.yaml")
-	cfg, err := serverset.Load(inv)
+	cfg, err := netmapmod.LoadSet(inv)
 	if err != nil {
-		t.Fatalf("load inventory: %v", err)
+		t.Fatalf("load server set: %v", err)
 	}
 	srv, err := cfg.ByName("server1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inv))
 	if err != nil {
 		t.Fatal(err)
 	}
 	spec := machine.Spec{
 		Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench",
 	}
-	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
+	// The direct user@host form authenticates from the environment; the dial
+	// still translates through the module's one address map.
+	o := netmapmod.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}
+	tgt, err := o.Open(spec)
 	if err != nil {
 		t.Fatalf("resolve user@host target: %v", err)
 	}
@@ -165,7 +164,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	}
 
 	// The key material exists ON the server, checked through the same stack.
-	cfg, err := serverset.Load(inv)
+	cfg, err := netmapmod.LoadSet(inv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,12 +172,8 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inv))
-	if err != nil {
-		t.Fatal(err)
-	}
 	spec := machine.Spec{Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench"}
-	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
+	tgt, err := netmapmod.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}.Open(spec)
 	if err != nil {
 		t.Fatal(err)
 	}

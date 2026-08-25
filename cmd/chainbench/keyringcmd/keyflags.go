@@ -11,7 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/netmap"
-	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
 // SourceFlags select where an imported key comes from — a private key, a BIP-39
@@ -58,7 +57,7 @@ func (f *SourceFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.remotePath, "remote-path", "", "deprecated: use --from srv://<server>/path")
 	_ = cmd.Flags().MarkDeprecated("remote-path", "use --from srv://<server>/path")
 
-	cmd.Flags().StringVar(&f.serverSet, "server-set", serverset.DefaultConfigFile, "server-set file for srv:// targets")
+	cmd.Flags().StringVar(&f.serverSet, "server-set", netmap.DefaultSetFile, "server-set file for srv:// targets")
 	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "override the SSH user for a host named directly in --from")
 	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "override the SSH port for a host named directly in --from (default 22)")
 	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keyring.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
@@ -112,7 +111,7 @@ func (f *SourceFlags) fromPath() (string, error) {
 		// --server took an index; --from names the entry. The server set answers
 		// both, so translate here rather than teaching the path syntax about
 		// indexes — a number is not a name.
-		cfg, err := serverset.Load(f.serverSetPath())
+		cfg, err := netmap.LoadSet(f.serverSetPath())
 		if err != nil {
 			return "", err
 		}
@@ -165,7 +164,7 @@ func (f *SourceFlags) serverSetPath() string {
 	if f.serverSet != "" {
 		return f.serverSet
 	}
-	return serverset.DefaultConfigFile
+	return netmap.DefaultSetFile
 }
 
 // storeFlags select whether and how a key is persisted. Storage is off unless

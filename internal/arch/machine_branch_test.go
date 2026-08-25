@@ -20,13 +20,13 @@ import (
 // to the worklist task that dissolves it. The list may only shrink: an entry
 // whose file no longer branches fails the test until it is removed here.
 var machineBranchAllowed = map[string]string{
-	"internal/core/procman":        "Proc.IsRemote is procman's own host notion, not machine.Kind (reconciled at V4)",
-	"internal/app/serverconf.go":   "constructs Specs from server-set entries (stating a kind is not branching on one)",
-	"internal/serverset":           "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
-	"internal/netcompose":          "deferred: dissolves into chainsetup/netmap at V2.3 and V5.1",
-	"internal/mcp/net_tools.go":    "deferred: renders the recorded target kind; goes with V6.3",
-	"cmd/chainbench/net.go":        "constructs Specs from the legacy remote flags",
-	"cmd/chainbench/net_status.go": "deferred: renders the recorded target kind; goes with V5.4",
+	"internal/core/procman":              "Proc.IsRemote is procman's own host notion, not machine.Kind (reconciled at V4)",
+	"internal/netmap":                    "the module surface constructs Specs from server-set entries and owns the wiring",
+	"internal/netmap/internal/serverset": "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
+	"internal/netcompose":                "deferred: dissolves into chainsetup/netmap at V2.3 and V5.1",
+	"internal/mcp/net_tools.go":          "deferred: renders the recorded target kind; goes with V6.3",
+	"cmd/chainbench/net.go":              "constructs Specs from the legacy remote flags",
+	"cmd/chainbench/net_status.go":       "deferred: renders the recorded target kind; goes with V5.4",
 }
 
 // TestMachineConsumersDoNotBranchOnKind walks every non-test Go file and

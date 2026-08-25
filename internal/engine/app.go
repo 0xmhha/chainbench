@@ -22,7 +22,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
@@ -77,7 +77,7 @@ type LocalConfig struct {
 	// Its zero value is the built-in local plan; a caller that read the
 	// operator's server server set passes that server's placement, which is how
 	// site-specific ports reach a run without ever entering a spec.
-	Placement serverset.Placement
+	Placement netmapmod.Placement
 	// Clock supplies the session start time; nil uses time.Now (injected so
 	// tests are deterministic).
 	Clock func() time.Time
@@ -147,7 +147,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	})
 	pl := cfg.Placement
 	if pl.Source == "" {
-		pl = serverset.Builtin(minValidators, defaultPortBand)
+		pl = netmapmod.Builtin(minValidators, defaultPortBand)
 	}
 	pool := pl.Pool
 	pool.Reservation = plugin.Family().PortReservation()

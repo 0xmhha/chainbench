@@ -9,7 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
 // TestLive_SudoElevatesWithThePassword proves the fleet's real access model

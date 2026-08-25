@@ -14,7 +14,7 @@ package netmap
 import (
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
 // Opener binds a machine spec to the server set and the docker translation,

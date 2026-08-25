@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/netcompose"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // newNetCmd is the composable step surface: it composes a chain network for
@@ -110,7 +110,7 @@ type serverFlags struct {
 
 // bind registers the server set flags on cmd.
 func (f *serverFlags) bind(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.config, "server-set", "", "server-set file: which servers exist and how to reach them (default: "+serverset.DefaultConfigFile+" when present)")
+	cmd.Flags().StringVar(&f.config, "server-set", "", "server-set file: which servers exist and how to reach them (default: "+netmap.DefaultSetFile+" when present)")
 	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the server set")
 	cmd.Flags().IntVar(&f.index, "server-index", 0, "server to place nodes on, by index from the server set")
 	cmd.Flags().BoolVar(&f.fleet, "fleet", false, "spread the network across every server in the set, one node per host")
