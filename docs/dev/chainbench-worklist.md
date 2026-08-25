@@ -393,6 +393,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **S5** | `cmd/` 규칙 위반 파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄. 실측 추이: 21파일(08-21) → **24파일(08-25)** — 착수 전까지 증식 중 | ☐ |
 | **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
 | **S7** | **`query` 조회 투영** — `ReadOnly` 기능들을 최상위 `query <명사> <동사>` 로 **자동 생성**(손 트리 금지, [[surface-unification-design]] §4.4, 확정 2026-08-25). 정본 철자는 명사 그룹, `query` 는 같은 등록의 두 번째 렌더링. MCP 는 같은 속성으로 조회 전용 도구 목록을 얻는다 | `query keyring list` == `keyring list` (같은 등록 실증) · 비-ReadOnly 기능이 query 에 나타나면 테스트 실패 | ☐ |
+| **S8** | **netmap 조회의 자기 그룹 독립** (사용자 결정 2026-08-25) — 배치 조회를 `net` 에서 분리해 모듈 이름 그대로의 최상위 그룹 `netmap`(show·pool·plan)으로. 동기: 조회가 조합 그룹에 묶여 있으면 netmap 모듈만 고쳤을 때 그 부분만 테스트할 수 없다. `plan` 신설 = 할당기를 질문으로 실행(인벤토리+형태→배치표, 워크스페이스 없음·무기록) → 배치 변경을 조합 없이 검증하는 통로. MCP 도 동일 이동(`chainbench_netmap_show/pool/plan`). `net` 은 상태를 바꾸는 조합 단계만 소유 | CLI 테스트 7건(plan 결정성·무기록·producer 0 거부·인벤토리 반영·자격 비노출, show 양방향·워크스페이스 요구, pool used 집계) — netmap 만 대상으로 실행 가능 | ☑ |
 
 **`internal/feature` 를 별도 패키지로 두는 이유**: `app/feature` 로 하면 `Invoke(ctx, Deps, in)` 의
 `Deps` 가 `app` 에 있어 `app → app/feature → app` **참조 순환**이 된다. 순환은 발생해서는 안 되며,
