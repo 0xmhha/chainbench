@@ -250,3 +250,26 @@ func (s Spec) resolveOver(creds remote.Credentials, env func(string) string, m r
 		Files: driver.NewRemoteFileStore(run), Driver: driver.NewRemoteDriver(run),
 	}, nil
 }
+
+// Validate reports whether the spec is structurally complete for its kind —
+// what resolving will need, checked before any dial. Consumers call this
+// instead of inspecting the kind themselves: what a remote spec requires is
+// this module's knowledge.
+func (s Spec) Validate() error {
+	switch s.Kind {
+	case "", KindLocal:
+		return nil
+	case KindRemote:
+		if s.Host == "" || s.DataRoot == "" {
+			return fmt.Errorf("target: remote target needs host and dataRoot")
+		}
+		return nil
+	case KindServer:
+		if s.Server == "" || s.DataRoot == "" {
+			return fmt.Errorf("target: server target needs a server name and dataRoot")
+		}
+		return nil
+	default:
+		return fmt.Errorf("target: unknown target kind %q", s.Kind)
+	}
+}

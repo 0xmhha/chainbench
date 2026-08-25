@@ -53,10 +53,10 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	if tgt.Kind == machine.KindLocal && tgt.DataRoot == "" {
 		tgt.DataRoot = w.comp.Dir()
 	}
-	// Validate the target resolves (remote needs host + reachable auth later,
-	// but structural validation happens here); env is nil so no live SSH dial.
-	if tgt.IsRemote() && (tgt.Host == "" || tgt.DataRoot == "") {
-		return "", fmt.Errorf("netcompose: remote target needs --remote-host and --target-dir")
+	// Structural validation happens here (no live SSH dial); what a spec
+	// needs to resolve is the machine module's knowledge, not this caller's.
+	if err := tgt.Validate(); err != nil {
+		return "", fmt.Errorf("netcompose: %w", err)
 	}
 
 	m := p.Manifest()

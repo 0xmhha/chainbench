@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // TestTargetResolve checks the location abstraction: a local spec yields the

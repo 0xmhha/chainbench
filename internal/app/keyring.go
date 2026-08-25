@@ -72,9 +72,10 @@ func (r RingRef) open(d Deps) (files provision.FileStore, dir, source string, er
 	if err != nil {
 		return nil, dir, source, err
 	}
-	if !spec.IsRemote() {
-		return provision.LocalFileStore{}, dir, source, nil
-	}
+	// One path for every kind: the resolver hands back local handles for a
+	// local spec, so this consumer never branches on where the ring lives.
+	// --docker stays the power switch either way — the flag without the
+	// localmap is an error, local ring or not.
 	var m remote.AddrMap
 	if r.Docker {
 		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(r.ServerSet))
