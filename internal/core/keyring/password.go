@@ -9,6 +9,14 @@ import (
 
 // PasswordSource supplies the password guarding a keystore. Implementations
 // differ in where the password comes from and whether the user is asked.
+// File modes shared by everything that persists key material: directories,
+// secrets (key files, passwords), and public artifacts (the index).
+const (
+	DirPerm    os.FileMode = 0o755
+	SecretPerm os.FileMode = 0o600
+	PublicPerm os.FileMode = 0o644
+)
+
 type PasswordSource interface {
 	Password() (string, error)
 }
@@ -54,10 +62,10 @@ func (p OnceThenFile) Password() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := os.MkdirAll(filepath.Dir(p.Path), dirPerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(p.Path), DirPerm); err != nil {
 		return "", err
 	}
-	if err := os.WriteFile(p.Path, []byte(pw), secretPerm); err != nil {
+	if err := os.WriteFile(p.Path, []byte(pw), SecretPerm); err != nil {
 		return "", fmt.Errorf("keyring: store password: %w", err)
 	}
 	return pw, nil

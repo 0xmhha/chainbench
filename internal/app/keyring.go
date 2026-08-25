@@ -14,6 +14,7 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/netmap"
 	"strings"
@@ -140,7 +141,7 @@ func KeyringNew(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
 	}
 	opts := in.opts(dir)
 	opts.Files = files
-	set, err := keyring.GenerateAt(ctx, opts, nil)
+	set, err := store.GenerateAt(ctx, opts, nil)
 	if err != nil {
 		return RingOut{Dir: displayRing(in.Ring, dir), Source: source}, err
 	}
@@ -155,7 +156,7 @@ func KeyringAdd(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
 	}
 	opts := in.opts(dir)
 	opts.Files = files
-	set, err := keyring.ExtendAt(ctx, opts, nil)
+	set, err := store.ExtendAt(ctx, opts, nil)
 	if err != nil {
 		return RingOut{Dir: displayRing(in.Ring, dir), Source: source}, err
 	}
@@ -177,12 +178,12 @@ func displayRing(ref RingRef, resolved string) string {
 // verb resolves an unset count its own way — creating a ring takes all of them,
 // extending one takes none — so resolving it here would have to know which verb
 // called and would get the other wrong. It did, once.
-func (in RingCreateIn) opts(dir string) keyring.GenerateOpts {
+func (in RingCreateIn) opts(dir string) store.GenerateOpts {
 	derive := keyring.AccountOnly
 	if in.WithBLS {
 		derive = keyring.WithBLS
 	}
-	return keyring.GenerateOpts{
+	return store.GenerateOpts{
 		Nodes: in.Count, Validators: in.Validators, Out: dir,
 		Password: in.Password, Balance: in.Balance, Derive: derive,
 	}
@@ -328,7 +329,7 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 				id.Address, in.ExpectAddress)
 		}
 	}
-	e, err := keyring.ImportAt(ctx, files, dir, keyring.Label(in.Label), key, derive)
+	e, err := store.ImportAt(ctx, files, dir, keyring.Label(in.Label), key, derive)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -350,7 +351,7 @@ func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, e
 	if err != nil {
 		return RingOut{}, err
 	}
-	srcSet, err := keyring.LoadPresetAt(ctx, srcFiles, srcDir)
+	srcSet, err := store.LoadPresetAt(ctx, srcFiles, srcDir)
 	if err != nil {
 		return RingOut{}, fmt.Errorf("app: import-ring: read source %s: %w", in.FromRing, err)
 	}
@@ -358,7 +359,7 @@ func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, e
 	if err != nil {
 		return RingOut{}, err
 	}
-	set, err := keyring.ImportRing(ctx, dstFiles, dstDir, srcSet, in.Password)
+	set, err := store.ImportRing(ctx, dstFiles, dstDir, srcSet, in.Password)
 	if err != nil {
 		return RingOut{Dir: displayRing(in.Ring, dstDir), Source: source}, err
 	}
@@ -417,7 +418,7 @@ func openRing(ctx context.Context, ref RingRef, d Deps) (dir, source string, set
 	if err != nil {
 		return displayRing(ref, dir), source, keyring.Preset{}, err
 	}
-	set, err = keyring.LoadPresetAt(ctx, files, dir)
+	set, err = store.LoadPresetAt(ctx, files, dir)
 	dir = displayRing(ref, dir)
 	if err != nil {
 		return dir, source, keyring.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)

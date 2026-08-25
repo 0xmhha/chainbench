@@ -14,7 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
@@ -364,7 +364,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: config: no node table — run `net allocate` first")
 	}
-	preset, err := keyring.LoadPreset(w.state.KeysDir)
+	preset, err := store.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: config: %w", err)
 	}
@@ -436,7 +436,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("netcompose: launchopts: no node table — run `net allocate` first")
 	}
-	preset, err := keyring.LoadPreset(w.state.KeysDir)
+	preset, err := store.LoadPreset(w.state.KeysDir)
 	if err != nil {
 		return "", fmt.Errorf("netcompose: launchopts: %w", err)
 	}

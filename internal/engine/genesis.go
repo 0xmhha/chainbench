@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -76,7 +76,7 @@ type PresetGenesisSource struct {
 // sources; the local metadata read does not use it.
 func (s PresetGenesisSource) Genesis(_ context.Context, plugin registry.ChainPlugin, req GenesisRequest) (GenesisArtifacts, error) {
 	validators := req.Validators
-	preset, err := keyring.LoadPreset(s.KeysDir)
+	preset, err := store.LoadPreset(s.KeysDir)
 	if err != nil {
 		return GenesisArtifacts{}, fmt.Errorf("engine: genesis source: %w", err)
 	}

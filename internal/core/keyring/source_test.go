@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
 // stubStore stands in for a file store on another host — the seam that lets one
@@ -43,12 +44,12 @@ func TestSources_AllYieldAPrivateKey(t *testing.T) {
 	known := loadPresetNodes(t)[0].Nodekey
 
 	dir := t.TempDir()
-	rawPath, err := (keyring.RawFileBackend{}).Save(dir, "k",
+	rawPath, err := (store.RawFileBackend{}).Save(dir, "k",
 		mustParse(t, known), nil)
 	if err != nil {
 		t.Fatalf("RawFileBackend.Save: %v", err)
 	}
-	ksPath, err := (keyring.KeystoreBackend{ScryptN: 1 << 12, ScryptP: 1}).
+	ksPath, err := (store.KeystoreBackend{ScryptN: 1 << 12, ScryptP: 1}).
 		Save(dir, "ks", mustParse(t, known), keyring.StaticPassword("pw"))
 	if err != nil {
 		t.Fatalf("KeystoreBackend.Save: %v", err)
@@ -145,11 +146,11 @@ func TestBackends_RoundTrip(t *testing.T) {
 
 	backends := []struct {
 		name string
-		b    keyring.Backend
+		b    store.Backend
 		pw   keyring.PasswordSource
 	}{
-		{name: "raw file", b: keyring.RawFileBackend{}, pw: nil},
-		{name: "keystore", b: keyring.KeystoreBackend{ScryptN: 1 << 12, ScryptP: 1}, pw: pw},
+		{name: "raw file", b: store.RawFileBackend{}, pw: nil},
+		{name: "keystore", b: store.KeystoreBackend{ScryptN: 1 << 12, ScryptP: 1}, pw: pw},
 	}
 	for _, tc := range backends {
 		t.Run(tc.name, func(t *testing.T) {
@@ -171,7 +172,7 @@ func TestBackends_RoundTrip(t *testing.T) {
 		})
 	}
 
-	if _, err := (keyring.KeystoreBackend{}).Save(t.TempDir(), "k", known, nil); err == nil {
+	if _, err := (store.KeystoreBackend{}).Save(t.TempDir(), "k", known, nil); err == nil {
 		t.Error("the keystore backend saved without a password")
 	}
 }

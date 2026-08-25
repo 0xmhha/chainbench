@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -42,7 +43,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 		t.Fatalf("registry.Get(stablenet): %v", err)
 	}
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
-	preset, err := keyring.LoadPreset(presetDir)
+	preset, err := store.LoadPreset(presetDir)
 	if err != nil {
 		t.Fatalf("load preset: %v", err)
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/provision"
@@ -55,7 +56,7 @@ func (h *liveHandoff) Prepare(_ context.Context, o HandoffOptions) (string, erro
 	if err != nil {
 		return "", err
 	}
-	preset, err := keyring.LoadPreset(o.PresetDir)
+	preset, err := store.LoadPreset(o.PresetDir)
 	if err != nil {
 		return "", err
 	}

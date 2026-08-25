@@ -9,6 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
@@ -119,7 +120,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[2], func() (string, error) {
-		p, err := keyring.LoadPreset(o.KeysDir)
+		p, err := store.LoadPreset(o.KeysDir)
 		if err != nil {
 			return "", err
 		}

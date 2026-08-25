@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -61,7 +62,7 @@ func newUpgradeRunCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			preset, err := keyring.LoadPreset(presetDir)
+			preset, err := store.LoadPreset(presetDir)
 			if err != nil {
 				return err
 			}

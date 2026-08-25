@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
 // Default material for a generated key set.
@@ -57,7 +58,7 @@ func (s PresetKeySource) Describe() string { return "preset:" + s.Path }
 
 // Ensure loads the preset and checks it covers n nodes.
 func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
-	p, err := keyring.LoadPreset(s.Path)
+	p, err := store.LoadPreset(s.Path)
 	if err != nil {
 		return KeySet{}, fmt.Errorf("engine: key source: %w", err)
 	}
@@ -105,7 +106,7 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 	if err := ctx.Err(); err != nil {
 		return KeySet{}, err
 	}
-	opts := keyring.GenerateOpts{
+	opts := store.GenerateOpts{
 		Nodes: n,
 		// A zero here has always meant "all of them" on this seam, so it is
 		// passed as absent rather than as a declared zero, which would now mean
@@ -116,7 +117,7 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}
-	if _, err := keyring.Generate(opts, nil); err != nil {
+	if _, err := store.Generate(opts, nil); err != nil {
 		return KeySet{}, fmt.Errorf("engine: key source: generate: %w", err)
 	}
 	return PresetKeySource{Path: s.Path}.Ensure(ctx, n)
@@ -147,7 +148,7 @@ func orDefault(v, def string) string {
 // produces a chain whose genesis registers one address while the node signs
 // with another — a failure that otherwise surfaces much later as an unexplained
 // consensus stall.
-func RegisterIdentities(ctx context.Context, ring *keyring.Ring, ks KeySet, n int) error {
+func RegisterIdentities(ctx context.Context, ring *store.Ring, ks KeySet, n int) error {
 	if ring == nil {
 		return nil
 	}

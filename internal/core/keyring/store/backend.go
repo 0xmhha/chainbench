@@ -1,4 +1,4 @@
-package keyring
+package store
 
 import (
 	"context"
