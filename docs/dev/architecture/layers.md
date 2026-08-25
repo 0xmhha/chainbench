@@ -115,6 +115,7 @@ flowchart TD
 | `core/keyring` | **키 자료의 단일 소유자** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·백엔드·링·색인 |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` · `serverset` | 토폴로지 YAML · **서버 세트(포트·호스트)** |
+| `netmap` | **netmap 모듈 표면** — 서버 이름을 능력 손잡이로 여는 유일 통로(Opener: 서버 세트 결합 · --docker 치환 · 치환 보고). 할당 코어(core/netmap)와 서버 세트를 low level 에 묶는다 ([[architecture-v2]]) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
 
