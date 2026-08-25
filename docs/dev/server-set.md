@@ -107,16 +107,16 @@ allocate: 4 node(s); ports: server-set.yaml[local]; p2p from 30303, http from 85
 
 ---
 
-## 5. 자격증명은 파일이 아니라 환경에서
+## 5. 자격증명의 단일 출처는 서버 세트 파일이다
 
-`ssh.password` / `ssh.key_file` 을 파일에 쓸 수는 있지만, **환경변수가 항상 이긴다.**
-그래야 서버 세트 파일 자체를 secret-free 로 유지할 수 있다.
+서버 세트에 이름이 있는 서버는 **파일이 말하는 그대로 접속된다. 환경변수는
+읽지 않는다** — 다른 환경에서 export 해 둔 변수가 로그인을 조용히 바꿔치면
+안 되기 때문이다. 비밀값을 파일 밖에 두려면 `ssh.password_file` /
+`ssh.key_passphrase_file` 로 한 줄짜리 0600 파일을 가리킨다(상대 경로는 서버
+세트 파일 기준, `~` 사용 가능).
 
-```
-CHAINBENCH_REMOTE_USER
-CHAINBENCH_REMOTE_PASS
-CHAINBENCH_REMOTE_KEY_FILE  (+ CHAINBENCH_REMOTE_KEY_PASSPHRASE)
-```
+`CHAINBENCH_REMOTE_USER` / `_PASS` / `_KEY_FILE` / `_KEY_PASSPHRASE` 는
+직접 표기(`user@host:/path`)에만 남아 있다 — 그 형태에는 참조할 파일이 없다.
 
 호스트키 정책은 별개다: `CHAINBENCH_SSH_KNOWN_HOSTS`, 또는 known_hosts 가 없는
 폐쇄망에서 `CHAINBENCH_SSH_INSECURE_HOST_KEY=1`.

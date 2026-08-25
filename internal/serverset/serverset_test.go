@@ -263,10 +263,10 @@ func TestCredentials_PasswordFile(t *testing.T) {
 		t.Errorf("password_file not read (trailing newline must be trimmed): %q", c.Password)
 	}
 
-	both := load(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password: x, password_file: "+pf+"}\n")
-	sb, _ := both.ByName("10.0.0.9")
-	if _, err := sb.Credentials(); err == nil {
-		t.Fatal("accepted both ssh.password and ssh.password_file")
+	// Both password fields at once is a file mistake, so it must fail when the
+	// file is read — not later, when the server is first dialed.
+	if _, err := serverset.Load(write(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password: x, password_file: "+pf+"}\n")); err == nil {
+		t.Fatal("Load accepted both ssh.password and ssh.password_file")
 	}
 
 	empty := filepath.Join(dir, "empty")
@@ -364,5 +364,68 @@ func TestSampleFileParses(t *testing.T) {
 	}
 	if err := cfg.Pool().Validate(); err != nil {
 		t.Fatalf("the tracked sample's pool does not validate: %v", err)
+	}
+}
+
+// TestLoad_KeyPassphraseFileNeedsKeyFile: a passphrase with no key to unlock
+// is a file mistake, and file mistakes fail at Load.
+func TestLoad_KeyPassphraseFileNeedsKeyFile(t *testing.T) {
+	_, err := serverset.Load(write(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: u, password: p, key_passphrase_file: /tmp/pp}\n"))
+	if err == nil || !strings.Contains(err.Error(), "key_passphrase_file") {
+		t.Fatalf("err = %v, want the key_passphrase_file-without-key_file rule", err)
+	}
+}
+
+// TestCredentials_InsecureSecretFileRefused: the plaintext password gets the
+// same 0600 rule the key file already has.
+func TestCredentials_InsecureSecretFileRefused(t *testing.T) {
+	pf := filepath.Join(t.TempDir(), "pass")
+	if err := os.WriteFile(pf, []byte("p\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := load(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: u, password_file: "+pf+"}\n")
+	s, _ := cfg.ByName("10.0.0.9")
+	if _, err := s.Credentials(); err == nil || !strings.Contains(err.Error(), "permissions") {
+		t.Fatalf("err = %v, want an insecure-permissions refusal", err)
+	}
+}
+
+// TestCredentials_RelativeSecretPathAnchorsToTheFile: `password_file: pass`
+// means the file next to the server set, wherever the command runs from.
+func TestCredentials_RelativeSecretPathAnchorsToTheFile(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "pass"), []byte("sibling\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p := filepath.Join(dir, "server-set.yaml")
+	if err := os.WriteFile(p, []byte("version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: u, password_file: pass}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(t.TempDir()) // somewhere the sibling file is NOT
+	cfg, err := serverset.Load(p)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	s, _ := cfg.ByName("10.0.0.9")
+	c, err := s.Credentials()
+	if err != nil {
+		t.Fatalf("Credentials: %v", err)
+	}
+	if c.Password != "sibling" {
+		t.Errorf("password = %q, want the set file's sibling", c.Password)
+	}
+}
+
+// TestLoad_OldNameGetsAMigrationHint: after the rename, the old file sitting at
+// the default location must produce the migration step, not a generic
+// not-found — and never be read silently.
+func TestLoad_OldNameGetsAMigrationHint(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "remote-server-config.yaml"), []byte("version: 2\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, err := serverset.Load(filepath.Join(dir, "server-set.yaml"))
+	if err == nil || !strings.Contains(err.Error(), "rename") {
+		t.Fatalf("err = %v, want a rename hint for the old file name", err)
 	}
 }

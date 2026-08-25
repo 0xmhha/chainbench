@@ -145,6 +145,28 @@ func parseSigner(pemKey []byte, passphrase string) (ssh.Signer, error) {
 	return signer, nil
 }
 
+// KeyNeedsPassphrase reports whether pemKey is passphrase-protected. It lets a
+// credential loader fail at resolve time with "this key needs a passphrase"
+// instead of deferring to a cryptic dial-time parse error.
+func KeyNeedsPassphrase(pemKey []byte) bool {
+	_, err := ssh.ParsePrivateKey(pemKey)
+	var missing *ssh.PassphraseMissingError
+	return errors.As(err, &missing)
+}
+
+// InsecureFilePerm reports whether path is group- or world-accessible (want
+// 0600). It is the same rule LoadPrivateKey enforces, exported so other
+// secret-holding files (a server set's password_file) get the same check.
+// The returned perm is for the error message; ok=false means the stat failed.
+func InsecureFilePerm(path string) (insecure bool, perm os.FileMode, err error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, 0, err
+	}
+	p := info.Mode().Perm()
+	return p&insecureKeyPermMask != 0, p, nil
+}
+
 // LoadPrivateKey reads a PEM-encoded SSH private key file for
 // Credentials.PrivateKey. It rejects a key file that is group- or
 // world-accessible (want 0600), so an exposed key is a fail-fast error rather

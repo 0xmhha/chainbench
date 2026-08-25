@@ -73,7 +73,8 @@ type NodeState struct {
 // State is the persisted composition state accumulated across step commands. It
 // grows as later steps land (placements, genesis path, node table); each field
 // is optional so a partially-composed workspace round-trips. It holds no
-// secrets — remote credentials live only in the environment.
+// secrets — a server-set placement reads its login from the server-set file at
+// resolve time, and a directly named target reads the environment.
 type State struct {
 	Chain string `json:"chain"`
 	// ManifestPath and TemplatePath name an external, project-supplied chain
@@ -104,6 +105,10 @@ type State struct {
 	// later steps resolve the same file — and, in docker mode, find the
 	// localmap next to it.
 	ServerSet string `json:"serverSet,omitempty"`
+	// LegacyServerSet reads the field's pre-rename key so a workspace composed
+	// before the rename keeps its recorded path. It is migrated into ServerSet
+	// on open and never written back.
+	LegacyServerSet string `json:"serverConfig,omitempty"`
 	// Docker records that this composition treats its servers as local docker
 	// containers: the harness's own dials are translated through the localmap
 	// next to ServerSet. It is recorded once at `net new --docker` so a
@@ -140,6 +145,10 @@ func Open(dir string, now func() time.Time) (*Workspace, error) {
 	if ws.state.Steps == nil {
 		ws.state.Steps = map[string]Step{}
 	}
+	if ws.state.ServerSet == "" && ws.state.LegacyServerSet != "" {
+		ws.state.ServerSet = ws.state.LegacyServerSet
+	}
+	ws.state.LegacyServerSet = ""
 	return ws, nil
 }
 
@@ -196,13 +205,16 @@ func (w *Workspace) addrMap() (remote.AddrMap, error) {
 
 // resolveTarget builds the live target for a step, applying the docker-mode
 // dial translation when the workspace recorded it. Every step resolves through
-// here so a multi-step run cannot be half-mapped.
+// here so a multi-step run cannot be half-mapped. A server-set placement
+// (TargetServer) reads its login from the recorded server-set file — the
+// single source; the environment authenticates only a directly named
+// user@host target, which has no file to consult.
 func (w *Workspace) resolveTarget() (*target.Target, error) {
 	m, err := w.addrMap()
 	if err != nil {
 		return nil, err
 	}
-	return w.state.Target.ResolveWithMap(w.env, nil, m)
+	return w.state.Target.ResolveWithMap(w.env, serverset.SetLookup(w.state.ServerSet), m)
 }
 
 // markStep records that step ran with detail, stamping the completion time.

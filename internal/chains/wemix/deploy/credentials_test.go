@@ -1,6 +1,10 @@
 package deploy
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestCredentials_For(t *testing.T) {
 	cr := &Credentials{
@@ -29,11 +33,34 @@ func TestCredentials_For(t *testing.T) {
 	if rc3.User != "adminuser" || rc3.Password != "globalpw" {
 		t.Errorf("server3 creds = %+v", rc3)
 	}
-	// env overrides win.
+	// With no credentials file, the environment is the source.
 	env := map[string]string{"CHAINBENCH_REMOTE_USER": "envuser", "CHAINBENCH_REMOTE_PASS": "envpw"}
 	rcEnv, _ := cr.For(c, c.Servers[0], func(k string) string { return env[k] })
 	if rcEnv.User != "envuser" || rcEnv.Password != "envpw" {
 		t.Errorf("env creds = %+v", rcEnv)
+	}
+}
+
+// TestCredentials_FileIsTheSingleSource pins the same rule the server set
+// enforces: once a credentials file is loaded, a leftover CHAINBENCH_REMOTE_*
+// export must not silently redirect a login.
+func TestCredentials_FileIsTheSingleSource(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "credentials")
+	if err := os.WriteFile(p, []byte("user: ubuntu\npassword: filepw\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cr, err := LoadCredentials(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := &Cluster{SSHPort: 22, Servers: []Server{{Index: 1, Host: "10.0.0.1", Role: RoleWbftBP}}}
+	env := map[string]string{"CHAINBENCH_REMOTE_USER": "envuser", "CHAINBENCH_REMOTE_PASS": "envpw"}
+	rc, err := cr.For(c, c.Servers[0], func(k string) string { return env[k] })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rc.User != "ubuntu" || rc.Password != "filepw" {
+		t.Errorf("the environment redirected a login the file defines: %+v", rc)
 	}
 }
 

@@ -45,9 +45,14 @@ type ResolveServerOut struct {
 func ResolveServer(d Deps, ref ServerRef, minValidators, portBand int) (ResolveServerOut, error) {
 	path := ref.SetPath
 	if path == "" {
-		// An server set at the default path is used when present, but its
-		// absence is only an error if the caller named a server.
+		// A server set at the default path is used when present, but its
+		// absence is only an error if the caller named a server — or if the
+		// file still sits there under its pre-rename name, which must not
+		// silently degrade a configured placement to the built-in local one.
 		if _, err := os.Stat(serverset.DefaultConfigFile); err != nil {
+			if hint := serverset.LegacyNameHint(serverset.DefaultConfigFile); hint != "" {
+				return ResolveServerOut{}, fmt.Errorf("app: %s", hint)
+			}
 			if ref.Name != "" || ref.Index != 0 || ref.Fleet {
 				return ResolveServerOut{}, fmt.Errorf(
 					"app: --server needs a server set: %s not found (copy %s)",
@@ -76,16 +81,17 @@ func ResolveServer(d Deps, ref ServerRef, minValidators, portBand int) (ResolveS
 	return ResolveServerOut{Placement: pl, Target: serverTarget(srv), HasTarget: true}, nil
 }
 
-// serverTarget describes where one server's data plane lives. The local and
-// remote cases differ only in the kind and the host, which is the point of the
-// server set carrying both in one shape.
+// serverTarget describes where one server's data plane lives. A remote server
+// is recorded as a TargetServer spec naming its set entry — not flattened to a
+// host/user pair — so every later step resolves the login from the server set
+// file, the single source of a named server's credentials. Host is still
+// carried for display and RPC addressing; it never authenticates anything.
 func serverTarget(s serverset.Server) target.TargetSpec {
 	spec := target.TargetSpec{Kind: target.TargetLocal, DataRoot: s.DataRoot}
 	if s.IsRemote() {
-		spec.Kind = target.TargetRemote
+		spec.Kind = target.TargetServer
+		spec.Server = s.Name
 		spec.Host = s.Host
-		spec.User = s.SSH.User
-		spec.Port = s.SSH.Port
 	}
 	return spec
 }

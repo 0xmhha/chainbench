@@ -9,7 +9,9 @@
 //
 // Resolve turns a spec into the live pair a caller actually works through: a
 // FileStore for the files and a Driver for the processes. Credentials never
-// appear in the syntax — they come from the environment at resolve time.
+// appear in the syntax — at resolve time a server-set entry reads them from
+// the server set (the single source for a named server), and a directly named
+// host reads the environment.
 
 package target
 
@@ -41,10 +43,11 @@ const (
 )
 
 // TargetSpec is the serializable descriptor of the compose target (persisted in
-// workspace.json). It carries NO secrets: remote SSH credentials are read from
-// the environment (CHAINBENCH_REMOTE_USER / _PASS / _KEY_FILE / _KEY_PASSPHRASE)
-// only when the live Target is resolved. DataRoot is the network's data-root
-// path ON the target (a local path, or a path on the remote host).
+// workspace.json). It carries NO secrets: a server-set target reads its login
+// from the server set at resolve time, and a directly named host reads the
+// environment (CHAINBENCH_REMOTE_USER / _PASS / _KEY_FILE / _KEY_PASSPHRASE).
+// DataRoot is the network's data-root path ON the target (a local path, or a
+// path on the remote host).
 type TargetSpec struct {
 	Kind     TargetKind `json:"kind"`
 	DataRoot string     `json:"dataRoot"`
@@ -158,8 +161,9 @@ type Target struct {
 // It is a function rather than a package dependency on purpose: parsing a path
 // must not require reading the operator's server set, and this package must
 // not know the server set's format. The caller that already loaded the server set
-// supplies the lookup.
-type ServerLookup func(name string, env func(string) string) (remote.Credentials, error)
+// supplies the lookup. It takes no environment on purpose — the server set is
+// the single source of a named server's login.
+type ServerLookup func(name string) (remote.Credentials, error)
 
 // Resolve builds the live Target from its spec, without a server set. An
 // srv:// spec is rejected with an error naming what is missing rather than
@@ -192,7 +196,7 @@ func (s TargetSpec) ResolveWithMap(env func(string) string, inv ServerLookup, m 
 		if inv == nil {
 			return nil, fmt.Errorf("target: %q names a server-set entry, but no server set was provided", s.Server)
 		}
-		creds, err := inv(s.Server, env)
+		creds, err := inv(s.Server)
 		if err != nil {
 			return nil, err
 		}

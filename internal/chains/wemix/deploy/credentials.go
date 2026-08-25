@@ -17,6 +17,11 @@ type Credentials struct {
 	Password  string                `yaml:"password"`
 	KeyFile   string                `yaml:"key_file,omitempty"`
 	Overrides map[int]CredsOverride `yaml:"overrides,omitempty"`
+	// fromFile records that these values came from a credentials file. A file
+	// is the single source of the cluster's login — the same rule the server
+	// set enforces — so the environment is consulted only when there is no
+	// file at all.
+	fromFile bool
 }
 
 // CredsOverride is a per-server auth override.
@@ -26,8 +31,8 @@ type CredsOverride struct {
 }
 
 // LoadCredentials reads the credentials file. If path is empty it returns
-// credentials with only the environment fallback (CHAINBENCH_REMOTE_PASS /
-// CHAINBENCH_REMOTE_USER) applied at For() time.
+// credentials that read the environment (CHAINBENCH_REMOTE_*) at For() time —
+// the only case in which the environment is consulted.
 func LoadCredentials(path string) (*Credentials, error) {
 	if path == "" {
 		return &Credentials{}, nil
@@ -40,13 +45,15 @@ func LoadCredentials(path string) (*Credentials, error) {
 	if err := yaml.Unmarshal(b, &cr); err != nil {
 		return nil, fmt.Errorf("deploy: parse credentials: %w", err)
 	}
+	cr.fromFile = true
 	return &cr, nil
 }
 
 // For builds the remote.Credentials for a server: user/password from the
-// per-server override, else the global values, with env fallbacks
-// (CHAINBENCH_REMOTE_USER / CHAINBENCH_REMOTE_PASS — the standard chainbench
-// secret channel) taking precedence over a file-stored password when set.
+// per-server override, else the file's global values. A loaded credentials
+// file is the single source — a leftover CHAINBENCH_REMOTE_* export must not
+// silently redirect a login, the same rule the server set enforces. Only when
+// no file was given does the environment supply the values.
 func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remote.Credentials, error) {
 	user := cr.User
 	pass := cr.Password
@@ -63,7 +70,7 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 		user = s.User
 	}
 	var passphrase string
-	if env != nil {
+	if !cr.fromFile && env != nil {
 		if v := env("CHAINBENCH_REMOTE_USER"); v != "" {
 			user = v
 		}
@@ -76,7 +83,7 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 		passphrase = env("CHAINBENCH_REMOTE_KEY_PASSPHRASE")
 	}
 	if user == "" {
-		return remote.Credentials{}, fmt.Errorf("deploy: no SSH user for server %d (set credentials.user or CHAINBENCH_REMOTE_USER)", s.Index)
+		return remote.Credentials{}, fmt.Errorf("deploy: no SSH user for server %d (set credentials.user, or CHAINBENCH_REMOTE_USER when no credentials file is used)", s.Index)
 	}
 
 	rc := remote.Credentials{User: user, Host: s.Host, Port: c.SSHPortFor(s), Password: pass}
@@ -89,7 +96,7 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 		rc.Passphrase = passphrase
 	}
 	if rc.Password == "" && len(rc.PrivateKey) == 0 {
-		return remote.Credentials{}, fmt.Errorf("deploy: no SSH auth for server %d (set credentials.password/key_file or CHAINBENCH_REMOTE_PASS/CHAINBENCH_REMOTE_KEY_FILE)", s.Index)
+		return remote.Credentials{}, fmt.Errorf("deploy: no SSH auth for server %d (set credentials.password/key_file in the credentials file, or CHAINBENCH_REMOTE_PASS/CHAINBENCH_REMOTE_KEY_FILE when no file is used)", s.Index)
 	}
 	return rc, nil
 }
