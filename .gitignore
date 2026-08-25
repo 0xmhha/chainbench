@@ -93,6 +93,11 @@ remote-server-config.yml
 # material in this repo is keys/preset/ (labeled TEST FIXTURE ONLY) and the
 # public test addresses in tests/env/*.env. Real secrets belong in the
 # gitignored tests/env/secret/ (see docs/SECURITY_KEY_HANDLING.md).
+
+# The keyring's default ring location (keyring new with no --keyring-dir).
+# It holds generated private keys, so it must never be committed — matched at
+# any depth, because a command run from a subdirectory creates it there.
+keys/default/
 #
 # Private-key / certificate files (none are tracked; catch new ones).
 *.pem
