@@ -154,7 +154,16 @@ type labelFlag struct{ name string }
 
 func (f *labelFlag) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.name, "name", "", "identity label (e.g. node1)")
-	_ = cmd.MarkFlagRequired("name")
+}
+
+// require refuses a missing --name with the way out, instead of cobra's bare
+// "required flag not set": the operator who forgot it usually wanted either
+// one identity by name or the whole ring, and the error should offer both.
+func (f *labelFlag) require(verb string) error {
+	if f.name != "" {
+		return nil
+	}
+	return fmt.Errorf("%s works on one identity — pass --name (e.g. node1); to see them all: keyring list", verb)
 }
 
 // shortHex abbreviates a 0x-hex value for a progress line.

@@ -32,6 +32,9 @@ func newKeyringImportCmd() *cobra.Command {
 			"  --from ubuntu@host:/srv/keys/node1  a host named directly\n",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
+			if err := label.require("import"); err != nil {
+				return err
+			}
 			in.Ring, in.Label, in.WithBLS = ring.ref(), label.name, bls.on
 			d := app.Deps{Logf: func(format string, args ...any) {
 				fmt.Fprintf(out, format+"\n", args...)
@@ -59,6 +62,7 @@ func newKeyringImportCmd() *cobra.Command {
 	cmd.Flags().StringVar(&in.Passphrase, "passphrase", "", "optional BIP-39 passphrase (with --mnemonic)")
 	cmd.Flags().Uint32Var(&in.HDCoinType, "hd-coin-type", 0, "BIP-44 coin type for --mnemonic (default 60, Ethereum)")
 	cmd.Flags().Uint32Var(&in.HDAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
+	cmd.Flags().Uint32Var(&in.HDChange, "hd-change", 0, "BIP-44 change level for --mnemonic (0 external, 1 internal)")
 	cmd.Flags().Uint32Var(&in.HDIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 	cmd.Flags().StringVar(&in.Password, "password", "", "password for a keystore named by --from")
 	cmd.Flags().BoolVar(&in.Docker, "docker", false,

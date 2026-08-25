@@ -44,7 +44,7 @@ keyring: /tmp/myring (--keyring)
 ### new — 링 생성
 
 ```
-bin/chainbench keyring new --count 3                          # ./keys/default 에
+bin/chainbench keyring new --count 3 [--json]                 # ./keys/default 에
 bin/chainbench keyring new --keyring /tmp/r --count 5 \
     --with-bls --validators 3                                 # 지정 경로, wbft 용
 ```
@@ -92,7 +92,7 @@ bin/chainbench keyring export --keyring /tmp/r --name node1 --yes
 | 출처 | 예 |
 |---|---|
 | 16진 비밀키 | `--private-key 0x…` |
-| BIP-39 니모닉 | `--mnemonic "word × 12/24" [--passphrase w25] [--hd-coin-type 60] [--hd-account 0] [--hd-index 0]` |
+| BIP-39 니모닉 | `--mnemonic "word × 12/24" [--passphrase w25] [--hd-coin-type 60] [--hd-account 0] [--hd-change 0] [--hd-index 0]` |
 | 로컬 파일 | `--from /path/key` — raw hex 또는 키스토어 JSON(`--password` 필요) |
 | 인벤토리 서버 | `--from srv://server1/data/…/nodekey [--server-config <파일>]` |
 | 직접 호스트 | `--from user@10.0.0.7:/path/key` 또는 `ssh://user@host:port/path` |

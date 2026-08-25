@@ -225,6 +225,7 @@ type RingImportIn struct {
 	Passphrase string
 	HDCoinType uint32
 	HDAccount  uint32
+	HDChange   uint32
 	HDIndex    uint32
 	// Password decrypts a keystore named by From.
 	Password string
@@ -269,13 +270,21 @@ func (in RingImportIn) source(d Deps, inventory string) (keyring.Source, error) 
 			given++
 		}
 	}
+	// An option that only qualifies an absent origin is a typo about to be
+	// ignored; refusing beats silently importing something else than asked.
+	if in.Mnemonic == "" && (in.Passphrase != "" || in.HDCoinType != 0 || in.HDAccount != 0 || in.HDChange != 0 || in.HDIndex != 0) {
+		return nil, fmt.Errorf("app: --passphrase and the --hd-* options qualify --mnemonic, which was not given")
+	}
+	if in.From == "" && in.Password != "" {
+		return nil, fmt.Errorf("app: --password decrypts a keystore named by --from, which was not given")
+	}
 	switch {
 	case given > 1:
 		return nil, fmt.Errorf("app: provide exactly one of a private key, a mnemonic, or a path")
 	case in.PrivateKey != "":
 		return keyring.PrivateKeySource{Hex: in.PrivateKey}, nil
 	case in.Mnemonic != "":
-		path := keyring.HDPath{CoinType: in.HDCoinType, Account: in.HDAccount, Index: in.HDIndex}
+		path := keyring.HDPath{CoinType: in.HDCoinType, Account: in.HDAccount, Change: in.HDChange, Index: in.HDIndex}
 		if path.CoinType == 0 {
 			path.CoinType = keyring.DefaultCoinType
 		}
