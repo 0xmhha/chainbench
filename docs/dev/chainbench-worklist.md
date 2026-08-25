@@ -569,11 +569,11 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **V0.2** | AST 전수 측정 — app·netcompose·engine·target·driver 함수별 이동표(현 위치 → 목표 칸) | — | 이동표가 V1~V6 각 태스크의 대상 파일을 명시 | ☑ (8패키지 541심볼, [[v2-move-map]](architecture/v2-move-map.md)) |
 | **V1.1** | `core/target` → `core/machine` 개명 — `machine.Spec`/`machine.Access`(stutter 해소), 소비자 일괄 전환 | V0.2 | 한 PR 원자 개명 · 전 소비자 컴파일 · 기존 테스트 무변경 통과 | ☑ |
 | **V1.2** | 무분기 감사 — machine 소비자의 local/remote 분기 전수 검사, 분기는 machine 내부로 | V1.1 | 제거: app keyring 로컬 지름길(해석기로 단일화)·netcompose 구조 검증(`Spec.Validate` 신설로 이동). 잔여 분기는 래칫 테스트가 유예 목록으로 고정(V2.2·V2.3·V5 에서 소멸, 축소만 허용) — `internal/arch` TestMachineConsumersDoNotBranchOnKind | ☑ |
-| **V2.1** | netmap 접근 wrapper 신설 — 서버 이름 → 능력 손잡이(FileStore·Driver), `--docker` 치환·치환 보고·자격 결합 내장. 추가만, 기존 코드 무변경 | V1.1 | 단위: 치환·보고·자격이 wrapper 한 곳에서 재현 | ☐ |
-| **V2.2** | keyring 소비 전환 — `RingRef.open` 의 개별 배선을 wrapper 호출로 교체 | V2.1 | keyring 라이브 스위트(원격 링·복제) 통과 | ☐ |
-| **V2.3** | netcompose 소비 전환 — `resolveTarget` 을 wrapper 로 교체(서버 세트 nil 전달 결함 구조적 해소) | V2.1 | 원격 net 단계가 env 변수 없이 서버 세트만으로 동작(라이브) | ☐ |
-| **V2.4** | serverset 흡수 — netmap 이 서버 정보 관리를 소유(패키지 이동 또는 내부화) | V2.2, V2.3 | 외부에서 serverset 직접 import 0건 | ☐ |
-| **V2.5** | enode 생성 이관 — netcompose 의 enode·static-nodes 조합을 netmap 으로(공개키는 입력 파라미터) | V2.3 | 기존 enode 골든 값 바이트 동일 | ☐ |
+| **V2.1** | netmap 접근 wrapper 신설 — 서버 이름 → 능력 손잡이(FileStore·Driver), `--docker` 치환·치환 보고·자격 결합 내장. 추가만, 기존 코드 무변경 | V1.1 | 단위: 치환·보고·자격이 wrapper 한 곳에서 재현 | ☑ (`netmap.Opener`) |
+| **V2.2** | keyring 소비 전환 — `RingRef.open` 의 개별 배선을 wrapper 호출로 교체 | V2.1 | keyring 라이브 스위트(원격 링·복제) 통과 | ☑ (keyflags 분기도 소멸, 래칫 축소) |
+| **V2.3** | netcompose 소비 전환 — `resolveTarget` 을 wrapper 로 교체(서버 세트 nil 전달 결함 구조적 해소) | V2.1 | 원격 net 단계가 env 변수 없이 서버 세트만으로 동작(라이브) | ☑ (health 프로브도 `Opener.AddrMap` 경유) |
+| **V2.4** | serverset 흡수 — netmap 이 서버 정보 관리를 소유(패키지 이동 또는 내부화) | V2.2, V2.3 | 외부에서 serverset 직접 import 0건 — `internal/netmap/internal/serverset` 로 컴파일러가 강제. `ResolveServer` 도 app 에서 모듈로 이동(app 은 별칭만) | ☑ |
+| **V2.5** | enode 생성 이관 — netcompose 의 enode·static-nodes 조합을 netmap 으로(공개키는 입력 파라미터) | V2.3 | 기존 enode 골든 값 바이트 동일 (`netmap.Enode`·`PeerList`, 골든 테스트 이동) | ☑ |
 | **V3.1** | `keyring/store` 분리 — 링 저장·읽기(레이아웃·metadata·암호화 파일)를 하위 패키지로, 키 역학은 keyring 에 잔류 | V0.2 | 한 PR 내 소비자 전환 · 전 테스트 통과 | ☐ |
 | **V3.2** | 링 위치 해석 이동 — `--keyring-dir` 우선순위(플래그>env>기본)를 store 로 | V3.1 | 위치 보고(`keyring: <dir> (<source>)`) 동작 유지 | ☐ |
 | **V3.3** | app keyring 슬림화 + CLI 직접 호출 — keyringcmd 가 core(store·netmap wrapper)를 직접 호출, app 은 MCP 용 얇은 함수만 | V2.2, V3.2 | CLI 전 명령 동작 동일(테스트) · app keyring 은 호출만 | ☐ |

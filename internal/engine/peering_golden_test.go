@@ -11,8 +11,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 var enodeLine = regexp.MustCompile(`"(enode://[^"]+)"`)
@@ -78,7 +78,7 @@ func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 		if !ok {
 			return "", false
 		}
-		return nodeconfig.Enode(e.PublicKey, p.Host, p.Ports.P2P), true
+		return netmapmod.Enode(e.PublicKey, p.Host, p.Ports.P2P), true
 	}
 
 	for i, spec := range specs {

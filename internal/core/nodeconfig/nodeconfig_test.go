@@ -84,11 +84,3 @@ func TestGenerate_RecommitDecoupledFromNamespace(t *testing.T) {
 		t.Errorf("recommit should default to the string form regardless of namespace, got:\n%s", toml)
 	}
 }
-
-func TestEnode(t *testing.T) {
-	got := Enode("deadbeef", "127.0.0.1", 30303)
-	want := "enode://deadbeef@127.0.0.1:30303?discport=0"
-	if got != want {
-		t.Errorf("Enode: got %q, want %q", got, want)
-	}
-}

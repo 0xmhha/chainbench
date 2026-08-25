@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // genesisFilePerm is the genesis.json file mode.
@@ -311,18 +312,18 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 	if peering == "" {
 		peering = netmap.Mesh
 	}
-	enode := func(pl netmap.Placement) (string, bool) {
-		nk, ok := preset.Node(pl.Index)
+	pubkey := func(index int) (string, bool) {
+		nk, ok := preset.Node(index)
 		if !ok {
 			return "", false
 		}
-		return nodeconfig.Enode(nk.PublicKey, pl.Host, pl.Ports.P2P), true
+		return nk.PublicKey, true
 	}
 
 	m := plugin.Manifest()
 	out := make([]driver.NodeSpec, len(plan.Nodes))
 	for i, spec := range plan.Nodes {
-		staticNodes, err := peering.StaticNodes(placed, netmap.LabelFor(spec.Index), enode)
+		staticNodes, err := netmapmod.PeerList(placed, peering, netmap.LabelFor(spec.Index), pubkey)
 		if err != nil {
 			return nil, fmt.Errorf("engine: launcher: node%d peers: %w", spec.Index, err)
 		}
