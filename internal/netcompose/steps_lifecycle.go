@@ -282,7 +282,7 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	if len(w.state.Nodes) == 0 {
 		return nil, fmt.Errorf("netcompose: health: no node table — run `net allocate` first")
 	}
-	m, err := w.addrMap()
+	m, err := w.opener().AddrMap()
 	if err != nil {
 		return nil, err
 	}

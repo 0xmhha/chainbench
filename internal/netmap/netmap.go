@@ -50,15 +50,26 @@ func (o Opener) Open(spec machine.Spec) (*machine.Access, error) {
 	if env == nil {
 		env = func(string) string { return "" }
 	}
-	var m remote.AddrMap
-	if o.Docker {
-		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(o.ServerSet))
-		if err != nil {
-			return nil, err
-		}
-		m = lm.AddrMap(func(from, to string) { o.report("docker: dialing %s as %s", from, to) })
+	m, err := o.AddrMap()
+	if err != nil {
+		return nil, err
 	}
 	return spec.ResolveWithMap(env, serverset.SetLookup(o.ServerSet), m)
+}
+
+// AddrMap returns the dial-time address translation this opener applies — nil
+// without docker mode. A consumer that dials something other than SSH (an
+// HTTP health probe) translates through this same map, so no second copy of
+// the localmap wiring can exist.
+func (o Opener) AddrMap() (remote.AddrMap, error) {
+	if !o.Docker {
+		return nil, nil
+	}
+	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(o.ServerSet))
+	if err != nil {
+		return nil, err
+	}
+	return lm.AddrMap(func(from, to string) { o.report("docker: dialing %s as %s", from, to) }), nil
 }
 
 // OpenPath parses a target path (plain path, srv://<server>/path,

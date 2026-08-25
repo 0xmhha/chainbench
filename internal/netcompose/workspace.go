@@ -26,9 +26,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/serverset"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // Step is a completed composition step (persistence model owned by session).
@@ -188,33 +187,19 @@ func (w *Workspace) keysBase() string {
 	return w.state.KeysDir
 }
 
-// addrMap returns the dial-time address translation for a docker-mode
-// composition, or nil when the workspace targets real servers. The localmap
-// is read on each call (it is one small file) so an operator regenerating the
-// fleet does not have to reason about which copy is in effect.
-func (w *Workspace) addrMap() (remote.AddrMap, error) {
-	if !w.state.Docker {
-		return nil, nil
-	}
-	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(w.state.ServerSet))
-	if err != nil {
-		return nil, err
-	}
-	return lm.AddrMap(nil), nil
+// resolveTarget builds the live target for a step through the netmap module,
+// the one dial-wiring point: the recorded server set, the docker-mode
+// translation, and the login rules are bound there identically for every
+// consumer, so a multi-step run cannot be half-mapped and this module cannot
+// diverge from keyring or anyone else.
+func (w *Workspace) resolveTarget() (*machine.Access, error) {
+	return w.opener().Open(w.state.Target)
 }
 
-// resolveTarget builds the live target for a step, applying the docker-mode
-// dial translation when the workspace recorded it. Every step resolves through
-// here so a multi-step run cannot be half-mapped. A server-set placement
-// (TargetServer) reads its login from the recorded server-set file — the
-// single source; the environment authenticates only a directly named
-// user@host target, which has no file to consult.
-func (w *Workspace) resolveTarget() (*machine.Access, error) {
-	m, err := w.addrMap()
-	if err != nil {
-		return nil, err
-	}
-	return w.state.Target.ResolveWithMap(w.env, serverset.SetLookup(w.state.ServerSet), m)
+// opener binds the workspace's recorded server set and docker choice to the
+// netmap module's single wiring point.
+func (w *Workspace) opener() netmapmod.Opener {
+	return netmapmod.Opener{ServerSet: w.state.ServerSet, Docker: w.state.Docker, Env: w.env}
 }
 
 // markStep records that step ran with detail, stamping the completion time.
