@@ -14,7 +14,7 @@ import (
 // writeServerConfig writes a minimal inventory and returns its path.
 func writeServerConfig(t *testing.T, body string) string {
 	t.Helper()
-	p := filepath.Join(t.TempDir(), "remote-server-config.yaml")
+	p := filepath.Join(t.TempDir(), "server-set.yaml")
 	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
@@ -74,25 +74,25 @@ func TestKeyringImport_DirectHostNeedsCredentials(t *testing.T) {
 	}
 }
 
-// TestKeyringImport_ServerNameComesFromInventory pins the inventory contract:
+// TestKeyringImport_ServerNameComesFromInventory pins the server set contract:
 // the command line carries a name, and the host address is only ever in the
-// inventory file.
+// server-set file.
 func TestKeyringImport_ServerNameComesFromInventory(t *testing.T) {
 	cfg := writeServerConfig(t, twoServerInventory)
 	dir := filepath.Join(t.TempDir(), "ring")
 
 	// An unknown entry fails by name, before any dial.
 	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
-		"--from", "srv://nope/k", "--server-config", cfg)
+		"--from", "srv://nope/k", "--server-set", cfg)
 	if err == nil || !strings.Contains(err.Error(), "nope") {
 		t.Fatalf("expected an unknown-entry error naming it, got %v", err)
 	}
 
 	// A missing inventory is a clear error rather than a silent local read.
 	_, err = run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
-		"--from", "srv://bp1/k", "--server-config", filepath.Join(t.TempDir(), "nope.yaml"))
+		"--from", "srv://bp1/k", "--server-set", filepath.Join(t.TempDir(), "nope.yaml"))
 	if err == nil || !strings.Contains(err.Error(), "not found") {
-		t.Fatalf("expected an inventory-not-found error, got %v", err)
+		t.Fatalf("expected a server set-not-found error, got %v", err)
 	}
 }
 

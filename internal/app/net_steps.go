@@ -107,7 +107,7 @@ type NetAllocateIn struct {
 	// replaces the counts, which cannot express a per-node choice.
 	TopologyPath string
 	// Server selects where the nodes are placed and on what ports, from the
-	// operator's server inventory. Its zero value uses the built-in local plan.
+	// operator's server set. Its zero value uses the built-in local plan.
 	Server ServerRef
 }
 
@@ -134,7 +134,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		return ws.Allocate(netcompose.AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
-			Placement: resolved.Placement, ConfigPath: in.Server.ConfigPath,
+			Placement: resolved.Placement, SetPath: in.Server.SetPath,
 		})
 	})
 	return StepOut{Detail: detail}, err

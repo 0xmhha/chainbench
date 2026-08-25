@@ -34,8 +34,8 @@ func ringSchema(extra map[string]any) map[string]any {
 				"places the ring on that server; omit for " + app.DefaultRingDir +
 				" or the " + app.RingEnv + " environment variable",
 		},
-		"serverConfig": map[string]any{"type": "string", "description": "server inventory file for srv:// paths"},
-		"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate dials via the localmap next to the inventory"},
+		"serverSet": map[string]any{"type": "string", "description": "server-set file for srv:// paths (which servers exist and how to reach them)"},
+		"docker":    map[string]any{"type": "boolean", "description": "the server is a local docker container: translate dials via the localmap next to the server set"},
 	}
 	maps.Copy(props, extra)
 	return map[string]any{"type": "object", "properties": props}
@@ -44,9 +44,9 @@ func ringSchema(extra map[string]any) map[string]any {
 // ringRef reads the shared arguments.
 func ringRef(args map[string]any) app.RingRef {
 	return app.RingRef{
-		Dir:          argString(args, "keyringDir", ""),
-		ServerConfig: argString(args, "serverConfig", ""),
-		Docker:       argBool(args, "docker", false),
+		Dir:       argString(args, "keyringDir", ""),
+		ServerSet: argString(args, "serverSet", ""),
+		Docker:    argBool(args, "docker", false),
 	}
 }
 
@@ -146,7 +146,7 @@ func keyringImportTool() Tool {
 	return Tool{
 		Name: "chainbench_keyring_import",
 		Description: "Bring an existing key into a ring, from a path here or on another host. " +
-			"Prefer srv://<server>/path, which keeps the host address in the operator's inventory " +
+			"Prefer srv://<server>/path, which keeps the host address in the operator's server set " +
 			"rather than in this conversation.",
 		InputSchema: ringSchema(map[string]any{
 			"name": map[string]any{"type": "string", "description": "label to store the identity under"},
@@ -171,8 +171,8 @@ func keyringImportTool() Tool {
 				"description": "clone a whole ring instead of one key (same path syntax as keyringDir); " +
 					"labels and the validator declaration are copied, every entry verified against the source index",
 			},
-			"serverConfig": map[string]any{"type": "string", "description": "inventory file for an srv:// source"},
-			"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate this dial via the localmap next to the inventory"},
+			"serverSet": map[string]any{"type": "string", "description": "server-set file for an srv:// source"},
+			"docker":    map[string]any{"type": "boolean", "description": "the server is a local docker container: translate this dial via the localmap next to the server set"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			in := app.RingImportIn{

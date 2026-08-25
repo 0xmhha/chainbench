@@ -2,7 +2,7 @@
 // node runs where, in which role, on which ports — asked as questions.
 //
 // The group is queries only. Nothing here composes, launches, or writes; the
-// commands read an inventory or a composed workspace and answer. Changing a
+// commands read a server set or a composed workspace and answer. Changing a
 // network is `net`'s job, and keeping the two apart is what lets a placement
 // change be exercised without composing anything.
 //
@@ -30,7 +30,7 @@ func New() *cobra.Command {
 		Use:   "netmap",
 		Short: "The network map: which node runs where, in which role, on which ports",
 		Long: "Queries over node placement. `plan` computes the placement a network shape\n" +
-			"would get, from the inventory alone; `show` reads a composed workspace's map;\n" +
+			"would get, from the server set alone; `show` reads a composed workspace's map;\n" +
 			"`pool` reports the addresses and port slots a network may be composed from.\n" +
 			"Nothing in this group changes anything — composing is `net`'s job.",
 	}
@@ -38,8 +38,8 @@ func New() *cobra.Command {
 	return cmd
 }
 
-// serverFlags is the inventory selection shared by the verbs that read one.
-// Host addresses and ports live in the inventory file, never on the command
+// serverFlags is the server-set selection shared by the verbs that read one.
+// Host addresses and ports live in the server-set file, never on the command
 // line.
 type serverFlags struct {
 	config string
@@ -49,15 +49,15 @@ type serverFlags struct {
 }
 
 func (f *serverFlags) bind(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&f.config, "server-config", "",
-		"server inventory file (default: "+serverset.DefaultConfigFile+" when present)")
-	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the inventory")
-	cmd.Flags().IntVar(&f.index, "server-index", 0, "server to place nodes on, by index from the inventory")
-	cmd.Flags().BoolVar(&f.fleet, "fleet", false, "spread the network across every server in the inventory, one node per host")
+	cmd.Flags().StringVar(&f.config, "server-set", "",
+		"server-set file: which servers exist and how to reach them (default: "+serverset.DefaultConfigFile+" when present)")
+	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the server set")
+	cmd.Flags().IntVar(&f.index, "server-index", 0, "server to place nodes on, by index from the server set")
+	cmd.Flags().BoolVar(&f.fleet, "fleet", false, "spread the network across every server in the set, one node per host")
 }
 
 func (f *serverFlags) ref() app.ServerRef {
-	return app.ServerRef{ConfigPath: f.config, Name: f.server, Index: f.index, Fleet: f.fleet}
+	return app.ServerRef{SetPath: f.config, Name: f.server, Index: f.index, Fleet: f.fleet}
 }
 
 // deps is the Deps every netmap verb runs with: operational side notes print

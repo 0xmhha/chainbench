@@ -237,7 +237,7 @@ type Transport interface {
 - **에이전트 도입은 보류**: 서브초 스트리밍 제어·대량 팬아웃 지연이 문제될 때만 재검토(현재 요구엔 불필요). SSH 왕복 지연은 노드 수 규모(수십)에서 허용.
 
 ### 4-3. 민감정보(IP/port/SSH) 관리
-- 사용할 **서버 IP 목록·포트·SSH(id/pw/port)** 는 **정의서에 넣지 않고** `remote-server-config.yaml`(런타임 로드)로 관리. **repository 미저장(gitignore)**, `remote-server-config.sample.yaml`만 추적(design §7·L6b, 이미 반영·gitignore 처리 완료).
+- 사용할 **서버 IP 목록·포트·SSH(id/pw/port)** 는 **정의서에 넣지 않고** `server-set.yaml`(런타임 로드)로 관리. **repository 미저장(gitignore)**, `server-set.sample.yaml`만 추적(design §7·L6b, 이미 반영·gitignore 처리 완료).
 
 ---
 

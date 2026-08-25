@@ -55,10 +55,10 @@ type NetUpIn struct {
 	// Peering is the peer graph to wire ("mesh" default, "proxied").
 	Peering string
 	// Server selects where the nodes run and on what ports, from the server
-	// inventory. Its zero value uses the built-in local plan.
+	// server set. Its zero value uses the built-in local plan.
 	Server ServerRef
 	// Docker treats the servers as local docker containers (dials translated
-	// through the localmap next to the inventory); recorded at the new step.
+	// through the localmap next to the server set); recorded at the new step.
 	Docker bool
 
 	// Identities (step: keys).

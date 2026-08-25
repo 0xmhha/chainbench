@@ -36,7 +36,7 @@ const (
 	// SSH.
 	TargetRemote TargetKind = "remote"
 	// TargetServer names a host indirectly, by its entry in the operator's
-	// server inventory. Resolving one needs that inventory (see ResolveWith).
+	// server set. Resolving one needs that server set (see ResolveWith).
 	TargetServer TargetKind = "server"
 )
 
@@ -51,28 +51,28 @@ type TargetSpec struct {
 	Host     string     `json:"host,omitempty"`
 	User     string     `json:"user,omitempty"`
 	Port     int        `json:"port,omitempty"`
-	// Server is the inventory entry name for a TargetServer spec. It is the
-	// whole address: host, port and credentials stay in the inventory, so
+	// Server is the server-set entry name for a TargetServer spec. It is the
+	// whole address: host, port and credentials stay in the server set, so
 	// neither a command line nor a persisted spec carries them.
 	Server string `json:"server,omitempty"`
 }
 
 // IsRemote reports whether the target is on another host — named directly or
-// through the inventory.
+// through the server set.
 func (s TargetSpec) IsRemote() bool { return s.Kind == TargetRemote || s.Kind == TargetServer }
 
 // ParseTarget parses the single-path target syntax, so that every layer above
 // names a location the same way whether it is here or on another machine:
 //
 //	/data/net1                        this machine
-//	srv://bp1/data/net1               the inventory entry "bp1"
+//	srv://bp1/data/net1               the server-set entry "bp1"
 //	user@host:/data/net1              remote over SSH (port 22 / env)
 //	ssh://user@host:2222/data/net1    remote with an explicit port
 //
 // Prefer srv:// for anything that gets typed or scripted. The other two remote
 // forms put a host address in the command line and in shell history, which is
-// exactly what keeping the inventory out of the repository is meant to avoid;
-// srv:// names an entry and lets the inventory hold the address.
+// exactly what keeping the server set out of the repository is meant to avoid;
+// srv:// names an entry and lets the server set hold the address.
 //
 // Parsing does no I/O: an srv:// spec records the entry name, and looking that
 // name up happens in ResolveWith. A bare local path stays bare — writing
@@ -80,7 +80,7 @@ func (s TargetSpec) IsRemote() bool { return s.Kind == TargetRemote || s.Kind ==
 // exception.
 //
 // Credentials never appear in the syntax — they come from the environment or
-// the inventory when the target is resolved.
+// the server set when the target is resolved.
 func ParseTarget(s string) (TargetSpec, error) {
 	if s == "" {
 		return TargetSpec{}, fmt.Errorf("target: empty target")
@@ -153,29 +153,29 @@ type Target struct {
 	Driver   driver.Driver
 }
 
-// Inventory turns a server-inventory entry name into SSH credentials.
+// ServerLookup turns a server-set entry name into SSH credentials.
 //
 // It is a function rather than a package dependency on purpose: parsing a path
-// must not require reading the operator's inventory file, and this package must
-// not know the inventory's format. The caller that already loaded the inventory
+// must not require reading the operator's server set, and this package must
+// not know the server set's format. The caller that already loaded the server set
 // supplies the lookup.
-type Inventory func(name string, env func(string) string) (remote.Credentials, error)
+type ServerLookup func(name string, env func(string) string) (remote.Credentials, error)
 
-// Resolve builds the live Target from its spec, without an inventory. An
+// Resolve builds the live Target from its spec, without a server set. An
 // srv:// spec is rejected with an error naming what is missing rather than
 // being silently treated as something else — see ResolveWith.
 func (s TargetSpec) Resolve(env func(string) string) (*Target, error) {
 	return s.ResolveWith(env, nil)
 }
 
-// ResolveWith builds the live Target, using inv to look up an srv:// entry.
+// ResolveWith builds the live Target, using inv to look up an srv:// entry from the server set.
 //
 // A local target uses the local filesystem and driver; the remote forms open an
 // SSH-backed FileStore and driver. Credentials come from env for a directly
-// named host and from the inventory for an srv:// entry. The host-key policy
+// named host and from the server set for an srv:// entry. The host-key policy
 // comes from remote.ResolveHostKeyCallback (known_hosts, or the loud insecure
 // opt-in) in both cases.
-func (s TargetSpec) ResolveWith(env func(string) string, inv Inventory) (*Target, error) {
+func (s TargetSpec) ResolveWith(env func(string) string, inv ServerLookup) (*Target, error) {
 	return s.ResolveWithMap(env, inv, nil)
 }
 
@@ -183,14 +183,14 @@ func (s TargetSpec) ResolveWith(env func(string) string, inv Inventory) (*Target
 // local containers posing as servers). The map touches only the credentials the
 // SSH transport dials; the spec, the data root, and everything composed onto
 // the target keep the real addresses. Nil is no translation.
-func (s TargetSpec) ResolveWithMap(env func(string) string, inv Inventory, m remote.AddrMap) (*Target, error) {
+func (s TargetSpec) ResolveWithMap(env func(string) string, inv ServerLookup, m remote.AddrMap) (*Target, error) {
 	switch s.Kind {
 	case "", TargetLocal:
 		return &Target{Spec: s, DataRoot: s.DataRoot, Files: provision.LocalFileStore{}, Driver: driver.NewLocalDriver()}, nil
 
 	case TargetServer:
 		if inv == nil {
-			return nil, fmt.Errorf("target: %q names a server inventory entry, but no inventory was provided", s.Server)
+			return nil, fmt.Errorf("target: %q names a server-set entry, but no server set was provided", s.Server)
 		}
 		creds, err := inv(s.Server, env)
 		if err != nil {

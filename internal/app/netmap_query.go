@@ -13,7 +13,7 @@ import (
 )
 
 // defaultPortBand is how many port slots a host is assumed to offer when no
-// inventory says otherwise. It matches what the composition uses.
+// server set says otherwise. It matches what the composition uses.
 const defaultPortBand = 100
 
 // NetMapIn asks the composed network where a node is. The selectors are
@@ -159,7 +159,7 @@ func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) 
 }
 
 // NetPoolIn asks what the network may be allocated from. A workspace is
-// optional: without one the answer is the inventory (or the built-ins) alone.
+// optional: without one the answer is the server set (or the built-ins) alone.
 type NetPoolIn struct {
 	DataDir string
 	Server  ServerRef
@@ -168,7 +168,7 @@ type NetPoolIn struct {
 // NetPoolOut is the resource and how much of it is spoken for.
 //
 // It deliberately carries no credentials. The pool says where nodes may run;
-// how to log in belongs to the inventory and the environment, and a summary an
+// how to log in belongs to the server set and the environment, and a summary an
 // agent can read should not be the place a password leaks.
 type NetPoolOut struct {
 	Source string   `json:"source"`
@@ -219,7 +219,7 @@ type NetPlanIn struct {
 }
 
 // NetPlan runs the allocator as a question: the same deterministic assignment
-// a composition would record, computed from the inventory (or the built-in
+// a composition would record, computed from the server set (or the built-in
 // pool) and the requested shape, with nothing written anywhere. It is how a
 // placement change is inspected — and tested — without composing a network.
 func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {

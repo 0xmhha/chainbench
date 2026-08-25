@@ -1,4 +1,4 @@
-// Package serverset loads the server inventory — where chainbench may run
+// Package serverset loads the server set — where chainbench may run
 // nodes, on what ports, under what data root, and how to reach it — from a YAML
 // config the repository never carries.
 //
@@ -9,9 +9,10 @@
 // way and the local/remote difference stays a property of the data.
 //
 // It is a control-plane concern and never dials. It resolves a chosen server to
-// remote.Credentials, layering server values over file defaults, and lets the
-// environment override secrets (CHAINBENCH_REMOTE_*) so passwords need not live
-// in the file at all.
+// remote.Credentials, layering server values over file defaults. The file is
+// the single source for a named server's login — the environment is never
+// consulted — and a secret can stay out of the file itself via password_file /
+// key_passphrase_file, which reference a separate one-line file (0600).
 package serverset
 
 import (
@@ -29,12 +30,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/target"
 )
 
-// DefaultConfigFile is the inventory path used when --server-config is omitted.
+// DefaultConfigFile is the server-set path used when --server-set is omitted.
 // It is gitignored; only DefaultSampleFile is tracked.
-const DefaultConfigFile = "remote-server-config.yaml"
+const DefaultConfigFile = "server-set.yaml"
 
 // DefaultSampleFile is the tracked template an operator copies.
-const DefaultSampleFile = "remote-server-config.sample.yaml"
+const DefaultSampleFile = "server-set.sample.yaml"
 
 // defaultSSHPort is the SSH port assumed when neither server nor defaults set it.
 const defaultSSHPort = 22
@@ -62,7 +63,7 @@ const (
 
 // Ports is a server's port plan: the two disjoint bands node ports are assigned
 // from. Zero fields inherit the file defaults, and any still zero fall back to
-// the built-in defaults (Defaults.Ports) so an inventory can name only what it
+// the built-in defaults (Defaults.Ports) so a server set can name only what it
 // needs to move.
 type Ports struct {
 	// P2PBase is the first node's devp2p port; P2PStep is the per-node stride.
@@ -74,14 +75,21 @@ type Ports struct {
 	RPCStep int `yaml:"rpcStep,omitempty"`
 }
 
-// SSH is how a remote server is reached. Secrets are better supplied through
-// CHAINBENCH_REMOTE_PASS / _KEY_FILE than written here, and the loader never
-// echoes these values.
+// SSH is how a remote server is reached. The server set is the single source
+// of these values; the loader never echoes them. An operator who keeps the set
+// file free of secrets writes password_file / key_passphrase_file instead,
+// pointing at a separate one-line file (0600) — the shape a secret manager
+// renders to disk.
 type SSH struct {
 	User     string `yaml:"user,omitempty"`
 	Port     int    `yaml:"port,omitempty"`
 	Password string `yaml:"password,omitempty"`
-	KeyFile  string `yaml:"key_file,omitempty"`
+	// PasswordFile names a file holding the password. Exactly one of Password
+	// and PasswordFile may be set.
+	PasswordFile string `yaml:"password_file,omitempty"`
+	KeyFile      string `yaml:"key_file,omitempty"`
+	// KeyPassphraseFile names a file holding the key's passphrase.
+	KeyPassphraseFile string `yaml:"key_passphrase_file,omitempty"`
 	// Sudo reports whether the login may elevate. It is carried, not consumed:
 	// the bring-up decides whether a step needs it, and netmap only passes it
 	// along (netmap-design NM-e).
@@ -172,7 +180,7 @@ type PoolSpec struct {
 	Ports BandsSpec  `yaml:"ports,omitempty"`
 }
 
-// Config is the parsed inventory.
+// Config is the parsed server set.
 type Config struct {
 	// Version is the file format version, so a later change can reject an old
 	// file by name instead of by a confusing field error.
@@ -194,7 +202,7 @@ type Config struct {
 	path string
 }
 
-// SupportedVersion is the inventory format this build reads. v2 replaced the
+// SupportedVersion is the server-set format this build reads. v2 replaced the
 // list of servers with a pool: the two allocation shapes an operator used to
 // choose between (this machine with stepped ports, one node per host) are the
 // same grid, so the file describes resources and the allocator decides
@@ -205,7 +213,7 @@ const SupportedVersion = 2
 // originated.
 func (c *Config) Path() string { return c.path }
 
-// Load reads and validates the inventory at path. It rejects unknown fields so
+// Load reads and validates the server set at path. It rejects unknown fields so
 // a typo fails loudly rather than silently leaving a default in place.
 func Load(path string) (*Config, error) {
 	b, err := os.ReadFile(path)
@@ -287,7 +295,7 @@ func (c *Config) expand() {
 	}
 }
 
-// Pool is the inventory as netmap allocates from it.
+// Pool is the server set as netmap allocates from it.
 func (c *Config) Pool() netmap.Pool {
 	hosts := make([]netmap.Host, 0, len(c.Servers))
 	for _, s := range c.Servers {
@@ -304,7 +312,7 @@ func (c *Config) Pool() netmap.Pool {
 	}
 }
 
-// BuiltinPool is the pool used when no inventory names one: this machine, the
+// BuiltinPool is the pool used when no server set names one: this machine, the
 // built-in bands, and room for a development-sized network.
 func BuiltinPool(slots int) netmap.Pool {
 	p := BuiltinPorts()
@@ -319,7 +327,7 @@ func BuiltinPool(slots int) netmap.Pool {
 	}
 }
 
-// legacyHint recognizes the flat pre-v1 inventory (top-level ssh fields, no
+// legacyHint recognizes the flat pre-v1 server-set file (top-level ssh fields, no
 // version) and says how to migrate, because the decoder's own "field not found"
 // error does not.
 func legacyHint(b []byte) string {
@@ -343,7 +351,7 @@ func legacyHint(b []byte) string {
 		"add `version: %d`, and give each server a `kind: local|remote` (see %s)", SupportedVersion, DefaultSampleFile)
 }
 
-// validate enforces a usable inventory: a supported version, unique selectors,
+// validate enforces a usable server set: a supported version, unique selectors,
 // a host per server, and port steps that cannot produce colliding ports.
 func (c *Config) validate() error {
 	if c.Version != SupportedVersion {
@@ -450,7 +458,7 @@ func (c *Config) ByName(name string) (Server, error) {
 }
 
 // Select resolves a server by name when one is given, otherwise by index, and
-// otherwise the only server in a single-server inventory. It is what a command
+// otherwise the only server in a single-server set. It is what a command
 // with an optional --server flag calls.
 func (c *Config) Select(name string, index int) (Server, error) {
 	switch {
@@ -544,73 +552,97 @@ func (c *Config) names() []string {
 	return out
 }
 
-// Credentials builds the SSH credentials for a remote server. The environment
-// overrides file values (CHAINBENCH_REMOTE_USER / _PASS / _KEY_FILE /
-// _KEY_PASSPHRASE) so secrets can stay out of the file. It errors if the server
-// is local (there is nothing to authenticate to) or if no user or auth resolves.
-// env is injected for testing.
-func (s Server) Credentials(env func(string) string) (remote.Credentials, error) {
+// Credentials builds the SSH credentials for a remote server. The server set
+// file is the single source: a server named there is reached exactly as the
+// file says, and the environment is never consulted — an exported variable
+// left over from another environment must not silently redirect a login.
+// Secrets can still stay out of the file itself: password_file and
+// key_passphrase_file reference a separate file (0600, one line), which is
+// also the shape a secret manager renders to disk. It errors if the server is
+// local (there is nothing to authenticate to) or if no user or auth resolves.
+func (s Server) Credentials() (remote.Credentials, error) {
 	if !s.IsRemote() {
 		return remote.Credentials{}, fmt.Errorf("serverset: server %s is local — it has no SSH credentials", s.label(0))
 	}
-	if env == nil {
-		env = func(string) string { return "" }
-	}
-	user, pass, keyFile := s.SSH.User, s.SSH.Password, s.SSH.KeyFile
-	if v := env("CHAINBENCH_REMOTE_USER"); v != "" {
-		user = v
-	}
-	if v := env("CHAINBENCH_REMOTE_PASS"); v != "" {
-		pass = v
-	}
-	if v := env("CHAINBENCH_REMOTE_KEY_FILE"); v != "" {
-		keyFile = v
-	}
-	if user == "" {
+	if s.SSH.User == "" {
 		return remote.Credentials{}, fmt.Errorf(
-			"serverset: server %s has no SSH user (set defaults.ssh.user or CHAINBENCH_REMOTE_USER)", s.label(0))
+			"serverset: server %s has no SSH user (set ssh.user in the server set)", s.label(0))
+	}
+	pass := s.SSH.Password
+	if s.SSH.PasswordFile != "" {
+		if pass != "" {
+			return remote.Credentials{}, fmt.Errorf(
+				"serverset: server %s sets both ssh.password and ssh.password_file — keep exactly one", s.label(0))
+		}
+		v, err := readSecretFile(s.SSH.PasswordFile)
+		if err != nil {
+			return remote.Credentials{}, fmt.Errorf("serverset: server %s: %w", s.label(0), err)
+		}
+		pass = v
 	}
 	port := s.SSH.Port
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	rc := remote.Credentials{User: user, Host: s.Host, Port: port, Password: pass}
-	if keyFile != "" {
-		key, err := remote.LoadPrivateKey(keyFile)
+	rc := remote.Credentials{User: s.SSH.User, Host: s.Host, Port: port, Password: pass}
+	if s.SSH.KeyFile != "" {
+		key, err := remote.LoadPrivateKey(s.SSH.KeyFile)
 		if err != nil {
 			return remote.Credentials{}, fmt.Errorf("serverset: server %s: %w", s.label(0), err)
 		}
 		rc.PrivateKey = key
-		rc.Passphrase = env("CHAINBENCH_REMOTE_KEY_PASSPHRASE")
+		if s.SSH.KeyPassphraseFile != "" {
+			v, err := readSecretFile(s.SSH.KeyPassphraseFile)
+			if err != nil {
+				return remote.Credentials{}, fmt.Errorf("serverset: server %s: %w", s.label(0), err)
+			}
+			rc.Passphrase = v
+		}
 	}
 	if rc.Password == "" && len(rc.PrivateKey) == 0 {
 		return remote.Credentials{}, fmt.Errorf(
-			"serverset: server %s has no SSH auth (set defaults.ssh.password/key_file or CHAINBENCH_REMOTE_PASS/CHAINBENCH_REMOTE_KEY_FILE)", s.label(0))
+			"serverset: server %s has no SSH auth (set ssh.password, ssh.password_file, or ssh.key_file in the server set)", s.label(0))
 	}
 	return rc, nil
 }
 
-// InventoryLookup returns a target.Inventory backed by the inventory file at
+// readSecretFile reads a one-line secret referenced from the server set,
+// trimming the trailing newline an editor leaves. The value never appears in
+// an error: a failure names the path, not the content.
+func readSecretFile(path string) (string, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read secret file: %w", err)
+	}
+	v := strings.TrimRight(string(b), "\r\n")
+	if v == "" {
+		return "", fmt.Errorf("secret file %s is empty", path)
+	}
+	return v, nil
+}
+
+// SetLookup returns a target.ServerLookup backed by the server set at
 // path (empty uses DefaultConfigFile). It is how an srv://<name>/path target
 // gets its host, port and credentials without any of those appearing in a
 // command line, a spec file, or a persisted workspace.
 //
 // The file is opened on each lookup rather than cached: a lookup happens once
-// per target, and an operator editing the inventory mid-session should not have
+// per target, and an operator editing the server set mid-session should not have
 // to reason about which copy is in effect.
-func InventoryLookup(path string) target.Inventory {
+func SetLookup(path string) target.ServerLookup {
 	return func(name string, env func(string) string) (remote.Credentials, error) {
 		if path == "" {
 			path = DefaultConfigFile
 		}
 		cfg, err := Load(path)
 		if err != nil {
-			return remote.Credentials{}, fmt.Errorf("serverset: %q needs the inventory: %w", name, err)
+			return remote.Credentials{}, fmt.Errorf("serverset: %q needs the server set: %w", name, err)
 		}
 		s, err := cfg.ByName(name)
 		if err != nil {
 			return remote.Credentials{}, err
 		}
-		return s.Credentials(env)
+		_ = env // the server set is the single credential source for named servers
+		return s.Credentials()
 	}
 }

@@ -26,7 +26,7 @@ type NetNewIn struct {
 	// workspace directory.
 	Target target.TargetSpec
 	// Docker treats the servers as local docker containers: the harness's own
-	// dials are translated through the localmap next to the server inventory.
+	// dials are translated through the localmap next to the server set.
 	// Recorded on the workspace so every later step follows it.
 	Docker bool
 }

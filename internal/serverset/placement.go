@@ -6,19 +6,19 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 )
 
-// The inventory's whole point downstream is this file: it turns a server entry
+// The server set's whole point downstream is this file: it turns a server entry
 // into the allocator inputs, so a caller composing a network says "place these
 // nodes on this server" and never branches on local vs remote. The difference
 // survives only as the mode and the host the allocator hands back.
 
-// BuiltinPorts is the port plan used when no inventory names one. It exists so
+// BuiltinPorts is the port plan used when no server set names one. It exists so
 // a developer can compose a network without writing a config first; anything
-// site-specific belongs in the inventory, which overrides these.
+// site-specific belongs in the server set, which overrides these.
 func BuiltinPorts() Ports {
 	return Ports{P2PBase: builtinP2PBase, P2PStep: builtinP2PStep, RPCBase: builtinRPCBase, RPCStep: builtinRPCStep}
 }
 
-// Built-in port plan. The steps satisfy the same floors the inventory is
+// Built-in port plan. The steps satisfy the same floors the server set is
 // validated against, and the rpc step leaves room for metrics.
 const (
 	builtinP2PBase = 31000
@@ -27,7 +27,7 @@ const (
 	builtinRPCStep = 10
 )
 
-// builtinSource is what Placement.Source reports when no inventory was loaded.
+// builtinSource is what Placement.Source reports when no server set was loaded.
 const builtinSource = "built-in defaults (no server config)"
 
 // Placement is the resource a network is composed on plus where that came
@@ -46,7 +46,7 @@ type Placement struct {
 	Source string
 }
 
-// Builtin is the placement used with no inventory: this machine, stepped ports,
+// Builtin is the placement used with no server set: this machine, stepped ports,
 // no data root of its own (the caller's workspace decides).
 func Builtin(minValidators, portBand int) Placement {
 	return Placement{
@@ -74,7 +74,7 @@ func (c *Config) Placement(s Server, minValidators, portBand int) Placement {
 }
 
 // Fleet resolves every remote server into one placement, for a network spread
-// one node per host. It errors on a mixed inventory: a network half on this
+// one node per host. It errors on a mixed server set: a network half on this
 // machine and half over SSH has two port regimes at once, and the allocator
 // cannot express that.
 func (c *Config) Fleet(minValidators, portBand int) (Placement, error) {
@@ -112,7 +112,7 @@ func (c *Config) Fleet(minValidators, portBand int) (Placement, error) {
 	}, nil
 }
 
-// bandsOf converts an inventory port plan into the bands netmap steps through.
+// bandsOf converts a server-set port plan into the bands netmap steps through.
 func bandsOf(p Ports) netmap.Bands {
 	return netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep}
 }

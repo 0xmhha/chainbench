@@ -79,14 +79,20 @@ profiles/*-auth.yaml
 # Defense in depth — tests/env/secret/.gitignore also ignores its own contents.
 tests/env/secret/
 
-# Server inventory: host addresses, node port assignments, data roots, and SSH
+# Server set: host addresses, node port assignments, data roots, and SSH
 # access. All of it is site-specific and sensitive — NEVER commit real values.
-# Only remote-server-config.sample.yaml is tracked (design §7).
+# Only server-set.sample.yaml is tracked (design §7).
+server-set.yaml
+server-set.yml
+*server-set.yaml
+*server-set.yml
+!server-set.sample.yaml
+# Older copies of the same file under its previous name may still exist
+# locally; keep them out too.
 remote-server-config.yaml
 remote-server-config.yml
 *remote-server-config.yaml
 *remote-server-config.yml
-!remote-server-config.sample.yaml
 
 # --- Secrets hardening (defense in depth) --------------------------------------
 # NEVER commit real private keys or credentials. The only intentional key
@@ -129,8 +135,8 @@ id_ed25519.*
 /chain-flag-graph
 /code-graph
 
-# local docker fleet artifacts (keys, generated inventory/map)
+# local docker fleet artifacts (keys, generated server set/map)
 env/docker/build/
-# dev accounts injected into the fleet (name:uid list + shared password);
+# dev accounts injected into the containers (name:uid list + shared password);
 # only accounts.env.sample is tracked
 env/docker/accounts.env

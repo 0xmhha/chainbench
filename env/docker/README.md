@@ -34,7 +34,7 @@ ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server
 | 파일 | 내용 |
 |---|---|
 | `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 22→2201+, rpc 8600→18601+ |
-| `remote-server-config.yaml` | **인벤토리 v2, 실주소 기재** — 운영 인벤토리와 같은 모양 |
+| `server-set.yaml` | **서버 세트 v2, 실주소 기재** — 운영 서버 세트와 같은 모양 |
 | `localmap.yaml` | 실주소→loopback 퍼블리시 포트 대응표. `--docker` 일 때만 적용(R1) |
 
 대수를 바꾸려면 `SERVERS=20 ./gen-env.sh` 후 compose 를 다시 올린다.
@@ -50,8 +50,8 @@ compose 명령을 그대로 다시 돌리므로 계정 이름 변경을 적용�
 바꿨다면 restart 로도 충분하다). 이미지 재빌드는 어느 쪽이든 필요 없다. 다른
 도구가 같은 계정 정보를 쓸 때도 이 파일을 읽는다.
 
-하네스 로그인도 이 파일에서 나온다: `gen-env.sh` 가 **첫 계정**을 인벤토리
-(`build/remote-server-config.yaml`)의 `ssh: user/password` 로 찍어내고,
+하네스 로그인도 이 파일에서 나온다: `gen-env.sh` 가 **첫 계정**을 서버 세트
+(`build/server-set.yaml`)의 `ssh: user/password` 로 찍어내고,
 dataRoot 도 그 계정 소유로 만든다. 계정 정보의 출처는 이 파일 하나다.
 
 정리:
@@ -60,7 +60,7 @@ dataRoot 도 그 계정 소유로 만든다. 계정 정보의 출처는 이 파�
 docker compose -f build/docker-compose.yml down
 ```
 
-## 왜 인벤토리에 컨테이너 실주소를 쓰나
+## 왜 서버 세트에 컨테이너 실주소를 쓰나
 
 노드끼리는 bridge 안에서 실주소로 통신해야 한다(genesis·static-nodes 에 들어가는
 주소). loopback 치환은 **하네스가 스스로 접속하는 순간에만** 일어나며, 그 스위치가

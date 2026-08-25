@@ -43,7 +43,7 @@
 | `pipeline/setup` (`Provision`/`Launch`/`Run`) | 노드 **순차** loop | setup은 **Plan 산출 + 동시 provision/launch 프리미티브**(errgroup+semaphore, ctx)만 제공하고, **기동 오케스트레이션·헬스게이트·복구는 supervisor가 소유**(L6·design §3.3). **세션 경로 인지**(D-1), placement 주입(D-4). 공개 `BuildPlan/Run` 시그니처 유지 |
 | `pipeline/verify` (`Run`) | 노드별 **순차** 폴링(verify.go:90) | **노드별 goroutine 팬아웃**(index 쓰기). 결과 Report는 **헬스 게이트**로 승격(D-6) |
 | `consensus/upgrade/exec.go:163` | `for range specs` 순차 init/provision/launch | 동시화 + 리더(producer) 우선 부트스트랩 게이트 |
-| remote (`chains/wemix/deploy` 8파일 + `core/remote` + `driver.RemoteDriver`) | **wemix 전용에 치우침** · SSH 자격증명 로딩 표준 없음 | 체인-무관 remote 절차로 **일반화·승격**(요구 9·10·11·16): 접근·upload·download를 core에서 공용화, deploy는 wemix 특화만. **SSH 접속정보(포트·IP목록·user·password/keyPath)는 `remote-server-config.yaml`(gitignore·`.sample`만 추적)에서 런타임 로드**(L6b·design §7) |
+| remote (`chains/wemix/deploy` 8파일 + `core/remote` + `driver.RemoteDriver`) | **wemix 전용에 치우침** · SSH 자격증명 로딩 표준 없음 | 체인-무관 remote 절차로 **일반화·승격**(요구 9·10·11·16): 접근·upload·download를 core에서 공용화, deploy는 wemix 특화만. **SSH 접속정보(포트·IP목록·user·password/keyPath)는 `server-set.yaml`(gitignore·`.sample`만 추적)에서 런타임 로드**(L6b·design §7) |
 | `core/state` (nodeset.json) | 데이터루트 기준 저장 | **세션 레이아웃 하위로 이동**(D-1), env.json과 통합 |
 
 ---

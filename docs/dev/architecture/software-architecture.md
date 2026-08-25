@@ -185,8 +185,8 @@ graph LR
 ```
 
 - 원격 제어는 **에이전트 없는 stateless SSH**(`nohup <cmd> & echo $!` → PID, `kill <PID>`).
-- SSH 자격증명은 **정의서에 넣지 않는다**. `remote-server-config.yaml`(gitignore)을 런타임에 읽고,
-  정의서는 참조만 한다. 추적 대상은 `remote-server-config.sample.yaml` 뿐이다.
+- SSH 자격증명은 **정의서에 넣지 않는다**. `server-set.yaml`(gitignore)을 런타임에 읽고,
+  정의서는 참조만 한다. 추적 대상은 `server-set.sample.yaml` 뿐이다.
 
 ---
 

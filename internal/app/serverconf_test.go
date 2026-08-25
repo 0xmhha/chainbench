@@ -13,13 +13,13 @@ import (
 
 // Ports and host addresses are site-specific and must come from the operator's
 // gitignored inventory, with the same entry shape for this machine and a remote
-// host. These pin that the inventory actually decides the layout, and that the
+// host. These pin that the server set actually decides the layout, and that the
 // no-inventory path stays usable and says where its ports came from.
 
-// writeInventory writes a server inventory and returns its path.
+// writeInventory writes a server set and returns its path.
 func writeInventory(t *testing.T, body string) string {
 	t.Helper()
-	p := filepath.Join(t.TempDir(), "remote-server-config.yaml")
+	p := filepath.Join(t.TempDir(), "server-set.yaml")
 	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
 		t.Fatalf("write inventory: %v", err)
 	}
@@ -45,17 +45,17 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 
 	out, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
 		DataDir: dir, Validators: 2,
-		Server: app.ServerRef{ConfigPath: writeInventory(t, localInventory), Name: "local"},
+		Server: app.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
 	})
 	if err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	st := stateOf(t, dir, d)
 	if st.Nodes[0].HTTP != 8545 || st.Nodes[1].HTTP != 8555 {
-		t.Errorf("http ports = %d, %d; want the inventory's 8545/8555", st.Nodes[0].HTTP, st.Nodes[1].HTTP)
+		t.Errorf("http ports = %d, %d; want the server set's 8545/8555", st.Nodes[0].HTTP, st.Nodes[1].HTTP)
 	}
 	if st.Nodes[0].P2P != 30303 {
-		t.Errorf("p2p = %d, want the inventory's 30303", st.Nodes[0].P2P)
+		t.Errorf("p2p = %d, want the server set's 30303", st.Nodes[0].P2P)
 	}
 	// Where the plan came from is recorded, not left for an operator to guess.
 	if !strings.Contains(st.PortSource, "local") || !strings.Contains(out.Detail, "ports:") {
@@ -70,7 +70,7 @@ func TestNetAllocate_WithoutAnInventoryUsesTheBuiltinsAndSaysSo(t *testing.T) {
 		t.Errorf("port source = %q, want it to name the built-ins", st.PortSource)
 	}
 	if st.Nodes[0].HTTP == 0 {
-		t.Error("no ports assigned without an inventory")
+		t.Error("no ports assigned without a server set")
 	}
 }
 
@@ -95,19 +95,19 @@ dataRoot: /srv/chainbench
 
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
 		DataDir: dir, Validators: 1,
-		Server: app.ServerRef{ConfigPath: inv, Name: "bp1"},
+		Server: app.ServerRef{SetPath: inv, Name: "bp1"},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	st := stateOf(t, dir, d)
 	if st.Target.Kind != target.TargetRemote || st.Target.Host != "10.0.0.11" {
-		t.Fatalf("target = %+v, want the inventory's remote host", st.Target)
+		t.Fatalf("target = %+v, want the server set's remote host", st.Target)
 	}
 	if st.Target.User != "deploy" || st.Target.Port != 2222 {
 		t.Errorf("ssh access not carried to the target: %+v", st.Target)
 	}
 	if st.Target.DataRoot != "/srv/chainbench" {
-		t.Errorf("data root = %q, want the inventory's", st.Target.DataRoot)
+		t.Errorf("data root = %q, want the server set's", st.Target.DataRoot)
 	}
 	// The node's own address is recorded, so a NodeSet reader reaches the host
 	// rather than this machine.
@@ -140,7 +140,7 @@ dataRoot: /srv/cb
 
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
 		DataDir: dir, Validators: 3,
-		Server: app.ServerRef{ConfigPath: inv, Fleet: true},
+		Server: app.ServerRef{SetPath: inv, Fleet: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestResolveServer_NamingAServerWithoutAnInventoryIsAnError(t *testing.T) {
 	// named server would put nodes somewhere they did not choose.
 	_, err := app.ResolveServer(app.Deps{}, app.ServerRef{Name: "bp1"}, 1, 100)
 	if err == nil {
-		t.Fatal("want an error naming a server with no inventory")
+		t.Fatal("want an error naming a server with no server set")
 	}
 	if !strings.Contains(err.Error(), "sample") {
 		t.Errorf("error should point at the sample, got: %v", err)
@@ -176,7 +176,7 @@ func TestResolveServer_NoSelectionFallsBackToTheBuiltins(t *testing.T) {
 		t.Fatalf("ResolveServer: %v", err)
 	}
 	if out.HasTarget {
-		t.Error("no inventory should leave the workspace target alone")
+		t.Error("no server set should leave the workspace target alone")
 	}
 	if !strings.Contains(out.Placement.Source, "built-in") {
 		t.Errorf("source = %q", out.Placement.Source)
@@ -209,7 +209,7 @@ dataRoot: /srv/cb
 `)
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{
 		DataDir: dir, Validators: 2,
-		Server: app.ServerRef{ConfigPath: inv, Fleet: true},
+		Server: app.ServerRef{SetPath: inv, Fleet: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -219,7 +219,7 @@ dataRoot: /srv/cb
 		t.Fatalf("got %d nodes, want 2", len(nodes))
 	}
 	if nodes[0].Host != "10.0.0.11" || nodes[1].Host != "10.0.0.12" {
-		t.Errorf("node hosts = %q, %q; want the inventory's", nodes[0].Host, nodes[1].Host)
+		t.Errorf("node hosts = %q, %q; want the server set's", nodes[0].Host, nodes[1].Host)
 	}
 	for _, n := range nodes {
 		if n.Host == "127.0.0.1" {

@@ -89,9 +89,9 @@ func TestPlan_RefusesAProducerlessNetwork(t *testing.T) {
 }
 
 // TestPlan_ReadsTheInventory pins the placement source: name a server from an
-// inventory file and the plan lands on its address, not the built-in pool.
+// server-set file and the plan lands on its address, not the built-in pool.
 func TestPlan_ReadsTheInventory(t *testing.T) {
-	inv := filepath.Join(t.TempDir(), "remote-server-config.yaml")
+	inv := filepath.Join(t.TempDir(), "server-set.yaml")
 	body := "version: 2\n" +
 		"pool:\n" +
 		"  hosts: [{name: box1, addr: 10.9.9.9}]\n" +
@@ -101,12 +101,12 @@ func TestPlan_ReadsTheInventory(t *testing.T) {
 	if err := os.WriteFile(inv, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	out, err := run(t, "netmap", "plan", "--server-config", inv, "--server", "box1", "--validators", "2")
+	out, err := run(t, "netmap", "plan", "--server-set", inv, "--server", "box1", "--validators", "2")
 	if err != nil {
 		t.Fatalf("plan over inventory: %v\n%s", err, out)
 	}
 	if !strings.Contains(out, "10.9.9.9") {
-		t.Errorf("plan ignored the inventory host:\n%s", out)
+		t.Errorf("plan ignored the server set host:\n%s", out)
 	}
 	if strings.Contains(out, "pw") {
 		t.Errorf("plan output carries a credential:\n%s", out)

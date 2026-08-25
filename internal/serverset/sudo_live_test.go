@@ -25,7 +25,7 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 	}
 	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
 
-	inv := filepath.Join(build, "remote-server-config.yaml")
+	inv := filepath.Join(build, "server-set.yaml")
 	cfg, err := serverset.Load(inv)
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +37,7 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 	if !srv.SSH.Sudo {
 		t.Fatalf("the fleet inventory should declare sudo: true")
 	}
-	creds, err := srv.Credentials(os.Getenv)
+	creds, err := srv.Credentials()
 	if err != nil {
 		t.Fatal(err)
 	}

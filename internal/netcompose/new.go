@@ -25,7 +25,7 @@ type NewOpts struct {
 	Target target.TargetSpec
 	// Docker treats the composition's servers as local docker containers: the
 	// harness's dials are translated through the localmap next to the server
-	// inventory. Recorded once here so every later step follows it.
+	// server set. Recorded once here so every later step follows it.
 	Docker bool
 }
 
@@ -86,7 +86,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 }
 
 // Retarget replaces where the network's data plane lives, after `new` recorded
-// a default. It exists for the server inventory: the entry an operator selects
+// a default. It exists for the server set: the entry an operator selects
 // decides both the host and the data root, and that decision arrives with the
 // placement rather than at `new`. A target with no data root keeps the current
 // one, so naming only a host does not blank the path.

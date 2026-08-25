@@ -55,7 +55,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/docker-remote-design.md`](dev/docker-remote-design.md) | **로컬 docker 를 원격 서버처럼** — 인벤토리는 실주소 유지, 접속 경계 4곳에서만 `AddrMap` 치환 · wemix-bp-test 의 LocalMap 선례 분석 · 함정 4개(loopback 판정·산출물 오염 등) · keyring 라이브 검증 기록. 작업 순서는 worklist §1g R. |
 | [`dev/netmap-design.md`](dev/netmap-design.md) | **노드 배치의 단일 소유자** — 배치 타입 8개·포트 표현 3벌(etcd 소실)·역할 어휘 3벌·static-nodes 조립 4벌 실측 · `core/netmap`(L1) 설계 · 피어링 그래프 파생(N0b) · 표면은 `net allocate` 산출 강화. 작업 순서는 worklist §1g. |
 | [`dev/key-and-material-design.md`](dev/key-and-material-design.md) | **키·자료 소유 구조** — 신원 타입 5개와 키 6패키지(1,565줄) 실측 · **`keyreg` 는 keyring 의 `import` 다**(주입 이유를 K1 이 없앰) · god function 2건 · **재업로드 방지가 존재 여부만 봐서 틀린 자료를 재사용하는 결함** · destination 레이아웃(`bin`/`material`/`run`, 내용 해시 경로). 작업 순서는 worklist §1g. |
-| [`dev/server-inventory.md`](dev/server-inventory.md) | **서버 인벤토리** — 노드 포트·호스트·접속 정보의 단일 출처(`remote-server-config.yaml`, gitignore). local/remote 동일 구조·포트 규칙·자격증명 취급. |
+| [`dev/server-set.md`](dev/server-set.md) | **서버 세트** — 노드 포트·호스트·접속 정보의 단일 출처(`server-set.yaml`, gitignore). local/remote 동일 구조·포트 규칙·자격증명 취급. |
 | [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) · [`dev/wemix4-migration-plan.md`](dev/wemix4-migration-plan.md) · [`dev/repro-migration-remaining.md`](dev/repro-migration-remaining.md) | wemix4 테스트 포팅·마이그레이션 추적. |
 
 ### `dev/architecture/` — 아키텍처 · 다이어그램 (현재 코드 기준)

@@ -9,7 +9,7 @@
 > 목표: **하나의 선언 문서**가 네트워크 전체를 기술하고, 거기서 모든 산출물이 파생된다.
 >
 > 실측: 2026-08-18. 관련: [[surface-unification-design]](surface-unification-design.md) ·
-> [[family-bringup-design]](family-bringup-design.md) · [[server-inventory]](server-inventory.md).
+> [[family-bringup-design]](family-bringup-design.md) · [[server-set]](server-set.md).
 > 작업 순서는 [[chainbench-worklist]](chainbench-worklist.md) §1g.
 
 ---
@@ -21,7 +21,7 @@
 | 조각 | 담는 것 | 못 담는 것 |
 |---|---|---|
 | `topology.yaml` | index · role · sync_mode · bootnode | 서버·포트·키·계정·잔액 |
-| `remote-server-config.yaml` | 호스트 · 포트 대역 · dataRoot · SSH | 어느 노드가 어디에 · 역할 |
+| `server-set.yaml` | 호스트 · 포트 대역 · dataRoot · SSH | 어느 노드가 어디에 · 역할 |
 | `keys/preset/metadata.json` | nodekey · 계정 · BLS · extraData | 배치·역할·잔액 정책 |
 | `poa.Config`(wemix 전용) | members · accounts · env | 다른 체인에 쓸 수 없음 |
 
@@ -328,7 +328,7 @@ chainbench net up --blueprint network.yaml
 | 6 | **내장 기본값** | 배치 기본 대역 |
 
 **출처를 기록한다.** `ResolvedNetwork` 는 값과 함께 "어디서 왔는지"를 남긴다 —
-[[server-inventory]] 에서 포트 출처를 표시한 것과 같은 이유로, 값의 유래가 추측 대상이면 안 된다.
+[[server-set]] 에서 포트 출처를 표시한 것과 같은 이유로, 값의 유래가 추측 대상이면 안 된다.
 
 ### 3.5 ResolvedNetwork — 확정된 스냅샷
 
@@ -628,8 +628,8 @@ S 계열(표면 통일)에서 뒤의 것이 `feature` 레지스트리와 겹치�
    `pn`=proxy, `en`=endpoint. **실행 옵션 차이는 없다** — 세 체인에 proxy 모드 플래그가 없다(실측).
    ~~proxied 그래프 규칙~~ → **확정: `bp ↔ pn ↔ en`, en 은 bp 를 직접 알지 못한다.**
    ~~wemix 의 pn~~ → **확정: poa 는 pn 을 쓰지 않는다(etcd 가 그 자리). 선언하면 오류.**
-2. **Blueprint 를 어디에 둘 것인가.** 노드 IP·포트를 담으므로 [[server-inventory]] 와 같은 민감도다.
-   서버 인벤토리를 참조만 하고(`server: local`) 자신은 IP 를 담지 않게 하면 커밋 가능해진다 —
+2. **Blueprint 를 어디에 둘 것인가.** 노드 IP·포트를 담으므로 [[server-set]] 와 같은 민감도다.
+   서버 세트를 참조만 하고(`server: local`) 자신은 IP 를 담지 않게 하면 커밋 가능해진다 —
    **그 편이 낫다고 본다.**
 3. **DSL `env` 선언과 Blueprint 의 관계.** [[dsl-v2-proposal]] 의 `env` 가 Blueprint 의 부분집합인가,
    Blueprint 를 가리키는 참조인가. 후자가 단순하다.

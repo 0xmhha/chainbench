@@ -96,17 +96,17 @@ type State struct {
 	// layout came from plain counts. Informational: every composed node lists
 	// every other as a static node, so peering does not depend on it.
 	Bootnode int `json:"bootnode,omitempty"`
-	// PortSource names where the port plan came from (a server inventory entry,
+	// PortSource names where the port plan came from (a server set entry,
 	// or the built-in defaults), so an operator reading the state never has to
 	// guess why a node listens where it does.
 	PortSource string `json:"portSource,omitempty"`
-	// ServerConfig is the inventory file the placement came from, recorded so
+	// ServerSet is the server-set file the placement came from, recorded so
 	// later steps resolve the same file — and, in docker mode, find the
 	// localmap next to it.
-	ServerConfig string `json:"serverConfig,omitempty"`
+	ServerSet string `json:"serverSet,omitempty"`
 	// Docker records that this composition treats its servers as local docker
 	// containers: the harness's own dials are translated through the localmap
-	// next to ServerConfig. It is recorded once at `net new --docker` so a
+	// next to ServerSet. It is recorded once at `net new --docker` so a
 	// multi-step run cannot be half-mapped, and it never changes what is
 	// composed — genesis, static-nodes and the node table keep real addresses.
 	Docker bool `json:"docker,omitempty"`
@@ -187,7 +187,7 @@ func (w *Workspace) addrMap() (remote.AddrMap, error) {
 	if !w.state.Docker {
 		return nil, nil
 	}
-	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(w.state.ServerConfig))
+	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(w.state.ServerSet))
 	if err != nil {
 		return nil, err
 	}

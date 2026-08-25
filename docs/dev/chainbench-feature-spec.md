@@ -153,7 +153,7 @@
   4. **용량 검증(C·요구 5)**: validators<4 → 배치 전 오류; 노드 수 > 가용 용량(local 포트대역 / remote Σ서버슬롯) → 배치 전 오류(fail-fast).
 
 ## F13. 기동 소유·etcd 리더게이트·헬스 복구·teardown  (요구 3,12,37 · design §3.3, C-etcd)
-- **입력**: plan, Options{LeaderGate, AlignJoinGap, MaxAttempts, Backoff, ForkSwaps}. remote 시 SSH 접속정보는 **`remote-server-config.yaml`(gitignore)** 에서 로드(L6b).
+- **입력**: plan, Options{LeaderGate, AlignJoinGap, MaxAttempts, Backoff, ForkSwaps}. remote 시 SSH 접속정보는 **`server-set.yaml`(gitignore)** 에서 로드(L6b).
 - **기동 소유(L6)**: **supervisor.BringUp이 노드 기동을 소유**(setup은 Plan+동시 provision/launch 프리미티브만 제공). 기동 후 **헬스 게이트**로 상태 확인·분류.
 - **동작**: etcd: `etcdInit` 후 **리더 준비(`etcdIsReady`/`"*"`) 폴링 확인**, 조인 슬롯에 **시작 정렬**(gap은 supervisor가 **클러스터 크기 N에서 파생** — sz≤11→7s·≤23→11s·≤41→17s·else 23s; 호출자가 고정값 안 넘김, L7). 실패는 분류(`EtcdJoinFailed/EtcdStale/ForkNotCrossed/QuorumLost/RPCUnready`)하고 사유·producer 로그를 세션 보존. 백오프 재기동 또는 명확한 실패.
 - **teardown·datadir(S2)**: 내장 etcd는 **프로세스 종료로 함께 종료**("살아있는 etcd 정리" 불필요). `Teardown{RemoveDataDir}`은 **종료와 별개 기능** — 재-셋업/디스크관리 시 datadir 삭제. procman이 노드별 `{PID, datadir}`를 추적해야 정확한 삭제 가능.
@@ -190,7 +190,7 @@
 - **입력**: 세션 실행 결과, 정의서, 키.
 - **동작**
   - **spec schemaVersion(O2)**: 정의서 최상위에 `schemaVersion`(예: `"1"`) 필수 — 해석기가 버전 불일치 시 명확히 거부(장기 자산 forward-compat).
-  - **키파일 권한(O3)**: `keys/<name>/private`·nodes/keystore는 **0600**, 디렉토리 **0700**으로 생성. private 값은 로그·아티팩트 본문에 노출 금지(경로/주소만). `.chainbench/`·`remote-server-config.yaml`은 gitignore(기존 규약).
+  - **키파일 권한(O3)**: `keys/<name>/private`·nodes/keystore는 **0600**, 디렉토리 **0700**으로 생성. private 값은 로그·아티팩트 본문에 노출 금지(경로/주소만). `.chainbench/`·`server-set.yaml`은 gitignore(기존 규약).
   - **세션 보존/정리(O4)**: `.chainbench/<session>`은 누적되므로 보존정책 제공 — `chainbench clean [--older-than <dur>] [--keep-last N]`로 세션·datadir GC(재-셋업의 datadir 삭제와 동일 경로, F13-S2). 미정리 시 디스크 증가 경고.
   - **CI 종료코드(O5)**: 세션 커맨드는 **집계 결과를 exit code로 반환** — 전건 pass=`0`, fail 존재=`1`, blocked/인프라오류=`2`. `session.json.summary`와 일치(무인 CI 게이팅).
 - **출력**: 버전거부 오류, 0600 키파일, GC 로그, 프로세스 exit code.
@@ -213,7 +213,7 @@
 | MCP 응답 스키마 | `{session,tests[],summary}` + assert provenance 링크 (F14) |
 | assert 함수 세트 | testify식 네이밍 + 타입인지 + EqualHashAt (F6) |
 
-**2차 검토 확정(코드 대조 반영):** genesis 4모드·진입점 `genesis.Build`(F9·L3) · 도메인 어휘 `bp`/`en` 표층 일관·enum 내부(F9·§3.9·L2) · etcd=wemix내장 `P2P+1` 예약(F12·L1) · supervisor가 기동 소유(F13·L6) · etcd gap은 N에서 파생(F13·L7) · datadir 삭제=종료와 별개(F13·S2) · SSH 자격증명 `remote-server-config.yaml`(F13·L6b) · 액션레지스트리 주입(design §3.2·P1) · 세마포어 `max(1,min(cores-2,N))`(§6·S1) · schemaVersion·키0600·세션GC·exit code(F16·O2~O5).
+**2차 검토 확정(코드 대조 반영):** genesis 4모드·진입점 `genesis.Build`(F9·L3) · 도메인 어휘 `bp`/`en` 표층 일관·enum 내부(F9·§3.9·L2) · etcd=wemix내장 `P2P+1` 예약(F12·L1) · supervisor가 기동 소유(F13·L6) · etcd gap은 N에서 파생(F13·L7) · datadir 삭제=종료와 별개(F13·S2) · SSH 자격증명 `server-set.yaml`(F13·L6b) · 액션레지스트리 주입(design §3.2·P1) · 세마포어 `max(1,min(cores-2,N))`(§6·S1) · schemaVersion·키0600·세션GC·exit code(F16·O2~O5).
 
 ## 부록. 요구사항 ↔ F 추적
 1-3→F3,F9 · 4-6→F4,F8,F12 · 7-8→F7 · 9-11,16→F2,F12,F13 · 12→F11,F13 · 13→F4 · 14,33-35→F1,F10,F15,F16 · 15-16→F12 · 17→F2,F16 · 18-26→F9,F13 · 27-28→F7,F11 · 29,30,32→F3,F5,F6 · 31→F14 · 36→F9 · 37→전체(F16 운영·보안).

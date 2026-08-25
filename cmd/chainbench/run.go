@@ -138,7 +138,7 @@ type runOpts struct {
 	networkID    int64
 	launchOpts   []string
 	// server selects the node placement (ports, host, capacity) from the
-	// operator's inventory; its zero value uses the built-in local plan.
+	// operator's server set; its zero value uses the built-in local plan.
 	server app.ServerRef
 	bus    *obs.Bus
 }

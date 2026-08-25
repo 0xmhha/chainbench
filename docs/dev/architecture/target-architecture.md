@@ -99,7 +99,7 @@ genesis·config 는 그 뒤에만 만들 수 있다. 지금 코드가 스텝마�
 ```mermaid
 flowchart TD
     bp["network.yaml<br/>청사진"]
-    inv["서버 인벤토리<br/>IP · 포트 풀 · slots"]
+    inv["서버 세트<br/>IP · 포트 풀 · slots"]
     plug["ChainPlugin"]
 
     bp --> r1

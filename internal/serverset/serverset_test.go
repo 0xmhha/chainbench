@@ -11,7 +11,7 @@ import (
 
 func write(t *testing.T, body string) string {
 	t.Helper()
-	p := filepath.Join(t.TempDir(), "remote-server-config.yaml")
+	p := filepath.Join(t.TempDir(), "server-set.yaml")
 	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestPool_ReadsTheGrid(t *testing.T) {
 		t.Errorf("unnamed host = %q, want it named by its address", p.Hosts[2].Name)
 	}
 	// Where a port came from is never a guess.
-	if !strings.Contains(p.Source, "remote-server-config.yaml") {
+	if !strings.Contains(p.Source, "server-set.yaml") {
 		t.Errorf("source = %q, want it to name the file", p.Source)
 	}
 }
@@ -167,7 +167,7 @@ func TestPlacement_LocalAndRemoteReadTheSameFields(t *testing.T) {
 		t.Errorf("remote placement hosts = %v", rp.Pool.Hosts)
 	}
 	for _, p := range []serverset.Placement{lp, rp} {
-		if !strings.Contains(p.Source, "remote-server-config.yaml") {
+		if !strings.Contains(p.Source, "server-set.yaml") {
 			t.Errorf("source does not name the file: %q", p.Source)
 		}
 	}
@@ -222,20 +222,61 @@ func TestFleet_RejectsAMixedInventory(t *testing.T) {
 	}
 }
 
-func TestCredentials_EnvOverridesTheFile(t *testing.T) {
+// TestCredentials_TheFileIsTheSingleSource pins the rule that makes a named
+// server's login predictable: the set file decides, and an exported
+// CHAINBENCH_REMOTE_* left over from another environment changes nothing.
+func TestCredentials_TheFileIsTheSingleSource(t *testing.T) {
+	t.Setenv("CHAINBENCH_REMOTE_USER", "deploy")
+	t.Setenv("CHAINBENCH_REMOTE_PASS", "envpass")
 	cfg := load(t, sample)
 	s, _ := cfg.ByName("bp1")
-	env := map[string]string{"CHAINBENCH_REMOTE_USER": "deploy", "CHAINBENCH_REMOTE_PASS": "envpass"}
 
-	c, err := s.Credentials(func(k string) string { return env[k] })
+	c, err := s.Credentials()
 	if err != nil {
 		t.Fatalf("Credentials: %v", err)
 	}
-	if c.User != "deploy" || c.Password != "envpass" {
-		t.Errorf("env did not override the file: user=%s", c.User)
+	if c.User == "deploy" || c.Password == "envpass" {
+		t.Errorf("the environment redirected a login the file defines: %+v", c)
 	}
 	if c.Host != "10.0.0.1" || c.Port != 22 {
 		t.Errorf("creds = %+v", c)
+	}
+}
+
+// TestCredentials_PasswordFile pins the way secrets stay out of the set file
+// itself: password_file references a one-line 0600 file, exactly one of the
+// two password fields may be set, and an empty file is refused.
+func TestCredentials_PasswordFile(t *testing.T) {
+	dir := t.TempDir()
+	pf := filepath.Join(dir, "pass")
+	if err := os.WriteFile(pf, []byte("frompf\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ring := "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password_file: " + pf + "}\n"
+	cfg := load(t, ring)
+	s, _ := cfg.ByName("10.0.0.9")
+	c, err := s.Credentials()
+	if err != nil {
+		t.Fatalf("Credentials: %v", err)
+	}
+	if c.Password != "frompf" {
+		t.Errorf("password_file not read (trailing newline must be trimmed): %q", c.Password)
+	}
+
+	both := load(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password: x, password_file: "+pf+"}\n")
+	sb, _ := both.ByName("10.0.0.9")
+	if _, err := sb.Credentials(); err == nil {
+		t.Fatal("accepted both ssh.password and ssh.password_file")
+	}
+
+	empty := filepath.Join(dir, "empty")
+	if err := os.WriteFile(empty, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ec := load(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password_file: "+empty+"}\n")
+	se, _ := ec.ByName("10.0.0.9")
+	if _, err := se.Credentials(); err == nil {
+		t.Fatal("accepted an empty secret file")
 	}
 }
 
@@ -244,7 +285,7 @@ func TestCredentials_LocalServerHasNone(t *testing.T) {
 	// naming, not something to answer with an empty struct.
 	cfg := load(t, sample)
 	s, _ := cfg.ByName("local")
-	if _, err := s.Credentials(nil); err == nil {
+	if _, err := s.Credentials(); err == nil {
 		t.Fatal("want an error asking a local server for credentials")
 	}
 }
@@ -252,7 +293,7 @@ func TestCredentials_LocalServerHasNone(t *testing.T) {
 func TestCredentials_NoAuthErrors(t *testing.T) {
 	cfg := load(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu}\n")
 	s, _ := cfg.ByName("10.0.0.9")
-	if _, err := s.Credentials(func(string) string { return "" }); err == nil {
+	if _, err := s.Credentials(); err == nil {
 		t.Fatal("want a no-auth error")
 	}
 }
@@ -303,7 +344,7 @@ func TestLoad_V1FormatSaysHowToMigrate(t *testing.T) {
 }
 
 // DefaultSample is spelled out so the hint keeps pointing at a file that exists.
-const DefaultSample = "remote-server-config.sample.yaml"
+const DefaultSample = "server-set.sample.yaml"
 
 func TestPorts_MetricsNeedsRoomInTheStep(t *testing.T) {
 	if !(serverset.Ports{RPCStep: 4}).HasMetrics() {
