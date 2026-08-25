@@ -62,6 +62,8 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 
 | 문서 | 내용 |
 |---|---|
+| [`dev/architecture/architecture-v2.md`](dev/architecture/architecture-v2.md) | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, netmap 이 서버 정보·자원 분배·enode·접근 wrapper 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. 모듈 경계는 이 문서가 이긴다. 작업은 worklist §1h. |
+| [`dev/architecture/v2-move-map.md`](dev/architecture/v2-move-map.md) | 아키텍처 v2 **이동표** — 8개 패키지 541 심볼 실측, 태스크별(V1~V6) 파일·심볼 목적지. |
 | [`dev/architecture/software-architecture.md`](dev/architecture/software-architecture.md) | 전체 소프트웨어 아키텍처 — 계층·컨텍스트·실행모델·환경 5요소·검증원·동시성. |
 | [`dev/architecture/component-diagram.md`](dev/architecture/component-diagram.md) | 컴포넌트 맵 · C4 컨테이너 뷰 · 키 소싱 컴포넌트 · 목표 델타. |
 | [`dev/architecture/sequence-diagrams.md`](dev/architecture/sequence-diagrams.md) | 전체 run · BuildEnv · Interpreter · 원자 스텝 CLI · 원격 SSH · 실패 경로. |

@@ -3,6 +3,7 @@
 > **[현행 설계]** 레이어·상태·이름 세 규칙.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
 > 작업 순서는 [[chainbench-worklist]] §1g 다.
+> 모듈 경계·표면 경로는 2026-08-25 재편이 덮는다: [[architecture-v2]](architecture-v2.md) (worklist §1h).
 
 > 목적: 코드 복잡도를 **규칙으로** 낮춘다. 레이어를 명시하고, 의존을 단방향으로 고정하고,
 > 상태를 쓸 수 있는 곳을 한정한다.
