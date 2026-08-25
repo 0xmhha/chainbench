@@ -315,6 +315,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 | ☑ |
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keyring.FileSource` 가 로컬·원격 겸용 | ☑ |
 | **K8** | **표면 통일** — 유스케이스를 `internal/app` 으로, CLI·MCP 는 노출 수단으로 | CLI 로 만든 링을 MCP 가 읽음(실증) · MCP 도구 5개(`new`/`add`/`list`/`show`/`import`) · **`export` 는 의도적 부재**(비밀이 에이전트 기록에 남지 않도록, 부재를 테스트로 고정) · `GenerateOpts.Validators` 를 `*int` 로 바꿔 "미설정"과 "없음"을 타입으로 구분 | ☑ |
+| **K9** | **원격 링** (사용자 결정 2026-08-25) — `--keyring-dir` 이 target 문법(`srv://…`)을 수용, 링의 생성·조회·가져오기가 **파일 seam 경유로 서버 위에서** 동작(`GenerateAt/ExtendAt/ImportAt/LoadPresetAt`, 로컬 래퍼 유지로 기존 18개 호출처 무변경). `--server-config`·`--docker` 는 전 동사 공통 플래그로 승격. **수정된 선재 결함**: 원격형 경로를 로컬 폴더 *이름*으로 취급해 운영자 머신에 조용히 생성하던 오배치 | 라이브(함대): 서버 위 생성·add 비승격·`list --verify` 원격 통과·중복 생성 원격 존재 검사로 거부·`--docker` 부재 시 실주소 timeout · 게이트 스위트 `Live_…CreatesARingOnAServer` 상설화 | ☑ |
 | **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 
 **의존성 추가**(K0 에서 완료): `github.com/kilic/bls12-381 v0.1.0` — **순수 Go** BLS12-381.

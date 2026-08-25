@@ -36,10 +36,8 @@ func newKeyringImportCmd() *cobra.Command {
 				return err
 			}
 			in.Ring, in.Label, in.WithBLS = ring.ref(), label.name, bls.on
-			d := app.Deps{Logf: func(format string, args ...any) {
-				fmt.Fprintf(out, format+"\n", args...)
-			}}
-			e, err := app.KeyringImport(cmd.Context(), d, in)
+			in.Docker = ring.docker
+			e, err := app.KeyringImport(cmd.Context(), deps(cmd), in)
 			if err != nil {
 				return err
 			}
@@ -51,7 +49,7 @@ func newKeyringImportCmd() *cobra.Command {
 			return nil
 		},
 	}
-	ring.bindWithInventory(cmd)
+	ring.bind(cmd)
 	label.bind(cmd)
 	bls.bind(cmd)
 	jsonF.bind(cmd, "the result")
@@ -65,7 +63,5 @@ func newKeyringImportCmd() *cobra.Command {
 	cmd.Flags().Uint32Var(&in.HDChange, "hd-change", 0, "BIP-44 change level for --mnemonic (0 external, 1 internal)")
 	cmd.Flags().Uint32Var(&in.HDIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 	cmd.Flags().StringVar(&in.Password, "password", "", "password for a keystore named by --from")
-	cmd.Flags().BoolVar(&in.Docker, "docker", false,
-		"the server is a local docker container: translate this dial via the localmap next to the inventory (addresses only — docker itself is not touched)")
 	return cmd
 }

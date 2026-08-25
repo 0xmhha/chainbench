@@ -3,6 +3,7 @@ package keyringcmd_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -140,4 +141,54 @@ func addressOf(t *testing.T, ring, name string) string {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
 	return e.Address
+}
+
+// TestLive_KeyringCreatesARingOnAServer pins the remote ring end to end: a
+// ring named srv://server1/... is created ON the server through the file
+// seam, its files land there (checked through the same remote stack), and it
+// reads back and verifies remotely — the same contracts the local ring
+// holds, at a different location. The path is per-process so reruns never
+// collide with a leftover index.
+func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
+	build := fleetBuildDir(t)
+	inv := filepath.Join(build, "remote-server-config.yaml")
+	onServer := fmt.Sprintf("/data/chainbench/live-ring-%d", os.Getpid())
+	ring := "srv://server1" + onServer
+
+	out, err := run(t, "keyring", "new", "--keyring-dir", ring, "--server-config", inv, "--docker",
+		"--count", "2", "--with-bls")
+	if err != nil {
+		t.Fatalf("remote ring new: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "docker: dialing") {
+		t.Errorf("the applied translation was not reported:\n%s", out)
+	}
+
+	// The key material exists ON the server, checked through the same stack.
+	cfg, err := serverset.Load(inv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, err := cfg.ByName("server1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inv))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec := target.TargetSpec{Kind: target.TargetRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench"}
+	tgt, err := spec.ResolveWithMap(os.Getenv, nil, lm.AddrMap(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	exists, err := tgt.Files.Exists(context.Background(), onServer+"/node1/nodekey")
+	if err != nil || !exists {
+		t.Fatalf("node1 nodekey not on the server (exists=%v err=%v)", exists, err)
+	}
+
+	// Read back and verify remotely: derivation must match what was written.
+	if out, err := run(t, "keyring", "list", "--keyring-dir", ring, "--server-config", inv, "--docker", "--verify"); err != nil {
+		t.Fatalf("remote list --verify: %v\n%s", err, out)
+	}
 }

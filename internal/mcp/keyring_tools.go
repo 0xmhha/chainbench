@@ -30,9 +30,12 @@ func ringSchema(extra map[string]any) map[string]any {
 	props := map[string]any{
 		"keyringDir": map[string]any{
 			"type": "string",
-			"description": "ring directory; omit for " + app.DefaultRingDir +
+			"description": "ring directory; a plain path is the operator machine, srv://<server>/path " +
+				"places the ring on that server; omit for " + app.DefaultRingDir +
 				" or the " + app.RingEnv + " environment variable",
 		},
+		"serverConfig": map[string]any{"type": "string", "description": "server inventory file for srv:// paths"},
+		"docker":       map[string]any{"type": "boolean", "description": "the server is a local docker container: translate dials via the localmap next to the inventory"},
 	}
 	maps.Copy(props, extra)
 	return map[string]any{"type": "object", "properties": props}
@@ -43,6 +46,7 @@ func ringRef(args map[string]any) app.RingRef {
 	return app.RingRef{
 		Dir:          argString(args, "keyringDir", ""),
 		ServerConfig: argString(args, "serverConfig", ""),
+		Docker:       argBool(args, "docker", false),
 	}
 }
 

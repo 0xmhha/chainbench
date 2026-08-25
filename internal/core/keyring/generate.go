@@ -1,6 +1,7 @@
 package keyring
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,8 @@ import (
 	"time"
 
 	"github.com/0xmhha/accounts/keystore"
+
+	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // File and directory permissions for a generated ring.
@@ -32,6 +35,11 @@ const (
 
 // GenerateOpts configures ring generation.
 type GenerateOpts struct {
+	// Files is where the ring is written and read; nil is this machine's
+	// filesystem. A remote store places the ring on a server through the same
+	// seam provision uses, so "where the ring lives" is a caller's choice
+	// rather than a second code path.
+	Files provision.FileStore
 	// Nodes is how many identities to create.
 	Nodes int
 	// Validators is how many identities join the validator set.
@@ -65,10 +73,16 @@ type GenerateOpts struct {
 // generated with no chain binary built or on PATH. That is what lets a network
 // be declared from scratch rather than starting from a committed fixture.
 func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
+	return GenerateAt(context.Background(), opts, progress)
+}
+
+// GenerateAt is Generate against opts.Files (nil = local), with the context a
+// remote store's I/O needs.
+func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (Preset, error) {
 	// Creating over a ring that already exists would replace identities a
 	// genesis, a datadir, or a test is already referring to, and the keys behind
 	// them cannot be recovered. Adding to a ring is a different verb.
-	if _, err := os.Stat(filepath.Join(opts.Out, PresetFile)); err == nil {
+	if exists, err := opts.files().Exists(ctx, filepath.Join(opts.Out, PresetFile)); err == nil && exists {
 		return Preset{}, fmt.Errorf("keyring: %s already holds a ring; add to it instead of creating over it", opts.Out)
 	}
 	// A ring generated without saying otherwise is a network's validator set,
@@ -81,7 +95,15 @@ func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
 		want = opts.Nodes
 	}
 	opts.Validators = &want
-	return generate(Preset{}, opts, progress)
+	return generate(ctx, Preset{}, opts, progress)
+}
+
+// files is the ring's store, defaulting to this machine.
+func (o GenerateOpts) files() provision.FileStore {
+	if o.Files != nil {
+		return o.Files
+	}
+	return provision.LocalFileStore{}
 }
 
 // Extend adds opts.Nodes entries to the ring already in opts.Out, keeping the
@@ -95,6 +117,11 @@ func Generate(opts GenerateOpts, progress func(string)) (Preset, error) {
 // it defaults to none. Changing who validates changes what the chain is, so it
 // is asked for rather than inferred from a count.
 func Extend(opts GenerateOpts, progress func(string)) (Preset, error) {
+	return ExtendAt(context.Background(), opts, progress)
+}
+
+// ExtendAt is Extend against opts.Files (nil = local).
+func ExtendAt(ctx context.Context, opts GenerateOpts, progress func(string)) (Preset, error) {
 	// Extending without saying otherwise promotes nobody: adding an identity and
 	// changing who validates are different decisions.
 	want := 0
@@ -106,11 +133,11 @@ func Extend(opts GenerateOpts, progress func(string)) (Preset, error) {
 			want, opts.Nodes)
 	}
 	opts.Validators = &want
-	existing, err := LoadPreset(opts.Out)
+	existing, err := LoadPresetAt(ctx, opts.files(), opts.Out)
 	if err != nil {
 		return Preset{}, fmt.Errorf("keyring: extend: %w", err)
 	}
-	return generate(existing, opts, progress)
+	return generate(ctx, existing, opts, progress)
 }
 
 // Import adds a key the caller already holds to the ring in dir, under label.
@@ -119,10 +146,18 @@ func Extend(opts GenerateOpts, progress func(string)) (Preset, error) {
 // identity that the index does not list is one that `list` and `show` cannot
 // see and a network cannot use, which is worse than not importing it at all.
 func Import(dir string, label Label, key PrivateKey, d Derivation) (Entry, error) {
+	return ImportAt(context.Background(), nil, dir, label, key, d)
+}
+
+// ImportAt is Import against files (nil = local).
+func ImportAt(ctx context.Context, files provision.FileStore, dir string, label Label, key PrivateKey, d Derivation) (Entry, error) {
+	if files == nil {
+		files = provision.LocalFileStore{}
+	}
 	if label == "" {
 		return Entry{}, fmt.Errorf("keyring: import needs a label")
 	}
-	set, err := LoadPreset(dir)
+	set, err := LoadPresetAt(ctx, files, dir)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return Entry{}, err
 	}
@@ -137,31 +172,31 @@ func Import(dir string, label Label, key PrivateKey, d Derivation) (Entry, error
 		return Entry{}, err
 	}
 	e := Entry{Label: label, Index: len(set.Nodes) + 1, Nodekey: key, Identity: id}
-	if err := writeEntryDir(filepath.Join(dir, string(label)), key, id, set.Password); err != nil {
+	if err := writeEntryDir(ctx, files, filepath.Join(dir, string(label)), key, id, set.Password); err != nil {
 		return Entry{}, err
 	}
 	set.Nodes = append(set.Nodes, e)
-	if err := writePreset(GenerateOpts{Out: dir}, set); err != nil {
+	if err := writePreset(ctx, GenerateOpts{Out: dir, Files: files}, set); err != nil {
 		return Entry{}, err
 	}
 	return e, nil
 }
 
-func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
+func generate(ctx context.Context, existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
 	if opts.Nodes < 1 {
 		return Preset{}, fmt.Errorf("keyring: nodes must be >= 1")
 	}
 	if opts.Rand == nil {
 		opts.Rand = rand.Reader
 	}
-	if err := prepareRingDir(opts); err != nil {
+	if err := prepareRingDir(ctx, opts); err != nil {
 		return Preset{}, err
 	}
-	set, err := appendEntries(existing, opts, progress)
+	set, err := appendEntries(ctx, existing, opts, progress)
 	if err != nil {
 		return Preset{}, err
 	}
-	if err := writePreset(opts, set); err != nil {
+	if err := writePreset(ctx, opts, set); err != nil {
 		return Preset{}, err
 	}
 	return set, nil
@@ -170,16 +205,15 @@ func generate(existing Preset, opts GenerateOpts, progress func(string)) (Preset
 // prepareRingDir creates the ring directory and the shared password file, which
 // is what a node unlocks with at launch (--password); the keystores use the
 // same password.
-func prepareRingDir(opts GenerateOpts) error {
-	if err := os.MkdirAll(opts.Out, dirPerm); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(opts.Out, "password"), []byte(opts.Password), secretPerm)
+func prepareRingDir(ctx context.Context, opts GenerateOpts) error {
+	// The store creates parent directories on write, so the ring directory is
+	// born with its first file.
+	return opts.files().Write(ctx, filepath.Join(opts.Out, "password"), []byte(opts.Password), secretPerm)
 }
 
 // appendEntries creates opts.Nodes identities after the ones already in
 // existing, and folds each into the ring's network decisions.
-func appendEntries(existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
+func appendEntries(ctx context.Context, existing Preset, opts GenerateOpts, progress func(string)) (Preset, error) {
 	alloc, err := decodeAlloc(existing.Network.Alloc)
 	if err != nil {
 		return Preset{}, err
@@ -190,7 +224,7 @@ func appendEntries(existing Preset, opts GenerateOpts, progress func(string)) (P
 	first := len(existing.Nodes) + 1
 	promoted := 0
 	for i := first; i < first+opts.Nodes; i++ {
-		e, err := generateEntry(i, opts)
+		e, err := generateEntry(ctx, i, opts)
 		if err != nil {
 			return Preset{}, fmt.Errorf("keyring: node %d: %w", i, err)
 		}
@@ -240,7 +274,7 @@ func promote(net Network, e Entry) Network {
 // no existing genesis, so without a balance their first transaction cannot pay
 // for gas, and nothing else can supply one until the network blueprint can
 // declare accounts of its own.
-func writePreset(opts GenerateOpts, set Preset) error {
+func writePreset(ctx context.Context, opts GenerateOpts, set Preset) error {
 	f := presetFile{
 		Description: fmt.Sprintf("Generated ring: %d nodes (%d validators). chainbench keyring.",
 			len(set.Nodes), len(set.Network.Validators)),
@@ -271,13 +305,13 @@ func writePreset(opts GenerateOpts, set Preset) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(opts.Out, PresetFile), b, publicPerm)
+	return opts.files().Write(ctx, filepath.Join(opts.Out, PresetFile), b, publicPerm)
 }
 
 // generateEntry creates node i's material and writes its directory: the
 // nodekey, an encrypted v3 keystore, and the public fields as plain files for
 // an operator reading the directory by hand.
-func generateEntry(i int, opts GenerateOpts) (Entry, error) {
+func generateEntry(ctx context.Context, i int, opts GenerateOpts) (Entry, error) {
 	nodeDir := filepath.Join(opts.Out, fmt.Sprintf("node%d", i))
 	key, err := NewPrivateKey(opts.Rand)
 	if err != nil {
@@ -287,7 +321,7 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 	if err != nil {
 		return Entry{}, err
 	}
-	if err := writeEntryDir(nodeDir, key, id, opts.Password); err != nil {
+	if err := writeEntryDir(ctx, opts.files(), nodeDir, key, id, opts.Password); err != nil {
 		return Entry{}, err
 	}
 	return Entry{Label: nodeLabel(i), Index: i, Nodekey: key, Identity: id}, nil
@@ -296,14 +330,11 @@ func generateEntry(i int, opts GenerateOpts) (Entry, error) {
 // writeEntryDir lays out one identity's directory: the key, an encrypted
 // keystore, and the derived public fields as plain files for an operator
 // reading the directory by hand.
-func writeEntryDir(dir string, key PrivateKey, id Identity, password string) error {
-	if err := os.MkdirAll(dir, dirPerm); err != nil {
+func writeEntryDir(ctx context.Context, files provision.FileStore, dir string, key PrivateKey, id Identity, password string) error {
+	if err := files.Write(ctx, filepath.Join(dir, "nodekey"), []byte(key.Hex()), secretPerm); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(dir, "nodekey"), []byte(key.Hex()), secretPerm); err != nil {
-		return err
-	}
-	if err := writeKeystore(dir, key, id.Address, password); err != nil {
+	if err := writeKeystore(ctx, files, dir, key, id.Address, password); err != nil {
 		return err
 	}
 	public := map[string]string{"address": id.Address, "pubkey": id.PublicKey}
@@ -311,7 +342,7 @@ func writeEntryDir(dir string, key PrivateKey, id Identity, password string) err
 		public["bls_pubkey"] = id.BLS.PublicKey
 	}
 	for name, val := range public {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(val), publicPerm); err != nil {
+		if err := files.Write(ctx, filepath.Join(dir, name), []byte(val), publicPerm); err != nil {
 			return err
 		}
 	}
@@ -342,16 +373,13 @@ func describeEntry(e Entry) string {
 // writeKeystore encrypts the account key into a standard v3 keystore where the
 // node reads it (<datadir>/keystore), which is what the node's own `account
 // import` used to produce — without shelling out to it.
-func writeKeystore(nodeDir string, key PrivateKey, address, password string) error {
+func writeKeystore(ctx context.Context, files provision.FileStore, nodeDir string, key PrivateKey, address, password string) error {
 	keyjson, err := keystore.Encrypt(key.Bytes(), password, keystoreScryptN, keystoreScryptP)
 	if err != nil {
 		return fmt.Errorf("keystore encrypt: %w", err)
 	}
 	dir := filepath.Join(nodeDir, "keystore")
-	if err := os.MkdirAll(dir, dirPerm); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(dir, keystoreFilename(address)), keyjson, secretPerm)
+	return files.Write(ctx, filepath.Join(dir, keystoreFilename(address)), keyjson, secretPerm)
 }
 
 // keystoreFilename is the geth-convention keystore name
