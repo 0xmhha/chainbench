@@ -16,12 +16,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/engine"
 	"github.com/0xmhha/chainbench/internal/serverset"
@@ -510,7 +510,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 // The rendered config and the launch argv point at keysBase, so without this
 // a remote node would look for its keys on the operator's machine. A local
 // target ships nothing: keysBase is the key set itself.
-func (w *Workspace) shipIdentities(ctx context.Context, t *target.Target) (int, error) {
+func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access) (int, error) {
 	if !w.state.Target.IsRemote() {
 		return 0, nil
 	}

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 )
 
 // Ports and host addresses are site-specific and must come from the operator's
@@ -102,7 +102,7 @@ dataRoot: /srv/chainbench
 	st := stateOf(t, dir, d)
 	// The target names the set entry rather than flattening its login: the
 	// server set stays the single credential source for every later step.
-	if st.Target.Kind != target.TargetServer || st.Target.Server != "bp1" {
+	if st.Target.Kind != machine.KindServer || st.Target.Server != "bp1" {
 		t.Fatalf("target = %+v, want a server-set target naming bp1", st.Target)
 	}
 	if st.Target.Host != "10.0.0.11" {

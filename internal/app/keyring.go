@@ -14,9 +14,9 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
 	"strings"
 )
@@ -68,13 +68,14 @@ func (r RingRef) resolve(env func(string) string) (dir, source string) {
 // machine, which is worse than a refusal.
 func (r RingRef) open(d Deps) (files provision.FileStore, dir, source string, err error) {
 	dir, source = r.resolve(d.env())
-	spec, err := target.ParseTarget(dir)
+	spec, err := machine.Parse(dir)
 	if err != nil {
 		return nil, dir, source, err
 	}
-	if !spec.IsRemote() {
-		return provision.LocalFileStore{}, dir, source, nil
-	}
+	// One path for every kind: the resolver hands back local handles for a
+	// local spec, so this consumer never branches on where the ring lives.
+	// --docker stays the power switch either way — the flag without the
+	// localmap is an error, local ring or not.
 	var m remote.AddrMap
 	if r.Docker {
 		lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(r.ServerSet))
@@ -403,7 +404,7 @@ func (in RingImportIn) source(d Deps, serverSet string) (keyring.Source, error) 
 		return nil, fmt.Errorf("app: import needs a private key, a mnemonic, or a path")
 	}
 
-	spec, err := target.ParseTarget(in.From)
+	spec, err := machine.Parse(in.From)
 	if err != nil {
 		return nil, err
 	}

@@ -23,11 +23,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/target"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -80,15 +80,15 @@ type State struct {
 	// ManifestPath and TemplatePath name an external, project-supplied chain
 	// manifest. When set they win over Chain, so a workspace composed for a
 	// project's own chain resolves the same plugin on every later step.
-	ManifestPath string            `json:"manifestPath,omitempty"`
-	TemplatePath string            `json:"templatePath,omitempty"`
-	Binary       string            `json:"binary,omitempty"`
-	KeysDir      string            `json:"keysDir,omitempty"`
-	Validators   int               `json:"validators,omitempty"`
-	Target       target.TargetSpec `json:"target"`
-	GenesisPath  string            `json:"genesisPath,omitempty"`
-	Nodes        []NodeState       `json:"nodes,omitempty"`
-	Steps        map[string]Step   `json:"steps"`
+	ManifestPath string          `json:"manifestPath,omitempty"`
+	TemplatePath string          `json:"templatePath,omitempty"`
+	Binary       string          `json:"binary,omitempty"`
+	KeysDir      string          `json:"keysDir,omitempty"`
+	Validators   int             `json:"validators,omitempty"`
+	Target       machine.Spec    `json:"target"`
+	GenesisPath  string          `json:"genesisPath,omitempty"`
+	Nodes        []NodeState     `json:"nodes,omitempty"`
+	Steps        map[string]Step `json:"steps"`
 	// Peering is the peer graph the composition wires ("mesh" default,
 	// "proxied" for bp <-> pn <-> en). Empty means mesh, so a workspace written
 	// before the field keeps the graph it was composed with.
@@ -209,7 +209,7 @@ func (w *Workspace) addrMap() (remote.AddrMap, error) {
 // (TargetServer) reads its login from the recorded server-set file — the
 // single source; the environment authenticates only a directly named
 // user@host target, which has no file to consult.
-func (w *Workspace) resolveTarget() (*target.Target, error) {
+func (w *Workspace) resolveTarget() (*machine.Access, error) {
 	m, err := w.addrMap()
 	if err != nil {
 		return nil, err
@@ -256,7 +256,7 @@ func (w *Workspace) NodeSet() node.NodeSet {
 		Nodes:        make([]node.Node, 0, len(w.state.Nodes)),
 	}
 	if ns.Network == "" {
-		ns.Network = string(target.TargetLocal)
+		ns.Network = string(machine.KindLocal)
 	}
 	for _, n := range w.state.Nodes {
 		// A node's own recorded host wins: a fleet placement puts each node on

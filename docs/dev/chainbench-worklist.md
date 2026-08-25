@@ -567,8 +567,8 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 |---|---|---|---|---|
 | **V0.1** | 아키텍처 v2 결정 기록 — 레이어 그림·모듈 책임·CLI/MCP 비대칭·네이밍 규칙을 architecture 문서로 | — | 문서 등급 표기(현행 설계) + docs/README 권위 순서 반영 | ☑ |
 | **V0.2** | AST 전수 측정 — app·netcompose·engine·target·driver 함수별 이동표(현 위치 → 목표 칸) | — | 이동표가 V1~V6 각 태스크의 대상 파일을 명시 | ☑ (8패키지 541심볼, [[v2-move-map]](architecture/v2-move-map.md)) |
-| **V1.1** | `core/target` → `core/machine` 개명 — `machine.Spec`/`machine.Access`(stutter 해소), 소비자 일괄 전환 | V0.2 | 한 PR 원자 개명 · 전 소비자 컴파일 · 기존 테스트 무변경 통과 | ☐ |
-| **V1.2** | 무분기 감사 — machine 소비자의 local/remote 분기 전수 검사, 분기는 machine 내부로 | V1.1 | 소비자 코드에 Kind 분기 0건(테스트로 고정) | ☐ |
+| **V1.1** | `core/target` → `core/machine` 개명 — `machine.Spec`/`machine.Access`(stutter 해소), 소비자 일괄 전환 | V0.2 | 한 PR 원자 개명 · 전 소비자 컴파일 · 기존 테스트 무변경 통과 | ☑ |
+| **V1.2** | 무분기 감사 — machine 소비자의 local/remote 분기 전수 검사, 분기는 machine 내부로 | V1.1 | 제거: app keyring 로컬 지름길(해석기로 단일화)·netcompose 구조 검증(`Spec.Validate` 신설로 이동). 잔여 분기는 래칫 테스트가 유예 목록으로 고정(V2.2·V2.3·V5 에서 소멸, 축소만 허용) — `internal/arch` TestMachineConsumersDoNotBranchOnKind | ☑ |
 | **V2.1** | netmap 접근 wrapper 신설 — 서버 이름 → 능력 손잡이(FileStore·Driver), `--docker` 치환·치환 보고·자격 결합 내장. 추가만, 기존 코드 무변경 | V1.1 | 단위: 치환·보고·자격이 wrapper 한 곳에서 재현 | ☐ |
 | **V2.2** | keyring 소비 전환 — `RingRef.open` 의 개별 배선을 wrapper 호출로 교체 | V2.1 | keyring 라이브 스위트(원격 링·복제) 통과 | ☐ |
 | **V2.3** | netcompose 소비 전환 — `resolveTarget` 을 wrapper 로 교체(서버 세트 nil 전달 결함 구조적 해소) | V2.1 | 원격 net 단계가 env 변수 없이 서버 세트만으로 동작(라이브) | ☐ |

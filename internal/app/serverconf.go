@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/serverset"
 )
 
@@ -34,7 +34,7 @@ type ResolveServerOut struct {
 	Placement serverset.Placement
 	// Target is where the data plane lives. It is the zero value when no
 	// server set applied, leaving the workspace's own target in place.
-	Target target.TargetSpec
+	Target machine.Spec
 	// HasTarget reports whether Target should replace the workspace's.
 	HasTarget bool
 }
@@ -86,10 +86,10 @@ func ResolveServer(d Deps, ref ServerRef, minValidators, portBand int) (ResolveS
 // host/user pair — so every later step resolves the login from the server set
 // file, the single source of a named server's credentials. Host is still
 // carried for display and RPC addressing; it never authenticates anything.
-func serverTarget(s serverset.Server) target.TargetSpec {
-	spec := target.TargetSpec{Kind: target.TargetLocal, DataRoot: s.DataRoot}
+func serverTarget(s serverset.Server) machine.Spec {
+	spec := machine.Spec{Kind: machine.KindLocal, DataRoot: s.DataRoot}
 	if s.IsRemote() {
-		spec.Kind = target.TargetServer
+		spec.Kind = machine.KindServer
 		spec.Server = s.Name
 		spec.Host = s.Host
 	}
@@ -98,10 +98,10 @@ func serverTarget(s serverset.Server) target.TargetSpec {
 
 // fleetTarget describes a fleet's data plane. Its host is the first server's:
 // the per-node addresses live on the node table, which the allocator fills.
-func fleetTarget(pl serverset.Placement) target.TargetSpec {
-	spec := target.TargetSpec{Kind: target.TargetLocal, DataRoot: pl.DataRoot}
+func fleetTarget(pl serverset.Placement) machine.Spec {
+	spec := machine.Spec{Kind: machine.KindLocal, DataRoot: pl.DataRoot}
 	if pl.Remote {
-		spec.Kind = target.TargetRemote
+		spec.Kind = machine.KindRemote
 		if len(pl.Pool.Hosts) > 0 {
 			spec.Host = pl.Pool.Hosts[0].Addr
 		}

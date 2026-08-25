@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/target"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 )
 
 // Net step tools — the MCP mirrors of `chainbench net <step>`. Each handler is
@@ -327,21 +327,21 @@ func netHealthTool() Tool {
 // targetSpecFromArgs maps the target arguments onto a TargetSpec. The
 // single-path "target" argument wins and cannot be mixed with the legacy
 // four-argument form. Mirrors the CLI's targetFlags.
-func targetSpecFromArgs(args map[string]any) (target.TargetSpec, error) {
+func targetSpecFromArgs(args map[string]any) (machine.Spec, error) {
 	host := argString(args, "remoteHost", "")
 	if t := argString(args, "target", ""); t != "" {
 		if host != "" || argString(args, "remoteUser", "") != "" ||
 			argInt(args, "remotePort", 0) != 0 || argString(args, "targetDir", "") != "" {
-			return target.TargetSpec{}, fmt.Errorf(
+			return machine.Spec{}, fmt.Errorf(
 				"mcp: target and the legacy remoteHost/remoteUser/remotePort/targetDir arguments cannot be mixed")
 		}
-		return target.ParseTarget(t)
+		return machine.Parse(t)
 	}
 	if host == "" {
-		return target.TargetSpec{Kind: target.TargetLocal, DataRoot: argString(args, "targetDir", "")}, nil
+		return machine.Spec{Kind: machine.KindLocal, DataRoot: argString(args, "targetDir", "")}, nil
 	}
-	return target.TargetSpec{
-		Kind: target.TargetRemote, Host: host,
+	return machine.Spec{
+		Kind: machine.KindRemote, Host: host,
 		User: argString(args, "remoteUser", ""), Port: argInt(args, "remotePort", 0),
 		DataRoot: argString(args, "targetDir", ""),
 	}, nil
