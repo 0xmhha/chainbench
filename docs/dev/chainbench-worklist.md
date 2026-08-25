@@ -577,9 +577,9 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **V3.1** | `keyring/store` 분리 — 링 저장·읽기(레이아웃·metadata·암호화 파일)를 하위 패키지로, 키 역학은 keyring 에 잔류 | V0.2 | 한 PR 내 소비자 전환 · 전 테스트 통과 | ☑ (17개 소비 파일 전환, 저장 테스트 동반 이동) |
 | **V3.2** | 링 위치 해석 이동 — `--keyring-dir` 우선순위(플래그>env>기본)를 store 로 | V3.1 | 위치 보고(`keyring: <dir> (<source>)`) 동작 유지 | ☑ (`store.Locate`) |
 | **V3.3** | app keyring 슬림화 + CLI 직접 호출 — keyringcmd 가 core(store·netmap wrapper)를 직접 호출, app 은 MCP 용 얇은 함수만 | V2.2, V3.2 | CLI 전 명령 동작 동일(테스트) · app keyring 은 호출만 | ☑ (동사 조립은 `internal/keyring` 모듈로 — CLI 직접 호출, app 은 별칭+위임 27줄) |
-| **V4.1** | driver 조회 보강 — 머신에서 바이너리/pid 실행 여부·포트 사용·명령 수행(결과 회수) 원시 기능 채움 | V1.1 | 단위 + docker 라이브(양면 프로브 유지) | ☐ |
-| **V4.2** | `core/process` 신설 — `process.Manager` 실행 대장: 어떤 머신·어떤 바이너리·어떤 명령·pid | V4.1 | 단위: 기록·조회·이중 기동 감지 | ☐ |
-| **V4.3** | pid 기록 전환 — netcompose 워크스페이스의 pid 관리를 process 대장으로 | V4.2 | start→stop→고아 0 라이브 재검증 | ☐ |
+| **V4.1** | driver 조회 보강 — 머신에서 바이너리/pid 실행 여부·포트 사용·명령 수행(결과 회수) 원시 기능 채움 | V1.1 | 단위 + docker 라이브(양면 프로브 유지) | ☑ (`ProcessInspector`·`Commander` 양쪽 드라이버. 원격 pid 는 `/proc` — 비특권 로그인에서 kill -0 의 EPERM 이 부재로 읽히는 함정 회피) |
+| **V4.2** | `core/process` 신설 — `process.Manager` 실행 대장: 어떤 머신·어떤 바이너리·어떤 명령·pid | V4.1 | 단위: 기록·조회·이중 기동 감지 | ☑ (기존 procman 흡수·개명. 영속 `Ledger` 신설: Record 가 이중 기동을 두 pid 명시로 거부, 재열람 왕복 고정) |
+| **V4.3** | pid 기록 전환 — netcompose 워크스페이스의 pid 관리를 process 대장으로 | V4.2 | start→stop→고아 0 라이브 재검증 | ☑ (`process.json` 이 정본, NodeState.PID 는 열람 뷰로 동기화. 라이브: 4노드 기동→블록 26→stop→서버 고아 0·대장 0건) |
 | **V5.1** | chainsetup 수렴 — netcompose 의 순차 진행을 chainsetup 으로 이동, 단계 내용은 기능 모듈로 분리. 역할 정의: 체인을 구성해 블록 생성 상태까지 | V2.3, V4.3 | 기존 net up 전 단계 라이브 통과 · netcompose 잔여 코드 0 | ☐ |
 | **V5.2** | 실행 기록 폴더 — 지정 폴더 아래 실행마다 폴더: 체인 id·입력 사본·배치표·genesis·실행 명령. **서버 세트 ssh 절 제외**(테스트로 고정) | V5.1 | 기록에서 자격증명 grep 0건 테스트 | ☐ |
 | **V5.3** | 사전 점검 배선 — 구성 전 process 대장으로 기동 중 노드 검사, 케이스별 함수 분리·조립(전체 셋업·부분 재시작·점검만) | V5.1 | 이미 도는 노드 위 재구성 거부 라이브 | ☐ |

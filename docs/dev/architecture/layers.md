@@ -104,7 +104,7 @@ flowchart TD
 | `core/driver` | 프로세스 기동/정지/provision. `Initializer`·`FileProvisioner`·`LogReader` capability |
 | `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
 | `core/rpc` | JSON-RPC 클라이언트 |
-| `core/procman` | PID 추적 · 검증된 종료 |
+| `core/process` | PID 추적 · 검증된 종료 |
 | `core/occupancy` | **기동 전 포트 점유 조회** — 로컬은 bind 두 형태(루프백·와일드카드) 모두 시도, 원격은 dial |
 | `core/provision` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
@@ -235,6 +235,7 @@ flowchart TD
 | `core/driver` | config·log (LocalDriver) | ✅ 전송 계층, Sink 의 구현 짝 |
 | `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
 | `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 seam 경유 |
+| `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | `engine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
@@ -276,7 +277,7 @@ flowchart TD
 
 | 패키지 | 상태 | 판정 |
 |---|---|---|
-| `core/procman` | PID 테이블 | ✅ 프로세스 소유자 |
+| `core/process` | PID 테이블 | ✅ 프로세스 소유자 |
 | `core/obs` | 이벤트 버퍼(bounded) | ✅ |
 | `core/collector` | 샘플 윈도우 | ✅ |
 | `core/session` · `core/keyring` · `core/capability` | 각자 소유 | ✅ |

@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -186,7 +186,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 		return fmt.Sprintf("genesis + %d config(s) under %s", len(specs), plan.DataRoot), nil
 	})
 
-	procs := procman.New()
+	procs := process.New()
 	t.do(c.Steps[8], func() (string, error) {
 		res, err := launch.InitAndLaunch(ctx, plan, specs)
 		for _, p := range res.Procs {

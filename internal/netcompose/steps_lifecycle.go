@@ -151,7 +151,7 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 			errs = append(errs, fmt.Sprintf("node%d: %v", ns.Index, err))
 			continue
 		}
-		w.state.Nodes[i].PID = 0
+		w.clearPID(i)
 		stopped++
 	}
 	if len(errs) > 0 {
@@ -188,7 +188,7 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 		if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 			return "", fmt.Errorf("netcompose: restart: stop node%d: %w", ns.Index, err)
 		}
-		w.state.Nodes[ni].PID = 0
+		w.clearPID(ni)
 	}
 	if len(ns.Args) == 0 {
 		return "", fmt.Errorf("netcompose: restart: node%d has no recorded argv — run `net start` first", index)
@@ -199,7 +199,9 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("netcompose: restart: node%d: %w", ns.Index, err)
 	}
-	w.state.Nodes[ni].PID = h.PID
+	if err := w.recordLaunch(ni, h.PID, bin); err != nil {
+		return "", fmt.Errorf("netcompose: restart: node%d: %w", index, err)
+	}
 	detail := fmt.Sprintf("node%d restarted (pid %d)", index, h.PID)
 	w.markStep("restart", detail)
 	return detail, nil
@@ -472,7 +474,9 @@ func (w *Workspace) startPhase(ctx context.Context, t *machine.Access, p registr
 		if err != nil {
 			return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
 		}
-		w.state.Nodes[i].PID = h.PID
+		if err := w.recordLaunch(i, h.PID, bin); err != nil {
+			return started, fmt.Errorf("netcompose: start: node%d: %w", ns.Index, err)
+		}
 		started++
 	}
 	return started, nil

@@ -8,7 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -27,7 +27,7 @@ const stopGrace = 5 * time.Second
 // the fault actions say so rather than pretending.
 type NodeController struct {
 	launcher LocalLauncher
-	procs    *procman.Manager
+	procs    *process.Manager
 
 	mu    sync.Mutex
 	specs map[int]driver.NodeSpec // node index -> arming from the last launch
@@ -37,9 +37,9 @@ type NodeController struct {
 // NewNodeController returns a controller over launcher, tracking processes in
 // procs (the same manager the supervisor tears down with, so a node stopped and
 // restarted mid-test is still accounted for at teardown).
-func NewNodeController(launcher LocalLauncher, procs *procman.Manager) *NodeController {
+func NewNodeController(launcher LocalLauncher, procs *process.Manager) *NodeController {
 	if procs == nil {
-		procs = procman.New()
+		procs = process.New()
 	}
 	return &NodeController{
 		launcher: launcher,
@@ -96,7 +96,7 @@ func (c *NodeController) Start(ctx context.Context, n node.Node) error {
 	if !ok {
 		return fmt.Errorf("engine: node%d was not launched by this run, so it cannot be started", n.Index)
 	}
-	if running > 1 && procman.Alive(running) {
+	if running > 1 && process.Alive(running) {
 		return fmt.Errorf("engine: node%d is already running (pid %d)", n.Index, running)
 	}
 
@@ -108,7 +108,7 @@ func (c *NodeController) Start(ctx context.Context, n node.Node) error {
 	if err != nil {
 		return fmt.Errorf("engine: restart node%d: %w", n.Index, err)
 	}
-	c.procs.TrackProc(procman.Proc{
+	c.procs.TrackProc(process.Proc{
 		PID: h.PID, Label: fmt.Sprintf("node%d", n.Index),
 		DataDir: spec.DataDir, Host: spec.Host,
 	})

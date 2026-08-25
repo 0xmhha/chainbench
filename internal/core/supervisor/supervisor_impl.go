@@ -9,7 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -21,7 +21,7 @@ const defaultLeaderWindow = 60 * time.Second
 // track (pid + datadir + host) for verified teardown.
 type LaunchResult struct {
 	Nodes node.NodeSet
-	Procs []procman.Proc
+	Procs []process.Proc
 }
 
 // Deps injects the supervisor's collaborators, so its orchestration is testable
@@ -57,7 +57,7 @@ type Deps struct {
 	// Declaring Options.ForkSwaps without wiring this is an error.
 	SwapBinary func(ctx context.Context, ns node.NodeSet, swap ForkSwap) error
 	// Procman tracks launched processes for verified teardown.
-	Procman *procman.Manager
+	Procman *process.Manager
 	// Sleep is the backoff sleeper, injected so tests do not wait. Defaults to
 	// time.Sleep.
 	Sleep func(time.Duration)
@@ -77,7 +77,7 @@ func New(deps Deps) Supervisor {
 		deps.Sleep = time.Sleep
 	}
 	if deps.Procman == nil {
-		deps.Procman = procman.New()
+		deps.Procman = process.New()
 	}
 	return &sup{deps: deps}
 }
@@ -199,7 +199,7 @@ func (s *sup) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) er
 	}
 	// Track the node set's local pids too, so a standalone Teardown still acts.
 	for _, n := range ns.Nodes {
-		s.deps.Procman.TrackProc(procman.Proc{PID: n.PID, Label: "node" + strconv.Itoa(n.Index)})
+		s.deps.Procman.TrackProc(process.Proc{PID: n.PID, Label: "node" + strconv.Itoa(n.Index)})
 	}
 
 	var errs []error

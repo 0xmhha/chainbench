@@ -10,7 +10,7 @@
 // and verifies local processes, StopRemote stops remote ones via an injected
 // kill, and RemoveDataDirs deletes data directories as a step separate from
 // stopping (design S2).
-package procman
+package process
 
 import (
 	"encoding/json"
@@ -29,6 +29,12 @@ import (
 type Proc struct {
 	PID   int
 	Label string
+	// Binary is the executable's name or path, when the launcher knows it —
+	// what lets the ledger answer "is a gstable already running there?".
+	Binary string
+	// Command is the launch command line, recorded for the operator reading
+	// the ledger, never re-executed from here.
+	Command string
 	// DataDir is the process's data directory, if known. Removing it is a
 	// separate operation from stopping the process (design S2).
 	DataDir string
@@ -210,7 +216,7 @@ func (m *Manager) StopOne(pid int, grace time.Duration) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("procman: pid %d is not a tracked local process", pid)
+		return fmt.Errorf("process: pid %d is not a tracked local process", pid)
 	}
 	if !Alive(target.PID) {
 		return nil
@@ -225,7 +231,7 @@ func (m *Manager) StopOne(pid int, grace time.Duration) error {
 	if waitAllGone(procs, 5*time.Second) {
 		return nil
 	}
-	return fmt.Errorf("procman: pid %d (%s) still alive after SIGKILL", target.PID, target.Label)
+	return fmt.Errorf("process: pid %d (%s) still alive after SIGKILL", target.PID, target.Label)
 }
 
 // waitAllGone polls until every proc is gone or timeout elapses; returns whether
@@ -271,7 +277,7 @@ func (m *Manager) StopRemote(kill func(host string, pid int) error) []error {
 			continue
 		}
 		if err := kill(p.Host, p.PID); err != nil {
-			errs = append(errs, fmt.Errorf("procman: stop %s pid %d: %w", p.Host, p.PID, err))
+			errs = append(errs, fmt.Errorf("process: stop %s pid %d: %w", p.Host, p.PID, err))
 		}
 	}
 	return errs
@@ -301,7 +307,7 @@ func (m *Manager) RemoveDataDirs() []error {
 	var errs []error
 	for _, dir := range m.DataDirs() {
 		if err := os.RemoveAll(dir); err != nil {
-			errs = append(errs, fmt.Errorf("procman: remove datadir %s: %w", dir, err))
+			errs = append(errs, fmt.Errorf("process: remove datadir %s: %w", dir, err))
 		}
 	}
 	return errs

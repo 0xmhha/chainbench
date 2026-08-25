@@ -21,11 +21,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
@@ -125,14 +127,45 @@ type State struct {
 // (control directory + manifest + step stamps) plus the netcompose domain
 // state the steps accumulate.
 type Workspace struct {
-	comp  session.Composition
-	state State
-	env   func(string) string
+	// ledger is the persisted run record — which machine runs which binary,
+	// under which command, as which pid. It is the source of truth for PIDs;
+	// NodeState.PID is the in-memory view, synced from here on Open.
+	ledger *process.Ledger
+	comp   session.Composition
+	state  State
+	env    func(string) string
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
 // deterministic timestamps; nil uses time.Now.
 func Open(dir string, now func() time.Time) (*Workspace, error) {
+	w, err := open(dir, now)
+	if err != nil {
+		return nil, err
+	}
+	l, err := process.OpenLedger(dir)
+	if err != nil {
+		return nil, err
+	}
+	w.ledger = l
+	for i, ns := range w.state.Nodes {
+		if p, ok := l.Get(string(ns.NodeLabel())); ok {
+			w.state.Nodes[i].PID = p.PID
+			continue
+		}
+		// A workspace from before the ledger recorded pids in its own state;
+		// seed the ledger once so the record moves without losing a process.
+		if ns.PID > 0 {
+			_ = l.Record(process.Proc{
+				PID: ns.PID, Label: string(ns.NodeLabel()),
+				Host: ns.Host, DataDir: ns.DataDir,
+			})
+		}
+	}
+	return w, nil
+}
+
+func open(dir string, now func() time.Time) (*Workspace, error) {
 	comp, err := session.OpenComposition(dir, now)
 	if err != nil {
 		return nil, err
@@ -208,7 +241,34 @@ func (w *Workspace) markStep(step, detail string) {
 }
 
 // Save writes the composition state to the manifest.
-func (w *Workspace) Save() error { return w.comp.Save(w.state) }
+func (w *Workspace) Save() error {
+	if w.ledger != nil {
+		if err := w.ledger.Save(); err != nil {
+			return err
+		}
+	}
+	return w.comp.Save(w.state)
+}
+
+// recordLaunch enters a launched node in the run ledger and syncs the view.
+func (w *Workspace) recordLaunch(i int, pid int, binary string) error {
+	ns := w.state.Nodes[i]
+	if err := w.ledger.Record(process.Proc{
+		PID: pid, Label: string(ns.NodeLabel()), Binary: filepath.Base(binary),
+		Command: strings.Join(append([]string{binary}, ns.Args...), " "),
+		Host:    nodeHost(ns), DataDir: ns.DataDir,
+	}); err != nil {
+		return err
+	}
+	w.state.Nodes[i].PID = pid
+	return nil
+}
+
+// clearPID removes a stopped node from the run ledger and syncs the view.
+func (w *Workspace) clearPID(i int) {
+	w.ledger.Clear(string(w.state.Nodes[i].NodeLabel()))
+	w.state.Nodes[i].PID = 0
+}
 
 // localHost is the address a locally-composed node is reachable at.
 const localHost = "127.0.0.1"

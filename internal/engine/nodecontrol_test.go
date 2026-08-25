@@ -10,7 +10,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 )
 
@@ -31,7 +31,7 @@ func (d *recordingDriver) Stop(context.Context, driver.Handle) error { return ni
 
 func TestNodeController_StartRelaunchesWithTheOriginalArming(t *testing.T) {
 	drv := &recordingDriver{}
-	c := NewNodeController(LocalLauncher{Driver: drv}, procman.New())
+	c := NewNodeController(LocalLauncher{Driver: drv}, process.New())
 	// Seed the controller as a launch would, without needing a preset on disk.
 	// PID 0 is the "stopped" state, which is when a restart is legal.
 	c.record(
@@ -48,7 +48,7 @@ func TestNodeController_StartRelaunchesWithTheOriginalArming(t *testing.T) {
 }
 
 func TestNodeController_StartUnknownNodeIsAnError(t *testing.T) {
-	c := NewNodeController(LocalLauncher{Driver: &recordingDriver{}}, procman.New())
+	c := NewNodeController(LocalLauncher{Driver: &recordingDriver{}}, process.New())
 	err := c.Start(context.Background(), node.Node{Index: 9})
 	if err == nil {
 		t.Fatal("expected an error for a node this run never launched")
@@ -59,7 +59,7 @@ func TestNodeController_StartUnknownNodeIsAnError(t *testing.T) {
 }
 
 func TestNodeController_StopWithoutATrackedProcessIsAnError(t *testing.T) {
-	c := NewNodeController(LocalLauncher{Driver: &recordingDriver{}}, procman.New())
+	c := NewNodeController(LocalLauncher{Driver: &recordingDriver{}}, process.New())
 	if err := c.Stop(context.Background(), node.Node{Index: 1}); err == nil {
 		t.Fatal("expected an error when there is no tracked process")
 	}
@@ -67,7 +67,7 @@ func TestNodeController_StopWithoutATrackedProcessIsAnError(t *testing.T) {
 
 func TestNodeController_StopThenStartRoundTrip(t *testing.T) {
 	pid := startDetachedSleeper(t)
-	procs := procman.New()
+	procs := process.New()
 	procs.Track(pid, "node1")
 
 	drv := &recordingDriver{}
@@ -81,7 +81,7 @@ func TestNodeController_StopThenStartRoundTrip(t *testing.T) {
 	if err := c.Stop(context.Background(), n); err != nil {
 		t.Fatalf("Stop: %v", err)
 	}
-	if procman.Alive(pid) {
+	if process.Alive(pid) {
 		t.Fatal("node process still alive after Stop")
 	}
 	// Start is allowed now that the process is gone, and re-arms from the record.
@@ -106,8 +106,8 @@ func startDetachedSleeper(t *testing.T) int {
 		t.Fatalf("parse pid %q: %v", out, err)
 	}
 	t.Cleanup(func() {
-		if procman.Alive(pid) {
-			m := procman.New()
+		if process.Alive(pid) {
+			m := process.New()
 			m.Track(pid, "cleanup")
 			_ = m.StopAll(time.Second)
 		}

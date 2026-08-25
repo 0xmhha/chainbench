@@ -20,7 +20,7 @@ import (
 // to the worklist task that dissolves it. The list may only shrink: an entry
 // whose file no longer branches fails the test until it is removed here.
 var machineBranchAllowed = map[string]string{
-	"internal/core/procman":              "Proc.IsRemote is procman's own host notion, not machine.Kind (reconciled at V4)",
+	"internal/core/process":              "Proc.IsRemote is the process ledger's own host notion, not machine.Kind",
 	"internal/netmap":                    "the module surface constructs Specs from server-set entries and owns the wiring",
 	"internal/netmap/internal/serverset": "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
 	"internal/netcompose":                "deferred: dissolves into chainsetup/netmap at V2.3 and V5.1",

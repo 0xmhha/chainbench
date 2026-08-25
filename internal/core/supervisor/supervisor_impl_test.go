@@ -13,7 +13,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 )
 
@@ -26,13 +26,13 @@ func nodeSet(pids ...int) node.NodeSet {
 }
 
 func TestBringUp_Success(t *testing.T) {
-	pm := procman.New()
+	pm := process.New()
 	launched := nodeSet(4001, 4002)
 	deps := supervisor.Deps{
 		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
 			return supervisor.LaunchResult{
 				Nodes: launched,
-				Procs: []procman.Proc{{PID: 4001, DataDir: "/d/1"}, {PID: 4002, DataDir: "/d/2"}},
+				Procs: []process.Proc{{PID: 4001, DataDir: "/d/1"}, {PID: 4002, DataDir: "/d/2"}},
 			}, nil
 		},
 		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {
@@ -51,17 +51,17 @@ func TestBringUp_Success(t *testing.T) {
 		t.Fatalf("diag=%+v nodes=%d", diag, len(ns.Nodes))
 	}
 	if pm.Count() != 2 {
-		t.Fatalf("procman tracked %d, want 2", pm.Count())
+		t.Fatalf("process ledger tracked %d, want 2", pm.Count())
 	}
 }
 
 func TestBringUp_RetryThenFail(t *testing.T) {
-	pm := procman.New()
+	pm := process.New()
 	attempts := 0
 	deps := supervisor.Deps{
 		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
 			attempts++
-			return supervisor.LaunchResult{Nodes: nodeSet(5001), Procs: []procman.Proc{{PID: 5001, DataDir: t.TempDir()}}}, nil
+			return supervisor.LaunchResult{Nodes: nodeSet(5001), Procs: []process.Proc{{PID: 5001, DataDir: t.TempDir()}}}, nil
 		},
 		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {
 			return supervisor.Diagnosis{OK: false, Mode: supervisor.ForkNotCrossed, Detail: "fork not reached"}, nil
@@ -91,7 +91,7 @@ func TestBringUp_LaunchError(t *testing.T) {
 		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {
 			return supervisor.Diagnosis{OK: true}, nil
 		},
-		Procman: procman.New(),
+		Procman: process.New(),
 		Sleep:   func(time.Duration) {},
 	})
 	if _, _, err := s.BringUp(context.Background(), driver.Plan{}, supervisor.Options{MaxAttempts: 1}); err == nil {
@@ -113,14 +113,14 @@ func TestTeardown_StopsAndRemovesDataDir(t *testing.T) {
 	sub := filepath.Join(dataDir, "chaindata")
 	_ = os.MkdirAll(sub, 0o755)
 
-	pm := procman.New()
-	pm.TrackProc(procman.Proc{PID: pid, DataDir: dataDir})
+	pm := process.New()
+	pm.TrackProc(process.Proc{PID: pid, DataDir: dataDir})
 	s := supervisor.New(supervisor.Deps{Procman: pm, Sleep: func(time.Duration) {}})
 
 	if err := s.Teardown(context.Background(), nodeSet(pid), supervisor.TeardownOpts{RemoveDataDir: true, Grace: time.Second}); err != nil {
 		t.Fatalf("Teardown: %v", err)
 	}
-	if procman.Alive(pid) {
+	if process.Alive(pid) {
 		t.Fatal("process still alive after Teardown")
 	}
 	if _, err := os.Stat(dataDir); !os.IsNotExist(err) {

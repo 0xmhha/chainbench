@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/procman"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
@@ -257,7 +257,7 @@ func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan driver.Plan, spec
 			RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
 			Ports:  spec.Ports, PID: h.PID,
 		})
-		res.Procs = append(res.Procs, procman.Proc{
+		res.Procs = append(res.Procs, process.Proc{
 			PID: h.PID, Label: fmt.Sprintf("node%d", spec.Index),
 			DataDir: spec.DataDir, Host: spec.Host,
 		})
