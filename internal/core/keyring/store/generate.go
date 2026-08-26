@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io"
 	"io/fs"
 	"path/filepath"
@@ -15,7 +16,6 @@ import (
 	"github.com/0xmhha/accounts/keystore"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // File and directory permissions for a generated ring.
@@ -161,7 +161,7 @@ func ImportAt(ctx context.Context, files filestore.Store, dir string, label Labe
 		}
 	}
 
-	id, err := keyring.Derive(key, d)
+	id, err := derive.Derive(key, d)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -307,11 +307,11 @@ func writePreset(ctx context.Context, opts GenerateOpts, set Preset) error {
 // an operator reading the directory by hand.
 func generateEntry(ctx context.Context, i int, opts GenerateOpts) (Entry, error) {
 	nodeDir := filepath.Join(opts.Out, fmt.Sprintf("node%d", i))
-	key, err := keyring.NewPrivateKey(opts.Rand)
+	key, err := derive.NewPrivateKey(opts.Rand)
 	if err != nil {
 		return Entry{}, err
 	}
-	id, err := keyring.Derive(key, opts.Derive)
+	id, err := derive.Derive(key, opts.Derive)
 	if err != nil {
 		return Entry{}, err
 	}

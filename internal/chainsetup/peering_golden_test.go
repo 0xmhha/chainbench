@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"regexp"
 	"strings"
 	"testing"
@@ -46,7 +47,7 @@ func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 		}
 		preset.Nodes = append(preset.Nodes, keyring.Entry{
 			Index:    i,
-			Identity: keyring.Identity{PublicKey: fmt.Sprintf("%02x%02x", i, i), Address: fmt.Sprintf("0xnode%d", i)},
+			Identity: derive.Identity{PublicKey: fmt.Sprintf("%02x%02x", i, i), Address: fmt.Sprintf("0xnode%d", i)},
 		})
 		plan.Nodes = append(plan.Nodes, driver.NodeSpec{
 			Index: i, Role: role, Host: "127.0.0.1", DataDir: fmt.Sprintf("/d/node%d", i),

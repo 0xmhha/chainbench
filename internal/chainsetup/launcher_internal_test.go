@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -100,8 +101,8 @@ func TestArmSpecs(t *testing.T) {
 	preset := keyring.Preset{
 		Network: keyring.Network{Validators: []string{"0xval1"}},
 		Nodes: []keyring.Entry{
-			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
-			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
+			{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: derive.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{
@@ -173,7 +174,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}}}}
+	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xval1"}}}}
 	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
@@ -219,8 +220,8 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 	preset := keyring.Preset{
 		Network: keyring.Network{Validators: []string{"0xval1"}},
 		Nodes: []keyring.Entry{
-			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
-			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
+			{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: derive.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{

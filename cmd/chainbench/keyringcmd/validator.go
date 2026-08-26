@@ -3,6 +3,7 @@ package keyringcmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io"
 	"text/tabwriter"
 
@@ -52,7 +53,7 @@ func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *s
 	}
 	// A wbft validator's BLS material comes from the same key as its address,
 	// so ask for it up front and let the family decide whether it is used.
-	id, err := keyring.Derive(key, derivationFor(family))
+	id, err := derive.Derive(key, derivationFor(family))
 	if err != nil {
 		return err
 	}
@@ -75,11 +76,11 @@ func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *s
 
 // derivationFor asks for BLS material only where a family uses it, so a poa
 // validator does not pay for a computation whose result it would discard.
-func derivationFor(family string) keyring.Derivation {
+func derivationFor(family string) derive.Derivation {
 	if family == "wbft" {
-		return keyring.WithBLS
+		return derive.WithBLS
 	}
-	return keyring.AccountOnly
+	return derive.AccountOnly
 }
 
 // validatorOut is a validator identity for display.
@@ -239,7 +240,7 @@ func newValidatorSetCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			// `validator set` builds a wbft validator set, which is defined by its
 			// BLS keys; `keyring new` is where BLS became opt-in.
-			opts.Derive = keyring.WithBLS
+			opts.Derive = derive.WithBLS
 			// This command's zero has always meant "all of them"; pass it as
 			// absent rather than as a declared zero, which now means a ring
 			// that declares no validators at all.

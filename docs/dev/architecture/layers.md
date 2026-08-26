@@ -112,7 +112,8 @@ flowchart TD
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
-| `core/keyring` | **키 모델과 역학** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·출처·검증. 저장은 하위 store 가 |
+| `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
+| `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
 | `core/keyring/store` | **링 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드·Ring 컨테이너, 파일 인터페이스 경유 |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |

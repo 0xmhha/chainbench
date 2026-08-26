@@ -9,11 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"path/filepath"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // PresetFile is the file a keyring's index lives in, inside the ring directory.
@@ -100,7 +100,7 @@ func (f presetFile) validate(path string) error {
 func (f presetFile) entries(path string) ([]Entry, error) {
 	out := make([]Entry, 0, len(f.Nodes))
 	for _, n := range f.Nodes {
-		key, err := keyring.ParsePrivateKey(n.Nodekey)
+		key, err := derive.ParsePrivateKey(n.Nodekey)
 		if err != nil {
 			return nil, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}

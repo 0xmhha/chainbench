@@ -2,6 +2,7 @@ package keyringcmd
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -223,7 +224,7 @@ func (f *PasswordFlags) Source() keyring.PasswordSource {
 
 // saveKey persists the key per the store/password flags, returning the file path, or
 // "" when storage is disabled. A keystore store requires a password.
-func saveKey(sf *storeFlags, pf *PasswordFlags, key keyring.PrivateKey) (string, error) {
+func saveKey(sf *storeFlags, pf *PasswordFlags, key derive.PrivateKey) (string, error) {
 	if !sf.enabled() {
 		return "", nil
 	}

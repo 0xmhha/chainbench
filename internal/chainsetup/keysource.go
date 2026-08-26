@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 
@@ -72,7 +73,7 @@ func (s PresetKeySource) Ensure(_ context.Context, n int) (KeySet, error) {
 // GeneratedKeySource generates a fresh random key set into Path on first use.
 //
 // Every identity — address, devp2p public key, BLS public key and
-// proof-of-possession — is derived in process (keyring.Derive), so generating a
+// proof-of-possession — is derived in process (derive.Derive), so generating a
 // key set needs no chain binary. It used to require the go-wbft bootnode tool,
 // which is what made the committed preset the only practical way to start a
 // network.
@@ -113,7 +114,7 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 		// a ring that declares no validators at all.
 		Validators: validatorCount(s.Validators),
 		Out:        s.Path,
-		Derive:     keyring.WithBLS,
+		Derive:     derive.WithBLS,
 		Password:   orDefault(s.Password, defaultGeneratedPassword),
 		Balance:    orDefault(s.Balance, defaultGeneratedBalance),
 	}
@@ -160,9 +161,9 @@ func RegisterIdentities(ctx context.Context, ring *store.Ring, ks KeySet, n int)
 		label := keyring.Label(fmt.Sprintf("node%d", i))
 		// Ask for exactly what the set claims to hold: a poa identity has no BLS
 		// material, and deriving some would invent a key it never had.
-		d := keyring.AccountOnly
+		d := derive.AccountOnly
 		if nk.BLS != nil {
-			d = keyring.WithBLS
+			d = derive.WithBLS
 		}
 		src := keyring.PrivateKeySource{Hex: nk.Nodekey.Hex()}
 		if _, err := ring.AddExpecting(ctx, label, src, d, nk.Address); err != nil {

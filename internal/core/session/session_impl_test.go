@@ -3,6 +3,7 @@ package session_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 	"testing"
@@ -209,7 +210,7 @@ func TestKeyring_IsRootedInTheSession(t *testing.T) {
 		t.Fatal("Keys() is nil — the session did not build a keyring")
 	}
 
-	e, err := ring.Add(context.Background(), "op1", keyring.RandomSource{}, keyring.AccountOnly)
+	e, err := ring.Add(context.Background(), "op1", keyring.RandomSource{}, derive.AccountOnly)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
 	}
@@ -218,7 +219,7 @@ func TestKeyring_IsRootedInTheSession(t *testing.T) {
 	}
 	// A second Add under the same label returns the first entry rather than
 	// generating a competing identity.
-	again, err := ring.Add(context.Background(), "op1", keyring.RandomSource{}, keyring.AccountOnly)
+	again, err := ring.Add(context.Background(), "op1", keyring.RandomSource{}, derive.AccountOnly)
 	if err != nil {
 		t.Fatalf("Add again: %v", err)
 	}

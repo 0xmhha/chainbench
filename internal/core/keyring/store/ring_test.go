@@ -3,6 +3,7 @@ package store_test
 import (
 	"context"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 	"sync"
@@ -18,11 +19,11 @@ import (
 // competing key for the same name.
 func TestRing_AddIsIdempotent(t *testing.T) {
 	ring := store.NewRing(t.TempDir())
-	first, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
+	first, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
 	}
-	second, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
+	second, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add again: %v", err)
 	}
@@ -41,11 +42,11 @@ func TestRing_AddIsIdempotent(t *testing.T) {
 // BLS has none, rather than a zero key that reads like a real one.
 func TestRing_DerivationIsPerEntry(t *testing.T) {
 	ring := store.NewRing(t.TempDir())
-	bp, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
+	bp, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add bp1: %v", err)
 	}
-	acct, err := ring.Add(context.Background(), "faucet", keyring.RandomSource{}, keyring.AccountOnly)
+	acct, err := ring.Add(context.Background(), "faucet", keyring.RandomSource{}, derive.AccountOnly)
 	if err != nil {
 		t.Fatalf("Add faucet: %v", err)
 	}
@@ -64,10 +65,10 @@ func TestRing_AddExpectingCatchesDrift(t *testing.T) {
 	ring := store.NewRing(t.TempDir())
 	src := keyring.PrivateKeySource{Hex: entry.Nodekey.Hex()}
 
-	if _, err := ring.AddExpecting(context.Background(), "ok", src, keyring.AccountOnly, entry.Address); err != nil {
+	if _, err := ring.AddExpecting(context.Background(), "ok", src, derive.AccountOnly, entry.Address); err != nil {
 		t.Fatalf("AddExpecting with the right address: %v", err)
 	}
-	_, err := ring.AddExpecting(context.Background(), "drifted", src, keyring.AccountOnly,
+	_, err := ring.AddExpecting(context.Background(), "drifted", src, derive.AccountOnly,
 		"0x00000000000000000000000000000000deadbeef")
 	if err == nil {
 		t.Fatal("AddExpecting accepted an address the key does not derive")
@@ -79,7 +80,7 @@ func TestRing_AddExpectingCatchesDrift(t *testing.T) {
 func TestRing_WritesUnderItsDirectory(t *testing.T) {
 	dir := t.TempDir()
 	ring := store.NewRing(dir)
-	if _, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS); err != nil {
+	if _, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS); err != nil {
 		t.Fatalf("Add: %v", err)
 	}
 	cases := []struct {
@@ -106,7 +107,7 @@ func TestRing_WritesUnderItsDirectory(t *testing.T) {
 // shipping a derived value is how a node and its genesis come to disagree.
 func TestRing_Install(t *testing.T) {
 	ring := store.NewRing(t.TempDir())
-	e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.WithBLS)
+	e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
 	}
@@ -133,7 +134,7 @@ func TestRing_Install(t *testing.T) {
 func TestRing_Labels(t *testing.T) {
 	ring := store.NewRing(t.TempDir())
 	for _, l := range []keyring.Label{"en1", "bp2", "bp1"} {
-		if _, err := ring.Add(context.Background(), l, keyring.RandomSource{}, keyring.AccountOnly); err != nil {
+		if _, err := ring.Add(context.Background(), l, keyring.RandomSource{}, derive.AccountOnly); err != nil {
 			t.Fatalf("Add %s: %v", l, err)
 		}
 	}
@@ -153,11 +154,11 @@ func TestRing_Labels(t *testing.T) {
 // as an entry.
 func TestRing_AddPropagatesSourceErrors(t *testing.T) {
 	ring := store.NewRing(t.TempDir())
-	_, err := ring.Add(context.Background(), "bad", keyring.PrivateKeySource{Hex: "zz"}, keyring.AccountOnly)
+	_, err := ring.Add(context.Background(), "bad", keyring.PrivateKeySource{Hex: "zz"}, derive.AccountOnly)
 	if err == nil {
 		t.Fatal("expected an error")
 	}
-	if !errors.Is(err, keyring.ErrInvalidPrivateKey) {
+	if !errors.Is(err, derive.ErrInvalidPrivateKey) {
 		t.Errorf("error should unwrap to ErrInvalidPrivateKey, got %v", err)
 	}
 	if _, ok := ring.Get("bad"); ok {
@@ -199,7 +200,7 @@ func TestRing_AddIsSafeUnderConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, keyring.AccountOnly)
+			e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.AccountOnly)
 			if err != nil {
 				t.Errorf("Add: %v", err)
 				return

@@ -3,20 +3,20 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"path/filepath"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // ServerIdentity is one server's node identity: which server it is, and the
 // public material its nodekey implies.
 //
-// The identity itself is keyring.Identity — the same type every other part of
+// The identity itself is derive.Identity — the same type every other part of
 // chainbench uses — so nothing here has to be converted before it can be
 // registered, written into a genesis, or compared with a declaration. This
 // package used to carry its own NodeKeyInfo, which held a subset of the same
@@ -24,7 +24,7 @@ import (
 type ServerIdentity struct {
 	// Server is the cluster server index this identity belongs to.
 	Server int
-	keyring.Identity
+	derive.Identity
 }
 
 // ReadServerKeys reads one server's identity: it fetches the node's key over
@@ -53,11 +53,11 @@ func readServerKeysFrom(ctx context.Context, files, dest filestore.Store, p Remo
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d read nodekey: %w", server, err)
 	}
-	key, err := keyring.ParsePrivateKey(string(raw))
+	key, err := derive.ParsePrivateKey(string(raw))
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d nodekey at %s: %w", server, p.Nodekey, err)
 	}
-	id, err := keyring.Derive(key, keyring.WithBLS)
+	id, err := derive.Derive(key, derive.WithBLS)
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d derive identity: %w", server, err)
 	}

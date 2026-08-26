@@ -1,4 +1,4 @@
-package keyring
+package derive
 
 import (
 	"crypto/hkdf"

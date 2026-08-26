@@ -13,6 +13,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	model "github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
@@ -186,13 +187,13 @@ func displayRing(ref RingRef, resolved string) string {
 // extending one takes none — so resolving it here would have to know which verb
 // called and would get the other wrong. It did, once.
 func (in RingCreateIn) opts(dir string) store.GenerateOpts {
-	derive := model.AccountOnly
+	how := derive.AccountOnly
 	if in.WithBLS {
-		derive = model.WithBLS
+		how = derive.WithBLS
 	}
 	return store.GenerateOpts{
 		Nodes: in.Count, Validators: in.Validators, Out: dir,
-		Password: in.Password, Balance: in.Balance, Derive: derive,
+		Password: in.Password, Balance: in.Balance, Derive: how,
 	}
 }
 
@@ -322,12 +323,12 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 	if err != nil {
 		return EntryOut{}, err
 	}
-	derive := model.AccountOnly
+	how := derive.AccountOnly
 	if in.WithBLS {
-		derive = model.WithBLS
+		how = derive.WithBLS
 	}
 	if in.ExpectAddress != "" {
-		id, err := model.Derive(key, model.AccountOnly)
+		id, err := derive.Derive(key, derive.AccountOnly)
 		if err != nil {
 			return EntryOut{}, err
 		}
@@ -336,7 +337,7 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 				id.Address, in.ExpectAddress)
 		}
 	}
-	e, err := store.ImportAt(ctx, files, dir, model.Label(in.Label), key, derive)
+	e, err := store.ImportAt(ctx, files, dir, model.Label(in.Label), key, how)
 	if err != nil {
 		return EntryOut{}, err
 	}

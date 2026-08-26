@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"maps"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 // Label names one entry in a ring: "node1", "bp1", "faucet".
@@ -79,7 +79,7 @@ func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
-	id, err := keyring.Derive(key, d)
+	id, err := derive.Derive(key, d)
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}

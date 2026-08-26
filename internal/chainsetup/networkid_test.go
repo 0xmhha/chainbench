@@ -1,6 +1,7 @@
 package chainsetup_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
@@ -25,7 +26,7 @@ func TestNodeLaunchArgs_EmitsTheManifestNetworkID(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: keyring.Identity{PublicKey: "aa", Address: "0x1"}}}}
+	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa", Address: "0x1"}}}}
 	spec := driver.NodeSpec{Index: 1, Role: node.RoleEN, Host: "127.0.0.1", DataDir: "/d/node1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}}
 
 	args, err := chainsetup.NodeLaunchArgs(plugin, preset, spec, "/keys", nil)

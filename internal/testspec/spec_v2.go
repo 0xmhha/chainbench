@@ -80,7 +80,7 @@ type KeySourceV2 struct {
 	Ref string `json:"ref,omitempty"`
 	// Bootnode named the external BLS-deriving binary. It is accepted so that
 	// existing specs keep parsing, and ignored: BLS material is now derived in
-	// process (keyring.Derive).
+	// process (derive.Derive).
 	//
 	// Deprecated: has no effect.
 	Bootnode string `json:"bootnode,omitempty"`
