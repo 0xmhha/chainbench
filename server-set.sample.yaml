@@ -65,9 +65,9 @@ pool:
 # password_file (or key_passphrase_file) at a separate one-line file, 0600 —
 # the shape a secret manager renders to disk.
 #
-# Host key policy is separate:
-#   CHAINBENCH_SSH_KNOWN_HOSTS, or CHAINBENCH_SSH_INSECURE_HOST_KEY=1 on a
-#   closed network with no known_hosts.
+# Host-key policy is data here too — no environment variable configures it:
+#   known_hosts_file: <path>     verify against this file (default ~/.ssh/known_hosts)
+#   insecure_host_key: true      closed-network throwaway servers ONLY (exactly one)
 ssh:
   port: 22                    # the Wemix3.5 test servers use 10022
   # user: chainbench

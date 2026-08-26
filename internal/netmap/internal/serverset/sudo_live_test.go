@@ -2,13 +2,12 @@ package serverset_test
 
 import (
 	"context"
-	"os"
+	"github.com/0xmhha/chainbench/internal/testkit"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
@@ -19,11 +18,7 @@ import (
 //
 //	CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build go test ./internal/serverset/ -run Live_Sudo -v
 func TestLive_SudoElevatesWithThePassword(t *testing.T) {
-	build := os.Getenv("CHAINBENCH_DOCKER_FLEET")
-	if build == "" {
-		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running")
-	}
-	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
+	build := testkit.FleetBuildDir(t)
 
 	inv := filepath.Join(build, "server-set.yaml")
 	cfg, err := serverset.Load(inv)
@@ -47,7 +42,7 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 	}
 	creds.Host, creds.Port = lm.AddrMap(nil)(creds.Host, creds.Port)
 
-	hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+	hostKey, err := creds.HostKey.Callback()
 	if err != nil {
 		t.Fatal(err)
 	}

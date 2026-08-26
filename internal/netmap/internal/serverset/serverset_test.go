@@ -1,6 +1,7 @@
 package serverset_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
 	"strings"
@@ -226,8 +227,8 @@ func TestFleet_RejectsAMixedInventory(t *testing.T) {
 // server's login predictable: the set file decides, and an exported
 // CHAINBENCH_REMOTE_* left over from another environment changes nothing.
 func TestCredentials_TheFileIsTheSingleSource(t *testing.T) {
-	t.Setenv("CHAINBENCH_REMOTE_USER", "deploy")
-	t.Setenv("CHAINBENCH_REMOTE_PASS", "envpass")
+	t.Setenv(remote.EnvUser, "deploy")
+	t.Setenv(remote.EnvPass, "envpass")
 	cfg := load(t, sample)
 	s, _ := cfg.ByName("bp1")
 

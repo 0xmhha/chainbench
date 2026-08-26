@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,8 +34,8 @@ func TestCredentials_For_KeyFile(t *testing.T) {
 
 	// key_file via env, with passphrase.
 	env := map[string]string{
-		"CHAINBENCH_REMOTE_KEY_FILE":       keyPath,
-		"CHAINBENCH_REMOTE_KEY_PASSPHRASE": "secret",
+		remote.EnvKeyFile:       keyPath,
+		remote.EnvKeyPassphrase: "secret",
 	}
 	crEnv := &Credentials{User: "ubuntu"}
 	rcEnv, err := crEnv.For(c, c.Servers[0], func(k string) string { return env[k] })

@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
 	"testing"
@@ -34,7 +35,7 @@ func TestCredentials_For(t *testing.T) {
 		t.Errorf("server3 creds = %+v", rc3)
 	}
 	// With no credentials file, the environment is the source.
-	env := map[string]string{"CHAINBENCH_REMOTE_USER": "envuser", "CHAINBENCH_REMOTE_PASS": "envpw"}
+	env := map[string]string{remote.EnvUser: "envuser", remote.EnvPass: "envpw"}
 	rcEnv, _ := cr.For(c, c.Servers[0], func(k string) string { return env[k] })
 	if rcEnv.User != "envuser" || rcEnv.Password != "envpw" {
 		t.Errorf("env creds = %+v", rcEnv)
@@ -54,7 +55,7 @@ func TestCredentials_FileIsTheSingleSource(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := &Cluster{SSHPort: 22, Servers: []Server{{Index: 1, Host: "10.0.0.1", Role: RoleWbftBP}}}
-	env := map[string]string{"CHAINBENCH_REMOTE_USER": "envuser", "CHAINBENCH_REMOTE_PASS": "envpw"}
+	env := map[string]string{remote.EnvUser: "envuser", remote.EnvPass: "envpw"}
 	rc, err := cr.For(c, c.Servers[0], func(k string) string { return env[k] })
 	if err != nil {
 		t.Fatal(err)

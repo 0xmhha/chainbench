@@ -186,8 +186,8 @@ func (s Spec) Resolve(env func(string) string) (*Access, error) {
 // A local target uses the local filesystem and driver; the remote forms open an
 // SSH-backed FileStore and driver. Credentials come from env for a directly
 // named host and from the server set for an srv:// entry. The host-key policy
-// comes from remote.ResolveHostKeyCallback (known_hosts, or the loud insecure
-// opt-in) in both cases.
+// comes from the host-key policy the caller supplies (the server set's, or the
+// safe known_hosts default) in both cases.
 func (s Spec) ResolveWith(env func(string) string, inv Lookup) (*Access, error) {
 	return s.ResolveWithMap(env, inv, nil)
 }
@@ -197,6 +197,14 @@ func (s Spec) ResolveWith(env func(string) string, inv Lookup) (*Access, error) 
 // SSH transport dials; the spec, the data root, and everything composed onto
 // the target keep the real addresses. Nil is no translation.
 func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrMap) (*Access, error) {
+	return s.ResolveWithPolicy(env, inv, m, remote.HostKeyPolicy{})
+}
+
+// ResolveWithPolicy is ResolveWithMap with the caller's host-key policy — the
+// server set's, loaded at runtime like every other connection setting. A
+// per-server policy on the looked-up credentials wins over it; the zero value
+// verifies against the default known_hosts.
+func (s Spec) ResolveWithPolicy(env func(string) string, inv Lookup, m remote.AddrMap, hk remote.HostKeyPolicy) (*Access, error) {
 	switch {
 	case !s.IsRemote():
 		return &Access{Spec: s, DataRoot: s.DataRoot, Files: provision.LocalFileStore{}, Driver: driver.NewLocalDriver()}, nil
@@ -209,7 +217,7 @@ func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrM
 		if err != nil {
 			return nil, err
 		}
-		return s.resolveOver(creds, env, m)
+		return s.resolveOver(creds, hk, m)
 
 	default:
 		if s.Host == "" || s.DataRoot == "" {
@@ -219,7 +227,7 @@ func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrM
 		if err != nil {
 			return nil, err
 		}
-		return s.resolveOver(creds, env, m)
+		return s.resolveOver(creds, hk, m)
 	}
 }
 
@@ -241,12 +249,18 @@ func mapCredentials(creds remote.Credentials, m remote.AddrMap) remote.Credentia
 // resolveOver builds the SSH-backed target for already-resolved credentials.
 // Both remote forms end here, so they cannot drift apart — and so the dial-time
 // address translation cannot be applied to one form and missed on the other.
-func (s Spec) resolveOver(creds remote.Credentials, env func(string) string, m remote.AddrMap) (*Access, error) {
+func (s Spec) resolveOver(creds remote.Credentials, hk remote.HostKeyPolicy, m remote.AddrMap) (*Access, error) {
 	if s.DataRoot == "" {
 		return nil, fmt.Errorf("target: remote target needs a path")
 	}
 	creds = mapCredentials(creds, m)
-	hostKey, err := remote.ResolveHostKeyCallback(env)
+	// The credentials' own policy (a per-server declaration) wins; hk is the
+	// caller's set-level policy; the zero value is the safe default.
+	policy := creds.HostKey
+	if policy == (remote.HostKeyPolicy{}) {
+		policy = hk
+	}
+	hostKey, err := policy.Callback()
 	if err != nil {
 		return nil, err
 	}

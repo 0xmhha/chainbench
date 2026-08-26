@@ -194,14 +194,9 @@ func TestDialTunnelClient_HostKeyMismatch(t *testing.T) {
 	otherSigner, _ := ssh.NewSignerFromKey(otherPriv)
 	khPath := writeKnownHosts(t, srv.addr, otherSigner.PublicKey())
 
-	cb, err := ResolveHostKeyCallback(func(k string) string {
-		if k == "CHAINBENCH_SSH_KNOWN_HOSTS" {
-			return khPath
-		}
-		return ""
-	})
+	cb, err := HostKeyPolicy{KnownHostsFile: khPath}.Callback()
 	if err != nil {
-		t.Fatalf("ResolveHostKeyCallback: %v", err)
+		t.Fatalf("Callback: %v", err)
 	}
 	if _, _, err := DialTunnelClient(credsFor(t, srv, "hunter2"), cb); err == nil {
 		t.Fatal("expected host key rejection")
@@ -255,15 +250,14 @@ func TestDialSSH_Validation(t *testing.T) {
 	}
 }
 
-func TestResolveHostKeyCallback_InsecureOptIn(t *testing.T) {
-	cb, err := ResolveHostKeyCallback(func(k string) string {
-		if k == "CHAINBENCH_SSH_INSECURE_HOST_KEY" {
-			return "1"
-		}
-		return ""
-	})
+func TestHostKeyPolicy_InsecureOptIn(t *testing.T) {
+	cb, err := HostKeyPolicy{InsecureHostKey: true}.Callback()
 	if err != nil || cb == nil {
 		t.Fatalf("insecure opt-in should yield a callback: %v", err)
+	}
+	// Declaring both a file and insecure is a contradiction, refused.
+	if _, err := (HostKeyPolicy{InsecureHostKey: true, KnownHostsFile: "x"}).Callback(); err == nil {
+		t.Fatal("both insecure and a known_hosts file were accepted")
 	}
 }
 

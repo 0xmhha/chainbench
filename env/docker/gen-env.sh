@@ -154,6 +154,9 @@ EOF
 ssh:
   user: $(yaml_sq "$SSH_USER")
   port: ${SSH_PORT}
+  # Containers get fresh host keys on every recreate, so known_hosts cannot
+  # pin them; this set is loopback-published and closed by the firewall.
+  insecure_host_key: true
   # Dev-only credential for loopback-published containers; a production
   # server set would reference a password_file instead of an inline value.
   password: $(yaml_sq "$SSH_PASSWORD")

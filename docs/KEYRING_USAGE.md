@@ -147,8 +147,10 @@ export 해 둔 값이 접속을 조용히 바꾸는 일이 없다. 비밀번호�
 | 환경변수 | 의미 |
 |---|---|
 | `CHAINBENCH_REMOTE_USER` / `_PASS` / `_KEY_FILE` (+`_KEY_PASSPHRASE`) | **직접 표기(`user@host:/path`) 전용** SSH 자격 — 참조할 서버 세트가 없는 형태라서다 |
-| `CHAINBENCH_SSH_KNOWN_HOSTS` | known_hosts 경로 (기본 `~/.ssh/known_hosts`) |
-| `CHAINBENCH_SSH_INSECURE_HOST_KEY=1` | 호스트키 검증 생략 — **폐쇄망·일회용 서버 전용** |
+
+호스트키 정책은 환경변수가 아니라 **서버 세트의 `ssh:` 절**이 정한다:
+`known_hosts_file: <경로>`(검증 파일 지정) 또는 폐쇄망 전용
+`insecure_host_key: true`(정확히 하나만). 지정이 없으면 `~/.ssh/known_hosts`.
 
 `srv://<이름>/경로` 는 서버 세트(`server-set.yaml`, 기본 위치 또는
 `--server-set`)에서 이름을 찾는다. 모르는 이름·없는 서버 세트는 dial 전에
@@ -176,10 +178,9 @@ docker compose -f build/docker-compose.yml up -d
 
 서버들의 접근은 **실서버와 같은 모양**이다: `env/docker/accounts.env` 의 첫 계정
 (기본 `devuser1`) + 공용 비밀번호, sudo 는 그 비밀번호를 요구한다. srv:// 경로는
-자격을 생성된 서버 세트에서 읽으므로, 켤 환경변수는 호스트키 예외 하나뿐이다.
+자격을 생성된 서버 세트에서 읽고, 호스트키 정책(`insecure_host_key`)도 세트가 선언하므로 켤 환경변수가 없다.
 
 ```
-CHAINBENCH_SSH_INSECURE_HOST_KEY=1 \
 bin/chainbench keyring import --keyring-dir /tmp/r --name srv1 \
     --from srv://server1/data/chainbench/live-test/rawkey \
     --server-set env/docker/build/server-set.yaml --docker
@@ -240,7 +241,7 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 | A9 | `import --mnemonic … --private-key …` 동시 | 거부 ("exactly one") | RefusesMixedSources / ExactlyOneOrigin |
 | A10 | `CHAINBENCH_KEYRING=/tmp/r keyring list` | env 출처 보고 | ReportsWhichRingItUsed |
 
-**B. 원격 (docker 서버들)** — §5 의 준비 후, 호스트키 예외 환경변수를 켠 상태로
+**B. 원격 (docker 서버들)** — §5 의 준비만 하면 된다(환경변수 불필요)
 
 | # | 할 일 | 기대 결과 | 자동 테스트 |
 |---|---|---|---|

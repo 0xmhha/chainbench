@@ -25,26 +25,29 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
+// The host and port this e2e dials. They are a test gate like
+// testkit.EnvDockerFleet, not a product setting: the transport itself takes
+// its address from the caller.
+const (
+	envRemoteHost = "CHAINBENCH_REMOTE_HOST"
+	envRemotePort = "CHAINBENCH_REMOTE_PORT"
+)
+
 func TestRemoteDriver_E2E(t *testing.T) {
-	host := os.Getenv("CHAINBENCH_REMOTE_HOST")
-	user := os.Getenv("CHAINBENCH_REMOTE_USER")
-	pass := os.Getenv("CHAINBENCH_REMOTE_PASS")
+	host := os.Getenv(envRemoteHost)
+	user := os.Getenv(remote.EnvUser)
+	pass := os.Getenv(remote.EnvPass)
 	if host == "" || user == "" || pass == "" {
-		t.Skip("set CHAINBENCH_REMOTE_HOST/USER/PASS (and optionally PORT) to run")
+		t.Skip("set " + envRemoteHost + "/" + remote.EnvUser + "/" + remote.EnvPass + " (and optionally " + envRemotePort + ") to run")
 	}
-	port, _ := strconv.Atoi(os.Getenv("CHAINBENCH_REMOTE_PORT"))
+	port, _ := strconv.Atoi(os.Getenv(envRemotePort))
 	if port == 0 {
 		port = 22
 	}
 	creds := remote.Credentials{User: user, Host: host, Port: port, Password: pass}
 
 	// The container's host key is ephemeral; accept it insecurely for the test.
-	hostKey, err := remote.ResolveHostKeyCallback(func(k string) string {
-		if k == "CHAINBENCH_SSH_INSECURE_HOST_KEY" {
-			return "1"
-		}
-		return ""
-	})
+	hostKey, err := remote.HostKeyPolicy{InsecureHostKey: true}.Callback()
 	if err != nil {
 		t.Fatalf("host key: %v", err)
 	}

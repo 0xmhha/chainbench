@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,17 +26,13 @@ import (
 // selection) runs unconditionally in keyring_test.go.
 func fleetBuildDir(t *testing.T) string {
 	t.Helper()
-	build := os.Getenv("CHAINBENCH_DOCKER_FLEET")
-	if build == "" {
-		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running (env/docker/gen-env.sh)")
-	}
-	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
+	build := testkit.FleetBuildDir(t)
 	// Access mirrors the real fleet: user + password. The srv:// path reads
 	// them from the server set; the direct user@host form reads the password
 	// from the environment, so it is exported here from the same file.
 	if cfg, err := netmapmod.LoadSet(filepath.Join(build, "server-set.yaml")); err == nil {
 		if srv, err := cfg.ByName("server1"); err == nil {
-			t.Setenv("CHAINBENCH_REMOTE_PASS", srv.SSH.Password)
+			t.Setenv(remote.EnvPass, srv.SSH.Password)
 		}
 	}
 	return build

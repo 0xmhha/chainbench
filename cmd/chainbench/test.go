@@ -17,18 +17,22 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 )
 
+// envFundedKey names the funded-account key variable once, so the reader and
+// its error message cannot disagree about what to set.
+const envFundedKey = "CHAINBENCH_FUNDED_KEY"
+
 // fundedKeyFromEnv reads an optional funded-account private key from
-// CHAINBENCH_FUNDED_KEY (0x-optional hex). It is env-only — never a flag or a
+// envFundedKey (0x-optional hex). It is env-only — never a flag or a
 // committed literal — so a secret never lands in shell history or the repo. It
 // lets chain-agnostic write cases act on a project-supplied chain (e.g. an L2).
 func fundedKeyFromEnv() ([]byte, error) {
-	v := strings.TrimSpace(os.Getenv("CHAINBENCH_FUNDED_KEY"))
+	v := strings.TrimSpace(os.Getenv(envFundedKey))
 	if v == "" {
 		return nil, nil
 	}
 	key, err := hex.DecodeString(strings.TrimPrefix(v, "0x"))
 	if err != nil {
-		return nil, fmt.Errorf("CHAINBENCH_FUNDED_KEY is not valid hex: %w", err)
+		return nil, fmt.Errorf("%s is not valid hex: %w", envFundedKey, err)
 	}
 	return key, nil
 }

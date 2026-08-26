@@ -10,6 +10,7 @@ package app_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,11 +20,7 @@ import (
 )
 
 func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
-	build := os.Getenv("CHAINBENCH_DOCKER_FLEET")
-	if build == "" {
-		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running (env/docker/gen-env.sh)")
-	}
-	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
+	build := testkit.FleetBuildDir(t)
 
 	spec := filepath.Join("..", "..", "tests", "specs", "consensus", "wbft-seals-quorum.json")
 	if _, err := os.Stat(spec); err != nil {
