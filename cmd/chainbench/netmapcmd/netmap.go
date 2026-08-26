@@ -40,9 +40,9 @@ func New() *cobra.Command {
 // deps is the Deps every netmap verb runs with: operational side notes print
 // as they happen.
 func deps(cmd *cobra.Command) app.Deps {
-	out := cmd.OutOrStdout()
+	errOut := cmd.ErrOrStderr()
 	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(out, format+"\n", args...)
+		fmt.Fprintf(errOut, format+"\n", args...)
 	}}
 }
 

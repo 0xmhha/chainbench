@@ -69,11 +69,13 @@ func (f *ringFlags) ref() keyringmod.RingRef {
 
 // deps is the Deps every keyring verb runs with: operational side notes —
 // today, the dial translations --docker applies — print as they happen, so a
-// remote ring is never reached silently.
+// remote ring is never reached silently. They go to stderr, like every other
+// group's: stdout belongs to the answer, and a --json consumer must never
+// have to strip a report line off the front of it.
 func deps(cmd *cobra.Command) keyringmod.Deps {
-	out := cmd.OutOrStdout()
+	errOut := cmd.ErrOrStderr()
 	return keyringmod.Deps{Report: func(format string, args ...any) {
-		fmt.Fprintf(out, format+"\n", args...)
+		fmt.Fprintf(errOut, format+"\n", args...)
 	}}
 }
 

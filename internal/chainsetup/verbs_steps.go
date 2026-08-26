@@ -121,11 +121,17 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		}
 		topo = &loaded
 	}
-	resolved, err := netmapmod.ResolveServer(in.Server, minValidators, portBand)
-	if err != nil {
-		return StepOut{}, err
-	}
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		// A set the workspace already recorded (net new --server-set) is the
+		// default: --docker and its set arrive as a pair, and a later
+		// --server-set on this step still wins.
+		if in.Server.SetPath == "" {
+			in.Server.SetPath = ws.State().ServerSet
+		}
+		resolved, err := netmapmod.ResolveServer(in.Server, minValidators, portBand)
+		if err != nil {
+			return "", err
+		}
 		if resolved.HasTarget {
 			if err := ws.Retarget(resolved.Target); err != nil {
 				return "", err

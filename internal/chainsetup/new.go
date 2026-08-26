@@ -23,6 +23,12 @@ type NewOpts struct {
 	// Target is where the network's data plane lives. A zero Target defaults to
 	// a local target whose data root is the workspace directory.
 	Target machine.Spec
+	// ServerSet is the server-set file the composition's servers come from.
+	// Recording it here keeps the pair together: --docker names HOW the
+	// servers are reached, the set names WHICH servers exist, and a workspace
+	// that knows one at new time may know both. The allocate step still
+	// records the set it actually placed from (a later --server-set wins).
+	ServerSet string
 	// Docker treats the composition's servers as local docker containers: the
 	// harness's dials are translated through the localmap next to the server
 	// server set. Recorded once here so every later step follows it.
@@ -68,6 +74,9 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.state.Binary = opts.Binary
 	w.state.KeysDir = keysDir
 	w.state.Target = tgt
+	if opts.ServerSet != "" {
+		w.state.ServerSet = opts.ServerSet
+	}
 	w.state.Docker = opts.Docker
 
 	var loc string

@@ -14,6 +14,7 @@ import (
 func newNetNewCmd() *cobra.Command {
 	var dataDir, chain, binary, keysDir, manifestPath, templatePath string
 	var docker bool
+	var serverSet string
 	var tf targetFlags
 	cmd := &cobra.Command{
 		Use:   "new",
@@ -29,6 +30,7 @@ func newNetNewCmd() *cobra.Command {
 			out, err := chainsetup.NetNew(cmd.Context(), deps(cmd), chainsetup.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
+				ServerSet: serverSet,
 			})
 			if err != nil {
 				return err
@@ -45,6 +47,8 @@ func newNetNewCmd() *cobra.Command {
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from (inspect/manage it with `account`)")
 	cmd.Flags().BoolVar(&docker, "docker", false,
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
+	cmd.Flags().StringVar(&serverSet, "server-set", "",
+		"server-set file the servers come from (recorded now; allocate may override): which servers exist and how to reach them")
 	tf.bind(cmd)
 	return cmd
 }
