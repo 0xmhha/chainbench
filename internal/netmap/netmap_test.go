@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
@@ -116,7 +115,7 @@ func TestOpener_CredentialsComeFromTheSet(t *testing.T) {
 	if _, ok := acc.Files.(provision.LocalFileStore); !ok {
 		t.Errorf("local path did not resolve to local handles: %T", acc.Files)
 	}
-	if acc.Spec.Kind != machine.KindLocal && acc.Spec.Kind != "" {
-		t.Errorf("kind = %q", acc.Spec.Kind)
+	if acc.Spec.IsRemote() {
+		t.Errorf("a plain path resolved as remote: %+v", acc.Spec)
 	}
 }

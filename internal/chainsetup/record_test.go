@@ -35,7 +35,7 @@ func TestRecordRun_WritesTheFactsAndNeverASecret(t *testing.T) {
 	}
 	w.state.Chain = "stablenet"
 	w.state.ServerSet = setPath
-	w.state.Target = machine.Spec{Kind: machine.KindServer, Server: "box1", Host: "192.0.2.11", DataRoot: "/data/cb"}
+	w.state.Target = machine.Spec{Server: "box1", Host: "192.0.2.11", DataRoot: "/data/cb"}
 	w.state.Nodes = []NodeState{{Index: 1, Role: "bp", Host: "192.0.2.11", PID: 4242}}
 	if err := w.ledger.Record(process.Proc{
 		PID: 4242, Label: "node1", Binary: "gstable",

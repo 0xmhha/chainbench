@@ -338,10 +338,10 @@ func targetSpecFromArgs(args map[string]any) (machine.Spec, error) {
 		return machine.Parse(t)
 	}
 	if host == "" {
-		return machine.Spec{Kind: machine.KindLocal, DataRoot: argString(args, "targetDir", "")}, nil
+		return machine.Spec{DataRoot: argString(args, "targetDir", "")}, nil
 	}
 	return machine.Spec{
-		Kind: machine.KindRemote, Host: host,
+		Host: host,
 		User: argString(args, "remoteUser", ""), Port: argInt(args, "remotePort", 0),
 		DataRoot: argString(args, "targetDir", ""),
 	}, nil

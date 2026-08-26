@@ -39,7 +39,7 @@ func TestWorkspace_NewPersist(t *testing.T) {
 	if st.Chain != "stablenet" || st.KeysDir != "keys/preset" {
 		t.Fatalf("state did not persist: %+v", st)
 	}
-	if st.Target.Kind != machine.KindLocal || st.Target.DataRoot != dir {
+	if st.Target.IsRemote() || st.Target.DataRoot != dir {
 		t.Fatalf("local target default wrong: %+v", st.Target)
 	}
 	if !st.Steps["new"].Done {
@@ -61,7 +61,7 @@ func TestWorkspace_Validation(t *testing.T) {
 	if _, err := chainsetup.Open("", fixedClock()); err == nil {
 		t.Fatal("expected error for empty data dir")
 	}
-	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", Target: machine.Spec{Kind: machine.KindRemote}}); err == nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", Target: machine.Spec{Host: "203.0.113.9"}}); err == nil {
 		t.Fatal("expected error for incomplete remote target")
 	}
 }

@@ -20,13 +20,11 @@ import (
 // to the worklist task that dissolves it. The list may only shrink: an entry
 // whose file no longer branches fails the test until it is removed here.
 var machineBranchAllowed = map[string]string{
-	"internal/core/process":               "Proc.IsRemote is the process ledger's own host notion, not machine.Kind",
-	"internal/netmap":                     "the module surface constructs Specs from server-set entries and owns the wiring",
-	"internal/netmap/internal/serverset":  "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
-	"internal/chainsetup":                 "deferred: display and keys-path branches dissolve with V5 follow-ups and V6.3",
-	"internal/mcp/net_tools.go":           "deferred: renders the recorded target kind; goes with V6.3",
-	"cmd/chainbench/netcmd/net.go":        "constructs Specs from the legacy remote flags",
-	"cmd/chainbench/netcmd/net_status.go": "deferred: renders the recorded target kind; goes with V5.4",
+	"internal/core/machine":              "the module itself — locality is derived here, the one place that owns the rule",
+	"internal/core/process":              "Proc.IsRemote is the process ledger's own host notion, not machine.Kind",
+	"internal/netmap":                    "the module surface constructs Specs from server-set entries and owns the wiring",
+	"internal/netmap/internal/serverset": "Server.IsRemote is serverset's own field logic, not machine.Kind (absorbed into netmap at V2.4)",
+	"internal/chainsetup":                "deferred: display and keys-path branches dissolve with V5 follow-ups and V6.3",
 }
 
 // TestMachineConsumersDoNotBranchOnKind walks every non-test Go file and
@@ -62,19 +60,11 @@ func TestMachineConsumersDoNotBranchOnKind(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		machineAlias := importAlias(f, "github.com/0xmhha/chainbench/internal/core/machine")
 		found := 0
 		ast.Inspect(f, func(n ast.Node) bool {
 			sel, ok := n.(*ast.SelectorExpr)
 			if !ok {
 				return true
-			}
-			if x, ok := sel.X.(*ast.Ident); ok && machineAlias != "" && x.Name == machineAlias &&
-				strings.HasPrefix(sel.Sel.Name, "Kind") && sel.Sel.Name != "Kind" {
-				found++
-				if !allowed(rel) {
-					offenders = append(offenders, rel+": uses "+machineAlias+"."+sel.Sel.Name)
-				}
 			}
 			// IsRemote is flagged regardless of imports: the branch a method
 			// call expresses does not need the machine package in scope.
@@ -118,19 +108,6 @@ func allowKey(rel string) string {
 	dir := filepath.Dir(rel)
 	if _, ok := machineBranchAllowed[dir]; ok {
 		return dir
-	}
-	return ""
-}
-
-func importAlias(f *ast.File, path string) string {
-	for _, imp := range f.Imports {
-		if strings.Trim(imp.Path.Value, `"`) != path {
-			continue
-		}
-		if imp.Name != nil {
-			return imp.Name.Name
-		}
-		return "machine"
 	}
 	return ""
 }

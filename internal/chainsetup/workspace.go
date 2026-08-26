@@ -262,8 +262,8 @@ func (w *Workspace) machineFor(ns NodeState) (*machine.Access, error) {
 		t, err = w.resolveTarget()
 	} else {
 		t, err = w.opener().Open(machine.Spec{
-			Kind: machine.KindServer, Server: ns.Server,
-			Host: ns.Host, DataRoot: w.state.Target.DataRoot,
+			Server: ns.Server,
+			Host:   ns.Host, DataRoot: w.state.Target.DataRoot,
 		})
 	}
 	if err != nil {
@@ -364,13 +364,11 @@ func (w *Workspace) NodeSet() node.NodeSet {
 	host := w.RPCHost()
 	ns := node.NodeSet{
 		Chain:        w.state.Chain,
-		Network:      string(w.state.Target.Kind),
+		Network:      w.state.Target.Describe(),
 		Capabilities: w.state.Capabilities,
 		Nodes:        make([]node.Node, 0, len(w.state.Nodes)),
 	}
-	if ns.Network == "" {
-		ns.Network = string(machine.KindLocal)
-	}
+
 	for _, n := range w.state.Nodes {
 		// A node's own recorded host wins: a fleet placement puts each node on
 		// a different address, which the target-level host cannot express.

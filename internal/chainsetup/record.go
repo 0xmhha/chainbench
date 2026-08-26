@@ -42,10 +42,11 @@ type runManifest struct {
 
 // runTarget is where the data plane lived — addressing only, never a login.
 type runTarget struct {
-	Kind     machine.Kind `json:"kind"`
-	Server   string       `json:"server,omitempty"`
-	Host     string       `json:"host,omitempty"`
-	DataRoot string       `json:"dataRoot"`
+	Server   string `json:"server,omitempty"`
+	Host     string `json:"host,omitempty"`
+	DataRoot string `json:"dataRoot"`
+	// Where is the human rendering ("server box1:/data/cb", "local /tmp/n1").
+	Where string `json:"where"`
 }
 
 // runNode is one node as this run launched it.
@@ -77,8 +78,9 @@ func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string
 		ServerSet: w.state.ServerSet,
 		Docker:    w.state.Docker,
 		Target: runTarget{
-			Kind: w.state.Target.Kind, Server: w.state.Target.Server,
-			Host: w.state.Target.Host, DataRoot: w.state.Target.DataRoot,
+			Server: w.state.Target.Server,
+			Host:   w.state.Target.Host, DataRoot: w.state.Target.DataRoot,
+			Where: w.state.Target.Describe(),
 		},
 		Steps: map[string]string{},
 	}
