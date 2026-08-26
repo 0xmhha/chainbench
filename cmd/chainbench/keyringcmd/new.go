@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
 // defaultRingBalance pre-funds each generated identity in the genesis alloc.
@@ -49,13 +49,13 @@ func (f *makeFlags) bind(cmd *cobra.Command, validatorsHelp string) {
 // in builds the use-case input. Whether --validators was typed is carried as a
 // pointer, because the flag value alone cannot distinguish "none" from "unset"
 // and the two mean opposite things.
-func (f *makeFlags) in(cmd *cobra.Command) keyringmod.RingCreateIn {
+func (f *makeFlags) in(cmd *cobra.Command) operation.RingCreateIn {
 	var validators *int
 	if cmd.Flags().Changed("validators") {
 		v := f.validators
 		validators = &v
 	}
-	return keyringmod.RingCreateIn{
+	return operation.RingCreateIn{
 		Ring: f.ring.ref(), Count: f.count, Validators: validators,
 		WithBLS: f.bls.on, Password: f.password, Balance: f.balance,
 	}
@@ -73,7 +73,7 @@ func newKeyringNewCmd() *cobra.Command {
 			"Nothing is executed — no chain binary needs to exist — so this is how a\n" +
 			"network is started from scratch rather than from a committed fixture.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRingCreate(cmd, keyringmod.KeyringNew, &mk)
+			return runRingCreate(cmd, operation.KeyringNew, &mk)
 		},
 	}
 	mk.bind(cmd, validatorsHelpNew)
@@ -90,7 +90,7 @@ func newKeyringAddCmd() *cobra.Command {
 			"referenced the moment they exist — in a genesis, in a running datadir, in\n" +
 			"a test's declaration — so they are never regenerated.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRingCreate(cmd, keyringmod.KeyringAdd, &mk)
+			return runRingCreate(cmd, operation.KeyringAdd, &mk)
 		},
 	}
 	mk.bind(cmd, validatorsHelpAdd)
@@ -98,7 +98,7 @@ func newKeyringAddCmd() *cobra.Command {
 }
 
 // ringCreateFunc is the shape both creating verbs share.
-type ringCreateFunc func(context.Context, keyringmod.Deps, keyringmod.RingCreateIn) (keyringmod.RingOut, error)
+type ringCreateFunc func(context.Context, operation.Deps, operation.RingCreateIn) (operation.RingOut, error)
 
 // runRingCreate calls the use case and renders it. The two verbs differ in
 // which function they call, not in what they print.
@@ -130,7 +130,7 @@ func runRingCreate(cmd *cobra.Command, use ringCreateFunc, mk *makeFlags) error 
 
 // blsSuffix abbreviates an identity's BLS key for a creation line, or says
 // nothing when it has none.
-func blsSuffix(e keyringmod.EntryOut) string {
+func blsSuffix(e operation.EntryOut) string {
 	if e.BLSPubKey == "" {
 		return ""
 	}

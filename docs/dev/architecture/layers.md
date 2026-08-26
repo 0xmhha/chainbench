@@ -114,11 +114,11 @@ flowchart TD
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
 | `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
-| `core/keyring/store` | **링 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드·Ring 컨테이너, 파일 인터페이스 경유 |
+| `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 |
+| `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
 | `netmap/internal/serverset` | **서버 세트(포트·호스트)** — netmap 모듈의 내부 데이터 형식. 컴파일러가 외부 import 를 차단한다 |
-| `keyring` | **keyring 모듈 표면** — 링에 대한 동사(new·add·import·list·show·export·링 복제)를 모델(core/keyring)+저장(store)+netmap 으로 조립. CLI 가 직접 호출, app 은 MCP 용으로 얇게 위임 ([[architecture-v2]]) |
 | `netmap` | **netmap 모듈 표면** — 서버 이름을 능력 손잡이로 여는 유일 통로(Opener: 서버 세트 결합 · --docker 치환 · 치환 보고). 할당 코어(core/netmap)와 서버 세트를 low level 에 묶는다 ([[architecture-v2]]) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |

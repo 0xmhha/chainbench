@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
 // newKeyringImportCmd brings a key that already exists into a ring.
@@ -20,7 +20,7 @@ func newKeyringImportCmd() *cobra.Command {
 		label labelFlag
 		bls   blsFlag
 		jsonF jsonFlag
-		in    keyringmod.RingImportIn
+		in    operation.RingImportIn
 	)
 	cmd := &cobra.Command{
 		Use:   "import",
@@ -41,7 +41,7 @@ func newKeyringImportCmd() *cobra.Command {
 				if label.name != "" || in.From != "" || in.PrivateKey != "" || in.Mnemonic != "" {
 					return fmt.Errorf("--from-ring copies a whole ring, labels and all — it cannot be combined with --name or a single-key origin")
 				}
-				r, err := keyringmod.KeyringImportRing(cmd.Context(), deps(cmd), in)
+				r, err := operation.KeyringImportRing(cmd.Context(), deps(cmd), in)
 				if err != nil {
 					return err
 				}
@@ -55,7 +55,7 @@ func newKeyringImportCmd() *cobra.Command {
 				return err
 			}
 			in.Label = label.name
-			e, err := keyringmod.KeyringImport(cmd.Context(), deps(cmd), in)
+			e, err := operation.KeyringImport(cmd.Context(), deps(cmd), in)
 			if err != nil {
 				return err
 			}

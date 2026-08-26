@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
 // newKeyringListCmd summarizes a ring.
@@ -20,8 +20,8 @@ func newKeyringListCmd() *cobra.Command {
 		Short: "List a ring's identities",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
-			r, err := keyringmod.KeyringList(cmd.Context(), deps(cmd),
-				keyringmod.RingListIn{Ring: ring.ref(), Verify: verify})
+			r, err := operation.KeyringList(cmd.Context(), deps(cmd),
+				operation.RingListIn{Ring: ring.ref(), Verify: verify})
 			if err != nil {
 				return err
 			}
@@ -56,8 +56,8 @@ func newKeyringShowCmd() *cobra.Command {
 			if err := label.require("show"); err != nil {
 				return err
 			}
-			e, err := keyringmod.KeyringShow(cmd.Context(), deps(cmd),
-				keyringmod.RingEntryIn{Ring: ring.ref(), Label: label.name})
+			e, err := operation.KeyringShow(cmd.Context(), deps(cmd),
+				operation.RingEntryIn{Ring: ring.ref(), Label: label.name})
 			if err != nil {
 				return err
 			}
@@ -96,8 +96,8 @@ func newKeyringExportCmd() *cobra.Command {
 			if err := label.require("export"); err != nil {
 				return err
 			}
-			e, err := keyringmod.KeyringExport(cmd.Context(), deps(cmd),
-				keyringmod.RingEntryIn{Ring: ring.ref(), Label: label.name})
+			e, err := operation.KeyringExport(cmd.Context(), deps(cmd),
+				operation.RingEntryIn{Ring: ring.ref(), Label: label.name})
 			if err != nil {
 				return err
 			}

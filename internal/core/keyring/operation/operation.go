@@ -3,7 +3,7 @@
 // (core/keyring), the storage (core/keyring/store), and the netmap module for
 // anything that lives on a server. CLI calls this package directly; app wraps
 // it thinly for MCP.
-package keyring
+package operation
 
 import (
 	"context"
@@ -15,16 +15,40 @@ import (
 	model "github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/core/machine"
 )
 
-// Deps is what the verbs need from their caller: the environment, and a
-// reporter for operational side notes (dial translations). A nil Env reads
-// the process environment — surfaces run in it, and CHAINBENCH_KEYRING must
-// work without ceremony; tests inject their own. A nil Report discards.
+// Opener opens a path — a plain directory here, or the target syntax naming a
+// server — into the handles an operation reads and writes through. It is the
+// only thing this package needs from whatever owns machines and server sets.
+type Opener interface {
+	OpenPath(path string) (*machine.Access, error)
+}
+
+// OpenerFor builds the opener for one key set's location choices. The caller
+// supplies it because the rules for reaching a server (which set file, whether
+// the servers are local containers) belong to the module that owns machines.
+type OpenerFor func(serverSet string, docker bool) Opener
+
+// Deps is what the operations need from their caller: the environment, and
+// the opener that reaches a key set wherever it lives. A nil Env reads the
+// process environment — surfaces run in it, and the keyring location variable
+// must work without ceremony; tests inject their own. Reporting belongs to
+// the opener, which is the thing with something to report.
 type Deps struct {
-	Env    func(string) string
-	Report func(format string, args ...any)
+	Env func(string) string
+	// Open builds the opener for a location. Nil means local paths only —
+	// naming a server without it is an error, not a silent local write.
+	Open OpenerFor
+}
+
+// opener returns the opener for these choices, or an error naming what is
+// missing when the caller supplied none.
+func (d Deps) opener(serverSet string, docker bool) (Opener, error) {
+	if d.Open == nil {
+		return nil, fmt.Errorf("keyring: this caller can only reach local key sets (no opener was supplied)")
+	}
+	return d.Open(serverSet, docker), nil
 }
 
 func (d Deps) env() func(string) string {
@@ -32,12 +56,6 @@ func (d Deps) env() func(string) string {
 		return os.Getenv
 	}
 	return d.Env
-}
-
-func (d Deps) logf(format string, args ...any) {
-	if d.Report != nil {
-		d.Report(format, args...)
-	}
 }
 
 // DefaultRingDir and RingEnv are the store's — re-stated here only until the
@@ -78,20 +96,21 @@ func (r RingRef) open(d Deps) (files filestore.Store, dir, source string, err er
 	// The netmap module is the one dial-wiring point: server-set lookup,
 	// --docker translation, and the translation report all live there, so
 	// this consumer cannot diverge from any other.
-	tgt, err := r.opener(d).OpenPath(dir)
+	o, err := r.opener(d)
+	if err != nil {
+		return nil, dir, source, err
+	}
+	tgt, err := o.OpenPath(dir)
 	if err != nil {
 		return nil, dir, source, err
 	}
 	return tgt.Files, tgt.DataRoot, source, nil
 }
 
-// opener binds this ring's server-set and docker choices to the netmap
-// module's single wiring point.
-func (r RingRef) opener(d Deps) netmap.Opener {
-	return netmap.Opener{
-		ServerSet: r.ServerSet, Docker: r.Docker,
-		Env: d.env(), Report: d.logf,
-	}
+// opener binds this key set's server-set and docker choices to the opener the
+// caller injected.
+func (r RingRef) opener(d Deps) (Opener, error) {
+	return d.opener(r.ServerSet, r.Docker)
 }
 
 // RingOut reports which ring a use case acted on, and what it holds afterwards.
@@ -407,7 +426,10 @@ func (in RingImportIn) source(d Deps, serverSet string) (model.Source, error) {
 		return nil, fmt.Errorf("keyring: import needs a private key, a mnemonic, or a path")
 	}
 
-	o := netmap.Opener{ServerSet: serverSet, Docker: in.Docker, Env: d.env(), Report: d.logf}
+	o, err := d.opener(serverSet, in.Docker)
+	if err != nil {
+		return nil, err
+	}
 	tgt, err := o.OpenPath(in.From)
 	if err != nil {
 		return nil, err
