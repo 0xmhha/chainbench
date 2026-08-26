@@ -32,14 +32,14 @@ func resolveAccountProvider(chain, manifestPath, templatePath string) (accounts.
 // CHAINBENCH_REMOTE_PASS env var — never a flag — so it is not exposed in the
 // process list or shell history. The host-key policy is resolved from the
 // server set's ssh block (known_hosts_file, or insecure_host_key on a closed
-// for a throwaway host). Returns nil when host is empty (local driver is used).
+// network). Returns nil when host is empty (the local driver is used).
 func remoteDriver(host, user string, port int) (driver.Driver, error) {
 	if host == "" {
 		return nil, nil
 	}
-	pass := os.Getenv("CHAINBENCH_REMOTE_PASS")
+	pass := os.Getenv(remote.EnvPass)
 	if pass == "" {
-		return nil, fmt.Errorf("remote setup needs the SSH password in CHAINBENCH_REMOTE_PASS (do not pass it on the command line)")
+		return nil, fmt.Errorf("remote setup needs the SSH password in %s (do not pass it on the command line)", remote.EnvPass)
 	}
 	if port == 0 {
 		port = 22

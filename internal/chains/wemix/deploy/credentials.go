@@ -71,19 +71,19 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 	}
 	var passphrase string
 	if !cr.fromFile && env != nil {
-		if v := env("CHAINBENCH_REMOTE_USER"); v != "" {
+		if v := env(remote.EnvUser); v != "" {
 			user = v
 		}
-		if v := env("CHAINBENCH_REMOTE_PASS"); v != "" {
+		if v := env(remote.EnvPass); v != "" {
 			pass = v
 		}
-		if v := env("CHAINBENCH_REMOTE_KEY_FILE"); v != "" {
+		if v := env(remote.EnvKeyFile); v != "" {
 			keyFile = v
 		}
-		passphrase = env("CHAINBENCH_REMOTE_KEY_PASSPHRASE")
+		passphrase = env(remote.EnvKeyPassphrase)
 	}
 	if user == "" {
-		return remote.Credentials{}, fmt.Errorf("deploy: no SSH user for server %d (set credentials.user, or CHAINBENCH_REMOTE_USER when no credentials file is used)", s.Index)
+		return remote.Credentials{}, fmt.Errorf("deploy: no SSH user for server %d (set credentials.user, or %s when no credentials file is used)", s.Index, remote.EnvUser)
 	}
 
 	rc := remote.Credentials{User: user, Host: s.Host, Port: c.SSHPortFor(s), Password: pass}
@@ -96,7 +96,7 @@ func (cr *Credentials) For(c *Cluster, s Server, env func(string) string) (remot
 		rc.Passphrase = passphrase
 	}
 	if rc.Password == "" && len(rc.PrivateKey) == 0 {
-		return remote.Credentials{}, fmt.Errorf("deploy: no SSH auth for server %d (set credentials.password/key_file in the credentials file, or CHAINBENCH_REMOTE_PASS/CHAINBENCH_REMOTE_KEY_FILE when no file is used)", s.Index)
+		return remote.Credentials{}, fmt.Errorf("deploy: no SSH auth for server %d (set credentials.password/key_file in the credentials file, or %s/%s when no file is used)", s.Index, remote.EnvPass, remote.EnvKeyFile)
 	}
 	return rc, nil
 }

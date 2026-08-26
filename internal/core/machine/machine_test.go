@@ -25,7 +25,7 @@ func TestTargetResolve(t *testing.T) {
 		t.Fatalf("local driver type = %T", local.Driver)
 	}
 
-	env := map[string]string{"CHAINBENCH_REMOTE_PASS": "pw"}
+	env := map[string]string{remote.EnvPass: "pw"}
 	// The host-key policy is the caller's (the server set's) — resolving
 	// never consults the environment for it.
 	remoteTgt, err := machine.Spec{

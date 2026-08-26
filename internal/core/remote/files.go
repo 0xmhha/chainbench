@@ -45,26 +45,26 @@ func CredentialsFromEnv(user, host string, port int, env func(string) string) (C
 	if env == nil {
 		env = func(string) string { return "" }
 	}
-	if v := env("CHAINBENCH_REMOTE_USER"); v != "" {
+	if v := env(EnvUser); v != "" {
 		user = v
 	}
 	creds := Credentials{User: user, Host: host, Port: port}
-	if v := env("CHAINBENCH_REMOTE_PASS"); v != "" {
+	if v := env(EnvPass); v != "" {
 		creds.Password = v
 	}
-	if kf := env("CHAINBENCH_REMOTE_KEY_FILE"); kf != "" {
+	if kf := env(EnvKeyFile); kf != "" {
 		key, err := LoadPrivateKey(kf)
 		if err != nil {
 			return Credentials{}, err
 		}
 		creds.PrivateKey = key
-		creds.Passphrase = env("CHAINBENCH_REMOTE_KEY_PASSPHRASE")
+		creds.Passphrase = env(EnvKeyPassphrase)
 	}
 	if creds.User == "" {
-		return Credentials{}, fmt.Errorf("remote: no SSH user (set --remote-user or CHAINBENCH_REMOTE_USER)")
+		return Credentials{}, fmt.Errorf("remote: no SSH user (set --remote-user or %s)", EnvUser)
 	}
 	if creds.Password == "" && len(creds.PrivateKey) == 0 {
-		return Credentials{}, fmt.Errorf("remote: no SSH auth (set CHAINBENCH_REMOTE_PASS or CHAINBENCH_REMOTE_KEY_FILE)")
+		return Credentials{}, fmt.Errorf("remote: no SSH auth (set %s or %s)", EnvPass, EnvKeyFile)
 	}
 	return creds, nil
 }

@@ -8,7 +8,7 @@ import (
 
 func TestCredentialsFromEnv(t *testing.T) {
 	// user from env overrides, password auth.
-	env := map[string]string{"CHAINBENCH_REMOTE_USER": "envuser", "CHAINBENCH_REMOTE_PASS": "pw"}
+	env := map[string]string{remote.EnvUser: "envuser", remote.EnvPass: "pw"}
 	c, err := remote.CredentialsFromEnv("flaguser", "10.0.0.1", 2222, func(k string) string { return env[k] })
 	if err != nil {
 		t.Fatalf("creds: %v", err)

@@ -2,7 +2,7 @@ package serverset_test
 
 import (
 	"context"
-	"os"
+	"github.com/0xmhha/chainbench/internal/testkit"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,10 +18,7 @@ import (
 //
 //	CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build go test ./internal/serverset/ -run Live_Sudo -v
 func TestLive_SudoElevatesWithThePassword(t *testing.T) {
-	build := os.Getenv("CHAINBENCH_DOCKER_FLEET")
-	if build == "" {
-		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running")
-	}
+	build := testkit.FleetBuildDir(t)
 
 	inv := filepath.Join(build, "server-set.yaml")
 	cfg, err := serverset.Load(inv)

@@ -8,6 +8,7 @@ package driver_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,10 +23,7 @@ import (
 // production uses — and returns its driver.
 func server1Driver(t *testing.T) driver.Driver {
 	t.Helper()
-	build := os.Getenv("CHAINBENCH_DOCKER_FLEET")
-	if build == "" {
-		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running (env/docker/gen-env.sh)")
-	}
+	build := testkit.FleetBuildDir(t)
 	acc, err := netmapmod.Opener{
 		ServerSet: filepath.Join(build, "server-set.yaml"), Docker: true, Env: os.Getenv,
 	}.Open(machine.Spec{Server: "server1", DataRoot: "/data/chainbench"})

@@ -1,6 +1,7 @@
 package keyringcmd_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
 	"strings"
@@ -64,9 +65,9 @@ func TestKeyringImport_RejectsMalformedPaths(t *testing.T) {
 // TestKeyringImport_DirectHostNeedsCredentials pins that the [user@]host:path
 // form refuses to dial without credentials rather than prompting or guessing.
 func TestKeyringImport_DirectHostNeedsCredentials(t *testing.T) {
-	t.Setenv("CHAINBENCH_REMOTE_USER", "")
-	t.Setenv("CHAINBENCH_REMOTE_PASS", "")
-	t.Setenv("CHAINBENCH_REMOTE_KEY_FILE", "")
+	t.Setenv(remote.EnvUser, "")
+	t.Setenv(remote.EnvPass, "")
+	t.Setenv(remote.EnvKeyFile, "")
 	dir := filepath.Join(t.TempDir(), "ring")
 	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x", "--from", "10.0.0.1:/k")
 	if err == nil || !strings.Contains(err.Error()+" ", "SSH") {
