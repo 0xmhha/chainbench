@@ -21,10 +21,17 @@ SERVERS="${SERVERS:-15}"          # server1..serverN (server15 is meant for pn)
 SLOTS="${SLOTS:-4}"               # port slots per server (nodes one host may hold)
 SUBNET_PREFIX="172.30.0"          # server i lives at .$((ADDR_OFFSET+i))
 ADDR_OFFSET=10
+SSH_PORT=10022                    # sshd inside every server (the real fleet's port)
 SSH_PUB_BASE=2200                 # server i's sshd published at 127.0.0.1:$((base+i))
 RPC_PUB_BASE=18600                # slot s of server i published at $((base + 100*s + i))
-RPC_PORT=8600                     # the rpc band base (slot s listens on base + 10*s)
-RPC_STEP=10
+# The port scheme mirrors the Wemix3.5 test servers' firewall: each purpose
+# has its own band (auth 85xx, http 86xx, ws 87xx, p2p 303xx, one metrics
+# port), and firewall.sh opens exactly these inside every container.
+P2P_PORT=30301; P2P_STEP=1
+RPC_PORT=8601;  RPC_STEP=1        # http band; slot s listens on base + step*s
+WS_PORT=8701;   WS_STEP=1
+AUTH_PORT=8501; AUTH_STEP=1
+METRICS_PORT=6060
 IMAGE="chainbench-server:ubuntu24"
 DATA_ROOT="/data/chainbench"
 ACCOUNTS_ENV=accounts.env         # dev accounts injected at container start
@@ -90,21 +97,26 @@ EOF
         ipv4_address: $(addr "$i")
     ports:
       # published on loopback only: nothing outside this machine can reach them
-      - "127.0.0.1:$((SSH_PUB_BASE + i)):22"
+      - "127.0.0.1:$((SSH_PUB_BASE + i)):${SSH_PORT}"
 EOF
         for s in $(seq 0 $((SLOTS - 1))); do
             echo "      - \"127.0.0.1:$((RPC_PUB_BASE + 100 * s + i)):$((RPC_PORT + RPC_STEP * s))\""
         done
         cat <<EOF
+    cap_add:
+      # firewall.sh needs to program iptables inside the container
+      - NET_ADMIN
     volumes:
       # dev accounts: created at start by setup-accounts.sh from accounts.env
       - ../${ACCOUNTS_ENV}:/etc/chainbench/accounts.env:ro
       - ../setup-accounts.sh:/usr/local/lib/chainbench/setup-accounts.sh:ro
+      - ../firewall.sh:/usr/local/lib/chainbench/firewall.sh:ro
     command:
       - /bin/sh
       - -c
       - >-
-        sh /usr/local/lib/chainbench/setup-accounts.sh
+        sh /usr/local/lib/chainbench/firewall.sh
+        && sh /usr/local/lib/chainbench/setup-accounts.sh
         && mkdir -p ${DATA_ROOT}
         && chown ${SSH_USER}:${SSH_USER} ${DATA_ROOT}
         && exec /usr/sbin/sshd -D -e
@@ -129,9 +141,19 @@ EOF
     cat <<EOF
   slots: ${SLOTS}
 
+  # The Wemix3.5 test servers' port scheme: one band per purpose, matching
+  # the firewall every server applies (firewall.sh). Ports outside these
+  # bands are DROPPED on the machine, so the set and the firewall agree.
+  ports:
+    p2p:     { base: ${P2P_PORT}, step: ${P2P_STEP} }
+    rpc:     { base: ${RPC_PORT}, step: ${RPC_STEP} }
+    ws:      { base: ${WS_PORT}, step: ${WS_STEP} }
+    auth:    { base: ${AUTH_PORT}, step: ${AUTH_STEP} }
+    metrics: { base: ${METRICS_PORT}, step: 0 }
+
 ssh:
   user: $(yaml_sq "$SSH_USER")
-  port: 22
+  port: ${SSH_PORT}
   # Dev-only credential for loopback-published containers; a production
   # server set would reference a password_file instead of an inline value.
   password: $(yaml_sq "$SSH_PASSWORD")
@@ -150,7 +172,7 @@ EOF
 hosts:
 EOF
     for i in $(seq 1 "$SERVERS"); do
-        ports="22: $((SSH_PUB_BASE + i))"
+        ports="${SSH_PORT}: $((SSH_PUB_BASE + i))"
         for s in $(seq 0 $((SLOTS - 1))); do
             ports="${ports}, $((RPC_PORT + RPC_STEP * s)): $((RPC_PUB_BASE + 100 * s + i))"
         done
@@ -167,4 +189,4 @@ echo
 echo "next:"
 echo "  docker build -t ${IMAGE} ."
 echo "  docker compose -f $BUILD/docker-compose.yml up -d"
-echo "  ssh -p $((SSH_PUB_BASE + 1)) ${SSH_USER}@127.0.0.1 hostname   # password: ${SSH_PASSWORD} -> server1"
+echo "  ssh -p $((SSH_PUB_BASE + 1)) ${SSH_USER}@127.0.0.1 hostname   # password: ${SSH_PASSWORD} -> server1 (container sshd on ${SSH_PORT})"

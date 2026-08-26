@@ -17,6 +17,14 @@ const presetDir = "../../keys/preset"
 // composeForQuery builds a small mixed network to ask questions about.
 func composeForQuery(t *testing.T) string {
 	t.Helper()
+	// wemix, deliberately: it is the family whose derived etcd ports exist,
+	// and the derived-port questions below are exactly the ones a wemix bind
+	// failure raises. A wbft network carries no etcd port to ask about.
+	return composeChainForQuery(t, "wemix")
+}
+
+func composeChainForQuery(t *testing.T, chain string) string {
+	t.Helper()
 	dir := t.TempDir()
 	ctx := context.Background()
 	d := app.Deps{Clock: fixedClock}
@@ -24,7 +32,7 @@ func composeForQuery(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := app.NetNew(ctx, d, app.NetNewIn{DataDir: dir, Chain: chain, KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	if _, err := app.NetAllocate(ctx, d, app.NetAllocateIn{DataDir: dir, Validators: 3, Endpoints: 1}); err != nil {

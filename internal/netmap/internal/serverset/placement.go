@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/netmap"
+	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // The server set's whole point downstream is this file: it turns a server entry
@@ -114,5 +115,15 @@ func (c *Config) Fleet(minValidators, portBand int) (Placement, error) {
 
 // bandsOf converts a server-set port plan into the bands netmap steps through.
 func bandsOf(p Ports) netmap.Bands {
-	return netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep}
+	b := netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep}
+	if p.WS != nil {
+		b.WS = &portplan.Band{Base: p.WS.Base, Step: p.WS.Step}
+	}
+	if p.Auth != nil {
+		b.Auth = &portplan.Band{Base: p.Auth.Base, Step: p.Auth.Step}
+	}
+	if p.Metrics != nil {
+		b.Metrics = &portplan.Band{Base: p.Metrics.Base, Step: p.Metrics.Step}
+	}
+	return b
 }

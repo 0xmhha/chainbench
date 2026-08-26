@@ -69,19 +69,31 @@ dataRoot: /var/lib/chainbench  # 대상 위 데이터 플레인 루트
 
 ## 3. 포트 규칙
 
-두 개의 **서로 겹치지 않는 대역**에서 노드마다 stride 만큼 전진한다.
+기본은 **파생 방식**이다. 두 대역에서 노드마다 stride 만큼 전진하고, 나머지는 http 에서 파생된다.
 
 ```
-p2p   = p2pBase + (node-1) * p2pStep      etcd 는 p2p+1 로 파생됨
+p2p   = p2pBase + (node-1) * p2pStep      wemix 계열만 etcd 를 p2p+1 로 파생
 http  = rpcBase + (node-1) * rpcStep      ws = http+1, auth = http+2
                                           metrics = http+3 (rpcStep >= 4 일 때)
 ```
 
-**`p2pStep >= 2` 는 스타일이 아니라 필수다.** wemix 계열 바이너리는 etcd 포트를
-`p2p+1` 로 유도하므로, step 이 1 이면 etcd 가 다음 노드의 p2p 포트와 충돌하고
-**블록 생성이 원인 불명으로 멈춘다.** `rpcStep >= 3` 은 http/ws/auth 를 담기 위한 최소값.
+**용도별 대역**을 선언하면 파생이 꺼진다. 방화벽이 포트를 용도별 구간으로 여는
+사이트(auth 85xx, http 86xx, ws 87xx, p2p 303xx)가 이 형태다:
 
-로더가 이 두 조건을 파일 읽는 시점에 검증한다.
+```yaml
+ports:
+  p2p:     { base: 30301, step: 1 }
+  rpc:     { base: 8601,  step: 1 }
+  ws:      { base: 8701,  step: 1 }
+  auth:    { base: 8501,  step: 1 }
+  metrics: { base: 6060,  step: 0 }   # step 0 = 노드마다 같은 포트 (호스트당 1노드일 때)
+```
+
+검증은 두 겹이다. **파일 시점**에는 stride 가 전진 가능한지(`p2pStep >= 1`)와,
+파생 방식일 때 `rpcStep >= 3`(http/ws/auth 를 담을 최소)만 본다. **할당 시점**에는
+패밀리가 자기 요구를 말한다 — wemix 는 etcd 를 p2p+1(클라이언트 p2p+2)로 유도하므로
+p2p step 이 그만큼 넓어야 하고, 좁으면 allocate 가 패밀리 이름을 대며 거부한다.
+wbft 는 p2p 하나만 들으므로 step 1 이 합법이다.
 
 ---
 

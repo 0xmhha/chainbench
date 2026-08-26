@@ -55,32 +55,92 @@ func (r Reservation) withDefaults() Reservation {
 	return r
 }
 
-// Plan computes node index's ports (index is 1-based). p2p ports advance by
-// p2pStep from p2pBase; rpc ports advance by rpcStep from rpcBase (ws = http+1,
-// auth = http+2, metrics = http+3 when the step allows). The reservation says
-// how much room each band must leave, and which derived ports exist at all.
+// Band is one port band: where it starts and how far apart consecutive nodes
+// sit within it.
+type Band struct {
+	Base int
+	Step int
+}
+
+// Bands are the bands a plan draws from. The RPC band derives ws (http+1),
+// auth (http+2) and metrics (http+3, when the step leaves room) unless a
+// purpose names its own band: a site whose firewall groups ports by purpose —
+// auth in one range, http in another, ws in a third — declares each band, and
+// the derived scheme stays the default for everyone else.
+type Bands struct {
+	P2P Band
+	RPC Band
+	// WS, Auth, and Metrics override the derivation when non-nil. WS and Auth
+	// need Step >= 1 (each node listens); Metrics allows Step 0 — one shared
+	// scrape port is a real deployment shape when hosts hold one node each.
+	WS      *Band
+	Auth    *Band
+	Metrics *Band
+}
+
+// Plan computes node index's ports (index is 1-based) from two bands with the
+// derived scheme. It is PlanBands with no per-purpose overrides.
 func Plan(index, p2pBase, p2pStep, rpcBase, rpcStep int, res Reservation) (Ports, error) {
+	return PlanBands(index, Bands{
+		P2P: Band{Base: p2pBase, Step: p2pStep},
+		RPC: Band{Base: rpcBase, Step: rpcStep},
+	}, res)
+}
+
+// PlanBands computes node index's ports from explicit bands. The reservation
+// says how much room the p2p side must leave and which derived ports exist;
+// the rpc side must leave the derivation room only when ws and auth actually
+// derive from it.
+func PlanBands(index int, b Bands, res Reservation) (Ports, error) {
 	if index < 1 {
 		return Ports{}, fmt.Errorf("portplan: node index must be >= 1, got %d", index)
 	}
 	res = res.withDefaults()
-	if p2pStep < res.P2PSpan {
+	if b.P2P.Step < res.P2PSpan {
 		return Ports{}, fmt.Errorf("portplan: p2p_step must be >= %d for this chain family (it reserves %d consecutive p2p-side ports), got %d",
-			res.P2PSpan, res.P2PSpan, p2pStep)
+			res.P2PSpan, res.P2PSpan, b.P2P.Step)
 	}
-	if rpcStep < res.RPCSpan {
-		return Ports{}, fmt.Errorf("portplan: rpc_step must be >= %d for http/ws/auth, got %d", res.RPCSpan, rpcStep)
+	derived := b.WS == nil || b.Auth == nil
+	if derived && b.RPC.Step < res.RPCSpan {
+		return Ports{}, fmt.Errorf("portplan: rpc_step must be >= %d for http/ws/auth, got %d", res.RPCSpan, b.RPC.Step)
 	}
-	p2p := p2pBase + (index-1)*p2pStep
-	http := rpcBase + (index-1)*rpcStep
-	p := Ports{P2P: p2p, HTTP: http, WS: http + 1, Auth: http + 2}
+	if !derived && b.RPC.Step < 1 {
+		return Ports{}, fmt.Errorf("portplan: rpc_step must be >= 1, got %d", b.RPC.Step)
+	}
+	at := func(band Band) int { return band.Base + (index-1)*band.Step }
+
+	p2p := at(b.P2P)
+	http := at(b.RPC)
+	p := Ports{P2P: p2p, HTTP: http}
 	if res.P2PSpan >= 2 {
 		p.Etcd = p2p + 1
 	}
 	if res.P2PSpan >= 3 {
 		p.EtcdClient = p2p + 2
 	}
-	if rpcStep >= 4 {
+	if b.WS != nil {
+		if b.WS.Step < 1 {
+			return Ports{}, fmt.Errorf("portplan: ws step must be >= 1, got %d", b.WS.Step)
+		}
+		p.WS = at(*b.WS)
+	} else {
+		p.WS = http + 1
+	}
+	if b.Auth != nil {
+		if b.Auth.Step < 1 {
+			return Ports{}, fmt.Errorf("portplan: auth step must be >= 1, got %d", b.Auth.Step)
+		}
+		p.Auth = at(*b.Auth)
+	} else {
+		p.Auth = http + 2
+	}
+	switch {
+	case b.Metrics != nil:
+		if b.Metrics.Step < 0 {
+			return Ports{}, fmt.Errorf("portplan: metrics step must be >= 0, got %d", b.Metrics.Step)
+		}
+		p.Metrics = at(*b.Metrics)
+	case b.RPC.Step >= 4:
 		p.Metrics = http + 3
 	}
 	return p, nil

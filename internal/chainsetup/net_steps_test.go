@@ -251,7 +251,9 @@ func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	// wemix, deliberately: it is the family that derives etcd ports; a wbft
+	// node listens on p2p alone and records none.
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "wemix", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {

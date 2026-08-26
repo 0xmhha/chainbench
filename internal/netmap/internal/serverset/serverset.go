@@ -71,9 +71,14 @@ type Ports struct {
 	P2PBase int `yaml:"p2pBase,omitempty"`
 	P2PStep int `yaml:"p2pStep,omitempty"`
 	// RPCBase is the first node's HTTP port; RPCStep is the per-node stride.
-	// ws = http+1, auth = http+2, and metrics = http+3 when the step allows.
+	// ws = http+1, auth = http+2, and metrics = http+3 when the step allows —
+	// unless the per-purpose bands below override the derivation.
 	RPCBase int `yaml:"rpcBase,omitempty"`
 	RPCStep int `yaml:"rpcStep,omitempty"`
+	// WS, Auth, and Metrics are per-purpose bands (BandsSpec); nil derives.
+	WS      *BandSpec `yaml:"-"`
+	Auth    *BandSpec `yaml:"-"`
+	Metrics *BandSpec `yaml:"-"`
 }
 
 // SSH is how a remote server is reached. The server set is the single source
@@ -131,10 +136,23 @@ type BandSpec struct {
 	Step int `yaml:"step"`
 }
 
-// BandsSpec is the two disjoint bands a slot draws from.
+// BandsSpec is the bands a slot draws from. The rpc band derives ws (http+1),
+// auth (http+2) and metrics (http+3, when the step leaves room) unless the
+// purpose declares its own band — a site whose firewall groups ports by
+// purpose (auth in one range, http in another, ws in a third) writes each:
+//
+//	ports:
+//	  p2p:     { base: 30301, step: 1 }
+//	  rpc:     { base: 8601,  step: 1 }
+//	  ws:      { base: 8701,  step: 1 }
+//	  auth:    { base: 8501,  step: 1 }
+//	  metrics: { base: 6060,  step: 0 }   # step 0: one shared scrape port
 type BandsSpec struct {
-	P2P BandSpec `yaml:"p2p,omitempty"`
-	RPC BandSpec `yaml:"rpc,omitempty"`
+	P2P     BandSpec  `yaml:"p2p,omitempty"`
+	RPC     BandSpec  `yaml:"rpc,omitempty"`
+	WS      *BandSpec `yaml:"ws,omitempty"`
+	Auth    *BandSpec `yaml:"auth,omitempty"`
+	Metrics *BandSpec `yaml:"metrics,omitempty"`
 }
 
 // HostSpec is one address the pool may place nodes on. It accepts either a
@@ -313,6 +331,7 @@ func (c *Config) expand() {
 	ports := Ports{
 		P2PBase: c.PoolSpec.Ports.P2P.Base, P2PStep: c.PoolSpec.Ports.P2P.Step,
 		RPCBase: c.PoolSpec.Ports.RPC.Base, RPCStep: c.PoolSpec.Ports.RPC.Step,
+		WS: c.PoolSpec.Ports.WS, Auth: c.PoolSpec.Ports.Auth, Metrics: c.PoolSpec.Ports.Metrics,
 	}
 	builtin := BuiltinPorts()
 	if ports.P2PBase == 0 {
@@ -471,14 +490,29 @@ func (s SSH) validateFields() error {
 // validate rejects a port plan that would assign the same port twice. The floors
 // are what make the plan collision-free by construction.
 func (p Ports) validate(where string) error {
-	if p.P2PStep < minP2PStep {
-		return fmt.Errorf("serverset: server %s p2pStep is %d, want >= %d (etcd is derived as p2p+1)", where, p.P2PStep, minP2PStep)
+	// The wemix family's derived etcd ports need more p2p room, but that is a
+	// family fact checked where the family is known (portplan, at allocate);
+	// the file itself only requires a usable stride.
+	if p.P2PStep < 1 {
+		return fmt.Errorf("serverset: server %s p2pStep is %d, want >= 1", where, p.P2PStep)
 	}
-	if p.RPCStep < minRPCStep {
-		return fmt.Errorf("serverset: server %s rpcStep is %d, want >= %d (http, ws, auth)", where, p.RPCStep, minRPCStep)
+	derived := p.WS == nil || p.Auth == nil
+	if derived && p.RPCStep < minRPCStep {
+		return fmt.Errorf("serverset: server %s rpcStep is %d, want >= %d (http, ws, auth — or declare ws/auth bands of their own)", where, p.RPCStep, minRPCStep)
+	}
+	if !derived && p.RPCStep < 1 {
+		return fmt.Errorf("serverset: server %s rpcStep is %d, want >= 1", where, p.RPCStep)
 	}
 	if p.P2PBase <= 0 || p.RPCBase <= 0 {
 		return fmt.Errorf("serverset: server %s needs a positive p2pBase and rpcBase", where)
+	}
+	for name, b := range map[string]*BandSpec{"ws": p.WS, "auth": p.Auth} {
+		if b != nil && (b.Base <= 0 || b.Step < 1) {
+			return fmt.Errorf("serverset: server %s %s band needs a positive base and step >= 1", where, name)
+		}
+	}
+	if p.Metrics != nil && (p.Metrics.Base <= 0 || p.Metrics.Step < 0) {
+		return fmt.Errorf("serverset: server %s metrics band needs a positive base and step >= 0", where)
 	}
 	return nil
 }

@@ -34,17 +34,28 @@ pool:
   # address. Defaults to 1.
   slots: 8
 
-  # The two disjoint bands a slot draws from. Omit either to take the built-in
-  # values (p2p 31000/10, rpc 8600/10).
+  # The bands a slot draws from. Omit either to take the built-in values
+  # (p2p 31000/10, rpc 8600/10).
   #
-  #   p2p.step >= 2   the wemix binary derives its etcd port as p2p+1, so a
-  #                   step of 1 makes etcd collide with the next slot's p2p
-  #                   and block production stalls with no obvious cause.
-  #   rpc.step >= 3   http, ws (http+1), auth (http+2). A step of 4 or more
-  #                   also buys the metrics endpoint (http+3).
+  #   p2p.step >= 1   the wemix family needs more room (etcd derives as p2p+1,
+  #                   client as p2p+2) and says so itself at allocate time;
+  #                   wbft listens on p2p alone, so packing one apart is legal.
+  #   rpc.step >= 3   when ws/auth DERIVE from it: ws = http+1, auth = http+2,
+  #                   and a step of 4 or more also buys metrics (http+3).
   ports:
     p2p: { base: 31000, step: 10 }
     rpc: { base: 8600, step: 10 }
+
+  # A site whose firewall groups ports by PURPOSE declares each band instead —
+  # then nothing derives from rpc and tight steps become legal. The Wemix3.5
+  # test servers' scheme, for example:
+  #
+  #  ports:
+  #    p2p:     { base: 30301, step: 1 }   # 30301..30304
+  #    rpc:     { base: 8601,  step: 1 }   # http 8601..8604
+  #    ws:      { base: 8701,  step: 1 }   # 8701..8704
+  #    auth:    { base: 8501,  step: 1 }   # 8501..8504
+  #    metrics: { base: 6060,  step: 0 }   # one shared scrape port
 
 # How every non-loopback host in the pool is reached.
 #
@@ -58,7 +69,7 @@ pool:
 #   CHAINBENCH_SSH_KNOWN_HOSTS, or CHAINBENCH_SSH_INSECURE_HOST_KEY=1 on a
 #   closed network with no known_hosts.
 ssh:
-  port: 22
+  port: 22                    # the Wemix3.5 test servers use 10022
   # user: chainbench
   # key_file: ~/.ssh/id_ed25519
   # password: ...             # or reference a secret file instead:

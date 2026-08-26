@@ -50,25 +50,33 @@ func hasFlag(flags []string, want string) bool {
 	return false
 }
 
-// TestPortReservation_KeepsTheSpacingNetworksAlreadyRun: wbft has no etcd, but
-// the second p2p-side port stays reserved. Reclaiming it would move every
-// existing network's ports for the sake of a port nobody listens on.
-func TestPortReservation_KeepsTheSpacingNetworksAlreadyRun(t *testing.T) {
+// TestPortReservation_IsHonest: a wbft node listens on one p2p-side port and
+// reserves one. The span said 2 out of inertia until the Wemix3.5 test-server
+// scheme (p2p packed one apart, 30301..30304) showed the over-reservation
+// rejecting a real deployment. Existing sets keep their spacing regardless —
+// ports come from the configured bands; the span only sets the minimum — and
+// a wbft plan derives no etcd port, so nothing advertises a port nobody
+// listens on.
+func TestPortReservation_IsHonest(t *testing.T) {
 	res := wbft.New().PortReservation()
-	if res.P2PSpan != 2 || res.RPCSpan != 3 {
-		t.Fatalf("reservation = %+v, want {2, 3}", res)
+	if res.P2PSpan != 1 || res.RPCSpan != 3 {
+		t.Fatalf("reservation = %+v, want {1, 3}", res)
 	}
+	// The tight real-server scheme is accepted...
+	tight, err := portplan.Plan(4, 30301, 1, 8601, 4, res)
+	if err != nil {
+		t.Fatalf("Plan(tight): %v", err)
+	}
+	if tight.P2P != 30304 || tight.Etcd != 0 {
+		t.Fatalf("tight plan = %+v, want p2p 30304 and no etcd", tight)
+	}
+	// ...and the historical spacing still yields the same ports it always did.
 	p, err := portplan.Plan(1, 31000, 10, 8600, 10, res)
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}
-	// The ports a composed stablenet network is running on today.
-	if p.P2P != 31000 || p.HTTP != 8600 || p.WS != 8601 || p.Auth != 8602 || p.Metrics != 8603 {
-		t.Fatalf("ports moved: %+v", p)
-	}
-	// No etcd client is reserved for a family that does not embed etcd.
-	if p.EtcdClient != 0 {
-		t.Fatalf("wbft should not reserve an etcd client port, got %d", p.EtcdClient)
+	if p.P2P != 31000 || p.HTTP != 8600 || p.WS != 8601 || p.Auth != 8602 {
+		t.Fatalf("historical plan moved: %+v", p)
 	}
 }
 
