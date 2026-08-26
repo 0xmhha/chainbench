@@ -26,43 +26,52 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
-// Kind is where a network's data plane lives — this machine, or a remote
-// SSH host.
-type Kind string
-
-const (
-	// KindLocal materializes files on the local filesystem and runs processes
-	// locally. The empty kind is treated as local.
-	KindLocal Kind = "local"
-	// KindRemote materializes files and runs processes on a remote host over
-	// SSH.
-	KindRemote Kind = "remote"
-	// KindServer names a host indirectly, by its entry in the operator's
-	// server set. Resolving one needs that server set (see ResolveWith).
-	KindServer Kind = "server"
-)
-
-// Spec is the serializable descriptor of the compose target (persisted in
-// workspace.json). It carries NO secrets: a server-set target reads its login
-// from the server set at resolve time, and a directly named host reads the
-// environment (CHAINBENCH_REMOTE_USER / _PASS / _KEY_FILE / _KEY_PASSPHRASE).
-// DataRoot is the network's data-root path ON the target (a local path, or a
-// path on the remote host).
+// Spec is the serializable descriptor of the machine an operation acts on
+// (persisted in workspace.json). There is NO kind field: what a spec IS
+// follows from what it names — the address decides, the same doctrine the
+// server set follows.
+//
+//	Server set   → a server-set entry: login comes from the set at resolve time
+//	Host set     → a machine named by address: login comes from the environment
+//	               (CHAINBENCH_REMOTE_USER / _PASS / _KEY_FILE / _KEY_PASSPHRASE)
+//	neither      → this machine: no dial at all
+//
+// A loopback Host with no User and no Port also means this machine — writing
+// 127.0.0.1 is spelling "here" with an address. Naming a User or a Port turns
+// even a loopback address into a deliberate SSH dial (a tunnel, a published
+// container port), because the operator asked for a login.
+//
+// It carries NO secrets in every case.
 type Spec struct {
-	Kind     Kind   `json:"kind"`
 	DataRoot string `json:"dataRoot"`
 	Host     string `json:"host,omitempty"`
 	User     string `json:"user,omitempty"`
 	Port     int    `json:"port,omitempty"`
-	// Server is the server-set entry name for a KindServer spec. It is the
-	// whole address: host, port and credentials stay in the server set, so
-	// neither a command line nor a persisted spec carries them.
+	// Server is the server-set entry name. It is the whole address: host,
+	// port and credentials stay in the server set, so neither a command line
+	// nor a persisted spec carries them. Host may still be carried beside it
+	// for display and RPC addressing; it never authenticates anything.
 	Server string `json:"server,omitempty"`
 }
 
-// IsRemote reports whether the target is on another host — named directly or
-// through the server set.
-func (s Spec) IsRemote() bool { return s.Kind == KindRemote || s.Kind == KindServer }
+// loopback are the host spellings that mean "this machine".
+var loopback = map[string]bool{
+	"": true, "127.0.0.1": true, "localhost": true, "::1": true, "[::1]": true,
+}
+
+// IsRemote reports whether the spec reaches another machine — a set entry, or
+// an address that is not a bare loopback. It is derived, never stored, so a
+// spec cannot say one thing in a kind field and another in its address.
+func (s Spec) IsRemote() bool {
+	if s.Server != "" {
+		return true
+	}
+	if loopback[s.Host] {
+		// A login on a loopback address is a deliberate SSH dial.
+		return s.User != "" || s.Port != 0
+	}
+	return s.Host != ""
+}
 
 // Parse parses the single-path target syntax, so that every layer above
 // names a location the same way whether it is here or on another machine:
@@ -93,7 +102,7 @@ func Parse(s string) (Spec, error) {
 		if !ok || name == "" || path == "" {
 			return Spec{}, fmt.Errorf("target: bad target %q (want srv://<server>/path)", s)
 		}
-		return Spec{Kind: KindServer, Server: name, DataRoot: "/" + path}, nil
+		return Spec{Server: name, DataRoot: "/" + path}, nil
 	}
 	if strings.HasPrefix(s, "ssh://") {
 		u, err := url.Parse(s)
@@ -112,7 +121,7 @@ func Parse(s string) (Spec, error) {
 			port = n
 		}
 		return Spec{
-			Kind: KindRemote, Host: u.Hostname(), User: u.User.Username(),
+			Host: u.Hostname(), User: u.User.Username(),
 			Port: port, DataRoot: u.Path,
 		}, nil
 	}
@@ -122,7 +131,7 @@ func Parse(s string) (Spec, error) {
 	if strings.Contains(s, "@") {
 		return Spec{}, fmt.Errorf("target: bad target %q (want [user@]host:/path)", s)
 	}
-	return Spec{Kind: KindLocal, DataRoot: s}, nil
+	return Spec{DataRoot: s}, nil
 }
 
 // parseHostColonPath recognises the scp-style [user@]host:/path form.
@@ -143,7 +152,7 @@ func parseHostColonPath(s string) (Spec, bool) {
 	if user == "" && strings.Contains(s, "@") {
 		return Spec{}, false
 	}
-	return Spec{Kind: KindRemote, Host: host, User: user, DataRoot: path}, true
+	return Spec{Host: host, User: user, DataRoot: path}, true
 }
 
 // Access is the resolved data plane: step functions materialize files through
@@ -188,11 +197,11 @@ func (s Spec) ResolveWith(env func(string) string, inv Lookup) (*Access, error) 
 // SSH transport dials; the spec, the data root, and everything composed onto
 // the target keep the real addresses. Nil is no translation.
 func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrMap) (*Access, error) {
-	switch s.Kind {
-	case "", KindLocal:
+	switch {
+	case !s.IsRemote():
 		return &Access{Spec: s, DataRoot: s.DataRoot, Files: provision.LocalFileStore{}, Driver: driver.NewLocalDriver()}, nil
 
-	case KindServer:
+	case s.Server != "":
 		if inv == nil {
 			return nil, fmt.Errorf("target: %q names a server-set entry, but no server set was provided", s.Server)
 		}
@@ -202,7 +211,7 @@ func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrM
 		}
 		return s.resolveOver(creds, env, m)
 
-	case KindRemote:
+	default:
 		if s.Host == "" || s.DataRoot == "" {
 			return nil, fmt.Errorf("target: remote target needs host and dataRoot")
 		}
@@ -211,9 +220,6 @@ func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrM
 			return nil, err
 		}
 		return s.resolveOver(creds, env, m)
-
-	default:
-		return nil, fmt.Errorf("target: unknown target kind %q", s.Kind)
 	}
 }
 
@@ -256,20 +262,39 @@ func (s Spec) resolveOver(creds remote.Credentials, env func(string) string, m r
 // instead of inspecting the kind themselves: what a remote spec requires is
 // this module's knowledge.
 func (s Spec) Validate() error {
-	switch s.Kind {
-	case "", KindLocal:
+	switch {
+	case !s.IsRemote():
 		return nil
-	case KindRemote:
+	case s.Server != "":
+		if s.DataRoot == "" {
+			return fmt.Errorf("target: server target needs a dataRoot")
+		}
+		return nil
+	default:
 		if s.Host == "" || s.DataRoot == "" {
 			return fmt.Errorf("target: remote target needs host and dataRoot")
 		}
 		return nil
-	case KindServer:
-		if s.Server == "" || s.DataRoot == "" {
-			return fmt.Errorf("target: server target needs a server name and dataRoot")
-		}
-		return nil
+	}
+}
+
+// Describe renders where the spec points, for status lines and records: the
+// locality question answered here, in the one place that owns the rule, so no
+// display site branches on it.
+func (s Spec) Describe() string {
+	switch {
+	case s.Server != "":
+		return fmt.Sprintf("server %s:%s", s.Server, s.DataRoot)
+	case !s.IsRemote():
+		return "local " + s.DataRoot
 	default:
-		return fmt.Errorf("target: unknown target kind %q", s.Kind)
+		host := s.Host
+		if s.User != "" {
+			host = s.User + "@" + host
+		}
+		if s.Port != 0 {
+			host = fmt.Sprintf("%s:%d", host, s.Port)
+		}
+		return fmt.Sprintf("remote %s:%s", host, s.DataRoot)
 	}
 }

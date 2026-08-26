@@ -96,11 +96,8 @@ func (f *targetFlags) spec() (machine.Spec, error) {
 		}
 		return machine.Parse(f.target)
 	}
-	if f.remoteHost == "" {
-		return machine.Spec{Kind: machine.KindLocal, DataRoot: f.targetDir}, nil
-	}
 	return machine.Spec{
-		Kind: machine.KindRemote, Host: f.remoteHost, User: f.remoteUser,
+		Host: f.remoteHost, User: f.remoteUser,
 		Port: f.remotePort, DataRoot: f.targetDir,
 	}, nil
 }

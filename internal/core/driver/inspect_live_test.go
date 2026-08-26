@@ -29,7 +29,7 @@ func server1Driver(t *testing.T) driver.Driver {
 	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
 	acc, err := netmapmod.Opener{
 		ServerSet: filepath.Join(build, "server-set.yaml"), Docker: true, Env: os.Getenv,
-	}.Open(machine.Spec{Kind: machine.KindServer, Server: "server1", DataRoot: "/data/chainbench"})
+	}.Open(machine.Spec{Server: "server1", DataRoot: "/data/chainbench"})
 	if err != nil {
 		t.Fatalf("open server1: %v", err)
 	}

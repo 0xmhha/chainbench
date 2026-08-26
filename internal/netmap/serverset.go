@@ -111,9 +111,8 @@ func ResolveServer(ref ServerRef, minValidators, portBand int) (ResolveServerOut
 // file, the single source of a named server's credentials. Host is still
 // carried for display and RPC addressing; it never authenticates anything.
 func serverTarget(s Server) machine.Spec {
-	spec := machine.Spec{Kind: machine.KindLocal, DataRoot: s.DataRoot}
+	spec := machine.Spec{DataRoot: s.DataRoot}
 	if s.IsRemote() {
-		spec.Kind = machine.KindServer
 		spec.Server = s.Name
 		spec.Host = s.Host
 	}
@@ -123,12 +122,12 @@ func serverTarget(s Server) machine.Spec {
 // fleetTarget describes a fleet's data plane. Its host is the first server's:
 // the per-node addresses live on the node table, which the allocator fills.
 func fleetTarget(pl Placement) machine.Spec {
-	spec := machine.Spec{Kind: machine.KindLocal, DataRoot: pl.DataRoot}
-	if pl.Remote {
-		spec.Kind = machine.KindRemote
-		if len(pl.Pool.Hosts) > 0 {
-			spec.Host = pl.Pool.Hosts[0].Addr
-		}
+	spec := machine.Spec{DataRoot: pl.DataRoot}
+	if pl.Remote && len(pl.Pool.Hosts) > 0 {
+		// Named by its first entry so per-node steps resolve their own; the
+		// entry name (not a bare address) keeps the login in the set.
+		spec.Server = pl.Pool.Hosts[0].Name
+		spec.Host = pl.Pool.Hosts[0].Addr
 	}
 	return spec
 }

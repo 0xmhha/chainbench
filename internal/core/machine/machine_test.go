@@ -13,7 +13,7 @@ import (
 // local filesystem sink + driver; a remote spec yields SSH-backed ones, reading
 // creds from env (no live dial).
 func TestTargetResolve(t *testing.T) {
-	local, err := machine.Spec{Kind: machine.KindLocal, DataRoot: "/tmp/x"}.Resolve(nil)
+	local, err := machine.Spec{DataRoot: "/tmp/x"}.Resolve(nil)
 	if err != nil {
 		t.Fatalf("local resolve: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestTargetResolve(t *testing.T) {
 		"CHAINBENCH_SSH_INSECURE_HOST_KEY": "1",
 	}
 	remoteTgt, err := machine.Spec{
-		Kind: machine.KindRemote, Host: "10.0.0.1", User: "ubuntu", DataRoot: "/tmp/net",
+		Host: "10.0.0.1", User: "ubuntu", DataRoot: "/tmp/net",
 	}.Resolve(func(k string) string { return env[k] })
 	if err != nil {
 		t.Fatalf("remote resolve: %v", err)
@@ -41,7 +41,7 @@ func TestTargetResolve(t *testing.T) {
 		t.Fatalf("remote driver type = %T", remoteTgt.Driver)
 	}
 
-	if _, err := (machine.Spec{Kind: machine.KindRemote, Host: "h", User: "u", DataRoot: "/d"}).Resolve(func(string) string { return "" }); err == nil {
+	if _, err := (machine.Spec{Host: "h", User: "u", DataRoot: "/d"}).Resolve(func(string) string { return "" }); err == nil {
 		t.Fatal("expected error for remote target without auth")
 	}
 }
@@ -51,14 +51,14 @@ func TestParse(t *testing.T) {
 		in   string
 		want machine.Spec
 	}{
-		{"/data/net1", machine.Spec{Kind: machine.KindLocal, DataRoot: "/data/net1"}},
-		{"rel/dir", machine.Spec{Kind: machine.KindLocal, DataRoot: "rel/dir"}},
+		{"/data/net1", machine.Spec{DataRoot: "/data/net1"}},
+		{"rel/dir", machine.Spec{DataRoot: "rel/dir"}},
 		{"alice@10.0.0.5:/data/net1", machine.Spec{
-			Kind: machine.KindRemote, User: "alice", Host: "10.0.0.5", DataRoot: "/data/net1"}},
+			User: "alice", Host: "10.0.0.5", DataRoot: "/data/net1"}},
 		{"ssh://bob@host9:2222/data/n", machine.Spec{
-			Kind: machine.KindRemote, User: "bob", Host: "host9", Port: 2222, DataRoot: "/data/n"}},
+			User: "bob", Host: "host9", Port: 2222, DataRoot: "/data/n"}},
 		{"ssh://carol@host9/data/n", machine.Spec{
-			Kind: machine.KindRemote, User: "carol", Host: "host9", DataRoot: "/data/n"}},
+			User: "carol", Host: "host9", DataRoot: "/data/n"}},
 	}
 	for _, tc := range cases {
 		got, err := machine.Parse(tc.in)
@@ -90,37 +90,37 @@ func TestParse_Syntaxes(t *testing.T) {
 		{
 			name: "bare path is local",
 			in:   "/data/net1",
-			want: machine.Spec{Kind: machine.KindLocal, DataRoot: "/data/net1"},
+			want: machine.Spec{DataRoot: "/data/net1"},
 		},
 		{
 			name: "relative path is local",
 			in:   "keys/preset",
-			want: machine.Spec{Kind: machine.KindLocal, DataRoot: "keys/preset"},
+			want: machine.Spec{DataRoot: "keys/preset"},
 		},
 		{
 			// The point of srv://: the address is not here.
 			name: "inventory entry",
 			in:   "srv://bp1/data/go-wbft/conf/nodekey",
 			want: machine.Spec{
-				Kind: machine.KindServer, Server: "bp1",
+				Server:   "bp1",
 				DataRoot: "/data/go-wbft/conf/nodekey",
 			},
 		},
 		{
 			name: "host and path, no user",
 			in:   "10.0.0.1:/keys/node1",
-			want: machine.Spec{Kind: machine.KindRemote, Host: "10.0.0.1", DataRoot: "/keys/node1"},
+			want: machine.Spec{Host: "10.0.0.1", DataRoot: "/keys/node1"},
 		},
 		{
 			name: "user, host and path",
 			in:   "ubuntu@host:/k",
-			want: machine.Spec{Kind: machine.KindRemote, Host: "host", User: "ubuntu", DataRoot: "/k"},
+			want: machine.Spec{Host: "host", User: "ubuntu", DataRoot: "/k"},
 		},
 		{
 			name: "ssh url with a port",
 			in:   "ssh://ubuntu@host:2222/data/net1",
 			want: machine.Spec{
-				Kind: machine.KindRemote, Host: "host", User: "ubuntu",
+				Host: "host", User: "ubuntu",
 				Port: 2222, DataRoot: "/data/net1",
 			},
 		},
@@ -128,7 +128,7 @@ func TestParse_Syntaxes(t *testing.T) {
 			// A colon in a local path must not be read as a host separator.
 			name: "local path containing a colon",
 			in:   "./notes:draft/key",
-			want: machine.Spec{Kind: machine.KindLocal, DataRoot: "./notes:draft/key"},
+			want: machine.Spec{DataRoot: "./notes:draft/key"},
 		},
 		{name: "empty", in: "", wantErr: true},
 		{name: "srv with no path", in: "srv://bp1", wantErr: true},

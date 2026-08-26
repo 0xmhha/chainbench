@@ -528,7 +528,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 // a remote node would look for its keys on the operator's machine. A local
 // target ships nothing: keysBase is the key set itself.
 func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access, nodes []NodeState) (int, error) {
-	if t.Spec.Kind == machine.KindLocal || t.Spec.Kind == "" {
+	if !t.Spec.IsRemote() {
 		return 0, nil
 	}
 	shipped := 0

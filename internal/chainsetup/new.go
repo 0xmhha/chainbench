@@ -53,10 +53,7 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	}
 
 	tgt := opts.Target
-	if tgt.Kind == "" {
-		tgt.Kind = machine.KindLocal
-	}
-	if tgt.Kind == machine.KindLocal && tgt.DataRoot == "" {
+	if !tgt.IsRemote() && tgt.DataRoot == "" {
 		tgt.DataRoot = w.comp.Dir()
 	}
 	// Structural validation happens here (no live SSH dial); what a spec
@@ -100,14 +97,14 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 // placement rather than at `new`. A target with no data root keeps the current
 // one, so naming only a host does not blank the path.
 func (w *Workspace) Retarget(t machine.Spec) error {
-	if t.Kind == "" {
+	if t == (machine.Spec{}) {
 		return nil
 	}
 	if t.DataRoot == "" {
 		t.DataRoot = w.state.Target.DataRoot
 	}
-	if t.Kind == machine.KindRemote && (t.Host == "" || t.DataRoot == "") {
-		return fmt.Errorf("chainsetup: remote target needs a host and a data root")
+	if err := t.Validate(); err != nil {
+		return fmt.Errorf("chainsetup: %w", err)
 	}
 	w.state.Target = t
 	return nil

@@ -35,12 +35,9 @@ func newNetStatusCmd() *cobra.Command {
 				return enc.Encode(st)
 			}
 
-			target := string(st.Target.Kind)
-			if st.Target.IsRemote() {
-				target = fmt.Sprintf("remote %s@%s:%s", st.Target.User, st.Target.Host, st.Target.DataRoot)
-			} else if st.Target.DataRoot != "" {
-				target = "local " + st.Target.DataRoot
-			}
+			// Where the workspace points is the machine module's question;
+			// the status line just prints its answer.
+			target := st.Target.Describe()
 			fmt.Fprintf(out, "workspace: %s\nchain: %s  binary: %s  keys: %s  validators: %d\ntarget: %s\n",
 				res.Dir, st.Chain, orDash(st.Binary), orDash(st.KeysDir), st.Validators, orDash(target))
 
