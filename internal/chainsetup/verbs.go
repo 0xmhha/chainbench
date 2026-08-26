@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -108,4 +109,41 @@ func NetStatus(_ context.Context, d Deps, in NetStatusIn) (NetStatusOut, error) 
 		return NetStatusOut{}, err
 	}
 	return NetStatusOut{Dir: ws.Dir(), State: ws.State()}, nil
+}
+
+// NetEndpointsIn asks for a composed network's reachable RPC endpoints.
+type NetEndpointsIn struct {
+	DataDir string
+}
+
+// NetEndpoints returns each node's HTTP RPC URL as this machine can reach it:
+// the recorded per-node host, translated through the docker map when the
+// workspace runs in docker mode — the same translation the health probe uses,
+// so a caller attaching a test engine dials what actually answers.
+func NetEndpoints(_ context.Context, d Deps, in NetEndpointsIn) ([]string, error) {
+	ws, err := Open(in.DataDir, d.Clock)
+	if err != nil {
+		return nil, err
+	}
+	ws.SetEnv(d.Env)
+	st := ws.State()
+	if len(st.Nodes) == 0 {
+		return nil, fmt.Errorf("chainsetup: endpoints: no node table — run `net allocate` first")
+	}
+	m, err := ws.opener().AddrMap()
+	if err != nil {
+		return nil, err
+	}
+	urls := make([]string, 0, len(st.Nodes))
+	for _, ns := range st.Nodes {
+		host, port := ns.Host, ns.HTTP
+		if host == "" {
+			host = ws.RPCHost()
+		}
+		if m != nil {
+			host, port = m(host, port)
+		}
+		urls = append(urls, fmt.Sprintf("http://%s:%d", host, port))
+	}
+	return urls, nil
 }
