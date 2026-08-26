@@ -1,4 +1,4 @@
-# 로컬 docker 를 원격 서버처럼 — 주소 변환 seam 설계
+# 로컬 docker 를 원격 서버처럼 — 주소 변환 boundary 설계
 
 > **등급: [현행 설계]** — 분석·준비 단계다. 구현 전이며, 작업 상태는 worklist §1g R 트랙이
 > 정본이다. 참조 구현: `~/Work/github/packages/wemix-bp-test` (동작 검증 완료된 선례).
@@ -57,7 +57,7 @@
 
 wemix-bp-test 는 서버 세트 로드 직후 값을 제자리에서 바꾼다. chainbench 는 그렇게
 하면 안 된다 — **조립 산출물(워크스페이스·genesis·static-nodes)에 주소가 영속**되므로,
-로드 시점 치환은 매핑된 loopback 주소를 산출물에 심는다. 따라서 seam 은 함수 주입이다:
+로드 시점 치환은 매핑된 loopback 주소를 산출물에 심는다. 따라서 boundary 은 함수 주입이다:
 
 ```go
 // AddrMap 은 하네스가 접속할 때만 주소를 바꾼다. 기본은 항등.
@@ -116,7 +116,7 @@ wemix-bp-test 의 `env/local` 패턴을 차용한다. ubuntu 이미지는 이미
 
 | # | 작업 | 게이트 |
 |---|---|---|
-| R1 | AddrMap seam — `--docker` 옵션 + 매핑 파일 로드 + 접속 경계 4곳 주입 + 적용 보고 | 옵션 없으면 파일이 있어도 항등 · 옵션+파일 부재는 오류 · `net` 은 워크스페이스에 모드 영속 · P1/P2 회귀 테스트 |
+| R1 | AddrMap boundary — `--docker` 옵션 + 매핑 파일 로드 + 접속 경계 4곳 주입 + 적용 보고 | 옵션 없으면 파일이 있어도 항등 · 옵션+파일 부재는 오류 · `net` 은 워크스페이스에 모드 영속 · P1/P2 회귀 테스트 |
 | R2 | docker 가상 서버 생성 스크립트 + 서버 세트/맵 자동 생성 | 스크립트 한 번으로 N 대 기동, `ssh -p 2201` 접속 확인 |
 | R3 | keyring 원격 경로 라이브 — `import --from srv://server1/...`, 지정 data root 설치 | docker 서버의 키를 가져오고, 링을 서버 경로에 설치 |
 | R4 | `net up --target user@server/...` 원격 조립 라이브 | provision·기동이 docker 서버에서 수행, 산출물에 loopback 없음 |

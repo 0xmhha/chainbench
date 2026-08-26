@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -10,15 +11,15 @@ import (
 
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// recordingSink is a provision.FileStore capturing writes and reporting a
+// recordingSink is a filestore.Store capturing writes and reporting a
 // preset existing set (to exercise upload-if-absent) in memory.
 type recordingSink struct {
 	written  map[string][]byte
@@ -58,7 +59,7 @@ func TestMaterialize(t *testing.T) {
 	}
 
 	sink := newRecordingSink()
-	if err := materialize(context.Background(), provision.New(sink), plan, plan.Nodes); err != nil {
+	if err := materialize(context.Background(), filestore.New(sink), plan, plan.Nodes); err != nil {
 		t.Fatalf("materialize: %v", err)
 	}
 	for _, want := range []string{"/d/genesis.json", "/d/config_node1.toml", "/d/config_node2.toml"} {
@@ -70,7 +71,7 @@ func TestMaterialize(t *testing.T) {
 	// Upload-if-absent: an existing genesis is not rewritten.
 	sink2 := newRecordingSink()
 	sink2.existing["/d/genesis.json"] = true
-	if err := materialize(context.Background(), provision.New(sink2), plan, plan.Nodes); err != nil {
+	if err := materialize(context.Background(), filestore.New(sink2), plan, plan.Nodes); err != nil {
 		t.Fatalf("materialize (reuse): %v", err)
 	}
 	if _, ok := sink2.written["/d/genesis.json"]; ok {
@@ -100,8 +101,8 @@ func TestArmSpecs(t *testing.T) {
 	preset := keyring.Preset{
 		Network: keyring.Network{Validators: []string{"0xval1"}},
 		Nodes: []keyring.Entry{
-			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
-			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
+			{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: derive.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{
@@ -162,7 +163,7 @@ func argsHas(args []string, vals ...string) bool {
 	return true
 }
 
-// TestArmSpecsOverrides pins the customization seam: a network id pin and a
+// TestArmSpecsOverrides pins the customization boundary: a network id pin and a
 // user launch knob flow through the Builder's override layer into every
 // node's argv.
 func TestArmSpecsOverrides(t *testing.T) {
@@ -173,7 +174,7 @@ func TestArmSpecsOverrides(t *testing.T) {
 		},
 		Fam: wbftfam.New(),
 	}
-	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}}}}
+	preset := keyring.Preset{Nodes: []keyring.Entry{{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xval1"}}}}
 	plan := driver.Plan{
 		DataRoot: "/d",
 		Nodes: []driver.NodeSpec{
@@ -219,8 +220,8 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 	preset := keyring.Preset{
 		Network: keyring.Network{Validators: []string{"0xval1"}},
 		Nodes: []keyring.Entry{
-			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xval1"}},
-			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xen2"}},
+			{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xval1"}},
+			{Index: 2, Identity: derive.Identity{PublicKey: "bb22", Address: "0xen2"}},
 		},
 	}
 	plan := driver.Plan{

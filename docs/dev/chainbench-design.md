@@ -276,7 +276,7 @@ type Key struct { Name, Address string; Private []byte; BLS, PoP []byte }
 type Source int
 const ( Random Source = iota; LocalFile; RemoteDownload )
 
-// BLSDeriver: BLS 공개키·PoP 생성 seam. chainbench에 네이티브 BLS 크립토가 없어
+// BLSDeriver: BLS 공개키·PoP 생성 boundary. chainbench에 네이티브 BLS 크립토가 없어
 // **외부 `bootnode` 바이너리에 위임**(§2b·D). 주입식(부재 시 명확 오류) — Random 소스로
 // validator 키를 만들 때 이 Deriver로 BLS/PoP를 채운다(genesis bp-신원 등록에 필요).
 type BLSDeriver interface { Derive(ctx context.Context, private []byte) (bls, pop []byte, err error) } // 외부 bootnode 프로세스 실행 → ctx로 timeout
@@ -463,7 +463,7 @@ hosts: [10.0.0.11, 10.0.0.12, 10.0.0.13]   # 1서버=1노드 (동일포트+다�
 - **testspec Action/Assertion 레지스트리 범위**: 내장 세트 + 체인별 확장 지점.
 - **`applicableChains` ↔ `chain.name` 관계**: `chain.name`은 이 테스트가 도는 **대상 체인**, `applicableChains`는 **호환 체인 집합**(예: 같은 합의계열 wbft·stablenet). 스위트 실행이 대상 체인을 `applicableChains` 내에서 바꿔 재사용할 수 있는지(체인-스윕) 여부를 F3에서 확정. 미적용이면 SKIP(요구 3).
 - **fingerprint 대상 = 선언값 전체**(`binaries+genesis+config+topology+hardforks+placement`, §D-2.4): precedence(flag>config>default, §B-3) 적용 *후*의 선언값을 해싱해야 재사용 판정이 정확(같은 config 파일+다른 flag=다른 env). **placement(local↔remote)도 포함**(O1) — local로 세운 env를 remote 선언이 오재사용하면 포트/호스트가 어긋난다. env-id 폴더명은 해시 앞 12hex 축약(§3.1·L5). §3.1·§3.2·§D-2.4 반영.
-- **MCP/대시보드 seam**: MCP(요구 31)는 세션 아티팩트(status/assert.json)를 읽어 결과 응답; 대시보드(요구 33·34)는 collector의 chainstate + session을 소비. 인터페이스는 F14·F15에서 확정(design은 소비 지점만 명시).
+- **MCP/대시보드 boundary**: MCP(요구 31)는 세션 아티팩트(status/assert.json)를 읽어 결과 응답; 대시보드(요구 33·34)는 collector의 chainstate + session을 소비. 인터페이스는 F14·F15에서 확정(design은 소비 지점만 명시).
 - 위 항목은 feature-spec(F3·F5·F6·F10·F12·F14·F15)의 AC에서 확정.
 
 ### 9.1 검토 반영(2차) — 확정 항목

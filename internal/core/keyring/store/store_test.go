@@ -3,12 +3,12 @@ package store_test
 import (
 	"bytes"
 	"context"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
@@ -53,7 +53,7 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	written, err := store.Generate(store.GenerateOpts{
 		Nodes: nodes, Validators: &validators, Out: dir, Password: "1", Balance: "0x1",
 		Derive: store.WithBLS,
-		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x7f}, nodes*keyring.PrivateKeyLen)),
+		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x7f}, nodes*derive.PrivateKeyLen)),
 	}, nil)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)

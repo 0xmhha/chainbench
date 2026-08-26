@@ -9,7 +9,7 @@ import (
 )
 
 // RemoteFileStore reads and writes files on a remote host over SSH. It
-// satisfies provision.FileStore structurally, so the file seam ships genesis,
+// satisfies filestore.Store structurally, so the file interface ships genesis,
 // config and key material to another host with no code change on the callers'
 // side.
 //

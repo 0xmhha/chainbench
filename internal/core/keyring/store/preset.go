@@ -1,6 +1,6 @@
-// Ring storage: the on-disk layout of a keyring — the index file, the
+// KeySet storage: the on-disk layout of a keyring — the index file, the
 // per-entry directories, and the keystore/raw backends — read and written
-// through the provision file seam so a ring lives the same way on this
+// through the provision file boundary so a ring lives the same way on this
 // machine or on a server. The key model (what an entry IS) stays in the
 // keyring package; this package only persists it.
 package store
@@ -9,11 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"path/filepath"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
 // PresetFile is the file a keyring's index lives in, inside the ring directory.
@@ -46,9 +46,9 @@ func LoadPreset(dir string) (Preset, error) {
 
 // LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
 // one file, so a ring on a server reads back with a single remote read.
-func LoadPresetAt(ctx context.Context, files provision.FileStore, dir string) (Preset, error) {
+func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (Preset, error) {
 	if files == nil {
-		files = provision.LocalFileStore{}
+		files = filestore.Local{}
 	}
 	path := filepath.Join(dir, PresetFile)
 	b, err := files.Read(ctx, path)
@@ -100,7 +100,7 @@ func (f presetFile) validate(path string) error {
 func (f presetFile) entries(path string) ([]Entry, error) {
 	out := make([]Entry, 0, len(f.Nodes))
 	for _, n := range f.Nodes {
-		key, err := keyring.ParsePrivateKey(n.Nodekey)
+		key, err := derive.ParsePrivateKey(n.Nodekey)
 		if err != nil {
 			return nil, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}

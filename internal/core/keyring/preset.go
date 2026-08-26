@@ -3,6 +3,7 @@ package keyring
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"strings"
 )
 
@@ -10,7 +11,7 @@ import (
 // identity that follows from it.
 //
 // It replaces the three shapes this used to have — a read-side NodeKey without
-// BLS, a write-side Node with it, and a registry Key with yet another field set
+// derive.BLS, a write-side Node with it, and a registry Key with yet another field set
 // — none of which converted to another.
 type Entry struct {
 	// Label names this entry within a ring. A preset entry is labelled by its
@@ -21,9 +22,9 @@ type Entry struct {
 	Index int
 	// Nodekey is the secret. It redacts itself when formatted; reaching the
 	// hex takes an explicit Hex call.
-	Nodekey PrivateKey
-	// Identity is everything public that derives from Nodekey.
-	Identity
+	Nodekey derive.PrivateKey
+	// derive.Identity is everything public that derives from Nodekey.
+	derive.Identity
 }
 
 // Network is what a *network* decides about a ring's identities: which of them
@@ -39,8 +40,8 @@ type Entry struct {
 type Network struct {
 	// Validators are the validator addresses (0x-hex), in genesis order.
 	Validators []string
-	// BLSKeys are the validators' BLS public keys (0x-hex), aligned with
-	// Validators. Empty for a family that does not use BLS.
+	// BLSKeys are the validators' derive.BLS public keys (0x-hex), aligned with
+	// Validators. Empty for a family that does not use derive.BLS.
 	BLSKeys []string
 	// ExtraData is the RLP-encoded validator extra-data (0x-hex), when the file
 	// recorded one for exactly this set. It is derived from the validator set,
@@ -134,7 +135,7 @@ func (p Preset) NetworkFor(n int) Network {
 }
 
 // truncate returns the first n of s as a new slice, tolerating a shorter s so a
-// set with no BLS keys narrows without a bounds check at every call site.
+// set with no derive.BLS keys narrows without a bounds check at every call site.
 //
 // It copies rather than reslices: the result outlives this call, and a shared
 // array is how an append on the result silently rewrites the original.
@@ -150,7 +151,7 @@ func truncate(s []string, n int) []string {
 // apart: a node would launch with one identity while the genesis registers
 // another, which shows up as a chain that produces no blocks.
 func (e Entry) Verify() error {
-	want, err := Derive(e.Nodekey, derivationFor(e.Identity))
+	want, err := derive.Derive(e.Nodekey, derivationFor(e.Identity))
 	if err != nil {
 		return err
 	}
@@ -162,16 +163,16 @@ func (e Entry) Verify() error {
 		return fmt.Errorf("keyring: node %d: key derives a different devp2p public key", e.Index)
 	}
 	if e.BLS != nil && (want.BLS == nil || want.BLS.PublicKey != e.BLS.PublicKey || want.BLS.PoP != e.BLS.PoP) {
-		return fmt.Errorf("keyring: node %d: key derives different BLS material", e.Index)
+		return fmt.Errorf("keyring: node %d: key derives different derive.BLS material", e.Index)
 	}
 	return nil
 }
 
 // derivationFor asks for exactly as much as the identity claims to have, so
-// verifying a poa entry does not compute BLS material it never had.
-func derivationFor(id Identity) Derivation {
+// verifying a poa entry does not compute derive.BLS material it never had.
+func derivationFor(id derive.Identity) derive.Derivation {
 	if id.BLS != nil {
-		return WithBLS
+		return derive.WithBLS
 	}
-	return AccountOnly
+	return derive.AccountOnly
 }

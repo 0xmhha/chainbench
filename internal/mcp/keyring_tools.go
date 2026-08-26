@@ -31,8 +31,8 @@ func ringSchema(extra map[string]any) map[string]any {
 		"keyringDir": map[string]any{
 			"type": "string",
 			"description": "ring directory; a plain path is the operator machine, srv://<server>/path " +
-				"places the ring on that server; omit for " + app.DefaultRingDir +
-				" or the " + app.RingEnv + " environment variable",
+				"places the ring on that server; omit for " + app.DefaultKeySetDir +
+				" or the " + app.KeySetEnv + " environment variable",
 		},
 		"serverSet": map[string]any{"type": "string", "description": "server-set file for srv:// paths (which servers exist and how to reach them)"},
 		"docker":    map[string]any{"type": "boolean", "description": "the server is a local docker container: translate dials via the localmap next to the server set"},

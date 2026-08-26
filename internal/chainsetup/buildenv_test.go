@@ -42,7 +42,7 @@ func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, req cha
 	return chainsetup.GenesisArtifacts{Genesis: g.bytes, Extra: g.extra}, nil
 }
 
-// fakeSupervisor is a real supervisor whose launch/health seams are fakes: it
+// fakeSupervisor is a real supervisor whose launch and health hooks are fakes: it
 // synthesizes a node set from the plan and always reports healthy.
 func fakeSupervisor() supervisor.Supervisor {
 	return supervisor.New(supervisor.Deps{

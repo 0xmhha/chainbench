@@ -63,7 +63,7 @@ func ExtractConfigSection(genesisJSON []byte, key string) (json.RawMessage, erro
 // applied in sorted order so the result is deterministic. Empty overrides return
 // the input unchanged.
 //
-// This is the delayed-fork seam: the setup phase supplies {"bohoBlock":"10"} to
+// This is the delayed-fork boundary: the setup phase supplies {"bohoBlock":"10"} to
 // move a fork off genesis so a network can be launched with a fork activating at
 // block N. It is engine-agnostic — no fork name is baked in here; the caller
 // (from config `genesis.overrides.*`) names the config keys.

@@ -93,7 +93,7 @@ func TestRegisterIdentities_RegistersEachNode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
-	ring := store.NewRing(t.TempDir())
+	ring := store.NewKeySet(t.TempDir())
 	if err := chainsetup.RegisterIdentities(context.Background(), ring, ks, 4); err != nil {
 		t.Fatalf("RegisterIdentities: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestRegisterIdentities_RejectsDriftedIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Ensure: %v", err)
 	}
-	err = chainsetup.RegisterIdentities(context.Background(), store.NewRing(t.TempDir()), ks, 4)
+	err = chainsetup.RegisterIdentities(context.Background(), store.NewKeySet(t.TempDir()), ks, 4)
 	if err == nil {
 		t.Fatal("want an error when a declared identity does not match its key")
 	}

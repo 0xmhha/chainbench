@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -19,8 +19,8 @@ import (
 // teardown work from a later process.
 const stateFile = "chain-network.json"
 
-// writeNodeSet persists a node set through the file seam.
-func writeNodeSet(ctx context.Context, files provision.FileStore, path string, ns node.NodeSet) error {
+// writeNodeSet persists a node set through the file interface.
+func writeNodeSet(ctx context.Context, files filestore.Store, path string, ns node.NodeSet) error {
 	b, err := json.MarshalIndent(ns, "", "  ")
 	if err != nil {
 		return err

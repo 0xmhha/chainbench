@@ -11,7 +11,7 @@ import (
 
 // The composition side lives in chainsetup — building an environment,
 // sourcing keys, bootstrapping a producer — and the runner consumes it
-// through this bridge. It is the V6 seam: the local engine still asks the
+// through this bridge. It is the V6 boundary: the local engine still asks the
 // setup module to build its environment; the workflow layer (V6.2) will
 // compose the two from above, and what remains here then is only what the
 // runner genuinely needs by name.
@@ -53,7 +53,7 @@ func NewNodeController(launcher LocalLauncher, procs *process.Manager) *chainset
 type KeySet = chainsetup.KeySet
 
 // RegisterIdentities loads a key set's identities into a ring.
-func RegisterIdentities(ctx context.Context, ring *store.Ring, ks KeySet, n int) error {
+func RegisterIdentities(ctx context.Context, ring *store.KeySet, ks KeySet, n int) error {
 	return chainsetup.RegisterIdentities(ctx, ring, ks, n)
 }
 

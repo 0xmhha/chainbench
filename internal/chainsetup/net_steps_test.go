@@ -16,7 +16,7 @@ import (
 const presetDir = "../../keys/preset"
 
 // TestNetStepPipeline composes a network step by step without a chain binary:
-// new -> allocate -> keys -> genesis -> config -> launchopts -> provision.
+// new -> allocate -> keys -> genesis -> config -> launchopts -> filestore.
 // It pins that each step persists its state, that the argv comes from the
 // single assembly site with overrides applied, and that the lifecycle steps
 // fail with actionable errors when their prerequisites are missing.

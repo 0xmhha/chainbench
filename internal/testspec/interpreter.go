@@ -14,7 +14,7 @@ import (
 // Deps are the collaborators an interpreter needs, injected at construction so
 // no package-global state is used and tests stay isolated.
 type Deps struct {
-	Keys      *store.Ring
+	Keys      *store.KeySet
 	Accounts  accounts.AccountProvider
 	RPC       func(url string) *rpc.Client
 	Collector collector.Collector

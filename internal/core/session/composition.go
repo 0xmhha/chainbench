@@ -29,7 +29,7 @@ type Step struct {
 	At     string `json:"at,omitempty"`
 }
 
-// Composition is the persistence seam of one long-lived environment: it owns
+// Composition is the persistence boundary of one long-lived environment: it owns
 // the control directory, the state file, and step timestamps. The state
 // payload's shape belongs to the caller (netcompose keeps its domain state);
 // this type owns where and how it persists.

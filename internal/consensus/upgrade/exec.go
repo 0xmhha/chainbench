@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -46,16 +46,16 @@ type LaunchOptions struct {
 	WaitReady func(ctx context.Context, endpoints []string) error
 	// Files is where the shared genesis is written. Nil is the local
 	// filesystem, which is what a local handoff wants and what this used to do
-	// unconditionally — the seam exists so a caller running against a remote
+	// unconditionally — the boundary exists so a caller running against a remote
 	// target can send the genesis where the nodes are rather than to the
 	// machine driving them — the defect the remote-provision path used to
 	// have, where a remote network's files landed on the operator's machine.
-	Files provision.FileStore
+	Files filestore.Store
 }
 
-func (o LaunchOptions) files() provision.FileStore {
+func (o LaunchOptions) files() filestore.Store {
 	if o.Files == nil {
-		return provision.LocalFileStore{}
+		return filestore.Local{}
 	}
 	return o.Files
 }

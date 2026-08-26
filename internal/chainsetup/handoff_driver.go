@@ -14,12 +14,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -347,10 +347,10 @@ func firstEntry(dir string) (string, error) {
 // copyFiles copies the regular files of src into dst.
 //
 // src is read from this machine — the key preset is the operator's — while dst
-// is written through the seam, because that side is the target. The asymmetry
+// is written through the boundary, because that side is the target. The asymmetry
 // is the point: it is what lets the same call place a keystore on a remote
 // node instead of beside the preset it came from.
-func copyFiles(ctx context.Context, files provision.FileStore, src, dst string) error {
+func copyFiles(ctx context.Context, files filestore.Store, src, dst string) error {
 	ents, err := os.ReadDir(src)
 	if err != nil {
 		return err

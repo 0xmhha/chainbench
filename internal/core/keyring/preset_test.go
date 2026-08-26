@@ -2,6 +2,7 @@ package keyring_test
 
 import (
 	"bytes"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,7 +20,7 @@ func bareRing(t *testing.T, nodes int) keyring.Preset {
 		Nodes: nodes, Validators: &none,
 		Out: t.TempDir(), Password: "1", Balance: "0x1",
 		Derive: store.WithBLS,
-		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x5a}, nodes*keyring.PrivateKeyLen)),
+		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x5a}, nodes*derive.PrivateKeyLen)),
 	}, nil)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
@@ -135,7 +136,7 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 			created, err := store.Generate(store.GenerateOpts{
 				Nodes: 3, Validators: tc.validators, Out: dir,
 				Password: "1", Balance: "0x1", Derive: store.WithBLS,
-				Rand: bytes.NewReader(bytes.Repeat([]byte{0x33}, 3*keyring.PrivateKeyLen)),
+				Rand: bytes.NewReader(bytes.Repeat([]byte{0x33}, 3*derive.PrivateKeyLen)),
 			}, nil)
 			if err != nil {
 				t.Fatalf("Generate: %v", err)
@@ -147,7 +148,7 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 			extended, err := store.Extend(store.GenerateOpts{
 				Nodes: 2, Validators: tc.validators, Out: dir,
 				Password: "1", Balance: "0x1", Derive: store.WithBLS,
-				Rand: bytes.NewReader(bytes.Repeat([]byte{0x44}, 2*keyring.PrivateKeyLen)),
+				Rand: bytes.NewReader(bytes.Repeat([]byte{0x44}, 2*derive.PrivateKeyLen)),
 			}, nil)
 			if err != nil {
 				t.Fatalf("Extend: %v", err)
@@ -169,7 +170,7 @@ func TestExtend_RejectsMoreValidatorsThanIdentities(t *testing.T) {
 	dir := t.TempDir()
 	if _, err := store.Generate(store.GenerateOpts{
 		Nodes: 2, Out: dir, Password: "1", Balance: "0x1",
-		Rand: bytes.NewReader(bytes.Repeat([]byte{0x55}, 2*keyring.PrivateKeyLen)),
+		Rand: bytes.NewReader(bytes.Repeat([]byte{0x55}, 2*derive.PrivateKeyLen)),
 	}, nil); err != nil {
 		t.Fatalf("Generate: %v", err)
 	}

@@ -99,7 +99,7 @@ func (r *chunkReader) ReadFrom(_ context.Context, _ string, offset int64) ([]byt
 }
 
 // TestCollector_TailUsesTheInjectedLogReader proves the tail loop reads through
-// a seam rather than the filesystem, which is what lets a remote reader (SSH)
+// a boundary rather than the filesystem, which is what lets a remote reader (SSH)
 // substitute for the local one. The first chunk ends mid-line; the partial must
 // be neither emitted nor lost.
 func TestCollector_TailUsesTheInjectedLogReader(t *testing.T) {

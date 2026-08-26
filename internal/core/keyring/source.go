@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"strings"
 
 	"github.com/0xmhha/accounts/account"
 	"github.com/0xmhha/accounts/hdwallet"
 
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
 // DefaultCoinType is Ethereum's SLIP-44 coin type. BIP-39/BIP-44 uses it by
@@ -40,13 +41,13 @@ func (p HDPath) String() string {
 // Source is where a key comes from: freshly generated, given literally, derived
 // from a mnemonic, or read from a file here or on another host.
 //
-// Every source yields a [PrivateKey] and nothing else. What that key means —
-// address, devp2p public key, BLS material — is [Derive]'s job, so a source
+// Every source yields a [derive.PrivateKey] and nothing else. What that key means —
+// address, devp2p public key, derive.BLS material — is [derive.Derive]'s job, so a source
 // never has to know which of those a caller wants.
 //
 // ctx is accepted for sources that do I/O; the rest ignore it.
 type Source interface {
-	Resolve(ctx context.Context) (PrivateKey, error)
+	Resolve(ctx context.Context) (derive.PrivateKey, error)
 }
 
 // RandomSource generates a fresh key.
@@ -56,17 +57,17 @@ type RandomSource struct {
 }
 
 // Resolve generates a new key.
-func (s RandomSource) Resolve(context.Context) (PrivateKey, error) {
+func (s RandomSource) Resolve(context.Context) (derive.PrivateKey, error) {
 	if s.Rand != nil {
 		raw, err := s.Rand()
 		if err != nil {
-			return PrivateKey{}, err
+			return derive.PrivateKey{}, err
 		}
-		return ParsePrivateKey(hex.EncodeToString(raw))
+		return derive.ParsePrivateKey(hex.EncodeToString(raw))
 	}
 	a, err := account.Generate()
 	if err != nil {
-		return PrivateKey{}, fmt.Errorf("keyring: generate: %w", err)
+		return derive.PrivateKey{}, fmt.Errorf("keyring: generate: %w", err)
 	}
 	return fromAccount(a)
 }
@@ -77,8 +78,8 @@ type PrivateKeySource struct {
 }
 
 // Resolve decodes the key.
-func (s PrivateKeySource) Resolve(context.Context) (PrivateKey, error) {
-	return ParsePrivateKey(s.Hex)
+func (s PrivateKeySource) Resolve(context.Context) (derive.PrivateKey, error) {
+	return derive.ParsePrivateKey(s.Hex)
 }
 
 // MnemonicSource derives a key from a BIP-39 mnemonic at an HD path.
@@ -90,14 +91,14 @@ type MnemonicSource struct {
 }
 
 // Resolve derives the key from the mnemonic at the configured path.
-func (s MnemonicSource) Resolve(context.Context) (PrivateKey, error) {
+func (s MnemonicSource) Resolve(context.Context) (derive.PrivateKey, error) {
 	w, err := hdwallet.FromMnemonic(strings.TrimSpace(s.Mnemonic), s.Passphrase)
 	if err != nil {
-		return PrivateKey{}, fmt.Errorf("keyring: mnemonic: %w", err)
+		return derive.PrivateKey{}, fmt.Errorf("keyring: mnemonic: %w", err)
 	}
 	a, err := w.Derive(s.Path.String())
 	if err != nil {
-		return PrivateKey{}, fmt.Errorf("keyring: derive %s: %w", s.Path, err)
+		return derive.PrivateKey{}, fmt.Errorf("keyring: derive %s: %w", s.Path, err)
 	}
 	return fromAccount(a)
 }
@@ -111,7 +112,7 @@ func (s MnemonicSource) Resolve(context.Context) (PrivateKey, error) {
 // special kind of remote.
 type FileSource struct {
 	// Files is where the key file lives. Nil means the local filesystem.
-	Files provision.FileStore
+	Files filestore.Store
 	// Path is the key file's path on that store.
 	Path string
 	// Password decrypts a keystore; unused for a raw hex key.
@@ -120,42 +121,42 @@ type FileSource struct {
 
 // Resolve reads the key file and decodes it, detecting a keystore JSON versus a
 // raw hex key.
-func (s FileSource) Resolve(ctx context.Context) (PrivateKey, error) {
+func (s FileSource) Resolve(ctx context.Context) (derive.PrivateKey, error) {
 	files := s.Files
 	if files == nil {
-		files = provision.LocalFileStore{}
+		files = filestore.Local{}
 	}
 	data, err := files.Read(ctx, s.Path)
 	if err != nil {
-		return PrivateKey{}, fmt.Errorf("keyring: read key file: %w", err)
+		return derive.PrivateKey{}, fmt.Errorf("keyring: read key file: %w", err)
 	}
 	return decodeKeyFile(data, s.Password)
 }
 
 // decodeKeyFile decodes key-file bytes, detecting a keystore JSON (decrypted
 // with pw) versus a raw hex key.
-func decodeKeyFile(data []byte, pw PasswordSource) (PrivateKey, error) {
+func decodeKeyFile(data []byte, pw PasswordSource) (derive.PrivateKey, error) {
 	data = bytes.TrimSpace(data)
 	if len(data) > 0 && data[0] == '{' {
 		if pw == nil {
-			return PrivateKey{}, fmt.Errorf("keyring: keystore needs a password")
+			return derive.PrivateKey{}, fmt.Errorf("keyring: keystore needs a password")
 		}
 		password, err := pw.Password()
 		if err != nil {
-			return PrivateKey{}, err
+			return derive.PrivateKey{}, err
 		}
 		a, err := account.FromKeystore(data, password)
 		if err != nil {
-			return PrivateKey{}, fmt.Errorf("keyring: decrypt keystore: %w", err)
+			return derive.PrivateKey{}, fmt.Errorf("keyring: decrypt keystore: %w", err)
 		}
 		return fromAccount(a)
 	}
-	return ParsePrivateKey(string(data))
+	return derive.ParsePrivateKey(string(data))
 }
 
 // fromAccount extracts the key from an SDK account. The SDK's account type is
 // the accounts library's, and it stops here: above this package a key is a
-// [PrivateKey] and what it implies is an [Identity].
-func fromAccount(a *account.Account) (PrivateKey, error) {
-	return ParsePrivateKey(hex.EncodeToString(a.PrivateKeyBytes()))
+// [derive.PrivateKey] and what it implies is an [derive.Identity].
+func fromAccount(a *account.Account) (derive.PrivateKey, error) {
+	return derive.ParsePrivateKey(hex.EncodeToString(a.PrivateKeyBytes()))
 }

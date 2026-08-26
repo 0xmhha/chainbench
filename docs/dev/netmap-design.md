@@ -266,20 +266,20 @@ func ParseRoleLabel(NodeLabel) (node.Role, int, error)
 역할이 섞여 있어도 `en1` 은 언제나 "가장 앞선 en" 이다. 전체 조망은 `net map` 이 역할별
 집계를 함께 찍어 해결한다.
 
-### 2.6 체인별 차이 — 새 타입이 아니라 기존 두 seam
+### 2.6 체인별 차이 — 새 타입이 아니라 기존 두 boundary
 
 초안은 `PortProfile{NeedsEtcd, AllowsPN}` 하나를 뒀는데, **이름이 어색한 이유는 두 개념을
 한 타입에 넣었기 때문**이었다. 포트 요구(파생·검증의 입력)와 역할 허용(선언의 검증)은
 성격이 다르고 — 그리고 둘 다 **이미 이름이 있다.**
 
-| 질문 | 기존 seam | 어디에 |
+| 질문 | 기존 boundary | 어디에 |
 |---|---|---|
-| 이 패밀리 노드가 요구하는 포트 span 은? | `PortReservation() portplan.Reservation` | [[family-bringup-design]] §seam |
+| 이 패밀리 노드가 요구하는 포트 span 은? | `PortReservation() portplan.Reservation` | [[family-bringup-design]] §boundary |
 | 이 역할이 이 패밀리에서 유효한가? | `SupportsRole(Role) bool` | [[chainbench-worklist]] N0b |
 
 netmap 은 새 타입을 만들지 않고 이 둘을 **소비**한다: Assign 이 `PortReservation` 으로
 베이스 간격을 검증하고(wemix 는 etcd=p2p+1 이라 span 2 이상), Peering 이 `SupportsRole` 로
-poa+pn 선언을 거부한다. `serverset` 의 전역 `p2pStep>=2` 강제는 이렇게 패밀리 seam 으로
+poa+pn 선언을 거부한다. `serverset` 의 전역 `p2pStep>=2` 강제는 이렇게 패밀리 boundary 으로
 옮겨져 F1 게이트("poa 는 step 2 거부, wbft 는 허용")가 닫힌다.
 
 | | wbft 계열 | poa(wemix) |
@@ -366,7 +366,7 @@ netmap 의 `Placement` 는 인벤토리 키(`Server string`)만 들고, 접속�
 | **NM1** | `core/netmap` 신설 — node.Role 에 bp/en/pn 추가·Ports(Etcd 포함)·Map/Placement·NodeLabel·legacy 매핑 | 기존 topology/NodeState 를 **읽기 호환**으로 흡수 · 문자열 역할이 남지 않음 · DSL 의 `"node"+i` 하드코딩이 `netmap.NodeLabel` 로 |
 | **NM1c** | **선행 결함 수정** — 셀렉터 폴딩표를 `netmap.NormalizeRole` 경유로 · 신원/별칭 두 표기(§2.5a) | ☑ **완료 2026-08-22.** `on:"bp1"` 이 `RoleBP`·`RoleValidator` 양쪽에 매칭 · `pn` 셀렉터 · `on:"node7"`(신원) 해석 · `RoleLabel`/`ParseRoleLabel` · `Placement{Index, Ord}` |
 | **NM1b** | Pool + Assign — 인벤토리 **v2 단독** 스키마(hosts×slots·ports 2대역·sudo·dataRoot) + 결정적 할당 | ☑ **완료 2026-08-22.** 5호스트×4슬롯×15노드 테이블 테스트 · 초과는 부족 수를 말하며 거부 · **`place` 두 결정적 모드를 바이트 동일 재현**(등가 테스트) · v1 은 고칠 방법을 말하며 거부 · 루프백 여부로 local/remote 판정 |
-| **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` seam — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` seam 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
+| **NM2** | Peering 파생 + `StaticNodes` + `SupportsRole` boundary — mesh 는 **현행 argv 와 바이트 동일** | ☑ **완료 2026-08-22.** 골든(`engine.armSpecs` 산출 config 의 enode 목록 == `netmap.Mesh`, self 항목 포함까지) · proxied 는 en 목록에 bp 없음 · pn 없는 proxied 거부 · `ConsensusFamily.SupportsRole` 로 poa+pn 거부. **잔여**: `serverset` 전역 `p2pStep>=2` → `PortReservation` boundary 은 F1 (패밀리 인터페이스가 포트 예약을 말하게 하는 일이라 F 트랙) |
 | **NM2b** | **`Layout`** — dataRoot 하위 경로 파생(순수 계산, 쓰기 없음). `"node%d"` 32곳 중 경로 파생분을 흡수 | ☑ **완료 2026-08-22 — 구현은 NM5 에서 `netmap.Layout` 으로 함께 들어왔다.** 노드 경로 4종(datadir·config·log·genesis)을 라벨에서 파생하고, 파일 쓰기는 0건이다. Root 만 바꾸면 로컬 워크스페이스와 서버 destination 에 같은 파생이 쓰인다. [[key-and-material-design]] §4.3 의 `bin`/`material`/`run` 구획은 이 단계의 범위가 아니다 — 자료 업로드 작업과 함께 간다 |
 | **NM3** | 조립 4곳 → netmap 소비 (engine·netcompose 먼저, upgrade·chainsetup 은 F4·F5 와) · `node.Endpoints`→`netmap.Ports`(Etcd 부활) | ◐ **static-nodes + 할당 전환 완료 2026-08-22**: 철자 무관 술어(`netmap.Is`) 9곳 · engine·netcompose 가 `netmap.Peering.StaticNodes` 경유 · `--peering` CLI/MCP 노출 · **라이브**(stablenet mesh 4노드 api 9/9 · wbft mesh 4노드 블록 54 · stablenet **proxied** 5노드 블록 전진+api 9/9, 고아 0). **할당 전환**: `place.Allocator` 프로덕션 호출 **0** — engine·netcompose·chainsetup 이 `netmap.Assign` 경유, `serverset.Placement` 가 `Pool` 을 함께 나른다. 라이브 재확인(포트 동일·api 9/9·고아 0). **포트 타입 통합 완료**: 표현 3벌 → **1벌**. 단, 방향은 설계와 반대다 — `node`(L0)는 `netmap`(L1)을 import 할 수 없으므로 **어휘를 L0 에 두고** `portplan.Ports`·`netmap.Ports` 가 `node.Endpoints` 의 별칭이 됐다. `Etcd` 가 런타임·워크스페이스까지 살아남는다(`"etcd": 31001` 실측). ☑ |
 | **NM4** | 표면 — `net map`·`net pool` 신설 + `--peering` (§3) | ☑ **완료 2026-08-22.** `app.NetMap`/`NetPool` 유스케이스 1개씩 → CLI 1개 + MCP 1개(K8 선례) · 4방향 조회(node·label(신원/별칭)·host·port) · 선택자 2개는 거부 · 무응답은 "nothing matches" 로 명시 · **`NetPoolOut` 에 자격증명 필드 부재를 리플렉션 테스트로 고정** |

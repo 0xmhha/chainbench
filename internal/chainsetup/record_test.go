@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // TestRecordRun_WritesTheFactsAndNeverASecret pins the record's two
@@ -46,7 +46,7 @@ func TestRecordRun_WritesTheFactsAndNeverASecret(t *testing.T) {
 
 	// The target is faked local so the genesis read-back has something to read.
 	tdir := t.TempDir()
-	files := provision.LocalFileStore{}
+	files := filestore.Local{}
 	if err := files.Write(context.Background(), filepath.Join(tdir, "genesis.json"), []byte(`{"config":{}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}

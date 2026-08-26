@@ -121,7 +121,7 @@ flowchart TD
     r5 --> rn
     rn --> mat["materialize (L3)"]
 
-    mat --> sink["provision.FileStore<br/>local | ssh<br/>내용 해시가 같으면 skip"]
+    mat --> sink["filestore.Store<br/>local | ssh<br/>내용 해시가 같으면 skip"]
     mat --> argv["launch argv"]
     sink --> sup["supervisor (L3)<br/>페이즈 실행"]
     argv --> sup

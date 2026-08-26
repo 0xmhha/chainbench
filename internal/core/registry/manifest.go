@@ -68,7 +68,7 @@ type Manifest struct {
 }
 
 // BootstrapSpec describes how a network of a chain is brought up to producing
-// blocks — the seam between the two consensus families.
+// blocks — the boundary between the two consensus families.
 type BootstrapSpec struct {
 	// Type is one of:
 	//   "static"          - validators and BLS keys come from the genesis, and

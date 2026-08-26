@@ -3,6 +3,7 @@ package keyring_test
 import (
 	"context"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -12,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
-// stubStore stands in for a file store on another host — the seam that lets one
+// stubStore stands in for a file store on another host — the boundary that lets one
 // source serve a local file and a remote one.
 type stubStore struct {
 	data map[string][]byte
@@ -94,7 +95,7 @@ func TestSources_AllYieldAPrivateKey(t *testing.T) {
 				t.Errorf("resolved a different key than the one supplied")
 			}
 			// Whatever the origin, the key means the same thing.
-			if _, err := keyring.Derive(key, keyring.AccountOnly); err != nil {
+			if _, err := derive.Derive(key, derive.AccountOnly); err != nil {
 				t.Errorf("Derive: %v", err)
 			}
 		})
@@ -177,9 +178,9 @@ func TestBackends_RoundTrip(t *testing.T) {
 	}
 }
 
-func mustParse(t *testing.T, hex string) keyring.PrivateKey {
+func mustParse(t *testing.T, hex string) derive.PrivateKey {
 	t.Helper()
-	k, err := keyring.ParsePrivateKey(hex)
+	k, err := derive.ParsePrivateKey(hex)
 	if err != nil {
 		t.Fatalf("ParsePrivateKey: %v", err)
 	}

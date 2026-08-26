@@ -6,7 +6,7 @@ import (
 
 // LaunchArgs builds the full launch argv (excluding the binary itself) for one
 // node of a handoff network, through the launchopt Builder (the single argv
-// assembly seam — docs/dev/architecture/code-graph.md §3). It differs from the
+// assembly boundary — docs/dev/architecture/code-graph.md §3). It differs from the
 // plain setup launch profile in the two ways the live handoff proved to
 // require:
 //

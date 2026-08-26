@@ -16,7 +16,7 @@ import (
 // need — the wbft family uses the validator set / BLS / extra-data / members /
 // alloc; the poa family uses only ChainID / Coinbase (its membership is set at
 // bootstrap). Defined here (not in pkg/core/genesis) so the ConsensusFamily
-// contract stays the single dispatch seam and core need not import a family.
+// contract stays the single dispatch boundary and core need not import a family.
 type GenesisParams struct {
 	ChainID    int64
 	Validators []string        // validator addresses (0x-hex) — wbft family
@@ -66,7 +66,7 @@ type ConsensusFamily interface {
 	// exist, and only the family can say so (netmap-design 2.6).
 	SupportsRole(role node.Role) bool
 	// BuildGenesis substitutes the family's placeholders in template with
-	// params and returns the genesis.json bytes. This is the dispatch seam that
+	// params and returns the genesis.json bytes. This is the dispatch boundary that
 	// lets pkg/core/genesis build a genesis without importing any family.
 	BuildGenesis(template []byte, params GenesisParams) ([]byte, error)
 }

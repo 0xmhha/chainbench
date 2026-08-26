@@ -80,7 +80,7 @@ type KeySourceV2 struct {
 	Ref string `json:"ref,omitempty"`
 	// Bootnode named the external BLS-deriving binary. It is accepted so that
 	// existing specs keep parsing, and ignored: BLS material is now derived in
-	// process (keyring.Derive).
+	// process (derive.Derive).
 	//
 	// Deprecated: has no effect.
 	Bootnode string `json:"bootnode,omitempty"`
@@ -90,7 +90,7 @@ type KeySourceV2 struct {
 // template + overlay; Set is dot-path sugar over the same overlay.
 type GenesisV2 struct {
 	// Mode is "template" (default). The other design modes (existing | build |
-	// inherit) are declared in the design but have no runtime seam yet; they
+	// inherit) are declared in the design but have no runtime boundary yet; they
 	// are rejected by name rather than silently treated as template.
 	Mode string `json:"mode,omitempty"`
 	// Set applies dot-path single values (e.g. "config.chainId": 8284).
@@ -246,10 +246,10 @@ func lowerCase(c CaseV2) (Spec, error) {
 	}
 
 	// Genesis: template(+overlay/set) is the runtime's proven path; the other
-	// declared modes have no seam yet and are rejected by name (G2 partial).
+	// declared modes have no support yet and are rejected by name (G2 partial).
 	if g := env.Genesis; g != nil {
 		if g.Mode != "" && g.Mode != "template" {
-			return Spec{}, fmt.Errorf("testspec: case %s: genesis mode %q has no runtime seam yet (supported: template)", c.ID, g.Mode)
+			return Spec{}, fmt.Errorf("testspec: case %s: genesis mode %q has no runtime boundary yet (supported: template)", c.ID, g.Mode)
 		}
 		overlay := map[string]any{}
 		maps.Copy(overlay, g.Overlay)
@@ -262,7 +262,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	}
 
 	// Keys/launch declarations carry through for the surface (cmd run) to fold
-	// into the engine's construction seams.
+	// into the engine's construction boundaries.
 	if env.Keys != nil && env.Keys.NodeKeys != nil {
 		spec.EnvKeys = env.Keys.NodeKeys
 	}

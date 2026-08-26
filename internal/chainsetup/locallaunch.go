@@ -7,10 +7,10 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -40,7 +40,7 @@ type LocalSetup struct {
 	Driver driver.Driver
 	// Files materializes on-disk files; nil defaults to the local filesystem. Set a
 	// driver.RemoteFileStore to ship genesis + config to a remote host.
-	Files provision.FileStore
+	Files filestore.Store
 	// Bus receives setup progress; nil drops the events. It exists because the
 	// dashboard shows a bring-up as it happens, and a launch that reports
 	// nothing until it finishes looks indistinguishable from one that hung.

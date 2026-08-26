@@ -7,8 +7,8 @@
 // go-stablenet, go-wbft, and go-wemix; only two things differ, and neither is
 // the key's structure:
 //
-//   - Whether BLS material is used at all. The wbft family consumes it; the
-//     poa family (wemix) has no BLS references. Hence [Derivation] — BLS is
+//   - Whether derive.BLS material is used at all. The wbft family consumes it; the
+//     poa family (wemix) has no derive.BLS references. Hence [derive.Derivation] — derive.BLS is
 //     opt-in, and when it is not asked for it is absent, not zeroed.
 //   - Whether the consensus account is the nodekey's own address. The wbft
 //     family derives it; wemix conventionally uses a separate keystore.
@@ -25,10 +25,10 @@
 // between hosts without a network existing yet, which is what lets a network be
 // declared by hand instead of being implied by a preset.
 //
-// # Derivation runs in process
+// # derive.Derivation runs in process
 //
-// Address, devp2p public key, BLS public key and BLS proof of possession are
+// Address, devp2p public key, derive.BLS public key and derive.BLS proof of possession are
 // all computed here in Go. No chain binary is executed, so key generation works
-// with no build of go-wbft present and with CGO disabled. [Derive] is checked
+// with no build of go-wbft present and with CGO disabled. [derive.Derive] is checked
 // byte for byte against the shipped keys/preset fixture.
 package keyring

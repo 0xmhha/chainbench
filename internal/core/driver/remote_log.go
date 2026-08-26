@@ -7,9 +7,9 @@ import (
 )
 
 // RemoteLogReader reads a node's log from another host over SSH. It satisfies
-// the collector's LogReader seam structurally, so the same tail loop follows a
+// the collector's LogReader boundary structurally, so the same tail loop follows a
 // remote node's log with no change above it — which is the whole point of the
-// seam.
+// boundary.
 //
 // It uses `tail -c +N`, whose offset is 1-based, so byte offset 0 is `+1`. That
 // spelling matters: `tail -n` would re-read by lines and lose the exact byte

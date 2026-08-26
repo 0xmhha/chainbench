@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
@@ -14,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
@@ -30,11 +30,11 @@ const configFilePerm os.FileMode = 0o644
 // set. For each node it renders the config, installs the preset identity
 // (devp2p nodekey, and for validators the unlock account), initializes the
 // datadir from the network genesis, and launches the process. It implements the
-// supervisor launch seam, so NewBuildEnv brings a real network up on the
+// supervisor launch boundary, so NewBuildEnv brings a real network up on the
 // allocator-assigned ports.
 //
 // On-disk files (genesis, per-node config) are materialized through a
-// provision.FileStore (upload-if-absent), so a rerun reuses existing files and a
+// filestore.Store (upload-if-absent), so a rerun reuses existing files and a
 // remote sink can later ship them to another host without changing this type.
 type LocalLauncher struct {
 	// Peering selects the peer graph the nodes are wired into. The zero value
@@ -53,7 +53,7 @@ type LocalLauncher struct {
 	// Driver launches the nodes; nil defaults to the local driver.
 	Driver driver.Driver
 	// Files materializes on-disk files; nil defaults to the local filesystem.
-	Files provision.FileStore
+	Files filestore.Store
 	// LaunchOverrides are high-precedence launch knobs (env.launch / case
 	// layers) applied to every node's argv after the role-derived modules.
 	LaunchOverrides []launchopt.Override
@@ -137,9 +137,9 @@ func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
 	sink := l.Files
 	if sink == nil {
-		sink = provision.LocalFileStore{}
+		sink = filestore.Local{}
 	}
-	if err := materialize(ctx, provision.New(sink), plan, specs); err != nil {
+	if err := materialize(ctx, filestore.New(sink), plan, specs); err != nil {
 		return err
 	}
 	if fp, remote := l.fileProvisioner(); remote {
@@ -269,11 +269,11 @@ func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan driver.Plan, spec
 // through the provisioner (upload-if-absent, so a rerun reuses existing files).
 // Identity files (nodekey, keystore, password) already live in the preset dir
 // and are referenced by path rather than copied.
-func materialize(ctx context.Context, pv *provision.Provisioner, plan driver.Plan, specs []driver.NodeSpec) error {
+func materialize(ctx context.Context, pv *filestore.Provisioner, plan driver.Plan, specs []driver.NodeSpec) error {
 	if len(plan.Genesis) > 0 {
-		in := provision.NodeInputs{
+		in := filestore.NodeInputs{
 			DataDir: plan.DataRoot,
-			Files:   []provision.File{{Path: filepath.Base(plan.GenesisPath), Content: plan.Genesis, Mode: genesisFilePerm}},
+			Files:   []filestore.File{{Path: filepath.Base(plan.GenesisPath), Content: plan.Genesis, Mode: genesisFilePerm}},
 		}
 		if _, err := pv.Provision(ctx, in); err != nil {
 			return fmt.Errorf("engine: launcher: genesis: %w", err)
@@ -283,9 +283,9 @@ func materialize(ctx context.Context, pv *provision.Provisioner, plan driver.Pla
 		if len(spec.ConfigContent) == 0 {
 			continue
 		}
-		in := provision.NodeInputs{
+		in := filestore.NodeInputs{
 			DataDir: filepath.Dir(spec.ConfigPath),
-			Files:   []provision.File{{Path: filepath.Base(spec.ConfigPath), Content: spec.ConfigContent, Mode: configFilePerm}},
+			Files:   []filestore.File{{Path: filepath.Base(spec.ConfigPath), Content: spec.ConfigContent, Mode: configFilePerm}},
 		}
 		if _, err := pv.Provision(ctx, in); err != nil {
 			return fmt.Errorf("engine: launcher: config node%d: %w", spec.Index, err)

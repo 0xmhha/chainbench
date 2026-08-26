@@ -110,7 +110,7 @@ func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 	return phases
 }
 
-// The bring-up actions this family names. They are strings at the seam because
+// The bring-up actions this family names. They are strings at the boundary because
 // the core does not know what they mean; these constants exist so the family
 // and whoever wires the executor agree on the spelling.
 const (

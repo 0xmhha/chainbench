@@ -2,15 +2,16 @@ package keyringcmd
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
@@ -138,7 +139,7 @@ func (f *SourceFlags) fromPath() (string, error) {
 // openFrom resolves a --from path to the store that holds it and the path on
 // that store. Local, server set-named, and directly-addressed hosts all end up
 // here, so none of them can grow its own read.
-func (f *SourceFlags) openFrom(path string, env func(string) string) (provision.FileStore, string, error) {
+func (f *SourceFlags) openFrom(path string, env func(string) string) (filestore.Store, string, error) {
 	spec, err := machine.Parse(path)
 	if err != nil {
 		return nil, "", err
@@ -223,7 +224,7 @@ func (f *PasswordFlags) Source() keyring.PasswordSource {
 
 // saveKey persists the key per the store/password flags, returning the file path, or
 // "" when storage is disabled. A keystore store requires a password.
-func saveKey(sf *storeFlags, pf *PasswordFlags, key keyring.PrivateKey) (string, error) {
+func saveKey(sf *storeFlags, pf *PasswordFlags, key derive.PrivateKey) (string, error) {
 	if !sf.enabled() {
 		return "", nil
 	}

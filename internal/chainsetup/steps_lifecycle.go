@@ -256,7 +256,7 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 }
 
 // Logs returns the last n lines of one node's log. The log lives on the
-// target, so it is read through the target's file store — the same seam that
+// target, so it is read through the target's file store — the same boundary that
 // wrote it — which is what makes a remote node's log one call instead of a
 // branch. (The collector's live tail has its own byte-offset reader; this is
 // the step surface's one-shot read.)

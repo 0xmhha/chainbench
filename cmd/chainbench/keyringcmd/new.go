@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
 // defaultRingBalance pre-funds each generated identity in the genesis alloc.
@@ -24,7 +24,7 @@ const (
 )
 
 // makeFlags are shared by `keyring new` and `keyring add`, which differ only in
-// whether the ring has to exist.
+// whether the key set has to exist.
 type makeFlags struct {
 	ring       ringFlags
 	bls        blsFlag
@@ -38,7 +38,7 @@ type makeFlags struct {
 func (f *makeFlags) bind(cmd *cobra.Command, validatorsHelp string) {
 	f.ring.bind(cmd)
 	f.bls.bind(cmd)
-	f.jsonF.bind(cmd, "the created ring")
+	f.jsonF.bind(cmd, "the created key set")
 	cmd.Flags().IntVar(&f.count, "count", 0, "how many identities to create")
 	cmd.Flags().IntVar(&f.validators, "validators", 0, validatorsHelp)
 	cmd.Flags().StringVar(&f.password, "password", "1", "password for the generated keystores")
@@ -49,48 +49,48 @@ func (f *makeFlags) bind(cmd *cobra.Command, validatorsHelp string) {
 // in builds the use-case input. Whether --validators was typed is carried as a
 // pointer, because the flag value alone cannot distinguish "none" from "unset"
 // and the two mean opposite things.
-func (f *makeFlags) in(cmd *cobra.Command) keyringmod.RingCreateIn {
+func (f *makeFlags) in(cmd *cobra.Command) operation.CreateIn {
 	var validators *int
 	if cmd.Flags().Changed("validators") {
 		v := f.validators
 		validators = &v
 	}
-	return keyringmod.RingCreateIn{
+	return operation.CreateIn{
 		Ring: f.ring.ref(), Count: f.count, Validators: validators,
 		WithBLS: f.bls.on, Password: f.password, Balance: f.balance,
 	}
 }
 
-// newKeyringNewCmd creates a ring.
+// newKeyringNewCmd creates a key set.
 func newKeyringNewCmd() *cobra.Command {
 	var mk makeFlags
 	cmd := &cobra.Command{
 		Use:   "new",
-		Short: "Create a ring of identities",
+		Short: "Create a key set",
 		Long: "Creates a ring: per-identity keys, their derived address and (with\n" +
 			"--with-bls) BLS material, an encrypted keystore each, and the index the\n" +
 			"harness reads.\n\n" +
 			"Nothing is executed — no chain binary needs to exist — so this is how a\n" +
 			"network is started from scratch rather than from a committed fixture.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRingCreate(cmd, keyringmod.KeyringNew, &mk)
+			return runRingCreate(cmd, operation.New, &mk)
 		},
 	}
 	mk.bind(cmd, validatorsHelpNew)
 	return cmd
 }
 
-// newKeyringAddCmd extends an existing ring.
+// newKeyringAddCmd extends an existing key set.
 func newKeyringAddCmd() *cobra.Command {
 	var mk makeFlags
 	cmd := &cobra.Command{
 		Use:   "add",
-		Short: "Add identities to an existing ring",
+		Short: "Add identities to an existing key set",
 		Long: "Adds identities, keeping the ones already there. Existing identities are\n" +
 			"referenced the moment they exist — in a genesis, in a running datadir, in\n" +
 			"a test's declaration — so they are never regenerated.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runRingCreate(cmd, keyringmod.KeyringAdd, &mk)
+			return runRingCreate(cmd, operation.Add, &mk)
 		},
 	}
 	mk.bind(cmd, validatorsHelpAdd)
@@ -98,7 +98,7 @@ func newKeyringAddCmd() *cobra.Command {
 }
 
 // ringCreateFunc is the shape both creating verbs share.
-type ringCreateFunc func(context.Context, keyringmod.Deps, keyringmod.RingCreateIn) (keyringmod.RingOut, error)
+type ringCreateFunc func(context.Context, operation.Deps, operation.CreateIn) (operation.SetOut, error)
 
 // runRingCreate calls the use case and renders it. The two verbs differ in
 // which function they call, not in what they print.
@@ -130,7 +130,7 @@ func runRingCreate(cmd *cobra.Command, use ringCreateFunc, mk *makeFlags) error 
 
 // blsSuffix abbreviates an identity's BLS key for a creation line, or says
 // nothing when it has none.
-func blsSuffix(e keyringmod.EntryOut) string {
+func blsSuffix(e operation.EntryOut) string {
 	if e.BLSPubKey == "" {
 		return ""
 	}

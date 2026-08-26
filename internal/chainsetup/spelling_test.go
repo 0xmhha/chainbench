@@ -1,6 +1,7 @@
 package chainsetup
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"strings"
 	"testing"
 
@@ -29,8 +30,8 @@ func TestArmSpecs_CanonicalRolesLaunchIdentically(t *testing.T) {
 	preset := keyring.Preset{
 		Network: keyring.Network{Validators: []string{"0xnode1"}},
 		Nodes: []keyring.Entry{
-			{Index: 1, Identity: keyring.Identity{PublicKey: "aa11", Address: "0xnode1"}},
-			{Index: 2, Identity: keyring.Identity{PublicKey: "bb22", Address: "0xnode2"}},
+			{Index: 1, Identity: derive.Identity{PublicKey: "aa11", Address: "0xnode1"}},
+			{Index: 2, Identity: derive.Identity{PublicKey: "bb22", Address: "0xnode2"}},
 		},
 	}
 	plan := func(producer, endpoint node.Role) driver.Plan {

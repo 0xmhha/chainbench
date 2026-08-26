@@ -1,18 +1,17 @@
 package deploy
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"strings"
 	"testing"
-
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 )
 
 func TestFormatAccountsFragment(t *testing.T) {
 	frag := FormatAccountsFragment([]ServerIdentity{{
 		Server: 3,
-		Identity: keyring.Identity{
+		Identity: derive.Identity{
 			Address: "0xabc",
-			BLS:     &keyring.BLS{PublicKey: "0xbbb", PoP: "0xppp"},
+			BLS:     &derive.BLS{PublicKey: "0xbbb", PoP: "0xppp"},
 		},
 	}})
 	for _, want := range []string{"validators:", "server: 3", `addr: "0xabc"`, `bls: "0xbbb"`, `bls_pop: "0xppp"`} {
@@ -28,7 +27,7 @@ func TestFormatAccountsFragment(t *testing.T) {
 func TestFormatAccountsFragment_NoBLS(t *testing.T) {
 	frag := FormatAccountsFragment([]ServerIdentity{{
 		Server:   1,
-		Identity: keyring.Identity{Address: "0xabc"},
+		Identity: derive.Identity{Address: "0xabc"},
 	}})
 	if strings.Contains(frag, "bls:") || strings.Contains(frag, "bls_pop:") {
 		t.Errorf("fragment emitted empty BLS fields:\n%s", frag)

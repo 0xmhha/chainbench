@@ -48,7 +48,7 @@ func (d *shippingDriver) names() []string {
 //
 // A network provisioned onto another host used to write its genesis and every
 // per-node config to the operator's own disk: the driver shipped the identities
-// because the launcher asks it to directly, but the file seam was never given a
+// because the launcher asks it to directly, but the file interface was never given a
 // store, so it defaulted to this filesystem. The remote node then started
 // against a datadir with no genesis in it.
 func TestRemoteProvision_LeavesNothingOnThisMachine(t *testing.T) {

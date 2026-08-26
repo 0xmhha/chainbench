@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
@@ -53,11 +53,11 @@ func loadPresetNodes(t *testing.T) []presetNode {
 func TestDerive_GoldenAgainstShippedPreset(t *testing.T) {
 	for _, want := range loadPresetNodes(t) {
 		t.Run(want.Address, func(t *testing.T) {
-			k, err := keyring.ParsePrivateKey(want.Nodekey)
+			k, err := derive.ParsePrivateKey(want.Nodekey)
 			if err != nil {
 				t.Fatalf("ParsePrivateKey: %v", err)
 			}
-			got, err := keyring.Derive(k, keyring.WithBLS)
+			got, err := derive.Derive(k, derive.WithBLS)
 			if err != nil {
 				t.Fatalf("Derive: %v", err)
 			}
@@ -88,11 +88,11 @@ func TestDerive_GoldenAgainstShippedPreset(t *testing.T) {
 // zero-valued BLS key would be indistinguishable from a real one downstream.
 func TestDerive_AccountOnlyOmitsBLS(t *testing.T) {
 	nodes := loadPresetNodes(t)
-	k, err := keyring.ParsePrivateKey(nodes[0].Nodekey)
+	k, err := derive.ParsePrivateKey(nodes[0].Nodekey)
 	if err != nil {
 		t.Fatalf("ParsePrivateKey: %v", err)
 	}
-	got, err := keyring.Derive(k, keyring.AccountOnly)
+	got, err := derive.Derive(k, derive.AccountOnly)
 	if err != nil {
 		t.Fatalf("Derive: %v", err)
 	}
@@ -118,17 +118,17 @@ func TestParseNodekey(t *testing.T) {
 		{name: "0x prefixed", in: "0x" + valid},
 		{name: "uppercase", in: strings.ToUpper(valid)},
 		{name: "surrounding space", in: "  " + valid + "\n"},
-		{name: "empty", in: "", wantErr: keyring.ErrInvalidPrivateKey},
-		{name: "too short", in: valid[:62], wantErr: keyring.ErrInvalidPrivateKey},
-		{name: "too long", in: valid + "ab", wantErr: keyring.ErrInvalidPrivateKey},
-		{name: "non-hex", in: strings.Repeat("z", 64), wantErr: keyring.ErrInvalidPrivateKey},
+		{name: "empty", in: "", wantErr: derive.ErrInvalidPrivateKey},
+		{name: "too short", in: valid[:62], wantErr: derive.ErrInvalidPrivateKey},
+		{name: "too long", in: valid + "ab", wantErr: derive.ErrInvalidPrivateKey},
+		{name: "non-hex", in: strings.Repeat("z", 64), wantErr: derive.ErrInvalidPrivateKey},
 		// All-zero is a valid 32-byte string but not a valid secp256k1 scalar,
 		// and a node started with it produces an identity nobody can sign for.
-		{name: "all zero", in: strings.Repeat("0", 64), wantErr: keyring.ErrInvalidPrivateKey},
+		{name: "all zero", in: strings.Repeat("0", 64), wantErr: derive.ErrInvalidPrivateKey},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			k, err := keyring.ParsePrivateKey(tc.in)
+			k, err := derive.ParsePrivateKey(tc.in)
 			if tc.wantErr != nil {
 				if !errors.Is(err, tc.wantErr) {
 					t.Fatalf("want %v, got %v", tc.wantErr, err)
@@ -148,16 +148,16 @@ func TestParseNodekey(t *testing.T) {
 // TestNewNodekey_UsesInjectedReader keeps generation deterministic under test:
 // randomness is a dependency, not a global.
 func TestNewNodekey_UsesInjectedReader(t *testing.T) {
-	fixed := bytes.Repeat([]byte{0xab}, keyring.PrivateKeyLen)
-	k, err := keyring.NewPrivateKey(bytes.NewReader(fixed))
+	fixed := bytes.Repeat([]byte{0xab}, derive.PrivateKeyLen)
+	k, err := derive.NewPrivateKey(bytes.NewReader(fixed))
 	if err != nil {
 		t.Fatalf("NewPrivateKey: %v", err)
 	}
-	if got := k.Hex(); got != strings.Repeat("ab", keyring.PrivateKeyLen) {
+	if got := k.Hex(); got != strings.Repeat("ab", derive.PrivateKeyLen) {
 		t.Errorf("got %s", got)
 	}
 
-	if _, err := keyring.NewPrivateKey(bytes.NewReader(nil)); err == nil {
+	if _, err := derive.NewPrivateKey(bytes.NewReader(nil)); err == nil {
 		t.Error("want error when the reader cannot supply enough entropy")
 	}
 }
@@ -168,7 +168,7 @@ func TestNewNodekey_UsesInjectedReader(t *testing.T) {
 // every disclosure a visible, greppable decision.
 func TestNodekey_DoesNotLeakWhenFormatted(t *testing.T) {
 	secret := loadPresetNodes(t)[0].Nodekey
-	k, err := keyring.ParsePrivateKey(secret)
+	k, err := derive.ParsePrivateKey(secret)
 	if err != nil {
 		t.Fatalf("ParsePrivateKey: %v", err)
 	}
@@ -190,19 +190,19 @@ func TestNodekey_DoesNotLeakWhenFormatted(t *testing.T) {
 func FuzzParseNodekey(f *testing.F) {
 	// A well-formed seed matters: without one the fuzzer only ever explores
 	// rejection paths and never reaches Derive.
-	f.Add(strings.Repeat("11", keyring.PrivateKeyLen))
+	f.Add(strings.Repeat("11", derive.PrivateKeyLen))
 	f.Add("0x00")
 	f.Add("")
 	f.Fuzz(func(t *testing.T, s string) {
-		k, err := keyring.ParsePrivateKey(s)
+		k, err := derive.ParsePrivateKey(s)
 		if err != nil {
 			return
 		}
 		// A parsed key must always round-trip, and must always derive.
-		if _, err := keyring.ParsePrivateKey(k.Hex()); err != nil {
+		if _, err := derive.ParsePrivateKey(k.Hex()); err != nil {
 			t.Fatalf("round trip failed for accepted key: %v", err)
 		}
-		if _, err := keyring.Derive(k, keyring.WithBLS); err != nil {
+		if _, err := derive.Derive(k, derive.WithBLS); err != nil {
 			t.Fatalf("accepted key failed to derive: %v", err)
 		}
 	})

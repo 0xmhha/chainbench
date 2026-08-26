@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -51,13 +51,13 @@ type Options struct {
 	// StopAfter ends the run once that step completes.
 	StopAfter string
 	// Files is where this run's artifacts are written. Nil is the local
-	// filesystem; see HandoffOptions.Files for why the seam is here.
-	Files provision.FileStore
+	// filesystem; see HandoffOptions.Files for why the boundary is here.
+	Files filestore.Store
 }
 
-func (o Options) files() provision.FileStore {
+func (o Options) files() filestore.Store {
 	if o.Files == nil {
-		return provision.LocalFileStore{}
+		return filestore.Local{}
 	}
 	return o.Files
 }
@@ -257,7 +257,7 @@ func waitHead(ctx context.Context, url string, target uint64, timeout time.Durat
 
 // saveState writes the node set so `chain status` and `chain down` can find the
 // network after the bring-up command exits.
-func saveState(ctx context.Context, files provision.FileStore, dataDir string, ns node.NodeSet) error {
+func saveState(ctx context.Context, files filestore.Store, dataDir string, ns node.NodeSet) error {
 	if len(ns.Nodes) == 0 {
 		return nil
 	}

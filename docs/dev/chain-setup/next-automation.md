@@ -142,7 +142,7 @@ A 가 끝난 뒤. 같은 2-페이즈를 쓰되 후계 체인이 없다.
 
 ### C. supervisor 잔여 (T3.2b)
 
-`Deps.LeaderGate` 는 seam 만 있고 구현체가 없다. §2.4대로 프로브를 `admin.wemixInfo.etcd.cluster`
+`Deps.LeaderGate` 는 boundary 만 있고 구현체가 없다. §2.4대로 프로브를 `admin.wemixInfo.etcd.cluster`
 로 하여 배선하면 `Options.AlignJoinGap`(`JoinWindow(N)`) 도 비로소 의미를 갖는다.
 `Deps.SwapBinary`(type-2 포크)도 미배선 — 선언 시 오류를 내도록만 되어 있다.
 

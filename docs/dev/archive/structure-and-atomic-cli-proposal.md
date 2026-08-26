@@ -54,7 +54,7 @@ design §2 의 "의존 방향 위→아래 단방향"은 **실제로 지켜지�
 
 이것이 유지보수성·가독성 저하의 **1차 원인**이다. 새 기능을 어디에 넣어야 하는지 코드가 알려주지
 않는다 — 실제로 `netcompose`(가장 최근)는 B(engine)가 아니라 A 의 부품(`core/driver`,
-`core/provision`)에 직접 붙었다.
+`core/filestore`)에 직접 붙었다.
 
 ### 1.4 배선되지 않은 모듈 — `keyreg`
 
@@ -128,7 +128,7 @@ test      (A: testkit Go-func)                                      ↔  run (B:
 | `core/pipeline/testrun` · `testkit` | `engine` + `testspec` | `cmd/test.go`, `mcp/tools.go` 이관 |
 | `core/probe` | `core/collector` | `mcp/network_tools.go` 이관 |
 | `core/keys` | `core/keyreg` (preset = `Source` 한 종류로 편입) | §1.4 배선 선행 |
-| `core/pipeline/setup` | `engine`(plan) + `core/provision`(물질화) | 13개 소비자 |
+| `core/pipeline/setup` | `engine`(plan) + `core/filestore`(물질화) | 13개 소비자 |
 | `netcompose.Workspace` | `core/session` 의 "long-lived environment" 모드 | 아래 §3.2 |
 | `chainsetup` | `app` 유스케이스 + `engine` | 케이스 지식은 데이터(profiles/)로 |
 

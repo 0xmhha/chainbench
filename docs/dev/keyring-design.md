@@ -116,7 +116,7 @@ core/keyring (L1)
 ├─ 생성    secp256k1 (crypto/rand)                  체인 무관
 ├─ 파생    address · pubkey · enode · BLS · PoP     Go 내장 + blst
 ├─ 백엔드  raw hex | keystore v3                    ← keymat.Store 승격
-│          + PasswordSource                          (이미 seam 존재)
+│          + PasswordSource                          (이미 boundary 존재)
 ├─ 링      이름 붙은 항목 · 조회 · 원격 전달        ← keyreg 흡수
 └─ 색인    metadata.json — 링의 목차
 ```

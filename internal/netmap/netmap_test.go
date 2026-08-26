@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
@@ -101,7 +101,7 @@ func TestOpener_CredentialsComeFromTheSet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("local open: %v", err)
 	}
-	if _, ok := acc.Files.(provision.LocalFileStore); !ok {
+	if _, ok := acc.Files.(filestore.Local); !ok {
 		t.Errorf("local path did not resolve to local handles: %T", acc.Files)
 	}
 	if acc.Spec.IsRemote() {

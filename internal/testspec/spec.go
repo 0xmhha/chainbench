@@ -23,7 +23,7 @@ type ChainSpec struct {
 }
 
 // LaunchKV is one env.launch knob carried from a v2 declaration for the
-// surface to fold into the engine's launch-override seam.
+// surface to fold into the engine's launch-override boundary.
 type LaunchKV struct {
 	Key   string
 	Value string
@@ -52,10 +52,10 @@ type Spec struct {
 	// OnFailActions run when the case fails (v2 hooks.onFail). Runtime-only.
 	OnFailActions []map[string]any `json:"-"`
 	// EnvKeys is the v2 env's node-key source declaration, for the surface to
-	// fold into the engine's KeySource seam. Runtime-only.
+	// fold into the engine's KeySource boundary. Runtime-only.
 	EnvKeys *KeySourceV2 `json:"-"`
 	// EnvLaunch are the v2 env.launch knobs (the "all" scope), for the
-	// surface to fold into the engine's launch-override seam. Runtime-only.
+	// surface to fold into the engine's launch-override boundary. Runtime-only.
 	EnvLaunch []LaunchKV `json:"-"`
 }
 

@@ -26,7 +26,7 @@ import (
 	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
-// Composition steps: keys, allocate, genesis, config, launchopts, provision.
+// Composition steps: keys, allocate, genesis, config, launchopts, filestore.
 // Each reads the accumulated state, fails fast when a prerequisite step has
 // not run, performs its one concern through the same core packages the engine
 // uses, and records itself in the step table. Lifecycle steps (init, start,
@@ -61,7 +61,7 @@ type KeysOpts struct {
 }
 
 // Keys ensures the workspace's key set exists and covers the requested node
-// count, through the same KeySource seam `chainbench run` uses.
+// count, through the same KeySource boundary `chainbench run` uses.
 func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	if _, err := w.plugin(); err != nil {
 		return "", err
@@ -523,7 +523,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 
 // shipIdentities uploads each node's identity files — the devp2p nodekey, the
 // validator keystore, and the shared password — from the local key set to
-// keysBase on a remote target, upload-if-absent like the rest of provision.
+// keysBase on a remote target, upload-if-absent like the rest of filestore.
 // The rendered config and the launch argv point at keysBase, so without this
 // a remote node would look for its keys on the operator's machine. A local
 // target ships nothing: keysBase is the key set itself.

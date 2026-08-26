@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"maps"
 	"os"
@@ -11,8 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
 // Label names one entry in a ring: "node1", "bp1", "faucet".
@@ -36,7 +36,7 @@ type entryFile struct {
 	perm    fs.FileMode
 }
 
-// Ring is a set of labelled keys held for the life of a command and persisted
+// KeySet is a set of labelled keys held for the life of a command and persisted
 // under a directory.
 //
 // It is the same idea as the rest of this package rather than a separate one:
@@ -44,20 +44,20 @@ type entryFile struct {
 // keyring does. It was a separate package while derivation had to be injected —
 // BLS material came from running an external binary, so the registry could not
 // compute it — and that constraint is gone.
-type Ring struct {
+type KeySet struct {
 	dir string
 
 	mu      sync.Mutex
 	entries map[Label]Entry
 }
 
-// NewRing returns a ring persisting entries under dir.
-func NewRing(dir string) *Ring {
-	return &Ring{dir: dir, entries: make(map[Label]Entry)}
+// NewKeySet returns a ring persisting entries under dir.
+func NewKeySet(dir string) *KeySet {
+	return &KeySet{dir: dir, entries: make(map[Label]Entry)}
 }
 
 // Dir is where the ring's entries are written.
-func (r *Ring) Dir() string { return r.dir }
+func (r *KeySet) Dir() string { return r.dir }
 
 // Add returns the entry for label, resolving it from src if it is not already
 // held. It is idempotent: a second call with the same label returns the first
@@ -67,7 +67,7 @@ func (r *Ring) Dir() string { return r.dir }
 // d selects how much to derive: a poa validator asks for [AccountOnly] and gets
 // an entry with no BLS material, rather than one with a zero key that reads
 // like a real one.
-func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (Entry, error) {
+func (r *KeySet) Add(ctx context.Context, label Label, src Source, d Derivation) (Entry, error) {
 	if e, ok := r.Get(label); ok {
 		return e, nil
 	}
@@ -79,7 +79,7 @@ func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
-	id, err := keyring.Derive(key, d)
+	id, err := derive.Derive(key, d)
 	if err != nil {
 		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
@@ -104,7 +104,7 @@ func (r *Ring) Add(ctx context.Context, label Label, src Source, d Derivation) (
 // The address is derived from the key material and compared, so a declaration
 // that has drifted from its key is caught here rather than as a chain that
 // registers one address in its genesis while the node signs with another.
-func (r *Ring) AddExpecting(ctx context.Context, label Label, src Source, d Derivation, want string) (Entry, error) {
+func (r *KeySet) AddExpecting(ctx context.Context, label Label, src Source, d Derivation, want string) (Entry, error) {
 	e, err := r.Add(ctx, label, src, d)
 	if err != nil {
 		return Entry{}, err
@@ -116,7 +116,7 @@ func (r *Ring) AddExpecting(ctx context.Context, label Label, src Source, d Deri
 }
 
 // Get returns a held entry.
-func (r *Ring) Get(label Label) (Entry, bool) {
+func (r *KeySet) Get(label Label) (Entry, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	e, ok := r.entries[label]
@@ -125,7 +125,7 @@ func (r *Ring) Get(label Label) (Entry, bool) {
 
 // Labels returns the held labels in sorted order, so output that lists a ring
 // is stable between runs.
-func (r *Ring) Labels() []Label {
+func (r *KeySet) Labels() []Label {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return slices.Sorted(maps.Keys(r.entries))
@@ -137,7 +137,7 @@ func (r *Ring) Labels() []Label {
 // It is how a node gets the key it launches with. Only the private material is
 // shipped: everything else about the identity derives from it, and shipping a
 // derived value is how a node and its genesis come to disagree.
-func (r *Ring) Install(ctx context.Context, files provision.FileStore, dir string, labels []Label) error {
+func (r *KeySet) Install(ctx context.Context, files filestore.Store, dir string, labels []Label) error {
 	for _, label := range labels {
 		e, ok := r.Get(label)
 		if !ok {
@@ -154,7 +154,7 @@ func (r *Ring) Install(ctx context.Context, files provision.FileStore, dir strin
 // write persists one entry under <dir>/<label>/. The key is owner-only; the
 // derived public fields are written beside it so an operator reading the
 // directory can see what the key is without decoding it.
-func (r *Ring) write(e Entry) error {
+func (r *KeySet) write(e Entry) error {
 	if r.dir == "" {
 		return nil
 	}

@@ -5,10 +5,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	keyringmod "github.com/0xmhha/chainbench/internal/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
-// newKeyringImportCmd brings a key that already exists into a ring.
+// newKeyringImportCmd brings a key that already exists into a key set.
 //
 // The key may be here or on another host; --from says where with one path
 // syntax, so importing from a server is not a different command. Prefer
@@ -20,11 +20,11 @@ func newKeyringImportCmd() *cobra.Command {
 		label labelFlag
 		bls   blsFlag
 		jsonF jsonFlag
-		in    keyringmod.RingImportIn
+		in    operation.ImportIn
 	)
 	cmd := &cobra.Command{
 		Use:   "import",
-		Short: "Import an existing key into a ring",
+		Short: "Import an existing key into a key set",
 		Long: "Imports a key that already exists — held as hex, or read from a file here\n" +
 			"or on another host — and writes it into the ring's index under --name.\n\n" +
 			"  --from /srv/keys/node1              this machine\n" +
@@ -39,9 +39,9 @@ func newKeyringImportCmd() *cobra.Command {
 			in.Docker = ring.docker
 			if in.FromRing != "" {
 				if label.name != "" || in.From != "" || in.PrivateKey != "" || in.Mnemonic != "" {
-					return fmt.Errorf("--from-ring copies a whole ring, labels and all — it cannot be combined with --name or a single-key origin")
+					return fmt.Errorf("--from-ring copies a whole key set, labels and all — it cannot be combined with --name or a single-key origin")
 				}
-				r, err := keyringmod.KeyringImportRing(cmd.Context(), deps(cmd), in)
+				r, err := operation.ImportSet(cmd.Context(), deps(cmd), in)
 				if err != nil {
 					return err
 				}
@@ -55,7 +55,7 @@ func newKeyringImportCmd() *cobra.Command {
 				return err
 			}
 			in.Label = label.name
-			e, err := keyringmod.KeyringImport(cmd.Context(), deps(cmd), in)
+			e, err := operation.Import(cmd.Context(), deps(cmd), in)
 			if err != nil {
 				return err
 			}
@@ -84,6 +84,6 @@ func newKeyringImportCmd() *cobra.Command {
 	cmd.Flags().StringVar(&in.ExpectAddress, "expect-address", "",
 		"refuse the import unless the key derives exactly this address")
 	cmd.Flags().StringVar(&in.FromRing, "from-ring", "",
-		"clone a whole ring instead of one key: same path syntax as --keyring-dir; labels, validator declaration, and alloc are copied, and every entry is verified against the source index")
+		"clone a whole key set instead of one key: same path syntax as --keyring-dir; labels, validator declaration, and alloc are copied, and every entry is verified against the source index")
 	return cmd
 }

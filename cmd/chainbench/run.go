@@ -183,7 +183,7 @@ const (
 	runPortBand      = 100
 )
 
-// keySource maps --keys-source to the engine seam that materializes identities.
+// keySource maps --keys-source to the engine boundary that materializes identities.
 func keySource(o runOpts) (testengine.KeySource, error) {
 	if o.keysDir == "" {
 		return nil, fmt.Errorf("run: --keys is required for a local run")
@@ -220,7 +220,7 @@ func parseLaunchOverrides(opts []string) ([]launchopt.Override, error) {
 // foldSpecEnv folds a single spec's v2 env declarations (keys, launch) into
 // the run options where the CLI did not already decide: explicit flags win
 // over the spec, and multiple specs get no folding (their envs could
-// disagree; the engine seams are per-invocation).
+// disagree; the engine hooks are per-invocation).
 func foldSpecEnv(o runOpts, specs [][]byte) runOpts {
 	if len(specs) != 1 {
 		return o
