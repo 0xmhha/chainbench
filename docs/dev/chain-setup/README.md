@@ -177,7 +177,7 @@ ROUND-CHANGE 가 자기 것만 쌓인다(`currentRoundChanges.count=1`).
 | 변곡점 | 설정 위치 | 상태 |
 |---|---|---|
 | 블록 전진 | `engine.NewBlockAdvanceGate(target, timeout)` | ✅ 배선됨 |
-| etcd 리더 | `supervisor.Options.LeaderGate` + `Deps.LeaderGate` | ⚠️ **seam 만 존재, 구현체 미배선** — 요청 시 오류 |
+| etcd 리더 | `supervisor.Options.LeaderGate` + `Deps.LeaderGate` | ⚠️ **boundary 만 존재, 구현체 미배선** — 요청 시 오류 |
 | 조인 슬롯 정렬 | `Options.AlignJoinGap` → `JoinWindow(N)` | ✅ 데드라인 파생 |
 | 재시도 | `Options.MaxAttempts` + `Backoff` | ✅ 재시도 시 datadir 삭제로 stale etcd 정리 |
 | 실패 분류 | `supervisor.Classify` | ✅ 5종 방출 |

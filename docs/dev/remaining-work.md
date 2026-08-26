@@ -114,5 +114,5 @@
 
 - ☑ account-extra 4건 (`authorized-extra-bit-synced`·`blacklisted-extra-bit-synced`·`dual-status-extra`·`extra-balance-preserved`) — account-extra 오버레이 넷 라이브 pass
 - ☑ `proposal-expiry-transitions` — short-expiry 오버레이 넷 라이브 pass (`waitFor` timestamp 폴링 → expireProposal → 상태워드 Expired(5))
-- ☑ 엔진 seam: `chainbench run --cap <name>` — attach 모드가 RPC 로 감지 못하는 오버레이 cap 을 운영자가 단언 → 게이팅 spec 이 skip 아닌 run (`internal/engine/attach.go`·`cmd/chainbench/run.go`·`attach_test.go`)
-- 커밋: `abc882c feat(specs): migrate overlay-gated cases to DSL + add run --cap seam`
+- ☑ 엔진 boundary: `chainbench run --cap <name>` — attach 모드가 RPC 로 감지 못하는 오버레이 cap 을 운영자가 단언 → 게이팅 spec 이 skip 아닌 run (`internal/engine/attach.go`·`cmd/chainbench/run.go`·`attach_test.go`)
+- 커밋: `abc882c feat(specs): migrate overlay-gated cases to DSL + add run --cap boundary`

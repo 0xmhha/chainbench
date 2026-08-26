@@ -1,6 +1,6 @@
 // Package external loads a chain plugin from a project-supplied manifest file,
 // so chainbench can bench a chain it does not embed — on an existing consensus
-// family — without a code change. It is the composition seam for the hybrid
+// family — without a code change. It is the composition boundary for the hybrid
 // model: first-party chains stay embedded (pkg/chains/*), while a project points
 // `--manifest`/`--genesis-template` at its own files. Only a genuinely new
 // consensus family still needs a plugin (a new pkg/consensus/*).

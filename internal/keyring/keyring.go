@@ -68,7 +68,7 @@ func (r RingRef) resolve(env func(string) string) (dir, source string) {
 
 // open resolves the ring to a file store and a directory on it. A plain path
 // is this machine; the target syntax (srv://<server>/path, user@host:/path,
-// ssh://…) places the ring on a server through the same seam provision uses.
+// ssh://…) places the ring on a server through the same boundary provision uses.
 // Before this, a remote-looking ring path was treated as a local directory
 // NAME — a ring created "on the server" landed silently on the operator's
 // machine, which is worse than a refusal.

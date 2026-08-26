@@ -41,7 +41,7 @@ const etcdFormWait = 30 * time.Second
 // phases: deploy the governance contracts, form the etcd cluster, and confirm
 // it formed.
 //
-// It is the executor side of the seam the family declares. The family says what
+// It is the executor side of the boundary the family declares. The family says what
 // must happen and in what order; this says how, for one particular target. The
 // supervisor owns when, how long, and how a failure is classified.
 type WemixBootstrap struct {

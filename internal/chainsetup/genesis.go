@@ -12,7 +12,7 @@ import (
 )
 
 // GenesisSource produces a network's genesis bytes for a chain plugin, sized to
-// the active validator count. It is a seam so BuildEnv does not depend on where
+// the active validator count. It is a boundary so BuildEnv does not depend on where
 // the validator set and RLP extra-data come from: a baked preset today, and a
 // live key deriver (once a Go extra-data encoder exists) later.
 type GenesisSource interface {
@@ -66,7 +66,7 @@ type PresetGenesisSource struct {
 	// keys, and RLP extra-data).
 	KeysDir string
 	// ChainID, when non-zero, overrides the manifest chain id in the built
-	// genesis (the custom-chain-id seam; the DSL env layer sets it).
+	// genesis (the custom-chain-id boundary; the DSL env layer sets it).
 	ChainID int64
 }
 

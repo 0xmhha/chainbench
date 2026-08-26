@@ -46,7 +46,7 @@ type LaunchOptions struct {
 	WaitReady func(ctx context.Context, endpoints []string) error
 	// Files is where the shared genesis is written. Nil is the local
 	// filesystem, which is what a local handoff wants and what this used to do
-	// unconditionally — the seam exists so a caller running against a remote
+	// unconditionally — the boundary exists so a caller running against a remote
 	// target can send the genesis where the nodes are rather than to the
 	// machine driving them — the defect the remote-provision path used to
 	// have, where a remote network's files landed on the operator's machine.

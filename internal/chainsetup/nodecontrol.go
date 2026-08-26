@@ -19,7 +19,7 @@ const stopGrace = 5 * time.Second
 
 // NodeController launches a plan and remembers each node's arming, so a spec can
 // later stop and restart one node without disturbing the rest of the network.
-// It sits in front of a LocalLauncher: it satisfies the supervisor's launch seam
+// It sits in front of a LocalLauncher: it satisfies the supervisor's launch boundary
 // and testspec.NodeControl at once, which is what lets a fault step reach the
 // exact process the bring-up started.
 //
@@ -49,7 +49,7 @@ func NewNodeController(launcher LocalLauncher, procs *process.Manager) *NodeCont
 	}
 }
 
-// Launch implements the supervisor launch seam, recording each node's arming and
+// Launch implements the supervisor launch boundary, recording each node's arming and
 // pid on the way through.
 func (c *NodeController) Launch(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, error) {
 	res, specs, err := c.launcher.LaunchArmed(ctx, plan, nodes)
@@ -129,5 +129,5 @@ func (c *NodeController) pidFor(n node.Node) int {
 	return n.PID
 }
 
-// NodeController satisfies the DSL's node-control seam.
+// NodeController satisfies the DSL's node-control boundary.
 var _ testspec.NodeControl = (*NodeController)(nil)

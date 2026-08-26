@@ -28,7 +28,7 @@ type TeardownFunc func(ctx context.Context) error
 type BuildEnvFunc func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error)
 
 // BuildDeps injects BuildEnv's collaborators so the composition is unit-testable
-// without real chain binaries: the supervisor's launch/health seams decide
+// without real chain binaries: the supervisor's launch and health hooks decide
 // whether a bring-up runs a process or a fake, and Provision decides what lands
 // on disk.
 type BuildDeps struct {

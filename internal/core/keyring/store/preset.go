@@ -1,6 +1,6 @@
 // Ring storage: the on-disk layout of a keyring — the index file, the
 // per-entry directories, and the keystore/raw backends — read and written
-// through the provision file seam so a ring lives the same way on this
+// through the provision file boundary so a ring lives the same way on this
 // machine or on a server. The key model (what an entry IS) stays in the
 // keyring package; this package only persists it.
 package store

@@ -89,7 +89,7 @@ type LocalConfig struct {
 // NewLocalEngine composes a runnable Engine for one local chain: it wires the
 // allocator, preset genesis source, local launcher, block-advance health gate,
 // interpreter, and session store into engine.Deps. It is the top-level assembly
-// the CLI/MCP entrypoints call — the seam where the live-proven components come
+// the CLI/MCP entrypoints call — the boundary where the live-proven components come
 // together behind Engine.Run.
 func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	if cfg.Chain == "" || cfg.Binary == "" || cfg.ArtifactRoot == "" {

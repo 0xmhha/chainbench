@@ -142,7 +142,7 @@ func addressOf(t *testing.T, ring, name string) string {
 
 // TestLive_KeyringCreatesARingOnAServer pins the remote ring end to end: a
 // ring named srv://server1/... is created ON the server through the file
-// seam, its files land there (checked through the same remote stack), and it
+// boundary, its files land there (checked through the same remote stack), and it
 // reads back and verifies remotely — the same contracts the local ring
 // holds, at a different location. The path is per-process so reruns never
 // collide with a leftover index.

@@ -46,7 +46,7 @@ type Deps struct {
 	// spans (defaults to defaultBPWindow). Older heights are pruned.
 	BPWindow int
 	// OnLine, when set, receives every newly appended log line per node as a live
-	// tail — the seam that mirrors logs to the dashboard (obs). Nil disables
+	// tail — the boundary that mirrors logs to the dashboard (obs). Nil disables
 	// tailing; tailing never blocks a node.
 	OnLine func(nodeName, line string)
 	// Logs reads a node's log bytes from an offset. Nil uses the local

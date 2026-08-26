@@ -108,7 +108,7 @@ func (s GeneratedKeySource) Ensure(ctx context.Context, n int) (KeySet, error) {
 	}
 	opts := store.GenerateOpts{
 		Nodes: n,
-		// A zero here has always meant "all of them" on this seam, so it is
+		// A zero here has always meant "all of them" on this boundary, so it is
 		// passed as absent rather than as a declared zero, which would now mean
 		// a ring that declares no validators at all.
 		Validators: validatorCount(s.Validators),

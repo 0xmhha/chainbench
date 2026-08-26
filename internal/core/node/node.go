@@ -84,7 +84,7 @@ type Node struct {
 // endpoint. It is a flexible map (converted to/from pkg/core/remote.Auth at the
 // boundary, so node need not import remote) with a fixed key convention: "type"
 // (e.g. "api_key" | "bearer") and the name of the env var holding the secret —
-// never the secret value itself. A named type so the seam is documented and
+// never the secret value itself. A named type so the boundary is documented and
 // greppable rather than an anonymous map[string]any.
 type Auth map[string]any
 

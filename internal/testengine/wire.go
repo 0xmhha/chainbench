@@ -15,7 +15,7 @@ type RunSpecFunc func(ctx context.Context, spec testspec.Spec, env session.Envir
 // NewRunSpec is the production RunSpec wiring: it binds the DSL interpreter to
 // the injected deps (typically with testspec.NewRegistry(true) so the built-in
 // tx action and RPC assertions are available) and runs each spec against the
-// environment. It is the composition seam between the engine and the
+// environment. It is the composition boundary between the engine and the
 // interpreter; keeping it thin is intentional — the behavior lives in the
 // interpreter and the registered actions/assertions.
 func NewRunSpec(deps testspec.Deps) RunSpecFunc {

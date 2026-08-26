@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
-// RemoteFileStore must satisfy the filestore.Store seam a launcher plugs into.
+// RemoteFileStore must satisfy the filestore.Store boundary a launcher plugs into.
 var _ filestore.Store = driver.RemoteFileStore{}
 
 func TestRemoteFileStore_Exists(t *testing.T) {

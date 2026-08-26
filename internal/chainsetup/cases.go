@@ -26,7 +26,7 @@ type CaseStep struct {
 	ID string
 	// Title is a short imperative description.
 	Title string
-	// Detail says what actually happens, including the seam that owns it.
+	// Detail says what actually happens, including the boundary that owns it.
 	Detail string
 	// Implemented is false for a step the framework does not perform yet; the
 	// executor stops there with that fact stated rather than pretending.

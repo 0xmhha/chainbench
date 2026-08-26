@@ -68,7 +68,7 @@ func verdictMark(line string) string {
 }
 
 // TestOnlyListedPackagesWriteFiles is the state-ownership rule. The control
-// plane belongs to core/session and the data plane to the file seam; a package
+// plane belongs to core/session and the data plane to the file interface; a package
 // that writes files outside that is either a listed exception or a new one
 // nobody decided on.
 func TestOnlyListedPackagesWriteFiles(t *testing.T) {

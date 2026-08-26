@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
-// stubStore stands in for a file store on another host — the seam that lets one
+// stubStore stands in for a file store on another host — the boundary that lets one
 // source serve a local file and a remote one.
 type stubStore struct {
 	data map[string][]byte

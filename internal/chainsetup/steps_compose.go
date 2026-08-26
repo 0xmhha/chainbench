@@ -61,7 +61,7 @@ type KeysOpts struct {
 }
 
 // Keys ensures the workspace's key set exists and covers the requested node
-// count, through the same KeySource seam `chainbench run` uses.
+// count, through the same KeySource boundary `chainbench run` uses.
 func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	if _, err := w.plugin(); err != nil {
 		return "", err

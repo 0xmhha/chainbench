@@ -157,7 +157,7 @@ func parseHostColonPath(s string) (Spec, bool) {
 
 // Access is the resolved data plane: step functions materialize files through
 // Files and run processes through Driver at DataRoot, without branching on local
-// vs remote. This is the one seam that hides the location difference.
+// vs remote. This is the one place that hides the location difference.
 type Access struct {
 	Spec     Spec
 	DataRoot string

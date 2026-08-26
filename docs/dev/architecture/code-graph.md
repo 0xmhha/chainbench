@@ -56,7 +56,7 @@ the layer are benign or already tracked:
 - `core/pipeline/testrun -> testkit` — legacy stack A, removed by T7.11.
 
 **Highest fan-in (the load-bearing contracts):** `core/node` (25),
-`core/registry` (18, of which `ChainPlugin` is the chain seam), `core/rpc` (12),
+`core/registry` (18, of which `ChainPlugin` is the chain boundary), `core/rpc` (12),
 `core/driver` (11, `NodeSpec` is the launch currency: 12 refs from engine
 alone).
 
@@ -99,7 +99,7 @@ by an equivalence test against the legacy argv:
 3. **Conversion of sites 4+5** — `upgrade.LaunchArgs` builds through the
    Builder; the two duplicated `ExtraArgs` closures (chainsetup + cmd) become
    typed `Overrides`.
-4. **Customization seams** — `genesis.Inputs.ChainID` override,
+4. **Customization boundaries** — `genesis.Inputs.ChainID` override,
    `LocalConfig.ChainID/NetworkID/LaunchOverrides`, CLI
    `--chain-id/--network-id/--launch-opt`.
 5. **Config/flag boundary** (§3.4 of the flag-graph review) — deferred: the

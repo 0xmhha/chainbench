@@ -36,7 +36,7 @@ type HandoffOptions struct {
 	// Exec runs a binary; nil uses os/exec.
 	Exec Runner
 	// Files is where this run's artifacts are written. Nil is the local
-	// filesystem. The seam exists so the package stops owning the question of
+	// filesystem. The boundary exists so the package stops owning the question of
 	// where state lands — the rule is that a step describes what to write and
 	// the target decides where (layers §5).
 	Files filestore.Store

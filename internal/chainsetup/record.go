@@ -61,7 +61,7 @@ type runNode struct {
 }
 
 // recordRun writes this start's record folder: the manifest, the genesis the
-// run composed (read back through the same seam it was written through), and
+// run composed (read back through the same boundary it was written through), and
 // each node's launch command. Failures are reported, not fatal — a record
 // must never take the network it records down with it.
 func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string) (string, error) {
@@ -115,7 +115,7 @@ func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string
 		}
 	}
 	// The genesis this run composed, read back from the target through the
-	// same seam that wrote it.
+	// same boundary that wrote it.
 	layout := netmap.Layout{Root: w.state.Target.DataRoot}
 	if g, err := t.Files.Read(ctx, layout.GenesisPath()); err == nil {
 		if err := files.Write(ctx, filepath.Join(dir, "genesis.json"), g, 0o644); err != nil {

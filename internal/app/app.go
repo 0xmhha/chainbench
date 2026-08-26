@@ -105,7 +105,7 @@ func (d Deps) files() (filestore.Store, error) {
 //
 // A driver knows how to put a file on the host it controls but not how to ask
 // whether one is there or read it back, so those two answer for the shape of
-// the seam rather than for the transport: a file is never assumed present, and
+// the boundary rather than for the transport: a file is never assumed present, and
 // reading is not offered.
 type driverStore struct{ fp driver.FileProvisioner }
 

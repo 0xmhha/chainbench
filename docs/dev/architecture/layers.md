@@ -113,7 +113,7 @@ flowchart TD
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
 | `core/keyring` | **키 모델과 역학** — 생성·파생(주소·devp2p·BLS·PoP, in-process)·출처·검증. 저장은 하위 store 가 |
-| `core/keyring/store` | **링 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드·Ring 컨테이너, 파일 seam 경유 |
+| `core/keyring/store` | **링 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드·Ring 컨테이너, 파일 인터페이스 경유 |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
 | `netmap/internal/serverset` | **서버 세트(포트·호스트)** — netmap 모듈의 내부 데이터 형식. 컴파일러가 외부 import 를 차단한다 |
@@ -234,12 +234,12 @@ flowchart TD
 | `core/filestore` | 타깃 파일 | ✅ 소유자 |
 | `core/driver` | config·log (LocalDriver) | ✅ 전송 계층, Sink 의 구현 짝 |
 | `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
-| `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 seam 경유 |
+| `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 인터페이스 경유 |
 | `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
-| `chainsetup` | 실행 기록(`runs/`) · 로컬 조립 산출물(구 engine 이관분) | ✅ 셋업 오케스트레이터 — 원격은 파일 seam 경유 |
+| `chainsetup` | 실행 기록(`runs/`) · 로컬 조립 산출물(구 engine 이관분) | ✅ 셋업 오케스트레이터 — 원격은 파일 인터페이스 경유 |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
 `filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다.
@@ -247,7 +247,7 @@ flowchart TD
 `os.MkdirAll` 이 대부분 사라진 것은 부수효과가 아니다. `FileStore.Write` 가 부모 디렉토리를
 만들므로, 디렉토리를 미리 만드는 코드는 **경로를 아는 코드**였고 그게 층 위반의 실체였다.
 남은 읽기(`os.ReadDir`/`os.ReadFile`)는 조작자 머신의 키 preset 을 읽는 쪽이라 그대로다 —
-`copyFiles` 가 **로컬에서 읽어 seam 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
+`copyFiles` 가 **로컬에서 읽어 boundary 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
 
 `app`(A3)·`chains/wemix/deploy`(A4) 는 앞서 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
 
@@ -259,9 +259,9 @@ flowchart TD
 | 무엇 | 어디로 갔나 |
 |---|---|
 | 신원(nodekey·keystore·password) | 원격 — 런처가 드라이버에게 직접 보낸다 |
-| **genesis · config.toml · topology.yaml** | **로컬** — 파일 seam 에 저장소가 주어진 적이 없어 기본값(이 머신)이 쓰였다 |
+| **genesis · config.toml · topology.yaml** | **로컬** — 파일 인터페이스 에 저장소가 주어진 적이 없어 기본값(이 머신)이 쓰였다 |
 
-원격 노드는 genesis 없는 datadir 로 기동하게 된다. `app.Deps` 에 `Files` seam 을 더하고,
+원격 노드는 genesis 없는 datadir 로 기동하게 된다. `app.Deps` 에 `Files` boundary 을 더하고,
 저장소를 명시하지 않았지만 드라이버가 파일을 보낼 수 있으면 **그 드라이버가 저장소**가 되게
 했다 — 프로세스를 원격으로 보내면서 파일에 대해 아무 말도 하지 않았다면, 파일도 따라가라는
 뜻이다.
@@ -440,9 +440,9 @@ A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
 
 ## 6. 패밀리 기동 설계가 앉는 자리
 
-[[family-bringup-design]] 의 4 seam 을 레이어에 매핑하면 **새 패키지가 왜 0개인지** 드러난다.
+[[family-bringup-design]] 의 4 boundary 을 레이어에 매핑하면 **새 패키지가 왜 0개인지** 드러난다.
 
-| seam | 층 | 왜 그 층인가 |
+| boundary | 층 | 왜 그 층인가 |
 |---|---|---|
 | `Phase` · `ConsensusFamily.BringUpPhases` | **L1** (`core/registry`) | 인터페이스는 아래. 구현은 L2a |
 | `PortReservation` | **L1** (`core/registry` 선언 / `core/portplan` 사용) | 순수 계산 |

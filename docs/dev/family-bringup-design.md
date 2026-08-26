@@ -19,10 +19,10 @@
 | 있는 것 | 위치 | 상태 |
 |---|---|---|
 | `poa.Config/Env/Member/Account` + `Validate()` | `consensus/poa/wemixconfig.go` | ✅ 형태 정확(idv5 128-hex 검증까지) |
-| `poa.GenerateGenesis` / `DeployGovernance` / `EtcdInit` | `consensus/poa/bootstrap_exec.go` | ✅ 커맨드 정확, `Runner` seam 있음 |
+| `poa.GenerateGenesis` / `DeployGovernance` / `EtcdInit` | `consensus/poa/bootstrap_exec.go` | ✅ 커맨드 정확, `Runner` boundary 있음 |
 | `poa.BootstrapPlan()` — 5단계 순서 데이터 | `consensus/poa/bootstrap.go` | ✅ 순서 정확 |
 | `supervisor.Deps.LeaderGate` — "미배선이면 오류" 계약 | `core/supervisor` | ✅ 자리만 비어 있음 |
-| `engine.GenesisSource` / `KeySource` seam | `internal/engine` | ✅ |
+| `engine.GenesisSource` / `KeySource` boundary | `internal/engine` | ✅ |
 
 **그런데 이 프리미티브를 부르는 곳이 3군데로 흩어져 있다:**
 
@@ -66,7 +66,7 @@ wemix 는 이 가정 하나만 위반한다. 나머지(provision·health·teardo
 
 ---
 
-## 4. 설계 — 4개의 seam
+## 4. 설계 — 4개의 boundary
 
 ### 4.1 `ConsensusFamily.BringUpPhases` — 기동 순서를 데이터로
 
@@ -90,7 +90,7 @@ type Phase struct {
 `Actions` 가 **문자열**인 것이 핵심이다. `testspec.rpcCall` 이 체인 어휘를 core 가 아니라 spec 에
 두었던 것과 같은 이유로, core 는 `deploy-governance` 가 무엇인지 알지 않는다(C6 ACL 유지).
 
-### 4.2 `supervisor.Deps.Action` — 액션 실행 seam
+### 4.2 `supervisor.Deps.Action` — 액션 실행 boundary
 
 ```go
 // Action performs one named bring-up action against a node. What an action name
@@ -186,7 +186,7 @@ internal/engine   WemixGenesisSource · poaActions 배선
 internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
 ```
 
-새 패키지는 **0개**다. 기존 seam 확장 + 이미 있는 프리미티브 배선이다.
+새 패키지는 **0개**다. 기존 boundary 확장 + 이미 있는 프리미티브 배선이다.
 
 의존 방향은 현행 그대로 유지된다 — core 는 여전히 어떤 체인도 import 하지 않는다.
 
@@ -204,7 +204,7 @@ internal/app      유스케이스 1곳 (net up / setup / upgrade 가 공유)
 
 - **`gwemix.sh` 를 Go 로 포팅하지 않는다.** 재구현이 필요한 것은 *순서*이지 스크립트가 아니다.
   `wemix genesis`·`deploy-governance`·`admin.etcdInit()` 는 바이너리의 기능이고, 계속 바이너리를 호출한다
-  (`keygen` 이 `bootnode` 를 호출하는 것과 같다). `Runner` seam 이 이미 그 경계다.
+  (`keygen` 이 `bootnode` 를 호출하는 것과 같다). `Runner` boundary 이 이미 그 경계다.
 - **wemix 전용 신원 생성기를 만들지 않는다.** §2 마지막 줄 — preset 이 이미 idv5 를 담고 있다.
 - **로컬/원격을 분기하지 않는다.** `Runner` 는 이미 로컬(`execRunner`)·SSH(`SSHPoaRunner`) 두 구현이 있다.
 

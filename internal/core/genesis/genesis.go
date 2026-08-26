@@ -29,7 +29,7 @@ type Inputs struct {
 	Members    []string        // governance council addresses (0x-hex) — anzeon system contracts
 	Alloc      json.RawMessage // raw genesis pre-funded accounts (address -> account) — wbft family
 	Coinbase   string          // block coinbase (0x-hex) — poa family; default zero
-	// ChainID, when non-zero, overrides the manifest chain id — the seam that
+	// ChainID, when non-zero, overrides the manifest chain id — the boundary that
 	// lets a test run a chain under a custom id without editing the manifest.
 	ChainID int64
 }
@@ -60,7 +60,7 @@ func Build(p registry.ChainPlugin, in Inputs) ([]byte, error) {
 }
 
 // NetworkOptions are the optional post-Build genesis transforms a network launch
-// applies: config overrides (the delayed-fork seam, e.g. {"bohoBlock":"10"}) and
+// applies: config overrides (the delayed-fork boundary, e.g. {"bohoBlock":"10"}) and
 // a deep-merge overlay (extra alloc or system-contract fragments). A zero value
 // applies neither.
 type NetworkOptions struct {

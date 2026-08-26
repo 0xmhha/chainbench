@@ -6,7 +6,7 @@
 // The collector samples each node's height, peers, and head block over RPC,
 // tallies bp participation from head producers over a bounded window, and flags
 // forks/reorgs when a known height reports a divergent hash. With Deps.OnLine
-// set it also tails each node's log live, the seam that mirrors logs to the
+// set it also tails each node's log live, the boundary that mirrors logs to the
 // dashboard. Tailing goes through a LogReader, so the same loop follows a local
 // file or a remote log over SSH (driver.RemoteLogReader).
 package collector

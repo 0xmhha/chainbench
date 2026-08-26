@@ -20,7 +20,7 @@
 
 | 패키지 (LOC) | 현재 역할 | 판정 | 근거·조치 |
 |---|---|---|---|
-| `core/registry` (284) `ChainPlugin`·`ConsensusFamily` | 체인 플러그인 추상화 | **EXTEND** | 깔끔한 seam. capability 선언(`NodeComposition/SupportedForks/SupportedAssertions/TestCapabilities`)을 Manifest/인터페이스에 추가(D-3, 요구 1·2·3) |
+| `core/registry` (284) `ChainPlugin`·`ConsensusFamily` | 체인 플러그인 추상화 | **EXTEND** | 깔끔한 boundary. capability 선언(`NodeComposition/SupportedForks/SupportedAssertions/TestCapabilities`)을 Manifest/인터페이스에 추가(D-3, 요구 1·2·3) |
 | `core/driver` (341) `Driver`+`Initializer`+`FileProvisioner` | local/remote 노드 실행·파일배치 | **KEEP** | `FileProvisioner`가 이미 remote 파일 upload를 추상화(요구 11). Launch/Provision/Stop 계약 유지 |
 | `core/config` (152) `Values`(flat map)+`Merge/Resolve/Flatten` | 설정 값 접근 | **KEEP** | **이미 닷키(`a.b.c`)·레이어 병합 지원** → TestSpec 닷경로 리졸버·[7,8] 우선순위(flag>config>default)에 직결 재사용(§D-2) |
 | `accounts` (877) `AccountProvider`·`Wallet` | tx 서명 SDK | **KEEP** | §D-2.2 서명. `AddressForKey`로 키→주소 파생도 존재 |

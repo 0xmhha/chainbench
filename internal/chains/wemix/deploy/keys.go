@@ -77,7 +77,7 @@ func readServerKeysFrom(ctx context.Context, files, dest filestore.Store, p Remo
 //
 // Both sides go through a file store: from is the host they come off, dest is
 // where they land. Writing the destination directly would have fixed it to this
-// machine, which is the assumption the file seam exists to remove — the same
+// machine, which is the assumption the file interface exists to remove — the same
 // one that left a remote network's genesis on the operator's disk.
 func pullKeystores(ctx context.Context, from, dest filestore.Store, p RemotePaths, server int, destDir string) error {
 	for _, ks := range []struct{ remote, local string }{

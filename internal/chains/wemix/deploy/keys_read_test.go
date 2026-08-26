@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
-// fileMap is a file store standing in for a server. It is the seam that
+// fileMap is a file store standing in for a server. It is the boundary that
 // replaced running `bootnode -writeaddress` over SSH.
 type fileMap struct {
 	files map[string][]byte

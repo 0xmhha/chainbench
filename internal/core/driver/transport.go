@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-// Transport is the unified local/remote seam (DDD context C7) over which upper
+// Transport is the unified local/remote boundary (DDD context C7) over which upper
 // layers reach and control a node without knowing whether it is local or
 // remote. Local uses exec/os/signals on the loopback address; remote uses
 // SSH/SFTP. It is stateless: no remote agent is deployed.

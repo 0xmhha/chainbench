@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// LogReader reads a node's log from a byte offset. It is the seam that makes the
+// LogReader reads a node's log from a byte offset. It is the boundary that makes the
 // tail loop indifferent to where the log lives: locally it is a file read,
 // remotely an SSH command. Returning fewer bytes than exist is fine — the tail
 // polls, and the offset only advances past complete lines.

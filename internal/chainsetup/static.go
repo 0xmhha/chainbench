@@ -51,7 +51,7 @@ type Options struct {
 	// StopAfter ends the run once that step completes.
 	StopAfter string
 	// Files is where this run's artifacts are written. Nil is the local
-	// filesystem; see HandoffOptions.Files for why the seam is here.
+	// filesystem; see HandoffOptions.Files for why the boundary is here.
 	Files filestore.Store
 }
 

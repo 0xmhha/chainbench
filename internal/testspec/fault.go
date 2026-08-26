@@ -19,7 +19,7 @@ const (
 	actionHealPartition = "healPartition"
 )
 
-// NodeControl stops and restarts individual node processes. It is the seam
+// NodeControl stops and restarts individual node processes. It is the boundary
 // between the DSL and process management: the local engine wires an
 // implementation backed by the launcher and procman, while attach mode leaves it
 // nil because chainbench did not start those nodes and must not pretend it can

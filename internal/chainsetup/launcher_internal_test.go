@@ -162,7 +162,7 @@ func argsHas(args []string, vals ...string) bool {
 	return true
 }
 
-// TestArmSpecsOverrides pins the customization seam: a network id pin and a
+// TestArmSpecsOverrides pins the customization boundary: a network id pin and a
 // user launch knob flow through the Builder's override layer into every
 // node's argv.
 func TestArmSpecsOverrides(t *testing.T) {

@@ -30,7 +30,7 @@ const configFilePerm os.FileMode = 0o644
 // set. For each node it renders the config, installs the preset identity
 // (devp2p nodekey, and for validators the unlock account), initializes the
 // datadir from the network genesis, and launches the process. It implements the
-// supervisor launch seam, so NewBuildEnv brings a real network up on the
+// supervisor launch boundary, so NewBuildEnv brings a real network up on the
 // allocator-assigned ports.
 //
 // On-disk files (genesis, per-node config) are materialized through a

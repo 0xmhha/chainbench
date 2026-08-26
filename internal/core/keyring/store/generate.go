@@ -31,7 +31,7 @@ const (
 type GenerateOpts struct {
 	// Files is where the ring is written and read; nil is this machine's
 	// filesystem. A remote store places the ring on a server through the same
-	// seam provision uses, so "where the ring lives" is a caller's choice
+	// boundary provision uses, so "where the ring lives" is a caller's choice
 	// rather than a second code path.
 	Files filestore.Store
 	// Nodes is how many identities to create.

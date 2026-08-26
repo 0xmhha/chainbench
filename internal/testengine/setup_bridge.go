@@ -11,7 +11,7 @@ import (
 
 // The composition side lives in chainsetup — building an environment,
 // sourcing keys, bootstrapping a producer — and the runner consumes it
-// through this bridge. It is the V6 seam: the local engine still asks the
+// through this bridge. It is the V6 boundary: the local engine still asks the
 // setup module to build its environment; the workflow layer (V6.2) will
 // compose the two from above, and what remains here then is only what the
 // runner genuinely needs by name.
