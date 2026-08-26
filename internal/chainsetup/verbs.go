@@ -61,6 +61,9 @@ type NetNewIn struct {
 	// dials are translated through the localmap next to the server set.
 	// Recorded on the workspace so every later step follows it.
 	Docker bool
+	// ServerSet is the server-set file, recordable here so --docker and the
+	// set it translates through arrive as the pair they are.
+	ServerSet string
 }
 
 // NetNewOut reports what the workspace was initialized to.
@@ -79,6 +82,7 @@ func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
 	detail, err := ws.New(NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
 		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
+		ServerSet: in.ServerSet,
 	})
 	if err != nil {
 		return NetNewOut{}, err

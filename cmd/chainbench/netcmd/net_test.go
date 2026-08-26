@@ -3,6 +3,7 @@ package netcmd_test
 import (
 	"bytes"
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -67,5 +68,34 @@ func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
 func TestNetCmd_RequiresDataDir(t *testing.T) {
 	if _, err := run(t, "net", "new", "--chain", "stablenet"); err == nil {
 		t.Fatal("expected error without --data-dir")
+	}
+}
+
+// TestNetNew_RecordsTheServerSetWithDocker pins the pair travelling together:
+// --docker names how servers are reached, --server-set names which exist, and
+// a workspace told both at new time carries both to every later step.
+func TestNetNew_RecordsTheServerSetWithDocker(t *testing.T) {
+	dir := t.TempDir()
+	set := filepath.Join(t.TempDir(), "server-set.yaml")
+	if err := os.WriteFile(set, []byte(
+		"version: 2\npool:\n  hosts: [{name: box1, addr: 192.0.2.11}]\n"+
+			"ssh: {user: dev, password: pw}\ndataRoot: /data/cb\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet",
+		"--keys", filepath.Join("..", "..", "..", "keys", "preset"),
+		"--docker", "--server-set", set); err != nil {
+		t.Fatalf("net new: %v", err)
+	}
+	out, err := run(t, "net", "status", "--data-dir", dir)
+	if err != nil {
+		t.Fatalf("net status: %v", err)
+	}
+	raw, err := os.ReadFile(filepath.Join(dir, "workspace.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), set) {
+		t.Errorf("workspace did not record the server set:\n%s\nstatus:\n%s", raw, out)
 	}
 }
