@@ -304,7 +304,11 @@ func TestLoad_RejectsBadInventories(t *testing.T) {
 		{"no hosts", "version: 2\npool:\n  hosts: []\n", "no pool hosts"},
 		{"host without address", "version: 2\npool:\n  hosts: [{name: bp1}]\n", "no addr"},
 		{"wrong version", "version: 99\npool:\n  hosts: [h]\n", "version 99"},
-		{"p2p step too small", "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30303, step: 1}, rpc: {base: 8545, step: 10}}\n", "p2pStep"},
+		// p2p step 1 is legal at load time now — the wemix family's larger
+		// reservation is checked where the family is known (portplan). A zero
+		// step means "unset" and inherits; what the file itself still refuses
+		// is a stride that cannot advance.
+		{"p2p step negative", "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30303, step: -1}, rpc: {base: 8545, step: 10}}\n", "p2pStep"},
 		{"rpc step too small", "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 2}}\n", "rpcStep"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -427,5 +431,32 @@ func TestLoad_OldNameGetsAMigrationHint(t *testing.T) {
 	_, err := serverset.Load(filepath.Join(dir, "server-set.yaml"))
 	if err == nil || !strings.Contains(err.Error(), "rename") {
 		t.Fatalf("err = %v, want a rename hint for the old file name", err)
+	}
+}
+
+// TestLoad_PerPurposeBands pins the firewall-shaped scheme: a site that groups
+// ports by purpose (auth 85xx, http 86xx, ws 87xx, p2p 303xx, one metrics
+// port) declares each band, and tight steps become legal because nothing
+// derives from the rpc band any more.
+func TestLoad_PerPurposeBands(t *testing.T) {
+	cfg := load(t, "version: 2\n"+
+		"pool:\n"+
+		"  hosts: [10.0.0.1]\n"+
+		"  slots: 4\n"+
+		"  ports:\n"+
+		"    p2p:     { base: 30301, step: 1 }\n"+
+		"    rpc:     { base: 8601,  step: 1 }\n"+
+		"    ws:      { base: 8701,  step: 1 }\n"+
+		"    auth:    { base: 8501,  step: 1 }\n"+
+		"    metrics: { base: 6060,  step: 0 }\n"+
+		"ssh: {user: dev, password: pw}\n")
+	s := cfg.Servers[0]
+	if s.Ports.WS == nil || s.Ports.WS.Base != 8701 || s.Ports.Auth.Base != 8501 || s.Ports.Metrics.Base != 6060 {
+		t.Fatalf("per-purpose bands lost in load: %+v", s.Ports)
+	}
+
+	// Deriving with a step of 1 must still be refused: ws/auth would collide.
+	if _, err := serverset.Load(write(t, "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30301, step: 1}, rpc: {base: 8601, step: 1}}\n")); err == nil {
+		t.Fatal("derived scheme with rpc step 1 was accepted")
 	}
 }

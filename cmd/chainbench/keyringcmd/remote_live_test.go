@@ -56,7 +56,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 		t.Fatal(err)
 	}
 	spec := machine.Spec{
-		Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench",
+		Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, Port: srv.SSH.Port, DataRoot: "/data/chainbench",
 	}
 	// The direct user@host form authenticates from the environment; the dial
 	// still translates through the module's one address map.
@@ -172,7 +172,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	spec := machine.Spec{Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, DataRoot: "/data/chainbench"}
+	spec := machine.Spec{Kind: machine.KindRemote, User: srv.SSH.User, Host: srv.Host, Port: srv.SSH.Port, DataRoot: "/data/chainbench"}
 	tgt, err := netmapmod.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}.Open(spec)
 	if err != nil {
 		t.Fatal(err)

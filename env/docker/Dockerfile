@@ -6,7 +6,7 @@ FROM ubuntu:24.04
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        openssh-server sudo \
+        openssh-server sudo iptables \
     && rm -rf /var/lib/apt/lists/*
 
 # No accounts are baked in: every login (including the harness's) comes from
@@ -16,12 +16,14 @@ RUN apt-get update \
 # harness has to prove, so NOPASSWD would defeat the purpose.
 
 # Password login only, no root: the same surface a hardened real host offers.
+# sshd listens on 10022, the real test servers' SSH port.
 RUN mkdir -p /run/sshd \
     && printf '%s\n' \
+        'Port 10022' \
         'PermitRootLogin no' \
         'PasswordAuthentication yes' \
         'PubkeyAuthentication no' \
         'KbdInteractiveAuthentication no' \
         > /etc/ssh/sshd_config.d/chainbench.conf
 
-EXPOSE 22
+EXPOSE 10022

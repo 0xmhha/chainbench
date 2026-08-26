@@ -18,6 +18,23 @@ type Bands struct {
 	P2PStep int
 	RPCBase int
 	RPCStep int
+	// WS, Auth, and Metrics override the derived scheme (ws=http+1,
+	// auth=http+2, metrics=http+3) when non-nil — a site whose firewall
+	// groups ports by purpose declares each band explicitly (portplan.Bands).
+	WS      *portplan.Band
+	Auth    *portplan.Band
+	Metrics *portplan.Band
+}
+
+// plan converts the bands to portplan's shape.
+func (b Bands) plan() portplan.Bands {
+	return portplan.Bands{
+		P2P:     portplan.Band{Base: b.P2PBase, Step: b.P2PStep},
+		RPC:     portplan.Band{Base: b.RPCBase, Step: b.RPCStep},
+		WS:      b.WS,
+		Auth:    b.Auth,
+		Metrics: b.Metrics,
+	}
 }
 
 // Host is one address the pool can place nodes on. The name is how an operator
@@ -72,7 +89,7 @@ func (p Pool) Validate() error {
 	}
 	// The last slot is the one that can run off the end of a band, so checking
 	// it checks every earlier one.
-	if _, err := portplan.Plan(p.Slots, p.Ports.P2PBase, p.Ports.P2PStep, p.Ports.RPCBase, p.Ports.RPCStep, p.Reservation); err != nil {
+	if _, err := portplan.PlanBands(p.Slots, p.Ports.plan(), p.Reservation); err != nil {
 		return fmt.Errorf("netmap: pool ports: %w", err)
 	}
 	return nil
@@ -132,9 +149,15 @@ func Assign(pool Pool, reqs []Request) (*Map, error) {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}
 		slot := i/hosts + 1 // 1-based: portplan counts slots from one
-		ports, err := portplan.Plan(slot, pool.Ports.P2PBase, pool.Ports.P2PStep, pool.Ports.RPCBase, pool.Ports.RPCStep, pool.Reservation)
+		ports, err := portplan.PlanBands(slot, pool.Ports.plan(), pool.Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
+		}
+		// A zero-step metrics band means one scrape port per MACHINE: the
+		// first slot on a host exposes it, later slots run metrics-off —
+		// two listeners on one port is a bind failure, not a plan.
+		if pool.Ports.Metrics != nil && pool.Ports.Metrics.Step == 0 && slot > 1 {
+			ports.Metrics = 0
 		}
 		ordinals[role]++
 		label := r.Label

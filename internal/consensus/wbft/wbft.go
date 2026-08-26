@@ -59,12 +59,14 @@ func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 	return []registry.Phase{{Name: "all"}}
 }
 
-// PortReservation: wbft nodes listen on p2p, http, ws and auth. The second
-// p2p-side port stays reserved rather than reclaimed — every network composed
-// so far is running on that spacing, and moving it would change ports for a
-// port nobody needs.
+// PortReservation: wbft nodes listen on p2p, http, ws and auth — one port on
+// the p2p side, nothing derived. The span used to say 2 out of inertia, and
+// that over-reservation rejected a real deployment shape: the Wemix3.5 test
+// servers pack p2p one apart (30301..30304) because nothing sits between.
+// Existing sets keep their spacing regardless — ports come from the
+// configured bands; the span only sets the minimum.
 func (Family) PortReservation() portplan.Reservation {
-	return portplan.Reservation{P2PSpan: 2, RPCSpan: 3}
+	return portplan.Reservation{P2PSpan: 1, RPCSpan: 3}
 }
 
 // SupportsRole: the wbft family runs producers, endpoints, and a proxy tier
