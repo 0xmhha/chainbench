@@ -54,27 +54,28 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	t, err := w.resolveTarget()
+	err = w.eachMachine(func(t *machine.Access, nodes []NodeState) error {
+		initer, ok := t.Driver.(driver.Initializer)
+		if !ok {
+			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
+		}
+		// GenesisPath is a path on the machine: the genesis step wrote it
+		// through each machine's file store, so it is read back the same way.
+		gen, err := t.Files.Read(ctx, w.state.GenesisPath)
+		if err != nil {
+			return fmt.Errorf("chainsetup: init: read genesis: %w", err)
+		}
+		for _, ns := range nodes {
+			spec := driverSpec(ns)
+			spec.Binary = bin
+			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
+				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return "", err
-	}
-	initer, ok := t.Driver.(driver.Initializer)
-	if !ok {
-		return "", fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
-	}
-	// GenesisPath is a path on the target: the genesis step wrote it through
-	// the target's file store, so it is read back the same way. A direct
-	// os.ReadFile here worked only while the target was this machine.
-	gen, err := t.Files.Read(ctx, w.state.GenesisPath)
-	if err != nil {
-		return "", fmt.Errorf("chainsetup: init: read genesis: %w", err)
-	}
-	for _, ns := range w.state.Nodes {
-		spec := driverSpec(ns)
-		spec.Binary = bin
-		if err := initer.InitDatadir(ctx, spec, gen); err != nil {
-			return "", fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
-		}
 	}
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d datadir(s) initialized with %s", len(w.state.Nodes), bin)
@@ -94,10 +95,6 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 		return "", fmt.Errorf("chainsetup: start: no node table — run `net allocate` first")
 	}
 	bin, err := w.binary(binaryArg)
-	if err != nil {
-		return "", err
-	}
-	t, err := w.resolveTarget()
 	if err != nil {
 		return "", err
 	}
@@ -121,7 +118,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	}
 	started := 0
 	for _, phase := range phases {
-		launched, err := w.startPhase(ctx, t, p, preset, bin, phase)
+		launched, err := w.startPhase(ctx, p, preset, bin, phase)
 		if err != nil {
 			return "", err
 		}
@@ -136,7 +133,11 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	w.state.Binary = bin
 	detail := fmt.Sprintf("%d node(s) started (%d already running)", started, len(w.state.Nodes)-started)
 	w.markStep("start", detail)
-	if dir, err := w.recordRun(ctx, t, bin); err == nil {
+	rec, err := w.machineFor(w.state.Nodes[0])
+	if err != nil {
+		return "", err
+	}
+	if dir, err := w.recordRun(ctx, rec, bin); err == nil {
 		detail += fmt.Sprintf("; run recorded at %s", dir)
 	} else {
 		// The record must never take the network it records down with it.
@@ -147,15 +148,15 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 
 // Stop terminates every running node by its recorded PID and clears the PIDs.
 func (w *Workspace) Stop(ctx context.Context) (string, error) {
-	t, err := w.resolveTarget()
-	if err != nil {
-		return "", err
-	}
 	stopped := 0
 	var errs []string
 	for i, ns := range w.state.Nodes {
 		if ns.PID <= 0 {
 			continue
+		}
+		t, err := w.machineFor(ns)
+		if err != nil {
+			return "", err
 		}
 		if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 			errs = append(errs, fmt.Sprintf("node%d: %v", ns.Index, err))
@@ -189,11 +190,11 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	t, err := w.resolveTarget()
+	ns := w.state.Nodes[ni]
+	t, err := w.machineFor(ns)
 	if err != nil {
 		return "", err
 	}
-	ns := w.state.Nodes[ni]
 	if ns.PID > 0 {
 		if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 			return "", fmt.Errorf("chainsetup: restart: stop node%d: %w", ns.Index, err)
@@ -260,13 +261,13 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 // branch. (The collector's live tail has its own byte-offset reader; this is
 // the step surface's one-shot read.)
 func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
-	t, err := w.resolveTarget()
-	if err != nil {
-		return "", err
-	}
 	for _, ns := range w.state.Nodes {
 		if ns.Index != index {
 			continue
+		}
+		t, err := w.machineFor(ns)
+		if err != nil {
+			return "", err
 		}
 		b, err := t.Files.Read(ctx, ns.LogPath)
 		if err != nil {
@@ -357,15 +358,18 @@ func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
 // it does not know belongs to someone — another workspace, an operator's
 // hand-started node — and composing on top of it is refused by name.
 func (w *Workspace) checkUnmanaged(ctx context.Context, bin string) error {
-	t, err := w.resolveTarget()
-	if err != nil {
-		return err
-	}
+	name := filepath.Base(bin)
+	return w.eachMachine(func(t *machine.Access, _ []NodeState) error {
+		return w.checkUnmanagedOn(ctx, t, name)
+	})
+}
+
+// checkUnmanagedOn is checkUnmanaged for one machine.
+func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *machine.Access, name string) error {
 	insp, ok := t.Driver.(driver.ProcessInspector)
 	if !ok {
 		return nil
 	}
-	name := filepath.Base(bin)
 	pids, err := insp.FindBinary(ctx, name)
 	if err != nil {
 		return fmt.Errorf("chainsetup: process check: %w", err)
@@ -448,25 +452,43 @@ func (w *Workspace) scanOccupancy(ctx context.Context, addrs []occupancy.Addr) (
 	if !w.state.Target.IsRemote() {
 		return occupancy.Scan(ctx, addrs, nil), nil
 	}
-	t, err := w.resolveTarget()
-	if err != nil {
-		return nil, err
-	}
-	prober, ok := t.Driver.(driver.PortProber)
-	if !ok {
-		// A remote driver that cannot probe reports nothing rather than
-		// guessing from the wrong side; the launch finds a collision the
-		// old way ("address already in use").
-		return nil, nil
-	}
 	byHost := map[string][]int{}
 	for _, a := range addrs {
 		if a.Port > 0 {
 			byHost[a.Host] = append(byHost[a.Host], a.Port)
 		}
 	}
+	// Each host is probed BY ITS OWN machine (the probe lies from anywhere
+	// else); the node table says which machine owns which address.
+	proberFor := func(host string) (driver.PortProber, error) {
+		for _, ns := range w.state.Nodes {
+			if nodeHost(ns) != host {
+				continue
+			}
+			t, err := w.machineFor(ns)
+			if err != nil {
+				return nil, err
+			}
+			p, ok := t.Driver.(driver.PortProber)
+			if !ok {
+				return nil, nil
+			}
+			return p, nil
+		}
+		return nil, nil
+	}
 	var busy []occupancy.Addr
 	for host, ports := range byHost {
+		prober, err := proberFor(host)
+		if err != nil {
+			return nil, err
+		}
+		if prober == nil {
+			// A machine whose driver cannot probe reports nothing rather
+			// than guessing from the wrong side; the launch finds a
+			// collision the old way ("address already in use").
+			continue
+		}
 		open, err := prober.ProbePorts(ctx, host, ports)
 		if err != nil {
 			return nil, fmt.Errorf("chainsetup: port probe on %s: %w", host, err)
@@ -515,7 +537,7 @@ type owner struct {
 	pid  int
 }
 
-func (w *Workspace) startPhase(ctx context.Context, t *machine.Access, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
+func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err
 	}
@@ -523,6 +545,10 @@ func (w *Workspace) startPhase(ctx context.Context, t *machine.Access, p registr
 	for i, ns := range w.state.Nodes {
 		if ns.PID > 0 || !phaseHasNode(phase, ns.Index) {
 			continue
+		}
+		t, err := w.machineFor(ns)
+		if err != nil {
+			return started, err
 		}
 		spec := driverSpec(ns)
 		spec.Binary = bin

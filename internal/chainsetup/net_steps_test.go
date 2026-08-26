@@ -4,6 +4,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"context"
+	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 	"os"
 	"path/filepath"
 	"strings"
@@ -263,6 +264,45 @@ func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
 	for _, n := range out.State.Nodes {
 		if n.Etcd != n.P2P+1 {
 			t.Fatalf("node%d: etcd = %d, want p2p+1 (%d)", n.Index, n.Etcd, n.P2P+1)
+		}
+	}
+}
+
+// TestAllocate_FleetRecordsEachNodesServer pins the fleet contract every later
+// step depends on: a spread placement names each node's server-set entry, so
+// files, init, and launch reach THAT machine — not the first one's.
+func TestAllocate_FleetRecordsEachNodesServer(t *testing.T) {
+	dir := t.TempDir()
+	set := filepath.Join(t.TempDir(), "server-set.yaml")
+	if err := os.WriteFile(set, []byte(
+		"version: 2\n"+
+			"pool:\n"+
+			"  hosts: [{name: box1, addr: 192.0.2.11}, {name: box2, addr: 192.0.2.12}, {name: box3, addr: 192.0.2.13}]\n"+
+			"  slots: 2\n"+
+			"ssh: {user: dev, password: pw}\n"+
+			"dataRoot: /data/cb\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	d := chainsetup.Deps{Clock: fixedClock()}
+	if _, err := chainsetup.NetNew(context.Background(), d, chainsetup.NetNewIn{
+		DataDir: dir, Chain: "stablenet", KeysDir: presetDir,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
+		DataDir: dir, Validators: 3,
+		Server: netmapmod.ServerRef{SetPath: set, Fleet: true},
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	st := stateOf(t, dir, d)
+	want := []string{"box1", "box2", "box3"}
+	for i, ns := range st.Nodes {
+		if ns.Server != want[i] {
+			t.Errorf("node%d server = %q, want %q", ns.Index, ns.Server, want[i])
+		}
+		if ns.Host == "" || ns.Host == st.Nodes[(i+1)%3].Host {
+			t.Errorf("node%d host = %q — nodes must spread across machines", ns.Index, ns.Host)
 		}
 	}
 }
