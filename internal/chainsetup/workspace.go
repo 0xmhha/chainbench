@@ -54,6 +54,12 @@ type NodeState struct {
 	// be switched to "snap" or "archive" so a large-gap re-sync exercises that
 	// path. Empty means the config's own default.
 	SyncMode string `json:"syncMode,omitempty"`
+	// Server names the server-set entry whose machine this node runs on, when
+	// the placement spread the network across a set ("--fleet"). Empty means
+	// the node lives on the workspace's single target. Every per-node file
+	// write, init, and launch resolves this name through the netmap module,
+	// so a fleet node's material lands on ITS machine, not the first one's.
+	Server string `json:"server,omitempty"`
 	// Host is the address this node is reachable at. It comes from the
 	// allocator, so a remote placement records the server's address rather than
 	// this machine's.
@@ -127,6 +133,9 @@ type State struct {
 // (control directory + manifest + step stamps) plus the netcompose domain
 // state the steps accumulate.
 type Workspace struct {
+	// machines caches per-server opened accesses for the current command, so
+	// a step over N nodes dials each machine once.
+	machines map[string]*machine.Access
 	// ledger is the persisted run record — which machine runs which binary,
 	// under which command, as which pid. It is the source of truth for PIDs;
 	// NodeState.PID is the in-memory view, synced from here on Open.
@@ -231,6 +240,61 @@ func (w *Workspace) keysBase() string {
 // diverge from keyring or anyone else.
 func (w *Workspace) resolveTarget() (*machine.Access, error) {
 	return w.opener().Open(w.state.Target)
+}
+
+// machineFor opens the machine ns runs on. A fleet node names its server-set
+// entry and resolves through the netmap module like everything else; a node
+// without one runs on the workspace's single target. Opened accesses are
+// cached per entry for the life of this command.
+func (w *Workspace) machineFor(ns NodeState) (*machine.Access, error) {
+	key := ns.Server
+	if w.machines == nil {
+		w.machines = map[string]*machine.Access{}
+	}
+	if t, ok := w.machines[key]; ok {
+		return t, nil
+	}
+	var (
+		t   *machine.Access
+		err error
+	)
+	if ns.Server == "" {
+		t, err = w.resolveTarget()
+	} else {
+		t, err = w.opener().Open(machine.Spec{
+			Kind: machine.KindServer, Server: ns.Server,
+			Host: ns.Host, DataRoot: w.state.Target.DataRoot,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	w.machines[key] = t
+	return t, nil
+}
+
+// eachMachine resolves every distinct machine the node table names, in node
+// order, and calls fn once per machine with the nodes that live on it.
+func (w *Workspace) eachMachine(fn func(t *machine.Access, nodes []NodeState) error) error {
+	order := []string{}
+	group := map[string][]NodeState{}
+	for _, ns := range w.state.Nodes {
+		if _, ok := group[ns.Server]; !ok {
+			order = append(order, ns.Server)
+		}
+		group[ns.Server] = append(group[ns.Server], ns)
+	}
+	for _, key := range order {
+		nodes := group[key]
+		t, err := w.machineFor(nodes[0])
+		if err != nil {
+			return err
+		}
+		if err := fn(t, nodes); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // opener binds the workspace's recorded server set and docker choice to the

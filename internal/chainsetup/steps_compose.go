@@ -216,6 +216,17 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		w.state.Target.DataRoot = root
 	}
 	layout := netmap.Layout{Root: root}
+	// On a fleet each node's machine is a server-set entry; record its name so
+	// every later step opens THAT machine. Addresses came from the pool, so
+	// the name is the pool's word for the address.
+	nameOf := map[string]string{}
+	if pl.Remote {
+		for _, h := range pl.Pool.Hosts {
+			if h.Name != "" && h.Name != h.Addr {
+				nameOf[h.Addr] = h.Name
+			}
+		}
+	}
 	nodes := make([]NodeState, len(placements))
 	validators := 0
 	for i, p := range placements {
@@ -223,6 +234,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			validators++
 		}
 		nodes[i] = NodeState{
+			Server:     nameOf[p.Host],
 			Index:      p.Index,
 			Label:      string(p.Label),
 			Role:       string(reqs[i].Role),
@@ -298,20 +310,25 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	gen := art.Genesis
-	t, err := w.resolveTarget()
+	// Every machine gets the genesis (and its by-products): each node's init
+	// reads it locally, and on a fleet "locally" is that node's server.
+	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
+	err = w.eachMachine(func(t *machine.Access, _ []NodeState) error {
+		p := filepath.Join(t.DataRoot, "genesis.json")
+		if err := t.Files.Write(ctx, p, gen, 0o644); err != nil {
+			return fmt.Errorf("chainsetup: genesis: write: %w", err)
+		}
+		// The step's by-products go beside the genesis: a wemix bring-up
+		// reads its governance config back during deploy-governance.
+		for name, content := range art.Extra {
+			if err := t.Files.Write(ctx, filepath.Join(t.DataRoot, name), content, 0o644); err != nil {
+				return fmt.Errorf("chainsetup: genesis: write %s: %w", name, err)
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return "", err
-	}
-	path := filepath.Join(t.DataRoot, "genesis.json")
-	if err := t.Files.Write(ctx, path, gen, 0o644); err != nil {
-		return "", fmt.Errorf("chainsetup: genesis: write: %w", err)
-	}
-	// The step's by-products go to the target beside the genesis: a wemix
-	// bring-up reads its governance config back during deploy-governance.
-	for name, content := range art.Extra {
-		if err := t.Files.Write(ctx, filepath.Join(t.DataRoot, name), content, 0o644); err != nil {
-			return "", fmt.Errorf("chainsetup: genesis: write %s: %w", name, err)
-		}
 	}
 	w.state.GenesisPath = path
 	w.state.Capabilities = networkCapabilities(p.Manifest().Capabilities, opts)
@@ -389,12 +406,12 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		}
 		return nk.PublicKey, true
 	}
-	t, err := w.resolveTarget()
-	if err != nil {
-		return "", err
-	}
 	m := p.Manifest()
 	for _, ns := range w.state.Nodes {
+		t, err := w.machineFor(ns)
+		if err != nil {
+			return "", err
+		}
 		staticNodes, err := netmapmod.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
@@ -412,7 +429,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
 	}
-	detail := fmt.Sprintf("%d config(s) under %s", len(w.state.Nodes), t.DataRoot)
+	detail := fmt.Sprintf("%d config(s) under %s", len(w.state.Nodes), w.state.Target.DataRoot)
 	w.markStep("config", detail)
 	return detail, nil
 }
@@ -468,31 +485,31 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("chainsetup: provision: no node table — run `net allocate` first")
 	}
-	t, err := w.resolveTarget()
-	if err != nil {
-		return "", err
-	}
-	present := 0
-	check := func(ctx context.Context, path string) error {
-		exists, err := t.Files.Exists(ctx, path)
-		if err != nil {
+	present, shipped := 0, 0
+	err := w.eachMachine(func(t *machine.Access, nodes []NodeState) error {
+		check := func(path string) error {
+			exists, err := t.Files.Exists(ctx, path)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				return fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path)
+			}
+			present++
+			return nil
+		}
+		if err := check(w.state.GenesisPath); err != nil {
 			return err
 		}
-		if !exists {
-			return fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path)
+		for _, ns := range nodes {
+			if err := check(ns.ConfigPath); err != nil {
+				return err
+			}
 		}
-		present++
-		return nil
-	}
-	if err := check(ctx, w.state.GenesisPath); err != nil {
-		return "", err
-	}
-	for _, ns := range w.state.Nodes {
-		if err := check(ctx, ns.ConfigPath); err != nil {
-			return "", err
-		}
-	}
-	shipped, err := w.shipIdentities(ctx, t)
+		n, err := w.shipIdentities(ctx, t, nodes)
+		shipped += n
+		return err
+	})
 	if err != nil {
 		return "", err
 	}
@@ -510,8 +527,8 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 // The rendered config and the launch argv point at keysBase, so without this
 // a remote node would look for its keys on the operator's machine. A local
 // target ships nothing: keysBase is the key set itself.
-func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access) (int, error) {
-	if !w.state.Target.IsRemote() {
+func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access, nodes []NodeState) (int, error) {
+	if t.Spec.Kind == machine.KindLocal || t.Spec.Kind == "" {
 		return 0, nil
 	}
 	shipped := 0
@@ -540,7 +557,7 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access) (int,
 	if err := put(filepath.Join(w.state.KeysDir, "password"), filepath.Join(base, "password"), 0o600); err != nil {
 		return shipped, fmt.Errorf("chainsetup: provision: password: %w", err)
 	}
-	for _, ns := range w.state.Nodes {
+	for _, ns := range nodes {
 		src := filepath.Join(w.state.KeysDir, fmt.Sprintf("node%d", ns.Index))
 		dst := filepath.Join(base, fmt.Sprintf("node%d", ns.Index))
 		if err := put(filepath.Join(src, "nodekey"), filepath.Join(dst, "nodekey"), 0o600); err != nil {
