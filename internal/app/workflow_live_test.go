@@ -23,7 +23,6 @@ func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
 	if build == "" {
 		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running (env/docker/gen-env.sh)")
 	}
-	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
 
 	spec := filepath.Join("..", "..", "tests", "specs", "consensus", "wbft-seals-quorum.json")
 	if _, err := os.Stat(spec); err != nil {

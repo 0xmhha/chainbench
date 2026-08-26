@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
@@ -131,3 +132,9 @@ func fleetTarget(pl Placement) machine.Spec {
 	}
 	return spec
 }
+
+// SetPolicy is the set-level host-key policy — how this site verifies the
+// hosts it dials, loaded from the server set at runtime like every other
+// connection setting. A missing set is the zero policy (the safe known_hosts
+// default), never an error.
+func SetPolicy(path string) remote.HostKeyPolicy { return serverset.SetPolicy(path) }

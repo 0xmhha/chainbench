@@ -8,6 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // resolveAccountProvider returns the accounts provider for a run: from an
@@ -30,7 +31,7 @@ func resolveAccountProvider(chain, manifestPath, templatePath string) (accounts.
 // provision and launch on a remote host. The SSH password comes only from the
 // CHAINBENCH_REMOTE_PASS env var — never a flag — so it is not exposed in the
 // process list or shell history. The host-key policy is resolved from the
-// standard SSH env (CHAINBENCH_SSH_KNOWN_HOSTS, or CHAINBENCH_SSH_INSECURE_HOST_KEY=1
+// server set's ssh block (known_hosts_file, or insecure_host_key on a closed
 // for a throwaway host). Returns nil when host is empty (local driver is used).
 func remoteDriver(host, user string, port int) (driver.Driver, error) {
 	if host == "" {
@@ -43,7 +44,7 @@ func remoteDriver(host, user string, port int) (driver.Driver, error) {
 	if port == 0 {
 		port = 22
 	}
-	hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+	hostKey, err := netmap.SetPolicy("").Callback()
 	if err != nil {
 		return nil, err
 	}

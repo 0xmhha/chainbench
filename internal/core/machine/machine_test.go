@@ -1,6 +1,7 @@
 package machine_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/remote"
 	"strings"
 	"testing"
 
@@ -24,13 +25,13 @@ func TestTargetResolve(t *testing.T) {
 		t.Fatalf("local driver type = %T", local.Driver)
 	}
 
-	env := map[string]string{
-		"CHAINBENCH_REMOTE_PASS":           "pw",
-		"CHAINBENCH_SSH_INSECURE_HOST_KEY": "1",
-	}
+	env := map[string]string{"CHAINBENCH_REMOTE_PASS": "pw"}
+	// The host-key policy is the caller's (the server set's) — resolving
+	// never consults the environment for it.
 	remoteTgt, err := machine.Spec{
 		Host: "10.0.0.1", User: "ubuntu", DataRoot: "/tmp/net",
-	}.Resolve(func(k string) string { return env[k] })
+	}.ResolveWithPolicy(func(k string) string { return env[k] }, nil, nil,
+		remote.HostKeyPolicy{InsecureHostKey: true})
 	if err != nil {
 		t.Fatalf("remote resolve: %v", err)
 	}

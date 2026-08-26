@@ -46,6 +46,9 @@ type Credentials struct {
 	PrivateKey []byte
 	// Passphrase decrypts an encrypted PrivateKey; empty for an unencrypted key.
 	Passphrase string
+	// HostKey is how a dial to this machine verifies the host. The zero value
+	// defers to the caller's policy (the server set's, or the safe default).
+	HostKey HostKeyPolicy
 }
 
 // DialTunnelClient opens an SSH connection and returns an *http.Client whose TCP
@@ -243,20 +246,28 @@ func ExecWithInput(ctx context.Context, creds Credentials, hostKey ssh.HostKeyCa
 	return res, nil
 }
 
-// ResolveHostKeyCallback builds the SSH host key verifier per the security
-// policy:
-//
-//   - CHAINBENCH_SSH_INSECURE_HOST_KEY=1 -> InsecureIgnoreHostKey (loud opt-in,
-//     for test/sandbox use against ephemeral hosts).
-//   - otherwise -> known_hosts verification using CHAINBENCH_SSH_KNOWN_HOSTS, or
-//     ~/.ssh/known_hosts when unset. Unknown/mismatched hosts are rejected.
-//
-// env is injected for testability (production passes os.Getenv).
-func ResolveHostKeyCallback(env func(string) string) (ssh.HostKeyCallback, error) {
-	if env("CHAINBENCH_SSH_INSECURE_HOST_KEY") == "1" {
+// HostKeyPolicy is how a dial verifies the host it reached. It is DATA, loaded
+// from the server set at runtime like every other connection setting — no
+// environment variable configures it. The zero value is the safe default:
+// verify against ~/.ssh/known_hosts, reject unknown or changed hosts.
+type HostKeyPolicy struct {
+	// KnownHostsFile verifies against this file instead of the default
+	// ~/.ssh/known_hosts.
+	KnownHostsFile string
+	// InsecureHostKey skips verification entirely. Closed-network, throwaway
+	// servers only — the server set that declares it should say why.
+	InsecureHostKey bool
+}
+
+// Callback builds the SSH verifier the policy describes.
+func (p HostKeyPolicy) Callback() (ssh.HostKeyCallback, error) {
+	if p.InsecureHostKey {
+		if p.KnownHostsFile != "" {
+			return nil, fmt.Errorf("remote: host-key policy sets both insecure_host_key and known_hosts_file — keep exactly one")
+		}
 		return ssh.InsecureIgnoreHostKey(), nil
 	}
-	path := env("CHAINBENCH_SSH_KNOWN_HOSTS")
+	path := p.KnownHostsFile
 	if path == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -267,7 +278,7 @@ func ResolveHostKeyCallback(env func(string) string) (ssh.HostKeyCallback, error
 	cb, err := knownhosts.New(path)
 	if err != nil {
 		return nil, fmt.Errorf("remote: load known_hosts %q: %w "+
-			"(set CHAINBENCH_SSH_KNOWN_HOSTS, or CHAINBENCH_SSH_INSECURE_HOST_KEY=1 to bypass)", path, err)
+			"(name a known_hosts_file in the server set's ssh block, or insecure_host_key: true on a closed network)", path, err)
 	}
 	return cb, nil
 }

@@ -28,7 +28,6 @@ func fleetBuildDir(t *testing.T) string {
 	if build == "" {
 		t.Skip("set CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build with the fleet running (env/docker/gen-env.sh)")
 	}
-	t.Setenv("CHAINBENCH_SSH_INSECURE_HOST_KEY", "1")
 	// Access mirrors the real fleet: user + password. The srv:// path reads
 	// them from the server set; the direct user@host form reads the password
 	// from the environment, so it is exported here from the same file.

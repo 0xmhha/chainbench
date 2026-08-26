@@ -130,8 +130,9 @@ allocate: 4 node(s); ports: server-set.yaml[local]; p2p from 30303, http from 85
 `CHAINBENCH_REMOTE_USER` / `_PASS` / `_KEY_FILE` / `_KEY_PASSPHRASE` 는
 직접 표기(`user@host:/path`)에만 남아 있다 — 그 형태에는 참조할 파일이 없다.
 
-호스트키 정책은 별개다: `CHAINBENCH_SSH_KNOWN_HOSTS`, 또는 known_hosts 가 없는
-폐쇄망에서 `CHAINBENCH_SSH_INSECURE_HOST_KEY=1`.
+호스트키 정책도 이 파일의 데이터다: `ssh.known_hosts_file: <경로>` 로 검증 파일을
+지정하거나, known_hosts 를 둘 수 없는 폐쇄망에서만 `ssh.insecure_host_key: true`
+(정확히 하나만). 지정이 없으면 `~/.ssh/known_hosts` 로 검증한다 — 환경변수는 없다.
 
 ---
 

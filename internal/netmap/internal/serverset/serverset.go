@@ -96,6 +96,14 @@ type SSH struct {
 	KeyFile      string `yaml:"key_file,omitempty"`
 	// KeyPassphraseFile names a file holding the key's passphrase.
 	KeyPassphraseFile string `yaml:"key_passphrase_file,omitempty"`
+	// KnownHostsFile verifies dialed hosts against this file instead of the
+	// default ~/.ssh/known_hosts. Like every connection setting, host-key
+	// policy is data in this file — no environment variable configures it.
+	KnownHostsFile string `yaml:"known_hosts_file,omitempty"`
+	// InsecureHostKey skips host-key verification for this set's dials.
+	// Closed-network, throwaway servers only; exactly one of this and
+	// KnownHostsFile may be set.
+	InsecureHostKey bool `yaml:"insecure_host_key,omitempty"`
 	// Sudo reports whether the login may elevate. It is carried, not consumed:
 	// the bring-up decides whether a step needs it, and netmap only passes it
 	// along (netmap-design NM-e).
@@ -289,7 +297,7 @@ func LegacyNameHint(path string) string {
 // directory, and a relative path is anchored to the server-set file's own
 // directory (dir), not the process working directory.
 func (s *SSH) resolveSecretPaths(dir string) error {
-	for _, f := range []*string{&s.PasswordFile, &s.KeyFile, &s.KeyPassphraseFile} {
+	for _, f := range []*string{&s.PasswordFile, &s.KeyFile, &s.KeyPassphraseFile, &s.KnownHostsFile} {
 		if *f == "" {
 			continue
 		}
@@ -480,6 +488,9 @@ func (c *Config) validate() error {
 func (s SSH) validateFields() error {
 	if s.Password != "" && s.PasswordFile != "" {
 		return fmt.Errorf("ssh sets both password and password_file — keep exactly one")
+	}
+	if s.InsecureHostKey && s.KnownHostsFile != "" {
+		return fmt.Errorf("ssh sets both insecure_host_key and known_hosts_file — keep exactly one")
 	}
 	if s.KeyPassphraseFile != "" && s.KeyFile == "" {
 		return fmt.Errorf("ssh sets key_passphrase_file without key_file — the passphrase has no key to unlock")
@@ -684,7 +695,13 @@ func (s Server) Credentials() (remote.Credentials, error) {
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	rc := remote.Credentials{User: s.SSH.User, Host: s.Host, Port: port, Password: pass}
+	rc := remote.Credentials{
+		User: s.SSH.User, Host: s.Host, Port: port, Password: pass,
+		HostKey: remote.HostKeyPolicy{
+			KnownHostsFile:  s.SSH.KnownHostsFile,
+			InsecureHostKey: s.SSH.InsecureHostKey,
+		},
+	}
 	if s.SSH.KeyFile != "" {
 		key, err := remote.LoadPrivateKey(s.SSH.KeyFile)
 		if err != nil {
@@ -758,5 +775,25 @@ func SetLookup(path string) machine.Lookup {
 			return remote.Credentials{}, err
 		}
 		return s.Credentials()
+	}
+}
+
+// SetPolicy loads the set-level host-key policy from the server set at path
+// (empty uses the default location). It is what covers a DIRECTLY named host
+// (user@host:/path): that form has no set entry to carry a policy, but the
+// operator's set still says how this site verifies hosts. A missing set is
+// the zero policy — the safe known_hosts default — not an error, because the
+// direct form must keep working with no set at all.
+func SetPolicy(path string) remote.HostKeyPolicy {
+	if path == "" {
+		path = DefaultConfigFile
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		return remote.HostKeyPolicy{}
+	}
+	return remote.HostKeyPolicy{
+		KnownHostsFile:  cfg.SSH.KnownHostsFile,
+		InsecureHostKey: cfg.SSH.InsecureHostKey,
 	}
 }

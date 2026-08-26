@@ -39,12 +39,7 @@ func TestRemoteDriver_E2E(t *testing.T) {
 	creds := remote.Credentials{User: user, Host: host, Port: port, Password: pass}
 
 	// The container's host key is ephemeral; accept it insecurely for the test.
-	hostKey, err := remote.ResolveHostKeyCallback(func(k string) string {
-		if k == "CHAINBENCH_SSH_INSECURE_HOST_KEY" {
-			return "1"
-		}
-		return ""
-	})
+	hostKey, err := remote.HostKeyPolicy{InsecureHostKey: true}.Callback()
 	if err != nil {
 		t.Fatalf("host key: %v", err)
 	}

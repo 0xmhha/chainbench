@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/chains/wemix/deploy"
-	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // newRemoteCmd is the remote closed-network deployment command group (the
@@ -49,7 +49,7 @@ func newRemoteHandoffCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			hostKey, err := netmap.SetPolicy("").Callback()
 			if err != nil {
 				return err
 			}
@@ -100,7 +100,7 @@ func newRemoteBootstrapCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			hostKey, err := netmap.SetPolicy("").Callback()
 			if err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func newRemoteDeployCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			hostKey, err := netmap.SetPolicy("").Callback()
 			if err != nil {
 				return err
 			}
@@ -207,7 +207,7 @@ func newRemoteKeysReadCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			hostKey, err := remote.ResolveHostKeyCallback(os.Getenv)
+			hostKey, err := netmap.SetPolicy("").Callback()
 			if err != nil {
 				return err
 			}

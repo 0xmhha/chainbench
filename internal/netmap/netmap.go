@@ -54,7 +54,7 @@ func (o Opener) Open(spec machine.Spec) (*machine.Access, error) {
 	if err != nil {
 		return nil, err
 	}
-	return spec.ResolveWithMap(env, serverset.SetLookup(o.ServerSet), m)
+	return spec.ResolveWithPolicy(env, serverset.SetLookup(o.ServerSet), m, serverset.SetPolicy(o.ServerSet))
 }
 
 // AddrMap returns the dial-time address translation this opener applies — nil
