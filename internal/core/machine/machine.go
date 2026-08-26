@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -161,7 +161,7 @@ func parseHostColonPath(s string) (Spec, bool) {
 type Access struct {
 	Spec     Spec
 	DataRoot string
-	Files    provision.FileStore
+	Files    filestore.Store
 	Driver   driver.Driver
 }
 
@@ -207,7 +207,7 @@ func (s Spec) ResolveWithMap(env func(string) string, inv Lookup, m remote.AddrM
 func (s Spec) ResolveWithPolicy(env func(string) string, inv Lookup, m remote.AddrMap, hk remote.HostKeyPolicy) (*Access, error) {
 	switch {
 	case !s.IsRemote():
-		return &Access{Spec: s, DataRoot: s.DataRoot, Files: provision.LocalFileStore{}, Driver: driver.NewLocalDriver()}, nil
+		return &Access{Spec: s, DataRoot: s.DataRoot, Files: filestore.Local{}, Driver: driver.NewLocalDriver()}, nil
 
 	case s.Server != "":
 		if inv == nil {

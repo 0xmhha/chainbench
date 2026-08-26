@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // Label names one entry in a ring: "node1", "bp1", "faucet".
@@ -137,7 +137,7 @@ func (r *Ring) Labels() []Label {
 // It is how a node gets the key it launches with. Only the private material is
 // shipped: everything else about the identity derives from it, and shipping a
 // derived value is how a node and its genesis come to disagree.
-func (r *Ring) Install(ctx context.Context, files provision.FileStore, dir string, labels []Label) error {
+func (r *Ring) Install(ctx context.Context, files filestore.Store, dir string, labels []Label) error {
 	for _, label := range labels {
 		e, ok := r.Get(label)
 		if !ok {

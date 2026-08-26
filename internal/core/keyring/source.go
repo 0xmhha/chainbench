@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/accounts/account"
 	"github.com/0xmhha/accounts/hdwallet"
 
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
 // DefaultCoinType is Ethereum's SLIP-44 coin type. BIP-39/BIP-44 uses it by
@@ -111,7 +111,7 @@ func (s MnemonicSource) Resolve(context.Context) (PrivateKey, error) {
 // special kind of remote.
 type FileSource struct {
 	// Files is where the key file lives. Nil means the local filesystem.
-	Files provision.FileStore
+	Files filestore.Store
 	// Path is the key file's path on that store.
 	Path string
 	// Password decrypts a keystore; unused for a raw hex key.
@@ -123,7 +123,7 @@ type FileSource struct {
 func (s FileSource) Resolve(ctx context.Context) (PrivateKey, error) {
 	files := s.Files
 	if files == nil {
-		files = provision.LocalFileStore{}
+		files = filestore.Local{}
 	}
 	data, err := files.Read(ctx, s.Path)
 	if err != nil {

@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
-// RemoteFileStore must satisfy the provision.FileStore seam a launcher plugs into.
-var _ provision.FileStore = driver.RemoteFileStore{}
+// RemoteFileStore must satisfy the filestore.Store seam a launcher plugs into.
+var _ filestore.Store = driver.RemoteFileStore{}
 
 func TestRemoteFileStore_Exists(t *testing.T) {
 	cases := []struct {

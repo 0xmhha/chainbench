@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // PresetFile is the file a keyring's index lives in, inside the ring directory.
@@ -46,9 +46,9 @@ func LoadPreset(dir string) (Preset, error) {
 
 // LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
 // one file, so a ring on a server reads back with a single remote read.
-func LoadPresetAt(ctx context.Context, files provision.FileStore, dir string) (Preset, error) {
+func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (Preset, error) {
 	if files == nil {
-		files = provision.LocalFileStore{}
+		files = filestore.Local{}
 	}
 	path := filepath.Join(dir, PresetFile)
 	b, err := files.Read(ctx, path)

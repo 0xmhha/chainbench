@@ -98,7 +98,7 @@ LLM 이 여러 행동을 자유롭게 조합(자유도 확대)할 수 있게 한
 | 배치 | `chain allocate` | `--mode/--base-p2p/--base-rpc/--hosts` | 포트맵 출력 | `core/place` |
 | genesis | `chain genesis` | `--mode(existing\|build\|overlay\|inherit)/--set/--overlay/--template` | genesis 바이트·검증자 치환 | `core/genesis`, `engine.GenesisSource` |
 | config | `chain config` | `--sync-mode/--set/--static-nodes` | 노드별 config 출력 | `core/nodeconfig` |
-| 수집·배치 | `chain provision` | (로컬/원격) `--remote-host/-user/-port/--key-file` | 물질화 파일·upload-if-absent | `core/provision`, `driver.RemoteFileSink` |
+| 수집·배치 | `chain provision` | (로컬/원격) `--remote-host/-user/-port/--key-file` | 물질화 파일·upload-if-absent | `core/filestore`, `driver.RemoteFileSink` |
 | init | `chain init` | — | datadir chaindata 확인 | `core/driver` |
 | 실행/정지/재실행/삭제 | `chain start`/`stop`/`restart`/`rm` | `--node\|--all/--grace/--data` | PID·head·고아0 | `core/driver`, `core/procman` |
 | 로그 | `chain logs` | `--node/--follow/--since` (로컬/원격 tail) | 최근 라인 | `core/logs`, `driver.RemoteLogReader` |

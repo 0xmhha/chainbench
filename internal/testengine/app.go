@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -240,7 +240,7 @@ func applicableTo(chain string) func(testspec.Spec) bool {
 // writeExtra puts the genesis step's by-products on the target beside the
 // genesis, under the names a later step reads them by.
 func writeExtra(ctx context.Context, plan driver.Plan, files map[string][]byte) error {
-	store := provision.LocalFileStore{}
+	store := filestore.Local{}
 	for name, content := range files {
 		if err := store.Write(ctx, filepath.Join(plan.DataRoot, name), content, 0o644); err != nil {
 			return fmt.Errorf("engine: write %s: %w", name, err)

@@ -16,7 +16,7 @@
 | 1.4 node key / 1.5 keystore (random·import, genesis 반영) | `internal/keymat/source.go`, `internal/core/keys`, `internal/core/keyreg`, `internal/keygen` | ✅ 충족 |
 | algo 4/5 genesis overlay(테스트 추가정보) | DSL `ChainSpec.GenesisOverlay` (`internal/testspec/spec.go:21`) + builder | ✅ 충족 |
 | 1.3 체인·테스트별 config | DSL `ChainSpec.Config` (`spec.go:20`), `internal/core/config` | ✅ 충족 |
-| algo 6 deploy skip-if-exists | `internal/core/provision/provision.go:46-57` (`Exists`→`Skipped`, "reused rather than") | ✅ 충족 |
+| algo 6 deploy skip-if-exists | `internal/core/filestore/provision.go:46-57` (`Exists`→`Skipped`, "reused rather than") | ✅ 충족 |
 | algo 7 command 빌드(http/ws/metric/chainId 등) | `internal/core/nodeconfig`, `internal/consensus/upgrade/launch.go` | ✅ 충족 |
 | algo 8 동일 구성 재사용 skip | 세션 지문 재사용 `internal/core/session/session.go:33-36`, `Spec.Fingerprint` (`spec.go`) | ✅ 충족 |
 | algo 9 health 체크(최신 블록 등) | `internal/engine/health.go`, `internal/core/probe` | ✅ 충족 |

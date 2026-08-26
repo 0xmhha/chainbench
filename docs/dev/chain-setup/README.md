@@ -30,7 +30,7 @@
 | 4 | **allocate** | 노드별 host/port 배치 + **용량 사전검증**(min validators, 포트 대역) | `core/place` |
 | 5 | **genesis** | genesis 바이트 산출(4모드 §2.5) | `core/genesis` · `engine.GenesisSource` |
 | 6 | **assemble-plan** | 배치+genesis+역할 → `setup.Plan` (노드별 datadir·config·args) | `engine.AssemblePlan` |
-| 7 | **provision** | genesis·per-node config 물질화(upload-if-absent; 로컬 FS 또는 SSH) | `core/provision` |
+| 7 | **provision** | genesis·per-node config 물질화(upload-if-absent; 로컬 FS 또는 SSH) | `core/filestore` |
 | 8 | **init-datadir** | 노드별 `init` (각자 자기 바이너리로) | `core/driver` |
 | 9 | **launch** | 노드 기동 + PID 추적 | `core/driver` · `core/procman` |
 | 10 | **health-gate** | 건강 판정(블록 전진 / etcd 리더 / 포크 도달) | `core/supervisor` |

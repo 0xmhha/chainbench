@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -39,12 +39,12 @@ type HandoffOptions struct {
 	// filesystem. The seam exists so the package stops owning the question of
 	// where state lands — the rule is that a step describes what to write and
 	// the target decides where (layers §5).
-	Files provision.FileStore
+	Files filestore.Store
 }
 
-func (o HandoffOptions) files() provision.FileStore {
+func (o HandoffOptions) files() filestore.Store {
 	if o.Files == nil {
-		return provision.LocalFileStore{}
+		return filestore.Local{}
 	}
 	return o.Files
 }

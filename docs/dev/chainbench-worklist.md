@@ -244,7 +244,7 @@ K0·S0 가 추측 위에 서게 된다.
 |---|---|---|---|
 | **A1** | 레이어 검사 테스트 (`internal/arch`) — [[layers]] §3 표를 **파싱**한다(코드에 복제하지 않음) | ☑ 상향 의존 **0건** · 미배치 패키지 거부 · 유령 항목 거부 · 네 실패 경로를 실제로 확인 |
 | **A2** | 상태 쓰기 허용목록 테스트 (`internal/arch`) — [[layers]] §5 표가 정본 | ☑ ❌ 4곳(app·chainsetup·wemix/deploy·upgrade)은 예외로 명시 · 신규 위반 차단 · **stale 예외도 차단** · `os.Create` 를 세면서 미기재였던 `engine` 을 찾아냄 |
-| **A3** | `app` 의 `topology.yaml` 쓰기를 `provision.FileStore` 경유로 | ☑ **정리가 아니라 결함 수정이었다** — 원격 프로비전이 genesis·config 를 조작자 머신에 쓰고 있었다(신원만 원격으로 갔다). `Deps.Files` seam 추가 · 드라이버가 파일을 보낼 수 있으면 그것이 기본 저장소 · 회귀 테스트 3건 |
+| **A3** | `app` 의 `topology.yaml` 쓰기를 `filestore.Store` 경유로 | ☑ **정리가 아니라 결함 수정이었다** — 원격 프로비전이 genesis·config 를 조작자 머신에 쓰고 있었다(신원만 원격으로 갔다). `Deps.Files` seam 추가 · 드라이버가 파일을 보낼 수 있으면 그것이 기본 저장소 · 회귀 테스트 3건 |
 | **A4** | `chains/wemix/deploy` 를 `FileStore` 경유로 | ☑ `pullKeystores` 가 읽기·쓰기 양쪽 모두 store 경유. 직접 파일 쓰기 0건 |
 | **A4b** | `chainsetup`·`consensus/upgrade` 를 `FileStore` 경유로 | ☑ **완료 2026-08-23.** 실측은 8+2 가 아니라 **11+2 = 13곳**. `Options`/`HandoffOptions`/`upgrade.LaunchOptions` 에 `Files` seam(nil=로컬). **직접 쓰기 0건**이 되어 [[layers]] §5 의 ❌ 가 사라졌고, **A2 가 stale 예외를 잡아** 표에서 지우게 했다(가드가 의도대로 동작). `os.MkdirAll` 대부분이 함께 사라진 게 핵심 — `Write` 가 부모를 만들므로 디렉토리를 미리 만들던 코드는 **경로를 아는 코드**였고 그게 위반의 실체였다. 라이브: `chain up --case wemix` 15/15 · 엔진 게이트 통과 | ☑ |
 | **A5** | ~~`core/bringup`·`core/state`~~ 삭제 완료 · `testkit`·`core/pipeline/testrun` 잔여 | 앞 둘은 #241 에서 소멸(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘은 **케이스 이관 선행** | ◐ |

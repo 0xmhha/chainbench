@@ -15,9 +15,9 @@ import (
 	chainsetupmod "github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/topology"
@@ -290,7 +290,7 @@ func overrides(in NetworkSpecIn) (config.Values, error) {
 // beside the genesis and configs it describes. Written directly it always
 // landed on the operator's machine, which for a remote network meant a layout
 // file describing nodes that were somewhere else.
-func saveTopology(ctx context.Context, files provision.FileStore, root, topologyPath string) error {
+func saveTopology(ctx context.Context, files filestore.Store, root, topologyPath string) error {
 	if topologyPath == "" {
 		return nil
 	}

@@ -10,15 +10,15 @@ import (
 
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// recordingSink is a provision.FileStore capturing writes and reporting a
+// recordingSink is a filestore.Store capturing writes and reporting a
 // preset existing set (to exercise upload-if-absent) in memory.
 type recordingSink struct {
 	written  map[string][]byte
@@ -58,7 +58,7 @@ func TestMaterialize(t *testing.T) {
 	}
 
 	sink := newRecordingSink()
-	if err := materialize(context.Background(), provision.New(sink), plan, plan.Nodes); err != nil {
+	if err := materialize(context.Background(), filestore.New(sink), plan, plan.Nodes); err != nil {
 		t.Fatalf("materialize: %v", err)
 	}
 	for _, want := range []string{"/d/genesis.json", "/d/config_node1.toml", "/d/config_node2.toml"} {
@@ -70,7 +70,7 @@ func TestMaterialize(t *testing.T) {
 	// Upload-if-absent: an existing genesis is not rewritten.
 	sink2 := newRecordingSink()
 	sink2.existing["/d/genesis.json"] = true
-	if err := materialize(context.Background(), provision.New(sink2), plan, plan.Nodes); err != nil {
+	if err := materialize(context.Background(), filestore.New(sink2), plan, plan.Nodes); err != nil {
 		t.Fatalf("materialize (reuse): %v", err)
 	}
 	if _, ok := sink2.written["/d/genesis.json"]; ok {

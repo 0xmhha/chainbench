@@ -11,9 +11,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	model "github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/netmap"
 )
 
@@ -72,7 +72,7 @@ func (r RingRef) resolve(env func(string) string) (dir, source string) {
 // Before this, a remote-looking ring path was treated as a local directory
 // NAME — a ring created "on the server" landed silently on the operator's
 // machine, which is worse than a refusal.
-func (r RingRef) open(d Deps) (files provision.FileStore, dir, source string, err error) {
+func (r RingRef) open(d Deps) (files filestore.Store, dir, source string, err error) {
 	dir, source = r.resolve(d.env())
 	// The netmap module is the one dial-wiring point: server-set lookup,
 	// --docker translation, and the translation report all live there, so

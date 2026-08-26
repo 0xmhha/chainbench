@@ -14,8 +14,8 @@ import (
 
 	"github.com/0xmhha/accounts/keystore"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // File and directory permissions for a generated ring.
@@ -33,7 +33,7 @@ type GenerateOpts struct {
 	// filesystem. A remote store places the ring on a server through the same
 	// seam provision uses, so "where the ring lives" is a caller's choice
 	// rather than a second code path.
-	Files provision.FileStore
+	Files filestore.Store
 	// Nodes is how many identities to create.
 	Nodes int
 	// Validators is how many identities join the validator set.
@@ -93,11 +93,11 @@ func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (
 }
 
 // files is the ring's store, defaulting to this machine.
-func (o GenerateOpts) files() provision.FileStore {
+func (o GenerateOpts) files() filestore.Store {
 	if o.Files != nil {
 		return o.Files
 	}
-	return provision.LocalFileStore{}
+	return filestore.Local{}
 }
 
 // Extend adds opts.Nodes entries to the ring already in opts.Out, keeping the
@@ -144,9 +144,9 @@ func Import(dir string, label Label, key PrivateKey, d Derivation) (Entry, error
 }
 
 // ImportAt is Import against files (nil = local).
-func ImportAt(ctx context.Context, files provision.FileStore, dir string, label Label, key PrivateKey, d Derivation) (Entry, error) {
+func ImportAt(ctx context.Context, files filestore.Store, dir string, label Label, key PrivateKey, d Derivation) (Entry, error) {
 	if files == nil {
-		files = provision.LocalFileStore{}
+		files = filestore.Local{}
 	}
 	if label == "" {
 		return Entry{}, fmt.Errorf("keyring: import needs a label")
@@ -324,7 +324,7 @@ func generateEntry(ctx context.Context, i int, opts GenerateOpts) (Entry, error)
 // writeEntryDir lays out one identity's directory: the key, an encrypted
 // keystore, and the derived public fields as plain files for an operator
 // reading the directory by hand.
-func writeEntryDir(ctx context.Context, files provision.FileStore, dir string, key PrivateKey, id Identity, password string) error {
+func writeEntryDir(ctx context.Context, files filestore.Store, dir string, key PrivateKey, id Identity, password string) error {
 	if err := files.Write(ctx, filepath.Join(dir, "nodekey"), []byte(key.Hex()), secretPerm); err != nil {
 		return err
 	}
@@ -367,7 +367,7 @@ func describeEntry(e Entry) string {
 // writeKeystore encrypts the account key into a standard v3 keystore where the
 // node reads it (<datadir>/keystore), which is what the node's own `account
 // import` used to produce — without shelling out to it.
-func writeKeystore(ctx context.Context, files provision.FileStore, nodeDir string, key PrivateKey, address, password string) error {
+func writeKeystore(ctx context.Context, files filestore.Store, nodeDir string, key PrivateKey, address, password string) error {
 	keyjson, err := keystore.Encrypt(key.Bytes(), password, keystoreScryptN, keystoreScryptP)
 	if err != nil {
 		return fmt.Errorf("keystore encrypt: %w", err)
@@ -404,9 +404,9 @@ func shortHex(s string) string {
 //
 // The destination must not already hold a ring, for the same reason Generate
 // refuses one: silently replacing referenced identities is unrecoverable.
-func ImportRing(ctx context.Context, files provision.FileStore, dir string, src Preset, password string) (Preset, error) {
+func ImportRing(ctx context.Context, files filestore.Store, dir string, src Preset, password string) (Preset, error) {
 	if files == nil {
-		files = provision.LocalFileStore{}
+		files = filestore.Local{}
 	}
 	if len(src.Nodes) == 0 {
 		return Preset{}, fmt.Errorf("keyring: import-ring: the source ring holds no identities")

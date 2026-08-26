@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 
 	netmap "github.com/0xmhha/chainbench/internal/core/netmap"
 )
@@ -67,7 +67,7 @@ type runNode struct {
 func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string) (string, error) {
 	stamp := w.now().UTC().Format("20060102-150405")
 	dir := filepath.Join(w.comp.Dir(), runsDir, stamp)
-	files := provision.LocalFileStore{}
+	files := filestore.Local{}
 
 	m := runManifest{
 		StartedAt: w.now().UTC().Format(time.RFC3339),

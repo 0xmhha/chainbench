@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -42,13 +42,13 @@ func ReadServerKeys(ctx context.Context, c *Cluster, cr *Credentials, hostKey re
 	if err != nil {
 		return ServerIdentity{}, err
 	}
-	return readServerKeysFrom(ctx, serverFiles(rc, hostKey), provision.LocalFileStore{}, c.Paths(), s.Index, localKeystoreDir)
+	return readServerKeysFrom(ctx, serverFiles(rc, hostKey), filestore.Local{}, c.Paths(), s.Index, localKeystoreDir)
 }
 
 // readServerKeysFrom is ReadServerKeys with the store already open. Opening it
 // needs credentials and a host; everything after that is just files, so the
 // split is what makes the read and the derivation testable without a host.
-func readServerKeysFrom(ctx context.Context, files, dest provision.FileStore, p RemotePaths, server int, localKeystoreDir string) (ServerIdentity, error) {
+func readServerKeysFrom(ctx context.Context, files, dest filestore.Store, p RemotePaths, server int, localKeystoreDir string) (ServerIdentity, error) {
 	raw, err := files.Read(ctx, p.Nodekey)
 	if err != nil {
 		return ServerIdentity{}, fmt.Errorf("deploy: server %d read nodekey: %w", server, err)
@@ -79,7 +79,7 @@ func readServerKeysFrom(ctx context.Context, files, dest provision.FileStore, p 
 // where they land. Writing the destination directly would have fixed it to this
 // machine, which is the assumption the file seam exists to remove — the same
 // one that left a remote network's genesis on the operator's disk.
-func pullKeystores(ctx context.Context, from, dest provision.FileStore, p RemotePaths, server int, destDir string) error {
+func pullKeystores(ctx context.Context, from, dest filestore.Store, p RemotePaths, server int, destDir string) error {
 	for _, ks := range []struct{ remote, local string }{
 		{p.CoinbaseKeystore, fmt.Sprintf("keystore_%d", server)},
 		{p.OperatorKeystore, fmt.Sprintf("operator_%d", server)},
@@ -105,7 +105,7 @@ const (
 // serverFiles opens the file store for one server. Reads and writes on that
 // host go through it, so the deploy no longer carries its own SSH file I/O
 // beside the shared one.
-func serverFiles(rc remote.Credentials, hostKey remote.HostKeyCallback) provision.FileStore {
+func serverFiles(rc remote.Credentials, hostKey remote.HostKeyCallback) filestore.Store {
 	return driver.NewRemoteFileStore(driver.SSHRunner(rc, hostKey))
 }
 

@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // TestTargetResolve checks the location abstraction: a local spec yields the
@@ -18,7 +18,7 @@ func TestTargetResolve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("local resolve: %v", err)
 	}
-	if _, ok := local.Files.(provision.LocalFileStore); !ok {
+	if _, ok := local.Files.(filestore.Local); !ok {
 		t.Fatalf("local sink type = %T", local.Files)
 	}
 	if _, ok := local.Driver.(*driver.LocalDriver); !ok {

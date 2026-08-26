@@ -38,7 +38,7 @@
 ```
 파일을 쓰는 패키지 14개:
   app · chainsetup · chains/wemix/deploy · consensus/upgrade
-  core/driver · core/keyring · core/netreg · core/obs · core/provision
+  core/driver · core/keyring · core/netreg · core/obs · core/filestore
   core/session
 ```
 
@@ -106,7 +106,7 @@ flowchart TD
 | `core/rpc` | JSON-RPC 클라이언트 |
 | `core/process` | PID 추적 · 검증된 종료 |
 | `core/occupancy` | **기동 전 포트 점유 조회** — 로컬은 bind 두 형태(루프백·와일드카드) 모두 시도, 원격은 dial |
-| `core/provision` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
+| `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
 | `core/netmap` | **노드 배치의 소유자** — NodeLabel · 역할 정규화 · Map(정/역방향) ([[netmap-design]]) |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
@@ -212,7 +212,7 @@ flowchart TD
 ## 5. 상태 소유 규칙 — 복잡도의 본체
 
 > **규칙: 상태를 쓰는 곳은 두 곳뿐이다.**
-> **컨트롤 플레인은 `core/session`, 데이터 플레인은 `core/provision.FileSink`.**
+> **컨트롤 플레인은 `core/session`, 데이터 플레인은 `core/filestore.FileSink`.**
 > 나머지 모든 패키지는 **바이트를 만들어 넘길 뿐, 어디에 쓸지 결정하지 않는다.**
 
 ### 두 개의 플레인
@@ -221,7 +221,7 @@ flowchart TD
 |---|---|---|
 | 무엇 | 실행 기록 · 판정 · 컴포지션 상태 | genesis · config.toml · datadir · 로그 |
 | 어디 | **항상 조작자의 로컬 머신** | 타깃(이 머신 또는 원격 SSH 호스트) |
-| 소유 | `core/session` | `core/provision.FileSink` |
+| 소유 | `core/session` | `core/filestore.FileSink` |
 | 예 | `session.json` · `env.json` · `workspace.json` · `chainstate.jsonl` | `genesis.json` · `config_nodeN.toml` · `nodeN/` |
 
 이 분리가 로컬/원격을 분기하지 않게 해준다 — 스텝은 `Sink` 에 쓰고, 어느 머신인지는 `Target` 이 안다.
@@ -231,7 +231,7 @@ flowchart TD
 | 패키지 | 무엇을 쓰나 | 판정 |
 |---|---|---|
 | `core/session` | 세션·컴포지션 매니페스트 | ✅ 소유자 |
-| `core/provision` | 타깃 파일 | ✅ 소유자 |
+| `core/filestore` | 타깃 파일 | ✅ 소유자 |
 | `core/driver` | config·log (LocalDriver) | ✅ 전송 계층, Sink 의 구현 짝 |
 | `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
 | `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 seam 경유 |
@@ -242,7 +242,7 @@ flowchart TD
 | `chainsetup` | 실행 기록(`runs/`) · 로컬 조립 산출물(구 engine 이관분) | ✅ 셋업 오케스트레이터 — 원격은 파일 seam 경유 |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
-`provision.FileStore` 경유가 되어 두 패키지는 이 표에서 내려갔다.
+`filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다.
 
 `os.MkdirAll` 이 대부분 사라진 것은 부수효과가 아니다. `FileStore.Write` 가 부모 디렉토리를
 만들므로, 디렉토리를 미리 만드는 코드는 **경로를 아는 코드**였고 그게 층 위반의 실체였다.

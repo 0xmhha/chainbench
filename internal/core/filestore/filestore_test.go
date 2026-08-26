@@ -1,4 +1,4 @@
-package provision_test
+package filestore_test
 
 import (
 	"context"
@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
-func node(dataDir string) provision.NodeInputs {
-	return provision.NodeInputs{
+func node(dataDir string) filestore.NodeInputs {
+	return filestore.NodeInputs{
 		DataDir: dataDir,
-		Files: []provision.File{
+		Files: []filestore.File{
 			{Path: "config.toml", Content: []byte("cfg"), Mode: 0o644},
 			{Path: "genesis.json", Content: []byte("{}"), Mode: 0o644},
 			{Path: "keystore/nodekey", Content: []byte("deadbeef"), Mode: 0o600},
@@ -23,7 +23,7 @@ func node(dataDir string) provision.NodeInputs {
 
 func TestProvision_WritesFiles(t *testing.T) {
 	base := t.TempDir()
-	p := provision.New(provision.LocalFileStore{})
+	p := filestore.New(filestore.Local{})
 	res, err := p.Provision(context.Background(), node(base))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
@@ -50,7 +50,7 @@ func TestProvision_SkipsExisting(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(base, "genesis.json"), []byte("EXISTING"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	p := provision.New(provision.LocalFileStore{})
+	p := filestore.New(filestore.Local{})
 	res, err := p.Provision(context.Background(), node(base))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
@@ -95,7 +95,7 @@ func TestProvision_UploadIfAbsent(t *testing.T) {
 	store := &fakeStore{present: map[string]bool{
 		filepath.Join("/remote/n1", "genesis.json"): true, // already on the server
 	}}
-	p := provision.New(store)
+	p := filestore.New(store)
 	res, err := p.Provision(context.Background(), node("/remote/n1"))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)

@@ -100,7 +100,7 @@ type Deps struct { Generate func() ...; DeriveAddress func(priv []byte) (string,
 비효율이 아니라 결함**이다.
 
 ```go
-// internal/core/provision/provision.go:52
+// internal/core/filestore/provision.go:52
 exists, err := p.sink.Exists(ctx, full)
 if exists { res.Skipped++; continue }      // ← 내용을 보지 않는다
 ```

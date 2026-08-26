@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/provision"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
 // Deps are the collaborators the use cases share, injected once at the surface
@@ -40,7 +40,7 @@ type Deps struct {
 	// over SSH still reads its keys from here — and because leaving it implicit
 	// is how a remote provision came to write its genesis and configs to the
 	// operator's own disk while shipping only the identities.
-	Files func() (provision.FileStore, error)
+	Files func() (filestore.Store, error)
 	// Command is what the operator typed, recorded in the workspace lock so a
 	// run that finds the workspace busy can say what is using it. Injected
 	// rather than read from os.Args: a use case must not depend on how the
@@ -84,12 +84,12 @@ func (d Deps) nodeDriver() (driver.Driver, error) {
 // When a driver ships files to another host but no store was named, that
 // driver is the store: a caller that routed the processes to a host and said
 // nothing about the files meant the files to follow.
-func (d Deps) files() (provision.FileStore, error) {
+func (d Deps) files() (filestore.Store, error) {
 	if d.Files != nil {
 		return d.Files()
 	}
 	if d.Driver == nil {
-		return provision.LocalFileStore{}, nil
+		return filestore.Local{}, nil
 	}
 	drv, err := d.Driver()
 	if err != nil {
@@ -98,10 +98,10 @@ func (d Deps) files() (provision.FileStore, error) {
 	if fp, ok := drv.(driver.FileProvisioner); ok {
 		return driverStore{fp}, nil
 	}
-	return provision.LocalFileStore{}, nil
+	return filestore.Local{}, nil
 }
 
-// driverStore adapts a driver that ships files into a provision.FileStore.
+// driverStore adapts a driver that ships files into a filestore.Store.
 //
 // A driver knows how to put a file on the host it controls but not how to ask
 // whether one is there or read it back, so those two answer for the shape of

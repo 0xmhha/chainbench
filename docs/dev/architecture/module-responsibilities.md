@@ -45,7 +45,7 @@
 | 4b | ↳ 공통 변형 | `core/genesis` | L1 | overlay 병합 · config override · fork 순서 검증 | 체인을 모른다 |
 | 5 | **노드 config.toml** | `core/nodeconfig` | L1 | 파라미터 → TOML 렌더 (순수) | 어디에 쓸지 모른다 |
 | 6 | **실행 argv** | `core/launchopt` | L1 | 다이얼렉트·모듈·오버라이드로 argv 조립 | 실행하지 않는다 |
-| 7 | **타깃 물질화** | `core/provision.FileSink` | L1 | **타깃에 파일을 놓는 유일한 통로** (local/SSH) | 무엇을 쓸지 정하지 않는다 |
+| 7 | **타깃 물질화** | `core/filestore.FileSink` | L1 | **타깃에 파일을 놓는 유일한 통로** (local/SSH) | 무엇을 쓸지 정하지 않는다 |
 | 8 | **노드 프로세스** | `core/driver` | L1 | 기동·정지·datadir init (local/SSH) | 순서를 모른다 |
 | 9 | **프로세스 추적** | `core/procman` | L1 | PID 테이블 · 검증된 종료 · 고아 보고 | 무엇을 띄울지 모른다 |
 | 10 | **기동 순서·복구** | `core/supervisor` | L3 | 페이즈 실행 · 게이트 · 진단 · 재시도 · teardown | 액션의 *의미*를 모른다(주입) |

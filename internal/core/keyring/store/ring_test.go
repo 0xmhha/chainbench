@@ -8,9 +8,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/provision"
 )
 
 // TestRing_AddIsIdempotent is what makes re-running a command safe: a label
@@ -112,7 +112,7 @@ func TestRing_Install(t *testing.T) {
 	}
 
 	dest := t.TempDir()
-	if err := ring.Install(context.Background(), provision.LocalFileStore{}, dest, []keyring.Label{"bp1"}); err != nil {
+	if err := ring.Install(context.Background(), filestore.Local{}, dest, []keyring.Label{"bp1"}); err != nil {
 		t.Fatalf("Install: %v", err)
 	}
 	got, err := os.ReadFile(filepath.Join(dest, "bp1", "private"))
@@ -123,7 +123,7 @@ func TestRing_Install(t *testing.T) {
 		t.Error("the installed key is not the one held")
 	}
 
-	err = ring.Install(context.Background(), provision.LocalFileStore{}, dest, []keyring.Label{"nobody"})
+	err = ring.Install(context.Background(), filestore.Local{}, dest, []keyring.Label{"nobody"})
 	if err == nil {
 		t.Fatal("Install accepted a label the ring does not hold")
 	}
