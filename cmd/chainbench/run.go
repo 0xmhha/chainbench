@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
@@ -51,7 +49,7 @@ func newRunCmd() *cobra.Command {
 		Short: "Run DSL test specs through the engine (attach or local)",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			specs, err := readSpecFiles(args)
+			specs, err := testspec.ReadFiles(args)
 			if err != nil {
 				return err
 			}
@@ -217,36 +215,6 @@ func parseLaunchOverrides(opts []string) ([]launchopt.Override, error) {
 		out = append(out, launchopt.Override{Key: launchopt.Key(k), Value: v})
 	}
 	return out, nil
-}
-
-// readSpecFiles reads each spec file into raw JSON bytes, resolving a v2
-// case's "env": "<id>" reference against the case file's directory
-// (<dir>/<id>.env.json, then <dir>/env/<id>.env.json).
-func readSpecFiles(paths []string) ([][]byte, error) {
-	specs := make([][]byte, 0, len(paths))
-	for _, p := range paths {
-		b, err := os.ReadFile(p)
-		if err != nil {
-			return nil, fmt.Errorf("run: read spec %s: %w", p, err)
-		}
-		dir := filepath.Dir(p)
-		b, err = testspec.InlineEnv(b, func(id string) ([]byte, error) {
-			for _, cand := range []string{
-				filepath.Join(dir, id+".env.json"),
-				filepath.Join(dir, "env", id+".env.json"),
-			} {
-				if eb, err := os.ReadFile(cand); err == nil {
-					return eb, nil
-				}
-			}
-			return nil, fmt.Errorf("no %s.env.json next to %s (or in its env/ subdirectory)", id, p)
-		})
-		if err != nil {
-			return nil, fmt.Errorf("run: %w", err)
-		}
-		specs = append(specs, b)
-	}
-	return specs, nil
 }
 
 // foldSpecEnv folds a single spec's v2 env declarations (keys, launch) into
