@@ -242,7 +242,7 @@ func newValidatorSetCmd() *cobra.Command {
 			// BLS keys; `keyring new` is where BLS became opt-in.
 			opts.Derive = derive.WithBLS
 			// This command's zero has always meant "all of them"; pass it as
-			// absent rather than as a declared zero, which now means a ring
+			// absent rather than as a declared zero, which now means a key set
 			// that declares no validators at all.
 			if validators > 0 {
 				opts.Validators = &validators

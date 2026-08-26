@@ -40,7 +40,7 @@ func TestKeyringImport_ExactlyOneOrigin(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			dir := filepath.Join(t.TempDir(), "ring")
+			dir := filepath.Join(t.TempDir(), "keys")
 			args := append([]string{"keyring", "import", "--keyring-dir", dir, "--name", "x"}, tc.args...)
 			if _, err := run(t, args...); err == nil {
 				t.Fatal("expected an exactly-one-origin error")
@@ -54,7 +54,7 @@ func TestKeyringImport_ExactlyOneOrigin(t *testing.T) {
 func TestKeyringImport_RejectsMalformedPaths(t *testing.T) {
 	for _, bad := range []string{"srv://", "srv://bp1", "user@:/k", "ssh://"} {
 		t.Run(bad, func(t *testing.T) {
-			dir := filepath.Join(t.TempDir(), "ring")
+			dir := filepath.Join(t.TempDir(), "keys")
 			if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x", "--from", bad); err == nil {
 				t.Errorf("accepted malformed path %q", bad)
 			}
@@ -68,7 +68,7 @@ func TestKeyringImport_DirectHostNeedsCredentials(t *testing.T) {
 	t.Setenv(remote.EnvUser, "")
 	t.Setenv(remote.EnvPass, "")
 	t.Setenv(remote.EnvKeyFile, "")
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x", "--from", "10.0.0.1:/k")
 	if err == nil || !strings.Contains(err.Error()+" ", "SSH") {
 		t.Fatalf("expected an SSH credential error, got %v", err)
@@ -80,7 +80,7 @@ func TestKeyringImport_DirectHostNeedsCredentials(t *testing.T) {
 // server-set file.
 func TestKeyringImport_ServerNameComesFromInventory(t *testing.T) {
 	cfg := writeServerConfig(t, twoServerInventory)
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 
 	// An unknown entry fails by name, before any dial.
 	_, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
@@ -103,7 +103,7 @@ func TestKeyringImport_ServerNameComesFromInventory(t *testing.T) {
 func TestKeyringImport_FromRing(t *testing.T) {
 	src := filepath.Join(t.TempDir(), "src")
 	if _, err := run(t, "keyring", "new", "--keyring-dir", src, "--count", "3", "--validators", "2"); err != nil {
-		t.Fatalf("seed source ring: %v", err)
+		t.Fatalf("seed source key set: %v", err)
 	}
 
 	t.Run("clone carries the declaration", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestKeyringImport_FromRing(t *testing.T) {
 		}
 		dst := filepath.Join(t.TempDir(), "dst")
 		if _, err := run(t, "keyring", "import", "--keyring-dir", dst, "--from-ring", bad); err == nil {
-			t.Fatal("cloned a ring whose index does not match its keys")
+			t.Fatal("cloned a key set whose index does not match its keys")
 		}
 	})
 }

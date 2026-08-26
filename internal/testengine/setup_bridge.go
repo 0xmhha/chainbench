@@ -53,7 +53,7 @@ func NewNodeController(launcher LocalLauncher, procs *process.Manager) *chainset
 type KeySet = chainsetup.KeySet
 
 // RegisterIdentities loads a key set's identities into a ring.
-func RegisterIdentities(ctx context.Context, ring *store.Ring, ks KeySet, n int) error {
+func RegisterIdentities(ctx context.Context, ring *store.KeySet, ks KeySet, n int) error {
 	return chainsetup.RegisterIdentities(ctx, ring, ks, n)
 }
 

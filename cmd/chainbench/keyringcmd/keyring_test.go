@@ -10,10 +10,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
-// newRing creates a ring in a temp dir and returns its path.
+// newRing creates a key set in a temp dir and returns its path.
 func newRing(t *testing.T, args ...string) string {
 	t.Helper()
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	base := []string{"keyring", "new", "--keyring-dir", dir, "--count", "3"}
 	if _, err := run(t, append(base, args...)...); err != nil {
 		t.Fatalf("keyring new: %v", err)
@@ -137,7 +137,7 @@ func TestKeyring_ExportRequiresConfirmation(t *testing.T) {
 }
 
 // TestKeyring_ReportsWhichRingItUsed pins a reporting contract: a command
-// that fell back to a default must say so, or an operator inspects one ring and
+// that fell back to a default must say so, or an operator inspects one key set and
 // launches from another.
 func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
 	dir := newRing(t)
@@ -150,23 +150,23 @@ func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
 		t.Errorf("the flag source was not reported:\n%s", out)
 	}
 
-	t.Setenv(operation.RingEnv, dir)
+	t.Setenv(operation.KeySetEnv, dir)
 	out, err = run(t, "keyring", "list")
 	if err != nil {
 		t.Fatalf("keyring list via env: %v", err)
 	}
-	if !strings.Contains(out, "("+operation.RingEnv+")") {
+	if !strings.Contains(out, "("+operation.KeySetEnv+")") {
 		t.Errorf("the environment source was not reported:\n%s", out)
 	}
 
-	// With nothing naming a ring, the error says where it looked and why.
-	t.Setenv(operation.RingEnv, "")
+	// With nothing naming a key set, the error says where it looked and why.
+	t.Setenv(operation.KeySetEnv, "")
 	_, err = run(t, "keyring", "list")
 	if err == nil {
-		t.Fatal("expected an error when the default ring does not exist")
+		t.Fatal("expected an error when the default key set does not exist")
 	}
-	if !strings.Contains(err.Error(), operation.DefaultRingDir) || !strings.Contains(err.Error(), "default") {
-		t.Errorf("error should name the ring and why it was chosen: %v", err)
+	if !strings.Contains(err.Error(), operation.DefaultKeySetDir) || !strings.Contains(err.Error(), "default") {
+		t.Errorf("error should name the key set and why it was chosen: %v", err)
 	}
 }
 
@@ -186,11 +186,11 @@ func TestKeyring_ImportRefusesToOverwrite(t *testing.T) {
 	}
 }
 
-// TestKeyring_VerifyCatchesDrift checks the shipped ring and then a tampered
+// TestKeyring_VerifyCatchesDrift checks the shipped key set and then a tampered
 // copy, so the check is shown to fail as well as pass.
 func TestKeyring_VerifyCatchesDrift(t *testing.T) {
 	if _, err := run(t, "keyring", "list", "--keyring-dir", "../../../keys/preset", "--verify"); err != nil {
-		t.Fatalf("the shipped ring did not verify: %v", err)
+		t.Fatalf("the shipped key set did not verify: %v", err)
 	}
 
 	dir := newRing(t)
@@ -254,7 +254,7 @@ func tamper(t *testing.T, path string) {
 }
 
 // jsonPart strips the "keyring: <dir> (<source>)" banner that precedes JSON
-// output, which exists so the ring in use is never a guess.
+// output, which exists so the key set in use is never a guess.
 func jsonPart(out string) string {
 	if i := strings.IndexAny(out, "[{"); i >= 0 {
 		return out[i:]
@@ -263,7 +263,7 @@ func jsonPart(out string) string {
 }
 
 // TestKeyring_NewRefusesToOverwriteARing is a regression: creating over an
-// existing ring replaced identities that a genesis, a datadir, or a test was
+// existing key set replaced identities that a genesis, a datadir, or a test was
 // already referring to, and the keys behind them were unrecoverable.
 func TestKeyring_NewRefusesToOverwriteARing(t *testing.T) {
 	dir := newRing(t)
@@ -271,15 +271,15 @@ func TestKeyring_NewRefusesToOverwriteARing(t *testing.T) {
 
 	_, err := run(t, "keyring", "new", "--keyring-dir", dir, "--count", "2")
 	if err == nil {
-		t.Fatal("keyring new overwrote an existing ring")
+		t.Fatal("keyring new overwrote an existing key set")
 	}
-	if !strings.Contains(err.Error(), "already holds a ring") {
-		t.Errorf("error should say the ring exists, got: %v", err)
+	if !strings.Contains(err.Error(), "already holds a key set") {
+		t.Errorf("error should say the key set exists, got: %v", err)
 	}
 
 	after := listAddresses(t, dir)
 	if len(after) != len(before) {
-		t.Fatalf("the ring changed: %d identities, was %d", len(after), len(before))
+		t.Fatalf("the key set changed: %d identities, was %d", len(after), len(before))
 	}
 	for i := range before {
 		if after[i] != before[i] {
@@ -289,7 +289,7 @@ func TestKeyring_NewRefusesToOverwriteARing(t *testing.T) {
 }
 
 // TestKeyring_ImportIsVisibleAfterwards is a regression: an imported key was
-// written to a directory beside the ring's index, so `list` and `show` could
+// written to a directory beside the key set's index, so `list` and `show` could
 // not see it and a network could not use it.
 func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 	dir := newRing(t)
@@ -314,7 +314,7 @@ func TestKeyring_ImportIsVisibleAfterwards(t *testing.T) {
 	// It survives a reload, which means it is in the index and not just in
 	// memory for the length of one command.
 	if got := len(listAddresses(t, dir)); got != 4 {
-		t.Errorf("ring holds %d identities after import, want 4", got)
+		t.Errorf("key set holds %d identities after import, want 4", got)
 	}
 }
 
@@ -341,7 +341,7 @@ func TestKeyringImport_MnemonicGolden(t *testing.T) {
 	const devMnemonic = "test test test test test test test test test test test junk"
 	const wantAddr = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "hd0",
 		"--mnemonic", devMnemonic); err != nil {
 		t.Fatalf("mnemonic import: %v", err)
@@ -354,7 +354,7 @@ func TestKeyringImport_MnemonicGolden(t *testing.T) {
 // TestKeyringImport_RefusesMixedSources pins that exactly one origin is
 // accepted: a command naming two keys cannot silently prefer one.
 func TestKeyringImport_RefusesMixedSources(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	// The refusal fires before any key is parsed, so the value only has to be
 	// key-shaped — a synthetic constant, not anyone's published dev key.
 	synthetic := "0x" + strings.Repeat("11", 32)
@@ -389,20 +389,20 @@ func TestKeyringImport_CoinTypeChangesTheKey(t *testing.T) {
 }
 
 // TestKeyringNew_JSON pins the creation verbs' machine-readable output: the
-// full ring comes back as JSON with no second command, and no private key in
+// full key set comes back as JSON with no second command, and no private key in
 // it — creation is not export.
 func TestKeyringNew_JSON(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	out, err := run(t, "keyring", "new", "--keyring-dir", dir, "--count", "2", "--json")
 	if err != nil {
 		t.Fatalf("new --json: %v\n%s", err, out)
 	}
-	var r operation.RingOut
+	var r operation.SetOut
 	if err := json.Unmarshal([]byte(jsonPart(out)), &r); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
 	if len(r.Entries) != 2 || r.Entries[0].Address == "" {
-		t.Fatalf("unexpected ring: %+v", r)
+		t.Fatalf("unexpected key set: %+v", r)
 	}
 	if strings.Contains(out, "privateKey") {
 		t.Fatal("creation output leaked a private key field")
@@ -410,7 +410,7 @@ func TestKeyringNew_JSON(t *testing.T) {
 }
 
 // TestKeyringShow_MissingNameOffersTheWayOut pins the guidance: the operator
-// who forgot --name wanted one identity or the whole ring, and the error
+// who forgot --name wanted one identity or the whole key set, and the error
 // offers both instead of cobra's bare "required flag not set".
 func TestKeyringShow_MissingNameOffersTheWayOut(t *testing.T) {
 	dir := newRing(t)
@@ -427,7 +427,7 @@ func TestKeyringShow_MissingNameOffersTheWayOut(t *testing.T) {
 // absent origin is refused, not silently ignored — a typo that drops
 // --mnemonic must not import a different key than asked.
 func TestKeyringImport_RefusesOrphanQualifiers(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	if _, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "x",
 		"--private-key", "0x"+strings.Repeat("22", 32), "--hd-index", "3"); err == nil {
 		t.Fatal("--hd-index without --mnemonic should refuse")

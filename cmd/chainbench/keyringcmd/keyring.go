@@ -29,10 +29,10 @@ func New() *cobra.Command {
 		Use:   "keyring",
 		Short: "Create, inspect, and move key material",
 		Long: "A keyring is a directory of node identities. Every command names one with\n" +
-			"--keyring-dir (or " + operation.RingEnv + "), and reports which one it used, so the\n" +
+			"--keyring-dir (or " + operation.KeySetEnv + "), and reports which one it used, so the\n" +
 			"path a key came from is never a guess.\n\n" +
 			"Identities are derived in process: no chain binary has to be built or on\n" +
-			"PATH to make a ring.",
+			"PATH to make a key set.",
 	}
 	c.AddCommand(
 		newKeyringNewCmd(),
@@ -45,7 +45,7 @@ func New() *cobra.Command {
 	return c
 }
 
-// ringFlags name the ring a command works on. The ring may live on a server
+// ringFlags name the key set a command works on. The key set may live on a server
 // (srv://<server>/path in --keyring-dir), so the server set and the docker
 // translation are part of naming it — on every verb, not just import.
 type ringFlags struct {
@@ -56,22 +56,22 @@ type ringFlags struct {
 
 func (f *ringFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.dir, "keyring-dir", "",
-		"ring directory — identities are created in and read from here; a plain path is this machine, "+
-			"srv://<server>/path places the ring on that server (default "+
-			operation.DefaultRingDir+", or "+operation.RingEnv+")")
+		"key set directory — identities are created in and read from here; a plain path is this machine, "+
+			"srv://<server>/path places the key set on that server (default "+
+			operation.DefaultKeySetDir+", or "+operation.KeySetEnv+")")
 	cmd.Flags().StringVar(&f.serverSet, "server-set", "",
 		"server-set file for srv:// paths: which servers exist and how to reach them")
 	cmd.Flags().BoolVar(&f.docker, "docker", false,
 		"the server is a local docker container: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
 }
 
-func (f *ringFlags) ref() operation.RingRef {
-	return operation.RingRef{Dir: f.dir, ServerSet: f.serverSet, Docker: f.docker}
+func (f *ringFlags) ref() operation.SetRef {
+	return operation.SetRef{Dir: f.dir, ServerSet: f.serverSet, Docker: f.docker}
 }
 
 // deps is the Deps every keyring verb runs with: operational side notes —
 // today, the dial translations --docker applies — print as they happen, so a
-// remote ring is never reached silently. They go to stderr, like every other
+// remote key set is never reached silently. They go to stderr, like every other
 // group's: stdout belongs to the answer, and a --json consumer must never
 // have to strip a report line off the front of it.
 func deps(cmd *cobra.Command) operation.Deps {
@@ -92,13 +92,13 @@ func deps(cmd *cobra.Command) operation.Deps {
 	}
 }
 
-// announce prints which ring was used and why, before anything else, so the
+// announce prints which key set was used and why, before anything else, so the
 // path is never a guess — including when the command then fails.
 //
 // The use case reports a surface-neutral source ("explicit"); here it is named
-// in this surface's own vocabulary, because an operator asking "why that ring?"
+// in this surface's own vocabulary, because an operator asking "why that key set?"
 // wants the flag they typed.
-func announce(out io.Writer, r operation.RingOut) {
+func announce(out io.Writer, r operation.SetOut) {
 	fmt.Fprintf(out, "keyring: %s (%s)\n", r.Dir, ringSourceName(r.Source))
 }
 
@@ -111,7 +111,7 @@ func ringSourceName(source string) string {
 }
 
 // renderEntries writes the human listing.
-func renderEntries(out io.Writer, r operation.RingOut) error {
+func renderEntries(out io.Writer, r operation.SetOut) error {
 	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "LABEL\tADDRESS\tROLE\tBLS")
 	for _, e := range r.Entries {
@@ -165,7 +165,7 @@ func (f *jsonFlag) bind(cmd *cobra.Command, what string) {
 // blsFlag is the --with-bls opt-in.
 //
 // BLS material is only read by the wbft family, so it is asked for rather than
-// assumed; a ring for wemix carrying BLS keys would carry keys nobody reads. An
+// assumed; a key set for wemix carrying BLS keys would carry keys nobody reads. An
 // identity made without it has no BLS material at all, which is a different
 // thing from having an empty one.
 type blsFlag struct{ on bool }
@@ -175,7 +175,7 @@ func (f *blsFlag) bind(cmd *cobra.Command) {
 		"also derive BLS material (required for the wbft family: stablenet, wbft)")
 }
 
-// labelFlag names one identity in a ring.
+// labelFlag names one identity in a key set.
 type labelFlag struct{ name string }
 
 func (f *labelFlag) bind(cmd *cobra.Command) {
@@ -184,7 +184,7 @@ func (f *labelFlag) bind(cmd *cobra.Command) {
 
 // require refuses a missing --name with the way out, instead of cobra's bare
 // "required flag not set": the operator who forgot it usually wanted either
-// one identity by name or the whole ring, and the error should offer both.
+// one identity by name or the whole key set, and the error should offer both.
 func (f *labelFlag) require(verb string) error {
 	if f.name != "" {
 		return nil

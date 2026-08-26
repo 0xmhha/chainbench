@@ -29,7 +29,7 @@ const (
 type Session interface {
 	ID() string
 	Root() string
-	Keys() *store.Ring
+	Keys() *store.KeySet
 	// Environment returns an existing environment with the given fingerprint,
 	// or ok=false if none exists yet (drives reuse).
 	Environment(fp Fingerprint) (Environment, bool)

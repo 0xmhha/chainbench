@@ -149,7 +149,7 @@ func orDefault(v, def string) string {
 // produces a chain whose genesis registers one address while the node signs
 // with another — a failure that otherwise surfaces much later as an unexplained
 // consensus stall.
-func RegisterIdentities(ctx context.Context, ring *store.Ring, ks KeySet, n int) error {
+func RegisterIdentities(ctx context.Context, ring *store.KeySet, ks KeySet, n int) error {
 	if ring == nil {
 		return nil
 	}

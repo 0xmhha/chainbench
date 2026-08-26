@@ -13,25 +13,25 @@ import (
 
 type (
 	// RingRef names the ring a verb works on.
-	RingRef = operation.RingRef
+	RingRef = operation.SetRef
 	// RingOut reports which ring a verb acted on, and what it holds.
-	RingOut = operation.RingOut
+	RingOut = operation.SetOut
 	// EntryOut is one identity's public material.
 	EntryOut = operation.EntryOut
 	// RingCreateIn shapes keyring new/add.
-	RingCreateIn = operation.RingCreateIn
+	RingCreateIn = operation.CreateIn
 	// RingListIn shapes keyring list.
-	RingListIn = operation.RingListIn
+	RingListIn = operation.ListIn
 	// RingEntryIn shapes keyring show/export.
-	RingEntryIn = operation.RingEntryIn
+	RingEntryIn = operation.EntryIn
 	// RingImportIn shapes keyring import (single key or whole ring).
-	RingImportIn = operation.RingImportIn
+	RingImportIn = operation.ImportIn
 )
 
-// DefaultRingDir and RingEnv mirror the store's defaults for surface help text.
+// DefaultKeySetDir and KeySetEnv mirror the store's defaults for surface help text.
 const (
-	DefaultRingDir = operation.DefaultRingDir
-	RingEnv        = operation.RingEnv
+	DefaultKeySetDir = operation.DefaultKeySetDir
+	KeySetEnv        = operation.KeySetEnv
 )
 
 // keyringDeps adapts this layer's dependency set to the module's.
@@ -49,35 +49,35 @@ func (d Deps) keyringDeps() operation.Deps {
 
 // KeyringNew creates a ring.
 func KeyringNew(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
-	return operation.KeyringNew(ctx, d.keyringDeps(), in)
+	return operation.New(ctx, d.keyringDeps(), in)
 }
 
 // KeyringAdd extends a ring.
 func KeyringAdd(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
-	return operation.KeyringAdd(ctx, d.keyringDeps(), in)
+	return operation.Add(ctx, d.keyringDeps(), in)
 }
 
 // KeyringList lists a ring's identities.
 func KeyringList(ctx context.Context, d Deps, in RingListIn) (RingOut, error) {
-	return operation.KeyringList(ctx, d.keyringDeps(), in)
+	return operation.List(ctx, d.keyringDeps(), in)
 }
 
 // KeyringShow shows one identity's public material.
 func KeyringShow(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
-	return operation.KeyringShow(ctx, d.keyringDeps(), in)
+	return operation.Show(ctx, d.keyringDeps(), in)
 }
 
 // KeyringExport reveals one identity's private key.
 func KeyringExport(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
-	return operation.KeyringExport(ctx, d.keyringDeps(), in)
+	return operation.Export(ctx, d.keyringDeps(), in)
 }
 
 // KeyringImport writes an existing key into a ring's index.
 func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, error) {
-	return operation.KeyringImport(ctx, d.keyringDeps(), in)
+	return operation.Import(ctx, d.keyringDeps(), in)
 }
 
 // KeyringImportRing clones a whole ring.
 func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, error) {
-	return operation.KeyringImportRing(ctx, d.keyringDeps(), in)
+	return operation.ImportSet(ctx, d.keyringDeps(), in)
 }

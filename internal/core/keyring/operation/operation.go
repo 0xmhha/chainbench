@@ -1,5 +1,5 @@
 // Package keyring is the key module's surface: the verbs a surface (CLI, or
-// app on behalf of MCP) runs against a ring, composed from the model
+// app on behalf of MCP) runs against a key set, composed from the model
 // (core/keyring), the storage (core/keyring/store), and the netmap module for
 // anything that lives on a server. CLI calls this package directly; app wraps
 // it thinly for MCP.
@@ -58,40 +58,40 @@ func (d Deps) env() func(string) string {
 	return d.Env
 }
 
-// DefaultRingDir and RingEnv are the store's — re-stated here only until the
+// DefaultKeySetDir and KeySetEnv are the store's — re-stated here only until the
 // surfaces call the store directly (worklist V3.3).
 const (
-	DefaultRingDir = store.DefaultRingDir
-	RingEnv        = store.RingEnv
+	DefaultKeySetDir = store.DefaultKeySetDir
+	KeySetEnv        = store.KeySetEnv
 )
 
-// RingRef names the ring a use case works on.
-type RingRef struct {
-	// Dir is the ring directory; empty falls back to the environment and then
-	// to DefaultRingDir.
+// SetRef names the key set a use case works on.
+type SetRef struct {
+	// Dir is the key set directory; empty falls back to the environment and then
+	// to DefaultKeySetDir.
 	Dir string
 	// ServerSet is the server-set file consulted for an srv:// source; empty uses
 	// the default server-set file.
 	ServerSet string
-	// Docker treats the ring's server as a local docker container: the dial is
+	// Docker treats the key set's server as a local docker container: the dial is
 	// translated through the localmap next to the server set. The flag is the
 	// power switch; a leftover mapping file alone activates nothing.
 	Docker bool
 }
 
-// resolve returns the ring directory and where that choice came from; the
-// answer is the store's (where a ring lives is storage knowledge).
-func (r RingRef) resolve(env func(string) string) (dir, source string) {
+// resolve returns the key set directory and where that choice came from; the
+// answer is the store's (where a key set lives is storage knowledge).
+func (r SetRef) resolve(env func(string) string) (dir, source string) {
 	return store.Locate(r.Dir, env)
 }
 
-// open resolves the ring to a file store and a directory on it. A plain path
+// open resolves the key set to a file store and a directory on it. A plain path
 // is this machine; the target syntax (srv://<server>/path, user@host:/path,
-// ssh://…) places the ring on a server through the same boundary provision uses.
-// Before this, a remote-looking ring path was treated as a local directory
-// NAME — a ring created "on the server" landed silently on the operator's
+// ssh://…) places the key set on a server through the same boundary provision uses.
+// Before this, a remote-looking key set path was treated as a local directory
+// NAME — a key set created "on the server" landed silently on the operator's
 // machine, which is worse than a refusal.
-func (r RingRef) open(d Deps) (files filestore.Store, dir, source string, err error) {
+func (r SetRef) open(d Deps) (files filestore.Store, dir, source string, err error) {
 	dir, source = r.resolve(d.env())
 	// The netmap module is the one dial-wiring point: server-set lookup,
 	// --docker translation, and the translation report all live there, so
@@ -109,28 +109,28 @@ func (r RingRef) open(d Deps) (files filestore.Store, dir, source string, err er
 
 // opener binds this key set's server-set and docker choices to the opener the
 // caller injected.
-func (r RingRef) opener(d Deps) (Opener, error) {
+func (r SetRef) opener(d Deps) (Opener, error) {
 	return d.opener(r.ServerSet, r.Docker)
 }
 
-// RingOut reports which ring a use case acted on, and what it holds afterwards.
-type RingOut struct {
-	// Dir is the resolved ring directory.
+// SetOut reports which key set a use case acted on, and what it holds afterwards.
+type SetOut struct {
+	// Dir is the resolved key set directory.
 	Dir string
 	// Source is where that directory came from: explicit, the environment
 	// variable's name, or "default".
 	Source string
-	// Entries are the ring's identities, public material only.
+	// Entries are the key set's identities, public material only.
 	Entries []EntryOut
-	// Validators is how many identities the ring declares as validators. Zero
-	// means the ring declares no validator set and a network decides.
+	// Validators is how many identities the key set declares as validators. Zero
+	// means the key set declares no validator set and a network decides.
 	Validators int
 }
 
 // EntryOut is one identity as a surface reports it.
 //
 // The private key is absent unless a use case was asked for it explicitly, so
-// listing or showing a ring cannot leak by construction.
+// listing or showing a key set cannot leak by construction.
 type EntryOut struct {
 	Label      string `json:"label"`
 	Index      int    `json:"index,omitempty"`
@@ -142,14 +142,14 @@ type EntryOut struct {
 	PrivateKey string `json:"privateKey,omitempty"`
 }
 
-// RingCreateIn creates a ring.
-type RingCreateIn struct {
-	Ring RingRef
+// CreateIn creates a key set.
+type CreateIn struct {
+	Ring SetRef
 	// Count is how many identities to create.
 	Count int
 	// Validators is how many identities join the validator set. Nil is "the
 	// caller said nothing", which each verb reads its own way; a pointer to 0
-	// declares none, a ring of identities and nothing else. The two cannot be
+	// declares none, a key set of identities and nothing else. The two cannot be
 	// one value, because zero is also what an unset field looks like.
 	Validators *int
 	// WithBLS derives BLS material, which only the wbft family reads.
@@ -160,39 +160,39 @@ type RingCreateIn struct {
 	Balance string
 }
 
-// KeyringNew creates a ring of fresh identities.
-func KeyringNew(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
+// New creates a key set of fresh identities.
+func New(ctx context.Context, d Deps, in CreateIn) (SetOut, error) {
 	files, dir, source, err := in.Ring.open(d)
 	if err != nil {
-		return RingOut{Dir: in.Ring.Dir, Source: source}, err
+		return SetOut{Dir: in.Ring.Dir, Source: source}, err
 	}
 	opts := in.opts(dir)
 	opts.Files = files
 	set, err := store.GenerateAt(ctx, opts, nil)
 	if err != nil {
-		return RingOut{Dir: displayRing(in.Ring, dir), Source: source}, err
+		return SetOut{Dir: displaySet(in.Ring, dir), Source: source}, err
 	}
-	return ringOut(displayRing(in.Ring, dir), source, set), nil
+	return setOut(displaySet(in.Ring, dir), source, set), nil
 }
 
-// KeyringAdd adds identities to a ring that already exists.
-func KeyringAdd(ctx context.Context, d Deps, in RingCreateIn) (RingOut, error) {
+// Add adds identities to a key set that already exists.
+func Add(ctx context.Context, d Deps, in CreateIn) (SetOut, error) {
 	files, dir, source, err := in.Ring.open(d)
 	if err != nil {
-		return RingOut{Dir: in.Ring.Dir, Source: source}, err
+		return SetOut{Dir: in.Ring.Dir, Source: source}, err
 	}
 	opts := in.opts(dir)
 	opts.Files = files
 	set, err := store.ExtendAt(ctx, opts, nil)
 	if err != nil {
-		return RingOut{Dir: displayRing(in.Ring, dir), Source: source}, err
+		return SetOut{Dir: displaySet(in.Ring, dir), Source: source}, err
 	}
-	return ringOut(displayRing(in.Ring, dir), source, set), nil
+	return setOut(displaySet(in.Ring, dir), source, set), nil
 }
 
-// displayRing is what a report calls the ring: the spelling the operator gave
+// displaySet is what a report calls the key set: the spelling the operator gave
 // (srv://server1/path) rather than the bare on-target path it resolved to.
-func displayRing(ref RingRef, resolved string) string {
+func displaySet(ref SetRef, resolved string) string {
 	if ref.Dir != "" && ref.Dir != resolved {
 		return ref.Dir
 	}
@@ -202,10 +202,10 @@ func displayRing(ref RingRef, resolved string) string {
 // opts renders the generation options.
 //
 // The validator count is passed through untouched, including its absence. Each
-// verb resolves an unset count its own way — creating a ring takes all of them,
+// verb resolves an unset count its own way — creating a key set takes all of them,
 // extending one takes none — so resolving it here would have to know which verb
 // called and would get the other wrong. It did, once.
-func (in RingCreateIn) opts(dir string) store.GenerateOpts {
+func (in CreateIn) opts(dir string) store.GenerateOpts {
 	how := derive.AccountOnly
 	if in.WithBLS {
 		how = derive.WithBLS
@@ -216,41 +216,41 @@ func (in RingCreateIn) opts(dir string) store.GenerateOpts {
 	}
 }
 
-// RingListIn reads a ring.
-type RingListIn struct {
-	Ring RingRef
+// ListIn reads a key set.
+type ListIn struct {
+	Ring SetRef
 	// Verify re-derives every identity from its own key and fails on a
-	// mismatch, which is how a ring whose records have drifted from its key
+	// mismatch, which is how a key set whose records have drifted from its key
 	// material is caught before a network runs on it.
 	Verify bool
 }
 
-// KeyringList reports what a ring holds.
-func KeyringList(ctx context.Context, d Deps, in RingListIn) (RingOut, error) {
-	dir, source, set, err := openRing(ctx, in.Ring, d)
+// List reports what a key set holds.
+func List(ctx context.Context, d Deps, in ListIn) (SetOut, error) {
+	dir, source, set, err := openSet(ctx, in.Ring, d)
 	if err != nil {
-		return RingOut{Dir: dir, Source: source}, err
+		return SetOut{Dir: dir, Source: source}, err
 	}
 	if in.Verify {
 		for _, e := range set.Nodes {
 			if err := e.Verify(); err != nil {
-				return RingOut{Dir: dir, Source: source}, err
+				return SetOut{Dir: dir, Source: source}, err
 			}
 		}
 	}
-	return ringOut(dir, source, set), nil
+	return setOut(dir, source, set), nil
 }
 
-// RingEntryIn names one identity in a ring.
-type RingEntryIn struct {
-	Ring RingRef
+// EntryIn names one identity in a key set.
+type EntryIn struct {
+	Ring SetRef
 	// Label is the identity's name, e.g. "node1" or "faucet".
 	Label string
 }
 
-// KeyringShow reports one identity's public material.
-func KeyringShow(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
-	_, _, set, err := openRing(ctx, in.Ring, d)
+// Show reports one identity's public material.
+func Show(ctx context.Context, d Deps, in EntryIn) (EntryOut, error) {
+	_, _, set, err := openSet(ctx, in.Ring, d)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -261,17 +261,17 @@ func KeyringShow(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) 
 	return entryOut(e, validatorSet(set)), nil
 }
 
-// KeyringExport reports one identity including its private key.
+// Export reports one identity including its private key.
 //
 // It is a separate use case from Show rather than a flag on it, so that
 // disclosing a secret is a call a reader can find, and so a surface can offer
 // one without offering the other.
-func KeyringExport(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error) {
-	out, err := KeyringShow(ctx, d, in)
+func Export(ctx context.Context, d Deps, in EntryIn) (EntryOut, error) {
+	out, err := Show(ctx, d, in)
 	if err != nil {
 		return EntryOut{}, err
 	}
-	_, _, set, err := openRing(ctx, in.Ring, d)
+	_, _, set, err := openSet(ctx, in.Ring, d)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -283,9 +283,9 @@ func KeyringExport(ctx context.Context, d Deps, in RingEntryIn) (EntryOut, error
 	return out, nil
 }
 
-// RingImportIn brings a key that already exists into a ring.
-type RingImportIn struct {
-	Ring RingRef
+// ImportIn brings a key that already exists into a key set.
+type ImportIn struct {
+	Ring SetRef
 	// Label is the name to store the identity under.
 	Label string
 	// From names the key file with the single path syntax: a local path,
@@ -318,17 +318,17 @@ type RingImportIn struct {
 	// a mismatch is refused before anything is written. It is how a caller
 	// who knows what the key should be makes the transfer prove it.
 	ExpectAddress string
-	// FromRing imports a whole ring instead of one key: every identity with
+	// FromRing imports a whole key set instead of one key: every identity with
 	// its label, and the network declaration (validators, BLS set, alloc).
 	// Each entry is verified against the source index before anything is
 	// written. Mutually exclusive with the single-key origins and Label.
 	FromRing string
 }
 
-// KeyringImport writes an existing key into a ring's index.
-func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, error) {
+// Import writes an existing key into a key set's index.
+func Import(ctx context.Context, d Deps, in ImportIn) (EntryOut, error) {
 	if in.FromRing != "" {
-		return EntryOut{}, fmt.Errorf("keyring: a whole-ring import returns a ring — use KeyringImportRing")
+		return EntryOut{}, fmt.Errorf("keyring: a whole-ring import returns a key set — use ImportSet")
 	}
 	files, dir, _, err := in.Ring.open(d)
 	if err != nil {
@@ -363,40 +363,40 @@ func KeyringImport(ctx context.Context, d Deps, in RingImportIn) (EntryOut, erro
 	return entryOut(e, nil), nil
 }
 
-// KeyringImportRing clones a whole ring named by in.FromRing (a local path or
+// ImportSet clones a whole key set named by in.FromRing (a local path or
 // target syntax) into in.Ring: every identity with its label, and the network
 // declaration. Each entry is verified against the source index before anything
 // is written — the key must still derive the address, devp2p key and BLS
 // material the index records — so a transfer that changed anything is refused
 // whole rather than materialized broken.
-func KeyringImportRing(ctx context.Context, d Deps, in RingImportIn) (RingOut, error) {
+func ImportSet(ctx context.Context, d Deps, in ImportIn) (SetOut, error) {
 	if in.FromRing == "" {
-		return RingOut{}, fmt.Errorf("keyring: import-ring needs --from-ring")
+		return SetOut{}, fmt.Errorf("keyring: import-ring needs --from-ring")
 	}
-	srcRef := RingRef{Dir: in.FromRing, ServerSet: in.Ring.ServerSet, Docker: in.Docker || in.Ring.Docker}
+	srcRef := SetRef{Dir: in.FromRing, ServerSet: in.Ring.ServerSet, Docker: in.Docker || in.Ring.Docker}
 	srcFiles, srcDir, _, err := srcRef.open(d)
 	if err != nil {
-		return RingOut{}, err
+		return SetOut{}, err
 	}
 	srcSet, err := store.LoadPresetAt(ctx, srcFiles, srcDir)
 	if err != nil {
-		return RingOut{}, fmt.Errorf("keyring: import-ring: read source %s: %w", in.FromRing, err)
+		return SetOut{}, fmt.Errorf("keyring: import-ring: read source %s: %w", in.FromRing, err)
 	}
 	dstFiles, dstDir, source, err := in.Ring.open(d)
 	if err != nil {
-		return RingOut{}, err
+		return SetOut{}, err
 	}
 	set, err := store.ImportRing(ctx, dstFiles, dstDir, srcSet, in.Password)
 	if err != nil {
-		return RingOut{Dir: displayRing(in.Ring, dstDir), Source: source}, err
+		return SetOut{Dir: displaySet(in.Ring, dstDir), Source: source}, err
 	}
-	return ringOut(displayRing(in.Ring, dstDir), source, set), nil
+	return setOut(displaySet(in.Ring, dstDir), source, set), nil
 }
 
 // source turns the ways of naming a key into one model.Source. Where a file
 // sits is a property of its path, so a remote import is not a different kind
 // of import; a mnemonic is a different origin, so it is its own input.
-func (in RingImportIn) source(d Deps, serverSet string) (model.Source, error) {
+func (in ImportIn) source(d Deps, serverSet string) (model.Source, error) {
 	given := 0
 	for _, set := range []bool{in.PrivateKey != "", in.From != "", in.Mnemonic != ""} {
 		if set {
@@ -441,22 +441,22 @@ func (in RingImportIn) source(d Deps, serverSet string) (model.Source, error) {
 	return model.FileSource{Files: tgt.Files, Path: tgt.DataRoot, Password: pw}, nil
 }
 
-// openRing resolves and loads a ring, naming the source in the error so that a
-// missing default ring is not a mystery.
-func openRing(ctx context.Context, ref RingRef, d Deps) (dir, source string, set model.Preset, err error) {
+// openSet resolves and loads a key set, naming the source in the error so that a
+// missing default key set is not a mystery.
+func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set model.Preset, err error) {
 	files, dir, source, err := ref.open(d)
 	if err != nil {
-		return displayRing(ref, dir), source, model.Preset{}, err
+		return displaySet(ref, dir), source, model.Preset{}, err
 	}
 	set, err = store.LoadPresetAt(ctx, files, dir)
-	dir = displayRing(ref, dir)
+	dir = displaySet(ref, dir)
 	if err != nil {
 		return dir, source, model.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
 	}
 	return dir, source, set, nil
 }
 
-// findEntry looks up an identity by label, listing what the ring holds when the
+// findEntry looks up an identity by label, listing what the key set holds when the
 // name is not one of them.
 func findEntry(set model.Preset, label string) (model.Entry, error) {
 	for _, e := range set.Nodes {
@@ -471,7 +471,7 @@ func findEntry(set model.Preset, label string) (model.Entry, error) {
 	return model.Entry{}, fmt.Errorf("no identity named %q (have: %v)", label, have)
 }
 
-// validatorSet indexes the ring's declared validators by lowercase address.
+// validatorSet indexes the key set's declared validators by lowercase address.
 func validatorSet(set model.Preset) map[string]bool {
 	out := make(map[string]bool, len(set.Network.Validators))
 	for _, a := range set.Network.Validators {
@@ -480,10 +480,10 @@ func validatorSet(set model.Preset) map[string]bool {
 	return out
 }
 
-// ringOut renders a whole ring.
-func ringOut(dir, source string, set model.Preset) RingOut {
+// setOut renders a whole key set.
+func setOut(dir, source string, set model.Preset) SetOut {
 	vals := validatorSet(set)
-	out := RingOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
+	out := SetOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
 	for _, e := range set.Nodes {
 		out.Entries = append(out.Entries, entryOut(e, vals))
 	}

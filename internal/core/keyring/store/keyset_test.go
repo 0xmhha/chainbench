@@ -14,11 +14,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
 
-// TestRing_AddIsIdempotent is what makes re-running a command safe: a label
+// TestKeySet_AddIsIdempotent is what makes re-running a command safe: a label
 // resolved once keeps its identity, instead of a second run producing a
 // competing key for the same name.
-func TestRing_AddIsIdempotent(t *testing.T) {
-	ring := store.NewRing(t.TempDir())
+func TestKeySet_AddIsIdempotent(t *testing.T) {
+	ring := store.NewKeySet(t.TempDir())
 	first, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
@@ -38,10 +38,10 @@ func TestRing_AddIsIdempotent(t *testing.T) {
 	}
 }
 
-// TestRing_DerivationIsPerEntry covers the poa case: an entry asked for without
+// TestKeySet_DerivationIsPerEntry covers the poa case: an entry asked for without
 // BLS has none, rather than a zero key that reads like a real one.
-func TestRing_DerivationIsPerEntry(t *testing.T) {
-	ring := store.NewRing(t.TempDir())
+func TestKeySet_DerivationIsPerEntry(t *testing.T) {
+	ring := store.NewKeySet(t.TempDir())
 	bp, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add bp1: %v", err)
@@ -58,11 +58,11 @@ func TestRing_DerivationIsPerEntry(t *testing.T) {
 	}
 }
 
-// TestRing_AddExpectingCatchesDrift is the check that keeps a declared identity
+// TestKeySet_AddExpectingCatchesDrift is the check that keeps a declared identity
 // and its key from parting ways unnoticed.
-func TestRing_AddExpectingCatchesDrift(t *testing.T) {
+func TestKeySet_AddExpectingCatchesDrift(t *testing.T) {
 	entry := presetEntry(t)
-	ring := store.NewRing(t.TempDir())
+	ring := store.NewKeySet(t.TempDir())
 	src := keyring.PrivateKeySource{Hex: entry.Nodekey.Hex()}
 
 	if _, err := ring.AddExpecting(context.Background(), "ok", src, derive.AccountOnly, entry.Address); err != nil {
@@ -75,11 +75,11 @@ func TestRing_AddExpectingCatchesDrift(t *testing.T) {
 	}
 }
 
-// TestRing_WritesUnderItsDirectory checks the persistence contract: the secret
+// TestKeySet_WritesUnderItsDirectory checks the persistence contract: the secret
 // is owner-only, the derived fields are readable, and nothing lands outside.
-func TestRing_WritesUnderItsDirectory(t *testing.T) {
+func TestKeySet_WritesUnderItsDirectory(t *testing.T) {
 	dir := t.TempDir()
-	ring := store.NewRing(dir)
+	ring := store.NewKeySet(dir)
 	if _, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS); err != nil {
 		t.Fatalf("Add: %v", err)
 	}
@@ -103,10 +103,10 @@ func TestRing_WritesUnderItsDirectory(t *testing.T) {
 	}
 }
 
-// TestRing_Install ships only the secret. Everything else derives from it, and
+// TestKeySet_Install ships only the secret. Everything else derives from it, and
 // shipping a derived value is how a node and its genesis come to disagree.
-func TestRing_Install(t *testing.T) {
-	ring := store.NewRing(t.TempDir())
+func TestKeySet_Install(t *testing.T) {
+	ring := store.NewKeySet(t.TempDir())
 	e, err := ring.Add(context.Background(), "bp1", keyring.RandomSource{}, derive.WithBLS)
 	if err != nil {
 		t.Fatalf("Add: %v", err)
@@ -130,9 +130,9 @@ func TestRing_Install(t *testing.T) {
 	}
 }
 
-// TestRing_Labels keeps listing output stable between runs.
-func TestRing_Labels(t *testing.T) {
-	ring := store.NewRing(t.TempDir())
+// TestKeySet_Labels keeps listing output stable between runs.
+func TestKeySet_Labels(t *testing.T) {
+	ring := store.NewKeySet(t.TempDir())
 	for _, l := range []keyring.Label{"en1", "bp2", "bp1"} {
 		if _, err := ring.Add(context.Background(), l, keyring.RandomSource{}, derive.AccountOnly); err != nil {
 			t.Fatalf("Add %s: %v", l, err)
@@ -150,10 +150,10 @@ func TestRing_Labels(t *testing.T) {
 	}
 }
 
-// TestRing_AddPropagatesSourceErrors keeps a failed resolve from being recorded
+// TestKeySet_AddPropagatesSourceErrors keeps a failed resolve from being recorded
 // as an entry.
-func TestRing_AddPropagatesSourceErrors(t *testing.T) {
-	ring := store.NewRing(t.TempDir())
+func TestKeySet_AddPropagatesSourceErrors(t *testing.T) {
+	ring := store.NewKeySet(t.TempDir())
 	_, err := ring.Add(context.Background(), "bad", keyring.PrivateKeySource{Hex: "zz"}, derive.AccountOnly)
 	if err == nil {
 		t.Fatal("expected an error")
@@ -187,11 +187,11 @@ func TestNetworkFor_DoesNotAliasThePreset(t *testing.T) {
 	}
 }
 
-// TestRing_AddIsSafeUnderConcurrency checks that one label yields one identity
+// TestKeySet_AddIsSafeUnderConcurrency checks that one label yields one identity
 // even when several callers race, and that a slow source does not serialize
 // the others behind it.
-func TestRing_AddIsSafeUnderConcurrency(t *testing.T) {
-	ring := store.NewRing(t.TempDir())
+func TestKeySet_AddIsSafeUnderConcurrency(t *testing.T) {
+	ring := store.NewKeySet(t.TempDir())
 
 	const callers = 8
 	var wg sync.WaitGroup

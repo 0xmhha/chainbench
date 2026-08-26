@@ -71,7 +71,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 // TestLive_KeyringImportsARawKeyFromAServer covers srv:// + --docker end to
 // end: a key that exists only on the server comes back as a derived identity,
 // and the translation is reported. The fixture is a key exported from a local
-// ring, so the imported address has a known right answer.
+// key set, so the imported address has a known right answer.
 func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 	build := fleetBuildDir(t)
 	inv := filepath.Join(build, "server-set.yaml")
@@ -81,7 +81,7 @@ func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 	plantOnServer1(t, build, "/data/chainbench/live-test/rawkey",
 		[]byte(strings.TrimPrefix(exportKey(t, local, "node1"), "0x")))
 
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "fromsrv",
 		"--from", "srv://server1/data/chainbench/live-test/rawkey",
 		"--server-set", inv, "--docker")
@@ -107,7 +107,7 @@ func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
 	ksDir := filepath.Join(local, "node1", "keystore")
 	entries, err := os.ReadDir(ksDir)
 	if err != nil || len(entries) == 0 {
-		t.Fatalf("local ring has no keystore: %v", err)
+		t.Fatalf("local key set has no keystore: %v", err)
 	}
 	ks, err := os.ReadFile(filepath.Join(ksDir, entries[0].Name()))
 	if err != nil {
@@ -115,7 +115,7 @@ func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
 	}
 	plantOnServer1(t, build, "/data/chainbench/live-test/keystore.json", ks)
 
-	dir := filepath.Join(t.TempDir(), "ring")
+	dir := filepath.Join(t.TempDir(), "keys")
 	out, err := run(t, "keyring", "import", "--keyring-dir", dir, "--name", "fromks",
 		"--from", "srv://server1/data/chainbench/live-test/keystore.json",
 		"--password", "1", "--server-set", inv, "--docker")
@@ -140,10 +140,10 @@ func addressOf(t *testing.T, ring, name string) string {
 	return e.Address
 }
 
-// TestLive_KeyringCreatesARingOnAServer pins the remote ring end to end: a
-// ring named srv://server1/... is created ON the server through the file
+// TestLive_KeyringCreatesARingOnAServer pins the remote key set end to end: a
+// key set named srv://server1/... is created ON the server through the file
 // boundary, its files land there (checked through the same remote stack), and it
-// reads back and verifies remotely — the same contracts the local ring
+// reads back and verifies remotely — the same contracts the local key set
 // holds, at a different location. The path is per-process so reruns never
 // collide with a leftover index.
 func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
@@ -186,7 +186,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	}
 }
 
-// TestLive_KeyringClonesARingFromAServer pins the whole-ring pull: a ring is
+// TestLive_KeyringClonesARingFromAServer pins the whole-ring pull: a key set is
 // created ON the server, then --from-ring clones it here in one command —
 // labels intact, validator declaration carried, and every entry verified
 // against the server's index before anything lands locally.

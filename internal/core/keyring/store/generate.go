@@ -77,7 +77,7 @@ func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (
 	// genesis, a datadir, or a test is already referring to, and the keys behind
 	// them cannot be recovered. Adding to a ring is a different verb.
 	if exists, err := opts.files().Exists(ctx, filepath.Join(opts.Out, PresetFile)); err == nil && exists {
-		return Preset{}, fmt.Errorf("keyring: %s already holds a ring; add to it instead of creating over it", opts.Out)
+		return Preset{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", opts.Out)
 	}
 	// A ring generated without saying otherwise is a network's validator set,
 	// which is what every existing preset is.
@@ -409,10 +409,10 @@ func ImportRing(ctx context.Context, files filestore.Store, dir string, src Pres
 		files = filestore.Local{}
 	}
 	if len(src.Nodes) == 0 {
-		return Preset{}, fmt.Errorf("keyring: import-ring: the source ring holds no identities")
+		return Preset{}, fmt.Errorf("keyring: import-ring: the source key set holds no identities")
 	}
 	if exists, err := files.Exists(ctx, filepath.Join(dir, PresetFile)); err == nil && exists {
-		return Preset{}, fmt.Errorf("keyring: %s already holds a ring; add to it instead of creating over it", dir)
+		return Preset{}, fmt.Errorf("keyring: %s already holds a key set; add to it instead of creating over it", dir)
 	}
 	for _, e := range src.Nodes {
 		if err := e.Verify(); err != nil {
