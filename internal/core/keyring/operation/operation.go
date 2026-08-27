@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	model "github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/machine"
@@ -356,7 +356,7 @@ func Import(ctx context.Context, d Deps, in ImportIn) (EntryOut, error) {
 				id.Address, in.ExpectAddress)
 		}
 	}
-	e, err := store.ImportAt(ctx, files, dir, model.Label(in.Label), key, how)
+	e, err := store.ImportAt(ctx, files, dir, keyring.Label(in.Label), key, how)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -393,10 +393,10 @@ func ImportSet(ctx context.Context, d Deps, in ImportIn) (SetOut, error) {
 	return setOut(displaySet(in.Ring, dstDir), source, set), nil
 }
 
-// source turns the ways of naming a key into one model.Source. Where a file
+// source turns the ways of naming a key into one keyring.Source. Where a file
 // sits is a property of its path, so a remote import is not a different kind
 // of import; a mnemonic is a different origin, so it is its own input.
-func (in ImportIn) source(d Deps, serverSet string) (model.Source, error) {
+func (in ImportIn) source(d Deps, serverSet string) (keyring.Source, error) {
 	given := 0
 	for _, set := range []bool{in.PrivateKey != "", in.From != "", in.Mnemonic != ""} {
 		if set {
@@ -415,13 +415,13 @@ func (in ImportIn) source(d Deps, serverSet string) (model.Source, error) {
 	case given > 1:
 		return nil, fmt.Errorf("keyring: provide exactly one of a private key, a mnemonic, or a path")
 	case in.PrivateKey != "":
-		return model.PrivateKeySource{Hex: in.PrivateKey}, nil
+		return keyring.PrivateKeySource{Hex: in.PrivateKey}, nil
 	case in.Mnemonic != "":
-		path := model.HDPath{CoinType: in.HDCoinType, Account: in.HDAccount, Change: in.HDChange, Index: in.HDIndex}
+		path := keyring.HDPath{CoinType: in.HDCoinType, Account: in.HDAccount, Change: in.HDChange, Index: in.HDIndex}
 		if path.CoinType == 0 {
-			path.CoinType = model.DefaultCoinType
+			path.CoinType = keyring.DefaultCoinType
 		}
-		return model.MnemonicSource{Mnemonic: in.Mnemonic, Passphrase: in.Passphrase, Path: path}, nil
+		return keyring.MnemonicSource{Mnemonic: in.Mnemonic, Passphrase: in.Passphrase, Path: path}, nil
 	case in.From == "":
 		return nil, fmt.Errorf("keyring: import needs a private key, a mnemonic, or a path")
 	}
@@ -434,31 +434,31 @@ func (in ImportIn) source(d Deps, serverSet string) (model.Source, error) {
 	if err != nil {
 		return nil, err
 	}
-	var pw model.PasswordSource
+	var pw keyring.PasswordSource
 	if in.Password != "" {
-		pw = model.StaticPassword(in.Password)
+		pw = keyring.StaticPassword(in.Password)
 	}
-	return model.FileSource{Files: tgt.Files, Path: tgt.DataRoot, Password: pw}, nil
+	return keyring.FileSource{Files: tgt.Files, Path: tgt.DataRoot, Password: pw}, nil
 }
 
 // openSet resolves and loads a key set, naming the source in the error so that a
 // missing default key set is not a mystery.
-func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set model.Preset, err error) {
+func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set keyring.Preset, err error) {
 	files, dir, source, err := ref.open(d)
 	if err != nil {
-		return displaySet(ref, dir), source, model.Preset{}, err
+		return displaySet(ref, dir), source, keyring.Preset{}, err
 	}
 	set, err = store.LoadPresetAt(ctx, files, dir)
 	dir = displaySet(ref, dir)
 	if err != nil {
-		return dir, source, model.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
+		return dir, source, keyring.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
 	}
 	return dir, source, set, nil
 }
 
 // findEntry looks up an identity by label, listing what the key set holds when the
 // name is not one of them.
-func findEntry(set model.Preset, label string) (model.Entry, error) {
+func findEntry(set keyring.Preset, label string) (keyring.Entry, error) {
 	for _, e := range set.Nodes {
 		if string(e.Label) == label {
 			return e, nil
@@ -468,11 +468,11 @@ func findEntry(set model.Preset, label string) (model.Entry, error) {
 	for _, e := range set.Nodes {
 		have = append(have, string(e.Label))
 	}
-	return model.Entry{}, fmt.Errorf("no identity named %q (have: %v)", label, have)
+	return keyring.Entry{}, fmt.Errorf("no identity named %q (have: %v)", label, have)
 }
 
 // validatorSet indexes the key set's declared validators by lowercase address.
-func validatorSet(set model.Preset) map[string]bool {
+func validatorSet(set keyring.Preset) map[string]bool {
 	out := make(map[string]bool, len(set.Network.Validators))
 	for _, a := range set.Network.Validators {
 		out[lower(a)] = true
@@ -481,7 +481,7 @@ func validatorSet(set model.Preset) map[string]bool {
 }
 
 // setOut renders a whole key set.
-func setOut(dir, source string, set model.Preset) SetOut {
+func setOut(dir, source string, set keyring.Preset) SetOut {
 	vals := validatorSet(set)
 	out := SetOut{Dir: dir, Source: source, Validators: len(set.Network.Validators)}
 	for _, e := range set.Nodes {
@@ -491,7 +491,7 @@ func setOut(dir, source string, set model.Preset) SetOut {
 }
 
 // entryOut renders one identity without its secret.
-func entryOut(e model.Entry, validators map[string]bool) EntryOut {
+func entryOut(e keyring.Entry, validators map[string]bool) EntryOut {
 	out := EntryOut{
 		Label:     string(e.Label),
 		Index:     e.Index,

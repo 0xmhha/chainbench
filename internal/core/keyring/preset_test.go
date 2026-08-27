@@ -19,7 +19,7 @@ func bareRing(t *testing.T, nodes int) keyring.Preset {
 	set, err := store.Generate(store.GenerateOpts{
 		Nodes: nodes, Validators: &none,
 		Out: t.TempDir(), Password: "1", Balance: "0x1",
-		Derive: store.WithBLS,
+		Derive: derive.WithBLS,
 		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x5a}, nodes*derive.PrivateKeyLen)),
 	}, nil)
 	if err != nil {
@@ -135,7 +135,7 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 			dir := t.TempDir()
 			created, err := store.Generate(store.GenerateOpts{
 				Nodes: 3, Validators: tc.validators, Out: dir,
-				Password: "1", Balance: "0x1", Derive: store.WithBLS,
+				Password: "1", Balance: "0x1", Derive: derive.WithBLS,
 				Rand: bytes.NewReader(bytes.Repeat([]byte{0x33}, 3*derive.PrivateKeyLen)),
 			}, nil)
 			if err != nil {
@@ -147,7 +147,7 @@ func TestValidatorCount_UnsetMeansOppositeThingsPerVerb(t *testing.T) {
 
 			extended, err := store.Extend(store.GenerateOpts{
 				Nodes: 2, Validators: tc.validators, Out: dir,
-				Password: "1", Balance: "0x1", Derive: store.WithBLS,
+				Password: "1", Balance: "0x1", Derive: derive.WithBLS,
 				Rand: bytes.NewReader(bytes.Repeat([]byte{0x44}, 2*derive.PrivateKeyLen)),
 			}, nil)
 			if err != nil {

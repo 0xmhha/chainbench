@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"path/filepath"
 	"strings"
@@ -40,35 +41,35 @@ type presetNode struct {
 // record of what a running network was given, and silently correcting it would
 // hide a set whose identities and keys have come apart. Use [Entry.Verify] to
 // check them on purpose.
-func LoadPreset(dir string) (Preset, error) {
+func LoadPreset(dir string) (keyring.Preset, error) {
 	return LoadPresetAt(context.Background(), nil, dir)
 }
 
 // LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
 // one file, so a ring on a server reads back with a single remote read.
-func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (Preset, error) {
+func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
 	if files == nil {
 		files = filestore.Local{}
 	}
 	path := filepath.Join(dir, PresetFile)
 	b, err := files.Read(ctx, path)
 	if err != nil {
-		return Preset{}, fmt.Errorf("keyring: read preset: %w", err)
+		return keyring.Preset{}, fmt.Errorf("keyring: read preset: %w", err)
 	}
 	var f presetFile
 	if err := json.Unmarshal(b, &f); err != nil {
-		return Preset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
+		return keyring.Preset{}, fmt.Errorf("keyring: parse %s: %w", path, err)
 	}
 	if err := f.validate(path); err != nil {
-		return Preset{}, err
+		return keyring.Preset{}, err
 	}
 	nodes, err := f.entries(path)
 	if err != nil {
-		return Preset{}, err
+		return keyring.Preset{}, err
 	}
-	return Preset{
+	return keyring.Preset{
 		Nodes: nodes,
-		Network: Network{
+		Network: keyring.Network{
 			Validators: f.Validators,
 			BLSKeys:    f.BLSPublicKeys,
 			ExtraData:  f.ExtraData,
@@ -97,30 +98,30 @@ func (f presetFile) validate(path string) error {
 }
 
 // entries decodes the file's identities.
-func (f presetFile) entries(path string) ([]Entry, error) {
-	out := make([]Entry, 0, len(f.Nodes))
+func (f presetFile) entries(path string) ([]keyring.Entry, error) {
+	out := make([]keyring.Entry, 0, len(f.Nodes))
 	for _, n := range f.Nodes {
 		key, err := derive.ParsePrivateKey(n.Nodekey)
 		if err != nil {
 			return nil, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
 		}
-		label := Label(n.Label)
+		label := keyring.Label(n.Label)
 		if label == "" {
 			// A numbered identity's label follows from its index, so reading a
 			// ring and generating one name entries the same way.
 			label = nodeLabel(n.Index)
 		}
-		e := Entry{
+		e := keyring.Entry{
 			Label:   label,
 			Index:   n.Index,
 			Nodekey: key,
-			Identity: Identity{
+			Identity: derive.Identity{
 				PublicKey: n.PublicKey,
 				Address:   n.Address,
 			},
 		}
 		if n.BLSPublicKey != "" {
-			e.BLS = &BLS{PublicKey: n.BLSPublicKey, PoP: n.BLSPoP}
+			e.BLS = &derive.BLS{PublicKey: n.BLSPublicKey, PoP: n.BLSPoP}
 		}
 		out = append(out, e)
 	}
@@ -128,7 +129,7 @@ func (f presetFile) entries(path string) ([]Entry, error) {
 }
 
 // nodeLabel is the label a numbered identity carries: node1, node2, ...
-func nodeLabel(index int) Label { return Label(fmt.Sprintf("node%d", index)) }
+func nodeLabel(index int) keyring.Label { return keyring.Label(fmt.Sprintf("node%d", index)) }
 
 // splitCSV splits a comma-separated field into trimmed, non-empty entries.
 func splitCSV(s string) []string {

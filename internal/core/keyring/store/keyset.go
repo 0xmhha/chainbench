@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"maps"
@@ -48,12 +49,12 @@ type KeySet struct {
 	dir string
 
 	mu      sync.Mutex
-	entries map[Label]Entry
+	entries map[keyring.Label]keyring.Entry
 }
 
 // NewKeySet returns a ring persisting entries under dir.
 func NewKeySet(dir string) *KeySet {
-	return &KeySet{dir: dir, entries: make(map[Label]Entry)}
+	return &KeySet{dir: dir, entries: make(map[keyring.Label]keyring.Entry)}
 }
 
 // Dir is where the ring's entries are written.
@@ -67,7 +68,7 @@ func (r *KeySet) Dir() string { return r.dir }
 // d selects how much to derive: a poa validator asks for [AccountOnly] and gets
 // an entry with no BLS material, rather than one with a zero key that reads
 // like a real one.
-func (r *KeySet) Add(ctx context.Context, label Label, src Source, d Derivation) (Entry, error) {
+func (r *KeySet) Add(ctx context.Context, label keyring.Label, src keyring.Source, d derive.Derivation) (keyring.Entry, error) {
 	if e, ok := r.Get(label); ok {
 		return e, nil
 	}
@@ -77,13 +78,13 @@ func (r *KeySet) Add(ctx context.Context, label Label, src Source, d Derivation)
 	// I/O would serialize every other caller behind one slow host.
 	key, err := src.Resolve(ctx)
 	if err != nil {
-		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
+		return keyring.Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
 	id, err := derive.Derive(key, d)
 	if err != nil {
-		return Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
+		return keyring.Entry{}, fmt.Errorf("keyring: add %q: %w", label, err)
 	}
-	e := Entry{Label: label, Nodekey: key, Identity: id}
+	e := keyring.Entry{Label: label, Nodekey: key, Identity: id}
 
 	// Two callers may have raced to here. The first to take the lock wins, and
 	// the loser discards its key rather than replacing an identity another
@@ -94,7 +95,7 @@ func (r *KeySet) Add(ctx context.Context, label Label, src Source, d Derivation)
 		return held, nil
 	}
 	if err := r.write(e); err != nil {
-		return Entry{}, err
+		return keyring.Entry{}, err
 	}
 	r.entries[label] = e
 	return e, nil
@@ -104,19 +105,19 @@ func (r *KeySet) Add(ctx context.Context, label Label, src Source, d Derivation)
 // The address is derived from the key material and compared, so a declaration
 // that has drifted from its key is caught here rather than as a chain that
 // registers one address in its genesis while the node signs with another.
-func (r *KeySet) AddExpecting(ctx context.Context, label Label, src Source, d Derivation, want string) (Entry, error) {
+func (r *KeySet) AddExpecting(ctx context.Context, label keyring.Label, src keyring.Source, d derive.Derivation, want string) (keyring.Entry, error) {
 	e, err := r.Add(ctx, label, src, d)
 	if err != nil {
-		return Entry{}, err
+		return keyring.Entry{}, err
 	}
 	if want != "" && !strings.EqualFold(want, e.Address) {
-		return Entry{}, fmt.Errorf("keyring: %q derives address %s but %s was declared", label, e.Address, want)
+		return keyring.Entry{}, fmt.Errorf("keyring: %q derives address %s but %s was declared", label, e.Address, want)
 	}
 	return e, nil
 }
 
 // Get returns a held entry.
-func (r *KeySet) Get(label Label) (Entry, bool) {
+func (r *KeySet) Get(label keyring.Label) (keyring.Entry, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	e, ok := r.entries[label]
@@ -125,7 +126,7 @@ func (r *KeySet) Get(label Label) (Entry, bool) {
 
 // Labels returns the held labels in sorted order, so output that lists a ring
 // is stable between runs.
-func (r *KeySet) Labels() []Label {
+func (r *KeySet) Labels() []keyring.Label {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return slices.Sorted(maps.Keys(r.entries))
@@ -137,14 +138,14 @@ func (r *KeySet) Labels() []Label {
 // It is how a node gets the key it launches with. Only the private material is
 // shipped: everything else about the identity derives from it, and shipping a
 // derived value is how a node and its genesis come to disagree.
-func (r *KeySet) Install(ctx context.Context, files filestore.Store, dir string, labels []Label) error {
+func (r *KeySet) Install(ctx context.Context, files filestore.Store, dir string, labels []keyring.Label) error {
 	for _, label := range labels {
 		e, ok := r.Get(label)
 		if !ok {
 			return fmt.Errorf("keyring: install: no entry named %q", label)
 		}
 		dst := filepath.Join(dir, string(label), fileKey)
-		if err := files.Write(ctx, dst, []byte(e.Nodekey.Hex()), secretPerm); err != nil {
+		if err := files.Write(ctx, dst, []byte(e.Nodekey.Hex()), keyring.SecretPerm); err != nil {
 			return fmt.Errorf("keyring: install %q: %w", label, err)
 		}
 	}
@@ -154,7 +155,7 @@ func (r *KeySet) Install(ctx context.Context, files filestore.Store, dir string,
 // write persists one entry under <dir>/<label>/. The key is owner-only; the
 // derived public fields are written beside it so an operator reading the
 // directory can see what the key is without decoding it.
-func (r *KeySet) write(e Entry) error {
+func (r *KeySet) write(e keyring.Entry) error {
 	if r.dir == "" {
 		return nil
 	}
@@ -163,13 +164,13 @@ func (r *KeySet) write(e Entry) error {
 		return fmt.Errorf("keyring: create %s: %w", dir, err)
 	}
 	files := []entryFile{
-		{fileKey, e.Nodekey.Hex(), secretPerm},
-		{fileAddress, e.Address, publicPerm},
+		{fileKey, e.Nodekey.Hex(), keyring.SecretPerm},
+		{fileAddress, e.Address, keyring.PublicPerm},
 	}
 	if e.BLS != nil {
 		files = append(files,
-			entryFile{fileBLS, e.BLS.PublicKey, publicPerm},
-			entryFile{filePoP, e.BLS.PoP, publicPerm},
+			entryFile{fileBLS, e.BLS.PublicKey, keyring.PublicPerm},
+			entryFile{filePoP, e.BLS.PoP, keyring.PublicPerm},
 		)
 	}
 	for _, f := range files {

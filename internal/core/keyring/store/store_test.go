@@ -52,7 +52,7 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	written, err := store.Generate(store.GenerateOpts{
 		Nodes: nodes, Validators: &validators, Out: dir, Password: "1", Balance: "0x1",
-		Derive: store.WithBLS,
+		Derive: derive.WithBLS,
 		Rand:   bytes.NewReader(bytes.Repeat([]byte{0x7f}, nodes*derive.PrivateKeyLen)),
 	}, nil)
 	if err != nil {
@@ -99,7 +99,7 @@ func TestImportRing_ClonesDeclarationAndRefusesTamper(t *testing.T) {
 	two := 2
 	src, err := store.Generate(store.GenerateOpts{
 		Nodes: 3, Validators: &two, Out: srcDir, Password: "pw",
-		Derive: store.WithBLS,
+		Derive: derive.WithBLS,
 	}, nil)
 	if err != nil {
 		t.Fatal(err)

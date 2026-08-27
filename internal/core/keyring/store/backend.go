@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
 
@@ -23,9 +25,9 @@ const (
 // cosmos-sdk spells --keyring-backend.
 type Backend interface {
 	// Save writes the key under name and returns the file path.
-	Save(dir, name string, key PrivateKey, pw PasswordSource) (string, error)
+	Save(dir, name string, key derive.PrivateKey, pw keyring.PasswordSource) (string, error)
 	// Load reads a previously saved key by name.
-	Load(dir, name string, pw PasswordSource) (PrivateKey, error)
+	Load(dir, name string, pw keyring.PasswordSource) (derive.PrivateKey, error)
 }
 
 // RawFileBackend stores the key as 0x-hex in <dir>/<name>.key (0600). No
@@ -34,20 +36,20 @@ type Backend interface {
 type RawFileBackend struct{}
 
 // Save writes the hex key.
-func (RawFileBackend) Save(dir, name string, key PrivateKey, _ PasswordSource) (string, error) {
-	if err := os.MkdirAll(dir, dirPerm); err != nil {
+func (RawFileBackend) Save(dir, name string, key derive.PrivateKey, _ keyring.PasswordSource) (string, error) {
+	if err := os.MkdirAll(dir, keyring.DirPerm); err != nil {
 		return "", err
 	}
 	path := filepath.Join(dir, name+".key")
-	if err := os.WriteFile(path, []byte("0x"+key.Hex()), secretPerm); err != nil {
+	if err := os.WriteFile(path, []byte("0x"+key.Hex()), keyring.SecretPerm); err != nil {
 		return "", err
 	}
 	return path, nil
 }
 
 // Load reads the hex key.
-func (RawFileBackend) Load(dir, name string, _ PasswordSource) (PrivateKey, error) {
-	return FileSource{Path: filepath.Join(dir, name+".key")}.Resolve(context.Background())
+func (RawFileBackend) Load(dir, name string, _ keyring.PasswordSource) (derive.PrivateKey, error) {
+	return keyring.FileSource{Path: filepath.Join(dir, name+".key")}.Resolve(context.Background())
 }
 
 // KeystoreBackend stores an encrypted v3 keystore JSON in <dir>/<name>.json
@@ -58,7 +60,7 @@ type KeystoreBackend struct {
 }
 
 // Save encrypts the key into a keystore JSON.
-func (b KeystoreBackend) Save(dir, name string, key PrivateKey, pw PasswordSource) (string, error) {
+func (b KeystoreBackend) Save(dir, name string, key derive.PrivateKey, pw keyring.PasswordSource) (string, error) {
 	if pw == nil {
 		return "", fmt.Errorf("keyring: keystore backend needs a password")
 	}
@@ -77,17 +79,17 @@ func (b KeystoreBackend) Save(dir, name string, key PrivateKey, pw PasswordSourc
 	if err != nil {
 		return "", fmt.Errorf("keyring: encrypt keystore: %w", err)
 	}
-	if err := os.MkdirAll(dir, dirPerm); err != nil {
+	if err := os.MkdirAll(dir, keyring.DirPerm); err != nil {
 		return "", err
 	}
 	path := filepath.Join(dir, name+".json")
-	if err := os.WriteFile(path, keyjson, secretPerm); err != nil {
+	if err := os.WriteFile(path, keyjson, keyring.SecretPerm); err != nil {
 		return "", err
 	}
 	return path, nil
 }
 
 // Load decrypts a stored keystore.
-func (KeystoreBackend) Load(dir, name string, pw PasswordSource) (PrivateKey, error) {
-	return FileSource{Path: filepath.Join(dir, name+".json"), Password: pw}.Resolve(context.Background())
+func (KeystoreBackend) Load(dir, name string, pw keyring.PasswordSource) (derive.PrivateKey, error) {
+	return keyring.FileSource{Path: filepath.Join(dir, name+".json"), Password: pw}.Resolve(context.Background())
 }
