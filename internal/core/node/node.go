@@ -1,8 +1,24 @@
-// Package node defines the chain-agnostic node model that flows between the
-// three pipeline phases (setup -> verify -> test). NodeSet is the single
-// hand-off object: every phase takes a NodeSet and returns a NodeSet, so a
-// phase can run standalone against nodes it did not create (e.g. attach, which
-// skips setup entirely — see docs/CHAINBENCH_GO_REDESIGN.md §3).
+// Package node owns what is known about a node: what it is called, what role
+// it plays, where it runs, on which ports, at which paths, and — derived from
+// the roles — who dials whom.
+//
+// It is the vocabulary every other module speaks. Nothing here reaches the
+// outside world: no files, no sockets, no processes. That is what lets it be
+// imported from anywhere without dragging a dependency along, and the rule is
+// enforced by measurement — this package imports nothing (see the code graph
+// in docs/dev/architecture/code-graph.md).
+//
+// The facts arrive from elsewhere and are recorded here. netmap allocates a
+// host and ports and hands back a Map; keyring derives the keys an Enode joins
+// to a placement. The division is deliberate: a module that decides something
+// about a node should not also be the place that remembers it, or the memory
+// forks the moment a second decider appears — which is how ten types came to
+// mean "one node" and four places came to compute the same paths
+// (docs/dev/architecture/module-plan.md §2).
+//
+// NodeSet remains the hand-off object between the three pipeline phases
+// (setup -> verify -> test): every phase takes a NodeSet and returns a
+// NodeSet, so a phase can run standalone against nodes it did not create.
 package node
 
 // Role is a node's operational role within a network. The BFT chains
@@ -13,7 +29,7 @@ type Role string
 
 // The canonical vocabulary is bp / en / pn. The two legacy
 // spellings survive because they are written into persisted state
-// (workspace.json, topology files) and launch flows; netmap.NormalizeRole folds
+// (workspace.json, topology files) and launch flows; NormalizeRole folds
 // them onto the canonical three, and new code should not emit them.
 const (
 	// RoleBP is a block producer: a BFT validator, or a staked poa producer.

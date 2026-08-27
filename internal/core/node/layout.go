@@ -1,4 +1,4 @@
-package netmap
+package node
 
 import "path/filepath"
 
@@ -17,18 +17,18 @@ type Layout struct {
 }
 
 // DataDir is the node's datadir — what --datadir points at.
-func (l Layout) DataDir(label NodeLabel) string {
+func (l Layout) DataDir(label Label) string {
 	return filepath.Join(l.Root, string(label))
 }
 
 // ConfigPath is the node's rendered TOML config.
-func (l Layout) ConfigPath(label NodeLabel) string {
+func (l Layout) ConfigPath(label Label) string {
 	return filepath.Join(l.Root, "config_"+string(label)+".toml")
 }
 
 // LogPath is where the node's stdout/stderr is captured. Logs share one
 // directory so a run can be read as a whole.
-func (l Layout) LogPath(label NodeLabel) string {
+func (l Layout) LogPath(label Label) string {
 	return filepath.Join(l.Root, "logs", string(label)+".log")
 }
 

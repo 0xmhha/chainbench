@@ -13,13 +13,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 var enodeLine = regexp.MustCompile(`"(enode://[^"]+)"`)
 
 // TestArmSpecs_StaticNodesMatchNetmapMesh held the launcher's own assembly
-// against netmap.Mesh while the two coexisted; the launcher now calls netmap,
+// against node.Mesh while the two coexisted; the launcher now calls netmap,
 // so what it pins today is the contract on the far side of the rendering: the
 // config a node is handed still carries the whole network, in map order, with
 // the node's own entry included.
@@ -74,17 +73,17 @@ func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 		t.Fatalf("netmap.Assign: %v", err)
 	}
 	// The caller holds both the map and the key material; netmap holds neither.
-	enode := func(p netmap.Placement) (string, bool) {
+	enode := func(p node.Placement) (string, bool) {
 		e, ok := preset.Node(p.Index)
 		if !ok {
 			return "", false
 		}
-		return netmapmod.Enode(e.PublicKey, p.Host, p.Ports.P2P), true
+		return node.Enode(e.PublicKey, p.Host, p.Ports.P2P), true
 	}
 
 	for i, spec := range specs {
-		label := netmap.LabelFor(i + 1)
-		want, err := netmap.Mesh.StaticNodes(m, label, enode)
+		label := node.LabelFor(i + 1)
+		want, err := node.Mesh.StaticNodes(m, label, enode)
 		if err != nil {
 			t.Fatalf("StaticNodes(%s): %v", label, err)
 		}

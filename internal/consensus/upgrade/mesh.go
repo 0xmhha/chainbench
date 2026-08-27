@@ -3,10 +3,10 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // WaitEndpointsReady polls each RPC endpoint until it answers (eth_blockNumber)
@@ -61,7 +61,7 @@ func (p Plan) Enodes(host string) []string {
 		if n.Pubkey == "" {
 			continue
 		}
-		out[i] = netmapmod.Enode(n.Pubkey, host, n.Ports.P2P)
+		out[i] = node.Enode(n.Pubkey, host, n.Ports.P2P)
 	}
 	return out
 }

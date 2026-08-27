@@ -11,13 +11,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
 )
 
 // genesisFilePerm is the genesis.json file mode.
@@ -38,9 +36,9 @@ const configFilePerm os.FileMode = 0o644
 // remote sink can later ship them to another host without changing this type.
 type LocalLauncher struct {
 	// Peering selects the peer graph the nodes are wired into. The zero value
-	// is netmap.Mesh, which is what every composition did before the policy had
+	// is node.Mesh, which is what every composition did before the policy had
 	// a name.
-	Peering netmap.Peering
+	Peering node.Peering
 
 	// Plugin is the target chain (supplies the RPC namespace and miner recommit
 	// form for config rendering).
@@ -303,7 +301,7 @@ func materialize(ctx context.Context, pv *filestore.Provisioner, plan driver.Pla
 // The argv is assembled here and only here (launchopt Builder), replacing the
 // previous split between AssemblePlan's common flags and this function's
 // identity appends — see docs/dev/architecture/code-graph.md §3.
-func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, peering netmap.Peering, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
+func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, peering node.Peering, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
 	// Who a node dials is netmap's policy now; this function only knows how to
 	// spell a peer, because an enode needs key material and netmap holds none.
 	placed, err := PlanMap(plan)
@@ -311,7 +309,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 		return nil, fmt.Errorf("engine: launcher: %w", err)
 	}
 	if peering == "" {
-		peering = netmap.Mesh
+		peering = node.Mesh
 	}
 	pubkey := func(index int) (string, bool) {
 		nk, ok := preset.Node(index)
@@ -324,7 +322,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 	m := plugin.Manifest()
 	out := make([]driver.NodeSpec, len(plan.Nodes))
 	for i, spec := range plan.Nodes {
-		staticNodes, err := netmapmod.PeerList(placed, peering, netmap.LabelFor(spec.Index), pubkey)
+		staticNodes, err := node.PeerList(placed, peering, node.LabelFor(spec.Index), pubkey)
 		if err != nil {
 			return nil, fmt.Errorf("engine: launcher: node%d peers: %w", spec.Index, err)
 		}
@@ -365,7 +363,7 @@ func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec dri
 		NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
 		AllowInsecureUnlock: policy.AllowInsecureUnlock,
 	}
-	if netmap.Is(spec.Role, node.RoleBP) {
+	if node.Is(spec.Role, node.RoleBP) {
 		if nk, ok := preset.Node(spec.Index); ok {
 			id.Unlock = nk.Address
 			id.PasswordFile = filepath.Join(keysDir, "password")
@@ -397,27 +395,27 @@ func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec dri
 // The plan's port set has no etcd port (node.Endpoints predates netmap.Ports,
 // NM-b), so the map carries what the plan knows and no more — the derived etcd
 // port arrives when the port type is swapped.
-func PlanMap(plan driver.Plan) (*netmap.Map, error) {
-	placements := make([]netmap.Placement, 0, len(plan.Nodes))
+func PlanMap(plan driver.Plan) (*node.Map, error) {
+	placements := make([]node.Placement, 0, len(plan.Nodes))
 	ordinals := map[node.Role]int{}
 	for _, spec := range plan.Nodes {
-		role, err := netmap.NormalizeRole(string(spec.Role))
+		role, err := node.NormalizeRole(string(spec.Role))
 		if err != nil {
 			return nil, fmt.Errorf("node%d: %w", spec.Index, err)
 		}
 		ordinals[role]++
-		placements = append(placements, netmap.Placement{
+		placements = append(placements, node.Placement{
 			Index: spec.Index,
-			Label: netmap.LabelFor(spec.Index),
+			Label: node.LabelFor(spec.Index),
 			Role:  role,
 			Ord:   ordinals[role],
 			Host:  spec.Host,
-			Ports: netmap.Ports{
+			Ports: node.Endpoints{
 				P2P: spec.Ports.P2P, HTTP: spec.Ports.HTTP, WS: spec.Ports.WS,
 				Auth: spec.Ports.Auth, Metrics: spec.Ports.Metrics,
 			},
 			DataDir: spec.DataDir,
 		})
 	}
-	return netmap.NewMap(placements)
+	return node.NewMap(placements)
 }

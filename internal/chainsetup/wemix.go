@@ -48,7 +48,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	var (
 		plugin registry.ChainPlugin
 		preset keyring.Preset
-		assign *netmap.Map
+		assign *node.Map
 		art    GenesisArtifacts
 		plan   driver.Plan
 		specs  []driver.NodeSpec

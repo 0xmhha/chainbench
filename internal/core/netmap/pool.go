@@ -98,7 +98,7 @@ func (p Pool) Validate() error {
 // Request is one node to place.
 //
 // The role is required; the label is not. Position in the request list is the
-// node's identity, and LabelFor spells it — but an operator who names a node
+// node's identity, and node.LabelFor spells it — but an operator who names a node
 // should have that name kept, because the name is how they will refer to it in
 // a log, a path, and a test definition. The previous placement type carried a
 // name too, invented in four different spellings by different callers and then
@@ -106,8 +106,8 @@ func (p Pool) Validate() error {
 type Request struct {
 	Role node.Role
 	// Label overrides the conventional identity label for this node. Empty
-	// takes LabelFor(position).
-	Label NodeLabel
+	// takes node.LabelFor(position).
+	Label node.Label
 }
 
 // Assign allocates the pool to the requests, deterministically: node i takes
@@ -127,7 +127,7 @@ type Request struct {
 // alternative — wrapping onto ports already handed out — produces a network
 // where two nodes cannot both bind, discovered much later and much less
 // clearly.
-func Assign(pool Pool, reqs []Request) (*Map, error) {
+func Assign(pool Pool, reqs []Request) (*node.Map, error) {
 	if err := pool.Validate(); err != nil {
 		return nil, err
 	}
@@ -142,9 +142,9 @@ func Assign(pool Pool, reqs []Request) (*Map, error) {
 
 	hosts := len(pool.Hosts)
 	ordinals := make(map[node.Role]int, 3)
-	placements := make([]Placement, 0, len(reqs))
+	placements := make([]node.Placement, 0, len(reqs))
 	for i, r := range reqs {
-		role, err := NormalizeRole(string(r.Role))
+		role, err := node.NormalizeRole(string(r.Role))
 		if err != nil {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}
@@ -162,9 +162,9 @@ func Assign(pool Pool, reqs []Request) (*Map, error) {
 		ordinals[role]++
 		label := r.Label
 		if label == "" {
-			label = LabelFor(i + 1)
+			label = node.LabelFor(i + 1)
 		}
-		placements = append(placements, Placement{
+		placements = append(placements, node.Placement{
 			Index: i + 1,
 			Label: label,
 			Role:  role,
@@ -173,5 +173,5 @@ func Assign(pool Pool, reqs []Request) (*Map, error) {
 			Ports: ports,
 		})
 	}
-	return NewMap(placements)
+	return node.NewMap(placements)
 }

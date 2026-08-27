@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -24,9 +23,9 @@ func wbftPlugin(t *testing.T) registry.ChainPlugin {
 func placed(role node.Role, host string, p2p, http int, dataPath string) chainsetup.PlacedNode {
 	return chainsetup.PlacedNode{
 		Req: place.NodeReq{Role: role, Binary: "go-wbft"},
-		Placement: netmap.Placement{
+		Placement: node.Placement{
 			Host:    host,
-			Ports:   netmap.Ports{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
+			Ports:   node.Endpoints{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
 			DataDir: dataPath,
 		},
 	}
@@ -80,7 +79,7 @@ func TestAssemblePlan_UsesAllocatorPorts(t *testing.T) {
 func TestAssemblePlan_BinaryFallsBackToManifest(t *testing.T) {
 	pn := chainsetup.PlacedNode{
 		Req:       place.NodeReq{Role: node.RoleValidator}, // no Binary
-		Placement: netmap.Placement{Host: "127.0.0.1", Ports: netmap.Ports{P2P: 30301, HTTP: 8501}, DataDir: "/d/node1"},
+		Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 30301, HTTP: 8501}, DataDir: "/d/node1"},
 	}
 	plan, err := chainsetup.AssemblePlan(wbftPlugin(t), []chainsetup.PlacedNode{pn}, nil, "/d", nil)
 	if err != nil {
@@ -94,7 +93,7 @@ func TestAssemblePlan_BinaryFallsBackToManifest(t *testing.T) {
 func TestAssemblePlan_DataDirDefault(t *testing.T) {
 	pn := chainsetup.PlacedNode{
 		Req:       place.NodeReq{Role: node.RoleValidator, Binary: "go-wbft"},
-		Placement: netmap.Placement{Host: "127.0.0.1", Ports: netmap.Ports{P2P: 30301, HTTP: 8501}}, // no DataPath
+		Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 30301, HTTP: 8501}}, // no DataPath
 	}
 	plan, err := chainsetup.AssemblePlan(wbftPlugin(t), []chainsetup.PlacedNode{pn}, nil, "/root", nil)
 	if err != nil {

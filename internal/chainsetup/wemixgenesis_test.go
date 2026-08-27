@@ -17,7 +17,7 @@ import (
 )
 
 // wemixPlacement is a small placed network: a producer and two others.
-func wemixPlacement(t *testing.T) *netmap.Map {
+func wemixPlacement(t *testing.T) *node.Map {
 	t.Helper()
 	m, err := netmap.Assign(netmap.Pool{
 		Hosts:       []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},

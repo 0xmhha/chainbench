@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -392,9 +391,9 @@ func (w *Workspace) NodeSet() node.NodeSet {
 
 // NodeLabel is the node's identity, falling back to the conventional label for
 // workspaces written before the field existed.
-func (n NodeState) NodeLabel() netmap.NodeLabel {
+func (n NodeState) NodeLabel() node.Label {
 	if n.Label != "" {
-		return netmap.NodeLabel(n.Label)
+		return node.Label(n.Label)
 	}
-	return netmap.LabelFor(n.Index)
+	return node.LabelFor(n.Index)
 }

@@ -133,7 +133,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 func countValidators(reqs []place.NodeReq) int {
 	n := 0
 	for _, r := range reqs {
-		if netmap.Is(r.Role, node.RoleBP) {
+		if node.Is(r.Role, node.RoleBP) {
 			n++
 		}
 	}

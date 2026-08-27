@@ -15,10 +15,8 @@ import (
 	"os"
 	"sort"
 
-	"go.yaml.in/yaml/v3"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"go.yaml.in/yaml/v3"
 )
 
 // Topology is the declarative node layout for a local network.
@@ -68,7 +66,7 @@ func (t Topology) Validate() error {
 	idx := make([]int, 0, len(t.Nodes))
 	producers, bootnodes := 0, 0
 	for _, n := range t.Nodes {
-		role, err := netmap.NormalizeRole(n.Role)
+		role, err := node.NormalizeRole(n.Role)
 		if err != nil {
 			return fmt.Errorf("topology: node %d has unknown role %q (want bp|validator, en|endpoint, boot)", n.Index, n.Role)
 		}
@@ -103,11 +101,11 @@ func (t Topology) Validate() error {
 // package used to keep is gone — netmap owns the folding, and this method
 // switches to the canonical spelling when the launch flows migrate to it.
 func (n Node) NodeRole() node.Role {
-	role, err := netmap.NormalizeRole(n.Role)
+	role, err := node.NormalizeRole(n.Role)
 	if err != nil {
 		return "" // unreachable after Validate; an invalid role never launches
 	}
-	return netmap.LegacySpelling(role)
+	return node.LegacySpelling(role)
 }
 
 // EffectiveSyncMode returns n's sync mode, defaulting an unset value to "full".

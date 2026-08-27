@@ -1,9 +1,7 @@
-package netmap
+package node
 
 import (
 	"fmt"
-
-	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // Peering is the shape of the peer graph a network is wired into. It is
@@ -32,14 +30,14 @@ func ParsePeering(s string) (Peering, error) {
 	case Proxied:
 		return Proxied, nil
 	default:
-		return "", fmt.Errorf("netmap: unknown peering %q (want %s or %s)", s, Mesh, Proxied)
+		return "", fmt.Errorf("node: unknown peering %q (want %s or %s)", s, Mesh, Proxied)
 	}
 }
 
 // RoleSupport answers whether a family can run a role. It is injected because
-// netmap does not know chains: the poa family has no proxy tier — etcd occupies
+// This package does not know chains: the poa family has no proxy tier — etcd occupies
 // that place — and only the family can say so.
-type RoleSupport func(node.Role) bool
+type RoleSupport func(Role) bool
 
 // Validate rejects a peering this network cannot express, before anything is
 // written or launched.
@@ -50,21 +48,21 @@ type RoleSupport func(node.Role) bool
 // to start.
 func (p Peering) Validate(m *Map, supports RoleSupport) error {
 	if m == nil {
-		return fmt.Errorf("netmap: peering: no map")
+		return fmt.Errorf("node: peering: no map")
 	}
-	counts := map[node.Role]int{}
+	counts := map[Role]int{}
 	for _, pl := range m.Placements() {
 		counts[pl.Role]++
 	}
 	if supports != nil {
 		for role, n := range counts {
 			if n > 0 && !supports(role) {
-				return fmt.Errorf("netmap: this chain family has no %q role, but %d node(s) declare it", role, n)
+				return fmt.Errorf("node: this chain family has no %q role, but %d node(s) declare it", role, n)
 			}
 		}
 	}
-	if p == Proxied && counts[node.RolePN] == 0 {
-		return fmt.Errorf("netmap: peering %q needs at least one pn — with no proxy tier there is nothing between bp and en", Proxied)
+	if p == Proxied && counts[RolePN] == 0 {
+		return fmt.Errorf("node: peering %q needs at least one pn — with no proxy tier there is nothing between bp and en", Proxied)
 	}
 	return nil
 }
@@ -75,18 +73,18 @@ func (p Peering) Validate(m *Map, supports RoleSupport) error {
 // always listed the whole network, the client ignores its own entry, and
 // dropping it here would change the launch arguments of every existing network
 // while claiming to be a refactor.
-func (p Peering) Peers(m *Map, label NodeLabel) ([]NodeLabel, error) {
+func (p Peering) Peers(m *Map, label Label) ([]Label, error) {
 	if m == nil {
-		return nil, fmt.Errorf("netmap: peering: no map")
+		return nil, fmt.Errorf("node: peering: no map")
 	}
 	self, ok := m.Lookup(label)
 	if !ok {
-		return nil, fmt.Errorf("netmap: %q is not in this network", label)
+		return nil, fmt.Errorf("node: %q is not in this network", label)
 	}
 	all := m.Placements()
 
 	if p == Mesh {
-		out := make([]NodeLabel, 0, len(all))
+		out := make([]Label, 0, len(all))
 		for _, pl := range all {
 			out = append(out, pl.Label)
 		}
@@ -105,19 +103,19 @@ func (p Peering) Peers(m *Map, label NodeLabel) ([]NodeLabel, error) {
 	//
 	// So bp <-> bp is direct, bp <-> pn and pn <-> en go through the tier, and
 	// en never learns a producer — which is the property the shape exists for.
-	var wants func(node.Role) bool
+	var wants func(Role) bool
 	switch {
-	case Is(self.Role, node.RoleBP):
-		wants = func(r node.Role) bool { return Is(r, node.RoleBP) || Is(r, node.RolePN) }
-	case Is(self.Role, node.RoleEN):
-		wants = func(r node.Role) bool { return Is(r, node.RolePN) }
-	case Is(self.Role, node.RolePN):
-		wants = func(node.Role) bool { return true }
+	case Is(self.Role, RoleBP):
+		wants = func(r Role) bool { return Is(r, RoleBP) || Is(r, RolePN) }
+	case Is(self.Role, RoleEN):
+		wants = func(r Role) bool { return Is(r, RolePN) }
+	case Is(self.Role, RolePN):
+		wants = func(Role) bool { return true }
 	default:
-		return nil, fmt.Errorf("netmap: peering %q has no place for role %q (%s)", p, self.Role, label)
+		return nil, fmt.Errorf("node: peering %q has no place for role %q (%s)", p, self.Role, label)
 	}
 
-	out := make([]NodeLabel, 0, len(all))
+	out := make([]Label, 0, len(all))
 	for _, pl := range all {
 		if pl.Label == label {
 			continue
@@ -137,9 +135,9 @@ func (p Peering) Peers(m *Map, label NodeLabel) ([]NodeLabel, error) {
 // has to import the other: the caller holds both and hands over a function.
 // A peer the formatter cannot express (no key yet) is skipped, matching what
 // the assemblies this replaces did.
-func (p Peering) StaticNodes(m *Map, label NodeLabel, enode func(Placement) (string, bool)) ([]string, error) {
+func (p Peering) StaticNodes(m *Map, label Label, enode func(Placement) (string, bool)) ([]string, error) {
 	if enode == nil {
-		return nil, fmt.Errorf("netmap: static nodes for %q: no enode formatter", label)
+		return nil, fmt.Errorf("node: static nodes for %q: no enode formatter", label)
 	}
 	peers, err := p.Peers(m, label)
 	if err != nil {
@@ -149,7 +147,7 @@ func (p Peering) StaticNodes(m *Map, label NodeLabel, enode func(Placement) (str
 	for _, peer := range peers {
 		pl, ok := m.Lookup(peer)
 		if !ok {
-			return nil, fmt.Errorf("netmap: %q lists %q, which is not in this network", label, peer)
+			return nil, fmt.Errorf("node: %q lists %q, which is not in this network", label, peer)
 		}
 		if e, ok := enode(pl); ok {
 			out = append(out, e)

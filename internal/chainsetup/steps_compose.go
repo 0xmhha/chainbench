@@ -165,7 +165,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 // syncModeFor returns the sync mode a node of this role renders. Only endpoints
 // are configurable — see AllocateOpts.EndpointSyncMode.
 func syncModeFor(role node.Role, endpointMode string) string {
-	if netmap.Is(role, node.RoleEN) && endpointMode != "" {
+	if node.Is(role, node.RoleEN) && endpointMode != "" {
 		return endpointMode
 	}
 	return syncModeFull
@@ -215,7 +215,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		root = pl.DataRoot
 		w.state.Target.DataRoot = root
 	}
-	layout := netmap.Layout{Root: root}
+	layout := node.Layout{Root: root}
 	// On a fleet each node's machine is a server-set entry; record its name so
 	// every later step opens THAT machine. Addresses came from the pool, so
 	// the name is the pool's word for the address.
@@ -230,7 +230,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	nodes := make([]NodeState, len(placements))
 	validators := 0
 	for i, p := range placements {
-		if netmap.Is(p.Role, node.RoleBP) {
+		if node.Is(p.Role, node.RoleBP) {
 			validators++
 		}
 		nodes[i] = NodeState{
@@ -248,7 +248,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	// Reject an impossible graph here rather than at config time: the operator
 	// is choosing the layout in this step.
-	peering, err := netmap.ParsePeering(opts.Peering)
+	peering, err := node.ParsePeering(opts.Peering)
 	if err != nil {
 		return "", err
 	}
@@ -388,7 +388,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
-	peering, err := netmap.ParsePeering(w.state.Peering)
+	peering, err := node.ParsePeering(w.state.Peering)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
@@ -412,7 +412,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		staticNodes, err := netmapmod.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
@@ -623,16 +623,16 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 // Netmap reads the workspace's node table as a placement map, so the peer
 // policy and the address lookups run off one representation. The host is the
 // node's own recorded address, which on a fleet is not this machine.
-func (w *Workspace) Netmap() (*netmap.Map, error) {
-	placements := make([]netmap.Placement, 0, len(w.state.Nodes))
+func (w *Workspace) Netmap() (*node.Map, error) {
+	placements := make([]node.Placement, 0, len(w.state.Nodes))
 	ordinals := map[node.Role]int{}
 	for _, ns := range w.state.Nodes {
-		role, err := netmap.NormalizeRole(ns.Role)
+		role, err := node.NormalizeRole(ns.Role)
 		if err != nil {
 			return nil, fmt.Errorf("node%d: %w", ns.Index, err)
 		}
 		ordinals[role]++
-		placements = append(placements, netmap.Placement{
+		placements = append(placements, node.Placement{
 			Index:   ns.Index,
 			Label:   ns.NodeLabel(),
 			Role:    role,
@@ -642,7 +642,7 @@ func (w *Workspace) Netmap() (*netmap.Map, error) {
 			DataDir: ns.DataDir,
 		})
 	}
-	return netmap.NewMap(placements)
+	return node.NewMap(placements)
 }
 
 // netmapRequests turns the composed node list into placement requests. Only the

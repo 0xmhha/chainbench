@@ -1,15 +1,14 @@
-package netmap_test
+package node_test
 
 import (
-	"strings"
-	"testing"
-
 	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"strings"
+	"testing"
 )
 
 // tiered builds bp1 bp2 pn1 en1 en2 on one host.
-func tiered(t *testing.T) *netmap.Map {
+func tiered(t *testing.T) *node.Map {
 	t.Helper()
 	pool := netmap.Pool{
 		Hosts: []netmap.Host{{Addr: "127.0.0.1"}},
@@ -27,7 +26,7 @@ func tiered(t *testing.T) *netmap.Map {
 	return m
 }
 
-func labels(t *testing.T, m *netmap.Map, p netmap.Peering, of netmap.NodeLabel) []string {
+func labels(t *testing.T, m *node.Map, p node.Peering, of node.Label) []string {
 	t.Helper()
 	peers, err := p.Peers(m, of)
 	if err != nil {
@@ -46,14 +45,14 @@ func labels(t *testing.T, m *netmap.Map, p netmap.Peering, of netmap.NodeLabel) 
 // Dropping it would change the launch arguments of every existing network.
 func TestPeering_MeshListsTheWholeNetwork(t *testing.T) {
 	m := tiered(t)
-	got := labels(t, m, netmap.Mesh, "node1")
+	got := labels(t, m, node.Mesh, "node1")
 	want := []string{"node1", "node2", "node3", "node4", "node5"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Fatalf("mesh peers = %v, want %v", got, want)
 	}
 	// Every node gets the same list, in the same order.
-	for _, l := range []netmap.NodeLabel{"node2", "node5"} {
-		if other := labels(t, m, netmap.Mesh, l); strings.Join(other, ",") != strings.Join(want, ",") {
+	for _, l := range []node.Label{"node2", "node5"} {
+		if other := labels(t, m, node.Mesh, l); strings.Join(other, ",") != strings.Join(want, ",") {
 			t.Fatalf("%s mesh peers = %v, want the same list", l, other)
 		}
 	}
@@ -70,20 +69,20 @@ func TestPeering_ProxiedKeepsEndpointsAwayFromProducers(t *testing.T) {
 	// A producer keeps its peers among the other producers plus the tier. It
 	// was measured: with the pn as a bp's only peer, consensus never forms —
 	// a pn is not a validator and does not carry consensus traffic.
-	if got := labels(t, m, netmap.Proxied, "node1"); strings.Join(got, ",") != "node2,node3" {
+	if got := labels(t, m, node.Proxied, "node1"); strings.Join(got, ",") != "node2,node3" {
 		t.Fatalf("bp peers = %v, want the other producer and the pn", got)
 	}
-	if got := labels(t, m, netmap.Proxied, "node4"); strings.Join(got, ",") != "node3" {
+	if got := labels(t, m, node.Proxied, "node4"); strings.Join(got, ",") != "node3" {
 		t.Fatalf("en peers = %v, want only the pn", got)
 	}
 	// The tier is the only role that sees both sides.
-	if got := labels(t, m, netmap.Proxied, "node3"); strings.Join(got, ",") != "node1,node2,node4,node5" {
+	if got := labels(t, m, node.Proxied, "node3"); strings.Join(got, ",") != "node1,node2,node4,node5" {
 		t.Fatalf("pn peers = %v, want both tiers", got)
 	}
 	// Stated as the invariant rather than as positions: no en lists any bp.
-	for _, en := range []netmap.NodeLabel{"node4", "node5"} {
-		for _, peer := range labels(t, m, netmap.Proxied, en) {
-			pl, _ := m.Lookup(netmap.NodeLabel(peer))
+	for _, en := range []node.Label{"node4", "node5"} {
+		for _, peer := range labels(t, m, node.Proxied, en) {
+			pl, _ := m.Lookup(node.Label(peer))
 			if pl.Role == node.RoleBP {
 				t.Fatalf("%s lists producer %s", en, peer)
 			}
@@ -97,7 +96,7 @@ func TestPeering_ValidateRejectsWhatCannotRun(t *testing.T) {
 	// A family without a proxy tier: poa puts etcd in that place, so a pn is a
 	// declaration that will not be honoured.
 	noPN := func(r node.Role) bool { return r != node.RolePN }
-	err := netmap.Mesh.Validate(m, noPN)
+	err := node.Mesh.Validate(m, noPN)
 	if err == nil || !strings.Contains(err.Error(), "pn") {
 		t.Fatalf("want a rejection naming pn, got %v", err)
 	}
@@ -111,23 +110,23 @@ func TestPeering_ValidateRejectsWhatCannotRun(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}
-	if err := netmap.Proxied.Validate(flat, nil); err == nil {
+	if err := node.Proxied.Validate(flat, nil); err == nil {
 		t.Fatal("proxied without a pn must be refused, not demoted to mesh")
 	}
 	// The same network is fine meshed.
-	if err := netmap.Mesh.Validate(flat, nil); err != nil {
+	if err := node.Mesh.Validate(flat, nil); err != nil {
 		t.Fatalf("mesh on a two-tier network: %v", err)
 	}
 }
 
 func TestParsePeering(t *testing.T) {
-	for in, want := range map[string]netmap.Peering{"": netmap.Mesh, "mesh": netmap.Mesh, "proxied": netmap.Proxied} {
-		got, err := netmap.ParsePeering(in)
+	for in, want := range map[string]node.Peering{"": node.Mesh, "mesh": node.Mesh, "proxied": node.Proxied} {
+		got, err := node.ParsePeering(in)
 		if err != nil || got != want {
 			t.Fatalf("ParsePeering(%q) = %q, %v", in, got, err)
 		}
 	}
-	if _, err := netmap.ParsePeering("star"); err == nil {
+	if _, err := node.ParsePeering("star"); err == nil {
 		t.Fatal("an unknown peering must not fall back to a default")
 	}
 }
@@ -137,13 +136,13 @@ func TestStaticNodes_FormatterOwnsTheKeyMaterial(t *testing.T) {
 	// The formatter stands in for the caller that holds both the map and the
 	// keyring; a peer it cannot express is skipped, as the assemblies this
 	// replaces did.
-	enode := func(p netmap.Placement) (string, bool) {
+	enode := func(p node.Placement) (string, bool) {
 		if p.Label == "node2" {
 			return "", false // no key material yet
 		}
 		return string(p.Label) + "@" + p.Host + ":" + itoa(p.Ports.P2P), true
 	}
-	got, err := netmap.Proxied.StaticNodes(m, "node3", enode)
+	got, err := node.Proxied.StaticNodes(m, "node3", enode)
 	if err != nil {
 		t.Fatalf("StaticNodes: %v", err)
 	}
@@ -155,10 +154,10 @@ func TestStaticNodes_FormatterOwnsTheKeyMaterial(t *testing.T) {
 			t.Fatalf("a peer with no key must be skipped, got %v", got)
 		}
 	}
-	if _, err := netmap.Mesh.StaticNodes(m, "node1", nil); err == nil {
+	if _, err := node.Mesh.StaticNodes(m, "node1", nil); err == nil {
 		t.Fatal("assembling without a formatter must error rather than return an empty list")
 	}
-	if _, err := netmap.Mesh.StaticNodes(m, "node9", enode); err == nil {
+	if _, err := node.Mesh.StaticNodes(m, "node9", enode); err == nil {
 		t.Fatal("a node outside the network must error")
 	}
 }

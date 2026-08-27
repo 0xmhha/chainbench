@@ -7,11 +7,9 @@ package nodeconfig
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"strconv"
 	"strings"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
-	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // baseModules are the RPC namespaces every node exposes; the chain's consensus
@@ -42,7 +40,7 @@ func Generate(p Params) []byte {
 	var b strings.Builder
 	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n\n", syncMode)
 
-	if netmap.Is(p.Role, node.RoleBP) || netmap.Is(p.Role, node.RoleBoot) {
+	if node.Is(p.Role, node.RoleBP) || node.Is(p.Role, node.RoleBoot) {
 		// miner.Config.Recommit is a time.Duration. Most geth-family binaries
 		// (go-stablenet/go-wbft) decode it from a TOML string ("2s"); the older
 		// go-ethereum in go-wemix decodes it only from an integer number of

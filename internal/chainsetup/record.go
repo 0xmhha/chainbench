@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-
-	netmap "github.com/0xmhha/chainbench/internal/core/netmap"
 )
 
 // Every start leaves a record: which chain was set up, from which inputs,
@@ -116,7 +115,7 @@ func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string
 	}
 	// The genesis this run composed, read back from the target through the
 	// same boundary that wrote it.
-	layout := netmap.Layout{Root: w.state.Target.DataRoot}
+	layout := node.Layout{Root: w.state.Target.DataRoot}
 	if g, err := t.Files.Read(ctx, layout.GenesisPath()); err == nil {
 		if err := files.Write(ctx, filepath.Join(dir, "genesis.json"), g, 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: record: %w", err)

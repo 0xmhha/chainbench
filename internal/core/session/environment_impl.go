@@ -2,14 +2,12 @@ package session
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
-	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // env is the concrete Environment: a shared chain instance identified by its
@@ -56,13 +54,13 @@ func (e *env) Nodes() []node.Node {
 // 0-based index).
 //
 // Both spellings resolve because they answer different questions — see
-// netmap.RoleLabel. The identity form is checked first: "node" is not a role,
+// node.RoleLabel. The identity form is checked first: "node" is not a role,
 // so the two grammars cannot collide.
 func (e *env) Resolve(selector string) (node.Node, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	if idx, err := netmap.NodeLabel(selector).Index(); err == nil {
+	if idx, err := node.Label(selector).Index(); err == nil {
 		for _, n := range e.nodes {
 			if n.Index == idx {
 				return n, nil
@@ -165,12 +163,12 @@ func parseSelector(sel string) (token string, index int, anyForm bool, err error
 // records "validator", one composed after the switch records "bp", and a
 // selector has to match both or a spec silently addresses nothing.
 func rolesForToken(tok string) map[node.Role]bool {
-	canonical, err := netmap.NormalizeRole(tok)
+	canonical, err := node.NormalizeRole(tok)
 	if err != nil {
 		return nil
 	}
 	roles := map[node.Role]bool{canonical: true}
-	if legacy := netmap.LegacySpelling(canonical); legacy != canonical {
+	if legacy := node.LegacySpelling(canonical); legacy != canonical {
 		roles[legacy] = true
 	}
 	return roles

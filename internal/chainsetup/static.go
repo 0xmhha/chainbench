@@ -88,7 +88,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	var (
 		plugin registry.ChainPlugin
 		preset keyring.Preset
-		places []netmap.Placement
+		places []node.Placement
 		gen    []byte
 		plan   driver.Plan
 		specs  []driver.NodeSpec
