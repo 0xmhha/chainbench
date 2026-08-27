@@ -15,9 +15,14 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | **[이력]** | *그때 무엇을 측정·결정했는가* | **현재 상태를 말하지 않는다.** 근거로 인용할 수 없다. |
 | **[대체됨]** | 제안이 구현됐거나 다른 문서로 옮겨감 | [`dev/archive/`](dev/archive/) 로 이동. 새 작업의 근거 금지. |
 
-정본은 4종뿐이다 — `chainbench-requirements-review` (요구·결정) ·
-`chainbench-feature-spec` (동작 계약) · `chainbench-design` (인터페이스·데이터 모델) ·
-`chainbench-worklist` (**작업 순서·상태의 단일 출처**).
+위 등급 체계는 **chainbench 자신의 설계·작업 문서**(`dev/`)에 적용된다. 그 정본은
+4종뿐이다 — `chainbench-requirements-review` (요구·결정) · `chainbench-feature-spec`
+(동작 계약) · `chainbench-design` (인터페이스·데이터 모델) · `chainbench-worklist`
+(**작업 순서·상태의 단일 출처**).
+
+[`chain-analysis/`](chain-analysis/) 는 이 축 밖에 있다. 우리 설계가 아니라 **외부 체인
+바이너리의 실측**이고, 바이너리에서 다시 뽑는다. 그 대상에 한해서는 그쪽이 정본이지만,
+위 4종과 경쟁하지 않는다.
 
 > 문서를 오래됐다고 지우지 않는다. 지우면 근거가 사라진다. 위험한 것은 오래된 문서가
 > 아니라 **오래됐다고 표시되지 않은 문서**다 — 등급 표기가 그 표시다.
@@ -29,23 +34,28 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/chainbench-requirements-review.md`](dev/chainbench-requirements-review.md) | 요구사항 37 · 사양 검토 · 코드 격차 · **etcd flaky 실체** · 동시성/안전성. |
 | [`dev/chainbench-design.md`](dev/chainbench-design.md) | **아키텍처 SSoT** — 구조·패키지 인터페이스(§3)·데이터 모델(§4)·동시성(§6)·마이그레이션. |
 | [`dev/chainbench-feature-spec.md`](dev/chainbench-feature-spec.md) | F1~F16 동작 계약 · 수용기준(AC). |
-| [`dev/chainbench-refactoring.md`](dev/chainbench-refactoring.md) | 기존 코드 → 목표 설계 매핑 · **작업 단위(WP) 분해**. |
 | [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) | **[정본] 작업 순서·상태의 단일 출처.** 무엇을 다음에 하는지는 여기서 읽는다. |
 
 ## 현행 참고 문서
 
 | 문서 | 내용 |
 |---|---|
-| [`REMOTE_WEMIX_DEPLOY_DESIGN.md`](REMOTE_WEMIX_DEPLOY_DESIGN.md) | remote wemix+etcd 배포 설계(현행 remote 경로). |
 | [`MCP_USAGE.md`](MCP_USAGE.md) | chainbench MCP 서버 사용 가이드(도구 호출, `.mcp.json` 등록). |
 | [`SECURITY_KEY_HANDLING.md`](SECURITY_KEY_HANDLING.md) | 키 취급 보안 정책·위협 모델. 프리셋 키는 **테스트 픽스처 전용**. |
 | [`KEYRING_USAGE.md`](KEYRING_USAGE.md) | **keyring 사용 설명서** — 키 세트 개념·명령 전부·가져오기 출처(니모닉/파일/srv://)·원격 환경변수·`--docker` 모드 · **수동 검증 체크리스트**(자동 테스트와 1:1 대응). |
+
+### `docs/` 루트의 이력 문서
+
+| 문서 | 등급 | 내용 |
+|---|---|---|
+| [`REMOTE_WEMIX_DEPLOY_DESIGN.md`](REMOTE_WEMIX_DEPLOY_DESIGN.md) | [이력] | wemix4 의 SSH 배포·하드포크 스위트를 Go 로 옮기기 위한 **착수 전 설계**(2026-08). 1~5 단계는 이미 구현됐다 — 원격 키 읽기는 `internal/core/remote/files.go`, 원격 파일 접근은 `internal/core/driver/remote_store.go`, 클러스터·계획·부트스트랩·핸드오프는 `internal/chains/wemix/deploy/` 에 있다. 본문은 이것들을 앞으로 만들 것처럼 서술하므로 **현재 동작의 근거로 인용하지 않는다.** 지금 무엇이 되는지는 코드와 [`internal/chains/wemix/deploy/README.md`](../internal/chains/wemix/deploy/README.md), 남은 일은 worklist 가 말한다. |
 
 ## `dev/` 개발 문서
 
 | 문서 | 내용 |
 |---|---|
 | `dev/chainbench-*.md` | 위 설계 SSoT 4종. |
+| [`dev/chainbench-refactoring.md`](dev/chainbench-refactoring.md) | **[이력]** pkg→internal 시기의 리팩토링 감사(WP1~6, 대부분 완료). 정본이 아니다 — 그때 무엇을 유지·재구성하기로 했는지의 기록이며, 현재 상태는 worklist 와 코드가 말한다. |
 | [`dev/keys-generate.md`](dev/keys-generate.md) · [`dev/topology.md`](dev/topology.md) | 프리셋 키 생성 · 로컬 토폴로지 설정 가이드. |
 | [`dev/keyring-design.md`](dev/keyring-design.md) | **keyring 설계 (첫 착수 대상)** — 키가 세 체인 동일함을 실증 · BLS 를 Go 로 파생(외부 바이너리 제거) · preset 이 신원/결정/산출물을 섞어 담은 문제와 분해 · 5패키지 → 1 · 명령. 작업 순서는 worklist §1g. |
 | [`dev/network-blueprint-design.md`](dev/network-blueprint-design.md) | **네트워크 청사진** — 구성 요소 전수(네트워크 14 · 노드 13 · 연결 4)와 누락 지점 · 선언→해석→물질화 3단계 · preset 을 전제에서 **생성기**로 강등 · 출처 사슬. 작업 순서는 worklist §1g. |
@@ -102,5 +112,5 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 
 | 경로 | 내용 |
 |---|---|
-| [`chain-analysis/`](chain-analysis/) | **[정본] 체인 바이너리의 CLI 표면과 배선** — 실행 옵션 질문은 체인 소스를 읽기 전에 여기부터. 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. |
+| [`chain-analysis/`](chain-analysis/) | **체인 바이너리의 CLI 표면과 배선** — 실행 옵션 질문은 체인 소스를 읽기 전에 여기부터. 바이너리에서 재생성되며 기준 체인 커밋을 스스로 적는다. 대상이 외부 바이너리라 설계 문서 4종과는 별개 축이다(§문서 등급). |
 | [`claudedocs/`](claudedocs/) | 외부 컨텍스트 — chainbench가 속한 상위 자동화 시스템의 제안서/지시서(cross-reference). **[이력]** 제안 당시의 문서라 `chainbench init`/`start` 같은 존재하지 않는 명령이 그대로 있다. 명령 표면은 `chainbench --help` 가 이긴다. |

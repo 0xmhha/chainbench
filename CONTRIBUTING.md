@@ -40,12 +40,22 @@ Open an issue with the `enhancement` label. Describe:
    git checkout -b feat/my-feature
    ```
 4. **Make changes** following the conventions below
-5. **Test** your changes — the same gates CI runs:
+5. **Test** your changes. `make check` is the main local gate:
    ```bash
    make check        # gofmt check + go vet + golangci-lint (pinned) + go test
    ```
    Individually: `make fmt-check`, `make vet`, `make lint`, `make test`,
-   `make test-race`. To exercise a real network end to end, compose one with
+   `make test-race`.
+
+   CI (`.github/workflows/ci.yml`) runs more than that, so a green `make check`
+   is not a green CI. What it adds:
+   ```bash
+   bash scripts/check-secrets.sh --all                 # secret scan
+   find scripts tests -name '*.sh' -exec bash -n {} \; # shell syntax
+   go build ./...
+   go test -race ./...                                 # make test is not -race
+   ```
+   To exercise a real network end to end, compose one with
    `chainbench net up --data-dir /tmp/cb --chain stablenet --binary <node>` and
    tear it down with `chainbench net stop --data-dir /tmp/cb`.
 6. **Commit** using [Conventional Commits](https://www.conventionalcommits.org/):

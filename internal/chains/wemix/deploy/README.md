@@ -2,8 +2,12 @@
 
 Remote **wemix+etcd** deployment for a go-wemix → go-wbft (Croissant) hardfork
 chain on a closed network. This is the chainbench-native migration of the
-`wemix4` SSH test suite; the architecture and phasing are in
+`wemix4` SSH test suite. The reasoning behind the shape — how each wemix4
+mechanism was mapped onto a chainbench component, and why the config surface
+looks like this — is in
 [`docs/REMOTE_WEMIX_DEPLOY_DESIGN.md`](../../../../docs/REMOTE_WEMIX_DEPLOY_DESIGN.md).
+That document was written before any of this existed and still describes phases
+1-5 as upcoming work, so read it as history: what is built is what is below.
 
 ## Status: Phases 1-5 — cluster + key read + provision/launch + governance/etcd + handoff
 

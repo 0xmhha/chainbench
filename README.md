@@ -11,7 +11,7 @@
 chainbench spins up local, multi-node blockchain networks without Docker, drives
 them through a three-phase pipeline (**setup → verify → test**), and reports
 per-chain test coverage. Adding a chain that reuses an existing consensus family
-is data-only — a manifest and a thin plugin, no fork of the tool.
+takes a manifest and a thin plugin that registers it, not a fork of the tool.
 
 **Supported chains:** `stablenet` and `wbft` (WBFT/BFT family), and `wemix`
 (PoA/etcd family). It also drives a **concurrent consensus-family upgrade** —
@@ -193,12 +193,19 @@ Beyond the built-in tools, chainbench exposes a **layered capability catalog**:
 common features shared by every chain plus chain-specific ones (e.g. stablenet
 governance, wemix bootstrap), addressed as `<version>.<chain>.<name>`. Call the
 `chainbench.capabilities` tool (or `chainbench capabilities [--chain]` on the
-CLI) to discover what a chain supports. Adding a chain's features is data-only —
-a `.jsonl` capability catalog embedded by the chain package (e.g.
-`internal/chains/stablenet/caps.jsonl`, loaded through
-`capability.LoadCatalog`); see
-[`internal/core/capability/README.md`](internal/core/capability/README.md).
-The MCP tools that expose them live in `internal/mcp/*_tools.go`.
+CLI) to discover what a chain supports. A capability is declared as data and bound in code, both inside the chain's own
+package. The catalog is a `.jsonl` file of `capability.Descriptor` lines the
+package embeds and loads in its `init` (e.g. `internal/chains/stablenet/caps.jsonl`
+through `capability.LoadCatalog`). That declares the metadata and nothing more:
+a capability appears in discovery and in `tools/list` only once it is **bound**.
+Binding is either `capability.RegisterHandler` in the same `init` — what
+`internal/chains/stablenet/caps.go` does for each governance verb, giving a
+callable tool — or `capability.RegisterFlat`, which maps an already-existing
+`chainbench_*` tool into the catalog for discovery. Either way the chain package
+must be blank-imported from `internal/chains/all/all.go`, or its `init` never
+runs. See
+[`internal/core/capability/README.md`](internal/core/capability/README.md); the
+flat tools live in `internal/mcp/*_tools.go`.
 
 ### Dashboard
 

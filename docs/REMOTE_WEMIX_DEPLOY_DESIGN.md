@@ -1,14 +1,33 @@
 # Remote wemix+etcd deployment — design (wemix4 → chainbench Go)
 
+> **[이력]** 착수 전 설계다. **현재 상태를 말하지 않는다** — 아래 본문은 §6 의 1~5
+> 단계를 앞으로 만들 것처럼 서술하지만, 그 단계들은 이미 구현됐다.
+>
+> - 원격 키 읽기 → `internal/core/remote/files.go` (`ReadFile`, `ReadFileCommand`)
+> - 원격 파일 읽기/쓰기 능력 → `internal/core/driver/remote_store.go`
+>   (`RemoteFileStore.Exists/Read/Write`)
+> - 클러스터 모델·계획·프로비저닝·거버넌스/etcd 부트스트랩·하드포크 핸드오프 →
+>   `internal/chains/wemix/deploy/` (`cluster.go` · `plan.go` · `keys.go` ·
+>   `bootstrap.go` · `handoff.go` · `orchestrate.go`)
+>
+> 지금 무엇이 동작하는지는 코드와
+> [`internal/chains/wemix/deploy/README.md`](../internal/chains/wemix/deploy/README.md)
+> 에서 확인한다. 남은 작업과 그 상태의 **정본은**
+> [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) 이고,
+> [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) 가 §6 의 6단계
+> 테스트 케이스 포팅 현황을 보조로 추적한다. 이 문서는 `[이력]` 이므로 현재
+> 동작의 근거가 아니다.
+>
+> 보존하는 이유는 **왜 그렇게 만들었는지**다. wemix4 의 각 장치를 어떤 chainbench
+> 구성요소에 대응시켰는지, 설정 표면을 왜 그렇게 잡았는지, §7 의 결정 5건이 무엇이었는지가
+> 여기에만 있다. 패키지 경로는 `pkg/` → `internal/` 이동(T0.0) 후 현재 트리에 맞춰
+> 고쳤고, 그 밖의 서술은 작성 시점 그대로 둔다.
+
 > Migrate the `tests/wemix4/` **SSH-driven, closed-network** deploy+hardfork test
 > suite into chainbench's Go implementation. Reference source:
 > `…/packages/chainbench/tests/wemix4/`. This doc maps each wemix4 mechanism to a
 > chainbench component (reuse vs build), defines the config surface, and phases
 > the work. **Design for review before implementation.**
->
-> **경로 주석(2026-08-27)**: 이 문서는 `pkg/` → `internal/` 이동(T0.0) 전에 쓰였다.
-> 본문의 패키지 경로는 현재 트리에 맞춰 `internal/*` 로 고쳤다. 결정과 단계 서술은
-> 작성 시점 그대로 두었으므로, 현재 구조는 코드가 이긴다.
 
 ## 0. What wemix4 does (one paragraph)
 
