@@ -86,8 +86,16 @@ func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (
 	if opts.Validators != nil {
 		want = *opts.Validators
 	}
-	if want < 0 || want > opts.Nodes {
+	if want < 0 {
 		want = opts.Nodes
+	}
+	// Asking for more validators than identities is a mistake in the request,
+	// not a number to round down: extend already refuses it, and silently
+	// creating a smaller set than asked for produced a genesis with fewer
+	// validators than the operator believed they had.
+	if want > opts.Nodes {
+		return keyring.Preset{}, fmt.Errorf("keyring: %d validators from %d identities — create more identities, or declare fewer validators",
+			want, opts.Nodes)
 	}
 	opts.Validators = &want
 	return generate(ctx, keyring.Preset{}, opts, progress)
