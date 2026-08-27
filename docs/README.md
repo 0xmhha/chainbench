@@ -34,7 +34,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/chainbench-requirements-review.md`](dev/chainbench-requirements-review.md) | 요구사항 37 · 사양 검토 · 코드 격차 · **etcd flaky 실체** · 동시성/안전성. |
 | [`dev/chainbench-design.md`](dev/chainbench-design.md) | **아키텍처 SSoT** — 구조·패키지 인터페이스(§3)·데이터 모델(§4)·동시성(§6)·마이그레이션. |
 | [`dev/chainbench-feature-spec.md`](dev/chainbench-feature-spec.md) | F1~F16 동작 계약 · 수용기준(AC). |
-| [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) | **[정본] 작업 순서·상태의 단일 출처.** 무엇을 다음에 하는지는 여기서 읽는다. |
+| [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) | **[정본] 작업 순서·상태의 단일 출처.** 무엇을 다음에 하는지는 여기서 읽는다. 현재 착수 지점은 §1i 의 P1.1(모듈 재편). |
 
 ## 현행 참고 문서
 
@@ -82,6 +82,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | 문서 | 등급 | 내용 |
 |---|---|---|
 | [`dev/architecture/architecture-v2.md`](dev/architecture/architecture-v2.md) | [현행 설계] | **아키텍처 v2 (2026-08-25 결정)** — CLI 는 core 직접·MCP 는 app 경유, netmap 이 서버 정보·자원 분배·enode·접근 wrapper 소유, low level 파라미터 주입, 소비자 측 interface 노출, 모듈 네이밍 규칙 7. 모듈 경계는 이 문서가 이긴다. 작업은 worklist §1h. |
+| [`dev/architecture/module-plan.md`](dev/architecture/module-plan.md) | [현행 설계] | **모듈 재편 계획(2026-08-27 실측)** — 자원·노드정보·프로세스 3모듈 + genesis·nodeconfig·dsl 빌더 3종 · 관심사별 현 위치 실측(노드 타입 10개·기동 진입점 8개·경로 계산 4곳) · 합칠 것과 지울 것 · P1~P8 단계와 게이트 · M1 이름 후보 5. 순서는 worklist 가 이긴다. |
 | [`dev/architecture/v2-move-map.md`](dev/architecture/v2-move-map.md) | [현행 설계] | 아키텍처 v2 **이동표** — 8개 패키지 541 심볼 실측, 태스크별(V1~V6) 파일·심볼 목적지. |
 | [`dev/architecture/software-architecture.md`](dev/architecture/software-architecture.md) | [이력] | 전체 소프트웨어 아키텍처 — 계층·컨텍스트·실행모델·환경 5요소·검증원·동시성. 작성 시점 기준이라 패키지 경로는 현재와 다를 수 있다. |
 | [`dev/architecture/component-diagram.md`](dev/architecture/component-diagram.md) | [이력] | 컴포넌트 맵 · C4 컨테이너 뷰 · 키 소싱 컴포넌트 · 목표 델타. |
@@ -90,7 +91,7 @@ chainbench는 **go-stablenet/wbft/wemix용 Go-first 다체인 테스트벤치**�
 | [`dev/architecture/target-architecture.md`](dev/architecture/target-architecture.md) | [현행 설계] | **목표 아키텍처 다이어그램 8종** — 디렉토리/호출 두 축 분리 · 레이어 · 청사진 파이프라인 · 패밀리 분기 2곳 · 키 파생 · 피어링 그래프 · 표면 통일. 산문 결정을 그림으로 검토하는 용도. |
 | [`dev/architecture/layers.md`](dev/architecture/layers.md) | [현행 설계] | **레이어 아키텍처** — L0~L6 정의 · 57개 패키지 전수 배치 · 의존 규칙(상향 0건 실측) · **상태 소유 규칙**(control plane=session / data plane=FileSink)과 위반 6곳 · 규칙 강제 테스트 제안. 작업 순서는 worklist §1g. |
 | [`dev/architecture/module-responsibilities.md`](dev/architecture/module-responsibilities.md) | [현행 설계] | **관심사별 소유 모듈**(체인구성 5요소·노드생명주기·DSL 등 16개) · 현재 소유자 부재 실측(genesis 17곳·키 17곳·노드 11곳) · **3체인 실행 시뮬레이션**(분기점은 genesis·기동순서 2개뿐) · DSL 파서 4분할 제안(dsl · assert · bind · interp). 작업 순서는 worklist §1g. |
-| [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) | [이력] | AST 실측 패키지 그래프 — 계층 검증 · fan-in/out · launch-args 분산 5지점 · launchopt 실행 순서. 측정 당시의 스냅샷이다. |
+| [`dev/architecture/code-graph.md`](dev/architecture/code-graph.md) | 측정 | AST 실측 패키지 그래프 — **§2~§3 은 2026-08-27 재측정**(75패키지·268엣지·46.6k줄 · 계층 위반 0 · netmap 계열 서브그래프), §4~§5 는 launchopt 브랜치 **[이력]**. 다시 뽑으면 갱신된다: `go run ./scripts/inventory/code-graph .` |
 
 ### 2026-08-11 재설계 검토
 
