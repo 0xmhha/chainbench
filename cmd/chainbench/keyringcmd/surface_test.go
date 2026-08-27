@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 )
 
 // index reads a key set's metadata file — the record every later command and
@@ -401,5 +403,60 @@ func TestRemoteTargets_RefuseWhatTheyCannotReach(t *testing.T) {
 				t.Fatalf("accepted a target it cannot reach:\n%s", out)
 			}
 		})
+	}
+}
+
+// TestKeySetLocation_FlagBeatsTheEnvironment: the precedence itself, which the
+// source-reporting test does not check — it covers the flag and the variable
+// separately, so nothing pinned which one wins when both are set. An operator
+// who exports the variable once and then names a set explicitly must get the
+// one they named.
+func TestKeySetLocation_FlagBeatsTheEnvironment(t *testing.T) {
+	flagged := newRing(t)
+	fromEnv := newRing(t)
+	t.Setenv(operation.KeySetEnv, fromEnv)
+
+	out, err := run(t, "keyring", "list", "--keyring-dir", flagged)
+	if err != nil {
+		t.Fatalf("list: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, flagged) || strings.Contains(out, fromEnv) {
+		t.Errorf("the environment overrode an explicit --keyring-dir:\n%s", out)
+	}
+	if !strings.Contains(out, "(--keyring-dir)") {
+		t.Errorf("the reported source is not the flag:\n%s", out)
+	}
+}
+
+// TestImportSet_RefusesAnOccupiedDestination: cloning onto a set that already
+// exists would replace identities a genesis or a datadir already refers to,
+// which is the same unrecoverable move `new` refuses.
+func TestImportSet_RefusesAnOccupiedDestination(t *testing.T) {
+	src := newRing(t)
+	dst := newRing(t)
+	if out, err := run(t, "keyring", "import", "--keyring-dir", dst, "--from-ring", src); err == nil {
+		t.Fatalf("cloned over an existing key set:\n%s", out)
+	}
+	// The destination is untouched: its own identities still verify.
+	if out, err := run(t, "keyring", "list", "--keyring-dir", dst, "--verify"); err != nil {
+		t.Fatalf("the refused clone damaged the destination: %v\n%s", err, out)
+	}
+}
+
+// TestAdd_WithoutBLSLeavesTheValidatorSetAlone is the plain-add case: the
+// existing non-promotion test always passes --with-bls, so the path where an
+// operator adds identities to a BLS set without mentioning BLS — the path that
+// produced the unloadable set — had nothing covering the non-promoting half.
+func TestAdd_WithoutBLSLeavesTheValidatorSetAlone(t *testing.T) {
+	dir := newRing(t, "--with-bls", "--validators", "2")
+	if out, err := run(t, "keyring", "add", "--keyring-dir", dir, "--count", "2"); err != nil {
+		t.Fatalf("keyring add: %v\n%s", err, out)
+	}
+	out, err := run(t, "keyring", "list", "--keyring-dir", dir, "--verify")
+	if err != nil {
+		t.Fatalf("the key set no longer loads after a plain add: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "5 identities, 2 validators") {
+		t.Errorf("adding without --validators changed the validator set:\n%s", out)
 	}
 }
