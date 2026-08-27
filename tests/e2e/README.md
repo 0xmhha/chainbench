@@ -4,7 +4,7 @@ These are the **live-verification tier**: Go tests that boot a network from a
 **real chain binary** and drive it end to end. They replace the former
 bash+python `tests/repro/*.sh` scripts — network orchestration goes through the
 `chainbench` CLI (via `os/exec`), and every assertion is pure Go
-(`pkg/core/rpc` + `pkg/accounts`). No bash, no python, no web3.
+(`internal/core/rpc` + `internal/accounts`). No bash, no python, no web3.
 
 ## Gating
 

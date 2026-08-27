@@ -124,9 +124,6 @@ chainbench test   --data-dir /tmp/cb   # run applicable cases; prints coverage
 chainbench stop   --data-dir /tmp/cb   # stop the nodes
 ```
 
-No chain binary handy? You can still exercise the whole lifecycle with a fake
-node script — see [`docs/dev/HandOff.md`](docs/dev/HandOff.md) §3.
-
 > [!WARNING]
 > `--keys-dir keys/preset` and every address it produces are **test-only
 > fixtures**. Use them exclusively for local, throwaway networks — **never in any
@@ -181,10 +178,12 @@ paired fork sections). `upgrade genesis` builds just the merged handoff genesis.
 
 ### MCP server
 
-`chainbench-mcp` is a self-contained Go MCP server (JSON-RPC over stdio) exposing
-**30 tools** that call the same core as the CLI — lifecycle, tests, RPC / tx /
-contract / consensus queries, logs, and remote-node tools. Register it with your
-agent by pointing at the built binary:
+`chainbench-mcp` is a self-contained Go MCP server (JSON-RPC over stdio) that
+exposes the same features the CLI drives — lifecycle, tests, RPC / tx / contract
+/ consensus queries, logs, and remote-node tools. The tool set grows with the
+chains a binary imports, so ask the server rather than a document: `tools/list`
+enumerates exactly what this build exposes. Register it with your agent by
+pointing at the built binary:
 
 ```json
 { "mcpServers": { "chainbench": { "command": "chainbench-mcp" } } }
@@ -195,8 +194,11 @@ common features shared by every chain plus chain-specific ones (e.g. stablenet
 governance, wemix bootstrap), addressed as `<version>.<chain>.<name>`. Call the
 `chainbench.capabilities` tool (or `chainbench capabilities [--chain]` on the
 CLI) to discover what a chain supports. Adding a chain's features is data-only —
-a `.jsonl` catalog plus handlers under `pkg/mcp/features/<project>/`; see
-[`pkg/mcp/features/README.md`](pkg/mcp/features/README.md).
+a `.jsonl` capability catalog embedded by the chain package (e.g.
+`internal/chains/stablenet/caps.jsonl`, loaded through
+`capability.LoadCatalog`); see
+[`internal/core/capability/README.md`](internal/core/capability/README.md).
+The MCP tools that expose them live in `internal/mcp/*_tools.go`.
 
 ### Dashboard
 
@@ -225,18 +227,19 @@ chainbench setup \
   --keys-dir ../my-chain/keys --binary ../my-chain/bin/gmychain --launch
 ```
 
-The manifest uses the same schema as [the built-in chains' `manifest.json`](pkg/chains);
+The manifest uses the same schema as [the built-in chains' `manifest.json`](internal/chains);
 set `"protocol"` to a built-in accounts profile (`stablenet` / `wbft` / `wemix`)
 to borrow its tx types and account model. The `--manifest` / `--genesis-template`
 flags also work on `consensus` and `faucet`.
 
 **First-party (embedded in the tool).** To ship a chain with chainbench: add
-`pkg/chains/<id>/manifest.json` and `pkg/chains/<id>/genesis.json`, a thin plugin at
-`pkg/chains/<id>/<id>.go` that registers via `registry.Register`, and a blank
-import in `pkg/chains/all/all.go`. Chain-specific bindings live under
-`pkg/chains/<id>/…`, never in the generic core.
+`internal/chains/<id>/manifest.json` and `internal/chains/<id>/genesis.json`, a
+thin plugin at `internal/chains/<id>/<id>.go` that embeds them and registers via
+`registry.Register` in its `init`, and a blank import in
+`internal/chains/all/all.go`. Chain-specific bindings live under
+`internal/chains/<id>/…`, never in the generic core.
 
-Only a genuinely new consensus algorithm needs a new `pkg/consensus/<family>`.
+Only a genuinely new consensus algorithm needs a new `internal/consensus/<family>`.
 
 ## Testing
 
@@ -259,15 +262,20 @@ chainbench/
 │   ├── chainbench/       # CLI (cobra)
 │   ├── chainbench-mcp/   # MCP server (single binary)
 │   └── chainbench-dashboard/      # dashboard daemon (HTTP/SSE)
-├── pkg/
-│   ├── core/             # chain-agnostic core: registry, config, pipeline
-│   │                     #   (setup/verify/attach/testrun), driver, genesis,
-│   │                     #   nodeconfig, rpc, obs, probe, remote, portplan, …
+├── internal/
+│   ├── core/             # chain-agnostic core: registry, machine, filestore,
+│   │                     #   driver, process, keyring (model/derive/store/
+│   │                     #   operation), netmap, genesis, nodeconfig, rpc,
+│   │                     #   obs, remote, portplan, session, …
 │   ├── consensus/        # consensus families (wbft, poa) + upgrade handoff
 │   ├── chains/           # one folder per chain: plugin + manifest + genesis +
 │   │                     #   bindings + capabilities (stablenet, wbft, wemix, external)
+│   ├── chainsetup/       # composes a chain up to producing blocks
+│   ├── testengine/       # runs tests on a chain something else composed
+│   ├── netmap/           # server set, placement, and the one dial-wiring point
+│   ├── app/              # workflow layer MCP reaches (DSL → setup → test → report)
 │   ├── accounts/         # account/tx/ABI boundary over the accounts SDK
-│   ├── mcp/              # MCP tool handlers (same core as the CLI)
+│   ├── mcp/              # MCP tool handlers (through the app layer)
 │   ├── dashboard/        # SSE server + embedded Svelte SPA
 │   └── testkit/          # test-case framework (Case / T / Report)
 ├── profiles/             # network + golden upgrade profiles (YAML)
@@ -276,15 +284,19 @@ chainbench/
 └── web/                  # dashboard SPA source (Svelte + Vite)
 ```
 
-The design contract: `pkg/core` never imports a chain or consensus package (the
-boundary is compiler-enforced). Chain knowledge lives in `pkg/chains/*`, and
-consensus knowledge in `pkg/consensus/*`.
+The design contract: `internal/core` never imports a chain or consensus package.
+Tests in `internal/arch` read the import graph and fail on any such edge, so the
+rule is checked, not just written down. Chain knowledge lives in
+`internal/chains/*`, and consensus knowledge in `internal/consensus/*`.
+The CLI calls core modules directly; MCP reaches the same features through
+`internal/app` — see
+[`docs/dev/architecture/architecture-v2.md`](docs/dev/architecture/architecture-v2.md).
 
 ## Contributing
 
 1. Create a feature branch (`git checkout -b feat/my-feature`).
-2. Keep `pkg/core` free of chain/consensus imports; chain-specific code lives in
-   `pkg/chains/*` and `pkg/consensus/*`.
+2. Keep `internal/core` free of chain/consensus imports; chain-specific code
+   lives in `internal/chains/*` and `internal/consensus/*`.
 3. Use [Conventional Commits](https://www.conventionalcommits.org/).
 4. Ensure `gofmt`, `go vet`, and `go test ./...` pass.
 5. Open a pull request.

@@ -58,7 +58,7 @@ to reuse a prebuilt binary.
 |--------|-----------|-------|-------|
 | `wemix-chain.sh` | **pure wemix chain (scenario 1)** — wemix+etcd, tx + contract | `WEMIX_BIN`, `TEMPLATE`, `FAUCET_PK`, etcd/jq/python3 + web3 | boots a go-wemix producer (poa + governance + etcdInit, no croissant), asserts block production, then a value transfer and a returns-42 contract deploy/call |
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
-| `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay pkg/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
+| `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay internal/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
 | `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-02/03/04/05) | `L2_RPC` (an already-running L2 RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
@@ -75,7 +75,7 @@ from the environment only.
 
 ## Gated Go E2E
 
-`pkg/core/driver/remote_e2e_test.go` (build tag `e2e`) drives the SSH RemoteDriver
+`internal/core/driver/remote_e2e_test.go` (build tag `e2e`) drives the SSH RemoteDriver
 against a real sshd. `go test ./...` never runs it. Run with the Docker stand-in:
 
 ```sh
@@ -83,7 +83,7 @@ tests/remote/sshd/run.sh
 # or manually:
 CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2222 \
 CHAINBENCH_REMOTE_USER=chainbench CHAINBENCH_REMOTE_PASS=chainbench \
-go test -tags e2e -run TestRemoteDriver_E2E -v ./pkg/core/driver/
+go test -tags e2e -run TestRemoteDriver_E2E -v ./internal/core/driver/
 ```
 
 ## Running scripts individually

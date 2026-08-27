@@ -1,4 +1,4 @@
-# pkg/chains/wemix/deploy
+# internal/chains/wemix/deploy
 
 Remote **wemix+etcd** deployment for a go-wemix → go-wbft (Croissant) hardfork
 chain on a closed network. This is the chainbench-native migration of the

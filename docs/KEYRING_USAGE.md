@@ -61,7 +61,8 @@ bin/chainbench keyring new --keyring-dir /tmp/r --count 5 \
 | `--validators M` | M 명만 검증자 명단에. **new 의 기본은 전원**, `0` 은 "검증자 없음 선언" |
 | `--password` / `--balance` | 키스토어 비밀번호(기본 "1") / genesis alloc 잔액 |
 
-이미 링이 있는 경로에는 **거부**한다(“already holds a ring; add to it instead”).
+이미 키가 있는 경로에는 **거부**한다
+(“already holds a key set; add to it instead of creating over it”).
 
 ### add — 신원 추가
 

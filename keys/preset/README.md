@@ -47,7 +47,9 @@ TEST FIXTURE ONLY — same public-key caveat as every other file here.
 
 ## How chainbench consumes these
 
-`profiles/default.yaml` references this directory via:
+This directory is the built-in default, not a special case: the config defaults
+in `internal/core/config` are `keys.mode: static` and `keys.source: keys/preset`,
+and a profile under `profiles/` overrides them.
 
 ```yaml
 keys:
@@ -55,5 +57,9 @@ keys:
   source: "keys/preset"
 ```
 
-`chainbench init` copies `password` and the per-node keystore/nodekey files
-into the runtime data directory (`data/node-N/`) before starting `gstable`.
+The `keys` step of a network resolves that source
+(`chainbench net keys --keys-source preset`, or `chainbench net up`, which runs
+the steps in order; `chainbench setup` takes `--keys-dir`). Genesis is built from
+`metadata.json`, and the launcher ships each node's identity — `password`,
+`keystore/`, `nodekey` — into that run's data directory before starting the node,
+locally or over the file seam for a remote node.

@@ -11,9 +11,10 @@ npm --prefix web install
 npm --prefix web run build
 ```
 
-`vite build` writes the static bundle to `pkg/dashboard/spa/` (committed), which
-`pkg/dashboard/spa.go` embeds with `go:embed`. The Go server serves it under
-`/app/`. Rebuild and commit `pkg/dashboard/spa/` whenever the source changes.
+`vite build` writes the static bundle to `internal/dashboard/spa/` (committed),
+which `internal/dashboard/spa.go` embeds with `go:embed`. The Go server serves it
+under `/app/`. Rebuild and commit `internal/dashboard/spa/` whenever the source
+changes.
 
 ## Dev
 

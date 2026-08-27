@@ -26,6 +26,8 @@
 ## 1. 즉시 처리 가능 (블로커 없음)
 
 ### 1.1 [P0] `overlays/account-extra.json` params 배열→문자열 버그
+
+> **상태 추적은 worklist 로 옮겼다** — [[chainbench-worklist]] §1c 의 T7.12. 아래는 그때 확인한 근거다.
 `internal/chains/stablenet/overlays/account-extra.json` 의
 `config.anzeon.systemContracts.govCouncil.params.authorizedAddresses` /
 `blacklistedAddresses` 가 **JSON 배열**로 선언돼 있으나, genesis `SystemContract.params` 는

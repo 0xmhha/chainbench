@@ -2,7 +2,7 @@
 
 This directory holds chainbench **test code** — runtime scenarios executed by
 the `testrun` phase against a live NodeSet. It is separate from the test
-**helper** module (`pkg/testkit`): helpers live there, scenarios live here.
+**helper** module (`internal/testkit`): helpers live there, scenarios live here.
 
 ## Naming
 
