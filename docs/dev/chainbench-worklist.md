@@ -596,6 +596,33 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 각 태스크 마무리마다: 해당 경계에 소비자 측 interface 수립 · 네이밍 규칙 판정 ·
 빌드·테스트·lint·(원격이면) docker 라이브 게이트.
 
+## 1i. 모듈 재편 — 관심사 단위 (사용자 결정 2026-08-27)
+
+> 설계·근거·이동표는 [[module-plan]](architecture/module-plan.md). 실측은
+> `go run ./scripts/inventory/code-graph -symbols .` 이며, **단계마다 재측정으로 열고
+> 재측정으로 닫는다**(같은 문서 §1).
+>
+> 부서 셋으로 나눈다. **자원(`resource`)이 정하고, 노드(`node`)가 기록하고,
+> 프로세스(`process`)가 돌린다.** 그 위에 빌더 셋(genesis · nodeconfig · dsl),
+> 그 위에 표면(cmd · mcp), 그 위에 오케스트레이션(chainsetup · testengine).
+>
+> 이름은 **부서가 소유한 대상 명사**로 짓는다. 은유(`netmap`)·약어(`netreg`·
+> `portplan`)·산출물(`place`)·동작(`alloc`)은 간판이 되지 못한다. `alloc` 은 이
+> 저장소에서 이미 genesis 계정 배분을 뜻하므로 쓸 수 없다(실측 13건).
+
+| # | 작업 | 선행 | 게이트 | 상태 |
+|---|---|---|---|---|
+| **P1.1** | **어휘·지도·경로·enode → `core/node`** — label(35)·role(36)·map(114)·peering(159)·layout(38)·enode(32) 약 380줄 이동. `Ports` 별칭 제거하고 `node.Endpoints` 로 통일 | — | `node` out-edge **0 유지**(L0) · 어휘만 쓰던 6곳(poa·wbft·nodeconfig·session·topology·testspec)의 `core/netmap` import 소멸 · `core/netmap` 에 pool.go 만 잔류 · 기존 테스트 무변경 통과 | ☐ |
+| **P1.2** | **`serverset` 승격 + `Opener` 합류 → `internal/resource`** — `netmap/internal/serverset`(1,028)와 `netmap` 표면(229)을 한 패키지로. 봉인 목적은 wrapper 가 같은 패키지에 들어오면서 유지. **서버 쪽 `Placement` 삭제**: `Source`·`DataRoot`·`Remote` 세 필드가 전부 같은 반환값(`Pool.Source`·`Target.DataRoot`·`Spec.IsRemote()`)에 이미 있는 사본이라, `ResolveServer` 가 `Pool` 과 `machine.Spec` 을 따로 돌려준다. **`fleet` 낱말 제거**(제품 용어는 server set 하나): `--fleet`→`--all-servers` · MCP `"fleet"`→`"all_servers"` · `ServerRef.Fleet`→`.All` · `fleetTarget`→`setTarget` · `CHAINBENCH_DOCKER_FLEET`→`CHAINBENCH_DOCKER_SERVERS` · `FleetBuildDir`→`ServersBuildDir` · 주석의 은유까지. **`Config.Fleet()` 삭제 → `Config.Pool()` 로 통합**(둘이 같은 일을 하고 `Pool()` 은 프로덕션 호출자 0). 슬롯 내림(`slots/len(hosts)`, 선언 4가 3으로 깎이던 결함)은 버리고, 서버별 슬롯이 다르면 이 단계에서는 명시적으로 거부 | P1.1 | `serverset → core/netmap` 엣지 소멸(동일 패키지) · 서버 쪽 `Placement` 심볼 0 · **`fleet` 문자열 0**(주석·테스트·스크립트 포함) · `--server-set` 과 `--docker` 라이브 경로 동작 동일 · keyring 원격 스위트(링 생성·복제) 통과 | ☐ |
+| **P1.3** | **풀·배정·포트밴드 → `resource`, `place` 흡수** — pool(145)+portplan(184) 이동, `place.NodeReq` → `resource.Request`, `Ports` 별칭 2개 제거하고 `node.Endpoints` 로 통일. **호스트별 슬롯 지원**(사용자 결정 2026-08-27: 서버별 값을 그대로 살린다): `Host` 가 자기 `Slots` 를 갖고 `Cap()` 은 합계, `Assign` 은 호스트별 잔여 슬롯을 소비(지금은 `i/hosts`·`i%hosts` 로 균등을 가정). P1.2 의 거부 해제 | P1.2 | 패키지 **4개 소멸**(`core/netmap`·`netmap`·`core/portplan`·`core/place`) · `resource → node` 단방향 · 계층 위반 0 · **균등 세트**에서 `net allocate`·`netmap plan` 산출 바이트 동일 · **비균등 세트**(2·1·1)에서 선언 용량 4가 그대로 배정 | ☐ |
+| **P2** | 노드 사실 레코드 — "노드 하나" 타입 10 → 3, 경로 계산 4곳 → 1 | P1 | 심볼 인벤토리로 계수 확인 | ☐ |
+| **P3** | 프로세스 — 실행은 `driver`, 정책은 `process`. 기동 진입점 8 → 2 | P2 | 진입점 계수 · `chainsetup` 714줄 감소 | ☐ |
+| **P4** | 빌더 셋 — genesis 생성 지점 5 → 1, config 렌더 2 → 1, dsl 파서가 액션을 import 하지 않음 | P2, P3 | 계수 + import 방향 | ☐ |
+| **P5** | 표면 — CLI 는 모듈 직접, MCP 는 app 경유. 직결 래칫 14 → 한 자릿수 | P1, P4 | `internal/arch` 래칫 축소 | ☐ |
+| **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☐ |
+| **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☐ |
+| **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☐ |
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
