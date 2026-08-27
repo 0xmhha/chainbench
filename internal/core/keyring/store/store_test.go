@@ -137,3 +137,61 @@ func TestImportRing_ClonesDeclarationAndRefusesTamper(t *testing.T) {
 		t.Fatal("import-ring overwrote an existing ring")
 	}
 }
+
+// TestExtend_PromotingIntoABLSSetKeepsItLoadable pins a defect that made `add`
+// report success and every later command fail: promoting a plain identity into
+// a set whose validators carry BLS keys left more validators than BLS keys, and
+// the loader refuses that pair. A set that uses BLS keeps using it.
+func TestExtend_PromotingIntoABLSSetKeepsItLoadable(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "set")
+	two := 2
+	if _, err := store.Generate(store.GenerateOpts{
+		Nodes: 2, Validators: &two, Out: dir, Password: "pw", Derive: derive.WithBLS,
+	}, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	// Extend WITHOUT asking for BLS, promoting the new identity.
+	one := 1
+	if _, err := store.Extend(store.GenerateOpts{
+		Nodes: 1, Validators: &one, Out: dir, Password: "pw",
+	}, nil); err != nil {
+		t.Fatalf("extend: %v", err)
+	}
+
+	set, err := store.LoadPreset(dir)
+	if err != nil {
+		t.Fatalf("the set no longer loads after add: %v", err)
+	}
+	if len(set.Network.Validators) != 3 || len(set.Network.BLSKeys) != 3 {
+		t.Fatalf("validators %d, BLS keys %d — the lists must stay aligned",
+			len(set.Network.Validators), len(set.Network.BLSKeys))
+	}
+	if set.Nodes[2].BLS == nil {
+		t.Error("the added identity has no BLS material, so it cannot validate here")
+	}
+}
+
+// TestExtend_PlainSetStaysPlain: inheritance only applies where there is
+// something to inherit — a set with no BLS anywhere keeps deriving without it.
+func TestExtend_PlainSetStaysPlain(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "set")
+	one := 1
+	if _, err := store.Generate(store.GenerateOpts{
+		Nodes: 1, Validators: &one, Out: dir, Password: "pw",
+	}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Extend(store.GenerateOpts{
+		Nodes: 1, Validators: &one, Out: dir, Password: "pw",
+	}, nil); err != nil {
+		t.Fatalf("extend: %v", err)
+	}
+	set, err := store.LoadPreset(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(set.Network.BLSKeys) != 0 || set.Nodes[1].BLS != nil {
+		t.Error("a plain set grew BLS material it never asked for")
+	}
+}
