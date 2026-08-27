@@ -23,7 +23,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Composition steps: keys, allocate, genesis, config, launchopts, filestore.
@@ -116,12 +116,12 @@ type AllocateOpts struct {
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
 	// per-node choice. Its Nodes must already be Validate()d.
 	Topology *topology.Topology
-	// Placement decides the port bands, the addressing mode, and the capacity
+	// Pool decides the port bands and the capacity
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
-	Placement netmapmod.Placement
-	// SetPath is the server-set file Placement came from, persisted so later
+	Pool netmap.Pool
+	// SetPath is the server-set file Pool came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
 	SetPath string
 }
@@ -187,14 +187,13 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pl := opts.Placement
-	if pl.Source == "" {
-		pl = netmapmod.Builtin(minValidatorsForPlacement, portBandSize)
+	pool := opts.Pool
+	if pool.Source == "" {
+		pool = resource.Builtin(minValidatorsForPlacement, portBandSize)
 	}
 	if opts.SetPath != "" {
 		w.state.ServerSet = opts.SetPath
 	}
-	pool := pl.Pool
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
@@ -208,20 +207,16 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	placements := assigned.Placements()
 
-	// A server set naming a data root wins over the workspace default:
-	// it is where that machine keeps node data.
-	root := w.state.Target.DataRoot
-	if pl.DataRoot != "" {
-		root = pl.DataRoot
-		w.state.Target.DataRoot = root
-	}
-	layout := node.Layout{Root: root}
-	// On a fleet each node's machine is a server-set entry; record its name so
-	// every later step opens THAT machine. Addresses came from the pool, so
-	// the name is the pool's word for the address.
+	// The data root is the target's: a server set naming one reached the
+	// workspace through Retarget before this step ran, so there is one answer
+	// rather than a copy that can disagree with it.
+	layout := node.Layout{Root: w.state.Target.DataRoot}
+	// Spread across a set, each node's machine is a server-set entry; record
+	// its name so every later step opens THAT machine. Addresses came from the
+	// pool, so the name is the pool's word for the address.
 	nameOf := map[string]string{}
-	if pl.Remote {
-		for _, h := range pl.Pool.Hosts {
+	if w.state.Target.IsRemote() {
+		for _, h := range pool.Hosts {
 			if h.Name != "" && h.Name != h.Addr {
 				nameOf[h.Addr] = h.Name
 			}
@@ -261,10 +256,10 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		w.state.Bootnode = opts.Topology.BootnodeIndex()
 	}
 
-	w.state.PortSource = pl.Source
+	w.state.PortSource = pool.Source
 
 	detail := fmt.Sprintf("%d node(s): %d validator(s) + %d endpoint(s); ports: %s; p2p from %d, http from %d",
-		len(nodes), validators, len(nodes)-validators, pl.Source, nodes[0].P2P, nodes[0].HTTP)
+		len(nodes), validators, len(nodes)-validators, pool.Source, nodes[0].P2P, nodes[0].HTTP)
 	if opts.Topology != nil {
 		detail += " (topology)"
 	}
@@ -311,7 +306,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	}
 	gen := art.Genesis
 	// Every machine gets the genesis (and its by-products): each node's init
-	// reads it locally, and on a fleet "locally" is that node's server.
+	// reads it locally, and spread across a set "locally" is that node's server.
 	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
 	err = w.eachMachine(func(t *machine.Access, _ []NodeState) error {
 		p := filepath.Join(t.DataRoot, "genesis.json")
@@ -395,7 +390,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
-	// The peer's own recorded address: on a fleet each node lives on a
+	// The peer's own recorded address: spread across a set each node lives on a
 	// different host, and a static-node list pointing at this machine would
 	// leave every node unable to find its peers. Keys reach the composition
 	// as inputs — the netmap module joins them to placements.
@@ -622,7 +617,7 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 
 // Netmap reads the workspace's node table as a placement map, so the peer
 // policy and the address lookups run off one representation. The host is the
-// node's own recorded address, which on a fleet is not this machine.
+// node's own recorded address, which spread across a set is not this machine.
 func (w *Workspace) Netmap() (*node.Map, error) {
 	placements := make([]node.Placement, 0, len(w.state.Nodes))
 	ordinals := map[node.Role]int{}

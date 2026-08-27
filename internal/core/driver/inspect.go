@@ -61,7 +61,7 @@ func (d *LocalDriver) Run(ctx context.Context, command string) (string, error) {
 
 // PIDAlive asks the machine's /proc, which answers for every process
 // regardless of ownership — kill -0 reads EPERM on another user's process as
-// absence, and the fleets this targets log in as an unprivileged user.
+// absence, and the servers this targets log in as an unprivileged user.
 func (d *RemoteDriver) PIDAlive(ctx context.Context, pid int) (bool, error) {
 	out, err := d.sh(ctx, fmt.Sprintf("test -d /proc/%d && echo yes || echo no", pid))
 	if err != nil {

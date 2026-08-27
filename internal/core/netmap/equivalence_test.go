@@ -8,7 +8,7 @@ import (
 )
 
 // The allocator netmap replaced had two deterministic modes: a local network on
-// the loopback with stepped ports, and a fleet with one node per host on
+// the loopback with stepped ports, and a server set with one node per host on
 // identical ports. They are this grid read two ways, and these are the values
 // it produced — kept as goldens now that the allocator itself is gone, because
 // the numbers are what an existing network is already running on.
@@ -36,7 +36,7 @@ func TestAssign_ReproducesTheLocalSteppedGolden(t *testing.T) {
 	}
 }
 
-func TestAssign_ReproducesTheFleetGolden(t *testing.T) {
+func TestAssign_ReproducesTheSetGolden(t *testing.T) {
 	hosts := []string{"10.0.0.1", "10.0.0.2", "10.0.0.3", "10.0.0.4"}
 	pool := netmap.Pool{Slots: 1, Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10}}
 	for _, h := range hosts {
@@ -46,7 +46,7 @@ func TestAssign_ReproducesTheFleetGolden(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}
-	// One node per host, every node on the same ports — the fleet shape.
+	// One node per host, every node on the same ports — the server set shape.
 	for i, p := range m.Placements() {
 		if p.Host != hosts[i] {
 			t.Fatalf("%s host = %s, want %s", p.Label, p.Host, hosts[i])

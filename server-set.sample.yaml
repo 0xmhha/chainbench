@@ -11,7 +11,7 @@
 # consumes hosts before slots, so with five addresses and four slots, node1..5
 # land on distinct machines and node6 returns to the first on the next slot.
 # A one-host pool with several slots is this machine running a whole network;
-# a many-host pool with one slot each is a fleet. They are the same grid.
+# a many-host pool with one slot each is a network spread one node per server. They are the same grid.
 #
 # With no config file at all, chainbench uses built-in ports and says so, so
 # where a port came from is never a guess.

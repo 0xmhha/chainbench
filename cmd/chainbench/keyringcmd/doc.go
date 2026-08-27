@@ -14,7 +14,7 @@
 // The groups' tests live here too, executing the commands the way an operator
 // types them — mounted on a bare root, so they cover exactly what package main
 // mounts without depending on it. The remote half of the matrix is the gated
-// Live_Keyring* suite (CHAINBENCH_DOCKER_FLEET); see docs/KEYRING_USAGE.md
+// Live_Keyring* suite (CHAINBENCH_DOCKER_SERVERS); see docs/KEYRING_USAGE.md
 // for the operator manual the tests mirror.
 //
 // # File placement rule

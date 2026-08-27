@@ -181,11 +181,11 @@ type NetPoolOut struct {
 // NetPool reports the addresses and port slots a network may be composed from,
 // and how many are already taken. It is what answers "why was 15 refused".
 func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
-	placement, err := ResolveServer(d, in.Server, 1, defaultPortBand)
+	resolved, err := ResolveServer(d, in.Server, 1, defaultPortBand)
 	if err != nil {
 		return NetPoolOut{}, err
 	}
-	pool := placement.Placement.Pool
+	pool := resolved.Pool
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
@@ -238,7 +238,7 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 	if err != nil {
 		return NetMapOut{}, err
 	}
-	pool := resolved.Placement.Pool
+	pool := resolved.Pool
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}

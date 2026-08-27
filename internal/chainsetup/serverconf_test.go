@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Ports and host addresses are site-specific and must come from the operator's
@@ -45,7 +45,7 @@ func TestNetAllocate_InventoryDecidesThePorts(t *testing.T) {
 
 	out, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
 		DataDir: dir, Validators: 2,
-		Server: netmapmod.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
+		Server: resource.ServerRef{SetPath: writeInventory(t, localInventory), Name: "local"},
 	})
 	if err != nil {
 		t.Fatalf("allocate: %v", err)
@@ -95,7 +95,7 @@ dataRoot: /srv/chainbench
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
 		DataDir: dir, Validators: 1,
-		Server: netmapmod.ServerRef{SetPath: inv, Name: "bp1"},
+		Server: resource.ServerRef{SetPath: inv, Name: "bp1"},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -125,7 +125,7 @@ dataRoot: /srv/chainbench
 	}
 }
 
-func TestNetAllocate_FleetSpreadsOneNodePerHost(t *testing.T) {
+func TestNetAllocate_AllServersSpreadsOneNodePerHost(t *testing.T) {
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
@@ -145,7 +145,7 @@ dataRoot: /srv/cb
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
 		DataDir: dir, Validators: 3,
-		Server: netmapmod.ServerRef{SetPath: inv, Fleet: true},
+		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
@@ -166,7 +166,7 @@ dataRoot: /srv/cb
 func TestResolveServer_NamingAServerWithoutAnInventoryIsAnError(t *testing.T) {
 	// Silently falling back to built-in ports when the operator asked for a
 	// named server would put nodes somewhere they did not choose.
-	_, err := netmapmod.ResolveServer(netmapmod.ServerRef{Name: "bp1"}, 1, 100)
+	_, err := resource.ResolveServer(resource.ServerRef{Name: "bp1"}, 1, 100)
 	if err == nil {
 		t.Fatal("want an error naming a server with no server set")
 	}
@@ -176,25 +176,25 @@ func TestResolveServer_NamingAServerWithoutAnInventoryIsAnError(t *testing.T) {
 }
 
 func TestResolveServer_NoSelectionFallsBackToTheBuiltins(t *testing.T) {
-	out, err := netmapmod.ResolveServer(netmapmod.ServerRef{}, 1, 100)
+	out, err := resource.ResolveServer(resource.ServerRef{}, 1, 100)
 	if err != nil {
 		t.Fatalf("ResolveServer: %v", err)
 	}
 	if out.HasTarget {
 		t.Error("no server set should leave the workspace target alone")
 	}
-	if !strings.Contains(out.Placement.Source, "built-in") {
-		t.Errorf("source = %q", out.Placement.Source)
+	if !strings.Contains(out.Pool.Source, "built-in") {
+		t.Errorf("source = %q", out.Pool.Source)
 	}
 }
 
-func TestNetAllocate_FleetRecordsEachNodesOwnHost(t *testing.T) {
+func TestNetAllocate_AllServersRecordsEachNodesOwnHost(t *testing.T) {
 	// The per-node host is what the config's static-node list and the launch
-	// specs derive from. If every node recorded this machine instead, a fleet's
+	// specs derive from. If every node recorded this machine instead, a set’s
 	// nodes could not find their peers and the failure would look like a
 	// consensus problem rather than an addressing one.
 	//
-	// Writing a fleet's configs needs a reachable SSH host, so this asserts the
+	// Writing a set’s configs needs a reachable SSH host, so this asserts the
 	// node table the writers read rather than the written files.
 	dir := t.TempDir()
 	d := chainsetup.Deps{Clock: fixedClock()}
@@ -214,7 +214,7 @@ dataRoot: /srv/cb
 `)
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
 		DataDir: dir, Validators: 2,
-		Server: netmapmod.ServerRef{SetPath: inv, Fleet: true},
+		Server: resource.ServerRef{SetPath: inv, All: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}

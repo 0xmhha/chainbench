@@ -1,4 +1,4 @@
-package netmap_test
+package resource_test
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // fixture writes a server set and its localmap side by side, returning the
@@ -48,7 +48,7 @@ func fixture(t *testing.T) string {
 func TestOpener_TranslatesAndReportsInOnePlace(t *testing.T) {
 	set := fixture(t)
 	var notes []string
-	o := netmap.Opener{
+	o := resource.Opener{
 		ServerSet: set, Docker: true,
 		Report: func(f string, a ...any) { notes = append(notes, fmt.Sprintf(f, a...)) },
 	}
@@ -74,12 +74,12 @@ func TestOpener_DockerIsThePowerSwitch(t *testing.T) {
 	if err := os.WriteFile(bare, raw, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := (netmap.Opener{ServerSet: bare, Docker: true}).OpenPath("srv://box1/x"); err == nil {
+	if _, err := (resource.Opener{ServerSet: bare, Docker: true}).OpenPath("srv://box1/x"); err == nil {
 		t.Fatal("docker mode accepted a missing localmap")
 	}
 
 	var notes []string
-	o := netmap.Opener{ServerSet: set, Report: func(f string, a ...any) { notes = append(notes, f) }}
+	o := resource.Opener{ServerSet: set, Report: func(f string, a ...any) { notes = append(notes, f) }}
 	if _, err := o.OpenPath("srv://box1/x"); err != nil {
 		t.Fatalf("open without docker: %v", err)
 	}
@@ -92,12 +92,12 @@ func TestOpener_DockerIsThePowerSwitch(t *testing.T) {
 // lookup, and a local path resolves to local handles through the same call.
 func TestOpener_CredentialsComeFromTheSet(t *testing.T) {
 	set := fixture(t)
-	if _, err := (netmap.Opener{ServerSet: set}).OpenPath("srv://ghost/x"); err == nil {
+	if _, err := (resource.Opener{ServerSet: set}).OpenPath("srv://ghost/x"); err == nil {
 		t.Fatal("unknown server name was accepted")
 	}
 
 	local := t.TempDir()
-	acc, err := (netmap.Opener{ServerSet: set}).OpenPath(local)
+	acc, err := (resource.Opener{ServerSet: set}).OpenPath(local)
 	if err != nil {
 		t.Fatalf("local open: %v", err)
 	}

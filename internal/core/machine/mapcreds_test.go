@@ -11,7 +11,7 @@ import (
 // carries no port; the dial would default it to 22 AFTER the map ran, so a map
 // keyed on 22 never matched and the harness dialed 127.0.0.1:22 — this
 // machine's own sshd — instead of the container. Caught live by the gated
-// remote keyring test; pinned here so it cannot come back without the fleet.
+// remote keyring test; pinned here so it cannot come back without the docker servers.
 func TestMapCredentials_ResolvesTheDefaultPortBeforeMapping(t *testing.T) {
 	m := func(host string, port int) (string, int) {
 		if host == "172.30.0.11" && port == remote.DefaultSSHPort {

@@ -50,7 +50,7 @@ type Host struct {
 //
 // It is a grid, not a list of servers. One host with four slots is a laptop
 // running four nodes on stepped ports; four hosts with one slot each is a
-// fleet running one node per machine on identical ports. Both were separate
+// a network spread one node per machine on identical ports. Both were separate
 // allocation modes before, and both are this grid read differently.
 type Pool struct {
 	// Hosts are the addresses in the order they are consumed.

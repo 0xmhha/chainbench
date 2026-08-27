@@ -9,12 +9,11 @@
 // exists because wiring diverged when every consumer did it alone: one
 // passed the server set, another passed nil, and the same server accepted
 // one login and refused the other (found live, 2026-08-25).
-package netmap
+package resource
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
 )
 
 // Opener binds a machine spec to the server set and the docker translation,
@@ -54,7 +53,7 @@ func (o Opener) Open(spec machine.Spec) (*machine.Access, error) {
 	if err != nil {
 		return nil, err
 	}
-	return spec.ResolveWithPolicy(env, serverset.SetLookup(o.ServerSet), m, serverset.SetPolicy(o.ServerSet))
+	return spec.ResolveWithPolicy(env, SetLookup(o.ServerSet), m, SetPolicy(o.ServerSet))
 }
 
 // AddrMap returns the dial-time address translation this opener applies — nil
@@ -65,7 +64,7 @@ func (o Opener) AddrMap() (remote.AddrMap, error) {
 	if !o.Docker {
 		return nil, nil
 	}
-	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(o.ServerSet))
+	lm, err := LoadLocalMap(LocalMapNear(o.ServerSet))
 	if err != nil {
 		return nil, err
 	}

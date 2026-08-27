@@ -1,4 +1,4 @@
-package serverset_test
+package resource_test
 
 import (
 	"os"
@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 func writeLocalMap(t *testing.T, dir string) string {
 	t.Helper()
-	path := filepath.Join(dir, serverset.LocalMapFile)
+	path := filepath.Join(dir, resource.LocalMapFile)
 	body := `hosts:
   172.30.0.11:
     host: 127.0.0.1
@@ -30,7 +30,7 @@ func writeLocalMap(t *testing.T, dir string) string {
 // host moves to its published port, an unmapped port keeps its number on the
 // substitute host, and an unknown host passes through untouched.
 func TestLocalMap_TranslatesOnlyWhatItKnows(t *testing.T) {
-	m, err := serverset.LoadLocalMap(writeLocalMap(t, t.TempDir()))
+	m, err := resource.LoadLocalMap(writeLocalMap(t, t.TempDir()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestLocalMap_TranslatesOnlyWhatItKnows(t *testing.T) {
 // loud, actionable error — silently dialing unmapped addresses is the failure
 // this design exists to prevent.
 func TestLocalMap_MissingFileNamesTheFix(t *testing.T) {
-	_, err := serverset.LoadLocalMap(filepath.Join(t.TempDir(), serverset.LocalMapFile))
+	_, err := resource.LoadLocalMap(filepath.Join(t.TempDir(), resource.LocalMapFile))
 	if err == nil {
 		t.Fatal("missing localmap should be an error")
 	}
@@ -72,7 +72,7 @@ func TestLocalMap_MissingFileNamesTheFix(t *testing.T) {
 // harness never connects somewhere the operator cannot see, and a chatty
 // repeat per dial would bury the report.
 func TestLocalMap_ReportsEachTranslationOnce(t *testing.T) {
-	m, err := serverset.LoadLocalMap(writeLocalMap(t, t.TempDir()))
+	m, err := resource.LoadLocalMap(writeLocalMap(t, t.TempDir()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,11 +89,11 @@ func TestLocalMap_ReportsEachTranslationOnce(t *testing.T) {
 
 // TestLocalMapNear derives the map's path from the server set it translates.
 func TestLocalMapNear(t *testing.T) {
-	got := serverset.LocalMapNear("env/docker/build/server-set.yaml")
-	if got != filepath.Join("env/docker/build", serverset.LocalMapFile) {
+	got := resource.LocalMapNear("env/docker/build/server-set.yaml")
+	if got != filepath.Join("env/docker/build", resource.LocalMapFile) {
 		t.Fatalf("LocalMapNear = %s", got)
 	}
-	if serverset.LocalMapNear("") != serverset.LocalMapFile {
+	if resource.LocalMapNear("") != resource.LocalMapFile {
 		t.Fatalf("default location should be the working directory")
 	}
 }

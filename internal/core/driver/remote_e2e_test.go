@@ -26,7 +26,7 @@ import (
 )
 
 // The host and port this e2e dials. They are a test gate like
-// testkit.EnvDockerFleet, not a product setting: the transport itself takes
+// testkit.EnvDockerServers, not a product setting: the transport itself takes
 // its address from the caller.
 const (
 	envRemoteHost = "CHAINBENCH_REMOTE_HOST"

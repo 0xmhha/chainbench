@@ -118,8 +118,7 @@ flowchart TD
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
-| `netmap/internal/serverset` | **서버 세트(포트·호스트)** — netmap 모듈의 내부 데이터 형식. 컴파일러가 외부 import 를 차단한다 |
-| `netmap` | **netmap 모듈 표면** — 서버 이름을 능력 손잡이로 여는 유일 통로(Opener: 서버 세트 결합 · --docker 치환 · 치환 보고). 할당 코어(core/netmap)와 서버 세트를 low level 에 묶는다. enode 조립은 `core/node` 로 옮겼다(P1.1) ([[architecture-v2]]) |
+| `resource` | **자원 모듈** — 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
 

@@ -420,8 +420,8 @@ M1 후보를 이 잣대로 비교한 결과다.
   값을 넘기며, `testengine` 은 타입 참조뿐이다
 - **`fleet` 낱말 제거**(§8.5): `--fleet` → `--all-servers`, MCP `"fleet"` →
   `"all_servers"`, `ServerRef.Fleet` → `.All`, `fleetTarget` → `setTarget`,
-  `testkit.EnvDockerFleet`(`CHAINBENCH_DOCKER_FLEET`) → `EnvDockerServers`
-  (`CHAINBENCH_DOCKER_SERVERS`), `FleetBuildDir` → `ServersBuildDir`, 주석의 은유까지
+  `testkit.EnvDockerServers`(`CHAINBENCH_DOCKER_SERVERS`) → `EnvDockerServers`
+  (`CHAINBENCH_DOCKER_SERVERS`), `ServersBuildDir` → `ServersBuildDir`, 주석의 은유까지
 - **`Config.Fleet()` 삭제 — `Config.Pool()` 로 통합.** 혼합 local/remote 거부와 첫
   서버 포트 기준은 가져오고, **슬롯 내림은 버린다**: 서버별 슬롯이 다르면 이 단계에서는
   **명시적으로 거부**한다(조용히 깎지 않는다). 살리는 것은 P1.3
@@ -434,11 +434,8 @@ M1 후보를 이 잣대로 비교한 결과다.
 - `core/netmap` · `core/portplan` · `core/place` 삭제
 - `place.NodeReq` → `resource.Request` 흡수
 - `Ports` 별칭 2개 제거, `node.Endpoints` 로 통일
-- **호스트별 슬롯 지원**(§8.5): `Host` 가 자기 `Slots` 를 갖고, `Cap()` 은 합계가
-  되며, `Assign` 은 호스트별 잔여 슬롯을 소비한다. P1.2 의 거부를 해제한다
 - 게이트: 패키지 4개 소멸 · `resource → node` 단방향 · 계층 위반 0 ·
-  **균등 세트**에서 `net allocate`·`netmap plan` 산출이 이전과 바이트 동일 ·
-  **비균등 세트**(예: 2·1·1)에서 선언한 용량 4가 그대로 배정된다
+  `net allocate`·`netmap plan` 산출이 이전과 바이트 동일
 
 ### 8.4 주의
 
@@ -493,7 +490,7 @@ M1 후보를 이 잣대로 비교한 결과다.
 |---|---|---|
 | 사용자 표면 | `--fleet` · MCP `"fleet"` · `ServerRef.Fleet` | `--all-servers` · `"all_servers"` · `ServerRef.All` |
 | 코드 API | `Config.Fleet()` · `fleetTarget()` | **삭제**(→`Config.Pool()`) · `setTarget()` |
-| 테스트 환경 | `EnvDockerFleet`(`CHAINBENCH_DOCKER_FLEET`) · `FleetBuildDir` | `EnvDockerServers`(`CHAINBENCH_DOCKER_SERVERS`) · `ServersBuildDir` |
+| 테스트 환경 | `EnvDockerServers`(`CHAINBENCH_DOCKER_SERVERS`) · `ServersBuildDir` | `EnvDockerServers`(`CHAINBENCH_DOCKER_SERVERS`) · `ServersBuildDir` |
 | 주석의 은유 | "on a fleet each node…" | "세트 전체에 펼쳤을 때" / "one node per server" |
 
 `--server all` 안은 접었다. 서버 이름이 실제로 `all` 일 수 있어 검증이 하나 더 붙는다.
@@ -504,17 +501,17 @@ M1 후보를 이 잣대로 비교한 결과다.
 `Fleet()` 만 local/remote 혼합을 거부한다, `Fleet()` 만 첫 서버 포트를 기준으로 쓴다.
 그리고 **`Config.Pool()` 은 프로덕션 호출자가 없다**(테스트 3곳뿐). 하나로 합친다.
 
-**슬롯 결함.** `Fleet()` 의 `Slots: slots / len(hosts)`(`placement.go:106`)는 정수
-나눗셈이라 **내림한다.** 서버가 2·1·1 슬롯을 선언하면 4가 3으로 줄어든다. 선언한
-용량이 조용히 깎인다.
+**슬롯 — 착수해보니 결함이 아니었다(2026-08-27 실측).** `Fleet()` 의
+`Slots: slots / len(hosts)`(`placement.go:106`)는 정수 나눗셈이라 내림하지만, **그
+경로에 도달할 수 없다.** v2 형식은 풀 하나에 `slots` 하나를 선언하고, `expand()` 가
+모든 호스트에 같은 값을 복사한다. 같은 값 N개를 더해 N으로 나누면 그 값이므로,
+파일이 만들 수 있는 어떤 세트에서도 손실이 없었다. 죽은 산술이었다.
 
-**결정(2026-08-27): 서버별 값을 그대로 살린다.** 다만 배정 알고리즘이 바뀌므로 두
-단계로 나눈다.
+그래서 P1.2 는 나눗셈을 없애고 첫 서버의 값을 그대로 쓴다. 거부는 필요 없다.
 
-- **P1.2**: 통합하면서 내림을 버리고, 서버별 슬롯이 다르면 **명시적으로 거부**한다.
-  조용한 손실이 큰 소리 나는 실패가 된다.
-- **P1.3**: `Host` 가 자기 `Slots` 를 갖고, `Cap()` 이 합계가 되며, `Assign` 이
-  호스트별 잔여 슬롯을 소비한다. 거부를 해제한다.
+**남는 것은 형식 결정이다.** 서버마다 슬롯을 다르게 주려면 `pool.hosts` 항목이
+자기 `slots` 를 가질 수 있어야 한다(`HostSpec` 확장). 이는 리팩토링이 아니라
+**서버 세트 형식 변경**이므로, P1.3 이 아니라 별도 결정으로 뺀다.
 
 지금 `Assign` 은 `slot := i/hosts + 1` · `host := i%hosts` 로 **모든 호스트가 같은
 슬롯 수**임을 가정한다(`pool.go:130`). 호스트별 슬롯을 살리려면 슬롯 순회에서

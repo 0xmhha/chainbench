@@ -4,7 +4,7 @@ package driver_test
 // the local docker servers:
 //
 //	cd env/docker && ./gen-env.sh && docker compose -f build/docker-compose.yml up -d
-//	CHAINBENCH_DOCKER_FLEET=$PWD/env/docker/build go test ./internal/core/driver -run Live_ -v
+//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./internal/core/driver -run Live_ -v
 
 import (
 	"context"
@@ -16,15 +16,15 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // server1Driver opens server1 through the netmap module — the same wiring
 // production uses — and returns its driver.
 func server1Driver(t *testing.T) driver.Driver {
 	t.Helper()
-	build := testkit.FleetBuildDir(t)
-	acc, err := netmapmod.Opener{
+	build := testkit.ServersBuildDir(t)
+	acc, err := resource.Opener{
 		ServerSet: filepath.Join(build, "server-set.yaml"), Docker: true, Env: os.Getenv,
 	}.Open(machine.Spec{Server: "server1", DataRoot: "/data/chainbench"})
 	if err != nil {

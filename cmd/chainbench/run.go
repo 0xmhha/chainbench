@@ -170,7 +170,7 @@ func buildRunEngine(o runOpts) (testengine.Engine, error) {
 			Chain: o.chain, Binary: o.binary, Keys: src,
 			ArtifactRoot: o.artifactRoot, Validators: o.validators,
 			ChainID: o.chainID, NetworkID: o.networkID, LaunchOverrides: overrides,
-			Placement: placement.Placement, Bus: o.bus,
+			Pool: placement.Pool, Bus: o.bus,
 		})
 	default:
 		return nil, fmt.Errorf("run: provide --rpc <url> (attach) or --binary <path> (local)")

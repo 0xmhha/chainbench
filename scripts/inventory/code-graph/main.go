@@ -397,10 +397,10 @@ func layerOf(path string) string {
 		strings.HasPrefix(path, "internal/validatorset"),
 		strings.HasPrefix(path, "internal/accounts"):
 		return "domain"
-	// netmap is the L1 module surface over core/netmap and the server set
+	// resource is the L1 module that owns the server set and the dial wiring
 	// (layers.md §3): a primitive, not an orchestrator.
 	case strings.HasPrefix(path, "internal/core"),
-		strings.HasPrefix(path, "internal/netmap"):
+		strings.HasPrefix(path, "internal/resource"):
 		return "core"
 	case strings.HasPrefix(path, "internal/testkit"):
 		return "support"
