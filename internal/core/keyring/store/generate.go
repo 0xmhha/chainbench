@@ -132,6 +132,13 @@ func ExtendAt(ctx context.Context, opts GenerateOpts, progress func(string)) (ke
 	if err != nil {
 		return keyring.Preset{}, fmt.Errorf("keyring: extend: %w", err)
 	}
+	// A key set that uses BLS keeps using it. Adding a plain identity to one
+	// and promoting it produced a validator with no BLS key, which left the
+	// index with more validators than BLS keys — a set the loader then
+	// refused, so `add` reported success and every later command failed.
+	if opts.Derive != derive.WithBLS && usesBLS(existing) {
+		opts.Derive = derive.WithBLS
+	}
 	return generate(ctx, existing, opts, progress)
 }
 
@@ -226,7 +233,11 @@ func appendEntries(ctx context.Context, existing keyring.Preset, opts GenerateOp
 		set.Nodes = append(set.Nodes, e)
 		alloc[strings.TrimPrefix(e.Address, "0x")] = map[string]any{"balance": opts.Balance}
 		if promoted < *opts.Validators {
-			set.Network = promote(set.Network, e)
+			net, err := promote(set.Network, e)
+			if err != nil {
+				return keyring.Preset{}, err
+			}
+			set.Network = net
 			promoted++
 		}
 		if progress != nil {
@@ -247,14 +258,35 @@ func appendEntries(ctx context.Context, existing keyring.Preset, opts GenerateOp
 	return set, nil
 }
 
-// promote adds one identity to the network's validator set, carrying its BLS
-// key when it has one so the two lists stay index-aligned.
-func promote(net keyring.Network, e keyring.Entry) keyring.Network {
+// usesBLS reports whether this key set carries BLS material — either the
+// network declares BLS keys, or an identity holds one. Both are asked because
+// a set may hold BLS identities before any of them validates.
+func usesBLS(set keyring.Preset) bool {
+	if len(set.Network.BLSKeys) > 0 {
+		return true
+	}
+	for _, e := range set.Nodes {
+		if e.BLS != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// promote adds one identity to the network's validator set. The two lists are
+// index-aligned, so an identity with no BLS key cannot join a set that has
+// them: appending to one list and not the other is what made a set the loader
+// refuses. The caller derives BLS for such a set (see ExtendAt), and this
+// refuses rather than writing the broken pair.
+func promote(net keyring.Network, e keyring.Entry) (keyring.Network, error) {
+	if len(net.BLSKeys) > 0 && e.BLS == nil {
+		return net, fmt.Errorf("keyring: %s has no BLS key, and this key set's validators each have one", e.Label)
+	}
 	net.Validators = append(net.Validators, e.Address)
 	if e.BLS != nil {
 		net.BLSKeys = append(net.BLSKeys, e.BLS.PublicKey)
 	}
-	return net
+	return net, nil
 }
 
 // writePreset renders the index file.
