@@ -1,64 +1,121 @@
-// Package nodeconfig generates a per-node geth-family TOML config for the setup
-// phase's environment-build step (requirement #8). It is chain-aware only in
-// the RPC namespace exposed (from the consensus family) and the miner-recommit
-// encoding; both come from the chain manifest (RPCNamespace, MinerRecommit), so
-// no chain name is hardcoded here. Everything else is shared geth config.
+// Package nodeconfig owns one node's configuration and renders it two ways:
+// the TOML file a geth-family binary reads, and the argv it is launched with.
+//
+// The two are one fact with two spellings. They used to have two owners —
+// this package rendered the file while launchopt's caller assembled the argv
+// — and each caller of either re-derived the inputs from a plan or a record
+// its own way. Spec is the single input; TOML and Argv are its renderers.
+// What the file carries is not repeated on the command line (a node whose
+// config names its auth port is not also told --authrpc.port), so the two
+// renderings agree by construction rather than by care.
+//
+// launchopt stays a separate package beneath this one: it is the dialect
+// table (which binary spells which flag how) and the layered override model,
+// and Argv is its only caller that speaks for a node.
 package nodeconfig
 
 import (
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"strconv"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // baseModules are the RPC namespaces every node exposes; the chain's consensus
 // namespace is appended.
 var baseModules = []string{"admin", "eth", "debug", "miner", "net", "txpool", "personal", "web3"}
 
-// Params fully describes one node's config.
-type Params struct {
-	Role          node.Role
-	Ports         node.Endpoints
-	KeystoreDir   string
-	RPCNamespace  string   // consensus namespace, e.g. "istanbul" or "wemix"
-	MinerRecommit string   // manifest miner_recommit form: "duration" (default) | "nanos"
-	HTTPHost      string   // default "0.0.0.0"
-	MetricsHost   string   // default "127.0.0.1"
-	StaticNodes   []string // enode URLs (all nodes, self included; geth ignores self)
-	SyncMode      string   // default "full"
+// Chain is what a node's configuration takes from the chain it runs: facts
+// from the manifest and the consensus family, none of them per node.
+type Chain struct {
+	// ID is the manifest id; it selects the flag dialect the binary speaks.
+	ID string
+	// RPCNamespace is the consensus namespace exposed over RPC ("istanbul",
+	// "wemix").
+	RPCNamespace string
+	// MinerRecommit is the manifest's miner_recommit form: "duration"
+	// (default) or "nanos" — which the target binary decodes.
+	MinerRecommit string
+	// NetworkID is the devp2p network id; 0 leaves it to the binary.
+	NetworkID int64
+	// FamilyFlags are the family's role-specific start flags, parsed into the
+	// policy the argv carries (mining, unlock policy, RPC policy).
+	FamilyFlags []string
 }
 
-// Generate renders the TOML config bytes for one node.
-func Generate(p Params) []byte {
-	httpHost := orDefault(p.HTTPHost, "0.0.0.0")
-	metricsHost := orDefault(p.MetricsHost, "127.0.0.1")
-	syncMode := orDefault(p.SyncMode, "full")
+// ChainOf reads a node's chain facts from its plugin for one role.
+func ChainOf(plugin registry.ChainPlugin, role node.Role) Chain {
+	m := plugin.Manifest()
+	return Chain{
+		ID:            m.ID,
+		RPCNamespace:  m.Consensus.RPCNamespace,
+		MinerRecommit: m.MinerRecommit,
+		NetworkID:     m.NetworkID,
+		FamilyFlags:   plugin.Family().StartFlags(role),
+	}
+}
 
-	modules := append(append([]string{}, baseModules...), p.RPCNamespace)
+// Spec is one node's configuration: everything both renderers draw on.
+type Spec struct {
+	Chain Chain
+	Role  node.Role
+	Ports node.Endpoints
+	// SyncMode is the geth sync mode; empty renders the default ("full").
+	SyncMode string
+
+	// DataDir is the node's datadir; ConfigPath is where the TOML lands.
+	DataDir    string
+	ConfigPath string
+
+	// Identity: where the node's keys are and, for a producer, which account
+	// it seals with. Empty fields are simply not rendered.
+	NodekeyPath  string
+	KeystoreDir  string
+	Unlock       string // 0x address to unlock, and the etherbase
+	PasswordFile string
+
+	// StaticNodes are the enode URLs this node dials (self included; geth
+	// ignores self).
+	StaticNodes []string
+
+	// HTTPHost binds the HTTP and WS endpoints; empty is 0.0.0.0 in the file
+	// and unset on the command line.
+	HTTPHost string
+	// MetricsHost binds the metrics endpoint; empty is 127.0.0.1.
+	MetricsHost string
+}
+
+// TOML renders the config file a geth-family binary reads.
+func TOML(s Spec) []byte {
+	httpHost := orDefault(s.HTTPHost, "0.0.0.0")
+	metricsHost := orDefault(s.MetricsHost, "127.0.0.1")
+	syncMode := orDefault(s.SyncMode, "full")
+
+	modules := append(append([]string{}, baseModules...), s.Chain.RPCNamespace)
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n\n", syncMode)
 
-	if node.Is(p.Role, node.RoleBP) || node.Is(p.Role, node.RoleBoot) {
+	if node.Is(s.Role, node.RoleBP) || node.Is(s.Role, node.RoleBoot) {
 		// miner.Config.Recommit is a time.Duration. Most geth-family binaries
 		// (go-stablenet/go-wbft) decode it from a TOML string ("2s"); the older
 		// go-ethereum in go-wemix decodes it only from an integer number of
 		// nanoseconds. Which form the target binary accepts is a manifest fact
-		// (miner_recommit), threaded in via MinerRecommit — do not re-derive it
-		// from the chain/namespace here.
+		// (miner_recommit) — do not re-derive it from the chain here.
 		recommit := `"2s"`
-		if p.MinerRecommit == "nanos" {
+		if s.Chain.MinerRecommit == "nanos" {
 			recommit = "2000000000" // 2s in nanoseconds
 		}
 		fmt.Fprintf(&b, "[Eth.Miner]\nRecommit = %s\n\n", recommit)
 	}
 
 	b.WriteString("[Node]\n")
-	fmt.Fprintf(&b, "KeyStoreDir = %q\n", p.KeystoreDir)
-	fmt.Fprintf(&b, "AuthPort = %d\n", p.Ports.Auth)
+	fmt.Fprintf(&b, "KeyStoreDir = %q\n", s.KeystoreDir)
+	fmt.Fprintf(&b, "AuthPort = %d\n", s.Ports.Auth)
 	fmt.Fprintf(&b, "HTTPHost = %q\n", httpHost)
-	fmt.Fprintf(&b, "HTTPPort = %d\n", p.Ports.HTTP)
+	fmt.Fprintf(&b, "HTTPPort = %d\n", s.Ports.HTTP)
 	b.WriteString("HTTPCors = [\"*\"]\n")
 	b.WriteString("HTTPVirtualHosts = [\"*\"]\n")
 	fmt.Fprintf(&b, "HTTPModules = [%s]\n\n", quoteList(modules))
@@ -66,18 +123,18 @@ func Generate(p Params) []byte {
 	// WebSocket endpoint (same host/modules as HTTP) so eth_subscribe is served;
 	// the port is also set via the --ws.port launch flag.
 	fmt.Fprintf(&b, "WSHost = %q\n", httpHost)
-	fmt.Fprintf(&b, "WSPort = %d\n", p.Ports.WS)
+	fmt.Fprintf(&b, "WSPort = %d\n", s.Ports.WS)
 	b.WriteString("WSOrigins = [\"*\"]\n")
 	fmt.Fprintf(&b, "WSModules = [%s]\n\n", quoteList(modules))
 
 	b.WriteString("[Node.P2P]\n")
-	fmt.Fprintf(&b, "ListenAddr = \":%d\"\n", p.Ports.P2P)
+	fmt.Fprintf(&b, "ListenAddr = \":%d\"\n", s.Ports.P2P)
 	b.WriteString("NoDiscovery = true\n")
-	if len(p.StaticNodes) > 0 {
+	if len(s.StaticNodes) > 0 {
 		b.WriteString("StaticNodes = [\n")
-		for i, en := range p.StaticNodes {
+		for i, en := range s.StaticNodes {
 			sep := ","
-			if i == len(p.StaticNodes)-1 {
+			if i == len(s.StaticNodes)-1 {
 				sep = ""
 			}
 			fmt.Fprintf(&b, "  %q%s\n", en, sep)
@@ -91,29 +148,52 @@ func Generate(p Params) []byte {
 	b.WriteString("[Metrics]\n")
 	b.WriteString("Enabled = true\n")
 	fmt.Fprintf(&b, "HTTP = %q\n", metricsHost)
-	fmt.Fprintf(&b, "Port = %d\n", p.Ports.Metrics)
+	fmt.Fprintf(&b, "Port = %d\n", s.Ports.Metrics)
 	b.WriteString("EnableInfluxDB = false\n")
 	b.WriteString("EnableInfluxDBV2 = false\n")
 
 	return []byte(b.String())
 }
 
-// LaunchArgs assembles the common geth-family node launch flags (datadir, config,
-// and the port flags) plus the family-specific flags. These are geth-family
-// conventions shared by both consensus families and by the binary-swap hardfork,
-// so they live here (next to the config generation) rather than in a pipeline
-// stage — the hardfork executor need not depend on pkg/core/pipeline/setup.
-func LaunchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
-	args := []string{
-		"--datadir", dataDir,
-		"--config", configPath,
-		"--port", strconv.Itoa(ports.P2P),
-		"--http",
-		"--http.port", strconv.Itoa(ports.HTTP),
-		"--ws",
-		"--ws.port", strconv.Itoa(ports.WS),
+// Argv renders the launch argv through the launchopt Builder: the family's
+// policy from its start flags, the identity, storage, p2p, and RPC modules
+// from the spec, then the caller's overrides on their own layer.
+//
+// A spec with a ConfigPath leaves the auth port to the file; one without
+// (a handoff relaunch that carries no config) says it on the command line.
+func Argv(s Spec, overrides ...launchopt.Override) ([]string, error) {
+	policy, err := launchopt.ParseFamilyFlags(s.Chain.FamilyFlags)
+	if err != nil {
+		return nil, err
 	}
-	return append(args, familyFlags...)
+	id := launchopt.Identity{
+		NodeKeyFile:         s.NodekeyPath,
+		AllowInsecureUnlock: policy.AllowInsecureUnlock,
+	}
+	if s.Unlock != "" {
+		id.Unlock = s.Unlock
+		id.PasswordFile = s.PasswordFile
+		id.Etherbase = s.Unlock
+	}
+	modules := []launchopt.Module{
+		id,
+		launchopt.Storage{DataDir: s.DataDir, ConfigFile: s.ConfigPath},
+		// The manifest's network id is emitted rather than left to the
+		// binary's default: a chain whose devp2p network id differs from its
+		// genesis chain id (the handoff produces one) must say so. An
+		// operator's --network-id still wins, arriving on a later layer.
+		launchopt.P2P{Port: s.Ports.P2P, NetworkID: s.Chain.NetworkID},
+		launchopt.HTTPRPC{Enabled: true, Addr: s.HTTPHost, Port: s.Ports.HTTP},
+		launchopt.WSRPC{Enabled: true, Port: s.Ports.WS},
+	}
+	if s.ConfigPath == "" && s.Ports.Auth > 0 {
+		modules = append(modules, launchopt.AuthIPC{AuthPort: s.Ports.Auth})
+	}
+	modules = append(modules,
+		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
+		launchopt.Mining{Mine: policy.Mine},
+	)
+	return launchopt.New(launchopt.DialectFor(s.Chain.ID), modules...).WithOverrides(overrides...).Build()
 }
 
 func quoteList(ss []string) string {

@@ -2,6 +2,7 @@ package upgrade
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 )
 
 // LaunchArgs builds the full launch argv (excluding the binary itself) for one
@@ -24,18 +25,13 @@ import (
 // every setting on the command line (no --config file), so the two binaries
 // need no pre-written node config.
 func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string, overrides ...launchopt.Override) ([]string, error) {
-	policy, err := launchopt.ParseFamilyFlags(familyFlags)
-	if err != nil {
-		return nil, err
-	}
-	return launchopt.New(launchopt.DialectFor(n.Chain),
-		launchopt.Identity{AllowInsecureUnlock: policy.AllowInsecureUnlock},
-		launchopt.Storage{DataDir: dataDir},
-		launchopt.P2P{Port: n.Ports.P2P, NetworkID: n.NetworkID},
-		launchopt.HTTPRPC{Enabled: true, Addr: "127.0.0.1", Port: n.Ports.HTTP},
-		launchopt.WSRPC{Enabled: true, Port: n.Ports.WS},
-		launchopt.AuthIPC{AuthPort: n.Ports.Auth},
-		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
-		launchopt.Mining{Mine: policy.Mine},
-	).WithOverrides(overrides...).Build()
+	// A handoff relaunch carries no config file, so the ports the file would
+	// have named travel on the command line; nodeconfig applies that rule.
+	return nodeconfig.Argv(nodeconfig.Spec{
+		Chain:    nodeconfig.Chain{ID: n.Chain, NetworkID: n.NetworkID, FamilyFlags: familyFlags},
+		Role:     n.Role,
+		Ports:    n.Ports,
+		DataDir:  dataDir,
+		HTTPHost: "127.0.0.1",
+	}, overrides...)
 }

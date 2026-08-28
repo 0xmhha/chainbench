@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"io/fs"
 	"maps"
@@ -381,33 +382,10 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("chainsetup: config: no node table — run `net allocate` first")
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	preset, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
-	placed, err := w.Netmap()
-	if err != nil {
-		return "", fmt.Errorf("chainsetup: config: %w", err)
-	}
-	peering, err := node.ParsePeering(w.state.Peering)
-	if err != nil {
-		return "", fmt.Errorf("chainsetup: config: %w", err)
-	}
-	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
-		return "", fmt.Errorf("chainsetup: config: %w", err)
-	}
-	// The peer's own recorded address: spread across a set each node lives on a
-	// different host, and a static-node list pointing at this machine would
-	// leave every node unable to find its peers. Keys reach the composition
-	// as inputs — the netmap module joins them to placements.
-	pubkey := func(index int) (string, bool) {
-		nk, ok := preset.Node(index)
-		if !ok {
-			return "", false
-		}
-		return nk.PublicKey, true
-	}
-	m := p.Manifest()
 	for _, ns := range w.state.Nodes {
 		t, err := w.machineFor(ns)
 		if err != nil {
@@ -417,15 +395,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
-		content := nodeconfig.Generate(nodeconfig.Params{
-			Role:          node.Role(ns.Role),
-			Ports:         ns.Endpoints,
-			KeystoreDir:   filepath.Join(w.keysBase(), fmt.Sprintf("node%d", ns.Index), "keystore"),
-			RPCNamespace:  m.Consensus.RPCNamespace,
-			SyncMode:      ns.SyncMode,
-			MinerRecommit: m.MinerRecommit,
-			StaticNodes:   staticNodes,
-		})
+		content := nodeconfig.TOML(launcher.NodeConfig(p, preset, driverSpec(ns), w.keysBase(), staticNodes))
 		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
@@ -442,8 +412,8 @@ type LaunchOptsOpts struct {
 	Set []string
 }
 
-// LaunchOpts assembles each node's launch argv through NodeLaunchArgs —
-// the single argv assembly site — and records it in the node table, so `start`
+// LaunchOpts assembles each node's launch argv through nodeconfig.Argv —
+// the single argv renderer — and records it in the node table, so `start`
 // launches exactly what this step showed.
 func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	p, err := w.plugin()
@@ -453,7 +423,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if len(w.state.Nodes) == 0 {
 		return "", fmt.Errorf("chainsetup: launchopts: no node table — run `net allocate` first")
 	}
-	preset, err := store.LoadPreset(w.state.KeysDir)
+	preset, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
@@ -462,7 +432,11 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		return "", err
 	}
 	for i, ns := range w.state.Nodes {
-		args, err := launcher.NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
+		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+		if err != nil {
+			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
+		}
+		args, err := nodeconfig.Argv(launcher.NodeConfig(p, preset, driverSpec(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -612,6 +586,7 @@ func driverSpec(ns node.Record) driver.NodeSpec {
 	return driver.NodeSpec{
 		Index:      ns.Index,
 		Role:       node.Role(ns.Role),
+		SyncMode:   ns.SyncMode,
 		Host:       nodeHost(ns),
 		DataDir:    ns.DataDir,
 		ConfigPath: ns.ConfigPath,
@@ -677,4 +652,38 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 		ConfigOverrides: opts.Overrides,
 		Overlay:         opts.Overlay,
 	})
+}
+
+// peerPlan is what every per-node rendering needs beyond the record: the key
+// set (identity and public keys), the placement, the validated peering, and a
+// public-key lookup by index. Config, launchopts and start all render from
+// the same four, so they are gathered once.
+func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.Preset, *node.Map, node.Peering, func(int) (string, bool), error) {
+	preset, err := store.LoadPreset(w.state.KeysDir)
+	if err != nil {
+		return keyring.Preset{}, nil, "", nil, err
+	}
+	placed, err := w.Netmap()
+	if err != nil {
+		return keyring.Preset{}, nil, "", nil, err
+	}
+	peering, err := node.ParsePeering(w.state.Peering)
+	if err != nil {
+		return keyring.Preset{}, nil, "", nil, err
+	}
+	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
+		return keyring.Preset{}, nil, "", nil, err
+	}
+	// The peer's own recorded address: spread across a set each node lives on
+	// a different host, and a static-node list pointing at this machine would
+	// leave every node unable to find its peers. Keys reach the composition
+	// as inputs — the node module joins them to placements.
+	pubkey := func(index int) (string, bool) {
+		nk, ok := preset.Node(index)
+		if !ok {
+			return "", false
+		}
+		return nk.PublicKey, true
+	}
+	return preset, placed, peering, pubkey, nil
 }

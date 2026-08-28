@@ -63,14 +63,26 @@ func BuildNodeSpec(c *Cluster, s Server, enodes []string) driver.NodeSpec {
 	fam := poa.New()
 	dd := c.dataRoot()
 	configPath := path.Join(dd, "config.toml")
-	cfg := nodeconfig.Generate(nodeconfig.Params{
-		Role:          role,
-		Ports:         ports,
-		RPCNamespace:  fam.RPCNamespace(),
-		MinerRecommit: wemixMinerRecommit,
-		SyncMode:      c.SyncModeFor(s),
-		StaticNodes:   enodes,
-	})
+	spec := nodeconfig.Spec{
+		Chain: nodeconfig.Chain{
+			ID: "wemix", RPCNamespace: fam.RPCNamespace(), MinerRecommit: wemixMinerRecommit,
+			FamilyFlags: fam.StartFlags(role),
+		},
+		Role:        role,
+		Ports:       ports,
+		SyncMode:    c.SyncModeFor(s),
+		DataDir:     dd,
+		ConfigPath:  configPath,
+		StaticNodes: enodes,
+	}
+	cfg := nodeconfig.TOML(spec)
+	args, err := nodeconfig.Argv(spec)
+	if err != nil {
+		// The cluster's specs are built without a context to fail into; a
+		// dialect that cannot render the family's own flags is a programming
+		// error, not an operator's.
+		panic(fmt.Sprintf("deploy: argv for server %d: %v", s.Index, err))
+	}
 	return driver.NodeSpec{
 		Index:         s.Index,
 		Role:          role,
@@ -81,7 +93,7 @@ func BuildNodeSpec(c *Cluster, s Server, enodes []string) driver.NodeSpec {
 		ConfigContent: cfg,
 		LogPath:       path.Join(dd, "node.log"),
 		Ports:         ports,
-		Args:          nodeconfig.LaunchArgs(dd, configPath, ports, fam.StartFlags(role)),
+		Args:          args,
 	}
 }
 

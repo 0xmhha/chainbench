@@ -314,25 +314,15 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 		return nk.PublicKey, true
 	}
 
-	m := plugin.Manifest()
 	out := make([]driver.NodeSpec, len(plan.Nodes))
 	for i, spec := range plan.Nodes {
 		staticNodes, err := node.PeerList(placed, peering, node.LabelFor(spec.Index), pubkey)
 		if err != nil {
 			return nil, fmt.Errorf("launcher: node%d peers: %w", spec.Index, err)
 		}
-		nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
-		spec.ConfigContent = nodeconfig.Generate(nodeconfig.Params{
-			Role:          spec.Role,
-			Ports:         spec.Ports,
-			KeystoreDir:   filepath.Join(nodeDir, "keystore"),
-			RPCNamespace:  m.Consensus.RPCNamespace,
-			MinerRecommit: m.MinerRecommit,
-			SyncMode:      spec.SyncMode,
-			StaticNodes:   staticNodes,
-		})
-
-		args, err := NodeLaunchArgs(plugin, preset, spec, keysDir, overrides)
+		cfg := NodeConfig(plugin, preset, spec, keysDir, staticNodes)
+		spec.ConfigContent = nodeconfig.TOML(cfg)
+		args, err := nodeconfig.Argv(cfg, overrides...)
 		if err != nil {
 			return nil, fmt.Errorf("launcher: node%d: %w", spec.Index, err)
 		}
@@ -343,44 +333,31 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 	return out, nil
 }
 
-// NodeLaunchArgs assembles one node's full launch argv through the launchopt
-// Builder. This is THE argv assembly site (docs/dev/architecture/code-graph.md
-// §3): armSpecs uses it for engine runs, and the netcompose step surface uses
-// it for `net launchopts`/`net start`, so a step-composed node launches with
-// exactly the argv an engine run would produce.
-func NodeLaunchArgs(plugin registry.ChainPlugin, preset keyring.Preset, spec driver.NodeSpec, keysDir string, overrides []launchopt.Override) ([]string, error) {
-	policy, err := launchopt.ParseFamilyFlags(plugin.Family().StartFlags(spec.Role))
-	if err != nil {
-		return nil, err
-	}
+// NodeConfig assembles one node's configuration from the chain, the key set,
+// and the node's spec: the one place a nodeconfig.Spec is built from a plan.
+// The step surface builds the same Spec from a workspace record through here
+// too, so a step-composed node launches with exactly the argv and config an
+// engine run would produce.
+func NodeConfig(plugin registry.ChainPlugin, preset keyring.Preset, spec driver.NodeSpec, keysDir string, staticNodes []string) nodeconfig.Spec {
 	nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
-	id := launchopt.Identity{
-		NodeKeyFile:         filepath.Join(nodeDir, "nodekey"),
-		AllowInsecureUnlock: policy.AllowInsecureUnlock,
+	cfg := nodeconfig.Spec{
+		Chain:       nodeconfig.ChainOf(plugin, spec.Role),
+		Role:        spec.Role,
+		Ports:       spec.Ports,
+		SyncMode:    spec.SyncMode,
+		DataDir:     spec.DataDir,
+		ConfigPath:  spec.ConfigPath,
+		NodekeyPath: filepath.Join(nodeDir, "nodekey"),
+		KeystoreDir: filepath.Join(nodeDir, "keystore"),
+		StaticNodes: staticNodes,
 	}
 	if node.Is(spec.Role, node.RoleBP) {
 		if nk, ok := preset.Node(spec.Index); ok {
-			id.Unlock = nk.Address
-			id.PasswordFile = filepath.Join(keysDir, "password")
-			id.Etherbase = nk.Address
+			cfg.Unlock = nk.Address
+			cfg.PasswordFile = filepath.Join(keysDir, "password")
 		}
 	}
-	return launchopt.New(launchopt.DialectFor(plugin.Manifest().ID),
-		id,
-		launchopt.Storage{DataDir: spec.DataDir, ConfigFile: spec.ConfigPath},
-		// The manifest's network id is emitted rather than left to the
-		// binary's default. It was never emitted at all, so a chain whose
-		// devp2p network id differs from its genesis chain id — which the
-		// handoff produces, since it forces the chain id — ran on whichever
-		// the binary inferred. Setting it from the manifest makes the argv say
-		// what the chain declares; an operator's --network-id still wins,
-		// because that override arrives on a later layer.
-		launchopt.P2P{Port: spec.Ports.P2P, NetworkID: plugin.Manifest().NetworkID},
-		launchopt.HTTPRPC{Enabled: true, Port: spec.Ports.HTTP},
-		launchopt.WSRPC{Enabled: true, Port: spec.Ports.WS},
-		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
-		launchopt.Mining{Mine: policy.Mine},
-	).WithOverrides(overrides...).Build()
+	return cfg
 }
 
 // PlanMap reads a launch plan as a placement map, so the peering policy and the

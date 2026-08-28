@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -86,7 +87,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 
 // Start launches every stopped node. Argv comes from the launchopts step when
 // it ran; otherwise it is assembled here through the same single site
-// (NodeLaunchArgs) with no overrides.
+// (nodeconfig.Argv) with no overrides.
 func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error) {
 	p, err := w.plugin()
 	if err != nil {
@@ -557,7 +558,15 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 		spec := driverSpec(ns)
 		spec.Binary = bin
 		if len(spec.Args) == 0 {
-			args, err := launcher.NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
+			_, placed, peering, pubkey, perr := w.peerPlan(p)
+			if perr != nil {
+				return started, fmt.Errorf("chainsetup: start: %w", perr)
+			}
+			staticNodes, perr := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+			if perr != nil {
+				return started, fmt.Errorf("chainsetup: start: node%d peers: %w", ns.Index, perr)
+			}
+			args, err := nodeconfig.Argv(launcher.NodeConfig(p, preset, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
