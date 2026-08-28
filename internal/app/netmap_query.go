@@ -198,14 +198,9 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
-	inv, err := resource.NewInventory(pool)
+	inv, err := chainsetup.Inventory(pool, "", in.DataDir)
 	if err != nil {
 		return NetPoolOut{}, err
-	}
-	for _, dir := range poolWorkspaces(in.DataDir) {
-		if ws, err := chainsetup.Open(dir, d.Clock); err == nil {
-			inv.Adopt(chainsetup.Allocations(ws))
-		}
 	}
 	u := inv.Usage()
 	out := NetPoolOut{Source: pool.Source, Slots: pool.Slots, Cap: u.Cap, Used: u.Used, Free: u.Free, ByNetwork: u.ByNetwork}
@@ -218,30 +213,6 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 		out.Hosts = append(out.Hosts, fmt.Sprintf("%s (%s)", name, h.Addr))
 	}
 	return out, nil
-}
-
-// poolWorkspaces is every workspace whose claims count against the pool: the
-// named one first, then the default root's. A missing default root is simply
-// nothing more to count.
-func poolWorkspaces(named string) []string {
-	var dirs []string
-	if named != "" {
-		dirs = append(dirs, named)
-	}
-	root, err := chainsetup.DefaultRoot()
-	if err != nil {
-		return dirs
-	}
-	found, err := chainsetup.Discover(root)
-	if err != nil {
-		return dirs
-	}
-	for _, f := range found {
-		if f != named {
-			dirs = append(dirs, f)
-		}
-	}
-	return dirs
 }
 
 // NetPlanIn asks what placement a network of this shape would get, before any
@@ -286,7 +257,14 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 	for range in.Endpoints {
 		reqs = append(reqs, resource.Request{Role: node.RoleEN})
 	}
-	m, err := resource.Assign(pool, reqs)
+	// The plan is what a composition would actually get, so it draws from
+	// the same inventory allocate does — a set half taken plans from where
+	// the taken part ends — without claiming anything.
+	inv, err := chainsetup.Inventory(pool, "")
+	if err != nil {
+		return NetMapOut{}, err
+	}
+	m, err := inv.Assign(reqs, "")
 	if err != nil {
 		return NetMapOut{}, err
 	}

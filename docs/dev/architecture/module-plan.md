@@ -276,6 +276,12 @@ remove one with `chainbench net rm`
 같은 자리를 말한다. 라이브에서 같은 세트의 두 조립이 같은 포트를 받는 것이
 확인됐고(인벤토리는 먼저 것만 보유자로 센다), 그것이 P2.x 가 고칠 충돌이다.
 
+**P2.x(2026-08-28).** 고쳤다. `Inventory.Assign(reqs, network)` 이 빈 슬롯을 `Take` 한 뒤
+배치하고, `chainsetup.Inventory` 가 allocate·plan·pool 셋이 읽는 claim 집합을 한 곳에서
+조립한다(자기 워크스페이스는 제외 — 재실행이 자기 이전 답과 경쟁하지 않게).
+`resource.Assign(pool)` 은 "빈 세트의 계획" 으로 남아 골든이 그대로다. 슬롯의 호스트
+키는 항목 이름, 이름 없는 항목은 주소(`hostKey`) — srv:// 와 같은 규칙.
+
 ## 3. 합칠 것과 지울 것
 
 재측정으로 확인된 잔재다. 단계 진행 중 **해당 모듈을 손댈 때 함께** 처리한다.
