@@ -10,10 +10,10 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -43,9 +43,9 @@ func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, req cha
 
 // fakeSupervisor is a real supervisor whose launch and health hooks are fakes: it
 // synthesizes a node set from the plan and always reports healthy.
-func fakeSupervisor() supervisor.Supervisor {
-	return supervisor.New(supervisor.Deps{
-		Launch: func(_ context.Context, plan driver.Plan, _ []int) (supervisor.LaunchResult, error) {
+func fakeSupervisor() launcher.Launcher {
+	return launcher.New(launcher.Deps{
+		Launch: func(_ context.Context, plan driver.Plan, _ []int) (launcher.Result, error) {
 			var ns node.NodeSet
 			for _, s := range plan.Nodes {
 				ns.Nodes = append(ns.Nodes, node.Node{
@@ -53,10 +53,10 @@ func fakeSupervisor() supervisor.Supervisor {
 					RPCURL: fmt.Sprintf("http://%s:%d", s.Host, s.Ports.HTTP), Ports: s.Ports,
 				})
 			}
-			return supervisor.LaunchResult{Nodes: ns}, nil
+			return launcher.Result{Nodes: ns}, nil
 		},
-		HealthGate: func(context.Context, node.NodeSet) (supervisor.Diagnosis, error) {
-			return supervisor.Diagnosis{OK: true}, nil
+		HealthGate: func(context.Context, node.NodeSet) (launcher.Diagnosis, error) {
+			return launcher.Diagnosis{OK: true}, nil
 		},
 		Sleep: func(time.Duration) {},
 	})

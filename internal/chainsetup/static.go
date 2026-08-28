@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 	"time"
@@ -91,7 +92,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 		gen    []byte
 		plan   driver.Plan
 		specs  []driver.NodeSpec
-		launch LocalLauncher
+		launch launcher.Direct
 		nodes  node.NodeSet
 	)
 	reqs := validatorReqs(o.Validators)
@@ -168,7 +169,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[6], func() (string, error) {
-		launch = LocalLauncher{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
+		launch = launcher.Direct{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
 		s, err := launch.Arm(plan)
 		if err != nil {
 			return "", err

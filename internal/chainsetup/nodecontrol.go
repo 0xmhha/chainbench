@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
@@ -19,14 +19,14 @@ const stopGrace = 5 * time.Second
 
 // NodeController launches a plan and remembers each node's arming, so a spec can
 // later stop and restart one node without disturbing the rest of the network.
-// It sits in front of a LocalLauncher: it satisfies the supervisor's launch boundary
+// It sits in front of a launcher.Direct: it satisfies the launcher's launch boundary
 // and testspec.NodeControl at once, which is what lets a fault step reach the
 // exact process the bring-up started.
 //
 // Attach mode wires none of this — chainbench does not own those processes, and
 // the fault actions say so rather than pretending.
 type NodeController struct {
-	launcher LocalLauncher
+	launcher launcher.Direct
 	procs    *process.Manager
 
 	mu    sync.Mutex
@@ -35,9 +35,9 @@ type NodeController struct {
 }
 
 // NewNodeController returns a controller over launcher, tracking processes in
-// procs (the same manager the supervisor tears down with, so a node stopped and
+// procs (the same manager the launcher tears down with, so a node stopped and
 // restarted mid-test is still accounted for at teardown).
-func NewNodeController(launcher LocalLauncher, procs *process.Manager) *NodeController {
+func NewNodeController(launcher launcher.Direct, procs *process.Manager) *NodeController {
 	if procs == nil {
 		procs = process.New()
 	}
@@ -49,16 +49,16 @@ func NewNodeController(launcher LocalLauncher, procs *process.Manager) *NodeCont
 	}
 }
 
-// Launch implements the supervisor launch boundary, recording each node's arming and
+// Launch implements the launcher launch boundary, recording each node's arming and
 // pid on the way through.
-func (c *NodeController) Launch(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, error) {
+func (c *NodeController) Launch(ctx context.Context, plan driver.Plan, nodes []int) (launcher.Result, error) {
 	res, specs, err := c.launcher.LaunchArmed(ctx, plan, nodes)
 	c.record(res, specs)
 	return res, err
 }
 
 // record stores the arming and pid of every node the launch produced.
-func (c *NodeController) record(res supervisor.LaunchResult, specs []driver.NodeSpec) {
+func (c *NodeController) record(res launcher.Result, specs []driver.NodeSpec) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, s := range specs {

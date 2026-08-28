@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 
@@ -125,7 +126,7 @@ func stopAll(ctx context.Context, d Deps, ns node.NodeSet) (NetworkStopOut, erro
 	if err != nil {
 		return NetworkStopOut{}, err
 	}
-	stopped, errs := driver.StopNodeSet(ctx, dr, ns)
+	stopped, errs := launcher.StopNodeSet(ctx, dr, ns)
 	return NetworkStopOut{Stopped: stopped, Failed: errs}, nil
 }
 
@@ -151,7 +152,7 @@ func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	if err != nil {
 		return err
 	}
-	if err := driver.StopNode(ctx, dr, ns, in.Index); err != nil {
+	if err := launcher.StopNode(ctx, dr, ns, in.Index); err != nil {
 		return err
 	}
 	for i := range ns.Nodes {
@@ -196,7 +197,7 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (NodeStartOut, error
 	if err != nil {
 		return NodeStartOut{}, err
 	}
-	refreshed, err := driver.RelaunchNode(ctx, dr, spec)
+	refreshed, err := launcher.RelaunchNode(ctx, dr, spec)
 	if err != nil {
 		return NodeStartOut{}, err
 	}

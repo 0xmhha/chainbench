@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -27,7 +27,7 @@ type TeardownFunc func(ctx context.Context) error
 type BuildEnvFunc func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error)
 
 // BuildDeps injects BuildEnv's collaborators so the composition is unit-testable
-// without real chain binaries: the supervisor's launch and health hooks decide
+// without real chain binaries: the launcher's launch and health hooks decide
 // whether a bring-up runs a process or a fake, and Provision decides what lands
 // on disk.
 type BuildDeps struct {
@@ -39,9 +39,9 @@ type BuildDeps struct {
 	// Genesis sources the network genesis bytes.
 	Genesis GenesisSource
 	// Supervisor brings the network up behind a health gate and tears it down.
-	Supervisor supervisor.Supervisor
+	Supervisor launcher.Launcher
 	// Options tunes bring-up (health gating, retries).
-	Options supervisor.Options
+	Options launcher.Options
 	// Caps are the advertised capabilities recorded on the plan.
 	Caps []string
 	// Reqs derives per-node placement requests (role/binary/sync) from a spec.
@@ -57,7 +57,7 @@ type BuildDeps struct {
 
 // NewBuildEnv composes the network build: allocate placements, source genesis,
 // assemble the plan, provision on-disk files, then bring the network up behind
-// the supervisor's health gate. The returned teardown stops the nodes and
+// the launcher's health gate. The returned teardown stops the nodes and
 // removes their data dirs. It is the production wiring for Deps.BuildEnv.
 func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 	return func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error) {
@@ -122,7 +122,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 		}
 
 		teardown := func(ctx context.Context) error {
-			return d.Supervisor.Teardown(ctx, ns, supervisor.TeardownOpts{RemoveDataDir: true, Grace: teardownGrace})
+			return d.Supervisor.Teardown(ctx, ns, launcher.TeardownOpts{RemoveDataDir: true, Grace: teardownGrace})
 		}
 		return ns, teardown, nil
 	}

@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -553,7 +554,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 		spec := driverSpec(ns)
 		spec.Binary = bin
 		if len(spec.Args) == 0 {
-			args, err := NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
+			args, err := launcher.NodeLaunchArgs(p, preset, spec, w.state.KeysDir, nil)
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}

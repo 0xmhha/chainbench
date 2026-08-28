@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"io/fs"
 	"maps"
 	"os"
@@ -461,7 +462,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		return "", err
 	}
 	for i, ns := range w.state.Nodes {
-		args, err := NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
+		args, err := launcher.NodeLaunchArgs(p, preset, driverSpec(ns), w.keysBase(), overrides)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}

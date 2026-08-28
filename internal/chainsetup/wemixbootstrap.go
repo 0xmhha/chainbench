@@ -42,7 +42,7 @@ const etcdFormWait = 30 * time.Second
 //
 // It is the executor side of the boundary the family declares. The family says what
 // must happen and in what order; this says how, for one particular target. The
-// supervisor owns when, how long, and how a failure is classified.
+// launcher owns when, how long, and how a failure is classified.
 type WemixBootstrap struct {
 	// Binary is the gwemix executable the actions drive.
 	Binary string

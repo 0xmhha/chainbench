@@ -1,4 +1,4 @@
-package supervisor
+package launcher
 
 import (
 	"strings"
@@ -8,7 +8,7 @@ import (
 // Etcd join-slot gaps, derived from the cluster size the way go-wemix's
 // etcdAutoJoin does: each node sleeps until its own slot before attempting a
 // join, and the slot spacing widens with the cluster. Reproducing the schedule
-// here is what lets the supervisor wait for a join that is merely scheduled
+// here is what lets the launcher wait for a join that is merely scheduled
 // rather than declaring it failed (design §3.3 L7, C-etcd).
 const (
 	smallClusterGap  = 7 * time.Second  // size <= 11

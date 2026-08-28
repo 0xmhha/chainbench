@@ -5,7 +5,7 @@ package driver
 // I/O, so it is unit testable and inspectable before anything runs.
 //
 // It lives here — next to NodeSpec, the per-node half of the same contract —
-// so the packages that execute plans (supervisor, engine, chainsetup) do not
+// so the packages that execute plans (launcher, engine, chainsetup) do not
 // depend on the legacy pipeline package that used to declare it
 // (core/pipeline/setup keeps a type alias for its remaining legacy
 // consumers until they migrate).

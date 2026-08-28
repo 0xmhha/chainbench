@@ -1,4 +1,4 @@
-package chainsetup
+package launcher
 
 import (
 	"context"
@@ -15,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 )
 
 // genesisFilePerm is the genesis.json file mode.
@@ -24,17 +23,17 @@ const genesisFilePerm os.FileMode = 0o644
 // configFilePerm is the node config file mode.
 const configFilePerm os.FileMode = 0o644
 
-// LocalLauncher arms and launches a plan on the local host from a preset key
+// Direct arms and launches a plan on the local host from a preset key
 // set. For each node it renders the config, installs the preset identity
 // (devp2p nodekey, and for validators the unlock account), initializes the
 // datadir from the network genesis, and launches the process. It implements the
-// supervisor launch boundary, so NewBuildEnv brings a real network up on the
+// launcher's launch boundary, so NewBuildEnv brings a real network up on the
 // allocator-assigned ports.
 //
 // On-disk files (genesis, per-node config) are materialized through a
 // filestore.Store (upload-if-absent), so a rerun reuses existing files and a
 // remote sink can later ship them to another host without changing this type.
-type LocalLauncher struct {
+type Direct struct {
 	// Peering selects the peer graph the nodes are wired into. The zero value
 	// is node.Mesh, which is what every composition did before the policy had
 	// a name.
@@ -59,7 +58,7 @@ type LocalLauncher struct {
 
 // Launch arms and launches every node in plan and returns the running node set
 // plus the processes to track for teardown.
-func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, error) {
+func (l Direct) Launch(ctx context.Context, plan driver.Plan, nodes []int) (Result, error) {
 	res, _, err := l.LaunchArmed(ctx, plan, nodes)
 	return res, err
 }
@@ -73,20 +72,20 @@ func (l LocalLauncher) Launch(ctx context.Context, plan driver.Plan, nodes []int
 // a caller checking the bring-up can report each one on its own: "which step
 // failed" is a different question from "did it come up", and only the phases
 // answer it.
-func (l LocalLauncher) LaunchArmed(ctx context.Context, plan driver.Plan, nodes []int) (supervisor.LaunchResult, []driver.NodeSpec, error) {
+func (l Direct) LaunchArmed(ctx context.Context, plan driver.Plan, nodes []int) (Result, []driver.NodeSpec, error) {
 	specs, err := l.Arm(plan)
 	if err != nil {
-		return supervisor.LaunchResult{}, nil, err
+		return Result{}, nil, err
 	}
 	// Every node's files are written even when only some are started: a later
 	// phase launches against inputs that must already be on the target, and a
 	// node's config names peers that do not exist yet either way.
 	if err := l.Materialize(ctx, plan, specs); err != nil {
-		return supervisor.LaunchResult{}, specs, err
+		return Result{}, specs, err
 	}
 	starting, err := selectSpecs(specs, nodes)
 	if err != nil {
-		return supervisor.LaunchResult{}, specs, err
+		return Result{}, specs, err
 	}
 	res, err := l.InitAndLaunch(ctx, plan, starting)
 	return res, specs, err
@@ -108,7 +107,7 @@ func selectSpecs(specs []driver.NodeSpec, nodes []int) ([]driver.NodeSpec, error
 	for _, i := range nodes {
 		s, ok := byIndex[i]
 		if !ok {
-			return nil, fmt.Errorf("engine: launcher: phase names node%d, which the plan does not have", i)
+			return nil, fmt.Errorf("launcher: phase names node%d, which the plan does not have", i)
 		}
 		out = append(out, s)
 	}
@@ -120,10 +119,10 @@ func selectSpecs(specs []driver.NodeSpec, nodes []int) ([]driver.NodeSpec, error
 // paths (nodekey, keystore, password) are rooted at keyBase(plan): the local
 // KeysDir for a local launch, or the remote keys dir a remote launch ships them
 // to.
-func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
+func (l Direct) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 	preset, err := store.LoadPreset(l.KeysDir)
 	if err != nil {
-		return nil, fmt.Errorf("engine: launcher: %w", err)
+		return nil, fmt.Errorf("launcher: %w", err)
 	}
 	return armSpecs(l.Plugin, preset, plan, l.Binary, l.keyBase(plan), l.Peering, l.LaunchOverrides)
 }
@@ -132,7 +131,7 @@ func (l LocalLauncher) Arm(plan driver.Plan) ([]driver.NodeSpec, error) {
 // (upload-if-absent), locally or to a remote host. When the driver ships files
 // to another host (a FileProvisioner), each node's preset identity files are
 // also shipped to the remote keys dir the armed specs reference.
-func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
+func (l Direct) Materialize(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) error {
 	sink := l.Files
 	if sink == nil {
 		sink = filestore.Local{}
@@ -142,7 +141,7 @@ func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs 
 	}
 	if fp, remote := l.fileProvisioner(); remote {
 		if err := shipIdentities(ctx, fp, l.KeysDir, l.keyBase(plan), specs); err != nil {
-			return fmt.Errorf("engine: launcher: ship identities: %w", err)
+			return fmt.Errorf("launcher: ship identities: %w", err)
 		}
 	}
 	return nil
@@ -152,7 +151,7 @@ func (l LocalLauncher) Materialize(ctx context.Context, plan driver.Plan, specs 
 // config, and — for a remote driver — the shipped identities) without
 // initializing datadirs or launching. It is the provision-only path behind
 // `setup --provision`. The returned specs are the armed specs materialize wrote.
-func (l LocalLauncher) Provision(ctx context.Context, plan driver.Plan) ([]driver.NodeSpec, error) {
+func (l Direct) Provision(ctx context.Context, plan driver.Plan) ([]driver.NodeSpec, error) {
 	specs, err := l.Arm(plan)
 	if err != nil {
 		return nil, err
@@ -165,7 +164,7 @@ func (l LocalLauncher) Provision(ctx context.Context, plan driver.Plan) ([]drive
 
 // fileProvisioner reports whether the launcher's driver ships files to another
 // host (the remote-launch case) and, if so, returns that capability.
-func (l LocalLauncher) fileProvisioner() (driver.FileProvisioner, bool) {
+func (l Direct) fileProvisioner() (driver.FileProvisioner, bool) {
 	if l.Driver == nil {
 		return nil, false
 	}
@@ -177,7 +176,7 @@ func (l LocalLauncher) fileProvisioner() (driver.FileProvisioner, bool) {
 // launch: the local KeysDir for a local launch, or a keys/ dir under the data
 // root for a remote launch (where shipIdentities places them, and where the
 // remote config keystore and launch args then point).
-func (l LocalLauncher) keyBase(plan driver.Plan) string {
+func (l Direct) keyBase(plan driver.Plan) string {
 	if _, remote := l.fileProvisioner(); remote {
 		return filepath.Join(plan.DataRoot, "keys")
 	}
@@ -225,7 +224,7 @@ func shipIdentities(ctx context.Context, fp driver.FileProvisioner, keysDir, key
 
 // InitAndLaunch initializes each node's datadir from the shared genesis and
 // starts it, returning the node set and the processes to track.
-func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) (supervisor.LaunchResult, error) {
+func (l Direct) InitAndLaunch(ctx context.Context, plan driver.Plan, specs []driver.NodeSpec) (Result, error) {
 	d := l.Driver
 	if d == nil {
 		d = driver.NewLocalDriver()
@@ -235,26 +234,22 @@ func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan driver.Plan, spec
 	// genesis and runs init on its host; otherwise fall back to a local init.
 	initer, canInit := d.(driver.Initializer)
 
-	res := supervisor.LaunchResult{Nodes: node.NodeSet{
+	res := Result{Nodes: node.NodeSet{
 		Chain: plan.Chain, Network: plan.Network, Capabilities: plan.Capabilities,
 	}}
 	for _, spec := range specs {
 		if canInit {
 			if err := initer.InitDatadir(ctx, spec, plan.Genesis); err != nil {
-				return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+				return res, fmt.Errorf("launcher: init node%d: %w", spec.Index, err)
 			}
 		} else if err := driver.InitDatadir(ctx, l.Binary, spec.DataDir, plan.GenesisPath); err != nil {
-			return res, fmt.Errorf("engine: launcher: init node%d: %w", spec.Index, err)
+			return res, fmt.Errorf("launcher: init node%d: %w", spec.Index, err)
 		}
 		h, err := d.Launch(ctx, spec)
 		if err != nil {
-			return res, fmt.Errorf("engine: launcher: launch node%d: %w", spec.Index, err)
+			return res, fmt.Errorf("launcher: launch node%d: %w", spec.Index, err)
 		}
-		res.Nodes.Nodes = append(res.Nodes.Nodes, node.Node{
-			Index: spec.Index, Role: spec.Role, Host: spec.Host,
-			RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
-			Ports:  spec.Ports, PID: h.PID,
-		})
+		res.Nodes.Nodes = append(res.Nodes.Nodes, driver.NodeOf(spec, h.PID))
 		res.Procs = append(res.Procs, process.Proc{
 			PID: h.PID, Label: string(node.LabelFor(spec.Index)),
 			DataDir: spec.DataDir, Host: spec.Host,
@@ -274,7 +269,7 @@ func materialize(ctx context.Context, pv *filestore.Provisioner, plan driver.Pla
 			Files:   []filestore.File{{Path: filepath.Base(plan.GenesisPath), Content: plan.Genesis, Mode: genesisFilePerm}},
 		}
 		if _, err := pv.Provision(ctx, in); err != nil {
-			return fmt.Errorf("engine: launcher: genesis: %w", err)
+			return fmt.Errorf("launcher: genesis: %w", err)
 		}
 	}
 	for _, spec := range specs {
@@ -286,7 +281,7 @@ func materialize(ctx context.Context, pv *filestore.Provisioner, plan driver.Pla
 			Files:   []filestore.File{{Path: filepath.Base(spec.ConfigPath), Content: spec.ConfigContent, Mode: configFilePerm}},
 		}
 		if _, err := pv.Provision(ctx, in); err != nil {
-			return fmt.Errorf("engine: launcher: config node%d: %w", spec.Index, err)
+			return fmt.Errorf("launcher: config node%d: %w", spec.Index, err)
 		}
 	}
 	return nil
@@ -306,7 +301,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 	// spell a peer, because an enode needs key material and netmap holds none.
 	placed, err := PlanMap(plan)
 	if err != nil {
-		return nil, fmt.Errorf("engine: launcher: %w", err)
+		return nil, fmt.Errorf("launcher: %w", err)
 	}
 	if peering == "" {
 		peering = node.Mesh
@@ -324,7 +319,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 	for i, spec := range plan.Nodes {
 		staticNodes, err := node.PeerList(placed, peering, node.LabelFor(spec.Index), pubkey)
 		if err != nil {
-			return nil, fmt.Errorf("engine: launcher: node%d peers: %w", spec.Index, err)
+			return nil, fmt.Errorf("launcher: node%d peers: %w", spec.Index, err)
 		}
 		nodeDir := filepath.Join(keysDir, fmt.Sprintf("node%d", spec.Index))
 		spec.ConfigContent = nodeconfig.Generate(nodeconfig.Params{
@@ -339,7 +334,7 @@ func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Pl
 
 		args, err := NodeLaunchArgs(plugin, preset, spec, keysDir, overrides)
 		if err != nil {
-			return nil, fmt.Errorf("engine: launcher: node%d: %w", spec.Index, err)
+			return nil, fmt.Errorf("launcher: node%d: %w", spec.Index, err)
 		}
 		spec.Args = args
 		spec.Binary = binary

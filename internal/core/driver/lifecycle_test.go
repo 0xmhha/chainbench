@@ -3,6 +3,7 @@ package driver_test
 import (
 	"context"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -48,7 +49,7 @@ func twoNodeSet() node.NodeSet {
 
 func TestStopNode(t *testing.T) {
 	d := &recordingDriver{}
-	if err := driver.StopNode(context.Background(), d, twoNodeSet(), 5); err != nil {
+	if err := launcher.StopNode(context.Background(), d, twoNodeSet(), 5); err != nil {
 		t.Fatalf("StopNode(5): %v", err)
 	}
 	if len(d.stopped) != 1 || d.stopped[0] != 5 {
@@ -58,11 +59,11 @@ func TestStopNode(t *testing.T) {
 
 func TestStopNode_UnknownIndexOrDeadPIDStopsNothing(t *testing.T) {
 	d := &recordingDriver{}
-	if err := driver.StopNode(context.Background(), d, twoNodeSet(), 9); err == nil {
+	if err := launcher.StopNode(context.Background(), d, twoNodeSet(), 9); err == nil {
 		t.Error("StopNode on an unknown index should error")
 	}
 	dead := node.NodeSet{Nodes: []node.Node{{Index: 1, PID: 0}}}
-	if err := driver.StopNode(context.Background(), d, dead, 1); err == nil {
+	if err := launcher.StopNode(context.Background(), d, dead, 1); err == nil {
 		t.Error("StopNode on a node with no live PID should error")
 	}
 	if len(d.stopped) != 0 {
@@ -76,7 +77,7 @@ func TestRelaunchNode(t *testing.T) {
 		Index: 5, Role: node.RoleEndpoint, Host: "127.0.0.1",
 		Ports: node.Endpoints{HTTP: 8505},
 	}
-	n, err := driver.RelaunchNode(context.Background(), d, spec)
+	n, err := launcher.RelaunchNode(context.Background(), d, spec)
 	if err != nil {
 		t.Fatalf("RelaunchNode: %v", err)
 	}
@@ -95,7 +96,7 @@ func TestStopNodeSet_SkipsNodesWithNoPID(t *testing.T) {
 	ns := twoNodeSet()
 	ns.Nodes = append(ns.Nodes, node.Node{Index: 7, PID: 0})
 
-	stopped, errs := driver.StopNodeSet(context.Background(), d, ns)
+	stopped, errs := launcher.StopNodeSet(context.Background(), d, ns)
 	if stopped != 2 || len(errs) != 0 {
 		t.Fatalf("stopped=%d errs=%v, want 2/none", stopped, errs)
 	}
@@ -109,7 +110,7 @@ func TestStopNodeSet_IsBestEffort(t *testing.T) {
 	// PID is exactly when tearing the rest of the network down matters most.
 	d := &recordingDriver{stopErr: errors.New("no such process")}
 
-	stopped, errs := driver.StopNodeSet(context.Background(), d, twoNodeSet())
+	stopped, errs := launcher.StopNodeSet(context.Background(), d, twoNodeSet())
 	if stopped != 0 {
 		t.Errorf("stopped = %d, want 0", stopped)
 	}

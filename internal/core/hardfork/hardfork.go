@@ -118,14 +118,11 @@ func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeS
 		if err != nil {
 			return ns, fmt.Errorf("hardfork: relaunch node%d on %s: %w", s.Index, binary, err)
 		}
-		ns.Nodes = append(ns.Nodes, node.Node{
-			Index:  s.Index,
-			Role:   s.Role,
-			Host:   "127.0.0.1",
-			RPCURL: fmt.Sprintf("http://127.0.0.1:%d", s.Ports.HTTP),
-			Ports:  s.Ports,
-			PID:    h.PID,
-		})
+		// The saved spec is the node: its host, ports and role come from it
+		// rather than being re-typed here, where a loopback literal used to
+		// be — a remote node relaunched on a fork would have reported the
+		// wrong address.
+		ns.Nodes = append(ns.Nodes, driver.NodeOf(orig, h.PID))
 	}
 	return ns, nil
 }

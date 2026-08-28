@@ -2,6 +2,7 @@ package testengine
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
@@ -29,7 +30,7 @@ type (
 	// GenesisConfig shapes the genesis the environment composes.
 	GenesisConfig = chainsetup.GenesisConfig
 	// LocalLauncher launches nodes on this machine.
-	LocalLauncher = chainsetup.LocalLauncher
+	LocalLauncher = launcher.Direct
 	// WemixBootstrap runs the wemix producer bring-up between phases.
 	WemixBootstrap = chainsetup.WemixBootstrap
 	// BuildDeps are what the environment builder needs.
@@ -64,4 +65,4 @@ var BuildLocalPlan = chainsetup.BuildLocalPlan
 type LocalSetup = chainsetup.LocalSetup
 
 // NodeLaunchArgs assembles one node's launch argv.
-var NodeLaunchArgs = chainsetup.NodeLaunchArgs
+var NodeLaunchArgs = launcher.NodeLaunchArgs

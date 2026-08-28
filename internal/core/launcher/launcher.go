@@ -1,4 +1,4 @@
-package supervisor
+package launcher
 
 import (
 	"context"
@@ -9,10 +9,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// Supervisor owns node bring-up: setup produces the plan and concurrent
-// provision/launch primitives, and the supervisor orchestrates launch, the
-// health gate, backoff recovery, and teardown.
-type Supervisor interface {
+// Launcher brings a plan up behind a health gate and tears it down: phase
+// order, the gate, backoff and retry, and a diagnosis of why a bring-up
+// failed. How one node is launched is Direct's job; this is how the launching
+// is repeated until the network is up.
+type Launcher interface {
 	// BringUp launches the plan's nodes behind a health gate and returns the
 	// resulting node set and a classified diagnosis.
 	BringUp(ctx context.Context, plan driver.Plan, opts Options) (node.NodeSet, Diagnosis, error)

@@ -1,4 +1,4 @@
-package chainsetup
+package launcher
 
 import (
 	"fmt"

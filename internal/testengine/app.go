@@ -13,6 +13,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
@@ -20,7 +21,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -124,7 +124,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	}
 
 	// The controller fronts the launcher so a fault step can reach an individual
-	// node process later; it shares the supervisor's procman so a node stopped
+	// node process later; it shares the launcher's procman so a node stopped
 	// and restarted mid-test is still torn down at the end.
 	// A pinned network id rides the same override layer as user launch knobs,
 	// so every node's argv carries it uniformly.
@@ -138,7 +138,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	controller := NewNodeController(LocalLauncher{
 		Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir, LaunchOverrides: overrides,
 	}, procs)
-	sup := supervisor.New(supervisor.Deps{
+	sup := launcher.New(launcher.Deps{
 		Launch:     controller.Launch,
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
 		Action:     WemixBootstrap{Binary: cfg.Binary, KeysDir: keysDir}.Action,

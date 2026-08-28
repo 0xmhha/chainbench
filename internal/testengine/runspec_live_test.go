@@ -3,6 +3,7 @@ package testengine_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 	"testing"
@@ -69,7 +70,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 		Plugin: plugin, Config: cfg, Binary: bin, KeysDir: presetDir,
 	}.Launch(ctx, plan)
 	t.Cleanup(func() {
-		_, errs := driver.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
+		_, errs := launcher.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
 		for _, e := range errs {
 			t.Logf("teardown: %v", e)
 		}

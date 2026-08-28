@@ -69,7 +69,7 @@ func TestBuildLocalPlan_PositionalRolesPortsAndCaps(t *testing.T) {
 	if got := plan.Nodes[2].Ports.HTTP; got != 8503 {
 		t.Errorf("node3 http = %d, want 8503 (base+2)", got)
 	}
-	// The launch argv is left to LocalLauncher.Arm.
+	// The launch argv is left to launcher.Direct.Arm.
 	if len(plan.Nodes[0].Args) != 0 {
 		t.Errorf("Args must be empty (armed by the launcher): %v", plan.Nodes[0].Args)
 	}

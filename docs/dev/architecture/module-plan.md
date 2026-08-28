@@ -141,9 +141,24 @@ key path · nodekey path · pid · process state
 | `driver.{Local,Remote}.Launch` | `core/driver` | 실제 실행 |
 | `driver.StopNode`/`StopNodeSet`/`RelaunchNode` | `core/driver/lifecycle.go` | 자유 함수 |
 
-**설계 방향**: 실제 실행은 `driver` 한 층, 정책(순서·재시도·teardown·진단)은
-`process` 한 층. 위 8개는 이 둘의 조합으로 표현되고 `chainsetup` 에는 **순서만**
-남는다.
+**설계 방향(정정 2026-08-28)**: 실행은 `driver` 한 층. 정책은 방향에 따라 둘이다 —
+**띄우는 정책은 `launcher`**(어떻게 띄우나 `Direct` + 올라올 때까지 어떻게 반복하나
+`Launcher`), **죽이는 정책은 `process`**(pid 대장 + SIGTERM→grace→SIGKILL→검증).
+진입점은 8 → **3** 이다. "8 → 2" 는 억지였다: 기동과 종료는 층이 아니라 방향이 다르고,
+이름이 둘인 것이 정직하다.
+
+**이름 결정(사용자, 2026-08-28).** 옛 `core/supervisor` 는 sudo 와 무관한 기동 재시도
+정책이었는데(실측: 패키지 안에 sudo·권한 언급 0), "supervisor" 는 sudo 승격 역할로
+읽힌다. 그 뜻은 이미 `resource` 의 `ssh.sudo`(허용 선언)와 `driver.SSHSudoRunner`
+(승격 실행)에 있다. `runner` 는 아래층에서 "명령 하나 실행" 으로 이미 네 번 쓰여
+충돌한다. **`launcher`** 로 확정 — 코드가 이미 `chainsetup.LocalLauncher` 로 부르던
+아래 절반과 `supervisor` 의 위 절반이 한 일의 두 조각이었다.
+
+**P3.1 결과(2026-08-28).** `core/launcher` 신설 = `core/supervisor` + `chainsetup.LocalLauncher`
+(→`Direct`) + `driver/lifecycle.go`. `supervisor` 낱말은 코드에서 0. `node.Node` 를 기동에서
+조립하는 곳 **4 → 1**(`driver.NodeOf`; hardfork 의 loopback 리터럴, upgrade·relaunch 의
+사본 소멸). `workspace.go` 의 `Endpoints` 필드별 복사(etcd 포트가 또 빠지던 곳)를 통째
+복사로. `chainsetup` 6,593 → 6,256줄.
 
 ### M4 genesis 빌더
 
@@ -370,8 +385,8 @@ fan-in 24). 나머지는 노드가 아니라 **노드에 대한 다른 것**이�
 2. `process` 가 정책을 소유 — 순서·재시도·teardown·진단(`supervisor` 흡수 검토).
 3. `chainsetup` 의 진입점 6개를 조합 호출로 대체.
 
-**게이트**: Launch 진입점 **8 → 2**(driver 실행 · process 정책).
-`chainsetup` 라인 수 감소가 `launcher.go`+`locallaunch.go`+`nodecontrol.go`(714줄)
+**게이트**: Launch 진입점 **8 → 3**(driver 실행 · launcher 기동 정책 · process 종료
+정책). `chainsetup` 라인 수 감소가 `launcher.go`+`locallaunch.go`+`nodecontrol.go`(714줄)
 규모로 나타난다.
 
 ### P4. 빌더 셋 (M4·M5·M6)
@@ -518,8 +533,8 @@ M1 후보를 이 잣대로 비교한 결과다.
 
 ## 7. 열린 질문
 
-1. **`supervisor` 를 `process` 가 흡수할까.** 진단(`FailureMode` 6종)이 프로세스
-   정책인지 체인 지식인지에 달렸다. `EtcdJoinFailed`·`ForkNotCrossed` 는 체인 쪽으로 보인다.
+1. ~~`supervisor` 를 `process` 가 흡수할까~~ → **`launcher` 로 합쳤다**(P3.1). 진단 6종은
+   오류 문자열 분류라 체인을 import 하지 않으며 `launcher` 에 남는다.
 2. **`session` 의 경계.** 1,050줄이 세션·환경·기록·잠금을 겸한다. `node` 와 겹치는
    부분(노드 테이블·경로)이 옮겨간 뒤 무엇이 남는지 P2 완료 시점에 다시 잰다.
 3. ~~CLI 표면도 가를까~~ → **갈랐다**(P5 완료 2026-08-28): `resource pool·plan` ·

@@ -64,7 +64,7 @@ flowchart TD
     L6["L6 표면<br/>cmd · mcp · dashboard"]
     L5["L5 유스케이스<br/>app"]
     L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup"]
-    L3["L3 도메인 서비스<br/>session · collector · health · supervisor · testspec"]
+    L3["L3 도메인 서비스<br/>session · collector · health · launcher · testspec"]
     L2b["L2b 체인 어댑터<br/>chains/*"]
     L2a["L2a 합의 패밀리<br/>consensus/*"]
     L1["L1 프리미티브<br/>driver · remote · rpc · place · keys · registry · serverset"]
@@ -147,7 +147,7 @@ flowchart TD
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션 |
 | `core/collector` | live tail · chainstate · bp 참여 · reorg |
 | `core/health` | 블록 전진 판정 |
-| `core/supervisor` | 기동 순서 · 헬스 게이트 · 진단 · 재시도 · teardown |
+| `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `core/hardfork` | 업그레이드 계획/실행 |
 | `core/netreg` | 네트워크 레지스트리 |
 | `testspec` · `testspec/assert` | DSL 파싱 · 인터프리터 · 어세션 |
@@ -360,7 +360,7 @@ chainbench-requirements-review.md §D-2.8
   "환경은 node→(binary, buildVersion) 집합"
 
 chainbench-feature-spec.md
-  "type-1(체인 업그레이드) / type-2(동일체인, supervisor.ForkSwaps)"
+  "type-1(체인 업그레이드) / type-2(동일체인, launcher.ForkSwaps)"
 ```
 
 코드 주석도 같다:
@@ -369,7 +369,7 @@ chainbench-feature-spec.md
 // consensus/upgrade/plan.go — 패키지 자신의 설명
 // "a single, validated launch plan for a hardfork handoff"
 
-// supervisor.go
+// launcher.go
 // ForkSwaps schedules same-chain (type-2) binary swaps before a fork block.
 // Type-1 (a chain upgrade / handoff) needs no swap — those nodes run
 // different binaries from the start.
@@ -444,12 +444,12 @@ A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
 |---|---|---|
 | `Phase` · `ConsensusFamily.BringUpPhases` | **L1** (`core/registry`) | 인터페이스는 아래. 구현은 L2a |
 | `PortReservation` | **L1** (`core/registry` 선언 / `core/node` 소유 · `resource` 사용) | 순수 계산 |
-| `supervisor.Deps.Action` | **L3** (`core/supervisor`) | 실행 시점·타임아웃·진단은 정책 |
+| `launcher.Deps.Action` | **L3** (`core/launcher`) | 실행 시점·타임아웃·진단은 정책 |
 | 액션 구현(거버넌스·etcd) | **L2a** (`consensus/poa`) | 이미 존재 |
 | `GenesisArtifacts` | **L4** (`engine`) | 조립 산출물 |
 | 유스케이스 수렴(3곳→1곳) | **L5** (`app`) | 유스케이스 1개 = 함수 1개 |
 
-**층이 정해지면 배선이 정해진다.** L3 supervisor 는 `Action` 을 이름으로만 알고,
+**층이 정해지면 배선이 정해진다.** L3 launcher 는 `Action` 을 이름으로만 알고,
 L5 app 이 L2a 구현을 주입한다 — L3 는 여전히 wemix 를 모른다.
 
 ---

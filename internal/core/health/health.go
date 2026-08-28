@@ -6,7 +6,7 @@
 // This is the INSPECTION read, used by `chainbench verify` and its MCP mirror.
 // It is deliberately not the same code as engine's launch gate
 // (NewBlockAdvanceGate), which polls one node to a target height as a
-// supervisor precondition: one produces a report about every node, the other
+// launcher precondition: one produces a report about every node, the other
 // blocks a bring-up on one node, and merging them would bend both.
 //
 // It was core/pipeline/verify; the move out of the pipeline tree is part of

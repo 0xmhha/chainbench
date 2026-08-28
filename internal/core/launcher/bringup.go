@@ -1,4 +1,4 @@
-package supervisor
+package launcher
 
 import (
 	"context"
@@ -17,14 +17,14 @@ import (
 // not ask for a cluster-size-derived window.
 const defaultLeaderWindow = 60 * time.Second
 
-// LaunchResult is what a launch produced: the node set and the processes to
+// Result is what a launch produced: the node set and the processes to
 // track (pid + datadir + host) for verified teardown.
-type LaunchResult struct {
+type Result struct {
 	Nodes node.NodeSet
 	Procs []process.Proc
 }
 
-// Deps injects the supervisor's collaborators, so its orchestration is testable
+// Deps injects the launcher's collaborators, so its orchestration is testable
 // without real chain binaries. A production wiring supplies a driver-backed
 // launcher and an RPC/etcd health gate.
 type Deps struct {
@@ -32,9 +32,9 @@ type Deps struct {
 	// processes to track. nodes lists the 1-based indices to start; nil or
 	// empty means the whole plan, so a caller with nothing to phase passes nil
 	// and keeps the behaviour it had.
-	Launch func(ctx context.Context, plan driver.Plan, nodes []int) (LaunchResult, error)
+	Launch func(ctx context.Context, plan driver.Plan, nodes []int) (Result, error)
 	// Action performs one named bring-up action against a node, between two
-	// phases. What a name means is chain-specific; the supervisor owns when it
+	// phases. What a name means is chain-specific; the launcher owns when it
 	// runs and how a failure is classified. Naming an action in a phase without
 	// wiring this is an error — the same contract as LeaderGate and
 	// SwapBinary, because a bootstrap that is quietly skipped produces a
@@ -46,14 +46,14 @@ type Deps struct {
 	// LeaderGate waits for the producer's etcd to have a ready leader, within
 	// the given window. It runs before HealthGate when Options.LeaderGate is
 	// set. What "leader ready" means is chain-specific (go-wemix's embedded
-	// etcd), so the check is injected; the supervisor owns when it runs, how
+	// etcd), so the check is injected; the launcher owns when it runs, how
 	// long it may take, and how a failure is classified. Leaving it nil while
 	// asking for the gate is an error, not a silent pass.
 	LeaderGate func(ctx context.Context, ns node.NodeSet, window time.Duration) (Diagnosis, error)
 	// SwapBinary performs one scheduled fork swap: it must relaunch the named
 	// node on the new binary before the chain reaches the fork block. Like the
 	// leader gate this is injected, because "relaunch on a different binary" is
-	// a launcher concern; the supervisor owns the schedule and the diagnosis.
+	// a launcher concern; the launcher owns the schedule and the diagnosis.
 	// Declaring Options.ForkSwaps without wiring this is an error.
 	SwapBinary func(ctx context.Context, ns node.NodeSet, swap ForkSwap) error
 	// Procman tracks launched processes for verified teardown.
@@ -63,29 +63,29 @@ type Deps struct {
 	Sleep func(time.Duration)
 }
 
-// sup is the concrete Supervisor.
-type sup struct {
+// impl is the concrete Launcher.
+type impl struct {
 	// teardownHook observes teardowns in tests. Production leaves it nil: the
 	// real evidence is that no process survives, which a unit test cannot see.
 	teardownHook func(node.NodeSet)
 	deps         Deps
 }
 
-// New returns a Supervisor over deps.
-func New(deps Deps) Supervisor {
+// New returns a Launcher over deps.
+func New(deps Deps) Launcher {
 	if deps.Sleep == nil {
 		deps.Sleep = time.Sleep
 	}
 	if deps.Procman == nil {
 		deps.Procman = process.New()
 	}
-	return &sup{deps: deps}
+	return &impl{deps: deps}
 }
 
 // BringUp launches the plan and gates on health, retrying with backoff. On
 // success it returns the node set and an OK diagnosis; on exhaustion it tears
 // down and returns the last classified diagnosis and an error.
-func (s *sup) BringUp(ctx context.Context, plan driver.Plan, opts Options) (node.NodeSet, Diagnosis, error) {
+func (s *impl) BringUp(ctx context.Context, plan driver.Plan, opts Options) (node.NodeSet, Diagnosis, error) {
 	attempts := opts.MaxAttempts
 	if attempts < 1 {
 		attempts = 1
@@ -134,18 +134,18 @@ func (s *sup) BringUp(ctx context.Context, plan driver.Plan, opts Options) (node
 			s.deps.Sleep(opts.Backoff(attempt))
 		}
 	}
-	return node.NodeSet{}, last, fmt.Errorf("supervisor: bring-up failed after %d attempt(s): %s: %s", attempts, last.Mode, last.Detail)
+	return node.NodeSet{}, last, fmt.Errorf("launcher: bring-up failed after %d attempt(s): %s: %s", attempts, last.Mode, last.Detail)
 }
 
 // gate runs the requested gates in order: the etcd leader gate first (a node
 // cannot be healthy before its cluster has a leader), then the general health
 // gate. With AlignJoinGap the leader gate's window is derived from the cluster
 // size, so a join that is merely waiting for its slot is not called a failure.
-func (s *sup) gate(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosis, error) {
+func (s *impl) gate(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosis, error) {
 	if opts.LeaderGate {
 		if s.deps.LeaderGate == nil {
 			return Diagnosis{Mode: EtcdJoinFailed},
-				fmt.Errorf("supervisor: LeaderGate was requested but no leader gate is wired")
+				fmt.Errorf("launcher: LeaderGate was requested but no leader gate is wired")
 		}
 		window := defaultLeaderWindow
 		if opts.AlignJoinGap {
@@ -173,18 +173,18 @@ func (s *sup) gate(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosi
 // applyForkSwaps performs each declared type-2 binary swap. A declared swap with
 // no implementation wired is a failure: silently skipping it would let the chain
 // cross the fork on the wrong binary and fail later, somewhere less obvious.
-func (s *sup) applyForkSwaps(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosis, error) {
+func (s *impl) applyForkSwaps(ctx context.Context, ns node.NodeSet, opts Options) (Diagnosis, error) {
 	if len(opts.ForkSwaps) == 0 {
 		return Diagnosis{OK: true}, nil
 	}
 	if s.deps.SwapBinary == nil {
 		return Diagnosis{Mode: ForkNotCrossed},
-			fmt.Errorf("supervisor: %d fork swap(s) declared but no swap implementation is wired", len(opts.ForkSwaps))
+			fmt.Errorf("launcher: %d fork swap(s) declared but no swap implementation is wired", len(opts.ForkSwaps))
 	}
 	for _, swap := range opts.ForkSwaps {
 		if err := s.deps.SwapBinary(ctx, ns, swap); err != nil {
 			return Diagnosis{Mode: ForkNotCrossed},
-				fmt.Errorf("supervisor: fork swap %s -> %s before %s (block %d): %w",
+				fmt.Errorf("launcher: fork swap %s -> %s before %s (block %d): %w",
 					swap.Node, swap.ToBinary, swap.Fork, swap.AtBlock, err)
 		}
 	}
@@ -193,7 +193,7 @@ func (s *sup) applyForkSwaps(ctx context.Context, ns node.NodeSet, opts Options)
 
 // Teardown stops the tracked processes (verifying local ones are gone) and, when
 // requested, removes their data directories.
-func (s *sup) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) error {
+func (s *impl) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) error {
 	if s.teardownHook != nil {
 		s.teardownHook(ns)
 	}
@@ -204,7 +204,7 @@ func (s *sup) Teardown(_ context.Context, ns node.NodeSet, opts TeardownOpts) er
 
 	var errs []error
 	if leaks := s.deps.Procman.StopAll(opts.Grace); len(leaks) > 0 {
-		errs = append(errs, fmt.Errorf("supervisor: orphan pids after stop: %v", leaks))
+		errs = append(errs, fmt.Errorf("launcher: orphan pids after stop: %v", leaks))
 	}
 	if opts.RemoveDataDir {
 		errs = append(errs, s.deps.Procman.RemoveDataDirs()...)
@@ -221,16 +221,16 @@ func graceOr(_ Options) time.Duration { return 5 * time.Second }
 //
 // Each phase's nodes join the accumulated set, so a later phase's health is
 // judged against the whole network rather than against itself.
-func (s *sup) launchPhases(ctx context.Context, plan driver.Plan, opts Options) (LaunchResult, error) {
+func (s *impl) launchPhases(ctx context.Context, plan driver.Plan, opts Options) (Result, error) {
 	phases := opts.Phases
 	if len(phases) == 0 {
 		return s.deps.Launch(ctx, plan, nil)
 	}
-	var all LaunchResult
+	var all Result
 	for _, phase := range phases {
 		res, err := s.deps.Launch(ctx, plan, phase.Nodes)
 		if err != nil {
-			return all, fmt.Errorf("supervisor: phase %q: %w", phase.Name, err)
+			return all, fmt.Errorf("launcher: phase %q: %w", phase.Name, err)
 		}
 		all.Nodes.Chain = res.Nodes.Chain
 		all.Nodes.Network = res.Nodes.Network
@@ -239,14 +239,14 @@ func (s *sup) launchPhases(ctx context.Context, plan driver.Plan, opts Options) 
 
 		for _, name := range phase.Actions {
 			if s.deps.Action == nil {
-				return all, fmt.Errorf("supervisor: phase %q needs action %q but no action executor is wired", phase.Name, name)
+				return all, fmt.Errorf("launcher: phase %q needs action %q but no action executor is wired", phase.Name, name)
 			}
 			on, ok := actionNode(phase, res.Nodes, all.Nodes)
 			if !ok {
-				return all, fmt.Errorf("supervisor: phase %q needs action %q but launched no node to run it on", phase.Name, name)
+				return all, fmt.Errorf("launcher: phase %q needs action %q but launched no node to run it on", phase.Name, name)
 			}
 			if err := s.deps.Action(ctx, name, plan, on); err != nil {
-				return all, fmt.Errorf("supervisor: phase %q action %q: %w", phase.Name, name, err)
+				return all, fmt.Errorf("launcher: phase %q action %q: %w", phase.Name, name, err)
 			}
 		}
 	}

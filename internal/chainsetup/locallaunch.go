@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/config"
@@ -16,7 +17,7 @@ import (
 // LocalSetup provisions and launches a local-host network from a resolved plan,
 // sourcing the network genesis from a preset. It is the CLI/MCP entrypoint that
 // composes BuildLocalPlan (the fixed-base-port plan) with PresetGenesisSource
-// (genesis, overrides/overlay applied) and LocalLauncher (arm → materialize →
+// (genesis, overrides/overlay applied) and launcher.Direct (arm → materialize →
 // init → launch), replacing the retired pipeline/setup Launch/Provision surface.
 //
 // A remote host is driven by setting Driver to a RemoteDriver and Sink to a
@@ -47,7 +48,7 @@ type LocalSetup struct {
 }
 
 // Launch attaches the network genesis to plan and brings every node up through
-// LocalLauncher, returning the running node set and the armed specs (so the
+// launcher.Direct, returning the running node set and the armed specs (so the
 // caller can persist them and later relaunch a single node). It is the engine
 // equivalent of the retired setup.LaunchWithSpecs.
 func (s LocalSetup) Launch(ctx context.Context, plan driver.Plan) (node.NodeSet, []driver.NodeSpec, error) {
@@ -94,9 +95,9 @@ func (s LocalSetup) Provision(ctx context.Context, plan driver.Plan) ([]driver.N
 	return specs, nil
 }
 
-// launcher builds the LocalLauncher backing this setup.
-func (s LocalSetup) launcher() LocalLauncher {
-	return LocalLauncher{
+// launcher builds the launcher.Direct backing this setup.
+func (s LocalSetup) launcher() launcher.Direct {
+	return launcher.Direct{
 		Plugin: s.Plugin, Binary: s.Binary, KeysDir: s.KeysDir,
 		Driver: s.Driver, Files: s.Files,
 	}
