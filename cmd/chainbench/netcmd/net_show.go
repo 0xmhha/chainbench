@@ -1,18 +1,29 @@
-package netmapcmd
+package netcmd
 
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/internal/mapview"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newShowCmd answers where a composed network's nodes are, in both directions.
-// It is a query, not a step: it changes nothing, which is why it lives here
-// and not in the composed sequence, even though it reads the same workspace.
-func newShowCmd() *cobra.Command {
-	var dataDir, label, host, addr string
+// queryDeps is the app.Deps a read-only query runs with: side notes to stderr.
+func queryDeps(cmd *cobra.Command) app.Deps {
+	errOut := cmd.ErrOrStderr()
+	return app.Deps{Logf: func(format string, args ...any) {
+		fmt.Fprintf(errOut, format+"\n", args...)
+	}}
+}
+
+// It is a query, not a step: it changes nothing. It lives in the net group
+// because it reads the composed workspace — the placement that IS, where
+// `resource plan` computes the placement that WOULD BE.
+func newNetShowCmd() *cobra.Command {
+	var workspaceDir, label, host, addr string
 	var nodeIdx, port int
 	var asJSON bool
 	cmd := &cobra.Command{
@@ -25,23 +36,23 @@ func newShowCmd() *cobra.Command {
 			"datadir, the log file, the keyring entry. The alias (en2) is what a test\n" +
 			"definition addresses, because a spec written once runs on many topologies.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+			if workspaceDir == "" {
+				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetMap(cmd.Context(), deps(cmd), app.NetMapIn{
-				DataDir: dataDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr,
+			out, err := app.NetMap(cmd.Context(), queryDeps(cmd), app.NetMapIn{
+				DataDir: workspaceDir, Node: nodeIdx, Label: label, Host: host, Port: port, Addr: addr,
 			})
 			if err != nil {
 				return err
 			}
 			if asJSON {
-				return emitJSON(cmd.OutOrStdout(), out)
+				return mapview.JSON(cmd.OutOrStdout(), out)
 			}
-			printMap(cmd.OutOrStdout(), out)
+			mapview.Print(cmd.OutOrStdout(), out)
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "workspace directory (where the composition was set up)")
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "select by identity (the 1-based node number)")
 	cmd.Flags().StringVar(&label, "label", "", "select by identity (node7) or role alias (en2)")
 	cmd.Flags().StringVar(&host, "host", "", "select every node on an address")

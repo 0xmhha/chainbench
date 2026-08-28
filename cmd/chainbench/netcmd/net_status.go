@@ -21,7 +21,7 @@ func newNetStatusCmd() *cobra.Command {
 		Short: "Show the workspace composition state and which steps have run",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				return fmt.Errorf("--workspace-dir is required")
 			}
 			res, err := chainsetup.NetStatus(cmd.Context(), deps(cmd), chainsetup.NetStatusIn{DataDir: dataDir})
 			if err != nil {
@@ -50,7 +50,7 @@ func newNetStatusCmd() *cobra.Command {
 			return w.Flush()
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the workspace state as JSON")
 	return cmd
 }

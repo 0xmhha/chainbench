@@ -12,7 +12,7 @@ import (
 )
 
 // newNetCmd is the composable step surface: it composes a chain network for
-// testing one customizable step at a time over a shared --data-dir workspace,
+// testing one customizable step at a time over a shared --workspace-dir workspace,
 // so each step can be run, customized, and verified independently. Each
 // subcommand mirrors an MCP tool (net_*) driving the same netcompose core.
 //
@@ -48,7 +48,7 @@ func newNetCmd() *cobra.Command {
 		Use:   "net",
 		Short: "Compose a chain network step by step (keys, genesis, config, start, ...)",
 		Long: "Compose a chain network for testing one customizable step at a time over a\n" +
-			"shared --data-dir workspace. Each step runs independently, can be re-run,\n" +
+			"shared --workspace-dir workspace. Each step runs independently, can be re-run,\n" +
 			"and is inspectable with `net status`. The workspace state is local; a step's\n" +
 			"data plane lives on the target (local, or a remote SSH host set at `net new`).\n" +
 			"The same steps are exposed as MCP tools.",
@@ -60,6 +60,7 @@ func newNetCmd() *cobra.Command {
 		newNetLaunchOptsCmd(), newNetProvisionCmd(),
 		newNetInitCmd(), newNetStartCmd(), newNetStopCmd(), newNetRestartCmd(),
 		newNetRmCmd(), newNetLogsCmd(), newNetHealthCmd(),
+		newNetShowCmd(),
 	)
 	return cmd
 }

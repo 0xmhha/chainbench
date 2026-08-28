@@ -1,4 +1,4 @@
-package netmapcmd
+package resourcecmd
 
 import (
 	"fmt"
@@ -8,6 +8,8 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/internal/mapview"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -15,7 +17,7 @@ import (
 // answers "why was that refused" without the operator reading the server set
 // and doing the arithmetic.
 func newPoolCmd() *cobra.Command {
-	var dataDir string
+	var workspaceDir string
 	var asJSON bool
 	var sf serverflag.Flags
 	cmd := &cobra.Command{
@@ -27,13 +29,13 @@ func newPoolCmd() *cobra.Command {
 			"may run, not how to log in.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out, err := app.NetPool(cmd.Context(), deps(cmd), app.NetPoolIn{
-				DataDir: dataDir, Server: sf.Ref(),
+				DataDir: workspaceDir, Server: sf.Ref(),
 			})
 			if err != nil {
 				return err
 			}
 			if asJSON {
-				return emitJSON(cmd.OutOrStdout(), out)
+				return mapview.JSON(cmd.OutOrStdout(), out)
 			}
 			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "HOST")
@@ -47,7 +49,7 @@ func newPoolCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "workspace to count used slots from (optional)")
+	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "workspace to count used slots from (optional)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the pool as JSON")
 	sf.Bind(cmd)
 	return cmd

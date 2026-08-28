@@ -49,13 +49,13 @@
 
 ```sh
 CHAIN=/Users/…/Work/github/chain
-chainbench net up --data-dir /tmp/cbs --chain stablenet \
+chainbench net up --workspace-dir /tmp/cbs --chain stablenet \
   --binary $CHAIN/go-stablenet/build/bin/gstable \
   --keys keys/preset --validators 4 --server local
 
 chainbench net health --data-dir /tmp/cbs
 chainbench run --chain stablenet --rpc http://127.0.0.1:8545 tests/specs/api/*.json
-chainbench net stop --data-dir /tmp/cbs
+chainbench net stop --workspace-dir /tmp/cbs
 ```
 
 9스텝 전부 CLI 존재. 결과: 블록 97→110→122, 4노드 동기, api 9 pass.
@@ -67,7 +67,7 @@ chainbench net stop --data-dir /tmp/cbs
 stablenet 과 **명령이 완전히 동일**하다. 두 가지만 다르다.
 
 ```sh
-chainbench net up --data-dir /tmp/cbw --chain wbft \
+chainbench net up --workspace-dir /tmp/cbw --chain wbft \
   --binary $CHAIN/go-wbft/build/bin/gwemix \   # ← 바이너리 이름이 gwemix 다
   --keys keys/preset --validators 4 --server local
 ```
@@ -198,7 +198,7 @@ for i in 2 3 4; do P=$((8588+(i-1)*1000)); $G --datadir $D/node$i --mine \
 
 ```sh
 # 목표 — 세 체인 모두 이 한 줄
-chainbench net up --data-dir /tmp/n1 --chain {stablenet|wbft|wemix} \
+chainbench net up --workspace-dir /tmp/n1 --chain {stablenet|wbft|wemix} \
   --binary <path> --keys keys/preset --validators 4 --server local
 ```
 

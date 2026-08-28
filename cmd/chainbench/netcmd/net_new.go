@@ -21,7 +21,10 @@ func newNetNewCmd() *cobra.Command {
 		Short: "Initialize a composition workspace for a chain (and its target)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				var err error
+				if dataDir, err = defaultWorkspaceDir(cmd); err != nil {
+					return err
+				}
 			}
 			target, err := tf.spec()
 			if err != nil {
@@ -39,7 +42,7 @@ func newNetNewCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory (keep it short: node IPC sockets have a 104-char limit)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory — where the composition is set up (default: ~/.chainbench/<timestamp>/chainsetup; keep it short: node IPC sockets have a 104-char limit)")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")

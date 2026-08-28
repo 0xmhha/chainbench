@@ -1,4 +1,4 @@
-package netmapcmd_test
+package resourcecmd_test
 
 import (
 	"bytes"
@@ -11,19 +11,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/netmapcmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins, as package main does
 )
 
-// run executes a netmap command line the way an operator types it. The group
+// run executes a resource command line the way an operator types it. The group
 // is mounted on a bare root, so these tests exercise exactly what the real
 // root command mounts, without depending on package main.
 func run(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 	root := &cobra.Command{Use: "chainbench", SilenceUsage: true, SilenceErrors: true}
-	root.AddCommand(netmapcmd.New())
+	root.AddCommand(resourcecmd.New())
 	var buf bytes.Buffer
 	root.SetOut(&buf)
 	root.SetErr(&buf)
@@ -31,6 +31,9 @@ func run(t *testing.T, args ...string) (string, error) {
 	err := root.ExecuteContext(context.Background())
 	return buf.String(), err
 }
+
+// TestPlan_ComputesWithoutComposing pins the group's reason to exist: the
+// allocator answers as a question, no workspace, nothing written anywhere.
 
 // TestPlan_ComputesWithoutComposing pins the group's reason to exist: the
 // allocator answers as a question, no workspace, nothing written anywhere.
@@ -45,7 +48,7 @@ func TestPlan_ComputesWithoutComposing(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(cwd) })
 
-	out, err := run(t, "netmap", "plan", "--validators", "2", "--endpoints", "1")
+	out, err := run(t, "resource", "plan", "--validators", "2", "--endpoints", "1")
 	if err != nil {
 		t.Fatalf("plan: %v\n%s", err, out)
 	}
@@ -66,12 +69,15 @@ func TestPlan_ComputesWithoutComposing(t *testing.T) {
 
 // TestPlan_IsDeterministic pins the allocator's core promise through the CLI:
 // the same inputs always place the same.
+
+// TestPlan_IsDeterministic pins the allocator's core promise through the CLI:
+// the same inputs always place the same.
 func TestPlan_IsDeterministic(t *testing.T) {
-	first, err := run(t, "netmap", "plan", "--validators", "3")
+	first, err := run(t, "resource", "plan", "--validators", "3")
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := run(t, "netmap", "plan", "--validators", "3")
+	second, err := run(t, "resource", "plan", "--validators", "3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,11 +88,17 @@ func TestPlan_IsDeterministic(t *testing.T) {
 
 // TestPlan_RefusesAProducerlessNetwork: a network where nothing seals never
 // advances, and the refusal belongs here, not at chain start.
+
+// TestPlan_RefusesAProducerlessNetwork: a network where nothing seals never
+// advances, and the refusal belongs here, not at chain start.
 func TestPlan_RefusesAProducerlessNetwork(t *testing.T) {
-	if _, err := run(t, "netmap", "plan", "--validators", "0", "--endpoints", "2"); err == nil {
+	if _, err := run(t, "resource", "plan", "--validators", "0", "--endpoints", "2"); err == nil {
 		t.Fatal("planned a network with no validator")
 	}
 }
+
+// TestPlan_ReadsTheInventory pins the placement source: name a server from an
+// server-set file and the plan lands on its address, not the built-in pool.
 
 // TestPlan_ReadsTheInventory pins the placement source: name a server from an
 // server-set file and the plan lands on its address, not the built-in pool.
@@ -101,7 +113,7 @@ func TestPlan_ReadsTheInventory(t *testing.T) {
 	if err := os.WriteFile(inv, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	out, err := run(t, "netmap", "plan", "--server-set", inv, "--server", "box1", "--validators", "2")
+	out, err := run(t, "resource", "plan", "--server-set", inv, "--server", "box1", "--validators", "2")
 	if err != nil {
 		t.Fatalf("plan over inventory: %v\n%s", err, out)
 	}
@@ -113,9 +125,8 @@ func TestPlan_ReadsTheInventory(t *testing.T) {
 	}
 }
 
-// composedWorkspace builds the smallest real workspace show can read. The
-// fixture goes through netcompose because the map show reads is the one a
-// composition records — but only new+allocate run; nothing launches.
+// composedWorkspace builds the smallest real workspace `pool` can count: only
+// new+allocate run; nothing launches.
 func composedWorkspace(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -135,52 +146,11 @@ func composedWorkspace(t *testing.T) string {
 	return dir
 }
 
-// TestShow_AnswersBothDirections pins the lookup: by label, and the reverse
-// question a port in a log line asks.
-func TestShow_AnswersBothDirections(t *testing.T) {
-	dir := composedWorkspace(t)
-
-	whole, err := run(t, "netmap", "show", "--data-dir", dir)
-	if err != nil {
-		t.Fatalf("show: %v\n%s", err, whole)
-	}
-	if !strings.Contains(whole, "3 node(s)") || !strings.Contains(whole, "2 bp") {
-		t.Errorf("whole map lost the composition:\n%s", whole)
-	}
-
-	byLabel, err := run(t, "netmap", "show", "--data-dir", dir, "--label", "en1")
-	if err != nil {
-		t.Fatalf("show --label: %v\n%s", err, byLabel)
-	}
-	if !strings.Contains(byLabel, "node3") {
-		t.Errorf("alias en1 did not resolve to its identity:\n%s", byLabel)
-	}
-
-	// Reverse lookup: take node1's http port from the whole map's row.
-	fields := strings.Fields(strings.Split(whole, "\n")[1])
-	port := fields[6]
-	byPort, err := run(t, "netmap", "show", "--data-dir", dir, "--port", port)
-	if err != nil {
-		t.Fatalf("show --port: %v\n%s", err, byPort)
-	}
-	if !strings.Contains(byPort, "node1") {
-		t.Errorf("port %s did not resolve to node1:\n%s", port, byPort)
-	}
-}
-
-// TestShow_RequiresAWorkspace: show reads a composed map; without one the
-// answer is a refusal, not an empty table.
-func TestShow_RequiresAWorkspace(t *testing.T) {
-	if _, err := run(t, "netmap", "show", "--data-dir", t.TempDir()); err == nil {
-		t.Fatal("showed a map for an empty directory")
-	}
-}
-
 // TestPool_CountsUsedSlots pins the arithmetic an operator otherwise does by
 // hand: capacity from the pool, used from the workspace.
 func TestPool_CountsUsedSlots(t *testing.T) {
 	dir := composedWorkspace(t)
-	out, err := run(t, "netmap", "pool", "--data-dir", dir)
+	out, err := run(t, "resource", "pool", "--workspace-dir", dir)
 	if err != nil {
 		t.Fatalf("pool: %v\n%s", err, out)
 	}

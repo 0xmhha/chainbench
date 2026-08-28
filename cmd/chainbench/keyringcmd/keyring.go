@@ -80,7 +80,7 @@ func deps(cmd *cobra.Command) operation.Deps {
 		fmt.Fprintf(errOut, format+"\n", args...)
 	}
 	return operation.Deps{
-		// The netmap module owns machines and server sets; the operations
+		// The resource module owns machines and server sets; the operations
 		// only need something that opens a path, so this is where the two
 		// meet.
 		Open: func(serverSet string, docker bool) operation.Opener {

@@ -24,7 +24,7 @@ func stepCmd(use, short string, run func(cmd *cobra.Command, dataDir string) (st
 		Short: short,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				return fmt.Errorf("--workspace-dir is required")
 			}
 			detail, err := run(cmd, dataDir)
 			if err != nil {
@@ -34,7 +34,7 @@ func stepCmd(use, short string, run func(cmd *cobra.Command, dataDir string) (st
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	return cmd, &dataDir
 }
 
@@ -112,7 +112,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 		Short: "Assemble (and show) each node's launch command without running it",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				return fmt.Errorf("--workspace-dir is required")
 			}
 			out, err := chainsetup.NetLaunchOpts(cmd.Context(), deps(cmd), chainsetup.NetLaunchOptsIn{
 				DataDir: dataDir, Set: sets,
@@ -128,7 +128,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().StringArrayVar(&sets, "set", nil, "high-precedence launch knob key=value (repeatable; bare key for booleans)")
 	return cmd
 }
@@ -201,7 +201,7 @@ func newNetLogsCmd() *cobra.Command {
 		Short: "Show the last lines of one node's log",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				return fmt.Errorf("--workspace-dir is required")
 			}
 			out, err := chainsetup.NetLogs(cmd.Context(), deps(cmd), chainsetup.NetLogsIn{
 				DataDir: dataDir, Node: nodeIdx, Lines: lines,
@@ -213,7 +213,7 @@ func newNetLogsCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based)")
 	cmd.Flags().IntVar(&lines, "lines", 50, "lines from the end")
 	return cmd
@@ -227,7 +227,7 @@ func newNetHealthCmd() *cobra.Command {
 		Short: "Probe every node's HTTP RPC for its latest block",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				return fmt.Errorf("--workspace-dir is required")
 			}
 			out, err := chainsetup.NetHealth(cmd.Context(), deps(cmd), chainsetup.NetHealthIn{DataDir: dataDir})
 			if err != nil {
@@ -246,7 +246,7 @@ func newNetHealthCmd() *cobra.Command {
 			return w.Flush()
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the probe table as JSON")
 	return cmd
 }

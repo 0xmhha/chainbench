@@ -11,13 +11,13 @@ import (
 // netMapTool answers where nodes are, in both directions. It is the tool an
 // agent reaches for instead of reading the workspace file and parsing it:
 // "which node owns port 8610", "what runs on this host", "where is en2".
-func netmapShowTool() Tool {
+func netShowTool() Tool {
 	return Tool{
-		Name: "chainbench_netmap_show",
+		Name: "chainbench_net_show",
 		Description: "Look up the composed network's placement. With no selector, the whole map; " +
 			"with one, that question answered — including the reverse ones (which node owns a port, " +
 			"what runs on an address). Each node has an identity (node7) and a role alias (en2).",
-		InputSchema: dataDirSchema(map[string]any{
+		InputSchema: workspaceDirSchema(map[string]any{
 			"node":  map[string]any{"type": "number", "description": "select by identity (1-based node number)"},
 			"label": map[string]any{"type": "string", "description": "select by identity (node7) or role alias (en2)"},
 			"host":  map[string]any{"type": "string", "description": "select every node on an address"},
@@ -26,7 +26,7 @@ func netmapShowTool() Tool {
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			res, err := app.NetMap(ctx, app.Deps{}, app.NetMapIn{
-				DataDir: argString(args, "dataDir", ""),
+				DataDir: argString(args, "workspaceDir", ""),
 				Node:    argInt(args, "node", 0),
 				Label:   argString(args, "label", ""),
 				Host:    argString(args, "host", ""),
@@ -38,7 +38,7 @@ func netmapShowTool() Tool {
 			}
 			b, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
-				return "", fmt.Errorf("mcp: netmap show: %w", err)
+				return "", fmt.Errorf("mcp: net show: %w", err)
 			}
 			return string(b), nil
 		},
@@ -51,39 +51,39 @@ func netmapShowTool() Tool {
 // It returns no credentials, and that absence is fixed by a test: the pool says
 // where nodes may run, and how to log in is not something an agent transcript
 // should carry (the keyring's missing export tool is the same judgement).
-func netmapPoolTool() Tool {
+func resourcePoolTool() Tool {
 	return Tool{
-		Name: "chainbench_netmap_pool",
+		Name: "chainbench_resource_pool",
 		Description: "Show the addresses and port slots a network may be composed from: hosts, slots per host, " +
 			"total capacity, how many a workspace already uses, and where the port plan came from.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"dataDir": map[string]any{"type": "string", "description": "workspace to count used slots from (optional)"},
+				"workspaceDir": map[string]any{"type": "string", "description": "workspace to count used slots from (optional)"},
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			res, err := app.NetPool(ctx, app.Deps{}, app.NetPoolIn{
-				DataDir: argString(args, "dataDir", ""),
+				DataDir: argString(args, "workspaceDir", ""),
 			})
 			if err != nil {
 				return "", err
 			}
 			b, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
-				return "", fmt.Errorf("mcp: netmap pool: %w", err)
+				return "", fmt.Errorf("mcp: resource pool: %w", err)
 			}
 			return string(b), nil
 		},
 	}
 }
 
-// netmapPlanTool runs the allocator as a question: the placement a network of
+// resourcePlanTool runs the allocator as a question: the placement a network of
 // this shape would get, from the server set (or the built-in pool), with
 // nothing written anywhere.
-func netmapPlanTool() Tool {
+func resourcePlanTool() Tool {
 	return Tool{
-		Name: "chainbench_netmap_plan",
+		Name: "chainbench_resource_plan",
 		Description: "Compute the placement a network shape would get, without composing anything: " +
 			"deterministic host and port assignment for the requested validators and endpoints. " +
 			"The chain sets the family's per-node port reservation.",
@@ -121,7 +121,7 @@ func netmapPlanTool() Tool {
 			}
 			b, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
-				return "", fmt.Errorf("mcp: netmap plan: %w", err)
+				return "", fmt.Errorf("mcp: resource plan: %w", err)
 			}
 			return string(b), nil
 		},

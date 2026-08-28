@@ -431,7 +431,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 	}
 	var hints []string
 	if recoverable {
-		hints = append(hints, "`net stop --data-dir "+w.Dir()+"` stops the ones with a recorded pid")
+		hints = append(hints, "`net stop --workspace-dir "+w.Dir()+"` stops the ones with a recorded pid")
 	}
 	if byHand {
 		hints = append(hints, "the rest hold ports this workspace planned but cannot address — find and stop them by hand")
