@@ -222,6 +222,13 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 stutter 이므로 타입은 `Report`·`Check` 등으로 짓는다. `driver.ProcessInspector`
 인터페이스와는 패키지가 달라 충돌은 아니나, P3(프로세스) 때 어휘를 함께 본다.
 
+**P3.3 결과(2026-08-28).** `core/inspector` = 옛 `core/occupancy` + 두 질문.
+`Ports(addrs)`(옛 `Scan`) · `Paths(store, paths)` · `Hosts(hosts, dial)`. 타입은
+`Addr`·`Path`·`Host`(stutter 없음). 의존은 `filestore`·`node` 뿐이라 L1 에 그대로.
+첫 소비는 `net start` 의 `checkPaths` — 기동 직전에 각 노드의 머신에서 binary·genesis·
+datadir·config 존재를 묻고, 빠진 것을 "무엇(node2 config) on server1" 로 보고한다.
+`preflight` 재정의(M8, P4.x)는 이 셋을 조합해 현재와 목표를 비교한다.
+
 ### M8 preflight — 현재 vs 목표 비교 (역할 재정의, 결정 2026-08-28)
 
 지금의 `core/preflight` 는 계획의 자기모순만 본다(네트워크 id 균일 · 포트 겹침 ·
