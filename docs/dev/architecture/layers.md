@@ -118,7 +118,8 @@ flowchart TD
 | `core/topology` | 토폴로지 YAML |
 | `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
-| `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
+| `core/consensus` | 검증자 조회 |
+| `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
 
 > `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
 > 그래서 L3/L4 가 체인을 모른 채 `ChainPlugin` 만 쓸 수 있다.

@@ -286,6 +286,20 @@ genesis 포크 절). 재정의된 역할은 **테스트를 연속 수행할 때 
 `resource.ValidatePorts`(이미 그렇다), genesis 포크 검사는 genesis 빌더(M4),
 네트워크 id 균일성은 config 빌더(M5)로. **자기 산출물은 자기 빌더가 검사한다.**
 
+**P4.x 결과(2026-08-28).** `core/preflight` 는 이제 **판단만** 한다: `Have`(타깃에 조립된
+체인 — chainsetup 이 워크스페이스 기록에서 읽음) 대 `Want`(다음 테스트가 원하는 체인 —
+`NetUpIn` 에서), `Compare` 가 종이 위에서 `reuse` / `rebuild-nodes N` / `rebuild-all` /
+`compose` 를 내고, `Check` 가 주입된 liveness(pid 는 그 노드의 머신에서, RPC head 는 그
+노드의 주소에서)로 죽은 노드를 재구성 목록에 더한다. 네트워크 전체 사실(체인·키·genesis
+해시·피어링·노드 수·시작 여부)이 다르면 rebuild-all, 노드 하나의 사실(동기화 모드·서버)이
+다르거나 죽어 있으면 그 노드만, 전부 죽어 있으면 rebuild-all(노드 루프가 아니라 조립이
+되살린다). `app.RunSuite` 가 `NetUp` 전에 이것을 물어 reuse 면 건너뛰고, rebuild-nodes 면
+그 노드만 `NetRestart`, 아니면 `NetUp` 한다 — 결정은 `RunSuiteOut.Preflight` 에 남는다.
+옛 계획 검사(`NetworkPlan`/`Validate`)의 유일한 소비자는 핸드오프였고, 그 검사는
+`consensus/upgrade.NetworkPlan.validate` 로 갔다(netid·ports·forks 는 각 빌더 함수 호출,
+"검증자는 멤버가 아니다" 는 핸드오프 자신의 규칙). 의존은 `node` 뿐이다.
+`Want.Nodes` 는 명명된 노드의 사실을 고정할 뿐 노드 수가 아니다(테스트가 잡은 실수).
+
 ### 2a. `resource.Inventory` — 가용과 할당의 관리 주체 (결정 2026-08-28)
 
 서버 세트의 정보를 관리하는 모듈(resource)이 **사용할 수 있는 것과 할당된 것**을

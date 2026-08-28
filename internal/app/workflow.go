@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"path/filepath"
 	"time"
 
@@ -81,6 +82,9 @@ type RunSuiteOut struct {
 	Summary testengine.Summary
 	// Stopped reports whether the network was torn down afterwards.
 	Stopped bool
+	// Preflight is the reuse decision the run started from: reuse, which
+	// nodes were rebuilt, or why everything was.
+	Preflight string
 }
 
 // RunSuite runs the whole flow: parse the DSL, set up the chain, run the
@@ -99,15 +103,35 @@ func RunSuite(ctx context.Context, d Deps, in RunSuiteIn) (RunSuiteOut, error) {
 		in.ArtifactRoot = filepath.Join(in.DataDir, "sessions")
 	}
 
-	up, err := NetUp(ctx, d, NetUpIn{
+	upIn := NetUpIn{
 		DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary,
 		Validators: in.Validators, Server: in.Server, Docker: in.Docker,
 		KeysDir: in.KeysDir, Stage: UpStart,
-	})
-	if err != nil {
-		return RunSuiteOut{}, fmt.Errorf("app: run suite: setup: %w", err)
 	}
-	out := RunSuiteOut{SetupSteps: up.Steps}
+	// What is composed here already may be what this suite wants: ask before
+	// rebuilding. The decision is recorded beside the setup steps so a run
+	// that reused a network says so, and one that rebuilt says why.
+	out := RunSuiteOut{}
+	decision := preflightDecision(ctx, d, in.DataDir, chainsetupmod.WantOf(upIn))
+	out.Preflight = decision.String()
+	switch decision.Verdict {
+	case preflight.Reuse:
+		out.SetupSteps = []string{"preflight: reuse — " + decision.String()}
+	case preflight.RebuildNodes:
+		for _, idx := range decision.Nodes {
+			st, err := NetRestart(ctx, d, NetRestartIn{DataDir: in.DataDir, Node: idx})
+			if err != nil {
+				return RunSuiteOut{}, fmt.Errorf("app: run suite: preflight restart node%d: %w", idx, err)
+			}
+			out.SetupSteps = append(out.SetupSteps, "restart: "+st.Detail)
+		}
+	default:
+		up, err := NetUp(ctx, d, upIn)
+		if err != nil {
+			return RunSuiteOut{}, fmt.Errorf("app: run suite: setup: %w", err)
+		}
+		out.SetupSteps = up.Steps
+	}
 
 	endpoints, err := chainsetupmod.NetEndpoints(ctx, d.chainsetupDeps(), chainsetupmod.NetEndpointsIn{DataDir: in.DataDir})
 	if err == nil {
@@ -181,4 +205,15 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 // SessionSummary reads a session's collected summary.
 func SessionSummary(root string) (RunSummary, error) {
 	return testengine.ReadSessionSummary(root)
+}
+
+// preflightDecision asks the workspace, when there is one, how much of what it
+// holds the request can reuse. No workspace, or one that cannot be read, is
+// simply "compose".
+func preflightDecision(ctx context.Context, d Deps, dir string, want preflight.Want) preflight.Decision {
+	ws, err := chainsetupmod.Open(dir, d.Clock)
+	if err != nil || len(ws.State().Nodes) == 0 {
+		return preflight.Decision{Verdict: preflight.Compose, Reasons: []string{"nothing is composed on the target"}}
+	}
+	return ws.Compare(ctx, want)
 }
