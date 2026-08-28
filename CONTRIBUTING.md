@@ -56,8 +56,8 @@ Open an issue with the `enhancement` label. Describe:
    go test -race ./...                                 # make test is not -race
    ```
    To exercise a real network end to end, compose one with
-   `chainbench net up --data-dir /tmp/cb --chain stablenet --binary <node>` and
-   tear it down with `chainbench net stop --data-dir /tmp/cb`.
+   `chainbench net up --workspace-dir /tmp/cb --chain stablenet --binary <node>` and
+   tear it down with `chainbench net stop --workspace-dir /tmp/cb`.
 6. **Commit** using [Conventional Commits](https://www.conventionalcommits.org/):
    ```
    feat: add new stress test for large transactions

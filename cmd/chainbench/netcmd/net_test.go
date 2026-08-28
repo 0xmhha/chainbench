@@ -33,7 +33,7 @@ func TestNetCmd_ComposeStepByStep(t *testing.T) {
 	dir := t.TempDir()
 	presetDir := filepath.Join("..", "..", "..", "keys", "preset")
 
-	out, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet", "--keys", presetDir)
+	out, err := run(t, "net", "new", "--workspace-dir", dir, "--chain", "stablenet", "--keys", presetDir)
 	if err != nil {
 		t.Fatalf("net new: %v\n%s", err, out)
 	}
@@ -42,7 +42,7 @@ func TestNetCmd_ComposeStepByStep(t *testing.T) {
 		t.Fatalf("net new output: %s", out)
 	}
 
-	out, err = run(t, "net", "status", "--data-dir", dir)
+	out, err = run(t, "net", "status", "--workspace-dir", dir)
 	if err != nil {
 		t.Fatalf("net status: %v\n%s", err, out)
 	}
@@ -55,7 +55,7 @@ func TestNetCmd_ComposeStepByStep(t *testing.T) {
 
 func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
 	dir := t.TempDir()
-	out, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet",
+	out, err := run(t, "net", "new", "--workspace-dir", dir, "--chain", "stablenet",
 		"--remote-host", "10.0.0.1", "--remote-user", "ubuntu", "--target-dir", "/tmp/net")
 	if err != nil {
 		t.Fatalf("net new remote: %v\n%s", err, out)
@@ -65,9 +65,21 @@ func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
 	}
 }
 
-func TestNetCmd_RequiresDataDir(t *testing.T) {
-	if _, err := run(t, "net", "new", "--chain", "stablenet"); err == nil {
-		t.Fatal("expected error without --data-dir")
+// TestNetCmd_DefaultsTheWorkspace pins the omitted-flag behaviour: a fresh
+// timestamped directory under the (test-scoped) home, and the path printed
+// before anything uses it, so it is never a guess.
+func TestNetCmd_DefaultsTheWorkspace(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	out, err := run(t, "net", "new", "--chain", "stablenet")
+	if err != nil {
+		t.Fatalf("net new without --workspace-dir: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "workspace: "+home) {
+		t.Fatalf("the default path was not announced:\n%s", out)
+	}
+	if !strings.Contains(out, "chainsetup") {
+		t.Fatalf("default path missing the chainsetup segment:\n%s", out)
 	}
 }
 
@@ -82,12 +94,12 @@ func TestNetNew_RecordsTheServerSetWithDocker(t *testing.T) {
 			"ssh: {user: dev, password: pw}\ndataRoot: /data/cb\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := run(t, "net", "new", "--data-dir", dir, "--chain", "stablenet",
+	if _, err := run(t, "net", "new", "--workspace-dir", dir, "--chain", "stablenet",
 		"--keys", filepath.Join("..", "..", "..", "keys", "preset"),
 		"--docker", "--server-set", set); err != nil {
 		t.Fatalf("net new: %v", err)
 	}
-	out, err := run(t, "net", "status", "--data-dir", dir)
+	out, err := run(t, "net", "status", "--workspace-dir", dir)
 	if err != nil {
 		t.Fatalf("net status: %v", err)
 	}

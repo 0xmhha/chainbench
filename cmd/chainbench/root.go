@@ -7,7 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/netcmd"
-	"github.com/0xmhha/chainbench/cmd/chainbench/netmapcmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -52,7 +52,7 @@ func newRootCmd() *cobra.Command {
 		newContractCmd(),
 		newRemoteCmd(),
 		keyringcmd.New(),
-		netmapcmd.New(),
+		resourcecmd.New(),
 	)
 	return root
 }

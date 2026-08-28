@@ -33,7 +33,10 @@ func newNetUpCmd() *cobra.Command {
 		Short: "Compose and launch a network in one command (runs every net step in order)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir is required")
+				var err error
+				if dataDir, err = defaultWorkspaceDir(cmd); err != nil {
+					return err
+				}
 			}
 			target, err := tf.spec()
 			if err != nil {
@@ -61,7 +64,7 @@ func newNetUpCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "local workspace directory (keep it short: node IPC sockets have a 104-char limit)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory — where the composition is set up (default: ~/.chainbench/<timestamp>/chainsetup; keep it short: node IPC sockets have a 104-char limit)")
 	cmd.Flags().StringVar(&stage, "stage", string(chainsetup.UpStart), "how far to go: provision (write artifacts only) or start")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")

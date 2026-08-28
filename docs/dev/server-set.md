@@ -143,15 +143,15 @@ cp server-set.sample.yaml server-set.yaml
 $EDITOR server-set.yaml        # 실제 호스트·포트 기입
 
 # 이 머신에서
-chainbench net up --data-dir /tmp/n1 --chain stablenet \
+chainbench net up --workspace-dir /tmp/n1 --chain stablenet \
   --binary $GSTABLE --server local
 
 # 원격 호스트 하나에서
-chainbench net up --data-dir /tmp/n1 --chain stablenet \
+chainbench net up --workspace-dir /tmp/n1 --chain stablenet \
   --binary /srv/bin/gstable --server bp1
 
 # 서버 세트 전체에 한 노드씩 펼쳐서
-chainbench net up --data-dir /tmp/n1 --chain stablenet \
+chainbench net up --workspace-dir /tmp/n1 --chain stablenet \
   --binary /srv/bin/gstable --all-servers
 
 # DSL 실행도 같은 서버 세트를 읽는다
