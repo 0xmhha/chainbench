@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 
 	"github.com/0xmhha/chainbench/internal/testengine"
@@ -53,7 +55,7 @@ func TestLocalEngine_RunRegistersNodeIdentities(t *testing.T) {
 	e, err := testengine.NewLocalEngine(testengine.LocalConfig{
 		Chain:        "stablenet",
 		Binary:       filepath.Join(t.TempDir(), "no-such-binary"),
-		Keys:         testengine.PresetKeySource{Path: presetDir},
+		Keys:         store.PresetKeys{Path: presetDir},
 		ArtifactRoot: root,
 		Validators:   4,
 	})
@@ -84,7 +86,7 @@ func TestLocalEngine_RunFailsOnUndersizedKeySet(t *testing.T) {
 	e, err := testengine.NewLocalEngine(testengine.LocalConfig{
 		Chain:        "stablenet",
 		Binary:       "unused",
-		Keys:         testengine.PresetKeySource{Path: presetDir},
+		Keys:         store.PresetKeys{Path: presetDir},
 		ArtifactRoot: t.TempDir(),
 		Validators:   999,
 	})

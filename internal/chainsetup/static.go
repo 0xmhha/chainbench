@@ -3,11 +3,12 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
@@ -157,11 +158,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[5], func() (string, error) {
-		placed := make([]PlacedNode, len(reqs))
-		for i := range reqs {
-			placed[i] = PlacedNode{Req: reqs[i], Placement: places[i]}
-		}
-		p, err := AssemblePlan(plugin, placed, gen, o.DataDir, plugin.Manifest().Capabilities)
+		p, err := launcher.PlanOf(plugin, reqs, places, gen, o.DataDir, plugin.Manifest().Capabilities)
 		if err != nil {
 			return "", err
 		}

@@ -1,9 +1,9 @@
-package chainsetup_test
+package launcher_test
 
 import (
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -26,20 +26,18 @@ func TestEtcdPortSurvivesIntoThePlan(t *testing.T) {
 		t.Fatalf("Assign: %v", err)
 	}
 
-	placed := make([]chainsetup.PlacedNode, 0, 2)
-	for _, p := range m.Placements() {
+	var reqs []node.LaunchReq
+	places := m.Placements()
+	for _, p := range places {
 		if p.Ports.Etcd != p.Ports.P2P+1 {
 			t.Fatalf("%s: assignment lost the etcd port: %+v", p.Label, p.Ports)
 		}
-		placed = append(placed, chainsetup.PlacedNode{
-			Req:       node.LaunchReq{Role: p.Role, Binary: "gwemix"},
-			Placement: p,
-		})
+		reqs = append(reqs, node.LaunchReq{Role: p.Role, Binary: "gwemix"})
 	}
 
-	plan, err := chainsetup.AssemblePlan(wbftTestPlugin(), placed, []byte(`{"g":1}`), "/d", nil)
+	plan, err := launcher.PlanOf(launcherTestPlugin(), reqs, places, []byte(`{"g":1}`), "/d", nil)
 	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
+		t.Fatalf("PlanOf: %v", err)
 	}
 	for _, spec := range plan.Nodes {
 		if spec.Ports.Etcd != spec.Ports.P2P+1 {

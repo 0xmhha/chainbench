@@ -3,12 +3,14 @@ package testengine_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -63,11 +65,11 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	defer cancel()
 
 	cfg := config.Resolve(nil, config.Values{"nodes.validators": "4"})
-	plan, err := testengine.BuildLocalPlan(cfg, plugin, dataRoot, nil)
+	plan, err := chainsetup.BuildLocalPlan(cfg, plugin, dataRoot, nil)
 	if err != nil {
 		t.Fatalf("build plan: %v", err)
 	}
-	ns, _, err := testengine.LocalSetup{
+	ns, _, err := chainsetup.LocalSetup{
 		Plugin: plugin, Config: cfg, Binary: bin, KeysDir: presetDir,
 	}.Launch(ctx, plan)
 	t.Cleanup(func() {

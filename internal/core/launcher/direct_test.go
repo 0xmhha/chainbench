@@ -3,14 +3,14 @@ package launcher_test
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
+
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -99,14 +99,7 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 	plugin := launcherTestPlugin()
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
 
-	placed := []chainsetup.PlacedNode{
-		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
-		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
-	}
-	plan, err := chainsetup.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
-	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
-	}
+	plan := twoValidatorPlan(t, plugin)
 
 	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeDriver{}
@@ -144,14 +137,7 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 func TestLocalLauncher_ProvisionOnlyDoesNotLaunch(t *testing.T) {
 	plugin := launcherTestPlugin()
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
-	placed := []chainsetup.PlacedNode{
-		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
-		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
-	}
-	plan, err := chainsetup.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
-	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
-	}
+	plan := twoValidatorPlan(t, plugin)
 
 	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeDriver{}
@@ -180,14 +166,7 @@ func TestLocalLauncher_ProvisionOnlyDoesNotLaunch(t *testing.T) {
 func TestLocalLauncher_RemoteShipsIdentities(t *testing.T) {
 	plugin := launcherTestPlugin()
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
-	placed := []chainsetup.PlacedNode{
-		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
-		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
-	}
-	plan, err := chainsetup.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
-	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
-	}
+	plan := twoValidatorPlan(t, plugin)
 
 	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeRemoteDriver{}
@@ -229,4 +208,20 @@ func repoRoot(t *testing.T) string {
 		}
 		dir = parent
 	}
+}
+
+// twoValidatorPlan is a two-node plan on this host, the shape a spec's
+// build or a composed workspace hands the launcher.
+func twoValidatorPlan(t *testing.T, plugin registry.ChainPlugin) driver.Plan {
+	t.Helper()
+	reqs := []node.LaunchReq{{Role: node.RoleValidator}, {Role: node.RoleValidator}}
+	places := []node.Placement{
+		{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"},
+		{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"},
+	}
+	plan, err := launcher.PlanOf(plugin, reqs, places, []byte(`{"g":1}`), "/d", []string{"ws"})
+	if err != nil {
+		t.Fatalf("PlanOf: %v", err)
+	}
+	return plan
 }

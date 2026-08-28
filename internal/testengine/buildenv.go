@@ -1,12 +1,12 @@
-package chainsetup
+package testengine
 
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -56,10 +56,11 @@ type BuildDeps struct {
 	ProvisionExtra func(ctx context.Context, plan driver.Plan, files map[string][]byte) error
 }
 
-// NewBuildEnv composes the network build: allocate placements, source genesis,
-// assemble the plan, provision on-disk files, then bring the network up behind
-// the launcher's health gate. The returned teardown stops the nodes and
-// removes their data dirs. It is the production wiring for Deps.BuildEnv.
+// NewBuildEnv composes the network build for one spec: allocate placements,
+// source genesis, assemble the plan, provision on-disk files, then bring the
+// network up behind the launcher's health gate. The returned teardown stops
+// the nodes and removes their data dirs. It is the production wiring for
+// Deps.BuildEnv when the engine builds its own network.
 func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 	return func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error) {
 		reqs := d.Reqs(spec)
@@ -67,7 +68,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: spec resolved to no nodes")
 		}
 
-		assigned, err := resource.Assign(d.Pool, netmapRequests(reqs))
+		assigned, err := resource.Assign(d.Pool, placementRequests(reqs))
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocate: %w", err)
 		}
@@ -81,11 +82,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis: %w", err)
 		}
 
-		placed := make([]PlacedNode, len(reqs))
-		for i := range reqs {
-			placed[i] = PlacedNode{Req: reqs[i], Placement: placements[i]}
-		}
-		plan, err := AssemblePlan(d.Plugin, placed, gen.Genesis, env.DataPath(), d.Caps)
+		plan, err := launcher.PlanOf(d.Plugin, reqs, placements, gen.Genesis, env.DataPath(), d.Caps)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: plan: %w", err)
 		}
@@ -127,6 +124,17 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 		}
 		return ns, teardown, nil
 	}
+}
+
+// placementRequests turns launch requests into placement requests. Only the
+// role travels: position comes from the order, which is also the node's
+// identity.
+func placementRequests(reqs []node.LaunchReq) []resource.Request {
+	out := make([]resource.Request, 0, len(reqs))
+	for _, r := range reqs {
+		out = append(out, resource.Request{Role: r.Role})
+	}
+	return out
 }
 
 // countValidators counts placement requests whose role produces blocks.

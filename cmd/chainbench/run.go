@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
 	"io"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 
 	"github.com/spf13/cobra"
 
@@ -184,15 +186,15 @@ const (
 )
 
 // keySource maps --keys-source to the engine boundary that materializes identities.
-func keySource(o runOpts) (testengine.KeySource, error) {
+func keySource(o runOpts) (store.KeySource, error) {
 	if o.keysDir == "" {
 		return nil, fmt.Errorf("run: --keys is required for a local run")
 	}
 	switch keysSourceKind(o.keysSource) {
 	case "", keysSourcePreset:
-		return testengine.PresetKeySource{Path: o.keysDir}, nil
+		return store.PresetKeys{Path: o.keysDir}, nil
 	case keysSourceGenerate:
-		return testengine.GeneratedKeySource{
+		return store.GeneratedKeys{
 			Path: o.keysDir, Validators: o.validators,
 		}, nil
 	default:

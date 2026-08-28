@@ -1,9 +1,9 @@
-package chainsetup_test
+package launcher_test
 
 import (
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 
@@ -19,29 +19,30 @@ func wbftPlugin(t *testing.T) registry.ChainPlugin {
 	return p
 }
 
-func placed(role node.Role, host string, p2p, http int, dataPath string) chainsetup.PlacedNode {
-	return chainsetup.PlacedNode{
-		Req: node.LaunchReq{Role: role, Binary: "go-wbft"},
-		Placement: node.Placement{
-			Host:    host,
-			Ports:   node.Endpoints{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
-			DataDir: dataPath,
-		},
+func placed(host string, p2p, http int, dataPath string) node.Placement {
+	return node.Placement{
+		Host:    host,
+		Ports:   node.Endpoints{P2P: p2p, Etcd: p2p + 1, HTTP: http, WS: http + 1, Auth: http + 2},
+		DataDir: dataPath,
 	}
 }
 
-func TestAssemblePlan_UsesAllocatorPorts(t *testing.T) {
-	nodes := []chainsetup.PlacedNode{
-		placed(node.RoleValidator, "127.0.0.1", 30301, 8501, "/data/node1"),
+func TestPlanOf_UsesAllocatorPorts(t *testing.T) {
+	reqs := []node.LaunchReq{
+		{Role: node.RoleValidator, Binary: "go-wbft"},
+		{Role: node.RoleValidator, Binary: "go-wbft"},
+	}
+	places := []node.Placement{
+		placed("127.0.0.1", 30301, 8501, "/data/node1"),
 		// Deliberately non-stepped ports to prove the plan takes them from the
-		// placement, not from a fixed base+step like setup.BuildPlan.
-		placed(node.RoleValidator, "127.0.0.1", 41000, 9000, "/data/node2"),
+		// placement, not from a fixed base+step like the local plan.
+		placed("127.0.0.1", 41000, 9000, "/data/node2"),
 	}
 	genesis := []byte(`{"config":{}}`)
 
-	plan, err := chainsetup.AssemblePlan(wbftPlugin(t), nodes, genesis, "/data", []string{"ws"})
+	plan, err := launcher.PlanOf(wbftPlugin(t), reqs, places, genesis, "/data", []string{"ws"})
 	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
+		t.Fatalf("PlanOf: %v", err)
 	}
 	if plan.Chain != "wbft" {
 		t.Fatalf("Chain = %q, want wbft", plan.Chain)
@@ -75,36 +76,40 @@ func TestAssemblePlan_UsesAllocatorPorts(t *testing.T) {
 	}
 }
 
-func TestAssemblePlan_BinaryFallsBackToManifest(t *testing.T) {
-	pn := chainsetup.PlacedNode{
-		Req:       node.LaunchReq{Role: node.RoleValidator}, // no Binary
-		Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 30301, HTTP: 8501}, DataDir: "/d/node1"},
-	}
-	plan, err := chainsetup.AssemblePlan(wbftPlugin(t), []chainsetup.PlacedNode{pn}, nil, "/d", nil)
+func TestPlanOf_BinaryFallsBackToManifest(t *testing.T) {
+	reqs := []node.LaunchReq{{Role: node.RoleValidator}} // no Binary
+	places := []node.Placement{{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 30301, HTTP: 8501}, DataDir: "/d/node1"}}
+	plan, err := launcher.PlanOf(wbftPlugin(t), reqs, places, nil, "/d", nil)
 	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
+		t.Fatalf("PlanOf: %v", err)
 	}
 	if got := plan.Nodes[0].Binary; got != wbftPlugin(t).Manifest().Binary {
 		t.Fatalf("binary = %q, want manifest binary %q", got, wbftPlugin(t).Manifest().Binary)
 	}
 }
 
-func TestAssemblePlan_DataDirDefault(t *testing.T) {
-	pn := chainsetup.PlacedNode{
-		Req:       node.LaunchReq{Role: node.RoleValidator, Binary: "go-wbft"},
-		Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 30301, HTTP: 8501}}, // no DataPath
-	}
-	plan, err := chainsetup.AssemblePlan(wbftPlugin(t), []chainsetup.PlacedNode{pn}, nil, "/root", nil)
+func TestPlanOf_DataDirDefault(t *testing.T) {
+	reqs := []node.LaunchReq{{Role: node.RoleValidator, Binary: "go-wbft"}}
+	places := []node.Placement{{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 30301, HTTP: 8501}}} // no DataPath
+	plan, err := launcher.PlanOf(wbftPlugin(t), reqs, places, nil, "/root", nil)
 	if err != nil {
-		t.Fatalf("AssemblePlan: %v", err)
+		t.Fatalf("PlanOf: %v", err)
 	}
 	if got := plan.Nodes[0].DataDir; got != "/root/node1" {
 		t.Fatalf("default DataDir = %q, want /root/node1", got)
 	}
 }
 
-func TestAssemblePlan_NoNodes(t *testing.T) {
-	if _, err := chainsetup.AssemblePlan(wbftPlugin(t), nil, nil, "/d", nil); err == nil {
+func TestPlanOf_NoNodes(t *testing.T) {
+	if _, err := launcher.PlanOf(wbftPlugin(t), nil, nil, nil, "/d", nil); err == nil {
 		t.Fatal("expected error for empty placements")
+	}
+}
+
+func TestPlanOf_PlacementCountMustMatch(t *testing.T) {
+	reqs := []node.LaunchReq{{Role: node.RoleValidator}, {Role: node.RoleValidator}}
+	places := []node.Placement{placed("127.0.0.1", 30301, 8501, "/d/node1")}
+	if _, err := launcher.PlanOf(wbftPlugin(t), reqs, places, nil, "/d", nil); err == nil {
+		t.Fatal("expected error when placements do not cover the requests")
 	}
 }

@@ -112,7 +112,7 @@ flowchart TD
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
 | `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
-| `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 |
+| `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run --binary` 가 같은 경계를 쓴다, P6.1) |
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
@@ -129,7 +129,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `consensus/wbft` | wbft genesis(extraData RLP) · start flags |
-| `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브** |
+| `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브와 그 실행자**(`Bootstrap`: 패밀리가 선언한 액션을 한 타깃에서 수행, `Info`/`WaitEtcdCluster`: 클러스터가 실제로 섰는지) — P6.1 에서 chainsetup 에서 옮겨옴 |
 | `consensus/upgrade` | 체인 핸드오프 |
 
 ### L2b 체인 어댑터 — 체인 특화
@@ -159,8 +159,8 @@ flowchart TD
 
 | 패키지 | 담는 것 |
 |---|---|
-| `testengine` | 테스트 엔진 — 구성된 체인 위에서 테스트 수행·수집·요약 (구성 책임은 chainsetup 으로 이관) |
-| `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 레거시 wemix 사례(T7.11 은퇴 예정) |
+| `testengine` | 테스트 엔진 — 구성된 체인 위에서 테스트 수행·수집·요약. `run --binary` 의 스펙별 환경 조립(`NewBuildEnv`)은 엔진 자신의 것이라 여기 있다(P6.1); chainsetup 을 import 하지 않는다 |
+| `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴) + `chain up` 케이스 러너(P7 이 대체) |
 | `chainsetup` | 체인별 셋업 절차 |
 | `testkit` | **(레거시)** 케이스 레지스트리 |
 | `core/pipeline/testrun` | **(레거시)** 케이스 실행 |

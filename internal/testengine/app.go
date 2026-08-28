@@ -3,15 +3,17 @@ package testengine
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
@@ -59,8 +61,8 @@ type LocalConfig struct {
 	KeysDir string
 	// Keys selects where the node identities come from — an existing set, or a
 	// freshly generated one (algorithm steps 2-3). Nil uses
-	// PresetKeySource{KeysDir}, the reproducible default.
-	Keys KeySource
+	// store.PresetKeys{KeysDir}, the reproducible default.
+	Keys store.KeySource
 	// ArtifactRoot is the base directory for session artifacts.
 	ArtifactRoot string
 	// Validators is the validator node count; <=0 uses the default.
@@ -101,7 +103,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		if cfg.KeysDir == "" {
 			return nil, fmt.Errorf("engine: local config needs keysDir or a key source")
 		}
-		keySrc = PresetKeySource{Path: cfg.KeysDir}
+		keySrc = store.PresetKeys{Path: cfg.KeysDir}
 	}
 	keysDir := keySrc.Dir()
 	plugin, err := registry.Get(cfg.Chain)
@@ -137,13 +139,13 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		}, overrides...)
 	}
 	procs := process.New()
-	controller := NewNodeController(LocalLauncher{
+	controller := launcher.NewController(launcher.Direct{
 		Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir, LaunchOverrides: overrides,
 	}, procs)
 	sup := launcher.New(launcher.Deps{
 		Launch:     controller.Launch,
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
-		Action:     WemixBootstrap{Binary: cfg.Binary, KeysDir: keysDir}.Action,
+		Action:     poa.Bootstrap{Binary: cfg.Binary, KeysDir: keysDir}.Action,
 		Procman:    procs,
 	})
 	pool := cfg.Pool
@@ -190,7 +192,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 			if err != nil {
 				return nil, err
 			}
-			if err := RegisterIdentities(ctx, sess.Keys(), ks, validators); err != nil {
+			if err := sess.Keys().Register(ctx, ks, validators); err != nil {
 				return nil, err
 			}
 			return sess, nil
