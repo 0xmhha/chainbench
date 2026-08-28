@@ -68,6 +68,3 @@ var BuildLocalPlan = chainsetup.BuildLocalPlan
 
 // LocalSetup is the local environment setup a plan runs through.
 type LocalSetup = chainsetup.LocalSetup
-
-// NodeLaunchArgs assembles one node's launch argv.
-var NodeLaunchArgs = launcher.NodeLaunchArgs

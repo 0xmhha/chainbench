@@ -8,13 +8,12 @@ import (
 )
 
 func TestGenerate_Validator(t *testing.T) {
-	toml := string(Generate(Params{
-		Role:         node.RoleValidator,
-		Ports:        node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501, Auth: 8551, Metrics: 6061},
-		KeystoreDir:  "/data/keystores/node1",
-		RPCNamespace: "istanbul",
-		StaticNodes:  []string{"enode://abc@127.0.0.1:30301?discport=0"},
-	}))
+	toml := string(TOML(Spec{
+		Chain:       Chain{RPCNamespace: "istanbul"},
+		Role:        node.RoleValidator,
+		Ports:       node.Endpoints{P2P: 30301, HTTP: 8501, WS: 9501, Auth: 8551, Metrics: 6061},
+		KeystoreDir: "/data/keystores/node1",
+		StaticNodes: []string{"enode://abc@127.0.0.1:30301?discport=0"}}))
 
 	for _, want := range []string{
 		`SyncMode = "full"`,
@@ -38,10 +37,10 @@ func TestGenerate_Validator(t *testing.T) {
 }
 
 func TestGenerate_EndpointHasNoMiner(t *testing.T) {
-	toml := string(Generate(Params{
-		Role:         node.RoleEndpoint,
-		Ports:        node.Endpoints{P2P: 30302, HTTP: 8502},
-		RPCNamespace: "wemix",
+	toml := string(TOML(Spec{
+		Chain: Chain{RPCNamespace: "wemix"},
+		Role:  node.RoleEndpoint,
+		Ports: node.Endpoints{P2P: 30302, HTTP: 8502},
 	}))
 	if strings.Contains(toml, "[Eth.Miner]") {
 		t.Error("endpoint should not have a miner section")
@@ -55,11 +54,10 @@ func TestGenerate_EndpointHasNoMiner(t *testing.T) {
 }
 
 func TestGenerate_NanosMinerRecommit(t *testing.T) {
-	toml := string(Generate(Params{
-		Role:          node.RoleValidator,
-		Ports:         node.Endpoints{P2P: 30301, HTTP: 8501},
-		RPCNamespace:  "wemix",
-		MinerRecommit: "nanos",
+	toml := string(TOML(Spec{
+		Chain: Chain{RPCNamespace: "wemix", MinerRecommit: "nanos"},
+		Role:  node.RoleValidator,
+		Ports: node.Endpoints{P2P: 30301, HTTP: 8501},
 	}))
 	// A "nanos" manifest binary decodes miner.Recommit only from an integer
 	// number of nanoseconds, not a TOML string.
@@ -75,10 +73,11 @@ func TestGenerate_NanosMinerRecommit(t *testing.T) {
 // chain/namespace: a "wemix" namespace with no (or "duration") MinerRecommit
 // gets the default string form. This pins the de-hardcoding.
 func TestGenerate_RecommitDecoupledFromNamespace(t *testing.T) {
-	toml := string(Generate(Params{
-		Role:         node.RoleValidator,
-		Ports:        node.Endpoints{P2P: 30301, HTTP: 8501},
-		RPCNamespace: "wemix", // namespace alone must NOT force nanos
+	toml := string(TOML(Spec{
+		// The namespace alone must NOT force the nanos form.
+		Chain: Chain{RPCNamespace: "wemix"},
+		Role:  node.RoleValidator,
+		Ports: node.Endpoints{P2P: 30301, HTTP: 8501},
 	}))
 	if !strings.Contains(toml, `Recommit = "2s"`) {
 		t.Errorf("recommit should default to the string form regardless of namespace, got:\n%s", toml)

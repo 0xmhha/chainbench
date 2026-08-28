@@ -15,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -241,7 +240,7 @@ func TestArmSpecsLaunchoptEquivalence(t *testing.T) {
 
 	fam := plugin.Family()
 	for i, spec := range plan.Nodes {
-		legacy := nodeconfig.LaunchArgs(spec.DataDir, spec.ConfigPath, spec.Ports, fam.StartFlags(spec.Role))
+		legacy := legacyLaunchArgs(spec.DataDir, spec.ConfigPath, spec.Ports, fam.StartFlags(spec.Role))
 		legacy = append(legacy, "--nodekey", "/keys/node"+strconv.Itoa(spec.Index)+"/nodekey")
 		if spec.Role == node.RoleValidator {
 			if nk, ok := preset.Node(spec.Index); ok {
@@ -290,4 +289,21 @@ func pairsOf(args []string) map[string]string {
 		}
 	}
 	return out
+}
+
+// legacyLaunchArgs is the flat argv the retired nodeconfig.LaunchArgs emitted:
+// datadir, config, the port flags, then the family's flags. It stays here as
+// the equivalence baseline the Builder is measured against — the contract is
+// flag-pair equality, since a geth-family binary parses position-free.
+func legacyLaunchArgs(dataDir, configPath string, ports node.Endpoints, familyFlags []string) []string {
+	args := []string{
+		"--datadir", dataDir,
+		"--config", configPath,
+		"--port", strconv.Itoa(ports.P2P),
+		"--http",
+		"--http.port", strconv.Itoa(ports.HTTP),
+		"--ws",
+		"--ws.port", strconv.Itoa(ports.WS),
+	}
+	return append(args, familyFlags...)
 }

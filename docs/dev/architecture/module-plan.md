@@ -201,6 +201,20 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 **설계 방향**: `nodeconfig` 가 "노드 하나의 구성" 을 소유하고, TOML 과 argv 는
 같은 입력에서 나오는 두 렌더러가 된다. `launchopt` 는 argv 렌더러로 그 안에 든다.
 
+**P4.2 결과(2026-08-28).** `nodeconfig.Spec` 이 단일 입력(체인 사실 `Chain` + 역할·포트·
+경로·신원·피어 목록), `TOML(spec)` 과 `Argv(spec, overrides…)` 가 두 렌더러. 파일이
+담는 것은 명령줄에 반복하지 않는다는 규칙이 코드에 있다(`ConfigPath` 가 있으면
+`--authrpc.port` 를 내지 않는다). Spec 조립은 `launcher.NodeConfig`(플랜+키셋에서) 한 곳이고,
+compose 의 config·launchopts·start 세 단계가 `chainsetup.peerPlan` 으로 같은 네 입력
+(키셋·배치·피어링·공개키)을 모아 그것을 부른다. 이전에 config 단계는 Params 를 손으로
+채우고 launchopts 는 `launcher.NodeLaunchArgs` 를 불렀다 — 두 렌더가 각자 입력을
+재조립하던 것이 사라졌다. `upgrade.LaunchArgs` 와 wemix4 원격 `deploy` 의 평평한
+`LaunchArgs` 도 `Argv` 를 거친다(argv 조립 3 → 1). 착수하며 잡은 결함 하나:
+`driverSpec` 이 `SyncMode` 를 빠뜨려 config 에는 닿고 argv 에는 안 닿던 것.
+**`launchopt` 디렉터리는 그대로다.** "편입" 은 소유의 문제로 풀었다: 노드를 대변해 argv 를
+만드는 호출자는 `nodeconfig.Argv` 뿐이고, 다른 소비자 5곳은 `Override` 값만 만든다. 1,3k줄
+방언표를 디렉터리째 옮기는 것은 이름만 바꾸는 일이라 하지 않았다.
+
 ### M6 dsl — 정의와 파서
 
 `testspec` 3,520줄 15파일 + `testspec/assert` 368줄. 큰 파일이 관심사를 겸한다.
