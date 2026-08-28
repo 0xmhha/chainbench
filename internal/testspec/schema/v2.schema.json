@@ -4,33 +4,56 @@
   "title": "chainbench DSL v2",
   "description": "Canonical grammar for v2 spec files (docs/dev/dsl-v2-proposal.md). Enforcement is the strict parser (internal/testspec/spec_v2.go); this document is the field-level source of truth the parser and docs must match.",
   "oneOf": [
-    { "$ref": "#/$defs/envSpec" },
-    { "$ref": "#/$defs/caseSpec" }
+    {
+      "$ref": "#/$defs/envSpec"
+    },
+    {
+      "$ref": "#/$defs/caseSpec"
+    }
   ],
   "$defs": {
     "envSpec": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "kind", "id", "chain"],
+      "required": [
+        "schemaVersion",
+        "kind",
+        "id",
+        "chain"
+      ],
       "properties": {
-        "schemaVersion": { "const": "2" },
-        "kind": { "const": "env" },
-        "id": { "type": "string", "minLength": 1 },
+        "schemaVersion": {
+          "const": "2"
+        },
+        "kind": {
+          "const": "env"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
         "target": {
           "type": "string",
           "description": "single-path data-plane location: /local/path | user@host:/path | ssh://user@host:port/path"
         },
-        "chain": { "type": "string", "minLength": 1 },
+        "chain": {
+          "type": "string",
+          "minLength": 1
+        },
         "binaries": {
           "type": "object",
           "description": "role -> binary; the \"default\" key applies to every role without its own entry",
-          "additionalProperties": { "type": "string" }
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "keys": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "nodekeys": { "$ref": "#/$defs/keySource" }
+            "nodekeys": {
+              "$ref": "#/$defs/keySource"
+            }
           }
         },
         "genesis": {
@@ -38,98 +61,246 @@
           "additionalProperties": false,
           "properties": {
             "mode": {
-              "enum": ["template"],
+              "enum": [
+                "template"
+              ],
               "description": "existing | build | inherit are designed but have no runtime seam yet; the parser rejects them by name"
             },
-            "set": { "type": "object", "description": "dot-path single values merged into the overlay" },
-            "overlay": { "type": "object", "description": "deep-merged into the built genesis" }
+            "set": {
+              "type": "object",
+              "description": "dot-path single values merged into the overlay"
+            },
+            "overlay": {
+              "type": "object",
+              "description": "deep-merged into the built genesis"
+            }
           }
         },
-        "topology": { "type": "object" },
-        "hardforks": { "type": "object", "additionalProperties": { "type": "integer" } },
+        "topology": {
+          "type": "object"
+        },
+        "hardforks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
         "launch": {
           "type": "object",
           "description": "scope -> launchopt knobs. Supported scope today: \"all\"; role scopes land with per-role wiring",
-          "additionalProperties": { "type": "object" }
+          "additionalProperties": {
+            "type": "object"
+          }
         },
-        "config": { "type": "string" },
-        "capabilities": { "type": "array", "items": { "type": "string" } }
+        "config": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "upgrade": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "profile",
+            "template"
+          ],
+          "description": "a mixed-binary handoff: the network starts on binaries.producer and forks to binaries.validator, shaped by a golden profile",
+          "properties": {
+            "profile": {
+              "type": "string",
+              "description": "golden upgrade profile (profiles/*.yaml)"
+            },
+            "template": {
+              "type": "string",
+              "description": "the producer chain's own genesis template"
+            }
+          }
+        }
       }
     },
     "keySource": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source"],
+      "required": [
+        "source"
+      ],
       "properties": {
-        "source": { "enum": ["preset", "generate"] },
-        "ref": { "type": "string", "description": "key-set directory" },
-        "bootnode": { "type": "string", "description": "BLS-deriving binary (generate)" }
+        "source": {
+          "enum": [
+            "preset",
+            "generate"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "description": "key-set directory"
+        },
+        "bootnode": {
+          "type": "string",
+          "description": "BLS-deriving binary (generate)"
+        }
       }
     },
     "caseSpec": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["schemaVersion", "kind", "id", "env", "steps"],
+      "required": [
+        "schemaVersion",
+        "kind",
+        "id",
+        "env",
+        "steps"
+      ],
       "properties": {
-        "schemaVersion": { "const": "2" },
-        "kind": { "const": "case" },
-        "id": { "type": "string", "minLength": 1 },
+        "schemaVersion": {
+          "const": "2"
+        },
+        "kind": {
+          "const": "case"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
         "env": {
           "oneOf": [
-            { "type": "string", "description": "env id resolved against the case file's directory" },
-            { "$ref": "#/$defs/envSpec" }
+            {
+              "type": "string",
+              "description": "env id resolved against the case file's directory"
+            },
+            {
+              "$ref": "#/$defs/envSpec"
+            }
           ]
         },
-        "applicableChains": { "type": "string" },
-        "requires": { "type": "array", "items": { "type": "string" } },
-        "on": { "type": "string", "description": "default target selector" },
-        "timeouts": { "type": "object", "additionalProperties": { "type": "string" } },
+        "applicableChains": {
+          "type": "string"
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "on": {
+          "type": "string",
+          "description": "default target selector"
+        },
+        "timeouts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "hooks": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "pre": { "type": "array", "items": { "$ref": "#/$defs/doStatement" } },
-            "post": { "type": "array", "items": { "$ref": "#/$defs/doStatement" } },
-            "onFail": { "type": "array", "items": { "$ref": "#/$defs/doStatement" } }
+            "pre": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/doStatement"
+              }
+            },
+            "post": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/doStatement"
+              }
+            },
+            "onFail": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/doStatement"
+              }
+            }
           }
         },
         "steps": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/statement" },
+          "items": {
+            "$ref": "#/$defs/statement"
+          },
           "description": "unified sequence; at least one expect statement is required"
         }
       }
     },
     "statement": {
       "oneOf": [
-        { "$ref": "#/$defs/doStatement" },
-        { "$ref": "#/$defs/expectStatement" }
+        {
+          "$ref": "#/$defs/doStatement"
+        },
+        {
+          "$ref": "#/$defs/expectStatement"
+        }
       ]
     },
     "doStatement": {
       "type": "object",
-      "required": ["do"],
+      "required": [
+        "do"
+      ],
       "properties": {
-        "do": { "type": "string", "minLength": 1, "description": "action name (registry-validated at runtime)" },
-        "on": { "type": "string" },
-        "onEach": { "type": "string" },
-        "save": { "type": "string" },
-        "timeout": { "type": "string" },
-        "expect": { "type": "string", "description": "adjunct on a do statement (e.g. sendTx expect receipt|revert)" }
+        "do": {
+          "type": "string",
+          "minLength": 1,
+          "description": "action name (registry-validated at runtime)"
+        },
+        "on": {
+          "type": "string"
+        },
+        "onEach": {
+          "type": "string"
+        },
+        "save": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "string"
+        },
+        "expect": {
+          "type": "string",
+          "description": "adjunct on a do statement (e.g. sendTx expect receipt|revert)"
+        }
       }
     },
     "expectStatement": {
       "type": "object",
-      "required": ["expect"],
-      "not": { "required": ["do"] },
+      "required": [
+        "expect"
+      ],
+      "not": {
+        "required": [
+          "do"
+        ]
+      },
       "properties": {
-        "expect": { "type": "string", "minLength": 1, "description": "assertion/source name; alias: rpc -> rpcCall" },
-        "is": { "description": "expected value (lowered to the runtime's \"expected\")" },
-        "compare": { "type": "string", "description": "assert primitive; default per assertion" },
-        "on": { "type": "string" },
-        "onEach": { "type": "string" },
-        "within": { "type": "string" }
+        "expect": {
+          "type": "string",
+          "minLength": 1,
+          "description": "assertion/source name; alias: rpc -> rpcCall"
+        },
+        "is": {
+          "description": "expected value (lowered to the runtime's \"expected\")"
+        },
+        "compare": {
+          "type": "string",
+          "description": "assert primitive; default per assertion"
+        },
+        "on": {
+          "type": "string"
+        },
+        "onEach": {
+          "type": "string"
+        },
+        "within": {
+          "type": "string"
+        }
       }
     }
   }

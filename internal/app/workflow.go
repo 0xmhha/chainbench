@@ -3,43 +3,48 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"path/filepath"
 	"time"
 
 	chainsetupmod "github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/testengine"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // The workflow is what MCP exists to reach (architecture-v2 §2): one call
-// that takes DSL inputs, sets the chain up through chainsetup, runs the specs
+// that takes DSL inputs, composes the chain the specs declare, runs the specs
 // through the test engine, collects the session, and reports — the sequence
 // an operator would otherwise drive verb by verb.
 
-// RunSuiteIn is one whole workflow request.
+// RunSuiteIn is one whole workflow request. The network is declared by the
+// specs' env; the fields here are the operator's overrides and the places
+// only the operator knows.
 type RunSuiteIn struct {
 	// SpecPaths are the DSL files to run, each read and env-resolved the one
 	// way every surface does (testspec.ReadFiles).
 	SpecPaths []string
 	// DataDir is the composition workspace; the network is set up here.
 	DataDir string
-	// Chain, Binary, Validators, and Server shape the setup, exactly as the
-	// net verbs take them.
-	Chain      string
-	Binary     string
+	// Chain, when set, must agree with what the specs declare.
+	Chain string
+	// Binary overrides the declared binary path for a single-binary network.
+	Binary string
+	// Validators overrides the declared validator count.
 	Validators int
-	Server     ServerRef
+	// Server selects where the nodes run, from the operator's server set.
+	Server ServerRef
 	// Docker treats the servers as local docker containers (the option is the
 	// power switch, as everywhere).
 	Docker bool
-	// KeysDir is the key set the network composes from (default keys/preset).
+	// KeysDir overrides the declared key set (default keys/preset).
 	KeysDir string
-	// ArtifactRoot is where the test session writes; empty uses the engine
-	// default.
+	// ArtifactRoot is where the test session writes; empty uses the
+	// workspace's sessions directory.
 	ArtifactRoot string
-	// Caps are extra capabilities the operator asserts the network provides.
+	// Caps are extra capabilities the operator asserts the network provides,
+	// beyond what the composition advertises.
 	Caps []string
 	// KeepUp leaves the network running after the tests (default: stop it).
 	KeepUp bool
@@ -83,72 +88,80 @@ type RunSuiteOut struct {
 	// Stopped reports whether the network was torn down afterwards.
 	Stopped bool
 	// Preflight is the reuse decision the run started from: reuse, which
-	// nodes were rebuilt, or why everything was.
+	// nodes were rebuilt, or why everything was. A handoff is always composed.
 	Preflight string
 }
 
-// RunSuite runs the whole flow: parse the DSL, set up the chain, run the
-// tests, collect, and stop the network unless asked to keep it. Setup failure
-// aborts before any test runs; a test-phase failure still tears down.
+// composed is a network the suite brought up: where the tests reach it, what
+// it advertises, and how to take it down.
+type composed struct {
+	endpoints []string
+	caps      []string
+	teardown  func(context.Context) error
+}
+
+// RunSuite runs the whole flow: read the DSL, compose the chain it declares,
+// run the tests, collect, and stop the network unless asked to keep it. Setup
+// failure aborts before any test runs; a test-phase failure still tears down.
 func RunSuite(ctx context.Context, d Deps, in RunSuiteIn) (RunSuiteOut, error) {
 	if len(in.SpecPaths) == 0 {
 		return RunSuiteOut{}, fmt.Errorf("app: run suite: no specs given")
+	}
+	if in.DataDir == "" {
+		return RunSuiteOut{}, fmt.Errorf("app: run suite: a workspace directory is required")
 	}
 	specs, err := testspec.ReadFiles(in.SpecPaths)
 	if err != nil {
 		return RunSuiteOut{}, err
 	}
+	parsed := make([]testspec.Spec, 0, len(specs))
+	for i, raw := range specs {
+		s, err := testspec.Parse(raw)
+		if err != nil {
+			return RunSuiteOut{}, fmt.Errorf("app: run suite: %s: %w", in.SpecPaths[i], err)
+		}
+		parsed = append(parsed, s)
+	}
+	if err := sameChain(parsed); err != nil {
+		return RunSuiteOut{}, fmt.Errorf("app: run suite: %w", err)
+	}
+	comp, err := compositionOf(ctx, parsed[0], in)
+	if err != nil {
+		return RunSuiteOut{}, fmt.Errorf("app: run suite: %w", err)
+	}
 	if in.ArtifactRoot == "" {
 		// The session belongs with the workspace it tested.
 		in.ArtifactRoot = filepath.Join(in.DataDir, "sessions")
 	}
+	chain := parsed[0].Chain.Name
 
-	upIn := NetUpIn{
-		DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary,
-		Validators: in.Validators, Server: in.Server, Docker: in.Docker,
-		KeysDir: in.KeysDir, Stage: UpStart,
-	}
-	// What is composed here already may be what this suite wants: ask before
-	// rebuilding. The decision is recorded beside the setup steps so a run
-	// that reused a network says so, and one that rebuilt says why.
 	out := RunSuiteOut{}
-	decision := preflightDecision(ctx, d, in.DataDir, chainsetupmod.WantOf(upIn))
-	out.Preflight = decision.String()
-	switch decision.Verdict {
-	case preflight.Reuse:
-		out.SetupSteps = []string{"preflight: reuse — " + decision.String()}
-	case preflight.RebuildNodes:
-		for _, idx := range decision.Nodes {
-			st, err := NetRestart(ctx, d, NetRestartIn{DataDir: in.DataDir, Node: idx})
-			if err != nil {
-				return RunSuiteOut{}, fmt.Errorf("app: run suite: preflight restart node%d: %w", idx, err)
-			}
-			out.SetupSteps = append(out.SetupSteps, "restart: "+st.Detail)
-		}
-	default:
-		up, err := NetUp(ctx, d, upIn)
+	var net composed
+	if comp.handoff != nil {
+		ns, steps, teardown, err := handoffUp(ctx, *comp.handoff)
+		out.SetupSteps = steps
 		if err != nil {
-			return RunSuiteOut{}, fmt.Errorf("app: run suite: setup: %w", err)
+			return out, fmt.Errorf("app: run suite: setup: %w", err)
 		}
-		out.SetupSteps = up.Steps
+		out.Preflight = preflight.Compose.String()
+		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
+	} else {
+		net, err = workspaceUp(ctx, d, *comp.up, &out)
+		if err != nil {
+			return out, err
+		}
 	}
+	out.Endpoints = net.endpoints
 
-	endpoints, err := chainsetupmod.NetEndpoints(ctx, d.chainsetupDeps(), chainsetupmod.NetEndpointsIn{DataDir: in.DataDir})
-	if err == nil {
-		out.Endpoints = endpoints
-	}
 	runErr := func() error {
-		if err != nil {
-			return fmt.Errorf("app: run suite: endpoints: %w", err)
-		}
 		if in.WaitBlocks > 0 {
-			if err := waitForHead(ctx, endpoints[0], in.WaitBlocks); err != nil {
+			if err := waitForHead(ctx, net.endpoints[0], in.WaitBlocks); err != nil {
 				return fmt.Errorf("app: run suite: %w", err)
 			}
 		}
 		eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
-			Chain: in.Chain, RPCURLs: endpoints,
-			ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock,
+			Chain: chain, RPCURLs: net.endpoints,
+			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: d.Clock,
 		})
 		if err != nil {
 			return fmt.Errorf("app: run suite: engine: %w", err)
@@ -167,13 +180,69 @@ func RunSuite(ctx context.Context, d Deps, in RunSuiteIn) (RunSuiteOut, error) {
 	}()
 
 	if !in.KeepUp {
-		if _, err := NetStop(ctx, d, NetStopIn{DataDir: in.DataDir}); err == nil {
+		if err := net.teardown(ctx); err == nil {
 			out.Stopped = true
 		} else if runErr == nil {
 			runErr = fmt.Errorf("app: run suite: teardown: %w", err)
 		}
 	}
 	return out, runErr
+}
+
+// workspaceUp composes a single-binary network through the workspace steps,
+// reusing what is already composed when preflight says it can. It records the
+// steps and the preflight decision on out.
+func workspaceUp(ctx context.Context, d Deps, up NetUpIn, out *RunSuiteOut) (composed, error) {
+	// What is composed here already may be what this suite wants: ask before
+	// rebuilding. The decision is recorded beside the setup steps so a run
+	// that reused a network says so, and one that rebuilt says why.
+	decision := preflightDecision(ctx, d, up.DataDir, chainsetupmod.WantOf(up))
+	out.Preflight = decision.String()
+	switch decision.Verdict {
+	case preflight.Reuse:
+		out.SetupSteps = []string{"preflight: reuse — " + decision.String()}
+	case preflight.RebuildNodes:
+		for _, idx := range decision.Nodes {
+			st, err := NetRestart(ctx, d, NetRestartIn{DataDir: up.DataDir, Node: idx})
+			if err != nil {
+				return composed{}, fmt.Errorf("app: run suite: preflight restart node%d: %w", idx, err)
+			}
+			out.SetupSteps = append(out.SetupSteps, "restart: "+st.Detail)
+		}
+	default:
+		res, err := NetUp(ctx, d, up)
+		out.SetupSteps = res.Steps
+		if err != nil {
+			return composed{}, fmt.Errorf("app: run suite: setup: %w", err)
+		}
+	}
+
+	endpoints, err := chainsetupmod.NetEndpoints(ctx, d.chainsetupDeps(), chainsetupmod.NetEndpointsIn{DataDir: up.DataDir})
+	if err != nil {
+		return composed{}, fmt.Errorf("app: run suite: endpoints: %w", err)
+	}
+	var caps []string
+	if ws, err := chainsetupmod.Open(up.DataDir, d.Clock); err == nil {
+		caps = ws.State().Capabilities
+	}
+	return composed{
+		endpoints: endpoints,
+		caps:      caps,
+		teardown: func(ctx context.Context) error {
+			_, err := NetStop(ctx, d, NetStopIn{DataDir: up.DataDir})
+			return err
+		},
+	}, nil
+}
+
+// chainCaps is what a chain advertises by its manifest: what a handoff
+// network, which has no workspace record, tells capability-gated specs.
+func chainCaps(chain string) []string {
+	p, err := ResolveChain(chain, "", "")
+	if err != nil {
+		return nil
+	}
+	return p.Manifest().Capabilities
 }
 
 // RunSummary is a collected session result.

@@ -27,8 +27,11 @@ type runReport struct {
 	testengine.Summary
 }
 
-// newRunCmd runs DSL test specs through the redesign testengine. With --rpc it
-// attaches to a running network; with --binary it builds a local one.
+// newRunCmd runs DSL test specs through the test engine. With --rpc it
+// attaches to a running network; with --workspace-dir it composes the network
+// the specs declare through the workspace steps (a handoff env composes the
+// handoff) and attaches to that; with --binary alone it builds a local one
+// through the engine's own build path.
 func newRunCmd() *cobra.Command {
 	var (
 		chain        string
@@ -44,6 +47,9 @@ func newRunCmd() *cobra.Command {
 		launchOpts   []string
 		dashboardURL string
 		jsonOut      bool
+		workspaceDir string
+		keepUp       bool
+		waitBlocks   uint64
 		sf           serverflag.Flags
 	)
 	cmd := &cobra.Command{
@@ -51,6 +57,25 @@ func newRunCmd() *cobra.Command {
 		Short: "Run DSL test specs through the engine (attach or local)",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if workspaceDir != "" {
+				if len(rpcURLs) > 0 {
+					return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc")
+				}
+				in := app.RunSuiteIn{
+					SpecPaths: args, DataDir: workspaceDir, Chain: chain,
+					Binary: binary, Server: sf.Ref(), KeepUp: keepUp, WaitBlocks: waitBlocks,
+				}
+				if cmd.Flags().Changed("keys") {
+					in.KeysDir = keysDir
+				}
+				if cmd.Flags().Changed("validators") {
+					in.Validators = validators
+				}
+				if cmd.Flags().Changed("artifact-root") {
+					in.ArtifactRoot = artifactRoot
+				}
+				return runComposed(cmd, in, jsonOut)
+			}
 			specs, err := testspec.ReadFiles(args)
 			if err != nil {
 				return err
@@ -92,7 +117,10 @@ func newRunCmd() *cobra.Command {
 			return printSession(cmd.OutOrStdout(), root, jsonOut)
 		},
 	}
-	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet)")
+	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); with --workspace-dir it is what the specs declare and may be omitted")
+	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
+	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
+	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
 	cmd.Flags().StringVar(&binary, "binary", "", "local: node binary path — builds a network")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: key set directory (read with --keys-source preset, written with generate)")
@@ -142,6 +170,23 @@ type runOpts struct {
 	// operator's server set; its zero value uses the built-in local plan.
 	server app.ServerRef
 	bus    *obs.Bus
+}
+
+// runComposed composes the network the specs declare and runs them against
+// it, printing the setup steps before the session.
+func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+	out := cmd.OutOrStdout()
+	res, err := app.RunSuite(cmd.Context(), app.Deps{}, in)
+	for _, step := range res.SetupSteps {
+		fmt.Fprintln(out, step)
+	}
+	if res.Preflight != "" {
+		fmt.Fprintf(out, "preflight: %s\n", res.Preflight)
+	}
+	if err != nil {
+		return err
+	}
+	return printSession(out, res.SessionRoot, jsonOut)
 }
 
 // buildRunEngine selects attach mode (when --rpc endpoints are given) or local

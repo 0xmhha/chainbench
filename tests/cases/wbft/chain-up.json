@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-chain-up",
+  "env": "wbft",
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "do": "waitBlock", "target": 2, "timeout": "120s" },
+    { "expect": "chainId", "compare": "Greater", "is": "0" },
+    { "expect": "blockNumber", "compare": "GreaterOrEqual", "is": "2" },
+    { "expect": "rpc", "method": "istanbul_getValidators", "params": ["latest"], "compare": "Len", "is": 4 },
+    { "expect": "rpc", "method": "net_peerCount", "compare": "NotEqual", "is": "0x0" }
+  ]
+}

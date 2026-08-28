@@ -579,6 +579,30 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
 **게이트**: 네 갈래가 같은 DSL 어휘를 쓰고, 체인별 분기가 **선언에만** 있다
 (러너에 `if chain ==` 가 없다).
 
+**P7 결과(2026-08-28).** 네 갈래는 `tests/cases/` 에 있다 — `env/` 아래 선언 4개
+(`stablenet`·`wbft`·`wemix`·`wemix-wbft`)와 각 갈래의 케이스 하나. 실행기는
+`app.RunSuite` 하나다: 케이스의 env 를 읽어 **선언의 모양**으로 조립기를 고른다.
+`upgrade` 블록이 있으면 `consensus/upgrade.Handoff`(혼합 바이너리 핸드오프), 없으면
+워크스페이스 단계(`NetUp`). 어느 쪽이든 attach 엔진이 케이스를 돌린다. wemix 의
+2-페이즈 부트스트랩은 패밀리가 선언한 phase 로 `NetUp` 안에서 돈다(F5b·F6).
+- 문법: `env.upgrade {profile, template}` 를 더했다(schema·strict parser·lowering).
+  이때 `binaries` 는 `producer`/`validator` 역할 이름만 받는다. `env.topology` 는
+  `bp|validators`·`en|endpoints`·`syncMode` 를 읽고, 모르는 키는 거부한다.
+  `hardforks` → genesis `--set`, `launch.all` → launchopts `--set`, `genesis.set/overlay`
+  → 워크스페이스 안의 overlay 파일(파일 인터페이스 경유). 선언 안의 경로와 바이너리는
+  `${VAR:-default}` 로 머신별 빌드 위치를 받는다.
+- 표면: `chainbench run --workspace-dir DIR [--binary] [--keep-up] [--wait-blocks]`
+  가 `RunSuite` 로 간다(전에는 라이브 테스트만 부르던 함수). `validate` 는 env 참조를
+  풀고, env 파일 자체는 선언으로 검증한다. 케이스 디렉터리가 공유하는 `../env/` 도
+  찾는다.
+- 게이트: `app`·`testengine`·`chainsetup` 에 `if chain ==` 0건(있는 것은 빈 문자열
+  검사 하나). 네 케이스와 env 4개가 `validate` 통과. **라이브는 stablenet 만**
+  (이 머신의 gstable): 조립 → 4노드 → 케이스 통과 → 정리. wbft·wemix·핸드오프는
+  바이너리가 없어 선언과 실행기 경로까지만 검증됐다(`tests/cases/README.md` 표).
+- 남은 것: P6.4 — `chain up --case` 러너(cases·static·wemix·handoff·report·state,
+  `cmd/chainbench/chain.go`)를 지운다. 케이스의 단계 보고는 `RunSuiteOut.SetupSteps`
+  가 대신한다.
+
 ### P8. test-helper 모듈
 
 케이스가 실제로 하는 일을 한곳에 모은다. 지금 후보는 `testspec` 의

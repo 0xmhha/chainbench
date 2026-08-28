@@ -206,3 +206,56 @@ func TestSchemaV2Embedded(t *testing.T) {
 		t.Fatalf("schema $id = %v", doc["$id"])
 	}
 }
+
+// TestV2_UpgradeEnvNamesItsBinariesByRole: a handoff declaration carries
+// through to the executable spec, and one that leaves a role out is refused
+// rather than composed as a single-binary network.
+func TestV2_UpgradeEnvNamesItsBinariesByRole(t *testing.T) {
+	good := `{"schemaVersion":"2","kind":"case","id":"h","env":{
+	  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	  "binaries":{"producer":"gwemix","validator":"gwbft"},
+	  "upgrade":{"profile":"p.yaml","template":"t.json"}},
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	s, err := Parse([]byte(good))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" || s.EnvUpgrade.Template != "t.json" {
+		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
+	}
+	if s.Chain.Binaries[RoleProducer] != "gwemix" || s.Chain.Binaries[RoleValidator] != "gwbft" || s.Chain.Binary != "" {
+		t.Fatalf("binaries = %v / %q", s.Chain.Binaries, s.Chain.Binary)
+	}
+
+	bad := map[string]string{
+		"missing validator":    `"binaries":{"producer":"gwemix"},"upgrade":{"profile":"p","template":"t"}`,
+		"default with upgrade": `"binaries":{"producer":"gwemix","validator":"gwbft","default":"x"},"upgrade":{"profile":"p","template":"t"}`,
+		"no template":          `"binaries":{"producer":"gwemix","validator":"gwbft"},"upgrade":{"profile":"p"}`,
+	}
+	for name, env := range bad {
+		raw := `{"schemaVersion":"2","kind":"case","id":"h","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",` + env + `},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+		if _, err := Parse([]byte(raw)); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}
+
+func TestParseEnv_StandsOnItsOwn(t *testing.T) {
+	env, err := ParseEnv([]byte(`{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`))
+	if err != nil || env.ID != "e" || env.Chain != "stablenet" {
+		t.Fatalf("ParseEnv: %+v (%v)", env, err)
+	}
+	if !IsEnv([]byte(`{"schemaVersion":"2","kind":"env"}`)) || IsEnv([]byte(`{"schemaVersion":"2","kind":"case"}`)) {
+		t.Fatal("IsEnv misreads the kind")
+	}
+	for name, raw := range map[string]string{
+		"typo field": `{"schemaVersion":"2","kind":"env","id":"e","chain":"x","binaris":{}}`,
+		"no chain":   `{"schemaVersion":"2","kind":"env","id":"e"}`,
+		"wrong kind": `{"schemaVersion":"2","kind":"case","id":"e","chain":"x"}`,
+	} {
+		if _, err := ParseEnv([]byte(raw)); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}

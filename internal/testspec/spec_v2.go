@@ -64,6 +64,28 @@ type EnvV2 struct {
 	Launch        map[string]map[string]any `json:"launch,omitempty"`
 	Config        string                    `json:"config,omitempty"`
 	Capabilities  []string                  `json:"capabilities,omitempty"`
+	// Upgrade declares a mixed-binary handoff: the network starts on the
+	// producer's binary and forks to the validators'. With it, Binaries names
+	// the two roles ("producer", "validator") rather than a default.
+	Upgrade *UpgradeV2 `json:"upgrade,omitempty"`
+}
+
+// Binary roles an upgrade env names.
+const (
+	// RoleProducer is the binary that seals up to the fork.
+	RoleProducer = "producer"
+	// RoleValidator is the binary that takes over after it.
+	RoleValidator = "validator"
+)
+
+// UpgradeV2 declares a handoff composition: which golden profile shapes it
+// and which genesis template the producer's binary generates from. It is a
+// declaration only; the composer that runs it lives above the grammar.
+type UpgradeV2 struct {
+	// Profile is the golden upgrade profile (profiles/*.yaml).
+	Profile string `json:"profile"`
+	// Template is the producer chain's own genesis template.
+	Template string `json:"template"`
 }
 
 // KeysV2 declares where node identities come from (background 1.4/1.5,
@@ -162,6 +184,29 @@ func ParseV2(raw []byte) (Spec, error) {
 	}
 }
 
+// IsEnv reports whether raw is a v2 env declaration: a file that is not
+// runnable on its own but is what cases reference.
+func IsEnv(raw []byte) bool {
+	var s sniff
+	return json.Unmarshal(raw, &s) == nil && s.SchemaVersion == schemaVersionV2 && s.Kind == KindEnv
+}
+
+// ParseEnv parses a v2 env declaration strictly, so a declaration can be
+// validated on its own before any case references it.
+func ParseEnv(raw []byte) (EnvV2, error) {
+	var env EnvV2
+	if err := parseStrict(raw, &env); err != nil {
+		return EnvV2{}, fmt.Errorf("testspec: env: %w", err)
+	}
+	if env.Kind != KindEnv {
+		return EnvV2{}, fmt.Errorf("testspec: env kind is %q, want %q", env.Kind, KindEnv)
+	}
+	if env.ID == "" || env.Chain == "" {
+		return EnvV2{}, fmt.Errorf("testspec: env needs \"id\" and \"chain\"")
+	}
+	return env, nil
+}
+
 // InlineEnv resolves a case's "env": "<id>" reference through lookup and
 // rewrites the case with the env object inlined. A case with an inline env
 // (or a v1 spec) passes through untouched. lookup receives the env id and
@@ -243,6 +288,23 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.Chain.Binary = b
 	} else if len(env.Binaries) > 0 {
 		spec.Chain.Binaries = env.Binaries
+	}
+
+	// An upgrade names its two binaries by role, and nothing else: a default
+	// would mean every node runs one binary, which is not a handoff.
+	if u := env.Upgrade; u != nil {
+		if u.Profile == "" || u.Template == "" {
+			return Spec{}, fmt.Errorf("testspec: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
+		}
+		for _, role := range []string{RoleProducer, RoleValidator} {
+			if env.Binaries[role] == "" {
+				return Spec{}, fmt.Errorf("testspec: case %s: an upgrade env names binaries by role — binaries.%s is missing", c.ID, role)
+			}
+		}
+		if len(env.Binaries) != 2 {
+			return Spec{}, fmt.Errorf("testspec: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, RoleProducer, RoleValidator)
+		}
+		spec.EnvUpgrade = u
 	}
 
 	// Genesis: template(+overlay/set) is the runtime's proven path; the other

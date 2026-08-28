@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-wbft-handoff",
+  "env": "wemix-wbft",
+  "requires": ["rpc"],
+  "steps": [
+    { "do": "waitBlock", "target": 22, "timeout": "240s" },
+    { "expect": "blockNumber", "compare": "Greater", "is": "20" },
+    { "expect": "rpc", "method": "eth_getBlockByNumber", "params": ["0x15", false],
+      "select": "miner", "compare": "NotEqual", "is": "0xf9593d358b373d354a348c00887b914b408f6984" },
+    { "expect": "rpc", "method": "istanbul_getValidators", "params": ["latest"], "compare": "Len", "is": 4 }
+  ]
+}
