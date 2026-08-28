@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -218,5 +219,27 @@ func TestPortedSpecs_IDsAreUnique(t *testing.T) {
 			t.Errorf("duplicate spec id %q in %s and %s", spec.ID, prev, p)
 		}
 		seen[spec.ID] = p
+	}
+}
+
+// TestValidateCmd_ChainCases: the four chain-setup declarations and their
+// cases validate offline — env references resolve from the shared env/
+// directory, and an env file validates as a declaration.
+func TestValidateCmd_ChainCases(t *testing.T) {
+	paths, err := filepath.Glob("../../tests/cases/*/*.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) < 8 {
+		t.Fatalf("expected the four envs and four cases under tests/cases, found %d files", len(paths))
+	}
+	var out bytes.Buffer
+	if err := validateSpecs(&out, paths, "", false); err != nil {
+		t.Fatalf("validate tests/cases: %v\n%s", err, out.String())
+	}
+	for _, want := range []string{"env declaration for chain wemix", "wemix-wbft-handoff", "stablenet-chain-up"} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("output should mention %q:\n%s", want, out.String())
+		}
 	}
 }

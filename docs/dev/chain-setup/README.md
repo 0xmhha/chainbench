@@ -15,6 +15,11 @@
 
 점검용 CLI: `chainbench chain`. 케이스별 절차를 **단계 단위로 실행·중단·검증**한다 — [§4](#4-cli-로-직접-점검) 참조.
 
+> **2026-08-28 (P7):** 네 케이스는 이제 DSL 선언으로도 세운다 — `tests/cases/env/` 의
+> env 4개와 `chainbench run --workspace-dir DIR tests/cases/<케이스>/*.json`. 실행기는
+> 선언의 모양으로 조립기를 고르고 체인 이름으로 분기하지 않는다. `chain up --case` 러너는
+> P6.4 에서 은퇴한다. 자세한 것은 `tests/cases/README.md`.
+
 ---
 
 ## 1. 공통 파이프라인

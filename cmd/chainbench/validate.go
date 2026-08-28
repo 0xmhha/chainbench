@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"io"
-	"os"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/spf13/cobra"
 
@@ -68,10 +68,18 @@ func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) er
 	invalid := 0
 	for _, p := range paths {
 		r := validateResult{Spec: p}
-		raw, err := os.ReadFile(p)
+		raws, err := testspec.ReadFiles([]string{p})
 		if err != nil {
 			r.Result = "ERROR: " + err.Error()
-		} else if s, perr := testspec.Parse(raw); perr != nil {
+		} else if testspec.IsEnv(raws[0]) {
+			// An env is a declaration, not a run: it validates on its own
+			// terms and is exercised through the cases that name it.
+			if env, perr := testspec.ParseEnv(raws[0]); perr != nil {
+				r.Result = "INVALID: " + perr.Error()
+			} else {
+				r.ID, r.OK, r.Result = env.ID, true, "env declaration for chain "+env.Chain
+			}
+		} else if s, perr := testspec.Parse(raws[0]); perr != nil {
 			r.Result = "INVALID: " + perr.Error()
 		} else if unresolved := testspec.Unresolved(s, reg); len(unresolved) > 0 {
 			r.ID = s.ID

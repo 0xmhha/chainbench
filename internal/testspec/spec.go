@@ -57,6 +57,10 @@ type Spec struct {
 	// EnvLaunch are the v2 env.launch knobs (the "all" scope), for the
 	// surface to fold into the engine's launch-override boundary. Runtime-only.
 	EnvLaunch []LaunchKV `json:"-"`
+	// EnvUpgrade is the v2 env's handoff declaration, for the composer to run
+	// the network as a mixed-binary handoff. Nil is a single-binary network.
+	// Runtime-only.
+	EnvUpgrade *UpgradeV2 `json:"-"`
 }
 
 // Parse routes raw JSON to its grammar (v1, or v2 by schemaVersion sniff),
