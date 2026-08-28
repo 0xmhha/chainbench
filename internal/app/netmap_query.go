@@ -165,7 +165,7 @@ type NetPoolIn struct {
 	Server  ServerRef
 }
 
-// NetPoolOut is the resource and how much of it is spoken for.
+// NetPoolOut is the resource, how much of it is spoken for, and by whom.
 //
 // It deliberately carries no credentials. The pool says where nodes may run;
 // how to log in belongs to the server set and the environment, and a summary an
@@ -176,10 +176,19 @@ type NetPoolOut struct {
 	Slots  int      `json:"slots"`
 	Cap    int      `json:"cap"`
 	Used   int      `json:"used"`
+	Free   int      `json:"free"`
+	// ByNetwork counts the slots each workspace holds, so a full set says
+	// what to remove rather than only that it is full.
+	ByNetwork map[string]int `json:"byNetwork,omitempty"`
 }
 
 // NetPool reports the addresses and port slots a network may be composed from,
 // and how many are already taken. It is what answers "why was 15 refused".
+//
+// Taken is what the resource module's inventory says after adopting every
+// workspace it can see: the one named (optional) and every composition under
+// the default root. A workspace composed somewhere else is counted only when
+// it is named — there is no registry of workspaces, only the directories.
 func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 	resolved, err := ResolveServer(d, in.Server, 1, defaultPortBand)
 	if err != nil {
@@ -189,7 +198,17 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
-	out := NetPoolOut{Source: pool.Source, Slots: pool.Slots, Cap: pool.Cap()}
+	inv, err := resource.NewInventory(pool)
+	if err != nil {
+		return NetPoolOut{}, err
+	}
+	for _, dir := range poolWorkspaces(in.DataDir) {
+		if ws, err := chainsetup.Open(dir, d.Clock); err == nil {
+			inv.Adopt(chainsetup.Allocations(ws))
+		}
+	}
+	u := inv.Usage()
+	out := NetPoolOut{Source: pool.Source, Slots: pool.Slots, Cap: u.Cap, Used: u.Used, Free: u.Free, ByNetwork: u.ByNetwork}
 	for _, h := range pool.Hosts {
 		name := h.Name
 		if name == "" || name == h.Addr {
@@ -198,14 +217,31 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 		}
 		out.Hosts = append(out.Hosts, fmt.Sprintf("%s (%s)", name, h.Addr))
 	}
-	// A workspace is optional: reporting the resource is useful before one
-	// exists, which is exactly when an operator is sizing a network.
-	if in.DataDir != "" {
-		if ws, err := chainsetup.Open(in.DataDir, d.Clock); err == nil {
-			out.Used = len(ws.State().Nodes)
+	return out, nil
+}
+
+// poolWorkspaces is every workspace whose claims count against the pool: the
+// named one first, then the default root's. A missing default root is simply
+// nothing more to count.
+func poolWorkspaces(named string) []string {
+	var dirs []string
+	if named != "" {
+		dirs = append(dirs, named)
+	}
+	root, err := chainsetup.DefaultRoot()
+	if err != nil {
+		return dirs
+	}
+	found, err := chainsetup.Discover(root)
+	if err != nil {
+		return dirs
+	}
+	for _, f := range found {
+		if f != named {
+			dirs = append(dirs, f)
 		}
 	}
-	return out, nil
+	return dirs
 }
 
 // NetPlanIn asks what placement a network of this shape would get, before any

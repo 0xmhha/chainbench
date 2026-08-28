@@ -56,10 +56,22 @@ func (p Pool) Validate() error {
 	if p.Slots < 1 {
 		return fmt.Errorf("netmap: pool must allow at least one slot per host, got %d", p.Slots)
 	}
-	// The last slot is the one that can run off the end of a band, so checking
-	// it checks every earlier one.
-	if _, err := PlanBands(p.Slots, p.Ports, p.Reservation); err != nil {
-		return fmt.Errorf("netmap: pool ports: %w", err)
+	// Plan every declared slot and check the result for collisions. A band has
+	// a base and a step but no end, so "slots" is only meaningful up to the
+	// point where one purpose's band runs into another's — p2p at 8500 step 10
+	// meets an rpc base of 8600 on the eleventh slot. Declaring more slots
+	// than the bands can carry used to pass here and fail at bind time; now
+	// the server set hears about it before anything launches.
+	ports := make([]node.Endpoints, 0, p.Slots)
+	for slot := 1; slot <= p.Slots; slot++ {
+		e, err := PlanBands(slot, p.Ports, p.Reservation)
+		if err != nil {
+			return fmt.Errorf("netmap: pool ports: %w", err)
+		}
+		ports = append(ports, e)
+	}
+	if err := ValidatePorts(ports); err != nil {
+		return fmt.Errorf("netmap: %d slot(s) exceed what the port bands can carry: %w", p.Slots, err)
 	}
 	return nil
 }

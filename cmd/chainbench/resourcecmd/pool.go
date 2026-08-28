@@ -2,6 +2,7 @@ package resourcecmd
 
 import (
 	"fmt"
+	"sort"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -43,13 +44,22 @@ func newPoolCmd() *cobra.Command {
 				fmt.Fprintf(w, "%s\n", h)
 			}
 			_ = w.Flush()
-			free := out.Cap - out.Used
 			fmt.Fprintf(cmd.OutOrStdout(), "%d host(s) x %d slot(s) = %d node(s); %d used, %d free\nports: %s\n",
-				len(out.Hosts), out.Slots, out.Cap, out.Used, free, out.Source)
+				len(out.Hosts), out.Slots, out.Cap, out.Used, out.Free, out.Source)
+			// Who holds what: "0 free" alone tells an operator nothing about
+			// which workspace to remove.
+			names := make([]string, 0, len(out.ByNetwork))
+			for n := range out.ByNetwork {
+				names = append(names, n)
+			}
+			sort.Strings(names)
+			for _, n := range names {
+				fmt.Fprintf(cmd.OutOrStdout(), "  %s holds %d\n", n, out.ByNetwork[n])
+			}
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "workspace to count used slots from (optional)")
+	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "a workspace to count in addition to those under ~/.chainbench (optional)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the pool as JSON")
 	sf.Bind(cmd)
 	return cmd

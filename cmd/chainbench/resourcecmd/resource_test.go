@@ -149,6 +149,9 @@ func composedWorkspace(t *testing.T) string {
 // TestPool_CountsUsedSlots pins the arithmetic an operator otherwise does by
 // hand: capacity from the pool, used from the workspace.
 func TestPool_CountsUsedSlots(t *testing.T) {
+	// The pool also adopts every composition under ~/.chainbench; point HOME
+	// at an empty dir so the operator's own workspaces do not leak in.
+	t.Setenv("HOME", t.TempDir())
 	dir := composedWorkspace(t)
 	out, err := run(t, "resource", "pool", "--workspace-dir", dir)
 	if err != nil {
@@ -156,5 +159,44 @@ func TestPool_CountsUsedSlots(t *testing.T) {
 	}
 	if !strings.Contains(out, "3 used") {
 		t.Errorf("pool did not count the workspace's nodes:\n%s", out)
+	}
+	if !strings.Contains(out, dir+" holds 3") {
+		t.Errorf("pool did not say who holds the slots:\n%s", out)
+	}
+}
+
+// TestPool_CountsEveryCompositionUnderTheRoot: two networks composed on the
+// same set compete for the same ports, so the pool must count both — not
+// only the one named — and say which holds what.
+func TestPool_CountsEveryCompositionUnderTheRoot(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	for _, stamp := range []string{"20260828-100000", "20260828-100100"} {
+		dir := filepath.Join(home, ".chainbench", stamp, "chainsetup")
+		ws, err := chainsetup.Open(dir, time.Now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet"}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := ws.Allocate(chainsetup.AllocateOpts{Validators: 2}); err != nil {
+			t.Fatal(err)
+		}
+		if err := ws.Save(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	out, err := run(t, "resource", "pool")
+	if err != nil {
+		t.Fatalf("pool: %v\n%s", err, out)
+	}
+	// Both compositions took slot 1 and 2 of the one local host: the same
+	// ports. The inventory keeps the first claim and still counts 2 used.
+	if !strings.Contains(out, "2 used") {
+		t.Errorf("want the root's compositions counted:\n%s", out)
+	}
+	if !strings.Contains(out, "20260828-100000") {
+		t.Errorf("want the older composition named as the holder:\n%s", out)
 	}
 }
