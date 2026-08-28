@@ -135,7 +135,7 @@ key path · nodekey path · pid · process state
 | `LocalLauncher.Launch` / `LaunchArmed` / `InitAndLaunch` | `chainsetup/launcher.go` 64·78·230 | 세 변형이 한 파일에 |
 | `LocalSetup.Launch` | `chainsetup/locallaunch.go:54` | 정적 셋업 경로 |
 | `NodeController.Launch`/`Start`/`Stop` | `chainsetup/nodecontrol.go` | 단일 노드 제어 |
-| `liveHandoff.Launch` | `chainsetup/handoff_driver.go:154` | 핸드오프 |
+| `Handoff.Launch` | `consensus/upgrade/handoff.go` (P6.3 에서 `chainsetup/handoff_driver.go` 에서 이동) | 핸드오프 |
 | `upgrade.Launch` | `consensus/upgrade/exec.go:165` (44줄) | 혼합 바이너리 |
 | `supervisor.BringUp` | `core/supervisor` (51줄) | 단계+진단 |
 | `driver.{Local,Remote}.Launch` | `core/driver` | 실제 실행 |
@@ -550,9 +550,17 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   `setup --launch` 로 띄우고, `hardfork`·`node start/stop`·`test --data-dir` 가 그
   경로만 쓰는 `nodeset.json`/`nodespecs.json` 을 읽는다. 레거시 `--data-dir` 14곳과
   한 번에 손댄다(§7-3 "두 번 손대지 않기"). **라이브 검증이 앞서야 한다.**
-- **P6.3 핸드오프 중복 제거** — `handoff_driver.go`(371줄)와
-  `cmd/chainbench/upgrade_run.go`(396줄)가 함수 단위로 같은 일을 한다(8쌍).
-  테스트가 붙은 쪽은 cmd 다. 둘을 `consensus/upgrade` 하나로 합친다.
+- **P6.3 핸드오프 중복 제거 — 완료 2026-08-28.** `handoff_driver.go`(371줄)와
+  `cmd/chainbench/upgrade_run.go`(396줄)가 함수 단위로 같은 일을 했다(8쌍).
+  본문은 `consensus/upgrade.Handoff` 하나가 됐다(546줄: `NewHandoff` →
+  `WriteConfig` → `BaseGenesis` → `ComposePlan` → `ApplyOverlay` → `Launch` →
+  `WireMesh` → `DeployGovernance` → `EtcdInit` → `VerifyEtcd` → `AwaitFork`;
+  `Exec`·`Files`·`Driver`·`Peers` 는 주입). 케이스 러너의 `liveHandoff` 는 85줄의
+  단계 어댑터, `upgrade run` 은 132줄의 표면이다. 그 김에 `upgrade run` 도
+  verify-etcd 를 하게 됐다(옛 CLI 가 부트스트랩 실패를 성공으로 보고하던 구멍,
+  chain-setup README 잔여 5번). `upgrade.LaunchHandoff`/`Bootstrap`/`WaitReady` 는
+  소비자가 없어져 삭제. 결과: `chainsetup` 5,210 → 4,865줄, 레이어 위반 0,
+  `Handoff` 종이 절반 테스트 4건(profile+preset 으로 config·plan·overlay 조립).
 - **P6.4 케이스 러너 삭제 = P7.** `cases/static/wemix/report/state`(1,793줄)와
   `cmd/chainbench/chain.go` 는 DSL 케이스 4종이 들어온 뒤 지운다. 2,000줄 목표는
   이때 닿는다.

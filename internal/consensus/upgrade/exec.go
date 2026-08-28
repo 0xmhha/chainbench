@@ -40,10 +40,6 @@ type LaunchOptions struct {
 	// mesh's admin_addPeer). Typed keys, so an unsupported knob is a classified
 	// assembly error instead of a silently ignored flag. Optional.
 	Overrides func(spec NodeSpec, producer bool) []launchopt.Override
-	// WaitReady, if set, is called with the node RPC endpoints after launch and
-	// before the mesh is wired, so wiring does not race the nodes' HTTP servers
-	// coming up. Optional (nil skips the wait; unit tests leave it nil).
-	WaitReady func(ctx context.Context, endpoints []string) error
 	// Files is where the shared genesis is written. Nil is the local
 	// filesystem, which is what a local handoff wants and what this used to do
 	// unconditionally — the boundary exists so a caller running against a remote
@@ -109,50 +105,6 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 		})
 	}
 	return specs, nil
-}
-
-// Bootstrap performs the post-launch producer bring-up (e.g. deploy-governance
-// + etcdInit for a wemix producer). It runs once per producer node. Injectable
-// so the orchestration is testable without a real chain.
-type Bootstrap func(ctx context.Context, producer node.Node) error
-
-// LaunchHandoff runs the full post-plan sequence that a live handoff needs:
-// Launch every node, wire a full peer mesh so the successor validators can reach
-// a quorum with each other, then bootstrap each producer. It is the framework
-// equivalent of the reproduction script's launch+peer+bootstrap steps. The peer
-// caller and bootstrap are injected (defaults: JSON-RPC admin_addPeer, and a
-// no-op bootstrap) so it can be exercised without binaries. Provisioning of key
-// material into datadirs is the caller's concern (external key layout).
-func LaunchHandoff(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions, caller PeerCaller, bootstrap Bootstrap) (node.NodeSet, error) {
-	ns, err := Launch(ctx, d, plan, opts)
-	if err != nil {
-		return ns, err
-	}
-	if caller == nil {
-		caller = DefaultPeerCaller()
-	}
-	endpoints := make([]string, len(ns.Nodes))
-	for i, n := range ns.Nodes {
-		endpoints[i] = n.RPCURL
-	}
-	if opts.WaitReady != nil {
-		if err := opts.WaitReady(ctx, endpoints); err != nil {
-			return ns, fmt.Errorf("upgrade: nodes not ready for mesh: %w", err)
-		}
-	}
-	if err := WireMesh(ctx, caller, endpoints, plan.Enodes(opts.host())); err != nil {
-		return ns, err
-	}
-	if bootstrap != nil {
-		for i, spec := range plan.Nodes {
-			if spec.Producer {
-				if err := bootstrap(ctx, ns.Nodes[i]); err != nil {
-					return ns, fmt.Errorf("upgrade: bootstrap producer node%d: %w", spec.Index+1, err)
-				}
-			}
-		}
-	}
-	return ns, nil
 }
 
 // Launch runs a handoff network: it writes the shared genesis, initializes each

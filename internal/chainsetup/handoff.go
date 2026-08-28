@@ -3,14 +3,12 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // HandoffOptions are the inputs for the gwemix -> gwbft case.
@@ -74,10 +72,9 @@ type HandoffDriver interface {
 	EtcdInit(ctx context.Context, o HandoffOptions, producer node.Node) (string, error)
 	// ProducerIPC returns the producer's IPC socket path.
 	ProducerIPC(o HandoffOptions, producer node.Node) string
-	// ForkBlock is the height the handoff happens at.
-	ForkBlock() int64
-	// ProducerAccount is the from-chain miner, used to tell who sealed a block.
-	ProducerAccount() string
+	// AwaitFork waits until a successor seals the first post-fork block and
+	// says which one did.
+	AwaitFork(ctx context.Context, ns node.NodeSet, o HandoffOptions) (string, error)
 }
 
 // RunHandoff executes the gwemix -> gwbft case step by step.
@@ -103,7 +100,7 @@ func RunHandoff(ctx context.Context, c Case, o HandoffOptions, d HandoffDriver, 
 		o.EtcdTimeout = 60 * time.Second
 	}
 	if o.Exec == nil {
-		o.Exec = defaultExec
+		o.Exec = poa.ExecRunner
 	}
 	// No mkdir here: a store Write creates the parents, and the first thing
 	// this run writes is the governance config under DataDir. The binary that
@@ -171,59 +168,8 @@ func RunHandoff(ctx context.Context, c Case, o HandoffOptions, d HandoffDriver, 
 		return fmt.Sprintf("governance %s, etcd cluster %q, miners %q", info.Governance, info.Cluster(), info.Miners), nil
 	})
 
-	t.do(c.Steps[11], func() (string, error) {
-		return awaitFork(ctx, ns, d.ForkBlock(), d.ProducerAccount(), o.ForkTimeout)
-	})
+	t.do(c.Steps[11], func() (string, error) { return d.AwaitFork(ctx, ns, o) })
 
 	run.Results = t.results
 	return run, nil
-}
-
-// awaitFork waits until a successor validator seals the first post-fork block.
-// It polls a validator rather than the producer: the producer cannot import
-// post-fork blocks, so its head is not the handoff's evidence.
-func awaitFork(ctx context.Context, ns node.NodeSet, forkBlock int64, producerAcct string, timeout time.Duration) (string, error) {
-	var target string
-	for _, n := range ns.Nodes {
-		if n.Index != 0 {
-			target = n.RPCURL
-			break
-		}
-	}
-	if target == "" {
-		return "", fmt.Errorf("no successor validator to observe the handoff on")
-	}
-	c := rpc.Dial(target)
-	producer := strings.ToLower(producerAcct)
-	deadline := time.Now().Add(timeout)
-	var head uint64
-	for time.Now().Before(deadline) {
-		h, err := c.BlockNumber(ctx)
-		if err == nil {
-			head = h
-			if h > uint64(forkBlock) {
-				var blk struct {
-					Miner string `json:"miner"`
-				}
-				if err := c.Call(ctx, "eth_getBlockByNumber", &blk, fmt.Sprintf("0x%x", forkBlock+1), false); err == nil {
-					miner := strings.ToLower(blk.Miner)
-					if miner != "" && miner != producer {
-						return fmt.Sprintf("head %d; block %d sealed by %s (successor)", h, forkBlock+1, miner), nil
-					}
-				}
-			}
-		}
-		select {
-		case <-ctx.Done():
-			return "", ctx.Err()
-		case <-time.After(healthPollInterval):
-		}
-	}
-	return "", fmt.Errorf("head stalled at %d, never crossed fork block %d within %s", head, forkBlock, timeout)
-}
-
-// producerIPCPath is the conventional IPC socket of the producer under a data
-// root. Index+1: the handoff plan numbers nodes from zero, the layout from one.
-func producerIPCPath(dataDir, fromBinary string, producer node.Node) string {
-	return node.Layout{Root: dataDir}.IPCPath(node.LabelFor(producer.Index+1), fromBinary)
 }

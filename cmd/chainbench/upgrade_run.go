@@ -2,44 +2,21 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"math/big"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strconv"
-	"strings"
+	"io"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-// bigDec parses a decimal wei string into a *big.Int (0 on empty/invalid).
-func bigDec(s string) *big.Int {
-	n, ok := new(big.Int).SetString(strings.TrimSpace(s), 10)
-	if !ok {
-		return big.NewInt(0)
-	}
-	return n
-}
-
-// execRunner shells out to a binary, returning combined output. It is the live
-// poa.Runner backing the genesis/deploy-governance/etcdInit steps.
-func execRunner(ctx context.Context, name string, args ...string) ([]byte, error) {
-	return exec.CommandContext(ctx, name, args...).CombinedOutput()
-}
+// etcdFormTimeout bounds the wait for the producer's etcd cluster to form
+// after admin.etcdInit(). The call returns before the cluster exists, and a
+// network whose cluster never forms stalls a few blocks later, far from the
+// cause — so the run checks rather than trusts the exit code.
+const etcdFormTimeout = 60 * time.Second
 
 func newUpgradeRunCmd() *cobra.Command {
 	var profilePath, presetDir, fromBinary, toBinary, template, dataDir, genesisOverlay string
@@ -47,10 +24,11 @@ func newUpgradeRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Launch and bootstrap the full concurrent handoff from a golden profile",
-		Long: "Composes the handoff framework end to end: build the producer's base " +
-			"genesis, merge the successor fork section, launch the mixed binaries " +
-			"concurrently, wire a full peer mesh, and bootstrap governance + etcd on " +
-			"the producer. Requires the built binaries, etcd, and a preset key set.",
+		Long: "Composes the handoff end to end: build the producer's base genesis, " +
+			"merge the successor fork section, launch the mixed binaries " +
+			"concurrently, wire a full peer mesh, bootstrap governance + etcd on " +
+			"the producer, and confirm the cluster formed. Requires the built " +
+			"binaries, etcd, and a preset key set.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if profilePath == "" || template == "" || dataDir == "" {
 				return fmt.Errorf("--profile, --template, and --data-dir are required")
@@ -58,11 +36,9 @@ func newUpgradeRunCmd() *cobra.Command {
 			ctx := cmd.Context()
 			out := cmd.OutOrStdout()
 
+			// The binaries resolve here, not in the sequence: the profile names
+			// each by its command name, and the operator may point at a build.
 			prof, err := upgrade.LoadProfile(profilePath)
-			if err != nil {
-				return err
-			}
-			preset, err := store.LoadPreset(presetDir)
 			if err != nil {
 				return err
 			}
@@ -74,133 +50,25 @@ func newUpgradeRunCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("to binary: %w", err)
 			}
-			from, err := registry.Get(prof.Upgrade.From)
-			if err != nil {
-				return err
-			}
-			to, err := registry.Get(prof.Upgrade.To)
-			if err != nil {
-				return err
-			}
-			if err := os.MkdirAll(dataDir, 0o755); err != nil {
-				return err
-			}
-			order := prof.PlanOrderOrDefault()
-			host := "127.0.0.1"
-
-			// 1. wemix governance config (producer only) -> base genesis.
-			producerAcct := prof.Producers.Members[0]
-			prodPreset, ok := preset.Node(order[0])
-			if !ok {
-				return fmt.Errorf("preset has no node %d (producer)", order[0])
-			}
-			cfg := buildPoAConfig(prof, preset, producerAcct, prodPreset, host)
-			cfgBytes, err := cfg.JSON()
-			if err != nil {
-				return err
-			}
-			configPath := filepath.Join(dataDir, from.Manifest().ID+"-config.json")
-			if err := os.WriteFile(configPath, cfgBytes, 0o644); err != nil {
-				return err
-			}
-			basePath := filepath.Join(dataDir, "base-genesis.json")
-			if err := poa.GenerateGenesis(ctx, execRunner, fromBin, configPath, template, basePath); err != nil {
-				return err
-			}
-			baseGenesis, err := forceForkPrereqs(basePath, prof.Upgrade.NetworkID)
-			if err != nil {
-				return err
-			}
-
-			// 2. plan (with per-node pubkeys for the mesh).
-			in, err := prof.Inputs(baseGenesis)
-			if err != nil {
-				return err
-			}
-			in.NodePubkeys = make([]string, len(order))
-			for i, presetNum := range order {
-				nk, ok := preset.Node(presetNum)
-				if !ok {
-					return fmt.Errorf("preset has no node %d", presetNum)
-				}
-				in.NodePubkeys[i] = nk.PublicKey
-			}
-			plan, err := upgrade.BuildPlan(from, to, in)
-			if err != nil {
-				return err
-			}
-
-			// 2b. Optional genesis overlay: deep-merge extra genesis fields into the
-			// composed handoff genesis (e.g. croissant.wBFT.useNCP / targetValidators
-			// / stabilizingStakersThreshold, or govContracts.govNCP.params.ncps) so a
-			// full-fidelity wemix4 config can be driven without editing the shared
-			// wbft template. Same file shape as `setup --genesis-overlay`:
-			// {"capabilities":[...], "genesis":{...}}.
-			if genesisOverlay != "" {
-				raw, err := os.ReadFile(genesisOverlay)
-				if err != nil {
-					return err
-				}
-				var ov struct {
-					Genesis json.RawMessage `json:"genesis"`
-				}
-				if err := json.Unmarshal(raw, &ov); err != nil {
-					return fmt.Errorf("bad --genesis-overlay %q: %w", genesisOverlay, err)
-				}
-				if len(ov.Genesis) > 0 {
-					plan.Genesis, err = genesis.MergeOverride(plan.Genesis, ov.Genesis)
-					if err != nil {
-						return fmt.Errorf("apply genesis overlay: %w", err)
-					}
-				}
-			}
-
-			// 3. compose launch options: key provisioning + account/RPC flags.
-			pwPath := filepath.Join(dataDir, "password")
-			if err := os.WriteFile(pwPath, []byte(preset.Password), 0o600); err != nil {
-				return err
-			}
-			opts := upgrade.LaunchOptions{
-				DataRoot:   dataDir,
+			h, err := upgrade.NewHandoff(upgrade.HandoffInputs{
+				ProfilePath: profilePath, PresetDir: presetDir,
 				FromBinary: fromBin, ToBinary: toBin,
-				FromFamily: from.Family(), ToFamily: to.Family(),
-				Host:          host,
-				ProvisionKeys: provisionKeysFn(prof, preset, order, plan, host, presetDir),
-				Overrides:     overridesFn(producerAcct, pwPath, from.Family().RPCNamespace(), to.Family().RPCNamespace()),
-				WaitReady: func(ctx context.Context, eps []string) error {
-					return upgrade.WaitEndpointsReady(ctx, eps, 30*time.Second)
-				},
-			}
-			bootstrap := func(ctx context.Context, producer node.Node) error {
-				ipc := filepath.Join(dataDir, fmt.Sprintf("node%d", producer.Index+1), filepath.Base(fromBin)+".ipc")
-				if err := waitForIPC(ipc, 20*time.Second); err != nil {
-					return err
-				}
-				ks := filepath.Join(dataDir, fmt.Sprintf("node%d", producer.Index+1), "keystore")
-				ksFile, err := firstFile(ks)
-				if err != nil {
-					return err
-				}
-				if err := poa.DeployGovernance(ctx, execRunner, fromBin, ipc, configPath, ksFile, pwPath); err != nil {
-					return err
-				}
-				return poa.EtcdInit(ctx, execRunner, fromBin, ipc)
-			}
-
-			// 4. run it.
-			fmt.Fprintf(out, "handoff %s -> %s at %s block %s; %d nodes; launching...\n",
-				plan.From.ID, plan.To.ID, plan.AtFork, in.ForkBlock, len(plan.Nodes))
-			ns, err := upgrade.LaunchHandoff(ctx, driver.NewLocalDriver(), plan, opts, upgrade.DefaultPeerCaller(), bootstrap)
+				Template: template, GenesisOverlay: genesisOverlay,
+				DataDir: dataDir,
+			})
 			if err != nil {
 				return err
 			}
-			for _, n := range ns.Nodes {
-				fmt.Fprintf(out, "  node%d  %s  pid=%d\n", n.Index+1, n.RPCURL, n.PID)
+			ns, err := runHandoff(ctx, out, h)
+			if err != nil {
+				return err
 			}
-			fmt.Fprintf(out, "governance deployed, etcd initialized, mesh wired.\n")
-
 			if waitFor > 0 {
-				return awaitHandoff(ctx, out, ns, prof.Upgrade.ForkBlock, producerAcct, waitFor)
+				detail, err := h.AwaitFork(ctx, ns, time.Duration(waitFor)*time.Second)
+				if err != nil {
+					return err
+				}
+				fmt.Fprintf(out, "handoff confirmed: %s\n", detail)
 			}
 			return nil
 		},
@@ -216,181 +84,49 @@ func newUpgradeRunCmd() *cobra.Command {
 	return cmd
 }
 
-// buildPoAConfig assembles the wemix governance config: a single producer member
-// (its unlockable account + devp2p id), the governance env from the profile, and
-// an alloc funding the producer and every validator.
-func buildPoAConfig(prof upgrade.Profile, preset keyring.Preset, producerAcct string, prod keyring.Entry, host string) poa.Config {
-	g := prof.Producers.Governance
-	env := poa.Env{
-		BallotDurationMin: g.BallotDurationMin, BallotDurationMax: g.BallotDurationMax,
-		StakingMin: bigDec(g.StakingMin), StakingMax: bigDec(g.StakingMax),
-		MaxIdleBlockInterval: g.MaxIdleBlockInterval, BlockCreationTime: g.BlockCreationTime,
-		BlockRewardAmount: bigDec(g.BlockRewardAmount), MaxPriorityFeePerGas: bigDec(g.MaxPriorityFeePerGas),
-		RewardDistribution: g.RewardDistribution, MaxBaseFee: bigDec(g.MaxBaseFee),
-		BlockGasLimit: g.BlockGasLimit, BaseFeeMaxChangeRate: g.BaseFeeMaxChangeRate,
-		GasTargetPercentage: g.GasTargetPercentage,
+// runHandoff runs the sequence up to a formed etcd cluster, reporting each
+// node as it comes up. It is the same order the `chain up` case runner
+// follows; the body is upgrade.Handoff's.
+func runHandoff(ctx context.Context, out io.Writer, h *upgrade.Handoff) (node.NodeSet, error) {
+	if _, err := h.WriteConfig(ctx); err != nil {
+		return node.NodeSet{}, err
 	}
-	bal := bigDec("1000000000000000000000000000")
-	accounts := []poa.Account{{Addr: producerAcct, Balance: bal}}
-	for _, v := range preset.Network.Validators {
-		accounts = append(accounts, poa.Account{Addr: v, Balance: bal})
-	}
-	return poa.Config{
-		ExtraData: "chainbench handoff", Staker: producerAcct, Ecosystem: producerAcct,
-		Maintenance: producerAcct, FeeCollector: producerAcct, Env: env,
-		Members: []poa.Member{{
-			Addr: producerAcct, Stake: bigDec(prof.Producers.Stake), Name: "producer",
-			ID: "0x" + prod.PublicKey, IP: host, Port: prof.Ports.BaseP2P, Bootnode: true,
-		}},
-		Accounts: accounts,
-	}
-}
-
-// forceForkPrereqs sets chainId and petersburgBlock on the base genesis, which
-// the wemix template omits but go-wbft requires for the fork ordering.
-func forceForkPrereqs(path string, networkID int64) ([]byte, error) {
-	b, err := os.ReadFile(path)
+	basePath, err := h.BaseGenesis(ctx)
 	if err != nil {
-		return nil, err
+		return node.NodeSet{}, err
 	}
-	b, err = genesis.SetConfigSection(b, "chainId", json.RawMessage(strconv.FormatInt(networkID, 10)))
+	if err := h.ComposePlan(basePath); err != nil {
+		return node.NodeSet{}, err
+	}
+	if _, err := h.ApplyOverlay(); err != nil {
+		return node.NodeSet{}, err
+	}
+	fmt.Fprintf(out, "handoff %s -> %s at %s block %d; %d nodes; launching...\n",
+		h.Plan.From.ID, h.Plan.To.ID, h.Plan.AtFork, h.ForkBlock(), len(h.Plan.Nodes))
+	ns, err := h.Launch(ctx)
 	if err != nil {
-		return nil, err
+		return ns, err
 	}
-	return genesis.SetConfigSection(b, "petersburgBlock", json.RawMessage("0"))
-}
-
-// provisionKeysFn returns the ProvisionKeys hook: it places each node's node key
-// in the binary-specific instance dir, writes static-nodes, and copies the
-// producer's keystore.
-func provisionKeysFn(prof upgrade.Profile, preset keyring.Preset, order []int, plan upgrade.Plan, host, presetDir string) func(context.Context, driver.NodeSpec, bool) error {
-	enodes := plan.Enodes(host)
-	staticNodes, _ := json.MarshalIndent(enodes, "", "  ")
-	return func(_ context.Context, spec driver.NodeSpec, producer bool) error {
-		inst := prof.Chains.To.NodekeyDir
-		if producer {
-			inst = prof.Chains.From.NodekeyDir
-		}
-		presetNum := order[spec.Index]
-		nk, ok := preset.Node(presetNum)
-		if !ok {
-			return fmt.Errorf("preset node %d missing", presetNum)
-		}
-		instDir := filepath.Join(spec.DataDir, inst)
-		if err := os.MkdirAll(instDir, 0o755); err != nil {
-			return err
-		}
-		if err := os.WriteFile(filepath.Join(instDir, "nodekey"), []byte(nk.Nodekey.Hex()), 0o600); err != nil {
-			return err
-		}
-		if err := os.WriteFile(filepath.Join(instDir, "static-nodes.json"), staticNodes, 0o644); err != nil {
-			return err
-		}
-		if producer {
-			src := filepath.Join(presetDir, fmt.Sprintf("node%d", presetNum), "keystore")
-			dst := filepath.Join(spec.DataDir, "keystore")
-			if err := copyDirFiles(src, dst); err != nil {
-				return fmt.Errorf("copy keystore: %w", err)
-			}
-		}
-		return nil
-	}
-}
-
-// overridesFn returns the Overrides hook: http.api (admin is needed for the
-// mesh's admin_addPeer) on every node, plus the producer's unlock/etherbase.
-func overridesFn(producerAcct, pwPath, fromNS, toNS string) func(upgrade.NodeSpec, bool) []launchopt.Override {
-	return func(_ upgrade.NodeSpec, producer bool) []launchopt.Override {
-		if producer {
-			return []launchopt.Override{
-				{Key: launchopt.KeyNAT, Value: "none"},
-				{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + fromNS + ",admin,miner,txpool,personal"},
-				{Key: launchopt.KeyEtherbase, Value: producerAcct},
-				{Key: launchopt.KeyUnlock, Value: producerAcct},
-				{Key: launchopt.KeyPassword, Value: pwPath},
-			}
-		}
-		return []launchopt.Override{
-			{Key: launchopt.KeyNAT, Value: "none"},
-			{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + toNS + ",admin,miner,txpool"},
-		}
-	}
-}
-
-func waitForIPC(path string, timeout time.Duration) error {
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		if fi, err := os.Stat(path); err == nil && fi.Mode()&os.ModeSocket != 0 {
-			return nil
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-	return fmt.Errorf("producer IPC never appeared at %s", path)
-}
-
-func firstFile(dir string) (string, error) {
-	ents, err := os.ReadDir(dir)
-	if err != nil {
-		return "", err
-	}
-	for _, e := range ents {
-		if !e.IsDir() {
-			return filepath.Join(dir, e.Name()), nil
-		}
-	}
-	return "", fmt.Errorf("no file in %s", dir)
-}
-
-func copyDirFiles(src, dst string) error {
-	if err := os.MkdirAll(dst, 0o755); err != nil {
-		return err
-	}
-	ents, err := os.ReadDir(src)
-	if err != nil {
-		return err
-	}
-	for _, e := range ents {
-		if e.IsDir() {
-			continue
-		}
-		b, err := os.ReadFile(filepath.Join(src, e.Name()))
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(filepath.Join(dst, e.Name()), b, 0o600); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// awaitHandoff polls a validator (not the producer, which cannot import
-// post-fork blocks) until the head passes the fork and a non-producer sealed the
-// first post-fork block.
-func awaitHandoff(ctx context.Context, out interface{ Write([]byte) (int, error) }, ns node.NodeSet, forkBlock int64, producerAcct string, seconds int) error {
-	var validator string
 	for _, n := range ns.Nodes {
-		if n.Index != 0 {
-			validator = n.RPCURL
-			break
-		}
+		fmt.Fprintf(out, "  node%d  %s  pid=%d\n", n.Index+1, n.RPCURL, n.PID)
 	}
-	cli := rpc.Dial(validator)
-	producer := strings.ToLower(producerAcct)
-	for i := 0; i < seconds; i++ {
-		head, err := cli.BlockNumber(ctx)
-		if err == nil && head > uint64(forkBlock) {
-			var blk struct {
-				Miner string `json:"miner"`
-			}
-			_ = cli.Call(ctx, "eth_getBlockByNumber", &blk, fmt.Sprintf("0x%x", forkBlock+1), false)
-			miner := strings.ToLower(blk.Miner)
-			if miner != "" && miner != producer {
-				fmt.Fprintf(out, "handoff confirmed: head=%d, block %d sealed by %s (go-wbft validator)\n", head, forkBlock+1, miner)
-				return nil
-			}
-		}
-		time.Sleep(time.Second)
+	if len(ns.Nodes) == 0 {
+		return ns, fmt.Errorf("launch produced no nodes")
 	}
-	return fmt.Errorf("handoff not observed within %ds", seconds)
+	producer := ns.Nodes[0]
+	if err := h.WireMesh(ctx, ns); err != nil {
+		return ns, err
+	}
+	if err := h.DeployGovernance(ctx, producer); err != nil {
+		return ns, err
+	}
+	if err := h.EtcdInit(ctx, producer); err != nil {
+		return ns, err
+	}
+	info, err := h.VerifyEtcd(ctx, producer, etcdFormTimeout)
+	if err != nil {
+		return ns, err
+	}
+	fmt.Fprintf(out, "governance deployed at %s, etcd cluster %q, mesh wired.\n", info.Governance, info.Cluster())
+	return ns, nil
 }
