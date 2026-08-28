@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"os"
 	"os/exec"
@@ -92,13 +93,14 @@ type network struct {
 }
 
 // boot launches `validators` validators + `endpoints` endpoints of chain on
-// binary via `chainbench setup --launch`, and registers cleanup. extraSet are
-// additional `--set key=value` overrides (e.g. "genesis.overrides.bohoBlock=40").
+// binary via `chainbench net up`, and registers cleanup. extraSet are
+// additional genesis config overrides, given either bare ("bohoBlock=40") or
+// in the old "genesis.overrides.<key>=<v>" spelling.
 func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, extraSet ...string) *network {
 	t.Helper()
 	extra := make([]string, 0, len(extraSet)*2)
 	for _, s := range extraSet {
-		extra = append(extra, "--set", s)
+		extra = append(extra, "--set", strings.TrimPrefix(s, "genesis.overrides."))
 	}
 	return launch(t, cli, chain, binary, validators, endpoints, extra)
 }
@@ -107,10 +109,10 @@ func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, ex
 // capabilities + genesis fields deep-merged into the built genesis).
 func bootOverlay(t *testing.T, cli, chain, binary string, validators, endpoints int, overlay string) *network {
 	t.Helper()
-	return launch(t, cli, chain, binary, validators, endpoints, []string{"--genesis-overlay", overlay})
+	return launch(t, cli, chain, binary, validators, endpoints, []string{"--overlay", overlay})
 }
 
-// launch runs `chainbench setup --launch` with extraArgs and registers cleanup.
+// launch runs `chainbench net up` with extraArgs and registers cleanup.
 func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, extraArgs []string) *network {
 	t.Helper()
 	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), validators, endpoints, extraArgs)
@@ -129,16 +131,15 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 		t.Fatalf("mkdir temp datadir: %v", err)
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(dir) })
-	args := []string{"setup", "--launch",
-		"--chain", chain, "--binary", binary,
-		"--data-dir", dir, "--keys-dir", keysDir,
+	args := []string{"net", "up",
+		"--workspace-dir", dir, "--chain", chain, "--binary", binary, "--keys", keysDir,
 		"--validators", itoa(validators), "--endpoints", itoa(endpoints),
 	}
 	args = append(args, extraArgs...)
 	cmd := exec.Command(cli, args...)
 	cmd.Dir = repoRoot(t)
 	if b, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("setup --launch: %v\n%s", err, b)
+		t.Fatalf("net up: %v\n%s", err, b)
 	}
 	n := &network{t: t, cli: cli, dir: dir, chain: chain, binary: binary}
 	n.rpcURL = n.rpcURLFor(1)
@@ -146,20 +147,33 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 	return n
 }
 
-// capabilities reads the advertised capability set from the saved nodeset.json.
-func (n *network) capabilities() []string {
+// workspace reads the composed network's record.
+func (n *network) workspace() workspaceState {
 	n.t.Helper()
-	b, err := os.ReadFile(filepath.Join(n.dir, "nodeset.json"))
+	b, err := os.ReadFile(filepath.Join(n.dir, "workspace.json"))
 	if err != nil {
-		n.t.Fatalf("read nodeset: %v", err)
+		n.t.Fatalf("read workspace: %v", err)
 	}
-	var ns struct {
-		Capabilities []string `json:"capabilities"`
+	var ws workspaceState
+	if err := json.Unmarshal(b, &ws); err != nil {
+		n.t.Fatalf("parse workspace: %v", err)
 	}
-	if err := json.Unmarshal(b, &ns); err != nil {
-		n.t.Fatalf("parse nodeset: %v", err)
-	}
-	return ns.Capabilities
+	return ws
+}
+
+// workspaceState is the slice of the workspace record the harness reads.
+type workspaceState struct {
+	Capabilities []string `json:"capabilities"`
+	Nodes        []struct {
+		Index int    `json:"index"`
+		Host  string `json:"host"`
+		HTTP  int    `json:"http"`
+	} `json:"nodes"`
+}
+
+// capabilities reads the advertised capability set from the workspace.
+func (n *network) capabilities() []string {
+	return n.workspace().Capabilities
 }
 
 // runCase runs a single gated testkit case against this network via
@@ -167,7 +181,7 @@ func (n *network) capabilities() []string {
 // skipped (a gating/capability problem). Returns the command output.
 func (n *network) runCase(name string) string {
 	n.t.Helper()
-	out := n.run("test", "--data-dir", n.dir, "--name", name)
+	out := n.run("test", "--workspace-dir", n.dir, "--name", name)
 	if skipRe.MatchString(out) {
 		n.t.Fatalf("case %q was skipped (capability/gating problem):\n%s", name, out)
 	}
@@ -179,7 +193,7 @@ var skipRe = regexp.MustCompile(`skip=[1-9]`)
 
 // stop tears the network down (best-effort).
 func (n *network) stop() {
-	cmd := exec.Command(n.cli, "stop", "--data-dir", n.dir)
+	cmd := exec.Command(n.cli, "stop", "--workspace-dir", n.dir)
 	cmd.Dir = repoRoot(n.t)
 	_ = cmd.Run()
 }
@@ -198,43 +212,34 @@ func (n *network) run(args ...string) string {
 
 // nodeStop stops node `index`, preserving its datadir for a later nodeStart.
 func (n *network) nodeStop(index int) {
-	n.run("node", "stop", "--data-dir", n.dir, "--index", itoa(index))
+	n.run("node", "stop", "--workspace-dir", n.dir, "--index", itoa(index))
 }
 
 // nodeStart relaunches a previously-stopped node `index`.
 func (n *network) nodeStart(index int) {
-	n.run("node", "start", "--data-dir", n.dir, "--index", itoa(index))
+	n.run("node", "start", "--workspace-dir", n.dir, "--index", itoa(index))
 }
 
 // hardfork swaps every node to toBinary (same or different chain) in place at
 // `block`, via `chainbench hardfork --dry-run=false`.
 func (n *network) hardfork(toChain, toBinary string, block int64) string {
-	return n.run("hardfork", "--data-dir", n.dir, "--to-chain", toChain,
+	return n.run("hardfork", "--workspace-dir", n.dir, "--to-chain", toChain,
 		"--to-binary", toBinary, "--block", strconv.FormatInt(block, 10), "--dry-run=false")
 }
 
-// rpcURLFor reads a node's RPC URL from the persisted nodeset.json.
+// rpcURLFor derives a node's RPC URL from the workspace record.
 func (n *network) rpcURLFor(index int) string {
 	n.t.Helper()
-	b, err := os.ReadFile(filepath.Join(n.dir, "nodeset.json"))
-	if err != nil {
-		n.t.Fatalf("read nodeset: %v", err)
-	}
-	var ns struct {
-		Nodes []struct {
-			Index  int    `json:"index"`
-			RPCURL string `json:"rpc_url"`
-		} `json:"nodes"`
-	}
-	if err := json.Unmarshal(b, &ns); err != nil {
-		n.t.Fatalf("parse nodeset: %v", err)
-	}
-	for _, node := range ns.Nodes {
+	for _, node := range n.workspace().Nodes {
 		if node.Index == index {
-			return node.RPCURL
+			host := node.Host
+			if host == "" {
+				host = "127.0.0.1"
+			}
+			return fmt.Sprintf("http://%s:%d", host, node.HTTP)
 		}
 	}
-	n.t.Fatalf("no node %d in nodeset", index)
+	n.t.Fatalf("no node %d in the workspace", index)
 	return ""
 }
 

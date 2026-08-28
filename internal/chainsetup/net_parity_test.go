@@ -353,9 +353,6 @@ func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("chainsetup.NetworkStatus: %v", err)
 	}
-	if !out.Composed {
-		t.Error("a workspace directory should report as composed")
-	}
 	if out.Nodes.Chain != "stablenet" || len(out.Nodes.Nodes) != 3 {
 		t.Fatalf("node set = %+v", out.Nodes)
 	}
@@ -373,21 +370,6 @@ func TestNetworkStatus_ReadsAComposedWorkspace(t *testing.T) {
 	}
 	if !hasCapability(out.Nodes.Capabilities, "ws") {
 		t.Errorf("capabilities did not survive the bridge: %v", out.Nodes.Capabilities)
-	}
-}
-
-func TestNetworkStatus_StillReadsASetupDataRoot(t *testing.T) {
-	// The bridge must not shadow the stack it is meant to coexist with.
-	dir, _, deps := launchedNetwork(t)
-	out, err := chainsetup.NetworkStatus(context.Background(), deps, chainsetup.NetworkStatusIn{DataDir: dir})
-	if err != nil {
-		t.Fatalf("chainsetup.NetworkStatus: %v", err)
-	}
-	if out.Composed {
-		t.Error("a setup data root must not report as composed")
-	}
-	if len(out.Nodes.Nodes) != 2 {
-		t.Errorf("node set = %+v", out.Nodes)
 	}
 }
 

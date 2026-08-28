@@ -28,7 +28,7 @@ func newNodeStopCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "stop",
-		Short: "Stop a single launched node by index (--data-dir from setup)",
+		Short: "Stop a single node by index (--workspace-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if err := app.NodeStop(cmd.Context(), app.Deps{}, app.NodeStopIn{DataDir: dataDir, Index: index}); err != nil {
 				return err
@@ -37,7 +37,7 @@ func newNodeStopCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with nodeset.json (from setup)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory")
 	cmd.Flags().IntVar(&index, "index", 0, "1-based node index to stop")
 	return cmd
 }
@@ -51,7 +51,7 @@ func newNodeStartCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "start",
-		Short: "Relaunch a single stopped node by index (--data-dir from setup)",
+		Short: "Relaunch a single stopped node by index (--workspace-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			res, err := app.NodeStart(cmd.Context(), app.Deps{}, app.NodeStartIn{DataDir: dataDir, Index: index})
 			if err != nil {
@@ -61,7 +61,7 @@ func newNodeStartCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with nodeset.json + nodespecs.json (from setup)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory")
 	cmd.Flags().IntVar(&index, "index", 0, "1-based node index to relaunch")
 	return cmd
 }

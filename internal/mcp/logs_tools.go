@@ -15,24 +15,24 @@ import (
 func logTimelineTool() Tool {
 	return Tool{
 		Name: "chainbench_log_timeline",
-		Description: "Merge per-node logs into one chronological timeline. Args: data_dir; " +
+		Description: "Merge per-node logs into one chronological timeline. Args: workspaceDir; " +
 			"optional pattern, regexp (bool), node (int), level (min severity), limit (int).",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"data_dir": map[string]any{"type": "string"},
-				"pattern":  map[string]any{"type": "string"},
-				"regexp":   map[string]any{"type": "boolean"},
-				"node":     map[string]any{"type": "integer"},
-				"level":    map[string]any{"type": "string"},
-				"limit":    map[string]any{"type": "integer"},
+				"workspaceDir": map[string]any{"type": "string"},
+				"pattern":      map[string]any{"type": "string"},
+				"regexp":       map[string]any{"type": "boolean"},
+				"node":         map[string]any{"type": "integer"},
+				"level":        map[string]any{"type": "string"},
+				"limit":        map[string]any{"type": "integer"},
 			},
-			"required": []string{"data_dir"},
+			"required": []string{"workspaceDir"},
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
-			dir := argString(args, "data_dir", "")
+			dir := argString(args, "workspaceDir", "")
 			if dir == "" {
-				return "", fmt.Errorf("data_dir is required")
+				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexpMode, _ := args["regexp"].(bool)
 			matches, err := logs.Timeline(dir, logs.SearchOpts{

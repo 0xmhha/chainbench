@@ -20,7 +20,7 @@ func newVerifyCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "verify",
-		Short: "Verify a network is producing blocks (from --rpc or a setup's --data-dir)",
+		Short: "Verify a network is producing blocks (from --rpc or a --workspace-dir)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ns, err := resolveNodeSet(dataDir, chain, rpcURLs)
 			if err != nil {
@@ -51,7 +51,7 @@ func newVerifyCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (optional metadata, used with --rpc)")
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "load the network from a setup's nodeset.json")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "load the network from a workspace")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "node RPC URL (repeatable)")
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")

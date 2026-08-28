@@ -91,7 +91,7 @@ func newTestCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "load NodeSet from <dir>/nodeset.json (from setup)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "load the node set from a workspace")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (with --rpc)")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "node RPC URL to attach (repeatable)")
 	cmd.Flags().StringArrayVar(&names, "name", nil, "run only these case names")

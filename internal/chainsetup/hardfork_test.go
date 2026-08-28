@@ -8,7 +8,6 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 func TestHardforkPlan_ReadsTheFromChainFromTheNetwork(t *testing.T) {
@@ -65,7 +64,7 @@ func TestHardforkPlan_RequiresADataDirAndTarget(t *testing.T) {
 	}
 }
 
-func TestHardforkExecute_RewritesTheSavedSpecsToThePostForkBinary(t *testing.T) {
+func TestHardforkExecute_RecordsThePostForkBinaryChainAndPids(t *testing.T) {
 	dir, stub, deps := launchedNetwork(t)
 	planned, err := chainsetup.HardforkPlan(context.Background(), deps, chainsetup.HardforkPlanIn{
 		DataDir: dir, ToChain: "wbft", Block: 100,
@@ -85,15 +84,22 @@ func TestHardforkExecute_RewritesTheSavedSpecsToThePostForkBinary(t *testing.T) 
 		t.Errorf("upgraded %d nodes, driver launched %v", len(res.Nodes.Nodes), stub.launched)
 	}
 	// A later single-node restart must start from the binary the network is
-	// actually running, not the one it was launched with.
-	specs, err := session.LoadLocalNodeSpecs(dir)
+	// actually running, on the chain it now is, with the pids it now has.
+	ws, err := chainsetup.Open(dir, nil)
 	if err != nil {
-		t.Fatalf("reload specs: %v", err)
+		t.Fatalf("reopen workspace: %v", err)
 	}
-	for _, s := range specs {
-		if s.Binary != postFork {
-			t.Errorf("node%d spec binary = %q, want %q", s.Index, s.Binary, postFork)
+	st := ws.State()
+	if st.Binary != postFork || st.Chain != "wbft" {
+		t.Errorf("workspace after the fork: binary %q chain %q, want %q / wbft", st.Binary, st.Chain, postFork)
+	}
+	for _, rec := range st.Nodes {
+		if rec.PID != 2000+rec.Index {
+			t.Errorf("node%d pid = %d, want the relaunched pid %d", rec.Index, rec.PID, 2000+rec.Index)
 		}
+	}
+	if !st.Steps["hardfork"].Done {
+		t.Error("the fork must be recorded as a step")
 	}
 }
 

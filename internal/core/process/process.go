@@ -13,10 +13,8 @@
 package process
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -107,30 +105,6 @@ func (m *Manager) TrackFromOutput(out string) int {
 		if pid, err := strconv.Atoi(match[1]); err == nil {
 			m.Track(pid, "launch-output")
 		}
-	}
-	return m.Count() - before
-}
-
-// TrackNodeSet reads <dataDir>/nodeset.json and tracks each node's pid. Missing
-// or unreadable files are not an error (the launch may have failed before
-// writing it); it just tracks nothing.
-func (m *Manager) TrackNodeSet(dataDir string) int {
-	b, err := os.ReadFile(filepath.Join(dataDir, "nodeset.json"))
-	if err != nil {
-		return 0
-	}
-	var ns struct {
-		Nodes []struct {
-			Index int `json:"index"`
-			PID   int `json:"pid"`
-		} `json:"nodes"`
-	}
-	if json.Unmarshal(b, &ns) != nil {
-		return 0
-	}
-	before := m.Count()
-	for _, n := range ns.Nodes {
-		m.Track(n.PID, "node"+strconv.Itoa(n.Index))
 	}
 	return m.Count() - before
 }

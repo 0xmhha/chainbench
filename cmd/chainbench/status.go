@@ -13,7 +13,7 @@ func newStatusCmd() *cobra.Command {
 	var dataDir string
 	cmd := &cobra.Command{
 		Use:   "status",
-		Short: "Show the launched network's node set (from nodeset.json)",
+		Short: "Show a composed network's node set (from its workspace)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			res, err := app.NetworkStatus(cmd.Context(), app.Deps{}, app.NetworkStatusIn{DataDir: dataDir})
 			if err != nil {
@@ -30,6 +30,6 @@ func newStatusCmd() *cobra.Command {
 			return w.Flush()
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with nodeset.json")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory")
 	return cmd
 }

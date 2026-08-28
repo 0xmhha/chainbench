@@ -26,20 +26,19 @@ func newCleanCmd() *cobra.Command {
 				return cleanSessions(cmd, artifactRoot, olderThan, keepLast)
 			}
 			if dataDir == "" {
-				return fmt.Errorf("--data-dir (or --artifact-root for session GC) is required")
+				return fmt.Errorf("--workspace-dir (or --artifact-root for session GC) is required")
 			}
 			res, err := app.NetworkRemove(cmd.Context(), app.Deps{}, app.NetworkRemoveIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
 			out := cmd.OutOrStdout()
-			printStopFailures(cmd, res.Failed)
 			fmt.Fprintf(out, "stopped %d node(s)\n", res.Stopped)
 			fmt.Fprintf(out, "removed %s\n", res.Removed)
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root to stop and remove")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace to stop and remove")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "", "session artifact root to garbage-collect")
 	cmd.Flags().StringVar(&olderThan, "older-than", "", "GC sessions older than this age (e.g. 7d, 12h)")
 	cmd.Flags().IntVar(&keepLast, "keep-last", 0, "GC keeps the newest N sessions")

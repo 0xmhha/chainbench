@@ -54,7 +54,7 @@ GSTABLE_BIN=/path/to/gstable WBFT_BIN=/path/to/gwbft WEMIX_BIN=/path/to/gwemix \
 
 ## Harness
 
-`harness_test.go` provides the shared helpers: `boot` (setup --launch), the
+`harness_test.go` provides the shared helpers: `boot` (`net up` into a workspace), the
 `network` type, `waitAdvancing`/`waitCross` (WBFT warmup-tolerant polling),
 `sendValue`, `deployReturns42`/`waitCallReturns42`, `balance`, and
 `presetFundedKey`.

@@ -180,47 +180,89 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// Restart bounces one node by index: stop (if running), relaunch with its
-// recorded arming — the exact argv it started with.
-func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
-	ni := -1
+// nodeAt finds a node's position in the table by its index.
+func (w *Workspace) nodeAt(index int) (int, error) {
 	for i, ns := range w.state.Nodes {
 		if ns.Index == index {
-			ni = i
-			break
+			return i, nil
 		}
 	}
-	if ni < 0 {
-		return "", fmt.Errorf("chainsetup: restart: no node %d in the table", index)
+	return -1, fmt.Errorf("chainsetup: no node %d in the table", index)
+}
+
+// StopNode stops one node by index and clears its pid; the node keeps its
+// resource and its datadir, so a later StartNode brings the same node back.
+// A node that is not running is left as it is.
+func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
+	ni, err := w.nodeAt(index)
+	if err != nil {
+		return "", err
+	}
+	ns := w.state.Nodes[ni]
+	if ns.PID <= 0 {
+		return fmt.Sprintf("node%d was not running", index), nil
+	}
+	t, err := w.machineFor(ns)
+	if err != nil {
+		return "", err
+	}
+	if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
+		return "", fmt.Errorf("chainsetup: stop node%d: %w", ns.Index, err)
+	}
+	w.clearPID(ni)
+	detail := fmt.Sprintf("node%d stopped", index)
+	w.markStep("stop-node", detail)
+	return detail, nil
+}
+
+// StartNode relaunches one stopped node with its recorded arming — the exact
+// argv it started with — and records the new pid. A node that is already
+// running is refused rather than doubled.
+func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
+	ni, err := w.nodeAt(index)
+	if err != nil {
+		return "", err
+	}
+	ns := w.state.Nodes[ni]
+	if ns.PID > 0 {
+		return "", fmt.Errorf("chainsetup: node%d is already running (pid %d)", index, ns.PID)
+	}
+	if len(ns.Args) == 0 {
+		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `net start` first", index)
 	}
 	bin, err := w.binary("")
 	if err != nil {
 		return "", err
 	}
-	ns := w.state.Nodes[ni]
 	t, err := w.machineFor(ns)
 	if err != nil {
 		return "", err
-	}
-	if ns.PID > 0 {
-		if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
-			return "", fmt.Errorf("chainsetup: restart: stop node%d: %w", ns.Index, err)
-		}
-		w.clearPID(ni)
-	}
-	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("chainsetup: restart: node%d has no recorded argv — run `net start` first", index)
 	}
 	spec := driver.SpecOf(ns)
 	spec.Binary = bin
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
-		return "", fmt.Errorf("chainsetup: restart: node%d: %w", ns.Index, err)
+		return "", fmt.Errorf("chainsetup: start node%d: %w", ns.Index, err)
 	}
 	if err := w.recordLaunch(ni, h.PID, bin); err != nil {
-		return "", fmt.Errorf("chainsetup: restart: node%d: %w", index, err)
+		return "", fmt.Errorf("chainsetup: start node%d: %w", index, err)
 	}
-	detail := fmt.Sprintf("node%d restarted (pid %d)", index, h.PID)
+	detail := fmt.Sprintf("node%d started (pid %d)", index, h.PID)
+	w.markStep("start-node", detail)
+	return detail, nil
+}
+
+// Restart bounces one node by index: stop (if running), then relaunch with
+// its recorded arming.
+func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
+	if _, err := w.StopNode(ctx, index); err != nil {
+		return "", fmt.Errorf("chainsetup: restart: %w", err)
+	}
+	detail, err := w.StartNode(ctx, index)
+	if err != nil {
+		return "", fmt.Errorf("chainsetup: restart: %w", err)
+	}
+	detail = fmt.Sprintf("node%d restarted", index) + strings.TrimPrefix(detail, fmt.Sprintf("node%d started", index))
 	w.markStep("restart", detail)
 	return detail, nil
 }

@@ -21,7 +21,7 @@
 | `cmd/chainbench test` | Go-func 케이스 CLI | `cmd/chainbench run` (DSL spec CLI) | REPLACE |
 | `internal/mcp`(test 도구: `tools.go`·`remote_tools.go`) | MCP 테스트 실행 | `chainbench_run`(#203, DSL) | REPLACE |
 | `internal/core/pipeline/setup`(Provision·Launch·Run) | 순차 셋업 | `engine.BuildEnv`/`AssemblePlan`/`LocalLauncher` | REFACTOR(엔진은 `setup.Plan` 타입만 사용) |
-| `internal/core/state`(nodeset.json) | 데이터루트 상태 | `internal/core/session`(env.json) | REFACTOR |
+| ~~`internal/core/state`(nodeset.json)~~ | 데이터루트 상태 | `session.Composition`(workspace.json) — **nodeset.json/nodespecs.json 은 P6.2(2026-08-28)에서 삭제** | DONE |
 | `internal/core/probe` | RPC 프로브 | `internal/core/collector` | ABSORB |
 
 ---

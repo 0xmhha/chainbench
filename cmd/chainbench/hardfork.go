@@ -59,7 +59,7 @@ func newHardforkCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with nodeset.json (the running from-chain)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace of the running from-chain")
 	cmd.Flags().StringVar(&toChain, "to-chain", "", "target chain id to upgrade to")
 	cmd.Flags().StringVar(&toBinary, "to-binary", "", "target node binary path (default: chain binary on PATH)")
 	cmd.Flags().Int64Var(&block, "block", 0, "hardfork activation block")

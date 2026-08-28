@@ -1,12 +1,15 @@
 package mcp_test
 
 import (
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // TestStopTool launches a real short-lived process, records its PID in a
@@ -22,13 +25,9 @@ func TestStopTool(t *testing.T) {
 	t.Cleanup(func() { _ = proc.Process.Kill(); _, _ = proc.Process.Wait() })
 
 	dir := t.TempDir()
-	nsJSON := `{"chain":"stablenet","network":"local","nodes":[{"index":1,"role":"validator","rpc_url":"http://127.0.0.1:8501","pid":` +
-		itoa(pid) + `}]}`
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, pid))
 
-	text, isErr := callText(t, newServer(), "chainbench_stop", map[string]any{"data_dir": dir})
+	text, isErr := callText(t, newServer(), "chainbench_stop", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "stopped 1 node") {
 		t.Fatalf("stop: err=%v text=%s", isErr, text)
 	}
@@ -42,15 +41,32 @@ func TestStopTool(t *testing.T) {
 	}
 }
 
-// itoa avoids importing strconv just for one int.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
+// writeWorkspace records a composed network the way the steps leave one.
+func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
+	t.Helper()
+	comp, err := session.OpenComposition(dir, nil)
+	if err != nil {
+		t.Fatal(err)
 	}
-	var b []byte
-	for n > 0 {
-		b = append([]byte{byte('0' + n%10)}, b...)
-		n /= 10
+	st := chainsetup.State{
+		Chain: chain, Binary: "/opt/fakebin", Validators: len(nodes),
+		Target: machine.Spec{DataRoot: dir}, Nodes: nodes,
+		Capabilities: []string{"rpc"},
+		Steps:        map[string]chainsetup.Step{},
 	}
-	return string(b)
+	if err := comp.Save(st); err != nil {
+		t.Fatalf("write workspace: %v", err)
+	}
+}
+
+// wsNode is one recorded node on this machine.
+func wsNode(root string, index int, role string, http, pid int) node.Record {
+	label := node.LabelFor(index)
+	layout := node.Layout{Root: root}
+	return node.Record{
+		Index: index, Label: string(label), Role: role, Host: "127.0.0.1",
+		DataDir: layout.DataDir(label), ConfigPath: layout.ConfigPath(label), LogPath: layout.LogPath(label),
+		Endpoints: node.Endpoints{P2P: 30300 + index, HTTP: http},
+		PID:       pid,
+	}
 }

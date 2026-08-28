@@ -67,29 +67,17 @@ func TestInitializeAndList(t *testing.T) {
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_setup_plan", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
 	}
 }
 
-func TestSetupPlanTool(t *testing.T) {
-	text, isErr := callText(t, newServer(), "chainbench_setup_plan", map[string]any{
-		"chain": "stablenet", "validators": 2, "endpoints": 1, "data_dir": "/tmp/plan",
-	})
-	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node3 endpoint") || !strings.Contains(text, "http=") {
-		t.Errorf("setup_plan tool: err=%v text=%s", isErr, text)
-	}
-}
-
 func TestStatusTool(t *testing.T) {
 	dir := t.TempDir()
-	nsJSON := `{"chain":"stablenet","network":"local","nodes":[{"index":1,"role":"validator","rpc_url":"http://127.0.0.1:8501","pid":4321}]}`
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	text, isErr := callText(t, newServer(), "chainbench_status", map[string]any{"data_dir": dir})
+	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, 4321))
+	text, isErr := callText(t, newServer(), "chainbench_status", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node1 validator") || !strings.Contains(text, "pid=4321") {
 		t.Errorf("status tool: err=%v text=%s", isErr, text)
 	}
@@ -163,7 +151,7 @@ func TestLogTool(t *testing.T) {
 		t.Fatal(err)
 	}
 	text, isErr := callText(t, newServer(), "chainbench_log", map[string]any{
-		"data_dir": dir, "level": "ERROR",
+		"workspaceDir": dir, "level": "ERROR",
 	})
 	if isErr || !strings.Contains(text, "node1:2") || !strings.Contains(text, "invalid validator") || strings.Contains(text, "booted") {
 		t.Errorf("log tool: err=%v text=%s", isErr, text)
@@ -192,7 +180,7 @@ func TestReportTool(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "runs.json"), []byte(runsJSON), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	text, isErr := callText(t, newServer(), "chainbench_report", map[string]any{"data_dir": dir})
+	text, isErr := callText(t, newServer(), "chainbench_report", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "test/x") || !strings.Contains(text, "total=2 ok=1 failed=1") {
 		t.Errorf("report tool: err=%v text=%s", isErr, text)
 	}

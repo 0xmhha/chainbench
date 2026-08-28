@@ -50,8 +50,8 @@ func TestNetUp_ProvisionStageComposesEverything(t *testing.T) {
 		}
 	}
 	// And the network reads back as a NodeSet with no processes started.
-	if len(out.Nodes.Nodes.Nodes) != 3 || !out.Nodes.Composed {
-		t.Fatalf("node set = %+v composed=%v", out.Nodes.Nodes, out.Nodes.Composed)
+	if len(out.Nodes.Nodes.Nodes) != 3 {
+		t.Fatalf("node set = %+v", out.Nodes.Nodes)
 	}
 	for _, n := range out.Nodes.Nodes.Nodes {
 		if n.PID != 0 {

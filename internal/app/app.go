@@ -9,9 +9,6 @@
 package app
 
 import (
-	"context"
-	"fmt"
-	"io/fs"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -68,57 +65,4 @@ func (d Deps) now() time.Time {
 		return time.Now()
 	}
 	return d.Clock()
-}
-
-// nodeDriver resolves the transport for node-process control, defaulting to
-// this machine.
-func (d Deps) nodeDriver() (driver.Driver, error) {
-	if d.Driver == nil {
-		return driver.NewLocalDriver(), nil
-	}
-	return d.Driver()
-}
-
-// files resolves where on-disk material lands, defaulting to this machine.
-//
-// When a driver ships files to another host but no store was named, that
-// driver is the store: a caller that routed the processes to a host and said
-// nothing about the files meant the files to follow.
-func (d Deps) files() (filestore.Store, error) {
-	if d.Files != nil {
-		return d.Files()
-	}
-	if d.Driver == nil {
-		return filestore.Local{}, nil
-	}
-	drv, err := d.Driver()
-	if err != nil {
-		return nil, err
-	}
-	if fp, ok := drv.(driver.FileProvisioner); ok {
-		return driverStore{fp}, nil
-	}
-	return filestore.Local{}, nil
-}
-
-// driverStore adapts a driver that ships files into a filestore.Store.
-//
-// A driver knows how to put a file on the host it controls but not how to ask
-// whether one is there or read it back, so those two answer for the shape of
-// the boundary rather than for the transport: a file is never assumed present, and
-// reading is not offered.
-type driverStore struct{ fp driver.FileProvisioner }
-
-// Exists reports false: a driver has no probe, and claiming a file is present
-// would make provisioning skip a write that never happened.
-func (driverStore) Exists(context.Context, string) (bool, error) { return false, nil }
-
-// Read is not available over a bare file provisioner.
-func (driverStore) Read(_ context.Context, path string) ([]byte, error) {
-	return nil, fmt.Errorf("app: this target can ship files but not read them back (%s)", path)
-}
-
-// Write ships the file to the host the driver controls.
-func (s driverStore) Write(ctx context.Context, path string, content []byte, mode fs.FileMode) error {
-	return s.fp.ProvisionFile(ctx, path, content, mode)
 }

@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
+
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -101,6 +103,10 @@ type Workspace struct {
 	state  State
 	env    func(string) string
 	now    func() time.Time
+	// driver, when set, replaces every machine's process driver — the seam a
+	// test uses to control nodes without an OS process, and a caller uses to
+	// route control over another transport.
+	driver func() (driver.Driver, error)
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
@@ -174,6 +180,15 @@ func (w *Workspace) SetEnv(fn func(string) string) {
 	}
 }
 
+// SetDriver overrides the process driver every machine of this workspace
+// controls its nodes through. Nil is ignored; the default is each machine's
+// own driver.
+func (w *Workspace) SetDriver(fn func() (driver.Driver, error)) {
+	if fn != nil {
+		w.driver = fn
+	}
+}
+
 // State returns a copy of the current composition state.
 func (w *Workspace) State() State { return w.state }
 
@@ -225,6 +240,14 @@ func (w *Workspace) machineFor(ns node.Record) (*machine.Access, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+	if w.driver != nil {
+		override, err := w.driver()
+		if err != nil {
+			return nil, err
+		}
+		// Copied: the opener may hand the same access to another workspace.
+		t = &machine.Access{Spec: t.Spec, DataRoot: t.DataRoot, Files: t.Files, Driver: override}
 	}
 	w.machines[key] = t
 	return t, nil
