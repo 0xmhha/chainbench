@@ -1,4 +1,4 @@
-package occupancy_test
+package inspector_test
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/occupancy"
+	"github.com/0xmhha/chainbench/internal/core/inspector"
 )
 
 // TestScan_ReportsOnlyWhatAnswers: a connection that opens is the evidence.
@@ -23,7 +23,7 @@ func TestScan_ReportsOnlyWhatAnswers(t *testing.T) {
 		return nil, errors.New("connection refused")
 	}
 
-	busy := occupancy.Scan(context.Background(), []occupancy.Addr{
+	busy := inspector.Ports(context.Background(), []inspector.Addr{
 		{Host: "10.0.0.1", Port: 8600, Node: 1, Purpose: "http"},
 		{Host: "10.0.0.1", Port: 31000, Node: 1, Purpose: "p2p"},
 		{Host: "10.0.0.2", Port: 31000, Node: 2, Purpose: "p2p"},
@@ -46,7 +46,7 @@ func TestScan_SkipsPortsAFamilyDoesNotUse(t *testing.T) {
 		asked++
 		return nil, errors.New("refused")
 	}
-	occupancy.Scan(context.Background(), []occupancy.Addr{
+	inspector.Ports(context.Background(), []inspector.Addr{
 		{Host: "h", Port: 0, Node: 1, Purpose: "etcd"},
 		{Host: "h", Port: 8600, Node: 1, Purpose: "http"},
 	}, dial)
@@ -58,7 +58,7 @@ func TestScan_SkipsPortsAFamilyDoesNotUse(t *testing.T) {
 // TestAddr_ReadsAsSomethingToActOn: the report has to name the node and what
 // the port is for, because a bare number sends an operator to lsof.
 func TestAddr_ReadsAsSomethingToActOn(t *testing.T) {
-	a := occupancy.Addr{Host: "10.0.0.3", Port: 31011, Node: 2, Purpose: "etcd"}
+	a := inspector.Addr{Host: "10.0.0.3", Port: 31011, Node: 2, Purpose: "etcd"}
 	if got, want := a.String(), "10.0.0.3:31011 (node2 etcd)"; got != want {
 		t.Fatalf("String() = %q, want %q", got, want)
 	}
@@ -79,7 +79,7 @@ func TestScan_LocalPortsAreTestedByBinding(t *testing.T) {
 	defer func() { _ = ln.Close() }()
 	port := ln.Addr().(*net.TCPAddr).Port
 
-	busy := occupancy.Scan(context.Background(), []occupancy.Addr{
+	busy := inspector.Ports(context.Background(), []inspector.Addr{
 		{Host: "127.0.0.1", Port: port, Node: 1, Purpose: "http"},
 	}, nil)
 	if len(busy) != 1 {
@@ -87,7 +87,7 @@ func TestScan_LocalPortsAreTestedByBinding(t *testing.T) {
 	}
 
 	_ = ln.Close()
-	if busy := occupancy.Scan(context.Background(), []occupancy.Addr{
+	if busy := inspector.Ports(context.Background(), []inspector.Addr{
 		{Host: "127.0.0.1", Port: port, Node: 1, Purpose: "http"},
 	}, nil); len(busy) != 0 {
 		t.Fatalf("busy = %v; the port was released", busy)

@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/inspector"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/occupancy"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -115,6 +115,9 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 	phases := p.Family().BringUpPhases(roles)
 
 	if err := w.checkUnmanaged(ctx, bin); err != nil {
+		return "", err
+	}
+	if err := w.checkPaths(ctx, bin); err != nil {
 		return "", err
 	}
 	started := 0
@@ -393,7 +396,7 @@ func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *machine.Access, nam
 }
 
 func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
-	var addrs []occupancy.Addr
+	var addrs []inspector.Addr
 	for _, ns := range w.state.Nodes {
 		if ns.PID > 0 || !phaseHasNode(phase, ns.Index) {
 			continue
@@ -403,10 +406,10 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 			"p2p": ns.P2P, "etcd": ns.Etcd, "etcd-client": ns.EtcdClient,
 			"http": ns.HTTP, "ws": ns.WS, "auth": ns.Auth, "metrics": ns.Metrics,
 		} {
-			addrs = append(addrs, occupancy.Addr{Host: host, Port: port, Node: ns.Index, Purpose: purpose})
+			addrs = append(addrs, inspector.Addr{Host: host, Port: port, Node: ns.Index, Purpose: purpose})
 		}
 	}
-	busy, err := w.scanOccupancy(ctx, addrs)
+	busy, err := w.scanPorts(ctx, addrs)
 	if err != nil {
 		return err
 	}
@@ -441,17 +444,17 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 	return fmt.Errorf("chainsetup: start: %d port(s) are already in use:\n%s\n%s", len(busy), strings.Join(lines, "\n"), hint)
 }
 
-// scanOccupancy asks whether the plan's ports are taken, from where the
-// answer is true. A local target asks this machine's kernel (occupancy.Scan's
+// scanPorts asks whether the plan's ports are taken, from where the
+// answer is true. A local target asks this machine's kernel (inspector.Scan's
 // bind probe). A remote target is asked ON the target through the driver's
 // PortProber: probing from here lies in both directions — a loopback-bound
 // listener on the server is invisible from outside, and a docker-published
 // port is "open" from here even when nothing inside the container listens,
 // because the publish forwarder itself accepts the connection (measured: an
 // idle set reported every node port busy).
-func (w *Workspace) scanOccupancy(ctx context.Context, addrs []occupancy.Addr) ([]occupancy.Addr, error) {
+func (w *Workspace) scanPorts(ctx context.Context, addrs []inspector.Addr) ([]inspector.Addr, error) {
 	if !w.state.Target.IsRemote() {
-		return occupancy.Scan(ctx, addrs, nil), nil
+		return inspector.Ports(ctx, addrs, nil), nil
 	}
 	byHost := map[string][]int{}
 	for _, a := range addrs {
@@ -478,7 +481,7 @@ func (w *Workspace) scanOccupancy(ctx context.Context, addrs []occupancy.Addr) (
 		}
 		return nil, nil
 	}
-	var busy []occupancy.Addr
+	var busy []inspector.Addr
 	for host, ports := range byHost {
 		prober, err := proberFor(host)
 		if err != nil {
@@ -629,4 +632,58 @@ func phaseActionNode(nodes []node.Record, phase registry.Phase) (node.Node, bool
 		return node.Node{Index: ns.Index, Role: node.Role(ns.Role), Host: nodeHost(ns), Ports: ns.Endpoints}, true
 	}
 	return node.Node{}, false
+}
+
+// checkPaths asks each node's machine whether what the launch is about to
+// read is there: the binary, the genesis, and every stopped node's datadir and
+// config. A missing file fails here with its name, rather than one step later
+// inside a launch with "no such file" and nothing about which file.
+func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
+	var lines []string
+	for _, ns := range w.state.Nodes {
+		if ns.PID > 0 {
+			continue
+		}
+		t, err := w.machineFor(ns)
+		if err != nil {
+			return err
+		}
+		want := []inspector.Path{
+			{Path: bin, Purpose: "binary"},
+			{Path: w.state.GenesisPath, Purpose: "genesis"},
+			{Path: ns.DataDir, Node: ns.Index, Purpose: "datadir"},
+			{Path: ns.ConfigPath, Node: ns.Index, Purpose: "config"},
+		}
+		missing, err := inspector.Paths(ctx, t.Files, want)
+		if err != nil {
+			return fmt.Errorf("chainsetup: start: %w", err)
+		}
+		for _, m := range missing {
+			line := "  " + m.String()
+			if ns.Server != "" {
+				line += " on " + ns.Server
+			}
+			lines = append(lines, line)
+		}
+	}
+	if len(lines) == 0 {
+		return nil
+	}
+	return fmt.Errorf("chainsetup: start: %d path(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`net genesis`, `net config`, `net init`) or check --binary",
+		len(lines), strings.Join(uniq(lines), "\n"))
+}
+
+// uniq drops repeated lines, keeping first occurrence order — the binary and
+// genesis are checked once per node and would otherwise be listed once each.
+func uniq(in []string) []string {
+	seen := map[string]bool{}
+	out := in[:0]
+	for _, s := range in {
+		if seen[s] {
+			continue
+		}
+		seen[s] = true
+		out = append(out, s)
+	}
+	return out
 }

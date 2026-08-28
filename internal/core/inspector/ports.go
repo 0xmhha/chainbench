@@ -1,14 +1,4 @@
-// Package occupancy answers one question a bring-up must ask before it starts
-// anything: is something already listening where these nodes are about to
-// listen?
-//
-// It exists because the alternative is finding out from the chain. A node whose
-// port is taken dies with "address already in use" somewhere inside a launch
-// sequence, and the operator is left guessing whether a test is running, whether
-// an earlier one died here, or whether the port belongs to something else
-// entirely. Those are different situations with different remedies, and only the
-// first one is a reason to wait.
-package occupancy
+package inspector
 
 import (
 	"context"
@@ -90,7 +80,7 @@ func localBusy(host string, port int) bool {
 // refused connection means nothing is there, and anything else (a filtered
 // port, an unreachable host) is a fact about reachability rather than about
 // occupancy, which the caller learns soon enough when it tries to launch.
-func Scan(ctx context.Context, addrs []Addr, dial DialFunc) []Addr {
+func Ports(ctx context.Context, addrs []Addr, dial DialFunc) []Addr {
 	injected := dial != nil
 	if dial == nil {
 		dial = defaultDial

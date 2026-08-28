@@ -105,7 +105,7 @@ flowchart TD
 | `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
 | `core/rpc` | JSON-RPC 클라이언트 |
 | `core/process` | PID 추적 · 검증된 종료 |
-| `core/occupancy` | **기동 전 포트 점유 조회** — 로컬은 bind 두 형태(루프백·와일드카드) 모두 시도, 원격은 dial |
+| `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
