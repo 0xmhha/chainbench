@@ -6,7 +6,9 @@
 > 이 문서는 그 사이를 잇는 **이동표**다.
 >
 > 실측 기준: 2026-08-27 · main `a63b500` · `go run ./scripts/inventory/code-graph -symbols .`
-> (패키지 75 · 엣지 268 · 선언 2,860 · 내부 코드 30.3k줄)
+> (패키지 75 · 엣지 268 · 선언 2,860 · 내부 코드 30.3k줄).
+> **P1 완료 후(2026-08-28)**: 패키지 71 · 엣지 246. §2 의 "지금 위치" 서술 중 P1 이
+> 옮긴 것은 완료 상태가 §4·§8 에 적혀 있다 — 어긋나 보이면 §8 이 이긴다.
 
 ## 0. 한 장 요약
 
@@ -28,17 +30,21 @@
 소유하듯이 — 간판이 산출물(`layout`)도 동작(`assign`)도 아니어야 한다(§6).
 
 ```
-표면        cmd(cli)              mcp
-             │                     │
-오케스트레이션  chainsetup  ────────  testengine
-             │                     │
-빌더        genesis   nodeconfig   dsl
-             └─────────┬───────────┘
-             ┌─────────┴───────────┐
-자원 resource ──────────────────→ 노드 node ←────── 프로세스 process
+표면        cmd(cli)                    mcp
+             │                           │
+오케스트레이션  chainsetup  ───────────  testengine
+             │                           │
+빌더        genesis    nodeconfig      dsl
+             └───────────┬─────────────┘
+             ┌───────────┴─────────────┐
+자원 resource ────────────────→ 노드 node ←────── 프로세스 process
+             ↑                                        ↑
+          inspector (요청 시 실사)  ←──────  preflight (현재 vs 목표 비교)
 ```
 
-**자원이 정하고, 노드가 기록하고, 프로세스가 돌린다.**
+**자원이 정하고, 노드가 기록하고, 프로세스가 돌린다.** 그 옆에 둘이 선다:
+**inspector 는 요청받으면 실물을 보고, preflight 는 그것으로 현재와 목표를
+비교한다**(§2 M7·M8).
 
 ## 1. 방법 — 그래프를 먼저 갱신하고 시작한다
 
@@ -68,6 +74,7 @@ go run ./scripts/inventory/code-graph -symbols .  > symbols.json # + 선언 2,86
 | 가용 자원 풀(호스트 × 포트 슬롯) · 포트 밴드 산술 | 체인 의미론 |
 | 결정적 배정 — 풀과 요청을 받아 **노드 사실을 만들어 넘긴다** | 키 파생 |
 | 서버 이름 → 능력 손잡이(유일 다이얼 지점) | |
+| **가용/할당 현황(`Inventory`)** — 몇 노드가 배정됐고 몇 자리가 남았는가 (§2a) | |
 
 지금 위치: `netmap/internal/serverset`(1,028) · `netmap`(261) ·
 `core/netmap` 의 pool.go(145) · `core/portplan`(184).
@@ -176,6 +183,90 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 `test-helper` 로**(§6). 지금 `builtins`·`read`·`fault`·`assets` 1,541줄이 액션이고,
 이것이 마지막 단계에서 옮겨갈 몸통이다.
 
+### M7 inspector — 요청 시 실사 (결정 2026-08-28)
+
+지금의 `core/occupancy`(129줄, 포트만 찔러봄)를 개명·확장한다. 소유하는 질문은
+**"타깃이 지금 실제로 어떤 상태인가"** 다:
+
+- ip 가 살아 있는가 · port 가 비어 있는가
+- 경로가 유효하고 사용 가능한가 — data root · node data dir · genesis ·
+  keystore · nodekey · config · log · binary
+
+**요청에 의해서만 확인한다.** 상시 감시가 아니다. 사실만 답하고 판단하지 않는다
+(판단은 preflight 의 일이다).
+
+이름 `inspector` 는 사용자 확정(2026-08-28). 주의 둘: `inspector.Inspector` 는
+stutter 이므로 타입은 `Report`·`Check` 등으로 짓는다. `driver.ProcessInspector`
+인터페이스와는 패키지가 달라 충돌은 아니나, P3(프로세스) 때 어휘를 함께 본다.
+
+### M8 preflight — 현재 vs 목표 비교 (역할 재정의, 결정 2026-08-28)
+
+지금의 `core/preflight` 는 계획의 자기모순만 본다(네트워크 id 균일 · 포트 겹침 ·
+genesis 포크 절). 재정의된 역할은 **테스트를 연속 수행할 때 재구성 비용을 없애는
+것**이다:
+
+1. 타깃에 지금 구성된 체인 환경을 분석한다
+2. 그것이 정상 동작 중인지 **inspector 로** 확인한다
+3. 다음 테스트가 요구하는 환경과 비교한다
+4. 같으면 재구성 없이 그대로 쓰고, 다르면 **어디까지 다시 만들지** 알려준다 —
+   5번 서버만 고치면 되는지, 전체를 다시 세워야 하는지
+
+설정 파일 비교만으로는 부족하다: 파일이 같아도 앞선 테스트가 노드 몇 개를 비정상
+상태로 남겼을 수 있다. 그래서 preflight 는 **inspector 를 사용하는 쪽**이다.
+
+지금 안에 있는 계획 검사는 각 빌더로 흩어진다 — 포트 충돌은
+`resource.ValidatePorts`(이미 그렇다), genesis 포크 검사는 genesis 빌더(M4),
+네트워크 id 균일성은 config 빌더(M5)로. **자기 산출물은 자기 빌더가 검사한다.**
+
+### 2a. `resource.Inventory` — 가용과 할당의 관리 주체 (결정 2026-08-28)
+
+서버 세트의 정보를 관리하는 모듈(resource)이 **사용할 수 있는 것과 할당된 것**을
+관리한다. ip·port 가 필요한 곳은 여기서 할당받는다. 그래야 총 몇 노드가 배정됐고
+몇 자리가 남았는지가 한 곳에서 관리된다.
+
+```go
+// Inventory is one server set's live view: what it offers, and what has
+// been handed out. One instance per set, in memory for the process's life.
+type Inventory struct {
+    pool  Pool
+    taken map[Slot]Holder
+}
+type Slot   struct { Host string; Index int } // 포트는 밴드에서 계산된다
+type Holder struct { Network string; Node string }
+
+func Open(setPath string) (*Inventory, error)
+func (i *Inventory) Adopt(records []Allocation)            // 기존 기록에서 파생
+func (i *Inventory) Take(n int, by string) ([]Slot, error) // 부족하면 ErrFull
+func (i *Inventory) Release(network string)                // 삭제 시 반납
+func (i *Inventory) Usage() Usage                          // Cap/Used/Free/ByNetwork
+```
+
+**원칙 셋** (모두 사용자 결정 2026-08-28):
+
+- **메모리가 정본이다.** 인스턴스가 프로세스 수명 동안 최신 상태를 갖는다.
+  파일 영속·복구(프로세스 장애 후 이전 진행 복원 + 서버 재확인)는 **모든 작업의
+  맨 마지막**에 한다 — worklist 최종 항목으로만 등록.
+- **`Adopt` 은 사본이 아니라 파생이다.** 새 프로세스는 기존 워크스페이스 기록을
+  읽어 taken 을 세운다. 자기 파일을 따로 쓰기 시작하는 순간 같은 사실이 두 곳에
+  생긴다(§8.4 의 `Placement` 와 같은 병) — 그래서 영속을 미룬다.
+- **반납은 삭제다, 종료가 아니다.** `stop` 은 pid 만 지운다(자원은 그 노드 것으로
+  유지 — 테스트 중 노드를 멈추고 설정을 바꿔 다시 띄우는 흐름이 있고, 그때 pid 만
+  갈린다). `start` 는 같은 자원에 새 pid 를 단다. **`rm` 이 반납이다.** 그래서
+  Inventory 는 pid 를 보지 않는다: 노드 레코드가 있으면 그 자원은 나간 것이다.
+
+`Full` 은 가용한 모든 ip 에서 모든 port 슬롯이 나간 상태다. 오류는 숫자만이
+아니라 **누가 쥐고 있는지**를 말한다:
+
+```
+resource: the set is full — 15 hosts × 1 slot = 15 nodes, all taken
+  net-a  5 (node1..node5)
+  net-b 10 (node1..node10)
+remove one with `chainbench net rm`
+```
+
+지금 `app.NetPool` 이 워크스페이스 하나만 열어 `Used` 를 세는 것(같은 세트의 다른
+네트워크는 안 보인다)이 이 모듈로 옮겨와 고쳐진다.
+
 ## 3. 합칠 것과 지울 것
 
 재측정으로 확인된 잔재다. 단계 진행 중 **해당 모듈을 손댈 때 함께** 처리한다.
@@ -214,6 +305,21 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 어휘 소비 엣지 6개 소멸, `serverset → core/netmap` 엣지 소멸(같은 패키지가 됨),
 `resource → node` 단방향 · `node` out-edge 0 유지, 계층 위반 0 유지.
 
+### P1.4 슬롯 상한 검사 · P1.5 Inventory (결정 2026-08-28)
+
+- **P1.4** — `Pool.Validate()` 가 선언한 슬롯 수만큼 실제로 `PlanBands` 를 돌려
+  `ValidatePorts` 로 충돌을 검사한다. "가용 포트가 4개면 slots 는 4를 넘을 수
+  없다" 를 **선언 시점에** 강제한다. 지금은 밴드에 끝이 없어 `slots: 1000` 도
+  통과하고, `pool.go` 의 주석("마지막 슬롯 검사가 앞을 다 검사한다")은 하지 않는
+  검사를 한다고 적혀 있다. 형식 변경 없음.
+- **P1.5** — `resource.Inventory` 신설(§2a). 메모리 인스턴스로 가용/할당을 관리.
+  `net pool` 의 `Used` 가 이것을 통해 답한다.
+
+> **폐기: "호스트별 슬롯"(옛 P1.4?).** 슬롯은 포트 슬롯이고 밴드는 세트 공통이라,
+> 포트가 허용하는 노드 수는 모든 호스트에서 같다 — 호스트마다 슬롯이 다르다는
+> 개념 자체가 성립하지 않는다(사용자 확인 2026-08-28). 장비 사양에 따른 노드 수
+> 제한이 필요해지면 그것은 포트와 무관한 별개 축(용량 정책)으로 설계한다.
+
 ### P2. 노드 사실 레코드 (M2 의 본체)
 
 1. 10개 타입이 갖고 있는 사실을 `node` 레코드로 모은다.
@@ -246,16 +352,47 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 **게이트**: genesis 를 만드는 곳 **5 → 1**. config 를 렌더하는 곳 **2 → 1**.
 `testspec` 에서 액션 파일이 분리 가능한 상태(파서가 액션을 import 하지 않는다).
 
-### P5. 표면 정리 — cmd(cli) 와 mcp
+### P5. 표면 정리 — cmd(cli) 와 mcp (P2 앞으로 당김, 결정 2026-08-28)
 
-여기서 **비대칭 규칙**을 지킨다. CLI 는 모듈을 직접 부르고, MCP 는 `app` 을 거친다.
+**P1 이 만든 부채 때문에 앞당긴다**: `netmap` 모듈은 사라졌는데 CLI 에는
+`chainbench netmap` 그룹과 `netmapcmd` 패키지가 남아, **표면이 없는 모듈의
+이름을 부르고 있다.** `net` 그룹 자체는 이 재편이 넣은 것이 아니라 T7.6
+(2026-08-10, PR #232)의 산물이지만, 지금 한 그룹에 세 모듈의 일이 섞여 있다:
 
-1. `cmd/chainbench` 31파일 3,227줄에서 모듈 직접 호출이 아닌 것(자체 조립)을 걷어낸다.
-2. MCP 직결 14종 래칫을 축소한다 — P1~P4 에서 모듈이 정리될 때마다 해당 항목이
-   사라진다(`internal/arch/mcp_imports_test.go` 가 사라진 항목의 삭제를 강제한다).
-3. 새 모듈마다 CLI 그룹 하나 + MCP 도구 묶음 하나가 **같은 동사 집합**을 갖는지 확인.
+| 지금 명령 | 실제로 무엇인가 | 소유 모듈 |
+|---|---|---|
+| `netmap pool` | 자원 조회 | resource |
+| `netmap plan` | 이 모양이면 어떤 배치가 나오나 | resource (배정 미리보기) |
+| `netmap show` | 조립된 네트워크의 노드가 어디 있나 | node (배치 조회) |
+| `net <13 단계>` | 조립 단계 | chainsetup |
 
-**게이트**: 래칫 목록 14 → 한 자릿수. `cmd/*` 의 fan-out 이 모듈 수에 수렴.
+keyring 을 정리한 방식(모듈 하나 = CLI 그룹 하나 = MCP 묶음 하나)을 그대로
+적용한다. 그룹 재편의 구체 모양은 착수 시 제안 후 결정한다.
+
+**플래그 두 개를 가른다** (사용자 결정 2026-08-28). 지금 `--data-dir` 은
+워크스페이스 루트를 뜻하는데, geth 계열 바이너리에 넘기는 `--datadir` 은 노드의
+블록 데이터 디렉터리다 — 같은 낱말이 한 칸 옆에서 다른 것을 뜻한다:
+
+- **`--workspace-dir`** — 테스트 수행을 위해 셋업 정보들을 생성하는 경로.
+  기본 경로 규칙도 함께 넣는다(`~/.chainbench/<날짜시간>/<테스트명>/chainsetup`
+  방향, 최종 형태는 착수 시 확정 — 노드 IPC 소켓 104자 제한 고려).
+- **`--data-dir`** — 노드를 실행할 때 블록 데이터가 쌓이는 디렉터리.
+
+비대칭 규칙은 그대로: CLI 는 모듈을 직접 부르고, MCP 는 `app` 을 거친다.
+
+1. `netmapcmd` 해체 — 자원 조회/배정 미리보기는 resource 의 그룹으로, 배치 조회는
+   node 쪽 표면으로. MCP 도구도 같은 경계로.
+2. `--workspace-dir` / `--data-dir` 분리 + 워크스페이스 기본 경로.
+3. `cmd/chainbench` 31파일 3,227줄에서 모듈 직접 호출이 아닌 것(자체 조립)을 걷어낸다.
+4. MCP 직결 14종 래칫 축소(`internal/arch/mcp_imports_test.go` 가 강제).
+5. 새 모듈마다 CLI 그룹 하나 + MCP 도구 묶음 하나가 **같은 동사 집합**인지 확인.
+
+**게이트**: `netmap` 문자열이 표면에서 0(또는 재편으로 정한 새 이름만) ·
+`--data-dir` 이 워크스페이스를 뜻하는 곳 0 · 래칫 14 → 한 자릿수 ·
+`cmd/*` fan-out 이 모듈 수에 수렴.
+
+**두 번 일하지 않기 위한 선긋기**: P2 가 노드 기록 구조를 바꾸므로, P5 에서는
+**이름과 경계만** 정리하고 출력 형식·기록 구조는 건드리지 않는다.
 
 ### P6. chainsetup · testengine
 
@@ -295,16 +432,23 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 
 ```mermaid
 flowchart LR
-    P1[P1 자원] --> P2[P2 노드정보]
-    P2 --> P3[P3 프로세스]
+    P1[P1 자원·노드 어휘] --> P14[P1.4-5 상한검사·Inventory]
+    P14 --> P5[P5 표면: 그룹 재편·플래그 분리]
+    P5 --> P2[P2 노드 사실 레코드]
+    P2 --> P2x[P2.x Assign이 Inventory에서 슬롯을 받음]
+    P2 --> P3[P3 프로세스 + inspector 개명·확장]
     P2 --> P4[P4 빌더 3종]
     P3 --> P4
-    P1 --> P5[P5 cmd·mcp]
-    P4 --> P5
-    P5 --> P6[P6 chainsetup·testengine]
+    P4 --> P45[P4.x preflight 재정의]
+    P4 --> P6[P6 chainsetup·testengine]
     P6 --> P7[P7 DSL 케이스 4종]
     P7 --> P8[P8 test-helper]
+    P8 --> PF[최종: 파일 영속·복구]
 ```
+
+순서 변경(2026-08-28): **P5 를 P2 앞으로.** 표면이 사라진 모듈 이름(`netmap`)을
+부르는 상태를 길게 두지 않는다. 대신 P5 는 이름과 경계만 손대고 기록 구조는
+P2 의 것으로 남긴다(위 선긋기).
 
 P2 가 병목이다. 노드 정보가 한 레코드로 서지 않으면 프로세스도 빌더도 각자
 필드를 다시 조립한다 — 지금 10개 타입이 생긴 경로가 그것이다.
@@ -344,10 +488,18 @@ M1 후보를 이 잣대로 비교한 결과다.
    정책인지 체인 지식인지에 달렸다. `EtcdJoinFailed`·`ForkNotCrossed` 는 체인 쪽으로 보인다.
 2. **`session` 의 경계.** 1,050줄이 세션·환경·기록·잠금을 겸한다. `node` 와 겹치는
    부분(노드 테이블·경로)이 옮겨간 뒤 무엇이 남는지 P2 완료 시점에 다시 잰다.
-3. **CLI 표면도 가를까.** `chainbench netmap show|plan` 은 노드 조회이고
-   `netmap pool` 은 자원 조회다. 패키지가 갈린 뒤 표면도 가를지는 P5 에서 정한다.
+3. ~~CLI 표면도 가를까~~ → **가른다**(2026-08-28 결정, P5 로 앞당김). 남은 것은
+   그룹 재편의 구체 모양뿐이며 착수 시 제안한다.
 4. **`node` 가 덤핑 패키지가 되지 않게** — 사실과 그 사실에서 파생되는 질문만
    소유하고, I/O 는 절대 들이지 않는다(out-edge 0 을 게이트로 고정).
+5. **`netreg` 의 새 이름.** 약어(규칙 7 위반)이고 netmap 과 혼동됐다. 붙어 있는
+   네트워크의 레지스트리라는 역할에 맞는 이름을 P5 그룹 재편과 함께 정한다.
+6. **워크스페이스 낱말의 삼중 정의.** `chainsetup.Workspace` ·
+   `session.Composition` · `session.Environment` 이 "한 네트워크의 상태" 를 나눠
+   갖는다. `workspace.json` 을 누가 왜 만드는지 포함해 P2 에서 소유를 확정한다.
+   그때까지의 정의: **워크스페이스 = 조립 중인 네트워크 하나의 로컬 기록**
+   (control plane 은 조작자 머신의 `workspace.json`, data plane 은 타깃 위의
+   genesis·config·datadir·로그).
 
 
 ## 8. P1 이동표 — 심볼 단위

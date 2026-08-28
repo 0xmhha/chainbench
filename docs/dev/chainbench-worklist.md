@@ -606,6 +606,10 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 > 프로세스(`process`)가 돌린다.** 그 위에 빌더 셋(genesis · nodeconfig · dsl),
 > 그 위에 표면(cmd · mcp), 그 위에 오케스트레이션(chainsetup · testengine).
 >
+> **표는 실행 순서다**(위에서 아래로). P5(표면)가 P2 앞에 오는 것은 2026-08-28
+> 결정 — P1 이 `netmap` 모듈을 없앤 뒤에도 표면이 그 이름을 부르고 있어, 이름과
+> 경계를 먼저 맞춘다. P5 는 기록 구조를 건드리지 않는다(그건 P2 의 것).
+>
 > 이름은 **부서가 소유한 대상 명사**로 짓는다. 은유(`netmap`)·약어(`netreg`·
 > `portplan`)·산출물(`place`)·동작(`alloc`)은 간판이 되지 못한다. `alloc` 은 이
 > 저장소에서 이미 genesis 계정 배분을 뜻하므로 쓸 수 없다(실측 13건).
@@ -615,14 +619,18 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P1.1** | **어휘·지도·경로·enode → `core/node`** — label(35)·role(36)·map(114)·peering(159)·layout(38)·enode(32) 약 380줄 이동. `Ports` 별칭 제거하고 `node.Endpoints` 로 통일 | — | `node` out-edge **0 유지**(L0) · 어휘만 쓰던 6곳(poa·wbft·nodeconfig·session·topology·testspec)의 `core/netmap` import 소멸 · `core/netmap` 에 pool.go 만 잔류 · 기존 테스트 무변경 통과 | ☑ **완료 2026-08-27** — `node` out-edge 0 · 어휘 6곳 import 소멸(엣지 268→260) · `core/netmap` 은 2파일 191줄만 잔류 · `NodeLabel`→`node.Label` stutter 해소 · 61패키지 테스트 통과 |
 | **P1.2** | **`serverset` 승격 + `Opener` 합류 → `internal/resource`** — `netmap/internal/serverset`(1,028)와 `netmap` 표면(229)을 한 패키지로. 봉인 목적은 wrapper 가 같은 패키지에 들어오면서 유지. **서버 쪽 `Placement` 삭제**: `Source`·`DataRoot`·`Remote` 세 필드가 전부 같은 반환값(`Pool.Source`·`Target.DataRoot`·`Spec.IsRemote()`)에 이미 있는 사본이라, `ResolveServer` 가 `Pool` 과 `machine.Spec` 을 따로 돌려준다. **`fleet` 낱말 제거**(제품 용어는 server set 하나): `--fleet`→`--all-servers` · MCP `"fleet"`→`"all_servers"` · `ServerRef.Fleet`→`.All` · `fleetTarget`→`setTarget` · `CHAINBENCH_DOCKER_SERVERS`→`CHAINBENCH_DOCKER_SERVERS` · `ServersBuildDir`→`ServersBuildDir` · 주석의 은유까지. **`Config.Fleet()` 삭제 → `Config.Pool()` 로 통합**(둘이 같은 일을 하고 `Pool()` 은 프로덕션 호출자 0). 슬롯 나눗셈(`slots/len(hosts)`)은 제거 — **착수 후 실측 결과 도달 불가능한 죽은 산술**이었다(v2 는 풀 하나에 slots 하나를 선언하고 `expand()` 가 모든 호스트에 복사하므로 같은 값 N개를 N으로 나눈 값이다). 호스트별 슬롯은 형식 변경이라 별도 결정으로 분리 | P1.1 | `serverset → core/netmap` 엣지 소멸(동일 패키지) · 서버 쪽 `Placement` 심볼 0 · **`fleet` 문자열 0**(주석·테스트·스크립트 포함) · `--server-set` 과 `--docker` 라이브 경로 동작 동일 · keyring 원격 스위트(링 생성·복제) 통과 | ☑ **완료 2026-08-27** — `internal/netmap` 소멸(패키지 75→74, 엣지 260→258) · 서버측 `Placement` 심볼 0(`ResolveServerOut{Pool, Target, HasTarget}`) · `fleet` 문자열 0(코드·스크립트·샘플) · `resource` 5파일 1,176줄, 소비자 6 · 계층 위반 0 · 61패키지 통과 |
 | **P1.3** | **풀·배정·포트밴드 → `resource`, `place` 흡수** — pool(145)+portplan(184) 이동, `place.NodeReq` → `node.LaunchReq`(착수 후 정정: 기동 요청이라 배정 요청과 다르다), `Ports` 별칭 2개 제거하고 `node.Endpoints` 로 통일 | P1.2 | 패키지 **4개 소멸**(`core/netmap`·`netmap`·`core/portplan`·`core/place`) · `resource → node` 단방향 · 계층 위반 0·  `net allocate`·`netmap plan` 산출 바이트 동일 | ☑ **완료 2026-08-28** — 패키지 4개 소멸(75→71, 엣지 268→246) · `resource → node`·machine·remote 만 · `node` out-edge 0 · `Bands` 중복 2→1(`plan()` 소멸) · `Reservation` 은 노드 사실이라 `core/node` 로(패밀리·registry 가 resource 를 import 하지 않음) · 골든 동일 · 61패키지·-race·lint 0 |
-| **P1.4?** | **호스트별 슬롯 — 서버 세트 형식 확장** (사용자 결정 2026-08-27 의 잔여분) — `pool.hosts` 항목이 자기 `slots` 를 갖도록 `HostSpec` 확장, `Cap()` 은 합계, `Assign` 은 호스트별 잔여 슬롯 소비(지금은 `i/hosts`·`i%hosts` 로 균등 가정). **리팩토링이 아니라 형식 변경**이라 별도 결정으로 분리 | P1.3 | 비균등 세트(2·1·1)에서 선언 용량 4가 그대로 배정 · 균등 세트 산출 바이트 동일 | ☐ |
-| **P2** | 노드 사실 레코드 — "노드 하나" 타입 10 → 3, 경로 계산 4곳 → 1 | P1 | 심볼 인벤토리로 계수 확인 | ☐ |
-| **P3** | 프로세스 — 실행은 `driver`, 정책은 `process`. 기동 진입점 8 → 2 | P2 | 진입점 계수 · `chainsetup` 714줄 감소 | ☐ |
+| **P1.4** | **슬롯 상한 검사** (결정 2026-08-28) — `Pool.Validate()` 가 선언한 슬롯 수만큼 `PlanBands` 를 실제로 돌려 `ValidatePorts` 로 충돌 검사. "가용 포트 수를 넘는 slots" 를 선언 시점에 거부(지금은 밴드에 끝이 없어 `slots: 1000` 도 통과, `pool.go` 주석은 하지 않는 검사를 한다고 적혀 있음). 형식 변경 없음. *(옛 P1.4? "호스트별 슬롯" 은 폐기 — 밴드가 세트 공통이라 포트가 허용하는 노드 수는 모든 호스트에서 같다. 개념이 성립하지 않음, 사용자 확인 2026-08-28)* | P1.3 | 초과 slots 선언이 `Validate` 에서 거부됨 · 기존 유효 세트는 전부 통과 | ☐ |
+| **P1.5** | **`resource.Inventory` 신설** (결정 2026-08-28) — 서버 세트 소유 모듈이 가용/할당을 관리: 메모리 인스턴스(`Open`·`Adopt`·`Take`·`Release`·`Usage`·`Full`), ip·port 가 필요한 곳은 여기서 할당받는다. **메모리가 정본**(파일 영속·복구는 최종 항목 F1). **반납 = `rm`**(`stop` 은 pid 만 제거, 자원은 노드 것으로 유지 — pid 는 재기동 시 갈린다). `Full` 오류는 누가 쥐고 있는지까지 출력. `net pool` 의 `Used` 가 워크스페이스 하나만 세던 것이 이것으로 고쳐짐 | P1.4 | `Usage` 가 같은 세트의 모든 네트워크를 계수 · `Take` 초과 시 `ErrFull` 에 보유자 목록 · 단위 테스트 | ☐ |
+| **P5** | **표면 재정리 (P2 앞으로 당김, 결정 2026-08-28)** — ① `netmapcmd` 해체: `netmap` 모듈이 P1 에서 사라졌는데 표면이 그 이름을 부르고 있다. `netmap pool`(자원)·`plan`(배정 미리보기)은 resource 의 그룹으로, `show`(배치 조회)는 node 쪽으로, keyring 방식(모듈=그룹=MCP 묶음) 적용. 구체 모양은 착수 시 제안. ② **플래그 분리**(사용자 결정 2026-08-28): `--workspace-dir` = 셋업 정보를 생성하는 경로(+ 기본 경로 규칙, `~/.chainbench/<날짜시간>/<테스트명>/chainsetup` 방향) / `--data-dir` = 노드가 블록 데이터를 쌓는 디렉터리(geth 계열 `--datadir` 과 같은 뜻으로 통일). ③ CLI 는 모듈 직접·MCP 는 app 경유, 래칫 14종 축소. **P2 와의 선긋기: 이름과 경계만, 기록 구조는 건드리지 않는다** | P1.5 | 표면에서 `netmap` 문자열 0(재편으로 정한 이름만) · `--data-dir` 이 워크스페이스를 뜻하는 곳 0 · 래칫 14→한 자릿수 | ☐ |
+| **P2** | 노드 사실 레코드 — "노드 하나" 타입 10 → 3, 경로 계산 4곳 → 1 | P5 | 심볼 인벤토리로 계수 확인. `workspace.json` 의 생성 주체·이유와 워크스페이스 삼중 정의(chainsetup.Workspace·session.Composition·Environment)의 소유 확정 포함 | ☐ |
+| **P2.x** | **배정이 Inventory 를 소비** — `Assign` 이 `Inventory` 에서 빈 슬롯을 받아 시작. 같은 세트로 올린 두 번째 네트워크가 첫 네트워크의 포트를 다시 받지 않게 됨(지금은 둘 다 슬롯 1부터 시작해 충돌) | P2 | 같은 세트 위 2개 네트워크 동시 기동 라이브 | ☐ |
+| **P3** | 프로세스 — 실행은 `driver`, 정책은 `process`. 기동 진입점 8 → 2. **`occupancy` → `inspector` 개명·확장**(사용자 결정 2026-08-28): ip 가용·port 가용·경로 유효성(data root·datadir·genesis·keystore·nodekey·config·log·binary)을 요청 시에만 실사해 사실만 답한다. 타입은 stutter 회피(`inspector.Report` 등), `driver.ProcessInspector` 어휘도 이때 정리 | P2 | 진입점 계수 · `chainsetup` 714줄 감소 | ☐ |
 | **P4** | 빌더 셋 — genesis 생성 지점 5 → 1, config 렌더 2 → 1, dsl 파서가 액션을 import 하지 않음 | P2, P3 | 계수 + import 방향 | ☐ |
-| **P5** | 표면 — CLI 는 모듈 직접, MCP 는 app 경유. 직결 래칫 14 → 한 자릿수 | P1, P4 | `internal/arch` 래칫 축소 | ☐ |
+| **P4.x** | **`preflight` 재정의** (결정 2026-08-28) — 계획 자기모순 검사에서 **현재 vs 목표 비교**로: 타깃의 현 체인 구성을 분석하고, 정상 동작 여부를 inspector 로 확인하고, 다음 테스트가 요구하는 구성과 비교해 "그대로 사용 / N번 서버만 재구성 / 전체 재구성" 을 답한다(연속 테스트의 재구성 비용 제거 — 설정 파일 비교만으로는 부족: 파일이 같아도 노드가 비정상일 수 있다). 기존 계획 검사는 각 빌더로(포트→resource, genesis 포크→genesis 빌더, netid→config 빌더) | P4, P3 | 동일 구성 연속 테스트에서 재구성 스킵 라이브 · 부분 변경 시 해당 노드만 재구성 | ☐ |
 | **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☐ |
 | **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☐ |
 | **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☐ |
+| **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | (착수 시 정의) | ☐ |
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 
