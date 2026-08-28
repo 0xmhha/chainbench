@@ -86,6 +86,12 @@ type State struct {
 	// The genesis step derives it, since that is where the customizations that
 	// change what the network can do are applied.
 	Capabilities []string `json:"capabilities,omitempty"`
+	// Request is what `net up` was asked to compose, recorded at the new
+	// step so a run that dies before the results exist can be resumed from
+	// what it was asked, not re-asked. Its DataDir is left empty: the
+	// workspace's location is where this file is. It is the one fact of a
+	// composition that is otherwise nowhere on disk (F1).
+	Request *NetUpIn `json:"request,omitempty"`
 }
 
 // Workspace is an open composition workspace: the session-owned persistence

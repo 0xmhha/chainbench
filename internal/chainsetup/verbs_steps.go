@@ -123,6 +123,22 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		}
 		topo = &loaded
 	}
+	// Allocation is the one moment two runs can hand out the same slot: each
+	// derives the set's inventory from the workspaces it can see, and two
+	// runs that look before either has saved both see it free. The set's
+	// lock is held from the look to the save — a lock, not a second record
+	// (the workspaces stay the only record of what is taken).
+	setPath := in.Server.SetPath
+	if setPath == "" {
+		if ws, err := Open(in.DataDir, d.Clock); err == nil {
+			setPath = ws.State().ServerSet
+		}
+	}
+	release, err := acquireSetLock(setPath, d)
+	if err != nil {
+		return StepOut{}, err
+	}
+	defer release()
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		// A set the workspace already recorded (net new --server-set) is the
 		// default: --docker and its set arrive as a pair, and a later
