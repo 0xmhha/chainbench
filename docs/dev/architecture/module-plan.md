@@ -179,6 +179,18 @@ config 병합·fork 검증) → `consensus/{poa,wbft}.BuildGenesis` → `chains/
 **설계 방향**: `genesis` 가 소스 선택·병합·오버레이·검증을 전부 소유하고,
 체인/패밀리는 **템플릿과 extraData 만** 제공한다. `chainsetup` 에는 호출만 남는다.
 
+**P4.1 결과(2026-08-28).** `core/genesis` 가 `Source`·`Request`·`Artifacts`·`Config`·
+`PresetSource`·`Compose`(소스 + 오버라이드 + 오버레이 + fork 검증)·`SourceFor` 를 소유한다.
+소스 선택에 **패밀리 id 분기가 0**: 패밀리가 `genesis.SourceProvider`(`GenesisSource(cfg)`)를
+선언하면 그것을, 아니면 프리셋 치환을 쓴다 — 타입 단언이라 `core/genesis` 는 어떤
+패밀리도 이름 부르지 않는다. wemix 소스(`WemixGenesisSource`)는 poa 지식이라
+`consensus/poa.GenesisSource` 로 갔고, `Family` 가 그 capability 를 구현한다.
+호출자 5곳(`steps_compose`·`static`·`wemix`·`locallaunch`·`buildenv`)이 전부
+`genesis.Compose` 또는 주입된 `genesis.Source` 를 부른다. `genesisArtifacts` 의
+"poa 일 때만 배치를 넘긴다" 분기도 없앴다(배치는 항상 넘기고 안 쓰는 패밀리는 무시).
+`chainsetup` 은 이제 파일을 직접 쓰지 않는다(전부 file seam) — layers §5 표에서 빠졌다.
+`chainsetup` 6,123 → 5,828줄.
+
 ### M5 config 빌더
 
 **사실상 비어 있다.** `core/nodeconfig` 는 134줄뿐이고(`Params`·`Generate`·

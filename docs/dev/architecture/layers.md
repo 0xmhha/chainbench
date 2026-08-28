@@ -109,7 +109,7 @@ flowchart TD
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
-| `core/genesis` | genesis 병합·오버라이드·fork 검증 |
+| `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
 | `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
 | `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 |
@@ -237,7 +237,7 @@ flowchart TD
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
 | `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
-| `chainsetup` | 실행 기록(`runs/`) · 로컬 조립 산출물(구 engine 이관분) | ✅ 셋업 오케스트레이터 — 원격은 파일 인터페이스 경유 |
+| `consensus/poa` | wemix genesis 생성의 **임시 작업 파일**(템플릿·거버넌스 config 를 임시 디렉터리에 쓰고 바이너리 출력을 읽음) | ✅ 패밀리의 genesis 소스 — 데이터 플레인이 아니라 로컬 스크래치이며 끝나면 지운다(P4.1, 2026-08-28; 옛 `chainsetup.WemixGenesisSource`) |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
 `filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다.

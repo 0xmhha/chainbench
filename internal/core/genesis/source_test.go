@@ -1,15 +1,14 @@
-package chainsetup_test
+package genesis_test
 
 import (
 	"context"
+	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/0xmhha/chainbench/internal/chainsetup"
-	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
-	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // wbftTestPlugin is a StaticPlugin with the real wbft family and a minimal
@@ -45,9 +44,9 @@ func TestPresetGenesisSource_BuildsGenesis(t *testing.T) {
 		"extraData": "0xdeadbeef",
 		"alloc": {}
 	}`)
-	src := chainsetup.PresetGenesisSource{KeysDir: dir}
+	src := genesis.PresetSource{KeysDir: dir}
 
-	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), chainsetup.GenesisRequest{Validators: 0}) // whole preset
+	gen, err := src.Genesis(context.Background(), wbftTestPlugin(), genesis.Request{Validators: 0}) // whole preset
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
@@ -72,7 +71,7 @@ func TestPresetGenesisSource_TakeLimitsValidators(t *testing.T) {
 		"extraData": "0xdeadbeef",
 		"alloc": {}
 	}`)
-	gen, err := chainsetup.PresetGenesisSource{KeysDir: dir}.Genesis(context.Background(), wbftTestPlugin(), chainsetup.GenesisRequest{Validators: 1})
+	gen, err := genesis.PresetSource{KeysDir: dir}.Genesis(context.Background(), wbftTestPlugin(), genesis.Request{Validators: 1})
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
@@ -97,9 +96,9 @@ func TestPresetGenesisSource_AppliesOverridesAndOverlay(t *testing.T) {
 	// The composition must apply ConfigOverrides and Overlay to whatever the
 	// family's source produced. petersburgBlock is included so the
 	// post-transform fork validation passes on the minimal test template.
-	gen, err := chainsetup.BuildGenesis(context.Background(), wbftTestPlugin(),
-		chainsetup.GenesisRequest{Validators: 0},
-		chainsetup.GenesisConfig{
+	gen, err := genesis.Compose(context.Background(), wbftTestPlugin(),
+		genesis.Request{Validators: 0},
+		genesis.Config{
 			KeysDir:         dir,
 			ConfigOverrides: map[string]string{"petersburgBlock": "0", "bohoBlock": "10"},
 			Overlay:         []byte(`{"alloc":{"00000000000000000000000000000000000000ff":{"balance":"0x2a"}}}`),
@@ -117,8 +116,8 @@ func TestPresetGenesisSource_AppliesOverridesAndOverlay(t *testing.T) {
 }
 
 func TestPresetGenesisSource_MissingPreset(t *testing.T) {
-	src := chainsetup.PresetGenesisSource{KeysDir: t.TempDir()} // no metadata.json
-	if _, err := src.Genesis(context.Background(), wbftTestPlugin(), chainsetup.GenesisRequest{Validators: 0}); err == nil {
+	src := genesis.PresetSource{KeysDir: t.TempDir()} // no metadata.json
+	if _, err := src.Genesis(context.Background(), wbftTestPlugin(), genesis.Request{Validators: 0}); err == nil {
 		t.Fatal("expected error when preset metadata is absent")
 	}
 }

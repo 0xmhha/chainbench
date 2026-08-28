@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -37,7 +38,7 @@ type BuildDeps struct {
 	// slots). resource.Assign consumes it.
 	Pool resource.Pool
 	// Genesis sources the network genesis bytes.
-	Genesis GenesisSource
+	Genesis genesis.Source
 	// Supervisor brings the network up behind a health gate and tears it down.
 	Supervisor launcher.Launcher
 	// Options tunes bring-up (health gating, retries).
@@ -75,7 +76,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocator returned %d placements for %d requests", len(placements), len(reqs))
 		}
 
-		gen, err := d.Genesis.Genesis(ctx, d.Plugin, GenesisRequest{Validators: countValidators(reqs), Nodes: assigned})
+		gen, err := d.Genesis.Genesis(ctx, d.Plugin, genesis.Request{Validators: countValidators(reqs), Nodes: assigned})
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis: %w", err)
 		}

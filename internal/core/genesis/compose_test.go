@@ -1,15 +1,15 @@
-package chainsetup_test
+package genesis_test
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register the plugins
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -35,12 +35,14 @@ func plugin(t *testing.T, id string) registry.ChainPlugin {
 // being made in five places before this.
 func TestGenesisSourceFor_TheFamilyDecides(t *testing.T) {
 	for _, tc := range []struct{ chain, want string }{
-		{"stablenet", "PresetGenesisSource"},
-		{"wbft", "PresetGenesisSource"},
-		{"wemix", "WemixGenesisSource"},
+		{"stablenet", "genesis.PresetSource"},
+		{"wbft", "genesis.PresetSource"},
+		// The poa family provides its own source; core/genesis picks it by
+		// capability, never by naming the family.
+		{"wemix", "poa.GenesisSource"},
 	} {
-		got := chainsetup.GenesisSourceFor(plugin(t, tc.chain), chainsetup.GenesisConfig{})
-		name := strings.TrimPrefix(strings.TrimPrefix(typeName(got), "chainsetup."), "*")
+		got := genesis.SourceFor(plugin(t, tc.chain), genesis.Config{})
+		name := strings.TrimPrefix(typeName(got), "*")
 		if name != tc.want {
 			t.Errorf("%s uses %s, want %s", tc.chain, name, tc.want)
 		}
@@ -55,9 +57,9 @@ func TestGenesisSourceFor_TheFamilyDecides(t *testing.T) {
 // engine one. Applying it outside the source means the caller's changes land on
 // whatever base the family built.
 func TestBuildGenesis_CustomizesWhateverTheFamilyProduced(t *testing.T) {
-	art, err := chainsetup.BuildGenesis(context.Background(), plugin(t, "stablenet"),
-		chainsetup.GenesisRequest{Validators: 4},
-		chainsetup.GenesisConfig{
+	art, err := genesis.Compose(context.Background(), plugin(t, "stablenet"),
+		genesis.Request{Validators: 4},
+		genesis.Config{
 			KeysDir: repoPath(t, "keys", "preset"),
 			Overlay: []byte(`{"config":{"aMarkerForThisTest":7}}`),
 		})

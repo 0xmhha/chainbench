@@ -1,15 +1,15 @@
-package chainsetup_test
+package poa_test
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/wemix" // register the wemix plugin
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -44,7 +44,7 @@ func TestWemixGenesisSource_AssemblesAValidConfigAndCallsTheBinary(t *testing.T)
 	dir := t.TempDir()
 
 	var gotArgs []string
-	src := chainsetup.WemixGenesisSource{
+	src := poa.GenesisSource{
 		KeysDir: filepath.Join(repoRoot(t), "keys", "preset"),
 		Binary:  "gwemix",
 		WorkDir: dir,
@@ -56,7 +56,7 @@ func TestWemixGenesisSource_AssemblesAValidConfigAndCallsTheBinary(t *testing.T)
 		},
 	}
 
-	art, err := src.Genesis(context.Background(), plugin, chainsetup.GenesisRequest{Validators: 2, Nodes: wemixPlacement(t)})
+	art, err := src.Genesis(context.Background(), plugin, genesis.Request{Validators: 2, Nodes: wemixPlacement(t)})
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
@@ -107,15 +107,15 @@ func TestWemixGenesisSource_RefusesWhatItCannotDo(t *testing.T) {
 
 	// No binary: this genesis cannot be produced in Go, and saying so beats
 	// returning a substituted template that starts the wrong chain.
-	_, err := chainsetup.WemixGenesisSource{KeysDir: keys}.Genesis(
-		context.Background(), plugin, chainsetup.GenesisRequest{Validators: 2, Nodes: wemixPlacement(t)})
+	_, err := poa.GenesisSource{KeysDir: keys}.Genesis(
+		context.Background(), plugin, genesis.Request{Validators: 2, Nodes: wemixPlacement(t)})
 	if err == nil || !strings.Contains(err.Error(), "binary") {
 		t.Fatalf("error = %v, want it to name the missing binary", err)
 	}
 
 	// No placement: the config names the producer's host and port.
-	_, err = chainsetup.WemixGenesisSource{KeysDir: keys, Binary: "gwemix"}.Genesis(
-		context.Background(), plugin, chainsetup.GenesisRequest{Validators: 2})
+	_, err = poa.GenesisSource{KeysDir: keys, Binary: "gwemix"}.Genesis(
+		context.Background(), plugin, genesis.Request{Validators: 2})
 	if err == nil || !strings.Contains(err.Error(), "placement") {
 		t.Fatalf("error = %v, want it to name the missing placement", err)
 	}
@@ -127,4 +127,24 @@ func keys(m map[string][]byte) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// repoRoot walks up from the test's working directory to the module root, so
+// the shipped preset can be read wherever the test runs.
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatal("go.mod not found above the test directory")
+		}
+		dir = parent
+	}
 }

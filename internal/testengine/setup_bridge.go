@@ -2,6 +2,7 @@ package testengine
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/testspec"
 
@@ -29,7 +30,7 @@ type (
 	// GeneratedKeySource derives fresh keys per run.
 	GeneratedKeySource = chainsetup.GeneratedKeySource
 	// GenesisConfig shapes the genesis the environment composes.
-	GenesisConfig = chainsetup.GenesisConfig
+	GenesisConfig = genesis.Config
 	// LocalLauncher launches nodes on this machine.
 	LocalLauncher = launcher.Direct
 	// WemixBootstrap runs the wemix producer bring-up between phases.
@@ -42,8 +43,8 @@ type (
 func NewBuildEnv(d chainsetup.BuildDeps) BuildEnvFunc { return chainsetup.NewBuildEnv(d) }
 
 // GenesisSourceFor picks the genesis source for a chain plugin.
-func GenesisSourceFor(plugin registry.ChainPlugin, cfg GenesisConfig) chainsetup.GenesisSource {
-	return chainsetup.GenesisSourceFor(plugin, cfg)
+func GenesisSourceFor(plugin registry.ChainPlugin, cfg GenesisConfig) genesis.Source {
+	return genesis.SourceFor(plugin, cfg)
 }
 
 // NewNodeController controls launched nodes over the launcher.

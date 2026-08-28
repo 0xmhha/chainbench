@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"io/fs"
 	"maps"
@@ -13,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
@@ -660,16 +660,17 @@ func netmapRequests(reqs []node.LaunchReq) []resource.Request {
 // genesisArtifacts builds the genesis through the one composition every surface
 // uses. The wemix source runs the chain binary, so the request also carries the
 // placement: the governance config names the producer by host and p2p port.
-func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) (GenesisArtifacts, error) {
-	req := GenesisRequest{Validators: w.state.Validators}
-	if p.Family().ID() == poa.FamilyID {
-		placed, err := w.Netmap()
-		if err != nil {
-			return GenesisArtifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
-		}
-		req.Nodes = placed
+func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) (genesis.Artifacts, error) {
+	// The placement always travels with the request: a family whose genesis
+	// names the producer's address reads it, and one whose genesis carries the
+	// validator set ignores it. Branching here on the family was the second
+	// place the wemix path had to be special-cased.
+	placed, err := w.Netmap()
+	if err != nil {
+		return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
 	}
-	return BuildGenesis(ctx, p, req, GenesisConfig{
+	req := genesis.Request{Validators: w.state.Validators, Nodes: placed}
+	return genesis.Compose(ctx, p, req, genesis.Config{
 		KeysDir:         w.state.KeysDir,
 		Binary:          w.state.Binary,
 		ChainID:         opts.ChainID,
