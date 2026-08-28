@@ -31,13 +31,13 @@ func TestCollector_ForkAcrossNodes(t *testing.T) {
 		node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"},
 		node.Node{Index: 2, Role: node.RoleValidator, RPCURL: "http://n2"},
 	)
-	states := map[string]collector.NodeState{
+	states := map[string]collector.Sample{
 		"http://n1": {Height: 5, HeadHash: "0xaaaa", HeadMiner: "0xA"},
 		"http://n2": {Height: 5, HeadHash: "0xbbbb", HeadMiner: "0xA"},
 	}
 	c := collector.New(collector.Deps{
 		Interval: 5 * time.Millisecond,
-		Probe: func(_ context.Context, url string) (collector.NodeState, error) {
+		Probe: func(_ context.Context, url string) (collector.Sample, error) {
 			return states[url], nil
 		},
 	})
@@ -55,13 +55,13 @@ func TestCollector_NoForkWhenConsistent(t *testing.T) {
 		node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"},
 		node.Node{Index: 2, Role: node.RoleValidator, RPCURL: "http://n2"},
 	)
-	states := map[string]collector.NodeState{
+	states := map[string]collector.Sample{
 		"http://n1": {Height: 5, HeadHash: "0xaaaa", HeadMiner: "0xA"},
 		"http://n2": {Height: 5, HeadHash: "0xaaaa", HeadMiner: "0xA"},
 	}
 	c := collector.New(collector.Deps{
 		Interval: 5 * time.Millisecond,
-		Probe: func(_ context.Context, url string) (collector.NodeState, error) {
+		Probe: func(_ context.Context, url string) (collector.Sample, error) {
 			return states[url], nil
 		},
 	})
@@ -84,7 +84,7 @@ func TestCollector_ReorgOnSingleNode(t *testing.T) {
 	var calls int
 	c := collector.New(collector.Deps{
 		Interval: 3 * time.Millisecond,
-		Probe: func(context.Context, string) (collector.NodeState, error) {
+		Probe: func(context.Context, string) (collector.Sample, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			calls++
@@ -92,7 +92,7 @@ func TestCollector_ReorgOnSingleNode(t *testing.T) {
 			if calls > 3 { // reorg: same height, different hash
 				hash = "0xbbbb"
 			}
-			return collector.NodeState{Height: 5, HeadHash: hash, HeadMiner: "0xA"}, nil
+			return collector.Sample{Height: 5, HeadHash: hash, HeadMiner: "0xA"}, nil
 		},
 	})
 	_ = c.Start(context.Background(), env)

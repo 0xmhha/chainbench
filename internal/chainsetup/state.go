@@ -41,8 +41,9 @@ func LoadNetwork(dataDir string) (node.NodeSet, error) {
 	return ns, nil
 }
 
-// NodeStatus is one node's observed state.
-type NodeStatus struct {
+// Probe is one node's observed state at a moment — an answer to `net status`,
+// not the node itself (the node's fact record is node.Record).
+type Probe struct {
 	Index   int
 	RPCURL  string
 	PID     int
@@ -56,14 +57,14 @@ type NodeStatus struct {
 // Status probes every node of a recorded network. A node that does not answer is
 // reported with its error rather than dropped, because "which node is down" is
 // usually the question being asked.
-func Status(ctx context.Context, dataDir string) ([]NodeStatus, error) {
+func Status(ctx context.Context, dataDir string) ([]Probe, error) {
 	ns, err := LoadNetwork(dataDir)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]NodeStatus, 0, len(ns.Nodes))
+	out := make([]Probe, 0, len(ns.Nodes))
 	for _, n := range ns.Nodes {
-		st := NodeStatus{Index: n.Index, RPCURL: n.RPCURL, PID: n.PID, Alive: process.Alive(n.PID)}
+		st := Probe{Index: n.Index, RPCURL: n.RPCURL, PID: n.PID, Alive: process.Alive(n.PID)}
 		c := rpc.Dial(n.RPCURL)
 		if h, err := c.BlockNumber(ctx); err == nil {
 			st.Head = h
@@ -91,7 +92,7 @@ func Down(dataDir string, removeData bool) ([]int, error) {
 	}
 	m := process.New()
 	for _, n := range ns.Nodes {
-		m.TrackProc(process.Proc{PID: n.PID, Label: fmt.Sprintf("node%d", n.Index), DataDir: dataDir, Host: n.Host})
+		m.TrackProc(process.Proc{PID: n.PID, Label: string(node.LabelFor(n.Index)), DataDir: dataDir, Host: n.Host})
 	}
 	leaks := m.StopAll(teardownGrace)
 	if removeData {

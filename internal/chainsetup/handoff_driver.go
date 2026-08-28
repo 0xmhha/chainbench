@@ -187,7 +187,7 @@ func (h *liveHandoff) DeployGovernance(ctx context.Context, o HandoffOptions, pr
 	if err := waitIPC(ipc, 30*time.Second); err != nil {
 		return "", err
 	}
-	ksDir := filepath.Join(o.DataDir, fmt.Sprintf("node%d", producer.Index+1), "keystore")
+	ksDir := node.Layout{Root: o.DataDir}.KeystoreDir(node.LabelFor(producer.Index + 1))
 	ksFile, err := firstEntry(ksDir)
 	if err != nil {
 		return "", fmt.Errorf("producer keystore: %w", err)

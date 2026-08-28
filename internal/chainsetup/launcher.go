@@ -256,7 +256,7 @@ func (l LocalLauncher) InitAndLaunch(ctx context.Context, plan driver.Plan, spec
 			Ports:  spec.Ports, PID: h.PID,
 		})
 		res.Procs = append(res.Procs, process.Proc{
-			PID: h.PID, Label: fmt.Sprintf("node%d", spec.Index),
+			PID: h.PID, Label: string(node.LabelFor(spec.Index)),
 			DataDir: spec.DataDir, Host: spec.Host,
 		})
 	}

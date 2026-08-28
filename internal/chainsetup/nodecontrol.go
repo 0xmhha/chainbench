@@ -109,7 +109,7 @@ func (c *NodeController) Start(ctx context.Context, n node.Node) error {
 		return fmt.Errorf("engine: restart node%d: %w", n.Index, err)
 	}
 	c.procs.TrackProc(process.Proc{
-		PID: h.PID, Label: fmt.Sprintf("node%d", n.Index),
+		PID: h.PID, Label: string(node.LabelFor(n.Index)),
 		DataDir: spec.DataDir, Host: spec.Host,
 	})
 	c.mu.Lock()

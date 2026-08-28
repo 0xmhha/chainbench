@@ -36,3 +36,26 @@ func (l Layout) LogPath(label Label) string {
 func (l Layout) GenesisPath() string {
 	return filepath.Join(l.Root, "genesis.json")
 }
+
+// NodekeyPath is the node's devp2p private key inside its datadir — where a
+// geth-family binary looks for it.
+func (l Layout) NodekeyPath(label Label) string {
+	return filepath.Join(l.DataDir(label), "nodekey")
+}
+
+// KeystoreDir is the node's account keystore directory inside its datadir.
+func (l Layout) KeystoreDir(label Label) string {
+	return filepath.Join(l.DataDir(label), "keystore")
+}
+
+// StaticNodesPath is the node's static peer list inside its datadir.
+func (l Layout) StaticNodesPath(label Label) string {
+	return filepath.Join(l.DataDir(label), "static-nodes.json")
+}
+
+// IPCPath is the node's console socket: inside its datadir, named after the
+// binary that serves it. The datadir placement is why a workspace path must
+// stay short — a unix socket path is capped at 104 characters.
+func (l Layout) IPCPath(label Label, binary string) string {
+	return filepath.Join(l.DataDir(label), filepath.Base(binary)+".ipc")
+}

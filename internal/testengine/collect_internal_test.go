@@ -57,8 +57,8 @@ func TestStartCollection_MirrorsChainstateAndLogs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	probe := func(context.Context, string) (collector.NodeState, error) {
-		return collector.NodeState{Height: 7, Peers: 2, HeadHash: "0xh", HeadMiner: "0xA"}, nil
+	probe := func(context.Context, string) (collector.Sample, error) {
+		return collector.Sample{Height: 7, Peers: 2, HeadHash: "0xh", HeadMiner: "0xA"}, nil
 	}
 	bus := obs.NewBus()
 	sub := bus.Subscribe()

@@ -220,13 +220,13 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			}
 		}
 	}
-	nodes := make([]NodeState, len(placements))
+	nodes := make([]node.Record, len(placements))
 	validators := 0
 	for i, p := range placements {
 		if node.Is(p.Role, node.RoleBP) {
 			validators++
 		}
-		nodes[i] = NodeState{
+		nodes[i] = node.Record{
 			Server:     nameOf[p.Host],
 			Index:      p.Index,
 			Label:      string(p.Label),
@@ -306,7 +306,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
 	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
-	err = w.eachMachine(func(t *machine.Access, _ []NodeState) error {
+	err = w.eachMachine(func(t *machine.Access, _ []node.Record) error {
 		p := filepath.Join(t.DataRoot, "genesis.json")
 		if err := t.Files.Write(ctx, p, gen, 0o644); err != nil {
 			return fmt.Errorf("chainsetup: genesis: write: %w", err)
@@ -479,7 +479,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("chainsetup: provision: no node table — run `net allocate` first")
 	}
 	present, shipped := 0, 0
-	err := w.eachMachine(func(t *machine.Access, nodes []NodeState) error {
+	err := w.eachMachine(func(t *machine.Access, nodes []node.Record) error {
 		check := func(path string) error {
 			exists, err := t.Files.Exists(ctx, path)
 			if err != nil {
@@ -520,7 +520,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 // The rendered config and the launch argv point at keysBase, so without this
 // a remote node would look for its keys on the operator's machine. A local
 // target ships nothing: keysBase is the key set itself.
-func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access, nodes []NodeState) (int, error) {
+func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access, nodes []node.Record) (int, error) {
 	if !t.Spec.IsRemote() {
 		return 0, nil
 	}
@@ -591,7 +591,7 @@ func ParseOverrides(sets []string) ([]launchopt.Override, error) {
 // nodeHost is the address a composed node is reachable at: the one the
 // allocator recorded, falling back to this machine for a plan that predates
 // per-node hosts.
-func nodeHost(ns NodeState) string {
+func nodeHost(ns node.Record) string {
 	if ns.Host != "" {
 		return ns.Host
 	}
@@ -600,7 +600,7 @@ func nodeHost(ns NodeState) string {
 
 // driverSpec maps a persisted node row onto the driver spec shape the argv
 // assembly and lifecycle steps consume.
-func driverSpec(ns NodeState) driver.NodeSpec {
+func driverSpec(ns node.Record) driver.NodeSpec {
 	return driver.NodeSpec{
 		Index:      ns.Index,
 		Role:       node.Role(ns.Role),

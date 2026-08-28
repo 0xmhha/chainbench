@@ -64,18 +64,20 @@ func BuildLocalPlan(cfg config.Values, plugin registry.ChainPlugin, dataRoot str
 		Metrics: cfg.Int("ports.base_metrics", 6061),
 	}
 
+	layout := node.Layout{Root: dataRoot}
 	nodes := make([]driver.NodeSpec, 0, total)
 	for i := 1; i <= total; i++ {
 		p := placements[i-1]
+		label := node.LabelFor(i)
 		nodes = append(nodes, driver.NodeSpec{
 			Index:      i,
 			Role:       p.role,
 			SyncMode:   p.syncMode,
 			Host:       host,
 			Binary:     m.Binary,
-			DataDir:    filepath.Join(dataRoot, fmt.Sprintf("node%d", i)),
-			ConfigPath: filepath.Join(dataRoot, fmt.Sprintf("config_node%d.toml", i)),
-			LogPath:    filepath.Join(dataRoot, "logs", fmt.Sprintf("node%d.log", i)),
+			DataDir:    layout.DataDir(label),
+			ConfigPath: layout.ConfigPath(label),
+			LogPath:    layout.LogPath(label),
 			Ports:      node.Offset(base, i-1),
 		})
 	}
