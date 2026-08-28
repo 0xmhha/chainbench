@@ -218,42 +218,47 @@ CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
 
 ## 4. CLI 로 직접 점검
 
+> **2026-08-28 (P6.4):** `chainbench chain cases|steps|up|status|down` 은 은퇴했다. 네 케이스는
+> `tests/cases/` 의 선언으로 세우고, 단계 보고는 `run --workspace-dir` 의 출력(`RunSuiteOut.SetupSteps`)이
+> 대신한다. 아래는 그 방법이다.
+
 ```sh
-chainbench chain cases                      # 4개 케이스와 현재 지원 상태
-chainbench chain steps --case wbft          # 그 케이스의 단계 + 변곡점
-chainbench chain up    --case wbft --binary <path> --data-dir /tmp/x   # 단계별 실행
-chainbench chain up    --case wbft ... --stop-after provision          # 특정 단계까지만
-chainbench chain status --data-dir /tmp/x   # 살아있는 네트워크 상태(높이·피어·엔진·etcd)
-chainbench chain down   --data-dir /tmp/x   # 종료(고아 0 검증)
+chainbench validate tests/cases/*/*.json                                   # 선언 4 + 케이스 4 오프라인 검증
+chainbench run --workspace-dir /tmp/x --binary <gstable> tests/cases/stablenet/chain-up.json
+chainbench run --workspace-dir /tmp/x --keep-up tests/cases/wemix/chain-up.json   # 네트워크를 남긴다
+chainbench net status --workspace-dir /tmp/x                               # 남긴 네트워크 상태
+chainbench net stop   --workspace-dir /tmp/x                               # 종료
 ```
 
-**케이스별 실행 진입점** — 어디까지 자동화됐는지가 다르다:
+**케이스별 진입점**:
 
-| 케이스 | 진입점 | 비고 |
+| 케이스 | 선언 | 비고 |
 |---|---|---|
-| stablenet | `chain up --case stablenet --binary <gstable>` | 전 단계 자동 |
-| wbft | `chain up --case wbft --binary <go-wbft/build/bin/gwemix>` | 전 단계 자동. **`--binary` 절대경로 필수**(이름이 `gwemix`) |
-| wemix-wbft | `scripts/chain-setup/handoff-wemix-wbft.sh <data-dir>` | `chain up` 은 아직 옛 순서라 실패. 스크립트가 2-페이즈 순서를 수행 |
-| wemix | 없음 — [case-1 §5](case-1-wemix.md) 의 수동 절차 | 오케스트레이터 미구현 |
+| stablenet | `tests/cases/env/stablenet.env.json` | 라이브 통과(gstable) |
+| wbft | `tests/cases/env/wbft.env.json` | `GWBFT_BIN=<go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
+| wemix | `tests/cases/env/wemix.env.json` | 패밀리가 선언한 2-페이즈 부트스트랩이 `net up` 안에서 돈다 |
+| wemix-wbft | `tests/cases/env/wemix-wbft.env.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
 
-`chain up` 은 **단계마다 PASS/FAIL 과 소요시간을 출력**하고, 실패하면 거기서 멈춘다.
-어느 단계가 깨졌는지가 곧 답이 되도록 만든 것이 이 명령의 목적이다.
+실행은 **단계마다 이름과 결과를 한 줄씩** 찍고, 실패하면 거기서 멈춘다. 어느 단계가 깨졌는지가
+곧 답이 되도록 만든 것은 그대로다.
 
 ```
-OK    resolve-chain      (0s)      stablenet: family wbft, chain id 8283, bootstrap static
-OK    load-preset        (0s)      5 node identities, 4 validators from keys/preset
-OK    allocate           (0s)      4 node(s); node1 p2p=30300 http=8600
-OK    genesis            (0s)      6273 bytes, 4 validator(s) substituted
-OK    provision          (1ms)     genesis + 4 config(s) under /tmp/x
-OK    launch             (1.834s)  4 node(s) up; node1 http://127.0.0.1:8600
-OK    health-gate        (3.022s)  head 2 on http://127.0.0.1:8600
+new: stablenet: family wbft, chain id 8283, bootstrap static; keys keys/preset; target local /tmp/x
+allocate: 4 node(s): 4 validator(s) + 0 endpoint(s); ports: built-in defaults; p2p from 31000, http from 8600
+keys: preset:keys/preset: 5 identities, 4 declared validators
+genesis: 6273 bytes at /tmp/x/genesis.json, 4 validator(s)
+config: 4 config(s) under /tmp/x
+launchopts: 4 argv(s) assembled
+provision: 5 launch input(s) present on the target
+init: 4 datadir(s) initialized with .../gstable
+start: 4 node(s) started (0 already running); run recorded at /tmp/x/runs/...
+preflight: compose: nothing is composed on the target
+SEQ  ID                  STATUS
+1    stablenet-chain-up  pass
 ```
 
-세 가지 결과를 구분한다: **OK** / **FAIL**(구현됐는데 깨짐) / **TODO**(아직 안 만듦).
-FAIL 과 TODO 를 나누는 이유는 후속 작업이 서로 다르기 때문이다.
-
-`chain steps --case <id>` 는 단계와 **변곡점 표**를 함께 출력한다 — 이 문서 §2 와 같은 내용이
-코드에서 나오므로, 문서와 구현이 조용히 어긋나지 않는다.
+케이스가 부트스트랩의 효과를 확인한다(`waitBlock`, 검증자 수, 피어 수, 핸드오프는 포크 뒤 블록의
+miner). 옛 `chain up` 의 OK/FAIL/TODO 세 결과 중 TODO 는 사라졌다 — 만들지 않은 단계는 이제 없다.
 
 ---
 

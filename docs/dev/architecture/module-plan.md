@@ -375,8 +375,8 @@ remove one with `chainbench net rm`
 | `core/netreg` | 161줄. 이름이 netmap 과 혼동되나 하는 일은 무관(attach 레지스트리) | **개명**(규칙 7: `netreg` 는 표준 약어 아님) |
 | `core/pipeline/testrun` + `testkit` | 159+365줄. T7.11 잔여, `testrun→testkit` 이 층 이탈 엣지 | **케이스 이관 후 삭제** |
 | `chainsetup/verbs_*.go` | 6파일 1,144줄. app 층 함수가 chainsetup 안에 있고 `app` 은 별칭만 | app 으로 이동 또는 소유 정리 |
-| `chainsetup/cases.go`+`static.go` | 524줄. 레거시 사례 러너 | T7.11 과 함께 은퇴 |
-| `chainsetup/wemix*.go`+`handoff*.go` | 1,083줄. 체인 특화가 오케스트레이터 안에 | `chains/wemix`·`consensus/upgrade` 로 |
+| `chainsetup/cases.go`+`static.go` | 524줄. 레거시 사례 러너 | ~~T7.11 과 함께 은퇴~~ → **삭제됨(P6.4, 2026-08-28)**, `tests/cases/` 선언이 대신 |
+| `chainsetup/wemix*.go`+`handoff*.go` | 1,083줄. 체인 특화가 오케스트레이터 안에 | **끝남**: 부트스트랩 실행자 → `consensus/poa`(P6.1), 핸드오프 본문 → `consensus/upgrade.Handoff`(P6.3), 러너 자체는 삭제(P6.4) |
 | MCP 직결 import | 14종(래칫 목록) | 각 모듈 정리 시 app 경유로 |
 
 ## 4. 단계 — 의존 순서대로
@@ -561,9 +561,13 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   chain-setup README 잔여 5번). `upgrade.LaunchHandoff`/`Bootstrap`/`WaitReady` 는
   소비자가 없어져 삭제. 결과: `chainsetup` 5,210 → 4,865줄, 레이어 위반 0,
   `Handoff` 종이 절반 테스트 4건(profile+preset 으로 config·plan·overlay 조립).
-- **P6.4 케이스 러너 삭제 = P7.** `cases/static/wemix/report/state`(1,793줄)와
-  `cmd/chainbench/chain.go` 는 DSL 케이스 4종이 들어온 뒤 지운다. 2,000줄 목표는
-  이때 닿는다.
+- **P6.4 케이스 러너 삭제 — 완료 2026-08-28.** `cases`·`static`·`wemix`·`handoff`·
+  `handoff_driver`·`report`·`state`(7파일)와 `cmd/chainbench/chain.go`, 그 테스트
+  2파일을 지웠다. 소비자는 `chain.go` 하나였고, P7 의 선언 4개 + `app.RunSuite` 가
+  같은 일을 한다(단계 보고는 `SetupSteps`, `chain status/down` 은 `net status/stop`).
+  결과: `chainsetup` 4,865 → **3,589줄**(14파일), `cmd/chainbench` 2,966 → 2,746줄,
+  레이어 위반 0. 2,000줄까지 남은 것은 P6.2(옛 `setup` 경로 265줄 + `verbs_*` 의
+  app 이전 여부) 뿐이다.
 
 ### P7. DSL 테스트 케이스 4종
 

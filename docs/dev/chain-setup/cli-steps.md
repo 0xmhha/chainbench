@@ -4,6 +4,8 @@
 > 각 스텝에 **현재 CLI 명령이 있는지** 표시한다 — 없는 것이 곧 만들 것이다.
 >
 > 실측: 2026-08-18 라이브(stablenet·wbft 는 `net up` 성공 / wemix 는 수동 절차로 성공).
+> **2026-08-28:** 표면은 `net` 하나로 모였다 — `chain up` 러너는 은퇴(P6.4), wemix 의 2-페이즈
+> 부트스트랩은 `net up` 안의 패밀리 phase 로 돈다(F5b·F6). 아래 §0 의 표는 그 전의 실측이다.
 > 케이스별 심층 분석은 [[case-1-wemix]](case-1-wemix.md) 등, 작업 순서는 [[chainbench-worklist]](../chainbench-worklist.md) §1g.
 
 ---
