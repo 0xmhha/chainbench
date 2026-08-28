@@ -25,10 +25,13 @@ const (
 // nil because chainbench did not start those nodes and must not pretend it can
 // stop them.
 type NodeControl interface {
-	// Stop terminates the node's process, verifying it is gone.
-	Stop(ctx context.Context, n node.Node) error
-	// Start relaunches a previously stopped node with its original arming.
-	Start(ctx context.Context, n node.Node) error
+	// Stop terminates the node's process, verifying it is gone, and returns
+	// the node as it now is (pid 0). The caller writes that back to the
+	// environment's node table: the table is the one record of a pid.
+	Stop(ctx context.Context, n node.Node) (node.Node, error)
+	// Start relaunches a previously stopped node with its original arming and
+	// returns it with its new pid.
+	Start(ctx context.Context, n node.Node) (node.Node, error)
 }
 
 // seedFaultBuiltins registers the node-lifecycle and partition actions.
@@ -48,9 +51,11 @@ func (stopNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	if err := ctrl.Stop(ctx, n); err != nil {
+	stopped, err := ctrl.Stop(ctx, n)
+	if err != nil {
 		return fmt.Errorf("testspec: stopNode node%d: %w", n.Index, err)
 	}
+	ac.Env.UpdateNode(stopped)
 	return nil
 }
 
@@ -62,9 +67,11 @@ func (startNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	if err := ctrl.Start(ctx, n); err != nil {
+	started, err := ctrl.Start(ctx, n)
+	if err != nil {
 		return fmt.Errorf("testspec: startNode node%d: %w", n.Index, err)
 	}
+	ac.Env.UpdateNode(started)
 	return nil
 }
 
@@ -77,12 +84,16 @@ func (restartNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	if err := ctrl.Stop(ctx, n); err != nil {
+	stopped, err := ctrl.Stop(ctx, n)
+	if err != nil {
 		return fmt.Errorf("testspec: restartNode node%d: stop: %w", n.Index, err)
 	}
-	if err := ctrl.Start(ctx, n); err != nil {
+	ac.Env.UpdateNode(stopped)
+	started, err := ctrl.Start(ctx, stopped)
+	if err != nil {
 		return fmt.Errorf("testspec: restartNode node%d: start: %w", n.Index, err)
 	}
+	ac.Env.UpdateNode(started)
 	return nil
 }
 

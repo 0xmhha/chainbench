@@ -46,6 +46,10 @@ type Environment interface {
 	Fingerprint() Fingerprint
 	// PopulateNodeTable fills the node table from a bring-up result before Save.
 	PopulateNodeTable(ns node.NodeSet)
+	// UpdateNode replaces the table's entry for n.Index. It is how a node
+	// stopped or relaunched mid-run keeps one record of its pid: the table,
+	// not a controller's private copy beside it.
+	UpdateNode(n node.Node)
 	Nodes() []node.Node
 	// Resolve maps a selector ("bp1", "bp:any", "en:0") to a node.
 	Resolve(selector string) (node.Node, error)

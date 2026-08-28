@@ -42,6 +42,20 @@ func (e *env) PopulateNodeTable(ns node.NodeSet) {
 	e.nodes = append(e.nodes[:0], ns.Nodes...)
 }
 
+// UpdateNode replaces the entry with n's index; an index the table does not
+// have is appended, so a node the run learned about late is not lost.
+func (e *env) UpdateNode(n node.Node) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	for i := range e.nodes {
+		if e.nodes[i].Index == n.Index {
+			e.nodes[i] = n
+			return
+		}
+	}
+	e.nodes = append(e.nodes, n)
+}
+
 // Nodes returns a copy of the node table.
 func (e *env) Nodes() []node.Node {
 	e.mu.Lock()
