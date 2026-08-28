@@ -166,8 +166,8 @@ func TestPool_CountsUsedSlots(t *testing.T) {
 }
 
 // TestPool_CountsEveryCompositionUnderTheRoot: two networks composed on the
-// same set compete for the same ports, so the pool must count both — not
-// only the one named — and say which holds what.
+// same set draw from one inventory, so the second starts where the first
+// one's claims end — and the pool counts both and names both.
 func TestPool_CountsEveryCompositionUnderTheRoot(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -191,12 +191,12 @@ func TestPool_CountsEveryCompositionUnderTheRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pool: %v\n%s", err, out)
 	}
-	// Both compositions took slot 1 and 2 of the one local host: the same
-	// ports. The inventory keeps the first claim and still counts 2 used.
-	if !strings.Contains(out, "2 used") {
-		t.Errorf("want the root's compositions counted:\n%s", out)
+	if !strings.Contains(out, "4 used") {
+		t.Errorf("want both compositions counted, 2 slots each:\n%s", out)
 	}
-	if !strings.Contains(out, "20260828-100000") {
-		t.Errorf("want the older composition named as the holder:\n%s", out)
+	for _, stamp := range []string{"20260828-100000", "20260828-100100"} {
+		if !strings.Contains(out, stamp+"/chainsetup holds 2") {
+			t.Errorf("want %s named as holding 2:\n%s", stamp, out)
+		}
 	}
 }

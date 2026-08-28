@@ -77,6 +77,37 @@ func Discover(root string) ([]string, error) {
 	return out, nil
 }
 
+// Inventory opens pool's inventory and adopts every composition it can see —
+// all of them under the default root, plus named — except self, so a
+// workspace re-running its own allocate does not compete with its earlier
+// answer. It is the one place the inventory is assembled: allocation, the
+// plan, and the pool report all read the same set of claims.
+func Inventory(pool resource.Pool, self string, named ...string) (*resource.Inventory, error) {
+	inv, err := resource.NewInventory(pool)
+	if err != nil {
+		return nil, err
+	}
+	dirs := append([]string{}, named...)
+	if root, err := DefaultRoot(); err == nil {
+		if found, err := Discover(root); err == nil {
+			dirs = append(dirs, found...)
+		}
+	}
+	seen := map[string]bool{}
+	for _, dir := range dirs {
+		if dir == "" || dir == self || seen[dir] {
+			continue
+		}
+		seen[dir] = true
+		ws, err := Open(dir, nil)
+		if err != nil {
+			continue
+		}
+		inv.Adopt(Allocations(ws))
+	}
+	return inv, nil
+}
+
 // Allocations are the claims a workspace's node records make on a resource,
 // in the shape the inventory adopts. The workspace is the record; this is a
 // reading of it, never a second copy.

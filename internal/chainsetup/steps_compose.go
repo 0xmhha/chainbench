@@ -199,7 +199,14 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// takes two ports beyond p2p, and sizing the step for a wbft node would put
 	// the next node on top of it.
 	pool.Reservation = plugin.Family().PortReservation()
-	assigned, err := resource.Assign(pool, netmapRequests(reqs))
+	// Draw from the set's inventory, not from an empty pool: every other
+	// composition on this set already holds its slots, and the second network
+	// must not be handed the first one's ports.
+	inv, err := Inventory(pool, w.Dir())
+	if err != nil {
+		return "", err
+	}
+	assigned, err := inv.Assign(netmapRequests(reqs), w.Dir())
 	if err != nil {
 		return "", err
 	}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // ErrFull is returned by Take when the set has no free slot left. The error
@@ -82,12 +84,21 @@ func (i *Inventory) Adopt(allocs []Allocation) {
 	}
 }
 
+// hostKey is how a slot names its host: the entry's name, or its address when
+// the entry is a bare address. The same rule the pool report and srv:// use.
+func hostKey(h Host) string {
+	if h.Name != "" {
+		return h.Name
+	}
+	return h.Addr
+}
+
 // slotOf maps an allocation onto a slot of this pool by its host and p2p port.
 func (i *Inventory) slotOf(a Allocation) (Slot, bool) {
 	host := ""
 	for _, h := range i.pool.Hosts {
-		if h.Addr == a.Host || h.Name == a.Host {
-			host = h.Name
+		if h.Addr == a.Host || hostKey(h) == a.Host {
+			host = hostKey(h)
 			break
 		}
 	}
@@ -105,22 +116,41 @@ func (i *Inventory) slotOf(a Allocation) (Slot, bool) {
 	return Slot{Host: host, Index: idx}, true
 }
 
-// Take hands out n free slots to network, hosts before slots — the same order
-// Assign places in, so a plan and a take agree. It fails with ErrFull (wrapped
-// with the usage) when fewer than n are free, taking nothing.
+// Take hands out n free slots to network, hosts before slots — the order a
+// plan places in, so a plan and a take agree. It fails with ErrFull (wrapped
+// with the usage) when fewer than n are free, taking nothing. An empty
+// network name takes without recording a holder: a plan, not a claim.
 func (i *Inventory) Take(n int, network string) ([]Slot, error) {
 	if n < 1 {
 		return nil, fmt.Errorf("resource: take needs at least one slot, got %d", n)
 	}
 	free := i.free()
 	if len(free) < n {
-		return nil, fmt.Errorf("%w: %d requested, %d free\n%s", ErrFull, n, len(free), i.Usage().Holders())
+		return nil, fmt.Errorf("%w: %d nodes requested, %d free of %d host(s) x %d slot(s) = %d (%d short)\n%s",
+			ErrFull, n, len(free), len(i.pool.Hosts), i.pool.Slots, i.pool.Cap(), n-len(free), i.Usage().Holders())
 	}
 	out := free[:n]
-	for k, s := range out {
-		i.taken[s] = Holder{Network: network, Node: fmt.Sprintf("node%d", k+1)}
+	if network != "" {
+		for k, s := range out {
+			i.taken[s] = Holder{Network: network, Node: fmt.Sprintf("node%d", k+1)}
+		}
 	}
 	return out, nil
+}
+
+// Assign places reqs on the slots still free, taking them for network. It is
+// how a composition that shares a set with others gets ports nobody holds:
+// the second network on a set starts where the first one's claims end. An
+// empty network name plans without claiming.
+func (i *Inventory) Assign(reqs []Request, network string) (*node.Map, error) {
+	if len(reqs) == 0 {
+		return nil, fmt.Errorf("netmap: no nodes requested")
+	}
+	slots, err := i.Take(len(reqs), network)
+	if err != nil {
+		return nil, err
+	}
+	return place(i.pool, slots, reqs)
 }
 
 // Release returns every slot network holds. Stopping a node is not a release
@@ -142,7 +172,7 @@ func (i *Inventory) free() []Slot {
 	var out []Slot
 	for idx := 1; idx <= i.pool.Slots; idx++ {
 		for _, h := range i.pool.Hosts {
-			s := Slot{Host: h.Name, Index: idx}
+			s := Slot{Host: hostKey(h), Index: idx}
 			if _, held := i.taken[s]; !held {
 				out = append(out, s)
 			}
