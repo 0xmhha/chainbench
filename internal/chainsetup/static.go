@@ -11,12 +11,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Local port layout for a bring-up. The steps clear the derived reservations:
@@ -88,7 +87,7 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	var (
 		plugin registry.ChainPlugin
 		preset keyring.Preset
-		places []netmap.Placement
+		places []node.Placement
 		gen    []byte
 		plan   driver.Plan
 		specs  []driver.NodeSpec
@@ -129,15 +128,15 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[3], func() (string, error) {
-		pool := netmap.Pool{
-			Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+		pool := resource.Pool{
+			Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 			Slots: defaultPortBand,
-			Ports: netmap.Bands{
-				P2PBase: defaultP2PBase, P2PStep: defaultStep,
-				RPCBase: defaultRPCBase, RPCStep: defaultStep,
+			Ports: resource.Bands{
+				P2P: resource.Band{Base: defaultP2PBase, Step: defaultStep},
+				RPC: resource.Band{Base: defaultRPCBase, Step: defaultStep},
 			},
 		}
-		assigned, err := netmap.Assign(pool, netmapRequests(reqs))
+		assigned, err := resource.Assign(pool, netmapRequests(reqs))
 		if err != nil {
 			return "", err
 		}
@@ -217,10 +216,10 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 }
 
 // validatorReqs builds n validator placement requests.
-func validatorReqs(n int) []place.NodeReq {
-	reqs := make([]place.NodeReq, n)
+func validatorReqs(n int) []node.LaunchReq {
+	reqs := make([]node.LaunchReq, n)
 	for i := range reqs {
-		reqs[i] = place.NodeReq{Role: node.RoleValidator}
+		reqs[i] = node.LaunchReq{Role: node.RoleValidator}
 	}
 	return reqs
 }

@@ -16,11 +16,11 @@ package upgrade
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"math/big"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -66,7 +66,7 @@ type Inputs struct {
 	// node specs so the mesh can be wired from the plan. Length, if non-zero,
 	// must equal the total node count.
 	NodePubkeys []string
-	// Port bases/steps for portplan.Plan (per-node p2p/etcd/http/ws/auth).
+	// Port bases/steps for resource.Plan (per-node p2p/etcd/http/ws/auth).
 	P2PBase, P2PStep, RPCBase, RPCStep int
 }
 
@@ -87,7 +87,7 @@ type NodeSpec struct {
 	// ("duration" | "nanos"); the driver formats miner.Recommit accordingly.
 	Recommit string
 	// Ports is the node's resolved port set.
-	Ports portplan.Ports
+	Ports node.Endpoints
 	// Pubkey is the node's 128-hex devp2p public key (no 0x prefix), used to
 	// build its enode for mesh wiring. Empty when identities are not supplied.
 	Pubkey string
@@ -173,10 +173,10 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 		return Plan{}, fmt.Errorf("upgrade: %d node pubkeys but %d nodes", len(in.NodePubkeys), total)
 	}
 	nodes := make([]NodeSpec, 0, total)
-	ports := make([]portplan.Ports, 0, total)
+	ports := make([]node.Endpoints, 0, total)
 	netids := make([]int64, 0, total)
 	for i := 0; i < total; i++ {
-		p, err := portplan.Plan(i+1, in.P2PBase, in.P2PStep, in.RPCBase, in.RPCStep, portplan.DefaultReservation)
+		p, err := resource.Plan(i+1, in.P2PBase, in.P2PStep, in.RPCBase, in.RPCStep, node.DefaultReservation)
 		if err != nil {
 			return Plan{}, fmt.Errorf("upgrade: port plan node %d: %w", i, err)
 		}

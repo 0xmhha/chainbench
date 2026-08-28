@@ -2,11 +2,11 @@ package poa
 
 import (
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 const wemixTmpl = `{"config":{"chainId":__CHAIN_ID__,"istanbulBlock":0},"coinbase":"__COINBASE__","alloc":{}}`
@@ -120,10 +120,10 @@ func TestPortReservation_LeavesRoomForBothEtcdPorts(t *testing.T) {
 		t.Fatalf("p2p span = %d, want 3 (p2p, etcd peer, etcd client)", res.P2PSpan)
 	}
 	// A step of two is refused, and a plan with room assigns both etcd ports.
-	if _, err := portplan.Plan(1, 30010, 2, 40010, 10, res); err == nil {
+	if _, err := resource.Plan(1, 30010, 2, 40010, 10, res); err == nil {
 		t.Fatal("a step of two is one short for an etcd family")
 	}
-	p, err := portplan.Plan(1, 30010, 10, 40010, 10, res)
+	p, err := resource.Plan(1, 30010, 10, 40010, 10, res)
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}

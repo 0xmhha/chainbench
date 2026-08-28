@@ -6,9 +6,7 @@
 package wbft
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -46,7 +44,7 @@ func (Family) StartFlags(role node.Role) []string {
 	// Both spellings of the producing role seal. Comparing against one of them
 	// makes --mine depend on which word the composition happened to record,
 	// and a producer launched without it stalls the chain.
-	if canonical, err := netmap.NormalizeRole(string(role)); err == nil && canonical == node.RoleBP {
+	if canonical, err := node.NormalizeRole(string(role)); err == nil && canonical == node.RoleBP {
 		flags = append(flags, "--mine")
 	}
 	return flags
@@ -65,15 +63,15 @@ func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 // servers pack p2p one apart (30301..30304) because nothing sits between.
 // Existing sets keep their spacing regardless — ports come from the
 // configured bands; the span only sets the minimum.
-func (Family) PortReservation() portplan.Reservation {
-	return portplan.Reservation{P2PSpan: 1, RPCSpan: 3}
+func (Family) PortReservation() node.Reservation {
+	return node.Reservation{P2PSpan: 1, RPCSpan: 3}
 }
 
 // SupportsRole: the wbft family runs producers, endpoints, and a proxy tier
 // between them. It has no governance bootstrap, so "boot" is not one of its
 // roles.
 func (Family) SupportsRole(role node.Role) bool {
-	canonical, err := netmap.NormalizeRole(string(role))
+	canonical, err := node.NormalizeRole(string(role))
 	if err != nil {
 		return false
 	}

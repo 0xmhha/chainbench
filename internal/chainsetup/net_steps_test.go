@@ -4,7 +4,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"context"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"path/filepath"
 	"strings"
@@ -270,10 +270,10 @@ func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
 	}
 }
 
-// TestAllocate_FleetRecordsEachNodesServer pins the fleet contract every later
+// TestAllocate_AllServersRecordsEachNodesServer pins the server set contract every later
 // step depends on: a spread placement names each node's server-set entry, so
 // files, init, and launch reach THAT machine — not the first one's.
-func TestAllocate_FleetRecordsEachNodesServer(t *testing.T) {
+func TestAllocate_AllServersRecordsEachNodesServer(t *testing.T) {
 	dir := t.TempDir()
 	set := filepath.Join(t.TempDir(), "server-set.yaml")
 	if err := os.WriteFile(set, []byte(
@@ -293,7 +293,7 @@ func TestAllocate_FleetRecordsEachNodesServer(t *testing.T) {
 	}
 	if _, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
 		DataDir: dir, Validators: 3,
-		Server: netmapmod.ServerRef{SetPath: set, Fleet: true},
+		Server: resource.ServerRef{SetPath: set, All: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}

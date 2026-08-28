@@ -97,8 +97,8 @@ func netmapPlanTool() Tool {
 					"type":        "string",
 					"description": "server-set file (default: server-set.yaml when present)",
 				},
-				"server": map[string]any{"type": "string", "description": "server to place nodes on, by name from the server set"},
-				"fleet":  map[string]any{"type": "boolean", "description": "spread across every server in the server set"},
+				"server":      map[string]any{"type": "string", "description": "server to place nodes on, by name from the server set"},
+				"all_servers": map[string]any{"type": "boolean", "description": "spread across every server in the server set"},
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -113,7 +113,7 @@ func netmapPlanTool() Tool {
 				Server: app.ServerRef{
 					SetPath: argString(args, "serverSet", ""),
 					Name:    argString(args, "server", ""),
-					Fleet:   argBool(args, "fleet", false),
+					All:     argBool(args, "all_servers", false),
 				},
 			})
 			if err != nil {

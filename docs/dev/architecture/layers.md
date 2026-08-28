@@ -91,7 +91,7 @@ flowchart TD
 
 | 패키지 | 담는 것 |
 |---|---|
-| `core/node` | `Node` · `NodeSet` · `Role` · `Endpoints`. **최다 피참조(25)** — 층을 잇는 공용 언어 |
+| `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`. **최다 피참조(26)** — 층을 잇는 공용 언어이며, **아무것도 import 하지 않는다**(측정으로 고정) |
 | `core/config` | 평면 dot-path 설정값 |
 | `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
 | `core/capability` | capability 집합 |
@@ -107,8 +107,6 @@ flowchart TD
 | `core/process` | PID 추적 · 검증된 종료 |
 | `core/occupancy` | **기동 전 포트 점유 조회** — 로컬은 bind 두 형태(루프백·와일드카드) 모두 시도, 원격은 dial |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
-| `core/portplan` · `core/place` | 포트 계산 · 노드 배치 (순수) |
-| `core/netmap` | **노드 배치의 소유자** — NodeLabel · 역할 정규화 · Map(정/역방향) ([[netmap-design]]) |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
 | `core/genesis` | genesis 병합·오버라이드·fork 검증 |
@@ -118,8 +116,7 @@ flowchart TD
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `core/topology` | 토폴로지 YAML |
-| `netmap/internal/serverset` | **서버 세트(포트·호스트)** — netmap 모듈의 내부 데이터 형식. 컴파일러가 외부 import 를 차단한다 |
-| `netmap` | **netmap 모듈 표면** — 서버 이름을 능력 손잡이로 여는 유일 통로(Opener: 서버 세트 결합 · --docker 치환 · 치환 보고). 할당 코어(core/netmap)와 서버 세트를 low level 에 묶는다 ([[architecture-v2]]) |
+| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` · `core/preflight` | 검증자 조회 · 사전 점검 |
 
@@ -200,7 +197,7 @@ flowchart TD
 
 | 층 | 같은 층 엣지 | 성격 |
 |---|---:|---|
-| L1 | 10 | `place→portplan`, `driver→remote` 등 — 프리미티브 간 세분화 |
+| L1 | 10 | `resource→node`, `driver→remote` 등 — 프리미티브 간 세분화 |
 | L2 | 11 | `chains/*→consensus/*` (L2b→L2a, 실제로는 하향) + 등록 집합 |
 | L3 | 4 | `testspec→collector/session` |
 | L4 | 3 | `testengine→chainsetup` — 러너가 환경 구축을 셋업 모듈에 위탁 (V6.2 에서 워크플로가 위에서 조립하면 소멸 검토) |
@@ -446,7 +443,7 @@ A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
 | boundary | 층 | 왜 그 층인가 |
 |---|---|---|
 | `Phase` · `ConsensusFamily.BringUpPhases` | **L1** (`core/registry`) | 인터페이스는 아래. 구현은 L2a |
-| `PortReservation` | **L1** (`core/registry` 선언 / `core/portplan` 사용) | 순수 계산 |
+| `PortReservation` | **L1** (`core/registry` 선언 / `core/node` 소유 · `resource` 사용) | 순수 계산 |
 | `supervisor.Deps.Action` | **L3** (`core/supervisor`) | 실행 시점·타임아웃·진단은 정책 |
 | 액션 구현(거버넌스·etcd) | **L2a** (`consensus/poa`) | 이미 존재 |
 | `GenesisArtifacts` | **L4** (`engine`) | 조립 산출물 |

@@ -8,7 +8,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -127,7 +126,7 @@ func (s LocalSetup) attachGenesis(ctx context.Context, plan *driver.Plan) error 
 func planValidatorCount(plan driver.Plan) int {
 	n := 0
 	for _, spec := range plan.Nodes {
-		if netmap.Is(spec.Role, node.RoleBP) {
+		if node.Is(spec.Role, node.RoleBP) {
 			n++
 		}
 	}

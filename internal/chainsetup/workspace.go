@@ -25,11 +25,10 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Step is a completed composition step (persistence model owned by session).
@@ -55,10 +54,10 @@ type NodeState struct {
 	// path. Empty means the config's own default.
 	SyncMode string `json:"syncMode,omitempty"`
 	// Server names the server-set entry whose machine this node runs on, when
-	// the placement spread the network across a set ("--fleet"). Empty means
+	// the pool spread the network across a set ("--all-servers"). Empty means
 	// the node lives on the workspace's single target. Every per-node file
 	// write, init, and launch resolves this name through the netmap module,
-	// so a fleet node's material lands on ITS machine, not the first one's.
+	// so each node's material lands on ITS machine, not the first one's.
 	Server string `json:"server,omitempty"`
 	// Host is the address this node is reachable at. It comes from the
 	// allocator, so a remote placement records the server's address rather than
@@ -242,7 +241,7 @@ func (w *Workspace) resolveTarget() (*machine.Access, error) {
 	return w.opener().Open(w.state.Target)
 }
 
-// machineFor opens the machine ns runs on. A fleet node names its server-set
+// machineFor opens the machine ns runs on. A node spread across a set names its server-set
 // entry and resolves through the netmap module like everything else; a node
 // without one runs on the workspace's single target. Opened accesses are
 // cached per entry for the life of this command.
@@ -299,8 +298,8 @@ func (w *Workspace) eachMachine(fn func(t *machine.Access, nodes []NodeState) er
 
 // opener binds the workspace's recorded server set and docker choice to the
 // netmap module's single wiring point.
-func (w *Workspace) opener() netmapmod.Opener {
-	return netmapmod.Opener{ServerSet: w.state.ServerSet, Docker: w.state.Docker, Env: w.env}
+func (w *Workspace) opener() resource.Opener {
+	return resource.Opener{ServerSet: w.state.ServerSet, Docker: w.state.Docker, Env: w.env}
 }
 
 // markStep records that step ran with detail, stamping the completion time.
@@ -370,7 +369,7 @@ func (w *Workspace) NodeSet() node.NodeSet {
 	}
 
 	for _, n := range w.state.Nodes {
-		// A node's own recorded host wins: a fleet placement puts each node on
+		// A node's own recorded host wins: a set-wide pool puts each node on
 		// a different address, which the target-level host cannot express.
 		nodeHost := n.Host
 		if nodeHost == "" {
@@ -392,9 +391,9 @@ func (w *Workspace) NodeSet() node.NodeSet {
 
 // NodeLabel is the node's identity, falling back to the conventional label for
 // workspaces written before the field existed.
-func (n NodeState) NodeLabel() netmap.NodeLabel {
+func (n NodeState) NodeLabel() node.Label {
 	if n.Label != "" {
-		return netmap.NodeLabel(n.Label)
+		return node.Label(n.Label)
 	}
-	return netmap.LabelFor(n.Index)
+	return node.LabelFor(n.Index)
 }

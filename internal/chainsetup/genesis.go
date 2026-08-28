@@ -3,11 +3,11 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -35,7 +35,7 @@ type GenesisRequest struct {
 	// Nodes is the resolved placement, or nil when a caller has none (a
 	// fixed-port setup path). A family that needs an address errors on nil
 	// rather than inventing one.
-	Nodes *netmap.Map
+	Nodes *node.Map
 }
 
 // GenesisArtifacts is what a genesis step produces. For most families that is

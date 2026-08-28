@@ -1,17 +1,17 @@
 package upgrade_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 func TestLaunchArgs(t *testing.T) {
 	n := upgrade.NodeSpec{
 		NetworkID: 8285,
-		Ports:     portplan.Ports{P2P: 30011, Etcd: 30012, HTTP: 40011, WS: 40012, Auth: 40013},
+		Ports:     node.Endpoints{P2P: 30011, Etcd: 30012, HTTP: 40011, WS: 40012, Auth: 40013},
 	}
 	args, err := upgrade.LaunchArgs(n, "/data/node1", []string{"--mine"})
 	if err != nil {

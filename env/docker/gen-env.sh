@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# gen-env.sh — generate the local docker fleet that poses as remote servers.
+# gen-env.sh — generate the local docker servers that pose as remote ones.
 #
 # Writes everything into build/ (gitignored): the compose file, the v2
 # server set (real bridge addresses — the file has the same shape a
 # production server set has), and localmap.yaml (the address translation
 # `--docker` applies; see docs/dev/docker-remote-design.md).
 #
-# Access mirrors the real fleet: a user id + password (dev-only value, on
+# Access mirrors a real server: a user id + password (dev-only value, on
 # loopback-published containers) and sudo that asks for that password.
 # There is no key path — the harness has to prove the password flows.
 #
-# Nothing in build/ is handwritten. To change the fleet, change the knobs
+# Nothing in build/ is handwritten. To change the servers, change the knobs
 # below and run this again.
 set -euo pipefail
 
@@ -21,7 +21,7 @@ SERVERS="${SERVERS:-15}"          # server1..serverN (server15 is meant for pn)
 SLOTS="${SLOTS:-4}"               # port slots per server (nodes one host may hold)
 SUBNET_PREFIX="172.30.0"          # server i lives at .$((ADDR_OFFSET+i))
 ADDR_OFFSET=10
-SSH_PORT=10022                    # sshd inside every server (the real fleet's port)
+SSH_PORT=10022                    # sshd inside every server (the real servers' port)
 SSH_PUB_BASE=2200                 # server i's sshd published at 127.0.0.1:$((base+i))
 RPC_PUB_BASE=18600                # slot s of server i published at $((base + 100*s + i))
 # The port scheme mirrors the Wemix3.5 test servers' firewall: each purpose
@@ -55,9 +55,9 @@ case "${DEV_ACCOUNTS_PASSWORD:-}" in
     '' | change-me) die "set a real DEV_ACCOUNTS_PASSWORD in $ACCOUNTS_ENV (not the sample placeholder)" ;;
 esac
 
-# The harness login is the FIRST account in accounts.env — the real fleet is
+# The harness login is the FIRST account in accounts.env — a real server is
 # reached with a provisioned dev account, not a baked-in image user, so the
-# docker fleet mirrors that. setup-accounts.sh is what creates the accounts,
+# these docker servers mirror that. setup-accounts.sh is what creates the accounts,
 # hence no override knob: an inventory user it does not create is a dead login.
 first_account=${DEV_ACCOUNTS%% *}
 case $first_account in

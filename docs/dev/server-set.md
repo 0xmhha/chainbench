@@ -50,7 +50,7 @@ dataRoot: /var/lib/chainbench  # 대상 위 데이터 플레인 루트
 
 **호스트 먼저, 슬롯 나중**으로 소비한다. 5주소 × 4슬롯이면 node1~5 가 서로 다른 머신에
 놓이고 node6 이 첫 주소로 돌아와 **다음 슬롯**을 받는다(포트가 겹치지 않는다). 한 호스트 ×
-여러 슬롯은 이 머신 위의 네트워크, 여러 호스트 × 1슬롯은 fleet 이다 — **같은 격자를 달리 읽은
+여러 슬롯은 이 머신 위의 네트워크, 여러 호스트 × 1슬롯은 한 서버당 한 노드다 — **같은 격자를 달리 읽은
 것**이라 구성하는 쪽은 분기하지 않는다.
 
 **local/remote 는 선언하지 않는다 — 주소가 정한다.** 루프백이면 이 머신, 아니면 SSH.
@@ -152,7 +152,7 @@ chainbench net up --data-dir /tmp/n1 --chain stablenet \
 
 # 서버 세트 전체에 한 노드씩 펼쳐서
 chainbench net up --data-dir /tmp/n1 --chain stablenet \
-  --binary /srv/bin/gstable --fleet
+  --binary /srv/bin/gstable --all-servers
 
 # DSL 실행도 같은 서버 세트를 읽는다
 chainbench run --chain stablenet --binary $GSTABLE --keys keys/preset \
@@ -160,7 +160,7 @@ chainbench run --chain stablenet --binary $GSTABLE --keys keys/preset \
 ```
 
 선택 플래그: `--server-set <path>`(기본 `server-set.yaml`) ·
-`--server <name>` · `--server-index <n>` · `--fleet`.
+`--server <name>` · `--server-index <n>` · `--all-servers`.
 
 ---
 

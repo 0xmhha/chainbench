@@ -1,11 +1,11 @@
 package wbft_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/resource"
 	"testing"
 
 	wbft "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // TestStartFlags_MineFollowsTheRoleNotItsSpelling: --mine was gated on the
@@ -63,7 +63,7 @@ func TestPortReservation_IsHonest(t *testing.T) {
 		t.Fatalf("reservation = %+v, want {1, 3}", res)
 	}
 	// The tight real-server scheme is accepted...
-	tight, err := portplan.Plan(4, 30301, 1, 8601, 4, res)
+	tight, err := resource.Plan(4, 30301, 1, 8601, 4, res)
 	if err != nil {
 		t.Fatalf("Plan(tight): %v", err)
 	}
@@ -71,7 +71,7 @@ func TestPortReservation_IsHonest(t *testing.T) {
 		t.Fatalf("tight plan = %+v, want p2p 30304 and no etcd", tight)
 	}
 	// ...and the historical spacing still yields the same ports it always did.
-	p, err := portplan.Plan(1, 31000, 10, 8600, 10, res)
+	p, err := resource.Plan(1, 31000, 10, 8600, 10, res)
 	if err != nil {
 		t.Fatalf("Plan: %v", err)
 	}

@@ -303,7 +303,7 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	out := make([]NodeHealth, len(w.state.Nodes))
 	for i, ns := range w.state.Nodes {
 		h := NodeHealth{Index: ns.Index, PID: ns.PID}
-		// A fleet places each node on its own address, so the probe asks the
+		// A network spread across a set places each node on its own address, so the probe asks the
 		// node's recorded host, not the target-level one.
 		host, port := ns.Host, ns.HTTP
 		if host == "" {
@@ -447,7 +447,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 // listener on the server is invisible from outside, and a docker-published
 // port is "open" from here even when nothing inside the container listens,
 // because the publish forwarder itself accepts the connection (measured: an
-// idle fleet reported every node port busy).
+// idle set reported every node port busy).
 func (w *Workspace) scanOccupancy(ctx context.Context, addrs []occupancy.Addr) ([]occupancy.Addr, error) {
 	if !w.state.Target.IsRemote() {
 		return occupancy.Scan(ctx, addrs, nil), nil

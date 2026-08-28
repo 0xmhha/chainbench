@@ -9,7 +9,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -125,13 +124,13 @@ func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Pla
 // on is the boot node — the phase names it, so the rule for which node that is
 // lives in the family and not here.
 func (b WemixBootstrap) joinProducers(ctx context.Context, run poa.Runner, binary string, plan driver.Plan, on node.Node, bootIPC string) error {
-	peer := string(netmap.LabelFor(on.Index))
+	peer := string(node.LabelFor(on.Index))
 	members := []string{peer}
 	for _, spec := range plan.Nodes {
 		if spec.Index == on.Index || !isProducer(spec.Role) {
 			continue
 		}
-		name := string(netmap.LabelFor(spec.Index))
+		name := string(node.LabelFor(spec.Index))
 		if err := b.joinOne(ctx, run, binary, ipcPath(spec, binary), bootIPC, peer, name); err != nil {
 			return fmt.Errorf("engine: wemix bootstrap: %q: %s: %w", poa.ActionEtcdJoin, name, err)
 		}
@@ -189,7 +188,7 @@ func (b WemixBootstrap) joinOne(ctx context.Context, run poa.Runner, binary, joi
 // join the cluster — the chain answers the join handshake for governance
 // members only, and a proxy or endpoint is neither.
 func isProducer(r node.Role) bool {
-	return netmap.Is(r, node.RoleBoot) || netmap.Is(r, node.RoleBP)
+	return node.Is(r, node.RoleBoot) || node.Is(r, node.RoleBP)
 }
 
 // specFor finds a node's launch spec, which is where its datadir lives.

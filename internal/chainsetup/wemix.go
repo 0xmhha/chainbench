@@ -10,11 +10,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // RunWemix walks the standalone wemix bring-up, reporting each step.
@@ -48,7 +47,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	var (
 		plugin registry.ChainPlugin
 		preset keyring.Preset
-		assign *netmap.Map
+		assign *node.Map
 		art    GenesisArtifacts
 		plan   driver.Plan
 		specs  []driver.NodeSpec
@@ -97,16 +96,16 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 		// etcd peer and client ports beside p2p, and a layout that forgot them
 		// puts the next node's p2p where this node's etcd goes.
 		res := plugin.Family().PortReservation()
-		pool := netmap.Pool{
-			Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+		pool := resource.Pool{
+			Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 			Slots: defaultPortBand,
-			Ports: netmap.Bands{
-				P2PBase: defaultP2PBase, P2PStep: defaultStep,
-				RPCBase: defaultRPCBase, RPCStep: defaultStep,
+			Ports: resource.Bands{
+				P2P: resource.Band{Base: defaultP2PBase, Step: defaultStep},
+				RPC: resource.Band{Base: defaultRPCBase, Step: defaultStep},
 			},
 			Reservation: res,
 		}
-		m, err := netmap.Assign(pool, netmapRoleRequests(roles))
+		m, err := resource.Assign(pool, netmapRoleRequests(roles))
 		if err != nil {
 			return "", err
 		}
@@ -129,7 +128,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	t.do(c.Steps[5], func() (string, error) {
 		placed := make([]PlacedNode, 0, o.Validators)
 		for i, p := range assign.Placements() {
-			placed = append(placed, PlacedNode{Req: place.NodeReq{Role: roles[i]}, Placement: p})
+			placed = append(placed, PlacedNode{Req: node.LaunchReq{Role: roles[i]}, Placement: p})
 		}
 		p, err := AssemblePlan(plugin, placed, art.Genesis, o.DataDir, plugin.Manifest().Capabilities)
 		if err != nil {
@@ -247,10 +246,10 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 
 // netmapRoleRequests turns a role list into placement requests: only the role
 // travels, since position comes from the order.
-func netmapRoleRequests(roles []node.Role) []netmap.Request {
-	out := make([]netmap.Request, 0, len(roles))
+func netmapRoleRequests(roles []node.Role) []resource.Request {
+	out := make([]resource.Request, 0, len(roles))
 	for _, r := range roles {
-		out = append(out, netmap.Request{Role: r})
+		out = append(out, resource.Request{Role: r})
 	}
 	return out
 }

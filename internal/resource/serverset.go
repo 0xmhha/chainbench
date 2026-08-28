@@ -13,7 +13,7 @@
 // the single source for a named server's login — the environment is never
 // consulted — and a secret can stay out of the file itself via password_file /
 // key_passphrase_file, which reference a separate one-line file (0600).
-package serverset
+package resource
 
 import (
 	"bytes"
@@ -27,13 +27,12 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
-// DefaultConfigFile is the server-set path used when --server-set is omitted.
+// DefaultSetFile is the server-set path used when --server-set is omitted.
 // It is gitignored; only DefaultSampleFile is tracked.
-const DefaultConfigFile = "server-set.yaml"
+const DefaultSetFile = "server-set.yaml"
 
 // DefaultSampleFile is the tracked template an operator copies.
 const DefaultSampleFile = "server-set.sample.yaml"
@@ -207,8 +206,8 @@ type PoolSpec struct {
 	Ports BandsSpec  `yaml:"ports,omitempty"`
 }
 
-// Config is the parsed server set.
-type Config struct {
+// Set is the parsed server set.
+type Set struct {
 	// Version is the file format version, so a later change can reject an old
 	// file by name instead of by a confusing field error.
 	Version int `yaml:"version"`
@@ -220,7 +219,7 @@ type Config struct {
 	DataRoot string `yaml:"dataRoot,omitempty"`
 
 	// Defaults and Servers are derived from the pool, not parsed: the surfaces
-	// that select "a server" (--server, --fleet, srv://) predate the pool and
+	// that select "a server" (--server, --all-servers, srv://) predate the pool and
 	// still read them. When those surfaces move onto the pool, the derivation
 	// goes with them.
 	Defaults Defaults `yaml:"-"`
@@ -238,11 +237,11 @@ const SupportedVersion = 2
 
 // Path is the file this config came from, for reporting where a port plan
 // originated.
-func (c *Config) Path() string { return c.path }
+func (c *Set) Path() string { return c.path }
 
 // Load reads and validates the server set at path. It rejects unknown fields so
 // a typo fails loudly rather than silently leaving a default in place.
-func Load(path string) (*Config, error) {
+func LoadSet(path string) (*Set, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -255,7 +254,7 @@ func Load(path string) (*Config, error) {
 	}
 	dec := yaml.NewDecoder(bytes.NewReader(b))
 	dec.KnownFields(true)
-	var c Config
+	var c Set
 	if err := dec.Decode(&c); err != nil {
 		if hint := legacyHint(b); hint != "" {
 			return nil, fmt.Errorf("serverset: %s looks like the pre-v%d format: %s", path, SupportedVersion, hint)
@@ -282,7 +281,7 @@ const legacyConfigFile = "remote-server-config.yaml"
 // migration step instead of a generic not-found. Empty means no old file is in
 // the way.
 func LegacyNameHint(path string) string {
-	if filepath.Base(path) != DefaultConfigFile {
+	if filepath.Base(path) != DefaultSetFile {
 		return ""
 	}
 	old := filepath.Join(filepath.Dir(path), legacyConfigFile)
@@ -331,7 +330,7 @@ func loopback(addr string) bool {
 // carrying the pool's slots, bands, data root and access, so the selection
 // surfaces keep working while the pool becomes the thing that is actually
 // declared.
-func (c *Config) expand() {
+func (c *Set) expand() {
 	slots := c.PoolSpec.Slots
 	if slots < 1 {
 		slots = 1
@@ -372,34 +371,17 @@ func (c *Config) expand() {
 	}
 }
 
-// Pool is the server set as netmap allocates from it.
-func (c *Config) Pool() netmap.Pool {
-	hosts := make([]netmap.Host, 0, len(c.Servers))
-	for _, s := range c.Servers {
-		hosts = append(hosts, netmap.Host{Name: s.Name, Addr: s.Host})
-	}
-	return netmap.Pool{
-		Hosts: hosts,
-		Slots: c.Defaults.Slots,
-		Ports: netmap.Bands{
-			P2PBase: c.Defaults.Ports.P2PBase, P2PStep: c.Defaults.Ports.P2PStep,
-			RPCBase: c.Defaults.Ports.RPCBase, RPCStep: c.Defaults.Ports.RPCStep,
-		},
-		Source: c.path,
-	}
-}
-
 // BuiltinPool is the pool used when no server set names one: this machine, the
 // built-in bands, and room for a development-sized network.
-func BuiltinPool(slots int) netmap.Pool {
+func BuiltinPool(slots int) Pool {
 	p := BuiltinPorts()
 	if slots < 1 {
 		slots = 1
 	}
-	return netmap.Pool{
-		Hosts:  []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	return Pool{
+		Hosts:  []Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots:  slots,
-		Ports:  netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep},
+		Ports:  Bands{P2P: Band{Base: p.P2PBase, Step: p.P2PStep}, RPC: Band{Base: p.RPCBase, Step: p.RPCStep}},
 		Source: builtinSource,
 	}
 }
@@ -430,7 +412,7 @@ func legacyHint(b []byte) string {
 
 // validate enforces a usable server set: a supported version, unique selectors,
 // a host per server, and port steps that cannot produce colliding ports.
-func (c *Config) validate() error {
+func (c *Set) validate() error {
 	if c.Version != SupportedVersion {
 		return fmt.Errorf("serverset: %s has version %d, want %d (see %s)", c.path, c.Version, SupportedVersion, DefaultSampleFile)
 	}
@@ -549,7 +531,7 @@ func (s Server) IsRemote() bool { return s.Kind == KindRemote }
 
 // Server returns the server with the given index, fully resolved against the
 // file defaults. It errors, listing what is available, if none matches.
-func (c *Config) Server(index int) (Server, error) {
+func (c *Set) Server(index int) (Server, error) {
 	for _, s := range c.Servers {
 		if s.Index == index && index != 0 {
 			return c.resolve(s), nil
@@ -559,7 +541,7 @@ func (c *Config) Server(index int) (Server, error) {
 }
 
 // ByName returns the server with the given name, fully resolved.
-func (c *Config) ByName(name string) (Server, error) {
+func (c *Set) ByName(name string) (Server, error) {
 	for _, s := range c.Servers {
 		if s.Name == name && name != "" {
 			return c.resolve(s), nil
@@ -571,7 +553,7 @@ func (c *Config) ByName(name string) (Server, error) {
 // Select resolves a server by name when one is given, otherwise by index, and
 // otherwise the only server in a single-server set. It is what a command
 // with an optional --server flag calls.
-func (c *Config) Select(name string, index int) (Server, error) {
+func (c *Set) Select(name string, index int) (Server, error) {
 	switch {
 	case name != "":
 		return c.ByName(name)
@@ -587,7 +569,7 @@ func (c *Config) Select(name string, index int) (Server, error) {
 
 // resolve fills a server's omitted fields from the file defaults, and any still
 // unset from the built-in defaults, so callers never see a zero port plan.
-func (c *Config) resolve(s Server) Server {
+func (c *Set) resolve(s Server) Server {
 	if s.Kind == "" {
 		s.Kind = KindLocal
 	}
@@ -640,7 +622,7 @@ func (s SSH) inherit(other SSH) SSH {
 }
 
 // indexes lists the configured indexes in ascending order for error messages.
-func (c *Config) indexes() []int {
+func (c *Set) indexes() []int {
 	out := make([]int, 0, len(c.Servers))
 	for _, s := range c.Servers {
 		if s.Index != 0 {
@@ -652,7 +634,7 @@ func (c *Config) indexes() []int {
 }
 
 // names lists the configured names in order for error messages.
-func (c *Config) names() []string {
+func (c *Set) names() []string {
 	out := make([]string, 0, len(c.Servers))
 	for _, s := range c.Servers {
 		if s.Name != "" {
@@ -754,7 +736,7 @@ func readSecretFile(path string) (string, error) {
 }
 
 // SetLookup returns a machine.Lookup backed by the server set at
-// path (empty uses DefaultConfigFile). It is how an srv://<name>/path target
+// path (empty uses DefaultSetFile). It is how an srv://<name>/path target
 // gets its host, port and credentials without any of those appearing in a
 // command line, a spec file, or a persisted workspace.
 //
@@ -764,9 +746,9 @@ func readSecretFile(path string) (string, error) {
 func SetLookup(path string) machine.Lookup {
 	return func(name string) (remote.Credentials, error) {
 		if path == "" {
-			path = DefaultConfigFile
+			path = DefaultSetFile
 		}
-		cfg, err := Load(path)
+		cfg, err := LoadSet(path)
 		if err != nil {
 			return remote.Credentials{}, fmt.Errorf("serverset: %q needs the server set: %w", name, err)
 		}
@@ -786,9 +768,9 @@ func SetLookup(path string) machine.Lookup {
 // direct form must keep working with no set at all.
 func SetPolicy(path string) remote.HostKeyPolicy {
 	if path == "" {
-		path = DefaultConfigFile
+		path = DefaultSetFile
 	}
-	cfg, err := Load(path)
+	cfg, err := LoadSet(path)
 	if err != nil {
 		return remote.HostKeyPolicy{}
 	}

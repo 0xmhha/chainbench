@@ -10,16 +10,15 @@ import (
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 var enodeLine = regexp.MustCompile(`"(enode://[^"]+)"`)
 
 // TestArmSpecs_StaticNodesMatchNetmapMesh held the launcher's own assembly
-// against netmap.Mesh while the two coexisted; the launcher now calls netmap,
+// against node.Mesh while the two coexisted; the launcher now calls netmap,
 // so what it pins today is the contract on the far side of the rendering: the
 // config a node is handed still carries the whole network, in map order, with
 // the node's own entry included.
@@ -62,29 +61,29 @@ func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 
 	// The same network as a netmap, assigned from the pool the launcher's
 	// ports came from.
-	m, err := netmap.Assign(netmap.Pool{
-		Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	m, err := resource.Assign(resource.Pool{
+		Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots: n,
-		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
-	}, []netmap.Request{
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
+	}, []resource.Request{
 		{Role: node.RoleValidator}, {Role: node.RoleValidator},
 		{Role: node.RoleEndpoint}, {Role: node.RoleEndpoint},
 	})
 	if err != nil {
-		t.Fatalf("netmap.Assign: %v", err)
+		t.Fatalf("resource.Assign: %v", err)
 	}
 	// The caller holds both the map and the key material; netmap holds neither.
-	enode := func(p netmap.Placement) (string, bool) {
+	enode := func(p node.Placement) (string, bool) {
 		e, ok := preset.Node(p.Index)
 		if !ok {
 			return "", false
 		}
-		return netmapmod.Enode(e.PublicKey, p.Host, p.Ports.P2P), true
+		return node.Enode(e.PublicKey, p.Host, p.Ports.P2P), true
 	}
 
 	for i, spec := range specs {
-		label := netmap.LabelFor(i + 1)
-		want, err := netmap.Mesh.StaticNodes(m, label, enode)
+		label := node.LabelFor(i + 1)
+		want, err := node.Mesh.StaticNodes(m, label, enode)
 		if err != nil {
 			t.Fatalf("StaticNodes(%s): %v", label, err)
 		}

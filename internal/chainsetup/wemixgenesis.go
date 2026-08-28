@@ -11,7 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -152,7 +151,7 @@ func (s WemixGenesisSource) config(preset keyring.Preset, req GenesisRequest) (p
 	// rotation. Membership is what makes a producer produce.
 	members := make([]poa.Member, 0, 4)
 	for _, p := range req.Nodes.Placements() {
-		if !netmap.Is(p.Role, node.RoleBoot) && !netmap.Is(p.Role, node.RoleBP) {
+		if !node.Is(p.Role, node.RoleBoot) && !node.Is(p.Role, node.RoleBP) {
 			continue
 		}
 		e, ok := preset.Node(p.Index)
@@ -186,13 +185,13 @@ func (s WemixGenesisSource) config(preset keyring.Preset, req GenesisRequest) (p
 
 // bootPlacement is the node the bootstrap runs on: the first producer in the
 // placement, which is also the node the family's boot phase launches alone.
-func bootPlacement(m *netmap.Map) (netmap.Placement, bool) {
+func bootPlacement(m *node.Map) (node.Placement, bool) {
 	for _, p := range m.Placements() {
-		if netmap.Is(p.Role, node.RoleBoot) || netmap.Is(p.Role, node.RoleBP) {
+		if node.Is(p.Role, node.RoleBoot) || node.Is(p.Role, node.RoleBP) {
 			return p, true
 		}
 	}
-	return netmap.Placement{}, false
+	return node.Placement{}, false
 }
 
 // execRunner runs the binary for real.

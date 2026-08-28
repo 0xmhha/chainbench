@@ -3,7 +3,7 @@ package keyringcmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"io"
 	"os"
 	"strings"
@@ -84,7 +84,7 @@ func deps(cmd *cobra.Command) operation.Deps {
 		// only need something that opens a path, so this is where the two
 		// meet.
 		Open: func(serverSet string, docker bool) operation.Opener {
-			return netmap.Opener{
+			return resource.Opener{
 				ServerSet: serverSet, Docker: docker,
 				Env: os.Getenv, Report: report,
 			}

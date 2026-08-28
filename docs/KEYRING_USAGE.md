@@ -225,7 +225,7 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 
 각 항목 옆은 같은 것을 검증하는 자동 테스트다. 전체 자동 실행:
 `go test ./cmd/chainbench/keyringcmd/ -v` (로컬),
-`CHAINBENCH_DOCKER_FLEET=$PWD/env/docker/build go test ./cmd/chainbench/keyringcmd/ -run Live_Keyring -v` (원격).
+`CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./cmd/chainbench/keyringcmd/ -run Live_Keyring -v` (원격).
 
 **A. 로컬** (사전 준비 없음)
 

@@ -28,7 +28,7 @@ func SSHRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Runner 
 }
 
 // SSHSudoRunner is SSHRunner with every command elevated through sudo, the
-// way a real fleet's operator account works: the login is an ordinary user,
+// way a real server's operator account works: the login is an ordinary user,
 // and sudo asks for that user's password. The password is the credentials'
 // own and travels on stdin (sudo -S), never in the command line — a command
 // line is visible in the remote process list and shell history.
@@ -183,7 +183,7 @@ func (d *RemoteDriver) ProbePorts(ctx context.Context, host string, ports []int)
 		list = append(list, strconv.Itoa(p))
 	}
 	// One round trip for the whole set. /dev/tcp needs bash, which sshd's
-	// exec gives us on the fleets this targets; the redirect failing is
+	// exec gives us on the servers this targets; the redirect failing is
 	// "closed", so only open ports reach stdout.
 	script := "for p in " + strings.Join(list, " ") + "; do " +
 		"(exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && echo $p; " +

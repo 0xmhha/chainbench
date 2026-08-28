@@ -11,7 +11,7 @@ import (
 func TestCallTool_RejectsRetiredArgs(t *testing.T) {
 	s := newServer()
 	text, isErr := callText(t, s, "chainbench_keyring_list", map[string]any{
-		"serverConfig": "/ops/fleet.yaml",
+		"serverConfig": "/ops/servers.yaml",
 	})
 	if !isErr {
 		t.Fatalf("a retired argument was accepted: %q", text)

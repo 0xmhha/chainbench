@@ -9,14 +9,13 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
@@ -72,18 +71,18 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 
 	build := chainsetup.NewBuildEnv(chainsetup.BuildDeps{
 		Plugin: plugin,
-		Pool: netmap.Pool{
-			Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+		Pool: resource.Pool{
+			Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 			Slots: 8,
-			Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+			Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
 		},
 		Genesis:    chainsetup.PresetGenesisSource{KeysDir: presetDir},
 		Supervisor: sup,
 		Caps:       []string{"ws"},
-		Reqs: func(testspec.Spec) []place.NodeReq {
-			reqs := make([]place.NodeReq, 4)
+		Reqs: func(testspec.Spec) []node.LaunchReq {
+			reqs := make([]node.LaunchReq, 4)
 			for i := range reqs {
-				reqs[i] = place.NodeReq{Role: node.RoleValidator, Binary: "go-stablenet"}
+				reqs[i] = node.LaunchReq{Role: node.RoleValidator, Binary: "go-stablenet"}
 			}
 			return reqs
 		},

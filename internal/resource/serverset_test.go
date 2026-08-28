@@ -1,4 +1,4 @@
-package serverset_test
+package resource_test
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/remote"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 func write(t *testing.T, body string) string {
@@ -41,9 +41,27 @@ ssh:
 dataRoot: /var/lib/chainbench
 `
 
-func load(t *testing.T, body string) *serverset.Config {
+// remoteSample is sample with every host routable, so it has a whole-set pool.
+// A set that mixes this machine with remote hosts deliberately does not.
+const remoteSample = `
+version: 2
+pool:
+  hosts:
+    - { name: bp0, addr: 10.0.0.9 }
+    - { name: bp1, addr: 10.0.0.1 }
+    - 10.0.0.7
+  slots: 8
+  ports:
+    p2p: { base: 30303, step: 10 }
+    rpc: { base: 8545, step: 10 }
+ssh:
+  user: ubuntu
+dataRoot: /var/lib/chainbench
+`
+
+func load(t *testing.T, body string) *resource.Set {
 	t.Helper()
-	cfg, err := serverset.Load(write(t, body))
+	cfg, err := resource.LoadSet(write(t, body))
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -53,14 +71,17 @@ func load(t *testing.T, body string) *serverset.Config {
 // TestPool_ReadsTheGrid: the file's subject is the resource, and the pool is
 // what the allocator is handed.
 func TestPool_ReadsTheGrid(t *testing.T) {
-	p := load(t, sample).Pool()
+	p, err := load(t, remoteSample).Pool(1, 100)
+	if err != nil {
+		t.Fatalf("Pool: %v", err)
+	}
 	if len(p.Hosts) != 3 || p.Slots != 8 {
 		t.Fatalf("pool = %d hosts x %d slots", len(p.Hosts), p.Slots)
 	}
 	if p.Cap() != 24 {
 		t.Errorf("Cap() = %d, want 24", p.Cap())
 	}
-	if p.Ports.P2PBase != 30303 || p.Ports.RPCBase != 8545 {
+	if p.Ports.P2P.Base != 30303 || p.Ports.RPC.Base != 8545 {
 		t.Errorf("bands = %+v", p.Ports)
 	}
 	if err := p.Validate(); err != nil {
@@ -79,9 +100,12 @@ func TestPool_ReadsTheGrid(t *testing.T) {
 // TestPool_UnsetBandsFallBackToTheBuiltins keeps a minimal inventory usable:
 // an operator listing addresses should not have to restate the ports.
 func TestPool_UnsetBandsFallBackToTheBuiltins(t *testing.T) {
-	p := load(t, "version: 2\npool:\n  hosts: [127.0.0.1]\n").Pool()
-	b := serverset.BuiltinPorts()
-	if p.Ports.P2PBase != b.P2PBase || p.Ports.RPCStep != b.RPCStep {
+	p, err := load(t, "version: 2\npool:\n  hosts: [127.0.0.1]\n").Pool(1, 100)
+	if err != nil {
+		t.Fatalf("Pool: %v", err)
+	}
+	b := resource.BuiltinPorts()
+	if p.Ports.P2P.Base != b.P2PBase || p.Ports.RPC.Step != b.RPCStep {
 		t.Errorf("bands = %+v, want the built-ins %+v", p.Ports, b)
 	}
 	if p.Slots != 1 {
@@ -110,7 +134,7 @@ func TestServers_DerivedFromTheHostAddress(t *testing.T) {
 	}
 	// The pool's slots, bands, data root and access reach every host: the pool
 	// is one resource, not a list of individually-configured machines.
-	for _, s := range []serverset.Server{local, remote} {
+	for _, s := range []resource.Server{local, remote} {
 		if s.Slots != 8 || s.DataRoot != "/var/lib/chainbench" || s.Ports.RPCBase != 8545 {
 			t.Errorf("%s did not inherit the pool: %+v", s.Name, s)
 		}
@@ -144,57 +168,74 @@ func TestSelect_ByNameByIndexAndTheLoneHost(t *testing.T) {
 // address and in whether the data plane is reached over SSH — nothing else. The
 // pool is read from the same fields either way, which is why composing a
 // network does not branch on it.
-func TestPlacement_LocalAndRemoteReadTheSameFields(t *testing.T) {
+func TestPoolFor_LocalAndRemoteReadTheSameFields(t *testing.T) {
 	cfg := load(t, sample)
 
 	local, _ := cfg.ByName("local")
-	lp := cfg.Placement(local, 1, 100)
-	if lp.Remote {
-		t.Errorf("a loopback address must not be remote: %+v", lp)
-	}
-	if lp.Pool.Slots != 8 || lp.DataRoot != "/var/lib/chainbench" {
-		t.Errorf("local placement = %+v", lp)
+	lp := cfg.PoolFor(local, 1, 100)
+	if lp.Slots != 8 {
+		t.Errorf("local pool = %+v", lp)
 	}
 
 	remoteSrv, _ := cfg.ByName("bp1")
-	rp := cfg.Placement(remoteSrv, 1, 100)
-	if !rp.Remote {
-		t.Errorf("a routable address must be remote: %+v", rp)
+	rp := cfg.PoolFor(remoteSrv, 1, 100)
+	if lp.Ports != rp.Ports {
+		t.Errorf("port bands diverged: local=%+v remote=%+v", lp.Ports, rp.Ports)
 	}
-	if lp.Pool.Ports != rp.Pool.Ports {
-		t.Errorf("port bands diverged: local=%+v remote=%+v", lp.Pool.Ports, rp.Pool.Ports)
+	if len(rp.Hosts) != 1 || rp.Hosts[0].Addr != "10.0.0.1" {
+		t.Errorf("remote pool hosts = %v", rp.Hosts)
 	}
-	if len(rp.Pool.Hosts) != 1 || rp.Pool.Hosts[0].Addr != "10.0.0.1" {
-		t.Errorf("remote placement hosts = %v", rp.Pool.Hosts)
-	}
-	for _, p := range []serverset.Placement{lp, rp} {
+	for _, p := range []resource.Pool{lp, rp} {
 		if !strings.Contains(p.Source, "server-set.yaml") {
 			t.Errorf("source does not name the file: %q", p.Source)
 		}
 	}
 }
 
+// TestResolveServer_TargetCarriesTheLocality pins where local/remote survives
+// now that the pool no longer stores it: in the machine spec, derived from the
+// address rather than recorded beside it.
+func TestResolveServer_TargetCarriesTheLocality(t *testing.T) {
+	set := write(t, sample)
+
+	out, err := resource.ResolveServer(resource.ServerRef{SetPath: set, Name: "local"}, 1, 100)
+	if err != nil {
+		t.Fatalf("ResolveServer(local): %v", err)
+	}
+	if out.Target.IsRemote() {
+		t.Errorf("a loopback address must not be remote: %+v", out.Target)
+	}
+	if out.Target.DataRoot != "/var/lib/chainbench" {
+		t.Errorf("target data root = %q", out.Target.DataRoot)
+	}
+
+	out, err = resource.ResolveServer(resource.ServerRef{SetPath: set, Name: "bp1"}, 1, 100)
+	if err != nil {
+		t.Fatalf("ResolveServer(bp1): %v", err)
+	}
+	if !out.Target.IsRemote() {
+		t.Errorf("a routable address must be remote: %+v", out.Target)
+	}
+}
+
 func TestBuiltin_NamesItselfAsTheSource(t *testing.T) {
 	// Where a port came from must never be a guess, including when no file
 	// was involved.
-	p := serverset.Builtin(1, 100)
-	if p.Remote {
-		t.Errorf("builtin placement = %+v", p)
-	}
+	p := resource.Builtin(1, 100)
 	if !strings.Contains(p.Source, "built-in") {
 		t.Errorf("source = %q, want it to say built-in", p.Source)
 	}
-	if p.Pool.Ports.RPCBase != serverset.BuiltinPorts().RPCBase {
-		t.Errorf("builtin ports not used: %+v", p.Pool.Ports)
+	if p.Ports.RPC.Base != resource.BuiltinPorts().RPCBase {
+		t.Errorf("builtin ports not used: %+v", p.Ports)
 	}
 
-	pool := serverset.BuiltinPool(4)
+	pool := resource.BuiltinPool(4)
 	if len(pool.Hosts) != 1 || pool.Slots != 4 || !strings.Contains(pool.Source, "built-in") {
 		t.Errorf("builtin pool = %+v", pool)
 	}
 }
 
-func TestFleet_SpreadsOneNodePerHost(t *testing.T) {
+func TestPool_SpreadsOneNodePerHost(t *testing.T) {
 	cfg := load(t, `
 version: 2
 pool:
@@ -202,24 +243,21 @@ pool:
   slots: 1
 ssh: {user: ubuntu}
 `)
-	p, err := cfg.Fleet(1, 100)
+	p, err := cfg.Pool(1, 100)
 	if err != nil {
-		t.Fatalf("Fleet: %v", err)
+		t.Fatalf("Pool: %v", err)
 	}
-	if !p.Remote || len(p.Pool.Hosts) != 3 {
-		t.Errorf("fleet placement = %+v", p)
-	}
-	if p.Pool.Slots != 1 || p.Pool.Cap() != 3 {
-		t.Errorf("fleet pool = %d hosts x %d slots", len(p.Pool.Hosts), p.Pool.Slots)
+	if len(p.Hosts) != 3 || p.Slots != 1 || p.Cap() != 3 {
+		t.Errorf("set pool = %d hosts x %d slots", len(p.Hosts), p.Slots)
 	}
 }
 
-func TestFleet_RejectsAMixedInventory(t *testing.T) {
+func TestPool_RejectsAMixedSet(t *testing.T) {
 	// Half on this machine and half over SSH is two port regimes at once, and
 	// the allocator has no way to express that.
 	cfg := load(t, sample)
-	if _, err := cfg.Fleet(1, 100); err == nil {
-		t.Fatal("want an error for a mixed local/remote fleet")
+	if _, err := cfg.Pool(1, 100); err == nil {
+		t.Fatal("want an error for a mixed local/remote set")
 	}
 }
 
@@ -266,7 +304,7 @@ func TestCredentials_PasswordFile(t *testing.T) {
 
 	// Both password fields at once is a file mistake, so it must fail when the
 	// file is read — not later, when the server is first dialed.
-	if _, err := serverset.Load(write(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password: x, password_file: "+pf+"}\n")); err == nil {
+	if _, err := resource.LoadSet(write(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: ubuntu, password: x, password_file: "+pf+"}\n")); err == nil {
 		t.Fatal("Load accepted both ssh.password and ssh.password_file")
 	}
 
@@ -313,7 +351,7 @@ func TestLoad_RejectsBadInventories(t *testing.T) {
 		{"rpc step too small", "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 2}}\n", "rpcStep"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := serverset.Load(write(t, c.body))
+			_, err := resource.LoadSet(write(t, c.body))
 			if err == nil {
 				t.Fatalf("want an error mentioning %q", c.want)
 			}
@@ -325,11 +363,11 @@ func TestLoad_RejectsBadInventories(t *testing.T) {
 }
 
 func TestLoad_MissingFilePointsAtTheSample(t *testing.T) {
-	_, err := serverset.Load(filepath.Join(t.TempDir(), "absent.yaml"))
+	_, err := resource.LoadSet(filepath.Join(t.TempDir(), "absent.yaml"))
 	if err == nil {
 		t.Fatal("want an error for a missing file")
 	}
-	if !strings.Contains(err.Error(), serverset.DefaultSampleFile) {
+	if !strings.Contains(err.Error(), resource.DefaultSampleFile) {
 		t.Errorf("error = %v, want it to point at the sample", err)
 	}
 }
@@ -337,7 +375,7 @@ func TestLoad_MissingFilePointsAtTheSample(t *testing.T) {
 // TestLoad_V1FormatSaysHowToMigrate: v2 dropped the server list, and a file
 // written for v1 must be told what changed rather than failing on a field name.
 func TestLoad_V1FormatSaysHowToMigrate(t *testing.T) {
-	_, err := serverset.Load(write(t, "version: 1\nservers:\n  - name: bp1\n    host: 10.0.0.1\n"))
+	_, err := resource.LoadSet(write(t, "version: 1\nservers:\n  - name: bp1\n    host: 10.0.0.1\n"))
 	if err == nil {
 		t.Fatal("want an error for the v1 format")
 	}
@@ -352,10 +390,10 @@ func TestLoad_V1FormatSaysHowToMigrate(t *testing.T) {
 const DefaultSample = "server-set.sample.yaml"
 
 func TestPorts_MetricsNeedsRoomInTheStep(t *testing.T) {
-	if !(serverset.Ports{RPCStep: 4}).HasMetrics() {
+	if !(resource.Ports{RPCStep: 4}).HasMetrics() {
 		t.Error("a step of 4 leaves room for metrics")
 	}
-	if (serverset.Ports{RPCStep: 3}).HasMetrics() {
+	if (resource.Ports{RPCStep: 3}).HasMetrics() {
 		t.Error("a step of 3 has no room for metrics")
 	}
 }
@@ -363,19 +401,27 @@ func TestPorts_MetricsNeedsRoomInTheStep(t *testing.T) {
 func TestSampleFileParses(t *testing.T) {
 	// The tracked template must stay loadable: it is the first thing an
 	// operator copies.
-	cfg, err := serverset.Load(filepath.Join("..", "..", "..", "..", serverset.DefaultSampleFile))
+	cfg, err := resource.LoadSet(filepath.Join("..", "..", resource.DefaultSampleFile))
 	if err != nil {
 		t.Fatalf("the tracked sample does not load: %v", err)
 	}
-	if err := cfg.Pool().Validate(); err != nil {
-		t.Fatalf("the tracked sample's pool does not validate: %v", err)
+	// The sample is deliberately mixed (this machine plus remote hosts), so it
+	// has no whole-set pool; every server's own pool must still validate.
+	for i := range cfg.Servers {
+		srv, err := cfg.Server(i + 1)
+		if err != nil {
+			t.Fatalf("server %d: %v", i+1, err)
+		}
+		if err := cfg.PoolFor(srv, 1, 100).Validate(); err != nil {
+			t.Fatalf("the sample's %s pool does not validate: %v", srv.Name, err)
+		}
 	}
 }
 
 // TestLoad_KeyPassphraseFileNeedsKeyFile: a passphrase with no key to unlock
 // is a file mistake, and file mistakes fail at Load.
 func TestLoad_KeyPassphraseFileNeedsKeyFile(t *testing.T) {
-	_, err := serverset.Load(write(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: u, password: p, key_passphrase_file: /tmp/pp}\n"))
+	_, err := resource.LoadSet(write(t, "version: 2\npool:\n  hosts: [10.0.0.9]\nssh: {user: u, password: p, key_passphrase_file: /tmp/pp}\n"))
 	if err == nil || !strings.Contains(err.Error(), "key_passphrase_file") {
 		t.Fatalf("err = %v, want the key_passphrase_file-without-key_file rule", err)
 	}
@@ -407,7 +453,7 @@ func TestCredentials_RelativeSecretPathAnchorsToTheFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Chdir(t.TempDir()) // somewhere the sibling file is NOT
-	cfg, err := serverset.Load(p)
+	cfg, err := resource.LoadSet(p)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -429,7 +475,7 @@ func TestLoad_OldNameGetsAMigrationHint(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "remote-server-config.yaml"), []byte("version: 2\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	_, err := serverset.Load(filepath.Join(dir, "server-set.yaml"))
+	_, err := resource.LoadSet(filepath.Join(dir, "server-set.yaml"))
 	if err == nil || !strings.Contains(err.Error(), "rename") {
 		t.Fatalf("err = %v, want a rename hint for the old file name", err)
 	}
@@ -457,7 +503,7 @@ func TestLoad_PerPurposeBands(t *testing.T) {
 	}
 
 	// Deriving with a step of 1 must still be refused: ws/auth would collide.
-	if _, err := serverset.Load(write(t, "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30301, step: 1}, rpc: {base: 8601, step: 1}}\n")); err == nil {
+	if _, err := resource.LoadSet(write(t, "version: 2\npool:\n  hosts: [h]\n  ports: {p2p: {base: 30301, step: 1}, rpc: {base: 8601, step: 1}}\n")); err == nil {
 		t.Fatal("derived scheme with rpc step 1 was accepted")
 	}
 }

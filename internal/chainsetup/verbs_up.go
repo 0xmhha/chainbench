@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
-
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // NetUp composes a whole network in one call by running the step use cases in
@@ -56,7 +55,7 @@ type NetUpIn struct {
 	Peering string
 	// Server selects where the nodes run and on what ports, from the server
 	// server set. Its zero value uses the built-in local plan.
-	Server netmapmod.ServerRef
+	Server resource.ServerRef
 	// Docker treats the servers as local docker containers (dials translated
 	// through the localmap next to the server set); recorded at the new step.
 	Docker bool

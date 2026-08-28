@@ -1,7 +1,6 @@
 package poa
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -34,5 +33,5 @@ func BootstrapPlan() []Step {
 // BootRole reports whether a role acts as the wemix boot node (governance
 // deploy + etcd init happen here).
 func BootRole(r node.Role) bool {
-	return netmap.Is(r, node.RoleBoot) || netmap.Is(r, node.RoleBP)
+	return node.Is(r, node.RoleBoot) || node.Is(r, node.RoleBP)
 }

@@ -2,11 +2,10 @@ package chainsetup
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -14,8 +13,8 @@ import (
 // plan assembly has both the binary/sync choices (from the request) and the
 // address and ports (from netmap).
 type PlacedNode struct {
-	Req       place.NodeReq
-	Placement netmap.Placement
+	Req       node.LaunchReq
+	Placement node.Placement
 }
 
 // AssemblePlan builds a driver.Plan from allocator-resolved placements and
@@ -34,13 +33,13 @@ func AssemblePlan(plugin registry.ChainPlugin, placed []PlacedNode, genesis []by
 	}
 	m := plugin.Manifest()
 
-	layout := netmap.Layout{Root: dataRoot}
+	layout := node.Layout{Root: dataRoot}
 	specs := make([]driver.NodeSpec, 0, len(placed))
 	for i, pn := range placed {
 		idx := i + 1
 		label := pn.Placement.Label
 		if label == "" {
-			label = netmap.LabelFor(idx)
+			label = node.LabelFor(idx)
 		}
 		ports := pn.Placement.Ports
 		dataDir := pn.Placement.DataDir

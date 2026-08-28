@@ -2,9 +2,8 @@ package app
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/netmap"
-
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // The keyring verbs live in the keyring module; app wraps them thinly so MCP
@@ -39,7 +38,7 @@ func (d Deps) keyringDeps() operation.Deps {
 	return operation.Deps{
 		Env: d.Env,
 		Open: func(serverSet string, docker bool) operation.Opener {
-			return netmap.Opener{
+			return resource.Opener{
 				ServerSet: serverSet, Docker: docker,
 				Env: d.Env, Report: d.Logf,
 			}

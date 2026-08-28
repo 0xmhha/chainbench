@@ -8,10 +8,7 @@ package poa
 
 import (
 	"fmt"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -54,7 +51,7 @@ func (Family) StartFlags(role node.Role) []string {
 	// Both spellings of the producing role seal (see the wbft family): a
 	// producer launched without --mine stalls the chain, and which word the
 	// composition recorded must not decide that.
-	canonical, err := netmap.NormalizeRole(string(role))
+	canonical, err := node.NormalizeRole(string(role))
 	if err == nil && (canonical == node.RoleBP || canonical == node.RoleBoot) {
 		flags = append(flags, "--mine")
 	}
@@ -75,7 +72,7 @@ func (Family) StartFlags(role node.Role) []string {
 func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 	boot := 0
 	for i, r := range roles {
-		if netmap.Is(r, node.RoleBoot) || netmap.Is(r, node.RoleBP) {
+		if node.Is(r, node.RoleBoot) || node.Is(r, node.RoleBP) {
 			boot = i + 1
 			break
 		}
@@ -140,15 +137,15 @@ const (
 // — peer at p2p+1 and client at p2p+2 (go-wemix wemix/etcdutil.go). Three is
 // the span, and a step of two — which the previous global rule accepted — puts
 // the next node's p2p port on this node's etcd client.
-func (Family) PortReservation() portplan.Reservation {
-	return portplan.Reservation{P2PSpan: 3, RPCSpan: 3}
+func (Family) PortReservation() node.Reservation {
+	return node.Reservation{P2PSpan: 3, RPCSpan: 3}
 }
 
 // SupportsRole: poa produces blocks and serves endpoints, and one producer
 // carries the governance bootstrap. It has no proxy tier — etcd occupies that
 // place — so a pn declared here is refused rather than quietly ignored.
 func (Family) SupportsRole(role node.Role) bool {
-	canonical, err := netmap.NormalizeRole(string(role))
+	canonical, err := node.NormalizeRole(string(role))
 	if err != nil {
 		return false
 	}

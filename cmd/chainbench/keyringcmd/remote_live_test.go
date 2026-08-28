@@ -13,24 +13,24 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // The remote half of the keyring verification matrix, live against the local
-// docker fleet posing as servers. Gated so CI (which has no fleet) skips it:
+// docker server set posing as servers. Gated so CI (which has no server set) skips it:
 //
 //	cd env/docker && ./gen-env.sh && docker compose -f build/docker-compose.yml up -d
-//	CHAINBENCH_DOCKER_FLEET=$PWD/env/docker/build go test ./cmd/chainbench/ -run Live_Keyring -v
+//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./cmd/chainbench/ -run Live_Keyring -v
 //
 // The local half (new/add/list/show/export, hex and file imports, env
 // selection) runs unconditionally in keyring_test.go.
-func fleetBuildDir(t *testing.T) string {
+func serversBuildDir(t *testing.T) string {
 	t.Helper()
-	build := testkit.FleetBuildDir(t)
-	// Access mirrors the real fleet: user + password. The srv:// path reads
+	build := testkit.ServersBuildDir(t)
+	// Access mirrors the real server set: user + password. The srv:// path reads
 	// them from the server set; the direct user@host form reads the password
 	// from the environment, so it is exported here from the same file.
-	if cfg, err := netmapmod.LoadSet(filepath.Join(build, "server-set.yaml")); err == nil {
+	if cfg, err := resource.LoadSet(filepath.Join(build, "server-set.yaml")); err == nil {
 		if srv, err := cfg.ByName("server1"); err == nil {
 			t.Setenv(remote.EnvPass, srv.SSH.Password)
 		}
@@ -45,7 +45,7 @@ func fleetBuildDir(t *testing.T) string {
 func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 	t.Helper()
 	inv := filepath.Join(build, "server-set.yaml")
-	cfg, err := netmapmod.LoadSet(inv)
+	cfg, err := resource.LoadSet(inv)
 	if err != nil {
 		t.Fatalf("load server set: %v", err)
 	}
@@ -58,7 +58,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 	}
 	// The direct user@host form authenticates from the environment; the dial
 	// still translates through the module's one address map.
-	o := netmapmod.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}
+	o := resource.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}
 	tgt, err := o.Open(spec)
 	if err != nil {
 		t.Fatalf("resolve user@host target: %v", err)
@@ -73,7 +73,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 // and the translation is reported. The fixture is a key exported from a local
 // key set, so the imported address has a known right answer.
 func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
-	build := fleetBuildDir(t)
+	build := serversBuildDir(t)
 	inv := filepath.Join(build, "server-set.yaml")
 
 	local := newRing(t)
@@ -99,7 +99,7 @@ func TestLive_KeyringImportsARawKeyFromAServer(t *testing.T) {
 // TestLive_KeyringImportsAKeystoreFromAServer covers the encrypted case: a
 // keystore JSON on the server, decrypted with --password on import.
 func TestLive_KeyringImportsAKeystoreFromAServer(t *testing.T) {
-	build := fleetBuildDir(t)
+	build := serversBuildDir(t)
 	inv := filepath.Join(build, "server-set.yaml")
 
 	local := newRing(t) // keystores encrypted with the default password "1"
@@ -147,7 +147,7 @@ func addressOf(t *testing.T, ring, name string) string {
 // holds, at a different location. The path is per-process so reruns never
 // collide with a leftover index.
 func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
-	build := fleetBuildDir(t)
+	build := serversBuildDir(t)
 	inv := filepath.Join(build, "server-set.yaml")
 	onServer := fmt.Sprintf("/data/chainbench/live-ring-%d", os.Getpid())
 	ring := "srv://server1" + onServer
@@ -162,7 +162,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	}
 
 	// The key material exists ON the server, checked through the same stack.
-	cfg, err := netmapmod.LoadSet(inv)
+	cfg, err := resource.LoadSet(inv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +171,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	spec := machine.Spec{User: srv.SSH.User, Host: srv.Host, Port: srv.SSH.Port, DataRoot: "/data/chainbench"}
-	tgt, err := netmapmod.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}.Open(spec)
+	tgt, err := resource.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}.Open(spec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -191,7 +191,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 // labels intact, validator declaration carried, and every entry verified
 // against the server's index before anything lands locally.
 func TestLive_KeyringClonesARingFromAServer(t *testing.T) {
-	build := fleetBuildDir(t)
+	build := serversBuildDir(t)
 	inv := filepath.Join(build, "server-set.yaml")
 	onServer := fmt.Sprintf("/data/chainbench/live-clone-src-%d", os.Getpid())
 	remote := "srv://server1" + onServer

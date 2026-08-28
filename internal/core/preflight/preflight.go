@@ -8,11 +8,12 @@ package preflight
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/netid"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // NetworkPlan is the fully-resolved description of a network about to launch.
@@ -22,7 +23,7 @@ type NetworkPlan struct {
 	// NetworkIDs is each node's configured devp2p network id.
 	NetworkIDs []int64
 	// Ports is each node's resolved port set.
-	Ports []portplan.Ports
+	Ports []node.Endpoints
 	// Genesis is the genesis bytes every node initializes from (identical).
 	Genesis []byte
 	// WemixMembers are the addresses registered as wemix+etcd producers.
@@ -38,7 +39,7 @@ func Validate(p NetworkPlan) error {
 	if err := netid.ValidateUniform(p.NetworkIDs); err != nil {
 		return err
 	}
-	if err := portplan.Validate(p.Ports); err != nil {
+	if err := resource.ValidatePorts(p.Ports); err != nil {
 		return err
 	}
 	if len(p.NetworkIDs) != len(p.Ports) {

@@ -7,7 +7,7 @@
 # every start, so an accounts.env edit needs no image rebuild.
 #
 # Fails loudly on a missing or malformed file: the harness login is the first
-# account in it, so a fleet without these accounts is broken either way — a
+# account in it, so a server without these accounts is broken either way — a
 # silent skip would only move the failure to an opaque chown/auth error later.
 set -eu
 

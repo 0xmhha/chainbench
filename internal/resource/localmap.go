@@ -1,4 +1,4 @@
-package serverset
+package resource
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ type LocalMap struct {
 type HostPorts struct {
 	// Host replaces the address itself (typically 127.0.0.1).
 	Host string `yaml:"host"`
-	// Ports maps the fleet-uniform ports onto the per-server published ones.
+	// Ports maps the set-uniform ports onto the per-server published ones.
 	// A port with no entry passes through unchanged.
 	Ports map[int]int `yaml:"ports"`
 }
@@ -43,7 +43,7 @@ type HostPorts struct {
 // setPath (empty means the default server-set location).
 func LocalMapNear(setPath string) string {
 	if setPath == "" {
-		setPath = DefaultConfigFile
+		setPath = DefaultSetFile
 	}
 	return filepath.Join(filepath.Dir(setPath), LocalMapFile)
 }

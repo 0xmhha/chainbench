@@ -1,10 +1,8 @@
-package netmap_test
+package node_test
 
 import (
-	"testing"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"testing"
 )
 
 // TestIs_FoldsBothSpellings is the predicate every role decision has to go
@@ -29,7 +27,7 @@ func TestIs_FoldsBothSpellings(t *testing.T) {
 		{node.Role("sideways"), node.RoleBP, false},
 		{node.RoleBP, node.Role("sideways"), false},
 	} {
-		if got := netmap.Is(c.role, c.canonical); got != c.want {
+		if got := node.Is(c.role, c.canonical); got != c.want {
 			t.Errorf("Is(%q, %q) = %v, want %v", c.role, c.canonical, got, c.want)
 		}
 	}

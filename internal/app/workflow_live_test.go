@@ -4,9 +4,9 @@ package app_test
 // chain up on a docker server, runs the specs against it, collects the
 // session, and tears the network down.
 //
-//	CHAINBENCH_DOCKER_FLEET=$PWD/env/docker/build go test ./internal/app -run Live_RunSuite -v
+//	CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build go test ./internal/app -run Live_RunSuite -v
 //
-// The fleet must carry the chain binary at /data/chainbench/bin/gstable.
+// The server set must carry the chain binary at /data/chainbench/bin/gstable.
 
 import (
 	"context"
@@ -16,11 +16,11 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
-	build := testkit.FleetBuildDir(t)
+	build := testkit.ServersBuildDir(t)
 
 	spec := filepath.Join("..", "..", "tests", "specs", "consensus", "wbft-seals-quorum.json")
 	if _, err := os.Stat(spec); err != nil {
@@ -33,7 +33,7 @@ func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
 		Chain:      "stablenet",
 		Binary:     "/data/chainbench/bin/gstable",
 		Validators: 4,
-		Server:     netmapmod.ServerRef{SetPath: filepath.Join(build, "server-set.yaml"), Name: "server1"},
+		Server:     resource.ServerRef{SetPath: filepath.Join(build, "server-set.yaml"), Name: "server1"},
 		Docker:     true,
 		KeysDir:    filepath.Join("..", "..", "keys", "preset"),
 		Caps:       []string{"consensus"},

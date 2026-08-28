@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"math/big"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -421,13 +421,13 @@ func assertTargets(ac *AssertCtx) []assertTarget {
 	if len(ac.On) > 0 {
 		out := make([]assertTarget, 0, len(ac.On))
 		for _, n := range ac.On {
-			out = append(out, assertTarget{name: string(netmap.LabelFor(n.Index)), url: n.RPCURL})
+			out = append(out, assertTarget{name: string(node.LabelFor(n.Index)), url: n.RPCURL})
 		}
 		return out
 	}
 	if ac.Env != nil {
 		if nodes := ac.Env.Nodes(); len(nodes) > 0 {
-			return []assertTarget{{name: string(netmap.LabelFor(nodes[0].Index)), url: nodes[0].RPCURL}}
+			return []assertTarget{{name: string(node.LabelFor(nodes[0].Index)), url: nodes[0].RPCURL}}
 		}
 	}
 	return nil

@@ -17,13 +17,11 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Composition steps: keys, allocate, genesis, config, launchopts, filestore.
@@ -116,12 +114,12 @@ type AllocateOpts struct {
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
 	// per-node choice. Its Nodes must already be Validate()d.
 	Topology *topology.Topology
-	// Placement decides the port bands, the addressing mode, and the capacity
+	// Pool decides the port bands and the capacity
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
-	Placement netmapmod.Placement
-	// SetPath is the server-set file Placement came from, persisted so later
+	Pool resource.Pool
+	// SetPath is the server-set file Pool came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
 	SetPath string
 }
@@ -129,17 +127,17 @@ type AllocateOpts struct {
 // placements resolves the requested layout into one placement request per node,
 // in launch order. A topology is authoritative when given; otherwise the counts
 // produce validators first, then endpoints.
-func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
+func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	if o.Topology != nil {
 		sorted := o.Topology.Sorted()
 		if len(sorted) == 0 {
 			return nil, nil, fmt.Errorf("chainsetup: allocate: topology has no nodes")
 		}
-		reqs := make([]place.NodeReq, len(sorted))
+		reqs := make([]node.LaunchReq, len(sorted))
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = place.NodeReq{Role: role}
+			reqs[i] = node.LaunchReq{Role: role}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -149,14 +147,14 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 	if o.Validators < 1 {
 		return nil, nil, fmt.Errorf("chainsetup: allocate: at least one validator is required")
 	}
-	reqs := make([]place.NodeReq, 0, o.Validators+o.Endpoints)
+	reqs := make([]node.LaunchReq, 0, o.Validators+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < o.Validators; i++ {
-		reqs = append(reqs, place.NodeReq{Role: node.RoleValidator})
+		reqs = append(reqs, node.LaunchReq{Role: node.RoleValidator})
 		modes = append(modes, syncModeFull)
 	}
 	for i := 0; i < o.Endpoints; i++ {
-		reqs = append(reqs, place.NodeReq{Role: node.RoleEndpoint})
+		reqs = append(reqs, node.LaunchReq{Role: node.RoleEndpoint})
 		modes = append(modes, syncModeFor(node.RoleEndpoint, o.EndpointSyncMode))
 	}
 	return reqs, modes, nil
@@ -165,7 +163,7 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 // syncModeFor returns the sync mode a node of this role renders. Only endpoints
 // are configurable — see AllocateOpts.EndpointSyncMode.
 func syncModeFor(role node.Role, endpointMode string) string {
-	if netmap.Is(role, node.RoleEN) && endpointMode != "" {
+	if node.Is(role, node.RoleEN) && endpointMode != "" {
 		return endpointMode
 	}
 	return syncModeFull
@@ -187,14 +185,13 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pl := opts.Placement
-	if pl.Source == "" {
-		pl = netmapmod.Builtin(minValidatorsForPlacement, portBandSize)
+	pool := opts.Pool
+	if pool.Source == "" {
+		pool = resource.Builtin(minValidatorsForPlacement, portBandSize)
 	}
 	if opts.SetPath != "" {
 		w.state.ServerSet = opts.SetPath
 	}
-	pool := pl.Pool
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
@@ -202,26 +199,22 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// takes two ports beyond p2p, and sizing the step for a wbft node would put
 	// the next node on top of it.
 	pool.Reservation = plugin.Family().PortReservation()
-	assigned, err := netmap.Assign(pool, netmapRequests(reqs))
+	assigned, err := resource.Assign(pool, netmapRequests(reqs))
 	if err != nil {
 		return "", err
 	}
 	placements := assigned.Placements()
 
-	// A server set naming a data root wins over the workspace default:
-	// it is where that machine keeps node data.
-	root := w.state.Target.DataRoot
-	if pl.DataRoot != "" {
-		root = pl.DataRoot
-		w.state.Target.DataRoot = root
-	}
-	layout := netmap.Layout{Root: root}
-	// On a fleet each node's machine is a server-set entry; record its name so
-	// every later step opens THAT machine. Addresses came from the pool, so
-	// the name is the pool's word for the address.
+	// The data root is the target's: a server set naming one reached the
+	// workspace through Retarget before this step ran, so there is one answer
+	// rather than a copy that can disagree with it.
+	layout := node.Layout{Root: w.state.Target.DataRoot}
+	// Spread across a set, each node's machine is a server-set entry; record
+	// its name so every later step opens THAT machine. Addresses came from the
+	// pool, so the name is the pool's word for the address.
 	nameOf := map[string]string{}
-	if pl.Remote {
-		for _, h := range pl.Pool.Hosts {
+	if w.state.Target.IsRemote() {
+		for _, h := range pool.Hosts {
 			if h.Name != "" && h.Name != h.Addr {
 				nameOf[h.Addr] = h.Name
 			}
@@ -230,7 +223,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	nodes := make([]NodeState, len(placements))
 	validators := 0
 	for i, p := range placements {
-		if netmap.Is(p.Role, node.RoleBP) {
+		if node.Is(p.Role, node.RoleBP) {
 			validators++
 		}
 		nodes[i] = NodeState{
@@ -248,7 +241,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	// Reject an impossible graph here rather than at config time: the operator
 	// is choosing the layout in this step.
-	peering, err := netmap.ParsePeering(opts.Peering)
+	peering, err := node.ParsePeering(opts.Peering)
 	if err != nil {
 		return "", err
 	}
@@ -261,10 +254,10 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 		w.state.Bootnode = opts.Topology.BootnodeIndex()
 	}
 
-	w.state.PortSource = pl.Source
+	w.state.PortSource = pool.Source
 
 	detail := fmt.Sprintf("%d node(s): %d validator(s) + %d endpoint(s); ports: %s; p2p from %d, http from %d",
-		len(nodes), validators, len(nodes)-validators, pl.Source, nodes[0].P2P, nodes[0].HTTP)
+		len(nodes), validators, len(nodes)-validators, pool.Source, nodes[0].P2P, nodes[0].HTTP)
 	if opts.Topology != nil {
 		detail += " (topology)"
 	}
@@ -311,7 +304,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	}
 	gen := art.Genesis
 	// Every machine gets the genesis (and its by-products): each node's init
-	// reads it locally, and on a fleet "locally" is that node's server.
+	// reads it locally, and spread across a set "locally" is that node's server.
 	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
 	err = w.eachMachine(func(t *machine.Access, _ []NodeState) error {
 		p := filepath.Join(t.DataRoot, "genesis.json")
@@ -388,14 +381,14 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
-	peering, err := netmap.ParsePeering(w.state.Peering)
+	peering, err := node.ParsePeering(w.state.Peering)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
 	if err := peering.Validate(placed, p.Family().SupportsRole); err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
-	// The peer's own recorded address: on a fleet each node lives on a
+	// The peer's own recorded address: spread across a set each node lives on a
 	// different host, and a static-node list pointing at this machine would
 	// leave every node unable to find its peers. Keys reach the composition
 	// as inputs — the netmap module joins them to placements.
@@ -412,7 +405,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		staticNodes, err := netmapmod.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
@@ -622,17 +615,17 @@ func driverSpec(ns NodeState) driver.NodeSpec {
 
 // Netmap reads the workspace's node table as a placement map, so the peer
 // policy and the address lookups run off one representation. The host is the
-// node's own recorded address, which on a fleet is not this machine.
-func (w *Workspace) Netmap() (*netmap.Map, error) {
-	placements := make([]netmap.Placement, 0, len(w.state.Nodes))
+// node's own recorded address, which spread across a set is not this machine.
+func (w *Workspace) Netmap() (*node.Map, error) {
+	placements := make([]node.Placement, 0, len(w.state.Nodes))
 	ordinals := map[node.Role]int{}
 	for _, ns := range w.state.Nodes {
-		role, err := netmap.NormalizeRole(ns.Role)
+		role, err := node.NormalizeRole(ns.Role)
 		if err != nil {
 			return nil, fmt.Errorf("node%d: %w", ns.Index, err)
 		}
 		ordinals[role]++
-		placements = append(placements, netmap.Placement{
+		placements = append(placements, node.Placement{
 			Index:   ns.Index,
 			Label:   ns.NodeLabel(),
 			Role:    role,
@@ -642,16 +635,16 @@ func (w *Workspace) Netmap() (*netmap.Map, error) {
 			DataDir: ns.DataDir,
 		})
 	}
-	return netmap.NewMap(placements)
+	return node.NewMap(placements)
 }
 
 // netmapRequests turns the composed node list into placement requests. Only the
 // role travels: position comes from the order, which is also the node's
 // identity.
-func netmapRequests(reqs []place.NodeReq) []netmap.Request {
-	out := make([]netmap.Request, 0, len(reqs))
+func netmapRequests(reqs []node.LaunchReq) []resource.Request {
+	out := make([]resource.Request, 0, len(reqs))
 	for _, r := range reqs {
-		out = append(out, netmap.Request{Role: r.Role})
+		out = append(out, resource.Request{Role: r.Role})
 	}
 	return out
 }

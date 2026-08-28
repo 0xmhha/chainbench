@@ -1,14 +1,13 @@
-package netmap_test
+package resource_test
 
 import (
-	"testing"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
+	"testing"
 )
 
 // The allocator netmap replaced had two deterministic modes: a local network on
-// the loopback with stepped ports, and a fleet with one node per host on
+// the loopback with stepped ports, and a server set with one node per host on
 // identical ports. They are this grid read two ways, and these are the values
 // it produced — kept as goldens now that the allocator itself is gone, because
 // the numbers are what an existing network is already running on.
@@ -16,10 +15,10 @@ import (
 // If these change, every composed network moves its ports, which is a decision
 // and not a refactor.
 func TestAssign_ReproducesTheLocalSteppedGolden(t *testing.T) {
-	m, err := netmap.Assign(netmap.Pool{
-		Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	m, err := resource.Assign(resource.Pool{
+		Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots: 6,
-		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
 	}, requests(6))
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
@@ -36,17 +35,17 @@ func TestAssign_ReproducesTheLocalSteppedGolden(t *testing.T) {
 	}
 }
 
-func TestAssign_ReproducesTheFleetGolden(t *testing.T) {
+func TestAssign_ReproducesTheSetGolden(t *testing.T) {
 	hosts := []string{"10.0.0.1", "10.0.0.2", "10.0.0.3", "10.0.0.4"}
-	pool := netmap.Pool{Slots: 1, Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10}}
+	pool := resource.Pool{Slots: 1, Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}}}
 	for _, h := range hosts {
-		pool.Hosts = append(pool.Hosts, netmap.Host{Addr: h})
+		pool.Hosts = append(pool.Hosts, resource.Host{Addr: h})
 	}
-	m, err := netmap.Assign(pool, requests(len(hosts)))
+	m, err := resource.Assign(pool, requests(len(hosts)))
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}
-	// One node per host, every node on the same ports — the fleet shape.
+	// One node per host, every node on the same ports — the server set shape.
 	for i, p := range m.Placements() {
 		if p.Host != hosts[i] {
 			t.Fatalf("%s host = %s, want %s", p.Label, p.Host, hosts[i])
@@ -57,10 +56,10 @@ func TestAssign_ReproducesTheFleetGolden(t *testing.T) {
 	}
 }
 
-func requests(n int) []netmap.Request {
-	out := make([]netmap.Request, n)
+func requests(n int) []resource.Request {
+	out := make([]resource.Request, n)
 	for i := range out {
-		out[i] = netmap.Request{Role: node.RoleValidator}
+		out[i] = resource.Request{Role: node.RoleValidator}
 	}
 	return out
 }

@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // defaultPortBand is how many port slots a host is assumed to offer when no
@@ -104,7 +104,7 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 
 // mapFilter turns the selectors into one predicate, rejecting a combination
 // that asks two questions at once rather than silently honouring one.
-func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) {
+func mapFilter(m *node.Map, in NetMapIn) (func(node.Placement) bool, error) {
 	given := 0
 	for _, on := range []bool{in.Node > 0, in.Label != "", in.Host != "", in.Port > 0, in.Addr != ""} {
 		if on {
@@ -124,28 +124,28 @@ func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) 
 			return nil, fmt.Errorf("app: netmap show: %q has no port number", in.Addr)
 		}
 		if label, ok := m.At(host, port); ok {
-			return func(p netmap.Placement) bool { return p.Label == label }, nil
+			return func(p node.Placement) bool { return p.Label == label }, nil
 		}
-		return func(netmap.Placement) bool { return false }, nil
+		return func(node.Placement) bool { return false }, nil
 	}
 	switch {
 	case in.Node > 0:
-		return func(p netmap.Placement) bool { return p.Index == in.Node }, nil
+		return func(p node.Placement) bool { return p.Index == in.Node }, nil
 	case in.Label != "":
-		want := netmap.NodeLabel(in.Label)
+		want := node.Label(in.Label)
 		if _, ok := m.Lookup(want); ok {
-			return func(p netmap.Placement) bool { return p.Label == want }, nil
+			return func(p node.Placement) bool { return p.Label == want }, nil
 		}
 		// Not an identity, so read it as a role alias ("en2").
-		role, ord, err := netmap.ParseRoleLabel(want)
+		role, ord, err := node.ParseRoleLabel(want)
 		if err != nil {
 			return nil, fmt.Errorf("app: netmap show: %q is neither a node in this network nor a role label: %w", in.Label, err)
 		}
-		return func(p netmap.Placement) bool { return netmap.Is(p.Role, role) && p.Ord == ord }, nil
+		return func(p node.Placement) bool { return node.Is(p.Role, role) && p.Ord == ord }, nil
 	case in.Host != "":
-		return func(p netmap.Placement) bool { return p.Host == in.Host }, nil
+		return func(p node.Placement) bool { return p.Host == in.Host }, nil
 	case in.Port > 0:
-		return func(p netmap.Placement) bool {
+		return func(p node.Placement) bool {
 			for _, port := range []int{p.Ports.P2P, p.Ports.Etcd, p.Ports.EtcdClient, p.Ports.HTTP, p.Ports.WS, p.Ports.Auth, p.Ports.Metrics} {
 				if port != 0 && port == in.Port {
 					return true
@@ -154,7 +154,7 @@ func mapFilter(m *netmap.Map, in NetMapIn) (func(netmap.Placement) bool, error) 
 			return false
 		}, nil
 	default:
-		return func(netmap.Placement) bool { return true }, nil
+		return func(node.Placement) bool { return true }, nil
 	}
 }
 
@@ -181,11 +181,11 @@ type NetPoolOut struct {
 // NetPool reports the addresses and port slots a network may be composed from,
 // and how many are already taken. It is what answers "why was 15 refused".
 func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
-	placement, err := ResolveServer(d, in.Server, 1, defaultPortBand)
+	resolved, err := ResolveServer(d, in.Server, 1, defaultPortBand)
 	if err != nil {
 		return NetPoolOut{}, err
 	}
-	pool := placement.Placement.Pool
+	pool := resolved.Pool
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
@@ -238,19 +238,19 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 	if err != nil {
 		return NetMapOut{}, err
 	}
-	pool := resolved.Placement.Pool
+	pool := resolved.Pool
 	if pool.Slots < 1 {
 		pool.Slots = 1
 	}
 	pool.Reservation = plugin.Family().PortReservation()
-	reqs := make([]netmap.Request, 0, in.Validators+in.Endpoints)
+	reqs := make([]resource.Request, 0, in.Validators+in.Endpoints)
 	for range in.Validators {
-		reqs = append(reqs, netmap.Request{Role: node.RoleBP})
+		reqs = append(reqs, resource.Request{Role: node.RoleBP})
 	}
 	for range in.Endpoints {
-		reqs = append(reqs, netmap.Request{Role: node.RoleEN})
+		reqs = append(reqs, resource.Request{Role: node.RoleEN})
 	}
-	m, err := netmap.Assign(pool, reqs)
+	m, err := resource.Assign(pool, reqs)
 	if err != nil {
 		return NetMapOut{}, err
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	netmapmod "github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"strings"
 
@@ -108,7 +108,7 @@ type NetAllocateIn struct {
 	TopologyPath string
 	// Server selects where the nodes are placed and on what ports, from the
 	// operator's server set. Its zero value uses the built-in local plan.
-	Server netmapmod.ServerRef
+	Server resource.ServerRef
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
@@ -128,7 +128,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		if in.Server.SetPath == "" {
 			in.Server.SetPath = ws.State().ServerSet
 		}
-		resolved, err := netmapmod.ResolveServer(in.Server, minValidators, portBand)
+		resolved, err := resource.ResolveServer(in.Server, minValidators, portBand)
 		if err != nil {
 			return "", err
 		}
@@ -140,7 +140,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		return ws.Allocate(AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
-			Placement: resolved.Placement, SetPath: in.Server.SetPath,
+			Pool: resolved.Pool, SetPath: in.Server.SetPath,
 		})
 	})
 	return StepOut{Detail: detail}, err

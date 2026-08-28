@@ -1,4 +1,4 @@
-package serverset_test
+package resource_test
 
 import (
 	"context"
@@ -8,20 +8,20 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/netmap/internal/serverset"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// TestLive_SudoElevatesWithThePassword proves the fleet's real access model
+// TestLive_SudoElevatesWithThePassword proves the server set's real access model
 // end to end: the login is an ordinary user authenticated by password, and
 // sudo elevates by asking for that same password — which SSHSudoRunner feeds
-// on stdin. Gated on the docker fleet:
+// on stdin. Gated on the docker server set:
 //
-//	CHAINBENCH_DOCKER_FLEET=<repo>/env/docker/build go test ./internal/serverset/ -run Live_Sudo -v
+//	CHAINBENCH_DOCKER_SERVERS=<repo>/env/docker/build go test ./internal/serverset/ -run Live_Sudo -v
 func TestLive_SudoElevatesWithThePassword(t *testing.T) {
-	build := testkit.FleetBuildDir(t)
+	build := testkit.ServersBuildDir(t)
 
 	inv := filepath.Join(build, "server-set.yaml")
-	cfg, err := serverset.Load(inv)
+	cfg, err := resource.LoadSet(inv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,13 +30,13 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !srv.SSH.Sudo {
-		t.Fatalf("the fleet inventory should declare sudo: true")
+		t.Fatalf("the server set inventory should declare sudo: true")
 	}
 	creds, err := srv.Credentials()
 	if err != nil {
 		t.Fatal(err)
 	}
-	lm, err := serverset.LoadLocalMap(serverset.LocalMapNear(inv))
+	lm, err := resource.LoadLocalMap(resource.LocalMapNear(inv))
 	if err != nil {
 		t.Fatal(err)
 	}

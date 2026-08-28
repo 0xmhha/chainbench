@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/netmap"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // resolveAccountProvider returns the accounts provider for a run: from an
@@ -44,7 +44,7 @@ func remoteDriver(host, user string, port int) (driver.Driver, error) {
 	if port == 0 {
 		port = 22
 	}
-	hostKey, err := netmap.SetPolicy("").Callback()
+	hostKey, err := resource.SetPolicy("").Callback()
 	if err != nil {
 		return nil, err
 	}
