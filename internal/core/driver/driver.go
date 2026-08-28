@@ -83,3 +83,28 @@ func NodeOf(spec NodeSpec, pid int) node.Node {
 		PID:    pid,
 	}
 }
+
+// localHost is where a node with no recorded host is reachable: this machine.
+const localHost = "127.0.0.1"
+
+// SpecOf is the launch description a recorded node becomes: what the record
+// says about identity, paths, ports and argv, with this machine as the host
+// when the record names none. The binary is not on the record — the caller
+// resolves it — so it is left for the caller to set.
+func SpecOf(r node.Record) NodeSpec {
+	host := r.Host
+	if host == "" {
+		host = localHost
+	}
+	return NodeSpec{
+		Index:      r.Index,
+		Role:       node.Role(r.Role),
+		SyncMode:   r.SyncMode,
+		Host:       host,
+		DataDir:    r.DataDir,
+		ConfigPath: r.ConfigPath,
+		LogPath:    r.LogPath,
+		Args:       r.Args,
+		Ports:      r.Endpoints,
+	}
+}

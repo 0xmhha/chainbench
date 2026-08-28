@@ -1,21 +1,24 @@
-package chainsetup_test
+package testengine_test
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
+
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"github.com/0xmhha/chainbench/internal/testengine"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
@@ -90,7 +93,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 	var gotPlan driver.Plan
 	provisionCalled := false
 
-	build := chainsetup.NewBuildEnv(chainsetup.BuildDeps{
+	build := testengine.NewBuildEnv(testengine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
 		Pool:       testPool(),
 		Genesis:    gen,
@@ -132,7 +135,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 }
 
 func TestNewBuildEnv_NoNodes(t *testing.T) {
-	build := chainsetup.NewBuildEnv(chainsetup.BuildDeps{
+	build := testengine.NewBuildEnv(testengine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
 		Pool:       testPool(),
 		Genesis:    &fakeGenesis{},
@@ -150,7 +153,7 @@ func TestNewBuildEnv_NoNodes(t *testing.T) {
 func TestNewBuildEnv_PoolTooSmall(t *testing.T) {
 	small := testPool()
 	small.Slots = 2
-	build := chainsetup.NewBuildEnv(chainsetup.BuildDeps{
+	build := testengine.NewBuildEnv(testengine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
 		Pool:       small,
 		Genesis:    &fakeGenesis{},
@@ -167,7 +170,7 @@ func TestNewBuildEnv_PoolTooSmall(t *testing.T) {
 }
 
 func TestNewBuildEnv_ProvisionError(t *testing.T) {
-	build := chainsetup.NewBuildEnv(chainsetup.BuildDeps{
+	build := testengine.NewBuildEnv(testengine.BuildDeps{
 		Plugin:     wbftTestPlugin(),
 		Pool:       testPool(),
 		Genesis:    &fakeGenesis{bytes: []byte("{}")},
@@ -177,5 +180,20 @@ func TestNewBuildEnv_ProvisionError(t *testing.T) {
 	})
 	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {
 		t.Fatal("expected provision error to propagate")
+	}
+}
+
+// wbftTestPlugin is a StaticPlugin with the real wbft family and a minimal
+// template exercising the consensus-critical placeholders.
+func wbftTestPlugin() registry.ChainPlugin {
+	tmpl := `{"config":{"chainId":__CHAIN_ID__},` +
+		`"validators":"__VALIDATORS_JSON__",` +
+		`"blsKeys":"__BLS_PUBLIC_KEYS_JSON__",` +
+		`"extraData":"__EXTRA_DATA__",` +
+		`"alloc":__ALLOC_JSON__}`
+	return registry.StaticPlugin{
+		M:    registry.Manifest{ID: "wbfttest", Binary: "go-wbft", ChainID: 1337, ConsensusFamily: "wbft"},
+		Fam:  wbftfam.New(),
+		Tmpl: []byte(tmpl),
 	}
 }

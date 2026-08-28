@@ -1,4 +1,4 @@
-package testengine_test
+package poa_test
 
 import (
 	"context"
@@ -13,8 +13,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-
-	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // fakeChain answers the console calls the join makes, and records them. It
@@ -120,7 +118,7 @@ func listenUnix(t *testing.T, path string) {
 func TestEtcdJoin_AsksTheBootNodeAndOnlyProducers(t *testing.T) {
 	plan := planWithIPCs(t, []node.Role{node.RoleBP, node.RoleBP, node.RoleBP, node.RoleEN})
 	chain := &fakeChain{cluster: []string{"node1"}}
-	b := testengine.WemixBootstrap{Binary: "gwemix", Run: chain.run}
+	b := poa.Bootstrap{Binary: "gwemix", Run: chain.run}
 
 	boot := node.Node{Index: 1, Role: node.RoleBP}
 	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, boot); err != nil {
@@ -153,7 +151,7 @@ func TestEtcdJoin_AsksTheBootNodeAndOnlyProducers(t *testing.T) {
 func TestEtcdJoin_KeepsAskingUntilTheClusterSaysSo(t *testing.T) {
 	plan := planWithIPCs(t, []node.Role{node.RoleBP, node.RoleBP})
 	chain := &fakeChain{cluster: []string{"node1"}, stubborn: "node2"}
-	b := testengine.WemixBootstrap{Binary: "gwemix", Run: chain.run}
+	b := poa.Bootstrap{Binary: "gwemix", Run: chain.run}
 
 	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, node.Node{Index: 1, Role: node.RoleBP}); err != nil {
 		t.Fatalf("etcd-join: %v", err)
@@ -168,7 +166,7 @@ func TestEtcdJoin_KeepsAskingUntilTheClusterSaysSo(t *testing.T) {
 func TestEtcdJoin_LoneProducerJoinsNothing(t *testing.T) {
 	plan := planWithIPCs(t, []node.Role{node.RoleBP, node.RoleEN})
 	chain := &fakeChain{cluster: []string{"node1"}}
-	b := testengine.WemixBootstrap{Binary: "gwemix", Run: chain.run}
+	b := poa.Bootstrap{Binary: "gwemix", Run: chain.run}
 
 	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, node.Node{Index: 1, Role: node.RoleBP}); err != nil {
 		t.Fatalf("etcd-join: %v", err)

@@ -1,29 +1,29 @@
-package chainsetup_test
+package testengine_test
 
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"github.com/0xmhha/chainbench/internal/testengine"
 	"github.com/0xmhha/chainbench/internal/testspec"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 )
 
 // TestBuildEnv_Live_Stablenet proves the bring-up half of the walking skeleton:
-// chainsetup.NewBuildEnv, wired with a real allocator, PresetGenesisSource, the
+// testengine.NewBuildEnv, wired with a real allocator, PresetGenesisSource, the
 // launcher.Direct, and a block-advance health gate, brings a real 4-node
 // stablenet network up on the allocator-assigned ports, and the teardown stops
 // it cleanly.
@@ -70,7 +70,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 		Procman: process.New(),
 	})
 
-	build := chainsetup.NewBuildEnv(chainsetup.BuildDeps{
+	build := testengine.NewBuildEnv(testengine.BuildDeps{
 		Plugin: plugin,
 		Pool: resource.Pool{
 			Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
@@ -113,25 +113,4 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 		t.Fatalf("head not advancing after bring-up: %v", err)
 	}
 	t.Logf("BuildEnv brought up %d nodes on allocator ports (node1 %s)", len(ns.Nodes), ns.Nodes[0].RPCURL)
-}
-
-// waitForHead polls until the head reaches at least target or the deadline.
-func waitForHead(ctx context.Context, rpcURL string, target uint64, timeout time.Duration) error {
-	c := rpc.Dial(rpcURL)
-	deadline := time.NewTimer(timeout)
-	defer deadline.Stop()
-	tick := time.NewTicker(2 * time.Second)
-	defer tick.Stop()
-	for {
-		if h, err := c.BlockNumber(ctx); err == nil && h >= target {
-			return nil
-		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-deadline.C:
-			return context.DeadlineExceeded
-		case <-tick.C:
-		}
-	}
 }

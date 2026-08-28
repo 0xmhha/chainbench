@@ -3,11 +3,13 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
@@ -23,7 +25,7 @@ import (
 // It composes the same pieces the engine and the step surfaces do rather than
 // carrying its own copy of the procedure: the placement comes from netmap, the
 // genesis from the binary via WemixGenesisSource, the phase order from the
-// consensus family, and the bootstrap actions from WemixBootstrap. What this
+// consensus family, and the bootstrap actions from poa.Bootstrap. What this
 // adds is the reporting — each phase called on its own, so a failure names the
 // step instead of the whole bring-up.
 func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, error) {
@@ -128,11 +130,11 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[5], func() (string, error) {
-		placed := make([]PlacedNode, 0, o.Validators)
-		for i, p := range assign.Placements() {
-			placed = append(placed, PlacedNode{Req: node.LaunchReq{Role: roles[i]}, Placement: p})
+		reqs := make([]node.LaunchReq, 0, len(roles))
+		for _, r := range roles {
+			reqs = append(reqs, node.LaunchReq{Role: r})
 		}
-		p, err := AssemblePlan(plugin, placed, art.Genesis, o.DataDir, plugin.Manifest().Capabilities)
+		p, err := launcher.PlanOf(plugin, reqs, assign.Placements(), art.Genesis, o.DataDir, plugin.Manifest().Capabilities)
 		if err != nil {
 			return "", err
 		}
@@ -167,7 +169,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	procs := process.New()
-	bootstrap := WemixBootstrap{Binary: o.Binary, KeysDir: o.KeysDir}
+	bootstrap := poa.Bootstrap{Binary: o.Binary, KeysDir: o.KeysDir}
 
 	t.do(c.Steps[8], func() (string, error) {
 		phases = plugin.Family().BringUpPhases(roles)

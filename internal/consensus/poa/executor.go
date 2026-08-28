@@ -1,4 +1,4 @@
-package chainsetup
+package poa
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
@@ -36,14 +35,14 @@ const memberWait = 120 * time.Second
 // retry-on-error.
 const etcdFormWait = 30 * time.Second
 
-// WemixBootstrap executes the bring-up actions a poa network names between its
+// Bootstrap executes the bring-up actions a poa network names between its
 // phases: deploy the governance contracts, form the etcd cluster, and confirm
 // it formed.
 //
 // It is the executor side of the boundary the family declares. The family says what
 // must happen and in what order; this says how, for one particular target. The
 // launcher owns when, how long, and how a failure is classified.
-type WemixBootstrap struct {
+type Bootstrap struct {
 	// Binary is the gwemix executable the actions drive.
 	Binary string
 	// KeysDir holds the key set: the boot node's keystore and the password.
@@ -54,65 +53,65 @@ type WemixBootstrap struct {
 	// takes the name the genesis source writes.
 	ConfigName string
 	// Run executes the binary; nil uses os/exec.
-	Run poa.Runner
+	Run Runner
 }
 
 // Action performs one named bring-up action against a node.
-func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Plan, on node.Node) error {
+func (b Bootstrap) Action(ctx context.Context, name string, plan driver.Plan, on node.Node) error {
 	spec, ok := planSpecFor(plan, on.Index)
 	if !ok {
-		return fmt.Errorf("engine: wemix bootstrap: the plan has no node%d to run %q on", on.Index, name)
+		return fmt.Errorf("poa: bootstrap: the plan has no node%d to run %q on", on.Index, name)
 	}
 	run := b.Run
 	if run == nil {
-		run = poa.ExecRunner
+		run = ExecRunner
 	}
 	binary := b.Binary
 	if binary == "" {
 		binary = spec.Binary
 	}
 	if binary == "" {
-		return fmt.Errorf("engine: wemix bootstrap: no binary to run %q with", name)
+		return fmt.Errorf("poa: bootstrap: no binary to run %q with", name)
 	}
 	ipc := ipcPath(spec, binary)
-	if err := poa.WaitForIPC(ctx, ipc, ipcWait); err != nil {
-		return fmt.Errorf("engine: wemix bootstrap: %q: %w", name, err)
+	if err := WaitForIPC(ctx, ipc, ipcWait); err != nil {
+		return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
 	}
 	// The governance deploy is a transaction and waits for its receipt, so the
 	// chain has to be sealing before it runs. The IPC socket appears about a
 	// second into start-up and says nothing about that.
-	if name == poa.ActionDeployGovernance {
-		if err := poa.WaitProducing(ctx, run, binary, ipc, producingWait); err != nil {
-			return fmt.Errorf("engine: wemix bootstrap: %q: %w", name, err)
+	if name == ActionDeployGovernance {
+		if err := WaitProducing(ctx, run, binary, ipc, producingWait); err != nil {
+			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
 		}
 	}
 
 	switch name {
-	case poa.ActionDeployGovernance:
+	case ActionDeployGovernance:
 		keystore, err := bootKeystore(b.KeysDir, on.Index)
 		if err != nil {
-			return fmt.Errorf("engine: wemix bootstrap: %q: %w", name, err)
+			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
 		}
 		password := filepath.Join(b.KeysDir, "password")
 		cfgName := b.ConfigName
 		if cfgName == "" {
-			cfgName = poa.ConfigFileName
+			cfgName = ConfigFileName
 		}
 		cfgPath := filepath.Join(plan.DataRoot, cfgName)
 		if _, err := os.Stat(cfgPath); err != nil {
-			return fmt.Errorf("engine: wemix bootstrap: %q needs the governance config the genesis step writes to the target: %w", name, err)
+			return fmt.Errorf("poa: bootstrap: %q needs the governance config the genesis step writes to the target: %w", name, err)
 		}
-		return poa.DeployGovernance(ctx, run, binary, ipc, cfgPath, keystore, password)
-	case poa.ActionEtcdInit:
-		return poa.EtcdInit(ctx, run, binary, ipc)
-	case poa.ActionVerifyEtcd:
-		return poa.VerifyEtcd(ctx, run, binary, ipc, etcdFormWait)
-	case poa.ActionEtcdJoin:
+		return DeployGovernance(ctx, run, binary, ipc, cfgPath, keystore, password)
+	case ActionEtcdInit:
+		return EtcdInit(ctx, run, binary, ipc)
+	case ActionVerifyEtcd:
+		return VerifyEtcd(ctx, run, binary, ipc, etcdFormWait)
+	case ActionEtcdJoin:
 		return b.joinProducers(ctx, run, binary, plan, on, ipc)
 	default:
 		// An action nobody implements is a gap in the bring-up, not something
 		// to skip: the phase that named it expects it to have happened.
-		return fmt.Errorf("engine: wemix bootstrap: no executor for action %q", name)
+		return fmt.Errorf("poa: bootstrap: no executor for action %q", name)
 	}
 }
 
@@ -123,7 +122,7 @@ func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Pla
 //
 // on is the boot node — the phase names it, so the rule for which node that is
 // lives in the family and not here.
-func (b WemixBootstrap) joinProducers(ctx context.Context, run poa.Runner, binary string, plan driver.Plan, on node.Node, bootIPC string) error {
+func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string, plan driver.Plan, on node.Node, bootIPC string) error {
 	peer := string(node.LabelFor(on.Index))
 	members := []string{peer}
 	for _, spec := range plan.Nodes {
@@ -132,7 +131,7 @@ func (b WemixBootstrap) joinProducers(ctx context.Context, run poa.Runner, binar
 		}
 		name := string(node.LabelFor(spec.Index))
 		if err := b.joinOne(ctx, run, binary, ipcPath(spec, binary), bootIPC, peer, name); err != nil {
-			return fmt.Errorf("engine: wemix bootstrap: %q: %s: %w", poa.ActionEtcdJoin, name, err)
+			return fmt.Errorf("poa: bootstrap: %q: %s: %w", ActionEtcdJoin, name, err)
 		}
 		members = append(members, name)
 	}
@@ -141,7 +140,7 @@ func (b WemixBootstrap) joinProducers(ctx context.Context, run poa.Runner, binar
 		// formed cluster of one, which the boot phase already verified.
 		return nil
 	}
-	return poa.VerifyEtcdMembers(ctx, run, binary, bootIPC, members, etcdJoinWait)
+	return VerifyEtcdMembers(ctx, run, binary, bootIPC, members, etcdJoinWait)
 }
 
 // joinOne asks one producer to join, and keeps asking until the cluster says
@@ -153,21 +152,21 @@ func (b WemixBootstrap) joinProducers(ctx context.Context, run poa.Runner, binar
 // without error still sometimes leaves the cluster unchanged — the peer
 // handles one request at a time — so the cluster, not the return value, is
 // what says it worked.
-func (b WemixBootstrap) joinOne(ctx context.Context, run poa.Runner, binary, joinerIPC, bootIPC, peer, name string) error {
-	if err := poa.WaitForIPC(ctx, joinerIPC, ipcWait); err != nil {
+func (b Bootstrap) joinOne(ctx context.Context, run Runner, binary, joinerIPC, bootIPC, peer, name string) error {
+	if err := WaitForIPC(ctx, joinerIPC, ipcWait); err != nil {
 		return err
 	}
-	if err := poa.WaitForMember(ctx, run, binary, joinerIPC, peer, memberWait); err != nil {
+	if err := WaitForMember(ctx, run, binary, joinerIPC, peer, memberWait); err != nil {
 		return err
 	}
 	deadline := time.Now().Add(etcdJoinWait)
 	var last error
 	for {
-		if err := poa.EtcdJoin(ctx, run, binary, joinerIPC, peer); err != nil {
+		if err := EtcdJoin(ctx, run, binary, joinerIPC, peer); err != nil {
 			last = err
 		}
-		cluster, err := poa.EtcdCluster(ctx, run, binary, bootIPC)
-		if err == nil && poa.ClusterNames(cluster, name) {
+		cluster, err := EtcdCluster(ctx, run, binary, bootIPC)
+		if err == nil && ClusterNames(cluster, name) {
 			return nil
 		}
 		if time.Now().After(deadline) {

@@ -521,6 +521,42 @@ keyring 을 정리한 방식(모듈 하나 = CLI 그룹 하나 = MCP 묶음 하�
 **게이트**: `chainsetup` fan-out 27 → 10 대. `testengine → chainsetup` 엣지 소멸
 (레이어 상향 1건도 함께).
 
+**P6 착수 전 실측(2026-08-28).** `chainsetup` 5,935줄(테스트 제외)은 세 덩어리다.
+v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_*`·`steps_*`),
+체인 구성 케이스 1,793줄(`cases`·`static`·`wemix`·`handoff*`·`report`·`state` —
+`chain up --case` 러너), 옛 엔진 빌드 경로 805줄(`buildenv`·`keysource`·`localplan`·
+`locallaunch`·`wemixbootstrap`). `testengine → chainsetup` 엣지는 셋째 덩어리
+때문이었고, `app.RunSuite` 는 이미 위에서 조립한다(`NetUp` + attach 엔진). 둘째
+덩어리는 P7 의 DSL 케이스 4종이 대체할 대상이라 P6 에서 지우지 않는다. 그래서 P6
+은 네 조각으로 간다.
+
+- **P6.1 경계 이동(동작 불변) — 완료 2026-08-28.** 옮긴 것: 키 출처
+  `KeySet/KeySource/PresetKeySource/GeneratedKeySource/RegisterIdentities` →
+  `core/keyring/store` (`KeySource`·`PresetKeys`·`GeneratedKeys`·`(*KeySet).Register`;
+  `net keys` 와 `run --binary` 가 같은 경계를 쓰므로 저장소가 주인이다) ·
+  `WemixBootstrap` + `WemixInfo/ReadWemixInfo/WaitEtcdCluster` → `consensus/poa`
+  (`Bootstrap`·`Info`·`ReadInfo`·`WaitEtcdCluster`; 패밀리가 선언한 액션의
+  실행자 절반, `chainsetup.Runner` 는 `poa.Runner` 의 사본이라 삭제) ·
+  `PlacedNode/AssemblePlan` → `launcher.PlanOf` (요청+배치 → `node.Record` →
+  `driver.SpecOf`; 워크스페이스의 `driverSpec` 도 `driver.SpecOf` 로 합쳐져 플랜
+  빌더 셋이 하나가 됐다. `launcher/direct_test.go` 의 상향 import 도 함께 사라짐) ·
+  `NewBuildEnv/BuildDeps/BuildEnvFunc/TeardownFunc` → `testengine` (엔진의 환경
+  조립이지 순서가 아니다). `setup_bridge.go` 삭제, 재수출 0.
+  결과: `testengine → chainsetup` 엣지 소멸, 레이어 위반 0, `chainsetup`
+  5,935 → 5,210줄, fan-out 26 → 24.
+- **P6.2 옛 `setup` 경로 은퇴** — `localplan.go`·`locallaunch.go`(265줄)와
+  `app.NetworkPlan/Provision/Launch`, CLI `setup --launch`, MCP `chainbench_start`·
+  `chainbench_setup_plan` 을 `NetUp` 으로 돌린다. 막힌 곳: e2e 13파일과 repro 3종이
+  `setup --launch` 로 띄우고, `hardfork`·`node start/stop`·`test --data-dir` 가 그
+  경로만 쓰는 `nodeset.json`/`nodespecs.json` 을 읽는다. 레거시 `--data-dir` 14곳과
+  한 번에 손댄다(§7-3 "두 번 손대지 않기"). **라이브 검증이 앞서야 한다.**
+- **P6.3 핸드오프 중복 제거** — `handoff_driver.go`(371줄)와
+  `cmd/chainbench/upgrade_run.go`(396줄)가 함수 단위로 같은 일을 한다(8쌍).
+  테스트가 붙은 쪽은 cmd 다. 둘을 `consensus/upgrade` 하나로 합친다.
+- **P6.4 케이스 러너 삭제 = P7.** `cases/static/wemix/report/state`(1,793줄)와
+  `cmd/chainbench/chain.go` 는 DSL 케이스 4종이 들어온 뒤 지운다. 2,000줄 목표는
+  이때 닿는다.
+
 ### P7. DSL 테스트 케이스 4종
 
 여기까지 와야 케이스를 **문법대로** 쓸 수 있다. 네 갈래를 각각 만든다.

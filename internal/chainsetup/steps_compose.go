@@ -3,9 +3,6 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"io/fs"
 	"maps"
 	"os"
@@ -13,6 +10,10 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/driver"
@@ -77,12 +78,12 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `net allocate` first or pass --nodes")
 	}
 
-	var src KeySource
+	var src store.KeySource
 	switch opts.Source {
 	case "", "preset":
-		src = PresetKeySource{Path: w.state.KeysDir}
+		src = store.PresetKeys{Path: w.state.KeysDir}
 	case "generate":
-		src = GeneratedKeySource{Path: w.state.KeysDir, Validators: opts.Validators}
+		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: opts.Validators}
 	default:
 		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset or generate)", opts.Source)
 	}
@@ -91,7 +92,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		return "", err
 	}
 	detail := fmt.Sprintf("%s: %d identities, %d declared validators",
-		src.Describe(), len(ks.Preset.Nodes), len(ks.Preset.Network.Validators))
+		src.Describe(), len(ks.Nodes), len(ks.Network.Validators))
 	w.markStep("keys", detail)
 	return detail, nil
 }
@@ -395,7 +396,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
-		content := nodeconfig.TOML(launcher.NodeConfig(p, preset, driverSpec(ns), w.keysBase(), staticNodes))
+		content := nodeconfig.TOML(launcher.NodeConfig(p, preset, driver.SpecOf(ns), w.keysBase(), staticNodes))
 		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
@@ -436,7 +437,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(launcher.NodeConfig(p, preset, driverSpec(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(launcher.NodeConfig(p, preset, driver.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -578,22 +579,6 @@ func nodeHost(ns node.Record) string {
 		return ns.Host
 	}
 	return localHost
-}
-
-// driverSpec maps a persisted node row onto the driver spec shape the argv
-// assembly and lifecycle steps consume.
-func driverSpec(ns node.Record) driver.NodeSpec {
-	return driver.NodeSpec{
-		Index:      ns.Index,
-		Role:       node.Role(ns.Role),
-		SyncMode:   ns.SyncMode,
-		Host:       nodeHost(ns),
-		DataDir:    ns.DataDir,
-		ConfigPath: ns.ConfigPath,
-		LogPath:    ns.LogPath,
-		Args:       ns.Args,
-		Ports:      ns.Endpoints,
-	}
 }
 
 // Netmap reads the workspace's node table as a placement map, so the peer

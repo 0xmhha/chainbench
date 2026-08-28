@@ -3,12 +3,14 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/inspector"
@@ -68,7 +70,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			return fmt.Errorf("chainsetup: init: read genesis: %w", err)
 		}
 		for _, ns := range nodes {
-			spec := driverSpec(ns)
+			spec := driver.SpecOf(ns)
 			spec.Binary = bin
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
@@ -209,7 +211,7 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	if len(ns.Args) == 0 {
 		return "", fmt.Errorf("chainsetup: restart: node%d has no recorded argv — run `net start` first", index)
 	}
-	spec := driverSpec(ns)
+	spec := driver.SpecOf(ns)
 	spec.Binary = bin
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
@@ -555,7 +557,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 		if err != nil {
 			return started, err
 		}
-		spec := driverSpec(ns)
+		spec := driver.SpecOf(ns)
 		spec.Binary = bin
 		if len(spec.Args) == 0 {
 			_, placed, peering, pubkey, perr := w.peerPlan(p)
@@ -592,7 +594,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase registry.Phase) error {
 	specs := make([]driver.NodeSpec, 0, len(w.state.Nodes))
 	for _, ns := range w.state.Nodes {
-		spec := driverSpec(ns)
+		spec := driver.SpecOf(ns)
 		spec.Binary = bin
 		specs = append(specs, spec)
 	}
@@ -602,7 +604,7 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 	if !ok {
 		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
-	exec := WemixBootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	exec := poa.Bootstrap{Binary: bin, KeysDir: w.state.KeysDir}
 	for _, name := range phase.Actions {
 		if err := exec.Action(ctx, name, plan, on); err != nil {
 			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)

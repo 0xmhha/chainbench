@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -33,7 +35,7 @@ type HandoffOptions struct {
 	// StopAfter ends the run once that step completes.
 	StopAfter string
 	// Exec runs a binary; nil uses os/exec.
-	Exec Runner
+	Exec poa.Runner
 	// Files is where this run's artifacts are written. Nil is the local
 	// filesystem. The boundary exists so the package stops owning the question of
 	// where state lands — the rule is that a step describes what to write and
@@ -162,7 +164,7 @@ func RunHandoff(ctx context.Context, c Case, o HandoffOptions, d HandoffDriver, 
 	t.do(c.Steps[9], func() (string, error) { return d.EtcdInit(ctx, o, producer) })
 
 	t.do(c.Steps[10], func() (string, error) {
-		info, err := WaitEtcdCluster(ctx, o.Exec, o.FromBinary, d.ProducerIPC(o, producer), o.EtcdTimeout, 0)
+		info, err := poa.WaitEtcdCluster(ctx, o.Exec, o.FromBinary, d.ProducerIPC(o, producer), o.EtcdTimeout, 0)
 		if err != nil {
 			return "", err
 		}
