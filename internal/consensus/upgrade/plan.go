@@ -16,12 +16,13 @@ package upgrade
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/netid"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"math/big"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -101,7 +102,7 @@ type Plan struct {
 	// fork-activation block: every node initializes from these identical bytes.
 	Genesis []byte
 	Nodes   []NodeSpec
-	Network preflight.NetworkPlan
+	Network NetworkPlan
 }
 
 // BuildPlan assembles a handoff launch plan from the two chain plugins and the
@@ -198,17 +199,66 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 		netids = append(netids, in.NetworkID)
 	}
 
-	// 4. Compose and run the preflight gate on the assembled plan.
-	net := preflight.NetworkPlan{
+	// 4. Validate the assembled plan: each builder checks its own artifact
+	// (network ids uniform, ports disjoint, forks ordered) and the handoff
+	// checks the one rule that is its own — a validator is not a member.
+	net := NetworkPlan{
 		NetworkIDs:     netids,
 		Ports:          ports,
 		Genesis:        merged,
 		WemixMembers:   in.ProducerAddrs,
 		WbftValidators: in.ToGenesis.Validators,
 	}
-	if err := preflight.Validate(net); err != nil {
+	if err := net.validate(); err != nil {
 		return Plan{}, err
 	}
 
 	return Plan{From: fm, To: tm, AtFork: up.AtFork, Genesis: merged, Nodes: nodes, Network: net}, nil
+}
+
+// NetworkPlan is the fully-resolved description of the handoff network about
+// to launch, kept on the Plan so a surface can show what was validated.
+type NetworkPlan struct {
+	// NetworkIDs is each node's configured devp2p network id.
+	NetworkIDs []int64
+	// Ports is each node's resolved port set.
+	Ports []node.Endpoints
+	// Genesis is the genesis bytes every node initializes from (identical).
+	Genesis []byte
+	// WemixMembers are the addresses registered as wemix+etcd producers.
+	WemixMembers []string
+	// WbftValidators are the croissant.init post-fork validator addresses.
+	// For an upgrade network these must be disjoint from WemixMembers.
+	WbftValidators []string
+}
+
+// validate runs the builders' own checks plus the handoff's role rule. Every
+// condition here caused a silent, hard-to-diagnose failure at least once.
+func (p NetworkPlan) validate() error {
+	if err := netid.ValidateUniform(p.NetworkIDs); err != nil {
+		return err
+	}
+	if err := resource.ValidatePorts(p.Ports); err != nil {
+		return err
+	}
+	if len(p.NetworkIDs) != len(p.Ports) {
+		return fmt.Errorf("upgrade: %d network ids but %d port sets", len(p.NetworkIDs), len(p.Ports))
+	}
+	if len(p.Genesis) > 0 {
+		if err := genesis.ValidateForks(p.Genesis); err != nil {
+			return err
+		}
+	}
+	// A go-wbft validator listed as a wemix member registers in governance but
+	// never joins etcd (it runs wbft), shows as "down", and stalls the producer.
+	member := map[string]bool{}
+	for _, a := range p.WemixMembers {
+		member[strings.ToLower(a)] = true
+	}
+	for _, v := range p.WbftValidators {
+		if member[strings.ToLower(v)] {
+			return fmt.Errorf("upgrade: address %s is both a wemix member and a wbft validator; keep validators out of the wemix member list", v)
+		}
+	}
+	return nil
 }

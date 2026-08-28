@@ -1,64 +1,108 @@
 package preflight_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/preflight"
-	"github.com/0xmhha/chainbench/internal/resource"
+	"context"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/preflight"
 )
 
-func goldenPorts(n int) []node.Endpoints {
-	var ps []node.Endpoints
-	for i := 1; i <= n; i++ {
-		p, _ := resource.Plan(i, 30010, 10, 40010, 10, node.DefaultReservation)
-		ps = append(ps, p)
-	}
-	return ps
-}
-
-func TestValidate_OK(t *testing.T) {
-	p := preflight.NetworkPlan{
-		NetworkIDs:     []int64{8285, 8285, 8285},
-		Ports:          goldenPorts(3),
-		Genesis:        []byte(`{"config":{"petersburgBlock":0,"croissantBlock":20,"croissant":{}}}`),
-		WemixMembers:   []string{"0xProd"},
-		WbftValidators: []string{"0xAAA", "0xBBB"},
-	}
-	if err := preflight.Validate(p); err != nil {
-		t.Fatalf("valid plan rejected: %v", err)
+func have() preflight.Have {
+	return preflight.Have{
+		Chain: "stablenet", Binary: "/bin/gstable", KeysDir: "keys/preset", Validators: 2, Started: true,
+		Nodes: []preflight.Node{
+			{Index: 1, Role: node.RoleBP, Host: "127.0.0.1", PID: 100},
+			{Index: 2, Role: node.RoleBP, Host: "127.0.0.1", PID: 101},
+			{Index: 3, Role: node.RoleEN, SyncMode: "full", Host: "127.0.0.1", PID: 102},
+		},
 	}
 }
 
-func TestValidate_Catches(t *testing.T) {
-	base := func() preflight.NetworkPlan {
-		return preflight.NetworkPlan{NetworkIDs: []int64{8285, 8285}, Ports: goldenPorts(2),
-			Genesis: []byte(`{"config":{"petersburgBlock":0}}`)}
+func TestCompare(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		have   preflight.Have
+		want   preflight.Want
+		expect preflight.Verdict
+		nodes  []int
+		reason string
+	}{
+		{"same shape reuses", have(), preflight.Want{Chain: "stablenet", Validators: 2, Endpoints: 1}, preflight.Reuse, nil, ""},
+		{"nothing composed", preflight.Have{}, preflight.Want{Chain: "stablenet"}, preflight.Compose, nil, "nothing is composed"},
+		{"other chain rebuilds all", have(), preflight.Want{Chain: "wbft", Validators: 2, Endpoints: 1}, preflight.RebuildAll, nil, "chain:"},
+		{"more validators rebuilds all", have(), preflight.Want{Chain: "stablenet", Validators: 3, Endpoints: 1}, preflight.RebuildAll, nil, "validators:"},
+		{"other keys rebuild all", have(), preflight.Want{Chain: "stablenet", KeysDir: "keys/other"}, preflight.RebuildAll, nil, "keys:"},
+		{"never started rebuilds all", func() preflight.Have { h := have(); h.Started = false; return h }(), preflight.Want{Chain: "stablenet"}, preflight.RebuildAll, nil, "never started"},
+		{"one node's sync mode rebuilds that node", have(),
+			preflight.Want{Chain: "stablenet", Nodes: []preflight.Node{{Index: 3, SyncMode: "snap"}}},
+			preflight.RebuildNodes, []int{3}, `node3: sync "full"→"snap"`},
+		{"a node moved to another server rebuilds that node", have(),
+			preflight.Want{Chain: "stablenet", Nodes: []preflight.Node{{Index: 2, Server: "server5"}}},
+			preflight.RebuildNodes, []int{2}, "server"},
+		{"a wanted node that is not composed rebuilds all", have(),
+			preflight.Want{Chain: "stablenet", Nodes: []preflight.Node{{Index: 9, SyncMode: "snap"}}},
+			preflight.RebuildAll, nil, "node9 is wanted"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			d := preflight.Compare(tc.have, tc.want)
+			if d.Verdict != tc.expect {
+				t.Fatalf("verdict = %s, want %s (%s)", d.Verdict, tc.expect, d)
+			}
+			if len(tc.nodes) > 0 && strings.Join(itoa(d.Nodes), ",") != strings.Join(itoa(tc.nodes), ",") {
+				t.Fatalf("nodes = %v, want %v", d.Nodes, tc.nodes)
+			}
+			if tc.reason != "" && !strings.Contains(d.String(), tc.reason) {
+				t.Fatalf("reasons should mention %q: %s", tc.reason, d)
+			}
+		})
 	}
-	// network id mismatch
-	p := base()
-	p.NetworkIDs = []int64{8285, 1111}
-	if err := preflight.Validate(p); err == nil || !strings.Contains(err.Error(), "mismatch") {
-		t.Errorf("networkid mismatch not caught: %v", err)
+}
+
+// TestCheck_ADeadNodeJoinsTheRebuild: the paper comparison keeps every node;
+// the live probe finds node2 gone, so node2 alone is rebuilt.
+func TestCheck_ADeadNodeJoinsTheRebuild(t *testing.T) {
+	live := func(_ context.Context, n preflight.Node) (bool, string) {
+		if n.Index == 2 {
+			return false, "pid 101 not running"
+		}
+		return true, ""
 	}
-	// member/validator overlap
-	p = base()
-	p.WemixMembers = []string{"0xShared"}
-	p.WbftValidators = []string{"0xSHARED"} // case-insensitive
-	if err := preflight.Validate(p); err == nil || !strings.Contains(err.Error(), "both a wemix member") {
-		t.Errorf("member/validator overlap not caught: %v", err)
+	d := preflight.Check(context.Background(), have(), preflight.Want{Chain: "stablenet", Validators: 2, Endpoints: 1}, live)
+	if d.Verdict != preflight.RebuildNodes || len(d.Nodes) != 1 || d.Nodes[0] != 2 {
+		t.Fatalf("decision = %s", d)
 	}
-	// genesis missing petersburg
-	p = base()
-	p.Genesis = []byte(`{"config":{"croissantBlock":20}}`)
-	if err := preflight.Validate(p); err == nil {
-		t.Error("missing petersburg not caught")
+	if !strings.Contains(d.String(), "pid 101 not running") {
+		t.Fatalf("the probe's reason should survive: %s", d)
 	}
-	// port collision (etcd overlaps http)
-	p = base()
-	p.Ports = []node.Endpoints{{P2P: 100, Etcd: 101, HTTP: 101, WS: 102, Auth: 103}}
-	p.NetworkIDs = []int64{8285}
-	if err := preflight.Validate(p); err == nil {
-		t.Error("port collision not caught")
+}
+
+// TestCheck_EveryNodeDeadIsNotARestart: a network with nothing alive comes
+// back whole through the composition, not node by node.
+func TestCheck_EveryNodeDeadIsNotARestart(t *testing.T) {
+	dead := func(context.Context, preflight.Node) (bool, string) { return false, "" }
+	d := preflight.Check(context.Background(), have(), preflight.Want{Chain: "stablenet"}, dead)
+	if d.Verdict != preflight.RebuildAll {
+		t.Fatalf("decision = %s, want rebuild-all", d)
 	}
+}
+
+// TestCheck_NetworkWideVerdictIsNotProbed: when the chain has to be recomposed
+// anyway, no node is dialled.
+func TestCheck_NetworkWideVerdictIsNotProbed(t *testing.T) {
+	probed := 0
+	live := func(context.Context, preflight.Node) (bool, string) { probed++; return true, "" }
+	d := preflight.Check(context.Background(), have(), preflight.Want{Chain: "wbft"}, live)
+	if d.Verdict != preflight.RebuildAll || probed != 0 {
+		t.Fatalf("decision = %s, probed %d nodes", d, probed)
+	}
+}
+
+func itoa(in []int) []string {
+	out := make([]string, len(in))
+	for i, v := range in {
+		out[i] = string(rune('0' + v))
+	}
+	return out
 }
