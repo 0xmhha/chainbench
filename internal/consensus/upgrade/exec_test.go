@@ -7,7 +7,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -72,40 +71,6 @@ func TestLaunch_MixedBinariesConcurrent(t *testing.T) {
 		if n.PID == 0 {
 			t.Errorf("node%d has no pid", n.Index)
 		}
-	}
-}
-
-func TestLaunchHandoff_ComposesLaunchMeshBootstrap(t *testing.T) {
-	from, to := plugins(t)
-	in := goodInputs()
-	// give every node a distinct pubkey so the plan yields enodes for the mesh.
-	in.NodePubkeys = []string{
-		strings.Repeat("a", 128), strings.Repeat("b", 128), strings.Repeat("c", 128),
-		strings.Repeat("d", 128), strings.Repeat("e", 128),
-	}
-	plan, err := upgrade.BuildPlan(from, to, in)
-	if err != nil {
-		t.Fatal(err)
-	}
-	d := &fakeDriver{}
-	caller := &fakePeerCaller{}
-	var bootstrapped []int
-	boot := func(_ context.Context, n node.Node) error { bootstrapped = append(bootstrapped, n.Index); return nil }
-
-	ns, err := upgrade.LaunchHandoff(context.Background(), d, plan, launchOpts(t), caller, boot)
-	if err != nil {
-		t.Fatalf("handoff: %v", err)
-	}
-	if len(ns.Nodes) != 5 {
-		t.Fatalf("want 5 nodes, got %d", len(ns.Nodes))
-	}
-	// full mesh over 5 nodes = 5*4 = 20 addPeer calls.
-	if len(caller.calls) != 20 {
-		t.Errorf("want 20 mesh calls, got %d", len(caller.calls))
-	}
-	// exactly the producer (index 0) is bootstrapped.
-	if len(bootstrapped) != 1 || bootstrapped[0] != 0 {
-		t.Errorf("only the producer should bootstrap, got %v", bootstrapped)
 	}
 }
 

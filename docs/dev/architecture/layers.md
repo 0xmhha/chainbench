@@ -130,7 +130,7 @@ flowchart TD
 |---|---|
 | `consensus/wbft` | wbft genesis(extraData RLP) · start flags |
 | `consensus/poa` | wemix config · genesis 생성 · **거버넌스/etcd 부트스트랩 프리미티브와 그 실행자**(`Bootstrap`: 패밀리가 선언한 액션을 한 타깃에서 수행, `Info`/`WaitEtcdCluster`: 클러스터가 실제로 섰는지) — P6.1 에서 chainsetup 에서 옮겨옴 |
-| `consensus/upgrade` | 체인 핸드오프 |
+| `consensus/upgrade` | 체인 핸드오프 — 계획(`BuildPlan`)·기동(`Launch`)·메시(`WireMesh`)와 **한 번의 핸드오프 본문**(`Handoff`: config → base genesis → plan → overlay → launch → mesh → governance → etcd → verify → fork 대기; P6.3). `chain up --case handoff` 와 `upgrade run` 은 그 위의 표면이다 |
 
 ### L2b 체인 어댑터 — 체인 특화
 

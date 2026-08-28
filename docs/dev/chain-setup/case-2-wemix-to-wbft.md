@@ -239,4 +239,4 @@ block 101 (0x65)  miner = 0x2493a8…   ← go-wbft 검증자 2  (라운드로�
 | 3 | 메시 위치 이동 | 최종 기동 뒤로 |
 | 4 | 프로파일 | `fork_block: 20` → `100` |
 | 5 | supervisor 배선 | `Deps.LeaderGate` 를 `admin.wemixInfo.etcd.cluster` 프로브로 (T3.2b 잔여) |
-| 6 | `upgrade run` | 같은 순서로 정렬하거나, `chain up` 으로 대체 |
+| 6 | `upgrade run` | **같은 순서가 됐다**(P6.3, 2026-08-28): `chain up --case handoff` 와 `upgrade run` 은 `consensus/upgrade.Handoff` 한 본문 위의 두 표면이다 |

@@ -10,7 +10,7 @@ import (
 )
 
 // WaitEndpointsReady polls each RPC endpoint until it answers (eth_blockNumber)
-// or the deadline passes. It is the default LaunchOptions.WaitReady used before
+// or the deadline passes. It is what a handoff waits on before
 // mesh wiring so admin_addPeer does not race the nodes' HTTP servers.
 func WaitEndpointsReady(ctx context.Context, endpoints []string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)

@@ -177,8 +177,9 @@ func (f *fakeHandoff) EtcdInit(context.Context, HandoffOptions, node.Node) (stri
 	return "called", f.mark("etcd-init")
 }
 func (f *fakeHandoff) ProducerIPC(HandoffOptions, node.Node) string { return "/ipc" }
-func (f *fakeHandoff) ForkBlock() int64                             { return 20 }
-func (f *fakeHandoff) ProducerAccount() string                      { return "0xproducer" }
+func (f *fakeHandoff) AwaitFork(context.Context, node.NodeSet, HandoffOptions) (string, error) {
+	return "forked", f.mark("await-fork")
+}
 
 func TestRunHandoff_VerifiesTheClusterAfterEtcdInit(t *testing.T) {
 	c, _ := Find("wemix-wbft")

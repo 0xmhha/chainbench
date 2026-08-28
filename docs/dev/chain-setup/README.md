@@ -262,7 +262,7 @@ FAIL 과 TODO 를 나누는 이유는 후속 작업이 서로 다르기 때문�
 | 2 | **후계 검증자에 keystore·`--unlock`·`--miner.etherbase` 가 없다** | 포크 후 인계 실패(라운드만 돎) | static 경로와 동일하게 배치 필요 (**미구현**) |
 | 3 | **재기동 후 메시 재연결이 없다** | 검증자끼리 미연결 → 쿼럼 불가 | 페이즈 B1 뒤로 이동 필요 (**미구현**) |
 | 4 | **`setup` 이 `governance-etcd` 부트스트랩을 실행하지 않는다** | 케이스 1 자동화 불가 | 매니페스트가 타입만 선언, `setup.Launch` 에 분기 없음 (**미구현**) |
-| 5 | `upgrade run` 이 부트스트랩 성공을 검증하지 않는다 | 실패해도 "etcd initialized" 출력 | `chain up` 의 **verify-etcd 로 해소**. `upgrade run` 은 그대로 |
+| 5 | `upgrade run` 이 부트스트랩 성공을 검증하지 않는다 | 실패해도 "etcd initialized" 출력 | **해소**(2026-08-28, P6.3): 두 경로가 `upgrade.Handoff` 한 본문을 쓰고, `upgrade run` 도 verify-etcd 를 한다 |
 | 6 | `admin.etcdIsReady` 가 이 go-wemix 빌드에 없다 | 설계 §3.3 의 리더게이트 프로브 이름이 틀림 | `admin.wemixInfo.etcd.cluster` 로 대체 확정 |
 | 7 | golden 프로파일 `fork_block: 20` 이 너무 이르다 | 프로듀서가 포크에서 멈춰 거버넌스 배포 영수증도 못 받음 | 참조값 **100** 으로 (**미구현**) |
 | 8 | `upgrade run` 에 재시도 없음 | e2e 헬퍼에만 있음 | (**미구현**) |
