@@ -60,7 +60,7 @@ keys:
 
 The `keys` step of a network resolves that source
 (`chainbench net keys --keys-source preset`, or `chainbench net up`, which runs
-the steps in order; `chainbench setup` takes `--keys-dir`). Genesis is built from
+the steps in order). Genesis is built from
 `metadata.json`, and the launcher ships each node's identity — `password`,
 `keystore/`, `nodekey` — into that run's data directory before starting the node,
 locally or over the file seam for a remote node.

@@ -9,11 +9,8 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/testhelper"
 
-	"github.com/0xmhha/chainbench/internal/core/config"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -64,23 +61,22 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	cfg := config.Resolve(nil, config.Values{"nodes.validators": "4"})
-	plan, err := chainsetup.BuildLocalPlan(cfg, plugin, dataRoot, nil)
-	if err != nil {
-		t.Fatalf("build plan: %v", err)
+	deps := chainsetup.Deps{}
+	if _, err := chainsetup.NetUp(ctx, deps, chainsetup.NetUpIn{
+		DataDir: dataRoot, Chain: "stablenet", Binary: bin, KeysDir: presetDir, Validators: 4,
+	}); err != nil {
+		t.Fatalf("net up stablenet: %v", err)
 	}
-	ns, _, err := chainsetup.LocalSetup{
-		Plugin: plugin, Config: cfg, Binary: bin, KeysDir: presetDir,
-	}.Launch(ctx, plan)
 	t.Cleanup(func() {
-		_, errs := launcher.StopNodeSet(context.Background(), driver.NewLocalDriver(), ns)
-		for _, e := range errs {
-			t.Logf("teardown: %v", e)
+		if _, err := chainsetup.NetworkStop(context.Background(), deps, chainsetup.NetworkStopIn{DataDir: dataRoot}); err != nil {
+			t.Logf("teardown: %v", err)
 		}
 	})
+	st, err := chainsetup.NetworkStatus(ctx, deps, chainsetup.NetworkStatusIn{DataDir: dataRoot})
 	if err != nil {
-		t.Fatalf("launch stablenet: %v", err)
+		t.Fatalf("network status: %v", err)
 	}
+	ns := st.Nodes
 	if len(ns.Nodes) == 0 {
 		t.Fatal("no nodes launched")
 	}
@@ -101,11 +97,10 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	}
 	env.PopulateNodeTable(ns)
 
-	deps := testspec.Deps{
+	run := testengine.NewRunSpec(testspec.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testhelper.Registry(),
-	}
-	run := testengine.NewRunSpec(deps)
+	})
 
 	spec := liveSpec(t, plugin.Manifest().ChainID, preset)
 	rec := sess.Test(1, spec.ID)

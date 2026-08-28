@@ -18,17 +18,10 @@ type Deps struct {
 	Env     func(string) string
 	Command string
 	Report  func(format string, args ...any)
-	// Driver overrides the transport used to control already-running node
-	// processes; nil uses the local driver. Injected for tests and for
-	// surfaces that route the same verb over SSH.
+	// Driver overrides the transport every machine of a workspace controls
+	// its nodes through; nil uses each machine's own driver. Injected for
+	// tests and for surfaces that route the same verb over another transport.
 	Driver func() (driver.Driver, error)
-}
-
-func (d Deps) nodeDriver() (driver.Driver, error) {
-	if d.Driver == nil {
-		return driver.NewLocalDriver(), nil
-	}
-	return d.Driver()
 }
 
 func (d Deps) command() string { return d.Command }

@@ -14,7 +14,7 @@ func newReportCmd() *cobra.Command {
 	var dataDir string
 	cmd := &cobra.Command{
 		Use:   "report",
-		Short: "Show stored run/test results (from a setup's data dir)",
+		Short: "Show stored run/test results (from a workspace)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
@@ -50,6 +50,6 @@ func newReportCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "data root with runs.json")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory with runs.json")
 	return cmd
 }

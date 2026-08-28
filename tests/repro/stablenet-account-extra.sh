@@ -62,20 +62,20 @@ rm -rf "$WORK"
 mkdir -p "$WORK"
 
 log "boot stablenet with the account-extra overlay"
-"$CHAINBENCH" setup --launch \
+"$CHAINBENCH" net up \
   --chain stablenet \
   --binary "$GSTABLE_BIN" \
-  --data-dir "$WORK" \
-  --keys-dir "$REPO/keys/preset" \
+  --workspace-dir "$WORK" \
+  --keys "$REPO/keys/preset" \
   --validators "$VALIDATORS" --endpoints "$ENDPOINTS" \
-  --genesis-overlay "$OVERLAY" || {
-  echo "setup --launch failed"
+  --overlay "$OVERLAY" || {
+  echo "net up failed"
   exit 1
 }
 
 # The overlay must advertise account-extra, else the cases would silently skip.
-if ! python3 -c "import json,sys; caps=json.load(open('$WORK/nodeset.json')).get('capabilities',[]); sys.exit(0 if 'account-extra' in caps else 1)"; then
-  echo "nodeset.json missing account-extra capability — overlay not applied"
+if ! python3 -c "import json,sys; caps=json.load(open('$WORK/workspace.json')).get('capabilities',[]); sys.exit(0 if 'account-extra' in caps else 1)"; then
+  echo "workspace.json missing account-extra capability — overlay not applied"
   exit 1
 fi
 
@@ -85,7 +85,7 @@ sleep "$SETTLE"
 args=()
 for c in "${CASES[@]}"; do args+=(--name "$c"); done
 log "run account-extra cases: ${CASES[*]}"
-if ! out="$("$CHAINBENCH" test --data-dir "$WORK" "${args[@]}" 2>&1)"; then
+if ! out="$("$CHAINBENCH" test --workspace-dir "$WORK" "${args[@]}" 2>&1)"; then
   echo "$out"
   echo "FAIL: account-extra cases reported failures"
   exit 1
@@ -96,5 +96,5 @@ if echo "$out" | grep -qE 'skip=[1-9]'; then
   exit 1
 fi
 
-"$CHAINBENCH" stop --data-dir "$WORK" >/dev/null 2>&1 || true
+"$CHAINBENCH" stop --workspace-dir "$WORK" >/dev/null 2>&1 || true
 log "PASS: account-extra bitmap smoke green"

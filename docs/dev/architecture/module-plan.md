@@ -544,12 +544,20 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   조립이지 순서가 아니다). `setup_bridge.go` 삭제, 재수출 0.
   결과: `testengine → chainsetup` 엣지 소멸, 레이어 위반 0, `chainsetup`
   5,935 → 5,210줄, fan-out 26 → 24.
-- **P6.2 옛 `setup` 경로 은퇴** — `localplan.go`·`locallaunch.go`(265줄)와
-  `app.NetworkPlan/Provision/Launch`, CLI `setup --launch`, MCP `chainbench_start`·
-  `chainbench_setup_plan` 을 `NetUp` 으로 돌린다. 막힌 곳: e2e 13파일과 repro 3종이
-  `setup --launch` 로 띄우고, `hardfork`·`node start/stop`·`test --data-dir` 가 그
-  경로만 쓰는 `nodeset.json`/`nodespecs.json` 을 읽는다. 레거시 `--data-dir` 14곳과
-  한 번에 손댄다(§7-3 "두 번 손대지 않기"). **라이브 검증이 앞서야 한다.**
+- **P6.2 옛 `setup` 경로 은퇴 — 완료 2026-08-28.** 지운 것: `chainsetup/localplan.go`·
+  `locallaunch.go`, `app.NetworkPlan/Provision/Launch`(`app/setup.go`), CLI `setup`,
+  MCP `chainbench_start`·`chainbench_setup_plan`, `session/localnet.go`(`nodeset.json`·
+  `nodespecs.json`), `process.TrackNodeSet`. 상태 파일은 워크스페이스 하나만 남았다.
+  옛 경로만 쓰던 verb 는 워크스페이스 위로 옮겼다: `NetworkStatus/Stop/Remove`,
+  `NodeStop/NodeStart`(`Workspace.StopNode/StartNode`, `Restart` 는 그 둘의 합성),
+  `HardforkPlan/Execute`(`Workspace.Hardfork` — 기록된 argv 로 재기동하고 새 pid·
+  바이너리·체인을 기록). `Deps.Driver` 는 워크스페이스의 머신 드라이버를 덮는 seam 이
+  됐다(테스트 더블·다른 전송). 레거시 명령 9곳의 `--data-dir` 은 `--workspace-dir` 로,
+  MCP 의 `data_dir` 인자는 `workspaceDir` 로 바꿨다(`upgrade run --data-dir` 만 노드
+  데이터 루트라는 뜻 그대로 남는다). e2e 하네스와 repro 3종은 `net up` 으로 띄우고
+  `workspace.json` 을 읽는다. **라이브(gstable)**: e2e `StablenetChain`·`SyncGap`
+  (node stop/start)·`HardforkSwap` 을 새 경로로 통과. 결과: `chainsetup` 3,589 →
+  **3,313줄**, `app` 1,757 → 1,410, `cmd/chainbench` 2,746 → 2,580, 위반 0.
 - **P6.3 핸드오프 중복 제거 — 완료 2026-08-28.** `handoff_driver.go`(371줄)와
   `cmd/chainbench/upgrade_run.go`(396줄)가 함수 단위로 같은 일을 했다(8쌍).
   본문은 `consensus/upgrade.Handoff` 하나가 됐다(546줄: `NewHandoff` →

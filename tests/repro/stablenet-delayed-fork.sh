@@ -67,21 +67,21 @@ rm -rf "$WORK"
 mkdir -p "$WORK"
 
 log "boot stablenet with Boho delayed to block $BOHO_BLOCK"
-"$CHAINBENCH" setup --launch \
+"$CHAINBENCH" net up \
   --chain stablenet \
   --binary "$GSTABLE_BIN" \
-  --data-dir "$WORK" \
-  --keys-dir "$REPO/keys/preset" \
+  --workspace-dir "$WORK" \
+  --keys "$REPO/keys/preset" \
   --validators "$VALIDATORS" --endpoints "$ENDPOINTS" \
-  --set "genesis.overrides.bohoBlock=$BOHO_BLOCK" || {
-  echo "setup --launch failed"
+  --set "bohoBlock=$BOHO_BLOCK" || {
+  echo "net up failed"
   exit 1
 }
 
-# The saved nodeset must advertise the delayed-boho capability, else the
+# The workspace must advertise the delayed-boho capability, else the
 # fork-transition cases would silently skip and this smoke test would be moot.
-if ! python3 -c "import json,sys; caps=json.load(open('$WORK/nodeset.json')).get('capabilities',[]); sys.exit(0 if 'delayed-boho' in caps else 1)"; then
-  echo "nodeset.json missing delayed-boho capability — override not applied"
+if ! python3 -c "import json,sys; caps=json.load(open('$WORK/workspace.json')).get('capabilities',[]); sys.exit(0 if 'delayed-boho' in caps else 1)"; then
+  echo "workspace.json missing delayed-boho capability — override not applied"
   exit 1
 fi
 
@@ -95,7 +95,7 @@ run_cases() {
   for c in "$@"; do args+=(--name "$c"); done
   log "run $label cases: $*"
   local out
-  if ! out="$("$CHAINBENCH" test --data-dir "$WORK" "${args[@]}" 2>&1)"; then
+  if ! out="$("$CHAINBENCH" test --workspace-dir "$WORK" "${args[@]}" 2>&1)"; then
     echo "$out"
     echo "FAIL: $label cases reported failures"
     return 1
@@ -115,7 +115,7 @@ if [ "${GOV:-1}" = "1" ]; then
   run_cases "governance-write" "${GOV_CASES[@]}" || rc=1
 fi
 
-"$CHAINBENCH" stop --data-dir "$WORK" >/dev/null 2>&1 || true
+"$CHAINBENCH" stop --workspace-dir "$WORK" >/dev/null 2>&1 || true
 
 if [ "$rc" = 0 ]; then log "PASS: delayed-fork + governance smoke green"; else log "FAIL"; fi
 exit "$rc"

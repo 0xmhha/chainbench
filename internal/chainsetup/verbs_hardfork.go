@@ -5,20 +5,20 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // Chain-upgrade use cases: plan a binary swap at a fork block over a running
 // network, and execute it. Planning is separate from executing so a surface can
 // show what will happen before anything is swapped.
 
-// HardforkPlanIn describes the upgrade of an already-launched network.
+// HardforkPlanIn describes the upgrade of an already-composed network.
 type HardforkPlanIn struct {
-	// DataDir is the running network's data root. The from-chain is read from
-	// its node set, so it is never guessed.
+	// DataDir is the running network's workspace. The from-chain is read from
+	// its record, so it is never guessed.
 	DataDir string
 	// ToChain is the chain id to upgrade to.
 	ToChain string
@@ -41,17 +41,18 @@ type HardforkPlanOut struct {
 }
 
 // HardforkPlan resolves the upgrade without touching the network.
-func HardforkPlan(_ context.Context, _ Deps, in HardforkPlanIn) (HardforkPlanOut, error) {
+func HardforkPlan(_ context.Context, d Deps, in HardforkPlanIn) (HardforkPlanOut, error) {
 	if in.DataDir == "" {
 		return HardforkPlanOut{}, ErrNoDataDir
 	}
 	if in.ToChain == "" {
 		return HardforkPlanOut{}, errors.New("chainsetup: hardfork needs a target chain")
 	}
-	ns, err := session.LoadLocalNodeSet(in.DataDir)
+	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return HardforkPlanOut{}, err
 	}
+	ns := ws.NodeSet()
 	from, err := registry.Get(ns.Chain)
 	if err != nil {
 		return HardforkPlanOut{}, fmt.Errorf("chainsetup: from-chain %q: %w", ns.Chain, err)
@@ -64,7 +65,7 @@ func HardforkPlan(_ context.Context, _ Deps, in HardforkPlanIn) (HardforkPlanOut
 		return HardforkPlanOut{}, fmt.Errorf(
 			"chainsetup: same-chain hardfork (%s -> %s) needs an explicit post-fork binary", ns.Chain, in.ToChain)
 	}
-	plan, err := hardfork.BuildPlan(ns, from, to, in.Block, in.DataDir)
+	plan, err := hardfork.BuildPlan(ns, from, to, in.Block, ws.State().Target.DataRoot)
 	if err != nil {
 		return HardforkPlanOut{}, err
 	}
@@ -74,7 +75,7 @@ func HardforkPlan(_ context.Context, _ Deps, in HardforkPlanIn) (HardforkPlanOut
 // HardforkExecuteIn carries a resolved plan and the binary to swap to.
 type HardforkExecuteIn struct {
 	Plan HardforkPlanOut
-	// DataDir is the network's data root.
+	// DataDir is the network's workspace.
 	DataDir string
 	// Binary is the resolved post-fork executable. As with a launch, this layer
 	// does not look it up on PATH.
@@ -86,34 +87,69 @@ type HardforkExecuteOut struct {
 	Nodes node.NodeSet
 }
 
-// HardforkExecute performs the swap and records the result. It also rewrites
-// the saved launch specs to the post-fork binary, so a later single-node
-// restart or a further upgrade starts from the binary the network is actually
-// running rather than the one it was launched with.
+// HardforkExecute performs the swap and records the result on the workspace:
+// each node's new pid, the binary the network now runs, and the chain it now
+// is — so a later single-node restart or a further upgrade starts from what
+// is actually running rather than what was launched.
+//
+// The relaunch reuses each node's armed argv. That is load-bearing: the argv
+// carries the node's validator identity and its peering, and a node relaunched
+// on generic flags would rejoin consensus as an unauthorized address.
 func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (HardforkExecuteOut, error) {
 	if in.Binary == "" {
 		return HardforkExecuteOut{}, errors.New("chainsetup: hardfork needs a resolved post-fork binary path")
 	}
-	specs, err := session.LoadLocalNodeSpecs(in.DataDir)
+	var out HardforkExecuteOut
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		ns, err := ws.Hardfork(ctx, in.Plan.Plan, in.Binary)
+		if err != nil {
+			return "", err
+		}
+		out.Nodes = ns
+		return fmt.Sprintf("%d node(s) now on %s (%s)", len(ns.Nodes), in.Plan.Plan.ToChain, in.Binary), nil
+	})
+	return out, err
+}
+
+// Hardfork swaps every node onto binary at the plan's fork, continuing the
+// same chain data, and records the new pids, binary and chain.
+func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.Plan, binary string) (node.NodeSet, error) {
+	if len(w.state.Nodes) == 0 {
+		return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: no node table — compose the network first")
+	}
+	specs := make([]driver.NodeSpec, 0, len(w.state.Nodes))
+	for _, rec := range w.state.Nodes {
+		if len(rec.Args) == 0 {
+			return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: node%d has no recorded argv — run `net start` first", rec.Index)
+		}
+		spec := driver.SpecOf(rec)
+		spec.Binary = w.state.Binary
+		specs = append(specs, spec)
+	}
+	// One driver relaunches every node: the swap runs on the machine the
+	// network's nodes share. (A network spread across a server set would need
+	// a per-node driver; the plan executes over one.)
+	t, err := w.machineFor(w.state.Nodes[0])
 	if err != nil {
-		return HardforkExecuteOut{}, fmt.Errorf("chainsetup: load node specs (launch the network first): %w", err)
+		return node.NodeSet{}, err
 	}
-	dr, err := d.nodeDriver()
+	ns, err := plan.Execute(ctx, t.Driver, specs, binary)
 	if err != nil {
-		return HardforkExecuteOut{}, err
+		return ns, err
 	}
-	ns, err := in.Plan.Plan.Execute(ctx, dr, specs, in.Binary)
-	if err != nil {
-		return HardforkExecuteOut{}, err
+	for _, n := range ns.Nodes {
+		for i, rec := range w.state.Nodes {
+			if rec.Index != n.Index {
+				continue
+			}
+			w.clearPID(i)
+			if err := w.recordLaunch(i, n.PID, binary); err != nil {
+				return ns, fmt.Errorf("chainsetup: hardfork: node%d: %w", n.Index, err)
+			}
+		}
 	}
-	if err := session.SaveLocalNodeSet(in.DataDir, ns); err != nil {
-		return HardforkExecuteOut{}, err
-	}
-	for i := range specs {
-		specs[i].Binary = in.Binary
-	}
-	if err := session.SaveLocalNodeSpecs(in.DataDir, specs); err != nil {
-		return HardforkExecuteOut{}, err
-	}
-	return HardforkExecuteOut{Nodes: ns}, nil
+	w.state.Chain = plan.ToChain
+	w.state.Binary = binary
+	w.markStep("hardfork", fmt.Sprintf("%s -> %s at block %d on %s", plan.FromChain, plan.ToChain, plan.Block, binary))
+	return ns, nil
 }

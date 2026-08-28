@@ -58,17 +58,17 @@ rm -rf "$WORK"
 mkdir -p "$WORK"
 
 log "boot stablenet ($VALIDATORS validators + $ENDPOINTS endpoint)"
-"$CHAINBENCH" setup --launch \
+"$CHAINBENCH" net up \
   --chain stablenet \
   --binary "$GSTABLE_BIN" \
-  --data-dir "$WORK" \
-  --keys-dir "$REPO/keys/preset" \
+  --workspace-dir "$WORK" \
+  --keys "$REPO/keys/preset" \
   --validators "$VALIDATORS" --endpoints "$ENDPOINTS" || {
-  echo "setup --launch failed"
+  echo "net up failed"
   exit 1
 }
 
-RPC_URL="$(python3 -c "import json; ns=json.load(open('$WORK/nodeset.json')); print(next(n['rpc_url'] for n in ns['nodes'] if n['index']==1))")"
+RPC_URL="$(python3 -c "import json; ws=json.load(open('$WORK/workspace.json')); n=next(n for n in ws['nodes'] if n['index']==1); print('http://%s:%d' % (n.get('host') or '127.0.0.1', n['http']))")"
 
 log "settle ${SETTLE}s for boot + peering"
 sleep "$SETTLE"
@@ -137,5 +137,5 @@ if [ "$low" -ge "$peak" ]; then
   exit 1
 fi
 
-"$CHAINBENCH" stop --data-dir "$WORK" >/dev/null 2>&1 || true
+"$CHAINBENCH" stop --workspace-dir "$WORK" >/dev/null 2>&1 || true
 log "PASS: baseFee increase (c-03) + decrease (c-05) observed"

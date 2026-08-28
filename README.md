@@ -112,17 +112,21 @@ go test ./...
 
 ### Quick start
 
-Bring up a local stablenet network, verify it, run the applicable tests, and
-tear it down. `--launch` needs a real chain binary — point `--binary` at it.
+Compose a local stablenet network into a workspace, verify it, run the
+applicable tests, and tear it down. Starting needs a real chain binary — point
+`--binary` at it.
 
 ```bash
-chainbench setup --chain stablenet --validators 2 --endpoints 1 \
-  --keys-dir keys/preset --data-dir /tmp/cb --binary /path/to/gstable --launch
+chainbench net up --workspace-dir /tmp/cb --chain stablenet --binary /path/to/gstable \
+  --validators 2 --endpoints 1 --keys keys/preset
 
-chainbench verify --data-dir /tmp/cb   # confirm block production + node info
-chainbench test   --data-dir /tmp/cb   # run applicable cases; prints coverage
-chainbench stop   --data-dir /tmp/cb   # stop the nodes
+chainbench verify --workspace-dir /tmp/cb   # confirm block production + node info
+chainbench test   --workspace-dir /tmp/cb   # run applicable cases; prints coverage
+chainbench stop   --workspace-dir /tmp/cb   # stop the nodes
 ```
+
+Or declare the network in a DSL env and let one command compose, run, and
+tear down: `chainbench run --workspace-dir /tmp/cb tests/cases/stablenet/chain-up.json`.
 
 > [!WARNING]
 > `--keys-dir keys/preset` and every address it produces are **test-only
@@ -138,10 +142,11 @@ Run `chainbench <command> --help` for the full flag set of any command.
 | Command | Purpose |
 |---|---|
 | `chains` | list the registered chains |
-| `setup` | plan / provision / launch a network (`--chain --validators --endpoints [--provision] [--launch] [--binary] [--keys-dir] [--data-dir]`) |
-| `verify` | confirm block production and report node info (`--rpc <url>…` or `--data-dir`) |
-| `test` | run gated test cases (`--rpc` or `--data-dir`, `[--name] [--category]`); prints `coverage = ran / applicable` |
-| `status` / `stop` / `clean` | show / stop (by PID) / stop-and-remove a launched network |
+| `net up` / `net <step>` | compose a network into a workspace, all at once or one step at a time (`--workspace-dir --chain --binary --validators --endpoints [--keys] [--set] [--overlay]`) |
+| `run` | run DSL specs: attach (`--rpc`) or compose what the specs declare (`--workspace-dir`) |
+| `verify` | confirm block production and report node info (`--rpc <url>…` or `--workspace-dir`) |
+| `test` | run the remaining Go-func cases (`--rpc` or `--workspace-dir`, `[--name] [--category]`); prints `coverage = ran / applicable` |
+| `status` / `stop` / `clean` | show / stop (by PID) / stop-and-remove a composed network |
 | `node rpc \| start \| stop` | arbitrary JSON-RPC passthrough, or relaunch/stop a single node |
 | `consensus` | query the validator/producer set (manifest-driven RPC method) |
 | `tx send \| wait` | sign and send a transaction, or wait for a receipt |
@@ -215,7 +220,7 @@ runs at it with `--dashboard`:
 
 ```bash
 chainbench-dashboard --addr 127.0.0.1:8787 &
-chainbench verify --data-dir /tmp/cb --dashboard http://127.0.0.1:8787
+chainbench verify --workspace-dir /tmp/cb --dashboard http://127.0.0.1:8787
 ```
 
 The SPA source lives in [`web/`](web/) (Svelte 5 + Vite); see `web/README.md` to
@@ -228,10 +233,10 @@ consensus family (`wbft` or `poa`), point chainbench at your own manifest — no
 code, no rebuild:
 
 ```bash
-chainbench setup \
+chainbench net up --workspace-dir /tmp/my \
   --manifest         ../my-chain/chainbench.json \
   --genesis-template ../my-chain/genesis.json \
-  --keys-dir ../my-chain/keys --binary ../my-chain/bin/gmychain --launch
+  --keys ../my-chain/keys --binary ../my-chain/bin/gmychain
 ```
 
 The manifest uses the same schema as [the built-in chains' `manifest.json`](internal/chains);

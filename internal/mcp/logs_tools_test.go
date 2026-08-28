@@ -16,7 +16,7 @@ func TestLogTimelineTool(t *testing.T) {
 	os.WriteFile(filepath.Join(logDir, "node1.log"), []byte("INFO [07-26|10:00:03.000] n1 late\n"), 0o644)
 	os.WriteFile(filepath.Join(logDir, "node2.log"), []byte("INFO [07-26|10:00:01.000] n2 early\n"), 0o644)
 
-	text, isErr := callText(t, newServer(), "chainbench_log_timeline", map[string]any{"data_dir": dir})
+	text, isErr := callText(t, newServer(), "chainbench_log_timeline", map[string]any{"workspaceDir": dir})
 	if isErr {
 		t.Fatalf("log_timeline error: %s", text)
 	}

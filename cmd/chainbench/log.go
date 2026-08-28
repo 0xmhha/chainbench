@@ -20,7 +20,7 @@ func newLogCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "log",
-		Short: "Search a setup's per-node logs (from --data-dir/logs)",
+		Short: "Search a workspace's per-node logs (from --workspace-dir/logs)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
@@ -51,7 +51,7 @@ func newLogCmd() *cobra.Command {
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&dataDir, "data-dir", "", "setup data root (searches <data-dir>/logs)")
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (searches <workspace-dir>/logs)")
 	cmd.Flags().StringVar(&pattern, "pattern", "", "substring (or regexp with --regexp) to match")
 	cmd.Flags().BoolVar(&useRe, "regexp", false, "treat --pattern as a regular expression")
 	cmd.Flags().IntVar(&node, "node", 0, "restrict to a 1-based node index (0 = all)")

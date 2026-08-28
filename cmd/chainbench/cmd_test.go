@@ -4,15 +4,21 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // run executes the root command with args and returns combined output.
@@ -39,151 +45,6 @@ func TestChainsCmd(t *testing.T) {
 	}
 }
 
-func TestSetupCmd_DryRunPlan(t *testing.T) {
-	out, err := run(t, "setup", "--chain", "wbft", "--validators", "3", "--endpoints", "1")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(out, "chain_id 8284") {
-		t.Errorf("expected wbft chain_id 8284:\n%s", out)
-	}
-	// 3 validators + 1 endpoint = 4 node rows; check node 4 present.
-	if !strings.Contains(out, "\n4\t") && !strings.Contains(out, "4  ") {
-		t.Errorf("expected 4 nodes in plan:\n%s", out)
-	}
-	if !strings.Contains(out, "genesis:  template=true") {
-		t.Errorf("wbft should report a genesis template:\n%s", out)
-	}
-}
-
-func TestSetupCmd_DryRunFalseWithoutLaunch(t *testing.T) {
-	_, err := run(t, "setup", "--chain", "stablenet", "--dry-run=false")
-	if err == nil || !strings.Contains(err.Error(), "needs --launch") {
-		t.Errorf("expected guidance to use --launch, got %v", err)
-	}
-}
-
-func TestSetupCmd_ProvisionWritesRealGenesis(t *testing.T) {
-	dir := t.TempDir()
-	out, err := run(t, "setup",
-		"--chain", "stablenet",
-		"--validators", "4", "--endpoints", "1",
-		"--data-dir", dir,
-		"--keys-dir", filepath.Join("..", "..", "keys", "preset"),
-		"--provision",
-	)
-	if err != nil {
-		t.Fatalf("provision: %v\n%s", err, out)
-	}
-	if !strings.Contains(out, "provisioned: genesis") {
-		t.Errorf("expected provisioned genesis:\n%s", out)
-	}
-	b, err := os.ReadFile(filepath.Join(dir, "genesis.json"))
-	if err != nil {
-		t.Fatalf("read genesis: %v", err)
-	}
-	var g struct {
-		Config struct {
-			ChainID int64 `json:"chainId"`
-			Anzeon  struct {
-				Init struct {
-					Validators []string `json:"validators"`
-				} `json:"init"`
-			} `json:"anzeon"`
-		} `json:"config"`
-	}
-	if err := json.Unmarshal(b, &g); err != nil {
-		t.Fatalf("genesis not valid JSON: %v", err)
-	}
-	if g.Config.ChainID != 8283 {
-		t.Errorf("chainId: %d", g.Config.ChainID)
-	}
-	// Real preset validators land in the genesis.
-	if len(g.Config.Anzeon.Init.Validators) != 4 {
-		t.Errorf("validators in genesis: %d, want 4", len(g.Config.Anzeon.Init.Validators))
-	}
-	if g.Config.Anzeon.Init.Validators[0] != "0xc17d493883eaa3b4cceb0f214b273392d562f9d8" {
-		t.Errorf("first validator: %s", g.Config.Anzeon.Init.Validators[0])
-	}
-
-	// Per-node TOML configs are written too.
-	if !strings.Contains(out, "node config(s)") {
-		t.Errorf("expected node configs written:\n%s", out)
-	}
-	cfg1, err := os.ReadFile(filepath.Join(dir, "config_node1.toml"))
-	if err != nil {
-		t.Fatalf("read config_node1.toml: %v", err)
-	}
-	s := string(cfg1)
-	if !strings.Contains(s, "[Eth.Miner]") { // node1 is a validator
-		t.Errorf("node1 config should have miner section:\n%s", s)
-	}
-	if !strings.Contains(s, "HTTPPort = 8501") || !strings.Contains(s, `"istanbul"`) {
-		t.Errorf("node1 config ports/namespace wrong:\n%s", s)
-	}
-	if !strings.Contains(s, "enode://8d2153cc") { // static node from preset pubkey
-		t.Errorf("node1 config missing static-node enode:\n%s", s)
-	}
-	// node5 is an endpoint: no miner section.
-	cfg5, err := os.ReadFile(filepath.Join(dir, "config_node5.toml"))
-	if err != nil {
-		t.Fatalf("read config_node5.toml: %v", err)
-	}
-	if strings.Contains(string(cfg5), "[Eth.Miner]") {
-		t.Errorf("node5 (endpoint) should not have miner section")
-	}
-}
-
-func TestSetupCmd_LaunchWithFakeBinary(t *testing.T) {
-	dir := t.TempDir()
-	// Fake node binary: `init` exits 0; run sleeps briefly then exits.
-	bin := filepath.Join(dir, "fakegeth")
-	script := "#!/bin/sh\nif [ \"$1\" = \"init\" ]; then exit 0; fi\nsleep 0.3\n"
-	if err := os.WriteFile(bin, []byte(script), 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	out, err := run(t, "setup",
-		"--chain", "stablenet",
-		"--validators", "2", "--endpoints", "0",
-		"--data-dir", filepath.Join(dir, "data"),
-		"--keys-dir", filepath.Join("..", "..", "keys", "preset"),
-		"--binary", bin,
-		"--launch",
-	)
-	if err != nil {
-		t.Fatalf("launch: %v\n%s", err, out)
-	}
-	if !strings.Contains(out, "launched 2 node(s)") {
-		t.Errorf("expected launch confirmation:\n%s", out)
-	}
-	// NodeSet state persisted.
-	b, err := os.ReadFile(filepath.Join(dir, "data", "nodeset.json"))
-	if err != nil {
-		t.Fatalf("read nodeset.json: %v", err)
-	}
-	var ns struct {
-		Chain string `json:"chain"`
-		Nodes []struct {
-			Index  int    `json:"index"`
-			RPCURL string `json:"rpc_url"`
-		} `json:"nodes"`
-	}
-	if err := json.Unmarshal(b, &ns); err != nil {
-		t.Fatalf("nodeset.json invalid: %v", err)
-	}
-	if ns.Chain != "stablenet" || len(ns.Nodes) != 2 {
-		t.Errorf("nodeset: %+v", ns)
-	}
-	if ns.Nodes[0].RPCURL != "http://127.0.0.1:8501" {
-		t.Errorf("node1 rpc: %s", ns.Nodes[0].RPCURL)
-	}
-	// Datadirs were initialized.
-	if _, err := os.Stat(filepath.Join(dir, "data", "node1")); err != nil {
-		t.Errorf("node1 datadir not created: %v", err)
-	}
-}
-
 func TestStopCmd_KillsNodes(t *testing.T) {
 	// Spawn a real long-lived process to act as a launched node.
 	proc := exec.Command("sleep", "30")
@@ -193,12 +54,9 @@ func TestStopCmd_KillsNodes(t *testing.T) {
 	pid := proc.Process.Pid
 
 	dir := t.TempDir()
-	nsJSON := fmt.Sprintf(`{"chain":"stablenet","network":"local","nodes":[{"index":1,"pid":%d}]}`, pid)
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, pid))
 
-	out, err := run(t, "stop", "--data-dir", dir)
+	out, err := run(t, "stop", "--workspace-dir", dir)
 	if err != nil {
 		t.Fatalf("stop: %v\n%s", err, out)
 	}
@@ -281,13 +139,10 @@ func TestVerifyCmd_FromState(t *testing.T) {
 	defer srv.Close()
 
 	dir := t.TempDir()
-	nsJSON := `{"chain":"wbft","network":"local","nodes":[{"index":1,"role":"validator","rpc_url":"` + srv.URL + `"}]}`
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, err := run(t, "verify", "--data-dir", dir, "--progress-delay", "1ms")
+	writeWorkspace(t, dir, "wbft", wsNode(dir, 1, "validator", portOf(t, srv.URL), 0))
+	out, err := run(t, "verify", "--workspace-dir", dir, "--progress-delay", "1ms")
 	if err != nil {
-		t.Fatalf("verify --data-dir: %v\n%s", err, out)
+		t.Fatalf("verify --workspace-dir: %v\n%s", err, out)
 	}
 	if !strings.Contains(out, "producing: true") || !strings.Contains(out, "8283") {
 		t.Errorf("expected producing + chain id from saved state:\n%s", out)
@@ -364,13 +219,10 @@ func TestTestCmd_PersistsAndReport(t *testing.T) {
 	defer srv.Close()
 
 	dir := t.TempDir()
-	nsJSON := `{"chain":"wbft","network":"local","capabilities":["rpc"],"nodes":[{"index":1,"role":"endpoint","rpc_url":"` + srv.URL + `"}]}`
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeWorkspace(t, dir, "wbft", wsNode(dir, 1, "endpoint", portOf(t, srv.URL), 0))
 
-	// Run test against the saved network; results persist to runs.json.
-	if _, err := run(t, "test", "--data-dir", dir, "--name", "fee-delegate-sign-rpc-present"); err != nil {
+	// Run test against the recorded network; results persist to runs.json.
+	if _, err := run(t, "test", "--workspace-dir", dir, "--name", "fee-delegate-sign-rpc-present"); err != nil {
 		t.Fatalf("test: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "runs.json")); err != nil {
@@ -378,7 +230,7 @@ func TestTestCmd_PersistsAndReport(t *testing.T) {
 	}
 
 	// report reads them back.
-	out, err := run(t, "report", "--data-dir", dir)
+	out, err := run(t, "report", "--workspace-dir", dir)
 	if err != nil {
 		t.Fatalf("report: %v\n%s", err, out)
 	}
@@ -388,7 +240,7 @@ func TestTestCmd_PersistsAndReport(t *testing.T) {
 }
 
 func TestReportCmd_Empty(t *testing.T) {
-	out, err := run(t, "report", "--data-dir", t.TempDir())
+	out, err := run(t, "report", "--workspace-dir", t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -407,15 +259,12 @@ func TestTestCmd_FromState(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// Write a nodeset.json pointing at the mock, then run test --data-dir.
+	// Record a workspace pointing at the mock, then run test --workspace-dir.
 	dir := t.TempDir()
-	nsJSON := `{"chain":"wbft","network":"local","capabilities":["rpc"],"nodes":[{"index":1,"role":"endpoint","rpc_url":"` + srv.URL + `"}]}`
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, err := run(t, "test", "--data-dir", dir, "--name", "fee-delegate-sign-rpc-present")
+	writeWorkspace(t, dir, "wbft", wsNode(dir, 1, "endpoint", portOf(t, srv.URL), 0))
+	out, err := run(t, "test", "--workspace-dir", dir, "--name", "fee-delegate-sign-rpc-present")
 	if err != nil {
-		t.Fatalf("test --data-dir: %v\n%s", err, out)
+		t.Fatalf("test --workspace-dir: %v\n%s", err, out)
 	}
 	if !strings.Contains(out, "pass=1") {
 		t.Errorf("expected pass=1 from state:\n%s", out)
@@ -424,12 +273,9 @@ func TestTestCmd_FromState(t *testing.T) {
 
 func TestHardforkCmd_DryRunPlan(t *testing.T) {
 	dir := t.TempDir()
-	// A running wemix network's saved state.
-	nsJSON := `{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator"},{"index":2,"role":"validator"}]}`
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	out, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100")
+	// A running wemix network's record.
+	writeWorkspace(t, dir, "wemix", wsNode(dir, 1, "validator", 8501, 0), wsNode(dir, 2, "validator", 8511, 0))
+	out, err := run(t, "hardfork", "--workspace-dir", dir, "--to-chain", "wbft", "--block", "100")
 	if err != nil {
 		t.Fatalf("hardfork: %v\n%s", err, out)
 	}
@@ -443,10 +289,9 @@ func TestHardforkCmd_DryRunPlan(t *testing.T) {
 
 func TestHardforkCmd_ExecuteNeedsBinary(t *testing.T) {
 	dir := t.TempDir()
-	nsJSON := `{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator"}]}`
-	_ = os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644)
+	writeWorkspace(t, dir, "wemix", wsNode(dir, 1, "validator", 8501, 0))
 	// gwbft is not on PATH → resolveBinary fails.
-	_, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100", "--dry-run=false")
+	_, err := run(t, "hardfork", "--workspace-dir", dir, "--to-chain", "wbft", "--block", "100", "--dry-run=false")
 	if err == nil || !strings.Contains(err.Error(), "cannot find node binary") {
 		t.Errorf("expected binary-not-found error, got %v", err)
 	}
@@ -460,23 +305,17 @@ func TestHardforkCmd_Execute(t *testing.T) {
 		t.Fatal(err)
 	}
 	oldPID := old.Process.Pid
-	nsJSON := fmt.Sprintf(`{"chain":"wemix","network":"local","nodes":[{"index":1,"role":"validator","ports":{"http":8501,"p2p":30301},"pid":%d}]}`, oldPID)
-	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	// hardfork Execute reuses the node's saved launch spec (identity args) and
-	// swaps only the binary, so nodespecs.json must exist (setup writes it).
-	specsJSON := fmt.Sprintf(`[{"Index":1,"Role":"validator","Host":"127.0.0.1","Binary":"oldbin","DataDir":%q,"ConfigPath":"","LogPath":%q,"Args":["--datadir",%q],"Ports":{"http":8501,"p2p":30301}}]`,
-		dir, filepath.Join(dir, "node.log"), dir)
-	if err := os.WriteFile(filepath.Join(dir, "nodespecs.json"), []byte(specsJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	// hardfork reuses the node's recorded argv (identity args) and swaps only
+	// the binary, so the record must carry the arming a start leaves behind.
+	n1 := wsNode(dir, 1, "validator", 8501, oldPID)
+	n1.Args = []string{"--datadir", dir}
+	writeWorkspace(t, dir, "wemix", n1)
 	bin := filepath.Join(dir, "faketo")
 	if err := os.WriteFile(bin, []byte("#!/bin/sh\nif [ \"$1\" = \"init\" ]; then exit 0; fi\nsleep 30\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
-	out, err := run(t, "hardfork", "--data-dir", dir, "--to-chain", "wbft", "--block", "100",
+	out, err := run(t, "hardfork", "--workspace-dir", dir, "--to-chain", "wbft", "--block", "100",
 		"--to-binary", bin, "--dry-run=false")
 	if err != nil {
 		t.Fatalf("hardfork execute: %v\n%s", err, out)
@@ -487,19 +326,16 @@ func TestHardforkCmd_Execute(t *testing.T) {
 	if werr := old.Wait(); werr == nil {
 		t.Error("old node should have been stopped")
 	}
-	// nodeset.json now records the new chain + a new pid; clean up the process.
-	b, _ := os.ReadFile(filepath.Join(dir, "nodeset.json"))
-	var ns struct {
-		Chain string `json:"chain"`
-		Nodes []struct {
-			PID int `json:"pid"`
-		} `json:"nodes"`
+	// The workspace now records the new chain + a new pid; clean up the process.
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		t.Fatalf("reopen workspace: %v", err)
 	}
-	_ = json.Unmarshal(b, &ns)
-	if ns.Chain != "wbft" || len(ns.Nodes) != 1 || ns.Nodes[0].PID == 0 {
-		t.Errorf("state after upgrade: %+v", ns)
+	st := ws.State()
+	if st.Chain != "wbft" || len(st.Nodes) != 1 || st.Nodes[0].PID == 0 {
+		t.Errorf("state after upgrade: chain=%s nodes=%+v", st.Chain, st.Nodes)
 	}
-	if p, err := os.FindProcess(ns.Nodes[0].PID); err == nil {
+	if p, err := os.FindProcess(st.Nodes[0].PID); err == nil {
 		_ = p.Kill()
 	}
 }
@@ -609,4 +445,50 @@ func itoaHex(n int) string {
 		n /= 16
 	}
 	return string(b)
+}
+
+// writeWorkspace records a composed network the way the steps leave one, so a
+// command can be driven against it without composing anything.
+func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
+	t.Helper()
+	comp, err := session.OpenComposition(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := chainsetup.State{
+		Chain: chain, Binary: "/opt/fakebin", Validators: len(nodes),
+		Target: machine.Spec{DataRoot: dir}, Nodes: nodes,
+		Capabilities: []string{"rpc"},
+		Steps:        map[string]chainsetup.Step{},
+	}
+	if err := comp.Save(st); err != nil {
+		t.Fatalf("write workspace: %v", err)
+	}
+}
+
+// wsNode is one recorded node on this machine: its HTTP port decides the RPC
+// URL the commands read back, and pid whether it counts as running.
+func wsNode(root string, index int, role string, http, pid int) node.Record {
+	label := node.LabelFor(index)
+	layout := node.Layout{Root: root}
+	return node.Record{
+		Index: index, Label: string(label), Role: role, Host: "127.0.0.1",
+		DataDir: layout.DataDir(label), ConfigPath: layout.ConfigPath(label), LogPath: layout.LogPath(label),
+		Endpoints: node.Endpoints{P2P: 30300 + index, HTTP: http},
+		PID:       pid,
+	}
+}
+
+// portOf is the port of an httptest server URL.
+func portOf(t *testing.T, rawURL string) int {
+	t.Helper()
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := strconv.Atoi(u.Port())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return p
 }

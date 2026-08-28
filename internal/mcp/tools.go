@@ -35,7 +35,6 @@ func Default(name, version string) *Server {
 	s.Register(nodeRPCTool())
 	s.Register(reportTool())
 	s.Register(statusTool())
-	s.Register(setupPlanTool())
 	s.Register(txpoolTool())
 	s.Register(logTool())
 	s.Register(accountStateTool())
@@ -77,7 +76,6 @@ func Default(name, version string) *Server {
 	for _, t := range keyringTools() {
 		s.Register(t)
 	}
-	s.Register(startTool())
 	s.Register(stopTool())
 	// Layered capability surface: one tool per registered capability
 	// (chainbench.<version>.<chain>.<name>) + a chainbench.capabilities
@@ -89,18 +87,18 @@ func Default(name, version string) *Server {
 func reportTool() Tool {
 	return Tool{
 		Name:        "chainbench_report",
-		Description: "Read stored run/test results from a setup's data dir. Args: data_dir.",
+		Description: "Read stored run/test results from a workspace. Args: workspaceDir.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"data_dir": map[string]any{"type": "string"},
+				"workspaceDir": map[string]any{"type": "string"},
 			},
-			"required": []string{"data_dir"},
+			"required": []string{"workspaceDir"},
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
-			dir := argString(args, "data_dir", "")
+			dir := argString(args, "workspaceDir", "")
 			if dir == "" {
-				return "", fmt.Errorf("data_dir is required")
+				return "", fmt.Errorf("workspaceDir is required")
 			}
 			store, err := obs.NewFileStore(filepath.Join(dir, "runs.json"))
 			if err != nil {
@@ -288,15 +286,15 @@ func verifyTool() Tool {
 func testTool() Tool {
 	return Tool{
 		Name:        "chainbench_test",
-		Description: "Run test cases against a network. Args: chain, rpc (array) or data_dir, optional name/category filters.",
+		Description: "Run test cases against a network. Args: chain, rpc (array) or workspaceDir, optional name/category filters.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"chain":    map[string]any{"type": "string"},
-				"rpc":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"data_dir": map[string]any{"type": "string"},
-				"name":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"category": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"chain":        map[string]any{"type": "string"},
+				"rpc":          map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"workspaceDir": map[string]any{"type": "string"},
+				"name":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"category":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -325,18 +323,18 @@ func testTool() Tool {
 func statusTool() Tool {
 	return Tool{
 		Name:        "chainbench_status",
-		Description: "Report the saved node set for a setup's data dir (chain, network, and each node's role/rpc/pid). Args: data_dir.",
+		Description: "Report a workspace's node set (chain, network, and each node's role/rpc/pid). Args: workspaceDir.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"data_dir": map[string]any{"type": "string"},
+				"workspaceDir": map[string]any{"type": "string"},
 			},
-			"required": []string{"data_dir"},
+			"required": []string{"workspaceDir"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			dir := argString(args, "data_dir", "")
+			dir := argString(args, "workspaceDir", "")
 			if dir == "" {
-				return "", fmt.Errorf("data_dir is required")
+				return "", fmt.Errorf("workspaceDir is required")
 			}
 			res, err := app.NetworkStatus(ctx, app.Deps{}, app.NetworkStatusIn{DataDir: dir})
 			if err != nil {
@@ -347,45 +345,6 @@ func statusTool() Tool {
 			fmt.Fprintf(&b, "chain=%s network=%s nodes=%d\n", ns.Chain, ns.Network, len(ns.Nodes))
 			for _, n := range ns.Nodes {
 				fmt.Fprintf(&b, "  node%d %s %s pid=%d\n", n.Index, n.Role, n.RPCURL, n.PID)
-			}
-			return b.String(), nil
-		},
-	}
-}
-
-func setupPlanTool() Tool {
-	return Tool{
-		Name:        "chainbench_setup_plan",
-		Description: "Preview a local network plan (nodes, roles, ports, genesis path) without launching. Args: chain, validators, endpoints, data_dir.",
-		InputSchema: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"chain":      map[string]any{"type": "string"},
-				"validators": map[string]any{"type": "integer"},
-				"endpoints":  map[string]any{"type": "integer"},
-				"data_dir":   map[string]any{"type": "string"},
-			},
-		},
-		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			validators := argInt(args, "validators", 4)
-			endpoints := argInt(args, "endpoints", 1)
-			planned, err := app.NetworkPlan(ctx, app.Deps{}, app.NetworkSpecIn{
-				Chain:         argString(args, "chain", "stablenet"),
-				ChainExplicit: true,
-				DataDir:       argString(args, "data_dir", "data"),
-				Validators:    &validators,
-				Endpoints:     &endpoints,
-			})
-			if err != nil {
-				return "", err
-			}
-			plan := planned.Plan
-			var b strings.Builder
-			fmt.Fprintf(&b, "chain=%s network=%s dataRoot=%s genesis=%s\n",
-				plan.Chain, plan.Network, plan.DataRoot, plan.GenesisPath)
-			for _, n := range plan.Nodes {
-				fmt.Fprintf(&b, "  node%d %s p2p=%d http=%d ws=%d\n",
-					n.Index, n.Role, n.Ports.P2P, n.Ports.HTTP, n.Ports.WS)
 			}
 			return b.String(), nil
 		},
@@ -423,23 +382,23 @@ func txpoolTool() Tool {
 func logTool() Tool {
 	return Tool{
 		Name:        "chainbench_log",
-		Description: "Search a setup's per-node logs (data_dir/logs). Args: data_dir, pattern, regexp (bool), node (int), level (min severity), limit (int).",
+		Description: "Search a workspace's per-node logs (workspaceDir/logs). Args: workspaceDir, pattern, regexp (bool), node (int), level (min severity), limit (int).",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"data_dir": map[string]any{"type": "string"},
-				"pattern":  map[string]any{"type": "string"},
-				"regexp":   map[string]any{"type": "boolean"},
-				"node":     map[string]any{"type": "integer"},
-				"level":    map[string]any{"type": "string"},
-				"limit":    map[string]any{"type": "integer"},
+				"workspaceDir": map[string]any{"type": "string"},
+				"pattern":      map[string]any{"type": "string"},
+				"regexp":       map[string]any{"type": "boolean"},
+				"node":         map[string]any{"type": "integer"},
+				"level":        map[string]any{"type": "string"},
+				"limit":        map[string]any{"type": "integer"},
 			},
-			"required": []string{"data_dir"},
+			"required": []string{"workspaceDir"},
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
-			dir := argString(args, "data_dir", "")
+			dir := argString(args, "workspaceDir", "")
 			if dir == "" {
-				return "", fmt.Errorf("data_dir is required")
+				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexp, _ := args["regexp"].(bool)
 			matches, err := logs.Search(dir, logs.SearchOpts{
@@ -688,8 +647,8 @@ func hexCount(s string) uint64 {
 	return n
 }
 
-// nodeSetFromArgs builds a NodeSet from rpc endpoints (attach) or data_dir
-// (a setup's saved state).
+// nodeSetFromArgs builds a NodeSet from rpc endpoints (attach) or workspaceDir
+// (a composed network's record).
 func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
 	if urls := argStrings(args, "rpc"); len(urls) > 0 {
 		eps := make([]node.RPCEndpoint, len(urls))
@@ -698,9 +657,9 @@ func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
 		}
 		return node.AttachedSet(argString(args, "chain", ""), "attached", eps)
 	}
-	if dir := argString(args, "data_dir", ""); dir != "" {
+	if dir := argString(args, "workspaceDir", ""); dir != "" {
 		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dir})
 		return res.Nodes, err
 	}
-	return node.NodeSet{}, fmt.Errorf("provide rpc (array) or data_dir")
+	return node.NodeSet{}, fmt.Errorf("provide rpc (array) or workspaceDir")
 }

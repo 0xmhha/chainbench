@@ -36,6 +36,7 @@ func withWorkspace(d Deps, dataDir string, fn func(*Workspace) (string, error)) 
 		return "", err
 	}
 	ws.SetEnv(d.Env)
+	ws.SetDriver(d.Driver)
 
 	// One run at a time per workspace. A second run would compose over the
 	// first's half-built network and blame the collision on the chain; the
