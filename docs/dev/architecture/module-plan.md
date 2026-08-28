@@ -267,6 +267,15 @@ remove one with `chainbench net rm`
 지금 `app.NetPool` 이 워크스페이스 하나만 열어 `Used` 를 세는 것(같은 세트의 다른
 네트워크는 안 보인다)이 이 모듈로 옮겨와 고쳐진다.
 
+**구현(P1.5, 2026-08-28).** 위 모양 그대로 `internal/resource/inventory.go`. 워크스페이스는
+등록되지 않고 **발견**된다 — `chainsetup.Discover(root)` 가 `~/.chainbench/*/chainsetup`
+의 `workspace.json` 을 찾고, `chainsetup.Allocations(ws)` 가 노드 레코드를 `Allocation`
+(network·node·host·p2p)으로 읽는다. 인벤토리는 host 와 p2p 포트로 슬롯을 역산한다
+(`(p2p-base)/step+1`). 다른 곳에 만든 워크스페이스는 이름을 대야 센다.
+`Take` 의 순서는 `Assign` 과 같다(호스트 먼저, 슬롯 나중) — 그래야 plan 과 take 가
+같은 자리를 말한다. 라이브에서 같은 세트의 두 조립이 같은 포트를 받는 것이
+확인됐고(인벤토리는 먼저 것만 보유자로 센다), 그것이 P2.x 가 고칠 충돌이다.
+
 ## 3. 합칠 것과 지울 것
 
 재측정으로 확인된 잔재다. 단계 진행 중 **해당 모듈을 손댈 때 함께** 처리한다.

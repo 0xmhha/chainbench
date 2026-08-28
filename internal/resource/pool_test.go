@@ -205,3 +205,27 @@ func TestAssign_IsDeterministic(t *testing.T) {
 		}
 	}
 }
+
+// TestPool_ValidateRefusesSlotsTheBandsCannotCarry pins the cap: a pool may
+// declare only as many slots as its bands hold without one purpose's port
+// landing on another's. With p2p at 8500 step 10 and rpc at 8600, the
+// eleventh slot puts p2p on 8600 — the first slot's http port.
+func TestPool_ValidateRefusesSlotsTheBandsCannotCarry(t *testing.T) {
+	bands := resource.Bands{
+		P2P: resource.Band{Base: 8500, Step: 10},
+		RPC: resource.Band{Base: 8600, Step: 10},
+	}
+	ok := resource.Pool{Hosts: []resource.Host{{Addr: "127.0.0.1"}}, Slots: 10, Ports: bands}
+	if err := ok.Validate(); err != nil {
+		t.Fatalf("10 slots fit between the bands, got: %v", err)
+	}
+	over := ok
+	over.Slots = 11
+	err := over.Validate()
+	if err == nil {
+		t.Fatal("11 slots run p2p into the rpc band; want a refusal")
+	}
+	if !strings.Contains(err.Error(), "11 slot(s)") || !strings.Contains(err.Error(), "8600") {
+		t.Errorf("the refusal should name the slot count and the colliding port: %v", err)
+	}
+}
