@@ -32,44 +32,44 @@ const (
 // in the order the steps consume them.
 type NetUpIn struct {
 	// DataDir is the workspace directory.
-	DataDir string
+	DataDir string `json:"dataDir,omitempty"`
 	// Stage is how far to go; empty means UpStart.
-	Stage UpStage
+	Stage UpStage `json:"stage,omitempty"`
 
 	// Chain identity (step: new).
-	Chain        string
-	ManifestPath string
-	TemplatePath string
-	KeysDir      string
-	Target       machine.Spec
+	Chain        string       `json:"chain,omitempty"`
+	ManifestPath string       `json:"manifestPath,omitempty"`
+	TemplatePath string       `json:"templatePath,omitempty"`
+	KeysDir      string       `json:"keysDir,omitempty"`
+	Target       machine.Spec `json:"target,omitempty"`
 	// Binary is the node executable. Required for UpStart; for a remote target
 	// it is a path on that host.
-	Binary string
+	Binary string `json:"binary,omitempty"`
 
 	// Layout (step: allocate).
-	Validators       int
-	Endpoints        int
-	EndpointSyncMode string
-	TopologyPath     string
+	Validators       int    `json:"validators,omitempty"`
+	Endpoints        int    `json:"endpoints,omitempty"`
+	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
+	TopologyPath     string `json:"topologyPath,omitempty"`
 	// Peering is the peer graph to wire ("mesh" default, "proxied").
-	Peering string
+	Peering string `json:"peering,omitempty"`
 	// Server selects where the nodes run and on what ports, from the server
 	// server set. Its zero value uses the built-in local plan.
-	Server resource.ServerRef
+	Server resource.ServerRef `json:"server,omitempty"`
 	// Docker treats the servers as local docker containers (dials translated
 	// through the localmap next to the server set); recorded at the new step.
-	Docker bool
+	Docker bool `json:"docker,omitempty"`
 
 	// Identities (step: keys).
-	KeysSource string
+	KeysSource string `json:"keysSource,omitempty"`
 
 	// Genesis customization (step: genesis).
-	ChainID     int64
-	GenesisSet  []string
-	OverlayPath string
+	ChainID     int64    `json:"chainID,omitempty"`
+	GenesisSet  []string `json:"genesisSet,omitempty"`
+	OverlayPath string   `json:"overlayPath,omitempty"`
 
 	// LaunchSet are launch-argv overrides (step: launchopts).
-	LaunchSet []string
+	LaunchSet []string `json:"launchSet,omitempty"`
 }
 
 // NetUpOut reports each step's recorded detail, in order, and the resulting
@@ -82,14 +82,18 @@ type NetUpOut struct {
 	Nodes NetworkStatusOut
 }
 
-// upStep is one named step of the macro.
-type upStep struct {
-	name string
-	fn   func() (string, error)
-}
+// upStepNames is the composition order — the one list resume and up share.
+var upStepNames = []string{"new", "allocate", "keys", "genesis", "config", "launchopts", "provision", "init", "start"}
 
 // NetUp runs the composition steps in order and returns what each recorded.
 func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
+	return netUpFrom(ctx, d, in, "")
+}
+
+// netUpFrom runs the composition from the named step on (every step when
+// from is empty). Steps before it are assumed done — the resume verb decides
+// that from the workspace's record.
+func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, error) {
 	if in.DataDir == "" {
 		return NetUpOut{}, errors.New("chainsetup: net up needs a workspace directory")
 	}
@@ -134,65 +138,77 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 		return nil
 	}
 
-	steps := []upStep{
-		{"new", func() (string, error) {
+	steps := map[string]func() (string, error){
+		"new": func() (string, error) {
 			r, err := NetNew(ctx, d, NetNewIn{
 				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
 				Target: in.Target, ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
 				Docker: in.Docker,
 			})
-			return r.Detail, err
-		}},
+			if err != nil {
+				return "", err
+			}
+			// The request is the one fact of a composition otherwise nowhere
+			// on disk; it is what a resume composes from.
+			if err := recordRequest(d, in); err != nil {
+				return "", err
+			}
+			return r.Detail, nil
+		},
 		// Allocate precedes keys: the key step sizes the identity set from the
 		// node table, so the layout has to exist first.
-		{"allocate", func() (string, error) {
+		"allocate": func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath, Peering: in.Peering,
 				Server: in.Server,
 			})
 			return r.Detail, err
-		}},
-		{"keys", func() (string, error) {
-			r, err := NetKeys(ctx, d, NetKeysIn{
-				DataDir: in.DataDir, Source: in.KeysSource,
-			})
+		},
+		"keys": func() (string, error) {
+			r, err := NetKeys(ctx, d, NetKeysIn{DataDir: in.DataDir, Source: in.KeysSource})
 			return r.Detail, err
-		}},
-		{"genesis", func() (string, error) {
+		},
+		"genesis": func() (string, error) {
 			r, err := NetGenesis(ctx, d, NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
 			})
 			return r.Detail, err
-		}},
-		{"config", func() (string, error) {
+		},
+		"config": func() (string, error) {
 			r, err := NetConfig(ctx, d, NetConfigIn{DataDir: in.DataDir})
 			return r.Detail, err
-		}},
-		{"launchopts", func() (string, error) {
+		},
+		"launchopts": func() (string, error) {
 			r, err := NetLaunchOpts(ctx, d, NetLaunchOptsIn{DataDir: in.DataDir, Set: in.LaunchSet})
 			return r.Detail, err
-		}},
-		{"provision", func() (string, error) {
+		},
+		"provision": func() (string, error) {
 			r, err := NetProvision(ctx, d, NetProvisionIn{DataDir: in.DataDir})
 			return r.Detail, err
-		}},
-	}
-	if stage == UpStart {
-		steps = append(steps,
-			upStep{"init", func() (string, error) {
-				r, err := NetInit(ctx, d, NetInitIn{DataDir: in.DataDir, Binary: in.Binary})
-				return r.Detail, err
-			}},
-			upStep{"start", func() (string, error) {
-				r, err := NetStart(ctx, d, NetStartIn{DataDir: in.DataDir, Binary: in.Binary})
-				return r.Detail, err
-			}},
-		)
+		},
+		"init": func() (string, error) {
+			r, err := NetInit(ctx, d, NetInitIn{DataDir: in.DataDir, Binary: in.Binary})
+			return r.Detail, err
+		},
+		"start": func() (string, error) {
+			r, err := NetStart(ctx, d, NetStartIn{DataDir: in.DataDir, Binary: in.Binary})
+			return r.Detail, err
+		},
 	}
 
-	for _, s := range steps {
-		if err := record(s.name, s.fn); err != nil {
+	started := from == ""
+	for _, name := range upStepNames {
+		if !started {
+			if name != from {
+				continue
+			}
+			started = true
+		}
+		if stage == UpProvision && (name == "init" || name == "start") {
+			break
+		}
+		if err := record(name, steps[name]); err != nil {
 			return out, err
 		}
 	}
@@ -203,4 +219,17 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	}
 	out.Nodes = nodes
 	return out, nil
+}
+
+// recordRequest writes what the composition was asked for onto the
+// workspace. The location is not part of it: the record is where the
+// workspace is.
+func recordRequest(d Deps, in NetUpIn) error {
+	req := in
+	req.DataDir = ""
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		ws.state.Request = &req
+		return "", nil
+	})
+	return err
 }

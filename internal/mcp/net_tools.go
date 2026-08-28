@@ -346,3 +346,39 @@ func targetSpecFromArgs(args map[string]any) (machine.Spec, error) {
 		DataRoot: argString(args, "targetDir", ""),
 	}, nil
 }
+
+// netResumeTool recovers a workspace whose run died.
+func netResumeTool() Tool {
+	return Tool{
+		Name:        "chainbench_net_resume",
+		Description: "Recover a workspace whose run died: reconcile recorded pids with the machine, continue the composition from the first unfinished step, and bring back nodes that should be running.",
+		InputSchema: workspaceDirSchema(map[string]any{
+			"binary": map[string]any{"type": "string", "description": "node binary path (default: the one the workspace recorded)"},
+		}),
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			out, err := app.NetResume(ctx, app.Deps{}, app.NetResumeIn{
+				DataDir: argString(args, "workspaceDir", ""), Binary: argString(args, "binary", ""),
+			})
+			var b strings.Builder
+			for _, line := range out.Reconciled {
+				fmt.Fprintf(&b, "reconcile: %s\n", line)
+			}
+			if out.Resumed != "" {
+				fmt.Fprintf(&b, "resumed from: %s\n", out.Resumed)
+			}
+			for _, step := range out.Steps {
+				fmt.Fprintln(&b, step)
+			}
+			for _, s := range out.Started {
+				fmt.Fprintf(&b, "started: %s\n", s)
+			}
+			if err != nil {
+				return b.String(), err
+			}
+			for _, n := range out.Nodes.Nodes.Nodes {
+				fmt.Fprintf(&b, "node%d %s %s pid=%d\n", n.Index, n.Role, n.RPCURL, n.PID)
+			}
+			return strings.TrimRight(b.String(), "\n"), nil
+		},
+	}
+}

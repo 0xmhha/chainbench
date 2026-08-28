@@ -15,14 +15,14 @@ import (
 type ServerRef struct {
 	// SetPath is the server-set file; empty uses DefaultSetFile when it
 	// exists, and otherwise no server set at all.
-	SetPath string
+	SetPath string `json:"setPath,omitempty"`
 	// Name and Index select within the server set. Both empty picks the only
 	// server in a single-server file.
-	Name  string
-	Index int
+	Name  string `json:"name,omitempty"`
+	Index int    `json:"index,omitempty"`
 	// All spreads the network across every server in the set, one node per
 	// host, instead of placing it on one.
-	All bool
+	All bool `json:"all,omitempty"`
 }
 
 // ResolveServerOut is what a composition needs from the server set.

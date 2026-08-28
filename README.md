@@ -143,6 +143,7 @@ Run `chainbench <command> --help` for the full flag set of any command.
 |---|---|
 | `chains` | list the registered chains |
 | `net up` / `net <step>` | compose a network into a workspace, all at once or one step at a time (`--workspace-dir --chain --binary --validators --endpoints [--keys] [--set] [--overlay]`) |
+| `net resume` | recover a workspace whose run died: reconcile recorded pids with the machine, continue from the first unfinished step, bring nodes back |
 | `run` | run DSL specs: attach (`--rpc`) or compose what the specs declare (`--workspace-dir`) |
 | `verify` | confirm block production and report node info (`--rpc <url>…` or `--workspace-dir`) |
 | `test` | run the remaining Go-func cases (`--rpc` or `--workspace-dir`, `[--name] [--category]`); prints `coverage = ran / applicable` |

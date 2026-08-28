@@ -68,6 +68,7 @@ func Default(name, version string) *Server {
 	s.Register(netStartTool())
 	s.Register(netStopTool())
 	s.Register(netRestartTool())
+	s.Register(netResumeTool())
 	s.Register(netRmTool())
 	s.Register(netLogsTool())
 	s.Register(netHealthTool())

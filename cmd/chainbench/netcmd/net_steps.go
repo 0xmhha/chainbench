@@ -3,6 +3,7 @@ package netcmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"text/tabwriter"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // Step subcommands of `net`. Every RunE is flag binding + one app call +
@@ -249,4 +251,56 @@ func newNetHealthCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the probe table as JSON")
 	return cmd
+}
+
+func newNetResumeCmd() *cobra.Command {
+	var binary string
+	cmd := &cobra.Command{
+		Use:   "resume",
+		Short: "Recover a workspace whose run died: reconcile pids, continue from the first unfinished step, bring nodes back",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			dataDir, _ := cmd.Flags().GetString("workspace-dir")
+			if dataDir == "" {
+				return fmt.Errorf("--workspace-dir is required")
+			}
+			out, err := chainsetup.NetResume(cmd.Context(), deps(cmd), chainsetup.NetResumeIn{DataDir: dataDir, Binary: binary})
+			w := cmd.OutOrStdout()
+			for _, line := range out.Reconciled {
+				fmt.Fprintln(w, "reconcile:", line)
+			}
+			if out.Resumed != "" {
+				fmt.Fprintf(w, "resumed from: %s\n", out.Resumed)
+			}
+			for _, step := range out.Steps {
+				fmt.Fprintln(w, step)
+			}
+			for _, s := range out.Started {
+				fmt.Fprintln(w, "started:", s)
+			}
+			if err != nil {
+				return err
+			}
+			if out.Resumed == "" && len(out.Started) == 0 {
+				fmt.Fprintln(w, "nothing to resume: every step is done and every node is running")
+			}
+			printNodeSet(w, out.Nodes.Nodes)
+			return nil
+		},
+	}
+	cmd.Flags().String("workspace-dir", "", "workspace directory (where the composition is set up)")
+	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the one the workspace recorded)")
+	return cmd
+}
+
+// printNodeSet renders a node table.
+func printNodeSet(out io.Writer, ns node.NodeSet) {
+	if len(ns.Nodes) == 0 {
+		return
+	}
+	w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "NODE\tROLE\tRPC\tPID")
+	for _, n := range ns.Nodes {
+		fmt.Fprintf(w, "%d\t%s\t%s\t%d\n", n.Index, n.Role, n.RPCURL, n.PID)
+	}
+	_ = w.Flush()
 }

@@ -1,8 +1,8 @@
 # F1 — 파일 영속·복구 (설계안, 2026-08-28)
 
 > 실행 순서표의 마지막 항목이다. "chainbench 프로세스가 중간에 죽었을 때, 다시 실행하면
-> 이전 진행을 이어받고 서버 상태를 다시 확인한다." 이 문서는 그 일을 **지금 있는 기록
-> 위에서** 어떻게 할지 적은 초안이고, 아래 §4 의 네 가지는 사용자 결정이 필요하다.
+> 이전 진행을 이어받고 서버 상태를 다시 확인한다." §4 의 네 가지는 제안대로 결정됐고
+> (2026-08-28), §6 이 구현 결과다.
 > 상위 계획: [[module-plan]] §2a(Inventory), §4 P4.x(preflight), §7-6(워크스페이스 정의).
 
 ## 0. 원칙 — 사본을 만들지 않는다
@@ -123,3 +123,22 @@ rebuild-nodes / rebuild-all 을 고르고, 죽은 노드는 재구성 목록에 
 - 테스트 단위 이어받기(3.2 끝).
 - 원격 타깃의 데이터 플레인 정리(`rm` 이 원격을 아직 지원하지 않는 것과 같은 선).
 - `sessions/`·`runs/` 의 정리나 압축 — F1 의 일이 아니다.
+
+## 6. 구현 결과 (2026-08-28, 제안대로)
+
+| 조각 | 어디에 | 무엇 |
+|---|---|---|
+| 요청 기록 | `chainsetup.State.Request` (`workspace.json` 의 `request`) | `net up` 의 `new` 단계 직후 `NetUpIn` 을 적는다(`DataDir` 은 비움). `NetUpIn`·`resource.ServerRef` 에 JSON 태그가 붙었다 |
+| 되짚기 | `chainsetup.NetResume` (`verbs_resume.go`), CLI `net resume --workspace-dir [--binary]`, MCP `chainbench_net_resume`, `app.NetResume` | ① `withWorkspace` 가 stale 잠금을 인수하고 live 는 거부 ② `Workspace.Reconcile`: 기록된 pid 는 그 노드 머신에서 `PIDAlive`, 죽었으면 ledger·record 둘 다 지움; pid 없는 노드는 `FindBinary` + `ps -o command=` 로 우리 argv 와 같은 프로세스를 찾아 입양 ③ `firstUndone` 부터 `netUpFrom` 으로 잇기(요청의 stage 가 provision 이면 init·start 는 미완이 아니다) ④ stage 가 start 면 pid 없는 노드를 `StartNode` 로 되살림 ⑤ `NetworkStatus` 로 읽어 보고 |
+| 단계 목록 | `upStepNames` (`verbs_up.go`) | `net up` 과 `resume` 이 같은 순서 하나를 쓴다 |
+| 세트 잠금 | `chainsetup/setlock.go` + `session.AcquireLock` | `NetAllocate` 가 `~/.chainbench/<set>.lock`(내장 풀은 `local.lock`)을 잡고 워크스페이스를 저장한 뒤 놓는다. live 홀더는 10초까지 기다린다. `session.AcquireLock` 은 워크스페이스 잠금과 같은 코드다(stale 인수·같은 프로세스 중첩) |
+
+게이트(§3.4) 실측:
+- 단위: 죽은 pid 정리 후 재기동 · 주인 없는 프로세스 입양(같은 바이너리 다른 argv 는 무시) ·
+  요청 없는 워크스페이스 거부 · provision 에서 죽은 start 요청을 `init` 부터 잇기(가짜 바이너리) ·
+  잠금 중첩/해제 — `internal/chainsetup/resume_test.go`.
+- 라이브(gstable): `net up --stage provision` → 요청을 start 로 바꿔 "start 도중 죽음" 을 재현 →
+  `net resume` 이 `init`·`start` 만 돌려 4노드 기동 → node3 을 `kill -9` → `net resume` 이
+  `pid 33693 dead, cleared` 후 `node3 started (pid 33719)` → `net health` 전 노드 블록 7 →
+  `net stop` 4노드. 스텝 목록·요청·pid 외에 새 파일은 세트 잠금 하나뿐이고, 그것은 사실이
+  아니라 신호다.

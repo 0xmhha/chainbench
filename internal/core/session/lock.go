@@ -72,14 +72,25 @@ func (c Composition) Lock() (Lock, LockState, error) {
 // habit that also deletes live ones. What it must not do is take over silently
 // — the previous holder is returned so the caller can say what it found.
 func (c Composition) Acquire(command string) (*Held, Lock, LockState, error) {
-	path := filepath.Join(c.dir, lockFile)
+	return AcquireLock(filepath.Join(c.dir, lockFile), command, c.now)
+}
+
+// AcquireLock takes the lock file at path for this process, with the same
+// rules a workspace lock follows: a live holder in this process nests, a live
+// holder elsewhere refuses, a stale or foreign-but-dead one is taken over and
+// reported. It is what a lock that is not a workspace's — one server set's
+// allocation lock — is taken through, so there is one notion of "held".
+func AcquireLock(path, command string, now func() time.Time) (*Held, Lock, LockState, error) {
+	if now == nil {
+		now = time.Now
+	}
 	prev, state, err := readLock(path)
 	if err != nil {
 		return nil, Lock{}, "", err
 	}
 	switch state {
 	case LockLive:
-		// A workspace is held by one run, not by one call. A composite step
+		// A lock is held by one run, not by one call. A composite step
 		// (net up) takes the lock and then calls the steps it is made of, and
 		// each of those takes it too; refusing there would make the tool
 		// deadlock against itself, and releasing there would hand the
@@ -93,14 +104,17 @@ func (c Composition) Acquire(command string) (*Held, Lock, LockState, error) {
 		return nil, prev, state, fmt.Errorf("%w: %s", ErrLocked, prev.Describe())
 	}
 
+	if err := os.MkdirAll(filepath.Dir(path), compositionDirPerm); err != nil {
+		return nil, prev, state, fmt.Errorf("session: mkdir for %s: %w", path, err)
+	}
 	host, _ := os.Hostname()
-	mine := Lock{PID: os.Getpid(), Host: host, Command: command, At: c.now().UTC().Format(time.RFC3339)}
+	mine := Lock{PID: os.Getpid(), Host: host, Command: command, At: now().UTC().Format(time.RFC3339)}
 	b, err := json.MarshalIndent(mine, "", "  ")
 	if err != nil {
 		return nil, prev, state, fmt.Errorf("session: marshal lock: %w", err)
 	}
 	if err := os.WriteFile(path, b, 0o644); err != nil {
-		return nil, prev, state, fmt.Errorf("session: write %s: %w", lockFile, err)
+		return nil, prev, state, fmt.Errorf("session: write %s: %w", path, err)
 	}
 	return &Held{path: path, lock: mine}, prev, state, nil
 }
@@ -117,7 +131,7 @@ func (h *Held) Release() error {
 		return nil
 	}
 	if err := os.Remove(h.path); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("session: remove %s: %w", lockFile, err)
+		return fmt.Errorf("session: remove %s: %w", h.path, err)
 	}
 	return nil
 }

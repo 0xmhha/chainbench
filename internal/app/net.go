@@ -27,6 +27,8 @@ type (
 	NetStartIn       = chainsetupmod.NetStartIn
 	NetStopIn        = chainsetupmod.NetStopIn
 	NetRestartIn     = chainsetupmod.NetRestartIn
+	NetResumeIn      = chainsetupmod.NetResumeIn
+	NetResumeOut     = chainsetupmod.NetResumeOut
 	NetRmIn          = chainsetupmod.NetRmIn
 	NetLogsIn        = chainsetupmod.NetLogsIn
 	NetLogsOut       = chainsetupmod.NetLogsOut
@@ -139,4 +141,11 @@ func NodeStart(ctx context.Context, d Deps, in NodeStartIn) (chainsetupmod.NodeS
 // NodeStop stops one node by index.
 func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 	return chainsetupmod.NodeStop(ctx, d.chainsetupDeps(), in)
+}
+
+// NetResume recovers a workspace whose run died: reconcile pids with the
+// machine, continue from the first unfinished step, bring back the nodes
+// that should be running.
+func NetResume(ctx context.Context, d Deps, in NetResumeIn) (chainsetupmod.NetResumeOut, error) {
+	return chainsetupmod.NetResume(ctx, d.chainsetupDeps(), in)
 }
