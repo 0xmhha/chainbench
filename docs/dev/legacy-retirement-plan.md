@@ -59,6 +59,11 @@
 
 ### 4.4 이관 진척 (2026-08-09)
 
+> **2026-08-28 (P8):** 이관이 끝난 Go 케이스 파일 41개(+유닛테스트)를 삭제했다 — 등록 134 → 56건,
+> `tests/api`·`tests/network` 패키지 소멸, 공유 헬퍼는 패키지별 `helpers.go` 로 취합.
+> 남은 34건의 미이관 사유는 `tests/specs/README.md` 의 잔여 표가 정본이다. 순서 1(suite 이관)의
+> 남은 분량이 그것이고, 2~4(`test` 명령·MCP·testrun·testkit 제거)는 그 뒤에 한 번에 한다.
+
 레거시 등록 케이스는 **134개**(`testkit.Cases()` 실측, 7개 카테고리). 이관분은 `tests/specs/<category>/<name>.json` 에 두고 CI 가 오프라인 검증한다([[tests-specs-readme]] = `tests/specs/README.md`).
 
 | 카테고리 | 레거시 | 이관 | 라이브 |

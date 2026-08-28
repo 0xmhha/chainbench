@@ -73,8 +73,6 @@ func TestHardforkReadCases(t *testing.T) {
 	for _, name := range []string{
 		"p256-precompile-active",
 		"p256-rejects-invalid",
-		"govminter-v2-code",
-		"boho-chain-config-active",
 	} {
 		rep, err := testrun.Run(context.Background(), ns, testrun.Options{Names: []string{name}})
 		if err != nil {
@@ -88,7 +86,7 @@ func TestHardforkReadCases(t *testing.T) {
 
 func TestHardforkReadCases_SkipForeignChain(t *testing.T) {
 	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
-	names := []string{"p256-precompile-active", "govminter-v2-code", "boho-chain-config-active"}
+	names := []string{"p256-precompile-active", "p256-rejects-invalid"}
 	rep, _ := testrun.Run(context.Background(), ns, testrun.Options{Names: names})
 	if len(rep.Results) != len(names) {
 		t.Fatalf("ran %d cases, want %d", len(rep.Results), len(names))

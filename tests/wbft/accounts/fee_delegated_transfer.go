@@ -25,7 +25,6 @@
 package accounts
 
 import (
-	"encoding/hex"
 	"math/big"
 	"time"
 
@@ -55,8 +54,7 @@ func feeDelegatedTransfer(t *testkit.T) {
 	t.NoErr(err, "accounts.ForChain")
 	t.Truef(ap.SupportsTxType(0x16), "chain %s must support fee-delegation (0x16)", t.NodeSet().Chain)
 
-	key, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	key := fundedKey(t)
 
 	w, err := ap.OpenWallet(t.Ctx(), key, primary.RPCURL)
 	t.NoErr(err, "open wallet")

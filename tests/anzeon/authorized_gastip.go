@@ -22,21 +22,11 @@
 //	the header GasTip; assert the tip charged equals the requested tip (not the
 //	header GasTip) and an AuthorizedTxExecuted event is present.
 //
-// # Test: authorized-tx-executed-event
-//
-// Intent:   every transaction from an authorized account emits AuthorizedTxExecuted.
-//
-// Applies:  stablenet. Requires "rpc".
-// Method:   authorize a fresh account; send any transfer; assert the receipt
-//
-//	carries the AuthorizedTxExecuted event.
-//
 // These are chainbench TEST CODE (requirement #16): live governance + tx flows,
 // so the sibling _test.go validates registration/gating.
 package anzeon
 
 import (
-	"encoding/hex"
 	"math/big"
 	"time"
 
@@ -57,13 +47,6 @@ func init() {
 		RequiresCaps: []string{"rpc"},
 		Fn:           authorizedAccountGastipFree,
 	})
-	testkit.Register(testkit.Case{
-		Name:         "authorized-tx-executed-event",
-		Category:     "system-contracts",
-		ChainCompat:  []string{"stablenet"},
-		RequiresCaps: []string{"rpc"},
-		Fn:           authorizedTxExecutedEvent,
-	})
 }
 
 // authorizeFreshAccount generates a new account, funds it from the faucet, and
@@ -79,8 +62,7 @@ func authorizeFreshAccount(t *testkit.T) accounts.Wallet {
 	t.NoErr(err, "generate key")
 
 	// Fund the fresh account from the faucet so it can pay gas.
-	fkey, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	fkey := fundedKey(t)
 	fw, err := ap.OpenWallet(t.Ctx(), fkey, primary.RPCURL)
 	t.NoErr(err, "open faucet wallet")
 	fundHash, err := fw.SendCoin(t.Ctx(), addr, tenEther())
@@ -133,18 +115,4 @@ func authorizedAccountGastipFree(t *testkit.T) {
 	c := rpc.Dial(primary.RPCURL)
 	t.Truef(receiptHasTopic(t.Ctx(), c, hash, authorizedTxExecutedTopic),
 		"AuthorizedTxExecuted event present for the authorized account's tx")
-}
-
-func authorizedTxExecutedEvent(t *testkit.T) {
-	w := authorizeFreshAccount(t)
-
-	hash, err := w.SendCoin(t.Ctx(), gastipRecipient, big.NewInt(1))
-	t.NoErr(err, "send from authorized account")
-
-	primary, _ := t.NodeSet().Primary()
-	c := rpc.Dial(primary.RPCURL)
-	t.WaitFor(func() bool { return receiptSucceeded(t.Ctx(), c, hash) },
-		90*time.Second, time.Second, "tx receipt")
-	t.Truef(receiptHasTopic(t.Ctx(), c, hash, authorizedTxExecutedTopic),
-		"AuthorizedTxExecuted event present for an authorized account's tx")
 }

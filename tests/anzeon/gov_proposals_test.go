@@ -11,21 +11,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
-// govWriteCases are the stablenet-only governance write cases ported from
-// f-system-contracts; each must register and gate to stablenet.
+// govWriteCases are the stablenet-only governance write cases still on the
+// Go-func path (the rest are DSL specs under tests/specs/system-contracts);
+// each must register and gate to stablenet.
 var govWriteCases = []string{
-	"burn-proposal-executes",
 	"validator-add-member-executes",
-	"blacklist-proposal-executes",
-	"authorize-proposal-executes",
-	"configure-minter-proposal-executes",
-	"burn-cancel-refundable",
-	"burn-execute-no-refundable",
-	"claim-zero-refund-reverts",
-	"burn-reject-refundable",
-	"claim-burn-refund-succeeds",
-	"claim-burn-refund-double-reverts",
-	"burn-refund-events",
+	"masterminter-member-add-remove",
 }
 
 func TestGovWriteCases_Register(t *testing.T) {

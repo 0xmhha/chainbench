@@ -13,7 +13,6 @@ import (
 
 var authorizedCases = []string{
 	"authorized-account-gastip-free",
-	"authorized-tx-executed-event",
 }
 
 func TestAuthorizedCases_Register(t *testing.T) {

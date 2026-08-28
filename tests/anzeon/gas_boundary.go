@@ -29,7 +29,6 @@
 package anzeon
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"math/big"
 	"strings"
@@ -61,8 +60,7 @@ func gasBoundaryWallet(t *testkit.T) accounts.Wallet {
 	t.Truef(ok, "node set has no primary node")
 	ap, err := accounts.ForChain(t.NodeSet().Chain)
 	t.NoErr(err, "accounts.ForChain")
-	key, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	key := fundedKey(t)
 	w, err := ap.OpenWallet(t.Ctx(), key, primary.RPCURL)
 	t.NoErr(err, "open wallet")
 	return w

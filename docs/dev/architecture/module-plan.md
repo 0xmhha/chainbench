@@ -616,6 +616,23 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
 **게이트**: DSL 파서가 액션을 모르고, 액션이 DSL 문법을 모른다. 케이스 4종이
 같은 헬퍼를 부른다.
 
+**P8 결과(2026-08-28).** 게이트 두 개는 앞 단계가 이미 닫았다 — 파서와 액션의
+분리는 P4.3(`testspec → testhelper` import 0), 케이스 4종의 공통 헬퍼는 P7(넷 다
+`testhelper` 내장 어휘로 확인). 이번에 한 것은 **취합의 남은 절반**, 레거시 Go 케이스다.
+`testkit.Cases()` 실측 134건 중 96건이 같은 id 의 DSL 스펙으로 이미 이관돼 있었고,
+그 Go 파일 41개와 유닛테스트를 지웠다(`tests/api`·`tests/network` 패키지 소멸,
+부분 이관 파일 5개는 이관된 케이스만 걷어냄). 남은 파일이 공유하던 헬퍼는
+`tests/anzeon/helpers.go`(208줄)·`tests/wbft/accounts/helpers.go`(47줄)로 모았다.
+남은 등록 56건 = 미이관 34건(사유는 `tests/specs/README.md` 잔여 표: fee-delegation
+0x16, EIP-7702, 비동기 제출·부정 채굴 기대, 토폴로지 파생 quorum, delayed-boho
+크로스오버, ws 구독 순서, SDK 클라이언트 가드) + 표 구동 파일에 섞인 이관분 22건.
+`tests/` 는 12,000 → 3,144줄. 옮기면서 레거시가 들고 있던 faucet 개인키
+리터럴은 없앴다(결정 2026-08-28): genesis alloc 에 잔고가 있는 preset 노드 계정에서
+보내면 되므로 별도 faucet 키가 필요 없다 — `fundedKey(t)` 가 `CHAINBENCH_FUNDED_KEY`
+또는 preset node1 의 키를 쓴다. **`testkit`·`testrun`·`chainbench test`·MCP
+`chainbench_test` 는 그 34건이 이관될 때 함께 은퇴한다** — 그때까지는 그 케이스들의
+유일한 실행기라 남긴다(T7.11 잔여, 위 §3 표).
+
 ## 5. 단계 간 의존
 
 ```mermaid

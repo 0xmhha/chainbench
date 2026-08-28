@@ -1,34 +1,3 @@
-// # Test: commit-signers-quorum
-//
-// Intent:   the block's commit-signer report must name an author and gather a
-//
-//	committer set at or above BFT quorum — proof the block was finalized
-//	by enough validators (ported from regression/g-api/
-//	g3-03-get-commit-signers.sh).
-//
-// Applies:  stablenet, wbft. Requires: "rpc", "consensus".
-// Method:   istanbul_getCommitSignersFromBlock("latest"); read Author and
-//
-//	Committers; quorum = ceil(2N/3) over the current validator set.
-//
-// Pass:     Author is a 0x address and len(Committers) >= quorum.
-//
-// # Test: wbft-seals-quorum
-//
-// Intent:   the latest block's committed and prepared seals must each be signed
-//
-//	by a quorum of sealers and carry a non-empty aggregate signature
-//	(ported from regression/b-wbft/b-02-wbft-extra-seal.sh).
-//
-// Applies:  stablenet, wbft. Requires: "rpc", "consensus".
-// Method:   istanbul_getWbftExtraInfo("latest"); inspect committedSeal and
-//
-//	preparedSeal.
-//
-// Pass:     each seal lists sealers >= quorum and a signature longer than the
-//
-//	bare "0x" prefix.
-//
 // # Test: prev-seals-quorum
 //
 // Intent:   the latest block must carry the previous block's votes: its
@@ -50,26 +19,10 @@
 package consensus
 
 import (
-	"strings"
-
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
 func init() {
-	testkit.Register(testkit.Case{
-		Name:         "commit-signers-quorum",
-		Category:     "consensus",
-		ChainCompat:  []string{"stablenet", "wbft"},
-		RequiresCaps: []string{"rpc", "consensus"},
-		Fn:           commitSignersQuorum,
-	})
-	testkit.Register(testkit.Case{
-		Name:         "wbft-seals-quorum",
-		Category:     "consensus",
-		ChainCompat:  []string{"stablenet", "wbft"},
-		RequiresCaps: []string{"rpc", "consensus"},
-		Fn:           wbftSealsQuorum,
-	})
 	testkit.Register(testkit.Case{
 		Name:         "prev-seals-quorum",
 		Category:     "consensus",
@@ -94,13 +47,6 @@ type wbftExtraSeals struct {
 	PrevPreparedSeal  wbftSeal `json:"prevPreparedSeal"`
 }
 
-// commitSigners is the istanbul_getCommitSignersFromBlock result. JSON decoding
-// is case-insensitive, so the CamelCase tags also match a lowercase server.
-type commitSigners struct {
-	Author     string   `json:"Author"`
-	Committers []string `json:"Committers"`
-}
-
 // quorumOf returns the BFT quorum ceil(2n/3) for an n-validator set.
 func quorumOf(n int) int { return (2*n + 2) / 3 }
 
@@ -109,34 +55,6 @@ func validatorCount(t *testkit.T) int {
 	var vals []string
 	t.NoErr(t.Primary().Call(t.Ctx(), "istanbul_getValidators", &vals, "latest"), "istanbul_getValidators")
 	return len(vals)
-}
-
-func commitSignersQuorum(t *testkit.T) {
-	quorum := quorumOf(validatorCount(t))
-	var cs commitSigners
-	t.NoErr(t.Primary().Call(t.Ctx(), "istanbul_getCommitSignersFromBlock", &cs, "latest"),
-		"istanbul_getCommitSignersFromBlock(latest)")
-	t.Truef(strings.HasPrefix(cs.Author, "0x") && len(cs.Author) == 42,
-		"Author is a 20-byte address, got %q", cs.Author)
-	t.Truef(len(cs.Committers) >= quorum,
-		"committers >= quorum (%d), got %d", quorum, len(cs.Committers))
-}
-
-func wbftSealsQuorum(t *testkit.T) {
-	quorum := quorumOf(validatorCount(t))
-	var extra wbftExtraSeals
-	t.NoErr(t.Primary().Call(t.Ctx(), "istanbul_getWbftExtraInfo", &extra, "latest"),
-		"istanbul_getWbftExtraInfo(latest)")
-
-	t.Truef(len(extra.CommittedSeal.Sealers) >= quorum,
-		"committedSeal.sealers >= quorum (%d), got %d", quorum, len(extra.CommittedSeal.Sealers))
-	t.Truef(len(extra.CommittedSeal.Signature) > 2,
-		"committedSeal.signature is non-empty, got %q", extra.CommittedSeal.Signature)
-
-	t.Truef(len(extra.PreparedSeal.Sealers) >= quorum,
-		"preparedSeal.sealers >= quorum (%d), got %d", quorum, len(extra.PreparedSeal.Sealers))
-	t.Truef(len(extra.PreparedSeal.Signature) > 2,
-		"preparedSeal.signature is non-empty, got %q", extra.PreparedSeal.Signature)
 }
 
 func prevSealsQuorum(t *testkit.T) {

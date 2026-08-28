@@ -15,7 +15,6 @@ import (
 // transactions/calls against a live node, so the sibling tests validate
 // registration and chain gating only.
 var txErrorCases = []string{
-	"insufficient-funds-rejected",
 	"eth-call-revert-returns-error",
 }
 

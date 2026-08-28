@@ -21,7 +21,6 @@
 package accounts
 
 import (
-	"encoding/hex"
 	"strings"
 	"time"
 
@@ -49,8 +48,7 @@ func setCodeDelegation(t *testkit.T) {
 	t.NoErr(err, "accounts.ForChain")
 	t.Truef(ap.SupportsTxType(0x04), "chain %s must support set-code (0x04)", t.NodeSet().Chain)
 
-	key, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	key := fundedKey(t)
 	w, err := ap.OpenWallet(t.Ctx(), key, primary.RPCURL)
 	t.NoErr(err, "open wallet")
 

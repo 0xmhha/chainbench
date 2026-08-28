@@ -11,7 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
-var quorumCases = []string{"commit-signers-quorum", "wbft-seals-quorum", "prev-seals-quorum"}
+var quorumCases = []string{"prev-seals-quorum"}
 
 // fourValidators is the sealer set the seal mocks report (quorum = 3).
 var fourValidators = []string{
@@ -29,11 +29,6 @@ func sealMockSet(t *testing.T) node.NodeSet {
 		switch method {
 		case "istanbul_getValidators":
 			return fourValidators
-		case "istanbul_getCommitSignersFromBlock":
-			return map[string]any{
-				"Author":     "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
-				"Committers": fourValidators[:3],
-			}
 		case "istanbul_getWbftExtraInfo":
 			return map[string]any{
 				"committedSeal":     seal(4),

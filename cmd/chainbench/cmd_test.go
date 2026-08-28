@@ -331,7 +331,7 @@ func TestVerifyCmd_HTTPMock(t *testing.T) {
 }
 
 func TestTestCmd_RunsCasesViaAttach(t *testing.T) {
-	// Mock node returning a stable non-zero chain id (chain-id case passes).
+	// Mock node answering every method with a value (the RPC-presence case passes).
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID int `json:"id"`
@@ -341,12 +341,12 @@ func TestTestCmd_RunsCasesViaAttach(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	out, err := run(t, "test", "--chain", "wbft", "--rpc", srv.URL, "--name", "chain-id")
+	out, err := run(t, "test", "--chain", "wbft", "--rpc", srv.URL, "--name", "fee-delegate-sign-rpc-present")
 	if err != nil {
 		t.Fatalf("test cmd: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "chain-id") || !strings.Contains(out, "pass") {
-		t.Errorf("expected chain-id pass in output:\n%s", out)
+	if !strings.Contains(out, "fee-delegate-sign-rpc-present") || !strings.Contains(out, "pass") {
+		t.Errorf("expected fee-delegate-sign-rpc-present pass in output:\n%s", out)
 	}
 	if !strings.Contains(out, "pass=1") {
 		t.Errorf("expected pass=1:\n%s", out)
@@ -370,7 +370,7 @@ func TestTestCmd_PersistsAndReport(t *testing.T) {
 	}
 
 	// Run test against the saved network; results persist to runs.json.
-	if _, err := run(t, "test", "--data-dir", dir, "--name", "chain-id"); err != nil {
+	if _, err := run(t, "test", "--data-dir", dir, "--name", "fee-delegate-sign-rpc-present"); err != nil {
 		t.Fatalf("test: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "runs.json")); err != nil {
@@ -382,7 +382,7 @@ func TestTestCmd_PersistsAndReport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("report: %v\n%s", err, out)
 	}
-	if !strings.Contains(out, "test/chain-id") || !strings.Contains(out, "total=1 ok=1") {
+	if !strings.Contains(out, "test/fee-delegate-sign-rpc-present") || !strings.Contains(out, "total=1 ok=1") {
 		t.Errorf("report output:\n%s", out)
 	}
 }
@@ -413,7 +413,7 @@ func TestTestCmd_FromState(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "nodeset.json"), []byte(nsJSON), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	out, err := run(t, "test", "--data-dir", dir, "--name", "chain-id")
+	out, err := run(t, "test", "--data-dir", dir, "--name", "fee-delegate-sign-rpc-present")
 	if err != nil {
 		t.Fatalf("test --data-dir: %v\n%s", err, out)
 	}

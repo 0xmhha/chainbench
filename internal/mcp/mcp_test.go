@@ -305,7 +305,7 @@ func TestVerifyAndTestTools(t *testing.T) {
 	}
 
 	ttext, terr := callText(t, s, "chainbench_test", map[string]any{
-		"chain": "wbft", "rpc": []any{srv.URL}, "name": []any{"chain-id"},
+		"chain": "wbft", "rpc": []any{srv.URL}, "name": []any{"fee-delegate-sign-rpc-present"},
 	})
 	if terr || !strings.Contains(ttext, "pass=1") {
 		t.Errorf("test tool: err=%v text=%s", terr, ttext)
