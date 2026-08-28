@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -14,7 +13,7 @@ import (
 // plan assembly has both the binary/sync choices (from the request) and the
 // address and ports (from netmap).
 type PlacedNode struct {
-	Req       place.NodeReq
+	Req       node.LaunchReq
 	Placement node.Placement
 }
 

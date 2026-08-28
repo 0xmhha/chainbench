@@ -17,10 +17,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -120,7 +118,7 @@ type AllocateOpts struct {
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
-	Pool netmap.Pool
+	Pool resource.Pool
 	// SetPath is the server-set file Pool came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
 	SetPath string
@@ -129,17 +127,17 @@ type AllocateOpts struct {
 // placements resolves the requested layout into one placement request per node,
 // in launch order. A topology is authoritative when given; otherwise the counts
 // produce validators first, then endpoints.
-func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
+func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	if o.Topology != nil {
 		sorted := o.Topology.Sorted()
 		if len(sorted) == 0 {
 			return nil, nil, fmt.Errorf("chainsetup: allocate: topology has no nodes")
 		}
-		reqs := make([]place.NodeReq, len(sorted))
+		reqs := make([]node.LaunchReq, len(sorted))
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = place.NodeReq{Role: role}
+			reqs[i] = node.LaunchReq{Role: role}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -149,14 +147,14 @@ func (o AllocateOpts) placements() ([]place.NodeReq, []string, error) {
 	if o.Validators < 1 {
 		return nil, nil, fmt.Errorf("chainsetup: allocate: at least one validator is required")
 	}
-	reqs := make([]place.NodeReq, 0, o.Validators+o.Endpoints)
+	reqs := make([]node.LaunchReq, 0, o.Validators+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < o.Validators; i++ {
-		reqs = append(reqs, place.NodeReq{Role: node.RoleValidator})
+		reqs = append(reqs, node.LaunchReq{Role: node.RoleValidator})
 		modes = append(modes, syncModeFull)
 	}
 	for i := 0; i < o.Endpoints; i++ {
-		reqs = append(reqs, place.NodeReq{Role: node.RoleEndpoint})
+		reqs = append(reqs, node.LaunchReq{Role: node.RoleEndpoint})
 		modes = append(modes, syncModeFor(node.RoleEndpoint, o.EndpointSyncMode))
 	}
 	return reqs, modes, nil
@@ -201,7 +199,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// takes two ports beyond p2p, and sizing the step for a wbft node would put
 	// the next node on top of it.
 	pool.Reservation = plugin.Family().PortReservation()
-	assigned, err := netmap.Assign(pool, netmapRequests(reqs))
+	assigned, err := resource.Assign(pool, netmapRequests(reqs))
 	if err != nil {
 		return "", err
 	}
@@ -643,10 +641,10 @@ func (w *Workspace) Netmap() (*node.Map, error) {
 // netmapRequests turns the composed node list into placement requests. Only the
 // role travels: position comes from the order, which is also the node's
 // identity.
-func netmapRequests(reqs []place.NodeReq) []netmap.Request {
-	out := make([]netmap.Request, 0, len(reqs))
+func netmapRequests(reqs []node.LaunchReq) []resource.Request {
+	out := make([]resource.Request, 0, len(reqs))
 	for _, r := range reqs {
-		out = append(out, netmap.Request{Role: r.Role})
+		out = append(out, resource.Request{Role: r.Role})
 	}
 	return out
 }

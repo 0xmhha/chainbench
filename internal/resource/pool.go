@@ -1,41 +1,10 @@
-package netmap
+package resource
 
 import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
-
-// Bands are the two disjoint port bands a network draws from. A node takes one
-// step of each: p2p (with etcd derived at p2p+1) and rpc (http, ws, auth, and
-// metrics when the step leaves room). The separation is not cosmetic — packing
-// p2p ports one apart makes the wemix binary's derived etcd port land on the
-// next node's p2p port, which stalls block production with no obvious cause
-// (portplan).
-type Bands struct {
-	P2PBase int
-	P2PStep int
-	RPCBase int
-	RPCStep int
-	// WS, Auth, and Metrics override the derived scheme (ws=http+1,
-	// auth=http+2, metrics=http+3) when non-nil — a site whose firewall
-	// groups ports by purpose declares each band explicitly (portplan.Bands).
-	WS      *portplan.Band
-	Auth    *portplan.Band
-	Metrics *portplan.Band
-}
-
-// plan converts the bands to portplan's shape.
-func (b Bands) plan() portplan.Bands {
-	return portplan.Bands{
-		P2P:     portplan.Band{Base: b.P2PBase, Step: b.P2PStep},
-		RPC:     portplan.Band{Base: b.RPCBase, Step: b.RPCStep},
-		WS:      b.WS,
-		Auth:    b.Auth,
-		Metrics: b.Metrics,
-	}
-}
 
 // Host is one address the pool can place nodes on. The name is how an operator
 // and a path reference it (srv://<name>/...); an entry that gives only an
@@ -63,7 +32,7 @@ type Pool struct {
 	// chain family decides — a wemix node's embedded etcd takes two more than
 	// a wbft one. The zero value takes portplan's default, so a caller that
 	// has not asked a family still gets a usable plan.
-	Reservation portplan.Reservation
+	Reservation node.Reservation
 	// Source names where the pool was read from, so a port number is never a
 	// guess ("server-set.yaml", "built-in defaults").
 	Source string
@@ -89,7 +58,7 @@ func (p Pool) Validate() error {
 	}
 	// The last slot is the one that can run off the end of a band, so checking
 	// it checks every earlier one.
-	if _, err := portplan.PlanBands(p.Slots, p.Ports.plan(), p.Reservation); err != nil {
+	if _, err := PlanBands(p.Slots, p.Ports, p.Reservation); err != nil {
 		return fmt.Errorf("netmap: pool ports: %w", err)
 	}
 	return nil
@@ -149,7 +118,7 @@ func Assign(pool Pool, reqs []Request) (*node.Map, error) {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}
 		slot := i/hosts + 1 // 1-based: portplan counts slots from one
-		ports, err := portplan.PlanBands(slot, pool.Ports.plan(), pool.Reservation)
+		ports, err := PlanBands(slot, pool.Ports, pool.Reservation)
 		if err != nil {
 			return nil, fmt.Errorf("netmap: node %d: %w", i+1, err)
 		}

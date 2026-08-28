@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // defaultPortBand is how many port slots a host is assumed to offer when no
@@ -243,14 +243,14 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 		pool.Slots = 1
 	}
 	pool.Reservation = plugin.Family().PortReservation()
-	reqs := make([]netmap.Request, 0, in.Validators+in.Endpoints)
+	reqs := make([]resource.Request, 0, in.Validators+in.Endpoints)
 	for range in.Validators {
-		reqs = append(reqs, netmap.Request{Role: node.RoleBP})
+		reqs = append(reqs, resource.Request{Role: node.RoleBP})
 	}
 	for range in.Endpoints {
-		reqs = append(reqs, netmap.Request{Role: node.RoleEN})
+		reqs = append(reqs, resource.Request{Role: node.RoleEN})
 	}
-	m, err := netmap.Assign(pool, reqs)
+	m, err := resource.Assign(pool, reqs)
 	if err != nil {
 		return NetMapOut{}, err
 	}

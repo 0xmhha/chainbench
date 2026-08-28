@@ -10,9 +10,9 @@ import (
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 var enodeLine = regexp.MustCompile(`"(enode://[^"]+)"`)
@@ -61,16 +61,16 @@ func TestArmSpecs_StaticNodesMatchNetmapMesh(t *testing.T) {
 
 	// The same network as a netmap, assigned from the pool the launcher's
 	// ports came from.
-	m, err := netmap.Assign(netmap.Pool{
-		Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	m, err := resource.Assign(resource.Pool{
+		Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots: n,
-		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
-	}, []netmap.Request{
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
+	}, []resource.Request{
 		{Role: node.RoleValidator}, {Role: node.RoleValidator},
 		{Role: node.RoleEndpoint}, {Role: node.RoleEndpoint},
 	})
 	if err != nil {
-		t.Fatalf("netmap.Assign: %v", err)
+		t.Fatalf("resource.Assign: %v", err)
 	}
 	// The caller holds both the map and the key material; netmap holds neither.
 	enode := func(p node.Placement) (string, bool) {

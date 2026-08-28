@@ -6,12 +6,11 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
@@ -35,8 +34,8 @@ type BuildDeps struct {
 	// Plugin is the target chain.
 	Plugin registry.ChainPlugin
 	// Pool is the resource the network is allocated from (addresses x port
-	// slots). netmap.Assign consumes it.
-	Pool netmap.Pool
+	// slots). resource.Assign consumes it.
+	Pool resource.Pool
 	// Genesis sources the network genesis bytes.
 	Genesis GenesisSource
 	// Supervisor brings the network up behind a health gate and tears it down.
@@ -46,7 +45,7 @@ type BuildDeps struct {
 	// Caps are the advertised capabilities recorded on the plan.
 	Caps []string
 	// Reqs derives per-node placement requests (role/binary/sync) from a spec.
-	Reqs func(spec testspec.Spec) []place.NodeReq
+	Reqs func(spec testspec.Spec) []node.LaunchReq
 	// Provision materializes the plan's on-disk files (genesis, per-node config,
 	// keys). It is injected because file content is chain/preset-specific; nil
 	// skips provisioning (e.g. an attach-only or test build).
@@ -67,7 +66,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: spec resolved to no nodes")
 		}
 
-		assigned, err := netmap.Assign(d.Pool, netmapRequests(reqs))
+		assigned, err := resource.Assign(d.Pool, netmapRequests(reqs))
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: allocate: %w", err)
 		}
@@ -130,7 +129,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 }
 
 // countValidators counts placement requests whose role produces blocks.
-func countValidators(reqs []place.NodeReq) int {
+func countValidators(reqs []node.LaunchReq) int {
 	n := 0
 	for _, r := range reqs {
 		if node.Is(r.Role, node.RoleBP) {

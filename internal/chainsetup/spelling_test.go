@@ -9,7 +9,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -78,7 +77,7 @@ func TestArmSpecs_CanonicalRolesLaunchIdentically(t *testing.T) {
 // validator set. Reading zero from a canonical plan would build a chain with no
 // producers.
 func TestCountValidators_CanonicalSpelling(t *testing.T) {
-	reqs := []place.NodeReq{
+	reqs := []node.LaunchReq{
 		{Role: node.RoleBP},
 		{Role: node.RoleValidator},
 		{Role: node.RoleEN},

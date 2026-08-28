@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // TestEtcdPortSurvivesIntoThePlan follows the one port that used to disappear.
@@ -18,11 +17,11 @@ import (
 // ports, two of which dropped it in the conversion. This walks it from the
 // assignment through plan assembly and asserts it is still there.
 func TestEtcdPortSurvivesIntoThePlan(t *testing.T) {
-	m, err := netmap.Assign(netmap.Pool{
-		Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	m, err := resource.Assign(resource.Pool{
+		Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots: 4,
-		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
-	}, []netmap.Request{{Role: node.RoleBP}, {Role: node.RoleBP}})
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
+	}, []resource.Request{{Role: node.RoleBP}, {Role: node.RoleBP}})
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}
@@ -33,7 +32,7 @@ func TestEtcdPortSurvivesIntoThePlan(t *testing.T) {
 			t.Fatalf("%s: assignment lost the etcd port: %+v", p.Label, p.Ports)
 		}
 		placed = append(placed, chainsetup.PlacedNode{
-			Req:       place.NodeReq{Role: p.Role, Binary: "gwemix"},
+			Req:       node.LaunchReq{Role: p.Role, Binary: "gwemix"},
 			Placement: p,
 		})
 	}

@@ -11,20 +11,20 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/wemix" // register the wemix plugin
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // wemixPlacement is a small placed network: a producer and two others.
 func wemixPlacement(t *testing.T) *node.Map {
 	t.Helper()
-	m, err := netmap.Assign(netmap.Pool{
-		Hosts:       []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	m, err := resource.Assign(resource.Pool{
+		Hosts:       []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots:       4,
-		Ports:       netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+		Ports:       resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
 		Reservation: poa.Family{}.PortReservation(),
-	}, []netmap.Request{{Role: node.RoleBP}, {Role: node.RoleBP}, {Role: node.RoleEN}})
+	}, []resource.Request{{Role: node.RoleBP}, {Role: node.RoleBP}, {Role: node.RoleEN}})
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}

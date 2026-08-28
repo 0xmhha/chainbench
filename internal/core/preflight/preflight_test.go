@@ -1,17 +1,17 @@
 package preflight_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/preflight"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"strings"
 	"testing"
-
-	"github.com/0xmhha/chainbench/internal/core/portplan"
-	"github.com/0xmhha/chainbench/internal/core/preflight"
 )
 
-func goldenPorts(n int) []portplan.Ports {
-	var ps []portplan.Ports
+func goldenPorts(n int) []node.Endpoints {
+	var ps []node.Endpoints
 	for i := 1; i <= n; i++ {
-		p, _ := portplan.Plan(i, 30010, 10, 40010, 10, portplan.DefaultReservation)
+		p, _ := resource.Plan(i, 30010, 10, 40010, 10, node.DefaultReservation)
 		ps = append(ps, p)
 	}
 	return ps
@@ -56,7 +56,7 @@ func TestValidate_Catches(t *testing.T) {
 	}
 	// port collision (etcd overlaps http)
 	p = base()
-	p.Ports = []portplan.Ports{{P2P: 100, Etcd: 101, HTTP: 101, WS: 102, Auth: 103}}
+	p.Ports = []node.Endpoints{{P2P: 100, Etcd: 101, HTTP: 101, WS: 102, Auth: 103}}
 	p.NetworkIDs = []int64{8285}
 	if err := preflight.Validate(p); err == nil {
 		t.Error("port collision not caught")

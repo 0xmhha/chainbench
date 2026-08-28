@@ -27,7 +27,6 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -374,15 +373,15 @@ func (c *Set) expand() {
 
 // BuiltinPool is the pool used when no server set names one: this machine, the
 // built-in bands, and room for a development-sized network.
-func BuiltinPool(slots int) netmap.Pool {
+func BuiltinPool(slots int) Pool {
 	p := BuiltinPorts()
 	if slots < 1 {
 		slots = 1
 	}
-	return netmap.Pool{
-		Hosts:  []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+	return Pool{
+		Hosts:  []Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots:  slots,
-		Ports:  netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep},
+		Ports:  Bands{P2P: Band{Base: p.P2PBase, Step: p.P2PStep}, RPC: Band{Base: p.RPCBase, Step: p.RPCStep}},
 		Source: builtinSource,
 	}
 }

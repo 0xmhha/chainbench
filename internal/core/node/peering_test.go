@@ -1,8 +1,8 @@
 package node_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"strings"
 	"testing"
 )
@@ -10,12 +10,12 @@ import (
 // tiered builds bp1 bp2 pn1 en1 en2 on one host.
 func tiered(t *testing.T) *node.Map {
 	t.Helper()
-	pool := netmap.Pool{
-		Hosts: []netmap.Host{{Addr: "127.0.0.1"}},
+	pool := resource.Pool{
+		Hosts: []resource.Host{{Addr: "127.0.0.1"}},
 		Slots: 8,
-		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
 	}
-	m, err := netmap.Assign(pool, []netmap.Request{
+	m, err := resource.Assign(pool, []resource.Request{
 		{Role: node.RoleBP}, {Role: node.RoleBP},
 		{Role: node.RolePN},
 		{Role: node.RoleEN}, {Role: node.RoleEN},
@@ -102,11 +102,11 @@ func TestPeering_ValidateRejectsWhatCannotRun(t *testing.T) {
 	}
 
 	// Proxied with nothing in the middle is a tier that does not exist.
-	pool := netmap.Pool{
-		Hosts: []netmap.Host{{Addr: "127.0.0.1"}}, Slots: 4,
-		Ports: netmap.Bands{P2PBase: 31000, P2PStep: 10, RPCBase: 8600, RPCStep: 10},
+	pool := resource.Pool{
+		Hosts: []resource.Host{{Addr: "127.0.0.1"}}, Slots: 4,
+		Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
 	}
-	flat, err := netmap.Assign(pool, []netmap.Request{{Role: node.RoleBP}, {Role: node.RoleEN}})
+	flat, err := resource.Assign(pool, []resource.Request{{Role: node.RoleBP}, {Role: node.RoleEN}})
 	if err != nil {
 		t.Fatalf("Assign: %v", err)
 	}

@@ -2,9 +2,6 @@ package resource
 
 import (
 	"fmt"
-
-	"github.com/0xmhha/chainbench/internal/core/netmap"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 )
 
 // The server set's whole point downstream is this file: it turns a server entry
@@ -33,16 +30,16 @@ const builtinSource = "built-in defaults (no server config)"
 
 // Builtin is the pool used with no server set: this machine, stepped ports. It
 // names itself as its own source so port provenance stays visible.
-func Builtin(minValidators, portBand int) netmap.Pool {
+func Builtin(minValidators, portBand int) Pool {
 	return BuiltinPool(portBand)
 }
 
 // PoolFor resolves one server into the pool a network is allocated from. Local
 // and remote read the same fields: the difference survives as the address and
 // as whether the data plane is reached over SSH, not as a mode.
-func (c *Set) PoolFor(s Server, minValidators, portBand int) netmap.Pool {
-	return netmap.Pool{
-		Hosts:  []netmap.Host{{Name: s.Name, Addr: s.Host}},
+func (c *Set) PoolFor(s Server, minValidators, portBand int) Pool {
+	return Pool{
+		Hosts:  []Host{{Name: s.Name, Addr: s.Host}},
 		Slots:  s.Slots,
 		Ports:  bandsOf(s.Ports),
 		Source: fmt.Sprintf("%s[%s]", c.path, s.label(0)),
@@ -59,21 +56,21 @@ func (c *Set) PoolFor(s Server, minValidators, portBand int) netmap.Pool {
 // docs/dev/architecture/module-plan.md). The count is read from the first
 // server rather than summed and divided, which is what the retired whole-set
 // resolver did.
-func (c *Set) Pool(minValidators, portBand int) (netmap.Pool, error) {
+func (c *Set) Pool(minValidators, portBand int) (Pool, error) {
 	if len(c.Servers) == 0 {
-		return netmap.Pool{}, fmt.Errorf("resource: %s configures no servers", c.path)
+		return Pool{}, fmt.Errorf("resource: %s configures no servers", c.path)
 	}
 	first := c.resolve(c.Servers[0])
-	hosts := make([]netmap.Host, 0, len(c.Servers))
+	hosts := make([]Host, 0, len(c.Servers))
 	for _, raw := range c.Servers {
 		s := c.resolve(raw)
 		if s.IsRemote() != first.IsRemote() {
-			return netmap.Pool{}, fmt.Errorf(
+			return Pool{}, fmt.Errorf(
 				"resource: %s mixes local and remote servers — every server must be the same kind", c.path)
 		}
-		hosts = append(hosts, netmap.Host{Name: s.Name, Addr: s.Host})
+		hosts = append(hosts, Host{Name: s.Name, Addr: s.Host})
 	}
-	return netmap.Pool{
+	return Pool{
 		Hosts:  hosts,
 		Slots:  first.Slots,
 		Ports:  bandsOf(first.Ports),
@@ -82,16 +79,16 @@ func (c *Set) Pool(minValidators, portBand int) (netmap.Pool, error) {
 }
 
 // bandsOf converts a server-set port plan into the bands netmap steps through.
-func bandsOf(p Ports) netmap.Bands {
-	b := netmap.Bands{P2PBase: p.P2PBase, P2PStep: p.P2PStep, RPCBase: p.RPCBase, RPCStep: p.RPCStep}
+func bandsOf(p Ports) Bands {
+	b := Bands{P2P: Band{Base: p.P2PBase, Step: p.P2PStep}, RPC: Band{Base: p.RPCBase, Step: p.RPCStep}}
 	if p.WS != nil {
-		b.WS = &portplan.Band{Base: p.WS.Base, Step: p.WS.Step}
+		b.WS = &Band{Base: p.WS.Base, Step: p.WS.Step}
 	}
 	if p.Auth != nil {
-		b.Auth = &portplan.Band{Base: p.Auth.Base, Step: p.Auth.Step}
+		b.Auth = &Band{Base: p.Auth.Base, Step: p.Auth.Step}
 	}
 	if p.Metrics != nil {
-		b.Metrics = &portplan.Band{Base: p.Metrics.Base, Step: p.Metrics.Step}
+		b.Metrics = &Band{Base: p.Metrics.Base, Step: p.Metrics.Step}
 	}
 	return b
 }

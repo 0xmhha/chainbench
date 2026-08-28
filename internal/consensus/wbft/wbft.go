@@ -7,7 +7,6 @@ package wbft
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/portplan"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -64,8 +63,8 @@ func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 // servers pack p2p one apart (30301..30304) because nothing sits between.
 // Existing sets keep their spacing regardless — ports come from the
 // configured bands; the span only sets the minimum.
-func (Family) PortReservation() portplan.Reservation {
-	return portplan.Reservation{P2PSpan: 1, RPCSpan: 3}
+func (Family) PortReservation() node.Reservation {
+	return node.Reservation{P2PSpan: 1, RPCSpan: 3}
 }
 
 // SupportsRole: the wbft family runs producers, endpoints, and a proxy tier

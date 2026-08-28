@@ -10,23 +10,22 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/supervisor"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // testPool is the resource the build allocates from: one host with room for a
-// development-sized network. Allocation is no longer injectable — netmap.Assign
+// development-sized network. Allocation is no longer injectable — resource.Assign
 // is deterministic, so a fake would only restate it less accurately.
-func testPool() netmap.Pool {
-	return netmap.Pool{
-		Hosts: []netmap.Host{{Name: "local", Addr: "127.0.0.1"}},
+func testPool() resource.Pool {
+	return resource.Pool{
+		Hosts: []resource.Host{{Name: "local", Addr: "127.0.0.1"}},
 		Slots: 8,
-		Ports: netmap.Bands{P2PBase: 30301, P2PStep: 10, RPCBase: 8501, RPCStep: 10},
+		Ports: resource.Bands{P2P: resource.Band{Base: 30301, Step: 10}, RPC: resource.Band{Base: 8501, Step: 10}},
 	}
 }
 
@@ -76,8 +75,8 @@ func buildEnvSession(t *testing.T) session.Environment {
 	return env
 }
 
-func fourNodeReqs() []place.NodeReq {
-	return []place.NodeReq{
+func fourNodeReqs() []node.LaunchReq {
+	return []node.LaunchReq{
 		{Role: node.RoleValidator, Binary: "go-wbft"},
 		{Role: node.RoleValidator, Binary: "go-wbft"},
 		{Role: node.RoleValidator, Binary: "go-wbft"},
@@ -96,7 +95,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 		Genesis:    gen,
 		Supervisor: fakeSupervisor(),
 		Caps:       []string{"ws"},
-		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },
+		Reqs:       func(testspec.Spec) []node.LaunchReq { return fourNodeReqs() },
 		Provision: func(_ context.Context, plan driver.Plan) error {
 			provisionCalled = true
 			gotPlan = plan
@@ -137,7 +136,7 @@ func TestNewBuildEnv_NoNodes(t *testing.T) {
 		Pool:       testPool(),
 		Genesis:    &fakeGenesis{},
 		Supervisor: fakeSupervisor(),
-		Reqs:       func(testspec.Spec) []place.NodeReq { return nil },
+		Reqs:       func(testspec.Spec) []node.LaunchReq { return nil },
 	})
 	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {
 		t.Fatal("expected error when a spec resolves to no nodes")
@@ -155,7 +154,7 @@ func TestNewBuildEnv_PoolTooSmall(t *testing.T) {
 		Pool:       small,
 		Genesis:    &fakeGenesis{},
 		Supervisor: fakeSupervisor(),
-		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },
+		Reqs:       func(testspec.Spec) []node.LaunchReq { return fourNodeReqs() },
 	})
 	_, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{})
 	if err == nil {
@@ -172,7 +171,7 @@ func TestNewBuildEnv_ProvisionError(t *testing.T) {
 		Pool:       testPool(),
 		Genesis:    &fakeGenesis{bytes: []byte("{}")},
 		Supervisor: fakeSupervisor(),
-		Reqs:       func(testspec.Spec) []place.NodeReq { return fourNodeReqs() },
+		Reqs:       func(testspec.Spec) []node.LaunchReq { return fourNodeReqs() },
 		Provision:  func(context.Context, driver.Plan) error { return errors.New("disk full") },
 	})
 	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {

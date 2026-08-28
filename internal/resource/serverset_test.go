@@ -1,7 +1,6 @@
 package resource_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
@@ -82,7 +81,7 @@ func TestPool_ReadsTheGrid(t *testing.T) {
 	if p.Cap() != 24 {
 		t.Errorf("Cap() = %d, want 24", p.Cap())
 	}
-	if p.Ports.P2PBase != 30303 || p.Ports.RPCBase != 8545 {
+	if p.Ports.P2P.Base != 30303 || p.Ports.RPC.Base != 8545 {
 		t.Errorf("bands = %+v", p.Ports)
 	}
 	if err := p.Validate(); err != nil {
@@ -106,7 +105,7 @@ func TestPool_UnsetBandsFallBackToTheBuiltins(t *testing.T) {
 		t.Fatalf("Pool: %v", err)
 	}
 	b := resource.BuiltinPorts()
-	if p.Ports.P2PBase != b.P2PBase || p.Ports.RPCStep != b.RPCStep {
+	if p.Ports.P2P.Base != b.P2PBase || p.Ports.RPC.Step != b.RPCStep {
 		t.Errorf("bands = %+v, want the built-ins %+v", p.Ports, b)
 	}
 	if p.Slots != 1 {
@@ -186,7 +185,7 @@ func TestPoolFor_LocalAndRemoteReadTheSameFields(t *testing.T) {
 	if len(rp.Hosts) != 1 || rp.Hosts[0].Addr != "10.0.0.1" {
 		t.Errorf("remote pool hosts = %v", rp.Hosts)
 	}
-	for _, p := range []netmap.Pool{lp, rp} {
+	for _, p := range []resource.Pool{lp, rp} {
 		if !strings.Contains(p.Source, "server-set.yaml") {
 			t.Errorf("source does not name the file: %q", p.Source)
 		}
@@ -226,7 +225,7 @@ func TestBuiltin_NamesItselfAsTheSource(t *testing.T) {
 	if !strings.Contains(p.Source, "built-in") {
 		t.Errorf("source = %q, want it to say built-in", p.Source)
 	}
-	if p.Ports.RPCBase != resource.BuiltinPorts().RPCBase {
+	if p.Ports.RPC.Base != resource.BuiltinPorts().RPCBase {
 		t.Errorf("builtin ports not used: %+v", p.Ports)
 	}
 

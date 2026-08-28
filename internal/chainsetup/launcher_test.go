@@ -12,7 +12,6 @@ import (
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -99,8 +98,8 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
 
 	placed := []chainsetup.PlacedNode{
-		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
-		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
+		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
+		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
 	}
 	plan, err := chainsetup.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
 	if err != nil {
@@ -144,8 +143,8 @@ func TestLocalLauncher_ProvisionOnlyDoesNotLaunch(t *testing.T) {
 	plugin := launcherTestPlugin()
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
 	placed := []chainsetup.PlacedNode{
-		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
-		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
+		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
+		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
 	}
 	plan, err := chainsetup.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
 	if err != nil {
@@ -180,8 +179,8 @@ func TestLocalLauncher_RemoteShipsIdentities(t *testing.T) {
 	plugin := launcherTestPlugin()
 	presetDir := filepath.Join(repoRoot(t), "keys", "preset")
 	placed := []chainsetup.PlacedNode{
-		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
-		{Req: place.NodeReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
+		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31000, HTTP: 8600}, DataDir: "/d/node1"}},
+		{Req: node.LaunchReq{Role: node.RoleValidator}, Placement: node.Placement{Host: "127.0.0.1", Ports: node.Endpoints{P2P: 31010, HTTP: 8610}, DataDir: "/d/node2"}},
 	}
 	plan, err := chainsetup.AssemblePlan(plugin, placed, []byte(`{"g":1}`), "/d", []string{"ws"})
 	if err != nil {

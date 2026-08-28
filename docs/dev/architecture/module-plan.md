@@ -367,12 +367,13 @@ M1 후보를 이 잣대로 비교한 결과다.
 | `netmap/enode.go` | 32 | `Enode` · `PeerList` | **node** | enode 는 노드 사실(공개키는 입력) |
 | `core/netmap/map.go:15` | 1 | `Ports` (별칭) | **삭제** | `node.Endpoints` 가 정본 |
 | `core/netmap/pool.go` | 145 | `Bands` · `Host` · `Pool` · `Cap` · `Validate` · `Request` · `Assign` | **resource** | 가용 자원과 그 분배 |
-| `core/portplan/*` | 184 | `Reservation` · `DefaultReservation` · `Band` · `Bands` · `Plan` · `PlanBands` · `Validate` | **resource** | 포트 밴드 산술 |
+| `core/portplan/*` | 184 | `Band` · `Bands` · `Plan` · `PlanBands` · `Validate`→`ValidatePorts` | **resource** | 포트 밴드 산술 |
+| `core/portplan.Reservation` | 20 | `Reservation` · `DefaultReservation` · `WithDefaults` | **node** | 착수 후 정정: 노드 하나가 **몇 개의 연속 포트를 필요로 하는가**는 노드의 사실이다. 패밀리(poa·wbft)와 registry 가 이것만 쓰므로 `resource` 를 import 하지 않게 된다 |
 | `core/portplan.Ports` | 1 | (별칭) | **삭제** | 위와 같은 이유 |
 | `netmap/netmap.go` | 89 | `Opener` · `Open` · `AddrMap` · `OpenPath` | **resource** | 서버에 닿는 유일 통로 |
 | `netmap/serverset.go` | 140 | `DefaultSetFile` · `Set` · `Server` · `LoadSet` · `Builtin` · `ServerRef` · `ResolveServer` · `SetPolicy` | **resource** | 서버 정보 |
 | `netmap/internal/serverset/*` | 1,028 | 전체 | **resource** | 같은 부서, `internal/` 봉인 해제 |
-| `core/place` | 23 | `NodeReq` | **resource.Request 로 흡수** | 배정 요청의 두 번째 철자 |
+| `core/place` | 23 | `NodeReq` | **`node.LaunchReq` 로** | 착수 후 정정: `resource.Request`(역할·라벨, 배정)와 달리 이것은 역할·동기화모드·바이너리, 즉 **기동** 요청이다. 배정 쪽으로 합치면 바이너리가 할당기 안으로 들어간다 |
 | `netmap/serverset.go` 의 `Placement` | 18 | (타입 + `Builtin` 반환) | **삭제** | 세 필드가 전부 같은 반환값에 이미 있다(§8.4) |
 
 `node` 는 옮긴 뒤에도 **import 0** 이어야 한다. 위 목록은 전부 문자열·정수·
@@ -432,10 +433,21 @@ M1 후보를 이 잣대로 비교한 결과다.
 **P1.3 — 풀·배정·포트밴드 → `resource`, `place` 흡수** (약 350줄)
 
 - `core/netmap` · `core/portplan` · `core/place` 삭제
-- `place.NodeReq` → `resource.Request` 흡수
+- `place.NodeReq` → `node.LaunchReq`(위 표의 정정)
 - `Ports` 별칭 2개 제거, `node.Endpoints` 로 통일
 - 게이트: 패키지 4개 소멸 · `resource → node` 단방향 · 계층 위반 0 ·
   `net allocate`·`netmap plan` 산출이 이전과 바이트 동일
+
+### 8.3a P1.3 에서 드러난 중복 하나 더
+
+`Bands` 라는 타입이 **둘**이었다. `netmap.Bands`(평평한 `P2PBase`/`P2PStep`/…)와
+`portplan.Bands`(중첩 `P2P Band`/`RPC Band`/…)이고, 둘 사이를 `netmap.Bands.plan()`
+이 변환했다. 한 패키지로 모이면 이름이 부딪히므로 개명하거나 합쳐야 했는데,
+변환 함수가 있다는 것 자체가 같은 데이터라는 증거였다.
+
+중첩 쪽을 남기고 평평한 쪽을 지웠다 — 밴드는 밴드다. `plan()` 도 함께 사라졌다.
+`Placement` 때와 같은 패턴이다: **이름이 겹친 것은 신호였고, 답은 개명이 아니라
+하나를 없애는 것이었다.**
 
 ### 8.4 주의
 

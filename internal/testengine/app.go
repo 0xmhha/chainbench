@@ -14,10 +14,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/launchopt"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
-	"github.com/0xmhha/chainbench/internal/core/place"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -78,7 +76,7 @@ type LocalConfig struct {
 	// the built-in local plan; a caller that read the operator's server set
 	// passes that server's pool, which is how site-specific ports reach a run
 	// without ever entering a spec.
-	Pool netmap.Pool
+	Pool resource.Pool
 	// Clock supplies the session start time; nil uses time.Now (injected so
 	// tests are deterministic).
 	Clock func() time.Time
@@ -209,11 +207,11 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 // validatorReqs returns a Reqs function producing n validator placement
 // requests. The per-node binary is left empty so AssemblePlan falls back to the
 // manifest binary; the launcher overrides it with the resolved path.
-func validatorReqs(n int) func(testspec.Spec) []place.NodeReq {
-	return func(testspec.Spec) []place.NodeReq {
-		reqs := make([]place.NodeReq, n)
+func validatorReqs(n int) func(testspec.Spec) []node.LaunchReq {
+	return func(testspec.Spec) []node.LaunchReq {
+		reqs := make([]node.LaunchReq, n)
 		for i := range reqs {
-			reqs[i] = place.NodeReq{Role: node.RoleValidator}
+			reqs[i] = node.LaunchReq{Role: node.RoleValidator}
 		}
 		return reqs
 	}

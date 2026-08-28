@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/netmap"
 )
 
 // Selecting a server: which entry of the set a composition runs on, and what
@@ -30,7 +29,7 @@ type ServerRef struct {
 type ResolveServerOut struct {
 	// Pool is the resource to allocate from: which hosts, how many slots, and
 	// the port bands each slot steps through.
-	Pool netmap.Pool
+	Pool Pool
 	// Target is where the data plane lives. It is the zero value when no
 	// server set applied, leaving the workspace's own target in place.
 	Target machine.Spec
