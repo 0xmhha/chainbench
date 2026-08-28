@@ -695,6 +695,31 @@ M1 후보를 이 잣대로 비교한 결과다.
 `fabric` · `estate` · `grid` · `site` 는 인벤토리와 배치를 한 낱말로 덮으려던
 후보였다. 배치가 `node` 로 가면서 쓸 자리가 없어졌다.
 
+## 6a. 재편 결과 — P1 착수 전과 후 (실측 2026-08-28)
+
+P1 착수 전(§0)과 P6.2 를 마친 뒤를 같은 도구(`scripts/inventory/code-graph`)로 잰 것이다.
+
+| 실측 | 착수 전 | 지금 | 어디에 |
+|---|---|---|---|
+| 패키지 수 | 75 | **71** | `netmap`·`core/place`·`core/portplan`·`core/supervisor`·`tests/api`·`tests/network` 소멸, `resource`·`launcher`·`inspector`·`testhelper` 신설 |
+| `chainsetup` | 6,593줄 27파일 | **3,313줄 14파일** | 옛 엔진 빌드 경로·케이스 러너·옛 `setup` 경로·핸드오프 본문이 각자 주인에게 갔다 |
+| 노드 하나의 **사실** 타입 | 10 | **2** (`node.Node`·`node.Record`) | 나머지는 목적별 뷰다: `driver.NodeSpec`(실행 명세), `preflight.Node`(비교), `hardfork.NodeSwap`(교체 계획), `upgrade.NodeSpec`(핸드오프 계획) |
+| 노드를 띄우는 진입점 | 8 | **3** | `driver`(실행) · `launcher`(기동 정책) · `upgrade.Handoff`(혼합 바이너리). 워크스페이스 `Start/StartNode` 는 `driver` 를 부른다 |
+| 경로를 계산하는 곳 | 4 | `node.Layout` 1 + 잔여 2 | 잔여: `hardfork.BuildPlan`·`upgrade.BuildNodeSpecs` 가 아직 `fmt.Sprintf("node%d")` 를 쓴다(둘 다 실행은 레코드의 경로를 쓰므로 표시용) |
+| 상태 파일 | 3종 (`chain-network.json`·`nodeset.json`+`nodespecs.json`·`workspace.json`) | **1종** (`workspace.json`) | P6.4·P6.2 |
+| 레이어 위반 | 1 (`launcher` 테스트 → `chainsetup`) | **0** | |
+| `node` out-edge | 0 | **0** | 게이트 유지 |
+| `testspec → testhelper` | — | **0** | P4.3 게이트 |
+| `testengine → chainsetup` | 1 | **0** | P6.1 게이트 |
+| 레거시 Go 케이스 등록 | 134 | **56** (미이관 34 + 표 구동 파일의 이관분 22) | P8 |
+| `tests/` | 12,000줄 | **3,144줄** | |
+| 전체 | — | 41,787줄 · 71패키지 · 엣지 263 | |
+
+`chainsetup` 2,000줄 목표에는 못 닿았다(3,313). 남은 큰 덩어리는 `verbs_*.go` 5파일
+(~1,100줄) 과 `steps_compose/steps_lifecycle` 의 단계 본문이다. `verbs_*` 는 app 층
+함수가 chainsetup 안에 있는 모양이라(§3 표) `app` 으로 옮기면 목표에 닿지만, CLI 가
+core 를 직접 부른다는 v2 원칙과 부딪힌다 — §7 열린 질문 7 로 남긴다.
+
 ## 7. 열린 질문
 
 1. ~~`supervisor` 를 `process` 가 흡수할까~~ → **`launcher` 로 합쳤다**(P3.1). 진단 6종은
@@ -708,6 +733,10 @@ M1 후보를 이 잣대로 비교한 결과다.
    소유하고, I/O 는 절대 들이지 않는다(out-edge 0 을 게이트로 고정).
 5. **`netreg` 의 새 이름.** 약어(규칙 7 위반)이고 netmap 과 혼동됐다. 붙어 있는
    네트워크의 레지스트리라는 역할에 맞는 이름을 P5 그룹 재편과 함께 정한다.
+7. **`verbs_*.go` 의 자리.** 1,100줄의 use-case 함수(`NetKeys`·`NetUp`·`NetworkStop` …)가
+   `chainsetup` 안에 있고 `app` 은 별칭만 둔다. `app` 으로 옮기면 `chainsetup` 은 2,000줄
+   아래로 가지만, CLI 가 `app` 을 거치게 된다(v2 는 CLI → core 직접). 그대로 두면 chainsetup
+   이 "순서 + 표면" 을 겸한다. F1 뒤에 정한다.
 6. ~~워크스페이스 낱말의 삼중 정의~~ → **소유 확정(P2, 2026-08-28)**. 코드를 읽은
    결과 셋은 겹치는 것이 아니라 층이 다르다:
    - **`workspace.json` 을 만드는 것은 `session.Composition`** 이다 — 단계별
