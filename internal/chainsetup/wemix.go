@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
@@ -49,7 +50,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 		plugin registry.ChainPlugin
 		preset keyring.Preset
 		assign *node.Map
-		art    GenesisArtifacts
+		art    genesis.Artifacts
 		plan   driver.Plan
 		specs  []driver.NodeSpec
 		launch launcher.Direct
@@ -117,8 +118,8 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
-		a, err := BuildGenesis(ctx, plugin, GenesisRequest{Validators: o.Validators, Nodes: assign},
-			GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
+		a, err := genesis.Compose(ctx, plugin, genesis.Request{Validators: o.Validators, Nodes: assign},
+			genesis.Config{KeysDir: o.KeysDir, Binary: o.Binary})
 		if err != nil {
 			return "", err
 		}

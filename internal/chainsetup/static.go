@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
@@ -146,8 +147,8 @@ func RunStatic(ctx context.Context, c Case, o Options, report Reporter) (Run, er
 	})
 
 	t.do(c.Steps[4], func() (string, error) {
-		b, err := BuildGenesis(ctx, plugin, GenesisRequest{Validators: o.Validators},
-			GenesisConfig{KeysDir: o.KeysDir, Binary: o.Binary})
+		b, err := genesis.Compose(ctx, plugin, genesis.Request{Validators: o.Validators},
+			genesis.Config{KeysDir: o.KeysDir, Binary: o.Binary})
 		if err != nil {
 			return "", err
 		}

@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"strings"
 
@@ -107,7 +108,7 @@ func (s LocalSetup) launcher() launcher.Direct {
 // validator count, with the config's overrides/overlay applied — and sets
 // plan.Genesis so the launcher can materialize it and init datadirs from it.
 func (s LocalSetup) attachGenesis(ctx context.Context, plan *driver.Plan) error {
-	gen, err := BuildGenesis(ctx, s.Plugin, GenesisRequest{Validators: planValidatorCount(*plan)}, GenesisConfig{
+	gen, err := genesis.Compose(ctx, s.Plugin, genesis.Request{Validators: planValidatorCount(*plan)}, genesis.Config{
 		KeysDir:         s.KeysDir,
 		Binary:          s.Binary,
 		ConfigOverrides: genesisConfigOverrides(s.Config),

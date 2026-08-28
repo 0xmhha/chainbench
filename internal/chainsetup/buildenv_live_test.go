@@ -3,6 +3,7 @@ package chainsetup_test
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,7 +77,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 			Slots: 8,
 			Ports: resource.Bands{P2P: resource.Band{Base: 31000, Step: 10}, RPC: resource.Band{Base: 8600, Step: 10}},
 		},
-		Genesis:    chainsetup.PresetGenesisSource{KeysDir: presetDir},
+		Genesis:    genesis.PresetSource{KeysDir: presetDir},
 		Supervisor: sup,
 		Caps:       []string{"ws"},
 		Reqs: func(testspec.Spec) []node.LaunchReq {

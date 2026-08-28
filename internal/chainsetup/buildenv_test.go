@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"strings"
 	"testing"
 	"time"
@@ -36,9 +37,9 @@ type fakeGenesis struct {
 	gotValidators int
 }
 
-func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, req chainsetup.GenesisRequest) (chainsetup.GenesisArtifacts, error) {
+func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, req genesis.Request) (genesis.Artifacts, error) {
 	g.gotValidators = req.Validators
-	return chainsetup.GenesisArtifacts{Genesis: g.bytes, Extra: g.extra}, nil
+	return genesis.Artifacts{Genesis: g.bytes, Extra: g.extra}, nil
 }
 
 // fakeSupervisor is a real supervisor whose launch and health hooks are fakes: it

@@ -65,7 +65,7 @@ func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Pla
 	}
 	run := b.Run
 	if run == nil {
-		run = execRunner
+		run = poa.ExecRunner
 	}
 	binary := b.Binary
 	if binary == "" {
@@ -96,7 +96,7 @@ func (b WemixBootstrap) Action(ctx context.Context, name string, plan driver.Pla
 		password := filepath.Join(b.KeysDir, "password")
 		cfgName := b.ConfigName
 		if cfgName == "" {
-			cfgName = wemixConfigName
+			cfgName = poa.ConfigFileName
 		}
 		cfgPath := filepath.Join(plan.DataRoot, cfgName)
 		if _, err := os.Stat(cfgPath); err != nil {

@@ -1,15 +1,14 @@
-package chainsetup_test
+package genesis_test
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/registry"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 )
@@ -40,7 +39,7 @@ func TestPresetGenesisSource_Live_GstableInit(t *testing.T) {
 		t.Fatalf("registry.Get(stablenet): %v", err)
 	}
 
-	gen, err := chainsetup.PresetGenesisSource{KeysDir: presetDir}.Genesis(context.Background(), plugin, chainsetup.GenesisRequest{Validators: 4})
+	gen, err := genesis.PresetSource{KeysDir: presetDir}.Genesis(context.Background(), plugin, genesis.Request{Validators: 4})
 	if err != nil {
 		t.Fatalf("build genesis: %v", err)
 	}

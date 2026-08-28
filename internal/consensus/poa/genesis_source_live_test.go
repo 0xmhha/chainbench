@@ -1,14 +1,15 @@
-package chainsetup_test
+package poa_test
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"os"
 	"path/filepath"
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/wemix" // register the wemix plugin
-	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -34,12 +35,12 @@ func TestWemixGenesisSource_Live_GeneratesAndInits(t *testing.T) {
 	}
 	dir := t.TempDir()
 
-	src := chainsetup.WemixGenesisSource{
+	src := poa.GenesisSource{
 		KeysDir: filepath.Join(repoRoot(t), "keys", "preset"),
 		Binary:  bin,
 		WorkDir: dir,
 	}
-	art, err := src.Genesis(context.Background(), plugin, chainsetup.GenesisRequest{Validators: 4, Nodes: wemixPlacement(t)})
+	art, err := src.Genesis(context.Background(), plugin, genesis.Request{Validators: 4, Nodes: wemixPlacement(t)})
 	if err != nil {
 		t.Fatalf("Genesis: %v", err)
 	}
