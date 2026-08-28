@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +37,7 @@ func TestRecordRun_WritesTheFactsAndNeverASecret(t *testing.T) {
 	w.state.Chain = "stablenet"
 	w.state.ServerSet = setPath
 	w.state.Target = machine.Spec{Server: "box1", Host: "192.0.2.11", DataRoot: "/data/cb"}
-	w.state.Nodes = []NodeState{{Index: 1, Role: "bp", Host: "192.0.2.11", PID: 4242}}
+	w.state.Nodes = []node.Record{{Index: 1, Role: "bp", Host: "192.0.2.11", PID: 4242}}
 	if err := w.ledger.Record(process.Proc{
 		PID: 4242, Label: "node1", Binary: "gstable",
 		Command: "gstable --config config_node1.toml", Host: "192.0.2.11",

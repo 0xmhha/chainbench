@@ -3,7 +3,6 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -221,7 +220,8 @@ func awaitFork(ctx context.Context, ns node.NodeSet, forkBlock int64, producerAc
 	return "", fmt.Errorf("head stalled at %d, never crossed fork block %d within %s", head, forkBlock, timeout)
 }
 
-// producerIPCPath is the conventional IPC socket of node1 under a data root.
+// producerIPCPath is the conventional IPC socket of the producer under a data
+// root. Index+1: the handoff plan numbers nodes from zero, the layout from one.
 func producerIPCPath(dataDir, fromBinary string, producer node.Node) string {
-	return filepath.Join(dataDir, fmt.Sprintf("node%d", producer.Index+1), filepath.Base(fromBinary)+".ipc")
+	return node.Layout{Root: dataDir}.IPCPath(node.LabelFor(producer.Index+1), fromBinary)
 }

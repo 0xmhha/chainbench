@@ -21,14 +21,16 @@ import (
 
 // Topology is the declarative node layout for a local network.
 type Topology struct {
-	Chain   string `yaml:"chain"`
-	Network string `yaml:"network,omitempty"`
-	Nodes   []Node `yaml:"nodes"`
+	Chain   string  `yaml:"chain"`
+	Network string  `yaml:"network,omitempty"`
+	Nodes   []Entry `yaml:"nodes"`
 }
 
-// Node is one node's placement: its 1-based index, role, sync mode, and whether
+// Entry is one node as the topology file declares it — index, role, sync mode,
+// bootnode flag. A declaration, not the node's fact record (node.Record): the
+// composition reads this and writes that.
 // it is the bootnode.
-type Node struct {
+type Entry struct {
 	Index    int    `yaml:"index"`
 	Role     string `yaml:"role"`                // bp|validator, en|endpoint, boot
 	SyncMode string `yaml:"sync_mode,omitempty"` // full (default) | snap | archive
@@ -100,7 +102,7 @@ func (t Topology) Validate() error {
 // spelling the composition still persists and compares. The alias table this
 // package used to keep is gone — netmap owns the folding, and this method
 // switches to the canonical spelling when the launch flows migrate to it.
-func (n Node) NodeRole() node.Role {
+func (n Entry) NodeRole() node.Role {
 	role, err := node.NormalizeRole(n.Role)
 	if err != nil {
 		return "" // unreachable after Validate; an invalid role never launches
@@ -109,7 +111,7 @@ func (n Node) NodeRole() node.Role {
 }
 
 // EffectiveSyncMode returns n's sync mode, defaulting an unset value to "full".
-func (n Node) EffectiveSyncMode() string {
+func (n Entry) EffectiveSyncMode() string {
 	if n.SyncMode == "" {
 		return "full"
 	}
@@ -117,8 +119,8 @@ func (n Node) EffectiveSyncMode() string {
 }
 
 // Sorted returns the nodes ordered by index (ascending).
-func (t Topology) Sorted() []Node {
-	out := append([]Node(nil), t.Nodes...)
+func (t Topology) Sorted() []Entry {
+	out := append([]Entry(nil), t.Nodes...)
 	sort.Slice(out, func(i, j int) bool { return out[i].Index < out[j].Index })
 	return out
 }

@@ -21,7 +21,7 @@ func TestCollector_BPParticipation(t *testing.T) {
 	var i int
 	c := collector.New(collector.Deps{
 		Interval: 5 * time.Millisecond,
-		Probe: func(context.Context, string) (collector.NodeState, error) {
+		Probe: func(context.Context, string) (collector.Sample, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			idx := i
@@ -30,7 +30,7 @@ func TestCollector_BPParticipation(t *testing.T) {
 			} else {
 				i++
 			}
-			return collector.NodeState{Height: uint64(idx + 1), HeadMiner: miners[idx], HeadHash: "h"}, nil
+			return collector.Sample{Height: uint64(idx + 1), HeadMiner: miners[idx], HeadHash: "h"}, nil
 		},
 	})
 	if err := c.Start(context.Background(), env); err != nil {
@@ -73,12 +73,12 @@ func TestCollector_BPWindowPrunesOldHeights(t *testing.T) {
 	c := collector.New(collector.Deps{
 		Interval: 2 * time.Millisecond,
 		BPWindow: 3,
-		Probe: func(context.Context, string) (collector.NodeState, error) {
+		Probe: func(context.Context, string) (collector.Sample, error) {
 			mu.Lock()
 			defer mu.Unlock()
 			h++
 			// Every block by the same producer.
-			return collector.NodeState{Height: h, HeadMiner: "0xA", HeadHash: "h"}, nil
+			return collector.Sample{Height: h, HeadMiner: "0xA", HeadHash: "h"}, nil
 		},
 	})
 	_ = c.Start(context.Background(), env)

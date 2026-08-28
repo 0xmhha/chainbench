@@ -201,8 +201,9 @@ func planSpecFor(plan driver.Plan, index int) (driver.NodeSpec, bool) {
 	return driver.NodeSpec{}, false
 }
 
-// ipcPath is where the node exposes its console socket: inside its datadir,
-// named after the binary.
+// ipcPath is where the node exposes its console socket. The spec's datadir is
+// authoritative (it may not be layout-conventional on an attach), so the
+// layout rule is applied to it directly.
 func ipcPath(spec driver.NodeSpec, binary string) string {
 	return filepath.Join(spec.DataDir, filepath.Base(binary)+".ipc")
 }

@@ -24,10 +24,11 @@ const (
 	tailInterval = 50 * time.Millisecond
 )
 
-// NodeState is one node's RPC-sampled state. HeadHash and HeadMiner describe the
+// Sample is one observation of a node over RPC — a reading, not the node
+// itself (the node's fact record is node.Record). HeadHash and HeadMiner describe the
 // node's latest block; they drive bp-participation and fork detection and are
 // optional (an empty HeadHash means the probe supplied height/peers only).
-type NodeState struct {
+type Sample struct {
 	Height    uint64
 	Peers     int
 	HeadHash  string
@@ -39,7 +40,7 @@ type NodeState struct {
 type Deps struct {
 	// Probe samples one node's state by RPC. Errors are treated as "not yet
 	// reachable" and skipped, never blocking the node.
-	Probe func(ctx context.Context, rpcURL string) (NodeState, error)
+	Probe func(ctx context.Context, rpcURL string) (Sample, error)
 	// Interval is the sampling period (defaults to one second).
 	Interval time.Duration
 	// BPWindow is the number of recent block heights the bp-participation tally
@@ -168,7 +169,7 @@ func (c *collector) sampleOnce(ctx context.Context) {
 // when a known height reports a divergent hash (across nodes or across samples,
 // i.e. a reorg), and prunes heights older than the window. Only the sampler
 // goroutine calls it.
-func (c *collector) recordSample(st NodeState) {
+func (c *collector) recordSample(st Sample) {
 	if st.HeadHash != "" {
 		if prev, ok := c.hashes[st.Height]; ok {
 			if prev != st.HeadHash {

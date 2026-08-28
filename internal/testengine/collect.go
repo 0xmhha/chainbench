@@ -21,19 +21,19 @@ const chainstateInterval = 2 * time.Second
 // height, peers, and head block (hash + producer) over RPC. A failing height
 // read means "not yet reachable" and is surfaced as an error the collector
 // skips; peers and head are best-effort.
-func rpcProbe(dial func(string) *rpc.Client) func(context.Context, string) (collector.NodeState, error) {
+func rpcProbe(dial func(string) *rpc.Client) func(context.Context, string) (collector.Sample, error) {
 	if dial == nil {
 		dial = rpc.Dial
 	}
-	return func(ctx context.Context, url string) (collector.NodeState, error) {
+	return func(ctx context.Context, url string) (collector.Sample, error) {
 		c := dial(url)
 		height, err := c.BlockNumber(ctx)
 		if err != nil {
-			return collector.NodeState{}, err
+			return collector.Sample{}, err
 		}
 		peers, _ := c.PeerCount(ctx)
 		_, hash, miner, _ := c.HeadBlock(ctx)
-		return collector.NodeState{Height: height, Peers: int(peers), HeadHash: hash, HeadMiner: miner}, nil
+		return collector.Sample{Height: height, Peers: int(peers), HeadHash: hash, HeadMiner: miner}, nil
 	}
 }
 
@@ -42,7 +42,7 @@ func rpcProbe(dial func(string) *rpc.Client) func(context.Context, string) (coll
 // jsonl file under the session (so a completed run can be replayed). It returns a
 // stop function that ends collection after a final snapshot. bus must be
 // non-nil; jsonl persistence is best-effort and never blocks the run.
-func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus, probe func(context.Context, string) (collector.NodeState, error), interval time.Duration) func() error {
+func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus, probe func(context.Context, string) (collector.Sample, error), interval time.Duration) func() error {
 	col := collector.New(collector.Deps{
 		Probe:    probe,
 		Interval: interval,

@@ -54,7 +54,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	err = w.eachMachine(func(t *machine.Access, nodes []NodeState) error {
+	err = w.eachMachine(func(t *machine.Access, nodes []node.Record) error {
 		initer, ok := t.Driver.(driver.Initializer)
 		if !ok {
 			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
@@ -359,7 +359,7 @@ func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
 // hand-started node — and composing on top of it is refused by name.
 func (w *Workspace) checkUnmanaged(ctx context.Context, bin string) error {
 	name := filepath.Base(bin)
-	return w.eachMachine(func(t *machine.Access, _ []NodeState) error {
+	return w.eachMachine(func(t *machine.Access, _ []node.Record) error {
 		return w.checkUnmanagedOn(ctx, t, name)
 	})
 }
@@ -616,7 +616,7 @@ func phaseHasNode(phase registry.Phase, index int) bool {
 // names one gets it — the rest phase's join concerns the boot node, which it
 // did not launch. Otherwise it is the first node the phase covers, which for a
 // bootstrap phase is the producer that is alone.
-func phaseActionNode(nodes []NodeState, phase registry.Phase) (node.Node, bool) {
+func phaseActionNode(nodes []node.Record, phase registry.Phase) (node.Node, bool) {
 	for _, ns := range nodes {
 		if phase.ActionsOn > 0 {
 			if ns.Index != phase.ActionsOn {

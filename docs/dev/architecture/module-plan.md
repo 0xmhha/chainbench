@@ -330,6 +330,25 @@ remove one with `chainbench net rm`
 **게이트**: "노드 하나" 타입 **10 → 3**(사실 레코드 · 기동 입력 뷰 · 런타임 뷰).
 경로 계산 지점 **4 → 1**. 둘 다 심볼 인벤토리로 셀 수 있다.
 
+**결과(2026-08-28).** 사실 레코드는 **`node.Record`** 로 승격했다 —
+`chainsetup.NodeState` 가 가장 완전한 형태였고(라벨·역할·서버·호스트·경로·포트·
+argv·pid) JSON 태그가 `workspace.json` 계약이라 그대로 가져왔다. 셋만 노드를 뜻한다:
+`node.Record`(정본) · `driver.NodeSpec`(기동 입력 뷰) · `node.Node`(런타임 hand-off,
+fan-in 24). 나머지는 노드가 아니라 **노드에 대한 다른 것**이었고 이름이 그것을
+말하게 했다: `collector.NodeState`→**`Sample`**(관측 한 번), `chainsetup.NodeStatus`
+→**`Probe`**(`net status` 의 답), `topology.Node`→**`Entry`**(선언 항목).
+`process.Proc` 은 이미 프로세스 기록이고 `upgrade.NodeSpec` 은 핸드오프 계획 항목이라
+그대로 둔다(둘 다 `driver.NodeSpec` 으로 파생된다). `PlacedNode` 는 요청+배치
+쌍이며 플랜 조립의 입력이라 유지한다.
+
+경로는 **`node.Layout` 이 정본**이고 여기에 없던 넷을 더했다 — `NodekeyPath` ·
+`KeystoreDir` · `StaticNodesPath` · `IPCPath`(사용자 14 사실 중 빠져 있던 key·nodekey
+경로). 손조립 `fmt.Sprintf("node%d")` 는 데이터 플레인에서 0 이 됐다. 남은 둘은
+**키셋 소스**(`keys/preset/node1`) 레이아웃이라 keyring store 의 것이고, 착수 전에
+4곳으로 세었던 것 중 `session` 의 경로는 다른 평면(세션 아티팩트), `deploy.RemotePaths`
+는 외부 고정 레이아웃 선언이라 사본이 아니었다 — 실제 중복은 chainsetup 안의
+손조립이었고 그것이 사라졌다.
+
 ### P3. 프로세스 (M3)
 
 1. `driver` 를 실행 한 층으로 좁힌다(`lifecycle.go` 자유 함수 3개 포함).
@@ -495,12 +514,18 @@ M1 후보를 이 잣대로 비교한 결과다.
    소유하고, I/O 는 절대 들이지 않는다(out-edge 0 을 게이트로 고정).
 5. **`netreg` 의 새 이름.** 약어(규칙 7 위반)이고 netmap 과 혼동됐다. 붙어 있는
    네트워크의 레지스트리라는 역할에 맞는 이름을 P5 그룹 재편과 함께 정한다.
-6. **워크스페이스 낱말의 삼중 정의.** `chainsetup.Workspace` ·
-   `session.Composition` · `session.Environment` 이 "한 네트워크의 상태" 를 나눠
-   갖는다. `workspace.json` 을 누가 왜 만드는지 포함해 P2 에서 소유를 확정한다.
-   그때까지의 정의: **워크스페이스 = 조립 중인 네트워크 하나의 로컬 기록**
-   (control plane 은 조작자 머신의 `workspace.json`, data plane 은 타깃 위의
-   genesis·config·datadir·로그).
+6. ~~워크스페이스 낱말의 삼중 정의~~ → **소유 확정(P2, 2026-08-28)**. 코드를 읽은
+   결과 셋은 겹치는 것이 아니라 층이 다르다:
+   - **`workspace.json` 을 만드는 것은 `session.Composition`** 이다 — 단계별
+     조립이 명령 사이를 건너 누적되는 "장수명 환경 모드" 의 persistence 를
+     session 이 소유한다(파일명 상수 `compositionFile = "workspace.json"`).
+   - **`chainsetup.Workspace`** 는 그 위의 도메인 상태와 단계 함수다. 파일을
+     직접 쓰지 않고 Composition 에 위탁한다.
+   - **`session.Environment`** 는 다른 수명이다 — 엔진 실행 한 번의 아티팩트
+     세션(`.chainbench/<session>/`), 수집기가 tail 을 누적하는 곳. 데이터
+     플레인의 노드 경로(`node.Layout`)와는 **다른 평면**이라 사본이 아니다.
+   정의는 그대로 유지한다: **워크스페이스 = 조립 중인 네트워크 하나의 로컬 기록.**
+   그 안의 노드 한 줄이 `node.Record` 다.
 
 
 ## 8. P1 이동표 — 심볼 단위

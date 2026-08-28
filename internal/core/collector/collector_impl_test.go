@@ -31,13 +31,13 @@ func TestCollector_SnapshotFromProbe(t *testing.T) {
 		node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://n1"},
 		node.Node{Index: 2, Role: node.RoleValidator, RPCURL: "http://n2"},
 	)
-	states := map[string]collector.NodeState{
+	states := map[string]collector.Sample{
 		"http://n1": {Height: 100, Peers: 3},
 		"http://n2": {Height: 99, Peers: 3},
 	}
 	c := collector.New(collector.Deps{
 		Interval: 10 * time.Millisecond,
-		Probe: func(_ context.Context, rpcURL string) (collector.NodeState, error) {
+		Probe: func(_ context.Context, rpcURL string) (collector.Sample, error) {
 			return states[rpcURL], nil
 		},
 	})
@@ -68,8 +68,8 @@ func TestCollector_ProbeErrorIsSkipped(t *testing.T) {
 	env := envWithNodes(t, node.Node{Index: 1, Role: node.RoleValidator, RPCURL: "http://down"})
 	c := collector.New(collector.Deps{
 		Interval: 10 * time.Millisecond,
-		Probe: func(_ context.Context, _ string) (collector.NodeState, error) {
-			return collector.NodeState{}, context.DeadlineExceeded
+		Probe: func(_ context.Context, _ string) (collector.Sample, error) {
+			return collector.Sample{}, context.DeadlineExceeded
 		},
 	})
 	_ = c.Start(context.Background(), env)
@@ -87,7 +87,7 @@ func TestCollector_WaitLog(t *testing.T) {
 	if err := os.WriteFile(env.LogPath("node1"), []byte("boot\nblock reward 100 paid\ndone\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	c := collector.New(collector.Deps{Interval: time.Second, Probe: func(context.Context, string) (collector.NodeState, error) { return collector.NodeState{}, nil }})
+	c := collector.New(collector.Deps{Interval: time.Second, Probe: func(context.Context, string) (collector.Sample, error) { return collector.Sample{}, nil }})
 	_ = c.Start(context.Background(), env)
 	defer c.Stop()
 

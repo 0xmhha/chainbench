@@ -24,7 +24,7 @@ func TestCollector_LiveTail(t *testing.T) {
 	var got []string
 	c := collector.New(collector.Deps{
 		Interval: time.Hour, // keep the sampler idle; this test is about the tail
-		Probe:    func(context.Context, string) (collector.NodeState, error) { return collector.NodeState{}, nil },
+		Probe:    func(context.Context, string) (collector.Sample, error) { return collector.Sample{}, nil },
 		OnLine:   func(_, line string) { mu.Lock(); got = append(got, line); mu.Unlock() },
 	})
 	if err := c.Start(context.Background(), env); err != nil {

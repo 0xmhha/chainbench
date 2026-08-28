@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"strings"
@@ -225,13 +226,13 @@ type NetLaunchOptsIn struct {
 // NetLaunchOptsOut is the assembled per-node argv table.
 type NetLaunchOptsOut struct {
 	Detail string
-	Nodes  []NodeState
+	Nodes  []node.Record
 }
 
 // NetLaunchOpts assembles each node's launch argv (the single assembly site)
 // and records it, returning the table so the surface can render the commands.
 func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
-	var nodes []NodeState
+	var nodes []node.Record
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
 		det, err := ws.LaunchOpts(LaunchOptsOpts{Set: in.Set})
 		nodes = ws.State().Nodes
