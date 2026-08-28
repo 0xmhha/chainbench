@@ -2,7 +2,6 @@ package testengine
 
 import (
 	"context"
-
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -13,7 +12,7 @@ import (
 type RunSpecFunc func(ctx context.Context, spec testspec.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
 
 // NewRunSpec is the production RunSpec wiring: it binds the DSL interpreter to
-// the injected deps (typically with testspec.NewRegistry(true) so the built-in
+// the injected deps (typically with testhelper.Registry() so the built-in
 // tx action and RPC assertions are available) and runs each spec against the
 // environment. It is the composition boundary between the engine and the
 // interpreter; keeping it thin is intentional — the behavior lives in the

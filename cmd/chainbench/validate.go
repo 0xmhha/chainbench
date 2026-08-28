@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 	"io"
 	"os"
 	"strings"
@@ -61,7 +62,7 @@ func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) er
 
 	// Resolve step/assertion names against the built-in registry so typo'd names
 	// are caught offline rather than at run time.
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 
 	results := make([]validateResult, 0, len(paths))
 	invalid := 0

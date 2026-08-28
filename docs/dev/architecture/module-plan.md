@@ -232,6 +232,18 @@ compose 의 config·launchopts·start 세 단계가 `chainsetup.peerPlan` 으로
 `test-helper` 로**(§6). 지금 `builtins`·`read`·`fault`·`assets` 1,541줄이 액션이고,
 이것이 마지막 단계에서 옮겨갈 몸통이다.
 
+**P4.3 결과(2026-08-28).** `testspec`(9파일 1,432줄)은 문법·파싱·검증·해석기·바인딩만
+남았고, 액션·어세션·리더 구현 7파일 2,129줄(테스트 포함)은 **`internal/testhelper`** 로
+갔다 — P8 이 testkit·tests 공통부를 모을 바로 그 모듈이다. 경계는 `testspec.Registry` 다:
+`Action`·`Assertion` 에 **`Reader`** 를 더해 "read/waitFor 가 어디서 읽나" 도 등록으로
+답하게 했고(전에는 `Unresolved` 가 액션 파일의 `readerFor` 를 직접 불러 문법이 액션을
+알았다), `NewRegistry()` 는 빈 레지스트리를 주며 `testhelper.Register(r)`/`Registry()` 가
+내장 어휘를 얹는다. 문법이 아는 액션 이름은 `ActionRead` 하나뿐이다(read 의 source 를
+오프라인 검증하려면 그 이름은 알아야 한다). `NodeControl` 계약과 `BigString` 은 testspec
+쪽으로 올라왔다(액션이 아니라 계약·표기). **게이트: `testspec → testhelper` import 0.**
+`dsl`/`interp` 두 패키지로 더 가르는 것은 하지 않았다 — 1,432줄에 소비자 5곳이라 가르면
+경계만 하나 늘고 얻는 것이 없다.
+
 ### M7 inspector — 요청 시 실사 (결정 2026-08-28)
 
 지금의 `core/occupancy`(129줄, 포트만 찔러봄)를 개명·확장한다. 소유하는 질문은

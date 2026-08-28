@@ -1,9 +1,10 @@
-package testspec
+package testhelper
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/testspec"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,7 +21,7 @@ import (
 // skipped; it fails if no node answers.
 type sameBlockHashAssertion struct{}
 
-func (sameBlockHashAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+func (sameBlockHashAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertSameBlockHash, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -72,7 +73,7 @@ func (sameBlockHashAssertion) Check(ctx context.Context, ac *AssertCtx) (session
 // the timeout.
 type blockAdvanceAssertion struct{}
 
-func (blockAdvanceAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+func (blockAdvanceAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertBlockAdvance, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -121,12 +122,12 @@ func (blockAdvanceAssertion) Check(ctx context.Context, ac *AssertCtx) (session.
 // that source needs (to/data for "call", address for "balanceAt", ...).
 type readAction struct{}
 
-func (readAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (readAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	source, _ := ac.Args["source"].(string)
 	if source == "" {
 		return fmt.Errorf("testspec: read requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
 	}
-	read, ok := readerFor(source)
+	read, ok := ac.Deps.Actions.Reader(source)
 	if !ok {
 		return fmt.Errorf("testspec: read: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
 	}
@@ -158,12 +159,12 @@ const (
 // The satisfying value is bound under "save" like a read.
 type waitForAction struct{}
 
-func (waitForAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (waitForAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	source, _ := ac.Args["source"].(string)
 	if source == "" {
 		return fmt.Errorf("testspec: waitFor requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
 	}
-	read, ok := readerFor(source)
+	read, ok := ac.Deps.Actions.Reader(source)
 	if !ok {
 		return fmt.Errorf("testspec: waitFor: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
 	}
@@ -207,18 +208,7 @@ func (waitForAction) Do(ctx context.Context, ac *ActionCtx) error {
 	}
 }
 
-// readerFor returns the reader registered under an assertion name, so the read
-// action and the assertions share one vocabulary (no second spelling of "call").
-func readerFor(name string) (reader, bool) {
-	for _, a := range builtinAssertions() {
-		if a.name == name {
-			return a.read, true
-		}
-	}
-	return nil, false
-}
-
-// readerNames lists the sources the read action accepts, for error messages.
+// readerNames lists the sources the built-ins register, for error messages.
 func readerNames() []string {
 	all := builtinAssertions()
 	out := make([]string, 0, len(all))
@@ -255,7 +245,7 @@ func builtinAssertions() []rpcAssertion {
 
 // reader reads one value from a node for an assertion. The value is returned in
 // a form the assert primitives compare (decimal string or 0x-hex).
-type reader func(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error)
+type reader = testspec.Reader
 
 // rpcAssertion compares one RPC-read value to the spec's expected value.
 type rpcAssertion struct {
@@ -266,7 +256,7 @@ type rpcAssertion struct {
 
 // Check reads the value from the target node and compares it to "expected"
 // using the default comparator (or the spec's "compare" override).
-func (a rpcAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+func (a rpcAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: a.name, Provenance: ac.Spec, Pass: true}
 	op := a.defaultOp
 	if o, ok := ac.Spec["compare"].(string); ok && o != "" {
@@ -373,7 +363,7 @@ func readBalanceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any
 	if err != nil {
 		return nil, err
 	}
-	return bigString(v), nil
+	return testspec.BigString(v), nil
 }
 
 func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {

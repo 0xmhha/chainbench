@@ -7,6 +7,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -170,7 +171,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	})
 	run := NewRunSpec(testspec.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions:  testspec.NewRegistry(true),
+		Actions:  testhelper.Registry(),
 		Nodes:    controller,
 		Accounts: accts,
 	})

@@ -1,6 +1,7 @@
 package testspec_test
 
 import (
+	"github.com/0xmhha/chainbench/internal/testhelper"
 	"reflect"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 )
 
 func TestUnresolved(t *testing.T) {
-	reg := testspec.NewRegistry(true) // seeds built-ins (sendTx, waitBlock, chainId, ...)
+	reg := testhelper.Registry() // seeds built-ins (sendTx, waitBlock, chainId, ...)
 
 	t.Run("all resolve", func(t *testing.T) {
 		s := testspec.Spec{
@@ -47,7 +48,7 @@ func TestUnresolved(t *testing.T) {
 }
 
 func TestUnresolved_ReportsUnboundReferences(t *testing.T) {
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 	spec := testspec.Spec{
 		Steps: []map[string]any{
 			{"read": map[string]any{"source": "call", "to": "0xa", "data": "0xb", "save": "supply"}},
@@ -65,7 +66,7 @@ func TestUnresolved_ReportsUnboundReferences(t *testing.T) {
 }
 
 func TestUnresolved_ReferenceMustBeSavedEarlier(t *testing.T) {
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 	// The reference is used in step 0 but only saved in step 1 — ordering matters.
 	spec := testspec.Spec{
 		Steps: []map[string]any{
@@ -81,7 +82,7 @@ func TestUnresolved_ReferenceMustBeSavedEarlier(t *testing.T) {
 }
 
 func TestUnresolved_BoundReferencesAreClean(t *testing.T) {
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 	spec := testspec.Spec{
 		Steps: []map[string]any{
 			{"sendTx": map[string]any{"from": "0xa", "to": "0xb", "save": "hash"}},
@@ -96,7 +97,7 @@ func TestUnresolved_BoundReferencesAreClean(t *testing.T) {
 }
 
 func TestUnresolved_SaveKeyBindsReference(t *testing.T) {
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 	spec := testspec.Spec{
 		Steps: []map[string]any{
 			{"newAccount": map[string]any{"save": "acct", "saveKey": "acctKey"}},
@@ -110,7 +111,7 @@ func TestUnresolved_SaveKeyBindsReference(t *testing.T) {
 }
 
 func TestUnresolved_ReportsAnUnknownReadSource(t *testing.T) {
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 	spec := testspec.Spec{
 		Steps: []map[string]any{
 			{"read": map[string]any{"source": "nosuchreader", "save": "v"}},
@@ -124,7 +125,7 @@ func TestUnresolved_ReportsAnUnknownReadSource(t *testing.T) {
 }
 
 func TestUnresolved_AcceptsAValidReadSource(t *testing.T) {
-	reg := testspec.NewRegistry(true)
+	reg := testhelper.Registry()
 	spec := testspec.Spec{
 		Steps: []map[string]any{
 			{"read": map[string]any{"source": "rpcCall", "method": "eth_chainId", "save": "v"}},

@@ -1,10 +1,11 @@
-package testspec
+package testhelper
 
 import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/testspec"
 	"math/big"
 	"strconv"
 	"strings"
@@ -31,7 +32,7 @@ const defaultSubscribeTimeout = 30 * time.Second
 // through builtinAssertions instead, because it reads one value like the others
 // and therefore has to work as a "read" source too — a name that works in
 // "assert" but not in "read" is a trap the spec author only meets at run time.
-func seedDerivedBuiltins(r Registry) {
+func seedDerivedBuiltins(r testspec.Registry) {
 	r.RegisterAssertion(assertWSSubscribe, wsSubscribeAssertion{})
 }
 
@@ -174,7 +175,7 @@ func dotPath(v any, path string) (any, bool) {
 // error — "two heads in five seconds" is a claim that can simply be false.
 type wsSubscribeAssertion struct{}
 
-func (wsSubscribeAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+func (wsSubscribeAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertWSSubscribe, Provenance: ac.Spec}
 
 	wsURL, err := wsTarget(ac)
@@ -236,7 +237,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *AssertCtx) (session.A
 // wsTarget derives the WebSocket URL of the assertion's target node from its
 // host and WS port. Attached nodes carry no port map, so this names that rather
 // than dialing something wrong.
-func wsTarget(ac *AssertCtx) (string, error) {
+func wsTarget(ac *testspec.AssertCtx) (string, error) {
 	nodes := ac.On
 	if len(nodes) == 0 && ac.Env != nil {
 		nodes = ac.Env.Nodes()

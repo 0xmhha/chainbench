@@ -1,8 +1,9 @@
-package testspec
+package testhelper
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/testspec"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -25,7 +26,7 @@ const assertMetric = "metric"
 // launchopt Metrics module also guards against.
 type metricAssertion struct{}
 
-func (metricAssertion) Check(ctx context.Context, ac *AssertCtx) (session.AssertResult, error) {
+func (metricAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertMetric, Provenance: ac.Spec, Pass: true}
 	name, _ := ac.Spec["name"].(string)
 	if name == "" {
@@ -87,7 +88,7 @@ type metricTarget struct {
 // "onEach" node, else the environment's primary node. Unlike assertTargets it
 // keeps the full node (host + ports), because the scrape URL is derived from
 // the metrics port, not the RPC URL.
-func metricTargets(ac *AssertCtx) []metricTarget {
+func metricTargets(ac *testspec.AssertCtx) []metricTarget {
 	if len(ac.On) > 0 {
 		out := make([]metricTarget, 0, len(ac.On))
 		for _, n := range ac.On {
