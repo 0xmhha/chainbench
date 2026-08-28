@@ -30,7 +30,6 @@
 package anzeon
 
 import (
-	"encoding/hex"
 	"math/big"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
@@ -60,8 +59,7 @@ func openFaucetWallet(t *testkit.T) accounts.Wallet {
 	t.Truef(ok, "node set has no primary node")
 	ap, err := accounts.ForChain(t.NodeSet().Chain)
 	t.NoErr(err, "accounts.ForChain")
-	key, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	key := fundedKey(t)
 	w, err := ap.OpenWallet(t.Ctx(), key, primary.RPCURL)
 	t.NoErr(err, "open faucet wallet")
 	return w

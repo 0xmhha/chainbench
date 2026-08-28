@@ -63,8 +63,7 @@ func newFundedWallet(t *testkit.T) accounts.Wallet {
 
 	key, addr, err := accounts.GenerateKey()
 	t.NoErr(err, "generate key")
-	fkey, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	fkey := fundedKey(t)
 	fw, err := ap.OpenWallet(t.Ctx(), fkey, primary.RPCURL)
 	t.NoErr(err, "open faucet wallet")
 	fundHash, err := fw.SendCoin(t.Ctx(), addr, tenEther())

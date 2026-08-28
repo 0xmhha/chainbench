@@ -43,8 +43,7 @@ func rejectTamperedFD(t *testkit.T, which string) {
 		t.Skip("chain %s does not support fee delegation (0x16)", t.NodeSet().Chain)
 	}
 
-	faucetKey, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	faucetKey := fundedKey(t)
 	w, _ := openFaucetWallet(t)
 
 	cid, err := t.Primary().ChainID(t.Ctx())

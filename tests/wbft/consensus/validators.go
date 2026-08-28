@@ -15,17 +15,6 @@
 //
 //	validator-role nodes.
 //
-// # Test: is-validator-flags
-//
-// Intent:   istanbul_isValidator must agree with each node's declared role: a
-//
-//	validator-role node answers true, a non-validator node answers false
-//	(ported from regression/g-api/g3-06-is-validator.sh).
-//
-// Applies:  stablenet, wbft. Requires: "rpc", "consensus".
-// Method:   istanbul_isValidator("latest") on every node; compare to its Role.
-// Pass:     the flag equals (role == validator) on every node.
-//
 // These are chainbench TEST CODE (requirement #16): registered at init and run
 // by the testrun phase against a live NodeSet (the sibling _test.go validates
 // registration and runs each against a mock node).
@@ -44,13 +33,6 @@ func init() {
 		RequiresCaps: []string{"rpc", "consensus"},
 		Fn:           validatorSetCount,
 	})
-	testkit.Register(testkit.Case{
-		Name:         "is-validator-flags",
-		Category:     "consensus",
-		ChainCompat:  []string{"stablenet", "wbft"},
-		RequiresCaps: []string{"rpc", "consensus"},
-		Fn:           isValidatorFlags,
-	})
 }
 
 func validatorSetCount(t *testkit.T) {
@@ -65,16 +47,4 @@ func validatorSetCount(t *testkit.T) {
 	t.Truef(len(vals) > 0, "validator set is non-empty (got %d)", len(vals))
 	t.Truef(len(vals) >= want,
 		"validator set (%d) covers all validator-role nodes (%d)", len(vals), want)
-}
-
-func isValidatorFlags(t *testkit.T) {
-	nodes := t.NodeSet().Nodes
-	t.Truef(len(nodes) > 0, "node set is non-empty")
-	for _, n := range nodes {
-		var isVal bool
-		t.NoErr(t.Node(n.Index).Call(t.Ctx(), "istanbul_isValidator", &isVal, "latest"),
-			"istanbul_isValidator")
-		want := n.Role == node.RoleValidator
-		t.Equalf(isVal, want, "node%d (%s) istanbul_isValidator", n.Index, n.Role)
-	}
 }

@@ -34,16 +34,17 @@
 | `node{1..5}/nodekey` | secp256k1 **private** key (test-only, public-equivalent). |
 | `node{1..4}/keystore/UTC--*` | Ethereum keystore (encrypted with password `1`). |
 
-## Faucet test key
+## Funding a test account
 
-`metadata.json` `alloc` also funds a standalone faucet account used by the
-`value-transfer` test case (it needs a raw private key, which the encrypted
-node keystores do not expose):
+Every `node{1..5}` account is in the genesis `alloc` with a large balance, so a
+test that needs to spend funds signs with one of those node keys (the DSL's
+`sendTx from: <node address>` does this through the session keyring; the
+remaining Go-func cases take node1's key from this preset). There is no
+separate faucet key to keep anywhere.
 
-| Address | `0x71562b71999873db5b286df957af199ec94617f7` |
-| Private key | `b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291` |
-
-TEST FIXTURE ONLY — same public-key caveat as every other file here.
+`metadata.json` `alloc` also carries one extra account
+(`0x71562b71999873db5b286df957af199ec94617f7`) that nothing spends from: tests
+read it as a prealloc balance that must survive a fork or a re-sync.
 
 ## How chainbench consumes these
 

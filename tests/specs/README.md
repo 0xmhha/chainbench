@@ -21,13 +21,15 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 
 ## 이관 현황
 
-레거시 등록 케이스 **134개** 기준.
+레거시 등록 케이스 **134개** 기준(`testkit.Cases()` 실측).
 
-> **분모 주의 (2026-08-18 실측)**: `tests/` 의 `testkit.Register` 호출은 **112건**이다
-> (`anzeon` 61 · `wbft` 36 · `api` 9 · `network` 4 · `external` 2).
-> 아래 표의 134 와 [[chainbench-worklist]] 가 인용하던 103 은 모두 낡았다.
-> 표의 카테고리는 디렉토리가 아니라 논리 분류라 1:1 대응하지 않으므로, 재집계 전까지는
-> **112 를 분모로** 읽을 것. 이관분은 `tests/specs` 21건 + `examples/specs` 의 network 3건.
+> **2026-08-28 실측 (P8):** 134건 중 **96건이 같은 id 의 DSL 스펙**으로 이관됐고(`tests/specs` 92 +
+> `examples/specs` 4), 이관이 끝난 **Go 케이스 파일 41개와 그 유닛테스트를 삭제**했다
+> (`tests/api`·`tests/network` 는 패키지째 사라졌다). 남은 등록은 **56건**: 미이관 34건 + 표 구동
+> 파일(`tx_rejections`·`gas_boundary`·`account_extra`·`gov_*_events` 등)에 이관분과 섞여 있는 22건.
+> 남은 파일이 공유하던 헬퍼는 `tests/anzeon/helpers.go`·`tests/wbft/accounts/helpers.go` 로 모았다.
+> 미이관 34건의 사유는 아래 "이관하지 않은 것과 그 이유" 와 카테고리별 잔여 표에 있다.
+> 그것들이 이관되면 `testkit`·`testrun`·`chainbench test`·MCP `chainbench_test` 가 함께 은퇴한다.
 
 | 카테고리 | 레거시 | 이관 | 상태 |
 |---|---:|---:|---|

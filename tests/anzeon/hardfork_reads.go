@@ -34,39 +34,9 @@
 //	it also means "not verified").
 //
 // Pass:     neither call returns 0x..01.
-//
-// # Test: govminter-v2-code
-//
-// Intent:   after Boho the GovMinter system contract holds its v2 bytecode, so
-//
-//	eth_getCode at GOV_MINTER returns substantial non-empty code
-//	(regression h-03).
-//
-// Applies:  stablenet. Requires: "rpc".
-// Method:   eth_getCode at GOV_MINTER (0x..1003); assert the code is hex, longer
-//
-//	than "0x", and substantial (a real compiled contract, > 100 hex chars).
-//
-// Pass:     GovMinter has substantial deployed code.
-//
-// # Test: boho-chain-config-active
-//
-// Intent:   the stablenet chain is running with the Boho/Anzeon config active at
-//
-//	genesis: it has produced blocks, reports a chain id, and its latest
-//	block carries an EIP-1559 baseFeePerGas (regression h-01).
-//
-// Applies:  stablenet. Requires: "rpc".
-// Method:   read eth_blockNumber (> 0), eth_chainId (> 0), and the latest block's
-//
-//	baseFeePerGas (present and positive).
-//
-// Pass:     block number > 0, chain id > 0, and baseFeePerGas > 0.
 package anzeon
 
 import (
-	"math/big"
-
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
@@ -114,20 +84,6 @@ func init() {
 		RequiresCaps: []string{"rpc"},
 		Fn:           p256RejectsInvalid,
 	})
-	testkit.Register(testkit.Case{
-		Name:         "govminter-v2-code",
-		Category:     "hardfork",
-		ChainCompat:  []string{"stablenet"},
-		RequiresCaps: []string{"rpc"},
-		Fn:           govminterV2Code,
-	})
-	testkit.Register(testkit.Case{
-		Name:         "boho-chain-config-active",
-		Category:     "hardfork",
-		ChainCompat:  []string{"stablenet"},
-		RequiresCaps: []string{"rpc"},
-		Fn:           bohoChainConfigActive,
-	})
 }
 
 func p256PrecompileActive(t *testkit.T) {
@@ -151,27 +107,4 @@ func p256RejectsInvalid(t *testkit.T) {
 		map[string]string{"to": p256Precompile, "data": p256ShortInput}, "latest"); err == nil {
 		t.Truef(got != p256SuccessWord, "P-256 must not return success for a 64-byte short input (got %s)", got)
 	}
-}
-
-func govminterV2Code(t *testkit.T) {
-	var code string
-	t.NoErr(t.Primary().Call(t.Ctx(), "eth_getCode", &code, govMinter, "latest"), "eth_getCode GovMinter")
-	t.Truef(code != "" && code != "0x", "GovMinter (%s) has deployed code", govMinter)
-	// A real compiled v2 contract is far larger than a trivial "0x" stub; the
-	// regression floor is > 100 hex chars.
-	t.Truef(len(code) > 100, "GovMinter code is substantial v2 bytecode (got %d hex chars)", len(code))
-}
-
-func bohoChainConfigActive(t *testkit.T) {
-	ctx := t.Ctx()
-	bn, err := t.Primary().BlockNumber(ctx)
-	t.NoErr(err, "eth_blockNumber")
-	t.Truef(bn > 0, "chain has produced blocks (block number %d > 0)", bn)
-
-	cid, err := t.Primary().ChainID(ctx)
-	t.NoErr(err, "eth_chainId")
-	t.Truef(cid > 0, "chain reports a chain id (%d > 0)", cid)
-
-	bf := latestBaseFee(t)
-	t.Truef(bf.Cmp(big.NewInt(0)) > 0, "latest block carries an EIP-1559 baseFeePerGas (%s > 0)", bf)
 }

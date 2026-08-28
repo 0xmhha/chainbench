@@ -4,19 +4,6 @@
 // surfacing (regression/a-ethereum/a3-05-eth-call-revert). Both assert
 // that the node returns an error rather than silently accepting the request.
 //
-// # Test: insufficient-funds-rejected
-//
-// Intent:   a value transfer that exceeds the sender's balance is rejected at
-//
-//	submission time rather than mined.
-//
-// Applies:  stablenet, wbft. Requires: the "rpc" capability.
-// Method:   read the funded sender's balance, then attempt to send balance + 1
-//
-//	coin; the SDK submit (eth_sendRawTransaction) must return an error.
-//
-// Pass:     SendCoin returns a non-nil error.
-//
 // # Test: eth-call-revert-returns-error
 //
 // Intent:   an eth_call to a function that reverts returns a JSON-RPC error, not
@@ -37,16 +24,12 @@ package accounts
 
 import (
 	"encoding/hex"
-	"math/big"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
-
-// insufficientRecipient receives the (rejected) over-balance transfer.
-const insufficientRecipient = "0x00000000000000000000000000000000C0FFEE07"
 
 // reverterInit is the creation bytecode of a Reverter contract whose fail()
 // (selector 0xa9cc4718) always reverts with "BAD_INPUT" (solc 0.8.30,
@@ -58,13 +41,6 @@ const reverterFailSelector = "0xa9cc4718"
 
 func init() {
 	testkit.Register(testkit.Case{
-		Name:         "insufficient-funds-rejected",
-		Category:     "accounts",
-		ChainCompat:  []string{"stablenet", "wbft"},
-		RequiresCaps: []string{"rpc"},
-		Fn:           insufficientFundsRejected,
-	})
-	testkit.Register(testkit.Case{
 		Name:         "eth-call-revert-returns-error",
 		Category:     "accounts",
 		ChainCompat:  []string{"stablenet", "wbft"},
@@ -73,33 +49,13 @@ func init() {
 	})
 }
 
-func insufficientFundsRejected(t *testkit.T) {
-	primary, ok := t.NodeSet().Primary()
-	t.Truef(ok, "node set has no primary node")
-
-	ap, err := accounts.ForChain(t.NodeSet().Chain)
-	t.NoErr(err, "accounts.ForChain")
-	key, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
-	w, err := ap.OpenWallet(t.Ctx(), key, primary.RPCURL)
-	t.NoErr(err, "open wallet")
-
-	// Attempt to send strictly more than the sender holds: balance + 1 coin.
-	bal := balanceOf(t, w.Address())
-	amount := new(big.Int).Add(bal, big.NewInt(1_000_000_000_000_000_000))
-
-	_, err = w.SendCoin(t.Ctx(), insufficientRecipient, amount)
-	t.Truef(err != nil, "over-balance transfer of %s wei (balance %s) must be rejected", amount, bal)
-}
-
 func ethCallRevertReturnsError(t *testkit.T) {
 	primary, ok := t.NodeSet().Primary()
 	t.Truef(ok, "node set has no primary node")
 
 	ap, err := accounts.ForChain(t.NodeSet().Chain)
 	t.NoErr(err, "accounts.ForChain")
-	key, err := hex.DecodeString(faucetKeyHex)
-	t.NoErr(err, "decode faucet key")
+	key := fundedKey(t)
 	w, err := ap.OpenWallet(t.Ctx(), key, primary.RPCURL)
 	t.NoErr(err, "open wallet")
 
