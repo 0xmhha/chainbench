@@ -1,4 +1,4 @@
-package supervisor
+package launcher
 
 import (
 	"context"
@@ -22,8 +22,8 @@ func phasePlan(n int) driver.Plan {
 
 // launchRecorder answers a launch with the nodes it was asked for, recording
 // the selection so a test can see what each phase actually started.
-func launchRecorder(got *[][]int) func(context.Context, driver.Plan, []int) (LaunchResult, error) {
-	return func(_ context.Context, plan driver.Plan, nodes []int) (LaunchResult, error) {
+func launchRecorder(got *[][]int) func(context.Context, driver.Plan, []int) (Result, error) {
+	return func(_ context.Context, plan driver.Plan, nodes []int) (Result, error) {
 		*got = append(*got, nodes)
 		want := nodes
 		if len(want) == 0 {
@@ -31,7 +31,7 @@ func launchRecorder(got *[][]int) func(context.Context, driver.Plan, []int) (Lau
 				want = append(want, s.Index)
 			}
 		}
-		var res LaunchResult
+		var res Result
 		for _, i := range want {
 			res.Nodes.Nodes = append(res.Nodes.Nodes, node.Node{Index: i, Role: node.RoleBP})
 		}
@@ -160,8 +160,8 @@ func TestBringUp_FailedLaunchLeavesNothingRunning(t *testing.T) {
 		HealthGate: func(context.Context, node.NodeSet) (Diagnosis, error) { return Diagnosis{OK: true}, nil },
 		Procman:    process.New(),
 	})
-	sup := s.(*sup)
-	sup.teardownHook = func(ns node.NodeSet) { stopped = append(stopped, ns) }
+	impl := s.(*impl)
+	impl.teardownHook = func(ns node.NodeSet) { stopped = append(stopped, ns) }
 
 	_, _, err := s.BringUp(context.Background(), phasePlan(3), Options{Phases: []registry.Phase{
 		{Name: "boot", Nodes: []int{1}, Actions: []string{"etcd-init"}},

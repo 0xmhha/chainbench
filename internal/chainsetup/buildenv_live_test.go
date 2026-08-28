@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testspec"
 
@@ -23,7 +23,7 @@ import (
 
 // TestBuildEnv_Live_Stablenet proves the bring-up half of the walking skeleton:
 // chainsetup.NewBuildEnv, wired with a real allocator, PresetGenesisSource, the
-// LocalLauncher, and a block-advance health gate, brings a real 4-node
+// launcher.Direct, and a block-advance health gate, brings a real 4-node
 // stablenet network up on the allocator-assigned ports, and the teardown stops
 // it cleanly.
 //
@@ -55,16 +55,16 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	sup := supervisor.New(supervisor.Deps{
-		Launch: chainsetup.LocalLauncher{Plugin: plugin, Binary: bin, KeysDir: presetDir}.Launch,
-		HealthGate: func(c context.Context, ns node.NodeSet) (supervisor.Diagnosis, error) {
+	sup := launcher.New(launcher.Deps{
+		Launch: launcher.Direct{Plugin: plugin, Binary: bin, KeysDir: presetDir}.Launch,
+		HealthGate: func(c context.Context, ns node.NodeSet) (launcher.Diagnosis, error) {
 			if len(ns.Nodes) == 0 {
-				return supervisor.Diagnosis{Mode: supervisor.RPCUnready}, fmt.Errorf("no nodes launched")
+				return launcher.Diagnosis{Mode: launcher.RPCUnready}, fmt.Errorf("no nodes launched")
 			}
 			if err := waitForHead(c, ns.Nodes[0].RPCURL, 1, 90*time.Second); err != nil {
-				return supervisor.Diagnosis{Mode: supervisor.RPCUnready, Detail: err.Error()}, err
+				return launcher.Diagnosis{Mode: launcher.RPCUnready, Detail: err.Error()}, err
 			}
-			return supervisor.Diagnosis{OK: true}, nil
+			return launcher.Diagnosis{OK: true}, nil
 		},
 		Procman: process.New(),
 	})

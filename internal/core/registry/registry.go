@@ -47,7 +47,7 @@ type ConsensusFamily interface {
 	// that every node in a plan starts at once. A wemix network cannot: its
 	// etcd cluster only forms while the producer is alone, so the bootstrap
 	// runs in the gap between two groups. Saying that as data keeps the
-	// supervisor's ownership intact: it still decides timing, retries and how a
+	// launcher's ownership intact: it still decides timing, retries and how a
 	// failure is classified, and only asks the family for the order.
 	//
 	// Actions are names, not functions. The core does not know what

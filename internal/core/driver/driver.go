@@ -8,6 +8,7 @@ package driver
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -66,4 +67,19 @@ type Initializer interface {
 // type-asserts and only ships when the driver requires it (i.e. is remote).
 type FileProvisioner interface {
 	ProvisionFile(ctx context.Context, remotePath string, content []byte, mode fs.FileMode) error
+}
+
+// NodeOf is the runtime node a launched spec becomes: the identity and ports
+// the spec carried, the pid the launch returned, and the RPC URL derived from
+// them. It is the one place a Node is assembled from a launch — three copies
+// of these six lines used to exist, and the etcd port was lost in one.
+func NodeOf(spec NodeSpec, pid int) node.Node {
+	return node.Node{
+		Index:  spec.Index,
+		Role:   spec.Role,
+		Host:   spec.Host,
+		RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
+		Ports:  spec.Ports,
+		PID:    pid,
+	}
 }

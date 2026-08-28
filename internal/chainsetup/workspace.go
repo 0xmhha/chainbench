@@ -338,10 +338,11 @@ func (w *Workspace) NodeSet() node.NodeSet {
 			Role:   node.Role(n.Role),
 			Host:   nodeHost,
 			RPCURL: fmt.Sprintf("http://%s:%d", nodeHost, n.HTTP),
-			Ports: node.Endpoints{
-				P2P: n.P2P, HTTP: n.HTTP, WS: n.WS, Auth: n.Auth, Metrics: n.Metrics,
-			},
-			PID: n.PID,
+			// The record's embedded Endpoints, whole: copying fields one by one
+			// is how the etcd port went missing between the plan and the
+			// running network before.
+			Ports: n.Endpoints,
+			PID:   n.PID,
 		})
 	}
 	return ns

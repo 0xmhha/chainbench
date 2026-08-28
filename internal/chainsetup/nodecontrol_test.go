@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 )
 
 // recordingDriver counts launches and hands back incrementing pids, standing in
@@ -31,11 +31,11 @@ func (d *recordingDriver) Stop(context.Context, driver.Handle) error { return ni
 
 func TestNodeController_StartRelaunchesWithTheOriginalArming(t *testing.T) {
 	drv := &recordingDriver{}
-	c := NewNodeController(LocalLauncher{Driver: drv}, process.New())
+	c := NewNodeController(launcher.Direct{Driver: drv}, process.New())
 	// Seed the controller as a launch would, without needing a preset on disk.
 	// PID 0 is the "stopped" state, which is when a restart is legal.
 	c.record(
-		supervisor.LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 2, PID: 0}}}},
+		launcher.Result{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 2, PID: 0}}}},
 		[]driver.NodeSpec{{Index: 2, DataDir: "/tmp/n2", Args: []string{"--nodekey", "k2"}}},
 	)
 
@@ -48,7 +48,7 @@ func TestNodeController_StartRelaunchesWithTheOriginalArming(t *testing.T) {
 }
 
 func TestNodeController_StartUnknownNodeIsAnError(t *testing.T) {
-	c := NewNodeController(LocalLauncher{Driver: &recordingDriver{}}, process.New())
+	c := NewNodeController(launcher.Direct{Driver: &recordingDriver{}}, process.New())
 	err := c.Start(context.Background(), node.Node{Index: 9})
 	if err == nil {
 		t.Fatal("expected an error for a node this run never launched")
@@ -59,7 +59,7 @@ func TestNodeController_StartUnknownNodeIsAnError(t *testing.T) {
 }
 
 func TestNodeController_StopWithoutATrackedProcessIsAnError(t *testing.T) {
-	c := NewNodeController(LocalLauncher{Driver: &recordingDriver{}}, process.New())
+	c := NewNodeController(launcher.Direct{Driver: &recordingDriver{}}, process.New())
 	if err := c.Stop(context.Background(), node.Node{Index: 1}); err == nil {
 		t.Fatal("expected an error when there is no tracked process")
 	}
@@ -71,9 +71,9 @@ func TestNodeController_StopThenStartRoundTrip(t *testing.T) {
 	procs.Track(pid, "node1")
 
 	drv := &recordingDriver{}
-	c := NewNodeController(LocalLauncher{Driver: drv}, procs)
+	c := NewNodeController(launcher.Direct{Driver: drv}, procs)
 	c.record(
-		supervisor.LaunchResult{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1, PID: pid}}}},
+		launcher.Result{Nodes: node.NodeSet{Nodes: []node.Node{{Index: 1, PID: pid}}}},
 		[]driver.NodeSpec{{Index: 1, DataDir: "/tmp/n1"}},
 	)
 

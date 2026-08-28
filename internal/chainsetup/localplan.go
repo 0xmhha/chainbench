@@ -31,7 +31,7 @@ type localPlacement struct {
 // launch order, its ports offset from the config base by i-1.
 //
 // It performs no I/O and leaves each spec's Args empty: the launch argv is
-// assembled single-sited by LocalLauncher.Arm (launchopt Builder), so the plan
+// assembled single-sited by launcher.Direct.Arm (launchopt Builder), so the plan
 // stays a pure description the CLI can display and the launcher can arm. It is
 // the fixed-base-port counterpart to AssemblePlan (which takes allocator ports),
 // preserving the CLI's ports.base_* scheme.

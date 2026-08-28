@@ -1,8 +1,9 @@
-package supervisor_test
+package launcher_test
 
 import (
 	"context"
 	"errors"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/supervisor"
 )
 
 func nodeSet(pids ...int) node.NodeSet {
@@ -28,22 +28,22 @@ func nodeSet(pids ...int) node.NodeSet {
 func TestBringUp_Success(t *testing.T) {
 	pm := process.New()
 	launched := nodeSet(4001, 4002)
-	deps := supervisor.Deps{
-		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
-			return supervisor.LaunchResult{
+	deps := launcher.Deps{
+		Launch: func(_ context.Context, _ driver.Plan, _ []int) (launcher.Result, error) {
+			return launcher.Result{
 				Nodes: launched,
 				Procs: []process.Proc{{PID: 4001, DataDir: "/d/1"}, {PID: 4002, DataDir: "/d/2"}},
 			}, nil
 		},
-		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {
-			return supervisor.Diagnosis{OK: true}, nil
+		HealthGate: func(_ context.Context, _ node.NodeSet) (launcher.Diagnosis, error) {
+			return launcher.Diagnosis{OK: true}, nil
 		},
 		Procman: pm,
 		Sleep:   func(time.Duration) {},
 	}
-	s := supervisor.New(deps)
+	s := launcher.New(deps)
 
-	ns, diag, err := s.BringUp(context.Background(), driver.Plan{}, supervisor.Options{MaxAttempts: 3})
+	ns, diag, err := s.BringUp(context.Background(), driver.Plan{}, launcher.Options{MaxAttempts: 3})
 	if err != nil {
 		t.Fatalf("BringUp: %v", err)
 	}
@@ -58,43 +58,43 @@ func TestBringUp_Success(t *testing.T) {
 func TestBringUp_RetryThenFail(t *testing.T) {
 	pm := process.New()
 	attempts := 0
-	deps := supervisor.Deps{
-		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
+	deps := launcher.Deps{
+		Launch: func(_ context.Context, _ driver.Plan, _ []int) (launcher.Result, error) {
 			attempts++
-			return supervisor.LaunchResult{Nodes: nodeSet(5001), Procs: []process.Proc{{PID: 5001, DataDir: t.TempDir()}}}, nil
+			return launcher.Result{Nodes: nodeSet(5001), Procs: []process.Proc{{PID: 5001, DataDir: t.TempDir()}}}, nil
 		},
-		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {
-			return supervisor.Diagnosis{OK: false, Mode: supervisor.ForkNotCrossed, Detail: "fork not reached"}, nil
+		HealthGate: func(_ context.Context, _ node.NodeSet) (launcher.Diagnosis, error) {
+			return launcher.Diagnosis{OK: false, Mode: launcher.ForkNotCrossed, Detail: "fork not reached"}, nil
 		},
 		Procman: pm,
 		Sleep:   func(time.Duration) {},
 	}
-	s := supervisor.New(deps)
+	s := launcher.New(deps)
 
-	_, diag, err := s.BringUp(context.Background(), driver.Plan{}, supervisor.Options{MaxAttempts: 3})
+	_, diag, err := s.BringUp(context.Background(), driver.Plan{}, launcher.Options{MaxAttempts: 3})
 	if err == nil {
 		t.Fatal("expected failure after retries")
 	}
 	if attempts != 3 {
 		t.Fatalf("attempts = %d, want 3", attempts)
 	}
-	if diag.Mode != supervisor.ForkNotCrossed {
-		t.Fatalf("diag.Mode = %v, want ForkNotCrossed", diag.Mode)
+	if diag.Mode != launcher.ForkNotCrossed {
+		t.Fatalf("diag.Mode = %v, want launcher.ForkNotCrossed", diag.Mode)
 	}
 }
 
 func TestBringUp_LaunchError(t *testing.T) {
-	s := supervisor.New(supervisor.Deps{
-		Launch: func(_ context.Context, _ driver.Plan, _ []int) (supervisor.LaunchResult, error) {
-			return supervisor.LaunchResult{}, errors.New("exec failed")
+	s := launcher.New(launcher.Deps{
+		Launch: func(_ context.Context, _ driver.Plan, _ []int) (launcher.Result, error) {
+			return launcher.Result{}, errors.New("exec failed")
 		},
-		HealthGate: func(_ context.Context, _ node.NodeSet) (supervisor.Diagnosis, error) {
-			return supervisor.Diagnosis{OK: true}, nil
+		HealthGate: func(_ context.Context, _ node.NodeSet) (launcher.Diagnosis, error) {
+			return launcher.Diagnosis{OK: true}, nil
 		},
 		Procman: process.New(),
 		Sleep:   func(time.Duration) {},
 	})
-	if _, _, err := s.BringUp(context.Background(), driver.Plan{}, supervisor.Options{MaxAttempts: 1}); err == nil {
+	if _, _, err := s.BringUp(context.Background(), driver.Plan{}, launcher.Options{MaxAttempts: 1}); err == nil {
 		t.Fatal("launch error must fail bring-up")
 	}
 }
@@ -115,9 +115,9 @@ func TestTeardown_StopsAndRemovesDataDir(t *testing.T) {
 
 	pm := process.New()
 	pm.TrackProc(process.Proc{PID: pid, DataDir: dataDir})
-	s := supervisor.New(supervisor.Deps{Procman: pm, Sleep: func(time.Duration) {}})
+	s := launcher.New(launcher.Deps{Procman: pm, Sleep: func(time.Duration) {}})
 
-	if err := s.Teardown(context.Background(), nodeSet(pid), supervisor.TeardownOpts{RemoveDataDir: true, Grace: time.Second}); err != nil {
+	if err := s.Teardown(context.Background(), nodeSet(pid), launcher.TeardownOpts{RemoveDataDir: true, Grace: time.Second}); err != nil {
 		t.Fatalf("Teardown: %v", err)
 	}
 	if process.Alive(pid) {

@@ -195,14 +195,7 @@ func Launch(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions)
 		if err != nil {
 			return ns, fmt.Errorf("upgrade: launch node%d (%s): %w", spec.Index+1, spec.Binary, err)
 		}
-		ns.Nodes = append(ns.Nodes, node.Node{
-			Index:  spec.Index,
-			Role:   spec.Role,
-			Host:   spec.Host,
-			RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
-			Ports:  spec.Ports,
-			PID:    h.PID,
-		})
+		ns.Nodes = append(ns.Nodes, driver.NodeOf(spec, h.PID))
 	}
 	return ns, nil
 }

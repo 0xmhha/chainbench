@@ -1,9 +1,11 @@
-package chainsetup_test
+package launcher_test
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -108,7 +110,7 @@ func TestLocalLauncher_ComposesMaterializeInitLaunch(t *testing.T) {
 
 	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeDriver{}
-	l := chainsetup.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
+	l := launcher.Direct{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
 	res, err := l.Launch(context.Background(), plan, nil)
 	if err != nil {
@@ -153,7 +155,7 @@ func TestLocalLauncher_ProvisionOnlyDoesNotLaunch(t *testing.T) {
 
 	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeDriver{}
-	l := chainsetup.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
+	l := launcher.Direct{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
 	specs, err := l.Provision(context.Background(), plan)
 	if err != nil {
@@ -189,7 +191,7 @@ func TestLocalLauncher_RemoteShipsIdentities(t *testing.T) {
 
 	store := &fakeStore{written: map[string]int{}}
 	drv := &fakeRemoteDriver{}
-	l := chainsetup.LocalLauncher{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
+	l := launcher.Direct{Plugin: plugin, Binary: "go-stablenet", KeysDir: presetDir, Driver: drv, Files: store}
 
 	// Materialize (via Provision) must ship each node's preset identity to the
 	// remote keys dir under the data root — the shared password and both nodekeys.
@@ -205,5 +207,26 @@ func TestLocalLauncher_RemoteShipsIdentities(t *testing.T) {
 		if drv.shipped[want] != 1 {
 			t.Fatalf("identity %q not shipped once: %v", want, drv.shipped)
 		}
+	}
+}
+
+// repoRoot walks up from the test's working directory to the module root (the
+// directory holding go.mod), so the shipped preset can be read wherever the
+// test runs.
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatal("go.mod not found above the test directory")
+		}
+		dir = parent
 	}
 }

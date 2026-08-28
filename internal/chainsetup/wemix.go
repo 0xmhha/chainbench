@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"os"
 	"path/filepath"
 	"time"
@@ -51,7 +52,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 		art    GenesisArtifacts
 		plan   driver.Plan
 		specs  []driver.NodeSpec
-		launch LocalLauncher
+		launch launcher.Direct
 		phases []registry.Phase
 		nodes  node.NodeSet
 		boot   node.Node
@@ -139,7 +140,7 @@ func RunWemix(ctx context.Context, c Case, o Options, report Reporter) (Run, err
 	})
 
 	t.do(c.Steps[6], func() (string, error) {
-		launch = LocalLauncher{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
+		launch = launcher.Direct{Plugin: plugin, Binary: o.Binary, KeysDir: o.KeysDir}
 		s, err := launch.Arm(plan)
 		if err != nil {
 			return "", err

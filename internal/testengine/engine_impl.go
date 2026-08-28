@@ -12,7 +12,7 @@ import (
 
 // Deps injects the engine's collaborators so its orchestration is testable
 // without real components. A production wiring composes place/keyreg/genesis/
-// provision/supervisor in BuildEnv and collector/interpreter in RunSpec.
+// provision/launcher in BuildEnv and collector/interpreter in RunSpec.
 type Deps struct {
 	// NewSession creates the artifact session for one command. It takes a
 	// context because a wiring may have to materialize key material (generating
