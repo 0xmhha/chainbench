@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 	"os"
 	"path/filepath"
 	"testing"
@@ -100,7 +101,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 
 	deps := testspec.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions: testspec.NewRegistry(true),
+		Actions: testhelper.Registry(),
 	}
 	run := testengine.NewRunSpec(deps)
 

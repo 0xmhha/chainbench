@@ -68,7 +68,7 @@ func testEnv(t *testing.T) session.Environment {
 }
 
 func TestRun_PassFlow(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	stepRan, postRan := false, false
 	reg.RegisterAction("tx", fakeAction{ran: &stepRan})
 	reg.RegisterAction("cleanup", fakeAction{ran: &postRan})
@@ -98,7 +98,7 @@ func TestRun_PassFlow(t *testing.T) {
 }
 
 func TestRun_PreFailBlocked(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	stepRan := false
 	reg.RegisterAction("ensureChain", fakeAction{err: errors.New("no chain")})
 	reg.RegisterAction("tx", fakeAction{ran: &stepRan})
@@ -120,7 +120,7 @@ func TestRun_PreFailBlocked(t *testing.T) {
 }
 
 func TestRun_AssertFail(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	reg.RegisterAssertion("Len", fakeAssertion{pass: false})
 	spec := testspec.Spec{Assertions: []map[string]any{{"assert": "Len", "expected": 7}}}
 	rec := &fakeRecord{}
@@ -133,7 +133,7 @@ func TestRun_AssertFail(t *testing.T) {
 }
 
 func TestRun_UnknownActionFails(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	spec := testspec.Spec{Steps: []map[string]any{{"nope": true}}}
 	rec := &fakeRecord{}
 	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
@@ -154,7 +154,7 @@ func (provenanceAction) Do(_ context.Context, ac *testspec.ActionCtx) error {
 }
 
 func TestRun_StepRecordsProvenance(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	reg.RegisterAction("tx", provenanceAction{})
 
 	spec := testspec.Spec{Steps: []map[string]any{{"tx": map[string]any{"on": "bp1"}}}}
@@ -174,7 +174,7 @@ func TestRun_StepRecordsProvenance(t *testing.T) {
 }
 
 func TestRun_UnknownStepActionFails(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	spec := testspec.Spec{Steps: []map[string]any{{"nope": true}}}
 	rec := &fakeRecord{}
 	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
@@ -192,7 +192,7 @@ func TestRun_UnknownStepActionFails(t *testing.T) {
 // expect failure records and continues (later statements still run), a do
 // failure stops the sequence, and onFail hooks run on a failed case.
 func TestRun_InterleavedSequence(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	laterRan, onFailRan := false, false
 	reg.RegisterAction("tx", fakeAction{})
 	reg.RegisterAction("later", fakeAction{ran: &laterRan})
@@ -233,7 +233,7 @@ func TestRun_InterleavedSequence(t *testing.T) {
 // TestRun_DoFailureStopsSequence pins fail-fast for do statements: later
 // statements are skipped and post actions do not run (the v1 contract).
 func TestRun_DoFailureStopsSequence(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	laterRan, postRan, onFailRan := false, false, false
 	reg.RegisterAction("boom", fakeAction{err: errors.New("broken")})
 	reg.RegisterAction("later", fakeAction{ran: &laterRan})

@@ -1,7 +1,8 @@
-package testspec
+package testhelper
 
 import (
 	"context"
+	"github.com/0xmhha/chainbench/internal/testspec"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -14,11 +15,11 @@ func TestReadAction_SavesRPCValue(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 
-	act, ok := d.Actions.Action(actionRead)
+	act, ok := d.Actions.Action(testspec.ActionRead)
 	if !ok {
 		t.Fatal("read action not registered")
 	}
-	ac := &ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+	ac := &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 		"source": "call",
 		"to":     "0x1000000000000000000000000000000000000000",
 		"data":   "0x18160ddd",
@@ -35,8 +36,8 @@ func TestReadAction_SavesRPCValue(t *testing.T) {
 
 func TestReadAction_RejectsUnknownSource(t *testing.T) {
 	d := deps()
-	act, _ := d.Actions.Action(actionRead)
-	err := act.Do(context.Background(), &ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
+	act, _ := d.Actions.Action(testspec.ActionRead)
+	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
 		Args: map[string]any{"source": "nosuchreader"}})
 	if err == nil {
 		t.Fatal("expected an error for an unknown source")
@@ -45,8 +46,8 @@ func TestReadAction_RejectsUnknownSource(t *testing.T) {
 
 func TestReadAction_RequiresSource(t *testing.T) {
 	d := deps()
-	act, _ := d.Actions.Action(actionRead)
-	if err := act.Do(context.Background(), &ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
+	act, _ := d.Actions.Action(testspec.ActionRead)
+	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
 		Args: map[string]any{}}); err == nil {
 		t.Fatal("expected an error when source is missing")
 	}
@@ -61,15 +62,15 @@ func TestRun_CrossCallComparison(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 
-	spec := Spec{
+	spec := testspec.Spec{
 		Steps: []map[string]any{
-			{actionRead: map[string]any{"source": "call", "to": "0xaaa", "data": "0x18160ddd", "save": "supply"}},
+			{testspec.ActionRead: map[string]any{"source": "call", "to": "0xaaa", "data": "0x18160ddd", "save": "supply"}},
 		},
 		Assertions: []map[string]any{
 			{"assert": assertCall, "to": "0xaaa", "data": "0x70a08231", "expected": "$supply"},
 		},
 	}
-	st, err := NewInterpreter(d).Run(context.Background(), spec, env, &recordStub{})
+	st, err := testspec.NewInterpreter(d).Run(context.Background(), spec, env, &recordStub{})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -101,7 +102,7 @@ func TestReaderNames_CoverEveryRPCReadingAssertion(t *testing.T) {
 		}
 	}
 	for _, want := range []string{"rpcCall", "gasPrice", "logs", "call", "balanceAt"} {
-		if _, ok := readerFor(want); !ok {
+		if _, ok := d.Actions.Reader(want); !ok {
 			t.Errorf("assertion %q should also be a read source", want)
 		}
 	}

@@ -1,4 +1,4 @@
-package testspec
+package testhelper
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/testspec"
 	"math/big"
 	"strconv"
 	"strings"
@@ -23,7 +24,6 @@ const (
 	actionSendTx     = "sendTx"
 	actionWaitBlock  = "waitBlock"
 	actionWaitFor    = "waitFor"
-	actionRead       = "read"
 	actionNewAccount = "newAccount"
 
 	assertChainID       = "chainId"
@@ -59,13 +59,24 @@ const (
 	defaultBlockAdvancePoll    = 500 * time.Millisecond
 )
 
-// seedBuiltins registers the built-in tx action and RPC-reading assertions on r.
-// It is called by NewRegistry(true).
-func seedBuiltins(r Registry) {
+// Register puts the built-in vocabulary on r: the actions a spec can do, the
+// assertions it can check, and the readers "read" and "waitFor" draw from.
+// The grammar and interpreter (testspec) know none of these — a run wires
+// them by calling this, and a test that wants a narrower vocabulary registers
+// its own.
+// Registry returns a fresh registry with the built-ins registered — the
+// default vocabulary a run or `validate` resolves against.
+func Registry() testspec.Registry {
+	r := testspec.NewRegistry()
+	Register(r)
+	return r
+}
+
+func Register(r testspec.Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
 	r.RegisterAction(actionWaitFor, waitForAction{})
-	r.RegisterAction(actionRead, readAction{})
+	r.RegisterAction(testspec.ActionRead, readAction{})
 	r.RegisterAction(actionNewAccount, newAccountAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
@@ -75,6 +86,7 @@ func seedBuiltins(r Registry) {
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
+		r.RegisterReader(a.name, testspec.Reader(a.read))
 	}
 }
 
@@ -82,7 +94,7 @@ func seedBuiltins(r Registry) {
 // number) or the timeout elapses. Args: target, on, timeout, pollInterval.
 type waitBlockAction struct{}
 
-func (waitBlockAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (waitBlockAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	target, ok := uintArg(ac.Args["target"])
 	if !ok {
 		return fmt.Errorf("testspec: waitBlock requires a numeric \"target\"")
@@ -117,7 +129,7 @@ type sendTxAction struct{}
 // the wait: expect:"reject" requires the submit itself to fail (see
 // checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
 // status 0x0 (see checkTxOutcome).
-func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (sendTxAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	// A "key" arg switches to local signing: the tx is signed offline with that
 	// private key and submitted via eth_sendRawTransaction, rather than
 	// eth_sendTransaction against a node's keystore. This lets a spec send from a
@@ -187,7 +199,7 @@ func (sendTxAction) Do(ctx context.Context, ac *ActionCtx) error {
 // Execute when a "data" payload is present, else SendCoin for a value-only
 // transfer. The target node RPC comes from the usual "on" selector so the wallet
 // dials the same endpoint the node-signed path would.
-func sendTxLocal(ctx context.Context, ac *ActionCtx, keyHex string) error {
+func sendTxLocal(ctx context.Context, ac *testspec.ActionCtx, keyHex string) error {
 	if ac.Deps == nil || ac.Deps.Accounts == nil {
 		return fmt.Errorf("testspec: sendTx key: no account provider")
 	}
@@ -286,7 +298,7 @@ type newAccountAction struct{}
 // Do generates a key pair and records the address as the step value plus the
 // private key under the "saveKey" binding. Args: save (address binding, the
 // usual step "save"), saveKey (private-key binding name, required).
-func (newAccountAction) Do(_ context.Context, ac *ActionCtx) error {
+func (newAccountAction) Do(_ context.Context, ac *testspec.ActionCtx) error {
 	keyName, _ := ac.Args["saveKey"].(string)
 	if keyName == "" {
 		return fmt.Errorf("testspec: newAccount requires \"saveKey\"")
@@ -353,7 +365,7 @@ func wantReject(args map[string]any) bool {
 // accepted submit fails the step. An optional "reason" (case-insensitive
 // substring) tightens the check to a specific rejection message, so a spec can
 // require e.g. an "insufficient funds" rejection rather than any error.
-func checkSubmitRejected(hash string, submitErr error, ac *ActionCtx) error {
+func checkSubmitRejected(hash string, submitErr error, ac *testspec.ActionCtx) error {
 	if submitErr == nil {
 		return fmt.Errorf("testspec: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
 	}
@@ -399,7 +411,7 @@ func waitReceipt(ctx context.Context, c *rpc.Client, hash string, timeout, inter
 }
 
 // clientFor returns an RPC client for url, guarding a missing injected factory.
-func clientFor(deps *Deps, url string) (*rpc.Client, error) {
+func clientFor(deps *testspec.Deps, url string) (*rpc.Client, error) {
 	if deps == nil || deps.RPC == nil {
 		return nil, fmt.Errorf("testspec: no RPC client injected")
 	}
@@ -417,7 +429,7 @@ type assertTarget struct {
 
 // assertTargets are the nodes an assertion checks: every resolved "on"/"onEach"
 // node, else the environment's primary node.
-func assertTargets(ac *AssertCtx) []assertTarget {
+func assertTargets(ac *testspec.AssertCtx) []assertTarget {
 	if len(ac.On) > 0 {
 		out := make([]assertTarget, 0, len(ac.On))
 		for _, n := range ac.On {
@@ -477,14 +489,6 @@ func hexQuantity(v any) (string, bool) {
 	default:
 		return "", false
 	}
-}
-
-// bigString renders a big.Int as a decimal string ("0" for nil).
-func bigString(v *big.Int) string {
-	if v == nil {
-		return "0"
-	}
-	return v.String()
 }
 
 // uintArg normalizes a numeric arg (number or decimal string) to a uint64.

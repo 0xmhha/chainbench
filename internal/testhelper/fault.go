@@ -1,8 +1,9 @@
-package testspec
+package testhelper
 
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/testspec"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -19,23 +20,8 @@ const (
 	actionHealPartition = "healPartition"
 )
 
-// NodeControl stops and restarts individual node processes. It is the boundary
-// between the DSL and process management: the local engine wires an
-// implementation backed by the launcher and procman, while attach mode leaves it
-// nil because chainbench did not start those nodes and must not pretend it can
-// stop them.
-type NodeControl interface {
-	// Stop terminates the node's process, verifying it is gone, and returns
-	// the node as it now is (pid 0). The caller writes that back to the
-	// environment's node table: the table is the one record of a pid.
-	Stop(ctx context.Context, n node.Node) (node.Node, error)
-	// Start relaunches a previously stopped node with its original arming and
-	// returns it with its new pid.
-	Start(ctx context.Context, n node.Node) (node.Node, error)
-}
-
 // seedFaultBuiltins registers the node-lifecycle and partition actions.
-func seedFaultBuiltins(r Registry) {
+func seedFaultBuiltins(r testspec.Registry) {
 	r.RegisterAction(actionStopNode, stopNodeAction{})
 	r.RegisterAction(actionStartNode, startNodeAction{})
 	r.RegisterAction(actionRestartNode, restartNodeAction{})
@@ -46,7 +32,7 @@ func seedFaultBuiltins(r Registry) {
 // stopNodeAction stops one node. Args: on (selector, required).
 type stopNodeAction struct{}
 
-func (stopNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (stopNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionStopNode)
 	if err != nil {
 		return err
@@ -62,7 +48,7 @@ func (stopNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
 // startNodeAction starts one previously stopped node. Args: on (required).
 type startNodeAction struct{}
 
-func (startNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (startNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionStartNode)
 	if err != nil {
 		return err
@@ -79,7 +65,7 @@ func (startNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
 // Args: on (required).
 type restartNodeAction struct{}
 
-func (restartNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (restartNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionRestartNode)
 	if err != nil {
 		return err
@@ -99,7 +85,7 @@ func (restartNodeAction) Do(ctx context.Context, ac *ActionCtx) error {
 
 // faultTarget resolves the action's "on" selector and the injected node control,
 // naming whichever is missing.
-func faultTarget(ac *ActionCtx, action string) (node.Node, NodeControl, error) {
+func faultTarget(ac *testspec.ActionCtx, action string) (node.Node, testspec.NodeControl, error) {
 	if ac.Deps == nil || ac.Deps.Nodes == nil {
 		return node.Node{}, nil, fmt.Errorf(
 			"testspec: %s needs node control, which this run has none of (attach mode does not own the node processes)", action)
@@ -135,7 +121,7 @@ func faultTarget(ac *ActionCtx, action string) (node.Node, NodeControl, error) {
 // split holds until healPartition (or a node restart) restores it.
 type partitionAction struct{}
 
-func (partitionAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (partitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	groups, err := partitionGroups(ac)
 	if err != nil {
 		return err
@@ -170,7 +156,7 @@ func (partitionAction) Do(ctx context.Context, ac *ActionCtx) error {
 // wants after a fault test.
 type healPartitionAction struct{}
 
-func (healPartitionAction) Do(ctx context.Context, ac *ActionCtx) error {
+func (healPartitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	if ac.Env == nil {
 		return fmt.Errorf("testspec: healPartition: no environment")
 	}
@@ -207,7 +193,7 @@ func (healPartitionAction) Do(ctx context.Context, ac *ActionCtx) error {
 }
 
 // partitionGroups resolves and validates the action's "groups" argument.
-func partitionGroups(ac *ActionCtx) ([][]node.Node, error) {
+func partitionGroups(ac *testspec.ActionCtx) ([][]node.Node, error) {
 	raw, ok := ac.Args["groups"]
 	if !ok {
 		return nil, fmt.Errorf("testspec: partition requires \"groups\" (two or more lists of node selectors)")
@@ -228,7 +214,7 @@ func partitionGroups(ac *ActionCtx) ([][]node.Node, error) {
 }
 
 // resolveGroups turns the DSL's [[selector...]...] into resolved node groups.
-func resolveGroups(ac *ActionCtx, raw any) ([][]node.Node, error) {
+func resolveGroups(ac *testspec.ActionCtx, raw any) ([][]node.Node, error) {
 	if ac.Env == nil {
 		return nil, fmt.Errorf("testspec: partition: no environment")
 	}
@@ -261,7 +247,7 @@ func resolveGroups(ac *ActionCtx, raw any) ([][]node.Node, error) {
 
 // enodesFor asks each node for its own enode (admin_nodeInfo), keyed by index.
 // Peers are named by enode, and only the node itself knows its own.
-func enodesFor(ctx context.Context, ac *ActionCtx, nodes []node.Node) (map[int]string, error) {
+func enodesFor(ctx context.Context, ac *testspec.ActionCtx, nodes []node.Node) (map[int]string, error) {
 	out := make(map[int]string, len(nodes))
 	for _, n := range nodes {
 		if _, done := out[n.Index]; done {

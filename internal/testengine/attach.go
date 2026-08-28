@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
@@ -84,7 +85,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 
 	run := NewRunSpec(testspec.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions:  testspec.NewRegistry(true),
+		Actions:  testhelper.Registry(),
 		Accounts: accts,
 	})
 

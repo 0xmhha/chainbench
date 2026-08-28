@@ -122,7 +122,7 @@ func refText(v any) string {
 	case bool:
 		return strconv.FormatBool(x)
 	case *big.Int:
-		return bigString(x)
+		return BigString(x)
 	case nil:
 		return ""
 	default:
@@ -172,4 +172,14 @@ func collectRefs(v any, seen map[string]bool) {
 			collectRefs(val, seen)
 		}
 	}
+}
+
+// BigString renders a big.Int as a decimal string ("0" for nil). It is the one
+// spelling a bound value and a read value share, so a saved balance compares
+// equal to an asserted one.
+func BigString(v *big.Int) string {
+	if v == nil {
+		return "0"
+	}
+	return v.String()
 }

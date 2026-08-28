@@ -34,7 +34,7 @@ func (a capturingAssertion) Check(_ context.Context, ac *testspec.AssertCtx) (se
 }
 
 func TestRun_StepValueBindsIntoLaterStep(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	var gotArgs map[string]any
 	reg.RegisterAction("produce", savingAction{value: "0xdeadbeef"})
 	reg.RegisterAction("consume", capturingAction{got: &gotArgs})
@@ -61,7 +61,7 @@ func TestRun_StepValueBindsIntoLaterStep(t *testing.T) {
 }
 
 func TestRun_StepValueBindsIntoAssertion(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	var gotSpec map[string]any
 	reg.RegisterAction("produce", savingAction{value: "0xhash"})
 	reg.RegisterAssertion("check", capturingAssertion{got: &gotSpec})
@@ -82,7 +82,7 @@ func TestRun_StepValueBindsIntoAssertion(t *testing.T) {
 func TestRun_SendTxHashIsBoundWithoutExplicitValue(t *testing.T) {
 	// An action that only sets Hash (as sendTx does) still binds, so a spec can
 	// reference the transaction it just submitted.
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	var gotSpec map[string]any
 	reg.RegisterAction("tx", hashOnlyAction{hash: "0xabc"})
 	reg.RegisterAssertion("check", capturingAssertion{got: &gotSpec})
@@ -107,7 +107,7 @@ func (a hashOnlyAction) Do(_ context.Context, ac *testspec.ActionCtx) error {
 }
 
 func TestRun_UnboundReferenceFailsTheStep(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	ran := false
 	reg.RegisterAction("consume", fakeAction{ran: &ran})
 	reg.RegisterAssertion("noop", fakeAssertion{pass: true})
@@ -130,7 +130,7 @@ func TestRun_UnboundReferenceFailsTheStep(t *testing.T) {
 }
 
 func TestRun_PreActionCanSaveForSteps(t *testing.T) {
-	reg := testspec.NewRegistry(false)
+	reg := testspec.NewRegistry()
 	var gotArgs map[string]any
 	reg.RegisterAction("prepare", savingAction{value: float64(42)})
 	reg.RegisterAction("consume", capturingAction{got: &gotArgs})

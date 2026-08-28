@@ -3,6 +3,7 @@ package testengine_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/internal/testhelper"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -74,7 +75,7 @@ func specWithAssertions(t *testing.T, assertions []map[string]any) testspec.Spec
 func runSpecDeps() testspec.Deps {
 	return testspec.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions: testspec.NewRegistry(true),
+		Actions: testhelper.Registry(),
 	}
 }
 

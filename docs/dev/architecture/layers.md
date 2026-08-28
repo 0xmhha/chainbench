@@ -150,7 +150,8 @@ flowchart TD
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `core/hardfork` | 업그레이드 계획/실행 |
 | `core/netreg` | 네트워크 레지스트리 |
-| `testspec` · `testspec/assert` | DSL 파싱 · 인터프리터 · 어세션 |
+| `testspec` · `testspec/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3, 2026-08-28) |
+| `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). testspec 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 testspec 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
 | `validatorset` | 검증자셋 계산 |
 
 ### L4 오케스트레이션

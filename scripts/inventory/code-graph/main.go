@@ -389,6 +389,7 @@ func layerOf(path string) string {
 	case strings.HasPrefix(path, "internal/mcp"),
 		strings.HasPrefix(path, "internal/dashboard"),
 		strings.HasPrefix(path, "internal/testspec"),
+		strings.HasPrefix(path, "internal/testhelper"),
 		strings.HasPrefix(path, "internal/testengine"),
 		strings.HasPrefix(path, "internal/chainsetup"):
 		return "orchestration"

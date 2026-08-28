@@ -34,11 +34,11 @@ func Unresolved(s Spec, reg Registry) []string {
 		checkRefs(args, bound, seen)
 		// A read action names its source by string too, so an unknown one would
 		// only surface once a network is up. Catch it here with the rest.
-		if name == actionRead {
+		if name == ActionRead {
 			source, _ := args["source"].(string)
 			if source == "" {
 				seen["source:(missing)"] = true
-			} else if _, ok := readerFor(source); !ok {
+			} else if _, ok := reg.Reader(source); !ok {
 				seen["source:"+source] = true
 			}
 		}
