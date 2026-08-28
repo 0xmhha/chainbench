@@ -160,7 +160,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `testengine` | 테스트 엔진 — 구성된 체인 위에서 테스트 수행·수집·요약. `run --binary` 의 스펙별 환경 조립(`NewBuildEnv`)은 엔진 자신의 것이라 여기 있다(P6.1); chainsetup 을 import 하지 않는다 |
-| `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴) + `chain up` 케이스 러너(P7 이 대체) |
+| `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/cases/` 선언 + `app.RunSuite` 가 대신한다 |
 | `chainsetup` | 체인별 셋업 절차 |
 | `testkit` | **(레거시)** 케이스 레지스트리 |
 | `core/pipeline/testrun` | **(레거시)** 케이스 실행 |
