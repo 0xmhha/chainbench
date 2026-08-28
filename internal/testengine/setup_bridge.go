@@ -3,6 +3,7 @@ package testengine
 import (
 	"context"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
+	"github.com/0xmhha/chainbench/internal/testspec"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
@@ -45,10 +46,13 @@ func GenesisSourceFor(plugin registry.ChainPlugin, cfg GenesisConfig) chainsetup
 	return chainsetup.GenesisSourceFor(plugin, cfg)
 }
 
-// NewNodeController controls launched nodes over the local launcher.
-func NewNodeController(launcher LocalLauncher, procs *process.Manager) *chainsetup.NodeController {
-	return chainsetup.NewNodeController(launcher, procs)
+// NewNodeController controls launched nodes over the launcher.
+func NewNodeController(direct LocalLauncher, procs *process.Manager) *launcher.Controller {
+	return launcher.NewController(direct, procs)
 }
+
+// The controller is what the DSL's fault steps drive.
+var _ testspec.NodeControl = (*launcher.Controller)(nil)
 
 // KeySet is a resolved set of key material.
 type KeySet = chainsetup.KeySet

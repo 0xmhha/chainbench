@@ -24,24 +24,26 @@ type fakeNodeControl struct {
 	err     error
 }
 
-func (c *fakeNodeControl) Stop(_ context.Context, n node.Node) error {
+func (c *fakeNodeControl) Stop(_ context.Context, n node.Node) (node.Node, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
-		return c.err
+		return n, c.err
 	}
 	c.stopped = append(c.stopped, n.Index)
-	return nil
+	n.PID = 0
+	return n, nil
 }
 
-func (c *fakeNodeControl) Start(_ context.Context, n node.Node) error {
+func (c *fakeNodeControl) Start(_ context.Context, n node.Node) (node.Node, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
-		return c.err
+		return n, c.err
 	}
 	c.started = append(c.started, n.Index)
-	return nil
+	n.PID = 4242
+	return n, nil
 }
 
 // envWithNodes builds an environment of n validator nodes pointed at url.

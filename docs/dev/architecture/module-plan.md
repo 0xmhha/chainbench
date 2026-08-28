@@ -160,6 +160,14 @@ key path · nodekey path · pid · process state
 사본 소멸). `workspace.go` 의 `Endpoints` 필드별 복사(etcd 포트가 또 빠지던 곳)를 통째
 복사로. `chainsetup` 6,593 → 6,256줄.
 
+**P3.2 결과(2026-08-28).** pid 를 기억하는 곳 **3 → 모드당 1**. 엔진 실행에서는
+`session.Environment` 의 노드표가, 조립에서는 `node.Record.PID` 가 기록이고,
+`process.Manager` 는 teardown 용 장부(pid+datadir, 죽은 것 포함)라 다른 관심사다.
+`NodeController` 의 사설 pid 맵이 세 번째 사본이었고 이것을 지웠다 —
+`launcher.Controller` 는 **arming 만** 기억하고, `testspec.NodeControl.Stop/Start` 가
+갱신된 노드를 돌려주면 fault 액션이 `Env.UpdateNode` 로 노드표에 써넣는다.
+`chainsetup` 6,256 → 6,123줄.
+
 ### M4 genesis 빌더
 
 지금 네 층에 걸쳐 있다. `core/genesis`(340: `Build`·`BuildNetwork`·`Customize`·
