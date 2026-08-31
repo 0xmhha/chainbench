@@ -1,10 +1,11 @@
 package deploy
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 func TestCredentials_For(t *testing.T) {

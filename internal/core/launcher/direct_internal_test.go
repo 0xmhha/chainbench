@@ -3,18 +3,19 @@ package launcher
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
+
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -181,9 +182,9 @@ func TestArmSpecsOverrides(t *testing.T) {
 				ConfigPath: "/d/c1.toml", Ports: node.Endpoints{P2P: 31000, HTTP: 8600, WS: 8700}},
 		},
 	}
-	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", []launchopt.Override{
-		{Key: launchopt.KeyNetworkID, Value: "4242"},
-		{Key: launchopt.KeyMaxPeers, Value: "7"},
+	specs, err := armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", []nodeconfig.Override{
+		{Key: nodeconfig.KeyNetworkID, Value: "4242"},
+		{Key: nodeconfig.KeyMaxPeers, Value: "7"},
 	})
 	if err != nil {
 		t.Fatalf("armSpecs: %v", err)
@@ -193,8 +194,8 @@ func TestArmSpecsOverrides(t *testing.T) {
 	}
 
 	// An override the dialect cannot express must fail assembly, not vanish.
-	_, err = armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", []launchopt.Override{
-		{Key: launchopt.KeyBlockInterval, Value: "1"},
+	_, err = armSpecs(plugin, preset, plan, "go-stablenet", "/keys", "", []nodeconfig.Override{
+		{Key: nodeconfig.KeyBlockInterval, Value: "1"},
 	})
 	if err == nil {
 		t.Fatal("wemix-only knob on geth114 must fail arming")

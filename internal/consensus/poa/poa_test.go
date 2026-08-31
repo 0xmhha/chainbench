@@ -2,9 +2,10 @@ package poa
 
 import (
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/resource"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 )

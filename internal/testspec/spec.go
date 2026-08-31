@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -130,7 +130,7 @@ type fpInput struct {
 // Fingerprint hashes the resolved declared values
 // (binaries+genesis+config+topology+hardforks+placement) to a reuse key. config
 // comes from resolved; the rest come from the receiver. It never touches a chain.
-func (s Spec) Fingerprint(resolved config.Values) session.Fingerprint {
+func (s Spec) Fingerprint(resolved nodeconfig.Values) session.Fingerprint {
 	in := fpInput{
 		Binary:         s.Chain.Binary,
 		Binaries:       s.Chain.Binaries,

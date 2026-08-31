@@ -17,8 +17,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -432,23 +432,23 @@ func (h *Handoff) provisionKeys() func(context.Context, driver.NodeSpec, bool) e
 // overrides are the account and RPC-namespace knobs: admin on every node,
 // because the mesh is wired with admin_addPeer, and the producer's unlocked
 // etherbase.
-func (h *Handoff) overrides() func(NodeSpec, bool) []launchopt.Override {
+func (h *Handoff) overrides() func(NodeSpec, bool) []nodeconfig.Override {
 	producerAcct := h.ProducerAccount()
 	fromNS, toNS := h.From.Family().RPCNamespace(), h.To.Family().RPCNamespace()
 	pwPath := h.pwPath
-	return func(_ NodeSpec, producer bool) []launchopt.Override {
+	return func(_ NodeSpec, producer bool) []nodeconfig.Override {
 		if producer {
-			return []launchopt.Override{
-				{Key: launchopt.KeyNAT, Value: "none"},
-				{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + fromNS + ",admin,miner,txpool,personal"},
-				{Key: launchopt.KeyEtherbase, Value: producerAcct},
-				{Key: launchopt.KeyUnlock, Value: producerAcct},
-				{Key: launchopt.KeyPassword, Value: pwPath},
+			return []nodeconfig.Override{
+				{Key: nodeconfig.KeyNAT, Value: "none"},
+				{Key: nodeconfig.KeyHTTPAPI, Value: "eth,net,web3," + fromNS + ",admin,miner,txpool,personal"},
+				{Key: nodeconfig.KeyEtherbase, Value: producerAcct},
+				{Key: nodeconfig.KeyUnlock, Value: producerAcct},
+				{Key: nodeconfig.KeyPassword, Value: pwPath},
 			}
 		}
-		return []launchopt.Override{
-			{Key: launchopt.KeyNAT, Value: "none"},
-			{Key: launchopt.KeyHTTPAPI, Value: "eth,net,web3," + toNS + ",admin,miner,txpool"},
+		return []nodeconfig.Override{
+			{Key: nodeconfig.KeyNAT, Value: "none"},
+			{Key: nodeconfig.KeyHTTPAPI, Value: "eth,net,web3," + toNS + ",admin,miner,txpool"},
 		}
 	}
 }

@@ -92,7 +92,6 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`. **최다 피참조(26)** — 층을 잇는 공용 언어이며, **아무것도 import 하지 않는다**(측정으로 고정) |
-| `core/config` | 평면 dot-path 설정값 |
 | `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
 | `core/capability` | capability 집합 |
 | `core/netid` · `core/logs` | 네트워크 id · 로그 라인 모델 |
@@ -108,14 +107,13 @@ flowchart TD
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
-| `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
+| `core/nodeconfig` | 노드 하나의 설정 — config.toml 렌더 · argv 조립(launchopt 빌더·dialect) · 평면 dot-path 설정값 (R1-3 에서 `core/launchopt`·`core/config` 흡수) |
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
 | `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
 | `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run --binary` 가 같은 경계를 쓴다, P6.1) |
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
-| `core/topology` | 토폴로지 YAML |
 | `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
 | `core/consensus` | 검증자 조회 |
@@ -149,11 +147,9 @@ flowchart TD
 | `core/collector` | live tail · chainstate · bp 참여 · reorg |
 | `core/health` | 블록 전진 판정 |
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
-| `core/hardfork` | 업그레이드 계획/실행 |
 | `core/netreg` | 네트워크 레지스트리 |
 | `testspec` · `testspec/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3, 2026-08-28) |
 | `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). testspec 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 testspec 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
-| `validatorset` | 검증자셋 계산 |
 
 ### L4 오케스트레이션
 

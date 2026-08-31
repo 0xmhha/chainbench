@@ -1,9 +1,10 @@
 package upgrade_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 )

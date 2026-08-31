@@ -3,8 +3,9 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )

@@ -3,12 +3,13 @@ package testengine
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/testhelper"
+
 	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/config"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -98,7 +99,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 			return session.New(cfg.ArtifactRoot, cmd, clock())
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
-			return s.Fingerprint(config.Values{})
+			return s.Fingerprint(nodeconfig.Values{})
 		},
 		BuildEnv:   withCollection(NewAttachBuildEnv(cfg.Chain, eps), cfg.Bus, nil),
 		RunSpec:    run,

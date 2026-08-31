@@ -3,10 +3,11 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io/fs"
 	"path/filepath"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"

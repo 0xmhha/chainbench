@@ -1,4 +1,4 @@
-package launchopt
+package nodeconfig
 
 import (
 	"errors"
@@ -26,7 +26,7 @@ type Builder struct {
 
 // New creates a Builder for one dialect and module set. Modules emit in the
 // given order; overrides apply after every module, last write wins.
-func New(d Dialect, modules ...Module) *Builder {
+func NewBuilder(d Dialect, modules ...Module) *Builder {
 	return &Builder{dialect: d, modules: modules}
 }
 

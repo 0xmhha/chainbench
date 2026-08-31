@@ -1,9 +1,10 @@
 package testspec_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"reflect"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/testspec"
 )

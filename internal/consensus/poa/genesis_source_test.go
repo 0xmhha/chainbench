@@ -3,11 +3,12 @@ package poa_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/wemix" // register the wemix plugin
 	"github.com/0xmhha/chainbench/internal/consensus/poa"

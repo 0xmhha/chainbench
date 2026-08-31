@@ -1,4 +1,4 @@
-package launchopt
+package nodeconfig
 
 import (
 	"strings"
@@ -116,7 +116,7 @@ func TestChainExtRejectsForeignKey(t *testing.T) {
 }
 
 func TestChainExtOnModernDialectIsError(t *testing.T) {
-	b := New(Geth114(),
+	b := NewBuilder(Geth114(),
 		Storage{DataDir: "/d"},
 		ChainExt{Values: map[Key]string{KeyBlockInterval: "1"}},
 	)
@@ -130,7 +130,7 @@ func TestChainExtOnModernDialectIsError(t *testing.T) {
 // TestBuildWbftValidatorSnapshot pins the canonical argv for the fullest local
 // shape: a wbft validator with identity, endpoints, and family policy.
 func TestBuildWbftValidatorSnapshot(t *testing.T) {
-	b := New(Geth114(),
+	b := NewBuilder(Geth114(),
 		Identity{
 			NodeKeyFile: "/keys/node1/nodekey", Unlock: "0xAA", PasswordFile: "/keys/password",
 			AllowInsecureUnlock: true, Etherbase: "0xAA",
@@ -170,7 +170,7 @@ func TestBuildWbftValidatorSnapshot(t *testing.T) {
 
 func TestBuildCrossChecks(t *testing.T) {
 	// unlock without allow-insecure-unlock
-	b := New(Geth114(),
+	b := NewBuilder(Geth114(),
 		Identity{Unlock: "0xAA", PasswordFile: "/p"},
 		Storage{DataDir: "/d"},
 		HTTPRPC{Enabled: true},
@@ -179,7 +179,7 @@ func TestBuildCrossChecks(t *testing.T) {
 		t.Fatalf("err = %v, want allow-insecure-unlock rule", err)
 	}
 	// api on disabled endpoint reaches Build through an override
-	b = New(Geth114(), Storage{DataDir: "/d"}).
+	b = NewBuilder(Geth114(), Storage{DataDir: "/d"}).
 		WithOverrides(Override{Key: KeyHTTPAPI, Value: "eth"})
 	if _, err := b.Build(); err == nil || !strings.Contains(err.Error(), "http.api") {
 		t.Fatalf("err = %v, want http.api rule", err)
@@ -187,7 +187,7 @@ func TestBuildCrossChecks(t *testing.T) {
 }
 
 func TestBuildJoinsAllProblems(t *testing.T) {
-	b := New(Geth114(),
+	b := NewBuilder(Geth114(),
 		Identity{Unlock: "0xAA"}, // missing password
 		Storage{},                // missing datadir
 		Metrics{Port: 6060},      // port without enable
@@ -204,7 +204,7 @@ func TestBuildJoinsAllProblems(t *testing.T) {
 }
 
 func TestBuildOverridesWin(t *testing.T) {
-	b := New(Geth114(),
+	b := NewBuilder(Geth114(),
 		Storage{DataDir: "/d"},
 		P2P{Port: 30301},
 	).WithOverrides(

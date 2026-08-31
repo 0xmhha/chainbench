@@ -10,10 +10,11 @@ package app_test
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/testkit"
 
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/resource"

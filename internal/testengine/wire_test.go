@@ -3,12 +3,13 @@ package testengine_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"

@@ -16,10 +16,11 @@ package upgrade
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/netid"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"math/big"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/netid"
+	"github.com/0xmhha/chainbench/internal/resource"
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/node"

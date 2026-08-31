@@ -8,6 +8,7 @@ package poa
 
 import (
 	"fmt"
+
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )

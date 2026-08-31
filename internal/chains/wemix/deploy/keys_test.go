@@ -1,9 +1,10 @@
 package deploy
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 )
 
 func TestFormatAccountsFragment(t *testing.T) {

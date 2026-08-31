@@ -1,8 +1,9 @@
 package wbft_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/resource"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/resource"
 
 	wbft "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/node"
