@@ -2,13 +2,14 @@ package genesis_test
 
 import (
 	"context"
-	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // wbftTestPlugin is a StaticPlugin with the real wbft family and a minimal

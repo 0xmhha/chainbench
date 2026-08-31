@@ -1,12 +1,12 @@
-// Package validatorset presents a chain's consensus identities — its validator
+// Roster presents a chain's consensus identities — its validator
 // set and related roles — from a key set. The roles differ by consensus family:
 // a wbft-family chain (stablenet, wbft) carries its validators (with baked BLS
 // keys) and — for anzeon system contracts — a governance council in genesis; a
 // poa-family chain (wemix) has no validators in genesis (they are registered at
 // the governance/etcd bootstrap), so its key set only fixes node identities.
-// This is the shared core behind the `validator` CLI subcommand and its MCP
+// It is the shared core behind the `validator` CLI subcommand and its MCP
 // mirror. Plain (EOA) account concerns live under the `account` surface instead.
-package validatorset
+package genesis
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ const (
 )
 
 // Account is one account with its chain role.
-type Account struct {
+type RosterAccount struct {
 	Role    string `json:"role"`
 	Index   int    `json:"index,omitempty"`
 	Address string `json:"address"`
@@ -32,16 +32,16 @@ type Account struct {
 
 // Roster is the chain-aware account view of a key set.
 type Roster struct {
-	Chain    string    `json:"chain"`
-	Family   string    `json:"family"`
-	Accounts []Account `json:"accounts"`
-	Note     string    `json:"note,omitempty"`
+	Chain    string          `json:"chain"`
+	Family   string          `json:"family"`
+	Accounts []RosterAccount `json:"accounts"`
+	Note     string          `json:"note,omitempty"`
 }
 
 // Load resolves the accounts a chain needs from the preset at keysDir, grouped
 // by role per the chain's consensus family. It errors if the chain is not
 // registered or the preset cannot be read.
-func Load(chainID, keysDir string) (Roster, error) {
+func LoadRoster(chainID, keysDir string) (Roster, error) {
 	p, err := registry.Get(chainID)
 	if err != nil {
 		return Roster{}, err
@@ -67,10 +67,10 @@ func Load(chainID, keysDir string) (Roster, error) {
 			if i < len(net.BLSKeys) && net.BLSKeys[i] != "" {
 				detail = "BLS present"
 			}
-			r.Accounts = append(r.Accounts, Account{Role: RoleValidator, Index: i + 1, Address: addr, Detail: detail})
+			r.Accounts = append(r.Accounts, RosterAccount{Role: RoleValidator, Index: i + 1, Address: addr, Detail: detail})
 		}
 		for _, addr := range net.Members {
-			r.Accounts = append(r.Accounts, Account{Role: RoleGovernance, Address: addr, Detail: "system-contract council"})
+			r.Accounts = append(r.Accounts, RosterAccount{Role: RoleGovernance, Address: addr, Detail: "system-contract council"})
 		}
 	case "poa":
 		r.Note = "poa: validators are not in genesis — they are registered at the governance/etcd bootstrap; the key set only fixes node identities."
@@ -79,7 +79,7 @@ func Load(chainID, keysDir string) (Roster, error) {
 	}
 
 	for _, n := range preset.Nodes {
-		r.Accounts = append(r.Accounts, Account{Role: RoleNode, Index: n.Index, Address: n.Address, Detail: "devp2p identity"})
+		r.Accounts = append(r.Accounts, RosterAccount{Role: RoleNode, Index: n.Index, Address: n.Address, Detail: "devp2p identity"})
 	}
 	return r, nil
 }

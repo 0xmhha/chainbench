@@ -4,11 +4,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 
 	"context"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // presetDir is the repository's shipped key set, used as a realistic fixture

@@ -2,12 +2,13 @@ package chainsetup
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/machine"

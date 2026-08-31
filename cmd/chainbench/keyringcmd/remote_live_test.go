@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/testkit"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 	"github.com/0xmhha/chainbench/internal/core/machine"

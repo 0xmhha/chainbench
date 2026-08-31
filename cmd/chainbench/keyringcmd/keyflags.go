@@ -2,8 +2,9 @@ package keyringcmd
 
 import (
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
+
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"

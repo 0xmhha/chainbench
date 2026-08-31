@@ -1,11 +1,12 @@
 package keyringcmd_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/remote"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // Ported from the retired `keys import` tests: the path syntax and the

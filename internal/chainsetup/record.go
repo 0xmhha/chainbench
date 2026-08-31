@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/machine"

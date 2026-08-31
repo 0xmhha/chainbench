@@ -1,10 +1,11 @@
 package node_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // tiered builds bp1 bp2 pn1 en1 en2 on one host.

@@ -1,8 +1,9 @@
 package node_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // TestEnode pins the URL byte for byte: a peer list is only compatible with

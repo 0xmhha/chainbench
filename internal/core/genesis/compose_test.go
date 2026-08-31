@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register the plugins
 	"github.com/0xmhha/chainbench/internal/core/registry"

@@ -2,13 +2,14 @@ package genesis_test
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 )

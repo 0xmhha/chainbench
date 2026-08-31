@@ -1,8 +1,9 @@
 package node_test
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // TestIs_FoldsBothSpellings is the predicate every role decision has to go

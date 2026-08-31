@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
+
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/core/topology"
 )
 
 // Net step use cases. Each opens the workspace, runs one netcompose step, and
@@ -115,9 +115,9 @@ type NetAllocateIn struct {
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
 func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
-	var topo *topology.Topology
+	var topo *node.Topology
 	if in.TopologyPath != "" {
-		loaded, err := topology.Load(in.TopologyPath)
+		loaded, err := node.LoadTopology(in.TopologyPath)
 		if err != nil {
 			return StepOut{}, err
 		}

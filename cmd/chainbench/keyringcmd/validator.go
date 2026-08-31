@@ -3,16 +3,17 @@ package keyringcmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io"
 	"text/tabwriter"
+
+	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/validatorset"
 )
 
 // NewValidator builds the validator-identity group. A validator is an account
@@ -183,7 +184,7 @@ func newValidatorRosterCmd() *cobra.Command {
 			if chain == "" {
 				return fmt.Errorf("--chain is required")
 			}
-			r, err := validatorset.Load(chain, keysDir)
+			r, err := genesis.LoadRoster(chain, keysDir)
 			if err != nil {
 				return err
 			}
