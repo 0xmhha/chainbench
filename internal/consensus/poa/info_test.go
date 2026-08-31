@@ -75,3 +75,17 @@ func TestWaitEtcdCluster_ReportsTheStateItSaw(t *testing.T) {
 		}
 	}
 }
+
+// TestReadInfo_ToleratesTheMemberObjectShape: gwemix 0.10.x reports
+// etcd.members as objects ({name, peerUrls}), older builds as strings. The
+// verify step reads only the cluster, so both shapes must parse.
+func TestReadInfo_ToleratesTheMemberObjectShape(t *testing.T) {
+	raw := `"{\"governance\":\"0xabc\",\"etcd\":{\"cluster\":\"producer=https://127.0.0.1:31001\",\"members\":[{\"name\":\"producer\",\"peerUrls\":\"https://127.0.0.1:31001\"}]},\"self\":{\"miner\":true}}"`
+	info, err := ReadInfo(context.Background(), fakeRunner(raw, nil), "gwemix", "/ipc")
+	if err != nil {
+		t.Fatalf("ReadInfo: %v", err)
+	}
+	if !info.Bootstrapped() {
+		t.Fatal("a formed cluster must count as bootstrapped regardless of the member shape")
+	}
+}
