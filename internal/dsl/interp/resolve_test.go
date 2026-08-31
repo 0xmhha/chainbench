@@ -1,4 +1,4 @@
-package dsl_test
+package interp_test
 
 import (
 	"github.com/0xmhha/chainbench/internal/testhelper"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 func TestUnresolved(t *testing.T) {
@@ -16,7 +17,7 @@ func TestUnresolved(t *testing.T) {
 			Steps:      []map[string]any{{"sendTx": map[string]any{"from": "0x1"}}, {"waitBlock": map[string]any{"target": 3}}},
 			Assertions: []map[string]any{{"assert": "chainId", "expected": 1}, {"assert": "balanceAt", "address": "0x1", "expected": 0}},
 		}
-		if got := dsl.Unresolved(s, reg); len(got) != 0 {
+		if got := interp.Unresolved(s, reg); len(got) != 0 {
 			t.Fatalf("expected no unresolved, got %v", got)
 		}
 	})
@@ -27,7 +28,7 @@ func TestUnresolved(t *testing.T) {
 			Steps:      []map[string]any{{"sendTx": map[string]any{}}, {"teleport": map[string]any{}}},
 			Assertions: []map[string]any{{"assert": "chainId"}, {"assert": "Nonexistent"}},
 		}
-		got := dsl.Unresolved(s, reg)
+		got := interp.Unresolved(s, reg)
 		want := []string{"action:ensureChain", "action:teleport", "assert:Nonexistent"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("Unresolved = %v, want %v", got, want)
@@ -39,7 +40,7 @@ func TestUnresolved(t *testing.T) {
 			Steps:      []map[string]any{{}},
 			Assertions: []map[string]any{{"expected": 1}}, // no "assert"
 		}
-		got := dsl.Unresolved(s, reg)
+		got := interp.Unresolved(s, reg)
 		want := []string{"action:(empty)", "assert:(missing)"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("Unresolved = %v, want %v", got, want)
@@ -58,7 +59,7 @@ func TestUnresolved_ReportsUnboundReferences(t *testing.T) {
 			{"assert": "call", "to": "0xa", "data": "0xb", "expected": "$missing"},
 		},
 	}
-	got := dsl.Unresolved(spec, reg)
+	got := interp.Unresolved(spec, reg)
 	want := []string{"ref:missing"}
 	if len(got) != 1 || got[0] != want[0] {
 		t.Fatalf("Unresolved = %v, want %v", got, want)
@@ -75,7 +76,7 @@ func TestUnresolved_ReferenceMustBeSavedEarlier(t *testing.T) {
 		},
 		Assertions: []map[string]any{{"assert": "blockNumber", "expected": "1"}},
 	}
-	got := dsl.Unresolved(spec, reg)
+	got := interp.Unresolved(spec, reg)
 	if len(got) != 1 || got[0] != "ref:later" {
 		t.Fatalf("Unresolved = %v, want [ref:later]", got)
 	}
@@ -91,7 +92,7 @@ func TestUnresolved_BoundReferencesAreClean(t *testing.T) {
 			{"assert": "txStatus", "hash": "$hash", "expected": "0x1"},
 		},
 	}
-	if got := dsl.Unresolved(spec, reg); len(got) != 0 {
+	if got := interp.Unresolved(spec, reg); len(got) != 0 {
 		t.Fatalf("Unresolved = %v, want none", got)
 	}
 }
@@ -105,7 +106,7 @@ func TestUnresolved_SaveKeyBindsReference(t *testing.T) {
 		},
 		Assertions: []map[string]any{},
 	}
-	if got := dsl.Unresolved(spec, reg); len(got) != 0 {
+	if got := interp.Unresolved(spec, reg); len(got) != 0 {
 		t.Fatalf("Unresolved = %v, want none (saveKey should bind $acctKey)", got)
 	}
 }
@@ -118,7 +119,7 @@ func TestUnresolved_ReportsAnUnknownReadSource(t *testing.T) {
 		},
 		Assertions: []map[string]any{{"assert": "blockNumber", "expected": "1"}},
 	}
-	got := dsl.Unresolved(spec, reg)
+	got := interp.Unresolved(spec, reg)
 	if len(got) != 1 || got[0] != "source:nosuchreader" {
 		t.Fatalf("Unresolved = %v, want [source:nosuchreader]", got)
 	}
@@ -132,7 +133,7 @@ func TestUnresolved_AcceptsAValidReadSource(t *testing.T) {
 		},
 		Assertions: []map[string]any{{"assert": "chainId", "expected": "$v"}},
 	}
-	if got := dsl.Unresolved(spec, reg); len(got) != 0 {
+	if got := interp.Unresolved(spec, reg); len(got) != 0 {
 		t.Fatalf("Unresolved = %v, want none", got)
 	}
 }

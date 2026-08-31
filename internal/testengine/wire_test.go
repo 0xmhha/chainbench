@@ -14,6 +14,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
@@ -72,8 +73,8 @@ func specWithAssertions(t *testing.T, assertions []map[string]any) dsl.Spec {
 	return spec
 }
 
-func runSpecDeps() dsl.Deps {
-	return dsl.Deps{
+func runSpecDeps() interp.Deps {
+	return interp.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testhelper.Registry(),
 	}

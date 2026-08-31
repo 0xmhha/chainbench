@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -21,7 +21,7 @@ const (
 )
 
 // seedFaultBuiltins registers the node-lifecycle and partition actions.
-func seedFaultBuiltins(r dsl.Registry) {
+func seedFaultBuiltins(r interp.Registry) {
 	r.RegisterAction(actionStopNode, stopNodeAction{})
 	r.RegisterAction(actionStartNode, startNodeAction{})
 	r.RegisterAction(actionRestartNode, restartNodeAction{})
@@ -32,7 +32,7 @@ func seedFaultBuiltins(r dsl.Registry) {
 // stopNodeAction stops one node. Args: on (selector, required).
 type stopNodeAction struct{}
 
-func (stopNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (stopNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionStopNode)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (stopNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 // startNodeAction starts one previously stopped node. Args: on (required).
 type startNodeAction struct{}
 
-func (startNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (startNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionStartNode)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (startNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 // Args: on (required).
 type restartNodeAction struct{}
 
-func (restartNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (restartNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionRestartNode)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (restartNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 
 // faultTarget resolves the action's "on" selector and the injected node control,
 // naming whichever is missing.
-func faultTarget(ac *dsl.ActionCtx, action string) (node.Node, dsl.NodeControl, error) {
+func faultTarget(ac *interp.ActionCtx, action string) (node.Node, interp.NodeControl, error) {
 	if ac.Deps == nil || ac.Deps.Nodes == nil {
 		return node.Node{}, nil, fmt.Errorf(
 			"dsl: %s needs node control, which this run has none of (attach mode does not own the node processes)", action)
@@ -121,7 +121,7 @@ func faultTarget(ac *dsl.ActionCtx, action string) (node.Node, dsl.NodeControl, 
 // split holds until healPartition (or a node restart) restores it.
 type partitionAction struct{}
 
-func (partitionAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (partitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	groups, err := partitionGroups(ac)
 	if err != nil {
 		return err
@@ -156,7 +156,7 @@ func (partitionAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 // wants after a fault test.
 type healPartitionAction struct{}
 
-func (healPartitionAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (healPartitionAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if ac.Env == nil {
 		return fmt.Errorf("dsl: healPartition: no environment")
 	}
@@ -193,7 +193,7 @@ func (healPartitionAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 }
 
 // partitionGroups resolves and validates the action's "groups" argument.
-func partitionGroups(ac *dsl.ActionCtx) ([][]node.Node, error) {
+func partitionGroups(ac *interp.ActionCtx) ([][]node.Node, error) {
 	raw, ok := ac.Args["groups"]
 	if !ok {
 		return nil, fmt.Errorf("dsl: partition requires \"groups\" (two or more lists of node selectors)")
@@ -214,7 +214,7 @@ func partitionGroups(ac *dsl.ActionCtx) ([][]node.Node, error) {
 }
 
 // resolveGroups turns the DSL's [[selector...]...] into resolved node groups.
-func resolveGroups(ac *dsl.ActionCtx, raw any) ([][]node.Node, error) {
+func resolveGroups(ac *interp.ActionCtx, raw any) ([][]node.Node, error) {
 	if ac.Env == nil {
 		return nil, fmt.Errorf("dsl: partition: no environment")
 	}
@@ -247,7 +247,7 @@ func resolveGroups(ac *dsl.ActionCtx, raw any) ([][]node.Node, error) {
 
 // enodesFor asks each node for its own enode (admin_nodeInfo), keyed by index.
 // Peers are named by enode, and only the node itself knows its own.
-func enodesFor(ctx context.Context, ac *dsl.ActionCtx, nodes []node.Node) (map[int]string, error) {
+func enodesFor(ctx context.Context, ac *interp.ActionCtx, nodes []node.Node) (map[int]string, error) {
 	out := make(map[int]string, len(nodes))
 	for _, n := range nodes {
 		if _, done := out[n.Index]; done {

@@ -186,7 +186,7 @@ func TestMigrateV1RoundTrip(t *testing.T) {
 		t.Fatalf("header drift: %+v vs %+v", conv.Chain, orig.Chain)
 	}
 	// The executable sequences must be identical.
-	os, cs := sequenceOf(orig), sequenceOf(conv)
+	os, cs := SequenceOf(orig), SequenceOf(conv)
 	ob, _ := json.Marshal(os)
 	cb, _ := json.Marshal(cs)
 	if string(ob) != string(cb) {

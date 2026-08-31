@@ -13,6 +13,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 // newValidateCmd parses DSL specs offline and reports which are well-formed,
@@ -81,7 +82,7 @@ func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) er
 			}
 		} else if s, perr := dsl.Parse(raws[0]); perr != nil {
 			r.Result = "INVALID: " + perr.Error()
-		} else if unresolved := dsl.Unresolved(s, reg); len(unresolved) > 0 {
+		} else if unresolved := interp.Unresolved(s, reg); len(unresolved) > 0 {
 			r.ID = s.ID
 			r.Result = "UNRESOLVED: " + strings.Join(unresolved, ", ")
 		} else {

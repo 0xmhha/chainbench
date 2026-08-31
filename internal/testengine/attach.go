@@ -13,6 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 // attachNetwork is the network label recorded for an attached NodeSet.
@@ -83,7 +84,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 
-	run := NewRunSpec(dsl.Deps{
+	run := NewRunSpec(interp.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions:  testhelper.Registry(),
 		Accounts: accts,
@@ -98,7 +99,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 			return session.New(cfg.ArtifactRoot, cmd, clock())
 		},
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
-			return s.Fingerprint(nodeconfig.Values{})
+			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
 		BuildEnv:   withCollection(NewAttachBuildEnv(cfg.Chain, eps), cfg.Bus, nil),
 		RunSpec:    run,

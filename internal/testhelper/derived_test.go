@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +22,7 @@ func TestGasPriceAssertion(t *testing.T) {
 	if !ok {
 		t.Fatal("gasPrice not registered")
 	}
-	res, err := as.Check(context.Background(), &dsl.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{"assert": assertGasPrice, "expected": "1000000000"},
 	})
@@ -48,7 +48,7 @@ func TestRPCCallAssertion_ReadsAChainSpecificMethod(t *testing.T) {
 	}
 
 	// A top-level field.
-	res, err := as.Check(context.Background(), &dsl.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
@@ -63,7 +63,7 @@ func TestRPCCallAssertion_ReadsAChainSpecificMethod(t *testing.T) {
 	}
 
 	// A nested field, via a dot path.
-	res, err = as.Check(context.Background(), &dsl.AssertCtx{
+	res, err = as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
@@ -82,7 +82,7 @@ func TestRPCCallAssertion_MissingSelectPathIsAnError(t *testing.T) {
 	srv := mockRPC(t, map[string]any{"istanbul_status": map[string]any{"a": 1}})
 	d := deps()
 	as, _ := d.Actions.Assertion(assertRPCCall)
-	_, err := as.Check(context.Background(), &dsl.AssertCtx{
+	_, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{"assert": assertRPCCall, "method": "istanbul_status", "select": "b.c", "expected": 1},
 	})
@@ -94,7 +94,7 @@ func TestRPCCallAssertion_MissingSelectPathIsAnError(t *testing.T) {
 func TestRPCCallAssertion_RequiresAMethod(t *testing.T) {
 	d := deps()
 	as, _ := d.Actions.Assertion(assertRPCCall)
-	if _, err := as.Check(context.Background(), &dsl.AssertCtx{
+	if _, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, "http://unused"), Deps: &d,
 		Spec: map[string]any{"assert": assertRPCCall, "expected": 1},
 	}); err == nil {
@@ -113,7 +113,7 @@ func TestRPCCallAssertion_IndexesArraysAndReportsLength(t *testing.T) {
 	as, _ := d.Actions.Assertion(assertRPCCall)
 
 	// "#" yields the array length (decimal), so an "at least one" check works.
-	res, err := as.Check(context.Background(), &dsl.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertRPCCall, "method": "admin_peers",
@@ -128,7 +128,7 @@ func TestRPCCallAssertion_IndexesArraysAndReportsLength(t *testing.T) {
 	}
 
 	// A numeric segment indexes into the array, then walks into the element.
-	res, err = as.Check(context.Background(), &dsl.AssertCtx{
+	res, err = as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertRPCCall, "method": "admin_peers",
@@ -147,7 +147,7 @@ func TestRPCCallAssertion_OutOfRangeIndexIsAnError(t *testing.T) {
 	srv := mockRPC(t, map[string]any{"admin_peers": []any{}})
 	d := deps()
 	as, _ := d.Actions.Assertion(assertRPCCall)
-	if _, err := as.Check(context.Background(), &dsl.AssertCtx{
+	if _, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{"assert": assertRPCCall, "method": "admin_peers", "select": "0.id", "expected": "x"},
 	}); err == nil {
@@ -188,7 +188,7 @@ func TestRPCCall_LatestParamSentinel(t *testing.T) {
 
 	d := deps()
 	as, _ := d.Actions.Assertion(assertRPCCall)
-	res, err := as.Check(context.Background(), &dsl.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertRPCCall, "method": "istanbul_getWbftExtraInfo",
@@ -266,7 +266,7 @@ func TestWSSubscribeAssertion_CountsNotifications(t *testing.T) {
 	if !ok {
 		t.Fatal("wsSubscribe not registered")
 	}
-	res, err := as.Check(context.Background(), &dsl.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithWS(t, host, port), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertWSSubscribe, "event": "newHeads",
@@ -286,7 +286,7 @@ func TestWSSubscribeAssertion_TimeoutReportsWhatArrived(t *testing.T) {
 	host, port := hostPort(t, srv.URL)
 	d := deps()
 	as, _ := d.Actions.Assertion(assertWSSubscribe)
-	res, err := as.Check(context.Background(), &dsl.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env: envWithWS(t, host, port), Deps: &d,
 		Spec: map[string]any{
 			"assert": assertWSSubscribe, "event": "newHeads",

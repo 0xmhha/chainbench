@@ -1,4 +1,4 @@
-package dsl_test
+package interp_test
 
 import (
 	"context"
@@ -6,13 +6,14 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 )
 
 // savingAction writes value into the ActionCtx output so the interpreter can
 // bind it under the step's "save" name.
 type savingAction struct{ value any }
 
-func (a savingAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
+func (a savingAction) Do(_ context.Context, ac *interp.ActionCtx) error {
 	ac.Value = a.value
 	return nil
 }
@@ -20,7 +21,7 @@ func (a savingAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
 // capturingAction records the args it received, after reference substitution.
 type capturingAction struct{ got *map[string]any }
 
-func (a capturingAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
+func (a capturingAction) Do(_ context.Context, ac *interp.ActionCtx) error {
 	*a.got = ac.Args
 	return nil
 }
@@ -28,13 +29,13 @@ func (a capturingAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
 // capturingAssertion records the assertion entry it received, after substitution.
 type capturingAssertion struct{ got *map[string]any }
 
-func (a capturingAssertion) Check(_ context.Context, ac *dsl.AssertCtx) (session.AssertResult, error) {
+func (a capturingAssertion) Check(_ context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	*a.got = ac.Spec
 	return session.AssertResult{Pass: true}, nil
 }
 
 func TestRun_StepValueBindsIntoLaterStep(t *testing.T) {
-	reg := dsl.NewRegistry()
+	reg := interp.NewRegistry()
 	var gotArgs map[string]any
 	reg.RegisterAction("produce", savingAction{value: "0xdeadbeef"})
 	reg.RegisterAction("consume", capturingAction{got: &gotArgs})
@@ -48,7 +49,7 @@ func TestRun_StepValueBindsIntoLaterStep(t *testing.T) {
 		Assertions: []map[string]any{{"assert": "noop"}},
 	}
 	rec := &fakeRecord{}
-	st, err := dsl.NewInterpreter(dsl.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), rec)
+	st, err := interp.NewInterpreter(interp.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), rec)
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -61,7 +62,7 @@ func TestRun_StepValueBindsIntoLaterStep(t *testing.T) {
 }
 
 func TestRun_StepValueBindsIntoAssertion(t *testing.T) {
-	reg := dsl.NewRegistry()
+	reg := interp.NewRegistry()
 	var gotSpec map[string]any
 	reg.RegisterAction("produce", savingAction{value: "0xhash"})
 	reg.RegisterAssertion("check", capturingAssertion{got: &gotSpec})
@@ -71,7 +72,7 @@ func TestRun_StepValueBindsIntoAssertion(t *testing.T) {
 		Assertions: []map[string]any{{"assert": "check", "hash": "$h", "expected": "0x1"}},
 	}
 	rec := &fakeRecord{}
-	if _, err := dsl.NewInterpreter(dsl.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), rec); err != nil {
+	if _, err := interp.NewInterpreter(interp.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), rec); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	if gotSpec["hash"] != "0xhash" {
@@ -82,7 +83,7 @@ func TestRun_StepValueBindsIntoAssertion(t *testing.T) {
 func TestRun_SendTxHashIsBoundWithoutExplicitValue(t *testing.T) {
 	// An action that only sets Hash (as sendTx does) still binds, so a spec can
 	// reference the transaction it just submitted.
-	reg := dsl.NewRegistry()
+	reg := interp.NewRegistry()
 	var gotSpec map[string]any
 	reg.RegisterAction("tx", hashOnlyAction{hash: "0xabc"})
 	reg.RegisterAssertion("check", capturingAssertion{got: &gotSpec})
@@ -91,7 +92,7 @@ func TestRun_SendTxHashIsBoundWithoutExplicitValue(t *testing.T) {
 		Steps:      []map[string]any{{"tx": map[string]any{"save": "sent"}}},
 		Assertions: []map[string]any{{"assert": "check", "hash": "$sent"}},
 	}
-	if _, err := dsl.NewInterpreter(dsl.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), &fakeRecord{}); err != nil {
+	if _, err := interp.NewInterpreter(interp.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), &fakeRecord{}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	if gotSpec["hash"] != "0xabc" {
@@ -101,13 +102,13 @@ func TestRun_SendTxHashIsBoundWithoutExplicitValue(t *testing.T) {
 
 type hashOnlyAction struct{ hash string }
 
-func (a hashOnlyAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
+func (a hashOnlyAction) Do(_ context.Context, ac *interp.ActionCtx) error {
 	ac.Hash = a.hash
 	return nil
 }
 
 func TestRun_UnboundReferenceFailsTheStep(t *testing.T) {
-	reg := dsl.NewRegistry()
+	reg := interp.NewRegistry()
 	ran := false
 	reg.RegisterAction("consume", fakeAction{ran: &ran})
 	reg.RegisterAssertion("noop", fakeAssertion{pass: true})
@@ -117,7 +118,7 @@ func TestRun_UnboundReferenceFailsTheStep(t *testing.T) {
 		Assertions: []map[string]any{{"assert": "noop"}},
 	}
 	rec := &fakeRecord{}
-	st, err := dsl.NewInterpreter(dsl.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), rec)
+	st, err := interp.NewInterpreter(interp.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), rec)
 	if err != nil {
 		t.Fatalf("Run returned an error: %v", err)
 	}
@@ -130,7 +131,7 @@ func TestRun_UnboundReferenceFailsTheStep(t *testing.T) {
 }
 
 func TestRun_PreActionCanSaveForSteps(t *testing.T) {
-	reg := dsl.NewRegistry()
+	reg := interp.NewRegistry()
 	var gotArgs map[string]any
 	reg.RegisterAction("prepare", savingAction{value: float64(42)})
 	reg.RegisterAction("consume", capturingAction{got: &gotArgs})
@@ -141,7 +142,7 @@ func TestRun_PreActionCanSaveForSteps(t *testing.T) {
 		Steps:      []map[string]any{{"consume": map[string]any{"n": "$n"}}},
 		Assertions: []map[string]any{{"assert": "noop"}},
 	}
-	if _, err := dsl.NewInterpreter(dsl.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), &fakeRecord{}); err != nil {
+	if _, err := interp.NewInterpreter(interp.Deps{Actions: reg}).Run(context.Background(), spec, testEnv(t), &fakeRecord{}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	if gotArgs["n"] != float64(42) {

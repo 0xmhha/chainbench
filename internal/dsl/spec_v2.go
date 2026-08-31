@@ -364,7 +364,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 		}
 		if st.Expect != "" {
 			expects++
-			spec.Assertions = append(spec.Assertions, statementAssertion(st))
+			spec.Assertions = append(spec.Assertions, StatementAssertion(st))
 		}
 		spec.Sequence = append(spec.Sequence, st)
 	}
@@ -411,16 +411,16 @@ func lowerStatement(m map[string]any) (Statement, error) {
 	return Statement{Expect: exName, Args: args}, nil
 }
 
-// statementAssertion renders an expect statement in the v1 assertion map shape.
-func statementAssertion(st Statement) map[string]any {
+// StatementAssertion renders an expect statement in the v1 assertion map shape.
+func StatementAssertion(st Statement) map[string]any {
 	out := make(map[string]any, len(st.Args)+1)
 	maps.Copy(out, st.Args)
 	out["assert"] = st.Expect
 	return out
 }
 
-// statementStep renders a do statement in the v1 step map shape.
-func statementStep(st Statement) map[string]any {
+// StatementStep renders a do statement in the v1 step map shape.
+func StatementStep(st Statement) map[string]any {
 	return map[string]any{st.Do: st.Args}
 }
 
@@ -450,7 +450,7 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 		if st.Do == "" {
 			return nil, fmt.Errorf("dsl: case %s: hooks.%s[%d]: hooks take do statements", caseID, hook, i)
 		}
-		out = append(out, statementStep(st))
+		out = append(out, StatementStep(st))
 	}
 	return out, nil
 }

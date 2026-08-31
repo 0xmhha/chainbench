@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 
@@ -97,7 +98,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	}
 	env.PopulateNodeTable(ns)
 
-	run := testengine.NewRunSpec(dsl.Deps{
+	run := testengine.NewRunSpec(interp.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testhelper.Registry(),
 	})

@@ -2,7 +2,7 @@ package testhelper
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -36,7 +36,7 @@ func TestMetricAssertion(t *testing.T) {
 	as := metricAssertion{}
 
 	// Default comparator is GreaterOrEqual: a floor check passes.
-	r, err := as.Check(context.Background(), &dsl.AssertCtx{On: []node.Node{n}, Spec: map[string]any{
+	r, err := as.Check(context.Background(), &interp.AssertCtx{On: []node.Node{n}, Spec: map[string]any{
 		"assert": assertMetric, "name": "chain_head_block", "expected": 10,
 	}})
 	if err != nil || !r.Pass {
@@ -47,7 +47,7 @@ func TestMetricAssertion(t *testing.T) {
 	}
 
 	// A failed comparison is a recorded failure, not an error.
-	r, err = as.Check(context.Background(), &dsl.AssertCtx{On: []node.Node{n}, Spec: map[string]any{
+	r, err = as.Check(context.Background(), &interp.AssertCtx{On: []node.Node{n}, Spec: map[string]any{
 		"assert": assertMetric, "name": "chain_head_block", "expected": 100,
 	}})
 	if err != nil {
@@ -58,7 +58,7 @@ func TestMetricAssertion(t *testing.T) {
 	}
 
 	// An unknown sample is an explicit error.
-	if r, _ := as.Check(context.Background(), &dsl.AssertCtx{On: []node.Node{n}, Spec: map[string]any{
+	if r, _ := as.Check(context.Background(), &interp.AssertCtx{On: []node.Node{n}, Spec: map[string]any{
 		"assert": assertMetric, "name": "no_such_metric", "expected": 1,
 	}}); r.Pass {
 		t.Fatal("missing metric must fail")
@@ -69,7 +69,7 @@ func TestMetricAssertionRequiresPortAndName(t *testing.T) {
 	as := metricAssertion{}
 
 	// No metrics port: explicit failure naming the launch condition.
-	r, err := as.Check(context.Background(), &dsl.AssertCtx{
+	r, err := as.Check(context.Background(), &interp.AssertCtx{
 		On:   []node.Node{{Index: 1, Host: "127.0.0.1"}},
 		Spec: map[string]any{"assert": assertMetric, "name": "x", "expected": 1},
 	})
@@ -78,7 +78,7 @@ func TestMetricAssertionRequiresPortAndName(t *testing.T) {
 	}
 
 	// Missing name.
-	if _, err := as.Check(context.Background(), &dsl.AssertCtx{
+	if _, err := as.Check(context.Background(), &interp.AssertCtx{
 		On:   []node.Node{{Index: 1}},
 		Spec: map[string]any{"assert": assertMetric},
 	}); err == nil {

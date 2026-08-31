@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -16,7 +16,7 @@ const (
 )
 
 // seedAssetBuiltins registers the funding and contract actions.
-func seedAssetBuiltins(r dsl.Registry) {
+func seedAssetBuiltins(r interp.Registry) {
 	r.RegisterAction(actionFaucet, faucetAction{})
 	r.RegisterAction(actionDeployContract, deployContractAction{})
 	r.RegisterAction(actionRegisterContract, registerContractAction{})
@@ -32,7 +32,7 @@ func seedAssetBuiltins(r dsl.Registry) {
 // pollInterval.
 type faucetAction struct{}
 
-func (faucetAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	to, _ := ac.Args["to"].(string)
 	if to == "" {
 		return fmt.Errorf("dsl: faucet requires \"to\" (the address to fund)")
@@ -77,7 +77,7 @@ func (faucetAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 // value, save, timeout, pollInterval.
 type deployContractAction struct{}
 
-func (deployContractAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	code, _ := ac.Args["bytecode"].(string)
 	if code == "" {
 		code, _ = ac.Args["data"].(string)
@@ -133,7 +133,7 @@ func (deployContractAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 // from, on, gas, value, timeout, pollInterval.
 type registerContractAction struct{}
 
-func (registerContractAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	to, _ := ac.Args["to"].(string)
 	if to == "" {
 		return fmt.Errorf("dsl: registerContract requires \"to\" (the deployed contract address)")

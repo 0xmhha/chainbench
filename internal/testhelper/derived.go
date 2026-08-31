@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"math/big"
 	"strconv"
 	"strings"
@@ -32,7 +32,7 @@ const defaultSubscribeTimeout = 30 * time.Second
 // through builtinAssertions instead, because it reads one value like the others
 // and therefore has to work as a "read" source too — a name that works in
 // "assert" but not in "read" is a trap the spec author only meets at run time.
-func seedDerivedBuiltins(r dsl.Registry) {
+func seedDerivedBuiltins(r interp.Registry) {
 	r.RegisterAssertion(assertWSSubscribe, wsSubscribeAssertion{})
 }
 
@@ -175,7 +175,7 @@ func dotPath(v any, path string) (any, bool) {
 // error — "two heads in five seconds" is a claim that can simply be false.
 type wsSubscribeAssertion struct{}
 
-func (wsSubscribeAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (session.AssertResult, error) {
+func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertWSSubscribe, Provenance: ac.Spec}
 
 	wsURL, err := wsTarget(ac)
@@ -237,7 +237,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (sessi
 // wsTarget derives the WebSocket URL of the assertion's target node from its
 // host and WS port. Attached nodes carry no port map, so this names that rather
 // than dialing something wrong.
-func wsTarget(ac *dsl.AssertCtx) (string, error) {
+func wsTarget(ac *interp.AssertCtx) (string, error) {
 	nodes := ac.On
 	if len(nodes) == 0 && ac.Env != nil {
 		nodes = ac.Env.Nodes()

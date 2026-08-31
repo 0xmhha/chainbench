@@ -25,6 +25,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -170,7 +171,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		Reqs:           validatorReqs(validators),
 		ProvisionExtra: provisionExtra,
 	})
-	run := NewRunSpec(dsl.Deps{
+	run := NewRunSpec(interp.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions:  testhelper.Registry(),
 		Nodes:    controller,
@@ -197,7 +198,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 			return sess, nil
 		},
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
-			return s.Fingerprint(nodeconfig.Values{})
+			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
 		BuildEnv:   withCollection(build, cfg.Bus, nil),
 		RunSpec:    run,

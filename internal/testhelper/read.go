@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"sort"
 	"strconv"
 	"strings"
@@ -21,7 +21,7 @@ import (
 // skipped; it fails if no node answers.
 type sameBlockHashAssertion struct{}
 
-func (sameBlockHashAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (session.AssertResult, error) {
+func (sameBlockHashAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertSameBlockHash, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -73,7 +73,7 @@ func (sameBlockHashAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (ses
 // the timeout.
 type blockAdvanceAssertion struct{}
 
-func (blockAdvanceAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (session.AssertResult, error) {
+func (blockAdvanceAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertBlockAdvance, Provenance: ac.Spec}
 	targets := assertTargets(ac)
 	if len(targets) == 0 {
@@ -122,7 +122,7 @@ func (blockAdvanceAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (sess
 // that source needs (to/data for "call", address for "balanceAt", ...).
 type readAction struct{}
 
-func (readAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (readAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	source, _ := ac.Args["source"].(string)
 	if source == "" {
 		return fmt.Errorf("dsl: read requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
@@ -159,7 +159,7 @@ const (
 // The satisfying value is bound under "save" like a read.
 type waitForAction struct{}
 
-func (waitForAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
+func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	source, _ := ac.Args["source"].(string)
 	if source == "" {
 		return fmt.Errorf("dsl: waitFor requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
@@ -245,7 +245,7 @@ func builtinAssertions() []rpcAssertion {
 
 // reader reads one value from a node for an assertion. The value is returned in
 // a form the assert primitives compare (decimal string or 0x-hex).
-type reader = dsl.Reader
+type reader = interp.Reader
 
 // rpcAssertion compares one RPC-read value to the spec's expected value.
 type rpcAssertion struct {
@@ -256,7 +256,7 @@ type rpcAssertion struct {
 
 // Check reads the value from the target node and compares it to "expected"
 // using the default comparator (or the spec's "compare" override).
-func (a rpcAssertion) Check(ctx context.Context, ac *dsl.AssertCtx) (session.AssertResult, error) {
+func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: a.name, Provenance: ac.Spec, Pass: true}
 	op := a.defaultOp
 	if o, ok := ac.Spec["compare"].(string); ok && o != "" {
@@ -363,7 +363,7 @@ func readBalanceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any
 	if err != nil {
 		return nil, err
 	}
-	return dsl.BigString(v), nil
+	return interp.BigString(v), nil
 }
 
 func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {

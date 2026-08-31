@@ -1,4 +1,4 @@
-package dsl
+package interp
 
 import (
 	"fmt"
@@ -77,7 +77,7 @@ func resolveString(s string, b Bindings) (any, error) {
 	if m := wholeRefPattern.FindStringSubmatch(s); m != nil {
 		val, ok := b[m[1]]
 		if !ok {
-			return nil, fmt.Errorf("testspec: unbound reference %q (no earlier step saved it)", s)
+			return nil, fmt.Errorf("interp: unbound reference %q (no earlier step saved it)", s)
 		}
 		return val, nil
 	}
@@ -91,7 +91,7 @@ func resolveString(s string, b Bindings) (any, error) {
 		val, ok := b[name]
 		if !ok {
 			if firstErr == nil {
-				firstErr = fmt.Errorf("testspec: unbound reference %q in %q (no earlier step saved it)", name, s)
+				firstErr = fmt.Errorf("interp: unbound reference %q in %q (no earlier step saved it)", name, s)
 			}
 			return match
 		}
