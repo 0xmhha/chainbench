@@ -632,9 +632,17 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ◐ **2026-08-28** — 게이트 둘은 P4.3·P7 이 닫음. 이관 끝난 레거시 Go 케이스 41파일 삭제(등록 134→56, `tests/api`·`tests/network` 소멸), 공유 헬퍼 `helpers.go` 취합, `tests/` 12,000→3,144줄. **남은 것**: 미이관 34건(문법 갭, `tests/specs/README.md` 잔여 표) → 이관 후 `testkit`·`testrun`·`test` 명령·MCP `chainbench_test` 은퇴 |
 | **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md` — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
 
-### 1j. 실행 순서표 완결 후보 (2026-08-31)
+### 1j. 사용자 주도 통폐합 (2026-08-31 확정 — 정본: `docs/dev/architecture/consolidation-plan.md`)
 
-§1i 의 표는 F1 까지 전부 끝났다. 다음 후보 셋, 권고 순:
+§1i 의 표는 F1 까지 전부 끝났다. 이후는 **사용자가 주도**한다. 확정된 방향:
+모듈을 관심사 단위로 통폐합(internal 55 → 약 20, R1~R5), 그다음 표면 재정리
+(`net` 폐기 → `chain` 그룹, 구성 6단계 사전, CLI↔DSL 1:1). testengine 은
+① chainsetup 수행 ② pre hook ③ test(interpreter 내장) ④ post hook 의 4단계가
+되고, testengine → chainsetup 의존은 의도적으로 부활한다(P6.1 게이트 대체).
+아래의 예전 후보 목록은 이 계획 안으로 흡수됐다(34건 이관 = R5, verbs 질문 =
+표면 재정리에서 함께).
+
+이전 기록 (2026-08-31 이전 후보):
 
 1. **레거시 34건 이관 + 스택 은퇴** — `tests/specs/README.md` 잔여 표의 문법 갭을
    묶음별로(자산·부정기대·fee-delegation 0x16·EIP-7702·비동기 제출·토폴로지 파생
