@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -278,10 +278,10 @@ func TestParseLaunchOverrides(t *testing.T) {
 	if len(got) != 3 {
 		t.Fatalf("overrides = %d, want 3", len(got))
 	}
-	if got[0].Key != launchopt.KeyNetworkID || got[0].Value != "4242" {
+	if got[0].Key != nodeconfig.KeyNetworkID || got[0].Value != "4242" {
 		t.Errorf("override[0] = %+v", got[0])
 	}
-	if got[1].Key != launchopt.KeyNoDiscover || got[1].Value != "" {
+	if got[1].Key != nodeconfig.KeyNoDiscover || got[1].Value != "" {
 		t.Errorf("bare boolean key: %+v", got[1])
 	}
 

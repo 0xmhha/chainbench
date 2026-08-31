@@ -1,4 +1,4 @@
-package launchopt
+package nodeconfig
 
 import "fmt"
 

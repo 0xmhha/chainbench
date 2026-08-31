@@ -9,7 +9,7 @@
 // Config is represented as flat dot-path keys (e.g. "ports.base_http") mirroring
 // the existing profile schema, so the package stays free of any file format:
 // callers Flatten a parsed YAML/JSON map into Values and Merge the layers.
-package config
+package nodeconfig
 
 import (
 	"strconv"

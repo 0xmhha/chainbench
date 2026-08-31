@@ -92,7 +92,6 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
-| `core/config` | 평면 dot-path 설정값 |
 | `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
 | `core/capability` | capability 집합 |
 | `core/logs` | 로그 라인 모델 |
@@ -108,7 +107,7 @@ flowchart TD
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
-| `core/nodeconfig` · `core/launchopt` | config.toml 렌더 · argv 조립 |
+| `core/nodeconfig` | 노드 하나의 설정을 한곳에서 — config.toml 렌더 · launch argv 조립(`Argv`, 옛 `core/launchopt`) · 평면 dot-path 설정값(`Values`·`Merge`·`Resolve`·`Flatten`·`Defaults`, 옛 `core/config`). 파일·argv·해석이 한 지붕(R1, 2026-08-31) |
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
 | `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |

@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/testengine"
@@ -249,17 +249,17 @@ func keySource(o runOpts) (store.KeySource, error) {
 }
 
 // parseLaunchOverrides maps --launch-opt key=value pairs onto typed launchopt
-// overrides. Keys are the chain-agnostic knob names (launchopt.Key); whether a
+// overrides. Keys are the chain-agnostic knob names (nodeconfig.Key); whether a
 // key exists for the target binary is checked at assembly time by the Builder,
 // which classifies an unsupported knob as an error rather than dropping it.
-func parseLaunchOverrides(opts []string) ([]launchopt.Override, error) {
-	out := make([]launchopt.Override, 0, len(opts))
+func parseLaunchOverrides(opts []string) ([]nodeconfig.Override, error) {
+	out := make([]nodeconfig.Override, 0, len(opts))
 	for _, o := range opts {
 		k, v, _ := strings.Cut(o, "=")
 		if k == "" {
 			return nil, fmt.Errorf("run: bad --launch-opt %q (want key=value or a bare boolean key)", o)
 		}
-		out = append(out, launchopt.Override{Key: launchopt.Key(k), Value: v})
+		out = append(out, nodeconfig.Override{Key: nodeconfig.Key(k), Value: v})
 	}
 	return out, nil
 }

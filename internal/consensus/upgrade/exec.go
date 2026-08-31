@@ -7,7 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -39,7 +39,7 @@ type LaunchOptions struct {
 	// unlock/etherbase/password, and the http.api set (admin is required for the
 	// mesh's admin_addPeer). Typed keys, so an unsupported knob is a classified
 	// assembly error instead of a silently ignored flag. Optional.
-	Overrides func(spec NodeSpec, producer bool) []launchopt.Override
+	Overrides func(spec NodeSpec, producer bool) []nodeconfig.Override
 	// Files is where the shared genesis is written. Nil is the local
 	// filesystem, which is what a local handoff wants and what this used to do
 	// unconditionally — the boundary exists so a caller running against a remote
@@ -84,7 +84,7 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 		dataDir := filepath.Join(opts.DataRoot, fmt.Sprintf("node%d", num))
 		configPath := filepath.Join(opts.DataRoot, fmt.Sprintf("config_node%d.toml", num))
 		endpoints := n.Ports
-		var overrides []launchopt.Override
+		var overrides []nodeconfig.Override
 		if opts.Overrides != nil {
 			overrides = opts.Overrides(n, n.Producer)
 		}

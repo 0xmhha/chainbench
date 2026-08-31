@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
@@ -70,7 +70,7 @@ func TestParse_UnsupportedSchemaVersion(t *testing.T) {
 
 func TestFingerprint_Deterministic(t *testing.T) {
 	s, _ := testspec.Parse([]byte(validSpec))
-	cfg := config.Values{"nodes.validators": "7", "chain.id": "111133"}
+	cfg := nodeconfig.Values{"nodes.validators": "7", "chain.id": "111133"}
 
 	fp1 := s.Fingerprint(cfg)
 	fp2 := s.Fingerprint(cfg)
@@ -81,7 +81,7 @@ func TestFingerprint_Deterministic(t *testing.T) {
 		t.Fatalf("fingerprint len = %d, want 64 hex", len(string(fp1)))
 	}
 	// A different resolved config -> different fingerprint.
-	if s.Fingerprint(config.Values{"chain.id": "999"}) == fp1 {
+	if s.Fingerprint(nodeconfig.Values{"chain.id": "999"}) == fp1 {
 		t.Fatal("different config must change fingerprint")
 	}
 	// A different placement -> different fingerprint.
@@ -95,8 +95,8 @@ func TestFingerprint_Deterministic(t *testing.T) {
 func TestFingerprint_MapOrderIndependent(t *testing.T) {
 	// Two configs with the same entries added in different order must hash the
 	// same (json.Marshal sorts map keys).
-	a := config.Values{"x": "1", "y": "2", "z": "3"}
-	b := config.Values{"z": "3", "y": "2", "x": "1"}
+	a := nodeconfig.Values{"x": "1", "y": "2", "z": "3"}
+	b := nodeconfig.Values{"z": "3", "y": "2", "x": "1"}
 	s, _ := testspec.Parse([]byte(validSpec))
 	if s.Fingerprint(a) != s.Fingerprint(b) {
 		t.Fatal("fingerprint must be independent of map insertion order")

@@ -11,7 +11,7 @@
 //
 // Everything here is a pure function of its inputs: no I/O, no globals, fully
 // unit-testable.
-package launchopt
+package nodeconfig
 
 // Key is the chain-agnostic name of one launch knob. Typed so a knob is never
 // a magic string; the Dialect maps it to (or refuses) a concrete flag.
