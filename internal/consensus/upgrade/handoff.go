@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -59,7 +59,7 @@ type HandoffInputs struct {
 	GenesisOverlay string
 	// DataDir is the network's data root.
 	DataDir string
-	// Host is the address nodes bind and advertise; empty is this machine.
+	// Host is the address nodes bind and advertise; empty is this resource.
 	Host string
 	// Exec runs a binary; nil uses os/exec.
 	Exec poa.Runner
@@ -68,8 +68,8 @@ type HandoffInputs struct {
 	// operator's — while what the nodes need lands through Files, which is what
 	// lets the same sequence place a keystore on a remote node.
 	Files filestore.Store
-	// Driver launches the nodes; nil is the local driver.
-	Driver driver.Driver
+	// Driver launches the nodes; nil is the local process.
+	Driver process.Driver
 	// Peers wires the mesh; nil uses JSON-RPC admin_addPeer.
 	Peers PeerCaller
 }
@@ -95,9 +95,9 @@ func (in HandoffInputs) files() filestore.Store {
 	return in.Files
 }
 
-func (in HandoffInputs) driver() driver.Driver {
+func (in HandoffInputs) driver() process.Driver {
 	if in.Driver == nil {
-		return driver.NewLocalDriver()
+		return process.NewLocalDriver()
 	}
 	return in.Driver
 }
@@ -397,11 +397,11 @@ func (h *Handoff) label(n node.Node) node.Label { return node.LabelFor(n.Index +
 // provisionKeys places each node's identity as its datadir comes up: the
 // nodekey in the binary-specific instance directory, the static-nodes list,
 // and — for the producer — its keystore.
-func (h *Handoff) provisionKeys() func(context.Context, driver.NodeSpec, bool) error {
+func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) error {
 	enodes := h.Plan.Enodes(h.in.host())
 	staticNodes, _ := json.MarshalIndent(enodes, "", "  ")
 	files := h.in.files()
-	return func(ctx context.Context, spec driver.NodeSpec, producer bool) error {
+	return func(ctx context.Context, spec process.NodeSpec, producer bool) error {
 		inst := h.Profile.Chains.To.NodekeyDir
 		if producer {
 			inst = h.Profile.Chains.From.NodekeyDir

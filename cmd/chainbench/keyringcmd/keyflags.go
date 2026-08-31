@@ -11,7 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -140,7 +139,7 @@ func (f *SourceFlags) fromPath() (string, error) {
 // that store. Local, server set-named, and directly-addressed hosts all end up
 // here, so none of them can grow its own read.
 func (f *SourceFlags) openFrom(path string, env func(string) string) (filestore.Store, string, error) {
-	spec, err := machine.Parse(path)
+	spec, err := resource.Parse(path)
 	if err != nil {
 		return nil, "", err
 	}

@@ -11,8 +11,8 @@ package app
 import (
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
 // Deps are the collaborators the use cases share, injected once at the surface
@@ -26,10 +26,10 @@ type Deps struct {
 	// environment.
 	Env func(string) string
 	// Driver resolves the transport used to control node processes of an
-	// already-launched network; nil uses the local driver. Injected so the use
+	// already-launched network; nil uses the local process. Injected so the use
 	// cases can be tested without spawning processes, and so a surface that
 	// targets a remote host routes the same use case over SSH.
-	Driver func() (driver.Driver, error)
+	Driver func() (process.Driver, error)
 	// Files resolves where a network's on-disk material lands; nil uses this
 	// machine's filesystem.
 	//

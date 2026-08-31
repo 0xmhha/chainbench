@@ -9,18 +9,16 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -139,10 +137,10 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		}, overrides...)
 	}
 	procs := process.New()
-	controller := launcher.NewController(launcher.Direct{
+	controller := process.NewController(process.Direct{
 		Plugin: plugin, Binary: cfg.Binary, KeysDir: keysDir, LaunchOverrides: overrides,
 	}, procs)
-	sup := launcher.New(launcher.Deps{
+	sup := process.NewLauncher(process.Deps{
 		Launch:     controller.Launch,
 		HealthGate: NewBlockAdvanceGate(1, defaultHealthTimeout),
 		Action:     poa.Bootstrap{Binary: cfg.Binary, KeysDir: keysDir}.Action,
@@ -157,7 +155,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	// source and a bootstrap between phases; one whose genesis is a template
 	// with the validator set written in needs neither.
 	genesisSource := genesis.SourceFor(plugin, genesis.Config{KeysDir: keysDir, Binary: cfg.Binary, ChainID: cfg.ChainID})
-	var provisionExtra func(context.Context, driver.Plan, map[string][]byte) error
+	var provisionExtra func(context.Context, process.Plan, map[string][]byte) error
 	if plugin.Family().ID() == poa.FamilyID {
 		provisionExtra = writeExtra
 	}
@@ -241,7 +239,7 @@ func applicableTo(chain string) func(dsl.Spec) bool {
 
 // writeExtra puts the genesis step's by-products on the target beside the
 // genesis, under the names a later step reads them by.
-func writeExtra(ctx context.Context, plan driver.Plan, files map[string][]byte) error {
+func writeExtra(ctx context.Context, plan process.Plan, files map[string][]byte) error {
 	store := filestore.Local{}
 	for name, content := range files {
 		if err := store.Write(ctx, filepath.Join(plan.DataRoot, name), content, 0o644); err != nil {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -50,7 +50,7 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 
 	// The plain runner is the user; the sudo runner is root. Asserting both
 	// proves elevation happened rather than the login secretly being root.
-	plain, err := driver.SSHRunner(creds, hostKey)(ctx, "whoami")
+	plain, err := process.SSHRunner(creds, hostKey)(ctx, "whoami")
 	if err != nil {
 		t.Fatalf("password login failed: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 		t.Fatalf("login user = %q, want %q", got, creds.User)
 	}
 
-	elevated, err := driver.SSHSudoRunner(creds, hostKey)(ctx, "whoami")
+	elevated, err := process.SSHSudoRunner(creds, hostKey)(ctx, "whoami")
 	if err != nil {
 		t.Fatalf("sudo exec failed: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 	// A root-only WRITE, not just an identity print: touch a file in a
 	// root-owned directory, verify, and clean up — the shape a privileged
 	// bring-up step will actually have.
-	if _, err := driver.SSHSudoRunner(creds, hostKey)(ctx,
+	if _, err := process.SSHSudoRunner(creds, hostKey)(ctx,
 		"touch /etc/chainbench-sudo-probe && rm /etc/chainbench-sudo-probe"); err != nil {
 		t.Fatalf("root-only write failed: %v", err)
 	}

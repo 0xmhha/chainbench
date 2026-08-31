@@ -12,9 +12,8 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -47,9 +46,9 @@ func (g *fakeGenesis) Genesis(_ context.Context, _ registry.ChainPlugin, req gen
 
 // fakeSupervisor is a real supervisor whose launch and health hooks are fakes: it
 // synthesizes a node set from the plan and always reports healthy.
-func fakeSupervisor() launcher.Launcher {
-	return launcher.New(launcher.Deps{
-		Launch: func(_ context.Context, plan driver.Plan, _ []int) (launcher.Result, error) {
+func fakeSupervisor() process.Launcher {
+	return process.NewLauncher(process.Deps{
+		Launch: func(_ context.Context, plan process.Plan, _ []int) (process.Result, error) {
 			var ns node.NodeSet
 			for _, s := range plan.Nodes {
 				ns.Nodes = append(ns.Nodes, node.Node{
@@ -57,10 +56,10 @@ func fakeSupervisor() launcher.Launcher {
 					RPCURL: fmt.Sprintf("http://%s:%d", s.Host, s.Ports.HTTP), Ports: s.Ports,
 				})
 			}
-			return launcher.Result{Nodes: ns}, nil
+			return process.Result{Nodes: ns}, nil
 		},
-		HealthGate: func(context.Context, node.NodeSet) (launcher.Diagnosis, error) {
-			return launcher.Diagnosis{OK: true}, nil
+		HealthGate: func(context.Context, node.NodeSet) (process.Diagnosis, error) {
+			return process.Diagnosis{OK: true}, nil
 		},
 		Sleep: func(time.Duration) {},
 	})
@@ -90,7 +89,7 @@ func fourNodeReqs() []node.LaunchReq {
 
 func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 	gen := &fakeGenesis{bytes: []byte(`{"genesis":true}`)}
-	var gotPlan driver.Plan
+	var gotPlan process.Plan
 	provisionCalled := false
 
 	build := testengine.NewBuildEnv(testengine.BuildDeps{
@@ -100,7 +99,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 		Supervisor: fakeSupervisor(),
 		Caps:       []string{"ws"},
 		Reqs:       func(dsl.Spec) []node.LaunchReq { return fourNodeReqs() },
-		Provision: func(_ context.Context, plan driver.Plan) error {
+		Provision: func(_ context.Context, plan process.Plan) error {
 			provisionCalled = true
 			gotPlan = plan
 			return nil
@@ -176,7 +175,7 @@ func TestNewBuildEnv_ProvisionError(t *testing.T) {
 		Genesis:    &fakeGenesis{bytes: []byte("{}")},
 		Supervisor: fakeSupervisor(),
 		Reqs:       func(dsl.Spec) []node.LaunchReq { return fourNodeReqs() },
-		Provision:  func(context.Context, driver.Plan) error { return errors.New("disk full") },
+		Provision:  func(context.Context, process.Plan) error { return errors.New("disk full") },
 	})
 	if _, _, err := build(context.Background(), buildEnvSession(t), dsl.Spec{}); err == nil {
 		t.Fatal("expected provision error to propagate")

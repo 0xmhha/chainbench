@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -72,7 +72,7 @@ func (w *Workspace) liveness(ctx context.Context, n preflight.Node) (bool, strin
 	if err != nil {
 		return false, err.Error()
 	}
-	if insp, ok := t.Driver.(driver.ProcessInspector); ok {
+	if insp, ok := t.Driver.(process.ProcessInspector); ok {
 		alive, err := insp.PIDAlive(ctx, n.PID)
 		if err != nil {
 			return false, err.Error()

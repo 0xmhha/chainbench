@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -37,11 +36,11 @@ type NetUpIn struct {
 	Stage UpStage `json:"stage,omitempty"`
 
 	// Chain identity (step: new).
-	Chain        string       `json:"chain,omitempty"`
-	ManifestPath string       `json:"manifestPath,omitempty"`
-	TemplatePath string       `json:"templatePath,omitempty"`
-	KeysDir      string       `json:"keysDir,omitempty"`
-	Target       machine.Spec `json:"target,omitempty"`
+	Chain        string        `json:"chain,omitempty"`
+	ManifestPath string        `json:"manifestPath,omitempty"`
+	TemplatePath string        `json:"templatePath,omitempty"`
+	KeysDir      string        `json:"keysDir,omitempty"`
+	Target       resource.Spec `json:"target,omitempty"`
 	// Binary is the node executable. Required for UpStart; for a remote target
 	// it is a path on that host.
 	Binary string `json:"binary,omitempty"`

@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -45,7 +45,7 @@ func (d *inspectingDriver) Run(_ context.Context, command string) (string, error
 	return c + "\n", nil
 }
 
-func (d *inspectingDriver) Launch(ctx context.Context, spec driver.NodeSpec) (driver.Handle, error) {
+func (d *inspectingDriver) Launch(ctx context.Context, spec process.NodeSpec) (process.Handle, error) {
 	h, err := d.stubDriver.Launch(ctx, spec)
 	if d.alive == nil {
 		d.alive = map[int]bool{}
@@ -78,7 +78,7 @@ func startedWorkspace(t *testing.T) (dir string, d *inspectingDriver, deps chain
 		t.Fatal(err)
 	}
 	d = &inspectingDriver{alive: map[int]bool{1001: true, 1002: true}}
-	deps = chainsetup.Deps{Driver: func() (driver.Driver, error) { return d, nil }}
+	deps = chainsetup.Deps{Driver: func() (process.Driver, error) { return d, nil }}
 	return dir, d, deps
 }
 

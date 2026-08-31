@@ -32,7 +32,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -81,7 +80,7 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 
 	// 4. Align the DB config with the new binary (non-destructive: keeps blocks).
 	genesisPath := filepath.Join(dataRoot, "genesis.json")
-	if err := driver.InitDatadir(ctx, toBin, node1dd, genesisPath); err != nil {
+	if err := process.InitDatadir(ctx, toBin, node1dd, genesisPath); err != nil {
 		t.Fatalf("go-wbft init on migrated datadir: %v", err)
 	}
 

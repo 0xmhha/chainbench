@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
 // ipcWait is how long a bootstrap action waits for the node's IPC socket. The
@@ -57,7 +57,7 @@ type Bootstrap struct {
 }
 
 // Action performs one named bring-up action against a node.
-func (b Bootstrap) Action(ctx context.Context, name string, plan driver.Plan, on node.Node) error {
+func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, on node.Node) error {
 	spec, ok := planSpecFor(plan, on.Index)
 	if !ok {
 		return fmt.Errorf("poa: bootstrap: the plan has no node%d to run %q on", on.Index, name)
@@ -122,7 +122,7 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan driver.Plan, on
 //
 // on is the boot node — the phase names it, so the rule for which node that is
 // lives in the family and not here.
-func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string, plan driver.Plan, on node.Node, bootIPC string) error {
+func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string, plan process.Plan, on node.Node, bootIPC string) error {
 	peer := string(node.LabelFor(on.Index))
 	members := []string{peer}
 	for _, spec := range plan.Nodes {
@@ -191,19 +191,19 @@ func isProducer(r node.Role) bool {
 }
 
 // specFor finds a node's launch spec, which is where its datadir lives.
-func planSpecFor(plan driver.Plan, index int) (driver.NodeSpec, bool) {
+func planSpecFor(plan process.Plan, index int) (process.NodeSpec, bool) {
 	for _, s := range plan.Nodes {
 		if s.Index == index {
 			return s, true
 		}
 	}
-	return driver.NodeSpec{}, false
+	return process.NodeSpec{}, false
 }
 
 // ipcPath is where the node exposes its console socket. The spec's datadir is
 // authoritative (it may not be layout-conventional on an attach), so the
 // layout rule is applied to it directly.
-func ipcPath(spec driver.NodeSpec, binary string) string {
+func ipcPath(spec process.NodeSpec, binary string) string {
 	return filepath.Join(spec.DataDir, filepath.Base(binary)+".ipc")
 }
 

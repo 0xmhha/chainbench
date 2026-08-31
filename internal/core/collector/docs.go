@@ -8,5 +8,5 @@
 // forks/reorgs when a known height reports a divergent hash. With Deps.OnLine
 // set it also tails each node's log live, the boundary that mirrors logs to the
 // dashboard. Tailing goes through a LogReader, so the same loop follows a local
-// file or a remote log over SSH (driver.RemoteLogReader).
+// file or a remote log over SSH (process.RemoteLogReader).
 package collector

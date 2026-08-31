@@ -11,7 +11,7 @@ import (
 // inSetDir runs the test in a directory holding a server set that declares
 // the host-key policy, which is where the policy now comes from: no
 // environment variable configures it, and a machine with no ~/.ssh (a CI
-// runner) must still be able to build a driver.
+// runner) must still be able to build a process.
 func inSetDir(t *testing.T, ssh string) {
 	t.Helper()
 	dir := t.TempDir()

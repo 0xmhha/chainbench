@@ -115,7 +115,7 @@ dataRoot: /srv/chainbench
 		t.Errorf("data root = %q, want the server set's", st.Target.DataRoot)
 	}
 	// The node's own address is recorded, so a NodeSet reader reaches the host
-	// rather than this machine.
+	// rather than this resource.
 	ns, err := chainsetup.NetworkStatus(ctx, d, chainsetup.NetworkStatusIn{DataDir: dir})
 	if err != nil {
 		t.Fatalf("status: %v", err)

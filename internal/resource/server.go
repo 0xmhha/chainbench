@@ -3,8 +3,6 @@ package resource
 import (
 	"fmt"
 	"os"
-
-	"github.com/0xmhha/chainbench/internal/core/machine"
 )
 
 // Selecting a server: which entry of the set a composition runs on, and what
@@ -32,7 +30,7 @@ type ResolveServerOut struct {
 	Pool Pool
 	// Target is where the data plane lives. It is the zero value when no
 	// server set applied, leaving the workspace's own target in place.
-	Target machine.Spec
+	Target Spec
 	// HasTarget reports whether Target should replace the workspace's.
 	HasTarget bool
 }
@@ -88,8 +86,8 @@ func ResolveServer(ref ServerRef, minValidators, portBand int) (ResolveServerOut
 // host/user pair — so every later step resolves the login from the server set
 // file, the single source of a named server's credentials. Host is still
 // carried for display and RPC addressing; it never authenticates anything.
-func serverTarget(s Server) machine.Spec {
-	spec := machine.Spec{DataRoot: s.DataRoot}
+func serverTarget(s Server) Spec {
+	spec := Spec{DataRoot: s.DataRoot}
 	if s.IsRemote() {
 		spec.Server = s.Name
 		spec.Host = s.Host
@@ -100,9 +98,9 @@ func serverTarget(s Server) machine.Spec {
 // setTarget describes the whole set's data plane. Its host is the first
 // server's: the per-node addresses live on the node table, which the allocator
 // fills.
-func (c *Set) setTarget() machine.Spec {
+func (c *Set) setTarget() Spec {
 	if len(c.Servers) == 0 {
-		return machine.Spec{}
+		return Spec{}
 	}
 	return serverTarget(c.resolve(c.Servers[0]))
 }

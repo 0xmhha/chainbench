@@ -6,23 +6,23 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
-	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 // fakeDriver records the specs it is asked to provision and launch.
 type fakeDriver struct {
-	launched []driver.NodeSpec
+	launched []process.NodeSpec
 	nextPID  int
 }
 
-func (f *fakeDriver) Provision(context.Context, driver.NodeSpec) error { return nil }
-func (f *fakeDriver) Launch(_ context.Context, s driver.NodeSpec) (driver.Handle, error) {
+func (f *fakeDriver) Provision(context.Context, process.NodeSpec) error { return nil }
+func (f *fakeDriver) Launch(_ context.Context, s process.NodeSpec) (process.Handle, error) {
 	f.nextPID++
 	f.launched = append(f.launched, s)
-	return driver.Handle{Index: s.Index, PID: 1000 + f.nextPID}, nil
+	return process.Handle{Index: s.Index, PID: 1000 + f.nextPID}, nil
 }
-func (f *fakeDriver) Stop(context.Context, driver.Handle) error { return nil }
+func (f *fakeDriver) Stop(context.Context, process.Handle) error { return nil }
 
 func launchOpts(t *testing.T) upgrade.LaunchOptions {
 	t.Helper()

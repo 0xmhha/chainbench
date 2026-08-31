@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
 // fakeChain answers the console calls the join makes, and records them. It
@@ -76,7 +76,7 @@ func (f *fakeChain) execs() []string {
 
 // planWithIPCs builds a plan whose datadirs hold a live-looking IPC socket, so
 // the action's wait for the socket is satisfied without a chain.
-func planWithIPCs(t *testing.T, roles []node.Role) driver.Plan {
+func planWithIPCs(t *testing.T, roles []node.Role) process.Plan {
 	t.Helper()
 	root, err := os.MkdirTemp("/tmp", "cbj")
 	if err != nil {
@@ -84,16 +84,16 @@ func planWithIPCs(t *testing.T, roles []node.Role) driver.Plan {
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(root) })
 
-	specs := make([]driver.NodeSpec, 0, len(roles))
+	specs := make([]process.NodeSpec, 0, len(roles))
 	for i, r := range roles {
 		dir := filepath.Join(root, fmt.Sprintf("node%d", i+1))
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		listenUnix(t, filepath.Join(dir, "gwemix.ipc"))
-		specs = append(specs, driver.NodeSpec{Index: i + 1, Role: r, DataDir: dir, Binary: "gwemix"})
+		specs = append(specs, process.NodeSpec{Index: i + 1, Role: r, DataDir: dir, Binary: "gwemix"})
 	}
-	return driver.Plan{DataRoot: root, Nodes: specs}
+	return process.Plan{DataRoot: root, Nodes: specs}
 }
 
 // listenUnix creates a real unix socket at path. The wait before an action

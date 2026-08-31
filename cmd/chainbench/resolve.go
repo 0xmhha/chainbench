@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -33,7 +33,7 @@ func resolveAccountProvider(chain, manifestPath, templatePath string) (accounts.
 // process list or shell history. The host-key policy is resolved from the
 // server set's ssh block (known_hosts_file, or insecure_host_key on a closed
 // network). Returns nil when host is empty (the local driver is used).
-func remoteDriver(host, user string, port int) (driver.Driver, error) {
+func remoteDriver(host, user string, port int) (process.Driver, error) {
 	if host == "" {
 		return nil, nil
 	}
@@ -49,5 +49,5 @@ func remoteDriver(host, user string, port int) (driver.Driver, error) {
 		return nil, err
 	}
 	creds := remote.Credentials{User: user, Host: host, Port: port, Password: pass}
-	return driver.NewRemoteDriver(driver.SSHRunner(creds, hostKey)), nil
+	return process.NewRemoteDriver(process.SSHRunner(creds, hostKey)), nil
 }

@@ -14,7 +14,7 @@ import (
 //     its devp2p network id (independent of chain id) while go-wbft derives it
 //     from chain id, so without this the two binaries never peer.
 //   - --authrpc.port is pinned per node. The engine API port otherwise defaults
-//     to 8551 on every node and collides when several run on one machine.
+//     to 8551 on every node and collides when several run on one resource.
 //
 // familyFlags are the consensus family's role flags (e.g. --mine for a
 // producer/validator), supplied by the caller from the node's own chain family

@@ -15,8 +15,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -98,8 +98,8 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 // peering. A homogeneous fork keeps that identity; regenerating generic start
 // flags would drop it and the relaunched node would rejoin WBFT consensus as an
 // unauthorized address, halting block production.
-func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeSpec, binary string) (node.NodeSet, error) {
-	byIndex := make(map[int]driver.NodeSpec, len(specs))
+func (p Plan) Execute(ctx context.Context, d process.Driver, specs []process.NodeSpec, binary string) (node.NodeSet, error) {
+	byIndex := make(map[int]process.NodeSpec, len(specs))
 	for _, s := range specs {
 		byIndex[s.Index] = s
 	}
@@ -107,7 +107,7 @@ func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeS
 	for _, s := range p.Swaps {
 		if s.PID > 0 {
 			// Best-effort stop; a node that already exited is fine.
-			_ = d.Stop(ctx, driver.Handle{Index: s.Index, PID: s.PID})
+			_ = d.Stop(ctx, process.Handle{Index: s.Index, PID: s.PID})
 		}
 		orig, ok := byIndex[s.Index]
 		if !ok {
@@ -122,7 +122,7 @@ func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeS
 		// rather than being re-typed here, where a loopback literal used to
 		// be — a remote node relaunched on a fork would have reported the
 		// wrong address.
-		ns.Nodes = append(ns.Nodes, driver.NodeOf(orig, h.PID))
+		ns.Nodes = append(ns.Nodes, process.NodeOf(orig, h.PID))
 	}
 	return ns, nil
 }

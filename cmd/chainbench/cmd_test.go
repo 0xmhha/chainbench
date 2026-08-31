@@ -16,9 +16,9 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // run executes the root command with args and returns combined output.
@@ -457,7 +457,7 @@ func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
 	}
 	st := chainsetup.State{
 		Chain: chain, Binary: "/opt/fakebin", Validators: len(nodes),
-		Target: machine.Spec{DataRoot: dir}, Nodes: nodes,
+		Target: resource.Spec{DataRoot: dir}, Nodes: nodes,
 		Capabilities: []string{"rpc"},
 		Steps:        map[string]chainsetup.Step{},
 	}

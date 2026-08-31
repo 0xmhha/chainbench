@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Deps is what the verbs need from their caller: a clock for step stamps, an
@@ -19,9 +19,9 @@ type Deps struct {
 	Command string
 	Report  func(format string, args ...any)
 	// Driver overrides the transport every machine of a workspace controls
-	// its nodes through; nil uses each machine's own driver. Injected for
+	// its nodes through; nil uses each machine's own process. Injected for
 	// tests and for surfaces that route the same verb over another transport.
-	Driver func() (driver.Driver, error)
+	Driver func() (process.Driver, error)
 }
 
 func (d Deps) command() string { return d.Command }
@@ -49,7 +49,7 @@ type NetNewIn struct {
 	KeysDir string
 	// Target is where the data plane lives; zero value = local, rooted at the
 	// workspace directory.
-	Target machine.Spec
+	Target resource.Spec
 	// Docker treats the servers as local docker containers: the harness's own
 	// dials are translated through the localmap next to the server set.
 	// Recorded on the workspace so every later step follows it.

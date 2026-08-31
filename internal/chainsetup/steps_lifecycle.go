@@ -9,17 +9,16 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/process"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/inspector"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Lifecycle steps: init, start, stop, restart, rm, logs, health. They act on
@@ -58,8 +57,8 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	err = w.eachMachine(func(t *machine.Access, nodes []node.Record) error {
-		initer, ok := t.Driver.(driver.Initializer)
+	err = w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
+		initer, ok := t.Driver.(process.Initializer)
 		if !ok {
 			return fmt.Errorf("chainsetup: init: target driver cannot initialize datadirs")
 		}
@@ -70,7 +69,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			return fmt.Errorf("chainsetup: init: read genesis: %w", err)
 		}
 		for _, ns := range nodes {
-			spec := driver.SpecOf(ns)
+			spec := process.SpecOf(ns)
 			spec.Binary = bin
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
@@ -165,7 +164,7 @@ func (w *Workspace) Stop(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
+		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 			errs = append(errs, fmt.Sprintf("node%d: %v", ns.Index, err))
 			continue
 		}
@@ -206,7 +205,7 @@ func (w *Workspace) StopNode(ctx context.Context, index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := t.Driver.Stop(ctx, driver.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
+	if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
 		return "", fmt.Errorf("chainsetup: stop node%d: %w", ns.Index, err)
 	}
 	w.clearPID(ni)
@@ -238,7 +237,7 @@ func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	spec := driver.SpecOf(ns)
+	spec := process.SpecOf(ns)
 	spec.Binary = bin
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
@@ -386,7 +385,7 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 // Preflight is the check-only entry: the same pre-launch inspection Start
 // runs, callable without composing anything. It answers "may a network of
 // this shape start here right now?" with the refusal Start would give — port
-// occupancy plus unmanaged copies of the binary already on the machine.
+// occupancy plus unmanaged copies of the binary already on the resource.
 func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
 	if len(w.state.Nodes) == 0 {
 		return fmt.Errorf("chainsetup: preflight: no node table — run `net allocate` first")
@@ -408,14 +407,14 @@ func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
 // hand-started node — and composing on top of it is refused by name.
 func (w *Workspace) checkUnmanaged(ctx context.Context, bin string) error {
 	name := filepath.Base(bin)
-	return w.eachMachine(func(t *machine.Access, _ []node.Record) error {
+	return w.eachMachine(func(t *resource.Access, _ []node.Record) error {
 		return w.checkUnmanagedOn(ctx, t, name)
 	})
 }
 
-// checkUnmanagedOn is checkUnmanaged for one machine.
-func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *machine.Access, name string) error {
-	insp, ok := t.Driver.(driver.ProcessInspector)
+// checkUnmanagedOn is checkUnmanaged for one resource.
+func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *resource.Access, name string) error {
+	insp, ok := t.Driver.(process.ProcessInspector)
 	if !ok {
 		return nil
 	}
@@ -509,7 +508,7 @@ func (w *Workspace) scanPorts(ctx context.Context, addrs []inspector.Addr) ([]in
 	}
 	// Each host is probed BY ITS OWN machine (the probe lies from anywhere
 	// else); the node table says which machine owns which address.
-	proberFor := func(host string) (driver.PortProber, error) {
+	proberFor := func(host string) (process.PortProber, error) {
 		for _, ns := range w.state.Nodes {
 			if nodeHost(ns) != host {
 				continue
@@ -518,7 +517,7 @@ func (w *Workspace) scanPorts(ctx context.Context, addrs []inspector.Addr) ([]in
 			if err != nil {
 				return nil, err
 			}
-			p, ok := t.Driver.(driver.PortProber)
+			p, ok := t.Driver.(process.PortProber)
 			if !ok {
 				return nil, nil
 			}
@@ -599,7 +598,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 		if err != nil {
 			return started, err
 		}
-		spec := driver.SpecOf(ns)
+		spec := process.SpecOf(ns)
 		spec.Binary = bin
 		if len(spec.Args) == 0 {
 			_, placed, peering, pubkey, perr := w.peerPlan(p)
@@ -610,7 +609,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			if perr != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d peers: %w", ns.Index, perr)
 			}
-			args, err := nodeconfig.Argv(launcher.NodeConfig(p, preset, spec, w.state.KeysDir, staticNodes))
+			args, err := nodeconfig.Argv(process.NodeConfig(p, preset, spec, w.state.KeysDir, staticNodes))
 			if err != nil {
 				return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 			}
@@ -634,13 +633,13 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 // phase that named it expects it to have happened, and a bootstrap quietly
 // skipped is a network that starts and then does nothing.
 func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase registry.Phase) error {
-	specs := make([]driver.NodeSpec, 0, len(w.state.Nodes))
+	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
 	for _, ns := range w.state.Nodes {
-		spec := driver.SpecOf(ns)
+		spec := process.SpecOf(ns)
 		spec.Binary = bin
 		specs = append(specs, spec)
 	}
-	plan := driver.Plan{DataRoot: w.state.Target.DataRoot, Nodes: specs}
+	plan := process.Plan{DataRoot: w.state.Target.DataRoot, Nodes: specs}
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {

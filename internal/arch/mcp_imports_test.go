@@ -17,7 +17,7 @@ import (
 var mcpImportAllowed = map[string]string{
 	"internal/accounts":              "account tools; migrates with the account verbs' module move",
 	"internal/core/collector":        "network status collection + event bus + log reading (obs/logs merged in, R1); V6 follow-up",
-	"internal/core/machine":          "target kind rendering in net tools; goes with the V5.4 display cleanups",
+	"internal/resource":              "target kind rendering in net tools (machine spec merged into resource, R3); goes with the V5.4 display cleanups",
 	"internal/core/node":             "node set types; V6 follow-up",
 	"internal/core/session":          "network registry reads, now owned by session (netreg merged in, R1); V6 follow-up",
 	"internal/core/pipeline/testrun": "legacy run pipeline; retires with T7.11",

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // newNetCmd is the composable step surface: it composes a chain network for
@@ -89,15 +89,15 @@ func (f *targetFlags) bind(cmd *cobra.Command) {
 // spec builds a TargetSpec from the flags. --target wins; mixing it with the
 // legacy flags is ambiguous and refused. Secrets are never captured here —
 // they come from the environment when the target is resolved.
-func (f *targetFlags) spec() (machine.Spec, error) {
+func (f *targetFlags) spec() (resource.Spec, error) {
 	if f.target != "" {
 		if f.remoteHost != "" || f.remoteUser != "" || f.remotePort != 0 || f.targetDir != "" {
-			return machine.Spec{}, fmt.Errorf(
+			return resource.Spec{}, fmt.Errorf(
 				"--target and the legacy --remote-host/--remote-user/--remote-port/--target-dir flags cannot be mixed")
 		}
-		return machine.Parse(f.target)
+		return resource.Parse(f.target)
 	}
-	return machine.Spec{
+	return resource.Spec{
 		Host: f.remoteHost, User: f.remoteUser,
 		Port: f.remotePort, DataRoot: f.targetDir,
 	}, nil

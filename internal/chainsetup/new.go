@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // NewOpts initializes a workspace's chain identity, key set, and compose target.
@@ -22,7 +22,7 @@ type NewOpts struct {
 	KeysDir string
 	// Target is where the network's data plane lives. A zero Target defaults to
 	// a local target whose data root is the workspace directory.
-	Target machine.Spec
+	Target resource.Spec
 	// ServerSet is the server-set file the composition's servers come from.
 	// Recording it here keeps the pair together: --docker names HOW the
 	// servers are reached, the set names WHICH servers exist, and a workspace
@@ -96,8 +96,8 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 // decides both the host and the data root, and that decision arrives with the
 // placement rather than at `new`. A target with no data root keeps the current
 // one, so naming only a host does not blank the path.
-func (w *Workspace) Retarget(t machine.Spec) error {
-	if t == (machine.Spec{}) {
+func (w *Workspace) Retarget(t resource.Spec) error {
+	if t == (resource.Spec{}) {
 		return nil
 	}
 	if t.DataRoot == "" {

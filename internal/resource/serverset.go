@@ -26,7 +26,6 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -54,7 +53,7 @@ const (
 type Kind string
 
 const (
-	// KindLocal runs nodes on this machine. It is the zero value, so an entry
+	// KindLocal runs nodes on this  It is the zero value, so an entry
 	// that says nothing about access is local.
 	KindLocal Kind = "local"
 	// KindRemote runs nodes on another host over SSH.
@@ -315,7 +314,7 @@ func (s *SSH) resolveSecretPaths(dir string) error {
 	return nil
 }
 
-// loopback reports whether nodes on addr run on this machine. It is what
+// loopback reports whether nodes on addr run on this  It is what
 // decides SSH, and it is derived rather than declared: a "kind" field can
 // disagree with the address it sits next to, and then the file says two things.
 func loopback(addr string) bool {
@@ -735,7 +734,7 @@ func readSecretFile(path string) (string, error) {
 	return v, nil
 }
 
-// SetLookup returns a machine.Lookup backed by the server set at
+// SetLookup returns a Lookup backed by the server set at
 // path (empty uses DefaultSetFile). It is how an srv://<name>/path target
 // gets its host, port and credentials without any of those appearing in a
 // command line, a spec file, or a persisted workspace.
@@ -743,7 +742,7 @@ func readSecretFile(path string) (string, error) {
 // The file is opened on each lookup rather than cached: a lookup happens once
 // per target, and an operator editing the server set mid-session should not have
 // to reason about which copy is in effect.
-func SetLookup(path string) machine.Lookup {
+func SetLookup(path string) Lookup {
 	return func(name string) (remote.Credentials, error) {
 		if path == "" {
 			path = DefaultSetFile
