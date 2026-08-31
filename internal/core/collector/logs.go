@@ -4,7 +4,7 @@
 // "LEVEL [MM-DD|HH:MM:SS.mmm] message  key=val" and filters by node, severity,
 // and a substring/regexp pattern, so the CLI and MCP surfaces can answer
 // "show me the errors on node 2" without shelling out.
-package logs
+package collector
 
 import (
 	"bufio"
@@ -17,8 +17,8 @@ import (
 	"strings"
 )
 
-// Match is one matching log line.
-type Match struct {
+// SearchMatch is one matching log line.
+type SearchMatch struct {
 	Node  int    `json:"node"`  // 1-based node index (from the file name)
 	Line  int    `json:"line"`  // 1-based line number within that node's log
 	Level string `json:"level"` // parsed severity (INFO/WARN/ERROR/...), "" if none
@@ -43,7 +43,7 @@ var levelRank = map[string]int{
 // Search scans <dir>/logs/node*.log and returns the lines matching opts, in
 // (node, line) order. A missing logs directory yields no matches (not an
 // error): a setup that never launched simply has none.
-func Search(dir string, opts SearchOpts) ([]Match, error) {
+func Search(dir string, opts SearchOpts) ([]SearchMatch, error) {
 	logDir := filepath.Join(dir, "logs")
 	files, err := filepath.Glob(filepath.Join(logDir, "node*.log"))
 	if err != nil {
@@ -67,7 +67,7 @@ func Search(dir string, opts SearchOpts) ([]Match, error) {
 		minRank = r
 	}
 
-	var out []Match
+	var out []SearchMatch
 	for _, f := range files {
 		node := nodeIndex(f)
 		if opts.Node > 0 && node != opts.Node {
@@ -85,14 +85,14 @@ func Search(dir string, opts SearchOpts) ([]Match, error) {
 	return out, nil
 }
 
-func scanFile(path string, node int, opts SearchOpts, re *regexp.Regexp, minRank int) ([]Match, error) {
+func scanFile(path string, node int, opts SearchOpts, re *regexp.Regexp, minRank int) ([]SearchMatch, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("logs: open %s: %w", path, err)
 	}
 	defer func() { _ = f.Close() }()
 
-	var out []Match
+	var out []SearchMatch
 	sc := bufio.NewScanner(f)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024) // node logs can have long lines
 	line := 0
@@ -110,7 +110,7 @@ func scanFile(path string, node int, opts SearchOpts, re *regexp.Regexp, minRank
 		if !matchesPattern(text, opts, re) {
 			continue
 		}
-		out = append(out, Match{Node: node, Line: line, Level: level, Text: text})
+		out = append(out, SearchMatch{Node: node, Line: line, Level: level, Text: text})
 		if opts.Limit > 0 && len(out) >= opts.Limit {
 			break
 		}

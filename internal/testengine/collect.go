@@ -7,7 +7,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec"
@@ -42,14 +41,14 @@ func rpcProbe(dial func(string) *rpc.Client) func(context.Context, string) (coll
 // jsonl file under the session (so a completed run can be replayed). It returns a
 // stop function that ends collection after a final snapshot. bus must be
 // non-nil; jsonl persistence is best-effort and never blocks the run.
-func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus, probe func(context.Context, string) (collector.Sample, error), interval time.Duration) func() error {
+func startCollection(ctx context.Context, env session.Environment, bus *collector.Bus, probe func(context.Context, string) (collector.Sample, error), interval time.Duration) func() error {
 	col := collector.New(collector.Deps{
 		Probe:    probe,
 		Interval: interval,
 		OnLine: func(nodeName, line string) {
-			bus.Publish(obs.Event{
-				Phase:   obs.PhaseTest,
-				Kind:    obs.KindInfo,
+			bus.Publish(collector.Event{
+				Phase:   collector.PhaseTest,
+				Kind:    collector.KindInfo,
 				Message: line,
 				Fields:  map[string]any{"node": nodeName, "log": true},
 			})
@@ -100,7 +99,7 @@ func startCollection(ctx context.Context, env session.Environment, bus *obs.Bus,
 // torn down as part of the environment teardown. When bus is nil it returns
 // build unchanged, so collection is opt-in and never affects a run without a
 // dashboard. dial nil uses the default RPC dialer.
-func withCollection(build BuildEnvFunc, bus *obs.Bus, dial func(string) *rpc.Client) BuildEnvFunc {
+func withCollection(build BuildEnvFunc, bus *collector.Bus, dial func(string) *rpc.Client) BuildEnvFunc {
 	if bus == nil {
 		return build
 	}
@@ -128,10 +127,10 @@ func withCollection(build BuildEnvFunc, bus *obs.Bus, dial func(string) *rpc.Cli
 }
 
 // publishChainstate mirrors one cross-node chainstate snapshot to the bus.
-func publishChainstate(bus *obs.Bus, cs collector.Chainstate) {
-	bus.Publish(obs.Event{
-		Phase:   obs.PhaseTest,
-		Kind:    obs.KindProgress,
+func publishChainstate(bus *collector.Bus, cs collector.Chainstate) {
+	bus.Publish(collector.Event{
+		Phase:   collector.PhaseTest,
+		Kind:    collector.KindProgress,
 		Message: "chainstate",
 		Fields: map[string]any{
 			"heights":         cs.Heights,

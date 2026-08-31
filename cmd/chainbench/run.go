@@ -13,8 +13,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/testengine"
 	"github.com/0xmhha/chainbench/internal/testspec"
@@ -85,10 +85,10 @@ func newRunCmd() *cobra.Command {
 			// bus and forward them to the running chainbench-dashboard. Emission never
 			// blocks the run; we close the bus and drain the forwarder before
 			// exiting so buffered events are flushed.
-			var bus *obs.Bus
+			var bus *collector.Bus
 			var forwardDone <-chan struct{}
 			if dashboardURL != "" {
-				bus = obs.NewBus()
+				bus = collector.NewBus()
 				forwardDone = dashboard.Forward(bus, dashboardURL, nil)
 			}
 			flush := func() {
@@ -169,7 +169,7 @@ type runOpts struct {
 	// server selects the node placement (ports, host, capacity) from the
 	// operator's server set; its zero value uses the built-in local plan.
 	server app.ServerRef
-	bus    *obs.Bus
+	bus    *collector.Bus
 }
 
 // runComposed composes the network the specs declare and runs them against

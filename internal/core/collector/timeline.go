@@ -1,4 +1,4 @@
-package logs
+package collector
 
 import (
 	"regexp"
@@ -16,7 +16,7 @@ var tsRE = regexp.MustCompile(`\[(\d\d-\d\d\|\d\d:\d\d:\d\d\.\d+)\]`)
 //
 // It searches the full set first and sorts before applying Limit, so the cap
 // keeps the earliest lines rather than whichever node was scanned first.
-func Timeline(dir string, opts SearchOpts) ([]Match, error) {
+func Timeline(dir string, opts SearchOpts) ([]SearchMatch, error) {
 	full := opts
 	full.Limit = 0
 	matches, err := Search(dir, full)

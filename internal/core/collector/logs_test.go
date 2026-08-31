@@ -1,11 +1,11 @@
-package logs_test
+package collector_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/logs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 // writeLogs seeds <dir>/logs/node{1,2}.log with a few lines each.
@@ -33,7 +33,7 @@ func writeLogs(t *testing.T) string {
 
 func TestSearch_All(t *testing.T) {
 	dir := writeLogs(t)
-	got, err := logs.Search(dir, logs.SearchOpts{})
+	got, err := collector.Search(dir, collector.SearchOpts{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func TestSearch_All(t *testing.T) {
 
 func TestSearch_LevelThreshold(t *testing.T) {
 	dir := writeLogs(t)
-	got, err := logs.Search(dir, logs.SearchOpts{Level: "WARN"})
+	got, err := collector.Search(dir, collector.SearchOpts{Level: "WARN"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestSearch_LevelThreshold(t *testing.T) {
 
 func TestSearch_NodeAndPattern(t *testing.T) {
 	dir := writeLogs(t)
-	got, err := logs.Search(dir, logs.SearchOpts{Node: 1, Pattern: "validator"})
+	got, err := collector.Search(dir, collector.SearchOpts{Node: 1, Pattern: "validator"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestSearch_NodeAndPattern(t *testing.T) {
 
 func TestSearch_Regexp(t *testing.T) {
 	dir := writeLogs(t)
-	got, err := logs.Search(dir, logs.SearchOpts{Pattern: `number=\d+`, Regexp: true})
+	got, err := collector.Search(dir, collector.SearchOpts{Pattern: `number=\d+`, Regexp: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestSearch_Regexp(t *testing.T) {
 
 func TestSearch_Limit(t *testing.T) {
 	dir := writeLogs(t)
-	got, err := logs.Search(dir, logs.SearchOpts{Limit: 2})
+	got, err := collector.Search(dir, collector.SearchOpts{Limit: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestSearch_Limit(t *testing.T) {
 }
 
 func TestSearch_NoLogsDir(t *testing.T) {
-	got, err := logs.Search(t.TempDir(), logs.SearchOpts{})
+	got, err := collector.Search(t.TempDir(), collector.SearchOpts{})
 	if err != nil {
 		t.Fatalf("missing logs dir should not error: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestSearch_NoLogsDir(t *testing.T) {
 
 func TestSearch_BadPattern(t *testing.T) {
 	dir := writeLogs(t)
-	if _, err := logs.Search(dir, logs.SearchOpts{Pattern: "(", Regexp: true}); err == nil {
+	if _, err := collector.Search(dir, collector.SearchOpts{Pattern: "(", Regexp: true}); err == nil {
 		t.Fatal("want error for invalid regexp")
 	}
 }

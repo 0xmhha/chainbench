@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec"
 )
@@ -34,7 +34,7 @@ type Deps struct {
 	Command string
 	// Emit publishes an orchestration event (run/build/spec milestones) for the
 	// dashboard. Nil disables emission — observation never affects the run.
-	Emit func(ev obs.Event)
+	Emit func(ev collector.Event)
 	// Network labels emitted events with the target chain/network. Optional.
 	Network string
 }
@@ -49,11 +49,11 @@ func New(deps Deps) Engine { return &engine{deps: deps} }
 
 // emit publishes ev when a sink is wired, stamping the network label. It is a
 // no-op when Deps.Emit is nil so observation never affects orchestration.
-func (e *engine) emit(phase obs.Phase, kind obs.Kind, msg string, fields map[string]any) {
+func (e *engine) emit(phase collector.Phase, kind collector.Kind, msg string, fields map[string]any) {
 	if e.deps.Emit == nil {
 		return
 	}
-	e.deps.Emit(obs.Event{
+	e.deps.Emit(collector.Event{
 		Phase:   phase,
 		Kind:    kind,
 		Network: e.deps.Network,
@@ -78,7 +78,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 	}()
 
-	e.emit(obs.PhaseTest, obs.KindInfo, "run started", map[string]any{"specs": len(specs)})
+	e.emit(collector.PhaseTest, collector.KindInfo, "run started", map[string]any{"specs": len(specs)})
 
 	for i, raw := range specs {
 		seq := i + 1
@@ -88,7 +88,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			rec.Spec(raw)
 			rec.Status(session.StatusBlocked)
 			rec.Reason(perr.Error())
-			e.emit(obs.PhaseTest, obs.KindError, "spec parse failed", map[string]any{"seq": seq, "error": perr.Error()})
+			e.emit(collector.PhaseTest, collector.KindError, "spec parse failed", map[string]any{"seq": seq, "error": perr.Error()})
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			// A skip with no reason reads as "this did not matter"; it usually
 			// means a capability the target does not advertise.
 			rec.Reason("does not apply to this target (chain or required capabilities)")
-			e.emit(obs.PhaseTest, obs.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
+			e.emit(collector.PhaseTest, collector.KindInfo, "spec skipped", map[string]any{"seq": seq, "id": spec.ID})
 			continue
 		}
 
@@ -111,17 +111,17 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 			if berr != nil {
 				rec.Status(session.StatusBlocked)
 				rec.Reason(berr.Error())
-				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "error": berr.Error()})
+				e.emit(collector.PhaseSetup, collector.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "error": berr.Error()})
 				continue
 			}
-			e.emit(obs.PhaseSetup, obs.KindProgress, "building environment", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
+			e.emit(collector.PhaseSetup, collector.KindProgress, "building environment", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
 			ns, td, buildErr := e.deps.BuildEnv(ctx, env, spec)
 			if buildErr != nil {
 				// The reason travels with the verdict: "blocked" on its own
 				// sends the reader to the logs of a network that never started.
 				rec.Status(session.StatusBlocked)
 				rec.Reason(buildErr.Error())
-				e.emit(obs.PhaseSetup, obs.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID(), "error": buildErr.Error()})
+				e.emit(collector.PhaseSetup, collector.KindError, "environment build failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID(), "error": buildErr.Error()})
 				continue
 			}
 			env.PopulateNodeTable(ns)
@@ -130,20 +130,20 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 				teardowns = append(teardowns, td)
 			}
 		} else {
-			e.emit(obs.PhaseSetup, obs.KindInfo, "environment reused", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
+			e.emit(collector.PhaseSetup, collector.KindInfo, "environment reused", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID()})
 		}
 
 		rec.SetEnvRef(env.ID())
-		e.emit(obs.PhaseTest, obs.KindProgress, "running spec", map[string]any{"seq": seq, "id": spec.ID})
+		e.emit(collector.PhaseTest, collector.KindProgress, "running spec", map[string]any{"seq": seq, "id": spec.ID})
 		st, runErr := e.deps.RunSpec(ctx, spec, env, rec)
 		if runErr != nil {
 			rec.Status(session.StatusFail)
 			st = session.StatusFail
 		}
-		e.emit(obs.PhaseTest, obs.KindResult, "spec "+string(st), map[string]any{"seq": seq, "id": spec.ID, "status": string(st)})
+		e.emit(collector.PhaseTest, collector.KindResult, "spec "+string(st), map[string]any{"seq": seq, "id": spec.ID, "status": string(st)})
 	}
 
-	e.emit(obs.PhaseTest, obs.KindResult, "run complete", nil)
+	e.emit(collector.PhaseTest, collector.KindResult, "run complete", nil)
 
 	if err := sess.Save(); err != nil {
 		return sess.Root(), fmt.Errorf("engine: save session: %w", err)

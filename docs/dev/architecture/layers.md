@@ -92,9 +92,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`. **최다 피참조(26)** — 층을 잇는 공용 언어이며, **아무것도 import 하지 않는다**(측정으로 고정) |
-| `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
 | `core/capability` | capability 집합 |
-| `core/logs` | 로그 라인 모델 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산
 
@@ -142,7 +140,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션 |
-| `core/collector` | live tail · chainstate · bp 참여 · reorg |
+| `core/collector` | live tail · chainstate · bp 참여 · reorg · 이벤트 타입·`Bus`(bounded, drop-on-full)·run 기록(`FileStore`/`MemStore`) · 로그 검색·타임라인(`Search`·`Timeline`·`SearchMatch`) — R1-5 에서 `core/obs`·`core/logs` 흡수 |
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) · 블록 전진 판정(`Health`, R1-4 에서 `core/health` 흡수) |
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `testspec` · `testspec/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3, 2026-08-28) |
@@ -230,8 +228,8 @@ flowchart TD
 | `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 인터페이스 경유 |
 | `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
 | `mcp` | 네트워크 레지스트리(R1-7 에서 `core/netreg` 흡수) | ◐ session 으로 흡수 검토 |
-| `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
-| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — mcp(netreg)·obs 와 같은 모양 |
+| `core/collector` | 이벤트 파일 싱크(R1-5 에서 `core/obs` 흡수) | ◐ session 으로 흡수 검토 |
+| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — mcp(netreg)·collector(obs) 와 같은 모양 |
 | `consensus/poa` | wemix genesis 생성의 **임시 작업 파일**(템플릿·거버넌스 config 를 임시 디렉터리에 쓰고 바이너리 출력을 읽음) | ✅ 패밀리의 genesis 소스 — 데이터 플레인이 아니라 로컬 스크래치이며 끝나면 지운다(P4.1, 2026-08-28; 옛 `chainsetup.WemixGenesisSource`) |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
@@ -272,8 +270,7 @@ flowchart TD
 | 패키지 | 상태 | 판정 |
 |---|---|---|
 | `core/process` | PID 테이블 | ✅ 프로세스 소유자 |
-| `core/obs` | 이벤트 버퍼(bounded) | ✅ |
-| `core/collector` | 샘플 윈도우 | ✅ |
+| `core/collector` | 이벤트 버퍼(bounded) · 샘플 윈도우 | ✅ |
 | `core/session` · `core/keyring` · `core/capability` | 각자 소유 | ✅ |
 | `testengine` | 조립 시 캐시 | ◐ 검토 |
 | `testkit` | 레거시 전역 케이스 레지스트리 | ❌ 삭제 예정 |

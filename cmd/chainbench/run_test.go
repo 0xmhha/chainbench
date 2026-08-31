@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
@@ -100,7 +100,7 @@ func TestRunCmd_DashboardStreamsEvents(t *testing.T) {
 	})
 
 	// A chainbench-dashboard whose bus we can observe.
-	srvBus := obs.NewBus()
+	srvBus := collector.NewBus()
 	defer srvBus.Close()
 	sub := srvBus.Subscribe()
 	dsrv := httptest.NewServer(dashboard.NewServer(srvBus, nil))

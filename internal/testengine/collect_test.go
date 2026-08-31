@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
@@ -24,7 +24,7 @@ func TestAttachEngine_EmitsChainstate(t *testing.T) {
 		},
 	})
 
-	bus := obs.NewBus()
+	bus := collector.NewBus()
 	sub := bus.Subscribe()
 
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{

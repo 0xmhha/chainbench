@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
@@ -19,9 +19,9 @@ func main() {
 	artifactRoot := flag.String("artifact-root", "", "directory of session artifacts to serve under /api/sessions (optional)")
 	flag.Parse()
 
-	bus := obs.NewBus()
+	bus := collector.NewBus()
 	defer bus.Close()
-	store := obs.NewMemStore()
+	store := collector.NewMemStore()
 
 	var opts []dashboard.Option
 	if *artifactRoot != "" {

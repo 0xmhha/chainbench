@@ -12,7 +12,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -60,7 +59,7 @@ func TestStartCollection_MirrorsChainstateAndLogs(t *testing.T) {
 	probe := func(context.Context, string) (collector.Sample, error) {
 		return collector.Sample{Height: 7, Peers: 2, HeadHash: "0xh", HeadMiner: "0xA"}, nil
 	}
-	bus := obs.NewBus()
+	bus := collector.NewBus()
 	sub := bus.Subscribe()
 
 	stop := startCollection(context.Background(), env, bus, probe, 5*time.Millisecond)

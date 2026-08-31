@@ -18,8 +18,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -74,7 +74,7 @@ type HealthReport struct {
 // block height strictly increases across the two samples. The returned error is
 // non-nil only for a wholly empty node set; per-node failures are recorded in
 // NodeInfo.OK/Err. bus may be nil.
-func Health(ctx context.Context, ns node.NodeSet, opts HealthOptions, bus *obs.Bus) (HealthReport, error) {
+func Health(ctx context.Context, ns node.NodeSet, opts HealthOptions, bus *collector.Bus) (HealthReport, error) {
 	dial := opts.Dial
 	if dial == nil {
 		dial = func(url string) Prober { return rpc.Dial(url) }
@@ -102,18 +102,18 @@ func Health(ctx context.Context, ns node.NodeSet, opts HealthOptions, bus *obs.B
 		if err := fill(ctx, p, &info); err != nil {
 			info.OK = false
 			info.Err = err.Error()
-			emit(bus, obs.Event{Phase: obs.PhaseVerify, Kind: obs.KindError, Network: ns.Network,
+			emit(bus, collector.Event{Phase: collector.PhaseVerify, Kind: collector.KindError, Network: ns.Network,
 				Node: n.Index, Message: "node info failed", Fields: map[string]any{"error": err.Error()}})
 		} else {
 			info.OK = true
-			emit(bus, obs.Event{Phase: obs.PhaseVerify, Kind: obs.KindProgress, Network: ns.Network,
+			emit(bus, collector.Event{Phase: collector.PhaseVerify, Kind: collector.KindProgress, Network: ns.Network,
 				Node: n.Index, Message: "node info", Fields: map[string]any{
 					"chain_id": info.ChainID, "block": info.BlockNumber, "peers": info.PeerCount}})
 		}
 		rep.Nodes = append(rep.Nodes, info)
 	}
 
-	emit(bus, obs.Event{Phase: obs.PhaseVerify, Kind: obs.KindResult, Network: ns.Network,
+	emit(bus, collector.Event{Phase: collector.PhaseVerify, Kind: collector.KindResult, Network: ns.Network,
 		Message: "verify complete", Fields: map[string]any{"producing": rep.Producing, "nodes": len(rep.Nodes)}})
 	return rep, nil
 }
@@ -180,7 +180,7 @@ func detectProducing(ctx context.Context, ns node.NodeSet, dial func(string) Pro
 	return false
 }
 
-func emit(bus *obs.Bus, e obs.Event) {
+func emit(bus *collector.Bus, e collector.Event) {
 	if bus != nil {
 		bus.Publish(e)
 	}
