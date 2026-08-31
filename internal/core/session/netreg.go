@@ -9,7 +9,7 @@
 // letting it die with the code around it. Its lifetime is also different: a
 // session is one run's artifacts, a composition is one workspace, and this is
 // a machine-wide inventory keyed by name.
-package netreg
+package session
 
 import (
 	"encoding/json"

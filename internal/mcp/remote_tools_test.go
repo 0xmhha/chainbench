@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/netreg"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -17,7 +17,7 @@ func TestRemoteRPCTool(t *testing.T) {
 		Chain: "wbft", Network: "prod",
 		Nodes: []node.Node{{Index: 1, Role: node.RoleEndpoint, RPCURL: srv.URL}},
 	}
-	if err := netreg.SaveNetwork(dir, ns); err != nil {
+	if err := session.SaveNetwork(dir, ns); err != nil {
 		t.Fatal(err)
 	}
 

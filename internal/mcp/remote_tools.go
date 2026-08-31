@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/netreg"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/testkit"
@@ -44,7 +44,7 @@ func remoteRPCTool() Tool {
 			if name == "" || stateDir == "" || method == "" {
 				return "", fmt.Errorf("name, state_dir, and method are required")
 			}
-			ns, err := netreg.LoadNetwork(stateDir, name)
+			ns, err := session.LoadNetwork(stateDir, name)
 			if err != nil {
 				return "", err
 			}
