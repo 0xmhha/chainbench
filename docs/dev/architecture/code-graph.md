@@ -35,7 +35,7 @@ and `tests/` and emits:
 
 ```mermaid
 flowchart TD
-    entry[entry: cmd/chainbench · -mcp · -dashboard · netcmd · netmapcmd · keyringcmd · serverflag]
+    entry[entry: cmd/chainbench · -mcp · -dashboard · netcmd · resourcecmd · keyringcmd]
     usecase[usecase: app]
     orch[orchestration: chainsetup · testengine · testspec · mcp · dashboard]
     domain[domain: chains · consensus · accounts]
@@ -89,7 +89,7 @@ same question.
 
 ```mermaid
 flowchart TD
-    cmd[cmd: netmapcmd · netcmd · keyringcmd · serverflag]
+    cmd[cmd: resourcecmd · netcmd · keyringcmd]
     app[app]
     setup[chainsetup]
     engine[testengine]

@@ -730,7 +730,8 @@ core 를 직접 부른다는 v2 원칙과 부딪힌다 — §7 열린 질문 7 �
 2. **`session` 의 경계.** 1,050줄이 세션·환경·기록·잠금을 겸한다. `node` 와 겹치는
    부분(노드 테이블·경로)이 옮겨간 뒤 무엇이 남는지 P2 완료 시점에 다시 잰다.
 3. ~~CLI 표면도 가를까~~ → **갈랐다**(P5 완료 2026-08-28): `resource pool·plan` ·
-   `net show` · 공용 렌더러 `cmd/chainbench/internal/mapview`. 레거시 명령 14곳의
+   `net show` · 공용 렌더러 `cmd/chainbench/internal/mapview`(→ 2026-08-31 사용자 결정으로
+   `resourcecmd` 에 흡수 — `ServerFlags`·`PrintMap`, `cmd` 아래 `internal` 폴더 소멸). 레거시 명령 14곳의
    `--data-dir` 은 T7.11 은퇴와 함께 사라진다(두 번 손대지 않기).
 4. **`node` 가 덤핑 패키지가 되지 않게** — 사실과 그 사실에서 파생되는 질문만
    소유하고, I/O 는 절대 들이지 않는다(out-edge 0 을 게이트로 고정).

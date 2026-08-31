@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 
 	"github.com/spf13/cobra"
@@ -50,7 +50,7 @@ func newRunCmd() *cobra.Command {
 		workspaceDir string
 		keepUp       bool
 		waitBlocks   uint64
-		sf           serverflag.Flags
+		sf           resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",

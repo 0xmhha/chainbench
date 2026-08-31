@@ -3,9 +3,6 @@ package resourcecmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/mapview"
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
-
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -17,7 +14,7 @@ func newPlanCmd() *cobra.Command {
 	var chain string
 	var validators, endpoints int
 	var asJSON bool
-	var sf serverflag.Flags
+	var sf ServerFlags
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "Compute the placement a network of this shape would get, without composing it",
@@ -34,9 +31,9 @@ func newPlanCmd() *cobra.Command {
 				return err
 			}
 			if asJSON {
-				return mapview.JSON(cmd.OutOrStdout(), out)
+				return MapJSON(cmd.OutOrStdout(), out)
 			}
-			mapview.Print(cmd.OutOrStdout(), out)
+			PrintMap(cmd.OutOrStdout(), out)
 			return nil
 		},
 	}

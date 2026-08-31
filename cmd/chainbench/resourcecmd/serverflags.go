@@ -1,8 +1,4 @@
-// Package serverflag is the one binding for the server-selection flags every
-// placing command shares (--server-set, --server, --server-index, --all-servers).
-// Host addresses and ports live in the server-set file, never on the command
-// line; these flags only select within it.
-package serverflag
+package resourcecmd
 
 import (
 	"github.com/spf13/cobra"
@@ -10,8 +6,12 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
-// Flags holds the selection.
-type Flags struct {
+// ServerFlags is the one binding for the server-selection flags every
+// placing command shares (--server-set, --server, --server-index,
+// --all-servers). Host addresses and ports live in the server-set file,
+// never on the command line; these flags only select within it. The resource
+// surface owns it; `net` and `run` borrow it.
+type ServerFlags struct {
 	config     string
 	server     string
 	index      int
@@ -19,7 +19,7 @@ type Flags struct {
 }
 
 // Bind registers the flags on cmd.
-func (f *Flags) Bind(cmd *cobra.Command) {
+func (f *ServerFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.config, "server-set", "",
 		"server-set file: which servers exist and how to reach them (default: "+resource.DefaultSetFile+" when present)")
 	cmd.Flags().StringVar(&f.server, "server", "", "server to place nodes on, by name from the server set")
@@ -28,6 +28,6 @@ func (f *Flags) Bind(cmd *cobra.Command) {
 }
 
 // Ref is the module-layer selection.
-func (f *Flags) Ref() resource.ServerRef {
+func (f *ServerFlags) Ref() resource.ServerRef {
 	return resource.ServerRef{SetPath: f.config, Name: f.server, Index: f.index, All: f.allServers}
 }
