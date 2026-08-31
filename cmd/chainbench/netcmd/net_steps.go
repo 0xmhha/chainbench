@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
@@ -61,7 +61,7 @@ func newNetKeysCmd() *cobra.Command {
 func newNetAllocateCmd() *cobra.Command {
 	var validators, endpoints int
 	var endpointSyncMode, topologyPath, peering string
-	var sf serverflag.Flags
+	var sf resourcecmd.ServerFlags
 	cmd, _ := stepCmd("allocate", "Build the node table: roles, paths, deterministic ports",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := chainsetup.NetAllocate(cmd.Context(), deps(cmd), chainsetup.NetAllocateIn{

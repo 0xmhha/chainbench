@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/mapview"
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 
 	"github.com/0xmhha/chainbench/internal/app"
 )
@@ -46,9 +46,9 @@ func newNetShowCmd() *cobra.Command {
 				return err
 			}
 			if asJSON {
-				return mapview.JSON(cmd.OutOrStdout(), out)
+				return resourcecmd.MapJSON(cmd.OutOrStdout(), out)
 			}
-			mapview.Print(cmd.OutOrStdout(), out)
+			resourcecmd.PrintMap(cmd.OutOrStdout(), out)
 			return nil
 		},
 	}

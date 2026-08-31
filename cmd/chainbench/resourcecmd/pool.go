@@ -7,10 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
-
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/mapview"
-
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -20,7 +16,7 @@ import (
 func newPoolCmd() *cobra.Command {
 	var workspaceDir string
 	var asJSON bool
-	var sf serverflag.Flags
+	var sf ServerFlags
 	cmd := &cobra.Command{
 		Use:   "pool",
 		Short: "Show the addresses and port slots a network may be composed from",
@@ -36,7 +32,7 @@ func newPoolCmd() *cobra.Command {
 				return err
 			}
 			if asJSON {
-				return mapview.JSON(cmd.OutOrStdout(), out)
+				return MapJSON(cmd.OutOrStdout(), out)
 			}
 			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "HOST")

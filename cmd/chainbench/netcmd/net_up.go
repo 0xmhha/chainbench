@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/internal/serverflag"
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
@@ -26,7 +26,7 @@ func newNetUpCmd() *cobra.Command {
 		peering                               string
 		docker                                bool
 		tf                                    targetFlags
-		sf                                    serverflag.Flags
+		sf                                    resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "up",
