@@ -38,14 +38,13 @@ go-wbft 의 make 타깃은 `gwemix` 라는 이름의 바이너리를 만들므�
 `GOWEMIX_TEMPLATE=/path/to/go-wemix/wemix/scripts/genesis-template.json`.
 chainbench 에 내장된 wemix 템플릿은 치환용이라 바이너리가 거부한다.
 
-## 검증 상태 (2026-08-28)
+## 검증 상태 (2026-08-31)
+
+네 갈래 모두 이 머신에서 라이브로 통과했다 (`run --workspace-dir`, 케이스 pass 후 정리).
 
 | 갈래 | 오프라인 validate | 라이브 |
 |---|---|---|
-| stablenet | ✅ | ✅ 이 머신의 gstable 로 `run --workspace-dir` 통과 |
-| wbft | ✅ | ☐ gwbft 빌드 없음 |
-| wemix | ✅ | ☐ gwemix 빌드 없음 |
-| wemix → wbft | ✅ | ☐ 두 바이너리와 템플릿 없음 |
-
-라이브로 확인되지 않은 갈래는 선언과 실행기 경로만 검증된 상태다. 바이너리가 준비되면
-위 명령을 그대로 돌리고 이 표를 갱신한다.
+| stablenet | ✅ | ✅ gstable v1.1.0 (2026-08-28) |
+| wbft | ✅ | ✅ go-wbft 1.0.0-alpha 빌드, `GWBFT_BIN=<go-wbft>/build/bin/gwemix` (2026-08-31) |
+| wemix | ✅ | ✅ go-wemix 0.10.14 빌드 — governance-etcd 2-페이즈 부트스트랩 포함 (2026-08-31) |
+| wemix → wbft | ✅ | ✅ 두 빌드 + `GOWEMIX_TEMPLATE` — verify-etcd 통과, 블록 21 을 후계 검증자가 봉인 (2026-08-31) |

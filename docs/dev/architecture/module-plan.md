@@ -608,9 +608,12 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   풀고, env 파일 자체는 선언으로 검증한다. 케이스 디렉터리가 공유하는 `../env/` 도
   찾는다.
 - 게이트: `app`·`testengine`·`chainsetup` 에 `if chain ==` 0건(있는 것은 빈 문자열
-  검사 하나). 네 케이스와 env 4개가 `validate` 통과. **라이브는 stablenet 만**
-  (이 머신의 gstable): 조립 → 4노드 → 케이스 통과 → 정리. wbft·wemix·핸드오프는
-  바이너리가 없어 선언과 실행기 경로까지만 검증됐다(`tests/cases/README.md` 표).
+  검사 하나). 네 케이스와 env 4개가 `validate` 통과. **라이브 4/4** (2026-08-31 완결):
+  stablenet(gstable) · wbft(go-wbft 빌드) · wemix(go-wemix 빌드, governance-etcd
+  2-페이즈 부트스트랩 포함) · 핸드오프(두 빌드, verify-etcd 후 블록 21 을 후계
+  검증자가 봉인). 핸드오프 검증 중 gwemix 0.10.x 의 `etcd.members` 응답 모양
+  변화(문자열→객체)가 verify 파싱을 깨는 것을 발견 — 아무도 읽지 않는 필드라
+  `poa.EtcdState` 에서 제거(`tests/cases/README.md` 표).
 - 남은 것: P6.4 — `chain up --case` 러너(cases·static·wemix·handoff·report·state,
   `cmd/chainbench/chain.go`)를 지운다. 케이스의 단계 보고는 `RunSuiteOut.SetupSteps`
   가 대신한다.

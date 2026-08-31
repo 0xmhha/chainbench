@@ -11,9 +11,12 @@ import (
 // EtcdState is what a wemix producer reports about its embedded etcd cluster.
 // It is the check that distinguishes "etcdInit ran" from "the cluster formed" —
 // the difference the handoff CLI could not see.
+// Only the cluster string is read: it is the one evidence the bootstrap
+// worked. The member list's shape differs between gwemix builds (names in
+// one, objects in another), and parsing what nothing reads is how a build
+// bump broke the verify step once.
 type EtcdState struct {
-	Cluster string   `json:"cluster"`
-	Members []string `json:"members"`
+	Cluster string `json:"cluster"`
 }
 
 // Info is the subset of admin.wemixInfo that says whether the governance
