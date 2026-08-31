@@ -85,7 +85,7 @@ flowchart TD
 > 3체인 실행 추적은 [[module-responsibilities]](module-responsibilities.md) 에 있고,
 > 거기서 이 문서의 보정 3건(B1 `testspec` 분할 · B2 노드 생명주기 소유자 · B3 관심사 열)을 제기한다.
 
-## 3. 모듈 배치 (57개 전수)
+## 3. 모듈 배치 (47개 전수 — R1 통폐합으로 8개 감소, 2026-08-31)
 
 ### L0 커널 — 공용 어휘
 

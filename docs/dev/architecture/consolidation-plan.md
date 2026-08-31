@@ -66,6 +66,30 @@
 | `core/netreg` → `mcp` | 161 | 소비자가 mcp 뿐 |
 | `core/consensus` → `core/registry`, `core/capability` → 소비자 조사 후 registry/testengine | 23+222 | |
 
+#### R1 실행 결과 (2026-08-31, 패키지 71 → 63; internal 트리 47)
+
+착수 후 **측정된 층·의존 방향**(layers.md §3 arch 게이트: 낮은 층이 높은 층을 import 금지)과
+대조하니 위 표의 세 항목이 그대로는 실행 불가였다. 사용자 확정 후 조정한다.
+
+**완료 (8 relocation / 5 커밋):**
+
+| 이동 | 목적지 | 결정 근거 |
+|---|---|---|
+| `core/topology` → `core/node` | node(L0) | 선언과 사실은 한 대상. node 내부-import-0 유지(외부 YAML 만) |
+| `core/launchopt`·`core/config` → `core/nodeconfig` | nodeconfig(L1) | argv·설정 해석·파일 렌더 한 지붕 |
+| `core/netid` → `resource` | resource(L1) | 네트워크 id 는 자원 배정값 |
+| `core/consensus`·`core/capability` → `core/registry` | registry(L1) | 등록물의 능력은 레지스트리와 함께. `capability.Get`→`GetByAddress`(레지스트리 `Get` 과 충돌) |
+| `core/obs`·`core/logs` → `core/collector` | collector(L3) | 관측 세 면(이벤트·로그·수집)이 한 모듈. §5 writer 를 obs→collector 로 |
+
+**조정·보류 (arch 게이트/응집도 충돌 — 결정 필요):**
+
+| 항목 | 계획대로면 | 실제 | 이유 |
+|---|---|---|---|
+| `validatorset` → `core/node` | L3→L0 | **제외** | validatorset 이 `chains/all`(L2)·`registry`(L1) 를 import — L0 커널에 못 들어간다. 로스터 계산은 L3 행위 |
+| `core/hardfork` → `core/genesis` | L3→L1 | **보류(재타깃도 보류)** | hardfork 가 `chains/all`(L2)·`driver` import — genesis(L1) 위반. upgrade(L2a) 재타깃은 층-안전하나 `Plan`·`BuildPlan` 이 upgrade 와 충돌 — 둘은 **의도적으로 다른 업그레이드 모델**(바이너리 swap vs 합의 handoff, hardfork.go 주석). 이름/소유 결정이 필요한 비-기계적 작업 |
+| `core/health` → `core/inspector` | L3→L1 | **보류** | health 가 obs(→collector L3) 를 import → inspector(L1) 위반. inspector 는 "판단 없는 실사" 계약이라 판정 로직(health) 흡수도 개념 어긋남 |
+| `core/netreg` → `mcp` | L3→L6 | **보류** | netreg 는 파일 writer(§5). mcp(L6 표면) 로 옮기면 표면이 영속-상태 소유자가 됨 — §5 스스로 권하는 `core/session` 흡수와 어긋남. mcp vs session 결정 필요 |
+
 ### R2. DSL 분리 — 문법과 실행기
 
 - `testspec` → **`dsl`** 로 개명, 문법·파싱·검증·fingerprint·Registry 계약만 남긴다.
