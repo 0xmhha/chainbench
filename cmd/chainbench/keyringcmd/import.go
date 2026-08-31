@@ -45,10 +45,10 @@ func newKeyringImportCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
+				announce(cmd, r)
 				if jsonF.on {
 					return emitJSON(out, r)
 				}
-				announce(out, r)
 				return renderEntries(out, r)
 			}
 			if err := label.require("import"); err != nil {

@@ -25,7 +25,7 @@ func newKeyringListCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			announce(out, r)
+			announce(cmd, r)
 			if jsonF.on {
 				return emitJSON(out, r.Entries)
 			}

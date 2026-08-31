@@ -3,11 +3,12 @@ package keyringcmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/0xmhha/chainbench/internal/resource"
 
 	"github.com/spf13/cobra"
 
@@ -93,13 +94,16 @@ func deps(cmd *cobra.Command) operation.Deps {
 }
 
 // announce prints which key set was used and why, before anything else, so the
-// path is never a guess — including when the command then fails.
+// path is never a guess — including when the command then fails, and
+// including with --json. It goes to stderr: stdout belongs to the answer,
+// and `keyring list --json | jq` must never have to strip a report line off
+// the front of it (the same rule deps' operational notes follow).
 //
 // The use case reports a surface-neutral source ("explicit"); here it is named
 // in this surface's own vocabulary, because an operator asking "why that key set?"
 // wants the flag they typed.
-func announce(out io.Writer, r operation.SetOut) {
-	fmt.Fprintf(out, "keyring: %s (%s)\n", r.Dir, ringSourceName(r.Source))
+func announce(cmd *cobra.Command, r operation.SetOut) {
+	fmt.Fprintf(cmd.ErrOrStderr(), "keyring: %s (%s)\n", r.Dir, ringSourceName(r.Source))
 }
 
 // ringSourceName renders a use-case source as a CLI reason.
