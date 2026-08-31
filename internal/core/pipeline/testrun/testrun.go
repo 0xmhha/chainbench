@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
