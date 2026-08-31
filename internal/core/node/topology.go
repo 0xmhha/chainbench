@@ -1,6 +1,6 @@
 // Package topology is the config-file model for a local test network's node
 // layout: which node index plays which role (block producer / endpoint / boot),
-// its sync mode (full / snap / archive), and which node is the bootnode. It
+// its sync mode (full / snap / archive), and which node is the boot It
 // replaces the positional "N validators + M endpoints" counts with an explicit,
 // per-node, inspectable description, so a test's environment is set up by one
 // consistent rule and you can tell from the file exactly how the chain is
@@ -8,14 +8,13 @@
 //
 // It is a pure config model (load + validate + normalize); the setup pipeline
 // consumes a Topology to build the per-node launch specs.
-package topology
+package node
 
 import (
 	"fmt"
 	"os"
 	"sort"
 
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -27,9 +26,9 @@ type Topology struct {
 }
 
 // Entry is one node as the topology file declares it — index, role, sync mode,
-// bootnode flag. A declaration, not the node's fact record (node.Record): the
+// bootnode flag. A declaration, not the node's fact record (Record): the
 // composition reads this and writes that.
-// it is the bootnode.
+// it is the boot
 type Entry struct {
 	Index    int    `yaml:"index"`
 	Role     string `yaml:"role"`                // bp|validator, en|endpoint, boot
@@ -57,7 +56,7 @@ var validSyncModes = map[string]bool{"": true, "full": true, "snap": true, "arch
 
 // Validate checks the topology is internally consistent: at least one node, a
 // contiguous 1..N index set, recognized roles and sync modes, at least one block
-// producer, and at most one bootnode.
+// producer, and at most one boot
 func (t Topology) Validate() error {
 	if t.Chain == "" {
 		return fmt.Errorf("topology: chain is required")
@@ -68,14 +67,14 @@ func (t Topology) Validate() error {
 	idx := make([]int, 0, len(t.Nodes))
 	producers, bootnodes := 0, 0
 	for _, n := range t.Nodes {
-		role, err := node.NormalizeRole(n.Role)
+		role, err := NormalizeRole(n.Role)
 		if err != nil {
 			return fmt.Errorf("topology: node %d has unknown role %q (want bp|validator, en|endpoint, boot)", n.Index, n.Role)
 		}
 		if !validSyncModes[n.SyncMode] {
 			return fmt.Errorf("topology: node %d has unknown sync_mode %q (want full, snap, archive)", n.Index, n.SyncMode)
 		}
-		if role == node.RoleBP {
+		if role == RoleBP {
 			producers++
 		}
 		if n.Bootnode {
@@ -98,16 +97,16 @@ func (t Topology) Validate() error {
 	return nil
 }
 
-// NodeRole returns the node.Role for n (validated by Validate), in the legacy
+// NodeRole returns the Role for n (validated by Validate), in the legacy
 // spelling the composition still persists and compares. The alias table this
 // package used to keep is gone — netmap owns the folding, and this method
 // switches to the canonical spelling when the launch flows migrate to it.
-func (n Entry) NodeRole() node.Role {
-	role, err := node.NormalizeRole(n.Role)
+func (n Entry) NodeRole() Role {
+	role, err := NormalizeRole(n.Role)
 	if err != nil {
 		return "" // unreachable after Validate; an invalid role never launches
 	}
-	return node.LegacySpelling(role)
+	return LegacySpelling(role)
 }
 
 // EffectiveSyncMode returns n's sync mode, defaulting an unset value to "full".
@@ -139,9 +138,9 @@ func (t Topology) BootnodeIndex() int {
 func (t Topology) Counts() (producers, endpoints int) {
 	for _, n := range t.Nodes {
 		switch n.NodeRole() {
-		case node.RoleValidator, node.RoleBP:
+		case RoleValidator, RoleBP:
 			producers++
-		case node.RoleEndpoint, node.RoleEN:
+		case RoleEndpoint, RoleEN:
 			endpoints++
 		}
 	}

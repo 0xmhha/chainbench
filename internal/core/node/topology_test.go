@@ -1,11 +1,10 @@
-package topology
+package node
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 func writeTmp(t *testing.T, content string) string {
@@ -45,10 +44,10 @@ nodes:
 	for _, n := range topo.Nodes {
 		byIdx[n.Index] = n
 	}
-	if byIdx[1].NodeRole() != node.RoleValidator {
+	if byIdx[1].NodeRole() != RoleValidator {
 		t.Errorf("node1 role = %v, want validator", byIdx[1].NodeRole())
 	}
-	if byIdx[3].NodeRole() != node.RoleEndpoint || byIdx[3].EffectiveSyncMode() != "archive" {
+	if byIdx[3].NodeRole() != RoleEndpoint || byIdx[3].EffectiveSyncMode() != "archive" {
 		t.Errorf("node3 = %v/%s, want endpoint/archive", byIdx[3].NodeRole(), byIdx[3].EffectiveSyncMode())
 	}
 	if byIdx[4].EffectiveSyncMode() != "full" {

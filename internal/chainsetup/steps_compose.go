@@ -23,7 +23,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -116,7 +115,7 @@ type AllocateOpts struct {
 	// launch order, each with its own role and sync mode. It replaces the
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
 	// per-node choice. Its Nodes must already be Validate()d.
-	Topology *topology.Topology
+	Topology *node.Topology
 	// Pool decides the port bands and the capacity
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
