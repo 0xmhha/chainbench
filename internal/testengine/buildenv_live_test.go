@@ -15,9 +15,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testengine"
-	"github.com/0xmhha/chainbench/internal/testspec"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 )
@@ -80,7 +80,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 		Genesis:    genesis.PresetSource{KeysDir: presetDir},
 		Supervisor: sup,
 		Caps:       []string{"ws"},
-		Reqs: func(testspec.Spec) []node.LaunchReq {
+		Reqs: func(dsl.Spec) []node.LaunchReq {
 			reqs := make([]node.LaunchReq, 4)
 			for i := range reqs {
 				reqs[i] = node.LaunchReq{Role: node.RoleValidator, Binary: "go-stablenet"}
@@ -98,7 +98,7 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 		t.Fatalf("NewEnvironment: %v", err)
 	}
 
-	ns, teardown, err := build(ctx, env, testspec.Spec{})
+	ns, teardown, err := build(ctx, env, dsl.Spec{})
 	if teardown != nil {
 		t.Cleanup(func() { _ = teardown(context.Background()) })
 	}

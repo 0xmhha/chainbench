@@ -7,16 +7,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // caseWithEnv builds a v2 case whose env is the given object, parsed the way
 // the suite parses it.
-func caseWithEnv(t *testing.T, env string) testspec.Spec {
+func caseWithEnv(t *testing.T, env string) dsl.Spec {
 	t.Helper()
 	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":` + env + `,
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
-	s, err := testspec.Parse([]byte(raw))
+	s, err := dsl.Parse([]byte(raw))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
@@ -141,10 +141,10 @@ func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 func TestSameChain(t *testing.T) {
 	a := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"g"}}`)
 	b := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"f","chain":"wbft","binaries":{"default":"g"}}`)
-	if err := sameChain([]testspec.Spec{a, a}); err != nil {
+	if err := sameChain([]dsl.Spec{a, a}); err != nil {
 		t.Errorf("same chain refused: %v", err)
 	}
-	if err := sameChain([]testspec.Spec{a, b}); err == nil {
+	if err := sameChain([]dsl.Spec{a, b}); err == nil {
 		t.Error("two chains in one suite accepted")
 	}
 }

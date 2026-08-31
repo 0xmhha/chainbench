@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // newMigrateSpecCmd mechanically converts a v1 spec to the v2 grammar
@@ -24,10 +24,10 @@ func newMigrateSpecCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if testspec.IsV2(raw) {
+			if dsl.IsV2(raw) {
 				return fmt.Errorf("%s already declares schemaVersion 2", args[0])
 			}
-			out, err := testspec.MigrateV1(raw)
+			out, err := dsl.MigrateV1(raw)
 			if err != nil {
 				return err
 			}

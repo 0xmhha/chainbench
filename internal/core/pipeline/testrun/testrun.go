@@ -4,7 +4,7 @@
 // Report. It emits obs events and persists a RunRecord per case so the dashboard
 // and `report` can read results back (docs/CHAINBENCH_GO_REDESIGN.md §3, §9).
 //
-// Legacy: superseded by internal/engine running internal/testspec DSL specs
+// Legacy: superseded by internal/engine running internal/dsl DSL specs
 // (`chainbench run`). It is retained only while the Go-func suites under tests/
 // are ported to DSL specs. See docs/dev/legacy-retirement-plan.md.
 package testrun

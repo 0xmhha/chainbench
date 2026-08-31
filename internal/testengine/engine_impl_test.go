@@ -10,7 +10,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
@@ -29,7 +29,7 @@ func specJSON(id, chain string) []byte {
 type harness struct {
 	buildCount, runCount, teardownCount int
 	fpByChain                           map[string]session.Fingerprint
-	applicable                          func(testspec.Spec) bool
+	applicable                          func(dsl.Spec) bool
 }
 
 func (h *harness) deps(t *testing.T) testengine.Deps {
@@ -38,16 +38,16 @@ func (h *harness) deps(t *testing.T) testengine.Deps {
 		NewSession: func(_ context.Context, cmd string) (session.Session, error) {
 			return session.New(t.TempDir(), cmd, time.Unix(0, 0).UTC())
 		},
-		Fingerprint: func(s testspec.Spec) session.Fingerprint {
+		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return h.fpByChain[s.Chain.Name]
 		},
 		Applicable: h.applicable,
-		BuildEnv: func(_ context.Context, _ session.Environment, _ testspec.Spec) (node.NodeSet, testengine.TeardownFunc, error) {
+		BuildEnv: func(_ context.Context, _ session.Environment, _ dsl.Spec) (node.NodeSet, testengine.TeardownFunc, error) {
 			h.buildCount++
 			ns := node.NodeSet{Nodes: []node.Node{{Index: 1, Role: node.RoleValidator}}}
 			return ns, func(context.Context) error { h.teardownCount++; return nil }, nil
 		},
-		RunSpec: func(_ context.Context, _ testspec.Spec, _ session.Environment, rec session.TestRecord) (session.TestStatus, error) {
+		RunSpec: func(_ context.Context, _ dsl.Spec, _ session.Environment, rec session.TestRecord) (session.TestStatus, error) {
 			h.runCount++
 			rec.Status(session.StatusPass)
 			return session.StatusPass, nil
@@ -94,7 +94,7 @@ func TestEngine_DifferentFingerprintsBuildTwice(t *testing.T) {
 func TestEngine_SkipsInapplicable(t *testing.T) {
 	h := &harness{
 		fpByChain:  map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
-		applicable: func(s testspec.Spec) bool { return s.Chain.Name == "wbft" },
+		applicable: func(s dsl.Spec) bool { return s.Chain.Name == "wbft" },
 	}
 	e := testengine.New(h.deps(t))
 	if _, err := e.Run(context.Background(), [][]byte{specJSON("T1", "stablenet")}); err != nil {

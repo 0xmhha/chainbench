@@ -1,4 +1,4 @@
-package testspec
+package dsl
 
 import (
 	"bytes"
@@ -168,19 +168,19 @@ func parseStrict(raw []byte, out any) error {
 func ParseV2(raw []byte) (Spec, error) {
 	var s sniff
 	if err := json.Unmarshal(raw, &s); err != nil {
-		return Spec{}, fmt.Errorf("testspec: parse v2: %w", err)
+		return Spec{}, fmt.Errorf("dsl: parse v2: %w", err)
 	}
 	switch s.Kind {
 	case KindCase:
 		var c CaseV2
 		if err := parseStrict(raw, &c); err != nil {
-			return Spec{}, fmt.Errorf("testspec: parse v2 case: %w", err)
+			return Spec{}, fmt.Errorf("dsl: parse v2 case: %w", err)
 		}
 		return lowerCase(c)
 	case KindEnv:
-		return Spec{}, fmt.Errorf("testspec: an env declaration is not runnable — reference it from a case (\"env\": \"<id>\")")
+		return Spec{}, fmt.Errorf("dsl: an env declaration is not runnable — reference it from a case (\"env\": \"<id>\")")
 	default:
-		return Spec{}, fmt.Errorf("testspec: v2 spec needs \"kind\": %q or %q", KindCase, KindEnv)
+		return Spec{}, fmt.Errorf("dsl: v2 spec needs \"kind\": %q or %q", KindCase, KindEnv)
 	}
 }
 
@@ -196,13 +196,13 @@ func IsEnv(raw []byte) bool {
 func ParseEnv(raw []byte) (EnvV2, error) {
 	var env EnvV2
 	if err := parseStrict(raw, &env); err != nil {
-		return EnvV2{}, fmt.Errorf("testspec: env: %w", err)
+		return EnvV2{}, fmt.Errorf("dsl: env: %w", err)
 	}
 	if env.Kind != KindEnv {
-		return EnvV2{}, fmt.Errorf("testspec: env kind is %q, want %q", env.Kind, KindEnv)
+		return EnvV2{}, fmt.Errorf("dsl: env kind is %q, want %q", env.Kind, KindEnv)
 	}
 	if env.ID == "" || env.Chain == "" {
-		return EnvV2{}, fmt.Errorf("testspec: env needs \"id\" and \"chain\"")
+		return EnvV2{}, fmt.Errorf("dsl: env needs \"id\" and \"chain\"")
 	}
 	return env, nil
 }
@@ -220,7 +220,7 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 		Env  json.RawMessage `json:"env"`
 	}
 	if err := json.Unmarshal(raw, &probe); err != nil {
-		return nil, fmt.Errorf("testspec: inline env: %w", err)
+		return nil, fmt.Errorf("dsl: inline env: %w", err)
 	}
 	if probe.Kind != KindCase || len(probe.Env) == 0 {
 		return raw, nil
@@ -230,15 +230,15 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 		return raw, nil // inline env object (or malformed — ParseV2 reports it)
 	}
 	if lookup == nil {
-		return nil, fmt.Errorf("testspec: case references env %q but no env resolver is available", id)
+		return nil, fmt.Errorf("dsl: case references env %q but no env resolver is available", id)
 	}
 	envRaw, err := lookup(id)
 	if err != nil {
-		return nil, fmt.Errorf("testspec: resolve env %q: %w", id, err)
+		return nil, fmt.Errorf("dsl: resolve env %q: %w", id, err)
 	}
 	var doc map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &doc); err != nil {
-		return nil, fmt.Errorf("testspec: inline env: %w", err)
+		return nil, fmt.Errorf("dsl: inline env: %w", err)
 	}
 	doc["env"] = envRaw
 	return json.Marshal(doc)
@@ -247,24 +247,24 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 // lowerCase lowers a v2 case (env inline) onto the executable Spec.
 func lowerCase(c CaseV2) (Spec, error) {
 	if c.ID == "" {
-		return Spec{}, fmt.Errorf("testspec: v2 case needs \"id\"")
+		return Spec{}, fmt.Errorf("dsl: v2 case needs \"id\"")
 	}
 	if len(c.Env) == 0 {
-		return Spec{}, fmt.Errorf("testspec: v2 case %s needs \"env\" (an env id or an inline env object)", c.ID)
+		return Spec{}, fmt.Errorf("dsl: v2 case %s needs \"env\" (an env id or an inline env object)", c.ID)
 	}
 	var envID string
 	if json.Unmarshal(c.Env, &envID) == nil {
-		return Spec{}, fmt.Errorf("testspec: case %s references env %q — resolve it with InlineEnv before parsing", c.ID, envID)
+		return Spec{}, fmt.Errorf("dsl: case %s references env %q — resolve it with InlineEnv before parsing", c.ID, envID)
 	}
 	var env EnvV2
 	if err := parseStrict(c.Env, &env); err != nil {
-		return Spec{}, fmt.Errorf("testspec: case %s: env: %w", c.ID, err)
+		return Spec{}, fmt.Errorf("dsl: case %s: env: %w", c.ID, err)
 	}
 	if env.Kind != "" && env.Kind != KindEnv {
-		return Spec{}, fmt.Errorf("testspec: case %s: env kind is %q, want %q", c.ID, env.Kind, KindEnv)
+		return Spec{}, fmt.Errorf("dsl: case %s: env kind is %q, want %q", c.ID, env.Kind, KindEnv)
 	}
 	if env.Chain == "" {
-		return Spec{}, fmt.Errorf("testspec: case %s: env needs \"chain\"", c.ID)
+		return Spec{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
 
 	spec := Spec{
@@ -294,15 +294,15 @@ func lowerCase(c CaseV2) (Spec, error) {
 	// would mean every node runs one binary, which is not a handoff.
 	if u := env.Upgrade; u != nil {
 		if u.Profile == "" || u.Template == "" {
-			return Spec{}, fmt.Errorf("testspec: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
+			return Spec{}, fmt.Errorf("dsl: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
 		}
 		for _, role := range []string{RoleProducer, RoleValidator} {
 			if env.Binaries[role] == "" {
-				return Spec{}, fmt.Errorf("testspec: case %s: an upgrade env names binaries by role — binaries.%s is missing", c.ID, role)
+				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names binaries by role — binaries.%s is missing", c.ID, role)
 			}
 		}
 		if len(env.Binaries) != 2 {
-			return Spec{}, fmt.Errorf("testspec: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, RoleProducer, RoleValidator)
+			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, RoleProducer, RoleValidator)
 		}
 		spec.EnvUpgrade = u
 	}
@@ -311,7 +311,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	// declared modes have no support yet and are rejected by name (G2 partial).
 	if g := env.Genesis; g != nil {
 		if g.Mode != "" && g.Mode != "template" {
-			return Spec{}, fmt.Errorf("testspec: case %s: genesis mode %q has no runtime boundary yet (supported: template)", c.ID, g.Mode)
+			return Spec{}, fmt.Errorf("dsl: case %s: genesis mode %q has no runtime boundary yet (supported: template)", c.ID, g.Mode)
 		}
 		overlay := map[string]any{}
 		maps.Copy(overlay, g.Overlay)
@@ -331,7 +331,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Launch) > 0 {
 		all, ok := env.Launch["all"]
 		if !ok || len(env.Launch) > 1 {
-			return Spec{}, fmt.Errorf("testspec: case %s: launch supports the \"all\" scope today; role-scoped launch lands with per-role wiring", c.ID)
+			return Spec{}, fmt.Errorf("dsl: case %s: launch supports the \"all\" scope today; role-scoped launch lands with per-role wiring", c.ID)
 		}
 		for k, v := range all {
 			spec.EnvLaunch = append(spec.EnvLaunch, LaunchKV{Key: k, Value: fmt.Sprintf("%v", v)})
@@ -354,22 +354,22 @@ func lowerCase(c CaseV2) (Spec, error) {
 
 	// Statements.
 	if len(c.Steps) == 0 {
-		return Spec{}, fmt.Errorf("testspec: case %s has no steps", c.ID)
+		return Spec{}, fmt.Errorf("dsl: case %s has no steps", c.ID)
 	}
 	expects := 0
 	for i, raw := range c.Steps {
 		st, err := lowerStatement(raw)
 		if err != nil {
-			return Spec{}, fmt.Errorf("testspec: case %s: step %d: %w", c.ID, i+1, err)
+			return Spec{}, fmt.Errorf("dsl: case %s: step %d: %w", c.ID, i+1, err)
 		}
 		if st.Expect != "" {
 			expects++
-			spec.Assertions = append(spec.Assertions, statementAssertion(st))
+			spec.Assertions = append(spec.Assertions, StatementAssertion(st))
 		}
 		spec.Sequence = append(spec.Sequence, st)
 	}
 	if expects == 0 {
-		return Spec{}, fmt.Errorf("testspec: case %s verifies nothing — at least one expect statement is required", c.ID)
+		return Spec{}, fmt.Errorf("dsl: case %s verifies nothing — at least one expect statement is required", c.ID)
 	}
 	return spec, nil
 }
@@ -411,16 +411,16 @@ func lowerStatement(m map[string]any) (Statement, error) {
 	return Statement{Expect: exName, Args: args}, nil
 }
 
-// statementAssertion renders an expect statement in the v1 assertion map shape.
-func statementAssertion(st Statement) map[string]any {
+// StatementAssertion renders an expect statement in the v1 assertion map shape.
+func StatementAssertion(st Statement) map[string]any {
 	out := make(map[string]any, len(st.Args)+1)
 	maps.Copy(out, st.Args)
 	out["assert"] = st.Expect
 	return out
 }
 
-// statementStep renders a do statement in the v1 step map shape.
-func statementStep(st Statement) map[string]any {
+// StatementStep renders a do statement in the v1 step map shape.
+func StatementStep(st Statement) map[string]any {
 	return map[string]any{st.Do: st.Args}
 }
 
@@ -445,12 +445,12 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 	for i, raw := range stmts {
 		st, err := lowerStatement(raw)
 		if err != nil {
-			return nil, fmt.Errorf("testspec: case %s: hooks.%s[%d]: %w", caseID, hook, i, err)
+			return nil, fmt.Errorf("dsl: case %s: hooks.%s[%d]: %w", caseID, hook, i, err)
 		}
 		if st.Do == "" {
-			return nil, fmt.Errorf("testspec: case %s: hooks.%s[%d]: hooks take do statements", caseID, hook, i)
+			return nil, fmt.Errorf("dsl: case %s: hooks.%s[%d]: hooks take do statements", caseID, hook, i)
 		}
-		out = append(out, statementStep(st))
+		out = append(out, StatementStep(st))
 	}
 	return out, nil
 }

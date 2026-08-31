@@ -1,4 +1,4 @@
-package testspec
+package interp
 
 import (
 	"reflect"

@@ -1,4 +1,4 @@
-package testspec
+package interp
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // Deps are the collaborators an interpreter needs, injected at construction so
@@ -112,7 +113,7 @@ type AssertCtx struct {
 // Interpreter runs a parsed Spec against a running environment, recording each
 // step and assertion, and returns the terminal status.
 type Interpreter interface {
-	Run(ctx context.Context, s Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
+	Run(ctx context.Context, s dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
 }
 
 // registry is the default instance-scoped registry.

@@ -11,8 +11,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
-	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // teardownGrace is how long a built environment's teardown waits for a graceful
@@ -25,7 +25,7 @@ type TeardownFunc func(ctx context.Context) error
 // BuildEnvFunc provisions and brings up a network for a spec, returning the node
 // set and a teardown. It has the same shape as Deps.BuildEnv so a wiring can be
 // assigned to it directly.
-type BuildEnvFunc func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error)
+type BuildEnvFunc func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error)
 
 // BuildDeps injects BuildEnv's collaborators so the composition is unit-testable
 // without real chain binaries: the launcher's launch and health hooks decide
@@ -46,7 +46,7 @@ type BuildDeps struct {
 	// Caps are the advertised capabilities recorded on the plan.
 	Caps []string
 	// Reqs derives per-node placement requests (role/binary/sync) from a spec.
-	Reqs func(spec testspec.Spec) []node.LaunchReq
+	Reqs func(spec dsl.Spec) []node.LaunchReq
 	// Provision materializes the plan's on-disk files (genesis, per-node config,
 	// keys). It is injected because file content is chain/preset-specific; nil
 	// skips provisioning (e.g. an attach-only or test build).
@@ -62,7 +62,7 @@ type BuildDeps struct {
 // the nodes and removes their data dirs. It is the production wiring for
 // Deps.BuildEnv when the engine builds its own network.
 func NewBuildEnv(d BuildDeps) BuildEnvFunc {
-	return func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error) {
+	return func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error) {
 		reqs := d.Reqs(spec)
 		if len(reqs) == 0 {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: spec resolved to no nodes")

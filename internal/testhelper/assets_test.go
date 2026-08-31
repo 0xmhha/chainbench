@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -69,7 +69,7 @@ func TestFaucetAction_FundsFromTheNodeCoinbaseByDefault(t *testing.T) {
 	if !ok {
 		t.Fatal("faucet not registered")
 	}
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 		"to":     "0xrecipient",
 		"amount": "1000",
 	}})
@@ -97,11 +97,11 @@ func TestFaucetAction_RequiresRecipientAndAmount(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, "http://unused")
 	act, _ := d.Actions.Action(actionFaucet)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d,
+	if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d,
 		Args: map[string]any{"amount": "1"}}); err == nil {
 		t.Fatal("expected an error without a recipient")
 	}
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d,
+	if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d,
 		Args: map[string]any{"to": "0xa"}}); err == nil {
 		t.Fatal("expected an error without an amount")
 	}
@@ -120,7 +120,7 @@ func TestDeployContractAction_BindsTheDeployedAddress(t *testing.T) {
 	if !ok {
 		t.Fatal("deployContract not registered")
 	}
-	ac := &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+	ac := &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 		"bytecode": "0x6080604052",
 		"save":     "addr",
 	}}
@@ -146,7 +146,7 @@ func TestDeployContractAction_FailsWhenTheReceiptHasNoAddress(t *testing.T) {
 	srv := rpcSrv.server(t)
 	d := deps()
 	act, _ := d.Actions.Action(actionDeployContract)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d,
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d,
 		Args: map[string]any{"bytecode": "0x60"}})
 	if err == nil {
 		t.Fatal("expected an error when the receipt carries no contract address")
@@ -164,7 +164,7 @@ func TestRegisterContractAction_SendsToTheDeployedAddress(t *testing.T) {
 	if !ok {
 		t.Fatal("registerContract not registered")
 	}
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d,
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d,
 		Args: map[string]any{"to": "0xdeployed", "data": "0xabcdef"}})
 	if err != nil {
 		t.Fatalf("registerContract: %v", err)
@@ -180,7 +180,7 @@ func TestRegisterContractAction_SendsToTheDeployedAddress(t *testing.T) {
 func TestRegisterContractAction_RequiresATarget(t *testing.T) {
 	d := deps()
 	act, _ := d.Actions.Action(actionRegisterContract)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
 		Args: map[string]any{"data": "0xab"}})
 	if err == nil {
 		t.Fatal("expected an error without a target contract")
@@ -192,7 +192,7 @@ func TestSendTx_CarriesFeeCapsAndNonce(t *testing.T) {
 	srv := rpcSrv.server(t)
 	d := deps()
 	act, _ := d.Actions.Action(actionSendTx)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
 		"from":                 "0xa",
 		"to":                   "0xb",
 		"maxFeePerGas":         "1000000000",
@@ -221,7 +221,7 @@ func TestSendTx_LegacyGasPrice(t *testing.T) {
 	srv := rpcSrv.server(t)
 	d := deps()
 	act, _ := d.Actions.Action(actionSendTx)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
+	if err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, srv.URL), Deps: &d, Args: map[string]any{
 		"from": "0xa", "to": "0xb", "gasPrice": "0x10",
 	}}); err != nil {
 		t.Fatalf("sendTx: %v", err)
@@ -236,7 +236,7 @@ func TestSendTx_LegacyGasPrice(t *testing.T) {
 func TestSendTx_RejectsMixedFeeForms(t *testing.T) {
 	d := deps()
 	act, _ := d.Actions.Action(actionSendTx)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d, Args: map[string]any{
+	err := act.Do(context.Background(), &interp.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d, Args: map[string]any{
 		"from": "0xa", "to": "0xb", "gasPrice": "0x10", "maxFeePerGas": "0x20",
 	}})
 	if err == nil {

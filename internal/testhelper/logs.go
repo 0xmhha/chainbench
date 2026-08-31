@@ -60,7 +60,7 @@ func readLogs(ctx context.Context, c *rpc.Client, spec map[string]any) (any, err
 		idx = int(n)
 	}
 	if idx >= len(logs) {
-		return nil, fmt.Errorf("testspec: logs: selected %s of log %d but only %d log(s) matched", sel, idx, len(logs))
+		return nil, fmt.Errorf("dsl: logs: selected %s of log %d but only %d log(s) matched", sel, idx, len(logs))
 	}
 	return logField(logs[idx], sel)
 }
@@ -71,11 +71,11 @@ func logField(log map[string]any, sel string) (any, error) {
 	if strings.HasPrefix(sel, "topic") {
 		n, err := strconv.Atoi(strings.TrimPrefix(sel, "topic"))
 		if err != nil {
-			return nil, fmt.Errorf("testspec: logs: bad topic selector %q", sel)
+			return nil, fmt.Errorf("dsl: logs: bad topic selector %q", sel)
 		}
 		topics, _ := log["topics"].([]any)
 		if n >= len(topics) {
-			return nil, fmt.Errorf("testspec: logs: topic%d requested but the log has %d topic(s)", n, len(topics))
+			return nil, fmt.Errorf("dsl: logs: topic%d requested but the log has %d topic(s)", n, len(topics))
 		}
 		return topics[n], nil
 	}
@@ -84,20 +84,20 @@ func logField(log map[string]any, sel string) (any, error) {
 	case logSelectData, logSelectAddr, logSelectTx:
 		v, ok := log[sel].(string)
 		if !ok {
-			return nil, fmt.Errorf("testspec: logs: log has no %q", sel)
+			return nil, fmt.Errorf("dsl: logs: log has no %q", sel)
 		}
 		return v, nil
 	case logSelectBlock:
 		v, ok := log[sel].(string)
 		if !ok {
-			return nil, fmt.Errorf("testspec: logs: log has no blockNumber")
+			return nil, fmt.Errorf("dsl: logs: log has no blockNumber")
 		}
 		n, err := strconv.ParseUint(strings.TrimPrefix(v, "0x"), 16, 64)
 		if err != nil {
-			return nil, fmt.Errorf("testspec: logs: blockNumber %q: %w", v, err)
+			return nil, fmt.Errorf("dsl: logs: blockNumber %q: %w", v, err)
 		}
 		return strconv.FormatUint(n, 10), nil
 	default:
-		return nil, fmt.Errorf("testspec: logs: unknown select %q (count|data|address|blockNumber|txHash|topicN)", sel)
+		return nil, fmt.Errorf("dsl: logs: unknown select %q (count|data|address|blockNumber|txHash|topicN)", sel)
 	}
 }

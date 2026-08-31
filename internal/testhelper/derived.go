@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"math/big"
 	"strconv"
 	"strings"
@@ -32,7 +32,7 @@ const defaultSubscribeTimeout = 30 * time.Second
 // through builtinAssertions instead, because it reads one value like the others
 // and therefore has to work as a "read" source too — a name that works in
 // "assert" but not in "read" is a trap the spec author only meets at run time.
-func seedDerivedBuiltins(r testspec.Registry) {
+func seedDerivedBuiltins(r interp.Registry) {
 	r.RegisterAssertion(assertWSSubscribe, wsSubscribeAssertion{})
 }
 
@@ -47,7 +47,7 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 	}
 	n, err := strconv.ParseUint(strings.TrimPrefix(s, "0x"), 16, 64)
 	if err != nil {
-		return nil, fmt.Errorf("testspec: gasPrice: bad value %q: %w", s, err)
+		return nil, fmt.Errorf("dsl: gasPrice: bad value %q: %w", s, err)
 	}
 	return strconv.FormatUint(n, 10), nil
 }
@@ -64,7 +64,7 @@ func readGasPrice(ctx context.Context, c *rpc.Client, _ map[string]any) (any, er
 func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
 	method, _ := spec["method"].(string)
 	if method == "" {
-		return nil, fmt.Errorf("testspec: rpcCall requires \"method\"")
+		return nil, fmt.Errorf("dsl: rpcCall requires \"method\"")
 	}
 	var params []any
 	if raw, ok := spec["params"].([]any); ok {
@@ -89,7 +89,7 @@ func readRPCCall(ctx context.Context, c *rpc.Client, spec map[string]any) (any, 
 	}
 	v, ok := dotPath(result, sel)
 	if !ok {
-		return nil, fmt.Errorf("testspec: rpcCall %s: no %q in the result", method, sel)
+		return nil, fmt.Errorf("dsl: rpcCall %s: no %q in the result", method, sel)
 	}
 	return v, nil
 }
@@ -175,7 +175,7 @@ func dotPath(v any, path string) (any, bool) {
 // error — "two heads in five seconds" is a claim that can simply be false.
 type wsSubscribeAssertion struct{}
 
-func (wsSubscribeAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (session.AssertResult, error) {
+func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
 	res := session.AssertResult{Assert: assertWSSubscribe, Provenance: ac.Spec}
 
 	wsURL, err := wsTarget(ac)
@@ -207,7 +207,7 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (
 	sub, err := rpc.Subscribe(sctx, wsURL, params...)
 	if err != nil {
 		res.Actual = err.Error()
-		return res, fmt.Errorf("testspec: wsSubscribe %s: %w", event, err)
+		return res, fmt.Errorf("dsl: wsSubscribe %s: %w", event, err)
 	}
 	defer func() { _ = sub.Close() }()
 
@@ -237,17 +237,17 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *testspec.AssertCtx) (
 // wsTarget derives the WebSocket URL of the assertion's target node from its
 // host and WS port. Attached nodes carry no port map, so this names that rather
 // than dialing something wrong.
-func wsTarget(ac *testspec.AssertCtx) (string, error) {
+func wsTarget(ac *interp.AssertCtx) (string, error) {
 	nodes := ac.On
 	if len(nodes) == 0 && ac.Env != nil {
 		nodes = ac.Env.Nodes()
 	}
 	if len(nodes) == 0 {
-		return "", fmt.Errorf("testspec: wsSubscribe: no target node")
+		return "", fmt.Errorf("dsl: wsSubscribe: no target node")
 	}
 	n := nodes[0]
 	if n.Ports.WS == 0 {
-		return "", fmt.Errorf("testspec: wsSubscribe: node%d has no WebSocket port (an attached node's ports are unknown)", n.Index)
+		return "", fmt.Errorf("dsl: wsSubscribe: node%d has no WebSocket port (an attached node's ports are unknown)", n.Index)
 	}
 	host := n.Host
 	if host == "" {
@@ -272,13 +272,13 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 	}
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) == 0 {
-		return nil, fmt.Errorf("testspec: derive requires \"of\" (a list of values)")
+		return nil, fmt.Errorf("dsl: derive requires \"of\" (a list of values)")
 	}
 	vals := make([]*big.Int, len(raw))
 	for i, v := range raw {
 		n, err := parseBigValue(v)
 		if err != nil {
-			return nil, fmt.Errorf("testspec: derive: of[%d]: %w", i, err)
+			return nil, fmt.Errorf("dsl: derive: of[%d]: %w", i, err)
 		}
 		vals[i] = n
 	}
@@ -290,7 +290,7 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 		case "diff":
 			acc.Sub(acc, v)
 		default:
-			return nil, fmt.Errorf("testspec: derive: unknown op %q (want sum or diff)", op)
+			return nil, fmt.Errorf("dsl: derive: unknown op %q (want sum or diff)", op)
 		}
 	}
 	return acc.String(), nil
@@ -307,14 +307,14 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 func deriveAbiCall(spec map[string]any) (any, error) {
 	sel := strings.TrimPrefix(strings.TrimSpace(fmt.Sprint(spec["selector"])), "0x")
 	if len(sel) != 8 {
-		return nil, fmt.Errorf("testspec: derive abiCall requires \"selector\" of 4 bytes (8 hex chars), got %q", spec["selector"])
+		return nil, fmt.Errorf("dsl: derive abiCall requires \"selector\" of 4 bytes (8 hex chars), got %q", spec["selector"])
 	}
 	if _, err := hex.DecodeString(sel); err != nil {
-		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
+		return nil, fmt.Errorf("dsl: derive abiCall: bad selector %q: %w", spec["selector"], err)
 	}
 	selBytes, err := hex.DecodeString(sel)
 	if err != nil {
-		return nil, fmt.Errorf("testspec: derive abiCall: bad selector %q: %w", spec["selector"], err)
+		return nil, fmt.Errorf("dsl: derive abiCall: bad selector %q: %w", spec["selector"], err)
 	}
 	var args []accounts.Arg
 	if raw, ok := spec["of"].([]any); ok {
@@ -322,10 +322,10 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 		for i, v := range raw {
 			n, err := parseBigValue(v)
 			if err != nil {
-				return nil, fmt.Errorf("testspec: derive abiCall: of[%d]: %w", i, err)
+				return nil, fmt.Errorf("dsl: derive abiCall: of[%d]: %w", i, err)
 			}
 			if n.Sign() < 0 || n.BitLen() > 256 {
-				return nil, fmt.Errorf("testspec: derive abiCall: of[%d] does not fit in a 32-byte word", i)
+				return nil, fmt.Errorf("dsl: derive abiCall: of[%d] does not fit in a 32-byte word", i)
 			}
 			args = append(args, accounts.Uint(n))
 		}
@@ -344,14 +344,14 @@ func deriveAbiCall(spec map[string]any) (any, error) {
 func deriveWord(spec map[string]any) (any, error) {
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) != 1 {
-		return nil, fmt.Errorf("testspec: derive word requires \"of\" with exactly one hex value")
+		return nil, fmt.Errorf("dsl: derive word requires \"of\" with exactly one hex value")
 	}
 	s, ok := raw[0].(string)
 	if !ok {
-		return nil, fmt.Errorf("testspec: derive word: of[0] must be a 0x-hex string, got %T", raw[0])
+		return nil, fmt.Errorf("dsl: derive word: of[0] must be a 0x-hex string, got %T", raw[0])
 	}
 	if _, err := hex.DecodeString(strings.TrimPrefix(strings.TrimSpace(s), "0x")); err != nil {
-		return nil, fmt.Errorf("testspec: derive word: of[0] is not valid hex: %w", err)
+		return nil, fmt.Errorf("dsl: derive word: of[0] is not valid hex: %w", err)
 	}
 	idx := 0
 	if n, ok := uintArg(spec["index"]); ok {
@@ -359,7 +359,7 @@ func deriveWord(spec map[string]any) (any, error) {
 	}
 	word, ok := accounts.WordAt(s, idx)
 	if !ok {
-		return nil, fmt.Errorf("testspec: derive word: index %d out of range", idx)
+		return nil, fmt.Errorf("dsl: derive word: index %d out of range", idx)
 	}
 	return word, nil
 }

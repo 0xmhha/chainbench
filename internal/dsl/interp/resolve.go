@@ -1,6 +1,10 @@
-package testspec
+package interp
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/0xmhha/chainbench/internal/dsl"
+)
 
 // Unresolved returns the references a spec makes that nothing satisfies:
 // action and assertion names not registered in reg (prefixed "action:" /
@@ -16,13 +20,13 @@ import "sort"
 // Binding references are checked in execution order (pre-actions, then steps,
 // then assertions, then post-actions), so a reference to a value saved *later*
 // is reported too — the interpreter would not have it bound yet.
-func Unresolved(s Spec, reg Registry) []string {
+func Unresolved(s dsl.Spec, reg Registry) []string {
 	seen := map[string]bool{}
 	bound := map[string]bool{}
 
 	// checkAction validates one action entry and records what it saves.
 	checkAction := func(entry map[string]any) {
-		name := actionName(entry)
+		name := dsl.ActionName(entry)
 		if name == "" {
 			seen["action:(empty)"] = true
 			return
@@ -30,7 +34,7 @@ func Unresolved(s Spec, reg Registry) []string {
 		if _, ok := reg.Action(name); !ok {
 			seen["action:"+name] = true
 		}
-		args := argsOf(entry[name])
+		args := dsl.ArgsOf(entry[name])
 		checkRefs(args, bound, seen)
 		// A read action names its source by string too, so an unknown one would
 		// only surface once a network is up. Catch it here with the rest.

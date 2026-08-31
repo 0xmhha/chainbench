@@ -7,7 +7,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // Deps injects the engine's collaborators so its orchestration is testable
@@ -20,16 +20,16 @@ type Deps struct {
 	NewSession func(ctx context.Context, command string) (session.Session, error)
 	// Fingerprint derives an environment reuse key from a spec (resolved config
 	// is applied by the wiring).
-	Fingerprint func(spec testspec.Spec) session.Fingerprint
+	Fingerprint func(spec dsl.Spec) session.Fingerprint
 	// BuildEnv provisions and brings up a network for spec, returning the node
 	// set and a teardown to run at the end of the session.
-	BuildEnv func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error)
+	BuildEnv func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error)
 	// RunSpec starts collection and runs the interpreter for one test, recording
 	// into rec.
-	RunSpec func(ctx context.Context, spec testspec.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
+	RunSpec func(ctx context.Context, spec dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
 	// Applicable reports whether a spec applies to this run's target chain. Nil
 	// means always applicable.
-	Applicable func(spec testspec.Spec) bool
+	Applicable func(spec dsl.Spec) bool
 	// Command is the invoking command string recorded in session.json.
 	Command string
 	// Emit publishes an orchestration event (run/build/spec milestones) for the
@@ -82,7 +82,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 
 	for i, raw := range specs {
 		seq := i + 1
-		spec, perr := testspec.Parse(raw)
+		spec, perr := dsl.Parse(raw)
 		if perr != nil {
 			rec := sess.Test(seq, fmt.Sprintf("spec-%d", seq))
 			rec.Spec(raw)

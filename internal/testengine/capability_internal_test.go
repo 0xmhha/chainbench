@@ -3,7 +3,7 @@ package testengine
 import (
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 func TestSatisfies(t *testing.T) {
@@ -30,19 +30,19 @@ func TestSatisfies(t *testing.T) {
 func TestApplicableWithCaps(t *testing.T) {
 	applies := applicableWithCaps("stablenet", []string{"rpc"})
 	// chain matches, no requirements -> applies.
-	if !applies(testspec.Spec{}) {
+	if !applies(dsl.Spec{}) {
 		t.Fatal("empty spec should apply")
 	}
 	// requires a capability the target provides.
-	if !applies(testspec.Spec{Requires: []string{"rpc"}}) {
+	if !applies(dsl.Spec{Requires: []string{"rpc"}}) {
 		t.Fatal("spec requiring rpc should apply against an rpc target")
 	}
 	// requires a capability the target lacks -> skip.
-	if applies(testspec.Spec{Requires: []string{"ws"}}) {
+	if applies(dsl.Spec{Requires: []string{"ws"}}) {
 		t.Fatal("spec requiring ws should not apply against an rpc-only target")
 	}
 	// wrong chain -> skip regardless of capabilities.
-	if applies(testspec.Spec{ApplicableChains: "wbft"}) {
+	if applies(dsl.Spec{ApplicableChains: "wbft"}) {
 		t.Fatal("spec for another chain should not apply")
 	}
 }

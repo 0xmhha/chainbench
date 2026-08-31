@@ -1,4 +1,4 @@
-package testspec
+package dsl
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func ReadFiles(paths []string) ([][]byte, error) {
 	for _, p := range paths {
 		b, err := os.ReadFile(p)
 		if err != nil {
-			return nil, fmt.Errorf("testspec: read spec %s: %w", p, err)
+			return nil, fmt.Errorf("dsl: read spec %s: %w", p, err)
 		}
 		dir := filepath.Dir(p)
 		b, err = InlineEnv(b, func(id string) ([]byte, error) {
@@ -33,7 +33,7 @@ func ReadFiles(paths []string) ([][]byte, error) {
 			return nil, fmt.Errorf("no %s.env.json next to %s (or in an env/ directory beside it or its parent)", id, p)
 		})
 		if err != nil {
-			return nil, fmt.Errorf("testspec: %w", err)
+			return nil, fmt.Errorf("dsl: %w", err)
 		}
 		specs = append(specs, b)
 	}

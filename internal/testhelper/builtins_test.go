@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -56,8 +56,8 @@ func envWithNode(t *testing.T, url string) session.Environment {
 	return env
 }
 
-func deps() testspec.Deps {
-	return testspec.Deps{RPC: func(u string) *rpc.Client { return rpc.Dial(u) }, Actions: testhelperRegistry()}
+func deps() interp.Deps {
+	return interp.Deps{RPC: func(u string) *rpc.Client { return rpc.Dial(u) }, Actions: testhelperRegistry()}
 }
 
 func TestBuiltinAssertions(t *testing.T) {
@@ -92,7 +92,7 @@ func TestBuiltinAssertions(t *testing.T) {
 			if !ok {
 				t.Fatalf("assertion %q not registered", tc.spec["assert"])
 			}
-			r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: tc.spec})
+			r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: tc.spec})
 			if err != nil {
 				t.Fatalf("Check: %v", err)
 			}
@@ -107,7 +107,7 @@ func TestBuiltinAssertion_MissingAddress(t *testing.T) {
 	srv := mockRPC(t, map[string]any{"eth_getBalance": "0x1"})
 	d := deps()
 	as, _ := d.Actions.Assertion(assertBalanceAt)
-	r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: []node.Node{{RPCURL: srv.URL}}, Spec: map[string]any{"assert": assertBalanceAt}})
+	r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{{RPCURL: srv.URL}}, Spec: map[string]any{"assert": assertBalanceAt}})
 	if err == nil {
 		t.Fatal("expected error for missing address")
 	}
@@ -127,7 +127,7 @@ func TestSendTxAction_SendsAndWaits(t *testing.T) {
 	if !ok {
 		t.Fatal("sendTx not registered")
 	}
-	err := act.Do(context.Background(), &testspec.ActionCtx{
+	err := act.Do(context.Background(), &interp.ActionCtx{
 		Env:  env,
 		Deps: &d,
 		Args: map[string]any{"from": "0xabc", "to": "0xdef", "value": "1000", "pollInterval": "5ms"},
@@ -164,7 +164,7 @@ func TestSendTxAction_PassesAccessList(t *testing.T) {
 
 	d := deps()
 	act, _ := d.Actions.Action(actionSendTx)
-	err := act.Do(context.Background(), &testspec.ActionCtx{
+	err := act.Do(context.Background(), &interp.ActionCtx{
 		Env: envWithNode(t, srv.URL), Deps: &d,
 		Args: map[string]any{
 			"from": "0xabc", "to": "0xdef", "value": "1", "gasPrice": "1000000000",
@@ -197,7 +197,7 @@ func TestSendTxAction_RequiresFrom(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 	act, _ := d.Actions.Action(actionSendTx)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+	if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
 		t.Fatal("expected error when \"from\" missing")
 	}
 }
@@ -208,7 +208,7 @@ func TestSendTxAction_WaitFalseSkipsReceipt(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 	act, _ := d.Actions.Action(actionSendTx)
-	err := act.Do(context.Background(), &testspec.ActionCtx{
+	err := act.Do(context.Background(), &interp.ActionCtx{
 		Env:  env,
 		Deps: &d,
 		Args: map[string]any{"from": "0xabc", "wait": false},
@@ -219,7 +219,7 @@ func TestSendTxAction_WaitFalseSkipsReceipt(t *testing.T) {
 }
 
 func TestNewRegistry_BuiltinsGatedByFlag(t *testing.T) {
-	if _, ok := testspec.NewRegistry().Action(actionSendTx); ok {
+	if _, ok := interp.NewRegistry().Action(actionSendTx); ok {
 		t.Fatal("built-ins must not be seeded when withBuiltins=false")
 	}
 	if _, ok := testhelperRegistry().Action(actionSendTx); !ok {
@@ -252,7 +252,7 @@ func TestBuiltinAssertions_NonceAndCall(t *testing.T) {
 			if !ok {
 				t.Fatalf("assertion %q not registered", tc.spec["assert"])
 			}
-			r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: tc.spec})
+			r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: tc.spec})
 			if err != nil {
 				t.Fatalf("Check: %v", err)
 			}
@@ -273,7 +273,7 @@ func TestBuiltinAssertions_NonceCallMissingArgs(t *testing.T) {
 		{"assert": assertCall, "data": "0xdead"}, // missing to
 	} {
 		as, _ := d.Actions.Assertion(spec["assert"].(string))
-		if r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: spec}); err == nil || r.Pass {
+		if r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: spec}); err == nil || r.Pass {
 			t.Fatalf("expected error for %v", spec)
 		}
 	}
@@ -286,7 +286,7 @@ func TestBuiltinAssertion_TxStatus(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x1"}})
 		as, _ := d.Actions.Assertion(assertTxStatus)
-		r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x1"}})
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x1"}})
 		if err != nil || !r.Pass {
 			t.Fatalf("want pass, got pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
 		}
@@ -294,7 +294,7 @@ func TestBuiltinAssertion_TxStatus(t *testing.T) {
 	t.Run("reverted", func(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x0"}})
 		as, _ := d.Actions.Assertion(assertTxStatus)
-		r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x0"}})
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus, "hash": "0xh", "expected": "0x0"}})
 		if err != nil || !r.Pass {
 			t.Fatalf("want pass for reverted match, got pass=%v err=%v", r.Pass, err)
 		}
@@ -302,7 +302,7 @@ func TestBuiltinAssertion_TxStatus(t *testing.T) {
 	t.Run("missing hash", func(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_getTransactionReceipt": map[string]any{"status": "0x1"}})
 		as, _ := d.Actions.Assertion(assertTxStatus)
-		if r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus}}); err == nil || r.Pass {
+		if r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on(srv.URL), Spec: map[string]any{"assert": assertTxStatus}}); err == nil || r.Pass {
 			t.Fatal("expected error for missing hash")
 		}
 	})
@@ -355,7 +355,7 @@ func TestWaitBlockAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"}) // 16
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitBlock)
-		if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(5), "pollInterval": "5ms"}}); err != nil {
+		if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(5), "pollInterval": "5ms"}}); err != nil {
 			t.Fatalf("waitBlock: %v", err)
 		}
 	})
@@ -363,7 +363,7 @@ func TestWaitBlockAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x1"}) // 1
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitBlock)
-		err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
+		err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"target": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
 		if err == nil {
 			t.Fatal("expected timeout error for unreachable target")
 		}
@@ -372,7 +372,7 @@ func TestWaitBlockAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitBlock)
-		if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+		if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
 			t.Fatal("expected error for missing target")
 		}
 	})
@@ -385,7 +385,7 @@ func TestWaitForAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"}) // 16
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitFor)
-		ac := &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+		ac := &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 			"source": assertBlockNumber, "compare": "GreaterOrEqual", "expected": float64(5), "pollInterval": "5ms"}}
 		if err := act.Do(context.Background(), ac); err != nil {
 			t.Fatalf("waitFor: %v", err)
@@ -398,7 +398,7 @@ func TestWaitForAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x1"}) // 1
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitFor)
-		err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+		err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 			"source": assertBlockNumber, "compare": "GreaterOrEqual", "expected": float64(100), "timeout": "40ms", "pollInterval": "5ms"}})
 		if err == nil {
 			t.Fatal("expected timeout error for a condition that never holds")
@@ -408,7 +408,7 @@ func TestWaitForAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitFor)
-		if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
+		if err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err == nil {
 			t.Fatal("expected error for missing source")
 		}
 	})
@@ -416,7 +416,7 @@ func TestWaitForAction(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x10"})
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionWaitFor)
-		err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+		err := act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 			"source": assertBlockNumber, "compare": "Nonsense", "expected": float64(1)}})
 		if err == nil {
 			t.Fatal("expected error for an unknown comparator")
@@ -432,7 +432,7 @@ func TestSendTxAction_RevertFailsStep(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 	act, _ := d.Actions.Action(actionSendTx)
-	err := act.Do(context.Background(), &testspec.ActionCtx{
+	err := act.Do(context.Background(), &interp.ActionCtx{
 		Env:  env,
 		Deps: &d,
 		Args: map[string]any{"from": "0xabc", "to": "0xdef", "pollInterval": "5ms"},
@@ -453,7 +453,7 @@ func TestSendTxAction_ExpectRevert(t *testing.T) {
 	run := func(srv *httptest.Server, args map[string]any) error {
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionSendTx)
-		return act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: args})
+		return act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: args})
 	}
 
 	// expectRevert + revert => step passes.
@@ -494,7 +494,7 @@ func TestSendTxAction_ExpectReject(t *testing.T) {
 	run := func(srv *httptest.Server, args map[string]any) error {
 		env := envWithNode(t, srv.URL)
 		act, _ := d.Actions.Action(actionSendTx)
-		return act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: args})
+		return act.Do(context.Background(), &interp.ActionCtx{Env: env, Deps: &d, Args: args})
 	}
 
 	// expect:"reject" + submit error => step passes.
@@ -531,7 +531,7 @@ func TestNewAccountAction_BindsAddressAndKey(t *testing.T) {
 	if !ok {
 		t.Fatal("newAccount not registered")
 	}
-	ac := &testspec.ActionCtx{Args: map[string]any{"save": "acct", "saveKey": "acctKey"}}
+	ac := &interp.ActionCtx{Args: map[string]any{"save": "acct", "saveKey": "acctKey"}}
 	if err := act.Do(context.Background(), ac); err != nil {
 		t.Fatalf("newAccount: %v", err)
 	}
@@ -548,7 +548,7 @@ func TestNewAccountAction_BindsAddressAndKey(t *testing.T) {
 func TestNewAccountAction_RequiresSaveKey(t *testing.T) {
 	d := deps()
 	act, _ := d.Actions.Action(actionNewAccount)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Args: map[string]any{"save": "acct"}}); err == nil {
+	if err := act.Do(context.Background(), &interp.ActionCtx{Args: map[string]any{"save": "acct"}}); err == nil {
 		t.Fatal("newAccount without saveKey must error")
 	}
 }
@@ -562,7 +562,7 @@ func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
 
 	on := []node.Node{{Index: 1, RPCURL: srv1.URL}, {Index: 2, RPCURL: srv2.URL}}
 	spec := map[string]any{"assert": assertPeerCount, "expected": float64(1), "compare": "GreaterOrEqual"}
-	r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: spec})
+	r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: spec})
 	if err != nil || !r.Pass {
 		t.Fatalf("onEach all-pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
 	}
@@ -570,7 +570,7 @@ func TestRPCAssertion_OnEachAllNodes(t *testing.T) {
 	// One node reports 0 peers -> the assertion fails and names that node.
 	srvBad := mockRPC(t, map[string]any{"net_peerCount": "0x0"})
 	onBad := []node.Node{{Index: 1, RPCURL: srv1.URL}, {Index: 2, RPCURL: srvBad.URL}}
-	r, err = as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: onBad, Spec: spec})
+	r, err = as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: onBad, Spec: spec})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -602,7 +602,7 @@ func TestBlockAdvanceAssertion(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x" + strconv.FormatInt(int64(cur), 16)})
 		}))
 		defer srv.Close()
-		r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
 			Spec: map[string]any{"assert": assertBlockAdvance, "pollInterval": "5ms", "timeout": "2s"}})
 		if err != nil || !r.Pass {
 			t.Fatalf("expected advance pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
@@ -611,7 +611,7 @@ func TestBlockAdvanceAssertion(t *testing.T) {
 
 	t.Run("stalled fails", func(t *testing.T) {
 		srv := mockRPC(t, map[string]any{"eth_blockNumber": "0x5"}) // never changes
-		r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: []node.Node{{Index: 1, RPCURL: srv.URL}},
 			Spec: map[string]any{"assert": assertBlockAdvance, "pollInterval": "5ms", "timeout": "40ms"}})
 		if err != nil {
 			t.Fatalf("stalled should not error: %v", err)
@@ -632,7 +632,7 @@ func TestSameBlockHashAssertion(t *testing.T) {
 	t.Run("agree", func(t *testing.T) {
 		a, b := mk("0xsame"), mk("0xsame")
 		on := []node.Node{{Index: 1, RPCURL: a.URL}, {Index: 2, RPCURL: b.URL}}
-		r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
 		if err != nil || !r.Pass {
 			t.Fatalf("agreeing nodes should pass: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
 		}
@@ -641,7 +641,7 @@ func TestSameBlockHashAssertion(t *testing.T) {
 	t.Run("fork", func(t *testing.T) {
 		a, b := mk("0xaaaa"), mk("0xbbbb")
 		on := []node.Node{{Index: 1, RPCURL: a.URL}, {Index: 2, RPCURL: b.URL}}
-		r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
+		r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertSameBlockHash, "block": "0x0"}})
 		if err != nil {
 			t.Fatalf("fork check should not error: %v", err)
 		}
@@ -659,17 +659,17 @@ func TestBaseFeeAssertion(t *testing.T) {
 	on := []node.Node{{Index: 1, RPCURL: srv.URL}}
 
 	// >= minimum passes
-	r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "20000000000000"}})
+	r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "20000000000000"}})
 	if err != nil || !r.Pass {
 		t.Fatalf("baseFee >= min: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
 	}
 	// <= maximum passes
-	r, err = as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "20000000000000000", "compare": "LessOrEqual"}})
+	r, err = as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "20000000000000000", "compare": "LessOrEqual"}})
 	if err != nil || !r.Pass {
 		t.Fatalf("baseFee <= max: pass=%v err=%v", r.Pass, err)
 	}
 	// below a higher minimum fails
-	r, err = as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "99000000000000"}})
+	r, err = as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertBaseFee, "expected": "99000000000000"}})
 	if err != nil || r.Pass {
 		t.Fatalf("baseFee below min should fail: pass=%v", r.Pass)
 	}
@@ -683,12 +683,12 @@ func TestEstimateGasAssertion(t *testing.T) {
 
 	// exceeds 21000
 	spec := map[string]any{"assert": assertEstimateGas, "to": "0xc0", "data": "0xa9059cbb", "expected": float64(21000), "compare": "Greater"}
-	r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: spec})
+	r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: spec})
 	if err != nil || !r.Pass {
 		t.Fatalf("estimateGas > 21000: pass=%v err=%v actual=%v", r.Pass, err, r.Actual)
 	}
 	// missing data errors
-	if r, err := as.Check(context.Background(), &testspec.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertEstimateGas, "to": "0xc0"}}); err == nil || r.Pass {
+	if r, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d, On: on, Spec: map[string]any{"assert": assertEstimateGas, "to": "0xc0"}}); err == nil || r.Pass {
 		t.Fatal("estimateGas requires data")
 	}
 }

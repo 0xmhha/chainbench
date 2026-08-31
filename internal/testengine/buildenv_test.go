@@ -17,9 +17,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testengine"
-	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // testPool is the resource the build allocates from: one host with room for a
@@ -99,7 +99,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 		Genesis:    gen,
 		Supervisor: fakeSupervisor(),
 		Caps:       []string{"ws"},
-		Reqs:       func(testspec.Spec) []node.LaunchReq { return fourNodeReqs() },
+		Reqs:       func(dsl.Spec) []node.LaunchReq { return fourNodeReqs() },
 		Provision: func(_ context.Context, plan driver.Plan) error {
 			provisionCalled = true
 			gotPlan = plan
@@ -107,7 +107,7 @@ func TestNewBuildEnv_ComposesAndBringsUp(t *testing.T) {
 		},
 	})
 
-	ns, teardown, err := build(context.Background(), buildEnvSession(t), testspec.Spec{})
+	ns, teardown, err := build(context.Background(), buildEnvSession(t), dsl.Spec{})
 	if err != nil {
 		t.Fatalf("build: %v", err)
 	}
@@ -140,9 +140,9 @@ func TestNewBuildEnv_NoNodes(t *testing.T) {
 		Pool:       testPool(),
 		Genesis:    &fakeGenesis{},
 		Supervisor: fakeSupervisor(),
-		Reqs:       func(testspec.Spec) []node.LaunchReq { return nil },
+		Reqs:       func(dsl.Spec) []node.LaunchReq { return nil },
 	})
-	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {
+	if _, _, err := build(context.Background(), buildEnvSession(t), dsl.Spec{}); err == nil {
 		t.Fatal("expected error when a spec resolves to no nodes")
 	}
 }
@@ -158,9 +158,9 @@ func TestNewBuildEnv_PoolTooSmall(t *testing.T) {
 		Pool:       small,
 		Genesis:    &fakeGenesis{},
 		Supervisor: fakeSupervisor(),
-		Reqs:       func(testspec.Spec) []node.LaunchReq { return fourNodeReqs() },
+		Reqs:       func(dsl.Spec) []node.LaunchReq { return fourNodeReqs() },
 	})
-	_, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{})
+	_, _, err := build(context.Background(), buildEnvSession(t), dsl.Spec{})
 	if err == nil {
 		t.Fatal("expected the over-capacity assignment to fail")
 	}
@@ -175,10 +175,10 @@ func TestNewBuildEnv_ProvisionError(t *testing.T) {
 		Pool:       testPool(),
 		Genesis:    &fakeGenesis{bytes: []byte("{}")},
 		Supervisor: fakeSupervisor(),
-		Reqs:       func(testspec.Spec) []node.LaunchReq { return fourNodeReqs() },
+		Reqs:       func(dsl.Spec) []node.LaunchReq { return fourNodeReqs() },
 		Provision:  func(context.Context, driver.Plan) error { return errors.New("disk full") },
 	})
-	if _, _, err := build(context.Background(), buildEnvSession(t), testspec.Spec{}); err == nil {
+	if _, _, err := build(context.Background(), buildEnvSession(t), dsl.Spec{}); err == nil {
 		t.Fatal("expected provision error to propagate")
 	}
 }

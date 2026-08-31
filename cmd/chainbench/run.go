@@ -16,8 +16,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/dashboard"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
-	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // runReport is the --json shape for a run: the session path plus the verdict
@@ -76,7 +76,7 @@ func newRunCmd() *cobra.Command {
 				}
 				return runComposed(cmd, in, jsonOut)
 			}
-			specs, err := testspec.ReadFiles(args)
+			specs, err := dsl.ReadFiles(args)
 			if err != nil {
 				return err
 			}
@@ -272,7 +272,7 @@ func foldSpecEnv(o runOpts, specs [][]byte) runOpts {
 	if len(specs) != 1 {
 		return o
 	}
-	s, err := testspec.Parse(specs[0])
+	s, err := dsl.Parse(specs[0])
 	if err != nil {
 		return o // the engine reports the parse error with full context
 	}

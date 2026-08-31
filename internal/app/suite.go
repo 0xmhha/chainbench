@@ -15,7 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // A suite composes the network its specs declare. The declaration is the
@@ -73,7 +73,7 @@ type composition struct {
 // compositionOf reads the network a spec declares and applies the caller's
 // overrides (a binary path, a key set, a validator count, a server) on top.
 // A v1 spec declares through its chain block; a v2 case through its env.
-func compositionOf(ctx context.Context, spec testspec.Spec, in RunSuiteIn) (composition, error) {
+func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (composition, error) {
 	chain := spec.Chain.Name
 	if in.Chain != "" && in.Chain != chain {
 		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
@@ -102,8 +102,8 @@ func compositionOf(ctx context.Context, spec testspec.Spec, in RunSuiteIn) (comp
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
 			PresetDir:      keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[testspec.RoleProducer]),
-			ToBinary:       expand(spec.Chain.Binaries[testspec.RoleValidator]),
+			FromBinary:     expand(spec.Chain.Binaries[dsl.RoleProducer]),
+			ToBinary:       expand(spec.Chain.Binaries[dsl.RoleValidator]),
 			GenesisOverlay: overlayPath,
 			DataDir:        in.DataDir,
 		}}, nil
@@ -210,7 +210,7 @@ func hardforkSets(forks map[string]int) []string {
 
 // launchSets renders declared launch knobs as the launchopts step's --set
 // arguments: a boolean knob travels as a bare key.
-func launchSets(kvs []testspec.LaunchKV) []string {
+func launchSets(kvs []dsl.LaunchKV) []string {
 	out := make([]string, 0, len(kvs))
 	for _, kv := range kvs {
 		if kv.Value == "" || kv.Value == "true" {
@@ -350,7 +350,7 @@ func handoffEndpoints(ns node.NodeSet) []string {
 
 // sameChain checks that every parsed spec declares the chain the first one
 // does: one suite composes one network.
-func sameChain(specs []testspec.Spec) error {
+func sameChain(specs []dsl.Spec) error {
 	if len(specs) == 0 {
 		return nil
 	}

@@ -3,7 +3,8 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -60,7 +61,7 @@ func TestLogsAssertion_CountsMatchingLogs(t *testing.T) {
 	if !ok {
 		t.Fatal("logs assertion not registered")
 	}
-	res, err := as.Check(context.Background(), &testspec.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env:  envWithNode(t, srv.URL),
 		Deps: &d,
 		Spec: map[string]any{"assert": assertLogs, "expected": "2"},
@@ -78,7 +79,7 @@ func TestLogsAssertion_PassesTheFilterThrough(t *testing.T) {
 	srv := rec.server(t)
 	d := deps()
 	as, _ := d.Actions.Assertion(assertLogs)
-	_, err := as.Check(context.Background(), &testspec.AssertCtx{
+	_, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env:  envWithNode(t, srv.URL),
 		Deps: &d,
 		Spec: map[string]any{
@@ -122,7 +123,7 @@ func TestLogsAssertion_SelectsAFieldOfOneLog(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.sel, func(t *testing.T) {
-			res, err := as.Check(context.Background(), &testspec.AssertCtx{
+			res, err := as.Check(context.Background(), &interp.AssertCtx{
 				Env:  envWithNode(t, srv.URL),
 				Deps: &d,
 				Spec: map[string]any{"assert": assertLogs, "select": tc.sel, "expected": tc.want},
@@ -141,7 +142,7 @@ func TestLogsAssertion_SelectOnAnEmptyResultIsAnError(t *testing.T) {
 	srv := (&logsRPC{result: []any{}}).server(t)
 	d := deps()
 	as, _ := d.Actions.Assertion(assertLogs)
-	res, err := as.Check(context.Background(), &testspec.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env:  envWithNode(t, srv.URL),
 		Deps: &d,
 		Spec: map[string]any{"assert": assertLogs, "select": "data", "expected": "0x"},
@@ -155,7 +156,7 @@ func TestLogsAssertion_CountOnAnEmptyResultIsZeroNotAnError(t *testing.T) {
 	srv := (&logsRPC{result: []any{}}).server(t)
 	d := deps()
 	as, _ := d.Actions.Assertion(assertLogs)
-	res, err := as.Check(context.Background(), &testspec.AssertCtx{
+	res, err := as.Check(context.Background(), &interp.AssertCtx{
 		Env:  envWithNode(t, srv.URL),
 		Deps: &d,
 		Spec: map[string]any{"assert": assertLogs, "expected": "0"},
@@ -195,7 +196,7 @@ func TestRun_EventAssertionAfterATransaction(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	d := deps()
-	spec := testspec.Spec{
+	spec := dsl.Spec{
 		Steps: []map[string]any{
 			{actionSendTx: map[string]any{"from": "0xa", "to": "0xb", "save": "hash"}},
 		},
@@ -204,7 +205,7 @@ func TestRun_EventAssertionAfterATransaction(t *testing.T) {
 			{"assert": assertTxStatus, "hash": "$hash", "expected": "0x1"},
 		},
 	}
-	st, err := testspec.NewInterpreter(d).Run(context.Background(), spec, envWithNode(t, srv.URL), &recordStub{})
+	st, err := interp.NewInterpreter(d).Run(context.Background(), spec, envWithNode(t, srv.URL), &recordStub{})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}

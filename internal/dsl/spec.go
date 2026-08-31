@@ -1,14 +1,9 @@
-package testspec
+package dsl
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // ChainSpec selects the chain, its binary/binaries, and genesis overlay for a
@@ -72,7 +67,7 @@ func Parse(raw []byte) (Spec, error) {
 	}
 	var s Spec
 	if err := json.Unmarshal(raw, &s); err != nil {
-		return Spec{}, fmt.Errorf("testspec: parse: %w", err)
+		return Spec{}, fmt.Errorf("dsl: parse: %w", err)
 	}
 	if err := s.validate(); err != nil {
 		return Spec{}, err
@@ -105,50 +100,12 @@ func (s Spec) validate() error {
 		missing = append(missing, "assertions")
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("testspec: missing required field(s): %s", strings.Join(missing, ", "))
+		return fmt.Errorf("dsl: missing required field(s): %s", strings.Join(missing, ", "))
 	}
 	if s.SchemaVersion != supportedSchemaVersion {
-		return fmt.Errorf("testspec: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
+		return fmt.Errorf("dsl: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
 	}
 	return nil
-}
-
-// fpInput is the canonical, order-independent hash input for a fingerprint.
-// json.Marshal sorts map keys, so equal declared values hash equally regardless
-// of insertion order.
-type fpInput struct {
-	Binary         string            `json:"binary"`
-	Binaries       map[string]string `json:"binaries"`
-	Config         string            `json:"config"`
-	GenesisOverlay map[string]any    `json:"genesisOverlay"`
-	Topology       map[string]any    `json:"topology"`
-	Hardforks      map[string]int    `json:"hardforks"`
-	Placement      string            `json:"placement"`
-	Resolved       map[string]string `json:"resolved"`
-}
-
-// Fingerprint hashes the resolved declared values
-// (binaries+genesis+config+topology+hardforks+placement) to a reuse key. config
-// comes from resolved; the rest come from the receiver. It never touches a chain.
-func (s Spec) Fingerprint(resolved nodeconfig.Values) session.Fingerprint {
-	in := fpInput{
-		Binary:         s.Chain.Binary,
-		Binaries:       s.Chain.Binaries,
-		Config:         s.Chain.Config,
-		GenesisOverlay: s.Chain.GenesisOverlay,
-		Topology:       s.Topology,
-		Hardforks:      s.Hardforks,
-		Placement:      s.Placement,
-		Resolved:       resolved,
-	}
-	b, err := json.Marshal(in)
-	if err != nil {
-		// Inputs originate from JSON, so this should not happen; fall back to a
-		// stable representation rather than silently ignoring the error.
-		b = []byte(fmt.Sprintf("fingerprint-error:%v", err))
-	}
-	sum := sha256.Sum256(b)
-	return session.Fingerprint(hex.EncodeToString(sum[:]))
 }
 
 // Get resolves a dot-path (a.b.c) within the spec. ok is false when the path is

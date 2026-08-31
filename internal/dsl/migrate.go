@@ -1,4 +1,4 @@
-package testspec
+package dsl
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ func MigrateV1(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 	if s.SchemaVersion != supportedSchemaVersion {
-		return nil, fmt.Errorf("testspec: migrate: %s is not a v1 spec", s.ID)
+		return nil, fmt.Errorf("dsl: migrate: %s is not a v1 spec", s.ID)
 	}
 
 	env := map[string]any{
@@ -51,9 +51,9 @@ func MigrateV1(raw []byte) ([]byte, error) {
 
 	steps := make([]map[string]any, 0, len(s.Steps)+len(s.Assertions))
 	for _, st := range s.Steps {
-		name := actionName(st)
+		name := ActionName(st)
 		stmt := map[string]any{"do": name}
-		maps.Copy(stmt, argsOf(st[name]))
+		maps.Copy(stmt, ArgsOf(st[name]))
 		stmt["do"] = name // an arg named "do" must not clobber the head
 		steps = append(steps, stmt)
 	}
@@ -108,9 +108,9 @@ func MigrateV1(raw []byte) ([]byte, error) {
 func hookStatements(actions []map[string]any) []map[string]any {
 	out := make([]map[string]any, 0, len(actions))
 	for _, a := range actions {
-		name := actionName(a)
+		name := ActionName(a)
 		stmt := map[string]any{}
-		maps.Copy(stmt, argsOf(a[name]))
+		maps.Copy(stmt, ArgsOf(a[name]))
 		stmt["do"] = name
 		out = append(out, stmt)
 	}
