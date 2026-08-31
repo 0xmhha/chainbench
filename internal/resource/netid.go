@@ -5,7 +5,7 @@
 // one chain will refuse to peer unless the same network id is set explicitly on
 // both. There is deliberately no default here — the value comes from the
 // manifest so a run's network id is always traceable.
-package netid
+package resource
 
 import (
 	"fmt"

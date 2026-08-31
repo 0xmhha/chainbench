@@ -1,4 +1,4 @@
-package netid
+package resource
 
 import (
 	"strings"
