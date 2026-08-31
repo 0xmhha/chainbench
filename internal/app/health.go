@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/health"
+	"github.com/0xmhha/chainbench/internal/core/inspector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
 )
@@ -27,14 +27,14 @@ type VerifyNetworkIn struct {
 
 // VerifyNetworkOut is the health report.
 type VerifyNetworkOut struct {
-	Report health.Report
+	Report inspector.HealthReport
 }
 
 // VerifyNetwork samples every node and reports the producing verdict — the
 // function behind `chainbench verify` and its MCP mirror, so both surfaces
 // return the same verdict from the same code.
 func VerifyNetwork(ctx context.Context, _ Deps, in VerifyNetworkIn) (VerifyNetworkOut, error) {
-	rep, err := health.Run(ctx, in.Nodes, health.Options{
+	rep, err := inspector.Health(ctx, in.Nodes, inspector.HealthOptions{
 		ProgressDelay: in.ProgressDelay,
 		ReadyTimeout:  in.ReadyTimeout,
 	}, in.Bus)

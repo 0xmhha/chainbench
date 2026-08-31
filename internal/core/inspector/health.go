@@ -12,7 +12,7 @@
 // It was core/pipeline/verify; the move out of the pipeline tree is part of
 // the legacy-pipeline retirement — the code is sound, only its home
 // was legacy.
-package health
+package inspector
 
 import (
 	"context"
@@ -33,7 +33,7 @@ type Prober interface {
 }
 
 // Options configures a verify run.
-type Options struct {
+type HealthOptions struct {
 	// Dial builds a Prober for a node's RPC URL. Defaults to rpc.Dial.
 	Dial func(url string) Prober
 	// ProgressDelay is the wait between the two block-height samples used to
@@ -64,7 +64,7 @@ type NodeInfo struct {
 }
 
 // Report is the outcome of a verify run.
-type Report struct {
+type HealthReport struct {
 	Network   string     `json:"network"`
 	Producing bool       `json:"producing"`
 	Nodes     []NodeInfo `json:"nodes"`
@@ -74,7 +74,7 @@ type Report struct {
 // block height strictly increases across the two samples. The returned error is
 // non-nil only for a wholly empty node set; per-node failures are recorded in
 // NodeInfo.OK/Err. bus may be nil.
-func Run(ctx context.Context, ns node.NodeSet, opts Options, bus *obs.Bus) (Report, error) {
+func Health(ctx context.Context, ns node.NodeSet, opts HealthOptions, bus *obs.Bus) (HealthReport, error) {
 	dial := opts.Dial
 	if dial == nil {
 		dial = func(url string) Prober { return rpc.Dial(url) }
@@ -88,7 +88,7 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options, bus *obs.Bus) (Repo
 		delay = 2 * time.Second
 	}
 
-	rep := Report{Network: ns.Network}
+	rep := HealthReport{Network: ns.Network}
 
 	// Determine production first: with a readiness window this polls through
 	// the RPC-not-up-yet and peering-not-converged phases, so the per-node

@@ -104,7 +104,6 @@ flowchart TD
 | `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
 | `core/rpc` | JSON-RPC 클라이언트 |
 | `core/process` | PID 추적 · 검증된 종료 |
-| `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` | 노드 하나의 설정 — config.toml 렌더 · argv 조립(launchopt 빌더·dialect) · 평면 dot-path 설정값 (R1-3 에서 `core/launchopt`·`core/config` 흡수) |
@@ -145,7 +144,7 @@ flowchart TD
 |---|---|
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션 |
 | `core/collector` | live tail · chainstate · bp 참여 · reorg |
-| `core/health` | 블록 전진 판정 |
+| `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) · 블록 전진 판정(`Health`, R1-4 에서 `core/health` 흡수) |
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `core/netreg` | 네트워크 레지스트리 |
 | `testspec` · `testspec/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3, 2026-08-28) |
