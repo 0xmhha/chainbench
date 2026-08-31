@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/netreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -38,7 +37,7 @@ func networkAttachTool() Tool {
 			if name == "" || rpc == "" || stateDir == "" {
 				return "", fmt.Errorf("name, rpc, and state_dir are required")
 			}
-			if !netreg.IsValidNetworkName(name) {
+			if !isValidNetworkName(name) {
 				return "", fmt.Errorf("invalid network name %q (must match [a-z0-9][a-z0-9_-]* and not be 'local')", name)
 			}
 			res, err := collector.Detect(ctx, collector.Options{RPCURL: rpc, Override: argString(args, "override", "")})
@@ -53,7 +52,7 @@ func networkAttachTool() Tool {
 				Chain: res.ChainType, Network: name,
 				Nodes: []node.Node{n}, Capabilities: []string{"rpc"},
 			}
-			if err := netreg.SaveNetwork(stateDir, ns); err != nil {
+			if err := saveNetwork(stateDir, ns); err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("attached %q: chain_type=%s chain_id=%d namespaces=%v",
@@ -77,7 +76,7 @@ func networkListTool() Tool {
 			if stateDir == "" {
 				return "", fmt.Errorf("state_dir is required")
 			}
-			nets, err := netreg.ListNetworks(stateDir)
+			nets, err := listNetworks(stateDir)
 			if err != nil {
 				return "", err
 			}
@@ -116,7 +115,7 @@ func networkInfoTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			ns, err := netreg.LoadNetwork(stateDir, name)
+			ns, err := loadNetwork(stateDir, name)
 			if err != nil {
 				return "", err
 			}
@@ -153,7 +152,7 @@ func networkDetachTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			if err := netreg.RemoveNetwork(stateDir, name); err != nil {
+			if err := removeNetwork(stateDir, name); err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("detached %q", name), nil

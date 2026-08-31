@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/netreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
 func TestNetworkTopologyTool(t *testing.T) {
@@ -21,7 +21,7 @@ func TestNetworkTopologyTool(t *testing.T) {
 			{Index: 3, Role: node.RoleEndpoint, RPCURL: "http://127.0.0.1:1"},
 		},
 	}
-	if err := netreg.SaveNetwork(dir, ns); err != nil {
+	if err := mcp.SaveNetwork(dir, ns); err != nil {
 		t.Fatal(err)
 	}
 

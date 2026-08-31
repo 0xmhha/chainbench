@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/netreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
 func TestRemoteRPCTool(t *testing.T) {
@@ -17,7 +17,7 @@ func TestRemoteRPCTool(t *testing.T) {
 		Chain: "wbft", Network: "prod",
 		Nodes: []node.Node{{Index: 1, Role: node.RoleEndpoint, RPCURL: srv.URL}},
 	}
-	if err := netreg.SaveNetwork(dir, ns); err != nil {
+	if err := mcp.SaveNetwork(dir, ns); err != nil {
 		t.Fatal(err)
 	}
 

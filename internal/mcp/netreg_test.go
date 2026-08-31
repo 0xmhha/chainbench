@@ -1,10 +1,9 @@
-package netreg_test
+package mcp
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/netreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -22,10 +21,10 @@ func sampleNet(name string) node.NodeSet {
 
 func TestNetworkRegistry_RoundTrip(t *testing.T) {
 	dir := t.TempDir()
-	if err := netreg.SaveNetwork(dir, sampleNet("prod")); err != nil {
+	if err := saveNetwork(dir, sampleNet("prod")); err != nil {
 		t.Fatal(err)
 	}
-	got, err := netreg.LoadNetwork(dir, "prod")
+	got, err := loadNetwork(dir, "prod")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,25 +40,25 @@ func TestNetworkRegistry_RoundTrip(t *testing.T) {
 func TestNetworkRegistry_ListAndRemove(t *testing.T) {
 	dir := t.TempDir()
 	// empty dir lists cleanly
-	if ns, err := netreg.ListNetworks(dir); err != nil || len(ns) != 0 {
+	if ns, err := listNetworks(dir); err != nil || len(ns) != 0 {
 		t.Fatalf("empty list: %v %v", ns, err)
 	}
 	for _, n := range []string{"beta", "alpha"} {
-		if err := netreg.SaveNetwork(dir, sampleNet(n)); err != nil {
+		if err := saveNetwork(dir, sampleNet(n)); err != nil {
 			t.Fatal(err)
 		}
 	}
-	list, err := netreg.ListNetworks(dir)
+	list, err := listNetworks(dir)
 	if err != nil || len(list) != 2 {
 		t.Fatalf("list: %v %v", list, err)
 	}
 	if list[0].Network != "alpha" || list[1].Network != "beta" {
 		t.Errorf("not sorted by name: %v", list)
 	}
-	if err := netreg.RemoveNetwork(dir, "alpha"); err != nil {
+	if err := removeNetwork(dir, "alpha"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := netreg.LoadNetwork(dir, "alpha"); !errors.Is(err, netreg.ErrNetworkNotFound) {
+	if _, err := loadNetwork(dir, "alpha"); !errors.Is(err, ErrNetworkNotFound) {
 		t.Errorf("removed network should be not-found: %v", err)
 	}
 }
@@ -67,21 +66,21 @@ func TestNetworkRegistry_ListAndRemove(t *testing.T) {
 func TestNetworkRegistry_Rejects(t *testing.T) {
 	dir := t.TempDir()
 	// reserved name
-	if err := netreg.SaveNetwork(dir, sampleNet("local")); !errors.Is(err, netreg.ErrReservedName) {
+	if err := saveNetwork(dir, sampleNet("local")); !errors.Is(err, ErrReservedName) {
 		t.Errorf("reserved name: %v", err)
 	}
 	// invalid name
-	if err := netreg.SaveNetwork(dir, sampleNet("Bad Name")); !errors.Is(err, netreg.ErrInvalidName) {
+	if err := saveNetwork(dir, sampleNet("Bad Name")); !errors.Is(err, ErrInvalidName) {
 		t.Errorf("invalid name: %v", err)
 	}
 	// missing on load/remove
-	if _, err := netreg.LoadNetwork(dir, "nope"); !errors.Is(err, netreg.ErrNetworkNotFound) {
+	if _, err := loadNetwork(dir, "nope"); !errors.Is(err, ErrNetworkNotFound) {
 		t.Errorf("missing load: %v", err)
 	}
-	if err := netreg.RemoveNetwork(dir, "nope"); !errors.Is(err, netreg.ErrNetworkNotFound) {
+	if err := removeNetwork(dir, "nope"); !errors.Is(err, ErrNetworkNotFound) {
 		t.Errorf("missing remove: %v", err)
 	}
-	if netreg.IsValidNetworkName("local") || netreg.IsValidNetworkName("X") || !netreg.IsValidNetworkName("ok-1") {
+	if isValidNetworkName("local") || isValidNetworkName("X") || !isValidNetworkName("ok-1") {
 		t.Error("IsValidNetworkName logic wrong")
 	}
 }

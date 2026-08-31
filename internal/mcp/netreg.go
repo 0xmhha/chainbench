@@ -9,7 +9,7 @@
 // letting it die with the code around it. Its lifetime is also different: a
 // session is one run's artifacts, a composition is one workspace, and this is
 // a machine-wide inventory keyed by name.
-package netreg
+package mcp
 
 import (
 	"encoding/json"
@@ -38,27 +38,27 @@ var (
 	ErrNetworkNotFound = errors.New("state: no attached network")
 )
 
-// IsReservedNetworkName reports whether s is reserved by the state layer and
+// isReservedNetworkName reports whether s is reserved by the state layer and
 // cannot name a saved network. Only "local" (the per-datadir nodeset) is reserved.
-func IsReservedNetworkName(s string) bool { return s == "local" }
+func isReservedNetworkName(s string) bool { return s == "local" }
 
-// IsValidNetworkName reports whether s is a structurally valid remote network
+// isValidNetworkName reports whether s is a structurally valid remote network
 // name (matches the pattern and is not reserved). Handlers use this to validate
 // input before a probe or state write.
-func IsValidNetworkName(s string) bool {
-	return !IsReservedNetworkName(s) && networkNameRE.MatchString(s)
+func isValidNetworkName(s string) bool {
+	return !isReservedNetworkName(s) && networkNameRE.MatchString(s)
 }
 
 // networksDir is the directory holding one JSON file per named network.
 func networksDir(stateDir string) string { return filepath.Join(stateDir, "networks") }
 
-// SaveNetwork persists a named (attached/remote) network under
+// saveNetwork persists a named (attached/remote) network under
 // <stateDir>/networks/<ns.Network>.json. The write is atomic (temp + rename);
 // overwriting an existing entry is allowed. The reserved "local" name and
 // invalid names are rejected.
-func SaveNetwork(stateDir string, ns node.NodeSet) error {
+func saveNetwork(stateDir string, ns node.NodeSet) error {
 	name := ns.Network
-	if IsReservedNetworkName(name) {
+	if isReservedNetworkName(name) {
 		return ErrReservedName
 	}
 	if !networkNameRE.MatchString(name) {
@@ -84,12 +84,12 @@ func SaveNetwork(stateDir string, ns node.NodeSet) error {
 	return nil
 }
 
-// LoadNetwork reads the named network from <stateDir>/networks/<name>.json. A
+// loadNetwork reads the named network from <stateDir>/networks/<name>.json. A
 // missing entry yields a wrapped ErrNetworkNotFound. The file's Network field
 // must agree with the filename stem, else a rename/copy mistake would silently
 // serve the wrong network.
-func LoadNetwork(stateDir, name string) (node.NodeSet, error) {
-	if IsReservedNetworkName(name) {
+func loadNetwork(stateDir, name string) (node.NodeSet, error) {
+	if isReservedNetworkName(name) {
 		return node.NodeSet{}, ErrReservedName
 	}
 	if !networkNameRE.MatchString(name) {
@@ -113,11 +113,11 @@ func LoadNetwork(stateDir, name string) (node.NodeSet, error) {
 	return ns, nil
 }
 
-// ListNetworks returns the saved networks under <stateDir>/networks/, sorted by
+// listNetworks returns the saved networks under <stateDir>/networks/, sorted by
 // name. A missing directory yields an empty slice, not an error. Entries that
 // fail to parse or whose contents disagree with the filename are skipped rather
 // than failing the whole listing.
-func ListNetworks(stateDir string) ([]node.NodeSet, error) {
+func listNetworks(stateDir string) ([]node.NodeSet, error) {
 	entries, err := os.ReadDir(networksDir(stateDir))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -130,7 +130,7 @@ func ListNetworks(stateDir string) ([]node.NodeSet, error) {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
 			continue
 		}
-		ns, err := LoadNetwork(stateDir, strings.TrimSuffix(e.Name(), ".json"))
+		ns, err := loadNetwork(stateDir, strings.TrimSuffix(e.Name(), ".json"))
 		if err != nil {
 			continue // skip malformed / reserved / mismatched entries
 		}
@@ -140,11 +140,11 @@ func ListNetworks(stateDir string) ([]node.NodeSet, error) {
 	return nets, nil
 }
 
-// RemoveNetwork deletes <stateDir>/networks/<name>.json (the inverse of
-// SaveNetwork). Reserved/invalid names are rejected; a missing entry yields a
+// removeNetwork deletes <stateDir>/networks/<name>.json (the inverse of
+// saveNetwork). Reserved/invalid names are rejected; a missing entry yields a
 // wrapped ErrNetworkNotFound.
-func RemoveNetwork(stateDir, name string) error {
-	if IsReservedNetworkName(name) {
+func removeNetwork(stateDir, name string) error {
+	if isReservedNetworkName(name) {
 		return ErrReservedName
 	}
 	if !networkNameRE.MatchString(name) {
