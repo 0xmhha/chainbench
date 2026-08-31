@@ -105,13 +105,13 @@ type ringCreateFunc func(context.Context, operation.Deps, operation.CreateIn) (o
 func runRingCreate(cmd *cobra.Command, use ringCreateFunc, mk *makeFlags) error {
 	out := cmd.OutOrStdout()
 	r, err := use(cmd.Context(), deps(cmd), mk.in(cmd))
+	announce(cmd, r)
 	if mk.jsonF.on {
 		if err != nil {
 			return err
 		}
 		return emitJSON(out, r)
 	}
-	announce(out, r)
 	if err != nil {
 		return err
 	}
