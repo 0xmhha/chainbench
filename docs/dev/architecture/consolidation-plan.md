@@ -66,6 +66,31 @@
 | `core/netreg` → `mcp` | 161 | 소비자가 mcp 뿐 |
 | `core/consensus` → `core/registry`, `core/capability` → 소비자 조사 후 registry/testengine | 23+222 | |
 
+#### R1 실행 결과 (2026-08-31, 패키지 71 → 62; internal 트리 46)
+
+착수 후 **측정된 층·의존 방향**(layers.md §3 arch 게이트: 낮은 층이 높은 층을 import 금지)과
+대조하니 위 표의 네 항목이 그대로는 실행 불가였다. 사용자 결정으로 아래처럼 확정했다.
+
+**완료 (9 relocation / 6 커밋):**
+
+| 이동 | 목적지 | 결정 근거 |
+|---|---|---|
+| `core/topology` → `core/node` | node(L0) | 선언과 사실은 한 대상. node 내부-import-0 유지(외부 YAML 만) |
+| `core/launchopt`·`core/config` → `core/nodeconfig` | nodeconfig(L1) | argv·설정 해석·파일 렌더 한 지붕 |
+| `core/netid` → `resource` | resource(L1) | 네트워크 id 는 자원 배정값 |
+| `core/consensus`·`core/capability` → `core/registry` | registry(L1) | 등록물의 능력은 레지스트리와 함께. `capability.Get`→`GetByAddress`(레지스트리 `Get` 과 충돌) |
+| `core/obs`·`core/logs` → `core/collector` | collector(L3) | 관측 세 면(이벤트·로그·수집)이 한 모듈. §5 writer 를 obs→collector 로 |
+| `core/netreg` → `core/session` | session(L3) | 계획의 `→ mcp` 는 표면(L6)을 영속-상태 소유자로 만든다. §5 가 권한 대로 **session**(이미 ✅ 소유자)으로. mcp 는 그대로 session 을 호출 |
+
+**계획과 달라진 결정 (arch 게이트/응집도 — 사용자 확정):**
+
+| 항목 | 계획대로면 | 결정 | 이유 |
+|---|---|---|---|
+| `core/netreg` → `mcp` | L3→L6 | **→ `core/session` 으로 변경** | 위 완료 표. 표면이 아니라 상태 소유자가 레지스트리를 소유 |
+| `core/hardfork` → `core/genesis` | L3→L1 | **통폐합 안 함 — 독립 유지** | hardfork(바이너리 swap)와 `consensus/upgrade`(합의-패밀리 handoff: 두 바이너리 동시 실행, hardfork 넘버부터 go-wbft 가 블록 생성)는 **의도적으로 다른 모델**. `Plan`·`BuildPlan` 충돌은 억지 병합의 신호. 둘은 별개로 둔다 |
+| `validatorset` → `core/node` | L3→L0 | **제외 (후속 작업)** | `chains/all`·`registry` import 라 L0 커널 불가. 로스터 계산(L3)의 올바른 홈은 **미정 → 후속 단계에서 결정**([[chainbench-worklist]] 에 기록) |
+| `core/health` → `core/inspector` | L3→L1 | **흡수 안 함 — 상위 조합 레이어로 (후속 작업)** | health 는 inspector 를 *쓴다*. 그러나 inspector 는 atomic 실사 프리미티브(L1, "판단 없음")로 두고, health(블록 전진 *판정*)는 그 atomic 들을 **조합하는 inspector 위 레이어**가 맞다. inspector 로 내려 합치지 않는다 → 후속에서 health 를 inspector 조합 소비자로 재배선 |
+
 ### R2. DSL 분리 — 문법과 실행기
 
 - `testspec` → **`dsl`** 로 개명, 문법·파싱·검증·fingerprint·Registry 계약만 남긴다.

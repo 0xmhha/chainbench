@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/netcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
@@ -58,8 +58,8 @@ func newRootCmd() *cobra.Command {
 // obsBus returns an event bus and a cleanup func. When --dashboard is set, bus
 // events are forwarded to that chainbench-dashboard; cleanup closes the bus and waits
 // for the forwarder to flush.
-func obsBus() (*obs.Bus, func()) {
-	bus := obs.NewBus()
+func obsBus() (*collector.Bus, func()) {
+	bus := collector.NewBus()
 	if dashboardURL == "" {
 		return bus, bus.Close
 	}

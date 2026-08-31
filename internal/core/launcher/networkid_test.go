@@ -6,7 +6,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -39,7 +38,7 @@ func TestNodeConfigArgv_EmitsTheManifestNetworkID(t *testing.T) {
 	}
 
 	// An operator's override arrives on a later layer and wins.
-	args, err = nodeconfig.Argv(cfg, launchopt.Override{Key: launchopt.KeyNetworkID, Value: "99", Layer: launchopt.LayerEnv})
+	args, err = nodeconfig.Argv(cfg, nodeconfig.Override{Key: nodeconfig.KeyNetworkID, Value: "99", Layer: nodeconfig.LayerEnv})
 	if err != nil {
 		t.Fatalf("nodeconfig.Argv with override: %v", err)
 	}

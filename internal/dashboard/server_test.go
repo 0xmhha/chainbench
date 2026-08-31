@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
 func TestHealthAndIndex(t *testing.T) {
-	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), obs.NewMemStore()))
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), collector.NewMemStore()))
 	defer srv.Close()
 
 	if b := get(t, srv.URL+"/healthz"); b != "ok" {
@@ -32,7 +32,7 @@ func TestHealthAndIndex(t *testing.T) {
 }
 
 func TestSPAAssetServed(t *testing.T) {
-	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), obs.NewMemStore()))
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), collector.NewMemStore()))
 	defer srv.Close()
 
 	// A hashed asset referenced by the SPA index must be served (non-empty).
@@ -51,12 +51,12 @@ func TestSPAAssetServed(t *testing.T) {
 }
 
 func TestRunsAPI(t *testing.T) {
-	store := obs.NewMemStore()
-	_ = store.SaveRun(obs.RunRecord{ID: "test/a", Phase: obs.PhaseTest, Status: obs.RunSucceeded})
-	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), store))
+	store := collector.NewMemStore()
+	_ = store.SaveRun(collector.RunRecord{ID: "test/a", Phase: collector.PhaseTest, Status: collector.RunSucceeded})
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), store))
 	defer srv.Close()
 
-	var runs []obs.RunRecord
+	var runs []collector.RunRecord
 	body := get(t, srv.URL+"/api/runs")
 	if err := json.Unmarshal([]byte(body), &runs); err != nil {
 		t.Fatalf("runs json: %v (%s)", err, body)
@@ -67,7 +67,7 @@ func TestRunsAPI(t *testing.T) {
 }
 
 func TestSSE_StreamsPublishedEvents(t *testing.T) {
-	bus := obs.NewBus()
+	bus := collector.NewBus()
 	defer bus.Close()
 	srv := httptest.NewServer(dashboard.NewServer(bus, nil))
 	defer srv.Close()
@@ -93,7 +93,7 @@ func TestSSE_StreamsPublishedEvents(t *testing.T) {
 			case <-stop:
 				return
 			case <-tick.C:
-				bus.Publish(obs.Event{Phase: obs.PhaseSetup, Kind: obs.KindResult, Message: "hello-dash"})
+				bus.Publish(collector.Event{Phase: collector.PhaseSetup, Kind: collector.KindResult, Message: "hello-dash"})
 			}
 		}
 	}()
@@ -102,11 +102,11 @@ func TestSSE_StreamsPublishedEvents(t *testing.T) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "data: ") {
-			var e obs.Event
+			var e collector.Event
 			if err := json.Unmarshal([]byte(strings.TrimPrefix(line, "data: ")), &e); err != nil {
 				t.Fatalf("bad SSE json: %v", err)
 			}
-			if e.Message == "hello-dash" && e.Phase == obs.PhaseSetup {
+			if e.Message == "hello-dash" && e.Phase == collector.PhaseSetup {
 				return // success
 			}
 		}
@@ -115,7 +115,7 @@ func TestSSE_StreamsPublishedEvents(t *testing.T) {
 }
 
 func TestPublishEndpoint(t *testing.T) {
-	bus := obs.NewBus()
+	bus := collector.NewBus()
 	defer bus.Close()
 	sub := bus.Subscribe()
 	srv := httptest.NewServer(dashboard.NewServer(bus, nil))

@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -161,12 +160,12 @@ func TOML(s Spec) []byte {
 //
 // A spec with a ConfigPath leaves the auth port to the file; one without
 // (a handoff relaunch that carries no config) says it on the command line.
-func Argv(s Spec, overrides ...launchopt.Override) ([]string, error) {
-	policy, err := launchopt.ParseFamilyFlags(s.Chain.FamilyFlags)
+func Argv(s Spec, overrides ...Override) ([]string, error) {
+	policy, err := ParseFamilyFlags(s.Chain.FamilyFlags)
 	if err != nil {
 		return nil, err
 	}
-	id := launchopt.Identity{
+	id := Identity{
 		NodeKeyFile:         s.NodekeyPath,
 		AllowInsecureUnlock: policy.AllowInsecureUnlock,
 	}
@@ -175,25 +174,25 @@ func Argv(s Spec, overrides ...launchopt.Override) ([]string, error) {
 		id.PasswordFile = s.PasswordFile
 		id.Etherbase = s.Unlock
 	}
-	modules := []launchopt.Module{
+	modules := []Module{
 		id,
-		launchopt.Storage{DataDir: s.DataDir, ConfigFile: s.ConfigPath},
+		Storage{DataDir: s.DataDir, ConfigFile: s.ConfigPath},
 		// The manifest's network id is emitted rather than left to the
 		// binary's default: a chain whose devp2p network id differs from its
 		// genesis chain id (the handoff produces one) must say so. An
 		// operator's --network-id still wins, arriving on a later layer.
-		launchopt.P2P{Port: s.Ports.P2P, NetworkID: s.Chain.NetworkID},
-		launchopt.HTTPRPC{Enabled: true, Addr: s.HTTPHost, Port: s.Ports.HTTP},
-		launchopt.WSRPC{Enabled: true, Port: s.Ports.WS},
+		P2P{Port: s.Ports.P2P, NetworkID: s.Chain.NetworkID},
+		HTTPRPC{Enabled: true, Addr: s.HTTPHost, Port: s.Ports.HTTP},
+		WSRPC{Enabled: true, Port: s.Ports.WS},
 	}
 	if s.ConfigPath == "" && s.Ports.Auth > 0 {
-		modules = append(modules, launchopt.AuthIPC{AuthPort: s.Ports.Auth})
+		modules = append(modules, AuthIPC{AuthPort: s.Ports.Auth})
 	}
 	modules = append(modules,
-		launchopt.RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
-		launchopt.Mining{Mine: policy.Mine},
+		RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
+		Mining{Mine: policy.Mine},
 	)
-	return launchopt.New(launchopt.DialectFor(s.Chain.ID), modules...).WithOverrides(overrides...).Build()
+	return New(DialectFor(s.Chain.ID), modules...).WithOverrides(overrides...).Build()
 }
 
 func quoteList(ss []string) string {

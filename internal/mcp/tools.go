@@ -13,10 +13,8 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/consensus"
-	"github.com/0xmhha/chainbench/internal/core/logs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -101,7 +99,7 @@ func reportTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			store, err := obs.NewFileStore(filepath.Join(dir, "runs.json"))
+			store, err := collector.NewFileStore(filepath.Join(dir, "runs.json"))
 			if err != nil {
 				return "", err
 			}
@@ -114,11 +112,11 @@ func reportTool() Tool {
 			for _, r := range runs {
 				fmt.Fprintf(&b, "%s [%s] %s %s\n", r.ID, r.Phase, r.Chain, r.Status)
 				switch r.Status {
-				case obs.RunSucceeded:
+				case collector.RunSucceeded:
 					ok++
-				case obs.RunFailed:
+				case collector.RunFailed:
 					failed++
-				case obs.RunSkipped:
+				case collector.RunSkipped:
 					skipped++
 				}
 			}
@@ -179,7 +177,7 @@ func consensusTool() Tool {
 				return "", err
 			}
 			method := p.Manifest().Consensus.ValidatorsMethod
-			vals, err := consensus.Validators(ctx, rpc.Dial(argString(args, "rpc", "")), method)
+			vals, err := registry.Validators(ctx, rpc.Dial(argString(args, "rpc", "")), method)
 			if err != nil {
 				return "", err
 			}
@@ -402,7 +400,7 @@ func logTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexp, _ := args["regexp"].(bool)
-			matches, err := logs.Search(dir, logs.SearchOpts{
+			matches, err := collector.Search(dir, collector.SearchOpts{
 				Pattern: argString(args, "pattern", ""),
 				Regexp:  regexp,
 				Node:    argInt(args, "node", 0),

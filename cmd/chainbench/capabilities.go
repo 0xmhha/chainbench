@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/capability"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 func newCapabilitiesCmd() *cobra.Command {
@@ -15,11 +15,11 @@ func newCapabilitiesCmd() *cobra.Command {
 		Use:   "capabilities",
 		Short: "List the capabilities chainbench exposes, grouped by version and chain",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			var caps []capability.Capability
+			var caps []registry.Capability
 			if chain != "" {
-				caps = capability.For(chain)
+				caps = registry.For(chain)
 			} else {
-				caps = capability.All()
+				caps = registry.All()
 			}
 			out := cmd.OutOrStdout()
 			if len(caps) == 0 {
@@ -68,10 +68,10 @@ func newCapabilityCallCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			address := args[0]
-			c, ok := capability.Lookup(address)
+			c, ok := registry.Lookup(address)
 			if !ok {
 				// Distinguish a built-in flat tool from an unknown address.
-				if d, cataloged := capability.Get(address); cataloged && d.Tool != "" {
+				if d, cataloged := registry.GetByAddress(address); cataloged && d.Tool != "" {
 					return fmt.Errorf("%q is the built-in tool %q; call it via its own command (e.g. `chainbench %s`)",
 						address, d.Tool, strings.TrimPrefix(strings.ReplaceAll(d.Name, ".", " "), ""))
 				}

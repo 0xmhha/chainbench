@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
@@ -16,7 +16,7 @@ func TestForward(t *testing.T) {
 	var mu sync.Mutex
 	var got []string
 	sink := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var e obs.Event
+		var e collector.Event
 		_ = json.NewDecoder(r.Body).Decode(&e)
 		mu.Lock()
 		got = append(got, e.Message)
@@ -25,11 +25,11 @@ func TestForward(t *testing.T) {
 	}))
 	defer sink.Close()
 
-	bus := obs.NewBus()
+	bus := collector.NewBus()
 	done := dashboard.Forward(bus, sink.URL, sink.Client())
 
-	bus.Publish(obs.Event{Phase: obs.PhaseSetup, Message: "a"})
-	bus.Publish(obs.Event{Phase: obs.PhaseVerify, Message: "b"})
+	bus.Publish(collector.Event{Phase: collector.PhaseSetup, Message: "a"})
+	bus.Publish(collector.Event{Phase: collector.PhaseVerify, Message: "b"})
 	bus.Close()
 
 	select {

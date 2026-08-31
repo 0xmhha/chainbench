@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/netreg"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // networkTopologyTool reports each node's reachability and peer count for a saved
@@ -33,7 +33,7 @@ func networkTopologyTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			ns, err := netreg.LoadNetwork(stateDir, name)
+			ns, err := session.LoadNetwork(stateDir, name)
 			if err != nil {
 				return "", err
 			}

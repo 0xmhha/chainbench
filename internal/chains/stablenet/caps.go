@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/accounts/protocol"
 
 	"github.com/0xmhha/chainbench/internal/chains/stablenet/govbind"
-	"github.com/0xmhha/chainbench/internal/core/capability"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -21,11 +21,11 @@ import (
 var catalog []byte
 
 func init() {
-	if err := capability.LoadCatalog(catalog); err != nil {
+	if err := registry.LoadCatalog(catalog); err != nil {
 		panic(err)
 	}
-	reg := func(name string, h capability.Handler) {
-		capability.RegisterHandler("v1", "stablenet", name, h)
+	reg := func(name string, h registry.Handler) {
+		registry.RegisterHandler("v1", "stablenet", name, h)
 	}
 	reg("governance.propose_mint", proposeMint)
 	reg("governance.propose_burn", proposeBurn)
@@ -43,11 +43,11 @@ func init() {
 // GovMinter with the proposals(id) calldata, then decode the status word. This
 // is a node-interacting (RPC) capability, unlike the pure calldata builders.
 func proposalStatus(ctx context.Context, args map[string]any) (string, error) {
-	url := capability.ArgString(args, "rpc", "")
+	url := registry.ArgString(args, "rpc", "")
 	if url == "" {
 		return "", fmt.Errorf("rpc is required")
 	}
-	id := capability.ArgBigInt(args, "id")
+	id := registry.ArgBigInt(args, "id")
 	if id == nil {
 		return "", fmt.Errorf("id is required (decimal)")
 	}
@@ -67,7 +67,7 @@ func proposalStatus(ctx context.Context, args map[string]any) (string, error) {
 }
 
 func proposeMint(_ context.Context, args map[string]any) (string, error) {
-	beneficiary := capability.ArgString(args, "beneficiary", "")
+	beneficiary := registry.ArgString(args, "beneficiary", "")
 	amount, timestamp, err := amountTimestamp(args)
 	if err != nil {
 		return "", err
@@ -76,14 +76,14 @@ func proposeMint(_ context.Context, args map[string]any) (string, error) {
 		return "", fmt.Errorf("beneficiary is required")
 	}
 	proof := govbind.MintProof(beneficiary, amount, timestamp,
-		capability.ArgString(args, "deposit_id", ""),
-		capability.ArgString(args, "bank_reference", ""),
-		capability.ArgString(args, "memo", ""))
+		registry.ArgString(args, "deposit_id", ""),
+		registry.ArgString(args, "bank_reference", ""),
+		registry.ArgString(args, "memo", ""))
 	return govbind.ProposeMintCall(proof), nil
 }
 
 func proposeBurn(_ context.Context, args map[string]any) (string, error) {
-	from := capability.ArgString(args, "from", "")
+	from := registry.ArgString(args, "from", "")
 	amount, timestamp, err := amountTimestamp(args)
 	if err != nil {
 		return "", err
@@ -92,18 +92,18 @@ func proposeBurn(_ context.Context, args map[string]any) (string, error) {
 		return "", fmt.Errorf("from is required")
 	}
 	proof := govbind.BurnProof(from, amount, timestamp,
-		capability.ArgString(args, "withdrawal_id", ""),
-		capability.ArgString(args, "reference_id", ""),
-		capability.ArgString(args, "memo", ""))
+		registry.ArgString(args, "withdrawal_id", ""),
+		registry.ArgString(args, "reference_id", ""),
+		registry.ArgString(args, "memo", ""))
 	return govbind.ProposeBurnCall(proof), nil
 }
 
 func proposeAddMember(_ context.Context, args map[string]any) (string, error) {
-	member := capability.ArgString(args, "member", "")
+	member := registry.ArgString(args, "member", "")
 	if member == "" {
 		return "", fmt.Errorf("member is required")
 	}
-	q := capability.ArgInt(args, "new_quorum", -1)
+	q := registry.ArgInt(args, "new_quorum", -1)
 	if q < 0 {
 		return "", fmt.Errorf("new_quorum is required (decimal)")
 	}
@@ -115,9 +115,9 @@ func claimBurnRefund(_ context.Context, _ map[string]any) (string, error) {
 }
 
 // byID adapts a govbind calldata builder that takes a single proposal id.
-func byID(build func(*big.Int) string) capability.Handler {
+func byID(build func(*big.Int) string) registry.Handler {
 	return func(_ context.Context, args map[string]any) (string, error) {
-		id := capability.ArgBigInt(args, "id")
+		id := registry.ArgBigInt(args, "id")
 		if id == nil {
 			return "", fmt.Errorf("id is required (decimal)")
 		}
@@ -127,11 +127,11 @@ func byID(build func(*big.Int) string) capability.Handler {
 
 // amountTimestamp reads the shared amount/timestamp proof fields.
 func amountTimestamp(args map[string]any) (amount, timestamp *big.Int, err error) {
-	amount = capability.ArgBigInt(args, "amount")
+	amount = registry.ArgBigInt(args, "amount")
 	if amount == nil {
 		return nil, nil, fmt.Errorf("amount is required (decimal wei)")
 	}
-	timestamp = capability.ArgBigInt(args, "timestamp")
+	timestamp = registry.ArgBigInt(args, "timestamp")
 	if timestamp == nil {
 		return nil, nil, fmt.Errorf("timestamp is required (decimal)")
 	}

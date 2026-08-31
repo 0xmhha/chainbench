@@ -1,7 +1,6 @@
 package upgrade
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 )
 
@@ -20,11 +19,11 @@ import (
 // familyFlags are the consensus family's role flags (e.g. --mine for a
 // producer/validator), supplied by the caller from the node's own chain family
 // so this stays engine-agnostic; they must fit the closed vocabulary
-// launchopt.ParseFamilyFlags accepts. overrides are the per-node high-precedence
+// nodeconfig.ParseFamilyFlags accepts. overrides are the per-node high-precedence
 // knobs (the handoff's account and RPC-namespace layer). The handoff passes
 // every setting on the command line (no --config file), so the two binaries
 // need no pre-written node config.
-func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string, overrides ...launchopt.Override) ([]string, error) {
+func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string, overrides ...nodeconfig.Override) ([]string, error) {
 	// A handoff relaunch carries no config file, so the ports the file would
 	// have named travel on the command line; nodeconfig applies that rule.
 	return nodeconfig.Argv(nodeconfig.Spec{

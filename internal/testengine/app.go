@@ -16,11 +16,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/config"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/launcher"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -31,7 +30,7 @@ import (
 
 // busEmit returns an event sink publishing to bus, or nil when bus is nil so the
 // engine's emission stays a no-op.
-func busEmit(bus *obs.Bus) func(obs.Event) {
+func busEmit(bus *collector.Bus) func(collector.Event) {
 	if bus == nil {
 		return nil
 	}
@@ -75,7 +74,7 @@ type LocalConfig struct {
 	NetworkID int64
 	// LaunchOverrides are high-precedence launch knobs applied to every node's
 	// argv through the launchopt Builder (env.launch / case layers).
-	LaunchOverrides []launchopt.Override
+	LaunchOverrides []nodeconfig.Override
 	// Pool decides the port bands and the capacity bound. Its zero value is
 	// the built-in local plan; a caller that read the operator's server set
 	// passes that server's pool, which is how site-specific ports reach a run
@@ -86,7 +85,7 @@ type LocalConfig struct {
 	Clock func() time.Time
 	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
 	// disables emission.
-	Bus *obs.Bus
+	Bus *collector.Bus
 }
 
 // NewLocalEngine composes a runnable Engine for one local chain: it wires the
@@ -134,8 +133,8 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 	// so every node's argv carries it uniformly.
 	overrides := cfg.LaunchOverrides
 	if cfg.NetworkID != 0 {
-		overrides = append([]launchopt.Override{
-			{Key: launchopt.KeyNetworkID, Value: strconv.FormatInt(cfg.NetworkID, 10), Layer: launchopt.LayerEnv},
+		overrides = append([]nodeconfig.Override{
+			{Key: nodeconfig.KeyNetworkID, Value: strconv.FormatInt(cfg.NetworkID, 10), Layer: nodeconfig.LayerEnv},
 		}, overrides...)
 	}
 	procs := process.New()
@@ -198,7 +197,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 			return sess, nil
 		},
 		Fingerprint: func(s testspec.Spec) session.Fingerprint {
-			return s.Fingerprint(config.Values{})
+			return s.Fingerprint(nodeconfig.Values{})
 		},
 		BuildEnv:   withCollection(build, cfg.Bus, nil),
 		RunSpec:    run,

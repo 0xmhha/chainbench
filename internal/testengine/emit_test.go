@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testspec"
 
@@ -13,19 +13,19 @@ import (
 
 // collectEvents runs specs through the engine with an Emit hook capturing every
 // published event, so tests can assert the dashboard-facing milestone stream.
-func collectEvents(t *testing.T, h *harness, specs [][]byte, network string) []obs.Event {
+func collectEvents(t *testing.T, h *harness, specs [][]byte, network string) []collector.Event {
 	t.Helper()
 	deps := h.deps(t)
 	deps.Network = network
-	var got []obs.Event
-	deps.Emit = func(ev obs.Event) { got = append(got, ev) }
+	var got []collector.Event
+	deps.Emit = func(ev collector.Event) { got = append(got, ev) }
 	if _, err := testengine.New(deps).Run(context.Background(), specs); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	return got
 }
 
-func messages(evs []obs.Event) []string {
+func messages(evs []collector.Event) []string {
 	out := make([]string, len(evs))
 	for i, e := range evs {
 		out[i] = e.Message
@@ -33,7 +33,7 @@ func messages(evs []obs.Event) []string {
 	return out
 }
 
-func containsMsg(evs []obs.Event, msg string) bool {
+func containsMsg(evs []collector.Event, msg string) bool {
 	for _, e := range evs {
 		if e.Message == msg {
 			return true
@@ -63,9 +63,9 @@ func TestEngine_EmitResultCarriesStatus(t *testing.T) {
 	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
 	evs := collectEvents(t, h, [][]byte{specJSON("T1", "wbft")}, "wbft")
 
-	var result *obs.Event
+	var result *collector.Event
 	for i := range evs {
-		if evs[i].Kind == obs.KindResult && evs[i].Message == "spec pass" {
+		if evs[i].Kind == collector.KindResult && evs[i].Message == "spec pass" {
 			result = &evs[i]
 		}
 	}

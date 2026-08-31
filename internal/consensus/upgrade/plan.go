@@ -16,7 +16,6 @@ package upgrade
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/netid"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"math/big"
 	"strings"
@@ -235,7 +234,7 @@ type NetworkPlan struct {
 // validate runs the builders' own checks plus the handoff's role rule. Every
 // condition here caused a silent, hard-to-diagnose failure at least once.
 func (p NetworkPlan) validate() error {
-	if err := netid.ValidateUniform(p.NetworkIDs); err != nil {
+	if err := resource.ValidateUniform(p.NetworkIDs); err != nil {
 		return err
 	}
 	if err := resource.ValidatePorts(p.Ports); err != nil {

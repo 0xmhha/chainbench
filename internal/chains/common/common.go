@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/capability"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -17,12 +16,12 @@ import (
 var catalog []byte
 
 func init() {
-	if err := capability.LoadCatalog(catalog); err != nil {
+	if err := registry.LoadCatalog(catalog); err != nil {
 		panic(err)
 	}
-	capability.RegisterHandler("v1", capability.CommonChain, "chains.list", chainsList)
-	capability.RegisterHandler("v1", capability.CommonChain, "chains.info", chainsInfo)
-	capability.RegisterHandler("v1", capability.CommonChain, "chains.hardforks", chainsHardforks)
+	registry.RegisterHandler("v1", registry.CommonChain, "chains.list", chainsList)
+	registry.RegisterHandler("v1", registry.CommonChain, "chains.info", chainsInfo)
+	registry.RegisterHandler("v1", registry.CommonChain, "chains.hardforks", chainsHardforks)
 }
 
 func chainsList(_ context.Context, _ map[string]any) (string, error) {
@@ -40,7 +39,7 @@ func chainsList(_ context.Context, _ map[string]any) (string, error) {
 }
 
 func chainsInfo(_ context.Context, args map[string]any) (string, error) {
-	id := capability.ArgString(args, "chain", "")
+	id := registry.ArgString(args, "chain", "")
 	if id == "" {
 		return "", fmt.Errorf("chain is required")
 	}
@@ -57,7 +56,7 @@ func chainsInfo(_ context.Context, args map[string]any) (string, error) {
 }
 
 func chainsHardforks(_ context.Context, args map[string]any) (string, error) {
-	id := capability.ArgString(args, "chain", "")
+	id := registry.ArgString(args, "chain", "")
 	if id == "" {
 		return "", fmt.Errorf("chain is required")
 	}

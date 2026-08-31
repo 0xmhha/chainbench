@@ -642,6 +642,23 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 아래의 예전 후보 목록은 이 계획 안으로 흡수됐다(34건 이관 = R5, verbs 질문 =
 표면 재정리에서 함께).
 
+**R1 완료 (2026-08-31, PR #325 — 9 relocation, internal 46).** 소형 흡수 8건 계획 중,
+측정된 층 그래프와 대조해 arch-안전한 것만 실행했다: topology→node · launchopt·config→nodeconfig ·
+netid→resource · consensus·capability→registry · obs·logs→collector · netreg→session. 상세·근거는
+정본(`consolidation-plan.md` §R1 실행 결과). **다음은 R2(DSL 분리).**
+
+**R1 에서 갈라져 나온 후속 작업 (별도 트랙):**
+
+- ☐ **validatorset 홈 결정** — `core/node`(L0)로 넣으려던 계획은 층 위반(validatorset 이
+  `chains/all`·`registry` import). 지금은 제자리(독립 L3)에 둔다. 로스터 계산(키+registry→검증자)의
+  올바른 소유 모듈을 후속에서 정한다. 소비자는 `cmd` 하나뿐.
+- ☐ **health 를 inspector 조합 레이어로 재배선** — health→inspector 흡수는 하지 않기로 결정.
+  방향: `inspector` 는 atomic 실사 프리미티브(L1, "판단 없음")로 두고, `health`(블록 전진 *판정*)는
+  그 atomic 들을 **조합하는 inspector 위 레이어**로 제공한다(현재 health 는 obs/rpc 를 직접 쓴다 →
+  inspector 프리미티브를 쓰도록 재배선). atomic ↔ 조합의 층 분리.
+- ☐ **hardfork 는 통폐합 대상 아님** — `hardfork`(바이너리 swap)와 `consensus/upgrade`(합의-패밀리
+  handoff)는 의도적으로 다른 모델이라 별개로 유지. R1 표의 `hardfork→genesis` 항목은 폐기.
+
 이전 기록 (2026-08-31 이전 후보):
 
 1. **레거시 34건 이관 + 스택 은퇴** — `tests/specs/README.md` 잔여 표의 문법 갭을

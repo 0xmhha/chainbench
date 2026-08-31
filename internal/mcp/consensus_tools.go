@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/consensus"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -44,7 +43,7 @@ func consensusStatusTool() Tool {
 			cid, _ := cli.ChainID(ctx)
 			peers, _ := cli.PeerCount(ctx)
 			syncing, _ := cli.Syncing(ctx)
-			vals, _ := consensus.Validators(ctx, cli, p.Manifest().Consensus.ValidatorsMethod)
+			vals, _ := registry.Validators(ctx, cli, p.Manifest().Consensus.ValidatorsMethod)
 			return fmt.Sprintf("chain=%s head=%d chain_id=%d peers=%d syncing=%t validators=%d",
 				chain, head, cid, peers, syncing, len(vals)), nil
 		},

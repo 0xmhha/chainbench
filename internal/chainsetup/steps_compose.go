@@ -18,12 +18,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/topology"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -116,7 +114,7 @@ type AllocateOpts struct {
 	// launch order, each with its own role and sync mode. It replaces the
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
 	// per-node choice. Its Nodes must already be Validate()d.
-	Topology *topology.Topology
+	Topology *node.Topology
 	// Pool decides the port bands and the capacity
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
@@ -559,14 +557,14 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access, nodes
 // ParseOverrides maps "key=value" strings (bare key for booleans) onto typed
 // launchopt overrides. Whether a key exists for the target binary is checked
 // at assembly by the Builder.
-func ParseOverrides(sets []string) ([]launchopt.Override, error) {
-	out := make([]launchopt.Override, 0, len(sets))
+func ParseOverrides(sets []string) ([]nodeconfig.Override, error) {
+	out := make([]nodeconfig.Override, 0, len(sets))
 	for _, s := range sets {
 		k, v, _ := strings.Cut(s, "=")
 		if k == "" {
 			return nil, fmt.Errorf("chainsetup: bad --set %q (want key=value or a bare boolean key)", s)
 		}
-		out = append(out, launchopt.Override{Key: launchopt.Key(k), Value: v})
+		out = append(out, nodeconfig.Override{Key: nodeconfig.Key(k), Value: v})
 	}
 	return out, nil
 }

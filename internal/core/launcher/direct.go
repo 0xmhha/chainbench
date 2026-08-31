@@ -10,7 +10,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/launchopt"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -53,7 +52,7 @@ type Direct struct {
 	Files filestore.Store
 	// LaunchOverrides are high-precedence launch knobs (env.launch / case
 	// layers) applied to every node's argv after the role-derived modules.
-	LaunchOverrides []launchopt.Override
+	LaunchOverrides []nodeconfig.Override
 }
 
 // Launch arms and launches every node in plan and returns the running node set
@@ -296,7 +295,7 @@ func materialize(ctx context.Context, pv *filestore.Provisioner, plan driver.Pla
 // The argv is assembled here and only here (launchopt Builder), replacing the
 // previous split between AssemblePlan's common flags and this function's
 // identity appends — see docs/dev/architecture/code-graph.md §3.
-func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, peering node.Peering, overrides []launchopt.Override) ([]driver.NodeSpec, error) {
+func armSpecs(plugin registry.ChainPlugin, preset keyring.Preset, plan driver.Plan, binary, keysDir string, peering node.Peering, overrides []nodeconfig.Override) ([]driver.NodeSpec, error) {
 	// Who a node dials is netmap's policy now; this function only knows how to
 	// spell a peer, because an enode needs key material and netmap holds none.
 	placed, err := PlanMap(plan)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/logs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -35,7 +35,7 @@ func logTimelineTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexpMode, _ := args["regexp"].(bool)
-			matches, err := logs.Timeline(dir, logs.SearchOpts{
+			matches, err := collector.Timeline(dir, collector.SearchOpts{
 				Pattern: argString(args, "pattern", ""),
 				Regexp:  regexpMode,
 				Node:    argInt(args, "node", 0),

@@ -10,17 +10,17 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/capability"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 //go:embed caps.jsonl
 var catalog []byte
 
 func init() {
-	if err := capability.LoadCatalog(catalog); err != nil {
+	if err := registry.LoadCatalog(catalog); err != nil {
 		panic(err)
 	}
-	capability.RegisterHandler("v1", "wemix", "bootstrap.plan", bootstrapPlan)
+	registry.RegisterHandler("v1", "wemix", "bootstrap.plan", bootstrapPlan)
 }
 
 func bootstrapPlan(_ context.Context, _ map[string]any) (string, error) {
