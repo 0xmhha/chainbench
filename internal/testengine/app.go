@@ -19,7 +19,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -30,7 +30,7 @@ import (
 
 // busEmit returns an event sink publishing to bus, or nil when bus is nil so the
 // engine's emission stays a no-op.
-func busEmit(bus *obs.Bus) func(obs.Event) {
+func busEmit(bus *collector.Bus) func(collector.Event) {
 	if bus == nil {
 		return nil
 	}
@@ -85,7 +85,7 @@ type LocalConfig struct {
 	Clock func() time.Time
 	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
 	// disables emission.
-	Bus *obs.Bus
+	Bus *collector.Bus
 }
 
 // NewLocalEngine composes a runnable Engine for one local chain: it wires the

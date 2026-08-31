@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/logs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 func newLogCmd() *cobra.Command {
@@ -25,7 +25,7 @@ func newLogCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			matches, err := logs.Search(dataDir, logs.SearchOpts{
+			matches, err := collector.Search(dataDir, collector.SearchOpts{
 				Pattern: pattern,
 				Regexp:  useRe,
 				Node:    node,

@@ -16,12 +16,10 @@ import (
 // import disappeared fails the test until removed.
 var mcpImportAllowed = map[string]string{
 	"internal/accounts":              "account tools; migrates with the account verbs' module move",
-	"internal/core/collector":        "network status collection; V6 follow-up",
-	"internal/core/logs":             "log reading; V6 follow-up",
+	"internal/core/collector":        "network status collection + event bus + log reading (obs/logs merged in, R1); V6 follow-up",
 	"internal/core/machine":          "target kind rendering in net tools; goes with the V5.4 display cleanups",
 	"internal/core/netreg":           "network registry reads; V6 follow-up",
 	"internal/core/node":             "node set types; V6 follow-up",
-	"internal/core/obs":              "dashboard event bus; V6 follow-up",
 	"internal/core/pipeline/testrun": "legacy run pipeline; retires with T7.11",
 	"internal/core/registry":         "chain plugin lookup; V6 follow-up",
 	"internal/core/remote":           "remote exec tool; V6 follow-up",

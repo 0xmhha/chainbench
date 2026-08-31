@@ -7,7 +7,7 @@
 //
 // The event bus feeds the dashboard (requirement #19) via chainbench-dashboard; its wire
 // format is deferred to the dashboard phase (G8).
-package obs
+package collector
 
 import "time"
 

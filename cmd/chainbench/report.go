@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 func newReportCmd() *cobra.Command {
@@ -19,7 +19,7 @@ func newReportCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			store, err := obs.NewFileStore(filepath.Join(dataDir, "runs.json"))
+			store, err := collector.NewFileStore(filepath.Join(dataDir, "runs.json"))
 			if err != nil {
 				return err
 			}
@@ -35,11 +35,11 @@ func newReportCmd() *cobra.Command {
 			for _, r := range runs {
 				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", r.ID, r.Phase, r.Chain, r.Status)
 				switch r.Status {
-				case obs.RunSucceeded:
+				case collector.RunSucceeded:
 					ok++
-				case obs.RunFailed:
+				case collector.RunFailed:
 					failed++
-				case obs.RunSkipped:
+				case collector.RunSkipped:
 					skipped++
 				}
 			}

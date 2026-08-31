@@ -92,8 +92,6 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
-| `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
-| `core/logs` | 로그 라인 모델 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산
 
@@ -142,7 +140,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션 |
-| `core/collector` | live tail · chainstate · bp 참여 · reorg |
+| `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
 | `core/health` | 블록 전진 판정 |
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `core/hardfork` | 업그레이드 계획/실행 |
@@ -233,8 +231,8 @@ flowchart TD
 | `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 인터페이스 경유 |
 | `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
 | `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
-| `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
-| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
+| `core/collector` | 이벤트 파일 싱크(옛 `core/obs`, R1 2026-08-31) | ◐ session 으로 흡수 검토 |
+| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·collector 와 같은 모양 |
 | `consensus/poa` | wemix genesis 생성의 **임시 작업 파일**(템플릿·거버넌스 config 를 임시 디렉터리에 쓰고 바이너리 출력을 읽음) | ✅ 패밀리의 genesis 소스 — 데이터 플레인이 아니라 로컬 스크래치이며 끝나면 지운다(P4.1, 2026-08-28; 옛 `chainsetup.WemixGenesisSource`) |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가

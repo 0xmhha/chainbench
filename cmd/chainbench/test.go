@@ -13,7 +13,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 )
 
@@ -62,7 +62,7 @@ func newTestCmd() *cobra.Command {
 			opts := testrun.Options{Names: names, Categories: categories, Bus: bus, FundedKey: fundedKey}
 			// Persist results when a data dir is given, so `report` can read them.
 			if dataDir != "" {
-				store, err := obs.NewFileStore(filepath.Join(dataDir, "runs.json"))
+				store, err := collector.NewFileStore(filepath.Join(dataDir, "runs.json"))
 				if err != nil {
 					return err
 				}

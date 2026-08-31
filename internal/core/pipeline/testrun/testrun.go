@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
 
@@ -29,9 +29,9 @@ type Options struct {
 	// Factory builds RPC clients for cases; defaults to testkit.DefaultFactory.
 	Factory testkit.ClientFactory
 	// Bus receives per-case events (may be nil).
-	Bus *obs.Bus
+	Bus *collector.Bus
 	// Store persists a RunRecord per case (may be nil).
-	Store obs.Store
+	Store collector.Store
 	// Now supplies timestamps for records; defaults to time.Now.
 	Now func() time.Time
 	// FundedKey is an optional funded-account private key (from
@@ -114,17 +114,17 @@ func record(opts Options, ns node.NodeSet, res testkit.Result, now func() time.T
 	if opts.Store == nil {
 		return
 	}
-	status := obs.RunSucceeded
+	status := collector.RunSucceeded
 	switch res.Status {
 	case testkit.StatusFail:
-		status = obs.RunFailed
+		status = collector.RunFailed
 	case testkit.StatusSkip:
-		status = obs.RunSkipped // a skip is not a pass — keep it distinct
+		status = collector.RunSkipped // a skip is not a pass — keep it distinct
 	}
 	ts := now()
-	_ = opts.Store.SaveRun(obs.RunRecord{
+	_ = opts.Store.SaveRun(collector.RunRecord{
 		ID:        "test/" + res.Name,
-		Phase:     obs.PhaseTest,
+		Phase:     collector.PhaseTest,
 		Chain:     ns.Chain,
 		Network:   ns.Network,
 		Status:    status,
@@ -134,16 +134,16 @@ func record(opts Options, ns node.NodeSet, res testkit.Result, now func() time.T
 	})
 }
 
-func emit(bus *obs.Bus, ns node.NodeSet, res testkit.Result) {
+func emit(bus *collector.Bus, ns node.NodeSet, res testkit.Result) {
 	if bus == nil {
 		return
 	}
-	kind := obs.KindResult
+	kind := collector.KindResult
 	if res.Status == testkit.StatusFail {
-		kind = obs.KindError
+		kind = collector.KindError
 	}
-	bus.Publish(obs.Event{
-		Phase: obs.PhaseTest, Kind: kind, Network: ns.Network,
+	bus.Publish(collector.Event{
+		Phase: collector.PhaseTest, Kind: kind, Network: ns.Network,
 		Message: res.Name,
 		Fields:  map[string]any{"status": string(res.Status), "category": res.Category, "message": res.Message},
 	})

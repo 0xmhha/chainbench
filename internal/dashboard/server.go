@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 //go:embed index.html
@@ -22,8 +22,8 @@ var indexHTML []byte
 
 // Server serves the dashboard API and page over one http.Handler.
 type Server struct {
-	bus          *obs.Bus
-	store        obs.Store
+	bus          *collector.Bus
+	store        collector.Store
 	artifactRoot string
 	mux          *http.ServeMux
 }
@@ -39,7 +39,7 @@ func WithArtifactRoot(root string) Option {
 
 // NewServer wires the routes. store may be nil (runs API returns []). Without
 // WithArtifactRoot the session-artifact API returns empty results.
-func NewServer(bus *obs.Bus, store obs.Store, opts ...Option) *Server {
+func NewServer(bus *collector.Bus, store collector.Store, opts ...Option) *Server {
 	s := &Server{bus: bus, store: store, mux: http.NewServeMux()}
 	for _, opt := range opts {
 		opt(s)
@@ -106,17 +106,17 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 // handleRuns returns the stored run records as JSON.
 func (s *Server) handleRuns(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	runs := []obs.RunRecord{}
+	runs := []collector.RunRecord{}
 	if s.store != nil {
 		runs = s.store.ListRuns()
 	}
 	_ = json.NewEncoder(w).Encode(runs)
 }
 
-// handlePublish accepts an obs.Event and publishes it to the bus, letting
+// handlePublish accepts an collector.Event and publishes it to the bus, letting
 // external processes (a CLI run, a remote agent) feed the dashboard.
 func (s *Server) handlePublish(w http.ResponseWriter, r *http.Request) {
-	var e obs.Event
+	var e collector.Event
 	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
 		http.Error(w, "bad event: "+err.Error(), http.StatusBadRequest)
 		return

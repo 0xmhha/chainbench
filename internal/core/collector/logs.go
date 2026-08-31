@@ -4,7 +4,7 @@
 // "LEVEL [MM-DD|HH:MM:SS.mmm] message  key=val" and filters by node, severity,
 // and a substring/regexp pattern, so the CLI and MCP surfaces can answer
 // "show me the errors on node 2" without shelling out.
-package logs
+package collector
 
 import (
 	"bufio"

@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/health"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 // VerifyNetworkIn asks whether a network is producing blocks and what state
@@ -22,7 +22,7 @@ type VerifyNetworkIn struct {
 	// zero takes a single two-sample reading.
 	ReadyTimeout time.Duration
 	// Bus receives orchestration events; nil disables emission.
-	Bus *obs.Bus
+	Bus *collector.Bus
 }
 
 // VerifyNetworkOut is the health report.

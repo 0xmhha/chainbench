@@ -1,11 +1,11 @@
-package logs_test
+package collector_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/logs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 func writeLog(t *testing.T, dir string, node int, lines string) {
@@ -25,7 +25,7 @@ func TestTimeline_InterleavesByTimestamp(t *testing.T) {
 	writeLog(t, dir, 1, "INFO [07-26|10:00:03.000] n1 third\nINFO [07-26|10:00:01.000] n1 first\n")
 	writeLog(t, dir, 2, "INFO [07-26|10:00:02.000] n2 second\nINFO [07-26|10:00:04.000] n2 fourth\n")
 
-	tl, err := logs.Timeline(dir, logs.SearchOpts{})
+	tl, err := collector.Timeline(dir, collector.SearchOpts{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestTimeline_LimitKeepsEarliest(t *testing.T) {
 	dir := t.TempDir()
 	writeLog(t, dir, 1, "INFO [07-26|10:00:05.000] late\n")
 	writeLog(t, dir, 2, "INFO [07-26|10:00:01.000] early\n")
-	tl, err := logs.Timeline(dir, logs.SearchOpts{Limit: 1})
+	tl, err := collector.Timeline(dir, collector.SearchOpts{Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

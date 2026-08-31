@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 // Forward subscribes to bus and POSTs every event to a running chainbench-dashboard's
 // /api/events, so a CLI (or any producer) can feed the dashboard live. It
 // returns a channel closed when forwarding finishes (after the bus is closed
 // and its buffered events are drained), so callers can flush before exiting.
-func Forward(bus *obs.Bus, dashboardURL string, client *http.Client) <-chan struct{} {
+func Forward(bus *collector.Bus, dashboardURL string, client *http.Client) <-chan struct{} {
 	if client == nil {
 		client = http.DefaultClient
 	}

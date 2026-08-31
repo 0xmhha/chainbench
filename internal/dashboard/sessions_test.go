@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -54,7 +54,7 @@ func TestSessionsAPI(t *testing.T) {
 	root := t.TempDir()
 	id := writeSession(t, root)
 
-	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), nil, dashboard.WithArtifactRoot(root)))
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), nil, dashboard.WithArtifactRoot(root)))
 	defer srv.Close()
 
 	// List.
@@ -98,7 +98,7 @@ func TestSessionsAPI(t *testing.T) {
 }
 
 func TestSessionsAPI_UnknownAndBadID(t *testing.T) {
-	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), nil, dashboard.WithArtifactRoot(t.TempDir())))
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), nil, dashboard.WithArtifactRoot(t.TempDir())))
 	defer srv.Close()
 
 	if resp, _ := getResp(t, srv.URL+"/api/sessions/UTC-nope"); resp.StatusCode != http.StatusNotFound {
@@ -110,7 +110,7 @@ func TestSessionsAPI_UnknownAndBadID(t *testing.T) {
 }
 
 func TestSessionsAPI_NoArtifactRoot(t *testing.T) {
-	srv := httptest.NewServer(dashboard.NewServer(obs.NewBus(), nil))
+	srv := httptest.NewServer(dashboard.NewServer(collector.NewBus(), nil))
 	defer srv.Close()
 
 	_, body := getResp(t, srv.URL+"/api/sessions")

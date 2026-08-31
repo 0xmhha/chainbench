@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/obs"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/testkit"
 )
@@ -44,7 +44,7 @@ func TestRun_GatingRunningReporting(t *testing.T) {
 	ns, _ := node.AttachedSet("wbft", "local", []node.RPCEndpoint{{RPCURL: "http://x"}})
 	// attach sets Capabilities ["rpc"]; "consensus" is absent -> tr-gated-cap skips.
 
-	store := obs.NewMemStore()
+	store := collector.NewMemStore()
 	rep, err := testrun.Run(context.Background(), ns, testrun.Options{
 		Names:   []string{"tr-ok", "tr-fail", "tr-gated-chain", "tr-gated-cap"},
 		Factory: func(string) testkit.Client { return fakeClient{} },
@@ -90,14 +90,14 @@ func TestRun_GatingRunningReporting(t *testing.T) {
 	if len(store.ListRuns()) != 4 {
 		t.Errorf("store runs: %d, want 4", len(store.ListRuns()))
 	}
-	if r, ok := store.GetRun("test/tr-fail"); !ok || r.Status != obs.RunFailed {
+	if r, ok := store.GetRun("test/tr-fail"); !ok || r.Status != collector.RunFailed {
 		t.Errorf("tr-fail record: %+v ok=%v", r, ok)
 	}
 	// A skip is persisted as RunSkipped, never RunSucceeded (no false green).
-	if r, ok := store.GetRun("test/tr-gated-cap"); !ok || r.Status != obs.RunSkipped {
+	if r, ok := store.GetRun("test/tr-gated-cap"); !ok || r.Status != collector.RunSkipped {
 		t.Errorf("tr-gated-cap record should be RunSkipped: %+v ok=%v", r, ok)
 	}
-	if r, ok := store.GetRun("test/tr-ok"); !ok || r.Status != obs.RunSucceeded {
+	if r, ok := store.GetRun("test/tr-ok"); !ok || r.Status != collector.RunSucceeded {
 		t.Errorf("tr-ok record should be RunSucceeded: %+v ok=%v", r, ok)
 	}
 }
