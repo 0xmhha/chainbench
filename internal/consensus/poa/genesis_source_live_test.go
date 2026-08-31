@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/wemix" // register the wemix plugin
-	"github.com/0xmhha/chainbench/internal/core/driver"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -84,7 +84,7 @@ func TestWemixGenesisSource_Live_GeneratesAndInits(t *testing.T) {
 		t.Fatal(err)
 	}
 	dataDir := filepath.Join(dir, "node1")
-	if err := driver.InitDatadir(context.Background(), bin, dataDir, genesisPath); err != nil {
+	if err := process.InitDatadir(context.Background(), bin, dataDir, genesisPath); err != nil {
 		t.Fatalf("gwemix init rejected the generated genesis: %v", err)
 	}
 }

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/hardfork"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -117,12 +117,12 @@ func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.Plan, binary str
 	if len(w.state.Nodes) == 0 {
 		return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: no node table — compose the network first")
 	}
-	specs := make([]driver.NodeSpec, 0, len(w.state.Nodes))
+	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
 	for _, rec := range w.state.Nodes {
 		if len(rec.Args) == 0 {
 			return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: node%d has no recorded argv — run `net start` first", rec.Index)
 		}
-		spec := driver.SpecOf(rec)
+		spec := process.SpecOf(rec)
 		spec.Binary = w.state.Binary
 		specs = append(specs, spec)
 	}

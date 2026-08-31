@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/resource"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
 )
@@ -61,7 +61,7 @@ func TestWorkspace_Validation(t *testing.T) {
 	if _, err := chainsetup.Open("", fixedClock()); err == nil {
 		t.Fatal("expected error for empty data dir")
 	}
-	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", Target: machine.Spec{Host: "203.0.113.9"}}); err == nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", Target: resource.Spec{Host: "203.0.113.9"}}); err == nil {
 		t.Fatal("expected error for incomplete remote target")
 	}
 }

@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -40,9 +39,9 @@ type BuildDeps struct {
 	// Genesis sources the network genesis bytes.
 	Genesis genesis.Source
 	// Supervisor brings the network up behind a health gate and tears it down.
-	Supervisor launcher.Launcher
+	Supervisor process.Launcher
 	// Options tunes bring-up (health gating, retries).
-	Options launcher.Options
+	Options process.Options
 	// Caps are the advertised capabilities recorded on the plan.
 	Caps []string
 	// Reqs derives per-node placement requests (role/binary/sync) from a spec.
@@ -50,10 +49,10 @@ type BuildDeps struct {
 	// Provision materializes the plan's on-disk files (genesis, per-node config,
 	// keys). It is injected because file content is chain/preset-specific; nil
 	// skips provisioning (e.g. an attach-only or test build).
-	Provision func(ctx context.Context, plan driver.Plan) error
+	Provision func(ctx context.Context, plan process.Plan) error
 	// ProvisionExtra writes the genesis step's by-products to the target,
 	// keyed by the name they take there. A family with none never calls it.
-	ProvisionExtra func(ctx context.Context, plan driver.Plan, files map[string][]byte) error
+	ProvisionExtra func(ctx context.Context, plan process.Plan, files map[string][]byte) error
 }
 
 // NewBuildEnv composes the network build for one spec: allocate placements,
@@ -82,7 +81,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: genesis: %w", err)
 		}
 
-		plan, err := launcher.PlanOf(d.Plugin, reqs, placements, gen.Genesis, env.DataPath(), d.Caps)
+		plan, err := process.PlanOf(d.Plugin, reqs, placements, gen.Genesis, env.DataPath(), d.Caps)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: build env: plan: %w", err)
 		}
@@ -120,7 +119,7 @@ func NewBuildEnv(d BuildDeps) BuildEnvFunc {
 		}
 
 		teardown := func(ctx context.Context) error {
-			return d.Supervisor.Teardown(ctx, ns, launcher.TeardownOpts{RemoveDataDir: true, Grace: teardownGrace})
+			return d.Supervisor.Teardown(ctx, ns, process.TeardownOpts{RemoveDataDir: true, Grace: teardownGrace})
 		}
 		return ns, teardown, nil
 	}

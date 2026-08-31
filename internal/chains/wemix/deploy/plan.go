@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
 // wemixMinerRecommit is the go-wemix manifest's miner_recommit form (the older
@@ -53,11 +53,11 @@ func (c *Cluster) ports() node.Endpoints {
 	}
 }
 
-// BuildNodeSpec maps a cluster server to a chainbench driver.NodeSpec: the
+// BuildNodeSpec maps a cluster server to a chainbench process.NodeSpec: the
 // remote binary (by role), datadir, ports, generated node config (poa/wemix
 // namespace, optional static-nodes peering), and launch args. enodes is the
 // static-nodes peer list (all servers; may be empty to rely on discovery).
-func BuildNodeSpec(c *Cluster, s Server, enodes []string) driver.NodeSpec {
+func BuildNodeSpec(c *Cluster, s Server, enodes []string) process.NodeSpec {
 	ports := c.ports()
 	role := NodeRole(s.Role)
 	fam := poa.New()
@@ -83,7 +83,7 @@ func BuildNodeSpec(c *Cluster, s Server, enodes []string) driver.NodeSpec {
 		// error, not an operator's.
 		panic(fmt.Sprintf("deploy: argv for server %d: %v", s.Index, err))
 	}
-	return driver.NodeSpec{
+	return process.NodeSpec{
 		Index:         s.Index,
 		Role:          role,
 		Host:          s.Host,
@@ -99,9 +99,9 @@ func BuildNodeSpec(c *Cluster, s Server, enodes []string) driver.NodeSpec {
 
 // BuildNodeSpecs builds the per-server specs in launch order (endpoints and
 // bootnodes before producers/validators).
-func BuildNodeSpecs(c *Cluster, enodes []string) []driver.NodeSpec {
+func BuildNodeSpecs(c *Cluster, enodes []string) []process.NodeSpec {
 	order := c.LaunchOrder()
-	specs := make([]driver.NodeSpec, 0, len(order))
+	specs := make([]process.NodeSpec, 0, len(order))
 	for _, s := range order {
 		specs = append(specs, BuildNodeSpec(c, s, enodes))
 	}
@@ -110,7 +110,7 @@ func BuildNodeSpecs(c *Cluster, enodes []string) []driver.NodeSpec {
 
 // Describe renders a human-readable deploy plan (a dry-run of what would be
 // provisioned and launched, in order).
-func Describe(c *Cluster, specs []driver.NodeSpec) string {
+func Describe(c *Cluster, specs []process.NodeSpec) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "deploy plan: %d server(s), croissant block %d, genesis %s\n",
 		len(specs), c.CroissantBlock, c.GenesisFile)

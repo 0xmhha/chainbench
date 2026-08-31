@@ -10,7 +10,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -24,7 +23,7 @@ import (
 
 // TestBuildEnv_Live_Stablenet proves the bring-up half of the walking skeleton:
 // testengine.NewBuildEnv, wired with a real allocator, PresetGenesisSource, the
-// launcher.Direct, and a block-advance health gate, brings a real 4-node
+// process.Direct, and a block-advance health gate, brings a real 4-node
 // stablenet network up on the allocator-assigned ports, and the teardown stops
 // it cleanly.
 //
@@ -56,16 +55,16 @@ func TestBuildEnv_Live_Stablenet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	sup := launcher.New(launcher.Deps{
-		Launch: launcher.Direct{Plugin: plugin, Binary: bin, KeysDir: presetDir}.Launch,
-		HealthGate: func(c context.Context, ns node.NodeSet) (launcher.Diagnosis, error) {
+	sup := process.NewLauncher(process.Deps{
+		Launch: process.Direct{Plugin: plugin, Binary: bin, KeysDir: presetDir}.Launch,
+		HealthGate: func(c context.Context, ns node.NodeSet) (process.Diagnosis, error) {
 			if len(ns.Nodes) == 0 {
-				return launcher.Diagnosis{Mode: launcher.RPCUnready}, fmt.Errorf("no nodes launched")
+				return process.Diagnosis{Mode: process.RPCUnready}, fmt.Errorf("no nodes launched")
 			}
 			if err := waitForHead(c, ns.Nodes[0].RPCURL, 1, 90*time.Second); err != nil {
-				return launcher.Diagnosis{Mode: launcher.RPCUnready, Detail: err.Error()}, err
+				return process.Diagnosis{Mode: process.RPCUnready, Detail: err.Error()}, err
 			}
-			return launcher.Diagnosis{OK: true}, nil
+			return process.Diagnosis{OK: true}, nil
 		},
 		Procman: process.New(),
 	})

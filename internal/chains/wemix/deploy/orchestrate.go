@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -28,7 +28,7 @@ func Deploy(ctx context.Context, c *Cluster, cr *Credentials, hostKey remote.Hos
 		if err != nil {
 			return nodes, err
 		}
-		d := driver.NewRemoteDriver(driver.SSHRunner(rc, hostKey))
+		d := process.NewRemoteDriver(process.SSHRunner(rc, hostKey))
 
 		if err := d.Provision(ctx, spec); err != nil {
 			return nodes, fmt.Errorf("deploy: server %d provision: %w", spec.Index, err)

@@ -15,14 +15,14 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Opener opens a path — a plain directory here, or the target syntax naming a
 // server — into the handles an operation reads and writes through. It is the
 // only thing this package needs from whatever owns machines and server sets.
 type Opener interface {
-	OpenPath(path string) (*machine.Access, error)
+	OpenPath(path string) (*resource.Access, error)
 }
 
 // OpenerFor builds the opener for one key set's location choices. The caller

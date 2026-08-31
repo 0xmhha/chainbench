@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Recovery (F1). A chainbench run can die between steps — killed, crashed,
@@ -129,7 +129,7 @@ func (w *Workspace) firstUndone() string {
 	return ""
 }
 
-// Reconcile makes the node records true against the machine. A recorded pid
+// Reconcile makes the node records true against the resource. A recorded pid
 // that is gone is cleared; a node with no pid whose process is nevertheless
 // running — launched by a run that died before it could record — is adopted
 // when its command line is the one this workspace would have launched it
@@ -141,7 +141,7 @@ func (w *Workspace) Reconcile(ctx context.Context) ([]string, error) {
 		if err != nil {
 			return lines, err
 		}
-		insp, ok := t.Driver.(driver.ProcessInspector)
+		insp, ok := t.Driver.(process.ProcessInspector)
 		if !ok {
 			lines = append(lines, fmt.Sprintf("node%d: pid %d (machine cannot be asked; left as recorded)", rec.Index, rec.PID))
 			continue
@@ -179,15 +179,15 @@ func (w *Workspace) Reconcile(ctx context.Context) ([]string, error) {
 // and whose command line is the one rec would launch with. It answers the
 // pid, or 0 when there is none — a process running the same binary with
 // another command line belongs to somebody else.
-func (w *Workspace) orphanOf(ctx context.Context, t *machine.Access, rec node.Record) (int, error) {
+func (w *Workspace) orphanOf(ctx context.Context, t *resource.Access, rec node.Record) (int, error) {
 	if w.state.Binary == "" || len(rec.Args) == 0 {
 		return 0, nil
 	}
-	insp, ok := t.Driver.(driver.ProcessInspector)
+	insp, ok := t.Driver.(process.ProcessInspector)
 	if !ok {
 		return 0, nil
 	}
-	cmdr, ok := t.Driver.(driver.Commander)
+	cmdr, ok := t.Driver.(process.Commander)
 	if !ok {
 		return 0, nil
 	}

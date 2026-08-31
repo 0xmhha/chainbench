@@ -13,12 +13,10 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
+	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -218,7 +216,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// rather than a copy that can disagree with it.
 	layout := node.Layout{Root: w.state.Target.DataRoot}
 	// Spread across a set, each node's machine is a server-set entry; record
-	// its name so every later step opens THAT machine. Addresses came from the
+	// its name so every later step opens THAT resource. Addresses came from the
 	// pool, so the name is the pool's word for the address.
 	nameOf := map[string]string{}
 	if w.state.Target.IsRemote() {
@@ -314,7 +312,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
 	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
-	err = w.eachMachine(func(t *machine.Access, _ []node.Record) error {
+	err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
 		p := filepath.Join(t.DataRoot, "genesis.json")
 		if err := t.Files.Write(ctx, p, gen, 0o644); err != nil {
 			return fmt.Errorf("chainsetup: genesis: write: %w", err)
@@ -394,7 +392,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
-		content := nodeconfig.TOML(launcher.NodeConfig(p, preset, driver.SpecOf(ns), w.keysBase(), staticNodes))
+		content := nodeconfig.TOML(process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes))
 		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
@@ -435,7 +433,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
 		}
-		args, err := nodeconfig.Argv(launcher.NodeConfig(p, preset, driver.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
+		args, err := nodeconfig.Argv(process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes), overrides...)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d: %w", ns.Index, err)
 		}
@@ -460,7 +458,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("chainsetup: provision: no node table — run `net allocate` first")
 	}
 	present, shipped := 0, 0
-	err := w.eachMachine(func(t *machine.Access, nodes []node.Record) error {
+	err := w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
 		check := func(path string) error {
 			exists, err := t.Files.Exists(ctx, path)
 			if err != nil {
@@ -499,9 +497,9 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 // validator keystore, and the shared password — from the local key set to
 // keysBase on a remote target, upload-if-absent like the rest of filestore.
 // The rendered config and the launch argv point at keysBase, so without this
-// a remote node would look for its keys on the operator's machine. A local
+// a remote node would look for its keys on the operator's resource. A local
 // target ships nothing: keysBase is the key set itself.
-func (w *Workspace) shipIdentities(ctx context.Context, t *machine.Access, nodes []node.Record) (int, error) {
+func (w *Workspace) shipIdentities(ctx context.Context, t *resource.Access, nodes []node.Record) (int, error) {
 	if !t.Spec.IsRemote() {
 		return 0, nil
 	}
@@ -581,7 +579,7 @@ func nodeHost(ns node.Record) string {
 
 // Netmap reads the workspace's node table as a placement map, so the peer
 // policy and the address lookups run off one representation. The host is the
-// node's own recorded address, which spread across a set is not this machine.
+// node's own recorded address, which spread across a set is not this resource.
 func (w *Workspace) Netmap() (*node.Map, error) {
 	placements := make([]node.Placement, 0, len(w.state.Nodes))
 	ordinals := map[node.Role]int{}

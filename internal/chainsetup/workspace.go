@@ -6,7 +6,7 @@
 //
 // Two planes are kept separate. The CONTROL plane — the composition state in
 // workspace.json (chain, keys, placements, node table, step-tracking) — always
-// lives locally on the operator's machine. The DATA plane — genesis, configs,
+// lives locally on the operator's resource. The DATA plane — genesis, configs,
 // datadirs, logs — lives on a Target (this machine's filesystem, or a remote
 // SSH host); see target.go. Step functions use the Target's FileStore/Driver and
 // never branch on local vs remote.
@@ -24,11 +24,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
-
-	"github.com/0xmhha/chainbench/internal/core/machine"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -51,7 +49,7 @@ type State struct {
 	Binary       string          `json:"binary,omitempty"`
 	KeysDir      string          `json:"keysDir,omitempty"`
 	Validators   int             `json:"validators,omitempty"`
-	Target       machine.Spec    `json:"target"`
+	Target       resource.Spec   `json:"target"`
 	GenesisPath  string          `json:"genesisPath,omitempty"`
 	Nodes        []node.Record   `json:"nodes,omitempty"`
 	Steps        map[string]Step `json:"steps"`
@@ -100,7 +98,7 @@ type State struct {
 type Workspace struct {
 	// machines caches per-server opened accesses for the current command, so
 	// a step over N nodes dials each machine once.
-	machines map[string]*machine.Access
+	machines map[string]*resource.Access
 	// ledger is the persisted run record — which machine runs which binary,
 	// under which command, as which pid. It is the source of truth for PIDs;
 	// node.Record.PID is the in-memory view, synced from here on Open.
@@ -112,7 +110,7 @@ type Workspace struct {
 	// driver, when set, replaces every machine's process driver — the seam a
 	// test uses to control nodes without an OS process, and a caller uses to
 	// route control over another transport.
-	driver func() (driver.Driver, error)
+	driver func() (process.Driver, error)
 }
 
 // Open opens (creating if absent) the workspace at dir. now is injected for
@@ -188,8 +186,8 @@ func (w *Workspace) SetEnv(fn func(string) string) {
 
 // SetDriver overrides the process driver every machine of this workspace
 // controls its nodes through. Nil is ignored; the default is each machine's
-// own driver.
-func (w *Workspace) SetDriver(fn func() (driver.Driver, error)) {
+// own process.
+func (w *Workspace) SetDriver(fn func() (process.Driver, error)) {
 	if fn != nil {
 		w.driver = fn
 	}
@@ -216,7 +214,7 @@ func (w *Workspace) keysBase() string {
 // translation, and the login rules are bound there identically for every
 // consumer, so a multi-step run cannot be half-mapped and this module cannot
 // diverge from keyring or anyone else.
-func (w *Workspace) resolveTarget() (*machine.Access, error) {
+func (w *Workspace) resolveTarget() (*resource.Access, error) {
 	return w.opener().Open(w.state.Target)
 }
 
@@ -224,22 +222,22 @@ func (w *Workspace) resolveTarget() (*machine.Access, error) {
 // entry and resolves through the netmap module like everything else; a node
 // without one runs on the workspace's single target. Opened accesses are
 // cached per entry for the life of this command.
-func (w *Workspace) machineFor(ns node.Record) (*machine.Access, error) {
+func (w *Workspace) machineFor(ns node.Record) (*resource.Access, error) {
 	key := ns.Server
 	if w.machines == nil {
-		w.machines = map[string]*machine.Access{}
+		w.machines = map[string]*resource.Access{}
 	}
 	if t, ok := w.machines[key]; ok {
 		return t, nil
 	}
 	var (
-		t   *machine.Access
+		t   *resource.Access
 		err error
 	)
 	if ns.Server == "" {
 		t, err = w.resolveTarget()
 	} else {
-		t, err = w.opener().Open(machine.Spec{
+		t, err = w.opener().Open(resource.Spec{
 			Server: ns.Server,
 			Host:   ns.Host, DataRoot: w.state.Target.DataRoot,
 		})
@@ -253,7 +251,7 @@ func (w *Workspace) machineFor(ns node.Record) (*machine.Access, error) {
 			return nil, err
 		}
 		// Copied: the opener may hand the same access to another workspace.
-		t = &machine.Access{Spec: t.Spec, DataRoot: t.DataRoot, Files: t.Files, Driver: override}
+		t = &resource.Access{Spec: t.Spec, DataRoot: t.DataRoot, Files: t.Files, Driver: override}
 	}
 	w.machines[key] = t
 	return t, nil
@@ -261,7 +259,7 @@ func (w *Workspace) machineFor(ns node.Record) (*machine.Access, error) {
 
 // eachMachine resolves every distinct machine the node table names, in node
 // order, and calls fn once per machine with the nodes that live on it.
-func (w *Workspace) eachMachine(fn func(t *machine.Access, nodes []node.Record) error) error {
+func (w *Workspace) eachMachine(fn func(t *resource.Access, nodes []node.Record) error) error {
 	order := []string{}
 	group := map[string][]node.Record{}
 	for _, ns := range w.state.Nodes {

@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // stubDriver stands in for node processes: it records what it was asked to do
@@ -23,14 +23,14 @@ type stubDriver struct {
 	stopErr  error
 }
 
-func (s *stubDriver) Provision(context.Context, driver.NodeSpec) error { return nil }
+func (s *stubDriver) Provision(context.Context, process.NodeSpec) error { return nil }
 
-func (s *stubDriver) Launch(_ context.Context, spec driver.NodeSpec) (driver.Handle, error) {
+func (s *stubDriver) Launch(_ context.Context, spec process.NodeSpec) (process.Handle, error) {
 	s.launched = append(s.launched, spec.Index)
-	return driver.Handle{Index: spec.Index, PID: 2000 + spec.Index}, nil
+	return process.Handle{Index: spec.Index, PID: 2000 + spec.Index}, nil
 }
 
-func (s *stubDriver) Stop(_ context.Context, h driver.Handle) error {
+func (s *stubDriver) Stop(_ context.Context, h process.Handle) error {
 	if s.stopErr != nil {
 		return s.stopErr
 	}
@@ -47,7 +47,7 @@ func launchedNetwork(t *testing.T) (dir string, d *stubDriver, deps chainsetup.D
 		record(dir, 1, 8600, 1001), record(dir, 2, 8610, 1002),
 	})
 	d = &stubDriver{}
-	deps = chainsetup.Deps{Driver: func() (driver.Driver, error) { return d, nil }}
+	deps = chainsetup.Deps{Driver: func() (process.Driver, error) { return d, nil }}
 	return dir, d, deps
 }
 
@@ -75,7 +75,7 @@ func seedWorkspace(t *testing.T, dir, chain, binary string, nodes []node.Record)
 	}
 	st := chainsetup.State{
 		Chain: chain, Binary: binary, Validators: len(nodes),
-		Target: machine.Spec{DataRoot: dir},
+		Target: resource.Spec{DataRoot: dir},
 		Nodes:  nodes,
 		Steps:  map[string]chainsetup.Step{},
 	}

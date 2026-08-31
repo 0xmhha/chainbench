@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/machine"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Every start leaves a record: which chain was set up, from which inputs,
@@ -63,7 +63,7 @@ type runNode struct {
 // run composed (read back through the same boundary it was written through), and
 // each node's launch command. Failures are reported, not fatal — a record
 // must never take the network it records down with it.
-func (w *Workspace) recordRun(ctx context.Context, t *machine.Access, bin string) (string, error) {
+func (w *Workspace) recordRun(ctx context.Context, t *resource.Access, bin string) (string, error) {
 	stamp := w.now().UTC().Format("20060102-150405")
 	dir := filepath.Join(w.comp.Dir(), runsDir, stamp)
 	files := filestore.Local{}

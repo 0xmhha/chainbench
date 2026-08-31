@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -26,13 +26,13 @@ type LaunchOptions struct {
 	// Host is the address nodes bind/advertise; defaults to 127.0.0.1.
 	Host string
 	// InitFn initializes a node's datadir from the shared genesis using the
-	// node's own binary; defaults to driver.InitDatadir. Injectable for tests.
+	// node's own binary; defaults to process.InitDatadir. Injectable for tests.
 	InitFn func(ctx context.Context, binary, dataDir, genesisPath string) error
 	// ProvisionKeys, if set, runs after a node's datadir is initialized and
 	// before it launches. It is where external key material (the node key in the
 	// binary-specific instance dir, the producer's keystore, static-nodes) is
 	// placed. Optional; nil means the datadir is used as initialized.
-	ProvisionKeys func(ctx context.Context, spec driver.NodeSpec, producer bool) error
+	ProvisionKeys func(ctx context.Context, spec process.NodeSpec, producer bool) error
 	// Overrides, if set, returns a node's high-precedence launch knobs, applied
 	// through the launchopt Builder after the standard and family layers. It is
 	// where account-specific and RPC-namespace knobs go: the producer's
@@ -45,7 +45,7 @@ type LaunchOptions struct {
 	// unconditionally — the boundary exists so a caller running against a remote
 	// target can send the genesis where the nodes are rather than to the
 	// machine driving them — the defect the remote-provision path used to
-	// have, where a remote network's files landed on the operator's machine.
+	// have, where a remote network's files landed on the operator's resource.
 	Files filestore.Store
 }
 
@@ -67,14 +67,14 @@ func (o LaunchOptions) host() string {
 // producer on the from-binary with the from-family's flags, each validator on
 // the to-binary with the to-family's flags, all with the plan's uniform network
 // id and collision-free ports. Pure — no disk or process side effects.
-func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
+func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 	if opts.FromBinary == "" || opts.ToBinary == "" {
 		return nil, fmt.Errorf("upgrade: both from and to binaries must be set")
 	}
 	if opts.FromFamily == nil || opts.ToFamily == nil {
 		return nil, fmt.Errorf("upgrade: both from and to consensus families must be set")
 	}
-	specs := make([]driver.NodeSpec, 0, len(plan.Nodes))
+	specs := make([]process.NodeSpec, 0, len(plan.Nodes))
 	for _, n := range plan.Nodes {
 		binary, fam := opts.ToBinary, opts.ToFamily
 		if n.Producer {
@@ -92,7 +92,7 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 		if err != nil {
 			return nil, fmt.Errorf("upgrade: node%d: %w", num, err)
 		}
-		specs = append(specs, driver.NodeSpec{
+		specs = append(specs, process.NodeSpec{
 			Index:      n.Index,
 			Role:       n.Role,
 			Host:       opts.host(),
@@ -110,14 +110,14 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]driver.NodeSpec, error) {
 // Launch runs a handoff network: it writes the shared genesis, initializes each
 // node's datadir with that node's own binary (so go-wemix and go-wbft each lay
 // out their chaindata correctly from identical genesis bytes), then provisions
-// and launches every node concurrently through the driver. Producers and
+// and launches every node concurrently through the process. Producers and
 // validators run at the same time — this is a concurrent handoff, not a binary
 // swap: producers mine up to the fork, validators sync and take over after it.
 // It returns the launched NodeSet.
-func Launch(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions) (node.NodeSet, error) {
+func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions) (node.NodeSet, error) {
 	initFn := opts.InitFn
 	if initFn == nil {
-		initFn = driver.InitDatadir
+		initFn = process.InitDatadir
 	}
 	ns := node.NodeSet{Chain: plan.To.ID, Network: "local"}
 
@@ -147,7 +147,7 @@ func Launch(ctx context.Context, d driver.Driver, plan Plan, opts LaunchOptions)
 		if err != nil {
 			return ns, fmt.Errorf("upgrade: launch node%d (%s): %w", spec.Index+1, spec.Binary, err)
 		}
-		ns.Nodes = append(ns.Nodes, driver.NodeOf(spec, h.PID))
+		ns.Nodes = append(ns.Nodes, process.NodeOf(spec, h.PID))
 	}
 	return ns, nil
 }

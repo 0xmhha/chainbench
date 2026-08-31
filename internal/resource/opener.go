@@ -12,7 +12,6 @@
 package resource
 
 import (
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -44,7 +43,7 @@ type Opener struct {
 // Open resolves spec into live capability handles (files, driver). Local
 // specs come back with local handles through the same path — the consumer
 // never branches on where the machine is.
-func (o Opener) Open(spec machine.Spec) (*machine.Access, error) {
+func (o Opener) Open(spec Spec) (*Access, error) {
 	env := o.Env
 	if env == nil {
 		env = func(string) string { return "" }
@@ -73,8 +72,8 @@ func (o Opener) AddrMap() (remote.AddrMap, error) {
 
 // OpenPath parses a target path (plain path, srv://<server>/path,
 // [user@]host:/path, ssh://…) and opens it.
-func (o Opener) OpenPath(path string) (*machine.Access, error) {
-	spec, err := machine.Parse(path)
+func (o Opener) OpenPath(path string) (*Access, error) {
+	spec, err := Parse(path)
 	if err != nil {
 		return nil, err
 	}

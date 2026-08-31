@@ -2,8 +2,8 @@ package genesis_test
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"path/filepath"
@@ -52,7 +52,7 @@ func TestPresetGenesisSource_Live_GstableInit(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	if err := driver.InitDatadir(ctx, bin, dataDir, genesisPath); err != nil {
+	if err := process.InitDatadir(ctx, bin, dataDir, genesisPath); err != nil {
 		t.Fatalf("gstable init rejected the genesis: %v", err)
 	}
 

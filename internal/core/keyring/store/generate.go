@@ -101,7 +101,7 @@ func GenerateAt(ctx context.Context, opts GenerateOpts, progress func(string)) (
 	return generate(ctx, keyring.Preset{}, opts, progress)
 }
 
-// files is the ring's store, defaulting to this machine.
+// files is the ring's store, defaulting to this resource.
 func (o GenerateOpts) files() filestore.Store {
 	if o.Files != nil {
 		return o.Files

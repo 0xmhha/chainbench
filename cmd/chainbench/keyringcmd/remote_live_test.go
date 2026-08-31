@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -53,7 +52,7 @@ func plantOnServer1(t *testing.T, build, remotePath string, content []byte) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	spec := machine.Spec{
+	spec := resource.Spec{
 		User: srv.SSH.User, Host: srv.Host, Port: srv.SSH.Port, DataRoot: "/data/chainbench",
 	}
 	// The direct user@host form authenticates from the environment; the dial
@@ -170,7 +169,7 @@ func TestLive_KeyringCreatesARingOnAServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	spec := machine.Spec{User: srv.SSH.User, Host: srv.Host, Port: srv.SSH.Port, DataRoot: "/data/chainbench"}
+	spec := resource.Spec{User: srv.SSH.User, Host: srv.Host, Port: srv.SSH.Port, DataRoot: "/data/chainbench"}
 	tgt, err := resource.Opener{ServerSet: inv, Docker: true, Env: os.Getenv}.Open(spec)
 	if err != nil {
 		t.Fatal(err)

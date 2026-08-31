@@ -3,7 +3,7 @@ package node
 // Record is what is known about one composed node — the fact record the
 // composition writes and every later step reads. One node has exactly one
 // Record; everything else that speaks about a node is either a view derived
-// from it (driver.NodeSpec is the launch input, Node is the runtime hand-off)
+// from it (process.NodeSpec is the launch input, Node is the runtime hand-off)
 // or a different concept wearing a precise name (an observation sample, a
 // topology declaration, a process ledger entry).
 //

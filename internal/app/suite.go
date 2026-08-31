@@ -11,10 +11,9 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
-	"github.com/0xmhha/chainbench/internal/core/driver"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/launcher"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
@@ -286,7 +285,7 @@ func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []s
 		return fail("launch", fmt.Errorf("no nodes launched"))
 	}
 	teardown := func(ctx context.Context) error {
-		_, errs := launcher.StopNodeSet(ctx, driver.NewLocalDriver(), ns)
+		_, errs := process.StopNodeSet(ctx, process.NewLocalDriver(), ns)
 		if len(errs) > 0 {
 			return fmt.Errorf("handoff: teardown: %v", errs)
 		}

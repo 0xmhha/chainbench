@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // TestStopTool launches a real short-lived process, records its PID in a
@@ -50,7 +50,7 @@ func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
 	}
 	st := chainsetup.State{
 		Chain: chain, Binary: "/opt/fakebin", Validators: len(nodes),
-		Target: machine.Spec{DataRoot: dir}, Nodes: nodes,
+		Target: resource.Spec{DataRoot: dir}, Nodes: nodes,
 		Capabilities: []string{"rpc"},
 		Steps:        map[string]chainsetup.Step{},
 	}
@@ -59,7 +59,7 @@ func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
 	}
 }
 
-// wsNode is one recorded node on this machine.
+// wsNode is one recorded node on this resource.
 func wsNode(root string, index int, role string, http, pid int) node.Record {
 	label := node.LabelFor(index)
 	layout := node.Layout{Root: root}

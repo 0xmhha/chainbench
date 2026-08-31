@@ -38,7 +38,7 @@
 ```
 파일을 쓰는 패키지 14개:
   app · chainsetup · chains/wemix/deploy · consensus/upgrade
-  core/driver · core/keyring · core/collector · core/filestore
+  core/process · core/keyring · core/collector · core/filestore
   core/session (R1: netreg 의 쓰기는 session 으로, obs 의 쓰기는 collector 로 흡수)
 ```
 
@@ -64,10 +64,10 @@ flowchart TD
     L6["L6 표면<br/>cmd · mcp · dashboard"]
     L5["L5 유스케이스<br/>app"]
     L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup"]
-    L3["L3 도메인 서비스<br/>session · collector · health · launcher · dsl · dsl/interp"]
+    L3["L3 도메인 서비스<br/>session · collector · health · dsl · dsl/interp"]
     L2b["L2b 체인 어댑터<br/>chains/*"]
     L2a["L2a 합의 패밀리<br/>consensus/*"]
-    L1["L1 프리미티브<br/>driver · remote · rpc · place · keys · registry · serverset"]
+    L1["L1 프리미티브<br/>process · remote · rpc · filestore · keys · registry · resource"]
     L0["L0 커널<br/>node · config · obs · capability"]
 
     L6 --> L5 --> L4 --> L3 --> L2b --> L2a --> L1 --> L0
@@ -85,7 +85,7 @@ flowchart TD
 > 3체인 실행 추적은 [[module-responsibilities]](module-responsibilities.md) 에 있고,
 > 거기서 이 문서의 보정 3건(B1 `testspec` 분할 · B2 노드 생명주기 소유자 · B3 관심사 열)을 제기한다.
 
-## 3. 모듈 배치 (47개 전수 — R1 통폐합 −9, R2 dsl/interp 분리 +1; 2026-09-01)
+## 3. 모듈 배치 (44개 전수 — R1 −9·R2 +1·R3 −3; 2026-09-01)
 
 ### L0 커널 — 공용 어휘
 
@@ -97,13 +97,11 @@ flowchart TD
 
 | 패키지 | 담는 것 |
 |---|---|
-| `core/driver` | 프로세스 기동/정지/provision. `Initializer`·`FileProvisioner`·`LogReader` capability |
 | `core/remote` | SSH 자격증명 · 실행 · host-key 정책 |
 | `core/rpc` | JSON-RPC 클라이언트 |
-| `core/process` | PID 추적 · 검증된 종료 |
+| `core/process` | **실행** — 프로세스 기동/정지/provision(`Initializer`·`LogReader`, 옛 `core/driver`)·PID 추적·검증된 종료(run ledger)와 **기동 정책**(`Direct`: arm·materialize·init·launch / `Launcher`: 헬스 게이트·진단·재시도·teardown, 옛 `core/launcher` L3). 실행 메커니즘과 정책이 한 모듈 — 층 경계는 파일 경계로 내려간다(R3, 2026-09-01) |
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) |
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
-| `core/machine` | 머신 지정 — ip+경로 한 규칙, 로컬/원격을 한 표기로 |
 | `core/nodeconfig` | 노드 하나의 설정을 한곳에서 — config.toml 렌더 · launch argv 조립(`Argv`, 옛 `core/launchopt`) · 평면 dot-path 설정값(`Values`·`Merge`·`Resolve`·`Flatten`·`Defaults`, 옛 `core/config`). 파일·argv·해석이 한 지붕(R1, 2026-08-31) |
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
@@ -111,7 +109,7 @@ flowchart TD
 | `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run --binary` 가 같은 경계를 쓴다, P6.1) |
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
-| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1, 2026-08-31) |
+| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1). 그리고 머신 지정(`Spec`·`Access`·ip+경로 한 규칙, 로컬/원격 한 표기, 옛 `core/machine`) — 타깃을 여는 것이 자원 접근이라 여기 합류(R3, 2026-09-01) |
 | `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리, 그리고 그 플러그인이 선언하는 것들: capability 카탈로그·핸들러(`Capability`·`LoadCatalog`·`RegisterHandler`·`GetByAddress`, 옛 `core/capability`)와 검증자 조회(`Validators`, 옛 `core/consensus`). 무엇이 등록되는가와 그 등록물의 능력이 한 곳(R1, 2026-08-31) |
 | `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
 
@@ -142,7 +140,6 @@ flowchart TD
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션, 그리고 이름 붙인 네트워크 레지스트리(`SaveNetwork`·`LoadNetwork`·`ListNetworks`·`RemoveNetwork`, 옛 `core/netreg` — 영속 상태의 소유자에 합류, R1 2026-08-31) |
 | `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
 | `core/health` | 블록 전진 판정 |
-| `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `consensus/upgrade` 의 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
 | `dsl` · `dsl/assert` | **DSL 문법** — v1·v2 문법·파싱·검증·statement 파생(`Parse`·`SequenceOf`·`ActionName`·`ArgsOf`). **순수** — 실행 인프라(rpc·session·collector)를 import 하지 않는다(R2 게이트, 2026-09-01). 옛 `testspec` 의 문법 절반 |
 | `dsl/interp` | **DSL 런타임** — 실행 계약(`Action`·`Assertion`·`Registry`·`Reader`·`Deps`·`ActionCtx`·`AssertCtx`·`NodeControl`)과 해석기(`NewInterpreter`·`Run`)·바인딩(`$ref`/`save`)·`Fingerprint`(환경 재사용 키)·`Unresolved`(오프라인 이름 검증). 계약이 여기 사는 것이 핵심 — `testhelper`(L3)가 구현하므로 `testengine`(L4)으로 올릴 수 없다. 옛 `testspec` 의 실행 절반(R2, 2026-09-01) |
@@ -226,10 +223,9 @@ flowchart TD
 |---|---|---|
 | `core/session` | 세션·컴포지션 매니페스트 | ✅ 소유자 |
 | `core/filestore` | 타깃 파일 | ✅ 소유자 |
-| `core/driver` | config·log (LocalDriver) | ✅ 전송 계층, Sink 의 구현 짝 |
 | `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
 | `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 인터페이스 경유 |
-| `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
+| `core/process` | 실행 대장(`process.json`) · config·log(LocalDriver, 옛 `core/driver`) | ✅ 프로세스·전송 계층 소유자(R3) |
 | `core/collector` | 이벤트 파일 싱크(옛 `core/obs`, R1 2026-08-31) | ◐ session 으로 흡수 검토 |
 | `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·collector 와 같은 모양 |
 | `consensus/poa` | wemix genesis 생성의 **임시 작업 파일**(템플릿·거버넌스 config 를 임시 디렉터리에 쓰고 바이너리 출력을 읽음) | ✅ 패밀리의 genesis 소스 — 데이터 플레인이 아니라 로컬 스크래치이며 끝나면 지운다(P4.1, 2026-08-28; 옛 `chainsetup.WemixGenesisSource`) |
@@ -439,7 +435,7 @@ A1·A2(레이어·상태 검사)와 같은 자리에 A7 로 둔다.
 |---|---|---|
 | `Phase` · `ConsensusFamily.BringUpPhases` | **L1** (`core/registry`) | 인터페이스는 아래. 구현은 L2a |
 | `PortReservation` | **L1** (`core/registry` 선언 / `core/node` 소유 · `resource` 사용) | 순수 계산 |
-| `launcher.Deps.Action` | **L3** (`core/launcher`) | 실행 시점·타임아웃·진단은 정책 |
+| `launcher.Deps.Action` | **L1** (`core/process`) | 실행 시점·타임아웃·진단은 정책 |
 | 액션 구현(거버넌스·etcd) | **L2a** (`consensus/poa`) | 이미 존재 |
 | `GenesisArtifacts` | **L4** (`engine`) | 조립 산출물 |
 | 유스케이스 수렴(3곳→1곳) | **L5** (`app`) | 유스케이스 1개 = 함수 1개 |

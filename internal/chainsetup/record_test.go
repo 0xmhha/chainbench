@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/machine"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // TestRecordRun_WritesTheFactsAndNeverASecret pins the record's two
@@ -36,7 +36,7 @@ func TestRecordRun_WritesTheFactsAndNeverASecret(t *testing.T) {
 	}
 	w.state.Chain = "stablenet"
 	w.state.ServerSet = setPath
-	w.state.Target = machine.Spec{Server: "box1", Host: "192.0.2.11", DataRoot: "/data/cb"}
+	w.state.Target = resource.Spec{Server: "box1", Host: "192.0.2.11", DataRoot: "/data/cb"}
 	w.state.Nodes = []node.Record{{Index: 1, Role: "bp", Host: "192.0.2.11", PID: 4242}}
 	if err := w.ledger.Record(process.Proc{
 		PID: 4242, Label: "node1", Binary: "gstable",
@@ -52,7 +52,7 @@ func TestRecordRun_WritesTheFactsAndNeverASecret(t *testing.T) {
 		t.Fatal(err)
 	}
 	w.state.Target.DataRoot = tdir
-	acc := &machine.Access{DataRoot: tdir, Files: files}
+	acc := &resource.Access{DataRoot: tdir, Files: files}
 
 	rec, err := w.recordRun(context.Background(), acc, "/data/cb/bin/gstable")
 	if err != nil {
