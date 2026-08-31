@@ -94,7 +94,7 @@ flowchart TD
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`. **최다 피참조(26)** — 층을 잇는 공용 언어이며, **아무것도 import 하지 않는다**(측정으로 고정) |
 | `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
 | `core/capability` | capability 집합 |
-| `core/netid` · `core/logs` | 네트워크 id · 로그 라인 모델 |
+| `core/logs` | 로그 라인 모델 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산
 
@@ -113,9 +113,8 @@ flowchart TD
 | `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run --binary` 가 같은 경계를 쓴다, P6.1) |
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
-| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)) |
-| `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
-| `core/consensus` | 검증자 조회 |
+| `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) · devp2p 네트워크 id 규약(`NetworkID`·`NetworkIDFlag`·`ValidateNetworkIDs`, R1-6 에서 `core/netid` 흡수) ([[module-plan]](module-plan.md)) |
+| `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 · 검증자 조회(`Validators`·`ConsensusCaller`, R1-8 에서 `core/consensus` 흡수) |
 | `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
 
 > `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
@@ -146,7 +145,6 @@ flowchart TD
 | `core/collector` | live tail · chainstate · bp 참여 · reorg |
 | `core/inspector` | **요청 시 실사** — 포트 점유(로컬은 bind 두 형태, 원격은 그 머신에서 probe) · 경로 존재(file seam 경유) · 호스트 도달. 사실만 답하고 판단하지 않는다(P3.3, 2026-08-28; 옛 `core/occupancy`) · 블록 전진 판정(`Health`, R1-4 에서 `core/health` 흡수) |
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
-| `core/netreg` | 네트워크 레지스트리 |
 | `testspec` · `testspec/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3, 2026-08-28) |
 | `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). testspec 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 testspec 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
 
@@ -170,7 +168,7 @@ flowchart TD
 
 | 패키지 | 담는 것 |
 |---|---|
-| `mcp` | MCP 도구 — 스키마 바인딩과 렌더링 |
+| `mcp` | MCP 도구 — 스키마 바인딩과 렌더링 · 붙인 네트워크 레지스트리(R1-7 에서 `core/netreg` 흡수) |
 | `dashboard` | 대시보드 데몬 |
 
 ### 규칙 자체
@@ -231,9 +229,9 @@ flowchart TD
 | `core/keyring` | 비밀번호 파일 프롬프트 저장(0600) | ✅ 키는 별도 소유자가 정당(보안 권한) |
 | `core/keyring/store` | 키 자료(0600) · 생성한 링 | ✅ 저장 소유자 — 원격은 파일 인터페이스 경유 |
 | `core/process` | 실행 대장(`process.json`) | ✅ 프로세스 소유자 — 무엇이 도는지의 기록 |
-| `core/netreg` | 네트워크 레지스트리 | ◐ session 으로 흡수 검토 |
+| `mcp` | 네트워크 레지스트리(R1-7 에서 `core/netreg` 흡수) | ◐ session 으로 흡수 검토 |
 | `core/obs` | 이벤트 파일 싱크 | ◐ session 으로 흡수 검토 |
-| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·obs 와 같은 모양 |
+| `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — mcp(netreg)·obs 와 같은 모양 |
 | `consensus/poa` | wemix genesis 생성의 **임시 작업 파일**(템플릿·거버넌스 config 를 임시 디렉터리에 쓰고 바이너리 출력을 읽음) | ✅ 패밀리의 genesis 소스 — 데이터 플레인이 아니라 로컬 스크래치이며 끝나면 지운다(P4.1, 2026-08-28; 옛 `chainsetup.WemixGenesisSource`) |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
