@@ -57,14 +57,14 @@
 
 | 이동 | 줄 | 비고 |
 |---|---|---|
-| `core/topology`, `validatorset` → `core/node` | 149+85 | 선언 타입은 declaration.go 로 |
+| `core/topology` → `core/node`, `validatorset` → `core/genesis` | 149+85 | **이탈(R1-1)**: validatorset 은 registry·keyring/store 를 import 해 node(out-edge 0)로 못 들어간다 — genesis 의 roster 로 흡수 |
 | `core/hardfork` → `core/genesis` | 128 | |
 | `core/launchopt`, `core/config` → `core/nodeconfig` | 935+152 | argv 조립·설정 해석이 한 지붕 |
 | `core/health` → `core/inspector` | 187 | |
 | `core/obs`, `core/logs` → `core/collector` | +207 | obs.Bus 는 collector 의 이벤트 면 |
 | `core/netid` → `resource` | 45 | |
 | `core/netreg` → `mcp` | 161 | 소비자가 mcp 뿐 |
-| `core/consensus` → `core/registry`, `core/capability` → 소비자 조사 후 registry/testengine | 23+222 | |
+| `core/consensus` → `core/registry` (R1-8) | 23 | `core/capability` 는 **보류**: registry.Get·Capabilities 와 이름이 충돌하고 소비자가 넓다 — R4 에서 재검토 |
 
 ### R2. DSL 분리 — 문법과 실행기
 
