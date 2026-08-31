@@ -13,7 +13,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/consensus"
 	"github.com/0xmhha/chainbench/internal/core/logs"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/obs"
@@ -179,7 +178,7 @@ func consensusTool() Tool {
 				return "", err
 			}
 			method := p.Manifest().Consensus.ValidatorsMethod
-			vals, err := consensus.Validators(ctx, rpc.Dial(argString(args, "rpc", "")), method)
+			vals, err := registry.Validators(ctx, rpc.Dial(argString(args, "rpc", "")), method)
 			if err != nil {
 				return "", err
 			}

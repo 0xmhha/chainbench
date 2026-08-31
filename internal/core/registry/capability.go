@@ -12,7 +12,7 @@
 // registers both here at init(). A capability is EXPOSED only if its catalog
 // entry has a bound handler — so the exposed surface is exactly what projects
 // have registered.
-package capability
+package registry
 
 import (
 	"bufio"
@@ -153,7 +153,7 @@ func For(chain string) []Capability {
 
 // Get returns the cataloged descriptor at address, whether or not it has a
 // bound handler (i.e. including flat, tool-backed entries).
-func Get(address string) (Descriptor, bool) {
+func GetByAddress(address string) (Descriptor, bool) {
 	mu.Lock()
 	defer mu.Unlock()
 	d, ok := catalog[address]

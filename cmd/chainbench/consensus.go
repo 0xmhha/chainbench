@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/consensus"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -29,7 +29,7 @@ func newConsensusCmd() *cobra.Command {
 				return err
 			}
 			method := p.Manifest().Consensus.ValidatorsMethod
-			vals, err := consensus.Validators(cmd.Context(), rpc.Dial(rpcURL), method)
+			vals, err := registry.Validators(cmd.Context(), rpc.Dial(rpcURL), method)
 			if err != nil {
 				return err
 			}

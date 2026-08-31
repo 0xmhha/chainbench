@@ -1,11 +1,11 @@
-package consensus_test
+package registry_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/core/consensus"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
 type fakeCaller struct {
@@ -25,7 +25,7 @@ func (f *fakeCaller) Call(_ context.Context, method string, out any, _ ...any) e
 
 func TestValidators(t *testing.T) {
 	fc := &fakeCaller{vals: []string{"0xaaa", "0xbbb"}}
-	got, err := consensus.Validators(context.Background(), fc, "istanbul_getValidators")
+	got, err := registry.Validators(context.Background(), fc, "istanbul_getValidators")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,7 +39,7 @@ func TestValidators(t *testing.T) {
 
 func TestValidators_Error(t *testing.T) {
 	fc := &fakeCaller{err: errors.New("boom")}
-	if _, err := consensus.Validators(context.Background(), fc, "wemix_getValidators"); err == nil {
+	if _, err := registry.Validators(context.Background(), fc, "wemix_getValidators"); err == nil {
 		t.Error("expected error")
 	}
 }

@@ -3,7 +3,7 @@
 // wemix_getValidators for poa). Driving the method name from the manifest keeps
 // this chain-agnostic — the hardcoded "istanbul_*" in the old TS consensus tool
 // is gone (docs/CHAINBENCH_GO_REDESIGN.md §C.5).
-package consensus
+package registry
 
 import "context"
 

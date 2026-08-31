@@ -16,9 +16,7 @@ import (
 // import disappeared fails the test until removed.
 var mcpImportAllowed = map[string]string{
 	"internal/accounts":              "account tools; migrates with the account verbs' module move",
-	"internal/core/capability":       "capability catalog rendering; V6 follow-up",
 	"internal/core/collector":        "network status collection; V6 follow-up",
-	"internal/core/consensus":        "consensus queries; V6 follow-up",
 	"internal/core/logs":             "log reading; V6 follow-up",
 	"internal/core/machine":          "target kind rendering in net tools; goes with the V5.4 display cleanups",
 	"internal/core/netreg":           "network registry reads; V6 follow-up",

@@ -93,7 +93,6 @@ flowchart TD
 |---|---|
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
 | `core/obs` | 이벤트 타입 · `Bus`(bounded, drop-on-full) |
-| `core/capability` | capability 집합 |
 | `core/logs` | 로그 라인 모델 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산
@@ -115,8 +114,7 @@ flowchart TD
 | `core/keyring/operation` | **키 세트에 가하는 동사** — new·add·list·show·export·import·세트 복제. 서버 접근은 자기가 선언한 `Opener` 인터페이스로 받는다(구현은 호출자가 주입) |
 | `accounts` | tx 서명(외부 SDK 래핑) |
 | `resource` | **자원 모듈** — 풀(호스트 × 포트 슬롯)·배정(`Assign`)·포트 밴드 산술(`Plan`·`PlanBands`·`ValidatePorts`)과 서버 세트(호스트·포트 밴드·자격·호스트키·docker 치환)와 그것을 여는 유일 통로(`Opener`), 그리고 세트를 풀로 해석하는 `Pool`/`PoolFor`. 형식과 접근이 한 패키지에 있어 "resource 를 import 한다 = wrapper 를 지난다" 가 성립한다(P1.2, 2026-08-27) ([[module-plan]](module-plan.md)). devp2p 네트워크 id 해석·검증(`Resolve`·`Flag`·`ValidateUniform`)도 자원의 배정값이라 여기 있다(R1, 2026-08-31) |
-| `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리 |
-| `core/consensus` | 검증자 조회 |
+| `core/registry` | `ChainPlugin`/`ConsensusFamily` **인터페이스** + 레지스트리, 그리고 그 플러그인이 선언하는 것들: capability 카탈로그·핸들러(`Capability`·`LoadCatalog`·`RegisterHandler`·`GetByAddress`, 옛 `core/capability`)와 검증자 조회(`Validators`, 옛 `core/consensus`). 무엇이 등록되는가와 그 등록물의 능력이 한 곳(R1, 2026-08-31) |
 | `core/preflight` | **현재 vs 목표 비교** — 타깃에 조립된 체인(`Have`)과 다음 테스트가 원하는 체인(`Want`)을 견줘 `reuse` / `rebuild-nodes N` / `rebuild-all` / `compose` 를 답한다. `Check` 는 주입된 liveness 로 죽은 노드를 재구성 목록에 더한다. 판단만 하고 보지 않는다(P4.x, 2026-08-28) |
 
 > `core/registry` 가 L1 인 것이 핵심이다. **인터페이스는 아래, 구현은 위**(L2)에 있고,
