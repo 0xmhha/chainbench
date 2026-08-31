@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // attachNetwork is the network label recorded for an attached NodeSet.
@@ -44,7 +44,7 @@ type AttachConfig struct {
 // RPC endpoints without provisioning or launching anything. Its teardown is nil:
 // attach did not create the nodes, so it must not stop them.
 func NewAttachBuildEnv(chain string, eps []node.RPCEndpoint) BuildEnvFunc {
-	return func(_ context.Context, _ session.Environment, _ testspec.Spec) (node.NodeSet, TeardownFunc, error) {
+	return func(_ context.Context, _ session.Environment, _ dsl.Spec) (node.NodeSet, TeardownFunc, error) {
 		ns, err := node.AttachedSet(chain, attachNetwork, eps)
 		if err != nil {
 			return node.NodeSet{}, nil, fmt.Errorf("engine: attach: %w", err)
@@ -83,7 +83,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 
-	run := NewRunSpec(testspec.Deps{
+	run := NewRunSpec(dsl.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions:  testhelper.Registry(),
 		Accounts: accts,
@@ -97,7 +97,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 			// directory rather than nothing.
 			return session.New(cfg.ArtifactRoot, cmd, clock())
 		},
-		Fingerprint: func(s testspec.Spec) session.Fingerprint {
+		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return s.Fingerprint(nodeconfig.Values{})
 		},
 		BuildEnv:   withCollection(NewAttachBuildEnv(cfg.Chain, eps), cfg.Bus, nil),

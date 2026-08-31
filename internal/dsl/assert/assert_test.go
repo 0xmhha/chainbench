@@ -3,7 +3,7 @@ package assert_test
 import (
 	"testing"
 
-	"github.com/0xmhha/chainbench/internal/testspec/assert"
+	"github.com/0xmhha/chainbench/internal/dsl/assert"
 )
 
 func TestEqual_TypeAwareNumeric(t *testing.T) {

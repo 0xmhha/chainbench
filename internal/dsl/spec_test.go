@@ -1,11 +1,11 @@
-package testspec_test
+package dsl_test
 
 import (
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 const validSpec = `{
@@ -20,7 +20,7 @@ const validSpec = `{
 }`
 
 func TestParse_Valid(t *testing.T) {
-	s, err := testspec.Parse([]byte(validSpec))
+	s, err := dsl.Parse([]byte(validSpec))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestParse_MissingRequired(t *testing.T) {
 		"assertions":    `{"schemaVersion":"1","id":"X","chain":{"name":"wbft","binary":"b"}}`,
 	}
 	for field, raw := range cases {
-		_, err := testspec.Parse([]byte(raw))
+		_, err := dsl.Parse([]byte(raw))
 		if err == nil {
 			t.Fatalf("missing %s: expected error", field)
 		}
@@ -52,14 +52,14 @@ func TestParse_MissingRequired(t *testing.T) {
 }
 
 func TestParse_InvalidJSON(t *testing.T) {
-	if _, err := testspec.Parse([]byte("{not json")); err == nil {
+	if _, err := dsl.Parse([]byte("{not json")); err == nil {
 		t.Fatal("invalid JSON must error")
 	}
 }
 
 func TestParse_UnsupportedSchemaVersion(t *testing.T) {
 	raw := `{"schemaVersion":"99","id":"X","chain":{"name":"wbft","binary":"b"},"assertions":[{"assert":"True"}]}`
-	_, err := testspec.Parse([]byte(raw))
+	_, err := dsl.Parse([]byte(raw))
 	if err == nil {
 		t.Fatal("unsupported schemaVersion must be rejected")
 	}
@@ -69,7 +69,7 @@ func TestParse_UnsupportedSchemaVersion(t *testing.T) {
 }
 
 func TestFingerprint_Deterministic(t *testing.T) {
-	s, _ := testspec.Parse([]byte(validSpec))
+	s, _ := dsl.Parse([]byte(validSpec))
 	cfg := nodeconfig.Values{"nodes.validators": "7", "chain.id": "111133"}
 
 	fp1 := s.Fingerprint(cfg)
@@ -97,14 +97,14 @@ func TestFingerprint_MapOrderIndependent(t *testing.T) {
 	// same (json.Marshal sorts map keys).
 	a := nodeconfig.Values{"x": "1", "y": "2", "z": "3"}
 	b := nodeconfig.Values{"z": "3", "y": "2", "x": "1"}
-	s, _ := testspec.Parse([]byte(validSpec))
+	s, _ := dsl.Parse([]byte(validSpec))
 	if s.Fingerprint(a) != s.Fingerprint(b) {
 		t.Fatal("fingerprint must be independent of map insertion order")
 	}
 }
 
 func TestGet_DotPath(t *testing.T) {
-	s, _ := testspec.Parse([]byte(validSpec))
+	s, _ := dsl.Parse([]byte(validSpec))
 
 	if v, ok := s.Get("chain.name"); !ok || v != "wbft" {
 		t.Fatalf("Get chain.name = %v ok=%v", v, ok)

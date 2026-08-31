@@ -64,7 +64,7 @@ flowchart TD
     L6["L6 표면<br/>cmd · mcp · dashboard"]
     L5["L5 유스케이스<br/>app"]
     L4["L4 오케스트레이션<br/>testengine · bringup · chainsetup"]
-    L3["L3 도메인 서비스<br/>session · collector · health · launcher · testspec"]
+    L3["L3 도메인 서비스<br/>session · collector · health · launcher · dsl"]
     L2b["L2b 체인 어댑터<br/>chains/*"]
     L2a["L2a 합의 패밀리<br/>consensus/*"]
     L1["L1 프리미티브<br/>driver · remote · rpc · place · keys · registry · serverset"]
@@ -144,8 +144,8 @@ flowchart TD
 | `core/health` | 블록 전진 판정 |
 | `core/launcher` | **기동 정책** — 어떻게 띄우나(`Direct`: arm · materialize · init · launch)와 올라올 때까지 어떻게 반복하나(`Launcher`: 헬스 게이트 · 진단 · 재시도 · teardown)를 한 모듈이 소유. 옛 `core/supervisor` + `chainsetup.LocalLauncher` + `driver/lifecycle.go`(P3.1, 2026-08-28). `supervisor` 라는 낱말은 sudo 쪽 뜻으로 읽혀 코드에서 뺐다 |
 | `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `consensus/upgrade` 의 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
-| `testspec` · `testspec/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3, 2026-08-28) |
-| `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). testspec 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 testspec 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
+| `dsl` · `dsl/assert` | **DSL** — 문법(v1·v2)·파싱·검증·해석기·바인딩. 액션·어세션·리더는 이름(문자열)으로만 알고 `Registry` 로 주입받는다 — 체인 어휘를 모른다(P4.3; testspec 개명 R2, 2026-09-01) |
+| `testhelper` | **테스트 액션 어휘** — 내장 액션(sendTx·waitBlock·read·fault·assets…)·어세션·리더의 구현과 그 등록(`Register`·`Registry`). dsl 의 `Action`/`Assertion`/`Reader` 계약을 구현하는 쪽이라 dsl 위에 있고, P8 에서 testkit·tests 공통부가 여기로 모인다 |
 | `validatorset` | 검증자셋 계산 |
 
 ### L4 오케스트레이션
@@ -194,7 +194,7 @@ flowchart TD
 |---|---:|---|
 | L1 | 10 | `resource→node`, `driver→remote` 등 — 프리미티브 간 세분화 |
 | L2 | 11 | `chains/*→consensus/*` (L2b→L2a, 실제로는 하향) + 등록 집합 |
-| L3 | 4 | `testspec→collector/session` |
+| L3 | 4 | `dsl→collector/session` |
 | L4 | 3 | `testengine→chainsetup` — 러너가 환경 구축을 셋업 모듈에 위탁 (V6.2 에서 워크플로가 위에서 조립하면 소멸 검토) |
 | L6 | 3 | `cmd→mcp/dashboard` |
 

@@ -16,7 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 
@@ -97,7 +97,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 	}
 	env.PopulateNodeTable(ns)
 
-	run := testengine.NewRunSpec(testspec.Deps{
+	run := testengine.NewRunSpec(dsl.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testhelper.Registry(),
 	})
@@ -115,7 +115,7 @@ func TestRunSpec_Live_Stablenet(t *testing.T) {
 
 // liveSpec builds a smoke spec: send one node-signed tx, then assert the chain
 // id and that the head has advanced.
-func liveSpec(t *testing.T, chainID int64, preset keyring.Preset) testspec.Spec {
+func liveSpec(t *testing.T, chainID int64, preset keyring.Preset) dsl.Spec {
 	t.Helper()
 	from := preset.Network.Validators[0]
 	to := from
@@ -134,7 +134,7 @@ func liveSpec(t *testing.T, chainID int64, preset keyring.Preset) testspec.Spec 
 			{"assert": "blockNumber", "expected": 1},
 		},
 	})
-	spec, err := testspec.Parse(raw)
+	spec, err := dsl.Parse(raw)
 	if err != nil {
 		t.Fatalf("parse live spec: %v", err)
 	}

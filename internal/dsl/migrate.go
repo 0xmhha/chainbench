@@ -1,4 +1,4 @@
-package testspec
+package dsl
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ func MigrateV1(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 	if s.SchemaVersion != supportedSchemaVersion {
-		return nil, fmt.Errorf("testspec: migrate: %s is not a v1 spec", s.ID)
+		return nil, fmt.Errorf("dsl: migrate: %s is not a v1 spec", s.ID)
 	}
 
 	env := map[string]any{

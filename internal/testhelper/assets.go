@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -16,7 +16,7 @@ const (
 )
 
 // seedAssetBuiltins registers the funding and contract actions.
-func seedAssetBuiltins(r testspec.Registry) {
+func seedAssetBuiltins(r dsl.Registry) {
 	r.RegisterAction(actionFaucet, faucetAction{})
 	r.RegisterAction(actionDeployContract, deployContractAction{})
 	r.RegisterAction(actionRegisterContract, registerContractAction{})
@@ -32,14 +32,14 @@ func seedAssetBuiltins(r testspec.Registry) {
 // pollInterval.
 type faucetAction struct{}
 
-func (faucetAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (faucetAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	to, _ := ac.Args["to"].(string)
 	if to == "" {
-		return fmt.Errorf("testspec: faucet requires \"to\" (the address to fund)")
+		return fmt.Errorf("dsl: faucet requires \"to\" (the address to fund)")
 	}
 	value, ok := hexQuantity(ac.Args["amount"])
 	if !ok {
-		return fmt.Errorf("testspec: faucet requires a numeric \"amount\" in wei")
+		return fmt.Errorf("dsl: faucet requires a numeric \"amount\" in wei")
 	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -59,11 +59,11 @@ func (faucetAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	}
 	receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
 	if err != nil {
-		return fmt.Errorf("testspec: faucet: %w", err)
+		return fmt.Errorf("dsl: faucet: %w", err)
 	}
 	ac.Hash, ac.Receipt = hash, receipt
 	if statusReverted(receipt) {
-		return fmt.Errorf("testspec: faucet %s -> %s reverted", from, to)
+		return fmt.Errorf("dsl: faucet %s -> %s reverted", from, to)
 	}
 	return nil
 }
@@ -77,13 +77,13 @@ func (faucetAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 // value, save, timeout, pollInterval.
 type deployContractAction struct{}
 
-func (deployContractAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (deployContractAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	code, _ := ac.Args["bytecode"].(string)
 	if code == "" {
 		code, _ = ac.Args["data"].(string)
 	}
 	if code == "" {
-		return fmt.Errorf("testspec: deployContract requires \"bytecode\"")
+		return fmt.Errorf("dsl: deployContract requires \"bytecode\"")
 	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -106,15 +106,15 @@ func (deployContractAction) Do(ctx context.Context, ac *testspec.ActionCtx) erro
 	}
 	receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
 	if err != nil {
-		return fmt.Errorf("testspec: deployContract: %w", err)
+		return fmt.Errorf("dsl: deployContract: %w", err)
 	}
 	ac.Hash, ac.Receipt = hash, receipt
 	if statusReverted(receipt) {
-		return fmt.Errorf("testspec: deployContract %s reverted", hash)
+		return fmt.Errorf("dsl: deployContract %s reverted", hash)
 	}
 	addr, _ := receipt["contractAddress"].(string)
 	if addr == "" {
-		return fmt.Errorf("testspec: deployContract %s: receipt carries no contract address", hash)
+		return fmt.Errorf("dsl: deployContract %s: receipt carries no contract address", hash)
 	}
 	ac.Value = addr
 	return nil
@@ -133,14 +133,14 @@ func (deployContractAction) Do(ctx context.Context, ac *testspec.ActionCtx) erro
 // from, on, gas, value, timeout, pollInterval.
 type registerContractAction struct{}
 
-func (registerContractAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (registerContractAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	to, _ := ac.Args["to"].(string)
 	if to == "" {
-		return fmt.Errorf("testspec: registerContract requires \"to\" (the deployed contract address)")
+		return fmt.Errorf("dsl: registerContract requires \"to\" (the deployed contract address)")
 	}
 	data, _ := ac.Args["data"].(string)
 	if data == "" {
-		return fmt.Errorf("testspec: registerContract requires \"data\" (the encoded call)")
+		return fmt.Errorf("dsl: registerContract requires \"data\" (the encoded call)")
 	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -163,11 +163,11 @@ func (registerContractAction) Do(ctx context.Context, ac *testspec.ActionCtx) er
 	}
 	receipt, hash, err := sendAndConfirm(ctx, c, args, ac.Args)
 	if err != nil {
-		return fmt.Errorf("testspec: registerContract: %w", err)
+		return fmt.Errorf("dsl: registerContract: %w", err)
 	}
 	ac.Hash, ac.Receipt = hash, receipt
 	if statusReverted(receipt) {
-		return fmt.Errorf("testspec: registerContract %s reverted", hash)
+		return fmt.Errorf("dsl: registerContract %s reverted", hash)
 	}
 	return nil
 }
@@ -221,7 +221,7 @@ func applyFeeArgs(args *rpc.SendTxArgs, in map[string]any) error {
 	tip, hasTip := hexQuantity(in["maxPriorityFeePerGas"])
 
 	if hasLegacy && (hasMaxFee || hasTip) {
-		return fmt.Errorf("testspec: sendTx: \"gasPrice\" and \"maxFeePerGas\"/\"maxPriorityFeePerGas\" are mutually exclusive")
+		return fmt.Errorf("dsl: sendTx: \"gasPrice\" and \"maxFeePerGas\"/\"maxPriorityFeePerGas\" are mutually exclusive")
 	}
 	if hasLegacy {
 		args.GasPrice = gasPrice

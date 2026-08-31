@@ -2,7 +2,7 @@ package testengine
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // wsCapability is advertised by locally launched nodes, which serve a WebSocket
@@ -34,9 +34,9 @@ func satisfies(required, provided []string) bool {
 // applies only when its chain matches (see applicableTo) and the target network
 // provides every capability the spec requires. A spec that requires a capability
 // the target lacks is skipped, not failed.
-func applicableWithCaps(chain string, provided []string) func(testspec.Spec) bool {
+func applicableWithCaps(chain string, provided []string) func(dsl.Spec) bool {
 	chainOK := applicableTo(chain)
-	return func(s testspec.Spec) bool {
+	return func(s dsl.Spec) bool {
 		return chainOK(s) && satisfies(s.Requires, provided)
 	}
 }

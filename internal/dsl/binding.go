@@ -1,4 +1,4 @@
-package testspec
+package dsl
 
 import (
 	"fmt"

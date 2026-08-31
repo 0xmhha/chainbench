@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // newValidateCmd parses DSL specs offline and reports which are well-formed,
@@ -68,20 +68,20 @@ func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) er
 	invalid := 0
 	for _, p := range paths {
 		r := validateResult{Spec: p}
-		raws, err := testspec.ReadFiles([]string{p})
+		raws, err := dsl.ReadFiles([]string{p})
 		if err != nil {
 			r.Result = "ERROR: " + err.Error()
-		} else if testspec.IsEnv(raws[0]) {
+		} else if dsl.IsEnv(raws[0]) {
 			// An env is a declaration, not a run: it validates on its own
 			// terms and is exercised through the cases that name it.
-			if env, perr := testspec.ParseEnv(raws[0]); perr != nil {
+			if env, perr := dsl.ParseEnv(raws[0]); perr != nil {
 				r.Result = "INVALID: " + perr.Error()
 			} else {
 				r.ID, r.OK, r.Result = env.ID, true, "env declaration for chain "+env.Chain
 			}
-		} else if s, perr := testspec.Parse(raws[0]); perr != nil {
+		} else if s, perr := dsl.Parse(raws[0]); perr != nil {
 			r.Result = "INVALID: " + perr.Error()
-		} else if unresolved := testspec.Unresolved(s, reg); len(unresolved) > 0 {
+		} else if unresolved := dsl.Unresolved(s, reg); len(unresolved) > 0 {
 			r.ID = s.ID
 			r.Result = "UNRESOLVED: " + strings.Join(unresolved, ", ")
 		} else {
@@ -123,7 +123,7 @@ func renderValidate(out io.Writer, results []validateResult, jsonOut bool) error
 
 // specResult describes a parsed spec's status against an optional target chain:
 // plain OK without a chain, else OK / SKIP (not applicable) / SKIP (needs caps).
-func specResult(s testspec.Spec, chain string, caps []string) string {
+func specResult(s dsl.Spec, chain string, caps []string) string {
 	if chain == "" {
 		return "OK"
 	}

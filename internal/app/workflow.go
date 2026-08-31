@@ -9,8 +9,8 @@ import (
 	chainsetupmod "github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
-	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // The workflow is what MCP exists to reach (architecture-v2 §2): one call
@@ -23,7 +23,7 @@ import (
 // only the operator knows.
 type RunSuiteIn struct {
 	// SpecPaths are the DSL files to run, each read and env-resolved the one
-	// way every surface does (testspec.ReadFiles).
+	// way every surface does (dsl.ReadFiles).
 	SpecPaths []string
 	// DataDir is the composition workspace; the network is set up here.
 	DataDir string
@@ -110,13 +110,13 @@ func RunSuite(ctx context.Context, d Deps, in RunSuiteIn) (RunSuiteOut, error) {
 	if in.DataDir == "" {
 		return RunSuiteOut{}, fmt.Errorf("app: run suite: a workspace directory is required")
 	}
-	specs, err := testspec.ReadFiles(in.SpecPaths)
+	specs, err := dsl.ReadFiles(in.SpecPaths)
 	if err != nil {
 		return RunSuiteOut{}, err
 	}
-	parsed := make([]testspec.Spec, 0, len(specs))
+	parsed := make([]dsl.Spec, 0, len(specs))
 	for i, raw := range specs {
-		s, err := testspec.Parse(raw)
+		s, err := dsl.Parse(raw)
 		if err != nil {
 			return RunSuiteOut{}, fmt.Errorf("app: run suite: %s: %w", in.SpecPaths[i], err)
 		}

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 func TestApplicableTo(t *testing.T) {
@@ -21,7 +21,7 @@ func TestApplicableTo(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := applicableTo(tc.target)(testspec.Spec{ApplicableChains: tc.chains})
+			got := applicableTo(tc.target)(dsl.Spec{ApplicableChains: tc.chains})
 			if got != tc.applies {
 				t.Fatalf("applicableTo(%q)(%q) = %v, want %v", tc.target, tc.chains, got, tc.applies)
 			}
@@ -30,7 +30,7 @@ func TestApplicableTo(t *testing.T) {
 }
 
 func TestValidatorReqs(t *testing.T) {
-	reqs := validatorReqs(4)(testspec.Spec{})
+	reqs := validatorReqs(4)(dsl.Spec{})
 	if len(reqs) != 4 {
 		t.Fatalf("reqs = %d, want 4", len(reqs))
 	}

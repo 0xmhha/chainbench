@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
@@ -83,7 +83,7 @@ func TestEngine_EmitResultCarriesStatus(t *testing.T) {
 func TestEngine_EmitSkipsInapplicable(t *testing.T) {
 	h := &harness{
 		fpByChain:  map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"},
-		applicable: func(s testspec.Spec) bool { return s.Chain.Name == "wbft" },
+		applicable: func(s dsl.Spec) bool { return s.Chain.Name == "wbft" },
 	}
 	evs := collectEvents(t, h, [][]byte{specJSON("T1", "stablenet")}, "wbft")
 	if !containsMsg(evs, "spec skipped") {

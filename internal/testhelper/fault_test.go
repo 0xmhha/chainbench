@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"encoding/json"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -66,8 +66,8 @@ func envWithNodes(t *testing.T, n int, url string) session.Environment {
 	return env
 }
 
-func faultDeps(ctrl testspec.NodeControl) testspec.Deps {
-	return testspec.Deps{
+func faultDeps(ctrl dsl.NodeControl) dsl.Deps {
+	return dsl.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testhelperRegistry(),
 		Nodes:   ctrl,
@@ -83,7 +83,7 @@ func TestStopNodeAction_StopsTheSelectedNode(t *testing.T) {
 	if !ok {
 		t.Fatal("stopNode not registered")
 	}
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp2"}}); err != nil {
+	if err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp2"}}); err != nil {
 		t.Fatalf("stopNode: %v", err)
 	}
 	if len(ctrl.stopped) != 1 || ctrl.stopped[0] != 2 {
@@ -97,7 +97,7 @@ func TestStartNodeAction_StartsTheSelectedNode(t *testing.T) {
 	env := envWithNodes(t, 4, "http://unused")
 
 	act, _ := d.Actions.Action(actionStartNode)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp3"}}); err != nil {
+	if err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp3"}}); err != nil {
 		t.Fatalf("startNode: %v", err)
 	}
 	if len(ctrl.started) != 1 || ctrl.started[0] != 3 {
@@ -111,7 +111,7 @@ func TestRestartNodeAction_StopsThenStarts(t *testing.T) {
 	env := envWithNodes(t, 4, "http://unused")
 
 	act, _ := d.Actions.Action(actionRestartNode)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp1"}}); err != nil {
+	if err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp1"}}); err != nil {
 		t.Fatalf("restartNode: %v", err)
 	}
 	if len(ctrl.stopped) != 1 || ctrl.stopped[0] != 1 {
@@ -126,7 +126,7 @@ func TestStopNodeAction_WithoutNodeControlIsAClearError(t *testing.T) {
 	d := faultDeps(nil) // attach mode: no process control
 	env := envWithNodes(t, 2, "http://unused")
 	act, _ := d.Actions.Action(actionStopNode)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp1"}})
+	err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"on": "bp1"}})
 	if err == nil {
 		t.Fatal("expected an error when no node control is wired")
 	}
@@ -209,7 +209,7 @@ func TestPartitionAction_SeversEveryCrossGroupLink(t *testing.T) {
 	if !ok {
 		t.Fatal("partition not registered")
 	}
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+	err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 		"groups": []any{
 			[]any{"bp1", "bp2"},
 			[]any{"bp3", "bp4"},
@@ -233,7 +233,7 @@ func TestPartitionAction_RequiresTwoGroups(t *testing.T) {
 	d := faultDeps(nil)
 	env := envWithNodes(t, 4, "http://unused")
 	act, _ := d.Actions.Action(actionPartition)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+	err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 		"groups": []any{[]any{"bp1", "bp2"}},
 	}})
 	if err == nil {
@@ -254,7 +254,7 @@ func TestHealPartitionAction_ReconnectsEveryPair(t *testing.T) {
 	if !ok {
 		t.Fatal("healPartition not registered")
 	}
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err != nil {
+	if err := act.Do(context.Background(), &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{}}); err != nil {
 		t.Fatalf("healPartition: %v", err)
 	}
 	rec.mu.Lock()

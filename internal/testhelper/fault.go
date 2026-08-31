@@ -3,7 +3,7 @@ package testhelper
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -21,7 +21,7 @@ const (
 )
 
 // seedFaultBuiltins registers the node-lifecycle and partition actions.
-func seedFaultBuiltins(r testspec.Registry) {
+func seedFaultBuiltins(r dsl.Registry) {
 	r.RegisterAction(actionStopNode, stopNodeAction{})
 	r.RegisterAction(actionStartNode, startNodeAction{})
 	r.RegisterAction(actionRestartNode, restartNodeAction{})
@@ -32,14 +32,14 @@ func seedFaultBuiltins(r testspec.Registry) {
 // stopNodeAction stops one node. Args: on (selector, required).
 type stopNodeAction struct{}
 
-func (stopNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (stopNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionStopNode)
 	if err != nil {
 		return err
 	}
 	stopped, err := ctrl.Stop(ctx, n)
 	if err != nil {
-		return fmt.Errorf("testspec: stopNode node%d: %w", n.Index, err)
+		return fmt.Errorf("dsl: stopNode node%d: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(stopped)
 	return nil
@@ -48,14 +48,14 @@ func (stopNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 // startNodeAction starts one previously stopped node. Args: on (required).
 type startNodeAction struct{}
 
-func (startNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (startNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionStartNode)
 	if err != nil {
 		return err
 	}
 	started, err := ctrl.Start(ctx, n)
 	if err != nil {
-		return fmt.Errorf("testspec: startNode node%d: %w", n.Index, err)
+		return fmt.Errorf("dsl: startNode node%d: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(started)
 	return nil
@@ -65,19 +65,19 @@ func (startNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 // Args: on (required).
 type restartNodeAction struct{}
 
-func (restartNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (restartNodeAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	n, ctrl, err := faultTarget(ac, actionRestartNode)
 	if err != nil {
 		return err
 	}
 	stopped, err := ctrl.Stop(ctx, n)
 	if err != nil {
-		return fmt.Errorf("testspec: restartNode node%d: stop: %w", n.Index, err)
+		return fmt.Errorf("dsl: restartNode node%d: stop: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(stopped)
 	started, err := ctrl.Start(ctx, stopped)
 	if err != nil {
-		return fmt.Errorf("testspec: restartNode node%d: start: %w", n.Index, err)
+		return fmt.Errorf("dsl: restartNode node%d: start: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(started)
 	return nil
@@ -85,21 +85,21 @@ func (restartNodeAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 
 // faultTarget resolves the action's "on" selector and the injected node control,
 // naming whichever is missing.
-func faultTarget(ac *testspec.ActionCtx, action string) (node.Node, testspec.NodeControl, error) {
+func faultTarget(ac *dsl.ActionCtx, action string) (node.Node, dsl.NodeControl, error) {
 	if ac.Deps == nil || ac.Deps.Nodes == nil {
 		return node.Node{}, nil, fmt.Errorf(
-			"testspec: %s needs node control, which this run has none of (attach mode does not own the node processes)", action)
+			"dsl: %s needs node control, which this run has none of (attach mode does not own the node processes)", action)
 	}
 	if ac.Env == nil {
-		return node.Node{}, nil, fmt.Errorf("testspec: %s: no environment", action)
+		return node.Node{}, nil, fmt.Errorf("dsl: %s: no environment", action)
 	}
 	sel, _ := ac.Args["on"].(string)
 	if sel == "" {
-		return node.Node{}, nil, fmt.Errorf("testspec: %s requires an \"on\" selector", action)
+		return node.Node{}, nil, fmt.Errorf("dsl: %s requires an \"on\" selector", action)
 	}
 	n, err := ac.Env.Resolve(sel)
 	if err != nil {
-		return node.Node{}, nil, fmt.Errorf("testspec: %s: %w", action, err)
+		return node.Node{}, nil, fmt.Errorf("dsl: %s: %w", action, err)
 	}
 	return n, ac.Deps.Nodes, nil
 }
@@ -121,7 +121,7 @@ func faultTarget(ac *testspec.ActionCtx, action string) (node.Node, testspec.Nod
 // split holds until healPartition (or a node restart) restores it.
 type partitionAction struct{}
 
-func (partitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (partitionAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	groups, err := partitionGroups(ac)
 	if err != nil {
 		return err
@@ -142,7 +142,7 @@ func (partitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 						return err
 					}
 					if err := c.RemovePeer(ctx, enodes[to.Index]); err != nil {
-						return fmt.Errorf("testspec: partition: node%d drop node%d: %w", from.Index, to.Index, err)
+						return fmt.Errorf("dsl: partition: node%d drop node%d: %w", from.Index, to.Index, err)
 					}
 				}
 			}
@@ -156,9 +156,9 @@ func (partitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 // wants after a fault test.
 type healPartitionAction struct{}
 
-func (healPartitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (healPartitionAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	if ac.Env == nil {
-		return fmt.Errorf("testspec: healPartition: no environment")
+		return fmt.Errorf("dsl: healPartition: no environment")
 	}
 	nodes := ac.Env.Nodes()
 	if raw, ok := ac.Args["groups"]; ok {
@@ -169,7 +169,7 @@ func (healPartitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error
 		nodes = flatten(groups)
 	}
 	if len(nodes) < 2 {
-		return fmt.Errorf("testspec: healPartition needs at least 2 nodes, got %d", len(nodes))
+		return fmt.Errorf("dsl: healPartition needs at least 2 nodes, got %d", len(nodes))
 	}
 	enodes, err := enodesFor(ctx, ac, nodes)
 	if err != nil {
@@ -185,7 +185,7 @@ func (healPartitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error
 				continue
 			}
 			if err := c.AddPeer(ctx, enodes[to.Index]); err != nil {
-				return fmt.Errorf("testspec: healPartition: node%d add node%d: %w", from.Index, to.Index, err)
+				return fmt.Errorf("dsl: healPartition: node%d add node%d: %w", from.Index, to.Index, err)
 			}
 		}
 	}
@@ -193,50 +193,50 @@ func (healPartitionAction) Do(ctx context.Context, ac *testspec.ActionCtx) error
 }
 
 // partitionGroups resolves and validates the action's "groups" argument.
-func partitionGroups(ac *testspec.ActionCtx) ([][]node.Node, error) {
+func partitionGroups(ac *dsl.ActionCtx) ([][]node.Node, error) {
 	raw, ok := ac.Args["groups"]
 	if !ok {
-		return nil, fmt.Errorf("testspec: partition requires \"groups\" (two or more lists of node selectors)")
+		return nil, fmt.Errorf("dsl: partition requires \"groups\" (two or more lists of node selectors)")
 	}
 	groups, err := resolveGroups(ac, raw)
 	if err != nil {
 		return nil, err
 	}
 	if len(groups) < 2 {
-		return nil, fmt.Errorf("testspec: partition needs at least 2 groups, got %d", len(groups))
+		return nil, fmt.Errorf("dsl: partition needs at least 2 groups, got %d", len(groups))
 	}
 	for i, g := range groups {
 		if len(g) == 0 {
-			return nil, fmt.Errorf("testspec: partition: group %d is empty", i)
+			return nil, fmt.Errorf("dsl: partition: group %d is empty", i)
 		}
 	}
 	return groups, nil
 }
 
 // resolveGroups turns the DSL's [[selector...]...] into resolved node groups.
-func resolveGroups(ac *testspec.ActionCtx, raw any) ([][]node.Node, error) {
+func resolveGroups(ac *dsl.ActionCtx, raw any) ([][]node.Node, error) {
 	if ac.Env == nil {
-		return nil, fmt.Errorf("testspec: partition: no environment")
+		return nil, fmt.Errorf("dsl: partition: no environment")
 	}
 	list, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf("testspec: partition: \"groups\" must be a list of node-selector lists")
+		return nil, fmt.Errorf("dsl: partition: \"groups\" must be a list of node-selector lists")
 	}
 	out := make([][]node.Node, 0, len(list))
 	for gi, g := range list {
 		sels, ok := g.([]any)
 		if !ok {
-			return nil, fmt.Errorf("testspec: partition: group %d must be a list of node selectors", gi)
+			return nil, fmt.Errorf("dsl: partition: group %d must be a list of node selectors", gi)
 		}
 		nodes := make([]node.Node, 0, len(sels))
 		for _, s := range sels {
 			sel, ok := s.(string)
 			if !ok {
-				return nil, fmt.Errorf("testspec: partition: group %d has a non-string selector", gi)
+				return nil, fmt.Errorf("dsl: partition: group %d has a non-string selector", gi)
 			}
 			n, err := ac.Env.Resolve(sel)
 			if err != nil {
-				return nil, fmt.Errorf("testspec: partition: %w", err)
+				return nil, fmt.Errorf("dsl: partition: %w", err)
 			}
 			nodes = append(nodes, n)
 		}
@@ -247,7 +247,7 @@ func resolveGroups(ac *testspec.ActionCtx, raw any) ([][]node.Node, error) {
 
 // enodesFor asks each node for its own enode (admin_nodeInfo), keyed by index.
 // Peers are named by enode, and only the node itself knows its own.
-func enodesFor(ctx context.Context, ac *testspec.ActionCtx, nodes []node.Node) (map[int]string, error) {
+func enodesFor(ctx context.Context, ac *dsl.ActionCtx, nodes []node.Node) (map[int]string, error) {
 	out := make(map[int]string, len(nodes))
 	for _, n := range nodes {
 		if _, done := out[n.Index]; done {
@@ -259,7 +259,7 @@ func enodesFor(ctx context.Context, ac *testspec.ActionCtx, nodes []node.Node) (
 		}
 		enode, err := c.Enode(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("testspec: enode of node%d: %w", n.Index, err)
+			return nil, fmt.Errorf("dsl: enode of node%d: %w", n.Index, err)
 		}
 		out[n.Index] = enode
 	}

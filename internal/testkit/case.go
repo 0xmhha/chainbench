@@ -7,7 +7,7 @@
 // by internal/core/pipeline/testrun (docs/CHAINBENCH_GO_REDESIGN.md §9).
 //
 // Legacy: this Go-func case model is being retired in favor of the declarative
-// DSL path (internal/testspec parsed and run by internal/engine, reached via
+// DSL path (internal/dsl parsed and run by internal/engine, reached via
 // `chainbench run`). The result model (Report/Result/Status) is reused by the
 // new path; the Case/registry authoring surface is what goes away once the
 // suites under tests/ are ported. See docs/dev/legacy-retirement-plan.md.

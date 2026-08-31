@@ -1,4 +1,4 @@
-package testspec
+package dsl
 
 import (
 	"crypto/sha256"
@@ -72,7 +72,7 @@ func Parse(raw []byte) (Spec, error) {
 	}
 	var s Spec
 	if err := json.Unmarshal(raw, &s); err != nil {
-		return Spec{}, fmt.Errorf("testspec: parse: %w", err)
+		return Spec{}, fmt.Errorf("dsl: parse: %w", err)
 	}
 	if err := s.validate(); err != nil {
 		return Spec{}, err
@@ -105,10 +105,10 @@ func (s Spec) validate() error {
 		missing = append(missing, "assertions")
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("testspec: missing required field(s): %s", strings.Join(missing, ", "))
+		return fmt.Errorf("dsl: missing required field(s): %s", strings.Join(missing, ", "))
 	}
 	if s.SchemaVersion != supportedSchemaVersion {
-		return fmt.Errorf("testspec: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
+		return fmt.Errorf("dsl: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
 	}
 	return nil
 }

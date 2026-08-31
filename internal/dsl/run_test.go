@@ -1,4 +1,4 @@
-package testspec_test
+package dsl_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // --- fakes ---
@@ -18,7 +18,7 @@ type fakeAction struct {
 	err error
 }
 
-func (a fakeAction) Do(_ context.Context, _ *testspec.ActionCtx) error {
+func (a fakeAction) Do(_ context.Context, _ *dsl.ActionCtx) error {
 	if a.ran != nil {
 		*a.ran = true
 	}
@@ -27,7 +27,7 @@ func (a fakeAction) Do(_ context.Context, _ *testspec.ActionCtx) error {
 
 type fakeAssertion struct{ pass bool }
 
-func (a fakeAssertion) Check(_ context.Context, _ *testspec.AssertCtx) (session.AssertResult, error) {
+func (a fakeAssertion) Check(_ context.Context, _ *dsl.AssertCtx) (session.AssertResult, error) {
 	return session.AssertResult{Pass: a.pass}, nil
 }
 
@@ -68,19 +68,19 @@ func testEnv(t *testing.T) session.Environment {
 }
 
 func TestRun_PassFlow(t *testing.T) {
-	reg := testspec.NewRegistry()
+	reg := dsl.NewRegistry()
 	stepRan, postRan := false, false
 	reg.RegisterAction("tx", fakeAction{ran: &stepRan})
 	reg.RegisterAction("cleanup", fakeAction{ran: &postRan})
 	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
 
-	spec := testspec.Spec{
+	spec := dsl.Spec{
 		Steps:       []map[string]any{{"tx": map[string]any{"on": "bp1"}}},
 		Assertions:  []map[string]any{{"on": "bp1", "assert": "Len", "expected": 1}},
 		PostActions: []map[string]any{{"cleanup": true}},
 	}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, err := it.Run(context.Background(), spec, testEnv(t), rec)
 	if err != nil {
@@ -98,17 +98,17 @@ func TestRun_PassFlow(t *testing.T) {
 }
 
 func TestRun_PreFailBlocked(t *testing.T) {
-	reg := testspec.NewRegistry()
+	reg := dsl.NewRegistry()
 	stepRan := false
 	reg.RegisterAction("ensureChain", fakeAction{err: errors.New("no chain")})
 	reg.RegisterAction("tx", fakeAction{ran: &stepRan})
 
-	spec := testspec.Spec{
+	spec := dsl.Spec{
 		PreActions: []map[string]any{{"ensureChain": true}},
 		Steps:      []map[string]any{{"tx": true}},
 	}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusBlocked {
@@ -120,11 +120,11 @@ func TestRun_PreFailBlocked(t *testing.T) {
 }
 
 func TestRun_AssertFail(t *testing.T) {
-	reg := testspec.NewRegistry()
+	reg := dsl.NewRegistry()
 	reg.RegisterAssertion("Len", fakeAssertion{pass: false})
-	spec := testspec.Spec{Assertions: []map[string]any{{"assert": "Len", "expected": 7}}}
+	spec := dsl.Spec{Assertions: []map[string]any{{"assert": "Len", "expected": 7}}}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {
@@ -133,10 +133,10 @@ func TestRun_AssertFail(t *testing.T) {
 }
 
 func TestRun_UnknownActionFails(t *testing.T) {
-	reg := testspec.NewRegistry()
-	spec := testspec.Spec{Steps: []map[string]any{{"nope": true}}}
+	reg := dsl.NewRegistry()
+	spec := dsl.Spec{Steps: []map[string]any{{"nope": true}}}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {
@@ -147,19 +147,19 @@ func TestRun_UnknownActionFails(t *testing.T) {
 // provenanceAction surfaces a tx hash and receipt for step-provenance recording.
 type provenanceAction struct{}
 
-func (provenanceAction) Do(_ context.Context, ac *testspec.ActionCtx) error {
+func (provenanceAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
 	ac.Hash = "0xdeadbeef"
 	ac.Receipt = map[string]any{"status": "0x1"}
 	return nil
 }
 
 func TestRun_StepRecordsProvenance(t *testing.T) {
-	reg := testspec.NewRegistry()
+	reg := dsl.NewRegistry()
 	reg.RegisterAction("tx", provenanceAction{})
 
-	spec := testspec.Spec{Steps: []map[string]any{{"tx": map[string]any{"on": "bp1"}}}}
+	spec := dsl.Spec{Steps: []map[string]any{{"tx": map[string]any{"on": "bp1"}}}}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -174,10 +174,10 @@ func TestRun_StepRecordsProvenance(t *testing.T) {
 }
 
 func TestRun_UnknownStepActionFails(t *testing.T) {
-	reg := testspec.NewRegistry()
-	spec := testspec.Spec{Steps: []map[string]any{{"nope": true}}}
+	reg := dsl.NewRegistry()
+	spec := dsl.Spec{Steps: []map[string]any{{"nope": true}}}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {
@@ -192,7 +192,7 @@ func TestRun_UnknownStepActionFails(t *testing.T) {
 // expect failure records and continues (later statements still run), a do
 // failure stops the sequence, and onFail hooks run on a failed case.
 func TestRun_InterleavedSequence(t *testing.T) {
-	reg := testspec.NewRegistry()
+	reg := dsl.NewRegistry()
 	laterRan, onFailRan := false, false
 	reg.RegisterAction("tx", fakeAction{})
 	reg.RegisterAction("later", fakeAction{ran: &laterRan})
@@ -200,8 +200,8 @@ func TestRun_InterleavedSequence(t *testing.T) {
 	reg.RegisterAssertion("failing", fakeAssertion{pass: false})
 	reg.RegisterAssertion("passing", fakeAssertion{pass: true})
 
-	spec := testspec.Spec{
-		Sequence: []testspec.Statement{
+	spec := dsl.Spec{
+		Sequence: []dsl.Statement{
 			{Do: "tx", Args: map[string]any{}},
 			{Expect: "failing", Args: map[string]any{}}, // records, continues
 			{Do: "later", Args: map[string]any{}},       // still runs
@@ -210,7 +210,7 @@ func TestRun_InterleavedSequence(t *testing.T) {
 		OnFailActions: []map[string]any{{"diag": true}},
 	}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, err := it.Run(context.Background(), spec, testEnv(t), rec)
 	if err != nil {
@@ -233,15 +233,15 @@ func TestRun_InterleavedSequence(t *testing.T) {
 // TestRun_DoFailureStopsSequence pins fail-fast for do statements: later
 // statements are skipped and post actions do not run (the v1 contract).
 func TestRun_DoFailureStopsSequence(t *testing.T) {
-	reg := testspec.NewRegistry()
+	reg := dsl.NewRegistry()
 	laterRan, postRan, onFailRan := false, false, false
 	reg.RegisterAction("boom", fakeAction{err: errors.New("broken")})
 	reg.RegisterAction("later", fakeAction{ran: &laterRan})
 	reg.RegisterAction("cleanup", fakeAction{ran: &postRan})
 	reg.RegisterAction("diag", fakeAction{ran: &onFailRan})
 
-	spec := testspec.Spec{
-		Sequence: []testspec.Statement{
+	spec := dsl.Spec{
+		Sequence: []dsl.Statement{
 			{Do: "boom", Args: map[string]any{}},
 			{Do: "later", Args: map[string]any{}},
 		},
@@ -249,7 +249,7 @@ func TestRun_DoFailureStopsSequence(t *testing.T) {
 		OnFailActions: []map[string]any{{"diag": true}},
 	}
 	rec := &fakeRecord{}
-	it := testspec.NewInterpreter(testspec.Deps{Actions: reg})
+	it := dsl.NewInterpreter(dsl.Deps{Actions: reg})
 
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {

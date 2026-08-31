@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"math/big"
 	"strconv"
 	"strings"
@@ -61,22 +61,22 @@ const (
 
 // Register puts the built-in vocabulary on r: the actions a spec can do, the
 // assertions it can check, and the readers "read" and "waitFor" draw from.
-// The grammar and interpreter (testspec) know none of these — a run wires
+// The grammar and interpreter (dsl) know none of these — a run wires
 // them by calling this, and a test that wants a narrower vocabulary registers
 // its own.
 // Registry returns a fresh registry with the built-ins registered — the
 // default vocabulary a run or `validate` resolves against.
-func Registry() testspec.Registry {
-	r := testspec.NewRegistry()
+func Registry() dsl.Registry {
+	r := dsl.NewRegistry()
 	Register(r)
 	return r
 }
 
-func Register(r testspec.Registry) {
+func Register(r dsl.Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})
 	r.RegisterAction(actionWaitFor, waitForAction{})
-	r.RegisterAction(testspec.ActionRead, readAction{})
+	r.RegisterAction(dsl.ActionRead, readAction{})
 	r.RegisterAction(actionNewAccount, newAccountAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
@@ -86,7 +86,7 @@ func Register(r testspec.Registry) {
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
-		r.RegisterReader(a.name, testspec.Reader(a.read))
+		r.RegisterReader(a.name, dsl.Reader(a.read))
 	}
 }
 
@@ -94,10 +94,10 @@ func Register(r testspec.Registry) {
 // number) or the timeout elapses. Args: target, on, timeout, pollInterval.
 type waitBlockAction struct{}
 
-func (waitBlockAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (waitBlockAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	target, ok := uintArg(ac.Args["target"])
 	if !ok {
-		return fmt.Errorf("testspec: waitBlock requires a numeric \"target\"")
+		return fmt.Errorf("dsl: waitBlock requires a numeric \"target\"")
 	}
 	c, err := clientFor(ac.Deps, selectorTarget(ac.Env, ac.Args))
 	if err != nil {
@@ -113,7 +113,7 @@ func (waitBlockAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 		}
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("testspec: waitBlock: height %d not reached: %w", target, ctx.Err())
+			return fmt.Errorf("dsl: waitBlock: height %d not reached: %w", target, ctx.Err())
 		case <-t.C:
 		}
 	}
@@ -129,7 +129,7 @@ type sendTxAction struct{}
 // the wait: expect:"reject" requires the submit itself to fail (see
 // checkSubmitRejected), and expect:"revert"/expectRevert requires a mined
 // status 0x0 (see checkTxOutcome).
-func (sendTxAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
+func (sendTxAction) Do(ctx context.Context, ac *dsl.ActionCtx) error {
 	// A "key" arg switches to local signing: the tx is signed offline with that
 	// private key and submitted via eth_sendRawTransaction, rather than
 	// eth_sendTransaction against a node's keystore. This lets a spec send from a
@@ -144,7 +144,7 @@ func (sendTxAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 	}
 	from, _ := ac.Args["from"].(string)
 	if from == "" {
-		return fmt.Errorf("testspec: sendTx requires \"from\"")
+		return fmt.Errorf("dsl: sendTx requires \"from\"")
 	}
 	args := rpc.SendTxArgs{From: from}
 	if to, ok := ac.Args["to"].(string); ok {
@@ -175,7 +175,7 @@ func (sendTxAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 		return checkSubmitRejected(hash, err, ac)
 	}
 	if err != nil {
-		return fmt.Errorf("testspec: sendTx: %w", err)
+		return fmt.Errorf("dsl: sendTx: %w", err)
 	}
 	ac.Hash = hash
 	if wait, ok := ac.Args["wait"].(bool); ok && !wait {
@@ -199,22 +199,22 @@ func (sendTxAction) Do(ctx context.Context, ac *testspec.ActionCtx) error {
 // Execute when a "data" payload is present, else SendCoin for a value-only
 // transfer. The target node RPC comes from the usual "on" selector so the wallet
 // dials the same endpoint the node-signed path would.
-func sendTxLocal(ctx context.Context, ac *testspec.ActionCtx, keyHex string) error {
+func sendTxLocal(ctx context.Context, ac *dsl.ActionCtx, keyHex string) error {
 	if ac.Deps == nil || ac.Deps.Accounts == nil {
-		return fmt.Errorf("testspec: sendTx key: no account provider")
+		return fmt.Errorf("dsl: sendTx key: no account provider")
 	}
 	priv, err := hex.DecodeString(strings.TrimPrefix(keyHex, "0x"))
 	if err != nil {
-		return fmt.Errorf("testspec: sendTx key: decode: %w", err)
+		return fmt.Errorf("dsl: sendTx key: decode: %w", err)
 	}
 	rpcURL := selectorTarget(ac.Env, ac.Args)
 	w, err := ac.Deps.Accounts.OpenWallet(ctx, priv, rpcURL)
 	if err != nil {
-		return fmt.Errorf("testspec: sendTx: open wallet: %w", err)
+		return fmt.Errorf("dsl: sendTx: open wallet: %w", err)
 	}
 	to, _ := ac.Args["to"].(string)
 	if to == "" {
-		return fmt.Errorf("testspec: sendTx key requires \"to\"")
+		return fmt.Errorf("dsl: sendTx key requires \"to\"")
 	}
 	value, err := parseValueWei(ac.Args["value"])
 	if err != nil {
@@ -232,7 +232,7 @@ func sendTxLocal(ctx context.Context, ac *testspec.ActionCtx, keyHex string) err
 	case feePayerKey != "":
 		fp, ferr := hex.DecodeString(strings.TrimPrefix(feePayerKey, "0x"))
 		if ferr != nil {
-			return fmt.Errorf("testspec: sendTx feePayerKey: decode: %w", ferr)
+			return fmt.Errorf("dsl: sendTx feePayerKey: decode: %w", ferr)
 		}
 		if value == nil {
 			value = new(big.Int)
@@ -241,7 +241,7 @@ func sendTxLocal(ctx context.Context, ac *testspec.ActionCtx, keyHex string) err
 	case data != "" && data != "0x":
 		b, derr := hex.DecodeString(strings.TrimPrefix(data, "0x"))
 		if derr != nil {
-			return fmt.Errorf("testspec: sendTx: data: %w", derr)
+			return fmt.Errorf("dsl: sendTx: data: %w", derr)
 		}
 		hash, err = w.Execute(ctx, to, b, value)
 	default:
@@ -254,7 +254,7 @@ func sendTxLocal(ctx context.Context, ac *testspec.ActionCtx, keyHex string) err
 		return checkSubmitRejected(hash, err, ac)
 	}
 	if err != nil {
-		return fmt.Errorf("testspec: sendTx: %w", err)
+		return fmt.Errorf("dsl: sendTx: %w", err)
 	}
 	ac.Hash = hash
 	if wait, ok := ac.Args["wait"].(bool); ok && !wait {
@@ -284,7 +284,7 @@ func parseValueWei(v any) (*big.Int, error) {
 	}
 	bi, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
 	if !ok {
-		return nil, fmt.Errorf("testspec: sendTx: bad value %v", v)
+		return nil, fmt.Errorf("dsl: sendTx: bad value %v", v)
 	}
 	return bi, nil
 }
@@ -298,14 +298,14 @@ type newAccountAction struct{}
 // Do generates a key pair and records the address as the step value plus the
 // private key under the "saveKey" binding. Args: save (address binding, the
 // usual step "save"), saveKey (private-key binding name, required).
-func (newAccountAction) Do(_ context.Context, ac *testspec.ActionCtx) error {
+func (newAccountAction) Do(_ context.Context, ac *dsl.ActionCtx) error {
 	keyName, _ := ac.Args["saveKey"].(string)
 	if keyName == "" {
-		return fmt.Errorf("testspec: newAccount requires \"saveKey\"")
+		return fmt.Errorf("dsl: newAccount requires \"saveKey\"")
 	}
 	priv, addr, err := accounts.GenerateKey()
 	if err != nil {
-		return fmt.Errorf("testspec: newAccount: %w", err)
+		return fmt.Errorf("dsl: newAccount: %w", err)
 	}
 	ac.Value = addr
 	if ac.Extra == nil {
@@ -324,12 +324,12 @@ func checkTxOutcome(hash string, receipt map[string]any, args map[string]any) er
 	reverted := statusReverted(receipt)
 	if wantRevert(args) {
 		if !reverted {
-			return fmt.Errorf("testspec: sendTx %s expected revert but succeeded", hash)
+			return fmt.Errorf("dsl: sendTx %s expected revert but succeeded", hash)
 		}
 		return nil
 	}
 	if reverted {
-		return fmt.Errorf("testspec: sendTx %s reverted (status 0x0)", hash)
+		return fmt.Errorf("dsl: sendTx %s reverted (status 0x0)", hash)
 	}
 	return nil
 }
@@ -365,13 +365,13 @@ func wantReject(args map[string]any) bool {
 // accepted submit fails the step. An optional "reason" (case-insensitive
 // substring) tightens the check to a specific rejection message, so a spec can
 // require e.g. an "insufficient funds" rejection rather than any error.
-func checkSubmitRejected(hash string, submitErr error, ac *testspec.ActionCtx) error {
+func checkSubmitRejected(hash string, submitErr error, ac *dsl.ActionCtx) error {
 	if submitErr == nil {
-		return fmt.Errorf("testspec: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
+		return fmt.Errorf("dsl: sendTx expected submit rejection but the node accepted it (hash %s)", hash)
 	}
 	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
 		if !strings.Contains(strings.ToLower(submitErr.Error()), strings.ToLower(reason)) {
-			return fmt.Errorf("testspec: sendTx was rejected but not for %q: %v", reason, submitErr)
+			return fmt.Errorf("dsl: sendTx was rejected but not for %q: %v", reason, submitErr)
 		}
 	}
 	// Bind the rejection message so a "save" can surface it to a later assertion.
@@ -398,25 +398,25 @@ func waitReceipt(ctx context.Context, c *rpc.Client, hash string, timeout, inter
 		if raw, err := c.TxReceipt(ctx, hash); err == nil && raw != nil {
 			var m map[string]any
 			if uerr := json.Unmarshal(raw, &m); uerr != nil {
-				return nil, fmt.Errorf("testspec: sendTx: parse receipt %s: %w", hash, uerr)
+				return nil, fmt.Errorf("dsl: sendTx: parse receipt %s: %w", hash, uerr)
 			}
 			return m, nil
 		}
 		select {
 		case <-ctx.Done():
-			return nil, fmt.Errorf("testspec: sendTx: receipt %s: %w", hash, ctx.Err())
+			return nil, fmt.Errorf("dsl: sendTx: receipt %s: %w", hash, ctx.Err())
 		case <-t.C:
 		}
 	}
 }
 
 // clientFor returns an RPC client for url, guarding a missing injected factory.
-func clientFor(deps *testspec.Deps, url string) (*rpc.Client, error) {
+func clientFor(deps *dsl.Deps, url string) (*rpc.Client, error) {
 	if deps == nil || deps.RPC == nil {
-		return nil, fmt.Errorf("testspec: no RPC client injected")
+		return nil, fmt.Errorf("dsl: no RPC client injected")
 	}
 	if url == "" {
-		return nil, fmt.Errorf("testspec: no target node RPC URL")
+		return nil, fmt.Errorf("dsl: no target node RPC URL")
 	}
 	return deps.RPC(url), nil
 }
@@ -429,7 +429,7 @@ type assertTarget struct {
 
 // assertTargets are the nodes an assertion checks: every resolved "on"/"onEach"
 // node, else the environment's primary node.
-func assertTargets(ac *testspec.AssertCtx) []assertTarget {
+func assertTargets(ac *dsl.AssertCtx) []assertTarget {
 	if len(ac.On) > 0 {
 		out := make([]assertTarget, 0, len(ac.On))
 		for _, n := range ac.On {

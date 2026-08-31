@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
 // chainstateInterval is how often live collection samples nodes and publishes a
@@ -104,7 +104,7 @@ func withCollection(build BuildEnvFunc, bus *collector.Bus, dial func(string) *r
 		return build
 	}
 	probe := rpcProbe(dial)
-	return func(ctx context.Context, env session.Environment, spec testspec.Spec) (node.NodeSet, TeardownFunc, error) {
+	return func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error) {
 		ns, td, err := build(ctx, env, spec)
 		if err != nil {
 			return ns, td, err

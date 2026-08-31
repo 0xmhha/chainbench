@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
@@ -57,7 +57,7 @@ func runEnv(t *testing.T, url string) (session.Environment, session.TestRecord) 
 	return env, sess.Test(1, "T1")
 }
 
-func specWithAssertions(t *testing.T, assertions []map[string]any) testspec.Spec {
+func specWithAssertions(t *testing.T, assertions []map[string]any) dsl.Spec {
 	t.Helper()
 	raw, _ := json.Marshal(map[string]any{
 		"schemaVersion": "1",
@@ -65,15 +65,15 @@ func specWithAssertions(t *testing.T, assertions []map[string]any) testspec.Spec
 		"chain":         map[string]any{"name": "wbft", "binary": "go-wbft"},
 		"assertions":    assertions,
 	})
-	spec, err := testspec.Parse(raw)
+	spec, err := dsl.Parse(raw)
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
 	return spec
 }
 
-func runSpecDeps() testspec.Deps {
-	return testspec.Deps{
+func runSpecDeps() dsl.Deps {
+	return dsl.Deps{
 		RPC:     func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions: testhelper.Registry(),
 	}

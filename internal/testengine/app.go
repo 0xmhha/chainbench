@@ -24,8 +24,8 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
-	"github.com/0xmhha/chainbench/internal/testspec"
 )
 
 // busEmit returns an event sink publishing to bus, or nil when bus is nil so the
@@ -170,7 +170,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 		Reqs:           validatorReqs(validators),
 		ProvisionExtra: provisionExtra,
 	})
-	run := NewRunSpec(testspec.Deps{
+	run := NewRunSpec(dsl.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions:  testhelper.Registry(),
 		Nodes:    controller,
@@ -196,7 +196,7 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 			}
 			return sess, nil
 		},
-		Fingerprint: func(s testspec.Spec) session.Fingerprint {
+		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return s.Fingerprint(nodeconfig.Values{})
 		},
 		BuildEnv:   withCollection(build, cfg.Bus, nil),
@@ -210,8 +210,8 @@ func NewLocalEngine(cfg LocalConfig) (Engine, error) {
 // validatorReqs returns a Reqs function producing n validator placement
 // requests. The per-node binary is left empty so AssemblePlan falls back to the
 // manifest binary; the launcher overrides it with the resolved path.
-func validatorReqs(n int) func(testspec.Spec) []node.LaunchReq {
-	return func(testspec.Spec) []node.LaunchReq {
+func validatorReqs(n int) func(dsl.Spec) []node.LaunchReq {
+	return func(dsl.Spec) []node.LaunchReq {
 		reqs := make([]node.LaunchReq, n)
 		for i := range reqs {
 			reqs[i] = node.LaunchReq{Role: node.RoleValidator}
@@ -223,8 +223,8 @@ func validatorReqs(n int) func(testspec.Spec) []node.LaunchReq {
 // applicableTo reports whether a spec applies to chain: an empty or absent
 // applicableChains applies to every chain; otherwise chain must appear in the
 // comma/space-separated list.
-func applicableTo(chain string) func(testspec.Spec) bool {
-	return func(s testspec.Spec) bool {
+func applicableTo(chain string) func(dsl.Spec) bool {
+	return func(s dsl.Spec) bool {
 		list := strings.FieldsFunc(s.ApplicableChains, func(r rune) bool { return r == ',' || r == ' ' })
 		if len(list) == 0 {
 			return true

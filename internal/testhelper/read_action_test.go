@@ -2,7 +2,7 @@ package testhelper
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/testspec"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -15,11 +15,11 @@ func TestReadAction_SavesRPCValue(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 
-	act, ok := d.Actions.Action(testspec.ActionRead)
+	act, ok := d.Actions.Action(dsl.ActionRead)
 	if !ok {
 		t.Fatal("read action not registered")
 	}
-	ac := &testspec.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
+	ac := &dsl.ActionCtx{Env: env, Deps: &d, Args: map[string]any{
 		"source": "call",
 		"to":     "0x1000000000000000000000000000000000000000",
 		"data":   "0x18160ddd",
@@ -36,8 +36,8 @@ func TestReadAction_SavesRPCValue(t *testing.T) {
 
 func TestReadAction_RejectsUnknownSource(t *testing.T) {
 	d := deps()
-	act, _ := d.Actions.Action(testspec.ActionRead)
-	err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
+	act, _ := d.Actions.Action(dsl.ActionRead)
+	err := act.Do(context.Background(), &dsl.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
 		Args: map[string]any{"source": "nosuchreader"}})
 	if err == nil {
 		t.Fatal("expected an error for an unknown source")
@@ -46,8 +46,8 @@ func TestReadAction_RejectsUnknownSource(t *testing.T) {
 
 func TestReadAction_RequiresSource(t *testing.T) {
 	d := deps()
-	act, _ := d.Actions.Action(testspec.ActionRead)
-	if err := act.Do(context.Background(), &testspec.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
+	act, _ := d.Actions.Action(dsl.ActionRead)
+	if err := act.Do(context.Background(), &dsl.ActionCtx{Env: envWithNode(t, "http://unused"), Deps: &d,
 		Args: map[string]any{}}); err == nil {
 		t.Fatal("expected an error when source is missing")
 	}
@@ -62,15 +62,15 @@ func TestRun_CrossCallComparison(t *testing.T) {
 	d := deps()
 	env := envWithNode(t, srv.URL)
 
-	spec := testspec.Spec{
+	spec := dsl.Spec{
 		Steps: []map[string]any{
-			{testspec.ActionRead: map[string]any{"source": "call", "to": "0xaaa", "data": "0x18160ddd", "save": "supply"}},
+			{dsl.ActionRead: map[string]any{"source": "call", "to": "0xaaa", "data": "0x18160ddd", "save": "supply"}},
 		},
 		Assertions: []map[string]any{
 			{"assert": assertCall, "to": "0xaaa", "data": "0x70a08231", "expected": "$supply"},
 		},
 	}
-	st, err := testspec.NewInterpreter(d).Run(context.Background(), spec, env, &recordStub{})
+	st, err := dsl.NewInterpreter(d).Run(context.Background(), spec, env, &recordStub{})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
