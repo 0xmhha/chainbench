@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/hardfork"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -32,7 +32,7 @@ type HardforkPlanIn struct {
 
 // HardforkPlanOut is the resolved swap description.
 type HardforkPlanOut struct {
-	Plan hardfork.Plan
+	Plan genesis.Hardfork
 	// Nodes is the running network the plan was built against.
 	Nodes node.NodeSet
 	// To is the resolved target chain, so a surface can fall back to its
@@ -65,7 +65,7 @@ func HardforkPlan(_ context.Context, d Deps, in HardforkPlanIn) (HardforkPlanOut
 		return HardforkPlanOut{}, fmt.Errorf(
 			"chainsetup: same-chain hardfork (%s -> %s) needs an explicit post-fork binary", ns.Chain, in.ToChain)
 	}
-	plan, err := hardfork.BuildPlan(ns, from, to, in.Block, ws.State().Target.DataRoot)
+	plan, err := genesis.PlanHardfork(ns, from, to, in.Block, ws.State().Target.DataRoot)
 	if err != nil {
 		return HardforkPlanOut{}, err
 	}
@@ -113,7 +113,7 @@ func HardforkExecute(ctx context.Context, d Deps, in HardforkExecuteIn) (Hardfor
 
 // Hardfork swaps every node onto binary at the plan's fork, continuing the
 // same chain data, and records the new pids, binary and chain.
-func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.Plan, binary string) (node.NodeSet, error) {
+func (w *Workspace) Hardfork(ctx context.Context, plan genesis.Hardfork, binary string) (node.NodeSet, error) {
 	if len(w.state.Nodes) == 0 {
 		return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: no node table — compose the network first")
 	}

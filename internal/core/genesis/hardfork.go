@@ -8,7 +8,7 @@
 // roles (producers mine up to the fork; separately-launched validators sync the
 // pre-fork chain and take over after it). That verified model lives in
 // pkg/consensus/upgrade (BuildPlan/Launch); use it for engine-changing handoffs.
-package hardfork
+package genesis
 
 import (
 	"context"
@@ -36,7 +36,7 @@ type NodeSwap struct {
 }
 
 // Plan is a full hardfork upgrade description.
-type Plan struct {
+type Hardfork struct {
 	FromChain  string
 	ToChain    string
 	FromBinary string
@@ -48,12 +48,12 @@ type Plan struct {
 // BuildPlan builds a hardfork upgrade from a running from-chain NodeSet to a
 // target chain, activating at block. dataRoot locates each node's datadir
 // (dataRoot/node<index>), which is preserved across the swap.
-func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, dataRoot string) (Plan, error) {
+func PlanHardfork(ns node.NodeSet, from, to registry.ChainPlugin, block int64, dataRoot string) (Hardfork, error) {
 	if len(ns.Nodes) == 0 {
-		return Plan{}, fmt.Errorf("hardfork: empty node set")
+		return Hardfork{}, fmt.Errorf("genesis: hardfork: empty node set")
 	}
 	if block < 0 {
-		return Plan{}, fmt.Errorf("hardfork: negative block %d", block)
+		return Hardfork{}, fmt.Errorf("genesis: hardfork: negative block %d", block)
 	}
 	fromBin := from.Manifest().Binary
 	toBin := to.Manifest().Binary
@@ -76,7 +76,7 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 			ToBinary:   toBin,
 		})
 	}
-	return Plan{
+	return Hardfork{
 		FromChain:  from.Manifest().ID,
 		ToChain:    to.Manifest().ID,
 		FromBinary: fromBin,
@@ -98,7 +98,7 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 // peering. A homogeneous fork keeps that identity; regenerating generic start
 // flags would drop it and the relaunched node would rejoin WBFT consensus as an
 // unauthorized address, halting block production.
-func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeSpec, binary string) (node.NodeSet, error) {
+func (p Hardfork) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeSpec, binary string) (node.NodeSet, error) {
 	byIndex := make(map[int]driver.NodeSpec, len(specs))
 	for _, s := range specs {
 		byIndex[s.Index] = s
@@ -111,12 +111,12 @@ func (p Plan) Execute(ctx context.Context, d driver.Driver, specs []driver.NodeS
 		}
 		orig, ok := byIndex[s.Index]
 		if !ok {
-			return ns, fmt.Errorf("hardfork: no saved spec for node%d; run setup so nodespecs.json exists", s.Index)
+			return ns, fmt.Errorf("genesis: hardfork: no saved spec for node%d; run setup so nodespecs.json exists", s.Index)
 		}
 		orig.Binary = binary // swap the binary; keep identity/config/peering args
 		h, err := d.Launch(ctx, orig)
 		if err != nil {
-			return ns, fmt.Errorf("hardfork: relaunch node%d on %s: %w", s.Index, binary, err)
+			return ns, fmt.Errorf("genesis: hardfork: relaunch node%d on %s: %w", s.Index, binary, err)
 		}
 		// The saved spec is the node: its host, ports and role come from it
 		// rather than being re-typed here, where a loopback literal used to

@@ -1,4 +1,4 @@
-package hardfork_test
+package genesis_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 	"github.com/0xmhha/chainbench/internal/core/driver"
-	"github.com/0xmhha/chainbench/internal/core/hardfork"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -30,7 +30,7 @@ func TestBuildPlan_WemixToWbft(t *testing.T) {
 	to, _ := registry.Get("wbft")
 	ns := nodeSet("wemix", 3)
 
-	plan, err := hardfork.BuildPlan(ns, from, to, 100, "/data")
+	plan, err := genesis.PlanHardfork(ns, from, to, 100, "/data")
 	if err != nil {
 		t.Fatalf("BuildPlan: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestExecute_StopsAndRelaunches(t *testing.T) {
 	ns := node.NodeSet{Chain: "wemix", Nodes: []node.Node{
 		{Index: 1, Role: node.RoleValidator, Ports: node.Endpoints{HTTP: 8501, P2P: 30301}, PID: oldPID},
 	}}
-	plan, err := hardfork.BuildPlan(ns, from, to, 100, dir)
+	plan, err := genesis.PlanHardfork(ns, from, to, 100, dir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,10 +109,10 @@ func TestBuildPlan_Errors(t *testing.T) {
 	sn, _ := registry.Get("stablenet")
 	wb, _ := registry.Get("wbft")
 
-	if _, err := hardfork.BuildPlan(node.NodeSet{Chain: "stablenet"}, sn, wb, 0, "/d"); err == nil {
+	if _, err := genesis.PlanHardfork(node.NodeSet{Chain: "stablenet"}, sn, wb, 0, "/d"); err == nil {
 		t.Error("expected error for empty node set")
 	}
-	if _, err := hardfork.BuildPlan(nodeSet("stablenet", 1), sn, wb, -1, "/d"); err == nil {
+	if _, err := genesis.PlanHardfork(nodeSet("stablenet", 1), sn, wb, -1, "/d"); err == nil {
 		t.Error("expected error for negative block")
 	}
 }
@@ -123,7 +123,7 @@ func TestBuildPlan_Errors(t *testing.T) {
 // the CLI supplies via --to-binary.
 func TestBuildPlan_SameChain(t *testing.T) {
 	sn, _ := registry.Get("stablenet")
-	plan, err := hardfork.BuildPlan(nodeSet("stablenet", 4), sn, sn, 200, "/data")
+	plan, err := genesis.PlanHardfork(nodeSet("stablenet", 4), sn, sn, 200, "/data")
 	if err != nil {
 		t.Fatalf("same-chain BuildPlan: %v", err)
 	}
