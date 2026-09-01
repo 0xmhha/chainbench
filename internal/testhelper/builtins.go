@@ -26,6 +26,7 @@ const (
 	actionWaitFor         = "waitFor"
 	actionNewAccount      = "newAccount"
 	actionSendRawTampered = "sendRawTampered"
+	actionSendSetCode     = "sendSetCode"
 
 	assertChainID       = "chainId"
 	assertBlockNumber   = "blockNumber"
@@ -83,6 +84,7 @@ func Register(r interp.Registry) {
 	r.RegisterAction(interp.ActionRead, readAction{})
 	r.RegisterAction(actionNewAccount, newAccountAction{})
 	r.RegisterAction(actionSendRawTampered, sendRawTamperedAction{})
+	r.RegisterAction(actionSendSetCode, sendSetCodeAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)

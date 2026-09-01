@@ -457,3 +457,36 @@ func TestReadDerive_Word(t *testing.T) {
 		}
 	}
 }
+
+func TestReadDerive_Quorum(t *testing.T) {
+	// ceil(2n/3): the BFT quorum for n validators.
+	cases := []struct {
+		n    string
+		want string
+	}{
+		{"4", "3"}, // ceil(8/3)=3
+		{"7", "5"}, // ceil(14/3)=5
+		{"1", "1"}, // ceil(2/3)=1
+		{"3", "2"}, // ceil(6/3)=2
+		{"10", "7"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, map[string]any{"op": "quorum", "of": []any{tc.n}})
+		if err != nil {
+			t.Fatalf("quorum(%s): %v", tc.n, err)
+		}
+		if got != tc.want {
+			t.Errorf("quorum(%s) = %v, want %v", tc.n, got, tc.want)
+		}
+	}
+	for name, bad := range map[string]map[string]any{
+		"no of":    {"op": "quorum"},
+		"two of":   {"op": "quorum", "of": []any{"4", "5"}},
+		"zero":     {"op": "quorum", "of": []any{"0"}},
+		"negative": {"op": "quorum", "of": []any{"-1"}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}

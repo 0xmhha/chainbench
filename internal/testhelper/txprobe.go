@@ -147,6 +147,61 @@ func (sendRawTamperedAction) Do(ctx context.Context, ac *interp.ActionCtx) error
 	return nil
 }
 
+// sendSetCodeAction sends an EIP-7702 (type 0x04) set-code transaction: the
+// sponsor (key) pays gas to delegate a fresh authority's account code to a
+// fixed address. Args: key (sponsor, hex), authorityKey (the delegating
+// account, hex), delegate (the address the authority's code points at), on. The
+// tx hash is bound under "save"; a spec then asserts the tx type is 0x4 and the
+// authority's code became the 0xef0100||delegate indicator.
+type sendSetCodeAction struct{}
+
+func (sendSetCodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("dsl: sendSetCode: no account provider")
+	}
+	if !ac.Deps.Accounts.SupportsTxType(0x04) {
+		return fmt.Errorf("dsl: sendSetCode: chain does not support set-code (0x04)")
+	}
+	sponsorKey, err := hexKeyArg(ac.Args["key"], "key")
+	if err != nil {
+		return err
+	}
+	authorityKey, err := hexKeyArg(ac.Args["authorityKey"], "authorityKey")
+	if err != nil {
+		return err
+	}
+	delegate, _ := ac.Args["delegate"].(string)
+	if delegate == "" {
+		return fmt.Errorf("dsl: sendSetCode requires \"delegate\"")
+	}
+	rpcURL := selectorTarget(ac.Env, ac.Args)
+	w, err := ac.Deps.Accounts.OpenWallet(ctx, sponsorKey, rpcURL)
+	if err != nil {
+		return fmt.Errorf("dsl: sendSetCode: open sponsor wallet: %w", err)
+	}
+	hash, err := w.SendSetCode(ctx, authorityKey, delegate)
+	if err != nil {
+		return fmt.Errorf("dsl: sendSetCode: %w", err)
+	}
+	ac.Value = hash
+	ac.Hash = hash
+	return nil
+}
+
+// hexKeyArg decodes a spec key argument (hex, 0x optional) into raw bytes, for
+// the set-code action's sponsor and authority keys.
+func hexKeyArg(v any, name string) ([]byte, error) {
+	s, _ := v.(string)
+	if s == "" {
+		return nil, fmt.Errorf("dsl: sendSetCode requires %q", name)
+	}
+	b, err := hex.DecodeString(strings.TrimPrefix(s, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("dsl: sendSetCode: %s: %w", name, err)
+	}
+	return b, nil
+}
+
 // hexKey decodes a spec key argument (hex, 0x optional) into raw bytes.
 func hexKey(v any, name string) ([]byte, error) {
 	s, _ := v.(string)

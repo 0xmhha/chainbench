@@ -270,6 +270,9 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 	if op == "word" {
 		return deriveWord(spec)
 	}
+	if op == "quorum" {
+		return deriveQuorum(spec)
+	}
 	raw, ok := spec["of"].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf("dsl: derive requires \"of\" (a list of values)")
@@ -294,6 +297,29 @@ func readDerive(_ context.Context, _ *rpc.Client, spec map[string]any) (any, err
 		}
 	}
 	return acc.String(), nil
+}
+
+// deriveQuorum computes the BFT quorum ceil(2n/3) for a validator count n — the
+// threshold a consensus seal set must reach. It takes the count as a parameter
+// ("of" with one value), not from the node table: a spec declares the size of
+// the network it composed and derives the quorum from that number, so the
+// harness never reads a spec's own topology. Spec: op ("quorum"), of (one value:
+// the validator count). The result is a decimal string.
+func deriveQuorum(spec map[string]any) (any, error) {
+	raw, ok := spec["of"].([]any)
+	if !ok || len(raw) != 1 {
+		return nil, fmt.Errorf("dsl: derive quorum requires \"of\" with exactly one value (the validator count)")
+	}
+	n, err := parseBigValue(raw[0])
+	if err != nil {
+		return nil, fmt.Errorf("dsl: derive quorum: %w", err)
+	}
+	if n.Sign() <= 0 {
+		return nil, fmt.Errorf("dsl: derive quorum: validator count must be positive, got %s", n)
+	}
+	// ceil(2n/3) = (2n + 2) / 3 in integer arithmetic.
+	num := new(big.Int).Add(new(big.Int).Mul(n, big.NewInt(2)), big.NewInt(2))
+	return new(big.Int).Div(num, big.NewInt(3)).String(), nil
 }
 
 // deriveAbiCall builds contract calldata from a 4-byte selector and a list of
