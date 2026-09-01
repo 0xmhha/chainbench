@@ -20,9 +20,10 @@ import (
 type UpStage string
 
 const (
-	// UpProvision composes and writes the artifacts (genesis, configs, argv)
-	// but starts nothing, so an external launcher can boot from the result.
-	UpProvision UpStage = "provision"
+	// UpDeploy composes and writes the artifacts (genesis, configs, argv) but
+	// starts nothing, so an external launcher can boot from the result. It ends
+	// after the deploy step (the old name was "provision").
+	UpDeploy UpStage = "deploy"
 	// UpStart additionally initializes the datadirs and launches the nodes.
 	UpStart UpStage = "start"
 )
@@ -82,7 +83,7 @@ type NetUpOut struct {
 }
 
 // upStepNames is the composition order — the one list resume and up share.
-var upStepNames = []string{"new", "allocate", "keys", "genesis", "config", "launchopts", "provision", "init", "start"}
+var upStepNames = []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"}
 
 // NetUp runs the composition steps in order and returns what each recorded.
 func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
@@ -94,17 +95,17 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 // that from the workspace's record.
 func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, error) {
 	if in.DataDir == "" {
-		return NetUpOut{}, errors.New("chainsetup: net up needs a workspace directory")
+		return NetUpOut{}, errors.New("chainsetup: chain up needs a workspace directory")
 	}
 	stage := in.Stage
 	if stage == "" {
 		stage = UpStart
 	}
-	if stage != UpProvision && stage != UpStart {
-		return NetUpOut{}, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, UpProvision, UpStart)
+	if stage != UpDeploy && stage != UpStart {
+		return NetUpOut{}, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, UpDeploy, UpStart)
 	}
 	if stage == UpStart && in.Binary == "" {
-		return NetUpOut{}, errors.New("chainsetup: net up --stage=start needs a node binary")
+		return NetUpOut{}, errors.New("chainsetup: chain up --stage=start needs a node binary")
 	}
 
 	// The composite holds the workspace for its whole run. Each step it calls
@@ -131,7 +132,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	record := func(name string, fn func() (string, error)) error {
 		detail, err := fn()
 		if err != nil {
-			return fmt.Errorf("chainsetup: net up: %s: %w", name, err)
+			return fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
 		}
 		out.Steps = append(out.Steps, name+": "+detail)
 		return nil
@@ -154,9 +155,9 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			}
 			return r.Detail, nil
 		},
-		// Allocate precedes keys: the key step sizes the identity set from the
+		// Place precedes keys: the key step sizes the identity set from the
 		// node table, so the layout has to exist first.
-		"allocate": func() (string, error) {
+		"place": func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath, Peering: in.Peering,
@@ -178,11 +179,11 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			r, err := NetConfig(ctx, d, NetConfigIn{DataDir: in.DataDir})
 			return r.Detail, err
 		},
-		"launchopts": func() (string, error) {
+		"build": func() (string, error) {
 			r, err := NetLaunchOpts(ctx, d, NetLaunchOptsIn{DataDir: in.DataDir, Set: in.LaunchSet})
 			return r.Detail, err
 		},
-		"provision": func() (string, error) {
+		"deploy": func() (string, error) {
 			r, err := NetProvision(ctx, d, NetProvisionIn{DataDir: in.DataDir})
 			return r.Detail, err
 		},
@@ -204,7 +205,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			}
 			started = true
 		}
-		if stage == UpProvision && (name == "init" || name == "start") {
+		if stage == UpDeploy && (name == "init" || name == "start") {
 			break
 		}
 		if err := record(name, steps[name]); err != nil {

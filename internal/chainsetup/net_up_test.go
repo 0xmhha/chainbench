@@ -23,7 +23,7 @@ func TestNetUp_ProvisionStageComposesEverything(t *testing.T) {
 	}
 
 	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
-		DataDir: dir, Stage: chainsetup.UpProvision,
+		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs,
 		Validators: 2, Endpoints: 1,
 		LaunchSet: []string{"networkid=4242"},
@@ -33,7 +33,7 @@ func TestNetUp_ProvisionStageComposesEverything(t *testing.T) {
 	}
 
 	// Every composition step ran, in order, and each recorded something.
-	wantSteps := []string{"new", "allocate", "keys", "genesis", "config", "launchopts", "provision"}
+	wantSteps := []string{"new", "place", "keys", "genesis", "config", "build", "deploy"}
 	if len(out.Steps) != len(wantSteps) {
 		t.Fatalf("ran %d steps, want %d: %v", len(out.Steps), len(wantSteps), out.Steps)
 	}
@@ -70,7 +70,7 @@ func TestNetUp_CarriesTheGenesisAndLayoutCustomizations(t *testing.T) {
 	keysAbs, _ := filepath.Abs(presetDir)
 
 	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
-		DataDir: dir, Stage: chainsetup.UpProvision,
+		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs,
 		Validators: 2, Endpoints: 1, EndpointSyncMode: "snap",
 		ChainID: 7777, GenesisSet: []string{"bohoBlock=10"},
@@ -112,7 +112,7 @@ func TestNetUp_StopsAtTheFirstFailingStepAndReportsProgress(t *testing.T) {
 	keysAbs, _ := filepath.Abs(presetDir)
 
 	out, err := chainsetup.NetUp(context.Background(), chainsetup.Deps{Clock: fixedClock()}, chainsetup.NetUpIn{
-		DataDir: dir, Stage: chainsetup.UpProvision,
+		DataDir: dir, Stage: chainsetup.UpDeploy,
 		Chain: "stablenet", KeysDir: keysAbs, Validators: 2,
 		GenesisSet: []string{"malformed-no-value"},
 	})

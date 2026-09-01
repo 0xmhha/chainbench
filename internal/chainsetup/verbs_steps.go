@@ -139,7 +139,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 	}
 	defer release()
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		// A set the workspace already recorded (net new --server-set) is the
+		// A set the workspace already recorded (chain new --server-set) is the
 		// default: --docker and its set arrive as a pair, and a later
 		// --server-set on this step still wins.
 		if in.Server.SetPath == "" {

@@ -139,8 +139,15 @@
 > 개명: `allocate`→`place`, `launchopts`→`build`, `provision`→`deploy`. 나머지 스텝·운영
 > 명령은 이름 유지한 채 `chain` 하위로. 사용자 대상 오류·문서 문구의 `net <cmd>` 전부
 > `chain <cmd>`(개명 반영)로 갱신. 라이브: `chain up/status/stop` 통과.
-> 남은 C: C2 init+start→run 합침·launchopts 내부 스텝명 정리 · C3 enode 신설·config 노드단위
-> · C4 CLI↔DSL 대응표 + 4갈래 재검증.
+> **C2 완료 (2026-09-01):** init·start 합침은 **취소**(끊어 실행하는 원자 스텝이 테스트의
+> 핵심이고, "살아 있는 체인"은 이미 `chain start`·`chain up` 이다 — 사용자 지적). 내부
+> 스텝 이름만 CLI 에 맞춤: chainsetup `markStep`·`upStepNames`·스테이지 러너의
+> `allocate`→`place`·`launchopts`→`build`·`provision`→`deploy`, 스테이지 `UpProvision`→
+> `UpDeploy`(`--stage provision`→`--stage deploy`). C1 이 놓친 문자열 중간의 `net <cmd>`
+> 잔재도 정리. MCP `chainbench_net_*` 는 별도 표면이라 유지(후속). 라이브: `chain up
+> --stage deploy` 가 place/build/deploy 만 수행.
+> 남은 C: C3 `chain enode`(기존 `node.Enode`·`PeerList` 파생 노출)+config 노드단위 ·
+> C4 CLI↔DSL 대응표(공유 코어 검증)+4갈래 재검증.
 
 - `net` 그룹 폐기 → **`chain`** 그룹: `keys → place → enode → genesis → config →
   build → deploy → run` (+`up`, `stop/status/resume`). 단계 사전과 1:1.

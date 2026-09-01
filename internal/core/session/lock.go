@@ -91,7 +91,7 @@ func AcquireLock(path, command string, now func() time.Time) (*Held, Lock, LockS
 	switch state {
 	case LockLive:
 		// A lock is held by one run, not by one call. A composite step
-		// (net up) takes the lock and then calls the steps it is made of, and
+		// (chain up) takes the lock and then calls the steps it is made of, and
 		// each of those takes it too; refusing there would make the tool
 		// deadlock against itself, and releasing there would hand the
 		// workspace to a competitor mid-run. Another process is the real

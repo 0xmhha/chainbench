@@ -267,7 +267,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	if opts.Topology != nil {
 		detail += " (topology)"
 	}
-	w.markStep("allocate", detail)
+	w.markStep("place", detail)
 	return detail, nil
 }
 
@@ -443,7 +443,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if len(opts.Set) > 0 {
 		detail += ", overrides: " + strings.Join(opts.Set, " ")
 	}
-	w.markStep("launchopts", detail)
+	w.markStep("build", detail)
 	return detail, nil
 }
 
@@ -489,7 +489,7 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	if shipped > 0 {
 		detail += fmt.Sprintf(", %d identity file(s) shipped to %s", shipped, w.keysBase())
 	}
-	w.markStep("provision", detail)
+	w.markStep("deploy", detail)
 	return detail, nil
 }
 

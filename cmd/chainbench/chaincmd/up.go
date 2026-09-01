@@ -65,7 +65,7 @@ func newNetUpCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory — where the composition is set up (default: ~/.chainbench/<timestamp>/chainsetup; keep it short: node IPC sockets have a 104-char limit)")
-	cmd.Flags().StringVar(&stage, "stage", string(chainsetup.UpStart), "how far to go: provision (write artifacts only) or start")
+	cmd.Flags().StringVar(&stage, "stage", string(chainsetup.UpStart), "how far to go: deploy (write artifacts only) or start")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
