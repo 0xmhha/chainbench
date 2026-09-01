@@ -248,6 +248,23 @@ func sendTxLocal(ctx context.Context, ac *interp.ActionCtx, keyHex string) error
 		if value == nil {
 			value = new(big.Int)
 		}
+		// Explicit fee caps ride a type-0x02 send; without them the wallet
+		// suggests fees (which on an anzeon chain means the forced gasTip, so
+		// a case probing the authorized-account exemption must set its own).
+		maxFee, hasMaxFee := hexQuantity(ac.Args["maxFeePerGas"])
+		tip, hasTip := hexQuantity(ac.Args["maxPriorityFeePerGas"])
+		if hasMaxFee != hasTip {
+			return fmt.Errorf("dsl: sendTx key: maxFeePerGas and maxPriorityFeePerGas come together")
+		}
+		if hasMaxFee {
+			feeCap, ok1 := new(big.Int).SetString(strings.TrimPrefix(maxFee, "0x"), 16)
+			tipCap, ok2 := new(big.Int).SetString(strings.TrimPrefix(tip, "0x"), 16)
+			if !ok1 || !ok2 {
+				return fmt.Errorf("dsl: sendTx key: bad fee quantity")
+			}
+			hash, err = w.SendDynamicFeeGas(ctx, to, value, feeCap, tipCap)
+			break
+		}
 		hash, err = w.SendCoin(ctx, to, value)
 	}
 	if wantReject(ac.Args) {
