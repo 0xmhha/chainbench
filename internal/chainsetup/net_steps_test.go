@@ -79,7 +79,7 @@ func TestNetStepPipeline(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, step := range []string{"new", "allocate", "keys", "genesis", "config", "launchopts", "provision"} {
+	for _, step := range []string{"new", "place", "keys", "genesis", "config", "build", "deploy"} {
 		if s, ok := st.State.Steps[step]; !ok || !s.Done {
 			t.Fatalf("step %q not recorded: %+v", step, st.State.Steps)
 		}

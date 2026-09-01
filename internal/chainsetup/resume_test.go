@@ -70,7 +70,7 @@ func startedWorkspace(t *testing.T) (dir string, d *inspectingDriver, deps chain
 		t.Fatal(err)
 	}
 	st := ws.State()
-	for _, name := range []string{"new", "allocate", "keys", "genesis", "config", "launchopts", "provision", "init", "start"} {
+	for _, name := range []string{"new", "place", "keys", "genesis", "config", "build", "deploy", "init", "start"} {
 		st.Steps[name] = chainsetup.Step{Done: true, Detail: "seeded"}
 	}
 	st.Request = &chainsetup.NetUpIn{Chain: "stablenet", Binary: "/opt/gstable", Validators: 2, Stage: chainsetup.UpStart}
@@ -184,9 +184,9 @@ func TestNetResume_ContinuesFromTheFirstUnfinishedStep(t *testing.T) {
 	bin := fakeNodeBinary(t, dir)
 	deps := chainsetup.Deps{Clock: fixedClock()}
 	if _, err := chainsetup.NetUp(context.Background(), deps, chainsetup.NetUpIn{
-		DataDir: dir, Stage: chainsetup.UpProvision, Chain: "stablenet", KeysDir: keysAbs, Validators: 2, Binary: bin,
+		DataDir: dir, Stage: chainsetup.UpDeploy, Chain: "stablenet", KeysDir: keysAbs, Validators: 2, Binary: bin,
 	}); err != nil {
-		t.Fatalf("chain up --stage provision: %v", err)
+		t.Fatalf("chain up --stage deploy: %v", err)
 	}
 	// What was asked is on the record, without the workspace's own location.
 	ws, err := chainsetup.Open(dir, nil)

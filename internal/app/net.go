@@ -49,8 +49,8 @@ type (
 )
 
 const (
-	UpProvision = chainsetupmod.UpProvision
-	UpStart     = chainsetupmod.UpStart
+	UpDeploy = chainsetupmod.UpDeploy
+	UpStart  = chainsetupmod.UpStart
 )
 
 // chainsetupDeps adapts this layer's dependency set to the module's.

@@ -119,7 +119,7 @@ func (w *Workspace) firstUndone() string {
 		stage = w.state.Request.Stage
 	}
 	for _, name := range upStepNames {
-		if stage == UpProvision && (name == "init" || name == "start") {
+		if stage == UpDeploy && (name == "init" || name == "start") {
 			return ""
 		}
 		if !w.state.Steps[name].Done {
