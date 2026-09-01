@@ -140,3 +140,4 @@ env/docker/build/
 # dev accounts injected into the containers (name:uid list + shared password);
 # only accounts.env.sample is tracked
 env/docker/accounts.env
+chainbench-out/
