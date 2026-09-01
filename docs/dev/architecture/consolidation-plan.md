@@ -111,6 +111,22 @@
   구성 소유자는 chainsetup 하나.
 - `app.RunSuite` 는 MCP 경유용 위임으로 축소.
 
+#### R4 실행 결과 (2026-09-01)
+
+- `testengine.RunSuite` 가 suite 흐름을 소유한다: compositionOf(선언→요청)와
+  구성 실행이 app 에서 testengine 으로 왔고, testengine 이 chainsetup 을 직접
+  부른다. app.RunSuite 는 같은 타입 위의 위임이다.
+- 자체 조립 경로 삭제: `NewLocalEngine`·`NewBuildEnv`·블록 전진 게이트가
+  사라졌다. CLI `run` 은 `--workspace-dir`(구성) 또는 `--rpc`(attach) 둘 중
+  하나다. local 모드의 능력(keys-source·chain-id·network-id·launch-opt)은
+  `RunSuiteIn` 으로 옮겨 한 경로가 다 표현한다.
+- suite 가 구성한 네트워크에는 워크스페이스의 노드 표 전체와 fault 제어가
+  배선된다: `AttachConfig.NodeSet`/`Control` + `workspaceNodes`(chainsetup 의
+  NodeStop/NodeStart 를 interpreter 의 `NodeControl` 로 적응) — attach 만으로는
+  잃었을 stopNode/startNode/restartNode 가 suite 경로에서 살아 있다.
+- 라이브 게이트 재작성: capstone·vocabulary·wemix 라이브 테스트가
+  RunSuite 경로로 옮겨졌다(runspec 라이브는 원래 chainsetup 경로였다).
+
 ### R5. 은퇴 (독립 트랙과 연동)
 
 - 레거시 34건 이관(문법 갭 묶음별) 완료 → `testkit`·`pipeline/testrun`·`test`

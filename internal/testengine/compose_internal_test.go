@@ -1,4 +1,4 @@
-package app
+package testengine
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
 
@@ -40,7 +41,7 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 		t.Fatal("a single-binary env composes through the workspace")
 	}
 	up := comp.up
-	if up.Chain != "stablenet" || up.Binary != "gstable" || up.Stage != UpStart {
+	if up.Chain != "stablenet" || up.Binary != "gstable" || up.Stage != chainsetup.UpStart {
 		t.Errorf("chain/binary/stage = %q/%q/%q", up.Chain, up.Binary, up.Stage)
 	}
 	if up.Validators != 3 || up.Endpoints != 1 || up.EndpointSyncMode != "snap" {

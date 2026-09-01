@@ -4,17 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 	"text/tabwriter"
-
-	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
@@ -27,11 +23,11 @@ type runReport struct {
 	testengine.Summary
 }
 
-// newRunCmd runs DSL test specs through the test engine. With --rpc it
-// attaches to a running network; with --workspace-dir it composes the network
-// the specs declare through the workspace steps (a handoff env composes the
-// handoff) and attaches to that; with --binary alone it builds a local one
-// through the engine's own build path.
+// newRunCmd runs DSL test specs through the test engine. With --workspace-dir
+// it composes the network the specs declare through the workspace steps (a
+// handoff env composes the handoff) and runs against that; with --rpc it
+// attaches to a running network. The engine's self-assembly build path is
+// gone (R4): composition belongs to chainsetup alone.
 func newRunCmd() *cobra.Command {
 	var (
 		chain        string
@@ -39,7 +35,6 @@ func newRunCmd() *cobra.Command {
 		binary       string
 		keysDir      string
 		keysSource   string
-		bootnode     string // deprecated, ignored
 		artifactRoot string
 		validators   int
 		chainID      int64
@@ -54,122 +49,95 @@ func newRunCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
-		Short: "Run DSL test specs through the engine (attach or local)",
+		Short: "Run DSL test specs (compose the declared network, or attach)",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if workspaceDir != "" {
-				if len(rpcURLs) > 0 {
-					return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc")
-				}
-				in := app.RunSuiteIn{
-					SpecPaths: args, DataDir: workspaceDir, Chain: chain,
-					Binary: binary, Server: sf.Ref(), KeepUp: keepUp, WaitBlocks: waitBlocks,
-				}
-				if cmd.Flags().Changed("keys") {
-					in.KeysDir = keysDir
-				}
-				if cmd.Flags().Changed("validators") {
-					in.Validators = validators
-				}
-				if cmd.Flags().Changed("artifact-root") {
-					in.ArtifactRoot = artifactRoot
-				}
-				return runComposed(cmd, in, jsonOut)
+			switch {
+			case len(rpcURLs) > 0 && workspaceDir != "":
+				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc")
+			case len(rpcURLs) > 0:
+				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, dashboardURL, jsonOut)
+			case workspaceDir == "":
+				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare) or --rpc <url> (attach to a running one)")
 			}
-			specs, err := dsl.ReadFiles(args)
-			if err != nil {
-				return err
+			in := app.RunSuiteIn{
+				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
+				Binary: binary, Server: sf.Ref(), KeepUp: keepUp, WaitBlocks: waitBlocks,
+				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
 			}
-
-			// When a dashboard is given, publish orchestration events to a local
-			// bus and forward them to the running chainbench-dashboard. Emission never
-			// blocks the run; we close the bus and drain the forwarder before
-			// exiting so buffered events are flushed.
-			var bus *collector.Bus
-			var forwardDone <-chan struct{}
-			if dashboardURL != "" {
-				bus = collector.NewBus()
-				forwardDone = dashboard.Forward(bus, dashboardURL, nil)
+			if cmd.Flags().Changed("keys") {
+				in.KeysDir = keysDir
 			}
-			flush := func() {
-				if bus != nil {
-					bus.Close()
-					<-forwardDone
-				}
+			if cmd.Flags().Changed("keys-source") {
+				in.KeysSource = keysSource
 			}
-
-			eng, err := buildRunEngine(foldSpecEnv(runOpts{
-				chain: chain, rpcURLs: rpcURLs, binary: binary,
-				keysDir: keysDir, keysSource: keysSource,
-				artifactRoot: artifactRoot, validators: validators,
-				chainID: chainID, networkID: networkID, launchOpts: launchOpts,
-				server: sf.Ref(), bus: bus,
-			}, specs))
-			if err != nil {
-				flush()
-				return err
+			if cmd.Flags().Changed("validators") {
+				in.Validators = validators
 			}
-			root, err := eng.Run(cmd.Context(), specs)
-			flush()
-			if err != nil {
-				return err
+			if cmd.Flags().Changed("artifact-root") {
+				in.ArtifactRoot = artifactRoot
 			}
-			return printSession(cmd.OutOrStdout(), root, jsonOut)
+			return runComposed(cmd, in, jsonOut)
 		},
 	}
-	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); with --workspace-dir it is what the specs declare and may be omitted")
+	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
-	cmd.Flags().StringVar(&binary, "binary", "", "local: node binary path — builds a network")
-	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "local: key set directory (read with --keys-source preset, written with generate)")
-	cmd.Flags().StringVar(&keysSource, "keys-source", string(keysSourcePreset),
-		"local: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
-	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
-	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
-	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory")
-	cmd.Flags().IntVar(&validators, "validators", 4, "local: validator node count")
-	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "local: override the manifest chain id in the built genesis (0 = manifest)")
-	cmd.Flags().Int64Var(&networkID, "network-id", 0, "local: pin the devp2p network id on every node (0 = binary default)")
+	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
+	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
+	cmd.Flags().StringVar(&keysSource, "keys-source", "preset",
+		"compose: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
+	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory (compose default: the workspace's sessions directory)")
+	cmd.Flags().IntVar(&validators, "validators", 4, "compose: validator node count, overriding what the specs declare")
+	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
+	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
-		"local: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
+		"compose: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
 	sf.Bind(cmd)
-	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
+	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "attach: chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd
 }
 
-// keysSourceKind names where a local run's node identities come from. Typed so
-// the accepted values live in one place instead of as literals at the parse site.
-type keysSourceKind string
-
-const (
-	// keysSourcePreset uses the --keys directory exactly as it is on disk: the
-	// same identities, and therefore the same chain, on every run.
-	keysSourcePreset keysSourceKind = "preset"
-	// keysSourceGenerate creates a fresh random identity set in --keys the first
-	// time and reuses it afterwards.
-	keysSourceGenerate keysSourceKind = "generate"
-)
-
-// runOpts are the resolved flags for one `run` invocation. Grouped into a struct
-// because the option count had outgrown a readable parameter list.
-type runOpts struct {
-	chain        string
-	rpcURLs      []string
-	binary       string
-	keysDir      string
-	keysSource   string
-	artifactRoot string
-	validators   int
-	chainID      int64
-	networkID    int64
-	launchOpts   []string
-	// server selects the node placement (ports, host, capacity) from the
-	// operator's server set; its zero value uses the built-in local plan.
-	server app.ServerRef
-	bus    *collector.Bus
+// runAttach runs the specs against a running network over its RPC endpoints,
+// optionally streaming orchestration events to a dashboard. Emission never
+// blocks the run; the bus is closed and the forwarder drained before exiting
+// so buffered events are flushed.
+func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, dashboardURL string, jsonOut bool) error {
+	if chain == "" {
+		return fmt.Errorf("run: --chain is required to attach")
+	}
+	specs, err := dsl.ReadFiles(args)
+	if err != nil {
+		return err
+	}
+	var bus *collector.Bus
+	var forwardDone <-chan struct{}
+	if dashboardURL != "" {
+		bus = collector.NewBus()
+		forwardDone = dashboard.Forward(bus, dashboardURL, nil)
+	}
+	flush := func() {
+		if bus != nil {
+			bus.Close()
+			<-forwardDone
+		}
+	}
+	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
+		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot, Bus: bus,
+	})
+	if err != nil {
+		flush()
+		return err
+	}
+	root, err := eng.Run(cmd.Context(), specs)
+	flush()
+	if err != nil {
+		return err
+	}
+	return printSession(cmd.OutOrStdout(), root, jsonOut)
 }
 
 // runComposed composes the network the specs declare and runs them against
@@ -187,115 +155,6 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 		return err
 	}
 	return printSession(out, res.SessionRoot, jsonOut)
-}
-
-// buildRunEngine selects attach mode (when --rpc endpoints are given) or local
-// mode (when --binary is given). A non-nil bus streams orchestration events.
-func buildRunEngine(o runOpts) (testengine.Engine, error) {
-	if o.chain == "" {
-		return nil, fmt.Errorf("run: --chain is required")
-	}
-	switch {
-	case len(o.rpcURLs) > 0:
-		return testengine.NewAttachEngine(testengine.AttachConfig{
-			Chain: o.chain, RPCURLs: o.rpcURLs, ArtifactRoot: o.artifactRoot, Bus: o.bus,
-		})
-	case o.binary != "":
-		src, err := keySource(o)
-		if err != nil {
-			return nil, err
-		}
-		overrides, err := parseLaunchOverrides(o.launchOpts)
-		if err != nil {
-			return nil, err
-		}
-		placement, err := app.ResolveServer(app.Deps{}, o.server, runMinValidators, runPortBand)
-		if err != nil {
-			return nil, err
-		}
-		return testengine.NewLocalEngine(testengine.LocalConfig{
-			Chain: o.chain, Binary: o.binary, Keys: src,
-			ArtifactRoot: o.artifactRoot, Validators: o.validators,
-			ChainID: o.chainID, NetworkID: o.networkID, LaunchOverrides: overrides,
-			Pool: placement.Pool, Bus: o.bus,
-		})
-	default:
-		return nil, fmt.Errorf("run: provide --rpc <url> (attach) or --binary <path> (local)")
-	}
-}
-
-// Placement bounds for a local run: a BFT floor and the local port band.
-const (
-	runMinValidators = 1
-	runPortBand      = 100
-)
-
-// keySource maps --keys-source to the engine boundary that materializes identities.
-func keySource(o runOpts) (store.KeySource, error) {
-	if o.keysDir == "" {
-		return nil, fmt.Errorf("run: --keys is required for a local run")
-	}
-	switch keysSourceKind(o.keysSource) {
-	case "", keysSourcePreset:
-		return store.PresetKeys{Path: o.keysDir}, nil
-	case keysSourceGenerate:
-		return store.GeneratedKeys{
-			Path: o.keysDir, Validators: o.validators,
-		}, nil
-	default:
-		return nil, fmt.Errorf("run: unknown --keys-source %q (want %s or %s)",
-			o.keysSource, keysSourcePreset, keysSourceGenerate)
-	}
-}
-
-// parseLaunchOverrides maps --launch-opt key=value pairs onto typed launchopt
-// overrides. Keys are the chain-agnostic knob names (nodeconfig.Key); whether a
-// key exists for the target binary is checked at assembly time by the Builder,
-// which classifies an unsupported knob as an error rather than dropping it.
-func parseLaunchOverrides(opts []string) ([]nodeconfig.Override, error) {
-	out := make([]nodeconfig.Override, 0, len(opts))
-	for _, o := range opts {
-		k, v, _ := strings.Cut(o, "=")
-		if k == "" {
-			return nil, fmt.Errorf("run: bad --launch-opt %q (want key=value or a bare boolean key)", o)
-		}
-		out = append(out, nodeconfig.Override{Key: nodeconfig.Key(k), Value: v})
-	}
-	return out, nil
-}
-
-// foldSpecEnv folds a single spec's v2 env declarations (keys, launch) into
-// the run options where the CLI did not already decide: explicit flags win
-// over the spec, and multiple specs get no folding (their envs could
-// disagree; the engine hooks are per-invocation).
-func foldSpecEnv(o runOpts, specs [][]byte) runOpts {
-	if len(specs) != 1 {
-		return o
-	}
-	s, err := dsl.Parse(specs[0])
-	if err != nil {
-		return o // the engine reports the parse error with full context
-	}
-	if k := s.EnvKeys; k != nil {
-		if o.keysSource == "" || o.keysSource == string(keysSourcePreset) {
-			o.keysSource = k.Source
-		}
-		if o.keysDir == "" || o.keysDir == "keys/preset" {
-			if k.Ref != "" {
-				o.keysDir = k.Ref
-			}
-		}
-	}
-	if len(s.EnvLaunch) > 0 && len(o.launchOpts) == 0 {
-		for _, kv := range s.EnvLaunch {
-			if kv.Value == "" || kv.Value == "true" {
-				o.launchOpts = append(o.launchOpts, kv.Key)
-			} else {
-				o.launchOpts = append(o.launchOpts, kv.Key+"="+kv.Value)
-			}
-		}
-	}
-	return o
 }
 
 // printSession reads the saved session and prints a table plus a summary,
