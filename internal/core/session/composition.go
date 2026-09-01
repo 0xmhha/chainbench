@@ -11,7 +11,7 @@ import (
 // Long-lived environment mode. A per-run artifact session
 // (session.New) lives for one engine run; a Composition is the other lifetime
 // this package owns: a persistent, step-composed environment that accumulates
-// state across independent commands (`net keys`, `net start`, ...). Owning
+// state across independent commands (`chain keys`, `chain start`, ...). Owning
 // both here removes the third parallel state-store implementation the
 // structure review measured (state / session / Workspace).
 

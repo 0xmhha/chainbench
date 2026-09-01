@@ -121,14 +121,14 @@ func TestNetStepPrerequisites(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 1}); err == nil ||
-		!strings.Contains(err.Error(), "net new") {
+		!strings.Contains(err.Error(), "chain new") {
 		t.Fatalf("allocate before new: %v", err)
 	}
 	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet"}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir}); err == nil ||
-		!strings.Contains(err.Error(), "net allocate") {
+		!strings.Contains(err.Error(), "chain place") {
 		t.Fatalf("genesis before allocate: %v", err)
 	}
 	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err == nil {

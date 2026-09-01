@@ -97,7 +97,7 @@ func (a *Args) Has(k Key) bool {
 func (a *Args) Value(k Key) string { return a.vals[k].value }
 
 // WonBy returns the layer that set the knob last ("" when unset). This is the
-// provenance surface for `net status`.
+// provenance surface for `chain status`.
 func (a *Args) WonBy(k Key) Layer { return a.vals[k].layer }
 
 // Problems returns every classified problem accumulated so far. The Builder

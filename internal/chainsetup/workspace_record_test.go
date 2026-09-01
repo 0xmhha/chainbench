@@ -12,10 +12,10 @@ import (
 // A step that launches nodes and then fails has already changed the world:
 // those processes hold ports whether the step reports success or not. Saving
 // only on success threw their pids away with the error, and a pid nobody
-// recorded is an orphan — `net stop` finds nothing and the next run fails with
+// recorded is an orphan — `chain stop` finds nothing and the next run fails with
 // "address already in use".
 //
-// Measured before the fix: interrupting `net up` mid-bring-up left four wemix
+// Measured before the fix: interrupting `chain up` mid-bring-up left four wemix
 // nodes running and the workspace holding four null pids.
 func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 	dir := t.TempDir()

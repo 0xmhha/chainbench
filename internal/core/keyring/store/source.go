@@ -24,7 +24,7 @@ const (
 // idempotent, so re-running a command against the same directory reuses what
 // is already there instead of producing a second, conflicting identity set.
 //
-// Both the composition steps (`net keys`) and the test engine's local run go
+// Both the composition steps (`chain keys`) and the test engine's local run go
 // through this boundary, which is why it lives with the store and not with
 // either of them.
 type KeySource interface {

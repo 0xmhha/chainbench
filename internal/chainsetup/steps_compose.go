@@ -40,7 +40,7 @@ const (
 // plugin resolves the workspace's chain plugin, requiring `new` to have run.
 func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 	if w.state.Chain == "" && w.state.ManifestPath == "" {
-		return nil, fmt.Errorf("chainsetup: no chain set — run `net new` first")
+		return nil, fmt.Errorf("chainsetup: no chain set — run `chain new` first")
 	}
 	return external.ResolveChain(w.state.Chain, w.state.ManifestPath, w.state.TemplatePath)
 }
@@ -71,7 +71,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		n = opts.Validators
 	}
 	if n <= 0 {
-		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `net allocate` first or pass --nodes")
+		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
 
 	var src store.KeySource
@@ -298,7 +298,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	if w.state.Validators <= 0 {
-		return "", fmt.Errorf("chainsetup: genesis: no validators — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: genesis: no validators — run `chain place` first")
 	}
 	// A family whose genesis its binary writes takes a different source: the
 	// generic dispatch builds a genesis by substituting a template, and for
@@ -377,7 +377,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		return "", err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: config: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: config: no node table — run `chain place` first")
 	}
 	preset, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
@@ -418,7 +418,7 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		return "", err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: launchopts: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: launchopts: no node table — run `chain place` first")
 	}
 	preset, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
@@ -452,10 +452,10 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 // the per-node configs. Re-running it reuses what already exists.
 func (w *Workspace) Provision(ctx context.Context) (string, error) {
 	if w.state.GenesisPath == "" {
-		return "", fmt.Errorf("chainsetup: provision: no genesis — run `net genesis` first")
+		return "", fmt.Errorf("chainsetup: provision: no genesis — run `chain genesis` first")
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: provision: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: provision: no node table — run `chain place` first")
 	}
 	present, shipped := 0, 0
 	err := w.eachMachine(func(t *resource.Access, nodes []node.Record) error {

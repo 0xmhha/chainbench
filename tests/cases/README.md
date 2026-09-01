@@ -5,7 +5,7 @@
 
 | 갈래 | env | 케이스 | 구성 방식 |
 |---|---|---|---|
-| go-stablenet | `env/stablenet.env.json` | `stablenet/chain-up.json` | 워크스페이스 단계(`net up`) |
+| go-stablenet | `env/stablenet.env.json` | `stablenet/chain-up.json` | 워크스페이스 단계(`chain up`) |
 | go-wbft 단독 | `env/wbft.env.json` | `wbft/chain-up.json` | 워크스페이스 단계 |
 | go-wemix 단독 | `env/wemix.env.json` | `wemix/chain-up.json` | 워크스페이스 단계 — 패밀리가 선언한 2-페이즈 부트스트랩(governance → etcd → join) |
 | go-wemix → go-wbft | `env/wemix-wbft.env.json` | `wemix-wbft/handoff.json` | `upgrade` 선언 → 핸드오프 본문(`consensus/upgrade.Handoff`) |

@@ -120,7 +120,7 @@ func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.Plan, binary str
 	specs := make([]process.NodeSpec, 0, len(w.state.Nodes))
 	for _, rec := range w.state.Nodes {
 		if len(rec.Args) == 0 {
-			return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: node%d has no recorded argv — run `net start` first", rec.Index)
+			return node.NodeSet{}, fmt.Errorf("chainsetup: hardfork: node%d has no recorded argv — run `chain start` first", rec.Index)
 		}
 		spec := process.SpecOf(rec)
 		spec.Binary = w.state.Binary

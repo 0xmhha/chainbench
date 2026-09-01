@@ -1,4 +1,4 @@
-package netcmd_test
+package chaincmd_test
 
 import (
 	"strings"
@@ -10,7 +10,7 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins, as package main does
 )
 
-// showWorkspace builds the smallest real workspace `net show` can read: only
+// showWorkspace builds the smallest real workspace `chain show` can read: only
 // new+allocate run; nothing launches.
 func showWorkspace(t *testing.T) string {
 	t.Helper()
@@ -36,7 +36,7 @@ func showWorkspace(t *testing.T) string {
 func TestShow_AnswersBothDirections(t *testing.T) {
 	dir := showWorkspace(t)
 
-	whole, err := run(t, "net", "show", "--workspace-dir", dir)
+	whole, err := run(t, "chain", "show", "--workspace-dir", dir)
 	if err != nil {
 		t.Fatalf("show: %v\n%s", err, whole)
 	}
@@ -44,7 +44,7 @@ func TestShow_AnswersBothDirections(t *testing.T) {
 		t.Errorf("whole map lost the composition:\n%s", whole)
 	}
 
-	byLabel, err := run(t, "net", "show", "--workspace-dir", dir, "--label", "en1")
+	byLabel, err := run(t, "chain", "show", "--workspace-dir", dir, "--label", "en1")
 	if err != nil {
 		t.Fatalf("show --label: %v\n%s", err, byLabel)
 	}
@@ -55,7 +55,7 @@ func TestShow_AnswersBothDirections(t *testing.T) {
 	// Reverse lookup: take node1's http port from the whole map's row.
 	fields := strings.Fields(strings.Split(whole, "\n")[1])
 	port := fields[6]
-	byPort, err := run(t, "net", "show", "--workspace-dir", dir, "--port", port)
+	byPort, err := run(t, "chain", "show", "--workspace-dir", dir, "--port", port)
 	if err != nil {
 		t.Fatalf("show --port: %v\n%s", err, byPort)
 	}
@@ -70,7 +70,7 @@ func TestShow_AnswersBothDirections(t *testing.T) {
 // TestShow_RequiresAWorkspace: show reads a composed map; without one the
 // answer is a refusal, not an empty table.
 func TestShow_RequiresAWorkspace(t *testing.T) {
-	if _, err := run(t, "net", "show", "--workspace-dir", t.TempDir()); err == nil {
+	if _, err := run(t, "chain", "show", "--workspace-dir", t.TempDir()); err == nil {
 		t.Fatal("showed a map for an empty directory")
 	}
 }

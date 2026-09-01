@@ -73,7 +73,7 @@ func NetMap(_ context.Context, d Deps, in NetMapIn) (NetMapOut, error) {
 	}
 	all := m.Placements()
 	if len(all) == 0 {
-		return NetMapOut{}, fmt.Errorf("app: netmap show: no node table — run `net allocate` first")
+		return NetMapOut{}, fmt.Errorf("app: netmap show: no node table — run `chain place` first")
 	}
 
 	roles := map[string]int{}

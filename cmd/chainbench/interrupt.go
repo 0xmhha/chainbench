@@ -26,7 +26,7 @@ const interruptExitCode = 130
 // Cancelling the context lets the step unwind through its normal error path,
 // which is where the workspace is written (app.withWorkspace saves on failure
 // too). So the first interrupt does not kill nodes — it makes them recoverable,
-// which `net stop` then acts on. Killing them here instead would race the
+// which `chain stop` then acts on. Killing them here instead would race the
 // record and could leave the worse state: gone from the machine, still in the
 // file.
 //
@@ -43,7 +43,7 @@ func interruptible(w io.Writer) (context.Context, func()) {
 		fmt.Fprintln(w, "\ninterrupted — finishing the step and recording what it started (interrupt again to force)")
 		cancel()
 		<-ch
-		fmt.Fprintln(w, "forced — nodes this run started are still running and may not be recorded; `net stop --data-dir <dir>` clears what was, and the rest need finding by hand")
+		fmt.Fprintln(w, "forced — nodes this run started are still running and may not be recorded; `chain stop --data-dir <dir>` clears what was, and the rest need finding by hand")
 		os.Exit(interruptExitCode)
 	}()
 	return ctx, func() {

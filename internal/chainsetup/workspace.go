@@ -75,7 +75,7 @@ type State struct {
 	LegacyServerSet string `json:"serverConfig,omitempty"`
 	// Docker records that this composition treats its servers as local docker
 	// containers: the harness's own dials are translated through the localmap
-	// next to ServerSet. It is recorded once at `net new --docker` so a
+	// next to ServerSet. It is recorded once at `chain new --docker` so a
 	// multi-step run cannot be half-mapped, and it never changes what is
 	// composed — genesis, static-nodes and the node table keep real addresses.
 	Docker bool `json:"docker,omitempty"`
@@ -84,7 +84,7 @@ type State struct {
 	// The genesis step derives it, since that is where the customizations that
 	// change what the network can do are applied.
 	Capabilities []string `json:"capabilities,omitempty"`
-	// Request is what `net up` was asked to compose, recorded at the new
+	// Request is what `chain up` was asked to compose, recorded at the new
 	// step so a run that dies before the results exist can be resumed from
 	// what it was asked, not re-asked. Its DataDir is left empty: the
 	// workspace's location is where this file is. It is the one fact of a

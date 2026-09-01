@@ -29,7 +29,7 @@
   **서버 위에 링을 만들 수도 있다**: `srv://server1/data/chainbench/ring` 처럼
   지정하면 생성·조회·가져오기 전부 그 서버의 경로에서 일어난다(파일 인터페이스 경유,
   docker 서버들에서는 `--docker` 와 함께). 네트워크 기동용 배송은 여전히
-  `net provision` 의 몫이다.
+  `chain deploy` 의 몫이다.
 - 체인 바이너리는 전혀 필요 없다. BLS 파생까지 인프로세스다.
 
 ## 2. 어느 링을 쓰는가
@@ -254,5 +254,5 @@ bin/chainbench validator set --out /tmp/preset --nodes 6 --validators 6
 | B6 | `keyring new --keyring-dir srv://server1/<경로> --docker --count 2 --with-bls` → `list --verify` | 서버 위에 링 생성(치환 보고 출력), 원격 검증 통과. `--docker` 를 빼면 실주소 dial | Live_…CreatesARingOnAServer |
 | B7 | `import --from-ring srv://server1/<경로> --docker` 로 서버 링을 로컬로 | 라벨·validator 선언 그대로, 항목별 재파생 대조 후 기록. 원본 인덱스를 1바이트 변조하면 전체 거부 | Live_…ClonesARingFromAServer, …Import_FromRing |
 
-C. **net 과의 결합**(참고): `net up --keys <ring> --keys-source generate --server server1
+C. **net 과의 결합**(참고): `chain up --keys <ring> --keys-source generate --server server1
 --docker` 가 링 생성→배송→기동까지 잇는다. R4 라이브로 검증된 경로다.

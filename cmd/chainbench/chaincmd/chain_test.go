@@ -1,4 +1,4 @@
-package netcmd_test
+package chaincmd_test
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/cmd/chainbench/netcmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/chaincmd"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins, as package main does
 )
@@ -20,7 +20,7 @@ import (
 func run(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 	root := &cobra.Command{Use: "chainbench", SilenceUsage: true, SilenceErrors: true}
-	root.AddCommand(netcmd.New())
+	root.AddCommand(chaincmd.New())
 	var buf bytes.Buffer
 	root.SetOut(&buf)
 	root.SetErr(&buf)
@@ -33,32 +33,32 @@ func TestNetCmd_ComposeStepByStep(t *testing.T) {
 	dir := t.TempDir()
 	presetDir := filepath.Join("..", "..", "..", "keys", "preset")
 
-	out, err := run(t, "net", "new", "--workspace-dir", dir, "--chain", "stablenet", "--keys", presetDir)
+	out, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet", "--keys", presetDir)
 	if err != nil {
-		t.Fatalf("net new: %v\n%s", err, out)
+		t.Fatalf("chain new: %v\n%s", err, out)
 	}
 	if !strings.Contains(out, "stablenet") || !strings.Contains(out, "chain id 8283") ||
 		!strings.Contains(out, "target local") || !strings.Contains(out, "keys "+presetDir) {
-		t.Fatalf("net new output: %s", out)
+		t.Fatalf("chain new output: %s", out)
 	}
 
-	out, err = run(t, "net", "status", "--workspace-dir", dir)
+	out, err = run(t, "chain", "status", "--workspace-dir", dir)
 	if err != nil {
-		t.Fatalf("net status: %v\n%s", err, out)
+		t.Fatalf("chain status: %v\n%s", err, out)
 	}
 	for _, want := range []string{"chain: stablenet", "target: local", "keys: " + presetDir, "new", "true"} {
 		if !strings.Contains(out, want) {
-			t.Fatalf("net status missing %q:\n%s", want, out)
+			t.Fatalf("chain status missing %q:\n%s", want, out)
 		}
 	}
 }
 
 func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
 	dir := t.TempDir()
-	out, err := run(t, "net", "new", "--workspace-dir", dir, "--chain", "stablenet",
+	out, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet",
 		"--remote-host", "10.0.0.1", "--remote-user", "ubuntu", "--target-dir", "/tmp/net")
 	if err != nil {
-		t.Fatalf("net new remote: %v\n%s", err, out)
+		t.Fatalf("chain new remote: %v\n%s", err, out)
 	}
 	if !strings.Contains(out, "remote ubuntu@10.0.0.1:/tmp/net") {
 		t.Fatalf("remote target not recorded: %s", out)
@@ -71,9 +71,9 @@ func TestNetCmd_RemoteTargetRecorded(t *testing.T) {
 func TestNetCmd_DefaultsTheWorkspace(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	out, err := run(t, "net", "new", "--chain", "stablenet")
+	out, err := run(t, "chain", "new", "--chain", "stablenet")
 	if err != nil {
-		t.Fatalf("net new without --workspace-dir: %v\n%s", err, out)
+		t.Fatalf("chain new without --workspace-dir: %v\n%s", err, out)
 	}
 	if !strings.Contains(out, "workspace: "+home) {
 		t.Fatalf("the default path was not announced:\n%s", out)
@@ -94,14 +94,14 @@ func TestNetNew_RecordsTheServerSetWithDocker(t *testing.T) {
 			"ssh: {user: dev, password: pw}\ndataRoot: /data/cb\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := run(t, "net", "new", "--workspace-dir", dir, "--chain", "stablenet",
+	if _, err := run(t, "chain", "new", "--workspace-dir", dir, "--chain", "stablenet",
 		"--keys", filepath.Join("..", "..", "..", "keys", "preset"),
 		"--docker", "--server-set", set); err != nil {
-		t.Fatalf("net new: %v", err)
+		t.Fatalf("chain new: %v", err)
 	}
-	out, err := run(t, "net", "status", "--workspace-dir", dir)
+	out, err := run(t, "chain", "status", "--workspace-dir", dir)
 	if err != nil {
-		t.Fatalf("net status: %v", err)
+		t.Fatalf("chain status: %v", err)
 	}
 	raw, err := os.ReadFile(filepath.Join(dir, "workspace.json"))
 	if err != nil {

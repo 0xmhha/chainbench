@@ -26,7 +26,7 @@ type LocalDriver struct {
 	// The two are separate because binding a node to the request context ends
 	// the node when the request ends. That was invisible while the root
 	// context was never cancelled; the moment an interrupt could cancel it,
-	// `net up` returned "4 node(s) started" and left three running.
+	// `chain up` returned "4 node(s) started" and left three running.
 	launchFn ExecFn
 }
 

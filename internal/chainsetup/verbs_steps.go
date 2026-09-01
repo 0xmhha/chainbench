@@ -23,7 +23,7 @@ import (
 // fails (or is interrupted) has already changed the world: those processes are
 // running and hold ports. Discarding the state because the step returned an
 // error discards their pids with it, and pids nobody recorded are orphans —
-// `net stop` finds nothing, the next run fails with "address already in use",
+// `chain stop` finds nothing, the next run fails with "address already in use",
 // and there is no record of who left them.
 //
 // A save failure on the error path is reported alongside the original error
@@ -48,7 +48,7 @@ func withWorkspace(d Deps, dataDir string, fn func(*Workspace) (string, error)) 
 	}
 	defer func() { _ = held.Release() }()
 	if state == session.LockStale {
-		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `net status` shows what is there", prev.Describe())
+		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up; `chain status` shows what is there", prev.Describe())
 	}
 
 	detail, stepErr := fn(ws)

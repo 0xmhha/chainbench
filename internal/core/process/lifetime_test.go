@@ -18,7 +18,7 @@ import (
 //
 // This is not hypothetical. While every command ran on a context that was never
 // cancelled, binding the node to it was invisible; the moment an interrupt could
-// cancel the root context, `net up` reported four nodes started and left three
+// cancel the root context, `chain up` reported four nodes started and left three
 // running, because cancelling on the way out killed them.
 func TestLaunch_NodeOutlivesTheCallThatStartedIt(t *testing.T) {
 	dir := t.TempDir()
