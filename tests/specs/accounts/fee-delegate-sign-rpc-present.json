@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "id": "fee-delegate-sign-rpc-present",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [],
+  "assertions": [
+    { "assert": "methodPresent", "method": "eth_signRawFeeDelegateTransaction",
+      "params": [{ "from": "0x00000000000000000000000000000000C0FFEE08" }, "0x00"] }
+  ]
+}

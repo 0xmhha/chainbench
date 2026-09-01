@@ -36,7 +36,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
 | `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
 | `network` | 4 | **4** | ✅ `examples/specs/network-*.json`(선행 이관분) 3건 + **admin-peers-populated** 라이브(gstable) — `rpcCall admin_peers` 를 `select:"#"`(배열 길이)≥1 & `select:"0.id"`(배열 인덱싱) NotEqual "" 로 검증. 갭 없음 |
-| `accounts` | 35 | **20** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
+| `accounts` | 35 | **30** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
 | `gas-policy` | 17 | **16** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
 | `hardfork` | 8 | **4** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
 | `system-contracts` | 46 | **45** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. **비회원 로컬서명 3건**(direct-blacklist·non-member-configure-minter·sender-blacklisted rejected — `newAccount`+`sendTx key` 로컬서명) + **burn-refund 라이프사이클 8건**(burn-transfer-event·burn-cancel-refundable·burn-execute-no-refundable·burn-reject-refundable·claim-burn-refund-succeeds·burn-refund-events·claim-zero-refund-reverts·claim-burn-refund-double-reverts — **Boho-v2 넷**(genesis 오버레이)에서 proposeBurn→cancel/disapprove/claim + refundableBalance **전후 델타**(`derive diff`) 어세션으로 재사용 넷 누적 간섭 회피). 잔여 11건 갭(아래) |
@@ -519,3 +519,42 @@ hardfork 4 (P256 바이너리 3 · govminter 코드스왑 반증 1) · system-co
 delayed-boho 2건(anzeon-active·prealloc-preserved)은 위 배치 뒤에 이관됐다: spec 이
 `hardforks` 로 지연 포크를 선언하면 suite 가 그 넷을 구성한다. govminter-code-changes 는
 라이브 반증(코드 스왑 신호 부재), p256-inactive 는 기존 P256 반증에 합류.
+
+### 라이브 검증 근거 — R5 프리미티브 배치 10건 (2026-09-01)
+
+잔여의 "새 DSL 프리미티브 필요" 갭을 프리미티브 4종으로 닫고 accounts 10건을 이관했다.
+전부 suite 경로(fresh 넷)에서 라이브 통과.
+
+프리미티브(모두 체인 이름을 모른다 — C6 ACL 유지):
+- **`txMined` 리드/어세션**: 해시에 영수증이 있으면 "true", 없으면 "false". `waitFor`
+  로 한 tx 채굴을 기다리고 `assert txMined expected:"false"` 로 다른 tx 의 부재를
+  확인한다(교체 tx 시나리오).
+- **key 서명 sendTx 의 `nonce`·`wait:false`**: 로컬 서명 경로가 명시 nonce 와 비동기
+  제출을 지원(`SendDynamicFeeTx` 경유). gap 난 nonce 를 큐잉하고 나중에 채우는 순서
+  케이스가 표현 가능.
+- **`sendRawTampered` 액션**: 0x16 이중서명 tx 를 만들어 sender/feepayer 한쪽 서명을
+  손상시키고 raw 제출→노드 거부를 통과 조건으로. chainId·nonce·fee 는 노드에서 읽어
+  서명 손상만이 유일한 거부 사유가 되게 한다. 계정 provider 의 `SupportsTxType(0x16)`
+  로 게이팅.
+- **`callError` 어세션**: eth_call 이 오류(revert)를 반환하면 통과. 값이 오면 실패.
+- **`methodPresent` 어세션**: 메서드가 등록돼 있으면 통과(throwaway 인자로 오류는 나도
+  됨). method-not-found(-32601)만 부재로 판정.
+
+```
+accounts (+10) → fresh 4노드(--wait-blocks 2): pass=10
+  nonce (fresh 계정 로컬서명, maxFee 1e14·tip 3e13 > 강제 gasTip 2.76e13):
+    nonce-ordering · out-of-order-nonces-mine (nonce 2,1,0 큐잉→nonceAt==3)
+    replacement-tx · same-nonce-replacement (교체 tx 는 feeCap·tip 둘 다 ≥10% bump →
+      txMined 교체==true, 원본==false)
+  fee-delegation 서명변조 (applepie 오버레이 넷, sendRawTampered):
+    fd-sender/fd-feepayer-sig-invalid-rejected ·
+    fee-delegated-sender/feepayer-sig-invalid-rejected
+  eth-call-revert-returns-error (Reverter 배포→callError) ·
+  fee-delegate-sign-rpc-present (methodPresent eth_signRawFeeDelegateTransaction)
+```
+
+**잔여 미이관 14건** (등록 56 − 이관과 동명 spec 보유 42): api 1(ws-subscribe-logs 구독
+순서) · consensus 3(epoch 대기 1 · 토폴로지 파생 2 — spec 이 자기 토폴로지를 참조하는
+수단이 없다, 설계상 의도적 경계) · gas-policy 1(tipcap-underpriced, 라이브 반증 보류) ·
+accounts 5(external 2 operator 키 · zero-address/precompile SDK 정적가드 2 · set-code
+0x04 1) · hardfork 4(P256 바이너리 3 · govminter 코드스왑 반증 1).
