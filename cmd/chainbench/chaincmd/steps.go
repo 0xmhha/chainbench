@@ -304,3 +304,42 @@ func printNodeSet(out io.Writer, ns node.NodeSet) {
 	}
 	_ = w.Flush()
 }
+
+// newNetEnodeCmd prints each node's enode — stage ③, derived from keys and
+// place. It writes nothing; it exposes the same derivation the config step
+// uses for static-nodes so the enodes are inspectable on their own.
+func newNetEnodeCmd() *cobra.Command {
+	var dataDir string
+	var nodeIdx int
+	var jsonOut bool
+	cmd := &cobra.Command{
+		Use:   "enode",
+		Short: "Show each node's enode (derived from keys and place; writes nothing)",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if dataDir == "" {
+				return fmt.Errorf("--workspace-dir is required")
+			}
+			out, err := chainsetup.NetEnodes(cmd.Context(), deps(cmd), chainsetup.NetEnodesIn{
+				DataDir: dataDir, Node: nodeIdx,
+			})
+			if err != nil {
+				return err
+			}
+			if jsonOut {
+				enc := json.NewEncoder(cmd.OutOrStdout())
+				enc.SetIndent("", "  ")
+				return enc.Encode(out.Enodes)
+			}
+			w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, "NODE\tLABEL\tENODE")
+			for _, e := range out.Enodes {
+				fmt.Fprintf(w, "%d\t%s\t%s\n", e.Index, e.Label, e.Enode)
+			}
+			return w.Flush()
+		},
+	}
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
+	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based); default all")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the enode list as JSON")
+	return cmd
+}

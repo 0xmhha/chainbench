@@ -146,8 +146,12 @@
 > `UpDeploy`(`--stage provision`→`--stage deploy`). C1 이 놓친 문자열 중간의 `net <cmd>`
 > 잔재도 정리. MCP `chainbench_net_*` 는 별도 표면이라 유지(후속). 라이브: `chain up
 > --stage deploy` 가 place/build/deploy 만 수행.
-> 남은 C: C3 `chain enode`(기존 `node.Enode`·`PeerList` 파생 노출)+config 노드단위 ·
-> C4 CLI↔DSL 대응표(공유 코어 검증)+4갈래 재검증.
+> **C3 완료 (2026-09-01):** `chain enode` 신설 — 기존 `node.Enode`(원자) + preset 공개키
+> + `Netmap`(배치) 파생을 조회로 노출한다(`chainsetup.NetEnodes`). 쓰지 않는다. keys·place
+> 가 전제이며 없으면 어느 스텝을 돌릴지 알려준다. enode host 는 기록된 노드 주소(peer 가
+> 접속하는 것)로 docker 번역 없음 — config 의 static-nodes 와 바이트 일치(라이브 교차검증).
+> config 노드 단위(`--node N --set`)는 사용자 C3 우선순위 밖이라 후속으로 분리.
+> 남은 C: C4 CLI↔DSL 대응표(공유 코어 검증)+4갈래 재검증. (config 노드단위는 그 뒤/독립)
 
 - `net` 그룹 폐기 → **`chain`** 그룹: `keys → place → enode → genesis → config →
   build → deploy → run` (+`up`, `stop/status/resume`). 단계 사전과 1:1.
