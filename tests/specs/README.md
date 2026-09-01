@@ -553,8 +553,7 @@ accounts (+10) → fresh 4노드(--wait-blocks 2): pass=10
   fee-delegate-sign-rpc-present (methodPresent eth_signRawFeeDelegateTransaction)
 ```
 
-**잔여 미이관 14건** (등록 56 − 이관과 동명 spec 보유 42): api 1(ws-subscribe-logs 구독
-순서) · consensus 3(epoch 대기 1 · 토폴로지 파생 2 — spec 이 자기 토폴로지를 참조하는
-수단이 없다, 설계상 의도적 경계) · gas-policy 1(tipcap-underpriced, 라이브 반증 보류) ·
-accounts 5(external 2 operator 키 · zero-address/precompile SDK 정적가드 2 · set-code
-0x04 1) · hardfork 4(P256 바이너리 3 · govminter 코드스왑 반증 1).
+**잔여 미이관 14건**: 카테고리·소스파일·사유·손실의 정본 표는
+[[legacy-retirement-plan]] §5 (`docs/dev/legacy-retirement-plan.md`). 세 갈래 —
+A 설계 경계 6건(토폴로지 자기참조·구독 순서·SDK 정적가드), B 외부 블로커 3건
+(external 2·set-code 0x04 1), C 라이브 반증 4건(P256 3·govminter 코드스왑 1).
