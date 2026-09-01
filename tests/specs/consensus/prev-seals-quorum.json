@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "id": "prev-seals-quorum",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "waitBlock": { "target": 3, "timeout": "60s", "pollInterval": "1s" } },
+    { "read": { "source": "derive", "op": "quorum", "of": ["4"], "save": "q" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["@latest"],
+      "select": "prevCommittedSeal.sealers.#", "compare": "GreaterOrEqual", "expected": "$q" },
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["@latest"],
+      "select": "prevPreparedSeal.sealers.#", "compare": "GreaterOrEqual", "expected": "$q" }
+  ]
+}

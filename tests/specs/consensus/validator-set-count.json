@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "id": "validator-set-count",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "waitFor": { "source": "blockNumber", "compare": "GreaterOrEqual", "expected": "1",
+                   "timeout": "60s", "pollInterval": "1s" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"],
+      "select": "#", "compare": "GreaterOrEqual", "expected": "4" }
+  ]
+}

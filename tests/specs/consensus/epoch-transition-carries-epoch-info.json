@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "epoch-transition-carries-epoch-info",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "waitBlock": { "target": 140, "timeout": "240s", "pollInterval": "2s" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["0x8c"],
+      "select": "epochInfo.validators.#", "compare": "GreaterOrEqual", "expected": "1" }
+  ]
+}
