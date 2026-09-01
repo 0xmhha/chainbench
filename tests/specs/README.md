@@ -38,7 +38,7 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | `network` | 4 | **4** | ✅ `examples/specs/network-*.json`(선행 이관분) 3건 + **admin-peers-populated** 라이브(gstable) — `rpcCall admin_peers` 를 `select:"#"`(배열 길이)≥1 & `select:"0.id"`(배열 인덱싱) NotEqual "" 로 검증. 갭 없음 |
 | `accounts` | 35 | **20** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
 | `gas-policy` | 17 | **16** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
-| `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
+| `hardfork` | 8 | **4** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
 | `system-contracts` | 46 | **45** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. **비회원 로컬서명 3건**(direct-blacklist·non-member-configure-minter·sender-blacklisted rejected — `newAccount`+`sendTx key` 로컬서명) + **burn-refund 라이프사이클 8건**(burn-transfer-event·burn-cancel-refundable·burn-execute-no-refundable·burn-reject-refundable·claim-burn-refund-succeeds·burn-refund-events·claim-zero-refund-reverts·claim-burn-refund-double-reverts — **Boho-v2 넷**(genesis 오버레이)에서 proposeBurn→cancel/disapprove/claim + refundableBalance **전후 델타**(`derive diff`) 어세션으로 재사용 넷 누적 간섭 회피). 잔여 11건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
@@ -445,7 +445,9 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
 | `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
-| `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
+| ~~`anzeon-active-before-boho` · `prealloc-preserved-across-boho`~~ ✅ **이관 완료(라이브 pass, bohoBlock=10 넷)** — spec 의 `hardforks:{"boho":10}` 선언이 suite 를 지연 포크 넷으로 구성한다(genesis config.bohoBlock=10 확인). anzeon-active 는 `eth_getCode(GovValidator,"0x1")` Regexp(실코드), prealloc 은 블록 1 잔고 저장→`waitFor blockNumber≥11`(포크 통과 신호)→latest 잔고 Equal·nonce 0x0 | — |
+| `govminter-code-changes-at-boho` | **라이브 반증**: chainbench genesis 빌더는 bohoBlock=10 이어도 GovMinter 코드를 처음부터 최종본으로 굽는다 — 블록 1 과 latest 의 getCode 가 동일(38250 hex, md5 일치, head 0x20 에서 실측). "v1→v2 코드 스왑" 신호 자체가 이 구성에는 없다 | delayed-boho 넷에 v1 코드를 굽는 genesis 소스(체인 특화 충실도) 확보 후 재분류 — P256 2건과 같은 부류 |
+| `p256-inactive-before-boho` | 위 P256 2건과 동일 — 이 빌드의 0x100 은 포크 후에도 "0x" 를 반환해 "활성" 쪽 절반이 성립 불가 | Boho/P256 탑재 바이너리 확보 후 |
 
 ### system-contracts 잔여 21건과 필요한 문법 확장
 
@@ -508,8 +510,12 @@ accounts (+3) → applepie 오버레이 넷(spec 의 chain.genesisOverlay 로 �
                   feepayer-insufficient-rejected
 ```
 
-**잔여 미이관 26건** (등록 56 − 이관과 동명 spec 보유 30):
+**잔여 미이관 24건** (등록 56 − 이관과 동명 spec 보유 32):
 accounts 15 (fee-delegation 서명변조 4 · nonce 4 · SDK 정적가드 2 · external 2 ·
 eth-call-revert 1 · sign-rpc 프로브 1 · set-code(0x04) 1) · api 1 (ws-subscribe-logs) ·
 consensus 3 (epoch 대기 · 토폴로지 파생 2) · gas-policy 1 (tipcap-underpriced, 라이브 반증 보류) ·
-hardfork 6 (P256 바이너리 2 · delayed-boho 교차포크 4) · system-contracts 0.
+hardfork 4 (P256 바이너리 3 · govminter 코드스왑 반증 1) · system-contracts 0.
+
+delayed-boho 2건(anzeon-active·prealloc-preserved)은 위 배치 뒤에 이관됐다: spec 이
+`hardforks` 로 지연 포크를 선언하면 suite 가 그 넷을 구성한다. govminter-code-changes 는
+라이브 반증(코드 스왑 신호 부재), p256-inactive 는 기존 P256 반증에 합류.
