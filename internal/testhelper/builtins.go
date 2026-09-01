@@ -21,10 +21,11 @@ import (
 // on). Kept as typed-free string constants so the registry and specs share one
 // source of truth.
 const (
-	actionSendTx     = "sendTx"
-	actionWaitBlock  = "waitBlock"
-	actionWaitFor    = "waitFor"
-	actionNewAccount = "newAccount"
+	actionSendTx          = "sendTx"
+	actionWaitBlock       = "waitBlock"
+	actionWaitFor         = "waitFor"
+	actionNewAccount      = "newAccount"
+	actionSendRawTampered = "sendRawTampered"
 
 	assertChainID       = "chainId"
 	assertBlockNumber   = "blockNumber"
@@ -39,6 +40,9 @@ const (
 	assertSameBlockHash = "sameBlockHash"
 	assertBaseFee       = "baseFee"
 	assertEstimateGas   = "estimateGas"
+	assertTxMined       = "txMined"
+	assertCallError     = "callError"
+	assertMethodPresent = "methodPresent"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.
@@ -78,16 +82,21 @@ func Register(r interp.Registry) {
 	r.RegisterAction(actionWaitFor, waitForAction{})
 	r.RegisterAction(interp.ActionRead, readAction{})
 	r.RegisterAction(actionNewAccount, newAccountAction{})
+	r.RegisterAction(actionSendRawTampered, sendRawTamperedAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
 	r.RegisterAssertion(assertMetric, metricAssertion{})
+	r.RegisterAssertion(assertCallError, callErrorAssertion{})
+	r.RegisterAssertion(assertMethodPresent, methodPresentAssertion{})
 	for _, a := range builtinAssertions() {
 		r.RegisterAssertion(a.name, a)
 		r.RegisterReader(a.name, interp.Reader(a.read))
 	}
+	r.RegisterReader(assertTxMined, interp.Reader(readTxMined))
+	r.RegisterAssertion(assertTxMined, txMinedAssertion{})
 }
 
 // waitBlockAction blocks until the target node's height reaches "target" (a
@@ -251,18 +260,28 @@ func sendTxLocal(ctx context.Context, ac *interp.ActionCtx, keyHex string) error
 		// Explicit fee caps ride a type-0x02 send; without them the wallet
 		// suggests fees (which on an anzeon chain means the forced gasTip, so
 		// a case probing the authorized-account exemption must set its own).
+		// An explicit nonce (out-of-order / replacement cases) forces the same
+		// fully-specified send, since SendCoin auto-picks the nonce.
 		maxFee, hasMaxFee := hexQuantity(ac.Args["maxFeePerGas"])
 		tip, hasTip := hexQuantity(ac.Args["maxPriorityFeePerGas"])
 		if hasMaxFee != hasTip {
 			return fmt.Errorf("dsl: sendTx key: maxFeePerGas and maxPriorityFeePerGas come together")
 		}
-		if hasMaxFee {
-			feeCap, ok1 := new(big.Int).SetString(strings.TrimPrefix(maxFee, "0x"), 16)
-			tipCap, ok2 := new(big.Int).SetString(strings.TrimPrefix(tip, "0x"), 16)
-			if !ok1 || !ok2 {
-				return fmt.Errorf("dsl: sendTx key: bad fee quantity")
+		noncePtr, nerr := noncePointer(ac.Args["nonce"])
+		if nerr != nil {
+			return nerr
+		}
+		if hasMaxFee || noncePtr != nil {
+			dargs := accounts.DynamicTxArgs{ToHex: to, Value: value, Gas: 21000, Nonce: noncePtr}
+			if hasMaxFee {
+				feeCap, ok1 := new(big.Int).SetString(strings.TrimPrefix(maxFee, "0x"), 16)
+				tipCap, ok2 := new(big.Int).SetString(strings.TrimPrefix(tip, "0x"), 16)
+				if !ok1 || !ok2 {
+					return fmt.Errorf("dsl: sendTx key: bad fee quantity")
+				}
+				dargs.GasFeeCap, dargs.GasTipCap = feeCap, tipCap
 			}
-			hash, err = w.SendDynamicFeeGas(ctx, to, value, feeCap, tipCap)
+			hash, err = w.SendDynamicFeeTx(ctx, dargs)
 			break
 		}
 		hash, err = w.SendCoin(ctx, to, value)
@@ -289,6 +308,22 @@ func sendTxLocal(ctx context.Context, ac *interp.ActionCtx, keyHex string) error
 	}
 	ac.Receipt = receipt
 	return checkTxOutcome(hash, receipt, ac.Args)
+}
+
+// noncePointer reads an optional "nonce" arg (decimal or 0x-hex) as a *uint64,
+// returning nil when absent so the wallet auto-picks the next nonce. An explicit
+// nonce is what lets a spec submit out of order or replace a pending tx.
+func noncePointer(v any) (*uint64, error) {
+	q, ok := hexQuantity(v)
+	if !ok {
+		return nil, nil
+	}
+	n, ok := new(big.Int).SetString(strings.TrimPrefix(q, "0x"), 16)
+	if !ok || n.Sign() < 0 || !n.IsUint64() {
+		return nil, fmt.Errorf("dsl: sendTx: bad nonce %v", v)
+	}
+	u := n.Uint64()
+	return &u, nil
 }
 
 // parseValueWei reads a tx "value" arg (decimal or 0x-hex wei) as a big.Int,
