@@ -174,6 +174,15 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
 
   "topology": { "bp": 7, "en": 5, "boot": 0,
                 "sync": { "bp1": "archive", "default": "full" } },
+  // 구현(2026-09-02, S1): count 형(`bp`/`en`)에 더해 노드 테이블 형을 지원한다.
+  //   "topology": { "nodes": [
+  //     { "role": "bp", "binary": "wemix" },
+  //     { "role": "bp", "binary": "wbft" },
+  //     { "role": "en", "binary": "wbft", "sync": "snap" } ] }
+  // 각 노드가 자기 role 과 binary 를 직접 적고, binary 는 위 binaries 맵의 키를
+  // 가리킨다. 같은 합의 family 의 서로 다른 빌드를 한 체인에 동시 구성하는 정적
+  // 혼합용이다(교차 family 혼합은 fork 가 필요 — upgrade 경로). CLI 는 같은 코드로
+  // `chain place/up --topology t.yaml --binaries wbft=/path/gwbft` 를 받는다.
 
   // ── Adjunct: 있으면 적용, 없으면 기본값
   "hardforks": { "croissant": 100, "brioche": 50 },

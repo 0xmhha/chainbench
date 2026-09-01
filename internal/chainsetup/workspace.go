@@ -91,6 +91,10 @@ type State struct {
 	// own — node wins). Stored key-agnostically so the surface and the storage
 	// do not change when the set of overridable knobs grows.
 	ConfigSet map[string][]string `json:"configSet,omitempty"`
+	// Binaries maps a per-node binary name (as topology entries reference it)
+	// to its resolved path. Empty means every node runs the single Binary. It
+	// is how one network runs mixed builds concurrently.
+	Binaries map[string]string `json:"binaries,omitempty"`
 	// Request is what `chain up` was asked to compose, recorded at the new
 	// step so a run that dies before the results exist can be resumed from
 	// what it was asked, not re-asked. Its DataDir is left empty: the

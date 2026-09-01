@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"context"
 	"encoding/json"
@@ -242,6 +243,42 @@ nodes:
 	}
 	if st.Bootnode != 1 {
 		t.Errorf("bootnode = %d, want 1", st.Bootnode)
+	}
+}
+
+func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
+	// A topology naming a per-node binary, plus the name→path map, records the
+	// binary on each node and stores the map on the workspace for launch.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Binary: "stable"},
+		{Index: 2, Role: "bp", Binary: "wbft"},
+		{Index: 3, Role: "en", Binary: "wbft"},
+	}}
+	bins := map[string]string{"stable": "/opt/gstable", "wbft": "/opt/gwbft"}
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+		DataDir: dir, Topology: topo, Binaries: bins,
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	st := stateOf(t, dir, d)
+	want := []string{"stable", "wbft", "wbft"}
+	if len(st.Nodes) != len(want) {
+		t.Fatalf("got %d nodes, want %d", len(st.Nodes), len(want))
+	}
+	for i, w := range want {
+		if st.Nodes[i].Binary != w {
+			t.Errorf("node%d binary = %q, want %q", i+1, st.Nodes[i].Binary, w)
+		}
+	}
+	if st.Binaries["stable"] != "/opt/gstable" || st.Binaries["wbft"] != "/opt/gwbft" {
+		t.Errorf("state binaries = %v", st.Binaries)
 	}
 }
 

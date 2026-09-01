@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -51,6 +52,12 @@ type NetUpIn struct {
 	Endpoints        int    `json:"endpoints,omitempty"`
 	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
 	TopologyPath     string `json:"topologyPath,omitempty"`
+	// Topology, when set, is the inline per-node layout, the DSL's in-memory
+	// equivalent of TopologyPath. It wins over Validators/Endpoints.
+	Topology *node.Topology `json:"topology,omitempty"`
+	// Binaries maps each per-node binary name the topology references to its
+	// resolved path. Empty means every node runs Binary.
+	Binaries map[string]string `json:"binaries,omitempty"`
 	// Peering is the peer graph to wire ("mesh" default, "proxied").
 	Peering string `json:"peering,omitempty"`
 	// Server selects where the nodes run and on what ports, from the server
@@ -164,7 +171,8 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		"place": func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
-				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath, Peering: in.Peering,
+				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
+				Topology: in.Topology, Binaries: in.Binaries, Peering: in.Peering,
 				Server: in.Server,
 			})
 			return r.Detail, err

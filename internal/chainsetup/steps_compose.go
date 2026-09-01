@@ -108,6 +108,10 @@ type AllocateOpts struct {
 	// exercise a path other than full sync. Validators ignore it: a node that
 	// seals blocks must hold full state.
 	EndpointSyncMode string
+	// Binaries maps a per-node binary name (as the topology references it) to
+	// its resolved path, recorded on the workspace so launch resolves each
+	// node's binary. Empty means every node runs the single binary.
+	Binaries map[string]string
 	// Topology, when set, gives the layout explicitly — one entry per node, in
 	// launch order, each with its own role and sync mode. It replaces the
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
@@ -136,7 +140,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = node.LaunchReq{Role: role}
+			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -238,6 +242,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			Label:      string(p.Label),
 			Role:       string(reqs[i].Role),
 			SyncMode:   modes[i],
+			Binary:     reqs[i].Binary,
 			DataDir:    layout.DataDir(p.Label),
 			ConfigPath: layout.ConfigPath(p.Label),
 			LogPath:    layout.LogPath(p.Label),
@@ -253,6 +258,9 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	w.state.Peering = string(peering)
 	w.state.Nodes = nodes
+	if len(opts.Binaries) > 0 {
+		w.state.Binaries = opts.Binaries
+	}
 	// Counted from the resolved placements, not the requested count: a topology
 	// decides the validator set, and the genesis step sizes itself from this.
 	w.state.Validators = validators

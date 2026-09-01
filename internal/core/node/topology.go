@@ -34,6 +34,12 @@ type Entry struct {
 	Role     string `yaml:"role"`                // bp|validator, en|endpoint, boot
 	SyncMode string `yaml:"sync_mode,omitempty"` // full (default) | snap | archive
 	Bootnode bool   `yaml:"bootnode,omitempty"`
+	// Binary names which binary this node runs, by the key an operator declared
+	// in the binaries map ("wemix", "wbft"). Empty means the composition's
+	// single binary. A per-node binary lets one network run mixed builds of the
+	// same consensus family concurrently (a cross-family mix needs a fork; see
+	// the upgrade path).
+	Binary string `yaml:"binary,omitempty"`
 }
 
 // Load reads and validates a topology YAML file.

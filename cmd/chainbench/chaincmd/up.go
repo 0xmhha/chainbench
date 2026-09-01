@@ -21,7 +21,7 @@ func newNetUpCmd() *cobra.Command {
 		endpointSyncMode, topologyPath, stage string
 		keysSource, bootnode                  string
 		chainID                               int64
-		genesisSet, launchSet                 []string
+		genesisSet, launchSet, binaries       []string
 		overlayPath                           string
 		peering                               string
 		docker                                bool
@@ -42,12 +42,17 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			bins, err := parseBinaries(binaries)
+			if err != nil {
+				return err
+			}
 			out, err := chainsetup.NetUp(cmd.Context(), deps(cmd), chainsetup.NetUpIn{
 				DataDir: dataDir, Stage: chainsetup.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
 				Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
+				Binaries:   bins,
 				Server:     sf.Ref(),
 				Docker:     docker,
 				KeysSource: keysSource,
@@ -74,7 +79,8 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
-	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode); overrides --validators/--endpoints")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
+	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")
 	cmd.Flags().StringVar(&peering, "peering", "", "peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "", "preset (default) or generate")
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")

@@ -26,6 +26,19 @@ import (
 // persist PIDs so a later step (or a re-run) can reach the same processes.
 
 // binary resolves the node binary: the argument wins, else the workspace's.
+// binaryFor resolves the binary one node runs: its per-node binary from the
+// binaries map when the topology assigned one, otherwise the fallback (the
+// composition's single binary). A workspace with no per-node binaries always
+// returns the fallback, so its behavior is unchanged.
+func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
+	if ns.Binary != "" {
+		if path := w.state.Binaries[ns.Binary]; path != "" {
+			return path
+		}
+	}
+	return fallback
+}
+
 func (w *Workspace) binary(arg string) (string, error) {
 	if arg != "" {
 		return arg, nil
@@ -70,7 +83,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 		}
 		for _, ns := range nodes {
 			spec := process.SpecOf(ns)
-			spec.Binary = bin
+			spec.Binary = w.binaryFor(ns, bin)
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
@@ -238,12 +251,12 @@ func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
 		return "", err
 	}
 	spec := process.SpecOf(ns)
-	spec.Binary = bin
+	spec.Binary = w.binaryFor(ns, bin)
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start node%d: %w", ns.Index, err)
 	}
-	if err := w.recordLaunch(ni, h.PID, bin); err != nil {
+	if err := w.recordLaunch(ni, h.PID, spec.Binary); err != nil {
 		return "", fmt.Errorf("chainsetup: start node%d: %w", index, err)
 	}
 	detail := fmt.Sprintf("node%d started (pid %d)", index, h.PID)
@@ -599,7 +612,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			return started, err
 		}
 		spec := process.SpecOf(ns)
-		spec.Binary = bin
+		spec.Binary = w.binaryFor(ns, bin)
 		if len(spec.Args) == 0 {
 			_, placed, peering, pubkey, perr := w.peerPlan(p)
 			if perr != nil {
@@ -620,7 +633,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 		if err != nil {
 			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
-		if err := w.recordLaunch(i, h.PID, bin); err != nil {
+		if err := w.recordLaunch(i, h.PID, spec.Binary); err != nil {
 			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
 		started++

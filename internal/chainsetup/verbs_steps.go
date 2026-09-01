@@ -111,12 +111,18 @@ type NetAllocateIn struct {
 	// Server selects where the nodes are placed and on what ports, from the
 	// operator's server set. Its zero value uses the built-in local plan.
 	Server resource.ServerRef
+	// Topology, when set, is the inline per-node layout (role/sync/bootnode/
+	// binary), the DSL's way to declare what --topology gives a file. It wins
+	// over Validators/Endpoints.
+	Topology *node.Topology
+	// Binaries maps per-node binary names to paths (with a per-node topology).
+	Binaries map[string]string
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
 func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
-	var topo *node.Topology
-	if in.TopologyPath != "" {
+	topo := in.Topology
+	if topo == nil && in.TopologyPath != "" {
 		loaded, err := node.Load(in.TopologyPath)
 		if err != nil {
 			return StepOut{}, err
@@ -158,7 +164,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		return ws.Allocate(AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
-			Pool: resolved.Pool, SetPath: in.Server.SetPath,
+			Pool: resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
 		})
 	})
 	return StepOut{Detail: detail}, err
