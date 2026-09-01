@@ -278,10 +278,20 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	}
 	// The workspace knows the whole node table — indices, hosts, every
 	// endpoint — so the engine attaches to that, not to bare URLs, and fault
-	// steps get a control over the recorded processes.
+	// steps get a control over the recorded processes. The recorded RPC host is
+	// the node's own (a container's internal address under --docker, an SSH
+	// host under a remote target); the dial address a test must actually use is
+	// the localmap-translated endpoint, so overwrite each node's RPCURL with the
+	// matching entry from NetEndpoints (same node order). Without this a
+	// docker/remote run dials the untranslated host and times out.
 	var nodes *node.NodeSet
 	if st, err := chainsetup.NetworkStatus(ctx, sd, chainsetup.NetworkStatusIn{DataDir: up.DataDir}); err == nil && len(st.Nodes.Nodes) > 0 {
 		ns := st.Nodes
+		if len(ns.Nodes) == len(endpoints) {
+			for i := range ns.Nodes {
+				ns.Nodes[i].RPCURL = endpoints[i]
+			}
+		}
 		nodes = &ns
 	}
 	return composed{

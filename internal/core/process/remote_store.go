@@ -29,10 +29,14 @@ func NewRemoteFileStore(run Runner) RemoteFileStore {
 	return RemoteFileStore{Run: run, Writer: NewRemoteDriver(run)}
 }
 
-// Exists reports whether remotePath is present on the host. A `test -f` exit of
-// 0 means present, non-zero means absent; only a transport failure is an error.
+// Exists reports whether remotePath is present on the host. It uses `test -e`,
+// not `test -f`, so a directory counts as present: the start preflight checks
+// datadirs (directories) alongside the binary/genesis/config (files), and the
+// local store's os.Stat already treats both alike — the two must agree. A
+// `test -e` exit of 0 means present, non-zero means absent; only a transport
+// failure is an error.
 func (s RemoteFileStore) Exists(ctx context.Context, remotePath string) (bool, error) {
-	res, err := s.Run(ctx, "test -f "+shq(remotePath))
+	res, err := s.Run(ctx, "test -e "+shq(remotePath))
 	if err != nil {
 		return false, fmt.Errorf("driver: remote exists %s: %w", remotePath, err)
 	}

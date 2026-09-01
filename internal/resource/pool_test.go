@@ -229,3 +229,43 @@ func TestPool_ValidateRefusesSlotsTheBandsCannotCarry(t *testing.T) {
 		t.Errorf("the refusal should name the slot count and the colliding port: %v", err)
 	}
 }
+
+// TestPool_ValidateAllowsZeroStepMetrics guards the docker server set's shape:
+// a metrics band with step 0 means one scrape port per machine, and place()
+// runs every slot after the first with metrics-off. Validate must plan the same
+// way, or a valid multi-slot pool is rejected before anything launches.
+func TestPool_ValidateAllowsZeroStepMetrics(t *testing.T) {
+	p := resource.Pool{
+		Hosts: []resource.Host{{Name: "server1", Addr: "127.0.0.1"}},
+		Slots: 4,
+		Ports: resource.Bands{
+			P2P:     resource.Band{Base: 30301, Step: 2},
+			RPC:     resource.Band{Base: 8601, Step: 1},
+			WS:      &resource.Band{Base: 8701, Step: 1},
+			Auth:    &resource.Band{Base: 8501, Step: 1},
+			Metrics: &resource.Band{Base: 6060, Step: 0},
+		},
+	}
+	if err := p.Validate(); err != nil {
+		t.Fatalf("a 4-slot pool with a shared (step 0) metrics port must validate: %v", err)
+	}
+	// And the placement it validated actually assigns the shared port once.
+	assigned, err := resource.Assign(p, []resource.Request{
+		{Role: "validator"}, {Role: "validator"}, {Role: "validator"}, {Role: "validator"},
+	})
+	if err != nil {
+		t.Fatalf("Assign: %v", err)
+	}
+	metricsPorts := 0
+	for _, pl := range assigned.Placements() {
+		if pl.Ports.Metrics != 0 {
+			metricsPorts++
+			if pl.Ports.Metrics != 6060 {
+				t.Errorf("the one metrics port should be 6060, got %d", pl.Ports.Metrics)
+			}
+		}
+	}
+	if metricsPorts != 1 {
+		t.Errorf("exactly one node should expose metrics on a shared-port machine, got %d", metricsPorts)
+	}
+}

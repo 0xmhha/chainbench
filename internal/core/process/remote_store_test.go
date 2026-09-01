@@ -47,7 +47,9 @@ func TestRemoteFileStore_Exists(t *testing.T) {
 			if ok != tc.want {
 				t.Fatalf("exists = %v, want %v", ok, tc.want)
 			}
-			if !strings.Contains(gotCmd, "test -f") || !strings.Contains(gotCmd, "genesis.json") {
+			// test -e, not test -f: a datadir is a directory and must count as
+			// present, the way the local store's os.Stat treats it.
+			if !strings.Contains(gotCmd, "test -e") || !strings.Contains(gotCmd, "genesis.json") {
 				t.Fatalf("unexpected probe command: %q", gotCmd)
 			}
 		})
