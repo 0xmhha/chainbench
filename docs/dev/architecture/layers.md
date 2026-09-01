@@ -85,13 +85,14 @@ flowchart TD
 > 3체인 실행 추적은 [[module-responsibilities]](module-responsibilities.md) 에 있고,
 > 거기서 이 문서의 보정 3건(B1 `testspec` 분할 · B2 노드 생명주기 소유자 · B3 관심사 열)을 제기한다.
 
-## 3. 모듈 배치 (44개 전수 — R1 −9·R2 +1·R3 −3; 2026-09-01)
+## 3. 모듈 배치 (43개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01)
 
 ### L0 커널 — 공용 어휘
 
 | 패키지 | 담는 것 |
 |---|---|
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
+| `testsupport` | **테스트 게이트**(제품 코드 없음) — 여러 패키지의 _test.go 가 공유하는 스킵 헬퍼(`ServersBuildDir`·`EnvDockerServers`). 패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산
 
@@ -152,8 +153,6 @@ flowchart TD
 |---|---|
 | `testengine` | 테스트 엔진 — 바깥 흐름 `RunSuite` 가 4단계를 소유한다(R4): ① DSL 이 선언한 체인을 chainsetup 으로 구성 ② pre-test hook ③ test ④ post-test hook(②~④는 interpreter 가 spec 에서 수행). 자체 조립 경로(`NewBuildEnv`·`NewLocalEngine`)는 R4 에서 삭제 — 구성 소유자는 chainsetup 하나이고, testengine → chainsetup 의존은 이 구조의 일부다(P6.1 게이트 대체) |
 | `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/cases/` 선언 + `testengine.RunSuite`(R4; app 은 MCP 경유 위임)가 대신한다 |
-| `testkit` | **(레거시)** 케이스 레지스트리 |
-| `core/pipeline/testrun` | **(레거시)** 케이스 실행 |
 
 ### L5 유스케이스
 
@@ -271,7 +270,6 @@ flowchart TD
 | `core/collector` | 샘플 윈도우 | ✅ |
 | `core/session` · `core/keyring` · `core/capability` | 각자 소유 | ✅ |
 | `testengine` | 조립 시 캐시 | ◐ 검토 |
-| `testkit` | 레거시 전역 케이스 레지스트리 | ❌ 삭제 예정 |
 
 ---
 

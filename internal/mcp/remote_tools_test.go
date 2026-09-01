@@ -35,16 +35,3 @@ func TestRemoteRPCTool(t *testing.T) {
 		t.Error("unknown network should error")
 	}
 }
-
-func TestTestListTool(t *testing.T) {
-	// tests/all is imported by the test binary, so at least one case is registered.
-	text, isErr := callText(t, newServer(), "chainbench_test_list", map[string]any{})
-	if isErr || text == "no test cases" || text == "" {
-		t.Fatalf("test_list should list registered cases: err=%v text=%q", isErr, text)
-	}
-	// a category that does not exist yields the empty message.
-	text, _ = callText(t, newServer(), "chainbench_test_list", map[string]any{"category": "does-not-exist"})
-	if text != "no test cases" {
-		t.Errorf("unknown category should be empty: %q", text)
-	}
-}

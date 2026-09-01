@@ -185,60 +185,6 @@ func TestVerifyCmd_HTTPMock(t *testing.T) {
 	}
 }
 
-func TestTestCmd_RunsCasesViaAttach(t *testing.T) {
-	// Mock node answering every method with a value (the RPC-presence case passes).
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			ID int `json:"id"`
-		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x205b"})
-	}))
-	defer srv.Close()
-
-	out, err := run(t, "test", "--chain", "wbft", "--rpc", srv.URL, "--name", "fee-delegate-sign-rpc-present")
-	if err != nil {
-		t.Fatalf("test cmd: %v\n%s", err, out)
-	}
-	if !strings.Contains(out, "fee-delegate-sign-rpc-present") || !strings.Contains(out, "pass") {
-		t.Errorf("expected fee-delegate-sign-rpc-present pass in output:\n%s", out)
-	}
-	if !strings.Contains(out, "pass=1") {
-		t.Errorf("expected pass=1:\n%s", out)
-	}
-}
-
-func TestTestCmd_PersistsAndReport(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			ID int `json:"id"`
-		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x205b"})
-	}))
-	defer srv.Close()
-
-	dir := t.TempDir()
-	writeWorkspace(t, dir, "wbft", wsNode(dir, 1, "endpoint", portOf(t, srv.URL), 0))
-
-	// Run test against the recorded network; results persist to runs.json.
-	if _, err := run(t, "test", "--workspace-dir", dir, "--name", "fee-delegate-sign-rpc-present"); err != nil {
-		t.Fatalf("test: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(dir, "runs.json")); err != nil {
-		t.Fatalf("runs.json not written: %v", err)
-	}
-
-	// report reads them back.
-	out, err := run(t, "report", "--workspace-dir", dir)
-	if err != nil {
-		t.Fatalf("report: %v\n%s", err, out)
-	}
-	if !strings.Contains(out, "test/fee-delegate-sign-rpc-present") || !strings.Contains(out, "total=1 ok=1") {
-		t.Errorf("report output:\n%s", out)
-	}
-}
-
 func TestReportCmd_Empty(t *testing.T) {
 	out, err := run(t, "report", "--workspace-dir", t.TempDir())
 	if err != nil {
@@ -246,28 +192,6 @@ func TestReportCmd_Empty(t *testing.T) {
 	}
 	if !strings.Contains(out, "no runs recorded") {
 		t.Errorf("expected empty report:\n%s", out)
-	}
-}
-
-func TestTestCmd_FromState(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			ID int `json:"id"`
-		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": "0x205b"})
-	}))
-	defer srv.Close()
-
-	// Record a workspace pointing at the mock, then run test --workspace-dir.
-	dir := t.TempDir()
-	writeWorkspace(t, dir, "wbft", wsNode(dir, 1, "endpoint", portOf(t, srv.URL), 0))
-	out, err := run(t, "test", "--workspace-dir", dir, "--name", "fee-delegate-sign-rpc-present")
-	if err != nil {
-		t.Fatalf("test --workspace-dir: %v\n%s", err, out)
-	}
-	if !strings.Contains(out, "pass=1") {
-		t.Errorf("expected pass=1 from state:\n%s", out)
 	}
 }
 

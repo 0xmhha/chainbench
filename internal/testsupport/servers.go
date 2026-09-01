@@ -1,4 +1,7 @@
-package testkit
+// Package testsupport holds cross-package test gates: helpers a _test.go in one
+// package shares with a _test.go in another, which a package-local test file
+// cannot. It carries no product code.
+package testsupport
 
 import (
 	"os"

@@ -10,17 +10,18 @@ package app_test
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/testsupport"
 
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 func TestLive_RunSuiteSetsUpRunsAndReports(t *testing.T) {
-	build := testkit.ServersBuildDir(t)
+	build := testsupport.ServersBuildDir(t)
 
 	spec := filepath.Join("..", "..", "tests", "specs", "consensus", "wbft-seals-quorum.json")
 	if _, err := os.Stat(spec); err != nil {

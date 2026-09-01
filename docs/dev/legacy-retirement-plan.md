@@ -1,5 +1,11 @@
 # 레거시 경로 은퇴 계획 (legacy retirement)
 
+> **[상태] 실행 완료 (2026-09-01, R5).** `internal/testkit`·`internal/core/pipeline/testrun`·
+> `cmd/chainbench test`·MCP `chainbench_test`/`chainbench_test_list`·레거시 케이스 패키지
+> (`tests/anzeon`·`tests/external`·`tests/wbft`·`tests/all`)를 삭제했다. 공용 테스트 게이트
+> `ServersBuildDir` 는 `internal/testsupport` 로 이관. 남은 미이관 5건은 §5 참조(전부 이관 대상 아님).
+> 아래는 그 은퇴에 이르기까지의 순서·매핑·블로커 기록이다.
+
 > **[이력]** 레거시 은퇴 계획. 진행은 worklist.
 > **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
 > 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.

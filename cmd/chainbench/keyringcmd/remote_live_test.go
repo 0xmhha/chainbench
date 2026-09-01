@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/remote"
-	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/testsupport"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -25,7 +26,7 @@ import (
 // selection) runs unconditionally in keyring_test.go.
 func serversBuildDir(t *testing.T) string {
 	t.Helper()
-	build := testkit.ServersBuildDir(t)
+	build := testsupport.ServersBuildDir(t)
 	// Access mirrors the real server set: user + password. The srv:// path reads
 	// them from the server set; the direct user@host form reads the password
 	// from the environment, so it is exported here from the same file.

@@ -8,11 +8,12 @@ package process_test
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/testkit"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/testsupport"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -22,7 +23,7 @@ import (
 // production uses — and returns its process.
 func server1Driver(t *testing.T) process.Driver {
 	t.Helper()
-	build := testkit.ServersBuildDir(t)
+	build := testsupport.ServersBuildDir(t)
 	acc, err := resource.Opener{
 		ServerSet: filepath.Join(build, "server-set.yaml"), Docker: true, Env: os.Getenv,
 	}.Open(resource.Spec{Server: "server1", DataRoot: "/data/chainbench"})

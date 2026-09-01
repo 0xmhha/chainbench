@@ -1,9 +1,7 @@
-// Package obs is chainbench's observability core (requirement #17): structured
-// logging, a runtime event bus, and a state/result store. It is deliberately
-// SEPARATE from the test helper (pkg/testkit): the setup and verify phases also
-// emit runtime records, so observation is not a test-only concern. testkit
-// consumes obs to build reports; it does not own storage
-// (docs/CHAINBENCH_GO_REDESIGN.md §8).
+// Package collector is chainbench's observability core (requirement #17):
+// structured logging, a runtime event bus, and a state/result store. Observation
+// is not a test-only concern — the setup and verify phases also emit runtime
+// records — so it stays independent of how tests are expressed.
 //
 // The event bus feeds the dashboard (requirement #19) via chainbench-dashboard; its wire
 // format is deferred to the dashboard phase (G8).

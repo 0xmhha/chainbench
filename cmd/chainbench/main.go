@@ -1,6 +1,6 @@
-// Command chainbench is the user-facing CLI (requirement #15) that drives the
-// three-phase pipeline: setup (plan/launch a local network), verify (confirm
-// block production over RPC), test (run cases), plus faucet and chain listing.
+// Command chainbench is the user-facing CLI (requirement #15): it composes a
+// network (the chain command / net verbs), verifies block production, and runs
+// DSL test specs against it (the run command), plus faucet and chain listing.
 // It is built on cobra and imports all chain plugins for registration.
 package main
 
@@ -9,8 +9,6 @@ import (
 	"os"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
-
-	_ "github.com/0xmhha/chainbench/tests/all"
 )
 
 func main() {
