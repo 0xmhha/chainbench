@@ -56,6 +56,9 @@ type Spec struct {
 	// the network as a mixed-binary handoff. Nil is a single-binary network.
 	// Runtime-only.
 	EnvUpgrade *UpgradeV2 `json:"-"`
+	// EnvConfig are the v2 env.config knob overrides by scope ("all" /
+	// "node<N>"), each a list of dot-path "key=value". Runtime-only.
+	EnvConfig map[string][]string `json:"-"`
 }
 
 // Parse routes raw JSON to its grammar (v1, or v2 by schemaVersion sniff),

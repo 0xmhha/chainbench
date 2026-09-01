@@ -7,6 +7,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -220,14 +221,39 @@ func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 	return opts, nil
 }
 
-// NetConfigIn identifies the workspace.
+// NetConfigIn identifies the workspace and, optionally, per-node config
+// overrides to record before rendering.
 type NetConfigIn struct {
 	DataDir string
+	// Node scopes a Set override to that 1-based node; 0 means every node.
+	Node int
+	// Set are dot-path "key=value" config-knob overrides to record. Empty
+	// renders with whatever overrides the workspace already holds.
+	Set []string
+	// ScopedSet records overrides for several scopes at once ("all", "node<N>"),
+	// the form the up flow and a DSL env pass. It is applied before Set.
+	ScopedSet map[string][]string
 }
 
-// NetConfig renders and writes each node's TOML config.
+// NetConfig records any per-node overrides, then renders and writes each node's
+// TOML config with them applied. Recording and rendering share one step so
+// `chain config --node N --set k=v` both persists the override and reflects it.
 func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		for _, scope := range sortedScopes(in.ScopedSet) {
+			if err := ws.recordConfigSet(scope, in.ScopedSet[scope]); err != nil {
+				return "", fmt.Errorf("chainsetup: config: %w", err)
+			}
+		}
+		if len(in.Set) > 0 {
+			scope := "all"
+			if in.Node > 0 {
+				scope = fmt.Sprintf("node%d", in.Node)
+			}
+			if err := ws.recordConfigSet(scope, in.Set); err != nil {
+				return "", fmt.Errorf("chainsetup: config: %w", err)
+			}
+		}
 		return ws.Config(ctx)
 	})
 	return StepOut{Detail: detail}, err
@@ -381,4 +407,27 @@ func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (NetHealthOut, error
 	ws.SetEnv(d.Env)
 	nodes, err := ws.Health(ctx)
 	return NetHealthOut{Nodes: nodes}, err
+}
+
+// sortedScopes orders config-override scopes deterministically: "all" first,
+// then the node scopes by index, so recording is reproducible regardless of
+// map iteration order.
+func sortedScopes(m map[string][]string) []string {
+	if len(m) == 0 {
+		return nil
+	}
+	scopes := make([]string, 0, len(m))
+	for k := range m {
+		scopes = append(scopes, k)
+	}
+	sort.Slice(scopes, func(i, j int) bool {
+		if scopes[i] == "all" {
+			return true
+		}
+		if scopes[j] == "all" {
+			return false
+		}
+		return scopes[i] < scopes[j]
+	})
+	return scopes
 }

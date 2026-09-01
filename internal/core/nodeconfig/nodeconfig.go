@@ -209,3 +209,28 @@ func orDefault(v, def string) string {
 	}
 	return v
 }
+
+// ConfigKnobs are the config.toml fields a per-node override may set. The
+// config file is a fixed structure rendered by TOML, so overrides map to the
+// Spec fields that structure exposes rather than to arbitrary TOML keys. The
+// list is the contract ApplyConfigOverride enforces and the surface documents;
+// promoting to arbitrary-key overrides (a TOML round-trip) would extend this
+// one function without touching the storage or the surfaces that feed it.
+var ConfigKnobs = []string{"syncMode", "httpHost", "metricsHost"}
+
+// ApplyConfigOverride sets one dot-path config knob on a spec. An unknown key
+// is an error naming the supported knobs — a per-node override that silently
+// did nothing would be worse than a rendered config that ignored it.
+func ApplyConfigOverride(s *Spec, key, value string) error {
+	switch key {
+	case "syncMode":
+		s.SyncMode = value
+	case "httpHost":
+		s.HTTPHost = value
+	case "metricsHost":
+		s.MetricsHost = value
+	default:
+		return fmt.Errorf("nodeconfig: unknown config knob %q (supported: %s)", key, strings.Join(ConfigKnobs, ", "))
+	}
+	return nil
+}

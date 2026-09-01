@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"regexp"
 	"strings"
 )
 
@@ -62,7 +63,7 @@ type EnvV2 struct {
 	Topology      map[string]any            `json:"topology,omitempty"`
 	Hardforks     map[string]int            `json:"hardforks,omitempty"`
 	Launch        map[string]map[string]any `json:"launch,omitempty"`
-	Config        string                    `json:"config,omitempty"`
+	Config        map[string]map[string]any `json:"config,omitempty"`
 	Capabilities  []string                  `json:"capabilities,omitempty"`
 	// Upgrade declares a mixed-binary handoff: the network starts on the
 	// producer's binary and forks to the validators'. With it, Binaries names
@@ -272,7 +273,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 		ID:               c.ID,
 		ApplicableChains: c.ApplicableChains,
 		Requires:         c.Requires,
-		Chain:            ChainSpec{Name: env.Chain, Config: env.Config},
+		Chain:            ChainSpec{Name: env.Chain},
 		Topology:         env.Topology,
 		Hardforks:        env.Hardforks,
 		Placement:        env.Target,
@@ -335,6 +336,17 @@ func lowerCase(c CaseV2) (Spec, error) {
 		}
 		for k, v := range all {
 			spec.EnvLaunch = append(spec.EnvLaunch, LaunchKV{Key: k, Value: fmt.Sprintf("%v", v)})
+		}
+	}
+	if len(env.Config) > 0 {
+		spec.EnvConfig = map[string][]string{}
+		for scope, kvs := range env.Config {
+			if scope != "all" && !nodeScopeRE.MatchString(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be \"all\" or \"node<N>\"", c.ID, scope)
+			}
+			for k, v := range kvs {
+				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
+			}
 		}
 	}
 
@@ -454,3 +466,6 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 	}
 	return out, nil
 }
+
+// nodeScopeRE matches a per-node config scope key ("node1", "node12").
+var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)

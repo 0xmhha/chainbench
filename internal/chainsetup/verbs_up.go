@@ -70,6 +70,10 @@ type NetUpIn struct {
 
 	// LaunchSet are launch-argv overrides (step: launchopts).
 	LaunchSet []string `json:"launchSet,omitempty"`
+
+	// ConfigSet are per-scope config-knob overrides (step: config), keyed by
+	// scope ("all" / "node<N>"). Each value is a list of dot-path "key=value".
+	ConfigSet map[string][]string `json:"configSet,omitempty"`
 }
 
 // NetUpOut reports each step's recorded detail, in order, and the resulting
@@ -176,7 +180,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			return r.Detail, err
 		},
 		"config": func() (string, error) {
-			r, err := NetConfig(ctx, d, NetConfigIn{DataDir: in.DataDir})
+			r, err := NetConfig(ctx, d, NetConfigIn{DataDir: in.DataDir, ScopedSet: in.ConfigSet})
 			return r.Detail, err
 		},
 		"build": func() (string, error) {
