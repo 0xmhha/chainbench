@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1",
+  "id": "validator-add-member-executes",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc"],
+  "steps": [
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x5c646aa6",
+                "of": ["0x5400d8b543eaf6738c7b44799623bea88fd0f5ee", "4"], "save": "propData" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "0x0000000000000000000000000000000000001001",
+                  "gas": "0x16e360",
+                  "data": "$propData",
+                  "save": "propHash" } },
+    { "read": { "source": "receiptLog", "hash": "$propHash",
+                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+                "topic": 1, "save": "pid" } },
+    { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$pid"], "save": "approveData" } },
+    { "sendTx": { "on": "en2",
+                  "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+                  "to": "0x0000000000000000000000000000000000001001",
+                  "gas": "0x16e360",
+                  "data": "$approveData",
+                  "save": "apHash" } },
+    { "read": { "source": "call", "to": "0x0000000000000000000000000000000000001001",
+                "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
+                "save": "membersRet" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$propHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$apHash", "expected": "0x1" },
+    { "assert": "derive", "op": "word", "index": 0, "of": ["$membersRet"],
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+  ]
+}
