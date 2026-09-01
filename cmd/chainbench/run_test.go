@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
 
@@ -143,9 +142,9 @@ func TestRunCmd_RequiresMode(t *testing.T) {
 		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
 		"assertions": []map[string]any{{"assert": "True"}},
 	})
-	// Neither --rpc nor --binary given.
+	// Neither --rpc nor --workspace-dir given.
 	if _, err := run(t, "run", "--chain", "stablenet", specPath); err == nil {
-		t.Fatal("expected error when neither attach nor local mode is selected")
+		t.Fatal("expected error when neither attach nor compose mode is selected")
 	}
 	// No --chain.
 	if _, err := run(t, "run", "--rpc", "http://127.0.0.1:1", specPath); err == nil {
@@ -210,82 +209,5 @@ func TestRunCmd_JSONOutput(t *testing.T) {
 	}
 	if rep.Summary.Pass != 1 || len(rep.Tests) != 1 || rep.Tests[0].ID != "json-smoke" || rep.Session == "" {
 		t.Fatalf("unexpected JSON report: %+v", rep)
-	}
-}
-
-func TestKeySource_FlagMapping(t *testing.T) {
-	cases := []struct {
-		name    string
-		opts    runOpts
-		want    string
-		wantErr string
-	}{
-		{
-			name: "default is the reproducible preset",
-			opts: runOpts{keysDir: "keys/preset"},
-			want: "preset:keys/preset",
-		},
-		{
-			name: "explicit preset",
-			opts: runOpts{keysDir: "k", keysSource: "preset"},
-			want: "preset:k",
-		},
-		{
-			name: "generate needs a bootnode for BLS material",
-			opts: runOpts{keysDir: "k", keysSource: "generate"},
-			// Generation needs no external binary: BLS material is derived in
-			// process, which is what lets a network start without a preset.
-			want: "generated:k",
-		},
-		{
-			name:    "unknown source is rejected",
-			opts:    runOpts{keysDir: "k", keysSource: "borrow"},
-			wantErr: "unknown --keys-source",
-		},
-		{
-			name:    "a local run needs a key directory",
-			opts:    runOpts{keysSource: "preset"},
-			wantErr: "--keys is required",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			src, err := keySource(tc.opts)
-			if tc.wantErr != "" {
-				if err == nil {
-					t.Fatalf("want an error containing %q", tc.wantErr)
-				}
-				if !strings.Contains(err.Error(), tc.wantErr) {
-					t.Errorf("error = %v, want it to contain %q", err, tc.wantErr)
-				}
-				return
-			}
-			if err != nil {
-				t.Fatalf("keySource: %v", err)
-			}
-			if got := src.Describe(); got != tc.want {
-				t.Errorf("Describe() = %s, want %s", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestParseLaunchOverrides(t *testing.T) {
-	got, err := parseLaunchOverrides([]string{"networkid=4242", "nodiscover", "http.api=eth,net"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(got) != 3 {
-		t.Fatalf("overrides = %d, want 3", len(got))
-	}
-	if got[0].Key != nodeconfig.KeyNetworkID || got[0].Value != "4242" {
-		t.Errorf("override[0] = %+v", got[0])
-	}
-	if got[1].Key != nodeconfig.KeyNoDiscover || got[1].Value != "" {
-		t.Errorf("bare boolean key: %+v", got[1])
-	}
-
-	if _, err := parseLaunchOverrides([]string{"=oops"}); err == nil {
-		t.Fatal("empty key must be rejected at the CLI boundary")
 	}
 }

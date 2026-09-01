@@ -3,8 +3,9 @@ package testengine
 import (
 	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/testhelper"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -18,6 +19,18 @@ import (
 
 // attachNetwork is the network label recorded for an attached NodeSet.
 const attachNetwork = "attached"
+
+// engineCommand is the invoking command recorded in session.json.
+const engineCommand = "chainbench"
+
+// busEmit returns an event sink publishing to bus, or nil when bus is nil so the
+// engine's emission stays a no-op.
+func busEmit(bus *collector.Bus) func(collector.Event) {
+	if bus == nil {
+		return nil
+	}
+	return bus.Publish
+}
 
 // AttachConfig configures an attach-mode Engine: it runs specs against an
 // already-running network addressed by RPC URLs, building and launching nothing.
@@ -39,7 +52,20 @@ type AttachConfig struct {
 	// Bus, when non-nil, receives orchestration events for the dashboard. Nil
 	// disables emission.
 	Bus *collector.Bus
+	// NodeSet, when non-nil, is the full node table of the network being
+	// attached to — a suite that composed the network itself passes the real
+	// nodes (indices, hosts, every endpoint) instead of bare RPC URLs.
+	NodeSet *node.NodeSet
+	// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)
+	// act on the node processes. Nil is plain attach's default: the run does
+	// not own the processes, and those steps fail with a clear reason.
+	Control interp.NodeControl
 }
+
+// BuildEnvFunc provisions and brings up a network for a spec, returning the
+// node set and a teardown. It has the same shape as Deps.BuildEnv so a wiring
+// can be assigned to it directly.
+type BuildEnvFunc func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error)
 
 // NewAttachBuildEnv returns a BuildEnv that builds the node table from existing
 // RPC endpoints without provisioning or launching anything. Its teardown is nil:
@@ -88,7 +114,16 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions:  testhelper.Registry(),
 		Accounts: accts,
+		Nodes:    cfg.Control,
 	})
+
+	build := NewAttachBuildEnv(cfg.Chain, eps)
+	if cfg.NodeSet != nil {
+		ns := *cfg.NodeSet
+		build = func(context.Context, session.Environment, dsl.Spec) (node.NodeSet, TeardownFunc, error) {
+			return ns, nil, nil
+		}
+	}
 
 	return New(Deps{
 		Command: engineCommand,
@@ -101,7 +136,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
-		BuildEnv:   withCollection(NewAttachBuildEnv(cfg.Chain, eps), cfg.Bus, nil),
+		BuildEnv:   withCollection(build, cfg.Bus, nil),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
 		Emit:       busEmit(cfg.Bus),

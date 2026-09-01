@@ -10,20 +10,22 @@ import (
 
 	_ "github.com/0xmhha/chainbench/internal/chains/stablenet" // register the stablenet plugin
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
-// TestEngine_Live_NewVocabulary drives the DSL vocabulary added for the legacy
-// suite migration against a real 4-node stablenet: step value binding, the read
-// action, faucet, event logs, derived gas reads, a generic chain-namespace call,
-// a WebSocket subscription, and node-level fault injection.
+// TestSuite_Live_NewVocabulary drives the DSL vocabulary added for the legacy
+// suite migration against a real 4-node stablenet composed through the suite
+// path: step value binding, the read action, faucet, event logs, derived gas
+// reads, a generic chain-namespace call, a WebSocket subscription, and
+// node-level fault injection (which since R4 acts through the workspace's own
+// node verbs).
 //
-// Unit tests cover each of these against a mock RPC; this is the proof they work
-// against a real chain, which is the only thing that settles whether a ported
-// case would actually pass.
+// Unit tests cover each of these against a mock RPC; this is the proof they
+// work against a real chain.
 //
 // Gated on GSTABLE_BIN; CI skips it and stays green.
-func TestEngine_Live_NewVocabulary(t *testing.T) {
+func TestSuite_Live_NewVocabulary(t *testing.T) {
 	bin := os.Getenv("GSTABLE_BIN")
 	if bin == "" {
 		t.Skip("set GSTABLE_BIN to a real gstable binary to run the vocabulary live e2e")
@@ -32,23 +34,11 @@ func TestEngine_Live_NewVocabulary(t *testing.T) {
 		t.Fatalf("GSTABLE_BIN=%q: %v", bin, err)
 	}
 
-	artifactRoot, err := os.MkdirTemp("/tmp", "v")
+	ws, err := os.MkdirTemp("/tmp", "v")
 	if err != nil {
-		t.Fatalf("mkdir artifact root: %v", err)
+		t.Fatalf("mkdir workspace: %v", err)
 	}
-	t.Cleanup(func() { _ = os.RemoveAll(artifactRoot) })
-
-	eng, err := testengine.NewLocalEngine(testengine.LocalConfig{
-		Chain:        "stablenet",
-		Binary:       bin,
-		KeysDir:      filepath.Join(repoRoot(t), "keys", "preset"),
-		ArtifactRoot: artifactRoot,
-		Validators:   4,
-		Clock:        func() time.Time { return time.Unix(0, 0).UTC() },
-	})
-	if err != nil {
-		t.Fatalf("NewLocalEngine: %v", err)
-	}
+	t.Cleanup(func() { _ = os.RemoveAll(ws) })
 
 	// The funded preset account, and an address that starts with nothing.
 	const (
@@ -56,8 +46,8 @@ func TestEngine_Live_NewVocabulary(t *testing.T) {
 		fresh  = "0x00000000000000000000000000000000000000aa"
 	)
 
-	specs := [][]byte{
-		mustSpec(t, map[string]any{
+	specs := []map[string]any{
+		{
 			"schemaVersion": "1",
 			"id":            "vocabulary-reads",
 			"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
@@ -76,8 +66,8 @@ func TestEngine_Live_NewVocabulary(t *testing.T) {
 				// The WebSocket transport actually carries heads.
 				{"assert": "wsSubscribe", "on": "bp1", "event": "newHeads", "count": 1, "timeout": "30s"},
 			},
-		}),
-		mustSpec(t, map[string]any{
+		},
+		{
 			"schemaVersion": "1",
 			"id":            "vocabulary-funding",
 			"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
@@ -91,8 +81,8 @@ func TestEngine_Live_NewVocabulary(t *testing.T) {
 				// range returns without error (a native transfer emits none).
 				{"assert": "logs", "fromBlock": "0x0", "toBlock": "latest", "compare": "GreaterOrEqual", "expected": "0"},
 			},
-		}),
-		mustSpec(t, map[string]any{
+		},
+		{
 			"schemaVersion": "1",
 			"id":            "vocabulary-fault",
 			"chain":         map[string]any{"name": "stablenet", "binary": "go-stablenet"},
@@ -107,47 +97,37 @@ func TestEngine_Live_NewVocabulary(t *testing.T) {
 			"postActions": []map[string]any{
 				{"startNode": map[string]any{"on": "bp4"}},
 			},
-		}),
+		},
+	}
+	paths := make([]string, 0, len(specs))
+	for _, m := range specs {
+		b, err := json.Marshal(m)
+		if err != nil {
+			t.Fatalf("marshal spec: %v", err)
+		}
+		p := filepath.Join(ws, m["id"].(string)+".json")
+		if err := os.WriteFile(p, b, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		paths = append(paths, p)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	defer cancel()
 
-	root, err := eng.Run(ctx, specs)
+	out, err := testengine.RunSuite(ctx, chainsetup.Deps{}, testengine.RunSuiteIn{
+		SpecPaths:  paths,
+		DataDir:    ws,
+		Binary:     bin,
+		KeysDir:    filepath.Join(repoRoot(t), "keys", "preset"),
+		WaitBlocks: 1,
+	})
 	if err != nil {
-		t.Fatalf("Engine.Run: %v", err)
+		t.Fatalf("RunSuite: %v (setup %v)", err, out.SetupSteps)
 	}
-
-	data, err := os.ReadFile(filepath.Join(root, "session.json"))
-	if err != nil {
-		t.Fatalf("read session.json: %v", err)
+	s := out.Summary.Summary
+	if s.Pass != len(specs) || s.Fail > 0 || s.Blocked > 0 {
+		t.Fatalf("summary %+v, want all %d specs passing (session %s)", s, len(specs), out.SessionRoot)
 	}
-	var doc struct {
-		Tests []struct {
-			ID     string `json:"id"`
-			Status string `json:"status"`
-		} `json:"tests"`
-		Summary struct {
-			Pass    int `json:"pass"`
-			Fail    int `json:"fail"`
-			Blocked int `json:"blocked"`
-		} `json:"summary"`
-	}
-	if err := json.Unmarshal(data, &doc); err != nil {
-		t.Fatalf("parse session.json: %v", err)
-	}
-	if doc.Summary.Pass != len(specs) || doc.Summary.Fail > 0 || doc.Summary.Blocked > 0 {
-		t.Fatalf("summary %+v, want all %d specs passing; tests: %+v", doc.Summary, len(specs), doc.Tests)
-	}
-	t.Logf("all %d vocabulary specs passed live; session at %s", doc.Summary.Pass, root)
-}
-
-// mustSpec marshals a spec map or fails the test.
-func mustSpec(t *testing.T, m map[string]any) []byte {
-	t.Helper()
-	b, err := json.Marshal(m)
-	if err != nil {
-		t.Fatalf("marshal spec: %v", err)
-	}
-	return b
+	t.Logf("all %d vocabulary specs passed live; session at %s", s.Pass, out.SessionRoot)
 }

@@ -8,9 +8,11 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
@@ -111,6 +113,40 @@ type composed struct {
 	endpoints []string
 	caps      []string
 	teardown  func(context.Context) error
+	// nodes is the full node table when the workspace knows it; nil for a
+	// handoff, whose engine builds the table from the endpoints.
+	nodes *node.NodeSet
+	// control acts on the node processes for fault steps; nil when the run
+	// does not own them.
+	control interp.NodeControl
+}
+
+// workspaceNodes adapts the workspace's node verbs to the interpreter's
+// NodeControl, so fault steps (stopNode/startNode/restartNode) act on a
+// suite-composed network through the same record every other verb uses.
+type workspaceNodes struct {
+	sd      chainsetup.Deps
+	dataDir string
+}
+
+// Stop stops one node through the workspace and returns it with its pid
+// cleared, which the interpreter writes back to the environment's node table.
+func (w workspaceNodes) Stop(ctx context.Context, n node.Node) (node.Node, error) {
+	if err := chainsetup.NodeStop(ctx, w.sd, chainsetup.NodeStopIn{DataDir: w.dataDir, Index: n.Index}); err != nil {
+		return n, err
+	}
+	n.PID = 0
+	return n, nil
+}
+
+// Start relaunches one previously stopped node through the workspace and
+// returns it with its new pid.
+func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, error) {
+	out, err := chainsetup.NodeStart(ctx, w.sd, chainsetup.NodeStartIn{DataDir: w.dataDir, Index: n.Index})
+	if err != nil {
+		return n, err
+	}
+	return out.Node, nil
 }
 
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
@@ -176,6 +212,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		eng, err := NewAttachEngine(AttachConfig{
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
+			NodeSet: net.nodes, Control: net.control,
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)
@@ -239,6 +276,14 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	if ws, err := chainsetup.Open(up.DataDir, sd.Clock); err == nil {
 		caps = ws.State().Capabilities
 	}
+	// The workspace knows the whole node table — indices, hosts, every
+	// endpoint — so the engine attaches to that, not to bare URLs, and fault
+	// steps get a control over the recorded processes.
+	var nodes *node.NodeSet
+	if st, err := chainsetup.NetworkStatus(ctx, sd, chainsetup.NetworkStatusIn{DataDir: up.DataDir}); err == nil && len(st.Nodes.Nodes) > 0 {
+		ns := st.Nodes
+		nodes = &ns
+	}
 	return composed{
 		endpoints: endpoints,
 		caps:      caps,
@@ -246,6 +291,8 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 			_, err := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: up.DataDir})
 			return err
 		},
+		nodes:   nodes,
+		control: workspaceNodes{sd: sd, dataDir: up.DataDir},
 	}, nil
 }
 
