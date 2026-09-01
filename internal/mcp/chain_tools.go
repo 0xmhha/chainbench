@@ -15,10 +15,10 @@ import (
 // schema decoding + one app-layer call: the same function the CLI subcommand
 // binds, so the two surfaces cannot drift.
 
-// netNewTool initializes a composition workspace.
-func netNewTool() Tool {
+// chainNewTool initializes a composition workspace.
+func chainNewTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_new",
+		Name:        "chainbench_chain_new",
 		Description: "Initialize a step-composition workspace for a chain: records the chain, key set, and where the data plane lives (local or a remote SSH host).",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -57,10 +57,10 @@ func netNewTool() Tool {
 	}
 }
 
-// netStatusTool reports the workspace composition state.
-func netStatusTool() Tool {
+// chainStatusTool reports the workspace composition state.
+func chainStatusTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_status",
+		Name:        "chainbench_chain_status",
 		Description: "Show a step-composition workspace's state as JSON: chain, target, and which steps have run.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -78,7 +78,7 @@ func netStatusTool() Tool {
 			}
 			b, err := json.MarshalIndent(res.State, "", "  ")
 			if err != nil {
-				return "", fmt.Errorf("mcp: net status: %w", err)
+				return "", fmt.Errorf("mcp: chain status: %w", err)
 			}
 			return string(b), nil
 		},
@@ -94,10 +94,10 @@ func workspaceDirSchema(extra map[string]any) map[string]any {
 	return map[string]any{"type": "object", "properties": props, "required": []string{"workspaceDir"}}
 }
 
-// netKeysTool ensures the workspace's key set.
-func netKeysTool() Tool {
+// chainKeysTool ensures the workspace's key set.
+func chainKeysTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_keys",
+		Name:        "chainbench_chain_keys",
 		Description: "Ensure the workspace's key set exists and covers the node count (preset, or generate a fresh set in process).",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"source":     map[string]any{"type": "string", "description": "preset (default) | generate"},
@@ -114,10 +114,10 @@ func netKeysTool() Tool {
 	}
 }
 
-// netAllocateTool builds the node table.
-func netAllocateTool() Tool {
+// chainPlaceTool builds the node table.
+func chainPlaceTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_allocate",
+		Name:        "chainbench_chain_place",
 		Description: "Build the workspace's node table: roles, target-side paths, deterministic ports.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"validators": map[string]any{"type": "number", "description": "validator node count (default 4)"},
@@ -139,10 +139,10 @@ func netAllocateTool() Tool {
 	}
 }
 
-// netGenesisTool builds the genesis.
-func netGenesisTool() Tool {
+// chainGenesisTool builds the genesis.
+func chainGenesisTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_genesis",
+		Name:        "chainbench_chain_genesis",
 		Description: "Build the genesis from the key set and write it to the target (optionally overriding the chain id).",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"chainId": map[string]any{"type": "number", "description": "override the manifest chain id (0 = manifest)"},
@@ -156,10 +156,10 @@ func netGenesisTool() Tool {
 	}
 }
 
-// netConfigTool renders node configs.
-func netConfigTool() Tool {
+// chainConfigTool renders node configs.
+func chainConfigTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_config",
+		Name:        "chainbench_chain_config",
 		Description: "Render and write each node's TOML config to the target.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -169,10 +169,10 @@ func netConfigTool() Tool {
 	}
 }
 
-// netLaunchOptsTool assembles the launch commands.
-func netLaunchOptsTool() Tool {
+// chainBuildTool assembles the launch commands.
+func chainBuildTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_launchopts",
+		Name:        "chainbench_chain_build",
 		Description: "Assemble each node's launch command (without running it), optionally applying key=value overrides through the launchopt Builder.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"set": map[string]any{"type": "array", "items": map[string]any{"type": "string"},
@@ -195,10 +195,10 @@ func netLaunchOptsTool() Tool {
 	}
 }
 
-// netProvisionTool verifies launch inputs.
-func netProvisionTool() Tool {
+// chainDeployTool verifies launch inputs.
+func chainDeployTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_provision",
+		Name:        "chainbench_chain_deploy",
 		Description: "Verify the launch inputs (genesis, configs) are present on the target; present files are reused, missing ones are named.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -208,10 +208,10 @@ func netProvisionTool() Tool {
 	}
 }
 
-// netInitTool initializes datadirs.
-func netInitTool() Tool {
+// chainInitTool initializes datadirs.
+func chainInitTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_init",
+		Name:        "chainbench_chain_init",
 		Description: "Initialize each node's datadir from the built genesis (runs `<binary> init`).",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the workspace's)"},
@@ -225,10 +225,10 @@ func netInitTool() Tool {
 	}
 }
 
-// netStartTool launches the network.
-func netStartTool() Tool {
+// chainStartTool launches the network.
+func chainStartTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_start",
+		Name:        "chainbench_chain_start",
 		Description: "Launch every stopped node of the composed network and record its PID.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the workspace's)"},
@@ -242,10 +242,10 @@ func netStartTool() Tool {
 	}
 }
 
-// netStopTool stops the network.
-func netStopTool() Tool {
+// chainStopTool stops the network.
+func chainStopTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_stop",
+		Name:        "chainbench_chain_stop",
 		Description: "Stop every running node by its recorded PID.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -255,10 +255,10 @@ func netStopTool() Tool {
 	}
 }
 
-// netRestartTool bounces one node.
-func netRestartTool() Tool {
+// chainRestartTool bounces one node.
+func chainRestartTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_restart",
+		Name:        "chainbench_chain_restart",
 		Description: "Stop and relaunch one node with its recorded arming (the exact argv it started with).",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"node": map[string]any{"type": "number", "description": "node index (1-based)"},
@@ -272,10 +272,10 @@ func netRestartTool() Tool {
 	}
 }
 
-// netRmTool removes the data plane.
-func netRmTool() Tool {
+// chainRmTool removes the data plane.
+func chainRmTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_rm",
+		Name:        "chainbench_chain_rm",
 		Description: "Remove the composed data plane (node datadirs, configs, genesis). Running nodes must be stopped first.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -285,10 +285,10 @@ func netRmTool() Tool {
 	}
 }
 
-// netLogsTool tails one node's log.
-func netLogsTool() Tool {
+// chainLogsTool tails one node's log.
+func chainLogsTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_logs",
+		Name:        "chainbench_chain_logs",
 		Description: "Show the last lines of one node's log.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"node":  map[string]any{"type": "number", "description": "node index (1-based)"},
@@ -304,10 +304,10 @@ func netLogsTool() Tool {
 	}
 }
 
-// netHealthTool probes the nodes.
-func netHealthTool() Tool {
+// chainHealthTool probes the nodes.
+func chainHealthTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_health",
+		Name:        "chainbench_chain_health",
 		Description: "Probe every node's HTTP RPC for its latest block height; returns a JSON table.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -347,10 +347,10 @@ func targetSpecFromArgs(args map[string]any) (resource.Spec, error) {
 	}, nil
 }
 
-// netResumeTool recovers a workspace whose run died.
-func netResumeTool() Tool {
+// chainResumeTool recovers a workspace whose run died.
+func chainResumeTool() Tool {
 	return Tool{
-		Name:        "chainbench_net_resume",
+		Name:        "chainbench_chain_resume",
 		Description: "Recover a workspace whose run died: reconcile recorded pids with the machine, continue the composition from the first unfinished step, and bring back nodes that should be running.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"binary": map[string]any{"type": "string", "description": "node binary path (default: the one the workspace recorded)"},

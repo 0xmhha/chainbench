@@ -11,9 +11,9 @@ import (
 // netMapTool answers where nodes are, in both directions. It is the tool an
 // agent reaches for instead of reading the workspace file and parsing it:
 // "which node owns port 8610", "what runs on this host", "where is en2".
-func netShowTool() Tool {
+func chainShowTool() Tool {
 	return Tool{
-		Name: "chainbench_net_show",
+		Name: "chainbench_chain_show",
 		Description: "Look up the composed network's placement. With no selector, the whole map; " +
 			"with one, that question answered — including the reverse ones (which node owns a port, " +
 			"what runs on an address). Each node has an identity (node7) and a role alias (en2).",
@@ -38,7 +38,7 @@ func netShowTool() Tool {
 			}
 			b, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
-				return "", fmt.Errorf("mcp: net show: %w", err)
+				return "", fmt.Errorf("mcp: chain show: %w", err)
 			}
 			return string(b), nil
 		},
