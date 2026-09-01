@@ -319,3 +319,32 @@ func hexInt(n int) string {
 	}
 	return string(b)
 }
+
+// TestChainToolsRenamed pins the compose tools to the chain names (C: the CLI
+// group is `chain`, and the MCP surface mirrors it). Every chainbench_chain_*
+// tool must be registered, the renamed steps under their new names, and no
+// chainbench_net_* may remain.
+func TestChainToolsRenamed(t *testing.T) {
+	listResp := call(t, newServer(), map[string]any{"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+	tools := listResp["result"].(map[string]any)["tools"].([]any)
+	names := map[string]bool{}
+	for _, tt := range tools {
+		name := tt.(map[string]any)["name"].(string)
+		names[name] = true
+		if strings.HasPrefix(name, "chainbench_net_") {
+			t.Errorf("retired MCP tool name still registered: %s", name)
+		}
+	}
+	for _, want := range []string{
+		"chainbench_chain_new", "chainbench_chain_status", "chainbench_chain_keys",
+		"chainbench_chain_place", "chainbench_chain_genesis", "chainbench_chain_config",
+		"chainbench_chain_build", "chainbench_chain_deploy", "chainbench_chain_init",
+		"chainbench_chain_start", "chainbench_chain_stop", "chainbench_chain_restart",
+		"chainbench_chain_rm", "chainbench_chain_logs", "chainbench_chain_health",
+		"chainbench_chain_resume", "chainbench_chain_show",
+	} {
+		if !names[want] {
+			t.Errorf("missing chain tool %q", want)
+		}
+	}
+}

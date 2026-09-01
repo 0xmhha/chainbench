@@ -52,7 +52,7 @@ MCP 클라이언트(Claude Code)는 프로젝트의 `.mcp.json` 을 읽어 자�
 | 검증/테스트 | `chainbench_verify` · `_test` · `_test_list` · `_report` |
 | 노드/Tx | `chainbench_node_rpc` · `_tx_send` · `_tx_wait` · `_txpool` · `_account_state` · `_contract_call` · `_contract_deploy` · `_faucet` |
 | 합의 | `chainbench_consensus` · `_consensus_status` · `_consensus_health` · `_consensus_block_info` |
-| 네트워크 구성(`net`) | `chainbench_net_new` · `_net_keys` · `_net_allocate` · `_net_genesis` · `_net_config` · `_net_launchopts` · `_net_provision` · `_net_init` · `_net_start` · `_net_stop` · `_net_restart` · `_net_rm` · `_net_status` · `_net_health` · `_net_logs` · `_net_show` |
+| 네트워크 구성(`net`) | `chainbench_chain_new` · `_net_keys` · `_net_allocate` · `_net_genesis` · `_net_config` · `_net_launchopts` · `_net_provision` · `_net_init` · `_net_start` · `_net_stop` · `_net_restart` · `_net_rm` · `_net_status` · `_net_health` · `_net_logs` · `_net_show` |
 | 자원(`resource`) | `chainbench_resource_pool` · `_resource_plan` |
 | 기존 네트워크 attach | `chainbench_network_attach` · `_network_list` · `_network_info` · `_network_detach` · `_network_peers` · `_network_topology` · `_remote_rpc` |
 | 키 재료 | `chainbench_keyring_new` · `_keyring_add` · `_keyring_list` · `_keyring_show` · `_keyring_import` |

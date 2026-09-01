@@ -200,3 +200,9 @@ verb 로 고정해(사전 밖 명령·개명 잔재를 막아) 표면 드리프�
 3. **session**: 아티팩트·컴포지션·잠금의 소유자로 유지. 재측정은 R4 뒤.
 4. P6.1 의 게이트("testengine → chainsetup 0")는 §0-2 로 **대체**된다. arch 테스트를
    새 구조(테스트엔진이 구성을 소유)로 고쳐 쓴다.
+
+> **C 후속 — MCP 도구 개명 (2026-09-01):** CLI 를 `chain` 으로 바꾼 것과 짝을 맞춰 MCP 구성
+> 도구 `chainbench_net_*` 를 `chainbench_chain_*` 로 개명(스텝 개명 반영: allocate→place,
+> launchopts→build, provision→deploy). `chainbench_network_*`(붙인 네트워크 레지스트리)는
+> 별개 개념이라 유지. 외부 계약 변경이라 옛 이름은 "unknown tool" 로 거부된다.
+> `TestChainToolsRenamed` 가 chain 도구 집합을 고정하고 net 잔재를 차단.
