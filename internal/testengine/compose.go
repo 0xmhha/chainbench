@@ -1,4 +1,4 @@
-package app
+package testengine
 
 import (
 	"context"
@@ -10,9 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
@@ -65,7 +67,7 @@ func expand(s string) string {
 // composition is what one suite composes: a single-binary network through
 // the workspace steps, or a mixed-binary handoff. Exactly one is set.
 type composition struct {
-	up      *NetUpIn
+	up      *chainsetup.NetUpIn
 	handoff *upgrade.HandoffInputs
 }
 
@@ -78,9 +80,11 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
 	}
 	keysDir := in.KeysDir
-	keysSource := ""
+	keysSource := in.KeysSource
 	if k := spec.EnvKeys; k != nil {
-		keysSource = k.Source
+		if keysSource == "" {
+			keysSource = k.Source
+		}
 		if keysDir == "" {
 			keysDir = expand(k.Ref)
 		}
@@ -96,6 +100,9 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if u := spec.EnvUpgrade; u != nil {
 		if in.Binary != "" {
 			return composition{}, fmt.Errorf("a handoff names its binaries by role in the env; --binary does not apply")
+		}
+		if in.ChainID != 0 || in.NetworkID != 0 || len(in.LaunchOpts) > 0 || in.KeysSource != "" {
+			return composition{}, fmt.Errorf("a handoff composes from its declaration; genesis, launch, and key-source overrides do not apply")
 		}
 		return composition{handoff: &upgrade.HandoffInputs{
 			ProfilePath:    expand(u.Profile),
@@ -125,14 +132,20 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if validators <= 0 {
 		validators = suiteDefaultValidators
 	}
-	up := &NetUpIn{
-		DataDir: in.DataDir, Stage: UpStart,
+	launch := launchSets(spec.EnvLaunch)
+	launch = append(launch, in.LaunchOpts...)
+	if in.NetworkID != 0 {
+		launch = append(launch, fmt.Sprintf("%s=%d", nodeconfig.KeyNetworkID, in.NetworkID))
+	}
+	up := &chainsetup.NetUpIn{
+		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		Validators: validators, Endpoints: endpoints, EndpointSyncMode: syncMode,
 		Server: in.Server, Docker: in.Docker,
+		ChainID:     in.ChainID,
 		GenesisSet:  hardforkSets(spec.Hardforks),
 		OverlayPath: overlayPath,
-		LaunchSet:   launchSets(spec.EnvLaunch),
+		LaunchSet:   launch,
 	}
 	return composition{up: up}, nil
 }
