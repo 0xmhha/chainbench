@@ -146,6 +146,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		GenesisSet:  hardforkSets(spec.Hardforks),
 		OverlayPath: overlayPath,
 		LaunchSet:   launch,
+		ConfigSet:   spec.EnvConfig,
 	}
 	return composition{up: up}, nil
 }

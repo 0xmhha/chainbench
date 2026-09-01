@@ -27,6 +27,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -84,6 +85,12 @@ type State struct {
 	// The genesis step derives it, since that is where the customizations that
 	// change what the network can do are applied.
 	Capabilities []string `json:"capabilities,omitempty"`
+	// ConfigSet holds per-scope config-knob overrides, keyed by scope: "all"
+	// for every node, "node<N>" for one. Each value is a list of dot-path
+	// "key=value" strings applied at config render (all first, then the node's
+	// own — node wins). Stored key-agnostically so the surface and the storage
+	// do not change when the set of overridable knobs grows.
+	ConfigSet map[string][]string `json:"configSet,omitempty"`
 	// Request is what `chain up` was asked to compose, recorded at the new
 	// step so a run that dies before the results exist can be resumed from
 	// what it was asked, not re-asked. Its DataDir is left empty: the
@@ -285,6 +292,50 @@ func (w *Workspace) eachMachine(fn func(t *resource.Access, nodes []node.Record)
 // netmap module's single wiring point.
 func (w *Workspace) opener() resource.Opener {
 	return resource.Opener{ServerSet: w.state.ServerSet, Docker: w.state.Docker, Env: w.env}
+}
+
+// applyConfigOverrides applies the workspace's config-knob overrides to one
+// node's spec: the "all" scope first, then that node's own scope (so a node
+// override wins). Each entry is a dot-path "key=value"; an unknown key or a
+// malformed entry is an error, never a silent no-op.
+func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error {
+	for _, scope := range []string{"all", fmt.Sprintf("node%d", index)} {
+		for _, kv := range w.state.ConfigSet[scope] {
+			key, value, ok := strings.Cut(kv, "=")
+			if !ok || key == "" {
+				return fmt.Errorf("config override %q must be key=value", kv)
+			}
+			if err := nodeconfig.ApplyConfigOverride(spec, key, value); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// recordConfigSet stores config overrides under a scope ("all" or "node<N>"),
+// appending to what that scope already holds so repeated --set calls accumulate.
+// It validates each entry against the knob contract up front, so a bad override
+// is refused at the point it is set rather than at render.
+func (w *Workspace) recordConfigSet(scope string, sets []string) error {
+	if len(sets) == 0 {
+		return nil
+	}
+	var probe nodeconfig.Spec
+	for _, kv := range sets {
+		key, value, ok := strings.Cut(kv, "=")
+		if !ok || key == "" {
+			return fmt.Errorf("config override %q must be key=value", kv)
+		}
+		if err := nodeconfig.ApplyConfigOverride(&probe, key, value); err != nil {
+			return err
+		}
+	}
+	if w.state.ConfigSet == nil {
+		w.state.ConfigSet = map[string][]string{}
+	}
+	w.state.ConfigSet[scope] = append(w.state.ConfigSet[scope], sets...)
+	return nil
 }
 
 // markStep records that step ran with detail, stamping the completion time.

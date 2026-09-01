@@ -259,3 +259,29 @@ func TestParseEnv_StandsOnItsOwn(t *testing.T) {
 		}
 	}
 }
+
+func TestV2_ConfigScopesLowerToEnvConfig(t *testing.T) {
+	raw := `{"schemaVersion":"2","kind":"case","id":"c","env":{
+	  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},
+	  "config":{"all":{"metricsHost":"0.0.0.0"},"node2":{"syncMode":"snap"}}},
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	s, err := Parse([]byte(raw))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got := s.EnvConfig["all"]; len(got) != 1 || got[0] != "metricsHost=0.0.0.0" {
+		t.Errorf("config.all lowered to %v", got)
+	}
+	if got := s.EnvConfig["node2"]; len(got) != 1 || got[0] != "syncMode=snap" {
+		t.Errorf("config.node2 lowered to %v", got)
+	}
+
+	// A scope that is neither "all" nor node<N> is refused.
+	bad := `{"schemaVersion":"2","kind":"case","id":"c","env":{
+	  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},
+	  "config":{"bp1":{"syncMode":"snap"}}},
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
+	if _, err := Parse([]byte(bad)); err == nil || !strings.Contains(err.Error(), "config scope") {
+		t.Fatalf("a non-all, non-node scope must be refused: %v", err)
+	}
+}

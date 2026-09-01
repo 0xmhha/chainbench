@@ -392,8 +392,11 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
-		content := nodeconfig.TOML(process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes))
-		if err := t.Files.Write(ctx, ns.ConfigPath, content, 0o644); err != nil {
+		spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+		if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
+			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+		}
+		if err := t.Files.Write(ctx, ns.ConfigPath, nodeconfig.TOML(spec), 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
 	}

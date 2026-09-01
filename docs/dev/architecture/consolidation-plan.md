@@ -171,7 +171,7 @@
 | ② | place | 노드별 host·port 표 (무충돌) | `topology`·`servers` | `chain place` | `NetAllocate` |
 | ③ | enode | 노드별 enode 목록 | ①②에서 파생 | `chain enode` | `NetEnodes` |
 | ④ | genesis | genesis.json (전 노드 공통) | `genesis`·`hardforks` | `chain genesis` | `NetGenesis` |
-| ⑤ | config | 노드별 config | `launch` | `chain config` | `NetConfig` |
+| ⑤ | config | 노드별 config (노드 단위 수정) | `config.all`·`config.node<N>` | `chain config [--node N] --set k=v` | `NetConfig` |
 | ⑥ | build | 노드별 실행 command | `binaries`·`launch` | `chain build` | `NetLaunchOpts` |
 | ⑦ | deploy | 머신 위의 파일들 | `servers` | `chain deploy` | `NetProvision` |
 | ⑧ | run(살아 있는 체인) | 초기화+기동 | — | `chain init`·`chain start` | `NetInit`·`NetStart` |
@@ -182,8 +182,13 @@
 갖지 않는다. `chaincmd` 의 `TestChainCommandSurface` 가 chain 명령 집합을 이 사전 + 운영
 verb 로 고정해(사전 밖 명령·개명 잔재를 막아) 표면 드리프트를 CI 에서 잡는다.
 
-> ⑤ config 를 노드 단위(`config --node N --set k=v`, DSL `config.node<N>`)로 세분하는 것은
-> 별도 후속(C3 에서 enode 우선으로 분리). 현재 `config` 는 노드 표 전체를 렌더한다.
+> ⑤ config 노드 단위 **완료 (2026-09-01, C 후속):** `chain config --node N --set k=v`(노드 N),
+> `--set k=v`(전 노드), DSL `config.all`·`config.node<N>`. 오버라이드는 workspace 에 스코프별로
+> 쌓여(재실행·resume 재현) 렌더 시 all→node<N> 순으로 적용된다(node 우선). 오버라이드 가능한
+> knob 은 `syncMode`·`httpHost`·`metricsHost`(config.toml 이 실제로 담는 값). 저장·CLI·DSL 은
+> 키에 무관하게 두고 적용 단계(`nodeconfig.ApplyConfigOverride`)만 knob 을 검증하므로, 임의
+> TOML 키(TOML 라이브러리 필요)로 승격하려면 그 한 함수만 바꾸면 된다. 미지원 키는 조용히
+> 무시하지 않고 오류.
 
 ## 4. 트레이드와 열린 결정
 

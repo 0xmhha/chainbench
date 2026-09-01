@@ -98,11 +98,30 @@ func newNetGenesisCmd() *cobra.Command {
 }
 
 func newNetConfigCmd() *cobra.Command {
-	cmd, _ := stepCmd("config", "Render and write each node's TOML config",
-		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetConfig(cmd.Context(), deps(cmd), chainsetup.NetConfigIn{DataDir: dataDir})
-			return out.Detail, err
-		})
+	var dataDir string
+	var nodeIdx int
+	var sets []string
+	cmd := &cobra.Command{
+		Use:   "config",
+		Short: "Render each node's TOML config; --set key=value overrides a knob (--node N for one node)",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			if dataDir == "" {
+				return fmt.Errorf("--workspace-dir is required")
+			}
+			out, err := chainsetup.NetConfig(cmd.Context(), deps(cmd), chainsetup.NetConfigIn{
+				DataDir: dataDir, Node: nodeIdx, Set: sets,
+			})
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(cmd.OutOrStdout(), out.Detail)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
+	cmd.Flags().IntVar(&nodeIdx, "node", 0, "scope --set to this 1-based node (default: every node)")
+	cmd.Flags().StringArrayVar(&sets, "set", nil,
+		"config knob override key=value (repeatable; supported keys: syncMode, httpHost, metricsHost)")
 	return cmd
 }
 
