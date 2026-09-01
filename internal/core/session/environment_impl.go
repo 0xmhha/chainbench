@@ -100,6 +100,17 @@ func (e *env) Resolve(selector string) (node.Node, error) {
 	}
 	sort.Slice(matched, func(i, j int) bool { return matched[i].Index < matched[j].Index })
 
+	// The table may hold no node of this role at all: an attach table is all
+	// endpoints, a workspace-composed table all validators. A spec written
+	// against one shape still means "the N-th addressable node" on the other,
+	// so when the role is entirely absent the ordinal falls back to identity
+	// order rather than addressing nothing. A partial table (some endpoints)
+	// keeps strict role addressing, out-of-range included.
+	if len(matched) == 0 {
+		matched = append(matched, e.nodes...)
+		sort.Slice(matched, func(i, j int) bool { return matched[i].Index < matched[j].Index })
+	}
+
 	if anyForm {
 		idx = 0
 	}

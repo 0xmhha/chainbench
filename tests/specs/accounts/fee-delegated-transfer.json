@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1",
+  "id": "fee-delegated-transfer",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable",
+             "genesisOverlay": { "config": { "applepieBlock": 0 } } },
+  "requires": ["rpc"],
+  "steps": [
+    { "newAccount": { "save": "sender", "saveKey": "senderKey" } },
+    { "newAccount": { "save": "feePayer", "saveKey": "feePayerKey" } },
+
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$sender",
+                  "value": "10000000000000000000", "gas": "21000",
+                  "save": "fundSenderHash" } },
+    { "sendTx": { "on": "en1",
+                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$feePayer",
+                  "value": "10000000000000000000", "gas": "21000",
+                  "save": "fundFeeHash" } },
+
+    { "sendTx": { "on": "en1",
+                  "key": "$senderKey",
+                  "feePayerKey": "$feePayerKey",
+                  "to": "0x00000000000000000000000000000000C0FFEE02",
+                  "value": "1000000000000000000",
+                  "save": "hash" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$fundSenderHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$fundFeeHash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
+    { "assert": "balanceAt", "address": "0x00000000000000000000000000000000C0FFEE02",
+      "compare": "Equal", "expected": "1000000000000000000" }
+  ]
+}

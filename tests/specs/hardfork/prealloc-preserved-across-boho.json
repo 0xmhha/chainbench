@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1",
+  "id": "prealloc-preserved-across-boho",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "hardforks": { "boho": 10 },
+  "requires": ["rpc"],
+  "steps": [
+    { "waitFor": { "source": "rpcCall", "method": "eth_getBalance",
+                   "params": ["0x71562b71999873db5b286df957af199ec94617f7", "0x1"],
+                   "compare": "NotEqual", "expected": "0x0",
+                   "timeout": "60s", "pollInterval": "1s" } },
+    { "read": { "source": "rpcCall", "method": "eth_getBalance",
+                "params": ["0x71562b71999873db5b286df957af199ec94617f7", "0x1"], "save": "balEarly" } },
+    { "waitFor": { "source": "blockNumber", "compare": "GreaterOrEqual", "expected": "11",
+                   "timeout": "120s", "pollInterval": "2s" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "eth_getBalance",
+      "params": ["0x71562b71999873db5b286df957af199ec94617f7", "latest"],
+      "compare": "Equal", "expected": "$balEarly" },
+    { "assert": "rpcCall", "method": "eth_getTransactionCount",
+      "params": ["0x71562b71999873db5b286df957af199ec94617f7", "latest"],
+      "compare": "Equal", "expected": "0x0" }
+  ]
+}

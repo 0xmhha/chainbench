@@ -32,7 +32,6 @@ func newRootCmd() *cobra.Command {
 		newStatusCmd(),
 		newCleanCmd(),
 		newVerifyCmd(),
-		newTestCmd(),
 		newRunCmd(),
 		netcmd.New(),
 		keyringcmd.NewValidator(),

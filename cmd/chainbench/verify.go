@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"text/tabwriter"
 	"time"
@@ -8,7 +9,25 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
+
+// resolveNodeSet builds a NodeSet from explicit RPC endpoints (attach) or from a
+// workspace's recorded network.
+func resolveNodeSet(dataDir, chain string, rpcURLs []string) (node.NodeSet, error) {
+	if len(rpcURLs) > 0 {
+		eps := make([]node.RPCEndpoint, len(rpcURLs))
+		for i, u := range rpcURLs {
+			eps[i] = node.RPCEndpoint{RPCURL: u}
+		}
+		return node.AttachedSet(chain, "attached", eps)
+	}
+	if dataDir != "" {
+		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dataDir})
+		return res.Nodes, err
+	}
+	return node.NodeSet{}, fmt.Errorf("provide --rpc <url> or --workspace-dir <dir>")
+}
 
 func newVerifyCmd() *cobra.Command {
 	var (

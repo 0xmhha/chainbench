@@ -54,6 +54,17 @@ func EncodeFeeDelegatedTampered(senderKey, feePayerKey []byte, toHex string, amo
 	return tx.Encode()
 }
 
+// AddressOf returns the 0x-prefixed hex address of a raw secp256k1 private key.
+// It is the address the key signs as, used to read that account's nonce before
+// building a raw transaction for it.
+func AddressOf(key []byte) (string, error) {
+	priv, err := sdkcrypto.PrivKeyFromBytes(key)
+	if err != nil {
+		return "", fmt.Errorf("accounts: private key: %w", err)
+	}
+	return sdkcrypto.PrivKeyToAddress(priv).Hex(), nil
+}
+
 // corruptSig flips the low byte of a signature component so it no longer recovers
 // the original signer.
 func corruptSig(v *big.Int) *big.Int {

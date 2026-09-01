@@ -12,8 +12,6 @@ import (
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 
-	_ "github.com/0xmhha/chainbench/tests/all"
-
 	"github.com/0xmhha/chainbench/internal/mcp"
 )
 

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "id": "anzeon-active-before-boho",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "hardforks": { "boho": 10 },
+  "requires": ["rpc"],
+  "steps": [
+    { "waitFor": { "source": "blockNumber", "compare": "GreaterOrEqual", "expected": "1",
+                   "timeout": "60s", "pollInterval": "1s" } }
+  ],
+  "assertions": [
+    { "assert": "rpcCall", "method": "eth_getCode",
+      "params": ["0x0000000000000000000000000000000000001001", "0x1"],
+      "compare": "Regexp", "expected": "^0x[0-9a-fA-F]{100,}$" }
+  ]
+}

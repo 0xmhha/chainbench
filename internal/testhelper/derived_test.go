@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/gorilla/websocket"
 )
@@ -455,5 +456,87 @@ func TestReadDerive_Word(t *testing.T) {
 		if _, err := readDerive(context.Background(), nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
+	}
+}
+
+func TestReadDerive_Quorum(t *testing.T) {
+	// ceil(2n/3): the BFT quorum for n validators.
+	cases := []struct {
+		n    string
+		want string
+	}{
+		{"4", "3"}, // ceil(8/3)=3
+		{"7", "5"}, // ceil(14/3)=5
+		{"1", "1"}, // ceil(2/3)=1
+		{"3", "2"}, // ceil(6/3)=2
+		{"10", "7"},
+	}
+	for _, tc := range cases {
+		got, err := readDerive(context.Background(), nil, map[string]any{"op": "quorum", "of": []any{tc.n}})
+		if err != nil {
+			t.Fatalf("quorum(%s): %v", tc.n, err)
+		}
+		if got != tc.want {
+			t.Errorf("quorum(%s) = %v, want %v", tc.n, got, tc.want)
+		}
+	}
+	for name, bad := range map[string]map[string]any{
+		"no of":    {"op": "quorum"},
+		"two of":   {"op": "quorum", "of": []any{"4", "5"}},
+		"zero":     {"op": "quorum", "of": []any{"0"}},
+		"negative": {"op": "quorum", "of": []any{"-1"}},
+	} {
+		if _, err := readDerive(context.Background(), nil, bad); err == nil {
+			t.Errorf("%s must fail", name)
+		}
+	}
+}
+
+// TestWSOpenThenCollected covers the open-before-cause vocabulary: wsOpen binds
+// a live subscription handle as a step, and a later wsCollected assertion drains
+// the notifications the subscription buffered in between.
+func TestWSOpenThenCollected(t *testing.T) {
+	srv := wsHeadServer(t, 2)
+	host, port := hostPort(t, srv.URL)
+	d := deps()
+	env := envWithWS(t, host, port)
+
+	openAct, ok := d.Actions.Action(actionWSOpen)
+	if !ok {
+		t.Fatal("wsOpen not registered")
+	}
+	ac := &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"event": "newHeads", "save": "sub"}}
+	if err := openAct.Do(context.Background(), ac); err != nil {
+		t.Fatalf("wsOpen: %v", err)
+	}
+	sub, ok := ac.Value.(*rpc.Subscription)
+	if !ok || sub == nil {
+		t.Fatalf("wsOpen must bind a subscription handle, got %#v", ac.Value)
+	}
+
+	// The later assertion receives the handle the way the interpreter passes it:
+	// the "$sub" reference resolves to the bound value.
+	as, _ := d.Actions.Assertion(assertWSCollected)
+	res, err := as.Check(context.Background(), &interp.AssertCtx{Env: env, Deps: &d,
+		Spec: map[string]any{"assert": assertWSCollected, "sub": sub, "count": 2, "timeout": "5s"}})
+	if err != nil {
+		t.Fatalf("wsCollected: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("expected 2 notifications, got actual %#v (%s)", res.Actual, res.Source)
+	}
+	// The record must not carry the live handle (it cannot be marshaled).
+	if _, err := json.Marshal(res.Provenance); err != nil {
+		t.Fatalf("provenance must be JSON-marshalable, got: %v", err)
+	}
+}
+
+func TestWSCollected_RequiresHandle(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertWSCollected)
+	res, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d,
+		Spec: map[string]any{"assert": assertWSCollected, "sub": "not-a-handle"}})
+	if err == nil || res.Pass {
+		t.Fatal("wsCollected must fail when sub is not a subscription handle")
 	}
 }

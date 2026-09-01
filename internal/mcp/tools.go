@@ -15,7 +15,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/pipeline/testrun"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -27,7 +26,6 @@ func Default(name, version string) *Server {
 	s.Register(chainsTool())
 	s.Register(faucetTool())
 	s.Register(verifyTool())
-	s.Register(testTool())
 	s.Register(runTool())
 	s.Register(consensusTool())
 	s.Register(nodeRPCTool())
@@ -45,7 +43,6 @@ func Default(name, version string) *Server {
 	s.Register(networkInfoTool())
 	s.Register(networkDetachTool())
 	s.Register(remoteRPCTool())
-	s.Register(testListTool())
 	s.Register(consensusStatusTool())
 	s.Register(consensusHealthTool())
 	s.Register(consensusBlockInfoTool())
@@ -277,43 +274,6 @@ func verifyTool() Tool {
 				fmt.Fprintf(&b, "node%d %s chain_id=%d block=%d peers=%d ok=%v\n",
 					n.Index, n.RPCURL, n.ChainID, n.BlockNumber, n.PeerCount, n.OK)
 			}
-			return b.String(), nil
-		},
-	}
-}
-
-func testTool() Tool {
-	return Tool{
-		Name:        "chainbench_test",
-		Description: "Run test cases against a network. Args: chain, rpc (array) or workspaceDir, optional name/category filters.",
-		InputSchema: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"chain":        map[string]any{"type": "string"},
-				"rpc":          map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"workspaceDir": map[string]any{"type": "string"},
-				"name":         map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-				"category":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-			},
-		},
-		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			ns, err := nodeSetFromArgs(args)
-			if err != nil {
-				return "", err
-			}
-			rep, err := testrun.Run(ctx, ns, testrun.Options{
-				Names:      argStrings(args, "name"),
-				Categories: argStrings(args, "category"),
-			})
-			if err != nil {
-				return "", err
-			}
-			var b strings.Builder
-			for _, r := range rep.Results {
-				fmt.Fprintf(&b, "%s [%s] %s %s\n", r.Name, r.Category, r.Status, r.Message)
-			}
-			pass, fail, skip := rep.Counts()
-			fmt.Fprintf(&b, "pass=%d fail=%d skip=%d", pass, fail, skip)
 			return b.String(), nil
 		},
 	}

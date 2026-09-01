@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
-	_ "github.com/0xmhha/chainbench/tests/all"
 
 	"github.com/0xmhha/chainbench/internal/mcp"
 )
@@ -67,7 +66,7 @@ func TestInitializeAndList(t *testing.T) {
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_test", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
@@ -282,7 +281,7 @@ func mockNode(t *testing.T) *httptest.Server {
 	}))
 }
 
-func TestVerifyAndTestTools(t *testing.T) {
+func TestVerifyTool(t *testing.T) {
 	srv := mockNode(t)
 	defer srv.Close()
 	s := newServer()
@@ -290,13 +289,6 @@ func TestVerifyAndTestTools(t *testing.T) {
 	vtext, verr := callText(t, s, "chainbench_verify", map[string]any{"chain": "wbft", "rpc": []any{srv.URL}})
 	if verr || !strings.Contains(vtext, "producing: true") {
 		t.Errorf("verify tool: err=%v text=%s", verr, vtext)
-	}
-
-	ttext, terr := callText(t, s, "chainbench_test", map[string]any{
-		"chain": "wbft", "rpc": []any{srv.URL}, "name": []any{"fee-delegate-sign-rpc-present"},
-	})
-	if terr || !strings.Contains(ttext, "pass=1") {
-		t.Errorf("test tool: err=%v text=%s", terr, ttext)
 	}
 }
 

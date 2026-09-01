@@ -34,12 +34,12 @@ chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.j
 | 카테고리 | 레거시 | 이관 | 상태 |
 |---|---:|---:|---|
 | `api` | 11 | **10** | ✅ 라이브 통과 (gstable) |
-| `consensus` | 13 | **11** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
+| `consensus` | 13 | **14** | ✅ 라이브 통과 (gstable·gwbft). +randao/mixdigest·block-period(parentHash 워크로 헤드 2쌍 `derive:diff`==1)·wbft-seals-quorum(seal 서명 present). 잔여 3건 갭(아래) |
 | `network` | 4 | **4** | ✅ `examples/specs/network-*.json`(선행 이관분) 3건 + **admin-peers-populated** 라이브(gstable) — `rpcCall admin_peers` 를 `select:"#"`(배열 길이)≥1 & `select:"0.id"`(배열 인덱싱) NotEqual "" 로 검증. 갭 없음 |
-| `accounts` | 35 | **17** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
-| `gas-policy` | 17 | **13** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
-| `hardfork` | 8 | **2** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
-| `system-contracts` | 46 | **35** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. **비회원 로컬서명 3건**(direct-blacklist·non-member-configure-minter·sender-blacklisted rejected — `newAccount`+`sendTx key` 로컬서명) + **burn-refund 라이프사이클 8건**(burn-transfer-event·burn-cancel-refundable·burn-execute-no-refundable·burn-reject-refundable·claim-burn-refund-succeeds·burn-refund-events·claim-zero-refund-reverts·claim-burn-refund-double-reverts — **Boho-v2 넷**(genesis 오버레이)에서 proposeBurn→cancel/disapprove/claim + refundableBalance **전후 델타**(`derive diff`) 어세션으로 재사용 넷 누적 간섭 회피). 잔여 11건 갭(아래) |
+| `accounts` | 35 | **31** | ✅ 라이브 통과 (gstable). value/legacy/dynamic-fee transfer·tx-count·tx-by-hash·receipt·effective-gas·genesis-balance·contract-roundtrip 9건 + **제출거부 3건**(insufficient-funds·dynamic-fee-below-basefee·gas-limit-exceeds-block, `expect:"reject"`) + **contract-event-emitted**(컨트랙트 생성 sendTx→receipt contractAddress→execute→`logs` topic0 매칭) + **access-list-tx**(EIP-2930 0x01: 빈 `accessList:[]`+gasPrice → `eth_getTransactionByHash` type==0x1) 라이브, secp256r1 precompile 3건은 wbft 전용(gstable 미탑재 확인)이라 오프라인 검증만. 잔여 18건은 문법 갭(아래) |
+| `gas-policy` | 17 | **16** | ✅ 라이브 통과 (gstable). read류 3 + tx-flow 6 (basefee min/max·effective-gas·gastip-forced·feecap exact/above-min) + **제출거부 4건**(feecap-below-min·legacy-gasprice-below-min·gaslimit-exceeded·accesslist-gasprice-below-min, `expect:"reject"`). `read/assert:"derive"`(sum/diff) 로 정확 산술 비교, `read:"derive"`(read source) 로 `feeCap = baseFee+tip` 를 계산해 sendTx 인자로 주입. 잔여 4건은 문법 갭(아래) |
+| `hardfork` | 8 | **4** | ✅ 라이브 통과 (gstable). boho-chain-config-active(blockNumber/chainId/baseFee >0)·govminter-v2-code(codeAt≠"0x"). 잔여 6건 갭(아래) |
+| `system-contracts` | 46 | **45** | ✅ 라이브 통과 (gstable). system-contracts-deployed(EVM 5종 codeAt)·adapter-code·token-metadata(WKRC 정확)·total-supply/balance readable·account authorization/blacklist readable·minter-status·validator-metadata 9건 + **토큰 write+event 2건**(token-transfer-emits-event·token-approve-sets-allowance, sendTx ABI calldata→`logs` topic 필터/select + allowance `call`) + **거버넌스 쿼럼 12건**(mint·blacklist·authorize·configure-minter·authorized-account-added-event·**mint-transfer-event** 단일 라운드 + unauthorize·address-unblacklisted·**remove-minter-executes** 2-라운드 + **burn-proposal-executes**(payable proposeBurn→approve→`(H) derive op:"word"` 로 proposals() 상태 워드[9]==Executed(3) 디코드) + **quorum-deficient-stays-voting**(proposeMint→정족수 미달 executeProposal 을 `expect:"revert"` 로 확정→proposals() 상태 워드[9]==Voting(1)→cleanup approve) + **recipient-blacklisted-rejected**(GovCouncil blacklist→ 수취인에게 전송 시 `expect:"reject" reason:"blacklist"` 제출거부→cleanup unblacklist): `receiptLog` topic1 로 proposalId 추출→`derive abiCall` 로 approve/execute calldata 조립→정족수 자동 execute→`call`/상태워드/`logs` 확인). `unblacklist-restores` 는 address-unblacklisted-event 가 이미 전량 커버(중복). read source `call`+`$var` 보간으로 totalSupply≥balance 표현. **비회원 로컬서명 3건**(direct-blacklist·non-member-configure-minter·sender-blacklisted rejected — `newAccount`+`sendTx key` 로컬서명) + **burn-refund 라이프사이클 8건**(burn-transfer-event·burn-cancel-refundable·burn-execute-no-refundable·burn-reject-refundable·claim-burn-refund-succeeds·burn-refund-events·claim-zero-refund-reverts·claim-burn-refund-double-reverts — **Boho-v2 넷**(genesis 오버레이)에서 proposeBurn→cancel/disapprove/claim + refundableBalance **전후 델타**(`derive diff`) 어세션으로 재사용 넷 누적 간섭 회피). 잔여 11건 갭(아래) |
 
 ### 라이브 검증 근거 (2026-08-09)
 
@@ -419,8 +419,8 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
-| `revert-tx-status-zero` · `out-of-gas-consumes-all` | 되돌아가는/가스소진 **컨트랙트 자산**과 gasUsed==gasLimit 판정이 필요 | 컨트랙트 바이트코드 자산 + receipt `gasUsed`/`gasLimit` read (부분 표현 가능, 자산 확보 선행) |
-| `authorized-account-gastip-free` | **거버넌스 쿼럼 흐름**(proposeAddAuthorizedAccount → 승인) 을 먼저 태워야 한다 | system-contracts 배치와 함께 — 거버넌스 스텝 표현 확보 후 |
+| ~~`revert-tx-status-zero` · `out-of-gas-consumes-all`~~ ✅ **이관 완료(라이브 pass)** — 자산은 spec 안의 initcode 리터럴(REVERT/무한루프 런타임, contract-event-emitted 와 같은 sendTx 생성 패턴). revert 는 `expect:"revert"`+receipt status, out-of-gas 는 receipt `gasUsed` 를 `derive diff`==0 으로 gasLimit(50000)와 대조 | — |
+| ~~`authorized-account-gastip-free`~~ ✅ **이관 완료(라이브 pass)** — (G) 쿼럼 흐름으로 fresh 계정 인가→`waitFor call isAuthorized==1`(반영 대기 필수)→**key 서명 sendTx 에 fee cap 지원 추가**(maxFee/maxPriorityFee → `SendDynamicFeeGas`; 없으면 지갑이 제안값=강제 gasTip 을 쓴다)→3×gasTip 요청이 그대로 청구됨을 `derive diff(egp,base)`==3×gasTip 로, AuthorizedTxExecuted 를 receiptLog 로 확인 | — |
 
 ### accounts 잔여 18건과 필요한 문법 확장
 
@@ -428,9 +428,9 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
-| `feepayer-insufficient-rejected` · `fee-delegated-unfunded-feepayer-rejected` | (B) `expect:"reject"` 는 확보됐으나 **fee-delegation(0x16)** tx(feePayer 이중서명) 미지원 — 제출거부 자체는 표현 가능하나 0x16 를 조립할 수단이 없다 | (D) sendTx feePayer + 0x16 인코딩 |
+| ~~`feepayer-insufficient-rejected` · `fee-delegated-unfunded-feepayer-rejected`~~ ✅ **이관 완료(라이브 pass, applepie 오버레이 넷)** — (D) `feePayerKey`(feepayer-blacklisted 에서 확보) + 미펀딩 fresh feePayer + `expect:"reject"`. 오버레이는 spec 의 `chain.genesisOverlay` 로 선언해 suite 가 자동 구성 | — |
 | `fd-sender-sig-invalid-rejected` · `fd-feepayer-sig-invalid-rejected` · `fee-delegated-sender-sig-invalid-rejected` · `fee-delegated-feepayer-sig-invalid-rejected` | 위 (B) + **손상된 이중서명 raw 트랜잭션 조립**(EncodeFeeDelegatedTampered) 을 spec 에서 만들 수단이 없다 | (B) + raw 서명 조립 자산 |
-| `fee-delegated-transfer` · `external-fee-delegated-transfer` | **fee-delegation(0x16) 트랜잭션** — sendTx 에 feePayer(이중서명) 필드가 없다 | (D) sendTx feePayer + 0x16 인코딩 |
+| ~~`fee-delegated-transfer`~~ ✅ **이관 완료(라이브 pass, applepie 오버레이 넷)** — fresh sender·feePayer 펀딩 후 `key`+`feePayerKey` 0x16 전송, 수취인 balanceAt==금액. `external-fee-delegated-transfer` 는 남음(operator 공급 키 갭) | (D 확보) / external: env 키 바인딩 |
 | `set-code-delegation` | **EIP-7702(0x04) set-code** — authorization 리스트/authority 서명 미지원 | (E) sendTx authorizationList + 신규 키 생성 |
 | `nonce-ordering` · `replacement-tx` · `out-of-order-nonces-mine` · `same-nonce-replacement` | sendTx 가 **제출 후 receipt 동기 대기** → gap 난 nonce(N+1) 를 큐잉만 하고 나중에 채굴시킬 수 없고, "tx1 은 채굴되면 안 된다" 는 **부정 채굴 기대**도 없다 | 비동기 제출(대기 안 함) + 부정 채굴 assertion |
 | `zero-address-transfer-blocked` · `precompile-transfer-blocked` | accounts SDK 의 **클라이언트측 정적 가드**(제출 전 거부)를 검사. DSL sendTx 는 노드로 직행하므로 이 가드를 태우지 못한다(의미가 다름) | SDK 가드 경로는 DSL 로 표현 대상 아님 — 갭으로 남김 |
@@ -445,7 +445,9 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
 | `p256-precompile-active` · `p256-rejects-invalid` | **라이브 반증**: gstable 빌드의 0x100 이 valid/corrupt/short 세 벡터 모두 `"0x"` 반환 → P256VERIFY 미탑재. `-active` 는 라이브 fail, `-rejects-invalid` 는 "precompile 부재"로 우연히 통과할 뿐 검증 의미 없음. 레거시 소스는 Boho-genesis P256 활성을 단언하나 바이너리와 불일치 | Boho/P256 탑재 gstable 바이너리 확보 후 재분류(체인팀 확인 필요). 현 빌드로는 표현해도 무의미 |
-| `govminter-code-changes-at-boho` · `p256-inactive-before-boho` · `anzeon-active-before-boho` · `prealloc-preserved-across-boho` | **delayed-boho 교차포크**: bohoBlock=N 으로 지연 활성한 뒤 fork 전(블록 1)·후(latest) 상태를 조건부 대기(WaitFor 크로스오버)로 비교. 1회성 read spec 은 포크 크로스오버를 표현할 수 없고, DSL 에 delayed-boho 조건부 대기가 없다 | delayed-boho 기동 + 크로스포크 조건부 WaitFor + 블록 고정(`0x1` vs latest) 비교 |
+| ~~`anzeon-active-before-boho` · `prealloc-preserved-across-boho`~~ ✅ **이관 완료(라이브 pass, bohoBlock=10 넷)** — spec 의 `hardforks:{"boho":10}` 선언이 suite 를 지연 포크 넷으로 구성한다(genesis config.bohoBlock=10 확인). anzeon-active 는 `eth_getCode(GovValidator,"0x1")` Regexp(실코드), prealloc 은 블록 1 잔고 저장→`waitFor blockNumber≥11`(포크 통과 신호)→latest 잔고 Equal·nonce 0x0 | — |
+| `govminter-code-changes-at-boho` | **라이브 반증**: chainbench genesis 빌더는 bohoBlock=10 이어도 GovMinter 코드를 처음부터 최종본으로 굽는다 — 블록 1 과 latest 의 getCode 가 동일(38250 hex, md5 일치, head 0x20 에서 실측). "v1→v2 코드 스왑" 신호 자체가 이 구성에는 없다 | delayed-boho 넷에 v1 코드를 굽는 genesis 소스(체인 특화 충실도) 확보 후 재분류 — P256 2건과 같은 부류 |
+| `p256-inactive-before-boho` | 위 P256 2건과 동일 — 이 빌드의 0x100 은 포크 후에도 "0x" 를 반환해 "활성" 쪽 절반이 성립 불가 | Boho/P256 탑재 바이너리 확보 후 |
 
 ### system-contracts 잔여 21건과 필요한 문법 확장
 
@@ -462,7 +464,7 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 | 레거시 케이스 (건수) | 갭 | 필요 확장 |
 |---|---|---|
 | ~~`gastip-governance-updates-header`~~ ✅ **이관 완료(라이브 pass, 4검증자 넷)** — 두 갭을 신규 프리미티브로 해소: (1) 시간 대기 → `waitFor`(source+comparator 폴링, `waitBlock` 일반화); (2) 폴링마다 최신 블록 재확인 → `rpcCall` params `"@latest"` 센티넬(호출 시점 `eth_blockNumber` 로 치환, `$head` 고정과 달리 매 폴링 재해석)로 `istanbul_getWbftExtraInfo("@latest").gasTip` 를 추적. 흐름: proposeGasTip(en1)→approve(en2 자동 execute)→`waitFor gasTip==25000000000000`→`$orig` 로 복원(멱등). GasTipUpdated 방출은 `logs` count≥1. **라이브 확인**: 넷 기본 헤더 gasTip=30000000000000(genesis param 27.6e12 과 별개의 WBFT 헤더 기본값) — 최초 target 30000000000000 이 기본값과 동일해 `proposeGasTip` 이 `SameGasTip()` revert 하던 것을 target 25000000000000(≠기본값·genesis param) 으로 수정해 해소. `$orig` 복원이라 재실행 멱등. `chainbench run` (엔진, `chainbench test` 아님) 으로 검증 | ✅ (G)+`waitFor`+`@latest` (확보) |
-| `validator-add-member-executes`·`masterminter-member-add-remove` (2) | `(G)`+`(H)` 로 흐름·calldata 는 확보했으나 **파괴적**: 검증자셋·정족수를 변경(add 후 quorum 상승/검증자 추가)해 공유 넷을 오염시키고 이후 spec 의 정족수 가정을 깬다 | (G)+(H)(확보) + 전용 격리 넷(다른 spec 과 분리 실행) |
+| ~~`validator-add-member-executes`·`masterminter-member-add-remove`~~ ✅ **이관 완료(라이브 pass)** — R4 이후 suite 가 매 실행 fresh 워크스페이스를 구성하므로 "전용 격리 넷" 조건이 기본값이 됐다. validator-add 는 preset node5 를 GovValidator 에 추가 후 `members()` 워드[0]==1; masterminter 는 add(quorum 3)→isMember/quorum 확인→remove(quorum 2, en2+en3 승인) 왕복 | — |
 | ~~`burn-proposal-executes`~~ ✅ **이관 완료**(라이브) — payable proposeBurn→approve→`(H) derive word` status==Executed(3) | — | — |
 | ~~`remove-minter-executes`~~ ✅ **이관 완료**(라이브) — configure→approve→`(H) derive word` 로 중간 isMinter==1 확인→remove→approve→`call` isMinter==0 | — | — |
 | ~~`mint-transfer-event`~~ ✅ **이관 완료**(라이브, fresh 넷) — proposeMint(C0FFEE30)→approve 자동 execute→`balanceAt`==1e18 & NativeCoinAdapter Transfer(0x0→C0FFEE30) `logs`. 감쇠 넷 재기동(20M) 후 검증 | — | — |
@@ -485,3 +487,105 @@ refundableBalance 가 재사용 넷에서 제안자별로 누적돼 `>0`/`==0` �
 - `applicableChains` 로 대상 체인을 선언한다 — 미적용 체인에서는 fail 이 아니라 **skip**.
 - `requires` 로 필요한 capability 를 선언한다(`rpc`, `ws`, `consensus`, `process`).
 - 레거시 케이스는 **소비자 이관 전까지 제거하지 않는다**. 지금은 두 경로가 병존한다.
+
+### 라이브 검증 근거 — R5 착수 배치 8건 (2026-09-01, R4 suite 경로)
+
+이 배치부터 검증은 attach 가 아니라 **suite 경로**(`chainbench run --workspace-dir …`,
+매 실행 fresh 4노드 워크스페이스)다. 그 전환이 드러낸 런타임 갭 2건을 함께 고쳤다:
+
+- **역할 셀렉터 인덱스 폴백**(`session.Resolve`): suite 의 노드 표는 전원 validator 라
+  `en1`/`en2` 가 아무것도 못 찾았다(attach 표는 반대로 전원 endpoint). 요청한 역할이
+  표에 **아예 없을 때만** 서수를 인덱스 순서로 폴백한다 — 일부라도 있으면 엄격 유지.
+- **key 서명 sendTx 의 fee cap**: 로컬 서명 경로가 fee 인자를 무시하고 `SendCoin`
+  (지갑 제안값 = 강제 gasTip)으로 보냈다. `maxFeePerGas`+`maxPriorityFeePerGas` 가
+  있으면 `SendDynamicFeeGas` 로 태운다.
+
+```
+gas-policy (+3) → fresh 4노드(31000/8600 기본 밴드, --wait-blocks 2): pass=3
+                  revert-tx-status-zero · out-of-gas-consumes-all · authorized-account-gastip-free
+system-contracts (+2) → 같은 배치: pass=2
+                  validator-add-member-executes · masterminter-member-add-remove
+accounts (+3) → applepie 오버레이 넷(spec 의 chain.genesisOverlay 로 자동 구성): pass=3
+                  fee-delegated-transfer · fee-delegated-unfunded-feepayer-rejected ·
+                  feepayer-insufficient-rejected
+```
+
+**잔여 미이관 24건** (등록 56 − 이관과 동명 spec 보유 32):
+accounts 15 (fee-delegation 서명변조 4 · nonce 4 · SDK 정적가드 2 · external 2 ·
+eth-call-revert 1 · sign-rpc 프로브 1 · set-code(0x04) 1) · api 1 (ws-subscribe-logs) ·
+consensus 3 (epoch 대기 · 토폴로지 파생 2) · gas-policy 1 (tipcap-underpriced, 라이브 반증 보류) ·
+hardfork 4 (P256 바이너리 3 · govminter 코드스왑 반증 1) · system-contracts 0.
+
+delayed-boho 2건(anzeon-active·prealloc-preserved)은 위 배치 뒤에 이관됐다: spec 이
+`hardforks` 로 지연 포크를 선언하면 suite 가 그 넷을 구성한다. govminter-code-changes 는
+라이브 반증(코드 스왑 신호 부재), p256-inactive 는 기존 P256 반증에 합류.
+
+### 라이브 검증 근거 — R5 프리미티브 배치 10건 (2026-09-01)
+
+잔여의 "새 DSL 프리미티브 필요" 갭을 프리미티브 4종으로 닫고 accounts 10건을 이관했다.
+전부 suite 경로(fresh 넷)에서 라이브 통과.
+
+프리미티브(모두 체인 이름을 모른다 — C6 ACL 유지):
+- **`txMined` 리드/어세션**: 해시에 영수증이 있으면 "true", 없으면 "false". `waitFor`
+  로 한 tx 채굴을 기다리고 `assert txMined expected:"false"` 로 다른 tx 의 부재를
+  확인한다(교체 tx 시나리오).
+- **key 서명 sendTx 의 `nonce`·`wait:false`**: 로컬 서명 경로가 명시 nonce 와 비동기
+  제출을 지원(`SendDynamicFeeTx` 경유). gap 난 nonce 를 큐잉하고 나중에 채우는 순서
+  케이스가 표현 가능.
+- **`sendRawTampered` 액션**: 0x16 이중서명 tx 를 만들어 sender/feepayer 한쪽 서명을
+  손상시키고 raw 제출→노드 거부를 통과 조건으로. chainId·nonce·fee 는 노드에서 읽어
+  서명 손상만이 유일한 거부 사유가 되게 한다. 계정 provider 의 `SupportsTxType(0x16)`
+  로 게이팅.
+- **`callError` 어세션**: eth_call 이 오류(revert)를 반환하면 통과. 값이 오면 실패.
+- **`methodPresent` 어세션**: 메서드가 등록돼 있으면 통과(throwaway 인자로 오류는 나도
+  됨). method-not-found(-32601)만 부재로 판정.
+
+```
+accounts (+10) → fresh 4노드(--wait-blocks 2): pass=10
+  nonce (fresh 계정 로컬서명, maxFee 1e14·tip 3e13 > 강제 gasTip 2.76e13):
+    nonce-ordering · out-of-order-nonces-mine (nonce 2,1,0 큐잉→nonceAt==3)
+    replacement-tx · same-nonce-replacement (교체 tx 는 feeCap·tip 둘 다 ≥10% bump →
+      txMined 교체==true, 원본==false)
+  fee-delegation 서명변조 (applepie 오버레이 넷, sendRawTampered):
+    fd-sender/fd-feepayer-sig-invalid-rejected ·
+    fee-delegated-sender/feepayer-sig-invalid-rejected
+  eth-call-revert-returns-error (Reverter 배포→callError) ·
+  fee-delegate-sign-rpc-present (methodPresent eth_signRawFeeDelegateTransaction)
+```
+
+**잔여 미이관 14건**: 카테고리·소스파일·사유·손실의 정본 표는
+[[legacy-retirement-plan]] §5 (`docs/dev/legacy-retirement-plan.md`). 세 갈래 —
+A 설계 경계 6건(토폴로지 자기참조·구독 순서·SDK 정적가드), B 외부 블로커 3건
+(external 2·set-code 0x04 1), C 라이브 반증 4건(P256 3·govminter 코드스왑 1).
+
+### 라이브 검증 근거 — R5 파라미터·모델확장 배치 5건 (2026-09-01)
+
+"토폴로지 수를 파라미터로 받는다"(사용자 제안)로 consensus 2건이, set-code 0x04
+프리미티브로 1건이, WS 구독-스텝 모델 확장으로 1건이 이관됐다. 전부 suite 경로 라이브 통과.
+
+신규(모두 체인 무관):
+- **`derive op:"quorum"`**: 검증자 수를 파라미터(`of:[n]`)로 받아 ceil(2n/3) 계산.
+  하네스가 노드 표를 읽지 않는다 — spec 이 자기가 구성한 넷의 크기를 선언하고 그 수로
+  quorum 을 유도한다.
+- **`sendSetCode` 액션**: EIP-7702 0x04. sponsor 키가 가스를 내어 fresh authority 의
+  코드를 지정 주소로 위임(provider `SendSetCode`, `SupportsTxType(0x04)` 게이팅).
+- **`wsOpen` 액션 + `wsCollected` 어세션**: WS 구독을 **스텝으로** 열어 핸들을 `save`,
+  나중 어세션이 버퍼를 비운다. 어세션이 스텝 뒤에 도는 순서 제약을 우회한다 —
+  로그 구독은 유발 tx 보다 먼저 열려야 하고(eth_subscribe 는 backfill 안 함), 핸들은
+  binding 으로 그대로 전달된다. 워치독이 미회수 구독을 2분 상한으로 정리.
+
+```
+consensus (+3) → fresh 4노드: pass=3
+  validator-set-count (istanbul_getValidators 길이 ≥ 파라미터 4) ·
+  prev-seals-quorum (prevCommitted/prepared sealers ≥ derive quorum(4)=3, @latest 센티넬) ·
+  epoch-transition-carries-epoch-info (waitBlock 140 → epochInfo.validators 4)
+accounts (+1) → applepie 오버레이 넷: pass=1
+  set-code-delegation (0x04, authority code == 0xef0100||delegate, tx type 0x4)
+api (+1) → fresh 4노드: pass=1
+  ws-subscribe-logs (wsOpen logs 필터 → 유발 tx → wsCollected 1건 수신)
+```
+
+**잔여 미이관 5건** (등록 56 − 이관·동명 spec 51): 전부 이관 대상 아님 —
+external 2(operator 키·외부 체인, 라이브 검증 불가) · SDK 정적가드 2(chainbench 아닌
+SDK 동작) · tipcap-underpriced 1(라이브 반증). P256 3·govminter 1 은 바이너리/genesis
+확보 시 기존 동사로 즉시 이관(DSL 작업 없음). 정본 표는 [[legacy-retirement-plan]] §5.

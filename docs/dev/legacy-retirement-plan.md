@@ -1,5 +1,11 @@
 # 레거시 경로 은퇴 계획 (legacy retirement)
 
+> **[상태] 실행 완료 (2026-09-01, R5).** `internal/testkit`·`internal/core/pipeline/testrun`·
+> `cmd/chainbench test`·MCP `chainbench_test`/`chainbench_test_list`·레거시 케이스 패키지
+> (`tests/anzeon`·`tests/external`·`tests/wbft`·`tests/all`)를 삭제했다. 공용 테스트 게이트
+> `ServersBuildDir` 는 `internal/testsupport` 로 이관. 남은 미이관 5건은 §5 참조(전부 이관 대상 아님).
+> 아래는 그 은퇴에 이르기까지의 순서·매핑·블로커 기록이다.
+
 > **[이력]** 레거시 은퇴 계획. 진행은 worklist.
 > **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
 > 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
@@ -123,3 +129,50 @@
 **남은 것은 표현력이 아니라 이관 작업량이다.** 각 anzeon/wbft/api 케이스를 실제 spec 으로 옮기고 라이브 검증하는 일이 남았다. 라이브 근거: `TestEngine_Live_NewVocabulary`(GSTABLE_BIN) 가 실 4노드 stablenet 에서 바인딩·`read`·`faucet`·`logs`·`gasPrice`·`rpcCall`·`wsSubscribe`·`stopNode`/`startNode` 를 한 세션으로 통과.
 
 > 원칙: **소비자 이관 전에는 레거시 제거 금지**(회귀 위험). 각 단계는 비-e2e 통과 + 대표 라이브 확인을 게이트로.
+
+---
+
+## 5. 잔여 미이관 14건 — 정본 (2026-09-01, R5 이관 종료 시점)
+
+등록 레거시 56건 중 **42건이 동명 DSL spec 으로 이관**됐고, 남은 **14건은 전부
+이관 불가 부류**다. 아래가 그 14건의 정본이다 — 카테고리, 소스 파일, 사유,
+은퇴 시 커버리지 손실. testkit/testrun 이 은퇴하면 이 14건의 Go-func 커버리지가
+사라지므로, 각 건의 손실 크기를 여기 못박는다.
+
+세 갈래로 나뉜다. **A) 설계 경계**(DSL 이 의도적으로 표현하지 않음 — 영구),
+**B) 외부 블로커**(바이너리·env 부재 — 확보 시 재분류), **C) 라이브 반증**(레거시
+전제가 실제 바이너리와 불일치 — 이관해도 무의미).
+
+| # | 카테고리 | 케이스 | 소스(`tests/`) | 갈래 | 사유 · 손실 |
+|---|---|---|---|---|---|
+| 1 | consensus | `validator-set-count` | `wbft/consensus/validators.go` | A | spec 이 **자기 토폴로지**(validator 노드 수)를 참조해 비교. DSL 은 spec 이 자기 규모를 모르게 설계(이식성). 손실: "검증자셋이 실행 노드 전부를 덮는가" 불변식. `istanbul_getValidators` 길이 ≥1 은 다른 spec 이 커버 |
+| 2 | consensus | `prev-seals-quorum` | `wbft/consensus/seals_quorum.go` | A | 위 + **토폴로지 파생 quorum**(ceil 2N/3) 산술. 손실: prev-seal 의 sealer 수 ≥ quorum. seal **존재**는 `wbft-seals-quorum`(이관됨)이 커버 |
+| 3 | consensus | `epoch-transition-carries-epoch-info` | `wbft/consensus/epoch.go` | A | 에폭 경계까지 **조건부 대기** 후 그 블록 조회. DSL 에 "N 의 배수 블록까지 대기" 표현이 없다. 손실: 에폭 전이 블록의 epoch 정보 |
+| 4 | api | `ws-subscribe-logs` | `anzeon/ws_subscribe.go` | A | **구독을 유발 tx 보다 먼저** 열어야 하는데 어세션은 스텝 뒤에 돈다. 순서 표현 불가. 손실: 로그 구독 스트림(heads 구독 `ws-subscribe-new-heads` 는 이관됨) |
+| 5 | accounts | `zero-address-transfer-blocked` | `wbft/accounts/value_guard.go` | A | accounts **SDK 클라이언트측 정적 가드**(제출 전 거부)를 검사. DSL sendTx 는 노드로 직행해 이 가드를 안 태운다 — 의미가 다르다. 손실: SDK 가드(노드 거부 아님) |
+| 6 | accounts | `precompile-transfer-blocked` | `wbft/accounts/value_guard.go` | A | 위와 동일(precompile 주소로의 전송을 SDK 가 막음) |
+| 7 | accounts | `external-value-transfer` | `external/write.go` | B | **operator 공급 키**(`CHAINBENCH_FUNDED_KEY`)로 외부(chainbench 미구성) 체인에 전송. suite 는 자기 넷만 구성. 손실: 외부 체인 스모크 |
+| 8 | accounts | `external-fee-delegated-transfer` | `external/write.go` | B | 위 + 0x16. 손실: 외부 체인 fee-delegation 스모크 |
+| 9 | accounts | `set-code-delegation` | `wbft/accounts/set_code_delegation.go` | B | **EIP-7702(0x04)** set-code — authorizationList·authority 서명 프리미티브 미구현. 손실: 0x04 경로. (프리미티브를 만들면 이관 가능 — 후속) |
+| 10 | gas-policy | `tipcap-underpriced-rejected` | `anzeon/tx_rejections.go` | C | **라이브 반증**(결함 표): 이 넷에서 재현 불안정 → 이관 보류. 손실: tipCap 미달 거부(다른 제출거부 4건이 인접 커버) |
+| 11 | hardfork | `p256-precompile-active` | `anzeon/hardfork_reads.go` | C | **라이브 반증**: 이 gstable 빌드에 P256VERIFY(0x100) 미탑재 — valid 벡터가 `"0x"` 반환. 손실: P256 활성(바이너리 확보 시 재분류) |
+| 12 | hardfork | `p256-rejects-invalid` | `anzeon/hardfork_reads.go` | C | 위와 동일 — precompile 부재로 "거부"가 우연히 성립할 뿐 검증 의미 없음 |
+| 13 | hardfork | `p256-inactive-before-boho` | `anzeon/fork_transition.go` | C | 위 P256 부재 + delayed-boho. 포크 후에도 "0x" 라 "활성" 절반 성립 불가 |
+| 14 | hardfork | `govminter-code-changes-at-boho` | `anzeon/fork_transition.go` | C | **라이브 반증**: chainbench genesis 빌더가 bohoBlock=10 이어도 GovMinter 코드를 처음부터 최종본으로 굽는다(블록 1·latest getCode md5 동일, head 0x20 실측). "v1→v2 스왑" 신호 자체가 없다 |
+
+**갈래별 은퇴 판단:**
+- **A(6건)**: 영구 미이관. DSL 의 의도적 경계이거나 대상이 SDK/순서라 표현 불가.
+  은퇴해도 재구현 대상 아님. 인접 spec 이 핵심 불변식을 부분 커버(2·4).
+- **B(3건)**: 프리미티브·바이너리·env 확보 시 이관 가능. 9(0x04)는 프리미티브만
+  만들면 되므로 후속 1순위. 7·8 은 외부 체인 전용이라 CI 스모크에서 빠져도 무방.
+- **C(4건)**: 레거시 전제가 **실제 바이너리와 불일치**. 이관해도 통과가 무의미하거나
+  라이브에서 fail. Boho/P256 충실 바이너리·genesis 소스 확보 후 재평가.
+
+**후속 (2026-09-01):** 위 14건 중 **9건이 추가 이관됐다.** 사용자 제안("토폴로지
+수를 파라미터로")으로 consensus 3(validator-set-count·prev-seals-quorum·epoch-transition),
+프리미티브 추가로 set-code 0x04·nonce 4·서명변조 4·eth-call-revert·sign-rpc·ws-subscribe-logs.
+**남은 5건은 전부 이관 대상 아님**: external 2(operator 키·외부 체인, 여기서 라이브
+검증 불가), SDK 정적가드 2(chainbench 가 아니라 accounts SDK 동작 검증), tipcap 1
+(라이브 반증). P256 3·govminter 1 은 바이너리/genesis 확보 시 기존 동사로 즉시 이관
+(DSL 작업 없음). **testkit·testrun·`chainbench test`·MCP `chainbench_test` 은퇴를
+진행해도 되는 상태다** — 남은 5건의 실효 커버리지 손실이 없다.

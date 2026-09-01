@@ -304,3 +304,34 @@ func TestEnvironment_Resolve_IdentityLabel(t *testing.T) {
 		t.Fatal("an absent node index must error")
 	}
 }
+
+func TestEnvironmentResolve_RoleAbsentFallsBackToIndexOrder(t *testing.T) {
+	sess, err := session.New(t.TempDir(), "test", time.Unix(0, 0).UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	env, err := sess.NewEnvironment("fp-fallback0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A workspace-composed table: validators only, no endpoint of any kind.
+	env.PopulateNodeTable(node.NodeSet{Chain: "stablenet", Nodes: []node.Node{
+		{Index: 1, Role: node.RoleValidator, RPCURL: "http://one"},
+		{Index: 2, Role: node.RoleValidator, RPCURL: "http://two"},
+	}})
+
+	n, err := env.Resolve("en2")
+	if err != nil {
+		t.Fatalf("en2 on a validator-only table must fall back to index order: %v", err)
+	}
+	if n.Index != 2 || n.RPCURL != "http://two" {
+		t.Fatalf("en2 resolved to %+v, want node 2", n)
+	}
+	if _, err := env.Resolve("en3"); err == nil {
+		t.Fatal("an ordinal beyond the table must still be out of range")
+	}
+	// A role that exists keeps strict addressing.
+	if n, err := env.Resolve("bp1"); err != nil || n.Index != 1 {
+		t.Fatalf("bp1 = %+v, %v", n, err)
+	}
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1",
+  "id": "ws-subscribe-logs",
+  "applicableChains": "stablenet",
+  "chain": { "name": "stablenet", "binary": "gstable" },
+  "requires": ["rpc", "ws"],
+  "steps": [
+    { "sendTx": { "on": "en1", "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "data": "0x6027600c60003960276000f37f111111111111111111111111111111111111111111111111111111111111111160006000a100",
+                  "gas": "200000", "save": "dhash" } },
+    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
+                "params": ["$dhash"], "select": "contractAddress", "save": "addr" } },
+
+    { "wsOpen": { "on": "en1", "event": "logs", "address": "$addr", "save": "logsub" } },
+    { "sendTx": { "on": "en1", "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "to": "$addr", "gas": "100000", "save": "ehash" } }
+  ],
+  "assertions": [
+    { "assert": "txStatus", "hash": "$dhash", "expected": "0x1" },
+    { "assert": "txStatus", "hash": "$ehash", "expected": "0x1" },
+    { "assert": "wsCollected", "sub": "$logsub", "count": 1, "timeout": "30s" }
+  ]
+}

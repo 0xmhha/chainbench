@@ -2,10 +2,11 @@ package resource_test
 
 import (
 	"context"
-	"github.com/0xmhha/chainbench/internal/testkit"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/testsupport"
 
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -18,7 +19,7 @@ import (
 //
 //	CHAINBENCH_DOCKER_SERVERS=<repo>/env/docker/build go test ./internal/serverset/ -run Live_Sudo -v
 func TestLive_SudoElevatesWithThePassword(t *testing.T) {
-	build := testkit.ServersBuildDir(t)
+	build := testsupport.ServersBuildDir(t)
 
 	inv := filepath.Join(build, "server-set.yaml")
 	cfg, err := resource.LoadSet(inv)

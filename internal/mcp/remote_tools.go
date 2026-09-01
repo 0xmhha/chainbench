@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
-	"github.com/0xmhha/chainbench/internal/testkit"
 
 	remotepkg "github.com/0xmhha/chainbench/internal/core/remote"
 )
@@ -85,32 +83,4 @@ func pickNode(ns node.NodeSet, index int) (node.Node, bool) {
 		return node.Node{}, false
 	}
 	return ns.Primary()
-}
-
-// testListTool lists the registered test cases, optionally filtered by category.
-func testListTool() Tool {
-	return Tool{
-		Name:        "chainbench_test_list",
-		Description: "List registered test cases. Args: optional category filter.",
-		InputSchema: map[string]any{
-			"type":       "object",
-			"properties": map[string]any{"category": map[string]any{"type": "string"}},
-		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
-			cat := argString(args, "category", "")
-			var b strings.Builder
-			count := 0
-			for _, c := range testkit.Cases() {
-				if cat != "" && c.Category != cat {
-					continue
-				}
-				fmt.Fprintf(&b, "%s\t%s\n", c.Name, c.Category)
-				count++
-			}
-			if count == 0 {
-				return "no test cases", nil
-			}
-			return strings.TrimRight(b.String(), "\n"), nil
-		},
-	}
 }

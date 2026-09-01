@@ -68,6 +68,12 @@ func (p Pool) Validate() error {
 		if err != nil {
 			return fmt.Errorf("netmap: pool ports: %w", err)
 		}
+		// A zero-step metrics band means one scrape port per machine: place()
+		// runs every slot after the first with metrics-off, so validate must
+		// see the same plan or it rejects a pool that composes cleanly.
+		if p.Ports.Metrics != nil && p.Ports.Metrics.Step == 0 && slot > 1 {
+			e.Metrics = 0
+		}
 		ports = append(ports, e)
 	}
 	if err := ValidatePorts(ports); err != nil {
