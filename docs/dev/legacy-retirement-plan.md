@@ -162,7 +162,11 @@
 - **C(4건)**: 레거시 전제가 **실제 바이너리와 불일치**. 이관해도 통과가 무의미하거나
   라이브에서 fail. Boho/P256 충실 바이너리·genesis 소스 확보 후 재평가.
 
-**결론:** 14건 중 **재구현 가치가 있는 것은 B 의 9(set-code 0x04) 하나**뿐이고,
-나머지 13건은 설계 경계·외부 블로커·라이브 반증이라 은퇴로 잃는 실효 커버리지가 작다.
-testkit·testrun·`chainbench test`·MCP `chainbench_test` 은퇴를 진행해도 되며, 9 는
-후속 프리미티브(0x04)로 이관, C(4건)는 바이너리 확보 시 재평가한다.
+**후속 (2026-09-01):** 위 14건 중 **9건이 추가 이관됐다.** 사용자 제안("토폴로지
+수를 파라미터로")으로 consensus 3(validator-set-count·prev-seals-quorum·epoch-transition),
+프리미티브 추가로 set-code 0x04·nonce 4·서명변조 4·eth-call-revert·sign-rpc·ws-subscribe-logs.
+**남은 5건은 전부 이관 대상 아님**: external 2(operator 키·외부 체인, 여기서 라이브
+검증 불가), SDK 정적가드 2(chainbench 가 아니라 accounts SDK 동작 검증), tipcap 1
+(라이브 반증). P256 3·govminter 1 은 바이너리/genesis 확보 시 기존 동사로 즉시 이관
+(DSL 작업 없음). **testkit·testrun·`chainbench test`·MCP `chainbench_test` 은퇴를
+진행해도 되는 상태다** — 남은 5건의 실효 커버리지 손실이 없다.
