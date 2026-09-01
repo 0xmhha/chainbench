@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/gorilla/websocket"
 )
@@ -488,5 +489,54 @@ func TestReadDerive_Quorum(t *testing.T) {
 		if _, err := readDerive(context.Background(), nil, bad); err == nil {
 			t.Errorf("%s must fail", name)
 		}
+	}
+}
+
+// TestWSOpenThenCollected covers the open-before-cause vocabulary: wsOpen binds
+// a live subscription handle as a step, and a later wsCollected assertion drains
+// the notifications the subscription buffered in between.
+func TestWSOpenThenCollected(t *testing.T) {
+	srv := wsHeadServer(t, 2)
+	host, port := hostPort(t, srv.URL)
+	d := deps()
+	env := envWithWS(t, host, port)
+
+	openAct, ok := d.Actions.Action(actionWSOpen)
+	if !ok {
+		t.Fatal("wsOpen not registered")
+	}
+	ac := &interp.ActionCtx{Env: env, Deps: &d, Args: map[string]any{"event": "newHeads", "save": "sub"}}
+	if err := openAct.Do(context.Background(), ac); err != nil {
+		t.Fatalf("wsOpen: %v", err)
+	}
+	sub, ok := ac.Value.(*rpc.Subscription)
+	if !ok || sub == nil {
+		t.Fatalf("wsOpen must bind a subscription handle, got %#v", ac.Value)
+	}
+
+	// The later assertion receives the handle the way the interpreter passes it:
+	// the "$sub" reference resolves to the bound value.
+	as, _ := d.Actions.Assertion(assertWSCollected)
+	res, err := as.Check(context.Background(), &interp.AssertCtx{Env: env, Deps: &d,
+		Spec: map[string]any{"assert": assertWSCollected, "sub": sub, "count": 2, "timeout": "5s"}})
+	if err != nil {
+		t.Fatalf("wsCollected: %v", err)
+	}
+	if !res.Pass {
+		t.Fatalf("expected 2 notifications, got actual %#v (%s)", res.Actual, res.Source)
+	}
+	// The record must not carry the live handle (it cannot be marshaled).
+	if _, err := json.Marshal(res.Provenance); err != nil {
+		t.Fatalf("provenance must be JSON-marshalable, got: %v", err)
+	}
+}
+
+func TestWSCollected_RequiresHandle(t *testing.T) {
+	d := deps()
+	as, _ := d.Actions.Assertion(assertWSCollected)
+	res, err := as.Check(context.Background(), &interp.AssertCtx{Deps: &d,
+		Spec: map[string]any{"assert": assertWSCollected, "sub": "not-a-handle"}})
+	if err == nil || res.Pass {
+		t.Fatal("wsCollected must fail when sub is not a subscription handle")
 	}
 }

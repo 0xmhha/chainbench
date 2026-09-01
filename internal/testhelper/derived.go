@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
@@ -21,12 +22,19 @@ const (
 	assertGasPrice    = "gasPrice"
 	assertRPCCall     = "rpcCall"
 	assertWSSubscribe = "wsSubscribe"
+	assertWSCollected = "wsCollected"
 	assertDerive      = "derive"
+	actionWSOpen      = "wsOpen"
 )
 
 // defaultSubscribeTimeout bounds a WebSocket subscription assertion. Every wait
 // in the DSL has a timeout; a subscription that never fires must fail, not hang.
 const defaultSubscribeTimeout = 30 * time.Second
+
+// wsCaptureMaxLifetime bounds a wsOpen subscription that a wsCollected never
+// closes (a spec that fails between them): the watchdog tears the connection
+// down after this, so a subscription cannot leak past one test's lifetime.
+const wsCaptureMaxLifetime = 2 * time.Minute
 
 // seedDerivedBuiltins registers the transport assertion. rpcCall is registered
 // through builtinAssertions instead, because it reads one value like the others
@@ -34,6 +42,132 @@ const defaultSubscribeTimeout = 30 * time.Second
 // "assert" but not in "read" is a trap the spec author only meets at run time.
 func seedDerivedBuiltins(r interp.Registry) {
 	r.RegisterAssertion(assertWSSubscribe, wsSubscribeAssertion{})
+	r.RegisterAction(actionWSOpen, wsOpenAction{})
+	r.RegisterAssertion(assertWSCollected, wsCollectedAssertion{})
+}
+
+// wsOpenAction opens a WebSocket subscription as a STEP and binds its live
+// handle under "save", so a later step can cause the events and a wsCollected
+// assertion can check they arrived. This closes the ordering gap wsSubscribe
+// (an assertion, which runs after every step) cannot: a logs subscription must
+// be open before the transaction that emits the log, because eth_subscribe does
+// not backfill. Args: event ("logs" by default), address / topics (a logs
+// filter), params (extra eth_subscribe args, verbatim), on, save (required).
+type wsOpenAction struct{}
+
+func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if s, _ := ac.Args["save"].(string); s == "" {
+		return fmt.Errorf("dsl: wsOpen requires \"save\" to bind the subscription handle")
+	}
+	wsURL, err := wsTargetURL(nodesFor(ac.Env, ac.Args))
+	if err != nil {
+		return err
+	}
+	event, _ := ac.Args["event"].(string)
+	if event == "" {
+		event = "logs"
+	}
+	params := []any{event}
+	if filter := logsFilter(ac.Args); filter != nil {
+		params = append(params, filter)
+	}
+	if extra, ok := ac.Args["params"].([]any); ok {
+		params = append(params, extra...)
+	}
+	sub, err := rpc.Subscribe(ctx, wsURL, params...)
+	if err != nil {
+		return fmt.Errorf("dsl: wsOpen %s: %w", event, err)
+	}
+	// Watchdog: if a wsCollected never closes this (the spec failed between the
+	// two), tear the connection down after a bounded lifetime so the read loop
+	// cannot outlive the test. wsCollected closing the sub first ends the read
+	// loop; this only backstops the failure path.
+	watchCtx, cancel := context.WithTimeout(ctx, wsCaptureMaxLifetime)
+	go func() {
+		defer cancel()
+		<-watchCtx.Done()
+		_ = sub.Close()
+	}()
+	ac.Value = sub
+	return nil
+}
+
+// logsFilter builds an eth_subscribe "logs" filter object from an action's
+// address and topics arguments, or nil when neither is given (subscribe to all
+// logs). topics passes through verbatim so a spec can use the null wildcard.
+func logsFilter(args map[string]any) map[string]any {
+	filter := map[string]any{}
+	if addr, ok := args["address"].(string); ok && addr != "" {
+		filter["address"] = addr
+	}
+	if topics, ok := args["topics"].([]any); ok {
+		filter["topics"] = topics
+	}
+	if len(filter) == 0 {
+		return nil
+	}
+	return filter
+}
+
+// wsCollectedAssertion drains a subscription an earlier wsOpen bound, passing
+// when at least "count" valid notifications arrived within the timeout. Args:
+// sub (the "$handle" an earlier wsOpen saved), count (default 1), timeout, on.
+type wsCollectedAssertion struct{}
+
+func (wsCollectedAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertWSCollected, Provenance: sanitizeWSProvenance(ac.Spec)}
+	sub, ok := ac.Spec["sub"].(*rpc.Subscription)
+	if !ok {
+		err := fmt.Errorf("dsl: wsCollected requires \"sub\" — the handle an earlier wsOpen saved")
+		res.Actual = err.Error()
+		return res, err
+	}
+	defer func() { _ = sub.Close() }()
+	want := 1
+	if n, ok := uintArg(ac.Spec["count"]); ok && n > 0 {
+		want = int(n)
+	}
+	res.Expected = strconv.Itoa(want)
+	timeout := durationArg(ac.Spec, "timeout", defaultSubscribeTimeout)
+	sctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	got := 0
+	for got < want {
+		select {
+		case msg, ok := <-sub.Notifications():
+			if !ok {
+				res.Actual = strconv.Itoa(got)
+				res.Source = "subscription closed after " + strconv.Itoa(got) + " notification(s)"
+				return res, nil
+			}
+			if len(msg) > 0 && json.Valid(msg) {
+				got++
+			}
+		case <-sctx.Done():
+			res.Actual = strconv.Itoa(got)
+			res.Source = fmt.Sprintf("only %d of %d notification(s) within %s", got, want, timeout)
+			return res, nil
+		}
+	}
+	res.Actual = strconv.Itoa(got)
+	res.Pass = true
+	return res, nil
+}
+
+// sanitizeWSProvenance copies an assertion's spec for the record without the
+// live subscription handle, which is a channel-backed struct that cannot be
+// marshaled to JSON. The handle's id stands in its place.
+func sanitizeWSProvenance(spec map[string]any) map[string]any {
+	out := make(map[string]any, len(spec))
+	for k, v := range spec {
+		if sub, ok := v.(*rpc.Subscription); ok {
+			out[k] = "subscription " + sub.ID()
+			continue
+		}
+		out[k] = v
+	}
+	return out
 }
 
 // readGasPrice returns eth_gasPrice as a decimal string. Together with baseFee
@@ -234,20 +368,40 @@ func (wsSubscribeAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (se
 	return res, nil
 }
 
-// wsTarget derives the WebSocket URL of the assertion's target node from its
-// host and WS port. Attached nodes carry no port map, so this names that rather
-// than dialing something wrong.
+// wsTarget derives the WebSocket URL of the assertion's target node.
 func wsTarget(ac *interp.AssertCtx) (string, error) {
 	nodes := ac.On
 	if len(nodes) == 0 && ac.Env != nil {
 		nodes = ac.Env.Nodes()
 	}
+	return wsTargetURL(nodes)
+}
+
+// nodesFor resolves an action's target nodes: the "on" selector if present,
+// else the environment's node table.
+func nodesFor(env session.Environment, args map[string]any) []node.Node {
+	if env == nil {
+		return nil
+	}
+	if sel, ok := args["on"].(string); ok && sel != "" {
+		if n, err := env.Resolve(sel); err == nil {
+			return []node.Node{n}
+		}
+		return nil
+	}
+	return env.Nodes()
+}
+
+// wsTargetURL builds the WebSocket URL of the first node from its host and WS
+// port. Attached nodes carry no port map, so this names that rather than dialing
+// something wrong.
+func wsTargetURL(nodes []node.Node) (string, error) {
 	if len(nodes) == 0 {
-		return "", fmt.Errorf("dsl: wsSubscribe: no target node")
+		return "", fmt.Errorf("dsl: no target node for a WebSocket subscription")
 	}
 	n := nodes[0]
 	if n.Ports.WS == 0 {
-		return "", fmt.Errorf("dsl: wsSubscribe: node%d has no WebSocket port (an attached node's ports are unknown)", n.Index)
+		return "", fmt.Errorf("dsl: node%d has no WebSocket port (an attached node's ports are unknown)", n.Index)
 	}
 	host := n.Host
 	if host == "" {
