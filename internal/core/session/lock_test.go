@@ -26,7 +26,7 @@ func TestLock_FreeThenHeldThenReleased(t *testing.T) {
 	if _, state, err := c.Lock(); err != nil || state != session.LockFree {
 		t.Fatalf("state = %s, err = %v; want free", state, err)
 	}
-	held, _, _, err := c.Acquire("net up --chain wemix")
+	held, _, _, err := c.Acquire("chain up --chain wemix")
 	if err != nil {
 		t.Fatalf("Acquire: %v", err)
 	}
@@ -34,7 +34,7 @@ func TestLock_FreeThenHeldThenReleased(t *testing.T) {
 	if err != nil || state != session.LockLive {
 		t.Fatalf("state = %s, err = %v; want live", state, err)
 	}
-	if got.PID != os.Getpid() || got.Command != "net up --chain wemix" {
+	if got.PID != os.Getpid() || got.Command != "chain up --chain wemix" {
 		t.Fatalf("lock = %+v; want this process and its command", got)
 	}
 	if err := held.Release(); err != nil {
@@ -70,19 +70,19 @@ func TestLock_AnotherLiveRunIsRefused(t *testing.T) {
 
 // TestLock_TheSameRunMayTakeItTwice.
 //
-// A workspace is held by one run, not by one call: `net up` takes the lock and
+// A workspace is held by one run, not by one call: `chain up` takes the lock and
 // then calls the nine steps it is made of, each of which takes it too. Refusing
 // there would deadlock the tool against itself, and releasing there would hand
 // the workspace to a competitor while the run continued — which is what
 // happened before this rule existed: the inner step's release removed the
-// outer lock, and a concurrent `net allocate` walked straight in.
+// outer lock, and a concurrent `chain place` walked straight in.
 func TestLock_TheSameRunMayTakeItTwice(t *testing.T) {
 	c := openComp(t)
-	outer, _, _, err := c.Acquire("net up")
+	outer, _, _, err := c.Acquire("chain up")
 	if err != nil {
 		t.Fatalf("outer Acquire: %v", err)
 	}
-	inner, _, state, err := c.Acquire("net allocate (inner step)")
+	inner, _, state, err := c.Acquire("chain place (inner step)")
 	if err != nil {
 		t.Fatalf("inner Acquire: %v — a run must not conflict with itself", err)
 	}
@@ -96,7 +96,7 @@ func TestLock_TheSameRunMayTakeItTwice(t *testing.T) {
 	if _, state, _ := c.Lock(); state != session.LockLive {
 		t.Fatalf("state = %s after the inner release; the run still holds it", state)
 	}
-	if got, _, _ := c.Lock(); got.Command != "net up" {
+	if got, _, _ := c.Lock(); got.Command != "chain up" {
 		t.Fatalf("lock command = %q; the outer holder must stay recorded", got.Command)
 	}
 	// The outermost release frees it.

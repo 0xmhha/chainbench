@@ -3,7 +3,7 @@
 //
 // The group is queries only. Nothing here composes, launches, or writes; the
 // commands read the server set and answer. Composing is `net`'s job, and a
-// composed network's own placement is `net show` — the split follows the
+// composed network's own placement is `chain show` — the split follows the
 // module boundary: this group speaks for the resource module (what is
 // available), while `net` speaks for the composition (what was made of it).
 //

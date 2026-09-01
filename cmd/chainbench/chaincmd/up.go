@@ -1,4 +1,4 @@
-package netcmd
+package chaincmd
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func newNetUpCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "up",
-		Short: "Compose and launch a network in one command (runs every net step in order)",
+		Short: "Compose and launch a network in one command (runs every chain step in order)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
 				var err error

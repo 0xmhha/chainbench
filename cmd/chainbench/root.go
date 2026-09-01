@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/chaincmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
-	"github.com/0xmhha/chainbench/cmd/chainbench/netcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
@@ -33,7 +33,7 @@ func newRootCmd() *cobra.Command {
 		newCleanCmd(),
 		newVerifyCmd(),
 		newRunCmd(),
-		netcmd.New(),
+		chaincmd.New(),
 		keyringcmd.NewValidator(),
 		newValidateCmd(),
 		newMigrateSpecCmd(),

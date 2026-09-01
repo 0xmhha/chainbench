@@ -1,4 +1,4 @@
-package netcmd
+package chaincmd
 
 import (
 	"encoding/json"
@@ -62,7 +62,7 @@ func newNetAllocateCmd() *cobra.Command {
 	var validators, endpoints int
 	var endpointSyncMode, topologyPath, peering string
 	var sf resourcecmd.ServerFlags
-	cmd, _ := stepCmd("allocate", "Build the node table: roles, paths, deterministic ports",
+	cmd, _ := stepCmd("place", "Build the node table: roles, hosts, deterministic non-colliding ports",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := chainsetup.NetAllocate(cmd.Context(), deps(cmd), chainsetup.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
@@ -110,7 +110,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 	var sets []string
 	var dataDir string
 	cmd := &cobra.Command{
-		Use:   "launchopts",
+		Use:   "build",
 		Short: "Assemble (and show) each node's launch command without running it",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if dataDir == "" {
@@ -136,7 +136,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 }
 
 func newNetProvisionCmd() *cobra.Command {
-	cmd, _ := stepCmd("provision", "Verify the launch inputs are present on the target (skip-if-exists)",
+	cmd, _ := stepCmd("deploy", "Put the launch inputs on the target and verify they are present (skip-if-exists)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
 			out, err := chainsetup.NetProvision(cmd.Context(), deps(cmd), chainsetup.NetProvisionIn{DataDir: dataDir})
 			return out.Detail, err

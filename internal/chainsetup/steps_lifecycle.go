@@ -33,17 +33,17 @@ func (w *Workspace) binary(arg string) (string, error) {
 	if w.state.Binary != "" {
 		return w.state.Binary, nil
 	}
-	return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `net new`)")
+	return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `chain new`)")
 }
 
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: init: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: init: no node table — run `chain place` first")
 	}
 	if w.state.GenesisPath == "" {
-		return "", fmt.Errorf("chainsetup: init: no genesis — run `net genesis` first")
+		return "", fmt.Errorf("chainsetup: init: no genesis — run `chain genesis` first")
 	}
 	// Before writing anything to the target. A datadir whose node is still
 	// running is refused by the binary here anyway ("datadir already used by
@@ -95,7 +95,7 @@ func (w *Workspace) Start(ctx context.Context, binaryArg string) (string, error)
 		return "", err
 	}
 	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: start: no node table — run `net allocate` first")
+		return "", fmt.Errorf("chainsetup: start: no node table — run `chain place` first")
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
@@ -227,7 +227,7 @@ func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
 		return "", fmt.Errorf("chainsetup: node%d is already running (pid %d)", index, ns.PID)
 	}
 	if len(ns.Args) == 0 {
-		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `net start` first", index)
+		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
 	}
 	bin, err := w.binary("")
 	if err != nil {
@@ -271,7 +271,7 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 func (w *Workspace) Rm(ctx context.Context) (string, error) {
 	for _, ns := range w.state.Nodes {
 		if ns.PID > 0 {
-			return "", fmt.Errorf("chainsetup: rm: node%d is running (pid %d) — run `net stop` first", ns.Index, ns.PID)
+			return "", fmt.Errorf("chainsetup: rm: node%d is running (pid %d) — run `chain stop` first", ns.Index, ns.PID)
 		}
 	}
 	if w.state.Target.IsRemote() {
@@ -342,7 +342,7 @@ type NodeHealth struct {
 // mark a step — it is a read, re-runnable at any time.
 func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	if len(w.state.Nodes) == 0 {
-		return nil, fmt.Errorf("chainsetup: health: no node table — run `net allocate` first")
+		return nil, fmt.Errorf("chainsetup: health: no node table — run `chain place` first")
 	}
 	m, err := w.opener().AddrMap()
 	if err != nil {
@@ -372,14 +372,14 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 }
 
 // startPhase launches one phase's nodes, or every stopped node when the phase
-// names none. A node already running is left alone: `net restart` bounces one,
-// and re-running `net start` should not double-launch the rest.
+// names none. A node already running is left alone: `chain restart` bounces one,
+// and re-running `chain start` should not double-launch the rest.
 // checkVacant refuses to launch onto ports something is already listening on.
 //
 // Without it the collision is discovered by the node, which dies with "address
 // already in use" partway through a bring-up, and the operator has to work out
 // which of three situations they are in. This says which: a port held by a node
-// this workspace recorded is its own leftover and `net stop` clears it; anything
+// this workspace recorded is its own leftover and `chain stop` clears it; anything
 // else belongs to something this workspace did not start, and guessing would be
 // worse than refusing.
 // Preflight is the check-only entry: the same pre-launch inspection Start
@@ -388,7 +388,7 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 // occupancy plus unmanaged copies of the binary already on the resource.
 func (w *Workspace) Preflight(ctx context.Context, binaryArg string) error {
 	if len(w.state.Nodes) == 0 {
-		return fmt.Errorf("chainsetup: preflight: no node table — run `net allocate` first")
+		return fmt.Errorf("chainsetup: preflight: no node table — run `chain place` first")
 	}
 	bin, err := w.binary(binaryArg)
 	if err != nil {
@@ -479,7 +479,7 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 	}
 	var hints []string
 	if recoverable {
-		hints = append(hints, "`net stop --workspace-dir "+w.Dir()+"` stops the ones with a recorded pid")
+		hints = append(hints, "`chain stop --workspace-dir "+w.Dir()+"` stops the ones with a recorded pid")
 	}
 	if byHand {
 		hints = append(hints, "the rest hold ports this workspace planned but cannot address — find and stop them by hand")
@@ -721,7 +721,7 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	if len(lines) == 0 {
 		return nil
 	}
-	return fmt.Errorf("chainsetup: start: %d path(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`net genesis`, `net config`, `net init`) or check --binary",
+	return fmt.Errorf("chainsetup: start: %d path(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
 		len(lines), strings.Join(uniq(lines), "\n"))
 }
 

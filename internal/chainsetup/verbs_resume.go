@@ -47,7 +47,7 @@ type NetResumeOut struct {
 // ErrNoRequest refuses to resume a workspace that never recorded what it was
 // asked to compose — one composed before requests were recorded, or by hand
 // step by step.
-var ErrNoRequest = errors.New("chainsetup: resume: the workspace records no request — compose it with `net up`, or finish the steps by hand")
+var ErrNoRequest = errors.New("chainsetup: resume: the workspace records no request — compose it with `chain up`, or finish the steps by hand")
 
 // NetResume recovers a workspace whose run died: reconcile the recorded pids
 // with the machine, continue the composition from the first step that never

@@ -186,7 +186,7 @@ func TestNetResume_ContinuesFromTheFirstUnfinishedStep(t *testing.T) {
 	if _, err := chainsetup.NetUp(context.Background(), deps, chainsetup.NetUpIn{
 		DataDir: dir, Stage: chainsetup.UpProvision, Chain: "stablenet", KeysDir: keysAbs, Validators: 2, Binary: bin,
 	}); err != nil {
-		t.Fatalf("net up --stage provision: %v", err)
+		t.Fatalf("chain up --stage provision: %v", err)
 	}
 	// What was asked is on the record, without the workspace's own location.
 	ws, err := chainsetup.Open(dir, nil)

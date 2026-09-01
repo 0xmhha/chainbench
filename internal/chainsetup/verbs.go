@@ -65,7 +65,7 @@ type NetNewOut struct {
 	Detail string
 }
 
-// NetNew initializes (or re-targets) the composition workspace — the `net new`
+// NetNew initializes (or re-targets) the composition workspace — the `chain new`
 // step, shared verbatim by the CLI subcommand and the MCP tool.
 func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
@@ -99,7 +99,7 @@ type NetStatusOut struct {
 	State State
 }
 
-// NetStatus reads the workspace composition state — the `net status` step.
+// NetStatus reads the workspace composition state — the `chain status` step.
 func NetStatus(_ context.Context, d Deps, in NetStatusIn) (NetStatusOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
@@ -125,7 +125,7 @@ func NetEndpoints(_ context.Context, d Deps, in NetEndpointsIn) ([]string, error
 	ws.SetEnv(d.Env)
 	st := ws.State()
 	if len(st.Nodes) == 0 {
-		return nil, fmt.Errorf("chainsetup: endpoints: no node table — run `net allocate` first")
+		return nil, fmt.Errorf("chainsetup: endpoints: no node table — run `chain place` first")
 	}
 	m, err := ws.opener().AddrMap()
 	if err != nil {

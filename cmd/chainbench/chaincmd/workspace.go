@@ -1,4 +1,4 @@
-package netcmd
+package chaincmd
 
 import (
 	"fmt"

@@ -134,6 +134,14 @@
 
 ### C 단계 — 표면 재정리 (제안 1, R4 이후)
 
+> **진행 (사용자 확정 2026-09-01): 단계로 쪼갠다. 운영 명령은 chain 하위 유지.**
+> **C1 완료 (2026-09-01):** `net` 그룹 → `chain` 그룹(패키지 netcmd→chaincmd). 스텝 3개
+> 개명: `allocate`→`place`, `launchopts`→`build`, `provision`→`deploy`. 나머지 스텝·운영
+> 명령은 이름 유지한 채 `chain` 하위로. 사용자 대상 오류·문서 문구의 `net <cmd>` 전부
+> `chain <cmd>`(개명 반영)로 갱신. 라이브: `chain up/status/stop` 통과.
+> 남은 C: C2 init+start→run 합침·launchopts 내부 스텝명 정리 · C3 enode 신설·config 노드단위
+> · C4 CLI↔DSL 대응표 + 4갈래 재검증.
+
 - `net` 그룹 폐기 → **`chain`** 그룹: `keys → place → enode → genesis → config →
   build → deploy → run` (+`up`, `stop/status/resume`). 단계 사전과 1:1.
 - 키가 배치보다 먼저. enode 는 조회 가능한 산출물. **config 는 노드 단위**

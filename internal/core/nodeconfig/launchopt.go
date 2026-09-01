@@ -159,7 +159,7 @@ const (
 )
 
 // Layer names one precedence level of the value stack. A later layer setting
-// the same Key wins; Args records the winner so `net status` can show which
+// the same Key wins; Args records the winner so `chain status` can show which
 // layer produced each flag (mirrors config's flag > file > default rule).
 type Layer string
 
