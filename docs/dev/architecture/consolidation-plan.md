@@ -151,7 +151,10 @@
 > 가 전제이며 없으면 어느 스텝을 돌릴지 알려준다. enode host 는 기록된 노드 주소(peer 가
 > 접속하는 것)로 docker 번역 없음 — config 의 static-nodes 와 바이트 일치(라이브 교차검증).
 > config 노드 단위(`--node N --set`)는 사용자 C3 우선순위 밖이라 후속으로 분리.
-> 남은 C: C4 CLI↔DSL 대응표(공유 코어 검증)+4갈래 재검증. (config 노드단위는 그 뒤/독립)
+> **C4 완료 (2026-09-01):** §3 사전에 공유 코어(chainsetup verb) 열 추가. 두 표면이 같은
+> verb 로 수렴함을 `TestChainCommandSurface`(명령 집합을 사전+운영으로 고정, 개명 잔재 차단)로
+> 고정. 4갈래 라이브 재검증(stablenet·wbft·wemix DSL 케이스 + CLI 스텝 파리티). C 단계 종료.
+> (config 노드단위는 독립 후속으로 남김.)
 
 - `net` 그룹 폐기 → **`chain`** 그룹: `keys → place → enode → genesis → config →
   build → deploy → run` (+`up`, `stop/status/resume`). 단계 사전과 1:1.
@@ -162,16 +165,25 @@
 
 ## 3. 단계 사전 (C 단계의 정본)
 
-| # | 단계 | 산출물 | DSL(env) | CLI |
-|---|---|---|---|---|
-| ① | keys | 노드별 nodekey·keystore·BLS | `nodes`·`keys` | `chain keys` |
-| ② | place | 노드별 host·port 표 (무충돌) | `topology`·`servers` | `chain place` |
-| ③ | enode | 노드별 enode 목록 | ①②에서 파생 | `chain enode` |
-| ④ | genesis | genesis.json (전 노드 공통) | `genesis` | `chain genesis` |
-| ⑤ | config | 노드별 config (노드 단위 수정) | `config.all`·`config.node<N>` | `chain config` |
-| ⑥ | build | 노드별 실행 command | `binaries`·`launch` | `chain build` |
-| ⑦ | deploy | 머신 위의 파일들 | `servers` | `chain deploy` |
-| ⑧ | run | 살아 있는 체인 | — | `chain run` |
+| # | 단계 | 산출물 | DSL(env) | CLI | 공유 코어(chainsetup) |
+|---|---|---|---|---|---|
+| ① | keys | 노드별 nodekey·keystore·BLS | `keys` | `chain keys` | `NetKeys` |
+| ② | place | 노드별 host·port 표 (무충돌) | `topology`·`servers` | `chain place` | `NetAllocate` |
+| ③ | enode | 노드별 enode 목록 | ①②에서 파생 | `chain enode` | `NetEnodes` |
+| ④ | genesis | genesis.json (전 노드 공통) | `genesis`·`hardforks` | `chain genesis` | `NetGenesis` |
+| ⑤ | config | 노드별 config | `launch` | `chain config` | `NetConfig` |
+| ⑥ | build | 노드별 실행 command | `binaries`·`launch` | `chain build` | `NetLaunchOpts` |
+| ⑦ | deploy | 머신 위의 파일들 | `servers` | `chain deploy` | `NetProvision` |
+| ⑧ | run(살아 있는 체인) | 초기화+기동 | — | `chain init`·`chain start` | `NetInit`·`NetStart` |
+| — | 전체 | ①~⑧ 한 번에 | 케이스 실행이 곧 이것 | `chain up` | `NetUp` |
+
+**공유 코어 원칙(C4):** CLI 의 각 `chain <stage>` 와 DSL(케이스 실행 `testengine.RunSuite`
+→ `compositionOf` → `NetUp`)은 **같은 chainsetup verb** 로 수렴한다. 두 표면은 병렬 구현을
+갖지 않는다. `chaincmd` 의 `TestChainCommandSurface` 가 chain 명령 집합을 이 사전 + 운영
+verb 로 고정해(사전 밖 명령·개명 잔재를 막아) 표면 드리프트를 CI 에서 잡는다.
+
+> ⑤ config 를 노드 단위(`config --node N --set k=v`, DSL `config.node<N>`)로 세분하는 것은
+> 별도 후속(C3 에서 enode 우선으로 분리). 현재 `config` 는 노드 표 전체를 렌더한다.
 
 ## 4. 트레이드와 열린 결정
 
