@@ -177,9 +177,18 @@ halving-config object through `genesis.overlay` (no code change — the overlay
 deep-merges into the poa genesis `config`). GOV-023 and WBFT-012/013 were already
 Go e2e (the earlier "remaining" prose was stale).
 
-Still outside the DSL: the `tests/repro`→Go-e2e remainder
-(`repro-migration-remaining.md`): `stablenet-delayed-fork` / `-account-extra` (chain
-boho + overlay fixture), `wemix-chain` (standalone wemix bootstrap not wired into
-`chainbench setup`), `layer2-attach` (needs a live external L2). The
-`stablenet-basefee-dynamics` script there is now **superseded** by the DSL anzeon
-cases (§5c).
+The `tests/repro`→Go-e2e remainder (`repro-migration-remaining.md`) is down to a
+single blocked script:
+- `layer2-attach` — needs a live external L2 RPC endpoint to verify against;
+  chain-agnostic attach-mode cases already run against any `--rpc <url>`.
+
+Now resolved and ported to DSL cases here:
+- `stablenet-delayed-fork` (`tests/cases/stablenet/delayed-fork.json`) — the boho
+  effects (GovMinter-v2 code swap, P-256 at 0x100, prealloc preserved) are real;
+  the old failures were genesis wiring (the genesis needs the full `boho` object,
+  not just `bohoBlock`). The case reads across the fork with `rpcCall` at explicit
+  block tags.
+- `stablenet-account-extra` (`tests/cases/stablenet/account-extra.json`, plus the
+  overlay fixture fix).
+- `wemix-chain` scenario 1 (`tests/cases/wemix/tx-and-contract.json`).
+- `stablenet-basefee-dynamics` (superseded by the anzeon cases, §5c).

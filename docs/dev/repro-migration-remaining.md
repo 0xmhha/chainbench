@@ -23,24 +23,31 @@ Binaries build from `/Users/…/Work/github/chain/{go-stablenet,go-wbft,go-wemix
 etcd** — no external etcd needed. Funded key: `keys/preset` node1 nodekey (public
 test fixture) is genesis-funded. See memory `live-verification-setup`.
 
-## Remaining (5 bash scripts) — each blocked on real prerequisite work
+## Remaining — 1 script blocked on an external resource
 
-These are NOT simple ports; each needs a separate track. Verified against
-gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
+Of the original 5, four are now ported to DSL cases (#1 delayed-fork, #2
+account-extra, #3 basefee-dynamics, #4 wemix-chain). Only `layer2-attach` (#5)
+remains, blocked on a live external L2 endpoint. The four resolved sections are
+kept below for the root-cause record.
 
-### 1. `stablenet-delayed-fork.sh` — testkit-case ↔ chain boho-behavior mismatch
-- Boots stablenet with `--set genesis.overrides.bohoBlock=N` (verified: the
-  rendered genesis has `"bohoBlock": N` and gstable's config reads
-  `json:"bohoBlock"`, so the override key is correct — not a chainbench bug).
-- The chain crosses block N, but the gated cases time out (2m):
-  `govminter-code-changes-at-boho`, `p256-inactive-before-boho`,
-  `prealloc-preserved-across-boho` FAIL; `anzeon-active-before-boho` PASSES.
-- Root cause: the boho activation effects the testkit cases assert (GovMinter-v2
-  code injection, P-256 precompile at 0x100) do not manifest as expected in the
-  built gstable. Both v1.0.1 and v1.1.0 fail identically.
-- **Needed:** reconcile the testkit cases (`tests/anzeon/hardfork_reads.go`,
-  `fork_transition.go`, etc.) with the actual go-stablenet boho implementation
-  (addresses, activation semantics) — or a gstable build matching the cases.
+### 1. `stablenet-delayed-fork.sh` — RESOLVED (root cause was genesis wiring, now ported)
+- The boho effects DO exist in go-stablenet: the GovMinter-v2 code swap
+  (`consensus/wbft/engine/engine.go` `processFinalize` → `SetCode` at the boho
+  block), the P-256 precompile at 0x100 (`core/vm/contracts.go`
+  `PrecompiledContractsBoho`, gated on `rules.IsBoho`), and prealloc preservation
+  (only code is swapped, no state cleared).
+- Root cause of the old failures: setting `bohoBlock=N` alone is not enough. The
+  GovMinter swap is gated by `params/config.go:1114` on `c.Boho != nil &&
+  c.Boho.SystemContracts != nil`, so the genesis must ALSO carry the `boho` object
+  (`boho.systemContracts.govMinter` version `v2`). With only `bohoBlock` set,
+  `CollectUpgrades` yields no upgrade and the code never changes.
+- **Ported** as `tests/cases/stablenet/delayed-fork.json` (env
+  `delayed-fork-stablenet`): the overlay sets `bohoBlock: 3` AND the `boho`
+  govMinter-v2 object. The case reads across the fork with `rpcCall` at explicit
+  block tags (`eth_getCode`/`eth_call`/`eth_getBalance` at `0x1` vs `latest`) and
+  asserts all three effects — GovMinter code changes v1→v2, P-256 at 0x100 is
+  inactive (`0x`) pre-boho and returns `0x…01` post-boho (a real RIP-7212 vector),
+  and a prealloc balance is unchanged. Live-verified.
 
 ### 2. `stablenet-account-extra.sh` — RESOLVED (overlay fixed + ported to a DSL case)
 - Root cause confirmed: the overlay's broken half was the
