@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -278,6 +279,139 @@ func TestSchemaV2MatchesParsedFields(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestSchemaV2MatchesParsedTypes catches the drift the field-set test cannot:
+// a property whose declared JSON type disagrees with the parser field's Go type.
+// This is what happened to "config" — schema "string" while the parser reads an
+// object. Each env/case field's Go kind is mapped to the JSON type it decodes
+// from and checked against the schema's declared type (resolving const, enum,
+// oneOf, and $ref). Fields the parser reads as raw/any JSON are skipped, since
+// the schema legitimately spells those as a union.
+func TestSchemaV2MatchesParsedTypes(t *testing.T) {
+	var doc map[string]any
+	if err := json.Unmarshal(SchemaV2, &doc); err != nil {
+		t.Fatalf("schema: %v", err)
+	}
+	defs, _ := doc["$defs"].(map[string]any)
+	for _, c := range []struct {
+		def string
+		typ reflect.Type
+	}{
+		{"envSpec", reflect.TypeOf(EnvV2{})},
+		{"caseSpec", reflect.TypeOf(CaseV2{})},
+	} {
+		def, _ := defs[c.def].(map[string]any)
+		props, _ := def["properties"].(map[string]any)
+		for i := 0; i < c.typ.NumField(); i++ {
+			f := c.typ.Field(i)
+			name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+			if name == "" || name == "-" {
+				continue
+			}
+			want := jsonKind(f.Type)
+			if want == "" {
+				continue // raw/any JSON — the schema may spell it as a union
+			}
+			prop, ok := props[name].(map[string]any)
+			if !ok {
+				continue // the field-set test reports a missing property
+			}
+			got := schemaTypesOf(prop, defs)
+			if len(got) > 0 && !got[want] {
+				t.Errorf("%s.%s: the parser reads a %s but the schema declares %v — v2.schema.json drifted from the parser type",
+					c.def, name, want, sortedKeys(got))
+			}
+		}
+	}
+}
+
+// jsonKind is the JSON type a Go type decodes from, or "" for raw/any JSON.
+func jsonKind(t reflect.Type) string {
+	if t == reflect.TypeOf(json.RawMessage(nil)) {
+		return ""
+	}
+	switch t.Kind() {
+	case reflect.Pointer:
+		return jsonKind(t.Elem())
+	case reflect.String:
+		return "string"
+	case reflect.Bool:
+		return "boolean"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return "integer"
+	case reflect.Float32, reflect.Float64:
+		return "number"
+	case reflect.Slice, reflect.Array:
+		return "array"
+	case reflect.Map, reflect.Struct:
+		return "object"
+	default:
+		return ""
+	}
+}
+
+// schemaTypesOf resolves the JSON type(s) a schema property declares, following
+// const/enum/oneOf and one level of $ref into $defs.
+func schemaTypesOf(prop, defs map[string]any) map[string]bool {
+	out := map[string]bool{}
+	switch {
+	case prop["$ref"] != nil:
+		if ref, ok := prop["$ref"].(string); ok {
+			const p = "#/$defs/"
+			if d, ok := defs[strings.TrimPrefix(ref, p)].(map[string]any); ok && strings.HasPrefix(ref, p) {
+				for k := range schemaTypesOf(d, defs) {
+					out[k] = true
+				}
+			}
+		}
+	case prop["type"] != nil:
+		if s, ok := prop["type"].(string); ok {
+			out[s] = true
+		}
+	case prop["const"] != nil:
+		out[valueKind(prop["const"])] = true
+	case prop["enum"] != nil:
+		if e, ok := prop["enum"].([]any); ok && len(e) > 0 {
+			out[valueKind(e[0])] = true
+		}
+	case prop["oneOf"] != nil:
+		if alts, ok := prop["oneOf"].([]any); ok {
+			for _, alt := range alts {
+				if m, ok := alt.(map[string]any); ok {
+					for k := range schemaTypesOf(m, defs) {
+						out[k] = true
+					}
+				}
+			}
+		}
+	}
+	delete(out, "")
+	return out
+}
+
+// valueKind is the JSON type of a decoded literal (a const or enum value).
+func valueKind(v any) string {
+	switch v.(type) {
+	case string:
+		return "string"
+	case bool:
+		return "boolean"
+	case float64:
+		return "number"
+	default:
+		return ""
+	}
+}
+
+func sortedKeys(m map[string]bool) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // TestV2_UpgradeEnvNamesItsBinariesByRole: a handoff declaration carries
