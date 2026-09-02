@@ -97,6 +97,33 @@ ran green against a real `gstable` 5-node network in one suite:
 | `basic/tx-send.sh` | `tx-send.json` | send a value tx → recipient `balanceAt` > 0 |
 | `basic/txpool-propagation.sh` | `txpool-propagation.json` | tx sent to node1 is mined and visible on node2 |
 
+## 5c. Third ported slice — `anzeon` dynamic base fee (live-verified)
+
+`tests/cases/anzeon/` + env `anzeon-stablenet` (stablenet, 4 bp, preset keys).
+These were the one genuine regression gap (§6 item 2): the base fee moves ±2% a
+block by block gas usage, which no static spec can drive. The new `load` action
+(§7) deploys a gas-burner sized to a percent of the block gas limit, one burn per
+block, sustained across blocks — so the base fee climbs (or, left idle, falls).
+All three ran green against a real `gstable` 4-node network:
+
+| legacy | DSL case | procedure |
+|---|---|---|
+| `anzeon/03-basefee-increase.sh` | `basefee-increase.json` | read baseFee → `load` fillPercent 25 blocks 6 (usage > 20%) → baseFee rose above the baseline (`Greater $bf0`) |
+| `anzeon/04-basefee-stable.sh` | `basefee-stable.json` | read baseFee → `load` fillPercent 10 blocks 6 (usage 6-20%) → baseFee unchanged (`Equal $bf0`) — the control: moderate load must NOT raise it |
+| `anzeon/05-basefee-decrease.sh` | `basefee-decrease.json` | `load` fillPercent 25 blocks 6 → read peak → idle empty blocks (waitBlock) → baseFee fell below the peak (`Less $peak`) |
+
+The three together characterise the Anzeon band: > 20% raises, 6-20% is neutral,
+empty blocks lower. `read baseFee` (the `baseFee` source doubles as a reader)
+captures the before value; the expect compares against it (`is: "$bf0"`). This is
+the first case to reference a saved value from an *expect* statement, which
+exposed a v2 gap in offline `validate` (`Unresolved` walked v1's Steps then
+Assertions and never saw a step's `save`); it now walks the unified `Sequence`.
+
+The base-fee min/max clamps (`anzeon/06`, `07`) stay covered by the `gas-policy`
+specs; the gas-tip cases (`anzeon/01`, `02`) by `regular-account-gastip-forced` /
+`authorized-account-gastip-free`. Only the three dynamic-adjustment cases needed
+porting.
+
 ## 6. Phased plan for the rest
 
 Port category-by-category, each slice live-verified against the from-source binary, gap-checked against §2 first:
@@ -107,16 +134,16 @@ Port category-by-category, each slice live-verified against the from-source bina
    - **ethereum (32)** — the tx-type matrix, contract deploy/call, eth_call/revert, out-of-gas, get-logs, chain-id, ws-subscribe are in `accounts`/`api`/`gas-policy` specs; **node-restart** is `fault/node-recover`; **full/snap sync, downloader, block-fetcher** are Go e2e (`TestE2E_StablenetSyncGap`, `TestE2E_WbftSnapSync`).
    - **wbft (12)** — block-period, extra-seal, epoch, add/remove-validator, gastip-header-sync, get-validators, quorum-deficient, prev-committed/prepared-seal are in `consensus` specs; **round-change / post-round-change** are Go e2e (`TestE2E_WbftViewChange`, `TestE2E_WbftRoundRobinProposer`).
    - **system-contracts (24) / blacklist-authorized (9) / fee-delegation (4)** — covered by the `system-contracts` (45) and `accounts` specs (native transfer, approve/transferFrom, mint/burn proposals, gov lifecycle, blacklist/authorize + events, fee-delegation valid + tampered).
-   - **anzeon (7)** — gastip-forced/free, min/max baseFee are in `gas-policy` specs. **Gap: `basefee-increase` / `basefee-stable` / `basefee-decrease`** (dynamic ±2% by block gas usage) — needs a load + gas-burner primitive to drive block utilization above/below the thresholds, and a before/after `baseFee` comparison. Blocked on §7's load primitive.
+   - **anzeon (7)** — gastip-forced/free, min/max baseFee are in `gas-policy` specs. The dynamic `basefee-increase` / `basefee-stable` / `basefee-decrease` cases (±2% by block gas usage) are now **ported and live-verified** (§5c) via the new `load` action — the last genuine regression gap is closed.
 3. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; the catalog (`stablenet-post-v1.0.0-change-test-catalog.md`) and the `tests/repro`→Go-e2e doc record these as ported to Go e2e (`TestE2E_StablenetHardforkSwap`, delayed-fork, account-extra) or blocked on chain-side prerequisites (`repro-migration-remaining.md` §1–5). No DSL-tractable gap without those prerequisites.
 4. **wemix4 (95)** — `wemix4-port-tracker.md`: ~62 ported (DSL + Go e2e), ~8 deferred needing new machinery (e.g. RPC-008 brioche-reward genesis config). Finish those against the tracker.
 
-**Net for items 2–4:** the bulk is already covered by `tests/specs` + Go e2e + the two ported slices here; the remaining DSL-tractable work is small and enumerated in §7 (load/gas-burner for anzeon basefee-dynamics + stress, blockHalt + hub-spoke for the two deferred fault tests) plus the ~8 tracked wemix4 items.
+**Net for items 2–4:** the bulk is already covered by `tests/specs` + Go e2e + the three ported slices here (fault, basic, anzeon); the remaining DSL-tractable work is small and enumerated in §7 (blockHalt + hub-spoke for the two deferred fault tests, a block-interval assertion for `stress/block-time`) plus the ~8 tracked wemix4 items. The `load` primitive that §7 called for is now built (§5c).
 
 ## 7. New DSL machinery the migration needs
 
+- ~~a load primitive~~ — **done**: the `load` action (`internal/testhelper/load.go`) deploys a gas-burner sized to `fillPercent`% of the block gas limit, one burn per block for `blocks` blocks, to drive block gas usage. It unblocked `anzeon` (§5c) and also covers `stress/tx-flood`'s intent (sustained block load); a tx-flood case can now be added if a distinct throughput assertion is wanted.
 - `blockHalt` assertion — head stays within a window (for `fault/two-down`).
 - hub-spoke / star peering for `partition` (for `fault/p2p-topology`).
-- a load primitive — send N txs in one step (for `stress/tx-flood`; the DSL has no loop).
 - a block-interval / timing assertion — sample head timestamps and check the interval (for `stress/block-time`).
 - Whatever the deferred wemix4 items need (see `wemix4-port-tracker.md`).

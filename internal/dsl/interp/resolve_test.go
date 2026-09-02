@@ -48,6 +48,39 @@ func TestUnresolved(t *testing.T) {
 	})
 }
 
+// A v2 case saves a value in a do step and references it from a later expect
+// statement. The two run interleaved in one Sequence, so the binding must be
+// visible to the assertion — the old Steps-then-Assertions split bound nothing
+// from a step for the assertions and reported a false unresolved reference.
+func TestUnresolved_V2SequenceBindsSaveForLaterExpect(t *testing.T) {
+	reg := testhelper.Registry()
+	spec := dsl.Spec{
+		Sequence: []dsl.Statement{
+			{Do: "read", Args: map[string]any{"source": "baseFee", "save": "bf0"}},
+			{Do: "waitBlock", Args: map[string]any{"target": 3}},
+			{Expect: "baseFee", Args: map[string]any{"compare": "Greater", "expected": "$bf0"}},
+		},
+	}
+	if got := interp.Unresolved(spec, reg); len(got) != 0 {
+		t.Fatalf("Unresolved = %v, want none (a v2 step's save must bind for a later expect)", got)
+	}
+}
+
+// A v2 expect statement that references a value nothing saved is still flagged.
+func TestUnresolved_V2SequenceReportsUnboundExpectReference(t *testing.T) {
+	reg := testhelper.Registry()
+	spec := dsl.Spec{
+		Sequence: []dsl.Statement{
+			{Do: "waitBlock", Args: map[string]any{"target": 3}},
+			{Expect: "baseFee", Args: map[string]any{"compare": "Greater", "expected": "$bf0"}},
+		},
+	}
+	got := interp.Unresolved(spec, reg)
+	if len(got) != 1 || got[0] != "ref:bf0" {
+		t.Fatalf("Unresolved = %v, want [ref:bf0]", got)
+	}
+}
+
 func TestUnresolved_ReportsUnboundReferences(t *testing.T) {
 	reg := testhelper.Registry()
 	spec := dsl.Spec{
