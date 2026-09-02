@@ -115,25 +115,43 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}}, nil
 	}
 
+	// A node table (topology.nodes[]) declares each node's role and binary
+	// explicitly; its absence keeps the count form (validators/endpoints).
+	inlineTopo, resolvedBins, topoBinary, err := inlineTopologyOf(chain, spec.Topology, spec.Chain.Binaries)
+	if err != nil {
+		return composition{}, err
+	}
+
 	binary := in.Binary
 	if binary == "" {
 		binary = expand(spec.Chain.Binary)
 	}
 	if binary == "" {
+		// With a node table but no single binary, launch falls back per node to
+		// the first node's binary; a node names its own binary over this.
+		binary = topoBinary
+	}
+	if binary == "" {
 		return composition{}, fmt.Errorf("the spec declares no binary and none was given")
 	}
-	validators, endpoints, syncMode, err := topologyOf(spec.Topology)
-	if err != nil {
-		return composition{}, err
+
+	var validators, endpoints int
+	var syncMode string
+	if inlineTopo == nil {
+		validators, endpoints, syncMode, err = topologyOf(spec.Topology)
+		if err != nil {
+			return composition{}, err
+		}
+		if in.Validators > 0 {
+			validators = in.Validators
+		}
+		if validators <= 0 {
+			validators = suiteDefaultValidators
+		}
 	}
-	if in.Validators > 0 {
-		validators = in.Validators
-	}
-	if validators <= 0 {
-		validators = suiteDefaultValidators
-	}
-	launch := launchSets(spec.EnvLaunch)
-	launch = append(launch, in.LaunchOpts...)
+	// The request's flat launch opts and the network id join the "all" scope;
+	// the env's scoped launch (per role or node) travels in LaunchScopedSet.
+	launch := append([]string(nil), in.LaunchOpts...)
 	if in.NetworkID != 0 {
 		launch = append(launch, fmt.Sprintf("%s=%d", nodeconfig.KeyNetworkID, in.NetworkID))
 	}
@@ -141,14 +159,101 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		Validators: validators, Endpoints: endpoints, EndpointSyncMode: syncMode,
+		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
-		ChainID:     in.ChainID,
-		GenesisSet:  hardforkSets(spec.Hardforks),
-		OverlayPath: overlayPath,
-		LaunchSet:   launch,
-		ConfigSet:   spec.EnvConfig,
+		ChainID:      in.ChainID,
+		GenesisSet:   hardforkSets(spec.Hardforks),
+		OverlayPath:  overlayPath,
+		LaunchSet:    launch,
+		LaunchScoped: spec.EnvLaunch,
+		ConfigSet:    spec.EnvConfig,
 	}
 	return composition{up: up}, nil
+}
+
+// inlineTopologyOf builds an in-memory node table from a topology.nodes[]
+// declaration, so a spec can name each node's role and binary in one file. It
+// returns nil when the declaration uses the count form (no nodes key), which
+// keeps the existing validators/endpoints path.
+//
+// The second result maps each binary name a node references to its resolved
+// path, drawn from the env's binaries map; the third is a fallback binary (the
+// first node's) for a node that names none.
+func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string) (*node.Topology, map[string]string, string, error) {
+	raw, ok := t["nodes"]
+	if !ok {
+		return nil, nil, "", nil
+	}
+	list, ok := raw.([]any)
+	if !ok {
+		return nil, nil, "", fmt.Errorf("topology.nodes must be a list")
+	}
+	if len(list) == 0 {
+		return nil, nil, "", fmt.Errorf("topology.nodes is empty")
+	}
+	topo := &node.Topology{Chain: chain, Nodes: make([]node.Entry, 0, len(list))}
+	resolved := map[string]string{}
+	fallback := ""
+	for i, item := range list {
+		m, ok := item.(map[string]any)
+		if !ok {
+			return nil, nil, "", fmt.Errorf("topology.nodes[%d] must be a mapping", i)
+		}
+		entry := node.Entry{Index: i + 1}
+		for k, v := range m {
+			s, isStr := v.(string)
+			switch k {
+			case "role":
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].role must be a string", i)
+				}
+				entry.Role = s
+			case "binary":
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].binary must be a string", i)
+				}
+				entry.Binary = s
+			case "sync", topoSyncMode, topoSyncModeSnak:
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s must be a string", i, k)
+				}
+				entry.SyncMode = s
+			case "bootnode":
+				b, isBool := v.(bool)
+				if !isBool {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].bootnode must be a boolean", i)
+				}
+				entry.Bootnode = b
+			case "index":
+				n, ferr := countOf("nodes[].index", v)
+				if ferr != nil {
+					return nil, nil, "", ferr
+				}
+				entry.Index = n
+			default:
+				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index)", i, k)
+			}
+		}
+		if entry.Role == "" {
+			return nil, nil, "", fmt.Errorf("topology.nodes[%d] needs a role", i)
+		}
+		if entry.Binary != "" {
+			path, named := binaries[entry.Binary]
+			if !named {
+				return nil, nil, "", fmt.Errorf("topology.nodes[%d].binary %q is not declared in binaries", i, entry.Binary)
+			}
+			p := expand(path)
+			resolved[entry.Binary] = p
+			if fallback == "" {
+				fallback = p
+			}
+		}
+		topo.Nodes = append(topo.Nodes, entry)
+	}
+	if err := topo.Validate(); err != nil {
+		return nil, nil, "", err
+	}
+	return topo, resolved, fallback, nil
 }
 
 // Topology keys a declaration may use for its node counts.
@@ -217,20 +322,6 @@ func hardforkSets(forks map[string]int) []string {
 	out := make([]string, 0, len(names))
 	for _, name := range names {
 		out = append(out, fmt.Sprintf("%sBlock=%d", name, forks[name]))
-	}
-	return out
-}
-
-// launchSets renders declared launch knobs as the launchopts step's --set
-// arguments: a boolean knob travels as a bare key.
-func launchSets(kvs []dsl.LaunchKV) []string {
-	out := make([]string, 0, len(kvs))
-	for _, kv := range kvs {
-		if kv.Value == "" || kv.Value == "true" {
-			out = append(out, kv.Key)
-			continue
-		}
-		out = append(out, kv.Key+"="+kv.Value)
 	}
 	return out
 }

@@ -45,6 +45,10 @@ type Record struct {
 	// missing between the plan and the running network, and the first attempt
 	// at restoring it dropped the port again in one of the three copies.
 	Endpoints
+	// Binary names which binary this node runs, by the key declared in the
+	// composition's binaries map. Empty means the composition's single binary,
+	// so a workspace with no per-node binaries behaves exactly as before.
+	Binary string `json:"binary,omitempty"`
 	// Args is the assembled launch argv (once launchopts ran).
 	Args []string `json:"args,omitempty"`
 	// PID is the live process id (once start ran; 0 = stopped). Stopping a

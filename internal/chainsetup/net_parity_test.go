@@ -2,6 +2,7 @@ package chainsetup_test
 
 import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/node"
 
 	"context"
 	"encoding/json"
@@ -242,6 +243,105 @@ nodes:
 	}
 	if st.Bootnode != 1 {
 		t.Errorf("bootnode = %d, want 1", st.Bootnode)
+	}
+}
+
+func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
+	// A generated set for a network with endpoints must declare exactly the
+	// topology's validators, not one per node. When it claimed every node a
+	// validator, a 4-bp + 11-en network failed genesis ("members and validators
+	// must be the same"). The allocated validator count is the authority.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	ctx := context.Background()
+	genKeys := filepath.Join(t.TempDir(), "gen")
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: genKeys}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+		DataDir: dir, Validators: 2, Endpoints: 3,
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	out, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir, Source: "generate"})
+	if err != nil {
+		t.Fatalf("keys: %v", err)
+	}
+	if !strings.Contains(out.Detail, "5 identities") {
+		t.Errorf("expected 5 identities, got %q", out.Detail)
+	}
+	if !strings.Contains(out.Detail, "2 declared validators") {
+		t.Errorf("generate must declare the topology's 2 validators, got %q", out.Detail)
+	}
+}
+
+func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
+	// A network of 3 validators. A launch override scoped to the whole "bp" role
+	// reaches every node; a "node2" override reaches only node2's argv. This
+	// exercises the real verb path (place -> keys -> build), not a stub.
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 3})
+	ctx := context.Background()
+	out, err := chainsetup.NetLaunchOpts(ctx, d, chainsetup.NetLaunchOptsIn{
+		DataDir: dir,
+		ScopedSet: map[string][]string{
+			"bp":    {"metrics"},
+			"node2": {"metrics.port=6161"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("launchopts: %v", err)
+	}
+	if len(out.Nodes) != 3 {
+		t.Fatalf("got %d nodes", len(out.Nodes))
+	}
+	for _, n := range out.Nodes {
+		argv := strings.Join(n.Args, " ")
+		if !strings.Contains(argv, "--metrics") {
+			t.Errorf("node%d argv missing the role-scoped --metrics: %s", n.Index, argv)
+		}
+		hasPort := strings.Contains(argv, "--metrics.port")
+		if n.Index == 2 && !hasPort {
+			t.Errorf("node2 argv missing its node-scoped --metrics.port: %s", argv)
+		}
+		if n.Index != 2 && hasPort {
+			t.Errorf("node%d argv has --metrics.port that was scoped to node2: %s", n.Index, argv)
+		}
+	}
+}
+
+func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
+	// A topology naming a per-node binary, plus the name→path map, records the
+	// binary on each node and stores the map on the workspace for launch.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	keysAbs, _ := filepath.Abs(presetDir)
+	ctx := context.Background()
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Binary: "stable"},
+		{Index: 2, Role: "bp", Binary: "wbft"},
+		{Index: 3, Role: "en", Binary: "wbft"},
+	}}
+	bins := map[string]string{"stable": "/opt/gstable", "wbft": "/opt/gwbft"}
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+		DataDir: dir, Topology: topo, Binaries: bins,
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	st := stateOf(t, dir, d)
+	want := []string{"stable", "wbft", "wbft"}
+	if len(st.Nodes) != len(want) {
+		t.Fatalf("got %d nodes, want %d", len(st.Nodes), len(want))
+	}
+	for i, w := range want {
+		if st.Nodes[i].Binary != w {
+			t.Errorf("node%d binary = %q, want %q", i+1, st.Nodes[i].Binary, w)
+		}
+	}
+	if st.Binaries["stable"] != "/opt/gstable" || st.Binaries["wbft"] != "/opt/gwbft" {
+		t.Errorf("state binaries = %v", st.Binaries)
 	}
 }
 

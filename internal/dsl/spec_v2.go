@@ -330,12 +330,14 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.EnvKeys = env.Keys.NodeKeys
 	}
 	if len(env.Launch) > 0 {
-		all, ok := env.Launch["all"]
-		if !ok || len(env.Launch) > 1 {
-			return Spec{}, fmt.Errorf("dsl: case %s: launch supports the \"all\" scope today; role-scoped launch lands with per-role wiring", c.ID)
-		}
-		for k, v := range all {
-			spec.EnvLaunch = append(spec.EnvLaunch, LaunchKV{Key: k, Value: fmt.Sprintf("%v", v)})
+		spec.EnvLaunch = map[string][]string{}
+		for scope, kvs := range env.Launch {
+			if !launchScopeRE.MatchString(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"", c.ID, scope)
+			}
+			for k, v := range kvs {
+				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
+			}
 		}
 	}
 	if len(env.Config) > 0 {
@@ -469,3 +471,8 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 
 // nodeScopeRE matches a per-node config scope key ("node1", "node12").
 var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
+
+// launchScopeRE matches a launch scope key: "all", a role token, or "node<N>".
+// Launch is scoped more widely than config because a launch flag often applies
+// to a whole role (every producer mines), not just one node.
+var launchScopeRE = regexp.MustCompile(`^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$`)

@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 
@@ -26,6 +28,19 @@ import (
 // persist PIDs so a later step (or a re-run) can reach the same processes.
 
 // binary resolves the node binary: the argument wins, else the workspace's.
+// binaryFor resolves the binary one node runs: its per-node binary from the
+// binaries map when the topology assigned one, otherwise the fallback (the
+// composition's single binary). A workspace with no per-node binaries always
+// returns the fallback, so its behavior is unchanged.
+func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
+	if ns.Binary != "" {
+		if path := w.state.Binaries[ns.Binary]; path != "" {
+			return path
+		}
+	}
+	return fallback
+}
+
 func (w *Workspace) binary(arg string) (string, error) {
 	if arg != "" {
 		return arg, nil
@@ -70,7 +85,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 		}
 		for _, ns := range nodes {
 			spec := process.SpecOf(ns)
-			spec.Binary = bin
+			spec.Binary = w.binaryFor(ns, bin)
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
@@ -238,12 +253,12 @@ func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
 		return "", err
 	}
 	spec := process.SpecOf(ns)
-	spec.Binary = bin
+	spec.Binary = w.binaryFor(ns, bin)
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start node%d: %w", ns.Index, err)
 	}
-	if err := w.recordLaunch(ni, h.PID, bin); err != nil {
+	if err := w.recordLaunch(ni, h.PID, spec.Binary); err != nil {
 		return "", fmt.Errorf("chainsetup: start node%d: %w", index, err)
 	}
 	detail := fmt.Sprintf("node%d started (pid %d)", index, h.PID)
@@ -599,7 +614,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			return started, err
 		}
 		spec := process.SpecOf(ns)
-		spec.Binary = bin
+		spec.Binary = w.binaryFor(ns, bin)
 		if len(spec.Args) == 0 {
 			_, placed, peering, pubkey, perr := w.peerPlan(p)
 			if perr != nil {
@@ -620,7 +635,7 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 		if err != nil {
 			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
-		if err := w.recordLaunch(i, h.PID, bin); err != nil {
+		if err := w.recordLaunch(i, h.PID, spec.Binary); err != nil {
 			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
 		started++
@@ -646,12 +661,71 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
 	exec := poa.Bootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	// A remote target runs the bootstrap where the node is: the binary, its IPC
+	// socket, the governance config and the keystore all live on the target, so
+	// route the runner and the file probes through that node's access — the same
+	// transport init and start use — and point the keys at where they shipped.
+	if w.state.Target.IsRemote() {
+		keystore, err := bootKeystoreOnTarget(w.state.KeysDir, w.keysBase(), on.Index)
+		if err != nil {
+			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)
+		}
+		exec.KeysDir = w.keysBase()
+		exec.BootKeystore = keystore
+		// Each node's bootstrap commands run on its own machine: a spread network
+		// puts the boot node and every joiner on a different host, so resolve the
+		// runner and file store per node index through the same access init/start
+		// use.
+		exec.Access = func(index int) (poa.Runner, filestore.Store, error) {
+			rec, ok := recordByIndex(w.state.Nodes, index)
+			if !ok {
+				return nil, nil, fmt.Errorf("no node%d in the table", index)
+			}
+			access, err := w.machineFor(rec)
+			if err != nil {
+				return nil, nil, err
+			}
+			cmdr, ok := access.Driver.(process.Commander)
+			if !ok {
+				return nil, nil, fmt.Errorf("node%d's target cannot run a command", index)
+			}
+			return poa.Runner(commanderRunner(cmdr)), access.Files, nil
+		}
+	}
 	for _, name := range phase.Actions {
 		if err := exec.Action(ctx, name, plan, on); err != nil {
 			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)
 		}
 	}
 	return nil
+}
+
+// recordByIndex returns the node record with the given 1-based index.
+func recordByIndex(nodes []node.Record, index int) (node.Record, bool) {
+	for _, ns := range nodes {
+		if ns.Index == index {
+			return ns, true
+		}
+	}
+	return node.Record{}, false
+}
+
+// bootKeystoreOnTarget returns the boot node's keystore file as a path on the
+// target. The keystore's name is generated with the key and shipped unchanged,
+// so it is read from the local set and re-rooted at the target keys directory —
+// the store the bootstrap probes with cannot list a directory to find it.
+func bootKeystoreOnTarget(localKeysDir, targetKeysDir string, index int) (string, error) {
+	dir := filepath.Join(localKeysDir, fmt.Sprintf("node%d", index), "keystore")
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return "", fmt.Errorf("chainsetup: start: read keystore for node%d: %w", index, err)
+	}
+	for _, e := range ents {
+		if !e.IsDir() {
+			return path.Join(targetKeysDir, fmt.Sprintf("node%d", index), "keystore", e.Name()), nil
+		}
+	}
+	return "", fmt.Errorf("chainsetup: start: node%d has no keystore file in %s", index, dir)
 }
 
 // phaseHasNode reports whether a phase covers a node. A phase naming no nodes

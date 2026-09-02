@@ -45,6 +45,7 @@ func newRunCmd() *cobra.Command {
 		workspaceDir string
 		keepUp       bool
 		waitBlocks   uint64
+		docker       bool
 		sf           resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -62,7 +63,7 @@ func newRunCmd() *cobra.Command {
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
-				Binary: binary, Server: sf.Ref(), KeepUp: keepUp, WaitBlocks: waitBlocks,
+				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
 				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
 			}
 			if cmd.Flags().Changed("keys") {
@@ -96,6 +97,8 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,
 		"compose: high-precedence launch knob key=value (repeatable; bare key for boolean flags, e.g. nodiscover)")
 	sf.Bind(cmd)
+	cmd.Flags().BoolVar(&docker, "docker", false,
+		"compose: the server set's hosts are local docker containers — translate this tool's dials via the localmap next to the server set (addresses only; docker itself is untouched)")
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "attach: chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd

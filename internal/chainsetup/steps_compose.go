@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"maps"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -79,7 +80,16 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	case "", "preset":
 		src = store.PresetKeys{Path: w.state.KeysDir}
 	case "generate":
-		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: opts.Validators}
+		// A generated set must declare exactly the topology's validators, not
+		// make every node one: a network with endpoints (4 bp + 11 en) whose key
+		// set claims 15 validators fails genesis, where the governance contract
+		// requires members and validators to match. The allocated count is the
+		// authority; an explicit opts.Validators still wins.
+		validators := opts.Validators
+		if validators <= 0 {
+			validators = w.state.Validators
+		}
+		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 	default:
 		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset or generate)", opts.Source)
 	}
@@ -108,6 +118,10 @@ type AllocateOpts struct {
 	// exercise a path other than full sync. Validators ignore it: a node that
 	// seals blocks must hold full state.
 	EndpointSyncMode string
+	// Binaries maps a per-node binary name (as the topology references it) to
+	// its resolved path, recorded on the workspace so launch resolves each
+	// node's binary. Empty means every node runs the single binary.
+	Binaries map[string]string
 	// Topology, when set, gives the layout explicitly — one entry per node, in
 	// launch order, each with its own role and sync mode. It replaces the
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
@@ -136,7 +150,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = node.LaunchReq{Role: role}
+			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -238,6 +252,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			Label:      string(p.Label),
 			Role:       string(reqs[i].Role),
 			SyncMode:   modes[i],
+			Binary:     reqs[i].Binary,
 			DataDir:    layout.DataDir(p.Label),
 			ConfigPath: layout.ConfigPath(p.Label),
 			LogPath:    layout.LogPath(p.Label),
@@ -253,6 +268,9 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	w.state.Peering = string(peering)
 	w.state.Nodes = nodes
+	if len(opts.Binaries) > 0 {
+		w.state.Binaries = opts.Binaries
+	}
 	// Counted from the resolved placements, not the requested count: a topology
 	// decides the validator set, and the genesis step sizes itself from this.
 	w.state.Validators = validators
@@ -405,17 +423,12 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// LaunchOptsOpts customizes the assembled argv.
-type LaunchOptsOpts struct {
-	// Set are high-precedence launch knobs ("key=value", bare key for boolean
-	// flags), applied through the launchopt Builder's override layer.
-	Set []string
-}
-
 // LaunchOpts assembles each node's launch argv through nodeconfig.Argv —
 // the single argv renderer — and records it in the node table, so `start`
-// launches exactly what this step showed.
-func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
+// launches exactly what this step showed. Each node's overrides come from the
+// scopes recorded on the workspace (all, then its role, then the node), so one
+// argv renderer serves a network of mixed launch flags.
+func (w *Workspace) LaunchOpts() (string, error) {
 	p, err := w.plugin()
 	if err != nil {
 		return "", err
@@ -427,11 +440,15 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
-	overrides, err := ParseOverrides(opts.Set)
-	if err != nil {
-		return "", err
-	}
+	scoped := false
 	for i, ns := range w.state.Nodes {
+		overrides, err := ParseOverrides(w.launchOverridesFor(ns.Role, ns.Index))
+		if err != nil {
+			return "", err
+		}
+		if len(overrides) > 0 {
+			scoped = true
+		}
 		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
@@ -443,8 +460,8 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		w.state.Nodes[i].Args = args
 	}
 	detail := fmt.Sprintf("%d argv(s) assembled", len(w.state.Nodes))
-	if len(opts.Set) > 0 {
-		detail += ", overrides: " + strings.Join(opts.Set, " ")
+	if scoped {
+		detail += ", with launch overrides"
 	}
 	w.markStep("build", detail)
 	return detail, nil
@@ -629,13 +646,76 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 		return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
 	}
 	req := genesis.Request{Validators: w.state.Validators, Nodes: placed}
-	return genesis.Compose(ctx, p, req, genesis.Config{
+	cfg := genesis.Config{
 		KeysDir:         w.state.KeysDir,
 		Binary:          w.state.Binary,
 		ChainID:         opts.ChainID,
 		ConfigOverrides: opts.Overrides,
 		Overlay:         opts.Overlay,
-	})
+	}
+	// A family whose genesis its own binary writes (wemix) runs that binary. On
+	// a remote target the binary lives there, not here, so stage the generator's
+	// inputs on the target and run it over the same access init/start use. A
+	// family whose genesis is in-process ignores these.
+	if w.state.Target.IsRemote() {
+		boot, ok := firstProducer(w.state.Nodes)
+		if !ok {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on")
+		}
+		access, err := w.machineFor(boot)
+		if err != nil {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
+		}
+		cmdr, ok := access.Driver.(process.Commander)
+		if !ok {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there")
+		}
+		cfg.Files = access.Files
+		cfg.WorkDir = path.Join(access.DataRoot, genesisWorkDir)
+		cfg.Runner = commanderRunner(cmdr)
+	}
+	return genesis.Compose(ctx, p, req, cfg)
+}
+
+// genesisWorkDir is where a binary-written genesis stages its config, template,
+// and output on the target, under the data root.
+const genesisWorkDir = "genesis-work"
+
+// firstProducer returns the first block-producing node in the table — the node
+// a binary-written genesis is generated on and the boot phase launches alone.
+func firstProducer(nodes []node.Record) (node.Record, bool) {
+	for _, ns := range nodes {
+		if node.Is(node.Role(ns.Role), node.RoleBP) {
+			return ns, true
+		}
+	}
+	return node.Record{}, false
+}
+
+// commanderRunner adapts a process.Commander (the local or remote driver's
+// arbitrary-command capability) into the runner a binary-written genesis and the
+// poa bootstrap take, so both run on the same transport as init and start. The
+// binary and its args are shell-quoted into one command line.
+func commanderRunner(c process.Commander) genesis.CommandRunner {
+	return func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		out, err := c.Run(ctx, shellCommand(name, args...))
+		return []byte(out), err
+	}
+}
+
+// shellCommand quotes a binary and its args into one command line for a shell.
+func shellCommand(name string, args ...string) string {
+	parts := make([]string, 0, len(args)+1)
+	parts = append(parts, shellQuote(name))
+	for _, a := range args {
+		parts = append(parts, shellQuote(a))
+	}
+	return strings.Join(parts, " ")
+}
+
+// shellQuote single-quotes one argument so a shell takes it literally.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // peerPlan is what every per-node rendering needs beyond the record: the key

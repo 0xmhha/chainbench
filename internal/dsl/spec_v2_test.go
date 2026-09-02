@@ -65,7 +65,7 @@ func TestParseV2CaseLowering(t *testing.T) {
 	if s.EnvKeys == nil || s.EnvKeys.Source != "generate" || s.EnvKeys.Ref != "keys/gen1" {
 		t.Fatalf("EnvKeys = %+v", s.EnvKeys)
 	}
-	if len(s.EnvLaunch) != 2 {
+	if len(s.EnvLaunch["all"]) != 2 {
 		t.Fatalf("EnvLaunch = %+v", s.EnvLaunch)
 	}
 
@@ -105,7 +105,7 @@ func TestParseV2Strictness(t *testing.T) {
 			"env":{"chain":"wbft"},"steps":[{"do":"waitBlock","n":1}]}`,
 		"unsupported genesis mode": `{"schemaVersion":"2","kind":"case","id":"x",
 			"env":{"chain":"wbft","genesis":{"mode":"inherit"}},"steps":[{"expect":"blockNumber","is":1}]}`,
-		"role-scoped launch": `{"schemaVersion":"2","kind":"case","id":"x",
+		"unknown launch scope": `{"schemaVersion":"2","kind":"case","id":"x",
 			"env":{"chain":"wbft","launch":{"bp1":{"mine":true}}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"override hook": `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft"},
 			"steps":[{"override":{"env.launch":{}}},{"expect":"blockNumber","is":1}]}`,
@@ -114,6 +114,26 @@ func TestParseV2Strictness(t *testing.T) {
 		if _, err := Parse([]byte(raw)); err == nil {
 			t.Errorf("%s: must fail", name)
 		}
+	}
+}
+
+func TestParseV2ScopedLaunch(t *testing.T) {
+	raw := `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft",
+	  "binaries":{"default":"gwbft"},
+	  "launch":{"all":{"metrics":true},"bp":{"mine":true},"node1":{"verbosity":5}}},
+	  "steps":[{"expect":"blockNumber","is":1}]}`
+	s, err := Parse([]byte(raw))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got := s.EnvLaunch["all"]; len(got) != 1 || got[0] != "metrics=true" {
+		t.Errorf("all scope = %v", got)
+	}
+	if got := s.EnvLaunch["bp"]; len(got) != 1 || got[0] != "mine=true" {
+		t.Errorf("bp scope = %v", got)
+	}
+	if got := s.EnvLaunch["node1"]; len(got) != 1 || got[0] != "verbosity=5" {
+		t.Errorf("node1 scope = %v", got)
 	}
 }
 

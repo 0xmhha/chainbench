@@ -459,6 +459,26 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | R4 | 원격 조립·기동 라이브 (단일 서버) | ☑ **완료 2026-08-24.** `net up --server server1 --docker` 로 stablenet 4검증자가 **docker 서버 위에서** 15스텝 완주, 블록 16→24 전진(매핑 포트로 프로브), stop 후 고아 0. **P2 실증**: genesis·static-nodes·workspace 전부 실주소(172.30.0.11), loopback 0건(metrics 자기 바인드 기본값 제외). **원격 경로의 선재 결함 4건을 이 과정에서 발견·수정**: ① init 이 타깃 경로를 로컬 `os.ReadFile` 로 읽음 → Files boundary 경유 ② netcompose 에 신원 배송 부재 + config/argv 가 로컬 키 경로를 타깃에 구움 → `keysBase()` + provision 의 `shipIdentities`(engine 방식 이식) ③ **원격 launch 셸 문법** — `mkdir && nohup CMD &` 는 리스트 전체가 백그라운드 서브셸이 되어 세션 파이프를 문 채 노드를 기다림(노드가 즉사할 때만 우연히 통과) → `|| exit 1; nohup … &` + 문법 회귀 테스트 ④ 헬스 프로브가 fleet 에서 노드별 주소 대신 target 주소를 물음 → 노드 기록 주소로 | ☑ |
 | R5 | **fleet 다중 호스트 기동** — 노드별 머신 해석 완성: allocate 가 노드마다 서버 세트 항목명을 기록하고(`NodeState.Server`), genesis·config·provision(신원 배송)·init·start·stop·restart·logs·사전 점검(포트 프로브·바이너리 검사)이 전부 **그 노드의 머신**으로 간다(`machineFor`/`eachMachine`, 명령당 머신별 1회 dial 캐시) | ☑ 라이브(2026-08-26): 5대 서버에 4 검증자+1 endpoint 분산 기동 → 서로 다른 머신끼리 합의해 블록 26 봉인 → 대장에 5머신 5기록 → stop → 5대 전부 고아 0. 단위: fleet allocate 가 서버명·호스트 분산을 기록 | ☑ |
 
+| **R6** | **poa(wemix) 원격 실행 + 직렬 브링업** — poa 는 genesis 를 바이너리 실행으로 만들고 기동 뒤 거버넌스·etcd 부트스트랩도 바이너리를 실행하는데, 둘 다 하네스 로컬 `os/exec` 였다. `resource.Access`(Files+Driver.Commander)로 genesis 생성과 부트스트랩을 **타깃에서** 실행(노드별 머신 해석). 부트 노드를 최상위 producer 로 하고, 나머지 producer 를 내림차순으로 **한 대씩 시작+join**(직렬)하여 joiner 의 fork 경합(late-join 노드가 mid-reorg 구간을 "unauthorized block"으로 거부)을 제거 | ☑ 라이브(2026-09-02): 15대 docker 서버셋에 14 bp + 1 en 웹믹스가 원격에서 genesis 생성·거버넌스·etcd 부트스트랩 완주, etcd 14멤버 형성, sealer 로테이션 확인. `run` 에 `--docker` 추가. 단, **아래 잔여 버그로 재현 신뢰성은 불완전** | ◐ |
+
+**R6 잔여 버그 (2026-09-02, 추후 디버깅) — go-wemix etcd 붕괴.** 직렬 브링업으로 fork 경합은
+사라졌으나, 14 bp 규모의 느린 브리지에서 **부트 노드가 형성한 etcd 클러스터가 가끔 붕괴**한다.
+`etcdInit` 으로 형성(VerifyEtcd 통과)된 뒤, 노드의 배경 etcd 관리가 거버넌스 멤버 목록(14개)을
+보고 그 "클러스터"에 join 하려다 실패하며 형성된 클러스터를 잃는다:
+
+```
+etcd join failed name=node14 error="not found"
+etcd failed to start: cannot fetch cluster info from peer urls
+```
+
+증상: 부트 노드 `admin.wemixInfo.etcd.cluster = undefined`, 부트가 거버넌스 블록에서 정지,
+후속 join 이 전부 "not found". 재현 2회 중 1회 완전 성공(14멤버·로테이션), 1회 부트 etcd 붕괴.
+chainbench 오케스트레이션(genesis·부트스트랩·직렬 순서)은 정상이고, **go-wemix 바이너리의 etcd
+형성·안정성** 영역이다. 조사 방향: (a) 부트 노드가 거버넌스 멤버 전체를 아는 상태로 단일 클러스터를
+안정 유지하는 조건(초기 클러스터를 자기 자신만으로 고정, 나머지는 add-member 순서), (b) etcd 붕괴
+감지 후 재형성(`etcdInit` 재발행)을 브링업에 넣을지 — 단 형성 중 재발행이 오히려 방해한 선례 있음.
+키·genesis 는 원인이 아님을 실측 확인(genesis 해시 전 노드 동일, 배포된 키 경로를 command 가 사용).
+
 ### 확정된 결정 (2026-08-22)
 
 | # | 결정 | 근거 |

@@ -111,12 +111,18 @@ type NetAllocateIn struct {
 	// Server selects where the nodes are placed and on what ports, from the
 	// operator's server set. Its zero value uses the built-in local plan.
 	Server resource.ServerRef
+	// Topology, when set, is the inline per-node layout (role/sync/bootnode/
+	// binary), the DSL's way to declare what --topology gives a file. It wins
+	// over Validators/Endpoints.
+	Topology *node.Topology
+	// Binaries maps per-node binary names to paths (with a per-node topology).
+	Binaries map[string]string
 }
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
 func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
-	var topo *node.Topology
-	if in.TopologyPath != "" {
+	topo := in.Topology
+	if topo == nil && in.TopologyPath != "" {
 		loaded, err := node.Load(in.TopologyPath)
 		if err != nil {
 			return StepOut{}, err
@@ -158,7 +164,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		return ws.Allocate(AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
-			Pool: resolved.Pool, SetPath: in.Server.SetPath,
+			Pool: resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
 		})
 	})
 	return StepOut{Detail: detail}, err
@@ -262,7 +268,11 @@ func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 // NetLaunchOptsIn customizes the assembled argv.
 type NetLaunchOptsIn struct {
 	DataDir string
-	Set     []string // key=value overrides (bare key for booleans)
+	Set     []string // key=value overrides for every node (bare key for booleans)
+	// ScopedSet records overrides for several scopes at once ("all", a role like
+	// "bp"/"en", or "node<N>"), the form the up flow and a DSL env pass. Set is
+	// folded into the "all" scope.
+	ScopedSet map[string][]string
 }
 
 // NetLaunchOptsOut is the assembled per-node argv table.
@@ -276,7 +286,15 @@ type NetLaunchOptsOut struct {
 func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
 	var nodes []node.Record
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		det, err := ws.LaunchOpts(LaunchOptsOpts{Set: in.Set})
+		for _, scope := range sortedScopes(in.ScopedSet) {
+			if err := ws.recordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
+				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
+			}
+		}
+		if err := ws.recordLaunchSet("all", in.Set); err != nil {
+			return "", fmt.Errorf("chainsetup: launchopts: %w", err)
+		}
+		det, err := ws.LaunchOpts()
 		nodes = ws.State().Nodes
 		return det, err
 	})

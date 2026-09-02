@@ -160,7 +160,51 @@ chainbench run --chain stablenet --binary $GSTABLE --keys keys/preset \
 ```
 
 선택 플래그: `--server-set <path>`(기본 `server-set.yaml`) ·
-`--server <name>` · `--server-index <n>` · `--all-servers`.
+`--server <name>` · `--server-index <n>` · `--all-servers` · `--docker`.
+
+---
+
+## 6a. docker: 로컬 컨테이너를 서버로 쓴다
+
+원격 서버 없이 원격 경로를 검증할 때, 로컬 docker 컨테이너를 서버 세트로 쓴다.
+하네스가 이미 있다 — [`env/docker/`](../../env/docker/) 가 15대짜리 compose 와
+서버 세트, localmap 을 함께 만든다.
+
+서버 세트에는 컨테이너의 **실주소**(bridge, 예 `172.30.0.11`)를 적는다. 노드끼리는
+bridge 안에서 그 주소로 통신하기 때문이다(genesis·static-nodes 에 그 값이 들어간다).
+하네스가 스스로 접속하는 dial 만 loopback 퍼블리시 포트로 바꿔야 하는데, 그 대응표가
+서버 세트 **옆에 놓인** `localmap.yaml` 이다.
+
+```yaml
+# server-set.yaml 옆의 localmap.yaml
+hosts:
+  172.30.0.11: { host: 127.0.0.1, ports: { 10022: 2201, 8601: 18601 } }
+```
+
+`localmap.yaml` 은 **`--docker` 플래그가 있을 때만** 적용된다. 파일이 있어도
+플래그가 없으면 아무 일도 하지 않는다 — 스위치는 파일 존재가 아니라 플래그다.
+`--docker` 는 `chain new`/`chain up` 과 `run`(compose) 모두 받는다.
+
+```sh
+# 서버 세트 전체(컨테이너 15대)에 한 노드씩 펼쳐 테스트를 돌린다
+chainbench run \
+  --workspace-dir <ws> \
+  --server-set env/docker/build/server-set.yaml \
+  --docker --all-servers \
+  --keys <ws>/genkeys \
+  tests/cases/stablenet/chain-up-15.json
+```
+
+컨테이너에는 대상 체인 바이너리(그 컨테이너 아키텍처의 Linux 판)가 서버 세트의
+`dataRoot` 아래(예 `/data/chainbench/bin/`)에 있어야 한다 — provision 은 키·설정·
+genesis 는 올리지만 바이너리는 올리지 않는다.
+
+**패밀리 제약**: wbft 계열(stablenet·wbft)은 genesis 를 in-process(순수 Go 치환)로
+만들고 부트스트랩 단계가 없어서 원격/docker 에서 그대로 돈다. poa(wemix)는 아직
+안 된다 — genesis 를 바이너리 실행으로 만들고(`poa.GenesisSource`), 기동 뒤
+거버넌스·etcd 부트스트랩도 바이너리를 실행하는데, 둘 다 하네스 로컬에서
+`os/exec` 로 돈다(타깃 실행 아님). poa 를 원격에서 돌리려면 그 두 실행 지점을
+타깃에서 수행하도록 만들어야 한다.
 
 ---
 

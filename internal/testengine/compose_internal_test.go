@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -53,8 +54,11 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 	if strings.Join(up.GenesisSet, ",") != "bohoBlock=10" {
 		t.Errorf("genesis set = %v", up.GenesisSet)
 	}
-	if strings.Join(up.LaunchSet, ",") != "nodiscover,verbosity=4" && strings.Join(up.LaunchSet, ",") != "verbosity=4,nodiscover" {
-		t.Errorf("launch set = %v", up.LaunchSet)
+	// The env's launch knobs travel scoped ("all" here), not in the flat set.
+	all := append([]string(nil), up.LaunchScoped["all"]...)
+	sort.Strings(all)
+	if strings.Join(all, ",") != "nodiscover=true,verbosity=4" {
+		t.Errorf("launch scoped[all] = %v", up.LaunchScoped["all"])
 	}
 	if up.OverlayPath == "" {
 		t.Fatal("a declared genesis set must reach the genesis step as an overlay file")
@@ -115,6 +119,63 @@ func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
 	}
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, Binary: "/x"}); err == nil {
 		t.Error("--binary has no role in a handoff and must be refused")
+	}
+}
+
+func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
+	// Two binaries of the same family run side by side, declared per node.
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	  "binaries":{"stable":"/opt/gstable","wbft":"/opt/gwbft"},
+	  "topology":{"nodes":[
+	    {"role":"bp","binary":"stable"},
+	    {"role":"bp","binary":"wbft"},
+	    {"role":"en","binary":"wbft","sync":"snap"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.handoff != nil || comp.up == nil {
+		t.Fatal("a same-family node table composes through the workspace")
+	}
+	up := comp.up
+	if up.Topology == nil || len(up.Topology.Nodes) != 3 {
+		t.Fatalf("node table not threaded: %+v", up.Topology)
+	}
+	if up.Topology.Nodes[0].Binary != "stable" || up.Topology.Nodes[2].SyncMode != "snap" {
+		t.Errorf("per-node fields lost: %+v", up.Topology.Nodes)
+	}
+	if up.Binaries["stable"] != "/opt/gstable" || up.Binaries["wbft"] != "/opt/gwbft" {
+		t.Errorf("binaries not resolved: %v", up.Binaries)
+	}
+	// No count is set; the node table is the sizing.
+	if up.Validators != 0 || up.Endpoints != 0 {
+		t.Errorf("counts leaked with a node table: %d/%d", up.Validators, up.Endpoints)
+	}
+	// The fallback binary is the first node's, for any node naming none.
+	if up.Binary != "/opt/gstable" {
+		t.Errorf("fallback binary = %q, want the first node's", up.Binary)
+	}
+}
+
+func TestInlineTopologyOf_Rejects(t *testing.T) {
+	bins := map[string]string{"wbft": "/opt/gwbft"}
+	cases := map[string]string{
+		"undeclared binary": `{"nodes":[{"role":"bp","binary":"ghost"}]}`,
+		"missing role":      `{"nodes":[{"binary":"wbft"}]}`,
+		"unknown key":       `{"nodes":[{"role":"bp","pn":true}]}`,
+		"empty list":        `{"nodes":[]}`,
+		"no producer":       `{"nodes":[{"role":"en"}]}`,
+	}
+	for name, topoJSON := range cases {
+		t.Run(name, func(t *testing.T) {
+			spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+			  "binaries":{"wbft":"/opt/gwbft"},"topology":`+topoJSON+`}`)
+			_ = bins
+			if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
+				t.Fatalf("topology %s accepted", topoJSON)
+			}
+		})
 	}
 }
 

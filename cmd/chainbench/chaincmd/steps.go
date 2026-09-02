@@ -61,23 +61,47 @@ func newNetKeysCmd() *cobra.Command {
 func newNetAllocateCmd() *cobra.Command {
 	var validators, endpoints int
 	var endpointSyncMode, topologyPath, peering string
+	var binaries []string
 	var sf resourcecmd.ServerFlags
 	cmd, _ := stepCmd("place", "Build the node table: roles, hosts, deterministic non-colliding ports",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
+			bins, err := parseBinaries(binaries)
+			if err != nil {
+				return "", err
+			}
 			out, err := chainsetup.NetAllocate(cmd.Context(), deps(cmd), chainsetup.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
-				Server: sf.Ref(),
+				Binaries: bins, Server: sf.Ref(),
 			})
 			return out.Detail, err
 		})
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
-	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode); overrides --validators/--endpoints")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
+	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")
 	cmd.Flags().StringVar(&peering, "peering", "", "peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)")
 	sf.Bind(cmd)
 	return cmd
+}
+
+// parseBinaries turns repeated "name=path" flags into the binary name→path map
+// a per-node topology resolves each node's binary through. It returns nil for no
+// flags, so the single-binary path is unchanged.
+func parseBinaries(kvs []string) (map[string]string, error) {
+	if len(kvs) == 0 {
+		return nil, nil
+	}
+	out := make(map[string]string, len(kvs))
+	for _, kv := range kvs {
+		name, path, ok := strings.Cut(kv, "=")
+		if !ok || name == "" || path == "" {
+			return nil, fmt.Errorf("--binaries %q must be name=path", kv)
+		}
+		out[name] = path
+	}
+	return out, nil
 }
 
 func newNetGenesisCmd() *cobra.Command {

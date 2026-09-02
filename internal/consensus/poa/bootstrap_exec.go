@@ -52,6 +52,22 @@ func EtcdInit(ctx context.Context, r Runner, binary, ipc string) error {
 	return nil
 }
 
+// etcdClusterReady reports whether the node's etcd cluster has formed. An empty
+// cluster prints as "", null or undefined depending on how far the init got;
+// none of them is a cluster.
+func etcdClusterReady(ctx context.Context, r Runner, binary, ipc string) (bool, error) {
+	out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
+	if err != nil {
+		return false, err
+	}
+	switch strings.Trim(strings.TrimSpace(string(out)), `"`) {
+	case "", "null", "undefined", "<nil>":
+		return false, nil
+	default:
+		return true, nil
+	}
+}
+
 // VerifyEtcd confirms the etcd cluster formed on the boot node.
 //
 // It exists because EtcdInit proves nothing: the call returns null whether it
@@ -65,21 +81,13 @@ func VerifyEtcd(ctx context.Context, r Runner, binary, ipc string, timeout time.
 	// once turned a working bootstrap into "formed nothing", and the node was
 	// torn down nine milliseconds after it announced the server was ready.
 	deadline := time.Now().Add(timeout)
-	var got string
 	for {
-		out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
-		if err == nil {
-			got = strings.TrimSpace(string(out))
-			// An empty cluster prints as "", null or undefined depending on how
-			// far the init got. None of them is a cluster.
-			switch strings.Trim(got, `"`) {
-			case "", "null", "undefined", "<nil>":
-			default:
-				return nil
-			}
+		ready, err := etcdClusterReady(ctx, r, binary, ipc)
+		if err == nil && ready {
+			return nil
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("poa: verify etcd: the cluster is still empty %s after init (admin.wemixInfo.etcd.cluster = %s) — the bootstrap ran but formed nothing", timeout, got)
+			return fmt.Errorf("poa: verify etcd: the cluster is still empty %s after init — the bootstrap ran but formed nothing", timeout)
 		}
 		select {
 		case <-ctx.Done():
@@ -204,42 +212,4 @@ func EtcdCluster(ctx context.Context, r Runner, binary, ipc string) (string, err
 // ClusterNames reports whether a cluster string names a member.
 func ClusterNames(cluster, member string) bool {
 	return strings.Contains(cluster, member+"=")
-}
-
-// VerifyEtcdMembers confirms the cluster names every member it should. It reads
-// the same string VerifyEtcd does, but a non-empty cluster is not the question
-// here — a cluster of one is non-empty, and that is exactly the state where a
-// single producer seals every block.
-//
-// Members are the node names as governance knows them, which is how the chain
-// spells them in the cluster string (name=url,name=url).
-func VerifyEtcdMembers(ctx context.Context, r Runner, binary, ipc string, members []string, timeout time.Duration) error {
-	deadline := time.Now().Add(timeout)
-	var got string
-	for {
-		out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
-		if err == nil {
-			got = strings.TrimSpace(string(out))
-			missing := make([]string, 0, len(members))
-			for _, m := range members {
-				if !strings.Contains(got, m+"=") {
-					missing = append(missing, m)
-				}
-			}
-			if len(missing) == 0 {
-				return nil
-			}
-			if time.Now().After(deadline) {
-				return fmt.Errorf("poa: verify etcd members: %s after joining, the cluster still does not name %s (admin.wemixInfo.etcd.cluster = %s) — a producer outside the cluster takes no turn at sealing",
-					timeout, strings.Join(missing, ", "), got)
-			}
-		} else if time.Now().After(deadline) {
-			return fmt.Errorf("poa: verify etcd members: could not read the cluster within %s: %w", timeout, err)
-		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
-		}
-	}
 }
