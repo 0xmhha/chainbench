@@ -42,18 +42,23 @@ gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
   `fork_transition.go`, etc.) with the actual go-stablenet boho implementation
   (addresses, activation semantics) — or a gstable build matching the cases.
 
-### 2. `stablenet-account-extra.sh` — overlay fixture bug
-- Genesis init FAILS: `cannot unmarshal array into … govCouncil.params of type
-  string`. Fails on both v1.0.1 and v1.1.0.
-- The overlay `internal/chains/stablenet/overlays/account-extra.json` merges
-  `govCouncil.params.{authorizedAddresses,blacklistedAddresses}` (arrays) — but
-  the base template's `govCouncil.params` is a flat string-map
-  (`members/quorum/expiry/…`). The intent is to seed account **Extra bits
-  (62/63)** in the alloc, not to put arrays in govCouncil.params.
-- **Needed:** rewrite the overlay to set the Extra-bit account state in the
-  genesis `alloc` in the format go-stablenet expects (investigate
-  `account.Extra` genesis representation), then port to Go with `bootOverlay` +
-  `runCase` (the harness already supports this — see proposal-expiry).
+### 2. `stablenet-account-extra.sh` — RESOLVED (overlay fixed + ported to a DSL case)
+- Root cause confirmed: the overlay's broken half was the
+  `config.anzeon.systemContracts.govCouncil.params.{authorizedAddresses,blacklistedAddresses}`
+  ARRAYS, which collide with the base template's flat string-map `govCouncil.params`
+  (`cannot unmarshal array into a string field`). The `alloc.*.extra` half was
+  already correct.
+- go-stablenet represents the Extra bits as a top-level `"extra"` field on each
+  alloc entry (`core/types/account.go` `Account.Extra uint64`, JSON
+  `math.HexOrDecimal64`): bit 62 `0x4000000000000000` = authorized, bit 63
+  `0x8000000000000000` = blacklisted. `statedb.SetExtra` applies them at
+  genesis-init and `ValidateExtra` rejects bits outside that mask.
+- **Fixed:** `internal/chains/stablenet/overlays/account-extra.json` now carries
+  only the alloc `extra` bits (the invalid `config.anzeon` block is removed), so
+  genesis init succeeds and the AccountManager (0x…B00003) reads the seeded
+  status. **Ported** as `tests/cases/stablenet/account-extra.json` — a self-contained
+  DSL case that seeds the three accounts via `genesis.overlay` and asserts
+  `isAuthorized`/`isBlacklisted` (incl. the dual account) return 1. Live-verified.
 
 ### 3. `stablenet-basefee-dynamics.sh` — SUPERSEDED by the DSL anzeon cases
 - ~~Needs a burst of many txs into ONE block to move baseFee.~~ Resolved a
