@@ -21,7 +21,7 @@
 #   CHAINBENCH  reuse a prebuilt CLI (default: build once to /tmp)
 #   REBUILD=1   force a rebuild of the CLI
 #   LOGDIR      per-script logs (default: /tmp/chainbench-repro-logs)
-# Plus the per-script vars (GSTABLE_BIN, WEMIX_BIN, WBFT_BIN, TEMPLATE, L2_RPC,
+# Plus the per-script vars (GSTABLE_BIN, WEMIX_BIN, WBFT_BIN, TEMPLATE, EXTERNAL_RPC,
 # FAUCET_PK, CHAINBENCH_FUNDED_KEY) documented in README.md — passed through.
 set -uo pipefail
 
@@ -65,7 +65,7 @@ for s in "${SCRIPTS[@]}"; do
   case $code in
   0) status=PASS; pass=$((pass + 1)); reason="" ;;
   2) status=SKIP; skip=$((skip + 1))
-     reason="$(grep -iE 'no .*binary|missing|requires|needs?|not found|set [A-Z_]{3,}|provide|L2_RPC|FAUCET_PK' "$log" | head -1 | sed 's/^[[:space:]]*//' | cut -c1-60)" ;;
+     reason="$(grep -iE 'no .*binary|missing|requires|needs?|not found|set [A-Z_]{3,}|provide|EXTERNAL_RPC|FAUCET_PK' "$log" | head -1 | sed 's/^[[:space:]]*//' | cut -c1-60)" ;;
   *) status=FAIL; fail=$((fail + 1)); reason="exit=$code; see $log" ;;
   esac
   ROWS+=("$(printf '%-6s %-34s %s' "$status" "$s" "$reason")")

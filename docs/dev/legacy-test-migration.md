@@ -5,7 +5,7 @@
 > This doc is the map both sides were parsed into and the plan for porting the rest.
 > All local categories (basic, fault, stress, anzeon) are ported and live-verified
 > (§5–§5d); the remote/stablenet/wemix4 remainder is covered by specs + Go e2e, and
-> the wemix4 + post-v1.0.0 items are ported (§7). The one non-item is `layer2-attach`
+> the wemix4 + post-v1.0.0 items are ported (§7). The one non-item is `attach-external`
 > (not a porting target — chainbench has no L2 chain support).
 
 ## 1. Scope
@@ -154,13 +154,14 @@ Port category-by-category, each slice live-verified against the from-source bina
    - **wbft (12)** — block-period, extra-seal, epoch, add/remove-validator, gastip-header-sync, get-validators, quorum-deficient, prev-committed/prepared-seal are in `consensus` specs; **round-change / post-round-change** are Go e2e (`TestE2E_WbftViewChange`, `TestE2E_WbftRoundRobinProposer`).
    - **system-contracts (24) / blacklist-authorized (9) / fee-delegation (4)** — covered by the `system-contracts` (45) and `accounts` specs (native transfer, approve/transferFrom, mint/burn proposals, gov lifecycle, blacklist/authorize + events, fee-delegation valid + tampered).
    - **anzeon (7)** — gastip-forced/free, min/max baseFee are in `gas-policy` specs. The dynamic `basefee-increase` / `basefee-stable` / `basefee-decrease` cases (±2% by block gas usage) are now **ported and live-verified** (§5c) via the new `load` action — the last genuine regression gap is closed.
-3. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; ported to Go e2e (`TestE2E_StablenetHardforkSwap`) and to the DSL cases here (`delayed-fork`, `account-extra`; see `repro-migration-remaining.md`). No DSL gap remains; the only non-item is `layer2-attach` (not a porting target).
+3. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; ported to Go e2e (`TestE2E_StablenetHardforkSwap`) and to the DSL cases here (`delayed-fork`, `account-extra`; see `repro-migration-remaining.md`). No DSL gap remains; the only non-item is `attach-external` (not a porting target).
 4. **wemix4 (95)** — `wemix4-port-tracker.md`: fully ported/covered (DSL + Go e2e). RPC-008 brioche was the last item, now ported (`tests/cases/wemix/brioche-block-reward.json`).
 
 **Net for items 2–4:** the local categories (basic, fault, stress, anzeon) are
 **fully ported** (§5–§5d); the rest is covered by `tests/specs` + Go e2e, and the
 wemix4 + post-v1.0.0 remainders are ported (§7). No DSL porting work remains; the
-one non-item is `layer2-attach` (not a porting target — no L2 chain support).
+one non-item is `attach-external` (not a porting target — an external chain
+attached over RPC, not an Ethereum L2).
 
 ## 7. New DSL machinery the migration needs
 
@@ -180,13 +181,14 @@ Go e2e (the earlier "remaining" prose was stale).
 
 The `tests/repro`→Go-e2e remainder (`repro-migration-remaining.md`) has nothing
 left to port:
-- `layer2-attach` is **not a porting target**. The reference suite has no L2
-  scripts (only a design note), chainbench does not support L2 as a chain family,
-  and "L2 E2E" is just the existing chain-agnostic RPC cases run attach-mode
-  against an external L2 (`chainbench test --rpc <url>`). "External L2" means an
-  already-running L2 chainbench neither launches nor manages — a black-box RPC
-  endpoint. Nothing to build or port; a live L2 URL is needed only to smoke-run
-  the existing generic cases.
+- `attach-external` (the legacy "Layer 2 E2E" section) is **not a porting target**.
+  Despite the legacy name it is NOT an Ethereum L2 — in chainbench terms it is an
+  **external chain**: one already running elsewhere that chainbench attaches to over
+  RPC (`chainbench test --rpc <url>`), never launching or managing it. The reference
+  suite has no runnable scripts there (only a design note), chainbench has no
+  external-chain family to build, and "L2 E2E" is just the existing chain-agnostic
+  RPC cases run attach-mode. Nothing to build or port; a live external RPC URL is
+  needed only to smoke-run the existing generic cases.
 
 Now resolved and ported to DSL cases here:
 - `stablenet-delayed-fork` (`tests/cases/stablenet/delayed-fork.json`) — the boho

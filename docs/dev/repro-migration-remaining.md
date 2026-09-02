@@ -26,12 +26,12 @@ test fixture) is genesis-funded. See memory `live-verification-setup`.
 ## Remaining — nothing to port
 
 Of the original 5, four are ported to DSL cases (#1 delayed-fork, #2
-account-extra, #3 basefee-dynamics, #4 wemix-chain). The fifth, `layer2-attach`
-(#5), is NOT a porting target: the reference suite has no L2 scripts (only a
-design note), chainbench does not support L2 as a chain family, and the "L2 E2E"
-cases are the existing chain-agnostic RPC cases run attach-mode against any
-endpoint. So the legacy→DSL migration is effectively complete. The five sections
-below are kept for the root-cause record.
+account-extra, #3 basefee-dynamics, #4 wemix-chain). The fifth, `attach-external`
+(#5, the legacy "Layer 2 E2E" section), is NOT a porting target: the reference
+suite has no runnable scripts there (only a design note), chainbench has no
+external-chain family to build, and those cases are the existing chain-agnostic
+RPC cases run attach-mode against any endpoint. So the legacy→DSL migration is
+effectively complete. The five sections below are kept for the root-cause record.
 
 ### 1. `stablenet-delayed-fork.sh` — RESOLVED (root cause was genesis wiring, now ported)
 - The boho effects DO exist in go-stablenet: the GovMinter-v2 code swap
@@ -94,21 +94,25 @@ below are kept for the root-cause record.
 - No standalone-bootstrap wiring into `chainbench setup` is needed for the port;
   the run path covers it.
 
-### 5. `layer2-attach.sh` — NOT a porting target (no L2 support, no legacy script)
-- There is nothing to port. The reference suite has NO z-layer2 scripts — only a
-  design note (`stablenet/regression/docs/z-layer2-e2e.md`) listing RT-Z-01..05.
-  "Layer 2 E2E" is not an L2 chain implementation; it is generic RPC operations
-  (chain state, event logs, contract call, tx, fee delegation) run against an L2.
-- chainbench does not support L2 as a chain family (no L2 binary/genesis/consensus)
-  and does not need to. Its chain-agnostic cases (block-progression,
-  gas-price-positive, chain-not-syncing, logs-query-well-formed, fee-history-…,
-  etc. — empty ChainCompat, gated only on `rpc`) already run against ANY endpoint
-  via attach mode (`chainbench test --rpc <url>`).
-- "External L2" = an already-running L2 that chainbench did NOT launch and does
-  not manage; it is treated as a black-box RPC endpoint. `layer2-attach.sh` is
-  just a convenience wrapper that points the existing generic cases at an `L2_RPC`
-  and checks they run (skip=0). It requires a live L2 URL only to execute — it is
-  not a DSL/Go port of a legacy test, because no such legacy test exists.
+### 5. `attach-external.sh` — NOT a porting target (external-chain attach, not an L2)
+- Terminology: the legacy regression called this section "Layer 2 E2E"
+  (`stablenet/regression/docs/z-layer2-e2e.md`, RT-Z-01..05), but despite the name
+  it is NOT an Ethereum L2 / rollup. In chainbench terms it is an **external
+  chain**: one already running somewhere else that chainbench attaches to over RPC
+  (it neither launches nor manages it). This doc uses "external chain" to avoid the
+  L2 confusion.
+- There is nothing to port. The reference suite has NO runnable z-layer2 scripts —
+  only that design note. "Layer 2 E2E" is just generic RPC operations (chain state,
+  event logs, contract call, tx, fee delegation) run against some external chain.
+- chainbench has no external-chain family to build (no binary/genesis/consensus)
+  and needs none. Its chain-agnostic cases (block-progression, gas-price-positive,
+  chain-not-syncing, logs-query-well-formed, fee-history-…, etc. — empty
+  ChainCompat, gated only on `rpc`) already run against ANY endpoint via attach
+  mode (`chainbench test --rpc <url>`).
+- `tests/repro/attach-external.sh` is just a convenience wrapper that points the
+  existing generic cases at an `EXTERNAL_RPC` and checks they run (skip=0). It
+  needs a live external RPC URL only to execute — it is not a DSL/Go port of a
+  legacy test, because no such legacy test exists.
 
 ## Notes
 - `tests/repro/run-all.sh` still orchestrates the not-yet-ported bash scripts;
