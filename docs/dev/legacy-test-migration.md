@@ -3,7 +3,9 @@
 > Source: `~/Work/github/packages/chainbench/tests` (~420 shell test scripts).
 > Target: this project's v2 DSL cases (`tests/cases/`) run by `chainbench run`.
 > This doc is the map both sides were parsed into and the plan for porting the rest.
-> First slice ported and live-verified: the `fault` category (see §5).
+> All local categories (basic, fault, stress, anzeon) are ported and live-verified
+> (§5–§5d); the remote/stablenet/wemix4 remainder is covered by specs + Go e2e, with
+> a small set of wemix4 items still blocked on chain-side prerequisites (§7).
 
 ## 1. Scope
 
@@ -77,10 +79,12 @@ Legacy uses numeric-local (`"1"` via `pids.json`) or alias-remote (`@stablenet-b
 | `fault/network-partition.sh` | `network-partition.json` | partition {node1,node2}\|{node3,node4} → peerCount ≤2 each side → healPartition → node3 catches up → sameBlockHash |
 | `fault/node-recover.sh` | `node-recover.json` | stopNode node3 → node1 runs ahead → restartNode node3 → node3 catches up → sameBlockHash |
 | `fault/txpool-leader-change.sh` | `txpool-leader-change.json` | send a tx → stopNode node1 (leader) → blockAdvance node2 → txpool_status.pending == 0x0 → startNode node1 |
+| `fault/two-down.sh` | `two-down.json` | waitBlock 3 → sameBlockHash → stopNode node3 + node4 → `blockHalt` node1 (advance ≤ 1 over 12s: 2/4 cannot seal) → startNode node3 (3/4 quorum) → blockAdvance node1 → startNode node4 |
+| `fault/p2p-topology.sh` | `p2p-topology.json` | hub-spoke via `partition [[node2],[node3],[node4]]` (each spoke its own group severs spoke↔spoke; node1, ungrouped, keeps all links) → peerCount node1 ≥ 2 → blockAdvance (consensus relays through hub) → tx through hub mined → healPartition → re-converge |
 
-Deferred (need new DSL machinery, tracked below):
-- `fault/two-down.sh` — asserts consensus **halts** with 2/4 down. Needs a `blockHalt`-style assertion (head does NOT advance within a window); `blockAdvance`'s negation is not expressible today.
-- `fault/p2p-topology.sh` — hub-spoke topology. `partition` models disjoint groups, not a hub with spokes.
+The last two needed the `blockHalt` assertion (§7) and the insight that hub-spoke
+is just `partition` with singleton spoke groups — no new peering primitive. All
+four fault cases now run green.
 
 ## 5b. Second ported slice — `basic` (live-verified)
 
@@ -124,11 +128,25 @@ specs; the gas-tip cases (`anzeon/01`, `02`) by `regular-account-gastip-forced` 
 `authorized-account-gastip-free`. Only the three dynamic-adjustment cases needed
 porting.
 
+## 5d. Fourth ported slice — `stress` (live-verified)
+
+`tests/cases/stress/` + env `stress-stablenet` (stablenet, 4 bp, preset keys).
+Both ran green against a real `gstable` 4-node network:
+
+| legacy | DSL case | check |
+|---|---|---|
+| `stress/block-time.sh` | `block-time.json` | waitBlock 20 → `blockInterval` blocks 15 maxSeconds 60 (average interval over the last 15 blocks is bounded and positive) |
+| `stress/tx-flood.sh` | `tx-flood.json` | `load` fillPercent 30 blocks 15 (15 burn txs, each confirmed — load errors if one fails to mine) → `blockAdvance` (chain kept sealing under sustained ~1/3-block load) |
+
+`blockInterval` samples block timestamps and checks the mean gap; `tx-flood` reuses
+the `load` action for throughput (every burn is confirmed, so 15 blocks = 15 mined
+txs under load) rather than the legacy's 100 independent value txs.
+
 ## 6. Phased plan for the rest
 
 Port category-by-category, each slice live-verified against the from-source binary, gap-checked against §2 first:
 
-1. **basic (7)** — ✅ done (§5b). **stress (2)** — deferred: `tx-flood` needs a load primitive (the DSL has no loop) and `block-time` needs a block-interval/timing assertion; both are in §7. **remote (4)** — the same reads as `basic` (chainId, blockNumber, peerCount, balance, tx) but attach-mode against an external chain; the DSL already runs any case attach-mode via `chainbench run --chain <c> --rpc <url> <case>`, so a `basic` case IS the remote test pointed at an external node — no separate cases needed, only external-chain env vars at run time.
+1. **basic (7)** — ✅ done (§5b). **stress (2)** — ✅ done (§5d): `stress/block-time` uses the new `blockInterval` assertion (avg interval over a window), `stress/tx-flood` uses the `load` action (sustained per-block burn txs, all confirmed). **fault (6)** — ✅ done (§5): all six, including two-down and p2p-topology. **remote (4)** — the same reads as `basic` (chainId, blockNumber, peerCount, balance, tx) but attach-mode against an external chain; the DSL already runs any case attach-mode via `chainbench run --chain <c> --rpc <url> <case>`, so a `basic` case IS the remote test pointed at an external node — no separate cases needed, only external-chain env vars at run time.
 2. **stablenet regression (~88 tests: api 23, ethereum 32, system-contracts 24, wbft 12, blacklist-authorized 9, anzeon 7, fee-delegation 4)** — gap-checked: essentially **already covered**, since `tests/specs/` was derived from this suite. Confirmed by cross-referencing each behavior:
    - **api (23)** — every RPC (getBlock*, getTx*, getCode, getTxCount, gasPrice, maxPriorityFee, feeHistory, estimateGas, all `istanbul_*`, txpool_*, admin_peers, signRawFeeDelegate, totalSupply, allowance) has a spec or a DSL source; `net_peerCount` is now covered by `basic/peers`.
    - **ethereum (32)** — the tx-type matrix, contract deploy/call, eth_call/revert, out-of-gas, get-logs, chain-id, ws-subscribe are in `accounts`/`api`/`gas-policy` specs; **node-restart** is `fault/node-recover`; **full/snap sync, downloader, block-fetcher** are Go e2e (`TestE2E_StablenetSyncGap`, `TestE2E_WbftSnapSync`).
@@ -138,12 +156,29 @@ Port category-by-category, each slice live-verified against the from-source bina
 3. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; the catalog (`stablenet-post-v1.0.0-change-test-catalog.md`) and the `tests/repro`→Go-e2e doc record these as ported to Go e2e (`TestE2E_StablenetHardforkSwap`, delayed-fork, account-extra) or blocked on chain-side prerequisites (`repro-migration-remaining.md` §1–5). No DSL-tractable gap without those prerequisites.
 4. **wemix4 (95)** — `wemix4-port-tracker.md`: ~62 ported (DSL + Go e2e), ~8 deferred needing new machinery (e.g. RPC-008 brioche-reward genesis config). Finish those against the tracker.
 
-**Net for items 2–4:** the bulk is already covered by `tests/specs` + Go e2e + the three ported slices here (fault, basic, anzeon); the remaining DSL-tractable work is small and enumerated in §7 (blockHalt + hub-spoke for the two deferred fault tests, a block-interval assertion for `stress/block-time`) plus the ~8 tracked wemix4 items. The `load` primitive that §7 called for is now built (§5c).
+**Net for items 2–4:** the local categories (basic, fault, stress, anzeon) are now
+**fully ported** (§5–§5d); the rest is covered by `tests/specs` + Go e2e. The only
+remaining DSL-tractable work is the ~8 tracked wemix4 items, most blocked on
+chain-side prerequisites (see §7 and `wemix4-port-tracker.md`).
 
 ## 7. New DSL machinery the migration needs
 
-- ~~a load primitive~~ — **done**: the `load` action (`internal/testhelper/load.go`) deploys a gas-burner sized to `fillPercent`% of the block gas limit, one burn per block for `blocks` blocks, to drive block gas usage. It unblocked `anzeon` (§5c) and also covers `stress/tx-flood`'s intent (sustained block load); a tx-flood case can now be added if a distinct throughput assertion is wanted.
-- `blockHalt` assertion — head stays within a window (for `fault/two-down`).
-- hub-spoke / star peering for `partition` (for `fault/p2p-topology`).
-- a block-interval / timing assertion — sample head timestamps and check the interval (for `stress/block-time`).
-- Whatever the deferred wemix4 items need (see `wemix4-port-tracker.md`).
+All four primitives the earlier slices called for are now built and live-verified:
+
+- ~~a load primitive~~ — **done**: the `load` action (`internal/testhelper/load.go`) deploys a gas-burner sized to `fillPercent`% of the block gas limit, one burn per block for `blocks` blocks. Unblocked `anzeon` (§5c) and `stress/tx-flood` (§5d).
+- ~~`blockHalt` assertion~~ — **done** (`internal/testhelper/blockprobe.go`): head advances ≤ `maxAdvance` over a `within` window — the negation of `blockAdvance`. Unblocked `fault/two-down` (§5).
+- ~~hub-spoke peering~~ — **done, no new code**: hub-spoke is `partition` with singleton spoke groups (`[[node2],[node3],[node4]]`); the ungrouped hub keeps all links. Unblocked `fault/p2p-topology` (§5).
+- ~~a block-interval assertion~~ — **done** (`blockprobe.go`): `blockInterval` samples the last `blocks` timestamps and bounds the mean gap. Unblocked `stress/block-time` (§5d).
+
+Still outstanding — the deferred **wemix4** items (see `wemix4-port-tracker.md`),
+most needing chain-side prerequisites, not new DSL machinery:
+- RPC-008 `wemix_getBriocheBlockReward` — needs a genesis with a `brioche` halving-config object (dedicated setup pending).
+- GOV-023 credential expiry — needs the unbonding window; GOV-021 is partly done.
+- WBFT-012/013 n=6 quorum variants — need a larger preset key set (the preset ships 5 identities).
+
+Also outside the DSL: the `tests/repro`→Go-e2e remainder
+(`repro-migration-remaining.md`): `stablenet-delayed-fork` / `-account-extra` (chain
+boho + overlay fixture), `wemix-chain` (standalone wemix bootstrap not wired into
+`chainbench setup`), `layer2-attach` (needs a live external L2). The
+`stablenet-basefee-dynamics` script there is now **superseded** by the DSL anzeon
+cases (§5c).

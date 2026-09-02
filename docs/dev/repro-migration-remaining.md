@@ -55,14 +55,14 @@ gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
   `account.Extra` genesis representation), then port to Go with `bootOverlay` +
   `runCase` (the harness already supports this — see proposal-expiry).
 
-### 3. `stablenet-basefee-dynamics.sh` — accounts SDK gap
-- Needs a burst of many txs into ONE block (>20% gas usage) to move baseFee.
-  That requires firing txs with EXPLICIT sequential nonces without waiting — the
-  `accounts.Wallet` interface has no explicit-nonce send, and sequential
-  `SendCoin` is too slow to concentrate load in a block.
-- **Needed:** add an explicit-nonce (or batch) send to the accounts SDK, or a
-  raw-tx path; then port as a best-effort Go test (already made best-effort in
-  bash: report INCONCLUSIVE when load is insufficient).
+### 3. `stablenet-basefee-dynamics.sh` — SUPERSEDED by the DSL anzeon cases
+- ~~Needs a burst of many txs into ONE block to move baseFee.~~ Resolved a
+  different way: the DSL `load` action (`internal/testhelper/load.go`) deploys a
+  single gas-burner sized to a percent of the block gas limit, so one tx fills the
+  block — no explicit-nonce burst needed. The base-fee dynamics are now covered by
+  `tests/cases/anzeon/basefee-{increase,stable,decrease}.json`, live-verified
+  against a real gstable network (see `legacy-test-migration.md` §5c).
+- No Go-e2e port of this script is needed; it can be retired from `run-all.sh`.
 
 ### 4. `wemix-chain.sh` (scenario 1, pure wemix) — framework gap
 - `chainbench setup --launch --chain wemix` does NOT run the governance-etcd

@@ -91,6 +91,8 @@ func Register(r interp.Registry) {
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
+	r.RegisterAssertion(assertBlockHalt, blockHaltAssertion{})
+	r.RegisterAssertion(assertBlockInterval, blockIntervalAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})
 	r.RegisterAssertion(assertMetric, metricAssertion{})
 	r.RegisterAssertion(assertCallError, callErrorAssertion{})
