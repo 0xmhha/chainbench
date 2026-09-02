@@ -692,6 +692,35 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
    하나) 개명 또는 흡수. 소품.
 
 
+## 1k. 체인 실행·테스트 증적 완결 (사용자 확인 2026-09-02)
+
+> 제품 방향은 [[chainbench-system-direction]](chainbench-system-direction.md), 현재 코드와의 차이와
+> 완료 조건은 [[refactoring-follow-up-handoff-2026-09-02]](refactoring-follow-up-handoff-2026-09-02.md)를
+> 따른다. 이 절만 작업 순서와 상태를 소유한다. 기존 완료 기능을 다시 만들지 말고 각 항목의 첫 단계에서
+> 코드·테스트·CLI를 재측정해 남은 차이만 구현한다.
+
+| # | 작업 | 선행 | 핵심 게이트 | 상태 |
+|---|---|---|---|---|
+| **E0** | **현행 재측정과 계약 고정** — key/resource/node/genesis/config/process/monitor/test/report의 producer·consumer, CLI·DSL·MCP 입력, local/remote/Docker 경로를 AST와 테스트로 재확인 | — | 중복 owner·직접 import·기존 완료 기능 목록, 수정 대상과 비대상 파일 확정 | ☐ |
+| **E0A** | **session artifact 계약 선행** — `environments/<env-id>` 정본 + `tests/<NNN>_<name>`별 env-ref·사용자료 snapshot/reference + root report의 2축 schema와 owner 고정 | E0 | testengine=verdict, session=영속, report builder=집계 · secret 정책 · 원자 write/readback | ☐ |
+| **E1** | **resolved producer → genesis** — validator count 기반 첫 N개 재선택을 제거하고 실제 BP identity/address/BLS를 사용 | E0A | `EN,BP,PN,BP` topology genesis readback 일치 · 누락/중복 no-write · 결정성 | ☐ |
+| **E2** | **자료 재사용 무결성** — asset별 owner를 유지하며 local/SSH/Docker의 binary·genesis·config·key·contract를 checksum으로 비교하고 결과 기록 | E0A | 같은 내용 재전송 0 · 같은 이름/다른 내용 오재사용 0 · secret 출력 0 | ☐ |
+| **E3** | **config·command 증적** — `nodeconfig` Command Builder, `config-<test-purpose>` fixture, override 우선순위, config readback, 노드별 argv·binary·checksum 기록 | E0A | node override 격리 · config/argv 동일 사실 · 변경 전후 revision 보존 | ☐ |
+| **E4** | **process와 개별 node control 정합** — Direct/Launcher/chainsetup start 중복을 측정하고 PID·실행 command·start/stop/restart·binary/config 교체를 하나의 ledger에 연결 | E2, E3 | 개별/전체 제어 · 실제 PID/command 일치 · 부분 실패 cleanup · orphan 0 · 세 환경 동등 | ☐ |
+| **E5** | **DSL syntax + semantic/capability 사전 검사** — schema/parser drift, selector/wait timeout, PN 제약과 chain·binary별 role/flag/RPC/metric/action/assertion/upgrade 지원을 모든 write 전에 검증 | E0A | unsupported는 no-write · applicableChains는 SKIP · CLI/MCP 판정 동등 | ☐ |
+| **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☐ |
+| **E7** | **동적 테스트와 contract** — 노드별 제어, partition/heal, binary/config 교체, 동적 `save/$ref` 주소와 deployer+nonce 결정적 주소 | E4, E5, E6 | per-node mixed binary · contract tx/receipt/address/checksum · 상태별 verdict | ☐ |
+| **E8** | **최종 증적 집계와 report** — E0A schema에 append-only logs, chainstate JSONL, assertion provenance, 테스트별 result를 채우고 root report 생성 | E0A, E3, E6, E7 | 실패 자료 수집 · remote reconnect · 전체 종료 후 report · secret 원문 0 | ☐ |
+| **E9** | **표면·환경 동등성** — CLI 단계, DSL 자동 구성, MCP 도구와 local/remote/Docker simulation을 같은 시나리오로 검증 | E1~E8 | 의미·기본값·오류·결과 동등 · 일반 mixed-binary와 `consensus/upgrade` handoff 구분 | ☐ |
+
+E1·E2·E3·E5는 E0A에서 저장 계약과 수정 파일을 분리한 뒤 병렬 진행할 수 있다. E4는 process와 chainsetup,
+E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 session/collector/report
+영역과 충돌하므로 해당 owner 작업과 동시에 수정하지 않는다.
+
+각 작업은 코드 변경 전에 입력·출력 타입, owner, 허용 import, 외부 상태 변경 시점과 rollback을 검토받는다.
+구현 후에는 단위·거부·readback 테스트, CLI JSON 예시, local 검증과 가능한 remote/Docker 라이브 결과,
+남은 wrapper·alias·직접 import를 보고한다.
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
