@@ -64,15 +64,20 @@ gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
   against a real gstable network (see `legacy-test-migration.md` §5c).
 - No Go-e2e port of this script is needed; it can be retired from `run-all.sh`.
 
-### 4. `wemix-chain.sh` (scenario 1, pure wemix) — framework gap
-- `chainbench setup --launch --chain wemix` does NOT run the governance-etcd
-  bootstrap standalone (only the upgrade/handoff path drives poa bootstrap via
-  `internal/consensus/poa` + a `Bootstrap` callback). The bash script does the raw
-  wemix genesis + init + launch + `deploy-governance` + `admin.etcdInit()`.
-- **Needed:** wire a standalone wemix bootstrap into `chainbench setup` (drive
-  `internal/consensus/poa.BootstrapPlan` steps for a non-handoff wemix network), then
-  port as a Go test. (Lower priority — the handoff test already exercises the
-  full wemix+etcd+governance bring-up.)
+### 4. `wemix-chain.sh` (scenario 1, pure wemix) — RESOLVED via the DSL run path
+- ~~`chainbench setup` does not bootstrap standalone wemix.~~ The DSL `chainbench
+  run` path DOES: it drives the poa governance-etcd bootstrap for a non-handoff
+  wemix network (confirmed by `tests/cases/wemix/chain-up.json`,
+  `brioche-block-reward.json`, and now `tx-and-contract.json`, all live-verified
+  against a real gwemix 4-validator network).
+- Scenario 1's block/tx/contract verification is ported as
+  `tests/cases/wemix/tx-and-contract.json`: on a standalone wemix network it sends
+  a value tx (receipt + recipient balance), deploys the roundtrip contract
+  (`codeAt` non-empty), and `eth_call`s it (returns 42). The sender is funded with
+  a `genesis.overlay` alloc entry (wemix ships an empty alloc), node-signed like
+  the stablenet cases.
+- No standalone-bootstrap wiring into `chainbench setup` is needed for the port;
+  the run path covers it.
 
 ### 5. `layer2-attach.sh` — external resource
 - Needs an already-running Layer-2 RPC endpoint (`L2_RPC`). Chain-agnostic
