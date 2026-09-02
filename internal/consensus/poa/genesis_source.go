@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
@@ -11,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"path"
 )
 
 // GenesisSource produces a wemix genesis the way the chain actually makes
@@ -33,10 +34,15 @@ type GenesisSource struct {
 	// Env is the governance policy; the zero value takes DefaultEnv.
 	Env *Env
 	// Run executes the binary. Injected so the assembly is testable without
-	// one; nil uses os/exec.
+	// one; nil uses os/exec. A remote run pairs with a remote Files.
 	Run Runner
+	// Files stages the config and template and reads the produced genesis back.
+	// Nil is the local filesystem; a remote store puts the inputs where the
+	// binary that reads them runs (the target host).
+	Files filestore.Store
 	// WorkDir is where the intermediate template and config are written before
-	// the binary reads them; empty uses a temporary directory that is removed.
+	// the binary reads them; empty uses a local temporary directory that is
+	// removed (valid only when Files is local).
 	WorkDir string
 }
 
@@ -80,21 +86,32 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
 	}
 
+	// Files stages the inputs where the binary reads them: the local filesystem
+	// for a local target, the target host for a remote one. A local run with no
+	// WorkDir gets a temporary directory that is removed; a remote run needs a
+	// real path on the target, so it does not default one.
+	files := s.Files
 	dir := s.WorkDir
-	if dir == "" {
-		tmp, err := os.MkdirTemp("", "cb-wemix-genesis-")
-		if err != nil {
-			return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
+	if files == nil {
+		files = filestore.Local{}
+		if dir == "" {
+			tmp, err := os.MkdirTemp("", "cb-wemix-genesis-")
+			if err != nil {
+				return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
+			}
+			defer func() { _ = os.RemoveAll(tmp) }()
+			dir = tmp
 		}
-		defer func() { _ = os.RemoveAll(tmp) }()
-		dir = tmp
 	}
-	cfgPath := filepath.Join(dir, ConfigFileName)
-	tmplPath := filepath.Join(dir, "genesis-template.json")
-	outPath := filepath.Join(dir, "genesis.json")
-	for path, content := range map[string][]byte{cfgPath: cfgBytes, tmplPath: tmpl} {
-		if err := os.WriteFile(path, content, 0o644); err != nil {
-			return genesis.Artifacts{}, fmt.Errorf("poa: genesis: write %s: %w", filepath.Base(path), err)
+	if dir == "" {
+		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: a remote genesis needs a work directory on the target")
+	}
+	cfgPath := path.Join(dir, ConfigFileName)
+	tmplPath := path.Join(dir, "genesis-template.json")
+	outPath := path.Join(dir, "genesis.json")
+	for p, content := range map[string][]byte{cfgPath: cfgBytes, tmplPath: tmpl} {
+		if err := files.Write(ctx, p, content, 0o644); err != nil {
+			return genesis.Artifacts{}, fmt.Errorf("poa: genesis: write %s: %w", path.Base(p), err)
 		}
 	}
 
@@ -105,7 +122,7 @@ func (s GenesisSource) Genesis(ctx context.Context, plugin registry.ChainPlugin,
 	if err := GenerateGenesis(ctx, run, s.Binary, cfgPath, tmplPath, outPath); err != nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: %w", err)
 	}
-	gen, err := os.ReadFile(outPath)
+	gen, err := files.Read(ctx, outPath)
 	if err != nil {
 		return genesis.Artifacts{}, fmt.Errorf("poa: genesis: read generated genesis: %w", err)
 	}
@@ -203,5 +220,11 @@ func ExecRunner(ctx context.Context, name string, args ...string) ([]byte, error
 // template. Declaring it here is what lets core/genesis pick it without
 // naming the family.
 func (Family) GenesisSource(cfg genesis.Config) genesis.Source {
-	return GenesisSource{KeysDir: cfg.KeysDir, Binary: cfg.Binary, ChainID: cfg.ChainID}
+	return GenesisSource{
+		KeysDir: cfg.KeysDir, Binary: cfg.Binary, ChainID: cfg.ChainID,
+		// The staging seam: a remote target passes its file store, a work
+		// directory on the host, and a runner that execs the binary there. A
+		// local target leaves them zero and the source runs in this process.
+		Files: cfg.Files, WorkDir: cfg.WorkDir, Run: Runner(cfg.Runner),
+	}
 }

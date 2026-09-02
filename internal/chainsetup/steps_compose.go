@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"maps"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -645,13 +646,76 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 		return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
 	}
 	req := genesis.Request{Validators: w.state.Validators, Nodes: placed}
-	return genesis.Compose(ctx, p, req, genesis.Config{
+	cfg := genesis.Config{
 		KeysDir:         w.state.KeysDir,
 		Binary:          w.state.Binary,
 		ChainID:         opts.ChainID,
 		ConfigOverrides: opts.Overrides,
 		Overlay:         opts.Overlay,
-	})
+	}
+	// A family whose genesis its own binary writes (wemix) runs that binary. On
+	// a remote target the binary lives there, not here, so stage the generator's
+	// inputs on the target and run it over the same access init/start use. A
+	// family whose genesis is in-process ignores these.
+	if w.state.Target.IsRemote() {
+		boot, ok := firstProducer(w.state.Nodes)
+		if !ok {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: no producer to generate the genesis on")
+		}
+		access, err := w.machineFor(boot)
+		if err != nil {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
+		}
+		cmdr, ok := access.Driver.(process.Commander)
+		if !ok {
+			return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: the target cannot run a command, so a binary-written genesis cannot be generated there")
+		}
+		cfg.Files = access.Files
+		cfg.WorkDir = path.Join(access.DataRoot, genesisWorkDir)
+		cfg.Runner = commanderRunner(cmdr)
+	}
+	return genesis.Compose(ctx, p, req, cfg)
+}
+
+// genesisWorkDir is where a binary-written genesis stages its config, template,
+// and output on the target, under the data root.
+const genesisWorkDir = "genesis-work"
+
+// firstProducer returns the first block-producing node in the table — the node
+// a binary-written genesis is generated on and the boot phase launches alone.
+func firstProducer(nodes []node.Record) (node.Record, bool) {
+	for _, ns := range nodes {
+		if node.Is(node.Role(ns.Role), node.RoleBP) {
+			return ns, true
+		}
+	}
+	return node.Record{}, false
+}
+
+// commanderRunner adapts a process.Commander (the local or remote driver's
+// arbitrary-command capability) into the runner a binary-written genesis and the
+// poa bootstrap take, so both run on the same transport as init and start. The
+// binary and its args are shell-quoted into one command line.
+func commanderRunner(c process.Commander) genesis.CommandRunner {
+	return func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		out, err := c.Run(ctx, shellCommand(name, args...))
+		return []byte(out), err
+	}
+}
+
+// shellCommand quotes a binary and its args into one command line for a shell.
+func shellCommand(name string, args ...string) string {
+	parts := make([]string, 0, len(args)+1)
+	parts = append(parts, shellQuote(name))
+	for _, a := range args {
+		parts = append(parts, shellQuote(a))
+	}
+	return strings.Join(parts, " ")
+}
+
+// shellQuote single-quotes one argument so a shell takes it literally.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // peerPlan is what every per-node rendering needs beyond the record: the key

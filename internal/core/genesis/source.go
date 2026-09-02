@@ -4,10 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
+
+// CommandRunner runs a binary with args and returns its combined output. It is
+// the seam that lets a family whose genesis its own binary writes run that
+// binary somewhere other than this process — on the target host, when the
+// network is composed remotely. Its signature matches the poa runner exactly,
+// so a family assigns it to its own runner field without conversion.
+type CommandRunner func(ctx context.Context, name string, args ...string) ([]byte, error)
 
 // Source produces a network's genesis bytes for a chain plugin, sized to
 // the active validator count. It is a boundary so BuildEnv does not depend on where
@@ -110,6 +118,17 @@ type Config struct {
 	ConfigOverrides map[string]string
 	// Overlay is a genesis JSON fragment deep-merged into the built
 	Overlay []byte
+	// Files stages the generator's inputs and reads its output. Nil is the local
+	// filesystem; a remote store runs a binary-written genesis on the target,
+	// where the binary lives. Ignored by families whose genesis is in-process.
+	Files filestore.Store
+	// WorkDir is the directory on Files' machine where the generator's config,
+	// template, and output live. Empty means a local temporary directory (valid
+	// only with a local Files); a remote store needs a real path on the target.
+	WorkDir string
+	// Runner runs the generating binary on Files' machine. Nil runs it in this
+	// process (os/exec) — correct only for a local target.
+	Runner CommandRunner
 }
 
 // Compose produces a network's genesis: the family's own base through its
