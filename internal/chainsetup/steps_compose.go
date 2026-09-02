@@ -413,17 +413,12 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	return detail, nil
 }
 
-// LaunchOptsOpts customizes the assembled argv.
-type LaunchOptsOpts struct {
-	// Set are high-precedence launch knobs ("key=value", bare key for boolean
-	// flags), applied through the launchopt Builder's override layer.
-	Set []string
-}
-
 // LaunchOpts assembles each node's launch argv through nodeconfig.Argv —
 // the single argv renderer — and records it in the node table, so `start`
-// launches exactly what this step showed.
-func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
+// launches exactly what this step showed. Each node's overrides come from the
+// scopes recorded on the workspace (all, then its role, then the node), so one
+// argv renderer serves a network of mixed launch flags.
+func (w *Workspace) LaunchOpts() (string, error) {
 	p, err := w.plugin()
 	if err != nil {
 		return "", err
@@ -435,11 +430,15 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: launchopts: %w", err)
 	}
-	overrides, err := ParseOverrides(opts.Set)
-	if err != nil {
-		return "", err
-	}
+	scoped := false
 	for i, ns := range w.state.Nodes {
+		overrides, err := ParseOverrides(w.launchOverridesFor(ns.Role, ns.Index))
+		if err != nil {
+			return "", err
+		}
+		if len(overrides) > 0 {
+			scoped = true
+		}
 		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: launchopts: node%d peers: %w", ns.Index, err)
@@ -451,8 +450,8 @@ func (w *Workspace) LaunchOpts(opts LaunchOptsOpts) (string, error) {
 		w.state.Nodes[i].Args = args
 	}
 	detail := fmt.Sprintf("%d argv(s) assembled", len(w.state.Nodes))
-	if len(opts.Set) > 0 {
-		detail += ", overrides: " + strings.Join(opts.Set, " ")
+	if scoped {
+		detail += ", with launch overrides"
 	}
 	w.markStep("build", detail)
 	return detail, nil

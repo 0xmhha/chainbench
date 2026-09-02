@@ -268,7 +268,11 @@ func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 // NetLaunchOptsIn customizes the assembled argv.
 type NetLaunchOptsIn struct {
 	DataDir string
-	Set     []string // key=value overrides (bare key for booleans)
+	Set     []string // key=value overrides for every node (bare key for booleans)
+	// ScopedSet records overrides for several scopes at once ("all", a role like
+	// "bp"/"en", or "node<N>"), the form the up flow and a DSL env pass. Set is
+	// folded into the "all" scope.
+	ScopedSet map[string][]string
 }
 
 // NetLaunchOptsOut is the assembled per-node argv table.
@@ -282,7 +286,15 @@ type NetLaunchOptsOut struct {
 func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOptsOut, error) {
 	var nodes []node.Record
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		det, err := ws.LaunchOpts(LaunchOptsOpts{Set: in.Set})
+		for _, scope := range sortedScopes(in.ScopedSet) {
+			if err := ws.recordLaunchSet(scope, in.ScopedSet[scope]); err != nil {
+				return "", fmt.Errorf("chainsetup: launchopts: %w", err)
+			}
+		}
+		if err := ws.recordLaunchSet("all", in.Set); err != nil {
+			return "", fmt.Errorf("chainsetup: launchopts: %w", err)
+		}
+		det, err := ws.LaunchOpts()
 		nodes = ws.State().Nodes
 		return det, err
 	})

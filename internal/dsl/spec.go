@@ -17,13 +17,6 @@ type ChainSpec struct {
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
 }
 
-// LaunchKV is one env.launch knob carried from a v2 declaration for the
-// surface to fold into the engine's launch-override boundary.
-type LaunchKV struct {
-	Key   string
-	Value string
-}
-
 // Spec is a parsed, validated test definition (schema in design §4.3).
 type Spec struct {
 	SchemaVersion    string            `json:"schemaVersion"`
@@ -49,9 +42,11 @@ type Spec struct {
 	// EnvKeys is the v2 env's node-key source declaration, for the surface to
 	// fold into the engine's KeySource boundary. Runtime-only.
 	EnvKeys *KeySourceV2 `json:"-"`
-	// EnvLaunch are the v2 env.launch knobs (the "all" scope), for the
-	// surface to fold into the engine's launch-override boundary. Runtime-only.
-	EnvLaunch []LaunchKV `json:"-"`
+	// EnvLaunch are the v2 env.launch knobs by scope ("all", a role like "bp"/
+	// "en", or "node<N>"), each a list of "key" (boolean flag) or "key=value".
+	// The surface folds them into the engine's launch-override boundary, applied
+	// per node most-general-first (all, then role, then the node). Runtime-only.
+	EnvLaunch map[string][]string `json:"-"`
 	// EnvUpgrade is the v2 env's handoff declaration, for the composer to run
 	// the network as a mixed-binary handoff. Nil is a single-binary network.
 	// Runtime-only.

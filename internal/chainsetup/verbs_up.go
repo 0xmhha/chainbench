@@ -75,8 +75,13 @@ type NetUpIn struct {
 	GenesisSet  []string `json:"genesisSet,omitempty"`
 	OverlayPath string   `json:"overlayPath,omitempty"`
 
-	// LaunchSet are launch-argv overrides (step: launchopts).
+	// LaunchSet are launch-argv overrides applied to every node (step:
+	// launchopts) — the "all" scope.
 	LaunchSet []string `json:"launchSet,omitempty"`
+	// LaunchScoped are launch-argv overrides by scope ("all", a role like "bp"/
+	// "en", or "node<N>"), applied per node most-general-first. It is the DSL
+	// env.launch form; the CLI passes LaunchSet.
+	LaunchScoped map[string][]string `json:"launchScoped,omitempty"`
 
 	// ConfigSet are per-scope config-knob overrides (step: config), keyed by
 	// scope ("all" / "node<N>"). Each value is a list of dot-path "key=value".
@@ -192,7 +197,9 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			return r.Detail, err
 		},
 		"build": func() (string, error) {
-			r, err := NetLaunchOpts(ctx, d, NetLaunchOptsIn{DataDir: in.DataDir, Set: in.LaunchSet})
+			r, err := NetLaunchOpts(ctx, d, NetLaunchOptsIn{
+				DataDir: in.DataDir, Set: in.LaunchSet, ScopedSet: in.LaunchScoped,
+			})
 			return r.Detail, err
 		},
 		"deploy": func() (string, error) {

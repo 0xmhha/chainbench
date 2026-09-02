@@ -246,6 +246,40 @@ nodes:
 	}
 }
 
+func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
+	// A network of 3 validators. A launch override scoped to the whole "bp" role
+	// reaches every node; a "node2" override reaches only node2's argv. This
+	// exercises the real verb path (place -> keys -> build), not a stub.
+	dir, d := composed(t, chainsetup.NetAllocateIn{Validators: 3})
+	ctx := context.Background()
+	out, err := chainsetup.NetLaunchOpts(ctx, d, chainsetup.NetLaunchOptsIn{
+		DataDir: dir,
+		ScopedSet: map[string][]string{
+			"bp":    {"metrics"},
+			"node2": {"metrics.port=6161"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("launchopts: %v", err)
+	}
+	if len(out.Nodes) != 3 {
+		t.Fatalf("got %d nodes", len(out.Nodes))
+	}
+	for _, n := range out.Nodes {
+		argv := strings.Join(n.Args, " ")
+		if !strings.Contains(argv, "--metrics") {
+			t.Errorf("node%d argv missing the role-scoped --metrics: %s", n.Index, argv)
+		}
+		hasPort := strings.Contains(argv, "--metrics.port")
+		if n.Index == 2 && !hasPort {
+			t.Errorf("node2 argv missing its node-scoped --metrics.port: %s", argv)
+		}
+		if n.Index != 2 && hasPort {
+			t.Errorf("node%d argv has --metrics.port that was scoped to node2: %s", n.Index, argv)
+		}
+	}
+}
+
 func TestNetAllocate_PerNodeBinaryReachesTheRecordsAndState(t *testing.T) {
 	// A topology naming a per-node binary, plus the name→path map, records the
 	// binary on each node and stores the map on the workspace for launch.

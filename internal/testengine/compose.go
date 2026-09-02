@@ -149,8 +149,9 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			validators = suiteDefaultValidators
 		}
 	}
-	launch := launchSets(spec.EnvLaunch)
-	launch = append(launch, in.LaunchOpts...)
+	// The request's flat launch opts and the network id join the "all" scope;
+	// the env's scoped launch (per role or node) travels in LaunchScopedSet.
+	launch := append([]string(nil), in.LaunchOpts...)
 	if in.NetworkID != 0 {
 		launch = append(launch, fmt.Sprintf("%s=%d", nodeconfig.KeyNetworkID, in.NetworkID))
 	}
@@ -160,11 +161,12 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		Validators: validators, Endpoints: endpoints, EndpointSyncMode: syncMode,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
-		ChainID:     in.ChainID,
-		GenesisSet:  hardforkSets(spec.Hardforks),
-		OverlayPath: overlayPath,
-		LaunchSet:   launch,
-		ConfigSet:   spec.EnvConfig,
+		ChainID:      in.ChainID,
+		GenesisSet:   hardforkSets(spec.Hardforks),
+		OverlayPath:  overlayPath,
+		LaunchSet:    launch,
+		LaunchScoped: spec.EnvLaunch,
+		ConfigSet:    spec.EnvConfig,
 	}
 	return composition{up: up}, nil
 }
@@ -320,20 +322,6 @@ func hardforkSets(forks map[string]int) []string {
 	out := make([]string, 0, len(names))
 	for _, name := range names {
 		out = append(out, fmt.Sprintf("%sBlock=%d", name, forks[name]))
-	}
-	return out
-}
-
-// launchSets renders declared launch knobs as the launchopts step's --set
-// arguments: a boolean knob travels as a bare key.
-func launchSets(kvs []dsl.LaunchKV) []string {
-	out := make([]string, 0, len(kvs))
-	for _, kv := range kvs {
-		if kv.Value == "" || kv.Value == "true" {
-			out = append(out, kv.Key)
-			continue
-		}
-		out = append(out, kv.Key+"="+kv.Value)
 	}
 	return out
 }

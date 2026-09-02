@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -53,8 +54,11 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 	if strings.Join(up.GenesisSet, ",") != "bohoBlock=10" {
 		t.Errorf("genesis set = %v", up.GenesisSet)
 	}
-	if strings.Join(up.LaunchSet, ",") != "nodiscover,verbosity=4" && strings.Join(up.LaunchSet, ",") != "verbosity=4,nodiscover" {
-		t.Errorf("launch set = %v", up.LaunchSet)
+	// The env's launch knobs travel scoped ("all" here), not in the flat set.
+	all := append([]string(nil), up.LaunchScoped["all"]...)
+	sort.Strings(all)
+	if strings.Join(all, ",") != "nodiscover=true,verbosity=4" {
+		t.Errorf("launch scoped[all] = %v", up.LaunchScoped["all"])
 	}
 	if up.OverlayPath == "" {
 		t.Fatal("a declared genesis set must reach the genesis step as an overlay file")

@@ -98,7 +98,7 @@ complement 와 같은 층에 넣을 수밖에 없고, (b) `save` 같은 adjunct 
 |---|---|---|---|---|
 | **G1** | 배경 1.4·1.5 / 알고리즘 2·3 — node key·keystore 를 **random 생성할지 기존 사용할지 결정** | design §3.5 `keyreg`(인터페이스만) | `keyreg.New` 는 **프로덕션 호출 지점 0**. `engine/attach.go:79`·`app.go:114` 가 `session.New(…, nil)` 로 nil 전달. 실경로는 `keys/preset` 하드코딩(`app.go:50`) | **미구현**. DSL 필드도 없음 |
 | **G2** | 배경 1.2 — genesis 4모드 | design §3.8 (4모드 명시) | DSL 은 `chain.genesisOverlay` 1개만 노출 | **문법 갭 3/4** |
-| **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → [`chain-binary-flag-graph.md`](chain-binary-flag-graph.md) §2 | **문서·문법·코드 모두 부재** |
+| **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → [`chain-binary-flag-graph.md`](chain-binary-flag-graph.md) §2 | **구현(2026-09-02)**: `env.launch` 가 스코프별(all·역할·node<N>) 오버라이드를 노드마다 병합 |
 | **G4** | 배경 3 — 검증에 **log·rpc·metric** 활용 | design §3.6 collector 는 log·chainstate 만 | 어세션 16종 중 metric 소스 0 | **1/3 미구현** |
 | **G5** | 배경 4 — pre/post hook 의 **override 동작** 정의 | design §3.2 는 액션 리스트로만 해석 | preActions/postActions = 액션 배열 | **시맨틱 부재** |
 | **G6** | key point 2 — local/remote 를 단일 "경로"로 | design §7 은 `remote.cluster` 참조 | §2.3 문제 ④ 참조 | **표현 분산** |
@@ -188,13 +188,17 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
   "hardforks": { "croissant": 100, "brioche": 50 },
   "ports":     { "mode": "os" },            // os | stepped, [base.p2p], [base.rpc]
   "launch": {                                               // 배경 2 · 알고리즘 7 — G3 해소
-    "all": { "http.api": "eth,net,web3,istanbul,admin,txpool",
-             "verbosity": 3, "metrics": true, "networkid": 8284 },
-    "bp":  { "mine": true },
-    "bp1": { "metrics.port": 6060 }
+    "all":   { "http.api": "eth,net,web3,istanbul,admin,txpool",
+               "verbosity": 3, "metrics": true, "networkid": 8284 },
+    "bp":    { "mine": true },
+    "node1": { "metrics.port": 6060 }
     //  키는 launchopt.Key(체인 무관 이름). 대상 바이너리 dialect 가 미지원이면
     //  "요청된 기능의 부재"로 오류 — 조용한 스킵 금지.
     //  (→ chain-binary-flag-graph.md §3.3)
+    // 구현(2026-09-02, G3): 스코프는 "all", 역할(bp|validator, en|endpoint, boot),
+    // "node<N>" 세 가지. 노드마다 all → 역할 → node<N> 순으로 병합하고, 뒤가
+    // 이긴다(config 의 스코프 병합과 같은 규칙). CLI 는 같은 코드 경로를 쓰고
+    // 평면 --launch-opt 는 "all" 스코프로 접힌다.
   },
   "config": { "eth.txpool.globalslots": 8192 },   // TOML 로 나가는 튜닝값(플래그와 겹치지 않음)
   "capabilities": ["rpc", "ws", "process", "metrics"]
