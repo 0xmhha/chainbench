@@ -170,13 +170,14 @@ All four primitives the earlier slices called for are now built and live-verifie
 - ~~hub-spoke peering~~ — **done, no new code**: hub-spoke is `partition` with singleton spoke groups (`[[node2],[node3],[node4]]`); the ungrouped hub keeps all links. Unblocked `fault/p2p-topology` (§5).
 - ~~a block-interval assertion~~ — **done** (`blockprobe.go`): `blockInterval` samples the last `blocks` timestamps and bounds the mean gap. Unblocked `stress/block-time` (§5d).
 
-Still outstanding — the deferred **wemix4** items (see `wemix4-port-tracker.md`),
-most needing chain-side prerequisites, not new DSL machinery:
-- RPC-008 `wemix_getBriocheBlockReward` — needs a genesis with a `brioche` halving-config object (dedicated setup pending).
-- GOV-023 credential expiry — needs the unbonding window; GOV-021 is partly done.
-- WBFT-012/013 n=6 quorum variants — need a larger preset key set (the preset ships 5 identities).
+The **wemix4** suite is now fully ported/covered (see `wemix4-port-tracker.md`):
+RPC-008 `wemix_getBriocheBlockReward` was the last item, ported as
+`tests/cases/wemix/brioche-block-reward.json` by injecting a `brioche`
+halving-config object through `genesis.overlay` (no code change — the overlay
+deep-merges into the poa genesis `config`). GOV-023 and WBFT-012/013 were already
+Go e2e (the earlier "remaining" prose was stale).
 
-Also outside the DSL: the `tests/repro`→Go-e2e remainder
+Still outside the DSL: the `tests/repro`→Go-e2e remainder
 (`repro-migration-remaining.md`): `stablenet-delayed-fork` / `-account-extra` (chain
 boho + overlay fixture), `wemix-chain` (standalone wemix bootstrap not wired into
 `chainbench setup`), `layer2-attach` (needs a live external L2). The

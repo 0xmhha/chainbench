@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-brioche-block-reward",
+  "env": "wemix-brioche",
+  "requires": ["rpc"],
+  "steps": [
+    { "do": "waitBlock", "target": 2, "timeout": "180s" },
+    { "do": "read", "source": "rpcCall", "method": "wemix_getBriocheBlockReward", "params": ["0x5"], "save": "pre" },
+    { "expect": "rpc", "method": "wemix_getBriocheBlockReward", "params": ["0x5"], "compare": "Greater", "is": "0" },
+    { "expect": "rpc", "method": "wemix_getBriocheBlockReward", "params": ["0xf"], "compare": "Less", "is": "$pre" }
+  ]
+}

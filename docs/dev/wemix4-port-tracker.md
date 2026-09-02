@@ -43,9 +43,10 @@ tractable first:
 6. **NODE-002 data migration** — **resolved** (ported): the handoff producer's
    go-wemix datadir is bridged (geth→gwemix) and reopened by go-wbft, which
    recognizes the pre-fork blocks (`TestWemixDataMigrationE2E`). *Done.*
-7. **RPC-008 wemix_getBriocheBlockReward** — needs the genesis configured with a
-   `brioche` halving object (a dedicated setup, to be provided) and the wemix RPC
-   namespace on a node that has it. **Do LAST.**
+7. ~~RPC-008 wemix_getBriocheBlockReward~~ — **done**: ported as
+   `tests/cases/wemix/brioche-block-reward.json` with a `brioche` object injected
+   through `genesis.overlay` (no code change). Live-verified. This was the last
+   open wemix4 item — the suite is now fully ported/covered.
 
 ## RPC (23)
 
@@ -58,7 +59,7 @@ tractable first:
 | RPC-005 getWbftExtraInfo (normal) | wbft-extra-info-fields | covered |
 | RPC-006 istanbul_status | istanbul-status-fields | covered |
 | RPC-007 getTransactionReceipt | transaction-receipt-fields | covered |
-| RPC-008 wemix_getBriocheBlockReward | — | **deferred — do LAST** (the `wemix_getBriocheBlockReward` RPC registers only when the genesis carries a `brioche` halving-config object — distinct from the `briocheBlock` fork switch; the go-wemix template ships only `briocheBlock`. There is a dedicated way to configure brioche for this test — pending that setup; lowest priority) |
+| RPC-008 wemix_getBriocheBlockReward | `tests/cases/wemix/brioche-block-reward.json` | **ported** (DSL, live-verified) — the env (`wemix-brioche`) adds a `brioche` halving-config object via `genesis.overlay` (no code change: the overlay deep-merges into the poa genesis `config`, confirmed by the "overlay merged" build line). The RPC computes the scheduled reward per height, so the case reads it below the first halving and asserts the reward above the halving is strictly smaller — which only holds when the `brioche` object is present (absent, every height returns the flat default and the compare fails) |
 | RPC-009 eth_call governance read | e2e TestWemixGovernanceE2E (GovStaking.totalStaking) | **ported** (e2e) |
 | RPC-010 istanbul_nodeAddress | node-address-returned | covered |
 | RPC-011 istanbul_isValidator | is-validator-flags | covered |
