@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "2", "kind": "case", "id": "basic-wbft-consensus",
+  "env": "basic-stablenet", "requires": ["rpc", "consensus"],
+  "steps": [
+    { "do": "waitBlock", "target": 5, "timeout": "120s" },
+    { "expect": "rpc", "method": "istanbul_getValidators", "params": ["latest"], "select": "#", "compare": "GreaterOrEqual", "is": "4" },
+    { "expect": "rpc", "method": "istanbul_getWbftExtraInfo", "params": ["@latest"], "select": "prevCommittedSeal.sealers.#", "compare": "GreaterOrEqual", "is": "3" }
+  ]
+}

@@ -82,20 +82,34 @@ Deferred (need new DSL machinery, tracked below):
 - `fault/two-down.sh` — asserts consensus **halts** with 2/4 down. Needs a `blockHalt`-style assertion (head does NOT advance within a window); `blockAdvance`'s negation is not expressible today.
 - `fault/p2p-topology.sh` — hub-spoke topology. `partition` models disjoint groups, not a hub with spokes.
 
+## 5b. Second ported slice — `basic` (live-verified)
+
+`tests/cases/basic/` + env `basic-stablenet` (stablenet, 4 bp + 1 en). All seven
+ran green against a real `gstable` 5-node network in one suite:
+
+| legacy | DSL case | check |
+|---|---|---|
+| `basic/rpc-health.sh` | `rpc-health.json` | every node's `blockNumber` ≥ 0 |
+| `basic/peers.sh` | `peers.json` | every node's `peerCount` ≥ 1 |
+| `basic/sync.sh` | `sync.json` | `sameBlockHash` — nodes agree on the head |
+| `basic/consensus.sh` | `consensus.json` | waitBlock 20 → `blockAdvance` → `sameBlockHash` |
+| `basic/wbft-consensus.sh` | `wbft-consensus.json` | `istanbul_getValidators` ≥ 4, `istanbul_getWbftExtraInfo("@latest").prevCommittedSeal.sealers` ≥ 3 |
+| `basic/tx-send.sh` | `tx-send.json` | send a value tx → recipient `balanceAt` > 0 |
+| `basic/txpool-propagation.sh` | `txpool-propagation.json` | tx sent to node1 is mined and visible on node2 |
+
 ## 6. Phased plan for the rest
 
 Port category-by-category, each slice live-verified against the from-source binary, gap-checked against §2 first:
 
-1. **basic (7)** — smoke: rpc-health, peers, sync, consensus, tx-send, txpool-propagation. Trivial `expect` reads + one `sendTx`.
-2. **stress (2)** — tx-flood, block-time. Needs a load primitive or a bounded `sendTx` loop.
-3. **stablenet regression (222)** — the functional matrix (api 46, system-contracts 48, ethereum 64, wbft 24, blacklist-authorized 18, anzeon 14, fee-delegation 8). Cross-ref each against `tests/specs/` (most api/system-contracts/consensus already exist); port the remainder.
-4. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; cross-ref the catalog doc.
-5. **wemix4 (95)** — finish the ~8 deferred in the tracker (e.g. RPC-008 brioche reward config).
-6. **remote (4)** — attach-mode reads against an external chain (`chainbench run --rpc`).
+1. **basic (7)** — ✅ done (§5b). **stress (2)** — deferred: `tx-flood` needs a load primitive (the DSL has no loop) and `block-time` needs a block-interval/timing assertion; both are in §7. **remote (4)** — the same reads as `basic` (chainId, blockNumber, peerCount, balance, tx) but attach-mode against an external chain; the DSL already runs any case attach-mode via `chainbench run --chain <c> --rpc <url> <case>`, so a `basic` case IS the remote test pointed at an external node — no separate cases needed, only external-chain env vars at run time.
+2. **stablenet regression (222)** — the functional matrix (api 46, system-contracts 48, ethereum 64, wbft 24, blacklist-authorized 18, anzeon 14, fee-delegation 8). Cross-ref each against `tests/specs/` (most api/system-contracts/consensus already exist); port the remainder.
+3. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; cross-ref the catalog doc.
+4. **wemix4 (95)** — finish the ~8 deferred in the tracker (e.g. RPC-008 brioche reward config).
 
 ## 7. New DSL machinery the migration needs
 
-- `blockHalt` assertion — head stays within a window (for fault halt, two-down).
-- hub-spoke / star peering for `partition` (for p2p-topology).
-- `sendTx`-loop / load primitive (for stress tx-flood).
+- `blockHalt` assertion — head stays within a window (for `fault/two-down`).
+- hub-spoke / star peering for `partition` (for `fault/p2p-topology`).
+- a load primitive — send N txs in one step (for `stress/tx-flood`; the DSL has no loop).
+- a block-interval / timing assertion — sample head timestamps and check the interval (for `stress/block-time`).
 - Whatever the deferred wemix4 items need (see `wemix4-port-tracker.md`).

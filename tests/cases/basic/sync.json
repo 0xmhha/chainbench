@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "2", "kind": "case", "id": "basic-sync",
+  "env": "basic-stablenet", "requires": ["rpc", "consensus"],
+  "steps": [
+    { "do": "waitBlock", "target": 3, "timeout": "120s" },
+    { "expect": "sameBlockHash", "block": "latest" }
+  ]
+}
