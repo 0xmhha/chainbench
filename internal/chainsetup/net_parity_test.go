@@ -246,6 +246,35 @@ nodes:
 	}
 }
 
+func TestNetKeys_GenerateHonorsTheTopologyValidatorCount(t *testing.T) {
+	// A generated set for a network with endpoints must declare exactly the
+	// topology's validators, not one per node. When it claimed every node a
+	// validator, a 4-bp + 11-en network failed genesis ("members and validators
+	// must be the same"). The allocated validator count is the authority.
+	dir := t.TempDir()
+	d := chainsetup.Deps{Clock: fixedClock()}
+	ctx := context.Background()
+	genKeys := filepath.Join(t.TempDir(), "gen")
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: genKeys}); err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
+		DataDir: dir, Validators: 2, Endpoints: 3,
+	}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	out, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir, Source: "generate"})
+	if err != nil {
+		t.Fatalf("keys: %v", err)
+	}
+	if !strings.Contains(out.Detail, "5 identities") {
+		t.Errorf("expected 5 identities, got %q", out.Detail)
+	}
+	if !strings.Contains(out.Detail, "2 declared validators") {
+		t.Errorf("generate must declare the topology's 2 validators, got %q", out.Detail)
+	}
+}
+
 func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
 	// A network of 3 validators. A launch override scoped to the whole "bp" role
 	// reaches every node; a "node2" override reaches only node2's argv. This

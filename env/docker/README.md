@@ -34,6 +34,26 @@ ssh -p 2201 devuser1@127.0.0.1 hostname   # password: accounts.env 값 -> server
 실행하면 안내와 함께 멈춘다 — placeholder 비밀번호로 sudo 계정을 띄우지 않기
 위해서다.
 
+## 15대에 테스트 돌리기
+
+`--all-servers` 는 노드를 서버당 하나씩 15대에 퍼뜨리고, `--docker` 는 dial 을
+localmap 으로 번역한다. 15노드(4 bp + 11 en) 스모크 테스트:
+
+```bash
+# 각 컨테이너 /data/chainbench/bin/ 에 대상 체인 바이너리(Linux)가 있어야 한다.
+bin/chainbench run \
+  --workspace-dir <ws> \
+  --server-set env/docker/build/server-set.yaml \
+  --docker --all-servers \
+  --keys <ws>/genkeys \
+  tests/cases/stablenet/chain-up-15.json
+```
+
+`chain-up-15` 의 env(`tests/cases/env/stablenet-docker15.env.json`)가 15노드
+topology 와 컨테이너 바이너리 경로를 선언한다. 키는 15개가 필요해 preset(5개)
+대신 generate 로 만든다 — 생성 세트는 topology 의 validator 수(4)만 validator 로
+선언한다.
+
 생성물(`build/`, gitignore):
 
 | 파일 | 내용 |

@@ -79,7 +79,16 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	case "", "preset":
 		src = store.PresetKeys{Path: w.state.KeysDir}
 	case "generate":
-		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: opts.Validators}
+		// A generated set must declare exactly the topology's validators, not
+		// make every node one: a network with endpoints (4 bp + 11 en) whose key
+		// set claims 15 validators fails genesis, where the governance contract
+		// requires members and validators to match. The allocated count is the
+		// authority; an explicit opts.Validators still wins.
+		validators := opts.Validators
+		if validators <= 0 {
+			validators = w.state.Validators
+		}
+		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 	default:
 		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset or generate)", opts.Source)
 	}
