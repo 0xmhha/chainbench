@@ -47,7 +47,7 @@ func (f *fakeChain) run(_ context.Context, _ string, args ...string) ([]byte, er
 
 	switch {
 	case strings.Contains(exec, "admin.wemixInfo.nodes"):
-		return []byte(`"[{\"name\":\"node1\"},{\"name\":\"node2\"}]"`), nil
+		return []byte(`"[{\"name\":\"node1\"},{\"name\":\"node2\"},{\"name\":\"node3\"},{\"name\":\"node4\"}]"`), nil
 	case strings.Contains(exec, "admin.etcdJoin"):
 		if f.asked == nil {
 			f.asked = map[string]int{}
@@ -107,21 +107,19 @@ func listenUnix(t *testing.T, path string) {
 	t.Cleanup(func() { _ = l.Close() })
 }
 
-// TestEtcdJoin_AsksTheBootNodeAndOnlyProducers pins the two things that were
-// wrong when a four-producer network sealed every block on one node.
-//
-// The join is directed at the peer that has the cluster, not at the node doing
-// the joining — calling it with the joiner's own name returns without error and
-// joins nothing, which is how the mistake hides. And it is a producers-only
-// handshake: the chain answers it for governance members, so asking an endpoint
-// to join is asking for a refusal.
-func TestEtcdJoin_AsksTheBootNodeAndOnlyProducers(t *testing.T) {
+// TestEtcdJoin_AsksTheBootNode pins that a joiner asks the boot node — the
+// highest-index producer, which holds the cluster — not itself. Calling the join
+// with the joiner's own name returns without error and joins nothing, which is
+// how the mistake hides. Each phase joins one node, so the action is called with
+// the joining node.
+func TestEtcdJoin_AsksTheBootNode(t *testing.T) {
 	plan := planWithIPCs(t, []node.Role{node.RoleBP, node.RoleBP, node.RoleBP, node.RoleEN})
-	chain := &fakeChain{cluster: []string{"node1"}}
+	chain := &fakeChain{}
 	b := poa.Bootstrap{Binary: "gwemix", Run: chain.run}
 
-	boot := node.Node{Index: 1, Role: node.RoleBP}
-	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, boot); err != nil {
+	// node3 is the boot (highest producer); node1 joins it.
+	joiner := node.Node{Index: 1, Role: node.RoleBP}
+	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, joiner); err != nil {
 		t.Fatalf("etcd-join: %v", err)
 	}
 
@@ -131,15 +129,31 @@ func TestEtcdJoin_AsksTheBootNodeAndOnlyProducers(t *testing.T) {
 			joins = append(joins, c)
 		}
 	}
-	if len(joins) != 2 {
-		t.Fatalf("joins = %v, want one per non-boot producer", joins)
+	if len(joins) != 1 {
+		t.Fatalf("joins = %v, want one join for the one node this phase brings in", joins)
 	}
-	for _, j := range joins {
-		if !strings.Contains(j, `admin.etcdJoin("node1")`) {
-			t.Fatalf("join asked the wrong peer: %s — the argument is the node that has the cluster", j)
-		}
-		if strings.HasPrefix(j, "node4:") {
-			t.Fatalf("the endpoint was asked to join: %s", j)
+	if !strings.Contains(joins[0], `admin.etcdJoin("node3")`) {
+		t.Fatalf("join asked the wrong peer: %s — the argument is the boot node that has the cluster", joins[0])
+	}
+	if !strings.HasPrefix(joins[0], "node1:") {
+		t.Fatalf("the join ran on the wrong node: %s — it runs on the joiner", joins[0])
+	}
+}
+
+// TestEtcdJoin_BootNodeJoinsNothing: the boot node does not join its own
+// cluster, so its phase (were one emitted) is a no-op.
+func TestEtcdJoin_BootNodeJoinsNothing(t *testing.T) {
+	plan := planWithIPCs(t, []node.Role{node.RoleBP, node.RoleBP, node.RoleBP, node.RoleEN})
+	chain := &fakeChain{}
+	b := poa.Bootstrap{Binary: "gwemix", Run: chain.run}
+
+	boot := node.Node{Index: 3, Role: node.RoleBP} // highest producer
+	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, boot); err != nil {
+		t.Fatalf("etcd-join: %v", err)
+	}
+	for _, c := range chain.execs() {
+		if strings.Contains(c, "admin.etcdJoin") {
+			t.Fatalf("the boot node asked to join: %s", c)
 		}
 	}
 }
@@ -150,14 +164,15 @@ func TestEtcdJoin_AsksTheBootNodeAndOnlyProducers(t *testing.T) {
 // cluster is the evidence rather than the return value.
 func TestEtcdJoin_KeepsAskingUntilTheClusterSaysSo(t *testing.T) {
 	plan := planWithIPCs(t, []node.Role{node.RoleBP, node.RoleBP})
-	chain := &fakeChain{cluster: []string{"node1"}, stubborn: "node2"}
+	// node2 is the boot; node1 joins it, and node1's first join does nothing.
+	chain := &fakeChain{stubborn: "node1"}
 	b := poa.Bootstrap{Binary: "gwemix", Run: chain.run}
 
 	if err := b.Action(context.Background(), poa.ActionEtcdJoin, plan, node.Node{Index: 1, Role: node.RoleBP}); err != nil {
 		t.Fatalf("etcd-join: %v", err)
 	}
-	if chain.asked["node2"] < 2 {
-		t.Fatalf("node2 was asked %d time(s); a silent no-op join must be retried", chain.asked["node2"])
+	if chain.asked["node1"] < 2 {
+		t.Fatalf("node1 was asked %d time(s); a silent no-op join must be retried", chain.asked["node1"])
 	}
 }
 

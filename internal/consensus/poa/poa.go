@@ -70,39 +70,47 @@ func (Family) StartFlags(role node.Role) []string {
 // executed by whoever wired them: this package says what must happen between
 // the groups, not how.
 func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
-	boot := 0
+	producers := make([]int, 0, len(roles))
+	endpoints := make([]int, 0, len(roles))
 	for i, r := range roles {
 		if node.Is(r, node.RoleBoot) || node.Is(r, node.RoleBP) {
-			boot = i + 1
-			break
+			producers = append(producers, i+1)
+		} else {
+			endpoints = append(endpoints, i+1)
 		}
 	}
-	if boot == 0 {
+	if len(producers) == 0 {
 		// No producer to bootstrap from; let the caller's own validation say
 		// so rather than inventing a phase over an empty group.
 		return []registry.Phase{{Name: "all"}}
 	}
-	rest := make([]int, 0, len(roles))
-	for i := range roles {
-		if i+1 != boot {
-			rest = append(rest, i+1)
-		}
-	}
+	// The boot node is the last (highest-index) producer. It comes up alone and
+	// forms the etcd cluster of one; genesis names the same node the sole initial
+	// member, so bootPlacement must pick it too.
+	boot := producers[len(producers)-1]
 	phases := []registry.Phase{{
 		Name:    "boot",
 		Nodes:   []int{boot},
 		Actions: []string{ActionDeployGovernance, ActionEtcdInit, ActionVerifyEtcd},
 	}}
-	if len(rest) > 0 {
-		// The rest phase's action concerns the boot node, not the nodes it
-		// launched: the joiners ask it for the cluster, and the cluster is
-		// read back there. Hence ActionsOn.
+	// Each remaining producer starts and joins on its own phase, highest index
+	// first. One node syncs at a time, from a set that is already the canonical
+	// chain, so no two producers race to seal a competing block before they have
+	// it — the flaky "unauthorized block" a simultaneous start produced on a
+	// spread network. The join concerns the joining node; ActionsOn names it.
+	for i := len(producers) - 2; i >= 0; i-- {
+		p := producers[i]
 		phases = append(phases, registry.Phase{
-			Name:      "rest",
-			Nodes:     rest,
+			Name:      fmt.Sprintf("join-node%d", p),
+			Nodes:     []int{p},
 			Actions:   []string{ActionEtcdJoin},
-			ActionsOn: boot,
+			ActionsOn: p,
 		})
+	}
+	// Endpoints seal nothing, so they never fork; bring them up together at the
+	// end, once the producer set is a formed cluster serving one chain.
+	if len(endpoints) > 0 {
+		phases = append(phases, registry.Phase{Name: "endpoints", Nodes: endpoints})
 	}
 	return phases
 }

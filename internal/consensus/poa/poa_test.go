@@ -132,18 +132,20 @@ func TestPortReservation_LeavesRoomForBothEtcdPorts(t *testing.T) {
 	}
 }
 
-// TestBringUpPhases_ProducerFirstThenTheRest is the order that makes a wemix
-// network possible at all: the etcd cluster forms while the producer is alone,
-// and the remaining nodes join it. Started together, the cluster stays empty
-// and the chain never produces.
-func TestBringUpPhases_ProducerFirstThenTheRest(t *testing.T) {
+// TestBringUpPhases_BootLastThenJoinOneAtATime is the order that makes a wemix
+// network possible at all: the etcd cluster forms while the boot node is alone,
+// and the remaining producers join it one at a time. Started together, the
+// cluster stays empty and the chain never produces; started all at once the
+// joiners race to seal competing blocks. The boot node is the last (highest)
+// producer, and the rest join highest-first; endpoints come up last.
+func TestBringUpPhases_BootLastThenJoinOneAtATime(t *testing.T) {
 	phases := Family{}.BringUpPhases([]node.Role{node.RoleBP, node.RoleBP, node.RoleEN})
-	if len(phases) != 2 {
-		t.Fatalf("phases = %d, want boot then rest", len(phases))
+	if len(phases) != 3 {
+		t.Fatalf("phases = %d, want boot + one join + endpoints", len(phases))
 	}
 	boot := phases[0]
-	if len(boot.Nodes) != 1 || boot.Nodes[0] != 1 {
-		t.Fatalf("boot phase = %v, want only the first producer", boot.Nodes)
+	if len(boot.Nodes) != 1 || boot.Nodes[0] != 2 {
+		t.Fatalf("boot phase = %v, want only the last producer (node2)", boot.Nodes)
 	}
 	// The init's return value proves nothing, so the verification is part of
 	// the phase rather than left to whoever wires it.
@@ -156,28 +158,41 @@ func TestBringUpPhases_ProducerFirstThenTheRest(t *testing.T) {
 			t.Fatalf("boot actions = %v, want %v", boot.Actions, want)
 		}
 	}
-	if len(phases[1].Nodes) != 2 || phases[1].Nodes[0] != 2 {
-		t.Fatalf("rest phase = %v, want the remaining nodes", phases[1].Nodes)
+	join := phases[1]
+	if len(join.Nodes) != 1 || join.Nodes[0] != 1 {
+		t.Fatalf("join phase = %v, want the one remaining producer (node1)", join.Nodes)
+	}
+	// The endpoints phase seals nothing and carries no bootstrap action.
+	if end := phases[2]; len(end.Nodes) != 1 || end.Nodes[0] != 3 || len(end.Actions) != 0 {
+		t.Fatalf("endpoints phase = %+v, want node3 with no actions", end)
 	}
 }
 
-// TestBringUpPhases_TheRestJoinTheClusterTheBootNodeFormed: a producer that is
-// not in the etcd cluster never takes a turn at sealing, so the rest phase is
-// not merely "launch the others" — it carries the join, and the join is
-// directed at the boot node rather than at the nodes the phase launched.
-func TestBringUpPhases_TheRestJoinTheClusterTheBootNodeFormed(t *testing.T) {
+// TestBringUpPhases_EachRemainingProducerJoinsOnItsOwnPhase: a producer that is
+// not in the etcd cluster never takes a turn at sealing, so each join is its own
+// phase (start then join), carried on the joining node so only it is syncing.
+func TestBringUpPhases_EachRemainingProducerJoinsOnItsOwnPhase(t *testing.T) {
 	phases := Family{}.BringUpPhases([]node.Role{node.RoleBP, node.RoleBP, node.RoleBP, node.RoleEN})
-	if len(phases) != 2 {
-		t.Fatalf("phases = %d, want boot then rest", len(phases))
+	// boot(node3) + join(node2) + join(node1) + endpoints(node4).
+	if len(phases) != 4 {
+		t.Fatalf("phases = %d, want boot + two joins + endpoints", len(phases))
 	}
-	rest := phases[1]
-	if len(rest.Actions) != 1 || rest.Actions[0] != ActionEtcdJoin {
-		t.Fatalf("rest actions = %v, want [%s]", rest.Actions, ActionEtcdJoin)
+	if phases[0].Nodes[0] != 3 {
+		t.Fatalf("boot = node%d, want the highest producer node3", phases[0].Nodes[0])
 	}
-	// Without this the executor would have to work out which node formed the
-	// cluster, which is the family's rule and belongs here.
-	if rest.ActionsOn != phases[0].Nodes[0] {
-		t.Fatalf("rest actions run on node%d, want the boot node (node%d)", rest.ActionsOn, phases[0].Nodes[0])
+	// Joins descend from the highest remaining producer.
+	for i, wantNode := range []int{2, 1} {
+		p := phases[i+1]
+		if len(p.Nodes) != 1 || p.Nodes[0] != wantNode {
+			t.Fatalf("join phase %d = %v, want [node%d]", i, p.Nodes, wantNode)
+		}
+		if len(p.Actions) != 1 || p.Actions[0] != ActionEtcdJoin {
+			t.Fatalf("join phase %d actions = %v, want [%s]", i, p.Actions, ActionEtcdJoin)
+		}
+		// The join is carried on the joining node — it runs there and syncs there.
+		if p.ActionsOn != wantNode {
+			t.Fatalf("join phase %d runs on node%d, want the joining node%d", i, p.ActionsOn, wantNode)
+		}
 	}
 }
 

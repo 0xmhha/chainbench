@@ -199,15 +199,23 @@ func (s GenesisSource) config(preset keyring.Preset, req genesis.Request) (Confi
 	}, nil
 }
 
-// bootPlacement is the node the bootstrap runs on: the first producer in the
-// placement, which is also the node the family's boot phase launches alone.
+// bootPlacement is the node the bootstrap runs on: the last producer in the
+// placement, which is also the node the family's boot phase launches alone. It
+// is the highest-index producer so the bring-up starts from the back and works
+// forward — the boot node comes up first, then each remaining producer joins one
+// at a time. BringUpPhases picks the same node; the two must agree, because the
+// genesis names this node the sole initial member and the boot phase forms the
+// cluster on it.
 func bootPlacement(m *node.Map) (node.Placement, bool) {
+	var boot node.Placement
+	found := false
 	for _, p := range m.Placements() {
 		if node.Is(p.Role, node.RoleBoot) || node.Is(p.Role, node.RoleBP) {
-			return p, true
+			boot = p
+			found = true
 		}
 	}
-	return node.Placement{}, false
+	return boot, found
 }
 
 // ExecRunner runs the binary for real.

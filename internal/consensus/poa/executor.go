@@ -198,7 +198,7 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 	case ActionVerifyEtcd:
 		return VerifyEtcd(ctx, run, binary, ipc, etcdFormWait)
 	case ActionEtcdJoin:
-		return b.joinProducers(ctx, run, binary, plan, on, ipc)
+		return b.joinNode(ctx, binary, plan, on)
 	default:
 		// An action nobody implements is a gap in the bring-up, not something
 		// to skip: the phase that named it expects it to have happened.
@@ -206,39 +206,59 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 	}
 }
 
-// joinProducers brings every producer other than the boot node into the
-// cluster. Each asks the boot node directly rather than being added from it:
-// the chain's handshake is driven by the joiner, and a member added from the
-// other side never receives the cluster string it needs to start its server.
+// joinNode brings one producer into the cluster the boot node formed. The
+// joiner asks the boot node directly rather than being added from it: the
+// chain's handshake is driven by the joiner, and a member added from the other
+// side never receives the cluster string it needs to start its server. One
+// joiner runs per phase (BringUpPhases emits a phase each), so only this node is
+// syncing when it joins — no producer races another to seal a competing block.
 //
-// on is the boot node — the phase names it, so the rule for which node that is
-// lives in the family and not here.
-func (b Bootstrap) joinProducers(ctx context.Context, bootRun Runner, binary string, plan process.Plan, on node.Node, bootIPC string) error {
-	peer := string(node.LabelFor(on.Index))
-	members := []string{peer}
-	for _, spec := range plan.Nodes {
-		if spec.Index == on.Index || !isProducer(spec.Role) {
-			continue
-		}
-		name := string(node.LabelFor(spec.Index))
-		// The joiner runs its own etcd-join, so its commands and its IPC probe
-		// go to its machine — not the boot node's. Only the cluster check reads
-		// the boot node.
-		joinerRun, joinerFiles, err := b.resolve(spec.Index)
-		if err != nil {
-			return fmt.Errorf("poa: bootstrap: %q: %s access: %w", ActionEtcdJoin, name, err)
-		}
-		if err := joinOne(ctx, joinerRun, joinerFiles, bootRun, binary, ipcPath(spec, binary), bootIPC, peer, name); err != nil {
-			return fmt.Errorf("poa: bootstrap: %q: %s: %w", ActionEtcdJoin, name, err)
-		}
-		members = append(members, name)
+// on is the joining node; the boot node is the highest-index producer.
+func (b Bootstrap) joinNode(ctx context.Context, binary string, plan process.Plan, on node.Node) error {
+	boot, ok := bootSpecOf(plan)
+	if !ok {
+		return fmt.Errorf("poa: bootstrap: the plan has no producer to form the cluster on")
 	}
-	if len(members) == 1 {
-		// Nothing to join is not a failure: a single-producer network is a
+	if on.Index == boot.Index {
+		// The boot node does not join itself; a single-producer network is a
 		// formed cluster of one, which the boot phase already verified.
 		return nil
 	}
-	return VerifyEtcdMembers(ctx, bootRun, binary, bootIPC, members, etcdJoinWait)
+	// The joiner runs its own etcd-join, so its commands and its IPC probe go to
+	// its machine; only the cluster check reads the boot node's.
+	joinerRun, joinerFiles, err := b.resolve(on.Index)
+	if err != nil {
+		return fmt.Errorf("poa: bootstrap: %q: node%d access: %w", ActionEtcdJoin, on.Index, err)
+	}
+	bootRun, _, err := b.resolve(boot.Index)
+	if err != nil {
+		return fmt.Errorf("poa: bootstrap: %q: boot node%d access: %w", ActionEtcdJoin, boot.Index, err)
+	}
+	joinerSpec, ok := planSpecFor(plan, on.Index)
+	if !ok {
+		return fmt.Errorf("poa: bootstrap: %q: the plan has no node%d", ActionEtcdJoin, on.Index)
+	}
+	peer := string(node.LabelFor(boot.Index))
+	name := string(node.LabelFor(on.Index))
+	if err := joinOne(ctx, joinerRun, joinerFiles, bootRun, binary,
+		ipcPath(joinerSpec, binary), ipcPath(boot, binary), peer, name); err != nil {
+		return fmt.Errorf("poa: bootstrap: %q: %s: %w", ActionEtcdJoin, name, err)
+	}
+	return nil
+}
+
+// bootSpecOf returns the boot node's spec: the highest-index producer, the same
+// node BringUpPhases launches first and the genesis names the initial member.
+func bootSpecOf(plan process.Plan) (process.NodeSpec, bool) {
+	var boot process.NodeSpec
+	found := false
+	for _, spec := range plan.Nodes {
+		if isProducer(spec.Role) && (!found || spec.Index > boot.Index) {
+			boot = spec
+			found = true
+		}
+	}
+	return boot, found
 }
 
 // joinOne asks one producer to join, and keeps asking until the cluster says

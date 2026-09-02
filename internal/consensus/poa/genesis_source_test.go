@@ -81,10 +81,21 @@ func TestWemixGenesisSource_AssemblesAValidConfigAndCallsTheBinary(t *testing.T)
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("the chain would reject this config: %v", err)
 	}
-	// The boot member is the producer, named at the address it will listen on.
-	m := cfg.Members[0]
-	if !m.Bootnode || m.IP != "127.0.0.1" || m.Port != 31000 {
-		t.Fatalf("boot member = %+v, want the producer at its placed p2p port", m)
+	// Exactly one member is the bootnode — the last (highest-index) producer,
+	// named at the address it will listen on. The bring-up launches this node
+	// first and forms the cluster on it.
+	var boots []poa.Member
+	for _, m := range cfg.Members {
+		if m.Bootnode {
+			boots = append(boots, m)
+		}
+	}
+	if len(boots) != 1 {
+		t.Fatalf("bootnode members = %d, want exactly one", len(boots))
+	}
+	// node2 is the last producer; its placed p2p port is 31010 (base 31000, step 10).
+	if b := boots[0]; b.Name != "node2" || b.IP != "127.0.0.1" || b.Port != 31010 {
+		t.Fatalf("boot member = %+v, want the last producer node2 at its placed p2p port 31010", b)
 	}
 	if len(cfg.Accounts) == 0 {
 		t.Fatal("no funded accounts: every test would have to arrange gas first")
