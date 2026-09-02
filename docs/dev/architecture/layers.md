@@ -226,10 +226,11 @@ flowchart TD
 | `core/process` | 실행 대장(`process.json`) · config·log(LocalDriver, 옛 `core/driver`) | ✅ 프로세스·전송 계층 소유자(R3) |
 | `core/collector` | 이벤트 파일 싱크(옛 `core/obs`, R1 2026-08-31) | ◐ session 으로 흡수 검토 |
 | `testengine` | `chainstate.jsonl` | ◐ 경로는 `session` 이 정하고 쓰기만 L4 가 한다 — netreg·collector 와 같은 모양 |
-| `consensus/poa` | wemix genesis 생성의 **임시 작업 파일**(템플릿·거버넌스 config 를 임시 디렉터리에 쓰고 바이너리 출력을 읽음) | ✅ 패밀리의 genesis 소스 — 데이터 플레인이 아니라 로컬 스크래치이며 끝나면 지운다(P4.1, 2026-08-28; 옛 `chainsetup.WemixGenesisSource`) |
 **❌ 는 0 이다**(A4b, 2026-08-23). `chainsetup`·`consensus/upgrade` 가 마지막이었고, F4·F5 가
 같은 코드를 다시 쓸 때까지 미뤄뒀다가 그것이 끝난 뒤 함께 옮겼다 — 13곳의 직접 쓰기가
-`filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다.
+`filestore.Store` 경유가 되어 두 패키지는 이 표에서 내려갔다. `consensus/poa` 도 원격 실행
+(R6, 2026-09-02)에서 genesis 생성의 임시 작업 파일을 주입된 `filestore.Store` 로 쓰게 되어
+이 표에서 내려갔다 — 로컬은 `filestore.Local`, 원격은 타깃 저장소.
 
 `os.MkdirAll` 이 대부분 사라진 것은 부수효과가 아니다. `FileStore.Write` 가 부모 디렉토리를
 만들므로, 디렉토리를 미리 만드는 코드는 **경로를 아는 코드**였고 그게 층 위반의 실체였다.
