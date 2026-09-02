@@ -200,7 +200,8 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
     // 이긴다(config 의 스코프 병합과 같은 규칙). CLI 는 같은 코드 경로를 쓰고
     // 평면 --launch-opt 는 "all" 스코프로 접힌다.
   },
-  "config": { "eth.txpool.globalslots": 8192 },   // TOML 로 나가는 튜닝값(플래그와 겹치지 않음)
+  "config": { "all": { "eth.txpool.globalslots": 8192 } },   // TOML 튜닝값(플래그와 겹치지 않음). scope→knob: launch 와 같은 스코프(all·node<N>)
+
   "capabilities": ["rpc", "ws", "process", "metrics"]
 }
 ```

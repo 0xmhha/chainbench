@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "chainbench/testspec/v2",
   "title": "chainbench DSL v2",
-  "description": "Canonical grammar for v2 spec files (docs/dev/dsl-v2-proposal.md). Enforcement is the strict parser (internal/testspec/spec_v2.go); this document is the field-level source of truth the parser and docs must match.",
+  "description": "Canonical grammar for v2 spec files (docs/dev/dsl-v2-proposal.md). Enforcement is the strict parser (internal/dsl/spec_v2.go); this document is the field-level source of truth the parser and docs must match.",
   "oneOf": [
     {
       "$ref": "#/$defs/envSpec"
@@ -42,7 +42,7 @@
         },
         "binaries": {
           "type": "object",
-          "description": "role -> binary; the \"default\" key applies to every role without its own entry",
+          "description": "name -> binary path. \"default\" applies to every node without its own; a per-node topology entry's \"binary\" names one of these; an upgrade names \"producer\"/\"validator\"",
           "additionalProperties": {
             "type": "string"
           }
@@ -77,7 +77,8 @@
           }
         },
         "topology": {
-          "type": "object"
+          "type": "object",
+          "description": "either the count form ({bp|validators, en|endpoints, syncMode}) or the node table ({nodes: [{role, binary, sync, bootnode, index}]}); the node table gives each node its own role and binary"
         },
         "hardforks": {
           "type": "object",
@@ -87,13 +88,23 @@
         },
         "launch": {
           "type": "object",
-          "description": "scope -> launchopt knobs. Supported scope today: \"all\"; role scopes land with per-role wiring",
+          "description": "scope -> launchopt knobs. scope: \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
           "additionalProperties": {
             "type": "object"
+          },
+          "propertyNames": {
+            "pattern": "^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$"
           }
         },
         "config": {
-          "type": "string"
+          "type": "object",
+          "description": "scope -> config-knob overrides. scope: \"all\" or \"node<N>\"",
+          "additionalProperties": {
+            "type": "object"
+          },
+          "propertyNames": {
+            "pattern": "^(all|node[1-9][0-9]*)$"
+          }
         },
         "capabilities": {
           "type": "array",

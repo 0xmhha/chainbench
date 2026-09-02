@@ -3,6 +3,7 @@ package dsl
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -224,6 +225,58 @@ func TestSchemaV2Embedded(t *testing.T) {
 	}
 	if doc["$id"] != "chainbench/testspec/v2" {
 		t.Fatalf("schema $id = %v", doc["$id"])
+	}
+}
+
+// TestSchemaV2MatchesParsedFields keeps the schema's field set from drifting
+// from the strict parser's. The schema is documentation, not enforcement, so a
+// field added to EnvV2/CaseV2 without a schema entry (or the reverse) goes
+// unnoticed until a reader trusts the wrong one — which is how "config" came to
+// say string while the parser read an object. It checks names, the drift that
+// actually happens; types stay a manual review.
+func TestSchemaV2MatchesParsedFields(t *testing.T) {
+	cases := []struct {
+		def  string
+		typ  reflect.Type
+		skip map[string]bool // struct fields the schema folds elsewhere
+	}{
+		{"envSpec", reflect.TypeOf(EnvV2{}), nil},
+		// CaseV2.Env is json.RawMessage in Go (resolved after a first pass); the
+		// schema spells out its string|envSpec shape.
+		{"caseSpec", reflect.TypeOf(CaseV2{}), nil},
+	}
+	var doc struct {
+		Defs map[string]struct {
+			Properties map[string]json.RawMessage `json:"properties"`
+		} `json:"$defs"`
+	}
+	if err := json.Unmarshal(SchemaV2, &doc); err != nil {
+		t.Fatalf("schema: %v", err)
+	}
+	for _, c := range cases {
+		schemaFields := map[string]bool{}
+		for k := range doc.Defs[c.def].Properties {
+			schemaFields[k] = true
+		}
+		structFields := map[string]bool{}
+		for i := 0; i < c.typ.NumField(); i++ {
+			tag := c.typ.Field(i).Tag.Get("json")
+			name, _, _ := strings.Cut(tag, ",")
+			if name == "" || name == "-" {
+				continue
+			}
+			structFields[name] = true
+		}
+		for f := range structFields {
+			if !schemaFields[f] && !c.skip[f] {
+				t.Errorf("%s: parser field %q has no schema property — add it to v2.schema.json", c.def, f)
+			}
+		}
+		for f := range schemaFields {
+			if !structFields[f] {
+				t.Errorf("%s: schema property %q has no parser field — remove it from v2.schema.json", c.def, f)
+			}
+		}
 	}
 }
 
