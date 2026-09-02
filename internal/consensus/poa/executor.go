@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 )
@@ -33,7 +35,13 @@ const memberWait = 120 * time.Second
 // etcdFormWait is how long the cluster has to appear after the init call. The
 // call returns before the embedded server is up, so this is a wait, not a
 // retry-on-error.
-const etcdFormWait = 30 * time.Second
+// etcdFormWait bounds how long the boot node's etcd takes to form after
+// etcdInit. The embedded server first tries to reach the other governance
+// members' etcds and only forms alone once those attempts give out. On one host
+// that refusal is instant; across a network the boot node's peers are not up yet
+// and each attempt times out, so forming alone takes over a minute — the wait
+// covers that, not the sub-second local case.
+const etcdFormWait = 150 * time.Second
 
 // Bootstrap executes the bring-up actions a poa network names between its
 // phases: deploy the governance contracts, form the etcd cluster, and confirm
@@ -45,7 +53,8 @@ const etcdFormWait = 30 * time.Second
 type Bootstrap struct {
 	// Binary is the gwemix executable the actions drive.
 	Binary string
-	// KeysDir holds the key set: the boot node's keystore and the password.
+	// KeysDir holds the key set: the boot node's keystore and the password. On a
+	// remote target it is the directory the keys were shipped to.
 	KeysDir string
 	// ConfigName is the governance config's name on the target, written beside
 	// the genesis by the genesis step. deploy-governance reads it back rather
@@ -54,6 +63,81 @@ type Bootstrap struct {
 	ConfigName string
 	// Run executes the binary; nil uses os/exec.
 	Run Runner
+	// Files probes the target for the node's IPC socket and the governance
+	// config. Nil probes the local filesystem — correct only for a local target.
+	Files filestore.Store
+	// Access resolves the runner and file store for the machine a given node
+	// runs on. It is what makes the bootstrap work across a spread network,
+	// where the boot node and each joining producer live on different hosts: a
+	// join runs on the joiner's machine, not the boot node's. Nil falls back to
+	// Run/Files (a single machine, or local).
+	Access NodeAccess
+	// BootKeystore is the boot node's keystore file, a path on its machine.
+	// Empty finds it by listing the local keystore directory, which is correct
+	// only when KeysDir is local; a remote bootstrap sets it because the store
+	// cannot list a directory.
+	BootKeystore string
+}
+
+// NodeAccess resolves how to reach one node's machine: a runner that execs the
+// binary there and a store that probes its filesystem. Each node in a spread
+// network has its own.
+type NodeAccess func(index int) (Runner, filestore.Store, error)
+
+// resolve returns the runner and file store for the machine node index runs on,
+// falling back to the single Run/Files (or os/exec) when no per-node resolver is
+// set.
+func (b Bootstrap) resolve(index int) (Runner, filestore.Store, error) {
+	if b.Access != nil {
+		return b.Access(index)
+	}
+	run := b.Run
+	if run == nil {
+		run = ExecRunner
+	}
+	return run, b.Files, nil
+}
+
+// waitForIPC blocks until the node's IPC endpoint appears. A local target
+// checks for a socket file; a remote one probes the target through the store,
+// where the socket lives.
+func waitForIPC(ctx context.Context, files filestore.Store, ipc string, timeout time.Duration) error {
+	if files == nil {
+		return WaitForIPC(ctx, ipc, timeout)
+	}
+	deadline := time.Now().Add(timeout)
+	for {
+		exists, err := files.Exists(ctx, ipc)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("poa: the node's IPC socket never appeared at %s within %s", ipc, timeout)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(250 * time.Millisecond):
+		}
+	}
+}
+
+// pathExists reports whether a path is present on a node's machine: the target
+// through its store, or the local filesystem when there is none.
+func pathExists(ctx context.Context, files filestore.Store, p string) (bool, error) {
+	if files != nil {
+		return files.Exists(ctx, p)
+	}
+	if _, err := os.Stat(p); err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 // Action performs one named bring-up action against a node.
@@ -62,9 +146,9 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 	if !ok {
 		return fmt.Errorf("poa: bootstrap: the plan has no node%d to run %q on", on.Index, name)
 	}
-	run := b.Run
-	if run == nil {
-		run = ExecRunner
+	run, files, err := b.resolve(on.Index)
+	if err != nil {
+		return fmt.Errorf("poa: bootstrap: %q: node%d access: %w", name, on.Index, err)
 	}
 	binary := b.Binary
 	if binary == "" {
@@ -74,7 +158,7 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 		return fmt.Errorf("poa: bootstrap: no binary to run %q with", name)
 	}
 	ipc := ipcPath(spec, binary)
-	if err := WaitForIPC(ctx, ipc, ipcWait); err != nil {
+	if err := waitForIPC(ctx, files, ipc, ipcWait); err != nil {
 		return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
 	}
 	// The governance deploy is a transaction and waits for its receipt, so the
@@ -88,18 +172,25 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 
 	switch name {
 	case ActionDeployGovernance:
-		keystore, err := bootKeystore(b.KeysDir, on.Index)
-		if err != nil {
-			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
+		keystore := b.BootKeystore
+		if keystore == "" {
+			var err error
+			if keystore, err = bootKeystore(b.KeysDir, on.Index); err != nil {
+				return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
+			}
 		}
-		password := filepath.Join(b.KeysDir, "password")
+		password := path.Join(b.KeysDir, "password")
 		cfgName := b.ConfigName
 		if cfgName == "" {
 			cfgName = ConfigFileName
 		}
-		cfgPath := filepath.Join(plan.DataRoot, cfgName)
-		if _, err := os.Stat(cfgPath); err != nil {
-			return fmt.Errorf("poa: bootstrap: %q needs the governance config the genesis step writes to the target: %w", name, err)
+		cfgPath := path.Join(plan.DataRoot, cfgName)
+		exists, err := pathExists(ctx, files, cfgPath)
+		if err != nil {
+			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
+		}
+		if !exists {
+			return fmt.Errorf("poa: bootstrap: %q needs the governance config the genesis step writes to the target at %s", name, cfgPath)
 		}
 		return DeployGovernance(ctx, run, binary, ipc, cfgPath, keystore, password)
 	case ActionEtcdInit:
@@ -122,7 +213,7 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 //
 // on is the boot node — the phase names it, so the rule for which node that is
 // lives in the family and not here.
-func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string, plan process.Plan, on node.Node, bootIPC string) error {
+func (b Bootstrap) joinProducers(ctx context.Context, bootRun Runner, binary string, plan process.Plan, on node.Node, bootIPC string) error {
 	peer := string(node.LabelFor(on.Index))
 	members := []string{peer}
 	for _, spec := range plan.Nodes {
@@ -130,7 +221,14 @@ func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string,
 			continue
 		}
 		name := string(node.LabelFor(spec.Index))
-		if err := b.joinOne(ctx, run, binary, ipcPath(spec, binary), bootIPC, peer, name); err != nil {
+		// The joiner runs its own etcd-join, so its commands and its IPC probe
+		// go to its machine — not the boot node's. Only the cluster check reads
+		// the boot node.
+		joinerRun, joinerFiles, err := b.resolve(spec.Index)
+		if err != nil {
+			return fmt.Errorf("poa: bootstrap: %q: %s access: %w", ActionEtcdJoin, name, err)
+		}
+		if err := joinOne(ctx, joinerRun, joinerFiles, bootRun, binary, ipcPath(spec, binary), bootIPC, peer, name); err != nil {
 			return fmt.Errorf("poa: bootstrap: %q: %s: %w", ActionEtcdJoin, name, err)
 		}
 		members = append(members, name)
@@ -140,7 +238,7 @@ func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string,
 		// formed cluster of one, which the boot phase already verified.
 		return nil
 	}
-	return VerifyEtcdMembers(ctx, run, binary, bootIPC, members, etcdJoinWait)
+	return VerifyEtcdMembers(ctx, bootRun, binary, bootIPC, members, etcdJoinWait)
 }
 
 // joinOne asks one producer to join, and keeps asking until the cluster says
@@ -152,20 +250,20 @@ func (b Bootstrap) joinProducers(ctx context.Context, run Runner, binary string,
 // without error still sometimes leaves the cluster unchanged — the peer
 // handles one request at a time — so the cluster, not the return value, is
 // what says it worked.
-func (b Bootstrap) joinOne(ctx context.Context, run Runner, binary, joinerIPC, bootIPC, peer, name string) error {
-	if err := WaitForIPC(ctx, joinerIPC, ipcWait); err != nil {
+func joinOne(ctx context.Context, joinerRun Runner, joinerFiles filestore.Store, bootRun Runner, binary, joinerIPC, bootIPC, peer, name string) error {
+	if err := waitForIPC(ctx, joinerFiles, joinerIPC, ipcWait); err != nil {
 		return err
 	}
-	if err := WaitForMember(ctx, run, binary, joinerIPC, peer, memberWait); err != nil {
+	if err := WaitForMember(ctx, joinerRun, binary, joinerIPC, peer, memberWait); err != nil {
 		return err
 	}
 	deadline := time.Now().Add(etcdJoinWait)
 	var last error
 	for {
-		if err := EtcdJoin(ctx, run, binary, joinerIPC, peer); err != nil {
+		if err := EtcdJoin(ctx, joinerRun, binary, joinerIPC, peer); err != nil {
 			last = err
 		}
-		cluster, err := EtcdCluster(ctx, run, binary, bootIPC)
+		cluster, err := EtcdCluster(ctx, bootRun, binary, bootIPC)
 		if err == nil && ClusterNames(cluster, name) {
 			return nil
 		}

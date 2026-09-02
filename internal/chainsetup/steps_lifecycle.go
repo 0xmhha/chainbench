@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 
@@ -659,12 +661,71 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 		return fmt.Errorf("chainsetup: start: phase %q names actions but launched no node to run them on", phase.Name)
 	}
 	exec := poa.Bootstrap{Binary: bin, KeysDir: w.state.KeysDir}
+	// A remote target runs the bootstrap where the node is: the binary, its IPC
+	// socket, the governance config and the keystore all live on the target, so
+	// route the runner and the file probes through that node's access — the same
+	// transport init and start use — and point the keys at where they shipped.
+	if w.state.Target.IsRemote() {
+		keystore, err := bootKeystoreOnTarget(w.state.KeysDir, w.keysBase(), on.Index)
+		if err != nil {
+			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)
+		}
+		exec.KeysDir = w.keysBase()
+		exec.BootKeystore = keystore
+		// Each node's bootstrap commands run on its own machine: a spread network
+		// puts the boot node and every joiner on a different host, so resolve the
+		// runner and file store per node index through the same access init/start
+		// use.
+		exec.Access = func(index int) (poa.Runner, filestore.Store, error) {
+			rec, ok := recordByIndex(w.state.Nodes, index)
+			if !ok {
+				return nil, nil, fmt.Errorf("no node%d in the table", index)
+			}
+			access, err := w.machineFor(rec)
+			if err != nil {
+				return nil, nil, err
+			}
+			cmdr, ok := access.Driver.(process.Commander)
+			if !ok {
+				return nil, nil, fmt.Errorf("node%d's target cannot run a command", index)
+			}
+			return poa.Runner(commanderRunner(cmdr)), access.Files, nil
+		}
+	}
 	for _, name := range phase.Actions {
 		if err := exec.Action(ctx, name, plan, on); err != nil {
 			return fmt.Errorf("chainsetup: start: phase %q: %w", phase.Name, err)
 		}
 	}
 	return nil
+}
+
+// recordByIndex returns the node record with the given 1-based index.
+func recordByIndex(nodes []node.Record, index int) (node.Record, bool) {
+	for _, ns := range nodes {
+		if ns.Index == index {
+			return ns, true
+		}
+	}
+	return node.Record{}, false
+}
+
+// bootKeystoreOnTarget returns the boot node's keystore file as a path on the
+// target. The keystore's name is generated with the key and shipped unchanged,
+// so it is read from the local set and re-rooted at the target keys directory —
+// the store the bootstrap probes with cannot list a directory to find it.
+func bootKeystoreOnTarget(localKeysDir, targetKeysDir string, index int) (string, error) {
+	dir := filepath.Join(localKeysDir, fmt.Sprintf("node%d", index), "keystore")
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return "", fmt.Errorf("chainsetup: start: read keystore for node%d: %w", index, err)
+	}
+	for _, e := range ents {
+		if !e.IsDir() {
+			return path.Join(targetKeysDir, fmt.Sprintf("node%d", index), "keystore", e.Name()), nil
+		}
+	}
+	return "", fmt.Errorf("chainsetup: start: node%d has no keystore file in %s", index, dir)
 }
 
 // phaseHasNode reports whether a phase covers a node. A phase naming no nodes

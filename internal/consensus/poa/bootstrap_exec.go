@@ -52,6 +52,22 @@ func EtcdInit(ctx context.Context, r Runner, binary, ipc string) error {
 	return nil
 }
 
+// etcdClusterReady reports whether the node's etcd cluster has formed. An empty
+// cluster prints as "", null or undefined depending on how far the init got;
+// none of them is a cluster.
+func etcdClusterReady(ctx context.Context, r Runner, binary, ipc string) (bool, error) {
+	out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
+	if err != nil {
+		return false, err
+	}
+	switch strings.Trim(strings.TrimSpace(string(out)), `"`) {
+	case "", "null", "undefined", "<nil>":
+		return false, nil
+	default:
+		return true, nil
+	}
+}
+
 // VerifyEtcd confirms the etcd cluster formed on the boot node.
 //
 // It exists because EtcdInit proves nothing: the call returns null whether it
@@ -65,21 +81,13 @@ func VerifyEtcd(ctx context.Context, r Runner, binary, ipc string, timeout time.
 	// once turned a working bootstrap into "formed nothing", and the node was
 	// torn down nine milliseconds after it announced the server was ready.
 	deadline := time.Now().Add(timeout)
-	var got string
 	for {
-		out, err := r(ctx, binary, "attach", ipc, "--exec", "admin.wemixInfo.etcd.cluster")
-		if err == nil {
-			got = strings.TrimSpace(string(out))
-			// An empty cluster prints as "", null or undefined depending on how
-			// far the init got. None of them is a cluster.
-			switch strings.Trim(got, `"`) {
-			case "", "null", "undefined", "<nil>":
-			default:
-				return nil
-			}
+		ready, err := etcdClusterReady(ctx, r, binary, ipc)
+		if err == nil && ready {
+			return nil
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("poa: verify etcd: the cluster is still empty %s after init (admin.wemixInfo.etcd.cluster = %s) — the bootstrap ran but formed nothing", timeout, got)
+			return fmt.Errorf("poa: verify etcd: the cluster is still empty %s after init — the bootstrap ran but formed nothing", timeout)
 		}
 		select {
 		case <-ctx.Done():
