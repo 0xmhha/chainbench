@@ -1,5 +1,5 @@
 {
-  "_comment": "Genesis overlay for the stablenet account-Extra bitmap cases (regression h-hardfork h-30/h-33/h-34). It adds three alloc accounts whose Extra bits seed AccountManager status at genesis-init (bit 62 = authorized, bit 63 = blacklisted) and seeds GovCouncil's authorized/blacklisted lists to match. Deep-merged into the built stablenet genesis by `chainbench setup --genesis-overlay`; declares the account-extra capability so the gated cases run.",
+  "_comment": "Genesis overlay for the stablenet account-Extra bitmap cases (authorized-extra-bit-synced / blacklisted-extra-bit-synced / dual-status-extra / extra-balance-preserved). It adds three alloc accounts whose Extra bits seed AccountManager status at genesis-init: bit 62 (0x4000000000000000) = authorized, bit 63 (0x8000000000000000) = blacklisted, both = 0xc000000000000000. go-stablenet applies these via statedb.SetExtra during genesis, and the AccountManager system contract (0x…B00003) reads them back through isAuthorized/isBlacklisted. Deep-merged into the built stablenet genesis; declares the account-extra capability so the gated cases run. NOTE: do NOT also seed config.anzeon.systemContracts.govCouncil.params here — the base template's govCouncil.params is a flat string-map, so merging authorized/blacklisted ARRAYS into it makes genesis init fail (cannot unmarshal array into a string field). The alloc Extra bits alone drive the AccountManager status the cases assert.",
   "capabilities": ["account-extra"],
   "genesis": {
     "alloc": {
@@ -14,18 +14,6 @@
       "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc": {
         "balance": "0xDE0B6B3A7640000",
         "extra": "0xc000000000000000"
-      }
-    },
-    "config": {
-      "anzeon": {
-        "systemContracts": {
-          "govCouncil": {
-            "params": {
-              "authorizedAddresses": ["0x90F79bf6EB2c4f870365E785982E1f101E93b906"],
-              "blacklistedAddresses": ["0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"]
-            }
-          }
-        }
       }
     }
   }

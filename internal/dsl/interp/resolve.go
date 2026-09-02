@@ -58,17 +58,38 @@ func Unresolved(s dsl.Spec, reg Registry) []string {
 	for _, a := range s.PreActions {
 		checkAction(a)
 	}
-	for _, st := range s.Steps {
-		checkAction(st)
-	}
-	for _, as := range s.Assertions {
-		name, _ := as["assert"].(string)
-		if name == "" {
-			seen["assert:(missing)"] = true
-		} else if _, ok := reg.Assertion(name); !ok {
-			seen["assert:"+name] = true
+	if len(s.Sequence) > 0 {
+		// v2: do steps and expect statements are one interleaved sequence. Walk
+		// it in order so a value a do step saves is bound before a later expect
+		// statement references it — the v1 two-pass split below binds nothing
+		// from a step for the assertions, and would miss that cross-reference.
+		for _, st := range s.Sequence {
+			if st.Do != "" {
+				checkAction(dsl.StatementStep(st))
+				continue
+			}
+			if st.Expect == "" {
+				seen["assert:(missing)"] = true
+			} else if _, ok := reg.Assertion(st.Expect); !ok {
+				seen["assert:"+st.Expect] = true
+			}
+			checkRefs(dsl.StatementAssertion(st), bound, seen)
 		}
-		checkRefs(as, bound, seen)
+	} else {
+		// v1: separate step and assertion lists — steps run first, then
+		// assertions.
+		for _, st := range s.Steps {
+			checkAction(st)
+		}
+		for _, as := range s.Assertions {
+			name, _ := as["assert"].(string)
+			if name == "" {
+				seen["assert:(missing)"] = true
+			} else if _, ok := reg.Assertion(name); !ok {
+				seen["assert:"+name] = true
+			}
+			checkRefs(as, bound, seen)
+		}
 	}
 	for _, po := range s.PostActions {
 		checkAction(po)

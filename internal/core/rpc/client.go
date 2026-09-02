@@ -267,12 +267,16 @@ func (c *Client) RemovePeer(ctx context.Context, enode string) error {
 }
 
 // Block is the subset of an Ethereum block chainbench reads. BaseFeePerGas is
-// nil on chains/blocks without EIP-1559.
+// nil on chains/blocks without EIP-1559. GasLimit and GasUsed drive the gas-load
+// primitive: a burn tx sized to a fraction of GasLimit fills the block it lands
+// in, and GasUsed/GasLimit is that block's utilization.
 type Block struct {
 	Number        uint64
 	Hash          string
 	Miner         string
 	Timestamp     uint64
+	GasLimit      uint64
+	GasUsed       uint64
 	BaseFeePerGas *big.Int
 }
 
@@ -285,6 +289,8 @@ func (c *Client) BlockByNumber(ctx context.Context, tag string) (Block, error) {
 		Hash          string `json:"hash"`
 		Miner         string `json:"miner"`
 		Timestamp     string `json:"timestamp"`
+		GasLimit      string `json:"gasLimit"`
+		GasUsed       string `json:"gasUsed"`
 		BaseFeePerGas string `json:"baseFeePerGas"`
 	}
 	if err := c.Call(ctx, "eth_getBlockByNumber", &b, tag, false); err != nil {
@@ -300,6 +306,16 @@ func (c *Client) BlockByNumber(ctx context.Context, tag string) (Block, error) {
 	if b.Timestamp != "" {
 		if blk.Timestamp, err = parseHexUint(b.Timestamp); err != nil {
 			return Block{}, fmt.Errorf("rpc: block timestamp: %w", err)
+		}
+	}
+	if b.GasLimit != "" {
+		if blk.GasLimit, err = parseHexUint(b.GasLimit); err != nil {
+			return Block{}, fmt.Errorf("rpc: block gas limit: %w", err)
+		}
+	}
+	if b.GasUsed != "" {
+		if blk.GasUsed, err = parseHexUint(b.GasUsed); err != nil {
+			return Block{}, fmt.Errorf("rpc: block gas used: %w", err)
 		}
 	}
 	if b.BaseFeePerGas != "" {

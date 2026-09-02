@@ -38,9 +38,9 @@ environment reports exactly which scenarios it could and could not exercise.
 # run all the stablenet scenarios a gstable binary can cover:
 GSTABLE_BIN=/path/to/gstable tests/repro/run-all.sh
 
-# full sweep (all three chains + hardforks + L2 + funded writes):
+# full sweep (all three chains + hardforks + external attach + funded writes):
 GSTABLE_BIN=/path/to/gstable WEMIX_BIN=/path/to/gwemix WBFT_BIN=/path/to/gwbft \
-  TEMPLATE=/path/to/template.json FAUCET_PK=0x... L2_RPC=http://... \
+  TEMPLATE=/path/to/template.json FAUCET_PK=0x... EXTERNAL_RPC=http://... \
   POST_FORK_BIN=/path/to/post-fork/gstable \
   tests/repro/run-all.sh
 
@@ -60,7 +60,7 @@ to reuse a prebuilt binary.
 | `stablenet-delayed-fork.sh` | delayed-Boho fork transition (h-15/16/27/29/35) | `GSTABLE_BIN`, python3 | boots with `--set genesis.overrides.bohoBlock=N`; runs the `delayed-boho`-gated cases + governance writes (`GOV=0` to skip); fails on any skip |
 | `stablenet-account-extra.sh` | account-Extra bitmap (h-30/33/34) | `GSTABLE_BIN`, python3 | boots with `--genesis-overlay internal/chains/stablenet/overlays/account-extra.json`; runs the `account-extra`-gated cases; fails on any skip |
 | `stablenet-basefee-dynamics.sh` | baseFee increase/stable/decrease (c-03/c-04/c-05) | `GSTABLE_BIN`, `FAUCET_PK`, python3 + web3 | burst load past 20% usage → assert next baseFee rose; a 6-20% block → assert unchanged (best-effort, reported if the band is not hit); idle → assert it fell. Load/timing sensitive (repro-only) |
-| `layer2-attach.sh` | Layer 2 generic ops (z-layer2 RT-Z-02/03/04/05) | `L2_RPC` (an already-running L2 RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the L2 and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
+| `attach-external.sh` | external-chain generic ops (legacy z-layer2 "Layer 2 E2E" RT-Z-02/03/04/05 — an external chain attached over RPC, NOT an Ethereum L2) | `EXTERNAL_RPC` (an already-running chain's RPC; no chain binary). Optional `CHAINBENCH_FUNDED_KEY` for write ops | attaches to the external endpoint and runs the chain-agnostic (rpc-only) read/state cases; with `CHAINBENCH_FUNDED_KEY` set, also runs the write cases (value transfer, fee delegation). Fails on any read skip |
 
 `LOCAL-*.sh` are ad-hoc local captures (gitignored pattern aside) and are not part
 of the runbook.

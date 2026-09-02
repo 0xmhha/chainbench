@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "2", "kind": "case", "id": "basic-consensus",
+  "env": "basic-stablenet", "requires": ["rpc", "consensus"],
+  "steps": [
+    { "do": "waitBlock", "target": 20, "timeout": "180s" },
+    { "expect": "blockAdvance", "on": "node1", "timeout": "60s", "pollInterval": "2s" },
+    { "expect": "sameBlockHash", "block": "latest" }
+  ]
+}

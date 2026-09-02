@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-tx-and-contract",
+  "env": "wemix-funded",
+  "requires": ["rpc"],
+  "steps": [
+    { "do": "waitBlock", "target": 3, "timeout": "180s" },
+    { "do": "newAccount", "save": "r", "saveKey": "rk" },
+    { "do": "sendTx", "on": "node1", "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "to": "$r", "value": "1", "expect": "receipt" },
+    { "expect": "balanceAt", "on": "node1", "address": "$r", "compare": "Greater", "is": "0" },
+    { "do": "deployContract", "on": "node1", "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3", "gas": "300000", "save": "c" },
+    { "expect": "codeAt", "on": "node1", "address": "$c", "compare": "NotEqual", "is": "0x" },
+    { "expect": "call", "on": "node1", "to": "$c", "data": "0x", "compare": "Equal", "is": "0x000000000000000000000000000000000000000000000000000000000000002a" }
+  ]
+}

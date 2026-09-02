@@ -23,62 +23,96 @@ Binaries build from `/Users/…/Work/github/chain/{go-stablenet,go-wbft,go-wemix
 etcd** — no external etcd needed. Funded key: `keys/preset` node1 nodekey (public
 test fixture) is genesis-funded. See memory `live-verification-setup`.
 
-## Remaining (5 bash scripts) — each blocked on real prerequisite work
+## Remaining — nothing to port
 
-These are NOT simple ports; each needs a separate track. Verified against
-gstable v1.0.1 AND v1.1.0 (same results) — not a chain-version issue.
+Of the original 5, four are ported to DSL cases (#1 delayed-fork, #2
+account-extra, #3 basefee-dynamics, #4 wemix-chain). The fifth, `attach-external`
+(#5, the legacy "Layer 2 E2E" section), is NOT a porting target: the reference
+suite has no runnable scripts there (only a design note), chainbench has no
+external-chain family to build, and those cases are the existing chain-agnostic
+RPC cases run attach-mode against any endpoint. So the legacy→DSL migration is
+effectively complete. The five sections below are kept for the root-cause record.
 
-### 1. `stablenet-delayed-fork.sh` — testkit-case ↔ chain boho-behavior mismatch
-- Boots stablenet with `--set genesis.overrides.bohoBlock=N` (verified: the
-  rendered genesis has `"bohoBlock": N` and gstable's config reads
-  `json:"bohoBlock"`, so the override key is correct — not a chainbench bug).
-- The chain crosses block N, but the gated cases time out (2m):
-  `govminter-code-changes-at-boho`, `p256-inactive-before-boho`,
-  `prealloc-preserved-across-boho` FAIL; `anzeon-active-before-boho` PASSES.
-- Root cause: the boho activation effects the testkit cases assert (GovMinter-v2
-  code injection, P-256 precompile at 0x100) do not manifest as expected in the
-  built gstable. Both v1.0.1 and v1.1.0 fail identically.
-- **Needed:** reconcile the testkit cases (`tests/anzeon/hardfork_reads.go`,
-  `fork_transition.go`, etc.) with the actual go-stablenet boho implementation
-  (addresses, activation semantics) — or a gstable build matching the cases.
+### 1. `stablenet-delayed-fork.sh` — RESOLVED (root cause was genesis wiring, now ported)
+- The boho effects DO exist in go-stablenet: the GovMinter-v2 code swap
+  (`consensus/wbft/engine/engine.go` `processFinalize` → `SetCode` at the boho
+  block), the P-256 precompile at 0x100 (`core/vm/contracts.go`
+  `PrecompiledContractsBoho`, gated on `rules.IsBoho`), and prealloc preservation
+  (only code is swapped, no state cleared).
+- Root cause of the old failures: setting `bohoBlock=N` alone is not enough. The
+  GovMinter swap is gated by `params/config.go:1114` on `c.Boho != nil &&
+  c.Boho.SystemContracts != nil`, so the genesis must ALSO carry the `boho` object
+  (`boho.systemContracts.govMinter` version `v2`). With only `bohoBlock` set,
+  `CollectUpgrades` yields no upgrade and the code never changes.
+- **Ported** as `tests/cases/stablenet/delayed-fork.json` (env
+  `delayed-fork-stablenet`): the overlay sets `bohoBlock: 3` AND the `boho`
+  govMinter-v2 object. The case reads across the fork with `rpcCall` at explicit
+  block tags (`eth_getCode`/`eth_call`/`eth_getBalance` at `0x1` vs `latest`) and
+  asserts all three effects — GovMinter code changes v1→v2, P-256 at 0x100 is
+  inactive (`0x`) pre-boho and returns `0x…01` post-boho (a real RIP-7212 vector),
+  and a prealloc balance is unchanged. Live-verified.
 
-### 2. `stablenet-account-extra.sh` — overlay fixture bug
-- Genesis init FAILS: `cannot unmarshal array into … govCouncil.params of type
-  string`. Fails on both v1.0.1 and v1.1.0.
-- The overlay `internal/chains/stablenet/overlays/account-extra.json` merges
-  `govCouncil.params.{authorizedAddresses,blacklistedAddresses}` (arrays) — but
-  the base template's `govCouncil.params` is a flat string-map
-  (`members/quorum/expiry/…`). The intent is to seed account **Extra bits
-  (62/63)** in the alloc, not to put arrays in govCouncil.params.
-- **Needed:** rewrite the overlay to set the Extra-bit account state in the
-  genesis `alloc` in the format go-stablenet expects (investigate
-  `account.Extra` genesis representation), then port to Go with `bootOverlay` +
-  `runCase` (the harness already supports this — see proposal-expiry).
+### 2. `stablenet-account-extra.sh` — RESOLVED (overlay fixed + ported to a DSL case)
+- Root cause confirmed: the overlay's broken half was the
+  `config.anzeon.systemContracts.govCouncil.params.{authorizedAddresses,blacklistedAddresses}`
+  ARRAYS, which collide with the base template's flat string-map `govCouncil.params`
+  (`cannot unmarshal array into a string field`). The `alloc.*.extra` half was
+  already correct.
+- go-stablenet represents the Extra bits as a top-level `"extra"` field on each
+  alloc entry (`core/types/account.go` `Account.Extra uint64`, JSON
+  `math.HexOrDecimal64`): bit 62 `0x4000000000000000` = authorized, bit 63
+  `0x8000000000000000` = blacklisted. `statedb.SetExtra` applies them at
+  genesis-init and `ValidateExtra` rejects bits outside that mask.
+- **Fixed:** `internal/chains/stablenet/overlays/account-extra.json` now carries
+  only the alloc `extra` bits (the invalid `config.anzeon` block is removed), so
+  genesis init succeeds and the AccountManager (0x…B00003) reads the seeded
+  status. **Ported** as `tests/cases/stablenet/account-extra.json` — a self-contained
+  DSL case that seeds the three accounts via `genesis.overlay` and asserts
+  `isAuthorized`/`isBlacklisted` (incl. the dual account) return 1. Live-verified.
 
-### 3. `stablenet-basefee-dynamics.sh` — accounts SDK gap
-- Needs a burst of many txs into ONE block (>20% gas usage) to move baseFee.
-  That requires firing txs with EXPLICIT sequential nonces without waiting — the
-  `accounts.Wallet` interface has no explicit-nonce send, and sequential
-  `SendCoin` is too slow to concentrate load in a block.
-- **Needed:** add an explicit-nonce (or batch) send to the accounts SDK, or a
-  raw-tx path; then port as a best-effort Go test (already made best-effort in
-  bash: report INCONCLUSIVE when load is insufficient).
+### 3. `stablenet-basefee-dynamics.sh` — SUPERSEDED by the DSL anzeon cases
+- ~~Needs a burst of many txs into ONE block to move baseFee.~~ Resolved a
+  different way: the DSL `load` action (`internal/testhelper/load.go`) deploys a
+  single gas-burner sized to a percent of the block gas limit, so one tx fills the
+  block — no explicit-nonce burst needed. The base-fee dynamics are now covered by
+  `tests/cases/anzeon/basefee-{increase,stable,decrease}.json`, live-verified
+  against a real gstable network (see `legacy-test-migration.md` §5c).
+- No Go-e2e port of this script is needed; it can be retired from `run-all.sh`.
 
-### 4. `wemix-chain.sh` (scenario 1, pure wemix) — framework gap
-- `chainbench setup --launch --chain wemix` does NOT run the governance-etcd
-  bootstrap standalone (only the upgrade/handoff path drives poa bootstrap via
-  `internal/consensus/poa` + a `Bootstrap` callback). The bash script does the raw
-  wemix genesis + init + launch + `deploy-governance` + `admin.etcdInit()`.
-- **Needed:** wire a standalone wemix bootstrap into `chainbench setup` (drive
-  `internal/consensus/poa.BootstrapPlan` steps for a non-handoff wemix network), then
-  port as a Go test. (Lower priority — the handoff test already exercises the
-  full wemix+etcd+governance bring-up.)
+### 4. `wemix-chain.sh` (scenario 1, pure wemix) — RESOLVED via the DSL run path
+- ~~`chainbench setup` does not bootstrap standalone wemix.~~ The DSL `chainbench
+  run` path DOES: it drives the poa governance-etcd bootstrap for a non-handoff
+  wemix network (confirmed by `tests/cases/wemix/chain-up.json`,
+  `brioche-block-reward.json`, and now `tx-and-contract.json`, all live-verified
+  against a real gwemix 4-validator network).
+- Scenario 1's block/tx/contract verification is ported as
+  `tests/cases/wemix/tx-and-contract.json`: on a standalone wemix network it sends
+  a value tx (receipt + recipient balance), deploys the roundtrip contract
+  (`codeAt` non-empty), and `eth_call`s it (returns 42). The sender is funded with
+  a `genesis.overlay` alloc entry (wemix ships an empty alloc), node-signed like
+  the stablenet cases.
+- No standalone-bootstrap wiring into `chainbench setup` is needed for the port;
+  the run path covers it.
 
-### 5. `layer2-attach.sh` — external resource
-- Needs an already-running Layer-2 RPC endpoint (`L2_RPC`). Chain-agnostic
-  read/write cases already work via `chainbench test --rpc <L2>`.
-- **Needed:** a live L2 endpoint to verify against; the Go port is otherwise
-  straightforward (attach + run rpc-only cases).
+### 5. `attach-external.sh` — NOT a porting target (external-chain attach, not an L2)
+- Terminology: the legacy regression called this section "Layer 2 E2E"
+  (`stablenet/regression/docs/z-layer2-e2e.md`, RT-Z-01..05), but despite the name
+  it is NOT an Ethereum L2 / rollup. In chainbench terms it is an **external
+  chain**: one already running somewhere else that chainbench attaches to over RPC
+  (it neither launches nor manages it). This doc uses "external chain" to avoid the
+  L2 confusion.
+- There is nothing to port. The reference suite has NO runnable z-layer2 scripts —
+  only that design note. "Layer 2 E2E" is just generic RPC operations (chain state,
+  event logs, contract call, tx, fee delegation) run against some external chain.
+- chainbench has no external-chain family to build (no binary/genesis/consensus)
+  and needs none. Its chain-agnostic cases (block-progression, gas-price-positive,
+  chain-not-syncing, logs-query-well-formed, fee-history-…, etc. — empty
+  ChainCompat, gated only on `rpc`) already run against ANY endpoint via attach
+  mode (`chainbench test --rpc <url>`).
+- `tests/repro/attach-external.sh` is just a convenience wrapper that points the
+  existing generic cases at an `EXTERNAL_RPC` and checks they run (skip=0). It
+  needs a live external RPC URL only to execute — it is not a DSL/Go port of a
+  legacy test, because no such legacy test exists.
 
 ## Notes
 - `tests/repro/run-all.sh` still orchestrates the not-yet-ported bash scripts;

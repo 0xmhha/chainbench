@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-account-extra",
+  "env": "account-extra-stablenet",
+  "requires": ["rpc"],
+  "steps": [
+    { "do": "waitBlock", "target": 1, "timeout": "60s" },
+
+    { "do": "read", "source": "derive", "op": "abiCall", "selector": "0xfe9fbb80", "of": ["0x90F79bf6EB2c4f870365E785982E1f101E93b906"], "save": "authCall" },
+    { "expect": "call", "on": "node1", "to": "0x0000000000000000000000000000000000B00003", "data": "$authCall", "compare": "Equal", "is": "0x0000000000000000000000000000000000000000000000000000000000000001" },
+
+    { "do": "read", "source": "derive", "op": "abiCall", "selector": "0xfe575a87", "of": ["0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"], "save": "blCall" },
+    { "expect": "call", "on": "node1", "to": "0x0000000000000000000000000000000000B00003", "data": "$blCall", "compare": "Equal", "is": "0x0000000000000000000000000000000000000000000000000000000000000001" },
+
+    { "do": "read", "source": "derive", "op": "abiCall", "selector": "0xfe9fbb80", "of": ["0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"], "save": "dualAuth" },
+    { "expect": "call", "on": "node1", "to": "0x0000000000000000000000000000000000B00003", "data": "$dualAuth", "compare": "Equal", "is": "0x0000000000000000000000000000000000000000000000000000000000000001" },
+
+    { "do": "read", "source": "derive", "op": "abiCall", "selector": "0xfe575a87", "of": ["0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"], "save": "dualBl" },
+    { "expect": "call", "on": "node1", "to": "0x0000000000000000000000000000000000B00003", "data": "$dualBl", "compare": "Equal", "is": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+  ]
+}

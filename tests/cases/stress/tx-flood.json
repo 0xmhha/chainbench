@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stress-tx-flood",
+  "env": "stress-stablenet",
+  "requires": ["rpc", "consensus"],
+  "steps": [
+    { "do": "waitBlock", "target": 2, "timeout": "60s" },
+    { "do": "load", "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "fillPercent": 30, "blocks": 15, "timeout": "90s" },
+    { "expect": "blockAdvance", "on": "node1", "timeout": "60s", "pollInterval": "2s" }
+  ]
+}
