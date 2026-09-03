@@ -749,10 +749,13 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
   통과한다. **핸드오프가 workspace 를 얻는 작업과 함께** LaunchOptions 에 선택적 Ledger 를
   넣고 teardown 에서 Clear 한다. 그 전까지는 SIGKILL 엣지의 orphan 복구만을 위해 배선하지
   않는다.
-- **죽은 process 오케스트레이션 은퇴** — `process.BringUp`/`NewLauncher`/`NewController`/
-  `RelaunchNode` 는 프로덕션(CLI·DSL 양쪽) 호출자가 0 이다(E4 착수 시 전수 확인). 프로덕션
-  기동은 chainsetup(startPhase/StartNode)·hardfork·upgrade 세 갈래뿐. 테스트 전용 심볼
-  제거는 A8(외부 소비자 0 공개 심볼 정리)·레거시 은퇴와 함께 처리한다.
+- ☑ **죽은 process 오케스트레이션 은퇴 (완료)** — `Launcher`(bringup.go: impl/NewLauncher/
+  BringUp/gate/Teardown/Deps/Result)·`Controller`(controller.go)·`Manager`(process.go)·
+  `Direct`(direct.go)·`PlanOf`(launcher_plan.go)·`gate.go`(JoinGap/JoinWindow/Classify)·
+  `StopNode`/`RelaunchNode`·`Proc.IsRemote` 를 그 테스트와 함께 제거(~3200줄). 생존 프리미티브만
+  남김: `FailureMode`(→failuremode.go, nodemonitor 소비)·`NodeConfig`(→nodeconfig.go, chainsetup
+  소비)·`StopNodeSet`(핸드오프 teardown)·`Proc`/`Alive`(레저·inspector)·`Plan`(데이터 캐리어).
+  no-branch-on-kind 래칫에서 process 항목 제거. build·vet·test·lint 통과, 동작 변화 0.
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 
