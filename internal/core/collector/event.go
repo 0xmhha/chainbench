@@ -1,10 +1,8 @@
-// Package collector is chainbench's observability core (requirement #17):
-// structured logging, a runtime event bus, and a state/result store. Observation
-// is not a test-only concern — the setup and verify phases also emit runtime
-// records — so it stays independent of how tests are expressed.
-//
-// The event bus feeds the dashboard (requirement #19) via chainbench-dashboard; its wire
-// format is deferred to the dashboard phase (G8).
+// Runtime event bus (part of package collector): the events the setup and
+// verify phases emit as they run. Observation is not a test-only concern, so it
+// stays independent of how tests are expressed. The bus feeds the dashboard
+// (requirement #19) via chainbench-dashboard; its wire format is deferred to
+// the dashboard phase (G8). The package doc lives in docs.go.
 package collector
 
 import "time"

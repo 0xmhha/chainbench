@@ -1,14 +1,13 @@
-// Package config implements the three-source configuration resolution required
-// by the chain setup surface (requirement #4): a value may come from a code
-// default, a config file, or a runtime flag/env override, with later sources
-// winning. Resolution produces one merged view that every pipeline phase and
-// driver consumes, removing the current three-way SSOT split
-// (defaults.generated.sh / profile YAML / flags) — see
-// docs/CHAINBENCH_GO_REDESIGN.md §6.
+// Config resolution (part of package nodeconfig): the three-source
+// configuration resolution required by the chain setup surface (requirement
+// #4): a value may come from a code default, a config file, or a runtime
+// flag/env override, with later sources winning. Resolution produces one merged
+// view that every pipeline phase and driver consumes.
 //
 // Config is represented as flat dot-path keys (e.g. "ports.base_http") mirroring
-// the existing profile schema, so the package stays free of any file format:
-// callers Flatten a parsed YAML/JSON map into Values and Merge the layers.
+// the profile schema, so this stays free of any file format: callers Flatten a
+// parsed YAML/JSON map into Values and Merge the layers. (Formerly the
+// standalone config package, folded into nodeconfig in R1.)
 package nodeconfig
 
 import (

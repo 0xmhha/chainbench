@@ -1,10 +1,10 @@
-// Package probe detects a chain's type and capabilities from an RPC endpoint,
-// so an operator can attach to an already-running network without knowing which
-// chain it is. It is the absorption of the legacy network/ probe into the Go
-// core: detection signatures (which RPC method identifies each family) plus the
-// chain-id disambiguation are sourced from the chain registry, and the endpoint
-// can be reached through any http.Client — including the auth/SSH-tunnel clients
-// from pkg/core/remote.
+// Chain detection (part of package collector): detects a chain's type and
+// capabilities from an RPC endpoint, so an operator can attach to an
+// already-running network without knowing which chain it is. Detection
+// signatures (which RPC method identifies each family) plus chain-id
+// disambiguation come from the chain registry, and the endpoint can be reached
+// through any http.Client — including the auth/SSH-tunnel clients from
+// core/remote. (Formerly the standalone probe package, folded into collector.)
 package collector
 
 import (
