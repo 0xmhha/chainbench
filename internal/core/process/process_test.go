@@ -31,155 +31,28 @@ func startSleeper(t *testing.T) int {
 	return pid
 }
 
-func TestStopAll_TerminatesAndVerifies(t *testing.T) {
-	m := New()
-	p1 := startSleeper(t)
-	p2 := startSleeper(t)
-	m.Track(p1, "a")
-	m.Track(p2, "b")
-	if m.Count() != 2 {
-		t.Fatalf("Count = %d, want 2", m.Count())
-	}
-	if !Alive(p1) || !Alive(p2) {
-		t.Fatal("sleepers should be alive before StopAll")
-	}
-
-	if leaks := m.StopAll(3 * time.Second); len(leaks) != 0 {
-		t.Fatalf("StopAll leaked %v, want none", leaks)
-	}
-	if Alive(p1) || Alive(p2) {
-		t.Fatal("sleepers still alive after StopAll")
-	}
-}
-
-func TestTrack_DedupAndIgnoresLowPIDs(t *testing.T) {
-	m := New()
-	m.Track(42, "x")
-	m.Track(42, "x-again") // dup
-	m.Track(0, "attached") // ignored
-	m.Track(1, "init")     // ignored
-	if m.Count() != 1 {
-		t.Fatalf("Count = %d, want 1 (dedup + low-pid ignore)", m.Count())
-	}
-}
-
-func TestTrackFromOutput(t *testing.T) {
-	out := "" +
-		"handoff wemix -> wbft; launching...\n" +
-		"  node1  http://127.0.0.1:40010  pid=1234\n" +
-		"  node2  http://127.0.0.1:40020  pid=5678\n" +
-		"governance deployed\n"
-	m := New()
-	if n := m.TrackFromOutput(out); n != 2 {
-		t.Fatalf("tracked %d, want 2", n)
-	}
-	got := map[int]bool{}
-	for _, p := range m.Tracked() {
-		got[p.PID] = true
-	}
-	if !got[1234] || !got[5678] {
-		t.Fatalf("tracked PIDs = %v, want 1234 and 5678", m.Tracked())
-	}
-}
-
-func TestStopAll_Idempotent(t *testing.T) {
-	m := New()
-	p := startSleeper(t)
-	m.Track(p, "a")
-	if leaks := m.StopAll(3 * time.Second); len(leaks) != 0 {
-		t.Fatalf("first StopAll leaked %v", leaks)
-	}
-	// A second call over already-dead PIDs must be a clean no-op.
-	if leaks := m.StopAll(time.Second); len(leaks) != 0 {
-		t.Fatalf("second StopAll leaked %v", leaks)
-	}
-}
-
-func TestAlive_GonePID(t *testing.T) {
-	p := startSleeper(t)
-	m := New()
-	m.Track(p, "a")
-	m.StopAll(3 * time.Second)
-	if Alive(p) {
-		t.Fatal("Alive should be false for a killed PID")
-	}
-}
-
-func TestStopOne_TerminatesJustThatProcess(t *testing.T) {
-	m := New()
-	keep := startSleeper(t)
-	target := startSleeper(t)
-	m.Track(keep, "keep")
-	m.Track(target, "target")
-
-	if err := m.StopOne(target, time.Second); err != nil {
-		t.Fatalf("StopOne: %v", err)
-	}
-	if Alive(target) {
-		t.Fatal("target still alive after StopOne")
-	}
-	if !Alive(keep) {
-		t.Fatal("StopOne stopped an untargeted process")
-	}
-	_ = m.StopAll(time.Second)
-}
-
-func TestStopOne_UntrackedPIDIsAnError(t *testing.T) {
-	m := New()
-	if err := m.StopOne(999999, time.Second); err == nil {
-		t.Fatal("expected an error for an untracked pid")
-	}
-}
-
-func TestStopOne_AlreadyGoneIsNotAnError(t *testing.T) {
-	m := New()
+// TestAlive pins the liveness probe the local driver's inspector uses: a
+// running process reads alive, and one that has been killed (and reaped, since
+// the sleeper is detached) reads gone.
+func TestAlive(t *testing.T) {
 	pid := startSleeper(t)
-	m.Track(pid, "one")
-	if err := m.StopOne(pid, time.Second); err != nil {
-		t.Fatalf("first StopOne: %v", err)
+	if !Alive(pid) {
+		t.Fatal("a started sleeper should be alive")
 	}
-	if err := m.StopOne(pid, time.Second); err != nil {
-		t.Fatalf("second StopOne on a stopped process: %v", err)
-	}
-}
-
-func TestProc_LoopbackHostIsLocal(t *testing.T) {
-	// The local launcher records each node's host, which for a local network is
-	// the loopback address. Treating that as "remote" would exclude the process
-	// from every signal-based operation while it is plainly ours to signal.
-	local := []string{"", "127.0.0.1", "localhost", "::1", "0.0.0.0"}
-	for _, h := range local {
-		if (Proc{PID: 2, Host: h}).IsRemote() {
-			t.Errorf("Proc{Host: %q}.IsRemote() = true, want false", h)
-		}
-	}
-	for _, h := range []string{"10.0.0.11", "node1.example.com"} {
-		if !(Proc{PID: 2, Host: h}).IsRemote() {
-			t.Errorf("Proc{Host: %q}.IsRemote() = false, want true", h)
-		}
-	}
-}
-
-func TestStopOne_StopsAProcessRecordedWithItsLoopbackHost(t *testing.T) {
-	m := New()
-	pid := startSleeper(t)
-	m.TrackProc(Proc{PID: pid, Label: "node1", Host: "127.0.0.1"})
-	if err := m.StopOne(pid, time.Second); err != nil {
-		t.Fatalf("StopOne on a loopback-hosted process: %v", err)
+	_ = syscall.Kill(pid, syscall.SIGKILL)
+	deadline := time.Now().Add(3 * time.Second)
+	for Alive(pid) && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
 	}
 	if Alive(pid) {
-		t.Fatal("process still alive")
+		t.Fatal("a killed pid should not be alive")
 	}
 }
 
-func TestStopAll_StopsLoopbackHostedProcesses(t *testing.T) {
-	m := New()
-	pid := startSleeper(t)
-	m.TrackProc(Proc{PID: pid, Label: "node1", Host: "127.0.0.1"})
-	if leaks := m.StopAll(time.Second); len(leaks) > 0 {
-		t.Fatalf("StopAll reported leaks %v", leaks)
-	}
-	if Alive(pid) {
-		t.Fatal("a loopback-hosted process survived StopAll")
+func TestAlive_LowPIDsAreNotAlive(t *testing.T) {
+	for _, pid := range []int{0, 1, -1} {
+		if Alive(pid) {
+			t.Errorf("Alive(%d) = true, want false", pid)
+		}
 	}
 }

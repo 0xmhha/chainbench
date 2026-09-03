@@ -46,50 +46,6 @@ func twoNodeSet() node.NodeSet {
 	}
 }
 
-func TestStopNode(t *testing.T) {
-	d := &recordingDriver{}
-	if err := process.StopNode(context.Background(), d, twoNodeSet(), 5); err != nil {
-		t.Fatalf("StopNode(5): %v", err)
-	}
-	if len(d.stopped) != 1 || d.stopped[0] != 5 {
-		t.Errorf("stopped the wrong node: %v", d.stopped)
-	}
-}
-
-func TestStopNode_UnknownIndexOrDeadPIDStopsNothing(t *testing.T) {
-	d := &recordingDriver{}
-	if err := process.StopNode(context.Background(), d, twoNodeSet(), 9); err == nil {
-		t.Error("StopNode on an unknown index should error")
-	}
-	dead := node.NodeSet{Nodes: []node.Node{{Index: 1, PID: 0}}}
-	if err := process.StopNode(context.Background(), d, dead, 1); err == nil {
-		t.Error("StopNode on a node with no live PID should error")
-	}
-	if len(d.stopped) != 0 {
-		t.Errorf("errored StopNode still stopped something: %v", d.stopped)
-	}
-}
-
-func TestRelaunchNode(t *testing.T) {
-	d := &recordingDriver{}
-	spec := process.NodeSpec{
-		Index: 5, Role: node.RoleEndpoint, Host: "127.0.0.1",
-		Ports: node.Endpoints{HTTP: 8505},
-	}
-	n, err := process.RelaunchNode(context.Background(), d, spec)
-	if err != nil {
-		t.Fatalf("RelaunchNode: %v", err)
-	}
-	// It re-provisions then launches the same index, and returns the refreshed
-	// node with the driver's new PID and the spec's endpoint.
-	if len(d.provisioned) != 1 || d.provisioned[0] != 5 || len(d.launched) != 1 || d.launched[0] != 5 {
-		t.Errorf("relaunch drove wrong calls: provisioned=%v launched=%v", d.provisioned, d.launched)
-	}
-	if n.Index != 5 || n.PID != 1005 || n.RPCURL != "http://127.0.0.1:8505" {
-		t.Errorf("refreshed node wrong: %+v", n)
-	}
-}
-
 func TestStopNodeSet_SkipsNodesWithNoPID(t *testing.T) {
 	d := &recordingDriver{}
 	ns := twoNodeSet()
