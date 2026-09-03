@@ -5,6 +5,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
@@ -180,5 +181,46 @@ func TestExtend_RejectsMoreValidatorsThanIdentities(t *testing.T) {
 	}, nil)
 	if err == nil {
 		t.Fatal("Extend accepted 3 new validators from 1 new identity")
+	}
+}
+
+// TestNetworkForNodes_SelectsByIndexNotFirstN pins the E1 fix: the validator set
+// is the nodes a placement named as producers (by index), not the first N of the
+// ring. For EN,BP,PN,BP the producers are node2 and node4.
+func TestNetworkForNodes_SelectsByIndexNotFirstN(t *testing.T) {
+	p := keyring.Preset{Nodes: []keyring.Entry{
+		{Index: 1, Identity: derive.Identity{Address: "0xa1", BLS: &derive.BLS{PublicKey: "0xb1"}}},
+		{Index: 2, Identity: derive.Identity{Address: "0xa2", BLS: &derive.BLS{PublicKey: "0xb2"}}},
+		{Index: 3, Identity: derive.Identity{Address: "0xa3", BLS: &derive.BLS{PublicKey: "0xb3"}}},
+		{Index: 4, Identity: derive.Identity{Address: "0xa4", BLS: &derive.BLS{PublicKey: "0xb4"}}},
+	}}
+
+	net, err := p.NetworkForNodes([]int{2, 4}) // the producers node2 and node4
+	if err != nil {
+		t.Fatalf("NetworkForNodes: %v", err)
+	}
+	if !reflect.DeepEqual(net.Validators, []string{"0xa2", "0xa4"}) {
+		t.Fatalf("validators = %v, want [0xa2 0xa4]", net.Validators)
+	}
+	if !reflect.DeepEqual(net.BLSKeys, []string{"0xb2", "0xb4"}) {
+		t.Fatalf("bls = %v, want [0xb2 0xb4]", net.BLSKeys)
+	}
+	if net.ExtraData != "" {
+		t.Fatalf("ExtraData = %q, want empty so the builder recomputes it", net.ExtraData)
+	}
+	// The governance council must track the selected validators, or the system
+	// contracts reject a genesis whose member and validator counts differ.
+	if !reflect.DeepEqual(net.Members, []string{"0xa2", "0xa4"}) {
+		t.Fatalf("members = %v, want the selected validators [0xa2 0xa4]", net.Members)
+	}
+
+	// The count-based path takes the FIRST two — the behavior this replaces would
+	// seat node1 (an endpoint) and drop node4 (a producer).
+	if first := p.NetworkFor(2); !reflect.DeepEqual(first.Validators, []string{"0xa1", "0xa2"}) {
+		t.Fatalf("NetworkFor(2) = %v, want [0xa1 0xa2]", first.Validators)
+	}
+
+	if _, err := p.NetworkForNodes([]int{2, 9}); err == nil {
+		t.Fatal("expected an error for an index with no identity in the ring")
 	}
 }

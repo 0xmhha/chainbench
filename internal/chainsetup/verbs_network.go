@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -119,6 +120,65 @@ type NodeStartIn struct {
 // NodeStartOut is the relaunched node, with its new PID.
 type NodeStartOut struct {
 	Node node.Node
+}
+
+// NetRunner returns the target's remote command runner, or nil for a local
+// target (which reads its own filesystem). It is what lets the run read a remote
+// node's log over SSH and reconnect a dropped session (E8).
+func NetRunner(d Deps, dataDir string) (process.Runner, error) {
+	ws, err := Open(dataDir, d.Clock)
+	if err != nil {
+		return nil, err
+	}
+	if !ws.state.Target.IsRemote() {
+		return nil, nil
+	}
+	t, err := ws.resolveTarget()
+	if err != nil {
+		return nil, err
+	}
+	return t.Runner, nil
+}
+
+// NodeSwapIn selects one node and the binary and/or config to relaunch it with.
+type NodeSwapIn struct {
+	DataDir string
+	Index   int
+	// Binary is the path to relaunch node Index on (empty keeps the current
+	// one). The datadir and genesis are unchanged: this is a swap, not a rebuild.
+	Binary string
+	// Config is a set of key=value config overrides to apply before relaunch
+	// (empty keeps the current config).
+	Config []string
+	// Purpose names the config fixture recorded in provenance (config-<purpose>).
+	Purpose string
+}
+
+// NodeSwap stops one node and relaunches it with a different binary and/or
+// config, so a network can run mixed binaries mid-test. The pre-swap pid and
+// command are kept as a ledger revision; the relaunched node's new PID is
+// returned.
+func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) {
+	if in.DataDir == "" || in.Index <= 0 {
+		return NodeStartOut{}, ErrNoDataDirAndIndex
+	}
+	var swapped node.Node
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		detail, err := ws.SwapNode(ctx, in.Index, in.Binary, in.Config, in.Purpose)
+		if err != nil {
+			return "", err
+		}
+		for _, n := range ws.NodeSet().Nodes {
+			if n.Index == in.Index {
+				swapped = n
+			}
+		}
+		return detail, nil
+	})
+	if err != nil {
+		return NodeStartOut{}, err
+	}
+	return NodeStartOut{Node: swapped}, nil
 }
 
 // NodeStart relaunches a single stopped node with the argv it was armed with,

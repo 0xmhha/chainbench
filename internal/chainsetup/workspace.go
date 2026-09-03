@@ -96,6 +96,11 @@ type State struct {
 	// own — node wins). Stored key-agnostically so the surface and the storage
 	// do not change when the set of overridable knobs grows.
 	ConfigSet map[string][]string `json:"configSet,omitempty"`
+	// ConfigProvenance records, per node, the overrides that shaped its config
+	// and the checksum of the config that resulted, so a run can show which
+	// config each node got and that it read back intact. The config step
+	// recomputes it each time it runs — a fresh config is a new revision.
+	ConfigProvenance []ConfigProvenance `json:"configProvenance,omitempty"`
 	// LaunchSet holds per-scope launch-argv overrides, keyed by scope: "all" for
 	// every node, a role ("bp"/"en"/"boot") for that role, "node<N>" for one.
 	// Each value is a list of "key" (boolean flag) or "key=value" applied at
@@ -313,18 +318,40 @@ func (w *Workspace) opener() resource.Opener {
 // override wins). Each entry is a dot-path "key=value"; an unknown key or a
 // malformed entry is an error, never a silent no-op.
 func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error {
-	for _, scope := range []string{"all", fmt.Sprintf("node%d", index)} {
-		for _, kv := range w.state.ConfigSet[scope] {
-			key, value, ok := strings.Cut(kv, "=")
-			if !ok || key == "" {
-				return fmt.Errorf("config override %q must be key=value", kv)
-			}
-			if err := nodeconfig.ApplyConfigOverride(spec, key, value); err != nil {
-				return err
-			}
+	for _, kv := range w.configOverridesFor(index) {
+		key, value, ok := strings.Cut(kv, "=")
+		if !ok || key == "" {
+			return fmt.Errorf("config override %q must be key=value", kv)
+		}
+		if err := nodeconfig.ApplyConfigOverride(spec, key, value); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+// configOverridesFor returns the config overrides that apply to one node,
+// most-general-first: "all" then "node<N>" (node wins). It is the single source
+// of which overrides shape a node's config — applyConfigOverrides applies them
+// and the config step records them as provenance, so the two never diverge. A
+// node reads only its own "node<N>" scope, so one node's override never leaks
+// into another's config.
+func (w *Workspace) configOverridesFor(index int) []string {
+	var out []string
+	for _, scope := range []string{"all", fmt.Sprintf("node%d", index)} {
+		out = append(out, w.state.ConfigSet[scope]...)
+	}
+	return out
+}
+
+// ConfigProvenance is one node's config record: the overrides applied to it and
+// the checksum ("sha256:<hex>") of the config that resulted. Fixture names a
+// mid-test config swap (config-<test-purpose>), empty for the initial compose.
+type ConfigProvenance struct {
+	Node      int      `json:"node"`
+	Fixture   string   `json:"fixture,omitempty"`
+	Overrides []string `json:"overrides,omitempty"`
+	Checksum  string   `json:"checksum"`
 }
 
 // recordLaunchSet stores launch-argv overrides under a scope ("all", a role,
@@ -418,14 +445,27 @@ func (w *Workspace) Save() error {
 	return w.comp.Save(w.state)
 }
 
-// recordLaunch enters a launched node in the run ledger and syncs the view.
+// recordLaunch enters an already-launched node (a resume reattaching to a live
+// pid) in the run ledger and syncs the view. Fresh launches go through
+// process.LaunchAndRecord, which launches and records in one step; this records
+// a pid the caller already holds.
 func (w *Workspace) recordLaunch(i int, pid int, binary string) error {
-	ns := w.state.Nodes[i]
-	if err := w.ledger.Record(process.Proc{
-		PID: pid, Label: string(ns.NodeLabel()), Binary: filepath.Base(binary),
-		Command: strings.Join(append([]string{binary}, ns.Args...), " "),
-		Host:    nodeHost(ns), DataDir: ns.DataDir,
-	}); err != nil {
+	spec := process.SpecOf(w.state.Nodes[i])
+	spec.Binary = binary
+	if err := w.ledger.Record(process.ProcFor(spec, pid)); err != nil {
+		return err
+	}
+	w.state.Nodes[i].PID = pid
+	return nil
+}
+
+// recordSwap records a node the hardfork swapped in, superseding its prior
+// entry so the pid and command that ran before the fork are kept as a revision
+// rather than discarded. The old process is already stopped by the swap.
+func (w *Workspace) recordSwap(i int, pid int, binary string) error {
+	spec := process.SpecOf(w.state.Nodes[i])
+	spec.Binary = binary
+	if _, _, err := w.ledger.Supersede(process.ProcFor(spec, pid)); err != nil {
 		return err
 	}
 	w.state.Nodes[i].PID = pid

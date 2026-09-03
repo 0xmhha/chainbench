@@ -9,9 +9,12 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
 
+	"github.com/0xmhha/chainbench/internal/core/report"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/mcp"
 )
 
@@ -66,7 +69,7 @@ func TestInitializeAndList(t *testing.T) {
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench_run", "chainbench_hardfork", "chainbench_upgrade", "chainbench.capabilities"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}
@@ -175,12 +178,21 @@ func TestTxpoolTool(t *testing.T) {
 
 func TestReportTool(t *testing.T) {
 	dir := t.TempDir()
-	runsJSON := `[{"id":"test/x","phase":"test","chain":"wbft","status":"succeeded"},{"id":"test/y","phase":"test","chain":"wbft","status":"failed"}]`
-	if err := os.WriteFile(filepath.Join(dir, "runs.json"), []byte(runsJSON), 0o644); err != nil {
+	s, err := session.New(dir, "chainbench run x.json y.json", time.Unix(0, 0).UTC())
+	if err != nil {
 		t.Fatal(err)
 	}
+	s.Test(1, "x").Status(session.StatusPass)
+	s.Test(2, "y").Status(session.StatusFail)
+	if err := s.Save(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := report.Generate(s.Root()); err != nil {
+		t.Fatal(err)
+	}
+	// The tool takes the root holding sessions and reports the most recent.
 	text, isErr := callText(t, newServer(), "chainbench_report", map[string]any{"workspaceDir": dir})
-	if isErr || !strings.Contains(text, "test/x") || !strings.Contains(text, "total=2 ok=1 failed=1") {
+	if isErr || !strings.Contains(text, "1 x") || !strings.Contains(text, "pass=1 fail=1") {
 		t.Errorf("report tool: err=%v text=%s", isErr, text)
 	}
 }

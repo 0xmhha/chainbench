@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -401,26 +402,68 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
+	// Recomputed for this config revision: a re-run reflects the current
+	// overrides, not a stale record.
+	w.state.ConfigProvenance = w.state.ConfigProvenance[:0]
+	overridden := 0
 	for _, ns := range w.state.Nodes {
-		t, err := w.machineFor(ns)
+		prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, ns, "")
 		if err != nil {
 			return "", err
 		}
-		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
-		if err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
-		}
-		spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
-		if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
-		}
-		if err := t.Files.Write(ctx, ns.ConfigPath, nodeconfig.TOML(spec), 0o644); err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+		w.state.ConfigProvenance = append(w.state.ConfigProvenance, prov)
+		if len(prov.Overrides) > 0 {
+			overridden++
 		}
 	}
 	detail := fmt.Sprintf("%d config(s) under %s", len(w.state.Nodes), w.state.Target.DataRoot)
+	if overridden > 0 {
+		detail += fmt.Sprintf(", %d with overrides", overridden)
+	}
 	w.markStep("config", detail)
 	return detail, nil
+}
+
+// writeNodeConfig renders one node's config with its overrides, writes it,
+// verifies the readback checksum, and returns its provenance. The Config step
+// and a mid-test config swap share it, so both produce the same config and the
+// same provenance record. purpose, when set, names the swap's config fixture
+// (config-<purpose>); the initial compose passes "".
+func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
+	t, err := w.machineFor(ns)
+	if err != nil {
+		return ConfigProvenance{}, err
+	}
+	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+	if err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
+	}
+	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+	overrides := w.configOverridesFor(ns.Index)
+	if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+	}
+	toml := nodeconfig.TOML(spec)
+	if err := t.Files.Write(ctx, ns.ConfigPath, toml, 0o644); err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+	}
+	// Readback: the config on the target must hash to what was written, so a
+	// truncated or clobbered write is caught here rather than at node boot.
+	// Checksum hashes on the target (a remote store runs sha256sum), so this
+	// does not download the file back.
+	want := filestore.Hash(toml)
+	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
+	if err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err)
+	}
+	if got != want {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got)
+	}
+	prov := ConfigProvenance{Node: ns.Index, Overrides: overrides, Checksum: want}
+	if purpose != "" {
+		prov.Fixture = "config-" + purpose
+	}
+	return prov, nil
 }
 
 // LaunchOpts assembles each node's launch argv through nodeconfig.Argv —
@@ -537,7 +580,15 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *resource.Access, node
 			return err
 		}
 		if exists {
-			return nil
+			have, err := t.Files.Checksum(ctx, dst)
+			if err != nil {
+				return err
+			}
+			if have == filestore.Hash(b) {
+				return nil // identical content already on the target: not re-sent
+			}
+			// A stale key file under the same name is not the one we mean; ship
+			// the current content over it rather than launch with the wrong key.
 		}
 		if err := t.Files.Write(ctx, dst, b, mode); err != nil {
 			return err

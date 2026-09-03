@@ -20,24 +20,41 @@ import (
 // recordingSink is a filestore.Store capturing writes and reporting a
 // preset existing set (to exercise upload-if-absent) in memory.
 type recordingSink struct {
-	written  map[string][]byte
-	existing map[string]bool
+	written map[string][]byte // files Write was called on, with their content
+	pre     map[string][]byte // files already present before provisioning
 }
 
 func newRecordingSink() *recordingSink {
-	return &recordingSink{written: map[string][]byte{}, existing: map[string]bool{}}
+	return &recordingSink{written: map[string][]byte{}, pre: map[string][]byte{}}
+}
+
+func (s *recordingSink) at(path string) ([]byte, bool) {
+	if b, ok := s.pre[path]; ok {
+		return b, true
+	}
+	b, ok := s.written[path]
+	return b, ok
 }
 
 func (s *recordingSink) Exists(_ context.Context, path string) (bool, error) {
-	return s.existing[path], nil
+	_, ok := s.at(path)
+	return ok, nil
 }
 
 func (s *recordingSink) Read(_ context.Context, path string) ([]byte, error) {
-	b, ok := s.written[path]
+	b, ok := s.at(path)
 	if !ok {
 		return nil, fmt.Errorf("not found: %s", path)
 	}
 	return b, nil
+}
+
+func (s *recordingSink) Checksum(_ context.Context, path string) (string, error) {
+	b, ok := s.at(path)
+	if !ok {
+		return "", fmt.Errorf("not found: %s", path)
+	}
+	return filestore.Hash(b), nil
 }
 
 func (s *recordingSink) Write(_ context.Context, path string, content []byte, _ fs.FileMode) error {
@@ -66,9 +83,9 @@ func TestMaterialize(t *testing.T) {
 		}
 	}
 
-	// Upload-if-absent: an existing genesis is not rewritten.
+	// Upload-if-absent: an existing genesis with identical content is reused.
 	sink2 := newRecordingSink()
-	sink2.existing["/d/genesis.json"] = true
+	sink2.pre["/d/genesis.json"] = []byte(`{"g":1}`)
 	if err := materialize(context.Background(), filestore.New(sink2), plan, plan.Nodes); err != nil {
 		t.Fatalf("materialize (reuse): %v", err)
 	}

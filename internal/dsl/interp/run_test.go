@@ -49,10 +49,12 @@ func (r *fakeRecord) Step(_ int, res session.StepResult) {
 	r.steps++
 	r.stepResults = append(r.stepResults, res)
 }
-func (r *fakeRecord) Assert(a session.AssertResult)   { r.asserts = append(r.asserts, a) }
-func (r *fakeRecord) Status(s session.TestStatus)     { r.status = s }
-func (r *fakeRecord) Reason(why string)               { r.reason = why }
-func (r *fakeRecord) PostAction(p session.PostResult) { r.posts = append(r.posts, p) }
+func (r *fakeRecord) Assert(a session.AssertResult)     { r.asserts = append(r.asserts, a) }
+func (r *fakeRecord) Status(s session.TestStatus)       { r.status = s }
+func (r *fakeRecord) Reason(why string)                 { r.reason = why }
+func (r *fakeRecord) PostAction(p session.PostResult)   { r.posts = append(r.posts, p) }
+func (r *fakeRecord) Artifacts(_ session.TestArtifacts) {}
+func (r *fakeRecord) Observation(_ string, _ []byte)    {}
 
 func testEnv(t *testing.T) session.Environment {
 	t.Helper()

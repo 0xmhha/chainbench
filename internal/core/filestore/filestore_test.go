@@ -44,22 +44,35 @@ func TestProvision_WritesFiles(t *testing.T) {
 	}
 }
 
-func TestProvision_SkipsExisting(t *testing.T) {
+func TestProvision_ReusesIdenticalOverwritesDifferent(t *testing.T) {
+	// Identical content already there: reused, never re-written.
 	base := t.TempDir()
-	// Pre-create genesis.json so it is reused, not overwritten.
-	if err := os.WriteFile(filepath.Join(base, "genesis.json"), []byte("EXISTING"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(base, "genesis.json"), []byte("{}"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	p := filestore.New(filestore.Local{})
-	res, err := p.Provision(context.Background(), node(base))
+	res, err := filestore.New(filestore.Local{}).Provision(context.Background(), node(base))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
 	}
-	if res.Written != 2 || res.Skipped != 1 {
-		t.Fatalf("result = %+v, want 2 written 1 skipped", res)
+	if res.Written != 2 || res.Skipped != 1 || res.Replaced != 0 {
+		t.Fatalf("identical: result = %+v, want 2 written 1 skipped 0 replaced", res)
 	}
-	if b, _ := os.ReadFile(filepath.Join(base, "genesis.json")); string(b) != "EXISTING" {
-		t.Fatalf("existing file was overwritten: %q", b)
+
+	// Same name, DIFFERENT content: overwritten, never falsely reused (the E2
+	// bug — the old exists-only check kept the stale file).
+	base2 := t.TempDir()
+	if err := os.WriteFile(filepath.Join(base2, "genesis.json"), []byte("STALE"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	res, err = filestore.New(filestore.Local{}).Provision(context.Background(), node(base2))
+	if err != nil {
+		t.Fatalf("Provision: %v", err)
+	}
+	if res.Written != 2 || res.Replaced != 1 || res.Skipped != 0 {
+		t.Fatalf("different: result = %+v, want 2 written 1 replaced 0 skipped", res)
+	}
+	if b, _ := os.ReadFile(filepath.Join(base2, "genesis.json")); string(b) != "{}" {
+		t.Fatalf("stale file was not overwritten: %q", b)
 	}
 }
 
@@ -82,6 +95,14 @@ func (f *fakeStore) Read(_ context.Context, path string) ([]byte, error) {
 	return b, nil
 }
 
+func (f *fakeStore) Checksum(_ context.Context, path string) (string, error) {
+	b, ok := f.content[path]
+	if !ok {
+		return "", fmt.Errorf("not found: %s", path)
+	}
+	return filestore.Hash(b), nil
+}
+
 func (f *fakeStore) Write(_ context.Context, path string, content []byte, _ os.FileMode) error {
 	f.written = append(f.written, path)
 	if f.content == nil {
@@ -92,11 +113,13 @@ func (f *fakeStore) Write(_ context.Context, path string, content []byte, _ os.F
 }
 
 func TestProvision_UploadIfAbsent(t *testing.T) {
-	store := &fakeStore{present: map[string]bool{
-		filepath.Join("/remote/n1", "genesis.json"): true, // already on the server
-	}}
-	p := filestore.New(store)
-	res, err := p.Provision(context.Background(), node("/remote/n1"))
+	gp := filepath.Join("/remote/n1", "genesis.json")
+	// Already on the server with the SAME content node() provisions ("{}").
+	store := &fakeStore{
+		present: map[string]bool{gp: true},
+		content: map[string][]byte{gp: []byte("{}")},
+	}
+	res, err := filestore.New(store).Provision(context.Background(), node("/remote/n1"))
 	if err != nil {
 		t.Fatalf("Provision: %v", err)
 	}
@@ -105,7 +128,20 @@ func TestProvision_UploadIfAbsent(t *testing.T) {
 	}
 	for _, w := range store.written {
 		if filepath.Base(w) == "genesis.json" {
-			t.Fatal("present remote file must not be re-uploaded")
+			t.Fatal("present identical remote file must not be re-uploaded")
 		}
+	}
+
+	// Present but STALE: re-uploaded, not falsely reused.
+	store2 := &fakeStore{
+		present: map[string]bool{gp: true},
+		content: map[string][]byte{gp: []byte("OLD")},
+	}
+	res, err = filestore.New(store2).Provision(context.Background(), node("/remote/n1"))
+	if err != nil {
+		t.Fatalf("Provision: %v", err)
+	}
+	if res.Replaced != 1 {
+		t.Fatalf("stale remote: result = %+v, want 1 replaced", res)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"strings"
 
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
@@ -50,6 +51,25 @@ func (s RemoteFileStore) Read(ctx context.Context, remotePath string) ([]byte, e
 		return nil, fmt.Errorf("driver: remote read %s: %w", remotePath, err)
 	}
 	return remote.DecodeReadFile(remotePath, res)
+}
+
+// Checksum returns the content address ("sha256:<hex>") of the remote file by
+// running sha256sum on the host, so an unchanged file is never downloaded just
+// to compare it. sha256sum prints "<hex>  <path>"; only the digest is taken.
+func (s RemoteFileStore) Checksum(ctx context.Context, remotePath string) (string, error) {
+	res, err := s.Run(ctx, "sha256sum "+shq(remotePath))
+	if err != nil {
+		return "", fmt.Errorf("driver: remote checksum %s: %w", remotePath, err)
+	}
+	if res.ExitCode != 0 {
+		return "", fmt.Errorf("driver: remote checksum %s: exit %d: %s",
+			remotePath, res.ExitCode, strings.TrimSpace(res.Stderr))
+	}
+	fields := strings.Fields(res.Stdout)
+	if len(fields) == 0 || len(fields[0]) != 64 {
+		return "", fmt.Errorf("driver: remote checksum %s: unexpected output %q", remotePath, res.Stdout)
+	}
+	return "sha256:" + fields[0], nil
 }
 
 // Write ships content to remotePath with the given mode.

@@ -158,6 +158,36 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_SurfaceDefaultsConverge pins the E9 parity guarantee: both
+// the CLI and MCP pass zero-values when a knob is unset, so compositionOf is the
+// single source of the canonical defaults (validators, keys). Passing the
+// explicit default must equal passing nothing — otherwise the two surfaces could
+// drift on a default. The constants are pinned so a surface's flag/arg default
+// cannot silently diverge from the seam.
+func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
+	if suiteDefaultValidators != 4 || defaultKeysDir != "keys/preset" {
+		t.Fatalf("canonical defaults drifted: validators=%d keys=%q", suiteDefaultValidators, defaultKeysDir)
+	}
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+
+	// Unset (what both surfaces pass when the operator/agent gives nothing).
+	unset, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The explicit default a surface might pass instead.
+	explicit, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), KeysDir: defaultKeysDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unset.up.KeysDir != explicit.up.KeysDir || unset.up.KeysDir != "keys/preset" {
+		t.Errorf("keys default diverges: unset=%q explicit=%q", unset.up.KeysDir, explicit.up.KeysDir)
+	}
+	if unset.up.Validators != suiteDefaultValidators {
+		t.Errorf("validators default = %d, want %d", unset.up.Validators, suiteDefaultValidators)
+	}
+}
+
 func TestInlineTopologyOf_Rejects(t *testing.T) {
 	bins := map[string]string{"wbft": "/opt/gwbft"}
 	cases := map[string]string{

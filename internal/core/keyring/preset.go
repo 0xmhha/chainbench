@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
+	"slices"
 	"strings"
 )
 
@@ -132,6 +133,56 @@ func (p Preset) NetworkFor(n int) Network {
 		out.Members = append([]string(nil), out.Validators...)
 	}
 	return out
+}
+
+// NetworkForNodes answers who validates when the validator set is a *specific*
+// set of nodes rather than the first n — the producers a topology actually
+// placed. For EN,BP,PN,BP the producers are node2 and node4, not the first two,
+// so a count is not enough: the caller passes the node indices it resolved from
+// the placement's roles, in order, and this selects each node's recorded
+// identity by index.
+//
+// ExtraData is kept only when the selection is exactly the recorded validator
+// set in order (the common all-producers case, unchanged); otherwise it is
+// cleared so the genesis builder recomputes it for this set, the same rule
+// NetworkFor follows when it narrows. The governance council is not narrowed — it
+// is independent of which nodes validate — and is seeded from the validators
+// only when the ring recorded none.
+//
+// An index with no identity in the ring is an error: it means the placement and
+// the key set disagree, which must fail while composing rather than produce a
+// genesis that names a validator the network cannot launch.
+func (p Preset) NetworkForNodes(indices []int) (Network, error) {
+	out := p.Network
+	vals := make([]string, 0, len(indices))
+	bls := make([]string, 0, len(indices))
+	for _, idx := range indices {
+		e, ok := p.Node(idx)
+		if !ok {
+			return Network{}, fmt.Errorf("keyring: the key set has no identity for node%d", idx)
+		}
+		vals = append(vals, e.Address)
+		if e.BLS != nil {
+			bls = append(bls, e.BLS.PublicKey)
+		}
+	}
+	out.Validators = vals
+	out.BLSKeys = bls
+	// The governance council is the producers: the system contracts require the
+	// member set to match the validator set (govValidator rejects a genesis where
+	// they differ in count), and every shipped preset records the two as the same
+	// addresses. So the selected producers are also the members — otherwise a
+	// three-producer network would seed a four-member council and fail to init.
+	out.Members = append([]string(nil), vals...)
+	// Keep the recorded extra-data only when the selection is exactly the
+	// recorded validator set, in order. Then this is the common all-producers
+	// case and nothing changes. A different set (a reordered or partial one, like
+	// EN,BP,PN,BP) describes validators the recorded extra-data does not, so it is
+	// cleared and the genesis builder recomputes it.
+	if !slices.Equal(vals, p.Network.Validators) {
+		out.ExtraData = ""
+	}
+	return out, nil
 }
 
 // truncate returns the first n of s as a new slice, tolerating a shorter s so a

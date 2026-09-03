@@ -8,9 +8,12 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -30,6 +33,10 @@ type RunSuiteIn struct {
 	// SpecPaths are the DSL files to run, each read and env-resolved the one
 	// way every surface does (dsl.ReadFiles).
 	SpecPaths []string
+	// SpecContent is inline, self-contained spec bytes to run instead of reading
+	// files — the form the MCP surface passes so an agent composes from inline
+	// specs without writing them to disk. When set, SpecPaths is ignored.
+	SpecContent [][]byte
 	// DataDir is the composition workspace; the network is set up here.
 	DataDir string
 	// Chain, when set, must agree with what the specs declare.
@@ -149,30 +156,52 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 	return out.Node, nil
 }
 
+// Swap relaunches one node with a different binary and/or config through the
+// workspace, satisfying interp.NodeSwapper so the swapNode action reaches it.
+func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {
+	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{
+		DataDir: w.dataDir, Index: n.Index,
+		Binary: change.Binary, Config: change.Config, Purpose: change.Purpose,
+	})
+	if err != nil {
+		return n, err
+	}
+	return out.Node, nil
+}
+
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
 // through chainsetup, run the tests, collect, and stop the network unless
 // asked to keep it. Setup failure aborts before any test runs; a test-phase
 // failure still tears down.
 func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteOut, error) {
-	if len(in.SpecPaths) == 0 {
+	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: no specs given")
 	}
 	if in.DataDir == "" {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: a workspace directory is required")
 	}
-	specs, err := dsl.ReadFiles(in.SpecPaths)
-	if err != nil {
-		return RunSuiteOut{}, err
+	specs := in.SpecContent
+	if len(specs) == 0 {
+		var err error
+		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
+			return RunSuiteOut{}, err
+		}
 	}
 	parsed := make([]dsl.Spec, 0, len(specs))
 	for i, raw := range specs {
 		s, err := dsl.Parse(raw)
 		if err != nil {
-			return RunSuiteOut{}, fmt.Errorf("engine: run suite: %s: %w", in.SpecPaths[i], err)
+			return RunSuiteOut{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
 		}
 		parsed = append(parsed, s)
 	}
 	if err := sameChain(parsed); err != nil {
+		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	// Pre-flight before anything is allocated or written: a spec that names an
+	// action/assertion/reader/reference that does not resolve, or a malformed
+	// node selector, fails here rather than after a network is composed.
+	if err := Precheck(parsed); err != nil {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	comp, err := compositionOf(ctx, parsed[0], in)
@@ -213,6 +242,27 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
 			NodeSet: net.nodes, Control: net.control,
+			// A bus turns on chainstate sampling: chainstate.jsonl is written per
+			// environment (E8) even on the headless suite path, which has no
+			// dashboard subscriber (events are simply dropped).
+			Bus: collector.NewBus(),
+			// A remote target reads its node logs over SSH (and reconnects a
+			// dropped session, E8); a local target leaves this nil and the
+			// collector reads the local filesystem.
+			LogReader: remoteLogReader(sd, in.DataDir),
+			// Gate the network before each test: a node a prior fault test left
+			// down is restarted or waited on within limits before the next test
+			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
+			// nodes, so the gate is a no-op there.
+			PreSpec: func(ctx context.Context, _ session.Environment) error {
+				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps)
+			},
+			// Gather a failed test's evidence (node logs, process, RPC/block) into
+			// its observations/ before the run moves on (E8).
+			OnFail: func(ctx context.Context, _ session.Environment, rec session.TestRecord) error {
+				collectFailureData(ctx, sd, in.DataDir, net.nodes, rec)
+				return nil
+			},
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)
@@ -294,6 +344,12 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 		}
 		nodes = &ns
 	}
+	// The network is composed (or reused); gate it before any test runs on it —
+	// wait on nodes still coming up, restart dead ones within limits, terminate
+	// on a state that would need a destructive remedy (E6).
+	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps); err != nil {
+		return composed{}, fmt.Errorf("engine: run suite: %w", err)
+	}
 	return composed{
 		endpoints: endpoints,
 		caps:      caps,
@@ -304,6 +360,18 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 		nodes:   nodes,
 		control: workspaceNodes{sd: sd, dataDir: up.DataDir},
 	}, nil
+}
+
+// remoteLogReader returns an SSH-backed log reader for a remote target's node
+// logs, which the collector wraps so a dropped session reconnects (E8); a local
+// target (or a lookup error — collection is best-effort) returns nil, and the
+// collector reads the local filesystem.
+func remoteLogReader(sd chainsetup.Deps, dataDir string) collector.LogReader {
+	runner, err := chainsetup.NetRunner(sd, dataDir)
+	if err != nil || runner == nil {
+		return nil
+	}
+	return process.NewRemoteLogReader(runner)
 }
 
 // chainCaps is what a chain advertises by its manifest: what a handoff

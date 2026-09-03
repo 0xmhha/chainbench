@@ -1,14 +1,10 @@
 package testengine
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-)
 
-// sessionFile is the session artifact file name written under a session root.
-const sessionFile = "session.json"
+	"github.com/0xmhha/chainbench/internal/core/session"
+)
 
 // TestOutcome is one test's recorded result in a session summary.
 type TestOutcome struct {
@@ -17,7 +13,7 @@ type TestOutcome struct {
 	Status string `json:"status"`
 }
 
-// Summary is the parsed session.json verdict: the per-test outcomes and the
+// Summary is the session.json verdict: the per-test outcomes and the
 // pass/fail/blocked/skip counts.
 type Summary struct {
 	Tests   []TestOutcome `json:"tests"`
@@ -34,16 +30,22 @@ func (s Summary) Failed() bool {
 	return s.Summary.Fail > 0 || s.Summary.Blocked > 0
 }
 
-// ReadSessionSummary reads and parses the session.json under root. It is the one
-// reader the CLI and MCP surfaces share so both report a run identically.
+// ReadSessionSummary reads the session.json under root through the session
+// package — the single reader of the schema — and maps it to a Summary. It is
+// the one summary reader the CLI and MCP surfaces share so both report a run
+// identically.
 func ReadSessionSummary(root string) (Summary, error) {
-	data, err := os.ReadFile(filepath.Join(root, sessionFile))
+	res, err := session.LoadDir(root)
 	if err != nil {
-		return Summary{}, fmt.Errorf("engine: read session: %w", err)
+		return Summary{}, fmt.Errorf("engine: %w", err)
 	}
-	var s Summary
-	if err := json.Unmarshal(data, &s); err != nil {
-		return Summary{}, fmt.Errorf("engine: parse session: %w", err)
+	s := Summary{Tests: make([]TestOutcome, 0, len(res.Tests))}
+	for _, t := range res.Tests {
+		s.Tests = append(s.Tests, TestOutcome{Seq: t.Seq, ID: t.ID, Status: t.Status})
 	}
+	s.Summary.Pass = res.Summary.Pass
+	s.Summary.Fail = res.Summary.Fail
+	s.Summary.Blocked = res.Summary.Blocked
+	s.Summary.Skip = res.Summary.Skip
 	return s, nil
 }

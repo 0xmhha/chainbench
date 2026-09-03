@@ -75,3 +75,45 @@ func TestRemoteFileStore_Write(t *testing.T) {
 		t.Fatalf("write command missing mkdir/chmod: %q", joined)
 	}
 }
+
+func TestRemoteFileStore_Checksum(t *testing.T) {
+	hex := strings.Repeat("ab", 32) // 64 hex chars
+	cases := []struct {
+		name    string
+		stdout  string
+		exit    int
+		runErr  error
+		want    string
+		wantErr bool
+	}{
+		{"sha256sum output", hex + "  /data/genesis.json\n", 0, nil, "sha256:" + hex, false},
+		{"transport error", "", 0, errors.New("dial failed"), "", true},
+		{"nonzero exit", "sha256sum: /data/x: No such file", 1, nil, "", true},
+		{"garbage output", "not-a-hash\n", 0, nil, "", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var gotCmd string
+			run := func(_ context.Context, cmd string) (remote.ExecResult, error) {
+				gotCmd = cmd
+				return remote.ExecResult{ExitCode: tc.exit, Stdout: tc.stdout}, tc.runErr
+			}
+			got, err := process.NewRemoteFileStore(run).Checksum(context.Background(), "/data/genesis.json")
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("expected error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Checksum: %v", err)
+			}
+			if got != tc.want {
+				t.Fatalf("Checksum = %q, want %q", got, tc.want)
+			}
+			if !strings.Contains(gotCmd, "sha256sum") {
+				t.Errorf("command %q should run sha256sum", gotCmd)
+			}
+		})
+	}
+}

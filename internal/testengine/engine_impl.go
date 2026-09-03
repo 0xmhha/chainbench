@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
@@ -30,6 +31,16 @@ type Deps struct {
 	// Applicable reports whether a spec applies to this run's target chain. Nil
 	// means always applicable.
 	Applicable func(spec dsl.Spec) bool
+	// PreSpec gates the environment right before each test runs on it (E6): a
+	// network left unfit by a prior fault test is waited on or restarted within
+	// limits, and a state needing a destructive remedy blocks the test. A
+	// non-nil error blocks the test with that reason. Nil means no gate.
+	PreSpec func(ctx context.Context, env session.Environment) error
+	// OnFail gathers failure evidence (node logs, process, RPC/block snapshot)
+	// into the test's observations/ when a test ends FAIL or BLOCKED (E8). It is
+	// best-effort: an error is emitted, never fatal, since it runs after the
+	// verdict is already decided. Nil means no gathering.
+	OnFail func(ctx context.Context, env session.Environment, rec session.TestRecord) error
 	// Command is the invoking command string recorded in session.json.
 	Command string
 	// Emit publishes an orchestration event (run/build/spec milestones) for the
@@ -134,11 +145,29 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 
 		rec.SetEnvRef(env.ID())
+		if e.deps.PreSpec != nil {
+			if gerr := e.deps.PreSpec(ctx, env); gerr != nil {
+				rec.Status(session.StatusBlocked)
+				rec.Reason(gerr.Error())
+				e.emit(collector.PhaseSetup, collector.KindError, "pre-test gate failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID(), "error": gerr.Error()})
+				continue
+			}
+		}
 		e.emit(collector.PhaseTest, collector.KindProgress, "running spec", map[string]any{"seq": seq, "id": spec.ID})
 		st, runErr := e.deps.RunSpec(ctx, spec, env, rec)
 		if runErr != nil {
 			rec.Status(session.StatusFail)
 			st = session.StatusFail
+		}
+		// A failed or blocked test gets its evidence gathered before the run moves
+		// on: the network it failed against may be gone or changed by the next
+		// test. Best-effort — the verdict already stands.
+		if st == session.StatusFail || st == session.StatusBlocked {
+			if e.deps.OnFail != nil {
+				if ferr := e.deps.OnFail(ctx, env, rec); ferr != nil {
+					e.emit(collector.PhaseTest, collector.KindError, "failure-data collection", map[string]any{"seq": seq, "id": spec.ID, "error": ferr.Error()})
+				}
+			}
 		}
 		e.emit(collector.PhaseTest, collector.KindResult, "spec "+string(st), map[string]any{"seq": seq, "id": spec.ID, "status": string(st)})
 	}
@@ -147,6 +176,12 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 
 	if err := sess.Save(); err != nil {
 		return sess.Root(), fmt.Errorf("engine: save session: %w", err)
+	}
+	// The verdicts are now persisted; the report builder aggregates them into
+	// report.json for the CLI/MCP report surfaces. A report failure does not
+	// invalidate the run, so it is surfaced but not fatal to Run's result.
+	if _, err := report.Generate(sess.Root()); err != nil {
+		return sess.Root(), fmt.Errorf("engine: build report: %w", err)
 	}
 	return sess.Root(), nil
 }

@@ -701,17 +701,17 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
 
 | # | 작업 | 선행 | 핵심 게이트 | 상태 |
 |---|---|---|---|---|
-| **E0** | **현행 재측정과 계약 고정** — key/resource/node/genesis/config/process/monitor/test/report의 producer·consumer, CLI·DSL·MCP 입력, local/remote/Docker 경로를 AST와 테스트로 재확인 | — | 중복 owner·직접 import·기존 완료 기능 목록, 수정 대상과 비대상 파일 확정 | ☐ |
-| **E0A** | **session artifact 계약 선행** — `environments/<env-id>` 정본 + `tests/<NNN>_<name>`별 env-ref·사용자료 snapshot/reference + root report의 2축 schema와 owner 고정 | E0 | testengine=verdict, session=영속, report builder=집계 · secret 정책 · 원자 write/readback | ☐ |
-| **E1** | **resolved producer → genesis** — validator count 기반 첫 N개 재선택을 제거하고 실제 BP identity/address/BLS를 사용 | E0A | `EN,BP,PN,BP` topology genesis readback 일치 · 누락/중복 no-write · 결정성 | ☐ |
-| **E2** | **자료 재사용 무결성** — asset별 owner를 유지하며 local/SSH/Docker의 binary·genesis·config·key·contract를 checksum으로 비교하고 결과 기록 | E0A | 같은 내용 재전송 0 · 같은 이름/다른 내용 오재사용 0 · secret 출력 0 | ☐ |
-| **E3** | **config·command 증적** — `nodeconfig` Command Builder, `config-<test-purpose>` fixture, override 우선순위, config readback, 노드별 argv·binary·checksum 기록 | E0A | node override 격리 · config/argv 동일 사실 · 변경 전후 revision 보존 | ☐ |
-| **E4** | **process와 개별 node control 정합** — Direct/Launcher/chainsetup start 중복을 측정하고 PID·실행 command·start/stop/restart·binary/config 교체를 하나의 ledger에 연결 | E2, E3 | 개별/전체 제어 · 실제 PID/command 일치 · 부분 실패 cleanup · orphan 0 · 세 환경 동등 | ☐ |
-| **E5** | **DSL syntax + semantic/capability 사전 검사** — schema/parser drift, selector/wait timeout, PN 제약과 chain·binary별 role/flag/RPC/metric/action/assertion/upgrade 지원을 모든 write 전에 검증 | E0A | unsupported는 no-write · applicableChains는 SKIP · CLI/MCP 판정 동등 | ☐ |
-| **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☐ |
-| **E7** | **동적 테스트와 contract** — 노드별 제어, partition/heal, binary/config 교체, 동적 `save/$ref` 주소와 deployer+nonce 결정적 주소 | E4, E5, E6 | per-node mixed binary · contract tx/receipt/address/checksum · 상태별 verdict | ☐ |
-| **E8** | **최종 증적 집계와 report** — E0A schema에 append-only logs, chainstate JSONL, assertion provenance, 테스트별 result를 채우고 root report 생성 | E0A, E3, E6, E7 | 실패 자료 수집 · remote reconnect · 전체 종료 후 report · secret 원문 0 | ☐ |
-| **E9** | **표면·환경 동등성** — CLI 단계, DSL 자동 구성, MCP 도구와 local/remote/Docker simulation을 같은 시나리오로 검증 | E1~E8 | 의미·기본값·오류·결과 동등 · 일반 mixed-binary와 `consensus/upgrade` handoff 구분 | ☐ |
+| **E0** | **현행 재측정과 계약 고정** — key/resource/node/genesis/config/process/monitor/test/report의 producer·consumer, CLI·DSL·MCP 입력, local/remote/Docker 경로를 AST와 테스트로 재확인 | — | 중복 owner·직접 import·기존 완료 기능 목록, 수정 대상과 비대상 파일 확정 | ☑ |
+| **E0A** | **session artifact 계약 선행** — `environments/<env-id>` 정본 + `tests/<NNN>_<name>`별 env-ref·사용자료 snapshot/reference + root report의 2축 schema와 owner 고정 | E0 | testengine=verdict, session=영속, report builder=집계 · secret 정책 · 원자 write/readback | ☑ |
+| **E1** | **resolved producer → genesis** — validator count 기반 첫 N개 재선택을 제거하고 실제 BP identity/address/BLS를 사용 | E0A | `EN,BP,PN,BP` topology genesis readback 일치 · 누락/중복 no-write · 결정성 | ☑ |
+| **E2** | **자료 재사용 무결성** — asset별 owner를 유지하며 local/SSH/Docker의 binary·genesis·config·key·contract를 checksum으로 비교하고 결과 기록 | E0A | 같은 내용 재전송 0 · 같은 이름/다른 내용 오재사용 0 · secret 출력 0 | ☑ |
+| **E3** | **config·command 증적** — `nodeconfig` Command Builder, `config-<test-purpose>` fixture, override 우선순위, config readback, 노드별 argv·binary·checksum 기록 | E0A | node override 격리 · config/argv 동일 사실 · 변경 전후 revision 보존 | ☑ |
+| **E4** | **process와 개별 node control 정합** — Direct/Launcher/chainsetup start 중복을 측정하고 PID·실행 command·start/stop/restart·binary/config 교체를 하나의 ledger에 연결 | E2, E3 | 개별/전체 제어 · 실제 PID/command 일치 · 부분 실패 cleanup · orphan 0 · 세 환경 동등 | ☑ |
+| **E5** | **DSL syntax + semantic/capability 사전 검사** — schema/parser drift, selector/wait timeout, PN 제약과 chain·binary별 role/flag/RPC/metric/action/assertion/upgrade 지원을 모든 write 전에 검증 | E0A | unsupported는 no-write · applicableChains는 SKIP · CLI/MCP 판정 동등 | ☑ |
+| **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☑ **stage a**(`internal/nodemonitor` L4): `Verdict`·`Classify`(순수, worst-first)·`Gate`(관측→분류→제한복구 루프, `Observer`/`Restarter`/`Clock`/`EvidenceSink` 주입). `process.FailureMode` 재사용, 파괴 상태(chainId 불일치·fork·EtcdStale·QuorumLost)=FATAL 자동복구 0. **stage b**(testengine 배선): `health.Run`+recorded pid→Facts(순수 `factsFromReport`), `chainsetup.NetRestart` 재시작, `composeWorkspace`가 compose/reuse 후 1회·`PreSpec` 훅이 각 테스트 전 게이트. 관측·재시작은 재구현 없이 기존 함수 재사용(사용자 결정). 고아 `process.BringUp` 상한재시도는 모양이 달라 미재사용→1k-Z2 이월. **라이브 검증(GSTABLE_BIN) 이월** — CI는 순수 매핑·게이트·엔진루프 단위테스트로 green | ☑ |
+| **E7** | **동적 테스트와 contract** — 노드별 제어, partition/heal, binary/config 교체, 동적 `save/$ref` 주소와 deployer+nonce 결정적 주소 | E4, E5, E6 | per-node mixed binary · contract tx/receipt/address/checksum · 상태별 verdict | ☑ 기존(fault·partition·save/$ref·deploy·call)은 재구현 없이 조합. **신규**: ① `createAddress` 리더 — `accounts.CreateAddress`(SDK `tx.CreateAddress` 래핑, canonical 벡터 검증), nonce 생략 시 현재 nonce → deployContract 예상=실제 assert. ② `swapNode` action — 노드별 binary/config 교체(`chainsetup.NodeSwap`, 같은 datadir/genesis, **E4 recordSwap로 revision 보존**, config는 `writeNodeConfig` 공유·config-`<purpose>` fixture provenance). `interp.NodeSwapper` 선택 인터페이스(코어 미변경). ③ `contractChecksum` 리더 — bytecode/runtime code sha256(`filestore.Hash` 재사용). 기대 revert=PASS 등 verdict는 기존(`checkTxOutcome`). **swapNode config launch·라이브 시나리오는 사용자 환경 이월**, CI는 매핑·플러밍·revision·config render 단위테스트로 green | ☑ |
+| **E8** | **최종 증적 집계와 report** — E0A schema에 append-only logs, chainstate JSONL, assertion provenance, 테스트별 result를 채우고 root report 생성 | E0A, E3, E6, E7 | 실패 자료 수집 · remote reconnect · 전체 종료 후 report · secret 원문 0 | ☑ 기존(session schema·`AssertResult.Provenance`·report.Build/Summary·chainstate_sink)은 확장. **E8-1** `session.Scrub` — 증적 write seam(`writeJSON`+`Spec`)에서 키·비밀번호 마스킹, hash/주소는 보존. workspace.json(기능)은 제외. **E8-2** FAIL/BLOCKED 시 엔진 `OnFail` 훅이 `collectFailureData`로 health.Run(RPC/peer/block)·process 레저(pid/command)·노드 로그 tail을 테스트별 `observations/`에 수집(`TestRecord.Observation`, 스크럽 적용). **E8-3** report가 observations/*를 링크, RunSuite가 bus로 chainstate.jsonl을 headless 경로에서도 기록. **E8-4** `collector.ReconnectingLogReader`(백오프 재시도, 항상 적용) + `resource.Access.Runner` 노출 + `chainsetup.NetRunner` + RunSuite가 remote면 `RemoteLogReader` 주입. **원격 SSH read·chainstate 라이브는 사용자 환경 이월**, CI는 스크럽·OnFail·tail·reconnect·report 링크 단위테스트로 green | ☑ |
+| **E9** | **표면·환경 동등성** — CLI 단계, DSL 자동 구성, MCP 도구와 local/remote/Docker simulation을 같은 시나리오로 검증 | E1~E8 | 의미·기본값·오류·결과 동등 · 일반 mixed-binary와 `consensus/upgrade` handoff 구분 | ☑ **E9-1** MCP↔CLI GAP 해소: `chainbench_run`이 rpc 없으면 compose(`app.RunSuite`, `RunSuiteIn.SpecContent`로 인라인 스펙)·있으면 attach. `chainbench_hardfork`→`app.HardforkPlan/Execute`(execute 기본 false). `chainbench_upgrade`→신설 `app.UpgradeRun`(handoff orchestration을 `upgrade.Handoff.Run`으로 추출, CLI `upgrade run`과 공유). **E9-2** 구조적 parity: 두 표면이 미설정 시 zero-value를 넘겨 `compositionOf`가 정본 기본값 단일 소스(validators 4·keys/preset 고정), run 모드 선택 검증. mixed-binary vs handoff 구분·컴포즈 기본값/선택/가드는 기존 `compose_internal_test`가 커버. 세 표면은 arch(`TestMCPGoesThroughApp`)가 app 경유로 고정. **행위적 CLI-vs-MCP diff는 cmd=main이라 불가**, local/remote/Docker 실제 실행은 라이브 이월(환경 분기 단일 지점 arch 고정) | ☑ |
 
 E1·E2·E3·E5는 E0A에서 저장 계약과 수정 파일을 분리한 뒤 병렬 진행할 수 있다. E4는 process와 chainsetup,
 E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 session/collector/report
@@ -720,6 +720,39 @@ E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 
 각 작업은 코드 변경 전에 입력·출력 타입, owner, 허용 import, 외부 상태 변경 시점과 rollback을 검토받는다.
 구현 후에는 단위·거부·readback 테스트, CLI JSON 예시, local 검증과 가능한 remote/Docker 라이브 결과,
 남은 wrapper·alias·직접 import를 보고한다.
+
+### 1k-Z. 레거시 네이밍 정리 (추후, E-series 이후 · 비차단)
+
+모듈 통폐합(R1) 과정에서 흡수된 파일·식별자가 **옛 이름을 그대로 달고 있다.** 동작에는
+문제 없으나 "어디를 봐야 하는가"를 흐린다. E-series를 막지 않는 **순수 개명 리팩토링**으로
+뒤에 한 번에 정리한다(파일·심볼 rename + 주석의 "옛 core/X" 표기 정돈, 동작 변화 0).
+
+정리 대상(측정으로 확정):
+
+- `internal/core/session/netreg.go` — `core/netreg` 가 session 으로 합쳐졌는데 파일명·에러
+  접두("state: …")·주석이 옛 `core/state` 어휘를 유지(E0A 에서 관찰). session 어휘로 통일.
+- `core/collector` 안의 "옛 `core/obs`"·"옛 `core/logs`", `core/nodeconfig` 안의 "옛
+  `core/launchopt`"·"옛 `core/config`" 등 §3 표가 나열한 흡수 이력 표기 — 코드 심볼은 이미
+  새 위치이나 파일/주석이 옛 이름을 인용하는 곳을 정돈.
+- 판정: **파일 이동/개명만으로 완료로 보지 않는다** — 에러 접두·doc 주석·테스트 이름까지
+  새 owner 어휘로 맞춘 뒤 완료.
+
+게이트: `go build`·`go test`·arch 테스트 통과, 동작·공개 계약 변화 0, 남은 옛-이름 인용 목록 보고.
+
+### 1k-Z2. E4 에서 미룬 항목 (추후, 비차단)
+
+E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬 둘.
+
+- **핸드오프 레저 기록** — `consensus/upgrade` 핸드오프는 workspace 가 없어(compose.go
+  핸드오프 경로) 영속 레저(process.json)를 읽는 소비자가 없다. teardown 은 레저가 아니라
+  반환 NodeSet 으로 `StopNodeSet` 을 부른다. `LaunchAndRecord` 는 nil 레저를 받아 이미
+  통과한다. **핸드오프가 workspace 를 얻는 작업과 함께** LaunchOptions 에 선택적 Ledger 를
+  넣고 teardown 에서 Clear 한다. 그 전까지는 SIGKILL 엣지의 orphan 복구만을 위해 배선하지
+  않는다.
+- **죽은 process 오케스트레이션 은퇴** — `process.BringUp`/`NewLauncher`/`NewController`/
+  `RelaunchNode` 는 프로덕션(CLI·DSL 양쪽) 호출자가 0 이다(E4 착수 시 전수 확인). 프로덕션
+  기동은 chainsetup(startPhase/StartNode)·hardfork·upgrade 세 갈래뿐. 테스트 전용 심볼
+  제거는 A8(외부 소비자 0 공개 심볼 정리)·레거시 은퇴와 함께 처리한다.
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 

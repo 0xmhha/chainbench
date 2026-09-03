@@ -74,4 +74,12 @@ type TestRecord interface {
 	// that something went wrong and not what.
 	Reason(why string)
 	PostAction(r PostResult)
+	// Artifacts records which inputs (genesis, config, command, deployment) this
+	// test actually used, as references, so a verdict is traceable to them.
+	Artifacts(a TestArtifacts)
+	// Observation writes one failure-evidence file under observations/ (scrubbed
+	// like every artifact), so a failed test carries the node logs, process and
+	// RPC/block snapshot gathered when it failed. Best-effort: a write error is
+	// captured for Save to surface, never returned to the caller.
+	Observation(name string, content []byte)
 }

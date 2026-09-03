@@ -2,8 +2,13 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/report"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -54,4 +59,48 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 // SessionSummary reads a session's collected summary.
 func SessionSummary(root string) (RunSummary, error) {
 	return testengine.ReadSessionSummary(root)
+}
+
+// Validate runs the shared offline DSL validation for the MCP surface: the same
+// parse, name-resolution, selector, and capability checks the CLI `validate`
+// runs, so both surfaces reach the same verdict. It writes and composes nothing.
+func Validate(paths []string, chain string) ([]testengine.ValidateResult, error) {
+	return testengine.ValidateSpecs(paths, chain)
+}
+
+// ValidateContent validates spec bytes (the form MCP passes: a spec is a JSON
+// string, not a file on the host), reaching the same verdict as Validate.
+func ValidateContent(raws [][]byte, labels []string, chain string) ([]testengine.ValidateResult, error) {
+	return testengine.ValidateContent(raws, labels, chain)
+}
+
+// Report renders a run's report as text for the MCP surface. dir is a session
+// directory or a root holding several sessions (then the most recent is used).
+// MCP reaches the report through here rather than importing the report/session
+// core packages directly (architecture-v2 §2: MCP goes through app).
+func Report(dir string) (string, error) {
+	sessionDir := dir
+	if ids, _ := session.List(dir); len(ids) > 0 {
+		sessionDir = session.SessionDir(dir, ids[len(ids)-1])
+	}
+	rep, err := report.Read(sessionDir)
+	if err != nil {
+		rep, err = report.Build(sessionDir)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return "no runs recorded", nil
+			}
+			return "", err
+		}
+	}
+	if len(rep.Tests) == 0 {
+		return "no runs recorded", nil
+	}
+	var b strings.Builder
+	for _, t := range rep.Tests {
+		fmt.Fprintf(&b, "%d %s [%s] %s\n", t.Seq, t.ID, t.Env, t.Status)
+	}
+	fmt.Fprintf(&b, "session=%s pass=%d fail=%d blocked=%d skip=%d",
+		rep.Session, rep.Summary.Pass, rep.Summary.Fail, rep.Summary.Blocked, rep.Summary.Skip)
+	return b.String(), nil
 }

@@ -140,6 +140,7 @@ flowchart TD
 |---|---|
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션, 그리고 이름 붙인 네트워크 레지스트리(`SaveNetwork`·`LoadNetwork`·`ListNetworks`·`RemoveNetwork`, 옛 `core/netreg` — 영속 상태의 소유자에 합류, R1 2026-08-31) |
 | `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
+| `core/report` | **실행 전체 report 의 집계자(E0A).** 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를 모아 `report.json` 을 만든다(`Build`·`Generate`·`Write`·`Read`). 판정을 다시 하지 않고 `core/session` 만 읽는다 — testengine 이 저장 뒤 호출하고 CLI/MCP(app 경유)가 읽는다 |
 | `core/health` | 블록 전진 판정 |
 | `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `consensus/upgrade` 의 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
 | `dsl` · `dsl/assert` | **DSL 문법** — v1·v2 문법·파싱·검증·statement 파생(`Parse`·`SequenceOf`·`ActionName`·`ArgsOf`). **순수** — 실행 인프라(rpc·session·collector)를 import 하지 않는다(R2 게이트, 2026-09-01). 옛 `testspec` 의 문법 절반 |
@@ -153,6 +154,7 @@ flowchart TD
 |---|---|
 | `testengine` | 테스트 엔진 — 바깥 흐름 `RunSuite` 가 4단계를 소유한다(R4): ① DSL 이 선언한 체인을 chainsetup 으로 구성 ② pre-test hook ③ test ④ post-test hook(②~④는 interpreter 가 spec 에서 수행). 자체 조립 경로(`NewBuildEnv`·`NewLocalEngine`)는 R4 에서 삭제 — 구성 소유자는 chainsetup 하나이고, testengine → chainsetup 의존은 이 구조의 일부다(P6.1 게이트 대체) |
 | `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/cases/` 선언 + `testengine.RunSuite`(R4; app 은 MCP 경유 위임)가 대신한다 |
+| `nodemonitor` | 테스트 실행 허가 판정 + 제한 복구(E6). `health`·`collector`·`inspector`·`process/inspect`·`preflight` 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 을 판정하고(`Classify`), WAITABLE 은 `MaxNodeMonitorTimeout` 까지 대기·RESTARTABLE 은 `MaxRestarts` 상한으로 재시작·FATAL 은 파괴적 조치 없이 즉시 종료한다(`Gate`). 관측과 재시작은 재구현하지 않고 seam(`Observer`·`Restarter`)으로 기존 함수를 주입받는다. `testengine`(재사용 전·각 테스트 전)과 app/MCP 가 소비한다 |
 
 ### L5 유스케이스
 

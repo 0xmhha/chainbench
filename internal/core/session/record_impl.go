@@ -14,6 +14,7 @@ const (
 	fileAssert     = "assert.json"
 	fileStatus     = "status.json"
 	filePostAction = "postaction.json"
+	fileArtifacts  = "artifacts.json"
 )
 
 // record is the concrete TestRecord: it accumulates one test's artifacts and
@@ -25,13 +26,14 @@ type record struct {
 	seq    int
 	id     string
 
-	mu      sync.Mutex
-	envRef  string
-	status  TestStatus
-	steps   []StepResult
-	asserts []AssertResult
-	posts   []PostResult
-	errs    []error
+	mu        sync.Mutex
+	envRef    string
+	status    TestStatus
+	steps     []StepResult
+	asserts   []AssertResult
+	posts     []PostResult
+	artifacts TestArtifacts
+	errs      []error
 }
 
 func (r *record) Dir() string { return r.dir }
@@ -41,14 +43,27 @@ func (r *record) SetEnvRef(envID string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.envRef = envID
-	r.capture(os.WriteFile(filepath.Join(r.dir, fileEnvRef), []byte(envID), 0o644))
+	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileEnvRef), []byte(envID), 0o644))
 }
 
-// Spec stores the raw test definition as spec.json.
+// Spec stores the raw test definition as spec.json, scrubbed — a spec can carry
+// a signing key or a password (e.g. sendTx "key"), which must not reach the
+// evidence tree verbatim.
 func (r *record) Spec(raw []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.capture(os.WriteFile(filepath.Join(r.dir, fileSpec), raw, 0o644))
+	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileSpec), Scrub(raw), 0o644))
+}
+
+// Artifacts records the manifest of inputs this test actually used
+// (artifacts.json), so a verdict is traceable to the exact genesis, config,
+// command, and deployment it ran against. It stores references, never key
+// material.
+func (r *record) Artifacts(a TestArtifacts) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.artifacts = a
+	r.capture(writeJSON(filepath.Join(r.dir, fileArtifacts), a))
 }
 
 // Step appends an executed step and rewrites steps.json.
@@ -111,6 +126,22 @@ func (r *record) PostAction(res PostResult) {
 	defer r.mu.Unlock()
 	r.posts = append(r.posts, res)
 	r.capture(writeJSON(filepath.Join(r.dir, filePostAction), r.posts))
+}
+
+// dirObservations holds a failed test's gathered evidence.
+const dirObservations = "observations"
+
+// Observation writes one failure-evidence file under observations/, scrubbed of
+// secrets like every artifact. Best-effort: write errors are captured for Save.
+func (r *record) Observation(name string, content []byte) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	dir := filepath.Join(r.dir, dirObservations)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		r.capture(err)
+		return
+	}
+	r.capture(WriteFileAtomic(filepath.Join(dir, name), Scrub(content), 0o644))
 }
 
 // record collects a non-nil write error for later surfacing by session.Save.

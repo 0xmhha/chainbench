@@ -3,6 +3,8 @@ package testhelper
 import (
 	"context"
 	"fmt"
+	"sort"
+
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -16,6 +18,7 @@ const (
 	actionStopNode      = "stopNode"
 	actionStartNode     = "startNode"
 	actionRestartNode   = "restartNode"
+	actionSwapNode      = "swapNode"
 	actionPartition     = "partition"
 	actionHealPartition = "healPartition"
 )
@@ -25,6 +28,7 @@ func seedFaultBuiltins(r interp.Registry) {
 	r.RegisterAction(actionStopNode, stopNodeAction{})
 	r.RegisterAction(actionStartNode, startNodeAction{})
 	r.RegisterAction(actionRestartNode, restartNodeAction{})
+	r.RegisterAction(actionSwapNode, swapNodeAction{})
 	r.RegisterAction(actionPartition, partitionAction{})
 	r.RegisterAction(actionHealPartition, healPartitionAction{})
 }
@@ -81,6 +85,61 @@ func (restartNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	}
 	ac.Env.UpdateNode(started)
 	return nil
+}
+
+// swapNodeAction swaps one node onto a different binary mid-test, so a network
+// runs mixed binaries (E7). The datadir and genesis are unchanged; the pre-swap
+// pid/command are kept as a ledger revision. Args: on (selector, required),
+// binary (path, required). The node control must own the node processes; plain
+// attach cannot swap.
+type swapNodeAction struct{}
+
+func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	n, ctrl, err := faultTarget(ac, actionSwapNode)
+	if err != nil {
+		return err
+	}
+	binary, _ := ac.Args["binary"].(string)
+	config := configOverrides(ac.Args["config"])
+	if binary == "" && len(config) == 0 {
+		return fmt.Errorf("dsl: swapNode requires a \"binary\" or \"config\"")
+	}
+	purpose, _ := ac.Args["purpose"].(string)
+	sw, ok := ctrl.(interp.NodeSwapper)
+	if !ok {
+		return fmt.Errorf("dsl: swapNode node%d: this run's node control cannot swap", n.Index)
+	}
+	swapped, err := sw.Swap(ctx, n, interp.NodeChange{Binary: binary, Config: config, Purpose: purpose})
+	if err != nil {
+		return fmt.Errorf("dsl: swapNode node%d: %w", n.Index, err)
+	}
+	ac.Env.UpdateNode(swapped)
+	return nil
+}
+
+// configOverrides normalizes a swapNode "config" arg to key=value strings: a
+// JSON object {"k":"v"} (sorted so the applied order is deterministic) or a list
+// ["k=v"].
+func configOverrides(v any) []string {
+	switch c := v.(type) {
+	case map[string]any:
+		out := make([]string, 0, len(c))
+		for k, val := range c {
+			out = append(out, fmt.Sprintf("%s=%v", k, val))
+		}
+		sort.Strings(out)
+		return out
+	case []any:
+		var out []string
+		for _, e := range c {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 // faultTarget resolves the action's "on" selector and the injected node control,

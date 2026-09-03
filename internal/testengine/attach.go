@@ -60,6 +60,18 @@ type AttachConfig struct {
 	// act on the node processes. Nil is plain attach's default: the run does
 	// not own the processes, and those steps fail with a clear reason.
 	Control interp.NodeControl
+	// PreSpec, when non-nil, gates the network before each test (E6). A suite
+	// that owns the network passes a gate that waits on or restarts unfit nodes;
+	// plain attach leaves it nil (it does not own the processes to restart).
+	PreSpec func(ctx context.Context, env session.Environment) error
+	// OnFail, when non-nil, gathers failure evidence into a failed test's
+	// observations/ (E8). A suite that owns the network passes a gatherer over
+	// its nodes and workspace; plain attach leaves it nil.
+	OnFail func(ctx context.Context, env session.Environment, rec session.TestRecord) error
+	// LogReader, when non-nil, is how the collector reads node logs — a remote
+	// target passes an SSH-backed reader so a remote node's log is captured (and
+	// reconnected on a dropped session, E8); nil reads the local filesystem.
+	LogReader collector.LogReader
 }
 
 // BuildEnvFunc provisions and brings up a network for a spec, returning the
@@ -136,9 +148,11 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
-		BuildEnv:   withCollection(build, cfg.Bus, nil),
+		BuildEnv:   withCollection(build, cfg.Bus, nil, cfg.LogReader),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
+		PreSpec:    cfg.PreSpec,
+		OnFail:     cfg.OnFail,
 		Emit:       busEmit(cfg.Bus),
 		Network:    cfg.Chain,
 	}), nil
