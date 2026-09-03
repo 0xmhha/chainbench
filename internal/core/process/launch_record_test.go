@@ -45,7 +45,7 @@ func TestProcFor(t *testing.T) {
 // the one the driver returned, and the fresh launch is refused a second time
 // (a double launch) while a nil ledger launches without recording.
 func TestLaunchAndRecord_RecordsLaunchedPID(t *testing.T) {
-	d := &fakeDriver{}
+	d := &recordingDriver{}
 	l, err := process.OpenLedger(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
