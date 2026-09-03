@@ -345,9 +345,11 @@ func (w *Workspace) configOverridesFor(index int) []string {
 }
 
 // ConfigProvenance is one node's config record: the overrides applied to it and
-// the checksum ("sha256:<hex>") of the config that resulted.
+// the checksum ("sha256:<hex>") of the config that resulted. Fixture names a
+// mid-test config swap (config-<test-purpose>), empty for the initial compose.
 type ConfigProvenance struct {
 	Node      int      `json:"node"`
+	Fixture   string   `json:"fixture,omitempty"`
 	Overrides []string `json:"overrides,omitempty"`
 	Checksum  string   `json:"checksum"`
 }

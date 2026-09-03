@@ -407,39 +407,12 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	w.state.ConfigProvenance = w.state.ConfigProvenance[:0]
 	overridden := 0
 	for _, ns := range w.state.Nodes {
-		t, err := w.machineFor(ns)
+		prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, ns, "")
 		if err != nil {
 			return "", err
 		}
-		staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
-		if err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
-		}
-		spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
-		overrides := w.configOverridesFor(ns.Index)
-		if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
-		}
-		toml := nodeconfig.TOML(spec)
-		if err := t.Files.Write(ctx, ns.ConfigPath, toml, 0o644); err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
-		}
-		// Readback: the config on the target must hash to what was written, so a
-		// truncated or clobbered write is caught here rather than at node boot.
-		// Checksum hashes on the target (a remote store runs sha256sum), so this
-		// does not download the file back.
-		want := filestore.Hash(toml)
-		got, err := t.Files.Checksum(ctx, ns.ConfigPath)
-		if err != nil {
-			return "", fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err)
-		}
-		if got != want {
-			return "", fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got)
-		}
-		w.state.ConfigProvenance = append(w.state.ConfigProvenance, ConfigProvenance{
-			Node: ns.Index, Overrides: overrides, Checksum: want,
-		})
-		if len(overrides) > 0 {
+		w.state.ConfigProvenance = append(w.state.ConfigProvenance, prov)
+		if len(prov.Overrides) > 0 {
 			overridden++
 		}
 	}
@@ -449,6 +422,48 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	}
 	w.markStep("config", detail)
 	return detail, nil
+}
+
+// writeNodeConfig renders one node's config with its overrides, writes it,
+// verifies the readback checksum, and returns its provenance. The Config step
+// and a mid-test config swap share it, so both produce the same config and the
+// same provenance record. purpose, when set, names the swap's config fixture
+// (config-<purpose>); the initial compose passes "".
+func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record, purpose string) (ConfigProvenance, error) {
+	t, err := w.machineFor(ns)
+	if err != nil {
+		return ConfigProvenance{}, err
+	}
+	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
+	if err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
+	}
+	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+	overrides := w.configOverridesFor(ns.Index)
+	if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+	}
+	toml := nodeconfig.TOML(spec)
+	if err := t.Files.Write(ctx, ns.ConfigPath, toml, 0o644); err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+	}
+	// Readback: the config on the target must hash to what was written, so a
+	// truncated or clobbered write is caught here rather than at node boot.
+	// Checksum hashes on the target (a remote store runs sha256sum), so this
+	// does not download the file back.
+	want := filestore.Hash(toml)
+	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
+	if err != nil {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err)
+	}
+	if got != want {
+		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got)
+	}
+	prov := ConfigProvenance{Node: ns.Index, Overrides: overrides, Checksum: want}
+	if purpose != "" {
+		prov.Fixture = "config-" + purpose
+	}
+	return prov, nil
 }
 
 // LaunchOpts assembles each node's launch argv through nodeconfig.Argv —

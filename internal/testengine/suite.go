@@ -150,10 +150,13 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 	return out.Node, nil
 }
 
-// Swap relaunches one node on a different binary through the workspace,
-// satisfying interp.NodeSwapper so the swapNode action reaches it.
-func (w workspaceNodes) Swap(ctx context.Context, n node.Node, binary string) (node.Node, error) {
-	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{DataDir: w.dataDir, Index: n.Index, Binary: binary})
+// Swap relaunches one node with a different binary and/or config through the
+// workspace, satisfying interp.NodeSwapper so the swapNode action reaches it.
+func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {
+	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{
+		DataDir: w.dataDir, Index: n.Index,
+		Binary: change.Binary, Config: change.Config, Purpose: change.Purpose,
+	})
 	if err != nil {
 		return n, err
 	}

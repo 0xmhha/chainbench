@@ -121,25 +121,31 @@ type NodeStartOut struct {
 	Node node.Node
 }
 
-// NodeSwapIn selects one node and the binary to relaunch it on.
+// NodeSwapIn selects one node and the binary and/or config to relaunch it with.
 type NodeSwapIn struct {
 	DataDir string
 	Index   int
-	// Binary is the path to relaunch node Index on. The datadir and genesis are
-	// unchanged: this is a per-node binary swap, not a rebuild.
+	// Binary is the path to relaunch node Index on (empty keeps the current
+	// one). The datadir and genesis are unchanged: this is a swap, not a rebuild.
 	Binary string
+	// Config is a set of key=value config overrides to apply before relaunch
+	// (empty keeps the current config).
+	Config []string
+	// Purpose names the config fixture recorded in provenance (config-<purpose>).
+	Purpose string
 }
 
-// NodeSwap stops one node and relaunches it on a different binary, so a network
-// can run mixed binaries mid-test. The pre-swap pid and command are kept as a
-// ledger revision; the relaunched node's new PID is returned.
+// NodeSwap stops one node and relaunches it with a different binary and/or
+// config, so a network can run mixed binaries mid-test. The pre-swap pid and
+// command are kept as a ledger revision; the relaunched node's new PID is
+// returned.
 func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) {
 	if in.DataDir == "" || in.Index <= 0 {
 		return NodeStartOut{}, ErrNoDataDirAndIndex
 	}
 	var swapped node.Node
 	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		detail, err := ws.SwapNode(ctx, in.Index, in.Binary)
+		detail, err := ws.SwapNode(ctx, in.Index, in.Binary, in.Config, in.Purpose)
 		if err != nil {
 			return "", err
 		}

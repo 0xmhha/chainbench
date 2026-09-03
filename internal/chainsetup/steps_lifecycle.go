@@ -279,14 +279,17 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	return detail, nil
 }
 
-// SwapNode stops node index and relaunches it on binary, keeping the same
-// datadir, genesis and argv — a per-node binary swap mid-test (so one network
-// runs mixed binaries), not a rebuild. The pre-swap pid and command are kept as
-// a ledger revision (recordSwap), and the node's per-node binary is updated so
-// a later restart uses the swapped one. binary is a path.
-func (w *Workspace) SwapNode(ctx context.Context, index int, binary string) (string, error) {
-	if binary == "" {
-		return "", fmt.Errorf("chainsetup: swap node%d needs a binary", index)
+// SwapNode stops node index and relaunches it with a different binary and/or
+// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
+// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
+// command are kept as a ledger revision (recordSwap); the node's per-node
+// binary and config provenance are updated so a later restart uses the swapped
+// ones. binary is a path (empty keeps the current one); config is a set of
+// key=value config overrides (empty keeps the current config); purpose names the
+// config fixture in provenance.
+func (w *Workspace) SwapNode(ctx context.Context, index int, binary string, config []string, purpose string) (string, error) {
+	if binary == "" && len(config) == 0 {
+		return "", fmt.Errorf("chainsetup: swap node%d needs a binary or a config change", index)
 	}
 	ni, err := w.nodeAt(index)
 	if err != nil {
@@ -295,6 +298,10 @@ func (w *Workspace) SwapNode(ctx context.Context, index int, binary string) (str
 	ns := w.state.Nodes[ni]
 	if len(ns.Args) == 0 {
 		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
+	}
+	bin, err := w.binary("")
+	if err != nil {
+		return "", err
 	}
 	t, err := w.machineFor(ns)
 	if err != nil {
@@ -307,10 +314,17 @@ func (w *Workspace) SwapNode(ctx context.Context, index int, binary string) (str
 			return "", fmt.Errorf("chainsetup: swap node%d: stop: %w", index, err)
 		}
 	}
-	w.setNodeBinary(ni, binary)
+	if binary != "" {
+		w.setNodeBinary(ni, binary)
+	}
+	if len(config) > 0 {
+		if err := w.swapNodeConfig(ctx, ni, config, purpose); err != nil {
+			return "", fmt.Errorf("chainsetup: swap node%d: %w", index, err)
+		}
+	}
 	ns = w.state.Nodes[ni]
 	spec := process.SpecOf(ns)
-	spec.Binary = w.binaryFor(ns, "")
+	spec.Binary = w.binaryFor(ns, bin)
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: swap node%d: launch: %w", index, err)
@@ -332,6 +346,44 @@ func (w *Workspace) setNodeBinary(ni int, binary string) {
 	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
 	w.state.Binaries[key] = binary
 	w.state.Nodes[ni].Binary = key
+}
+
+// swapNodeConfig appends config overrides for node ni, re-renders and writes its
+// config through the shared writeNodeConfig path (so the swap produces the same
+// config and provenance a compose would), and records the config-<purpose>
+// fixture in provenance. An unknown override key fails here, not at node boot.
+func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string, purpose string) error {
+	p, err := w.plugin()
+	if err != nil {
+		return err
+	}
+	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	if err != nil {
+		return err
+	}
+	scope := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
+	if w.state.ConfigSet == nil {
+		w.state.ConfigSet = map[string][]string{}
+	}
+	w.state.ConfigSet[scope] = append(w.state.ConfigSet[scope], config...)
+	prov, err := w.writeNodeConfig(ctx, p, preset, placed, peering, pubkey, w.state.Nodes[ni], purpose)
+	if err != nil {
+		return err
+	}
+	w.setConfigProvenance(prov)
+	return nil
+}
+
+// setConfigProvenance replaces node prov.Node's config provenance entry, or
+// appends it, so a mid-test config swap updates just that node's record.
+func (w *Workspace) setConfigProvenance(prov ConfigProvenance) {
+	for i, e := range w.state.ConfigProvenance {
+		if e.Node == prov.Node {
+			w.state.ConfigProvenance[i] = prov
+			return
+		}
+	}
+	w.state.ConfigProvenance = append(w.state.ConfigProvenance, prov)
 }
 
 // Rm removes the composed data plane (node datadirs, configs, genesis, logs)
