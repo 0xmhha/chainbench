@@ -45,11 +45,13 @@ func (r *record) SetEnvRef(envID string) {
 	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileEnvRef), []byte(envID), 0o644))
 }
 
-// Spec stores the raw test definition as spec.json.
+// Spec stores the raw test definition as spec.json, scrubbed — a spec can carry
+// a signing key or a password (e.g. sendTx "key"), which must not reach the
+// evidence tree verbatim.
 func (r *record) Spec(raw []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileSpec), raw, 0o644))
+	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileSpec), Scrub(raw), 0o644))
 }
 
 // Artifacts records the manifest of inputs this test actually used
