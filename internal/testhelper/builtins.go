@@ -45,6 +45,7 @@ const (
 	assertTxMined       = "txMined"
 	assertCallError     = "callError"
 	assertMethodPresent = "methodPresent"
+	assertCreateAddress = "createAddress"
 )
 
 // Defaults for the sendTx wait loop, overridable per action via args.

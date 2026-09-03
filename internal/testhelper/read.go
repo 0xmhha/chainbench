@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl/assert"
@@ -232,6 +233,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertCodeAt, defaultOp: "Equal", read: readCodeAt},
 		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
 		{name: assertCall, defaultOp: "Equal", read: readCall},
+		{name: assertCreateAddress, defaultOp: "Equal", read: readCreateAddress},
 		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
 		{name: assertReceiptLog, defaultOp: "Equal", read: readReceiptLog},
 		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
@@ -364,6 +366,31 @@ func readBalanceAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any
 		return nil, err
 	}
 	return interp.BigString(v), nil
+}
+
+// readCreateAddress computes the contract address a CREATE deploy from
+// "deployer" (or "from") at "nonce" will land at — the deterministic address a
+// spec can save/$ref and assert a deploy reached. With no "nonce" it reads the
+// deployer's current on-chain nonce, so `deployContract` right after lands at
+// the returned address. It reuses accounts.CreateAddress (the SDK's own
+// computation); nothing is deployed here.
+func readCreateAddress(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	deployer, _ := spec["deployer"].(string)
+	if deployer == "" {
+		deployer, _ = spec["from"].(string)
+	}
+	if deployer == "" {
+		return nil, fmt.Errorf("dsl: createAddress requires \"deployer\"")
+	}
+	nonce, ok := uintArg(spec["nonce"])
+	if !ok {
+		n, err := c.NonceAt(ctx, deployer)
+		if err != nil {
+			return nil, err
+		}
+		nonce = n
+	}
+	return accounts.CreateAddress(deployer, nonce)
 }
 
 func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
