@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 )
@@ -37,6 +38,17 @@ func (s stubStore) Read(_ context.Context, path string) ([]byte, error) {
 }
 
 func (s stubStore) Write(context.Context, string, []byte, fs.FileMode) error { return nil }
+
+func (s stubStore) Checksum(_ context.Context, path string) (string, error) {
+	if s.err != nil {
+		return "", s.err
+	}
+	b, ok := s.data[path]
+	if !ok {
+		return "", errors.New("no such file")
+	}
+	return filestore.Hash(b), nil
+}
 
 // TestSources_AllYieldAPrivateKey pins the contract of the absorbed key sources:
 // every origin produces the same type, so what a key means is decided once, by

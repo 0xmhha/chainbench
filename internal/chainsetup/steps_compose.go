@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -537,7 +538,15 @@ func (w *Workspace) shipIdentities(ctx context.Context, t *resource.Access, node
 			return err
 		}
 		if exists {
-			return nil
+			have, err := t.Files.Checksum(ctx, dst)
+			if err != nil {
+				return err
+			}
+			if have == filestore.Hash(b) {
+				return nil // identical content already on the target: not re-sent
+			}
+			// A stale key file under the same name is not the one we mean; ship
+			// the current content over it rather than launch with the wrong key.
 		}
 		if err := t.Files.Write(ctx, dst, b, mode); err != nil {
 			return err

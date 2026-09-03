@@ -38,6 +38,17 @@ func (m fileMap) Read(_ context.Context, path string) ([]byte, error) {
 
 func (m fileMap) Write(context.Context, string, []byte, fs.FileMode) error { return nil }
 
+func (m fileMap) Checksum(_ context.Context, path string) (string, error) {
+	if m.err != nil {
+		return "", m.err
+	}
+	b, ok := m.files[path]
+	if !ok {
+		return "", errors.New("no such file: " + path)
+	}
+	return filestore.Hash(b), nil
+}
+
 // presetNode1 returns the shipped fixture's first node, which is what the
 // go-wbft bootnode tool produced for that key. Deriving the same values from
 // the same nodekey is what makes the local derivation a replacement for the

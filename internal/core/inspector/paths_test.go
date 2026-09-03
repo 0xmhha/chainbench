@@ -16,6 +16,7 @@ func (presentStore) Read(context.Context, string) ([]byte, error)          { ret
 func (presentStore) Write(context.Context, string, []byte, fs.FileMode) error {
 	return nil
 }
+func (presentStore) Checksum(context.Context, string) (string, error) { return "", nil }
 
 // TestPaths_ReportsOnlyTheAbsent: the inspector says what is missing, in a
 // stable order, and names each path by what it is for.

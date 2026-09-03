@@ -12,6 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -29,6 +30,13 @@ func (s *fakeStore) Read(_ context.Context, path string) ([]byte, error) {
 		return nil, fmt.Errorf("not found: %s", path)
 	}
 	return b, nil
+}
+func (s *fakeStore) Checksum(_ context.Context, path string) (string, error) {
+	b, ok := s.content[path]
+	if !ok {
+		return "", fmt.Errorf("not found: %s", path)
+	}
+	return filestore.Hash(b), nil
 }
 
 func (s *fakeStore) Write(_ context.Context, path string, content []byte, _ fs.FileMode) error {
