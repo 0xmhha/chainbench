@@ -279,6 +279,61 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	return detail, nil
 }
 
+// SwapNode stops node index and relaunches it on binary, keeping the same
+// datadir, genesis and argv — a per-node binary swap mid-test (so one network
+// runs mixed binaries), not a rebuild. The pre-swap pid and command are kept as
+// a ledger revision (recordSwap), and the node's per-node binary is updated so
+// a later restart uses the swapped one. binary is a path.
+func (w *Workspace) SwapNode(ctx context.Context, index int, binary string) (string, error) {
+	if binary == "" {
+		return "", fmt.Errorf("chainsetup: swap node%d needs a binary", index)
+	}
+	ni, err := w.nodeAt(index)
+	if err != nil {
+		return "", err
+	}
+	ns := w.state.Nodes[ni]
+	if len(ns.Args) == 0 {
+		return "", fmt.Errorf("chainsetup: node%d has no recorded argv — run `chain start` first", index)
+	}
+	t, err := w.machineFor(ns)
+	if err != nil {
+		return "", err
+	}
+	// Stop the running process but leave the ledger entry, so the relaunch
+	// supersedes it and keeps the pre-swap pid/command as a revision.
+	if ns.PID > 0 {
+		if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: ns.PID}); err != nil {
+			return "", fmt.Errorf("chainsetup: swap node%d: stop: %w", index, err)
+		}
+	}
+	w.setNodeBinary(ni, binary)
+	ns = w.state.Nodes[ni]
+	spec := process.SpecOf(ns)
+	spec.Binary = w.binaryFor(ns, "")
+	h, err := t.Driver.Launch(ctx, spec)
+	if err != nil {
+		return "", fmt.Errorf("chainsetup: swap node%d: launch: %w", index, err)
+	}
+	if err := w.recordSwap(ni, h.PID, spec.Binary); err != nil {
+		return "", fmt.Errorf("chainsetup: swap node%d: %w", index, err)
+	}
+	detail := fmt.Sprintf("node%d swapped to %s (pid %d)", index, filepath.Base(spec.Binary), h.PID)
+	w.markStep("swap-node", detail)
+	return detail, nil
+}
+
+// setNodeBinary registers binary under a per-node key and points node ni at it,
+// so binaryFor resolves the swapped binary for this and any later launch.
+func (w *Workspace) setNodeBinary(ni int, binary string) {
+	if w.state.Binaries == nil {
+		w.state.Binaries = map[string]string{}
+	}
+	key := "node" + strconv.Itoa(w.state.Nodes[ni].Index)
+	w.state.Binaries[key] = binary
+	w.state.Nodes[ni].Binary = key
+}
+
 // Rm removes the composed data plane (node datadirs, configs, genesis, logs)
 // for a local target. Running nodes must be stopped first.
 func (w *Workspace) Rm(ctx context.Context) (string, error) {

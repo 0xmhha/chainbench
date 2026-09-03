@@ -121,6 +121,41 @@ type NodeStartOut struct {
 	Node node.Node
 }
 
+// NodeSwapIn selects one node and the binary to relaunch it on.
+type NodeSwapIn struct {
+	DataDir string
+	Index   int
+	// Binary is the path to relaunch node Index on. The datadir and genesis are
+	// unchanged: this is a per-node binary swap, not a rebuild.
+	Binary string
+}
+
+// NodeSwap stops one node and relaunches it on a different binary, so a network
+// can run mixed binaries mid-test. The pre-swap pid and command are kept as a
+// ledger revision; the relaunched node's new PID is returned.
+func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) {
+	if in.DataDir == "" || in.Index <= 0 {
+		return NodeStartOut{}, ErrNoDataDirAndIndex
+	}
+	var swapped node.Node
+	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
+		detail, err := ws.SwapNode(ctx, in.Index, in.Binary)
+		if err != nil {
+			return "", err
+		}
+		for _, n := range ws.NodeSet().Nodes {
+			if n.Index == in.Index {
+				swapped = n
+			}
+		}
+		return detail, nil
+	})
+	if err != nil {
+		return NodeStartOut{}, err
+	}
+	return NodeStartOut{Node: swapped}, nil
+}
+
 // NodeStart relaunches a single stopped node with the argv it was armed with,
 // so it rejoins its peers and re-syncs the blocks it missed, and records its
 // new PID.

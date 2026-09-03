@@ -150,6 +150,16 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 	return out.Node, nil
 }
 
+// Swap relaunches one node on a different binary through the workspace,
+// satisfying interp.NodeSwapper so the swapNode action reaches it.
+func (w workspaceNodes) Swap(ctx context.Context, n node.Node, binary string) (node.Node, error) {
+	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{DataDir: w.dataDir, Index: n.Index, Binary: binary})
+	if err != nil {
+		return n, err
+	}
+	return out.Node, nil
+}
+
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
 // through chainsetup, run the tests, collect, and stop the network unless
 // asked to keep it. Setup failure aborts before any test runs; a test-phase

@@ -16,6 +16,7 @@ const (
 	actionStopNode      = "stopNode"
 	actionStartNode     = "startNode"
 	actionRestartNode   = "restartNode"
+	actionSwapNode      = "swapNode"
 	actionPartition     = "partition"
 	actionHealPartition = "healPartition"
 )
@@ -25,6 +26,7 @@ func seedFaultBuiltins(r interp.Registry) {
 	r.RegisterAction(actionStopNode, stopNodeAction{})
 	r.RegisterAction(actionStartNode, startNodeAction{})
 	r.RegisterAction(actionRestartNode, restartNodeAction{})
+	r.RegisterAction(actionSwapNode, swapNodeAction{})
 	r.RegisterAction(actionPartition, partitionAction{})
 	r.RegisterAction(actionHealPartition, healPartitionAction{})
 }
@@ -80,6 +82,34 @@ func (restartNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		return fmt.Errorf("dsl: restartNode node%d: start: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(started)
+	return nil
+}
+
+// swapNodeAction swaps one node onto a different binary mid-test, so a network
+// runs mixed binaries (E7). The datadir and genesis are unchanged; the pre-swap
+// pid/command are kept as a ledger revision. Args: on (selector, required),
+// binary (path, required). The node control must own the node processes; plain
+// attach cannot swap.
+type swapNodeAction struct{}
+
+func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	n, ctrl, err := faultTarget(ac, actionSwapNode)
+	if err != nil {
+		return err
+	}
+	binary, _ := ac.Args["binary"].(string)
+	if binary == "" {
+		return fmt.Errorf("dsl: swapNode requires a \"binary\"")
+	}
+	sw, ok := ctrl.(interp.NodeSwapper)
+	if !ok {
+		return fmt.Errorf("dsl: swapNode node%d: this run's node control cannot swap binaries", n.Index)
+	}
+	swapped, err := sw.Swap(ctx, n, binary)
+	if err != nil {
+		return fmt.Errorf("dsl: swapNode node%d: %w", n.Index, err)
+	}
+	ac.Env.UpdateNode(swapped)
 	return nil
 }
 

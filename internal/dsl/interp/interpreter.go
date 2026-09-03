@@ -67,6 +67,16 @@ type NodeControl interface {
 	Start(ctx context.Context, n node.Node) (node.Node, error)
 }
 
+// NodeSwapper is an optional NodeControl capability: relaunching a node on a
+// different binary mid-test, so one network runs mixed binaries. A control that
+// owns the node processes (a suite-composed network) implements it; plain attach
+// does not, and the swapNode action reports that rather than failing obscurely.
+type NodeSwapper interface {
+	// Swap stops n and relaunches it on binary (a path), keeping the same
+	// datadir and genesis, and returns it with its new pid.
+	Swap(ctx context.Context, n node.Node, binary string) (node.Node, error)
+}
+
 // Action is one atomic pre-action, step, or post-action (no partial success).
 type Action interface {
 	Do(ctx context.Context, ac *ActionCtx) error
