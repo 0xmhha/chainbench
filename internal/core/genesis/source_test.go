@@ -2,11 +2,15 @@ package genesis_test
 
 import (
 	"context"
+	"encoding/json"
 	wbftfam "github.com/0xmhha/chainbench/internal/consensus/wbft"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -119,5 +123,57 @@ func TestPresetGenesisSource_MissingPreset(t *testing.T) {
 	src := genesis.PresetSource{KeysDir: t.TempDir()} // no metadata.json
 	if _, err := src.Genesis(context.Background(), wbftTestPlugin(), genesis.Request{Validators: 0}); err == nil {
 		t.Fatal("expected error when preset metadata is absent")
+	}
+}
+
+// TestPresetGenesisSource_ProducersFromPlacement is the E1 defect reproduction:
+// for the topology node1=EN, node2=BP, node3=PN, node4=BP the genesis validator
+// set must be the producers (node2, node4), not the first two nodes of the ring.
+func TestPresetGenesisSource_ProducersFromPlacement(t *testing.T) {
+	// Use the real committed ring: the preset loader verifies each identity
+	// derives from its nodekey, so a fabricated one is rejected.
+	presetDir := filepath.Join("..", "..", "..", "..", "keys", "preset")
+	preset, err := store.LoadPreset(presetDir)
+	if err != nil {
+		t.Skipf("preset fixture unavailable: %v", err)
+	}
+	n2, ok2 := preset.Node(2)
+	n4, ok4 := preset.Node(4)
+	if !ok2 || !ok4 {
+		t.Skip("preset ring has fewer than 4 nodes")
+	}
+
+	m, err := node.NewMap([]node.Placement{
+		{Index: 1, Label: node.LabelFor(1), Role: node.RoleEN, Host: "10.0.0.1", Ports: node.Endpoints{P2P: 30301}},
+		{Index: 2, Label: node.LabelFor(2), Role: node.RoleBP, Host: "10.0.0.2", Ports: node.Endpoints{P2P: 30301}},
+		{Index: 3, Label: node.LabelFor(3), Role: node.RolePN, Host: "10.0.0.3", Ports: node.Endpoints{P2P: 30301}},
+		{Index: 4, Label: node.LabelFor(4), Role: node.RoleBP, Host: "10.0.0.4", Ports: node.Endpoints{P2P: 30301}},
+	})
+	if err != nil {
+		t.Fatalf("NewMap: %v", err)
+	}
+
+	gen, err := genesis.PresetSource{KeysDir: presetDir}.Genesis(context.Background(), wbftTestPlugin(),
+		genesis.Request{Validators: 2, Nodes: m})
+	if err != nil {
+		t.Fatalf("Genesis: %v", err)
+	}
+
+	var doc struct {
+		Validators []string `json:"validators"`
+	}
+	if err := json.Unmarshal(gen.Genesis, &doc); err != nil {
+		t.Fatalf("parse genesis: %v\n%s", err, gen.Genesis)
+	}
+	want := []string{n2.Address, n4.Address}
+	if !reflect.DeepEqual(doc.Validators, want) {
+		t.Fatalf("genesis validators = %v, want the producers node2,node4 %v", doc.Validators, want)
+	}
+	// And the endpoint's identity must NOT be a validator.
+	n1, _ := preset.Node(1)
+	for _, v := range doc.Validators {
+		if v == n1.Address {
+			t.Fatalf("node1 (EN) %s wrongly seated as a validator", n1.Address)
+		}
 	}
 }

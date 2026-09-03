@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -81,12 +82,14 @@ type PresetSource struct {
 // config overrides and overlay. ctx is accepted for future remote preset
 // sources; the local metadata read does not use it.
 func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, req Request) (Artifacts, error) {
-	validators := req.Validators
 	preset, err := store.LoadPreset(s.KeysDir)
 	if err != nil {
 		return Artifacts{}, fmt.Errorf("genesis: preset source: %w", err)
 	}
-	net := preset.NetworkFor(validators)
+	net, err := presetNetwork(preset, req)
+	if err != nil {
+		return Artifacts{}, fmt.Errorf("genesis: preset source: %w", err)
+	}
 	gen, err := Build(plugin, Inputs{
 		Validators: net.Validators,
 		BLSKeys:    net.BLSKeys,
@@ -101,6 +104,37 @@ func (s PresetSource) Genesis(_ context.Context, plugin registry.ChainPlugin, re
 	// A wbft-family network is one file: the validator set is inside the
 	// genesis, so nothing else has to reach a later step.
 	return Artifacts{Genesis: gen}, nil
+}
+
+// presetNetwork resolves the validator set for a preset genesis.
+//
+// When a placement is present, the validators are the producers the topology
+// actually named — the nodes whose role is a producer, taken by index in
+// placement order — so a topology whose producers are not the first N nodes
+// (EN,BP,PN,BP names node2 and node4) still seeds genesis with the right
+// identities. Before this, the count req.Validators was passed to NetworkFor,
+// which took the first N of the ring: correct only when the producers happened
+// to be the leading nodes, and silently wrong (an endpoint registered as a
+// validator, a producer left out) otherwise.
+//
+// Without a placement (a fixed-port caller that has only a count) it falls back
+// to the first req.Validators of the ring.
+func presetNetwork(preset keyring.Preset, req Request) (keyring.Network, error) {
+	if req.Nodes == nil {
+		return preset.NetworkFor(req.Validators), nil
+	}
+	var indices []int
+	for _, p := range req.Nodes.Placements() {
+		if node.Is(p.Role, node.RoleBP) {
+			indices = append(indices, p.Index)
+		}
+	}
+	if len(indices) == 0 {
+		// A placement that named no producer role: fall back to the count so a
+		// caller with a placement but no resolved producers still gets a genesis.
+		return preset.NetworkFor(req.Validators), nil
+	}
+	return preset.NetworkForNodes(indices)
 }
 
 // Config is everything a caller can say about how a network's genesis is
