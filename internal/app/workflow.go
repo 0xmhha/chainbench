@@ -61,6 +61,19 @@ func SessionSummary(root string) (RunSummary, error) {
 	return testengine.ReadSessionSummary(root)
 }
 
+// Validate runs the shared offline DSL validation for the MCP surface: the same
+// parse, name-resolution, selector, and capability checks the CLI `validate`
+// runs, so both surfaces reach the same verdict. It writes and composes nothing.
+func Validate(paths []string, chain string) ([]testengine.ValidateResult, error) {
+	return testengine.ValidateSpecs(paths, chain)
+}
+
+// ValidateContent validates spec bytes (the form MCP passes: a spec is a JSON
+// string, not a file on the host), reaching the same verdict as Validate.
+func ValidateContent(raws [][]byte, labels []string, chain string) ([]testengine.ValidateResult, error) {
+	return testengine.ValidateContent(raws, labels, chain)
+}
+
 // Report renders a run's report as text for the MCP surface. dir is a session
 // directory or a root holding several sessions (then the most recent is used).
 // MCP reaches the report through here rather than importing the report/session
