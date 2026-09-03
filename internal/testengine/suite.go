@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -238,6 +239,10 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			// environment (E8) even on the headless suite path, which has no
 			// dashboard subscriber (events are simply dropped).
 			Bus: collector.NewBus(),
+			// A remote target reads its node logs over SSH (and reconnects a
+			// dropped session, E8); a local target leaves this nil and the
+			// collector reads the local filesystem.
+			LogReader: remoteLogReader(sd, in.DataDir),
 			// Gate the network before each test: a node a prior fault test left
 			// down is restarted or waited on within limits before the next test
 			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
@@ -348,6 +353,18 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 		nodes:   nodes,
 		control: workspaceNodes{sd: sd, dataDir: up.DataDir},
 	}, nil
+}
+
+// remoteLogReader returns an SSH-backed log reader for a remote target's node
+// logs, which the collector wraps so a dropped session reconnects (E8); a local
+// target (or a lookup error — collection is best-effort) returns nil, and the
+// collector reads the local filesystem.
+func remoteLogReader(sd chainsetup.Deps, dataDir string) collector.LogReader {
+	runner, err := chainsetup.NetRunner(sd, dataDir)
+	if err != nil || runner == nil {
+		return nil
+	}
+	return process.NewRemoteLogReader(runner)
 }
 
 // chainCaps is what a chain advertises by its manifest: what a handoff

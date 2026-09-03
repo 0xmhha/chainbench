@@ -259,6 +259,12 @@ func (c *collector) tail(ctx context.Context, name, path string) {
 	if reader == nil {
 		reader = LocalLogReader{}
 	}
+	// Wrap the reader so a dropped connection (a remote SSH tail that failed)
+	// recovers with backoff and the tail resumes from its offset (E8). A reader
+	// that is already reconnecting is not double-wrapped.
+	if _, ok := reader.(ReconnectingLogReader); !ok {
+		reader = ReconnectingLogReader{Reader: reader}
+	}
 	var offset int64
 	emit := func(line string) { c.deps.OnLine(name, line) }
 	for {

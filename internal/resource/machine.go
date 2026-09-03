@@ -163,6 +163,11 @@ type Access struct {
 	DataRoot string
 	Files    filestore.Store
 	Driver   process.Driver
+	// Runner runs a shell command on the target, for a remote target only (nil
+	// for local, which reads its own filesystem). It is what lets a consumer
+	// read a remote node's log over SSH — the same runner the remote Files and
+	// Driver are built on.
+	Runner process.Runner
 }
 
 // Lookup turns a server-set entry name into SSH credentials.
@@ -268,6 +273,7 @@ func (s Spec) resolveOver(creds remote.Credentials, hk remote.HostKeyPolicy, m r
 	return &Access{
 		Spec: s, DataRoot: s.DataRoot,
 		Files: process.NewRemoteFileStore(run), Driver: process.NewRemoteDriver(run),
+		Runner: run,
 	}, nil
 }
 

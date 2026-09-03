@@ -62,7 +62,7 @@ func TestStartCollection_MirrorsChainstateAndLogs(t *testing.T) {
 	bus := collector.NewBus()
 	sub := bus.Subscribe()
 
-	stop := startCollection(context.Background(), env, bus, probe, 5*time.Millisecond)
+	stop := startCollection(context.Background(), env, bus, probe, 5*time.Millisecond, nil)
 
 	var sawChainstate, sawLog bool
 	deadline := time.After(2 * time.Second)

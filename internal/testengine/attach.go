@@ -68,6 +68,10 @@ type AttachConfig struct {
 	// observations/ (E8). A suite that owns the network passes a gatherer over
 	// its nodes and workspace; plain attach leaves it nil.
 	OnFail func(ctx context.Context, env session.Environment, rec session.TestRecord) error
+	// LogReader, when non-nil, is how the collector reads node logs — a remote
+	// target passes an SSH-backed reader so a remote node's log is captured (and
+	// reconnected on a dropped session, E8); nil reads the local filesystem.
+	LogReader collector.LogReader
 }
 
 // BuildEnvFunc provisions and brings up a network for a spec, returning the
@@ -144,7 +148,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Fingerprint: func(s dsl.Spec) session.Fingerprint {
 			return interp.Fingerprint(s, nodeconfig.Values{})
 		},
-		BuildEnv:   withCollection(build, cfg.Bus, nil),
+		BuildEnv:   withCollection(build, cfg.Bus, nil, cfg.LogReader),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
 		PreSpec:    cfg.PreSpec,

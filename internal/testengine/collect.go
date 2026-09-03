@@ -41,10 +41,11 @@ func rpcProbe(dial func(string) *rpc.Client) func(context.Context, string) (coll
 // jsonl file under the session (so a completed run can be replayed). It returns a
 // stop function that ends collection after a final snapshot. bus must be
 // non-nil; jsonl persistence is best-effort and never blocks the run.
-func startCollection(ctx context.Context, env session.Environment, bus *collector.Bus, probe func(context.Context, string) (collector.Sample, error), interval time.Duration) func() error {
+func startCollection(ctx context.Context, env session.Environment, bus *collector.Bus, probe func(context.Context, string) (collector.Sample, error), interval time.Duration, logs collector.LogReader) func() error {
 	col := collector.New(collector.Deps{
 		Probe:    probe,
 		Interval: interval,
+		Logs:     logs,
 		OnLine: func(nodeName, line string) {
 			bus.Publish(collector.Event{
 				Phase:   collector.PhaseTest,
@@ -99,7 +100,7 @@ func startCollection(ctx context.Context, env session.Environment, bus *collecto
 // torn down as part of the environment teardown. When bus is nil it returns
 // build unchanged, so collection is opt-in and never affects a run without a
 // dashboard. dial nil uses the default RPC dialer.
-func withCollection(build BuildEnvFunc, bus *collector.Bus, dial func(string) *rpc.Client) BuildEnvFunc {
+func withCollection(build BuildEnvFunc, bus *collector.Bus, dial func(string) *rpc.Client, logs collector.LogReader) BuildEnvFunc {
 	if bus == nil {
 		return build
 	}
@@ -113,7 +114,7 @@ func withCollection(build BuildEnvFunc, bus *collector.Bus, dial func(string) *r
 		// samples the built nodes; engine.Run re-populates it (idempotently)
 		// after BuildEnv returns.
 		env.PopulateNodeTable(ns)
-		stop := startCollection(ctx, env, bus, probe, chainstateInterval)
+		stop := startCollection(ctx, env, bus, probe, chainstateInterval, logs)
 		return ns, func(c context.Context) error {
 			cerr := stop()
 			if td != nil {

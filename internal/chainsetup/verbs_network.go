@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
@@ -119,6 +120,24 @@ type NodeStartIn struct {
 // NodeStartOut is the relaunched node, with its new PID.
 type NodeStartOut struct {
 	Node node.Node
+}
+
+// NetRunner returns the target's remote command runner, or nil for a local
+// target (which reads its own filesystem). It is what lets the run read a remote
+// node's log over SSH and reconnect a dropped session (E8).
+func NetRunner(d Deps, dataDir string) (process.Runner, error) {
+	ws, err := Open(dataDir, d.Clock)
+	if err != nil {
+		return nil, err
+	}
+	if !ws.state.Target.IsRemote() {
+		return nil, nil
+	}
+	t, err := ws.resolveTarget()
+	if err != nil {
+		return nil, err
+	}
+	return t.Runner, nil
 }
 
 // NodeSwapIn selects one node and the binary and/or config to relaunch it with.
