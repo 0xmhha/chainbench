@@ -69,7 +69,7 @@ func TestInitializeAndList(t *testing.T) {
 	for _, tt := range tools {
 		names[tt.(map[string]any)["name"].(string)] = true
 	}
-	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench.capabilities"} {
+	for _, want := range []string{"chainbench_chains", "chainbench_faucet", "chainbench_verify", "chainbench_consensus", "chainbench_node_rpc", "chainbench_report", "chainbench_status", "chainbench_txpool", "chainbench_log", "chainbench_account_state", "chainbench_contract_call", "chainbench_tx_wait", "chainbench_tx_send", "chainbench_contract_deploy", "chainbench_run", "chainbench_hardfork", "chainbench_upgrade", "chainbench.capabilities"} {
 		if !names[want] {
 			t.Errorf("missing tool %q", want)
 		}

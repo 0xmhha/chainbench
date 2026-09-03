@@ -88,44 +88,15 @@ func newUpgradeRunCmd() *cobra.Command {
 // node as it comes up. It is the same order the `chain up` case runner
 // follows; the body is upgrade.Handoff's.
 func runHandoff(ctx context.Context, out io.Writer, h *upgrade.Handoff) (node.NodeSet, error) {
-	if _, err := h.WriteConfig(ctx); err != nil {
-		return node.NodeSet{}, err
-	}
-	basePath, err := h.BaseGenesis(ctx)
-	if err != nil {
-		return node.NodeSet{}, err
-	}
-	if err := h.ComposePlan(basePath); err != nil {
-		return node.NodeSet{}, err
-	}
-	if _, err := h.ApplyOverlay(); err != nil {
-		return node.NodeSet{}, err
-	}
-	fmt.Fprintf(out, "handoff %s -> %s at %s block %d; %d nodes; launching...\n",
-		h.Plan.From.ID, h.Plan.To.ID, h.Plan.AtFork, h.ForkBlock(), len(h.Plan.Nodes))
-	ns, err := h.Launch(ctx)
+	ns, info, err := h.Run(ctx, etcdFormTimeout)
 	if err != nil {
 		return ns, err
 	}
+	// The plan is composed inside Run, so its detail is reported afterwards.
+	fmt.Fprintf(out, "handoff %s -> %s at %s block %d; %d nodes\n",
+		h.Plan.From.ID, h.Plan.To.ID, h.Plan.AtFork, h.ForkBlock(), len(h.Plan.Nodes))
 	for _, n := range ns.Nodes {
 		fmt.Fprintf(out, "  node%d  %s  pid=%d\n", n.Index+1, n.RPCURL, n.PID)
-	}
-	if len(ns.Nodes) == 0 {
-		return ns, fmt.Errorf("launch produced no nodes")
-	}
-	producer := ns.Nodes[0]
-	if err := h.WireMesh(ctx, ns); err != nil {
-		return ns, err
-	}
-	if err := h.DeployGovernance(ctx, producer); err != nil {
-		return ns, err
-	}
-	if err := h.EtcdInit(ctx, producer); err != nil {
-		return ns, err
-	}
-	info, err := h.VerifyEtcd(ctx, producer, etcdFormTimeout)
-	if err != nil {
-		return ns, err
 	}
 	fmt.Fprintf(out, "governance deployed at %s, etcd cluster %q, mesh wired.\n", info.Governance, info.Cluster())
 	return ns, nil

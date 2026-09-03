@@ -33,6 +33,10 @@ type RunSuiteIn struct {
 	// SpecPaths are the DSL files to run, each read and env-resolved the one
 	// way every surface does (dsl.ReadFiles).
 	SpecPaths []string
+	// SpecContent is inline, self-contained spec bytes to run instead of reading
+	// files — the form the MCP surface passes so an agent composes from inline
+	// specs without writing them to disk. When set, SpecPaths is ignored.
+	SpecContent [][]byte
 	// DataDir is the composition workspace; the network is set up here.
 	DataDir string
 	// Chain, when set, must agree with what the specs declare.
@@ -170,21 +174,24 @@ func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.Nod
 // asked to keep it. Setup failure aborts before any test runs; a test-phase
 // failure still tears down.
 func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteOut, error) {
-	if len(in.SpecPaths) == 0 {
+	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: no specs given")
 	}
 	if in.DataDir == "" {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: a workspace directory is required")
 	}
-	specs, err := dsl.ReadFiles(in.SpecPaths)
-	if err != nil {
-		return RunSuiteOut{}, err
+	specs := in.SpecContent
+	if len(specs) == 0 {
+		var err error
+		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
+			return RunSuiteOut{}, err
+		}
 	}
 	parsed := make([]dsl.Spec, 0, len(specs))
 	for i, raw := range specs {
 		s, err := dsl.Parse(raw)
 		if err != nil {
-			return RunSuiteOut{}, fmt.Errorf("engine: run suite: %s: %w", in.SpecPaths[i], err)
+			return RunSuiteOut{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
 		}
 		parsed = append(parsed, s)
 	}

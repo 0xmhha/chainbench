@@ -341,6 +341,50 @@ func (h *Handoff) VerifyEtcd(ctx context.Context, producer node.Node, timeout ti
 	return poa.WaitEtcdCluster(ctx, h.in.exec(), h.in.FromBinary, h.ProducerIPC(producer), timeout, 0)
 }
 
+// Run performs the whole handoff in order — write config, base genesis, compose
+// the plan, apply the overlay, launch, wire the mesh, deploy governance, init
+// and verify etcd — and returns the running node set and the verified cluster
+// info. It is the one orchestration the CLI `upgrade run` and app.UpgradeRun
+// share, so both drive the identical sequence. etcdTimeout bounds the wait for
+// the producer's etcd cluster to form.
+func (h *Handoff) Run(ctx context.Context, etcdTimeout time.Duration) (node.NodeSet, poa.Info, error) {
+	if _, err := h.WriteConfig(ctx); err != nil {
+		return node.NodeSet{}, poa.Info{}, err
+	}
+	basePath, err := h.BaseGenesis(ctx)
+	if err != nil {
+		return node.NodeSet{}, poa.Info{}, err
+	}
+	if err := h.ComposePlan(basePath); err != nil {
+		return node.NodeSet{}, poa.Info{}, err
+	}
+	if _, err := h.ApplyOverlay(); err != nil {
+		return node.NodeSet{}, poa.Info{}, err
+	}
+	ns, err := h.Launch(ctx)
+	if err != nil {
+		return ns, poa.Info{}, err
+	}
+	if len(ns.Nodes) == 0 {
+		return ns, poa.Info{}, fmt.Errorf("upgrade: launch produced no nodes")
+	}
+	producer := ns.Nodes[0]
+	if err := h.WireMesh(ctx, ns); err != nil {
+		return ns, poa.Info{}, err
+	}
+	if err := h.DeployGovernance(ctx, producer); err != nil {
+		return ns, poa.Info{}, err
+	}
+	if err := h.EtcdInit(ctx, producer); err != nil {
+		return ns, poa.Info{}, err
+	}
+	info, err := h.VerifyEtcd(ctx, producer, etcdTimeout)
+	if err != nil {
+		return ns, poa.Info{}, err
+	}
+	return ns, info, nil
+}
+
 // ProducerIPC is the producer's console socket under the data root.
 func (h *Handoff) ProducerIPC(producer node.Node) string {
 	return node.Layout{Root: h.in.DataDir}.IPCPath(h.label(producer), h.in.FromBinary)
