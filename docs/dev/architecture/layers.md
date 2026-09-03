@@ -154,6 +154,7 @@ flowchart TD
 |---|---|
 | `testengine` | 테스트 엔진 — 바깥 흐름 `RunSuite` 가 4단계를 소유한다(R4): ① DSL 이 선언한 체인을 chainsetup 으로 구성 ② pre-test hook ③ test ④ post-test hook(②~④는 interpreter 가 spec 에서 수행). 자체 조립 경로(`NewBuildEnv`·`NewLocalEngine`)는 R4 에서 삭제 — 구성 소유자는 chainsetup 하나이고, testengine → chainsetup 의존은 이 구조의 일부다(P6.1 게이트 대체) |
 | `chainsetup` | 체인 셋업 오케스트레이터 — 스텝 컴포지션(구 netcompose 흡수) + 옛 `setup` 경로(P6.2 은퇴 예정). `chain up` 케이스 러너는 P6.4 에서 삭제, `tests/cases/` 선언 + `testengine.RunSuite`(R4; app 은 MCP 경유 위임)가 대신한다 |
+| `nodemonitor` | 테스트 실행 허가 판정 + 제한 복구(E6). `health`·`collector`·`inspector`·`process/inspect`·`preflight` 가 낸 사실을 조합해 노드별 READY/WAITABLE/RESTARTABLE/FATAL 을 판정하고(`Classify`), WAITABLE 은 `MaxNodeMonitorTimeout` 까지 대기·RESTARTABLE 은 `MaxRestarts` 상한으로 재시작·FATAL 은 파괴적 조치 없이 즉시 종료한다(`Gate`). 관측과 재시작은 재구현하지 않고 seam(`Observer`·`Restarter`)으로 기존 함수를 주입받는다. `testengine`(재사용 전·각 테스트 전)과 app/MCP 가 소비한다 |
 
 ### L5 유스케이스
 
