@@ -706,7 +706,7 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
 | **E1** | **resolved producer → genesis** — validator count 기반 첫 N개 재선택을 제거하고 실제 BP identity/address/BLS를 사용 | E0A | `EN,BP,PN,BP` topology genesis readback 일치 · 누락/중복 no-write · 결정성 | ☑ |
 | **E2** | **자료 재사용 무결성** — asset별 owner를 유지하며 local/SSH/Docker의 binary·genesis·config·key·contract를 checksum으로 비교하고 결과 기록 | E0A | 같은 내용 재전송 0 · 같은 이름/다른 내용 오재사용 0 · secret 출력 0 | ☑ |
 | **E3** | **config·command 증적** — `nodeconfig` Command Builder, `config-<test-purpose>` fixture, override 우선순위, config readback, 노드별 argv·binary·checksum 기록 | E0A | node override 격리 · config/argv 동일 사실 · 변경 전후 revision 보존 | ☑ |
-| **E4** | **process와 개별 node control 정합** — Direct/Launcher/chainsetup start 중복을 측정하고 PID·실행 command·start/stop/restart·binary/config 교체를 하나의 ledger에 연결 | E2, E3 | 개별/전체 제어 · 실제 PID/command 일치 · 부분 실패 cleanup · orphan 0 · 세 환경 동등 | ☐ |
+| **E4** | **process와 개별 node control 정합** — Direct/Launcher/chainsetup start 중복을 측정하고 PID·실행 command·start/stop/restart·binary/config 교체를 하나의 ledger에 연결 | E2, E3 | 개별/전체 제어 · 실제 PID/command 일치 · 부분 실패 cleanup · orphan 0 · 세 환경 동등 | ☑ |
 | **E5** | **DSL syntax + semantic/capability 사전 검사** — schema/parser drift, selector/wait timeout, PN 제약과 chain·binary별 role/flag/RPC/metric/action/assertion/upgrade 지원을 모든 write 전에 검증 | E0A | unsupported는 no-write · applicableChains는 SKIP · CLI/MCP 판정 동등 | ☑ |
 | **E6** | **`nodemonitor` 실행 허가** — inspector/preflight/health/collector를 복제하지 않고 READY/WAITABLE/RESTARTABLE/FATAL로 조합, `MaxNodeMonitorTimeout` 적용 | E1~E5 | 재사용 전·각 테스트 전 gate · 제한 재시작 · 파괴적 자동 복구 0 · 판정 증적 | ☐ |
 | **E7** | **동적 테스트와 contract** — 노드별 제어, partition/heal, binary/config 교체, 동적 `save/$ref` 주소와 deployer+nonce 결정적 주소 | E4, E5, E6 | per-node mixed binary · contract tx/receipt/address/checksum · 상태별 verdict | ☐ |
@@ -738,6 +738,21 @@ E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 
   새 owner 어휘로 맞춘 뒤 완료.
 
 게이트: `go build`·`go test`·arch 테스트 통과, 동작·공개 계약 변화 0, 남은 옛-이름 인용 목록 보고.
+
+### 1k-Z2. E4 에서 미룬 항목 (추후, 비차단)
+
+E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬 둘.
+
+- **핸드오프 레저 기록** — `consensus/upgrade` 핸드오프는 workspace 가 없어(compose.go
+  핸드오프 경로) 영속 레저(process.json)를 읽는 소비자가 없다. teardown 은 레저가 아니라
+  반환 NodeSet 으로 `StopNodeSet` 을 부른다. `LaunchAndRecord` 는 nil 레저를 받아 이미
+  통과한다. **핸드오프가 workspace 를 얻는 작업과 함께** LaunchOptions 에 선택적 Ledger 를
+  넣고 teardown 에서 Clear 한다. 그 전까지는 SIGKILL 엣지의 orphan 복구만을 위해 배선하지
+  않는다.
+- **죽은 process 오케스트레이션 은퇴** — `process.BringUp`/`NewLauncher`/`NewController`/
+  `RelaunchNode` 는 프로덕션(CLI·DSL 양쪽) 호출자가 0 이다(E4 착수 시 전수 확인). 프로덕션
+  기동은 chainsetup(startPhase/StartNode)·hardfork·upgrade 세 갈래뿐. 테스트 전용 심볼
+  제거는 A8(외부 소비자 0 공개 심볼 정리)·레거시 은퇴와 함께 처리한다.
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 
