@@ -23,6 +23,10 @@ var evidenceFiles = []string{
 	"postaction.json",
 }
 
+// dirObservations is the per-test folder holding failure evidence (E8), mirrored
+// from the session layout.
+const dirObservations = "observations"
+
 // Report is the run-level report: the session's verdicts with a link to each
 // test's evidence and the overall tally. It carries no verdict logic of its own
 // — it mirrors what the session recorded.
@@ -86,15 +90,29 @@ func Build(sessionDir string) (Report, error) {
 // exist in a test's directory, in evidenceFiles order.
 func evidenceUnder(sessionDir, testDir string) []string {
 	var out []string
+	link := func(p string) {
+		if rel, err := filepath.Rel(sessionDir, p); err == nil {
+			out = append(out, rel)
+		} else {
+			out = append(out, p)
+		}
+	}
 	for _, name := range evidenceFiles {
 		p := filepath.Join(testDir, name)
 		if _, err := os.Stat(p); err != nil {
 			continue
 		}
-		if rel, err := filepath.Rel(sessionDir, p); err == nil {
-			out = append(out, rel)
-		} else {
-			out = append(out, p)
+		link(p)
+	}
+	// A failed test's gathered evidence (E8) lives under observations/; link each
+	// file so the report points at the logs, process, and RPC/block snapshot
+	// behind a failure. ReadDir returns names sorted, so the order is stable.
+	obs := filepath.Join(testDir, dirObservations)
+	if entries, err := os.ReadDir(obs); err == nil {
+		for _, e := range entries {
+			if !e.IsDir() {
+				link(filepath.Join(obs, e.Name()))
+			}
 		}
 	}
 	return out

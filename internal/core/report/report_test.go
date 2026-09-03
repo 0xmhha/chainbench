@@ -31,6 +31,8 @@ func buildSession(t *testing.T) string {
 	r2.SetEnvRef("env-abc123")
 	r2.Status(session.StatusFail)
 	r2.Reason("assertion X failed")
+	// A failed test gathered evidence into observations/ (E8).
+	r2.Observation("health.json", []byte(`{"producing":false}`))
 
 	if err := s.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
@@ -77,6 +79,27 @@ func TestGenerateAndRead_RoundTrip(t *testing.T) {
 	}
 	if !strings.Contains(alpha.Dir, "001_alpha") {
 		t.Errorf("alpha dir = %q, want to contain 001_alpha", alpha.Dir)
+	}
+}
+
+// TestReport_LinksFailureObservations: a failed test's report entry links the
+// evidence gathered under observations/ (E8), so a verdict points at the logs
+// and snapshots behind it.
+func TestReport_LinksFailureObservations(t *testing.T) {
+	root := buildSession(t)
+	rep, err := report.Build(root)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	var beta report.TestReport
+	for _, tr := range rep.Tests {
+		if tr.ID == "beta" {
+			beta = tr
+		}
+	}
+	joined := strings.Join(beta.Evidence, " ")
+	if !strings.Contains(joined, filepath.Join("observations", "health.json")) {
+		t.Errorf("beta evidence %q does not link the failure observation", joined)
 	}
 }
 

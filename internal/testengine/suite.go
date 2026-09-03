@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -233,6 +234,10 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
 			NodeSet: net.nodes, Control: net.control,
+			// A bus turns on chainstate sampling: chainstate.jsonl is written per
+			// environment (E8) even on the headless suite path, which has no
+			// dashboard subscriber (events are simply dropped).
+			Bus: collector.NewBus(),
 			// Gate the network before each test: a node a prior fault test left
 			// down is restarted or waited on within limits before the next test
 			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
