@@ -142,8 +142,7 @@ func (w *Workspace) Hardfork(ctx context.Context, plan hardfork.Plan, binary str
 			if rec.Index != n.Index {
 				continue
 			}
-			w.clearPID(i)
-			if err := w.recordLaunch(i, n.PID, binary); err != nil {
+			if err := w.recordSwap(i, n.PID, binary); err != nil {
 				return ns, fmt.Errorf("chainsetup: hardfork: node%d: %w", n.Index, err)
 			}
 		}

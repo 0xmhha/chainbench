@@ -254,13 +254,11 @@ func (w *Workspace) StartNode(ctx context.Context, index int) (string, error) {
 	}
 	spec := process.SpecOf(ns)
 	spec.Binary = w.binaryFor(ns, bin)
-	h, err := t.Driver.Launch(ctx, spec)
+	h, err := process.LaunchAndRecord(ctx, t.Driver, w.ledger, spec)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: start node%d: %w", ns.Index, err)
 	}
-	if err := w.recordLaunch(ni, h.PID, spec.Binary); err != nil {
-		return "", fmt.Errorf("chainsetup: start node%d: %w", index, err)
-	}
+	w.state.Nodes[ni].PID = h.PID
 	detail := fmt.Sprintf("node%d started (pid %d)", index, h.PID)
 	w.markStep("start-node", detail)
 	return detail, nil
@@ -631,13 +629,11 @@ func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, pres
 			spec.Args = args
 			w.state.Nodes[i].Args = args
 		}
-		h, err := t.Driver.Launch(ctx, spec)
+		h, err := process.LaunchAndRecord(ctx, t.Driver, w.ledger, spec)
 		if err != nil {
 			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
 		}
-		if err := w.recordLaunch(i, h.PID, spec.Binary); err != nil {
-			return started, fmt.Errorf("chainsetup: start: node%d: %w", ns.Index, err)
-		}
+		w.state.Nodes[i].PID = h.PID
 		started++
 	}
 	return started, nil

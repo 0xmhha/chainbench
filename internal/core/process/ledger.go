@@ -22,14 +22,17 @@ const LedgerFile = "process.json"
 // It records facts; it does not signal. Stopping is the Manager's or a
 // driver's job, and a caller that stopped a process clears its entry.
 type Ledger struct {
-	mu    sync.Mutex
-	dir   string
-	procs map[string]Proc
+	mu      sync.Mutex
+	dir     string
+	procs   map[string]Proc
+	history []Proc
 }
 
-// ledgerFile is the persisted shape.
+// ledgerFile is the persisted shape. History holds entries a swap superseded,
+// in supersede order, so the record of what ran before a hardfork survives.
 type ledgerFile struct {
-	Procs []Proc `json:"procs"`
+	Procs   []Proc `json:"procs"`
+	History []Proc `json:"history,omitempty"`
 }
 
 // OpenLedger loads the ledger persisted in dir, or starts an empty one when
@@ -50,6 +53,7 @@ func OpenLedger(dir string) (*Ledger, error) {
 	for _, p := range f.Procs {
 		l.procs[p.Label] = p
 	}
+	l.history = f.History
 	return l, nil
 }
 
@@ -62,6 +66,7 @@ func (l *Ledger) Save() error {
 		f.Procs = append(f.Procs, p)
 	}
 	sort.Slice(f.Procs, func(i, j int) bool { return f.Procs[i].Label < f.Procs[j].Label })
+	f.History = l.history
 	b, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
 		return fmt.Errorf("process: encode ledger: %w", err)
@@ -93,6 +98,45 @@ func (l *Ledger) Record(p Proc) error {
 	}
 	l.procs[p.Label] = p
 	return nil
+}
+
+// Supersede replaces label's current entry with p for a deliberate re-launch (a
+// binary swap), archiving the prior entry in history so the pid and command
+// that ran before the swap are not lost. Unlike Record it does not refuse an
+// existing label — a swap is a legitimate re-launch, not a double launch — and
+// it sets p.Revision to one past the prior entry's. It returns the superseded
+// entry (zero Proc and false when the label had none, i.e. this is a first
+// launch, which Supersede still records).
+func (l *Ledger) Supersede(p Proc) (Proc, bool, error) {
+	if p.Label == "" {
+		return Proc{}, false, fmt.Errorf("process: supersede needs a label")
+	}
+	if p.PID <= 0 {
+		return Proc{}, false, fmt.Errorf("process: supersede %s: pid %d is not a live process", p.Label, p.PID)
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	prev, ok := l.procs[p.Label]
+	if ok {
+		l.history = append(l.history, prev)
+		p.Revision = prev.Revision + 1
+	}
+	l.procs[p.Label] = p
+	return prev, ok, nil
+}
+
+// History returns the entries superseded for label, oldest first — the record
+// of what ran under this label before the swaps that replaced it.
+func (l *Ledger) History(label string) []Proc {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	var out []Proc
+	for _, p := range l.history {
+		if p.Label == label {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // Clear removes label's entry, returning what it was. Clearing an absent

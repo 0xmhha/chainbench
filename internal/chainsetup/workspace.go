@@ -443,14 +443,27 @@ func (w *Workspace) Save() error {
 	return w.comp.Save(w.state)
 }
 
-// recordLaunch enters a launched node in the run ledger and syncs the view.
+// recordLaunch enters an already-launched node (a resume reattaching to a live
+// pid) in the run ledger and syncs the view. Fresh launches go through
+// process.LaunchAndRecord, which launches and records in one step; this records
+// a pid the caller already holds.
 func (w *Workspace) recordLaunch(i int, pid int, binary string) error {
-	ns := w.state.Nodes[i]
-	if err := w.ledger.Record(process.Proc{
-		PID: pid, Label: string(ns.NodeLabel()), Binary: filepath.Base(binary),
-		Command: strings.Join(append([]string{binary}, ns.Args...), " "),
-		Host:    nodeHost(ns), DataDir: ns.DataDir,
-	}); err != nil {
+	spec := process.SpecOf(w.state.Nodes[i])
+	spec.Binary = binary
+	if err := w.ledger.Record(process.ProcFor(spec, pid)); err != nil {
+		return err
+	}
+	w.state.Nodes[i].PID = pid
+	return nil
+}
+
+// recordSwap records a node the hardfork swapped in, superseding its prior
+// entry so the pid and command that ran before the fork are kept as a revision
+// rather than discarded. The old process is already stopped by the swap.
+func (w *Workspace) recordSwap(i int, pid int, binary string) error {
+	spec := process.SpecOf(w.state.Nodes[i])
+	spec.Binary = binary
+	if _, _, err := w.ledger.Supersede(process.ProcFor(spec, pid)); err != nil {
 		return err
 	}
 	w.state.Nodes[i].PID = pid
