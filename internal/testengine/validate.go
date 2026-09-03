@@ -174,7 +174,8 @@ func selectorWellFormed(sel string) bool {
 		v, err := strconv.Atoi(n)
 		return err == nil && v >= 1
 	}
-	base, suffix, hasSuffix := sel, "", false
+	var base string
+	suffix, hasSuffix := "", false
 	if i := strings.IndexByte(sel, ':'); i >= 0 {
 		base, suffix, hasSuffix = sel[:i], sel[i+1:], true
 	} else {
