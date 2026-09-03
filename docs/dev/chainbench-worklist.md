@@ -721,6 +721,24 @@ E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 
 구현 후에는 단위·거부·readback 테스트, CLI JSON 예시, local 검증과 가능한 remote/Docker 라이브 결과,
 남은 wrapper·alias·직접 import를 보고한다.
 
+### 1k-Z. 레거시 네이밍 정리 (추후, E-series 이후 · 비차단)
+
+모듈 통폐합(R1) 과정에서 흡수된 파일·식별자가 **옛 이름을 그대로 달고 있다.** 동작에는
+문제 없으나 "어디를 봐야 하는가"를 흐린다. E-series를 막지 않는 **순수 개명 리팩토링**으로
+뒤에 한 번에 정리한다(파일·심볼 rename + 주석의 "옛 core/X" 표기 정돈, 동작 변화 0).
+
+정리 대상(측정으로 확정):
+
+- `internal/core/session/netreg.go` — `core/netreg` 가 session 으로 합쳐졌는데 파일명·에러
+  접두("state: …")·주석이 옛 `core/state` 어휘를 유지(E0A 에서 관찰). session 어휘로 통일.
+- `core/collector` 안의 "옛 `core/obs`"·"옛 `core/logs`", `core/nodeconfig` 안의 "옛
+  `core/launchopt`"·"옛 `core/config`" 등 §3 표가 나열한 흡수 이력 표기 — 코드 심볼은 이미
+  새 위치이나 파일/주석이 옛 이름을 인용하는 곳을 정돈.
+- 판정: **파일 이동/개명만으로 완료로 보지 않는다** — 에러 접두·doc 주석·테스트 이름까지
+  새 owner 어휘로 맞춘 뒤 완료.
+
+게이트: `go build`·`go test`·arch 테스트 통과, 동작·공개 계약 변화 0, 남은 옛-이름 인용 목록 보고.
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
