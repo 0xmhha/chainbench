@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 )
 
 // TestReadCreateAddress_ExplicitNonce: with a nonce given, the reader computes
@@ -37,15 +39,42 @@ func TestReadCreateAddress_RequiresDeployer(t *testing.T) {
 	}
 }
 
+// TestReadContractChecksum matches filestore.Hash of the decoded bytecode, so a
+// spec's deploy-evidence checksum is the same digest the artifact store records.
+func TestReadContractChecksum(t *testing.T) {
+	got, err := readContractChecksum(context.Background(), nil, map[string]any{"bytecode": "0x6001600155"})
+	if err != nil {
+		t.Fatalf("readContractChecksum: %v", err)
+	}
+	want := filestore.Hash([]byte{0x60, 0x01, 0x60, 0x01, 0x55})
+	if got != want {
+		t.Errorf("checksum = %v, want %s", got, want)
+	}
+	if !strings.HasPrefix(want, "sha256:") {
+		t.Errorf("checksum format = %s, want sha256: prefix", want)
+	}
+}
+
+func TestReadContractChecksum_RejectsNonHex(t *testing.T) {
+	if _, err := readContractChecksum(context.Background(), nil, map[string]any{"bytecode": "0xzz"}); err == nil {
+		t.Fatal("want an error for non-hex bytecode")
+	}
+	if _, err := readContractChecksum(context.Background(), nil, map[string]any{}); err == nil {
+		t.Fatal("want an error with neither bytecode nor address")
+	}
+}
+
 // TestCreateAddressWiredIntoRegistry guards the E5 lesson (registered != wired):
 // createAddress must reach the production registry as both a readable source
 // (for read/save/$ref) and an assertion (for expect).
 func TestCreateAddressWiredIntoRegistry(t *testing.T) {
 	reg := Registry()
-	if _, ok := reg.Reader(assertCreateAddress); !ok {
-		t.Error("createAddress reader not registered")
-	}
-	if _, ok := reg.Assertion(assertCreateAddress); !ok {
-		t.Error("createAddress assertion not registered")
+	for _, name := range []string{assertCreateAddress, assertContractChecksum} {
+		if _, ok := reg.Reader(name); !ok {
+			t.Errorf("%s reader not registered", name)
+		}
+		if _, ok := reg.Assertion(name); !ok {
+			t.Errorf("%s assertion not registered", name)
+		}
 	}
 }

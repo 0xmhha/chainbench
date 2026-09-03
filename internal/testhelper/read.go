@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl/assert"
@@ -234,6 +236,7 @@ func builtinAssertions() []rpcAssertion {
 		{name: assertNonceAt, defaultOp: "Equal", read: readNonceAt},
 		{name: assertCall, defaultOp: "Equal", read: readCall},
 		{name: assertCreateAddress, defaultOp: "Equal", read: readCreateAddress},
+		{name: assertContractChecksum, defaultOp: "Equal", read: readContractChecksum},
 		{name: assertTxStatus, defaultOp: "Equal", read: readTxStatus},
 		{name: assertReceiptLog, defaultOp: "Equal", read: readReceiptLog},
 		{name: assertBaseFee, defaultOp: "GreaterOrEqual", read: readBaseFee},
@@ -391,6 +394,36 @@ func readCreateAddress(ctx context.Context, c *rpc.Client, spec map[string]any) 
 		nonce = n
 	}
 	return accounts.CreateAddress(deployer, nonce)
+}
+
+// readContractChecksum returns the sha256 checksum ("sha256:<hex>") of a
+// contract's bytecode — of "bytecode"/"data" when given, else of the runtime
+// code at "address" (eth_getCode). It is the deploy-evidence checksum a spec
+// saves and asserts (§8): pin the init code, or verify a deploy's runtime code
+// matches an expected checksum. It reuses filestore.Hash, the same digest the
+// artifact store records.
+func readContractChecksum(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
+	code, _ := spec["bytecode"].(string)
+	if code == "" {
+		code, _ = spec["data"].(string)
+	}
+	if code == "" {
+		if addr, _ := spec["address"].(string); addr != "" {
+			runtime, err := c.CodeAt(ctx, addr)
+			if err != nil {
+				return nil, err
+			}
+			code = runtime
+		}
+	}
+	if code == "" {
+		return nil, fmt.Errorf("dsl: contractChecksum requires \"bytecode\" or \"address\"")
+	}
+	raw, err := hex.DecodeString(strings.TrimPrefix(code, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("dsl: contractChecksum: bytecode is not hex: %w", err)
+	}
+	return filestore.Hash(raw), nil
 }
 
 func readCodeAt(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error) {
