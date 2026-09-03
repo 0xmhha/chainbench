@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 )
@@ -147,6 +148,12 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 
 	if err := sess.Save(); err != nil {
 		return sess.Root(), fmt.Errorf("engine: save session: %w", err)
+	}
+	// The verdicts are now persisted; the report builder aggregates them into
+	// report.json for the CLI/MCP report surfaces. A report failure does not
+	// invalidate the run, so it is surfaced but not fatal to Run's result.
+	if _, err := report.Generate(sess.Root()); err != nil {
+		return sess.Root(), fmt.Errorf("engine: build report: %w", err)
 	}
 	return sess.Root(), nil
 }

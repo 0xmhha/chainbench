@@ -83,14 +83,15 @@ func TestRun_CrossCallComparison(t *testing.T) {
 // recordStub is a no-op TestRecord for interpreter-level tests.
 type recordStub struct{ asserts []session.AssertResult }
 
-func (r *recordStub) Dir() string                   { return "" }
-func (r *recordStub) SetEnvRef(string)              {}
-func (r *recordStub) Spec([]byte)                   {}
-func (r *recordStub) Step(int, session.StepResult)  {}
-func (r *recordStub) Assert(a session.AssertResult) { r.asserts = append(r.asserts, a) }
-func (r *recordStub) Status(session.TestStatus)     {}
-func (r *recordStub) Reason(string)                 {}
-func (r *recordStub) PostAction(session.PostResult) {}
+func (r *recordStub) Dir() string                     { return "" }
+func (r *recordStub) SetEnvRef(string)                {}
+func (r *recordStub) Spec([]byte)                     {}
+func (r *recordStub) Step(int, session.StepResult)    {}
+func (r *recordStub) Assert(a session.AssertResult)   { r.asserts = append(r.asserts, a) }
+func (r *recordStub) Status(session.TestStatus)       {}
+func (r *recordStub) Reason(string)                   {}
+func (r *recordStub) PostAction(session.PostResult)   {}
+func (r *recordStub) Artifacts(session.TestArtifacts) {}
 
 func TestReaderNames_CoverEveryRPCReadingAssertion(t *testing.T) {
 	// Every assertion that reads one value must be usable as a read source:

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -83,7 +82,7 @@ func Default(name, version string) *Server {
 func reportTool() Tool {
 	return Tool{
 		Name:        "chainbench_report",
-		Description: "Read stored run/test results from a workspace. Args: workspaceDir.",
+		Description: "Read a run's report from a session directory. Args: workspaceDir.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -96,29 +95,7 @@ func reportTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			store, err := collector.NewFileStore(filepath.Join(dir, "runs.json"))
-			if err != nil {
-				return "", err
-			}
-			runs := store.ListRuns()
-			if len(runs) == 0 {
-				return "no runs recorded", nil
-			}
-			var b strings.Builder
-			var ok, failed, skipped int
-			for _, r := range runs {
-				fmt.Fprintf(&b, "%s [%s] %s %s\n", r.ID, r.Phase, r.Chain, r.Status)
-				switch r.Status {
-				case collector.RunSucceeded:
-					ok++
-				case collector.RunFailed:
-					failed++
-				case collector.RunSkipped:
-					skipped++
-				}
-			}
-			fmt.Fprintf(&b, "total=%d ok=%d failed=%d skipped=%d", len(runs), ok, failed, skipped)
-			return b.String(), nil
+			return app.Report(dir)
 		},
 	}
 }

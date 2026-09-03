@@ -1,7 +1,6 @@
 package session
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -153,28 +152,9 @@ func (s *sess) Test(seq int, id string) TestRecord {
 	return r
 }
 
-// sessionDoc is the session.json schema.
-type sessionDoc struct {
-	ID        string       `json:"id"`
-	Command   string       `json:"command"`
-	StartedAt string       `json:"startedAt"`
-	Tests     []testEntry  `json:"tests"`
-	Summary   summaryCount `json:"summary"`
-}
-
-type testEntry struct {
-	Seq    int    `json:"seq"`
-	ID     string `json:"id"`
-	Env    string `json:"env,omitempty"`
-	Status string `json:"status"`
-}
-
-type summaryCount struct {
-	Pass    int `json:"pass"`
-	Fail    int `json:"fail"`
-	Blocked int `json:"blocked"`
-	Skip    int `json:"skip"`
-}
+// Result, TestResult, and Counts (session.json schema) live in read.go, where
+// they double as the read-back types — one struct for the write and the read so
+// the schema has a single owner.
 
 // Save writes session.json. It returns any deferred artifact-write error so
 // record write failures are surfaced rather than lost.
@@ -182,15 +162,15 @@ func (s *sess) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	doc := sessionDoc{
+	doc := Result{
 		ID:        s.id,
 		Command:   s.command,
 		StartedAt: s.startedAt.UTC().Format(time.RFC3339),
-		Tests:     make([]testEntry, 0, len(s.tests)),
+		Tests:     make([]TestResult, 0, len(s.tests)),
 	}
 	var writeErrs []error
 	for _, r := range s.tests {
-		doc.Tests = append(doc.Tests, testEntry{Seq: r.seq, ID: r.id, Env: r.envRef, Status: string(r.status)})
+		doc.Tests = append(doc.Tests, TestResult{Seq: r.seq, ID: r.id, Env: r.envRef, Status: string(r.status)})
 		switch r.status {
 		case StatusPass:
 			doc.Summary.Pass++
@@ -209,15 +189,5 @@ func (s *sess) Save() error {
 	return errors.Join(writeErrs...)
 }
 
-// writeJSON marshals v indented and writes it to path atomically enough for
-// artifacts (single Save per file).
-func writeJSON(path string, v any) error {
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return fmt.Errorf("session: marshal %s: %w", filepath.Base(path), err)
-	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
-		return fmt.Errorf("session: write %s: %w", filepath.Base(path), err)
-	}
-	return nil
-}
+// writeJSON lives in write.go, alongside the atomic write primitive it and every
+// other session artifact writer share.

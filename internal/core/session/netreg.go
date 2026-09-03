@@ -73,13 +73,8 @@ func SaveNetwork(stateDir string, ns node.NodeSet) error {
 		return fmt.Errorf("state: marshal network: %w", err)
 	}
 	final := filepath.Join(dir, name+".json")
-	tmp := final + ".tmp"
-	if err := os.WriteFile(tmp, raw, 0o644); err != nil {
-		return fmt.Errorf("state: write temp: %w", err)
-	}
-	if err := os.Rename(tmp, final); err != nil {
-		_ = os.Remove(tmp)
-		return fmt.Errorf("state: rename: %w", err)
+	if err := WriteFileAtomic(final, raw, 0o644); err != nil {
+		return fmt.Errorf("state: write network %s: %w", name, err)
 	}
 	return nil
 }

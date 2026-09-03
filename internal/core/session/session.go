@@ -74,4 +74,7 @@ type TestRecord interface {
 	// that something went wrong and not what.
 	Reason(why string)
 	PostAction(r PostResult)
+	// Artifacts records which inputs (genesis, config, command, deployment) this
+	// test actually used, as references, so a verdict is traceable to them.
+	Artifacts(a TestArtifacts)
 }

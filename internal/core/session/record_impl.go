@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 )
@@ -14,6 +13,7 @@ const (
 	fileAssert     = "assert.json"
 	fileStatus     = "status.json"
 	filePostAction = "postaction.json"
+	fileArtifacts  = "artifacts.json"
 )
 
 // record is the concrete TestRecord: it accumulates one test's artifacts and
@@ -25,13 +25,14 @@ type record struct {
 	seq    int
 	id     string
 
-	mu      sync.Mutex
-	envRef  string
-	status  TestStatus
-	steps   []StepResult
-	asserts []AssertResult
-	posts   []PostResult
-	errs    []error
+	mu        sync.Mutex
+	envRef    string
+	status    TestStatus
+	steps     []StepResult
+	asserts   []AssertResult
+	posts     []PostResult
+	artifacts TestArtifacts
+	errs      []error
 }
 
 func (r *record) Dir() string { return r.dir }
@@ -41,14 +42,25 @@ func (r *record) SetEnvRef(envID string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.envRef = envID
-	r.capture(os.WriteFile(filepath.Join(r.dir, fileEnvRef), []byte(envID), 0o644))
+	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileEnvRef), []byte(envID), 0o644))
 }
 
 // Spec stores the raw test definition as spec.json.
 func (r *record) Spec(raw []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.capture(os.WriteFile(filepath.Join(r.dir, fileSpec), raw, 0o644))
+	r.capture(WriteFileAtomic(filepath.Join(r.dir, fileSpec), raw, 0o644))
+}
+
+// Artifacts records the manifest of inputs this test actually used
+// (artifacts.json), so a verdict is traceable to the exact genesis, config,
+// command, and deployment it ran against. It stores references, never key
+// material.
+func (r *record) Artifacts(a TestArtifacts) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.artifacts = a
+	r.capture(writeJSON(filepath.Join(r.dir, fileArtifacts), a))
 }
 
 // Step appends an executed step and rewrites steps.json.

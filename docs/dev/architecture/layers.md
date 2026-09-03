@@ -140,6 +140,7 @@ flowchart TD
 |---|---|
 | `core/session` | **아티팩트 레이아웃의 소유자.** 세션·환경·컴포지션, 그리고 이름 붙인 네트워크 레지스트리(`SaveNetwork`·`LoadNetwork`·`ListNetworks`·`RemoveNetwork`, 옛 `core/netreg` — 영속 상태의 소유자에 합류, R1 2026-08-31) |
 | `core/collector` | live tail · chainstate · bp 참여 · reorg, 그리고 관측의 나머지 두 면: 이벤트(`Bus`·`Event`·`Kind`·`Phase`, 옛 `core/obs`)와 로그 검색·타임라인(`Search`·`Timeline`, 옛 `core/logs`). 무엇이 일어났나를 모으는 한 모듈(R1, 2026-08-31) |
+| `core/report` | **실행 전체 report 의 집계자(E0A).** 세션이 영속한 테스트별 verdict(status.json)와 증적 경로를 모아 `report.json` 을 만든다(`Build`·`Generate`·`Write`·`Read`). 판정을 다시 하지 않고 `core/session` 만 읽는다 — testengine 이 저장 뒤 호출하고 CLI/MCP(app 경유)가 읽는다 |
 | `core/health` | 블록 전진 판정 |
 | `core/hardfork` | 업그레이드 계획/실행 — **바이너리 교체(swap)** 모델: 같은 노드를 멈췄다 fork 를 켠 새 바이너리로 재기동(합의 엔진 불변). `consensus/upgrade` 의 **합의-패밀리 handoff**(두 바이너리 동시 실행)와 의도적으로 별개다 — R1 에서 통폐합하지 않기로 결정(2026-08-31) |
 | `dsl` · `dsl/assert` | **DSL 문법** — v1·v2 문법·파싱·검증·statement 파생(`Parse`·`SequenceOf`·`ActionName`·`ArgsOf`). **순수** — 실행 인프라(rpc·session·collector)를 import 하지 않는다(R2 게이트, 2026-09-01). 옛 `testspec` 의 문법 절반 |
