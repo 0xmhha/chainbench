@@ -402,6 +402,10 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: config: %w", err)
 	}
+	// Recomputed for this config revision: a re-run reflects the current
+	// overrides, not a stale record.
+	w.state.ConfigProvenance = w.state.ConfigProvenance[:0]
+	overridden := 0
 	for _, ns := range w.state.Nodes {
 		t, err := w.machineFor(ns)
 		if err != nil {
@@ -412,14 +416,37 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 		}
 		spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
+		overrides := w.configOverridesFor(ns.Index)
 		if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 		}
-		if err := t.Files.Write(ctx, ns.ConfigPath, nodeconfig.TOML(spec), 0o644); err != nil {
+		toml := nodeconfig.TOML(spec)
+		if err := t.Files.Write(ctx, ns.ConfigPath, toml, 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+		}
+		// Readback: the config on the target must hash to what was written, so a
+		// truncated or clobbered write is caught here rather than at node boot.
+		// Checksum hashes on the target (a remote store runs sha256sum), so this
+		// does not download the file back.
+		want := filestore.Hash(toml)
+		got, err := t.Files.Checksum(ctx, ns.ConfigPath)
+		if err != nil {
+			return "", fmt.Errorf("chainsetup: config: node%d readback: %w", ns.Index, err)
+		}
+		if got != want {
+			return "", fmt.Errorf("chainsetup: config: node%d config did not read back intact (wrote %s, target has %s)", ns.Index, want, got)
+		}
+		w.state.ConfigProvenance = append(w.state.ConfigProvenance, ConfigProvenance{
+			Node: ns.Index, Overrides: overrides, Checksum: want,
+		})
+		if len(overrides) > 0 {
+			overridden++
 		}
 	}
 	detail := fmt.Sprintf("%d config(s) under %s", len(w.state.Nodes), w.state.Target.DataRoot)
+	if overridden > 0 {
+		detail += fmt.Sprintf(", %d with overrides", overridden)
+	}
 	w.markStep("config", detail)
 	return detail, nil
 }
