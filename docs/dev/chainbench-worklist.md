@@ -721,7 +721,17 @@ E6는 inspector/preflight/health/collector, E7은 DSL/testhelper/upgrade, E8은 
 구현 후에는 단위·거부·readback 테스트, CLI JSON 예시, local 검증과 가능한 remote/Docker 라이브 결과,
 남은 wrapper·alias·직접 import를 보고한다.
 
-### 1k-Z. 레거시 네이밍 정리 (추후, E-series 이후 · 비차단)
+### 1k-Z. 레거시 네이밍 정리 (추후, E-series 이후 · 비차단) — ☑ 완료
+
+**완료(2026-09-03):** R1에서 흡수된 파일이 달고 있던 leftover `// Package <옛>` doc 주석
+6곳(netreg→session, probe/logs→collector, config/launchopt→nodeconfig, event.go의 중복
+`Package collector`)을 일반 섹션 주석으로 바꿔 패키지마다 정본 doc 하나만 남겼다. 폐기된
+옛-패키지 에러 접두 정리: netreg `state:`→`session:`, run store `obs:`→`collector:`. 살아있는
+하위 개념 접두 `logs:`(로그 검색)·`launchopt:`(런치 옵션)는 유지(폐기 패키지명이 아니라 실제
+개념). 테스트가 이 문자열을 검사하지 않고 errors.Is 무영향 → 동작·공개 계약 변화 0. 남은 옛-이름
+언급은 의도적 provenance 주석("Formerly the standalone X package…")뿐. build·test·arch·lint 통과.
+
+아래는 착수 전 기록:
 
 모듈 통폐합(R1) 과정에서 흡수된 파일·식별자가 **옛 이름을 그대로 달고 있다.** 동작에는
 문제 없으나 "어디를 봐야 하는가"를 흐린다. E-series를 막지 않는 **순수 개명 리팩토링**으로
