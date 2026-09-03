@@ -3,6 +3,7 @@ package testengine_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -74,6 +75,40 @@ func TestEngine_ReusesEnvByFingerprint(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, "session.json")); err != nil {
 		t.Fatalf("session.json missing: %v", err)
+	}
+}
+
+func TestEngine_PreSpecGateBlocksTest(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	deps := h.deps(t)
+	deps.PreSpec = func(context.Context, session.Environment) error {
+		return errors.New("network not ready to test: node1 FATAL: chain diverged")
+	}
+	e := testengine.New(deps)
+	if _, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	// The gate ran before the test: the network was built, but the test was
+	// blocked rather than run against an unfit network.
+	if h.buildCount != 1 {
+		t.Errorf("buildCount = %d, want 1", h.buildCount)
+	}
+	if h.runCount != 0 {
+		t.Errorf("runCount = %d, want 0 (gate blocked the test)", h.runCount)
+	}
+}
+
+func TestEngine_PreSpecGatePassLetsTestRun(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	deps := h.deps(t)
+	called := 0
+	deps.PreSpec = func(context.Context, session.Environment) error { called++; return nil }
+	e := testengine.New(deps)
+	if _, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if called != 1 || h.runCount != 1 {
+		t.Errorf("gate called %d, runCount %d, want 1/1", called, h.runCount)
 	}
 }
 

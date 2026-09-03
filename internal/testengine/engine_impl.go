@@ -31,6 +31,11 @@ type Deps struct {
 	// Applicable reports whether a spec applies to this run's target chain. Nil
 	// means always applicable.
 	Applicable func(spec dsl.Spec) bool
+	// PreSpec gates the environment right before each test runs on it (E6): a
+	// network left unfit by a prior fault test is waited on or restarted within
+	// limits, and a state needing a destructive remedy blocks the test. A
+	// non-nil error blocks the test with that reason. Nil means no gate.
+	PreSpec func(ctx context.Context, env session.Environment) error
 	// Command is the invoking command string recorded in session.json.
 	Command string
 	// Emit publishes an orchestration event (run/build/spec milestones) for the
@@ -135,6 +140,14 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		}
 
 		rec.SetEnvRef(env.ID())
+		if e.deps.PreSpec != nil {
+			if gerr := e.deps.PreSpec(ctx, env); gerr != nil {
+				rec.Status(session.StatusBlocked)
+				rec.Reason(gerr.Error())
+				e.emit(collector.PhaseSetup, collector.KindError, "pre-test gate failed", map[string]any{"seq": seq, "id": spec.ID, "env": env.ID(), "error": gerr.Error()})
+				continue
+			}
+		}
 		e.emit(collector.PhaseTest, collector.KindProgress, "running spec", map[string]any{"seq": seq, "id": spec.ID})
 		st, runErr := e.deps.RunSpec(ctx, spec, env, rec)
 		if runErr != nil {

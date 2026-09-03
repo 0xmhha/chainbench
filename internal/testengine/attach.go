@@ -60,6 +60,10 @@ type AttachConfig struct {
 	// act on the node processes. Nil is plain attach's default: the run does
 	// not own the processes, and those steps fail with a clear reason.
 	Control interp.NodeControl
+	// PreSpec, when non-nil, gates the network before each test (E6). A suite
+	// that owns the network passes a gate that waits on or restarts unfit nodes;
+	// plain attach leaves it nil (it does not own the processes to restart).
+	PreSpec func(ctx context.Context, env session.Environment) error
 }
 
 // BuildEnvFunc provisions and brings up a network for a spec, returning the
@@ -139,6 +143,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		BuildEnv:   withCollection(build, cfg.Bus, nil),
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
+		PreSpec:    cfg.PreSpec,
 		Emit:       busEmit(cfg.Bus),
 		Network:    cfg.Chain,
 	}), nil

@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/preflight"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 	"github.com/0xmhha/chainbench/internal/resource"
@@ -219,6 +220,13 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
 			NodeSet: net.nodes, Control: net.control,
+			// Gate the network before each test: a node a prior fault test left
+			// down is restarted or waited on within limits before the next test
+			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
+			// nodes, so the gate is a no-op there.
+			PreSpec: func(ctx context.Context, _ session.Environment) error {
+				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps)
+			},
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)
@@ -299,6 +307,12 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 			}
 		}
 		nodes = &ns
+	}
+	// The network is composed (or reused); gate it before any test runs on it —
+	// wait on nodes still coming up, restart dead ones within limits, terminate
+	// on a state that would need a destructive remedy (E6).
+	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps); err != nil {
+		return composed{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return composed{
 		endpoints: endpoints,
