@@ -92,6 +92,7 @@ func (r *recordStub) Status(session.TestStatus)       {}
 func (r *recordStub) Reason(string)                   {}
 func (r *recordStub) PostAction(session.PostResult)   {}
 func (r *recordStub) Artifacts(session.TestArtifacts) {}
+func (r *recordStub) Observation(string, []byte)      {}
 
 func TestReaderNames_CoverEveryRPCReadingAssertion(t *testing.T) {
 	// Every assertion that reads one value must be usable as a read source:

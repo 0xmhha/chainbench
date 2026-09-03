@@ -240,6 +240,12 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			PreSpec: func(ctx context.Context, _ session.Environment) error {
 				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps)
 			},
+			// Gather a failed test's evidence (node logs, process, RPC/block) into
+			// its observations/ before the run moves on (E8).
+			OnFail: func(ctx context.Context, _ session.Environment, rec session.TestRecord) error {
+				collectFailureData(ctx, sd, in.DataDir, net.nodes, rec)
+				return nil
+			},
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)

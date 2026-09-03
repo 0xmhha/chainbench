@@ -98,6 +98,38 @@ func TestEngine_PreSpecGateBlocksTest(t *testing.T) {
 	}
 }
 
+func TestEngine_OnFailGathersOnFailedTest(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	deps := h.deps(t)
+	deps.RunSpec = func(_ context.Context, _ dsl.Spec, _ session.Environment, rec session.TestRecord) (session.TestStatus, error) {
+		rec.Status(session.StatusFail)
+		return session.StatusFail, nil
+	}
+	fails := 0
+	deps.OnFail = func(context.Context, session.Environment, session.TestRecord) error { fails++; return nil }
+	e := testengine.New(deps)
+	if _, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if fails != 1 {
+		t.Errorf("OnFail called %d times on a failing test, want 1", fails)
+	}
+}
+
+func TestEngine_OnFailSkippedOnPass(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	deps := h.deps(t) // default RunSpec passes
+	fails := 0
+	deps.OnFail = func(context.Context, session.Environment, session.TestRecord) error { fails++; return nil }
+	e := testengine.New(deps)
+	if _, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if fails != 0 {
+		t.Errorf("OnFail called %d times on a passing test, want 0", fails)
+	}
+}
+
 func TestEngine_PreSpecGatePassLetsTestRun(t *testing.T) {
 	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
 	deps := h.deps(t)

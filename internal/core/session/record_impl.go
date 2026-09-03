@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 )
@@ -125,6 +126,22 @@ func (r *record) PostAction(res PostResult) {
 	defer r.mu.Unlock()
 	r.posts = append(r.posts, res)
 	r.capture(writeJSON(filepath.Join(r.dir, filePostAction), r.posts))
+}
+
+// dirObservations holds a failed test's gathered evidence.
+const dirObservations = "observations"
+
+// Observation writes one failure-evidence file under observations/, scrubbed of
+// secrets like every artifact. Best-effort: write errors are captured for Save.
+func (r *record) Observation(name string, content []byte) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	dir := filepath.Join(r.dir, dirObservations)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		r.capture(err)
+		return
+	}
+	r.capture(WriteFileAtomic(filepath.Join(dir, name), Scrub(content), 0o644))
 }
 
 // record collects a non-nil write error for later surfacing by session.Save.

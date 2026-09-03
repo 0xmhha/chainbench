@@ -36,6 +36,11 @@ type Deps struct {
 	// limits, and a state needing a destructive remedy blocks the test. A
 	// non-nil error blocks the test with that reason. Nil means no gate.
 	PreSpec func(ctx context.Context, env session.Environment) error
+	// OnFail gathers failure evidence (node logs, process, RPC/block snapshot)
+	// into the test's observations/ when a test ends FAIL or BLOCKED (E8). It is
+	// best-effort: an error is emitted, never fatal, since it runs after the
+	// verdict is already decided. Nil means no gathering.
+	OnFail func(ctx context.Context, env session.Environment, rec session.TestRecord) error
 	// Command is the invoking command string recorded in session.json.
 	Command string
 	// Emit publishes an orchestration event (run/build/spec milestones) for the
@@ -153,6 +158,16 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		if runErr != nil {
 			rec.Status(session.StatusFail)
 			st = session.StatusFail
+		}
+		// A failed or blocked test gets its evidence gathered before the run moves
+		// on: the network it failed against may be gone or changed by the next
+		// test. Best-effort — the verdict already stands.
+		if st == session.StatusFail || st == session.StatusBlocked {
+			if e.deps.OnFail != nil {
+				if ferr := e.deps.OnFail(ctx, env, rec); ferr != nil {
+					e.emit(collector.PhaseTest, collector.KindError, "failure-data collection", map[string]any{"seq": seq, "id": spec.ID, "error": ferr.Error()})
+				}
+			}
 		}
 		e.emit(collector.PhaseTest, collector.KindResult, "spec "+string(st), map[string]any{"seq": seq, "id": spec.ID, "status": string(st)})
 	}

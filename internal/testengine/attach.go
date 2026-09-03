@@ -64,6 +64,10 @@ type AttachConfig struct {
 	// that owns the network passes a gate that waits on or restarts unfit nodes;
 	// plain attach leaves it nil (it does not own the processes to restart).
 	PreSpec func(ctx context.Context, env session.Environment) error
+	// OnFail, when non-nil, gathers failure evidence into a failed test's
+	// observations/ (E8). A suite that owns the network passes a gatherer over
+	// its nodes and workspace; plain attach leaves it nil.
+	OnFail func(ctx context.Context, env session.Environment, rec session.TestRecord) error
 }
 
 // BuildEnvFunc provisions and brings up a network for a spec, returning the
@@ -144,6 +148,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		RunSpec:    run,
 		Applicable: applicableWithCaps(cfg.Chain, append([]string{attachCapability}, cfg.Caps...)),
 		PreSpec:    cfg.PreSpec,
+		OnFail:     cfg.OnFail,
 		Emit:       busEmit(cfg.Bus),
 		Network:    cfg.Chain,
 	}), nil
