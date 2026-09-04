@@ -5,7 +5,7 @@
   "chain": { "name": "stablenet", "binary": "gstable" },
   "requires": ["rpc"],
   "steps": [
-    { "deployContract": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+    { "deployContract": { "from": "node1",
                           "bytecode": "0x600a600c600039600a6000f3602a60005260206000f3",
                           "gas": "200000", "save": "contract" } }
   ],
