@@ -27,11 +27,12 @@ type (
 	RingImportIn = operation.ImportIn
 )
 
-// DefaultKeySetDir and KeySetEnv mirror the store's defaults for surface help text.
-const (
-	DefaultKeySetDir = operation.DefaultKeySetDir
-	KeySetEnv        = operation.KeySetEnv
-)
+// KeySetEnv mirrors the store's default for surface help text.
+const KeySetEnv = operation.KeySetEnv
+
+// DefaultKeySetDir is where an unnamed key set lives, for surfaces that print
+// it in help text.
+func DefaultKeySetDir() (string, error) { return operation.DefaultKeySetDir() }
 
 // keyringDeps adapts this layer's dependency set to the module's.
 func (d Deps) keyringDeps() operation.Deps {

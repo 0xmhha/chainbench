@@ -165,7 +165,11 @@ func TestKeyring_ReportsWhichRingItUsed(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error when the default key set does not exist")
 	}
-	if !strings.Contains(err.Error(), operation.DefaultKeySetDir) || !strings.Contains(err.Error(), "default") {
+	want, derr := operation.DefaultKeySetDir()
+	if derr != nil {
+		t.Skipf("no home directory to place the default key set under: %v", derr)
+	}
+	if !strings.Contains(err.Error(), want) || !strings.Contains(err.Error(), "default") {
 		t.Errorf("error should name the key set and why it was chosen: %v", err)
 	}
 }

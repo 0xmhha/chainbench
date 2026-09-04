@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/0xmhha/chainbench/internal/core/home"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -17,10 +19,6 @@ import (
 // is how a later command sees the ones that exist. A workspace composed
 // elsewhere is counted only when it is named.
 
-// defaultRootDir is the directory under the operator's home that holds
-// timestamped compositions.
-const defaultRootDir = ".chainbench"
-
 // setupDir is the segment under a composition that holds its setup: the
 // workspace.json and everything the steps generate before launch.
 const setupDir = "chainsetup"
@@ -31,13 +29,7 @@ const setupDir = "chainsetup"
 const timestampLayout = "20060102-150405"
 
 // DefaultRoot is where compositions default to: ~/.chainbench.
-func DefaultRoot() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("chainsetup: no home directory to default the workspace under: %w", err)
-	}
-	return filepath.Join(home, defaultRootDir), nil
-}
+func DefaultRoot() (string, error) { return home.Root() }
 
 // DefaultWorkspaceDir is the workspace a composition gets when none is named:
 // ~/.chainbench/<YYYYMMDD-HHMMSS>/chainsetup. A <test-name> segment joins the
