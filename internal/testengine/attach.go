@@ -3,12 +3,16 @@ package testengine
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/testhelper"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -196,5 +200,40 @@ func ringFor(dir string) (*store.KeySet, error) {
 	if err := ring.Register(context.Background(), set, len(set.Nodes)); err != nil {
 		return nil, err
 	}
+	// Beyond the numbered identities the preset index lists, a ring directory
+	// may hold entries a run created — the test accounts a spec declares. They
+	// are read back rather than regenerated so a label keeps meaning the same
+	// address across runs, which is the property that makes a label worth more
+	// than the address it replaced.
+	if err := loadEntries(ring, dir); err != nil {
+		return nil, err
+	}
 	return ring, nil
+}
+
+// loadEntries adds every on-disk entry the ring does not already hold. A
+// directory that does not look like an entry is skipped rather than refused:
+// a key set also holds files that are not identities.
+func loadEntries(ring *store.KeySet, dir string) error {
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return nil //nolint:nilerr // an unreadable ring dir is the caller's problem, not this scan's
+	}
+	for _, e := range ents {
+		if !e.IsDir() {
+			continue
+		}
+		label := keyring.Label(e.Name())
+		if _, held := ring.Get(label); held {
+			continue
+		}
+		path := filepath.Join(dir, e.Name(), "private")
+		if _, statErr := os.Stat(path); statErr != nil {
+			continue
+		}
+		if _, err := ring.Add(context.Background(), label, keyring.FileSource{Path: path}, derive.AccountOnly); err != nil {
+			return fmt.Errorf("key set entry %s: %w", e.Name(), err)
+		}
+	}
+	return nil
 }

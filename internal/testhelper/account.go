@@ -111,3 +111,43 @@ func knownLabels(d *interp.Deps) []string {
 	}
 	return out
 }
+
+// addressArgs are the argument names that hold an account address, and so the
+// places a label may stand in for one.
+//
+// The list lives here rather than in the interpreter because these are chain
+// words: the grammar knows a step has arguments, not that "deployer" is an
+// account. Naming them in one place is what keeps a label usable everywhere an
+// address is — a label that worked in "from" but not in "address" would be a
+// half-usable feature, and a spec would go back to pasting hex for the half it
+// could not name.
+var addressArgs = []string{"address", "from", "to", "deployer", "funder"}
+
+// resolveAddressArgs returns spec with every address-shaped argument resolved,
+// leaving everything else untouched. The input map is not modified: a spec is
+// read more than once (an assertion runs against each target node), and
+// rewriting it in place would resolve against a spec that had already changed.
+func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, error) {
+	var out map[string]any
+	for _, key := range addressArgs {
+		ref, ok := spec[key].(string)
+		if !ok || ref == "" || addressLiteral.MatchString(ref) {
+			continue
+		}
+		acct, err := ResolveAccount(d, ref)
+		if err != nil {
+			return nil, err
+		}
+		if out == nil {
+			out = make(map[string]any, len(spec))
+			for k, v := range spec {
+				out[k] = v
+			}
+		}
+		out[key] = acct.Address
+	}
+	if out == nil {
+		return spec, nil
+	}
+	return out, nil
+}

@@ -130,6 +130,10 @@ func (readAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if source == "" {
 		return fmt.Errorf("dsl: read requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
 	}
+	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	if aerr != nil {
+		return aerr
+	}
 	read, ok := ac.Deps.Actions.Reader(source)
 	if !ok {
 		return fmt.Errorf("dsl: read: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
@@ -138,7 +142,7 @@ func (readAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	v, err := read(ctx, c, ac.Args)
+	v, err := read(ctx, c, args)
 	if err != nil {
 		return fmt.Errorf("dsl: read %s: %w", source, err)
 	}
@@ -167,6 +171,10 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if source == "" {
 		return fmt.Errorf("dsl: waitFor requires a \"source\" (one of: %s)", strings.Join(readerNames(), ", "))
 	}
+	args, aerr := resolveAddressArgs(ac.Deps, ac.Args)
+	if aerr != nil {
+		return aerr
+	}
 	read, ok := ac.Deps.Actions.Reader(source)
 	if !ok {
 		return fmt.Errorf("dsl: waitFor: unknown source %q (one of: %s)", source, strings.Join(readerNames(), ", "))
@@ -191,7 +199,7 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	var lastActual any
 	var lastErr error
 	for {
-		if v, rerr := read(ctx, c, ac.Args); rerr == nil {
+		if v, rerr := read(ctx, c, args); rerr == nil {
 			lastActual, lastErr = v, nil
 			if pass, _ := cmp(v, expected); pass {
 				ac.Value = v
@@ -290,7 +298,12 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
 		}
-		actual, err := a.read(ctx, c, ac.Spec)
+		spec, rerr := resolveAddressArgs(ac.Deps, ac.Spec)
+		if rerr != nil {
+			res.Pass, res.Actual = false, rerr.Error()
+			return res, rerr
+		}
+		actual, err := a.read(ctx, c, spec)
 		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err

@@ -65,10 +65,26 @@ type EnvV2 struct {
 	Launch        map[string]map[string]any `json:"launch,omitempty"`
 	Config        map[string]map[string]any `json:"config,omitempty"`
 	Capabilities  []string                  `json:"capabilities,omitempty"`
+	// Accounts declares test accounts by name, created and funded when the
+	// network comes up. They are not in the genesis on purpose: an account
+	// funded at run time is one the genesis never has to mention, so preparing
+	// a test account stops meaning editing the genesis and re-deriving
+	// everything downstream of it.
+	Accounts map[string]AccountV2 `json:"accounts,omitempty"`
 	// Upgrade declares a mixed-binary handoff: the network starts on the
 	// producer's binary and forks to the validators'. With it, Binaries names
 	// the two roles ("producer", "validator") rather than a default.
 	Upgrade *UpgradeV2 `json:"upgrade,omitempty"`
+}
+
+// AccountV2 is one declared test account.
+//
+// An empty declaration is deliberate and useful: an account with no balance is
+// what a test needs to exercise the paths that fail for want of gas.
+type AccountV2 struct {
+	// Fund is the balance to send it once the chain is up, in wei (decimal or
+	// 0x-hex). Empty leaves the account at zero.
+	Fund string `json:"fund,omitempty"`
 }
 
 // Binary roles an upgrade env names.
@@ -326,6 +342,9 @@ func lowerCase(c CaseV2) (Spec, error) {
 
 	// Keys/launch declarations carry through for the surface (cmd run) to fold
 	// into the engine's construction boundaries.
+	if len(env.Accounts) > 0 {
+		spec.EnvAccounts = env.Accounts
+	}
 	if env.Keys != nil && env.Keys.NodeKeys != nil {
 		spec.EnvKeys = env.Keys.NodeKeys
 	}

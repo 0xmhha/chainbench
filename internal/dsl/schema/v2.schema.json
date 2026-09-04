@@ -130,6 +130,20 @@
               "description": "the producer chain's own genesis template"
             }
           }
+        },
+        "accounts": {
+          "type": "object",
+          "description": "Test accounts created and funded when the network is up. Declared here rather than in the genesis so adding or renaming one does not force a new genesis and a re-init of every datadir.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "fund": {
+                "type": "string",
+                "description": "Balance to send once the chain is sealing, in wei (decimal or 0x-hex). Omit for an account that must start at zero — what a test needs to exercise the paths that fail for want of gas."
+              }
+            },
+            "additionalProperties": false
+          }
         }
       }
     },
