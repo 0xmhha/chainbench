@@ -159,13 +159,28 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	from, _ := ac.Args["from"].(string)
-	if from == "" {
+	fromRef, _ := ac.Args["from"].(string)
+	if fromRef == "" {
 		return fmt.Errorf("dsl: sendTx requires \"from\"")
 	}
-	args := rpc.SendTxArgs{From: from}
+	sender, err := ResolveAccount(ac.Deps, fromRef)
+	if err != nil {
+		return err
+	}
+	// An account only this harness holds cannot be signed by a node: the node
+	// has no such key, and asking it to would fail with "unknown account",
+	// which says nothing about why. Signing here is not a fallback — it is the
+	// only place that key exists.
+	if sender.SignsLocally() {
+		return sendTxLocalFrom(ctx, ac, sender)
+	}
+	args := rpc.SendTxArgs{From: sender.Address}
 	if to, ok := ac.Args["to"].(string); ok {
-		args.To = to
+		recipient, rerr := ResolveAccount(ac.Deps, to)
+		if rerr != nil {
+			return rerr
+		}
+		args.To = recipient.Address
 	}
 	if data, ok := ac.Args["data"].(string); ok {
 		args.Data = data
@@ -216,23 +231,38 @@ func (sendTxAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // Execute when a "data" payload is present, else SendCoin for a value-only
 // transfer. The target node RPC comes from the usual "on" selector so the wallet
 // dials the same endpoint the node-signed path would.
+// sendTxLocalFrom signs with the key a label resolved to. It is the same path
+// an explicit "key" takes; the difference is only where the key came from.
+func sendTxLocalFrom(ctx context.Context, ac *interp.ActionCtx, from Account) error {
+	return sendTxLocalKey(ctx, ac, from.Key)
+}
+
 func sendTxLocal(ctx context.Context, ac *interp.ActionCtx, keyHex string) error {
-	if ac.Deps == nil || ac.Deps.Accounts == nil {
-		return fmt.Errorf("dsl: sendTx key: no account provider")
-	}
 	priv, err := hex.DecodeString(strings.TrimPrefix(keyHex, "0x"))
 	if err != nil {
 		return fmt.Errorf("dsl: sendTx key: decode: %w", err)
+	}
+	return sendTxLocalKey(ctx, ac, priv)
+}
+
+func sendTxLocalKey(ctx context.Context, ac *interp.ActionCtx, priv []byte) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("dsl: sendTx: no account provider")
 	}
 	rpcURL := selectorTarget(ac.Env, ac.Args)
 	w, err := ac.Deps.Accounts.OpenWallet(ctx, priv, rpcURL)
 	if err != nil {
 		return fmt.Errorf("dsl: sendTx: open wallet: %w", err)
 	}
-	to, _ := ac.Args["to"].(string)
-	if to == "" {
-		return fmt.Errorf("dsl: sendTx key requires \"to\"")
+	toRef, _ := ac.Args["to"].(string)
+	if toRef == "" {
+		return fmt.Errorf("dsl: sendTx requires \"to\" when this harness signs")
 	}
+	recipient, err := ResolveAccount(ac.Deps, toRef)
+	if err != nil {
+		return err
+	}
+	to := recipient.Address
 	value, err := parseValueWei(ac.Args["value"])
 	if err != nil {
 		return err

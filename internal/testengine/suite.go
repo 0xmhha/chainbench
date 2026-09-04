@@ -126,6 +126,9 @@ type composed struct {
 	// control acts on the node processes for fault steps; nil when the run
 	// does not own them.
 	control interp.NodeControl
+	// keysDir is the key set the network was composed from, so a spec can name
+	// an account by label instead of by address.
+	keysDir string
 }
 
 // workspaceNodes adapts the workspace's node verbs to the interpreter's
@@ -241,7 +244,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		eng, err := NewAttachEngine(AttachConfig{
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
-			NodeSet: net.nodes, Control: net.control,
+			NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
 			// A bus turns on chainstate sampling: chainstate.jsonl is written per
 			// environment (E8) even on the headless suite path, which has no
 			// dashboard subscriber (events are simply dropped).
@@ -359,6 +362,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 		},
 		nodes:   nodes,
 		control: workspaceNodes{sd: sd, dataDir: up.DataDir},
+		keysDir: up.KeysDir,
 	}, nil
 }
 

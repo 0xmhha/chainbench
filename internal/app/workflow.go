@@ -39,6 +39,11 @@ type AttachRunIn struct {
 	RPCURLs      []string
 	ArtifactRoot string
 	Caps         []string
+	// KeysDir is the key set the running network was composed from, when the
+	// operator knows it. It is what lets a spec name an account by label while
+	// attached: the addresses are the key set's, and without it the run has no
+	// way to turn "node1" into one.
+	KeysDir string
 	// Specs are raw DSL JSON blobs (already env-resolved).
 	Specs [][]byte
 }
@@ -48,7 +53,7 @@ type AttachRunIn struct {
 func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,
-		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock,
+		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock, KeysDir: in.KeysDir,
 	})
 	if err != nil {
 		return "", fmt.Errorf("app: attach run: %w", err)

@@ -33,10 +33,15 @@ func seedAssetBuiltins(r interp.Registry) {
 type faucetAction struct{}
 
 func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
-	to, _ := ac.Args["to"].(string)
-	if to == "" {
-		return fmt.Errorf("dsl: faucet requires \"to\" (the address to fund)")
+	toRef, _ := ac.Args["to"].(string)
+	if toRef == "" {
+		return fmt.Errorf("dsl: faucet requires \"to\" (the account to fund)")
 	}
+	recipient, err := ResolveAccount(ac.Deps, toRef)
+	if err != nil {
+		return err
+	}
+	to := recipient.Address
 	value, ok := hexQuantity(ac.Args["amount"])
 	if !ok {
 		return fmt.Errorf("dsl: faucet requires a numeric \"amount\" in wei")
@@ -45,7 +50,7 @@ func (faucetAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	from, err := funder(ctx, c, ac.Args)
+	from, err := funder(ctx, c, ac.Deps, ac.Args)
 	if err != nil {
 		return err
 	}
@@ -89,7 +94,7 @@ func (deployContractAction) Do(ctx context.Context, ac *interp.ActionCtx) error 
 	if err != nil {
 		return err
 	}
-	from, err := funder(ctx, c, ac.Args)
+	from, err := funder(ctx, c, ac.Deps, ac.Args)
 	if err != nil {
 		return err
 	}
@@ -146,7 +151,7 @@ func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) erro
 	if err != nil {
 		return err
 	}
-	from, err := funder(ctx, c, ac.Args)
+	from, err := funder(ctx, c, ac.Deps, ac.Args)
 	if err != nil {
 		return err
 	}
@@ -175,9 +180,20 @@ func (registerContractAction) Do(ctx context.Context, ac *interp.ActionCtx) erro
 // funder resolves the sending account: the explicit "from" if given, else the
 // target node's unlocked coinbase (a validator signs with it, so it is the one
 // account a locally launched network can always spend from).
-func funder(ctx context.Context, c *rpc.Client, args map[string]any) (string, error) {
+// funder is the account a faucet step draws from.
+//
+// A spec may name one, and the reserved "faucet" label is the ordinary way to
+// do it: it means the account this network funded at genesis, so a spec asks
+// for the role rather than for whichever address holds the money. Naming none
+// falls back to the node's own coinbase, which is what specs written before
+// labels relied on.
+func funder(ctx context.Context, c *rpc.Client, d *interp.Deps, args map[string]any) (string, error) {
 	if from, ok := args["from"].(string); ok && from != "" {
-		return from, nil
+		acct, err := ResolveAccount(d, from)
+		if err != nil {
+			return "", err
+		}
+		return acct.Address, nil
 	}
 	from, err := c.Coinbase(ctx)
 	if err != nil {

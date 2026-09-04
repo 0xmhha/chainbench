@@ -50,7 +50,7 @@ func (loadAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if err != nil {
 		return err
 	}
-	from, err := funder(ctx, c, ac.Args)
+	from, err := funder(ctx, c, ac.Deps, ac.Args)
 	if err != nil {
 		return fmt.Errorf("dsl: load: %w", err)
 	}
