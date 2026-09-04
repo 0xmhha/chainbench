@@ -34,12 +34,14 @@ func TestClassify(t *testing.T) {
 
 		// RESTARTABLE — a fresh start may clear it.
 		{"process dead", func(f *nodemonitor.Facts) { f.PIDAlive = false }, nodemonitor.Restartable},
-		{"rpc unready flag", func(f *nodemonitor.Facts) { f.Failure = process.RPCUnready }, nodemonitor.Restartable},
 		{"etcd join failed", func(f *nodemonitor.Facts) { f.Failure = process.EtcdJoinFailed }, nodemonitor.Restartable},
 		{"fork not crossed", func(f *nodemonitor.Facts) { f.Failure = process.ForkNotCrossed }, nodemonitor.Restartable},
-		{"rpc down", func(f *nodemonitor.Facts) { f.RPCUp = false }, nodemonitor.Restartable},
 
-		// WAITABLE — alive and reachable, not there yet.
+		// WAITABLE — alive, not there yet. An RPC that has not opened belongs
+		// here rather than above: the process is running, so it is starting,
+		// and a restart would discard the start it was part way through.
+		{"rpc unready flag", func(f *nodemonitor.Facts) { f.Failure = process.RPCUnready }, nodemonitor.Waitable},
+		{"rpc down", func(f *nodemonitor.Facts) { f.RPCUp = false }, nodemonitor.Waitable},
 		{"syncing", func(f *nodemonitor.Facts) { f.Syncing = true }, nodemonitor.Waitable},
 		{"not advancing", func(f *nodemonitor.Facts) { f.Advancing = false }, nodemonitor.Waitable},
 		{"few peers", func(f *nodemonitor.Facts) { f.Peers = 1 }, nodemonitor.Waitable},
@@ -74,5 +76,46 @@ func TestClassify_PeersUnconstrained(t *testing.T) {
 	f.Peers = 0
 	if got := nodemonitor.Classify(f); got.Verdict != nodemonitor.Ready {
 		t.Fatalf("verdict = %s, want READY when peers unconstrained", got.Verdict)
+	}
+}
+
+// TestClassify_AStartingNodeWaitsRatherThanRestarts.
+//
+// A node whose process is alive but whose RPC has not opened yet has not
+// failed — it has not finished starting. Restarting it throws away exactly the
+// progress it was making, and the gate's first observation is taken right after
+// launch, when no node could possibly be serving yet.
+//
+// Measured before this: every live suite run died about two seconds in with
+// "node1 exhausted 0 restart(s): rpc not ready", while the same network brought
+// up by hand answered eth_blockNumber immediately afterwards.
+func TestClassify_AStartingNodeWaitsRatherThanRestarts(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		mut  func(*nodemonitor.Facts)
+	}{
+		{"rpc has not opened", func(f *nodemonitor.Facts) { f.RPCUp = false }},
+		{"rpc reports unready", func(f *nodemonitor.Facts) {
+			f.RPCUp = false
+			f.Failure = process.RPCUnready
+		}},
+	} {
+		f := ready()
+		tc.mut(&f)
+		if got := nodemonitor.Classify(f).Verdict; got != nodemonitor.Waitable {
+			t.Errorf("%s: verdict = %s, want WAITABLE — a live process with no RPC yet is starting, not broken", tc.name, got)
+		}
+	}
+}
+
+// TestClassify_ADeadProcessIsStillRestartable: the distinction is aliveness. A
+// process that is gone cannot be waited for, and a restart is the remedy that
+// fits.
+func TestClassify_ADeadProcessIsStillRestartable(t *testing.T) {
+	f := ready()
+	f.PIDAlive = false
+	f.RPCUp = false
+	if got := nodemonitor.Classify(f).Verdict; got != nodemonitor.Restartable {
+		t.Errorf("verdict = %s, want RESTARTABLE for a dead process", got)
 	}
 }
