@@ -55,11 +55,22 @@ type ringFlags struct {
 	docker    bool
 }
 
+// defaultRingDir renders the promised key-set location for help text. A
+// machine with no home directory has no promised place; saying so in the help
+// is better than printing a path that does not exist.
+func defaultRingDir() string {
+	d, err := operation.DefaultKeySetDir()
+	if err != nil {
+		return "the chainbench home, which this machine does not have"
+	}
+	return d
+}
+
 func (f *ringFlags) bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.dir, "keyring-dir", "",
 		"key set directory — identities are created in and read from here; a plain path is this machine, "+
 			"srv://<server>/path places the key set on that server (default "+
-			operation.DefaultKeySetDir+", or "+operation.KeySetEnv+")")
+			defaultRingDir()+", or "+operation.KeySetEnv+")")
 	cmd.Flags().StringVar(&f.serverSet, "server-set", "",
 		"server-set file for srv:// paths: which servers exist and how to reach them")
 	cmd.Flags().BoolVar(&f.docker, "docker", false,

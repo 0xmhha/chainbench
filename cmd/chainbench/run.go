@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
@@ -90,7 +91,8 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "preset",
 		"compose: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
-	cmd.Flags().StringVar(&artifactRoot, "artifact-root", "chainbench-out", "session artifact base directory (compose default: the workspace's sessions directory)")
+	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
+		"session artifact base directory (compose default: the workspace's sessions directory)")
 	cmd.Flags().IntVar(&validators, "validators", 4, "compose: validator node count, overriding what the specs declare")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")
@@ -102,6 +104,20 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dashboardURL, "dashboard", "", "attach: chainbench-dashboard URL to stream run events to (e.g. http://127.0.0.1:8787)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the session summary as JSON instead of a table")
 	return cmd
+}
+
+// defaultArtifactRoot is where a run's session lands when no root is named.
+//
+// A composed run keeps its sessions beside its workspace; this is the answer
+// for attaching to a network somebody else is running, which has no workspace
+// to keep them beside. It used to be the relative "chainbench-out", which
+// scattered sessions across the filesystem one working directory at a time.
+func defaultArtifactRoot() string {
+	d, err := home.Sessions()
+	if err != nil {
+		return "chainbench-out"
+	}
+	return d
 }
 
 // runAttach runs the specs against a running network over its RPC endpoints,

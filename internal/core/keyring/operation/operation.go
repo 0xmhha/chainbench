@@ -58,12 +58,14 @@ func (d Deps) env() func(string) string {
 	return d.Env
 }
 
-// DefaultKeySetDir and KeySetEnv are the store's — re-stated here only until the
-// surfaces call the store directly (worklist V3.3).
-const (
-	DefaultKeySetDir = store.DefaultKeySetDir
-	KeySetEnv        = store.KeySetEnv
-)
+// KeySetEnv is the store's — re-stated here only until the surfaces call the
+// store directly (worklist V3.3).
+const KeySetEnv = store.KeySetEnv
+
+// DefaultKeySetDir is the store's answer for an unnamed key set. It is a
+// function rather than a constant because the promised location is under the
+// operator's home, which is knowledge and not a literal.
+func DefaultKeySetDir() (string, error) { return store.DefaultKeySetDir() }
 
 // SetRef names the key set a use case works on.
 type SetRef struct {
