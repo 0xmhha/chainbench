@@ -1,9 +1,10 @@
-// Package logs is a search surface over the per-node log files a setup leaves
-// under <data-dir>/logs/node<N>.log (requirement #5, replacing the legacy bash
-// logs/*.sh). It parses the geth-family line format
+// Log search (part of package collector): a search surface over the per-node
+// log files a setup leaves under <data-dir>/logs/node<N>.log (requirement #5,
+// replacing the legacy bash logs/*.sh). It parses the geth-family line format
 // "LEVEL [MM-DD|HH:MM:SS.mmm] message  key=val" and filters by node, severity,
 // and a substring/regexp pattern, so the CLI and MCP surfaces can answer
-// "show me the errors on node 2" without shelling out.
+// "show me the errors on node 2" without shelling out. (Formerly the standalone
+// logs package, folded into collector in R1.)
 package collector
 
 import (

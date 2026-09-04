@@ -1,7 +1,8 @@
-// Package launchopt is the single assembly point for a node's launch command
-// line (background requirement #2, algorithm step 7). It replaces the five
-// scattered argv sites measured in docs/dev/architecture/code-graph.md §3 with
-// one Builder over ten concern modules.
+// Launch-option assembly (part of package nodeconfig): the single assembly
+// point for a node's launch command line (background requirement #2, algorithm
+// step 7). It replaces the five scattered argv sites measured in
+// docs/dev/architecture/code-graph.md §3 with one Builder over ten concern
+// modules. (Formerly the standalone launchopt package, folded into nodeconfig.)
 //
 // The design (docs/dev/chain-binary-flag-graph.md §3.3) rests on one measured
 // fact: the three chain binaries expose two flag generations, not three, so a

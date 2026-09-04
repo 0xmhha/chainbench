@@ -28,12 +28,12 @@ func NewFileStore(path string) (*FileStore, error) {
 		return f, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("obs: read run store %s: %w", path, err)
+		return nil, fmt.Errorf("collector: read run store %s: %w", path, err)
 	}
 	var runs []RunRecord
 	if len(b) > 0 {
 		if err := json.Unmarshal(b, &runs); err != nil {
-			return nil, fmt.Errorf("obs: parse run store %s: %w", path, err)
+			return nil, fmt.Errorf("collector: parse run store %s: %w", path, err)
 		}
 	}
 	for _, r := range runs {
@@ -67,14 +67,14 @@ func (f *FileStore) ListRuns() []RunRecord {
 // flush writes the current records to disk (caller holds the lock).
 func (f *FileStore) flush() error {
 	if err := os.MkdirAll(filepath.Dir(f.path), 0o755); err != nil {
-		return fmt.Errorf("obs: mkdir run store dir: %w", err)
+		return fmt.Errorf("collector: mkdir run store dir: %w", err)
 	}
 	b, err := json.MarshalIndent(f.mem.ListRuns(), "", "  ")
 	if err != nil {
-		return fmt.Errorf("obs: marshal run store: %w", err)
+		return fmt.Errorf("collector: marshal run store: %w", err)
 	}
 	if err := os.WriteFile(f.path, append(b, '\n'), 0o644); err != nil {
-		return fmt.Errorf("obs: write run store %s: %w", f.path, err)
+		return fmt.Errorf("collector: write run store %s: %w", f.path, err)
 	}
 	return nil
 }
