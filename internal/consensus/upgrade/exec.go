@@ -40,6 +40,12 @@ type LaunchOptions struct {
 	// mesh's admin_addPeer). Typed keys, so an unsupported knob is a classified
 	// assembly error instead of a silently ignored flag. Optional.
 	Overrides func(spec NodeSpec, producer bool) []nodeconfig.Override
+	// Only, when non-empty, restricts the launch to these 0-based node
+	// positions. It is how a caller launches in phases: a poa network's etcd
+	// cluster forms only while its producer is alone, so the producer goes up,
+	// the bootstrap runs, and the rest follow. Empty launches every node, which
+	// is what a family with nothing to order asks for.
+	Only []int
 	// Files is where the shared genesis is written. Nil is the local
 	// filesystem, which is what a local handoff wants and what this used to do
 	// unconditionally — the boundary exists so a caller running against a remote
@@ -47,6 +53,19 @@ type LaunchOptions struct {
 	// machine driving them — the defect the remote-provision path used to
 	// have, where a remote network's files landed on the operator's resource.
 	Files filestore.Store
+}
+
+// wants reports whether position i is in this launch.
+func (o LaunchOptions) wants(i int) bool {
+	if len(o.Only) == 0 {
+		return true
+	}
+	for _, n := range o.Only {
+		if n == i {
+			return true
+		}
+	}
+	return false
 }
 
 func (o LaunchOptions) files() filestore.Store {
@@ -132,6 +151,9 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 		return ns, err
 	}
 	for i, spec := range specs {
+		if !opts.wants(i) {
+			continue
+		}
 		if err := initFn(ctx, spec.Binary, spec.DataDir, genesisPath); err != nil {
 			return ns, fmt.Errorf("upgrade: init node%d (%s): %w", spec.Index+1, spec.Binary, err)
 		}

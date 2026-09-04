@@ -47,7 +47,6 @@ func newRootCmd() *cobra.Command {
 		newAccountCmd(),
 		newTxCmd(),
 		newContractCmd(),
-		newRemoteCmd(),
 		keyringcmd.New(),
 		resourcecmd.New(),
 	)
