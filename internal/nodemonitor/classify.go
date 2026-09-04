@@ -83,18 +83,26 @@ func Classify(f Facts) NodeReport {
 		return reason(Restartable, "process not alive")
 	}
 	switch f.Failure {
-	case process.RPCUnready:
-		return reason(Restartable, "rpc not ready (%s)", f.Failure)
 	case process.EtcdJoinFailed:
 		return reason(Restartable, "etcd join failed")
 	case process.ForkNotCrossed:
 		return reason(Restartable, "fork not crossed")
 	}
-	if !f.RPCUp {
-		return reason(Restartable, "rpc not ready")
-	}
 
-	// WAITABLE — alive and reachable, just not there yet.
+	// WAITABLE — alive, just not there yet.
+	//
+	// A live process whose RPC has not opened is starting, not broken, and the
+	// remedy for starting is to let it finish. Restarting throws away exactly
+	// the progress it was making — and the gate's first observation is taken
+	// right after launch, when no node could be serving yet, so calling this
+	// RESTARTABLE ended every run about two seconds in with "exhausted 0
+	// restart(s): rpc not ready" against a network that was perfectly healthy a
+	// moment later. A node that never opens is caught by the wait budget, which
+	// is the bound that belongs on waiting.
+	if !f.RPCUp || f.Failure == process.RPCUnready {
+		r = reason(Waitable, "rpc not ready yet")
+		return r
+	}
 	if f.Syncing {
 		r = reason(Waitable, "still syncing")
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
@@ -56,6 +57,13 @@ type AttachConfig struct {
 	// attached to — a suite that composed the network itself passes the real
 	// nodes (indices, hosts, every endpoint) instead of bare RPC URLs.
 	NodeSet *node.NodeSet
+	// KeysDir is the key set the network was composed from. It is what makes an
+	// account label resolvable: a spec naming node1 has to reach the identity
+	// behind that name, and this is the only place the run learns where those
+	// identities live. Empty is plain attach, where the operator points at
+	// somebody else's network and there is no key set to speak of — labels
+	// then fail by name instead of resolving to something arbitrary.
+	KeysDir string
 	// Control, when non-nil, lets fault steps (stopNode/startNode/restartNode)
 	// act on the node processes. Nil is plain attach's default: the run does
 	// not own the processes, and those steps fail with a clear reason.
@@ -122,10 +130,15 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 
+	keys, err := ringFor(cfg.KeysDir)
+	if err != nil {
+		return nil, fmt.Errorf("engine: attach engine: %w", err)
+	}
 	run := NewRunSpec(interp.Deps{
 		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
 		Actions:  testhelper.Registry(),
 		Accounts: accts,
+		Keys:     keys,
 		Nodes:    cfg.Control,
 	})
 
@@ -156,4 +169,32 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		Emit:       busEmit(cfg.Bus),
 		Network:    cfg.Chain,
 	}), nil
+}
+
+// ringFor opens the key set a run resolves account labels against.
+//
+// It reads the identities the network was composed from, which is what makes
+// "node1" mean the same account here as it does in the genesis and in that
+// node's keystore. A run with no key set gets no ring rather than an empty one:
+// a label then fails saying there is nothing to resolve against, which is the
+// truth, instead of failing as if the name were unknown.
+func ringFor(dir string) (*store.KeySet, error) {
+	if dir == "" {
+		return nil, nil
+	}
+	set, err := store.LoadPreset(dir)
+	if err != nil {
+		// A key set that is not there is not an error here. Attaching to a
+		// network somebody else composed is the ordinary case, and the compose
+		// path's default (keys/preset) is carried in even when nothing needs
+		// it. What must not happen is a label quietly resolving to nothing:
+		// with no ring, ResolveAccount says there is none, at the step that
+		// asked.
+		return nil, nil //nolint:nilerr // absence is a valid state, not a failure
+	}
+	ring := store.NewKeySet(dir)
+	if err := ring.Register(context.Background(), set, len(set.Nodes)); err != nil {
+		return nil, err
+	}
+	return ring, nil
 }

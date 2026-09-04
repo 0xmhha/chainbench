@@ -65,7 +65,12 @@ func (o Options) withDefaults() Options {
 	if o.WaitInterval <= 0 {
 		o.WaitInterval = DefaultWaitInterval
 	}
-	if o.MaxRestarts < 0 {
+	// Zero means unset here, as it does for the other two: a caller writing
+	// Options{} is asking for defaults. Treating it as "never restart" made
+	// that literal contradict the one call site's own comment ("restarting
+	// RESTARTABLE ones within limits") and terminate on the first node that
+	// needed one.
+	if o.MaxRestarts <= 0 {
 		o.MaxRestarts = DefaultMaxRestarts
 	}
 	return o

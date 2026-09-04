@@ -57,7 +57,7 @@ func newRunCmd() *cobra.Command {
 			case len(rpcURLs) > 0 && workspaceDir != "":
 				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc")
 			case len(rpcURLs) > 0:
-				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, dashboardURL, jsonOut)
+				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut)
 			case workspaceDir == "":
 				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare) or --rpc <url> (attach to a running one)")
 			}
@@ -108,7 +108,7 @@ func newRunCmd() *cobra.Command {
 // optionally streaming orchestration events to a dashboard. Emission never
 // blocks the run; the bus is closed and the forwarder drained before exiting
 // so buffered events are flushed.
-func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, dashboardURL string, jsonOut bool) error {
+func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("run: --chain is required to attach")
 	}
@@ -130,6 +130,11 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 	}
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot, Bus: bus,
+		// The key set is what turns "node1" in a spec into an address. An
+		// operator attaching to a network they composed has it; passing it here
+		// is the difference between labels working and a spec having to paste
+		// hex it would have to update whenever the keys change.
+		KeysDir: keysDir,
 	})
 	if err != nil {
 		flush()
