@@ -54,6 +54,10 @@ type Spec struct {
 	// EnvConfig are the v2 env.config knob overrides by scope ("all" /
 	// "node<N>"), each a list of dot-path "key=value". Runtime-only.
 	EnvConfig map[string][]string `json:"-"`
+	// EnvAccounts are the v2 env's declared test accounts, by label. The suite
+	// creates them in the key set and funds the ones that ask for a balance,
+	// after the chain is up.
+	EnvAccounts map[string]AccountV2 `json:"-"`
 }
 
 // Parse routes raw JSON to its grammar (v1, or v2 by schemaVersion sniff),

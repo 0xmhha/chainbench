@@ -241,6 +241,22 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 				return fmt.Errorf("engine: run suite: %w", err)
 			}
 		}
+		// Declared test accounts are created and funded here: after the chain
+		// seals (funding is a transaction) and before any spec runs (a spec
+		// referring to one must find it).
+		if len(parsed[0].EnvAccounts) > 0 {
+			ring, rerr := ringFor(net.keysDir)
+			if rerr != nil {
+				return fmt.Errorf("engine: run suite: accounts: %w", rerr)
+			}
+			funder, ok := ring.Get("node1")
+			if !ok {
+				return fmt.Errorf("engine: run suite: accounts: the key set has no node1 to fund from")
+			}
+			if err := prepareAccounts(ctx, ring, net.keysDir, net.endpoints[0], parsed[0].EnvAccounts, funder.Address); err != nil {
+				return fmt.Errorf("engine: run suite: %w", err)
+			}
+		}
 		eng, err := NewAttachEngine(AttachConfig{
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
