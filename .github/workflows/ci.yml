@@ -56,6 +56,13 @@ jobs:
         run: go build ./...
       - name: go test
         run: go test -race ./...
+      # The e2e suites need chain binaries and never run here, so nothing else
+      # compiles them. That is how two of them came to reference a type deleted
+      # months earlier: the removal checked for callers, and a build tag hid
+      # these from the check and from every `go test ./...` since. Vetting the
+      # tag costs one step and catches the rot at the commit that causes it.
+      - name: go vet (e2e build tag)
+        run: go vet -tags e2e ./...
 
   # Static analysis beyond go vet: staticcheck, ineffassign, unused, errcheck
   # (config + exclusions in .golangci.yml).
