@@ -7,7 +7,7 @@
   "requires": ["rpc"],
   "steps": [
     { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
-    { "sendTx": { "on": "en1", "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8", "to": "$acct",
+    { "sendTx": { "on": "en1", "from": "node1", "to": "$acct",
                   "value": "10000000000000000000", "gas": "21000", "save": "fundHash" } },
     { "sendRawTampered": { "on": "en1", "senderKey": "$acctKey", "feePayerKey": "$acctKey",
                            "to": "0x00000000000000000000000000000000C0FFEE22", "value": "1", "which": "sender" } }

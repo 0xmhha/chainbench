@@ -7,7 +7,7 @@
   "steps": [
     { "read": { "source": "derive", "op": "abiCall", "selector": "0xeeaf6816", "of": ["30000000000001"], "save": "propData" } },
     { "sendTx": { "on": "en1",
-                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "from": "node1",
                   "to": "0x0000000000000000000000000000000000001001",
                   "gas": "0x16e360",
                   "data": "$propData", "save": "propHash" } },
@@ -23,7 +23,7 @@
 
     { "read": { "source": "derive", "op": "abiCall", "selector": "0xe1b526b0", "of": ["$pid"], "save": "expData" } },
     { "sendTx": { "on": "en1",
-                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "from": "node1",
                   "to": "0x0000000000000000000000000000000000001001",
                   "gas": "0x16e360",
                   "data": "$expData", "save": "expHash" } },

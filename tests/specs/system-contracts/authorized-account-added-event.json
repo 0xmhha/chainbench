@@ -6,7 +6,7 @@
   "requires": ["rpc"],
   "steps": [
     { "sendTx": { "on": "en1",
-                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "from": "node1",
                   "to": "0x0000000000000000000000000000000000001004",
                   "gas": "0x16e360",
                   "data": "0x93a8bb9900000000000000000000000000000000000000000000000000000000c0ffee11",
@@ -16,7 +16,7 @@
                 "topic": 1, "save": "pid" } },
     { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$pid"], "save": "approveData" } },
     { "sendTx": { "on": "en2",
-                  "from": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+                  "from": "node2",
                   "to": "0x0000000000000000000000000000000000001004",
                   "gas": "0x16e360",
                   "data": "$approveData",

@@ -10,7 +10,7 @@
                 "params": ["$n"], "select": "gasTip", "save": "htip" } },
     { "read": { "source": "derive", "op": "sum",
                 "of": ["$htip", "$htip", "$htip", "$htip", "$htip"], "save": "hightip" } },
-    { "sendTx": { "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+    { "sendTx": { "from": "node1",
                   "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
                   "value": "1", "gas": "21000",
                   "maxFeePerGas": "1000000000000000", "maxPriorityFeePerGas": "$hightip",

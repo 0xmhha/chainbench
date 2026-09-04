@@ -5,7 +5,7 @@
   "chain": { "name": "stablenet", "binary": "gstable" },
   "requires": ["rpc"],
   "assertions": [
-    { "assert": "balanceAt", "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+    { "assert": "balanceAt", "address": "node1",
       "compare": "Greater", "expected": "0" }
   ]
 }

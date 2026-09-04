@@ -10,7 +10,7 @@
     { "newAccount": { "save": "feePayer", "saveKey": "feePayerKey" } },
 
     { "sendTx": { "on": "en1",
-                  "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+                  "from": "node1",
                   "to": "$sender",
                   "value": "10000000000000000000", "gas": "21000",
                   "save": "fundHash" } },
