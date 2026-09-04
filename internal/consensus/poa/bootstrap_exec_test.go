@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 )
 
 func sampleMember(boot bool) Member {
@@ -89,5 +90,54 @@ func TestBootstrapExec_Commands(t *testing.T) {
 	}
 	if !strings.Contains(joined(2), "attach /ipc --exec admin.etcdInit()") {
 		t.Errorf("etcdInit cmd: %s", joined(2))
+	}
+}
+
+// TestEtcdInit_ARefusalIsNotSuccess.
+//
+// admin.etcdInit() refuses with "not running" while the node has not yet read
+// the governance contract that tells it which member it is. The console prints
+// that rather than failing the process, so a caller that only checks the
+// process status is told the cluster was formed when nothing was. Measured: one
+// handoff in four deployed governance, initialized nothing, and stalled with an
+// empty cluster and no error anywhere.
+func TestEtcdInit_ARefusalIsNotSuccess(t *testing.T) {
+	run := func(context.Context, string, ...string) ([]byte, error) {
+		return []byte("Error: not running\n\tat web3.js:6373:9(45)"), nil
+	}
+	err := EtcdInit(context.Background(), run, "gwemix", "/tmp/x.ipc")
+	if err == nil {
+		t.Fatal("a refusal printed to the console was reported as success")
+	}
+	if !strings.Contains(err.Error(), "not running") {
+		t.Fatalf("the error does not carry what the node said: %v", err)
+	}
+}
+
+// TestEtcdInit_SuccessIsQuiet: a working init prints null, which is not an
+// error and must not be read as one.
+func TestEtcdInit_SuccessIsQuiet(t *testing.T) {
+	run := func(context.Context, string, ...string) ([]byte, error) { return []byte("null"), nil }
+	if err := EtcdInit(context.Background(), run, "gwemix", "/tmp/x.ipc"); err != nil {
+		t.Fatalf("a successful init was reported as a failure: %v", err)
+	}
+}
+
+// TestWaitSelf_WaitsForTheNodeToFindItself: the window closes when the node's
+// governance refresh lands, so the wait is on the state and not on a duration.
+func TestWaitSelf_WaitsForTheNodeToFindItself(t *testing.T) {
+	calls := 0
+	run := func(context.Context, string, ...string) ([]byte, error) {
+		calls++
+		if calls < 2 {
+			return []byte(`"{\"self\":{\"name\":\"\"},\"miners\":\"\"}"`), nil
+		}
+		return []byte(`"{\"self\":{\"name\":\"node1\"},\"miners\":\"node1/up\"}"`), nil
+	}
+	if err := WaitSelf(context.Background(), run, "gwemix", "/tmp/x.ipc", 10*time.Second); err != nil {
+		t.Fatalf("WaitSelf: %v", err)
+	}
+	if calls < 2 {
+		t.Fatalf("returned after %d call(s); it must keep asking until self is known", calls)
 	}
 }
