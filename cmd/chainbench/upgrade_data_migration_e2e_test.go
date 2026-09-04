@@ -47,7 +47,7 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 
 	// 1. Run the handoff, keeping the datadir. node1 (go-wemix producer) mines the
 	// pre-fork chain into <dataRoot>/node1/geth.
-	dataRoot, node1URL, mgr := runHandoffKeepDatadir(t, fromBin, toBin, template)
+	dataRoot, node1URL, pids := runHandoffKeepDatadir(t, fromBin, toBin, template)
 	t.Cleanup(func() { _ = os.RemoveAll(dataRoot) })
 
 	// Record node1's pre-fork head before shutting it down.
@@ -58,7 +58,7 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 	t.Logf("go-wemix producer pre-fork head: %d", preforkHead)
 
 	// 2. Stop every handoff node so node1's chaindata is closed and reopenable.
-	if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
+	if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 		t.Logf("process: leaked handoff PIDs before migration: %v", leaks)
 	}
 	// Give the OS a moment to release the DB lock.
@@ -123,10 +123,10 @@ func TestWemixDataMigrationE2E(t *testing.T) {
 }
 
 // runHandoffKeepDatadir runs the handoff like runGovHandoff but returns the data
-// root, the producer (node1) RPC URL, and the process.Manager tracking the nodes
+// root, the producer (node1) RPC URL, and the pids of the nodes
 // (the caller stops them) instead of auto-tearing-down. It retries the flaky
 // producer/etcd bootstrap.
-func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (string, string, *process.Manager) {
+func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (string, string, []int) {
 	t.Helper()
 	var lastOut string
 	for attempt := 1; attempt <= govHandoffAttempts; attempt++ {
@@ -134,7 +134,6 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (strin
 		if err != nil {
 			t.Fatalf("mkdir temp datadir: %v", err)
 		}
-		mgr := process.New()
 
 		cmd := newUpgradeRunCmd()
 		cmd.SetArgs([]string{
@@ -150,18 +149,17 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (strin
 		cmd.SetOut(&out)
 		cmd.SetErr(&out)
 		runErr := cmd.Execute()
-		mgr.TrackFromOutput(out.String())
-		mgr.TrackNodeSet(dataDir)
+		pids := pidsFrom(out.String())
 
 		if runErr == nil && strings.Contains(out.String(), "handoff confirmed") {
 			if attempt > 1 {
 				t.Logf("handoff confirmed on attempt %d/%d", attempt, govHandoffAttempts)
 			}
-			return dataDir, node1RPC(t, out.String()), mgr
+			return dataDir, node1RPC(t, out.String()), pids
 		}
 
 		lastOut = out.String()
-		if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
+		if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 			t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
 		}
 		_ = os.RemoveAll(dataDir)

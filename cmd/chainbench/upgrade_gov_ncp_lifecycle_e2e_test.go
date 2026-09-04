@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -157,7 +156,7 @@ const govHandoffWait = "100"
 // runGovHandoff launches the `upgrade run` handoff and returns a successor RPC
 // URL, retrying the flaky producer/etcd bootstrap. It uses a SHORT /tmp datadir
 // so node1's IPC socket path stays under the ~104-byte unix-socket limit (long
-// t.TempDir() paths break the producer's IPC), and a process.Manager so every
+// t.TempDir() paths break the producer's IPC), and the node pids so every
 // launched node is tracked and verifiably killed on teardown (between retries and
 // at test end) — no orphans.
 func runGovHandoff(t *testing.T, fromBin, toBin, template string) string {
@@ -174,7 +173,6 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		if err != nil {
 			t.Fatalf("mkdir temp datadir: %v", err)
 		}
-		mgr := process.New()
 
 		cmd := newUpgradeRunCmd()
 		args := []string{
@@ -194,15 +192,14 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 		runErr := cmd.Execute()
 		// Track whatever launched (PIDs are printed as `pid=N`, and mirrored into
 		// nodeset.json) so we can guarantee teardown either way.
-		mgr.TrackFromOutput(out.String())
-		mgr.TrackNodeSet(dataDir)
+		pids := pidsFrom(out.String())
 
 		if runErr == nil && strings.Contains(out.String(), "handoff confirmed") {
 			// Success: keep the nodes running for the test, tear down verifiably at
 			// the end.
 			dir := dataDir
 			t.Cleanup(func() {
-				if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
+				if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 					t.Logf("process: leaked node PIDs after test: %v", leaks)
 				}
 				_ = os.RemoveAll(dir)
@@ -215,7 +212,7 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 
 		// Failure: kill this attempt's nodes cleanly (no orphans) before retrying.
 		lastOut = out.String()
-		if leaks := mgr.StopAll(10 * time.Second); len(leaks) > 0 {
+		if leaks := stopPIDs(pids, 10*time.Second); len(leaks) > 0 {
 			t.Logf("process: attempt %d leaked node PIDs %v", attempt, leaks)
 		}
 		_ = os.RemoveAll(dataDir)
