@@ -1,27 +1,23 @@
 # Remote wemix+etcd deployment — design (wemix4 → chainbench Go)
 
-> **[이력]** 착수 전 설계다. **현재 상태를 말하지 않는다** — 아래 본문은 §6 의 1~5
-> 단계를 앞으로 만들 것처럼 서술하지만, 그 단계들은 이미 구현됐다.
+> **[대체됨]** 이 문서가 설계한 경로(`chainbench remote` 명령군과
+> `internal/chains/wemix/deploy`)는 **2026-09-05 에 폐기됐다.** 같은 일을 core 를
+> 경유해서 하는 경로가 R 트랙에서 완성됐기 때문이다:
 >
-> - 원격 키 읽기 → `internal/core/remote/files.go` (`ReadFile`, `ReadFileCommand`)
-> - 원격 파일 읽기/쓰기 능력 → `internal/core/driver/remote_store.go`
->   (`RemoteFileStore.Exists/Read/Write`)
-> - 클러스터 모델·계획·프로비저닝·거버넌스/etcd 부트스트랩·하드포크 핸드오프 →
->   `internal/chains/wemix/deploy/` (`cluster.go` · `plan.go` · `keys.go` ·
->   `bootstrap.go` · `handoff.go` · `orchestrate.go`)
+> | 이 문서의 것 | 대체 |
+> |---|---|
+> | `remote deploy` — SSH 로 클러스터 프로비전·기동 | `chain up --server <name>` (R4·R5, 실서버 배치 라이브 검증) |
+> | `remote bootstrap` — 거버넌스 배포 + etcd 초기화 | poa 패밀리의 `deploy-governance`·`etcd-init`·`verify-etcd` 페이즈 액션 (F5) |
+> | `remote handoff` — 핸드오프 확인 | `upgrade`·`hardfork` 명령 |
+> | `remote keys read` — 서버에서 키 읽기 | `keyring import --from srv://<server>/path` (R3) |
+> | `deploy.Cluster` yaml | 서버 세트(`resource`) + 토폴로지 |
 >
-> 지금 무엇이 동작하는지는 코드와
-> [`internal/chains/wemix/deploy/README.md`](../internal/chains/wemix/deploy/README.md)
-> 에서 확인한다. 남은 작업과 그 상태의 **정본은**
-> [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) 이고,
-> [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) 가 §6 의 6단계
-> 테스트 케이스 포팅 현황을 보조로 추적한다. 이 문서는 `[이력]` 이므로 현재
-> 동작의 근거가 아니다.
+> 폐기 이유는 기능 중복이 아니라 **소유권**이다: 이 패키지는 자기 `Server`·`Role`·
+> `Credentials`·`BuildNodeSpecs` 를 들고 있었고, core 가 `resource`·`machine`·
+> `process` 로 재편되는 동안 그 밖에 남아 있었다. 원격 경로의 개념은
+> [[docker-remote-design]](dev/docker-remote-design.md) 와 서버 세트 문서가 잇는다.
 >
-> 보존하는 이유는 **왜 그렇게 만들었는지**다. wemix4 의 각 장치를 어떤 chainbench
-> 구성요소에 대응시켰는지, 설정 표면을 왜 그렇게 잡았는지, §7 의 결정 5건이 무엇이었는지가
-> 여기에만 있다. 패키지 경로는 `pkg/` → `internal/` 이동(T0.0) 후 현재 트리에 맞춰
-> 고쳤고, 그 밖의 서술은 작성 시점 그대로 둔다.
+> 아래 본문은 **그때 무엇을 설계했는지의 기록**이며 현재 상태를 말하지 않는다.
 
 > Migrate the `tests/wemix4/` **SSH-driven, closed-network** deploy+hardfork test
 > suite into chainbench's Go implementation. Reference source:

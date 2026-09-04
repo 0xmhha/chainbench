@@ -447,7 +447,7 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 |---|---|---|---|
 | **G1** | **조립 지점 단일화** — `engine.BuildGenesis`(소스 선택 + 커스터마이즈)를 모든 경로가 부른다 | ☑ **완료 2026-08-25.** 소스 선택이 **5곳 → 1곳**(엔진·스텝 두 경로가 `poa.FamilyID` 로 분기 + 세 곳이 하드코딩). 커스터마이즈를 소스 **밖으로** 빼서 `netcompose.customizeGenesis`(=`genesis.BuildNetwork` 의 옵션 처리를 줄 단위로 재구현한 사본) 소멸. 라이브: stablenet 4노드 · `chain up --case wemix` 15/15 | ☑ |
 | **G1a** | 닫힌 격차 — **wemix + overlay** | ☑ genesis overlay 가 스텝 경로에선 반영되고 엔진 경로에선 **말없이 버려지던** 분기. 커스터마이즈가 소스 안(한 패밀리만 쓰는 곳)에 있었던 탓. 이제 패밀리가 만든 base 위에 동일하게 적용된다 | ☑ |
-| G2 | `chainsetup/handoff_driver` 의 자체 genesis 조립(`BaseGenesis` + `MergeOverride`)도 같은 조립으로 | 핸드오프 경로는 `BringUpPhases` 도 안 쓴다 — 함께 처리 | ☐ |
+| **G2** | 핸드오프 경로를 패밀리 선언으로 · `chains/wemix/deploy` 폐기 | ◐ **2026-09-05.** **`remote` 명령군과 `deploy` 패키지(995줄) 폐기** — 네 하위명령 모두 core 경유 대체가 있다(`chain up --server`·poa 페이즈 액션·`upgrade`·`keyring import --from srv://`). **핸드오프가 패밀리 순서를 따른다**: 전원 기동 후 부트스트랩하던 것을 `BringUpPhases` 로 물어 프로듀서 단독 → 거버넌스·etcd → 나머지 → 메시 순으로. 거버넌스 배포 전 `WaitProducing` 도 컴포지션 경로와 맞췄다. **잔여**: 여전히 간헐 실패(3회 중 1~2회) — `self.miner=false` 로, 거버넌스에 멤버로 등록됐는데(`miners="producer/up"`) 노드가 자신을 그 멤버로 인식하지 못한다. 신원(enode/주소) 대조 문제로 보이며 별도 조사가 필요하다 | ◐ |
 | G3 | genesis 산출물의 by-product(`Extra`) 배치 규칙 정리 — 지금은 소비자마다 따로 쓴다 | | ☐ |
 
 ### R — 로컬 docker 를 원격 서버처럼 (원격 경로 검증)

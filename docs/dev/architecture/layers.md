@@ -37,7 +37,7 @@
 
 ```
 파일을 쓰는 패키지 14개:
-  app · chainsetup · chains/wemix/deploy · consensus/upgrade
+  app · chainsetup · consensus/upgrade
   core/process · core/keyring · core/collector · core/filestore
   core/session (R1: netreg 의 쓰기는 session 으로, obs 의 쓰기는 collector 로 흡수)
 ```
@@ -131,7 +131,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `chains/stablenet` · `chains/wbft` · `chains/wemix` | 체인 플러그인 |
-| `chains/wemix/deploy` · `chains/stablenet/govbind` | 체인 특화 하위 기능 |
+| `chains/stablenet/govbind` | 체인 특화 하위 기능 |
 | `chains/external` | 외부 매니페스트 |
 | `chains/all` · `chains/common` | 등록 집합 · 공통 헬퍼 |
 
@@ -240,7 +240,7 @@ flowchart TD
 남은 읽기(`os.ReadDir`/`os.ReadFile`)는 조작자 머신의 키 preset 을 읽는 쪽이라 그대로다 —
 `copyFiles` 가 **로컬에서 읽어 boundary 으로 쓰는** 비대칭이 원격 배치를 가능하게 하는 지점이다.
 
-`app`(A3)·`chains/wemix/deploy`(A4) 는 앞서 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
+`app`(A3)·`chains/wemix/deploy`(A4, 그 뒤 폐기) 는 앞서 정리됐다. A3 은 정리가 아니라 **결함 수정**이었다 — 아래.
 
 ### A3 이 드러낸 것 — 원격 프로비전이 로컬에 쓰고 있었다
 

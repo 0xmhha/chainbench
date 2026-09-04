@@ -28,6 +28,9 @@ const (
 	// ipcWait is how long the producer's IPC socket has to appear before a
 	// bootstrap step is attempted over it.
 	ipcWait = 30 * time.Second
+	// producingWait is how long the producer has to start sealing before the
+	// governance deploy sends a transaction into it.
+	producingWait = 60 * time.Second
 	// readyWait bounds the wait for every node's RPC before the mesh is wired.
 	readyWait = 30 * time.Second
 	// forkPoll is how often the successor's head is read while waiting for the
@@ -276,7 +279,15 @@ func (h *Handoff) ApplyOverlay() (string, error) {
 // Launch writes the shared password file and starts every node — producers on
 // the from binary, validators on the to binary, concurrently — returning the
 // running set. Node identities are placed per node as each datadir comes up.
-func (h *Handoff) Launch(ctx context.Context) (node.NodeSet, error) {
+func (h *Handoff) Launch(ctx context.Context) (node.NodeSet, error) { return h.launch(ctx, nil) }
+
+// LaunchPhase starts only the nodes at these 0-based positions, so a caller can
+// bring the producer up alone and the rest after the bootstrap.
+func (h *Handoff) LaunchPhase(ctx context.Context, only []int) (node.NodeSet, error) {
+	return h.launch(ctx, only)
+}
+
+func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) {
 	if len(h.Plan.Nodes) == 0 {
 		return node.NodeSet{}, fmt.Errorf("upgrade: launch needs a composed plan")
 	}
@@ -292,6 +303,7 @@ func (h *Handoff) Launch(ctx context.Context) (node.NodeSet, error) {
 		ProvisionKeys: h.provisionKeys(),
 		Overrides:     h.overrides(),
 		Files:         h.in.Files,
+		Only:          only,
 	}
 	return Launch(ctx, h.in.driver(), h.Plan, opts)
 }
@@ -318,6 +330,20 @@ func (h *Handoff) WireMesh(ctx context.Context, ns node.NodeSet) error {
 func (h *Handoff) DeployGovernance(ctx context.Context, producer node.Node) error {
 	ipc := h.ProducerIPC(producer)
 	if err := poa.WaitForIPC(ctx, ipc, ipcWait); err != nil {
+		return err
+	}
+	// The deploy is a transaction and waits for its receipt, so the chain has
+	// to be sealing before it runs. The IPC socket appears about a second into
+	// start-up and says nothing about that — waiting on it alone left this
+	// deploying into a chain that had not produced a block, and the etcd
+	// cluster that follows then formed nothing.
+	//
+	// The composition path's executor does this too. That it has to be written
+	// twice is the real defect: this bootstrap repeats poa.Bootstrap.Action's
+	// sequence by hand because the two carry different plan types, so every
+	// lesson learned there has to be carried here as well. The functions are at
+	// least the family's own rather than copies of them.
+	if err := poa.WaitProducing(ctx, h.in.exec(), h.in.FromBinary, ipc, producingWait); err != nil {
 		return err
 	}
 	ksDir := node.Layout{Root: h.in.DataDir}.KeystoreDir(h.label(producer))
@@ -361,7 +387,15 @@ func (h *Handoff) Run(ctx context.Context, etcdTimeout time.Duration) (node.Node
 	if _, err := h.ApplyOverlay(); err != nil {
 		return node.NodeSet{}, poa.Info{}, err
 	}
-	ns, err := h.Launch(ctx)
+	// The producer comes up alone. A poa network's etcd cluster forms only
+	// while it is: with the others already running, admin.etcdInit() returns
+	// without error and creates nothing, and the producer then never seals.
+	// The order is not this function's to invent — the consensus family
+	// declares it, and the composition path has followed that declaration since
+	// F3. Doing it by hand here is what left the handoff failing at
+	// verify-etcd while the same network came up correctly through `chain up`.
+	boot, rest := h.phases()
+	ns, err := h.LaunchPhase(ctx, boot)
 	if err != nil {
 		return ns, poa.Info{}, err
 	}
@@ -369,9 +403,6 @@ func (h *Handoff) Run(ctx context.Context, etcdTimeout time.Duration) (node.Node
 		return ns, poa.Info{}, fmt.Errorf("upgrade: launch produced no nodes")
 	}
 	producer := ns.Nodes[0]
-	if err := h.WireMesh(ctx, ns); err != nil {
-		return ns, poa.Info{}, err
-	}
 	if err := h.DeployGovernance(ctx, producer); err != nil {
 		return ns, poa.Info{}, err
 	}
@@ -382,7 +413,46 @@ func (h *Handoff) Run(ctx context.Context, etcdTimeout time.Duration) (node.Node
 	if err != nil {
 		return ns, poa.Info{}, err
 	}
+	if len(rest) > 0 {
+		more, err := h.LaunchPhase(ctx, rest)
+		if err != nil {
+			return ns, poa.Info{}, err
+		}
+		ns.Nodes = append(ns.Nodes, more.Nodes...)
+	}
+	// The mesh is wired once everyone is up: admin_addPeer needs both ends.
+	if err := h.WireMesh(ctx, ns); err != nil {
+		return ns, poa.Info{}, err
+	}
 	return ns, info, nil
+}
+
+// phases asks the producer's consensus family how to order the bring-up, and
+// renders its answer as the node positions this plan launches in each step.
+//
+// The family speaks in roles, so the plan's producers are offered as producers
+// and everything else as endpoints; what comes back is which of them may start
+// together.
+func (h *Handoff) phases() (boot, rest []int) {
+	roles := make([]node.Role, len(h.Plan.Nodes))
+	for i, n := range h.Plan.Nodes {
+		roles[i] = node.RoleEN
+		if n.Producer {
+			roles[i] = node.RoleBP
+		}
+	}
+	for _, phase := range h.From.Family().BringUpPhases(roles) {
+		positions := make([]int, 0, len(phase.Nodes))
+		for _, oneBased := range phase.Nodes {
+			positions = append(positions, oneBased-1)
+		}
+		if boot == nil {
+			boot = positions
+			continue
+		}
+		rest = append(rest, positions...)
+	}
+	return boot, rest
 }
 
 // ProducerIPC is the producer's console socket under the data root.
