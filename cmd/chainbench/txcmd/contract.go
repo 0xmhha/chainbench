@@ -1,4 +1,4 @@
-package main
+package txcmd
 
 import (
 	"fmt"
@@ -9,16 +9,16 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-func newContractCmd() *cobra.Command {
+func NewContract() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "contract",
 		Short: "Deploy and call contracts",
 	}
-	c.AddCommand(newContractDeployCmd(), newContractCallCmd())
+	c.AddCommand(newDeployCmd(), newCallCmd())
 	return c
 }
 
-func newContractDeployCmd() *cobra.Command {
+func newDeployCmd() *cobra.Command {
 	var (
 		chain    string
 		rpcURL   string
@@ -69,7 +69,7 @@ func newContractDeployCmd() *cobra.Command {
 	return cmd
 }
 
-func newContractCallCmd() *cobra.Command {
+func newCallCmd() *cobra.Command {
 	var (
 		rpcURL string
 		to     string

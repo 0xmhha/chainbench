@@ -1,4 +1,4 @@
-package main
+package accountcmd
 
 import (
 	"github.com/spf13/cobra"
@@ -10,11 +10,11 @@ import (
 // group for every kind of key; the generation/import verbs this group used to
 // carry were the same operations under another name and are gone with the
 // deprecated `keys` group.
-func newAccountCmd() *cobra.Command {
+func New() *cobra.Command {
 	acct := &cobra.Command{
 		Use:   "account",
 		Short: "Inspect and fund accounts on a chain; key material lives under `keyring`",
 	}
-	acct.AddCommand(newAccountFundCmd(), newAccountStateCmd())
+	acct.AddCommand(newFundCmd(), newStateCmd())
 	return acct
 }

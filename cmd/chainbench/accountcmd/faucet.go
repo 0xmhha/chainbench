@@ -1,4 +1,4 @@
-package main
+package accountcmd
 
 import (
 	"encoding/hex"
@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newFaucetCmd() *cobra.Command {
+func NewFaucet() *cobra.Command {
 	var (
 		chain        string
 		manifestPath string

@@ -1,4 +1,4 @@
-package main
+package txcmd
 
 import (
 	"encoding/hex"
@@ -14,16 +14,16 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-func newTxCmd() *cobra.Command {
+func NewTx() *cobra.Command {
 	tx := &cobra.Command{
 		Use:   "tx",
 		Short: "Send transactions and wait for receipts",
 	}
-	tx.AddCommand(newTxSendCmd(), newTxWaitCmd())
+	tx.AddCommand(newSendCmd(), newWaitCmd())
 	return tx
 }
 
-func newTxSendCmd() *cobra.Command {
+func newSendCmd() *cobra.Command {
 	var (
 		chain   string
 		rpcURL  string
@@ -76,7 +76,7 @@ func newTxSendCmd() *cobra.Command {
 	return cmd
 }
 
-func newTxWaitCmd() *cobra.Command {
+func newWaitCmd() *cobra.Command {
 	var (
 		rpcURL  string
 		hash    string

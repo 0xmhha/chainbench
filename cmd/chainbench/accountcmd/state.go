@@ -1,4 +1,4 @@
-package main
+package accountcmd
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 // newAccountStateCmd reports an account's on-chain state over RPC.
-func newAccountStateCmd() *cobra.Command {
+func newStateCmd() *cobra.Command {
 	var (
 		rpcURL string
 		addr   string

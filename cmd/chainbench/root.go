@@ -5,9 +5,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/accountcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/chaincmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/txcmd"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/dashboard"
 )
@@ -42,11 +44,11 @@ func newRootCmd() *cobra.Command {
 		newHardforkCmd(),
 		newUpgradeCmd(),
 		newReportCmd(),
-		newFaucetCmd(),
+		accountcmd.NewFaucet(),
 		newLogCmd(),
-		newAccountCmd(),
-		newTxCmd(),
-		newContractCmd(),
+		accountcmd.New(),
+		txcmd.NewTx(),
+		txcmd.NewContract(),
 		keyringcmd.New(),
 		resourcecmd.New(),
 	)

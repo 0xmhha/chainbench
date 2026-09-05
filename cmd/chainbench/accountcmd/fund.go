@@ -1,4 +1,4 @@
-package main
+package accountcmd
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 // mnemonic, or a local/remote key file), using the chain's account provider.
 // This is the account-layer sibling of `faucet`, but the funding key can come
 // from any source, not just an inline hex key.
-func newAccountFundCmd() *cobra.Command {
+func newFundCmd() *cobra.Command {
 	var (
 		chain        string
 		manifestPath string
