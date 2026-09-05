@@ -1,5 +1,12 @@
 # 표면 통일 리팩토링 — Feature 레지스트리 · cmd 박막화 · 체인 공통/특화 분리
 
+> **[일부 대체됨 2026-09-05]** 진단(같은 기능이 세 표면에 각각 구현돼 있다)은 유효하고 지금도
+> 실측된다. 해법의 형태가 바뀌었다. "`cmd/` 가 `app` 만 import" 대신 **세 표면이 모두 app 을
+> 지나고, 게이트는 기능별 동등성 테스트**다. 작업 순서와 상태는
+> [[chainbench-worklist]](chainbench-worklist.md) §1l 의 U 트랙이 소유하며, 이 문서의 S5·S6 은
+> 폐기됐다. 레지스트리·`ReadOnly`·`query` 투영(S0·S7)은 그대로 유효하다.
+> 규칙의 정본은 [[architecture-v2]](architecture/architecture-v2.md) §2 다.
+
 > **[현행 설계]** 표면 통일·명령 표면.
 > 지금 향하는 목표. 근거는 정본([[chainbench-requirements-review]]·[[chainbench-feature-spec]])이고,
 > 작업 순서는 [[chainbench-worklist]] §1g 다.

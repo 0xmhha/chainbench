@@ -380,6 +380,10 @@ K0·S0 가 추측 위에 서게 된다.
 ### S — 표면 통일 (CLI/MCP/DSL 을 한 레지스트리로)
 
 > 근거: [[surface-unification-design]](surface-unification-design.md).
+> **2026-09-05: 표면 경로 부분은 §1l 의 U 트랙이 가져갔다.** S5·S6 은 폐기했다. 아래 줄수는
+> 08-18 시점 기록이며, 지금은 CLI 가 네 패키지로 나뉘어 합계 4,176줄이다(`cmd/chainbench`
+> 1,981 · `keyringcmd` 1,119 · `chaincmd` 828 · `resourcecmd` 248, 비테스트 기준). 코드가 옮겨
+> 갔을 뿐 줄지 않았다.
 > 실측 문제: `cmd/chainbench` 4,569줄 중 **21파일이 `app` 을 우회**해 L1~L4 를 직접 부른다.
 > MCP 도구 46개 중 **34개가 JSON 스키마 손작성**. DSL 은 또 다른 레지스트리를 갖는다 —
 > **기능 목록이 세 벌**이고 실제로 갈라졌다(`faucet`·`verify` 는 DSL 에 없다).
@@ -391,8 +395,8 @@ K0·S0 가 추측 위에 서게 된다.
 | **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
 | **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인. **선례: keyring(K8)** 이 같은 형태로 끝났다 — 유스케이스는 `app`, 표면은 바인딩과 렌더링만 | ☐ |
 | **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
-| **S5** | `cmd/` 규칙 위반 파일 정리(`upgrade_run.go` 395줄부터) | `cmd/` 가 `app` 만 import · 4,569→~1,800줄. 실측 추이: 21파일(08-21) → **24파일(08-25)** — 착수 전까지 증식 중 | ☐ |
-| **S6** | `cmd` import 화이트리스트 테스트 | 재발 차단 | ☐ |
+| **S5** | ~~`cmd/` 규칙 위반 파일 정리~~ **폐기 2026-09-05** | 게이트가 "`cmd/` 가 `app` 만 import" 였는데, 지키려던 성질은 import 목록이 아니라 표면 사이의 동등성이다. 줄수 목표(~1,800)는 **달성하지 못했다**: CLI 네 패키지 합계가 4,569 → 4,176 으로 거의 그대로고, 줄어든 것처럼 보였던 것은 코드가 `chaincmd`·`keyringcmd`·`resourcecmd` 로 옮겨 갔기 때문이다. 폐기 사유는 목표 달성이 아니라 규칙 교체다. 남은 실체는 §1l 의 U 트랙이 가져간다 | ☒ |
+| **S6** | ~~`cmd` import 화이트리스트 테스트~~ **폐기 2026-09-05** | 대리 지표 대신 기능별 동등성 테스트로 대체한다(U0·U2~U7). 라체트는 "app 을 거치지 않는 항목 수"로 세운다 | ☒ |
 | **S7** | **`query` 조회 투영** — `ReadOnly` 기능들을 최상위 `query <명사> <동사>` 로 **자동 생성**(손 트리 금지, [[surface-unification-design]] §4.4, 확정 2026-08-25). 정본 철자는 명사 그룹, `query` 는 같은 등록의 두 번째 렌더링. MCP 는 같은 속성으로 조회 전용 도구 목록을 얻는다 | `query keyring list` == `keyring list` (같은 등록 실증) · 비-ReadOnly 기능이 query 에 나타나면 테스트 실패 | ☐ |
 | **S8** | **netmap 조회의 자기 그룹 독립** (사용자 결정 2026-08-25) — 배치 조회를 `net` 에서 분리해 모듈 이름 그대로의 최상위 그룹 `netmap`(show·pool·plan)으로. 동기: 조회가 조합 그룹에 묶여 있으면 netmap 모듈만 고쳤을 때 그 부분만 테스트할 수 없다. `plan` 신설 = 할당기를 질문으로 실행(인벤토리+형태→배치표, 워크스페이스 없음·무기록) → 배치 변경을 조합 없이 검증하는 통로. MCP 도 동일 이동(`chainbench_netmap_show/pool/plan`). `net` 은 상태를 바꾸는 조합 단계만 소유 | CLI 테스트 7건(plan 결정성·무기록·producer 0 거부·인벤토리 반영·자격 비노출, show 양방향·워크스페이스 요구, pool used 집계) — netmap 만 대상으로 실행 가능 | ☑ |
 | **S10** | **용도별 포트 대역 + 실서버 방화벽 재현** (사용자 요구 2026-08-26) — ① 서버 세트 `ports` 에 `ws`/`auth`/`metrics` 대역 선언 추가(선언 시 rpc 파생 꺼짐, `portplan.PlanBands`). 로더의 p2pStep 최소는 1로(패밀리 요구는 allocate 의 portplan 이 검사 — wemix 만 넓은 예약, wbft 는 관성이던 예약 2→1 정직화). ② docker 서버들: `firewall.sh` 가 Wemix3.5 테스트 서버 허용 목록(TCP 10022·8501-8504·8601-8604·8701-8704·6060·3000·3001·9100·9090·30301-30304·1099·5901·5044·9200, UDP 30303)만 열고 기본 DROP. ③ sshd 10022 + 서버 세트 `ssh.port: 10022`, gen-env 가 실서버 규격 대역을 서버 세트에 기록 | 단위: 용도별 대역 로드·검증·tight-step 판정. 라이브: 허용/차단 포트 프로브(DROP·refused 구분), 새 대역으로 5대 분산 기동→블록 24→고아 0, keyring·driver·워크플로 라이브 스위트 10022 경유 통과 | ☑ |
@@ -772,6 +776,67 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
   남김: `FailureMode`(→failuremode.go, nodemonitor 소비)·`NodeConfig`(→nodeconfig.go, chainsetup
   소비)·`StopNodeSet`(핸드오프 teardown)·`Proc`/`Alive`(레저·inspector)·`Plan`(데이터 캐리어).
   no-branch-on-kind 래칫에서 process 항목 제거. build·vet·test·lint 통과, 동작 변화 0.
+
+## 1l. 표면 단일 진입 (사용자 결정 2026-09-05)
+
+> **결정**: CLI·MCP·DSL 은 모두 `app` 을 통해 기능에 닿는다. 세 표면이 같은 층을 지나야
+> 같은 경험을 준다. `app` 이 커지더라도 규칙이 하나인 편이 낫다는 판단이다.
+> 이 결정은 [[architecture-v2]](architecture/architecture-v2.md) §2 의 비대칭 규칙("CLI 는 core
+> 직접, MCP 는 app 경유", 2026-08-25)을 대체한다. S 절의 **S5·S6 은 폐기**한다. 게이트가
+> "cmd 는 app 만 import" 였는데, 지키려던 성질은 import 목록이 아니라 표면 사이의 동등성이다.
+>
+> **근거가 된 실측(2026-09-05, AST 전수)**: 세 표면의 등록 지점 **157개**(CLI 58 · MCP 54 ·
+> DSL 45 = 액션 18 + 어서션 27)를 파싱해 실제로 닿는 패키지를 따라갔다. app 을 지나지 않고
+> 그 아래에 닿는 항목이 **109개**다(CLI 40 · MCP 24 · DSL 45). app 을 한 번도 부르지 않는
+> 항목만 세면 102개다.
+>
+> 표면 사이 비교는 이름이 겹쳐 자동으로 묶으면 틀린다(`new` 는 `chain` 밑에도 `keyring`
+> 밑에도 있고, `run` 은 스위트 실행과 `upgrade run` 둘 다이다). 그래서 **손으로 확인한 32쌍**만
+> 쓴다. 그중 **22쌍이 서로 다른 경로로 간다.** 양쪽이 모두 app 을 지나는 것은 `chain show`·
+> `hardfork`·`resource plan`·`resource pool` **4쌍뿐이고**, 나머지 6쌍은 양쪽이 똑같이 app 을
+> 건너뛴다(경로는 같지만 구현은 각자다).
+>
+> 갈라진 예를 들면, `report` 는 CLI 가 `core/report`+`core/session` 을 직접 부르는데 MCP 는 app
+> 으로 간다. `build`·`config`·`health`·`logs`·`resume`·`status`·`new` 는 CLI 가 `chainsetup` 을
+> 직접 부르고 MCP `chain_*` 는 전부 app 이다. keyring 다섯 동사는 CLI 가
+> `core/keyring/operation` 을 부르고 MCP 는 app 을 부르는데, app 이 그 모듈을 얇게 감싼 것이라
+> 구현은 같고 경로만 다르다. `send`·`deploy`·`faucet` 은 CLI·MCP·DSL 세 곳이 각각 조립한다.
+>
+> **선례**: Helm 은 `pkg/action` 에 동사마다 액션을 하나씩 두고 CLI 와 SDK 가 같은 것을 부른다
+> (`pkg/action/doc.go`: "Actions approximately match the command line invocations that the Helm
+> client uses"). CLI 는 `cmd/helm` 이 아니라 `pkg/cmd` 에 있고, `cmd/helm/helm.go` 는 50줄짜리
+> `package main` 으로 `helmcmd.NewRootCmd` 만 부른다. U1 이 따르려는 모양이 이것이다.
+>
+> 반대 방향의 증거도 같은 저장소에 있다. 차트 의존성을 갱신하는 `downloader.Manager` 는
+> `pkg/cmd` 의 다섯 파일(`install`·`upgrade`·`package`·`dependency_update`·`dependency_build`)에
+> 나오고 **`pkg/action` 에는 한 번도 나오지 않는다.** 옵션 `DependencyUpdate` 는 액션이
+> 선언하는데 그 동작은 CLI 가 구현한다. `action.Install` 을 직접 쓰는 소비자가 그 옵션을 켜도
+> 아무 일도 일어나지 않는다는 뜻이다. **표면이 층 위에 앉는 것을 허용하면 갈라진다.**
+>
+> Docker 는 CLI 가 엔진에 닿는 통로를 API 클라이언트 하나로 두었다(`cli/command/**` 의 각
+> 동사가 `dockerCLI.Client()` 로 시작한다). 데몬이 별도 프로세스라 우회할 방법 자체가 없다.
+>
+> **규칙**: 기능 하나에 `app` 진입점 하나를 둔다. `core` 모듈은 기구를 갖고, `app` 은 동사를
+> 갖고, 표면은 바인딩과 렌더링만 한다. 표면은 `app` 을 건너뛰지 않는다.
+> **게이트는 import 규칙이 아니라 동등성 테스트다.** 같은 입력에 두 표면이 같은 결과를 내는
+> 것을 기능마다 증명한다. 그러려면 CLI 가 import 가능해야 하므로 U1 이 앞에 온다.
+
+| # | 작업 | 선행 | 핵심 게이트 | 상태 |
+|---|---|---|---|---|
+| **U0** | **규칙 확정과 측정 고정** — `architecture-v2` §2 를 이 결정으로 다시 쓰고, S5·S6 폐기 사유를 S 절에 남긴다. 전수 인벤토리 분석기를 `scripts/inventory/surface-graph` 로 커밋해 누구나 같은 숫자를 재현하게 한다. app 을 거치지 않는 항목 수를 **줄기만 하는 라체트**로 고정한다 | — | 도구가 130 항목·우회 82 를 재현 · 라체트 테스트가 82 를 상한으로 고정 · 문서 사이 모순 0 | ☐ |
+| **U1** | **CLI 를 import 가능한 패키지로** — `package main` 안에 cobra 명령 생성자가 **32개** 있어 그 명령들은 테스트에서 부를 수 없다. 표면 패키지로 옮기고 `package main` 은 배선만 남긴다(Helm 이 `cmd/helm` 을 `pkg/cmd` 로 옮긴 것과 같은 이유). 동등성 테스트가 가능해지는 전제다 | U0 | `package main` 의 명령 생성자 32 → 0 · 옮긴 그룹마다 표면 테스트 1건 이상 · E9 가 "cmd=main 이라 불가"로 이월한 CLI-vs-MCP diff 가 가능해짐 | ☐ |
+| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 10개(`new`·`show`·`status`·`build`·`config`·`enode`·`health`·`logs`·`resume`·`up`) 중 app 을 지나는 것은 `show` 하나뿐이고 나머지는 `chainsetup` 을 직접 부른다. MCP `chain_*` 17개는 16개가 이미 app 이므로 진입점이 대체로 있다. CLI 를 그리로 돌린다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☐ |
+| **U3** | **keyring 계열 이관** — `new`·`add`·`list`·`show`·`import`·`export`·`set`. `app.Keyring*` 7개가 이미 `core/keyring/operation` 의 동사 7개를 1:1 로 감싼다. 그 파일은 83줄인데 주석과 타입 별칭을 빼면 39줄이고 대부분 `Deps` 어댑터라, 끼우는 층이 두껍지 않다는 근거이기도 하다. `keyringcmd` 를 app 경유로 | U1 | 동등성 테스트 · keyring 라이브 스위트 통과 · `operation` 단위 테스트는 app 을 지나지 않음(모듈 단독 검증 유지) | ☐ |
+| **U4** | **테스트 동사 계열 신설** — `send`·`deploy`·`call`·`faucet`·`wait`·`state`·`txpool`·`newAccount`. 유스케이스가 어느 모듈에도 없고 CLI(461줄)·MCP·DSL 에 각각 쓰여 있다. 모듈로 뽑고 app 진입점을 만들어 **세 표면을 동시에** 연결한다 | U1 | 세 표면 동등성 테스트 · `mcpImportAllowed` 에서 `internal/accounts`·`internal/core/rpc` 제거 · DSL `sendTx` 가 같은 진입점 사용 | ☐ |
+| **U5** | **실행·보고 계열 이관** — `run`·`report`·`validate`·`verify`·`log`. 넷 다 CLI 와 MCP 의 경로가 다르고, `run` 은 CLI 가 `dsl`→`collector`→`dashboard`→`testengine` 을 직접 엮는다 | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☐ |
+| **U6** | **조회 계열 이관** — `chains`·`capabilities`·`consensus*`·`rpc`·`roster`·`migrate-spec`·`network_*`·`remote_rpc`·`node_rpc`. 대부분 읽기 전용이라 S7 의 `query` 투영과 함께 정리한다 | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ☐ |
+| **U7** | **DSL 흡수** — 액션 18개와 어서션 27개가 `internal/testhelper` 의 다섯 파일(`builtins`·`read`·`assets`·`derived`·`fault`, 합쳐 2,339줄)에서 `accounts`·`core/rpc`·`core/session`·`core/node` 를 직접 조립한다. 45개 전부가 app 을 지나지 않으며, 세 표면 중 유일하게 어느 계획에도 들어 있지 않았다. app 진입점을 부르게 바꾼다 | U4 | DSL 액션과 어서션이 core 를 직접 import 하지 않음 · 기존 스펙 전량 회귀 · `verify` 가 DSL 에도 노출(`faucet` 은 이미 있다) | ☐ |
+| **U8** | **규칙 대칭 마감** — `mcpImportAllowed` 비대칭 라체트를 폐기하고 표면 공통 규칙 하나로 합친다 | U2~U7 | 우회 항목 0 · 표면 3종이 같은 등록을 렌더링 · 문서와 테스트가 한 규칙만 말함 | ☐ |
+
+**측정 기준선(2026-09-05)**: 등록 항목 157 = CLI 58 + MCP 54 + DSL 45(액션 18 + 어서션 27).
+app 아래에 닿는 항목 109 = CLI 40 + MCP 24 + DSL 45. app 을 한 번도 부르지 않는 항목 102.
+손으로 확인한 32쌍 중 경로 불일치 22, 양쪽 다 app 인 것 4.
+`go run ./scripts/inventory/surface-graph .` 으로 재현한다.
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 
