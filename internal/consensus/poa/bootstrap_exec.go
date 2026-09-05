@@ -49,7 +49,51 @@ func EtcdInit(ctx context.Context, r Runner, binary, ipc string) error {
 	if err != nil {
 		return fmt.Errorf("poa: etcdInit: %w: %s", err, out)
 	}
+	// The console prints a thrown error rather than failing the process, so an
+	// error in the output is the failure. Not reading it is how this call came
+	// to report success while creating nothing: admin.etcdInit() refuses with
+	// "not running" when the node has not yet read the governance data that
+	// tells it which member it is, and the refusal went into a string nobody
+	// looked at. Its sibling EtcdJoin has checked this since it cost a session
+	// to find there.
+	if s := strings.TrimSpace(string(out)); strings.Contains(s, "Error") || strings.Contains(s, "error") {
+		return fmt.Errorf("poa: etcdInit: %s", s)
+	}
 	return nil
+}
+
+// WaitSelf blocks until the node recognises itself in the governance member
+// list.
+//
+// A wemix node learns which member it is by reading the governance contract off
+// the chain, so for a window after the deploy it knows the members and not that
+// one of them is itself. admin.etcdInit() refuses in that window — ma.self is
+// nil — and the cluster is never formed, which surfaces much later as a
+// producer that never seals.
+//
+// The wait is on self rather than on a fixed delay because the window is a
+// state, not a duration: it closes when the node's next governance refresh
+// lands, and how long that takes is the chain's business.
+func WaitSelf(ctx context.Context, r Runner, binary, ipc string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	var last string
+	for {
+		info, err := ReadInfo(ctx, r, binary, ipc)
+		if err == nil {
+			last = info.Self.Name
+			if strings.TrimSpace(info.Self.Name) != "" {
+				return nil
+			}
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("poa: the node did not recognise itself in the governance member list within %s (self.name=%q) — etcd cannot be initialized until it does", timeout, last)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 // etcdClusterReady reports whether the node's etcd cluster has formed. An empty
@@ -70,10 +114,13 @@ func etcdClusterReady(ctx context.Context, r Runner, binary, ipc string) (bool, 
 
 // VerifyEtcd confirms the etcd cluster formed on the boot node.
 //
-// It exists because EtcdInit proves nothing: the call returns null whether it
-// worked or not, and reading that as success is how a network came up with an
-// empty cluster and no block production. admin.wemixInfo.etcd.cluster is the
-// only evidence, so it is read back and required to name at least one member.
+// It exists because a successful EtcdInit proves only that the node accepted the
+// call: it returns null on the way to a cluster and on the way to nothing alike,
+// and reading that as success is how a network came up with an empty cluster and
+// no block production. (EtcdInit now catches an outright refusal, which is a
+// different thing from the cluster having formed.) admin.wemixInfo.etcd.cluster
+// is the only evidence, so it is read back and required to name at least one
+// member.
 func VerifyEtcd(ctx context.Context, r Runner, binary, ipc string, timeout time.Duration) error {
 	// Polled, not read once. etcdInit returns as soon as it has asked, and the
 	// cluster appears when the embedded server finishes coming up — measured at

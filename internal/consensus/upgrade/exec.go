@@ -56,11 +56,20 @@ type LaunchOptions struct {
 }
 
 // wants reports whether position i is in this launch.
-func (o LaunchOptions) wants(i int) bool {
-	if len(o.Only) == 0 {
+func (o LaunchOptions) wants(i int) bool { return selected(o.Only, i) }
+
+// selected reports whether a phase that names these 0-based positions includes
+// this one; naming none means all of them.
+//
+// One rule, because two callers depend on agreeing exactly: the launcher uses
+// it to decide what to start, and the vacancy check uses it to decide whose
+// ports to check. Were they to disagree, the check would clear the ports of
+// nodes that are not starting while missing the ones that are.
+func selected(only []int, i int) bool {
+	if len(only) == 0 {
 		return true
 	}
-	for _, n := range o.Only {
+	for _, n := range only {
 		if n == i {
 			return true
 		}

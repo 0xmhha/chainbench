@@ -22,6 +22,10 @@ const ipcWait = 30 * time.Second
 // before it sends a transaction into it.
 const producingWait = 60 * time.Second
 
+// selfWait is how long the node has to recognise itself in the governance
+// member list before etcd can be initialized.
+const selfWait = 60 * time.Second
+
 // etcdJoinWait is how long one producer has to appear in the cluster after it
 // starts asking. The chain's own join waits 30s for the peer's reply, so this
 // leaves room for a retry rather than for every joiner in turn.
@@ -166,6 +170,14 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 	// second into start-up and says nothing about that.
 	if name == ActionDeployGovernance {
 		if err := WaitProducing(ctx, run, binary, ipc, producingWait); err != nil {
+			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
+		}
+	}
+	// A node learns which member it is by reading the governance contract off
+	// the chain, and admin.etcdInit() refuses until it has. The refusal used to
+	// be swallowed, so the cluster was simply never formed.
+	if name == ActionEtcdInit {
+		if err := WaitSelf(ctx, run, binary, ipc, selfWait); err != nil {
 			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
 		}
 	}

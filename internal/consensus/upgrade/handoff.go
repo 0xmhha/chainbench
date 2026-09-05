@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/genesis"
+	"github.com/0xmhha/chainbench/internal/core/inspector"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -31,6 +33,9 @@ const (
 	// producingWait is how long the producer has to start sealing before the
 	// governance deploy sends a transaction into it.
 	producingWait = 60 * time.Second
+	// selfWait is how long the producer has to recognise itself in the
+	// governance member list before etcd is initialized.
+	selfWait = 60 * time.Second
 	// readyWait bounds the wait for every node's RPC before the mesh is wired.
 	readyWait = 30 * time.Second
 	// forkPoll is how often the successor's head is read while waiting for the
@@ -291,6 +296,9 @@ func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) 
 	if len(h.Plan.Nodes) == 0 {
 		return node.NodeSet{}, fmt.Errorf("upgrade: launch needs a composed plan")
 	}
+	if err := h.checkVacant(ctx, only); err != nil {
+		return node.NodeSet{}, err
+	}
 	h.pwPath = filepath.Join(h.in.DataDir, "password")
 	if err := h.in.files().Write(ctx, h.pwPath, []byte(h.Preset.Password), 0o600); err != nil {
 		return node.NodeSet{}, err
@@ -306,6 +314,45 @@ func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) 
 		Only:          only,
 	}
 	return Launch(ctx, h.in.driver(), h.Plan, opts)
+}
+
+// checkVacant refuses to launch onto ports something else is already holding.
+//
+// Without it the collision surfaces as silence: the node exits on "address
+// already in use" and the handoff waits out its timeout on a socket that will
+// never appear, reporting "the node's IPC socket never appeared within 30s" and
+// naming neither the port nor the process. Measured here — a node left over
+// from an earlier session held the producer's p2p port, and three runs in a row
+// died that way before anyone looked at the port table.
+//
+// The composition path has checked this since A3; the handoff is the surface
+// that was never wired to it.
+func (h *Handoff) checkVacant(ctx context.Context, only []int) error {
+	var addrs []inspector.Addr
+	for i, n := range h.Plan.Nodes {
+		if !selected(only, i) {
+			continue
+		}
+		for purpose, port := range map[string]int{
+			"p2p": n.Ports.P2P, "etcd": n.Ports.Etcd, "etcd-client": n.Ports.EtcdClient,
+			"http": n.Ports.HTTP, "ws": n.Ports.WS, "auth": n.Ports.Auth, "metrics": n.Ports.Metrics,
+		} {
+			if port > 0 {
+				addrs = append(addrs, inspector.Addr{Host: h.in.host(), Port: port, Node: n.Index + 1, Purpose: purpose})
+			}
+		}
+	}
+	busy := inspector.Ports(ctx, addrs, nil)
+	if len(busy) == 0 {
+		return nil
+	}
+	lines := make([]string, len(busy))
+	for i, b := range busy {
+		lines[i] = "  " + b.String()
+	}
+	sort.Strings(lines)
+	return fmt.Errorf("upgrade: these ports are already in use, so the handoff would launch onto them and the node would exit silently:\n%s\nstop whatever holds them, or run the handoff on a different port base",
+		strings.Join(lines, "\n"))
 }
 
 // WireMesh waits for every node's RPC and connects each to every other, so
@@ -354,10 +401,20 @@ func (h *Handoff) DeployGovernance(ctx context.Context, producer node.Node) erro
 	return poa.DeployGovernance(ctx, h.in.exec(), h.in.FromBinary, ipc, h.configPath, ksFile, h.pwPath)
 }
 
-// EtcdInit calls admin.etcdInit() on the producer. Its return says only that
-// the call was made; VerifyEtcd says whether the cluster formed.
+// EtcdInit calls admin.etcdInit() on the producer, once the producer knows which
+// governance member it is — before that the call is refused. A refusal is now an
+// error rather than a silent success; VerifyEtcd still says whether the cluster
+// actually formed.
 func (h *Handoff) EtcdInit(ctx context.Context, producer node.Node) error {
-	return poa.EtcdInit(ctx, h.in.exec(), h.in.FromBinary, h.ProducerIPC(producer))
+	ipc := h.ProducerIPC(producer)
+	// The node has to have read the governance contract before it can be told
+	// to form a cluster: until it recognises itself among the members,
+	// admin.etcdInit() refuses. Measured here — one run in four deployed
+	// governance, initialized nothing, and stalled with an empty cluster.
+	if err := poa.WaitSelf(ctx, h.in.exec(), h.in.FromBinary, ipc, selfWait); err != nil {
+		return err
+	}
+	return poa.EtcdInit(ctx, h.in.exec(), h.in.FromBinary, ipc)
 }
 
 // VerifyEtcd polls the producer until its etcd cluster is non-empty, or the
