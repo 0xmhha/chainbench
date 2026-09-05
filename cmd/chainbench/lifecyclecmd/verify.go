@@ -1,8 +1,12 @@
-package main
+package lifecyclecmd
 
 import (
+	"net/http"
+
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/core/collector"
+	"github.com/0xmhha/chainbench/internal/dashboard"
 	"text/tabwriter"
 	"time"
 
@@ -29,7 +33,7 @@ func resolveNodeSet(dataDir, chain string, rpcURLs []string) (node.NodeSet, erro
 	return node.NodeSet{}, fmt.Errorf("provide --rpc <url> or --workspace-dir <dir>")
 }
 
-func newVerifyCmd() *cobra.Command {
+func NewVerify() *cobra.Command {
 	var (
 		chain        string
 		dataDir      string
@@ -45,7 +49,7 @@ func newVerifyCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			bus, closeBus := obsBus()
+			bus, closeBus := obsBus(cmd)
 			defer closeBus()
 			res, err := app.VerifyNetwork(cmd.Context(), app.Deps{}, app.VerifyNetworkIn{
 				Nodes:         ns,
@@ -75,4 +79,24 @@ func newVerifyCmd() *cobra.Command {
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")
 	return cmd
+}
+
+// obsBus returns an event bus and a cleanup func. When --dashboard is set, bus
+// events are forwarded to that chainbench-dashboard and cleanup waits for the
+// forwarder to flush.
+//
+// The URL is read from the command rather than from a package variable: the
+// flag is declared as persistent on the root, so every subcommand inherits it,
+// and reading it here keeps the surface packages free of shared mutable state.
+func obsBus(cmd *cobra.Command) (*collector.Bus, func()) {
+	bus := collector.NewBus()
+	url, _ := cmd.Flags().GetString("dashboard")
+	if url == "" {
+		return bus, bus.Close
+	}
+	done := dashboard.Forward(bus, url, http.DefaultClient)
+	return bus, func() {
+		bus.Close()
+		<-done
+	}
 }

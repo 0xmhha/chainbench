@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,8 +34,8 @@ func TestValidateCmd_ValidAndInvalid(t *testing.T) {
 
 	// A run with an invalid spec exits non-zero.
 	out, err = run(t, "validate", valid, invalid)
-	if exitCode(err) != 1 {
-		t.Fatalf("validate invalid: exit = %d, want 1\n%s", exitCode(err), out)
+	if exitcode.Of(err) != 1 {
+		t.Fatalf("validate invalid: exit = %d, want 1\n%s", exitcode.Of(err), out)
 	}
 	if !strings.Contains(out, "INVALID") {
 		t.Fatalf("expected INVALID row:\n%s", out)
@@ -43,8 +43,8 @@ func TestValidateCmd_ValidAndInvalid(t *testing.T) {
 }
 
 func TestValidateCmd_MissingFile(t *testing.T) {
-	if _, err := run(t, "validate", "/no/such/spec.json"); exitCode(err) != 1 {
-		t.Fatalf("missing file should exit 1, got %d", exitCode(err))
+	if _, err := run(t, "validate", "/no/such/spec.json"); exitcode.Of(err) != 1 {
+		t.Fatalf("missing file should exit 1, got %d", exitcode.Of(err))
 	}
 }
 
@@ -129,8 +129,8 @@ func TestValidateCmd_UnresolvedNames(t *testing.T) {
 		"assertions":    []map[string]any{{"assert": "chainId", "expected": 1}, {"assert": "Nonexistent"}},
 	})
 	out, err := run(t, "validate", bad)
-	if exitCode(err) != 1 {
-		t.Fatalf("unresolved spec should exit 1, got %d\n%s", exitCode(err), out)
+	if exitcode.Of(err) != 1 {
+		t.Fatalf("unresolved spec should exit 1, got %d\n%s", exitcode.Of(err), out)
 	}
 	if !strings.Contains(out, "UNRESOLVED") || !strings.Contains(out, "assert:Nonexistent") || !strings.Contains(out, "action:teleport") {
 		t.Fatalf("expected unresolved names in output:\n%s", out)
@@ -149,8 +149,8 @@ func TestValidateCmd_JSONOutput(t *testing.T) {
 	}) // missing assertions
 
 	out, err := run(t, "validate", "--json", good, bad)
-	if exitCode(err) != 1 {
-		t.Fatalf("expected exit 1 with an invalid spec, got %d\n%s", exitCode(err), out)
+	if exitcode.Of(err) != 1 {
+		t.Fatalf("expected exit 1 with an invalid spec, got %d\n%s", exitcode.Of(err), out)
 	}
 	var results []struct {
 		Spec   string `json:"spec"`
@@ -233,13 +233,16 @@ func TestValidateCmd_ChainCases(t *testing.T) {
 	if len(paths) < 8 {
 		t.Fatalf("expected the four envs and four cases under tests/cases, found %d files", len(paths))
 	}
-	var out bytes.Buffer
-	if err := validateSpecs(&out, paths, "", false); err != nil {
-		t.Fatalf("validate tests/cases: %v\n%s", err, out.String())
+	// Through the mounted command rather than the package-internal function:
+	// the point of the check is that an operator running `chainbench validate`
+	// on these files gets them validated.
+	got, err := run(t, append([]string{"validate"}, paths...)...)
+	if err != nil {
+		t.Fatalf("validate tests/cases: %v\n%s", err, got)
 	}
 	for _, want := range []string{"env declaration for chain wemix", "wemix-wbft-handoff", "stablenet-chain-up"} {
-		if !strings.Contains(out.String(), want) {
-			t.Errorf("output should mention %q:\n%s", want, out.String())
+		if !strings.Contains(got, want) {
+			t.Errorf("output should mention %q:\n%s", want, got)
 		}
 	}
 }

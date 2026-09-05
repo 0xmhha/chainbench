@@ -1,4 +1,4 @@
-package main
+package reportcmd
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
-func newLogCmd() *cobra.Command {
+func NewLog() *cobra.Command {
 	var (
 		dataDir string
 		pattern string

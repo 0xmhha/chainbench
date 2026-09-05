@@ -1,4 +1,4 @@
-package main
+package catalogcmd
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-func newChainsCmd() *cobra.Command {
+func NewChains() *cobra.Command {
 	return &cobra.Command{
 		Use:   "chains",
 		Short: "List the registered chains",

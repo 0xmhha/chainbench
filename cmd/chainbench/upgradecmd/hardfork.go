@@ -1,4 +1,4 @@
-package main
+package upgradecmd
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-func newHardforkCmd() *cobra.Command {
+func NewHardfork() *cobra.Command {
 	var (
 		dataDir  string
 		toChain  string

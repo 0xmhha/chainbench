@@ -1,4 +1,4 @@
-package main
+package upgradecmd
 
 import (
 	"fmt"
@@ -15,12 +15,12 @@ import (
 // go-wbft) framework in pkg/consensus/upgrade from a golden profile. Unlike the
 // `hardfork` command (an in-place binary swap for a homogeneous fork), this
 // composes a plan where producers and validators run concurrently.
-func newUpgradeCmd() *cobra.Command {
+func New() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "upgrade",
 		Short: "Plan a concurrent consensus-family handoff from a golden profile",
 	}
-	cmd.AddCommand(newUpgradeGenesisCmd(), newUpgradeRunCmd())
+	cmd.AddCommand(newGenesisCmd(), newRunCmd())
 	return cmd
 }
 
@@ -50,7 +50,7 @@ func buildPlanFromProfile(profilePath, fromGenesisPath string) (upgrade.Plan, er
 	return upgrade.BuildPlan(from, to, in)
 }
 
-func newUpgradeGenesisCmd() *cobra.Command {
+func newGenesisCmd() *cobra.Command {
 	var profilePath, fromGenesis, out string
 	cmd := &cobra.Command{
 		Use:   "genesis",

@@ -1,4 +1,4 @@
-package main
+package reportcmd
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
-func newReportCmd() *cobra.Command {
+func NewReport() *cobra.Command {
 	var dataDir string
 	cmd := &cobra.Command{
 		Use:   "report",

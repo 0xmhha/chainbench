@@ -1,4 +1,4 @@
-package main
+package catalogcmd
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-func newCapabilitiesCmd() *cobra.Command {
+func NewCapabilities() *cobra.Command {
 	var chain string
 	cmd := &cobra.Command{
 		Use:   "capabilities",
@@ -55,12 +55,12 @@ func newCapabilitiesCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "scope to a chain (shows common + that chain's capabilities)")
-	cmd.AddCommand(newCapabilityCallCmd())
+	cmd.AddCommand(newCallCmd())
 	return cmd
 }
 
 // newCapabilityCallCmd invokes a handler-backed capability by its address.
-func newCapabilityCallCmd() *cobra.Command {
+func newCallCmd() *cobra.Command {
 	var argPairs []string
 	cmd := &cobra.Command{
 		Use:   "call <version.chain.name>",

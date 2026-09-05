@@ -1,4 +1,4 @@
-package main
+package lifecyclecmd
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-func newStatusCmd() *cobra.Command {
+func NewStatus() *cobra.Command {
 	var dataDir string
 	cmd := &cobra.Command{
 		Use:   "status",

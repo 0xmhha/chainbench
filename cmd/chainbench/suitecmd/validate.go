@@ -1,4 +1,4 @@
-package main
+package suitecmd
 
 import (
 	"encoding/json"
@@ -8,13 +8,15 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
+
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // newValidateCmd parses DSL specs offline and reports which are well-formed,
 // without launching anything — fast feedback while authoring or porting specs.
 // With --chain it also reports whether each spec would run on that chain.
-func newValidateCmd() *cobra.Command {
+func NewValidate() *cobra.Command {
 	var (
 		chain   string
 		jsonOut bool
@@ -51,7 +53,7 @@ func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) er
 		}
 	}
 	if invalid > 0 {
-		return &exitError{code: 1, err: fmt.Errorf("validate: %d invalid spec(s)", invalid)}
+		return &exitcode.Error{Code: 1, Err: fmt.Errorf("validate: %d invalid spec(s)", invalid)}
 	}
 	return nil
 }

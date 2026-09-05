@@ -1,4 +1,4 @@
-package main
+package lifecyclecmd
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-func newCleanCmd() *cobra.Command {
+func NewClean() *cobra.Command {
 	var (
 		dataDir      string
 		artifactRoot string

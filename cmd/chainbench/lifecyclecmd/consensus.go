@@ -1,4 +1,4 @@
-package main
+package lifecyclecmd
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-func newConsensusCmd() *cobra.Command {
+func NewConsensus() *cobra.Command {
 	var (
 		chain        string
 		manifestPath string

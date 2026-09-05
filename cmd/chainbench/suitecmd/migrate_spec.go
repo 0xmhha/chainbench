@@ -1,4 +1,4 @@
-package main
+package suitecmd
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 // (dsl-v2-proposal §3.6): chain/topology/... fold into an inline env, steps
 // become do statements, assertions become expect statements appended after
 // them (v1's fixed order), and pre/post actions become hooks.
-func newMigrateSpecCmd() *cobra.Command {
+func NewMigrateSpec() *cobra.Command {
 	var outPath string
 	cmd := &cobra.Command{
 		Use:   "migrate-spec <v1-spec.json>",

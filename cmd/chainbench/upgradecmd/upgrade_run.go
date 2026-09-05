@@ -1,4 +1,4 @@
-package main
+package upgradecmd
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 // cause — so the run checks rather than trusts the exit code.
 const etcdFormTimeout = 60 * time.Second
 
-func newUpgradeRunCmd() *cobra.Command {
+func newRunCmd() *cobra.Command {
 	var profilePath, presetDir, fromBinary, toBinary, template, dataDir, genesisOverlay string
 	var waitFor int
 	cmd := &cobra.Command{

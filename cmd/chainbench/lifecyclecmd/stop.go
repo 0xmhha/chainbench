@@ -1,4 +1,4 @@
-package main
+package lifecyclecmd
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-func newStopCmd() *cobra.Command {
+func NewStop() *cobra.Command {
 	var dataDir string
 	cmd := &cobra.Command{
 		Use:   "stop",

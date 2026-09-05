@@ -1,4 +1,4 @@
-package main
+package suitecmd
 
 import (
 	"encoding/json"
@@ -7,6 +7,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
+
+	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/app"
@@ -29,7 +31,7 @@ type runReport struct {
 // handoff env composes the handoff) and runs against that; with --rpc it
 // attaches to a running network. The engine's self-assembly build path is
 // gone (R4): composition belongs to chainsetup alone.
-func newRunCmd() *cobra.Command {
+func NewRun() *cobra.Command {
 	var (
 		chain        string
 		rpcURLs      []string
@@ -214,7 +216,7 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 		if doc.Summary.Blocked > 0 {
 			code = 2
 		}
-		return &exitError{code: code, err: fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)}
+		return &exitcode.Error{Code: code, Err: fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)}
 	}
 	return nil
 }

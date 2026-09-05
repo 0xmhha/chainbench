@@ -1,4 +1,4 @@
-package main
+package nodecmd
 
 import (
 	"encoding/json"
@@ -10,18 +10,18 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
-func newNodeCmd() *cobra.Command {
+func New() *cobra.Command {
 	node := &cobra.Command{
 		Use:   "node",
 		Short: "Inspect and control individual nodes of a launched network",
 	}
-	node.AddCommand(newNodeRPCCmd(), newNodeStopCmd(), newNodeStartCmd())
+	node.AddCommand(newRPCCmd(), newStopCmd(), newStartCmd())
 	return node
 }
 
 // newNodeStopCmd stops a single node of a launched network by index, so a sync
 // gap can be created while the rest keep producing blocks.
-func newNodeStopCmd() *cobra.Command {
+func newStopCmd() *cobra.Command {
 	var (
 		dataDir string
 		index   int
@@ -44,7 +44,7 @@ func newNodeStopCmd() *cobra.Command {
 
 // newNodeStartCmd relaunches a single previously-stopped node from its saved
 // spec, so it rejoins its peers and re-syncs the blocks it missed.
-func newNodeStartCmd() *cobra.Command {
+func newStartCmd() *cobra.Command {
 	var (
 		dataDir string
 		index   int
@@ -66,7 +66,7 @@ func newNodeStartCmd() *cobra.Command {
 	return cmd
 }
 
-func newNodeRPCCmd() *cobra.Command {
+func newRPCCmd() *cobra.Command {
 	var (
 		rpcURL     string
 		method     string
