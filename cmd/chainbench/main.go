@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 	"os"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
@@ -24,6 +25,6 @@ func main() {
 			os.Exit(interruptExitCode)
 		}
 		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(exitCode(err))
+		os.Exit(exitcode.Of(err))
 	}
 }

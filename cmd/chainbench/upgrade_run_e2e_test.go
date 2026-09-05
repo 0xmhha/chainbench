@@ -46,8 +46,9 @@ func TestUpgradeRunE2E(t *testing.T) {
 	// run's datadir when the test ends so ports are freed for the next run.
 	t.Cleanup(func() { _ = exec.Command("pkill", "-9", "-f", dataDir).Run() })
 
-	cmd := newUpgradeRunCmd()
+	cmd := newRootCmd()
 	cmd.SetArgs([]string{
+		"upgrade", "run",
 		"--profile", "../../profiles/wemix-upgrade.yaml",
 		"--preset", "../../keys/preset",
 		"--from-binary", fromBin,

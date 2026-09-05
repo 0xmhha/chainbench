@@ -174,8 +174,9 @@ func runGovHandoffArgs(t *testing.T, fromBin, toBin, template string, extraArgs 
 			t.Fatalf("mkdir temp datadir: %v", err)
 		}
 
-		cmd := newUpgradeRunCmd()
+		cmd := newRootCmd()
 		args := []string{
+			"upgrade", "run",
 			"--profile", "../../profiles/wemix-upgrade.yaml",
 			"--preset", "../../keys/preset",
 			"--from-binary", fromBin,

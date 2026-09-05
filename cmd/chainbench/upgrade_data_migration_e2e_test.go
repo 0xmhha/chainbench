@@ -135,8 +135,9 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (strin
 			t.Fatalf("mkdir temp datadir: %v", err)
 		}
 
-		cmd := newUpgradeRunCmd()
+		cmd := newRootCmd()
 		cmd.SetArgs([]string{
+			"upgrade", "run",
 			"--profile", "../../profiles/wemix-upgrade.yaml",
 			"--preset", "../../keys/preset",
 			"--from-binary", fromBin,

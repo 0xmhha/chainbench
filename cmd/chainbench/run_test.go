@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -161,8 +162,8 @@ func TestRunCmd_ExitCodes(t *testing.T) {
 		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
 		"assertions": []map[string]any{{"assert": "chainId", "expected": 1337}},
 	})
-	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), passSpec); exitCode(err) != 0 {
-		t.Fatalf("pass exit = %d, want 0 (err=%v)", exitCode(err), err)
+	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), passSpec); exitcode.Of(err) != 0 {
+		t.Fatalf("pass exit = %d, want 0 (err=%v)", exitcode.Of(err), err)
 	}
 
 	// fail -> 1
@@ -171,8 +172,8 @@ func TestRunCmd_ExitCodes(t *testing.T) {
 		"chain":      map[string]any{"name": "stablenet", "binary": "go-stablenet"},
 		"assertions": []map[string]any{{"assert": "chainId", "expected": 999}},
 	})
-	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), failSpec); exitCode(err) != 1 {
-		t.Fatalf("fail exit = %d, want 1 (err=%v)", exitCode(err), err)
+	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), failSpec); exitcode.Of(err) != 1 {
+		t.Fatalf("fail exit = %d, want 1 (err=%v)", exitcode.Of(err), err)
 	}
 
 	// blocked (malformed spec) -> 2
@@ -180,8 +181,8 @@ func TestRunCmd_ExitCodes(t *testing.T) {
 	if err := os.WriteFile(bad, []byte("{not json"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), bad); exitCode(err) != 2 {
-		t.Fatalf("blocked exit = %d, want 2 (err=%v)", exitCode(err), err)
+	if _, err := run(t, "run", "--chain", "stablenet", "--rpc", srv.URL, "--artifact-root", t.TempDir(), bad); exitcode.Of(err) != 2 {
+		t.Fatalf("blocked exit = %d, want 2 (err=%v)", exitcode.Of(err), err)
 	}
 }
 
