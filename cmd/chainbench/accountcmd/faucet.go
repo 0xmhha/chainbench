@@ -1,12 +1,11 @@
 package accountcmd
 
 import (
-	"encoding/hex"
 	"fmt"
-	"math/big"
-	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 func NewFaucet() *cobra.Command {
@@ -23,19 +22,12 @@ func NewFaucet() *cobra.Command {
 		Use:   "faucet",
 		Short: "Send funds from a genesis-allocated key to an account (requirement #3)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			ap, err := resolveAccountProvider(chain, manifestPath, templatePath)
-			if err != nil {
-				return err
-			}
-			key, err := hex.DecodeString(strings.TrimPrefix(fromKey, "0x"))
-			if err != nil {
-				return fmt.Errorf("bad --from-key: %w", err)
-			}
-			amt, ok := new(big.Int).SetString(amount, 10)
-			if !ok {
-				return fmt.Errorf("bad --amount %q (decimal wei expected)", amount)
-			}
-			hash, err := ap.Faucet(cmd.Context(), key, to, amt, rpcURL)
+			hash, err := app.Faucet(cmd.Context(), deps(cmd), app.FaucetIn{
+				Chain: app.ChainRef{
+					Chain: chain, Manifest: manifestPath, Template: templatePath, RPC: rpcURL,
+				},
+				FromKey: fromKey, To: to, Amount: amount,
+			})
 			if err != nil {
 				return err
 			}

@@ -30,3 +30,27 @@ type TargetSpec = resource.Spec
 // one: the same string typed at the CLI and passed to a tool has to mean the
 // same machine, so both read it through here.
 func ParseTarget(s string) (TargetSpec, error) { return resource.Parse(s) }
+
+// DefaultServerSetFile is where the server set is read from when none is named.
+const DefaultServerSetFile = resource.DefaultSetFile
+
+// ServerNameByIndex answers what a server set calls the server at this index.
+//
+// It exists because one deprecated flag took an index where the rest of the
+// vocabulary takes a name. A number is not a name, so the translation belongs
+// with the server set rather than in the surface that still accepts the old
+// spelling.
+func ServerNameByIndex(serverSet string, index int) (string, error) {
+	if serverSet == "" {
+		serverSet = DefaultServerSetFile
+	}
+	cfg, err := resource.LoadSet(serverSet)
+	if err != nil {
+		return "", err
+	}
+	srv, err := cfg.Server(index)
+	if err != nil {
+		return "", err
+	}
+	return srv.Name, nil
+}

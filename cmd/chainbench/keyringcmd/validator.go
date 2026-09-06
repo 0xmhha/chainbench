@@ -9,7 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
+	"github.com/0xmhha/chainbench/internal/app"
+
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/validatorset"
@@ -33,7 +34,7 @@ func NewValidator() *cobra.Command {
 // and proof-of-possession from the key in process; a poa chain has no genesis
 // validator material (validators are registered at bootstrap), so it only
 // reports the account with a note.
-func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *storeFlags, pf *PasswordFlags, showPrivate, jsonOut bool) error {
+func runValidator(cmd *cobra.Command, chain string, key app.PrivateKey, sf *storeFlags, pf *PasswordFlags, showPrivate, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("--chain is required")
 	}
@@ -43,11 +44,7 @@ func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *s
 	}
 	family := p.Manifest().ConsensusFamily
 
-	key, err := source.Resolve(cmd.Context())
-	if err != nil {
-		return err
-	}
-	path, err := saveKey(sf, pf, key)
+	path, err := saveKey(cmd.Context(), deps(cmd), sf, pf, key)
 	if err != nil {
 		return err
 	}
@@ -131,7 +128,11 @@ func newValidatorNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Generate a new validator identity for a chain (chain-aware consensus material)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runValidator(cmd, chain, keyring.RandomSource{}, &sf, &pf, true, jsonOut)
+			key, err := app.GenerateKey(cmd.Context(), deps(cmd))
+			if err != nil {
+				return err
+			}
+			return runValidator(cmd, chain, key, &sf, &pf, true, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
@@ -154,11 +155,11 @@ func newValidatorImportCmd() *cobra.Command {
 		Use:   "import",
 		Short: "Import a key as a validator identity for a chain",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			source, err := src.Source(pf.Source())
+			key, err := src.Resolve(cmd.Context(), deps(cmd), pf.Source())
 			if err != nil {
 				return err
 			}
-			return runValidator(cmd, chain, source, &sf, &pf, false, jsonOut)
+			return runValidator(cmd, chain, key, &sf, &pf, false, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")

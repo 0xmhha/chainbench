@@ -197,3 +197,99 @@ func TestFaucet_RejectsANonDecimalAmount(t *testing.T) {
 		t.Errorf("the error does not say what the amount should look like: %v", err)
 	}
 }
+
+// TestParity_Faucet: funding is the verb a test harness leans on most — a
+// generated account cannot pay for its own first transaction — so the two
+// surfaces must move the same sum from the same key.
+//
+// Comparing the signed transaction covers the amount, the recipient and the
+// sender at once. Both surfaces went through their own copy of this until U4
+// gave it one entry point.
+func TestParity_Faucet(t *testing.T) {
+	n := newSigningNode(t)
+	const (
+		key    = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21"
+		to     = "0x000000000000000000000000000000000000dEaD"
+		amount = "1000000000000000000"
+	)
+
+	cli, err := runCLI(t, "faucet", "--rpc", n.URL, "--from-key", key, "--to", to, "--amount", amount)
+	if err != nil {
+		t.Fatalf("CLI faucet: %v\n%s", err, cli)
+	}
+	cliSent := n.broadcast()
+
+	runMCP(t, "chainbench_faucet", map[string]any{
+		"rpc": n.URL, "from_key": key, "to": to, "amount": amount,
+	})
+	mcpSent := n.broadcast()
+
+	if len(cliSent) != 1 {
+		t.Fatalf("the CLI broadcast %d transactions, want 1 — nothing to compare", len(cliSent))
+	}
+	if len(mcpSent) != 1 || cliSent[0] != mcpSent[0] {
+		t.Errorf("the two surfaces funded with different transactions.\n  CLI: %v\n  MCP: %v", cliSent, mcpSent)
+	}
+}
+
+// signingNode answers the calls a wallet makes on its way to broadcasting, and
+// records the raw transaction it was given.
+type signingNode struct {
+	*httptest.Server
+	mu   sync.Mutex
+	sent []string
+}
+
+func newSigningNode(t *testing.T) *signingNode {
+	t.Helper()
+	n := &signingNode{}
+	results := map[string]any{
+		"eth_chainId":              "0x205b",
+		"eth_getTransactionCount":  "0x0",
+		"eth_gasPrice":             "0x3b9aca00",
+		"eth_maxPriorityFeePerGas": "0x3b9aca00",
+		"eth_estimateGas":          "0x5208",
+		// stablenet asks whether the sender is blacklisted before it signs, and
+		// an empty proof is how a plain account answers.
+		"eth_getProof": map[string]any{
+			"balance": "0x0", "nonce": "0x0", "codeHash": "0x", "storageProof": []any{},
+		},
+		"eth_getBlockByNumber": map[string]any{
+			"number": "0x1", "baseFeePerGas": "0x7", "gasLimit": "0x1c9c380",
+		},
+	}
+	n.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+			Params []any  `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		resp := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if req.Method == "eth_sendRawTransaction" {
+			if len(req.Params) > 0 {
+				if raw, ok := req.Params[0].(string); ok {
+					n.mu.Lock()
+					n.sent = append(n.sent, raw)
+					n.mu.Unlock()
+				}
+			}
+			resp["result"] = "0x" + strings.Repeat("ab", 32)
+		} else if v, ok := results[req.Method]; ok {
+			resp["result"] = v
+		} else {
+			resp["error"] = map[string]any{"code": -32601, "message": "method not found"}
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	t.Cleanup(n.Close)
+	return n
+}
+
+func (n *signingNode) broadcast() []string {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	out := append([]string(nil), n.sent...)
+	n.sent = nil
+	return out
+}

@@ -2,15 +2,12 @@ package mcp
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -205,19 +202,10 @@ func faucetTool() Tool {
 			"required": []string{"rpc", "from_key", "to", "amount"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			ap, err := accounts.ForChain(argString(args, "chain", "stablenet"))
-			if err != nil {
-				return "", err
-			}
-			key, err := hex.DecodeString(strings.TrimPrefix(argString(args, "from_key", ""), "0x"))
-			if err != nil {
-				return "", fmt.Errorf("bad from_key: %w", err)
-			}
-			amt, ok := new(big.Int).SetString(argString(args, "amount", ""), 10)
-			if !ok {
-				return "", fmt.Errorf("bad amount (decimal wei expected)")
-			}
-			hash, err := ap.Faucet(ctx, key, argString(args, "to", ""), amt, argString(args, "rpc", ""))
+			hash, err := app.Faucet(ctx, app.Deps{}, app.FaucetIn{
+				Chain: chainRefFromArgs(args), FromKey: argString(args, "from_key", ""),
+				To: argString(args, "to", ""), Amount: argString(args, "amount", ""),
+			})
 			if err != nil {
 				return "", err
 			}
@@ -380,21 +368,12 @@ func accountStateTool() Tool {
 			if url == "" || addr == "" {
 				return "", fmt.Errorf("rpc and address are required")
 			}
-			c := rpc.Dial(url)
-			bal, err := c.BalanceAt(ctx, addr)
-			if err != nil {
-				return "", err
-			}
-			nonce, err := c.NonceAt(ctx, addr)
-			if err != nil {
-				return "", err
-			}
-			code, err := c.CodeAt(ctx, addr)
+			out, err := app.AccountState(ctx, app.Deps{}, app.AccountStateIn{RPC: url, Address: addr})
 			if err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("address=%s balance=%s nonce=%d contract=%v",
-				addr, bal.String(), nonce, code != "" && code != "0x" && code != "0x0"), nil
+				out.Address, out.Balance, out.Nonce, out.Contract), nil
 		},
 	}
 }
@@ -417,7 +396,9 @@ func contractCallTool() Tool {
 			if url == "" || to == "" {
 				return "", fmt.Errorf("rpc and to are required")
 			}
-			return rpc.Dial(url).EthCall(ctx, to, argString(args, "data", ""))
+			return app.ContractCall(ctx, app.Deps{}, app.ContractCallIn{
+				RPC: url, To: to, Data: argString(args, "data", ""),
+			})
 		},
 	}
 }
@@ -440,21 +421,14 @@ func txWaitTool() Tool {
 			if url == "" || hash == "" {
 				return "", fmt.Errorf("rpc and hash are required")
 			}
-			c := rpc.Dial(url)
-			timeout := time.Duration(argInt(args, "timeout_seconds", 30)) * time.Second
-			for waited := time.Duration(0); ; waited += time.Second {
-				rec, err := c.TxReceipt(ctx, hash)
-				if err != nil {
-					return "", err
-				}
-				if rec != nil {
-					return string(rec), nil
-				}
-				if waited >= timeout {
-					return "", fmt.Errorf("timed out after %s waiting for tx %s", timeout, hash)
-				}
-				time.Sleep(time.Second)
+			r, err := app.TxWait(ctx, app.Deps{}, app.TxWaitIn{
+				RPC: url, Hash: hash,
+				Timeout: time.Duration(argInt(args, "timeout_seconds", 30)) * time.Second,
+			})
+			if err != nil {
+				return "", err
 			}
+			return asJSON(r)
 		},
 	}
 }
@@ -476,19 +450,11 @@ func txSendTool() Tool {
 			"required": []string{"rpc", "from_key", "to"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			w, err := openWalletFromArgs(ctx, args)
-			if err != nil {
-				return "", err
-			}
-			data, err := hexBytes(argString(args, "data", ""))
-			if err != nil {
-				return "", fmt.Errorf("bad data: %w", err)
-			}
-			wei, err := weiArg(args)
-			if err != nil {
-				return "", err
-			}
-			hash, err := w.Execute(ctx, argString(args, "to", ""), data, wei)
+			hash, err := app.TxSend(ctx, app.Deps{}, app.TxSendIn{
+				Chain: chainRefFromArgs(args), FromKey: argString(args, "from_key", ""),
+				To: argString(args, "to", ""), Data: argString(args, "data", ""),
+				Value: argString(args, "value", "0"),
+			})
 			if err != nil {
 				return "", err
 			}
@@ -513,67 +479,24 @@ func contractDeployTool() Tool {
 			"required": []string{"rpc", "from_key", "bytecode"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			w, err := openWalletFromArgs(ctx, args)
+			out, err := app.ContractDeploy(ctx, app.Deps{}, app.ContractDeployIn{
+				Chain: chainRefFromArgs(args), FromKey: argString(args, "from_key", ""),
+				Bytecode: argString(args, "bytecode", ""), Value: argString(args, "value", "0"),
+			})
 			if err != nil {
 				return "", err
 			}
-			code, err := hexBytes(argString(args, "bytecode", ""))
-			if err != nil {
-				return "", fmt.Errorf("bad bytecode: %w", err)
-			}
-			if len(code) == 0 {
-				return "", fmt.Errorf("bytecode is required")
-			}
-			wei, err := weiArg(args)
-			if err != nil {
-				return "", err
-			}
-			hash, addr, err := w.Deploy(ctx, code, wei)
-			if err != nil {
-				return "", err
-			}
-			return fmt.Sprintf("tx: %s\ncontract: %s", hash, addr), nil
+			return fmt.Sprintf("tx: %s\ncontract: %s", out.Tx, out.Address), nil
 		},
 	}
 }
 
-// openWalletFromArgs opens an accounts wallet from the chain/from_key/rpc args.
-func openWalletFromArgs(ctx context.Context, args map[string]any) (accounts.Wallet, error) {
-	url := argString(args, "rpc", "")
-	if url == "" {
-		return nil, fmt.Errorf("rpc is required")
+// chainRefFromArgs names which chain's rules apply and where to reach it.
+func chainRefFromArgs(args map[string]any) app.ChainRef {
+	return app.ChainRef{
+		Chain: argString(args, "chain", "stablenet"),
+		RPC:   argString(args, "rpc", ""),
 	}
-	ap, err := accounts.ForChain(argString(args, "chain", "stablenet"))
-	if err != nil {
-		return nil, err
-	}
-	key, err := hexBytes(argString(args, "from_key", ""))
-	if err != nil {
-		return nil, fmt.Errorf("bad from_key: %w", err)
-	}
-	return ap.OpenWallet(ctx, key, url)
-}
-
-// hexBytes decodes a 0x-prefixed or bare hex string; "" yields nil.
-func hexBytes(s string) ([]byte, error) {
-	s = strings.TrimPrefix(s, "0x")
-	if s == "" {
-		return nil, nil
-	}
-	return hex.DecodeString(s)
-}
-
-// weiArg parses the optional decimal "value" argument (wei), defaulting to 0.
-func weiArg(args map[string]any) (*big.Int, error) {
-	s := argString(args, "value", "")
-	if s == "" {
-		return big.NewInt(0), nil
-	}
-	v, ok := new(big.Int).SetString(s, 10)
-	if !ok {
-		return nil, fmt.Errorf("bad value %q (decimal wei expected)", s)
-	}
-	return v, nil
 }
 
 // hexCount parses a 0x-hex count (e.g. txpool_status fields) to a uint64; a

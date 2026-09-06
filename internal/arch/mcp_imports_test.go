@@ -15,7 +15,6 @@ import (
 // the migration that removes it. The list may only shrink: an entry whose
 // import disappeared fails the test until removed.
 var mcpImportAllowed = map[string]string{
-	"internal/accounts":       "account tools; migrates with the account verbs' module move",
 	"internal/core/collector": "network status collection + event bus + log reading (obs/logs merged in, R1); V6 follow-up",
 	"internal/resource":       "target kind rendering in net tools (machine spec merged into resource, R3); goes with the V5.4 display cleanups",
 	"internal/core/node":      "node set types; V6 follow-up",

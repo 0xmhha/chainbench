@@ -19,8 +19,8 @@ import (
 // surface that comes in under budget fails too, so the ceiling tracks reality
 // rather than drifting above it.
 var surfaceBudget = map[string]int{
-	"CLI":  31,
-	"MCP":  24,
+	"CLI":  17,
+	"MCP":  18,
 	"DSL":  18,
 	"DSLa": 27,
 }

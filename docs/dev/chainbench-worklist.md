@@ -844,8 +844,22 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 **여기서 제 테스트 결함을 둘 잡았다.** 처음에는 디렉터리를 훑어 "JSON 파일"을 집었는데 알파벳순으로 `process.json`(양쪽 다 `{"procs": []}`)이 걸려서, 빈 문서 둘을 비교하며 통과하고 있었다. `workspace.json` 을 이름으로 지정하고 가드를 실질화했다. status 쪽은 "stablenet" 부분 문자열을 찾았는데 그 낱말이 step 의 `detail` 안에도 있어서, 도구가 chain 필드를 아예 안 내보내도 통과했다. 도구의 JSON 을 파싱해 구조로 견주게 고쳤다. 셋 다 변이를 심어 실제로 잡는 것을 확인했다.
 
 `internal/app/net.go` 머리말의 "CLI 는 모듈을 직접 부르고 여기를 지나지 않는다" 도 고쳤다. U0 에서 뒤집힌 규칙의 잔재였다 |
-| **U3** | **keyring 계열 이관** — `new`·`add`·`list`·`show`·`import`·`export`·`set`. `app.Keyring*` 7개가 이미 `core/keyring/operation` 의 동사 7개를 1:1 로 감싼다. 그 파일은 83줄인데 주석과 타입 별칭을 빼면 39줄이고 대부분 `Deps` 어댑터라, 끼우는 층이 두껍지 않다는 근거이기도 하다. `keyringcmd` 를 app 경유로 | U1 | 동등성 테스트 · keyring 라이브 스위트 통과 · `operation` 단위 테스트는 app 을 지나지 않음(모듈 단독 검증 유지) | ☐ |
-| **U4** | **테스트 동사 계열 신설** — `send`·`deploy`·`call`·`faucet`·`wait`·`state`·`txpool`·`newAccount`. 유스케이스가 어느 모듈에도 없고 CLI(461줄)·MCP·DSL 에 각각 쓰여 있다. 모듈로 뽑고 app 진입점을 만들어 **세 표면을 동시에** 연결한다 | U1 | 세 표면 동등성 테스트 · `mcpImportAllowed` 에서 `internal/accounts`·`internal/core/rpc` 제거 · DSL `sendTx` 가 같은 진입점 사용 | ☐ |
+| **U3** | **keyring 계열 이관** | U1 | 동등성 테스트 · keyring 라이브 스위트 통과 · `operation` 단위 테스트는 app 을 지나지 않음 | ☑ **2026-09-05. CLI 31 → 24.** 표면이 `core/keyring/operation`·`keyring`·`store`·`derive`·`resource` 를 직접 부르던 것을 app 경유로 돌렸다.
+
+**중복 구현을 하나 지운 것이 알맹이다.** `keyflags.go` 가 플래그로 `keyring.Source` 를 조립하고 있었는데, `operation.ImportIn.source` 에 같은 읽기가 이미 있었다. "정확히 하나의 출처"나 "니모닉 없는 hd 옵션"이 무슨 뜻인지를 두 곳이 각자 정하고 있었다는 뜻이다. 모듈 쪽을 `operation.KeyRef`+`ResolveKey` 로 승격하고 표면은 **설명만** 하게 했다. `SaveKey`·`GenerateKey` 도 같은 이유로 모듈로 올렸다. 비밀번호는 값이 아니라 씨앗 함수로 넘긴다. `--password-once` 는 물어보는데, 쓰지도 않을 비밀번호를 미리 묻는 건 사용자를 대하는 좋은 방식이 아니다.
+
+**단위 테스트가 진짜 결함을 잡았다.** CLI 의 `--hd-coin-type` 기본값이 60 이라, 모듈의 "니모닉 없이 hd 옵션을 줬다" 거절에 항상 걸렸다. 플래그 기본값은 사용자가 지정한 것이 아니므로 0 으로 바꾸고 뜻은 도움말에 적었다.
+
+**표면 사이 기능 격차도 찾았다.** MCP `keyring_import` 에 `privateKey` 가 없었다(CLI 에는 `--private-key` 가 있다). app 이 이미 그 필드를 갖고 있어 스키마 한 줄로 닫았다.
+
+동등성 3건(list·show·import). 셋 다 변이로 확인했다 |
+| **U4** | **테스트 동사 계열 신설** | U1 | 세 표면 동등성 · `mcpImportAllowed` 에서 `accounts`·`core/rpc` 제거 · DSL `sendTx` 가 같은 진입점 | ◐ **2026-09-05. CLI 24 → 17, MCP 24 → 18.** `send`·`deploy`·`call`·`faucet`·`wait`·`state` 의 유스케이스가 어느 모듈에도 없이 **CLI·MCP·DSL 세 곳에 각각** 쓰여 있었다. `internal/app/chainops.go` 로 모아 CLI 와 MCP 를 그리로 돌렸다. `HexBytes`·`Wei` 도 여기 있다. 한쪽이 `0x` 접두사를 요구하고 다른 쪽이 안 하는 차이는 아무도 테스트할 생각을 못 한다.
+
+`accountcmd/provider.go` 는 소멸했다(`app.ChainRef.provider` 가 같은 일을 한다). MCP 의 `openWalletFromArgs`·`hexBytes`·`weiArg` 도 소멸했다. **라체트에서 `internal/accounts` 가 빠졌다** — "계정 동사 이관과 함께 사라진다"고 예고돼 있던 항목이고, 실제로 그렇게 됐다.
+
+동등성 4건인데 **서명된 원본 트랜잭션을 바이트로 비교**한다. nonce·gas·value·calldata·서명을 한 번에 덮으므로, 여기서 일치하면 두 표면이 `--value` 나 `--data` 를 다르게 읽고 있을 수 없다. 넷 다 변이로 확인했다.
+
+**잔여**: DSL 은 아직 `testhelper` 에서 직접 조립한다(U7). 오류 문구가 플래그 이름을 잃어서 표면에 `flagError` 를 뒀는데, app 은 거래 전체를 받고 어느 부분이 틀렸는지 말하지 |
 | **U5** | **실행·보고 계열 이관** — `run`·`report`·`validate`·`verify`·`log`. 넷 다 CLI 와 MCP 의 경로가 다르고, `run` 은 CLI 가 `dsl`→`collector`→`dashboard`→`testengine` 을 직접 엮는다 | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☐ |
 | **U6** | **조회 계열 이관** — `chains`·`capabilities`·`consensus*`·`rpc`·`roster`·`migrate-spec`·`network_*`·`remote_rpc`·`node_rpc`. 대부분 읽기 전용이라 S7 의 `query` 투영과 함께 정리한다 | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ☐ |
 | **U7** | **DSL 흡수** — 액션 18개와 어서션 27개가 `internal/testhelper` 의 다섯 파일(`builtins`·`read`·`assets`·`derived`·`fault`, 합쳐 2,339줄)에서 `accounts`·`core/rpc`·`core/session`·`core/node` 를 직접 조립한다. 45개 전부가 app 을 지나지 않으며, 세 표면 중 유일하게 어느 계획에도 들어 있지 않았다. app 진입점을 부르게 바꾼다 | U4 | DSL 액션과 어서션이 core 를 직접 import 하지 않음 · 기존 스펙 전량 회귀 · `verify` 가 DSL 에도 노출(`faucet` 은 이미 있다) | ☐ |

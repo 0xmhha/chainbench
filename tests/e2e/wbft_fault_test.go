@@ -93,31 +93,27 @@ func TestE2E_WbftQuorumAllRequired(t *testing.T) {
 	n.waitAdvancing(url, 90*time.Second)
 }
 
-// genPreset generates an n-validator preset via `chainbench keys generate`, using
-// the go-wbft bootnode tool (BOOTNODE_BIN) for address/BLS derivation and the
-// node binary for keystore import. It returns the preset dir, skipping when the
-// bootnode tool is not provided. This unblocks networks larger than the committed
-// 5-node preset.
-func genPreset(t *testing.T, cli, binary string, n int) string {
+// genPreset generates an n-validator key set, so a scenario can use a network
+// larger than the committed 5-node preset.
+//
+// It shells out to `keyring new --with-bls` rather than deriving here: the
+// point of these tests is that the CLI an operator types produces a usable
+// network. It used to call `keys generate` and pass BOOTNODE_BIN for BLS
+// derivation; that command is gone and the derivation is native (V3), so
+// neither the external tool nor the node binary is needed any more.
+func genPreset(t *testing.T, cli string, n int) string {
 	t.Helper()
-	boot := os.Getenv("BOOTNODE_BIN")
-	if boot == "" {
-		t.Skip("set BOOTNODE_BIN=/path/to/go-wbft/build/bin/bootnode to generate larger presets")
-	}
-	if _, err := os.Stat(boot); err != nil {
-		t.Skipf("BOOTNODE_BIN=%s not found", boot)
-	}
 	dir, err := os.MkdirTemp("/tmp", "cbpreset")
 	if err != nil {
 		t.Fatalf("mkdir preset dir: %v", err)
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(dir) })
-	cmd := exec.Command(cli, "keys", "generate",
-		"--nodes", itoa(n), "--validators", itoa(n),
-		"--bootnode", boot, "--binary", binary, "--out", dir)
+	cmd := exec.Command(cli, "keyring", "new",
+		"--count", itoa(n), "--validators", itoa(n),
+		"--with-bls", "--keyring-dir", dir)
 	cmd.Dir = repoRoot(t)
 	if b, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("keys generate: %v\n%s", err, b)
+		t.Fatalf("keyring new: %v\n%s", err, b)
 	}
 	return dir
 }
@@ -130,7 +126,7 @@ func genPreset(t *testing.T, cli, binary string, n int) string {
 func TestE2E_WbftQuorum6of6Tolerates1(t *testing.T) {
 	bin := requireBinary(t, "WBFT_BIN", "gwbft")
 	cli := buildCLI(t)
-	preset := genPreset(t, cli, bin, 6)
+	preset := genPreset(t, cli, 6)
 
 	n := launchPreset(t, cli, "wbft", bin, preset, 6, 0, nil)
 	url := n.rpcURL
@@ -153,7 +149,7 @@ func TestE2E_WbftQuorum6of6Tolerates1(t *testing.T) {
 func TestE2E_WbftQuorum6of6Halts2(t *testing.T) {
 	bin := requireBinary(t, "WBFT_BIN", "gwbft")
 	cli := buildCLI(t)
-	preset := genPreset(t, cli, bin, 6)
+	preset := genPreset(t, cli, 6)
 
 	n := launchPreset(t, cli, "wbft", bin, preset, 6, 0, nil)
 	url := n.rpcURL
