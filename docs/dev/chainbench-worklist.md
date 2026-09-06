@@ -835,7 +835,15 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 **e2e 도 실제 마운트 지점을 거치게 바꿨다.** 잎사귀 생성자를 직접 부르면 그 명령이 루트에 제대로 붙어 있는지는 시험하지 못한다. `newRootCmd()` 에 `upgrade run` 을 붙여 부른다.
 
 덤으로 `resolve.go` 의 `remoteDriver` 를 걷어냈다. `remote` 명령군 폐기(#346) 이후 자기 테스트 말고 부르는 데가 없었다. |
-| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 10개(`new`·`show`·`status`·`build`·`config`·`enode`·`health`·`logs`·`resume`·`up`) 중 app 을 지나는 것은 `show` 하나뿐이고 나머지는 `chainsetup` 을 직접 부른다. MCP `chain_*` 17개는 16개가 이미 app 이므로 진입점이 대체로 있다. CLI 를 그리로 돌린다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☐ |
+| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 19개가 `chainsetup` 을 직접 불렀다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☑ **2026-09-05. CLI 40 → 31.** `chaincmd` 가 `chainsetup`·`resource`·`core/node` 를 직접 부르던 것을 전부 `app` 경유로 돌렸다. app 이 이미 대부분을 얇게 감싸고 있어서(`NetStatus` 는 `chainsetupmod.NetStatus` 로 넘기는 한 줄) 빠진 진입점만 채웠다. `NetEnodes` · `DefaultWorkspaceDir` · `State` · `NodeSet` · `TargetSpec`/`ParseTarget`.
+
+**기본 워크스페이스를 app 으로 올린 것이 이 항목의 알맹이다.** 두 표면이 각자 계산하면 한쪽이 다른 쪽이 못 찾는 곳에 구성한다. `app.DefaultWorkspaceDir` 하나만 쓰게 했다.
+
+**동등성 테스트 3건.** 인쇄한 글자가 아니라 **디스크에 남은 워크스페이스**를 비교한다. 구성은 디스크에 대한 부수효과이고 그 상태가 곧 답이다. 워크스페이스 경로와 시각만 정규화하고 나머지는 그대로 견준다.
+
+**여기서 제 테스트 결함을 둘 잡았다.** 처음에는 디렉터리를 훑어 "JSON 파일"을 집었는데 알파벳순으로 `process.json`(양쪽 다 `{"procs": []}`)이 걸려서, 빈 문서 둘을 비교하며 통과하고 있었다. `workspace.json` 을 이름으로 지정하고 가드를 실질화했다. status 쪽은 "stablenet" 부분 문자열을 찾았는데 그 낱말이 step 의 `detail` 안에도 있어서, 도구가 chain 필드를 아예 안 내보내도 통과했다. 도구의 JSON 을 파싱해 구조로 견주게 고쳤다. 셋 다 변이를 심어 실제로 잡는 것을 확인했다.
+
+`internal/app/net.go` 머리말의 "CLI 는 모듈을 직접 부르고 여기를 지나지 않는다" 도 고쳤다. U0 에서 뒤집힌 규칙의 잔재였다 |
 | **U3** | **keyring 계열 이관** — `new`·`add`·`list`·`show`·`import`·`export`·`set`. `app.Keyring*` 7개가 이미 `core/keyring/operation` 의 동사 7개를 1:1 로 감싼다. 그 파일은 83줄인데 주석과 타입 별칭을 빼면 39줄이고 대부분 `Deps` 어댑터라, 끼우는 층이 두껍지 않다는 근거이기도 하다. `keyringcmd` 를 app 경유로 | U1 | 동등성 테스트 · keyring 라이브 스위트 통과 · `operation` 단위 테스트는 app 을 지나지 않음(모듈 단독 검증 유지) | ☐ |
 | **U4** | **테스트 동사 계열 신설** — `send`·`deploy`·`call`·`faucet`·`wait`·`state`·`txpool`·`newAccount`. 유스케이스가 어느 모듈에도 없고 CLI(461줄)·MCP·DSL 에 각각 쓰여 있다. 모듈로 뽑고 app 진입점을 만들어 **세 표면을 동시에** 연결한다 | U1 | 세 표면 동등성 테스트 · `mcpImportAllowed` 에서 `internal/accounts`·`internal/core/rpc` 제거 · DSL `sendTx` 가 같은 진입점 사용 | ☐ |
 | **U5** | **실행·보고 계열 이관** — `run`·`report`·`validate`·`verify`·`log`. 넷 다 CLI 와 MCP 의 경로가 다르고, `run` 은 CLI 가 `dsl`→`collector`→`dashboard`→`testengine` 을 직접 엮는다 | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☐ |

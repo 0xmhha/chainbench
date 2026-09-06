@@ -7,8 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/resource"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newNetCmd is the composable step surface: it composes a chain network for
@@ -22,13 +21,13 @@ import (
 // New builds the net command group.
 func New() *cobra.Command { return newNetCmd() }
 
-// deps is what every chain verb hands the chainsetup module: the operator's
-// command line for the workspace lock's owner note, and side notes to stderr.
-func deps(cmd *cobra.Command) chainsetup.Deps {
+// deps is what every chain verb hands the app layer: the operator's command
+// line for the workspace lock's owner note, and side notes to stderr.
+func deps(cmd *cobra.Command) app.Deps {
 	err := cmd.ErrOrStderr()
-	return chainsetup.Deps{
+	return app.Deps{
 		Command: commandLine(cmd),
-		Report: func(format string, args ...any) {
+		Logf: func(format string, args ...any) {
 			fmt.Fprintf(err, format+"\n", args...)
 		},
 	}
@@ -89,15 +88,15 @@ func (f *targetFlags) bind(cmd *cobra.Command) {
 // spec builds a TargetSpec from the flags. --target wins; mixing it with the
 // legacy flags is ambiguous and refused. Secrets are never captured here —
 // they come from the environment when the target is resolved.
-func (f *targetFlags) spec() (resource.Spec, error) {
+func (f *targetFlags) spec() (app.TargetSpec, error) {
 	if f.target != "" {
 		if f.remoteHost != "" || f.remoteUser != "" || f.remotePort != 0 || f.targetDir != "" {
-			return resource.Spec{}, fmt.Errorf(
+			return app.TargetSpec{}, fmt.Errorf(
 				"--target and the legacy --remote-host/--remote-user/--remote-port/--target-dir flags cannot be mixed")
 		}
-		return resource.Parse(f.target)
+		return app.ParseTarget(f.target)
 	}
-	return resource.Spec{
+	return app.TargetSpec{
 		Host: f.remoteHost, User: f.remoteUser,
 		Port: f.remotePort, DataRoot: f.targetDir,
 	}, nil
@@ -110,7 +109,7 @@ func orDash(s string) string {
 	return s
 }
 
-func sortedSteps(st chainsetup.State) []string {
+func sortedSteps(st app.State) []string {
 	names := make([]string, 0, len(st.Steps))
 	for n := range st.Steps {
 		names = append(names, n)
