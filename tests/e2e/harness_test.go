@@ -129,7 +129,17 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 	if err != nil {
 		t.Fatalf("mkdir temp datadir: %v", err)
 	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	// A passing run leaves nothing behind; a failing one leaves everything.
+	// These scenarios stop and start real nodes, and when one does not come
+	// back the answer is in its log — which the old unconditional cleanup
+	// deleted, so a failure could be counted but never read.
+	t.Cleanup(func() {
+		if t.Failed() {
+			t.Logf("workspace kept for inspection: %s", dir)
+			return
+		}
+		_ = os.RemoveAll(dir)
+	})
 	args := []string{"chain", "up",
 		"--workspace-dir", dir, "--chain", chain, "--binary", binary, "--keys", keysDir,
 		"--validators", itoa(validators), "--endpoints", itoa(endpoints),

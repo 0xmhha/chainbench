@@ -47,7 +47,12 @@ type Driver interface {
 	// Launch starts the node process and returns a Handle. It does not block
 	// on the node's lifetime.
 	Launch(ctx context.Context, spec NodeSpec) (Handle, error)
-	// Stop terminates a previously launched node.
+	// Stop terminates a previously launched node, and returns once it is gone
+	// or has been made to go.
+	//
+	// It may be called concurrently for different nodes: StopNodeSet does, so
+	// that a network's teardown pays the shutdown grace once rather than once
+	// per node. An implementation with shared state guards it.
 	Stop(ctx context.Context, h Handle) error
 }
 

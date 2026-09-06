@@ -8,6 +8,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
@@ -202,15 +203,21 @@ func (d *RemoteDriver) ProbePorts(ctx context.Context, host string, ports []int)
 	return open, nil
 }
 
-// Stop terminates the remote node by PID. A process that has already exited is
-// not an error.
+// Stop terminates the remote node by PID, with the same policy as a local one:
+// SIGTERM, StopGrace to close the database, then SIGKILL. A process that has
+// already exited is not an error.
+//
+// The wait happens on the target rather than here, so a slow link does not eat
+// the grace the node was given. `kill -0` is what asks whether it has gone.
 func (d *RemoteDriver) Stop(ctx context.Context, h Handle) error {
-	// `kill -0` first so an already-gone process is a clean no-op.
-	res, err := d.run(ctx, "kill "+strconv.Itoa(h.PID)+" 2>/dev/null || true")
-	if err != nil {
+	pid := strconv.Itoa(h.PID)
+	script := "kill " + pid + " 2>/dev/null || true; " +
+		"for _ in $(seq 1 " + strconv.Itoa(int(StopGrace/time.Second)) + "); do " +
+		"kill -0 " + pid + " 2>/dev/null || exit 0; sleep 1; done; " +
+		"kill -9 " + pid + " 2>/dev/null || true"
+	if _, err := d.run(ctx, script); err != nil {
 		return fmt.Errorf("driver: remote stop node%d (pid %d): %w", h.Index, h.PID, err)
 	}
-	_ = res
 	return nil
 }
 
