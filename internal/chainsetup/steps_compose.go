@@ -336,12 +336,15 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		if err := t.Files.Write(ctx, p, gen, 0o644); err != nil {
 			return fmt.Errorf("chainsetup: genesis: write: %w", err)
 		}
+		w.recordInput(p, gen)
 		// The step's by-products go beside the genesis: a wemix bring-up
 		// reads its governance config back during deploy-governance.
 		for name, content := range art.Extra {
-			if err := t.Files.Write(ctx, filepath.Join(t.DataRoot, name), content, 0o644); err != nil {
+			extra := filepath.Join(t.DataRoot, name)
+			if err := t.Files.Write(ctx, extra, content, 0o644); err != nil {
 				return fmt.Errorf("chainsetup: genesis: write %s: %w", name, err)
 			}
+			w.recordInput(extra, content)
 		}
 		return nil
 	})
@@ -444,6 +447,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
 	toml := nodeconfig.TOML(spec)
+	w.recordInput(ns.ConfigPath, toml)
 	if err := t.Files.Write(ctx, ns.ConfigPath, toml, 0o644); err != nil {
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
@@ -529,6 +533,20 @@ func (w *Workspace) Provision(ctx context.Context) (string, error) {
 			}
 			if !exists {
 				return fmt.Errorf("chainsetup: provision: %s missing — run the genesis/config steps first", path)
+			}
+			// Present is not the same as ours. A genesis someone edited, or a
+			// config left by a previous composition, is present and would be
+			// launched from.
+			if want, known := w.state.LaunchInputs[path]; known {
+				have, err := t.Files.Checksum(ctx, path)
+				if err != nil {
+					return err
+				}
+				if have != want {
+					return fmt.Errorf("chainsetup: provision: %s is not the file this workspace built "+
+						"(built %s, found %s) — something else wrote it; re-run the step that makes it "+
+						"(`chain genesis` or `chain config`) to put yours back", path, short(want), short(have))
+				}
 			}
 			present++
 			return nil
@@ -801,4 +819,23 @@ func (w *Workspace) peerPlan(p registry.ChainPlugin) (keyring.Preset, *node.Map,
 		return nk.PublicKey, true
 	}
 	return preset, placed, peering, pubkey, nil
+}
+
+// recordInput remembers what a launch input hashed to when this workspace wrote
+// it, so deploy can tell the file it built from one that merely occupies the
+// same path.
+func (w *Workspace) recordInput(path string, content []byte) {
+	if w.state.LaunchInputs == nil {
+		w.state.LaunchInputs = map[string]string{}
+	}
+	w.state.LaunchInputs[path] = filestore.Hash(content)
+}
+
+// short renders a hash the way a reader compares two of them: enough to tell
+// them apart, not so much that the message wraps.
+func short(hash string) string {
+	if i := strings.IndexByte(hash, ':'); i >= 0 && len(hash) > i+13 {
+		return hash[:i+13]
+	}
+	return hash
 }

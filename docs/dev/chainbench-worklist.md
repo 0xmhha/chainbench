@@ -248,10 +248,10 @@ K0·S0 가 추측 위에 서게 된다.
 | **A3** | `app` 의 `topology.yaml` 쓰기를 `filestore.Store` 경유로 | ☑ **정리가 아니라 결함 수정이었다** — 원격 프로비전이 genesis·config 를 조작자 머신에 쓰고 있었다(신원만 원격으로 갔다). `Deps.Files` boundary 추가 · 드라이버가 파일을 보낼 수 있으면 그것이 기본 저장소 · 회귀 테스트 3건 |
 | **A4** | `chains/wemix/deploy` 를 `FileStore` 경유로 | ☑ `pullKeystores` 가 읽기·쓰기 양쪽 모두 store 경유. 직접 파일 쓰기 0건 |
 | **A4b** | `chainsetup`·`consensus/upgrade` 를 `FileStore` 경유로 | ☑ **완료 2026-08-23.** 실측은 8+2 가 아니라 **11+2 = 13곳**. `Options`/`HandoffOptions`/`upgrade.LaunchOptions` 에 `Files` boundary(nil=로컬). **직접 쓰기 0건**이 되어 [[layers]] §5 의 ❌ 가 사라졌고, **A2 가 stale 예외를 잡아** 표에서 지우게 했다(가드가 의도대로 동작). `os.MkdirAll` 대부분이 함께 사라진 게 핵심 — `Write` 가 부모를 만들므로 디렉토리를 미리 만들던 코드는 **경로를 아는 코드**였고 그게 위반의 실체였다. 라이브: `chain up --case wemix` 15/15 · 엔진 게이트 통과 | ☑ |
-| **A5** | ~~`core/bringup`·`core/state`~~ 삭제 완료 · `testkit`·`core/pipeline/testrun` 잔여 | 앞 둘은 #241 에서 소멸(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘은 **케이스 이관 선행** | ◐ |
-| **A6** | `netreg`·`obs` 파일 싱크를 `session` 으로 흡수 검토 | 컨트롤 플레인 단일화 | ☐ |
+| **A5** | ~~`core/bringup`·`core/state`·`testkit`·`core/pipeline/testrun`~~ **전부 소멸 2026-09-06** | — | ☑ 앞 둘은 #241 에서(`engine.LocalSetup`·`session.SaveLocalNodeSet` 로 수렴). 뒤 둘도 이제 없다 — 케이스 이관(P6.4)과 R 트랙 재편이 가져갔다 |
+| **A6** | ~~`netreg`·`obs` 를 `session` 으로 흡수~~ **완료 2026-09-06 확인** | 컨트롤 플레인 단일화 | ☑ R1 에서 끝났다. `internal/netreg` 도 `core/obs` 도 없고, 네트워크 레지스트리는 `core/session/netreg.go`(`SaveNetwork`·`ListNetworks`), 이벤트 버스는 `core/collector/bus.go` 다 |
 | **A7b** | **`hardfork` 와 `upgrade` 통합** — hardfork 가 상위 범주, upgrade 는 type-1 핸드오프. 선언은 `Hardfork{AtBlock, BinaryAfter, ProducersAfter}` 하나, **메커니즘(스왑/핸드오프)은 파생** | 세 사례(같은체인 스왑 · wemix→wbft 핸드오프 · genesis 전용 포크)가 한 선언에서 갈림 · 명령 둘 → 하나 | ☐ |
-| **A8** | **외부 소비자 0 인 공개 심볼 정리** — AST 전수(08-25): 함수·상수 531개 중 **230개가 다른 패키지에서 셀렉터로 한 번도 참조되지 않음**(레지스트리 디스패치는 미탐 — testspec/assert 류는 거짓 양성). 대부분 삭제가 아니라 **비공개화** 후보(예: `engine.New`·`mcp.NewServer`·`testspec.ParseV2` 는 패키지 안에서만 소비); `chains/wemix/deploy`·`chainsetup` 의 군집은 레거시 은퇴(T7.11 계열)와 함께 소멸 | 비공개화 후 A7 테스트가 충돌 표면 축소를 확인 | ☐ |
+| **A8** | **외부 소비자 0 인 공개 심볼 정리** | 대부분 unexport, 일부 삭제 | ☐ **재측정 2026-09-06: 공개 심볼 1,610개 중 896개**가 다른 패키지에서 셀렉터로 한 번도 참조되지 않는다(08-25 에는 531 중 230). 상위는 `core/nodeconfig` 154 · `resource` 65 · `chainsetup` 48 · `core/session` 47 · `app` 46. **그대로 지울 목록이 아니다** — 레지스트리 디스패치와 인터페이스 구현은 이 셈에 안 잡힌다. 조사 시작점이다. `go run ./scripts/inventory/code-graph -symbols .` 로 재현한다 |
 | **A7** | **이름 겹침 검출 테스트** — exported 식별자가 2개 이상 패키지에 같은 이름이면 보고(관용 허용목록 명시) | 실측(08-21): `Identity`×2 · `Plan`×4 · `Config`×3 · `Step`×4. **재실측(08-25, AST 전수)**: 3+ 패키지 충돌 11개 이름(`New`×10 · `Deps`×5 · `Options`×5 · `Plan`×4 · `Load`×4 · `Result`×4 · `Server`×4 · `Step`×4 · `Ports`×3 · `Run`×3 · `Runner`×3), 2패키지 43건 — 표면이 커지고 있다. 진짜 신호 둘: `serverset.Ports`(NM3 에서 소멸 예정이라던 파생 뷰가 잔존) · `Runner`×3(의미 다른 동명: driver/chainsetup/poa) | ☐ |
 
 **이름은 각 항목이 자기 범위에서 함께 고친다**([[layers]] §5b). 개명만 하는 커밋은 리뷰가 어렵고
@@ -264,7 +264,7 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **B1** | **`testspec`(2,998줄) 4분할** — `dsl`(L1 구문 689) · `dsl/assert`(L1 368) · `dsl/bind`(L1 259) · `dsl/interp`(L3 2,050) | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ☐ |
+| **B1** | **`testspec` 분할** — 문법과 런타임을 가른다 | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ◐ **분할은 끝났다(#311, #326).** `internal/testspec` 은 없고 `dsl`·`dsl/assert`·`dsl/interp` 로 갈라졌다. `dsl/bind` 는 따로 서지 않고 `interp` 안에 남았다. **게이트 둘이 남았다.** ① `dsl` 자체는 `core/rpc`·`core/session` 을 링크하지 않는데, `validate` 가 사는 `suitecmd` 는 `run` 과 같은 패키지라 링크한다. 표면을 가르든 게이트를 다시 쓰든 결정이 필요하다(2026-09-06 실측). ② 파서 fuzz 는 없다 |
 | **B2** | `Spec.Fingerprint()` 가 `string` 반환 (현재 `session.Fingerprint`) | **구문이 L3 에 묶인 유일한 이유**가 이 타입 하나다 — B1 의 선행 조건 | ☐ |
 
 현재 `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 해서
@@ -356,9 +356,15 @@ K0·S0 가 추측 위에 서게 된다.
 | **N9** | **해석 순서 강제** — ① keyring → ② netmap → ③ enode → ④ genesis ⑤ config | ③ 이전에 ④⑤ 를 만들 수 없다(컴파일 타임 또는 명시적 오류) | ☐ |
 | **N10** | **계정 라벨** — 라벨 ↔ 주소·개인키. **faucet 은 예약 라벨** | ☑ **완료 2026-09-05.** 실측이 문제를 말한다: 스펙 94파일에 주소 505회, 그중 **키에서 파생돼 키셋이 바뀌면 틀어지는 것이 143회**(`node1` 하나가 93회). 라벨은 주소만이 아니라 **서명 방법**까지 답한다 — 노드 계정은 그 노드가, 하네스만 가진 계정은 여기서 서명해 raw 로 보낸다. `0x` 접두사면 주소, 아니면 라벨. 미지의 라벨은 **아는 라벨을 나열하며 실패**(zero address 로 흘러가지 않는다). 주소 자리(`address`·`from`·`to`·`deployer`·`funder`)는 전부 라벨을 받는다. **2차**: `accounts:` 선언으로 dev 계정을 **genesis 밖에서** 만들고 faucet 으로 채운다 — 계정 추가가 genesis 수정을 뜻하지 않게 된 것이 이 단계의 요점. 잔액 없이 선언하면 0으로 남는다(가스 부족 경로 테스트용). 라이브: 선언한 dev1 이 **자기 키로 서명**하고 dev2 잔액이 정확히 1 wei(0에서 시작해 그 한 번만 받음). 잔여: 스펙 143곳 이관(기계적) | ☑ |
 | **N11** | **다중 config** — 이름으로 참조, 노드별 지정. `restartNode` 액션은 **이미 있고** `config:` 인자만 추가 | 일부 노드만 다른 config 로 재기동 | ☐ |
-| **N12** | **deploy skip 을 내용 해시로** (현재는 존재 여부만) | 같은 경로에 **다른 내용**이면 skip 하지 않음 | ☐ |
+| **N12** | **deploy skip 을 내용 해시로** | 같은 경로에 **다른 내용**이면 skip 하지 않음 | ☑ **2026-09-06.** deploy 가 genesis 와 config 를 **존재 여부만** 보고 "reused, not rewritten" 이라고 보고했다. 누가 편집한 genesis 도, 이전 구성이 남긴 config 도 똑같이 "있음"이라 노드가 그걸로 뜬다.
+
+genesis·config 를 쓸 때 해시를 `State.LaunchInputs` 에 기록하고, deploy 가 대상의 내용과 대조한다. 다르면 파일 이름과 두 해시를 대고 어느 스텝을 다시 돌릴지 말한다. 되쓰지 않고 거절하는 이유는 deploy 의 일이 만드는 것이 아니라 확인하는 것이기 때문이다.
+
+**같은 스텝 안에서 신원 파일은 이미 제대로 하고 있었다** — `shipIdentities` 가 `Checksum` 과 `filestore.Hash` 로 내용을 견준다. genesis·config 만 빠져 있었다.
+
+테스트 3건(편집된 genesis 거절 · 교체된 config 거절 · 자기가 쓴 것은 통과). 변이 둘로 확인했다: 비교를 끄거나 해시 기록을 빼면 편집된 genesis 가 "reused" 로 통과한다 |
 | **N13** | **skip 사유 기록** — `TestRecord.Status(s)` 에 사유가 없어 "왜 skip 됐는지"가 아티팩트에 안 남는다 | ☑ **F5 와 함께 완료 2026-08-22** — `TestRecord.Reason(why)` + `statusDoc.Reason`. 적용 4곳: 파싱 실패·미적용(`does not apply to this target (chain or required capabilities)`)·blocked 2종. 이유 없는 blocked 하나가 `chain.binary` 누락을 찾는 데 한 세션을 썼다 | ☑ |
-| **N14** | **`capability` 이름 충돌 정리** — `engine/capability`(DSL 게이팅)와 `core/capability`(표면 카탈로그)가 무관한데 같은 이름 | S 계열의 `feature` 레지스트리와 함께 정리 | ☐ |
+| **N14** | ~~**`capability` 이름 충돌 정리**~~ **대상 소멸 2026-09-06** | — | ☒ `engine/capability` 도 `core/capability` 도 없다. 이름이 겹치는 패키지는 `wbft` 하나뿐이고(체인 플러그인과 합의 패밀리) 그건 별개다. 충돌은 R 트랙의 모듈 재편 과정에서 사라졌다 |
 
 **N7~N14 는 2026-08-19 요구 재도출분**([[network-blueprint-design]] §6). 세 체인을 실제로 구성한
 기록에서 다시 뽑았고, 다섯 요구(로컬 포트·원격 IP풀·라벨 지정·enode 순서·계정 라벨)가 전부
@@ -393,7 +399,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 · **`ReadOnly` 속성**(선언식 — 상태 불변 + 출력에 비밀 없음; `keyring export` 는 자격 없음) | 기존 동작 무변경 · 미등록 기능 카운트 테스트 · ReadOnly 선언이 스키마에 노출 | ☐ |
 | **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☐ |
 | **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
-| **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP/DSL 동시 노출 확인. **선례: keyring(K8)** 이 같은 형태로 끝났다 — 유스케이스는 `app`, 표면은 바인딩과 렌더링만 | ☐ |
+| **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP 동시 노출 | ☑ **U4 가 했다(2026-09-05).** 넷 다 `app.TxSend`·`Faucet`·`ContractDeploy`·`VerifyNetwork` 를 CLI 와 MCP 가 함께 부른다(실측 확인 2026-09-06). **DSL 은 뺀다** — 액션은 표면이 아니라 L3 어휘이고 app 을 부르면 import 순환이다(§1l U7 참조) |
 | **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
 | **S5** | ~~`cmd/` 규칙 위반 파일 정리~~ **폐기 2026-09-05** | 게이트가 "`cmd/` 가 `app` 만 import" 였는데, 지키려던 성질은 import 목록이 아니라 표면 사이의 동등성이다. 줄수 목표(~1,800)는 **달성하지 못했다**: CLI 네 패키지 합계가 4,569 → 4,176 으로 거의 그대로고, 줄어든 것처럼 보였던 것은 코드가 `chaincmd`·`keyringcmd`·`resourcecmd` 로 옮겨 갔기 때문이다. 폐기 사유는 목표 달성이 아니라 규칙 교체다. 남은 실체는 §1l 의 U 트랙이 가져간다 | ☒ |
 | **S6** | ~~`cmd` import 화이트리스트 테스트~~ **폐기 2026-09-05** | 대리 지표 대신 기능별 동등성 테스트로 대체한다(U0·U2~U7). 라체트는 "app 을 거치지 않는 항목 수"로 세운다 | ☒ |
@@ -923,6 +929,10 @@ MCP `chainbench_run` 에도 `attach` 인자로 같이 넣었다. 한쪽에만 �
 `AttachRunIn.Caps` 는 원래부터 있었는데 아무도 채우지 않았다. 배선만 없던 것이지 설계가 없던 것은 아니다.
 
 **변이로 확인했다**: `in.Caps` 를 비우면 정확히 예전 증상(skip)으로 돌아간다.
+
+**다만 시나리오는 아직 통과하지 않는다(정정 2026-09-06).** 처음에 1판만 돌리고 "통과"라고 적었는데 성급했다. 3판씩 두 번 재니 **3판 중 2판 실패**다. 고쳐진 것은 **게이트**이고, 실패는 그 안쪽의 별개 문제다 — `sendTx` 가 en1 에 보낸 트랜잭션의 영수증이 시간 초과한다(`context deadline exceeded`). N12 적용 전후로 실패 비율이 같아(각 2/3) N12 탓도 아니다.
+
+skip 이 fail 로 바뀐 것은 후퇴가 아니다. skip 은 아무것도 검증하지 않던 상태이고, fail 은 시나리오가 실제로 무언가를 재고 있다는 뜻이다. 원인은 미상이며 wbft 정족수 회복 건과는 별개다.
 
 ### U 트랙에서 배운 것 (2026-09-05)
 
