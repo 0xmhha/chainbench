@@ -7,8 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
-	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newUpgradeCmd drives the concurrent consensus-family handoff (go-wemix+etcd ->
@@ -24,32 +23,6 @@ func New() *cobra.Command {
 	return cmd
 }
 
-// buildPlanFromProfile is the shared front half: load the golden profile, read
-// the from-chain base genesis, resolve both chain plugins, and build the plan.
-func buildPlanFromProfile(profilePath, fromGenesisPath string) (upgrade.Plan, error) {
-	p, err := upgrade.LoadProfile(profilePath)
-	if err != nil {
-		return upgrade.Plan{}, err
-	}
-	fromGenesis, err := os.ReadFile(fromGenesisPath)
-	if err != nil {
-		return upgrade.Plan{}, fmt.Errorf("read from-genesis: %w", err)
-	}
-	in, err := p.Inputs(fromGenesis)
-	if err != nil {
-		return upgrade.Plan{}, err
-	}
-	from, err := registry.Get(p.Upgrade.From)
-	if err != nil {
-		return upgrade.Plan{}, fmt.Errorf("from-chain %q: %w", p.Upgrade.From, err)
-	}
-	to, err := registry.Get(p.Upgrade.To)
-	if err != nil {
-		return upgrade.Plan{}, fmt.Errorf("to-chain %q: %w", p.Upgrade.To, err)
-	}
-	return upgrade.BuildPlan(from, to, in)
-}
-
 func newGenesisCmd() *cobra.Command {
 	var profilePath, fromGenesis, out string
 	cmd := &cobra.Command{
@@ -59,33 +32,33 @@ func newGenesisCmd() *cobra.Command {
 			if profilePath == "" || fromGenesis == "" {
 				return fmt.Errorf("--profile and --from-genesis are required")
 			}
-			plan, err := buildPlanFromProfile(profilePath, fromGenesis)
+			res, err := app.UpgradeGenesis(deps(cmd), profilePath, fromGenesis)
 			if err != nil {
 				return err
 			}
 			if out != "" {
-				if err := os.WriteFile(out, plan.Genesis, 0o644); err != nil {
+				if err := os.WriteFile(out, res.Genesis, 0o644); err != nil {
 					return err
 				}
 			}
 			o := cmd.OutOrStdout()
 			fmt.Fprintf(o, "handoff: %s -> %s at %s block; %d node(s)\n",
-				plan.From.ID, plan.To.ID, plan.AtFork, len(plan.Nodes))
+				res.Plan.From, res.Plan.To, res.Plan.AtFork, res.Plan.Nodes)
 			w := tabwriter.NewWriter(o, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "NODE\tCHAIN\tROLE\tNETID\tP2P\tHTTP\tETCD")
-			for _, n := range plan.Nodes {
+			for _, n := range res.Nodes {
 				role := "validator"
 				if n.Producer {
 					role = "producer"
 				}
 				fmt.Fprintf(w, "%d\t%s\t%s\t%d\t%d\t%d\t%d\n",
-					n.Index+1, n.Chain, role, n.NetworkID, n.Ports.P2P, n.Ports.HTTP, n.Ports.Etcd)
+					n.Index+1, n.Chain, role, n.NetworkID, n.P2P, n.HTTP, n.Etcd)
 			}
 			if err := w.Flush(); err != nil {
 				return err
 			}
 			if out != "" {
-				fmt.Fprintf(o, "merged genesis written to %s (%d bytes)\n", out, len(plan.Genesis))
+				fmt.Fprintf(o, "merged genesis written to %s (%d bytes)\n", out, len(res.Genesis))
 			}
 			return nil
 		},

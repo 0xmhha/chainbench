@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 )
 
@@ -49,6 +50,9 @@ type Deps struct {
 	// use case's returned value.
 	Logf func(format string, args ...any)
 }
+
+// NodeSet is a composed network's nodes as a surface receives them for display.
+type NodeSet = node.NodeSet
 
 // command is what the operator typed, or a placeholder when nothing was
 // injected (an MCP call, a test).

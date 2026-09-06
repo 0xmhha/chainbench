@@ -2,10 +2,11 @@ package accountcmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newAccountStateCmd reports an account's on-chain state over RPC.
@@ -21,22 +22,14 @@ func newStateCmd() *cobra.Command {
 			if rpcURL == "" || addr == "" {
 				return fmt.Errorf("--rpc and --address are required")
 			}
-			c := rpc.Dial(rpcURL)
-			ctx := cmd.Context()
-			bal, err := c.BalanceAt(ctx, addr)
-			if err != nil {
-				return err
-			}
-			nonce, err := c.NonceAt(ctx, addr)
-			if err != nil {
-				return err
-			}
-			code, err := c.CodeAt(ctx, addr)
+			out, err := app.AccountState(cmd.Context(), deps(cmd), app.AccountStateIn{
+				RPC: rpcURL, Address: addr,
+			})
 			if err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "address:  %s\nbalance:  %s wei\nnonce:    %d\ncontract: %v\n",
-				addr, bal.String(), nonce, hasCode(code))
+				out.Address, out.Balance, out.Nonce, out.Contract)
 			return nil
 		},
 	}
@@ -45,7 +38,10 @@ func newStateCmd() *cobra.Command {
 	return cmd
 }
 
-// hasCode reports whether an eth_getCode result is a non-empty contract.
-func hasCode(code string) bool {
-	return code != "" && code != "0x" && code != "0x0"
+// deps is what every account verb hands the app layer: side notes to stderr.
+func deps(cmd *cobra.Command) app.Deps {
+	errOut := cmd.ErrOrStderr()
+	return app.Deps{Env: os.Getenv, Logf: func(format string, args ...any) {
+		fmt.Fprintf(errOut, format+"\n", args...)
+	}}
 }

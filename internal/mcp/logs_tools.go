@@ -2,11 +2,11 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // logTimelineTool merges a setup's per-node logs into one chronological view, so
@@ -35,7 +35,7 @@ func logTimelineTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexpMode, _ := args["regexp"].(bool)
-			matches, err := collector.Timeline(dir, collector.SearchOpts{
+			matches, err := app.LogTimeline(app.Deps{}, dir, app.LogSearchIn{
 				Pattern: argString(args, "pattern", ""),
 				Regexp:  regexpMode,
 				Node:    argInt(args, "node", 0),
@@ -75,8 +75,7 @@ func networkPeersTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			cli := rpc.Dial(rpcURL)
-			count, err := cli.PeerCount(ctx)
+			count, err := app.PeersOf(ctx, app.Deps{}, rpcURL)
 			if err != nil {
 				return "", err
 			}
@@ -90,7 +89,8 @@ func networkPeersTool() Tool {
 					RemoteAddress string `json:"remoteAddress"`
 				} `json:"network"`
 			}
-			if err := cli.Call(ctx, "admin_peers", &peers); err == nil {
+			if raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: rpcURL, Method: "admin_peers"}); err == nil &&
+				json.Unmarshal(raw, &peers) == nil {
 				for _, p := range peers {
 					addr := p.Network.RemoteAddress
 					if addr == "" {

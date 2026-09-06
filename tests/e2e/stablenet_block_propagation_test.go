@@ -22,11 +22,18 @@ func TestE2E_StablenetBlockPropagation(t *testing.T) {
 		lag        = 2 // max blocks a node may trail node 1
 	)
 	n := boot(t, cli, "stablenet", bin, validators, endpoints)
-	n.waitAdvancing(n.rpcURL, 45*time.Second)
 
 	urls := make([]string, 0, validators+endpoints)
 	for i := 1; i <= validators+endpoints; i++ {
 		urls = append(urls, n.rpcURLFor(i))
+	}
+	// Every node, not just node 1. What follows measures how far behind a node
+	// runs once the network is up, and a node that has not started following
+	// yet is not behind - it is absent. Waiting on node 1 alone let the first
+	// sample land while the endpoint was still joining, which read as a
+	// propagation failure at round 0.
+	for _, u := range urls {
+		n.waitAdvancing(u, 60*time.Second)
 	}
 
 	for r := 0; r < rounds; r++ {

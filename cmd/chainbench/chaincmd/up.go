@@ -7,11 +7,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newNetUpCmd composes and brings up a whole network in one command — the nine
-// `net` steps run in order. Flag binding + chainsetup.NetUp + output; the logic lives
+// `net` steps run in order. Flag binding + app.NetUp + output; the logic lives
 // in the app layer, shared with the MCP tool.
 func newNetUpCmd() *cobra.Command {
 	var (
@@ -46,8 +46,8 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := chainsetup.NetUp(cmd.Context(), deps(cmd), chainsetup.NetUpIn{
-				DataDir: dataDir, Stage: chainsetup.UpStage(stage),
+			out, err := app.NetUp(cmd.Context(), deps(cmd), app.NetUpIn{
+				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
 				Validators: validators, Endpoints: endpoints,
@@ -70,7 +70,7 @@ func newNetUpCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory — where the composition is set up (default: ~/.chainbench/<timestamp>/chainsetup; keep it short: node IPC sockets have a 104-char limit)")
-	cmd.Flags().StringVar(&stage, "stage", string(chainsetup.UpStart), "how far to go: deploy (write artifacts only) or start")
+	cmd.Flags().StringVar(&stage, "stage", string(app.UpStart), "how far to go: deploy (write artifacts only) or start")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
@@ -97,7 +97,7 @@ func newNetUpCmd() *cobra.Command {
 }
 
 // printUpSteps lists what each step recorded, in order.
-func printUpSteps(cmd *cobra.Command, out chainsetup.NetUpOut) {
+func printUpSteps(cmd *cobra.Command, out app.NetUpOut) {
 	w := cmd.OutOrStdout()
 	for _, s := range out.Steps {
 		fmt.Fprintln(w, s)
@@ -105,7 +105,7 @@ func printUpSteps(cmd *cobra.Command, out chainsetup.NetUpOut) {
 }
 
 // printUpNodes renders the composed node table.
-func printUpNodes(cmd *cobra.Command, out chainsetup.NetUpOut) {
+func printUpNodes(cmd *cobra.Command, out app.NetUpOut) {
 	nodes := out.Nodes.Nodes.Nodes
 	if len(nodes) == 0 {
 		return

@@ -180,3 +180,172 @@ func TestDeploy_RefusesWithoutBytecode(t *testing.T) {
 		t.Errorf("the error does not mention the missing bytecode: %v", err)
 	}
 }
+
+// U4 gave the on-chain verbs a single entry point in app, and these are what
+// that buys: before it, `tx send` was written three times over — here, in the
+// MCP tools, and in the DSL's built-in actions — and nothing compared them.
+
+// signingNode answers the calls a wallet makes on its way to broadcasting, so
+// a send can be driven end to end without a chain. It records the raw
+// transaction each surface produced.
+type signingNode struct {
+	*httptest.Server
+	mu   sync.Mutex
+	sent []string
+	seen []string
+}
+
+func newSigningNode(t *testing.T) *signingNode {
+	t.Helper()
+	n := &signingNode{}
+	results := map[string]any{
+		"eth_chainId":              "0x205b",
+		"eth_getTransactionCount":  "0x0",
+		"eth_gasPrice":             "0x3b9aca00",
+		"eth_maxPriorityFeePerGas": "0x3b9aca00",
+		"eth_estimateGas":          "0x5208",
+		// stablenet asks whether the sender is blacklisted before it signs, and
+		// an empty proof is how a plain account answers.
+		"eth_getProof": map[string]any{
+			"balance": "0x0", "nonce": "0x0", "codeHash": "0x", "storageProof": []any{},
+		},
+		"eth_getBlockByNumber": map[string]any{
+			"number": "0x1", "baseFeePerGas": "0x7", "gasLimit": "0x1c9c380",
+		},
+	}
+	n.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     int    `json:"id"`
+			Method string `json:"method"`
+			Params []any  `json:"params"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		n.mu.Lock()
+		n.seen = append(n.seen, req.Method)
+		if req.Method == "eth_sendRawTransaction" && len(req.Params) > 0 {
+			if raw, ok := req.Params[0].(string); ok {
+				n.sent = append(n.sent, raw)
+			}
+		}
+		n.mu.Unlock()
+		resp := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+		if req.Method == "eth_sendRawTransaction" {
+			resp["result"] = "0x" + strings.Repeat("ab", 32)
+		} else if v, ok := results[req.Method]; ok {
+			resp["result"] = v
+		} else {
+			resp["error"] = map[string]any{"code": -32601, "message": "method not found"}
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	t.Cleanup(n.Close)
+	return n
+}
+
+// broadcast returns the raw transactions seen so far and forgets them.
+func (n *signingNode) broadcast() []string {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	out := append([]string(nil), n.sent...)
+	n.sent = nil
+	n.seen = nil
+	return out
+}
+
+const testKey = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21"
+
+// TestParity_TxSend: the same request signed by either surface has to produce
+// the same transaction, byte for byte.
+//
+// Comparing the raw signed transaction is the strongest check available here:
+// it covers the nonce, the gas fields, the value, the calldata and the
+// signature at once. Two surfaces that agree on this cannot be reading --value
+// or --data differently.
+func TestParity_TxSend(t *testing.T) {
+	n := newSigningNode(t)
+	const to, data, value = "0x000000000000000000000000000000000000dEaD", "0xdeadbeef", "1000"
+
+	cli, err := runCLI(t, "tx", "send", "--rpc", n.URL, "--from-key", testKey,
+		"--to", to, "--data", data, "--value", value)
+	if err != nil {
+		t.Fatalf("CLI tx send: %v\n%s", err, cli)
+	}
+	cliSent := n.broadcast()
+
+	runMCP(t, "chainbench_tx_send", map[string]any{
+		"rpc": n.URL, "from_key": testKey, "to": to, "data": data, "value": value,
+	})
+	mcpSent := n.broadcast()
+
+	if len(cliSent) != 1 {
+		t.Fatalf("the CLI broadcast %d transactions, want 1 — nothing to compare", len(cliSent))
+	}
+	if len(mcpSent) != 1 || cliSent[0] != mcpSent[0] {
+		t.Errorf("the two surfaces signed different transactions.\n  CLI: %v\n  MCP: %v", cliSent, mcpSent)
+	}
+}
+
+// TestParity_ContractDeploy: same, for a creation transaction — the one whose
+// value both surfaces default and whose bytecode both must read as hex.
+func TestParity_ContractDeploy(t *testing.T) {
+	n := newSigningNode(t)
+	const code = "0x6080604052"
+
+	cli, err := runCLI(t, "contract", "deploy", "--rpc", n.URL, "--from-key", testKey, "--bytecode", code)
+	if err != nil {
+		t.Fatalf("CLI contract deploy: %v\n%s", err, cli)
+	}
+	cliSent := n.broadcast()
+
+	runMCP(t, "chainbench_contract_deploy", map[string]any{
+		"rpc": n.URL, "from_key": testKey, "bytecode": code,
+	})
+	mcpSent := n.broadcast()
+
+	if len(cliSent) != 1 {
+		t.Fatalf("the CLI broadcast %d transactions, want 1 — nothing to compare", len(cliSent))
+	}
+	if len(mcpSent) != 1 || cliSent[0] != mcpSent[0] {
+		t.Errorf("the two surfaces deployed different transactions.\n  CLI: %v\n  MCP: %v", cliSent, mcpSent)
+	}
+}
+
+// TestParity_TxWait: a receipt read by either surface reports the same facts.
+// The renderings differ — the CLI lays the receipt out for a person, MCP
+// answers with it as JSON — so the facts are what is compared.
+func TestParity_TxWait(t *testing.T) {
+	const hash = "0xabc"
+	n := newNode(t, map[string]any{
+		"eth_getTransactionReceipt": map[string]any{
+			"status": "0x1", "blockNumber": "0x2a", "gasUsed": "0x5208",
+		},
+	})
+
+	cli, err := runCLI(t, "tx", "wait", "--rpc", n.URL, "--hash", hash)
+	if err != nil {
+		t.Fatalf("CLI tx wait: %v\n%s", err, cli)
+	}
+	mcpOut := runMCP(t, "chainbench_tx_wait", map[string]any{"rpc": n.URL, "hash": hash})
+
+	var r struct {
+		Status      string `json:"status"`
+		BlockNumber string `json:"blockNumber"`
+		GasUsed     string `json:"gasUsed"`
+	}
+	if err := json.Unmarshal([]byte(mcpOut), &r); err != nil {
+		t.Fatalf("the tool's answer is not a receipt: %v\n%s", err, mcpOut)
+	}
+	if r.Status == "" || r.BlockNumber == "" {
+		t.Fatalf("the tool reported an empty receipt, so agreeing about it proves nothing:\n%s", mcpOut)
+	}
+	// The CLI spells a status out for a person, so the block and the gas are
+	// what can be compared verbatim; the status is checked by its meaning.
+	for _, want := range []string{r.BlockNumber, r.GasUsed} {
+		if !strings.Contains(cli, want) {
+			t.Errorf("the CLI's receipt lost %q:\n%s", want, cli)
+		}
+	}
+	if !strings.Contains(cli, "success") {
+		t.Errorf("the tool reported status %s; the CLI does not call it a success:\n%s", r.Status, cli)
+	}
+}

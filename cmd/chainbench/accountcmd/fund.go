@@ -2,11 +2,12 @@ package accountcmd
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
+
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newAccountFundCmd funds an account: it sends amount wei to a recipient from a
@@ -29,23 +30,16 @@ func newFundCmd() *cobra.Command {
 		Use:   "fund",
 		Short: "Send funds to an account from a funding key (private key, mnemonic, or file)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			amt, ok := new(big.Int).SetString(amount, 10)
-			if !ok {
-				return fmt.Errorf("bad --amount %q (decimal wei expected)", amount)
-			}
-			source, err := src.Source(pf.Source())
+			funder, err := src.Resolve(cmd.Context(), deps(cmd), pf.Source())
 			if err != nil {
 				return err
 			}
-			funder, err := source.Resolve(cmd.Context())
-			if err != nil {
-				return err
-			}
-			ap, err := resolveAccountProvider(chain, manifestPath, templatePath)
-			if err != nil {
-				return err
-			}
-			hash, err := ap.Faucet(cmd.Context(), funder.Bytes(), to, amt, rpcURL)
+			hash, err := app.FaucetFromKey(cmd.Context(), deps(cmd), app.FaucetKeyIn{
+				Chain: app.ChainRef{
+					Chain: chain, Manifest: manifestPath, Template: templatePath, RPC: rpcURL,
+				},
+				Key: funder, To: to, Amount: amount,
+			})
 			if err != nil {
 				return err
 			}

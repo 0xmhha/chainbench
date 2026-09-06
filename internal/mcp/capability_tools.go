@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/registry"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // RegisterCapabilities folds the server's built-in flat tools into the
@@ -24,12 +24,12 @@ func (s *Server) RegisterCapabilities() {
 		}
 		t := s.tools[name]
 		capName := strings.TrimPrefix(name, "chainbench_")
-		registry.RegisterFlat("v1", registry.CommonChain, capName, name, t.Description, paramsFromSchema(t.InputSchema))
+		app.RegisterCapability(app.Deps{}, "v1", app.CommonChain, capName, name, t.Description, paramsFromSchema(t.InputSchema))
 	}
 
 	// 2. Generate a tool for each handler-backed capability (project-supplied);
 	//    flat ones (Tool set) already have a tool, so skip them.
-	for _, c := range registry.All() {
+	for _, c := range app.Capabilities(app.Deps{}) {
 		if c.Tool != "" || c.Handler == nil {
 			continue
 		}
@@ -40,7 +40,7 @@ func (s *Server) RegisterCapabilities() {
 	s.Register(capabilitiesDiscoveryTool())
 }
 
-func capabilityTool(c registry.Capability) Tool {
+func capabilityTool(c app.Capability) Tool {
 	props := map[string]any{}
 	var required []string
 	for _, p := range c.Params {
@@ -62,7 +62,7 @@ func capabilityTool(c registry.Capability) Tool {
 		schema["required"] = required
 	}
 	scope := "common (all chains)"
-	if c.Chain != registry.CommonChain {
+	if c.Chain != app.CommonChain {
 		scope = "chain: " + c.Chain
 	}
 	h := c.Handler
@@ -87,11 +87,11 @@ func capabilitiesDiscoveryTool() Tool {
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
 			chain := argString(args, "chain", "")
-			var caps []registry.Capability
+			var caps []app.Capability
 			if chain != "" {
-				caps = registry.For(chain)
+				caps = app.CapabilitiesFor(app.Deps{}, chain)
 			} else {
-				caps = registry.All()
+				caps = app.Capabilities(app.Deps{})
 			}
 			return formatCapabilities(caps, chain), nil
 		},
@@ -99,7 +99,7 @@ func capabilitiesDiscoveryTool() Tool {
 }
 
 // formatCapabilities renders the capability tree (shared shape with the CLI).
-func formatCapabilities(caps []registry.Capability, chain string) string {
+func formatCapabilities(caps []app.Capability, chain string) string {
 	if len(caps) == 0 {
 		return "no capabilities registered"
 	}
@@ -133,7 +133,7 @@ func formatCapabilities(caps []registry.Capability, chain string) string {
 }
 
 // paramsFromSchema converts a tool's JSON input schema into capability Params.
-func paramsFromSchema(schema map[string]any) []registry.Param {
+func paramsFromSchema(schema map[string]any) []app.Param {
 	props, _ := schema["properties"].(map[string]any)
 	req := map[string]bool{}
 	switch rs := schema["required"].(type) {
@@ -148,7 +148,7 @@ func paramsFromSchema(schema map[string]any) []registry.Param {
 			}
 		}
 	}
-	out := make([]registry.Param, 0, len(props))
+	out := make([]app.Param, 0, len(props))
 	for k, v := range props {
 		typ, desc := "string", ""
 		if m, ok := v.(map[string]any); ok {
@@ -159,7 +159,7 @@ func paramsFromSchema(schema map[string]any) []registry.Param {
 				desc = d
 			}
 		}
-		out = append(out, registry.Param{Name: k, Type: typ, Desc: desc, Required: req[k]})
+		out = append(out, app.Param{Name: k, Type: typ, Desc: desc, Required: req[k]})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out

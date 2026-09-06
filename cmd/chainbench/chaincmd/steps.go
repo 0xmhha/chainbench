@@ -10,8 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
-	"github.com/0xmhha/chainbench/internal/chainsetup"
-	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // Step subcommands of `net`. Every RunE is flag binding + one app call +
@@ -45,7 +44,7 @@ func newNetKeysCmd() *cobra.Command {
 	var nodes, validators int
 	cmd, _ := stepCmd("keys", "Ensure the key set exists and covers the node count (preset or generate)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetKeys(cmd.Context(), deps(cmd), chainsetup.NetKeysIn{
+			out, err := app.NetKeys(cmd.Context(), deps(cmd), app.NetKeysIn{
 				DataDir: dataDir, Source: source, Nodes: nodes, Validators: validators,
 			})
 			return out.Detail, err
@@ -69,7 +68,7 @@ func newNetAllocateCmd() *cobra.Command {
 			if err != nil {
 				return "", err
 			}
-			out, err := chainsetup.NetAllocate(cmd.Context(), deps(cmd), chainsetup.NetAllocateIn{
+			out, err := app.NetAllocate(cmd.Context(), deps(cmd), app.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Binaries: bins, Server: sf.Ref(),
@@ -110,7 +109,7 @@ func newNetGenesisCmd() *cobra.Command {
 	var overlay string
 	cmd, _ := stepCmd("genesis", "Build the genesis from the key set and write it to the target",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetGenesis(cmd.Context(), deps(cmd), chainsetup.NetGenesisIn{
+			out, err := app.NetGenesis(cmd.Context(), deps(cmd), app.NetGenesisIn{
 				DataDir: dataDir, ChainID: chainID, Set: sets, OverlayPath: overlay,
 			})
 			return out.Detail, err
@@ -132,7 +131,7 @@ func newNetConfigCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := chainsetup.NetConfig(cmd.Context(), deps(cmd), chainsetup.NetConfigIn{
+			out, err := app.NetConfig(cmd.Context(), deps(cmd), app.NetConfigIn{
 				DataDir: dataDir, Node: nodeIdx, Set: sets,
 			})
 			if err != nil {
@@ -159,7 +158,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := chainsetup.NetLaunchOpts(cmd.Context(), deps(cmd), chainsetup.NetLaunchOptsIn{
+			out, err := app.NetLaunchOpts(cmd.Context(), deps(cmd), app.NetLaunchOptsIn{
 				DataDir: dataDir, Set: sets,
 			})
 			if err != nil {
@@ -181,7 +180,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 func newNetProvisionCmd() *cobra.Command {
 	cmd, _ := stepCmd("deploy", "Put the launch inputs on the target and verify they are present (skip-if-exists)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetProvision(cmd.Context(), deps(cmd), chainsetup.NetProvisionIn{DataDir: dataDir})
+			out, err := app.NetProvision(cmd.Context(), deps(cmd), app.NetProvisionIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -191,7 +190,7 @@ func newNetInitCmd() *cobra.Command {
 	var binary string
 	cmd, _ := stepCmd("init", "Initialize each node's datadir from the built genesis",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetInit(cmd.Context(), deps(cmd), chainsetup.NetInitIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetInit(cmd.Context(), deps(cmd), app.NetInitIn{DataDir: dataDir, Binary: binary})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the workspace's)")
@@ -202,7 +201,7 @@ func newNetStartCmd() *cobra.Command {
 	var binary string
 	cmd, _ := stepCmd("start", "Launch every stopped node and record its PID",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetStart(cmd.Context(), deps(cmd), chainsetup.NetStartIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetStart(cmd.Context(), deps(cmd), app.NetStartIn{DataDir: dataDir, Binary: binary})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the workspace's)")
@@ -212,7 +211,7 @@ func newNetStartCmd() *cobra.Command {
 func newNetStopCmd() *cobra.Command {
 	cmd, _ := stepCmd("stop", "Stop every running node by its recorded PID",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetStop(cmd.Context(), deps(cmd), chainsetup.NetStopIn{DataDir: dataDir})
+			out, err := app.NetStop(cmd.Context(), deps(cmd), app.NetStopIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -222,7 +221,7 @@ func newNetRestartCmd() *cobra.Command {
 	var nodeIdx int
 	cmd, _ := stepCmd("restart", "Stop and relaunch one node with its recorded arming",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetRestart(cmd.Context(), deps(cmd), chainsetup.NetRestartIn{DataDir: dataDir, Node: nodeIdx})
+			out, err := app.NetRestart(cmd.Context(), deps(cmd), app.NetRestartIn{DataDir: dataDir, Node: nodeIdx})
 			return out.Detail, err
 		})
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based)")
@@ -232,7 +231,7 @@ func newNetRestartCmd() *cobra.Command {
 func newNetRmCmd() *cobra.Command {
 	cmd, _ := stepCmd("rm", "Remove the composed data plane (stopped nodes only)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := chainsetup.NetRm(cmd.Context(), deps(cmd), chainsetup.NetRmIn{DataDir: dataDir})
+			out, err := app.NetRm(cmd.Context(), deps(cmd), app.NetRmIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -248,7 +247,7 @@ func newNetLogsCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := chainsetup.NetLogs(cmd.Context(), deps(cmd), chainsetup.NetLogsIn{
+			out, err := app.NetLogs(cmd.Context(), deps(cmd), app.NetLogsIn{
 				DataDir: dataDir, Node: nodeIdx, Lines: lines,
 			})
 			if err != nil {
@@ -274,7 +273,7 @@ func newNetHealthCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := chainsetup.NetHealth(cmd.Context(), deps(cmd), chainsetup.NetHealthIn{DataDir: dataDir})
+			out, err := app.NetHealth(cmd.Context(), deps(cmd), app.NetHealthIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
@@ -306,7 +305,7 @@ func newNetResumeCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := chainsetup.NetResume(cmd.Context(), deps(cmd), chainsetup.NetResumeIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetResume(cmd.Context(), deps(cmd), app.NetResumeIn{DataDir: dataDir, Binary: binary})
 			w := cmd.OutOrStdout()
 			for _, line := range out.Reconciled {
 				fmt.Fprintln(w, "reconcile:", line)
@@ -336,7 +335,7 @@ func newNetResumeCmd() *cobra.Command {
 }
 
 // printNodeSet renders a node table.
-func printNodeSet(out io.Writer, ns node.NodeSet) {
+func printNodeSet(out io.Writer, ns app.NodeSet) {
 	if len(ns.Nodes) == 0 {
 		return
 	}
@@ -362,7 +361,7 @@ func newNetEnodeCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := chainsetup.NetEnodes(cmd.Context(), deps(cmd), chainsetup.NetEnodesIn{
+			out, err := app.NetEnodes(cmd.Context(), deps(cmd), app.NetEnodesIn{
 				DataDir: dataDir, Node: nodeIdx,
 			})
 			if err != nil {

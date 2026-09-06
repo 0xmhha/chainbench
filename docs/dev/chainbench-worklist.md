@@ -835,18 +835,96 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 **e2e 도 실제 마운트 지점을 거치게 바꿨다.** 잎사귀 생성자를 직접 부르면 그 명령이 루트에 제대로 붙어 있는지는 시험하지 못한다. `newRootCmd()` 에 `upgrade run` 을 붙여 부른다.
 
 덤으로 `resolve.go` 의 `remoteDriver` 를 걷어냈다. `remote` 명령군 폐기(#346) 이후 자기 테스트 말고 부르는 데가 없었다. |
-| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 10개(`new`·`show`·`status`·`build`·`config`·`enode`·`health`·`logs`·`resume`·`up`) 중 app 을 지나는 것은 `show` 하나뿐이고 나머지는 `chainsetup` 을 직접 부른다. MCP `chain_*` 17개는 16개가 이미 app 이므로 진입점이 대체로 있다. CLI 를 그리로 돌린다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☐ |
-| **U3** | **keyring 계열 이관** — `new`·`add`·`list`·`show`·`import`·`export`·`set`. `app.Keyring*` 7개가 이미 `core/keyring/operation` 의 동사 7개를 1:1 로 감싼다. 그 파일은 83줄인데 주석과 타입 별칭을 빼면 39줄이고 대부분 `Deps` 어댑터라, 끼우는 층이 두껍지 않다는 근거이기도 하다. `keyringcmd` 를 app 경유로 | U1 | 동등성 테스트 · keyring 라이브 스위트 통과 · `operation` 단위 테스트는 app 을 지나지 않음(모듈 단독 검증 유지) | ☐ |
-| **U4** | **테스트 동사 계열 신설** — `send`·`deploy`·`call`·`faucet`·`wait`·`state`·`txpool`·`newAccount`. 유스케이스가 어느 모듈에도 없고 CLI(461줄)·MCP·DSL 에 각각 쓰여 있다. 모듈로 뽑고 app 진입점을 만들어 **세 표면을 동시에** 연결한다 | U1 | 세 표면 동등성 테스트 · `mcpImportAllowed` 에서 `internal/accounts`·`internal/core/rpc` 제거 · DSL `sendTx` 가 같은 진입점 사용 | ☐ |
-| **U5** | **실행·보고 계열 이관** — `run`·`report`·`validate`·`verify`·`log`. 넷 다 CLI 와 MCP 의 경로가 다르고, `run` 은 CLI 가 `dsl`→`collector`→`dashboard`→`testengine` 을 직접 엮는다 | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☐ |
-| **U6** | **조회 계열 이관** — `chains`·`capabilities`·`consensus*`·`rpc`·`roster`·`migrate-spec`·`network_*`·`remote_rpc`·`node_rpc`. 대부분 읽기 전용이라 S7 의 `query` 투영과 함께 정리한다 | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ☐ |
-| **U7** | **DSL 흡수** — 액션 18개와 어서션 27개가 `internal/testhelper` 의 다섯 파일(`builtins`·`read`·`assets`·`derived`·`fault`, 합쳐 2,339줄)에서 `accounts`·`core/rpc`·`core/session`·`core/node` 를 직접 조립한다. 45개 전부가 app 을 지나지 않으며, 세 표면 중 유일하게 어느 계획에도 들어 있지 않았다. app 진입점을 부르게 바꾼다 | U4 | DSL 액션과 어서션이 core 를 직접 import 하지 않음 · 기존 스펙 전량 회귀 · `verify` 가 DSL 에도 노출(`faucet` 은 이미 있다) | ☐ |
-| **U8** | **규칙 대칭 마감** — `mcpImportAllowed` 비대칭 라체트를 폐기하고 표면 공통 규칙 하나로 합친다 | U2~U7 | 우회 항목 0 · 표면 3종이 같은 등록을 렌더링 · 문서와 테스트가 한 규칙만 말함 | ☐ |
+| **U2** | **조합 계열 이관** — `chaincmd` 의 명령 19개가 `chainsetup` 을 직접 불렀다 | U1 | 기능별 CLI==MCP 동등성 테스트 · 라체트 감소 · `net up` 3체인 회귀 | ☑ **2026-09-05. CLI 40 → 31.** `chaincmd` 가 `chainsetup`·`resource`·`core/node` 를 직접 부르던 것을 전부 `app` 경유로 돌렸다. app 이 이미 대부분을 얇게 감싸고 있어서(`NetStatus` 는 `chainsetupmod.NetStatus` 로 넘기는 한 줄) 빠진 진입점만 채웠다. `NetEnodes` · `DefaultWorkspaceDir` · `State` · `NodeSet` · `TargetSpec`/`ParseTarget`.
 
-**측정 기준선(2026-09-05)**: 등록 항목 157 = CLI 58 + MCP 54 + DSL 45(액션 18 + 어서션 27).
-app 아래에 닿는 항목 109 = CLI 40 + MCP 24 + DSL 45. app 을 한 번도 부르지 않는 항목 102.
+**기본 워크스페이스를 app 으로 올린 것이 이 항목의 알맹이다.** 두 표면이 각자 계산하면 한쪽이 다른 쪽이 못 찾는 곳에 구성한다. `app.DefaultWorkspaceDir` 하나만 쓰게 했다.
+
+**동등성 테스트 3건.** 인쇄한 글자가 아니라 **디스크에 남은 워크스페이스**를 비교한다. 구성은 디스크에 대한 부수효과이고 그 상태가 곧 답이다. 워크스페이스 경로와 시각만 정규화하고 나머지는 그대로 견준다.
+
+**여기서 제 테스트 결함을 둘 잡았다.** 처음에는 디렉터리를 훑어 "JSON 파일"을 집었는데 알파벳순으로 `process.json`(양쪽 다 `{"procs": []}`)이 걸려서, 빈 문서 둘을 비교하며 통과하고 있었다. `workspace.json` 을 이름으로 지정하고 가드를 실질화했다. status 쪽은 "stablenet" 부분 문자열을 찾았는데 그 낱말이 step 의 `detail` 안에도 있어서, 도구가 chain 필드를 아예 안 내보내도 통과했다. 도구의 JSON 을 파싱해 구조로 견주게 고쳤다. 셋 다 변이를 심어 실제로 잡는 것을 확인했다.
+
+`internal/app/net.go` 머리말의 "CLI 는 모듈을 직접 부르고 여기를 지나지 않는다" 도 고쳤다. U0 에서 뒤집힌 규칙의 잔재였다 |
+| **U3** | **keyring 계열 이관** | U1 | 동등성 테스트 · keyring 라이브 스위트 통과 · `operation` 단위 테스트는 app 을 지나지 않음 | ☑ **2026-09-05. CLI 31 → 24.** 표면이 `core/keyring/operation`·`keyring`·`store`·`derive`·`resource` 를 직접 부르던 것을 app 경유로 돌렸다.
+
+**중복 구현을 하나 지운 것이 알맹이다.** `keyflags.go` 가 플래그로 `keyring.Source` 를 조립하고 있었는데, `operation.ImportIn.source` 에 같은 읽기가 이미 있었다. "정확히 하나의 출처"나 "니모닉 없는 hd 옵션"이 무슨 뜻인지를 두 곳이 각자 정하고 있었다는 뜻이다. 모듈 쪽을 `operation.KeyRef`+`ResolveKey` 로 승격하고 표면은 **설명만** 하게 했다. `SaveKey`·`GenerateKey` 도 같은 이유로 모듈로 올렸다. 비밀번호는 값이 아니라 씨앗 함수로 넘긴다. `--password-once` 는 물어보는데, 쓰지도 않을 비밀번호를 미리 묻는 건 사용자를 대하는 좋은 방식이 아니다.
+
+**단위 테스트가 진짜 결함을 잡았다.** CLI 의 `--hd-coin-type` 기본값이 60 이라, 모듈의 "니모닉 없이 hd 옵션을 줬다" 거절에 항상 걸렸다. 플래그 기본값은 사용자가 지정한 것이 아니므로 0 으로 바꾸고 뜻은 도움말에 적었다.
+
+**표면 사이 기능 격차도 찾았다.** MCP `keyring_import` 에 `privateKey` 가 없었다(CLI 에는 `--private-key` 가 있다). app 이 이미 그 필드를 갖고 있어 스키마 한 줄로 닫았다.
+
+동등성 3건(list·show·import). 셋 다 변이로 확인했다 |
+| **U4** | **테스트 동사 계열 신설** | U1 | 세 표면 동등성 · `mcpImportAllowed` 에서 `accounts`·`core/rpc` 제거 · DSL `sendTx` 가 같은 진입점 | ◐ **2026-09-05. CLI 24 → 17, MCP 24 → 18.** `send`·`deploy`·`call`·`faucet`·`wait`·`state` 의 유스케이스가 어느 모듈에도 없이 **CLI·MCP·DSL 세 곳에 각각** 쓰여 있었다. `internal/app/chainops.go` 로 모아 CLI 와 MCP 를 그리로 돌렸다. `HexBytes`·`Wei` 도 여기 있다. 한쪽이 `0x` 접두사를 요구하고 다른 쪽이 안 하는 차이는 아무도 테스트할 생각을 못 한다.
+
+`accountcmd/provider.go` 는 소멸했다(`app.ChainRef.provider` 가 같은 일을 한다). MCP 의 `openWalletFromArgs`·`hexBytes`·`weiArg` 도 소멸했다. **라체트에서 `internal/accounts` 가 빠졌다** — "계정 동사 이관과 함께 사라진다"고 예고돼 있던 항목이고, 실제로 그렇게 됐다.
+
+동등성 4건인데 **서명된 원본 트랜잭션을 바이트로 비교**한다. nonce·gas·value·calldata·서명을 한 번에 덮으므로, 여기서 일치하면 두 표면이 `--value` 나 `--data` 를 다르게 읽고 있을 수 없다. 넷 다 변이로 확인했다.
+
+**잔여**: DSL 은 아직 `testhelper` 에서 직접 조립한다(U7). 오류 문구가 플래그 이름을 잃어서 표면에 `flagError` 를 뒀는데, app 은 거래 전체를 받고 어느 부분이 틀렸는지 말하지 |
+| **U5** | **실행·보고 계열 이관** | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☑ **2026-09-05. CLI 17 → 12, MCP 18 → 16.** `run`·`report`·`validate`·`log`·`verify` 를 app 경유로.
+
+**`app.Report` 가 산문을 돌려주고 있었다.** MCP 는 그걸 그대로 냈고 CLI 는 같은 읽기를 다시 해서 표로 그렸다. 렌더링하는 층은 표면이 우회할 수밖에 없는 층이다. 이제 보고서를 돌려주고 표면이 각자 그린다.
+
+**`VerifyNetworkIn` 주석에 "노드 집합 해석은 표면의 몫"이라고 적혀 있었고, 실제로 두 표면이 각자 했다.** 워크스페이스가 어느 엔드포인트를 뜻하는지, 붙인 집합을 뭐라 부르는지를 두 번 정하고 있었다. `app.ResolveNodes` 하나로 합쳤다.
+
+**레이어 검사가 제 실수를 잡았다.** 대시보드 이벤트 배선을 app 에 넣었더니 `L5 app → L6 dashboard` 로 걸렸다. 표면이 다른 표면을 부르는 것은 우회가 아니므로, 배선은 `dashboard.Stream` 으로 표면 층에 두고 라체트도 L6 끼리의 호출은 세지 않게 고쳤다. 안 그러면 옳은 일을 하고 숫자가 나빠진다.
+
+동등성 2건(report·log). 둘 다 변이로 확인했다.
+
+**잔여**: `verify` 는 `dashboard` 만 부른다(같은 층이라 규칙 위반이 아니다) |
+| **U6** | **조회 계열 이관** | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ☑ **2026-09-05. CLI 12 → 0, MCP 15 → 0.** **두 표면 112개 등록이 전부 app 을 지난다.**
+
+CLI 쪽은 `chains`·`capabilities`·`consensus`·`node rpc`·`migrate-spec`·`validator`·`upgrade` 를, MCP 쪽은 `network_*`·`remote_rpc`·`consensus_*`·`txpool`·`node_rpc`·`log`·`chain_new` 을 옮겼다. `app.Chains`·`Capabilities`·`Validators`·`NodeCall`·`ReadNode`·`MigrateSpec`·`DeriveIdentity`·`ValidatorSetOf`·`GenerateSet`·`ResolveBinary`·`UpgradeGenesis`·`AttachNetwork`·`Network(s)`·`DetachNetwork`·`DetectNetwork`·`PeersOf`·`CallOnNode`·`PeersOfNode`·`NodeAt`·`RegisterCapability` 를 신설했다.
+
+**중복 둘이 죽었다.** `resolveBinary` 가 `upgradecmd` 와 app 에 각각 있어서 한쪽이 받는 이름을 다른 쪽이 거절할 수 있었다. 그리고 validator 키에서 무엇을 파생할지(`WithBLS` 인지 `AccountOnly` 인지)를 표면이 정하고 있었는데, 그건 합의 패밀리의 규칙이다.
+
+**저장된 망의 노드에 닿는 법도 하나로 모았다.** 붙여 둔 노드는 SSH 터널이나 docker 매핑 뒤에 있을 수 있고, 거기 닿는 길은 노드 기록의 auth 서술자다. `CallOnNode`·`PeersOfNode` 는 URL 이 아니라 노드를 받는다.
+
+**제가 낸 회귀를 테스트가 잡았다.** `ReadNode` 를 만들면서 네 읽기를 전부 필수로 했는데, 원래는 head 만 필수고 나머지는 최선 노력이었다. net 네임스페이스를 끈 노드가 오류가 돼 버렸다. 계약을 되돌리고 왜 그런지 적었다 |
+| **U7** | ~~**DSL 흡수**~~ **전제가 틀렸다 — 폐기 2026-09-05** | U4 | — | ☒ **DSL 액션은 표면이 아니다.** 계획할 때 "액션 18개와 어세션 27개가 app 을 지나지 않는다"고 셌는데, `testhelper` 는 [[layers]] §3 에서 **L3 도메인 서비스**다. `dsl/interp` 의 `Action`/`Assertion` 계약을 구현하는 쪽이고, app 은 L5 다. 아래층이 위층을 부를 수 없다.
+
+**컴파일러로 확인했다.** `testhelper` 에 `app` import 를 넣어 보니 레이어 위반일 뿐 아니라 **import 순환**이다: `app → testengine → … → testhelper`.
+
+**중복의 성격도 달랐다.** U3·U4 에서 찾은 것은 같은 읽기가 두 벌 있는 것이었다. DSL 의 `sendTx` 와 `faucet` 은 라벨을 주소로 풀고, 노드 서명과 로컬 서명을 가르고, 수수료 인자를 적용한다. `app.TxSend`/`Faucet` 보다 하는 일이 많고 메커니즘이 다르다. 같은 구현의 복사본이 아니라 언어의 어휘다.
+
+DSL 에게 표면은 `run` 이고, CLI 와 MCP 두 철자 모두 이미 app 을 지난다.
+
+**라체트도 고쳤다.** 45개를 빚으로 세면 구조상 0 에 닿을 수 없고, 내려갈 수 없는 천장은 다음 사람에게 무시하는 법을 가르친다. 이제 표면만 센다(0/112). 어휘는 세지 않고 보고만 한다 |
+| **U8** | **규칙 대칭 마감** | U2~U6 | 우회 항목 0 · 문서와 테스트가 한 규칙만 말함 | ☑ **2026-09-05.** `mcpImportAllowed` 의 마지막 여섯 항목(`core/rpc`·`core/collector`·`resource`·`core/node`·`core/session`·`core/remote`)이 각자 예고한 이관과 함께 사라져 목록이 비었다. 목록은 줄기만 하고 사라진 항목이 남아 있으면 테스트가 실패하므로, **빈 map 은 규칙이 안 걸린 것이 아니라 지켜지고 있다는 뜻이다.** 비대칭 라체트는 이것으로 폐기했고, 표면 규칙은 `TestSurfacesReachThroughApp` 하나가 말한다 |
+
+**측정 기준선(2026-09-05 착수 시점)**: 등록 항목 157 = CLI 58 + MCP 54 + DSL 45(액션 18 + 어서션 27).
+app 아래에 닿는 항목 109 = CLI 40 + MCP 24 + DSL 45.
 손으로 확인한 32쌍 중 경로 불일치 22, 양쪽 다 app 인 것 4.
+
+**U0~U8 이후(같은 날)**: 표면 등록 **0 / 112** 가 app 을 우회한다(CLI 0 · MCP 0).
+DSL 어휘 45개는 L3 이라 세지 않는다 — U7 행에 왜 그런지 적었다.
+동등성 테스트 17건이 붙었고 전부 변이로 확인했다.
 `go run ./scripts/inventory/surface-graph .` 으로 재현한다.
+
+### 라이브 스위트에서 남은 관찰 (2026-09-05)
+
+`tests/e2e` 를 되살린 뒤 실제 바이너리로 돌린 결과다. 17개 중 **16 통과**, 1 skip, 그리고 간헐 실패 1건.
+
+**`TestE2E_WbftQuorum6of6Halts2` 는 5회 중 2회 실패한다.** 증상이 항상 같다. 6노드 중 2개를 멈춰 정족수를 깨는 데까지는 매번 성공하고, 되살린 뒤 2분 안에 생산이 재개되지 않는다(`head stuck at 2`). **감지가 아니라 회복이 불안정하다.**
+
+원인은 wbft 의 view change 나 재합류 쪽으로 보이며 하니스 문제가 아니다. 대기 시간을 늘리는 것은 같은 사실을 더 늦게 보고할 뿐이고, 정족수를 되찾고도 2분 안에 재개하지 못하는 체인은 결국 재개하든 말든 알 가치가 있다. 노드 로그를 봐야 하므로 별건으로 남긴다.
+
+**`TestE2E_StablenetProposalExpiry` 는 돌릴 명령이 없어 skip 한다.** 이미 구성된 워크스페이스에 capability 로 게이트된 스펙을 돌려야 하는데, 그걸 하던 `chainbench test` 는 폐기됐고 `run --workspace-dir`(재구성)와 `run --rpc`(워크스페이스 미조회)는 상호 배타다. 표면에 그 조합이 없다.
+
+### U 트랙에서 배운 것 (2026-09-05)
+
+계획을 세울 때는 몰랐고 하면서 알게 된 것들이다. 다음에 같은 종류의 일을 할 때 쓰라고 적는다.
+
+**중복은 두 종류였고 대응이 다르다.** CLI 와 MCP 사이의 것은 같은 읽기를 두 벌 쓴 것이라 하나로 합치면 됐다(U3 의 키 참조, U4 의 온체인 동사). DSL 과의 것은 그렇지 않았다. 이름이 같고 의도가 같아도 메커니즘이 다르면 합칠 대상이 아니다. 세기 전에 열어 봐야 한다.
+
+**레이어가 계획을 이긴다.** U7 은 "DSL 도 app 을 지나게 한다"였는데, `testhelper` 가 L3 이라 불가능했다. 문서를 읽고 안 것이 아니라 import 를 넣고 컴파일러에게 물어서 알았다. 계획이 레이어를 건드릴 때는 그렇게 확인하는 편이 빠르다.
+
+**지표가 못 내려가면 지표를 의심한다.** DSL 45개를 빚으로 세는 한 0 에 닿을 수 없었다. 내려갈 수 없는 천장은 다음 사람에게 무시하는 법을 가르친다.
+
+**통과하는 테스트는 변이로 확인해야 한다.** 17건 중 두 건이 처음에는 아무것도 증명하지 못했다. 하나는 디렉터리를 훑다 빈 `process.json` 두 개를 비교하고 있었고, 하나는 step 의 detail 안에 우연히 들어 있는 낱말을 찾고 있었다. 둘 다 초록색이었다.
+
+**컴파일되는 것과 도는 것은 다르다.** `tests/e2e` 는 8월 말부터 죽어 있었는데 CI 의 e2e 태그 vet 은 못 잡았다. 명령 이름이 문자열이기 때문이다. 테스트가 **참조하는 것**의 썩음은 컴파일러가 잡지만, 테스트가 **요구하는 것**의 썩음은 실제로 돌려 봐야 안다.
+
+**라이브는 한 번에 하나만 돌린다.** 전체 스위트가 도는 중에 다른 실행을 시작했다가 그쪽 `pkill` 이 앞 실행의 노드를 죽였다.
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 

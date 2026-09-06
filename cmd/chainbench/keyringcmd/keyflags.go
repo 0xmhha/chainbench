@@ -1,17 +1,15 @@
 package keyringcmd
 
 import (
+	"context"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"github.com/0xmhha/chainbench/internal/core/filestore"
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/resource"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // SourceFlags select where an imported key comes from — a private key, a BIP-39
@@ -58,41 +56,50 @@ func (f *SourceFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.remotePath, "remote-path", "", "deprecated: use --from srv://<server>/path")
 	_ = cmd.Flags().MarkDeprecated("remote-path", "use --from srv://<server>/path")
 
-	cmd.Flags().StringVar(&f.serverSet, "server-set", resource.DefaultSetFile, "server-set file for srv:// targets")
+	cmd.Flags().StringVar(&f.serverSet, "server-set", app.DefaultServerSetFile, "server-set file for srv:// targets")
 	cmd.Flags().StringVar(&f.remoteUser, "remote-user", "", "override the SSH user for a host named directly in --from")
 	cmd.Flags().IntVar(&f.remotePort, "remote-port", 0, "override the SSH port for a host named directly in --from (default 22)")
-	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", keyring.DefaultCoinType, "BIP-44 coin type for --mnemonic (60=Ethereum; set your chain's for exact addresses)")
+	// Zero, not 60: a flag's default is not something the operator named, and
+	// app refuses HD options that qualify a mnemonic nobody asked for. The
+	// keyring applies 60 when the coin type is left unset.
+	cmd.Flags().Uint32Var(&f.coinType, "hd-coin-type", 0,
+		fmt.Sprintf("BIP-44 coin type for --mnemonic (default %d = Ethereum; set your chain's for exact addresses)", app.DefaultHDCoinType))
 	cmd.Flags().Uint32Var(&f.hdAccount, "hd-account", 0, "BIP-44 account index for --mnemonic")
 	cmd.Flags().Uint32Var(&f.hdIndex, "hd-index", 0, "BIP-44 address index for --mnemonic")
 }
 
-// source builds the keyring.Source, requiring exactly one origin. pw guards a
-// keystore file import (local or remote). Production passes os.Getenv.
-func (f *SourceFlags) Source(pw keyring.PasswordSource) (keyring.Source, error) {
-	return f.sourceWithEnv(pw, os.Getenv)
-}
-
-// sourceWithEnv is source with an injected environment for the remote SSH creds.
-func (f *SourceFlags) sourceWithEnv(pw keyring.PasswordSource, env func(string) string) (keyring.Source, error) {
+// Ref describes the key origin the operator named, for app to read.
+//
+// The surface's job ends at describing it. Turning "exactly one of
+// --private-key, --mnemonic, --from" into a key is one reading, and it lives in
+// the keyring module: this file used to carry a second copy of that reading, so
+// the two were free to disagree about what a bare mnemonic, or a password with
+// no path, meant.
+func (f *SourceFlags) Ref(pw func() (string, error)) (app.KeyRef, error) {
 	path, err := f.fromPath()
 	if err != nil {
-		return nil, err
+		return app.KeyRef{}, err
 	}
-	switch {
-	case f.privateKey != "":
-		return keyring.PrivateKeySource{Hex: f.privateKey}, nil
-	case f.mnemonic != "":
-		return keyring.MnemonicSource{
-			Mnemonic: f.mnemonic, Passphrase: f.passphrase,
-			Path: keyring.HDPath{CoinType: f.coinType, Account: f.hdAccount, Index: f.hdIndex},
-		}, nil
-	default:
-		files, keyPath, err := f.openFrom(path, env)
-		if err != nil {
-			return nil, err
-		}
-		return keyring.FileSource{Files: files, Path: keyPath, Password: pw}, nil
+	return app.KeyRef{
+		PrivateKey: f.privateKey,
+		Mnemonic:   f.mnemonic,
+		Passphrase: f.passphrase,
+		HDCoinType: f.coinType,
+		HDAccount:  f.hdAccount,
+		HDIndex:    f.hdIndex,
+		From:       path,
+		Password:   pw,
+		ServerSet:  f.serverSetPath(),
+	}, nil
+}
+
+// Resolve reads the key the flags name.
+func (f *SourceFlags) Resolve(ctx context.Context, d app.Deps, pw func() (string, error)) (app.PrivateKey, error) {
+	ref, err := f.Ref(pw)
+	if err != nil {
+		return app.PrivateKey{}, err
 	}
+	return app.ResolveKey(ctx, d, ref)
 }
 
 // fromPath folds the superseded flags into the one --from spelling and enforces
@@ -112,15 +119,11 @@ func (f *SourceFlags) fromPath() (string, error) {
 		// --server took an index; --from names the entry. The server set answers
 		// both, so translate here rather than teaching the path syntax about
 		// indexes — a number is not a name.
-		cfg, err := resource.LoadSet(f.serverSetPath())
+		name, err := app.ServerNameByIndex(f.serverSetPath(), f.server)
 		if err != nil {
 			return "", err
 		}
-		srv, err := cfg.Server(f.server)
-		if err != nil {
-			return "", err
-		}
-		path = "srv://" + srv.Name + f.remotePath
+		path = "srv://" + name + f.remotePath
 	}
 
 	origins := 0
@@ -135,37 +138,12 @@ func (f *SourceFlags) fromPath() (string, error) {
 	return path, nil
 }
 
-// openFrom resolves a --from path to the store that holds it and the path on
-// that store. Local, server set-named, and directly-addressed hosts all end up
-// here, so none of them can grow its own read.
-func (f *SourceFlags) openFrom(path string, env func(string) string) (filestore.Store, string, error) {
-	spec, err := resource.Parse(path)
-	if err != nil {
-		return nil, "", err
-	}
-	// The overrides only mean anything for a directly-named host — a local
-	// path has no user, a server-set entry gets both from the set — so
-	// setting them unconditionally changes nothing there and keeps this
-	// consumer free of kind branches.
-	if f.remoteUser != "" {
-		spec.User = f.remoteUser
-	}
-	if f.remotePort != 0 {
-		spec.Port = f.remotePort
-	}
-	t, err := resource.Opener{ServerSet: f.serverSetPath(), Env: env}.Open(spec)
-	if err != nil {
-		return nil, "", err
-	}
-	return t.Files, t.DataRoot, nil
-}
-
 // serverSetPath is the server-set file to consult, defaulting when unset.
 func (f *SourceFlags) serverSetPath() string {
 	if f.serverSet != "" {
 		return f.serverSet
 	}
-	return resource.DefaultSetFile
+	return app.DefaultServerSetFile
 }
 
 // storeFlags select whether and how a key is persisted. Storage is off unless
@@ -184,17 +162,6 @@ func (f *storeFlags) bind(cmd *cobra.Command) {
 
 func (f *storeFlags) enabled() bool { return f.out != "" }
 
-func (f *storeFlags) build() (store.Backend, error) {
-	switch f.store {
-	case "keystore":
-		return store.KeystoreBackend{}, nil
-	case "file":
-		return store.RawFileBackend{}, nil
-	default:
-		return nil, fmt.Errorf("--store must be keystore or file")
-	}
-}
-
 // PasswordFlags select how the keystore password is supplied.
 type PasswordFlags struct {
 	password     string
@@ -208,34 +175,59 @@ func (f *PasswordFlags) Bind(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.passwordOnce, "password-once", "", "prompt for the password once, store it at this path, and reuse it without asking")
 }
 
-func (f *PasswordFlags) Source() keyring.PasswordSource {
+// Source returns how to obtain the password, or nil when none was named.
+//
+// It is a function rather than a value so the password is fetched only if it is
+// actually needed: --password-once prompts the operator, and asking for a
+// password that the command then never uses is a poor way to treat them.
+func (f *PasswordFlags) Source() func() (string, error) {
 	switch {
 	case f.password != "":
-		return keyring.StaticPassword(f.password)
+		pw := f.password
+		return func() (string, error) { return pw, nil }
 	case f.passwordFile != "":
-		return keyring.FilePassword{Path: f.passwordFile}
+		path := f.passwordFile
+		return func() (string, error) {
+			b, err := os.ReadFile(path)
+			if err != nil {
+				return "", fmt.Errorf("read password file %s: %w", path, err)
+			}
+			return strings.TrimSpace(string(b)), nil
+		}
 	case f.passwordOnce != "":
-		return keyring.OnceThenFile{Path: f.passwordOnce, Prompt: promptPassword}
+		return oncePassword(f.passwordOnce)
 	default:
 		return nil
 	}
 }
 
+// oncePassword prompts the first time, saves the answer, and reuses it after,
+// so a long sequence of key operations asks once rather than each time.
+func oncePassword(path string) func() (string, error) {
+	return func() (string, error) {
+		if b, err := os.ReadFile(path); err == nil {
+			return strings.TrimSpace(string(b)), nil
+		}
+		pw, err := promptPassword()
+		if err != nil {
+			return "", err
+		}
+		if err := os.WriteFile(path, []byte(pw), 0o600); err != nil {
+			return "", fmt.Errorf("save password at %s: %w", path, err)
+		}
+		return pw, nil
+	}
+}
+
 // saveKey persists the key per the store/password flags, returning the file path, or
 // "" when storage is disabled. A keystore store requires a password.
-func saveKey(sf *storeFlags, pf *PasswordFlags, key derive.PrivateKey) (string, error) {
+func saveKey(ctx context.Context, d app.Deps, sf *storeFlags, pf *PasswordFlags, key app.PrivateKey) (string, error) {
 	if !sf.enabled() {
 		return "", nil
 	}
-	backend, err := sf.build()
-	if err != nil {
-		return "", err
-	}
-	pw := pf.Source()
-	if _, isKeystore := backend.(store.KeystoreBackend); isKeystore && pw == nil {
-		return "", fmt.Errorf("keystore storage needs a password (--password / --password-file / --password-once)")
-	}
-	return backend.Save(sf.out, sf.name, key, pw)
+	return app.SaveKey(ctx, d, key, app.SaveKeyIn{
+		Dir: sf.out, Name: sf.name, Format: sf.store, Password: pf.Source(),
+	})
 }
 
 // promptPassword reads a password from the terminal without echo.

@@ -155,6 +155,7 @@ func keyringImportTool() Tool {
 				"description": "key file path: /local/path | srv://<server>/path | [user@]host:path | ssh://user@host:port/path",
 			},
 			"password":   map[string]any{"type": "string", "description": "password for a keystore named by from"},
+			"privateKey": map[string]any{"type": "string", "description": "import a key the caller already holds (0x-hex; alternative to from and mnemonic)"},
 			"mnemonic":   map[string]any{"type": "string", "description": "derive the key from a BIP-39 mnemonic (alternative to from)"},
 			"passphrase": map[string]any{"type": "string", "description": "optional BIP-39 passphrase (with mnemonic)"},
 			"hdCoinType": map[string]any{"type": "number", "description": "BIP-44 coin type for mnemonic (default 60)"},
@@ -178,6 +179,7 @@ func keyringImportTool() Tool {
 			in := app.RingImportIn{
 				Ring: ringRef(args), Label: argString(args, "name", ""),
 				From: argString(args, "from", ""), Password: argString(args, "password", ""),
+				PrivateKey:    argString(args, "privateKey", ""),
 				Mnemonic:      argString(args, "mnemonic", ""),
 				Passphrase:    argString(args, "passphrase", ""),
 				HDCoinType:    uint32(argInt(args, "hdCoinType", 0)),

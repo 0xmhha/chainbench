@@ -2,21 +2,21 @@ package chaincmd
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // defaultWorkspaceDir is what a composition gets when --workspace-dir is
-// omitted (chainsetup.DefaultWorkspaceDir). The chosen path is printed BEFORE
-// anything uses it: every later step needs it, so it must never be a guess.
+// omitted. The chosen path is printed BEFORE anything uses it: every later step
+// needs it, so it must never be a guess.
 //
-// The clock is the process's: this is an entry-point default, not logic a
-// test needs to pin.
+// The default itself comes from app rather than from this surface's own
+// arithmetic. A CLI run and an MCP call that both omit the workspace have to
+// land in the same directory, or one composes somewhere the other cannot find.
 func defaultWorkspaceDir(cmd *cobra.Command) (string, error) {
-	dir, err := chainsetup.DefaultWorkspaceDir(time.Now)
+	dir, err := app.DefaultWorkspaceDir(deps(cmd))
 	if err != nil {
 		return "", err
 	}

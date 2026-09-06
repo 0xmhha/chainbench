@@ -183,32 +183,47 @@ type Entry struct {
 	Pkgs []string
 }
 
-// Via says how an entry reaches its work.
+// Via says how an entry reaches its work: through app, past it, or nowhere.
+//
+// A package at the surface layer counts as neither — a command calling the
+// dashboard is one L6 package calling another, which the rule allows.
 func (e Entry) Via() string {
-	hasApp := false
+	hasApp, hasCore := false, false
 	for _, p := range e.Pkgs {
-		if p == "app" {
+		switch {
+		case p == "app":
 			hasApp = true
+		case !surfaceLayer[p]:
+			hasCore = true
 		}
 	}
 	switch {
-	case hasApp && len(e.Pkgs) == 1:
-		return "app"
-	case hasApp:
+	case hasApp && hasCore:
 		return "app+core"
-	case len(e.Pkgs) == 0:
-		return "-"
-	default:
+	case hasApp:
+		return "app"
+	case hasCore:
 		return "core"
+	default:
+		return "-"
 	}
 }
 
 // ReachesPastApp reports whether the entry touches anything below app. This is
 // the count the U track drives to zero.
+//
+// A surface calling another surface is not reaching past app: dashboard is L6,
+// the same layer as cmd and mcp, so a command that opens an event stream
+// through it has not gone around the rule. Counting it would push the number in
+// the wrong direction for doing the right thing.
 func (e Entry) ReachesPastApp() bool {
 	v := e.Via()
 	return v == "core" || v == "app+core"
 }
+
+// surfaceLayer names the packages that sit at L6 beside cmd and mcp, per
+// layers.md §3.
+var surfaceLayer = map[string]bool{"dashboard": true, "mcp": true}
 
 // Entries walks the three surfaces rooted at a module directory and reports
 // every registered feature with the internal packages it reaches.

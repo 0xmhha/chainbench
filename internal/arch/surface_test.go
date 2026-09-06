@@ -1,29 +1,39 @@
 package arch
 
 import (
-	"fmt"
 	"sort"
 	"testing"
 )
 
 // surfaceBudget is how many registrations may still reach past the app layer,
-// per surface. It is a ceiling that only comes down.
+// per surface. It is a ceiling that only comes down, and both surfaces are at
+// zero as of 2026-09-05 (U6).
 //
-// The rule is that CLI, MCP and DSL all reach a feature through app
-// (architecture-v2 §2, decided 2026-09-05). 109 registrations do not yet, and
-// moving them is the U track (worklist §1l). Until that finishes the rule
-// cannot be asserted outright, so it is held as a budget instead: new work may
-// not add to the debt, and each U item lowers these numbers.
+// The DSL is deliberately absent, and that is a correction rather than an
+// omission. The rule as first written said "CLI, MCP and DSL all reach a
+// feature through app", but the DSL's actions are not a surface: they are the
+// implementation of the language's vocabulary, at L3 (layers.md §3,
+// `testhelper`), which is BELOW app. Making them call app is not merely a layer
+// violation, it is an import cycle — app imports testengine, which reaches
+// testhelper — and the compiler says so.
+//
+// What is a surface for the DSL is `run`, and both spellings of it (the CLI
+// command and chainbench_run) already go through app. Counting the vocabulary
+// as 45 registrations in debt made the number unreachable by construction, and
+// a ceiling that cannot come down teaches the next reader to ignore it.
 //
 // Lower a number when its surface's entries move under app. Never raise one. A
 // surface that comes in under budget fails too, so the ceiling tracks reality
 // rather than drifting above it.
 var surfaceBudget = map[string]int{
-	"CLI":  40,
-	"MCP":  24,
-	"DSL":  18,
-	"DSLa": 27,
+	"CLI": 0,
+	"MCP": 0,
 }
+
+// vocabulary names the entry kinds that are a language's implementation rather
+// than a surface: the DSL's actions and assertions, which live at L3 and cannot
+// reach up to app. They are inventoried, not budgeted.
+var vocabulary = map[string]bool{"DSL": true, "DSLa": true}
 
 // TestSurfacesReachThroughApp holds the U track's ratchet.
 //
@@ -72,7 +82,7 @@ func TestSurfacesReachThroughApp(t *testing.T) {
 	}
 
 	for s := range past {
-		if _, ok := surfaceBudget[s]; !ok {
+		if _, ok := surfaceBudget[s]; !ok && !vocabulary[s] {
 			t.Errorf("surface %q has no budget, so nothing holds it down; add it to surfaceBudget", s)
 		}
 	}
@@ -80,24 +90,14 @@ func TestSurfacesReachThroughApp(t *testing.T) {
 	if t.Failed() {
 		return
 	}
-	total := 0
-	for _, n := range past {
-		total += n
+	pastSurfaces, vocab := 0, 0
+	for s, n := range past {
+		if vocabulary[s] {
+			vocab += n
+			continue
+		}
+		pastSurfaces += n
 	}
-	t.Log(remaining(past, total, len(entries)))
-}
-
-// remaining renders the countdown, so a passing run still says how far the
-// track has to go.
-func remaining(past map[string]int, total, registrations int) string {
-	s := fmt.Sprintf("%d of %d registrations still reach past app", total, registrations)
-	keys := make([]string, 0, len(past))
-	for k := range past {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		s += fmt.Sprintf("; %s %d", k, past[k])
-	}
-	return s
+	t.Logf("%d of %d surface registrations reach past app; the DSL vocabulary is %d entries at L3, which is where it belongs",
+		pastSurfaces, len(entries)-vocab, vocab)
 }

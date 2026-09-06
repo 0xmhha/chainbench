@@ -6,9 +6,13 @@ import (
 	chainsetupmod "github.com/0xmhha/chainbench/internal/chainsetup"
 )
 
-// The net verbs live in the chainsetup module; app wraps them thinly so MCP
-// reaches every feature through this layer (architecture-v2 §2). CLI calls
-// the module directly and does not pass through here.
+// The net verbs live in the chainsetup module; app wraps them thinly so that
+// every surface — CLI, MCP and DSL alike — reaches the feature through this
+// layer (architecture-v2 §2, revised 2026-09-05).
+//
+// Thinly is the whole contract. These wrappers adapt a dependency set and
+// forward; they decide nothing. A wrapper that starts judging is how the two
+// surfaces above it drift apart while both still appear to go through app.
 
 type (
 	NetNewIn         = chainsetupmod.NetNewIn
@@ -34,6 +38,11 @@ type (
 	NetLogsOut       = chainsetupmod.NetLogsOut
 	NetHealthIn      = chainsetupmod.NetHealthIn
 	NetHealthOut     = chainsetupmod.NetHealthOut
+	NetEnodesIn      = chainsetupmod.NetEnodesIn
+	NetEnodesOut     = chainsetupmod.NetEnodesOut
+	// State is a workspace's recorded progress: which steps have run and what
+	// each produced. A surface renders it; it is not a use case's input.
+	State            = chainsetupmod.State
 	UpStage          = chainsetupmod.UpStage
 	NetUpIn          = chainsetupmod.NetUpIn
 	NetUpOut         = chainsetupmod.NetUpOut
@@ -148,4 +157,19 @@ func NodeStop(ctx context.Context, d Deps, in NodeStopIn) error {
 // that should be running.
 func NetResume(ctx context.Context, d Deps, in NetResumeIn) (chainsetupmod.NetResumeOut, error) {
 	return chainsetupmod.NetResume(ctx, d.chainsetupDeps(), in)
+}
+
+// NetEnodes reports each node's enode URL, which is what a surface prints when
+// an operator needs to peer something by hand.
+func NetEnodes(ctx context.Context, d Deps, in NetEnodesIn) (NetEnodesOut, error) {
+	return chainsetupmod.NetEnodes(ctx, d.chainsetupDeps(), in)
+}
+
+// DefaultWorkspaceDir is where a composition lands when the operator names no
+// workspace. It is here rather than in each surface because a CLI run and an
+// MCP call that both omit it must land in the same place; two surfaces
+// computing their own default is how one of them starts composing somewhere
+// the other cannot find.
+func DefaultWorkspaceDir(d Deps) (string, error) {
+	return chainsetupmod.DefaultWorkspaceDir(d.now)
 }

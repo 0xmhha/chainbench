@@ -16,7 +16,7 @@ import (
 func TestE2E_StablenetProposalExpiry(t *testing.T) {
 	bin := requireBinary(t, "GSTABLE_BIN", "gstable")
 	cli := buildCLI(t)
-	overlay := filepath.Join(repoRoot(t), "pkg", "chains", "stablenet", "overlays", "short-expiry.json")
+	overlay := filepath.Join(repoRoot(t), "internal", "chains", "stablenet", "overlays", "short-expiry.json")
 
 	n := bootOverlay(t, cli, "stablenet", bin, 4, 1, overlay)
 

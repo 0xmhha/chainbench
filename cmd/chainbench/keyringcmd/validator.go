@@ -3,16 +3,12 @@ package keyringcmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"io"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/keyring"
-	"github.com/0xmhha/chainbench/internal/core/keyring/store"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/validatorset"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // NewValidator builds the validator-identity group. A validator is an account
@@ -33,54 +29,36 @@ func NewValidator() *cobra.Command {
 // and proof-of-possession from the key in process; a poa chain has no genesis
 // validator material (validators are registered at bootstrap), so it only
 // reports the account with a note.
-func runValidator(cmd *cobra.Command, chain string, source keyring.Source, sf *storeFlags, pf *PasswordFlags, showPrivate, jsonOut bool) error {
+func runValidator(cmd *cobra.Command, chain string, key app.PrivateKey, sf *storeFlags, pf *PasswordFlags, showPrivate, jsonOut bool) error {
 	if chain == "" {
 		return fmt.Errorf("--chain is required")
 	}
-	p, err := registry.Get(chain)
-	if err != nil {
-		return err
-	}
-	family := p.Manifest().ConsensusFamily
 
-	key, err := source.Resolve(cmd.Context())
-	if err != nil {
-		return err
-	}
-	path, err := saveKey(sf, pf, key)
+	path, err := saveKey(cmd.Context(), deps(cmd), sf, pf, key)
 	if err != nil {
 		return err
 	}
 	// A wbft validator's BLS material comes from the same key as its address,
 	// so ask for it up front and let the family decide whether it is used.
-	id, err := derive.Derive(key, derivationFor(family))
+	id, err := app.DeriveIdentity(deps(cmd), chain, key)
 	if err != nil {
 		return err
 	}
 
-	v := validatorOut{Chain: chain, Family: family, Address: id.Address, Stored: path}
+	v := validatorOut{Chain: chain, Family: id.Family, Address: id.Address, Stored: path}
 	if showPrivate {
 		v.PrivateKey = "0x" + key.Hex()
 	}
-	switch family {
+	switch id.Family {
 	case "wbft":
 		v.BLSPublicKey = id.BLS.PublicKey
 		v.BLSPoP = id.BLS.PoP
 	case "poa":
 		v.Note = "poa: this validator is registered at the governance/etcd bootstrap, not in genesis; no BLS material."
 	default:
-		v.Note = fmt.Sprintf("unknown consensus family %q", family)
+		v.Note = fmt.Sprintf("unknown consensus family %q", id.Family)
 	}
 	return printValidator(cmd.OutOrStdout(), v, jsonOut)
-}
-
-// derivationFor asks for BLS material only where a family uses it, so a poa
-// validator does not pay for a computation whose result it would discard.
-func derivationFor(family string) derive.Derivation {
-	if family == "wbft" {
-		return derive.WithBLS
-	}
-	return derive.AccountOnly
 }
 
 // validatorOut is a validator identity for display.
@@ -131,7 +109,11 @@ func newValidatorNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Generate a new validator identity for a chain (chain-aware consensus material)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return runValidator(cmd, chain, keyring.RandomSource{}, &sf, &pf, true, jsonOut)
+			key, err := app.GenerateKey(cmd.Context(), deps(cmd))
+			if err != nil {
+				return err
+			}
+			return runValidator(cmd, chain, key, &sf, &pf, true, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
@@ -154,11 +136,11 @@ func newValidatorImportCmd() *cobra.Command {
 		Use:   "import",
 		Short: "Import a key as a validator identity for a chain",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			source, err := src.Source(pf.Source())
+			key, err := src.Resolve(cmd.Context(), deps(cmd), pf.Source())
 			if err != nil {
 				return err
 			}
-			return runValidator(cmd, chain, source, &sf, &pf, false, jsonOut)
+			return runValidator(cmd, chain, key, &sf, &pf, false, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
@@ -183,7 +165,7 @@ func newValidatorRosterCmd() *cobra.Command {
 			if chain == "" {
 				return fmt.Errorf("--chain is required")
 			}
-			r, err := validatorset.Load(chain, keysDir)
+			r, err := app.ValidatorSetOf(deps(cmd), chain, keysDir)
 			if err != nil {
 				return err
 			}
@@ -224,7 +206,7 @@ func newValidatorRosterCmd() *cobra.Command {
 // preset is defined by its validator set, not by raw keys.
 func newValidatorSetCmd() *cobra.Command {
 	var (
-		opts       store.GenerateOpts
+		opts       app.GenerateSetIn
 		validators int
 		basePort   int // superseded; see below
 	)
@@ -240,14 +222,14 @@ func newValidatorSetCmd() *cobra.Command {
 			out := cmd.OutOrStdout()
 			// `validator set` builds a wbft validator set, which is defined by its
 			// BLS keys; `keyring new` is where BLS became opt-in.
-			opts.Derive = derive.WithBLS
+			opts.Derive = app.WithBLS
 			// This command's zero has always meant "all of them"; pass it as
 			// absent rather than as a declared zero, which now means a key set
 			// that declares no validators at all.
 			if validators > 0 {
 				opts.Validators = &validators
 			}
-			meta, err := store.Generate(opts, func(line string) { fmt.Fprintln(out, line) })
+			meta, err := app.GenerateSet(deps(cmd), opts, func(line string) { fmt.Fprintln(out, line) })
 			if err != nil {
 				return err
 			}

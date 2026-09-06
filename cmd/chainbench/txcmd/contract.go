@@ -5,8 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/accounts"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 func NewContract() *cobra.Command {
@@ -33,31 +32,14 @@ func newDeployCmd() *cobra.Command {
 			if rpcURL == "" || fromKey == "" || bytecode == "" {
 				return fmt.Errorf("--rpc, --from-key and --bytecode are required")
 			}
-			key, err := decodeHex(fromKey)
+			out, err := app.ContractDeploy(cmd.Context(), deps(cmd), app.ContractDeployIn{
+				Chain:   app.ChainRef{Chain: chain, RPC: rpcURL},
+				FromKey: fromKey, Bytecode: bytecode, Value: value,
+			})
 			if err != nil {
-				return fmt.Errorf("bad --from-key: %w", err)
+				return flagError(err)
 			}
-			code, err := decodeHex(bytecode)
-			if err != nil {
-				return fmt.Errorf("bad --bytecode: %w", err)
-			}
-			wei, err := parseWei(value)
-			if err != nil {
-				return err
-			}
-			ap, err := accounts.ForChain(chain)
-			if err != nil {
-				return err
-			}
-			w, err := ap.OpenWallet(cmd.Context(), key, rpcURL)
-			if err != nil {
-				return err
-			}
-			hash, addr, err := w.Deploy(cmd.Context(), code, wei)
-			if err != nil {
-				return err
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "tx:       %s\ncontract: %s\n", hash, addr)
+			fmt.Fprintf(cmd.OutOrStdout(), "tx:       %s\ncontract: %s\n", out.Tx, out.Address)
 			return nil
 		},
 	}
@@ -82,7 +64,9 @@ func newCallCmd() *cobra.Command {
 			if rpcURL == "" || to == "" {
 				return fmt.Errorf("--rpc and --to are required")
 			}
-			res, err := rpc.Dial(rpcURL).EthCall(cmd.Context(), to, data)
+			res, err := app.ContractCall(cmd.Context(), deps(cmd), app.ContractCallIn{
+				RPC: rpcURL, To: to, Data: data,
+			})
 			if err != nil {
 				return err
 			}
