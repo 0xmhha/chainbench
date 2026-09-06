@@ -77,3 +77,52 @@ func TestMigrateSpec_RefusesASpecThatIsAlreadyV2(t *testing.T) {
 		t.Fatalf("a v2 spec was migrated again without a word about it:\n%s", out)
 	}
 }
+
+// TestRun_AttachNeedsAWorkspace: --attach takes its endpoints from a
+// workspace, so without one there is nothing to attach to.
+func TestRun_AttachNeedsAWorkspace(t *testing.T) {
+	out, err := run(t, "run", "--attach", "spec.json")
+	if err == nil {
+		t.Fatalf("--attach with no workspace was accepted:\n%s", out)
+	}
+	if !strings.Contains(err.Error(), "--workspace-dir") {
+		t.Errorf("the error does not say what is missing: %v", err)
+	}
+}
+
+// TestRun_AttachAndRPCAreDifferentAnswersToTheSameQuestion: both name the
+// network to run against, so giving both leaves it ambiguous which one meant
+// it. Refusing beats picking one.
+func TestRun_AttachAndRPCAreDifferentAnswersToTheSameQuestion(t *testing.T) {
+	out, err := run(t, "run", "--attach", "--workspace-dir", t.TempDir(),
+		"--rpc", "http://127.0.0.1:1", "spec.json")
+	if err == nil {
+		t.Fatalf("--attach with --rpc was accepted:\n%s", out)
+	}
+	if !strings.Contains(err.Error(), "does not combine with --rpc") {
+		t.Errorf("the error does not explain the conflict: %v", err)
+	}
+}
+
+// TestRun_ComposingAndAttachingAreStillToldApart: --workspace-dir alone still
+// composes, and the refusal that says so now points at --attach, which is what
+// the operator wanted if their network is already up.
+func TestRun_ComposingAndAttachingAreStillToldApart(t *testing.T) {
+	out, err := run(t, "run", "--workspace-dir", t.TempDir(), "--rpc", "http://127.0.0.1:1", "spec.json")
+	if err == nil {
+		t.Fatalf("--workspace-dir with --rpc was accepted:\n%s", out)
+	}
+	if !strings.Contains(err.Error(), "--attach") {
+		t.Errorf("the refusal does not mention the mode that does what was asked: %v", err)
+	}
+}
+
+// TestRun_AttachRefusesAWorkspaceWithNoNetwork: attaching to a directory that
+// composed nothing has to say so, rather than run against an empty endpoint
+// list and report that every spec passed.
+func TestRun_AttachRefusesAWorkspaceWithNoNetwork(t *testing.T) {
+	out, err := run(t, "run", "--workspace-dir", t.TempDir(), "--attach", "spec.json")
+	if err == nil {
+		t.Fatalf("attaching to an empty workspace was accepted:\n%s", out)
+	}
+}

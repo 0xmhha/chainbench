@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -191,25 +192,21 @@ func (n *network) capabilities() []string {
 // command output.
 func (n *network) runCase(name string) string {
 	n.t.Helper()
-	// This scenario has no command to run under any more.
-	//
-	// It needs a capability-gated spec run against an ALREADY-COMPOSED network:
-	// the workspace carries the capability (here, short-expiry, from a genesis
-	// overlay), and the spec refuses to run without it. `chainbench test
-	// --workspace-dir --name` did exactly that and was retired. What replaced
-	// it splits the two: `run --workspace-dir` composes a fresh network from
-	// the spec's own declaration, and `run --rpc` attaches but never reads the
-	// workspace, so the gate always fails. The two are explicitly refused
-	// together.
-	//
-	// Skipping states the gap rather than hiding it. Faking a pass by dropping
-	// the gate would leave the scenario asserting nothing, and deleting the
-	// test would lose a regression (f3-06) that still matters.
-	n.t.Skipf("no CLI path runs a capability-gated spec against a composed workspace: "+
-		"`chainbench test` was retired, `run --workspace-dir` recomposes, and `run --rpc` "+
-		"does not read the workspace's capabilities (case %q needs short-expiry)", name)
-	return ""
+	// Attached to the workspace, not composed from the spec: the network is
+	// already up with the capability this case is gated on, and composing again
+	// would test a different one.
+	spec := filepath.Join("tests", "specs", "system-contracts", name+".json")
+	out := n.run("run", "--workspace-dir", n.dir, "--attach", spec)
+	if skipRe.MatchString(out) {
+		n.t.Fatalf("case %q was skipped (capability/gating problem):\n%s", name, out)
+	}
+	return out
 }
+
+// skipRe matches a non-zero skip count in a run summary. A skipped case is a
+// failure here: the scenario exists to exercise the case, and a gate that did
+// not open means the network was not what the test set up.
+var skipRe = regexp.MustCompile(`skip=[1-9]`)
 
 // stop tears the network down (best-effort).
 func (n *network) stop() {
