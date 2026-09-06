@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"sync"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -12,6 +13,7 @@ import (
 // recordingDriver records provisions/launches/stops without touching the OS.
 // stopErr, when set, fails every Stop so the best-effort path is observable.
 type recordingDriver struct {
+	mu          sync.Mutex
 	provisioned []int
 	launched    []int
 	stopped     []int
@@ -28,10 +30,15 @@ func (r *recordingDriver) Launch(_ context.Context, s process.NodeSpec) (process
 	return process.Handle{Index: s.Index, PID: 1000 + s.Index}, nil
 }
 
+// Stop records the node it was asked to stop. StopNodeSet calls this
+// concurrently, so the record is guarded — a fake that is not safe for the way
+// its contract is used tests the race detector rather than the code.
 func (r *recordingDriver) Stop(_ context.Context, h process.Handle) error {
 	if r.stopErr != nil {
 		return r.stopErr
 	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.stopped = append(r.stopped, h.Index)
 	return nil
 }

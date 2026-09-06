@@ -2,10 +2,12 @@ package process
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 )
 
 // ExecFn constructs the command a LocalDriver launches. It is injectable so
@@ -104,15 +106,37 @@ func (d *LocalDriver) launch(ctx context.Context, name string, arg ...string) *e
 	return detachedExec(ctx, name, arg...)
 }
 
-// Stop sends SIGTERM (via Process) to the handle's PID. A process that has
-// already exited yields no error.
-func (d *LocalDriver) Stop(_ context.Context, h Handle) error {
+// Stop asks the node to go down, and insists if it will not: SIGTERM, then
+// StopGrace to close its database, then SIGKILL. A process that has already
+// exited yields no error.
+//
+// It used to send SIGKILL immediately, which the comment above it denied. See
+// stop.go for what that cost.
+func (d *LocalDriver) Stop(ctx context.Context, h Handle) error {
 	proc, err := os.FindProcess(h.PID)
 	if err != nil {
 		return fmt.Errorf("driver: find process %d: %w", h.PID, err)
 	}
-	if err := proc.Kill(); err != nil && !isFinished(err) {
+	if err := proc.Signal(syscall.SIGTERM); err != nil {
+		if isFinished(err) || errors.Is(err, os.ErrProcessDone) {
+			return nil
+		}
 		return fmt.Errorf("driver: stop node%d (pid %d): %w", h.Index, h.PID, err)
+	}
+	if awaitExit(ctx, h.PID, StopGrace) {
+		return nil
+	}
+	// It had its chance. A node still running after the grace is either wedged
+	// or ignoring the signal, and leaving it would hold the ports and the
+	// datadir of the node the caller asked to stop.
+	if err := proc.Kill(); err != nil && !isFinished(err) && !errors.Is(err, os.ErrProcessDone) {
+		return fmt.Errorf("driver: stop node%d (pid %d) after %s: %w", h.Index, h.PID, StopGrace, err)
+	}
+	// SIGKILL is delivered, not instantaneous, and a child of this process
+	// lingers as a zombie until collected. Returning before either has settled
+	// would report a stop that a caller could then observe as still running.
+	if !awaitExit(context.WithoutCancel(ctx), h.PID, killWait) {
+		return fmt.Errorf("driver: node%d (pid %d) is still present %s after SIGKILL", h.Index, h.PID, killWait)
 	}
 	return nil
 }
