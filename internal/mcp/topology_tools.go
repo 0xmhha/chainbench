@@ -3,11 +3,8 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/app"
 	"strings"
-
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // networkTopologyTool reports each node's reachability and peer count for a saved
@@ -33,7 +30,7 @@ func networkTopologyTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			ns, err := session.LoadNetwork(stateDir, name)
+			ns, err := app.Network(app.Deps{}, stateDir, name)
 			if err != nil {
 				return "", err
 			}
@@ -56,11 +53,8 @@ func networkTopologyTool() Tool {
 	}
 }
 
-// nodePeerCount dials a node (through its stored auth) and returns its peer count.
-func nodePeerCount(ctx context.Context, n node.Node) (uint64, error) {
-	hc, err := httpClientForNode(n)
-	if err != nil {
-		return 0, err
-	}
-	return rpc.DialWithClient(n.RPCURL, hc).PeerCount(ctx)
+// nodePeerCount asks a node how many peers it has, reached through whatever its
+// record says is needed.
+func nodePeerCount(ctx context.Context, n app.Node) (uint64, error) {
+	return app.PeersOfNode(ctx, app.Deps{}, n)
 }

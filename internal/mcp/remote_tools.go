@@ -2,16 +2,9 @@ package mcp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
 
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/session"
-
-	remotepkg "github.com/0xmhha/chainbench/internal/core/remote"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // remoteRPCTool calls a JSON-RPC method on a saved attached network's endpoint,
@@ -42,45 +35,20 @@ func remoteRPCTool() Tool {
 			if name == "" || stateDir == "" || method == "" {
 				return "", fmt.Errorf("name, state_dir, and method are required")
 			}
-			ns, err := session.LoadNetwork(stateDir, name)
+			ns, err := app.Network(app.Deps{}, stateDir, name)
 			if err != nil {
 				return "", err
 			}
-			n, ok := pickNode(ns, argInt(args, "node", 0))
+			n, ok := app.NodeAt(ns, argInt(args, "node", 0))
 			if !ok {
 				return "", fmt.Errorf("network %q has no usable node", name)
 			}
-			hc, err := httpClientForNode(n)
-			if err != nil {
-				return "", err
-			}
-			var out json.RawMessage
 			params, _ := args["params"].([]any)
-			if err := rpc.DialWithClient(n.RPCURL, hc).Call(ctx, method, &out, params...); err != nil {
+			out, err := app.CallOnNode(ctx, app.Deps{}, n, method, params...)
+			if err != nil {
 				return "", err
 			}
 			return string(out), nil
 		},
 	}
-}
-
-// httpClientForNode builds an http.Client that reaches a node through its stored
-// auth descriptor (empty auth yields the default client). Shared by the tools
-// that dial a saved network's nodes.
-func httpClientForNode(n node.Node) (*http.Client, error) {
-	return remotepkg.HTTPClientFromAuth(remotepkg.Auth(n.Auth), os.Getenv)
-}
-
-// pickNode returns the node with the given 1-based index, or the primary node
-// when index <= 0.
-func pickNode(ns node.NodeSet, index int) (node.Node, bool) {
-	if index > 0 {
-		for _, n := range ns.Nodes {
-			if n.Index == index {
-				return n, true
-			}
-		}
-		return node.Node{}, false
-	}
-	return ns.Primary()
 }

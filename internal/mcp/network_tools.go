@@ -6,9 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // networkAttachTool probes an RPC endpoint to identify the chain, then saves it
@@ -38,22 +36,22 @@ func networkAttachTool() Tool {
 			if name == "" || rpc == "" || stateDir == "" {
 				return "", fmt.Errorf("name, rpc, and state_dir are required")
 			}
-			if !session.IsValidNetworkName(name) {
+			if !app.IsValidNetworkName(name) {
 				return "", fmt.Errorf("invalid network name %q (must match [a-z0-9][a-z0-9_-]* and not be 'local')", name)
 			}
-			res, err := collector.Detect(ctx, collector.Options{RPCURL: rpc, Override: argString(args, "override", "")})
+			res, err := app.DetectNetwork(ctx, app.Deps{}, app.DetectOptions{RPCURL: rpc, Override: argString(args, "override", "")})
 			if err != nil {
 				return "", err
 			}
-			n := node.Node{Index: 1, Role: node.RoleEndpoint, Host: hostOf(rpc), RPCURL: rpc}
+			n := app.Node{Index: 1, Role: app.RoleEndpoint, Host: hostOf(rpc), RPCURL: rpc}
 			if a, ok := args["auth"].(map[string]any); ok && len(a) > 0 {
 				n.Auth = a
 			}
-			ns := node.NodeSet{
+			ns := app.NodeSet{
 				Chain: res.ChainType, Network: name,
-				Nodes: []node.Node{n}, Capabilities: []string{"rpc"},
+				Nodes: []app.Node{n}, Capabilities: []string{"rpc"},
 			}
-			if err := session.SaveNetwork(stateDir, ns); err != nil {
+			if err := app.AttachNetwork(app.Deps{}, stateDir, ns); err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("attached %q: chain_type=%s chain_id=%d namespaces=%v",
@@ -77,7 +75,7 @@ func networkListTool() Tool {
 			if stateDir == "" {
 				return "", fmt.Errorf("state_dir is required")
 			}
-			nets, err := session.ListNetworks(stateDir)
+			nets, err := app.Networks(app.Deps{}, stateDir)
 			if err != nil {
 				return "", err
 			}
@@ -116,7 +114,7 @@ func networkInfoTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			ns, err := session.LoadNetwork(stateDir, name)
+			ns, err := app.Network(app.Deps{}, stateDir, name)
 			if err != nil {
 				return "", err
 			}
@@ -153,7 +151,7 @@ func networkDetachTool() Tool {
 			if name == "" || stateDir == "" {
 				return "", fmt.Errorf("name and state_dir are required")
 			}
-			if err := session.RemoveNetwork(stateDir, name); err != nil {
+			if err := app.DetachNetwork(app.Deps{}, stateDir, name); err != nil {
 				return "", err
 			}
 			return fmt.Sprintf("detached %q", name), nil

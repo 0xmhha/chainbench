@@ -2,13 +2,12 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // consensusStatusTool reports a one-shot consensus snapshot: head, chain id,
@@ -32,21 +31,13 @@ func consensusStatusTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			p, err := app.Chain(app.Deps{}, chain)
+			r, err := app.ReadNode(ctx, app.Deps{}, rpcURL)
 			if err != nil {
 				return "", err
 			}
-			cli := rpc.Dial(rpcURL)
-			head, err := cli.BlockNumber(ctx)
-			if err != nil {
-				return "", err
-			}
-			cid, _ := cli.ChainID(ctx)
-			peers, _ := cli.PeerCount(ctx)
-			syncing, _ := cli.Syncing(ctx)
-			vals, _ := registry.Validators(ctx, cli, p.Manifest().Consensus.ValidatorsMethod)
+			vals, _ := app.Validators(ctx, app.Deps{}, chain, "", "", rpcURL)
 			return fmt.Sprintf("chain=%s head=%d chain_id=%d peers=%d syncing=%t validators=%d",
-				chain, head, cid, peers, syncing, len(vals)), nil
+				chain, r.BlockNumber, r.ChainID, r.PeerCount, r.Syncing, len(vals.Validators)), nil
 		},
 	}
 }
@@ -68,18 +59,15 @@ func consensusHealthTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			cli := rpc.Dial(rpcURL)
-			head, err := cli.BlockNumber(ctx)
+			r, err := app.ReadNode(ctx, app.Deps{}, rpcURL)
 			if err != nil {
 				return "", err
 			}
-			syncing, _ := cli.Syncing(ctx)
-			peers, _ := cli.PeerCount(ctx)
 			verdict := "healthy"
-			if syncing || head == 0 {
+			if r.Syncing || r.BlockNumber == 0 {
 				verdict = "unhealthy"
 			}
-			return fmt.Sprintf("%s: head=%d syncing=%t peers=%d", verdict, head, syncing, peers), nil
+			return fmt.Sprintf("%s: head=%d syncing=%t peers=%d", verdict, r.BlockNumber, r.Syncing, r.PeerCount), nil
 		},
 	}
 }
@@ -112,8 +100,14 @@ func consensusBlockInfoTool() Tool {
 				GasUsed      string   `json:"gasUsed"`
 				Transactions []string `json:"transactions"`
 			}
-			if err := rpc.Dial(rpcURL).Call(ctx, "eth_getBlockByNumber", &blk, block, false); err != nil {
+			raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{
+				RPC: rpcURL, Method: "eth_getBlockByNumber", Params: []any{block, false},
+			})
+			if err != nil {
 				return "", err
+			}
+			if err := json.Unmarshal(raw, &blk); err != nil {
+				return "", fmt.Errorf("mcp: block info: %w", err)
 			}
 			if blk.Number == "" {
 				return "", fmt.Errorf("no block %q", block)

@@ -2,11 +2,11 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // logTimelineTool merges a setup's per-node logs into one chronological view, so
@@ -75,8 +75,7 @@ func networkPeersTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			cli := rpc.Dial(rpcURL)
-			count, err := cli.PeerCount(ctx)
+			count, err := app.PeersOf(ctx, app.Deps{}, rpcURL)
 			if err != nil {
 				return "", err
 			}
@@ -90,7 +89,8 @@ func networkPeersTool() Tool {
 					RemoteAddress string `json:"remoteAddress"`
 				} `json:"network"`
 			}
-			if err := cli.Call(ctx, "admin_peers", &peers); err == nil {
+			if raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: rpcURL, Method: "admin_peers"}); err == nil &&
+				json.Unmarshal(raw, &peers) == nil {
 				for _, p := range peers {
 					addr := p.Network.RemoteAddress
 					if addr == "" {

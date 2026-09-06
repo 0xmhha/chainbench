@@ -9,20 +9,17 @@ import (
 )
 
 // mcpImportAllowed is the ratchet for the surface rule (architecture-v2 §2):
-// MCP reaches features through the app layer. An internal/mcp file may import
-// app, its own package tree, and non-internal dependencies; every other
-// internal import is a tool still wired straight to core, listed here with
-// the migration that removes it. The list may only shrink: an entry whose
-// import disappeared fails the test until removed.
-var mcpImportAllowed = map[string]string{
-	"internal/core/collector": "network status collection + event bus + log reading (obs/logs merged in, R1); V6 follow-up",
-	"internal/resource":       "target kind rendering in net tools (machine spec merged into resource, R3); goes with the V5.4 display cleanups",
-	"internal/core/node":      "node set types; V6 follow-up",
-	"internal/core/session":   "network registry reads, now owned by session (netreg merged in, R1); V6 follow-up",
-	"internal/core/registry":  "chain plugin lookup; V6 follow-up",
-	"internal/core/remote":    "remote exec tool; V6 follow-up",
-	"internal/core/rpc":       "direct RPC tools; V6 follow-up",
-}
+// every surface reaches features through the app layer. An internal/mcp file
+// may import app, its own package tree, and non-internal dependencies; every
+// other internal import would be a tool still wired straight to core, listed
+// here with the migration that removes it.
+//
+// It is empty as of 2026-09-05 (U6): the last six entries — core/rpc,
+// core/collector, resource, core/node, core/session, core/remote — went with
+// the query migration they each named. The list may only shrink, and an entry
+// whose import has disappeared fails the test until it is removed, so an empty
+// map is the rule holding rather than the rule being unenforced.
+var mcpImportAllowed = map[string]string{}
 
 // TestMCPGoesThroughApp pins the asymmetric surface rule: CLI calls core
 // directly, MCP goes through app. Every internal import in internal/mcp that

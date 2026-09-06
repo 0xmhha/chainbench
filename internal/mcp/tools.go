@@ -9,9 +9,6 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 // Default returns a Server with the built-in chainbench tools registered. Chain
@@ -136,7 +133,8 @@ func nodeRPCTool() Tool {
 				params = p
 			}
 			var raw json.RawMessage
-			if err := rpc.Dial(url).Call(ctx, method, &raw, params...); err != nil {
+			raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: url, Method: method, Params: params})
+			if err != nil {
 				return "", err
 			}
 			return string(raw), nil
@@ -163,7 +161,8 @@ func consensusTool() Tool {
 				return "", err
 			}
 			method := p.Manifest().Consensus.ValidatorsMethod
-			vals, err := registry.Validators(ctx, rpc.Dial(argString(args, "rpc", "")), method)
+			res, err := app.Validators(ctx, app.Deps{}, argString(args, "chain", "stablenet"), "", "", argString(args, "rpc", ""))
+			vals := res.Validators
 			if err != nil {
 				return "", err
 			}
@@ -310,8 +309,12 @@ func txpoolTool() Tool {
 				Pending string `json:"pending"`
 				Queued  string `json:"queued"`
 			}
-			if err := rpc.Dial(url).Call(ctx, "txpool_status", &st); err != nil {
+			raw, err := app.NodeCall(ctx, app.Deps{}, app.NodeCallIn{RPC: url, Method: "txpool_status"})
+			if err != nil {
 				return "", err
+			}
+			if err := json.Unmarshal(raw, &st); err != nil {
+				return "", fmt.Errorf("mcp: txpool: %w", err)
 			}
 			return fmt.Sprintf("pending=%d queued=%d", hexCount(st.Pending), hexCount(st.Queued)), nil
 		},
@@ -340,7 +343,7 @@ func logTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexp, _ := args["regexp"].(bool)
-			matches, err := collector.Search(dir, collector.SearchOpts{
+			matches, err := app.LogSearch(app.Deps{}, dir, app.LogSearchIn{
 				Pattern: argString(args, "pattern", ""),
 				Regexp:  regexp,
 				Node:    argInt(args, "node", 0),

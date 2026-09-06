@@ -20,7 +20,7 @@ import (
 // rather than drifting above it.
 var surfaceBudget = map[string]int{
 	"CLI":  0,
-	"MCP":  15,
+	"MCP":  0,
 	"DSL":  18,
 	"DSLa": 27,
 }

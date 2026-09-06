@@ -871,15 +871,17 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 동등성 2건(report·log). 둘 다 변이로 확인했다.
 
 **잔여**: `verify` 는 `dashboard` 만 부른다(같은 층이라 규칙 위반이 아니다) |
-| **U6** | **조회 계열 이관** | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ◐ **2026-09-05. CLI 12 → 0.** `chains`·`capabilities`·`consensus`·`node rpc`·`migrate-spec`·`validator`·`upgrade` 를 app 경유로. **CLI 등록 58개가 전부 app 을 지난다.**
+| **U6** | **조회 계열 이관** | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ☑ **2026-09-05. CLI 12 → 0, MCP 15 → 0.** **두 표면 112개 등록이 전부 app 을 지난다.**
 
-`app.Chains`·`Capabilities`·`Validators`·`NodeCall`·`MigrateSpec`·`DeriveIdentity`·`ValidatorSetOf`·`GenerateSet`·`ResolveBinary`·`UpgradeGenesis` 를 신설했다. `resolveBinary` 는 `upgradecmd` 와 app 에 각각 있었고 지금은 하나다. 어느 계열의 재료를 파생할지(`derive.WithBLS` 인지 `AccountOnly` 인지)도 표면이 정하고 있었는데, 그건 패밀리의 규칙이지 부르는 쪽의 선택이 아니다.
+CLI 쪽은 `chains`·`capabilities`·`consensus`·`node rpc`·`migrate-spec`·`validator`·`upgrade` 를, MCP 쪽은 `network_*`·`remote_rpc`·`consensus_*`·`txpool`·`node_rpc`·`log`·`chain_new` 을 옮겼다. `app.Chains`·`Capabilities`·`Validators`·`NodeCall`·`ReadNode`·`MigrateSpec`·`DeriveIdentity`·`ValidatorSetOf`·`GenerateSet`·`ResolveBinary`·`UpgradeGenesis`·`AttachNetwork`·`Network(s)`·`DetachNetwork`·`DetectNetwork`·`PeersOf`·`CallOnNode`·`PeersOfNode`·`NodeAt`·`RegisterCapability` 를 신설했다.
 
-**도구의 분류가 둘로 갈라져 있던 것도 고쳤다.** `Via()` 는 옛 규칙으로, 카운트는 새 규칙으로 세고 있어서 표에 `app+core` 로 보이는 항목이 숫자에는 안 잡혔다. 하나로 합쳤다.
+**중복 둘이 죽었다.** `resolveBinary` 가 `upgradecmd` 와 app 에 각각 있어서 한쪽이 받는 이름을 다른 쪽이 거절할 수 있었다. 그리고 validator 키에서 무엇을 파생할지(`WithBLS` 인지 `AccountOnly` 인지)를 표면이 정하고 있었는데, 그건 합의 패밀리의 규칙이다.
 
-**잔여**: MCP 15개(`network_*`·`remote_rpc`·`consensus_*`·`txpool`·`node_rpc`·`log`) |
+**저장된 망의 노드에 닿는 법도 하나로 모았다.** 붙여 둔 노드는 SSH 터널이나 docker 매핑 뒤에 있을 수 있고, 거기 닿는 길은 노드 기록의 auth 서술자다. `CallOnNode`·`PeersOfNode` 는 URL 이 아니라 노드를 받는다.
+
+**제가 낸 회귀를 테스트가 잡았다.** `ReadNode` 를 만들면서 네 읽기를 전부 필수로 했는데, 원래는 head 만 필수고 나머지는 최선 노력이었다. net 네임스페이스를 끈 노드가 오류가 돼 버렸다. 계약을 되돌리고 왜 그런지 적었다 |
 | **U7** | **DSL 흡수** — 액션 18개와 어서션 27개가 `internal/testhelper` 의 다섯 파일(`builtins`·`read`·`assets`·`derived`·`fault`, 합쳐 2,339줄)에서 `accounts`·`core/rpc`·`core/session`·`core/node` 를 직접 조립한다. 45개 전부가 app 을 지나지 않으며, 세 표면 중 유일하게 어느 계획에도 들어 있지 않았다. app 진입점을 부르게 바꾼다 | U4 | DSL 액션과 어서션이 core 를 직접 import 하지 않음 · 기존 스펙 전량 회귀 · `verify` 가 DSL 에도 노출(`faucet` 은 이미 있다) | ☐ |
-| **U8** | **규칙 대칭 마감** — `mcpImportAllowed` 비대칭 라체트를 폐기하고 표면 공통 규칙 하나로 합친다 | U2~U7 | 우회 항목 0 · 표면 3종이 같은 등록을 렌더링 · 문서와 테스트가 한 규칙만 말함 | ☐ |
+| **U8** | **규칙 대칭 마감** | U2~U7 | 우회 항목 0 · 표면 3종이 같은 등록을 렌더링 · 문서와 테스트가 한 규칙만 말함 | ◐ **비대칭 라체트는 폐기했다(2026-09-05).** `mcpImportAllowed` 의 마지막 여섯 항목(`core/rpc`·`core/collector`·`resource`·`core/node`·`core/session`·`core/remote`)이 각자 예고한 이관과 함께 사라져 목록이 비었다. 목록은 줄기만 하고, 사라진 항목이 남아 있으면 테스트가 실패하므로, **빈 map 은 규칙이 안 걸린 것이 아니라 규칙이 지켜지고 있다는 뜻이다.** 남은 것은 DSL(U7) 이다 |
 
 **측정 기준선(2026-09-05)**: 등록 항목 157 = CLI 58 + MCP 54 + DSL 45(액션 18 + 어서션 27).
 app 아래에 닿는 항목 109 = CLI 40 + MCP 24 + DSL 45. app 을 한 번도 부르지 않는 항목 102.

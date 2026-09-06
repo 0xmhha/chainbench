@@ -21,7 +21,16 @@ type (
 	Capability = registry.Capability
 	// Descriptor is one system contract: its address and what it is for.
 	Descriptor = registry.Descriptor
+	// Param is one input a capability takes.
+	Param = registry.Param
 )
+
+// RegisterCapability records a capability a surface itself provides, so that
+// what the bench advertises includes the surface's own tools rather than only
+// the chains'.
+func RegisterCapability(_ Deps, version, chain, group, name, desc string, params []Param) {
+	registry.RegisterFlat(version, chain, group, name, desc, params)
+}
 
 // CommonChain is the pseudo-chain holding capabilities every chain shares.
 const CommonChain = registry.CommonChain
@@ -94,4 +103,40 @@ func NodeCall(ctx context.Context, _ Deps, in NodeCallIn) ([]byte, error) {
 		return nil, err
 	}
 	return json.Marshal(out)
+}
+
+// NodeReadings is what a single node says about itself in one pass: its head,
+// its chain, its peers, and whether it is still catching up.
+type NodeReadings struct {
+	BlockNumber uint64 `json:"blockNumber"`
+	ChainID     uint64 `json:"chainId"`
+	PeerCount   uint64 `json:"peerCount"`
+	Syncing     bool   `json:"syncing"`
+}
+
+// ReadNode takes those four readings.
+//
+// Four calls in one place because they are one question — "what is this node
+// doing" — and a surface that took three of them would answer it differently
+// from one that took four.
+//
+// Only the head is required. The rest are best-effort: a node with the admin or
+// net namespace switched off still answers about its head, and refusing to
+// report anything because it will not name its peers would turn a working node
+// into an error. That was the behaviour of both surfaces before this call
+// existed, and keeping it is why the failures are dropped rather than returned.
+func ReadNode(ctx context.Context, _ Deps, rpcURL string) (NodeReadings, error) {
+	if rpcURL == "" {
+		return NodeReadings{}, fmt.Errorf("a node endpoint is required")
+	}
+	c := rpc.Dial(rpcURL)
+	head, err := c.BlockNumber(ctx)
+	if err != nil {
+		return NodeReadings{}, err
+	}
+	r := NodeReadings{BlockNumber: head}
+	r.ChainID, _ = c.ChainID(ctx)
+	r.PeerCount, _ = c.PeerCount(ctx)
+	r.Syncing, _ = c.Syncing(ctx)
+	return r, nil
 }
