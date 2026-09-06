@@ -17,8 +17,8 @@ import (
 func runTool() Tool {
 	return Tool{
 		Name: "chainbench_run",
-		Description: "Run DSL test specs and report the verdict. With rpc (array of RPC URLs) it attaches to a running network; without rpc it composes the network the specs declare and runs against it. " +
-			"Args: spec (a spec JSON string) and/or specs (array); rpc + chain for attach; dataDir/binary/validators/keysDir for compose.",
+		Description: "Run DSL test specs and report the verdict. With rpc (array of RPC URLs) it attaches to a running network; with dataDir + attach it runs against the network that workspace already composed, using the capabilities it advertised; with dataDir alone it composes the network the specs declare. " +
+			"Args: spec (a spec JSON string) and/or specs (array); rpc + chain for attach; dataDir + attach to run against a composed network; dataDir/binary/validators/keysDir for compose.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -30,6 +30,10 @@ func runTool() Tool {
 				"binary":     map[string]any{"type": "string"},
 				"validators": map[string]any{"type": "integer"},
 				"keysDir":    map[string]any{"type": "string"},
+				"attach": map[string]any{
+					"type":        "boolean",
+					"description": "the network in dataDir is already up: run against it, with the capabilities its composition advertised, instead of composing again",
+				},
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -38,11 +42,39 @@ func runTool() Tool {
 				return "", fmt.Errorf("chainbench_run: provide spec or specs")
 			}
 			if rpcURLs := argStrings(args, "rpc"); len(rpcURLs) > 0 {
+				if argBool(args, "attach", false) {
+					return "", fmt.Errorf("chainbench_run: attach takes the endpoints from dataDir; it does not combine with rpc")
+				}
 				return runAttach(ctx, argString(args, "chain", ""), rpcURLs, specs)
+			}
+			if argBool(args, "attach", false) {
+				return runAttachWorkspace(ctx, argString(args, "dataDir", ""), argString(args, "chain", ""), specs)
 			}
 			return runCompose(ctx, args, specs)
 		},
 	}
+}
+
+// runAttachWorkspace runs the specs against the network a workspace composed,
+// taking its endpoints and its advertised capabilities from the workspace.
+//
+// A spec that declares a capability it needs can only run this way: given
+// endpoints alone the gate has nothing to check against and the spec skips.
+func runAttachWorkspace(ctx context.Context, dataDir, chain string, specs [][]byte) (string, error) {
+	if dataDir == "" {
+		return "", fmt.Errorf("chainbench_run: attach needs dataDir, the workspace whose network is already up")
+	}
+	artifactRoot, err := os.MkdirTemp("", "cb-run")
+	if err != nil {
+		return "", fmt.Errorf("chainbench_run: temp dir: %w", err)
+	}
+	root, err := app.AttachRun(ctx, app.Deps{}, app.AttachRunIn{
+		DataDir: dataDir, Chain: chain, ArtifactRoot: artifactRoot, Specs: specs,
+	})
+	if err != nil {
+		return "", err
+	}
+	return formatRunSummary(root)
 }
 
 // runAttach runs the specs against an already-running network.

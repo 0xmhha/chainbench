@@ -53,13 +53,48 @@ type AttachRunIn struct {
 	// surface (L6) and this layer sits below it. Opening the stream is
 	// dashboard.Stream's job, which both surfaces call.
 	Bus *collector.Bus
+	// DataDir attaches to the network a workspace already composed, instead of
+	// naming its endpoints. The workspace supplies both: the endpoints, and
+	// the capabilities the composition advertised.
+	//
+	// The capabilities are why this exists. A spec may declare that it needs
+	// one — the proposal-expiry regression needs "short-expiry", which a
+	// genesis overlay grants — and a caller who only passes endpoints cannot
+	// say what the network has, so a gated spec always skips. Composing again
+	// to satisfy the gate would test a different network from the one the
+	// operator set up.
+	DataDir string
 }
 
 // AttachRun attaches the test engine to a running network and runs the specs,
 // returning the session root.
 func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
+	if in.DataDir != "" {
+		res, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
+		if err != nil {
+			return "", fmt.Errorf("app: attach run: %w", err)
+		}
+		if len(res.Nodes.Nodes) == 0 {
+			return "", fmt.Errorf("app: attach run: %s composed no nodes to attach to", in.DataDir)
+		}
+		// What the workspace says wins over what the caller assumed: it is the
+		// record of the network that actually came up.
+		in.RPCURLs = nil
+		for _, n := range res.Nodes.Nodes {
+			if n.RPCURL != "" {
+				in.RPCURLs = append(in.RPCURLs, n.RPCURL)
+			}
+		}
+		in.Caps = append(append([]string(nil), res.Nodes.Capabilities...), in.Caps...)
+		if in.Chain == "" {
+			in.Chain = res.Nodes.Chain
+		}
+	}
 	if in.Chain == "" {
 		return "", fmt.Errorf("app: attach run: a chain is required to attach")
+	}
+	if len(in.RPCURLs) == 0 {
+		return "", fmt.Errorf("app: attach run: no endpoint to attach to")
 	}
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,

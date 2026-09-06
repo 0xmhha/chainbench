@@ -46,6 +46,7 @@ func NewRun() *cobra.Command {
 		keepUp       bool
 		waitBlocks   uint64
 		docker       bool
+		attach       bool
 		sf           resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -54,12 +55,22 @@ func NewRun() *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch {
+			case attach && len(rpcURLs) > 0:
+				return fmt.Errorf("run: --attach takes the endpoints from --workspace-dir; it does not combine with --rpc")
+			case attach && workspaceDir == "":
+				return fmt.Errorf("run: --attach needs --workspace-dir <dir>, the workspace whose network is already up")
+			case attach:
+				// The workspace supplies the endpoints and the capabilities its
+				// composition advertised, which is what lets a gated spec run
+				// against the network the operator set up rather than a fresh
+				// one built to satisfy the gate.
+				return runAttachWorkspace(cmd, args, workspaceDir, chain, artifactRoot, keysDir, dashboardURL, jsonOut)
 			case len(rpcURLs) > 0 && workspaceDir != "":
-				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc")
+				return fmt.Errorf("run: --workspace-dir composes a network; it does not combine with --rpc (use --attach to run against the network it already composed)")
 			case len(rpcURLs) > 0:
 				return runAttach(cmd, args, chain, rpcURLs, artifactRoot, keysDir, dashboardURL, jsonOut)
 			case workspaceDir == "":
-				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare) or --rpc <url> (attach to a running one)")
+				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one)")
 			}
 			in := app.RunSuiteIn{
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
@@ -86,6 +97,8 @@ func NewRun() *cobra.Command {
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
+	cmd.Flags().BoolVar(&attach, "attach", false,
+		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")
 	cmd.Flags().StringVar(&binary, "binary", "", "compose: node binary path, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "compose: key set directory, overriding what the specs declare")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "preset",
@@ -133,6 +146,31 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 	defer flush()
 	root, err := app.AttachRun(cmd.Context(), deps(cmd), app.AttachRunIn{
 		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot,
+		KeysDir: keysDir, Specs: specs, Bus: bus,
+	})
+	if err != nil {
+		return err
+	}
+	return printSession(cmd.OutOrStdout(), root, jsonOut)
+}
+
+// runAttachWorkspace runs the specs against the network a workspace composed.
+//
+// It differs from runAttach in where the network comes from: not endpoints the
+// operator typed, but the workspace's own record, which also says which
+// capabilities the composition advertised. A spec that declares it needs one —
+// the proposal-expiry regression needs "short-expiry", granted by a genesis
+// overlay — can only run this way. Given endpoints alone the gate has nothing
+// to check against and the spec skips.
+func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
+	specs, err := app.ReadSpecFiles(args)
+	if err != nil {
+		return err
+	}
+	bus, flush := dashboard.Stream(dashboardURL)
+	defer flush()
+	root, err := app.AttachRun(cmd.Context(), deps(cmd), app.AttachRunIn{
+		DataDir: workspaceDir, Chain: chain, ArtifactRoot: artifactRoot,
 		KeysDir: keysDir, Specs: specs, Bus: bus,
 	})
 	if err != nil {
