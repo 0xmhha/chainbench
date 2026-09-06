@@ -61,6 +61,14 @@ jobs:
       # months earlier: the removal checked for callers, and a build tag hid
       # these from the check and from every `go test ./...` since. Vetting the
       # tag costs one step and catches the rot at the commit that causes it.
+      #
+      # It catches only what the compiler can see, which is worth stating,
+      # because on 2026-09-05 the whole suite turned out to have been dead
+      # since August for a reason this step cannot notice: the harness ran
+      # `chainbench net up` after the command group was renamed to `chain`. A
+      # command name is a string, so it compiled, vetted, and failed on its
+      # first call. Rot in what a test ASKS FOR, as opposed to what it
+      # references, is only found by running it against real binaries.
       - name: go vet (e2e build tag)
         run: go vet -tags e2e ./...
 
