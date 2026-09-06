@@ -880,8 +880,16 @@ CLI 쪽은 `chains`·`capabilities`·`consensus`·`node rpc`·`migrate-spec`·`v
 **저장된 망의 노드에 닿는 법도 하나로 모았다.** 붙여 둔 노드는 SSH 터널이나 docker 매핑 뒤에 있을 수 있고, 거기 닿는 길은 노드 기록의 auth 서술자다. `CallOnNode`·`PeersOfNode` 는 URL 이 아니라 노드를 받는다.
 
 **제가 낸 회귀를 테스트가 잡았다.** `ReadNode` 를 만들면서 네 읽기를 전부 필수로 했는데, 원래는 head 만 필수고 나머지는 최선 노력이었다. net 네임스페이스를 끈 노드가 오류가 돼 버렸다. 계약을 되돌리고 왜 그런지 적었다 |
-| **U7** | **DSL 흡수** — 액션 18개와 어서션 27개가 `internal/testhelper` 의 다섯 파일(`builtins`·`read`·`assets`·`derived`·`fault`, 합쳐 2,339줄)에서 `accounts`·`core/rpc`·`core/session`·`core/node` 를 직접 조립한다. 45개 전부가 app 을 지나지 않으며, 세 표면 중 유일하게 어느 계획에도 들어 있지 않았다. app 진입점을 부르게 바꾼다 | U4 | DSL 액션과 어서션이 core 를 직접 import 하지 않음 · 기존 스펙 전량 회귀 · `verify` 가 DSL 에도 노출(`faucet` 은 이미 있다) | ☐ |
-| **U8** | **규칙 대칭 마감** | U2~U7 | 우회 항목 0 · 표면 3종이 같은 등록을 렌더링 · 문서와 테스트가 한 규칙만 말함 | ◐ **비대칭 라체트는 폐기했다(2026-09-05).** `mcpImportAllowed` 의 마지막 여섯 항목(`core/rpc`·`core/collector`·`resource`·`core/node`·`core/session`·`core/remote`)이 각자 예고한 이관과 함께 사라져 목록이 비었다. 목록은 줄기만 하고, 사라진 항목이 남아 있으면 테스트가 실패하므로, **빈 map 은 규칙이 안 걸린 것이 아니라 규칙이 지켜지고 있다는 뜻이다.** 남은 것은 DSL(U7) 이다 |
+| **U7** | ~~**DSL 흡수**~~ **전제가 틀렸다 — 폐기 2026-09-05** | U4 | — | ☒ **DSL 액션은 표면이 아니다.** 계획할 때 "액션 18개와 어세션 27개가 app 을 지나지 않는다"고 셌는데, `testhelper` 는 [[layers]] §3 에서 **L3 도메인 서비스**다. `dsl/interp` 의 `Action`/`Assertion` 계약을 구현하는 쪽이고, app 은 L5 다. 아래층이 위층을 부를 수 없다.
+
+**컴파일러로 확인했다.** `testhelper` 에 `app` import 를 넣어 보니 레이어 위반일 뿐 아니라 **import 순환**이다: `app → testengine → … → testhelper`.
+
+**중복의 성격도 달랐다.** U3·U4 에서 찾은 것은 같은 읽기가 두 벌 있는 것이었다. DSL 의 `sendTx` 와 `faucet` 은 라벨을 주소로 풀고, 노드 서명과 로컬 서명을 가르고, 수수료 인자를 적용한다. `app.TxSend`/`Faucet` 보다 하는 일이 많고 메커니즘이 다르다. 같은 구현의 복사본이 아니라 언어의 어휘다.
+
+DSL 에게 표면은 `run` 이고, CLI 와 MCP 두 철자 모두 이미 app 을 지난다.
+
+**라체트도 고쳤다.** 45개를 빚으로 세면 구조상 0 에 닿을 수 없고, 내려갈 수 없는 천장은 다음 사람에게 무시하는 법을 가르친다. 이제 표면만 센다(0/112). 어휘는 세지 않고 보고만 한다 |
+| **U8** | **규칙 대칭 마감** | U2~U6 | 우회 항목 0 · 문서와 테스트가 한 규칙만 말함 | ☑ **2026-09-05.** `mcpImportAllowed` 의 마지막 여섯 항목(`core/rpc`·`core/collector`·`resource`·`core/node`·`core/session`·`core/remote`)이 각자 예고한 이관과 함께 사라져 목록이 비었다. 목록은 줄기만 하고 사라진 항목이 남아 있으면 테스트가 실패하므로, **빈 map 은 규칙이 안 걸린 것이 아니라 지켜지고 있다는 뜻이다.** 비대칭 라체트는 이것으로 폐기했고, 표면 규칙은 `TestSurfacesReachThroughApp` 하나가 말한다 |
 
 **측정 기준선(2026-09-05)**: 등록 항목 157 = CLI 58 + MCP 54 + DSL 45(액션 18 + 어서션 27).
 app 아래에 닿는 항목 109 = CLI 40 + MCP 24 + DSL 45. app 을 한 번도 부르지 않는 항목 102.
