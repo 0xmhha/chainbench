@@ -50,15 +50,25 @@ type State struct {
 	// ManifestPath and TemplatePath name an external, project-supplied chain
 	// manifest. When set they win over Chain, so a workspace composed for a
 	// project's own chain resolves the same plugin on every later step.
-	ManifestPath string          `json:"manifestPath,omitempty"`
-	TemplatePath string          `json:"templatePath,omitempty"`
-	Binary       string          `json:"binary,omitempty"`
-	KeysDir      string          `json:"keysDir,omitempty"`
-	Validators   int             `json:"validators,omitempty"`
-	Target       resource.Spec   `json:"target"`
-	GenesisPath  string          `json:"genesisPath,omitempty"`
-	Nodes        []node.Record   `json:"nodes,omitempty"`
-	Steps        map[string]Step `json:"steps"`
+	ManifestPath string        `json:"manifestPath,omitempty"`
+	TemplatePath string        `json:"templatePath,omitempty"`
+	Binary       string        `json:"binary,omitempty"`
+	KeysDir      string        `json:"keysDir,omitempty"`
+	Validators   int           `json:"validators,omitempty"`
+	Target       resource.Spec `json:"target"`
+	GenesisPath  string        `json:"genesisPath,omitempty"`
+	// LaunchInputs is what each launch input hashed to when this workspace
+	// wrote it, keyed by path on the target.
+	//
+	// It exists so deploy can tell "the file is there" from "the file is the
+	// one we built". Without it deploy checked only for presence and reported
+	// the inputs "reused, not rewritten", which is true of a genesis someone
+	// edited and of a config left by a previous composition — and the nodes
+	// then launch from it. A hash costs nothing to record and turns a silent
+	// wrong launch into a refusal that names the file.
+	LaunchInputs map[string]string `json:"launchInputs,omitempty"`
+	Nodes        []node.Record     `json:"nodes,omitempty"`
+	Steps        map[string]Step   `json:"steps"`
 	// Peering is the peer graph the composition wires ("mesh" default,
 	// "proxied" for bp <-> pn <-> en). Empty means mesh, so a workspace written
 	// before the field keeps the graph it was composed with.
