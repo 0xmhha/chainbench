@@ -1,16 +1,21 @@
 package reportcmd
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 
-	"github.com/0xmhha/chainbench/internal/core/report"
-	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/app"
 )
+
+// deps is what every report verb hands the app layer.
+func deps(cmd *cobra.Command) app.Deps {
+	errOut := cmd.ErrOrStderr()
+	return app.Deps{Logf: func(format string, args ...any) {
+		fmt.Fprintf(errOut, format+"\n", args...)
+	}}
+}
 
 func NewReport() *cobra.Command {
 	var dataDir string
@@ -21,24 +26,9 @@ func NewReport() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			// The argument may be a session directory itself or a root holding
-			// several sessions; in the latter case show the most recent.
-			sessionDir := dataDir
-			if ids, _ := session.List(dataDir); len(ids) > 0 {
-				sessionDir = session.SessionDir(dataDir, ids[len(ids)-1])
-			}
-			// Prefer the persisted report.json; fall back to building it from
-			// session.json so a session written before report.json still shows.
-			rep, err := report.Read(sessionDir)
+			rep, err := app.Report(deps(cmd), dataDir)
 			if err != nil {
-				rep, err = report.Build(sessionDir)
-				if err != nil {
-					if errors.Is(err, os.ErrNotExist) {
-						fmt.Fprintln(cmd.OutOrStdout(), "no runs recorded")
-						return nil
-					}
-					return err
-				}
+				return err
 			}
 			out := cmd.OutOrStdout()
 			if len(rep.Tests) == 0 {

@@ -10,7 +10,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/collector"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -95,7 +94,20 @@ func reportTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			return app.Report(dir)
+			rep, err := app.Report(app.Deps{}, dir)
+			if err != nil {
+				return "", err
+			}
+			if len(rep.Tests) == 0 {
+				return "no runs recorded", nil
+			}
+			var b strings.Builder
+			for _, t := range rep.Tests {
+				fmt.Fprintf(&b, "%d %s [%s] %s\n", t.Seq, t.ID, t.Env, t.Status)
+			}
+			fmt.Fprintf(&b, "session=%s pass=%d fail=%d blocked=%d skip=%d",
+				rep.Session, rep.Summary.Pass, rep.Summary.Fail, rep.Summary.Blocked, rep.Summary.Skip)
+			return b.String(), nil
 		},
 	}
 }
@@ -227,11 +239,11 @@ func verifyTool() Tool {
 			"required": []string{"rpc"},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
-			ns, err := nodeSetFromArgs(args)
-			if err != nil {
-				return "", err
-			}
-			res, err := app.VerifyNetwork(ctx, app.Deps{}, app.VerifyNetworkIn{Nodes: ns})
+			res, err := app.VerifyNetwork(ctx, app.Deps{}, app.VerifyNetworkIn{
+				DataDir: argString(args, "workspaceDir", ""),
+				Chain:   argString(args, "chain", ""),
+				RPCURLs: argStrings(args, "rpc"),
+			})
 			if err != nil {
 				return "", err
 			}
@@ -507,21 +519,4 @@ func hexCount(s string) uint64 {
 		return 0
 	}
 	return n
-}
-
-// nodeSetFromArgs builds a NodeSet from rpc endpoints (attach) or workspaceDir
-// (a composed network's record).
-func nodeSetFromArgs(args map[string]any) (node.NodeSet, error) {
-	if urls := argStrings(args, "rpc"); len(urls) > 0 {
-		eps := make([]node.RPCEndpoint, len(urls))
-		for i, u := range urls {
-			eps[i] = node.RPCEndpoint{RPCURL: u}
-		}
-		return node.AttachedSet(argString(args, "chain", ""), "attached", eps)
-	}
-	if dir := argString(args, "workspaceDir", ""); dir != "" {
-		res, err := app.NetworkStatus(context.Background(), app.Deps{}, app.NetworkStatusIn{DataDir: dir})
-		return res.Nodes, err
-	}
-	return node.NodeSet{}, fmt.Errorf("provide rpc (array) or workspaceDir")
 }

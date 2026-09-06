@@ -205,10 +205,23 @@ func (e Entry) Via() string {
 
 // ReachesPastApp reports whether the entry touches anything below app. This is
 // the count the U track drives to zero.
+//
+// A surface calling another surface is not reaching past app: dashboard is L6,
+// the same layer as cmd and mcp, so a command that opens an event stream
+// through it has not gone around the rule. Counting it would push the number in
+// the wrong direction for doing the right thing.
 func (e Entry) ReachesPastApp() bool {
-	v := e.Via()
-	return v == "core" || v == "app+core"
+	for _, p := range e.Pkgs {
+		if p != "app" && !surfaceLayer[p] {
+			return true
+		}
+	}
+	return false
 }
+
+// surfaceLayer names the packages that sit at L6 beside cmd and mcp, per
+// layers.md §3.
+var surfaceLayer = map[string]bool{"dashboard": true, "mcp": true}
 
 // Entries walks the three surfaces rooted at a module directory and reports
 // every registered feature with the internal packages it reaches.

@@ -860,7 +860,17 @@ E4(launch+record 통일 · 스왑 revision 보존)에서 근거를 대고 미룬
 동등성 4건인데 **서명된 원본 트랜잭션을 바이트로 비교**한다. nonce·gas·value·calldata·서명을 한 번에 덮으므로, 여기서 일치하면 두 표면이 `--value` 나 `--data` 를 다르게 읽고 있을 수 없다. 넷 다 변이로 확인했다.
 
 **잔여**: DSL 은 아직 `testhelper` 에서 직접 조립한다(U7). 오류 문구가 플래그 이름을 잃어서 표면에 `flagError` 를 뒀는데, app 은 거래 전체를 받고 어느 부분이 틀렸는지 말하지 |
-| **U5** | **실행·보고 계열 이관** — `run`·`report`·`validate`·`verify`·`log`. 넷 다 CLI 와 MCP 의 경로가 다르고, `run` 은 CLI 가 `dsl`→`collector`→`dashboard`→`testengine` 을 직접 엮는다 | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☐ |
+| **U5** | **실행·보고 계열 이관** | U2 | 동등성 테스트 · `run.go` 에서 흐름 조립 소멸 · 라이브 스위트 회귀 | ☑ **2026-09-05. CLI 17 → 12, MCP 18 → 16.** `run`·`report`·`validate`·`log`·`verify` 를 app 경유로.
+
+**`app.Report` 가 산문을 돌려주고 있었다.** MCP 는 그걸 그대로 냈고 CLI 는 같은 읽기를 다시 해서 표로 그렸다. 렌더링하는 층은 표면이 우회할 수밖에 없는 층이다. 이제 보고서를 돌려주고 표면이 각자 그린다.
+
+**`VerifyNetworkIn` 주석에 "노드 집합 해석은 표면의 몫"이라고 적혀 있었고, 실제로 두 표면이 각자 했다.** 워크스페이스가 어느 엔드포인트를 뜻하는지, 붙인 집합을 뭐라 부르는지를 두 번 정하고 있었다. `app.ResolveNodes` 하나로 합쳤다.
+
+**레이어 검사가 제 실수를 잡았다.** 대시보드 이벤트 배선을 app 에 넣었더니 `L5 app → L6 dashboard` 로 걸렸다. 표면이 다른 표면을 부르는 것은 우회가 아니므로, 배선은 `dashboard.Stream` 으로 표면 층에 두고 라체트도 L6 끼리의 호출은 세지 않게 고쳤다. 안 그러면 옳은 일을 하고 숫자가 나빠진다.
+
+동등성 2건(report·log). 둘 다 변이로 확인했다.
+
+**잔여**: `verify` 는 `dashboard` 만 부른다(같은 층이라 규칙 위반이 아니다) |
 | **U6** | **조회 계열 이관** — `chains`·`capabilities`·`consensus*`·`rpc`·`roster`·`migrate-spec`·`network_*`·`remote_rpc`·`node_rpc`. 대부분 읽기 전용이라 S7 의 `query` 투영과 함께 정리한다 | U2 | 동등성 테스트 · ReadOnly 선언이 세 표면에 동일 노출 | ☐ |
 | **U7** | **DSL 흡수** — 액션 18개와 어서션 27개가 `internal/testhelper` 의 다섯 파일(`builtins`·`read`·`assets`·`derived`·`fault`, 합쳐 2,339줄)에서 `accounts`·`core/rpc`·`core/session`·`core/node` 를 직접 조립한다. 45개 전부가 app 을 지나지 않으며, 세 표면 중 유일하게 어느 계획에도 들어 있지 않았다. app 진입점을 부르게 바꾼다 | U4 | DSL 액션과 어서션이 core 를 직접 import 하지 않음 · 기존 스펙 전량 회귀 · `verify` 가 DSL 에도 노출(`faucet` 은 이미 있다) | ☐ |
 | **U8** | **규칙 대칭 마감** — `mcpImportAllowed` 비대칭 라체트를 폐기하고 표면 공통 규칙 하나로 합친다 | U2~U7 | 우회 항목 0 · 표면 3종이 같은 등록을 렌더링 · 문서와 테스트가 한 규칙만 말함 | ☐ |

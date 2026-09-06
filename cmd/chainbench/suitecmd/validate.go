@@ -10,7 +10,7 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 
-	"github.com/0xmhha/chainbench/internal/testengine"
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // newValidateCmd parses DSL specs offline and reports which are well-formed,
@@ -39,7 +39,7 @@ func NewValidate() *cobra.Command {
 // when any spec is unreadable or invalid; applicability/capability outcomes are
 // informational and stay OK.
 func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) error {
-	results, err := testengine.ValidateSpecs(paths, chain)
+	results, err := app.Validate(paths, chain)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func validateSpecs(out io.Writer, paths []string, chain string, jsonOut bool) er
 }
 
 // renderValidate writes the results as a table or, with jsonOut, as a JSON array.
-func renderValidate(out io.Writer, results []testengine.ValidateResult, jsonOut bool) error {
+func renderValidate(out io.Writer, results []app.ValidateResult, jsonOut bool) error {
 	if jsonOut {
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")

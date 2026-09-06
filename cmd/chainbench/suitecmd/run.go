@@ -12,18 +12,15 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/dashboard"
-	"github.com/0xmhha/chainbench/internal/dsl"
-	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
 // runReport is the --json shape for a run: the session path plus the verdict
-// (testengine.Summary is embedded so its tests/summary fields flatten in).
+// (app.RunSummary is embedded so its tests/summary fields flatten in).
 type runReport struct {
 	Session string `json:"session"`
-	testengine.Summary
+	app.RunSummary
 }
 
 // newRunCmd runs DSL test specs through the test engine. With --workspace-dir
@@ -123,54 +120,40 @@ func defaultArtifactRoot() string {
 }
 
 // runAttach runs the specs against a running network over its RPC endpoints,
-// optionally streaming orchestration events to a dashboard. Emission never
-// blocks the run; the bus is closed and the forwarder drained before exiting
-// so buffered events are flushed.
+// optionally streaming orchestration events to a dashboard.
+//
+// The reading, the engine and the event stream all live in app: this is the
+// binding and the rendering, which is all a surface owes.
 func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string, artifactRoot, keysDir, dashboardURL string, jsonOut bool) error {
-	if chain == "" {
-		return fmt.Errorf("run: --chain is required to attach")
-	}
-	specs, err := dsl.ReadFiles(args)
+	specs, err := app.ReadSpecFiles(args)
 	if err != nil {
 		return err
 	}
-	var bus *collector.Bus
-	var forwardDone <-chan struct{}
-	if dashboardURL != "" {
-		bus = collector.NewBus()
-		forwardDone = dashboard.Forward(bus, dashboardURL, nil)
-	}
-	flush := func() {
-		if bus != nil {
-			bus.Close()
-			<-forwardDone
-		}
-	}
-	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
-		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot, Bus: bus,
-		// The key set is what turns "node1" in a spec into an address. An
-		// operator attaching to a network they composed has it; passing it here
-		// is the difference between labels working and a spec having to paste
-		// hex it would have to update whenever the keys change.
-		KeysDir: keysDir,
+	bus, flush := dashboard.Stream(dashboardURL)
+	defer flush()
+	root, err := app.AttachRun(cmd.Context(), deps(cmd), app.AttachRunIn{
+		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot,
+		KeysDir: keysDir, Specs: specs, Bus: bus,
 	})
-	if err != nil {
-		flush()
-		return err
-	}
-	root, err := eng.Run(cmd.Context(), specs)
-	flush()
 	if err != nil {
 		return err
 	}
 	return printSession(cmd.OutOrStdout(), root, jsonOut)
 }
 
+// deps is what every suite verb hands the app layer.
+func deps(cmd *cobra.Command) app.Deps {
+	errOut := cmd.ErrOrStderr()
+	return app.Deps{Logf: func(format string, args ...any) {
+		fmt.Fprintf(errOut, format+"\n", args...)
+	}}
+}
+
 // runComposed composes the network the specs declare and runs them against
 // it, printing the setup steps before the session.
 func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 	out := cmd.OutOrStdout()
-	res, err := app.RunSuite(cmd.Context(), app.Deps{}, in)
+	res, err := app.RunSuite(cmd.Context(), deps(cmd), in)
 	for _, step := range res.SetupSteps {
 		fmt.Fprintln(out, step)
 	}
@@ -186,7 +169,7 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 // printSession reads the saved session and prints a table plus a summary,
 // returning a non-nil error when any test failed or was blocked.
 func printSession(out io.Writer, root string, jsonOut bool) error {
-	doc, err := testengine.ReadSessionSummary(root)
+	doc, err := app.SessionSummary(root)
 	if err != nil {
 		return err
 	}
@@ -194,7 +177,7 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 	if jsonOut {
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
-		if err := enc.Encode(runReport{Session: root, Summary: doc}); err != nil {
+		if err := enc.Encode(runReport{Session: root, RunSummary: doc}); err != nil {
 			return err
 		}
 	} else {

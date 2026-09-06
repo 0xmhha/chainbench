@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -46,20 +47,37 @@ type AttachRunIn struct {
 	KeysDir string
 	// Specs are raw DSL JSON blobs (already env-resolved).
 	Specs [][]byte
+	// Bus receives orchestration events; nil disables emission.
+	//
+	// A bus rather than a dashboard URL because the dashboard is itself a
+	// surface (L6) and this layer sits below it. Opening the stream is
+	// dashboard.Stream's job, which both surfaces call.
+	Bus *collector.Bus
 }
 
 // AttachRun attaches the test engine to a running network and runs the specs,
 // returning the session root.
 func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
+	if in.Chain == "" {
+		return "", fmt.Errorf("app: attach run: a chain is required to attach")
+	}
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,
-		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock, KeysDir: in.KeysDir,
+		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock,
+		KeysDir: in.KeysDir, Bus: in.Bus,
 	})
 	if err != nil {
 		return "", fmt.Errorf("app: attach run: %w", err)
 	}
 	return eng.Run(ctx, in.Specs)
 }
+
+// ReadSpecFiles reads DSL spec files, resolving each against its environment.
+//
+// Every surface that runs specs reads them, and reading is where a relative
+// path or an env reference is settled; two surfaces settling it separately is
+// two answers to where a spec's environment lives.
+func ReadSpecFiles(paths []string) ([][]byte, error) { return dsl.ReadFiles(paths) }
 
 // SessionSummary reads a session's collected summary.
 func SessionSummary(root string) (RunSummary, error) {
@@ -69,6 +87,10 @@ func SessionSummary(root string) (RunSummary, error) {
 // Validate runs the shared offline DSL validation for the MCP surface: the same
 // parse, name-resolution, selector, and capability checks the CLI `validate`
 // runs, so both surfaces reach the same verdict. It writes and composes nothing.
+// ValidateResult is one spec's verdict: whether it parses, and what is wrong
+// with it if not.
+type ValidateResult = testengine.ValidateResult
+
 func Validate(paths []string, chain string) ([]testengine.ValidateResult, error) {
 	return testengine.ValidateSpecs(paths, chain)
 }
@@ -79,11 +101,20 @@ func ValidateContent(raws [][]byte, labels []string, chain string) ([]testengine
 	return testengine.ValidateContent(raws, labels, chain)
 }
 
-// Report renders a run's report as text for the MCP surface. dir is a session
-// directory or a root holding several sessions (then the most recent is used).
-// MCP reaches the report through here rather than importing the report/session
-// core packages directly (architecture-v2 §2: MCP goes through app).
-func Report(dir string) (string, error) {
+// ReportDoc is a run's report as a surface receives it: the verdict tally and
+// one entry per test.
+type ReportDoc = report.Report
+
+// Report reads a run's report from a session directory, or from a root holding
+// several sessions, in which case the most recent is read.
+//
+// It answers with the report rather than with prose, because the two surfaces
+// lay it out differently — a table for a person, JSON for a program — and a
+// layer that renders is a layer each surface has to work around. Reading it is
+// what they share: prefer the persisted report.json, and fall back to building
+// it from session.json so a run recorded before report.json existed still
+// shows.
+func Report(_ Deps, dir string) (ReportDoc, error) {
 	sessionDir := dir
 	if ids, _ := session.List(dir); len(ids) > 0 {
 		sessionDir = session.SessionDir(dir, ids[len(ids)-1])
@@ -93,19 +124,10 @@ func Report(dir string) (string, error) {
 		rep, err = report.Build(sessionDir)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
-				return "no runs recorded", nil
+				return ReportDoc{}, nil
 			}
-			return "", err
+			return ReportDoc{}, err
 		}
 	}
-	if len(rep.Tests) == 0 {
-		return "no runs recorded", nil
-	}
-	var b strings.Builder
-	for _, t := range rep.Tests {
-		fmt.Fprintf(&b, "%d %s [%s] %s\n", t.Seq, t.ID, t.Env, t.Status)
-	}
-	fmt.Fprintf(&b, "session=%s pass=%d fail=%d blocked=%d skip=%d",
-		rep.Session, rep.Summary.Pass, rep.Summary.Fail, rep.Summary.Blocked, rep.Summary.Skip)
-	return b.String(), nil
+	return rep, nil
 }
