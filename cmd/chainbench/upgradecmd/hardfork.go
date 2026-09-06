@@ -21,7 +21,7 @@ func NewHardfork() *cobra.Command {
 		Use:   "hardfork",
 		Short: "Plan a chain upgrade (swap binary at a fork block, keeping node data)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			planned, err := app.HardforkPlan(cmd.Context(), app.Deps{}, app.HardforkPlanIn{
+			planned, err := app.HardforkPlan(cmd.Context(), deps(cmd), app.HardforkPlanIn{
 				DataDir: dataDir, ToChain: toChain, ToBinary: toBinary, Block: block,
 			})
 			if err != nil {
@@ -44,11 +44,11 @@ func NewHardfork() *cobra.Command {
 			if dryRun {
 				return nil
 			}
-			bin, err := resolveBinary(toBinary, planned.To.Manifest().Binary)
+			bin, err := app.ResolveBinary(toBinary, planned.To.Manifest().Binary)
 			if err != nil {
 				return err
 			}
-			res, err := app.HardforkExecute(cmd.Context(), app.Deps{}, app.HardforkExecuteIn{
+			res, err := app.HardforkExecute(cmd.Context(), deps(cmd), app.HardforkExecuteIn{
 				Plan: planned, DataDir: dataDir, Binary: bin,
 			})
 			if err != nil {

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
@@ -24,12 +25,12 @@ func (s *Server) RegisterCapabilities() {
 		}
 		t := s.tools[name]
 		capName := strings.TrimPrefix(name, "chainbench_")
-		registry.RegisterFlat("v1", registry.CommonChain, capName, name, t.Description, paramsFromSchema(t.InputSchema))
+		registry.RegisterFlat("v1", app.CommonChain, capName, name, t.Description, paramsFromSchema(t.InputSchema))
 	}
 
 	// 2. Generate a tool for each handler-backed capability (project-supplied);
 	//    flat ones (Tool set) already have a tool, so skip them.
-	for _, c := range registry.All() {
+	for _, c := range app.Capabilities(app.Deps{}) {
 		if c.Tool != "" || c.Handler == nil {
 			continue
 		}
@@ -40,7 +41,7 @@ func (s *Server) RegisterCapabilities() {
 	s.Register(capabilitiesDiscoveryTool())
 }
 
-func capabilityTool(c registry.Capability) Tool {
+func capabilityTool(c app.Capability) Tool {
 	props := map[string]any{}
 	var required []string
 	for _, p := range c.Params {
@@ -62,7 +63,7 @@ func capabilityTool(c registry.Capability) Tool {
 		schema["required"] = required
 	}
 	scope := "common (all chains)"
-	if c.Chain != registry.CommonChain {
+	if c.Chain != app.CommonChain {
 		scope = "chain: " + c.Chain
 	}
 	h := c.Handler
@@ -87,11 +88,11 @@ func capabilitiesDiscoveryTool() Tool {
 		},
 		Handler: func(_ context.Context, args map[string]any) (string, error) {
 			chain := argString(args, "chain", "")
-			var caps []registry.Capability
+			var caps []app.Capability
 			if chain != "" {
-				caps = registry.For(chain)
+				caps = app.CapabilitiesFor(app.Deps{}, chain)
 			} else {
-				caps = registry.All()
+				caps = app.Capabilities(app.Deps{})
 			}
 			return formatCapabilities(caps, chain), nil
 		},
@@ -99,7 +100,7 @@ func capabilitiesDiscoveryTool() Tool {
 }
 
 // formatCapabilities renders the capability tree (shared shape with the CLI).
-func formatCapabilities(caps []registry.Capability, chain string) string {
+func formatCapabilities(caps []app.Capability, chain string) string {
 	if len(caps) == 0 {
 		return "no capabilities registered"
 	}

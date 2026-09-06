@@ -6,8 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/internal/app"
-	"github.com/0xmhha/chainbench/internal/core/registry"
-	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
 func NewConsensus() *cobra.Command {
@@ -24,17 +22,13 @@ func NewConsensus() *cobra.Command {
 			if rpcURL == "" {
 				return fmt.Errorf("--rpc url is required")
 			}
-			p, err := app.ResolveChain(chain, manifestPath, templatePath)
+			res, err := app.Validators(cmd.Context(), deps(cmd), chain, manifestPath, templatePath, rpcURL)
 			if err != nil {
 				return err
 			}
-			method := p.Manifest().Consensus.ValidatorsMethod
-			vals, err := registry.Validators(cmd.Context(), rpc.Dial(rpcURL), method)
-			if err != nil {
-				return err
-			}
+			vals := res.Validators
 			out := cmd.OutOrStdout()
-			fmt.Fprintf(out, "validators (%s via %s): %d\n", p.Manifest().ID, method, len(vals))
+			fmt.Fprintf(out, "validators (%s via %s): %d\n", res.Chain, res.Method, len(vals))
 			for i, v := range vals {
 				fmt.Fprintf(out, "  %d. %s\n", i+1, v)
 			}

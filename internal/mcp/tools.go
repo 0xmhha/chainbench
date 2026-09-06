@@ -158,7 +158,7 @@ func consensusTool() Tool {
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			chain := argString(args, "chain", "stablenet")
-			p, err := registry.Get(chain)
+			p, err := app.Chain(app.Deps{}, chain)
 			if err != nil {
 				return "", err
 			}
@@ -184,8 +184,8 @@ func chainsTool() Tool {
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{}},
 		Handler: func(_ context.Context, _ map[string]any) (string, error) {
 			var b strings.Builder
-			for _, id := range registry.Names() {
-				p, err := registry.Get(id)
+			for _, id := range app.Chains(app.Deps{}) {
+				p, err := app.Chain(app.Deps{}, id)
 				if err != nil {
 					return "", err
 				}

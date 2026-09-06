@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
@@ -31,7 +32,7 @@ func consensusStatusTool() Tool {
 			if rpcURL == "" {
 				return "", fmt.Errorf("rpc is required")
 			}
-			p, err := registry.Get(chain)
+			p, err := app.Chain(app.Deps{}, chain)
 			if err != nil {
 				return "", err
 			}

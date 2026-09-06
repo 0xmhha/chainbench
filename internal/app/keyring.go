@@ -5,7 +5,10 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/operation"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"github.com/0xmhha/chainbench/internal/validatorset"
 )
 
 // The keyring verbs live in the keyring module; app wraps them thinly so that
@@ -114,3 +117,69 @@ func SaveKey(ctx context.Context, d Deps, key PrivateKey, in SaveKeyIn) (string,
 func GenerateKey(ctx context.Context, d Deps) (PrivateKey, error) {
 	return operation.GenerateKey(ctx, d.keyringDeps())
 }
+
+// The validator side of a key: what a chain's consensus family needs derived
+// from it, and the roster a composed network declares.
+
+type (
+	// Identity is a key's derived material: its address, its devp2p public key,
+	// and the BLS pair when the family needs one.
+	Identity = derive.Identity
+	// ValidatorSetOut is a key set's validator declaration as a network reads
+	// it.
+	ValidatorSetOut = validatorset.Roster
+	// GenerateSetIn shapes generating a preset key set.
+	GenerateSetIn = store.GenerateOpts
+	// GenerateSetOut describes what was generated.
+	GenerateSetOut = keyring.Preset
+)
+
+// DeriveIdentity derives what the chain's consensus family needs from a key.
+//
+// Which material that is — an account alone, or an account with BLS — is the
+// family's rule, not the caller's. Asking here is what keeps a surface from
+// deciding it, and two surfaces from deciding it differently.
+func DeriveIdentity(_ Deps, chain string, key PrivateKey) (IdentityOut, error) {
+	p, err := registry.Get(chain)
+	if err != nil {
+		return IdentityOut{}, err
+	}
+	family := p.Manifest().ConsensusFamily
+	id, err := derive.Derive(key, derivationFor(family))
+	if err != nil {
+		return IdentityOut{}, err
+	}
+	return IdentityOut{Identity: id, Family: family}, nil
+}
+
+// IdentityOut is a derived identity with the family that decided what to
+// derive, so a caller can report both without asking the registry again.
+type IdentityOut struct {
+	Identity
+	// Family is the chain's consensus family ("wbft", "poa", ...).
+	Family string
+}
+
+// derivationFor maps a consensus family to the material it needs.
+func derivationFor(family string) derive.Derivation {
+	if family == "wbft" {
+		return derive.WithBLS
+	}
+	return derive.AccountOnly
+}
+
+// ValidatorSetOf reads the validator declaration a key set carries.
+func ValidatorSetOf(_ Deps, chain, keysDir string) (ValidatorSetOut, error) {
+	return validatorset.Load(chain, keysDir)
+}
+
+// GenerateSet creates a preset key set, reporting each identity as it is made.
+func GenerateSet(_ Deps, in GenerateSetIn, report func(string)) (GenerateSetOut, error) {
+	return store.Generate(in, report)
+}
+
+// WithBLS is the derivation a wbft-family chain needs; AccountOnly is the rest.
+var (
+	WithBLS     = derive.WithBLS
+	AccountOnly = derive.AccountOnly
+)
