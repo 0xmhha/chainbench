@@ -163,6 +163,18 @@ func TestE2E_WbftQuorum6of6Halts2(t *testing.T) {
 		t.Fatalf("consensus kept producing with 2/6 validators down (quorum 5 not met)")
 	}
 	// Restart both: quorum restored, consensus resumes.
+	//
+	// This is where the scenario fails intermittently — measured 2026-09-05 as
+	// two failures in five runs, always the same way: the head is stuck at 2
+	// and never moves again inside two minutes. The halt above always works, so
+	// what is unreliable is the recovery, not the detection.
+	//
+	// It is recorded rather than softened. Raising the wait would only make the
+	// test take longer to report the same thing, and a chain that does not
+	// resume within two minutes of regaining quorum is worth knowing about
+	// whether or not it resumes eventually. The cause is in wbft's view change
+	// or its rejoin, not in the harness, and finding it needs the node logs
+	// rather than a longer sleep.
 	n.nodeStart(5)
 	n.nodeStart(6)
 	n.waitAdvancing(url, 120*time.Second)
