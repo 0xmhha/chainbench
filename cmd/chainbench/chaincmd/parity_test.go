@@ -22,6 +22,12 @@ func TestChainCommandSurface(t *testing.T) {
 	// Operational verbs the C decision keeps under chain rather than forcing
 	// into the dictionary.
 	operational := []string{"new", "status", "show", "stop", "restart", "resume", "rm", "logs", "health"}
+	// Authoring verbs write a declaration rather than act on a network. They
+	// are a fourth category rather than an operational verb because they touch
+	// no target at all: `blueprint` reads a key set and prints a document, and
+	// filing it with stop/rm would say it does something to a running chain
+	// (N5, network-blueprint-design.md §3.3).
+	authoring := []string{"blueprint"}
 
 	allowed := map[string]string{}
 	for _, n := range dictionary {
@@ -32,6 +38,9 @@ func TestChainCommandSurface(t *testing.T) {
 	}
 	for _, n := range operational {
 		allowed[n] = "operational"
+	}
+	for _, n := range authoring {
+		allowed[n] = "authoring"
 	}
 
 	got := map[string]bool{}

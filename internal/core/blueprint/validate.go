@@ -191,13 +191,24 @@ func (bp Blueprint) validateAlloc(declared map[string]bool) error {
 	return nil
 }
 
-// known reports the first reference that names no declared node.
+// known reports the first reference that names no node this document could
+// produce.
 //
-// It lists what IS declared. A reference that resolves to nothing is almost
-// always a typo, and the answer a person needs is the spelling they meant.
+// A reference resolves either to a name the document writes down or to a role
+// label, because a label is derived: `nodes: [{role: bp}]` yields bp1 whether or
+// not anyone typed the name. Rejecting bp1 there would refuse a document that
+// is exactly right, so the check accepts a well-formed label and leaves "is
+// there actually a bp1" to Resolve, which is where the node table exists.
+//
+// The error lists what IS declared, because a reference that resolves to
+// nothing is almost always a typo and the answer wanted is the intended
+// spelling.
 func known(declared map[string]bool, refs []string, where string) error {
 	for _, r := range refs {
 		if declared[r] {
+			continue
+		}
+		if _, _, err := node.ParseRoleLabel(node.Label(r)); err == nil {
 			continue
 		}
 		names := make([]string, 0, len(declared))
@@ -205,7 +216,7 @@ func known(declared map[string]bool, refs []string, where string) error {
 			names = append(names, n)
 		}
 		if len(names) == 0 {
-			return fmt.Errorf("blueprint: %s names node %q, but the document declares no named nodes", where, r)
+			return fmt.Errorf("blueprint: %s names node %q, which is neither a declared name nor a role label", where, r)
 		}
 		sort.Strings(names)
 		return fmt.Errorf("blueprint: %s names node %q; the document declares %s", where, r, strings.Join(names, ", "))

@@ -3,6 +3,7 @@ package dsl
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -107,6 +108,41 @@ func (s Spec) validate() error {
 	if s.SchemaVersion != supportedSchemaVersion {
 		return fmt.Errorf("dsl: unsupported schemaVersion %q (supported: %s)", s.SchemaVersion, supportedSchemaVersion)
 	}
+	return s.validateSequence()
+}
+
+// validateSequence rejects a step or an assertion that names nothing.
+//
+// Both used to be caught at run time, as `unknown action ""` or `unknown
+// assertion ""`, which is after the network is composed and launched and with
+// no file or index in the message. `validate` exists to tell an author what is
+// wrong with their document before any of that, and a spec it passes that
+// cannot run is the one thing it must not do. The v2 grammar already refuses
+// the same shapes ("statement needs do or expect"); this is v1 catching up.
+//
+// A fuzz run found it: migrating {"assertions":[{}]} produced a v2 document its
+// own parser rejected, which is only possible because the v1 side let it in.
+func (s Spec) validateSequence() error {
+	for i, st := range s.Steps {
+		switch len(st) {
+		case 1:
+			if ActionName(st) == "" {
+				return fmt.Errorf("dsl: step %d has an empty action name", i+1)
+			}
+		case 0:
+			return fmt.Errorf("dsl: step %d names no action", i+1)
+		default:
+			// One entry, one action. Two keys in a step map means the action
+			// is whichever the map iterates to first, so the same file would
+			// run differently on two days.
+			return fmt.Errorf("dsl: step %d names %d actions (%s) — one step is one action", i+1, len(st), strings.Join(stepKeys(st), ", "))
+		}
+	}
+	for i, as := range s.Assertions {
+		if name, _ := as["assert"].(string); name == "" {
+			return fmt.Errorf("dsl: assertion %d names no check — give it an \"assert\"", i+1)
+		}
+	}
 	return nil
 }
 
@@ -132,4 +168,15 @@ func (s Spec) Get(dotPath string) (any, bool) {
 		}
 	}
 	return cur, true
+}
+
+// stepKeys names a step map's keys in a fixed order, so an error message reads
+// the same twice.
+func stepKeys(m map[string]any) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }

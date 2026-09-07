@@ -150,16 +150,16 @@ func ExtendAt(ctx context.Context, opts GenerateOpts, progress func(string)) (ke
 	return generate(ctx, existing, opts, progress)
 }
 
-// Import adds a key the caller already holds to the ring in dir, under label.
+// ImportAt adds a key the caller already holds to the ring in dir, under label,
+// against files (nil = local).
 //
 // It writes the entry into the ring's index, not into a directory beside it: an
 // identity that the index does not list is one that `list` and `show` cannot
 // see and a network cannot use, which is worse than not importing it at all.
-func Import(dir string, label keyring.Label, key derive.PrivateKey, d derive.Derivation) (keyring.Entry, error) {
-	return ImportAt(context.Background(), nil, dir, label, key, d)
-}
-
-// ImportAt is Import against files (nil = local).
+//
+// The context-free Import wrapper that stood beside it is gone (A8): nothing
+// called it, and its name collided with operation.Import, which is the verb a
+// surface actually reaches for.
 func ImportAt(ctx context.Context, files filestore.Store, dir string, label keyring.Label, key derive.PrivateKey, d derive.Derivation) (keyring.Entry, error) {
 	if files == nil {
 		files = filestore.Local{}

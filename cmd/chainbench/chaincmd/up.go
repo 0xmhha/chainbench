@@ -15,18 +15,18 @@ import (
 // in the app layer, shared with the MCP tool.
 func newNetUpCmd() *cobra.Command {
 	var (
-		dataDir, chain, binary, keysDir       string
-		manifestPath, templatePath            string
-		validators, endpoints                 int
-		endpointSyncMode, topologyPath, stage string
-		keysSource, bootnode                  string
-		chainID                               int64
-		genesisSet, launchSet, binaries       []string
-		overlayPath                           string
-		peering                               string
-		docker                                bool
-		tf                                    targetFlags
-		sf                                    resourcecmd.ServerFlags
+		dataDir, chain, binary, keysDir                      string
+		manifestPath, templatePath                           string
+		validators, endpoints                                int
+		endpointSyncMode, topologyPath, blueprintPath, stage string
+		keysSource, bootnode                                 string
+		chainID                                              int64
+		genesisSet, launchSet, binaries                      []string
+		overlayPath                                          string
+		peering                                              string
+		docker                                               bool
+		tf                                                   targetFlags
+		sf                                                   resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "up",
@@ -51,7 +51,7 @@ func newNetUpCmd() *cobra.Command {
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
 				Validators: validators, Endpoints: endpoints,
-				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
+				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, BlueprintPath: blueprintPath, Peering: peering,
 				Binaries:   bins,
 				Server:     sf.Ref(),
 				Docker:     docker,
@@ -81,8 +81,9 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
 	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
 	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")
+	cmd.Flags().StringVar(&blueprintPath, "blueprint", "", "network declaration YAML: the layout AND the node keys in one document. With one, no key set is needed — it replaces --topology and --validators/--endpoints, and --keys-source defaults to declared")
 	cmd.Flags().StringVar(&peering, "peering", "", "peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)")
-	cmd.Flags().StringVar(&keysSource, "keys-source", "", "preset (default) or generate")
+	cmd.Flags().StringVar(&keysSource, "keys-source", "", "preset (default), generate, or declared (with --blueprint)")
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
 	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "override the manifest chain id (0 = manifest)")
