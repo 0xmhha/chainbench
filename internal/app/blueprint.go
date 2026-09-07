@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // BlueprintFromPresetIn names the key set to describe and the network to
@@ -56,6 +57,41 @@ func BlueprintFromPreset(ctx context.Context, _ Deps, in BlueprintFromPresetIn) 
 		Producers: in.Producers, Endpoints: in.Endpoints,
 		Binary: in.Binary, Peering: in.Peering,
 	})
+	if err != nil {
+		return BlueprintFromPresetOut{}, err
+	}
+	raw, err := blueprint.Marshal(bp)
+	if err != nil {
+		return BlueprintFromPresetOut{}, err
+	}
+	return BlueprintFromPresetOut{YAML: raw, Nodes: len(bp.Nodes)}, nil
+}
+
+// BlueprintFromTopologyIn names the older layout file to rewrite.
+type BlueprintFromTopologyIn struct {
+	// Path is the topology YAML.
+	Path string
+	// Binary is the node executable to record, which a topology cannot say.
+	Binary string
+	// Peering is the peer graph to record, which a topology cannot say either.
+	Peering string
+}
+
+// BlueprintFromTopology rewrites a node layout as a network declaration.
+//
+// It is the other half of N6's absorption. A blueprint is a strict superset of
+// a topology, so an existing layout can move to the wider format without being
+// hand-translated, which is what lets both be read during the transition
+// instead of needing a flag day.
+func BlueprintFromTopology(_ context.Context, _ Deps, in BlueprintFromTopologyIn) (BlueprintFromPresetOut, error) {
+	if in.Path == "" {
+		return BlueprintFromPresetOut{}, fmt.Errorf("app: blueprint: name the topology to rewrite")
+	}
+	topo, err := node.Load(in.Path)
+	if err != nil {
+		return BlueprintFromPresetOut{}, err
+	}
+	bp, err := blueprint.FromTopology(topo, blueprint.FromTopologyIn{Binary: in.Binary, Peering: in.Peering})
 	if err != nil {
 		return BlueprintFromPresetOut{}, err
 	}

@@ -13,7 +13,7 @@ import (
 // an operator can read and edit. Rendering and file writing only — the
 // generation goes through app.BlueprintFromPreset.
 func newBlueprintCmd() *cobra.Command {
-	var keysDir, chain, manifest, binary, peering, out string
+	var keysDir, fromTopology, chain, manifest, binary, peering, out string
 	var producers, endpoints int
 	cmd := &cobra.Command{
 		Use:   "blueprint",
@@ -23,15 +23,31 @@ func newBlueprintCmd() *cobra.Command {
 			"inspectable in between. This writes the middle out: a document that says what\n" +
 			"will be launched, which you can read, diff, edit and commit, and then compose\n" +
 			"with `chain up --blueprint`.\n\n" +
-			"The keys are referenced by path, never copied into the document.",
+			"The keys are referenced by path, never copied into the document.\n\n" +
+			"--from-topology rewrites the older per-node layout format instead. A blueprint\n" +
+			"is a strict superset of it, so nothing is lost; a field with nowhere to land is\n" +
+			"reported rather than dropped.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if keysDir == "" {
-				return fmt.Errorf("--from-preset is required: name the key set to describe")
+			switch {
+			case keysDir != "" && fromTopology != "":
+				return fmt.Errorf("--from-preset and --from-topology describe different things — give one")
+			case keysDir == "" && fromTopology == "":
+				return fmt.Errorf("name what to describe: --from-preset <dir> or --from-topology <file>")
 			}
-			res, err := app.BlueprintFromPreset(cmd.Context(), deps(cmd), app.BlueprintFromPresetIn{
-				KeysDir: keysDir, Chain: chain, Manifest: manifest,
-				Producers: producers, Endpoints: endpoints, Binary: binary, Peering: peering,
-			})
+			var (
+				res app.BlueprintFromPresetOut
+				err error
+			)
+			if fromTopology != "" {
+				res, err = app.BlueprintFromTopology(cmd.Context(), deps(cmd), app.BlueprintFromTopologyIn{
+					Path: fromTopology, Binary: binary, Peering: peering,
+				})
+			} else {
+				res, err = app.BlueprintFromPreset(cmd.Context(), deps(cmd), app.BlueprintFromPresetIn{
+					KeysDir: keysDir, Chain: chain, Manifest: manifest,
+					Producers: producers, Endpoints: endpoints, Binary: binary, Peering: peering,
+				})
+			}
 			if err != nil {
 				return err
 			}
@@ -48,11 +64,16 @@ func newBlueprintCmd() *cobra.Command {
 			if err := os.WriteFile(out, res.YAML, 0o644); err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s: %d node(s) from %s\n", out, res.Nodes, keysDir)
+			from := keysDir
+			if fromTopology != "" {
+				from = fromTopology
+			}
+			fmt.Fprintf(cmd.ErrOrStderr(), "wrote %s: %d node(s) from %s\n", out, res.Nodes, from)
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&keysDir, "from-preset", "", "key set to describe (required)")
+	cmd.Flags().StringVar(&keysDir, "from-preset", "", "key set to describe")
+	cmd.Flags().StringVar(&fromTopology, "from-topology", "", "topology YAML to rewrite as a declaration (the wider format carries everything it says)")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id to record (stablenet|wbft|wemix)")
 	cmd.Flags().StringVar(&manifest, "manifest", "", "external chain manifest to record instead of --chain")
 	cmd.Flags().IntVar(&producers, "bp", 0, "block producers (default: every identity the set declares as a validator)")
