@@ -223,15 +223,23 @@ func peeringOf(bp *blueprint.Blueprint, flag string) string {
 }
 
 // NetGenesisIn customizes the built genesis.
+//
+// The cb tags are what a surface renders this from: one declaration behind the
+// cobra flags a person types and the JSON schema an agent reads, so the two
+// cannot describe the same argument differently (feature.Flags / feature.Schema,
+// surface-unification-design §3.2). They are inert until a surface reads them —
+// this struct is unchanged otherwise — and TestNetGenesis_TagsMatchTheCommand
+// holds them to the flags the command declares by hand today, so the derivation
+// is proven to reproduce the shipped surface before anything switches to it.
 type NetGenesisIn struct {
-	DataDir string
-	ChainID int64
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	ChainID int64  `cb:"chain-id"               help:"override the manifest chain id (0 = manifest)"`
 	// Set carries genesis config overrides as key=value on the bare config key,
 	// e.g. "bohoBlock=10" to move a fork off genesis.
-	Set []string
+	Set []string `cb:"set" help:"override a genesis config key (repeatable), e.g. --set bohoBlock=10"`
 	// OverlayPath is a JSON overlay file {capabilities, genesis}: the genesis
 	// fragment is deep-merged and the capabilities are advertised.
-	OverlayPath string
+	OverlayPath string `cb:"overlay" help:"JSON overlay file {capabilities,genesis} deep-merged into the genesis"`
 }
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
