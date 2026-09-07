@@ -20,8 +20,9 @@ import (
 // migration is in flight is one more thing to move later, and one more chance
 // for the three surfaces to describe it three ways.
 //
-// Measured 2026-09-08. Lower it as features register; never raise it.
-const unregistered = 80
+// Measured 2026-09-08, after S1 registered the thirteen compose features.
+// Lower it as more register; never raise it.
+const unregistered = 67
 
 // TestRegistry_CoversMoreOfAppEachTime counts the use cases in internal/app and
 // holds the unregistered remainder to a ceiling that only comes down.

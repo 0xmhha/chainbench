@@ -3,7 +3,6 @@ package feature_test
 import (
 	"context"
 	"reflect"
-	"sort"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -148,10 +147,15 @@ func TestRegister_KeepsTheTypes(t *testing.T) {
 		t.Errorf("out = %v, want the input's data dir", out)
 	}
 
-	queries := feature.Queries()
-	sort.Strings(queries)
-	if len(queries) == 0 || queries[0] != "probe.echo" {
-		t.Errorf("Queries() = %v, want it to hold the read-only feature", queries)
+	// Queries holds every read-only feature, this probe among the real ones.
+	var found bool
+	for _, q := range feature.Queries() {
+		if q == "probe.echo" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("Queries() = %v, want it to hold the read-only probe", feature.Queries())
 	}
 }
 

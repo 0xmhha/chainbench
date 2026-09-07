@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -21,6 +22,13 @@ import (
 const (
 	Tag     = "cb"
 	HelpTag = "help"
+	// DefaultTag is the value a surface offers when the caller says nothing.
+	//
+	// It is separate from the zero value because they are different facts:
+	// `--validators` defaults to 4 and zero validators is not a network, while
+	// `--endpoints` defaults to 0 and means it. Deriving one from the other
+	// would have silently changed what `chain place` does.
+	DefaultTag = "default"
 )
 
 // field is one input field as the tags describe it.
@@ -36,6 +44,8 @@ type field struct {
 	// schema agree about what they hold.
 	Elem  reflect.Kind
 	Index int
+	// Default is the tag's literal, empty when the field simply starts at zero.
+	Default string
 }
 
 // fieldsOf reads the tagged fields of an input struct.
@@ -68,6 +78,7 @@ func fieldsOf(in any) ([]field, error) {
 				f.Required = true
 			}
 		}
+		f.Default = sf.Tag.Get(DefaultTag)
 		if f.Kind == reflect.Slice {
 			f.Elem = sf.Type.Elem().Kind()
 		}
@@ -94,13 +105,21 @@ func Flags(in any, fs *pflag.FlagSet) error {
 		target := v.Field(f.Index).Addr().Interface()
 		switch f.Kind {
 		case reflect.String:
-			fs.StringVar(target.(*string), f.Name, "", f.Help)
+			fs.StringVar(target.(*string), f.Name, f.Default, f.Help)
 		case reflect.Bool:
-			fs.BoolVar(target.(*bool), f.Name, false, f.Help)
+			fs.BoolVar(target.(*bool), f.Name, f.Default == "true", f.Help)
 		case reflect.Int:
-			fs.IntVar(target.(*int), f.Name, 0, f.Help)
+			n, err := f.intDefault()
+			if err != nil {
+				return err
+			}
+			fs.IntVar(target.(*int), f.Name, int(n), f.Help)
 		case reflect.Int64:
-			fs.Int64Var(target.(*int64), f.Name, 0, f.Help)
+			n, err := f.intDefault()
+			if err != nil {
+				return err
+			}
+			fs.Int64Var(target.(*int64), f.Name, n, f.Help)
 		case reflect.Slice:
 			if f.Elem != reflect.String {
 				return fmt.Errorf("feature: %s is a slice of %s; only strings repeat as flags", f.Name, f.Elem)
@@ -111,6 +130,20 @@ func Flags(in any, fs *pflag.FlagSet) error {
 		}
 	}
 	return nil
+}
+
+// intDefault reads a numeric default, refusing one that is not a number rather
+// than starting the flag at zero and letting the difference surface as a
+// network of the wrong size.
+func (f field) intDefault() (int64, error) {
+	if f.Default == "" {
+		return 0, nil
+	}
+	n, err := strconv.ParseInt(f.Default, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("feature: %s has default %q, which is not a number", f.Name, f.Default)
+	}
+	return n, nil
 }
 
 // Schema renders an input's tagged fields as a JSON schema, the shape MCP
@@ -133,6 +166,9 @@ func Schema(in any, readOnly bool) (map[string]any, error) {
 		}
 		if f.Help != "" {
 			p["description"] = f.Help
+		}
+		if f.Default != "" {
+			p["default"] = f.Default
 		}
 		props[f.Name] = p
 		if f.Required {
