@@ -177,6 +177,12 @@
 | ⑧ | run(살아 있는 체인) | 초기화+기동 | — | `chain init`·`chain start` | `NetInit`·`NetStart` |
 | — | 전체 | ①~⑧ 한 번에 | 케이스 실행이 곧 이것 | `chain up` | `NetUp` |
 
+**저작 verb (2026-09-07, N5 추가):** `chain blueprint` 는 사전에도 운영에도 들지 않는 네 번째
+갈래다. 대상을 건드리지 않고 키 세트를 읽어 선언 문서를 찍어 낸다. 조립이 `preset → (내부 조립)
+→ 네트워크` 라서 가운데를 볼 수도 고칠 수도 없던 것을 `preset → 청사진 → 네트워크` 로 뒤집는
+일이고([[network-blueprint-design]] §3.3), 그 청사진은 `chain up --blueprint` 가 먹는다.
+`stop`·`rm` 과 같은 칸에 넣으면 도는 체인에 무언가를 한다고 말하는 셈이라 갈래를 나눴다.
+
 **공유 코어 원칙(C4):** CLI 의 각 `chain <stage>` 와 DSL(케이스 실행 `testengine.RunSuite`
 → `compositionOf` → `NetUp`)은 **같은 chainsetup verb** 로 수렴한다. 두 표면은 병렬 구현을
 갖지 않는다. `chaincmd` 의 `TestChainCommandSurface` 가 chain 명령 집합을 이 사전 + 운영
