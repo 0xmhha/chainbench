@@ -154,7 +154,13 @@ type ReportDoc = report.Report
 // what they share: prefer the persisted report.json, and fall back to building
 // it from session.json so a run recorded before report.json existed still
 // shows.
-func Report(_ Deps, dir string) (ReportDoc, error) {
+// ReportIn names the session to read.
+type ReportIn struct {
+	Dir string `cb:"workspace-dir,required" help:"session directory, or a root holding sessions"`
+}
+
+func Report(_ context.Context, _ Deps, in ReportIn) (ReportDoc, error) {
+	dir := in.Dir
 	sessionDir := dir
 	if ids, _ := session.List(dir); len(ids) > 0 {
 		sessionDir = session.SessionDir(dir, ids[len(ids)-1])

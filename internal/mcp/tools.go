@@ -92,7 +92,7 @@ func reportTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			rep, err := app.Report(app.Deps{}, dir)
+			rep, err := app.Report(context.Background(), app.Deps{}, app.ReportIn{Dir: dir})
 			if err != nil {
 				return "", err
 			}
@@ -350,12 +350,15 @@ func logTool() Tool {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexp, _ := args["regexp"].(bool)
-			matches, err := app.LogSearch(app.Deps{}, dir, app.LogSearchIn{
-				Pattern: argString(args, "pattern", ""),
-				Regexp:  regexp,
-				Node:    argInt(args, "node", 0),
-				Level:   argString(args, "level", ""),
-				Limit:   argInt(args, "limit", 0),
+			matches, err := app.LogSearch(context.Background(), app.Deps{}, app.LogSearchIn{
+				Dir: dir,
+				SearchOpts: app.LogSearchFilter{
+					Pattern: argString(args, "pattern", ""),
+					Regexp:  regexp,
+					Node:    argInt(args, "node", 0),
+					Level:   argString(args, "level", ""),
+					Limit:   argInt(args, "limit", 0),
+				},
 			})
 			if err != nil {
 				return "", err

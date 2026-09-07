@@ -42,8 +42,10 @@ type field struct {
 	Kind     reflect.Kind
 	// Elem is the element kind for a slice, so a repeated flag and an array
 	// schema agree about what they hold.
-	Elem  reflect.Kind
-	Index int
+	Elem reflect.Kind
+	// Path is the index chain to the field, so an embedded struct's field is
+	// reachable the same way a top-level one is.
+	Path []int
 	// Default is the tag's literal, empty when the field simply starts at zero.
 	Default string
 }
@@ -61,15 +63,33 @@ func fieldsOf(in any) ([]field, error) {
 	if t == nil || t.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("feature: an input is a struct, got %T", in)
 	}
+	return fieldsOfType(t, nil)
+}
+
+// fieldsOfType reads one struct's tagged fields, path being how it was reached
+// from the input's top level.
+func fieldsOfType(t reflect.Type, path []int) ([]field, error) {
 	var out []field
 	for i := 0; i < t.NumField(); i++ {
 		sf := t.Field(i)
+		// An embedded struct contributes its own tagged fields, so a block of
+		// options shared by several inputs is declared once and embedded
+		// rather than copied into each — which is how two declarations of one
+		// field start disagreeing.
+		if sf.Anonymous && sf.Type.Kind() == reflect.Struct {
+			inner, err := fieldsOfType(sf.Type, append(path, i))
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, inner...)
+			continue
+		}
 		tag, ok := sf.Tag.Lookup(Tag)
 		if !ok || tag == "-" || !sf.IsExported() {
 			continue
 		}
 		parts := strings.Split(tag, ",")
-		f := field{Name: parts[0], Help: sf.Tag.Get(HelpTag), Kind: sf.Type.Kind(), Index: i}
+		f := field{Name: parts[0], Help: sf.Tag.Get(HelpTag), Kind: sf.Type.Kind(), Path: append(append([]int(nil), path...), i)}
 		if f.Name == "" {
 			return nil, fmt.Errorf("feature: field %s has an empty %s name", sf.Name, Tag)
 		}
@@ -102,7 +122,7 @@ func Flags(in any, fs *pflag.FlagSet) error {
 	}
 	v = v.Elem()
 	for _, f := range fields {
-		target := v.Field(f.Index).Addr().Interface()
+		target := v.FieldByIndex(f.Path).Addr().Interface()
 		switch f.Kind {
 		case reflect.String:
 			fs.StringVar(target.(*string), f.Name, f.Default, f.Help)

@@ -28,7 +28,7 @@ func NewReport() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			rep, err := app.Report(deps(cmd), dataDir)
+			rep, err := app.Report(cmd.Context(), deps(cmd), app.ReportIn{Dir: dataDir})
 			if err != nil {
 				return err
 			}

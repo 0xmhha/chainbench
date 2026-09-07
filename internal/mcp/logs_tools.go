@@ -30,18 +30,21 @@ func logTimelineTool() Tool {
 			},
 			"required": []string{"workspaceDir"},
 		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			dir := argString(args, "workspaceDir", "")
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexpMode, _ := args["regexp"].(bool)
-			matches, err := app.LogTimeline(app.Deps{}, dir, app.LogSearchIn{
-				Pattern: argString(args, "pattern", ""),
-				Regexp:  regexpMode,
-				Node:    argInt(args, "node", 0),
-				Level:   argString(args, "level", ""),
-				Limit:   argInt(args, "limit", 0),
+			matches, err := app.LogTimeline(ctx, app.Deps{}, app.LogSearchIn{
+				Dir: dir,
+				SearchOpts: app.LogSearchFilter{
+					Pattern: argString(args, "pattern", ""),
+					Regexp:  regexpMode,
+					Node:    argInt(args, "node", 0),
+					Level:   argString(args, "level", ""),
+					Limit:   argInt(args, "limit", 0),
+				},
 			})
 			if err != nil {
 				return "", err
