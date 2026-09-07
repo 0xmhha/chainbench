@@ -9,7 +9,7 @@
     { "newAccount": { "save": "sender", "saveKey": "senderKey" } },
     { "newAccount": { "save": "feePayer", "saveKey": "feePayerKey" } },
 
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "$sender",
                   "value": "10000000000000000000", "gas": "21000",

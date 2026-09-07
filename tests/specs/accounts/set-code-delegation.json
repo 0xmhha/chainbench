@@ -8,7 +8,7 @@
   "steps": [
     { "newAccount": { "save": "sponsor", "saveKey": "sponsorKey" } },
     { "newAccount": { "save": "authority", "saveKey": "authorityKey" } },
-    { "sendTx": { "on": "en1", "from": "node1",
+    { "sendTx": { "on": "node1", "from": "node1",
                   "to": "$sponsor", "value": "30000000000000000000", "gas": "21000", "save": "fundHash" } },
 
     { "sendSetCode": { "on": "en1", "key": "$sponsorKey", "authorityKey": "$authorityKey",

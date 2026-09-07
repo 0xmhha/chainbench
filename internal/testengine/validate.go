@@ -109,6 +109,10 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 		r.Result = "INVALID SELECTOR: " + strings.Join(bad, ", ")
 		return r
 	}
+	if bad := misdirectedSends(s); len(bad) > 0 {
+		r.Result = "MISDIRECTED SEND: " + strings.Join(bad, "; ")
+		return r
+	}
 	r.OK, r.Result = true, specResult(s, chain, caps)
 	return r
 }
@@ -126,8 +130,63 @@ func Precheck(specs []dsl.Spec) error {
 		if bad := malformedSelectors(s); len(bad) > 0 {
 			return fmt.Errorf("spec %s has malformed node selectors: %s", s.ID, strings.Join(bad, ", "))
 		}
+		if bad := misdirectedSends(s); len(bad) > 0 {
+			return fmt.Errorf("spec %s sends from a node account through a different node: %s", s.ID, strings.Join(bad, "; "))
+		}
 	}
 	return nil
+}
+
+// misdirectedSends reports steps that ask one node to sign with another's key.
+//
+// A "nodeN" sender is the node's own account, unlocked on that node and signed
+// there — the harness holds no key for it, by design. So a step that names
+// from: nodeN has to be submitted to nodeN: sent anywhere else the receiving
+// node is asked to sign for an account it does not hold, and answers "unknown
+// account".
+//
+// Only a node account is constrained. A step that carries a raw key signs here
+// and submits the signed bytes, which any node accepts — which is why sending
+// through an endpoint is the normal shape for those.
+//
+// This is caught offline because the runtime symptom does not name the cause.
+// Measured 2026-09-06: specs paired on: enN with from: nodeN and worked only
+// because attaching flattened every node to "endpoint", making en1 resolve to
+// node1. With the roles kept, en1 is the endpoint and the send fails.
+func misdirectedSends(s dsl.Spec) []string {
+	var bad []string
+	seen := map[string]bool{}
+	for _, st := range dsl.SequenceOf(s) {
+		from, ok := st.Args["from"].(string)
+		if !ok || !nodeAccount(from) {
+			continue
+		}
+		on, ok := st.Args["on"].(string)
+		if !ok || on == "" || on == from {
+			continue
+		}
+		what := st.Do
+		if what == "" {
+			what = st.Expect
+		}
+		msg := fmt.Sprintf("%s from %s on %s (send it on %s, or sign here with a key)", what, from, on, from)
+		if seen[msg] {
+			continue
+		}
+		seen[msg] = true
+		bad = append(bad, msg)
+	}
+	return bad
+}
+
+// nodeAccount reports whether a sender names a node's own account.
+func nodeAccount(ref string) bool {
+	n, ok := strings.CutPrefix(ref, "node")
+	if !ok {
+		return false
+	}
+	v, err := strconv.Atoi(n)
+	return err == nil && v >= 1
 }
 
 // malformedSelectors returns the on/onEach/defaultOn selectors in a spec that

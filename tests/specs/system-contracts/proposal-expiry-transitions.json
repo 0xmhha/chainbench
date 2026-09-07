@@ -6,7 +6,7 @@
   "requires": ["rpc", "short-expiry"],
   "steps": [
     { "read": { "source": "derive", "op": "abiCall", "selector": "0xeeaf6816", "of": ["30000000000001"], "save": "propData" } },
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "0x0000000000000000000000000000000000001001",
                   "gas": "0x16e360",
@@ -22,7 +22,7 @@
                    "timeout": "90s", "pollInterval": "2s" } },
 
     { "read": { "source": "derive", "op": "abiCall", "selector": "0xe1b526b0", "of": ["$pid"], "save": "expData" } },
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "0x0000000000000000000000000000000000001001",
                   "gas": "0x16e360",

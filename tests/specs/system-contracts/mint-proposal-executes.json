@@ -7,7 +7,7 @@
   "steps": [
     { "read": { "source": "balanceAt", "address": "0x00000000000000000000000000000000C0FFEE05", "save": "b0" } },
     { "read": { "source": "derive", "op": "sum", "of": ["$b0", "1000000000000000000"], "save": "want" } },
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "0x0000000000000000000000000000000000001003",
                   "gas": "0x16e360",
@@ -17,7 +17,7 @@
                 "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
                 "topic": 1, "save": "pid" } },
     { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$pid"], "save": "approveData" } },
-    { "sendTx": { "on": "en2",
+    { "sendTx": { "on": "node2",
                   "from": "node2",
                   "to": "0x0000000000000000000000000000000000001003",
                   "gas": "0x16e360",

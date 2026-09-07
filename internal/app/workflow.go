@@ -47,6 +47,10 @@ type AttachRunIn struct {
 	KeysDir string
 	// Specs are raw DSL JSON blobs (already env-resolved).
 	Specs [][]byte
+	// Nodes is the network as its composer recorded it, with the roles a spec
+	// addresses by. Set from DataDir; a caller who names endpoints has no such
+	// record and gets the roleless table attach has always used.
+	Nodes NodeSet
 	// Bus receives orchestration events; nil disables emission.
 	//
 	// A bus rather than a dashboard URL because the dashboard is itself a
@@ -77,8 +81,9 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 		if len(res.Nodes.Nodes) == 0 {
 			return "", fmt.Errorf("app: attach run: %s composed no nodes to attach to", in.DataDir)
 		}
-		// What the workspace says wins over what the caller assumed: it is the
-		// record of the network that actually came up.
+		// The whole record, not a list of URLs. Flattening it loses the roles,
+		// and a spec that names "en1" then reaches whichever node came first.
+		in.Nodes = res.Nodes
 		in.RPCURLs = nil
 		for _, n := range res.Nodes.Nodes {
 			if n.RPCURL != "" {
@@ -99,7 +104,7 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,
 		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock,
-		KeysDir: in.KeysDir, Bus: in.Bus,
+		KeysDir: in.KeysDir, Bus: in.Bus, Nodes: in.Nodes,
 	})
 	if err != nil {
 		return "", fmt.Errorf("app: attach run: %w", err)
