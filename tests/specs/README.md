@@ -390,11 +390,11 @@ system-contracts (+8 spec) → gstable 5노드(Boho-v2 fresh, 8611-8615): 각 pa
 
 | 레거시 케이스 | 문제 | 이관본에서의 처리 |
 |---|---|---|
-| `wbft-extra-info-fields` | `istanbul_getWbftExtraInfo` 를 **`"latest"` 태그로 호출** — 체인이 `block -2 not found` 로 거부한다. 구체적 블록 번호가 필요 | 헤드를 먼저 읽어(`read` + `$head`) 넘긴다 |
-| `wbft-extra-info-fields` | `ChainCompat: [stablenet, wbft]` 인데 **`gasTip` 은 stablenet 전용** — wbft 응답에 그 필드가 없다 | 공통 필드(`committedSeal`·`preparedSeal`)만 양 체인 대상으로 남기고, `gasTip` 은 `stablenet-gastip-field.json` 으로 분리 |
+| ~~`wbft-extra-info-fields`~~ ✅ **이관 완료(2026-09-07 재확인)** — 이관 완료(2026-09-07 확인, 검증 통과) | — | 헤드를 먼저 읽어(`read` + `$head`) 넘긴다 |
+| ~~`wbft-extra-info-fields`~~ ✅ **이관 완료(2026-09-07 재확인)** — 이관 완료(2026-09-07 확인, 검증 통과) | — | 공통 필드(`committedSeal`·`preparedSeal`)만 양 체인 대상으로 남기고, `gasTip` 은 `stablenet-gastip-field.json` 으로 분리 |
 | `p256-precompile-active` (hardfork) | 소스는 "stablenet 이 Boho 를 genesis 활성 → 0x100 P256VERIFY 가 valid 벡터에 `0x..01` 반환"을 단언하나, **실제 gstable 빌드는 0x100 에 대해 `"0x"` 반환** — precompile 미탑재. accounts secp256r1 3건과 동일 증상 | 라이브 반증으로 이관 보류. Boho/P256 탑재 바이너리 확보 여부를 체인팀에 확인 후 재분류 |
 | `govbind.BurnDepositRefundedTopic` (binding) | 상수가 `0x334fe3ea…`(=`BurnDepositRefunded(address,uint256,uint256)`)로 **파라미터 순서가 틀렸다**. 라이브 v2 넷에서 cancel 은 `0x116044c8…`(=`BurnDepositRefunded(uint256,address,uint256)` — proposalId 가 첫 indexed)을 방출. 레거시 `tests/anzeon/gov_burn_refund.go:197` 이 이 상수로 cancel 영수증을 검사하므로 v2 넷 대상 실행 시 실패했을 것 | 라이브로 확인한 `0x116044c8…` 으로 상수 교체 + 유닛테스트를 `EventTopic("BurnDepositRefunded(uint256,address,uint256)")` 파생 검증으로 강화(len==66 → 정확 매칭). BurnRefundClaimed 는 기존 그대로 정확 |
-| `system-contracts-deployed` (system-contracts) | `eth_getCode ≠ "0x"` 를 **8개 시스템 주소 전체**에 걸었으나, `0xB00001-3`(bls-pop·native-coin-manager·account-manager)은 **네이티브 precompile** — `getCode` 는 `"0x"`(빈 코드)를 반환하고 `eth_call` 로만 응답한다. getCode 로 "배포" 여부를 판정하는 건 precompile 엔 부적절 | EVM 바이트코드 계약 5종(0x1000-0x1004)만 codeAt 로 판정. precompile 은 각자의 read 케이스(account-*-readable 등)로 활성 확인 |
+| ~~`system-contracts-deployed`~~ ✅ **이관 완료(2026-09-07 재확인)** — 이관 완료(2026-09-07 확인, 검증 통과) | — | EVM 바이트코드 계약 5종(0x1000-0x1004)만 codeAt 로 판정. precompile 은 각자의 read 케이스(account-*-readable 등)로 활성 확인 |
 | `tipcap-underpriced-rejected` (gas-policy) | 소스는 "유효 feeCap + tipCap=1 wei 는 MinTip 미만 → ErrUnderpriced 로 제출거부"를 단언하나, **실제 gstable 빌드는 이 tx 를 수락·채굴**(블록 0x18, status 0x1, maxPriorityFeePerGas=0x1). 이 빌드는 제출 시점에 MinTip 을 강제하지 않는다 — p256 3건과 동일한 라이브 반증 유형 | 이관 보류(삭제). MinTip 강제 빌드/설정 확보 여부를 체인팀에 확인 후 재분류. 현 빌드로는 표현해도 무의미 |
 | `stablenet-fee-boundary` (examples, 문법예시) | ① below-min tx 에 `expectRevert:true` 를 썼으나 실제로는 **제출거부**(채굴 후 revert 아님) — feecap-below-min-rejected 로 라이브 확정. ② "accepted" tx 가 feeCap 을 1e12 로 하드코딩했는데 이 네트워크 최소치는 2e13 이라 **이것마저 거부**됨 | ① `expect:"reject"` 로 교정. ② baseFee 를 읽어 `derive sum [$base,$base]` 로 feeCap 을 산출해 주입 → 수정 후 라이브 pass |
 
@@ -402,13 +402,25 @@ system-contracts (+8 spec) → gstable 5노드(Boho-v2 fresh, 8611-8615): 각 pa
 
 ## 이관하지 않은 것과 그 이유
 
+> **재측정 2026-09-07 (P8).** 이 절과 아래 카테고리별 표가 낡아 있었다. 갭에 막혔다고 적힌 19건 중
+> **15건에 이미 스펙이 있고 전부 검증을 통과한다.** 없다고 적힌 프리미티브가 그동안 다 생겼기 때문이다 —
+> 로그를 유발하기 전에 구독을 여는 `wsOpen`, 손상된 이중서명을 조립하는 `sendRawTampered`,
+> EIP-7702 의 `sendSetCode`, 로컬 키를 만드는 `newAccount`, "오류는 나도 되지만 not-found 는 아니다"를
+> 묻는 `methodPresent`, revert 를 기대하는 `callError`, ceil(2n/3) 을 계산하는 `derive op:"quorum"`.
+>
+> 불완전한 문서보다 나쁜 상태였다. 이걸 보고 계획하면 끝난 일을 다시 하고, 커버리지를 감사하면
+> 실제보다 얇다고 믿게 된다. 그래서 이제 **`TestSpecDoc_BlockedCasesHaveNoSpec` 이 이 주장을 검사한다**:
+> 막혔다고 적힌 케이스에 스펙이 있으면 실패한다. 다시 낡으면 CI 가 말한다.
+>
+> 레거시 등록부(`testkit.Cases()`)는 2026-09-06 에 사라졌다(A5). 그래서 위 "이관 현황"의 134/56 같은
+> 숫자는 더 이상 다시 뽑을 수 없다. 기준은 커밋된 스펙 **122개**이고, 전부 `chainbench validate` 를 통과한다.
+
+**남은 4건과 그 이유** — 갭이 아직 유효하다.
+
 | 레거시 케이스 | 왜 |
 |---|---|
-| `ws-subscribe-logs` | **구독을 먼저 열고 그 다음 로그를 유발**해야 하는데, 어세션은 스텝 뒤에 실행되므로 이미 늦다. 현재 DSL 로는 순서를 표현할 수 없다 — 가짜로 만들지 않고 갭으로 남긴다 |
-| ~~`block-period-one-second`~~ | ✅ **이관 완료** — `parentHash` 로 헤드에서 두 단계 되짚어 인접 블록 타임스탬프를 얻고 `derive`(diff)==blockPeriod(1) 로 검증. 파생 블록번호를 hex RPC 파라미터로 되먹일 수 없는 갭을 hash 워크로 우회 |
-| `epoch-transition-carries-epoch-info` | 에폭 경계까지 대기 후 그 블록을 조회해야 한다. 조건부 대기 표현이 없다 |
-| `validator-set-count` | 검증자 수를 **토폴로지에서 파생**해 비교한다. spec 이 자기 토폴로지를 참조할 수단이 없다(현재는 `Len` 에 상수 4를 쓴다). 배열 길이 자체는 이제 `select:"#"` 로 얻지만, 비교 대상 quorum/검증자수를 토폴로지에서 파생하는 수단이 없다 |
-| `prev-seals-quorum` | prevCommitted/prevPrepared seal 의 **sealer 수 >= quorum(ceil 2N/3)** 만 검사한다(서명 필드 없음). 배열 길이 비교는 이제 `select:"#"`+`GreaterOrEqual` 로 가능하나, **토폴로지 파생 quorum 산술**(ceil 2N/3)이 없다 — 그 갭으로 남긴다 |
+| `zero-address-transfer-blocked` · `precompile-transfer-blocked` | accounts SDK 의 **클라이언트측 정적 가드**(제출 전 거부)를 검사한다. DSL 의 sendTx 는 노드로 직행하므로 이 가드를 태우지 못한다 — 같은 이름의 다른 시험이 된다. **표현 대상이 아니다**, 갭이 아니다 |
+| `external-value-transfer` · `external-fee-delegated-transfer` | **조작자가 밖에서 넣어 주는 funded 키**(`CHAINBENCH_FUNDED_KEY`)가 필요하다. `newAccount` 는 일회용 키를 **만들** 뿐이고, 환경에서 키를 **받는** 수단은 없다. 그 둘은 다른 일이다 |
 
 ### gas-policy 잔여 4건과 필요한 문법 확장
 
@@ -429,14 +441,14 @@ access-list(0x01) 제출거부까지 표현됐다. 나머지 4건은 아래 갭�
 | 레거시 케이스 | 갭 | 필요 확장 |
 |---|---|---|
 | ~~`feepayer-insufficient-rejected` · `fee-delegated-unfunded-feepayer-rejected`~~ ✅ **이관 완료(라이브 pass, applepie 오버레이 넷)** — (D) `feePayerKey`(feepayer-blacklisted 에서 확보) + 미펀딩 fresh feePayer + `expect:"reject"`. 오버레이는 spec 의 `chain.genesisOverlay` 로 선언해 suite 가 자동 구성 | — |
-| `fd-sender-sig-invalid-rejected` · `fd-feepayer-sig-invalid-rejected` · `fee-delegated-sender-sig-invalid-rejected` · `fee-delegated-feepayer-sig-invalid-rejected` | 위 (B) + **손상된 이중서명 raw 트랜잭션 조립**(EncodeFeeDelegatedTampered) 을 spec 에서 만들 수단이 없다 | (B) + raw 서명 조립 자산 |
+| ~~`fd-sender-sig-invalid-rejected`~~ · ~~`fd-feepayer-sig-invalid-rejected`~~ · ~~`fee-delegated-sender-sig-invalid-rejected`~~ · ~~`fee-delegated-feepayer-sig-invalid-rejected`~~ ✅ **이관 완료(2026-09-07 재확인)** — `newAccount` + `sendRawTampered` 로 손상된 이중서명을 조립해 `expect:"reject"` | — | (B) + raw 서명 조립 자산 |
 | ~~`fee-delegated-transfer`~~ ✅ **이관 완료(라이브 pass, applepie 오버레이 넷)** — fresh sender·feePayer 펀딩 후 `key`+`feePayerKey` 0x16 전송, 수취인 balanceAt==금액. `external-fee-delegated-transfer` 는 남음(operator 공급 키 갭) | (D 확보) / external: env 키 바인딩 |
-| `set-code-delegation` | **EIP-7702(0x04) set-code** — authorization 리스트/authority 서명 미지원 | (E) sendTx authorizationList + 신규 키 생성 |
-| `nonce-ordering` · `replacement-tx` · `out-of-order-nonces-mine` · `same-nonce-replacement` | sendTx 가 **제출 후 receipt 동기 대기** → gap 난 nonce(N+1) 를 큐잉만 하고 나중에 채굴시킬 수 없고, "tx1 은 채굴되면 안 된다" 는 **부정 채굴 기대**도 없다 | 비동기 제출(대기 안 함) + 부정 채굴 assertion |
+| ~~`set-code-delegation`~~ ✅ **이관 완료(2026-09-07 재확인)** — `sendSetCode` 가 authorization 리스트와 authority 서명을 다룬다 | — | (E) sendTx authorizationList + 신규 키 생성 |
+| ~~`nonce-ordering`~~ · ~~`replacement-tx`~~ · ~~`out-of-order-nonces-mine`~~ · ~~`same-nonce-replacement`~~ ✅ **이관 완료(2026-09-07 재확인)** — `newAccount` 로 fresh 계정을 만들고 `waitFor` 로 채굴을 기다린다 | — | 비동기 제출(대기 안 함) + 부정 채굴 assertion |
 | `zero-address-transfer-blocked` · `precompile-transfer-blocked` | accounts SDK 의 **클라이언트측 정적 가드**(제출 전 거부)를 검사. DSL sendTx 는 노드로 직행하므로 이 가드를 태우지 못한다(의미가 다름) | SDK 가드 경로는 DSL 로 표현 대상 아님 — 갭으로 남김 |
 | `external-value-transfer` | **operator 공급 funded 키**(CHAINBENCH_FUNDED_KEY)와 **런타임 신규 수취인 생성**이 필요. DSL 은 env 키 주입/키 생성 수단이 없다 | env 키 바인딩 + 키 생성 소스 |
-| `fee-delegate-sign-rpc-present` | `eth_signRawFeeDelegateTransaction` 가 **method-not-found(-32601) 이 아님**을 확인(오류는 나도 됨). rpcCall assertion 은 RPC 오류를 스텝 실패로 처리 → "오류지만 not-found 는 아님" 을 표현 못함 | 메서드 존재 프로브(오류 코드 구분) |
-| `eth-call-revert-returns-error` | eth_call 이 **revert 오류를 반환**해야 통과. `call` assertion 은 호출 오류를 스텝 실패로 처리할 뿐 부정 기대가 없다 | `call` 부정 기대(expectCallError) |
+| ~~`fee-delegate-sign-rpc-present`~~ ✅ **이관 완료(2026-09-07 재확인)** — `methodPresent` 단언이 "오류는 나도 되지만 method-not-found 는 아니다"를 표현한다 | — | 메서드 존재 프로브(오류 코드 구분) |
+| ~~`eth-call-revert-returns-error`~~ ✅ **이관 완료(2026-09-07 재확인)** — `callError` 단언이 호출이 revert 하기를 기대한다 | — | `call` 부정 기대(expectCallError) |
 
 ### hardfork 잔여 6건과 필요한 문법 확장
 
