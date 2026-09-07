@@ -637,7 +637,9 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **V6.1** | engine → `testengine` — 구성 책임 제거, "구성된 체인 위에서 테스트만 일관 수행" 으로 축소·개명 | V5.1 | 기존 테스트 스위트 결과 동일 | ☑ (구성 파일 10개(빌드환경·genesis·keysource·launcher·plan·nodecontrol·wemix 계열)와 테스트가 chainsetup 으로, 러너는 setup_bridge 한 파일로 위탁 — 의존 방향 chainsetup→engine 이 testengine→chainsetup 으로 역전, 순환 0) |
 | **V6.2** | app 워크플로 — DSL 파싱 → chainsetup → testengine → 수집 → 레포트를 app 이 한 흐름으로 제공 | V6.1 | e2e: DSL 입력 하나로 셋업+테스트+레포트 산출 | ☑ (`app.RunSuite`: testspec.ReadFiles(신설, CLI 도 공용) → NetUp → 봉인 대기(WaitBlocks) → attach 실행 → 수집 → 자동 해체. 라이브 e2e: DSL 1건 → server1 4노드 → 1 pass → 고아 0) |
 | **V6.3** | MCP 전환 — MCP 도구가 app 워크플로·얇은 app 함수만 경유(CLI 는 core 직접 유지) | V6.2 | run 도구가 app 경유로 전환(`AttachRun`/`SessionSummary`). 잔여 직결 import 14종은 래칫 테스트가 축소 전용 목록으로 고정(각 항목이 소멸 후속을 명시) — `internal/arch` TestMCPGoesThroughApp | ☑ (전면 0건은 후속 축소로) |
-| **V7** | 기회 개명 백로그 — `netreg`(규칙 7)·`accounts`(규칙 5)는 해당 모듈을 손댈 때 개명 | 해당 트랙 | 네이밍 규칙 표 판정 통과 | ☐ |
+| **V7** | 기회 개명 백로그 | 해당 트랙 | 네이밍 규칙 표 판정 통과 | ☑ **완료 2026-09-07 — 둘의 판정이 갈렸다.** `netreg`(규칙 7)은 **모듈이 이미 없다** — R1 이 `core/session` 으로 흡수했고, 남은 것은 파일 이름 셋이었다. 규칙 표는 모듈을 판정하지만 약어는 읽는 사람이 마주치는 모든 이름에 해당하므로 `networks.go` 로 바꿨다(소비자 0, 기계적).
+
+`accounts`(규칙 5)는 **개명하지 않는다.** 이 패키지는 상류 SDK `github.com/0xmhha/accounts` 위의 경계이고, 이름이 그 SDK 를 가리켜서 찾기 쉽다. 규칙 5 의 목적은 복수형이 "실은 하나"라는 사실을 감추는 것을 막는 일인데, 여기서 주제는 계정 하나도 계정 집합도 아니라 **SDK 경계**다. 단수 `account` 로 바꾸면 그 대응이 끊기고(읽는 사람이 "accounts SDK 를 어떻게 쓰나"를 찾을 곳이 사라진다) 소비자 27곳이 바뀐다. 규칙이 막으려는 해악이 없는 자리에서 규칙의 글자만 맞추는 거래다 |
 
 각 태스크 마무리마다: 해당 경계에 소비자 측 interface 수립 · 네이밍 규칙 판정 ·
 빌드·테스트·lint·(원격이면) docker 라이브 게이트.
@@ -1071,7 +1073,7 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 | # | 무엇 | 지금 상태 | 게이트 |
 |---|---|---|---|
 | **N11** | 다중 config | ◐ **게이트는 `swapNode` 가 이미 만족한다.** `binary` 없이 `config` 만 줘도 세 층이 다 받는다. `restartNode` 에 또 붙이면 한 동작에 철자가 둘이 되므로 붙이지 않는다 | 남은 것은 config 만 바꾸는 스왑의 통합 테스트 하나다 |
-| **V7** | `netreg`·`accounts` 개명 | 해당 모듈을 손댈 때 함께 한다 | 네이밍 규칙 표를 통과한다 |
+| **V7** | 기회 개명 백로그 | ☑ `netreg` 는 모듈이 이미 없어 파일 이름만 `networks.go` 로 바꿨고, `accounts` 는 상류 SDK 를 가리키는 이름이라 두기로 했다 | 네이밍 규칙 표를 통과한다 |
 | **B1**-b | 파서 fuzz | ☑ **완료 2026-09-07.** `FuzzParse`·`FuzzMigrateV1`·`FuzzInlineEnv` 셋. 씨앗은 저장소의 스펙 122개 — 무작위 바이트는 거부 경로만 훑고, 진짜 스펙이라야 변이가 수용 경로에 닿는다 | 죽지 않는 것에 더해, **통과한 것은 해석기가 쓸 수 있어야 한다**(id·chain·schemaVersion). **fuzz 가 v1 문법의 결함을 찾았다** — 아래 |
 | **P8** | 미이관 테스트 케이스 | 문법 갭을 메우거나 이관하지 않을 이유를 적는다 | ☑ **완료 2026-09-07 — 갭이 아니라 기록이 문제였다.** `tests/specs/README.md` 가 갭에 막혔다고 적은 19건 중 **15건에 이미 스펙이 있고 전부 검증을 통과한다**. 없다고 적힌 프리미티브가 그동안 다 생겼기 때문이다: 로그를 유발하기 전에 구독을 여는 `wsOpen`, 손상된 이중서명을 조립하는 `sendRawTampered`, EIP-7702 의 `sendSetCode`, 로컬 키를 만드는 `newAccount`, "오류는 나도 되지만 not-found 는 아니다"를 묻는 `methodPresent`, revert 를 기대하는 `callError`, ceil(2n/3) 의 `derive op:"quorum"`. **불완전한 문서보다 나쁜 상태였다** — 그걸 보고 계획하면 끝난 일을 다시 하고, 커버리지를 감사하면 실제보다 얇다고 믿는다. 문서를 실제 상태로 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다(layers.md 처럼 **문서를 파싱하고 복제하지 않는다**). 변이 둘로 확인. **진짜 남은 8건**: SDK 클라이언트 가드 2건(표현 대상이 아니다) · 조작자 공급 키가 필요한 2건(`newAccount` 는 키를 만들 뿐 받지 못한다) · 바이너리가 기능을 안 담은 P256 3건과 genesis 빌더가 처음부터 최종 코드를 굽는 govminter 1건(라이브 반증, 다른 빌드가 필요하다). 기준선도 바뀌었다 — 레거시 등록부 `testkit.Cases()` 가 2026-09-06 에 사라져(A5) 134/56 같은 숫자는 다시 뽑을 수 없다. 기준은 커밋된 스펙 **122개**이고 전부 `validate` 를 통과한다 |
 | **B2** | 해석기를 `session` 에서 떼기 | 요구를 좁힌다. **완전 분리는 하지 않는다** | ☑ **완료 2026-09-07 — 재보고 후 범위를 바꿨다.** 실측하니 결합이 타입 목록보다 훨씬 좁았다: interp 는 `Environment` 11개 중 **4개**(`Nodes`·`Resolve`·`ResolveEach`·`UpdateNode`), `TestRecord` 12개 중 **4개**(`Step`·`Assert`·`PostAction`·`Status`)만 쓴다. 그래서 `interp.NodeTable` 과 `interp.Recorder` 로 요구를 선언했다(`operation.Opener` 와 같은 수법). 세션 쪽은 구조적으로 만족하므로 엔진은 바뀐 것이 없다.
