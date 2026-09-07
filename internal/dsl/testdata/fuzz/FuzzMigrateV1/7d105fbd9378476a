@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\"sChemAVersion\":\"1\",\"id\":\"0\",\"ChAin\":{\"nAme\":\"0\",\"BinArY\":\"0\"},\"Assertions\":[{}]}")
