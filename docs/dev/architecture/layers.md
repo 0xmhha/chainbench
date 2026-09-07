@@ -106,6 +106,7 @@ flowchart TD
 | `core/filestore` | `FileSink` — **타깃에 파일을 놓는 유일한 통로** |
 | `core/nodeconfig` | 노드 하나의 설정을 한곳에서 — config.toml 렌더 · launch argv 조립(`Argv`, 옛 `core/launchopt`) · 평면 dot-path 설정값(`Values`·`Merge`·`Resolve`·`Flatten`·`Defaults`, 옛 `core/config`). 파일·argv·해석이 한 지붕(R1, 2026-08-31) |
 | `core/genesis` | **genesis 빌더** — 소스 선택(`SourceFor`: 패밀리가 `SourceProvider` 를 선언하면 그것, 아니면 프리셋 템플릿 치환) · `Compose`(소스 + 오버라이드 + 오버레이 + fork 검증) · 병합·오버라이드 원시 함수 (P4.1) |
+| `core/blueprint` | **네트워크 선언** — 하나의 문서가 네트워크의 전부를 말한다(`Blueprint` 파싱·왕복·문서 내부 검증). 구성 정보가 네 조각(topology·serverset·preset·패밀리 config)으로 흩어져 어느 것도 전체를 말하지 못하던 것을 한 선언으로 모은다([[network-blueprint-design]] §1.1). **해석하지 않는다** — 빠진 값을 인벤토리·키셋·플러그인·패밀리에서 채우는 일은 한 층 위의 `Resolve` 몫이고(§3.4), 둘을 갈라 두어야 부분 선언이 왕복한다. 미지 필드는 거부한다: 선언에서는 오타가 증상을 남기지 않고 다른 값으로 조용히 대체되기 때문이다 |
 | `core/keyring` | **키 모델** — Entry·Preset·Network·Label·출처(hex·니모닉·파일)·비밀번호 입력 |
 | `core/keyring/derive` | **키 파생** — secp256k1 키·주소·devp2p 공개키·BLS·PoP (in-process, 순수 계산) |
 | `core/keyring/store` | **키 세트 저장·읽기** — 디스크 레이아웃·metadata 색인·keystore/raw 백엔드, 파일 인터페이스 경유 · **키 출처**(`KeySource`: preset 을 쓰거나 생성; `net keys` 와 `run` 이 같은 경계를 쓴다, P6.1·R4) |
