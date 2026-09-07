@@ -100,9 +100,9 @@ type Assertion interface {
 // ActionCtx gives an action access to the environment, deps, and test record.
 // Args are the DSL-boundary arguments, narrowed to typed values by Parse.
 type ActionCtx struct {
-	Env  session.Environment
+	Env  NodeTable
 	Deps *Deps
-	Rec  session.TestRecord
+	Rec  Recorder
 	Args map[string]any
 	// Hash and Receipt let a tx action surface its result so the interpreter can
 	// record step provenance. They are outputs, set by the action.
@@ -124,7 +124,7 @@ type ActionCtx struct {
 
 // AssertCtx gives an assertion access to the environment, deps, and targets.
 type AssertCtx struct {
-	Env  session.Environment
+	Env  NodeTable
 	Deps *Deps
 	On   []node.Node
 	Spec map[string]any
@@ -133,7 +133,7 @@ type AssertCtx struct {
 // Interpreter runs a parsed Spec against a running environment, recording each
 // step and assertion, and returns the terminal status.
 type Interpreter interface {
-	Run(ctx context.Context, s dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error)
+	Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Recorder) (session.TestStatus, error)
 }
 
 // registry is the default instance-scoped registry.
