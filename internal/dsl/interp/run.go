@@ -18,7 +18,7 @@ import (
 // for later steps and assertions to reference as "$name" (see binding.go). The
 // scope is per-run, so nothing leaks between tests and the interpreter itself
 // stays free of shared state.
-func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env session.Environment, rec session.TestRecord) (session.TestStatus, error) {
+func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Recorder) (session.TestStatus, error) {
 	if i.deps.Actions == nil {
 		return session.StatusFail, fmt.Errorf("interp: interpreter has no action/assertion registry")
 	}
@@ -75,7 +75,7 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env session.Environme
 
 // runRecorded runs hook actions whose outcome is recorded but never changes
 // the verdict.
-func (i *interpreter) runRecorded(ctx context.Context, actions []map[string]any, env session.Environment, rec session.TestRecord, binds Bindings) {
+func (i *interpreter) runRecorded(ctx context.Context, actions []map[string]any, env NodeTable, rec Recorder, binds Bindings) {
 	for _, a := range actions {
 		name := dsl.ActionName(a)
 		if err := i.runAction(ctx, a, env, rec, binds); err != nil {
@@ -88,7 +88,7 @@ func (i *interpreter) runRecorded(ctx context.Context, actions []map[string]any,
 
 // runAction dispatches a single-key action entry ({name: args}) to the registry,
 // substituting binding references in its args first.
-func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env session.Environment, rec session.TestRecord, binds Bindings) error {
+func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env NodeTable, rec Recorder, binds Bindings) error {
 	name := dsl.ActionName(entry)
 	if name == "" {
 		return fmt.Errorf("interp: empty action entry")
@@ -111,7 +111,7 @@ func (i *interpreter) runAction(ctx context.Context, entry map[string]any, env s
 
 // runStep runs a step action and records a StepResult (including any tx
 // hash/receipt the action surfaces) even on failure.
-func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any, env session.Environment, rec session.TestRecord, binds Bindings) error {
+func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any, env NodeTable, rec Recorder, binds Bindings) error {
 	name := dsl.ActionName(entry)
 	act, ok := i.deps.Actions.Action(name)
 	if !ok {
@@ -150,7 +150,7 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 // registered assertion) and returns its recorded result. Binding references in
 // the entry are substituted first, so an assertion can compare against a value
 // an earlier step saved.
-func (i *interpreter) runAssertion(ctx context.Context, entry map[string]any, env session.Environment, binds Bindings) (session.AssertResult, error) {
+func (i *interpreter) runAssertion(ctx context.Context, entry map[string]any, env NodeTable, binds Bindings) (session.AssertResult, error) {
 	name, _ := entry["assert"].(string)
 	if name == "" {
 		return session.AssertResult{Pass: false, Provenance: entry}, fmt.Errorf(`interp: assertion missing "assert"`)
@@ -202,7 +202,7 @@ func bindResult(binds Bindings, args map[string]any, ac *ActionCtx) {
 // resolveOn resolves the entry's "on" (single) or "onEach" ([]) selectors to
 // nodes, best-effort (an unresolved selector yields no nodes here; the
 // assertion decides how to treat that).
-func (i *interpreter) resolveOn(entry map[string]any, env session.Environment) []node.Node {
+func (i *interpreter) resolveOn(entry map[string]any, env NodeTable) []node.Node {
 	if sel, ok := entry["on"].(string); ok {
 		if n, err := env.Resolve(sel); err == nil {
 			return []node.Node{n}

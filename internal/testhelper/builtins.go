@@ -14,7 +14,6 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/accounts"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
-	"github.com/0xmhha/chainbench/internal/core/session"
 )
 
 // Built-in action and assertion names (the DSL keys the interpreter dispatches
@@ -537,7 +536,7 @@ func assertTargets(ac *interp.AssertCtx) []assertTarget {
 
 // selectorTarget resolves an action's "on" selector to a node URL, else the
 // environment's primary node.
-func selectorTarget(env session.Environment, args map[string]any) string {
+func selectorTarget(env interp.NodeTable, args map[string]any) string {
 	if env == nil {
 		return ""
 	}

@@ -379,7 +379,7 @@ func wsTarget(ac *interp.AssertCtx) (string, error) {
 
 // nodesFor resolves an action's target nodes: the "on" selector if present,
 // else the environment's node table.
-func nodesFor(env session.Environment, args map[string]any) []node.Node {
+func nodesFor(env interp.NodeTable, args map[string]any) []node.Node {
 	if env == nil {
 		return nil
 	}
