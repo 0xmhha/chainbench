@@ -7,6 +7,12 @@
 > Generated from `scripts/inventory/code-graph` (go/ast, no build required).
 > Regenerate with `go run ./scripts/inventory/code-graph . > graph.json` after
 > structural refactors; do not hand-edit the numbers here.
+>
+> **드리프트 (2026-09-07 재측정): 패키지 65 · 간선 209 · 위반 0.** 아래 §2 의
+> 75/268 은 08-27 의 값이다. 그 사이 R 트랙의 통폐합과 N 트랙의 청사진이 지나갔고,
+> 특히 §3 이 싣고 있는 `core/netreg` 는 **더 이상 없다**(R1 에서 `core/session` 으로
+> 흡수). 표를 손으로 고치는 대신 이 줄을 둔다 — 두 날짜가 섞인 표가 낡은 표보다 나쁘다.
+> 전면 갱신은 도구를 다시 돌려서 한다.
 
 ## 1. Method
 
