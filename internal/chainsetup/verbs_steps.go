@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/node"
-	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"sort"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/blueprint"
+	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // Net step use cases. Each opens the workspace, runs one netcompose step, and
@@ -79,18 +80,30 @@ type StepOut struct {
 
 // NetKeysIn selects where node identities come from.
 type NetKeysIn struct {
-	DataDir    string
-	Source     string // preset (default) | generate
-	Nodes      int
-	Validators int
+	DataDir string
+	Source  string // preset (default) | generate | declared
+	// BlueprintPath is the declaration the keys come from when Source is
+	// "declared" (or when a blueprint is given and Source is silent).
+	BlueprintPath string
+	Nodes         int
+	Validators    int
 }
 
 // NetKeys ensures the workspace's key set exists and covers the node count.
 func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
+	bp, err := readBlueprint(in.BlueprintPath)
+	if err != nil {
+		return StepOut{}, err
+	}
+	source := in.Source
+	// A blueprint that carries keys is the source unless the caller asked for
+	// another one. Making the operator name it twice would let the two answers
+	// disagree, and the composition would take the one they did not mean.
+	if source == "" && bp != nil {
+		source = "declared"
+	}
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		return ws.Keys(ctx, KeysOpts{
-			Source: in.Source, Nodes: in.Nodes, Validators: in.Validators,
-		})
+		return ws.Keys(ctx, KeysOpts{Source: source, Blueprint: bp, Nodes: in.Nodes, Validators: in.Validators})
 	})
 	return StepOut{Detail: detail}, err
 }
@@ -108,6 +121,9 @@ type NetAllocateIn struct {
 	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
 	// replaces the counts, which cannot express a per-node choice.
 	TopologyPath string
+	// BlueprintPath is a network declaration (N1). It is the widest of the
+	// three layout sources and wins over both the counts and a topology.
+	BlueprintPath string
 	// Server selects where the nodes are placed and on what ports, from the
 	// operator's server set. Its zero value uses the built-in local plan.
 	Server resource.ServerRef
@@ -121,7 +137,16 @@ type NetAllocateIn struct {
 
 // NetAllocate builds the node table (roles, paths, deterministic ports).
 func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
+	bp, err := readBlueprint(in.BlueprintPath)
+	if err != nil {
+		return StepOut{}, err
+	}
 	topo := in.Topology
+	if bp != nil && (topo != nil || in.TopologyPath != "") {
+		// Both describe the layout, and picking one silently would leave the
+		// other's author reading a network that is not theirs.
+		return StepOut{}, fmt.Errorf("chainsetup: allocate: a blueprint and a topology both describe the layout — give one")
+	}
 	if topo == nil && in.TopologyPath != "" {
 		loaded, err := node.Load(in.TopologyPath)
 		if err != nil {
@@ -163,11 +188,38 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 		}
 		return ws.Allocate(AllocateOpts{
 			Validators: in.Validators, Endpoints: in.Endpoints,
-			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Peering: in.Peering,
-			Pool: resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
+			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Blueprint: bp,
+			Peering: peeringOf(bp, in.Peering),
+			Pool:    resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
 		})
 	})
 	return StepOut{Detail: detail}, err
+}
+
+// readBlueprint loads a network declaration, or returns nil when none is named.
+func readBlueprint(path string) (*blueprint.Blueprint, error) {
+	if path == "" {
+		return nil, nil
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("chainsetup: read blueprint %s: %w", path, err)
+	}
+	bp, err := blueprint.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	return &bp, nil
+}
+
+// peeringOf lets a flag override the declaration, and the declaration answer
+// when the flag is silent. A flag is a person typing now, which is the one
+// thing that outranks a document.
+func peeringOf(bp *blueprint.Blueprint, flag string) string {
+	if flag != "" || bp == nil {
+		return flag
+	}
+	return bp.Peering
 }
 
 // NetGenesisIn customizes the built genesis.

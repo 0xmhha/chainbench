@@ -17,7 +17,9 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
+	"github.com/0xmhha/chainbench/internal/core/blueprint"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/keyring/derive"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
@@ -49,8 +51,12 @@ func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 
 // KeysOpts selects where node identities come from (algorithm steps 2-3).
 type KeysOpts struct {
-	// Source is "preset" (default) or "generate".
+	// Source is "preset" (default), "generate", or "declared".
 	Source string
+	// Blueprint is the declaration the keys come from when Source is
+	// "declared". Its nodes carry their own nodekeys, which is what lets a
+	// network be composed with no preset directory anywhere (N3).
+	Blueprint *blueprint.Blueprint
 	// Nodes is how many identities the set must cover; <=0 uses the node table
 	// length, falling back to the validator count.
 	Nodes int
@@ -80,6 +86,18 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	switch opts.Source {
 	case "", "preset":
 		src = store.PresetKeys{Path: w.state.KeysDir}
+	case "declared":
+		// The declaration is the origin, and the ring is materialised from it
+		// so that the genesis source, the launcher and provision keep reading
+		// keys the one way they already do.
+		if opts.Blueprint == nil {
+			return "", fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source)
+		}
+		set, err := w.declaredKeys(*opts.Blueprint, n)
+		if err != nil {
+			return "", err
+		}
+		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
 	case "generate":
 		// A generated set must declare exactly the topology's validators, not
 		// make every node one: a network with endpoints (4 bp + 11 en) whose key
@@ -92,7 +110,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		}
 		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 	default:
-		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset or generate)", opts.Source)
+		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset, generate or declared)", opts.Source)
 	}
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
@@ -102,6 +120,42 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		src.Describe(), len(ks.Nodes), len(ks.Network.Validators))
 	w.markStep("keys", detail)
 	return detail, nil
+}
+
+// declaredKeys derives the ring a blueprint declares, for the network the
+// placement has already decided.
+//
+// It resolves against the node table this workspace allocated rather than
+// against the document alone: the identity that matters is the node's index,
+// which is what its datadir, its keyring entry and its enode are all named
+// from. Deriving against a different table would produce keys that are correct
+// in isolation and attached to the wrong nodes.
+func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset, error) {
+	placed, err := w.Netmap()
+	if err != nil {
+		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: %w — run `chain place` first", err)
+	}
+	r, err := blueprint.Resolve(bp, blueprint.Inputs{
+		Placed: placed.Placements(),
+		Chain:  blueprint.ChainFacts{ID: w.state.Chain, Binary: w.state.Binary},
+		Layout: node.Layout{Root: w.state.Target.DataRoot},
+	})
+	if err != nil {
+		return keyring.Preset{}, err
+	}
+	// BLS material is derived for every family, which is what the generated
+	// source already does. Only wbft reads it, and asking the family instead
+	// would be the better answer, but there is no method that says so today and
+	// inventing one here would put the question in two places. Recorded as N3
+	// debt rather than guessed at.
+	set, err := blueprint.PresetFrom(r, derive.WithBLS, os.ReadFile)
+	if err != nil {
+		return keyring.Preset{}, err
+	}
+	if len(set.Nodes) < n {
+		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
+	}
+	return set, nil
 }
 
 // AllocateOpts sizes the network.
@@ -128,6 +182,11 @@ type AllocateOpts struct {
 	// Validators/Endpoints counts and EndpointSyncMode, which cannot express a
 	// per-node choice. Its Nodes must already be Validate()d.
 	Topology *node.Topology
+	// Blueprint, when set, is the network declaration the layout comes from
+	// (N1-N3). It is the widest of the three sources — a topology says role and
+	// sync mode per node, a blueprint says those and the keys, ports, server and
+	// binary too — so it wins over both.
+	Blueprint *blueprint.Blueprint
 	// Pool decides the port bands and the capacity
 	// bound. Its zero value is the built-in local plan; a caller that read a
 	// server set passes that server's placement instead, which is the
@@ -142,6 +201,9 @@ type AllocateOpts struct {
 // in launch order. A topology is authoritative when given; otherwise the counts
 // produce validators first, then endpoints.
 func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
+	if o.Blueprint != nil {
+		return blueprintPlacements(*o.Blueprint)
+	}
 	if o.Topology != nil {
 		sorted := o.Topology.Sorted()
 		if len(sorted) == 0 {
@@ -170,6 +232,46 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	for i := 0; i < o.Endpoints; i++ {
 		reqs = append(reqs, node.LaunchReq{Role: node.RoleEN})
 		modes = append(modes, syncModeFor(node.RoleEN, o.EndpointSyncMode))
+	}
+	return reqs, modes, nil
+}
+
+// blueprintPlacements turns a declaration's node table into one placement
+// request per node.
+//
+// Only what the ALLOCATION needs is read here: the role decides where a node
+// lands and how much port room it takes, and the sync mode is recorded with the
+// layout. Keys, accounts and pinned ports are the resolver's business, and
+// reading them twice is how two places come to disagree about one document.
+func blueprintPlacements(bp blueprint.Blueprint) ([]node.LaunchReq, []string, error) {
+	if len(bp.Nodes) == 0 {
+		return nil, nil, fmt.Errorf("chainsetup: allocate: the blueprint declares no nodes")
+	}
+	reqs := make([]node.LaunchReq, len(bp.Nodes))
+	modes := make([]string, len(bp.Nodes))
+	for i, n := range bp.Nodes {
+		// An unstated role is a producer. A declaration whose nodes say nothing
+		// is the smallest network anyone writes, and it has to be one that
+		// seals.
+		role := node.RoleBP
+		if n.Role != "" {
+			r, err := node.NormalizeRole(n.Role)
+			if err != nil {
+				return nil, nil, fmt.Errorf("chainsetup: allocate: blueprint node %d: %w", i+1, err)
+			}
+			role = r
+		}
+		// A field this step cannot honour is refused by name rather than
+		// dropped. Silently ignoring a declared value is the failure this whole
+		// track exists to end: the network comes up looking right and running
+		// something the document does not describe.
+		if n.Server != "" {
+			return nil, nil, fmt.Errorf("chainsetup: allocate: blueprint node %d declares server %q, and per-node server placement is not wired yet (N3) — remove it or use a server set", i+1, n.Server)
+		}
+		reqs[i] = node.LaunchReq{Role: role}
+		// A sealing node is pinned to full whatever the document says: it must
+		// hold full state, and the declaration cannot make it stateless.
+		modes[i] = syncModeFor(role, n.SyncMode)
 	}
 	return reqs, modes, nil
 }

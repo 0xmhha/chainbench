@@ -52,6 +52,10 @@ type NetUpIn struct {
 	Endpoints        int    `json:"endpoints,omitempty"`
 	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
 	TopologyPath     string `json:"topologyPath,omitempty"`
+	// BlueprintPath is a network declaration: the layout AND the keys in one
+	// document. It is what lets a network be composed with no preset directory
+	// anywhere (N3).
+	BlueprintPath string `json:"blueprintPath,omitempty"`
 	// Topology, when set, is the inline per-node layout, the DSL's in-memory
 	// equivalent of TopologyPath. It wins over Validators/Endpoints.
 	Topology *node.Topology `json:"topology,omitempty"`
@@ -177,13 +181,16 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
 				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
-				Topology: in.Topology, Binaries: in.Binaries, Peering: in.Peering,
+				BlueprintPath: in.BlueprintPath,
+				Topology:      in.Topology, Binaries: in.Binaries, Peering: in.Peering,
 				Server: in.Server,
 			})
 			return r.Detail, err
 		},
 		"keys": func() (string, error) {
-			r, err := NetKeys(ctx, d, NetKeysIn{DataDir: in.DataDir, Source: in.KeysSource})
+			r, err := NetKeys(ctx, d, NetKeysIn{
+				DataDir: in.DataDir, Source: in.KeysSource, BlueprintPath: in.BlueprintPath,
+			})
 			return r.Detail, err
 		},
 		"genesis": func() (string, error) {
