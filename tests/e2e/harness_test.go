@@ -28,6 +28,8 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/accounts"
+	"github.com/0xmhha/chainbench/internal/core/health"
+	nodemod "github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 )
 
@@ -176,6 +178,7 @@ type workspaceState struct {
 	Capabilities []string `json:"capabilities"`
 	Nodes        []struct {
 		Index int    `json:"index"`
+		Role  string `json:"role"`
 		Host  string `json:"host"`
 		HTTP  int    `json:"http"`
 	} `json:"nodes"`
@@ -283,7 +286,106 @@ func (n *network) waitAdvancing(url string, timeout time.Duration) {
 			return
 		}
 	}
-	n.t.Fatalf("chain not producing blocks at %s (head stuck at %d)", url, start)
+	n.t.Errorf("chain not producing blocks at %s (head stuck at %d)", url, start)
+	n.diagnose("chain did not advance")
+	n.t.FailNow()
+}
+
+// diagnose records what every node saw at the moment a wait gave up.
+//
+// The workspace survives a failure, but the nodes do not: cleanup stops them,
+// so by the time anyone opens the directory the peer counts and the other
+// nodes' heads are gone. A halt that is one node stuck looks exactly like a
+// halt that is the whole network stuck, until someone asks each node, and it is
+// too late to ask afterwards.
+//
+// This exists because of TestE2E_WbftQuorum6of6Halts2, which failed two runs in
+// five and then stopped reproducing — after the Stop fix, after NM6, across 18
+// runs on 2026-09-07 (10 through the test, 8 through a hand reproduction). The
+// cause was never established, and there was nothing kept from the failing runs
+// to establish it from. If it returns, this is what will be in the output.
+func (n *network) diagnose(why string) {
+	n.t.Helper()
+	n.t.Logf("--- %s; per-node state at that moment:", why)
+	for _, node := range n.workspace().Nodes {
+		url := fmt.Sprintf("http://%s:%d", node.Host, node.HTTP)
+		c := rpc.Dial(url)
+		h, herr := c.BlockNumber(context.Background())
+		peers, perr := c.PeerCount(context.Background())
+		switch {
+		case herr != nil:
+			n.t.Logf("    node%d %s: unreachable (%v)", node.Index, url, herr)
+		case perr != nil:
+			n.t.Logf("    node%d %s: head %d, peer count unavailable (%v)", node.Index, url, h, perr)
+		default:
+			n.t.Logf("    node%d %s: head %d, %d peers", node.Index, url, h, peers)
+		}
+	}
+	n.t.Logf("    node logs are under %s/logs (the workspace is kept on failure)", n.dir)
+}
+
+// waitFormed waits until every validator has sealed a block, not merely until
+// the head moved somewhere.
+//
+// A four-validator BFT network keeps producing with three, so waitAdvancing
+// returns while one validator has not joined. That node is up, in sync and
+// reporting the same head as the others, and a transaction sent to it is never
+// mined — it sits in a pool no other node ever sees, and the test learns about
+// it thirty seconds later as a receipt that did not arrive.
+//
+// Measured 2026-09-07 on TestE2E_StablenetProposalExpiry. Nine runs split four
+// to five on exactly this: every passing run had node1 sealing between five and
+// twelve blocks, every failing one had it sealing none. Waiting here took the
+// case from 5 failures in 16 runs to 0 in 16, and removing the wait brought a
+// failure back within five.
+//
+// What this does NOT explain is why a validator sometimes joins late. That is
+// the chain binary's business, and it still happens — this only stops the suite
+// from driving a network that has not finished forming.
+func (n *network) waitFormed(timeout time.Duration) {
+	n.t.Helper()
+	nodes := n.workspace().Nodes
+	if len(nodes) == 0 {
+		n.t.Fatal("no nodes in the workspace")
+	}
+	c := rpc.Dial(n.rpcURL)
+	// Producers only. An endpoint has a coinbase like any node and seals
+	// nothing by design, so counting it makes every network look unformed —
+	// which the first version of this did, failing six runs in a row on node5
+	// of a four-validator network.
+	//
+	// Ask each producer for its own coinbase: that is the address it would seal
+	// under, and it needs no key set or genesis parsing to obtain.
+	var want []string
+	for _, n := range nodes {
+		if !nodemod.Is(nodemod.Role(n.Role), nodemod.RoleBP) {
+			continue
+		}
+		addr, err := rpc.Dial(fmt.Sprintf("http://%s:%d", n.Host, n.HTTP)).Coinbase(context.Background())
+		if err == nil && addr != "" && addr != "0x0000000000000000000000000000000000000000" {
+			want = append(want, addr)
+		}
+	}
+	if len(want) == 0 {
+		n.t.Log("no producer reported a coinbase; skipping the formation check")
+		return
+	}
+	window := health.WindowFor(len(want))
+	deadline := timeAfter(timeout)
+	var last health.Participation
+	for !deadline() {
+		p, err := health.Participants(context.Background(), c, want, window)
+		if err == nil {
+			last = p
+			if p.Formed() {
+				return
+			}
+		}
+		time.Sleep(2 * time.Second)
+	}
+	n.t.Errorf("network never formed within %s: %s", timeout, last.Describe())
+	n.diagnose("not every validator joined block production")
+	n.t.FailNow()
 }
 
 // grewWithin reports whether the head at url grew over the window — used for the
@@ -304,7 +406,9 @@ func (n *network) waitCross(url string, target int64, timeout time.Duration) {
 		}
 		time.Sleep(3 * time.Second)
 	}
-	n.t.Fatalf("head did not cross %d at %s (last=%d)", target, url, head(n.t, url))
+	n.t.Errorf("head did not cross %d at %s (last=%d)", target, url, head(n.t, url))
+	n.diagnose("head did not reach the target")
+	n.t.FailNow()
 }
 
 // wallet opens an accounts SDK wallet for the chain, funded by key, against url.
@@ -387,7 +491,9 @@ func (n *network) waitReceiptSuccess(url, hash string) {
 		}
 		time.Sleep(2 * time.Second)
 	}
-	n.t.Fatalf("tx %s never mined", hash)
+	n.t.Errorf("tx %s never mined", hash)
+	n.diagnose("a transaction was never mined")
+	n.t.FailNow()
 }
 
 // hexBlock formats a block height as a 0x-hex ref for eth_getBlockByNumber.

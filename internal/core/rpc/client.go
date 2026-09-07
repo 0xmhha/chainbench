@@ -400,3 +400,16 @@ func parseHexUint(s string) (uint64, error) {
 	}
 	return n, nil
 }
+
+// BlockMiner returns the address that sealed block n.
+//
+// It is the one question health's participation check asks per block, and
+// asking it through a named method keeps the hex encoding of a block number in
+// one place rather than at every caller.
+func (c *Client) BlockMiner(ctx context.Context, n uint64) (string, error) {
+	b, err := c.BlockByNumber(ctx, "0x"+strconv.FormatUint(n, 16))
+	if err != nil {
+		return "", err
+	}
+	return b.Miner, nil
+}

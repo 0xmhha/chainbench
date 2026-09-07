@@ -25,8 +25,13 @@ func TestE2E_StablenetProposalExpiry(t *testing.T) {
 		t.Fatalf("nodeset missing short-expiry capability — overlay not applied: %v", n.capabilities())
 	}
 
-	// Wait for the network to be up and producing before driving the case.
+	// Wait for the network to be FORMED, not merely producing. A four-validator
+	// BFT chain keeps producing with three, and this case sends its proposal to
+	// node1: if node1 has not joined, the transaction sits in a pool nobody
+	// else sees and the case fails thirty seconds later on a receipt that never
+	// arrives, naming nothing.
 	n.waitAdvancing(n.rpcURL, 45*time.Second)
+	n.waitFormed(60 * time.Second)
 
 	// The case proposes, waits ~35s for expiry, and asserts Expired.
 	n.runCase("proposal-expiry-transitions")

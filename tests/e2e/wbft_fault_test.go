@@ -164,17 +164,32 @@ func TestE2E_WbftQuorum6of6Halts2(t *testing.T) {
 	}
 	// Restart both: quorum restored, consensus resumes.
 	//
-	// This is where the scenario fails intermittently — measured 2026-09-05 as
-	// two failures in five runs, always the same way: the head is stuck at 2
-	// and never moves again inside two minutes. The halt above always works, so
-	// what is unreliable is the recovery, not the detection.
+	// This used to fail intermittently — measured 2026-09-05 as two failures in
+	// five, always the same way: the head stuck at 2 and never moving again
+	// inside two minutes. The halt above always worked, so what was unreliable
+	// was the recovery.
 	//
-	// It is recorded rather than softened. Raising the wait would only make the
-	// test take longer to report the same thing, and a chain that does not
-	// resume within two minutes of regaining quorum is worth knowing about
-	// whether or not it resumes eventually. The cause is in wbft's view change
-	// or its rejoin, not in the harness, and finding it needs the node logs
-	// rather than a longer sleep.
+	// It no longer reproduces. On 2026-09-07 it passed 18 consecutive runs: ten
+	// through this test and eight through a hand reproduction that stopped the
+	// two nodes at head 2, 4 and 20 to see whether the timing of the stop was
+	// the trigger. It was not — every run recovered on the first poll, three
+	// seconds after the restart, with all six nodes reporting five peers.
+	//
+	// That is NOT a fix. The cause was never established, and the changes in
+	// between (the process.Stop policy, then the NM6 role flip) were never
+	// shown to be connected to it. What is recorded is the measurement: it does
+	// not reproduce here today, on this machine, with this binary.
+	//
+	// The wait is left at two minutes rather than softened. A chain that does
+	// not resume within two minutes of regaining quorum is worth knowing about
+	// whether or not it resumes eventually, and raising the number would only
+	// make the test take longer to report the same thing.
+	//
+	// What did change is what a failure leaves behind: waitAdvancing now
+	// records every node's head and peer count before it gives up. The runs
+	// that failed in September left nothing to work from, which is why three
+	// hypotheses were built and knocked down on evidence that came only from
+	// the failing side.
 	n.nodeStart(5)
 	n.nodeStart(6)
 	n.waitAdvancing(url, 120*time.Second)
