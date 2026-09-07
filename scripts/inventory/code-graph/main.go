@@ -18,6 +18,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+
+	"github.com/0xmhha/chainbench/internal/arch"
 	"go/types"
 	"io/fs"
 	"os"
@@ -95,10 +97,25 @@ type Graph struct {
 
 func main() {
 	symbols := flag.Bool("symbols", false, "also emit the per-declaration symbol inventory")
+	dead := flag.Bool("dead", false, "instead of the graph, report every exported non-method symbol and who reaches it (A8)")
 	flag.Parse()
 	root := "."
 	if flag.NArg() > 0 {
 		root = flag.Arg(0)
+	}
+	if *dead {
+		report, err := arch.Reach(root)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(report); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
 	}
 	g, err := build(root, *symbols)
 	if err != nil {

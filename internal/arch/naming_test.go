@@ -26,7 +26,6 @@ var nameShared = map[string]string{
 	"Compose":          "genesis 를 조립하는 일과, preflight 가 '아직 아무것도 조립되지 않았다'고 말하는 단계다",
 	"DefaultKeySetDir": "app 에서 operation 을 거쳐 store 까지 그대로 전달한다",
 	"Generate":         "키셋을 만드는 일과 리포트를 만드는 일이다",
-	"Import":           "operation 이 받아 store 가 쓴다. 같은 동작의 계층별 표기다",
 	"List":             "키셋이 무엇을 담았는지와, 아티팩트 루트에 어떤 세션이 있는지를 각각 센다",
 	"Load":             "토폴로지·외부 플러그인·검증자 명부를 각각 읽는다",
 	"Parse":            "테스트 스펙을 읽는 일과 서버 지정자를 읽는 일이다",

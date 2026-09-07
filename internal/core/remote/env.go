@@ -25,9 +25,3 @@ const (
 	// EnvKeyPassphrase decrypts that key when it is encrypted.
 	EnvKeyPassphrase = "CHAINBENCH_REMOTE_KEY_PASSPHRASE"
 )
-
-// EnvNames lists every environment variable this package reads, so a surface
-// can document or clear them without keeping its own copy of the list.
-func EnvNames() []string {
-	return []string{EnvUser, EnvPass, EnvKeyFile, EnvKeyPassphrase}
-}
