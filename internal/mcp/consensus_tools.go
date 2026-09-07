@@ -16,6 +16,7 @@ import (
 func consensusStatusTool() Tool {
 	return Tool{
 		Name:        "chainbench_consensus_status",
+		ReadOnly:    true,
 		Description: "Consensus snapshot: head block, chain id, peers, syncing, validator count. Args: chain, rpc.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -48,6 +49,7 @@ func consensusStatusTool() Tool {
 func consensusHealthTool() Tool {
 	return Tool{
 		Name:        "chainbench_consensus_health",
+		ReadOnly:    true,
 		Description: "Quick consensus health verdict (not syncing + past genesis). Args: rpc.",
 		InputSchema: map[string]any{
 			"type":       "object",
@@ -77,6 +79,7 @@ func consensusHealthTool() Tool {
 func consensusBlockInfoTool() Tool {
 	return Tool{
 		Name:        "chainbench_consensus_block_info",
+		ReadOnly:    true,
 		Description: "Block header info (number, hash, miner, timestamp, tx count, gas). Args: rpc, optional block.",
 		InputSchema: map[string]any{
 			"type": "object",

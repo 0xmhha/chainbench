@@ -14,7 +14,8 @@ import (
 // Same filters as chainbench_log; the difference is the ordering.
 func logTimelineTool() Tool {
 	return Tool{
-		Name: "chainbench_log_timeline",
+		Name:     "chainbench_log_timeline",
+		ReadOnly: true,
 		Description: "Merge per-node logs into one chronological timeline. Args: workspaceDir; " +
 			"optional pattern, regexp (bool), node (int), level (min severity), limit (int).",
 		InputSchema: map[string]any{
@@ -64,6 +65,7 @@ func logTimelineTool() Tool {
 func networkPeersTool() Tool {
 	return Tool{
 		Name:        "chainbench_network_peers",
+		ReadOnly:    true,
 		Description: "Report a node's peer count and connected peers (if admin is enabled). Args: rpc.",
 		InputSchema: map[string]any{
 			"type":       "object",

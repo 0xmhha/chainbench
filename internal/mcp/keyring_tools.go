@@ -107,6 +107,7 @@ func keyringAddTool() Tool {
 func keyringListTool() Tool {
 	return Tool{
 		Name:        "chainbench_keyring_list",
+		ReadOnly:    true,
 		Description: "List a ring's identities: label, address, whether it validates, and whether it has BLS material.",
 		InputSchema: ringSchema(map[string]any{
 			"verify": map[string]any{
@@ -124,7 +125,8 @@ func keyringListTool() Tool {
 
 func keyringShowTool() Tool {
 	return Tool{
-		Name: "chainbench_keyring_show",
+		Name:     "chainbench_keyring_show",
+		ReadOnly: true,
 		Description: "Show one identity's public material: address, devp2p public key, and BLS key with its " +
 			"proof of possession. Never includes the private key.",
 		InputSchema: ringSchema(map[string]any{

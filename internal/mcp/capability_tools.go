@@ -80,6 +80,7 @@ func capabilityTool(c app.Capability) Tool {
 func capabilitiesDiscoveryTool() Tool {
 	return Tool{
 		Name:        "chainbench.capabilities",
+		ReadOnly:    true,
 		Description: "List the capabilities chainbench exposes, grouped by version and chain, with the tool name to call each. Args: chain (optional; returns common + that chain's features).",
 		InputSchema: map[string]any{
 			"type":       "object",

@@ -60,6 +60,7 @@ func chainNewTool() Tool {
 func chainStatusTool() Tool {
 	return Tool{
 		Name:        "chainbench_chain_status",
+		ReadOnly:    true,
 		Description: "Show a step-composition workspace's state as JSON: chain, target, and which steps have run.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -288,6 +289,7 @@ func chainRmTool() Tool {
 func chainLogsTool() Tool {
 	return Tool{
 		Name:        "chainbench_chain_logs",
+		ReadOnly:    true,
 		Description: "Show the last lines of one node's log.",
 		InputSchema: workspaceDirSchema(map[string]any{
 			"node":  map[string]any{"type": "number", "description": "node index (1-based)"},
@@ -307,6 +309,7 @@ func chainLogsTool() Tool {
 func chainHealthTool() Tool {
 	return Tool{
 		Name:        "chainbench_chain_health",
+		ReadOnly:    true,
 		Description: "Probe every node's HTTP RPC for its latest block height; returns a JSON table.",
 		InputSchema: workspaceDirSchema(nil),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {

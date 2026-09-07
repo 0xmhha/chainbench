@@ -78,6 +78,7 @@ func Default(name, version string) *Server {
 func reportTool() Tool {
 	return Tool{
 		Name:        "chainbench_report",
+		ReadOnly:    true,
 		Description: "Read a run's report from a session directory. Args: workspaceDir.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -145,6 +146,7 @@ func nodeRPCTool() Tool {
 func consensusTool() Tool {
 	return Tool{
 		Name:        "chainbench_consensus",
+		ReadOnly:    true,
 		Description: "List the validator/producer set via the chain's consensus RPC method. Args: chain, rpc.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -179,6 +181,7 @@ func consensusTool() Tool {
 func chainsTool() Tool {
 	return Tool{
 		Name:        "chainbench_chains",
+		ReadOnly:    true,
 		Description: "List the chains chainbench supports (id, consensus family, binary, chain id, RPC namespace).",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{}},
 		Handler: func(_ context.Context, _ map[string]any) (string, error) {
@@ -228,6 +231,7 @@ func faucetTool() Tool {
 func verifyTool() Tool {
 	return Tool{
 		Name:        "chainbench_verify",
+		ReadOnly:    true,
 		Description: "Verify an existing network is producing blocks and report node info. Args: chain, rpc (string or array of RPC URLs).",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -261,6 +265,7 @@ func verifyTool() Tool {
 func statusTool() Tool {
 	return Tool{
 		Name:        "chainbench_status",
+		ReadOnly:    true,
 		Description: "Report a workspace's node set (chain, network, and each node's role/rpc/pid). Args: workspaceDir.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -292,6 +297,7 @@ func statusTool() Tool {
 func txpoolTool() Tool {
 	return Tool{
 		Name:        "chainbench_txpool",
+		ReadOnly:    true,
 		Description: "Report a node's transaction pool status (pending/queued counts). Args: rpc.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -324,6 +330,7 @@ func txpoolTool() Tool {
 func logTool() Tool {
 	return Tool{
 		Name:        "chainbench_log",
+		ReadOnly:    true,
 		Description: "Search a workspace's per-node logs (workspaceDir/logs). Args: workspaceDir, pattern, regexp (bool), node (int), level (min severity), limit (int).",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -369,6 +376,7 @@ func logTool() Tool {
 func accountStateTool() Tool {
 	return Tool{
 		Name:        "chainbench_account_state",
+		ReadOnly:    true,
 		Description: "Report an account's balance (wei), nonce, and whether it holds contract code. Args: rpc, address.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -396,6 +404,7 @@ func accountStateTool() Tool {
 func contractCallTool() Tool {
 	return Tool{
 		Name:        "chainbench_contract_call",
+		ReadOnly:    true,
 		Description: "Read-only contract call (eth_call), returning the 0x-hex result. Args: rpc, to, data.",
 		InputSchema: map[string]any{
 			"type": "object",
@@ -421,6 +430,7 @@ func contractCallTool() Tool {
 func txWaitTool() Tool {
 	return Tool{
 		Name:        "chainbench_tx_wait",
+		ReadOnly:    true,
 		Description: "Wait for a transaction receipt and return it as JSON. Args: rpc, hash, timeout_seconds (default 30).",
 		InputSchema: map[string]any{
 			"type": "object",

@@ -15,6 +15,7 @@ import (
 func networkTopologyTool() Tool {
 	return Tool{
 		Name:        "chainbench_network_topology",
+		ReadOnly:    true,
 		Description: "Per-node reachability and peer count for a saved network. Args: name, state_dir.",
 		InputSchema: map[string]any{
 			"type": "object",

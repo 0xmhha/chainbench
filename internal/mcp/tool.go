@@ -23,6 +23,19 @@ type Tool struct {
 	Description string
 	InputSchema map[string]any
 	Handler     Handler
+	// ReadOnly declares that calling this tool changes no file, no process and
+	// no chain state, and that its result carries no secret.
+	//
+	// It is the same property the CLI's query projection reads, declared here
+	// too because MCP has no command tree to project from
+	// (surface-unification-design §4.4, rule 3). An agent asks for the tool
+	// list and learns which subset it may call while exploring.
+	//
+	// Declared, not inferred, for the same reasons: chainbench_node_rpc takes
+	// the method as an argument, so nothing about the tool says whether it
+	// writes, and chainbench_keyring_show is safe while an export would not be
+	// even though both only print.
+	ReadOnly bool
 }
 
 // argString returns a string argument or def if absent/not a string.
