@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -53,7 +55,7 @@ func NewVerify() *cobra.Command {
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "node RPC URL (repeatable)")
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 // deps is what every lifecycle verb hands the app layer.

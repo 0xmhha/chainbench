@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -36,7 +38,7 @@ func newKeyringListCmd() *cobra.Command {
 	jsonF.bind(cmd, "the listing")
 	cmd.Flags().BoolVar(&verify, "verify", false,
 		"re-derive every identity from its own key and fail on a mismatch")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 // newKeyringShowCmd prints one identity's public material.
@@ -71,7 +73,7 @@ func newKeyringShowCmd() *cobra.Command {
 	ring.bind(cmd)
 	label.bind(cmd)
 	jsonF.bind(cmd, "the identity")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 // newKeyringExportCmd prints one identity's private key.

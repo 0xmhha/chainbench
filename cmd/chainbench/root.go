@@ -55,5 +55,8 @@ func newRootCmd() *cobra.Command {
 		keyringcmd.New(),
 		resourcecmd.New(),
 	)
+	// The query group is built last, because it is a projection of the tree and
+	// there has to be a tree to project.
+	root.AddCommand(newQueryCmd(root))
 	return root
 }

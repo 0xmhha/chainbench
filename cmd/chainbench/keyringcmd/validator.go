@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -197,7 +199,7 @@ func newValidatorRosterCmd() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix)")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set (preset) directory")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the roster as JSON")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 // newValidatorSetCmd generates a network's validator set — the preset key

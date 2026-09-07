@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -58,5 +60,5 @@ func newPoolCmd() *cobra.Command {
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "a workspace to count in addition to those under ~/.chainbench (optional)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the pool as JSON")
 	sf.Bind(cmd)
-	return cmd
+	return surface.ReadOnly(cmd)
 }

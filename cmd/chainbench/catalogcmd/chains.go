@@ -6,11 +6,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
 func NewChains() *cobra.Command {
-	return &cobra.Command{
+	return surface.ReadOnly(&cobra.Command{
 		Use:   "chains",
 		Short: "List the registered chains",
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -27,7 +29,7 @@ func NewChains() *cobra.Command {
 			}
 			return w.Flush()
 		},
-	}
+	})
 }
 
 // deps is what every catalog verb hands the app layer.

@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -77,5 +79,5 @@ func newCallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&rpcURL, "rpc", "", "node RPC URL")
 	cmd.Flags().StringVar(&to, "to", "", "contract address (0x-hex)")
 	cmd.Flags().StringVar(&data, "data", "", "calldata (0x-hex)")
-	return cmd
+	return surface.ReadOnly(cmd)
 }

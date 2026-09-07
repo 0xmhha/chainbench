@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -52,5 +54,5 @@ func newNetStatusCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the workspace state as JSON")
-	return cmd
+	return surface.ReadOnly(cmd)
 }

@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -49,5 +51,5 @@ func NewReport() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "session directory, or a root holding sessions")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
