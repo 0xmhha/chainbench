@@ -22,8 +22,8 @@ network: local
 nodes:
   - { index: 1, role: bp,  sync_mode: full }
   - { index: 2, role: en,  sync_mode: full, bootnode: true }
-  - { index: 3, role: en,  sync_mode: archive }
-  - { index: 4, role: bp }
+  - { index: 3, role: endpoint, sync_mode: archive }
+  - { index: 4, role: validator }
 `)
 	topo, err := Load(p)
 	if err != nil {
@@ -43,11 +43,14 @@ nodes:
 	for _, n := range topo.Nodes {
 		byIdx[n.Index] = n
 	}
-	if byIdx[1].NodeRole() != RoleValidator {
-		t.Errorf("node1 role = %v, want validator", byIdx[1].NodeRole())
+	// NM6: whichever spelling the file used, the model hands back the
+	// canonical one. The fixture above mixes them on purpose — nodes 3 and 4
+	// carry the legacy words a topology written earlier still holds.
+	if byIdx[1].NodeRole() != RoleBP {
+		t.Errorf("node1 role = %v, want bp", byIdx[1].NodeRole())
 	}
-	if byIdx[3].NodeRole() != RoleEndpoint || byIdx[3].EffectiveSyncMode() != "archive" {
-		t.Errorf("node3 = %v/%s, want endpoint/archive", byIdx[3].NodeRole(), byIdx[3].EffectiveSyncMode())
+	if byIdx[3].NodeRole() != RoleEN || byIdx[3].EffectiveSyncMode() != "archive" {
+		t.Errorf("node3 = %v/%s, want en/archive", byIdx[3].NodeRole(), byIdx[3].EffectiveSyncMode())
 	}
 	if byIdx[4].EffectiveSyncMode() != "full" {
 		t.Errorf("node4 default sync = %s, want full", byIdx[4].EffectiveSyncMode())

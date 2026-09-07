@@ -1,5 +1,7 @@
 package node
 
+import "encoding/json"
+
 // Record is what is known about one composed node — the fact record the
 // composition writes and every later step reads. One node has exactly one
 // Record; everything else that speaks about a node is either a view derived
@@ -64,4 +66,25 @@ func (r Record) NodeLabel() Label {
 		return Label(r.Label)
 	}
 	return LabelFor(r.Index)
+}
+
+// UnmarshalJSON folds Role onto the canonical vocabulary as the record is read,
+// the same way [Node.UnmarshalJSON] does for the hand-off object.
+//
+// Both boundaries are needed because a workspace keeps two tables: Record is
+// what the composition persists in workspace.json, Node is what the phases pass
+// around. A fold on only one of them would leave a workspace written before NM6
+// reporting "validator" in `chain status` and "bp" everywhere else, which is
+// how one vocabulary becomes two.
+func (r *Record) UnmarshalJSON(b []byte) error {
+	type raw Record // shed the method, or this recurses
+	var v raw
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	*r = Record(v)
+	if canonical, err := NormalizeRole(r.Role); err == nil {
+		r.Role = string(canonical)
+	}
+	return nil
 }

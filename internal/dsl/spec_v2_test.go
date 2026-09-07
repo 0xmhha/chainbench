@@ -430,7 +430,7 @@ func TestV2_UpgradeEnvNamesItsBinariesByRole(t *testing.T) {
 	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" || s.EnvUpgrade.Template != "t.json" {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
-	if s.Chain.Binaries[RoleProducer] != "gwemix" || s.Chain.Binaries[RoleValidator] != "gwbft" || s.Chain.Binary != "" {
+	if s.Chain.Binaries[BinaryBefore] != "gwemix" || s.Chain.Binaries[BinaryAfter] != "gwbft" || s.Chain.Binary != "" {
 		t.Fatalf("binaries = %v / %q", s.Chain.Binaries, s.Chain.Binary)
 	}
 

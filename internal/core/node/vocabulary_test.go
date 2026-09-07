@@ -1,6 +1,7 @@
 package node_test
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -50,12 +51,39 @@ func TestNormalizeRole_FoldsEverySpelling(t *testing.T) {
 	if _, err := node.NormalizeRole("miner"); err == nil {
 		t.Error("an unknown role was accepted")
 	}
-	// The transition mapping goes back exactly, so behaviour is unchanged
-	// until the migration flips the persisted spelling deliberately.
-	if node.LegacySpelling(node.RoleBP) != node.RoleValidator ||
-		node.LegacySpelling(node.RoleEN) != node.RoleEndpoint ||
-		node.LegacySpelling(node.RolePN) != node.RolePN {
-		t.Error("LegacySpelling does not mirror the folding")
+}
+
+// TestUnmarshalJSON_FoldsAtTheBoundary is NM6's compatibility guarantee: a
+// workspace composed before the flip holds "validator" and "endpoint" on disk,
+// and reading it must produce the canonical vocabulary so nothing above this
+// package ever has to know which era wrote the file.
+func TestUnmarshalJSON_FoldsAtTheBoundary(t *testing.T) {
+	const legacy = `{"chain":"wbft","network":"local","nodes":[
+		{"index":1,"role":"validator","host":"127.0.0.1","rpc_url":"http://127.0.0.1:8545"},
+		{"index":2,"role":"endpoint","host":"127.0.0.1","rpc_url":"http://127.0.0.1:8546"},
+		{"index":3,"role":"pn","host":"127.0.0.1","rpc_url":"http://127.0.0.1:8547"}]}`
+
+	var ns node.NodeSet
+	if err := json.Unmarshal([]byte(legacy), &ns); err != nil {
+		t.Fatalf("a workspace written before NM6 must still read: %v", err)
+	}
+	want := []node.Role{node.RoleBP, node.RoleEN, node.RolePN}
+	for i, n := range ns.Nodes {
+		if n.Role != want[i] {
+			t.Errorf("node%d role = %q, want the canonical %q", n.Index, n.Role, want[i])
+		}
+	}
+
+	// An unrecognised role survives decoding untouched. Whether it may launch
+	// is Validate's and SupportsRole's question, and they answer it with the
+	// node's own word; failing here would make a bad topology unreadable
+	// instead of merely invalid.
+	var one node.Node
+	if err := json.Unmarshal([]byte(`{"index":1,"role":"miner"}`), &one); err != nil {
+		t.Fatalf("decoding must not reject an unknown role: %v", err)
+	}
+	if one.Role != node.Role("miner") {
+		t.Errorf("role = %q, want it left as written", one.Role)
 	}
 }
 

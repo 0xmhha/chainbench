@@ -29,7 +29,7 @@ func TestAttach_EndpointsAloneMakeEveryNodeAnEndpoint(t *testing.T) {
 		t.Error("attach must not offer to stop nodes it did not start")
 	}
 	for _, n := range ns.Nodes {
-		if n.Role != node.RoleEndpoint {
+		if n.Role != node.RoleEN {
 			t.Errorf("node%d came back as %q; with no record, no node may be assumed to produce", n.Index, n.Role)
 		}
 	}

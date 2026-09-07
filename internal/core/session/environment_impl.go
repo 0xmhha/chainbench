@@ -87,14 +87,19 @@ func (e *env) Resolve(selector string) (node.Node, error) {
 	if err != nil {
 		return node.Node{}, err
 	}
-	roles := rolesForToken(token)
-	if roles == nil {
+	role, err := node.NormalizeRole(token)
+	if err != nil {
 		return node.Node{}, fmt.Errorf("session: unknown role %q in selector %q", token, selector)
 	}
 
+	// Is rather than an equality check, because a node table may still hold a
+	// legacy word. Since NM6 nothing emits one and a decoded set is folded at
+	// the boundary, but a set handed straight in from code has passed neither,
+	// and a selector that silently addresses nothing is the defect this whole
+	// vocabulary exists to prevent.
 	var matched []node.Node
 	for _, n := range e.nodes {
-		if roles[n.Role] {
+		if node.Is(n.Role, role) {
 			matched = append(matched, n)
 		}
 	}
@@ -177,24 +182,4 @@ func parseSelector(sel string) (token string, index int, anyForm bool, err error
 		return "", 0, false, fmt.Errorf("session: bad selector ordinal in %q", sel)
 	}
 	return sel[:split], n - 1, false, nil
-}
-
-// rolesForToken maps a DSL role token to the node roles it selects. Returns nil
-// for an unknown token.
-// rolesForToken folds a selector's role word onto every spelling a node may
-// actually carry. The folding itself belongs to netmap — this function only
-// adds the legacy spelling, because a running network can hold either until
-// the migration to the canonical spelling is complete: a node composed today
-// records "validator", one composed after the switch records "bp", and a
-// selector has to match both or a spec silently addresses nothing.
-func rolesForToken(tok string) map[node.Role]bool {
-	canonical, err := node.NormalizeRole(tok)
-	if err != nil {
-		return nil
-	}
-	roles := map[node.Role]bool{canonical: true}
-	if legacy := node.LegacySpelling(canonical); legacy != canonical {
-		roles[legacy] = true
-	}
-	return roles
 }

@@ -21,6 +21,8 @@
 // NodeSet, so a phase can run standalone against nodes it did not create.
 package node
 
+import "encoding/json"
+
 // Role is a node's operational role within a network. The BFT chains
 // (stablenet/wbft) use validator/endpoint; the wemix (poa) bootstrap adds the
 // boot/en distinction seen in ../script/wemix-upgrade (boot-node deploys
@@ -94,6 +96,30 @@ type Node struct {
 	// Auth is the optional authentication descriptor for reaching a remote
 	// attached endpoint. Empty for local or unauthenticated nodes.
 	Auth Auth `json:"auth,omitempty"`
+}
+
+// UnmarshalJSON folds Role onto the canonical vocabulary as the node is read.
+//
+// This is the boundary the legacy spellings survive at. A workspace composed
+// before NM6 holds "validator" on disk, and every consumer used to have to
+// remember that; folding here means nothing above this package ever sees the
+// old word, so a comparison cannot pick the wrong spelling to compare against.
+//
+// An unrecognised role is left as it was found rather than rejected. Decoding
+// is not the place that decides a role is usable — Topology.Validate and
+// ChainPlugin.SupportsRole are, and they say so with the node's own word in the
+// message. Erroring here would turn a bad topology into an unreadable session.
+func (n *Node) UnmarshalJSON(b []byte) error {
+	type raw Node // shed the method, or this recurses
+	var r raw
+	if err := json.Unmarshal(b, &r); err != nil {
+		return err
+	}
+	*n = Node(r)
+	if canonical, err := NormalizeRole(string(n.Role)); err == nil {
+		n.Role = canonical
+	}
+	return nil
 }
 
 // Auth is a node's authentication descriptor for reaching a remote attached

@@ -15,7 +15,8 @@ const layersDoc = "../../docs/dev/architecture/layers.md"
 // modulePrefix is the import prefix of the packages under test, and moduleRoot
 // is where the toolchain has to be invoked from to see all of them.
 const (
-	modulePrefix = "github.com/0xmhha/chainbench/internal/"
+	modulePath   = "github.com/0xmhha/chainbench"
+	modulePrefix = modulePath + "/internal/"
 	moduleRoot   = "../.."
 )
 

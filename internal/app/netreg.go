@@ -25,8 +25,8 @@ type (
 	DetectResult = collector.Result
 )
 
-// RoleEndpoint is the role of a node that serves RPC without producing blocks.
-const RoleEndpoint = node.RoleEndpoint
+// RoleEN is the role of a node that serves RPC without producing blocks.
+const RoleEN = node.RoleEN
 
 // IsValidNetworkName reports whether a name may be registered. The rule is the
 // registry's, so every surface applies the same one.
