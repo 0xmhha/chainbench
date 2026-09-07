@@ -22,7 +22,6 @@ import (
 var nameShared = map[string]string{
 	// 동사다. 호출하는 자리에 패키지 이름이 늘 앞에 붙어 문장이 된다.
 	"Build":            "genesis 를 만드는 일과 report 를 만드는 일이다",
-	"BuildPlan":        "핸드오프 계획과 하드포크 계획을 각각 세운다",
 	"Compose":          "genesis 를 조립하는 일과, preflight 가 '아직 아무것도 조립되지 않았다'고 말하는 단계다",
 	"DefaultKeySetDir": "app 에서 operation 을 거쳐 store 까지 그대로 전달한다",
 	"Generate":         "키셋을 만드는 일과 리포트를 만드는 일이다",

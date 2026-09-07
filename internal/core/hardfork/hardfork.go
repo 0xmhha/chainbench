@@ -36,7 +36,15 @@ type NodeSwap struct {
 }
 
 // Plan is a full hardfork upgrade description.
-type Plan struct {
+// SwapPlan is which nodes to stop and relaunch on a different binary, and at
+// which block the fork activates.
+//
+// Named SwapPlan rather than Plan because upgrade.Plan is a different thing and
+// the shared word said otherwise (A7, A7b). This one acts on a network that is
+// already composed: the genesis is untouched, the data directories are kept,
+// and each node comes back on a new executable. upgrade.Plan builds a genesis
+// and composes a network from scratch, running two binaries at once.
+type SwapPlan struct {
 	FromChain  string
 	ToChain    string
 	FromBinary string
@@ -45,15 +53,15 @@ type Plan struct {
 	Swaps      []NodeSwap
 }
 
-// BuildPlan builds a hardfork upgrade from a running from-chain NodeSet to a
-// target chain, activating at block. dataRoot locates each node's datadir
+// PlanSwap builds the swap from a running from-chain NodeSet to a target chain,
+// activating at block. dataRoot locates each node's datadir
 // (dataRoot/node<index>), which is preserved across the swap.
-func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, dataRoot string) (Plan, error) {
+func PlanSwap(ns node.NodeSet, from, to registry.ChainPlugin, block int64, dataRoot string) (SwapPlan, error) {
 	if len(ns.Nodes) == 0 {
-		return Plan{}, fmt.Errorf("hardfork: empty node set")
+		return SwapPlan{}, fmt.Errorf("hardfork: empty node set")
 	}
 	if block < 0 {
-		return Plan{}, fmt.Errorf("hardfork: negative block %d", block)
+		return SwapPlan{}, fmt.Errorf("hardfork: negative block %d", block)
 	}
 	fromBin := from.Manifest().Binary
 	toBin := to.Manifest().Binary
@@ -76,7 +84,7 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 			ToBinary:   toBin,
 		})
 	}
-	return Plan{
+	return SwapPlan{
 		FromChain:  from.Manifest().ID,
 		ToChain:    to.Manifest().ID,
 		FromBinary: fromBin,
@@ -98,7 +106,7 @@ func BuildPlan(ns node.NodeSet, from, to registry.ChainPlugin, block int64, data
 // peering. A homogeneous fork keeps that identity; regenerating generic start
 // flags would drop it and the relaunched node would rejoin WBFT consensus as an
 // unauthorized address, halting block production.
-func (p Plan) Execute(ctx context.Context, d process.Driver, specs []process.NodeSpec, binary string) (node.NodeSet, error) {
+func (p SwapPlan) Execute(ctx context.Context, d process.Driver, specs []process.NodeSpec, binary string) (node.NodeSet, error) {
 	byIndex := make(map[int]process.NodeSpec, len(specs))
 	for _, s := range specs {
 		byIndex[s.Index] = s
