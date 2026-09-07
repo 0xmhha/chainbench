@@ -7,7 +7,7 @@
   "steps": [
     { "read": { "source": "derive", "op": "abiCall", "selector": "0xb03d36cd", "of": ["0xc17d493883eaa3b4cceb0f214b273392d562f9d8"], "save": "refBalCall" } },
     { "read": { "source": "call", "to": "0x0000000000000000000000000000000000001003", "data": "$refBalCall", "save": "refBefore" } },
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "0x0000000000000000000000000000000000001003",
                   "gas": "0xb71b0",
@@ -18,7 +18,7 @@
                 "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
                 "topic": 1, "save": "burnPid" } },
     { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$burnPid"], "save": "approveData" } },
-    { "sendTx": { "on": "en2",
+    { "sendTx": { "on": "node2",
                   "from": "node2",
                   "to": "0x0000000000000000000000000000000000001003",
                   "gas": "0xb71b0",

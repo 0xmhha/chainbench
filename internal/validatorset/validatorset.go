@@ -15,11 +15,13 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
 
-// Role names an account's function in a chain.
+// What an account does in a chain. Spelled Account rather than Role because a
+// node's role and an account's function are different questions about
+// different things, and sharing the word Role made them look like one (A7).
 const (
-	RoleValidator  = "validator"
-	RoleGovernance = "governance-member"
-	RoleNode       = "node"
+	AccountValidator  = "validator"
+	AccountGovernance = "governance-member"
+	AccountNode       = "node"
 )
 
 // Account is one account with its chain role.
@@ -67,10 +69,10 @@ func Load(chainID, keysDir string) (Roster, error) {
 			if i < len(net.BLSKeys) && net.BLSKeys[i] != "" {
 				detail = "BLS present"
 			}
-			r.Accounts = append(r.Accounts, Account{Role: RoleValidator, Index: i + 1, Address: addr, Detail: detail})
+			r.Accounts = append(r.Accounts, Account{Role: AccountValidator, Index: i + 1, Address: addr, Detail: detail})
 		}
 		for _, addr := range net.Members {
-			r.Accounts = append(r.Accounts, Account{Role: RoleGovernance, Address: addr, Detail: "system-contract council"})
+			r.Accounts = append(r.Accounts, Account{Role: AccountGovernance, Address: addr, Detail: "system-contract council"})
 		}
 	case "poa":
 		r.Note = "poa: validators are not in genesis — they are registered at the governance/etcd bootstrap; the key set only fixes node identities."
@@ -79,7 +81,7 @@ func Load(chainID, keysDir string) (Roster, error) {
 	}
 
 	for _, n := range preset.Nodes {
-		r.Accounts = append(r.Accounts, Account{Role: RoleNode, Index: n.Index, Address: n.Address, Detail: "devp2p identity"})
+		r.Accounts = append(r.Accounts, Account{Role: AccountNode, Index: n.Index, Address: n.Address, Detail: "devp2p identity"})
 	}
 	return r, nil
 }

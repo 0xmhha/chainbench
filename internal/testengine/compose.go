@@ -108,8 +108,8 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
 			PresetDir:      keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[dsl.RoleProducer]),
-			ToBinary:       expand(spec.Chain.Binaries[dsl.RoleValidator]),
+			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryBefore]),
+			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryAfter]),
 			GenesisOverlay: overlayPath,
 			DataDir:        in.DataDir,
 		}}, nil

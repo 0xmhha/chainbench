@@ -9,11 +9,11 @@
     { "newAccount": { "save": "spender", "saveKey": "spenderKey" } },
     { "newAccount": { "save": "recipient", "saveKey": "recipientKey" } },
 
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "$owner", "value": "5000000000000000000", "gas": "21000",
                   "save": "fundOwnerHash" } },
-    { "sendTx": { "on": "en1",
+    { "sendTx": { "on": "node1",
                   "from": "node1",
                   "to": "$spender", "value": "10000000000000000000", "gas": "21000",
                   "save": "fundSpenderHash" } },

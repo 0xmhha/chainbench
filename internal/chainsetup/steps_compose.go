@@ -164,12 +164,12 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	reqs := make([]node.LaunchReq, 0, o.Validators+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < o.Validators; i++ {
-		reqs = append(reqs, node.LaunchReq{Role: node.RoleValidator})
+		reqs = append(reqs, node.LaunchReq{Role: node.RoleBP})
 		modes = append(modes, syncModeFull)
 	}
 	for i := 0; i < o.Endpoints; i++ {
-		reqs = append(reqs, node.LaunchReq{Role: node.RoleEndpoint})
-		modes = append(modes, syncModeFor(node.RoleEndpoint, o.EndpointSyncMode))
+		reqs = append(reqs, node.LaunchReq{Role: node.RoleEN})
+		modes = append(modes, syncModeFor(node.RoleEN, o.EndpointSyncMode))
 	}
 	return reqs, modes, nil
 }
@@ -316,8 +316,8 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	if err != nil {
 		return "", err
 	}
-	if w.state.Validators <= 0 {
-		return "", fmt.Errorf("chainsetup: genesis: no validators — run `chain place` first")
+	if err := w.require("genesis"); err != nil {
+		return "", err
 	}
 	// A family whose genesis its binary writes takes a different source: the
 	// generic dispatch builds a genesis by substituting a template, and for
@@ -398,8 +398,8 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: config: no node table — run `chain place` first")
+	if err := w.require("config"); err != nil {
+		return "", err
 	}
 	preset, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
@@ -480,8 +480,8 @@ func (w *Workspace) LaunchOpts() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: launchopts: no node table — run `chain place` first")
+	if err := w.require("build"); err != nil {
+		return "", err
 	}
 	preset, placed, peering, pubkey, err := w.peerPlan(p)
 	if err != nil {
@@ -518,11 +518,8 @@ func (w *Workspace) LaunchOpts() (string, error) {
 // upload-if-absent semantics: the genesis (as built by the genesis step) and
 // the per-node configs. Re-running it reuses what already exists.
 func (w *Workspace) Provision(ctx context.Context) (string, error) {
-	if w.state.GenesisPath == "" {
-		return "", fmt.Errorf("chainsetup: provision: no genesis — run `chain genesis` first")
-	}
-	if len(w.state.Nodes) == 0 {
-		return "", fmt.Errorf("chainsetup: provision: no node table — run `chain place` first")
+	if err := w.require("deploy"); err != nil {
+		return "", err
 	}
 	present, shipped := 0, 0
 	err := w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
@@ -838,4 +835,57 @@ func short(hash string) string {
 		return hash[:i+13]
 	}
 	return hash
+}
+
+// composeNeeds is the composition's resolution order, declared once.
+//
+// It was a convention before: each step hand-rolled a check on whatever state
+// field it happened to need and wrote its own "run X first" message. Three
+// things went wrong with that. The checks disagreed about what a step needs —
+// genesis looked at the validator count and never at the key set, though it
+// cannot build extraData without one. The messages named different steps for
+// the same missing prerequisite. And the order existed nowhere a reader could
+// see it, so N9's question ("what has to resolve before what") could only be
+// answered by reading six functions.
+//
+// The order is NOT keyring → netmap, which is how the worklist recorded it.
+// `keys` takes its node count from the placement, so `place` runs first and
+// `chain up` has always run them that way; the note was written from the
+// intended design rather than from the code.
+//
+// genesis needs place and NOT keys, which is the second thing writing this down
+// corrected. It hands the key directory to the family and the family decides:
+// one that seals extraData from the validator keys reads it, one that
+// substitutes a supplied template never opens it. Requiring a key set here
+// broke composing an external chain from its own template, which is a thing
+// that worked, so the dependency belongs to the family and not to the step.
+//
+// Each entry lists what a step reaches for DIRECTLY. deploy needs a key set as
+// much as config does, and gets it by way of config rather than by claiming it
+// here, so a change in what config needs does not have to be copied.
+//
+// enode is absent because it produces nothing and marks no step: it derives a
+// view from place and keys, and verbs_enode.go asks for both directly.
+var composeNeeds = map[string][]string{
+	"place":   {"new"},
+	"keys":    {"new"},
+	"genesis": {"place"},
+	"config":  {"place", "keys"},
+	"build":   {"place", "keys"},
+	"deploy":  {"place", "genesis", "config"},
+}
+
+// require reports whether every step that has to resolve before step has run,
+// naming the first one that has not.
+//
+// It reads the recorded steps rather than the state fields they leave behind.
+// A field can be non-empty because something else filled it, and a step that
+// half-ran leaves exactly that: state that looks composed and was not.
+func (w *Workspace) require(step string) error {
+	for _, need := range composeNeeds[step] {
+		if _, done := w.state.Steps[need]; !done {
+			return fmt.Errorf("chainsetup: %s: %s has not run — run `chain %s` first", step, need, need)
+		}
+	}
+	return nil
 }

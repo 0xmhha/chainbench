@@ -182,7 +182,7 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 		}
 		producer := i < in.Roles.Producers
 		spec := NodeSpec{
-			Index: i, Role: node.RoleValidator, Producer: producer,
+			Index: i, Role: node.RoleBP, Producer: producer,
 			NetworkID: in.NetworkID, Ports: p,
 		}
 		if len(in.NodePubkeys) != 0 {

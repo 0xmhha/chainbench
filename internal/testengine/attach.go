@@ -44,6 +44,16 @@ type AttachConfig struct {
 	Chain string
 	// RPCURLs are the endpoints of the running nodes; the first is the primary.
 	RPCURLs []string
+	// Nodes is the network as its composer recorded it, when the caller has
+	// that record. It wins over RPCURLs.
+	//
+	// The difference is the roles, and the roles are how a spec addresses a
+	// node: "en1" means the first node whose role is en, while "node1" means
+	// the first node by order. Attaching to endpoints alone chainbench cannot
+	// know which of someone else's nodes produce, so every node is called an
+	// endpoint and "en1" falls back to node 1. Attaching to a workspace the
+	// roles ARE known, and discarding them made "en1" name a producer.
+	Nodes node.NodeSet
 	// ArtifactRoot is the base directory for session artifacts.
 	ArtifactRoot string
 	// Caps are extra capabilities the operator asserts the attached network
@@ -91,6 +101,15 @@ type AttachConfig struct {
 // can be assigned to it directly.
 type BuildEnvFunc func(ctx context.Context, env session.Environment, spec dsl.Spec) (node.NodeSet, TeardownFunc, error)
 
+// NewRecordedBuildEnv returns a BuildEnv that hands back a node set its
+// composer already recorded, roles and all, launching nothing. Its teardown is
+// nil for the same reason attach's is: this run did not create the nodes.
+func NewRecordedBuildEnv(ns node.NodeSet) BuildEnvFunc {
+	return func(_ context.Context, _ session.Environment, _ dsl.Spec) (node.NodeSet, TeardownFunc, error) {
+		return ns, nil, nil
+	}
+}
+
 // NewAttachBuildEnv returns a BuildEnv that builds the node table from existing
 // RPC endpoints without provisioning or launching anything. Its teardown is nil:
 // attach did not create the nodes, so it must not stop them.
@@ -111,8 +130,8 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	if cfg.Chain == "" || cfg.ArtifactRoot == "" {
 		return nil, fmt.Errorf("engine: attach config needs chain and artifactRoot")
 	}
-	if len(cfg.RPCURLs) == 0 {
-		return nil, fmt.Errorf("engine: attach config needs at least one RPC URL")
+	if len(cfg.Nodes.Nodes) == 0 && len(cfg.RPCURLs) == 0 {
+		return nil, fmt.Errorf("engine: attach config needs a node set or at least one RPC URL")
 	}
 	eps := make([]node.RPCEndpoint, len(cfg.RPCURLs))
 	for i, u := range cfg.RPCURLs {
@@ -147,6 +166,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 	})
 
 	build := NewAttachBuildEnv(cfg.Chain, eps)
+	if len(cfg.Nodes.Nodes) > 0 {
+		// The recorded set says which nodes produce and which serve RPC, so a
+		// spec that names "en1" reaches an endpoint rather than whichever URL
+		// happened to come first.
+		build = NewRecordedBuildEnv(cfg.Nodes)
+	}
 	if cfg.NodeSet != nil {
 		ns := *cfg.NodeSet
 		build = func(context.Context, session.Environment, dsl.Spec) (node.NodeSet, TeardownFunc, error) {

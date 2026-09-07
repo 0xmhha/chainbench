@@ -21,6 +21,8 @@
 // NodeSet, so a phase can run standalone against nodes it did not create.
 package node
 
+import "encoding/json"
+
 // Role is a node's operational role within a network. The BFT chains
 // (stablenet/wbft) use validator/endpoint; the wemix (poa) bootstrap adds the
 // boot/en distinction seen in ../script/wemix-upgrade (boot-node deploys
@@ -54,8 +56,12 @@ const (
 // Endpoints holds a node's reachable ports on its host. For nodes on the same
 // host these are offset per node; across hosts they may repeat while Host
 // varies (docs §7, requirement #6).
+//
+// The yaml tags are here so a blueprint declares ports in the one representation
+// the rest of the system uses. Three spellings of a port map is what NM7 ended,
+// and a declaration format is exactly where a fourth would have started.
 type Endpoints struct {
-	P2P int `json:"p2p"`
+	P2P int `json:"p2p" yaml:"p2p,omitempty"`
 	// Etcd is not a launch flag: a wemix node's embedded etcd derives its peer
 	// port as P2P+1 and its client port as P2P+2. Both are carried so a running
 	// node can be asked for them and so collision checks see them — the ports
@@ -64,12 +70,12 @@ type Endpoints struct {
 	//
 	// A family that does not embed etcd leaves them zero rather than reserving
 	// ports it will not listen on.
-	Etcd       int `json:"etcd,omitempty"`
-	EtcdClient int `json:"etcdClient,omitempty"`
-	HTTP       int `json:"http"`
-	WS         int `json:"ws"`
-	Auth       int `json:"auth"`
-	Metrics    int `json:"metrics"`
+	Etcd       int `json:"etcd,omitempty" yaml:"etcd,omitempty"`
+	EtcdClient int `json:"etcdClient,omitempty" yaml:"etcd_client,omitempty"`
+	HTTP       int `json:"http" yaml:"http,omitempty"`
+	WS         int `json:"ws" yaml:"ws,omitempty"`
+	Auth       int `json:"auth" yaml:"auth,omitempty"`
+	Metrics    int `json:"metrics" yaml:"metrics,omitempty"`
 }
 
 // Node is one chain node, whether locally launched, remotely launched, or
@@ -94,6 +100,30 @@ type Node struct {
 	// Auth is the optional authentication descriptor for reaching a remote
 	// attached endpoint. Empty for local or unauthenticated nodes.
 	Auth Auth `json:"auth,omitempty"`
+}
+
+// UnmarshalJSON folds Role onto the canonical vocabulary as the node is read.
+//
+// This is the boundary the legacy spellings survive at. A workspace composed
+// before NM6 holds "validator" on disk, and every consumer used to have to
+// remember that; folding here means nothing above this package ever sees the
+// old word, so a comparison cannot pick the wrong spelling to compare against.
+//
+// An unrecognised role is left as it was found rather than rejected. Decoding
+// is not the place that decides a role is usable — Topology.Validate and
+// ChainPlugin.SupportsRole are, and they say so with the node's own word in the
+// message. Erroring here would turn a bad topology into an unreadable session.
+func (n *Node) UnmarshalJSON(b []byte) error {
+	type raw Node // shed the method, or this recurses
+	var r raw
+	if err := json.Unmarshal(b, &r); err != nil {
+		return err
+	}
+	*n = Node(r)
+	if canonical, err := NormalizeRole(string(n.Role)); err == nil {
+		n.Role = canonical
+	}
+	return nil
 }
 
 // Auth is a node's authentication descriptor for reaching a remote attached

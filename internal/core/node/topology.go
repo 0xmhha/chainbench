@@ -103,16 +103,15 @@ func (t Topology) Validate() error {
 	return nil
 }
 
-// NodeRole returns the Role for n (validated by Validate), in the legacy
-// spelling the composition still persists and compares. The alias table this
-// package used to keep is gone — netmap owns the folding, and this method
-// switches to the canonical spelling when the launch flows migrate to it.
+// NodeRole returns the Role for n (validated by Validate) in the canonical
+// vocabulary, whichever spelling the file used. A topology may still say
+// "validator"; nothing downstream of this method sees that word.
 func (n Entry) NodeRole() Role {
 	role, err := NormalizeRole(n.Role)
 	if err != nil {
 		return "" // unreachable after Validate; an invalid role never launches
 	}
-	return LegacySpelling(role)
+	return role
 }
 
 // EffectiveSyncMode returns n's sync mode, defaulting an unset value to "full".
@@ -143,10 +142,10 @@ func (t Topology) BootnodeIndex() int {
 // Counts returns the number of block-producer and endpoint nodes.
 func (t Topology) Counts() (producers, endpoints int) {
 	for _, n := range t.Nodes {
-		switch n.NodeRole() {
-		case RoleValidator, RoleBP:
+		switch {
+		case Is(n.NodeRole(), RoleBP):
 			producers++
-		case RoleEndpoint, RoleEN:
+		case Is(n.NodeRole(), RoleEN):
 			endpoints++
 		}
 	}

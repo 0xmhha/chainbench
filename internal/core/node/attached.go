@@ -34,7 +34,7 @@ func AttachedSet(chain, network string, eps []RPCEndpoint) (NodeSet, error) {
 		}
 		ns.Nodes = append(ns.Nodes, Node{
 			Index:  i + 1,
-			Role:   RoleEndpoint,
+			Role:   RoleEN,
 			Host:   ep.Host,
 			RPCURL: ep.RPCURL,
 			Ports:  Endpoints{HTTP: ep.HTTPPort},

@@ -63,7 +63,7 @@ func TestNetAllocate_EndpointSyncModeReachesTheConfig(t *testing.T) {
 
 	for _, n := range stateOf(t, dir, d).Nodes {
 		want := "full"
-		if n.Role == "endpoint" {
+		if node.Is(node.Role(n.Role), node.RoleEN) {
 			want = "snap"
 		}
 		if n.SyncMode != want {
@@ -209,7 +209,7 @@ nodes:
     role: en
     sync_mode: archive
   - index: 3
-    role: bp
+    role: validator
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -222,11 +222,14 @@ nodes:
 		t.Errorf("detail should say the layout came from a topology, got %q", out.Detail)
 	}
 
+	// NM6: the composition records the canonical vocabulary whatever the
+	// topology said. node3 above is declared with the legacy word on purpose,
+	// so this also pins that the file's spelling never reaches the state.
 	st := stateOf(t, dir, d)
 	want := []struct{ role, sync string }{
-		{"validator", "full"},
-		{"endpoint", "archive"},
-		{"validator", "full"},
+		{"bp", "full"},
+		{"en", "archive"},
+		{"bp", "full"},
 	}
 	if len(st.Nodes) != len(want) {
 		t.Fatalf("got %d nodes, want %d", len(st.Nodes), len(want))

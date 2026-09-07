@@ -37,14 +37,14 @@ func TestRoster_WbftFamilyHasValidators(t *testing.T) {
 	var validators, nodes, gov int
 	for _, a := range r.Accounts {
 		switch a.Role {
-		case validatorset.RoleValidator:
+		case validatorset.AccountValidator:
 			validators++
 			if a.Detail != "BLS present" {
 				t.Fatalf("stablenet validator should have BLS: %+v", a)
 			}
-		case validatorset.RoleNode:
+		case validatorset.AccountNode:
 			nodes++
-		case validatorset.RoleGovernance:
+		case validatorset.AccountGovernance:
 			gov++
 		}
 	}
@@ -62,7 +62,7 @@ func TestRoster_PoaFamilyNoGenesisValidators(t *testing.T) {
 		t.Fatalf("family = %q, want poa", r.Family)
 	}
 	for _, a := range r.Accounts {
-		if a.Role == validatorset.RoleValidator {
+		if a.Role == validatorset.AccountValidator {
 			t.Fatalf("poa chain should not list genesis validators: %+v", a)
 		}
 	}

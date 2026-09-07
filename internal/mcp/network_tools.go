@@ -43,7 +43,7 @@ func networkAttachTool() Tool {
 			if err != nil {
 				return "", err
 			}
-			n := app.Node{Index: 1, Role: app.RoleEndpoint, Host: hostOf(rpc), RPCURL: rpc}
+			n := app.Node{Index: 1, Role: app.RoleEN, Host: hostOf(rpc), RPCURL: rpc}
 			if a, ok := args["auth"].(map[string]any); ok && len(a) > 0 {
 				n.Auth = a
 			}

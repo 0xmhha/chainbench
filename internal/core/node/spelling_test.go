@@ -10,6 +10,10 @@ import (
 // a producer launched without --mine (chain stalls, every node healthy) and a
 // selector that resolved bp1 to the wrong node. Neither failed until something
 // else started emitting the other word.
+//
+// Since NM6 nothing emits the legacy word, but Is keeps folding both: a
+// topology file may still say "validator", and a role that reached memory some
+// other way than [Node.UnmarshalJSON] has not passed the boundary fold.
 func TestIs_FoldsBothSpellings(t *testing.T) {
 	for _, c := range []struct {
 		role, canonical node.Role
