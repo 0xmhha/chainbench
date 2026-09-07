@@ -1,7 +1,6 @@
 package chaincmd_test
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -89,14 +88,4 @@ func TestComposeFeatures_TagsMatchTheCommands(t *testing.T) {
 		t.Fatal("no derived flag was compared, so this test asserts nothing")
 	}
 	t.Logf("%d derived flags across %d features match what the commands declare by hand", checked, len(composeCommands))
-}
-
-// describe renders a flag set as sorted "name type usage" lines.
-func describe(fs *pflag.FlagSet) []string {
-	var out []string
-	fs.VisitAll(func(f *pflag.Flag) {
-		out = append(out, f.Name+" "+f.Value.Type()+" "+f.Usage)
-	})
-	sort.Strings(out)
-	return out
 }
