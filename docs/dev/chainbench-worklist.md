@@ -1272,10 +1272,15 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   활성화를 launch 로 배선, ② metrics 를 수집하는 경로(collector/scrape), ③ `--docker` 에서
   metrics 포트를 localmap 으로 번역(지금은 컨테이너 내부주소 `172.30.0.11:6060` 로 직접
   dial 해 timeout). 이 셋이 되면 `metric` 스펙(제거된 `03-metric-head-block`)을 다시 추가한다.
-- [ ] **B 잔여 — 거버넌스·부정 경로 커버리지**. go-wemix·go-wbft 의 거버넌스 플로우와
-  negative-tx(expect:revert/reject) 케이스. 체인별 거버넌스 셋업이 필요해 fleet 에서 작성·검증한다.
-  registerContract 는 임의 호출을 받는 컨트랙트로 최소 검증만 했다 — 실제 메서드/ABI 를 쓰는
-  케이스는 여기 포함.
+- [x] **B — 부정 경로**: `go-stablenet/tx/01-negative-tx-revert` (revert 하는 런타임 배포
+  후 `expect:revert`) fleet 검증 완료.
+- [ ] **B 잔여 — 거버넌스(체인 특화, fleet)**. go-wbft·go-wemix 거버넌스는 stablenet 을
+  그대로 옮길 수 없다 — stablenet 의 GovValidator 흐름(0x…1001, proposeAddMember)을 go-wbft 로
+  적응해 fleet 에서 돌리니 **2단계 proposeAddMember 가 revert** 했다(node1 이 gwbft 의 gov
+  멤버가 아니거나 시스템 컨트랙트 셋업이 다름). 각 체인의 실제 거버넌스(컨트랙트 주소·선택자·
+  멤버·정족수)를 확인한 뒤 작성해야 한다. go-wemix(poa)는 etcd/거버넌스 배포 경로라 더 다르다.
+  registerContract 도 실제 메서드/ABI 를 쓰는 케이스는 여기 포함(현재는 임의 호출 컨트랙트로 최소 검증).
+  negative-tx 의 reject(제출 거부) 변형도 남아 있다(신뢰할 수 있는 재현 방법 확정 필요).
 - [ ] **D. WA1 — 라이브 MCP 플러그인 재배포**. 배포본이 `net_*` 이름의 stale 빌드다. 저장소는
   `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. 코드가 아니라 배포 작업이다.
 - [ ] **E. WA21 잔여 — DSL 문법 확장(D4 로 미룸)**. env 에 `blueprint`, keys-validator-subset
