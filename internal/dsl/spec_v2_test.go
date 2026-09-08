@@ -497,3 +497,21 @@ func TestV2_ConfigScopesLowerToEnvConfig(t *testing.T) {
 		t.Fatalf("a non-all, non-node scope must be refused: %v", err)
 	}
 }
+
+// TestParseV2_RequiresAndCapabilitiesUnion pins WA22: a case's own requires and
+// the env's capabilities union rather than the env's being dropped whenever the
+// case lists any of its own. The shared entry is not duplicated.
+func TestParseV2_RequiresAndCapabilitiesUnion(t *testing.T) {
+	raw := `{"schemaVersion":"2","kind":"case","id":"x",
+	  "requires":["account-extra"],
+	  "env":{"chain":"wbft","binaries":{"default":"gwbft"},"capabilities":["short-expiry","account-extra"]},
+	  "steps":[{"expect":"blockNumber","is":1}]}`
+	s, err := Parse([]byte(raw))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	want := []string{"account-extra", "short-expiry"}
+	if !reflect.DeepEqual(s.Requires, want) {
+		t.Fatalf("requires = %v, want %v (case requires and env capabilities must union without duplicates)", s.Requires, want)
+	}
+}

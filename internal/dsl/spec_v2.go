@@ -309,8 +309,20 @@ func lowerCase(c CaseV2) (Spec, error) {
 		DefaultOn:        c.On,
 		Timeouts:         c.Timeouts,
 	}
-	if len(env.Capabilities) > 0 && len(spec.Requires) == 0 {
-		spec.Requires = env.Capabilities
+	// The env's capabilities and the case's requires are both gating inputs, so
+	// they union — a case that lists its own requires must not lose the ones the
+	// env declares. Duplicates are dropped, case order first.
+	if len(env.Capabilities) > 0 {
+		seen := make(map[string]bool, len(spec.Requires))
+		for _, r := range spec.Requires {
+			seen[r] = true
+		}
+		for _, c := range env.Capabilities {
+			if !seen[c] {
+				seen[c] = true
+				spec.Requires = append(spec.Requires, c)
+			}
+		}
 	}
 
 	// Binaries: "default" is every node's binary; other keys are per-role.
