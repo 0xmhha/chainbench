@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "node-address-returned",
+  "description": "RT-G-3-01 — istanbul_nodeAddress (원본 regression/api/11-test-node-address)",
+  "applicableChains": "stablenet,wbft",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "node-address-returned-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "consensus"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "Regexp",
+      "expect": "rpcCall",
+      "is": "^0x[0-9a-fA-F]{40}$",
+      "method": "istanbul_nodeAddress",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "bp3",
+        "bp4"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fee-history-well-formed",
+  "description": "RT-G-2-03 — eth_feeHistory (원본 regression/api/09-test-fee-history)",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fee-history-well-formed-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "Regexp",
+      "expect": "rpcCall",
+      "is": "^0x[0-9a-fA-F]+$",
+      "method": "eth_feeHistory",
+      "params": [
+        "0x10",
+        "latest",
+        []
+      ],
+      "select": "oldestBlock"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "eth_feeHistory",
+      "params": [
+        "0x10",
+        "latest",
+        []
+      ],
+      "select": "baseFeePerGas"
+    }
+  ]
+}

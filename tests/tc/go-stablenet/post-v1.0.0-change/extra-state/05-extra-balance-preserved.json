@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "extra-balance-preserved",
+  "description": "TC-4-5-08 — 동기화 시 무관 계정 잔액 보존 (원본 post-v1.0.0-change/extra-state/05-test-extra-balance-preserved)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "account-extra"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "extra-balance-preserved-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "account-extra"
+    ]
+  },
+  "steps": [
+    {
+      "address": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+      "compare": "Equal",
+      "expect": "balanceAt",
+      "is": "1000000000000000000"
+    },
+    {
+      "address": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+      "compare": "Equal",
+      "expect": "balanceAt",
+      "is": "1000000000000000000"
+    }
+  ]
+}

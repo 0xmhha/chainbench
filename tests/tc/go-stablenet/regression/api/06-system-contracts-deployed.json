@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "system-contracts-deployed",
+  "description": "RT-G-1-06 — eth_getCode on NativeCoinAdapter (0x1000) (원본 regression/api/06-test-get-code-system)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "system-contracts-deployed-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "address": "0x0000000000000000000000000000000000001000",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001001",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001002",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001003",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001004",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    }
+  ]
+}

@@ -150,6 +150,10 @@ type NodeSwapIn struct {
 	// Config is a set of key=value config overrides to apply before relaunch
 	// (empty keeps the current config).
 	Config []string
+	// GenesisOverlay is a genesis JSON fragment deep-merged into the network
+	// genesis and re-applied to this node's datadir, so one node can run a
+	// genesis the rest of the network does not have.
+	GenesisOverlay []byte
 	// Purpose names the config fixture recorded in provenance (config-<purpose>).
 	Purpose string
 }
@@ -164,7 +168,10 @@ func NodeSwap(ctx context.Context, d Deps, in NodeSwapIn) (NodeStartOut, error) 
 	}
 	var swapped node.Node
 	_, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		detail, err := ws.SwapNode(ctx, in.Index, in.Binary, in.Config, in.Purpose)
+		detail, err := ws.SwapNode(ctx, SwapNodeOpts{
+			Index: in.Index, Binary: in.Binary, Config: in.Config,
+			GenesisOverlay: in.GenesisOverlay, Purpose: in.Purpose,
+		})
 		if err != nil {
 			return "", err
 		}

@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "dynamic-fee-tx",
+  "description": "RT-A-2-02 — EIP-1559 DynamicFeeTx (type 0x2) 발행 (원본 regression/ethereum/09-test-dynamic-fee-tx)",
+  "applicableChains": "stablenet,wbft",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "dynamic-fee-tx-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$n",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "tip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "op": "sum",
+      "save": "feecap",
+      "source": "derive"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "maxFeePerGas": "$feecap",
+      "maxPriorityFeePerGas": "$tip",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE0C",
+      "value": "1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x2",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hash"
+      ],
+      "select": "type"
+    }
+  ]
+}

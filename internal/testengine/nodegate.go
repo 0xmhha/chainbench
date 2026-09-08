@@ -127,7 +127,7 @@ func joinReasons(rs []string) string {
 // error when the network cannot be made fit (a FATAL node, or a budget/cap
 // reached) so the caller does not run tests against it. A nil or empty node set
 // (an attach to bare URLs) is not gated here.
-func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes *node.NodeSet, steps *[]string) error {
+func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes *node.NodeSet, steps *[]string, waitBudget time.Duration) error {
 	if nodes == nil || len(nodes.Nodes) == 0 {
 		return nil
 	}
@@ -136,7 +136,10 @@ func gateReady(ctx context.Context, deps chainsetup.Deps, dataDir string, nodes 
 		restartAdapter{deps: deps, dataDir: dataDir},
 		ctxClock{},
 		stepSink{steps: steps},
-		nodemonitor.Options{},
+		// A zero budget takes nodemonitor's default; a caller raises it for a
+		// large or slow bring-up (a 15-node poa network over docker) where late
+		// endpoints take longer than the default to sync.
+		nodemonitor.Options{MaxNodeMonitorTimeout: waitBudget},
 	)
 	if err != nil {
 		return fmt.Errorf("nodemonitor: %w", err)

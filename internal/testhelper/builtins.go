@@ -26,6 +26,7 @@ const (
 	actionNewAccount      = "newAccount"
 	actionSendRawTampered = "sendRawTampered"
 	actionSendSetCode     = "sendSetCode"
+	actionSignAuth        = "signAuthorization"
 	actionLoad            = "load"
 
 	assertChainID          = "chainId"
@@ -38,6 +39,7 @@ const (
 	assertTxStatus         = "txStatus"
 	assertReceiptLog       = "receiptLog"
 	assertBlockAdvance     = "blockAdvance"
+	assertBlockStalled     = "blockStalled"
 	assertSameBlockHash    = "sameBlockHash"
 	assertBaseFee          = "baseFee"
 	assertEstimateGas      = "estimateGas"
@@ -87,11 +89,13 @@ func Register(r interp.Registry) {
 	r.RegisterAction(actionNewAccount, newAccountAction{})
 	r.RegisterAction(actionSendRawTampered, sendRawTamperedAction{})
 	r.RegisterAction(actionSendSetCode, sendSetCodeAction{})
+	r.RegisterAction(actionSignAuth, signAuthorizationAction{})
 	r.RegisterAction(actionLoad, loadAction{})
 	seedFaultBuiltins(r)
 	seedAssetBuiltins(r)
 	seedDerivedBuiltins(r)
 	r.RegisterAssertion(assertBlockAdvance, blockAdvanceAssertion{})
+	r.RegisterAssertion(assertBlockStalled, blockStalledAssertion{})
 	r.RegisterAssertion(assertBlockHalt, blockHaltAssertion{})
 	r.RegisterAssertion(assertBlockInterval, blockIntervalAssertion{})
 	r.RegisterAssertion(assertSameBlockHash, sameBlockHashAssertion{})

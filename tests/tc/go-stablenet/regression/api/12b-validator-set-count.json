@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "validator-set-count",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "validator-set-count-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "consensus"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "1",
+      "pollInterval": "1s",
+      "source": "blockNumber",
+      "timeout": "60s"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "rpcCall",
+      "is": "4",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ],
+      "select": "#"
+    }
+  ]
+}

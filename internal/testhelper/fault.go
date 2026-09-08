@@ -2,8 +2,12 @@ package testhelper
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/dsl/interp"
 
@@ -21,6 +25,24 @@ const (
 	actionSwapNode      = "swapNode"
 	actionPartition     = "partition"
 	actionHealPartition = "healPartition"
+	actionReadNodeLog   = "readNodeLog"
+)
+
+// Bounds for the node-lifecycle vocabulary. A step that expects a node NOT to
+// come up has to wait long enough to be sure, and a log read has to stop
+// somewhere: a node that has been running for an hour has a log no assertion
+// wants in full.
+const (
+	// nodeDownProbeTimeout is how long a step that expects a failed launch
+	// keeps probing before it accepts that the node is down. A node that boots
+	// normally answers JSON-RPC well inside this.
+	nodeDownProbeTimeout = 20 * time.Second
+	// nodeDownProbeInterval is the gap between those probes.
+	nodeDownProbeInterval = time.Second
+	// nodeLogDefaultMaxBytes is how much of a log's tail readNodeLog binds when
+	// the step does not say. Enough for a startup failure's message and stack,
+	// small enough to keep an artifact readable.
+	nodeLogDefaultMaxBytes = 64 * 1024
 )
 
 // seedFaultBuiltins registers the node-lifecycle and partition actions.
@@ -31,6 +53,146 @@ func seedFaultBuiltins(r interp.Registry) {
 	r.RegisterAction(actionSwapNode, swapNodeAction{})
 	r.RegisterAction(actionPartition, partitionAction{})
 	r.RegisterAction(actionHealPartition, healPartitionAction{})
+	r.RegisterAction(actionReadNodeLog, readNodeLogAction{})
+}
+
+// expectsNodeDown reports whether a node-lifecycle step declares that the node
+// must NOT come up: expect:"fail" or expectFail:true. It mirrors sendTx's
+// expect:"reject" so one grammar covers both kinds of expected failure — a
+// transaction the node refuses, and a launch the node refuses.
+func expectsNodeDown(args map[string]any) bool {
+	if b, ok := args["expectFail"].(bool); ok {
+		return b
+	}
+	if s, ok := args["expect"].(string); ok {
+		return strings.EqualFold(s, "fail")
+	}
+	return false
+}
+
+// confirmNodeDown enforces expect:"fail" on a launch: the node must not answer
+// JSON-RPC within nodeDownProbeTimeout. A launcher error is not enough on its
+// own, because a node can start and then exit — the process manager sees a
+// clean launch and the failure is only in the log — so this probes the endpoint
+// instead of trusting the return value.
+//
+// The evidence it gathers (the launcher's error, plus the node's log tail when
+// the control can read one) is bound under "save" and matched against an
+// optional "reason" (case-insensitive substring), so a spec can require the
+// specific rejection it expects rather than any failure at all.
+func confirmNodeDown(ctx context.Context, ac *interp.ActionCtx, n node.Node,
+	ctrl interp.NodeControl, launchErr error, action string) error {
+	evidence := nodeFailureEvidence(ctx, ctrl, n, launchErr)
+	deadline := time.Now().Add(nodeDownProbeTimeout)
+	for nodeAnswers(ctx, ac, n) {
+		if time.Now().After(deadline) {
+			return fmt.Errorf("dsl: %s node%d expected the node not to come up, but it answers JSON-RPC after %s",
+				action, n.Index, nodeDownProbeTimeout)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(nodeDownProbeInterval):
+		}
+	}
+	if reason, ok := ac.Args["reason"].(string); ok && reason != "" {
+		if !strings.Contains(strings.ToLower(evidence), strings.ToLower(reason)) {
+			return fmt.Errorf("dsl: %s node%d did not come up, but not for %q. evidence: %s",
+				action, n.Index, reason, evidence)
+		}
+	}
+	ac.Value = evidence
+	return nil
+}
+
+// nodeFailureEvidence collects what can be said about why a node is not up: the
+// launcher's error and, when the control can read it, the tail of the node's
+// log. Reading the log is best effort — the reason match falls back to the
+// launcher error when there is no log to read.
+func nodeFailureEvidence(ctx context.Context, ctrl interp.NodeControl, n node.Node, launchErr error) string {
+	var parts []string
+	if launchErr != nil {
+		parts = append(parts, launchErr.Error())
+	}
+	if reader, ok := ctrl.(interp.NodeLogReader); ok {
+		if out, err := reader.Log(ctx, n, nodeLogDefaultMaxBytes); err == nil && out != "" {
+			parts = append(parts, out)
+		}
+	}
+	if len(parts) == 0 {
+		return "(no launcher error and no readable log)"
+	}
+	return strings.Join(parts, "\n")
+}
+
+// nodeAnswers reports whether n serves JSON-RPC right now.
+func nodeAnswers(ctx context.Context, ac *interp.ActionCtx, n node.Node) bool {
+	if n.RPCURL == "" {
+		return false
+	}
+	c, err := clientFor(ac.Deps, n.RPCURL)
+	if err != nil {
+		return false
+	}
+	_, err = c.BlockNumber(ctx)
+	return err == nil
+}
+
+// readNodeLogAction binds the tail of one node's captured stdout/stderr under
+// "save", so an assertion can match what the node said. Args: on (selector,
+// required), maxBytes (optional, defaults to nodeLogDefaultMaxBytes).
+//
+// It needs a control that owns the node processes; attach mode says so rather
+// than binding an empty string.
+type readNodeLogAction struct{}
+
+func (readNodeLogAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	n, ctrl, err := faultTarget(ac, actionReadNodeLog)
+	if err != nil {
+		return err
+	}
+	reader, ok := ctrl.(interp.NodeLogReader)
+	if !ok {
+		return fmt.Errorf("dsl: readNodeLog node%d: this run's node control cannot read logs", n.Index)
+	}
+	maxBytes := nodeLogDefaultMaxBytes
+	if v, ok := ac.Args["maxBytes"]; ok {
+		b, err := positiveIntArg(v, "maxBytes")
+		if err != nil {
+			return fmt.Errorf("dsl: readNodeLog: %w", err)
+		}
+		maxBytes = b
+	}
+	out, err := reader.Log(ctx, n, maxBytes)
+	if err != nil {
+		return fmt.Errorf("dsl: readNodeLog node%d: %w", n.Index, err)
+	}
+	ac.Value = out
+	return nil
+}
+
+// positiveIntArg reads a DSL numeric argument that must be above zero. JSON
+// numbers arrive as float64, and a spec may also write one as a string.
+func positiveIntArg(v any, name string) (int, error) {
+	var n int
+	switch t := v.(type) {
+	case float64:
+		n = int(t)
+	case int:
+		n = t
+	case string:
+		parsed, err := strconv.Atoi(t)
+		if err != nil {
+			return 0, fmt.Errorf("%s %q is not a number: %w", name, t, err)
+		}
+		n = parsed
+	default:
+		return 0, fmt.Errorf("%s must be a number", name)
+	}
+	if n <= 0 {
+		return 0, fmt.Errorf("%s must be greater than zero (got %d)", name, n)
+	}
+	return n, nil
 }
 
 // stopNodeAction stops one node. Args: on (selector, required).
@@ -58,6 +220,9 @@ func (startNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		return err
 	}
 	started, err := ctrl.Start(ctx, n)
+	if expectsNodeDown(ac.Args) {
+		return confirmNodeDown(ctx, ac, n, ctrl, err, actionStartNode)
+	}
 	if err != nil {
 		return fmt.Errorf("dsl: startNode node%d: %w", n.Index, err)
 	}
@@ -101,20 +266,49 @@ func (swapNodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	}
 	binary, _ := ac.Args["binary"].(string)
 	config := configOverrides(ac.Args["config"])
-	if binary == "" && len(config) == 0 {
-		return fmt.Errorf("dsl: swapNode requires a \"binary\" or \"config\"")
+	overlay, err := genesisOverlayArg(ac.Args["genesisOverlay"])
+	if err != nil {
+		return fmt.Errorf("dsl: swapNode node%d: %w", n.Index, err)
+	}
+	if binary == "" && len(config) == 0 && len(overlay) == 0 {
+		return fmt.Errorf("dsl: swapNode requires a \"binary\", \"config\", or \"genesisOverlay\"")
 	}
 	purpose, _ := ac.Args["purpose"].(string)
 	sw, ok := ctrl.(interp.NodeSwapper)
 	if !ok {
 		return fmt.Errorf("dsl: swapNode node%d: this run's node control cannot swap", n.Index)
 	}
-	swapped, err := sw.Swap(ctx, n, interp.NodeChange{Binary: binary, Config: config, Purpose: purpose})
+	swapped, err := sw.Swap(ctx, n, interp.NodeChange{
+		Binary: binary, Config: config, GenesisOverlay: overlay, Purpose: purpose})
+	if expectsNodeDown(ac.Args) {
+		return confirmNodeDown(ctx, ac, n, ctrl, err, actionSwapNode)
+	}
 	if err != nil {
 		return fmt.Errorf("dsl: swapNode node%d: %w", n.Index, err)
 	}
 	ac.Env.UpdateNode(swapped)
 	return nil
+}
+
+// genesisOverlayArg encodes a swapNode "genesisOverlay" argument — a JSON object
+// the spec writes inline — back into the bytes the genesis merge takes. A
+// missing argument is not an error: an ordinary swap has none.
+func genesisOverlayArg(v any) ([]byte, error) {
+	if v == nil {
+		return nil, nil
+	}
+	obj, ok := v.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("genesisOverlay must be a JSON object")
+	}
+	if len(obj) == 0 {
+		return nil, nil
+	}
+	b, err := json.Marshal(obj)
+	if err != nil {
+		return nil, fmt.Errorf("encode genesisOverlay: %w", err)
+	}
+	return b, nil
 }
 
 // configOverrides normalizes a swapNode "config" arg to key=value strings: a

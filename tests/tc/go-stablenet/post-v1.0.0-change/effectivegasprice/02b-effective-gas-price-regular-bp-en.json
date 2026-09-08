@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "effective-gas-price-regular-bp-en",
+  "description": "TC-4-6-02 — 일반 계정 tx 의 effectiveGasPrice 가 두 노드에서 같다",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "egp-snap-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1,
+      "syncMode": "snap"
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "120s"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "value": "1",
+      "gas": "21000",
+      "save": "txHash",
+      "expect": "receipt"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "blockNumber",
+      "save": "txBlock"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "$txBlock",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "effectiveGasPrice",
+      "save": "egpBP"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "effectiveGasPrice",
+      "compare": "Equal",
+      "is": "$egpBP"
+    }
+  ]
+}

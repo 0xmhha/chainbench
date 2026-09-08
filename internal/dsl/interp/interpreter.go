@@ -78,13 +78,32 @@ type NodeSwapper interface {
 	Swap(ctx context.Context, n node.Node, change NodeChange) (node.Node, error)
 }
 
+// NodeLogReader is an optional NodeControl capability: reading the tail of a
+// node's captured stdout/stderr. A control that owns the node processes
+// implements it; attach mode does not, and the readNodeLog action reports that
+// rather than binding an empty log — which would read as a clean start.
+//
+// It exists because some failures are only visible in the log: a node that
+// refuses a genesis prints why and exits, and the process manager sees nothing
+// but an exit. A spec that asserts "this genesis must be rejected" has to be
+// able to say WHICH rejection it expects.
+type NodeLogReader interface {
+	// Log returns at most maxBytes from the end of n's captured log. A node
+	// that has never been launched returns an empty string and no error.
+	Log(ctx context.Context, n node.Node, maxBytes int) (string, error)
+}
+
 // NodeChange is what a swapNode applies: a new binary path (empty keeps the
 // current one), config key=value overrides (empty keeps the current config), and
 // a purpose that names the config fixture in provenance.
 type NodeChange struct {
-	Binary  string
-	Config  []string
-	Purpose string
+	Binary string
+	Config []string
+	// GenesisOverlay is a genesis JSON fragment deep-merged into the network's
+	// genesis and re-applied to this node's datadir. Empty leaves the node's
+	// genesis alone, which is the ordinary swap.
+	GenesisOverlay []byte
+	Purpose        string
 }
 
 // Action is one atomic pre-action, step, or post-action (no partial success).

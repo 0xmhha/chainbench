@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "fault-txpool-leader-change",
+  "description": "Verify pending transactions survive leader node failure and get processed by remaining validators (원본 fault/txpool-leader-change.sh)",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fault-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "to": "$acct",
+      "value": "1",
+      "expect": "receipt"
+    },
+    {
+      "do": "stopNode",
+      "on": "node1"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node2",
+      "timeout": "90s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node2",
+      "method": "txpool_status",
+      "select": "pending",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "do": "startNode",
+      "on": "node1"
+    }
+  ]
+}

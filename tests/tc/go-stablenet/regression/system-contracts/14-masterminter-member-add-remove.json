@@ -1,0 +1,260 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "masterminter-member-add-remove",
+  "description": "RT-F-4-03 — GovMasterMinter 자체 멤버 추가/제거 (proposeAddMember, proposeRemoveMember) (원본 regression/system-contracts/14-test-masterminter-self-member)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "masterminter-member-add-remove-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "member",
+      "saveKey": "memberKey"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$member",
+        "3"
+      ],
+      "op": "abiCall",
+      "save": "addData",
+      "selector": "0x5c646aa6",
+      "source": "derive"
+    },
+    {
+      "data": "$addData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "addHash",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "do": "read",
+      "hash": "$addHash",
+      "save": "addPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$addPid"
+      ],
+      "op": "abiCall",
+      "save": "addApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$addApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "addApHash",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "data": "0x6ad89315",
+      "do": "read",
+      "save": "ver1",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$member",
+        "$ver1"
+      ],
+      "op": "abiCall",
+      "save": "isMemData1",
+      "selector": "0x85752d03",
+      "source": "derive"
+    },
+    {
+      "data": "$isMemData1",
+      "do": "read",
+      "save": "isMem1",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "data": "0x1703a018",
+      "do": "read",
+      "save": "q1",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$member",
+        "2"
+      ],
+      "op": "abiCall",
+      "save": "rmData",
+      "selector": "0xbfbd7f4c",
+      "source": "derive"
+    },
+    {
+      "data": "$rmData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "rmHash",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "do": "read",
+      "hash": "$rmHash",
+      "save": "rmPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$rmPid"
+      ],
+      "op": "abiCall",
+      "save": "rmApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$rmApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "rmApHash2",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "data": "$rmApprove",
+      "do": "sendTx",
+      "from": "node3",
+      "gas": "0x16e360",
+      "on": "node3",
+      "save": "rmApHash3",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "data": "0x6ad89315",
+      "do": "read",
+      "save": "ver2",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$member",
+        "$ver2"
+      ],
+      "op": "abiCall",
+      "save": "isMemData2",
+      "selector": "0x85752d03",
+      "source": "derive"
+    },
+    {
+      "data": "$isMemData2",
+      "do": "read",
+      "save": "isMem2",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "data": "0x1703a018",
+      "do": "read",
+      "save": "q2",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$addApHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rmApHash2",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rmApHash3",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "of": [
+        "$isMem1"
+      ],
+      "op": "word"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "of": [
+        "$q1"
+      ],
+      "op": "word"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "of": [
+        "$isMem2"
+      ],
+      "op": "word"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "of": [
+        "$q2"
+      ],
+      "op": "word"
+    }
+  ]
+}

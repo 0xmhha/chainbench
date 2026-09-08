@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "txpool-content-well-formed",
+  "description": "RT-G-4-03 — txpool_content: pending/queued 분리 내용 확인 (원본 regression/api/19-test-txpool-content)",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "txpool-content-well-formed-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "txpool_content",
+      "select": "pending"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "txpool_content",
+      "select": "queued"
+    }
+  ]
+}

@@ -211,7 +211,7 @@ func TestInlineTopologyOf_Rejects(t *testing.T) {
 
 func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 	cases := map[string]map[string]any{
-		"unknown key":  {"pn": 1},
+		"unknown key":  {"boot": 1},
 		"fraction":     {"bp": 2.5},
 		"negative":     {"en": -1},
 		"not a number": {"bp": "four"},
@@ -219,14 +219,14 @@ func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 	}
 	for name, topo := range cases {
 		t.Run(name, func(t *testing.T) {
-			if _, _, _, err := topologyOf(topo); err == nil {
+			if _, _, _, _, err := topologyOf(topo); err == nil {
 				t.Fatalf("topology %v accepted", topo)
 			}
 		})
 	}
-	v, e, m, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "sync_mode": "archive"})
-	if err != nil || v != 4 || e != 2 || m != "archive" {
-		t.Fatalf("got %d/%d/%q (%v)", v, e, m, err)
+	v, e, p, m, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "pn": float64(1), "sync_mode": "archive"})
+	if err != nil || v != 4 || e != 2 || p != 1 || m != "archive" {
+		t.Fatalf("got %d/%d/%d/%q (%v)", v, e, p, m, err)
 	}
 }
 

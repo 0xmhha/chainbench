@@ -17,7 +17,7 @@ func newNetUpCmd() *cobra.Command {
 	var (
 		dataDir, chain, binary, keysDir                      string
 		manifestPath, templatePath                           string
-		validators, endpoints                                int
+		validators, endpoints, proxies                       int
 		endpointSyncMode, topologyPath, blueprintPath, stage string
 		keysSource, bootnode                                 string
 		chainID                                              int64
@@ -50,7 +50,7 @@ func newNetUpCmd() *cobra.Command {
 				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
-				Validators: validators, Endpoints: endpoints,
+				Validators: validators, Endpoints: endpoints, Proxies: proxies,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, BlueprintPath: blueprintPath, Peering: peering,
 				Binaries:   bins,
 				Server:     sf.Ref(),
@@ -78,6 +78,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from")
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
+	cmd.Flags().IntVar(&proxies, "proxies", 0, "pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
 	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
 	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")

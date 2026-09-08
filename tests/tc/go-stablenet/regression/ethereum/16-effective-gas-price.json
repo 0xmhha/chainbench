@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "effective-gas-price",
+  "description": "RT-A-2-08 — eth_getTransactionReceipt의 effectiveGasPrice 검증 (원본 regression/ethereum/16-test-effective-gas-price)",
+  "applicableChains": "stablenet,wbft",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "effective-gas-price-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE0B",
+      "value": "1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Greater",
+      "expect": "rpcCall",
+      "is": "0",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "effectiveGasPrice"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "rpcCall",
+      "is": "21000",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "gasUsed"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -45,6 +46,7 @@ func NewRun() *cobra.Command {
 		workspaceDir string
 		keepUp       bool
 		waitBlocks   uint64
+		nodeMonitorT time.Duration
 		docker       bool
 		attach       bool
 		sf           resourcecmd.ServerFlags
@@ -76,6 +78,7 @@ func NewRun() *cobra.Command {
 				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
 				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
 				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
+				NodeMonitorTimeout: nodeMonitorT,
 			}
 			if cmd.Flags().Changed("keys") {
 				in.KeysDir = keysDir
@@ -96,6 +99,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
+	cmd.Flags().DurationVar(&nodeMonitorT, "node-monitor-timeout", 0, "compose: how long the readiness gate waits on nodes still coming up (0 = default; raise for a large/slow bring-up, e.g. 5m for a 15-node poa network over docker)")
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "attach: node RPC URL (repeatable) — runs against a live network")
 	cmd.Flags().BoolVar(&attach, "attach", false,
 		"attach: the network --workspace-dir composed is already up — run against it, with the capabilities it advertised, instead of composing again")

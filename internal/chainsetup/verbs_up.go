@@ -50,6 +50,7 @@ type NetUpIn struct {
 	// Layout (step: allocate).
 	Validators       int    `json:"validators,omitempty"`
 	Endpoints        int    `json:"endpoints,omitempty"`
+	Proxies          int    `json:"proxies,omitempty"`
 	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
 	TopologyPath     string `json:"topologyPath,omitempty"`
 	// BlueprintPath is a network declaration: the layout AND the keys in one
@@ -179,7 +180,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		// node table, so the layout has to exist first.
 		"place": func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
-				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints,
+				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints, Proxies: in.Proxies,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,
 				Topology:      in.Topology, Binaries: in.Binaries, Peering: in.Peering,

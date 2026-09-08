@@ -2,7 +2,11 @@ package testengine
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -75,6 +79,12 @@ type RunSuiteIn struct {
 	// meaningless against a chain that has not sealed one. Bounded by
 	// waitBlocksTimeout.
 	WaitBlocks uint64
+	// NodeMonitorTimeout, when positive, is how long the readiness gate waits on
+	// nodes still coming up before it gives up (E6). Zero takes the default; a
+	// large or slow bring-up (a 15-node poa network over docker, whose late
+	// endpoints sync slowly) raises it so the gate does not terminate a network
+	// that is merely still forming.
+	NodeMonitorTimeout time.Duration
 }
 
 // waitBlocksTimeout bounds the wait for the chain to reach WaitBlocks.
@@ -164,12 +174,53 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {
 	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{
 		DataDir: w.dataDir, Index: n.Index,
-		Binary: change.Binary, Config: change.Config, Purpose: change.Purpose,
+		Binary: change.Binary, Config: change.Config,
+		GenesisOverlay: change.GenesisOverlay, Purpose: change.Purpose,
 	})
 	if err != nil {
 		return n, err
 	}
 	return out.Node, nil
+}
+
+// Log returns the tail of one node's captured stdout/stderr, satisfying
+// interp.NodeLogReader. It is what lets a spec say WHY a node is not up: a node
+// that refuses its genesis prints the reason and exits, and the process manager
+// sees only an exit.
+//
+// The log lives in the workspace this suite composed, under the conventional
+// per-node label. A node that has never been launched has no log file, which is
+// not an error — it reads as an empty log.
+func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (string, error) {
+	path := node.Layout{Root: w.dataDir}.LogPath(node.LabelFor(n.Index))
+	f, err := os.Open(path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", fmt.Errorf("engine: open node%d log %s: %w", n.Index, path, err)
+	}
+	defer func() { _ = f.Close() }()
+	info, err := f.Stat()
+	if err != nil {
+		return "", fmt.Errorf("engine: stat node%d log: %w", n.Index, err)
+	}
+	size := info.Size()
+	if maxBytes <= 0 || int64(maxBytes) > size {
+		maxBytes = int(size)
+	}
+	if maxBytes == 0 {
+		return "", nil
+	}
+	if _, err := f.Seek(size-int64(maxBytes), io.SeekStart); err != nil {
+		return "", fmt.Errorf("engine: seek node%d log: %w", n.Index, err)
+	}
+	buf := make([]byte, maxBytes)
+	read, err := io.ReadFull(f, buf)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return "", fmt.Errorf("engine: read node%d log: %w", n.Index, err)
+	}
+	return string(buf[:read]), nil
 }
 
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
@@ -201,6 +252,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if err := sameChain(parsed); err != nil {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
 	}
+	if err := sameComposition(parsed); err != nil {
+		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
+	}
 	// Pre-flight before anything is allocated or written: a spec that names an
 	// action/assertion/reader/reference that does not resolve, or a malformed
 	// node selector, fails here rather than after a network is composed.
@@ -228,7 +282,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		out.Preflight = preflight.Compose.String()
 		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
 	} else {
-		net, err = composeWorkspace(ctx, sd, *comp.up, &out)
+		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
 		if err != nil {
 			return out, err
 		}
@@ -274,7 +328,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
 			// nodes, so the gate is a no-op there.
 			PreSpec: func(ctx context.Context, _ session.Environment) error {
-				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps)
+				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps, in.NodeMonitorTimeout)
 			},
 			// Gather a failed test's evidence (node logs, process, RPC/block) into
 			// its observations/ before the run moves on (E8).
@@ -312,7 +366,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 // composeWorkspace composes a single-binary network through the workspace
 // steps, reusing what is already composed when preflight says it can. It
 // records the steps and the preflight decision on out.
-func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut) (composed, error) {
+func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut, gateBudget time.Duration) (composed, error) {
 	// What is composed here already may be what this suite wants: ask before
 	// rebuilding. The decision is recorded beside the setup steps so a run
 	// that reused a network says so, and one that rebuilt says why.
@@ -366,7 +420,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	// The network is composed (or reused); gate it before any test runs on it —
 	// wait on nodes still coming up, restart dead ones within limits, terminate
 	// on a state that would need a destructive remedy (E6).
-	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps); err != nil {
+	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps, gateBudget); err != nil {
 		return composed{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return composed{

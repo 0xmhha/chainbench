@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "validator-remove-member-executes",
+  "description": "RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다.",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "validator-remove-member-executes-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+        "4"
+      ],
+      "op": "abiCall",
+      "save": "addData",
+      "selector": "0x5c646aa6",
+      "source": "derive"
+    },
+    {
+      "data": "$addData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "addHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "do": "read",
+      "hash": "$addHash",
+      "save": "addPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$addPid"
+      ],
+      "op": "abiCall",
+      "save": "addApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$addApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "addApHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "do": "read",
+      "save": "memberAfterAdd",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "do": "read",
+      "of": [
+        "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+        "4"
+      ],
+      "op": "abiCall",
+      "save": "rmData",
+      "selector": "0xbfbd7f4c",
+      "source": "derive"
+    },
+    {
+      "data": "$rmData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "rmHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "do": "read",
+      "hash": "$rmHash",
+      "save": "rmPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$rmPid"
+      ],
+      "op": "abiCall",
+      "save": "rmApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$rmApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "rmApHash",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
+      "do": "read",
+      "save": "memberAfterRemove",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001001"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$addApHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rmHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$rmApHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "of": [
+        "$memberAfterAdd"
+      ],
+      "op": "word"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 0,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "of": [
+        "$memberAfterRemove"
+      ],
+      "op": "word"
+    }
+  ]
+}

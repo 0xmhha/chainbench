@@ -1,0 +1,130 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "extra-state-across-delayed-boho",
+  "description": "TC-4-5-10/11/12 — 하드포크가 지연돼도 alloc.Extra 가 AccountManager 에 반영되고 잔액은 보존된다",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "delayed-extra-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "alloc": {
+          "0x90F79bf6EB2c4f870365E785982E1f101E93b906": {
+            "balance": "0xDE0B6B3A7640000",
+            "extra": "0x4000000000000000"
+          },
+          "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65": {
+            "balance": "0xDE0B6B3A7640000",
+            "extra": "0x8000000000000000"
+          }
+        },
+        "config": {
+          "bohoBlock": 6
+        }
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        "latest"
+      ],
+      "save": "authBalPre"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+        "latest"
+      ],
+      "save": "blackBalPre"
+    },
+    {
+      "do": "waitBlock",
+      "target": 9,
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xfe9fbb80",
+      "of": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+      ],
+      "save": "isAuthCall"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0xfe575a87",
+      "of": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+      ],
+      "save": "isBlackCall"
+    },
+    {
+      "expect": "call",
+      "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$isAuthCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "call",
+      "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$isBlackCall",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_getBalance",
+      "params": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "$authBalPre"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_getBalance",
+      "params": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+        "latest"
+      ],
+      "compare": "Equal",
+      "is": "$blackBalPre"
+    }
+  ]
+}

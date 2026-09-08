@@ -135,10 +135,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		return composition{}, fmt.Errorf("the spec declares no binary and none was given")
 	}
 
-	var validators, endpoints int
+	var validators, endpoints, proxies int
 	var syncMode string
 	if inlineTopo == nil {
-		validators, endpoints, syncMode, err = topologyOf(spec.Topology)
+		validators, endpoints, proxies, syncMode, err = topologyOf(spec.Topology)
 		if err != nil {
 			return composition{}, err
 		}
@@ -158,7 +158,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	up := &chainsetup.NetUpIn{
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
-		Validators: validators, Endpoints: endpoints, EndpointSyncMode: syncMode,
+		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
 		ChainID:      in.ChainID,
@@ -167,6 +167,13 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		LaunchSet:    launch,
 		LaunchScoped: spec.EnvLaunch,
 		ConfigSet:    spec.EnvConfig,
+	}
+	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
+	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
+	// endpoints never dial a producer) rather than the default full mesh — a pn
+	// under mesh would defeat its own purpose.
+	if proxies > 0 {
+		up.Peering = string(node.Proxied)
 	}
 	return composition{up: up}, nil
 }
@@ -262,6 +269,7 @@ const (
 	topoBP           = "bp"
 	topoEndpoints    = "endpoints"
 	topoEN           = "en"
+	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
 	topoSyncModeSnak = "sync_mode"
 )
@@ -269,13 +277,15 @@ const (
 // topologyOf reads the node counts a declaration gives: validators (or bp),
 // endpoints (or en), and the endpoints' sync mode. A key it does not know is
 // an error rather than a silently ignored intention.
-func topologyOf(t map[string]any) (validators, endpoints int, syncMode string, err error) {
+func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, err error) {
 	for k, v := range t {
 		switch k {
 		case topoValidators, topoBP:
 			validators, err = countOf(k, v)
 		case topoEndpoints, topoEN:
 			endpoints, err = countOf(k, v)
+		case topoPN:
+			proxies, err = countOf(k, v)
 		case topoSyncMode, topoSyncModeSnak:
 			s, ok := v.(string)
 			if !ok {
@@ -283,13 +293,13 @@ func topologyOf(t map[string]any) (validators, endpoints int, syncMode string, e
 			}
 			syncMode = s
 		default:
-			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, syncMode)", k)
+			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
 		}
 		if err != nil {
-			return 0, 0, "", err
+			return 0, 0, 0, "", err
 		}
 	}
-	return validators, endpoints, syncMode, nil
+	return validators, endpoints, proxies, syncMode, nil
 }
 
 // countOf reads a node count, which JSON hands over as a float.
@@ -450,6 +460,64 @@ func handoffEndpoints(ns node.NodeSet) []string {
 		successors = append(successors, n.RPCURL)
 	}
 	return append(successors, producers...)
+}
+
+// sameComposition checks that every spec in a suite declares the SAME network,
+// not merely the same chain.
+//
+// One run composes one network, and it composes it from the first spec. A spec
+// further down the list that declares a different genesis, topology or binary
+// does not get the network it asked for — it runs against the first spec's, and
+// its assertions are answered by the wrong chain. That failure is silent, which
+// is the worst kind: six genesis-string cases each declaring their own
+// authorizedAccounts would all be answered by the first one's genesis and five
+// of them would report a wrong count as a real result.
+//
+// So the disagreement is refused here, before anything is allocated, and the
+// message names what differs so the caller can split the run.
+func sameComposition(specs []dsl.Spec) error {
+	if len(specs) < 2 {
+		return nil
+	}
+	want := compositionKey(specs[0])
+	var others []string
+	for _, s := range specs[1:] {
+		if compositionKey(s) != want {
+			others = append(others, s.ID)
+		}
+	}
+	if len(others) == 0 {
+		return nil
+	}
+	return fmt.Errorf(
+		"one run composes one network, from the first spec (%s); these declare a different one: %s. "+
+			"run them separately, or give them the same env",
+		specs[0].ID, strings.Join(others, ", "))
+}
+
+// compositionKey is what makes two specs the same network to compose: the
+// binaries, genesis, config, topology, hardforks and placement. It deliberately
+// mirrors the reuse fingerprint's inputs — a run that may share one network is
+// exactly a run whose specs would fingerprint alike.
+func compositionKey(s dsl.Spec) string {
+	key := struct {
+		Binary    string            `json:"binary"`
+		Binaries  map[string]string `json:"binaries"`
+		Config    string            `json:"config"`
+		Genesis   map[string]any    `json:"genesis"`
+		Topology  map[string]any    `json:"topology"`
+		Hardforks map[string]int    `json:"hardforks"`
+		Placement string            `json:"placement"`
+	}{
+		Binary: s.Chain.Binary, Binaries: s.Chain.Binaries, Config: s.Chain.Config,
+		Genesis: s.Chain.GenesisOverlay, Topology: s.Topology,
+		Hardforks: s.Hardforks, Placement: s.Placement,
+	}
+	b, err := json.Marshal(key)
+	if err != nil {
+		return fmt.Sprintf("composition-error:%v", err)
+	}
+	return string(b)
 }
 
 // sameChain checks that every parsed spec declares the chain the first one

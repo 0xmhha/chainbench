@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "transaction-count-increments",
+  "description": "RT-G-1-05 — eth_getTransactionCount (nonce 조회) (원본 regression/api/05-test-get-tx-count)",
+  "applicableChains": "stablenet,wbft",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "transaction-count-increments-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "latest"
+      ],
+      "save": "before",
+      "source": "rpcCall"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE04",
+      "value": "1"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "latest"
+      ],
+      "save": "after",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "1",
+      "of": [
+        "$after",
+        "$before"
+      ],
+      "op": "diff"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "anzeon-active-before-boho",
+  "description": "TC-4-1-02 — Boho 하드포크 값의 체인 설정 반영 및 런타임 활성화 검증 (원본 post-v1.0.0-change/common-all/16-test-boho-chain-config-activation)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "anzeon-active-before-boho-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "hardforks": {
+      "boho": 10
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "1",
+      "pollInterval": "1s",
+      "source": "blockNumber",
+      "timeout": "60s"
+    },
+    {
+      "compare": "Regexp",
+      "expect": "rpcCall",
+      "is": "^0x[0-9a-fA-F]{100,}$",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001001",
+        "0x1"
+      ]
+    }
+  ]
+}

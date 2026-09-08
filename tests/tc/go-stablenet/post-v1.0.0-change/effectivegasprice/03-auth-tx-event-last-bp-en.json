@@ -1,0 +1,215 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "auth-tx-event-last-bp-en",
+  "description": "TC-4-6-04 — AuthorizedTxExecuted 가 영수증 로그의 마지막이고, 두 노드가 같은 값을 보고한다",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "egp-snap-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1,
+      "syncMode": "snap"
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "120s"
+    },
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "$acct",
+      "value": "10000000000000000000",
+      "gas": "21000",
+      "expect": "receipt"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x93a8bb99",
+      "of": [
+        "$acct"
+      ],
+      "save": "authData"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "0x0000000000000000000000000000000000001004",
+      "gas": "0x16e360",
+      "data": "$authData",
+      "save": "authHash",
+      "expect": "receipt"
+    },
+    {
+      "do": "read",
+      "source": "receiptLog",
+      "hash": "$authHash",
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+      "topic": 1,
+      "save": "authPid"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x98951b56",
+      "of": [
+        "$authPid"
+      ],
+      "save": "authApprove"
+    },
+    {
+      "do": "sendTx",
+      "on": "node2",
+      "from": "node2",
+      "to": "0x0000000000000000000000000000000000001004",
+      "gas": "0x16e360",
+      "data": "$authApprove",
+      "save": "authApHash",
+      "expect": "receipt"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "key": "$acctKey",
+      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "value": "1",
+      "save": "txHash",
+      "expect": "receipt"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "blockNumber",
+      "save": "txBlock"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "GreaterOrEqual",
+      "expected": "$txBlock",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "logs.#",
+      "save": "lastTopicBPCount"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$lastTopicBPCount",
+        "1"
+      ],
+      "save": "lastTopicBPLastIdx"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "logs.${lastTopicBPLastIdx}.topics.0",
+      "save": "lastTopicBP"
+    },
+    {
+      "do": "read",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "logs.#",
+      "save": "lastTopicENCount"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "diff",
+      "of": [
+        "$lastTopicENCount",
+        "1"
+      ],
+      "save": "lastTopicENLastIdx"
+    },
+    {
+      "do": "read",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "logs.${lastTopicENLastIdx}.topics.0",
+      "save": "lastTopicEN"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "logs.${lastTopicBPLastIdx}.topics.0",
+      "compare": "Equal",
+      "is": "0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3ed4607b94d3a1e6a3e0373"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "select": "logs.${lastTopicENLastIdx}.topics.0",
+      "compare": "Equal",
+      "is": "$lastTopicBP"
+    }
+  ]
+}

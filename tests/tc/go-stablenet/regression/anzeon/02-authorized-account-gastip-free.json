@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "authorized-account-gastip-free",
+  "description": "RT-C-02 — Authorized 계정은 tipCap을 자유롭게 설정할 수 있음 (원본 regression/anzeon/02-test-authorized-account-gastip-free)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "authorized-account-gastip-free-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "30000000000000000000"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$acct"
+      ],
+      "op": "abiCall",
+      "save": "authData",
+      "selector": "0x93a8bb99",
+      "source": "derive"
+    },
+    {
+      "data": "$authData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "authHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "read",
+      "hash": "$authHash",
+      "save": "pid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$pid"
+      ],
+      "op": "abiCall",
+      "save": "approveData",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$approveData",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "apHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$acct"
+      ],
+      "op": "abiCall",
+      "save": "isAuthData",
+      "selector": "0xfe9fbb80",
+      "source": "derive"
+    },
+    {
+      "compare": "Equal",
+      "data": "$isAuthData",
+      "do": "waitFor",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "pollInterval": "1s",
+      "source": "call",
+      "timeout": "60s",
+      "to": "0x0000000000000000000000000000000000B00003"
+    },
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "htip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$htip",
+        "$htip",
+        "$htip"
+      ],
+      "op": "sum",
+      "save": "customTip",
+      "source": "derive"
+    },
+    {
+      "do": "sendTx",
+      "gas": "21000",
+      "key": "$acctKey",
+      "maxFeePerGas": "1000000000000000",
+      "maxPriorityFeePerGas": "$customTip",
+      "on": "en1",
+      "save": "hash",
+      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "value": "1"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "save": "egp",
+      "select": "effectiveGasPrice",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "save": "blk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blk",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$apHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "$customTip",
+      "of": [
+        "$egp",
+        "$base"
+      ],
+      "op": "diff"
+    },
+    {
+      "expect": "receiptLog",
+      "hash": "$hash",
+      "is": "0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3ed4607b94d3a1e6a3e0373",
+      "topic": 0,
+      "topic0": "0x40e728a89c7f5b192cf1c1b747fb64d51d81c7a2b3ed4607b94d3a1e6a3e0373"
+    }
+  ]
+}

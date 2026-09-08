@@ -11,6 +11,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
 	"github.com/0xmhha/chainbench/internal/core/filestore"
+	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 
@@ -287,9 +288,31 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 // ones. binary is a path (empty keeps the current one); config is a set of
 // key=value config overrides (empty keeps the current config); purpose names the
 // config fixture in provenance.
-func (w *Workspace) SwapNode(ctx context.Context, index int, binary string, config []string, purpose string) (string, error) {
-	if binary == "" && len(config) == 0 {
-		return "", fmt.Errorf("chainsetup: swap node%d needs a binary or a config change", index)
+// SwapNodeOpts is what one node is relaunched with. Every field is optional on
+// its own, but at least one must be set — a swap that changes nothing is a
+// restart, and saying so is clearer than doing it silently.
+type SwapNodeOpts struct {
+	// Index selects the node, 1-based.
+	Index int
+	// Binary is the path to relaunch on (empty keeps the current one).
+	Binary string
+	// Config is key=value config overrides applied before relaunch.
+	Config []string
+	// GenesisOverlay is a genesis JSON fragment deep-merged into the network's
+	// genesis and re-applied to THIS node's datadir. It is how a test gives one
+	// node a genesis the rest of the network does not have — the shape a
+	// "this genesis must be rejected" case needs, since a bad genesis given to
+	// the whole network fails composition rather than the test.
+	GenesisOverlay []byte
+	// Purpose names the config fixture recorded in provenance.
+	Purpose string
+}
+
+func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, error) {
+	index := opts.Index
+	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
+	if binary == "" && len(config) == 0 && len(opts.GenesisOverlay) == 0 {
+		return "", fmt.Errorf("chainsetup: swap node%d needs a binary, a config change, or a genesis overlay", index)
 	}
 	ni, err := w.nodeAt(index)
 	if err != nil {
@@ -325,6 +348,11 @@ func (w *Workspace) SwapNode(ctx context.Context, index int, binary string, conf
 	ns = w.state.Nodes[ni]
 	spec := process.SpecOf(ns)
 	spec.Binary = w.binaryFor(ns, bin)
+	if len(opts.GenesisOverlay) > 0 {
+		if err := w.reinitNodeGenesis(ctx, t, spec, opts.GenesisOverlay); err != nil {
+			return "", fmt.Errorf("chainsetup: swap node%d: %w", index, err)
+		}
+	}
 	h, err := t.Driver.Launch(ctx, spec)
 	if err != nil {
 		return "", fmt.Errorf("chainsetup: swap node%d: launch: %w", index, err)
@@ -335,6 +363,34 @@ func (w *Workspace) SwapNode(ctx context.Context, index int, binary string, conf
 	detail := fmt.Sprintf("node%d swapped to %s (pid %d)", index, filepath.Base(spec.Binary), h.PID)
 	w.markStep("swap-node", detail)
 	return detail, nil
+}
+
+// reinitNodeGenesis re-initializes one node's datadir with the network genesis
+// deep-merged with overlay. It is the per-node half of Init: same driver call,
+// same genesis source, one node instead of all of them.
+//
+// A genesis the binary refuses fails here, which is what an expect:"fail" swap
+// is looking for — the node never launches and the error names the reason.
+func (w *Workspace) reinitNodeGenesis(ctx context.Context, t *resource.Access, spec process.NodeSpec, overlay []byte) error {
+	if w.state.GenesisPath == "" {
+		return fmt.Errorf("no genesis — run `chain genesis` first")
+	}
+	initer, ok := t.Driver.(process.Initializer)
+	if !ok {
+		return fmt.Errorf("target driver cannot initialize datadirs")
+	}
+	base, err := t.Files.Read(ctx, w.state.GenesisPath)
+	if err != nil {
+		return fmt.Errorf("read genesis: %w", err)
+	}
+	merged, err := genesis.MergeOverride(base, overlay)
+	if err != nil {
+		return fmt.Errorf("merge genesis overlay: %w", err)
+	}
+	if err := initer.InitDatadir(ctx, spec, merged); err != nil {
+		return fmt.Errorf("init datadir with overlaid genesis: %w", err)
+	}
+	return nil
 }
 
 // setNodeBinary registers binary under a per-node key and points node ni at it,

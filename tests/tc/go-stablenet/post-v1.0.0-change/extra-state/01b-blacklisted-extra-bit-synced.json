@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "blacklisted-extra-bit-synced",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "account-extra"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "blacklisted-extra-bit-synced-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "account-extra"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+      ],
+      "op": "abiCall",
+      "save": "isBlData",
+      "selector": "0xfe575a87",
+      "source": "derive"
+    },
+    {
+      "compare": "Equal",
+      "data": "$isBlData",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000B00003"
+    }
+  ]
+}

@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 )
 
 func TestValidateCmd_ValidAndInvalid(t *testing.T) {
@@ -176,12 +179,9 @@ func TestValidateCmd_JSONOutput(t *testing.T) {
 // suites: every one must parse and resolve. A ported case that only fails once
 // a network is up would defeat the point of porting it.
 func TestValidateCmd_PortedSpecs(t *testing.T) {
-	paths, err := filepath.Glob("../../tests/specs/*/*.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+	paths := specFilesUnder(t, "../../tests/tc")
 	if len(paths) == 0 {
-		t.Fatal("no ported specs found under tests/specs")
+		t.Fatal("no ported specs found under tests/tc")
 	}
 	out, err := run(t, append([]string{"validate"}, paths...)...)
 	if err != nil {
@@ -195,10 +195,7 @@ func TestValidateCmd_PortedSpecs(t *testing.T) {
 // TestPortedSpecs_IDsAreUnique keeps a ported id from colliding with another,
 // since the session records a test by id and a duplicate would overwrite it.
 func TestPortedSpecs_IDsAreUnique(t *testing.T) {
-	paths, err := filepath.Glob("../../tests/specs/*/*.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+	paths := specFilesUnder(t, "../../tests/tc")
 	seen := map[string]string{}
 	for _, p := range paths {
 		b, err := os.ReadFile(p)
@@ -222,27 +219,58 @@ func TestPortedSpecs_IDsAreUnique(t *testing.T) {
 	}
 }
 
-// TestValidateCmd_ChainCases: the four chain-setup declarations and their
-// cases validate offline — env references resolve from the shared env/
-// directory, and an env file validates as a declaration.
+// TestValidateCmd_ChainCases: every case under tests/tc validates offline. Each
+// carries its own environment inline, so validating one proves the composition
+// it declares parses too — there is no separate env file left to check.
 func TestValidateCmd_ChainCases(t *testing.T) {
-	paths, err := filepath.Glob("../../tests/cases/*/*.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+	paths := jsonFilesUnder(t, "../../tests/tc")
 	if len(paths) < 8 {
-		t.Fatalf("expected the four envs and four cases under tests/cases, found %d files", len(paths))
+		t.Fatalf("expected the chain-bringup cases under tests/tc, found %d files", len(paths))
 	}
 	// Through the mounted command rather than the package-internal function:
 	// the point of the check is that an operator running `chainbench validate`
 	// on these files gets them validated.
 	got, err := run(t, append([]string{"validate"}, paths...)...)
 	if err != nil {
-		t.Fatalf("validate tests/cases: %v\n%s", err, got)
+		t.Fatalf("validate tests/tc: %v\n%s", err, got)
 	}
-	for _, want := range []string{"env declaration for chain wemix", "wemix-wbft-handoff", "stablenet-chain-up"} {
+	for _, want := range []string{"wemix-wbft-handoff", "stablenet-chain-up"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output should mention %q:\n%s", want, got)
 		}
 	}
+}
+
+// jsonFilesUnder lists every .json file under root, including env
+// declarations. The suite nests case directories several levels deep
+// (tests/tc/<chain>/<group>/<domain>), so it walks rather than globs.
+func jsonFilesUnder(t *testing.T, root string) []string {
+	t.Helper()
+	var out []string
+	if err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && strings.HasSuffix(p, ".json") {
+			out = append(out, p)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// specFilesUnder lists the spec and case files under root, leaving out the
+// env declarations those cases reference.
+func specFilesUnder(t *testing.T, root string) []string {
+	t.Helper()
+	var out []string
+	for _, p := range jsonFilesUnder(t, root) {
+		if !strings.HasSuffix(p, ".env.json") {
+			out = append(out, p)
+		}
+	}
+	return out
 }

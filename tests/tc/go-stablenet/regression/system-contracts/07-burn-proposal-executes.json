@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "burn-proposal-executes",
+  "description": "RT-F-2-02 — 코인 소각: proposeBurn(proofData) payable → 승인 → execute (원본 regression/system-contracts/07-test-burn-proposal)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "burn-proposal-executes-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "data": "0x64e2a8fc00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000180000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d800000000000000000000000000000000000000000000000000038d7ea4c68000000000000000000000000000000000000000000000000000000000006553f10000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000000944534c2d57442d30310000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a44534c2d5245462d303100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000864736c206275726e000000000000000000000000000000000000000000000000",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0xb71b0",
+      "on": "node1",
+      "save": "burnHash",
+      "to": "0x0000000000000000000000000000000000001003",
+      "value": "0x38d7ea4c68000"
+    },
+    {
+      "do": "read",
+      "hash": "$burnHash",
+      "save": "burnPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$burnPid"
+      ],
+      "op": "abiCall",
+      "save": "burnApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$burnApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0xb71b0",
+      "on": "node2",
+      "save": "burnApHash",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$burnPid"
+      ],
+      "op": "abiCall",
+      "save": "proposalsCall",
+      "selector": "0x013cf08b",
+      "source": "derive"
+    },
+    {
+      "data": "$proposalsCall",
+      "do": "read",
+      "save": "proposalsRet",
+      "source": "call",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$burnHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$burnApHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "index": 9,
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "of": [
+        "$proposalsRet"
+      ],
+      "op": "word"
+    }
+  ]
+}

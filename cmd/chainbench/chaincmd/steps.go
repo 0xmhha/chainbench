@@ -60,7 +60,7 @@ func newNetKeysCmd() *cobra.Command {
 }
 
 func newNetAllocateCmd() *cobra.Command {
-	var validators, endpoints int
+	var validators, endpoints, proxies int
 	var endpointSyncMode, topologyPath, peering string
 	var binaries []string
 	var sf resourcecmd.ServerFlags
@@ -71,7 +71,7 @@ func newNetAllocateCmd() *cobra.Command {
 				return "", err
 			}
 			out, err := app.NetAllocate(cmd.Context(), deps(cmd), app.NetAllocateIn{
-				DataDir: dataDir, Validators: validators, Endpoints: endpoints,
+				DataDir: dataDir, Validators: validators, Endpoints: endpoints, Proxies: proxies,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Binaries: bins, Server: sf.Ref(),
 			})
@@ -79,6 +79,7 @@ func newNetAllocateCmd() *cobra.Command {
 		})
 	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
 	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
+	cmd.Flags().IntVar(&proxies, "proxies", 0, "pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
 	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
 	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")

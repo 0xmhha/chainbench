@@ -8,7 +8,7 @@ import (
 )
 
 // TestEncodeCallTransferGolden pins the calldata the migrated
-// estimate-gas-token-transfer spec (tests/specs/gas-policy) embeds, so the
+// estimate-gas-token-transfer spec (tests/tc/go-stablenet/regression/anzeon) embeds, so the
 // spec and the legacy case provably encode the same call.
 func TestEncodeCallTransferGolden(t *testing.T) {
 	got := accounts.EncodeCall("transfer(address,uint256)",

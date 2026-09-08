@@ -164,6 +164,9 @@ type AllocateOpts struct {
 	Validators int
 	// Endpoints is the non-validator (endpoint) node count.
 	Endpoints int
+	// Proxies is the pn (proxy-tier) node count. A family with no proxy tier
+	// (poa, where etcd occupies that place) refuses a pn at peering validation.
+	Proxies int
 	// Peering is the peer graph to wire ("mesh" default, "proxied" for
 	// bp <-> pn <-> en). It is recorded now and consumed by the config step,
 	// so the graph a network runs is decided where its layout is.
@@ -223,11 +226,15 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	if o.Validators < 1 {
 		return nil, nil, fmt.Errorf("chainsetup: allocate: at least one validator is required")
 	}
-	reqs := make([]node.LaunchReq, 0, o.Validators+o.Endpoints)
+	reqs := make([]node.LaunchReq, 0, o.Validators+o.Proxies+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < o.Validators; i++ {
 		reqs = append(reqs, node.LaunchReq{Role: node.RoleBP})
 		modes = append(modes, syncModeFull)
+	}
+	for i := 0; i < o.Proxies; i++ {
+		reqs = append(reqs, node.LaunchReq{Role: node.RolePN})
+		modes = append(modes, syncModeFor(node.RolePN, o.EndpointSyncMode))
 	}
 	for i := 0; i < o.Endpoints; i++ {
 		reqs = append(reqs, node.LaunchReq{Role: node.RoleEN})

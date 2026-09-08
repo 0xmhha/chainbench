@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "authorized-account-added-event",
+  "description": "RT-F-5-08 — AuthorizedAccountAdded 이벤트 (원본 regression/system-contracts/23-test-authorized-account-added-event)",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "authorized-account-added-event-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "data": "0x93a8bb9900000000000000000000000000000000000000000000000000000000c0ffee11",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "propHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "read",
+      "hash": "$propHash",
+      "save": "pid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$pid"
+      ],
+      "op": "abiCall",
+      "save": "approveData",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$approveData",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "apHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$apHash"
+      ],
+      "save": "apBlk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$propHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$apHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "data": "0xfe9fbb8000000000000000000000000000000000000000000000000000000000c0ffee11",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000B00003"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001004",
+      "compare": "GreaterOrEqual",
+      "expect": "logs",
+      "fromBlock": "$apBlk",
+      "is": "1",
+      "select": "count",
+      "toBlock": "$apBlk",
+      "topics": [
+        "0x3110d1ee06428a72c2523738b03b74d2cac172112945536944ef0d34f9175947",
+        "0x00000000000000000000000000000000000000000000000000000000c0ffee11"
+      ]
+    }
+  ]
+}

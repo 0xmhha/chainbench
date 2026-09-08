@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "transaction-receipt-fields",
+  "description": "RT-G-1-04 — eth_getTransactionReceipt (PR #70 fix 확인) (원본 regression/api/04-test-get-tx-receipt)",
+  "applicableChains": "stablenet,wbft",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "transaction-receipt-fields-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE06",
+      "value": "1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x1",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "status"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "effectiveGasPrice"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "select": "logs"
+    }
+  ]
+}
