@@ -75,6 +75,12 @@ type RunSuiteIn struct {
 	// meaningless against a chain that has not sealed one. Bounded by
 	// waitBlocksTimeout.
 	WaitBlocks uint64
+	// NodeMonitorTimeout, when positive, is how long the readiness gate waits on
+	// nodes still coming up before it gives up (E6). Zero takes the default; a
+	// large or slow bring-up (a 15-node poa network over docker, whose late
+	// endpoints sync slowly) raises it so the gate does not terminate a network
+	// that is merely still forming.
+	NodeMonitorTimeout time.Duration
 }
 
 // waitBlocksTimeout bounds the wait for the chain to reach WaitBlocks.
@@ -228,7 +234,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		out.Preflight = preflight.Compose.String()
 		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
 	} else {
-		net, err = composeWorkspace(ctx, sd, *comp.up, &out)
+		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
 		if err != nil {
 			return out, err
 		}
@@ -274,7 +280,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
 			// nodes, so the gate is a no-op there.
 			PreSpec: func(ctx context.Context, _ session.Environment) error {
-				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps)
+				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps, in.NodeMonitorTimeout)
 			},
 			// Gather a failed test's evidence (node logs, process, RPC/block) into
 			// its observations/ before the run moves on (E8).
@@ -312,7 +318,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 // composeWorkspace composes a single-binary network through the workspace
 // steps, reusing what is already composed when preflight says it can. It
 // records the steps and the preflight decision on out.
-func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut) (composed, error) {
+func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.NetUpIn, out *RunSuiteOut, gateBudget time.Duration) (composed, error) {
 	// What is composed here already may be what this suite wants: ask before
 	// rebuilding. The decision is recorded beside the setup steps so a run
 	// that reused a network says so, and one that rebuilt says why.
@@ -366,7 +372,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	// The network is composed (or reused); gate it before any test runs on it —
 	// wait on nodes still coming up, restart dead ones within limits, terminate
 	// on a state that would need a destructive remedy (E6).
-	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps); err != nil {
+	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps, gateBudget); err != nil {
 		return composed{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return composed{

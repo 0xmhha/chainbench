@@ -54,6 +54,46 @@ topology 와 컨테이너 바이너리 경로를 선언한다. 키는 15개가 �
 대신 generate 로 만든다 — 생성 세트는 topology 의 validator 수(4)만 validator 로
 선언한다.
 
+### 세 체인 패밀리 15대 스모크 (stablenet · wbft · go-wemix)
+
+세 패밀리 모두 15대(4 bp + 11 en)에서 검증됐다:
+
+```bash
+# stablenet (wbft 패밀리)  — server-set.yaml, 기본 게이트
+bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set.yaml \
+  --docker --all-servers --keys <ws>/genkeys --keys-source generate \
+  tests/cases/stablenet/chain-up-15.json
+
+# wbft                      — server-set.yaml, 기본 게이트
+bin/chainbench run ... tests/cases/wbft/chain-up-15.json
+
+# go-wemix (poa)           — server-set-wemix.yaml 필요, 게이트 예산 상향
+bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set-wemix.yaml \
+  --docker --all-servers --keys <ws>/genkeys --keys-source generate \
+  --node-monitor-timeout 5m \
+  tests/cases/wemix/chain-up-15.json
+```
+
+go-wemix(poa)는 stablenet/wbft 와 두 가지가 다르다:
+
+1. **서버 세트가 다르다** — poa 는 노드마다 p2p 옆에 3연속 포트(p2p+etcd)를 잡으므로
+   `p2p step ≥ 3` 이 필요하다. `gen-env.sh` 가 이 용도로 `server-set-wemix.yaml`
+   (slots 1, p2p step 3)을 함께 찍는다. 일반 `server-set.yaml`(step 1)로 wemix 를
+   올리면 place 단계에서 `p2p_step must be >= 3` 로 거절된다.
+2. **게이트 예산을 올린다** — poa 는 producer 부트(4 bp) → 거버넌스 배포 → etcd 형성 →
+   endpoint(11 en) 조인 순으로 뜨는데, 늦게 조인한 endpoint 의 sync 가 nodemonitor 기본
+   대기(90s)보다 오래 걸린다. `--node-monitor-timeout 5m` 로 게이트가 형성 중인 망을
+   조기 종료하지 않게 한다.
+
+**체인을 바꿔 다시 돌릴 때는 컨테이너를 먼저 비운다.** genesis 가 다르면(다른 키·다른
+패밀리) 남아 있는 datadir·genesis 가 init 을 `incompatible genesis` 로 막는다. 원격
+`chain rm` 이 아직 없으므로(worklist §1n) 지금은 수동으로 비운다:
+
+```bash
+for i in $(seq 1 15); do docker exec chainbench-server$i sh -c \
+  'cd /data/chainbench && sudo find . -maxdepth 1 -mindepth 1 ! -name bin -exec rm -rf {} +'; done
+```
+
 생성물(`build/`, gitignore):
 
 | 파일 | 내용 |
