@@ -8,3 +8,8 @@
 
 # ERC-20 '토큰' 전송 테스트. 인증 토큰이 아니라 도메인 어휘가 'token' 패턴과 겹친 것.
 tests/anzeon/token_transfer.go
+
+# ERC-20 '토큰' 회귀 테스트 케이스(JSON). 인증 토큰이 아니라 도메인 어휘가 'token'
+# 패턴과 겹친 것. tests/cases -> tests/tc 통합으로 경로가 바뀌며 검사에 걸렸다.
+tests/tc/go-stablenet/regression/api/*token*.json
+tests/tc/go-stablenet/regression/system-contracts/*token*.json

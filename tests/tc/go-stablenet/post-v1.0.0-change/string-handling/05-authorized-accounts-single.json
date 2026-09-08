@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1",
+  "id": "authorized-accounts-single",
+  "applicableChains": "stablenet",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable",
+    "genesisOverlay": {
+      "config": {
+        "anzeon": {
+          "systemContracts": {
+            "govCouncil": {
+              "params": {
+                "authorizedAccounts": "0xaaa"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "TC-4-3-05: GovCouncil authorizedAccounts splitAndTrim — 단일 항목 \"0xaaa\" → 1",
+  "assertions": [
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000001004",
+      "data": "0x6a6debd7",
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    }
+  ]
+}

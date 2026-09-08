@@ -8,22 +8,22 @@
 
 ```sh
 # 오프라인 검증 (CI 가드가 이걸 돌린다)
-chainbench validate tests/specs/*/*.json
+chainbench validate tests/tc/**/*.json
 
 # 로컬 체인 기동 후 실행
 CHAIN=/path/to/chain
 chainbench run --chain stablenet --binary $CHAIN/go-stablenet/build/bin/gstable \
-  --keys keys/preset --artifact-root /tmp/out tests/specs/api/*.json
+  --keys keys/preset --artifact-root /tmp/out tests/tc/go-stablenet/regression/api/*.json
 
 # 이미 떠 있는 네트워크에 붙여서
-chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/specs/api/*.json
+chainbench run --chain stablenet --rpc http://127.0.0.1:8600 tests/tc/go-stablenet/regression/api/*.json
 ```
 
 ## 이관 현황
 
 레거시 등록 케이스 **134개** 기준(`testkit.Cases()` 실측).
 
-> **2026-08-28 실측 (P8):** 134건 중 **96건이 같은 id 의 DSL 스펙**으로 이관됐고(`tests/specs` 92 +
+> **2026-08-28 실측 (P8):** 134건 중 **96건이 같은 id 의 DSL 스펙**으로 이관됐고(`tests/tc` 92 +
 > `examples/specs` 4), 이관이 끝난 **Go 케이스 파일 41개와 그 유닛테스트를 삭제**했다
 > (`tests/api`·`tests/network` 는 패키지째 사라졌다). 남은 등록은 **56건**: 미이관 34건 + 표 구동
 > 파일(`tx_rejections`·`gas_boundary`·`account_extra`·`gov_*_events` 등)에 이관분과 섞여 있는 22건.

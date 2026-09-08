@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1",
+  "id": "precompile-transfer-rejected",
+  "applicableChains": "stablenet",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "RT-E-06: 프리컴파일·시스템 컨트랙트 주소로의 값 전송은 5개 주소 모두 거부된다.",
+  "steps": [
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000000001",
+        "value": "1",
+        "gas": "100000",
+        "expect": "reject",
+        "reason": "precompile"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000000100",
+        "value": "1",
+        "gas": "100000",
+        "expect": "reject",
+        "reason": "precompile"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000b00001",
+        "value": "1",
+        "gas": "100000",
+        "expect": "reject",
+        "reason": "precompile"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000b00002",
+        "value": "1",
+        "gas": "100000",
+        "expect": "reject",
+        "reason": "precompile"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000b00003",
+        "value": "1",
+        "gas": "100000",
+        "expect": "reject",
+        "reason": "precompile"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "blockNumber",
+      "compare": "GreaterOrEqual",
+      "expected": "0x1"
+    }
+  ]
+}

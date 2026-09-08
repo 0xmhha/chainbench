@@ -115,10 +115,10 @@ func TestValidate_ReachesForNothingLive(t *testing.T) {
 	}
 }
 
-// committedSpecs lists the specs under tests/specs.
+// committedSpecs lists the specs under tests/tc.
 func committedSpecs(t *testing.T) []string {
 	t.Helper()
-	root, err := filepath.Abs("../../tests/specs")
+	root, err := filepath.Abs("../../tests/tc")
 	if err != nil {
 		t.Fatal(err)
 	}

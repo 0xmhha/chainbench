@@ -11,7 +11,7 @@ import (
 // specDoc is the migration record. It is parsed rather than duplicated, the way
 // the architecture tests read layers.md: a list of blocked cases that lives only
 // in prose goes stale silently, and this one did.
-const specDoc = "../../tests/specs/README.md"
+const specDoc = "../../tests/tc/SPECS.md"
 
 // gapSection is where a case is recorded as NOT migrated. Everything under one
 // of these headings names cases blocked on a grammar gap.
@@ -37,6 +37,16 @@ var (
 	migrated = regexp.MustCompile(`~~[^~]*~~`)
 )
 
+// filePrefix matches the "NN-" / "NNb-" ordering prefix a spec file carries
+// under tests/tc, which mirrors the legacy suite's numbering. The document
+// names specs by id, so the prefix is stripped before matching.
+var filePrefix = regexp.MustCompile(`^[0-9]+[a-z]?-`)
+
+// specNameFromFile turns a spec file name into the id the document uses.
+func specNameFromFile(name string) string {
+	return filePrefix.ReplaceAllString(strings.TrimSuffix(name, ".json"), "")
+}
+
 // TestSpecDoc_BlockedCasesHaveNoSpec keeps the migration record honest.
 //
 // Measured 2026-09-07: the document listed nineteen cases as blocked on grammar
@@ -58,9 +68,9 @@ func TestSpecDoc_BlockedCasesHaveNoSpec(t *testing.T) {
 		t.Fatal(err)
 	}
 	specs := map[string]string{}
-	if err := filepath.WalkDir("../../tests/specs", func(p string, d os.DirEntry, err error) error {
+	if err := filepath.WalkDir("../../tests/tc", func(p string, d os.DirEntry, err error) error {
 		if err == nil && !d.IsDir() && strings.HasSuffix(p, ".json") {
-			specs[strings.TrimSuffix(d.Name(), ".json")] = p
+			specs[specNameFromFile(d.Name())] = p
 		}
 		return nil
 	}); err != nil {

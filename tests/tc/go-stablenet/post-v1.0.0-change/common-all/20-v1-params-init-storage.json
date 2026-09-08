@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1",
+  "id": "v1-params-init-storage",
+  "applicableChains": "stablenet",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "TC-5-2-04: v1 시스템 컨트랙트의 Params 가 genesis 에서 초기화된다. GovValidator gasTip 슬롯(0x39)과 GovMinter quorum 슬롯(0x04)이 0이 아니어야 한다.",
+  "assertions": [
+    {
+      "assert": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001001",
+        "0x0000000000000000000000000000000000000000000000000000000000000039",
+        "0x0"
+      ],
+      "compare": "NotEqual",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0000000000000000000000000000000000000000000000000000000000000004",
+        "0x63"
+      ],
+      "compare": "NotEqual",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0"
+      ],
+      "compare": "NotEqual",
+      "expected": "0x"
+    }
+  ]
+}

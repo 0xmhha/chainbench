@@ -126,7 +126,7 @@ chainbench stop   --workspace-dir /tmp/cb   # stop the nodes
 ```
 
 Or declare the network in a DSL env and let one command compose, run, and
-tear down: `chainbench run --workspace-dir /tmp/cb tests/cases/stablenet/chain-up.json`.
+tear down: `chainbench run --workspace-dir /tmp/cb tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json`.
 
 > [!WARNING]
 > `--keys-dir keys/preset` and every address it produces are **test-only

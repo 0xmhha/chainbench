@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1",
+  "id": "genesis-block-hash-consistent",
+  "applicableChains": "stablenet,wbft",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "TC-5-3-01: block 0 해시가 모든 노드에서 같고 parentHash 가 0 이다. 레거시는 릴리스 고정 해시와 비교했으나, 사설망은 env 마다 genesis 가 달라 노드 간 일치와 genesis 형태로 검증한다.",
+  "steps": [
+    {
+      "read": {
+        "source": "rpcCall",
+        "method": "eth_getBlockByNumber",
+        "params": [
+          "0x0",
+          false
+        ],
+        "select": "hash",
+        "save": "genesisHash"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x0",
+        false
+      ],
+      "select": "hash",
+      "compare": "NotEqual",
+      "expected": "0x"
+    },
+    {
+      "assert": "sameBlockHash",
+      "block": "0x0"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x0",
+        false
+      ],
+      "select": "parentHash",
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

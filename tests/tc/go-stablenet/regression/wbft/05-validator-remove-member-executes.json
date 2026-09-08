@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "1",
+  "id": "validator-remove-member-executes",
+  "applicableChains": "stablenet",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다.",
+  "steps": [
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0x5c646aa6",
+        "of": [
+          "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+          "4"
+        ],
+        "save": "addData"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000001001",
+        "gas": "0x16e360",
+        "data": "$addData",
+        "save": "addHash"
+      }
+    },
+    {
+      "read": {
+        "source": "receiptLog",
+        "hash": "$addHash",
+        "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+        "topic": 1,
+        "save": "addPid"
+      }
+    },
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0x98951b56",
+        "of": [
+          "$addPid"
+        ],
+        "save": "addApprove"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node2",
+        "from": "node2",
+        "to": "0x0000000000000000000000000000000000001001",
+        "gas": "0x16e360",
+        "data": "$addApprove",
+        "save": "addApHash"
+      }
+    },
+    {
+      "read": {
+        "source": "call",
+        "to": "0x0000000000000000000000000000000000001001",
+        "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
+        "save": "memberAfterAdd"
+      }
+    },
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0xbfbd7f4c",
+        "of": [
+          "0x5400d8b543eaf6738c7b44799623bea88fd0f5ee",
+          "4"
+        ],
+        "save": "rmData"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "0x0000000000000000000000000000000000001001",
+        "gas": "0x16e360",
+        "data": "$rmData",
+        "save": "rmHash"
+      }
+    },
+    {
+      "read": {
+        "source": "receiptLog",
+        "hash": "$rmHash",
+        "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+        "topic": 1,
+        "save": "rmPid"
+      }
+    },
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0x98951b56",
+        "of": [
+          "$rmPid"
+        ],
+        "save": "rmApprove"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node2",
+        "from": "node2",
+        "to": "0x0000000000000000000000000000000000001001",
+        "gas": "0x16e360",
+        "data": "$rmApprove",
+        "save": "rmApHash"
+      }
+    },
+    {
+      "read": {
+        "source": "call",
+        "to": "0x0000000000000000000000000000000000001001",
+        "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
+        "save": "memberAfterRemove"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "txStatus",
+      "hash": "$addApHash",
+      "expected": "0x1"
+    },
+    {
+      "assert": "txStatus",
+      "hash": "$rmHash",
+      "expected": "0x1"
+    },
+    {
+      "assert": "txStatus",
+      "hash": "$rmApHash",
+      "expected": "0x1"
+    },
+    {
+      "assert": "derive",
+      "op": "word",
+      "index": 0,
+      "of": [
+        "$memberAfterAdd"
+      ],
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "assert": "derive",
+      "op": "word",
+      "index": 0,
+      "of": [
+        "$memberAfterRemove"
+      ],
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1",
+  "id": "extra-union-merge",
+  "applicableChains": "stablenet",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable",
+    "genesisOverlay": {
+      "alloc": {
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906": {
+          "balance": "0xDE0B6B3A7640000",
+          "extra": "0x4000000000000000"
+        },
+        "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955": {
+          "balance": "0xDE0B6B3A7640000",
+          "extra": "0x4000000000000000"
+        }
+      },
+      "config": {
+        "anzeon": {
+          "systemContracts": {
+            "govCouncil": {
+              "params": {
+                "authorizedAccounts": "0x976EA74026E726554dB657fA54763abd0C3a0aa9,0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "TC-4-5-05/06: alloc.Extra 와 GovCouncil params 가 서로 다른 계정을 인가하면 합집합이 되고, 양쪽에 다 있는 계정은 중복 없이 한 번만 센다 (3개, 4개가 아님).",
+  "steps": [
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0xfe9fbb80",
+        "of": [
+          "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+        ],
+        "save": "allocOnly"
+      }
+    },
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0xfe9fbb80",
+        "of": [
+          "0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+        ],
+        "save": "paramOnly"
+      }
+    },
+    {
+      "read": {
+        "source": "derive",
+        "op": "abiCall",
+        "selector": "0xfe9fbb80",
+        "of": [
+          "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"
+        ],
+        "save": "bothSides"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$allocOnly",
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$paramOnly",
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000B00003",
+      "data": "$bothSides",
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "assert": "call",
+      "to": "0x0000000000000000000000000000000000001004",
+      "data": "0x6a6debd7",
+      "compare": "Equal",
+      "expected": "0x0000000000000000000000000000000000000000000000000000000000000003"
+    }
+  ]
+}

@@ -16,7 +16,7 @@ import (
 func seedCorpus(f *testing.F) {
 	f.Helper()
 	var n int
-	_ = filepath.WalkDir("../../tests/specs", func(p string, d os.DirEntry, err error) error {
+	_ = filepath.WalkDir("../../tests/tc", func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") || n >= 40 {
 			return nil
 		}
@@ -140,7 +140,7 @@ func TestValidate_RefusesAStatementThatNamesNothing(t *testing.T) {
 // next, by which time the original is gone.
 func TestMigrate_EmitsWhatItsOwnParserReads(t *testing.T) {
 	var n int
-	err := filepath.WalkDir("../../tests/specs", func(p string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir("../../tests/tc", func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") {
 			return nil
 		}

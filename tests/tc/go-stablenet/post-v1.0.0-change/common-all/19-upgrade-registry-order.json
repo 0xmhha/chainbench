@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1",
+  "id": "upgrade-registry-order",
+  "applicableChains": "stablenet",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "TC-5-2-01/02/03: block 0 에 Anzeon baseline 이 등록돼 있고, BohoBlock(100) 전까지 중간 업그레이드가 없으며, BohoBlock 에서 GovMinter 코드가 교체된다.",
+  "steps": [
+    {
+      "read": {
+        "source": "rpcCall",
+        "method": "eth_getCode",
+        "params": [
+          "0x0000000000000000000000000000000000001003",
+          "0x0"
+        ],
+        "save": "codeGenesis"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0"
+      ],
+      "compare": "NotEqual",
+      "expected": "0x"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x63"
+      ],
+      "compare": "Equal",
+      "expected": "$codeGenesis"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x64"
+      ],
+      "compare": "NotEqual",
+      "expected": "$codeGenesis"
+    }
+  ]
+}

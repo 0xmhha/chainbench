@@ -18,16 +18,16 @@
 
 ```sh
 # 오프라인 검증 (env 참조를 풀어 문법을 확인한다)
-chainbench validate tests/cases/*/*.json
+chainbench validate tests/tc/**/*.json
 
 # 구성 + 실행: 선언한 네트워크를 워크스페이스에 세우고 케이스를 돌린 뒤 내린다
-chainbench run --workspace-dir /tmp/cb-stablenet tests/cases/stablenet/chain-up.json
+chainbench run --workspace-dir /tmp/cb-stablenet tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json
 
 # 바이너리가 PATH 에 없으면 덮어쓴다 (단일 바이너리 갈래)
-chainbench run --workspace-dir /tmp/cb-stablenet --binary /path/to/gstable tests/cases/stablenet/chain-up.json
+chainbench run --workspace-dir /tmp/cb-stablenet --binary /path/to/gstable tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json
 
 # 네트워크를 남겨 두고 살펴보려면
-chainbench run --workspace-dir /tmp/cb-wemix --keep-up tests/cases/wemix/chain-up.json
+chainbench run --workspace-dir /tmp/cb-wemix --keep-up tests/tc/go-wemix/chain-up/01-wemix-chain-up.json
 ```
 
 바이너리 이름은 선언 안에서 환경 변수로 덮어쓸 수 있다: `${GWBFT_BIN:-gwbft}` 처럼.
