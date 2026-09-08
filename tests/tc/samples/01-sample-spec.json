@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1",
+  "id": "sample-spec-value-transfer",
+  "applicableChains": "stablenet,wbft",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-spec.json",
+  "preActions": [
+    {
+      "read": {
+        "source": "derive",
+        "op": "sum",
+        "of": [
+          "21000"
+        ],
+        "save": "transferGas"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "read": {
+        "source": "balanceAt",
+        "address": "node2",
+        "save": "balBefore"
+      }
+    },
+    {
+      "sendTx": {
+        "on": "node1",
+        "from": "node1",
+        "to": "node2",
+        "value": "1000000000000000000",
+        "gas": "$transferGas",
+        "save": "txHash",
+        "expect": "receipt"
+      }
+    },
+    {
+      "read": {
+        "source": "rpcCall",
+        "method": "eth_getTransactionReceipt",
+        "params": [
+          "$txHash"
+        ],
+        "select": "blockNumber",
+        "save": "txBlock"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "assert": "txStatus",
+      "hash": "$txHash",
+      "expected": "0x1"
+    },
+    {
+      "assert": "derive",
+      "op": "diff",
+      "of": [
+        "$txBlock",
+        "0"
+      ],
+      "compare": "Greater",
+      "expected": "0"
+    },
+    {
+      "assert": "balanceAt",
+      "address": "node2",
+      "compare": "Greater",
+      "expected": "$balBefore"
+    }
+  ]
+}
