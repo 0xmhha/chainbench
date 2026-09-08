@@ -127,6 +127,14 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	return eng.Run(ctx, in.Specs)
 }
 
+// SpecInfo is one test case as the catalog lists it.
+type SpecInfo = dsl.SpecInfo
+
+// ListSpecs enumerates the runnable test cases under dir, so an operator or an
+// agent can discover what is there before running one. It is the catalog behind
+// the CLI `test list` and the MCP test_list tool.
+func ListSpecs(dir string) ([]SpecInfo, error) { return dsl.ListSpecs(dir) }
+
 // ReadSpecFiles reads DSL spec files, resolving each against its environment.
 //
 // Every surface that runs specs reads them, and reading is where a relative

@@ -19,6 +19,7 @@ func Default(name, version string) *Server {
 	s.Register(faucetTool())
 	s.Register(verifyTool())
 	s.Register(runTool())
+	s.Register(testListTool())
 	s.Register(hardforkTool())
 	s.Register(upgradeTool())
 	s.Register(validateTool())
