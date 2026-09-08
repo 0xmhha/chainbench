@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 
@@ -220,5 +221,26 @@ func TestEngine_RecordsArtifactsManifest(t *testing.T) {
 	}
 	if len(got.Refs) != 1 || got.Refs[0].Kind != "genesis" || got.Refs[0].Ref != "genesis.json" {
 		t.Fatalf("artifacts manifest = %+v, want a single genesis ref", got.Refs)
+	}
+}
+
+// TestEngine_GeneratesReport pins WA23: a full engine run (compose -> run ->
+// record) generates report.json without a live binary, so the
+// compose->run->report pipeline has non-live CI coverage rather than only the
+// GSTABLE_BIN-gated live tests.
+func TestEngine_GeneratesReport(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	e := testengine.New(h.deps(t))
+
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft"), specJSON("T2", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	rep, err := report.Read(root)
+	if err != nil {
+		t.Fatalf("report.Read: %v (a run must generate report.json)", err)
+	}
+	if len(rep.Tests) != 2 || rep.Summary.Pass != 2 {
+		t.Fatalf("report = %d tests, pass=%d; want 2 tests, 2 pass", len(rep.Tests), rep.Summary.Pass)
 	}
 }
