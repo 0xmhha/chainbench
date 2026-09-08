@@ -159,7 +159,7 @@ func (sendSetCodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if ac.Deps == nil || ac.Deps.Accounts == nil {
 		return fmt.Errorf("dsl: sendSetCode: no account provider")
 	}
-	if !ac.Deps.Accounts.SupportsTxType(0x04) {
+	if !ac.Deps.Accounts.SupportsTxType(setCodeTxType) {
 		return fmt.Errorf("dsl: sendSetCode: chain does not support set-code (0x04)")
 	}
 	sponsorKey, err := hexKeyArg(ac.Args["key"], "key")
@@ -185,6 +185,57 @@ func (sendSetCodeAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	}
 	ac.Value = hash
 	ac.Hash = hash
+	return nil
+}
+
+// setCodeTxType is the EIP-7702 transaction type. Both the set-code send and the
+// authorization signing need the chain to support it, so the probe asks the
+// account provider with this one number rather than repeating a literal.
+const setCodeTxType = 0x04
+
+// signAuthorizationAction signs an EIP-7702 authorization tuple WITHOUT sending
+// anything, and binds it under "save" as the JSON-RPC object an
+// authorizationList carries. A spec uses it to measure what an authorization
+// costs — eth_estimateGas with one tuple, then two — which sending cannot show,
+// because a sent set-code transaction reports only its own total.
+//
+// Args: authorityKey (the delegating account, hex), delegate (the address its
+// code points at), on (selector, optional).
+type signAuthorizationAction struct{}
+
+func (signAuthorizationAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
+	if ac.Deps == nil || ac.Deps.Accounts == nil {
+		return fmt.Errorf("dsl: signAuthorization: no account provider")
+	}
+	if !ac.Deps.Accounts.SupportsTxType(setCodeTxType) {
+		return fmt.Errorf("dsl: signAuthorization: chain does not support set-code (0x04)")
+	}
+	authorityKey, err := hexKeyArg(ac.Args["authorityKey"], "authorityKey")
+	if err != nil {
+		return err
+	}
+	delegate, _ := ac.Args["delegate"].(string)
+	if delegate == "" {
+		return fmt.Errorf("dsl: signAuthorization requires \"delegate\"")
+	}
+	rpcURL := selectorTarget(ac.Env, ac.Args)
+	// The authority signs its own authorization, so it is the only key needed;
+	// the wallet is opened with it purely to reach the chain id and its nonce.
+	w, err := ac.Deps.Accounts.OpenWallet(ctx, authorityKey, rpcURL)
+	if err != nil {
+		return fmt.Errorf("dsl: signAuthorization: open authority wallet: %w", err)
+	}
+	auth, err := w.SignAuthorization(ctx, authorityKey, delegate)
+	if err != nil {
+		return fmt.Errorf("dsl: signAuthorization: %w", err)
+	}
+	// Bind as map[string]any so the interpreter can splice it into an RPC
+	// params array unchanged.
+	obj := make(map[string]any, len(auth))
+	for k, v := range auth {
+		obj[k] = v
+	}
+	ac.Value = obj
 	return nil
 }
 

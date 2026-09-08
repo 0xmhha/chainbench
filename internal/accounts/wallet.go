@@ -44,6 +44,12 @@ type Wallet interface {
 	// delegating its account code to delegateHex. After it mines, the authority's
 	// code becomes 0xef0100||delegate. Returns the tx hash.
 	SendSetCode(ctx context.Context, authorityKey []byte, delegateHex string) (txHash string, err error)
+	// SignAuthorization signs an EIP-7702 authorization tuple — authorityKey
+	// delegating its account code to delegateHex, at the authority's current
+	// nonce on this wallet's chain — and returns it in the shape a JSON-RPC
+	// call carries it (chainId, address, nonce, yParity, r, s), so a caller can
+	// put it in an eth_estimateGas authorizationList without sending anything.
+	SignAuthorization(ctx context.Context, authorityKey []byte, delegateHex string) (map[string]string, error)
 	// SendDynamicFee sends a type 0x02 (EIP-1559 dynamic-fee) value transfer of
 	// amountWei to the hex recipient, returning the tx hash. Fees are auto-filled
 	// (GasTipCap from the node's suggestion, GasFeeCap = gasPrice + tip). This is
@@ -381,28 +387,73 @@ func (s sdkWallet) SendAccessListGas(ctx context.Context, toHex string, amountWe
 	return h.Hex(), nil
 }
 
-func (s sdkWallet) SendSetCode(ctx context.Context, authorityKey []byte, delegateHex string) (string, error) {
+// setCodeGasLimit is the gas a set-code (EIP-7702) transaction is sent with. It
+// covers the intrinsic cost plus one authorization; the transaction carries no
+// calldata, so a fixed limit is enough and keeps the send deterministic.
+const setCodeGasLimit = 200000
+
+// signAuthorization builds and signs the EIP-7702 authorization tuple that both
+// SendSetCode and SignAuthorization need: authorityKey delegates its own code to
+// delegateHex, signed by itself, at its current nonce on this wallet's chain.
+func (s sdkWallet) signAuthorization(ctx context.Context, authorityKey []byte, delegateHex string) (sdktx.SetCodeAuthorization, error) {
+	var zero sdktx.SetCodeAuthorization
 	delegate, err := sdktypes.HexToAddress(delegateHex)
 	if err != nil {
-		return "", fmt.Errorf("accounts: invalid delegate %q: %w", delegateHex, err)
+		return zero, fmt.Errorf("accounts: invalid delegate %q: %w", delegateHex, err)
 	}
 	authority, err := sdkacct.FromPrivateKeyBytes(authorityKey)
 	if err != nil {
-		return "", fmt.Errorf("accounts: bad authority key: %w", err)
+		return zero, fmt.Errorf("accounts: bad authority key: %w", err)
 	}
 	chainID, err := s.w.Client.ChainID(ctx)
 	if err != nil {
-		return "", fmt.Errorf("accounts: chain id: %w", err)
+		return zero, fmt.Errorf("accounts: chain id: %w", err)
 	}
-	// The authority delegates its own code to `delegate`, signed by itself, at
-	// its current nonce.
 	authNonce, err := s.w.Client.Nonce(ctx, authority.Address())
 	if err != nil {
-		return "", fmt.Errorf("accounts: authority nonce: %w", err)
+		return zero, fmt.Errorf("accounts: authority nonce: %w", err)
 	}
 	auth := sdktx.SetCodeAuthorization{ChainID: chainID, Address: delegate, Nonce: authNonce}
 	if err := auth.Sign(authority.PrivateKey()); err != nil {
-		return "", fmt.Errorf("accounts: sign authorization: %w", err)
+		return zero, fmt.Errorf("accounts: sign authorization: %w", err)
+	}
+	return auth, nil
+}
+
+// SignAuthorization signs an authorization tuple and returns it as the JSON-RPC
+// object an authorizationList carries. Every field is a 0x-hex quantity, which
+// is what eth_estimateGas and eth_sendTransaction expect.
+func (s sdkWallet) SignAuthorization(ctx context.Context, authorityKey []byte, delegateHex string) (map[string]string, error) {
+	auth, err := s.signAuthorization(ctx, authorityKey, delegateHex)
+	if err != nil {
+		return nil, err
+	}
+	if auth.V == nil || auth.R == nil || auth.S == nil {
+		return nil, fmt.Errorf("accounts: authorization is unsigned")
+	}
+	return map[string]string{
+		"chainId": hexQuantity(auth.ChainID),
+		"address": auth.Address.Hex(),
+		"nonce":   hexQuantity(new(big.Int).SetUint64(auth.Nonce)),
+		"yParity": hexQuantity(auth.V),
+		"r":       hexQuantity(auth.R),
+		"s":       hexQuantity(auth.S),
+	}, nil
+}
+
+// hexQuantity encodes v as a 0x-prefixed hex quantity (no leading zeroes), the
+// JSON-RPC encoding for a number. A nil v encodes as 0x0.
+func hexQuantity(v *big.Int) string {
+	if v == nil {
+		return "0x0"
+	}
+	return fmt.Sprintf("%#x", v)
+}
+
+func (s sdkWallet) SendSetCode(ctx context.Context, authorityKey []byte, delegateHex string) (string, error) {
+	auth, err := s.signAuthorization(ctx, authorityKey, delegateHex)
+	if err != nil {
+		return "", err
 	}
 	nonce, err := s.w.Client.Nonce(ctx, s.w.Account.Address())
 	if err != nil {
@@ -416,9 +467,11 @@ func (s sdkWallet) SendSetCode(ctx context.Context, authorityKey []byte, delegat
 	if err != nil {
 		return "", fmt.Errorf("accounts: gas price: %w", err)
 	}
+	// The authorization was signed for this chain, so it carries the chain id
+	// the transaction needs — no second lookup.
 	t := &sdktx.SetCodeTx{
-		ChainID: chainID, Nonce: nonce, GasTipCap: tip, GasFeeCap: new(big.Int).Add(gp, tip),
-		Gas: 200000, To: s.w.Account.Address(), Value: big.NewInt(0),
+		ChainID: auth.ChainID, Nonce: nonce, GasTipCap: tip, GasFeeCap: new(big.Int).Add(gp, tip),
+		Gas: setCodeGasLimit, To: s.w.Account.Address(), Value: big.NewInt(0),
 		AuthorizationList: []sdktx.SetCodeAuthorization{auth},
 	}
 	if err := t.Sign(s.w.Account.PrivateKey()); err != nil {
