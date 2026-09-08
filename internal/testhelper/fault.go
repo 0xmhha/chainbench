@@ -84,10 +84,7 @@ func confirmNodeDown(ctx context.Context, ac *interp.ActionCtx, n node.Node,
 	ctrl interp.NodeControl, launchErr error, action string) error {
 	evidence := nodeFailureEvidence(ctx, ctrl, n, launchErr)
 	deadline := time.Now().Add(nodeDownProbeTimeout)
-	for {
-		if !nodeAnswers(ctx, ac, n) {
-			break
-		}
+	for nodeAnswers(ctx, ac, n) {
 		if time.Now().After(deadline) {
 			return fmt.Errorf("dsl: %s node%d expected the node not to come up, but it answers JSON-RPC after %s",
 				action, n.Index, nodeDownProbeTimeout)
