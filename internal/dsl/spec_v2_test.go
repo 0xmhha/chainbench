@@ -116,6 +116,11 @@ func TestParseV2Strictness(t *testing.T) {
 		"typo expect adjunct": `{"schemaVersion":"2","kind":"case","id":"x",
 			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},
 			"steps":[{"do":"sendTx","from":"0xa","expect":"revrt"},{"expect":"blockNumber","is":1}]}`,
+		// A timeouts value that is not a duration must be refused, not silently
+		// ignored at run time (WA15).
+		"bad timeout duration": `{"schemaVersion":"2","kind":"case","id":"x",
+			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},"timeouts":{"case":"tenminutes"},
+			"steps":[{"expect":"blockNumber","is":1}]}`,
 	}
 	for name, raw := range cases {
 		if _, err := Parse([]byte(raw)); err == nil {

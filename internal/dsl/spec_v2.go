@@ -8,6 +8,7 @@ import (
 	"maps"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // SchemaV2 is the canonical v2 grammar (schema/v2.schema.json). The strict
@@ -295,6 +296,13 @@ func lowerCase(c CaseV2) (Spec, error) {
 	}
 	if env.Chain == "" {
 		return Spec{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
+	}
+	// Timeout values are durations; reject an unparsable one here so a typo
+	// fails at parse time rather than being silently ignored at run time.
+	for name, v := range c.Timeouts {
+		if _, err := time.ParseDuration(v); err != nil {
+			return Spec{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
+		}
 	}
 
 	spec := Spec{

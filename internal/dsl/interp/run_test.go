@@ -80,6 +80,39 @@ func (a captureOnAction) Do(_ context.Context, ac *interp.ActionCtx) error {
 	return nil
 }
 
+// captureDeadlineAction records whether the ctx it ran under carried a deadline.
+type captureDeadlineAction struct{ hadDeadline *bool }
+
+func (a captureDeadlineAction) Do(ctx context.Context, _ *interp.ActionCtx) error {
+	_, ok := ctx.Deadline()
+	*a.hadDeadline = ok
+	return nil
+}
+
+// TestRun_CaseTimeoutBoundsTheRun pins WA15: a case-level timeout puts a
+// deadline on the whole run's context, so a hanging step fails within the
+// declared budget. Before the fix timeouts was parsed but never consulted.
+func TestRun_CaseTimeoutBoundsTheRun(t *testing.T) {
+	reg := interp.NewRegistry()
+	var hadDeadline bool
+	reg.RegisterAction("tx", captureDeadlineAction{hadDeadline: &hadDeadline})
+	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
+
+	spec := dsl.Spec{
+		Timeouts:   map[string]string{"case": "10m"},
+		Steps:      []map[string]any{{"tx": map[string]any{}}},
+		Assertions: []map[string]any{{"assert": "Len"}},
+	}
+	rec := &fakeRecord{}
+	it := interp.NewInterpreter(interp.Deps{Actions: reg})
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !hadDeadline {
+		t.Fatal("a case timeout must put a deadline on the run's context")
+	}
+}
+
 // TestRun_DefaultOnRoutesStatements pins WA14: a case-level default target
 // routes every statement that names none, while a statement with its own on
 // still wins. Before the fix defaultOn was parsed but never consulted, so both

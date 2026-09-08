@@ -3,6 +3,7 @@ package interp
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -21,6 +22,15 @@ import (
 func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Recorder) (session.TestStatus, error) {
 	if i.deps.Actions == nil {
 		return session.StatusFail, fmt.Errorf("interp: interpreter has no action/assertion registry")
+	}
+	// A case-level timeout bounds the whole run: every step and assertion shares
+	// the deadline, so a case that hangs fails within its declared budget rather
+	// than only at the engine's outer bound. Per-action timeouts still apply
+	// within it.
+	if d := caseTimeout(s.Timeouts); d > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, d)
+		defer cancel()
 	}
 	binds := Bindings{}
 
@@ -205,6 +215,20 @@ func bindResult(binds Bindings, args map[string]any, ac *ActionCtx) {
 	if ac.Hash != "" {
 		binds[name] = ac.Hash
 	}
+}
+
+// caseTimeout returns the whole-case deadline a spec declares via timeouts.case
+// (or its alias timeouts.test), or 0 when none is set. The value's format is
+// validated when the spec is lowered, so an unparsable one never reaches here.
+func caseTimeout(timeouts map[string]string) time.Duration {
+	for _, k := range []string{"case", "test"} {
+		if v := timeouts[k]; v != "" {
+			if d, err := time.ParseDuration(v); err == nil {
+				return d
+			}
+		}
+	}
+	return 0
 }
 
 // applyDefaultOn makes the case-level default target the target of a statement
