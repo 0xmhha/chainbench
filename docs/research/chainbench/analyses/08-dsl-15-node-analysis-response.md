@@ -250,3 +250,42 @@ server / canonical 모델)의 file:line 증거는 이 문서 각 절에 요약�
 - (C2) §11.1 case (b): genesis 에 validator 주소는 있는데 키가 없으면 — 에러로 볼지, 키를 만들
   수 없으니(주소 고정) 거부인지. 재사용/생성만 있고 (b)는 오류로 두는 게 맞나?
 - (C3) bootnode 역할 승격 범위: 세 체인 공통으로 role 추가하되 etcd 운영은 wemix 만 — 맞나?
+
+## 13. C1·C2·C3 확정 (2026-09-08)
+
+- **C1 정정**: node→server 는 server-set 순서로 **순차 할당**(node1→server1, node2→server2…).
+  운영자가 임의 서버를 직접 고르는 방식은 아니다. 대신 **DSL 이 노드 index 별로 role·binary·
+  key·genesis·config 를 미리 지정**할 수 있어야 한다(테스트 절차에서 특정 노드 동작을 개별 설정).
+- **C2 정정**: genesis 에 validator 주소가 있는데 키가 서버에 없으면 → **키를 새로 생성하고
+  genesis 의 validator 를 그 주소로 변경**한다(에러 아님). DSL 에 "서버에 존재할 키·config"를 미리
+  선언해 두고, 그 파일이 있으면 사용, 없으면(지금 케이스) 생성 + genesis 갱신. 목적은 반복 테스트
+  효율(genesis 에 bp/validator 를 미리 고정).
+- **C3 확정**: bootnode 역할은 세 체인 공통 추가, etcd 운영은 wemix 만. **bootnode 의 enode 정보를
+  다른 노드의 config 에 넣어** 각 노드가 누구에게 바로 연결할지 알게 한다.
+
+## 14. 구체 구현 계획 (§6.4 제출물 — 검토 후 착수)
+
+각 단계는 단위 테스트 + docker fleet 라이브 게이트를 갖는다. 재사용을 우선하고 축약 경로를 남긴다.
+
+- **S1. bootnode 역할 승격 (토대).** `internal/core/node` 에 bootnode 를 first-class 역할로.
+  peering RoleSupport 세 패밀리 허용, 2개 지정 시 문법/Validate 에러. 실행 순서 최우선(poa
+  BringUpPhases 일반화). **bootnode enode → 다른 노드 config 의 static-nodes/bootnodes 로 전파**
+  (`nodeconfig`). wemix 는 bootnode 가 etcd 운영(기존 poa boot 로직을 역할에 연결).
+  대상: node/role.go·topology.go·peering.go, consensus/poa, chainsetup steps, nodeconfig.
+- **S2. 동적 크기.** count-form 기본을 server-set 가용 수에서 산출(15 하드코딩 제거). 기본 역할 =
+  bootnode/pn 1 + en 1 + 나머지 bp(wemix: pn 없음). 노드>서버면 슬롯 port 순환. 대상: chainsetup
+  allocate/steps_compose, resource.
+- **S3. 노드 index 별 DSL 필드.** node-table 에 per-node key·config 추가(binary·role·sync 는 있음).
+  genesis 는 네트워크 단위 파일 재사용으로 취급. 대상: dsl spec_v2·schema, testengine compose,
+  chainsetup keys/config 스텝.
+- **S4. 키 재사용 + genesis 3-case (C2).** 선언된 키/config 파일이 서버에 있으면 재사용, 없으면
+  생성 + genesis validator 갱신. keys.validators 를 이 관점으로 재정의(§5 무효 상태 해소). 대상:
+  chainsetup keys 스텝·core/keyring·genesis.
+- **S5. canonical env/blueprint + 테스트별 override.** 공통 노드 정의 1곳, 각 테스트는 차이만.
+  (S1~S4 로 blueprint/node-table 소비가 완성된 뒤.)
+- **S6. 검증.** 07 §7 의 20 게이트를 local·remote·docker 로. 각 게이트 실행 증적.
+
+### 착수 순서 제안
+
+S1(bootnode 역할)이 나머지의 토대다. S1 → S2 → S3 → S4 → S5 → S6. 각 단계는 별도 커밋/PR 가능.
+대량 DSL 수정(S5)은 S1~S4 완료 후에만.
