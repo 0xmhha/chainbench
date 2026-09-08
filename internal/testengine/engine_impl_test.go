@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -242,5 +243,22 @@ func TestEngine_GeneratesReport(t *testing.T) {
 	}
 	if len(rep.Tests) != 2 || rep.Summary.Pass != 2 {
 		t.Fatalf("report = %d tests, pass=%d; want 2 tests, 2 pass", len(rep.Tests), rep.Summary.Pass)
+	}
+}
+
+// TestAttachWorkspaceRun_RefusesNoWorkspace pins WA10's attach entry: it fails
+// cleanly (no panic) when given no workspace or one that composed nothing,
+// rather than attaching to nothing. The gate/evidence wiring itself is the same
+// wiredAttachEngine the compose path uses, covered by the engine PreSpec/OnFail
+// tests above.
+func TestAttachWorkspaceRun_RefusesNoWorkspace(t *testing.T) {
+	sd := chainsetup.Deps{Clock: func() time.Time { return time.Unix(0, 0).UTC() }}
+	if _, err := testengine.AttachWorkspaceRun(context.Background(), sd, testengine.AttachWorkspaceIn{}); err == nil {
+		t.Fatal("attach with no workspace must fail")
+	}
+	if _, err := testengine.AttachWorkspaceRun(context.Background(), sd, testengine.AttachWorkspaceIn{
+		DataDir: t.TempDir(), Chain: "wbft",
+	}); err == nil {
+		t.Fatal("attach to a workspace that composed nothing must fail, not attach to nothing")
 	}
 }
