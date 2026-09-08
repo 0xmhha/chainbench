@@ -348,3 +348,31 @@ func TestRun_DoFailureStopsSequence(t *testing.T) {
 		t.Fatal("onFail diagnostics must run after a do failure")
 	}
 }
+
+// TestRun_OnEachStepFansOut pins WA18: a do step's onEach runs the action once
+// per selected node, mirroring how an assertion checks each. Before the fix the
+// action path read only "on", so onEach was silently ignored and the step ran
+// once against the primary node.
+func TestRun_OnEachStepFansOut(t *testing.T) {
+	reg := interp.NewRegistry()
+	var seen []string
+	reg.RegisterAction("tx", captureOnAction{seen: &seen})
+	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
+
+	spec := dsl.Spec{
+		Steps:      []map[string]any{{"tx": map[string]any{"onEach": []any{"node1", "node2"}}}},
+		Assertions: []map[string]any{{"assert": "Len"}},
+	}
+	rec := &fakeRecord{}
+	it := interp.NewInterpreter(interp.Deps{Actions: reg})
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	want := []string{"node1", "node2"}
+	if len(seen) != 2 || seen[0] != want[0] || seen[1] != want[1] {
+		t.Fatalf("fan-out targets = %v, want %v (onEach runs the action per node)", seen, want)
+	}
+	if rec.steps != 2 {
+		t.Fatalf("recorded %d steps, want 2 (one per fanned-out node)", rec.steps)
+	}
+}

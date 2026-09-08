@@ -149,7 +149,26 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Error: err.Error()})
 		return err
 	}
+	// Fan-out: an onEach step runs the action once per selected node (WA18),
+	// mirroring how an assertion checks each. A single "on", or neither, runs
+	// once against that node (or the primary). Fail fast on the first node, per
+	// the do-statement contract.
+	if each, ok := args["onEach"].([]any); ok && len(each) > 0 {
+		for _, sel := range each {
+			s, _ := sel.(string)
+			if err := i.dispatchStep(ctx, idx, name, act, s, argsOnEachOne(args, s), env, rec, binds); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	on, _ := args["on"].(string)
+	return i.dispatchStep(ctx, idx, name, act, on, args, env, rec, binds)
+}
+
+// dispatchStep runs the action once against one target, records its StepResult
+// even on failure, and binds any saved result on success.
+func (i *interpreter) dispatchStep(ctx context.Context, idx int, name string, act Action, on string, args map[string]any, env NodeTable, rec Recorder, binds Bindings) error {
 	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
 	runErr := act.Do(ctx, ac)
 	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt}
@@ -162,6 +181,20 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 	}
 	bindResult(binds, args, ac)
 	return nil
+}
+
+// argsOnEachOne returns a shallow copy of args pinned to a single target: on is
+// set to sel and onEach removed, so selectorTarget routes to that one node.
+func argsOnEachOne(args map[string]any, sel string) map[string]any {
+	out := make(map[string]any, len(args))
+	for k, v := range args {
+		if k == "onEach" {
+			continue
+		}
+		out[k] = v
+	}
+	out["on"] = sel
+	return out
 }
 
 // runAssertion dispatches an assertion entry (its "assert" field names the
