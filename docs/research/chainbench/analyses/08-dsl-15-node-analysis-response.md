@@ -289,3 +289,48 @@ server / canonical 모델)의 file:line 증거는 이 문서 각 절에 요약�
 
 S1(bootnode 역할)이 나머지의 토대다. S1 → S2 → S3 → S4 → S5 → S6. 각 단계는 별도 커밋/PR 가능.
 대량 DSL 수정(S5)은 S1~S4 완료 후에만.
+
+## 15. 최종 확정 모델 (2026-09-08, W1·W2·W3)
+
+체인 코드 검증(go-wemix/go-wbft/go-stablenet) 후 통합 모델로 확정.
+
+**검증된 메커니즘**: 체인에 별개 pn/proxy 역할 플래그는 없다. bootnode = 표준 geth —
+허브가 discovery 를 켜고, 다른 노드가 `--bootnodes=<허브 enode>` 로 가리킨다. chainbench
+nodeconfig 에 이미 `--bootnodes`·`--nodiscover` 가 있어 배선만 하면 된다(체인 변경 불필요).
+wemix etcd 는 어느 member(producer)나 init 가능(`etcdInit` 전제 = `self != nil`), 나머지는 join.
+
+**확정 모델 — 세 체인 공통, 동적**:
+- 노드 수 = server-set 가용 서버 수(동적). 15대면 15노드, 6대면 6노드…
+- **마지막 노드(index = 서버 수) = PN**. PN 은 bootnode 옵션(discovery)을 켜고, 그 enode 를 모든
+  노드의 static-nodes 에 기본 포함(+ discovery 모드면 `--bootnodes` 로도 제공).
+- EN 1개, 나머지 전부 BP. 예) 15 = 13 bp + 1 pn + 1 en, 6 = 4 bp + 1 pn + 1 en.
+- validator 집합 = BP(pn·en 제외).
+- **wemix(poa)도 bp/en/pn 지원으로 재정리**한다(현행 poa 는 pn 거부 — 이를 바꾼다). 별도 boot
+  역할은 두지 않는다. producer 들이 etcd 클러스터를 이룬다(seed = 최상위 인덱스 BP, 내부 지정,
+  pn 아님). pn 은 non-validator 로 p2p 디스커버리 허브만.
+- DSL node-table 은 노드 index 별 role·binary·key·config 를 지정 가능. count-form 은 위 기본을
+  동적 크기로 적용.
+
+**현행 코드와의 간극(구현 대상)**:
+- poa SupportsRole 에 pn 추가(bp/en/pn). peering proxied 를 wemix 에도 허용. "etcd 가 proxy 자리
+  차지" 주석 근거 폐기(pn=p2p 디스커버리, etcd=producer 합의로 층이 다름).
+- poa bootPlacement/etcd-seed 를 "최상위 producer(BP)"로(마지막 노드가 pn 이 되므로 pn 이 아닌 BP).
+  genesis bootNodeId 도 그 producer 로. pn 은 member 에서 제외(en 과 동일).
+- pn = bootnode 배선: discovery 켜기 + pn enode 를 static-nodes 기본 포함, discovery 모드 --bootnodes.
+- 동적 크기: count-form 기본 = 서버 수, pn=마지막, en=1, 나머지 bp. 노드>서버면 슬롯 port 순환.
+- 키 재사용(genesis 3-case), keys.validators 재정의.
+
+**라이브 검증 필요(fleet)**: wemix 에서 non-producer pn 이 producer 들의 etcd 와 공존하며 정상
+동작하는지. 코드상 가능해 보이나 실동작 확인 필요.
+
+## 16. 최종 구현 계획 (검토 후 착수)
+
+- **S1. poa pn 지원 + peering proxied 통일.** poa SupportsRole bp/en/pn, bootPlacement/etcd-seed 를
+  최상위 BP 로, pn 을 member 제외. 단위 + wemix docker 라이브(공존 검증).
+- **S2. pn = bootnode 배선.** pn discovery on + enode 를 전 노드 static-nodes 기본 포함(+ --bootnodes).
+  세 체인.
+- **S3. 동적 크기.** count-form 기본 = 서버 수, pn=마지막·en=1·나머지 bp. 노드>서버 port 순환.
+- **S4. DSL node-table per-node(role·binary·key·config, index 지정) + count-form 동적 기본.**
+- **S5. 키 재사용 + genesis 3-case.**
+- **S6. canonical env + 테스트별 override.**
+- **S7. 검증(07 §7 20 게이트, local/remote/docker, CLI=MCP).**
