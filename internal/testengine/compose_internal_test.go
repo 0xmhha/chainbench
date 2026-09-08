@@ -317,3 +317,19 @@ func TestCompositionOf_HandoffRejectsEnvComposeFields(t *testing.T) {
 		t.Fatal("a handoff env that also declares a topology must be refused, not silently dropped")
 	}
 }
+
+// TestCompositionOf_EnvManifestThreads pins WA21: an env's manifest and genesis
+// template reach the composition, so a DSL spec can run an external chain on a
+// built-in family — the capability was CLI-only before.
+func TestCompositionOf_EnvManifestThreads(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "manifest":"/chains/acme.json","genesisTemplate":"/chains/acme-genesis.json"}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.ManifestPath != "/chains/acme.json" || comp.up.TemplatePath != "/chains/acme-genesis.json" {
+		t.Fatalf("manifest/template not threaded: %+v", comp.up)
+	}
+}

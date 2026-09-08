@@ -44,6 +44,14 @@
           "type": "string",
           "minLength": 1
         },
+        "manifest": {
+          "type": "string",
+          "description": "an external, project-supplied chain manifest JSON run on the family named by chain (the DSL equivalent of --manifest)"
+        },
+        "genesisTemplate": {
+          "type": "string",
+          "description": "the genesis template for manifest (the DSL equivalent of --genesis-template)"
+        },
         "binaries": {
           "type": "object",
           "description": "name -> binary path. \"default\" applies to every node without its own; a per-node topology entry's \"binary\" names one of these; an upgrade names \"producer\"/\"validator\"",

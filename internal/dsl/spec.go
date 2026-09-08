@@ -16,6 +16,10 @@ type ChainSpec struct {
 	Binaries       map[string]string `json:"binaries,omitempty"`
 	Config         string            `json:"config,omitempty"`
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
+	// ManifestPath is an external chain manifest run on the family named by
+	// Name; TemplatePath is its genesis template. Empty means an embedded chain.
+	ManifestPath string `json:"manifestPath,omitempty"`
+	TemplatePath string `json:"templatePath,omitempty"`
 }
 
 // Spec is a parsed, validated test definition (schema in design §4.3).

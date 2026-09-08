@@ -166,6 +166,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	up := &chainsetup.NetUpIn{
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
+		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
 		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,

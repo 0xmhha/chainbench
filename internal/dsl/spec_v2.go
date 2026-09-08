@@ -59,17 +59,22 @@ type EnvV2 struct {
 	// Description says what this environment is for, in prose. It carries no
 	// execution semantics; it exists so a declaration can explain itself where
 	// it is read, rather than in a file beside it.
-	Description  string                    `json:"description,omitempty"`
-	Target       string                    `json:"target,omitempty"`
-	Chain        string                    `json:"chain"`
-	Binaries     map[string]string         `json:"binaries,omitempty"`
-	Keys         *KeysV2                   `json:"keys,omitempty"`
-	Genesis      *GenesisV2                `json:"genesis,omitempty"`
-	Topology     map[string]any            `json:"topology,omitempty"`
-	Hardforks    map[string]int            `json:"hardforks,omitempty"`
-	Launch       map[string]map[string]any `json:"launch,omitempty"`
-	Config       map[string]map[string]any `json:"config,omitempty"`
-	Capabilities []string                  `json:"capabilities,omitempty"`
+	Description string `json:"description,omitempty"`
+	Target      string `json:"target,omitempty"`
+	Chain       string `json:"chain"`
+	// Manifest is an external, project-supplied chain manifest JSON, run on the
+	// built-in family named by Chain; GenesisTemplate is its genesis template.
+	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
+	Manifest        string                    `json:"manifest,omitempty"`
+	GenesisTemplate string                    `json:"genesisTemplate,omitempty"`
+	Binaries        map[string]string         `json:"binaries,omitempty"`
+	Keys            *KeysV2                   `json:"keys,omitempty"`
+	Genesis         *GenesisV2                `json:"genesis,omitempty"`
+	Topology        map[string]any            `json:"topology,omitempty"`
+	Hardforks       map[string]int            `json:"hardforks,omitempty"`
+	Launch          map[string]map[string]any `json:"launch,omitempty"`
+	Config          map[string]map[string]any `json:"config,omitempty"`
+	Capabilities    []string                  `json:"capabilities,omitempty"`
 	// Accounts declares test accounts by name, created and funded when the
 	// network comes up. They are not in the genesis on purpose: an account
 	// funded at run time is one the genesis never has to mention, so preparing
@@ -332,6 +337,11 @@ func lowerCase(c CaseV2) (Spec, error) {
 			}
 		}
 	}
+
+	// An external manifest (and its genesis template) runs on the family named
+	// by chain; both travel on the chain spec for the composer to thread.
+	spec.Chain.ManifestPath = env.Manifest
+	spec.Chain.TemplatePath = env.GenesisTemplate
 
 	// Binaries: "default" is every node's binary; other keys are per-role.
 	if b, ok := env.Binaries["default"]; ok && len(env.Binaries) == 1 {
