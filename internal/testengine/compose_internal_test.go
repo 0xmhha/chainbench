@@ -333,3 +333,32 @@ func TestCompositionOf_EnvManifestThreads(t *testing.T) {
 		t.Fatalf("manifest/template not threaded: %+v", comp.up)
 	}
 }
+
+// TestCompositionOf_EnvBlueprintAndKeysValidators pins WA21 (E): an env can name
+// a blueprint (layout + keys in one document) and, for a generated key set, how
+// many identities join the validator set — both threaded to the composition,
+// where they were CLI-only before.
+func TestCompositionOf_EnvBlueprintAndKeysValidators(t *testing.T) {
+	// Blueprint: threaded to the composition's BlueprintPath.
+	bp := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"blueprint":"/net/blueprint.yaml"}`)
+	comp, err := compositionOf(context.Background(), bp, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.BlueprintPath != "/net/blueprint.yaml" {
+		t.Fatalf("blueprint not threaded: %+v", comp.up)
+	}
+
+	// keys.validators: threaded to the composition's KeysValidators.
+	kv := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"topology":{"bp":3},
+	  "keys":{"nodekeys":{"source":"generate","ref":"keys/gen","validators":2}}}`)
+	comp, err = compositionOf(context.Background(), kv, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.KeysValidators != 2 {
+		t.Fatalf("keys validators not threaded: %+v", comp.up)
+	}
+}

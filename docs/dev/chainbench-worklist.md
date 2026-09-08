@@ -1283,8 +1283,11 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   negative-tx 의 reject(제출 거부) 변형도 남아 있다(신뢰할 수 있는 재현 방법 확정 필요).
 - [ ] **D. WA1 — 라이브 MCP 플러그인 재배포**. 배포본이 `net_*` 이름의 stale 빌드다. 저장소는
   `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. 코드가 아니라 배포 작업이다.
-- [ ] **E. WA21 잔여 — DSL 문법 확장(D4 로 미룸)**. env 에 `blueprint`, keys-validator-subset
-  (생성 키 중 N개만 validator), deploy-only stage 를 더한다.
+- [x] **E. WA21 — DSL 문법 확장(D4 로 미룬 것)**. env 에 `blueprint`(레이아웃+키 한 문서)와
+  `keys.nodekeys.validators`(생성 키 중 N개만 validator)를 더해 compose 로 배선했다(단위 테스트).
+  **deploy-only stage 는 넣지 않았다** — 테스트 케이스는 어서션을 돌리므로 항상 망을 기동해야
+  한다(UpStart). 배포만 하는 compose 는 테스트 env 의미가 없다. blueprint/validator-subset 를
+  실제로 쓰는 라이브 스펙은 다른 커버리지처럼 fleet 에서 작성·검증하면 된다.
 - [ ] **WA10 잔여 없음** — attach 경로 게이트·증적(E6·E8)까지 반영됨(PR #363).
 
 기존 §1n 의 R6(go-wemix etcd collapse — 체인팀), G2(핸드오프 원격), 원격 `chain rm`

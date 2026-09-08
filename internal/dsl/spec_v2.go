@@ -65,16 +65,20 @@ type EnvV2 struct {
 	// Manifest is an external, project-supplied chain manifest JSON, run on the
 	// built-in family named by Chain; GenesisTemplate is its genesis template.
 	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
-	Manifest        string                    `json:"manifest,omitempty"`
-	GenesisTemplate string                    `json:"genesisTemplate,omitempty"`
-	Binaries        map[string]string         `json:"binaries,omitempty"`
-	Keys            *KeysV2                   `json:"keys,omitempty"`
-	Genesis         *GenesisV2                `json:"genesis,omitempty"`
-	Topology        map[string]any            `json:"topology,omitempty"`
-	Hardforks       map[string]int            `json:"hardforks,omitempty"`
-	Launch          map[string]map[string]any `json:"launch,omitempty"`
-	Config          map[string]map[string]any `json:"config,omitempty"`
-	Capabilities    []string                  `json:"capabilities,omitempty"`
+	Manifest        string            `json:"manifest,omitempty"`
+	GenesisTemplate string            `json:"genesisTemplate,omitempty"`
+	Binaries        map[string]string `json:"binaries,omitempty"`
+	Keys            *KeysV2           `json:"keys,omitempty"`
+	// Blueprint is a network declaration file — the layout AND the node keys in
+	// one document. With it, no topology or key set is needed; it is the DSL
+	// equivalent of the CLI's --blueprint.
+	Blueprint    string                    `json:"blueprint,omitempty"`
+	Genesis      *GenesisV2                `json:"genesis,omitempty"`
+	Topology     map[string]any            `json:"topology,omitempty"`
+	Hardforks    map[string]int            `json:"hardforks,omitempty"`
+	Launch       map[string]map[string]any `json:"launch,omitempty"`
+	Config       map[string]map[string]any `json:"config,omitempty"`
+	Capabilities []string                  `json:"capabilities,omitempty"`
 	// Accounts declares test accounts by name, created and funded when the
 	// network comes up. They are not in the genesis on purpose: an account
 	// funded at run time is one the genesis never has to mention, so preparing
@@ -132,6 +136,11 @@ type KeySourceV2 struct {
 	Source string `json:"source"`
 	// Ref is the key-set directory.
 	Ref string `json:"ref,omitempty"`
+	// Validators is how many of a generated set join the validator set (0 =
+	// all). It has effect only with source "generate": it composes a network
+	// whose key set has more identities than producers, the DSL equivalent of
+	// the keys step's --validators.
+	Validators int `json:"validators,omitempty"`
 	// Bootnode named the external BLS-deriving binary. It is accepted so that
 	// existing specs keep parsing, and ignored: BLS material is now derived in
 	// process (derive.Derive).
@@ -391,6 +400,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if env.Keys != nil && env.Keys.NodeKeys != nil {
 		spec.EnvKeys = env.Keys.NodeKeys
 	}
+	spec.EnvBlueprint = env.Blueprint
 	if len(env.Launch) > 0 {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
