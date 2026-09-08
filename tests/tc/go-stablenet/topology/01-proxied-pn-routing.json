@@ -22,8 +22,8 @@
     },
     "keys": {
       "nodekeys": {
-        "source": "generate",
-        "ref": "keys/gen-proxied"
+        "source": "preset",
+        "ref": "keys/preset"
       }
     }
   },

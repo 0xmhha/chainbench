@@ -1256,6 +1256,36 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 - [ ] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/dev/dsl-authoring-guide.md` 로 일부 해소 가능.)
 
 
+## 1p. WA 트랙 이후 — fleet 검증 결과와 남은 작업 (2026-09-08)
+
+WA 트랙은 PR #363 으로 main 에 머지됐다(WA1~WA26 중 코드/문법/표면 항목 반영). 이어
+docker 함대(15대, stablenet/wbft/wemix)에서 커버리지 스펙을 라이브로 돌려 다음을 확인했다.
+
+**라이브 통과 확인**: createAddress·contractChecksum, faucet(amount 를 십진 wei 로 수정),
+proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·fault, go-wemix fault.
+전부 preset 키만 쓴다 — 생성 키를 저장소에 남기지 않는다.
+
+### 남은 작업
+
+- [ ] **C. metric 수집 인프라 (신규 — WA24 metric 이 드러냄)**. `metric` 어서션은 등록돼
+  있으나 수집 경로가 프로덕션에 배선되지 않았다. 필요한 것 셋: ① 노드 실행 시 metrics
+  활성화를 launch 로 배선, ② metrics 를 수집하는 경로(collector/scrape), ③ `--docker` 에서
+  metrics 포트를 localmap 으로 번역(지금은 컨테이너 내부주소 `172.30.0.11:6060` 로 직접
+  dial 해 timeout). 이 셋이 되면 `metric` 스펙(제거된 `03-metric-head-block`)을 다시 추가한다.
+- [ ] **B 잔여 — 거버넌스·부정 경로 커버리지**. go-wemix·go-wbft 의 거버넌스 플로우와
+  negative-tx(expect:revert/reject) 케이스. 체인별 거버넌스 셋업이 필요해 fleet 에서 작성·검증한다.
+  registerContract 는 임의 호출을 받는 컨트랙트로 최소 검증만 했다 — 실제 메서드/ABI 를 쓰는
+  케이스는 여기 포함.
+- [ ] **D. WA1 — 라이브 MCP 플러그인 재배포**. 배포본이 `net_*` 이름의 stale 빌드다. 저장소는
+  `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. 코드가 아니라 배포 작업이다.
+- [ ] **E. WA21 잔여 — DSL 문법 확장(D4 로 미룸)**. env 에 `blueprint`, keys-validator-subset
+  (생성 키 중 N개만 validator), deploy-only stage 를 더한다.
+- [ ] **WA10 잔여 없음** — attach 경로 게이트·증적(E6·E8)까지 반영됨(PR #363).
+
+기존 §1n 의 R6(go-wemix etcd collapse — 체인팀), G2(핸드오프 원격), 원격 `chain rm`
+(filestore Remove 부재)은 WA 와 무관하게 그대로 남아 있다.
+
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
