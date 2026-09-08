@@ -111,6 +111,11 @@ func TestParseV2Strictness(t *testing.T) {
 			"env":{"chain":"wbft","launch":{"bp1":{"mine":true}}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"override hook": `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft"},
 			"steps":[{"override":{"env.launch":{}}},{"expect":"blockNumber","is":1}]}`,
+		// A typo in a do step's expect adjunct must be refused, not silently
+		// treated as the default success (WA8) — "revrt" is not "revert".
+		"typo expect adjunct": `{"schemaVersion":"2","kind":"case","id":"x",
+			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},
+			"steps":[{"do":"sendTx","from":"0xa","expect":"revrt"},{"expect":"blockNumber","is":1}]}`,
 	}
 	for name, raw := range cases {
 		if _, err := Parse([]byte(raw)); err == nil {

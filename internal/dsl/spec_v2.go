@@ -424,6 +424,13 @@ func lowerCase(c CaseV2) (Spec, error) {
 // assertion names.
 var expectAliases = map[string]string{"rpc": "rpcCall"}
 
+// expectAdjuncts is the outcome vocabulary a do step's "expect" may name:
+// receipt (the default — the tx must be mined), revert (mined with status 0x0),
+// reject (the submit itself must fail), and fail (a launched node must not come
+// up). A value outside this set is a typo that must be refused, not treated as
+// the default success.
+var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "fail": true}
+
 // lowerStatement lowers one v2 statement map onto the runtime vocabulary.
 func lowerStatement(m map[string]any) (Statement, error) {
 	doName, hasDo := m["do"].(string)
@@ -432,6 +439,13 @@ func lowerStatement(m map[string]any) (Statement, error) {
 	// on sendTx). It is a statement head only when "do" is absent.
 	if !hasDo && !hasEx {
 		return Statement{}, fmt.Errorf("statement needs \"do\" or \"expect\"")
+	}
+	// A do step's expect names an outcome, not an assertion, so it is checked
+	// here rather than by Unresolved (which resolves head expects as assertion
+	// names). A value outside the outcome vocabulary would otherwise fall through
+	// to the default "must succeed", silently turning a negative case positive.
+	if hasDo && hasEx && !expectAdjuncts[strings.ToLower(exName)] {
+		return Statement{}, fmt.Errorf("do step's expect adjunct %q is not a known outcome (want receipt, revert, reject, or fail)", exName)
 	}
 	if _, isOverride := m["override"]; isOverride {
 		return Statement{}, fmt.Errorf("override hooks (G5) have no execution semantics yet and are not accepted")
