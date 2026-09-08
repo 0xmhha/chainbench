@@ -158,6 +158,30 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_NodeTablePnSelectsProxied pins WA9: a pn declared in a node
+// table means the same proxy tier as a pn in the count form, so the composition
+// must select proxied peering. Under mesh the tier would do nothing and
+// endpoints would dial producers directly.
+func TestCompositionOf_NodeTablePnSelectsProxied(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "topology":{"nodes":[
+	    {"role":"bp"},
+	    {"role":"pn"},
+	    {"role":"en"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil {
+		t.Fatal("a node table composes through the workspace")
+	}
+	if comp.up.Peering != "proxied" {
+		t.Errorf("peering = %q, want proxied for a node table that declares a pn", comp.up.Peering)
+	}
+}
+
 // TestCompositionOf_SurfaceDefaultsConverge pins the E9 parity guarantee: both
 // the CLI and MCP pass zero-values when a knob is unset, so compositionOf is the
 // single source of the canonical defaults (validators, keys). Passing the

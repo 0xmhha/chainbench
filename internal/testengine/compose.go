@@ -171,11 +171,27 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
 	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
 	// endpoints never dial a producer) rather than the default full mesh — a pn
-	// under mesh would defeat its own purpose.
-	if proxies > 0 {
+	// under mesh would defeat its own purpose. A pn is declared either as a
+	// count (count form) or as a node-table role, and both mean the same tier.
+	if proxies > 0 || topologyHasProxy(inlineTopo) {
 		up.Peering = string(node.Proxied)
 	}
 	return composition{up: up}, nil
+}
+
+// topologyHasProxy reports whether a node-table topology declares a pn, so the
+// composer selects the proxied graph for it exactly as it does for the count
+// form. It is nil-safe: the count form passes no table.
+func topologyHasProxy(t *node.Topology) bool {
+	if t == nil {
+		return false
+	}
+	for _, n := range t.Nodes {
+		if node.Is(n.NodeRole(), node.RolePN) {
+			return true
+		}
+	}
+	return false
 }
 
 // inlineTopologyOf builds an in-memory node table from a topology.nodes[]
