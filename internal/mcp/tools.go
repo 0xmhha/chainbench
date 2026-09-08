@@ -24,6 +24,8 @@ func Default(name, version string) *Server {
 	s.Register(validateTool())
 	s.Register(consensusTool())
 	s.Register(nodeRPCTool())
+	s.Register(nodeStopTool())
+	s.Register(nodeStartTool())
 	s.Register(reportTool())
 	s.Register(statusTool())
 	s.Register(txpoolTool())
