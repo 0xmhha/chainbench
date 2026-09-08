@@ -318,23 +318,18 @@ tests/tc/
 | `regression/wbft/09-test-round-change` | e2e TestE2E_WbftViewChange |
 | `regression/wbft/10-test-post-round-change` | e2e TestE2E_WbftRoundRobinProposer |
 
-## 4. 아직 옮기지 않은 레거시 테스트
+## 4. 레거시 대비 커버리지
 
-감사에서 나온 누락 18건 중 14건은 스펙으로 추가했다. 남은 4건은 지금 DSL 문법으로
-표현할 수 없어 새 primitive 가 필요하다.
+감사에서 나온 **누락 18건은 전부 옮겼다.** 부분 포팅으로 남아 있던 것 중
+검증 범위가 눈에 띄게 좁았던 셋(effectivegasprice 3건의 노드 간 일치,
+wbft add-validator 의 에폭 경계)도 채웠다.
 
-| 레거시 | 검증 내용 | 필요한 것 |
-|---|---|---|
-| `post-v1.0.0-change/extra-state/06-test-invalid-extra-reject` (TC-4-5-09) | 미정의 Extra 비트 genesis 로는 노드가 부팅에 실패해야 함 | 부팅 실패를 단언하는 verb (예: `expect: nodeStartFails`) |
-| `post-v1.0.0-change/stand-alone/02-test-genesis-mismatch` (TC-4-1-03) | genesis 가 다른 바이너리로 교체하면 GenesisMismatchError 로 기동 실패 | 같음 |
-| `post-v1.0.0-change/stand-alone/03-test-unsupported-version` (TC-5-2-06) | 미지원 시스템 컨트랙트 버전이면 BohoBlock 커밋 실패 | 같음 |
-| `post-v1.0.0-change/common-all/17-test-estimategas-authorizationlist-cost` (TC-4-2-01/03) | EIP-7702 authorizationList 1건·2건의 estimateGas 증가분 | `estimateGas` 단언의 authorizationList 인자, 또는 서명된 authorization 튜플을 만드는 verb |
+남은 것은 사설망에서 값을 고정할 수 없어 등호를 부등호로 낮춘 항목들과,
+fee-delegation 4건의 `personal_*` API 경로다. 후자는 로컬 서명으로 대체한 것이
+의도인지 먼저 정해야 한다. 자세한 목록은
+`../../docs/dev/legacy-port-audit/03-port-audit.md` 3.3 절에 있다.
 
-앞의 셋은 "노드가 뜨지 않아야 한다"는 음성 테스트다. `startNode`·`swapNode` 는 있으나
-실패를 기대하는 래퍼가 없다. 넷째는 `readEstimateGas` 가 from·to·data 만 받고
-`sendSetCode` 가 서명한 authorization 을 밖으로 내주지 않아서 막혀 있다.
-
-### 4.1 이번에 추가한 14건
+### 4.1 이번에 추가한 스펙
 
 | 새 스펙 | 레거시 | 원본과 달라진 점 |
 |---|---|---|
@@ -348,11 +343,34 @@ tests/tc/
 | `post-v1.0.0-change/stand-alone/04-genesis-block-hash-consistent` | TC-5-3-01 | 릴리스 고정 해시 대신 노드 간 일치와 `parentHash == 0` 으로 본다. 사설망은 env 마다 genesis 가 달라 고정값을 쓸 수 없다 |
 | `post-v1.0.0-change/string-handling/01~06` | TC-4-3-01~06 | 입력 문자열을 genesisOverlay 로 넣는다. 원본이 시나리오마다 전용 바이너리를 바꿔 끼우던 자리다. `01` 의 입력은 레거시 원본대로 `0xaaa,0xbbb,0xccc` 를 쓴다 |
 
-## 5. env 참조 규칙
+| `post-v1.0.0-change/common-all/17-estimategas-authorizationlist-cost` | TC-4-2-01/03 | 위임 대상을 고정 주소 대신 새로 만든 계정으로 잡는다. 경계값은 preActions 에서 이름을 붙여 한 번씩만 적는다 |
+| `post-v1.0.0-change/stand-alone/02-genesis-mismatch` | TC-4-1-03 | 원본은 SSH 로 바이너리를 직접 실행해 stderr 를 봤다. 여기서는 `swapNode` 에 `expect: fail` 을 걸고 노드가 RPC 에 응답하지 않는 것과 그 이유가 genesis 임을 확인한다. mismatch 바이너리가 사전 조건이다 (env 의 `GSTABLE_MISMATCH_BIN`) |
+| `post-v1.0.0-change/stand-alone/03-unsupported-version` | TC-5-2-06 | 원본은 BohoBlock 커밋 실패를 로그로 봤다. 여기서는 genesis overlay 로 지원하지 않는 버전을 선언하고, BohoBlock 직전까지 생산한 뒤 `blockStalled` 로 멈춤을 확인하며 노드 로그를 아티팩트에 남긴다 |
+
+| `post-v1.0.0-change/extra-state/06-invalid-extra-reject` | TC-4-5-09 | 원본은 미정의 Extra 비트가 박힌 바이너리로 노드를 띄웠다. 여기서는 `swapNode` 의 `genesisOverlay` 로 EN 한 대에만 그 genesis 를 주고 `expect:"fail"` 로 부팅 거부를 확인한다. 원본의 cleanup 단계는 옮기지 않았다 — compose 는 실행마다 새 워크스페이스를 쓴다 |
+| `post-v1.0.0-change/effectivegasprice/01·02b·03` | TC-4-6-01/02/04 | 원본이 보던 **BP 와 snap-sync EN 의 값 일치**를 되살렸다. 기존 단일 노드 스펙은 그대로 두고, snap 엔드포인트가 있는 env 위에서 두 노드를 비교하는 케이스를 더했다. 03 은 AuthorizedTxExecuted 가 로그의 *마지막*인지도 두 노드에서 확인한다 |
+| `regression/wbft/04b-validator-add-member-epoch-activates` | RT-B-04 | 원본이 보던 **에폭 경계에서 검증자 집합이 커지는지**를 되살렸다. 승격 대상은 살아 있는 EN 노드 자신(`istanbul_nodeAddress`)이라 실제로 합의에 들어간다. 에폭 길이는 genesis overlay 로 10블록으로 줄였다 |
+
+## 5. 이번에 추가한 DSL 문법
+
+옮기지 못하던 테스트를 표현하려고 세 가지를 더했다.
+
+| 문법 | 뜻 | 구현 |
+|---|---|---|
+| `{"do":"signAuthorization","authorityKey":…,"delegate":…,"save":…}` | EIP-7702 인증 튜플에 서명만 하고 보내지 않는다. `eth_estimateGas` 의 `authorizationList` 에 넣을 수 있다 | `internal/accounts.Wallet.SignAuthorization`, `internal/testhelper/txprobe.go` |
+| `{"do":"readNodeLog","on":…,"maxBytes":…,"save":…}` | 특정 노드가 남긴 stdout/stderr 의 끝부분을 읽는다 | `interp.NodeLogReader`, `testengine.workspaceNodes.Log`, `internal/testhelper/fault.go` |
+| `{"do":"swapNode"…,"expect":"fail","reason":…}` | 이 기동은 실패해야 한다. RPC 가 응답하지 않는 것을 확인하고, 런처 에러와 노드 로그를 합쳐 `reason` 을 맞춘다 | `internal/testhelper/fault.go` |
+| `{"expect":"blockStalled","on":…,"timeout":…}` | `blockAdvance` 의 반대. 창 내내 head 가 움직이지 않아야 통과한다 | `internal/testhelper/read.go` |
+| `{"do":"swapNode"…,"genesisOverlay":{…}}` | 네트워크 genesis 에 조각을 덮어 **그 노드만** 다시 init 한다. 한 대에만 다른 genesis 를 줄 수 있다 | `chainsetup.SwapNodeOpts`, `interp.NodeChange.GenesisOverlay` |
+
+`expect: "fail"` 은 `sendTx` 의 `expect: "reject"` 와 같은 모양이다. 실패를 기대하는
+표현이 트랜잭션과 노드 기동 두 곳에서 같게 읽힌다.
+
+## 6. env 참조 규칙
 
 케이스는 `"env": "<id>"` 로 환경을 부른다. `internal/dsl.ReadFiles` 가 케이스 파일이 있는 디렉터리부터 위로 올라가며 `<id>.env.json` 과 `env/<id>.env.json` 을 찾는다. 그래서 `tests/tc/env/` 하나로 모든 깊이의 케이스가 같은 환경 선언을 공유한다.
 
-## 6. 함께 있는 문서
+## 7. 함께 있는 문서
 
 - `SPECS.md` — 스펙 이관 기록 (레거시 시절 `tests/specs/README.md`)
 - `CHAIN-BRINGUP.md` — 체인 구성 케이스 설명 (레거시 시절 `tests/cases/README.md`)

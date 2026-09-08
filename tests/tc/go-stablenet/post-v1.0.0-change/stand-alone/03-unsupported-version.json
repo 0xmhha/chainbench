@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "unsupported-system-contract-version",
+  "env": "unsupported-version-stablenet",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 5,
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_blockNumber",
+      "params": [],
+      "save": "stalledAt"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "node1",
+      "save": "node1Log"
+    },
+    {
+      "expect": "blockStalled",
+      "on": "node1",
+      "timeout": "20s",
+      "pollInterval": "2s"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "Equal",
+      "is": "$stalledAt"
+    },
+    {
+      "expect": "rpc",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x6",
+        false
+      ],
+      "compare": "Equal",
+      "is": null
+    }
+  ]
+}

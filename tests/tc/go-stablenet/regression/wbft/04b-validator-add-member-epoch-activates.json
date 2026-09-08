@@ -1,0 +1,127 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "validator-add-member-epoch-activates",
+  "env": "add-validator-stablenet",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "read",
+      "on": "en1",
+      "source": "rpcCall",
+      "method": "istanbul_nodeAddress",
+      "params": [],
+      "save": "candidate"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ],
+      "select": "#",
+      "save": "countBefore"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "istanbul_isValidator",
+      "params": [],
+      "compare": "Equal",
+      "is": false
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x5c646aa6",
+      "of": [
+        "$candidate",
+        "4"
+      ],
+      "save": "addData"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "node1",
+      "to": "0x0000000000000000000000000000000000001001",
+      "gas": "0x16e360",
+      "data": "$addData",
+      "save": "addHash",
+      "expect": "receipt"
+    },
+    {
+      "do": "read",
+      "source": "receiptLog",
+      "hash": "$addHash",
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
+      "topic": 1,
+      "save": "pid"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "abiCall",
+      "selector": "0x98951b56",
+      "of": [
+        "$pid"
+      ],
+      "save": "approveData"
+    },
+    {
+      "do": "sendTx",
+      "on": "node2",
+      "from": "node2",
+      "to": "0x0000000000000000000000000000000000001001",
+      "gas": "0x16e360",
+      "data": "$approveData",
+      "save": "apHash",
+      "expect": "receipt"
+    },
+    {
+      "do": "waitBlock",
+      "target": 25,
+      "timeout": "180s"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$countBefore",
+        "1"
+      ],
+      "save": "countExpected"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ],
+      "select": "#",
+      "compare": "Equal",
+      "is": "$countExpected"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "istanbul_isValidator",
+      "params": [],
+      "compare": "Equal",
+      "is": true
+    }
+  ]
+}

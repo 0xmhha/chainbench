@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "invalid-extra-reject",
+  "env": "invalid-extra-stablenet",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "expect": "rpc",
+      "on": "en1",
+      "method": "eth_blockNumber",
+      "params": [],
+      "compare": "NotEqual",
+      "is": null
+    },
+    {
+      "do": "swapNode",
+      "on": "en1",
+      "purpose": "invalid-extra",
+      "genesisOverlay": {
+        "alloc": {
+          "0x90F79bf6EB2c4f870365E785982E1f101E93b906": {
+            "balance": "0xDE0B6B3A7640000",
+            "extra": "0x0000000000000001"
+          }
+        }
+      },
+      "expect": "fail",
+      "save": "rejectEvidence"
+    },
+    {
+      "do": "readNodeLog",
+      "on": "en1",
+      "save": "victimLog"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "60s",
+      "pollInterval": "2s"
+    }
+  ]
+}
