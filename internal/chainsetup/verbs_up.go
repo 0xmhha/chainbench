@@ -74,6 +74,9 @@ type NetUpIn struct {
 
 	// Identities (step: keys).
 	KeysSource string `json:"keysSource,omitempty"`
+	// KeysValidators is how many of a generated key set join the validator set
+	// (0 = all). It has effect only when KeysSource is "generate".
+	KeysValidators int `json:"keysValidators,omitempty"`
 
 	// Genesis customization (step: genesis).
 	ChainID     int64    `json:"chainID,omitempty"`
@@ -191,6 +194,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		"keys": func() (string, error) {
 			r, err := NetKeys(ctx, d, NetKeysIn{
 				DataDir: in.DataDir, Source: in.KeysSource, BlueprintPath: in.BlueprintPath,
+				Validators: in.KeysValidators,
 			})
 			return r.Detail, err
 		},

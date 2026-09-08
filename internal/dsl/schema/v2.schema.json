@@ -59,6 +59,10 @@
             "type": "string"
           }
         },
+        "blueprint": {
+          "type": "string",
+          "description": "a network declaration file — the layout and the node keys in one document (the DSL equivalent of --blueprint); with it no topology or key set is needed"
+        },
         "keys": {
           "type": "object",
           "additionalProperties": false,
@@ -175,6 +179,10 @@
         "ref": {
           "type": "string",
           "description": "key-set directory"
+        },
+        "validators": {
+          "type": "integer",
+          "description": "how many of a generated set join the validator set (0 = all; generate only)"
         },
         "bootnode": {
           "type": "string",

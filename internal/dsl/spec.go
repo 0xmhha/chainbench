@@ -47,6 +47,10 @@ type Spec struct {
 	// EnvKeys is the v2 env's node-key source declaration, for the surface to
 	// fold into the engine's KeySource boundary. Runtime-only.
 	EnvKeys *KeySourceV2 `json:"-"`
+	// EnvBlueprint is the v2 env's network-declaration file (layout + keys in
+	// one document); empty means the env declares its layout and keys directly.
+	// Runtime-only.
+	EnvBlueprint string `json:"-"`
 	// EnvLaunch are the v2 env.launch knobs by scope ("all", a role like "bp"/
 	// "en", or "node<N>"), each a list of "key" (boolean flag) or "key=value".
 	// The surface folds them into the engine's launch-override boundary, applied
