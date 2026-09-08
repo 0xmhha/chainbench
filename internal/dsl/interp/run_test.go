@@ -159,6 +159,10 @@ func TestRun_PreFailBlocked(t *testing.T) {
 	if stepRan {
 		t.Fatal("steps must not run after pre-action failure")
 	}
+	// WA12: a reader of status.json alone must learn why it blocked.
+	if rec.reason == "" {
+		t.Fatal("a blocked pre-action must record a reason")
+	}
 }
 
 func TestRun_AssertFail(t *testing.T) {
@@ -171,6 +175,10 @@ func TestRun_AssertFail(t *testing.T) {
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {
 		t.Fatalf("status = %v, want fail", status)
+	}
+	// WA12: a failed case records why, not just that it failed.
+	if rec.reason == "" {
+		t.Fatal("a failed case must record a reason")
 	}
 }
 

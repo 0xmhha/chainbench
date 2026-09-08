@@ -27,6 +27,7 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 	// Pre-actions: a failure blocks the test (steps/assertions do not run).
 	for _, pa := range s.PreActions {
 		if err := i.runAction(ctx, pa, env, rec, binds); err != nil {
+			rec.Reason(fmt.Sprintf("pre-action %q failed: %v", dsl.ActionName(pa), err))
 			rec.Status(session.StatusBlocked)
 			return session.StatusBlocked, nil
 		}
@@ -38,6 +39,7 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 	// reproduces the historical steps-then-assertions behavior exactly; v2
 	// interleaves freely (proposal G7).
 	pass := true
+	failedAsserts := 0
 	stepIdx := 0
 	for _, st := range dsl.SequenceOf(s) {
 		// The case-level default target routes every statement that names none;
@@ -49,6 +51,7 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 				// on-fail diagnostics run, post-actions do not (the v1
 				// contract — cleanup assumes the steps it undoes happened).
 				i.runRecorded(ctx, s.OnFailActions, env, rec, binds)
+				rec.Reason(fmt.Sprintf("step %d (%s) failed: %v", stepIdx+1, st.Do, err))
 				rec.Status(session.StatusFail)
 				return session.StatusFail, nil
 			}
@@ -59,11 +62,13 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 		rec.Assert(r)
 		if err != nil || !r.Pass {
 			pass = false
+			failedAsserts++
 		}
 	}
 	status := session.StatusPass
 	if !pass {
 		status = session.StatusFail
+		rec.Reason(fmt.Sprintf("%d assertion(s) failed", failedAsserts))
 		// On-fail hooks: diagnostics for a failed case, recorded like
 		// post-actions.
 		i.runRecorded(ctx, s.OnFailActions, env, rec, binds)

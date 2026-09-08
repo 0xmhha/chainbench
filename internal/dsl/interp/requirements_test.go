@@ -54,12 +54,14 @@ type sink struct {
 	assert []session.AssertResult
 	posts  []session.PostResult
 	status session.TestStatus
+	reason string
 }
 
 func (s *sink) Step(_ int, r session.StepResult) { s.steps = append(s.steps, r) }
 func (s *sink) Assert(r session.AssertResult)    { s.assert = append(s.assert, r) }
 func (s *sink) PostAction(r session.PostResult)  { s.posts = append(s.posts, r) }
 func (s *sink) Status(st session.TestStatus)     { s.status = st }
+func (s *sink) Reason(why string)                { s.reason = why }
 
 // noop is an action that does nothing and reports it ran.
 type noop struct{ ran *bool }

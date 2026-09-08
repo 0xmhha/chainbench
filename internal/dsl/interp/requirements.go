@@ -52,4 +52,9 @@ type Recorder interface {
 	PostAction(r session.PostResult)
 	// Status records the test's terminal verdict.
 	Status(s session.TestStatus)
+	// Reason records why the test reached its terminal status, so a reader of
+	// status.json alone learns the cause rather than only that it blocked or
+	// failed. It is one line; the per-step and per-assertion detail stays in
+	// their own records.
+	Reason(why string)
 }
