@@ -1,7 +1,7 @@
 {
   "schemaVersion": "2",
   "kind": "case",
-  "id": "sample-case-node-restart",
+  "id": "sample-lifecycle-node-restart",
   "description": "작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/dev/dsl-authoring-guide.md)",
   "requires": [
     "rpc",
