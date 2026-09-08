@@ -70,6 +70,63 @@ func (sameBlockHashAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (
 	return res, nil
 }
 
+// blockStalledAssertion is the negation of blockAdvance: it passes when the
+// target node's head does NOT move for the whole window. Spec: timeout,
+// pollInterval, on.
+//
+// It exists because "the chain must stop here" is a real expectation — a
+// genesis the node cannot commit halts consensus at that block — and asserting
+// it with blockAdvance inverted is not possible: an assertion that fails is a
+// failed test, not a satisfied negative. Waiting the full window is the point,
+// so unlike blockAdvance this one cannot return early on success.
+type blockStalledAssertion struct{}
+
+func (blockStalledAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.AssertResult, error) {
+	res := session.AssertResult{Assert: assertBlockStalled, Provenance: ac.Spec}
+	targets := assertTargets(ac)
+	if len(targets) == 0 {
+		err := fmt.Errorf("dsl: blockStalled: no target node RPC URL")
+		res.Actual = err.Error()
+		return res, err
+	}
+	c, err := clientFor(ac.Deps, targets[0].url)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	start, err := c.BlockNumber(ctx)
+	if err != nil {
+		res.Actual = err.Error()
+		return res, err
+	}
+	res.Expected = "head stays at " + strconv.FormatUint(start, 10)
+
+	timeout := durationArg(ac.Spec, "timeout", defaultBlockAdvanceTimeout)
+	pctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	t := time.NewTicker(durationArg(ac.Spec, "pollInterval", defaultBlockAdvancePoll))
+	defer t.Stop()
+	for {
+		select {
+		case <-pctx.Done():
+			// The window closed with the head where it started: stalled.
+			res.Pass, res.Actual = true, start
+			return res, nil
+		case <-t.C:
+			cur, err := c.BlockNumber(pctx)
+			if err != nil {
+				// An unreachable node is not a moving chain; keep waiting.
+				continue
+			}
+			if cur > start {
+				res.Actual = cur
+				res.Source = "head advanced to " + strconv.FormatUint(cur, 10)
+				return res, nil
+			}
+		}
+	}
+}
+
 // blockAdvanceAssertion passes when the target node's head advances within the
 // poll window — proof the network is producing blocks. Spec: timeout,
 // pollInterval, on. It reads the head once, then polls until a higher head or

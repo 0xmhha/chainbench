@@ -2,7 +2,11 @@ package testengine
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -170,12 +174,53 @@ func (w workspaceNodes) Start(ctx context.Context, n node.Node) (node.Node, erro
 func (w workspaceNodes) Swap(ctx context.Context, n node.Node, change interp.NodeChange) (node.Node, error) {
 	out, err := chainsetup.NodeSwap(ctx, w.sd, chainsetup.NodeSwapIn{
 		DataDir: w.dataDir, Index: n.Index,
-		Binary: change.Binary, Config: change.Config, Purpose: change.Purpose,
+		Binary: change.Binary, Config: change.Config,
+		GenesisOverlay: change.GenesisOverlay, Purpose: change.Purpose,
 	})
 	if err != nil {
 		return n, err
 	}
 	return out.Node, nil
+}
+
+// Log returns the tail of one node's captured stdout/stderr, satisfying
+// interp.NodeLogReader. It is what lets a spec say WHY a node is not up: a node
+// that refuses its genesis prints the reason and exits, and the process manager
+// sees only an exit.
+//
+// The log lives in the workspace this suite composed, under the conventional
+// per-node label. A node that has never been launched has no log file, which is
+// not an error — it reads as an empty log.
+func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (string, error) {
+	path := node.Layout{Root: w.dataDir}.LogPath(node.LabelFor(n.Index))
+	f, err := os.Open(path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", fmt.Errorf("engine: open node%d log %s: %w", n.Index, path, err)
+	}
+	defer func() { _ = f.Close() }()
+	info, err := f.Stat()
+	if err != nil {
+		return "", fmt.Errorf("engine: stat node%d log: %w", n.Index, err)
+	}
+	size := info.Size()
+	if maxBytes <= 0 || int64(maxBytes) > size {
+		maxBytes = int(size)
+	}
+	if maxBytes == 0 {
+		return "", nil
+	}
+	if _, err := f.Seek(size-int64(maxBytes), io.SeekStart); err != nil {
+		return "", fmt.Errorf("engine: seek node%d log: %w", n.Index, err)
+	}
+	buf := make([]byte, maxBytes)
+	read, err := io.ReadFull(f, buf)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) {
+		return "", fmt.Errorf("engine: read node%d log: %w", n.Index, err)
+	}
+	return string(buf[:read]), nil
 }
 
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
