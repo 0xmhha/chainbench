@@ -520,3 +520,26 @@ func TestParseV2_RequiresAndCapabilitiesUnion(t *testing.T) {
 		t.Fatalf("requires = %v, want %v (case requires and env capabilities must union without duplicates)", s.Requires, want)
 	}
 }
+
+// TestSchemaV2StatementOnEachIsArray guards WA17: the do/expect statement
+// onEach selector is a list, matching how the parser and validator read it
+// ([]any). It drifted to "string" once, silently, because the top-level type
+// test cannot see per-statement args.
+func TestSchemaV2StatementOnEachIsArray(t *testing.T) {
+	var doc map[string]any
+	if err := json.Unmarshal(SchemaV2, &doc); err != nil {
+		t.Fatalf("schema: %v", err)
+	}
+	defs, _ := doc["$defs"].(map[string]any)
+	for _, name := range []string{"doStatement", "expectStatement"} {
+		def, _ := defs[name].(map[string]any)
+		props, _ := def["properties"].(map[string]any)
+		oe, ok := props["onEach"].(map[string]any)
+		if !ok {
+			t.Fatalf("%s has no onEach property", name)
+		}
+		if oe["type"] != "array" {
+			t.Errorf("%s.onEach type = %v, want array (the parser reads []any)", name, oe["type"])
+		}
+	}
+}

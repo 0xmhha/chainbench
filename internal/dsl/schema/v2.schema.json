@@ -288,7 +288,10 @@
           "type": "string"
         },
         "onEach": {
-          "type": "string"
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "save": {
           "type": "string"
@@ -329,7 +332,10 @@
           "type": "string"
         },
         "onEach": {
-          "type": "string"
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "within": {
           "type": "string"
