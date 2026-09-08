@@ -192,3 +192,61 @@ config 는 못 한다. 즉 통합 설계의 선결 조건은 "형식 선택"이 
 
 부록: 근거 그래프는 `docs/dev/codegraph/codegraph.json`. 추적 3건(keys.validators / per-node
 server / canonical 모델)의 file:line 증거는 이 문서 각 절에 요약돼 있다.
+
+---
+
+## 11. 사용자 결정 (2026-09-08 확정)
+
+07 §9 항목에 대한 사용자 결정. 이 결정이 §12 의 계획을 확정한다.
+
+1. **keys/genesis** — genesis 는 세 경우를 다룬다: (a) genesis 에 bp(validator)와 그 키가 이미
+   있으면 **그 키를 재사용**, (b) genesis 에 bp 는 있는데 키가 없는 경우, (c) genesis 에 bp 가 없어
+   새로 생성. 반복 테스트 효율을 위해 **서버에 키가 이미 있으면 genesis 가 그 키를 계속 사용**한다.
+2. **canonical 모델** — 기본은 **bp 를 최대로, pn·en 은 1개씩**. DSL node-table 로 노드별 역할을
+   선언하면 그에 따른다. 이때 **몇 번 노드가 어떤 역할인지까지 DSL 에서 지정 가능**해야 한다
+   (테스트 절차에서 특정 노드의 동작을 개별 설정하기 위해).
+3. **pn 개수** — 기본 1, DSL 상세 설정 시 변경 가능.
+4. **wemix** — **bootnode 노드가 반드시 필요**하고, 그 노드가 **etcd 서버를 운영**하여 이를 통해
+   노드 간 연결이 이뤄진다. 이 전제로 설계한다.
+5. **bootnode = 역할** — bootnode 노드가 **가장 먼저 설정·실행**되어야 하므로 역할로 둔다. DSL 에서
+   변경 가능하고, **bootnode 를 2개 지정하면 DSL 문법 검증에서 에러**.
+6. **동적 노드 수** — 노드는 **서버당 하나**가 기본이고, 노드가 서버보다 많으면 **port 를 순환
+   분배**해 배치한다. "15"는 server-set 가용 서버가 15대라 나온 수일 뿐, **가용 서버가 늘거나 줄면
+   노드 수도 그에 맞춰 동적으로 변한다**(15 고정 아님).
+7. **per-node server** — 6번과 연관된 것으로 본다: 배치는 6번의 자동 분배(서버당 하나, 초과 시 port
+   순환)를 따른다. 운영자가 특정 노드를 특정 서버에 직접 지정하는 방식은 채택하지 않는다.
+   *(이 해석이 아니면 사용자에게 재문의 — §12 확인 항목.)*
+8. **문서** — 관련 모든 문서가 정정 범위. **모든 작업 완료 후** 문서 정리를 진행한다.
+
+## 12. 결정 반영 — refined 모델과 구현 계획
+
+### 확정된 canonical 모델
+
+- **크기: 서버셋 가용 수에서 동적 산출.** 하드코딩 15 금지. 노드 수 = 가용 서버 수(기본, 서버당
+  하나), 노드가 서버보다 많으면 port 순환 분배.
+- **기본 역할 분배**: pn 1 + en 1 + 나머지 전부 bp. wemix(poa)는 pn 불가 → bootnode 1 + en 1 +
+  나머지 bp. validator 집합 = bp 집합(불변).
+- **bootnode = 역할**(first-class), 가장 먼저 실행. wemix 는 bootnode 가 etcd 운영. 2개 지정 시
+  문법 에러.
+- **DSL node-table**: 노드 index 별 역할(bp/pn/en/bootnode)을 명시 지정 가능. count-form 은 위
+  기본 분배를 동적 크기로 적용.
+
+### 현재 코드와의 간극 (구현 대상)
+
+- **bootnode 를 역할로 승격** — 현재 `boot` 는 폐기 예정 잔재(node.go:50-53)이고 bootnode 는 속성
+  (Entry.Bootnode). 결정 5·4 는 반대로 **first-class 역할 + 실행 순서 최우선 + wemix etcd**를 요구.
+  topology/peering/genesis/실행순서(poa BringUpPhases) 전반 변경.
+- **동적 크기** — count-form 기본이 고정 수가 아니라 server-set 가용 수를 읽어 산출. port 순환은
+  이미 resource 슬롯에 있으나(슬롯>1), "노드>서버 시 순환"을 기본 경로로 배선.
+- **키 재사용(genesis 3-case)** — 서버에 키/genesis 가 있으면 재사용, 없으면 생성. 현재 generate
+  경로는 매번 생성 가능성 — 재사용 판정 배선.
+- **DSL per-node role+index** — node-table 에 대체로 있음. bootnode 역할 + 2개 에러 검증 추가.
+- **keys.validators** — 결정 1 의 키 재사용 관점으로 재정의(단순 카운트 승격이 아니라 genesis×키
+  존재의 3-case). §5 의 "무효" 상태를 이 결정에 맞게 배선하거나 제거.
+
+### 착수 전 확인 항목 (사용자)
+
+- (C1) §11.7 해석: per-node server 는 자동 분배(6번)만, 운영자 직접 지정 없음 — 맞나?
+- (C2) §11.1 case (b): genesis 에 validator 주소는 있는데 키가 없으면 — 에러로 볼지, 키를 만들
+  수 없으니(주소 고정) 거부인지. 재사용/생성만 있고 (b)는 오류로 두는 게 맞나?
+- (C3) bootnode 역할 승격 범위: 세 체인 공통으로 role 추가하되 etcd 운영은 wemix 만 — 맞나?
