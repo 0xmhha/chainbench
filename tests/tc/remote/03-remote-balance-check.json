@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1",
+  "id": "remote-balance-check",
+  "applicableChains": "stablenet,wbft",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "레거시 remote/balance-check: 잔액 조회가 16진 수량으로 돌아온다. 레거시 기본값과 같이 0 주소를 본다 — 어느 체인에나 있고 값이 변하지 않는다.",
+  "assertions": [
+    {
+      "assert": "balanceAt",
+      "address": "0x0000000000000000000000000000000000000000",
+      "compare": "GreaterOrEqual",
+      "expected": "0"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getBalance",
+      "params": [
+        "0x0000000000000000000000000000000000000000",
+        "latest"
+      ],
+      "compare": "NotEqual",
+      "expected": ""
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1",
+  "id": "remote-chain-info",
+  "applicableChains": "stablenet,wbft",
+  "chain": {
+    "name": "stablenet",
+    "binary": "gstable"
+  },
+  "requires": [
+    "rpc"
+  ],
+  "description": "레거시 remote/chain-info: 붙은 체인이 chainId 를 보고하고 동기화가 끝나 있다.",
+  "assertions": [
+    {
+      "assert": "chainId",
+      "compare": "Greater",
+      "expected": "0"
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_syncing",
+      "expected": false
+    },
+    {
+      "assert": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "select": "hash",
+      "compare": "NotEqual",
+      "expected": ""
+    }
+  ]
+}
