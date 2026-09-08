@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-faucet-funds",
+  "description": "Exercise the faucet action (WA24): top up a freshly generated account and read back its balance. LIVE-UNVERIFIED: authored offline (passes validate), needs a fleet run to confirm the target node's coinbase funder is unlocked.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 1,
+      "timeout": "120s"
+    },
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "faucet",
+      "to": "$acct",
+      "amount": "0x0de0b6b3a7640000",
+      "timeout": "60s"
+    },
+    {
+      "expect": "balanceAt",
+      "address": "$acct",
+      "compare": "GreaterOrEqual",
+      "is": "0x0de0b6b3a7640000"
+    }
+  ]
+}

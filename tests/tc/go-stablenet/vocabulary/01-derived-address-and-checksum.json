@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-derived-vocabulary",
+  "description": "Exercise the pure-derivation vocabulary that no case used before (WA24): createAddress computes the CREATE address from a deployer and nonce, and contractChecksum hashes bytecode. Both are deterministic — the expected values are fixed, so this is safe against a live chain as well as offline.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 1,
+      "timeout": "120s"
+    },
+    {
+      "expect": "createAddress",
+      "deployer": "0x1111111111111111111111111111111111111111",
+      "nonce": 0,
+      "is": "0x8f7a45ebde059392e46a46dcc14ab24681a961ea"
+    },
+    {
+      "expect": "contractChecksum",
+      "bytecode": "0x6001",
+      "is": "sha256:9e67b12fd8c58953460459cad7a6d4dd7d6d57594affce8206d1397c9c4db543"
+    }
+  ]
+}

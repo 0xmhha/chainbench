@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-metric-head-block",
+  "description": "Exercise the metric assertion (WA24): read the node's chain_head_block Prometheus metric once the chain has advanced. LIVE-UNVERIFIED: authored offline (passes validate), needs a fleet run to confirm the metrics endpoint exposes this series.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "stablenet-metrics",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "launch": {
+      "all": {
+        "metrics": true
+      }
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "120s"
+    },
+    {
+      "expect": "metric",
+      "name": "chain_head_block",
+      "compare": "GreaterOrEqual",
+      "is": 1
+    }
+  ]
+}
