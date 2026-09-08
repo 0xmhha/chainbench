@@ -362,3 +362,19 @@ func TestCompositionOf_EnvBlueprintAndKeysValidators(t *testing.T) {
 		t.Fatalf("keys validators not threaded: %+v", comp.up)
 	}
 }
+
+// TestCompositionOf_WemixProxiedPn pins S1: poa (wemix) now accepts a pn, so a
+// wemix bp/pn/en topology composes as the proxied graph. The pn is a
+// non-producing discovery hub; validators stay the bp set. Verified live on the
+// docker fleet (a wemix bp3/pn1/en1 network comes up and produces blocks).
+func TestCompositionOf_WemixProxiedPn(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix"},"topology":{"bp":3,"pn":1,"en":1}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.Peering != "proxied" {
+		t.Fatalf("peering = %q, want proxied for a wemix pn topology", comp.up.Peering)
+	}
+}

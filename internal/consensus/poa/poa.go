@@ -149,16 +149,20 @@ func (Family) PortReservation() node.Reservation {
 	return node.Reservation{P2PSpan: 3, RPCSpan: 3}
 }
 
-// SupportsRole: poa produces blocks and serves endpoints, and one producer
-// carries the governance bootstrap. It has no proxy tier — etcd occupies that
-// place — so a pn declared here is refused rather than quietly ignored.
+// SupportsRole: poa produces blocks, serves endpoints, and accepts a proxy tier
+// (pn). The pn is a non-producing discovery hub — brought up first, it is the
+// node others connect through — while the etcd cluster forms among the producers
+// (a producer inits, the rest join). The two are separate layers: p2p discovery
+// (pn) and consensus/etcd (producers). Every gwemix embeds etcd and the cluster
+// forms around whichever member inits first, so a non-producer pn does not need
+// to be an etcd member to serve connection info.
 func (Family) SupportsRole(role node.Role) bool {
 	canonical, err := node.NormalizeRole(string(role))
 	if err != nil {
 		return false
 	}
 	switch canonical {
-	case node.RoleBP, node.RoleEN, node.RoleBoot:
+	case node.RoleBP, node.RoleEN, node.RolePN, node.RoleBoot:
 		return true
 	default:
 		return false

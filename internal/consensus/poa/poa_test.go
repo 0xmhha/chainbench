@@ -76,14 +76,13 @@ func TestFamily_StaticFacts(t *testing.T) {
 	}
 }
 
-// TestSupportsRole_PoaHasNoProxyTier: etcd occupies that place, so a pn here is
-// a declaration that would never be honoured.
-func TestSupportsRole_PoaHasNoProxyTier(t *testing.T) {
+// TestSupportsRole_PoaAcceptsProxyTier: a pn is a non-producing discovery hub
+// on poa too. It is not an etcd member — the cluster forms among the producers —
+// so a non-producer pn serving connection info coexists with etcd (S1, verified
+// live: a wemix bp/pn/en network comes up and produces blocks).
+func TestSupportsRole_PoaAcceptsProxyTier(t *testing.T) {
 	f := Family{}
-	if f.SupportsRole(node.RolePN) {
-		t.Error("poa must not claim a proxy tier")
-	}
-	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleEN, node.RoleBoot} {
+	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleEN, node.RolePN, node.RoleBoot} {
 		if !f.SupportsRole(role) {
 			t.Errorf("poa should run %q", role)
 		}
