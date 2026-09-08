@@ -303,3 +303,17 @@ func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
 		t.Fatal("a malformed env target must fail composition")
 	}
 }
+
+// TestCompositionOf_HandoffRejectsEnvComposeFields pins WA20: a handoff composes
+// from its profile and template, so env-level topology/hardforks/launch/config
+// have nowhere to go and are refused rather than silently dropped.
+func TestCompositionOf_HandoffRejectsEnvComposeFields(t *testing.T) {
+	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/g.json")
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	  "binaries":{"producer":"gwemix","validator":"gwbft"},
+	  "topology":{"validators":4},
+	  "upgrade":{"profile":"p.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
+	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
+		t.Fatal("a handoff env that also declares a topology must be refused, not silently dropped")
+	}
+}
