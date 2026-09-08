@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // A suite composes the network its specs declare. The declaration is the
@@ -175,6 +176,17 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// count (count form) or as a node-table role, and both mean the same tier.
 	if proxies > 0 || topologyHasProxy(inlineTopo) {
 		up.Peering = string(node.Proxied)
+	}
+	// The env's target selects where the network is placed (local data root, a
+	// server-set entry, or an ssh host). It fed only the reuse fingerprint
+	// before, so a declared target shifted the key without moving the nodes;
+	// thread it to the composition so it actually places them.
+	if spec.Placement != "" {
+		tgt, perr := resource.Parse(spec.Placement)
+		if perr != nil {
+			return composition{}, fmt.Errorf("testengine: env target %q: %w", spec.Placement, perr)
+		}
+		up.Target = tgt
 	}
 	return composition{up: up}, nil
 }

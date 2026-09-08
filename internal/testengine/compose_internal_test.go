@@ -280,3 +280,26 @@ func TestExpand_DefaultsAndVars(t *testing.T) {
 		}
 	}
 }
+
+// TestCompositionOf_EnvTargetPlaces pins WA19: the env's target selects where
+// the network is placed, threaded into the composition rather than only feeding
+// the reuse fingerprint (which left a declared target moving the key but not the
+// nodes).
+func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"target":"srv://bp1/data"}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.Target.Server != "bp1" || comp.up.Target.DataRoot != "/data" {
+		t.Fatalf("env target not threaded to placement: %+v", comp.up.Target)
+	}
+
+	// A malformed target fails composition rather than being ignored.
+	bad := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"target":"srv://"}`)
+	if _, err := compositionOf(context.Background(), bad, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
+		t.Fatal("a malformed env target must fail composition")
+	}
+}
