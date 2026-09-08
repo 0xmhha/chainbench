@@ -44,6 +44,7 @@ func Default(name, version string) *Server {
 	s.Register(logTimelineTool())
 	s.Register(networkPeersTool())
 	s.Register(chainNewTool())
+	s.Register(chainUpTool())
 	s.Register(chainStatusTool())
 	s.Register(chainShowTool())
 	s.Register(resourcePoolTool())
