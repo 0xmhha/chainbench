@@ -240,7 +240,7 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 	if op == "" {
 		op = "Equal"
 	}
-	cmp, ok := assert.Lookup(op)
+	cmp, ok := comparator(op, ac.Args)
 	if !ok {
 		return fmt.Errorf("dsl: waitFor: unknown comparator %q", op)
 	}
@@ -274,6 +274,24 @@ func (waitForAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		case <-t.C:
 		}
 	}
+}
+
+// comparator resolves a "compare" op to a two-argument predicate. Most ops are
+// the registered assert primitives; InDelta additionally needs a tolerance,
+// read here from the "delta" (or "tol") arg and bound into the returned closure
+// so the call sites stay uniform. It is what makes compare:"InDelta" reachable
+// from a spec (WA16) — a tolerance comparison such as reward ± gas.
+func comparator(op string, args map[string]any) (assert.Func, bool) {
+	if op == "InDelta" {
+		tol := args["delta"]
+		if tol == nil {
+			tol = args["tol"]
+		}
+		return func(actual, expected any) (bool, string) {
+			return assert.InDelta(actual, expected, tol)
+		}, true
+	}
+	return assert.Lookup(op)
 }
 
 // readerNames lists the sources the built-ins register, for error messages.
@@ -332,7 +350,7 @@ func (a rpcAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session.
 	if o, ok := ac.Spec["compare"].(string); ok && o != "" {
 		op = o
 	}
-	fn, ok := assert.Lookup(op)
+	fn, ok := comparator(op, ac.Spec)
 	if !ok {
 		return res, fmt.Errorf("dsl: unknown comparator %q", op)
 	}

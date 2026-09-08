@@ -198,7 +198,8 @@ func HashesEqual(hashes []string) (bool, string) {
 }
 
 // funcs is the name -> primitive dispatch for two-argument assertions. InDelta
-// (three args) and HashesEqual (a slice) are called directly by the interpreter.
+// (three args) is reached through the testhelper comparator, which binds its
+// tolerance from the spec; HashesEqual (a slice) is called directly.
 var funcs = map[string]Func{
 	"Equal":          Equal,
 	"NotEqual":       NotEqual,
