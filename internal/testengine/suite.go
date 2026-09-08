@@ -315,6 +315,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 			Chain: chain, RPCURLs: net.endpoints,
 			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
 			NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
+			// The composition manifest: every spec's verdict is traceable to the
+			// genesis the network was brought up against (WA11).
+			Artifacts: composedArtifacts(net),
 			// A bus turns on chainstate sampling: chainstate.jsonl is written per
 			// environment (E8) even on the headless suite path, which has no
 			// dashboard subscriber (events are simply dropped).
@@ -361,6 +364,20 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		}
 	}
 	return out, runErr
+}
+
+// composedArtifacts is the manifest of composition inputs a workspace-owned
+// network was brought up against, recorded into each test's artifacts.json so a
+// verdict is traceable to what it ran on (WA11). It names the genesis by its
+// env-relative path — the one input every node shares and the anchor of the
+// run's provenance. A network the suite did not compose (a handoff, or a
+// bare-URL attach with no node table) owns no single genesis and gets none;
+// the config, command, and deployment refs are the next fill of this seam.
+func composedArtifacts(net composed) []session.ArtifactRef {
+	if net.nodes == nil {
+		return nil
+	}
+	return []session.ArtifactRef{{Kind: "genesis", Ref: "genesis.json"}}
 }
 
 // composeWorkspace composes a single-binary network through the workspace

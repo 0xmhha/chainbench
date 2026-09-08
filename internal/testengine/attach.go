@@ -94,6 +94,11 @@ type AttachConfig struct {
 	// target passes an SSH-backed reader so a remote node's log is captured (and
 	// reconnected on a dropped session, E8); nil reads the local filesystem.
 	LogReader collector.LogReader
+	// Artifacts is the manifest of composition inputs (genesis, config, command)
+	// the network was composed against, recorded into each test's artifacts.json
+	// for traceability (WA11). A suite that owns a workspace passes at least the
+	// genesis; plain attach leaves it nil (it composed nothing of its own).
+	Artifacts []session.ArtifactRef
 }
 
 // BuildEnvFunc provisions and brings up a network for a spec, returning the
@@ -197,6 +202,7 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		OnFail:     cfg.OnFail,
 		Emit:       busEmit(cfg.Bus),
 		Network:    cfg.Chain,
+		Artifacts:  cfg.Artifacts,
 	}), nil
 }
 

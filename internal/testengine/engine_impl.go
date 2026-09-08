@@ -48,6 +48,12 @@ type Deps struct {
 	Emit func(ev collector.Event)
 	// Network labels emitted events with the target chain/network. Optional.
 	Network string
+	// Artifacts is the manifest of composition inputs (genesis, config, command,
+	// deployment) every spec in this run was composed against. It is recorded
+	// into each test's artifacts.json so a verdict is traceable to what it ran
+	// on (WA11). Empty leaves artifacts.json unwritten, which is what a bare-URL
+	// attach with no composition of its own wants.
+	Artifacts []session.ArtifactRef
 }
 
 // engine is the concrete Engine.
@@ -71,6 +77,16 @@ func (e *engine) emit(phase collector.Phase, kind collector.Kind, msg string, fi
 		Message: msg,
 		Fields:  fields,
 	})
+}
+
+// recordArtifacts writes the composition manifest into a test's record, so its
+// verdict is traceable to the genesis, config, and command it ran against. It
+// is a no-op when the run declared none (a bare-URL attach).
+func (e *engine) recordArtifacts(rec session.TestRecord) {
+	if len(e.deps.Artifacts) == 0 {
+		return
+	}
+	rec.Artifacts(session.TestArtifacts{Refs: e.deps.Artifacts})
 }
 
 // Run executes the specs serially: parse, skip if inapplicable, reuse or build
@@ -97,6 +113,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 		if perr != nil {
 			rec := sess.Test(seq, fmt.Sprintf("spec-%d", seq))
 			rec.Spec(raw)
+			e.recordArtifacts(rec)
 			rec.Status(session.StatusBlocked)
 			rec.Reason(perr.Error())
 			e.emit(collector.PhaseTest, collector.KindError, "spec parse failed", map[string]any{"seq": seq, "error": perr.Error()})
@@ -105,6 +122,7 @@ func (e *engine) Run(ctx context.Context, specs [][]byte) (string, error) {
 
 		rec := sess.Test(seq, spec.ID)
 		rec.Spec(raw)
+		e.recordArtifacts(rec)
 
 		if e.deps.Applicable != nil && !e.deps.Applicable(spec) {
 			rec.Status(session.StatusSkip)

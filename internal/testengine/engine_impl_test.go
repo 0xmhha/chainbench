@@ -186,3 +186,39 @@ func TestEngine_MalformedSpecBlocked(t *testing.T) {
 		t.Fatalf("session.json missing: %v", err)
 	}
 }
+
+// TestEngine_RecordsArtifactsManifest pins WA11: the composition manifest the
+// run was given is written into each test's artifacts.json, so a verdict is
+// traceable to the genesis it ran against rather than the field being empty.
+func TestEngine_RecordsArtifactsManifest(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	deps := h.deps(t)
+	deps.Artifacts = []session.ArtifactRef{{Kind: "genesis", Ref: "genesis.json"}}
+	e := testengine.New(deps)
+
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	var found string
+	_ = filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() && filepath.Base(p) == "artifacts.json" {
+			found = p
+		}
+		return nil
+	})
+	if found == "" {
+		t.Fatal("no artifacts.json written for the test (WA11)")
+	}
+	b, err := os.ReadFile(found)
+	if err != nil {
+		t.Fatalf("read artifacts.json: %v", err)
+	}
+	var got session.TestArtifacts
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("unmarshal artifacts.json: %v", err)
+	}
+	if len(got.Refs) != 1 || got.Refs[0].Kind != "genesis" || got.Refs[0].Ref != "genesis.json" {
+		t.Fatalf("artifacts manifest = %+v, want a single genesis ref", got.Refs)
+	}
+}
