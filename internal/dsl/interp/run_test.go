@@ -70,6 +70,45 @@ func testEnv(t *testing.T) session.Environment {
 	return env
 }
 
+// captureOnAction records the "on" selector each step is dispatched with, so a
+// test can assert how a statement was routed.
+type captureOnAction struct{ seen *[]string }
+
+func (a captureOnAction) Do(_ context.Context, ac *interp.ActionCtx) error {
+	on, _ := ac.Args["on"].(string)
+	*a.seen = append(*a.seen, on)
+	return nil
+}
+
+// TestRun_DefaultOnRoutesStatements pins WA14: a case-level default target
+// routes every statement that names none, while a statement with its own on
+// still wins. Before the fix defaultOn was parsed but never consulted, so both
+// steps silently went to the primary node.
+func TestRun_DefaultOnRoutesStatements(t *testing.T) {
+	reg := interp.NewRegistry()
+	var seen []string
+	reg.RegisterAction("tx", captureOnAction{seen: &seen})
+	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
+
+	spec := dsl.Spec{
+		DefaultOn: "bp3",
+		Steps: []map[string]any{
+			{"tx": map[string]any{}},            // no on -> the case default
+			{"tx": map[string]any{"on": "bp1"}}, // its own on wins
+		},
+		Assertions: []map[string]any{{"assert": "Len"}},
+	}
+	rec := &fakeRecord{}
+	it := interp.NewInterpreter(interp.Deps{Actions: reg})
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	want := []string{"bp3", "bp1"}
+	if len(seen) != 2 || seen[0] != want[0] || seen[1] != want[1] {
+		t.Fatalf("routed on = %v, want %v (defaultOn routes the first, explicit on wins the second)", seen, want)
+	}
+}
+
 func TestRun_PassFlow(t *testing.T) {
 	reg := interp.NewRegistry()
 	stepRan, postRan := false, false

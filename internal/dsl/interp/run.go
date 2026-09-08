@@ -40,6 +40,9 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 	pass := true
 	stepIdx := 0
 	for _, st := range dsl.SequenceOf(s) {
+		// The case-level default target routes every statement that names none;
+		// an explicit on/onEach on the statement still wins.
+		applyDefaultOn(st.Args, s.DefaultOn)
 		if st.Do != "" {
 			if err := i.runStep(ctx, stepIdx, dsl.StatementStep(st), env, rec, binds); err != nil {
 				// A failed do statement invalidates everything after it:
@@ -197,6 +200,23 @@ func bindResult(binds Bindings, args map[string]any, ac *ActionCtx) {
 	if ac.Hash != "" {
 		binds[name] = ac.Hash
 	}
+}
+
+// applyDefaultOn makes the case-level default target the target of a statement
+// that names none, so a case head "on" routes every step and assertion that
+// does not override it. A statement with its own on or onEach is left alone,
+// and an empty default (the common case) is a no-op.
+func applyDefaultOn(args map[string]any, defaultOn string) {
+	if defaultOn == "" || args == nil {
+		return
+	}
+	if _, ok := args["on"]; ok {
+		return
+	}
+	if _, ok := args["onEach"]; ok {
+		return
+	}
+	args["on"] = defaultOn
 }
 
 // resolveOn resolves the entry's "on" (single) or "onEach" ([]) selectors to
