@@ -28,16 +28,16 @@ func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
 
 func TestSupportsRole_WbftHasAProxyTier(t *testing.T) {
 	f := wbft.New()
-	for _, role := range []node.Role{node.RoleBP, node.RoleEN, node.RolePN, node.RoleValidator, node.RoleEndpoint} {
+	// The legacy spellings fold onto their canonical role, so a topology that
+	// still says "validator"/"endpoint"/"boot" runs as bp/en/bp.
+	for _, role := range []node.Role{node.RoleBP, node.RoleEN, node.RolePN, node.RoleValidator, node.RoleEndpoint, node.RoleBoot} {
 		if !f.SupportsRole(role) {
 			t.Errorf("wbft should run %q", role)
 		}
 	}
-	// No governance bootstrap in this family, and not a role at all.
-	for _, role := range []node.Role{node.RoleBoot, node.Role("sideways")} {
-		if f.SupportsRole(role) {
-			t.Errorf("wbft should not claim %q", role)
-		}
+	// A word that is not a role, under any spelling, is refused.
+	if f.SupportsRole(node.Role("sideways")) {
+		t.Error("wbft should not claim \"sideways\"")
 	}
 }
 

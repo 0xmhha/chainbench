@@ -97,7 +97,7 @@ func TOML(s Spec) []byte {
 	var b strings.Builder
 	fmt.Fprintf(&b, "[Eth]\nSyncMode = %q\n\n", syncMode)
 
-	if node.Is(s.Role, node.RoleBP) || node.Is(s.Role, node.RoleBoot) {
+	if node.Is(s.Role, node.RoleBP) {
 		// miner.Config.Recommit is a time.Duration. Most geth-family binaries
 		// (go-stablenet/go-wbft) decode it from a TOML string ("2s"); the older
 		// go-ethereum in go-wemix decodes it only from an integer number of

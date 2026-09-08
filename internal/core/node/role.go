@@ -19,15 +19,15 @@ import (
 // happened to know.
 func NormalizeRole(s string) (Role, error) {
 	switch Role(s) {
-	case RoleBP, RoleValidator:
+	case RoleBP, RoleValidator, RoleBoot:
+		// "boot" folds onto bp: it is not a role of its own. The poa bring-up
+		// picks the etcd-seed node positionally (the highest-index producer),
+		// so which producer boots is not carried in the role.
 		return RoleBP, nil
 	case RoleEN, RoleEndpoint:
 		return RoleEN, nil
 	case RolePN:
 		return RolePN, nil
-	case RoleBoot:
-		// Still a role until the poa bring-up treats boot as an attribute.
-		return RoleBoot, nil
 	default:
 		return "", fmt.Errorf("node: unknown role %q (want bp, en, pn, or a legacy spelling)", s)
 	}

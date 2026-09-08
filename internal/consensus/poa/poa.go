@@ -52,7 +52,7 @@ func (Family) StartFlags(role node.Role) []string {
 	// producer launched without --mine stalls the chain, and which word the
 	// composition recorded must not decide that.
 	canonical, err := node.NormalizeRole(string(role))
-	if err == nil && (canonical == node.RoleBP || canonical == node.RoleBoot) {
+	if err == nil && canonical == node.RoleBP {
 		flags = append(flags, "--mine")
 	}
 	return flags
@@ -73,7 +73,7 @@ func (Family) BringUpPhases(roles []node.Role) []registry.Phase {
 	producers := make([]int, 0, len(roles))
 	endpoints := make([]int, 0, len(roles))
 	for i, r := range roles {
-		if node.Is(r, node.RoleBoot) || node.Is(r, node.RoleBP) {
+		if node.Is(r, node.RoleBP) {
 			producers = append(producers, i+1)
 		} else {
 			endpoints = append(endpoints, i+1)
@@ -162,7 +162,7 @@ func (Family) SupportsRole(role node.Role) bool {
 		return false
 	}
 	switch canonical {
-	case node.RoleBP, node.RoleEN, node.RolePN, node.RoleBoot:
+	case node.RoleBP, node.RoleEN, node.RolePN:
 		return true
 	default:
 		return false

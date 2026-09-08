@@ -317,7 +317,7 @@ func joinOne(ctx context.Context, joinerRun Runner, joinerFiles filestore.Store,
 // join the cluster — the chain answers the join handshake for governance
 // members only, and a proxy or endpoint is neither.
 func isProducer(r node.Role) bool {
-	return node.Is(r, node.RoleBoot) || node.Is(r, node.RoleBP)
+	return node.Is(r, node.RoleBP)
 }
 
 // specFor finds a node's launch spec, which is where its datadir lives.

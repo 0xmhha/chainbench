@@ -71,9 +71,6 @@ func TestFamily_StaticFacts(t *testing.T) {
 	if f.ID() != "poa" || f.RPCNamespace() != "wemix" || f.ValidatorsMethod() != "wemix_getValidators" {
 		t.Errorf("poa family facts wrong: %s/%s/%s", f.ID(), f.RPCNamespace(), f.ValidatorsMethod())
 	}
-	if !BootRole(node.RoleBoot) || BootRole(node.RoleEndpoint) {
-		t.Error("BootRole classification wrong")
-	}
 }
 
 // TestSupportsRole_PoaAcceptsProxyTier: a pn is a non-producing discovery hub
