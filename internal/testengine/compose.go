@@ -135,10 +135,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		return composition{}, fmt.Errorf("the spec declares no binary and none was given")
 	}
 
-	var validators, endpoints int
+	var validators, endpoints, proxies int
 	var syncMode string
 	if inlineTopo == nil {
-		validators, endpoints, syncMode, err = topologyOf(spec.Topology)
+		validators, endpoints, proxies, syncMode, err = topologyOf(spec.Topology)
 		if err != nil {
 			return composition{}, err
 		}
@@ -158,7 +158,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	up := &chainsetup.NetUpIn{
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
-		Validators: validators, Endpoints: endpoints, EndpointSyncMode: syncMode,
+		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
 		ChainID:      in.ChainID,
@@ -167,6 +167,13 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		LaunchSet:    launch,
 		LaunchScoped: spec.EnvLaunch,
 		ConfigSet:    spec.EnvConfig,
+	}
+	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
+	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
+	// endpoints never dial a producer) rather than the default full mesh — a pn
+	// under mesh would defeat its own purpose.
+	if proxies > 0 {
+		up.Peering = string(node.Proxied)
 	}
 	return composition{up: up}, nil
 }
@@ -262,6 +269,7 @@ const (
 	topoBP           = "bp"
 	topoEndpoints    = "endpoints"
 	topoEN           = "en"
+	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
 	topoSyncModeSnak = "sync_mode"
 )
@@ -269,13 +277,15 @@ const (
 // topologyOf reads the node counts a declaration gives: validators (or bp),
 // endpoints (or en), and the endpoints' sync mode. A key it does not know is
 // an error rather than a silently ignored intention.
-func topologyOf(t map[string]any) (validators, endpoints int, syncMode string, err error) {
+func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, err error) {
 	for k, v := range t {
 		switch k {
 		case topoValidators, topoBP:
 			validators, err = countOf(k, v)
 		case topoEndpoints, topoEN:
 			endpoints, err = countOf(k, v)
+		case topoPN:
+			proxies, err = countOf(k, v)
 		case topoSyncMode, topoSyncModeSnak:
 			s, ok := v.(string)
 			if !ok {
@@ -283,13 +293,13 @@ func topologyOf(t map[string]any) (validators, endpoints int, syncMode string, e
 			}
 			syncMode = s
 		default:
-			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, syncMode)", k)
+			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
 		}
 		if err != nil {
-			return 0, 0, "", err
+			return 0, 0, 0, "", err
 		}
 	}
-	return validators, endpoints, syncMode, nil
+	return validators, endpoints, proxies, syncMode, nil
 }
 
 // countOf reads a node count, which JSON hands over as a float.

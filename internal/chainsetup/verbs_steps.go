@@ -114,6 +114,7 @@ type NetAllocateIn struct {
 	DataDir    string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	Validators int    `cb:"validators" default:"4" help:"validator node count"`
 	Endpoints  int    `cb:"endpoints" help:"endpoint (non-validator) node count"`
+	Proxies    int    `cb:"proxies" help:"pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it"`
 	// Peering is the peer graph ("mesh" default, "proxied").
 	Peering string `cb:"peering" help:"peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)"`
 	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
@@ -188,7 +189,7 @@ func NetAllocate(_ context.Context, d Deps, in NetAllocateIn) (StepOut, error) {
 			}
 		}
 		return ws.Allocate(AllocateOpts{
-			Validators: in.Validators, Endpoints: in.Endpoints,
+			Validators: in.Validators, Endpoints: in.Endpoints, Proxies: in.Proxies,
 			EndpointSyncMode: in.EndpointSyncMode, Topology: topo, Blueprint: bp,
 			Peering: peeringOf(bp, in.Peering),
 			Pool:    resolved.Pool, SetPath: in.Server.SetPath, Binaries: in.Binaries,
