@@ -1,79 +1,93 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "sample-spec-value-transfer",
+  "description": "v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-spec.json",
   "applicableChains": "stablenet,wbft",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
   "requires": [
     "rpc"
   ],
-  "description": "v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-spec.json",
-  "preActions": [
-    {
-      "read": {
-        "source": "derive",
-        "op": "sum",
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "sample-spec-value-transfer-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "hooks": {
+    "pre": [
+      {
+        "do": "read",
         "of": [
           "21000"
         ],
-        "save": "transferGas"
+        "op": "sum",
+        "save": "transferGas",
+        "source": "derive"
       }
-    }
-  ],
+    ]
+  },
   "steps": [
     {
-      "read": {
-        "source": "balanceAt",
-        "address": "node2",
-        "save": "balBefore"
-      }
+      "address": "node2",
+      "do": "read",
+      "save": "balBefore",
+      "source": "balanceAt"
     },
     {
-      "sendTx": {
-        "on": "node1",
-        "from": "node1",
-        "to": "node2",
-        "value": "1000000000000000000",
-        "gas": "$transferGas",
-        "save": "txHash",
-        "expect": "receipt"
-      }
+      "do": "sendTx",
+      "expect": "receipt",
+      "from": "node1",
+      "gas": "$transferGas",
+      "on": "node1",
+      "save": "txHash",
+      "to": "node2",
+      "value": "1000000000000000000"
     },
     {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_getTransactionReceipt",
-        "params": [
-          "$txHash"
-        ],
-        "select": "blockNumber",
-        "save": "txBlock"
-      }
-    }
-  ],
-  "assertions": [
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$txHash"
+      ],
+      "save": "txBlock",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
     {
-      "assert": "txStatus",
+      "expect": "txStatus",
       "hash": "$txHash",
-      "expected": "0x1"
+      "is": "0x1"
     },
     {
-      "assert": "derive",
-      "op": "diff",
+      "compare": "Greater",
+      "expect": "derive",
+      "is": "0",
       "of": [
         "$txBlock",
         "0"
       ],
-      "compare": "Greater",
-      "expected": "0"
+      "op": "diff"
     },
     {
-      "assert": "balanceAt",
       "address": "node2",
       "compare": "Greater",
-      "expected": "$balBefore"
+      "expect": "balanceAt",
+      "is": "$balBefore"
     }
   ]
 }

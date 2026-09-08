@@ -52,19 +52,23 @@ type Statement struct {
 
 // EnvV2 is the v2 environment declaration — the reuse unit.
 type EnvV2 struct {
-	SchemaVersion string                    `json:"schemaVersion"`
-	Kind          string                    `json:"kind"`
-	ID            string                    `json:"id"`
-	Target        string                    `json:"target,omitempty"`
-	Chain         string                    `json:"chain"`
-	Binaries      map[string]string         `json:"binaries,omitempty"`
-	Keys          *KeysV2                   `json:"keys,omitempty"`
-	Genesis       *GenesisV2                `json:"genesis,omitempty"`
-	Topology      map[string]any            `json:"topology,omitempty"`
-	Hardforks     map[string]int            `json:"hardforks,omitempty"`
-	Launch        map[string]map[string]any `json:"launch,omitempty"`
-	Config        map[string]map[string]any `json:"config,omitempty"`
-	Capabilities  []string                  `json:"capabilities,omitempty"`
+	SchemaVersion string `json:"schemaVersion"`
+	Kind          string `json:"kind"`
+	ID            string `json:"id"`
+	// Description says what this environment is for, in prose. It carries no
+	// execution semantics; it exists so a declaration can explain itself where
+	// it is read, rather than in a file beside it.
+	Description  string                    `json:"description,omitempty"`
+	Target       string                    `json:"target,omitempty"`
+	Chain        string                    `json:"chain"`
+	Binaries     map[string]string         `json:"binaries,omitempty"`
+	Keys         *KeysV2                   `json:"keys,omitempty"`
+	Genesis      *GenesisV2                `json:"genesis,omitempty"`
+	Topology     map[string]any            `json:"topology,omitempty"`
+	Hardforks    map[string]int            `json:"hardforks,omitempty"`
+	Launch       map[string]map[string]any `json:"launch,omitempty"`
+	Config       map[string]map[string]any `json:"config,omitempty"`
+	Capabilities []string                  `json:"capabilities,omitempty"`
 	// Accounts declares test accounts by name, created and funded when the
 	// network comes up. They are not in the genesis on purpose: an account
 	// funded at run time is one the genesis never has to mention, so preparing
@@ -154,9 +158,13 @@ type HooksV2 struct {
 
 // CaseV2 is the v2 scenario file.
 type CaseV2 struct {
-	SchemaVersion    string            `json:"schemaVersion"`
-	Kind             string            `json:"kind"`
-	ID               string            `json:"id"`
+	SchemaVersion string `json:"schemaVersion"`
+	Kind          string `json:"kind"`
+	ID            string `json:"id"`
+	// Description says what this case verifies, in prose. Strict parsing means
+	// a case cannot carry a note unless the grammar has a place for one, and a
+	// test that cannot say what it is for is read by opening its steps.
+	Description      string            `json:"description,omitempty"`
 	Env              json.RawMessage   `json:"env"`
 	ApplicableChains string            `json:"applicableChains,omitempty"`
 	Requires         []string          `json:"requires,omitempty"`

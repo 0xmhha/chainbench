@@ -1,24 +1,83 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "out-of-gas-consumes-all",
+  "description": "RT-A-3-07 — out-of-gas tx: gasUsed == gasLimit, 잔액 전량 차감 검증 (원본 regression/ethereum/25-test-out-of-gas)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "sendTx": { "from": "node1",
-                  "data": "0x600480600b6000396000f35b600056",
-                  "gas": "200000", "save": "dhash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$dhash"], "select": "contractAddress", "save": "addr" } },
-    { "sendTx": { "from": "node1",
-                  "to": "$addr", "gas": "50000",
-                  "expect": "revert", "save": "chash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$chash"], "select": "gasUsed", "save": "used" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$dhash", "expected": "0x1" },
-    { "assert": "derive", "op": "diff", "of": ["$used", "50000"],
-      "compare": "Equal", "expected": "0" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "out-of-gas-consumes-all-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "data": "0x600480600b6000396000f35b600056",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "save": "dhash"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "save": "addr",
+      "select": "contractAddress",
+      "source": "rpcCall"
+    },
+    {
+      "do": "sendTx",
+      "expect": "revert",
+      "from": "node1",
+      "gas": "50000",
+      "save": "chash",
+      "to": "$addr"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "save": "used",
+      "select": "gasUsed",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$dhash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "0",
+      "of": [
+        "$used",
+        "50000"
+      ],
+      "op": "diff"
+    }
   ]
 }

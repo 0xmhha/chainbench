@@ -1,32 +1,50 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "remote-rpc-health",
+  "description": "레거시 remote/rpc-health: 붙은 엔드포인트가 살아 있고 기본 RPC 셋이 응답한다. chainbench run --rpc <endpoint> 로 실행한다.",
   "applicableChains": "stablenet,wbft",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
   "requires": [
     "rpc"
   ],
-  "description": "레거시 remote/rpc-health: 붙은 엔드포인트가 살아 있고 기본 RPC 셋이 응답한다. chainbench run --rpc <endpoint> 로 실행한다.",
-  "assertions": [
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "remote-rpc-health-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
     {
-      "assert": "blockNumber",
       "compare": "GreaterOrEqual",
-      "expected": "0x0"
+      "expect": "blockNumber",
+      "is": "0x0"
     },
     {
-      "assert": "rpcCall",
-      "method": "web3_clientVersion",
       "compare": "NotEqual",
-      "expected": ""
+      "expect": "rpcCall",
+      "is": "",
+      "method": "web3_clientVersion"
     },
     {
-      "assert": "rpcCall",
-      "method": "net_peerCount",
       "compare": "NotEqual",
-      "expected": ""
+      "expect": "rpcCall",
+      "is": "",
+      "method": "net_peerCount"
     }
   ]
 }

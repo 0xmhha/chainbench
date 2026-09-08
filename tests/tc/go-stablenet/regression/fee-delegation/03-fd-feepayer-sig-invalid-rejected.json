@@ -1,19 +1,73 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "fd-feepayer-sig-invalid-rejected",
+  "description": "RT-D-04 — FeePayer 서명 변조 시 거부 (원본 regression/fee-delegation/03-test-feepayer-sig-invalid)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable",
-             "genesisOverlay": { "config": { "applepieBlock": 0 } } },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
-    { "sendTx": { "on": "node1", "from": "node1", "to": "$acct",
-                  "value": "10000000000000000000", "gas": "21000", "save": "fundHash" } },
-    { "sendRawTampered": { "on": "en1", "senderKey": "$acctKey", "feePayerKey": "$acctKey",
-                           "to": "0x00000000000000000000000000000000C0FFEE21", "value": "1", "which": "feepayer" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
-    { "assert": "blockNumber", "compare": "GreaterOrEqual", "expected": "1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fd-feepayer-sig-invalid-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendRawTampered",
+      "feePayerKey": "$acctKey",
+      "on": "en1",
+      "senderKey": "$acctKey",
+      "to": "0x00000000000000000000000000000000C0FFEE21",
+      "value": "1",
+      "which": "feepayer"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "blockNumber",
+      "is": "1"
+    }
   ]
 }

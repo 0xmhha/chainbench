@@ -1,33 +1,48 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "zero-address-transfer-rejected",
+  "description": "RT-E-05: 0x0 주소로의 전송은 제출 단계에서 거부된다 (ErrZeroAddressTransfer).",
   "applicableChains": "stablenet",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
   "requires": [
     "rpc"
   ],
-  "description": "RT-E-05: 0x0 주소로의 전송은 제출 단계에서 거부된다 (ErrZeroAddressTransfer).",
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "zero-address-transfer-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
   "steps": [
     {
-      "sendTx": {
-        "on": "node1",
-        "from": "node1",
-        "to": "0x0000000000000000000000000000000000000000",
-        "value": "1",
-        "gas": "100000",
-        "expect": "reject",
-        "reason": "zero"
-      }
-    }
-  ],
-  "assertions": [
+      "do": "sendTx",
+      "expect": "reject",
+      "from": "node1",
+      "gas": "100000",
+      "on": "node1",
+      "reason": "zero",
+      "to": "0x0000000000000000000000000000000000000000",
+      "value": "1"
+    },
     {
-      "assert": "blockNumber",
       "compare": "GreaterOrEqual",
-      "expected": "0x1"
+      "expect": "blockNumber",
+      "is": "0x1"
     }
   ]
 }

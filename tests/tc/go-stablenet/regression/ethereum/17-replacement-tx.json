@@ -1,30 +1,107 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "replacement-tx",
+  "description": "RT-A-2-09 — 동일 nonce, 더 높은 GasFeeCap으로 tx 교체 (원본 regression/ethereum/17-test-replacement-tx)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
-    { "sendTx": { "on": "node1", "from": "node1", "to": "$acct",
-                  "value": "10000000000000000000", "gas": "21000", "save": "fundHash" } },
-
-    { "sendTx": { "on": "en1", "key": "$acctKey", "to": "0x00000000000000000000000000000000C0FFEE12", "value": "1",
-                  "nonce": "1", "maxFeePerGas": "100000000000000", "maxPriorityFeePerGas": "30000000000000",
-                  "wait": false, "save": "tx1" } },
-    { "sendTx": { "on": "en1", "key": "$acctKey", "to": "0x00000000000000000000000000000000C0FFEE12", "value": "1",
-                  "nonce": "1", "maxFeePerGas": "120000000000000", "maxPriorityFeePerGas": "36000000000000",
-                  "wait": false, "save": "tx2" } },
-    { "sendTx": { "on": "en1", "key": "$acctKey", "to": "0x00000000000000000000000000000000C0FFEE12", "value": "1",
-                  "nonce": "0", "maxFeePerGas": "100000000000000", "maxPriorityFeePerGas": "30000000000000",
-                  "wait": false, "save": "tx3" } },
-
-    { "waitFor": { "source": "txMined", "hash": "$tx2", "compare": "Equal", "expected": "true",
-                   "timeout": "90s", "pollInterval": "2s" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
-    { "assert": "txMined", "hash": "$tx2", "expected": "true" },
-    { "assert": "txMined", "hash": "$tx1", "expected": "false" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "replacement-tx-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "maxFeePerGas": "100000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "nonce": "1",
+      "on": "en1",
+      "save": "tx1",
+      "to": "0x00000000000000000000000000000000C0FFEE12",
+      "value": "1",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "maxFeePerGas": "120000000000000",
+      "maxPriorityFeePerGas": "36000000000000",
+      "nonce": "1",
+      "on": "en1",
+      "save": "tx2",
+      "to": "0x00000000000000000000000000000000C0FFEE12",
+      "value": "1",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "maxFeePerGas": "100000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "nonce": "0",
+      "on": "en1",
+      "save": "tx3",
+      "to": "0x00000000000000000000000000000000C0FFEE12",
+      "value": "1",
+      "wait": false
+    },
+    {
+      "compare": "Equal",
+      "do": "waitFor",
+      "expected": "true",
+      "hash": "$tx2",
+      "pollInterval": "2s",
+      "source": "txMined",
+      "timeout": "90s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txMined",
+      "hash": "$tx2",
+      "is": "true"
+    },
+    {
+      "expect": "txMined",
+      "hash": "$tx1",
+      "is": "false"
+    }
   ]
 }

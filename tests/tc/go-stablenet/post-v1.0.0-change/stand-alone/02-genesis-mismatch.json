@@ -2,12 +2,31 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "genesis-mismatch-refuses-to-start",
-  "env": "genesis-mismatch-stablenet",
+  "description": "TC-4-1-03 — 이 체인과 다른 genesis 로 빌드된 바이너리는 GenesisMismatch 로 기동에 실패한다",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "genesis-mismatch-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable",
+      "mismatch": "${GSTABLE_MISMATCH_BIN:-gstable-genesis-mismatch}"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

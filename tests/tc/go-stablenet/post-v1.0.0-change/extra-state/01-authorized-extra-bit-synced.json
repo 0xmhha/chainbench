@@ -1,15 +1,52 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "authorized-extra-bit-synced",
+  "description": "TC-4-5-01,TC-4-5-02 — Account Extra alloc bits reflected in AccountManager (authorized + blacklisted) (원본 post-v1.0.0-change/extra-state/01-test-extra-alloc-to-contract)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc", "account-extra"],
-  "steps": [
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0xfe9fbb80", "of": ["0x90F79bf6EB2c4f870365E785982E1f101E93b906"], "save": "isAuthData" } }
+  "requires": [
+    "rpc",
+    "account-extra"
   ],
-  "assertions": [
-    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
-      "data": "$isAuthData", "compare": "Equal",
-      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "authorized-extra-bit-synced-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "account-extra"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+      ],
+      "op": "abiCall",
+      "save": "isAuthData",
+      "selector": "0xfe9fbb80",
+      "source": "derive"
+    },
+    {
+      "compare": "Equal",
+      "data": "$isAuthData",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000B00003"
+    }
   ]
 }

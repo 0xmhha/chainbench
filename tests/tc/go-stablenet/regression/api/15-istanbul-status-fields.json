@@ -1,13 +1,77 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "istanbul-status-fields",
+  "description": "RT-G-3-05 — istanbul_status (원본 regression/api/15-test-istanbul-status)",
   "applicableChains": "stablenet,wbft",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "assertions": [
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "sealerActivity", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "author", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "blockRange", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_status", "params": ["0x1", "0x2"], "select": "roundStats", "compare": "NotNil", "expected": null }
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "istanbul-status-fields-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_status",
+      "params": [
+        "0x1",
+        "0x2"
+      ],
+      "select": "sealerActivity"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_status",
+      "params": [
+        "0x1",
+        "0x2"
+      ],
+      "select": "author"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_status",
+      "params": [
+        "0x1",
+        "0x2"
+      ],
+      "select": "blockRange"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_status",
+      "params": [
+        "0x1",
+        "0x2"
+      ],
+      "select": "roundStats"
+    }
   ]
 }

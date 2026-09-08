@@ -1,52 +1,132 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "feepayer-blacklisted-rejected",
+  "description": "RT-E-03 — FeePayer가 블랙리스트 계정이면 거부 (원본 regression/blacklist-authorized/03-test-feepayer-blacklisted)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "sender", "saveKey": "senderKey" } },
-    { "newAccount": { "save": "feePayer", "saveKey": "feePayerKey" } },
-
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$sender",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundSenderHash" } },
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$feePayer",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundFeeHash" } },
-
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0x0d321273", "of": ["$feePayer"], "save": "addBlData" } },
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "0x0000000000000000000000000000000000001004",
-                  "gas": "0x16e360",
-                  "data": "$addBlData",
-                  "save": "addHash" } },
-    { "read": { "source": "receiptLog", "hash": "$addHash",
-                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
-                "topic": 1, "save": "addPid" } },
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$addPid"], "save": "addApprove" } },
-    { "sendTx": { "on": "node2",
-                  "from": "node2",
-                  "to": "0x0000000000000000000000000000000000001004",
-                  "gas": "0x16e360",
-                  "data": "$addApprove",
-                  "save": "addApHash" } },
-
-    { "sendTx": { "on": "en1",
-                  "key": "$senderKey",
-                  "feePayerKey": "$feePayerKey",
-                  "to": "0x00000000000000000000000000000000C0FFEE13",
-                  "value": "1",
-                  "expect": "reject", "reason": "blacklist" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundSenderHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$fundFeeHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$addApHash", "expected": "0x1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "feepayer-blacklisted-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "feePayer",
+      "saveKey": "feePayerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundSenderHash",
+      "to": "$sender",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundFeeHash",
+      "to": "$feePayer",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$feePayer"
+      ],
+      "op": "abiCall",
+      "save": "addBlData",
+      "selector": "0x0d321273",
+      "source": "derive"
+    },
+    {
+      "data": "$addBlData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "addHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "read",
+      "hash": "$addHash",
+      "save": "addPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$addPid"
+      ],
+      "op": "abiCall",
+      "save": "addApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$addApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "addApHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "sendTx",
+      "expect": "reject",
+      "feePayerKey": "$feePayerKey",
+      "key": "$senderKey",
+      "on": "en1",
+      "reason": "blacklist",
+      "to": "0x00000000000000000000000000000000C0FFEE13",
+      "value": "1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundSenderHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundFeeHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$addApHash",
+      "is": "0x1"
+    }
   ]
 }

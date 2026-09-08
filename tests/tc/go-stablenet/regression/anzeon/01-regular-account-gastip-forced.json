@@ -1,31 +1,123 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "regular-account-gastip-forced",
+  "description": "RT-C-01 — 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨 (원본 regression/anzeon/01-test-regular-account-gastip-forced)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "go-stablenet" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
-    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
-                "params": ["$n"], "select": "gasTip", "save": "htip" } },
-    { "read": { "source": "derive", "op": "sum",
-                "of": ["$htip", "$htip", "$htip", "$htip", "$htip"], "save": "hightip" } },
-    { "sendTx": { "from": "node1",
-                  "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-                  "value": "1", "gas": "21000",
-                  "maxFeePerGas": "1000000000000000", "maxPriorityFeePerGas": "$hightip",
-                  "save": "hash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$hash"], "select": "effectiveGasPrice", "save": "egp" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$hash"], "select": "blockNumber", "save": "blk" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["$blk", false], "select": "baseFeePerGas", "save": "base" } },
-    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
-                "params": ["$blk"], "select": "gasTip", "save": "itip" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "derive", "op": "diff", "of": ["$egp", "$base"],
-      "compare": "Equal", "expected": "$itip" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "regular-account-gastip-forced-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "go-stablenet"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "htip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$htip",
+        "$htip",
+        "$htip",
+        "$htip",
+        "$htip"
+      ],
+      "op": "sum",
+      "save": "hightip",
+      "source": "derive"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "maxFeePerGas": "1000000000000000",
+      "maxPriorityFeePerGas": "$hightip",
+      "save": "hash",
+      "to": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "value": "1"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "save": "egp",
+      "select": "effectiveGasPrice",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "save": "blk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$blk",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$blk"
+      ],
+      "save": "itip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "$itip",
+      "of": [
+        "$egp",
+        "$base"
+      ],
+      "op": "diff"
+    }
   ]
 }

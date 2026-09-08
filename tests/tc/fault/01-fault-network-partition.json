@@ -2,16 +2,77 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-network-partition",
-  "env": "fault-stablenet",
-  "requires": ["rpc", "consensus", "process"],
+  "description": "Simulate network partition via admin_removePeer - verify consensus halts and recovers after heal (원본 fault/network-partition.sh)",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fault-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
-    { "do": "waitBlock", "target": 3, "timeout": "120s" },
-    { "expect": "sameBlockHash", "block": "latest" },
-    { "do": "partition", "groups": [["node1", "node2"], ["node3", "node4"]] },
-    { "expect": "peerCount", "on": "node1", "compare": "LessOrEqual", "is": "2" },
-    { "expect": "peerCount", "on": "node3", "compare": "LessOrEqual", "is": "2" },
-    { "do": "healPartition" },
-    { "do": "waitBlock", "on": "node3", "target": 8, "timeout": "150s" },
-    { "expect": "sameBlockHash", "block": "latest" }
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "do": "partition",
+      "groups": [
+        [
+          "node1",
+          "node2"
+        ],
+        [
+          "node3",
+          "node4"
+        ]
+      ]
+    },
+    {
+      "expect": "peerCount",
+      "on": "node1",
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "expect": "peerCount",
+      "on": "node3",
+      "compare": "LessOrEqual",
+      "is": "2"
+    },
+    {
+      "do": "healPartition"
+    },
+    {
+      "do": "waitBlock",
+      "on": "node3",
+      "target": 8,
+      "timeout": "150s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    }
   ]
 }

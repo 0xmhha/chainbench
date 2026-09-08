@@ -462,6 +462,64 @@ func handoffEndpoints(ns node.NodeSet) []string {
 	return append(successors, producers...)
 }
 
+// sameComposition checks that every spec in a suite declares the SAME network,
+// not merely the same chain.
+//
+// One run composes one network, and it composes it from the first spec. A spec
+// further down the list that declares a different genesis, topology or binary
+// does not get the network it asked for — it runs against the first spec's, and
+// its assertions are answered by the wrong chain. That failure is silent, which
+// is the worst kind: six genesis-string cases each declaring their own
+// authorizedAccounts would all be answered by the first one's genesis and five
+// of them would report a wrong count as a real result.
+//
+// So the disagreement is refused here, before anything is allocated, and the
+// message names what differs so the caller can split the run.
+func sameComposition(specs []dsl.Spec) error {
+	if len(specs) < 2 {
+		return nil
+	}
+	want := compositionKey(specs[0])
+	var others []string
+	for _, s := range specs[1:] {
+		if compositionKey(s) != want {
+			others = append(others, s.ID)
+		}
+	}
+	if len(others) == 0 {
+		return nil
+	}
+	return fmt.Errorf(
+		"one run composes one network, from the first spec (%s); these declare a different one: %s. "+
+			"run them separately, or give them the same env",
+		specs[0].ID, strings.Join(others, ", "))
+}
+
+// compositionKey is what makes two specs the same network to compose: the
+// binaries, genesis, config, topology, hardforks and placement. It deliberately
+// mirrors the reuse fingerprint's inputs — a run that may share one network is
+// exactly a run whose specs would fingerprint alike.
+func compositionKey(s dsl.Spec) string {
+	key := struct {
+		Binary    string            `json:"binary"`
+		Binaries  map[string]string `json:"binaries"`
+		Config    string            `json:"config"`
+		Genesis   map[string]any    `json:"genesis"`
+		Topology  map[string]any    `json:"topology"`
+		Hardforks map[string]int    `json:"hardforks"`
+		Placement string            `json:"placement"`
+	}{
+		Binary: s.Chain.Binary, Binaries: s.Chain.Binaries, Config: s.Chain.Config,
+		Genesis: s.Chain.GenesisOverlay, Topology: s.Topology,
+		Hardforks: s.Hardforks, Placement: s.Placement,
+	}
+	b, err := json.Marshal(key)
+	if err != nil {
+		return fmt.Sprintf("composition-error:%v", err)
+	}
+	return string(b)
+}
+
 // sameChain checks that every parsed spec declares the chain the first one
 // does: one suite composes one network.
 func sameChain(specs []dsl.Spec) error {

@@ -1,30 +1,125 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "legacy-transfer",
+  "description": "RT-A-2-01 — Legacy Tx (type 0x0) 발행 (원본 regression/ethereum/08-test-legacy-tx)",
   "applicableChains": "stablenet,wbft",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["$n", false], "select": "baseFeePerGas", "save": "base" } },
-    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
-                "params": ["$n"], "select": "gasTip", "save": "tip" } },
-    { "read": { "source": "derive", "op": "sum", "of": ["$base", "$base", "$tip"], "save": "gp" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBalance",
-                "params": ["0x00000000000000000000000000000000C0FFEE03", "latest"], "save": "before" } },
-    { "sendTx": { "from": "node1",
-                  "to": "0x00000000000000000000000000000000C0FFEE03",
-                  "value": "1000000000000000000", "gas": "21000",
-                  "gasPrice": "$gp", "save": "hash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBalance",
-                "params": ["0x00000000000000000000000000000000C0FFEE03", "latest"], "save": "after" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
-    { "assert": "rpcCall", "method": "eth_getTransactionByHash", "params": ["$hash"],
-      "select": "type", "compare": "Equal", "expected": "0x0" },
-    { "assert": "derive", "op": "diff", "of": ["$after", "$before"],
-      "compare": "Equal", "expected": "1000000000000000000" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "legacy-transfer-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$n",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "tip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "op": "sum",
+      "save": "gp",
+      "source": "derive"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBalance",
+      "params": [
+        "0x00000000000000000000000000000000C0FFEE03",
+        "latest"
+      ],
+      "save": "before",
+      "source": "rpcCall"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "gasPrice": "$gp",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE03",
+      "value": "1000000000000000000"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBalance",
+      "params": [
+        "0x00000000000000000000000000000000C0FFEE03",
+        "latest"
+      ],
+      "save": "after",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x0",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$hash"
+      ],
+      "select": "type"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "1000000000000000000",
+      "of": [
+        "$after",
+        "$before"
+      ],
+      "op": "diff"
+    }
   ]
 }

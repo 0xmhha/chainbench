@@ -1,15 +1,46 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "minter-status-readable",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "assertions": [
-    { "assert": "call", "to": "0x0000000000000000000000000000000000001000",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "minter-status-readable-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "NotEqual",
       "data": "0xaa271e1a000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
-      "compare": "NotEqual", "expected": "0x" },
-    { "assert": "call", "to": "0x0000000000000000000000000000000000001000",
+      "expect": "call",
+      "is": "0x",
+      "to": "0x0000000000000000000000000000000000001000"
+    },
+    {
+      "compare": "NotEqual",
       "data": "0x8a6db9c3000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
-      "compare": "NotEqual", "expected": "0x" }
+      "expect": "call",
+      "is": "0x",
+      "to": "0x0000000000000000000000000000000000001000"
+    }
   ]
 }

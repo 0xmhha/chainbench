@@ -2,12 +2,31 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "invalid-extra-reject",
-  "env": "invalid-extra-stablenet",
+  "description": "TC-4-5-09 — 미정의 Extra 비트를 가진 genesis 를 받은 노드는 부팅에 실패한다",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "invalid-extra-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

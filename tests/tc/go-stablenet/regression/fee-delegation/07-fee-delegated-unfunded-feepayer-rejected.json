@@ -1,29 +1,77 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "fee-delegated-unfunded-feepayer-rejected",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable",
-             "genesisOverlay": { "config": { "applepieBlock": 0 } } },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "sender", "saveKey": "senderKey" } },
-    { "newAccount": { "save": "feePayer", "saveKey": "feePayerKey" } },
-
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$sender",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundHash" } },
-
-    { "sendTx": { "on": "en1",
-                  "key": "$senderKey",
-                  "feePayerKey": "$feePayerKey",
-                  "to": "0x00000000000000000000000000000000C0FFEE10",
-                  "value": "1",
-                  "expect": "reject" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
-    { "assert": "blockNumber", "compare": "GreaterOrEqual", "expected": "1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fee-delegated-unfunded-feepayer-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "feePayer",
+      "saveKey": "feePayerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$sender",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "expect": "reject",
+      "feePayerKey": "$feePayerKey",
+      "key": "$senderKey",
+      "on": "en1",
+      "to": "0x00000000000000000000000000000000C0FFEE10",
+      "value": "1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "blockNumber",
+      "is": "1"
+    }
   ]
 }

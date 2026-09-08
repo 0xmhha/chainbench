@@ -1,24 +1,100 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "nonce-ordering",
+  "description": "RT-A-2-04 — Nonce 순서 보장 (원본 regression/ethereum/11-test-nonce-ordering)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
-    { "sendTx": { "on": "node1", "from": "node1", "to": "$acct",
-                  "value": "10000000000000000000", "gas": "21000", "save": "fundHash" } },
-    { "sendTx": { "on": "en1", "key": "$acctKey", "to": "0x00000000000000000000000000000000C0FFEE10", "value": "1",
-                  "nonce": "2", "maxFeePerGas": "100000000000000", "maxPriorityFeePerGas": "30000000000000", "wait": false } },
-    { "sendTx": { "on": "en1", "key": "$acctKey", "to": "0x00000000000000000000000000000000C0FFEE10", "value": "1",
-                  "nonce": "1", "maxFeePerGas": "100000000000000", "maxPriorityFeePerGas": "30000000000000", "wait": false } },
-    { "sendTx": { "on": "en1", "key": "$acctKey", "to": "0x00000000000000000000000000000000C0FFEE10", "value": "1",
-                  "nonce": "0", "maxFeePerGas": "100000000000000", "maxPriorityFeePerGas": "30000000000000", "wait": false } },
-    { "waitFor": { "source": "nonceAt", "address": "$acct", "compare": "Equal", "expected": "3",
-                   "timeout": "90s", "pollInterval": "2s" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
-    { "assert": "nonceAt", "address": "$acct", "compare": "Equal", "expected": "3" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "nonce-ordering-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "maxFeePerGas": "100000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "nonce": "2",
+      "on": "en1",
+      "to": "0x00000000000000000000000000000000C0FFEE10",
+      "value": "1",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "maxFeePerGas": "100000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "nonce": "1",
+      "on": "en1",
+      "to": "0x00000000000000000000000000000000C0FFEE10",
+      "value": "1",
+      "wait": false
+    },
+    {
+      "do": "sendTx",
+      "key": "$acctKey",
+      "maxFeePerGas": "100000000000000",
+      "maxPriorityFeePerGas": "30000000000000",
+      "nonce": "0",
+      "on": "en1",
+      "to": "0x00000000000000000000000000000000C0FFEE10",
+      "value": "1",
+      "wait": false
+    },
+    {
+      "address": "$acct",
+      "compare": "Equal",
+      "do": "waitFor",
+      "expected": "3",
+      "pollInterval": "2s",
+      "source": "nonceAt",
+      "timeout": "90s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "address": "$acct",
+      "compare": "Equal",
+      "expect": "nonceAt",
+      "is": "3"
+    }
   ]
 }

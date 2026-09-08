@@ -2,14 +2,59 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-node-recover",
-  "env": "fault-stablenet",
-  "requires": ["rpc", "consensus", "process"],
+  "description": "Stop a node, wait, restart, and measure sync time (원본 fault/node-recover.sh)",
+  "requires": [
+    "rpc",
+    "consensus",
+    "process"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fault-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
-    { "do": "waitBlock", "target": 3, "timeout": "120s" },
-    { "do": "stopNode", "on": "node3" },
-    { "do": "waitBlock", "on": "node1", "target": 12, "timeout": "150s" },
-    { "do": "restartNode", "on": "node3" },
-    { "do": "waitBlock", "on": "node3", "target": 12, "timeout": "150s" },
-    { "expect": "sameBlockHash", "block": "latest" }
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "120s"
+    },
+    {
+      "do": "stopNode",
+      "on": "node3"
+    },
+    {
+      "do": "waitBlock",
+      "on": "node1",
+      "target": 12,
+      "timeout": "150s"
+    },
+    {
+      "do": "restartNode",
+      "on": "node3"
+    },
+    {
+      "do": "waitBlock",
+      "on": "node3",
+      "target": 12,
+      "timeout": "150s"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    }
   ]
 }

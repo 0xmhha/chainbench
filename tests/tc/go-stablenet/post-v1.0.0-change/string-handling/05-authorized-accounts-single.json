@@ -1,35 +1,55 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "authorized-accounts-single",
+  "description": "TC-4-3-05: GovCouncil authorizedAccounts splitAndTrim — 단일 항목 \"0xaaa\" → 1",
   "applicableChains": "stablenet",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable",
-    "genesisOverlay": {
-      "config": {
-        "anzeon": {
-          "systemContracts": {
-            "govCouncil": {
-              "params": {
-                "authorizedAccounts": "0xaaa"
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "authorized-accounts-single-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "anzeon": {
+            "systemContracts": {
+              "govCouncil": {
+                "params": {
+                  "authorizedAccounts": "0xaaa"
+                }
               }
             }
           }
         }
       }
-    }
+    },
+    "capabilities": [
+      "rpc"
+    ]
   },
-  "requires": [
-    "rpc"
-  ],
-  "description": "TC-4-3-05: GovCouncil authorizedAccounts splitAndTrim — 단일 항목 \"0xaaa\" → 1",
-  "assertions": [
+  "steps": [
     {
-      "assert": "call",
-      "to": "0x0000000000000000000000000000000000001004",
-      "data": "0x6a6debd7",
       "compare": "Equal",
-      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      "data": "0x6a6debd7",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000001004"
     }
   ]
 }

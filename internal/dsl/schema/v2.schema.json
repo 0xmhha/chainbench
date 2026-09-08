@@ -32,6 +32,10 @@
           "type": "string",
           "minLength": 1
         },
+        "description": {
+          "type": "string",
+          "description": "Prose saying what this document is for. No execution semantics."
+        },
         "target": {
           "type": "string",
           "description": "single-path data-plane location: /local/path | user@host:/path | ssh://user@host:port/path"
@@ -190,6 +194,10 @@
         "id": {
           "type": "string",
           "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "description": "Prose saying what this document is for. No execution semantics."
         },
         "env": {
           "oneOf": [

@@ -1,74 +1,87 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "govminter-v2-code",
+  "description": "TC-5-2-05: GovMinter v2 업그레이드는 코드만 교체하고 잔액은 건드리지 않는다. 하드포크 전후의 코드가 다르고 잔액이 같은지를 함께 본다.",
   "applicableChains": "stablenet",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
   "requires": [
     "rpc"
   ],
-  "assertions": [
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "govminter-v2-code-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
     {
-      "assert": "codeAt",
-      "address": "0x0000000000000000000000000000000000001003",
-      "compare": "NotEqual",
-      "expected": "0x"
+      "do": "read",
+      "method": "eth_getBalance",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x1"
+      ],
+      "save": "balPreBoho",
+      "source": "rpcCall"
     },
     {
-      "assert": "rpcCall",
+      "do": "read",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x1"
+      ],
+      "save": "codePreBoho",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "11",
+      "pollInterval": "2s",
+      "source": "blockNumber",
+      "timeout": "120s"
+    },
+    {
+      "address": "0x0000000000000000000000000000000000001003",
+      "compare": "NotEqual",
+      "expect": "codeAt",
+      "is": "0x"
+    },
+    {
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "$codePreBoho",
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "latest"
-      ],
-      "compare": "NotEqual",
-      "expected": "$codePreBoho"
+      ]
     },
     {
-      "assert": "rpcCall",
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "$balPreBoho",
       "method": "eth_getBalance",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "latest"
-      ],
-      "compare": "Equal",
-      "expected": "$balPreBoho"
+      ]
     }
-  ],
-  "steps": [
-    {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_getBalance",
-        "params": [
-          "0x0000000000000000000000000000000000001003",
-          "0x1"
-        ],
-        "save": "balPreBoho"
-      }
-    },
-    {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_getCode",
-        "params": [
-          "0x0000000000000000000000000000000000001003",
-          "0x1"
-        ],
-        "save": "codePreBoho"
-      }
-    },
-    {
-      "waitFor": {
-        "source": "blockNumber",
-        "compare": "GreaterOrEqual",
-        "expected": "11",
-        "timeout": "120s",
-        "pollInterval": "2s"
-      }
-    }
-  ],
-  "description": "TC-5-2-05: GovMinter v2 업그레이드는 코드만 교체하고 잔액은 건드리지 않는다. 하드포크 전후의 코드가 다르고 잔액이 같은지를 함께 본다."
+  ]
 }

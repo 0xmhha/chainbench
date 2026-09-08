@@ -1,14 +1,74 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "block-by-hash-consistency",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber", "params": ["latest", false], "select": "hash", "save": "hash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber", "params": ["latest", false], "select": "number", "save": "number" } }
+  "description": "RT-G-1-02 — eth_getBlockByHash (원본 regression/api/02-test-get-block-by-hash)",
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "rpcCall", "method": "eth_getBlockByHash", "params": ["$hash", false], "select": "hash", "expected": "$hash" },
-    { "assert": "rpcCall", "method": "eth_getBlockByHash", "params": ["$hash", false], "select": "number", "expected": "$number" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "block-by-hash-consistency-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "save": "hash",
+      "select": "hash",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "save": "number",
+      "select": "number",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "rpcCall",
+      "is": "$hash",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$hash",
+        false
+      ],
+      "select": "hash"
+    },
+    {
+      "expect": "rpcCall",
+      "is": "$number",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$hash",
+        false
+      ],
+      "select": "number"
+    }
   ]
 }

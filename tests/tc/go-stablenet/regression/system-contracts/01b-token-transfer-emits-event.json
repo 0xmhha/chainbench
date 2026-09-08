@@ -1,33 +1,83 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "token-transfer-emits-event",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "sendTx": { "from": "node1",
-                  "to": "0x0000000000000000000000000000000000001000",
-                  "data": "0xa9059cbb00000000000000000000000000000000000000000000000000000000c0ffee040000000000000000000000000000000000000000000000000000000000000001",
-                  "gas": "100000", "save": "hash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$hash"], "select": "blockNumber", "save": "blk" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
-    { "assert": "logs",
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "token-transfer-emits-event-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "data": "0xa9059cbb00000000000000000000000000000000000000000000000000000000c0ffee040000000000000000000000000000000000000000000000000000000000000001",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "100000",
+      "save": "hash",
+      "to": "0x0000000000000000000000000000000000001000"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$hash"
+      ],
+      "save": "blk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
       "address": "0x0000000000000000000000000000000000001000",
-      "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                 null,
-                 "0x00000000000000000000000000000000000000000000000000000000c0ffee04"],
-      "fromBlock": "$blk", "toBlock": "$blk",
-      "select": "count", "compare": "GreaterOrEqual", "expected": "1" },
-    { "assert": "logs",
+      "compare": "GreaterOrEqual",
+      "expect": "logs",
+      "fromBlock": "$blk",
+      "is": "1",
+      "select": "count",
+      "toBlock": "$blk",
+      "topics": [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        null,
+        "0x00000000000000000000000000000000000000000000000000000000c0ffee04"
+      ]
+    },
+    {
       "address": "0x0000000000000000000000000000000000001000",
-      "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                 null,
-                 "0x00000000000000000000000000000000000000000000000000000000c0ffee04"],
-      "fromBlock": "$blk", "toBlock": "$blk",
-      "select": "data", "compare": "Equal",
-      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+      "compare": "Equal",
+      "expect": "logs",
+      "fromBlock": "$blk",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "select": "data",
+      "toBlock": "$blk",
+      "topics": [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        null,
+        "0x00000000000000000000000000000000000000000000000000000000c0ffee04"
+      ]
+    }
   ]
 }

@@ -1,14 +1,62 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "commit-signers-quorum",
+  "description": "RT-G-3-03 — istanbul_getCommitSignersFromBlock (원본 regression/api/13-test-get-commit-signers)",
   "applicableChains": "stablenet,wbft",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc", "consensus"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"], "save": "validators" } }
+  "requires": [
+    "rpc",
+    "consensus"
   ],
-  "assertions": [
-    { "assert": "rpcCall", "method": "istanbul_getCommitSignersFromBlock", "params": ["latest"], "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_getValidators", "params": ["latest"], "compare": "Equal", "expected": "$validators" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "commit-signers-quorum-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "consensus"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ],
+      "save": "validators",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_getCommitSignersFromBlock",
+      "params": [
+        "latest"
+      ]
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "$validators",
+      "method": "istanbul_getValidators",
+      "params": [
+        "latest"
+      ]
+    }
   ]
 }

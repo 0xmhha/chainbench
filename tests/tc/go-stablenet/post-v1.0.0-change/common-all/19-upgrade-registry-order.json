@@ -1,58 +1,73 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "upgrade-registry-order",
+  "description": "TC-5-2-01/02/03: block 0 에 Anzeon baseline 이 등록돼 있고, BohoBlock(100) 전까지 중간 업그레이드가 없으며, BohoBlock 에서 GovMinter 코드가 교체된다.",
   "applicableChains": "stablenet",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
   "requires": [
     "rpc"
   ],
-  "description": "TC-5-2-01/02/03: block 0 에 Anzeon baseline 이 등록돼 있고, BohoBlock(100) 전까지 중간 업그레이드가 없으며, BohoBlock 에서 GovMinter 코드가 교체된다.",
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "upgrade-registry-order-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
   "steps": [
     {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_getCode",
-        "params": [
-          "0x0000000000000000000000000000000000001003",
-          "0x0"
-        ],
-        "save": "codeGenesis"
-      }
-    }
-  ],
-  "assertions": [
-    {
-      "assert": "rpcCall",
+      "do": "read",
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "0x0"
       ],
-      "compare": "NotEqual",
-      "expected": "0x"
+      "save": "codeGenesis",
+      "source": "rpcCall"
     },
     {
-      "assert": "rpcCall",
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "0x",
+      "method": "eth_getCode",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0"
+      ]
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "$codeGenesis",
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "0x63"
-      ],
-      "compare": "Equal",
-      "expected": "$codeGenesis"
+      ]
     },
     {
-      "assert": "rpcCall",
+      "compare": "NotEqual",
+      "expect": "rpcCall",
+      "is": "$codeGenesis",
       "method": "eth_getCode",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "0x64"
-      ],
-      "compare": "NotEqual",
-      "expected": "$codeGenesis"
+      ]
     }
   ]
 }

@@ -1,19 +1,69 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "dual-status-extra",
+  "description": "TC-4-5-07 — 동일 주소 dual-status — authorized AND blacklisted 동시 반영 (원본 post-v1.0.0-change/extra-state/04-test-extra-dual-status)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc", "account-extra"],
-  "steps": [
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0xfe9fbb80", "of": ["0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"], "save": "isAuthData" } },
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0xfe575a87", "of": ["0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"], "save": "isBlData" } }
+  "requires": [
+    "rpc",
+    "account-extra"
   ],
-  "assertions": [
-    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
-      "data": "$isAuthData", "compare": "Equal",
-      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" },
-    { "assert": "call", "to": "0x0000000000000000000000000000000000B00003",
-      "data": "$isBlData", "compare": "Equal",
-      "expected": "0x0000000000000000000000000000000000000000000000000000000000000001" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "dual-status-extra-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "account-extra"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "of": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      ],
+      "op": "abiCall",
+      "save": "isAuthData",
+      "selector": "0xfe9fbb80",
+      "source": "derive"
+    },
+    {
+      "do": "read",
+      "of": [
+        "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+      ],
+      "op": "abiCall",
+      "save": "isBlData",
+      "selector": "0xfe575a87",
+      "source": "derive"
+    },
+    {
+      "compare": "Equal",
+      "data": "$isAuthData",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000B00003"
+    },
+    {
+      "compare": "Equal",
+      "data": "$isBlData",
+      "expect": "call",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "to": "0x0000000000000000000000000000000000B00003"
+    }
   ]
 }

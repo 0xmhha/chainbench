@@ -1,10 +1,38 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "basefee-minimum",
+  "description": "RT-C-06 — baseFee가 MinBaseFee(20 Gwei) 아래로 내려가지 않음 (원본 regression/anzeon/06-test-min-basefee)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "go-stablenet" },
-  "requires": ["rpc"],
-  "assertions": [
-    { "assert": "baseFee", "compare": "GreaterOrEqual", "expected": "20000000000000" }
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "basefee-minimum-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "go-stablenet"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "GreaterOrEqual",
+      "expect": "baseFee",
+      "is": "20000000000000"
+    }
   ]
 }

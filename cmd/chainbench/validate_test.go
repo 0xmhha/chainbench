@@ -219,13 +219,13 @@ func TestPortedSpecs_IDsAreUnique(t *testing.T) {
 	}
 }
 
-// TestValidateCmd_ChainCases: the four chain-setup declarations and their
-// cases validate offline — env references resolve from the shared env/
-// directory, and an env file validates as a declaration.
+// TestValidateCmd_ChainCases: every case under tests/tc validates offline. Each
+// carries its own environment inline, so validating one proves the composition
+// it declares parses too — there is no separate env file left to check.
 func TestValidateCmd_ChainCases(t *testing.T) {
 	paths := jsonFilesUnder(t, "../../tests/tc")
 	if len(paths) < 8 {
-		t.Fatalf("expected the chain-bringup envs and cases under tests/tc, found %d files", len(paths))
+		t.Fatalf("expected the chain-bringup cases under tests/tc, found %d files", len(paths))
 	}
 	// Through the mounted command rather than the package-internal function:
 	// the point of the check is that an operator running `chainbench validate`
@@ -234,7 +234,7 @@ func TestValidateCmd_ChainCases(t *testing.T) {
 	if err != nil {
 		t.Fatalf("validate tests/tc: %v\n%s", err, got)
 	}
-	for _, want := range []string{"env declaration for chain wemix", "wemix-wbft-handoff", "stablenet-chain-up"} {
+	for _, want := range []string{"wemix-wbft-handoff", "stablenet-chain-up"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("output should mention %q:\n%s", want, got)
 		}

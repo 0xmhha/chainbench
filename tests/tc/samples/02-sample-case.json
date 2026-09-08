@@ -2,12 +2,43 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "sample-case-node-restart",
-  "env": "sample",
+  "description": "작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/dev/dsl-authoring-guide.md)",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "sample",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "${GSTABLE_BIN:-gstable}"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "bohoBlock": 6
+        }
+      }
+    },
+    "accounts": {
+      "dev1": {
+        "fund": "0x8AC7230489E80000"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

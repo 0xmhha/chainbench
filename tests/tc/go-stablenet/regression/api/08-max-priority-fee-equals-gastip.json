@@ -1,22 +1,79 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "max-priority-fee-equals-gastip",
+  "description": "RT-G-2-02 — eth_maxPriorityFeePerGas == WBFTExtra.GasTip (원본 regression/api/08-test-max-priority-fee)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "go-stablenet" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_maxPriorityFeePerGas",
-                "params": [], "save": "mpf" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["latest", false], "select": "number", "save": "n" } },
-    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
-                "params": ["$n"], "select": "gasTip", "save": "tip" } },
-    { "read": { "source": "derive", "op": "sum", "of": ["$tip"], "save": "tipDec" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "max-priority-fee-equals-gastip-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "go-stablenet"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
     {
-      "assert": "derive", "op": "sum", "of": ["$mpf"],
-      "compare": "Equal", "expected": "$tipDec"
+      "do": "read",
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "save": "mpf",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "save": "n",
+      "select": "number",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "tip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$tip"
+      ],
+      "op": "sum",
+      "save": "tipDec",
+      "source": "derive"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "$tipDec",
+      "of": [
+        "$mpf"
+      ],
+      "op": "sum"
     }
   ]
 }

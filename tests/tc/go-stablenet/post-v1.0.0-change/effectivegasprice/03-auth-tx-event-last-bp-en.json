@@ -2,10 +2,30 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "auth-tx-event-last-bp-en",
-  "env": "egp-snap-stablenet",
+  "description": "TC-4-6-04 — AuthorizedTxExecuted 가 영수증 로그의 마지막이고, 두 노드가 같은 값을 보고한다",
   "requires": [
     "rpc"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "egp-snap-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1,
+      "syncMode": "snap"
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

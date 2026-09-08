@@ -1,23 +1,84 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "ws-subscribe-logs",
+  "description": "RT-A-4-07 — eth_subscribe(logs) WebSocket 구독 (원본 regression/ethereum/32-test-ws-subscribe-logs)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc", "ws"],
-  "steps": [
-    { "sendTx": { "on": "node1", "from": "node1",
-                  "data": "0x6027600c60003960276000f37f111111111111111111111111111111111111111111111111111111111111111160006000a100",
-                  "gas": "200000", "save": "dhash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$dhash"], "select": "contractAddress", "save": "addr" } },
-
-    { "wsOpen": { "on": "en1", "event": "logs", "address": "$addr", "save": "logsub" } },
-    { "sendTx": { "on": "node1", "from": "node1",
-                  "to": "$addr", "gas": "100000", "save": "ehash" } }
+  "requires": [
+    "rpc",
+    "ws"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$dhash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$ehash", "expected": "0x1" },
-    { "assert": "wsCollected", "sub": "$logsub", "count": 1, "timeout": "30s" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "ws-subscribe-logs-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "ws"
+    ]
+  },
+  "steps": [
+    {
+      "data": "0x6027600c60003960276000f37f111111111111111111111111111111111111111111111111111111111111111160006000a100",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "on": "node1",
+      "save": "dhash"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "save": "addr",
+      "select": "contractAddress",
+      "source": "rpcCall"
+    },
+    {
+      "address": "$addr",
+      "do": "wsOpen",
+      "event": "logs",
+      "on": "en1",
+      "save": "logsub"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "100000",
+      "on": "node1",
+      "save": "ehash",
+      "to": "$addr"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$dhash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$ehash",
+      "is": "0x1"
+    },
+    {
+      "count": 1,
+      "expect": "wsCollected",
+      "sub": "$logsub",
+      "timeout": "30s"
+    }
   ]
 }

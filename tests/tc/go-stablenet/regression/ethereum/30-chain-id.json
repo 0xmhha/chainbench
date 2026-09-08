@@ -1,11 +1,44 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "chain-id",
+  "description": "RT-A-1-01 — 제네시스 블록으로 노드 초기화 (원본 regression/ethereum/01-test-genesis-init)",
   "applicableChains": "stablenet,wbft",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "assertions": [
-    { "assert": "rpcCall", "method": "eth_chainId", "compare": "Regexp", "expected": "^0x[0-9a-fA-F]+$" },
-    { "assert": "chainId", "compare": "Greater", "expected": "0" }
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "chain-id-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "Regexp",
+      "expect": "rpcCall",
+      "is": "^0x[0-9a-fA-F]+$",
+      "method": "eth_chainId"
+    },
+    {
+      "compare": "Greater",
+      "expect": "chainId",
+      "is": "0"
+    }
   ]
 }

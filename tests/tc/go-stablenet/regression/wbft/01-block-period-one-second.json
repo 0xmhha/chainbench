@@ -1,24 +1,114 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "block-period-one-second",
+  "description": "RT-B-01 — 블록 생산 주기 1초 간격 (원본 regression/wbft/01-test-block-period)",
   "applicableChains": "stablenet,wbft",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["$n", false], "select": "timestamp", "save": "t1" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["$n", false], "select": "parentHash", "save": "ph1" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByHash",
-                "params": ["$ph1", false], "select": "timestamp", "save": "t0" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByHash",
-                "params": ["$ph1", false], "select": "parentHash", "save": "ph0" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByHash",
-                "params": ["$ph0", false], "select": "timestamp", "save": "tm1" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "derive", "op": "diff", "of": ["$t1", "$t0"], "compare": "Equal", "expected": "1" },
-    { "assert": "derive", "op": "diff", "of": ["$t0", "$tm1"], "compare": "Equal", "expected": "1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "block-period-one-second-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$n",
+        false
+      ],
+      "save": "t1",
+      "select": "timestamp",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$n",
+        false
+      ],
+      "save": "ph1",
+      "select": "parentHash",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$ph1",
+        false
+      ],
+      "save": "t0",
+      "select": "timestamp",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$ph1",
+        false
+      ],
+      "save": "ph0",
+      "select": "parentHash",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByHash",
+      "params": [
+        "$ph0",
+        false
+      ],
+      "save": "tm1",
+      "select": "timestamp",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "1",
+      "of": [
+        "$t1",
+        "$t0"
+      ],
+      "op": "diff"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "1",
+      "of": [
+        "$t0",
+        "$tm1"
+      ],
+      "op": "diff"
+    }
   ]
 }

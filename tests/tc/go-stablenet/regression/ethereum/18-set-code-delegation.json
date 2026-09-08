@@ -1,28 +1,102 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "set-code-delegation",
+  "description": "RT-A-2-10 — SetCodeTx (type 0x4 / EIP-7702) 계정 코드 위임 (원본 regression/ethereum/18-test-setcode-tx)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable",
-             "genesisOverlay": { "config": { "applepieBlock": 0 } } },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "sponsor", "saveKey": "sponsorKey" } },
-    { "newAccount": { "save": "authority", "saveKey": "authorityKey" } },
-    { "sendTx": { "on": "node1", "from": "node1",
-                  "to": "$sponsor", "value": "30000000000000000000", "gas": "21000", "save": "fundHash" } },
-
-    { "sendSetCode": { "on": "en1", "key": "$sponsorKey", "authorityKey": "$authorityKey",
-                       "delegate": "0x1111111111111111111111111111111111111111", "save": "scHash" } },
-    { "waitFor": { "source": "codeAt", "address": "$authority", "compare": "Equal",
-                   "expected": "0xef01001111111111111111111111111111111111111111",
-                   "timeout": "90s", "pollInterval": "1s" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$scHash", "expected": "0x1" },
-    { "assert": "rpcCall", "method": "eth_getTransactionByHash", "params": ["$scHash"],
-      "select": "type", "compare": "Equal", "expected": "0x4" },
-    { "assert": "codeAt", "address": "$authority", "compare": "Equal",
-      "expected": "0xef01001111111111111111111111111111111111111111" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "set-code-delegation-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sponsor",
+      "saveKey": "sponsorKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "authority",
+      "saveKey": "authorityKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$sponsor",
+      "value": "30000000000000000000"
+    },
+    {
+      "authorityKey": "$authorityKey",
+      "delegate": "0x1111111111111111111111111111111111111111",
+      "do": "sendSetCode",
+      "key": "$sponsorKey",
+      "on": "en1",
+      "save": "scHash"
+    },
+    {
+      "address": "$authority",
+      "compare": "Equal",
+      "do": "waitFor",
+      "expected": "0xef01001111111111111111111111111111111111111111",
+      "pollInterval": "1s",
+      "source": "codeAt",
+      "timeout": "90s"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$scHash",
+      "is": "0x1"
+    },
+    {
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x4",
+      "method": "eth_getTransactionByHash",
+      "params": [
+        "$scHash"
+      ],
+      "select": "type"
+    },
+    {
+      "address": "$authority",
+      "compare": "Equal",
+      "expect": "codeAt",
+      "is": "0xef01001111111111111111111111111111111111111111"
+    }
   ]
 }

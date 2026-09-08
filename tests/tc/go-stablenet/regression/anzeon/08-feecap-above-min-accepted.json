@@ -1,23 +1,85 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "feecap-above-min-accepted",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "go-stablenet" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "n" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["$n", false], "select": "baseFeePerGas", "save": "base" } },
-    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
-                "params": ["$n"], "select": "gasTip", "save": "tip" } },
-    { "read": { "source": "derive", "op": "sum", "of": ["$base", "$base", "$tip"], "save": "feecap" } },
-    { "sendTx": { "from": "node1",
-                  "to": "0x00000000000000000000000000000000C0FFEE0E",
-                  "value": "1", "gas": "21000",
-                  "maxFeePerGas": "$feecap", "maxPriorityFeePerGas": "$tip",
-                  "save": "hash" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "feecap-above-min-accepted-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "go-stablenet"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "n",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$n",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "tip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$base",
+        "$base",
+        "$tip"
+      ],
+      "op": "sum",
+      "save": "feecap",
+      "source": "derive"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "maxFeePerGas": "$feecap",
+      "maxPriorityFeePerGas": "$tip",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE0E",
+      "value": "1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    }
   ]
 }

@@ -1,76 +1,88 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "access-list-tx",
+  "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다.",
   "applicableChains": "stablenet,wbft",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
   "requires": [
     "rpc"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "access-list-tx-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
   "steps": [
     {
-      "read": {
-        "source": "baseFee",
-        "save": "base"
-      }
+      "do": "read",
+      "save": "base",
+      "source": "baseFee"
     },
     {
-      "read": {
-        "source": "derive",
-        "op": "sum",
-        "of": [
-          "$base",
-          "$base"
-        ],
-        "save": "gp"
-      }
+      "do": "read",
+      "of": [
+        "$base",
+        "$base"
+      ],
+      "op": "sum",
+      "save": "gp",
+      "source": "derive"
     },
     {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_createAccessList",
-        "params": [
-          {
-            "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
-            "to": "0x00000000000000000000000000000000C0FFEE0D",
-            "value": "0x1"
-          },
-          "latest"
-        ],
-        "select": "accessList",
-        "save": "createdList"
-      }
+      "do": "read",
+      "method": "eth_createAccessList",
+      "params": [
+        {
+          "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+          "to": "0x00000000000000000000000000000000C0FFEE0D",
+          "value": "0x1"
+        },
+        "latest"
+      ],
+      "save": "createdList",
+      "select": "accessList",
+      "source": "rpcCall"
     },
     {
-      "sendTx": {
-        "from": "node1",
-        "to": "0x00000000000000000000000000000000C0FFEE0D",
-        "value": "1",
-        "gas": "21000",
-        "gasPrice": "$gp",
-        "accessList": "$createdList",
-        "save": "hash"
-      }
-    }
-  ],
-  "assertions": [
+      "accessList": "$createdList",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "gasPrice": "$gp",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE0D",
+      "value": "1"
+    },
     {
-      "assert": "txStatus",
+      "expect": "txStatus",
       "hash": "$hash",
-      "expected": "0x1"
+      "is": "0x1"
     },
     {
-      "assert": "rpcCall",
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x1",
       "method": "eth_getTransactionByHash",
       "params": [
         "$hash"
       ],
-      "select": "type",
-      "compare": "Equal",
-      "expected": "0x1"
+      "select": "type"
     }
-  ],
-  "description": "RT-A-2-03: eth_createAccessList 로 노드가 만든 접근 목록을 붙여 type 0x01 트랜잭션을 보낸다."
+  ]
 }

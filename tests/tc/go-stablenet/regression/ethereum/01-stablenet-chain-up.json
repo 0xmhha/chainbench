@@ -2,11 +2,28 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-chain-up",
-  "env": "stablenet",
   "requires": [
     "rpc",
     "consensus"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

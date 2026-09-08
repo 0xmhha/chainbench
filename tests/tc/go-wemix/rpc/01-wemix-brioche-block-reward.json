@@ -2,12 +2,72 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "wemix-brioche-block-reward",
-  "env": "wemix-brioche",
-  "requires": ["rpc"],
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wemix-brioche",
+    "chain": "wemix",
+    "binaries": {
+      "default": "${GWEMIX_BIN:-gwemix}"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "brioche": {
+            "firstHalvingBlock": 10,
+            "halvingPeriod": 10,
+            "finishRewardBlock": 1000,
+            "halvingTimes": 4,
+            "halvingRate": 50
+          }
+        }
+      }
+    }
+  },
   "steps": [
-    { "do": "waitBlock", "target": 2, "timeout": "180s" },
-    { "do": "read", "source": "rpcCall", "method": "wemix_getBriocheBlockReward", "params": ["0x5"], "save": "pre" },
-    { "expect": "rpc", "method": "wemix_getBriocheBlockReward", "params": ["0x5"], "compare": "Greater", "is": "0" },
-    { "expect": "rpc", "method": "wemix_getBriocheBlockReward", "params": ["0xf"], "compare": "Less", "is": "$pre" }
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "180s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "wemix_getBriocheBlockReward",
+      "params": [
+        "0x5"
+      ],
+      "save": "pre"
+    },
+    {
+      "expect": "rpc",
+      "method": "wemix_getBriocheBlockReward",
+      "params": [
+        "0x5"
+      ],
+      "compare": "Greater",
+      "is": "0"
+    },
+    {
+      "expect": "rpc",
+      "method": "wemix_getBriocheBlockReward",
+      "params": [
+        "0xf"
+      ],
+      "compare": "Less",
+      "is": "$pre"
+    }
   ]
 }

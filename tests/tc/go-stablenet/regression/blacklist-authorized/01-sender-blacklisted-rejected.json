@@ -1,41 +1,112 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "sender-blacklisted-rejected",
+  "description": "RT-E-01 — 블랙리스트 계정이 Sender인 tx 거부 (ErrBlacklistedAccount) (원본 regression/blacklist-authorized/01-test-sender-blacklisted)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$acct",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundHash" } },
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0x0d321273", "of": ["$acct"], "save": "addBlData" } },
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "0x0000000000000000000000000000000000001004",
-                  "gas": "0x16e360",
-                  "data": "$addBlData",
-                  "save": "addHash" } },
-    { "read": { "source": "receiptLog", "hash": "$addHash",
-                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
-                "topic": 1, "save": "addPid" } },
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0x98951b56", "of": ["$addPid"], "save": "addApprove" } },
-    { "sendTx": { "on": "node2",
-                  "from": "node2",
-                  "to": "0x0000000000000000000000000000000000001004",
-                  "gas": "0x16e360",
-                  "data": "$addApprove",
-                  "save": "addApHash" } },
-    { "sendTx": { "on": "en1",
-                  "key": "$acctKey",
-                  "to": "0x00000000000000000000000000000000C0FFEE10",
-                  "value": "1",
-                  "expect": "reject", "reason": "blacklist" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$addApHash", "expected": "0x1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "sender-blacklisted-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$acct"
+      ],
+      "op": "abiCall",
+      "save": "addBlData",
+      "selector": "0x0d321273",
+      "source": "derive"
+    },
+    {
+      "data": "$addBlData",
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "0x16e360",
+      "on": "node1",
+      "save": "addHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "read",
+      "hash": "$addHash",
+      "save": "addPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$addPid"
+      ],
+      "op": "abiCall",
+      "save": "addApprove",
+      "selector": "0x98951b56",
+      "source": "derive"
+    },
+    {
+      "data": "$addApprove",
+      "do": "sendTx",
+      "from": "node2",
+      "gas": "0x16e360",
+      "on": "node2",
+      "save": "addApHash",
+      "to": "0x0000000000000000000000000000000000001004"
+    },
+    {
+      "do": "sendTx",
+      "expect": "reject",
+      "key": "$acctKey",
+      "on": "en1",
+      "reason": "blacklist",
+      "to": "0x00000000000000000000000000000000C0FFEE10",
+      "value": "1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$addApHash",
+      "is": "0x1"
+    }
   ]
 }

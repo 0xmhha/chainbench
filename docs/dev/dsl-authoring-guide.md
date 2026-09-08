@@ -6,19 +6,59 @@
 
 ---
 
-## 1. 두 가지 문서 형태
+## 1. 문서 한 장이 전부다
 
-DSL 문서는 `schemaVersion` 으로 갈린다. 어느 쪽을 쓸지는 **체인을 누가 세우는가**로 정해진다.
+`tests/tc` 아래 문서는 모두 `schemaVersion: "2"` 의 케이스다. 하나를 열면 그 테스트가
+**어떤 체인 위에서, 어떤 바이너리로, 어떤 genesis·config 로, 무엇을 검증하는지**가
+그 안에 다 있다. 다른 파일을 열 필요가 없다.
 
-`schemaVersion: "1"` 은 스펙이다. 문서 안에 `chain` 을 직접 적고, 이미 떠 있는 체인에 붙어 돌 수 있다. 노드를 멈추거나 바꾸는 동작은 쓰지 않는다.
+```json
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "legacy-transfer",
+  "description": "RT-A-2-01 — 레거시(type 0x00) 송금",
+  "requires": ["rpc"],
+  "env": {
+    "kind": "env",
+    "chain": "stablenet",
+    "binaries": { "default": "gstable" },
+    "topology": { "bp": 4 },
+    "keys": { "nodekeys": { "source": "preset", "ref": "keys/preset" } }
+  },
+  "steps": [ ... ]
+}
+```
 
-`schemaVersion: "2"` 는 케이스다. `env` 로 환경 선언을 이름으로 부르고, 그 선언대로 네트워크를 세운 뒤 돈다. 노드를 멈추고 살리고 바꾸는 동작은 여기서만 쓸 수 있다.
+`env` 는 문법상 두 가지를 받는다. 환경 선언 객체를 그대로 넣거나, 다른 파일에 있는
+선언의 id 를 문자열로 부르거나. **`tests/tc` 는 전부 객체를 넣는 쪽을 쓴다.** id 로
+부르면 파일만 봐서는 어떤 네트워크에서 도는지 알 수 없기 때문이다.
 
-환경 선언은 `kind: "env"` 인 별도 문서다. `tests/tc/env/` 에 두면 아래 어느 깊이의 케이스든 id 로 찾아 쓴다.
+env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — 검증자 4대와
+`keys/preset` 이다(`internal/testengine/compose.go`). `tests/tc` 는 그 기본값도 적어
+둔다. 기본값이 바뀌었을 때 테스트가 조용히 다른 네트워크에서 도는 일을 막기 위해서다.
 
-샘플은 `tests/tc/samples/` 에 있다. `01-sample-spec.json` 이 v1, `02-sample-case.json` 이 v2 이고 `tests/tc/env/sample.env.json` 이 그 환경이다.
+`description` 은 실행에 영향을 주지 않는다. 무엇을 검증하는 문서인지 사람이 읽으라고
+있는 자리다.
 
-> v2 는 모르는 필드를 거부한다. v1 은 통과시킨다. v2 케이스에 `description` 을 넣으면 파싱이 실패한다 — 설명은 파일 밖(README)에 적는다.
+### 한 번의 실행은 한 네트워크
+
+여러 케이스를 한 번에 넘기면 **첫 번째 케이스의 env 로 네트워크를 세운다**
+(`internal/testengine/suite.go`, `compositionOf(ctx, parsed[0], in)`). 나머지의 env 는
+구성에 쓰이지 않는다.
+
+그래서 함께 돌릴 케이스는 env 가 같아야 한다. **같은 폴더에 있다고 같은 것은 아니다.**
+`string-handling` 여섯 건은 각자 다른 `authorizedAccounts` 를 genesis 에 넣는 것이
+시험의 요점이라 여섯 개가 서로 다른 네트워크를 요구한다. 한 번에 넘기면 다섯 건이
+첫 번째의 genesis 위에서 돌아 틀린 답을 맞다고 보고한다.
+
+실행기가 이제 그것을 막는다. 넘어온 케이스들의 구성이 갈리면 네트워크를 세우기 전에
+어떤 케이스가 다른지 이름을 대고 거부한다(`sameComposition`). 그런 묶음은 나눠서
+돌려야 한다.
+
+샘플은 `tests/tc/samples/` 에 두 개 있다. `01-sample-spec.json` 은 값 전송 하나를
+확인하는 가장 작은 형태이고, `02-sample-case.json` 은 노드를 멈췄다 살리는 형태다.
+둘 다 다른 문서와 함께 `chainbench validate` 를 받으므로 낡으면 바로 드러난다.
 
 ---
 
@@ -37,6 +77,8 @@ v2 의 `is` 는 낮추는 단계에서 `expected` 로 바뀐다. 둘 다 통하�
 `expect` 는 자리에 따라 뜻이 다르다. 문장의 머리로 오면 판정이고, `do` 가 있는 문장에 붙으면 그 동작의 기대 결과다 — `{"do":"sendTx", "expect":"receipt"}` 처럼.
 
 `rpc` 는 `rpcCall` 의 별칭이다.
+
+v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 통일했으므로 새 문서는 v2 로 쓴다. 손에 v1 문서가 있으면 `chainbench migrate-spec <파일>` 이 v2 로 바꿔 준다.
 
 ---
 

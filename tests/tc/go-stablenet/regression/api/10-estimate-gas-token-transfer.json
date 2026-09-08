@@ -1,17 +1,41 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "estimate-gas-token-transfer",
+  "description": "RT-G-2-04 — eth_estimateGas (NativeCoinAdapter.transfer) (원본 regression/api/10-test-estimate-system-call)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "go-stablenet" },
-  "requires": ["rpc"],
-  "assertions": [
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "estimate-gas-token-transfer-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "go-stablenet"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
     {
-      "assert": "estimateGas",
-      "from": "node1",
-      "to": "0x0000000000000000000000000000000000001000",
-      "data": "0xa9059cbb00000000000000000000000000000000000000000000000000000000c0ffee0900000000000000000000000000000000000000000000000000000000000003e8",
       "compare": "GreaterOrEqual",
-      "expected": "21001"
+      "data": "0xa9059cbb00000000000000000000000000000000000000000000000000000000c0ffee0900000000000000000000000000000000000000000000000000000000000003e8",
+      "expect": "estimateGas",
+      "from": "node1",
+      "is": "21001",
+      "to": "0x0000000000000000000000000000000000001000"
     }
   ]
 }

@@ -2,12 +2,45 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "unsupported-system-contract-version",
-  "env": "unsupported-version-stablenet",
+  "description": "TC-5-2-06 — genesis 가 지원하지 않는 시스템 컨트랙트 버전을 선언하면 BohoBlock 을 커밋하지 못하고 멈춘다",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "unsupported-version-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "bohoBlock": 6,
+          "boho": {
+            "systemContracts": {
+              "govMinter": {
+                "address": "0x0000000000000000000000000000000000001003",
+                "version": "v99"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

@@ -1,97 +1,109 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "prealloc-preserved-across-boho",
+  "description": "TC-1-1-11/12: 하드포크가 prealloc 계정의 잔액·nonce 를 보존하고, 시스템 컨트랙트의 스토리지 슬롯도 그대로 둔다.",
   "applicableChains": "stablenet",
-  "chain": {
-    "name": "stablenet",
-    "binary": "gstable"
-  },
-  "hardforks": {
-    "boho": 10
-  },
   "requires": [
     "rpc"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "prealloc-preserved-across-boho-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "hardforks": {
+      "boho": 10
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
   "steps": [
     {
-      "waitFor": {
-        "source": "rpcCall",
-        "method": "eth_getBalance",
-        "params": [
-          "0x71562b71999873db5b286df957af199ec94617f7",
-          "0x1"
-        ],
-        "compare": "NotEqual",
-        "expected": "0x0",
-        "timeout": "60s",
-        "pollInterval": "1s"
-      }
+      "compare": "NotEqual",
+      "do": "waitFor",
+      "expected": "0x0",
+      "method": "eth_getBalance",
+      "params": [
+        "0x71562b71999873db5b286df957af199ec94617f7",
+        "0x1"
+      ],
+      "pollInterval": "1s",
+      "source": "rpcCall",
+      "timeout": "60s"
     },
     {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_getBalance",
-        "params": [
-          "0x71562b71999873db5b286df957af199ec94617f7",
-          "0x1"
-        ],
-        "save": "balEarly"
-      }
+      "do": "read",
+      "method": "eth_getBalance",
+      "params": [
+        "0x71562b71999873db5b286df957af199ec94617f7",
+        "0x1"
+      ],
+      "save": "balEarly",
+      "source": "rpcCall"
     },
     {
-      "read": {
-        "source": "rpcCall",
-        "method": "eth_getStorageAt",
-        "params": [
-          "0x0000000000000000000000000000000000001003",
-          "0x0000000000000000000000000000000000000000000000000000000000000004",
-          "0x1"
-        ],
-        "save": "storagePreBoho"
-      }
+      "do": "read",
+      "method": "eth_getStorageAt",
+      "params": [
+        "0x0000000000000000000000000000000000001003",
+        "0x0000000000000000000000000000000000000000000000000000000000000004",
+        "0x1"
+      ],
+      "save": "storagePreBoho",
+      "source": "rpcCall"
     },
     {
-      "waitFor": {
-        "source": "blockNumber",
-        "compare": "GreaterOrEqual",
-        "expected": "11",
-        "timeout": "120s",
-        "pollInterval": "2s"
-      }
-    }
-  ],
-  "assertions": [
+      "compare": "GreaterOrEqual",
+      "do": "waitFor",
+      "expected": "11",
+      "pollInterval": "2s",
+      "source": "blockNumber",
+      "timeout": "120s"
+    },
     {
-      "assert": "rpcCall",
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "$balEarly",
       "method": "eth_getBalance",
       "params": [
         "0x71562b71999873db5b286df957af199ec94617f7",
         "latest"
-      ],
-      "compare": "Equal",
-      "expected": "$balEarly"
+      ]
     },
     {
-      "assert": "rpcCall",
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "0x0",
       "method": "eth_getTransactionCount",
       "params": [
         "0x71562b71999873db5b286df957af199ec94617f7",
         "latest"
-      ],
-      "compare": "Equal",
-      "expected": "0x0"
+      ]
     },
     {
-      "assert": "rpcCall",
+      "compare": "Equal",
+      "expect": "rpcCall",
+      "is": "$storagePreBoho",
       "method": "eth_getStorageAt",
       "params": [
         "0x0000000000000000000000000000000000001003",
         "0x0000000000000000000000000000000000000000000000000000000000000004",
         "latest"
-      ],
-      "compare": "Equal",
-      "expected": "$storagePreBoho"
+      ]
     }
-  ],
-  "description": "TC-1-1-11/12: 하드포크가 prealloc 계정의 잔액·nonce 를 보존하고, 시스템 컨트랙트의 스토리지 슬롯도 그대로 둔다."
+  ]
 }

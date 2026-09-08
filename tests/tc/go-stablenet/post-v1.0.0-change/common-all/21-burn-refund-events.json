@@ -1,47 +1,137 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "burn-refund-events",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "sendTx": { "on": "node4",
-                  "from": "node4",
-                  "to": "0x0000000000000000000000000000000000001003",
-                  "gas": "0xb71b0",
-                  "value": "0xde0b6b3a7640000",
-                  "data": "0x64e2a8fc000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001800000000000000000000000008eb79036bc0f3aba136ef18b3a2fb8c1188939a60000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000006553f10000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000000a77642d6576656e74733200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b7265662d6576656e74733200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000106275726e2d726566756e642d7465737400000000000000000000000000000000",
-                  "save": "burnHash" } },
-    { "read": { "source": "receiptLog", "hash": "$burnHash",
-                "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a",
-                "topic": 1, "save": "burnPid" } },
-    { "read": { "source": "derive", "op": "abiCall", "selector": "0xe0a8f6f5", "of": ["$burnPid"], "save": "cancelData" } },
-    { "sendTx": { "on": "node4",
-                  "from": "node4",
-                  "to": "0x0000000000000000000000000000000000001003",
-                  "gas": "0xb71b0", "data": "$cancelData", "save": "cancelHash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$cancelHash"], "select": "blockNumber", "save": "cancelBlk" } },
-    { "sendTx": { "on": "node4",
-                  "from": "node4",
-                  "to": "0x0000000000000000000000000000000000001003",
-                  "gas": "0xb71b0", "data": "0x936834b9", "save": "claimHash" } },
-    { "read": { "source": "rpcCall", "method": "eth_getTransactionReceipt",
-                "params": ["$claimHash"], "select": "blockNumber", "save": "claimBlk" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$burnHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$cancelHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$claimHash", "expected": "0x1" },
-    { "assert": "logs",
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "burn-refund-events-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "data": "0x64e2a8fc000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000001800000000000000000000000008eb79036bc0f3aba136ef18b3a2fb8c1188939a60000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000000000000000006553f10000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000000a77642d6576656e74733200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b7265662d6576656e74733200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000106275726e2d726566756e642d7465737400000000000000000000000000000000",
+      "do": "sendTx",
+      "from": "node4",
+      "gas": "0xb71b0",
+      "on": "node4",
+      "save": "burnHash",
+      "to": "0x0000000000000000000000000000000000001003",
+      "value": "0xde0b6b3a7640000"
+    },
+    {
+      "do": "read",
+      "hash": "$burnHash",
+      "save": "burnPid",
+      "source": "receiptLog",
+      "topic": 1,
+      "topic0": "0x830652010a654c24b39890c16f53e6f6179becc61702ecd9a8c88461c2ff941a"
+    },
+    {
+      "do": "read",
+      "of": [
+        "$burnPid"
+      ],
+      "op": "abiCall",
+      "save": "cancelData",
+      "selector": "0xe0a8f6f5",
+      "source": "derive"
+    },
+    {
+      "data": "$cancelData",
+      "do": "sendTx",
+      "from": "node4",
+      "gas": "0xb71b0",
+      "on": "node4",
+      "save": "cancelHash",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$cancelHash"
+      ],
+      "save": "cancelBlk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "data": "0x936834b9",
+      "do": "sendTx",
+      "from": "node4",
+      "gas": "0xb71b0",
+      "on": "node4",
+      "save": "claimHash",
+      "to": "0x0000000000000000000000000000000000001003"
+    },
+    {
+      "do": "read",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$claimHash"
+      ],
+      "save": "claimBlk",
+      "select": "blockNumber",
+      "source": "rpcCall"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$burnHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$cancelHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$claimHash",
+      "is": "0x1"
+    },
+    {
       "address": "0x0000000000000000000000000000000000001003",
-      "topics": ["0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062"],
-      "fromBlock": "$cancelBlk", "toBlock": "$cancelBlk",
-      "select": "count", "compare": "GreaterOrEqual", "expected": "1" },
-    { "assert": "logs",
+      "compare": "GreaterOrEqual",
+      "expect": "logs",
+      "fromBlock": "$cancelBlk",
+      "is": "1",
+      "select": "count",
+      "toBlock": "$cancelBlk",
+      "topics": [
+        "0x116044c8ec23de4088f4a50cf4f8a504ec887c439452af3be4f57f6c77bf2062"
+      ]
+    },
+    {
       "address": "0x0000000000000000000000000000000000001003",
-      "topics": ["0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24"],
-      "fromBlock": "$claimBlk", "toBlock": "$claimBlk",
-      "select": "count", "compare": "GreaterOrEqual", "expected": "1" }
+      "compare": "GreaterOrEqual",
+      "expect": "logs",
+      "fromBlock": "$claimBlk",
+      "is": "1",
+      "select": "count",
+      "toBlock": "$claimBlk",
+      "topics": [
+        "0x9543fa265d2616af3e7021d8b5a7d1271eb7bba960908675ce3bddaf60c1af24"
+      ]
+    }
   ]
 }

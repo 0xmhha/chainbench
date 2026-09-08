@@ -1,37 +1,98 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "fee-delegated-transfer",
+  "description": "RT-D-01 — FeeDelegateDynamicFeeTx (type 0x16) 정상 처리 (원본 regression/fee-delegation/01-test-fee-delegate-normal)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable",
-             "genesisOverlay": { "config": { "applepieBlock": 0 } } },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "sender", "saveKey": "senderKey" } },
-    { "newAccount": { "save": "feePayer", "saveKey": "feePayerKey" } },
-
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$sender",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundSenderHash" } },
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$feePayer",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundFeeHash" } },
-
-    { "sendTx": { "on": "en1",
-                  "key": "$senderKey",
-                  "feePayerKey": "$feePayerKey",
-                  "to": "0x00000000000000000000000000000000C0FFEE02",
-                  "value": "1000000000000000000",
-                  "save": "hash" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundSenderHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$fundFeeHash", "expected": "0x1" },
-    { "assert": "txStatus", "hash": "$hash", "expected": "0x1" },
-    { "assert": "balanceAt", "address": "0x00000000000000000000000000000000C0FFEE02",
-      "compare": "Equal", "expected": "1000000000000000000" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fee-delegated-transfer-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "genesis": {
+      "overlay": {
+        "config": {
+          "applepieBlock": 0
+        }
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "sender",
+      "saveKey": "senderKey"
+    },
+    {
+      "do": "newAccount",
+      "save": "feePayer",
+      "saveKey": "feePayerKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundSenderHash",
+      "to": "$sender",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundFeeHash",
+      "to": "$feePayer",
+      "value": "10000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "feePayerKey": "$feePayerKey",
+      "key": "$senderKey",
+      "on": "en1",
+      "save": "hash",
+      "to": "0x00000000000000000000000000000000C0FFEE02",
+      "value": "1000000000000000000"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundSenderHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundFeeHash",
+      "is": "0x1"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$hash",
+      "is": "0x1"
+    },
+    {
+      "address": "0x00000000000000000000000000000000C0FFEE02",
+      "compare": "Equal",
+      "expect": "balanceAt",
+      "is": "1000000000000000000"
+    }
   ]
 }

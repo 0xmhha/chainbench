@@ -252,6 +252,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if err := sameChain(parsed); err != nil {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
 	}
+	if err := sameComposition(parsed); err != nil {
+		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
+	}
 	// Pre-flight before anything is allocated or written: a spec that names an
 	// action/assertion/reader/reference that does not resolve, or a malformed
 	// node selector, fails here rather than after a network is composed.

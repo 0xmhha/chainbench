@@ -2,12 +2,30 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "fault-txpool-leader-change",
-  "env": "fault-stablenet",
+  "description": "Verify pending transactions survive leader node failure and get processed by remaining validators (원본 fault/txpool-leader-change.sh)",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "fault-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

@@ -1,22 +1,79 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "gas-price-equals-basefee-plus-tip",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "go-stablenet" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "gasPrice", "save": "gp" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["latest", false], "select": "number", "save": "n" } },
-    { "read": { "source": "rpcCall", "method": "eth_getBlockByNumber",
-                "params": ["$n", false], "select": "baseFeePerGas", "save": "base" } },
-    { "read": { "source": "rpcCall", "method": "istanbul_getWbftExtraInfo",
-                "params": ["$n"], "select": "gasTip", "save": "tip" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "gas-price-equals-basefee-plus-tip-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "go-stablenet"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
     {
-      "assert": "derive", "op": "sum", "of": ["$base", "$tip"],
-      "compare": "Equal", "expected": "$gp"
+      "do": "read",
+      "save": "gp",
+      "source": "gasPrice"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "save": "n",
+      "select": "number",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "$n",
+        false
+      ],
+      "save": "base",
+      "select": "baseFeePerGas",
+      "source": "rpcCall"
+    },
+    {
+      "do": "read",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$n"
+      ],
+      "save": "tip",
+      "select": "gasTip",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "Equal",
+      "expect": "derive",
+      "is": "$gp",
+      "of": [
+        "$base",
+        "$tip"
+      ],
+      "op": "sum"
     }
   ]
 }

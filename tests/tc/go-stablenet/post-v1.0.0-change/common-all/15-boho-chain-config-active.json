@@ -1,12 +1,48 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "boho-chain-config-active",
+  "description": "TC-4-1-01 — Boho hardfork chain config verification (원본 post-v1.0.0-change/common-all/15-test-chain-config-boho)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "assertions": [
-    { "assert": "blockNumber", "compare": "Greater", "expected": "0" },
-    { "assert": "chainId", "compare": "Greater", "expected": "0" },
-    { "assert": "baseFee", "compare": "Greater", "expected": "0" }
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "boho-chain-config-active-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "compare": "Greater",
+      "expect": "blockNumber",
+      "is": "0"
+    },
+    {
+      "compare": "Greater",
+      "expect": "chainId",
+      "is": "0"
+    },
+    {
+      "compare": "Greater",
+      "expect": "baseFee",
+      "is": "0"
+    }
   ]
 }

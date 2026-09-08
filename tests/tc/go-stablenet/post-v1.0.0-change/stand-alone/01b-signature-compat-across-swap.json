@@ -2,12 +2,32 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "signature-compat-across-swap",
-  "env": "signature-compat-stablenet",
+  "description": "TC-3-1-04 — 노드가 다른 바이너리로 재기동해도 기존 tx 의 blockNumber·status·from·to 가 보존된다",
   "requires": [
     "rpc",
     "consensus",
     "process"
   ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "signature-compat-stablenet",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable",
+      "upgrade": "${GSTABLE_UPGRADE_BIN:-gstable}"
+    },
+    "topology": {
+      "bp": 4,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
   "steps": [
     {
       "do": "waitBlock",

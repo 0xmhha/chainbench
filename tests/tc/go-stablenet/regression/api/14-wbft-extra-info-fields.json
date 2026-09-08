@@ -1,14 +1,59 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "wbft-extra-info-fields",
+  "description": "RT-G-3-04 — istanbul_getWbftExtraInfo (원본 regression/api/14-test-get-wbft-extra)",
   "applicableChains": "stablenet,wbft",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "read": { "source": "rpcCall", "method": "eth_blockNumber", "save": "head" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$head"], "select": "committedSeal", "compare": "NotNil", "expected": null },
-    { "assert": "rpcCall", "method": "istanbul_getWbftExtraInfo", "params": ["$head"], "select": "preparedSeal", "compare": "NotNil", "expected": null }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-extra-info-fields-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "read",
+      "method": "eth_blockNumber",
+      "save": "head",
+      "source": "rpcCall"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$head"
+      ],
+      "select": "committedSeal"
+    },
+    {
+      "compare": "NotNil",
+      "expect": "rpcCall",
+      "is": null,
+      "method": "istanbul_getWbftExtraInfo",
+      "params": [
+        "$head"
+      ],
+      "select": "preparedSeal"
+    }
   ]
 }

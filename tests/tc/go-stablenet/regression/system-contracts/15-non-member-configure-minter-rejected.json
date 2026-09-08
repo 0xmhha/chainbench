@@ -1,23 +1,60 @@
 {
-  "schemaVersion": "1",
+  "schemaVersion": "2",
+  "kind": "case",
   "id": "non-member-configure-minter-rejected",
+  "description": "RT-F-4-04 — 비멤버 계정의 GovMasterMinter.proposeConfigureMinter 호출 거부 (원본 regression/system-contracts/15-test-non-member-rejected)",
   "applicableChains": "stablenet",
-  "chain": { "name": "stablenet", "binary": "gstable" },
-  "requires": ["rpc"],
-  "steps": [
-    { "newAccount": { "save": "acct", "saveKey": "acctKey" } },
-    { "sendTx": { "on": "node1",
-                  "from": "node1",
-                  "to": "$acct",
-                  "value": "10000000000000000000", "gas": "21000",
-                  "save": "fundHash" } },
-    { "sendTx": { "on": "en1",
-                  "key": "$acctKey",
-                  "to": "0x0000000000000000000000000000000000001002",
-                  "data": "0x898420a900000000000000000000000000000000000000000000000000000000c0ffee410000000000000000000000000000000000000000000000008ac7230489e80000",
-                  "expect": "reject" } }
+  "requires": [
+    "rpc"
   ],
-  "assertions": [
-    { "assert": "txStatus", "hash": "$fundHash", "expected": "0x1" }
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "non-member-configure-minter-rejected-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc"
+    ]
+  },
+  "steps": [
+    {
+      "do": "newAccount",
+      "save": "acct",
+      "saveKey": "acctKey"
+    },
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "21000",
+      "on": "node1",
+      "save": "fundHash",
+      "to": "$acct",
+      "value": "10000000000000000000"
+    },
+    {
+      "data": "0x898420a900000000000000000000000000000000000000000000000000000000c0ffee410000000000000000000000000000000000000000000000008ac7230489e80000",
+      "do": "sendTx",
+      "expect": "reject",
+      "key": "$acctKey",
+      "on": "en1",
+      "to": "0x0000000000000000000000000000000000001002"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$fundHash",
+      "is": "0x1"
+    }
   ]
 }
