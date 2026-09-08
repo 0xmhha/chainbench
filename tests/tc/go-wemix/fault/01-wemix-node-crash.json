@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-node-crash",
+  "description": "Stop one wemix (poa) producer and verify block production continues, then restart it (WA25 — wemix had no fault coverage).",
+  "requires": ["rpc", "consensus", "process"],
+  "env": {
+    "schemaVersion": "2", "kind": "env", "id": "wemix-fault", "chain": "wemix",
+    "binaries": { "default": "gwemix" },
+    "topology": { "bp": 4 },
+    "keys": { "nodekeys": { "source": "preset", "ref": "keys/preset" } }
+  },
+  "steps": [
+    { "do": "waitBlock", "target": 3, "timeout": "300s" },
+    { "do": "stopNode", "on": "node3" },
+    { "expect": "blockAdvance", "on": "node1", "timeout": "180s", "pollInterval": "3s" },
+    { "do": "restartNode", "on": "node3" }
+  ]
+}
