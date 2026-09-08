@@ -36,9 +36,10 @@ func Unresolved(s dsl.Spec, reg Registry) []string {
 		}
 		args := dsl.ArgsOf(entry[name])
 		checkRefs(args, bound, seen)
-		// A read action names its source by string too, so an unknown one would
-		// only surface once a network is up. Catch it here with the rest.
-		if name == ActionRead {
+		// read and waitFor both name their source by string, so an unknown or
+		// missing one would only surface once a network is up. Catch it here with
+		// the rest.
+		if name == ActionRead || name == ActionWaitFor {
 			source, _ := args["source"].(string)
 			if source == "" {
 				seen["source:(missing)"] = true

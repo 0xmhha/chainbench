@@ -47,10 +47,14 @@ type Registry interface {
 // Reader reads one value from a target node for the spec's arguments.
 type Reader func(ctx context.Context, c *rpc.Client, spec map[string]any) (any, error)
 
-// ActionRead is the one action name the grammar itself knows: a read names
-// its source by string, and Unresolved checks that source against the
-// registered readers offline.
-const ActionRead = "read"
+// ActionRead and ActionWaitFor are the action names the grammar itself knows:
+// each names a read source by string, and Unresolved checks that source
+// against the registered readers offline so a typo fails before a network is
+// up rather than in the middle of a live run.
+const (
+	ActionRead    = "read"
+	ActionWaitFor = "waitFor"
+)
 
 // NodeControl stops and restarts individual node processes. It is the boundary
 // between the DSL and process management: the local engine wires an

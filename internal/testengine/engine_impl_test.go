@@ -9,7 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/report"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
 
@@ -184,5 +186,79 @@ func TestEngine_MalformedSpecBlocked(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, "session.json")); err != nil {
 		t.Fatalf("session.json missing: %v", err)
+	}
+}
+
+// TestEngine_RecordsArtifactsManifest pins WA11: the composition manifest the
+// run was given is written into each test's artifacts.json, so a verdict is
+// traceable to the genesis it ran against rather than the field being empty.
+func TestEngine_RecordsArtifactsManifest(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	deps := h.deps(t)
+	deps.Artifacts = []session.ArtifactRef{{Kind: "genesis", Ref: "genesis.json"}}
+	e := testengine.New(deps)
+
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	var found string
+	_ = filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() && filepath.Base(p) == "artifacts.json" {
+			found = p
+		}
+		return nil
+	})
+	if found == "" {
+		t.Fatal("no artifacts.json written for the test (WA11)")
+	}
+	b, err := os.ReadFile(found)
+	if err != nil {
+		t.Fatalf("read artifacts.json: %v", err)
+	}
+	var got session.TestArtifacts
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("unmarshal artifacts.json: %v", err)
+	}
+	if len(got.Refs) != 1 || got.Refs[0].Kind != "genesis" || got.Refs[0].Ref != "genesis.json" {
+		t.Fatalf("artifacts manifest = %+v, want a single genesis ref", got.Refs)
+	}
+}
+
+// TestEngine_GeneratesReport pins WA23: a full engine run (compose -> run ->
+// record) generates report.json without a live binary, so the
+// compose->run->report pipeline has non-live CI coverage rather than only the
+// GSTABLE_BIN-gated live tests.
+func TestEngine_GeneratesReport(t *testing.T) {
+	h := &harness{fpByChain: map[string]session.Fingerprint{"wbft": "aaaaaaaaaaaa0000"}}
+	e := testengine.New(h.deps(t))
+
+	root, err := e.Run(context.Background(), [][]byte{specJSON("T1", "wbft"), specJSON("T2", "wbft")})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	rep, err := report.Read(root)
+	if err != nil {
+		t.Fatalf("report.Read: %v (a run must generate report.json)", err)
+	}
+	if len(rep.Tests) != 2 || rep.Summary.Pass != 2 {
+		t.Fatalf("report = %d tests, pass=%d; want 2 tests, 2 pass", len(rep.Tests), rep.Summary.Pass)
+	}
+}
+
+// TestAttachWorkspaceRun_RefusesNoWorkspace pins WA10's attach entry: it fails
+// cleanly (no panic) when given no workspace or one that composed nothing,
+// rather than attaching to nothing. The gate/evidence wiring itself is the same
+// wiredAttachEngine the compose path uses, covered by the engine PreSpec/OnFail
+// tests above.
+func TestAttachWorkspaceRun_RefusesNoWorkspace(t *testing.T) {
+	sd := chainsetup.Deps{Clock: func() time.Time { return time.Unix(0, 0).UTC() }}
+	if _, err := testengine.AttachWorkspaceRun(context.Background(), sd, testengine.AttachWorkspaceIn{}); err == nil {
+		t.Fatal("attach with no workspace must fail")
+	}
+	if _, err := testengine.AttachWorkspaceRun(context.Background(), sd, testengine.AttachWorkspaceIn{
+		DataDir: t.TempDir(), Chain: "wbft",
+	}); err == nil {
+		t.Fatal("attach to a workspace that composed nothing must fail, not attach to nothing")
 	}
 }

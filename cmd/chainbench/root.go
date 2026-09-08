@@ -8,10 +8,12 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/chaincmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/lifecyclecmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/networkcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/nodecmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/reportcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/suitecmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/testcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/txcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/upgradecmd"
 )
@@ -42,7 +44,9 @@ func newRootCmd() *cobra.Command {
 		keyringcmd.NewValidator(),
 		suitecmd.NewValidate(),
 		suitecmd.NewMigrateSpec(),
+		testcmd.New(),
 		nodecmd.New(),
+		networkcmd.New(),
 		lifecyclecmd.NewConsensus(),
 		upgradecmd.NewHardfork(),
 		upgradecmd.New(),

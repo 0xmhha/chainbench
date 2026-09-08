@@ -117,6 +117,13 @@ func TestPeering_ValidateRejectsWhatCannotRun(t *testing.T) {
 	if err := node.Mesh.Validate(flat, nil); err != nil {
 		t.Fatalf("mesh on a two-tier network: %v", err)
 	}
+
+	// The mirror of the proxied-without-pn rejection: a pn declared under mesh
+	// is a tier that will not take effect, so mesh must refuse it rather than
+	// silently let endpoints dial producers (WA9). m carries a pn.
+	if err := node.Mesh.Validate(m, nil); err == nil || !strings.Contains(err.Error(), "mesh") {
+		t.Fatalf("mesh with a pn must be refused, got %v", err)
+	}
 }
 
 func TestParsePeering(t *testing.T) {

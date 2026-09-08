@@ -70,6 +70,78 @@ func testEnv(t *testing.T) session.Environment {
 	return env
 }
 
+// captureOnAction records the "on" selector each step is dispatched with, so a
+// test can assert how a statement was routed.
+type captureOnAction struct{ seen *[]string }
+
+func (a captureOnAction) Do(_ context.Context, ac *interp.ActionCtx) error {
+	on, _ := ac.Args["on"].(string)
+	*a.seen = append(*a.seen, on)
+	return nil
+}
+
+// captureDeadlineAction records whether the ctx it ran under carried a deadline.
+type captureDeadlineAction struct{ hadDeadline *bool }
+
+func (a captureDeadlineAction) Do(ctx context.Context, _ *interp.ActionCtx) error {
+	_, ok := ctx.Deadline()
+	*a.hadDeadline = ok
+	return nil
+}
+
+// TestRun_CaseTimeoutBoundsTheRun pins WA15: a case-level timeout puts a
+// deadline on the whole run's context, so a hanging step fails within the
+// declared budget. Before the fix timeouts was parsed but never consulted.
+func TestRun_CaseTimeoutBoundsTheRun(t *testing.T) {
+	reg := interp.NewRegistry()
+	var hadDeadline bool
+	reg.RegisterAction("tx", captureDeadlineAction{hadDeadline: &hadDeadline})
+	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
+
+	spec := dsl.Spec{
+		Timeouts:   map[string]string{"case": "10m"},
+		Steps:      []map[string]any{{"tx": map[string]any{}}},
+		Assertions: []map[string]any{{"assert": "Len"}},
+	}
+	rec := &fakeRecord{}
+	it := interp.NewInterpreter(interp.Deps{Actions: reg})
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if !hadDeadline {
+		t.Fatal("a case timeout must put a deadline on the run's context")
+	}
+}
+
+// TestRun_DefaultOnRoutesStatements pins WA14: a case-level default target
+// routes every statement that names none, while a statement with its own on
+// still wins. Before the fix defaultOn was parsed but never consulted, so both
+// steps silently went to the primary node.
+func TestRun_DefaultOnRoutesStatements(t *testing.T) {
+	reg := interp.NewRegistry()
+	var seen []string
+	reg.RegisterAction("tx", captureOnAction{seen: &seen})
+	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
+
+	spec := dsl.Spec{
+		DefaultOn: "bp3",
+		Steps: []map[string]any{
+			{"tx": map[string]any{}},            // no on -> the case default
+			{"tx": map[string]any{"on": "bp1"}}, // its own on wins
+		},
+		Assertions: []map[string]any{{"assert": "Len"}},
+	}
+	rec := &fakeRecord{}
+	it := interp.NewInterpreter(interp.Deps{Actions: reg})
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	want := []string{"bp3", "bp1"}
+	if len(seen) != 2 || seen[0] != want[0] || seen[1] != want[1] {
+		t.Fatalf("routed on = %v, want %v (defaultOn routes the first, explicit on wins the second)", seen, want)
+	}
+}
+
 func TestRun_PassFlow(t *testing.T) {
 	reg := interp.NewRegistry()
 	stepRan, postRan := false, false
@@ -120,6 +192,10 @@ func TestRun_PreFailBlocked(t *testing.T) {
 	if stepRan {
 		t.Fatal("steps must not run after pre-action failure")
 	}
+	// WA12: a reader of status.json alone must learn why it blocked.
+	if rec.reason == "" {
+		t.Fatal("a blocked pre-action must record a reason")
+	}
 }
 
 func TestRun_AssertFail(t *testing.T) {
@@ -132,6 +208,10 @@ func TestRun_AssertFail(t *testing.T) {
 	status, _ := it.Run(context.Background(), spec, testEnv(t), rec)
 	if status != session.StatusFail {
 		t.Fatalf("status = %v, want fail", status)
+	}
+	// WA12: a failed case records why, not just that it failed.
+	if rec.reason == "" {
+		t.Fatal("a failed case must record a reason")
 	}
 }
 
@@ -266,5 +346,33 @@ func TestRun_DoFailureStopsSequence(t *testing.T) {
 	}
 	if !onFailRan {
 		t.Fatal("onFail diagnostics must run after a do failure")
+	}
+}
+
+// TestRun_OnEachStepFansOut pins WA18: a do step's onEach runs the action once
+// per selected node, mirroring how an assertion checks each. Before the fix the
+// action path read only "on", so onEach was silently ignored and the step ran
+// once against the primary node.
+func TestRun_OnEachStepFansOut(t *testing.T) {
+	reg := interp.NewRegistry()
+	var seen []string
+	reg.RegisterAction("tx", captureOnAction{seen: &seen})
+	reg.RegisterAssertion("Len", fakeAssertion{pass: true})
+
+	spec := dsl.Spec{
+		Steps:      []map[string]any{{"tx": map[string]any{"onEach": []any{"node1", "node2"}}}},
+		Assertions: []map[string]any{{"assert": "Len"}},
+	}
+	rec := &fakeRecord{}
+	it := interp.NewInterpreter(interp.Deps{Actions: reg})
+	if _, err := it.Run(context.Background(), spec, testEnv(t), rec); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	want := []string{"node1", "node2"}
+	if len(seen) != 2 || seen[0] != want[0] || seen[1] != want[1] {
+		t.Fatalf("fan-out targets = %v, want %v (onEach runs the action per node)", seen, want)
+	}
+	if rec.steps != 2 {
+		t.Fatalf("recorded %d steps, want 2 (one per fanned-out node)", rec.steps)
 	}
 }

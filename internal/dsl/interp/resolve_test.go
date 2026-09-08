@@ -46,6 +46,21 @@ func TestUnresolved(t *testing.T) {
 			t.Fatalf("Unresolved = %v, want %v", got, want)
 		}
 	})
+
+	// waitFor names a read source by string exactly as read does, so an unknown
+	// one must be caught offline too — before the fix only read was checked, and
+	// a typo'd waitFor source failed only once a live network was up (WA13).
+	t.Run("waitFor source validated", func(t *testing.T) {
+		s := dsl.Spec{
+			Steps:      []map[string]any{{"waitFor": map[string]any{"source": "ghostReader"}}},
+			Assertions: []map[string]any{{"assert": "chainId"}},
+		}
+		got := interp.Unresolved(s, reg)
+		want := []string{"source:ghostReader"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("Unresolved = %v, want %v (waitFor source must be checked offline like read)", got, want)
+		}
+	})
 }
 
 // A v2 case saves a value in a do step and references it from a later expect

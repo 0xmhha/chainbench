@@ -158,6 +158,30 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_NodeTablePnSelectsProxied pins WA9: a pn declared in a node
+// table means the same proxy tier as a pn in the count form, so the composition
+// must select proxied peering. Under mesh the tier would do nothing and
+// endpoints would dial producers directly.
+func TestCompositionOf_NodeTablePnSelectsProxied(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "topology":{"nodes":[
+	    {"role":"bp"},
+	    {"role":"pn"},
+	    {"role":"en"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil {
+		t.Fatal("a node table composes through the workspace")
+	}
+	if comp.up.Peering != "proxied" {
+		t.Errorf("peering = %q, want proxied for a node table that declares a pn", comp.up.Peering)
+	}
+}
+
 // TestCompositionOf_SurfaceDefaultsConverge pins the E9 parity guarantee: both
 // the CLI and MCP pass zero-values when a knob is unset, so compositionOf is the
 // single source of the canonical defaults (validators, keys). Passing the
@@ -254,5 +278,58 @@ func TestExpand_DefaultsAndVars(t *testing.T) {
 		if got := expand(in); got != want {
 			t.Errorf("expand(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// TestCompositionOf_EnvTargetPlaces pins WA19: the env's target selects where
+// the network is placed, threaded into the composition rather than only feeding
+// the reuse fingerprint (which left a declared target moving the key but not the
+// nodes).
+func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"target":"srv://bp1/data"}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.Target.Server != "bp1" || comp.up.Target.DataRoot != "/data" {
+		t.Fatalf("env target not threaded to placement: %+v", comp.up.Target)
+	}
+
+	// A malformed target fails composition rather than being ignored.
+	bad := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"target":"srv://"}`)
+	if _, err := compositionOf(context.Background(), bad, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
+		t.Fatal("a malformed env target must fail composition")
+	}
+}
+
+// TestCompositionOf_HandoffRejectsEnvComposeFields pins WA20: a handoff composes
+// from its profile and template, so env-level topology/hardforks/launch/config
+// have nowhere to go and are refused rather than silently dropped.
+func TestCompositionOf_HandoffRejectsEnvComposeFields(t *testing.T) {
+	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/g.json")
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	  "binaries":{"producer":"gwemix","validator":"gwbft"},
+	  "topology":{"validators":4},
+	  "upgrade":{"profile":"p.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
+	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
+		t.Fatal("a handoff env that also declares a topology must be refused, not silently dropped")
+	}
+}
+
+// TestCompositionOf_EnvManifestThreads pins WA21: an env's manifest and genesis
+// template reach the composition, so a DSL spec can run an external chain on a
+// built-in family — the capability was CLI-only before.
+func TestCompositionOf_EnvManifestThreads(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "manifest":"/chains/acme.json","genesisTemplate":"/chains/acme-genesis.json"}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.ManifestPath != "/chains/acme.json" || comp.up.TemplatePath != "/chains/acme-genesis.json" {
+		t.Fatalf("manifest/template not threaded: %+v", comp.up)
 	}
 }

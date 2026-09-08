@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/dsl"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // A suite composes the network its specs declare. The declaration is the
@@ -104,6 +105,13 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if in.ChainID != 0 || in.NetworkID != 0 || len(in.LaunchOpts) > 0 || in.KeysSource != "" {
 			return composition{}, fmt.Errorf("a handoff composes from its declaration; genesis, launch, and key-source overrides do not apply")
 		}
+		// A handoff composes its network from the profile and template, so
+		// env-level hardforks, topology, launch, and config have nowhere to go.
+		// Refuse them loudly rather than parse an upgrade env that carries them
+		// and silently drop half its declaration.
+		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
+			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply")
+		}
 		return composition{handoff: &upgrade.HandoffInputs{
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
@@ -158,6 +166,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	up := &chainsetup.NetUpIn{
 		DataDir: in.DataDir, Stage: chainsetup.UpStart,
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
+		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
 		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
@@ -171,11 +180,38 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
 	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
 	// endpoints never dial a producer) rather than the default full mesh — a pn
-	// under mesh would defeat its own purpose.
-	if proxies > 0 {
+	// under mesh would defeat its own purpose. A pn is declared either as a
+	// count (count form) or as a node-table role, and both mean the same tier.
+	if proxies > 0 || topologyHasProxy(inlineTopo) {
 		up.Peering = string(node.Proxied)
 	}
+	// The env's target selects where the network is placed (local data root, a
+	// server-set entry, or an ssh host). It fed only the reuse fingerprint
+	// before, so a declared target shifted the key without moving the nodes;
+	// thread it to the composition so it actually places them.
+	if spec.Placement != "" {
+		tgt, perr := resource.Parse(spec.Placement)
+		if perr != nil {
+			return composition{}, fmt.Errorf("testengine: env target %q: %w", spec.Placement, perr)
+		}
+		up.Target = tgt
+	}
 	return composition{up: up}, nil
+}
+
+// topologyHasProxy reports whether a node-table topology declares a pn, so the
+// composer selects the proxied graph for it exactly as it does for the count
+// form. It is nil-safe: the count form passes no table.
+func topologyHasProxy(t *node.Topology) bool {
+	if t == nil {
+		return false
+	}
+	for _, n := range t.Nodes {
+		if node.Is(n.NodeRole(), node.RolePN) {
+			return true
+		}
+	}
+	return false
 }
 
 // inlineTopologyOf builds an in-memory node table from a topology.nodes[]

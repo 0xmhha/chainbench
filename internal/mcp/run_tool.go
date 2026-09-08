@@ -34,6 +34,16 @@ func runTool() Tool {
 					"type":        "boolean",
 					"description": "the network in dataDir is already up: run against it, with the capabilities its composition advertised, instead of composing again",
 				},
+				"keepUp": map[string]any{
+					"type":        "boolean",
+					"description": "compose mode: leave the network running after the tests so it can be driven with follow-on rpc/tx/attach calls (default: stop it)",
+				},
+				"docker":     map[string]any{"type": "boolean"},
+				"waitBlocks": map[string]any{"type": "integer"},
+				"networkId":  map[string]any{"type": "integer"},
+				"serverSet":  map[string]any{"type": "string", "description": "compose mode: server-set file selecting where the nodes run"},
+				"server":     map[string]any{"type": "string", "description": "compose mode: server name within the server set"},
+				"allServers": map[string]any{"type": "boolean", "description": "compose mode: spread the network across every server in the set"},
 			},
 		},
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
@@ -112,6 +122,18 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 		Binary:      argString(args, "binary", ""),
 		Validators:  argInt(args, "validators", 0),
 		KeysDir:     argString(args, "keysDir", ""),
+		// Parity with the CLI `run` flags (WA3): leave the network up for
+		// follow-on dynamic actions, target a server set or docker, and wait for
+		// the chain to reach a height before the specs run.
+		KeepUp:     argBool(args, "keepUp", false),
+		Docker:     argBool(args, "docker", false),
+		WaitBlocks: uint64(argInt(args, "waitBlocks", 0)),
+		NetworkID:  int64(argInt(args, "networkId", 0)),
+		Server: app.ServerRef{
+			SetPath: argString(args, "serverSet", ""),
+			Name:    argString(args, "server", ""),
+			All:     argBool(args, "allServers", false),
+		},
 	})
 	if err != nil {
 		return "", err
@@ -119,7 +141,18 @@ func runCompose(ctx context.Context, args map[string]any, specs [][]byte) (strin
 	if out.SessionRoot == "" {
 		return "no session produced", nil
 	}
-	return formatRunSummary(out.SessionRoot)
+	text, rerr := formatRunSummary(out.SessionRoot)
+	// When the network is left up, the workspace is the handle for follow-on
+	// dynamic actions (rpc/tx/attach), so name it alongside the verdict — on the
+	// error path too, since a failed run still leaves the network standing.
+	if argBool(args, "keepUp", false) {
+		note := fmt.Sprintf("\nnetwork: %s (left up)", dataDir)
+		text += note
+		if rerr != nil {
+			rerr = fmt.Errorf("%s%s", rerr, note)
+		}
+	}
+	return text, rerr
 }
 
 // collectSpecs gathers spec JSON blobs from the "specs" array and the single
@@ -137,7 +170,12 @@ func collectSpecs(args map[string]any) [][]byte {
 	return specs
 }
 
-// formatRunSummary renders the session verdict as agent-readable text.
+// formatRunSummary renders the session verdict as agent-readable text and
+// signals failure. The text names the session root so a caller can fetch the
+// full report with chainbench_report (WA6). A run with any failed or blocked
+// test is returned as a tool error carrying that same text, so an automated
+// caller that branches on the error does not read a failed run as success
+// (WA7); a clean run returns it with no error.
 func formatRunSummary(root string) (string, error) {
 	doc, err := app.SessionSummary(root)
 	if err != nil {
@@ -147,7 +185,12 @@ func formatRunSummary(root string) (string, error) {
 	for _, t := range doc.Tests {
 		fmt.Fprintf(&b, "%d %s %s\n", t.Seq, t.ID, t.Status)
 	}
-	fmt.Fprintf(&b, "pass=%d fail=%d blocked=%d skip=%d",
+	fmt.Fprintf(&b, "pass=%d fail=%d blocked=%d skip=%d\n",
 		doc.Summary.Pass, doc.Summary.Fail, doc.Summary.Blocked, doc.Summary.Skip)
-	return b.String(), nil
+	fmt.Fprintf(&b, "session: %s", root)
+	text := b.String()
+	if doc.Summary.Fail > 0 || doc.Summary.Blocked > 0 {
+		return text, fmt.Errorf("%s", text)
+	}
+	return text, nil
 }

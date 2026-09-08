@@ -120,7 +120,7 @@ accounts   (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
 ### 라이브 검증 근거 — 배열 인덱싱 배치 (2026-08-14)
 
 `rpcCall` 의 `select` dot-path 에 **배열 인덱싱**(숫자 세그먼트 `peers.0.id`)과 **길이**(`#` 세그먼트,
-십진 반환)를 추가(`internal/testspec/derived.go` `dotPath`). 배열을 반환하는 RPC 결과에서 "최소 N개"와
+십진 반환)를 추가(`internal/testhelper/derived.go` `dotPath`). 배열을 반환하는 RPC 결과에서 "최소 N개"와
 "N번째 엔트리의 필드"를 표현할 수 있게 됐다.
 
 ```
@@ -133,7 +133,7 @@ network    (+1 spec) → gstable 5노드(스크래치, 8601-8605, attach): pass=
 ### 라이브 검증 근거 — access-list(0x01) 배치 (2026-08-14)
 
 `(C)` sendTx 에 **`accessList` 필드**를 추가(`internal/core/rpc/client.go` `SendTxArgs.AccessList any` +
-`internal/testspec/builtins.go` 패스스루). 빈 리스트 `[]` 도 EIP-2930 type 0x01 을 선택하므로 —
+`internal/testhelper/builtins.go` 패스스루). 빈 리스트 `[]` 도 EIP-2930 type 0x01 을 선택하므로 —
 `[]AccessTuple` + `omitempty` 였다면 빈 케이스가 조용히 legacy 로 강등된다 — `any` 로 선언해 verbatim 전달한다.
 
 ```
@@ -152,11 +152,11 @@ DSL 라이브 경로는 옛 바이너리를 실행했다. 재빌드 후 양쪽 p
 
 `(G)` 거버넌스 다단계 흐름을 **신규 스텝 프리미티브 없이** 기존 sendTx + read source 두 개의 조합으로
 표현했다. 신규 프리미티브 2종:
-- **`receiptLog` read source**(`internal/testspec/builtins.go`) — 트랜잭션 receipt 의 로그에서 topic/data 를
+- **`receiptLog` read source**(`internal/testhelper/builtins.go`) — 트랜잭션 receipt 의 로그에서 topic/data 를
   추출해 바인딩에 저장한다. `hash`(필수) + `address`/`topic0` 필터(hex 대소문자 무시) + `index`(기본 0) +
   `topic`(기본 1) 또는 `select:"data"`. 런타임에만 알 수 있는 `proposalId`(ProposalCreated 의 indexed topic1)를
   꺼내는 용도.
-- **`derive op:"abiCall"`**(`internal/testspec/derived.go`) — `selector`(4바이트) + `of` 인자들을 32바이트
+- **`derive op:"abiCall"`**(`internal/testhelper/derived.go`) — `selector`(4바이트) + `of` 인자들을 32바이트
   좌패딩 워드로 이어붙여 calldata 를 조립한다. uint256·address 동일 인코딩. 추출한 `$pid` 를 approve/execute
   calldata 에 끼워넣는 용도.
 
@@ -277,7 +277,7 @@ system-contracts (+1 spec) → gstable 5노드(재기동 fresh, 8601-8605): pass
 ```
 
 - **5-엔드포인트 필수**: approve 는 `en2`(node2, 0x2493) 로 서명하므로 `--rpc` 를 5개(8601-8605) 모두 넘겨야
-  en1/en2 가 해소된다. 1개만 넘기면 `testspec: no target node RPC URL` 로 approve 스텝이 실패한다.
+  en1/en2 가 해소된다. 1개만 넘기면 `dsl: no target node RPC URL` 로 approve 스텝이 실패한다.
 - **deposit 유일성은 propose 시점 강제**: GovMinter 는 (depositID+bank+ts) 재제안을 **propose 단계에서** revert
   (status 0x0)한다 — 이미 실행된 게 아니라 **미실행 대기(Voting) 제안이 있어도** 중복을 막는다. 따라서 부분
   실패로 dangling 제안이 남으면 같은 deposit 재실행 불가 → fresh 넷에서 단발로 통과시킨다(DSL-MINT-EVT 전용 예약).
@@ -333,7 +333,7 @@ system-contracts (+3 spec) → gstable 5노드(fresh, 8601-8605): 각 pass=1 fai
   `newAccount` 는 주소를 `save`, 개인키 hex 를 `saveKey` 로 바인딩하며 `Unresolved` 가 둘 다 인식한다.
 - **펀딩 순서**: sender-blacklisted 는 blacklist **이전**에 펀딩해야 한다(수취인 blacklist 후엔 전송이 거부됨).
   펀딩으로 거부 사유가 "insufficient funds" 가 아닌 가드/blacklist revert 임을 보장한다.
-- **엔진 배선**: `AccountProvider` 를 `internal/engine/{app,attach}.go` 의 `testspec.Deps.Accounts` 로 주입한다
+- **엔진 배선**: `AccountProvider` 를 `internal/testengine` 의 `interp.Deps.Accounts` 로 주입한다
   (기존엔 미배선이라 `key` 사용 시 "no account provider" 로 실패했다).
 
 ### 라이브 검증 근거 — burn-refund 라이프사이클 8건 (2026-08-14, Boho-v2 넷)
@@ -377,7 +377,7 @@ system-contracts (+8 spec) → gstable 5노드(Boho-v2 fresh, 8611-8615): 각 pa
 ### 재분류 — `logs` 어세션은 이미 topic 인덱싱을 지원한다
 
 이전 원장은 이벤트 로그 케이스(contract-event-emitted·token-transfer-emits-event·token-approve-sets-allowance)를
-"`select` 가 배열/topic 인덱스를 못 짚는다"는 갭으로 분류했으나, **이는 혼동이었다**. `logs` 어세션(`internal/testspec/logs.go`)은
+"`select` 가 배열/topic 인덱스를 못 짚는다"는 갭으로 분류했으나, **이는 혼동이었다**. `logs` 어세션(`internal/testhelper/logs.go`)은
 실제로 (1) `topics` 필터에 위치별 매칭(문자열=정확 매칭, null/비문자열=와일드카드)을, (2) `select:topicN`(topic0..N)
 으로 특정 topic 추출을, (3) `index` 로 매칭 로그 중 N번째 선택을 **이미 지원**한다. 따라서 위 3건은 **신규 문법 없이**
 표현 가능했고 라이브 통과했다. (진짜 갭인 "`select` 배열 인덱싱"은 `resolve.go` 의 JSON-path 배열 인덱싱 — 별개 사안이며

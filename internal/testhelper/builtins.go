@@ -22,7 +22,7 @@ import (
 const (
 	actionSendTx          = "sendTx"
 	actionWaitBlock       = "waitBlock"
-	actionWaitFor         = "waitFor"
+	actionWaitFor         = interp.ActionWaitFor
 	actionNewAccount      = "newAccount"
 	actionSendRawTampered = "sendRawTampered"
 	actionSendSetCode     = "sendSetCode"

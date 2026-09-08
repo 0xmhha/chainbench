@@ -8,6 +8,7 @@ import (
 	"maps"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // SchemaV2 is the canonical v2 grammar (schema/v2.schema.json). The strict
@@ -58,17 +59,22 @@ type EnvV2 struct {
 	// Description says what this environment is for, in prose. It carries no
 	// execution semantics; it exists so a declaration can explain itself where
 	// it is read, rather than in a file beside it.
-	Description  string                    `json:"description,omitempty"`
-	Target       string                    `json:"target,omitempty"`
-	Chain        string                    `json:"chain"`
-	Binaries     map[string]string         `json:"binaries,omitempty"`
-	Keys         *KeysV2                   `json:"keys,omitempty"`
-	Genesis      *GenesisV2                `json:"genesis,omitempty"`
-	Topology     map[string]any            `json:"topology,omitempty"`
-	Hardforks    map[string]int            `json:"hardforks,omitempty"`
-	Launch       map[string]map[string]any `json:"launch,omitempty"`
-	Config       map[string]map[string]any `json:"config,omitempty"`
-	Capabilities []string                  `json:"capabilities,omitempty"`
+	Description string `json:"description,omitempty"`
+	Target      string `json:"target,omitempty"`
+	Chain       string `json:"chain"`
+	// Manifest is an external, project-supplied chain manifest JSON, run on the
+	// built-in family named by Chain; GenesisTemplate is its genesis template.
+	// They are the DSL equivalent of the CLI's --manifest/--genesis-template.
+	Manifest        string                    `json:"manifest,omitempty"`
+	GenesisTemplate string                    `json:"genesisTemplate,omitempty"`
+	Binaries        map[string]string         `json:"binaries,omitempty"`
+	Keys            *KeysV2                   `json:"keys,omitempty"`
+	Genesis         *GenesisV2                `json:"genesis,omitempty"`
+	Topology        map[string]any            `json:"topology,omitempty"`
+	Hardforks       map[string]int            `json:"hardforks,omitempty"`
+	Launch          map[string]map[string]any `json:"launch,omitempty"`
+	Config          map[string]map[string]any `json:"config,omitempty"`
+	Capabilities    []string                  `json:"capabilities,omitempty"`
 	// Accounts declares test accounts by name, created and funded when the
 	// network comes up. They are not in the genesis on purpose: an account
 	// funded at run time is one the genesis never has to mention, so preparing
@@ -296,6 +302,13 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if env.Chain == "" {
 		return Spec{}, fmt.Errorf("dsl: case %s: env needs \"chain\"", c.ID)
 	}
+	// Timeout values are durations; reject an unparsable one here so a typo
+	// fails at parse time rather than being silently ignored at run time.
+	for name, v := range c.Timeouts {
+		if _, err := time.ParseDuration(v); err != nil {
+			return Spec{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
+		}
+	}
 
 	spec := Spec{
 		SchemaVersion:    supportedSchemaVersion, // lowered form IS the executable v1 shape
@@ -309,9 +322,26 @@ func lowerCase(c CaseV2) (Spec, error) {
 		DefaultOn:        c.On,
 		Timeouts:         c.Timeouts,
 	}
-	if len(env.Capabilities) > 0 && len(spec.Requires) == 0 {
-		spec.Requires = env.Capabilities
+	// The env's capabilities and the case's requires are both gating inputs, so
+	// they union — a case that lists its own requires must not lose the ones the
+	// env declares. Duplicates are dropped, case order first.
+	if len(env.Capabilities) > 0 {
+		seen := make(map[string]bool, len(spec.Requires))
+		for _, r := range spec.Requires {
+			seen[r] = true
+		}
+		for _, c := range env.Capabilities {
+			if !seen[c] {
+				seen[c] = true
+				spec.Requires = append(spec.Requires, c)
+			}
+		}
 	}
+
+	// An external manifest (and its genesis template) runs on the family named
+	// by chain; both travel on the chain spec for the composer to thread.
+	spec.Chain.ManifestPath = env.Manifest
+	spec.Chain.TemplatePath = env.GenesisTemplate
 
 	// Binaries: "default" is every node's binary; other keys are per-role.
 	if b, ok := env.Binaries["default"]; ok && len(env.Binaries) == 1 {
@@ -424,6 +454,13 @@ func lowerCase(c CaseV2) (Spec, error) {
 // assertion names.
 var expectAliases = map[string]string{"rpc": "rpcCall"}
 
+// expectAdjuncts is the outcome vocabulary a do step's "expect" may name:
+// receipt (the default — the tx must be mined), revert (mined with status 0x0),
+// reject (the submit itself must fail), and fail (a launched node must not come
+// up). A value outside this set is a typo that must be refused, not treated as
+// the default success.
+var expectAdjuncts = map[string]bool{"receipt": true, "revert": true, "reject": true, "fail": true}
+
 // lowerStatement lowers one v2 statement map onto the runtime vocabulary.
 func lowerStatement(m map[string]any) (Statement, error) {
 	doName, hasDo := m["do"].(string)
@@ -432,6 +469,13 @@ func lowerStatement(m map[string]any) (Statement, error) {
 	// on sendTx). It is a statement head only when "do" is absent.
 	if !hasDo && !hasEx {
 		return Statement{}, fmt.Errorf("statement needs \"do\" or \"expect\"")
+	}
+	// A do step's expect names an outcome, not an assertion, so it is checked
+	// here rather than by Unresolved (which resolves head expects as assertion
+	// names). A value outside the outcome vocabulary would otherwise fall through
+	// to the default "must succeed", silently turning a negative case positive.
+	if hasDo && hasEx && !expectAdjuncts[strings.ToLower(exName)] {
+		return Statement{}, fmt.Errorf("do step's expect adjunct %q is not a known outcome (want receipt, revert, reject, or fail)", exName)
 	}
 	if _, isOverride := m["override"]; isOverride {
 		return Statement{}, fmt.Errorf("override hooks (G5) have no execution semantics yet and are not accepted")

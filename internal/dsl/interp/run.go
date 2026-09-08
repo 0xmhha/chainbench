@@ -3,6 +3,7 @@ package interp
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/session"
@@ -22,11 +23,21 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 	if i.deps.Actions == nil {
 		return session.StatusFail, fmt.Errorf("interp: interpreter has no action/assertion registry")
 	}
+	// A case-level timeout bounds the whole run: every step and assertion shares
+	// the deadline, so a case that hangs fails within its declared budget rather
+	// than only at the engine's outer bound. Per-action timeouts still apply
+	// within it.
+	if d := caseTimeout(s.Timeouts); d > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, d)
+		defer cancel()
+	}
 	binds := Bindings{}
 
 	// Pre-actions: a failure blocks the test (steps/assertions do not run).
 	for _, pa := range s.PreActions {
 		if err := i.runAction(ctx, pa, env, rec, binds); err != nil {
+			rec.Reason(fmt.Sprintf("pre-action %q failed: %v", dsl.ActionName(pa), err))
 			rec.Status(session.StatusBlocked)
 			return session.StatusBlocked, nil
 		}
@@ -38,14 +49,19 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 	// reproduces the historical steps-then-assertions behavior exactly; v2
 	// interleaves freely (proposal G7).
 	pass := true
+	failedAsserts := 0
 	stepIdx := 0
 	for _, st := range dsl.SequenceOf(s) {
+		// The case-level default target routes every statement that names none;
+		// an explicit on/onEach on the statement still wins.
+		applyDefaultOn(st.Args, s.DefaultOn)
 		if st.Do != "" {
 			if err := i.runStep(ctx, stepIdx, dsl.StatementStep(st), env, rec, binds); err != nil {
 				// A failed do statement invalidates everything after it:
 				// on-fail diagnostics run, post-actions do not (the v1
 				// contract — cleanup assumes the steps it undoes happened).
 				i.runRecorded(ctx, s.OnFailActions, env, rec, binds)
+				rec.Reason(fmt.Sprintf("step %d (%s) failed: %v", stepIdx+1, st.Do, err))
 				rec.Status(session.StatusFail)
 				return session.StatusFail, nil
 			}
@@ -56,11 +72,13 @@ func (i *interpreter) Run(ctx context.Context, s dsl.Spec, env NodeTable, rec Re
 		rec.Assert(r)
 		if err != nil || !r.Pass {
 			pass = false
+			failedAsserts++
 		}
 	}
 	status := session.StatusPass
 	if !pass {
 		status = session.StatusFail
+		rec.Reason(fmt.Sprintf("%d assertion(s) failed", failedAsserts))
 		// On-fail hooks: diagnostics for a failed case, recorded like
 		// post-actions.
 		i.runRecorded(ctx, s.OnFailActions, env, rec, binds)
@@ -131,7 +149,26 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 		rec.Step(idx, session.StepResult{Index: idx, Type: name, On: on, Error: err.Error()})
 		return err
 	}
+	// Fan-out: an onEach step runs the action once per selected node (WA18),
+	// mirroring how an assertion checks each. A single "on", or neither, runs
+	// once against that node (or the primary). Fail fast on the first node, per
+	// the do-statement contract.
+	if each, ok := args["onEach"].([]any); ok && len(each) > 0 {
+		for _, sel := range each {
+			s, _ := sel.(string)
+			if err := i.dispatchStep(ctx, idx, name, act, s, argsOnEachOne(args, s), env, rec, binds); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	on, _ := args["on"].(string)
+	return i.dispatchStep(ctx, idx, name, act, on, args, env, rec, binds)
+}
+
+// dispatchStep runs the action once against one target, records its StepResult
+// even on failure, and binds any saved result on success.
+func (i *interpreter) dispatchStep(ctx context.Context, idx int, name string, act Action, on string, args map[string]any, env NodeTable, rec Recorder, binds Bindings) error {
 	ac := &ActionCtx{Env: env, Deps: &i.deps, Rec: rec, Args: args}
 	runErr := act.Do(ctx, ac)
 	step := session.StepResult{Index: idx, Type: name, On: on, Hash: ac.Hash, Receipt: ac.Receipt}
@@ -144,6 +181,20 @@ func (i *interpreter) runStep(ctx context.Context, idx int, entry map[string]any
 	}
 	bindResult(binds, args, ac)
 	return nil
+}
+
+// argsOnEachOne returns a shallow copy of args pinned to a single target: on is
+// set to sel and onEach removed, so selectorTarget routes to that one node.
+func argsOnEachOne(args map[string]any, sel string) map[string]any {
+	out := make(map[string]any, len(args))
+	for k, v := range args {
+		if k == "onEach" {
+			continue
+		}
+		out[k] = v
+	}
+	out["on"] = sel
+	return out
 }
 
 // runAssertion dispatches an assertion entry (its "assert" field names the
@@ -197,6 +248,37 @@ func bindResult(binds Bindings, args map[string]any, ac *ActionCtx) {
 	if ac.Hash != "" {
 		binds[name] = ac.Hash
 	}
+}
+
+// caseTimeout returns the whole-case deadline a spec declares via timeouts.case
+// (or its alias timeouts.test), or 0 when none is set. The value's format is
+// validated when the spec is lowered, so an unparsable one never reaches here.
+func caseTimeout(timeouts map[string]string) time.Duration {
+	for _, k := range []string{"case", "test"} {
+		if v := timeouts[k]; v != "" {
+			if d, err := time.ParseDuration(v); err == nil {
+				return d
+			}
+		}
+	}
+	return 0
+}
+
+// applyDefaultOn makes the case-level default target the target of a statement
+// that names none, so a case head "on" routes every step and assertion that
+// does not override it. A statement with its own on or onEach is left alone,
+// and an empty default (the common case) is a no-op.
+func applyDefaultOn(args map[string]any, defaultOn string) {
+	if defaultOn == "" || args == nil {
+		return
+	}
+	if _, ok := args["on"]; ok {
+		return
+	}
+	if _, ok := args["onEach"]; ok {
+		return
+	}
+	args["on"] = defaultOn
 }
 
 // resolveOn resolves the entry's "on" (single) or "onEach" ([]) selectors to

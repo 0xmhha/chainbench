@@ -311,31 +311,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 				return fmt.Errorf("engine: run suite: %w", err)
 			}
 		}
-		eng, err := NewAttachEngine(AttachConfig{
-			Chain: chain, RPCURLs: net.endpoints,
-			ArtifactRoot: in.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), in.Caps...), Clock: sd.Clock,
-			NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
-			// A bus turns on chainstate sampling: chainstate.jsonl is written per
-			// environment (E8) even on the headless suite path, which has no
-			// dashboard subscriber (events are simply dropped).
-			Bus: collector.NewBus(),
-			// A remote target reads its node logs over SSH (and reconnects a
-			// dropped session, E8); a local target leaves this nil and the
-			// collector reads the local filesystem.
-			LogReader: remoteLogReader(sd, in.DataDir),
-			// Gate the network before each test: a node a prior fault test left
-			// down is restarted or waited on within limits before the next test
-			// runs (E6). A handoff or bare-URL attach (no workspace) passes no
-			// nodes, so the gate is a no-op there.
-			PreSpec: func(ctx context.Context, _ session.Environment) error {
-				return gateReady(ctx, sd, in.DataDir, net.nodes, &out.SetupSteps, in.NodeMonitorTimeout)
-			},
-			// Gather a failed test's evidence (node logs, process, RPC/block) into
-			// its observations/ before the run moves on (E8).
-			OnFail: func(ctx context.Context, _ session.Environment, rec session.TestRecord) error {
-				collectFailureData(ctx, sd, in.DataDir, net.nodes, rec)
-				return nil
-			},
+		eng, err := wiredAttachEngine(sd, net, attachWiring{
+			Chain: chain, DataDir: in.DataDir, ArtifactRoot: in.ArtifactRoot,
+			Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &out.SetupSteps,
 		})
 		if err != nil {
 			return fmt.Errorf("engine: run suite: engine: %w", err)
@@ -361,6 +339,115 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		}
 	}
 	return out, runErr
+}
+
+// attachWiring is the run-side wiring the compose path and the workspace-attach
+// path share: which workspace, where the session goes, extra capabilities, the
+// readiness-gate budget, and where to record the gate's steps.
+type attachWiring struct {
+	Chain              string
+	DataDir            string
+	ArtifactRoot       string
+	Caps               []string
+	NodeMonitorTimeout time.Duration
+	SetupSteps         *[]string
+}
+
+// wiredAttachEngine builds an attach engine over a composed network with the
+// full wiring: the composition manifest (WA11), chainstate sampling, a
+// remote-aware log reader, a readiness gate before each test (E6), and
+// failure-evidence collection (E8). Both RunSuite (after composing) and
+// AttachWorkspaceRun (attaching to an existing workspace) build it the same
+// way, so the attach path no longer loses the gate and the evidence (WA10).
+func wiredAttachEngine(sd chainsetup.Deps, net composed, w attachWiring) (Engine, error) {
+	return NewAttachEngine(AttachConfig{
+		Chain: w.Chain, RPCURLs: net.endpoints,
+		ArtifactRoot: w.ArtifactRoot, Caps: append(append([]string(nil), net.caps...), w.Caps...), Clock: sd.Clock,
+		NodeSet: net.nodes, Control: net.control, KeysDir: net.keysDir,
+		Artifacts: composedArtifacts(net),
+		Bus:       collector.NewBus(),
+		LogReader: remoteLogReader(sd, w.DataDir),
+		PreSpec: func(ctx context.Context, _ session.Environment) error {
+			return gateReady(ctx, sd, w.DataDir, net.nodes, w.SetupSteps, w.NodeMonitorTimeout)
+		},
+		OnFail: func(ctx context.Context, _ session.Environment, rec session.TestRecord) error {
+			collectFailureData(ctx, sd, w.DataDir, net.nodes, rec)
+			return nil
+		},
+	})
+}
+
+// AttachWorkspaceIn attaches to the network a workspace already composed.
+type AttachWorkspaceIn struct {
+	// DataDir is the workspace whose network is up.
+	DataDir string
+	// Chain is the chain family; empty reads it from the workspace.
+	Chain string
+	// ArtifactRoot is where the session is written; empty defaults to the
+	// workspace's sessions directory.
+	ArtifactRoot string
+	// Caps are extra capabilities the operator asserts, beyond what the
+	// workspace advertised.
+	Caps []string
+	// Specs are the DSL blobs to run (already env-resolved).
+	Specs [][]byte
+	// NodeMonitorTimeout budgets the readiness gate; zero takes the default.
+	NodeMonitorTimeout time.Duration
+}
+
+// AttachWorkspaceRun attaches to the network the workspace at DataDir composed
+// and runs the specs against it, with the same readiness gate (E6), failure-
+// evidence collection (E8), fault control, remote log reading, and composition
+// manifest the compose path wires. It composes nothing — the network is already
+// up — but reads the workspace's node table, capabilities, and key set so a
+// spec addresses nodes by role and resolves account labels (WA10).
+func AttachWorkspaceRun(ctx context.Context, sd chainsetup.Deps, in AttachWorkspaceIn) (string, error) {
+	if in.DataDir == "" {
+		return "", fmt.Errorf("engine: attach workspace: a workspace directory is required")
+	}
+	chain := in.Chain
+	keysDir := ""
+	if ws, err := chainsetup.Open(in.DataDir, sd.Clock); err == nil {
+		st := ws.State()
+		keysDir = st.KeysDir
+		if chain == "" {
+			chain = st.Chain
+		}
+	}
+	if chain == "" {
+		return "", fmt.Errorf("engine: attach workspace: a chain is required to attach")
+	}
+	artifactRoot := in.ArtifactRoot
+	if artifactRoot == "" {
+		artifactRoot = filepath.Join(in.DataDir, "sessions")
+	}
+	var setupSteps []string
+	net, err := readWorkspaceComposed(ctx, sd, in.DataDir, keysDir, &setupSteps, in.NodeMonitorTimeout)
+	if err != nil {
+		return "", err
+	}
+	eng, err := wiredAttachEngine(sd, net, attachWiring{
+		Chain: chain, DataDir: in.DataDir, ArtifactRoot: artifactRoot,
+		Caps: in.Caps, NodeMonitorTimeout: in.NodeMonitorTimeout, SetupSteps: &setupSteps,
+	})
+	if err != nil {
+		return "", fmt.Errorf("engine: attach workspace: %w", err)
+	}
+	return eng.Run(ctx, in.Specs)
+}
+
+// composedArtifacts is the manifest of composition inputs a workspace-owned
+// network was brought up against, recorded into each test's artifacts.json so a
+// verdict is traceable to what it ran on (WA11). It names the genesis by its
+// env-relative path — the one input every node shares and the anchor of the
+// run's provenance. A network the suite did not compose (a handoff, or a
+// bare-URL attach with no node table) owns no single genesis and gets none;
+// the config, command, and deployment refs are the next fill of this seam.
+func composedArtifacts(net composed) []session.ArtifactRef {
+	if net.nodes == nil {
+		return nil
+	}
+	return []session.ArtifactRef{{Kind: "genesis", Ref: "genesis.json"}}
 }
 
 // composeWorkspace composes a single-binary network through the workspace
@@ -391,12 +478,21 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 		}
 	}
 
-	endpoints, err := chainsetup.NetEndpoints(ctx, sd, chainsetup.NetEndpointsIn{DataDir: up.DataDir})
+	return readWorkspaceComposed(ctx, sd, up.DataDir, up.KeysDir, &out.SetupSteps, gateBudget)
+}
+
+// readWorkspaceComposed reads the network a workspace has composed — endpoints,
+// advertised capabilities, the full node table (with dial addresses translated
+// to the reachable endpoints), and a control over the recorded processes — then
+// gates it ready (E6). It is the shared tail of both composing a network and
+// attaching to one an existing workspace already brought up (WA10).
+func readWorkspaceComposed(ctx context.Context, sd chainsetup.Deps, dataDir, keysDir string, setupSteps *[]string, gateBudget time.Duration) (composed, error) {
+	endpoints, err := chainsetup.NetEndpoints(ctx, sd, chainsetup.NetEndpointsIn{DataDir: dataDir})
 	if err != nil {
 		return composed{}, fmt.Errorf("engine: run suite: endpoints: %w", err)
 	}
 	var caps []string
-	if ws, err := chainsetup.Open(up.DataDir, sd.Clock); err == nil {
+	if ws, err := chainsetup.Open(dataDir, sd.Clock); err == nil {
 		caps = ws.State().Capabilities
 	}
 	// The workspace knows the whole node table — indices, hosts, every
@@ -408,7 +504,7 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	// matching entry from NetEndpoints (same node order). Without this a
 	// docker/remote run dials the untranslated host and times out.
 	var nodes *node.NodeSet
-	if st, err := chainsetup.NetworkStatus(ctx, sd, chainsetup.NetworkStatusIn{DataDir: up.DataDir}); err == nil && len(st.Nodes.Nodes) > 0 {
+	if st, err := chainsetup.NetworkStatus(ctx, sd, chainsetup.NetworkStatusIn{DataDir: dataDir}); err == nil && len(st.Nodes.Nodes) > 0 {
 		ns := st.Nodes
 		if len(ns.Nodes) == len(endpoints) {
 			for i := range ns.Nodes {
@@ -420,19 +516,19 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 	// The network is composed (or reused); gate it before any test runs on it —
 	// wait on nodes still coming up, restart dead ones within limits, terminate
 	// on a state that would need a destructive remedy (E6).
-	if err := gateReady(ctx, sd, up.DataDir, nodes, &out.SetupSteps, gateBudget); err != nil {
+	if err := gateReady(ctx, sd, dataDir, nodes, setupSteps, gateBudget); err != nil {
 		return composed{}, fmt.Errorf("engine: run suite: %w", err)
 	}
 	return composed{
 		endpoints: endpoints,
 		caps:      caps,
 		teardown: func(ctx context.Context) error {
-			_, err := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: up.DataDir})
+			_, err := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: dataDir})
 			return err
 		},
 		nodes:   nodes,
-		control: workspaceNodes{sd: sd, dataDir: up.DataDir},
-		keysDir: up.KeysDir,
+		control: workspaceNodes{sd: sd, dataDir: dataDir},
+		keysDir: keysDir,
 	}, nil
 }
 

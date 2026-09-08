@@ -73,27 +73,32 @@ type AttachRunIn struct {
 // AttachRun attaches the test engine to a running network and runs the specs,
 // returning the session root.
 func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
+	// Pre-flight the specs the way RunSuite does before composing (WA10): an
+	// unresolved action/assertion/reader/reference or a malformed selector fails
+	// here with a clear reason. The attach path skipped this, so such a mistake
+	// reached the interpreter and vanished into an AssertResult that has no field
+	// to carry it. A spec that does not parse is left for the engine to record
+	// per-spec.
+	parsed := make([]dsl.Spec, 0, len(in.Specs))
+	for _, raw := range in.Specs {
+		if s, perr := dsl.Parse(raw); perr == nil {
+			parsed = append(parsed, s)
+		}
+	}
+	if err := testengine.Precheck(parsed); err != nil {
+		return "", fmt.Errorf("app: attach run: %w", err)
+	}
+	// Attaching to a workspace whose network is up goes through the engine's
+	// workspace-attach path, which wires the readiness gate (E6), failure-
+	// evidence collection (E8), fault control, and the composition manifest just
+	// as the compose path does — the plain NewAttachEngine below wires none of
+	// those, so a bare-URL attach (which owns no workspace or processes) is the
+	// only thing that should use it (WA10).
 	if in.DataDir != "" {
-		res, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
-		if err != nil {
-			return "", fmt.Errorf("app: attach run: %w", err)
-		}
-		if len(res.Nodes.Nodes) == 0 {
-			return "", fmt.Errorf("app: attach run: %s composed no nodes to attach to", in.DataDir)
-		}
-		// The whole record, not a list of URLs. Flattening it loses the roles,
-		// and a spec that names "en1" then reaches whichever node came first.
-		in.Nodes = res.Nodes
-		in.RPCURLs = nil
-		for _, n := range res.Nodes.Nodes {
-			if n.RPCURL != "" {
-				in.RPCURLs = append(in.RPCURLs, n.RPCURL)
-			}
-		}
-		in.Caps = append(append([]string(nil), res.Nodes.Capabilities...), in.Caps...)
-		if in.Chain == "" {
-			in.Chain = res.Nodes.Chain
-		}
+		return testengine.AttachWorkspaceRun(ctx, d.chainsetupDeps(), testengine.AttachWorkspaceIn{
+			DataDir: in.DataDir, Chain: in.Chain, ArtifactRoot: in.ArtifactRoot,
+			Caps: in.Caps, Specs: in.Specs,
+		})
 	}
 	if in.Chain == "" {
 		return "", fmt.Errorf("app: attach run: a chain is required to attach")
@@ -111,6 +116,14 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	}
 	return eng.Run(ctx, in.Specs)
 }
+
+// SpecInfo is one test case as the catalog lists it.
+type SpecInfo = dsl.SpecInfo
+
+// ListSpecs enumerates the runnable test cases under dir, so an operator or an
+// agent can discover what is there before running one. It is the catalog behind
+// the CLI `test list` and the MCP test_list tool.
+func ListSpecs(dir string) ([]SpecInfo, error) { return dsl.ListSpecs(dir) }
 
 // ReadSpecFiles reads DSL spec files, resolving each against its environment.
 //

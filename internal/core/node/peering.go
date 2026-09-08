@@ -64,6 +64,13 @@ func (p Peering) Validate(m *Map, supports RoleSupport) error {
 	if p == Proxied && counts[RolePN] == 0 {
 		return fmt.Errorf("node: peering %q needs at least one pn — with no proxy tier there is nothing between bp and en", Proxied)
 	}
+	// The mirror of the check above: a pn only means something under proxied
+	// peering. Meshing a topology that declares a proxy tier would let endpoints
+	// dial producers anyway, so refuse it loudly rather than quietly ignore the
+	// tier the operator asked for.
+	if p == Mesh && counts[RolePN] > 0 {
+		return fmt.Errorf("node: peering %q with %d pn(s) — a proxy tier only takes effect under %s peering; under mesh endpoints would still dial producers", Mesh, counts[RolePN], Proxied)
+	}
 	return nil
 }
 

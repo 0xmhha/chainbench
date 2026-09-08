@@ -384,3 +384,54 @@ func chainResumeTool() Tool {
 		},
 	}
 }
+
+// chainUpTool composes and launches a whole network in one call — the MCP
+// counterpart of the CLI `chain up`, so an agent reaches goal 2 (bring a
+// network up, then drive it with rpc/tx/attach) without walking the seven step
+// tools by hand (WA3).
+func chainUpTool() Tool {
+	return Tool{
+		Name: "chainbench_chain_up",
+		Description: "Compose and launch a network in one call (runs every chain step in order), leaving it up for follow-on rpc/tx/attach. " +
+			"Args: workspaceDir, chain, binary, validators, endpoints, proxies, keysDir, keysSource, endpointSyncMode, peering, docker, serverSet/server/allServers.",
+		InputSchema: workspaceDirSchema(map[string]any{
+			"chain":            map[string]any{"type": "string"},
+			"binary":           map[string]any{"type": "string"},
+			"validators":       map[string]any{"type": "integer"},
+			"endpoints":        map[string]any{"type": "integer"},
+			"proxies":          map[string]any{"type": "integer", "description": "pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it"},
+			"keysDir":          map[string]any{"type": "string"},
+			"keysSource":       map[string]any{"type": "string"},
+			"endpointSyncMode": map[string]any{"type": "string"},
+			"peering":          map[string]any{"type": "string", "description": "mesh (default) | proxied (bp <-> pn <-> en)"},
+			"docker":           map[string]any{"type": "boolean"},
+			"serverSet":        map[string]any{"type": "string"},
+			"server":           map[string]any{"type": "string"},
+			"allServers":       map[string]any{"type": "boolean"},
+		}),
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			out, err := app.NetUp(ctx, app.Deps{}, app.NetUpIn{
+				DataDir:          argString(args, "workspaceDir", ""),
+				Chain:            argString(args, "chain", ""),
+				Binary:           argString(args, "binary", ""),
+				Validators:       argInt(args, "validators", 4),
+				Endpoints:        argInt(args, "endpoints", 0),
+				Proxies:          argInt(args, "proxies", 0),
+				KeysDir:          argString(args, "keysDir", ""),
+				KeysSource:       argString(args, "keysSource", ""),
+				EndpointSyncMode: argString(args, "endpointSyncMode", ""),
+				Peering:          argString(args, "peering", ""),
+				Docker:           argBool(args, "docker", false),
+				Server: app.ServerRef{
+					SetPath: argString(args, "serverSet", ""),
+					Name:    argString(args, "server", ""),
+					All:     argBool(args, "allServers", false),
+				},
+			})
+			if err != nil {
+				return "", err
+			}
+			return strings.Join(out.Steps, "\n"), nil
+		},
+	}
+}

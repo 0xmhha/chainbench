@@ -111,6 +111,16 @@ func TestParseV2Strictness(t *testing.T) {
 			"env":{"chain":"wbft","launch":{"bp1":{"mine":true}}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"override hook": `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft"},
 			"steps":[{"override":{"env.launch":{}}},{"expect":"blockNumber","is":1}]}`,
+		// A typo in a do step's expect adjunct must be refused, not silently
+		// treated as the default success (WA8) — "revrt" is not "revert".
+		"typo expect adjunct": `{"schemaVersion":"2","kind":"case","id":"x",
+			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},
+			"steps":[{"do":"sendTx","from":"0xa","expect":"revrt"},{"expect":"blockNumber","is":1}]}`,
+		// A timeouts value that is not a duration must be refused, not silently
+		// ignored at run time (WA15).
+		"bad timeout duration": `{"schemaVersion":"2","kind":"case","id":"x",
+			"env":{"chain":"wbft","binaries":{"default":"gwbft"}},"timeouts":{"case":"tenminutes"},
+			"steps":[{"expect":"blockNumber","is":1}]}`,
 	}
 	for name, raw := range cases {
 		if _, err := Parse([]byte(raw)); err == nil {
@@ -490,5 +500,46 @@ func TestV2_ConfigScopesLowerToEnvConfig(t *testing.T) {
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	if _, err := Parse([]byte(bad)); err == nil || !strings.Contains(err.Error(), "config scope") {
 		t.Fatalf("a non-all, non-node scope must be refused: %v", err)
+	}
+}
+
+// TestParseV2_RequiresAndCapabilitiesUnion pins WA22: a case's own requires and
+// the env's capabilities union rather than the env's being dropped whenever the
+// case lists any of its own. The shared entry is not duplicated.
+func TestParseV2_RequiresAndCapabilitiesUnion(t *testing.T) {
+	raw := `{"schemaVersion":"2","kind":"case","id":"x",
+	  "requires":["account-extra"],
+	  "env":{"chain":"wbft","binaries":{"default":"gwbft"},"capabilities":["short-expiry","account-extra"]},
+	  "steps":[{"expect":"blockNumber","is":1}]}`
+	s, err := Parse([]byte(raw))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	want := []string{"account-extra", "short-expiry"}
+	if !reflect.DeepEqual(s.Requires, want) {
+		t.Fatalf("requires = %v, want %v (case requires and env capabilities must union without duplicates)", s.Requires, want)
+	}
+}
+
+// TestSchemaV2StatementOnEachIsArray guards WA17: the do/expect statement
+// onEach selector is a list, matching how the parser and validator read it
+// ([]any). It drifted to "string" once, silently, because the top-level type
+// test cannot see per-statement args.
+func TestSchemaV2StatementOnEachIsArray(t *testing.T) {
+	var doc map[string]any
+	if err := json.Unmarshal(SchemaV2, &doc); err != nil {
+		t.Fatalf("schema: %v", err)
+	}
+	defs, _ := doc["$defs"].(map[string]any)
+	for _, name := range []string{"doStatement", "expectStatement"} {
+		def, _ := defs[name].(map[string]any)
+		props, _ := def["properties"].(map[string]any)
+		oe, ok := props["onEach"].(map[string]any)
+		if !ok {
+			t.Fatalf("%s has no onEach property", name)
+		}
+		if oe["type"] != "array" {
+			t.Errorf("%s.onEach type = %v, want array (the parser reads []any)", name, oe["type"])
+		}
 	}
 }

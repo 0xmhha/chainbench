@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "stablenet-proxied-pn-routing",
+  "description": "Compose the proxied tier (bp <-> pn <-> en) and prove the endpoint stays in sync through the pn: under proxied peering an endpoint never dials a producer, so a rising head on en confirms the pn relays blocks to it (WA25). The pn/proxied compose was verified live on the docker fleet; chain sync is a proven assertion pattern.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "stablenet-proxied",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 3,
+      "pn": 1,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "generate",
+        "ref": "keys/gen-proxied"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "180s"
+    },
+    {
+      "do": "waitFor",
+      "source": "blockNumber",
+      "on": "en1",
+      "compare": "GreaterOrEqual",
+      "expected": 1,
+      "timeout": "120s"
+    },
+    {
+      "expect": "blockNumber",
+      "on": "en1",
+      "compare": "GreaterOrEqual",
+      "is": 1
+    }
+  ]
+}
