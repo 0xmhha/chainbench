@@ -101,6 +101,21 @@ func AttachRun(ctx context.Context, d Deps, in AttachRunIn) (string, error) {
 	if len(in.RPCURLs) == 0 {
 		return "", fmt.Errorf("app: attach run: no endpoint to attach to")
 	}
+	// Pre-flight the specs the way RunSuite does before composing (WA10): an
+	// unresolved action/assertion/reader/reference or a malformed selector fails
+	// here with a clear reason. The attach path skipped this, so such a mistake
+	// reached the interpreter and vanished into an AssertResult that has no field
+	// to carry it. A spec that does not parse is left for the engine to record
+	// per-spec.
+	parsed := make([]dsl.Spec, 0, len(in.Specs))
+	for _, raw := range in.Specs {
+		if s, perr := dsl.Parse(raw); perr == nil {
+			parsed = append(parsed, s)
+		}
+	}
+	if err := testengine.Precheck(parsed); err != nil {
+		return "", fmt.Errorf("app: attach run: %w", err)
+	}
 	eng, err := testengine.NewAttachEngine(testengine.AttachConfig{
 		Chain: in.Chain, RPCURLs: in.RPCURLs,
 		ArtifactRoot: in.ArtifactRoot, Caps: in.Caps, Clock: d.Clock,
