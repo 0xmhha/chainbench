@@ -252,7 +252,7 @@ func (n *signingNode) broadcast() []string {
 	return out
 }
 
-const testKey = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21"
+const testKey = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21" // betterleaks:allow — throwaway signing key for this test only; its derived address appears in no genesis, config or keystore
 
 // TestParity_TxSend: the same request signed by either surface has to produce
 // the same transaction, byte for byte.

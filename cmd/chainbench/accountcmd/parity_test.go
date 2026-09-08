@@ -208,7 +208,7 @@ func TestFaucet_RejectsANonDecimalAmount(t *testing.T) {
 func TestParity_Faucet(t *testing.T) {
 	n := newSigningNode(t)
 	const (
-		key    = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21"
+		key    = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21" // betterleaks:allow — throwaway signing key for this test only; its derived address appears in no genesis, config or keystore
 		to     = "0x000000000000000000000000000000000000dEaD"
 		amount = "1000000000000000000"
 	)
