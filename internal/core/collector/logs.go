@@ -28,11 +28,15 @@ type Match struct {
 
 // SearchOpts configures a Search.
 type SearchOpts struct {
-	Pattern string // substring (or regexp when Regexp) to match; "" matches all
-	Regexp  bool   // treat Pattern as a regular expression
-	Node    int    // restrict to this 1-based node; 0 = all nodes
-	Level   string // minimum severity (e.g. "WARN"); "" = any level
-	Limit   int    // cap results; <=0 = no cap
+	// The cb tags are what a surface renders these from — one declaration
+	// behind the flags a person types and the JSON schema an agent reads
+	// (internal/feature). They live here rather than in a second struct beside
+	// this one, because two declarations of one field are what drift.
+	Pattern string `cb:"pattern" help:"substring (or regexp with --regexp) to match"`
+	Regexp  bool   `cb:"regexp" help:"treat --pattern as a regular expression"`
+	Node    int    `cb:"node" help:"restrict to a 1-based node index (0 = all)"`
+	Level   string `cb:"level" help:"minimum severity (TRACE|DEBUG|INFO|WARN|ERROR|CRIT)"`
+	Limit   int    `cb:"limit" help:"cap the number of lines (0 = no cap)"`
 }
 
 // levelRank orders the geth log severities so a Level filter means

@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -25,12 +27,11 @@ func NewLog() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			matches, err := app.LogSearch(deps(cmd), dataDir, app.LogSearchIn{
-				Pattern: pattern,
-				Regexp:  useRe,
-				Node:    node,
-				Level:   level,
-				Limit:   limit,
+			matches, err := app.LogSearch(cmd.Context(), deps(cmd), app.LogSearchIn{
+				Dir: dataDir,
+				SearchOpts: app.LogSearchFilter{
+					Pattern: pattern, Regexp: useRe, Node: node, Level: level, Limit: limit,
+				},
 			})
 			if err != nil {
 				return err
@@ -57,5 +58,5 @@ func NewLog() *cobra.Command {
 	cmd.Flags().IntVar(&node, "node", 0, "restrict to a 1-based node index (0 = all)")
 	cmd.Flags().StringVar(&level, "level", "", "minimum severity (TRACE|DEBUG|INFO|WARN|ERROR|CRIT)")
 	cmd.Flags().IntVar(&limit, "limit", 0, "cap the number of lines (0 = no cap)")
-	return cmd
+	return surface.ReadOnly(cmd)
 }

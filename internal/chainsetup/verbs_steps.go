@@ -80,13 +80,14 @@ type StepOut struct {
 
 // NetKeysIn selects where node identities come from.
 type NetKeysIn struct {
-	DataDir string
-	Source  string // preset (default) | generate | declared
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	// Source is preset (default) | generate | declared.
+	Source string `cb:"keys-source" default:"preset" help:"preset (use the recorded key set) | generate (create a fresh set)"`
 	// BlueprintPath is the declaration the keys come from when Source is
 	// "declared" (or when a blueprint is given and Source is silent).
 	BlueprintPath string
-	Nodes         int
-	Validators    int
+	Nodes         int `cb:"nodes" help:"identities the set must cover (default: the allocated node count)"`
+	Validators    int `cb:"validators" help:"identities joining the validator set (generate; 0 = all)"`
 }
 
 // NetKeys ensures the workspace's key set exists and covers the node count.
@@ -110,17 +111,17 @@ func NetKeys(ctx context.Context, d Deps, in NetKeysIn) (StepOut, error) {
 
 // NetAllocateIn sizes the network.
 type NetAllocateIn struct {
-	DataDir    string
-	Validators int
-	Endpoints  int
+	DataDir    string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	Validators int    `cb:"validators" default:"4" help:"validator node count"`
+	Endpoints  int    `cb:"endpoints" help:"endpoint (non-validator) node count"`
 	// Peering is the peer graph ("mesh" default, "proxied").
-	Peering string
+	Peering string `cb:"peering" help:"peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)"`
 	// EndpointSyncMode switches endpoints off full sync ("snap"/"archive") so a
 	// re-sync test can exercise that path. Empty leaves every node on full.
-	EndpointSyncMode string
+	EndpointSyncMode string `cb:"endpoint-syncmode" help:"sync mode for endpoints (snap|archive); default full"`
 	// TopologyPath is a per-node layout YAML (role, sync mode, bootnode). It
 	// replaces the counts, which cannot express a per-node choice.
-	TopologyPath string
+	TopologyPath string `cb:"topology" help:"per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints"`
 	// BlueprintPath is a network declaration (N1). It is the widest of the
 	// three layout sources and wins over both the counts and a topology.
 	BlueprintPath string
@@ -223,15 +224,23 @@ func peeringOf(bp *blueprint.Blueprint, flag string) string {
 }
 
 // NetGenesisIn customizes the built genesis.
+//
+// The cb tags are what a surface renders this from: one declaration behind the
+// cobra flags a person types and the JSON schema an agent reads, so the two
+// cannot describe the same argument differently (feature.Flags / feature.Schema,
+// surface-unification-design §3.2). They are inert until a surface reads them —
+// this struct is unchanged otherwise — and TestNetGenesis_TagsMatchTheCommand
+// holds them to the flags the command declares by hand today, so the derivation
+// is proven to reproduce the shipped surface before anything switches to it.
 type NetGenesisIn struct {
-	DataDir string
-	ChainID int64
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	ChainID int64  `cb:"chain-id"               help:"override the manifest chain id (0 = manifest)"`
 	// Set carries genesis config overrides as key=value on the bare config key,
 	// e.g. "bohoBlock=10" to move a fork off genesis.
-	Set []string
+	Set []string `cb:"set" help:"override a genesis config key (repeatable), e.g. --set bohoBlock=10"`
 	// OverlayPath is a JSON overlay file {capabilities, genesis}: the genesis
 	// fragment is deep-merged and the capabilities are advertised.
-	OverlayPath string
+	OverlayPath string `cb:"overlay" help:"JSON overlay file {capabilities,genesis} deep-merged into the genesis"`
 }
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
@@ -282,12 +291,12 @@ func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 // NetConfigIn identifies the workspace and, optionally, per-node config
 // overrides to record before rendering.
 type NetConfigIn struct {
-	DataDir string
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	// Node scopes a Set override to that 1-based node; 0 means every node.
-	Node int
+	Node int `cb:"node" help:"scope --set to this 1-based node (default: every node)"`
 	// Set are dot-path "key=value" config-knob overrides to record. Empty
 	// renders with whatever overrides the workspace already holds.
-	Set []string
+	Set []string `cb:"set" help:"config knob override key=value (repeatable; supported keys: syncMode, httpHost, metricsHost)"`
 	// ScopedSet records overrides for several scopes at once ("all", "node<N>"),
 	// the form the up flow and a DSL env pass. It is applied before Set.
 	ScopedSet map[string][]string
@@ -319,8 +328,8 @@ func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 
 // NetLaunchOptsIn customizes the assembled argv.
 type NetLaunchOptsIn struct {
-	DataDir string
-	Set     []string // key=value overrides for every node (bare key for booleans)
+	DataDir string   `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	Set     []string `cb:"set" help:"high-precedence launch knob key=value (repeatable; bare key for booleans)"` // key=value overrides for every node (bare key for booleans)
 	// ScopedSet records overrides for several scopes at once ("all", a role like
 	// "bp"/"en", or "node<N>"), the form the up flow and a DSL env pass. Set is
 	// folded into the "all" scope.
@@ -355,7 +364,7 @@ func NetLaunchOpts(_ context.Context, d Deps, in NetLaunchOptsIn) (NetLaunchOpts
 
 // NetProvisionIn identifies the workspace.
 type NetProvisionIn struct {
-	DataDir string
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 }
 
 // NetProvision verifies the launch inputs are present on the target
@@ -369,8 +378,8 @@ func NetProvision(ctx context.Context, d Deps, in NetProvisionIn) (StepOut, erro
 
 // NetInitIn initializes datadirs.
 type NetInitIn struct {
-	DataDir string
-	Binary  string
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	Binary  string `cb:"binary" help:"node binary path (default: the workspace's)"`
 }
 
 // NetInit runs `<binary> init` for each node's datadir from the built genesis.
@@ -383,8 +392,8 @@ func NetInit(ctx context.Context, d Deps, in NetInitIn) (StepOut, error) {
 
 // NetStartIn launches the composed network.
 type NetStartIn struct {
-	DataDir string
-	Binary  string
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
+	Binary  string `cb:"binary" help:"node binary path (default: the workspace's)"`
 }
 
 // NetStart launches every stopped node and records the PIDs.
@@ -397,7 +406,7 @@ func NetStart(ctx context.Context, d Deps, in NetStartIn) (StepOut, error) {
 
 // NetStopIn identifies the workspace.
 type NetStopIn struct {
-	DataDir string
+	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 }
 
 // NetStop terminates every running node by its recorded PID.

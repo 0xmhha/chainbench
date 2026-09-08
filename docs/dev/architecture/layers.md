@@ -163,6 +163,7 @@ flowchart TD
 | 패키지 | 담는 것 |
 |---|---|
 | `app` | 유스케이스 1개 = 함수 1개. cobra·MCP 타입을 모른다 |
+| `feature` | **기능 등록의 한 자리** — `Descriptor`·`Register[In,Out]`·`Stage`·`ReadOnly`, 그리고 **입력 struct 태그 하나가 만드는 두 바인딩**(`Flags` 는 cobra 플래그를, `Schema` 는 MCP JSON 스키마를). 기능 하나를 세 곳에 쓰던 것을 한 곳에 등록하는 일이고, 소비자가 이미 셋이라 예측이 아니라 중복 제거다([[surface-unification-design]] §3.1). **명령을 생성하지 않는다** — 이름·계층·도움말 문구는 사람이 정하는 편이 낫고, 태그에서 만드는 것은 플래그 바인딩뿐이다(§3.4) |
 
 ### L6 표면
 

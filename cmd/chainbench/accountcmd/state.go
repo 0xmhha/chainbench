@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -35,7 +37,7 @@ func newStateCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&rpcURL, "rpc", "", "node RPC URL")
 	cmd.Flags().StringVar(&addr, "address", "", "account address (0x-hex)")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 // deps is what every account verb hands the app layer: side notes to stderr.

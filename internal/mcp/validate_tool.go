@@ -14,7 +14,8 @@ import (
 // agent gets the same verdict the operator would.
 func validateTool() Tool {
 	return Tool{
-		Name: "chainbench_validate",
+		Name:     "chainbench_validate",
+		ReadOnly: true,
 		Description: "Validate DSL test specs offline (no network, no writes) and report which are well-formed. " +
 			"Args: spec (a spec JSON string) and/or specs (array of spec JSON strings); optional chain (also report applicability).",
 		InputSchema: map[string]any{

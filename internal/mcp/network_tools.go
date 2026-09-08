@@ -64,6 +64,7 @@ func networkAttachTool() Tool {
 func networkListTool() Tool {
 	return Tool{
 		Name:        "chainbench_network_list",
+		ReadOnly:    true,
 		Description: "List saved attached networks. Args: state_dir.",
 		InputSchema: map[string]any{
 			"type":       "object",
@@ -99,6 +100,7 @@ func networkListTool() Tool {
 func networkInfoTool() Tool {
 	return Tool{
 		Name:        "chainbench_network_info",
+		ReadOnly:    true,
 		Description: "Show a saved attached network's nodes. Args: name, state_dir.",
 		InputSchema: map[string]any{
 			"type": "object",

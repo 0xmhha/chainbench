@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -39,5 +41,5 @@ func NewConsensus() *cobra.Command {
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&rpcURL, "rpc", "", "node RPC URL")
-	return cmd
+	return surface.ReadOnly(cmd)
 }

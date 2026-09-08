@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -85,7 +87,7 @@ func newWaitCmd() *cobra.Command {
 	cmd.Flags().StringVar(&rpcURL, "rpc", "", "node RPC URL")
 	cmd.Flags().StringVar(&hash, "hash", "", "transaction hash (0x-hex)")
 	cmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "how long to wait for inclusion")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 func txStatus(s string) string {

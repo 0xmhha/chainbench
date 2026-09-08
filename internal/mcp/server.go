@@ -22,6 +22,19 @@ func NewServer(name, version string) *Server {
 	return &Server{name: name, version: version, tools: map[string]Tool{}}
 }
 
+// ReadOnlyTools names the tools that declared themselves queries, in
+// registration order. It is what a caller asks when it wants the safe subset,
+// and it reads the same declaration tools/list reports.
+func (s *Server) ReadOnlyTools() []string {
+	var out []string
+	for _, name := range s.order {
+		if s.tools[name].ReadOnly {
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
 // Register adds a tool (last registration of a name wins; order preserved on
 // first registration).
 func (s *Server) Register(t Tool) {
@@ -81,11 +94,20 @@ func (s *Server) toolList() []map[string]any {
 		if schema == nil {
 			schema = map[string]any{"type": "object"}
 		}
-		out = append(out, map[string]any{
+		entry := map[string]any{
 			"name":        t.Name,
 			"description": t.Description,
 			"inputSchema": schema,
-		})
+		}
+		if t.ReadOnly {
+			// readOnlyHint is MCP's own spelling for this (the annotations
+			// block added in the 2025-03-26 revision). This server still
+			// declares 2024-11-05, so a client that does not know the field
+			// ignores it and one that does gets the right answer — which beats
+			// inventing a name only chainbench would understand.
+			entry["annotations"] = map[string]any{"readOnlyHint": true}
+		}
+		out = append(out, entry)
 	}
 	return out
 }

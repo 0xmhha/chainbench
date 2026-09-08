@@ -8,6 +8,9 @@
 > 원칙: **Low는 TDD 먼저 → walking skeleton으로 조기 통합 → 수직 슬라이스 확장**(big-bang 금지). 코드는 [[go-code-quality-guidelines]] 준수.
 > 상태 표기: ☐ 미착수 · ◐ 진행 · ☑ 완료.
 
+> **이어서 할 일은 §1n "다음 사람에게" 부터 읽는다** (2026-09-08). 남은 것이 무엇이고 무엇이
+> 필요한지, 그리고 라이브를 쫓을 때 이번에 비싸게 배운 측정 함정 여섯이 거기 있다.
+
 ---
 
 ## 1. 개발 우선순위 (walking skeleton 최단 도달 → 심화)
@@ -91,8 +94,8 @@
 | **T7.8** | **DSL v2** — env/case 분리, do/expect 통일 문장형(v1 은 같은 시퀀스로 desugar — 실행 경로 1개), strict 파싱, keys/launch/genesis(set·overlay) 선언, schema/v2.schema.json 정본, `migrate-spec`(라운드트립 게이트), hooks.onFail | 미배선 선언은 이름 붙여 거부: genesis existing/build/inherit·role-scoped launch·override hook(G5) | ☑ |
 | **T7.9** | **metric 검증원** — portplan 이 metrics 포트(HTTP+3, rpcStep≥4) 할당, collector.ScrapeMetrics(Prometheus 텍스트), `expect:"metric"` 어세션(기본 GreaterOrEqual). metrics 포트 없는 노드는 명시적 실패 | 3-검증원(log·rpc·metric) 완성 | ☑ |
 | **T7.10** | **단일 경로 문법** — `netcompose.ParseTarget`: `/local/path` · `user@host:/path` · `ssh://user@host:port/path`. `net new --target` + MCP `target` 인자; 레거시 4-플래그는 유지하되 혼용 거부 | setup 명령의 4-플래그는 T7.11 에서 스택과 함께 | ☑ |
-| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료**(§1d) · **패키지 이동 완료**(§1e: `pipeline/setup`→`core/bringup`) · **netcompose 대체 진행 중**(§1f: b-1~b-4 완료, b-5·b-6 은 라이브 검증 선행). **잔여**: `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 — 남은 건 라이브 검증 후 전환·삭제, 그리고 케이스 이관(작업량) | ◐ |
-| **T7.12** | **`overlays/account-extra.json` params 형식 교정** — `internal/chains/stablenet/overlays/account-extra.json` 의 `govCouncil.params.authorizedAddresses`·`blacklistedAddresses` 가 JSON 배열인데, genesis 의 `SystemContract.params` 는 `map[string]string` 이라 `gstable init` 이 `cannot unmarshal array ... of type string` 으로 거부한다. 콤마로 이어붙인 문자열로 고쳐야 `setup --genesis-overlay` 기동이 성공한다. 다른 소비자(레거시 testkit setup 경로)도 이 오버레이를 쓰는지 확인 후 일괄 교정. **게이트**: 이 오버레이로 `tests/repro/stablenet-account-extra.sh` 가 스킵 없이 통과 | 라이브 검증 때 스크래치 사본으로만 우회했고 원본은 그대로다 — 오버레이 경로가 실제로는 깨져 있다 ([[remaining-work]] §1.1) | ☐ |
+| **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료**(§1d) · **패키지 이동 완료**(§1e: `pipeline/setup`→`core/bringup`) · **netcompose 대체 진행 중**(§1f: b-1~b-4 완료, b-5·b-6 은 라이브 검증 선행). **잔여**: `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 — 남은 건 라이브 검증 후 전환·삭제, 그리고 케이스 이관(작업량) | ☑ **완료 확인 2026-09-07.** 대상 셋이 전부 없다 — `core/probe`·`core/driver`·`internal/pipeline` 어느 것도 트리에 없고, 흡수처(`core/collector`·`core/health`·`core/node`)만 남았다. 게이트로 재고 닫는다 |
+| **T7.12** | **`overlays/account-extra.json` params 형식 교정** — `internal/chains/stablenet/overlays/account-extra.json` 의 `govCouncil.params.authorizedAddresses`·`blacklistedAddresses` 가 JSON 배열인데, genesis 의 `SystemContract.params` 는 `map[string]string` 이라 `gstable init` 이 `cannot unmarshal array ... of type string` 으로 거부한다. 콤마로 이어붙인 문자열로 고쳐야 `setup --genesis-overlay` 기동이 성공한다. 다른 소비자(레거시 testkit setup 경로)도 이 오버레이를 쓰는지 확인 후 일괄 교정. **게이트**: 이 오버레이로 `tests/repro/stablenet-account-extra.sh` 가 스킵 없이 통과 | 라이브 검증 때 스크래치 사본으로만 우회했고 원본은 그대로다 — 오버레이 경로가 실제로는 깨져 있다 ([[remaining-work]] §1.1) | ☑ **완료 확인 2026-09-07.** 오버레이에 `params` 키가 아예 없고, **왜 넣으면 안 되는지**가 파일 주석에 남아 있다(base 템플릿의 `govCouncil.params` 는 평평한 string-map 이라 배열을 넣으면 `gstable init` 이 거부한다). 이 오버레이를 쓰는 스펙 4건 전부 `validate` 통과 |
 | — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☐ |
 
 ---
@@ -274,8 +277,8 @@ K0·S0 가 추측 위에 서게 된다.
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **B1** | **`testspec` 분할** — 문법과 런타임을 가른다 | `chainbench validate` 가 rpc/session 을 링크하지 않음 · 파서 fuzz | ◐ **분할은 끝났다(#311, #326).** `internal/testspec` 은 없고 `dsl`·`dsl/assert`·`dsl/interp` 로 갈라졌다. `dsl/bind` 는 따로 서지 않고 `interp` 안에 남았다. **게이트 둘이 남았다.** ① `dsl` 자체는 `core/rpc`·`core/session` 을 링크하지 않는데, `validate` 가 사는 `suitecmd` 는 `run` 과 같은 패키지라 링크한다. 표면을 가르든 게이트를 다시 쓰든 결정이 필요하다(2026-09-06 실측). ② 파서 fuzz 는 없다 |
-| **B2** | `Spec.Fingerprint()` 가 `string` 반환 (현재 `session.Fingerprint`) | **구문이 L3 에 묶인 유일한 이유**가 이 타입 하나다 — B1 의 선행 조건 | ☐ |
+| **B1** | **`testspec` 분할** — 문법과 런타임을 가른다 | `validate` 는 다이얼도 쓰기도 하지 않는다 · 파서 fuzz | ☑ **완료 2026-09-08 — 게이트를 다시 썼다.** 분할은 끝났고(#311·#326), fuzz 도 끝났다(#357, 550만 실행에 v1 문법 결함 셋 발견).\n\n**옛 게이트 "`validate` 가 rpc/session 을 링크하지 않는다"는 통과할 수 없고, 이제 잴 값어치도 없다.** U 트랙이 모든 표면을 `app` 으로 모았고 `app` 의 fanOut 이 22 라, 한 바이너리에서 어느 명령을 켜도 전부 링크된다. 바이너리를 쪼개면 문자는 만족하지만 그 통합을 되돌린다.\n\n**실측이 진단도 뒤집었다**: `validate.go` 는 rpc·session 을 **한 번도 참조하지 않는다**(쓰는 것은 dsl·dsl/interp·testhelper·core/node·core/registry). 링크는 둘에서 온다 — ① run 경로와 같은 패키지에 산다, ② `validate` 가 이름 해석에 부르는 `testhelper.Registry()` 가 **이름 목록이 아니라 액션 구현 자체**라 rpc·session·keyring·accounts 를 끌고 온다. 그래서 파일을 별도 패키지로 옮겨도 ②가 남는다.\n\n**게이트는 행동으로 바꿨다** — 지킬 것은 링크 크기가 아니라 "아무것도 없을 때 돌리는 명령"이라는 계약이다. `TestValidate_TouchesNothing` 은 커밋된 스펙 122개를 빈 작업 디렉터리에서 검증하고 **아무 파일도 안 생기는지**와 25ms 안에 끝나는지를 본다(다이얼했다면 시한까지 기다렸을 것이다). `TestValidate_ReachesForNothingLive` 는 `validate.go` 가 rpc·session·process·filestore·remote·chainsetup 을 import 하지 않는지 본다 — 라이브 검사가 들어오면 여기서 먼저 걸린다. 변이 둘로 확인.\n\n**어휘에서 이름을 떼어내는 안(②의 근본 해결)은 하지 않는다.** 액션 45개의 등록 방식을 바꾸는 일인데 얻는 것이 오프라인 검증의 링크 크기뿐이다. 문법만 쓰는 다른 소비자가 생기면 그때 근거가 선다 |
+| **B2** | `Spec.Fingerprint()` 가 `string` 반환 (현재 `session.Fingerprint`) | **구문이 L3 에 묶인 유일한 이유**가 이 타입 하나다 — B1 의 선행 조건 | ☑ **완료 2026-09-07 (#359) — 다만 이 행의 전제가 틀렸다.** "구문이 L3 에 묶인 유일한 이유가 이 타입 하나"가 아니었다: `dsl` 자체는 fanOut 0 이고, 묶인 것은 `dsl/interp` 이며 그것이 `session` 을 쓰는 곳은 세 파일이다(`fingerprint.go` 1개 · `interpreter.go` 4개 · `run.go` 9개). `Fingerprint` 를 `string` 으로 되돌려도 첫 파일 하나만 풀린다. 실제로 한 일은 **요구를 좁힌 것**이다 — interp 는 `Environment` 11개 중 4개, `TestRecord` 12개 중 4개만 쓰므로 `NodeTable`·`Recorder` 로 선언했다. 완전 분리(결과 타입 이관)는 서로 맞아야 하는 구조체를 둘 만들어 아티팩트에서 증거가 조용히 빠지는 길이라 **하지 않기로 했고 근거를 남겼다** |
 
 현재 `testspec` 이 `collector`·`session`·`rpc`·`keyreg`·`accounts` 를 import 해서
 **순수해야 할 파서가 L3 로 끌려 올라가 있다**([[module-responsibilities]] §3).
@@ -365,7 +368,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **N8** | ~~`serverset` 가용 자원 풀~~ → **이미 있음**(`slots`·포트 밴드, 2026-08-18). 명시적 범위 풀은 근거 생기면 | — | ☑ |
 | **N9** | **해석 순서 강제** | 선행 단계가 안 돌았으면 명시적으로 거부한다 | ☑ **완료 2026-09-07.** `composeNeeds` 한 곳에 선언하고 모든 단계가 `require` 를 거친다. **적어 보니 두 군데가 틀려 있었다**: 순서는 keyring→netmap 이 아니라 `place → keys` 다(`keys` 가 노드 수를 배치에서 받는다), 그리고 `genesis` 는 키셋을 요구하지 않는다(템플릿을 치환하는 외부 체인은 키를 안 읽고, 요구하게 했더니 되던 조립이 깨졌다). 선언을 훑는 표 테스트 + 순환·도달 검사 + 유스케이스 경유 1건, 변이 세 개로 확인 |
 | **N10** | **계정 라벨** — 라벨 ↔ 주소·개인키. **faucet 은 예약 라벨** | ☑ **완료 2026-09-05.** 실측이 문제를 말한다: 스펙 94파일에 주소 505회, 그중 **키에서 파생돼 키셋이 바뀌면 틀어지는 것이 143회**(`node1` 하나가 93회). 라벨은 주소만이 아니라 **서명 방법**까지 답한다 — 노드 계정은 그 노드가, 하네스만 가진 계정은 여기서 서명해 raw 로 보낸다. `0x` 접두사면 주소, 아니면 라벨. 미지의 라벨은 **아는 라벨을 나열하며 실패**(zero address 로 흘러가지 않는다). 주소 자리(`address`·`from`·`to`·`deployer`·`funder`)는 전부 라벨을 받는다. **2차**: `accounts:` 선언으로 dev 계정을 **genesis 밖에서** 만들고 faucet 으로 채운다 — 계정 추가가 genesis 수정을 뜻하지 않게 된 것이 이 단계의 요점. 잔액 없이 선언하면 0으로 남는다(가스 부족 경로 테스트용). 라이브: 선언한 dev1 이 **자기 키로 서명**하고 dev2 잔액이 정확히 1 wei(0에서 시작해 그 한 번만 받음). 잔여: 스펙 143곳 이관(기계적) | ☑ |
-| **N11** | **다중 config** — 노드별 지정 | 일부 노드만 다른 config 로 재기동한다 | ◐ **게이트는 `swapNode` 가 이미 만족한다**(2026-09-07 확인). `binary` 없이 `config` 만 줘도 되고, 액션·유스케이스·워크스페이스 세 층이 모두 그 경로를 받는다. `restartNode` 에 `config:` 를 또 붙이면 한 동작에 철자가 둘이 되므로 **붙이지 않는다**. 남은 것은 config 만 바꾸는 스왑의 통합 테스트 하나인데, 키셋을 갖춘 기동된 네트워크가 필요해 지금 픽스처로는 안 된다 |
+| **N11** | **다중 config** — 노드별 지정 | 일부 노드만 다른 config 로 재기동한다 | ☑ **완료 2026-09-08.** 게이트는 `swapNode` 가 이미 만족했고(`binary` 없이 `config` 만 줘도 액션·유스케이스·워크스페이스 세 층이 받는다), 빠져 있던 통합 테스트를 채웠다. 걸림돌이던 "키셋을 갖춘 기동된 망"은 실제로 조립해서 만들었다 — preset 키·배치·제네시스·config·argv 기록까지 진짜로 하고 드라이버만 스텁이다. 검증: node2 의 config 가 `SyncMode = "snap"` 으로 다시 렌더되고, **node1 은 그대로이며**, 오버라이드가 `node2` 범위에만 기록돼 나중 재기동이 그것을 쓴다. `restartNode` 에 `config:` 를 또 붙이지 않는다 — 한 동작에 철자가 둘이 된다. 변이 둘(config 만은 거부 · 오버라이드를 전 노드 범위로)로 확인. 부수 확인: config 만 바꾸는 스왑도 **바이너리 기록은 필요하다**(재기동에 실행 파일이 있어야 한다) |
 | **N12** | **deploy skip 을 내용 해시로** | 같은 경로에 **다른 내용**이면 skip 하지 않음 | ☑ **2026-09-06.** deploy 가 genesis 와 config 를 **존재 여부만** 보고 "reused, not rewritten" 이라고 보고했다. 누가 편집한 genesis 도, 이전 구성이 남긴 config 도 똑같이 "있음"이라 노드가 그걸로 뜬다.
 
 genesis·config 를 쓸 때 해시를 `State.LaunchInputs` 에 기록하고, deploy 가 대상의 내용과 대조한다. 다르면 파일 이름과 두 해시를 대고 어느 스텝을 다시 돌릴지 말한다. 되쓰지 않고 거절하는 이유는 deploy 의 일이 만드는 것이 아니라 확인하는 것이기 때문이다.
@@ -406,14 +409,30 @@ genesis·config 를 쓸 때 해시를 `State.LaunchInputs` 에 기록하고, dep
 
 | # | 작업 | 게이트 | 상태 |
 |---|---|---|---|
-| **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 · **`ReadOnly` 속성**(선언식 — 상태 불변 + 출력에 비밀 없음; `keyring export` 는 자격 없음) | 기존 동작 무변경 · 미등록 기능 카운트 테스트 · ReadOnly 선언이 스키마에 노출 | ☐ |
-| **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☐ |
-| **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ☐ |
+| **S0** | **`internal/feature`**(별도 패키지, `Deps` 소유) 레지스트리 골격 · 입력 태그→cobra 플래그/JSON 스키마 바인딩 · **`ReadOnly` 속성**(선언식 — 상태 불변 + 출력에 비밀 없음; `keyring export` 는 자격 없음) | 기존 동작 무변경 · 미등록 기능 카운트 테스트 · ReadOnly 선언이 스키마에 노출 | ☑ **완료 2026-09-08.** `internal/feature`(L5): `Registration`·`Register[In,Out]`·`Stage`·`ReadOnly`, 그리고 **입력 struct 태그 하나가 두 바인딩을 만든다** — `Flags` 가 cobra 플래그를, `Schema` 가 MCP JSON 스키마를.
+
+**게이트 셋 다 실측으로 닫았다.** ① *기존 동작 무변경*: `NetGenesisIn` 에 태그를 달았고(태그는 무해하다), 파생한 플래그 4개가 `chain genesis` 가 손으로 선언한 것과 이름·타입·도움말까지 일치한다. 그래서 S1 의 이관은 표면을 바꾸는 일이 아니라 **손으로 쓴 절반을 지우는 일**이 된다. ② *미등록 기능 카운트*: app 의 유스케이스 80개 중 0개 등록. 큰 숫자이고 그게 계획이다 — 래칫이 막는 것은 이 숫자가 **오르는 것**이다. ③ *ReadOnly 가 스키마에 노출*: `readOnlyHint` 로 나간다.
+
+**이름 둘을 A7 이 커밋 전에 잡았다**: 설계가 `Descriptor` 라 불렀는데 그 이름이 이미 두 뜻(`core/registry` 의 체인 플러그인, `app` 의 재수출)으로 있어 `Registration` 으로, `All` 은 `core/registry` 것과 겹쳐 `Registered` 로 바꿨다.
+
+**명령은 생성하지 않는다**(§3.4). 이름·계층·도움말 문구는 사람이 정하고, 태그에서 만드는 것은 플래그 바인딩뿐이다. 변이 셋으로 확인 |
+| **S1** | ① Compose 이관 — `net.*` 9스텝 등록(이미 `app` 경유라 등록만) | `net up` 3체인 회귀 | ☑ **완료 2026-09-08.** compose 스테이지 **13개** 등록(9스텝 + 조회 넷). 미등록 카운트 80 → **67**, 래칫이 내려간 것을 알아채고 상수를 낮추라고 실패로 말했다. **태그 대조가 갈라짐 하나를 잡았다**: `chain.keys --keys-source` 가 태그엔 기본값 없음, 명령엔 `preset` 이었다. 명령을 파생으로 바꿀 때 몰랐으면 `chain keys` 의 기본 동작이 조용히 바뀐다. 그래서 **기본값 태그를 이번에 만들었다** — 영값에서 유추할 수 없다(`--validators` 는 4가 기본, `--endpoints` 는 0이 기본인데 유추하면 검증자 0인 네트워크가 된다). 파생 플래그 24개가 이름·타입·도움말·기본값까지 일치한다. 대조는 **한쪽 방향**이다 — 태그가 파생하는 것은 명령에 다 있어야 하고 명령은 더 가져도 된다(`--server` 류는 공유 바인더 몫이라 어느 한 입력의 것이 아니다). **라이브 3체인 회귀 통과**: 등록 전 커밋을 별도 worktree 에 빌드해 같은 절차로 나란히 돌렸다(stablenet 20/24 · wemix 58/58 · wbft 24/0). wbft 만 갈려서 before↔after 를 번갈아 4판씩 더 돌렸더니 **before 도 4판 중 1판이 0** 이고 after 는 2판이 정상 — 등록과 무관한 wbft 자체의 불안정이고, 이번 주에 규명한 "검증자가 늦게 합류하면 망이 안 선다"와 같은 자리다(`chain up` 은 아직 `health.Participants` 를 안 쓴다). **측정 실수 셋을 기록해 둔다**: 12초 단일 표본이 head 0 을 회귀처럼 보이게 했고(wbft 는 1에 머물다 가속한다), `pkill -f 'gstable|gwemix'` 가 그 문자열을 본문에 담은 러너 자신을 죽였고, 도는 스크립트를 편집해 bash 가 아직 안 읽은 줄이 어긋났으며 첫 러너가 살아 있는 채 둘째를 띄워 포트 8600 을 두고 다퉜다 — 같은 바이너리·같은 체인이 24 와 0 을 동시에 낸 것이 그 증거다 |
+| **S2** | MCP `net_*` 를 레지스트리 소비로 전환 | 손작성 스키마 감소분 측정 | ◐ **조회 전용 목록은 완료(2026-09-08), 스키마 감축은 근거가 약하다.** §4.4 규칙 3 을 구현했다 — 도구가 `ReadOnly` 로 선언하고 `tools/list` 가 MCP 자신의 철자인 `annotations.readOnlyHint` 로 실어 나른다(이 서버는 2024-11-05 를 선언하고 그 필드는 2025-03-26 에 생겼으므로, 모르는 클라이언트는 무시하고 아는 쪽은 정답을 얻는다 — chainbench 만 아는 이름을 짓는 것보다 낫다). 54개 중 **28개**가 선언했다.
+
+**CLI 와 MCP 가 어긋나지 않도록 짝을 못박았다.** 공유 레지스트리가 아직 없어 같은 사실을 두 번 선언하는데(cobra 주석 / 구조체 필드), 그게 바로 갈라지는 모양이라 18쌍을 테스트가 붙들고 있다. 한쪽만 표시를 떼면 실패한다(변이 확인).
+
+**손작성 스키마 감축은 지금 하지 않는다.** 실측: 되풀이되는 속성은 `rpc` 16 · `workspaceDir` 11 · `chain` 11 이고 전부 한 줄짜리 선언이다. **설명이 갈라졌는지 세어 보니 갈라지지 않았다** — `rpc` 15곳이 같은 표현이고 다른 둘은 실제로 다른 인자다(배열 허용, attach 용). 즉 이 감축은 교정이 아니라 예방이고, 54개 도구를 기계적으로 훑는 diff 를 그 근거로 사기에는 약하다. 갈라짐이 실제로 생기면 그때가 착수 시점이고, 그 신호는 이 줄에 적힌 숫자를 다시 세면 나온다 |
 | **S3** | ② Test 이관 — `tx`·`faucet`·`contract`·`verify` | CLI/MCP 동시 노출 | ☑ **U4 가 했다(2026-09-05).** 넷 다 `app.TxSend`·`Faucet`·`ContractDeploy`·`VerifyNetwork` 를 CLI 와 MCP 가 함께 부른다(실측 확인 2026-09-06). **DSL 은 뺀다** — 액션은 표면이 아니라 L3 어휘이고 app 을 부르면 import 순환이다(§1l U7 참조) |
-| **S4** | ③ Report 이관 — `status`·`report`·`logs` | | ☐ |
+| **S4** | ③ Report 이관 — `status`·`report`·`logs` | 등록 + 태그가 배포된 표면과 일치 | ☑ **완료 2026-09-08.** 넷 등록(report.session·report.log·report.timeline·network.status), 모두 조회 전용. 미등록 카운트 67 → **63**.\n\n**등록하려니 세 함수의 모양이 맞지 않았다** — `LogSearch(_ Deps, dir string, in)` 처럼 디렉터리를 별도 인자로 받았는데, 그건 사실 입력이다. `(ctx, Deps, In)` 으로 바꾸면서 필드를 두 번 선언하지 않으려고 **바인더가 임베디드 구조체를 읽게** 했다. 그래서 `app.LogSearchIn` 은 `Dir` + `collector.SearchOpts` 이고, 검색 조건은 여전히 한 곳에만 선언돼 있다.\n\n**표면 래칫이 곧바로 잡았다**: 호출부를 고치다 `reportcmd/log` 가 `collector` 를 직접 참조하게 됐다. app 이 `LogSearchFilter` 로 어휘를 내주게 고쳤고, 그 이름은 A7 이 다시 잡았다 — `LogFilter` 는 `core/rpc` 에서 eth_getLogs 필터를 뜻한다. 파생 플래그 7개가 명령과 일치하고, 변이로 확인했다 |
 | **S5** | ~~`cmd/` 규칙 위반 파일 정리~~ **폐기 2026-09-05** | 게이트가 "`cmd/` 가 `app` 만 import" 였는데, 지키려던 성질은 import 목록이 아니라 표면 사이의 동등성이다. 줄수 목표(~1,800)는 **달성하지 못했다**: CLI 네 패키지 합계가 4,569 → 4,176 으로 거의 그대로고, 줄어든 것처럼 보였던 것은 코드가 `chaincmd`·`keyringcmd`·`resourcecmd` 로 옮겨 갔기 때문이다. 폐기 사유는 목표 달성이 아니라 규칙 교체다. 남은 실체는 §1l 의 U 트랙이 가져간다 | ☒ |
 | **S6** | ~~`cmd` import 화이트리스트 테스트~~ **폐기 2026-09-05** | 대리 지표 대신 기능별 동등성 테스트로 대체한다(U0·U2~U7). 라체트는 "app 을 거치지 않는 항목 수"로 세운다 | ☒ |
-| **S7** | **`query` 조회 투영** — `ReadOnly` 기능들을 최상위 `query <명사> <동사>` 로 **자동 생성**(손 트리 금지, [[surface-unification-design]] §4.4, 확정 2026-08-25). 정본 철자는 명사 그룹, `query` 는 같은 등록의 두 번째 렌더링. MCP 는 같은 속성으로 조회 전용 도구 목록을 얻는다 | `query keyring list` == `keyring list` (같은 등록 실증) · 비-ReadOnly 기능이 query 에 나타나면 테스트 실패 | ☐ |
+| **S7** | **`query` 조회 투영** — `ReadOnly` 기능들을 최상위 `query <명사> <동사>` 로 **자동 생성**(손 트리 금지, [[surface-unification-design]] §4.4, 확정 2026-08-25). 정본 철자는 명사 그룹, `query` 는 같은 등록의 두 번째 렌더링. MCP 는 같은 속성으로 조회 전용 도구 목록을 얻는다 | `query keyring list` == `keyring list` (같은 등록 실증) · 비-ReadOnly 기능이 query 에 나타나면 테스트 실패 | ☑ **완료 2026-09-07.** `query` 는 손으로 만들지 않고 **명령 트리에서 생성한다**. 각 명령이 `surface.ReadOnly` 로 스스로 선언하고(추론이 아니다 — `node rpc` 는 메서드가 인자라 코드로 알 수 없고, `keyring show` 는 안전한데 `keyring export` 는 비밀을 찍으니 둘 다 "찍기만 한다"로는 갈리지 않는다), 투영이 그것을 읽는다. 19개가 선언했고 `query` 가 정확히 그것만 담는다.
+
+**같은 등록임을 세 가지로 확인한다**: 설명이 같고, `RunE` 가 같은 함수 값이며, **플래그 변수가 공유된다**(투영에 `--json` 을 세우면 정본 명령이 그것을 본다). 셋째가 잡는 위험은 "생성자를 다시 불러 만든 두 번째 등록"이다 — 도움말은 멀쩡해 보이지만 변수가 따로라 갈라진다.
+
+**주석 하나를 실측으로 고쳤다**: "복사로는 변수 공유를 얻을 수 없다"고 적었는데 틀렸다. `pflag.Flag` 의 `Value` 가 인터페이스라 구조체를 복사해도 변수는 공유된다. 탐침으로 확인하고 주석을 사실대로 바꿨다.
+
+변이 셋으로 확인: 쓰기 명령(`chain genesis`)에 선언을 붙이면 잡히고, 플래그를 새로 선언하면 "두 플래그 집합"으로 걸리고, 투영에서 하나를 빼면 선언과 안 맞는다고 실패한다 |
 | **S8** | **netmap 조회의 자기 그룹 독립** (사용자 결정 2026-08-25) — 배치 조회를 `net` 에서 분리해 모듈 이름 그대로의 최상위 그룹 `netmap`(show·pool·plan)으로. 동기: 조회가 조합 그룹에 묶여 있으면 netmap 모듈만 고쳤을 때 그 부분만 테스트할 수 없다. `plan` 신설 = 할당기를 질문으로 실행(인벤토리+형태→배치표, 워크스페이스 없음·무기록) → 배치 변경을 조합 없이 검증하는 통로. MCP 도 동일 이동(`chainbench_netmap_show/pool/plan`). `net` 은 상태를 바꾸는 조합 단계만 소유 | CLI 테스트 7건(plan 결정성·무기록·producer 0 거부·인벤토리 반영·자격 비노출, show 양방향·워크스페이스 요구, pool used 집계) — netmap 만 대상으로 실행 가능 | ☑ |
 | **S10** | **용도별 포트 대역 + 실서버 방화벽 재현** (사용자 요구 2026-08-26) — ① 서버 세트 `ports` 에 `ws`/`auth`/`metrics` 대역 선언 추가(선언 시 rpc 파생 꺼짐, `portplan.PlanBands`). 로더의 p2pStep 최소는 1로(패밀리 요구는 allocate 의 portplan 이 검사 — wemix 만 넓은 예약, wbft 는 관성이던 예약 2→1 정직화). ② docker 서버들: `firewall.sh` 가 Wemix3.5 테스트 서버 허용 목록(TCP 10022·8501-8504·8601-8604·8701-8704·6060·3000·3001·9100·9090·30301-30304·1099·5901·5044·9200, UDP 30303)만 열고 기본 DROP. ③ sshd 10022 + 서버 세트 `ssh.port: 10022`, gen-env 가 실서버 규격 대역을 서버 세트에 기록 | 단위: 용도별 대역 로드·검증·tight-step 판정. 라이브: 허용/차단 포트 프로브(DROP·refused 구분), 새 대역으로 5대 분산 기동→블록 24→고아 0, keyring·driver·워크플로 라이브 스위트 10022 경유 통과 | ☑ |
 | **S11** | **machine.Kind 제거 — 구분은 저장하지 않고 파생** (사용자 결정 2026-08-26) — Kind(local/remote/server)는 축이 지리처럼 읽히지만 실체는 "지정 방식"이었고, 저장된 kind 는 주소와 어긋날 수 있었다. Spec 은 필드만 갖고(서버명·호스트·경로), 지역성은 파생한다: `Server` 있음 → 세트 항목, 루프백/빈 호스트(로그인 미지정) → 이 머신, 그 외 → 직접 지정(환경 인증). 루프백+User/Port 명시는 의도적 SSH dial(터널·퍼블리시 포트). 표시 문구는 `Spec.Describe()` 한 곳으로 — net status·MCP·실행 기록의 자체 분기 소멸, 래칫 3항목 축소 | 단위: 파생 규칙·Validate·Describe. 라이브: fleet 기동·status `server server1:…` 표기·workspace.json 에 kind 없음·실행 기록 where 일치·keyring 스위트 통과 | ☑ |
@@ -675,9 +694,9 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P3** | 프로세스 — 실행은 `driver`, 정책은 `process`. 기동 진입점 8 → **3**(driver 실행 · `launcher` 기동 정책 · `process` 종료 정책 — 사용자 결정 2026-08-28: 옛 `supervisor` 는 sudo 역할로 읽혀 `launcher` 로). **`occupancy` → `inspector` 개명·확장**(사용자 결정 2026-08-28): ip 가용·port 가용·경로 유효성(data root·datadir·genesis·keystore·nodekey·config·log·binary)을 요청 시에만 실사해 사실만 답한다. 타입은 stutter 회피(`inspector.Report` 등), `driver.ProcessInspector` 어휘도 이때 정리 | P2 | 진입점 계수 · `chainsetup` 714줄 감소 | ☑ **P3 완료 2026-08-28** · P3.1 — `core/launcher` = `supervisor`+`chainsetup.LocalLauncher`(→`Direct`)+`driver/lifecycle.go`, `supervisor` 낱말 0, `driver.NodeOf` 로 Node 조립 4→1(hardfork 의 loopback 리터럴 소멸), `workspace.go` 의 etcd 포트 누락 복사 수정, `chainsetup` 6,593→6,256. **P3.2 완료 2026-08-28** — `NodeController`→`launcher.Controller`(pid 맵 삭제: arming 만 기억, pid 는 `session.Environment` 노드표 한 곳 — `NodeControl.Stop/Start` 가 갱신된 노드를 돌려주고 fault 액션이 `Env.UpdateNode` 로 써넣음), `chainsetup` 6,256→6,123. `Workspace.Start/Stop/Restart` 는 노드별 머신을 거쳐 driver 를 부르고 `Record.PID` 에 적으므로 그대로(조립 모드의 한 기록). `LocalSetup` 은 레거시 `setup --launch`/MCP `_start` 경로라 T7.11 과 함께. **P3.3 완료 2026-08-28** — `core/occupancy`→`core/inspector`: `Ports`(옛 Scan) · `Paths`(file seam 으로 타깃에서 존재 확인) · `Hosts`(도달) 세 질문, 요청 시에만, 사실만. `net start` 가 기동 전 binary·genesis·datadir·config 존재를 각 노드의 머신에서 확인해 빠진 것을 이름으로 보고. `occupancy` 문자열 0 |
 | **P4** | 빌더 셋 — genesis 생성 지점 5 → 1, config 렌더 2 → 1, dsl 파서가 액션을 import 하지 않음 | P2, P3 | 계수 + import 방향 | ☑ **P4 완료 2026-08-28** · P4.1 genesis 완료 2026-08-28** — `core/genesis` 가 소스 선택(`SourceFor`, 패밀리 id 분기 0: `SourceProvider` 타입 단언)·`Compose`·프리셋 소스 소유, wemix 소스는 `consensus/poa.GenesisSource`(Family 가 capability 구현), 호출자 5곳 전부 `Compose`/주입 `Source` 경유, `chainsetup` 직접 파일 쓰기 0(layers §5 에서 제외), 5,828줄. **P4.2 config 완료 2026-08-28** — `nodeconfig.Spec` 단일 입력, `TOML`/`Argv` 두 렌더러, Spec 조립은 `launcher.NodeConfig` 한 곳, compose 의 config·launchopts·start 가 `peerPlan` 으로 같은 입력을 모음, argv 조립 3→1(`upgrade.LaunchArgs`·deploy 평평한 `LaunchArgs` 도 `Argv` 경유), `driverSpec` 의 `SyncMode` 누락 수정. `launchopt` 는 소유로 편입(호출자는 `nodeconfig.Argv` 뿐), 디렉터리 유지. **P4.3 dsl 완료 2026-08-28** — `testspec`(문법·해석기 1,432줄)과 `internal/testhelper`(액션·어세션·리더 2,129줄) 분리. `Registry` 에 `Reader` 추가로 문법이 액션 파일을 부르던 고리(`readerFor`) 제거, `NewRegistry()` 빈 레지스트리 + `testhelper.Register`. `testspec→testhelper` import 0 |
 | **P4.x** | **`preflight` 재정의** (결정 2026-08-28) — 계획 자기모순 검사에서 **현재 vs 목표 비교**로: 타깃의 현 체인 구성을 분석하고, 정상 동작 여부를 inspector 로 확인하고, 다음 테스트가 요구하는 구성과 비교해 "그대로 사용 / N번 서버만 재구성 / 전체 재구성" 을 답한다(연속 테스트의 재구성 비용 제거 — 설정 파일 비교만으로는 부족: 파일이 같아도 노드가 비정상일 수 있다). 기존 계획 검사는 각 빌더로(포트→resource, genesis 포크→genesis 빌더, netid→config 빌더) | P4, P3 | 동일 구성 연속 테스트에서 재구성 스킵 라이브 · 부분 변경 시 해당 노드만 재구성 | ☑ **완료 2026-08-28** — `core/preflight` = `Have`/`Want`/`Compare`/`Check`/`Decision`(reuse·rebuild-nodes·rebuild-all·compose, 이유 포함), 의존 `node` 뿐 · `chainsetup.Workspace.Have/Compare` + liveness(pid 는 노드의 머신, RPC head 는 노드 주소) · `app.RunSuite` 가 NetUp 전에 물어 reuse 는 건너뛰고 rebuild-nodes 는 `NetRestart` 만 · 옛 계획 검사는 `upgrade.NetworkPlan.validate` 로(빌더 함수 호출) · 표 테스트 9 + liveness 3 |
-| **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ◐ **P6.1 완료 2026-08-28** — 키 출처 → `keyring/store`(`KeySource`·`PresetKeys`·`GeneratedKeys`·`KeySet.Register`) · wemix 부트스트랩 실행자·`Info` → `consensus/poa` · `AssemblePlan`+`driverSpec` → `launcher.PlanOf`+`driver.SpecOf`(플랜 빌더 3→1) · `NewBuildEnv` → `testengine` · `setup_bridge.go` 삭제 · `testengine→chainsetup` 엣지 0 · 레이어 위반 0 · 5,935→5,210줄. **P6.3 완료 2026-08-28** — 핸드오프 본문은 `consensus/upgrade.Handoff` 하나(케이스 러너 `liveHandoff` 85줄 어댑터, `upgrade run` 132줄 표면, `upgrade run` 도 verify-etcd 수행, `LaunchHandoff` 삭제) · 5,210→4,865줄. **P6.4 완료 2026-08-28** — `chain up --case` 러너 7파일 + `cmd/chain.go` 삭제(P7 선언이 대신) · 4,865→3,589줄. **P6.2 완료 2026-08-28** — `setup`·`app.Network*`·`localplan/locallaunch`·`nodeset.json/nodespecs.json`·MCP `start/setup_plan` 삭제, verb 전부 워크스페이스 위로(`StopNode/StartNode/Hardfork`), `--data-dir`→`--workspace-dir`(9곳)·MCP `workspaceDir`, e2e·repro 는 `net up`; stablenet e2e 3종 라이브 통과 |
+| **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☒ **닫는다 2026-09-08 — 줄 수 목표는 근거를 잃었고, 남은 게이트는 좁히기로 달성되지 않는다.**\n\n**실측**: `chainsetup` 4,652줄 · `testengine` 2,349줄, 합 7,001. 그중 **주석이 1,547줄(22%)** 이고 공백 451, 실제 코드는 5,003 이다. 함수·메서드가 213개라 평균 20줄 남짓 — 비대한 함수가 몰린 구조가 아니다. 가장 큰 것이 `netUpFrom` 133 · `RunSuite` 132 · `Run` 109 · `Allocate` 99 다.\n\n**목표 2,000 은 P5 시점의 6,593 에서 잡은 것인데, 그 뒤 이 두 패키지가 하는 일이 늘었다**(청사진 N1~N6, N9 순서 선언, NM6, 원격 경로). 줄이 는 것은 기능이 는 것이지 부풀어서가 아니다. 그리고 줄 수를 목표로 삼으면 **가장 먼저 지워지는 것이 그 22%의 주석**인데, 이 세션에서 판단을 바꾼 것이 바로 그 주석들이었다(`derive quorum` 이 노드 표를 안 읽는 이유, `genesis` 가 키셋을 요구하지 않는 이유).\n\n**게이트 둘 중 하나는 충족**이다 — `setup_bridge.go` 는 없다. 남은 `testengine→chainsetup` 엣지는 비테스트 4파일이고, **층 위반이 아니다**(둘 다 L4). 노드 수명(start/stop/restart/swap)을 인터페이스로 좁혀 보면 **4파일 중 1개**(`nodegate.go`)만 import 가 사라지고 `suite.go` 에는 `NetUp`·`Open`·`WantOf`·`NetworkStatus`·`NetStop`·`NetEndpoints` 등 11개가 남는다 — **패키지 엣지는 그대로다.** 인터페이스가 12개 메서드라면 그것은 요구를 좁힌 것이 아니라 chainsetup 을 다른 이름으로 부르는 것이다.\n\n**엣지를 실제로 없애는 길은 하나뿐이다**: 조립을 testengine 밖으로 내보내 엔진이 망을 *받게* 하는 것. 그것은 좁히기가 아니라 재설계이고, 근거가 생기면 그때 별도 항목으로 세운다. 지금은 열어 둘 이유가 없다 |
 | **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☑ **완료 2026-08-28** — `tests/cases/env/` 선언 4개 + 케이스 4개 · 문법 `env.upgrade`(schema·strict·lowering, `binaries` 는 producer/validator 역할) · 실행기 `app.RunSuite` 가 선언의 모양으로 조립기 선택(`upgrade` → `upgrade.Handoff`, 아니면 `NetUp`) · 표면 `run --workspace-dir` · `validate` 가 env 를 풀고 env 파일을 선언으로 검증 · 러너 `if chain ==` 0건 · **라이브 4/4 완결 2026-08-31**(gstable·go-wbft·go-wemix 빌드; 핸드오프는 후계 검증자의 블록 21 봉인까지) — 그 과정에서 gwemix 0.10.x 의 `etcd.members` 모양 변화가 깨뜨린 verify 파싱을 `EtcdState` 필드 제거로 해소 |
-| **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ◐ **2026-08-28** — 게이트 둘은 P4.3·P7 이 닫음. 이관 끝난 레거시 Go 케이스 41파일 삭제(등록 134→56, `tests/api`·`tests/network` 소멸), 공유 헬퍼 `helpers.go` 취합, `tests/` 12,000→3,144줄. **남은 것**: 미이관 34건(문법 갭, `tests/specs/README.md` 잔여 표) → 이관 후 `testkit`·`testrun`·`test` 명령·MCP `chainbench_test` 은퇴 |
+| **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☑ **완료 2026-09-07 (#357).** 남은 것은 문법 갭이 아니라 **낡은 기록**이었다 — 막혔다던 19건 중 15건에 이미 스펙이 있었고 122개 전부 `validate` 를 통과한다. 문서를 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다. 진짜 남은 8건은 이유가 유효하다(SDK 가드 2 · 조작자 공급 키 2 · 다른 빌드가 필요한 4) |
 | **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md` — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
 
 ### 1j. 사용자 주도 통폐합 (2026-08-31 확정 — 정본: `docs/dev/architecture/consolidation-plan.md`)
@@ -1072,9 +1091,9 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 
 | # | 무엇 | 지금 상태 | 게이트 |
 |---|---|---|---|
-| **N11** | 다중 config | ◐ **게이트는 `swapNode` 가 이미 만족한다.** `binary` 없이 `config` 만 줘도 세 층이 다 받는다. `restartNode` 에 또 붙이면 한 동작에 철자가 둘이 되므로 붙이지 않는다 | 남은 것은 config 만 바꾸는 스왑의 통합 테스트 하나다 |
+| **N11** | 다중 config | ☑ **완료 2026-09-08.** 게이트는 `swapNode` 가 이미 만족했고, 빠져 있던 통합 테스트를 채웠다(진짜로 조립하고 드라이버만 스텁) | 일부 노드만 다른 config 로 재기동한다 |
 | **V7** | 기회 개명 백로그 | ☑ `netreg` 는 모듈이 이미 없어 파일 이름만 `networks.go` 로 바꿨고, `accounts` 는 상류 SDK 를 가리키는 이름이라 두기로 했다 | 네이밍 규칙 표를 통과한다 |
-| **B1**-b | 파서 fuzz | ☑ **완료 2026-09-07.** `FuzzParse`·`FuzzMigrateV1`·`FuzzInlineEnv` 셋. 씨앗은 저장소의 스펙 122개 — 무작위 바이트는 거부 경로만 훑고, 진짜 스펙이라야 변이가 수용 경로에 닿는다 | 죽지 않는 것에 더해, **통과한 것은 해석기가 쓸 수 있어야 한다**(id·chain·schemaVersion). **fuzz 가 v1 문법의 결함을 찾았다** — 아래 |
+| **B1**-b | 파서 fuzz | ☑ **완료 2026-09-07 (#357).** `FuzzParse`·`FuzzMigrateV1`·`FuzzInlineEnv` 셋. 씨앗은 저장소의 스펙 122개 — 무작위 바이트는 거부 경로만 훑고, 진짜 스펙이라야 변이가 수용 경로에 닿는다 | 죽지 않는 것에 더해, **통과한 것은 해석기가 쓸 수 있어야 한다**(id·chain·schemaVersion). **fuzz 가 v1 문법의 결함을 찾았다** — 아래 |
 | **P8** | 미이관 테스트 케이스 | 문법 갭을 메우거나 이관하지 않을 이유를 적는다 | ☑ **완료 2026-09-07 — 갭이 아니라 기록이 문제였다.** `tests/specs/README.md` 가 갭에 막혔다고 적은 19건 중 **15건에 이미 스펙이 있고 전부 검증을 통과한다**. 없다고 적힌 프리미티브가 그동안 다 생겼기 때문이다: 로그를 유발하기 전에 구독을 여는 `wsOpen`, 손상된 이중서명을 조립하는 `sendRawTampered`, EIP-7702 의 `sendSetCode`, 로컬 키를 만드는 `newAccount`, "오류는 나도 되지만 not-found 는 아니다"를 묻는 `methodPresent`, revert 를 기대하는 `callError`, ceil(2n/3) 의 `derive op:"quorum"`. **불완전한 문서보다 나쁜 상태였다** — 그걸 보고 계획하면 끝난 일을 다시 하고, 커버리지를 감사하면 실제보다 얇다고 믿는다. 문서를 실제 상태로 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다(layers.md 처럼 **문서를 파싱하고 복제하지 않는다**). 변이 둘로 확인. **진짜 남은 8건**: SDK 클라이언트 가드 2건(표현 대상이 아니다) · 조작자 공급 키가 필요한 2건(`newAccount` 는 키를 만들 뿐 받지 못한다) · 바이너리가 기능을 안 담은 P256 3건과 genesis 빌더가 처음부터 최종 코드를 굽는 govminter 1건(라이브 반증, 다른 빌드가 필요하다). 기준선도 바뀌었다 — 레거시 등록부 `testkit.Cases()` 가 2026-09-06 에 사라져(A5) 134/56 같은 숫자는 다시 뽑을 수 없다. 기준은 커밋된 스펙 **122개**이고 전부 `validate` 를 통과한다 |
 | **B2** | 해석기를 `session` 에서 떼기 | 요구를 좁힌다. **완전 분리는 하지 않는다** | ☑ **완료 2026-09-07 — 재보고 후 범위를 바꿨다.** 실측하니 결합이 타입 목록보다 훨씬 좁았다: interp 는 `Environment` 11개 중 **4개**(`Nodes`·`Resolve`·`ResolveEach`·`UpdateNode`), `TestRecord` 12개 중 **4개**(`Step`·`Assert`·`PostAction`·`Status`)만 쓴다. 그래서 `interp.NodeTable` 과 `interp.Recorder` 로 요구를 선언했다(`operation.Opener` 와 같은 수법). 세션 쪽은 구조적으로 만족하므로 엔진은 바뀐 것이 없다.
 
@@ -1086,29 +1105,27 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 진입점을 쓴다. 남은 값어치는 **MCP 손작성 스키마 감축**과 **`query` 투영(S7)** 둘뿐이다.
 S0·S1·S2·S4 는 여기서 닫는다.
 
-### 다른 머신이 필요하다
+### 이 기기에서 못 하는 것 — 로컬 docker 함대가 필요하다
 
-| # | 무엇 |
-|---|---|
-| **R6** | poa(wemix) 를 원격에서 실행하고 직렬로 브링업한다 |
-| — | docker 기반 서버 라이브 테스트를 돌린다 |
+> **정정 2026-09-07.** 이 절은 "다른 머신이 필요하다"고 적혀 있었는데 **근거 없이 쓴 것이고 사실과 반대다.**
+> R 트랙의 전제 자체가 "실 원격 서버 없이 컨테이너를 가상 서버로 쓴다"이고([[docker-remote-design]]),
+> R1~R5 는 전부 끝났으며 **R6 도 15대 docker 서버셋에서 라이브로 완주했다**(2026-09-02).
+> 필요한 것은 다른 기계가 아니라 이 기계 위의 docker 데몬이고, 지금 그것이 떠 있지 않다.
+> 함대는 `env/docker/gen-env.sh` 가 만들고 산출물(인벤토리·localmap)은 gitignore 대상이다.
+
+| # | 무엇 | 남은 것 |
+|---|---|---|
+| **R6** 잔여 | poa 원격 브링업 | **chainbench 결함이 아니다.** `etcdInit` 이 형성한 클러스터를 노드의 배경 etcd 관리가 거버넌스 멤버 14개를 보고 다시 join 하려다 잃는다. 재현 2회 중 1회. go-wemix 바이너리 쪽이다 |
+| **G2** 잔여 | 핸드오프의 원격 경로 | R6 과 같은 함대에서 본다 |
+| `chain rm` 원격 | N4 가 남긴 유일한 진짜 분기 | `filestore.Store` 에 삭제가 없다. 파괴적 원격 작업이라 검증할 함대가 있을 때 함께 |
 
 ### 미해결 조사
 
-리팩토링과 섞으면 원인 판별이 불가능해지므로 위 단계와 겹치지 않게 몰아서 본다.
-
 | 무엇 | 실측 | 아는 것 |
 |---|---|---|
-| **`TestE2E_WbftQuorum6of6Halts2`** | **2026-09-07: 18판 무실패** | **재현되지 않는다. 고쳤다는 말이 아니다.** 실제 테스트 10판 + 손 재현 8판. 실패 기록이 "head 2 에 멈춤"이라 **정지 시점이 이르면 회복이 안 된다**는 가설을 세워 head 2·4·20 세 지점에서 시험했는데, 여덟 판 전부 3초 만에 회복했고 여섯 노드가 모두 피어 5를 보고했다. **정지 시점은 방아쇠가 아니다.** 원인은 여전히 모르고, 그 사이 들어간 변경(`process.Stop`·NM6)이 이것과 연결된다는 것도 보인 적이 없다. 9월의 실패 판들이 아무것도 남기지 않아 가설 셋이 실패한 쪽 증거만으로 세워졌다 무너졌으므로, **다음 실패가 진단 가능하도록** 대기가 포기할 때 모든 노드의 head 와 피어 수를 남기게 했다 |
-| **`TestE2E_StablenetProposalExpiry`** | **원인 규명 · 2026-09-07** | 실패 4판과 통과 5판이 **한 가지로 갈렸다: `node1 sealed=0`.** 통과 판은 node1 이 5~12개 봉인하고, 실패 판은 0이다. 체인은 멀쩡히 블록 24까지 갔고 그 트랜잭션만 채굴되지 않았다 — node1 이 블록 17~24 를 매번 `txs=1` 로 준비했지만 한 번도 낼 기회를 못 얻었고, tx 는 다른 어떤 노드에도 전파되지 않았다.
-
-**chainbench 의 결함은 준비 판정이었다.** `detectProducing` 이 **주 노드 하나에게만** 헤드가 자랐는지 묻는다. 4검증자 BFT 망은 셋만 봉인해도 생산하므로, 넷째가 합의에 못 껴도 "생산 중"이다. 그 노드는 떠 있고 동기화돼 있고 남들과 같은 헤드를 보고하는데, 거기로 보낸 트랜잭션은 30초 뒤 아무것도 지목하지 않는 영수증 시한 초과로만 나타난다.
-
-`health.Participants` 가 최근 블록의 봉인자를 세어 조용한 검증자를 지목하고, 하네스는 헤드가 움직였는지가 아니라 **모든 생산자가 참여했는지**를 기다린다. **실측: 검사 없이 16판 중 5실패(31%) → 검사와 함께 16판 중 0실패.** 검사를 도로 빼자 5판 안에 실패가 돌아왔다.
-
-**여전히 모르는 것**: 왜 어떤 판에서 검증자가 늦게 합류하는가. 그건 체인 바이너리 쪽이고 지금도 일어난다. 고친 것은 망이 다 서기 전에 스위트가 그것을 몰아붙이지 않게 한 것뿐이다 |
-
-두 실패는 "체인이 제때 처리하지 않는다"는 같은 모양이라 함께 보는 편이 나을 수 있다.
+| **`TestE2E_WbftQuorum6of6Halts2`** | **2026-09-07: 18판 무실패** | **재현되지 않는다. 고쳤다는 말이 아니다.** 실제 테스트 10판 + 손 재현 8판. "head 2 에 멈춤"이라는 기록에서 **이른 정지가 방아쇠**라는 가설을 세워 head 2·4·20 에서 시험했는데 여덟 판 전부 3초 만에 회복했고 여섯 노드가 피어 5를 보고했다 — 가설은 무너졌고 대신할 원인은 없다. 그 사이 들어간 변경(`process.Stop`·NM6)이 이것과 연결된다는 것도 보인 적이 없다. 재현되면 이제 진단이 남는다 |
+| ~~**`TestE2E_StablenetProposalExpiry`**~~ | ☑ **규명·수정 2026-09-07 (#358)** | 실패 4판과 통과 5판이 **`node1 sealed=0`** 하나로 갈렸다. chainbench 의 결함은 준비 판정이었다 — `detectProducing` 이 주 노드 하나에게만 물어서, 4검증자 BFT 망이 셋만 봉인해도 "생산 중"이었다. `health.Participants` 로 봉인자를 세고 하네스가 **모든 생산자의 참여**를 기다린다. 검사 없이 16판 중 5실패 → 검사와 함께 16판 중 0실패, 빼면 5판 안에 복귀 |
+| **`G2` 잔여** | — | 원격 경로라 함대와 함께 본다 |
 
 ### 이 순서의 단점
 
@@ -1119,6 +1136,67 @@ S0·S1·S2·S4 는 여기서 닫는다.
 **쫓을 때의 교훈**: 실패한 판 하나만 보고 원인을 말하면 안 된다. 위 두 건에서 가설 셋이 무너졌는데
 **셋 다 통과한 판에도 같은 표시가 있었다.** 통과와 실패를 나란히 놓고 갈리는 것을 찾는 단계가 원인과
 우연을 가른다.
+
+## 1n. 다음 사람에게 (2026-09-08)
+
+> 이 기기(docker 데몬 미기동)에서 할 수 있는 일은 끝났다. 남은 것은 셋인데 **하나만 실제 작업**이고
+> 둘은 착수 근거가 아직 없다.
+
+### 지금 트리 상태
+
+`main` + PR #361(커밋 12개). 53개 패키지 통과, `gofmt`·`go vet`·`golangci-lint`·`go build -tags e2e` 통과.
+라이브 스위트는 2026-09-07 에 19/19 통과했다.
+
+이번에 닫힌 것: S0·S1·S2(조회 목록)·S4·S7 · N0/NM6 · N9 · N1~N6 · A7 · A7b · A8 · B1 · B1-b · N11 · P6 · P8 · V7.
+
+### 남은 것 1 — 로컬 docker 함대가 필요하다 (유일한 실제 작업)
+
+**다른 기계가 아니라 docker 데몬이 필요하다.** R 트랙의 전제가 "실 원격 서버 없이 컨테이너를 가상
+서버로 쓴다"이고 R1~R5 는 끝났으며 R6 도 15대 서버셋에서 라이브 완주했다([[docker-remote-design]]).
+
+착수 순서:
+
+1. docker 를 띄우고 `env/docker/gen-env.sh` 로 15대 함대를 만든다. 산출물(인벤토리·localmap)은
+   gitignore 대상이라 저장소에 없다.
+2. **R6 잔여** — `etcdInit` 이 형성한 클러스터를 노드의 배경 etcd 관리가 거버넌스 멤버 14개를 보고
+   다시 join 하려다 잃는다(재현 2회 중 1회). **chainbench 오케스트레이션은 정상이고 go-wemix
+   바이너리 쪽이다.** 체인팀과 볼 일이지 여기서 고칠 것이 아닐 수 있다.
+3. **G2 잔여** — 핸드오프의 원격 경로. 같은 함대에서 본다.
+4. **`chain rm` 원격** — `filestore.Store` 에 삭제가 없어(확인·읽기·쓰기·체크섬뿐) 경계를 통과하지
+   못한다. 파괴적 원격 작업이므로 검증할 함대가 있을 때 인터페이스에 `Remove` 를 더한다. 지금은
+   절반만 지우거나 지웠다고 거짓말하지 않고 소리 내어 거절한다.
+
+### 남은 것 2 — 근거가 생기면 (지금은 하지 않는다)
+
+| 무엇 | 무엇이 근거가 되나 |
+|---|---|
+| **S2 스키마 감축** | 지금 되풀이는 `rpc` 16 · `workspaceDir` 11 · `chain` 11 인데 **설명이 갈라지지 않았다**(16곳 중 15곳이 같은 표현). 예방이지 교정이 아니다. 저 숫자를 다시 세어 갈라짐이 보이면 그때다 |
+| **어휘에서 이름 떼기** | `validate` 가 이름 해석에 부르는 레지스트리가 액션 구현 자체라 rpc·session 을 끌고 온다. 액션 45개의 등록 방식을 바꾸는 일이고, 문법만 쓰는 **다른 소비자**가 생기면 근거가 선다 |
+| **testengine→chainsetup 엣지** | 좁히기로는 안 된다(4파일 중 1개만 사라진다, P6 참조). 조립을 엔진 밖으로 내보내 엔진이 망을 *받게* 하는 재설계라야 하고, 그럴 이유가 생기면 별도 항목으로 세운다 |
+| **나머지 63개 기능 등록** | `internal/feature` 에 17개가 등록됐고 래칫이 63을 천장으로 잡고 있다. 표면을 파생 플래그로 바꾸는 일은 `TestComposeFeatures_TagsMatchTheCommands` 가 지켜 주므로 **손으로 쓴 절반을 지우는 일**이 된다 |
+
+### 남은 것 3 — 재현되면 본다
+
+`TestE2E_WbftQuorum6of6Halts2` 는 2026-09-07 에 18판 무실패였고 **재현되지 않는다**(고쳤다는 뜻이
+아니다). 이제 대기가 포기할 때 모든 노드의 head 와 피어 수를 남기므로, 다시 나오면 그것부터 본다.
+
+### 이번에 비싸게 배운 것 — 측정을 먼저 의심하라
+
+라이브를 쫓을 때 **틀린 답을 그럴듯하게 만든 것이 코드가 아니라 측정이었다.**
+
+1. **한 번만 재고 판단하지 않는다.** 12초 단일 표본이 head 0 을 회귀처럼 보이게 했다. wbft 는 1에
+   머물다 가속하므로 25초까지 재면 24다.
+2. **`pkill -f` 는 자기 자신을 맞춘다.** 패턴이 스크립트 본문에 들어 있으면 러너가 죽는다.
+   `pkill -x <실행파일>` 로 정확히 맞춘다.
+3. **도는 스크립트를 편집하지 않는다.** bash 는 바이트 오프셋으로 이어 읽으므로 아직 안 읽은 줄이
+   어긋난다. 복사본을 만들어 돌린다.
+4. **라이브를 둘 이상 동시에 돌리지 않는다.** 포트 8600 을 두고 다투면 같은 바이너리·같은 체인이
+   24와 0을 함께 낸다. 새로 띄우기 전에 `pgrep` 으로 0을 확인한다.
+5. **통과와 실패를 나란히 놓는다.** 실패한 판만 보면 가설이 선다. 제안 만료 건은 통과 5판과 실패
+   4판을 견줘 `node1 sealed=0` 하나로 갈렸다.
+6. **`golangci-lint` 를 검증 절차에 넣는다.** `gofmt`·`vet`·`build`·`test` 만 돌리다 CI 에서 `unused`
+   에 걸렸다. 로컬에 있는데 안 돌린 것이다.
+
 
 ## 2. 전체 작업 리스트 (Phase · Task)
 

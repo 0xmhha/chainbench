@@ -14,7 +14,8 @@ import (
 // Same filters as chainbench_log; the difference is the ordering.
 func logTimelineTool() Tool {
 	return Tool{
-		Name: "chainbench_log_timeline",
+		Name:     "chainbench_log_timeline",
+		ReadOnly: true,
 		Description: "Merge per-node logs into one chronological timeline. Args: workspaceDir; " +
 			"optional pattern, regexp (bool), node (int), level (min severity), limit (int).",
 		InputSchema: map[string]any{
@@ -29,18 +30,21 @@ func logTimelineTool() Tool {
 			},
 			"required": []string{"workspaceDir"},
 		},
-		Handler: func(_ context.Context, args map[string]any) (string, error) {
+		Handler: func(ctx context.Context, args map[string]any) (string, error) {
 			dir := argString(args, "workspaceDir", "")
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
 			regexpMode, _ := args["regexp"].(bool)
-			matches, err := app.LogTimeline(app.Deps{}, dir, app.LogSearchIn{
-				Pattern: argString(args, "pattern", ""),
-				Regexp:  regexpMode,
-				Node:    argInt(args, "node", 0),
-				Level:   argString(args, "level", ""),
-				Limit:   argInt(args, "limit", 0),
+			matches, err := app.LogTimeline(ctx, app.Deps{}, app.LogSearchIn{
+				Dir: dir,
+				SearchOpts: app.LogSearchFilter{
+					Pattern: argString(args, "pattern", ""),
+					Regexp:  regexpMode,
+					Node:    argInt(args, "node", 0),
+					Level:   argString(args, "level", ""),
+					Limit:   argInt(args, "limit", 0),
+				},
 			})
 			if err != nil {
 				return "", err
@@ -64,6 +68,7 @@ func logTimelineTool() Tool {
 func networkPeersTool() Tool {
 	return Tool{
 		Name:        "chainbench_network_peers",
+		ReadOnly:    true,
 		Description: "Report a node's peer count and connected peers (if admin is enabled). Args: rpc.",
 		InputSchema: map[string]any{
 			"type":       "object",

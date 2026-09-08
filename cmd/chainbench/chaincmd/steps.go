@@ -9,6 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 	"github.com/0xmhha/chainbench/internal/app"
 )
@@ -260,7 +262,7 @@ func newNetLogsCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based)")
 	cmd.Flags().IntVar(&lines, "lines", 50, "lines from the end")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 func newNetHealthCmd() *cobra.Command {
@@ -292,7 +294,7 @@ func newNetHealthCmd() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the probe table as JSON")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
 
 func newNetResumeCmd() *cobra.Command {
@@ -383,5 +385,5 @@ func newNetEnodeCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory (where the composition is set up)")
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based); default all")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit the enode list as JSON")
-	return cmd
+	return surface.ReadOnly(cmd)
 }

@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
 
 	"github.com/0xmhha/chainbench/internal/app"
@@ -59,5 +61,5 @@ func newNetShowCmd() *cobra.Command {
 	cmd.Flags().IntVar(&port, "port", 0, "select whichever node listens on a port (p2p, etcd, http, ws, auth or metrics)")
 	cmd.Flags().StringVar(&addr, "addr", "", "select by an address as a log line prints it (host:port)")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "emit the map as JSON")
-	return cmd
+	return surface.ReadOnly(cmd)
 }

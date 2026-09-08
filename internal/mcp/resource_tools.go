@@ -13,7 +13,8 @@ import (
 // "which node owns port 8610", "what runs on this host", "where is en2".
 func chainShowTool() Tool {
 	return Tool{
-		Name: "chainbench_chain_show",
+		Name:     "chainbench_chain_show",
+		ReadOnly: true,
 		Description: "Look up the composed network's placement. With no selector, the whole map; " +
 			"with one, that question answered — including the reverse ones (which node owns a port, " +
 			"what runs on an address). Each node has an identity (node7) and a role alias (en2).",
@@ -53,7 +54,8 @@ func chainShowTool() Tool {
 // should carry (the keyring's missing export tool is the same judgement).
 func resourcePoolTool() Tool {
 	return Tool{
-		Name: "chainbench_resource_pool",
+		Name:     "chainbench_resource_pool",
+		ReadOnly: true,
 		Description: "Show the addresses and port slots a network may be composed from: hosts, slots per host, " +
 			"total capacity, how many a workspace already uses, and where the port plan came from.",
 		InputSchema: map[string]any{
@@ -83,7 +85,8 @@ func resourcePoolTool() Tool {
 // nothing written anywhere.
 func resourcePlanTool() Tool {
 	return Tool{
-		Name: "chainbench_resource_plan",
+		Name:     "chainbench_resource_plan",
+		ReadOnly: true,
 		Description: "Compute the placement a network shape would get, without composing anything: " +
 			"deterministic host and port assignment for the requested validators and endpoints. " +
 			"The chain sets the family's per-node port reservation.",

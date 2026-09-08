@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
+
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -26,7 +28,7 @@ func NewReport() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			rep, err := app.Report(deps(cmd), dataDir)
+			rep, err := app.Report(cmd.Context(), deps(cmd), app.ReportIn{Dir: dataDir})
 			if err != nil {
 				return err
 			}
@@ -49,5 +51,5 @@ func NewReport() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "session directory, or a root holding sessions")
-	return cmd
+	return surface.ReadOnly(cmd)
 }
