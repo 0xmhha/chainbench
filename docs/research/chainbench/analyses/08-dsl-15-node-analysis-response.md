@@ -334,3 +334,21 @@ wemix etcd 는 어느 member(producer)나 init 가능(`etcdInit` 전제 = `self 
 - **S5. 키 재사용 + genesis 3-case.**
 - **S6. canonical env + 테스트별 override.**
 - **S7. 검증(07 §7 20 게이트, local/remote/docker, CLI=MCP).**
+
+## 17. 위험 #1 해소 (사용자 검증, 2026-09-08)
+
+**wemix non-producer pn 허브 — 동작 가능 확인.** 모든 gwemix 는 etcd 를 내장하고, 초기에 init 하는
+노드를 중심으로 etcd 클러스터가 형성된다. pn 을 먼저 설정하면 pn 을 중심으로 노드가 연결되고,
+**producer 가 아니어도 노드 간 연결정보(디스커버리)를 제공하는 노드로 동작할 수 있다.** §15 의
+"proxy 자리를 etcd 가 차지" 근거로 pn 을 거부하던 것은 폐기한다.
+
+**함의 — bring-up 순서**: pn(디스커버리 허브)이 먼저 뜨고, 이후 producer 들이 떠서 그중 하나가
+etcd 를 init(seed)하고 나머지가 join 한다. etcd 멤버십(합의 층)은 producer 들 사이의 일이고, pn 은
+non-member 로 p2p 디스커버리(연결 층)만 맡는다 — 두 층은 분리된다. S1 의 poa BringUpPhases 는 이
+순서(pn-first → etcd-seed producer → 나머지)로 조립하고, chainbench 오케스트레이션에서의 통합
+동작을 docker 라이브로 확인한다(체인 능력은 사용자가 검증; S1 은 그 배선을 검증).
+
+**남은 항목은 구현 디테일(논리 블로커 아님)**: (2) discovery 모드 전환 — static 기본 포함 경로는
+안전, discovery 경로는 검증 필요. (4) per-node key/config 재사용의 원격/docker 파일 존재 확인.
+(5) keys.validators/genesis 3-case 의 세부(case-b 생성+genesis 갱신). 각 항목은 해당 단계에서
+단위·라이브 게이트로 처리한다.
