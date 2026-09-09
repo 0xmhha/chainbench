@@ -87,7 +87,11 @@ func ResolveServer(ref ServerRef, minValidators, portBand int) (ResolveServerOut
 // file, the single source of a named server's credentials. Host is still
 // carried for display and RPC addressing; it never authenticates anything.
 func serverTarget(s Server) Spec {
-	spec := Spec{DataRoot: s.DataRoot}
+	// dataRoot no longer comes from the server set (it moved to
+	// workspace-config), so the target carries only locality here. A target with
+	// no data root leaves the recorded one in place — see Workspace.Retarget —
+	// so the data root set at `new` from workspace-config survives selection.
+	var spec Spec
 	if s.IsRemote() {
 		spec.Server = s.Name
 		spec.Host = s.Host

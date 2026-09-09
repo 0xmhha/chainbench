@@ -25,7 +25,7 @@ func TestRecordRun_WritesTheFactsAndNeverASecret(t *testing.T) {
 	const canary = "CANARY-NEVER-IN-RECORD"
 	if err := os.WriteFile(setPath, []byte(
 		"version: 2\npool:\n  hosts: [{name: box1, addr: 192.0.2.11}]\n"+
-			"ssh: {user: dev, password: "+canary+"}\ndataRoot: /data/cb\n"), 0o600); err != nil {
+			"ssh: {user: dev, password: "+canary+"}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 

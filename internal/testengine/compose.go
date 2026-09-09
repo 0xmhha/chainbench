@@ -232,6 +232,17 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		up.Target = tgt
 	}
+	// The workspace-config owns the target data root (it moved off the server
+	// set). Setting it here means `new` records it and every later step — and a
+	// server selection through Retarget, which keeps a data root already set —
+	// resolves paths under the root the environment named, not the workspace dir.
+	if in.WorkspaceConfigPath != "" {
+		wc, werr := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+		if werr != nil {
+			return composition{}, werr
+		}
+		up.Target.DataRoot = wc.DataRoot
+	}
 	return composition{up: up}, nil
 }
 

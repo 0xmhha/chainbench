@@ -38,7 +38,6 @@ ssh:
   port: 22
   password: filepass
   sudo: true
-dataRoot: /var/lib/chainbench
 `
 
 // remoteSample is sample with every host routable, so it has a whole-set pool.
@@ -56,7 +55,6 @@ pool:
     rpc: { base: 8545, step: 10 }
 ssh:
   user: ubuntu
-dataRoot: /var/lib/chainbench
 `
 
 func load(t *testing.T, body string) *resource.Set {
@@ -132,10 +130,11 @@ func TestServers_DerivedFromTheHostAddress(t *testing.T) {
 	if !remote.IsRemote() {
 		t.Error("a routable address must be reached over SSH")
 	}
-	// The pool's slots, bands, data root and access reach every host: the pool
-	// is one resource, not a list of individually-configured machines.
+	// The pool's slots, bands and access reach every host: the pool is one
+	// resource, not a list of individually-configured machines. (Data root
+	// moved to workspace-config, so it is no longer a per-server field.)
 	for _, s := range []resource.Server{local, remote} {
-		if s.Slots != 8 || s.DataRoot != "/var/lib/chainbench" || s.Ports.RPCBase != 8545 {
+		if s.Slots != 8 || s.Ports.RPCBase != 8545 {
 			t.Errorf("%s did not inherit the pool: %+v", s.Name, s)
 		}
 	}
@@ -205,8 +204,10 @@ func TestResolveServer_TargetCarriesTheLocality(t *testing.T) {
 	if out.Target.IsRemote() {
 		t.Errorf("a loopback address must not be remote: %+v", out.Target)
 	}
-	if out.Target.DataRoot != "/var/lib/chainbench" {
-		t.Errorf("target data root = %q", out.Target.DataRoot)
+	// The target carries locality only; its data root now comes from
+	// workspace-config at `new`, not from the server set.
+	if out.Target.DataRoot != "" {
+		t.Errorf("server set must not set a data root any more: %q", out.Target.DataRoot)
 	}
 
 	out, err = resource.ResolveServer(resource.ServerRef{SetPath: set, Name: "bp1"}, 1, 100)

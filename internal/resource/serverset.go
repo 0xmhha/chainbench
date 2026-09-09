@@ -112,11 +112,9 @@ type SSH struct {
 // omits.
 type Defaults struct {
 	// Slots is how many nodes one server may host.
-	Slots int `yaml:"slots,omitempty"`
-	// DataRoot is where a node's data plane lives on the server.
-	DataRoot string `yaml:"dataRoot,omitempty"`
-	Ports    Ports  `yaml:"ports,omitempty"`
-	SSH      SSH    `yaml:"ssh,omitempty"`
+	Slots int   `yaml:"slots,omitempty"`
+	Ports Ports `yaml:"ports,omitempty"`
+	SSH   SSH   `yaml:"ssh,omitempty"`
 }
 
 // Server is one place chainbench may run nodes. Index and Name are both
@@ -128,11 +126,10 @@ type Server struct {
 	// whether the ssh block matters.
 	Kind Kind `yaml:"kind,omitempty"`
 	// Host is the address nodes on this server are reachable at.
-	Host     string `yaml:"host"`
-	Slots    int    `yaml:"slots,omitempty"`
-	DataRoot string `yaml:"dataRoot,omitempty"`
-	Ports    Ports  `yaml:"ports,omitempty"`
-	SSH      SSH    `yaml:"ssh,omitempty"`
+	Host  string `yaml:"host"`
+	Slots int    `yaml:"slots,omitempty"`
+	Ports Ports  `yaml:"ports,omitempty"`
+	SSH   SSH    `yaml:"ssh,omitempty"`
 }
 
 // BandSpec is one port band: where it starts and how far apart consecutive
@@ -214,7 +211,10 @@ type Set struct {
 	PoolSpec PoolSpec `yaml:"pool"`
 	// SSH reaches every non-loopback host in the pool.
 	SSH SSH `yaml:"ssh,omitempty"`
-	// DataRoot is where a node's data plane lives on the target.
+	// DataRoot is no longer owned here — it moved to workspace-config so one DSL
+	// runs across targets by swapping that file. The field is kept only to
+	// reject a leftover value with a migration message rather than a confusing
+	// unknown-field error; LoadSet errors when it is set.
 	DataRoot string `yaml:"dataRoot,omitempty"`
 
 	// Defaults and Servers are derived from the pool, not parsed: the surfaces
@@ -259,6 +259,9 @@ func LoadSet(path string) (*Set, error) {
 			return nil, fmt.Errorf("serverset: %s looks like the pre-v%d format: %s", path, SupportedVersion, hint)
 		}
 		return nil, fmt.Errorf("serverset: parse %s: %w", path, err)
+	}
+	if c.DataRoot != "" {
+		return nil, fmt.Errorf("serverset: %s sets dataRoot, which has moved to workspace-config — remove it here and put dataRoot in the --workspace-config file", path)
 	}
 	c.path = path
 	if err := c.SSH.resolveSecretPaths(filepath.Dir(path)); err != nil {
@@ -352,7 +355,7 @@ func (c *Set) expand() {
 	if ports.RPCStep == 0 {
 		ports.RPCStep = builtin.RPCStep
 	}
-	c.Defaults = Defaults{Slots: slots, DataRoot: c.DataRoot, Ports: ports, SSH: c.SSH}
+	c.Defaults = Defaults{Slots: slots, Ports: ports, SSH: c.SSH}
 	c.Servers = make([]Server, 0, len(c.PoolSpec.Hosts))
 	for i, h := range c.PoolSpec.Hosts {
 		kind := KindRemote
@@ -365,7 +368,7 @@ func (c *Set) expand() {
 		}
 		c.Servers = append(c.Servers, Server{
 			Index: i + 1, Name: name, Kind: kind, Host: h.Addr,
-			Slots: slots, DataRoot: c.DataRoot, Ports: ports, SSH: c.SSH,
+			Slots: slots, Ports: ports, SSH: c.SSH,
 		})
 	}
 }
@@ -392,8 +395,8 @@ func legacyHint(b []byte) string {
 	text := string(b)
 	if strings.Contains("\n"+text, "\nservers:") {
 		return fmt.Sprintf("v%d replaced the server list with a pool: put every address under "+
-			"`pool.hosts`, move `slots` and `ports` up to `pool`, and lift `ssh`/`dataRoot` to the "+
-			"top level (see %s)", SupportedVersion, DefaultSampleFile)
+			"`pool.hosts`, move `slots` and `ports` up to `pool`, and lift `ssh` to the "+
+			"top level (dataRoot now lives in workspace-config, not here; see %s)", SupportedVersion, DefaultSampleFile)
 	}
 	hasTopLevelSSH := false
 	for _, k := range []string{"\nuser:", "\nport:", "\npassword:", "\nkey_file:", "\nsshPort:", "\nhosts:"} {
@@ -577,9 +580,6 @@ func (c *Set) resolve(s Server) Server {
 	}
 	if s.Slots == 0 {
 		s.Slots = 1
-	}
-	if s.DataRoot == "" {
-		s.DataRoot = c.Defaults.DataRoot
 	}
 	s.Ports = s.Ports.inherit(c.Defaults.Ports).inherit(BuiltinPorts())
 	s.SSH = s.SSH.inherit(c.Defaults.SSH)

@@ -81,7 +81,8 @@ func TestNetAllocate_RemoteServerRetargetsTheDataPlane(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+		Target: resource.Spec{DataRoot: "/srv/chainbench"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	inv := writeInventory(t, `
@@ -90,7 +91,6 @@ pool:
   hosts: [{name: bp1, addr: 10.0.0.11}]
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 ssh: {user: deploy, port: 2222}
-dataRoot: /srv/chainbench
 `)
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
@@ -112,7 +112,7 @@ dataRoot: /srv/chainbench
 		t.Errorf("login fields must stay in the server set, not the spec: %+v", st.Target)
 	}
 	if st.Target.DataRoot != "/srv/chainbench" {
-		t.Errorf("data root = %q, want the server set's", st.Target.DataRoot)
+		t.Errorf("data root = %q, want the one set at new (workspace-config), kept through retarget", st.Target.DataRoot)
 	}
 	// The node's own address is recorded, so a NodeSet reader reaches the host
 	// rather than this resource.
@@ -130,7 +130,8 @@ func TestNetAllocate_AllServersSpreadsOneNodePerHost(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+		Target: resource.Spec{DataRoot: "/srv/cb"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	inv := writeInventory(t, `
@@ -140,7 +141,6 @@ pool:
   slots: 1
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 ssh: {user: deploy}
-dataRoot: /srv/cb
 `)
 
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
@@ -200,7 +200,8 @@ func TestNetAllocate_AllServersRecordsEachNodesOwnHost(t *testing.T) {
 	d := chainsetup.Deps{Clock: fixedClock()}
 	keysAbs, _ := filepath.Abs(presetDir)
 	ctx := context.Background()
-	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
+	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs,
+		Target: resource.Spec{DataRoot: "/srv/cb"}}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
 	inv := writeInventory(t, `
@@ -210,7 +211,6 @@ pool:
   slots: 1
   ports: {p2p: {base: 30303, step: 10}, rpc: {base: 8545, step: 10}}
 ssh: {user: deploy}
-dataRoot: /srv/cb
 `)
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
 		DataDir: dir, Validators: 2,
