@@ -106,6 +106,11 @@ file the same way.
 - `execution.chain` is live for `chain up`: `fresh` (default),
   `reuse-if-matching` (per-node reconciliation, above), and `attach` (refused by
   up).
+- An existing (prepared) genesis is checked against the composed keys: for a
+  wbft-family chain, the validators the genesis names must be exactly the key
+  set the network runs, or the compose is refused (block signing would stall
+  consensus otherwise). A generated genesis is built from the keys and cannot
+  disagree.
 - A prepared preset's `keyring` may name a key set on a server
   (`keyring: srv://server-01/...`): the keys step downloads it to a local
   directory (elevating through sudo where the server set permits it) and a node
