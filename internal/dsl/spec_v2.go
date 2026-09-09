@@ -252,10 +252,19 @@ func ParseEnv(raw []byte) (EnvV2, error) {
 	return env, nil
 }
 
-// InlineEnv resolves a case's "env": "<id>" reference through lookup and
-// rewrites the case with the env object inlined. A case with an inline env
-// (or a v1 spec) passes through untouched. lookup receives the env id and
-// returns the env file's bytes; the caller owns where env files live.
+// InlineEnv resolves a case's env reference through lookup and rewrites the
+// case with the env object inlined. Three forms are accepted:
+//
+//	"env": "<id>"                              — the canonical env, verbatim.
+//	"env": {"extends": "<id>", "topology": …}  — the canonical env with the
+//	                                             named fields overridden.
+//	"env": { …a full env object… }             — inline, no lookup.
+//
+// The override form is a shallow top-level merge: each field the case names
+// replaces that field of the canonical env whole (topology, hardforks, keys),
+// so a test declares only what differs. A case with an inline env (or a v1
+// spec) passes through untouched. lookup receives the env id and returns the
+// env file's bytes; the caller owns where env files live.
 func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, error) {
 	if !IsV2(raw) {
 		return raw, nil
@@ -270,10 +279,48 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 	if probe.Kind != KindCase || len(probe.Env) == 0 {
 		return raw, nil
 	}
+	// "env": "<id>" — inline the canonical env verbatim.
 	var id string
-	if json.Unmarshal(probe.Env, &id) != nil || id == "" {
-		return raw, nil // inline env object (or malformed — ParseV2 reports it)
+	if json.Unmarshal(probe.Env, &id) == nil && id != "" {
+		envRaw, err := resolveEnv(id, lookup)
+		if err != nil {
+			return nil, err
+		}
+		return replaceEnv(raw, envRaw)
 	}
+	// "env": {"extends": "<id>", …} — inline the canonical env with overrides.
+	var envObj map[string]json.RawMessage
+	if json.Unmarshal(probe.Env, &envObj) == nil {
+		if extRaw, ok := envObj["extends"]; ok {
+			var baseID string
+			if json.Unmarshal(extRaw, &baseID) != nil || baseID == "" {
+				return nil, fmt.Errorf("dsl: env.extends must be an env id string")
+			}
+			baseRaw, err := resolveEnv(baseID, lookup)
+			if err != nil {
+				return nil, err
+			}
+			var base map[string]json.RawMessage
+			if err := json.Unmarshal(baseRaw, &base); err != nil {
+				return nil, fmt.Errorf("dsl: env %q is not an object: %w", baseID, err)
+			}
+			// Shallow override: each field the case names replaces the base's.
+			delete(envObj, "extends")
+			for k, v := range envObj {
+				base[k] = v
+			}
+			merged, err := json.Marshal(base)
+			if err != nil {
+				return nil, fmt.Errorf("dsl: merge env %q: %w", baseID, err)
+			}
+			return replaceEnv(raw, merged)
+		}
+	}
+	return raw, nil // inline env object (or malformed — ParseV2 reports it)
+}
+
+// resolveEnv looks up a canonical env by id, requiring a resolver.
+func resolveEnv(id string, lookup func(id string) ([]byte, error)) ([]byte, error) {
 	if lookup == nil {
 		return nil, fmt.Errorf("dsl: case references env %q but no env resolver is available", id)
 	}
@@ -281,6 +328,11 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 	if err != nil {
 		return nil, fmt.Errorf("dsl: resolve env %q: %w", id, err)
 	}
+	return envRaw, nil
+}
+
+// replaceEnv rewrites the case document with env set to the resolved object.
+func replaceEnv(raw, envRaw []byte) ([]byte, error) {
 	var doc map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return nil, fmt.Errorf("dsl: inline env: %w", err)
