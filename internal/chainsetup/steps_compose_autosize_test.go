@@ -95,6 +95,28 @@ func TestPlacements_AutoSizeRefusesAServerSetTooSmall(t *testing.T) {
 	}
 }
 
+// TestPlacements_TopologyCarriesPerNodeConfig: a node table's config path rides
+// the LaunchReq so the config step can write it verbatim for that node.
+func TestPlacements_TopologyCarriesPerNodeConfig(t *testing.T) {
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Config: "/opt/cfg/node1.toml"},
+		{Index: 2, Role: "en"},
+	}}
+	reqs, _, err := AllocateOpts{Topology: topo}.placements()
+	if err != nil {
+		t.Fatalf("placements: %v", err)
+	}
+	if len(reqs) != 2 {
+		t.Fatalf("reqs = %d, want 2", len(reqs))
+	}
+	if reqs[0].Config != "/opt/cfg/node1.toml" {
+		t.Errorf("node1 config = %q, want the pinned path", reqs[0].Config)
+	}
+	if reqs[1].Config != "" {
+		t.Errorf("node2 config = %q, want empty", reqs[1].Config)
+	}
+}
+
 // TestPlacements_NamedCountKeepsBpPnEnOrder: without AutoSize the ordering the
 // existing specs address by index is unchanged (bp, then pn, then en).
 func TestPlacements_NamedCountKeepsBpPnEnOrder(t *testing.T) {

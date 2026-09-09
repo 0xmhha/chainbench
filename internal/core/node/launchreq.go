@@ -17,4 +17,9 @@ type LaunchReq struct {
 	Role   Role
 	Sync   string
 	Binary string
+	// Config is a pre-written config file this node uses verbatim, instead of
+	// the one the composition renders. Empty means render as usual. It is a
+	// declaration a node table carries (topology.nodes[].config); the config
+	// step reads it when it writes the node's config.
+	Config string
 }

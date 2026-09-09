@@ -51,6 +51,12 @@ type Record struct {
 	// composition's binaries map. Empty means the composition's single binary,
 	// so a workspace with no per-node binaries behaves exactly as before.
 	Binary string `json:"binary,omitempty"`
+	// Config is a pre-written config file this node uses verbatim (topology
+	// node table's config field). Empty renders the config as usual. When set,
+	// the config step writes this file to ConfigPath rather than rendering one,
+	// so the file is the whole config — it carries its own ports, datadir and
+	// static-nodes, none of which the composition fills in.
+	Config string `json:"config,omitempty"`
 	// Args is the assembled launch argv (once launchopts ran).
 	Args []string `json:"args,omitempty"`
 	// PID is the live process id (once start ran; 0 = stopped). Stopping a

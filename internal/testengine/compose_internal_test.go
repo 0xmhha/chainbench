@@ -158,6 +158,33 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_NodeTablePerNodeConfig pins S4: a node may name a
+// pre-written config file, and it rides the node table to the composition
+// (where the config step later writes it verbatim). The path is expanded like
+// every other declared path.
+func TestCompositionOf_NodeTablePerNodeConfig(t *testing.T) {
+	t.Setenv("CFGDIR", "/opt/cfg")
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "topology":{"nodes":[
+	    {"role":"bp","config":"${CFGDIR}/node1.toml"},
+	    {"role":"en"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.Topology == nil || len(comp.up.Topology.Nodes) != 2 {
+		t.Fatalf("node table not threaded: %+v", comp.up)
+	}
+	if got := comp.up.Topology.Nodes[0].Config; got != "/opt/cfg/node1.toml" {
+		t.Errorf("node1 config = %q, want the expanded path", got)
+	}
+	if comp.up.Topology.Nodes[1].Config != "" {
+		t.Errorf("node2 config = %q, want empty", comp.up.Topology.Nodes[1].Config)
+	}
+}
+
 // TestCompositionOf_NodeTablePnSelectsProxied pins WA9: a pn declared in a node
 // table means the same proxy tier as a pn in the count form, so the composition
 // must select proxied peering. Under mesh the tier would do nothing and

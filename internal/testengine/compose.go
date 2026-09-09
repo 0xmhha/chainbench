@@ -285,6 +285,11 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 					return nil, nil, "", fmt.Errorf("topology.nodes[%d].bootnode must be a boolean", i)
 				}
 				entry.Bootnode = b
+			case "config":
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].config must be a string (a path to a pre-written config file)", i)
+				}
+				entry.Config = expand(s)
 			case "index":
 				n, ferr := countOf("nodes[].index", v)
 				if ferr != nil {
@@ -292,7 +297,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 				}
 				entry.Index = n
 			default:
-				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index)", i, k)
+				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index, config)", i, k)
 			}
 		}
 		if entry.Role == "" {

@@ -223,7 +223,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary}
+			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary, Config: n.Config}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -415,6 +415,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			LogPath:    layout.LogPath(p.Label),
 			Host:       p.Host,
 			Endpoints:  p.Ports,
+			Config:     reqs[i].Config,
 		}
 	}
 	// Reject an impossible graph here rather than at config time: the operator
@@ -593,6 +594,17 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
+	// A node that names its own config file uses it verbatim: the file is the
+	// whole config, so the composition renders nothing and applies no overrides
+	// for it. It still goes through the same write + readback as a rendered one,
+	// so a truncated copy is caught here rather than at boot.
+	if ns.Config != "" {
+		toml, rerr := os.ReadFile(ns.Config)
+		if rerr != nil {
+			return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
+		}
+		return w.writeConfigFile(ctx, t, ns, toml, purpose, nil)
+	}
 	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 	if err != nil {
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
@@ -603,14 +615,19 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
 	toml := nodeconfig.TOML(spec)
+	return w.writeConfigFile(ctx, t, ns, toml, purpose, overrides)
+}
+
+// writeConfigFile writes one node's config to its target and reads it back:
+// the config on the target must hash to what was written, so a truncated or
+// clobbered write is caught here rather than at node boot. The checksum runs
+// on the target (a remote store runs sha256sum), so it does not download the
+// file back. overrides is nil for a pinned config file — it applied none.
+func (w *Workspace) writeConfigFile(ctx context.Context, t *resource.Access, ns node.Record, toml []byte, purpose string, overrides []string) (ConfigProvenance, error) {
 	w.recordInput(ns.ConfigPath, toml)
 	if err := t.Files.Write(ctx, ns.ConfigPath, toml, 0o644); err != nil {
 		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
-	// Readback: the config on the target must hash to what was written, so a
-	// truncated or clobbered write is caught here rather than at node boot.
-	// Checksum hashes on the target (a remote store runs sha256sum), so this
-	// does not download the file back.
 	want := filestore.Hash(toml)
 	got, err := t.Files.Checksum(ctx, ns.ConfigPath)
 	if err != nil {
