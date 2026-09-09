@@ -374,11 +374,13 @@ non-member 로 p2p 디스커버리(연결 층)만 맡는다 — 두 층은 분�
   host-first 채움이 이미 제공. 단위 5 건 + stablenet 15노드 라이브(place 15 = 13 validator + pn + en,
   블록 생성, en sync) 통과. 커밋 c910d5c.
 
-**S5 로 넘길 발견 — spec 의 `keys.nodekeys.source:"generate"` 가 `run` 경로에서 안 먹힌다.**
-S3 라이브에서 spec 이 generate 를 선언해도 preset 으로 떨어졌고, `--keys-source generate --keys <dir>`
-를 명시해야 15 개 키가 생성됐다. 기존 15노드 spec(tests/tc/.../33-stablenet-chain-up-15.json 등)도
-`keys.generate` 를 선언하지만 플래그로 실행되는 것으로 보인다. spec-level generate 가 의도된 경로인지,
-플래그가 정본인지 S5(키 재사용 + genesis 3-case)에서 확정한다.
+**S5 관련 발견 (버그 아님) — generate 는 대상 디렉토리에 키가 있으면 재사용한다.**
+S3 라이브에서 spec 의 `keys.generate` 는 정상 적용됐다. 다만 `GeneratedKeys.Ensure` 는 대상 디렉토리에
+`metadata.json` 이 있으면 그 키셋을 재사용한다(source.go:101). ref 미지정 시 keysDir 기본값이 공용
+`keys/preset`(5 키)이라, generate 여도 그 5 키를 재사용해 "5 개뿐, 15 필요" 로 멈췄다. 빈 디렉토리를
+가리키면(run3: `--keys <scratch>`) 실제로 15 개를 생성한다. 이 **"있으면 재사용"** 동작이 곧 S5 의 키
+재사용 메커니즘이다(사용자: "서버에 key 가 존재하면 genesis 에서 계속 사용"). S5 결정 포인트: generate
+가 ref 미지정일 때 공용 preset 이 아니라 **워크스페이스 로컬 키 디렉토리**를 기본으로 써야 한다.
 
 **남은 단계**: S4(node-table per-node key/config), S5(키 재사용 + genesis 3-case, 위 발견 포함),
 S6(canonical env), S7(검증 20 게이트).
