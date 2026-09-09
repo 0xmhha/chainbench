@@ -106,9 +106,14 @@ file the same way.
 - `execution.chain` is live for `chain up`: `fresh` (default),
   `reuse-if-matching` (per-node reconciliation, above), and `attach` (refused by
   up).
-- `paths`, `binaryAliases`, `inputs`, and `presets` parse and validate, and
-  their consumption (purpose-directory resolution, server file references,
-  prepared/generated wiring) lands incrementally — see the handoff docs
+- A prepared preset's `configs` map is applied: a node table names its configs
+  logically (`config: validator`) and the preset says which file that name is on
+  this target (`configs: {validator: srv://.../v.toml}`), so one spec runs
+  against different targets by swapping the map. A config value that is not a
+  preset name stays a direct file reference.
+- `paths`, `binaryAliases`, and the rest of `inputs`/`presets` parse and
+  validate, and their consumption (purpose-directory resolution, server file
+  references, prepared/generated wiring) lands incrementally — see the handoff docs
   `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`
   and `10-prepared-inputs-server-ref-handoff.md`. Until a field is wired, it is
   parsed but not yet acted on.
