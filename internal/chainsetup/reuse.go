@@ -183,22 +183,27 @@ func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reu
 			reuse[d.Index] = true
 		}
 	}
+	// A reused node needs no action: the run ledger keeps its pid attached across
+	// this open, so init and start (which skip a pid-bearing node) leave it
+	// running. A node that must be redone is torn down here — its live process
+	// stopped, then dropped from the ledger — so the next open no longer
+	// reattaches it, and init re-initializes its datadir and start relaunches it.
+	// Without the ledger drop, the pid this step cleared comes back on the next
+	// open (workspace.go: Open reattaches from the ledger).
 	for i := range w.state.Nodes {
 		ns := &w.state.Nodes[i]
-		b, had := snap.before[ns.Index]
 		if reuse[ns.Index] {
-			// Carry the running pid so init and start leave it alone.
-			ns.PID = b.PID
 			continue
 		}
-		// A node that must be redone starts from stopped: if its prior process
-		// is still up, stop it before init re-initializes the datadir.
-		if had && b.PID > 0 {
-			if err := w.stopByPID(ctx, *ns, b.PID); err != nil {
+		if ns.PID > 0 {
+			// Best-effort: a node classified redo because it stopped answering
+			// may already be gone, and the driver's stop is a no-op on a dead
+			// pid. A node that drifted but is still up is genuinely stopped here.
+			if err := w.stopByPID(ctx, *ns, ns.PID); err != nil {
 				return plan, err
 			}
 		}
-		ns.PID = 0
+		w.clearPID(i)
 	}
 	return plan, nil
 }
