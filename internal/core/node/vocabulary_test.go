@@ -40,7 +40,7 @@ func TestNormalizeRole_FoldsEverySpelling(t *testing.T) {
 		{"bp", node.RoleBP}, {"validator", node.RoleBP},
 		{"en", node.RoleEN}, {"endpoint", node.RoleEN},
 		{"pn", node.RolePN},
-		{"boot", node.RoleBoot}, // a role until the poa bring-up demotes it to an attribute
+		{"boot", node.RoleBP}, // boot folds onto bp; the etcd seed is chosen positionally
 	}
 	for _, tc := range cases {
 		got, err := node.NormalizeRole(tc.in)

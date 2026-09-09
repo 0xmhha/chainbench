@@ -352,3 +352,66 @@ non-member 로 p2p 디스커버리(연결 층)만 맡는다 — 두 층은 분�
 안전, discovery 경로는 검증 필요. (4) per-node key/config 재사용의 원격/docker 파일 존재 확인.
 (5) keys.validators/genesis 3-case 의 세부(case-b 생성+genesis 갱신). 각 항목은 해당 단계에서
 단위·라이브 게이트로 처리한다.
+
+## 18. 구현 진행 로그 (branch feat/15node-unified-model)
+
+착수 이후 실제로 들어간 것과 라이브 검증 결과를 남긴다. 커밋은 모두 이 브랜치에 있고 1 PR 로 넣는다.
+
+**역할 모델 정리 (mid-turn 결정).** 정식 역할을 **bp / en / pn 셋**으로 고정했다. `boot` 은 독립
+역할이 아니라 `bp` 의 철자 별칭으로 접었다(`validator→bp`, `endpoint→en` 과 같은 방식). etcd seed 를
+고르는 것은 역할이 아니라 위치(최상위 인덱스 producer)이고, poa 의 모든 분기가 이미
+`Is(r,RoleBoot)||Is(r,RoleBP)` 로 boot 을 bp 와 똑같이 다뤘으므로 중복 분기를 걷어냈다. 커밋 3d43ff8.
+
+- **S1 — 완료.** poa SupportsRole 이 pn 수용. wemix bp3/pn1/en1 proxied 가 docker fleet 에서 올라오고
+  블록을 생성(genesis 3 validator), en 이 pn 통해 sync 확인. 커밋 cdf6e80.
+- **S2 — static 경로 완료.** proxied peering 이 이미 pn 을 전 노드의 static-nodes 허브로 만든다
+  (bp→{bp,pn}, en→{pn}, pn→전부). wemix 에서 en 이 pn 통해 sync 되는 것까지 라이브 확인. discovery
+  모드 `--bootnodes` 는 사용자가 조건부("discovery 로 할 경우")로 둔 선택 경로이고 이를 고르는 spec
+  노브가 아직 없어, 실제 두 번째 사용처가 생길 때 붙인다(과설계 금지).
+- **S3 — 완료.** count-form 의 `bp` 값으로 `"max"` 를 받는다. 서버 수(len(pool.hosts))만큼 노드를
+  채우고, pn 1 개(마지막 노드 → 마지막 서버)·en 1 개·나머지 bp. named-count 경로는 bp/pn/en 순서를
+  유지해 기존 spec 불변. 서버 셋 없으면 거부, 셋이 너무 작으면 거부. 포트 순환은 allocator 의 기존
+  host-first 채움이 이미 제공. 단위 5 건 + stablenet 15노드 라이브(place 15 = 13 validator + pn + en,
+  블록 생성, en sync) 통과. 커밋 c910d5c.
+
+**S5 관련 발견 (버그 아님) — generate 는 대상 디렉토리에 키가 있으면 재사용한다.**
+S3 라이브에서 spec 의 `keys.generate` 는 정상 적용됐다. 다만 `GeneratedKeys.Ensure` 는 대상 디렉토리에
+`metadata.json` 이 있으면 그 키셋을 재사용한다(source.go:101). ref 미지정 시 keysDir 기본값이 공용
+`keys/preset`(5 키)이라, generate 여도 그 5 키를 재사용해 "5 개뿐, 15 필요" 로 멈췄다. 빈 디렉토리를
+가리키면(run3: `--keys <scratch>`) 실제로 15 개를 생성한다. 이 **"있으면 재사용"** 동작이 곧 S5 의 키
+재사용 메커니즘이다(사용자: "서버에 key 가 존재하면 genesis 에서 계속 사용"). S5 결정 포인트: generate
+가 ref 미지정일 때 공용 preset 이 아니라 **워크스페이스 로컬 키 디렉토리**를 기본으로 써야 한다.
+
+- **S4 — config 파트 완료.** node-table(`topology.nodes[]`) 항목이 `config` 로 미리 쓴 설정 파일을
+  지정하면 그 노드는 그 파일을 그대로 쓴다. 파일이 곧 전체 설정이라(포트·datadir·static-nodes 포함)
+  날카로운 도구이며 문서에 명시했다. `Entry.Config → LaunchReq.Config → Record.Config`(workspace.json
+  신규 필드)로 흐르고 config 단계가 렌더 대신 파일을 쓴다(기존 write+checksum 재사용, 없는 파일은
+  노드·경로를 밝히며 실패). 단위(파싱·전달) + 로컬 통합 테스트(두 노드, node1 pin → 바이트 일치,
+  node2 렌더). per-node **key** 는 S5 로 미뤘다(genesis validator 일관성과 함께 배선). 커밋 00be447.
+- **S5 — generate 기본 디렉토리 완료.** ref 미지정 generate 는 공용 `keys/preset` 이 아니라
+  `<workspace>/keys` 로 간다. GeneratedKeys 가 대상 디렉토리의 기존 키셋을 재사용하므로, 기본이
+  preset 이면 preset 의 정체성을 조용히 재사용해 부족할 때 실패했다. 라이브: `bp:"max"` +
+  `keys.generate` spec 이 이제 `--keys`/`--keys-source` 플래그 없이 동작(키 15 개 워크스페이스 생성,
+  genesis validator 13, 네트워크 기동, 리포 preset 무오염). 커밋 347dc63.
+
+- **S5 — genesis 3-case + per-node key 완료.** genesis 모델을 확인한 결과 **key-driven**이다 — validator
+  주소는 항상 조합된 키셋에서 나오고, 템플릿은 placeholder만 담는다. 그래서 3-case는 genesis 재작성이
+  아니라 키 소싱으로 귀결된다. node-table 항목이 `key`(파일 경로 또는 0x-hex)를 지정하면 keys 단계가
+  세트를 테이블에서 만든다. (a) 지정 키 = 그 노드 identity, (b) 미지정 노드는 생성, (c) producer 키는
+  genesis validator 주소를 고정하고 비-producer(en/pn)는 키·enode만 갖고 validator 는 아니다. case (c) 는
+  "validator 아닌 노드"로 재정의됐고(사용자 확정) 이미 그대로 동작한다 — presetNetwork 가 bp 만 validator
+  로 고른다. "validator 인데 노드 없음"은 금지(해석 2 확정). 생성 부분은 `store.Generate` 모듈을
+  재사용(entropy·BLS·keystore·password)하고, 손수 crypto/rand 를 쓰지 않는다. per-node 키가 있으면
+  keysDir 도 workspace-local 로 기본 설정(공용 preset 은 재사용으로 빌드를 막으므로). 커밋 289e8f7.
+  라이브: node1 pin + node2 생성 + node3 en 인 3노드 stablenet 이 뜨고 validator 2 로 sealing, en sync.
+
+- **S6 — canonical env + override 완료.** case 의 env 가 `{"extends":"<id>", ...override}` 형식을
+  받는다. 참조 env 를 base 로, case 가 명시한 필드를 top-level shallow 로 덮는다(명시한 필드는 통째
+  교체 — topology·hardforks·keys). 테스트는 달라지는 것만 선언한다. 문자열 id·인라인 객체 형식은
+  그대로 유지. 커밋 077f871. 라이브: canonical stablenet env(bp:"max")를 extends 하고 topology 를
+  bp2/en1 로 덮은 case 가 3노드로 구성되고 keys.generate 를 상속해 validator 2 로 생성.
+
+**남은 단계**: S7(검증 — handoff §7 게이트, local/remote/docker, CLI=MCP). 각 단계(S1·S3·S4·S5·S6)는
+착수 시 docker 라이브 게이트를 통과했다. S7 은 이를 종합하고 CLI=MCP 동등성·remote 타깃을 확인한다.
+DSL run 경로(compositionOf)는 CLI(`chainbench run`)와 MCP(`chainbench_run`)가 공유하므로 새 기능은
+두 표면에 자동으로 걸린다.

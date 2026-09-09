@@ -53,6 +53,9 @@ type NetUpIn struct {
 	Proxies          int    `json:"proxies,omitempty"`
 	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
 	TopologyPath     string `json:"topologyPath,omitempty"`
+	// AutoSize fills the validator count to the server set (bp: "max"): one node
+	// per server, less the proxies and endpoints. It needs a server-set target.
+	AutoSize bool `json:"autoSize,omitempty"`
 	// BlueprintPath is a network declaration: the layout AND the keys in one
 	// document. It is what lets a network be composed with no preset directory
 	// anywhere (N3).
@@ -187,7 +190,8 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,
 				Topology:      in.Topology, Binaries: in.Binaries, Peering: in.Peering,
-				Server: in.Server,
+				Server:   in.Server,
+				AutoSize: in.AutoSize,
 			})
 			return r.Detail, err
 		},

@@ -40,6 +40,16 @@ type Entry struct {
 	// same consensus family concurrently (a cross-family mix needs a fork; see
 	// the upgrade path).
 	Binary string `yaml:"binary,omitempty"`
+	// Config is a pre-written config file this node uses verbatim, instead of
+	// the composition rendering one. It is the whole config — it carries its
+	// own ports, datadir and static-nodes — so it is a sharp tool: a wrong
+	// file yields a node that does not peer or bind. Empty renders as usual.
+	Config string `yaml:"config,omitempty"`
+	// Key is this node's private key — a file path or 0x-hex. Empty lets the
+	// keys step generate one. When any node names a key, the set is built from
+	// the table: declared where given, generated where not. A producer's key
+	// fixes its genesis validator address; a non-producer just takes its nodekey.
+	Key string `yaml:"key,omitempty"`
 }
 
 // Load reads and validates a topology YAML file.

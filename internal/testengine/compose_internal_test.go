@@ -158,6 +158,102 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_GenerateDefaultsToWorkspaceDir pins S5's key-reuse edge:
+// a spec that asks to generate keys but names no ref must not default to the
+// shared preset (where GeneratedKeys would reuse the preset's identities and
+// fail once the network wants more). It goes to a workspace-local dir instead;
+// every other source still defaults to the shared preset.
+func TestCompositionOf_GenerateDefaultsToWorkspaceDir(t *testing.T) {
+	dir := t.TempDir()
+	gen := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "keys":{"nodekeys":{"source":"generate"}}}`)
+	comp, err := compositionOf(context.Background(), gen, RunSuiteIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if want := filepath.Join(dir, generatedKeysSubdir); comp.up.KeysDir != want {
+		t.Errorf("generate keys dir = %q, want the workspace-local %q", comp.up.KeysDir, want)
+	}
+	if comp.up.KeysSource != keySourceGenerate {
+		t.Errorf("keys source = %q, want generate", comp.up.KeysSource)
+	}
+
+	// Preset (the default source) still composes from the shared preset.
+	preset := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	pc, err := compositionOf(context.Background(), preset, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pc.up.KeysDir != defaultKeysDir {
+		t.Errorf("preset keys dir = %q, want %q", pc.up.KeysDir, defaultKeysDir)
+	}
+}
+
+// TestCompositionOf_NodeTablePerNodeConfig pins S4: a node may name a
+// pre-written config file, and it rides the node table to the composition
+// (where the config step later writes it verbatim). The path is expanded like
+// every other declared path.
+func TestCompositionOf_NodeTablePerNodeConfig(t *testing.T) {
+	t.Setenv("CFGDIR", "/opt/cfg")
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "topology":{"nodes":[
+	    {"role":"bp","config":"${CFGDIR}/node1.toml"},
+	    {"role":"en"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.Topology == nil || len(comp.up.Topology.Nodes) != 2 {
+		t.Fatalf("node table not threaded: %+v", comp.up)
+	}
+	if got := comp.up.Topology.Nodes[0].Config; got != "/opt/cfg/node1.toml" {
+		t.Errorf("node1 config = %q, want the expanded path", got)
+	}
+	if comp.up.Topology.Nodes[1].Config != "" {
+		t.Errorf("node2 config = %q, want empty", comp.up.Topology.Nodes[1].Config)
+	}
+}
+
+// TestCompositionOf_NodeTablePerNodeKey pins S5's per-node key surface: a node
+// may name its key (a file path or 0x-hex) and it rides the node table to the
+// composition, where the keys step makes it the node's identity. The path form
+// is expanded like every other declared path.
+func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
+	t.Setenv("KEYDIR", "/opt/keys")
+	dir := t.TempDir()
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "topology":{"nodes":[
+	    {"role":"bp","key":"0xabc"},
+	    {"role":"bp","key":"${KEYDIR}/node2.key"},
+	    {"role":"en"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	// A pinned key builds a fresh set, so the keys land workspace-local, never
+	// in the shared preset (where the build would be blocked by reuse).
+	if want := filepath.Join(dir, generatedKeysSubdir); comp.up.KeysDir != want {
+		t.Errorf("keys dir = %q, want the workspace-local %q for a keyed node table", comp.up.KeysDir, want)
+	}
+	if comp.up == nil || comp.up.Topology == nil || len(comp.up.Topology.Nodes) != 3 {
+		t.Fatalf("node table not threaded: %+v", comp.up)
+	}
+	if got := comp.up.Topology.Nodes[0].Key; got != "0xabc" {
+		t.Errorf("node1 key = %q, want the inline hex", got)
+	}
+	if got := comp.up.Topology.Nodes[1].Key; got != "/opt/keys/node2.key" {
+		t.Errorf("node2 key = %q, want the expanded path", got)
+	}
+	if comp.up.Topology.Nodes[2].Key != "" {
+		t.Errorf("node3 key = %q, want empty", comp.up.Topology.Nodes[2].Key)
+	}
+}
+
 // TestCompositionOf_NodeTablePnSelectsProxied pins WA9: a pn declared in a node
 // table means the same proxy tier as a pn in the count form, so the composition
 // must select proxied peering. Under mesh the tier would do nothing and
@@ -243,14 +339,20 @@ func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 	}
 	for name, topo := range cases {
 		t.Run(name, func(t *testing.T) {
-			if _, _, _, _, err := topologyOf(topo); err == nil {
+			if _, _, _, _, _, err := topologyOf(topo); err == nil {
 				t.Fatalf("topology %v accepted", topo)
 			}
 		})
 	}
-	v, e, p, m, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "pn": float64(1), "sync_mode": "archive"})
-	if err != nil || v != 4 || e != 2 || p != 1 || m != "archive" {
-		t.Fatalf("got %d/%d/%d/%q (%v)", v, e, p, m, err)
+	v, e, p, m, auto, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "pn": float64(1), "sync_mode": "archive"})
+	if err != nil || v != 4 || e != 2 || p != 1 || m != "archive" || auto {
+		t.Fatalf("got %d/%d/%d/%q auto=%v (%v)", v, e, p, m, auto, err)
+	}
+	// bp: "max" leaves the count for the composer to fill and flags autoBP;
+	// pn/en still parse alongside it.
+	v, e, p, _, auto, err = topologyOf(map[string]any{"bp": "max", "pn": float64(1), "en": float64(1)})
+	if err != nil || !auto || v != 0 || p != 1 || e != 1 {
+		t.Fatalf("bp:max got v=%d e=%d p=%d auto=%v (%v)", v, e, p, auto, err)
 	}
 }
 
@@ -360,5 +462,21 @@ func TestCompositionOf_EnvBlueprintAndKeysValidators(t *testing.T) {
 	}
 	if comp.up == nil || comp.up.KeysValidators != 2 {
 		t.Fatalf("keys validators not threaded: %+v", comp.up)
+	}
+}
+
+// TestCompositionOf_WemixProxiedPn pins S1: poa (wemix) now accepts a pn, so a
+// wemix bp/pn/en topology composes as the proxied graph. The pn is a
+// non-producing discovery hub; validators stay the bp set. Verified live on the
+// docker fleet (a wemix bp3/pn1/en1 network comes up and produces blocks).
+func TestCompositionOf_WemixProxiedPn(t *testing.T) {
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wemix",
+	  "binaries":{"default":"gwemix"},"topology":{"bp":3,"pn":1,"en":1}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if comp.up == nil || comp.up.Peering != "proxied" {
+		t.Fatalf("peering = %q, want proxied for a wemix pn topology", comp.up.Peering)
 	}
 }

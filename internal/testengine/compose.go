@@ -48,6 +48,14 @@ const overlayFile = "env-genesis-overlay.json"
 // defaultKeysDir is the key set a declaration that names none composes from.
 const defaultKeysDir = "keys/preset"
 
+// keySourceGenerate is the key source that creates a fresh set rather than
+// reading a recorded one.
+const keySourceGenerate = "generate"
+
+// generatedKeysSubdir is where a generated set with no ref lands, under the
+// workspace, so generate does not reuse the shared preset by default.
+const generatedKeysSubdir = "keys"
+
 // expand substitutes environment variables in a declared path or binary:
 // $VAR, ${VAR}, and ${VAR:-default} — the last so a declaration can name the
 // binary it expects (gwbft) while a machine that built it elsewhere points at
@@ -93,7 +101,17 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		keysValidators = k.Validators
 	}
 	if keysDir == "" {
-		keysDir = defaultKeysDir
+		// A generated set — or a node table that pins per-node keys — goes to a
+		// workspace-local dir, not the shared preset. The key sources reuse
+		// whatever set already sits at the dir, so defaulting to keys/preset
+		// would silently reuse the preset's identities (and ignore the pinned
+		// keys, or fail when the network wants more than the preset holds)
+		// instead of building a fresh set. Preset stays the default otherwise.
+		if keysSource == keySourceGenerate || topologyHasKeys(spec.Topology) {
+			keysDir = filepath.Join(in.DataDir, generatedKeysSubdir)
+		} else {
+			keysDir = defaultKeysDir
+		}
 	}
 	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay)
 	if err != nil {
@@ -147,15 +165,29 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 
 	var validators, endpoints, proxies int
 	var syncMode string
+	var autoBP bool
 	if inlineTopo == nil {
-		validators, endpoints, proxies, syncMode, err = topologyOf(spec.Topology)
+		validators, endpoints, proxies, syncMode, autoBP, err = topologyOf(spec.Topology)
 		if err != nil {
 			return composition{}, err
 		}
+		// An explicit --validators is a named count: it turns dynamic sizing off
+		// rather than being filled over.
 		if in.Validators > 0 {
 			validators = in.Validators
+			autoBP = false
 		}
-		if validators <= 0 {
+		if autoBP {
+			// The unified model's default shape: one pn (the discovery hub on the
+			// last server) and one en unless the spec said otherwise; the composer
+			// fills the rest with validators once it knows the server count.
+			if proxies == 0 {
+				proxies = 1
+			}
+			if endpoints == 0 {
+				endpoints = 1
+			}
+		} else if validators <= 0 {
 			validators = suiteDefaultValidators
 		}
 	}
@@ -171,6 +203,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
 		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
 		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
+		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
 		ChainID:      in.ChainID,
@@ -200,6 +233,28 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		up.Target = tgt
 	}
 	return composition{up: up}, nil
+}
+
+// topologyHasKeys reports whether a node-table declaration pins any per-node
+// key. A table that does builds its own key set (declared where given,
+// generated where not), so its keys belong in a workspace-local dir rather than
+// the shared preset. It reads the raw declaration defensively: a malformed
+// nodes list is the node-table parser's error to report, not this peek's.
+func topologyHasKeys(t map[string]any) bool {
+	list, ok := t["nodes"].([]any)
+	if !ok {
+		return false
+	}
+	for _, item := range list {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if s, ok := m["key"].(string); ok && s != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // topologyHasProxy reports whether a node-table topology declares a pn, so the
@@ -270,6 +325,16 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 					return nil, nil, "", fmt.Errorf("topology.nodes[%d].bootnode must be a boolean", i)
 				}
 				entry.Bootnode = b
+			case "config":
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].config must be a string (a path to a pre-written config file)", i)
+				}
+				entry.Config = expand(s)
+			case "key":
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].key must be a string (a key file path or 0x-hex)", i)
+				}
+				entry.Key = expand(s)
 			case "index":
 				n, ferr := countOf("nodes[].index", v)
 				if ferr != nil {
@@ -277,7 +342,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 				}
 				entry.Index = n
 			default:
-				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index)", i, k)
+				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index, config, key)", i, k)
 			}
 		}
 		if entry.Role == "" {
@@ -311,15 +376,28 @@ const (
 	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
 	topoSyncModeSnak = "sync_mode"
+	// topoMax is the bp value that fills the network to the server set instead
+	// of naming a count: bp becomes one node per server, less the pn and en.
+	topoMax = "max"
 )
 
 // topologyOf reads the node counts a declaration gives: validators (or bp),
 // endpoints (or en), and the endpoints' sync mode. A key it does not know is
 // an error rather than a silently ignored intention.
-func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, err error) {
+//
+// bp may be the word "max" instead of a number: autoBP is then true and the
+// validator count is left for the composer to fill from the server set.
+func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, autoBP bool, err error) {
 	for k, v := range t {
 		switch k {
 		case topoValidators, topoBP:
+			if s, ok := v.(string); ok {
+				if s != topoMax {
+					return 0, 0, 0, "", false, fmt.Errorf("topology.%s must be a number or %q, got %q", k, topoMax, s)
+				}
+				autoBP = true
+				break
+			}
 			validators, err = countOf(k, v)
 		case topoEndpoints, topoEN:
 			endpoints, err = countOf(k, v)
@@ -335,10 +413,10 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
 		}
 		if err != nil {
-			return 0, 0, 0, "", err
+			return 0, 0, 0, "", false, err
 		}
 	}
-	return validators, endpoints, proxies, syncMode, nil
+	return validators, endpoints, proxies, syncMode, autoBP, nil
 }
 
 // countOf reads a node count, which JSON hands over as a float.

@@ -186,6 +186,49 @@ func TestInlineEnv(t *testing.T) {
 	}
 }
 
+// TestInlineEnv_Extends pins S6's override form: a case extends a canonical env
+// and names only what differs. The named fields replace the canonical env's
+// whole; everything else is inherited.
+func TestInlineEnv_Extends(t *testing.T) {
+	canonical := `{"schemaVersion":"2","kind":"env","id":"stablenet-15","chain":"stablenet",
+		"binaries":{"default":"gstable"},"topology":{"bp":"max","pn":1,"en":1}}`
+	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1",
+		"env":{"extends":"stablenet-15","topology":{"bp":3,"en":1}},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+
+	out, err := InlineEnv([]byte(caseRef), func(id string) ([]byte, error) {
+		if id != "stablenet-15" {
+			return nil, fmt.Errorf("unexpected id %s", id)
+		}
+		return []byte(canonical), nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := Parse(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Inherited from the canonical env.
+	if s.Chain.Name != "stablenet" {
+		t.Fatalf("chain not inherited: %+v", s.Chain)
+	}
+	// Overridden whole: the case's topology replaces the canonical "max" form.
+	bp, ok := s.Topology["bp"]
+	if !ok || bp != float64(3) {
+		t.Fatalf("topology.bp = %v, want the overriding 3", s.Topology["bp"])
+	}
+	if _, hasPN := s.Topology["pn"]; hasPN {
+		t.Fatalf("topology should be replaced whole, not merged: %v", s.Topology)
+	}
+
+	// extends with a non-string id is rejected.
+	bad := `{"schemaVersion":"2","kind":"case","id":"c1","env":{"extends":5},"steps":[]}`
+	if _, err := InlineEnv([]byte(bad), func(string) ([]byte, error) { return nil, nil }); err == nil {
+		t.Fatal("a non-string extends id was accepted")
+	}
+}
+
 // TestMigrateV1RoundTrip pins the §3.6 property: migrating a v1 spec and
 // parsing the result yields the same executable content as parsing the v1
 // spec directly.

@@ -27,7 +27,7 @@ func TestIs_FoldsBothSpellings(t *testing.T) {
 		{node.RolePN, node.RolePN, true},
 		{node.RoleEN, node.RoleBP, false},
 		{node.RolePN, node.RoleEN, false},
-		{node.RoleBoot, node.RoleBP, false}, // boot is its own role until it becomes an attribute of a bp
+		{node.RoleBoot, node.RoleBP, true}, // boot is a legacy spelling of bp
 		{node.Role("sideways"), node.RoleBP, false},
 		{node.RoleBP, node.Role("sideways"), false},
 	} {

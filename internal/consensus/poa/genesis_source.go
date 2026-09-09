@@ -167,7 +167,7 @@ func (s GenesisSource) config(preset keyring.Preset, req genesis.Request) (Confi
 	// rotation. Membership is what makes a producer produce.
 	members := make([]Member, 0, 4)
 	for _, p := range req.Nodes.Placements() {
-		if !node.Is(p.Role, node.RoleBoot) && !node.Is(p.Role, node.RoleBP) {
+		if !node.Is(p.Role, node.RoleBP) {
 			continue
 		}
 		e, ok := preset.Node(p.Index)
@@ -210,7 +210,7 @@ func bootPlacement(m *node.Map) (node.Placement, bool) {
 	var boot node.Placement
 	found := false
 	for _, p := range m.Placements() {
-		if node.Is(p.Role, node.RoleBoot) || node.Is(p.Role, node.RoleBP) {
+		if node.Is(p.Role, node.RoleBP) {
 			boot = p
 			found = true
 		}
