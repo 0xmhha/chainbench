@@ -106,6 +106,13 @@ file the same way.
 - `execution.chain` is live for `chain up`: `fresh` (default),
   `reuse-if-matching` (per-node reconciliation, above), and `attach` (refused by
   up).
+- A prepared preset's `keyring` may name a key set on a server
+  (`keyring: srv://server-01/...`): the keys step downloads it to a local
+  directory (elevating through sudo where the server set permits it) and a node
+  signs with keys at that local path. A local absolute keyring is used in place.
+- `chainbench file upload`/`download` move files between this machine and a
+  server's data plane — a replacement binary onto `bin`, a node log or key back
+  off — refusing a name collision on upload unless `--force-upload`.
 - A prepared preset's `configs` map is applied: a node table names its configs
   logically (`config: validator`) and the preset says which file that name is on
   this target (`configs: {validator: srv://.../v.toml}`), so one spec runs
