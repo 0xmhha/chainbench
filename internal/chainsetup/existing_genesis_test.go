@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/consensus/wbft"
+	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 
 	_ "github.com/0xmhha/chainbench/internal/chains/all"
@@ -18,8 +20,20 @@ import (
 // preset keyring + per-node configs) drive a regression run.
 func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	dir := t.TempDir()
-	// A distinctive finished genesis (valid JSON, not what the builder would make).
-	const finished = `{"config":{"chainId":424242},"note":"prepared-regression","alloc":{}}`
+	presetDir := filepath.Join("..", "..", "keys", "preset")
+	// A distinctive finished genesis (valid JSON, not what the builder would
+	// make) that still names the validators the two-producer key set provides —
+	// a wbft genesis without them is refused, and rightly, since it cannot sign.
+	preset, err := store.LoadPreset(presetDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	net := preset.NetworkFor(2)
+	extra, err := wbft.ExtraData(net.Validators, net.BLSKeys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	finished := `{"config":{"chainId":424242},"note":"prepared-regression","alloc":{},"extraData":"` + extra + `"}`
 	genPath := filepath.Join(dir, "prepared-genesis.json")
 	if err := os.WriteFile(genPath, []byte(finished), 0o644); err != nil {
 		t.Fatal(err)
@@ -29,7 +43,7 @@ func TestGenesis_ExistingIsUsedVerbatim(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join("..", "..", "keys", "preset")}); err != nil {
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: presetDir}); err != nil {
 		t.Fatal(err)
 	}
 	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{

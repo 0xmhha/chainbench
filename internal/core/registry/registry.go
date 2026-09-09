@@ -94,6 +94,17 @@ type Phase struct {
 	ActionsOn int
 }
 
+// GenesisValidatorReader is an optional ConsensusFamily capability: read the
+// validator addresses a finished genesis encodes. A composition uses it to
+// check an existing genesis against the keys the network will run with — a
+// validator the running keys cannot produce would pass genesis validation and
+// then stall consensus. A family that carries its validator set outside the
+// genesis file (poa keeps it in a governance config) does not implement it, and
+// the check is skipped for that family.
+type GenesisValidatorReader interface {
+	GenesisValidators(genesisJSON []byte) ([]string, error)
+}
+
 // ChainPlugin is one chain's registration. Most of a chain is data (Manifest)
 // plus a consensus-family selection plus its account protocol; only genuinely
 // chain-specific behavior needs code.

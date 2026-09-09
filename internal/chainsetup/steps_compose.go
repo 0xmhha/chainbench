@@ -623,15 +623,20 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	)
 	if opts.Existing != "" {
 		// A finished genesis is read on its own machine and used verbatim — no
-		// template build, no overrides. It must be valid JSON; a deeper check
-		// that its validators match the composed key set is a chain-specific
-		// follow-up, so the operator is trusted to have paired a matching keyring.
+		// template build, no overrides. It must be valid JSON, and (for a family
+		// that carries its validator set in the genesis) its validators must be
+		// the composed key set — checked below, not left to trust.
 		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
 		if rerr != nil {
 			return "", fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
 		}
 		if !json.Valid(b) {
 			return "", fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+		}
+		// The validators an existing genesis names must be exactly the keys the
+		// network runs, or block signing fails at consensus rather than here.
+		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
+			return "", err
 		}
 		gen = b
 	} else {
