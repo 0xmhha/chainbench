@@ -160,7 +160,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 	// would be the better answer, but there is no method that says so today and
 	// inventing one here would put the question in two places. Recorded as N3
 	// debt rather than guessed at.
-	set, err := blueprint.PresetFrom(r, derive.WithBLS, os.ReadFile)
+	set, err := blueprint.PresetFrom(r, derive.WithBLS, localKeyReader)
 	if err != nil {
 		return keyring.Preset{}, err
 	}
@@ -247,7 +247,26 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, b
 // parseNodeKey reads a node's declared key. A path that exists is read as a key
 // file; anything else is parsed as 0x-hex, so a network can pin a key inline or
 // point at a file, the way a blueprint's nodekey does.
+// localKeyReader is the file reader a blueprint's declared keys are read
+// through. Like parseNodeKey, it refuses a server reference: a private key a
+// blueprint names is a local file or inline hex, never a secret pulled off a
+// server onto this machine.
+func localKeyReader(path string) ([]byte, error) {
+	if strings.HasPrefix(path, "srv://") {
+		return nil, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — use inline hex or a local key file", path)
+	}
+	return os.ReadFile(path)
+}
+
 func parseNodeKey(ref string) (derive.PrivateKey, error) {
+	// A private key is never pulled off a server to be derived here: a server
+	// reference for a key would read the secret onto this machine, which the key
+	// contract forbids (a prepared key is verified on its own server, and only
+	// its public identity leaves it). A key is therefore inline hex or a local
+	// file only; on-server key verification is a separate, explicit path.
+	if strings.HasPrefix(ref, "srv://") {
+		return derive.PrivateKey{}, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — use inline 0x-hex or a local key file", ref)
+	}
 	if _, err := os.Stat(ref); err == nil {
 		b, rerr := os.ReadFile(ref)
 		if rerr != nil {
