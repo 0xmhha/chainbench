@@ -405,4 +405,13 @@ S3 라이브에서 spec 의 `keys.generate` 는 정상 적용됐다. 다만 `Gen
   keysDir 도 workspace-local 로 기본 설정(공용 preset 은 재사용으로 빌드를 막으므로). 커밋 289e8f7.
   라이브: node1 pin + node2 생성 + node3 en 인 3노드 stablenet 이 뜨고 validator 2 로 sealing, en sync.
 
-**남은 단계**: S6(canonical env + 테스트별 override), S7(검증 20 게이트).
+- **S6 — canonical env + override 완료.** case 의 env 가 `{"extends":"<id>", ...override}` 형식을
+  받는다. 참조 env 를 base 로, case 가 명시한 필드를 top-level shallow 로 덮는다(명시한 필드는 통째
+  교체 — topology·hardforks·keys). 테스트는 달라지는 것만 선언한다. 문자열 id·인라인 객체 형식은
+  그대로 유지. 커밋 077f871. 라이브: canonical stablenet env(bp:"max")를 extends 하고 topology 를
+  bp2/en1 로 덮은 case 가 3노드로 구성되고 keys.generate 를 상속해 validator 2 로 생성.
+
+**남은 단계**: S7(검증 — handoff §7 게이트, local/remote/docker, CLI=MCP). 각 단계(S1·S3·S4·S5·S6)는
+착수 시 docker 라이브 게이트를 통과했다. S7 은 이를 종합하고 CLI=MCP 동등성·remote 타깃을 확인한다.
+DSL run 경로(compositionOf)는 CLI(`chainbench run`)와 MCP(`chainbench_run`)가 공유하므로 새 기능은
+두 표면에 자동으로 걸린다.
