@@ -147,15 +147,29 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 
 	var validators, endpoints, proxies int
 	var syncMode string
+	var autoBP bool
 	if inlineTopo == nil {
-		validators, endpoints, proxies, syncMode, err = topologyOf(spec.Topology)
+		validators, endpoints, proxies, syncMode, autoBP, err = topologyOf(spec.Topology)
 		if err != nil {
 			return composition{}, err
 		}
+		// An explicit --validators is a named count: it turns dynamic sizing off
+		// rather than being filled over.
 		if in.Validators > 0 {
 			validators = in.Validators
+			autoBP = false
 		}
-		if validators <= 0 {
+		if autoBP {
+			// The unified model's default shape: one pn (the discovery hub on the
+			// last server) and one en unless the spec said otherwise; the composer
+			// fills the rest with validators once it knows the server count.
+			if proxies == 0 {
+				proxies = 1
+			}
+			if endpoints == 0 {
+				endpoints = 1
+			}
+		} else if validators <= 0 {
 			validators = suiteDefaultValidators
 		}
 	}
@@ -171,6 +185,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
 		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
 		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
+		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
 		ChainID:      in.ChainID,
@@ -311,15 +326,28 @@ const (
 	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
 	topoSyncModeSnak = "sync_mode"
+	// topoMax is the bp value that fills the network to the server set instead
+	// of naming a count: bp becomes one node per server, less the pn and en.
+	topoMax = "max"
 )
 
 // topologyOf reads the node counts a declaration gives: validators (or bp),
 // endpoints (or en), and the endpoints' sync mode. A key it does not know is
 // an error rather than a silently ignored intention.
-func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, err error) {
+//
+// bp may be the word "max" instead of a number: autoBP is then true and the
+// validator count is left for the composer to fill from the server set.
+func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, autoBP bool, err error) {
 	for k, v := range t {
 		switch k {
 		case topoValidators, topoBP:
+			if s, ok := v.(string); ok {
+				if s != topoMax {
+					return 0, 0, 0, "", false, fmt.Errorf("topology.%s must be a number or %q, got %q", k, topoMax, s)
+				}
+				autoBP = true
+				break
+			}
 			validators, err = countOf(k, v)
 		case topoEndpoints, topoEN:
 			endpoints, err = countOf(k, v)
@@ -335,10 +363,10 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
 		}
 		if err != nil {
-			return 0, 0, 0, "", err
+			return 0, 0, 0, "", false, err
 		}
 	}
-	return validators, endpoints, proxies, syncMode, nil
+	return validators, endpoints, proxies, syncMode, autoBP, nil
 }
 
 // countOf reads a node count, which JSON hands over as a float.

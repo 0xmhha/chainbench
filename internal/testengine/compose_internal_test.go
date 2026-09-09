@@ -243,14 +243,20 @@ func TestTopologyOf_RejectsWhatItDoesNotKnow(t *testing.T) {
 	}
 	for name, topo := range cases {
 		t.Run(name, func(t *testing.T) {
-			if _, _, _, _, err := topologyOf(topo); err == nil {
+			if _, _, _, _, _, err := topologyOf(topo); err == nil {
 				t.Fatalf("topology %v accepted", topo)
 			}
 		})
 	}
-	v, e, p, m, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "pn": float64(1), "sync_mode": "archive"})
-	if err != nil || v != 4 || e != 2 || p != 1 || m != "archive" {
-		t.Fatalf("got %d/%d/%d/%q (%v)", v, e, p, m, err)
+	v, e, p, m, auto, err := topologyOf(map[string]any{"validators": float64(4), "endpoints": float64(2), "pn": float64(1), "sync_mode": "archive"})
+	if err != nil || v != 4 || e != 2 || p != 1 || m != "archive" || auto {
+		t.Fatalf("got %d/%d/%d/%q auto=%v (%v)", v, e, p, m, auto, err)
+	}
+	// bp: "max" leaves the count for the composer to fill and flags autoBP;
+	// pn/en still parse alongside it.
+	v, e, p, _, auto, err = topologyOf(map[string]any{"bp": "max", "pn": float64(1), "en": float64(1)})
+	if err != nil || !auto || v != 0 || p != 1 || e != 1 {
+		t.Fatalf("bp:max got v=%d e=%d p=%d auto=%v (%v)", v, e, p, auto, err)
 	}
 }
 

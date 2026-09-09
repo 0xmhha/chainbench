@@ -195,6 +195,13 @@ type AllocateOpts struct {
 	// server set passes that server's placement instead, which is the
 	// only way site-specific ports enter the composition.
 	Pool resource.Pool
+	// AutoSize fills the network to the server set: the count is one node per
+	// server (len(Pool.Hosts)), not a figure the spec named. Proxies and
+	// Endpoints still say how many of those the operator wants (one each by
+	// default); the rest are validators. It needs a resolved server set — with
+	// no pool there is no capacity to fill — and the pn is placed last so it
+	// lands on the last server (the discovery hub the model puts there).
+	AutoSize bool
 	// SetPath is the server-set file Pool came from, persisted so later
 	// steps resolve the same file (and, in docker mode, its sibling localmap).
 	SetPath string
@@ -223,24 +230,64 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		}
 		return reqs, modes, nil
 	}
-	if o.Validators < 1 {
+	validators := o.Validators
+	if o.AutoSize {
+		v, err := o.autoValidators()
+		if err != nil {
+			return nil, nil, err
+		}
+		validators = v
+	}
+	if validators < 1 {
 		return nil, nil, fmt.Errorf("chainsetup: allocate: at least one validator is required")
 	}
-	reqs := make([]node.LaunchReq, 0, o.Validators+o.Proxies+o.Endpoints)
+	reqs := make([]node.LaunchReq, 0, validators+o.Proxies+o.Endpoints)
 	modes := make([]string, 0, cap(reqs))
-	for i := 0; i < o.Validators; i++ {
+	for i := 0; i < validators; i++ {
 		reqs = append(reqs, node.LaunchReq{Role: node.RoleBP})
 		modes = append(modes, syncModeFull)
 	}
-	for i := 0; i < o.Proxies; i++ {
-		reqs = append(reqs, node.LaunchReq{Role: node.RolePN})
-		modes = append(modes, syncModeFor(node.RolePN, o.EndpointSyncMode))
+	// Order differs by path. A named count keeps bp, pn, en — the ordering
+	// existing specs address by index. AutoSize instead ends on the pn, so the
+	// last node lands on the last server: that node is the discovery hub the
+	// unified model puts at the highest index (and, on wemix, still leaves the
+	// etcd seed as the highest-index bp, which comes before it either way).
+	appendProxies := func() {
+		for i := 0; i < o.Proxies; i++ {
+			reqs = append(reqs, node.LaunchReq{Role: node.RolePN})
+			modes = append(modes, syncModeFor(node.RolePN, o.EndpointSyncMode))
+		}
 	}
-	for i := 0; i < o.Endpoints; i++ {
-		reqs = append(reqs, node.LaunchReq{Role: node.RoleEN})
-		modes = append(modes, syncModeFor(node.RoleEN, o.EndpointSyncMode))
+	appendEndpoints := func() {
+		for i := 0; i < o.Endpoints; i++ {
+			reqs = append(reqs, node.LaunchReq{Role: node.RoleEN})
+			modes = append(modes, syncModeFor(node.RoleEN, o.EndpointSyncMode))
+		}
+	}
+	if o.AutoSize {
+		appendEndpoints()
+		appendProxies()
+	} else {
+		appendProxies()
+		appendEndpoints()
 	}
 	return reqs, modes, nil
+}
+
+// autoValidators sizes the validator count from the server set: one node per
+// server, less the proxies and endpoints the operator asked for. It is the
+// count form's dynamic default (bp: "max"), so the same spec fills a 6-server
+// set with 6 nodes and a 15-server set with 15.
+func (o AllocateOpts) autoValidators() (int, error) {
+	servers := len(o.Pool.Hosts)
+	if servers == 0 {
+		return 0, fmt.Errorf("chainsetup: allocate: dynamic sizing (bp: \"max\") needs a server-set target — there is no capacity to fill without one")
+	}
+	validators := servers - o.Proxies - o.Endpoints
+	if validators < 1 {
+		return 0, fmt.Errorf("chainsetup: allocate: %d server(s) cannot hold %d pn + %d en and still leave a validator", servers, o.Proxies, o.Endpoints)
+	}
+	return validators, nil
 }
 
 // blueprintPlacements turns a declaration's node table into one placement
