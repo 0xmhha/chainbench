@@ -51,7 +51,26 @@ chainbench (`~` expands locally).
 `inputs.mode` is `generated` (build test keys and genesis/config with the
 in-process builders) or `prepared` (use files already on the target, named by a
 `presets` bundle). `execution.chain` is `fresh`, `reuse-if-matching`, or
-`attach`.
+`attach` — see below.
+
+## execution.chain: how a run treats an existing composition
+
+`fresh` (the default) composes and launches the network as always; it does not
+disturb another composition's processes or data.
+
+`reuse-if-matching` reconciles a running network node by node before it deploys
+or launches anything. For each node it compares the config and binary against
+what the run would produce now, and probes whether the node is still answering.
+A node whose inputs are unchanged and that is up is left running; only nodes
+that drifted or stopped are torn down and brought back. Of fifteen nodes, if one
+changed, one is redone and fourteen keep running. The one exception is the
+genesis: it is shared by every node, so a changed genesis is a different chain
+and cannot be reconciled onto a running network — the whole reuse is refused,
+and nothing is touched. Use it to continue an expensive environment across runs.
+
+`attach` tests an already-running chain. It does not create, deploy, or init, so
+`chain up` refuses it — bring the chain up separately and use the attach/run
+path.
 
 ## Run with both files
 
@@ -66,15 +85,24 @@ chainbench run tests/tc/example.json \
 is recorded); it is separate from the target's `dataRoot`. Add `--docker` when
 the server-set's hosts are local docker containers.
 
+`--workspace-config` is accepted by the one-shot `run`, by the step-form
+`chain new` and `chain up`, and by the MCP tools `chainbench_chain_new` and
+`chainbench_chain_up` — every surface resolves the target's `dataRoot` from the
+file the same way.
+
 ## What is live today
 
 - The workspace-config file format, its validation, and its `dataRoot` are
   live: `dataRoot` comes from this file, and the server-set no longer carries
   one.
-- `paths`, `binaryAliases`, `inputs`, `execution`, and `presets` parse and
-  validate, but their consumption (purpose-directory resolution, server file
-  references, prepared/generated wiring, reuse and attach modes) lands
-  incrementally — see the handoff docs
+- `--workspace-config` is wired into the step-form CLI (`chain new`/`chain up`)
+  and the MCP step tools, not only the one-shot `run`.
+- `execution.chain` is live for `chain up`: `fresh` (default),
+  `reuse-if-matching` (per-node reconciliation, above), and `attach` (refused by
+  up).
+- `paths`, `binaryAliases`, `inputs`, and `presets` parse and validate, and
+  their consumption (purpose-directory resolution, server file references,
+  prepared/generated wiring) lands incrementally — see the handoff docs
   `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`
   and `10-prepared-inputs-server-ref-handoff.md`. Until a field is wired, it is
   parsed but not yet acted on.
