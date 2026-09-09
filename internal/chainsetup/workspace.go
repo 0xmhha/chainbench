@@ -85,6 +85,10 @@ type State struct {
 	// later steps resolve the same file — and, in docker mode, find the
 	// localmap next to it.
 	ServerSet string `json:"serverSet,omitempty"`
+	// WorkspaceConfig is the environment file (--workspace-config) this
+	// composition was set up with, recorded so later steps and a resume resolve
+	// portable file references under the same data root and purpose directories.
+	WorkspaceConfig string `json:"workspaceConfig,omitempty"`
 	// LegacyServerSet reads the field's pre-rename key so a workspace composed
 	// before the rename keeps its recorded path. It is migrated into ServerSet
 	// on open and never written back.
@@ -143,6 +147,11 @@ type Workspace struct {
 	state  State
 	env    func(string) string
 	now    func() time.Time
+	// wcCache holds the parsed workspace-config for this command, loaded once
+	// from state.WorkspaceConfig. nil until first use; the bool records that a
+	// load was attempted so a workspace with none is not reloaded per node.
+	wcCache  *resource.WorkspaceConfig
+	wcLoaded bool
 	// driver, when set, replaces every machine's process driver — the seam a
 	// test uses to control nodes without an OS process, and a caller uses to
 	// route control over another transport.

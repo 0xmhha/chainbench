@@ -29,6 +29,10 @@ type NewOpts struct {
 	// that knows one at new time may know both. The allocate step still
 	// records the set it actually placed from (a later --server-set wins).
 	ServerSet string
+	// WorkspaceConfigPath is the environment file whose data root and purpose
+	// directories this composition resolves portable references under. Recorded
+	// so later steps and a resume resolve against the same file.
+	WorkspaceConfigPath string
 	// Docker treats the composition's servers as local docker containers: the
 	// harness's dials are translated through the localmap next to the server
 	// server set. Recorded once here so every later step follows it.
@@ -73,6 +77,9 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.state.Target = tgt
 	if opts.ServerSet != "" {
 		w.state.ServerSet = opts.ServerSet
+	}
+	if opts.WorkspaceConfigPath != "" {
+		w.state.WorkspaceConfig = opts.WorkspaceConfigPath
 	}
 	w.state.Docker = opts.Docker
 

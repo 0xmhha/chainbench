@@ -700,7 +700,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	// for it. It still goes through the same write + readback as a rendered one,
 	// so a truncated copy is caught here rather than at boot.
 	if ns.Config != "" {
-		toml, rerr := os.ReadFile(ns.Config)
+		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
 			return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
 		}

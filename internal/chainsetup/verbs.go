@@ -57,6 +57,10 @@ type NetNewIn struct {
 	// ServerSet is the server-set file, recordable here so --docker and the
 	// set it translates through arrive as the pair they are.
 	ServerSet string
+	// WorkspaceConfigPath is the environment file owning the target data root and
+	// purpose directories; recorded so later steps resolve portable references
+	// under it.
+	WorkspaceConfigPath string
 }
 
 // NetNewOut reports what the workspace was initialized to.
@@ -75,7 +79,7 @@ func NetNew(_ context.Context, d Deps, in NetNewIn) (NetNewOut, error) {
 	detail, err := ws.New(NewOpts{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Target: in.Target,
 		ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath, Docker: in.Docker,
-		ServerSet: in.ServerSet,
+		ServerSet: in.ServerSet, WorkspaceConfigPath: in.WorkspaceConfigPath,
 	})
 	if err != nil {
 		return NetNewOut{}, err

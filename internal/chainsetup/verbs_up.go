@@ -74,6 +74,10 @@ type NetUpIn struct {
 	// Docker treats the servers as local docker containers (dials translated
 	// through the localmap next to the server set); recorded at the new step.
 	Docker bool `json:"docker,omitempty"`
+	// WorkspaceConfigPath is the environment file owning the target data root and
+	// purpose directories; recorded at new so later steps resolve portable
+	// references under it.
+	WorkspaceConfigPath string `json:"workspaceConfigPath,omitempty"`
 
 	// Identities (step: keys).
 	KeysSource string `json:"keysSource,omitempty"`
@@ -170,7 +174,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			r, err := NetNew(ctx, d, NetNewIn{
 				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
 				Target: in.Target, ManifestPath: in.ManifestPath, TemplatePath: in.TemplatePath,
-				Docker: in.Docker,
+				Docker: in.Docker, WorkspaceConfigPath: in.WorkspaceConfigPath,
 			})
 			if err != nil {
 				return "", err

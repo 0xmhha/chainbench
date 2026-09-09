@@ -242,6 +242,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			return composition{}, werr
 		}
 		up.Target.DataRoot = wc.DataRoot
+		up.WorkspaceConfigPath = in.WorkspaceConfigPath
 	}
 	return composition{up: up}, nil
 }
