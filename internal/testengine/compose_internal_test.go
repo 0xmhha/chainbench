@@ -254,6 +254,57 @@ func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_PreparedPresetExpands pins W4's preset bundle: inputs.mode
+// prepared expands the named preset onto the composition — its finished genesis
+// stands in for declaring one in the DSL — and a keyring on a server is refused
+// for now (keys are read locally).
+func TestCompositionOf_PreparedPresetExpands(t *testing.T) {
+	dir := t.TempDir()
+	wcPath := filepath.Join(dir, "workspace-config.yaml")
+	base := "version: 1\ndataRoot: /data\n" +
+		"paths: {binaries: bin, configs: configs, genesis: genesis, keystore: keystore, keyrings: keys, nodes: node, runtime: runtime, logs: logs}\n" +
+		"control: {artifactRoot: ~/.chainbench}\n" +
+		"inputs: {mode: prepared, preset: regression}\nexecution: {chain: fresh}\n"
+	write := func(presetBody string) {
+		if err := os.WriteFile(wcPath, []byte(base+presetBody), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+
+	// A preset genesis expands to an existing-genesis reference.
+	write("presets:\n  regression:\n    genesis: srv://server-01/data/genesis/g.json\n")
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
+	if err != nil {
+		t.Fatalf("preset genesis: %v", err)
+	}
+	if comp.up.GenesisExisting != "srv://server-01/data/genesis/g.json" {
+		t.Fatalf("preset genesis not applied: %q", comp.up.GenesisExisting)
+	}
+
+	// A preset genesis conflicts with a spec that already declares a genesis.
+	specG := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"genesis":{"set":{"config.chainId":9}}}`)
+	if _, err := compositionOf(context.Background(), specG, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
+		t.Fatal("a preset genesis over a declared genesis must conflict")
+	}
+
+	// A keyring on a server is refused (keys are read locally).
+	write("presets:\n  regression:\n    keyring: srv://server-01/data/keys/r\n")
+	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
+		t.Fatal("a srv:// preset keyring must be refused for now")
+	}
+
+	// A local keyring becomes the key dir.
+	write("presets:\n  regression:\n    keyring: /opt/keys/regression\n")
+	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
+	if err != nil {
+		t.Fatalf("local preset keyring: %v", err)
+	}
+	if comp.up.KeysDir != "/opt/keys/regression" || comp.up.KeysSource != "preset" {
+		t.Fatalf("local keyring not applied: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
+	}
+}
+
 // TestCompositionOf_WorkspaceConfigDataRootConflict pins the locality/root
 // consistency check: the workspace-config is the one owner of the data root, so
 // an env target that names a different root is a conflict, not a silent

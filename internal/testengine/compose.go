@@ -255,8 +255,48 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		up.Target.DataRoot = wc.DataRoot
 		up.WorkspaceConfigPath = in.WorkspaceConfigPath
+		if err := applyPreset(up, wc, spec); err != nil {
+			return composition{}, err
+		}
 	}
 	return composition{up: up}, nil
+}
+
+// applyPreset expands a prepared input preset onto the composition: the
+// preset's finished genesis and its keyring stand in for declaring them in the
+// DSL, which is the point of naming a bundle. A field the DSL already declared
+// is a conflict rather than a silent override. It runs only for inputs.mode
+// prepared; a generated run has no preset (workspace-config validation ensures
+// that).
+func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+	if wc.Inputs.Mode != resource.InputPrepared {
+		return nil
+	}
+	name := wc.Inputs.Preset
+	preset := wc.Presets[name] // validated to exist at parse time
+	if preset.Genesis != "" {
+		if up.GenesisExisting != "" || len(spec.Chain.GenesisOverlay) > 0 {
+			return fmt.Errorf("testengine: preset %q sets a genesis, but the spec already declares one — declare it in one place", name)
+		}
+		up.GenesisExisting = preset.Genesis
+	}
+	if preset.Keyring != "" {
+		if spec.EnvKeys != nil {
+			return fmt.Errorf("testengine: preset %q sets a keyring, but the spec already declares keys — declare them in one place", name)
+		}
+		// The keys step reads the key set on the machine running chainbench, so a
+		// keyring on a server (srv:// or a portable target reference) would pull
+		// private keys across machines, which the key contract forbids. Until the
+		// on-target key path exists, a preset keyring must be a local key set.
+		if strings.HasPrefix(preset.Keyring, "srv://") || !filepath.IsAbs(preset.Keyring) {
+			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path for now — a keyring on a server is not read across machines (key security)", name, preset.Keyring)
+		}
+		up.KeysDir = preset.Keyring
+		up.KeysSource = "preset"
+	}
+	// preset.Configs (a logical-name -> file map) is not applied here yet; a
+	// node's config comes from its topology config reference today.
+	return nil
 }
 
 // topologyHasKeys reports whether a node-table declaration pins any per-node
