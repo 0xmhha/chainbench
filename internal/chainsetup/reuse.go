@@ -1,6 +1,12 @@
 package chainsetup
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/process"
+)
 
 // Reuse reconciliation for execution.chain = reuse-if-matching.
 //
@@ -110,6 +116,104 @@ func planReuse(genesisBefore, genesisAfter string, before map[int]nodeBaseline, 
 		plan.Nodes = append(plan.Nodes, d)
 	}
 	return plan
+}
+
+// reuseSnapshot is the running composition's baseline, captured before an up
+// re-runs its steps and overwrites the record. planReuse compares it against
+// what the re-run produces.
+type reuseSnapshot struct {
+	genesisHash string
+	before      map[int]nodeBaseline
+	alive       map[int]bool
+}
+
+// snapshotForReuse captures the prior per-node baseline and probes which nodes
+// answer, before the compose steps re-run and reset the node table. An empty
+// workspace (a first up) yields an empty snapshot, which planReuse reads as
+// "compose every node fresh".
+func (w *Workspace) snapshotForReuse(ctx context.Context) reuseSnapshot {
+	snap := reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}}
+	if len(w.state.Nodes) == 0 {
+		return snap
+	}
+	snap.genesisHash = w.state.LaunchInputs[w.state.GenesisPath]
+	for _, ns := range w.state.Nodes {
+		snap.before[ns.Index] = nodeBaseline{
+			Index:      ns.Index,
+			Label:      ns.Label,
+			ConfigHash: w.state.LaunchInputs[ns.ConfigPath],
+			Binary:     w.binaryFor(ns, w.state.Binary),
+			PID:        ns.PID,
+		}
+	}
+	// A probe error, or a node that does not answer, is a redo — never a reuse.
+	// The probe is best-effort: it must not stop an up, only downgrade nodes.
+	if h, err := w.Health(ctx); err == nil {
+		for _, nh := range h {
+			snap.alive[nh.Index] = nh.Err == ""
+		}
+	}
+	return snap
+}
+
+// reconcileReuse decides, after the compose steps re-ran, which nodes to leave
+// running and which to bring back, and carries out the teardown of the ones
+// that changed. Reused nodes keep their pid so init and start skip them (their
+// datadir and process are left untouched); a node that must be redone and is
+// still up is stopped here so init can re-initialize its datadir. A changed
+// shared genesis refuses the whole reuse and touches nothing.
+func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reusePlan, error) {
+	genesisAfter := w.state.LaunchInputs[w.state.GenesisPath]
+	after := make([]nodeTarget, 0, len(w.state.Nodes))
+	for _, ns := range w.state.Nodes {
+		after = append(after, nodeTarget{
+			Index:      ns.Index,
+			Label:      ns.Label,
+			ConfigHash: w.state.LaunchInputs[ns.ConfigPath],
+			Binary:     w.binaryFor(ns, w.state.Binary),
+		})
+	}
+	plan := planReuse(snap.genesisHash, genesisAfter, snap.before, after, snap.alive)
+	if plan.Refuse != "" {
+		return plan, nil
+	}
+	reuse := map[int]bool{}
+	for _, d := range plan.Nodes {
+		if d.Reuse {
+			reuse[d.Index] = true
+		}
+	}
+	for i := range w.state.Nodes {
+		ns := &w.state.Nodes[i]
+		b, had := snap.before[ns.Index]
+		if reuse[ns.Index] {
+			// Carry the running pid so init and start leave it alone.
+			ns.PID = b.PID
+			continue
+		}
+		// A node that must be redone starts from stopped: if its prior process
+		// is still up, stop it before init re-initializes the datadir.
+		if had && b.PID > 0 {
+			if err := w.stopByPID(ctx, *ns, b.PID); err != nil {
+				return plan, err
+			}
+		}
+		ns.PID = 0
+	}
+	return plan, nil
+}
+
+// stopByPID stops a node's prior process by the pid the snapshot recorded, for
+// the redo path where the re-run has already reset the node table's pids.
+func (w *Workspace) stopByPID(ctx context.Context, ns node.Record, pid int) error {
+	t, err := w.machineFor(ns)
+	if err != nil {
+		return err
+	}
+	if err := t.Driver.Stop(ctx, process.Handle{Index: ns.Index, PID: pid}); err != nil {
+		return fmt.Errorf("chainsetup: reuse: stop node%d (pid %d): %w", ns.Index, pid, err)
+	}
+	return nil
 }
 
 // describe renders the plan as one line for a step's recorded detail.

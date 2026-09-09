@@ -141,6 +141,17 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	if stage == UpStart && in.Binary == "" {
 		return NetUpOut{}, errors.New("chainsetup: chain up --stage=start needs a node binary")
 	}
+	// execution.chain selects how this up treats an existing composition. attach
+	// does not compose or launch, so it has no meaning for up; reuse-if-matching
+	// reconciles a running network node by node (below); fresh is the default and
+	// composes as it always has.
+	mode, err := upChainMode(in)
+	if err != nil {
+		return NetUpOut{}, err
+	}
+	if mode == resource.ChainAttach {
+		return NetUpOut{}, errors.New("chainsetup: chain up: execution.chain=attach does not compose or launch a network — bring the chain up separately and use the attach/run path")
+	}
 
 	// The composite holds the workspace for its whole run. Each step it calls
 	// takes the lock too, but a run cannot conflict with itself (session
@@ -151,6 +162,8 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	if err != nil {
 		return NetUpOut{}, err
 	}
+	lockWS.SetEnv(d.Env)
+	lockWS.SetDriver(d.Driver)
 	held, prev, lockState, err := lockWS.Acquire(d.command())
 	if err != nil {
 		return NetUpOut{}, err
@@ -158,6 +171,16 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	defer func() { _ = held.Release() }()
 	if lockState == session.LockStale {
 		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up", prev.Describe())
+	}
+
+	// reuse-if-matching reconciles a running network node by node. Its baseline
+	// — what each node hashed to and whether it answers — must be captured now,
+	// before the compose steps re-run and reset the node table. A first up over
+	// an empty workspace yields an empty snapshot, which composes everything.
+	reuseMode := mode == resource.ChainReuseIfMatching && stage == UpStart
+	var snap reuseSnapshot
+	if reuseMode {
+		snap = lockWS.snapshotForReuse(ctx)
 	}
 
 	var out NetUpOut
@@ -254,6 +277,19 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		if err := record(name, steps[name]); err != nil {
 			return out, err
 		}
+		// After the artifacts are composed (through build) and before anything is
+		// deployed or launched, reconcile against the running network: leave the
+		// matching nodes up, tear down only the ones that drifted.
+		if reuseMode && name == "build" {
+			plan, rerr := reconcileUp(ctx, d, in.DataDir, snap)
+			if rerr != nil {
+				return out, rerr
+			}
+			out.Steps = append(out.Steps, "reuse: "+plan.describe())
+			if plan.Refuse != "" {
+				return out, fmt.Errorf("chainsetup: chain up: reuse-if-matching refused: %s", plan.Refuse)
+			}
+		}
 	}
 
 	nodes, err := NetworkStatus(ctx, d, NetworkStatusIn{DataDir: in.DataDir})
@@ -262,6 +298,39 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	}
 	out.Nodes = nodes
 	return out, nil
+}
+
+// upChainMode reads how this up should treat an existing composition from the
+// workspace-config's execution.chain. No config, or an empty value, is fresh —
+// the default that composes as it always has.
+func upChainMode(in NetUpIn) (resource.ChainMode, error) {
+	if in.WorkspaceConfigPath == "" {
+		return resource.ChainFresh, nil
+	}
+	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+	if err != nil {
+		return "", fmt.Errorf("chainsetup: chain up: %w", err)
+	}
+	if wc.Execution.Chain == "" {
+		return resource.ChainFresh, nil
+	}
+	return wc.Execution.Chain, nil
+}
+
+// reconcileUp runs the reuse reconciliation against the freshly composed
+// workspace and saves the result, returning the plan for the caller to report
+// and to stop on a refusal.
+func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot) (reusePlan, error) {
+	var plan reusePlan
+	_, err := withWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
+		p, err := ws.reconcileReuse(ctx, snap)
+		if err != nil {
+			return "", err
+		}
+		plan = p
+		return p.describe(), nil
+	})
+	return plan, err
 }
 
 // recordRequest writes what the composition was asked for onto the
