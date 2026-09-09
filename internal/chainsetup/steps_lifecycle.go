@@ -504,7 +504,10 @@ func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		b, err := t.Files.Read(ctx, ns.LogPath)
+		// A node's log lives on its machine, and may be root-owned there, so it is
+		// read through the machine (remote or local) and elevated through sudo
+		// where the login user cannot reach it and the server set permits it.
+		b, err := t.ReadMaybeElevated(ctx, ns.LogPath)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: logs: %w", err)
 		}

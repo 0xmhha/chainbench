@@ -3,9 +3,7 @@ package testengine
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"strconv"
-	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/health"
@@ -37,27 +35,20 @@ func collectFailureData(ctx context.Context, sd chainsetup.Deps, dataDir string,
 			rec.Observation("processes.json", b)
 		}
 	}
+	// Each node's log is read from ITS machine, not this one: a network spread
+	// across a server set (or docker) keeps every log on its own host, so a
+	// local read would collect nothing for a remote run. w.Logs reads through the
+	// node's machine and elevates through sudo where a root-owned log needs it.
 	if ws, err := chainsetup.Open(dataDir, sd.Clock); err == nil {
+		ws.SetEnv(sd.Env)
+		ws.SetDriver(sd.Driver)
 		for _, n := range ws.State().Nodes {
 			if n.LogPath == "" {
 				continue
 			}
-			if tail, err := tailFile(n.LogPath, failureLogTailLines); err == nil {
-				rec.Observation("node"+strconv.Itoa(n.Index)+".log", tail)
+			if tail, err := ws.Logs(ctx, n.Index, failureLogTailLines); err == nil {
+				rec.Observation("node"+strconv.Itoa(n.Index)+".log", []byte(tail))
 			}
 		}
 	}
-}
-
-// tailFile returns the last n lines of the file at path.
-func tailFile(path string, n int) ([]byte, error) {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	lines := strings.Split(strings.TrimRight(string(b), "\n"), "\n")
-	if len(lines) > n {
-		lines = lines[len(lines)-n:]
-	}
-	return []byte(strings.Join(lines, "\n")), nil
 }
