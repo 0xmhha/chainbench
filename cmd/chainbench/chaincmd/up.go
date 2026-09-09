@@ -20,7 +20,7 @@ func newNetUpCmd() *cobra.Command {
 		manifestPath, templatePath                           string
 		validators, endpoints, proxies                       int
 		endpointSyncMode, topologyPath, blueprintPath, stage string
-		keysSource, bootnode                                 string
+		keysSource, bootnode, genesisExisting                string
 		chainID                                              int64
 		genesisSet, launchSet, binaries                      []string
 		overlayPath                                          string
@@ -62,6 +62,7 @@ func newNetUpCmd() *cobra.Command {
 				Docker:              docker,
 				KeysSource:          keysSource,
 				WorkspaceConfigPath: workspaceConfig,
+				GenesisExisting:     genesisExisting,
 				ChainID:             chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
 				LaunchSet: launchSet,
 			})
@@ -97,6 +98,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "override the manifest chain id (0 = manifest)")
 	cmd.Flags().StringArrayVar(&genesisSet, "set", nil, "override a genesis config key (repeatable), e.g. --set bohoBlock=10")
 	cmd.Flags().StringVar(&overlayPath, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")
+	cmd.Flags().StringVar(&genesisExisting, "genesis-existing", "", "use a finished genesis file verbatim (a local path or srv:// reference) instead of building one; its validators must match the composed keys")
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
 	cmd.Flags().BoolVar(&docker, "docker", false,
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
