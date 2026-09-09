@@ -294,9 +294,31 @@ func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.S
 		up.KeysDir = preset.Keyring
 		up.KeysSource = "preset"
 	}
-	// preset.Configs (a logical-name -> file map) is not applied here yet; a
-	// node's config comes from its topology config reference today.
+	applyPresetConfigs(up, preset)
 	return nil
+}
+
+// applyPresetConfigs resolves each node's logical config name to the preset's
+// file. A node table's config value is a logical name when it is a key in the
+// preset's configs map: the DSL names a config, and the environment's preset
+// says which file that name is on this target, so one spec runs against
+// different targets by swapping the map. A config value that is not a preset
+// key is left as a direct file reference, which is how a node named its config
+// before presets existed. With no node table there is nothing to map onto, and
+// the map is simply unused.
+func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
+	if len(preset.Configs) == 0 || up.Topology == nil {
+		return
+	}
+	for i := range up.Topology.Nodes {
+		logical := up.Topology.Nodes[i].Config
+		if logical == "" {
+			continue
+		}
+		if file, ok := preset.Configs[logical]; ok {
+			up.Topology.Nodes[i].Config = file
+		}
+	}
 }
 
 // topologyHasKeys reports whether a node-table declaration pins any per-node
