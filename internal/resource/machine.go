@@ -21,6 +21,7 @@ import (
 	"io/fs"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -177,6 +178,11 @@ type Access struct {
 	// target; it is nil otherwise, so a caller that needs it and finds nil knows
 	// elevation was not granted rather than silently reading nothing.
 	ElevatedFiles filestore.Store
+	// ElevatedRunner runs a shell command on the target through sudo, the runner
+	// half of the same elevation ElevatedFiles is the file half of. It is what
+	// lets a listing (find) see a root-only directory; nil when elevation was not
+	// granted.
+	ElevatedRunner process.Runner
 }
 
 // ReadMaybeElevated reads a file on the target, elevating through sudo only if
@@ -273,6 +279,73 @@ func (a *Access) Upload(ctx context.Context, localPath, remotePath string, force
 		return fmt.Errorf("upload %s: %w", remotePath, err)
 	}
 	return nil
+}
+
+// DownloadDir copies a directory tree from the target to a local directory,
+// preserving the layout under remoteDir and elevating through sudo where needed
+// and granted. It exists for a keyring, which is a tree (a password, metadata,
+// and a folder per node), not a single file: the whole set has to arrive for a
+// node to sign with it. Every file lands 0600, and no path or byte is logged.
+func (a *Access) DownloadDir(ctx context.Context, remoteDir, localDir string) error {
+	if a.Runner == nil {
+		return fmt.Errorf("download dir %s: not a remote target", remoteDir)
+	}
+	files, err := a.listFilesMaybeElevated(ctx, remoteDir)
+	if err != nil {
+		return fmt.Errorf("download dir %s: list: %w", remoteDir, err)
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("download dir %s: no files found (wrong path, or not readable even with elevation)", remoteDir)
+	}
+	prefix := strings.TrimSuffix(remoteDir, "/") + "/"
+	for _, remote := range files {
+		rel := strings.TrimPrefix(remote, prefix)
+		local := filepath.FromSlash(rel)
+		if err := a.DownloadTo(ctx, remote, filepath.Join(localDir, local)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// listFilesMaybeElevated lists the files under dir on the target, recursively,
+// elevating only when the plain listing cannot see it (a root-only directory).
+func (a *Access) listFilesMaybeElevated(ctx context.Context, dir string) ([]string, error) {
+	files, err := runFind(ctx, a.Runner, dir)
+	if err == nil {
+		return files, nil
+	}
+	if a.ElevatedRunner == nil {
+		return nil, err
+	}
+	return runFind(ctx, a.ElevatedRunner, dir)
+}
+
+// runFind lists the regular files under dir through run, one absolute path per
+// line. A non-zero exit (an unreadable or missing directory) is an error so the
+// elevated retry is tried.
+func runFind(ctx context.Context, run process.Runner, dir string) ([]string, error) {
+	res, err := run(ctx, "find "+shellQuote(dir)+" -type f")
+	if err != nil {
+		return nil, err
+	}
+	if res.ExitCode != 0 {
+		return nil, fmt.Errorf("find %s: exit %d: %s", dir, res.ExitCode, strings.TrimSpace(res.Stderr))
+	}
+	var out []string
+	for _, line := range strings.Split(res.Stdout, "\n") {
+		if p := strings.TrimSpace(line); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out, nil
+}
+
+// shellQuote single-quotes s for a POSIX shell. The process package has its own
+// unexported copy for the driver commands; this is the resource layer's, for the
+// listing command it issues directly.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // Lookup turns a server-set entry name into SSH credentials.
@@ -385,7 +458,9 @@ func (s Spec) resolveOver(creds remote.Credentials, hk remote.HostKeyPolicy, m r
 	// caller reaching a root-owned file goes through the same host, same
 	// credentials — only elevated.
 	if creds.Sudo {
-		acc.ElevatedFiles = process.NewRemoteFileStore(process.SSHSudoRunner(creds, hostKey))
+		sudoRun := process.SSHSudoRunner(creds, hostKey)
+		acc.ElevatedFiles = process.NewRemoteFileStore(sudoRun)
+		acc.ElevatedRunner = sudoRun
 	}
 	return acc, nil
 }
