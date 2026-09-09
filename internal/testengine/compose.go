@@ -48,6 +48,14 @@ const overlayFile = "env-genesis-overlay.json"
 // defaultKeysDir is the key set a declaration that names none composes from.
 const defaultKeysDir = "keys/preset"
 
+// keySourceGenerate is the key source that creates a fresh set rather than
+// reading a recorded one.
+const keySourceGenerate = "generate"
+
+// generatedKeysSubdir is where a generated set with no ref lands, under the
+// workspace, so generate does not reuse the shared preset by default.
+const generatedKeysSubdir = "keys"
+
 // expand substitutes environment variables in a declared path or binary:
 // $VAR, ${VAR}, and ${VAR:-default} — the last so a declaration can name the
 // binary it expects (gwbft) while a machine that built it elsewhere points at
@@ -93,7 +101,17 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		keysValidators = k.Validators
 	}
 	if keysDir == "" {
-		keysDir = defaultKeysDir
+		// A generated set with no ref goes to a workspace-local dir, not the
+		// shared preset: GeneratedKeys reuses whatever set already sits at the
+		// dir, so defaulting generate to keys/preset would silently reuse the
+		// preset's identities (and fail when the network wants more than it has)
+		// instead of generating a fresh set. Preset stays the default for every
+		// other source.
+		if keysSource == keySourceGenerate {
+			keysDir = filepath.Join(in.DataDir, generatedKeysSubdir)
+		} else {
+			keysDir = defaultKeysDir
+		}
 	}
 	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay)
 	if err != nil {

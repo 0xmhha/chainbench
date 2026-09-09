@@ -158,6 +158,38 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_GenerateDefaultsToWorkspaceDir pins S5's key-reuse edge:
+// a spec that asks to generate keys but names no ref must not default to the
+// shared preset (where GeneratedKeys would reuse the preset's identities and
+// fail once the network wants more). It goes to a workspace-local dir instead;
+// every other source still defaults to the shared preset.
+func TestCompositionOf_GenerateDefaultsToWorkspaceDir(t *testing.T) {
+	dir := t.TempDir()
+	gen := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "keys":{"nodekeys":{"source":"generate"}}}`)
+	comp, err := compositionOf(context.Background(), gen, RunSuiteIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	if want := filepath.Join(dir, generatedKeysSubdir); comp.up.KeysDir != want {
+		t.Errorf("generate keys dir = %q, want the workspace-local %q", comp.up.KeysDir, want)
+	}
+	if comp.up.KeysSource != keySourceGenerate {
+		t.Errorf("keys source = %q, want generate", comp.up.KeysSource)
+	}
+
+	// Preset (the default source) still composes from the shared preset.
+	preset := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	pc, err := compositionOf(context.Background(), preset, RunSuiteIn{DataDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pc.up.KeysDir != defaultKeysDir {
+		t.Errorf("preset keys dir = %q, want %q", pc.up.KeysDir, defaultKeysDir)
+	}
+}
+
 // TestCompositionOf_NodeTablePerNodeConfig pins S4: a node may name a
 // pre-written config file, and it rides the node table to the composition
 // (where the config step later writes it verbatim). The path is expanded like
