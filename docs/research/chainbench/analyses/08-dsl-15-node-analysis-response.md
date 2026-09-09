@@ -394,6 +394,15 @@ S3 라이브에서 spec 의 `keys.generate` 는 정상 적용됐다. 다만 `Gen
   `keys.generate` spec 이 이제 `--keys`/`--keys-source` 플래그 없이 동작(키 15 개 워크스페이스 생성,
   genesis validator 13, 네트워크 기동, 리포 preset 무오염). 커밋 347dc63.
 
-**남은 단계**: S5 심화(genesis 3-case + per-node key: bp+키 있음 재사용 / bp 있고 키 없음 → 생성+genesis
-validator 갱신 / genesis 에 validator 있으나 노드 없음), S6(canonical env + 테스트별 override),
-S7(검증 20 게이트). genesis 3-case 는 체인 정확성 직결이라 착수 전 genesis 빌드 모델을 확인 중이다.
+- **S5 — genesis 3-case + per-node key 완료.** genesis 모델을 확인한 결과 **key-driven**이다 — validator
+  주소는 항상 조합된 키셋에서 나오고, 템플릿은 placeholder만 담는다. 그래서 3-case는 genesis 재작성이
+  아니라 키 소싱으로 귀결된다. node-table 항목이 `key`(파일 경로 또는 0x-hex)를 지정하면 keys 단계가
+  세트를 테이블에서 만든다. (a) 지정 키 = 그 노드 identity, (b) 미지정 노드는 생성, (c) producer 키는
+  genesis validator 주소를 고정하고 비-producer(en/pn)는 키·enode만 갖고 validator 는 아니다. case (c) 는
+  "validator 아닌 노드"로 재정의됐고(사용자 확정) 이미 그대로 동작한다 — presetNetwork 가 bp 만 validator
+  로 고른다. "validator 인데 노드 없음"은 금지(해석 2 확정). 생성 부분은 `store.Generate` 모듈을
+  재사용(entropy·BLS·keystore·password)하고, 손수 crypto/rand 를 쓰지 않는다. per-node 키가 있으면
+  keysDir 도 workspace-local 로 기본 설정(공용 preset 은 재사용으로 빌드를 막으므로). 커밋 289e8f7.
+  라이브: node1 pin + node2 생성 + node3 en 인 3노드 stablenet 이 뜨고 validator 2 로 sealing, en sync.
+
+**남은 단계**: S6(canonical env + 테스트별 override), S7(검증 20 게이트).
