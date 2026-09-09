@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
@@ -173,7 +174,20 @@ func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reu
 			Binary:     w.binaryFor(ns, w.state.Binary),
 		})
 	}
-	plan := planReuse(snap.genesisHash, genesisAfter, snap.before, after, snap.alive)
+	// Where this workspace has no record of a node, read the baseline back from
+	// what is running on the target. A node already up with the config this run
+	// would give it is reused in place (and attached below); a node up with a
+	// different config or binary is a foreign process this run must not compose
+	// over, so the whole reuse is refused rather than colliding on its ports.
+	before, alive, attach, refuse, err := w.mergeRunning(ctx, after, snap)
+	if err != nil {
+		return reusePlan{}, err
+	}
+	if refuse != "" {
+		return reusePlan{Refuse: refuse}, nil
+	}
+
+	plan := planReuse(snap.genesisHash, genesisAfter, before, after, alive)
 	if plan.Refuse != "" {
 		return plan, nil
 	}
@@ -183,9 +197,11 @@ func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reu
 			reuse[d.Index] = true
 		}
 	}
-	// A reused node needs no action: the run ledger keeps its pid attached across
-	// this open, so init and start (which skip a pid-bearing node) leave it
-	// running. A node that must be redone is torn down here — its live process
+	// A reused node this workspace already recorded needs no action: the run
+	// ledger keeps its pid attached across this open, so init and start (which
+	// skip a pid-bearing node) leave it running. A reused node recovered from the
+	// target is attached now (recordLaunch) so those steps skip it and health can
+	// reach it. A node that must be redone is torn down here — its live process
 	// stopped, then dropped from the ledger — so the next open no longer
 	// reattaches it, and init re-initializes its datadir and start relaunches it.
 	// Without the ledger drop, the pid this step cleared comes back on the next
@@ -193,6 +209,11 @@ func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reu
 	for i := range w.state.Nodes {
 		ns := &w.state.Nodes[i]
 		if reuse[ns.Index] {
+			if pid, ok := attach[ns.Index]; ok {
+				if err := w.recordLaunch(i, pid, w.binaryFor(*ns, w.state.Binary)); err != nil {
+					return plan, err
+				}
+			}
 			continue
 		}
 		if ns.PID > 0 {
@@ -206,6 +227,61 @@ func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reu
 		w.clearPID(i)
 	}
 	return plan, nil
+}
+
+// mergeRunning augments the workspace-record baseline with what is running on
+// the target, for the nodes the record does not cover. It returns the merged
+// before/alive maps planReuse compares against, the pids to reattach for nodes
+// reused in place (keyed by node index), and a non-empty refusal when a node is
+// already up under a different config or binary — which this run must not
+// compose over. When every node already has a record, the target is not probed.
+func (w *Workspace) mergeRunning(ctx context.Context, after []nodeTarget, snap reuseSnapshot) (before map[int]nodeBaseline, alive map[int]bool, attach map[int]int, refuse string, err error) {
+	before = make(map[int]nodeBaseline, len(snap.before))
+	for k, v := range snap.before {
+		before[k] = v
+	}
+	alive = make(map[int]bool, len(snap.alive))
+	for k, v := range snap.alive {
+		alive[k] = v
+	}
+	attach = map[int]int{}
+
+	missing := false
+	for _, ns := range w.state.Nodes {
+		if _, ok := before[ns.Index]; !ok {
+			missing = true
+			break
+		}
+	}
+	if !missing {
+		return before, alive, attach, "", nil
+	}
+
+	running, err := w.introspectRunning(ctx, path.Base(w.state.Binary))
+	if err != nil {
+		return nil, nil, nil, "", err
+	}
+	for i, ns := range w.state.Nodes {
+		if _, ok := before[ns.Index]; ok {
+			continue
+		}
+		r, ok := running[ns.Label]
+		if !ok {
+			continue // nothing at this label — the node composes fresh
+		}
+		if r.ConfigHash != after[i].ConfigHash || r.Binary != after[i].Binary {
+			return nil, nil, nil, fmt.Sprintf(
+				"node %s is already running on the target with a different config or binary — stop it, or use execution.chain=fresh",
+				ns.Label), nil
+		}
+		before[ns.Index] = nodeBaseline{
+			Index: ns.Index, Label: ns.Label,
+			ConfigHash: r.ConfigHash, Binary: r.Binary, PID: r.PID,
+		}
+		alive[ns.Index] = true
+		attach[ns.Index] = r.PID
+	}
+	return before, alive, attach, "", nil
 }
 
 // stopByPID stops a node's prior process by the pid the snapshot recorded, for
