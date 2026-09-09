@@ -506,6 +506,15 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// workspace through Retarget before this step ran, so there is one answer
 	// rather than a copy that can disagree with it.
 	layout := node.Layout{Root: w.state.Target.DataRoot}
+	// A workspace-config composition isolates its node datadirs under its
+	// composition id, so two compositions sharing one data root do not collide.
+	// Without a workspace-config the layout stays flat, exactly as before.
+	if wc, werr := w.wc(); werr != nil {
+		return "", werr
+	} else if wc != nil {
+		layout.CompositionID = w.state.CompositionID
+		layout.NodesDir = wc.Paths.Nodes
+	}
 	// Spread across a set, each node's machine is a server-set entry; record
 	// its name so every later step opens THAT resource. Addresses came from the
 	// pool, so the name is the pool's word for the address.

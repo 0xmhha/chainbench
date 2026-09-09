@@ -14,11 +14,28 @@ type Layout struct {
 	// Root is the data root on the target: this machine's workspace, or the
 	// destination directory on a server.
 	Root string
+	// CompositionID, when set, isolates this composition's node data under
+	// Root/NodesDir/<CompositionID>/<label> so two compositions sharing one data
+	// root do not collide on a datadir. Empty keeps the flat Root/<label>
+	// layout, which every workspace composed before this used.
+	CompositionID string
+	// NodesDir is the directory node datadirs sit under when CompositionID is
+	// set (the workspace-config's paths.nodes). Empty defaults to "node".
+	NodesDir string
 }
 
-// DataDir is the node's datadir — what --datadir points at.
+// DataDir is the node's datadir — what --datadir points at. With a
+// CompositionID it is isolated per composition; without one it is the flat
+// Root/<label> a pre-workspace-config layout used.
 func (l Layout) DataDir(label Label) string {
-	return filepath.Join(l.Root, string(label))
+	if l.CompositionID == "" {
+		return filepath.Join(l.Root, string(label))
+	}
+	nodes := l.NodesDir
+	if nodes == "" {
+		nodes = "node"
+	}
+	return filepath.Join(l.Root, nodes, l.CompositionID, string(label))
 }
 
 // ConfigPath is the node's rendered TOML config.

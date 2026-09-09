@@ -92,6 +92,11 @@ func normalize(v any, dir string) {
 	switch t := v.(type) {
 	case map[string]any:
 		delete(t, "at")
+		// compositionId is derived from the workspace directory, which the two
+		// surfaces deliberately run in different temp dirs, so it differs by
+		// construction — a run-specific value like the timestamp, not a
+		// composition choice the surfaces could disagree on.
+		delete(t, "compositionId")
 		for k, sub := range t {
 			if str, ok := sub.(string); ok {
 				t[k] = strings.ReplaceAll(str, dir, "<workspace>")
