@@ -382,5 +382,18 @@ S3 라이브에서 spec 의 `keys.generate` 는 정상 적용됐다. 다만 `Gen
 재사용 메커니즘이다(사용자: "서버에 key 가 존재하면 genesis 에서 계속 사용"). S5 결정 포인트: generate
 가 ref 미지정일 때 공용 preset 이 아니라 **워크스페이스 로컬 키 디렉토리**를 기본으로 써야 한다.
 
-**남은 단계**: S4(node-table per-node key/config), S5(키 재사용 + genesis 3-case, 위 발견 포함),
-S6(canonical env), S7(검증 20 게이트).
+- **S4 — config 파트 완료.** node-table(`topology.nodes[]`) 항목이 `config` 로 미리 쓴 설정 파일을
+  지정하면 그 노드는 그 파일을 그대로 쓴다. 파일이 곧 전체 설정이라(포트·datadir·static-nodes 포함)
+  날카로운 도구이며 문서에 명시했다. `Entry.Config → LaunchReq.Config → Record.Config`(workspace.json
+  신규 필드)로 흐르고 config 단계가 렌더 대신 파일을 쓴다(기존 write+checksum 재사용, 없는 파일은
+  노드·경로를 밝히며 실패). 단위(파싱·전달) + 로컬 통합 테스트(두 노드, node1 pin → 바이트 일치,
+  node2 렌더). per-node **key** 는 S5 로 미뤘다(genesis validator 일관성과 함께 배선). 커밋 00be447.
+- **S5 — generate 기본 디렉토리 완료.** ref 미지정 generate 는 공용 `keys/preset` 이 아니라
+  `<workspace>/keys` 로 간다. GeneratedKeys 가 대상 디렉토리의 기존 키셋을 재사용하므로, 기본이
+  preset 이면 preset 의 정체성을 조용히 재사용해 부족할 때 실패했다. 라이브: `bp:"max"` +
+  `keys.generate` spec 이 이제 `--keys`/`--keys-source` 플래그 없이 동작(키 15 개 워크스페이스 생성,
+  genesis validator 13, 네트워크 기동, 리포 preset 무오염). 커밋 347dc63.
+
+**남은 단계**: S5 심화(genesis 3-case + per-node key: bp+키 있음 재사용 / bp 있고 키 없음 → 생성+genesis
+validator 갱신 / genesis 에 validator 있으나 노드 없음), S6(canonical env + 테스트별 override),
+S7(검증 20 게이트). genesis 3-case 는 체인 정확성 직결이라 착수 전 genesis 빌드 모델을 확인 중이다.
