@@ -74,7 +74,13 @@ execution: {chain: fresh}
 	}
 
 	// node1's written config is the prepared file read from dataRoot/configs.
-	got, err := os.ReadFile(filepath.Join(dataRoot, "config_node1.toml"))
+	// With a workspace-config the rendered config is isolated under the
+	// composition's runtime directory, so find it there rather than flat.
+	matches, _ := filepath.Glob(filepath.Join(dataRoot, "runtime", "*", "configs", "node1.toml"))
+	if len(matches) != 1 {
+		t.Fatalf("expected one isolated node1 config under runtime, got %v", matches)
+	}
+	got, err := os.ReadFile(matches[0])
 	if err != nil {
 		t.Fatalf("read node1 config: %v", err)
 	}

@@ -30,6 +30,26 @@ func (w *Workspace) wc() (*resource.WorkspaceConfig, error) {
 	return w.wcCache, nil
 }
 
+// layout builds the path layout for this composition: flat under the data root
+// without a workspace-config, or isolated per composition id (node datadirs
+// under NodesDir, generated genesis/configs under RuntimeDir, logs under
+// LogsDir) with one. Allocate and the genesis step share it so every path is
+// derived one way.
+func (w *Workspace) layout() (node.Layout, error) {
+	l := node.Layout{Root: w.state.Target.DataRoot}
+	wc, err := w.wc()
+	if err != nil {
+		return node.Layout{}, err
+	}
+	if wc != nil {
+		l.CompositionID = w.state.CompositionID
+		l.NodesDir = wc.Paths.Nodes
+		l.RuntimeDir = wc.Paths.Runtime
+		l.LogsDir = wc.Paths.Logs
+	}
+	return l, nil
+}
+
 // indexName maps a 1-based serverIndex to a fixed server name from the
 // workspace's server set, so a reference chosen by number resolves to a name
 // that a resume records rather than re-counting the list.

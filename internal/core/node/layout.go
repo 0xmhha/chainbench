@@ -22,6 +22,23 @@ type Layout struct {
 	// NodesDir is the directory node datadirs sit under when CompositionID is
 	// set (the workspace-config's paths.nodes). Empty defaults to "node".
 	NodesDir string
+	// RuntimeDir is where generated genesis and configs sit, per composition,
+	// when CompositionID is set (the workspace-config's paths.runtime). Empty
+	// defaults to "runtime". It keeps a composition's generated files off the
+	// shared data root so two compositions do not clobber one genesis or config.
+	RuntimeDir string
+	// LogsDir is where node logs sit, per composition, when CompositionID is set
+	// (the workspace-config's paths.logs). Empty defaults to "logs".
+	LogsDir string
+}
+
+// runtimeBase is the per-composition directory generated files sit under.
+func (l Layout) runtimeBase() string {
+	dir := l.RuntimeDir
+	if dir == "" {
+		dir = "runtime"
+	}
+	return filepath.Join(l.Root, dir, l.CompositionID)
 }
 
 // DataDir is the node's datadir — what --datadir points at. With a
@@ -38,20 +55,36 @@ func (l Layout) DataDir(label Label) string {
 	return filepath.Join(l.Root, nodes, l.CompositionID, string(label))
 }
 
-// ConfigPath is the node's rendered TOML config.
+// ConfigPath is the node's rendered TOML config — a generated file, so it sits
+// under the composition's runtime directory when isolated, or flat otherwise.
 func (l Layout) ConfigPath(label Label) string {
-	return filepath.Join(l.Root, "config_"+string(label)+".toml")
+	if l.CompositionID == "" {
+		return filepath.Join(l.Root, "config_"+string(label)+".toml")
+	}
+	return filepath.Join(l.runtimeBase(), "configs", string(label)+".toml")
 }
 
-// LogPath is where the node's stdout/stderr is captured. Logs share one
-// directory so a run can be read as a whole.
+// LogPath is where the node's stdout/stderr is captured. Isolated per
+// composition when an id is set; otherwise one shared logs directory.
 func (l Layout) LogPath(label Label) string {
-	return filepath.Join(l.Root, "logs", string(label)+".log")
+	if l.CompositionID == "" {
+		return filepath.Join(l.Root, "logs", string(label)+".log")
+	}
+	logs := l.LogsDir
+	if logs == "" {
+		logs = "logs"
+	}
+	return filepath.Join(l.Root, logs, l.CompositionID, string(label)+".log")
 }
 
-// GenesisPath is the network's genesis, which is shared rather than per-node.
+// GenesisPath is the network's genesis, shared across nodes but per composition:
+// a generated genesis sits under the composition's runtime directory when
+// isolated, so two compositions on one data root do not clobber one genesis.
 func (l Layout) GenesisPath() string {
-	return filepath.Join(l.Root, "genesis.json")
+	if l.CompositionID == "" {
+		return filepath.Join(l.Root, "genesis.json")
+	}
+	return filepath.Join(l.runtimeBase(), "genesis.json")
 }
 
 // NodekeyPath is the node's devp2p private key inside its datadir — where a

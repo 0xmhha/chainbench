@@ -505,15 +505,12 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// The data root is the target's: a server set naming one reached the
 	// workspace through Retarget before this step ran, so there is one answer
 	// rather than a copy that can disagree with it.
-	layout := node.Layout{Root: w.state.Target.DataRoot}
-	// A workspace-config composition isolates its node datadirs under its
-	// composition id, so two compositions sharing one data root do not collide.
-	// Without a workspace-config the layout stays flat, exactly as before.
-	if wc, werr := w.wc(); werr != nil {
-		return "", werr
-	} else if wc != nil {
-		layout.CompositionID = w.state.CompositionID
-		layout.NodesDir = wc.Paths.Nodes
+	// A workspace-config composition isolates its node datadirs, generated
+	// genesis/configs, and logs under its composition id, so two compositions
+	// sharing one data root do not collide. Without one the layout stays flat.
+	layout, err := w.layout()
+	if err != nil {
+		return "", err
 	}
 	// Spread across a set, each node's machine is a server-set entry; record
 	// its name so every later step opens THAT resource. Addresses came from the
@@ -641,9 +638,18 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	}
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
-	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
+	// The genesis is a generated file, so it sits under the composition's
+	// runtime directory when isolated (flat otherwise). The path is derived the
+	// one way, per machine, so a set writes each server the same relative path.
+	lay, err := w.layout()
+	if err != nil {
+		return "", err
+	}
+	path := lay.GenesisPath()
 	err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
-		p := filepath.Join(t.DataRoot, "genesis.json")
+		ml := lay
+		ml.Root = t.DataRoot
+		p := ml.GenesisPath()
 		if err := t.Files.Write(ctx, p, gen, 0o644); err != nil {
 			return fmt.Errorf("chainsetup: genesis: write: %w", err)
 		}
@@ -651,7 +657,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		// The step's by-products go beside the genesis: a wemix bring-up
 		// reads its governance config back during deploy-governance.
 		for name, content := range art.Extra {
-			extra := filepath.Join(t.DataRoot, name)
+			extra := filepath.Join(filepath.Dir(p), name)
 			if err := t.Files.Write(ctx, extra, content, 0o644); err != nil {
 				return fmt.Errorf("chainsetup: genesis: write %s: %w", name, err)
 			}

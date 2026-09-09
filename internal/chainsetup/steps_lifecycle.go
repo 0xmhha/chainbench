@@ -813,7 +813,7 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 		spec.Binary = bin
 		specs = append(specs, spec)
 	}
-	plan := process.Plan{DataRoot: w.state.Target.DataRoot, Nodes: specs}
+	plan := process.Plan{DataRoot: w.state.Target.DataRoot, GenesisPath: w.state.GenesisPath, Nodes: specs}
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {

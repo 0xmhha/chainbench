@@ -196,7 +196,15 @@ func (b Bootstrap) Action(ctx context.Context, name string, plan process.Plan, o
 		if cfgName == "" {
 			cfgName = ConfigFileName
 		}
-		cfgPath := path.Join(plan.DataRoot, cfgName)
+		// The governance config sits beside the genesis (the genesis step writes
+		// both together), which is the composition's runtime directory when
+		// isolated — not the bare data root. Fall back to the data root for a
+		// flat layout that records no genesis path.
+		cfgDir := plan.DataRoot
+		if plan.GenesisPath != "" {
+			cfgDir = path.Dir(plan.GenesisPath)
+		}
+		cfgPath := path.Join(cfgDir, cfgName)
 		exists, err := pathExists(ctx, files, cfgPath)
 		if err != nil {
 			return fmt.Errorf("poa: bootstrap: %q: %w", name, err)
