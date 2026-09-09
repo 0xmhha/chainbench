@@ -217,6 +217,43 @@ func TestCompositionOf_NodeTablePerNodeConfig(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_NodeTablePerNodeKey pins S5's per-node key surface: a node
+// may name its key (a file path or 0x-hex) and it rides the node table to the
+// composition, where the keys step makes it the node's identity. The path form
+// is expanded like every other declared path.
+func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
+	t.Setenv("KEYDIR", "/opt/keys")
+	dir := t.TempDir()
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},
+	  "topology":{"nodes":[
+	    {"role":"bp","key":"0xabc"},
+	    {"role":"bp","key":"${KEYDIR}/node2.key"},
+	    {"role":"en"}
+	  ]}}`)
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir})
+	if err != nil {
+		t.Fatalf("compositionOf: %v", err)
+	}
+	// A pinned key builds a fresh set, so the keys land workspace-local, never
+	// in the shared preset (where the build would be blocked by reuse).
+	if want := filepath.Join(dir, generatedKeysSubdir); comp.up.KeysDir != want {
+		t.Errorf("keys dir = %q, want the workspace-local %q for a keyed node table", comp.up.KeysDir, want)
+	}
+	if comp.up == nil || comp.up.Topology == nil || len(comp.up.Topology.Nodes) != 3 {
+		t.Fatalf("node table not threaded: %+v", comp.up)
+	}
+	if got := comp.up.Topology.Nodes[0].Key; got != "0xabc" {
+		t.Errorf("node1 key = %q, want the inline hex", got)
+	}
+	if got := comp.up.Topology.Nodes[1].Key; got != "/opt/keys/node2.key" {
+		t.Errorf("node2 key = %q, want the expanded path", got)
+	}
+	if comp.up.Topology.Nodes[2].Key != "" {
+		t.Errorf("node3 key = %q, want empty", comp.up.Topology.Nodes[2].Key)
+	}
+}
+
 // TestCompositionOf_NodeTablePnSelectsProxied pins WA9: a pn declared in a node
 // table means the same proxy tier as a pn in the count form, so the composition
 // must select proxied peering. Under mesh the tier would do nothing and

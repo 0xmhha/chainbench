@@ -82,35 +82,47 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
 
+	// A node table that names any per-node key builds the set from the table:
+	// declared where a key is given, generated where not. This fixes each
+	// producer's genesis validator address to its key, and hands a non-producer
+	// its nodekey and enode without making it a validator. It takes precedence
+	// over the source string because a table that declares keys has said where
+	// its identities come from.
 	var src store.KeySource
-	switch opts.Source {
-	case "", "preset":
-		src = store.PresetKeys{Path: w.state.KeysDir}
-	case "declared":
-		// The declaration is the origin, and the ring is materialised from it
-		// so that the genesis source, the launcher and provision keep reading
-		// keys the one way they already do.
-		if opts.Blueprint == nil {
-			return "", fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source)
-		}
-		set, err := w.declaredKeys(*opts.Blueprint, n)
-		if err != nil {
-			return "", err
-		}
+	if set, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
+		return "", kerr
+	} else if keyed {
 		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
-	case "generate":
-		// A generated set must declare exactly the topology's validators, not
-		// make every node one: a network with endpoints (4 bp + 11 en) whose key
-		// set claims 15 validators fails genesis, where the governance contract
-		// requires members and validators to match. The allocated count is the
-		// authority; an explicit opts.Validators still wins.
-		validators := opts.Validators
-		if validators <= 0 {
-			validators = w.state.Validators
+	} else {
+		switch opts.Source {
+		case "", "preset":
+			src = store.PresetKeys{Path: w.state.KeysDir}
+		case "declared":
+			// The declaration is the origin, and the ring is materialised from it
+			// so that the genesis source, the launcher and provision keep reading
+			// keys the one way they already do.
+			if opts.Blueprint == nil {
+				return "", fmt.Errorf("chainsetup: keys: source %q needs a blueprint to take the keys from", opts.Source)
+			}
+			set, err := w.declaredKeys(*opts.Blueprint, n)
+			if err != nil {
+				return "", err
+			}
+			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
+		case "generate":
+			// A generated set must declare exactly the topology's validators, not
+			// make every node one: a network with endpoints (4 bp + 11 en) whose key
+			// set claims 15 validators fails genesis, where the governance contract
+			// requires members and validators to match. The allocated count is the
+			// authority; an explicit opts.Validators still wins.
+			validators := opts.Validators
+			if validators <= 0 {
+				validators = w.state.Validators
+			}
+			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
+		default:
+			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset, generate or declared)", opts.Source)
 		}
-		src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
-	default:
-		return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset, generate or declared)", opts.Source)
 	}
 	ks, err := src.Ensure(ctx, n)
 	if err != nil {
@@ -156,6 +168,94 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 		return keyring.Preset{}, fmt.Errorf("chainsetup: keys: the blueprint declares %d identities and the network has %d nodes", len(set.Nodes), n)
 	}
 	return set, nil
+}
+
+// nodeTableKeys builds the key set a node table with per-node keys asks for:
+// a node that names a key uses it (case a), and a node that names none is
+// generated (case b). A producer's key fixes its genesis validator address; a
+// non-producer takes the key as its nodekey and enode without becoming a
+// validator (case c). The second result is false when no node names a key, so
+// the caller falls back to the source string.
+//
+// The generated identities come from store.Generate — the one module that
+// creates keys, with the entropy, BLS derivation, keystores and password the
+// rest of the system expects — rather than being hand-rolled here. Only their
+// key material is taken; DeclaredKeys re-writes the ring (keystores, password,
+// metadata) at the workspace's key dir, the way the declared source already does.
+func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, bool, error) {
+	byIndex := make(map[int]node.Record, len(w.state.Nodes))
+	keyed := false
+	for _, r := range w.state.Nodes {
+		byIndex[r.Index] = r
+		if r.Key != "" {
+			keyed = true
+		}
+	}
+	if !keyed {
+		return keyring.Preset{}, false, nil
+	}
+
+	// Generate a full set once, to a throwaway dir, for the entropy of the nodes
+	// that name no key. Its keystores are not reused — DeclaredKeys re-writes
+	// them from the key material below — so the dir is temporary.
+	tmp, err := os.MkdirTemp("", "cb-nodekeys-")
+	if err != nil {
+		return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(tmp) }()
+	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
+	if err != nil {
+		return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
+	}
+
+	var set keyring.Preset
+	for i := 1; i <= n; i++ {
+		r, ok := byIndex[i]
+		if !ok {
+			return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
+		}
+		var key derive.PrivateKey
+		if r.Key != "" {
+			key, err = parseNodeKey(r.Key)
+			if err != nil {
+				return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
+			}
+		} else {
+			key = gen.Nodes[i-1].Nodekey
+		}
+		id, derr := derive.Derive(key, derive.WithBLS)
+		if derr != nil {
+			return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
+		}
+		set.Nodes = append(set.Nodes, keyring.Entry{
+			Label:    keyring.Label(node.LabelFor(i)),
+			Index:    i,
+			Nodekey:  key,
+			Identity: id,
+		})
+	}
+	// The validator set is the producers, in index order — the same rule the
+	// genesis source applies. A non-producer holds a key but is not listed.
+	for i := 1; i <= n; i++ {
+		if node.Is(node.Role(byIndex[i].Role), node.RoleBP) {
+			set.Network.Validators = append(set.Network.Validators, set.Nodes[i-1].Address)
+		}
+	}
+	return set, true, nil
+}
+
+// parseNodeKey reads a node's declared key. A path that exists is read as a key
+// file; anything else is parsed as 0x-hex, so a network can pin a key inline or
+// point at a file, the way a blueprint's nodekey does.
+func parseNodeKey(ref string) (derive.PrivateKey, error) {
+	if _, err := os.Stat(ref); err == nil {
+		b, rerr := os.ReadFile(ref)
+		if rerr != nil {
+			return derive.PrivateKey{}, fmt.Errorf("read key file %q: %w", ref, rerr)
+		}
+		return derive.ParsePrivateKey(string(b))
+	}
+	return derive.ParsePrivateKey(ref)
 }
 
 // AllocateOpts sizes the network.
@@ -223,7 +323,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
-			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary, Config: n.Config}
+			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary, Config: n.Config, Key: n.Key}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
 			modes[i] = syncModeFor(role, n.EffectiveSyncMode())
@@ -416,6 +516,7 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 			Host:       p.Host,
 			Endpoints:  p.Ports,
 			Config:     reqs[i].Config,
+			Key:        reqs[i].Key,
 		}
 	}
 	// Reject an impossible graph here rather than at config time: the operator

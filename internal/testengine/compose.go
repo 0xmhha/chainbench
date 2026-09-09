@@ -101,13 +101,13 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		keysValidators = k.Validators
 	}
 	if keysDir == "" {
-		// A generated set with no ref goes to a workspace-local dir, not the
-		// shared preset: GeneratedKeys reuses whatever set already sits at the
-		// dir, so defaulting generate to keys/preset would silently reuse the
-		// preset's identities (and fail when the network wants more than it has)
-		// instead of generating a fresh set. Preset stays the default for every
-		// other source.
-		if keysSource == keySourceGenerate {
+		// A generated set — or a node table that pins per-node keys — goes to a
+		// workspace-local dir, not the shared preset. The key sources reuse
+		// whatever set already sits at the dir, so defaulting to keys/preset
+		// would silently reuse the preset's identities (and ignore the pinned
+		// keys, or fail when the network wants more than the preset holds)
+		// instead of building a fresh set. Preset stays the default otherwise.
+		if keysSource == keySourceGenerate || topologyHasKeys(spec.Topology) {
 			keysDir = filepath.Join(in.DataDir, generatedKeysSubdir)
 		} else {
 			keysDir = defaultKeysDir
@@ -235,6 +235,28 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	return composition{up: up}, nil
 }
 
+// topologyHasKeys reports whether a node-table declaration pins any per-node
+// key. A table that does builds its own key set (declared where given,
+// generated where not), so its keys belong in a workspace-local dir rather than
+// the shared preset. It reads the raw declaration defensively: a malformed
+// nodes list is the node-table parser's error to report, not this peek's.
+func topologyHasKeys(t map[string]any) bool {
+	list, ok := t["nodes"].([]any)
+	if !ok {
+		return false
+	}
+	for _, item := range list {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if s, ok := m["key"].(string); ok && s != "" {
+			return true
+		}
+	}
+	return false
+}
+
 // topologyHasProxy reports whether a node-table topology declares a pn, so the
 // composer selects the proxied graph for it exactly as it does for the count
 // form. It is nil-safe: the count form passes no table.
@@ -308,6 +330,11 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 					return nil, nil, "", fmt.Errorf("topology.nodes[%d].config must be a string (a path to a pre-written config file)", i)
 				}
 				entry.Config = expand(s)
+			case "key":
+				if !isStr {
+					return nil, nil, "", fmt.Errorf("topology.nodes[%d].key must be a string (a key file path or 0x-hex)", i)
+				}
+				entry.Key = expand(s)
 			case "index":
 				n, ferr := countOf("nodes[].index", v)
 				if ferr != nil {
@@ -315,7 +342,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 				}
 				entry.Index = n
 			default:
-				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index, config)", i, k)
+				return nil, nil, "", fmt.Errorf("topology.nodes[%d].%s is not a key the composer knows (role, binary, sync, bootnode, index, config, key)", i, k)
 			}
 		}
 		if entry.Role == "" {

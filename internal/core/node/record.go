@@ -57,6 +57,12 @@ type Record struct {
 	// so the file is the whole config — it carries its own ports, datadir and
 	// static-nodes, none of which the composition fills in.
 	Config string `json:"config,omitempty"`
+	// Key is this node's declared private key — a file path or 0x-hex (topology
+	// node table's key field). Empty lets the keys step generate one. When any
+	// node carries a Key, the keys step builds the set from these — declared
+	// where given, generated where not — so a producer's key fixes its genesis
+	// validator address.
+	Key string `json:"key,omitempty"`
 	// Args is the assembled launch argv (once launchopts ran).
 	Args []string `json:"args,omitempty"`
 	// PID is the live process id (once start ran; 0 = stopped). Stopping a

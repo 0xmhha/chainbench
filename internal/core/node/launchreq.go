@@ -22,4 +22,9 @@ type LaunchReq struct {
 	// declaration a node table carries (topology.nodes[].config); the config
 	// step reads it when it writes the node's config.
 	Config string
+	// Key is this node's private key — a file path or 0x-hex
+	// (topology.nodes[].key). Empty lets the keys step generate one. When set,
+	// the node's identity is this key, so a producer's genesis validator address
+	// is this key's address; a non-producer just takes it as its nodekey/enode.
+	Key string
 }
