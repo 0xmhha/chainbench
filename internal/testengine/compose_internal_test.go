@@ -288,10 +288,22 @@ func TestCompositionOf_PreparedPresetExpands(t *testing.T) {
 		t.Fatal("a preset genesis over a declared genesis must conflict")
 	}
 
-	// A keyring on a server is refused (keys are read locally).
+	// A keyring on a server is accepted onto KeysDir as a srv:// reference; the
+	// keys step downloads it to a local directory (materializeKeyring). compose
+	// only records the reference here.
 	write("presets:\n  regression:\n    keyring: srv://server-01/data/keys/r\n")
+	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
+	if err != nil {
+		t.Fatalf("srv:// preset keyring: %v", err)
+	}
+	if comp.up.KeysDir != "srv://server-01/data/keys/r" || comp.up.KeysSource != "preset" {
+		t.Fatalf("srv:// keyring not carried: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
+	}
+
+	// A bare relative name is neither a local path nor a srv:// reference.
+	write("presets:\n  regression:\n    keyring: just-a-name\n")
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
-		t.Fatal("a srv:// preset keyring must be refused for now")
+		t.Fatal("a bare relative keyring name must be rejected")
 	}
 
 	// A local keyring becomes the key dir.

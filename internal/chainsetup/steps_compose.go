@@ -82,6 +82,11 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	if n <= 0 {
 		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
 	}
+	// A key set named on a server is downloaded to a local directory first, so
+	// the rest of this step reads it the one local way.
+	if err := w.materializeKeyring(ctx); err != nil {
+		return "", err
+	}
 
 	// A node table that names any per-node key builds the set from the table:
 	// declared where a key is given, generated where not. This fixes each

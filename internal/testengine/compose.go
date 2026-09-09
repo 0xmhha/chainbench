@@ -284,12 +284,13 @@ func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.S
 		if spec.EnvKeys != nil {
 			return fmt.Errorf("testengine: preset %q sets a keyring, but the spec already declares keys — declare them in one place", name)
 		}
-		// The keys step reads the key set on the machine running chainbench, so a
-		// keyring on a server (srv:// or a portable target reference) would pull
-		// private keys across machines, which the key contract forbids. Until the
-		// on-target key path exists, a preset keyring must be a local key set.
-		if strings.HasPrefix(preset.Keyring, "srv://") || !filepath.IsAbs(preset.Keyring) {
-			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path for now — a keyring on a server is not read across machines (key security)", name, preset.Keyring)
+		// A local key set is used in place; a keyring on a server (srv://) is
+		// downloaded to a local directory by the keys step (materializeKeyring)
+		// so the ring is read the one local way and a node signs with keys at a
+		// known local path. A bare relative name is neither, and is rejected here
+		// rather than mistaken for a local directory.
+		if !strings.HasPrefix(preset.Keyring, "srv://") && !filepath.IsAbs(preset.Keyring) {
+			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path or a srv:// reference", name, preset.Keyring)
 		}
 		up.KeysDir = preset.Keyring
 		up.KeysSource = "preset"

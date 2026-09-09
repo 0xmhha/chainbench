@@ -68,6 +68,41 @@ func (w *Workspace) indexName(i int) (string, error) {
 	return s.Name, nil
 }
 
+// materializeKeyring brings a key set named on a server down to a local
+// directory, so the keys step (which reads the ring on the machine running
+// chainbench) and the test runtime (which signs with keys at a known local
+// path) both find it locally. Only a srv:// KeysDir is downloaded; a local path
+// — absolute or the default relative "keys/preset" — is left untouched.
+//
+// The download is the explicit, operator-authorized transfer of a key set that
+// already exists on a server (ssh.sudo permitting a root-owned one), distinct
+// from silently pulling a private key to derive an identity. The local copy
+// lands under the workspace and its files are written 0600.
+func (w *Workspace) materializeKeyring(ctx context.Context) error {
+	ref := w.state.KeysDir
+	if !strings.HasPrefix(ref, "srv://") {
+		return nil
+	}
+	wc, err := w.wc()
+	if err != nil {
+		return err
+	}
+	loc, err := resource.InputRef{Raw: ref}.Resolve(wc, resource.PurposeKeyrings, w.indexName)
+	if err != nil {
+		return err
+	}
+	t, err := w.opener().Open(resource.Spec{Server: loc.Server, DataRoot: w.state.Target.DataRoot})
+	if err != nil {
+		return err
+	}
+	local := filepath.Join(w.Dir(), "downloaded-keys")
+	if err := t.DownloadDir(ctx, loc.Path, local); err != nil {
+		return fmt.Errorf("chainsetup: keys: download keyring %s: %w", ref, err)
+	}
+	w.state.KeysDir = local
+	return nil
+}
+
 // readInputRef reads a referenced input file from the machine it names, so a
 // reference is never dialed as a local path by mistake. An absolute path is
 // read locally (the pre-workspace-config behaviour for a pinned file); every
