@@ -254,6 +254,48 @@ func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
 	}
 }
 
+// TestCompositionOf_WorkspaceConfigDataRootConflict pins the locality/root
+// consistency check: the workspace-config is the one owner of the data root, so
+// an env target that names a different root is a conflict, not a silent
+// override. A matching root (or no env target) is accepted.
+func TestCompositionOf_WorkspaceConfigDataRootConflict(t *testing.T) {
+	dir := t.TempDir()
+	wcPath := filepath.Join(dir, "workspace-config.yaml")
+	writeWC := func(root string) {
+		body := "version: 1\ndataRoot: " + root + "\n" +
+			"paths: {binaries: bin, configs: configs, genesis: genesis, keystore: keystore, keyrings: keys, nodes: node, runtime: runtime, logs: logs}\n" +
+			"control: {artifactRoot: ~/.chainbench}\ninputs: {mode: generated}\nexecution: {chain: fresh}\n"
+		if err := os.WriteFile(wcPath, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// env.target names a different root than the workspace-config -> conflict.
+	writeWC("/data")
+	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"target":"/other/root"}`)
+	_, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
+	if err == nil || !strings.Contains(err.Error(), "data root conflict") {
+		t.Fatalf("mismatched roots must conflict, got %v", err)
+	}
+
+	// The same root is fine.
+	writeWC("/other/root")
+	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err != nil {
+		t.Fatalf("matching roots must be accepted: %v", err)
+	}
+
+	// No env target: the workspace-config root is used with no conflict.
+	writeWC("/data")
+	plain := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
+	comp, err := compositionOf(context.Background(), plain, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
+	if err != nil {
+		t.Fatalf("no env target must be accepted: %v", err)
+	}
+	if comp.up.Target.DataRoot != "/data" {
+		t.Fatalf("data root = %q, want the workspace-config's /data", comp.up.Target.DataRoot)
+	}
+}
+
 // TestCompositionOf_NodeTablePnSelectsProxied pins WA9: a pn declared in a node
 // table means the same proxy tier as a pn in the count form, so the composition
 // must select proxied peering. Under mesh the tier would do nothing and

@@ -241,6 +241,17 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if werr != nil {
 			return composition{}, werr
 		}
+		// The workspace-config is the one owner of the data root. If the env's
+		// target already carries a different one — a srv:// or a path in
+		// env.target — that is two answers to where the data plane lives, so it
+		// is a conflict rather than a silent override. Same value, or none, is
+		// fine. The target's locality (local vs remote/SSH) still comes from the
+		// server set, not this file; only the root does.
+		if up.Target.DataRoot != "" && up.Target.DataRoot != wc.DataRoot {
+			return composition{}, fmt.Errorf(
+				"testengine: data root conflict — the env target %q says %q but --workspace-config says %q; put the data root in workspace-config alone",
+				spec.Placement, up.Target.DataRoot, wc.DataRoot)
+		}
 		up.Target.DataRoot = wc.DataRoot
 		up.WorkspaceConfigPath = in.WorkspaceConfigPath
 	}
