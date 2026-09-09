@@ -152,10 +152,15 @@ type KeySourceV2 struct {
 // GenesisV2 declares the genesis build (gap G2). The runtime's proven path is
 // template + overlay; Set is dot-path sugar over the same overlay.
 type GenesisV2 struct {
-	// Mode is "template" (default). The other design modes (existing | build |
-	// inherit) are declared in the design but have no runtime boundary yet; they
-	// are rejected by name rather than silently treated as template.
+	// Mode is "template" (default) or "existing". "existing" uses a finished
+	// genesis file verbatim (Ref); the other design modes (build | inherit)
+	// have no runtime boundary yet and are rejected by name.
 	Mode string `json:"mode,omitempty"`
+	// Ref names the finished genesis file for mode "existing": a portable
+	// reference (resolved under the workspace-config genesis directory), a
+	// srv:// path, or a local absolute path. Required for "existing", refused
+	// otherwise.
+	Ref string `json:"ref,omitempty"`
 	// Set applies dot-path single values (e.g. "config.chainId": 8284).
 	Set map[string]any `json:"set,omitempty"`
 	// Overlay deep-merges into the built genesis.
@@ -431,16 +436,29 @@ func lowerCase(c CaseV2) (Spec, error) {
 	// Genesis: template(+overlay/set) is the runtime's proven path; the other
 	// declared modes have no support yet and are rejected by name (G2 partial).
 	if g := env.Genesis; g != nil {
-		if g.Mode != "" && g.Mode != "template" {
-			return Spec{}, fmt.Errorf("dsl: case %s: genesis mode %q has no runtime boundary yet (supported: template)", c.ID, g.Mode)
-		}
-		overlay := map[string]any{}
-		maps.Copy(overlay, g.Overlay)
-		for path, v := range g.Set {
-			mergeDotPath(overlay, path, v)
-		}
-		if len(overlay) > 0 {
-			spec.Chain.GenesisOverlay = overlay
+		switch g.Mode {
+		case "", "template":
+			overlay := map[string]any{}
+			maps.Copy(overlay, g.Overlay)
+			for path, v := range g.Set {
+				mergeDotPath(overlay, path, v)
+			}
+			if len(overlay) > 0 {
+				spec.Chain.GenesisOverlay = overlay
+			}
+		case "existing":
+			// A finished genesis is used verbatim, so set/overlay — which edit a
+			// built one — have nothing to act on and are refused rather than
+			// silently ignored.
+			if g.Ref == "" {
+				return Spec{}, fmt.Errorf("dsl: case %s: genesis mode existing needs a ref", c.ID)
+			}
+			if len(g.Set) > 0 || len(g.Overlay) > 0 {
+				return Spec{}, fmt.Errorf("dsl: case %s: genesis mode existing uses the file verbatim — set/overlay do not apply", c.ID)
+			}
+			spec.Chain.GenesisExisting = g.Ref
+		default:
+			return Spec{}, fmt.Errorf("dsl: case %s: genesis mode %q has no runtime boundary yet (supported: template, existing)", c.ID, g.Mode)
 		}
 	}
 

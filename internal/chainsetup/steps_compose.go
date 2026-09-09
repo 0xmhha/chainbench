@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -583,6 +584,11 @@ type GenesisOpts struct {
 	// Capabilities are advertised alongside the network so capability-gated
 	// cases run — an overlay declares what it enables.
 	Capabilities []string
+	// Existing is a reference to a finished genesis file used verbatim (genesis
+	// mode "existing"): the file is read on its machine and written to each
+	// target, instead of building one from a template. Overrides/Overlay do not
+	// apply to it. Empty builds as usual.
+	Existing string
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -600,11 +606,30 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// generic dispatch builds a genesis by substituting a template, and for
 	// wemix that produces a file that initializes cleanly and runs the wrong
 	// consensus.
-	art, err := w.genesisArtifacts(ctx, p, opts)
-	if err != nil {
-		return "", err
+	var (
+		art genesis.Artifacts
+		gen []byte
+	)
+	if opts.Existing != "" {
+		// A finished genesis is read on its own machine and used verbatim — no
+		// template build, no overrides. It must be valid JSON; a deeper check
+		// that its validators match the composed key set is a chain-specific
+		// follow-up, so the operator is trusted to have paired a matching keyring.
+		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
+		if rerr != nil {
+			return "", fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
+		}
+		if !json.Valid(b) {
+			return "", fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+		}
+		gen = b
+	} else {
+		art, err = w.genesisArtifacts(ctx, p, opts)
+		if err != nil {
+			return "", err
+		}
+		gen = art.Genesis
 	}
-	gen := art.Genesis
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
 	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")

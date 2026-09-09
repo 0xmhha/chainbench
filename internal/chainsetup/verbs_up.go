@@ -89,6 +89,9 @@ type NetUpIn struct {
 	ChainID     int64    `json:"chainID,omitempty"`
 	GenesisSet  []string `json:"genesisSet,omitempty"`
 	OverlayPath string   `json:"overlayPath,omitempty"`
+	// GenesisExisting is a reference to a finished genesis file used verbatim
+	// (genesis mode "existing"); empty builds from the template as usual.
+	GenesisExisting string `json:"genesisExisting,omitempty"`
 
 	// LaunchSet are launch-argv overrides applied to every node (step:
 	// launchopts) — the "all" scope.
@@ -209,6 +212,7 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		"genesis": func() (string, error) {
 			r, err := NetGenesis(ctx, d, NetGenesisIn{
 				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet, OverlayPath: in.OverlayPath,
+				GenesisExisting: in.GenesisExisting,
 			})
 			return r.Detail, err
 		},

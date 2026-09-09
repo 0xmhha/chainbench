@@ -16,6 +16,9 @@ type ChainSpec struct {
 	Binaries       map[string]string `json:"binaries,omitempty"`
 	Config         string            `json:"config,omitempty"`
 	GenesisOverlay map[string]any    `json:"genesisOverlay,omitempty"`
+	// GenesisExisting is a reference to a finished genesis file used verbatim
+	// (genesis mode "existing"), instead of building one from a template.
+	GenesisExisting string `json:"genesisExisting,omitempty"`
 	// ManifestPath is an external chain manifest run on the family named by
 	// Name; TemplatePath is its genesis template. Empty means an embedded chain.
 	ManifestPath string `json:"manifestPath,omitempty"`
