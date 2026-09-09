@@ -18,7 +18,9 @@ package resource
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -209,6 +211,66 @@ func (a *Access) DownloadTo(ctx context.Context, remotePath, localPath string) e
 	}
 	if err := (filestore.Local{}).Write(ctx, localPath, b, 0o600); err != nil {
 		return fmt.Errorf("download %s: write local: %w", remotePath, err)
+	}
+	return nil
+}
+
+// ExistsMaybeElevated reports whether a file is present on the target, asking
+// through sudo when the ordinary probe cannot see it (a root-only directory
+// makes `test -e` answer "absent" for the login user). A present answer from the
+// plain probe is trusted directly; only an absent-or-failed one consults the
+// elevated store, so a collision check never misses a root-owned file.
+func (a *Access) ExistsMaybeElevated(ctx context.Context, path string) (bool, error) {
+	ok, err := a.Files.Exists(ctx, path)
+	if err == nil && ok {
+		return true, nil
+	}
+	if a.ElevatedFiles == nil {
+		return ok, err
+	}
+	return a.ElevatedFiles.Exists(ctx, path)
+}
+
+// WriteMaybeElevated writes a file on the target, elevating through sudo only
+// when the ordinary write fails and elevation was granted — the same fall-back
+// shape as ReadMaybeElevated, for a destination the login user cannot write (a
+// root-owned keystore directory).
+func (a *Access) WriteMaybeElevated(ctx context.Context, path string, content []byte, mode fs.FileMode) error {
+	err := a.Files.Write(ctx, path, content, mode)
+	if err == nil {
+		return nil
+	}
+	if a.ElevatedFiles == nil {
+		return err
+	}
+	return a.ElevatedFiles.Write(ctx, path, content, mode)
+}
+
+// Upload copies a local file to remotePath on the target, preserving the local
+// file's mode, elevating through sudo where needed and granted. A destination
+// that already exists is refused unless force is set: a name collision is a
+// mistake to surface, not to silently overwrite (the --force-upload path is the
+// deliberate override). The file's bytes never pass through a log or error.
+func (a *Access) Upload(ctx context.Context, localPath, remotePath string, force bool) error {
+	content, err := os.ReadFile(localPath)
+	if err != nil {
+		return fmt.Errorf("upload: read local %s: %w", localPath, err)
+	}
+	info, err := os.Stat(localPath)
+	if err != nil {
+		return fmt.Errorf("upload: stat local %s: %w", localPath, err)
+	}
+	if !force {
+		exists, err := a.ExistsMaybeElevated(ctx, remotePath)
+		if err != nil {
+			return fmt.Errorf("upload: check %s: %w", remotePath, err)
+		}
+		if exists {
+			return fmt.Errorf("upload: %s already exists on the target — pass --force-upload to overwrite", remotePath)
+		}
+	}
+	if err := a.WriteMaybeElevated(ctx, remotePath, content, info.Mode().Perm()); err != nil {
+		return fmt.Errorf("upload %s: %w", remotePath, err)
 	}
 	return nil
 }
