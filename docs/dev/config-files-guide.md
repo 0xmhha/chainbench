@@ -63,7 +63,13 @@ or launches anything. For each node it compares the config and binary against
 what the run would produce now, and probes whether the node is still answering.
 A node whose inputs are unchanged and that is up is left running; only nodes
 that drifted or stopped are torn down and brought back. Of fifteen nodes, if one
-changed, one is redone and fourteen keep running. The one exception is the
+changed, one is redone and fourteen keep running. When this workspace has no
+record of a node — a first run against a target something is already up on — the
+baseline is read back from the running process itself: its `--config` is
+recovered from the command line and hashed on the machine, so a node already up
+with the config this run would give it is reused in place, and one up with a
+different config is refused as foreign rather than composed over. The one
+exception is the
 genesis: it is shared by every node, so a changed genesis is a different chain
 and cannot be reconciled onto a running network — the whole reuse is refused,
 and nothing is touched. Use it to continue an expensive environment across runs.
