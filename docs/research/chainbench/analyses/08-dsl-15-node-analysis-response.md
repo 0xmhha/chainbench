@@ -352,3 +352,33 @@ non-member 로 p2p 디스커버리(연결 층)만 맡는다 — 두 층은 분�
 안전, discovery 경로는 검증 필요. (4) per-node key/config 재사용의 원격/docker 파일 존재 확인.
 (5) keys.validators/genesis 3-case 의 세부(case-b 생성+genesis 갱신). 각 항목은 해당 단계에서
 단위·라이브 게이트로 처리한다.
+
+## 18. 구현 진행 로그 (branch feat/15node-unified-model)
+
+착수 이후 실제로 들어간 것과 라이브 검증 결과를 남긴다. 커밋은 모두 이 브랜치에 있고 1 PR 로 넣는다.
+
+**역할 모델 정리 (mid-turn 결정).** 정식 역할을 **bp / en / pn 셋**으로 고정했다. `boot` 은 독립
+역할이 아니라 `bp` 의 철자 별칭으로 접었다(`validator→bp`, `endpoint→en` 과 같은 방식). etcd seed 를
+고르는 것은 역할이 아니라 위치(최상위 인덱스 producer)이고, poa 의 모든 분기가 이미
+`Is(r,RoleBoot)||Is(r,RoleBP)` 로 boot 을 bp 와 똑같이 다뤘으므로 중복 분기를 걷어냈다. 커밋 3d43ff8.
+
+- **S1 — 완료.** poa SupportsRole 이 pn 수용. wemix bp3/pn1/en1 proxied 가 docker fleet 에서 올라오고
+  블록을 생성(genesis 3 validator), en 이 pn 통해 sync 확인. 커밋 cdf6e80.
+- **S2 — static 경로 완료.** proxied peering 이 이미 pn 을 전 노드의 static-nodes 허브로 만든다
+  (bp→{bp,pn}, en→{pn}, pn→전부). wemix 에서 en 이 pn 통해 sync 되는 것까지 라이브 확인. discovery
+  모드 `--bootnodes` 는 사용자가 조건부("discovery 로 할 경우")로 둔 선택 경로이고 이를 고르는 spec
+  노브가 아직 없어, 실제 두 번째 사용처가 생길 때 붙인다(과설계 금지).
+- **S3 — 완료.** count-form 의 `bp` 값으로 `"max"` 를 받는다. 서버 수(len(pool.hosts))만큼 노드를
+  채우고, pn 1 개(마지막 노드 → 마지막 서버)·en 1 개·나머지 bp. named-count 경로는 bp/pn/en 순서를
+  유지해 기존 spec 불변. 서버 셋 없으면 거부, 셋이 너무 작으면 거부. 포트 순환은 allocator 의 기존
+  host-first 채움이 이미 제공. 단위 5 건 + stablenet 15노드 라이브(place 15 = 13 validator + pn + en,
+  블록 생성, en sync) 통과. 커밋 c910d5c.
+
+**S5 로 넘길 발견 — spec 의 `keys.nodekeys.source:"generate"` 가 `run` 경로에서 안 먹힌다.**
+S3 라이브에서 spec 이 generate 를 선언해도 preset 으로 떨어졌고, `--keys-source generate --keys <dir>`
+를 명시해야 15 개 키가 생성됐다. 기존 15노드 spec(tests/tc/.../33-stablenet-chain-up-15.json 등)도
+`keys.generate` 를 선언하지만 플래그로 실행되는 것으로 보인다. spec-level generate 가 의도된 경로인지,
+플래그가 정본인지 S5(키 재사용 + genesis 3-case)에서 확정한다.
+
+**남은 단계**: S4(node-table per-node key/config), S5(키 재사용 + genesis 3-case, 위 발견 포함),
+S6(canonical env), S7(검증 20 게이트).
