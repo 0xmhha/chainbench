@@ -682,6 +682,7 @@ func (s Server) Credentials() (remote.Credentials, error) {
 			KnownHostsFile:  s.SSH.KnownHostsFile,
 			InsecureHostKey: s.SSH.InsecureHostKey,
 		},
+		Sudo: s.SSH.Sudo,
 	}
 	if s.SSH.KeyFile != "" {
 		key, err := remote.LoadPrivateKey(s.SSH.KeyFile)

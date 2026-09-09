@@ -16,6 +16,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -168,6 +169,48 @@ type Access struct {
 	// read a remote node's log over SSH — the same runner the remote Files and
 	// Driver are built on.
 	Runner process.Runner
+	// ElevatedFiles reads and writes on the target through sudo, for the files a
+	// step needs that the login user cannot reach (a root-owned key). It is set
+	// only when the server set permits elevation (ssh.sudo) and only for a remote
+	// target; it is nil otherwise, so a caller that needs it and finds nil knows
+	// elevation was not granted rather than silently reading nothing.
+	ElevatedFiles filestore.Store
+}
+
+// ReadMaybeElevated reads a file on the target, elevating through sudo only if
+// the ordinary read fails and elevation was granted. It exists for a file the
+// login user may not be able to reach — a root-owned key already on the server —
+// so the common case (a readable file) pays nothing, and the restricted case
+// succeeds where elevation is permitted. The returned error and this function
+// never include the file's bytes.
+func (a *Access) ReadMaybeElevated(ctx context.Context, path string) ([]byte, error) {
+	b, err := a.Files.Read(ctx, path)
+	if err == nil {
+		return b, nil
+	}
+	if a.ElevatedFiles == nil {
+		return nil, err
+	}
+	elevated, eerr := a.ElevatedFiles.Read(ctx, path)
+	if eerr != nil {
+		return nil, fmt.Errorf("read %s (plain and elevated both failed): %w", path, eerr)
+	}
+	return elevated, nil
+}
+
+// DownloadTo copies a file from the target to a local path, elevating through
+// sudo where needed and granted (ReadMaybeElevated). The local copy is written
+// 0600: a key downloaded from a server is a secret at rest, and its bytes never
+// pass through a log or error on the way.
+func (a *Access) DownloadTo(ctx context.Context, remotePath, localPath string) error {
+	b, err := a.ReadMaybeElevated(ctx, remotePath)
+	if err != nil {
+		return fmt.Errorf("download %s: %w", remotePath, err)
+	}
+	if err := (filestore.Local{}).Write(ctx, localPath, b, 0o600); err != nil {
+		return fmt.Errorf("download %s: write local: %w", remotePath, err)
+	}
+	return nil
 }
 
 // Lookup turns a server-set entry name into SSH credentials.
@@ -270,11 +313,19 @@ func (s Spec) resolveOver(creds remote.Credentials, hk remote.HostKeyPolicy, m r
 		return nil, err
 	}
 	run := process.SSHRunner(creds, hostKey)
-	return &Access{
+	acc := &Access{
 		Spec: s, DataRoot: s.DataRoot,
 		Files: process.NewRemoteFileStore(run), Driver: process.NewRemoteDriver(run),
 		Runner: run,
-	}, nil
+	}
+	// Elevation is offered only where the server set permits it. The sudo runner
+	// re-authenticates each command with the login's own password on stdin, so a
+	// caller reaching a root-owned file goes through the same host, same
+	// credentials — only elevated.
+	if creds.Sudo {
+		acc.ElevatedFiles = process.NewRemoteFileStore(process.SSHSudoRunner(creds, hostKey))
+	}
+	return acc, nil
 }
 
 // Validate reports whether the spec is structurally complete for its kind —

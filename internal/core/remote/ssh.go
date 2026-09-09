@@ -49,6 +49,11 @@ type Credentials struct {
 	// HostKey is how a dial to this machine verifies the host. The zero value
 	// defers to the caller's policy (the server set's, or the safe default).
 	HostKey HostKeyPolicy
+	// Sudo reports whether the login on this host may elevate through sudo. It
+	// is a permission the server set declares, carried so a caller can build an
+	// elevated runner (SSHSudoRunner) only where elevation is allowed. It is not
+	// a secret; the password it would use is Password, which is.
+	Sudo bool
 }
 
 // DialTunnelClient opens an SSH connection and returns an *http.Client whose TCP
