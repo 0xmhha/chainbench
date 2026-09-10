@@ -205,18 +205,29 @@ func deps(cmd *cobra.Command) app.Deps {
 // runComposed composes the network the specs declare and runs them against
 // it, printing the setup steps before the session.
 func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
-	out := cmd.OutOrStdout()
+	// Under --json the whole of stdout is the document; the setup narration is
+	// progress, so it goes to stderr. Without it, both share stdout as before.
+	notes := progressWriter(cmd, jsonOut)
 	res, err := app.RunSuite(cmd.Context(), deps(cmd), in)
 	for _, step := range res.SetupSteps {
-		fmt.Fprintln(out, step)
+		fmt.Fprintln(notes, step)
 	}
 	if res.Preflight != "" {
-		fmt.Fprintf(out, "preflight: %s\n", res.Preflight)
+		fmt.Fprintf(notes, "preflight: %s\n", res.Preflight)
 	}
 	if err != nil {
 		return err
 	}
-	return printSession(out, res.SessionRoot, jsonOut)
+	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut)
+}
+
+// progressWriter is where narration goes: stderr when stdout has to parse as a
+// document, stdout otherwise so a person reads one stream in order.
+func progressWriter(cmd *cobra.Command, jsonOut bool) io.Writer {
+	if jsonOut {
+		return cmd.ErrOrStderr()
+	}
+	return cmd.OutOrStdout()
 }
 
 // runComposedSequence runs several test definitions in order, each through the
@@ -224,40 +235,87 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 // and session under its own heading. It ends with one line per definition so a
 // long run's outcome is readable without scrolling back.
 func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
-	out := cmd.OutOrStdout()
+	notes := progressWriter(cmd, jsonOut)
 	res, err := app.RunSuites(cmd.Context(), deps(cmd), in)
 	if err != nil {
 		return err
 	}
+
+	report := sequenceReport{Runs: make([]sequenceRunReport, 0, len(res.Runs))}
 	for i, r := range res.Runs {
-		fmt.Fprintf(out, "\n=== [%d/%d] %s ===\n", i+1, len(res.Runs), r.Spec)
+		fmt.Fprintf(notes, "\n=== [%d/%d] %s ===\n", i+1, len(res.Runs), r.Spec)
 		for _, step := range r.Out.SetupSteps {
-			fmt.Fprintln(out, step)
+			fmt.Fprintln(notes, step)
 		}
 		if r.Out.Preflight != "" {
-			fmt.Fprintf(out, "preflight: %s\n", r.Out.Preflight)
+			fmt.Fprintf(notes, "preflight: %s\n", r.Out.Preflight)
 		}
 		if r.Err != "" {
-			fmt.Fprintf(out, "error: %s\n", r.Err)
+			fmt.Fprintf(notes, "error: %s\n", r.Err)
+		}
+		if jsonOut {
+			report.Runs = append(report.Runs, sequenceRunReport{
+				Spec: r.Spec, Session: r.Out.SessionRoot, Error: r.Err, RunSummary: r.Out.Summary,
+			})
 			continue
 		}
-		// A failed definition is reported in the tally below, so its own
-		// non-nil verdict must not stop the remaining ones from printing.
-		_ = printSession(out, r.Out.SessionRoot, jsonOut)
-	}
-	fmt.Fprintf(out, "\n=== %d definition(s) ===\n", len(res.Runs))
-	for i, r := range res.Runs {
-		s := r.Out.Summary.Summary
-		status := fmt.Sprintf("pass=%d fail=%d blocked=%d skip=%d", s.Pass, s.Fail, s.Blocked, s.Skip)
-		if r.Err != "" {
-			status = "error: " + r.Err
+		if r.Err == "" {
+			// A failed definition is reported in the tally below, so its own
+			// verdict must not stop the remaining ones from printing.
+			_ = printSession(cmd.OutOrStdout(), r.Out.SessionRoot, false)
 		}
-		fmt.Fprintf(out, "%d. %s — %s\n", i+1, r.Spec, status)
 	}
-	if res.Failed() {
-		return fmt.Errorf("run: one or more definitions failed")
+
+	if jsonOut {
+		// One document for the whole command: a reader parses stdout once.
+		enc := json.NewEncoder(cmd.OutOrStdout())
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(report); err != nil {
+			return err
+		}
+	} else {
+		fmt.Fprintf(cmd.OutOrStdout(), "\n=== %d definition(s) ===\n", len(res.Runs))
+		for i, r := range res.Runs {
+			s := r.Out.Summary.Summary
+			status := fmt.Sprintf("pass=%d fail=%d blocked=%d skip=%d", s.Pass, s.Fail, s.Blocked, s.Skip)
+			if r.Err != "" {
+				status = "error: " + r.Err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%d. %s — %s\n", i+1, r.Spec, status)
+		}
 	}
-	return nil
+	return sequenceExit(res)
+}
+
+// sequenceRunReport is one definition's entry in the --json document. It carries
+// the same summary a single run emits, so a reader handles both the same way.
+type sequenceRunReport struct {
+	Spec    string `json:"spec"`
+	Session string `json:"session,omitempty"`
+	Error   string `json:"error,omitempty"`
+	app.RunSummary
+}
+
+// sequenceReport is the whole command's --json document.
+type sequenceReport struct {
+	Runs []sequenceRunReport `json:"runs"`
+}
+
+// sequenceExit maps the run to the exit code the CLI promises CI: 0 all pass,
+// 1 a test failed, 2 blocked or an infrastructure error. A definition that could
+// not run at all is infrastructure, which outranks a plain test failure — losing
+// that distinction is what a single generic error did.
+func sequenceExit(res app.RunSuitesOut) error {
+	setupErrors, failed, blocked := res.Totals()
+	switch {
+	case setupErrors > 0 || blocked > 0:
+		return &exitcode.Error{Code: 2, Err: fmt.Errorf(
+			"run: %d definition(s) could not run, %d test(s) blocked, %d failed", setupErrors, blocked, failed)}
+	case failed > 0:
+		return &exitcode.Error{Code: 1, Err: fmt.Errorf("run: %d test(s) failed", failed)}
+	default:
+		return nil
+	}
 }
 
 // printSession reads the saved session and prints a table plus a summary,

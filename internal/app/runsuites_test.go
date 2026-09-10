@@ -78,3 +78,38 @@ func TestRunSuites_KeepsNetworkUpBetweenDefinitions(t *testing.T) {
 		})
 	}
 }
+
+// TestRunSuitesOut_TotalsSeparatesTheThreeOutcomes pins what the exit code is
+// derived from: a definition that could not run at all is not the same as a test
+// that failed, and neither is a blocked one. Collapsing them is what the
+// sequential path used to do by returning one generic error.
+func TestRunSuitesOut_TotalsSeparatesTheThreeOutcomes(t *testing.T) {
+	mk := func(pass, fail, blocked int) SuiteRunResult {
+		var r SuiteRunResult
+		r.Out.Summary.Summary.Pass = pass
+		r.Out.Summary.Summary.Fail = fail
+		r.Out.Summary.Summary.Blocked = blocked
+		return r
+	}
+	out := RunSuitesOut{Runs: []SuiteRunResult{
+		mk(1, 0, 0),
+		mk(0, 2, 0),
+		mk(0, 0, 1),
+		{Spec: "c.json", Err: "compose failed"},
+	}}
+	setupErrors, failed, blocked := out.Totals()
+	if setupErrors != 1 || failed != 2 || blocked != 1 {
+		t.Fatalf("totals = %d/%d/%d, want 1 setup error, 2 failed, 1 blocked", setupErrors, failed, blocked)
+	}
+	if !out.Failed() {
+		t.Fatal("a run with failures must report failed")
+	}
+
+	clean := RunSuitesOut{Runs: []SuiteRunResult{mk(3, 0, 0)}}
+	if s, f, b := clean.Totals(); s != 0 || f != 0 || b != 0 {
+		t.Fatalf("a clean run totals %d/%d/%d", s, f, b)
+	}
+	if clean.Failed() {
+		t.Fatal("a clean run must not report failed")
+	}
+}
