@@ -13,6 +13,8 @@ type presentStore map[string]bool
 
 func (s presentStore) Exists(_ context.Context, path string) (bool, error) { return s[path], nil }
 func (presentStore) Read(context.Context, string) ([]byte, error)          { return nil, nil }
+func (presentStore) Remove(context.Context, string) error                  { return nil }
+
 func (presentStore) Write(context.Context, string, []byte, fs.FileMode) error {
 	return nil
 }

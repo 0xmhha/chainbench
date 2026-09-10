@@ -103,6 +103,15 @@ func (f *fakeStore) Checksum(_ context.Context, path string) (string, error) {
 	return filestore.Hash(b), nil
 }
 
+func (f *fakeStore) Remove(_ context.Context, path string) error {
+	if err := filestore.CheckRemovable(path); err != nil {
+		return err
+	}
+	delete(f.present, path)
+	delete(f.content, path)
+	return nil
+}
+
 func (f *fakeStore) Write(_ context.Context, path string, content []byte, _ os.FileMode) error {
 	f.written = append(f.written, path)
 	if f.content == nil {

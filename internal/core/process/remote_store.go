@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -75,4 +76,30 @@ func (s RemoteFileStore) Checksum(ctx context.Context, remotePath string) (strin
 // Write ships content to remotePath with the given mode.
 func (s RemoteFileStore) Write(ctx context.Context, remotePath string, content []byte, mode fs.FileMode) error {
 	return s.Writer.ProvisionFile(ctx, remotePath, content, mode)
+}
+
+// Remove deletes the file or directory tree at remotePath on the host.
+//
+// `rm -rf` is the one command here that cannot be undone, so the path is
+// checked before it is ever formatted into a shell string: filestore's guard
+// refuses an empty, relative, glob-bearing, or too-shallow path, and the
+// caller that knows the target's data root confines it further. The path is
+// then single-quoted like every other argument this package sends, so a
+// directory name containing a space or a quote stays one argument.
+//
+// -f makes absence succeed, which matches the local store's os.RemoveAll and
+// keeps clearing a composition twice from failing the second time.
+func (s RemoteFileStore) Remove(ctx context.Context, remotePath string) error {
+	if err := filestore.CheckRemovable(remotePath); err != nil {
+		return err
+	}
+	res, err := s.Run(ctx, "rm -rf "+remote.ShellQuote(remotePath))
+	if err != nil {
+		return fmt.Errorf("driver: remote remove %s: %w", remotePath, err)
+	}
+	if res.ExitCode != 0 {
+		return fmt.Errorf("driver: remote remove %s: exit %d: %s",
+			remotePath, res.ExitCode, strings.TrimSpace(res.Stderr))
+	}
+	return nil
 }
