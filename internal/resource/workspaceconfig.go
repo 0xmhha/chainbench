@@ -294,6 +294,34 @@ func (c WorkspaceConfig) Resolve(purpose Purpose, ref string) (string, error) {
 	return joinTarget(c.DataRoot, dir, ref)
 }
 
+// AdoptDataRoot folds this config's data root into a compose target.
+//
+// The workspace-config is the single owner of the data root, and that is the
+// whole rule: a target that already names a different one is two answers to
+// where the data plane lives, so it is a conflict rather than a silent
+// override. The same value, or none, folds in quietly. The target's locality
+// (local vs remote/SSH) is not touched — that comes from the server set.
+//
+// It lives here because both callers that fold a config into a target — the
+// step-form surfaces through app, and the run path through testengine — were
+// each carrying their own copy of the comparison and their own wording for the
+// refusal. Two copies of a single-owner rule is one copy too many.
+//
+// origin names where the target came from, for the message; empty says "the
+// target".
+func (c WorkspaceConfig) AdoptDataRoot(target Spec, origin string) (Spec, error) {
+	if origin == "" {
+		origin = "the target"
+	}
+	if target.DataRoot != "" && target.DataRoot != c.DataRoot {
+		return target, fmt.Errorf(
+			"data root conflict: %s says %q but --workspace-config says %q — put the data root in workspace-config alone",
+			origin, target.DataRoot, c.DataRoot)
+	}
+	target.DataRoot = c.DataRoot
+	return target, nil
+}
+
 // BinaryPath resolves a binary reference to its target path, applying a
 // binaryAlias when one is declared for the name.
 func (c WorkspaceConfig) BinaryPath(ref string) (string, error) {

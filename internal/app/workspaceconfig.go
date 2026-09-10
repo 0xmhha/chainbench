@@ -1,18 +1,14 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // WithWorkspaceConfig folds a --workspace-config file's data root into a compose
 // target, so the step-form surfaces (CLI and MCP) resolve the target the one way
-// the run path does. The workspace-config is the single owner of the data root:
-// a target that already names a different one is a conflict, not a silent
-// override, and an empty config path leaves the target unchanged. The target's
-// locality (local vs remote/SSH) still comes from the server set — only the data
-// root comes from this file.
+// the run path does. An empty config path leaves the target unchanged. The rule
+// for what folding means — and what a target that names a different root does —
+// belongs to the config itself, in AdoptDataRoot.
 func WithWorkspaceConfig(target resource.Spec, wcPath string) (resource.Spec, error) {
 	if wcPath == "" {
 		return target, nil
@@ -21,13 +17,7 @@ func WithWorkspaceConfig(target resource.Spec, wcPath string) (resource.Spec, er
 	if err != nil {
 		return target, err
 	}
-	if target.DataRoot != "" && target.DataRoot != wc.DataRoot {
-		return target, fmt.Errorf(
-			"data root conflict: the target says %q but --workspace-config says %q — put the data root in workspace-config alone",
-			target.DataRoot, wc.DataRoot)
-	}
-	target.DataRoot = wc.DataRoot
-	return target, nil
+	return wc.AdoptDataRoot(target, "")
 }
 
 // TargetForWorkspaceConfig returns a fresh compose target rooted at the

@@ -259,3 +259,46 @@ presets:
 		t.Fatalf("refusal changed shape, and the sample quotes the old one: %v", err)
 	}
 }
+
+// TestAdoptDataRoot pins the single-owner rule at the place that now owns it.
+// It used to be written twice — once in app for the step-form surfaces, once in
+// testengine for the run path — with two spellings of the same refusal, which is
+// how two surfaces come to disagree about a rule that has exactly one answer.
+func TestAdoptDataRoot(t *testing.T) {
+	wc := WorkspaceConfig{DataRoot: "/data"}
+
+	// No root on the target: the config fills it in.
+	got, err := wc.AdoptDataRoot(Spec{}, "")
+	if err != nil {
+		t.Fatalf("empty target should adopt: %v", err)
+	}
+	if got.DataRoot != "/data" {
+		t.Fatalf("dataRoot = %q, want /data", got.DataRoot)
+	}
+
+	// The same root: agreement, not a conflict.
+	if _, err := wc.AdoptDataRoot(Spec{DataRoot: "/data"}, ""); err != nil {
+		t.Fatalf("the same root must fold in quietly: %v", err)
+	}
+
+	// A different root: two answers to where the data plane lives.
+	target := Spec{DataRoot: "/other"}
+	got, err = wc.AdoptDataRoot(target, "")
+	if err == nil {
+		t.Fatal("a different root must conflict")
+	}
+	if !strings.Contains(err.Error(), "the target") || !strings.Contains(err.Error(), "/other") {
+		t.Fatalf("the refusal must name the origin and the value: %v", err)
+	}
+	// A refused fold changes nothing.
+	if got.DataRoot != "/other" {
+		t.Fatalf("a refusal must leave the target alone, got %q", got.DataRoot)
+	}
+
+	// The origin is the caller's to name, so a refusal can point at the line
+	// the operator actually wrote.
+	_, err = wc.AdoptDataRoot(target, `the env target "srv://server-01/other"`)
+	if err == nil || !strings.Contains(err.Error(), "the env target") {
+		t.Fatalf("origin should reach the message: %v", err)
+	}
+}
