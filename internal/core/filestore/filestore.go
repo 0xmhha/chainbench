@@ -141,10 +141,46 @@ func (Local) Checksum(_ context.Context, path string) (string, error) {
 	return Hash(b), nil
 }
 
-// Write creates any parent directories and writes the file.
+// Write creates any parent directories and writes the file with mode.
+//
+// The file ends up with the mode the caller asked for whether or not something
+// was already at path. That is the contract the remote store has always had (it
+// runs an explicit chmod), and the local one used to break it: os.WriteFile
+// applies its perm only when it CREATES the file, so writing a key onto an
+// existing 0644 file left the key world-readable while the caller believed it
+// had asked for 0600.
+//
+// The bytes go to a fresh file that is renamed into place, rather than into
+// path directly. A fresh O_EXCL file cannot be a symlink to somewhere else,
+// carries its mode from before the content lands rather than after, and the
+// rename replaces the name in one step — so a reader never sees a half-written
+// file, and a secret is never briefly readable under the old file's mode.
 func (Local) Write(_ context.Context, path string, content []byte, mode fs.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), dirPerm); err != nil {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, dirPerm); err != nil {
 		return err
 	}
-	return os.WriteFile(path, content, mode)
+	// CreateTemp opens with O_EXCL at 0600 — safe by default for the secret
+	// case; the requested mode is applied below, before the file gets its name.
+	tmp, err := os.CreateTemp(dir, "."+filepath.Base(path)+".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmp.Name()
+	// Removes the temp file on every failure path; a no-op once renamed.
+	defer func() { _ = os.Remove(tmpName) }()
+
+	if _, err := tmp.Write(content); err != nil {
+		_ = tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	// Chmod rather than the open mode: umask applies to the latter, and a
+	// caller asking for 0600 must get 0600.
+	if err := os.Chmod(tmpName, mode.Perm()); err != nil {
+		return err
+	}
+	return os.Rename(tmpName, path)
 }

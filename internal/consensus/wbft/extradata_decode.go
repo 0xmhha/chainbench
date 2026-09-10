@@ -102,28 +102,39 @@ func rlpDecode(b []byte) (rlpNode, []byte, error) {
 
 // rlpDecodeLong decodes a long string or long list whose length is itself
 // length-prefixed.
+//
+// The declared length is accumulated in uint64 and compared against the bytes
+// actually left, never added to an offset first. A header may claim any length
+// it likes — an existing genesis can come off a server — and `start+n` in int
+// arithmetic wraps negative for a large enough claim, which turned the bounds
+// check into a no-op and panicked on the slice that followed. The header is at
+// most 8 bytes (the RLP grammar), so uint64 holds any value it can express.
 func rlpDecodeLong(b []byte, p, base byte, list bool) (rlpNode, []byte, error) {
 	ll := int(p - base)
 	if len(b) < 1+ll {
 		return rlpNode{}, nil, fmt.Errorf("length header overruns input")
 	}
-	n := 0
+	var n uint64
 	for _, c := range b[1 : 1+ll] {
-		n = n<<8 | int(c)
+		n = n<<8 | uint64(c)
 	}
 	start := 1 + ll
-	if len(b) < start+n {
-		return rlpNode{}, nil, fmt.Errorf("payload overruns input")
+	// len(b) >= start here, so the subtraction is the remaining byte count.
+	if n > uint64(len(b)-start) {
+		return rlpNode{}, nil, fmt.Errorf("payload overruns input: header claims %d bytes, %d remain", n, len(b)-start)
 	}
+	size := int(n) // bounded by the remaining length above
 	if list {
-		return rlpDecodeList(b, start, n)
+		return rlpDecodeList(b, start, size)
 	}
-	return rlpNode{bytes: b[start : start+n]}, b[start+n:], nil
+	return rlpNode{bytes: b[start : start+size]}, b[start+size:], nil
 }
 
 // rlpDecodeList decodes n bytes of list payload starting at off into items.
+// The bounds are checked without adding off and n together, for the same reason
+// rlpDecodeLong avoids it; negative values are refused rather than sliced.
 func rlpDecodeList(b []byte, off, n int) (rlpNode, []byte, error) {
-	if len(b) < off+n {
+	if off < 0 || n < 0 || off > len(b) || n > len(b)-off {
 		return rlpNode{}, nil, fmt.Errorf("list payload overruns input")
 	}
 	payload := b[off : off+n]

@@ -25,6 +25,10 @@ const (
 	// governance member index is 1-based; index 0 is the zero address.
 	govGetMember = "0xab3545e5"
 	zeroAddr40   = "0000000000000000000000000000000000000000"
+	// maxGovMembers bounds how many members this will enumerate. A wemix
+	// producer set is tens of nodes; a reply above this is malformed or hostile,
+	// and following it would mean one eth_call per claimed member.
+	maxGovMembers = 1000
 )
 
 // RuntimeValidators asks a running wemix node which validators its governance
@@ -40,12 +44,12 @@ func (Family) RuntimeValidators(ctx context.Context, c registry.Caller) ([]strin
 	if err != nil {
 		return nil, fmt.Errorf("poa: getMemberLength: %w", err)
 	}
-	n, ok := new(big.Int).SetString(strings.TrimPrefix(lenHex, "0x"), 16)
-	if !ok {
-		return nil, fmt.Errorf("poa: getMemberLength returned %q", lenHex)
+	count, err := parseMemberCount(lenHex)
+	if err != nil {
+		return nil, fmt.Errorf("poa: getMemberLength: %w", err)
 	}
-	out := make([]string, 0, n.Int64())
-	for i := int64(1); i <= n.Int64(); i++ { // members are 1-based
+	out := make([]string, 0, count)
+	for i := int64(1); i <= int64(count); i++ { // members are 1-based
 		res, err := ethCall(ctx, c, gov, govGetMember+pad32(i))
 		if err != nil {
 			return nil, fmt.Errorf("poa: getMember(%d): %w", i, err)
@@ -57,6 +61,50 @@ func (Family) RuntimeValidators(ctx context.Context, c registry.Caller) ([]strin
 		out = append(out, addr)
 	}
 	return out, nil
+}
+
+// parseMemberCount reads an ABI uint256 member count out of an eth_call reply.
+//
+// The value comes from whatever the node answers, so it is a trust boundary,
+// not a fact. It is validated before anything is sized from it: big.Int accepts
+// a leading sign, so "0x-1" used to parse as -1 and reach make([]string, 0, -1),
+// and a full-width uint256 truncates to a negative int64 the same way — both
+// panic in makeslice. A merely huge value is no better: the enumeration below is
+// one eth_call per member, so an unbounded count is an RPC flood.
+func parseMemberCount(raw string) (int, error) {
+	h := strings.TrimPrefix(strings.TrimSpace(raw), "0x")
+	if h == "" {
+		return 0, fmt.Errorf("reply %q carries no value", raw)
+	}
+	// An ABI word is 32 bytes; anything longer is not one. Digits are checked
+	// explicitly because big.Int would happily accept "-1" or "+1".
+	if len(h) > 64 {
+		return 0, fmt.Errorf("reply %q is longer than a uint256 word", raw)
+	}
+	for _, c := range h {
+		if !isHexDigit(c) {
+			return 0, fmt.Errorf("reply %q is not a hex uint256", raw)
+		}
+	}
+	n, ok := new(big.Int).SetString(h, 16)
+	if !ok {
+		return 0, fmt.Errorf("reply %q is not a hex uint256", raw)
+	}
+	if !n.IsInt64() || n.Int64() > maxGovMembers {
+		return 0, fmt.Errorf("reply %q claims more than %d governance members", raw, maxGovMembers)
+	}
+	return int(n.Int64()), nil
+}
+
+// isHexDigit reports whether c is a hex digit. It is spelled out rather than
+// left to big.Int, which accepts a leading sign an ABI word never carries.
+func isHexDigit(c rune) bool {
+	switch {
+	case '0' <= c && c <= '9', 'a' <= c && c <= 'f', 'A' <= c && c <= 'F':
+		return true
+	default:
+		return false
+	}
 }
 
 // governanceAddress reads the governance contract's address from admin.wemixInfo

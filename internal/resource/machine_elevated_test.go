@@ -157,6 +157,34 @@ func TestReadMaybeElevated_NoElevationGrantedReturnsPlainError(t *testing.T) {
 	}
 }
 
+// TestDownloadTo_OverwritesAnExistingFileAt0600 is the case the original test
+// missed: --out often names a path that already exists (a re-run), and the help
+// promises 0600 there too. The old local write applied its mode only on create,
+// so the key kept the leftover file's 0644.
+func TestDownloadTo_OverwritesAnExistingFileAt0600(t *testing.T) {
+	acc := &resource.Access{
+		Files:         fakeStore{err: errors.New("permission denied")},
+		ElevatedFiles: fakeStore{data: []byte("downloaded-key")},
+	}
+	local := filepath.Join(t.TempDir(), "key")
+	if err := os.WriteFile(local, []byte("stale"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := acc.DownloadTo(context.Background(), "/keys/root-owned", local); err != nil {
+		t.Fatalf("DownloadTo: %v", err)
+	}
+	info, err := os.Stat(local)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Fatalf("perm = %#o on an existing target, want 0600", got)
+	}
+	if b, _ := os.ReadFile(local); string(b) != "downloaded-key" {
+		t.Fatalf("content = %q", b)
+	}
+}
+
 // TestDownloadTo_WritesLocal0600: a downloaded file lands locally with 0600, and
 // its bytes match what the (elevated) read returned.
 func TestDownloadTo_WritesLocal0600(t *testing.T) {

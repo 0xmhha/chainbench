@@ -309,6 +309,13 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 			if err := json.Unmarshal(baseRaw, &base); err != nil {
 				return nil, fmt.Errorf("dsl: env %q is not an object: %w", baseID, err)
 			}
+			// JSON null unmarshals into a nil map without error, and the
+			// override loop below would then assign into it and panic. A null
+			// env is not an object either, so it fails the way the line above
+			// already promises.
+			if base == nil {
+				return nil, fmt.Errorf("dsl: env %q is not an object: it is null", baseID)
+			}
 			// Shallow override: each field the case names replaces the base's.
 			delete(envObj, "extends")
 			for k, v := range envObj {

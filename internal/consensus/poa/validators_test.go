@@ -86,6 +86,76 @@ func TestRuntimeValidators_ReadsGovernanceMembers(t *testing.T) {
 	}
 }
 
+// TestParseMemberCount covers the member count as what it is — a value the node
+// supplies, not a fact. Anything that cannot size an enumeration must come back
+// as an error, never as a slice capacity.
+func TestParseMemberCount(t *testing.T) {
+	ok := []struct {
+		raw  string
+		want int
+	}{
+		{"0x0000000000000000000000000000000000000000000000000000000000000004", 4},
+		{"0x4", 4},
+		{"0x0", 0},
+	}
+	for _, tc := range ok {
+		got, err := parseMemberCount(tc.raw)
+		if err != nil || got != tc.want {
+			t.Fatalf("parseMemberCount(%q) = %d, %v; want %d, nil", tc.raw, got, err, tc.want)
+		}
+	}
+
+	bad := []struct {
+		name string
+		raw  string
+	}{
+		{"negative notation", "0x-1"},
+		{"positive sign", "0x+1"},
+		{"uint256 max truncates to -1 as int64", "0x" + strings.Repeat("f", 64)},
+		{"beyond int64 but positive", "0x8000000000000000"},
+		{"over the member cap", "0x10000"},
+		{"longer than a word", "0x" + strings.Repeat("1", 65)},
+		{"not hex", "0xzz"},
+		{"empty", "0x"},
+		{"blank", ""},
+	}
+	for _, tc := range bad {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := parseMemberCount(tc.raw); err == nil {
+				t.Fatalf("parseMemberCount(%q) must be refused", tc.raw)
+			}
+		})
+	}
+}
+
+// TestRuntimeValidators_MalformedMemberCountIsAnError drives the whole reader
+// with a node that answers a bad length: the command must report it, not panic.
+func TestRuntimeValidators_MalformedMemberCountIsAnError(t *testing.T) {
+	for _, lenReply := range []string{"0x-1", "0x" + strings.Repeat("f", 64), "0x10000"} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var req struct {
+				ID     any    `json:"id"`
+				Method string `json:"method"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			result := any(nil)
+			switch req.Method {
+			case "admin_wemixInfo":
+				result = map[string]any{"governance": "0x269330264fb2510dc374e08cf79fc08b805ecf0c"}
+			case "eth_call":
+				result = lenReply
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
+		}))
+		f := Family{}
+		_, err := f.RuntimeValidators(context.Background(), rpc.Dial(srv.URL))
+		srv.Close()
+		if err == nil {
+			t.Fatalf("member length %q must be refused", lenReply)
+		}
+	}
+}
+
 func TestRuntimeValidators_GovernanceNotDeployed(t *testing.T) {
 	srv := govRPCServer(t, "0x"+zeroAddr40, nil)
 	defer srv.Close()
