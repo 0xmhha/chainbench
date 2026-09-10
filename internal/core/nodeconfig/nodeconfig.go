@@ -82,14 +82,23 @@ type Spec struct {
 	// HTTPHost binds the HTTP and WS endpoints; empty is 0.0.0.0 in the file
 	// and unset on the command line.
 	HTTPHost string
-	// MetricsHost binds the metrics endpoint; empty is 127.0.0.1.
+	// MetricsHost binds the metrics endpoint; empty is 0.0.0.0, the same as
+	// HTTPHost.
+	//
+	// It used to default to 127.0.0.1, which made the endpoint reachable only
+	// from the node's own machine — so the metric assertion could never work
+	// against a remote or docker node, the two cases the harness exists for. The
+	// exposure this widens is the one the HTTP endpoint already has, and it is
+	// bounded the same way: a docker container publishes to loopback only, and a
+	// real server's inbound is closed by its firewall to an allow list. Set this
+	// per node (the metricsHost config knob) to narrow it.
 	MetricsHost string
 }
 
 // TOML renders the config file a geth-family binary reads.
 func TOML(s Spec) []byte {
 	httpHost := orDefault(s.HTTPHost, "0.0.0.0")
-	metricsHost := orDefault(s.MetricsHost, "127.0.0.1")
+	metricsHost := orDefault(s.MetricsHost, "0.0.0.0")
 	syncMode := orDefault(s.SyncMode, "full")
 
 	modules := append(append([]string{}, baseModules...), s.Chain.RPCNamespace)
@@ -192,6 +201,19 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 		RPCPolicy{DeprecatedPersonal: policy.DeprecatedPersonal, UnprotectedTxs: policy.UnprotectedTxs},
 		Mining{Mine: policy.Mine},
 	)
+	// A node launched with a config file gets metrics from its [Metrics] block.
+	// One launched without — the handoff relaunch, which carries no config —
+	// got none at all, so the same network answered a metric assertion before
+	// the fork and not after. Saying it on the command line covers both: the
+	// module refuses a port without --metrics, which is the defect class it
+	// exists for.
+	if s.Ports.Metrics > 0 {
+		modules = append(modules, Metrics{
+			Enabled: true,
+			Addr:    orDefault(s.MetricsHost, "0.0.0.0"),
+			Port:    s.Ports.Metrics,
+		})
+	}
 	return New(DialectFor(s.Chain.ID), modules...).WithOverrides(overrides...).Build()
 }
 

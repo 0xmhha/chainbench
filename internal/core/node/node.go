@@ -93,6 +93,16 @@ type Node struct {
 	// RPCURL is the JSON-RPC endpoint used for verify/test. For attached
 	// nodes this is the only field that must be set.
 	RPCURL string `json:"rpc_url"`
+	// MetricsURL is the endpoint a caller dials to scrape this node's metrics.
+	//
+	// It exists for the same reason RPCURL does: Host and Ports hold the node's
+	// OWN address, which is what peers use and what goes into the genesis and
+	// static-nodes list, and that is not always the address this tool can reach
+	// it at. A docker container publishes on loopback; composing the pair by
+	// hand is how the metric assertion came to dial a container-internal address
+	// and time out. Empty when the composition did not record one (an attached
+	// node, or a node with no metrics port).
+	MetricsURL string `json:"metrics_url,omitempty"`
 	// Ports holds the node's port map (empty for pure-attach nodes whose
 	// ports are unknown/irrelevant).
 	Ports Endpoints `json:"ports"`

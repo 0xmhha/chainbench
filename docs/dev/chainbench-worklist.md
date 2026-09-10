@@ -1274,11 +1274,19 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
 
 ### 남은 작업
 
-- [ ] **C. metric 수집 인프라 (신규 — WA24 metric 이 드러냄)**. `metric` 어서션은 등록돼
-  있으나 수집 경로가 프로덕션에 배선되지 않았다. 필요한 것 셋: ① 노드 실행 시 metrics
-  활성화를 launch 로 배선, ② metrics 를 수집하는 경로(collector/scrape), ③ `--docker` 에서
-  metrics 포트를 localmap 으로 번역(지금은 컨테이너 내부주소 `172.30.0.11:6060` 로 직접
-  dial 해 timeout). 이 셋이 되면 `metric` 스펙(제거된 `03-metric-head-block`)을 다시 추가한다.
+- ◐ **C. metric 수집 인프라 (신규 — WA24 metric 이 드러냄)**. **코드 경로는 열렸다
+  (2026-09-11), 라이브 검증만 남았다.** 진단이 셋 중 하나 틀렸다 — ②수집 경로는 이미
+  있었다(`collector.ScrapeMetrics`). 실제로 막던 것과 처리:
+  - **바인드 주소**: `metricsHost` 기본값이 `127.0.0.1` 이라 노드 자기 기계에서만 닿았다.
+    HTTP 와 같은 `0.0.0.0` 으로 맞췄다. 좁히려면 `metricsHost` 노브를 노드별로 준다.
+  - **주소 번역**: 어서션이 `Host`+`Ports.Metrics` 로 직접 조립해 dial 했다. `node.Node` 에
+    `MetricsURL` 을 더해 `RPCURL` 과 **같은 opener 를 지나게** 했다 — 번역은 이제 구성이
+    기록하고 어서션은 읽기만 한다.
+  - **config 없는 기동**: `Argv` 에 Metrics 모듈이 없어 핸드오프 재기동 노드는 metrics 가
+    아예 없었다(같은 망이 포크 전에는 답하고 후에는 답하지 않았다). 포트가 배정된 노드면
+    커맨드라인으로도 말하게 했다.
+  - 제거했던 `03-metric-head-block` 스펙을 **되살렸다**(`validate` OK). 여전히
+    **LIVE-UNVERIFIED** — 그 시리즈를 실제로 노출하는지는 함대에서 확인해야 한다.
 - [x] **B — 부정 경로**: `go-stablenet/tx/01-negative-tx-revert` (revert 하는 런타임 배포
   후 `expect:revert`) fleet 검증 완료.
 - [ ] **B 잔여 — 거버넌스(체인 특화, fleet)**. go-wbft·go-wemix 거버넌스는 stablenet 을
@@ -1403,10 +1411,10 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 라이브 함대가 있어야 진행되는 갈래다.
 
-- [ ] **C. metric 수집 인프라.** `metric` 어서션은 등록돼 있는데 수집 경로가 없다. 셋이
-  필요하다 — 노드 기동 때 metrics 활성화를 launch 로 배선, 수집 경로(collector/scrape),
-  `--docker` 에서 metrics 포트를 localmap 으로 번역. 지금은 컨테이너 내부 주소로 직접
-  dial 해 timeout 난다. 셋이 되면 제거했던 `03-metric-head-block` 스펙을 되살린다.
+- ◐ **C. metric 수집 인프라** — **코드 경로 완료 (2026-09-11), 라이브 검증 대기.** 상세는
+  §1p C. 수집 경로는 원래 있었고, 막던 것은 바인드 주소(`127.0.0.1`)·어서션의 주소 번역
+  우회·config 없는 기동의 metrics 누락 셋이었다. 회귀 테스트를 붙였고
+  `03-metric-head-block` 스펙을 되살렸다(LIVE-UNVERIFIED).
 - [ ] **B 잔여 — 체인별 거버넌스 케이스.** stablenet 의 GovValidator 흐름을 go-wbft 로
   그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
   멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.

@@ -297,17 +297,21 @@ func TestNetLaunchOpts_ScopedOverridesReachTheRightNodes(t *testing.T) {
 	if len(out.Nodes) != 3 {
 		t.Fatalf("got %d nodes", len(out.Nodes))
 	}
+	// Every node now carries a metrics port of its own (the launch path emits the
+	// module whenever placement assigned one), so the presence of --metrics.port
+	// no longer distinguishes a scoped override from the default. What the scope
+	// has to guarantee is that node2's VALUE reaches node2 and nowhere else.
 	for _, n := range out.Nodes {
 		argv := strings.Join(n.Args, " ")
 		if !strings.Contains(argv, "--metrics") {
 			t.Errorf("node%d argv missing the role-scoped --metrics: %s", n.Index, argv)
 		}
-		hasPort := strings.Contains(argv, "--metrics.port")
-		if n.Index == 2 && !hasPort {
-			t.Errorf("node2 argv missing its node-scoped --metrics.port: %s", argv)
+		scoped := strings.Contains(argv, "--metrics.port 6161")
+		if n.Index == 2 && !scoped {
+			t.Errorf("node2 argv missing its node-scoped --metrics.port 6161: %s", argv)
 		}
-		if n.Index != 2 && hasPort {
-			t.Errorf("node%d argv has --metrics.port that was scoped to node2: %s", n.Index, argv)
+		if n.Index != 2 && scoped {
+			t.Errorf("node%d argv got the --metrics.port scoped to node2: %s", n.Index, argv)
 		}
 	}
 }
