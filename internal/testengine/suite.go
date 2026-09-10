@@ -85,6 +85,11 @@ type RunSuiteIn struct {
 	// endpoints sync slowly) raises it so the gate does not terminate a network
 	// that is merely still forming.
 	NodeMonitorTimeout time.Duration
+	// WorkspaceConfigPath is the environment file (--workspace-config) that owns
+	// the target dataRoot and its purpose directories. When set, its dataRoot is
+	// the target's data root, so the same DSL runs across targets by swapping
+	// this file. Empty keeps the local default (the workspace directory).
+	WorkspaceConfigPath string
 }
 
 // waitBlocksTimeout bounds the wait for the chain to reach WaitBlocks.

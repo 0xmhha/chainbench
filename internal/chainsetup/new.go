@@ -1,11 +1,28 @@
 package chainsetup
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"path/filepath"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
+
+// compositionID derives a stable short identifier for a composition from its
+// workspace directory. It is deterministic — the same workspace yields the same
+// id — so a resume keeps the id it was composed under rather than minting a new
+// one from the run time or a pid, and two workspaces never collide on one data
+// root.
+func compositionID(dir string) string {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		abs = dir
+	}
+	sum := sha256.Sum256([]byte(abs))
+	return hex.EncodeToString(sum[:])[:12]
+}
 
 // NewOpts initializes a workspace's chain identity, key set, and compose target.
 type NewOpts struct {
@@ -29,6 +46,10 @@ type NewOpts struct {
 	// that knows one at new time may know both. The allocate step still
 	// records the set it actually placed from (a later --server-set wins).
 	ServerSet string
+	// WorkspaceConfigPath is the environment file whose data root and purpose
+	// directories this composition resolves portable references under. Recorded
+	// so later steps and a resume resolve against the same file.
+	WorkspaceConfigPath string
 	// Docker treats the composition's servers as local docker containers: the
 	// harness's dials are translated through the localmap next to the server
 	// server set. Recorded once here so every later step follows it.
@@ -71,8 +92,14 @@ func (w *Workspace) New(opts NewOpts) (string, error) {
 	w.state.Binary = opts.Binary
 	w.state.KeysDir = keysDir
 	w.state.Target = tgt
+	if w.state.CompositionID == "" {
+		w.state.CompositionID = compositionID(w.comp.Dir())
+	}
 	if opts.ServerSet != "" {
 		w.state.ServerSet = opts.ServerSet
+	}
+	if opts.WorkspaceConfigPath != "" {
+		w.state.WorkspaceConfig = opts.WorkspaceConfigPath
 	}
 	w.state.Docker = opts.Docker
 

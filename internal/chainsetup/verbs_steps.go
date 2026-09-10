@@ -248,6 +248,9 @@ type NetGenesisIn struct {
 	// OverlayPath is a JSON overlay file {capabilities, genesis}: the genesis
 	// fragment is deep-merged and the capabilities are advertised.
 	OverlayPath string `cb:"overlay" help:"JSON overlay file {capabilities,genesis} deep-merged into the genesis"`
+	// GenesisExisting is a reference to a finished genesis file used verbatim
+	// (genesis mode "existing"); empty builds from the template.
+	GenesisExisting string
 }
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
@@ -265,7 +268,7 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 // genesisOpts folds the flag-shaped genesis inputs into the step options: the
 // key=value overrides and the overlay file's two halves.
 func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
-	opts := GenesisOpts{ChainID: in.ChainID}
+	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting}
 	for _, kv := range in.Set {
 		k, v, ok := strings.Cut(kv, "=")
 		if !ok || k == "" {

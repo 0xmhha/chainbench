@@ -2,6 +2,7 @@ package chainsetup
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -80,6 +81,11 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	}
 	if n <= 0 {
 		return "", fmt.Errorf("chainsetup: keys: node count unknown — run `chain place` first or pass --nodes")
+	}
+	// A key set named on a server is downloaded to a local directory first, so
+	// the rest of this step reads it the one local way.
+	if err := w.materializeKeyring(ctx); err != nil {
+		return "", err
 	}
 
 	// A node table that names any per-node key builds the set from the table:
@@ -160,7 +166,7 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 	// would be the better answer, but there is no method that says so today and
 	// inventing one here would put the question in two places. Recorded as N3
 	// debt rather than guessed at.
-	set, err := blueprint.PresetFrom(r, derive.WithBLS, os.ReadFile)
+	set, err := blueprint.PresetFrom(r, derive.WithBLS, localKeyReader)
 	if err != nil {
 		return keyring.Preset{}, err
 	}
@@ -247,7 +253,26 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, b
 // parseNodeKey reads a node's declared key. A path that exists is read as a key
 // file; anything else is parsed as 0x-hex, so a network can pin a key inline or
 // point at a file, the way a blueprint's nodekey does.
+// localKeyReader is the file reader a blueprint's declared keys are read
+// through. Like parseNodeKey, it refuses a server reference: a private key a
+// blueprint names is a local file or inline hex, never a secret pulled off a
+// server onto this machine.
+func localKeyReader(path string) ([]byte, error) {
+	if strings.HasPrefix(path, "srv://") {
+		return nil, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — use inline hex or a local key file", path)
+	}
+	return os.ReadFile(path)
+}
+
 func parseNodeKey(ref string) (derive.PrivateKey, error) {
+	// A private key is never pulled off a server to be derived here: a server
+	// reference for a key would read the secret onto this machine, which the key
+	// contract forbids (a prepared key is verified on its own server, and only
+	// its public identity leaves it). A key is therefore inline hex or a local
+	// file only; on-server key verification is a separate, explicit path.
+	if strings.HasPrefix(ref, "srv://") {
+		return derive.PrivateKey{}, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — use inline 0x-hex or a local key file", ref)
+	}
 	if _, err := os.Stat(ref); err == nil {
 		b, rerr := os.ReadFile(ref)
 		if rerr != nil {
@@ -485,7 +510,13 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	// The data root is the target's: a server set naming one reached the
 	// workspace through Retarget before this step ran, so there is one answer
 	// rather than a copy that can disagree with it.
-	layout := node.Layout{Root: w.state.Target.DataRoot}
+	// A workspace-config composition isolates its node datadirs, generated
+	// genesis/configs, and logs under its composition id, so two compositions
+	// sharing one data root do not collide. Without one the layout stays flat.
+	layout, err := w.layout()
+	if err != nil {
+		return "", err
+	}
 	// Spread across a set, each node's machine is a server-set entry; record
 	// its name so every later step opens THAT resource. Addresses came from the
 	// pool, so the name is the pool's word for the address.
@@ -564,6 +595,11 @@ type GenesisOpts struct {
 	// Capabilities are advertised alongside the network so capability-gated
 	// cases run — an overlay declares what it enables.
 	Capabilities []string
+	// Existing is a reference to a finished genesis file used verbatim (genesis
+	// mode "existing"): the file is read on its machine and written to each
+	// target, instead of building one from a template. Overrides/Overlay do not
+	// apply to it. Empty builds as usual.
+	Existing string
 }
 
 // Genesis builds the genesis from the key set's validator material and writes
@@ -581,16 +617,49 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	// generic dispatch builds a genesis by substituting a template, and for
 	// wemix that produces a file that initializes cleanly and runs the wrong
 	// consensus.
-	art, err := w.genesisArtifacts(ctx, p, opts)
+	var (
+		art genesis.Artifacts
+		gen []byte
+	)
+	if opts.Existing != "" {
+		// A finished genesis is read on its own machine and used verbatim — no
+		// template build, no overrides. It must be valid JSON, and (for a family
+		// that carries its validator set in the genesis) its validators must be
+		// the composed key set — checked below, not left to trust.
+		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
+		if rerr != nil {
+			return "", fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
+		}
+		if !json.Valid(b) {
+			return "", fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+		}
+		// The validators an existing genesis names must be exactly the keys the
+		// network runs, or block signing fails at consensus rather than here.
+		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
+			return "", err
+		}
+		gen = b
+	} else {
+		art, err = w.genesisArtifacts(ctx, p, opts)
+		if err != nil {
+			return "", err
+		}
+		gen = art.Genesis
+	}
+	// Every machine gets the genesis (and its by-products): each node's init
+	// reads it locally, and spread across a set "locally" is that node's server.
+	// The genesis is a generated file, so it sits under the composition's
+	// runtime directory when isolated (flat otherwise). The path is derived the
+	// one way, per machine, so a set writes each server the same relative path.
+	lay, err := w.layout()
 	if err != nil {
 		return "", err
 	}
-	gen := art.Genesis
-	// Every machine gets the genesis (and its by-products): each node's init
-	// reads it locally, and spread across a set "locally" is that node's server.
-	path := filepath.Join(w.state.Target.DataRoot, "genesis.json")
+	path := lay.GenesisPath()
 	err = w.eachMachine(func(t *resource.Access, _ []node.Record) error {
-		p := filepath.Join(t.DataRoot, "genesis.json")
+		ml := lay
+		ml.Root = t.DataRoot
+		p := ml.GenesisPath()
 		if err := t.Files.Write(ctx, p, gen, 0o644); err != nil {
 			return fmt.Errorf("chainsetup: genesis: write: %w", err)
 		}
@@ -598,7 +667,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		// The step's by-products go beside the genesis: a wemix bring-up
 		// reads its governance config back during deploy-governance.
 		for name, content := range art.Extra {
-			extra := filepath.Join(t.DataRoot, name)
+			extra := filepath.Join(filepath.Dir(p), name)
 			if err := t.Files.Write(ctx, extra, content, 0o644); err != nil {
 				return fmt.Errorf("chainsetup: genesis: write %s: %w", name, err)
 			}
@@ -700,7 +769,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	// for it. It still goes through the same write + readback as a rendered one,
 	// so a truncated copy is caught here rather than at boot.
 	if ns.Config != "" {
-		toml, rerr := os.ReadFile(ns.Config)
+		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
 			return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
 		}

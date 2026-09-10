@@ -16,8 +16,12 @@
 package resource
 
 import (
+	"context"
 	"fmt"
+	"io/fs"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -168,6 +172,180 @@ type Access struct {
 	// read a remote node's log over SSH — the same runner the remote Files and
 	// Driver are built on.
 	Runner process.Runner
+	// ElevatedFiles reads and writes on the target through sudo, for the files a
+	// step needs that the login user cannot reach (a root-owned key). It is set
+	// only when the server set permits elevation (ssh.sudo) and only for a remote
+	// target; it is nil otherwise, so a caller that needs it and finds nil knows
+	// elevation was not granted rather than silently reading nothing.
+	ElevatedFiles filestore.Store
+	// ElevatedRunner runs a shell command on the target through sudo, the runner
+	// half of the same elevation ElevatedFiles is the file half of. It is what
+	// lets a listing (find) see a root-only directory; nil when elevation was not
+	// granted.
+	ElevatedRunner process.Runner
+}
+
+// ReadMaybeElevated reads a file on the target, elevating through sudo only if
+// the ordinary read fails and elevation was granted. It exists for a file the
+// login user may not be able to reach — a root-owned key already on the server —
+// so the common case (a readable file) pays nothing, and the restricted case
+// succeeds where elevation is permitted. The returned error and this function
+// never include the file's bytes.
+func (a *Access) ReadMaybeElevated(ctx context.Context, path string) ([]byte, error) {
+	b, err := a.Files.Read(ctx, path)
+	if err == nil {
+		return b, nil
+	}
+	if a.ElevatedFiles == nil {
+		return nil, err
+	}
+	elevated, eerr := a.ElevatedFiles.Read(ctx, path)
+	if eerr != nil {
+		return nil, fmt.Errorf("read %s (plain and elevated both failed): %w", path, eerr)
+	}
+	return elevated, nil
+}
+
+// DownloadTo copies a file from the target to a local path, elevating through
+// sudo where needed and granted (ReadMaybeElevated). The local copy is written
+// 0600: a key downloaded from a server is a secret at rest, and its bytes never
+// pass through a log or error on the way.
+func (a *Access) DownloadTo(ctx context.Context, remotePath, localPath string) error {
+	b, err := a.ReadMaybeElevated(ctx, remotePath)
+	if err != nil {
+		return fmt.Errorf("download %s: %w", remotePath, err)
+	}
+	if err := (filestore.Local{}).Write(ctx, localPath, b, 0o600); err != nil {
+		return fmt.Errorf("download %s: write local: %w", remotePath, err)
+	}
+	return nil
+}
+
+// ExistsMaybeElevated reports whether a file is present on the target, asking
+// through sudo when the ordinary probe cannot see it (a root-only directory
+// makes `test -e` answer "absent" for the login user). A present answer from the
+// plain probe is trusted directly; only an absent-or-failed one consults the
+// elevated store, so a collision check never misses a root-owned file.
+func (a *Access) ExistsMaybeElevated(ctx context.Context, path string) (bool, error) {
+	ok, err := a.Files.Exists(ctx, path)
+	if err == nil && ok {
+		return true, nil
+	}
+	if a.ElevatedFiles == nil {
+		return ok, err
+	}
+	return a.ElevatedFiles.Exists(ctx, path)
+}
+
+// WriteMaybeElevated writes a file on the target, elevating through sudo only
+// when the ordinary write fails and elevation was granted — the same fall-back
+// shape as ReadMaybeElevated, for a destination the login user cannot write (a
+// root-owned keystore directory).
+func (a *Access) WriteMaybeElevated(ctx context.Context, path string, content []byte, mode fs.FileMode) error {
+	err := a.Files.Write(ctx, path, content, mode)
+	if err == nil {
+		return nil
+	}
+	if a.ElevatedFiles == nil {
+		return err
+	}
+	return a.ElevatedFiles.Write(ctx, path, content, mode)
+}
+
+// Upload copies a local file to remotePath on the target, preserving the local
+// file's mode, elevating through sudo where needed and granted. A destination
+// that already exists is refused unless force is set: a name collision is a
+// mistake to surface, not to silently overwrite (the --force-upload path is the
+// deliberate override). The file's bytes never pass through a log or error.
+func (a *Access) Upload(ctx context.Context, localPath, remotePath string, force bool) error {
+	content, err := os.ReadFile(localPath)
+	if err != nil {
+		return fmt.Errorf("upload: read local %s: %w", localPath, err)
+	}
+	info, err := os.Stat(localPath)
+	if err != nil {
+		return fmt.Errorf("upload: stat local %s: %w", localPath, err)
+	}
+	if !force {
+		exists, err := a.ExistsMaybeElevated(ctx, remotePath)
+		if err != nil {
+			return fmt.Errorf("upload: check %s: %w", remotePath, err)
+		}
+		if exists {
+			return fmt.Errorf("upload: %s already exists on the target — pass --force-upload to overwrite", remotePath)
+		}
+	}
+	if err := a.WriteMaybeElevated(ctx, remotePath, content, info.Mode().Perm()); err != nil {
+		return fmt.Errorf("upload %s: %w", remotePath, err)
+	}
+	return nil
+}
+
+// DownloadDir copies a directory tree from the target to a local directory,
+// preserving the layout under remoteDir and elevating through sudo where needed
+// and granted. It exists for a keyring, which is a tree (a password, metadata,
+// and a folder per node), not a single file: the whole set has to arrive for a
+// node to sign with it. Every file lands 0600, and no path or byte is logged.
+func (a *Access) DownloadDir(ctx context.Context, remoteDir, localDir string) error {
+	if a.Runner == nil {
+		return fmt.Errorf("download dir %s: not a remote target", remoteDir)
+	}
+	files, err := a.listFilesMaybeElevated(ctx, remoteDir)
+	if err != nil {
+		return fmt.Errorf("download dir %s: list: %w", remoteDir, err)
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("download dir %s: no files found (wrong path, or not readable even with elevation)", remoteDir)
+	}
+	prefix := strings.TrimSuffix(remoteDir, "/") + "/"
+	for _, remote := range files {
+		rel := strings.TrimPrefix(remote, prefix)
+		local := filepath.FromSlash(rel)
+		if err := a.DownloadTo(ctx, remote, filepath.Join(localDir, local)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// listFilesMaybeElevated lists the files under dir on the target, recursively,
+// elevating only when the plain listing cannot see it (a root-only directory).
+func (a *Access) listFilesMaybeElevated(ctx context.Context, dir string) ([]string, error) {
+	files, err := runFind(ctx, a.Runner, dir)
+	if err == nil {
+		return files, nil
+	}
+	if a.ElevatedRunner == nil {
+		return nil, err
+	}
+	return runFind(ctx, a.ElevatedRunner, dir)
+}
+
+// runFind lists the regular files under dir through run, one absolute path per
+// line. A non-zero exit (an unreadable or missing directory) is an error so the
+// elevated retry is tried.
+func runFind(ctx context.Context, run process.Runner, dir string) ([]string, error) {
+	res, err := run(ctx, "find "+shellQuote(dir)+" -type f")
+	if err != nil {
+		return nil, err
+	}
+	if res.ExitCode != 0 {
+		return nil, fmt.Errorf("find %s: exit %d: %s", dir, res.ExitCode, strings.TrimSpace(res.Stderr))
+	}
+	var out []string
+	for _, line := range strings.Split(res.Stdout, "\n") {
+		if p := strings.TrimSpace(line); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out, nil
+}
+
+// shellQuote single-quotes s for a POSIX shell. The process package has its own
+// unexported copy for the driver commands; this is the resource layer's, for the
+// listing command it issues directly.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // Lookup turns a server-set entry name into SSH credentials.
@@ -270,11 +448,21 @@ func (s Spec) resolveOver(creds remote.Credentials, hk remote.HostKeyPolicy, m r
 		return nil, err
 	}
 	run := process.SSHRunner(creds, hostKey)
-	return &Access{
+	acc := &Access{
 		Spec: s, DataRoot: s.DataRoot,
 		Files: process.NewRemoteFileStore(run), Driver: process.NewRemoteDriver(run),
 		Runner: run,
-	}, nil
+	}
+	// Elevation is offered only where the server set permits it. The sudo runner
+	// re-authenticates each command with the login's own password on stdin, so a
+	// caller reaching a root-owned file goes through the same host, same
+	// credentials — only elevated.
+	if creds.Sudo {
+		sudoRun := process.SSHSudoRunner(creds, hostKey)
+		acc.ElevatedFiles = process.NewRemoteFileStore(sudoRun)
+		acc.ElevatedRunner = sudoRun
+	}
+	return acc, nil
 }
 
 // Validate reports whether the spec is structurally complete for its kind —

@@ -73,6 +73,7 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+	inited := 0
 	err = w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
 		initer, ok := t.Driver.(process.Initializer)
 		if !ok {
@@ -85,11 +86,18 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 			return fmt.Errorf("chainsetup: init: read genesis: %w", err)
 		}
 		for _, ns := range nodes {
+			// A running node's datadir is not re-initialized: reuse-if-matching
+			// carries the pid of a node it leaves up, and re-initializing under a
+			// live process would wipe the chain data it is serving.
+			if ns.PID > 0 {
+				continue
+			}
 			spec := process.SpecOf(ns)
 			spec.Binary = w.binaryFor(ns, bin)
 			if err := initer.InitDatadir(ctx, spec, gen); err != nil {
 				return fmt.Errorf("chainsetup: init: node%d: %w", ns.Index, err)
 			}
+			inited++
 		}
 		return nil
 	})
@@ -97,7 +105,10 @@ func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) 
 		return "", err
 	}
 	w.state.Binary = bin
-	detail := fmt.Sprintf("%d datadir(s) initialized with %s", len(w.state.Nodes), bin)
+	detail := fmt.Sprintf("%d datadir(s) initialized with %s", inited, bin)
+	if reused := len(w.state.Nodes) - inited; reused > 0 {
+		detail += fmt.Sprintf(" (%d left running)", reused)
+	}
 	w.markStep("init", detail)
 	return detail, nil
 }
@@ -493,7 +504,10 @@ func (w *Workspace) Logs(ctx context.Context, index, n int) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		b, err := t.Files.Read(ctx, ns.LogPath)
+		// A node's log lives on its machine, and may be root-owned there, so it is
+		// read through the machine (remote or local) and elevated through sudo
+		// where the login user cannot reach it and the server set permits it.
+		b, err := t.ReadMaybeElevated(ctx, ns.LogPath)
 		if err != nil {
 			return "", fmt.Errorf("chainsetup: logs: %w", err)
 		}
@@ -813,7 +827,7 @@ func (w *Workspace) runPhaseActions(ctx context.Context, bin string, phase regis
 		spec.Binary = bin
 		specs = append(specs, spec)
 	}
-	plan := process.Plan{DataRoot: w.state.Target.DataRoot, Nodes: specs}
+	plan := process.Plan{DataRoot: w.state.Target.DataRoot, GenesisPath: w.state.GenesisPath, Nodes: specs}
 
 	on, ok := phaseActionNode(w.state.Nodes, phase)
 	if !ok {

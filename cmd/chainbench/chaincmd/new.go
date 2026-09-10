@@ -13,6 +13,7 @@ import (
 // + output — the logic lives in the app layer, shared with the MCP tool.
 func newNetNewCmd() *cobra.Command {
 	var dataDir, chain, binary, keysDir, manifestPath, templatePath string
+	var workspaceConfig string
 	var docker bool
 	var serverSet string
 	var tf targetFlags
@@ -30,10 +31,14 @@ func newNetNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			target, err = app.WithWorkspaceConfig(target, workspaceConfig)
+			if err != nil {
+				return err
+			}
 			out, err := app.NetNew(cmd.Context(), deps(cmd), app.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
-				ServerSet: serverSet,
+				ServerSet: serverSet, WorkspaceConfigPath: workspaceConfig,
 			})
 			if err != nil {
 				return err
@@ -43,6 +48,7 @@ func newNetNewCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory — where the composition is set up (default: ~/.chainbench/<timestamp>/chainsetup; keep it short: node IPC sockets have a 104-char limit)")
+	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "environment file owning the target dataRoot and its purpose directories; recorded so later steps resolve under it")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")

@@ -281,13 +281,13 @@ func TestAllocate_AllServersRecordsEachNodesServer(t *testing.T) {
 			"pool:\n"+
 			"  hosts: [{name: box1, addr: 192.0.2.11}, {name: box2, addr: 192.0.2.12}, {name: box3, addr: 192.0.2.13}]\n"+
 			"  slots: 2\n"+
-			"ssh: {user: dev, password: pw}\n"+
-			"dataRoot: /data/cb\n"), 0o600); err != nil {
+			"ssh: {user: dev, password: pw}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	d := chainsetup.Deps{Clock: fixedClock()}
 	if _, err := chainsetup.NetNew(context.Background(), d, chainsetup.NetNewIn{
 		DataDir: dir, Chain: "stablenet", KeysDir: presetDir,
+		Target: resource.Spec{DataRoot: "/data/cb"},
 	}); err != nil {
 		t.Fatal(err)
 	}

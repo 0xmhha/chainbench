@@ -108,8 +108,7 @@ func TestPlan_ReadsTheInventory(t *testing.T) {
 		"pool:\n" +
 		"  hosts: [{name: box1, addr: 10.9.9.9}]\n" +
 		"  slots: 4\n" +
-		"ssh: {user: dev, password: pw}\n" +
-		"dataRoot: /data/cb\n"
+		"ssh: {user: dev, password: pw}\n"
 	if err := os.WriteFile(inv, []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}

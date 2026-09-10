@@ -28,8 +28,7 @@ func fixture(t *testing.T) string {
 		"version: 2\n"+
 			"pool:\n"+
 			"  hosts: [{name: box1, addr: 192.0.2.11}]\n"+
-			"ssh: {user: dev, password: pw, known_hosts_file: known_hosts}\n"+
-			"dataRoot: /data/cb\n"), 0o600); err != nil {
+			"ssh: {user: dev, password: pw, known_hosts_file: known_hosts}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "localmap.yaml"), []byte(

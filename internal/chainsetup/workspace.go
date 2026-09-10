@@ -47,6 +47,12 @@ type Step = session.Step
 // resolve time, and a directly named target reads the environment.
 type State struct {
 	Chain string `json:"chain"`
+	// CompositionID is a stable identifier for this composition, set once at
+	// `new` and kept across resume and binary swap. It names the composition's
+	// own node data directories, runtime files, and logs so two compositions on
+	// one data root do not collide; it is derived from the workspace directory,
+	// not the run time or a pid, so a resume keeps the same one.
+	CompositionID string `json:"compositionId,omitempty"`
 	// ManifestPath and TemplatePath name an external, project-supplied chain
 	// manifest. When set they win over Chain, so a workspace composed for a
 	// project's own chain resolves the same plugin on every later step.
@@ -85,6 +91,10 @@ type State struct {
 	// later steps resolve the same file — and, in docker mode, find the
 	// localmap next to it.
 	ServerSet string `json:"serverSet,omitempty"`
+	// WorkspaceConfig is the environment file (--workspace-config) this
+	// composition was set up with, recorded so later steps and a resume resolve
+	// portable file references under the same data root and purpose directories.
+	WorkspaceConfig string `json:"workspaceConfig,omitempty"`
 	// LegacyServerSet reads the field's pre-rename key so a workspace composed
 	// before the rename keeps its recorded path. It is migrated into ServerSet
 	// on open and never written back.
@@ -143,6 +153,11 @@ type Workspace struct {
 	state  State
 	env    func(string) string
 	now    func() time.Time
+	// wcCache holds the parsed workspace-config for this command, loaded once
+	// from state.WorkspaceConfig. nil until first use; the bool records that a
+	// load was attempted so a workspace with none is not reloaded per node.
+	wcCache  *resource.WorkspaceConfig
+	wcLoaded bool
 	// driver, when set, replaces every machine's process driver — the seam a
 	// test uses to control nodes without an OS process, and a caller uses to
 	// route control over another transport.

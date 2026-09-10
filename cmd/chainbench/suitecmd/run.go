@@ -31,25 +31,26 @@ type runReport struct {
 // gone (R4): composition belongs to chainsetup alone.
 func NewRun() *cobra.Command {
 	var (
-		chain        string
-		rpcURLs      []string
-		binary       string
-		keysDir      string
-		keysSource   string
-		artifactRoot string
-		validators   int
-		chainID      int64
-		networkID    int64
-		launchOpts   []string
-		dashboardURL string
-		jsonOut      bool
-		workspaceDir string
-		keepUp       bool
-		waitBlocks   uint64
-		nodeMonitorT time.Duration
-		docker       bool
-		attach       bool
-		sf           resourcecmd.ServerFlags
+		chain           string
+		rpcURLs         []string
+		binary          string
+		keysDir         string
+		keysSource      string
+		artifactRoot    string
+		validators      int
+		chainID         int64
+		networkID       int64
+		launchOpts      []string
+		dashboardURL    string
+		jsonOut         bool
+		workspaceDir    string
+		workspaceConfig string
+		keepUp          bool
+		waitBlocks      uint64
+		nodeMonitorT    time.Duration
+		docker          bool
+		attach          bool
+		sf              resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
 		Use:   "run [spec.json ...]",
@@ -92,11 +93,15 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("artifact-root") {
 				in.ArtifactRoot = artifactRoot
 			}
+			if cmd.Flags().Changed("workspace-config") {
+				in.WorkspaceConfigPath = workspaceConfig
+			}
 			return runComposed(cmd, in, jsonOut)
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
+	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().DurationVar(&nodeMonitorT, "node-monitor-timeout", 0, "compose: how long the readiness gate waits on nodes still coming up (0 = default; raise for a large/slow bring-up, e.g. 5m for a 15-node poa network over docker)")

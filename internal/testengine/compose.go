@@ -206,12 +206,13 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,
-		ChainID:      in.ChainID,
-		GenesisSet:   hardforkSets(spec.Hardforks),
-		OverlayPath:  overlayPath,
-		LaunchSet:    launch,
-		LaunchScoped: spec.EnvLaunch,
-		ConfigSet:    spec.EnvConfig,
+		ChainID:         in.ChainID,
+		GenesisSet:      hardforkSets(spec.Hardforks),
+		OverlayPath:     overlayPath,
+		GenesisExisting: spec.Chain.GenesisExisting,
+		LaunchSet:       launch,
+		LaunchScoped:    spec.EnvLaunch,
+		ConfigSet:       spec.EnvConfig,
 	}
 	// A pn is a proxy tier: it exists to keep endpoints off the producers, so a
 	// topology that declares one composes as the proxied graph (bp <-> pn <-> en,
@@ -232,7 +233,93 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		up.Target = tgt
 	}
+	// The workspace-config owns the target data root (it moved off the server
+	// set). Setting it here means `new` records it and every later step — and a
+	// server selection through Retarget, which keeps a data root already set —
+	// resolves paths under the root the environment named, not the workspace dir.
+	if in.WorkspaceConfigPath != "" {
+		wc, werr := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+		if werr != nil {
+			return composition{}, werr
+		}
+		// The workspace-config is the one owner of the data root. If the env's
+		// target already carries a different one — a srv:// or a path in
+		// env.target — that is two answers to where the data plane lives, so it
+		// is a conflict rather than a silent override. Same value, or none, is
+		// fine. The target's locality (local vs remote/SSH) still comes from the
+		// server set, not this file; only the root does.
+		if up.Target.DataRoot != "" && up.Target.DataRoot != wc.DataRoot {
+			return composition{}, fmt.Errorf(
+				"testengine: data root conflict — the env target %q says %q but --workspace-config says %q; put the data root in workspace-config alone",
+				spec.Placement, up.Target.DataRoot, wc.DataRoot)
+		}
+		up.Target.DataRoot = wc.DataRoot
+		up.WorkspaceConfigPath = in.WorkspaceConfigPath
+		if err := applyPreset(up, wc, spec); err != nil {
+			return composition{}, err
+		}
+	}
 	return composition{up: up}, nil
+}
+
+// applyPreset expands a prepared input preset onto the composition: the
+// preset's finished genesis and its keyring stand in for declaring them in the
+// DSL, which is the point of naming a bundle. A field the DSL already declared
+// is a conflict rather than a silent override. It runs only for inputs.mode
+// prepared; a generated run has no preset (workspace-config validation ensures
+// that).
+func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+	if wc.Inputs.Mode != resource.InputPrepared {
+		return nil
+	}
+	name := wc.Inputs.Preset
+	preset := wc.Presets[name] // validated to exist at parse time
+	if preset.Genesis != "" {
+		if up.GenesisExisting != "" || len(spec.Chain.GenesisOverlay) > 0 {
+			return fmt.Errorf("testengine: preset %q sets a genesis, but the spec already declares one — declare it in one place", name)
+		}
+		up.GenesisExisting = preset.Genesis
+	}
+	if preset.Keyring != "" {
+		if spec.EnvKeys != nil {
+			return fmt.Errorf("testengine: preset %q sets a keyring, but the spec already declares keys — declare them in one place", name)
+		}
+		// A local key set is used in place; a keyring on a server (srv://) is
+		// downloaded to a local directory by the keys step (materializeKeyring)
+		// so the ring is read the one local way and a node signs with keys at a
+		// known local path. A bare relative name is neither, and is rejected here
+		// rather than mistaken for a local directory.
+		if !strings.HasPrefix(preset.Keyring, "srv://") && !filepath.IsAbs(preset.Keyring) {
+			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path or a srv:// reference", name, preset.Keyring)
+		}
+		up.KeysDir = preset.Keyring
+		up.KeysSource = "preset"
+	}
+	applyPresetConfigs(up, preset)
+	return nil
+}
+
+// applyPresetConfigs resolves each node's logical config name to the preset's
+// file. A node table's config value is a logical name when it is a key in the
+// preset's configs map: the DSL names a config, and the environment's preset
+// says which file that name is on this target, so one spec runs against
+// different targets by swapping the map. A config value that is not a preset
+// key is left as a direct file reference, which is how a node named its config
+// before presets existed. With no node table there is nothing to map onto, and
+// the map is simply unused.
+func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
+	if len(preset.Configs) == 0 || up.Topology == nil {
+		return
+	}
+	for i := range up.Topology.Nodes {
+		logical := up.Topology.Nodes[i].Config
+		if logical == "" {
+			continue
+		}
+		if file, ok := preset.Configs[logical]; ok {
+			up.Topology.Nodes[i].Config = file
+		}
+	}
 }
 
 // topologyHasKeys reports whether a node-table declaration pins any per-node

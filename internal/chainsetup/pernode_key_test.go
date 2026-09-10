@@ -15,6 +15,32 @@ import (
 	_ "github.com/0xmhha/chainbench/internal/chains/all" // register chain plugins
 )
 
+// TestKeys_NodeTableRejectsServerKeyReference is W2's key-security guard: a
+// private key on a server is never pulled onto this machine to be derived, so a
+// node whose key is a srv:// reference fails with that reason rather than
+// reading the secret.
+func TestKeys_NodeTableRejectsServerKeyReference(t *testing.T) {
+	dir := t.TempDir()
+	ws, err := chainsetup.Open(dir, fixedClock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join(dir, "keys")}); err != nil {
+		t.Fatal(err)
+	}
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Key: "srv://server-01/data/keys/node1"},
+		{Index: 2, Role: "bp"},
+	}}
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{Topology: topo}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	_, err = ws.Keys(context.Background(), chainsetup.KeysOpts{})
+	if err == nil || !strings.Contains(err.Error(), "server") {
+		t.Fatalf("a srv:// key reference was accepted: %v", err)
+	}
+}
+
 // TestKeys_NodeTablePinnedKeyDrivesGenesis is S5's per-node key contract (cases
 // a/b/c together): node1 pins a key and its address becomes the node's identity
 // and a genesis validator (a); node2 names no key and is generated, and is a

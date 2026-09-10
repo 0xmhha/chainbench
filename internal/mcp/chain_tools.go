@@ -22,16 +22,17 @@ func chainNewTool() Tool {
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"workspaceDir": map[string]any{"type": "string", "description": "workspace directory (where the composition is set up)"},
-				"chain":        map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix)"},
-				"binary":       map[string]any{"type": "string", "description": "node binary path (may also be set at start)"},
-				"keys":         map[string]any{"type": "string", "description": "key set directory (default keys/preset)"},
-				"target":       map[string]any{"type": "string", "description": "data plane as one path: /local/path | user@host:/path | ssh://user@host:port/path"},
-				"remoteHost":   map[string]any{"type": "string", "description": "legacy: SSH host for a remote data plane (prefer target)"},
-				"remoteUser":   map[string]any{"type": "string", "description": "legacy: SSH user (prefer target)"},
-				"remotePort":   map[string]any{"type": "number", "description": "legacy: SSH port (prefer target)"},
-				"targetDir":    map[string]any{"type": "string", "description": "legacy: data root ON the target (prefer target)"},
-				"docker":       map[string]any{"type": "boolean", "description": "servers are local docker containers: translate this tool's dials via the localmap next to the server set"},
+				"workspaceDir":    map[string]any{"type": "string", "description": "workspace directory (where the composition is set up)"},
+				"workspaceConfig": map[string]any{"type": "string", "description": "environment file owning the target dataRoot and its purpose directories"},
+				"chain":           map[string]any{"type": "string", "description": "chain id (stablenet|wbft|wemix)"},
+				"binary":          map[string]any{"type": "string", "description": "node binary path (may also be set at start)"},
+				"keys":            map[string]any{"type": "string", "description": "key set directory (default keys/preset)"},
+				"target":          map[string]any{"type": "string", "description": "data plane as one path: /local/path | user@host:/path | ssh://user@host:port/path"},
+				"remoteHost":      map[string]any{"type": "string", "description": "legacy: SSH host for a remote data plane (prefer target)"},
+				"remoteUser":      map[string]any{"type": "string", "description": "legacy: SSH user (prefer target)"},
+				"remotePort":      map[string]any{"type": "number", "description": "legacy: SSH port (prefer target)"},
+				"targetDir":       map[string]any{"type": "string", "description": "legacy: data root ON the target (prefer target)"},
+				"docker":          map[string]any{"type": "boolean", "description": "servers are local docker containers: translate this tool's dials via the localmap next to the server set"},
 			},
 			"required": []string{"workspaceDir", "chain"},
 		},
@@ -40,13 +41,19 @@ func chainNewTool() Tool {
 			if err != nil {
 				return "", err
 			}
+			wcPath := argString(args, "workspaceConfig", "")
+			target, err = app.WithWorkspaceConfig(target, wcPath)
+			if err != nil {
+				return "", err
+			}
 			out, err := app.NetNew(ctx, app.Deps{}, app.NetNewIn{
-				DataDir: argString(args, "workspaceDir", ""),
-				Chain:   argString(args, "chain", ""),
-				Binary:  argString(args, "binary", ""),
-				KeysDir: argString(args, "keys", ""),
-				Target:  target,
-				Docker:  argBool(args, "docker", false),
+				DataDir:             argString(args, "workspaceDir", ""),
+				Chain:               argString(args, "chain", ""),
+				Binary:              argString(args, "binary", ""),
+				KeysDir:             argString(args, "keys", ""),
+				Target:              target,
+				Docker:              argBool(args, "docker", false),
+				WorkspaceConfigPath: wcPath,
 			})
 			if err != nil {
 				return "", err
@@ -404,24 +411,32 @@ func chainUpTool() Tool {
 			"keysSource":       map[string]any{"type": "string"},
 			"endpointSyncMode": map[string]any{"type": "string"},
 			"peering":          map[string]any{"type": "string", "description": "mesh (default) | proxied (bp <-> pn <-> en)"},
+			"workspaceConfig":  map[string]any{"type": "string", "description": "environment file owning the target dataRoot and its purpose directories"},
 			"docker":           map[string]any{"type": "boolean"},
 			"serverSet":        map[string]any{"type": "string"},
 			"server":           map[string]any{"type": "string"},
 			"allServers":       map[string]any{"type": "boolean"},
 		}),
 		Handler: func(ctx context.Context, args map[string]any) (string, error) {
+			wcPath := argString(args, "workspaceConfig", "")
+			target, err := app.TargetForWorkspaceConfig(wcPath)
+			if err != nil {
+				return "", err
+			}
 			out, err := app.NetUp(ctx, app.Deps{}, app.NetUpIn{
-				DataDir:          argString(args, "workspaceDir", ""),
-				Chain:            argString(args, "chain", ""),
-				Binary:           argString(args, "binary", ""),
-				Validators:       argInt(args, "validators", 4),
-				Endpoints:        argInt(args, "endpoints", 0),
-				Proxies:          argInt(args, "proxies", 0),
-				KeysDir:          argString(args, "keysDir", ""),
-				KeysSource:       argString(args, "keysSource", ""),
-				EndpointSyncMode: argString(args, "endpointSyncMode", ""),
-				Peering:          argString(args, "peering", ""),
-				Docker:           argBool(args, "docker", false),
+				DataDir:             argString(args, "workspaceDir", ""),
+				Chain:               argString(args, "chain", ""),
+				Binary:              argString(args, "binary", ""),
+				Validators:          argInt(args, "validators", 4),
+				Endpoints:           argInt(args, "endpoints", 0),
+				Proxies:             argInt(args, "proxies", 0),
+				KeysDir:             argString(args, "keysDir", ""),
+				KeysSource:          argString(args, "keysSource", ""),
+				EndpointSyncMode:    argString(args, "endpointSyncMode", ""),
+				Peering:             argString(args, "peering", ""),
+				Docker:              argBool(args, "docker", false),
+				Target:              target,
+				WorkspaceConfigPath: wcPath,
 				Server: app.ServerRef{
 					SetPath: argString(args, "serverSet", ""),
 					Name:    argString(args, "server", ""),

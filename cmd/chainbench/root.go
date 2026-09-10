@@ -6,6 +6,7 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/accountcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/catalogcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/chaincmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/filecmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/lifecyclecmd"
 	"github.com/0xmhha/chainbench/cmd/chainbench/networkcmd"
@@ -58,6 +59,7 @@ func newRootCmd() *cobra.Command {
 		txcmd.NewContract(),
 		keyringcmd.New(),
 		resourcecmd.New(),
+		filecmd.New(),
 	)
 	// The query group is built last, because it is a projection of the tree and
 	// there has to be a tree to project.

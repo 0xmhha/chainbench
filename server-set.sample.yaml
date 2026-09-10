@@ -79,7 +79,8 @@ ssh:
   # decides whether a step needs it.
   sudo: false
 
-# Where a node's data plane lives ON the target (datadirs, genesis, configs,
-# logs). A remote host's path is a path on that host. Node directories are
-# created underneath it.
-dataRoot: /var/lib/chainbench
+# dataRoot is NOT set here any more. Where a node's data plane lives on the
+# target — the dataRoot and the purpose directories under it — is owned by the
+# workspace-config file (--workspace-config), so one DSL runs across targets by
+# swapping that file. See workspace-config.sample.yaml. A dataRoot left in this
+# file is rejected with a migration message.

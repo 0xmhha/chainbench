@@ -55,6 +55,28 @@ func TestLocalInspector_AnswersProcessQuestions(t *testing.T) {
 	}
 }
 
+// TestLocalCmdline_ReadsArgvOfARunningProcess pins the cmdline capability: it
+// returns the argv a running pid was launched with, binary first.
+func TestLocalCmdline_ReadsArgvOfARunningProcess(t *testing.T) {
+	d := process.NewLocalDriver()
+	sleep := exec.Command("sleep", "31")
+	if err := sleep.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sleep.Process.Kill(); _, _ = sleep.Process.Wait() })
+
+	argv, err := d.Cmdline(context.Background(), sleep.Process.Pid)
+	if err != nil {
+		t.Fatalf("Cmdline: %v", err)
+	}
+	if len(argv) < 2 || argv[len(argv)-1] != "31" {
+		t.Fatalf("argv = %v, want it to end with the sleep duration 31", argv)
+	}
+	if _, err := d.Cmdline(context.Background(), -1); err == nil {
+		t.Error("cmdline of a non-existent pid must error")
+	}
+}
+
 // TestLocalCommander_ReturnsStdout pins the capability's contract: the
 // command's stdout, nothing folded in.
 func TestLocalCommander_ReturnsStdout(t *testing.T) {

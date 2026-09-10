@@ -107,6 +107,10 @@ func TestParseV2Strictness(t *testing.T) {
 			"env":{"chain":"wbft"},"steps":[{"do":"waitBlock","n":1}]}`,
 		"unsupported genesis mode": `{"schemaVersion":"2","kind":"case","id":"x",
 			"env":{"chain":"wbft","genesis":{"mode":"inherit"}},"steps":[{"expect":"blockNumber","is":1}]}`,
+		"existing genesis without ref": `{"schemaVersion":"2","kind":"case","id":"x",
+			"env":{"chain":"wbft","genesis":{"mode":"existing"}},"steps":[{"expect":"blockNumber","is":1}]}`,
+		"existing genesis with overlay": `{"schemaVersion":"2","kind":"case","id":"x",
+			"env":{"chain":"wbft","genesis":{"mode":"existing","ref":"g.json","set":{"config.chainId":9}}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"unknown launch scope": `{"schemaVersion":"2","kind":"case","id":"x",
 			"env":{"chain":"wbft","launch":{"bp1":{"mine":true}}},"steps":[{"expect":"blockNumber","is":1}]}`,
 		"override hook": `{"schemaVersion":"2","kind":"case","id":"x","env":{"chain":"wbft"},
@@ -183,6 +187,25 @@ func TestInlineEnv(t *testing.T) {
 	// A case parsed without inlining reports the pending reference.
 	if _, err := Parse([]byte(caseRef)); err == nil || !strings.Contains(err.Error(), "InlineEnv") {
 		t.Fatalf("unresolved ref parse: %v", err)
+	}
+}
+
+// TestGenesisExistingMode pins W4's finished-genesis form: mode "existing" with
+// a ref lowers to Spec.Chain.GenesisExisting and does not build a template.
+func TestGenesisExistingMode(t *testing.T) {
+	raw := `{"schemaVersion":"2","kind":"case","id":"x",
+		"env":{"chain":"wbft","binaries":{"default":"gwbft"},
+		       "genesis":{"mode":"existing","ref":"genesis-regression.json"}},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+	s, err := Parse([]byte(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Chain.GenesisExisting != "genesis-regression.json" {
+		t.Fatalf("GenesisExisting = %q, want the ref", s.Chain.GenesisExisting)
+	}
+	if len(s.Chain.GenesisOverlay) != 0 {
+		t.Fatalf("existing mode must not build an overlay: %v", s.Chain.GenesisOverlay)
 	}
 }
 

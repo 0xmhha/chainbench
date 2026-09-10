@@ -16,10 +16,11 @@ import (
 func newNetUpCmd() *cobra.Command {
 	var (
 		dataDir, chain, binary, keysDir                      string
+		workspaceConfig                                      string
 		manifestPath, templatePath                           string
 		validators, endpoints, proxies                       int
 		endpointSyncMode, topologyPath, blueprintPath, stage string
-		keysSource, bootnode                                 string
+		keysSource, bootnode, genesisExisting                string
 		chainID                                              int64
 		genesisSet, launchSet, binaries                      []string
 		overlayPath                                          string
@@ -42,6 +43,10 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			target, err = app.WithWorkspaceConfig(target, workspaceConfig)
+			if err != nil {
+				return err
+			}
 			bins, err := parseBinaries(binaries)
 			if err != nil {
 				return err
@@ -52,11 +57,13 @@ func newNetUpCmd() *cobra.Command {
 				KeysDir: keysDir, Target: target, Binary: binary,
 				Validators: validators, Endpoints: endpoints, Proxies: proxies,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, BlueprintPath: blueprintPath, Peering: peering,
-				Binaries:   bins,
-				Server:     sf.Ref(),
-				Docker:     docker,
-				KeysSource: keysSource,
-				ChainID:    chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
+				Binaries:            bins,
+				Server:              sf.Ref(),
+				Docker:              docker,
+				KeysSource:          keysSource,
+				WorkspaceConfigPath: workspaceConfig,
+				GenesisExisting:     genesisExisting,
+				ChainID:             chainID, GenesisSet: genesisSet, OverlayPath: overlayPath,
 				LaunchSet: launchSet,
 			})
 			// The steps that did run are worth printing even when a later one
@@ -70,6 +77,7 @@ func newNetUpCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&dataDir, "workspace-dir", "", "workspace directory — where the composition is set up (default: ~/.chainbench/<timestamp>/chainsetup; keep it short: node IPC sockets have a 104-char limit)")
+	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "environment file owning the target dataRoot and its purpose directories; the same steps run across targets by swapping this file")
 	cmd.Flags().StringVar(&stage, "stage", string(app.UpStart), "how far to go: deploy (write artifacts only) or start")
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (stablenet|wbft|wemix); ignored with --manifest")
 	cmd.Flags().StringVar(&manifestPath, "manifest", "", "path to an external chain manifest JSON (project-supplied chain, on a built-in family)")
@@ -90,6 +98,7 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "override the manifest chain id (0 = manifest)")
 	cmd.Flags().StringArrayVar(&genesisSet, "set", nil, "override a genesis config key (repeatable), e.g. --set bohoBlock=10")
 	cmd.Flags().StringVar(&overlayPath, "overlay", "", "JSON overlay file {capabilities,genesis} deep-merged into the genesis")
+	cmd.Flags().StringVar(&genesisExisting, "genesis-existing", "", "use a finished genesis file verbatim (a local path or srv:// reference) instead of building one; its validators must match the composed keys")
 	cmd.Flags().StringArrayVar(&launchSet, "launch-opt", nil, "override a launch option (repeatable), e.g. --launch-opt networkid=4242")
 	cmd.Flags().BoolVar(&docker, "docker", false,
 		"servers are local docker containers: translate this tool's dials via the localmap next to the server set (addresses only — docker itself is not touched)")
