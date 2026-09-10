@@ -21,6 +21,10 @@ import (
 // (app.RunSummary is embedded so its tests/summary fields flatten in).
 type runReport struct {
 	Session string `json:"session"`
+	// Error is why the run produced no session at all — a chain that would not
+	// compose, most often. It is omitted when there is one, so a successful
+	// document is byte for byte what it was before this field existed.
+	Error string `json:"error,omitempty"`
 	app.RunSummary
 }
 
@@ -216,9 +220,34 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 		fmt.Fprintf(notes, "preflight: %s\n", res.Preflight)
 	}
 	if err != nil {
-		return err
+		return setupFailure(cmd.OutOrStdout(), err, jsonOut)
 	}
 	return printSession(cmd.OutOrStdout(), res.SessionRoot, jsonOut)
+}
+
+// setupFailure reports a run that never got as far as a session.
+//
+// It used to return the error and nothing else, which made one definition
+// answer differently from several for the very same failure: a broken binary
+// exited 1 with an empty stdout on its own, and 2 with a full document when a
+// second definition was named alongside it. Nothing about the failure differs,
+// so nothing about the report should.
+//
+// The code is 2 either way, --json or not, matching what sequenceExit already
+// returns for a definition that could not run: "the chain would not come up" is not the
+// same news as "a test ran and failed", and CI gates on the difference.
+func setupFailure(out io.Writer, cause error, jsonOut bool) error {
+	if jsonOut {
+		// The document goes out even though the run failed, because under
+		// --json stdout is the whole answer: a consumer that gets nothing
+		// cannot tell a compose failure from a crash.
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(runReport{Error: cause.Error()}); err != nil {
+			return err
+		}
+	}
+	return &exitcode.Error{Code: 2, Err: cause}
 }
 
 // progressWriter is where narration goes: stderr when stdout has to parse as a
