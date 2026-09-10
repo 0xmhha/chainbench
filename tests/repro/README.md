@@ -2,9 +2,10 @@
 
 These scripts drive the **built chainbench CLI against real chain binaries** to
 reproduce regression scenarios that cannot run in CI (no chain binary in the
-sandbox). They are the live-verification tier for the Go test-bench: the matching
-testkit cases under `tests/` are registration- and capability-gated in CI, and
-these scripts confirm the actual on-chain behavior in a normal environment.
+sandbox). Most of this tier has moved to gated Go tests under
+[`../e2e/`](../e2e/README.md); what is left here is what has not. The DSL cases
+under [`../tc/`](../tc/README.md) cover the same behavior in CI against a mock or
+an attached network, and these scripts confirm it against a live chain.
 
 Run each from the repo root once you have the relevant node binary. Each script
 guards its requirements and exits `2` if a binary/tool is missing, so a bare run
@@ -75,15 +76,14 @@ from the environment only.
 
 ## Gated Go E2E
 
-`internal/core/driver/remote_e2e_test.go` (build tag `e2e`) drives the SSH RemoteDriver
-against a real sshd. `go test ./...` never runs it. Run with the Docker stand-in:
+`internal/core/process/remote_e2e_test.go` (build tag `e2e`) drives the SSH
+`RemoteDriver` against a real sshd. `go test ./...` never runs it. Bring up the
+Docker stand-in from [`../../env/docker/`](../../env/docker/README.md), then:
 
 ```sh
-tests/remote/sshd/run.sh
-# or manually:
 CHAINBENCH_REMOTE_HOST=127.0.0.1 CHAINBENCH_REMOTE_PORT=2222 \
 CHAINBENCH_REMOTE_USER=chainbench CHAINBENCH_REMOTE_PASS=chainbench \
-go test -tags e2e -run TestRemoteDriver_E2E -v ./internal/core/driver/
+go test -tags e2e -run TestRemoteDriver_E2E -v ./internal/core/process/
 ```
 
 ## Running scripts individually

@@ -40,7 +40,7 @@ tests/tc/
 `string-handling` 여섯 건은 각자 다른 genesis 를 요구한다. 실행기가 구성이 갈리는
 묶음을 거부하므로(`sameComposition`) 조용히 틀린 네트워크에서 돌지는 않는다.
 
-작성 방법은 `../../docs/dev/dsl-authoring-guide.md` 에 있다.
+작성 방법은 `../../docs/guide/dsl-authoring.md` 에 있다.
 
 ## 2. 디렉터리별 내용
 
@@ -338,7 +338,7 @@ tests/tc/
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
 | `01-sample-minimal.json` | v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-minimal.json | stablenet | `default=gstable` | bp=4 | — |
-| `02-sample-lifecycle.json` | 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/dev/dsl-authoring-guide.md) | stablenet | `default=${GSTABLE_BIN:-gstable}` | bp=4, en=1 | 있음 |
+| `02-sample-lifecycle.json` | 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/guide/dsl-authoring.md) | stablenet | `default=${GSTABLE_BIN:-gstable}` | bp=4, en=1 | 있음 |
 
 ### `stress` (2)
 

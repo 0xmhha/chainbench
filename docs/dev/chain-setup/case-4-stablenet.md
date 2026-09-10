@@ -4,6 +4,12 @@
 > 상태: ✅ **동작 확인** — 라이브 e2e 5종 + CI(mock/attach) 커버. 네 케이스 중 가장 검증도가 높다.
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
 
+> **명령 표면 정정 (2026-09-11).** 본문 서술은 그때의 기록이다. **현재 표면은 `chain` 하나다** —
+> `net` 명령군과 `chain up --case`, `chainbench setup` 은 모두 없다. 대응: `net up`/`chain up --case X`
+> → `chain up --chain X`, `net <verb>` → `chain <verb>`, `--data-dir` → `--workspace-dir`,
+> `--stop-after provision` → `--stage deploy`. 아래 실행 예시는 현재 표면으로 고쳐 두었다.
+> 근거: `chainbench chain --help` · `cmd/chainbench/chaincmd/up.go`.
+
 ---
 
 ## 1. 전제
@@ -73,15 +79,15 @@
 
 ```sh
 CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
-chainbench chain up --case stablenet \
+chainbench chain up --chain stablenet \
   --binary $CHAIN/go-stablenet/build/bin/gstable \
-  --data-dir /tmp/cb-stablenet
+  --workspace-dir /tmp/cb-stablenet
 ```
 
 단계마다 PASS/FAIL 이 찍힌다. 특정 단계까지만 보고 싶으면:
 
 ```sh
-chainbench chain up --case stablenet --binary <gstable> --data-dir /tmp/x --stop-after provision
+chainbench chain up --chain stablenet --binary <gstable> --workspace-dir /tmp/x --stage deploy
 ls /tmp/x            # genesis.json + node<N>/config.toml 확인
 ```
 
@@ -92,12 +98,11 @@ chainbench run --chain stablenet --binary <gstable> --keys keys/preset \
   --artifact-root /tmp/out examples/specs/smoke-rpc-reads.json
 ```
 
-### 4.3 레거시 setup 경로
+### 4.3 상태 확인과 정지
 
 ```sh
-chainbench setup --chain stablenet --launch --binary <gstable> --data-dir /tmp/x --validators 4
-chainbench status --data-dir /tmp/x
-chainbench stop   --data-dir /tmp/x
+chainbench status --workspace-dir /tmp/x
+chainbench stop   --workspace-dir /tmp/x
 ```
 
 ---

@@ -4,7 +4,7 @@
 > **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
 > 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
 
-> 2026-08-11 코드 실측. 자매 문서: [아키텍처](software-architecture.md) · [시퀀스](sequence-diagrams.md) · [상태](state-diagrams.md)
+> 2026-08-11 코드 실측. 자매 문서: [아키텍처](software-architecture-2026-08-11.md) · [시퀀스](sequence-diagrams-2026-08-11.md) · [상태](state-diagrams-2026-08-11.md)
 > 표기: `✅` 배선 완료 · `◐` 부분 · `☐` 미구현 · `→x` x 로 흡수 예정
 
 ---

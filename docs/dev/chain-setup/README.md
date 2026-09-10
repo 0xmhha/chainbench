@@ -6,12 +6,13 @@
 
 | 케이스 | 문서 | 현재 상태 |
 |---|---|---|
-| gwemix 단독 | [case-1-wemix.md](case-1-wemix.md) | ⚠️ **절차 확정, 자동화 미구현** — 수동 절차는 §1b 로 확립 |
-| gwemix → gwbft 하드포크 핸드오프 | [case-2-wemix-to-wbft.md](case-2-wemix-to-wbft.md) | ✅ **수동 절차 검증 완료** (블록 100 인계 확인) / 자동화는 미구현 |
+| gwemix 단독 | [case-1-wemix.md](case-1-wemix.md) | ✅ **자동화됨** (2026-08-23) — `chain up --chain wemix`. 2-페이즈 부트스트랩은 poa 패밀리 phase 로 돈다 |
+| gwemix → gwbft 하드포크 핸드오프 | [case-2-wemix-to-wbft.md](case-2-wemix-to-wbft.md) | ✅ **수동 절차 검증 완료** (블록 100 인계) · 자동화는 `upgrade run` |
 | gwbft 단독 | [case-3-wbft.md](case-3-wbft.md) | ✅ **동작 확인** (라이브) |
 | gstable 단독 | [case-4-stablenet.md](case-4-stablenet.md) | ✅ **동작 확인** (라이브·CI 게이트) |
 
-**다음 작업을 이어받는다면 → [next-automation.md](next-automation.md)** (컨텍스트 + 남은 작업 리스트)
+> 자동화가 남아 있던 시절의 인수인계는 [`../archive/chain-setup-next-automation.md`](../archive/chain-setup-next-automation.md)
+> 에 있다 — **그 남은 일은 끝났다.** 지금 남은 일은 [`../chainbench-worklist.md`](../chainbench-worklist.md) 가 말한다.
 
 점검용 CLI: `chainbench chain`. 케이스별 절차를 **단계 단위로 실행·중단·검증**한다 — [§4](#4-cli-로-직접-점검) 참조.
 
@@ -30,20 +31,31 @@
 체인 종류와 무관하게 아래 순서다. 다른 것은 **부트스트랩 유형** 하나뿐이며, 그것이 매니페스트의
 `bootstrap.type`으로 선언된다.
 
-| # | 단계 | 하는 일 | 소유 패키지 |
+> **단계 이름·소유자 갱신 (2026-09-11).** 아래는 `chainbench chain up` 이 실제로 도는 순서다
+> (`internal/chainsetup/verbs_up.go:120` 의 `upStepNames`). 각 단계는 같은 이름의 CLI 하위
+> 명령으로 따로 실행할 수도 있다(`chainbench chain place` 등). **`place` 가 `keys` 앞이다** —
+> 거버넌스 멤버가 배치에서 나오는 ip/port 를 담기 때문이며, 이 순서 정정이 case-1 의 발견이었다.
+
+| # | 단계 | 하는 일 | 소유 |
 |---|---|---|---|
-| 1 | **resolve-chain** | 체인 플러그인 해석(매니페스트: chain_id·binary·family·hardforks·capabilities) | `core/registry` |
-| 2 | **resolve-binary** | 실행할 노드 바이너리 확정(명시 경로 > PATH) | `cmd` |
-| 3 | **load-preset** | 키셋 로드(nodekey·keystore·주소·BLS/PoP·alloc·검증자셋) | `core/keys` · `core/keyreg` |
-| 4 | **allocate** | 노드별 host/port 배치 + **용량 사전검증**(min validators, 포트 대역) | `core/place` |
-| 5 | **genesis** | genesis 바이트 산출(4모드 §2.5) | `core/genesis` · `engine.GenesisSource` |
-| 6 | **assemble-plan** | 배치+genesis+역할 → `setup.Plan` (노드별 datadir·config·args) | `engine.AssemblePlan` |
-| 7 | **provision** | genesis·per-node config 물질화(upload-if-absent; 로컬 FS 또는 SSH) | `core/filestore` |
-| 8 | **init-datadir** | 노드별 `init` (각자 자기 바이너리로) | `core/driver` |
-| 9 | **launch** | 노드 기동 + PID 추적 | `core/driver` · `core/procman` |
-| 10 | **health-gate** | 건강 판정(블록 전진 / etcd 리더 / 포크 도달) | `core/supervisor` |
-| 11 | *(bootstrap)* | `bootstrap.type` 이 `governance-etcd` 인 체인만: 거버넌스 배포 + etcd 초기화 | `consensus/poa` |
-| 12 | **teardown** | SIGTERM→SIGKILL→고아 검증, datadir 삭제는 **별개 연산** | `core/procman` |
+| 0 | *(resolve-chain)* | 체인 플러그인 해석(chain_id·binary·family·hardforks·capabilities) | `core/registry` |
+| 1 | **new** | 워크스페이스 초기화(대상 target·server-set·workspace-config 확정) | `chainsetup.NetNew` |
+| 2 | **place** | 노드 테이블: 역할·호스트·**결정적 비충돌 포트** + 용량 사전검증 | `chainsetup.NetAllocate` → `resource` · `core/node` |
+| 3 | **keys** | 키 세트 확보(preset 사용 / 생성 / blueprint 선언), 노드 수만큼 커버 | `chainsetup.NetKeys` → `core/keyring` |
+| 4 | **genesis** | genesis 산출(§2.5 의 4모드) | `chainsetup.NetGenesis` → `core/genesis` |
+| 5 | **config** | 노드별 TOML config 렌더 (`--set key=value` 로 knob 오버라이드) | `chainsetup.NetConfig` → `core/nodeconfig` |
+| 6 | **build** | 노드별 실행 커맨드 조립(실행하지 않고 보여준다) | `chainsetup.NetLaunchOpts` → `core/nodeconfig` |
+| 7 | **deploy** | 산출물을 대상에 배치하고 **있는지 확인**(skip-if-exists; 로컬 FS 또는 SSH) | `chainsetup.NetProvision` → `core/filestore` · `core/remote` |
+| 8 | **init** | 노드별 datadir 초기화 (각자 자기 바이너리로) | `chainsetup.NetInit` → `core/process` |
+| 9 | **start** | 노드 기동 + PID 기록 | `chainsetup.NetStart` → `core/process` |
+| — | *(bootstrap)* | `bootstrap.type` 이 `governance-etcd` 인 체인만: 거버넌스 배포 + etcd 초기화 · verify-etcd | `consensus/poa` 패밀리 phase 액션 |
+| — | **health** | 건강 판정(블록 전진 / etcd 리더 / 포크 도달) | `chain health` → `core/health` |
+| — | **stop / rm** | 기록된 PID 로 정지, 데이터 평면 제거는 **별개 연산** | `chain stop` · `chain rm` → `core/process` |
+
+> 이전 판의 단계 이름(`load-preset`·`allocate`·`assemble-plan`·`provision`·`init-datadir`·
+> `launch`·`health-gate`·`teardown`)과 소유 패키지(`core/keys`·`core/keyreg`·`core/place`·
+> `core/driver`·`core/procman`·`core/supervisor`·`internal/engine`)는 **모두 사라졌다.**
+> 아래 본문의 서술이 옛 이름을 쓰는 곳은 이 표로 읽는다.
 
 ```
 bootstrap.type = "static"          bootstrap.type = "governance-etcd"

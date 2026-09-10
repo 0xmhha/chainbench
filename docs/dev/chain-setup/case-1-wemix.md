@@ -1,12 +1,18 @@
 # 케이스 1 — gwemix 단독 체인 구성
 
 > 목표: `gwemix` 만으로 wemix(wpoa) 체인을 세우고 블록을 만들게 한다.
-> 상태: ✅ **자동화됨**(2026-08-23) — `chainbench chain up --case wemix --validators 4` 가
-> 15스텝을 전부 수행한다. `net up --chain wemix` 도 같은 절차를 탄다.
+> 상태: ✅ **자동화됨**(2026-08-23) — `chainbench chain up --chain wemix --validators 4` 가
+> 15스텝을 전부 수행한다.
 > 선언돼 있던 절차에는 오류가 둘 있었고 구현하면서 정정했다: **genesis 가 allocate 앞에 있었으나**
 > 거버넌스 멤버는 배치에서 나오는 ip/port 를 담으므로 순서가 반대여야 하고, **나머지 노드의
 > 기동과 etcd 조인 두 단계가 통째로 빠져 있었다** — 조인이 없으면 부트 노드가 모든 블록을 봉인한다.
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
+
+> **명령 표면 정정 (2026-09-11).** 본문 서술은 그때의 기록이다. **현재 표면은 `chain` 하나다** —
+> `net` 명령군과 `chain up --case`, `chainbench setup` 은 모두 없다. 대응: `net up`/`chain up --case X`
+> → `chain up --chain X`, `net <verb>` → `chain <verb>`, `--data-dir` → `--workspace-dir`,
+> `--stop-after provision` → `--stage deploy`. 아래 실행 예시는 현재 표면으로 고쳐 두었다.
+> 근거: `chainbench chain --help` · `cmd/chainbench/chaincmd/up.go`.
 
 ---
 

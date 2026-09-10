@@ -8,7 +8,7 @@
 > 설계 의도의 정본은 [`../chainbench-design.md`](../chainbench-design.md), 진행 상태의 정본은
 > [`../chainbench-worklist.md`](../chainbench-worklist.md) 다. 이 문서는 **지금 코드가 실제로 어떤 모양인가**를
 > 그리고, 목표 구조와의 차이를 명시한다.
-> 자매 문서: [컴포넌트](component-diagram.md) · [시퀀스](sequence-diagrams.md) · [상태](state-diagrams.md)
+> 자매 문서: [컴포넌트](component-diagram-2026-08-11.md) · [시퀀스](sequence-diagrams-2026-08-11.md) · [상태](state-diagrams-2026-08-11.md)
 
 ---
 
@@ -166,8 +166,8 @@ graph LR
 **잔여(레거시 스택 A, T7.11 에서 이관)**: `core/pipeline/setup`·`chains/wemix/deploy` 의
 `nodeconfig.LaunchArgs` 호출 2곳.
 
-근거·비판적 검토는 [`../chain-binary-flag-graph.md`](../chain-binary-flag-graph.md),
-실측은 [`code-graph.md`](code-graph.md) §3–4.
+근거·비판적 검토는 [`../chain-binary-flag-graph.md`](chain-binary-flag-graph.md),
+실측은 [`code-graph.md`](../architecture/code-graph.md) §3–4.
 
 ---
 

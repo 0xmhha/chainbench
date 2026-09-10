@@ -8,6 +8,12 @@
 > 부트스트랩은 `net up` 안의 패밀리 phase 로 돈다(F5b·F6). 아래 §0 의 표는 그 전의 실측이다.
 > 케이스별 심층 분석은 [[case-1-wemix]](case-1-wemix.md) 등, 작업 순서는 [[chainbench-worklist]](../chainbench-worklist.md) §1g.
 
+> **명령 표면 정정 (2026-09-11).** 본문 서술은 그때의 기록이다. **현재 표면은 `chain` 하나다** —
+> `net` 명령군과 `chain up --case`, `chainbench setup` 은 모두 없다. 대응: `net up`/`chain up --case X`
+> → `chain up --chain X`, `net <verb>` → `chain <verb>`, `--data-dir` → `--workspace-dir`,
+> `--stop-after provision` → `--stage deploy`. 아래 실행 예시는 현재 표면으로 고쳐 두었다.
+> 근거: `chainbench chain --help` · `cmd/chainbench/chaincmd/up.go`.
+
 ---
 
 ## 0. 먼저 — 기동 표면이 3개다
@@ -43,7 +49,7 @@
 | 8 | init | `net init` | `<binary> init` 으로 datadir 초기화 |
 | 9 | start | `net start` | **★ 패밀리 분기 ★** 노드 기동 |
 
-확인: `net status` (스텝 진행) · `net health` (블록 전진) · `net logs --node i` · `net stop` · `net rm`
+확인: `chain status` (스텝 진행) · `chain health` (블록 전진) · `chain logs --node i` · `chain stop` · `chain rm`
 
 ---
 
@@ -51,13 +57,13 @@
 
 ```sh
 CHAIN=/Users/…/Work/github/chain
-chainbench net up --workspace-dir /tmp/cbs --chain stablenet \
+chainbench chain up --workspace-dir /tmp/cbs --chain stablenet \
   --binary $CHAIN/go-stablenet/build/bin/gstable \
-  --keys keys/preset --validators 4 --server local
+  --keys keys/preset --validators 4
 
-chainbench net health --data-dir /tmp/cbs
-chainbench run --chain stablenet --rpc http://127.0.0.1:8545 tests/specs/api/*.json
-chainbench net stop --workspace-dir /tmp/cbs
+chainbench chain health --workspace-dir /tmp/cbs
+chainbench run --attach --chain stablenet --rpc http://127.0.0.1:8545 tests/tc/basic
+chainbench chain stop --workspace-dir /tmp/cbs
 ```
 
 9스텝 전부 CLI 존재. 결과: 블록 97→110→122, 4노드 동기, api 9 pass.
@@ -69,9 +75,9 @@ chainbench net stop --workspace-dir /tmp/cbs
 stablenet 과 **명령이 완전히 동일**하다. 두 가지만 다르다.
 
 ```sh
-chainbench net up --workspace-dir /tmp/cbw --chain wbft \
+chainbench chain up --workspace-dir /tmp/cbw --chain wbft \
   --binary $CHAIN/go-wbft/build/bin/gwemix \   # ← 바이너리 이름이 gwemix 다
-  --keys keys/preset --validators 4 --server local
+  --keys keys/preset --validators 4
 ```
 
 | 함정 | 내용 |
@@ -200,7 +206,7 @@ for i in 2 3 4; do P=$((8588+(i-1)*1000)); $G --datadir $D/node$i --mine \
 
 ```sh
 # 목표 — 세 체인 모두 이 한 줄
-chainbench net up --workspace-dir /tmp/n1 --chain {stablenet|wbft|wemix} \
+chainbench chain up --workspace-dir /tmp/n1 --chain {stablenet|wbft|wemix} \
   --binary <path> --keys keys/preset --validators 4 --server local
 ```
 

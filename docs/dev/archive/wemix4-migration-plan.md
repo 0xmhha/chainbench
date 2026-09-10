@@ -1,5 +1,10 @@
 # wemix4 → chainbench(Go) 마이그레이션 절차 검토
 
+
+> **[대체됨] 2026-09-11.** 2026-08-10 의 절차 검토다. 진행·판정은
+> [`../wemix4-port-tracker.md`](../wemix4-port-tracker.md) 가 승계했고, 본문의
+> `chainbench keys generate` 는 지금 `chainbench validator set` 이다. §1 의 wemix4 실행
+> 모델(단일 연속 체인 · stateful phase 순서 · full-config)은 여기가 원본이라 남긴다.
 > 근거 문서: `tests/wemix4/docs/test-execution-review.md` (사용자 작성 인수인계 검토서) 및
 > `tests/wemix4/` 전체(README, envs/default/{run,bootstrap}.sh, node_env.json, lib/*.sh,
 > genesis/genesis_main_test.md, docs/{node,tx,wbft,gov,rpc}.md).

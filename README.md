@@ -210,7 +210,7 @@ callable tool — or `capability.RegisterFlat`, which maps an already-existing
 `chainbench_*` tool into the catalog for discovery. Either way the chain package
 must be blank-imported from `internal/chains/all/all.go`, or its `init` never
 runs. See
-[`internal/core/capability/README.md`](internal/core/capability/README.md); the
+[`internal/core/registry/README.md`](internal/core/registry/README.md); the
 flat tools live in `internal/mcp/*_tools.go`.
 
 ### Dashboard

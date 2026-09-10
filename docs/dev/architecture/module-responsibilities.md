@@ -9,6 +9,23 @@
 >
 > 실측 기준: §2 소유자 표는 2026-08-21 재측정(K 계열 병합 후), 나머지는 2026-08-18. 관련: [[family-bringup-design]](../family-bringup-design.md)
 
+> **경로 정정 (2026-09-11).** §2 소유자 표와 §4 의 DSL 분할안은 2026-08-18~21 실측이다.
+> 그 뒤 R·U 트랙이 지나가 **이름이 바뀌었고, 제안 하나는 다르게 구현됐다.** 판단(관심사마다
+> 주인을 둔다)은 유효하니, 아래 본문은 이 대응표로 읽는다.
+>
+> | 본문의 이름 | 지금 |
+> |---|---|
+> | `internal/engine` (테스트벤치 엔진) | `internal/testengine` — §4 가 경계한 이름 충돌은 `test` 접두로 해소됐다 |
+> | `internal/engine/wire.go` | `internal/testengine/wire.go` |
+> | `engine.KeySource` boundary | `chainsetup.NetKeys` → `core/keyring` (키 확보가 구성 단계의 하나가 됐다) |
+> | `engine.GenesisSource` boundary | `genesis.Source` 인터페이스 + 패밀리 구현(`consensus/poa.GenesisSource`) |
+> | `netcompose` / `engine` (네트워크 조립) | `internal/chainsetup` — 조립이 여기로 모였다 |
+> | `internal/dsl/bind` (L1, 제안) | **만들지 않았다.** 값 바인딩·`$ref` 해석은 `internal/dsl/interp/binding.go`(L3) 안에 있다 |
+> | `testspec` 4분할(dsl · assert · bind · interp) | **3분할로 구현** — `internal/dsl` · `dsl/assert` · `dsl/interp`. `testspec` 은 없다 |
+>
+> 현재 패키지 전수와 층 배치는 [`code-graph.md`](code-graph.md)(2026-09-11 재측정)와
+> [`layers.md`](layers.md) 가 말한다.
+
 ---
 
 ## 1. 진단 — 관심사마다 주인이 없다

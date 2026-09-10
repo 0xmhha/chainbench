@@ -132,5 +132,5 @@ loopback 주소의 머신일 뿐이고, 구현 차이는 machine 내부의 관�
 
 ## 8. 이동 계획
 
-함수 단위 이동표는 [[v2-move-map]](v2-move-map.md), 작업 순서와 상태는
+함수 단위 이동표는 [[v2-move-map]](../archive/v2-move-map.md), 작업 순서와 상태는
 [[chainbench-worklist]] §1h (V0~V7) 이 정본이다.

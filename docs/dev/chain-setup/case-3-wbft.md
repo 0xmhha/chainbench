@@ -4,6 +4,12 @@
 > 상태: ✅ **동작 확인** — 2026-08-09 라이브 실행으로 확인(§5).
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
 
+> **명령 표면 정정 (2026-09-11).** 본문 서술은 그때의 기록이다. **현재 표면은 `chain` 하나다** —
+> `net` 명령군과 `chain up --case`, `chainbench setup` 은 모두 없다. 대응: `net up`/`chain up --case X`
+> → `chain up --chain X`, `net <verb>` → `chain <verb>`, `--data-dir` → `--workspace-dir`,
+> `--stop-after provision` → `--stage deploy`. 아래 실행 예시는 현재 표면으로 고쳐 두었다.
+> 근거: `chainbench chain --help` · `cmd/chainbench/chaincmd/up.go`.
+
 ---
 
 ## 1. 전제
@@ -43,7 +49,7 @@
 
 **wbft 의 검증자셋 위치(중요):** 헤더 `extraData` 가 아니라 **genesis config 의 `croissant.init.validators`** 다.
 그래서 `extraData` 는 평범한 32바이트 vanity 이고 **istanbul RLP 인코딩이 필요 없다** — 이것이
-`validator set` 로 임의 크기 프리셋을 만들 수 있는 이유다(`docs/dev/keys-generate.md`).
+`validator set` 로 임의 크기 프리셋을 만들 수 있는 이유다(`docs/guide/validator-set.md`).
 
 ---
 
@@ -76,9 +82,9 @@
 
 ```sh
 CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
-chainbench chain up --case wbft \
+chainbench chain up --chain wbft \
   --binary $CHAIN/go-wbft/build/bin/gwemix \
-  --data-dir /tmp/cb-wbft
+  --workspace-dir /tmp/cb-wbft
 ```
 
 ### 4.2 DSL 스펙 실행 (실측 확인된 경로)
@@ -95,11 +101,16 @@ chainbench run --chain wbft \
   --keys keys/preset --artifact-root /tmp/out /tmp/wbft-smoke.json
 ```
 
-### 4.3 레거시 setup 경로
+### 4.3 단계별 경로
+
+`chain up` 은 `chain new → keys → place → genesis → config → init → build → deploy → start`
+를 한 번에 돈다. 단계를 따로 보려면 각 스텝을 직접 부른다.
 
 ```sh
-chainbench setup --chain wbft --launch --binary $CHAIN/go-wbft/build/bin/gwemix \
-  --data-dir /tmp/x --validators 4
+chainbench chain new   --chain wbft --workspace-dir /tmp/x
+chainbench chain keys  --workspace-dir /tmp/x
+chainbench chain place --workspace-dir /tmp/x --validators 4
+chainbench chain status --workspace-dir /tmp/x   # 어느 스텝까지 돌았는지
 ```
 
 ---

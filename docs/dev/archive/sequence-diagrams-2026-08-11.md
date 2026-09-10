@@ -4,7 +4,7 @@
 > **현재 상태를 말하지 않는다.** 그때 무엇을 측정·결정했는지의 기록이다.
 > 현재 상태는 [[chainbench-worklist]] 와 코드가 정본이다.
 
-> 2026-08-11 코드 실측(keyreg 배선 포함). 자매 문서: [아키텍처](software-architecture.md) · [컴포넌트](component-diagram.md) · [상태](state-diagrams.md)
+> 2026-08-11 코드 실측(keyreg 배선 포함). 자매 문서: [아키텍처](software-architecture-2026-08-11.md) · [컴포넌트](component-diagram-2026-08-11.md) · [상태](state-diagrams-2026-08-11.md)
 > 각 다이어그램은 배경 문서의 **알고리즘 1~15** 단계 번호를 주석으로 단다.
 
 ---

@@ -4,7 +4,7 @@
 // docs/dev/architecture/code-graph.md §3 with one Builder over ten concern
 // modules. (Formerly the standalone launchopt package, folded into nodeconfig.)
 //
-// The design (docs/dev/chain-binary-flag-graph.md §3.3) rests on one measured
+// The design (docs/dev/archive/chain-binary-flag-graph.md §3.3) rests on one measured
 // fact: the three chain binaries expose two flag generations, not three, so a
 // Dialect — the flag vocabulary of one binary generation — is the only place
 // that knows a binary's spelling. Option modules stay chain-agnostic and speak
