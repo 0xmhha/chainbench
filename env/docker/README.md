@@ -101,11 +101,16 @@ for i in $(seq 1 15); do docker exec chainbench-server$i sh -c \
 
 | 파일 | 내용 |
 |---|---|
-| `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 22→2201+, rpc 8600→18601+ |
+| `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 22→2201+, rpc 8600→18601+, metrics 6060→16061+ |
 | `server-set.yaml` | **서버 세트 v2, 실주소 기재** — 운영 서버 세트와 같은 모양. slots 4, p2p step 1 |
 | `server-set-wemix.yaml` | 같은 서버·같은 자격증명에 poa 용 노브만 다름 — slots 1, p2p step 3 |
 | `workspace-config.yaml` | 대상 `dataRoot` 와 용도별 디렉터리. server-set 이 더는 `dataRoot` 를 갖지 않으므로 짝으로 넘겨야 한다 |
 | `localmap.yaml` | 실주소→loopback 퍼블리시 포트 대응표. `--docker` 일 때만 적용(R1) |
+
+> **매핑에 없는 포트는 조용히 그대로 나간다.** `AddrMap` 은 호스트만 바꾸고 매핑이 없는
+> 포트는 원본을 유지하므로, 퍼블리시하지 않은 포트로 dial 하면 `127.0.0.1:<컨테이너 포트>`
+> 라는 그럴듯한 주소가 만들어지고 아무것도 답하지 않는다. metrics 6060 이 정확히 그랬다
+> (2026-09-11 수정). 새 포트를 쓰기 시작하면 compose 의 publish 와 localmap 양쪽에 더한다.
 
 대수를 바꾸려면 `SERVERS=20 ./gen-env.sh` 후 compose 를 다시 올린다.
 

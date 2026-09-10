@@ -2,11 +2,11 @@ package chainsetup_test
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/core/collector"
 )
 
 // TestWorkspace_DockerModePersists pins that the mode is recorded once at
@@ -90,11 +90,16 @@ func TestNodeSet_MetricsURLIsTranslatedLikeTheRPCURL(t *testing.T) {
 	if n.MetricsURL == "" {
 		t.Fatal("the composition recorded no metrics endpoint; the assertion would have to build one from Host+Ports, which is the bug")
 	}
-	// Without docker the two agree — the translation is identity, and that is
-	// what makes the recorded endpoint safe to prefer unconditionally.
-	want := fmt.Sprintf("http://%s:%d", n.Host, n.Ports.Metrics)
+	// Without docker the address translation is identity, so the only thing left
+	// in the value is the part that was missing the first time: the Prometheus
+	// path. A bare host:port is a working metrics server answering 404 from its
+	// root, which is the failure this pins.
+	want := collector.MetricsURL(n.Host, n.Ports.Metrics)
 	if n.MetricsURL != want {
-		t.Errorf("MetricsURL = %q, want %q for an untranslated target", n.MetricsURL, want)
+		t.Errorf("MetricsURL = %q, want %q", n.MetricsURL, want)
+	}
+	if !strings.HasSuffix(n.MetricsURL, "/debug/metrics/prometheus") {
+		t.Errorf("MetricsURL carries no scrape path, so a caller GETs the server root: %q", n.MetricsURL)
 	}
 	if n.RPCURL == n.MetricsURL {
 		t.Errorf("the metrics endpoint must not be the RPC one: %s", n.MetricsURL)

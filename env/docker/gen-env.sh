@@ -36,6 +36,11 @@ RPC_PORT=8601;  RPC_STEP=1        # http band; slot s listens on base + step*s
 WS_PORT=8701;   WS_STEP=1
 AUTH_PORT=8501; AUTH_STEP=1
 METRICS_PORT=6060
+# Metrics is one shared port per server (the allocator gives it step 0), so it
+# publishes once per server rather than once per slot. It has to be published
+# and mapped like the RPC ports: without it the metric assertion's dial is
+# translated to loopback but keeps port 6060, which nothing on the host answers.
+METRICS_PUB_BASE="${METRICS_PUB_BASE:-16060}"
 IMAGE="chainbench-server:ubuntu24"
 DATA_ROOT="/data/chainbench"
 ACCOUNTS_ENV=accounts.env         # dev accounts injected at container start
@@ -111,6 +116,7 @@ EOF
         for s in $(seq 0 $((SLOTS - 1))); do
             echo "      - \"127.0.0.1:$((RPC_PUB_BASE + 100 * s + i)):$((RPC_PORT + RPC_STEP * s))\""
         done
+        echo "      - \"127.0.0.1:$((METRICS_PUB_BASE + i)):${METRICS_PORT}\""
         cat <<EOF
     cap_add:
       # firewall.sh needs to program iptables inside the container
@@ -237,6 +243,7 @@ EOF
         for s in $(seq 0 $((SLOTS - 1))); do
             ports="${ports}, $((RPC_PORT + RPC_STEP * s)): $((RPC_PUB_BASE + 100 * s + i))"
         done
+        ports="${ports}, ${METRICS_PORT}: $((METRICS_PUB_BASE + i))"
         cat <<EOF
   $(addr "$i"):
     host: 127.0.0.1

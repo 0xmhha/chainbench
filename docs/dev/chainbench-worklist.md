@@ -1285,8 +1285,14 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   - **config 없는 기동**: `Argv` 에 Metrics 모듈이 없어 핸드오프 재기동 노드는 metrics 가
     아예 없었다(같은 망이 포크 전에는 답하고 후에는 답하지 않았다). 포트가 배정된 노드면
     커맨드라인으로도 말하게 했다.
-  - 제거했던 `03-metric-head-block` 스펙을 **되살렸다**(`validate` OK). 여전히
-    **LIVE-UNVERIFIED** — 그 시리즈를 실제로 노출하는지는 함대에서 확인해야 한다.
+  - 제거했던 `03-metric-head-block` 스펙을 **되살렸고 라이브로 통과시켰다**(2026-09-11,
+    15대 함대, `chain_head_block=3`).
+  - **라이브가 유닛 검증이 놓친 것 둘을 더 찾았다.** ① `env/docker/gen-env.sh` 가 metrics
+    포트 6060 을 퍼블리시하지도 localmap 에 넣지도 않았다 — `AddrMap` 은 매핑 없는 포트를
+    **그대로 두므로** 호스트는 loopback 으로 바뀌고 포트는 6060 으로 남아 아무것도 답하지
+    않았다. ② 기록된 `MetricsURL` 을 `HTTPEndpoint`(주소만 해석)로 만들어
+    **`/debug/metrics/prometheus` 경로가 빠졌다** — 살아 있는 metrics 서버가 루트에서 404 를
+    냈다. 유닛 테스트는 둘 다 잡지 못했다(전자는 함대 정의, 후자는 경로를 검사하지 않음).
 - [x] **B — 부정 경로**: `go-stablenet/tx/01-negative-tx-revert` (revert 하는 런타임 배포
   후 `expect:revert`) fleet 검증 완료.
 - [ ] **B 잔여 — 거버넌스(체인 특화, fleet)**. go-wbft·go-wemix 거버넌스는 stablenet 을
@@ -1409,12 +1415,15 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 ### B. fleet 커버리지와 관측 (§1p)
 
-라이브 함대가 있어야 진행되는 갈래다.
+라이브 함대가 있어야 진행되는 갈래다. **함대는 2026-09-11 에 섰다** — 15대 docker,
+세 체인 패밀리 15노드 스모크가 모두 통과했다(stablenet · wbft · wemix(poa)). 체인
+바이너리는 세 저장소를 `golang:1.23-bookworm` 컨테이너에서 linux/arm64 로 빌드했다
+(호스트가 macOS 라 `CGO_ENABLED=0` 크로스컴파일은 blst 에서 실패한다).
 
-- ◐ **C. metric 수집 인프라** — **코드 경로 완료 (2026-09-11), 라이브 검증 대기.** 상세는
-  §1p C. 수집 경로는 원래 있었고, 막던 것은 바인드 주소(`127.0.0.1`)·어서션의 주소 번역
-  우회·config 없는 기동의 metrics 누락 셋이었다. 회귀 테스트를 붙였고
-  `03-metric-head-block` 스펙을 되살렸다(LIVE-UNVERIFIED).
+- [x] **C. metric 수집 인프라** — **라이브 검증 완료 (2026-09-11).** 15대 docker 함대에서
+  `03-metric-head-block` 통과(`chain_head_block=3`). 상세는 §1p C. 라이브가 코드 검증이
+  놓친 결함 둘을 더 찾았다 — `gen-env.sh` 가 metrics 포트를 퍼블리시·매핑하지 않았고,
+  기록된 `MetricsURL` 에 Prometheus 경로가 빠져 있었다(둘 다 수정).
 - [ ] **B 잔여 — 체인별 거버넌스 케이스.** stablenet 의 GovValidator 흐름을 go-wbft 로
   그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
   멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.
