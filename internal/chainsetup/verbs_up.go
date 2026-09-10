@@ -141,6 +141,17 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	if stage == UpStart && in.Binary == "" {
 		return NetUpOut{}, errors.New("chainsetup: chain up --stage=start needs a node binary")
 	}
+	// Before the request is recorded, not before it is used.
+	//
+	// The node table's keys are checked again at place, which is where they turn
+	// into node records. That is too late for this path: `up` writes the request
+	// itself onto the workspace first (it is what a resume composes from), and
+	// the request carries the topology whole — so an inline key was already in
+	// workspace.json by the time place refused it. Nothing is written until this
+	// returns.
+	if err := checkTopologyKeyRefs(in.Topology); err != nil {
+		return NetUpOut{}, err
+	}
 	// execution.chain selects how this up treats an existing composition. attach
 	// does not compose or launch, so it has no meaning for up; reuse-if-matching
 	// reconciles a running network node by node (below); fresh is the default and

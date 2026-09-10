@@ -287,3 +287,91 @@ func TestIntrospectRunning_TwoProcessesOneDatadirIsRefused(t *testing.T) {
 		t.Fatal("two processes out of one datadir must be refused, not silently resolved")
 	}
 }
+
+// TestIntrospectRunning_TwoServersWithTheSameDataDirDoNotCollide is the half of
+// MON-010 that the same-server test cannot reach.
+//
+// Two compositions on one server are told apart by the composition id in their
+// datadirs. Two servers are not: with one node per host every server runs its
+// node1 out of the identical path, and when no workspace-config is given there
+// is no composition id in it either — so /data/chainbench/node1 on server6 and
+// on server7 are the same string. The only thing separating them is the server
+// the process was found on, which is why nodeAddr carries it. Drop that field
+// and this fails: the second server's entry either overwrites the first or
+// trips the one-datadir-two-processes refusal.
+//
+// Each server gets its own driver, as production does — a remote driver is bound
+// to its host, so listing on server6 returns server6's pids and nothing else.
+func TestIntrospectRunning_TwoServersWithTheSameDataDirDoNotCollide(t *testing.T) {
+	dir := t.TempDir()
+	// The identical path, on both servers.
+	const shared = "/data/chainbench/node1"
+	cfg6 := filepath.Join(dir, "six.toml")
+	cfg7 := filepath.Join(dir, "seven.toml")
+	if err := os.WriteFile(cfg6, []byte("six"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(cfg7, []byte("seven"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	w, err := Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.SetEnv(os.Getenv)
+	w.state.Target = resource.Spec{DataRoot: dir}
+	w.state.Binary = "gstable"
+	w.state.Nodes = []node.Record{
+		{Index: 1, Label: "node1", Server: "server6", ConfigPath: cfg6, DataDir: shared},
+		{Index: 2, Label: "node1", Server: "server7", ConfigPath: cfg7, DataDir: shared},
+	}
+
+	// One machine per server, each with its own driver — which is what
+	// production has: a remote driver is bound to its host, so listing on
+	// server6 returns server6's pids and nothing else. The accesses are seeded
+	// rather than opened so the test stays about the keying and never dials.
+	w.machines = map[string]*resource.Access{
+		"server6": {
+			Spec: resource.Spec{Server: "server6"}, DataRoot: dir, Files: filestore.Local{},
+			Driver: &fakeIntrospectDriver{
+				byBinary: map[string][]int{"gstable": {111}},
+				cmdlines: map[int][]string{111: {"gstable", "--datadir", shared, "--config", cfg6}},
+			},
+		},
+		"server7": {
+			Spec: resource.Spec{Server: "server7"}, DataRoot: dir, Files: filestore.Local{},
+			Driver: &fakeIntrospectDriver{
+				byBinary: map[string][]int{"gstable": {222}},
+				cmdlines: map[int][]string{222: {"gstable", "--datadir", shared, "--config", cfg7}},
+			},
+		},
+	}
+
+	got, err := w.introspectRunning(context.Background(), "gstable")
+	if err != nil {
+		t.Fatalf("introspectRunning: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("the two servers' nodes must be kept apart, got %d entries", len(got))
+	}
+	six, ok := got[nodeAddr{Server: "server6", DataDir: shared}]
+	if !ok {
+		t.Fatal("server6's node was not recorded under its own server")
+	}
+	if six.PID != 111 {
+		t.Fatalf("server6 node1 = pid %d, want 111 — the other server's process was adopted", six.PID)
+	}
+	seven, ok := got[nodeAddr{Server: "server7", DataDir: shared}]
+	if !ok {
+		t.Fatal("server7's node was not recorded under its own server")
+	}
+	if seven.PID != 222 {
+		t.Fatalf("server7 node1 = pid %d, want 222", seven.PID)
+	}
+	// The configs travel with them: hashing the wrong server's file is the same
+	// mistake one step later.
+	if six.ConfigHash == seven.ConfigHash {
+		t.Fatal("both servers hashed to the same config — the wrong file was read for one of them")
+	}
+}

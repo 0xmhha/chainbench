@@ -236,9 +236,11 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, [
 		}
 		var key derive.PrivateKey
 		if r.Key != "" {
-			key, err = parseNodeKey(r.Key)
+			// parseNodeKey names the node itself: its refusal for inline key
+			// material must not be wrapped in anything that quotes the value.
+			key, err = parseNodeKey(i, r.Key)
 			if err != nil {
-				return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
+				return keyring.Preset{}, nil, true, err
 			}
 		} else {
 			key = gen.Nodes[i-1].Nodekey
@@ -277,7 +279,76 @@ func localKeyReader(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-func parseNodeKey(ref string) (derive.PrivateKey, error) {
+// checkNodeKeyRef decides whether a node table's key reference may be carried
+// any further, and says why not without ever quoting key material.
+//
+// The distinction it draws is between a reference and a secret. A server path
+// and a mistyped file path are both references: naming them is what tells the
+// operator which line to fix, and neither is a secret. Key material is not, so
+// a refusal that echoed it would move the key from the document into the error
+// — and from there into stderr, the session record and the --json report, which
+// is the leak the whole rule exists to prevent. The node is named by its index
+// instead; the operator has the document.
+func checkNodeKeyRef(index int, ref string) error {
+	if ref == "" {
+		return nil
+	}
+	if looksLikeKeyMaterial(ref) {
+		return fmt.Errorf(
+			"chainsetup: keys: node%d declares a private key inline: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext (the value is withheld here for the same reason)",
+			index)
+	}
+	if strings.HasPrefix(ref, "srv://") {
+		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref)
+	}
+	if _, err := os.Stat(ref); err != nil {
+		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref)
+	}
+	return nil
+}
+
+// checkTopologyKeyRefs applies checkNodeKeyRef to every node a topology
+// declares. A nil topology declares nothing.
+func checkTopologyKeyRefs(t *node.Topology) error {
+	if t == nil {
+		return nil
+	}
+	for _, n := range t.Sorted() {
+		if err := checkNodeKeyRef(n.Index, n.Key); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// looksLikeKeyMaterial reports whether a key reference is the key itself rather
+// than a path to one.
+//
+// A secp256k1 private key is 32 bytes, written as 64 hex digits with or without
+// the 0x prefix. The test is deliberately wider than that — any run of hex at
+// least 32 digits long — because the cost of the two mistakes is not symmetric:
+// treating a path as a key withholds it from one message, while treating a key
+// as a path prints it. A real path carries a separator or a dot long before it
+// carries thirty-two hex digits and nothing else.
+func looksLikeKeyMaterial(ref string) bool {
+	h := strings.TrimSpace(ref)
+	if strings.HasPrefix(h, "0x") || strings.HasPrefix(h, "0X") {
+		h = h[2:]
+	}
+	if len(h) < 32 {
+		return false
+	}
+	for _, c := range h {
+		switch {
+		case '0' <= c && c <= '9', 'a' <= c && c <= 'f', 'A' <= c && c <= 'F':
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 	// A node table's key is a local FILE, and nothing else.
 	//
 	// Not a server reference: reading a secret off a server onto this machine is
@@ -290,18 +361,25 @@ func parseNodeKey(ref string) (derive.PrivateKey, error) {
 	// written inline would sit there in cleartext, which is the same reason the
 	// blueprint generator references keys by path and never inlines them
 	// (blueprint.FromPreset). A path in state names a secret; it is not one.
-	if strings.HasPrefix(ref, "srv://") {
-		return derive.PrivateKey{}, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — point it at a local key file", ref)
-	}
-	if _, err := os.Stat(ref); err != nil {
-		return derive.PrivateKey{}, fmt.Errorf(
-			"key reference %q is not a readable file: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext", ref)
+	//
+	// place already refused everything this rejects, before the string reached
+	// the node record. The check stands here too because this function is what
+	// opens the file: a reader that trusts an earlier caller to have validated
+	// its input is one refactor away from reading whatever it is handed.
+	if err := checkNodeKeyRef(index, ref); err != nil {
+		return derive.PrivateKey{}, err
 	}
 	b, rerr := os.ReadFile(ref)
 	if rerr != nil {
-		return derive.PrivateKey{}, fmt.Errorf("read key file %q: %w", ref, rerr)
+		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr)
 	}
-	return derive.ParsePrivateKey(string(b))
+	// The parse failure is not wrapped with the bytes: a file that is nearly a
+	// key is still a key someone meant to keep.
+	key, perr := derive.ParsePrivateKey(string(b))
+	if perr != nil {
+		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref)
+	}
+	return key, nil
 }
 
 // AllocateOpts sizes the network.
@@ -369,6 +447,18 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
+			// Before the string is copied anywhere, not after.
+			//
+			// The refusal used to live in the keys step, which runs after place
+			// has put this exact string into the node record and after
+			// withWorkspace has saved it: the run stopped, and the key it
+			// stopped for was already in workspace.json — and in the --json
+			// report, since a setup error is carried in it verbatim. Rejecting
+			// a value the moment it is read is the only order in which "never
+			// stored" is true.
+			if err := checkNodeKeyRef(n.Index, n.Key); err != nil {
+				return nil, nil, err
+			}
 			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary, Config: n.Config, Key: n.Key}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
@@ -627,6 +717,15 @@ type GenesisOpts struct {
 // it to the target's data root (upload-if-absent semantics are the provision
 // step's concern; genesis always reflects the current inputs).
 func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, error) {
+	// The rule belongs to the operation, not to the one builder that happened to
+	// construct these options. genesisOpts checks it too, and every caller today
+	// goes through genesisOpts — but this method is exported and takes the
+	// options directly, so "a finished genesis is never quietly changed" held
+	// only as long as no one assembled a GenesisOpts by hand. An invariant that
+	// depends on which door you came in is not an invariant.
+	if err := opts.checkExistingIsUnchanged(); err != nil {
+		return "", err
+	}
 	p, err := w.plugin()
 	if err != nil {
 		return "", err
