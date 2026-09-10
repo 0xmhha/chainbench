@@ -113,8 +113,18 @@ type Observed struct {
 // nothing about configs, and silence there is not a failure.
 func (b Baseline) Check(o Observed) []string {
 	var diffs []string
-	if b.Genesis != "" && o.Genesis != "" && b.Genesis != o.Genesis {
-		diffs = append(diffs, fmt.Sprintf("genesis: approved %s, found %s", shortHash(b.Genesis), shortHash(o.Genesis)))
+	// A field the baseline records must be observed. Skipping the comparison
+	// when the observation is missing turned "we could not look" into "it
+	// matches" — an empty Observed compared clean against a fully populated
+	// baseline. Not recorded is still not checked; recorded but unseen is a
+	// failure to check, and says so.
+	if b.Genesis != "" {
+		switch {
+		case o.Genesis == "":
+			diffs = append(diffs, "genesis: approved "+shortHash(b.Genesis)+", but none was observed")
+		case b.Genesis != o.Genesis:
+			diffs = append(diffs, fmt.Sprintf("genesis: approved %s, found %s", shortHash(b.Genesis), shortHash(o.Genesis)))
+		}
 	}
 	labels := make([]string, 0, len(b.Configs))
 	for label := range b.Configs {
@@ -123,16 +133,21 @@ func (b Baseline) Check(o Observed) []string {
 	sort.Strings(labels)
 	for _, label := range labels {
 		want := b.Configs[label]
-		got, ok := o.Configs[label]
-		if !ok || want == "" || got == "" {
-			continue
+		if want == "" {
+			continue // the baseline fixes nothing for this label
 		}
-		if want != got {
+		got, ok := o.Configs[label]
+		switch {
+		case !ok || got == "":
+			diffs = append(diffs, label+" config: approved "+shortHash(want)+", but none was observed")
+		case want != got:
 			diffs = append(diffs, fmt.Sprintf("%s config: approved %s, found %s", label, shortHash(want), shortHash(got)))
 		}
 	}
-	if len(b.Validators) > 0 && len(o.Validators) > 0 {
-		if d := diffAddresses(b.Validators, o.Validators); d != "" {
+	if len(b.Validators) > 0 {
+		if len(o.Validators) == 0 {
+			diffs = append(diffs, "validators: approved a set, but none was observed")
+		} else if d := diffAddresses(b.Validators, o.Validators); d != "" {
 			diffs = append(diffs, "validators: "+d)
 		}
 	}

@@ -109,3 +109,46 @@ func TestBaseline_UnsetFieldsAreNotChecked(t *testing.T) {
 		t.Fatalf("unrecorded fields must not be checked: %v", diffs)
 	}
 }
+
+// TestBaseline_MissingObservationIsNotAMatch is MON-016's second condition. A
+// field the baseline fixes but the check could not observe used to be skipped,
+// so an empty Observed compared clean against a fully populated baseline —
+// "we could not look" reported as "it matches".
+func TestBaseline_MissingObservationIsNotAMatch(t *testing.T) {
+	b := resource.Baseline{
+		Genesis:    "sha256:g",
+		Configs:    map[string]string{"node1": "sha256:c1"},
+		Validators: []string{"0xaa"},
+	}
+	cases := []struct {
+		name string
+		obs  resource.Observed
+		want string
+	}{
+		{"nothing observed at all", resource.Observed{}, "genesis"},
+		{"genesis unseen", resource.Observed{
+			Configs: map[string]string{"node1": "sha256:c1"}, Validators: []string{"0xaa"},
+		}, "genesis"},
+		{"a config unseen", resource.Observed{
+			Genesis: "sha256:g", Configs: map[string]string{}, Validators: []string{"0xaa"},
+		}, "node1 config"},
+		{"validators unseen", resource.Observed{
+			Genesis: "sha256:g", Configs: map[string]string{"node1": "sha256:c1"},
+		}, "validators"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			diffs := b.Check(tc.obs)
+			if len(diffs) == 0 {
+				t.Fatal("an unobserved approved field must not report a match")
+			}
+			joined := strings.Join(diffs, " | ")
+			if !strings.Contains(joined, tc.want) {
+				t.Fatalf("expected %q to be named: %s", tc.want, joined)
+			}
+			if !strings.Contains(joined, "observed") {
+				t.Fatalf("the diff should say the value was not observed: %s", joined)
+			}
+		})
+	}
+}

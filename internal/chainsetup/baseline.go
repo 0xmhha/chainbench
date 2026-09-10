@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -24,13 +25,41 @@ import (
 // genesis and per-node config hashes it recorded when it wrote them, and the
 // validator addresses its key set derives. Only public identities are read —
 // never key material.
-func (w *Workspace) ObserveBaseline() (resource.Observed, error) {
+func (w *Workspace) ObserveBaseline(ctx context.Context) (resource.Observed, error) {
 	obs := resource.Observed{Configs: map[string]string{}}
-	obs.Genesis = w.state.LaunchInputs[w.state.GenesisPath]
+
+	// Hashes are computed from the files as they are NOW, on the machine that
+	// holds them — not read back from what this workspace recorded when it wrote
+	// them. Those recorded hashes only say what the composition produced, so an
+	// edit made on the server afterwards left them agreeing with the approval
+	// and the check reported a match. The whole reason to approve a baseline is
+	// to notice exactly that edit.
+	if w.state.GenesisPath == "" {
+		return obs, fmt.Errorf("chainsetup: baseline: no genesis has been composed yet")
+	}
+	t, err := w.resolveTarget()
+	if err != nil {
+		return obs, err
+	}
+	gen, err := t.Files.Read(ctx, w.state.GenesisPath)
+	if err != nil {
+		return obs, fmt.Errorf("chainsetup: baseline: read genesis %s: %w", w.state.GenesisPath, err)
+	}
+	obs.Genesis = filestore.Hash(gen)
+
 	for _, ns := range w.state.Nodes {
-		if h := w.state.LaunchInputs[ns.ConfigPath]; h != "" {
-			obs.Configs[string(ns.NodeLabel())] = h
+		if ns.ConfigPath == "" {
+			continue
 		}
+		nt, err := w.machineFor(ns)
+		if err != nil {
+			return obs, err
+		}
+		cfg, err := nt.Files.Read(ctx, ns.ConfigPath)
+		if err != nil {
+			return obs, fmt.Errorf("chainsetup: baseline: read %s config %s: %w", ns.NodeLabel(), ns.ConfigPath, err)
+		}
+		obs.Configs[string(ns.NodeLabel())] = filestore.Hash(cfg)
 	}
 	if w.state.KeysDir != "" {
 		preset, err := store.LoadPreset(w.state.KeysDir)
@@ -59,7 +88,7 @@ type BaselineCheck struct {
 // approved for its workspace-config. A workspace with no workspace-config, or
 // an environment with no approved baseline, reports Approved=false and is not a
 // failure — the caller decides whether to demand one.
-func (w *Workspace) CheckBaseline() (BaselineCheck, error) {
+func (w *Workspace) CheckBaseline(ctx context.Context) (BaselineCheck, error) {
 	if w.state.WorkspaceConfig == "" {
 		return BaselineCheck{}, fmt.Errorf("chainsetup: baseline: this workspace was composed without a --workspace-config, so it has no environment to hold a baseline")
 	}
@@ -73,7 +102,7 @@ func (w *Workspace) CheckBaseline() (BaselineCheck, error) {
 		return out, nil
 	}
 	out.Approved = true
-	obs, err := w.ObserveBaseline()
+	obs, err := w.ObserveBaseline(ctx)
 	if err != nil {
 		return out, err
 	}
@@ -99,13 +128,13 @@ type NetBaselineOut struct {
 
 // NetBaselineCheck compares a composed workspace against its environment's
 // approved baseline. It writes nothing.
-func NetBaselineCheck(_ context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
+func NetBaselineCheck(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetBaselineOut{}, err
 	}
 	ws.SetEnv(d.Env)
-	check, err := ws.CheckBaseline()
+	check, err := ws.CheckBaseline(ctx)
 	return NetBaselineOut{Check: check}, err
 }
 
@@ -113,7 +142,7 @@ func NetBaselineCheck(_ context.Context, d Deps, in NetBaselineIn) (NetBaselineO
 // baseline. It is the one path that writes a baseline, and it exists as its own
 // verb because approving is a decision a person makes after looking at what
 // changed — never a side effect of a run.
-func NetBaselineApprove(_ context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
+func NetBaselineApprove(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
 		return NetBaselineOut{}, err
@@ -122,7 +151,7 @@ func NetBaselineApprove(_ context.Context, d Deps, in NetBaselineIn) (NetBaselin
 	if ws.state.WorkspaceConfig == "" {
 		return NetBaselineOut{}, fmt.Errorf("chainsetup: baseline: this workspace was composed without a --workspace-config, so there is no environment to approve a baseline for")
 	}
-	obs, err := ws.ObserveBaseline()
+	obs, err := ws.ObserveBaseline(ctx)
 	if err != nil {
 		return NetBaselineOut{}, err
 	}
