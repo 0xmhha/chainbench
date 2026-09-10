@@ -44,6 +44,7 @@ localmap 으로 번역한다. 15노드(4 bp + 11 en) 스모크 테스트:
 bin/chainbench run \
   --workspace-dir <ws> \
   --server-set env/docker/build/server-set.yaml \
+  --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers \
   --keys <ws>/genkeys \
   tests/cases/stablenet/chain-up-15.json
@@ -61,6 +62,7 @@ topology 와 컨테이너 바이너리 경로를 선언한다. 키는 15개가 �
 ```bash
 # stablenet (wbft 패밀리)  — server-set.yaml, 기본 게이트
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set.yaml \
+  --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
   tests/cases/stablenet/chain-up-15.json
 
@@ -69,6 +71,7 @@ bin/chainbench run ... tests/cases/wbft/chain-up-15.json
 
 # go-wemix (poa)           — server-set-wemix.yaml 필요, 게이트 예산 상향
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set-wemix.yaml \
+  --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
   --node-monitor-timeout 5m \
   tests/cases/wemix/chain-up-15.json
@@ -99,7 +102,9 @@ for i in $(seq 1 15); do docker exec chainbench-server$i sh -c \
 | 파일 | 내용 |
 |---|---|
 | `docker-compose.yml` | server1~N. bridge 고정 주소 172.30.0.11+, ssh 22→2201+, rpc 8600→18601+ |
-| `server-set.yaml` | **서버 세트 v2, 실주소 기재** — 운영 서버 세트와 같은 모양 |
+| `server-set.yaml` | **서버 세트 v2, 실주소 기재** — 운영 서버 세트와 같은 모양. slots 4, p2p step 1 |
+| `server-set-wemix.yaml` | 같은 서버·같은 자격증명에 poa 용 노브만 다름 — slots 1, p2p step 3 |
+| `workspace-config.yaml` | 대상 `dataRoot` 와 용도별 디렉터리. server-set 이 더는 `dataRoot` 를 갖지 않으므로 짝으로 넘겨야 한다 |
 | `localmap.yaml` | 실주소→loopback 퍼블리시 포트 대응표. `--docker` 일 때만 적용(R1) |
 
 대수를 바꾸려면 `SERVERS=20 ./gen-env.sh` 후 compose 를 다시 올린다.
