@@ -124,22 +124,29 @@ func NetUp(ctx context.Context, d Deps, in NetUpIn) (NetUpOut, error) {
 	return netUpFrom(ctx, d, in, "")
 }
 
-// netUpFrom runs the composition from the named step on (every step when
-// from is empty). Steps before it are assumed done — the resume verb decides
-// that from the workspace's record.
-func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, error) {
+// upPlan is a validated up request: the stage it runs to and how it treats an
+// existing composition, both resolved from defaults and checked once.
+type upPlan struct {
+	stage UpStage
+	mode  resource.ChainMode
+}
+
+// planUp validates the request and resolves its defaults. It writes nothing:
+// every refusal here happens before the workspace is opened, which is the point
+// of doing it in one place up front.
+func planUp(in NetUpIn) (upPlan, error) {
 	if in.DataDir == "" {
-		return NetUpOut{}, errors.New("chainsetup: chain up needs a workspace directory")
+		return upPlan{}, errors.New("chainsetup: chain up needs a workspace directory")
 	}
 	stage := in.Stage
 	if stage == "" {
 		stage = UpStart
 	}
 	if stage != UpDeploy && stage != UpStart {
-		return NetUpOut{}, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, UpDeploy, UpStart)
+		return upPlan{}, fmt.Errorf("chainsetup: unknown stage %q (want %s or %s)", stage, UpDeploy, UpStart)
 	}
 	if stage == UpStart && in.Binary == "" {
-		return NetUpOut{}, errors.New("chainsetup: chain up --stage=start needs a node binary")
+		return upPlan{}, errors.New("chainsetup: chain up --stage=start needs a node binary")
 	}
 	// Before the request is recorded, not before it is used.
 	//
@@ -150,63 +157,28 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 	// workspace.json by the time place refused it. Nothing is written until this
 	// returns.
 	if err := checkTopologyKeyRefs(in.Topology); err != nil {
-		return NetUpOut{}, err
+		return upPlan{}, err
 	}
 	// execution.chain selects how this up treats an existing composition. attach
 	// does not compose or launch, so it has no meaning for up; reuse-if-matching
-	// reconciles a running network node by node (below); fresh is the default and
+	// reconciles a running network node by node; fresh is the default and
 	// composes as it always has.
 	mode, err := upChainMode(in)
 	if err != nil {
-		return NetUpOut{}, err
+		return upPlan{}, err
 	}
 	if mode == resource.ChainAttach {
-		return NetUpOut{}, errors.New("chainsetup: chain up: execution.chain=attach does not compose or launch a network — bring the chain up separately and use the attach/run path")
+		return upPlan{}, errors.New("chainsetup: chain up: execution.chain=attach does not compose or launch a network — bring the chain up separately and use the attach/run path")
 	}
+	return upPlan{stage: stage, mode: mode}, nil
+}
 
-	// The composite holds the workspace for its whole run. Each step it calls
-	// takes the lock too, but a run cannot conflict with itself (session
-	// Acquire is re-entrant per process); what this closes is the gap between
-	// steps, where another run used to slip in and compose over a half-built
-	// network.
-	lockWS, err := Open(in.DataDir, d.Clock)
-	if err != nil {
-		return NetUpOut{}, err
-	}
-	lockWS.SetEnv(d.Env)
-	lockWS.SetDriver(d.Driver)
-	held, prev, lockState, err := lockWS.Acquire(d.command())
-	if err != nil {
-		return NetUpOut{}, err
-	}
-	defer func() { _ = held.Release() }()
-	if lockState == session.LockStale {
-		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up", prev.Describe())
-	}
-
-	// reuse-if-matching reconciles a running network node by node. Its baseline
-	// — what each node hashed to and whether it answers — must be captured now,
-	// before the compose steps re-run and reset the node table. A first up over
-	// an empty workspace yields an empty snapshot, which composes everything.
-	reuseMode := mode == resource.ChainReuseIfMatching && stage == UpStart
-	var snap reuseSnapshot
-	if reuseMode {
-		snap = lockWS.snapshotForReuse(ctx)
-	}
-
-	var out NetUpOut
-	// record runs one step and appends its detail, stopping the whole run on the
-	// first failure so a later step never composes on top of a broken one.
-	record := func(name string, fn func() (string, error)) error {
-		detail, err := fn()
-		if err != nil {
-			return fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
-		}
-		out.Steps = append(out.Steps, name+": "+detail)
-		return nil
-	}
-
-	steps := map[string]func() (string, error){
+// upSteps is the composition's step table: one closure per name in
+// upStepNames, each wrapping the same verb the matching `chain <step>` command
+// calls. It is built once and read by the runner below, so the order the run
+// follows and the work each step does stay separate things.
+func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string, error) {
+	return map[string]func() (string, error){
 		"new": func() (string, error) {
 			r, err := NetNew(ctx, d, NetNewIn{
 				DataDir: in.DataDir, Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir,
@@ -273,6 +245,61 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 			return r.Detail, err
 		},
 	}
+}
+
+// netUpFrom runs the composition from the named step on (every step when
+// from is empty). Steps before it are assumed done — the resume verb decides
+// that from the workspace's record.
+func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, error) {
+	up, err := planUp(in)
+	if err != nil {
+		return NetUpOut{}, err
+	}
+	stage, mode := up.stage, up.mode
+
+	// The composite holds the workspace for its whole run. Each step it calls
+	// takes the lock too, but a run cannot conflict with itself (session
+	// Acquire is re-entrant per process); what this closes is the gap between
+	// steps, where another run used to slip in and compose over a half-built
+	// network.
+	lockWS, err := Open(in.DataDir, d.Clock)
+	if err != nil {
+		return NetUpOut{}, err
+	}
+	lockWS.SetEnv(d.Env)
+	lockWS.SetDriver(d.Driver)
+	held, prev, lockState, err := lockWS.Acquire(d.command())
+	if err != nil {
+		return NetUpOut{}, err
+	}
+	defer func() { _ = held.Release() }()
+	if lockState == session.LockStale {
+		d.logf("took over a lock left by a run that is no longer running (%s) — nodes it started may still be up", prev.Describe())
+	}
+
+	// reuse-if-matching reconciles a running network node by node. Its baseline
+	// — what each node hashed to and whether it answers — must be captured now,
+	// before the compose steps re-run and reset the node table. A first up over
+	// an empty workspace yields an empty snapshot, which composes everything.
+	reuseMode := mode == resource.ChainReuseIfMatching && stage == UpStart
+	var snap reuseSnapshot
+	if reuseMode {
+		snap = lockWS.snapshotForReuse(ctx)
+	}
+
+	var out NetUpOut
+	// record runs one step and appends its detail, stopping the whole run on the
+	// first failure so a later step never composes on top of a broken one.
+	record := func(name string, fn func() (string, error)) error {
+		detail, err := fn()
+		if err != nil {
+			return fmt.Errorf("chainsetup: chain up: %s: %w", name, err)
+		}
+		out.Steps = append(out.Steps, name+": "+detail)
+		return nil
+	}
+
+	steps := upSteps(ctx, d, in)
 
 	started := from == ""
 	for _, name := range upStepNames {

@@ -27,7 +27,7 @@ func NewLog() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--data-dir is required")
 			}
-			matches, err := app.LogSearch(cmd.Context(), deps(cmd), app.LogSearchIn{
+			matches, err := app.LogSearch(cmd.Context(), surface.Deps(cmd), app.LogSearchIn{
 				Dir: dataDir,
 				SearchOpts: app.LogSearchFilter{
 					Pattern: pattern, Regexp: useRe, Node: node, Level: level, Limit: limit,

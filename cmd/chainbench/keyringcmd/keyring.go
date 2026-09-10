@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"text/tabwriter"
 
@@ -77,21 +76,6 @@ func (f *ringFlags) bind(cmd *cobra.Command) {
 
 func (f *ringFlags) ref() app.RingRef {
 	return app.RingRef{Dir: f.dir, ServerSet: f.serverSet, Docker: f.docker}
-}
-
-// deps is the Deps every keyring verb runs with: operational side notes —
-// today, the dial translations --docker applies — print as they happen, so a
-// remote key set is never reached silently. They go to stderr, like every other
-// group's: stdout belongs to the answer, and a --json consumer must never
-// have to strip a report line off the front of it.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{
-		Env: os.Getenv,
-		Logf: func(format string, args ...any) {
-			fmt.Fprintf(errOut, format+"\n", args...)
-		},
-	}
 }
 
 // announce prints which key set was used and why, before anything else, so the

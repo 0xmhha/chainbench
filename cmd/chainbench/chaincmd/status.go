@@ -25,7 +25,7 @@ func newNetStatusCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			res, err := app.NetStatus(cmd.Context(), deps(cmd), app.NetStatusIn{DataDir: dataDir})
+			res, err := app.NetStatus(cmd.Context(), surface.Deps(cmd), app.NetStatusIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}

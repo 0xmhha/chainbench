@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -25,7 +26,7 @@ func newRunCmd() *cobra.Command {
 				return fmt.Errorf("--profile, --template, and --data-dir are required")
 			}
 			out := cmd.OutOrStdout()
-			res, err := app.UpgradeRun(cmd.Context(), deps(cmd), app.UpgradeRunIn{
+			res, err := app.UpgradeRun(cmd.Context(), surface.Deps(cmd), app.UpgradeRunIn{
 				ProfilePath: profilePath, PresetDir: presetDir,
 				FromBinary: fromBinary, ToBinary: toBinary,
 				Template: template, GenesisOverlay: genesisOverlay,
@@ -56,12 +57,4 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dataDir, "data-dir", "", "node data root")
 	cmd.Flags().IntVar(&waitFor, "wait", 0, "seconds to poll for the post-fork handoff (0=don't wait)")
 	return cmd
-}
-
-// deps is what every upgrade verb hands the app layer.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
 }

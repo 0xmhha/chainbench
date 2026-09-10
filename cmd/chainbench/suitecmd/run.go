@@ -12,6 +12,7 @@ import (
 	"github.com/0xmhha/chainbench/cmd/chainbench/exitcode"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 	"github.com/0xmhha/chainbench/internal/core/home"
 	"github.com/0xmhha/chainbench/internal/dashboard"
@@ -163,7 +164,7 @@ func runAttach(cmd *cobra.Command, args []string, chain string, rpcURLs []string
 	}
 	bus, flush := dashboard.Stream(dashboardURL)
 	defer flush()
-	root, err := app.AttachRun(cmd.Context(), deps(cmd), app.AttachRunIn{
+	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
 		Chain: chain, RPCURLs: rpcURLs, ArtifactRoot: artifactRoot,
 		KeysDir: keysDir, Specs: specs, Bus: bus,
 	})
@@ -188,7 +189,7 @@ func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, 
 	}
 	bus, flush := dashboard.Stream(dashboardURL)
 	defer flush()
-	root, err := app.AttachRun(cmd.Context(), deps(cmd), app.AttachRunIn{
+	root, err := app.AttachRun(cmd.Context(), surface.Deps(cmd), app.AttachRunIn{
 		DataDir: workspaceDir, Chain: chain, ArtifactRoot: artifactRoot,
 		KeysDir: keysDir, Specs: specs, Bus: bus,
 	})
@@ -198,21 +199,13 @@ func runAttachWorkspace(cmd *cobra.Command, args []string, workspaceDir, chain, 
 	return printSession(cmd.OutOrStdout(), root, jsonOut)
 }
 
-// deps is what every suite verb hands the app layer.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
-}
-
 // runComposed composes the network the specs declare and runs them against
 // it, printing the setup steps before the session.
 func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 	// Under --json the whole of stdout is the document; the setup narration is
 	// progress, so it goes to stderr. Without it, both share stdout as before.
 	notes := progressWriter(cmd, jsonOut)
-	res, err := app.RunSuite(cmd.Context(), deps(cmd), in)
+	res, err := app.RunSuite(cmd.Context(), surface.Deps(cmd), in)
 	for _, step := range res.SetupSteps {
 		fmt.Fprintln(notes, step)
 	}
@@ -265,7 +258,7 @@ func progressWriter(cmd *cobra.Command, jsonOut bool) io.Writer {
 // long run's outcome is readable without scrolling back.
 func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 	notes := progressWriter(cmd, jsonOut)
-	res, err := app.RunSuites(cmd.Context(), deps(cmd), in)
+	res, err := app.RunSuites(cmd.Context(), surface.Deps(cmd), in)
 	if err != nil {
 		return err
 	}

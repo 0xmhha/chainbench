@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -35,7 +36,7 @@ func newNetNewCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetNew(cmd.Context(), deps(cmd), app.NetNewIn{
+			out, err := app.NetNew(cmd.Context(), surface.Deps(cmd), app.NetNewIn{
 				DataDir: dataDir, Chain: chain, Binary: binary, KeysDir: keysDir, Target: target,
 				ManifestPath: manifestPath, TemplatePath: templatePath, Docker: docker,
 				ServerSet: serverSet, WorkspaceConfigPath: workspaceConfig,

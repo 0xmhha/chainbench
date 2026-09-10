@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -82,7 +83,7 @@ func newRPCCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			raw, err := app.NodeCall(cmd.Context(), deps(cmd), app.NodeCallIn{
+			raw, err := app.NodeCall(cmd.Context(), surface.Deps(cmd), app.NodeCallIn{
 				RPC: rpcURL, Method: method, Params: params,
 			})
 			if err != nil {
@@ -109,12 +110,4 @@ func decodeParams(s string) ([]any, error) {
 		return nil, fmt.Errorf("bad --params (JSON array expected): %w", err)
 	}
 	return params, nil
-}
-
-// deps is what every node verb hands the app layer.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
 }

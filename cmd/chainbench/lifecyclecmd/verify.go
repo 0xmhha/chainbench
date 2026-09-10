@@ -3,7 +3,6 @@ package lifecyclecmd
 import (
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/dashboard"
-	"os"
 	"text/tabwriter"
 	"time"
 
@@ -31,7 +30,7 @@ func NewVerify() *cobra.Command {
 			url, _ := cmd.Flags().GetString("dashboard")
 			bus, closeBus := dashboard.Stream(url)
 			defer closeBus()
-			res, err := app.VerifyNetwork(cmd.Context(), deps(cmd), app.VerifyNetworkIn{
+			res, err := app.VerifyNetwork(cmd.Context(), surface.Deps(cmd), app.VerifyNetworkIn{
 				DataDir: dataDir, Chain: chain, RPCURLs: rpcURLs,
 				ProgressDelay: delay,
 				ReadyTimeout:  readyTimeout,
@@ -57,7 +56,7 @@ func NewVerify() *cobra.Command {
 				if dataDir == "" {
 					return fmt.Errorf("--validators needs --workspace-dir (it reads the composed keys to compare against)")
 				}
-				vres, verr := app.VerifyValidators(cmd.Context(), deps(cmd), app.NetVerifyValidatorsIn{DataDir: dataDir})
+				vres, verr := app.VerifyValidators(cmd.Context(), surface.Deps(cmd), app.NetVerifyValidatorsIn{DataDir: dataDir})
 				if verr != nil {
 					return verr
 				}
@@ -72,7 +71,7 @@ func NewVerify() *cobra.Command {
 				if dataDir == "" {
 					return fmt.Errorf("--baseline needs --workspace-dir (the composition to check against the approved record)")
 				}
-				bres, berr := app.BaselineCheck(cmd.Context(), deps(cmd), app.NetBaselineIn{DataDir: dataDir})
+				bres, berr := app.BaselineCheck(cmd.Context(), surface.Deps(cmd), app.NetBaselineIn{DataDir: dataDir})
 				if berr != nil {
 					return berr
 				}
@@ -100,15 +99,4 @@ func NewVerify() *cobra.Command {
 	cmd.Flags().BoolVar(&validators, "validators", false, "also check the running chain recognizes exactly the composed keys as its validators (needs --workspace-dir)")
 	cmd.Flags().BoolVar(&baseline, "baseline", false, "also read the target's genesis and node configs now and check they match the environment's approved baseline (needs --workspace-dir); never updates it")
 	return surface.ReadOnly(cmd)
-}
-
-// deps is what every lifecycle verb hands the app layer.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{
-		Env: os.Getenv,
-		Logf: func(format string, args ...any) {
-			fmt.Fprintf(errOut, format+"\n", args...)
-		},
-	}
 }

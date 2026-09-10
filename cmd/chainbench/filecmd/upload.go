@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -22,7 +23,7 @@ func newUploadCmd() *cobra.Command {
 		Short: "Upload local files to a server (refuses a name collision unless --force-upload)",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			out, err := app.Upload(cmd.Context(), deps(cmd), app.UploadIn{
+			out, err := app.Upload(cmd.Context(), surface.Deps(cmd), app.UploadIn{
 				Target: app.TransferServer{
 					ServerSet: serverSet, Server: server, Docker: docker,
 					WorkspaceConfigPath: workspaceConfig,

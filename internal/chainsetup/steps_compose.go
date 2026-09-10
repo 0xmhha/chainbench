@@ -17,6 +17,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/core/remote"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
@@ -1262,16 +1263,11 @@ func commanderRunner(c process.Commander) genesis.CommandRunner {
 // shellCommand quotes a binary and its args into one command line for a shell.
 func shellCommand(name string, args ...string) string {
 	parts := make([]string, 0, len(args)+1)
-	parts = append(parts, shellQuote(name))
+	parts = append(parts, remote.ShellQuote(name))
 	for _, a := range args {
-		parts = append(parts, shellQuote(a))
+		parts = append(parts, remote.ShellQuote(a))
 	}
 	return strings.Join(parts, " ")
-}
-
-// shellQuote single-quotes one argument so a shell takes it literally.
-func shellQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // peerPlan is what every per-node rendering needs beyond the record: the key

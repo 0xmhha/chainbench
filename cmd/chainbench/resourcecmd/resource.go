@@ -11,13 +11,7 @@
 // verb, tests mirroring the group.
 package resourcecmd
 
-import (
-	"fmt"
-
-	"github.com/spf13/cobra"
-
-	"github.com/0xmhha/chainbench/internal/app"
-)
+import "github.com/spf13/cobra"
 
 // New builds the resource command group.
 func New() *cobra.Command {
@@ -31,13 +25,4 @@ func New() *cobra.Command {
 	}
 	cmd.AddCommand(newPoolCmd(), newPlanCmd())
 	return cmd
-}
-
-// deps is the Deps every resource verb runs with: operational side notes print
-// as they happen.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
 }

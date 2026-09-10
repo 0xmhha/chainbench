@@ -49,7 +49,7 @@ func SSHSudoRunner(creds remote.Credentials, hostKey remote.HostKeyCallback) Run
 // depend on what ran before), and -p ” silences the prompt that would
 // otherwise interleave with the command's own stderr.
 func sudoWrap(command string) string {
-	return "sudo -S -k -p '' /bin/sh -c " + shq(command)
+	return "sudo -S -k -p '' /bin/sh -c " + remote.ShellQuote(command)
 }
 
 // RemoteDriver provisions, launches, and stops nodes on a remote host by running
@@ -78,13 +78,13 @@ func (d *RemoteDriver) sh(ctx context.Context, command string) (string, error) {
 // Provision creates the data dir and writes the node config (base64-piped to
 // avoid quoting issues) on the remote host.
 func (d *RemoteDriver) Provision(ctx context.Context, spec NodeSpec) error {
-	if _, err := d.sh(ctx, "mkdir -p "+shq(spec.DataDir)); err != nil {
+	if _, err := d.sh(ctx, "mkdir -p "+remote.ShellQuote(spec.DataDir)); err != nil {
 		return fmt.Errorf("driver: remote mkdir datadir: %w", err)
 	}
 	if spec.ConfigPath != "" && len(spec.ConfigContent) > 0 {
 		b64 := base64.StdEncoding.EncodeToString(spec.ConfigContent)
-		cmd := "mkdir -p " + shq(path.Dir(spec.ConfigPath)) +
-			" && printf %s " + shq(b64) + " | base64 -d > " + shq(spec.ConfigPath)
+		cmd := "mkdir -p " + remote.ShellQuote(path.Dir(spec.ConfigPath)) +
+			" && printf %s " + remote.ShellQuote(b64) + " | base64 -d > " + remote.ShellQuote(spec.ConfigPath)
 		if _, err := d.sh(ctx, cmd); err != nil {
 			return fmt.Errorf("driver: remote write config: %w", err)
 		}
@@ -97,9 +97,9 @@ func (d *RemoteDriver) Provision(ctx context.Context, spec NodeSpec) error {
 // so setup can ship per-node identity files (nodekey, keystore, password).
 func (d *RemoteDriver) ProvisionFile(ctx context.Context, remotePath string, content []byte, mode fs.FileMode) error {
 	b64 := base64.StdEncoding.EncodeToString(content)
-	cmd := "mkdir -p " + shq(path.Dir(remotePath)) +
-		" && printf %s " + shq(b64) + " | base64 -d > " + shq(remotePath) +
-		" && chmod " + fmt.Sprintf("%o", mode.Perm()) + " " + shq(remotePath)
+	cmd := "mkdir -p " + remote.ShellQuote(path.Dir(remotePath)) +
+		" && printf %s " + remote.ShellQuote(b64) + " | base64 -d > " + remote.ShellQuote(remotePath) +
+		" && chmod " + fmt.Sprintf("%o", mode.Perm()) + " " + remote.ShellQuote(remotePath)
 	if _, err := d.sh(ctx, cmd); err != nil {
 		return fmt.Errorf("driver: remote write file %s: %w", remotePath, err)
 	}
@@ -112,12 +112,12 @@ func (d *RemoteDriver) ProvisionFile(ctx context.Context, remotePath string, con
 func (d *RemoteDriver) InitDatadir(ctx context.Context, spec NodeSpec, genesis []byte) error {
 	genesisPath := path.Join(spec.DataDir, "genesis.json")
 	b64 := base64.StdEncoding.EncodeToString(genesis)
-	ship := "mkdir -p " + shq(spec.DataDir) +
-		" && printf %s " + shq(b64) + " | base64 -d > " + shq(genesisPath)
+	ship := "mkdir -p " + remote.ShellQuote(spec.DataDir) +
+		" && printf %s " + remote.ShellQuote(b64) + " | base64 -d > " + remote.ShellQuote(genesisPath)
 	if _, err := d.sh(ctx, ship); err != nil {
 		return fmt.Errorf("driver: remote ship genesis node%d: %w", spec.Index, err)
 	}
-	initCmd := shq(spec.Binary) + " init --datadir " + shq(spec.DataDir) + " " + shq(genesisPath)
+	initCmd := remote.ShellQuote(spec.Binary) + " init --datadir " + remote.ShellQuote(spec.DataDir) + " " + remote.ShellQuote(genesisPath)
 	if _, err := d.sh(ctx, initCmd); err != nil {
 		return fmt.Errorf("driver: remote init node%d: %w", spec.Index, err)
 	}
@@ -151,13 +151,13 @@ func (d *RemoteDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error
 // stdin is redirected away so the node never holds the session's stdin either.
 func launchCommand(spec NodeSpec) string {
 	parts := make([]string, 0, len(spec.Args)+1)
-	parts = append(parts, shq(spec.Binary))
+	parts = append(parts, remote.ShellQuote(spec.Binary))
 	for _, a := range spec.Args {
-		parts = append(parts, shq(a))
+		parts = append(parts, remote.ShellQuote(a))
 	}
-	return "mkdir -p " + shq(path.Dir(spec.LogPath)) +
+	return "mkdir -p " + remote.ShellQuote(path.Dir(spec.LogPath)) +
 		" || exit 1; nohup " + strings.Join(parts, " ") +
-		" > " + shq(spec.LogPath) + " 2>&1 < /dev/null & echo $!"
+		" > " + remote.ShellQuote(spec.LogPath) + " 2>&1 < /dev/null & echo $!"
 }
 
 // PortProber reports which of a host's ports something is already listening
@@ -190,7 +190,7 @@ func (d *RemoteDriver) ProbePorts(ctx context.Context, host string, ports []int)
 		"(exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && echo $p; " +
 		"(exec 3<>/dev/tcp/" + host + "/$p) 2>/dev/null && echo $p; " +
 		"done | sort -un; true"
-	out, err := d.sh(ctx, "bash -c "+shq(script))
+	out, err := d.sh(ctx, "bash -c "+remote.ShellQuote(script))
 	if err != nil {
 		return nil, fmt.Errorf("driver: remote port probe: %w", err)
 	}
@@ -219,9 +219,4 @@ func (d *RemoteDriver) Stop(ctx context.Context, h Handle) error {
 		return fmt.Errorf("driver: remote stop node%d (pid %d): %w", h.Index, h.PID, err)
 	}
 	return nil
-}
-
-// shq single-quotes s for safe use in a POSIX shell command.
-func shq(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }

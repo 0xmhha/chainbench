@@ -37,7 +37,7 @@ func NewRemoteFileStore(run Runner) RemoteFileStore {
 // `test -e` exit of 0 means present, non-zero means absent; only a transport
 // failure is an error.
 func (s RemoteFileStore) Exists(ctx context.Context, remotePath string) (bool, error) {
-	res, err := s.Run(ctx, "test -e "+shq(remotePath))
+	res, err := s.Run(ctx, "test -e "+remote.ShellQuote(remotePath))
 	if err != nil {
 		return false, fmt.Errorf("driver: remote exists %s: %w", remotePath, err)
 	}
@@ -57,7 +57,7 @@ func (s RemoteFileStore) Read(ctx context.Context, remotePath string) ([]byte, e
 // running sha256sum on the host, so an unchanged file is never downloaded just
 // to compare it. sha256sum prints "<hex>  <path>"; only the digest is taken.
 func (s RemoteFileStore) Checksum(ctx context.Context, remotePath string) (string, error) {
-	res, err := s.Run(ctx, "sha256sum "+shq(remotePath))
+	res, err := s.Run(ctx, "sha256sum "+remote.ShellQuote(remotePath))
 	if err != nil {
 		return "", fmt.Errorf("driver: remote checksum %s: %w", remotePath, err)
 	}

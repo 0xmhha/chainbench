@@ -13,7 +13,7 @@ import (
 // It is exported with [DecodeReadFile] so that a caller holding a command
 // runner rather than credentials — the driver's file store — reads files over
 // exactly the same wire format, instead of growing a second one beside it.
-func ReadFileCommand(path string) string { return "base64 < " + shellQuote(path) }
+func ReadFileCommand(path string) string { return "base64 < " + ShellQuote(path) }
 
 // DecodeReadFile turns the result of [ReadFileCommand] into the file's bytes.
 // A non-zero exit is the file being unreadable, not a transport failure.
@@ -69,7 +69,16 @@ func CredentialsFromEnv(user, host string, port int, env func(string) string) (C
 	return creds, nil
 }
 
-// shellQuote single-quotes a path for safe remote shell use.
-func shellQuote(s string) string {
+// ShellQuote single-quotes s so a POSIX shell takes it literally: the string is
+// wrapped in single quotes and any single quote inside is closed, escaped, and
+// reopened ('\”).
+//
+// This is the module's one shell-quoting primitive, and it is exported because
+// it had four byte-identical copies (core/process, chainsetup, resource, and
+// here). Quoting is where a path or an argument becomes shell syntax, so a
+// defect found in one copy has to be found in all of them — and the copy that
+// is missed is the only one that stays exploitable. One implementation makes
+// that a single edit and a single test.
+func ShellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }

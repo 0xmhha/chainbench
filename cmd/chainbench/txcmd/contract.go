@@ -34,7 +34,7 @@ func newDeployCmd() *cobra.Command {
 			if rpcURL == "" || fromKey == "" || bytecode == "" {
 				return fmt.Errorf("--rpc, --from-key and --bytecode are required")
 			}
-			out, err := app.ContractDeploy(cmd.Context(), deps(cmd), app.ContractDeployIn{
+			out, err := app.ContractDeploy(cmd.Context(), surface.Deps(cmd), app.ContractDeployIn{
 				Chain:   app.ChainRef{Chain: chain, RPC: rpcURL},
 				FromKey: fromKey, Bytecode: bytecode, Value: value,
 			})
@@ -66,7 +66,7 @@ func newCallCmd() *cobra.Command {
 			if rpcURL == "" || to == "" {
 				return fmt.Errorf("--rpc and --to are required")
 			}
-			res, err := app.ContractCall(cmd.Context(), deps(cmd), app.ContractCallIn{
+			res, err := app.ContractCall(cmd.Context(), surface.Deps(cmd), app.ContractCallIn{
 				RPC: rpcURL, To: to, Data: data,
 			})
 			if err != nil {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -41,7 +42,7 @@ func newKeyringImportCmd() *cobra.Command {
 				if label.name != "" || in.From != "" || in.PrivateKey != "" || in.Mnemonic != "" {
 					return fmt.Errorf("--from-ring copies a whole key set, labels and all — it cannot be combined with --name or a single-key origin")
 				}
-				r, err := app.KeyringImportRing(cmd.Context(), deps(cmd), in)
+				r, err := app.KeyringImportRing(cmd.Context(), surface.Deps(cmd), in)
 				if err != nil {
 					return err
 				}
@@ -55,7 +56,7 @@ func newKeyringImportCmd() *cobra.Command {
 				return err
 			}
 			in.Label = label.name
-			e, err := app.KeyringImport(cmd.Context(), deps(cmd), in)
+			e, err := app.KeyringImport(cmd.Context(), surface.Deps(cmd), in)
 			if err != nil {
 				return err
 			}

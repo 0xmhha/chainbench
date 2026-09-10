@@ -5,6 +5,13 @@ import (
 	"strconv"
 )
 
+// This file is the argument decoding for a capability or tool call. Both
+// surfaces that invoke a capability hand it the same shape — a JSON object
+// decoded into map[string]any — so the rules for reading one value out of it (a
+// JSON number arrives as float64, a numeric string is accepted, an absent or
+// wrong-typed key falls back to a default) belong to one package. They lived
+// here and in a private copy inside internal/mcp; the surface now delegates.
+
 // ArgString returns a string argument, or def if absent/not a string.
 func ArgString(args map[string]any, key, def string) string {
 	if v, ok := args[key]; ok {
@@ -43,4 +50,36 @@ func ArgBigInt(args map[string]any, key string) *big.Int {
 		return nil
 	}
 	return n
+}
+
+// ArgStrings returns a []string argument (a JSON array of strings), or nil.
+// A non-string element is skipped rather than failing the call: the schema is
+// what rejects a malformed argument, and a decoder that panics on one bad
+// element would turn a validation problem into a crash.
+func ArgStrings(args map[string]any, key string) []string {
+	v, ok := args[key]
+	if !ok {
+		return nil
+	}
+	switch t := v.(type) {
+	case []string:
+		return t
+	case []any:
+		out := make([]string, 0, len(t))
+		for _, e := range t {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
+// ArgBool returns a boolean argument, or def if absent/not a boolean.
+func ArgBool(args map[string]any, key string, def bool) bool {
+	if v, ok := args[key].(bool); ok {
+		return v
+	}
+	return def
 }

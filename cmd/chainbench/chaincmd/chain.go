@@ -3,7 +3,6 @@ package chaincmd
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -20,27 +19,6 @@ import (
 // (see targetFlags). Subcommands live in the net_*.go files.
 // New builds the net command group.
 func New() *cobra.Command { return newNetCmd() }
-
-// deps is what every chain verb hands the app layer: the operator's command
-// line for the workspace lock's owner note, and side notes to stderr.
-func deps(cmd *cobra.Command) app.Deps {
-	err := cmd.ErrOrStderr()
-	return app.Deps{
-		Command: commandLine(cmd),
-		Logf: func(format string, args ...any) {
-			fmt.Fprintf(err, format+"\n", args...)
-		},
-	}
-}
-
-// commandLine renders this invocation the way the operator typed it.
-func commandLine(cmd *cobra.Command) string {
-	parts := []string{"chainbench"}
-	for c := cmd; c != nil && c.Name() != "chainbench"; c = c.Parent() {
-		parts = append(parts[:1], append([]string{c.Name()}, parts[1:]...)...)
-	}
-	return strings.Join(parts, " ")
-}
 
 func newNetCmd() *cobra.Command {
 	cmd := &cobra.Command{

@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -21,7 +22,7 @@ func NewHardfork() *cobra.Command {
 		Use:   "hardfork",
 		Short: "Plan a chain upgrade (swap binary at a fork block, keeping node data)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			planned, err := app.HardforkPlan(cmd.Context(), deps(cmd), app.HardforkPlanIn{
+			planned, err := app.HardforkPlan(cmd.Context(), surface.Deps(cmd), app.HardforkPlanIn{
 				DataDir: dataDir, ToChain: toChain, ToBinary: toBinary, Block: block,
 			})
 			if err != nil {
@@ -48,7 +49,7 @@ func NewHardfork() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			res, err := app.HardforkExecute(cmd.Context(), deps(cmd), app.HardforkExecuteIn{
+			res, err := app.HardforkExecute(cmd.Context(), surface.Deps(cmd), app.HardforkExecuteIn{
 				Plan: planned, DataDir: dataDir, Binary: bin,
 			})
 			if err != nil {

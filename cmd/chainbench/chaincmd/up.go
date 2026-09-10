@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/resourcecmd"
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -51,7 +52,7 @@ func newNetUpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			out, err := app.NetUp(cmd.Context(), deps(cmd), app.NetUpIn{
+			out, err := app.NetUp(cmd.Context(), surface.Deps(cmd), app.NetUpIn{
 				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,

@@ -37,7 +37,7 @@ func newSendCmd() *cobra.Command {
 			if rpcURL == "" || fromKey == "" || to == "" {
 				return fmt.Errorf("--rpc, --from-key and --to are required")
 			}
-			hash, err := app.TxSend(cmd.Context(), deps(cmd), app.TxSendIn{
+			hash, err := app.TxSend(cmd.Context(), surface.Deps(cmd), app.TxSendIn{
 				Chain:   app.ChainRef{Chain: chain, RPC: rpcURL},
 				FromKey: fromKey, To: to, Data: data, Value: value,
 			})
@@ -70,7 +70,7 @@ func newWaitCmd() *cobra.Command {
 			if rpcURL == "" || hash == "" {
 				return fmt.Errorf("--rpc and --hash are required")
 			}
-			r, err := app.TxWait(cmd.Context(), deps(cmd), app.TxWaitIn{
+			r, err := app.TxWait(cmd.Context(), surface.Deps(cmd), app.TxWaitIn{
 				RPC: rpcURL, Hash: hash, Timeout: timeout,
 			})
 			if err != nil {
@@ -99,14 +99,6 @@ func txStatus(s string) string {
 	default:
 		return s
 	}
-}
-
-// deps is what every tx verb hands the app layer: side notes to stderr.
-func deps(cmd *cobra.Command) app.Deps {
-	err := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(err, format+"\n", args...)
-	}}
 }
 
 // flagError names the flag an operator typed for a value app rejected.
