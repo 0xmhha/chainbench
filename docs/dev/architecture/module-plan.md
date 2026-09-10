@@ -375,7 +375,7 @@ remove one with `chainbench net rm`
 | `core/netreg` | 161줄. 이름이 netmap 과 혼동되나 하는 일은 무관(attach 레지스트리) | **개명**(규칙 7: `netreg` 는 표준 약어 아님) |
 | `core/pipeline/testrun` + `testkit` | 159+365줄. T7.11 잔여, `testrun→testkit` 이 층 이탈 엣지 | **케이스 이관 후 삭제** |
 | `chainsetup/verbs_*.go` | 6파일 1,144줄. app 층 함수가 chainsetup 안에 있고 `app` 은 별칭만 | app 으로 이동 또는 소유 정리 |
-| `chainsetup/cases.go`+`static.go` | 524줄. 레거시 사례 러너 | ~~T7.11 과 함께 은퇴~~ → **삭제됨(P6.4, 2026-08-28)**, `tests/cases/` 선언이 대신 |
+| `chainsetup/cases.go`+`static.go` | 524줄. 레거시 사례 러너 | ~~T7.11 과 함께 은퇴~~ → **삭제됨(P6.4, 2026-08-28)**, 당시 `tests/cases/`(지금 `tests/tc/`) 선언이 대신 |
 | `chainsetup/wemix*.go`+`handoff*.go` | 1,083줄. 체인 특화가 오케스트레이터 안에 | **끝남**: 부트스트랩 실행자 → `consensus/poa`(P6.1), 핸드오프 본문 → `consensus/upgrade.Handoff`(P6.3), 러너 자체는 삭제(P6.4) |
 | MCP 직결 import | 14종(래칫 목록) | 각 모듈 정리 시 app 경유로 |
 
@@ -591,9 +591,11 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
 **게이트**: 네 갈래가 같은 DSL 어휘를 쓰고, 체인별 분기가 **선언에만** 있다
 (러너에 `if chain ==` 가 없다).
 
-**P7 결과(2026-08-28).** 네 갈래는 `tests/cases/` 에 있다 — `env/` 아래 선언 4개
+**P7 결과(2026-08-28).** 네 갈래는 그때 `tests/cases/` 에 놓였다 — `env/` 아래 선언 4개
 (`stablenet`·`wbft`·`wemix`·`wemix-wbft`)와 각 갈래의 케이스 하나. 실행기는
 `app.RunSuite` 하나다: 케이스의 env 를 읽어 **선언의 모양**으로 조립기를 고른다.
+지금 그 네 갈래는 `tests/tc/` 아래에 있고(`3c42fb76`), env 는 별도 파일이 아니라 각
+정의서의 `env` 블록이다.
 `upgrade` 블록이 있으면 `consensus/upgrade.Handoff`(혼합 바이너리 핸드오프), 없으면
 워크스페이스 단계(`NetUp`). 어느 쪽이든 attach 엔진이 케이스를 돌린다. wemix 의
 2-페이즈 부트스트랩은 패밀리가 선언한 phase 로 `NetUp` 안에서 돈다(F5b·F6).
@@ -613,7 +615,7 @@ v2 워크스페이스 3,337줄(`workspace`·`record`·`discover`·`new`·`verbs_
   2-페이즈 부트스트랩 포함) · 핸드오프(두 빌드, verify-etcd 후 블록 21 을 후계
   검증자가 봉인). 핸드오프 검증 중 gwemix 0.10.x 의 `etcd.members` 응답 모양
   변화(문자열→객체)가 verify 파싱을 깨는 것을 발견 — 아무도 읽지 않는 필드라
-  `poa.EtcdState` 에서 제거(`tests/cases/README.md` 표).
+  `poa.EtcdState` 에서 제거(당시 `tests/cases/README.md` 표, 지금 `tests/tc/CHAIN-BRINGUP.md`).
 - 남은 것: P6.4 — `chain up --case` 러너(cases·static·wemix·handoff·report·state,
   `cmd/chainbench/chain.go`)를 지운다. 케이스의 단계 보고는 `RunSuiteOut.SetupSteps`
   가 대신한다.

@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 
@@ -255,11 +257,14 @@ type NetGenesisIn struct {
 
 // NetGenesis builds the genesis from the key set and writes it to the target.
 func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
+	// The request is read before the workspace is opened: one that contradicts
+	// itself needs no workspace, and refusing here keeps the lock and the state
+	// out of a request that was never going to be carried out.
+	opts, err := genesisOpts(in)
+	if err != nil {
+		return StepOut{}, err
+	}
 	detail, err := withWorkspace(d, in.DataDir, func(ws *Workspace) (string, error) {
-		opts, err := genesisOpts(in)
-		if err != nil {
-			return "", err
-		}
 		return ws.Genesis(ctx, opts)
 	})
 	return StepOut{Detail: detail}, err
@@ -267,7 +272,50 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (StepOut, error) {
 
 // genesisOpts folds the flag-shaped genesis inputs into the step options: the
 // key=value overrides and the overlay file's two halves.
+// genesisOpts turns a genesis request into the options the step applies, and
+// refuses a request that asks for both a finished genesis and a change to it.
+//
+// The two cannot both be honoured: a finished genesis is written byte for byte,
+// so a chain id, a fork height or an overlay arriving alongside it is silently
+// dropped. It used to be worse than silent — the completion detail still
+// reported "chain id N (override)" and the advertised capabilities were derived
+// from the dropped fork heights, so a capability-gated fork test would run
+// against a chain that has no such fork. Saying no here, before anything is
+// written, is the only answer that leaves the request and the result equal.
 func genesisOpts(in NetGenesisIn) (GenesisOpts, error) {
+	opts, err := buildGenesisOpts(in)
+	if err != nil {
+		return opts, err
+	}
+	return opts, opts.checkExistingIsUnchanged()
+}
+
+// checkExistingIsUnchanged reports a request that pairs a finished genesis with
+// a change to it, naming every conflicting part so one message covers the whole
+// request rather than one round trip per option.
+func (o GenesisOpts) checkExistingIsUnchanged() error {
+	if o.Existing == "" {
+		return nil
+	}
+	var asked []string
+	if o.ChainID != 0 {
+		asked = append(asked, fmt.Sprintf("chain id %d", o.ChainID))
+	}
+	if len(o.Overrides) > 0 {
+		asked = append(asked, fmt.Sprintf("genesis override(s) %s", strings.Join(slices.Sorted(maps.Keys(o.Overrides)), ", ")))
+	}
+	if len(o.Overlay) > 0 {
+		asked = append(asked, "a genesis overlay")
+	}
+	if len(asked) == 0 {
+		return nil
+	}
+	return fmt.Errorf(
+		"chainsetup: genesis: %q is used verbatim, so %s cannot be applied — drop the change, or build the genesis instead of naming a finished one",
+		o.Existing, strings.Join(asked, " and "))
+}
+
+func buildGenesisOpts(in NetGenesisIn) (GenesisOpts, error) {
 	opts := GenesisOpts{ChainID: in.ChainID, Existing: in.GenesisExisting}
 	for _, kv := range in.Set {
 		k, v, ok := strings.Cut(kv, "=")

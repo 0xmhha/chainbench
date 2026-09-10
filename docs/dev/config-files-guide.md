@@ -81,7 +81,7 @@ path.
 ## Run with both files
 
 ```sh
-chainbench run tests/tc/example.json \
+chainbench run tests/tc/samples/01-sample-minimal.json \
   --server-set  ./server-set.yaml \
   --workspace-config ./workspace-config.yaml \
   --workspace-dir /tmp/control/chain-a
@@ -128,4 +128,11 @@ file the same way.
   references, prepared/generated wiring) lands incrementally — see the handoff docs
   `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`
   and `10-prepared-inputs-server-ref-handoff.md`. Until a field is wired, it is
-  parsed but not yet acted on.
+  parsed but not yet acted on. `binaryAliases` is at that stage today: it is
+  validated, and nothing outside a test reads it.
+- The object reference forms the sample sketches in comments (`{server, ref}`,
+  `serverIndex`, `localPath`) are a step behind that, and the difference matters
+  when you copy one out. A preset's `genesis` and `keyring` are strings and its
+  `configs` is a string map, so a mapping in those positions does not parse at
+  all: the whole file is refused with `cannot unmarshal !!map into string`.
+  Today a preset reference is an `srv://` string or a plain relative filename.

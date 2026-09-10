@@ -337,7 +337,7 @@ tests/tc/
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
-| `01-sample-minimal.json` | v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-spec.json | stablenet | `default=gstable` | bp=4 | — |
+| `01-sample-minimal.json` | v1 스펙 샘플. 이미 떠 있는 체인에 붙어 실행한다. steps 로 값을 모으고 assertions 로 판정한다. chainbench validate tests/tc/samples/01-sample-minimal.json | stablenet | `default=gstable` | bp=4 | — |
 | `02-sample-lifecycle.json` | 작성 샘플 — 노드를 멈췄다 살리고 체인이 이어지는지 확인한다 (docs/dev/dsl-authoring-guide.md) | stablenet | `default=${GSTABLE_BIN:-gstable}` | bp=4, en=1 | 있음 |
 
 ### `stress` (2)

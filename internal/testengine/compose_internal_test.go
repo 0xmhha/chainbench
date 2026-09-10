@@ -340,6 +340,11 @@ func TestCompositionOf_WorkspaceConfigDataRootConflict(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "data root conflict") {
 		t.Fatalf("mismatched roots must conflict, got %v", err)
 	}
+	// The rule itself lives in resource; what this path owes the operator is
+	// which target disagreed, so the refusal names the env line to change.
+	if !strings.Contains(err.Error(), "/other/root") {
+		t.Fatalf("the refusal must name the env target, got %v", err)
+	}
 
 	// The same root is fine.
 	writeWC("/other/root")

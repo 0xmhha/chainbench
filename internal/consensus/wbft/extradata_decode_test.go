@@ -68,6 +68,61 @@ func TestGenesisValidators_ManyValidatorsCrossTheLongFormBoundary(t *testing.T) 
 	}
 }
 
+// TestGenesisValidators_OversizedLengthIsAnErrorNotAPanic covers the long-form
+// length headers. A header may claim any length — an existing genesis can be
+// fetched from a server — and the claim used to be accumulated into an int that
+// wrapped negative, defeating the bounds check and panicking on the slice.
+// Every case here must come back as an error.
+func TestGenesisValidators_OversizedLengthIsAnErrorNotAPanic(t *testing.T) {
+	cases := []struct {
+		name  string
+		extra string
+	}{
+		// 0xbf = long string, 8 length bytes; all 0xff wraps int to -1.
+		{"long string, length wraps negative", "0xbf" + strings.Repeat("ff", 8)},
+		// 0xff = long list, same 8 length bytes.
+		{"long list, length wraps negative", "0xff" + strings.Repeat("ff", 8)},
+		// A large but non-wrapping claim with nothing behind it.
+		{"long string, claim beyond input", "0xbb01000000"},
+		{"long list, claim beyond input", "0xfb01000000"},
+		// The header itself is truncated.
+		{"length header truncated", "0xbf01"},
+		{"max length value", "0xb8ff"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			genesis := []byte(`{"extraData":"` + tc.extra + `"}`)
+			// The contract is an error, never a panic; the test binary would
+			// fail the run outright on a panic, which is the point.
+			if _, err := genesisValidatorsFromExtraData(genesis); err == nil {
+				t.Fatalf("extraData %s must be refused", tc.extra)
+			}
+		})
+	}
+}
+
+// FuzzGenesisValidators drives the decoder with arbitrary extra-data. It asserts
+// nothing about the result: the property under test is that no input panics, and
+// a parser fed a file from elsewhere deserves that guarantee.
+func FuzzGenesisValidators(f *testing.F) {
+	f.Add("0x")
+	f.Add("0xc0")
+	f.Add("0xbf" + strings.Repeat("ff", 8))
+	f.Add("0xff" + strings.Repeat("ff", 8))
+	vals := []string{addr20(0x11), addr20(0x22)}
+	bls := []string{bls48(0xa1), bls48(0xb2)}
+	if extra, err := ExtraData(vals, bls); err == nil {
+		f.Add(extra)
+	}
+	f.Fuzz(func(t *testing.T, extra string) {
+		b, err := json.Marshal(map[string]any{"extraData": extra})
+		if err != nil {
+			t.Skip()
+		}
+		_, _ = genesisValidatorsFromExtraData(b)
+	})
+}
+
 func TestGenesisValidators_Errors(t *testing.T) {
 	if _, err := genesisValidatorsFromExtraData([]byte(`{"config":{}}`)); err == nil {
 		t.Error("a genesis with no extraData must error")

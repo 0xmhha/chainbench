@@ -98,7 +98,7 @@ func NewVerify() *cobra.Command {
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")
 	cmd.Flags().BoolVar(&validators, "validators", false, "also check the running chain recognizes exactly the composed keys as its validators (needs --workspace-dir)")
-	cmd.Flags().BoolVar(&baseline, "baseline", false, "also check the composition still matches the environment's approved baseline (needs --workspace-dir); never updates it")
+	cmd.Flags().BoolVar(&baseline, "baseline", false, "also read the target's genesis and node configs now and check they match the environment's approved baseline (needs --workspace-dir); never updates it")
 	return surface.ReadOnly(cmd)
 }
 

@@ -695,7 +695,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 | **P4** | 빌더 셋 — genesis 생성 지점 5 → 1, config 렌더 2 → 1, dsl 파서가 액션을 import 하지 않음 | P2, P3 | 계수 + import 방향 | ☑ **P4 완료 2026-08-28** · P4.1 genesis 완료 2026-08-28** — `core/genesis` 가 소스 선택(`SourceFor`, 패밀리 id 분기 0: `SourceProvider` 타입 단언)·`Compose`·프리셋 소스 소유, wemix 소스는 `consensus/poa.GenesisSource`(Family 가 capability 구현), 호출자 5곳 전부 `Compose`/주입 `Source` 경유, `chainsetup` 직접 파일 쓰기 0(layers §5 에서 제외), 5,828줄. **P4.2 config 완료 2026-08-28** — `nodeconfig.Spec` 단일 입력, `TOML`/`Argv` 두 렌더러, Spec 조립은 `launcher.NodeConfig` 한 곳, compose 의 config·launchopts·start 가 `peerPlan` 으로 같은 입력을 모음, argv 조립 3→1(`upgrade.LaunchArgs`·deploy 평평한 `LaunchArgs` 도 `Argv` 경유), `driverSpec` 의 `SyncMode` 누락 수정. `launchopt` 는 소유로 편입(호출자는 `nodeconfig.Argv` 뿐), 디렉터리 유지. **P4.3 dsl 완료 2026-08-28** — `testspec`(문법·해석기 1,432줄)과 `internal/testhelper`(액션·어세션·리더 2,129줄) 분리. `Registry` 에 `Reader` 추가로 문법이 액션 파일을 부르던 고리(`readerFor`) 제거, `NewRegistry()` 빈 레지스트리 + `testhelper.Register`. `testspec→testhelper` import 0 |
 | **P4.x** | **`preflight` 재정의** (결정 2026-08-28) — 계획 자기모순 검사에서 **현재 vs 목표 비교**로: 타깃의 현 체인 구성을 분석하고, 정상 동작 여부를 inspector 로 확인하고, 다음 테스트가 요구하는 구성과 비교해 "그대로 사용 / N번 서버만 재구성 / 전체 재구성" 을 답한다(연속 테스트의 재구성 비용 제거 — 설정 파일 비교만으로는 부족: 파일이 같아도 노드가 비정상일 수 있다). 기존 계획 검사는 각 빌더로(포트→resource, genesis 포크→genesis 빌더, netid→config 빌더) | P4, P3 | 동일 구성 연속 테스트에서 재구성 스킵 라이브 · 부분 변경 시 해당 노드만 재구성 | ☑ **완료 2026-08-28** — `core/preflight` = `Have`/`Want`/`Compare`/`Check`/`Decision`(reuse·rebuild-nodes·rebuild-all·compose, 이유 포함), 의존 `node` 뿐 · `chainsetup.Workspace.Have/Compare` + liveness(pid 는 노드의 머신, RPC head 는 노드 주소) · `app.RunSuite` 가 NetUp 전에 물어 reuse 는 건너뛰고 rebuild-nodes 는 `NetRestart` 만 · 옛 계획 검사는 `upgrade.NetworkPlan.validate` 로(빌더 함수 호출) · 표 테스트 9 + liveness 3 |
 | **P6** | `chainsetup`·`testengine` — 남는 것은 순서뿐. 6,593 → 2,000줄 이하 | P5 | `setup_bridge.go` 소멸 · `testengine→chainsetup` 엣지 소멸 | ☒ **닫는다 2026-09-08 — 줄 수 목표는 근거를 잃었고, 남은 게이트는 좁히기로 달성되지 않는다.**\n\n**실측**: `chainsetup` 4,652줄 · `testengine` 2,349줄, 합 7,001. 그중 **주석이 1,547줄(22%)** 이고 공백 451, 실제 코드는 5,003 이다. 함수·메서드가 213개라 평균 20줄 남짓 — 비대한 함수가 몰린 구조가 아니다. 가장 큰 것이 `netUpFrom` 133 · `RunSuite` 132 · `Run` 109 · `Allocate` 99 다.\n\n**목표 2,000 은 P5 시점의 6,593 에서 잡은 것인데, 그 뒤 이 두 패키지가 하는 일이 늘었다**(청사진 N1~N6, N9 순서 선언, NM6, 원격 경로). 줄이 는 것은 기능이 는 것이지 부풀어서가 아니다. 그리고 줄 수를 목표로 삼으면 **가장 먼저 지워지는 것이 그 22%의 주석**인데, 이 세션에서 판단을 바꾼 것이 바로 그 주석들이었다(`derive quorum` 이 노드 표를 안 읽는 이유, `genesis` 가 키셋을 요구하지 않는 이유).\n\n**게이트 둘 중 하나는 충족**이다 — `setup_bridge.go` 는 없다. 남은 `testengine→chainsetup` 엣지는 비테스트 4파일이고, **층 위반이 아니다**(둘 다 L4). 노드 수명(start/stop/restart/swap)을 인터페이스로 좁혀 보면 **4파일 중 1개**(`nodegate.go`)만 import 가 사라지고 `suite.go` 에는 `NetUp`·`Open`·`WantOf`·`NetworkStatus`·`NetStop`·`NetEndpoints` 등 11개가 남는다 — **패키지 엣지는 그대로다.** 인터페이스가 12개 메서드라면 그것은 요구를 좁힌 것이 아니라 chainsetup 을 다른 이름으로 부르는 것이다.\n\n**엣지를 실제로 없애는 길은 하나뿐이다**: 조립을 testengine 밖으로 내보내 엔진이 망을 *받게* 하는 것. 그것은 좁히기가 아니라 재설계이고, 근거가 생기면 그때 별도 항목으로 세운다. 지금은 열어 둘 이유가 없다 |
-| **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☑ **완료 2026-08-28** — `tests/cases/env/` 선언 4개 + 케이스 4개 · 문법 `env.upgrade`(schema·strict·lowering, `binaries` 는 producer/validator 역할) · 실행기 `app.RunSuite` 가 선언의 모양으로 조립기 선택(`upgrade` → `upgrade.Handoff`, 아니면 `NetUp`) · 표면 `run --workspace-dir` · `validate` 가 env 를 풀고 env 파일을 선언으로 검증 · 러너 `if chain ==` 0건 · **라이브 4/4 완결 2026-08-31**(gstable·go-wbft·go-wemix 빌드; 핸드오프는 후계 검증자의 블록 21 봉인까지) — 그 과정에서 gwemix 0.10.x 의 `etcd.members` 모양 변화가 깨뜨린 verify 파싱을 `EtcdState` 필드 제거로 해소 |
+| **P7** | DSL 케이스 4종 — go-wemix · wemix→wbft · wbft 단독 · stablenet | P6 | 러너에 `if chain ==` 0건 | ☑ **완료 2026-08-28** — 당시 `tests/cases/env/` 선언 4개 + 케이스 4개(지금은 `tests/tc/`, env 는 정의서 인라인) · 문법 `env.upgrade`(schema·strict·lowering, `binaries` 는 producer/validator 역할) · 실행기 `app.RunSuite` 가 선언의 모양으로 조립기 선택(`upgrade` → `upgrade.Handoff`, 아니면 `NetUp`) · 표면 `run --workspace-dir` · `validate` 가 env 를 풀고 env 파일을 선언으로 검증 · 러너 `if chain ==` 0건 · **라이브 4/4 완결 2026-08-31**(gstable·go-wbft·go-wemix 빌드; 핸드오프는 후계 검증자의 블록 21 봉인까지) — 그 과정에서 gwemix 0.10.x 의 `etcd.members` 모양 변화가 깨뜨린 verify 파싱을 `EtcdState` 필드 제거로 해소 |
 | **P8** | `test-helper` — 액션 1,541줄 + testkit + tests 공통부 취합 | P7 | 파서가 액션을 모르고 액션이 문법을 모른다 | ☑ **완료 2026-09-07 (#357).** 남은 것은 문법 갭이 아니라 **낡은 기록**이었다 — 막혔다던 19건 중 15건에 이미 스펙이 있었고 122개 전부 `validate` 를 통과한다. 문서를 고치고 `TestSpecDoc_BlockedCasesHaveNoSpec` 이 그 주장을 검사하게 했다. 진짜 남은 8건은 이유가 유효하다(SDK 가드 2 · 조작자 공급 키 2 · 다른 빌드가 필요한 4) |
 | **F1(최종)** | **파일 영속·복구 시스템** (사용자 결정 2026-08-28: 모든 작업의 맨 마지막) — chainbench 프로세스 장애로 중단됐을 때 재실행하여 이전 진행 상황을 복구하고 서버 상태를 재확인. `Inventory` 등 메모리 정본의 파일 저장이 이때 들어온다. 그 전까지는 기존 기록에서 `Adopt` 으로 파생(사본 금지 원칙) | P8 | **설계안 2026-08-28**: `docs/dev/architecture/f1-recovery.md` — 요청 기록(`workspace.json.request`) · `net resume`(잠금 인수 → 생사 대조 → 첫 미완 단계부터 → 재확인) · 세트 잠금(인벤토리 파일 없음) · 주인 없는 프로세스 입양. §4 는 제안대로 결정 → ☑ **완료 2026-08-28**: `State.Request` 기록 · `net resume`(reconcile → 첫 미완 단계부터 → 죽은 노드 재기동) · `session.AcquireLock` + 세트 잠금(`~/.chainbench/<set>.lock`) · 우리 argv 프로세스 입양 · 단위 6건 + gstable 라이브(kill -9 → resume) | ☑ |
 
@@ -723,7 +723,7 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
   방향: `inspector` 는 atomic 실사 프리미티브(L1, "판단 없음")로 두고, `health`(블록 전진 *판정*)는
   그 atomic 들을 **조합하는 inspector 위 레이어**로 제공한다(현재 health 는 obs/rpc 를 직접 쓴다 →
   inspector 프리미티브를 쓰도록 재배선). atomic ↔ 조합의 층 분리.
-- ☐ **hardfork 는 통폐합 대상 아님** — `hardfork`(바이너리 swap)와 `consensus/upgrade`(합의-패밀리
+- ☑ **hardfork 는 통폐합 대상 아님**(결정으로 닫힘) — `hardfork`(바이너리 swap)와 `consensus/upgrade`(합의-패밀리
   handoff)는 의도적으로 다른 모델이라 별개로 유지. R1 표의 `hardfork→genesis` 항목은 폐기.
 
 이전 기록 (2026-08-31 이전 후보):
@@ -1217,6 +1217,13 @@ tests/tc 코퍼스)을 병렬로 감사했다. 두 목적은 이렇다.
 happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스트다. 모두 정적 분석이며 라이브
 실행으로 확인한 것은 없다(특히 WA1 은 이름·grep 증거다).
 
+> **상태(2026-09-10):** 이 목록은 **PR #363 으로 반영을 마쳤다.** 아래 체크박스는 감사 당시
+> 상태 그대로이고 갱신되지 않았으니, 미완으로 읽지 않는다. 표본 확인: WA2(`internal/mcp/test_tools.go`·
+> `cmd/chainbench/testcmd/test.go`), WA4(`internal/mcp/node_tools.go`), WA8(`spec_v2.go:549,565` 의
+> expect 검증), WA16(주석에 적힌 대로 testhelper 비교자 경유), WA26(`SPECS.md` 의
+> `internal/testspec` 참조 0건). **남은 것은 §1p 에 따로 적혀 있다** — metric 수집(C),
+> 체인별 거버넌스 케이스(B 잔여), MCP 플러그인 재배포(D), 커버리지(WA25).
+
 ### A. 정확성·목적 차단 (먼저 반영)
 
 - [ ] **WA1** [치명] 라이브 MCP 플러그인이 이 소스로 빌드된 게 아니다. 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
@@ -1323,6 +1330,137 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 두 항목 모두 지금 동작을 막지 않는다 — L1 은 증적 보존, L2 는 키 취급 범위를 좁히는
 일이다. 착수 전에 인계 문서 §7·§8 을 함께 읽을 것.
+
+
+## 1r. 모니터링 이슈 재검토와 수정 계획 (2026-09-10)
+
+모니터링 세션이 제기한 16건(MON-001~016,
+`docs/research/chainbench/analyses/11-monitoring-open-issues.md`)을 HEAD `2cc82692` 기준으로
+다시 판정했다. 판정 근거·추가 발견·검증 계획은 정본
+[`monitoring-issue-review-2026-09-10.md`](monitoring-issue-review-2026-09-10.md)에 있다.
+
+결과: **유효 14건, 해결·검증 완료 2건(MON-004·MON-006), 오탐 0건.** 기준 시점의 전체
+테스트는 통과 상태였으므로, 남은 14건은 모두 기존 테스트가 잡지 못하는 결함이다.
+문서에 없던 추가 발견 5건(N1~N5)도 정본에 적었다.
+
+작업은 작은 모듈에서 상위 조합, 표면 순서로 진행한다. 각 항목의 완료 기준은 정본의
+6절, 검증 방법은 7절을 따른다.
+
+- ☑ **MR-A. 프리미티브·합의 패밀리** (`c6b8b091`)
+  - A1 MON-012 `internal/consensus/wbft` RLP 길이 범위 검사 + fuzz
+  - A2 MON-014 `internal/consensus/poa` 멤버 수 uint256 검증·상한
+  - A3 MON-003 `internal/dsl` null·비객체 env 거부
+  - A4 MON-011·N1 `internal/core/filestore` 로컬 Write가 mode 강제(심볼릭 링크 포함).
+    비밀 쓰기 여러 곳의 공통 원인이므로 호출부마다 고치지 않고 스토어에서 고친다.
+- ☑ **MR-B. 키와 비밀** (`2246f14e`) — 결정 ①② 승인 반영
+  - B1 MON-001 인라인 개인 키가 `State.Nodes[].Key`·`State.Request`에 남지 않게
+  - B2 MON-002 명시 키와 기존 keyring 신원 불일치를 자원 변경 전에 거부(재사용 자체는 유지)
+- ☑ **MR-C. 구성 오케스트레이션** (`internal/chainsetup`) — C1 `e6641505`, C2~C4 `72e7ca63`, C5 `d370597d`
+  - C1 MON-009 후보 생성과 실행 경로 반영 분리 — 거부 시 파일·해시·PID 보존
+  - C2 MON-010 발견 결과에 서버·전체 datadir 보존(구성 간 label 충돌 제거)
+  - C3 MON-008·N2 `recordRun`이 실제 GenesisPath 사용 + 노드 config 수집
+  - C4 MON-007 existing genesis와 변경 옵션 충돌 거부(capability 산출 포함)
+  - C5 MON-016 baseline 관측 시점·누락 처리 정정
+  - C1·C5는 "대상의 현재 파일을 읽어 해시" 기능을 공유하므로 공용 헬퍼 하나로 만든다.
+- ☑ **MR-D. 표면·환경**
+  - ☑ D1 MON-015·N3 `--json` stdout 계약과 순차 실행 종료 코드 (`edb05eb8`)
+  - ☑ D2 MON-005·N5 `env/docker/gen-env.sh`와 README를 새 server-set 계약에 맞춤 (`d210ac93`).
+    생성기가 workspace-config 와 server-set-wemix 까지 찍고, 생성물을 실제 파서로 읽는
+    테스트를 붙였다. 로컬 `build/` 는 손으로 고쳐 놓은 상태였고 생성기만 옛 형식을
+    쓰고 있었다 — 새 체크아웃에서만 깨지는 모양이었다.
+  - ☑ D3 MON-013 샘플 안내를 실제 소비 범위와 일치 (`21d47abe`).
+    `binaryAliases` 는 파싱만 되고 읽는 곳이 없으며, 객체형 참조는 아예 로드에
+    실패한다. 두 경우를 갈라 적고 테스트로 고정했다.
+  - ☑ D4 N4 data-root 충돌 규칙을 `internal/resource` 한 곳으로 (`35735508`)
+
+- ☑ **Docker 라이브 검증** (컨테이너 15대) — 7절 다섯 시나리오 모두 통과. 검증 중
+  포트 충돌 메시지가 다른 워크스페이스의 노드를 자기 것으로 부르는 결함을 새로 찾아
+  같이 고쳤다(`9d0109e3`). 상세는 정본 9절.
+
+6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
+
+
+## 1s. 남은 작업 한눈에 (2026-09-10)
+
+§1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
+배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다. 표시가
+낡아 미완으로 보이던 것들(§1o 의 WA 체크박스, `hardfork` 결정)은 이번에 정리했다.
+
+착수 순서를 정한 목록이 아니다. 성격이 다른 다섯 갈래이고, 갈래끼리는 서로 막지 않는다.
+
+### A. 지금 진행 중
+
+- **모니터링 트랙(§1r)** — PR #371 의 리뷰와 머지만 남았다. 재검토를 두 번 거쳤다.
+  1차에서 **MON-001 이 미해결이었음을 확인하고 고쳤다**(인라인 키가 상태 파일·stderr·
+  `--json` stdout 세 곳으로 샜다). 2차에서 **MON-017 을 새로 확인해 고쳤다** — 노드별
+  바이너리 이름이 다르면 실행 중인 노드를 발견하지 못했고, Docker 에서 전후를 대조해
+  확인했다. **MON-015 의 단일 실행 분기**도 복수 실행과 답이 달라 맞췄다. MON-007·010 은
+  동작은 맞았고 근거를 넓혔다. 3차에서 **MON-018** — 그 키 노출 회귀 테스트가 문법 오류로
+  끝나 검사에 닿은 적이 없었음을 확인하고 바로잡았다(프로덕션 결함은 없었다). 상세와 검증
+  수준 구분은 정본의 재검토 절들.
+
+### B. fleet 커버리지와 관측 (§1p)
+
+라이브 함대가 있어야 진행되는 갈래다.
+
+- [ ] **C. metric 수집 인프라.** `metric` 어서션은 등록돼 있는데 수집 경로가 없다. 셋이
+  필요하다 — 노드 기동 때 metrics 활성화를 launch 로 배선, 수집 경로(collector/scrape),
+  `--docker` 에서 metrics 포트를 localmap 으로 번역. 지금은 컨테이너 내부 주소로 직접
+  dial 해 timeout 난다. 셋이 되면 제거했던 `03-metric-head-block` 스펙을 되살린다.
+- [ ] **B 잔여 — 체인별 거버넌스 케이스.** stablenet 의 GovValidator 흐름을 go-wbft 로
+  그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
+  멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.
+  실제 ABI 를 쓰는 `registerContract` 케이스와 negative-tx 의 reject 변형도 여기 묶인다.
+- [ ] **WA25. go-wemix·go-wbft 커버리지가 얕다.** 각각 5건·6건뿐이고, pn/proxied 라우팅을
+  검증하는 스펙이 없다.
+- [ ] **D. 라이브 MCP 플러그인 재배포.** 배포본이 `net_*` 이름의 낡은 빌드다. 저장소는
+  `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. **코드 작업이 아니라 배포 작업이다.**
+
+### C. 키 취급과 증적 (§1q)
+
+둘 다 지금 동작을 막지 않는다. 하나는 증적 보존, 하나는 키가 로컬에 내려오는 범위를
+좁히는 일이다.
+
+- [ ] **L1. 노드별 시도(attempt) 로그 축.** 노드 로그가 노드당 한 파일이라 재기동하면
+  이전 시도의 로그가 덮인다. reuse-if-matching 이 한 노드를 여러 번 재작업할 때 특히
+  문제다. `core/node/layout.go` 에 attempt 축이 없다.
+- [ ] **L2. 대상에서 키 검증(공개 신원만 반환).** 지금 `srv://` keyring 은 묶음 전체를
+  로컬로 내려받는다. 서명에 로컬 경로가 필요해 정당한 경로지만, 대조만 필요한 경우까지
+  내려받을 이유는 없다. 다운로드가 필요한 경우와 검증만 필요한 경우를 가르는 것이 요점이다.
+
+### D. 모니터링 트랙에서 파생된 후속 (§1r 8절)
+
+이번 PR 의 범위 밖으로 명시하고 미룬 것들이다.
+
+- [ ] **후보·반영 완전 분리.** 부분 재사용에서 승인된 노드만 정지·반영·재기동한다.
+  지금은 판정을 쓰기 앞으로 옮기는 데까지 했다(MON-009).
+- [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 파싱만 되고 읽는 곳이 없고,
+  후자(`{server,ref}`·`serverIndex`·`localPath`)는 아직 파싱조차 안 된다. 샘플과 안내
+  문서가 "미구현" 이라고 적어 두었고, 구현하면 `TestWorkspaceConfig_SampleCommentsMatchWhatParses`
+  가 실패하며 그 주석을 걷으라고 알린다.
+- [ ] **여러 정의서 실행의 통합 report.** 지금은 실행마다 따로 남는다.
+
+### E. 오래 남아 있는 잔여 (§1n 및 그 이전)
+
+- [ ] **원격 `chain rm`.** `filestore.Store` 에 삭제가 없다(확인·읽기·쓰기·체크섬뿐).
+  파괴적 원격 작업이라 검증할 함대가 있을 때 함께 한다.
+- ◐ **G2. 핸드오프 원격.** `remote` 명령군과 `deploy` 패키지 폐기까지는 끝났고, 핸드오프
+  경로를 패밀리 선언으로 옮기는 일이 남았다.
+- [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
+  **체인팀 몫이다.**
+- [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에
+  뒀다. 로스터 계산의 올바른 소유 모듈을 정해야 한다. 소비자는 `cmd` 하나뿐이라 급하지 않다.
+- [ ] **health 를 inspector 조합 레이어로 재배선.** `inspector` 는 판단 없는 atomic
+  프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
+  `health` 는 obs/rpc 를 직접 쓴다.
+- ◐ **Phase 2~6 의 부분 완료 항목** — T2.1(driver 위 Transport 타입 형식화), T3.3, T5.1,
+  T6.6. 각 절에 무엇이 끝났고 무엇이 남았는지 적혀 있다.
+
+### 이번에 바로잡은 표시
+
+- §1o 의 WA1~WA26 체크박스는 PR #363 으로 반영을 마쳤는데 미완으로 남아 있었다. 절
+  머리에 상태와 표본 확인 근거를 적었다.
+- `hardfork 는 통폐합 대상 아님` 은 할 일이 아니라 내린 결정이라 ☑ 로 바꿨다.
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)

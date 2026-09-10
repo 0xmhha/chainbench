@@ -124,3 +124,81 @@ func TestDeclaredKeys_RefusesTooFewIdentities(t *testing.T) {
 func TestDeclaredKeys_IsAKeySource(t *testing.T) {
 	var _ store.KeySource = store.DeclaredKeys{}
 }
+
+// TestDeclaredKeys_PinnedMismatchIsRefused is MON-002's contract. Reuse stays
+// the rule — the ring on disk is what a genesis and the datadirs already refer
+// to — but a key the operator PINNED to a different identity is a contradiction,
+// not a preference to drop in silence. The refusal must leave the ring alone.
+func TestDeclaredKeys_PinnedMismatchIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	first := declaredSet(t, 2)
+	if _, err := (store.DeclaredKeys{Path: dir, Set: first}).Ensure(context.Background(), 2); err != nil {
+		t.Fatalf("first ensure: %v", err)
+	}
+
+	// node1 is pinned to a different identity than the one on disk (declaredSet
+	// is deterministic, so the swap is what makes them differ).
+	second := declaredSet(t, 2)
+	second.Nodes[0].Nodekey = first.Nodes[1].Nodekey
+	second.Nodes[0].Identity = first.Nodes[1].Identity
+	_, err := store.DeclaredKeys{Path: dir, Set: second, Pinned: []int{1}}.Ensure(context.Background(), 2)
+	if err == nil {
+		t.Fatal("a pinned key that differs from the existing ring must be refused")
+	}
+	// Both addresses are public, and naming them is what tells the operator
+	// which side to change.
+	if !strings.Contains(err.Error(), first.Nodes[0].Address) {
+		t.Fatalf("the refusal should name the identity on disk: %v", err)
+	}
+
+	// The ring on disk is untouched: the refusal changed nothing.
+	after, lerr := store.PresetKeys{Path: dir}.Ensure(context.Background(), 2)
+	if lerr != nil {
+		t.Fatalf("reload: %v", lerr)
+	}
+	for i := range after.Nodes {
+		if after.Nodes[i].Address != first.Nodes[i].Address {
+			t.Fatalf("node%d changed to %s after a refusal", i+1, after.Nodes[i].Address)
+		}
+	}
+}
+
+// TestDeclaredKeys_PinnedMatchReuses: the same identity pinned again is not a
+// conflict — it is the normal re-run, and it must keep working.
+func TestDeclaredKeys_PinnedMatchReuses(t *testing.T) {
+	dir := t.TempDir()
+	first := declaredSet(t, 2)
+	if _, err := (store.DeclaredKeys{Path: dir, Set: first}).Ensure(context.Background(), 2); err != nil {
+		t.Fatalf("first ensure: %v", err)
+	}
+	got, err := store.DeclaredKeys{Path: dir, Set: first, Pinned: []int{1, 2}}.Ensure(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("pinning the same keys must reuse them: %v", err)
+	}
+	if got.Nodes[0].Address != first.Nodes[0].Address {
+		t.Fatalf("node1 = %s, want the existing %s", got.Nodes[0].Address, first.Nodes[0].Address)
+	}
+}
+
+// TestDeclaredKeys_UnpinnedNodesStillReuse: a node the table left out carries
+// fresh entropy on every call. Comparing it would fail every re-run, so only
+// pinned indexes are checked.
+func TestDeclaredKeys_UnpinnedNodesStillReuse(t *testing.T) {
+	dir := t.TempDir()
+	first := declaredSet(t, 2)
+	if _, err := (store.DeclaredKeys{Path: dir, Set: first}).Ensure(context.Background(), 2); err != nil {
+		t.Fatalf("first ensure: %v", err)
+	}
+	// node1 is pinned to what is on disk; node2 declares a different identity but
+	// is NOT pinned, standing in for a node the table left out.
+	second := declaredSet(t, 2)
+	second.Nodes[1].Nodekey = first.Nodes[0].Nodekey
+	second.Nodes[1].Identity = first.Nodes[0].Identity
+	got, err := store.DeclaredKeys{Path: dir, Set: second, Pinned: []int{1}}.Ensure(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("an unpinned node must not turn a re-run into a failure: %v", err)
+	}
+	if got.Nodes[1].Address != first.Nodes[1].Address {
+		t.Fatalf("node2 = %s, want the existing %s", got.Nodes[1].Address, first.Nodes[1].Address)
+	}
+}

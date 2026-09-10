@@ -212,6 +212,52 @@ func TestGenesisExistingMode(t *testing.T) {
 // TestInlineEnv_Extends pins S6's override form: a case extends a canonical env
 // and names only what differs. The named fields replace the canonical env's
 // whole; everything else is inherited.
+// TestInlineEnv_NonObjectBaseIsAnError: a referenced env that is not an object
+// must be reported, not crash the check that is supposed to report it. JSON null
+// is the case that mattered — it unmarshals into a nil map without error, and
+// the override loop then assigned into that nil map and panicked.
+func TestInlineEnv_NonObjectBaseIsAnError(t *testing.T) {
+	cases := []struct {
+		name string
+		base string
+	}{
+		{"null", `null`},
+		{"array", `[1,2]`},
+		{"string", `"env"`},
+		{"number", `7`},
+		{"malformed", `{`},
+	}
+	// The case must name at least one override field: that is what reaches the
+	// merge loop.
+	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1",
+		"env":{"extends":"base","topology":{"bp":3}},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := InlineEnv([]byte(caseRef), func(string) ([]byte, error) {
+				return []byte(tc.base), nil
+			})
+			if err == nil {
+				t.Fatalf("a %s env must be refused", tc.name)
+			}
+		})
+	}
+}
+
+// TestInlineEnv_NullBaseWithNoOverrideIsAlsoRefused: without an override field
+// the merge loop never runs, so this path used to survive by accident. It is
+// still not a usable env, and the failure should come from the same check.
+func TestInlineEnv_NullBaseWithNoOverrideIsAlsoRefused(t *testing.T) {
+	caseRef := `{"schemaVersion":"2","kind":"case","id":"c1",
+		"env":{"extends":"base"},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+	if _, err := InlineEnv([]byte(caseRef), func(string) ([]byte, error) {
+		return []byte(`null`), nil
+	}); err == nil {
+		t.Fatal("a null env must be refused even with no override field")
+	}
+}
+
 func TestInlineEnv_Extends(t *testing.T) {
 	canonical := `{"schemaVersion":"2","kind":"env","id":"stablenet-15","chain":"stablenet",
 		"binaries":{"default":"gstable"},"topology":{"bp":"max","pn":1,"en":1}}`

@@ -36,14 +36,29 @@ type RunSuitesOut struct {
 	Runs []SuiteRunResult `json:"runs"`
 }
 
-// Failed reports whether any definition failed to run or recorded a failure.
-func (o RunSuitesOut) Failed() bool {
+// Totals adds up what the run produced across every definition: how many could
+// not run at all, how many tests failed, and how many were blocked.
+//
+// The counting lives here rather than in a surface so the CLI's exit code and
+// any other reader agree on what happened — the three are not interchangeable,
+// and a surface that recounts them is a second opinion waiting to drift.
+func (o RunSuitesOut) Totals() (setupErrors, failed, blocked int) {
 	for _, r := range o.Runs {
-		if r.Err != "" || r.Out.Summary.Summary.Fail > 0 || r.Out.Summary.Summary.Blocked > 0 {
-			return true
+		if r.Err != "" {
+			setupErrors++
+			continue
 		}
+		failed += r.Out.Summary.Summary.Fail
+		blocked += r.Out.Summary.Summary.Blocked
 	}
-	return false
+	return setupErrors, failed, blocked
+}
+
+// Failed reports whether anything went wrong, for a caller that needs only the
+// verdict and not the breakdown.
+func (o RunSuitesOut) Failed() bool {
+	setupErrors, failed, blocked := o.Totals()
+	return setupErrors > 0 || failed > 0 || blocked > 0
 }
 
 // RunSuites runs each definition in turn through the same RunSuite a single

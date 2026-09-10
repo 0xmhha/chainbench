@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/0xmhha/chainbench/internal/core/node"
 	"path/filepath"
 	"strings"
 	"time"
@@ -113,11 +112,52 @@ func (w *Workspace) recordRun(ctx context.Context, t *resource.Access, bin strin
 			return "", fmt.Errorf("chainsetup: record: %w", err)
 		}
 	}
-	// The genesis this run composed, read back from the target through the
-	// same boundary that wrote it.
-	layout := node.Layout{Root: w.state.Target.DataRoot}
-	if g, err := t.Files.Read(ctx, layout.GenesisPath()); err == nil {
-		if err := files.Write(ctx, filepath.Join(dir, "genesis.json"), g, 0o644); err != nil {
+	// The inputs this run actually composed, read back from the target through
+	// the same boundary that wrote them.
+	//
+	// The path comes from the state, not from a freshly built Layout: a Layout
+	// with only a Root resolves to the flat <dataRoot>/genesis.json, which is
+	// not where a composition with a workspace-config puts it. That record
+	// silently held no genesis at all — or, worse, a leftover from a different
+	// composition sharing the data root, presented as this run's.
+	//
+	// A missing input is reported rather than skipped. The record exists to say
+	// what ran; a record that quietly lacks the genesis looks complete and is
+	// not, and finding that out later costs more than the note costs here.
+	var missing []string
+	if w.state.GenesisPath == "" {
+		missing = append(missing, "genesis (no genesis step has run)")
+	} else if g, err := t.Files.Read(ctx, w.state.GenesisPath); err != nil {
+		missing = append(missing, fmt.Sprintf("genesis (%s): %v", w.state.GenesisPath, err))
+	} else if werr := files.Write(ctx, filepath.Join(dir, "genesis.json"), g, 0o644); werr != nil {
+		return "", fmt.Errorf("chainsetup: record: %w", werr)
+	}
+
+	// Each node's config, from the machine that node runs on. A run record
+	// without them cannot answer what a node was actually started with, which
+	// is the first question asked of it.
+	for _, ns := range w.state.Nodes {
+		if ns.ConfigPath == "" {
+			continue
+		}
+		nt, err := w.machineFor(ns)
+		if err != nil {
+			missing = append(missing, fmt.Sprintf("%s config: %v", ns.NodeLabel(), err))
+			continue
+		}
+		cfg, err := nt.Files.Read(ctx, ns.ConfigPath)
+		if err != nil {
+			missing = append(missing, fmt.Sprintf("%s config (%s): %v", ns.NodeLabel(), ns.ConfigPath, err))
+			continue
+		}
+		name := fmt.Sprintf("config_%s.toml", ns.NodeLabel())
+		if err := files.Write(ctx, filepath.Join(dir, name), cfg, 0o644); err != nil {
+			return "", fmt.Errorf("chainsetup: record: %w", err)
+		}
+	}
+	if len(missing) > 0 {
+		note := "these inputs were not collected:\n  " + strings.Join(missing, "\n  ") + "\n"
+		if err := files.Write(ctx, filepath.Join(dir, "missing-inputs.txt"), []byte(note), 0o644); err != nil {
 			return "", fmt.Errorf("chainsetup: record: %w", err)
 		}
 	}

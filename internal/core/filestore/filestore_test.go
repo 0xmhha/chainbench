@@ -145,3 +145,83 @@ func TestProvision_UploadIfAbsent(t *testing.T) {
 		t.Fatalf("stale remote: result = %+v, want 1 replaced", res)
 	}
 }
+
+// TestLocalWrite_EnforcesModeOnAnExistingFile is the secret-at-rest contract: a
+// caller asking for 0600 gets 0600 even when something is already at the path.
+// os.WriteFile applies its perm only on create, so a key written onto a leftover
+// 0644 file used to stay world-readable while the help text promised otherwise.
+func TestLocalWrite_EnforcesModeOnAnExistingFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "key")
+	if err := os.WriteFile(path, []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := (filestore.Local{}).Write(context.Background(), path, []byte("secret"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Fatalf("perm = %#o, want 0600", got)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil || string(b) != "secret" {
+		t.Fatalf("content = %q err=%v", b, err)
+	}
+}
+
+// TestLocalWrite_DoesNotFollowASymlink: a secret must land at the path the
+// caller named. Writing through a symlink would put it in the link's target,
+// with that file's mode and owner, and leave the caller none the wiser.
+func TestLocalWrite_DoesNotFollowASymlink(t *testing.T) {
+	dir := t.TempDir()
+	victim := filepath.Join(dir, "victim")
+	if err := os.WriteFile(victim, []byte("untouched"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "link")
+	if err := os.Symlink(victim, link); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	if err := (filestore.Local{}).Write(context.Background(), link, []byte("secret"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if b, err := os.ReadFile(victim); err != nil || string(b) != "untouched" {
+		t.Fatalf("the symlink target was overwritten: %q err=%v", b, err)
+	}
+	info, err := os.Lstat(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		t.Fatal("the path is still a symlink; the secret went through it")
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Fatalf("perm = %#o, want 0600", got)
+	}
+}
+
+// TestLocalWrite_LeavesNoTempFileBehind: the write goes through a temp file, so
+// a run must not litter the directory with them.
+func TestLocalWrite_LeavesNoTempFileBehind(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "cfg.toml")
+	for i := 0; i < 3; i++ {
+		if err := (filestore.Local{}).Write(context.Background(), path, []byte("x"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 || entries[0].Name() != "cfg.toml" {
+		names := make([]string, 0, len(entries))
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		t.Fatalf("directory holds %v, want only cfg.toml", names)
+	}
+}

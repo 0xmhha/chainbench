@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -95,10 +96,10 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	// over the source string because a table that declares keys has said where
 	// its identities come from.
 	var src store.KeySource
-	if set, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
+	if set, pinned, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
 		return "", kerr
 	} else if keyed {
-		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
+		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
 	} else {
 		switch opts.Source {
 		case "", "preset":
@@ -114,7 +115,16 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
+			// A blueprint names a key for every node it declares (a node without
+			// one is an error there), so every index is pinned: if the ring on
+			// disk holds a different identity, the document and the disk
+			// disagree and the operator has to say which is right.
+			pinned := make([]int, 0, len(set.Nodes))
+			for _, e := range set.Nodes {
+				pinned = append(pinned, e.Index)
+			}
+			sort.Ints(pinned)
+			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
 		case "generate":
 			// A generated set must declare exactly the topology's validators, not
 			// make every node one: a network with endpoints (4 bp + 11 en) whose key
@@ -188,50 +198,56 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 // rest of the system expects — rather than being hand-rolled here. Only their
 // key material is taken; DeclaredKeys re-writes the ring (keystores, password,
 // metadata) at the workspace's key dir, the way the declared source already does.
-func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, bool, error) {
+func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, []int, bool, error) {
 	byIndex := make(map[int]node.Record, len(w.state.Nodes))
-	keyed := false
+	// pinned are the nodes whose key the table actually names. They are the only
+	// ones an existing ring can contradict — the rest are filled with fresh
+	// entropy, so they differ on every call by construction.
+	var pinned []int
 	for _, r := range w.state.Nodes {
 		byIndex[r.Index] = r
 		if r.Key != "" {
-			keyed = true
+			pinned = append(pinned, r.Index)
 		}
 	}
-	if !keyed {
-		return keyring.Preset{}, false, nil
+	if len(pinned) == 0 {
+		return keyring.Preset{}, nil, false, nil
 	}
+	sort.Ints(pinned)
 
 	// Generate a full set once, to a throwaway dir, for the entropy of the nodes
 	// that name no key. Its keystores are not reused — DeclaredKeys re-writes
 	// them from the key material below — so the dir is temporary.
 	tmp, err := os.MkdirTemp("", "cb-nodekeys-")
 	if err != nil {
-		return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: %w", err)
+		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
 	if err != nil {
-		return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
+		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
 	}
 
 	var set keyring.Preset
 	for i := 1; i <= n; i++ {
 		r, ok := byIndex[i]
 		if !ok {
-			return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
+			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
 		}
 		var key derive.PrivateKey
 		if r.Key != "" {
-			key, err = parseNodeKey(r.Key)
+			// parseNodeKey names the node itself: its refusal for inline key
+			// material must not be wrapped in anything that quotes the value.
+			key, err = parseNodeKey(i, r.Key)
 			if err != nil {
-				return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
+				return keyring.Preset{}, nil, true, err
 			}
 		} else {
 			key = gen.Nodes[i-1].Nodekey
 		}
 		id, derr := derive.Derive(key, derive.WithBLS)
 		if derr != nil {
-			return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
+			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
 		}
 		set.Nodes = append(set.Nodes, keyring.Entry{
 			Label:    keyring.Label(node.LabelFor(i)),
@@ -247,12 +263,11 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, b
 			set.Network.Validators = append(set.Network.Validators, set.Nodes[i-1].Address)
 		}
 	}
-	return set, true, nil
+	return set, pinned, true, nil
 }
 
-// parseNodeKey reads a node's declared key. A path that exists is read as a key
-// file; anything else is parsed as 0x-hex, so a network can pin a key inline or
-// point at a file, the way a blueprint's nodekey does.
+// parseNodeKey reads a node's declared key from the local file the node table
+// names. Inline key material is refused — see the reasoning on the function.
 // localKeyReader is the file reader a blueprint's declared keys are read
 // through. Like parseNodeKey, it refuses a server reference: a private key a
 // blueprint names is a local file or inline hex, never a secret pulled off a
@@ -264,23 +279,107 @@ func localKeyReader(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-func parseNodeKey(ref string) (derive.PrivateKey, error) {
-	// A private key is never pulled off a server to be derived here: a server
-	// reference for a key would read the secret onto this machine, which the key
-	// contract forbids (a prepared key is verified on its own server, and only
-	// its public identity leaves it). A key is therefore inline hex or a local
-	// file only; on-server key verification is a separate, explicit path.
+// checkNodeKeyRef decides whether a node table's key reference may be carried
+// any further, and says why not without ever quoting key material.
+//
+// The distinction it draws is between a reference and a secret. A server path
+// and a mistyped file path are both references: naming them is what tells the
+// operator which line to fix, and neither is a secret. Key material is not, so
+// a refusal that echoed it would move the key from the document into the error
+// — and from there into stderr, the session record and the --json report, which
+// is the leak the whole rule exists to prevent. The node is named by its index
+// instead; the operator has the document.
+func checkNodeKeyRef(index int, ref string) error {
+	if ref == "" {
+		return nil
+	}
+	if looksLikeKeyMaterial(ref) {
+		return fmt.Errorf(
+			"chainsetup: keys: node%d declares a private key inline: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext (the value is withheld here for the same reason)",
+			index)
+	}
 	if strings.HasPrefix(ref, "srv://") {
-		return derive.PrivateKey{}, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — use inline 0x-hex or a local key file", ref)
+		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is on a server: a private key is not read across machines — point it at a local key file", index, ref)
 	}
-	if _, err := os.Stat(ref); err == nil {
-		b, rerr := os.ReadFile(ref)
-		if rerr != nil {
-			return derive.PrivateKey{}, fmt.Errorf("read key file %q: %w", ref, rerr)
+	if _, err := os.Stat(ref); err != nil {
+		return fmt.Errorf("chainsetup: keys: node%d: key reference %q is not a readable file: a node key is named by a local file path", index, ref)
+	}
+	return nil
+}
+
+// checkTopologyKeyRefs applies checkNodeKeyRef to every node a topology
+// declares. A nil topology declares nothing.
+func checkTopologyKeyRefs(t *node.Topology) error {
+	if t == nil {
+		return nil
+	}
+	for _, n := range t.Sorted() {
+		if err := checkNodeKeyRef(n.Index, n.Key); err != nil {
+			return err
 		}
-		return derive.ParsePrivateKey(string(b))
 	}
-	return derive.ParsePrivateKey(ref)
+	return nil
+}
+
+// looksLikeKeyMaterial reports whether a key reference is the key itself rather
+// than a path to one.
+//
+// A secp256k1 private key is 32 bytes, written as 64 hex digits with or without
+// the 0x prefix. The test is deliberately wider than that — any run of hex at
+// least 32 digits long — because the cost of the two mistakes is not symmetric:
+// treating a path as a key withholds it from one message, while treating a key
+// as a path prints it. A real path carries a separator or a dot long before it
+// carries thirty-two hex digits and nothing else.
+func looksLikeKeyMaterial(ref string) bool {
+	h := strings.TrimSpace(ref)
+	if strings.HasPrefix(h, "0x") || strings.HasPrefix(h, "0X") {
+		h = h[2:]
+	}
+	if len(h) < 32 {
+		return false
+	}
+	for _, c := range h {
+		switch {
+		case '0' <= c && c <= '9', 'a' <= c && c <= 'f', 'A' <= c && c <= 'F':
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
+	// A node table's key is a local FILE, and nothing else.
+	//
+	// Not a server reference: reading a secret off a server onto this machine is
+	// what the key contract forbids (a prepared key is verified on its own
+	// server, and only its public identity leaves it).
+	//
+	// And not inline hex either. The node table is copied into the workspace's
+	// own state — node records and the recorded request both keep this string —
+	// and that state is ordinary JSON a person reads, diffs and copies. A key
+	// written inline would sit there in cleartext, which is the same reason the
+	// blueprint generator references keys by path and never inlines them
+	// (blueprint.FromPreset). A path in state names a secret; it is not one.
+	//
+	// place already refused everything this rejects, before the string reached
+	// the node record. The check stands here too because this function is what
+	// opens the file: a reader that trusts an earlier caller to have validated
+	// its input is one refactor away from reading whatever it is handed.
+	if err := checkNodeKeyRef(index, ref); err != nil {
+		return derive.PrivateKey{}, err
+	}
+	b, rerr := os.ReadFile(ref)
+	if rerr != nil {
+		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: read key file %q: %w", index, ref, rerr)
+	}
+	// The parse failure is not wrapped with the bytes: a file that is nearly a
+	// key is still a key someone meant to keep.
+	key, perr := derive.ParsePrivateKey(string(b))
+	if perr != nil {
+		return derive.PrivateKey{}, fmt.Errorf("chainsetup: keys: node%d: key file %q does not hold a private key", index, ref)
+	}
+	return key, nil
 }
 
 // AllocateOpts sizes the network.
@@ -348,6 +447,18 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		modes := make([]string, len(sorted))
 		for i, n := range sorted {
 			role := n.NodeRole()
+			// Before the string is copied anywhere, not after.
+			//
+			// The refusal used to live in the keys step, which runs after place
+			// has put this exact string into the node record and after
+			// withWorkspace has saved it: the run stopped, and the key it
+			// stopped for was already in workspace.json — and in the --json
+			// report, since a setup error is carried in it verbatim. Rejecting
+			// a value the moment it is read is the only order in which "never
+			// stored" is true.
+			if err := checkNodeKeyRef(n.Index, n.Key); err != nil {
+				return nil, nil, err
+			}
 			reqs[i] = node.LaunchReq{Role: role, Binary: n.Binary, Config: n.Config, Key: n.Key}
 			// A topology's per-node mode wins; a validator is still pinned to
 			// full, since the topology cannot make a sealing node stateless.
@@ -606,6 +717,15 @@ type GenesisOpts struct {
 // it to the target's data root (upload-if-absent semantics are the provision
 // step's concern; genesis always reflects the current inputs).
 func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, error) {
+	// The rule belongs to the operation, not to the one builder that happened to
+	// construct these options. genesisOpts checks it too, and every caller today
+	// goes through genesisOpts — but this method is exported and takes the
+	// options directly, so "a finished genesis is never quietly changed" held
+	// only as long as no one assembled a GenesisOpts by hand. An invariant that
+	// depends on which door you came in is not an invariant.
+	if err := opts.checkExistingIsUnchanged(); err != nil {
+		return "", err
+	}
 	p, err := w.plugin()
 	if err != nil {
 		return "", err
@@ -621,30 +741,9 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		art genesis.Artifacts
 		gen []byte
 	)
-	if opts.Existing != "" {
-		// A finished genesis is read on its own machine and used verbatim — no
-		// template build, no overrides. It must be valid JSON, and (for a family
-		// that carries its validator set in the genesis) its validators must be
-		// the composed key set — checked below, not left to trust.
-		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
-		if rerr != nil {
-			return "", fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
-		}
-		if !json.Valid(b) {
-			return "", fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
-		}
-		// The validators an existing genesis names must be exactly the keys the
-		// network runs, or block signing fails at consensus rather than here.
-		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
-			return "", err
-		}
-		gen = b
-	} else {
-		art, err = w.genesisArtifacts(ctx, p, opts)
-		if err != nil {
-			return "", err
-		}
-		gen = art.Genesis
+	gen, art, err = w.genesisBytes(ctx, p, opts)
+	if err != nil {
+		return "", err
 	}
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
@@ -764,28 +863,46 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
-	// A node that names its own config file uses it verbatim: the file is the
-	// whole config, so the composition renders nothing and applies no overrides
-	// for it. It still goes through the same write + readback as a rendered one,
-	// so a truncated copy is caught here rather than at boot.
+	toml, err := w.nodeConfigBytes(ctx, p, preset, placed, peering, pubkey, ns)
+	if err != nil {
+		return ConfigProvenance{}, err
+	}
+	// A node that names its own config file applies no overrides: the file is
+	// the whole config.
+	var overrides []string
+	if ns.Config == "" {
+		overrides = w.configOverridesFor(ns.Index)
+	}
+	return w.writeConfigFile(ctx, t, ns, toml, purpose, overrides)
+}
+
+// nodeConfigBytes renders what a node's config file would hold, without writing
+// anything.
+//
+// Rendering is separated from writing so a caller can ask what a composition
+// WOULD produce before it touches the target. reuse-if-matching needs exactly
+// that: it has to decide whether the inputs changed, and deciding after the
+// write means a refusal that has already replaced the running network's files.
+//
+// A node that names its own config file uses it verbatim — the file is the
+// whole config, so nothing is rendered and no override applies to it.
+func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
-			return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
+			return nil, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
 		}
-		return w.writeConfigFile(ctx, t, ns, toml, purpose, nil)
+		return toml, nil
 	}
 	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 	if err != nil {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
+		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
 	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
-	overrides := w.configOverridesFor(ns.Index)
 	if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
-	toml := nodeconfig.TOML(spec)
-	return w.writeConfigFile(ctx, t, ns, toml, purpose, overrides)
+	return nodeconfig.TOML(spec), nil
 }
 
 // writeConfigFile writes one node's config to its target and reads it back:
@@ -1040,6 +1157,36 @@ func netmapRequests(reqs []node.LaunchReq) []resource.Request {
 		out = append(out, resource.Request{Role: r.Role})
 	}
 	return out
+}
+
+// genesisBytes produces the genesis this composition would write, without
+// writing it. Rendering is separated from writing so a caller can ask what a
+// composition WOULD produce — reuse-if-matching has to know whether the inputs
+// changed before it touches the target, and asking afterwards means a refusal
+// that has already replaced the running network's genesis.
+//
+// A finished genesis is read on its own machine and used verbatim — no template
+// build, no overrides. It must be valid JSON, and (for a family that carries its
+// validator set in the genesis) its validators must be the composed key set.
+func (w *Workspace) genesisBytes(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) ([]byte, genesis.Artifacts, error) {
+	if opts.Existing != "" {
+		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
+		if rerr != nil {
+			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
+		}
+		if !json.Valid(b) {
+			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+		}
+		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
+			return nil, genesis.Artifacts{}, err
+		}
+		return b, genesis.Artifacts{}, nil
+	}
+	art, err := w.genesisArtifacts(ctx, p, opts)
+	if err != nil {
+		return nil, genesis.Artifacts{}, err
+	}
+	return art.Genesis, art, nil
 }
 
 // genesisArtifacts builds the genesis through the one composition every surface

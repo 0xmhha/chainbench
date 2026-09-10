@@ -213,3 +213,92 @@ func TestParseWorkspaceConfig_Sample(t *testing.T) {
 		t.Fatalf("sample parsed unexpectedly: dataRoot=%q mode=%q", c.DataRoot, c.Inputs.Mode)
 	}
 }
+
+// TestWorkspaceConfig_SampleCommentsMatchWhatParses guards the sample against
+// the drift that made it wrong: it promised the reader everything below it was
+// supported, while two of the things it showed were not.
+//
+// The subtler half is that the two are unsupported in different ways.
+// binaryAliases parses and validates and is then read by nobody, so writing one
+// is merely ignored. The object reference forms are worse: a preset's genesis
+// and keyring are strings, so a mapping there refuses the whole file, and an
+// operator who uncomments the example loses the config rather than the feature.
+//
+// The sample now says so at both spots. This pins the statements: implement
+// either one and this test fails, which is the moment those comments have to
+// come out.
+func TestWorkspaceConfig_SampleCommentsMatchWhatParses(t *testing.T) {
+	// Still nothing but a test reads binaryAliases. If BinaryPath gains a real
+	// caller, drop this and the sample's "미구현" note with it.
+	c, err := ParseWorkspaceConfig([]byte(validConfig))
+	if err != nil {
+		t.Fatalf("binaryAliases should still parse: %v", err)
+	}
+	if got := c.BinaryAliases["gwemix"]; got != "linux-amd64/gwemix" {
+		t.Fatalf("binaryAliases = %q, want it parsed", got)
+	}
+
+	// The object form the sample sketches. It must still be refused, and
+	// refused in the way the sample and the guide tell the reader it is.
+	objectForm := strings.Replace(validConfig, `inputs:
+  mode: generated
+`, `inputs:
+  mode: prepared
+  preset: regression
+presets:
+  regression:
+    genesis:
+      server: server-01
+      ref: genesis.json
+`, 1)
+	_, err = ParseWorkspaceConfig([]byte(objectForm))
+	if err == nil {
+		t.Fatal("the object reference form now parses — update the sample and the guide, which both say it does not")
+	}
+	if !strings.Contains(err.Error(), "cannot unmarshal !!map into string") {
+		t.Fatalf("refusal changed shape, and the sample quotes the old one: %v", err)
+	}
+}
+
+// TestAdoptDataRoot pins the single-owner rule at the place that now owns it.
+// It used to be written twice — once in app for the step-form surfaces, once in
+// testengine for the run path — with two spellings of the same refusal, which is
+// how two surfaces come to disagree about a rule that has exactly one answer.
+func TestAdoptDataRoot(t *testing.T) {
+	wc := WorkspaceConfig{DataRoot: "/data"}
+
+	// No root on the target: the config fills it in.
+	got, err := wc.AdoptDataRoot(Spec{}, "")
+	if err != nil {
+		t.Fatalf("empty target should adopt: %v", err)
+	}
+	if got.DataRoot != "/data" {
+		t.Fatalf("dataRoot = %q, want /data", got.DataRoot)
+	}
+
+	// The same root: agreement, not a conflict.
+	if _, err := wc.AdoptDataRoot(Spec{DataRoot: "/data"}, ""); err != nil {
+		t.Fatalf("the same root must fold in quietly: %v", err)
+	}
+
+	// A different root: two answers to where the data plane lives.
+	target := Spec{DataRoot: "/other"}
+	got, err = wc.AdoptDataRoot(target, "")
+	if err == nil {
+		t.Fatal("a different root must conflict")
+	}
+	if !strings.Contains(err.Error(), "the target") || !strings.Contains(err.Error(), "/other") {
+		t.Fatalf("the refusal must name the origin and the value: %v", err)
+	}
+	// A refused fold changes nothing.
+	if got.DataRoot != "/other" {
+		t.Fatalf("a refusal must leave the target alone, got %q", got.DataRoot)
+	}
+
+	// The origin is the caller's to name, so a refusal can point at the line
+	// the operator actually wrote.
+	_, err = wc.AdoptDataRoot(target, `the env target "srv://server-01/other"`)
+	if err == nil || !strings.Contains(err.Error(), "the env target") {
+		t.Fatalf("origin should reach the message: %v", err)
+	}
+}
