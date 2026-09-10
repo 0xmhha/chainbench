@@ -47,10 +47,10 @@ bin/chainbench run \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers \
   --keys <ws>/genkeys \
-  tests/cases/stablenet/chain-up-15.json
+  tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json
 ```
 
-`chain-up-15` 의 env(`tests/cases/env/stablenet-docker15.env.json`)가 15노드
+`chain-up-15` 의 env 블록(정의서 안에 인라인, id `stablenet-docker15`)이 15노드
 topology 와 컨테이너 바이너리 경로를 선언한다. 키는 15개가 필요해 preset(5개)
 대신 generate 로 만든다 — 생성 세트는 topology 의 validator 수(4)만 validator 로
 선언한다.
@@ -64,17 +64,17 @@ topology 와 컨테이너 바이너리 경로를 선언한다. 키는 15개가 �
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set.yaml \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
-  tests/cases/stablenet/chain-up-15.json
+  tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json
 
 # wbft                      — server-set.yaml, 기본 게이트
-bin/chainbench run ... tests/cases/wbft/chain-up-15.json
+bin/chainbench run ... tests/tc/go-wbft/chain-up/02-wbft-chain-up-15.json
 
 # go-wemix (poa)           — server-set-wemix.yaml 필요, 게이트 예산 상향
 bin/chainbench run --workspace-dir <ws> --server-set env/docker/build/server-set-wemix.yaml \
   --workspace-config env/docker/build/workspace-config.yaml \
   --docker --all-servers --keys <ws>/genkeys --keys-source generate \
   --node-monitor-timeout 5m \
-  tests/cases/wemix/chain-up-15.json
+  tests/tc/go-wemix/chain-up/02-wemix-chain-up-15.json
 ```
 
 go-wemix(poa)는 stablenet/wbft 와 두 가지가 다르다:

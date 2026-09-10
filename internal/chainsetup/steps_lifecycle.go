@@ -648,14 +648,18 @@ func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error
 	lines := make([]string, 0, len(busy))
 	var recoverable, byHand bool
 	for _, b := range busy {
-		who, ok := mine[b.Port]
+		who, ok := mine[portKey{host: b.Host, port: b.Port}]
 		switch {
 		case ok && who.pid > 0:
 			recoverable = true
 			lines = append(lines, fmt.Sprintf("  %s — this workspace's node%d (pid %d)", b, who.node, who.pid))
 		case ok:
+			// This workspace planned the address and never recorded a pid for
+			// it, so whatever is listening is not something it started. Saying
+			// "this workspace's node%d" claimed the opposite, and the operator
+			// who believed it went looking in the wrong composition.
 			byHand = true
-			lines = append(lines, fmt.Sprintf("  %s — this workspace's node%d, but no pid was recorded", b, who.node))
+			lines = append(lines, fmt.Sprintf("  %s — planned for this workspace's node%d, but it started nothing there: another composition holds it", b, who.node))
 		default:
 			byHand = true
 			lines = append(lines, fmt.Sprintf("  %s — not started by this workspace", b))
@@ -747,17 +751,31 @@ func (w *Workspace) scanPorts(ctx context.Context, addrs []inspector.Addr) ([]in
 // removed while its nodes kept running — still owns the layout, and telling the
 // operator that their own ports belong to somebody else is the least useful
 // thing this check could say.
-func (w *Workspace) recordedLeftovers() map[int]owner {
-	out := map[int]owner{}
+func (w *Workspace) recordedLeftovers() map[portKey]owner {
+	out := map[portKey]owner{}
 	for _, ns := range w.state.Nodes {
 		o := owner{node: ns.Index, pid: ns.PID}
+		host := nodeHost(ns)
 		for _, port := range []int{ns.P2P, ns.Etcd, ns.EtcdClient, ns.HTTP, ns.WS, ns.Auth, ns.Metrics} {
 			if port > 0 {
-				out[port] = o
+				out[portKey{host: host, port: port}] = o
 			}
 		}
 	}
 	return out
+}
+
+// portKey addresses a planned port the way the scan reports a busy one: by host
+// and port, never by port alone.
+//
+// A port number is not an identity here. Spread across a server set, every
+// server runs its slot-1 node on the same numbers — 8601, 30301 — so a map
+// keyed on the number alone answers "who planned 8601?" with whichever node was
+// written last, and a busy port on one server gets reported as a node on
+// another. Same collapse as the running-node map had (MON-010), one file over.
+type portKey struct {
+	host string
+	port int
 }
 
 // owner is what this workspace knows about the node that planned a port: which
