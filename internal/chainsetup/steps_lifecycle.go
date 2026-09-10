@@ -542,15 +542,9 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	for i, ns := range w.state.Nodes {
 		h := NodeHealth{Index: ns.Index, PID: ns.PID}
 		// A network spread across a set places each node on its own address, so the probe asks the
-		// node's recorded host, not the target-level one.
-		host, port := ns.Host, ns.HTTP
-		if host == "" {
-			host = w.RPCHost()
-		}
-		if m != nil {
-			host, port = m(host, port)
-		}
-		c := rpc.Dial(fmt.Sprintf("http://%s:%d", host, port))
+		// node's recorded host, not the target-level one (nodeHTTPURL applies the
+		// same dial-time address translation the validator check uses).
+		c := rpc.Dial(w.nodeHTTPURL(ns, m))
 		if bn, err := c.BlockNumber(ctx); err != nil {
 			h.Err = err.Error()
 		} else {

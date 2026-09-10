@@ -38,8 +38,12 @@ type (
 	NetLogsOut       = chainsetupmod.NetLogsOut
 	NetHealthIn      = chainsetupmod.NetHealthIn
 	NetHealthOut     = chainsetupmod.NetHealthOut
-	NetEnodesIn      = chainsetupmod.NetEnodesIn
-	NetEnodesOut     = chainsetupmod.NetEnodesOut
+
+	NetVerifyValidatorsIn  = chainsetupmod.NetVerifyValidatorsIn
+	NetVerifyValidatorsOut = chainsetupmod.NetVerifyValidatorsOut
+	ValidatorCheck         = chainsetupmod.ValidatorCheck
+	NetEnodesIn            = chainsetupmod.NetEnodesIn
+	NetEnodesOut           = chainsetupmod.NetEnodesOut
 	// State is a workspace's recorded progress: which steps have run and what
 	// each produced. A surface renders it; it is not a use case's input.
 	State            = chainsetupmod.State
@@ -81,6 +85,13 @@ func NetGenesis(ctx context.Context, d Deps, in NetGenesisIn) (chainsetupmod.Ste
 
 func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (chainsetupmod.NetHealthOut, error) {
 	return chainsetupmod.NetHealth(ctx, d.chainsetupDeps(), in)
+}
+
+// VerifyValidators checks the running chain recognizes exactly the composed
+// keys as its validators — the runtime validator verification behind
+// `verify --validators`, shared by both surfaces.
+func VerifyValidators(ctx context.Context, d Deps, in NetVerifyValidatorsIn) (NetVerifyValidatorsOut, error) {
+	return chainsetupmod.NetVerifyValidators(ctx, d.chainsetupDeps(), in)
 }
 
 func NetInit(ctx context.Context, d Deps, in NetInitIn) (chainsetupmod.StepOut, error) {

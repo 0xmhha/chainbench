@@ -35,7 +35,7 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 		return fmt.Errorf("chainsetup: genesis: load keys to verify against the existing genesis: %w", err)
 	}
 	keyVals := preset.NetworkFor(w.state.Validators).Validators
-	if err := sameValidatorSet(genesisVals, keyVals); err != nil {
+	if err := sameValidatorSet(genesisVals, keyVals, "genesis validators", "the running keys"); err != nil {
 		return fmt.Errorf("chainsetup: genesis: existing genesis %s does not match the composed keys — %w", ref, err)
 	}
 	return nil
@@ -43,36 +43,36 @@ func (w *Workspace) verifyExistingGenesisKeys(p registry.ChainPlugin, genesisJSO
 
 // sameValidatorSet reports whether two address lists are the same set,
 // case-insensitively and order-independently. On a mismatch it names which
-// addresses the genesis expects that no key provides, and which keys are not in
-// the genesis — addresses are public, so naming them is safe and is what an
-// operator needs to fix the pairing.
-func sameValidatorSet(genesis, keys []string) error {
-	g := addressSet(genesis)
-	k := addressSet(keys)
-	var missingKey, missingGenesis []string
-	for a := range g {
-		if !k[a] {
-			missingKey = append(missingKey, a)
+// addresses of each side the other is missing, labelled by aLabel/bLabel —
+// addresses are public, so naming them is safe and is what an operator needs to
+// fix the pairing. The two callers are the genesis-time check (genesis vs keys)
+// and the runtime check (the validators the chain reports vs the composed keys).
+func sameValidatorSet(a, b []string, aLabel, bLabel string) error {
+	as, bs := addressSet(a), addressSet(b)
+	var aOnly, bOnly []string
+	for x := range as {
+		if !bs[x] {
+			aOnly = append(aOnly, x)
 		}
 	}
-	for a := range k {
-		if !g[a] {
-			missingGenesis = append(missingGenesis, a)
+	for x := range bs {
+		if !as[x] {
+			bOnly = append(bOnly, x)
 		}
 	}
-	if len(missingKey) == 0 && len(missingGenesis) == 0 {
+	if len(aOnly) == 0 && len(bOnly) == 0 {
 		return nil
 	}
-	sort.Strings(missingKey)
-	sort.Strings(missingGenesis)
+	sort.Strings(aOnly)
+	sort.Strings(bOnly)
 	var parts []string
-	if len(missingKey) > 0 {
-		parts = append(parts, fmt.Sprintf("genesis validators with no running key: %s", strings.Join(missingKey, ", ")))
+	if len(aOnly) > 0 {
+		parts = append(parts, fmt.Sprintf("%s not in %s: %s", aLabel, bLabel, strings.Join(aOnly, ", ")))
 	}
-	if len(missingGenesis) > 0 {
-		parts = append(parts, fmt.Sprintf("running keys not in the genesis validator set: %s", strings.Join(missingGenesis, ", ")))
+	if len(bOnly) > 0 {
+		parts = append(parts, fmt.Sprintf("%s not in %s: %s", bLabel, aLabel, strings.Join(bOnly, ", ")))
 	}
-	return fmt.Errorf("%s (block signing would fail; pair the genesis with the matching key set)", strings.Join(parts, "; "))
+	return fmt.Errorf("%s (block signing would fail; pair the chain with the matching key set)", strings.Join(parts, "; "))
 }
 
 // addressSet lowercases each address into a set for order-independent

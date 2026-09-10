@@ -62,6 +62,10 @@ func init() {
 		Summary: "Probe every node's HTTP RPC for its latest block",
 	}, app.NetHealth)
 	Register(Registration{
+		Name: "chain.verify-validators", Stage: StageCompose, ReadOnly: true,
+		Summary: "Check the running chain recognizes exactly the composed keys as its validators",
+	}, app.VerifyValidators)
+	Register(Registration{
 		Name: "chain.enode", Stage: StageCompose, ReadOnly: true,
 		Summary: "Show each node's enode (derived from keys and place; writes nothing)",
 	}, app.NetEnodes)

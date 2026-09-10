@@ -45,15 +45,15 @@ func TestVerifyExistingGenesisKeys_MatchesAndMismatches(t *testing.T) {
 
 func TestSameValidatorSet(t *testing.T) {
 	// Same set, different order and case -> equal.
-	if err := sameValidatorSet([]string{"0xAA", "0xbb"}, []string{"0xbb", "0xaa"}); err != nil {
+	if err := sameValidatorSet([]string{"0xAA", "0xbb"}, []string{"0xbb", "0xaa"}, "a", "b"); err != nil {
 		t.Fatalf("same set should match: %v", err)
 	}
-	// A genesis validator with no key.
-	if err := sameValidatorSet([]string{"0xaa", "0xbb"}, []string{"0xaa"}); err == nil {
-		t.Fatal("missing key must error")
+	// An address on the first side the second is missing.
+	if err := sameValidatorSet([]string{"0xaa", "0xbb"}, []string{"0xaa"}, "a", "b"); err == nil {
+		t.Fatal("a missing address must error")
 	}
-	// A key not in the genesis.
-	if err := sameValidatorSet([]string{"0xaa"}, []string{"0xaa", "0xcc"}); err == nil {
-		t.Fatal("extra key must error")
+	// An address on the second side the first is missing.
+	if err := sameValidatorSet([]string{"0xaa"}, []string{"0xaa", "0xcc"}, "a", "b"); err == nil {
+		t.Fatal("an extra address must error")
 	}
 }
