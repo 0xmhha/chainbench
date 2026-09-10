@@ -2,7 +2,7 @@ package chainsetup
 
 import (
 	"context"
-	"path"
+	"fmt"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -21,10 +21,29 @@ import (
 // machine hash to the same value the compose steps record. The comparison then
 // runs on equal terms.
 
+// nodeAddr identifies a node the way the target does: which server it runs on
+// and the datadir it runs out of.
+//
+// The label alone does not identify anything. Every composition names its nodes
+// node1..nodeN, and the datadir's last element is that label, so keying by it
+// merges the node1 of every server AND the node1 of every composition sharing a
+// server — the composition id in the path is exactly what distinguishes them.
+// Whichever process was found last used to win, which is how a foreign pid could
+// be adopted and later stopped as if it were ours.
+type nodeAddr struct {
+	// Server is the server-set name the process was found on; empty is the
+	// target itself (a local composition).
+	Server string
+	// DataDir is the full --datadir, not its last element.
+	DataDir string
+}
+
 // runningNode is what introspection recovered about one node already up on the
-// target, keyed for comparison by the node label its datadir carries.
+// target. It keeps where it was found, so a caller can check that a candidate is
+// the node it asked about rather than one that merely shares a name.
 type runningNode struct {
-	Label      string
+	Addr       nodeAddr
+	ConfigPath string
 	PID        int
 	Binary     string
 	ConfigHash string
@@ -37,8 +56,8 @@ type runningNode struct {
 // target whose driver cannot read cmdlines, or a process whose config cannot be
 // read, contributes nothing rather than failing the run: the affected node then
 // composes fresh, which is the safe default.
-func (w *Workspace) introspectRunning(ctx context.Context, binaryName string) (map[string]runningNode, error) {
-	found := map[string]runningNode{}
+func (w *Workspace) introspectRunning(ctx context.Context, binaryName string) (map[nodeAddr]runningNode, error) {
+	found := map[nodeAddr]runningNode{}
 	if binaryName == "" {
 		return found, nil
 	}
@@ -68,9 +87,18 @@ func (w *Workspace) introspectRunning(ctx context.Context, binaryName string) (m
 			if err != nil {
 				continue // config gone or unreadable — cannot compare it
 			}
-			label := path.Base(view.DataDir)
-			found[label] = runningNode{
-				Label:      label,
+			addr := nodeAddr{Server: t.Spec.Server, DataDir: view.DataDir}
+			// Two live processes out of one datadir is not something to pick a
+			// winner from: adopting either would bind this composition to a pid
+			// chosen by listing order.
+			if prev, dup := found[addr]; dup {
+				return fmt.Errorf(
+					"chainsetup: reuse: two processes are running out of %s on %s (pids %d and %d) — stop one before reusing this composition",
+					view.DataDir, serverLabel(t.Spec.Server), prev.PID, pid)
+			}
+			found[addr] = runningNode{
+				Addr:       addr,
+				ConfigPath: view.ConfigPath,
 				PID:        pid,
 				Binary:     view.Binary,
 				ConfigHash: filestore.Hash(cfg),
@@ -79,4 +107,12 @@ func (w *Workspace) introspectRunning(ctx context.Context, binaryName string) (m
 		return nil
 	})
 	return found, err
+}
+
+// serverLabel names a server for a message; a local target has no name.
+func serverLabel(server string) string {
+	if server == "" {
+		return "this machine"
+	}
+	return server
 }

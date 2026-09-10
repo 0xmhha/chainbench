@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
@@ -94,5 +95,45 @@ func TestGenesis_ExistingRejectsInvalidJSON(t *testing.T) {
 	}
 	if _, err := ws.Genesis(ctx, chainsetup.GenesisOpts{Existing: genPath}); err == nil {
 		t.Fatal("an invalid-JSON existing genesis was accepted")
+	}
+}
+
+// TestGenesis_ExistingRejectsChangeRequests is MON-007. A finished genesis is
+// written byte for byte, so a change arriving with it was dropped in silence —
+// and the step still reported it as applied, while the advertised capabilities
+// were derived from the dropped fork heights. The request is refused now, and
+// the refusal names what could not be applied.
+func TestGenesis_ExistingRejectsChangeRequests(t *testing.T) {
+	cases := []struct {
+		name string
+		in   chainsetup.NetGenesisIn
+		want string
+	}{
+		{"chain id", chainsetup.NetGenesisIn{GenesisExisting: "/g.json", ChainID: 424243}, "chain id"},
+		{"hardfork height", chainsetup.NetGenesisIn{GenesisExisting: "/g.json", Set: []string{"bohoBlock=10"}}, "override"},
+		{"both", chainsetup.NetGenesisIn{GenesisExisting: "/g.json", ChainID: 7, Set: []string{"bohoBlock=10"}}, "chain id"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := chainsetup.NetGenesis(context.Background(), chainsetup.Deps{}, tc.in)
+			if err == nil {
+				t.Fatal("a change alongside an existing genesis must be refused")
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("the refusal should name what was asked for (%s): %v", tc.want, err)
+			}
+		})
+	}
+}
+
+// TestGenesis_ExistingAloneIsStillAccepted: the refusal is about the pairing,
+// not about naming a finished genesis.
+func TestGenesis_ExistingAloneIsStillAccepted(t *testing.T) {
+	// A missing workspace fails later than the conflict check, which is enough
+	// to show the conflict check did not fire.
+	_, err := chainsetup.NetGenesis(context.Background(), chainsetup.Deps{},
+		chainsetup.NetGenesisIn{DataDir: t.TempDir(), GenesisExisting: "/g.json"})
+	if err != nil && strings.Contains(err.Error(), "used verbatim") {
+		t.Fatalf("an existing genesis on its own must not be refused: %v", err)
 	}
 }

@@ -266,14 +266,18 @@ func (w *Workspace) mergeRunning(ctx context.Context, after []nodeTarget, snap r
 		if _, ok := before[ns.Index]; ok {
 			continue
 		}
-		r, ok := running[ns.Label]
+		// Matched by where the node actually lives — its server and its own
+		// datadir — not by its name. Every composition calls its nodes
+		// node1..nodeN, so a name match says nothing about whether this is the
+		// same node.
+		r, ok := running[nodeAddr{Server: ns.Server, DataDir: ns.DataDir}]
 		if !ok {
-			continue // nothing at this label — the node composes fresh
+			continue // nothing running out of this node's datadir — compose it fresh
 		}
 		if r.ConfigHash != after[i].ConfigHash || r.Binary != after[i].Binary {
 			return nil, nil, nil, fmt.Sprintf(
-				"node %s is already running on the target with a different config or binary — stop it, or use execution.chain=fresh",
-				ns.Label), nil
+				"node %s on %s is already running out of %s with a different config or binary — stop it, or use execution.chain=fresh",
+				ns.Label, serverLabel(ns.Server), ns.DataDir), nil
 		}
 		before[ns.Index] = nodeBaseline{
 			Index: ns.Index, Label: ns.Label,

@@ -70,9 +70,9 @@ func TestIntrospectRunning_RecoversConfigHashByLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("introspectRunning: %v", err)
 	}
-	r, ok := got["node1"]
+	r, ok := got[nodeAddr{DataDir: dataDir}]
 	if !ok {
-		t.Fatalf("no running node recovered for label node1: %v", got)
+		t.Fatalf("no running node recovered for %s: %v", dataDir, got)
 	}
 	if r.PID != 4242 || r.Binary != "gstable" {
 		t.Fatalf("recovered = %+v, want pid 4242 binary gstable", r)
@@ -188,5 +188,102 @@ func TestIntrospectRunning_SkipsProcessesWithoutDatadirOrConfig(t *testing.T) {
 	}
 	if len(got) != 0 {
 		t.Fatalf("expected nothing recovered, got %v", got)
+	}
+}
+
+// TestIntrospectRunning_TwoCompositionsOnOneServerDoNotCollide is MON-010.
+//
+// Every composition names its nodes node1..nodeN, and the datadir's last element
+// is that label. Keying discovery by the label therefore merged the node1 of one
+// composition with the node1 of another sharing the data root — the composition
+// id in the path is exactly what tells them apart. Whichever process was listed
+// last won, so a foreign pid could be adopted and later stopped as ours.
+func TestIntrospectRunning_TwoCompositionsOnOneServerDoNotCollide(t *testing.T) {
+	dir := t.TempDir()
+	// Two compositions, same server, same node label, different datadirs.
+	mine := filepath.Join(dir, "node", "aaaaaaaaaaaa", "node1")
+	theirs := filepath.Join(dir, "node", "bbbbbbbbbbbb", "node1")
+	myCfg := filepath.Join(dir, "mine.toml")
+	theirCfg := filepath.Join(dir, "theirs.toml")
+	if err := os.WriteFile(myCfg, []byte("mine"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(theirCfg, []byte("theirs"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	w, err := Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.SetEnv(os.Getenv)
+	w.state.Target = resource.Spec{DataRoot: dir}
+	w.state.Binary = "gstable"
+	w.state.Nodes = []node.Record{{Index: 1, Label: "node1", ConfigPath: myCfg, DataDir: mine}}
+
+	fake := &fakeIntrospectDriver{
+		byBinary: map[string][]int{"gstable": {100, 200}},
+		cmdlines: map[int][]string{
+			100: {"gstable", "--datadir", mine, "--config", myCfg},
+			200: {"gstable", "--datadir", theirs, "--config", theirCfg},
+		},
+	}
+	w.SetDriver(func() (process.Driver, error) { return fake, nil })
+
+	got, err := w.introspectRunning(context.Background(), "gstable")
+	if err != nil {
+		t.Fatalf("introspectRunning: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("both processes must be kept apart, got %d entries", len(got))
+	}
+	if r := got[nodeAddr{DataDir: mine}]; r.PID != 100 {
+		t.Fatalf("this composition's node1 = pid %d, want 100", r.PID)
+	}
+	if r := got[nodeAddr{DataDir: theirs}]; r.PID != 200 {
+		t.Fatalf("the other composition's node1 = pid %d, want 200", r.PID)
+	}
+
+	// And the merge must pick THIS composition's process, whatever the listing
+	// order was: matched by datadir, not by the shared label.
+	after := []nodeTarget{{Index: 1, Label: "node1", ConfigHash: filestore.Hash([]byte("mine")), Binary: "gstable"}}
+	_, _, attach, refuse, err := w.mergeRunning(context.Background(), after,
+		reuseSnapshot{before: map[int]nodeBaseline{}, alive: map[int]bool{}})
+	if err != nil || refuse != "" {
+		t.Fatalf("mergeRunning: refuse=%q err=%v", refuse, err)
+	}
+	if attach[1] != 100 {
+		t.Fatalf("attached pid %d — the other composition's node was adopted", attach[1])
+	}
+}
+
+// TestIntrospectRunning_TwoProcessesOneDatadirIsRefused: picking a winner would
+// bind this composition to whichever pid the listing happened to return first.
+func TestIntrospectRunning_TwoProcessesOneDatadirIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	dataDir := filepath.Join(dir, "node1")
+	cfg := filepath.Join(dir, "n.toml")
+	if err := os.WriteFile(cfg, []byte("c"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	w, err := Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.SetEnv(os.Getenv)
+	w.state.Target = resource.Spec{DataRoot: dir}
+	w.state.Binary = "gstable"
+	w.state.Nodes = []node.Record{{Index: 1, Label: "node1", ConfigPath: cfg, DataDir: dataDir}}
+	fake := &fakeIntrospectDriver{
+		byBinary: map[string][]int{"gstable": {7, 8}},
+		cmdlines: map[int][]string{
+			7: {"gstable", "--datadir", dataDir, "--config", cfg},
+			8: {"gstable", "--datadir", dataDir, "--config", cfg},
+		},
+	}
+	w.SetDriver(func() (process.Driver, error) { return fake, nil })
+
+	if _, err := w.introspectRunning(context.Background(), "gstable"); err == nil {
+		t.Fatal("two processes out of one datadir must be refused, not silently resolved")
 	}
 }
