@@ -371,6 +371,82 @@ config 경로**를 써서 어느 저장소에서 읽었는지가 갈리지 않�
 `mergeRunning` → `reconcileReuse` → `recordLaunch` → 원장 → 재오픈까지 따라가며 PID·host·
 datadir·config 경로를 확인한다. 프로덕션 코드는 바꾸지 않았다.
 
+### MON-018 — 앞선 보고의 검증 범위 정정 (2026-09-10)
+
+`2881d7d4`에서 더한 `TestRun_SetupFailureDocumentCarriesNoKeyMaterial`을 두고 "실패 문서가
+개인 키를 싣지 않는지 확인한다"고 적었다. **그 주장은 근거가 없었다.**
+
+#### 무엇이 잘못됐나
+
+fixture가 v2 case의 `steps` 대신 최상위 `tests`를 썼다. `CaseV2`에 그 필드는 없고
+(`internal/dsl/spec_v2.go:194`) `parseStrict`가 미지의 필드를 거부하므로(`:210-214`),
+실행은 여기서 멈췄다.
+
+```
+error: engine: run suite: spec 1: dsl: parse v2 case: json: unknown field "tests"
+```
+
+`NetUp`의 키 검사에는 닿지 않았다. 그런데 테스트는 오류를 가리지 않고 받은 뒤 stdout과
+stderr에 키가 없는지만 봤다. 문법 오류 메시지에 키가 있을 리 없으니 통과했다.
+
+#### 무용함을 어떻게 확인했나
+
+주장만으로는 부족해서, 이 테스트가 잡아야 할 회귀를 실제로 넣었다. `checkNodeKeyRef`의
+거부 문구를 `%q`로 키를 인용하도록 되돌리고 돌렸다.
+
+```
+--- PASS: TestRun_SetupFailureDocumentCarriesNoKeyMaterial
+```
+
+**키를 유출하는 코드에서도 통과했다.**
+
+같은 회귀를 넣고 `internal/chainsetup` 쪽을 돌리면 이렇게 실패한다.
+
+```
+--- FAIL: TestKeys_NodeTableRejectsInlineKeyMaterial/0x_prefixed
+    the refusal quotes the private key: chainsetup: keys: node1 declares a private key inline: "0x1111..."
+```
+
+#### 그래서 실제 상태는
+
+**키 보호 기능 자체는 지켜지고 있었다.** 거부 문구를 검사하는 것은 chainsetup 단위
+테스트이고 그쪽은 정상이다. 무용했던 것은 CLI 테스트 하나이며, 그 테스트의 고유한 값은
+발행 표면(`--json` stdout, stderr)까지 끝에서 끝으로 보는 것이었는데 그 값을 내지 못했다.
+프로덕션 결함은 없었다.
+
+#### 보완 후 결과
+
+fixture가 `steps`를 쓰고 등록된 동작(`expect: blockNumber`)으로 채운다. 테스트는 먼저
+`validate`를 돌려 **exit 0을 요구한다**. 파싱 실패가 검사 대상 행세를 하지 못하게 하는
+것이 이 건의 요점이므로, 그것을 단정으로 못 박았다.
+
+그다음 `--binary` 없이 실행한다. 인라인 키가 유일한 실패 원인이 되도록 한 것이다. 확인
+항목은 종료 코드 2, stdout 전체의 JSON 파싱, 원인이 인라인 키 거부인지(`inline`과 `node1`을
+모두 담는지), 그리고 **stdout·stderr·반환 오류·JSON `error` 네 곳** 모두에 임시 키 원문이
+없는지다. 이전에는 앞의 두 스트림만 봤다.
+
+보완 후 격리 검증을 두 번 했다.
+
+| 주입한 회귀 | 이전 테스트 | 보완 후 |
+|---|---|---|
+| 거부 문구가 키를 인용 | PASS (무용) | **FAIL** — "the returned error carries the private key" |
+| fixture를 `tests`로 되돌림 | PASS (무용) | **FAIL** — "the fixture must parse and pre-check cleanly" |
+
+두 주입 모두 확인 직후 되돌렸다. 최종 코드에는 남지 않았고, 기준 커밋 대비 변경은 테스트
+파일 하나뿐이다(`git diff --stat 1a5d68d8 -- internal cmd`).
+
+실행한 명령은 `go test ./cmd/chainbench/suitecmd/ -run TestRun_SetupFailureDocumentCarriesNoKeyMaterial`
+이고, 전체로는 build·vet·gofmt·`go test ./internal/... ./cmd/...`·golangci-lint(0건)·
+`-race`·betterleaks를 통과시켰다. 실제 운영 키와 원격 서버는 쓰지 않았다. 키는 `0x4444…`
+형태의 더미이고, 실행은 로컬 프로세스조차 띄우지 않고 키 검사에서 멈춘다.
+
+#### 남는 교훈
+
+**통과한 테스트는 무엇이 맞는지는 말해 주지만 무엇을 안 봤는지는 말해 주지 않는다.** 이
+건은 그 문장의 가장 나쁜 형태다. 테스트가 통과했고, 통과했다는 사실을 검증 근거로 적었고,
+그 테스트는 검사 대상에 닿은 적이 없었다. 보호 대상이 비밀일 때는 "실패해야 할 때 실패하는지"를
+따로 확인해야 한다.
+
 ### 검증 수준 구분
 
 같은 "통과" 라도 근거의 무게가 다르므로 나눠 적는다.
@@ -379,6 +455,9 @@ datadir·config 경로를 확인한다. 프로덕션 코드는 바꾸지 않았�
 |---|---|---|---|---|
 | MON-017 | ○ (4건) | ○ | **○ 전후 대조** | ✕ |
 | MON-015 | ○ (3건, CLI 진입점) | ○ | ○ | ✕ |
+
+MON-015 의 세 건 중 키 노출 회귀 테스트는 **처음에 무용했다**. 아래 MON-018 절을 볼 것 —
+그 줄의 "○" 는 보완 후 기준이다.
 | MON-010 | ○ (2건) | ○ | ○ (부수적) | ✕ |
 
 각 커밋에서 `go build`·`go vet`·`gofmt`·`go test ./internal/... ./cmd/...`·

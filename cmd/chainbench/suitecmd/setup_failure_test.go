@@ -133,10 +133,22 @@ func TestRun_SetupFailureIsCodeTwoWithoutJSONToo(t *testing.T) {
 }
 
 // TestRun_SetupFailureDocumentCarriesNoKeyMaterial: the failure document is a
-// new place for an error string to be published, and setup errors are carried
-// into it verbatim. A node key named inline is refused during compose (MON-001),
-// and that refusal must not become the thing this prints.
+// place an error string gets published, and setup errors are carried into it
+// verbatim. A node key named inline is refused during compose (MON-001), and
+// that refusal must not become the thing this prints.
+//
+// The first version of this test proved none of that. Its fixture wrote a
+// top-level "tests" field where a v2 case has "steps", the parser rejects
+// unknown fields, and the run therefore died at "unknown field" long before
+// anything looked at a key. The assertions accepted any error at all and only
+// searched the streams, and a syntax message has no key in it — so the test
+// passed even with the refusal deliberately changed to quote the key.
+//
+// Hence the shape below: prove the fixture is a valid spec BEFORE running it, so
+// a parse failure cannot masquerade as the thing under test, then require the
+// failure to be the key refusal by name.
 func TestRun_SetupFailureDocumentCarriesNoKeyMaterial(t *testing.T) {
+	// Not a real key: 32 bytes of 0x44, recognisable in any stream it leaks to.
 	const inlineHex = "0x4444444444444444444444444444444444444444444444444444444444444444"
 	bare := strings.TrimPrefix(inlineHex, "0x")
 	dir := t.TempDir()
@@ -145,22 +157,67 @@ func TestRun_SetupFailureDocumentCarriesNoKeyMaterial(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stdout, stderr, err := runSplit(t, "run", "--workspace-dir", dir, "--json",
-		"--binary", "/nonexistent/chainbench-test-binary", spec)
+	// The fixture has to be a spec this project accepts, and validate is the
+	// verb that says so. Asserting it here is the guard the old test lacked: a
+	// fixture that stops being parseable fails loudly instead of quietly
+	// exercising the parser instead of the key check.
+	if out, err := run(t, "validate", spec); err != nil {
+		t.Fatalf("the fixture must parse and pre-check cleanly, or the run below tests the parser: %v\n%s", err, out)
+	}
+
+	// No --binary: the inline key is then the only thing wrong with this run, so
+	// a refusal for any other reason is a real signal rather than noise.
+	stdout, stderr, err := runSplit(t, "run", "--workspace-dir", dir, "--json", spec)
 	if err == nil {
 		t.Fatal("an inline node key must fail the run")
 	}
-	for _, stream := range map[string]string{"stdout": stdout, "stderr": stderr} {
-		for _, secret := range []string{inlineHex, bare} {
-			if strings.Contains(stream, secret) {
-				t.Fatalf("the failure report carries the private key:\n%s", stream)
+	if got := codeOf(t, err); got != 2 {
+		t.Fatalf("exit code = %d, want 2 for a setup failure: %v", got, err)
+	}
+
+	var doc map[string]any
+	if jerr := json.Unmarshal([]byte(stdout), &doc); jerr != nil {
+		t.Fatalf("stdout does not parse as one JSON document: %v\n%s", jerr, stdout)
+	}
+	cause, _ := doc["error"].(string)
+	if cause == "" {
+		t.Fatalf("the document states no cause: %s", stdout)
+	}
+	// It has to be THE refusal. A syntax error, a missing binary and a missing
+	// key set all fail the run too, and none of them would be evidence about
+	// how a key is reported. Matching two words rather than the whole sentence
+	// keeps this from breaking every time the message is reworded, and the
+	// validate call above already rules out the parse-failure case.
+	for _, want := range []string{"inline", "node1"} {
+		if !strings.Contains(cause, want) {
+			t.Fatalf("the run failed for something other than the inline key (no %q in the cause): %s", want, cause)
+		}
+	}
+
+	// Every surface the failure reaches, not just the two streams: the returned
+	// error is what the process exits with, and the document's error field is
+	// what a machine reads.
+	surfaces := map[string]string{
+		"stdout":         stdout,
+		"stderr":         stderr,
+		"returned error": err.Error(),
+		"document error": cause,
+	}
+	for name, text := range surfaces {
+		for _, secret := range []string{inlineHex, bare, strings.ToUpper(bare)} {
+			if strings.Contains(text, secret) {
+				t.Fatalf("the %s carries the private key:\n%s", name, text)
 			}
 		}
 	}
 }
 
-// writeCaseWithInlineKey writes the smallest v2 case whose env declares a node
-// table with one node's key written inline.
+// writeCaseWithInlineKey writes the smallest valid v2 case whose env declares a
+// node table with one node's key written inline.
+//
+// "steps" is the field name, and what goes in it has to be a registered action:
+// the point of the fixture is to reach the composition, so anything the grammar
+// or the interpreter rejects defeats it before it starts.
 func writeCaseWithInlineKey(path, key string) error {
 	doc := map[string]any{
 		"schemaVersion": "2",
@@ -182,10 +239,15 @@ func writeCaseWithInlineKey(path, key string) error {
 				},
 			},
 		},
-		"tests": []any{
+		// One assertion, of the kind every shipped case opens with. The network
+		// never comes up here, so nothing runs it — it exists so the document is
+		// a case rather than a fragment.
+		"steps": []any{
 			map[string]any{
-				"id": "t1",
-				"do": []any{map[string]any{"rpc": "eth_blockNumber", "as": "h"}},
+				"expect":  "blockNumber",
+				"on":      "node1",
+				"compare": "GreaterOrEqual",
+				"is":      "0",
 			},
 		},
 	}
