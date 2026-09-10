@@ -22,6 +22,7 @@ func NewVerify() *cobra.Command {
 		delay        time.Duration
 		readyTimeout time.Duration
 		validators   bool
+		baseline     bool
 	)
 	cmd := &cobra.Command{
 		Use:   "verify",
@@ -67,6 +68,27 @@ func NewVerify() *cobra.Command {
 					return fmt.Errorf("validator set does not match the composed keys")
 				}
 			}
+			if baseline {
+				if dataDir == "" {
+					return fmt.Errorf("--baseline needs --workspace-dir (the composition to check against the approved record)")
+				}
+				bres, berr := app.BaselineCheck(cmd.Context(), deps(cmd), app.NetBaselineIn{DataDir: dataDir})
+				if berr != nil {
+					return berr
+				}
+				c := bres.Check
+				if !c.Approved {
+					fmt.Fprintf(out, "\nbaseline: none approved yet (%s) — approve one with `chainbench baseline approve`\n", c.Path)
+					return nil
+				}
+				fmt.Fprintf(out, "\nbaseline (%s) match: %v\n", c.Path, c.Match)
+				if !c.Match {
+					for _, d := range c.Diffs {
+						fmt.Fprintf(out, "  %s\n", d)
+					}
+					return fmt.Errorf("composition drifted from the approved baseline")
+				}
+			}
 			return nil
 		},
 	}
@@ -76,6 +98,7 @@ func NewVerify() *cobra.Command {
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")
 	cmd.Flags().BoolVar(&validators, "validators", false, "also check the running chain recognizes exactly the composed keys as its validators (needs --workspace-dir)")
+	cmd.Flags().BoolVar(&baseline, "baseline", false, "also check the composition still matches the environment's approved baseline (needs --workspace-dir); never updates it")
 	return surface.ReadOnly(cmd)
 }
 

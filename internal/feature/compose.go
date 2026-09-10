@@ -66,6 +66,14 @@ func init() {
 		Summary: "Check the running chain recognizes exactly the composed keys as its validators",
 	}, app.VerifyValidators)
 	Register(Registration{
+		Name: "baseline.show", Stage: StageCompose, ReadOnly: true,
+		Summary: "Report whether the composition matches the environment's approved baseline",
+	}, app.BaselineCheck)
+	Register(Registration{
+		Name: "baseline.approve", Stage: StageCompose,
+		Summary: "Record the current composition as the environment's approved baseline",
+	}, app.BaselineApprove)
+	Register(Registration{
 		Name: "chain.enode", Stage: StageCompose, ReadOnly: true,
 		Summary: "Show each node's enode (derived from keys and place; writes nothing)",
 	}, app.NetEnodes)

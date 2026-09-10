@@ -42,8 +42,11 @@ type (
 	NetVerifyValidatorsIn  = chainsetupmod.NetVerifyValidatorsIn
 	NetVerifyValidatorsOut = chainsetupmod.NetVerifyValidatorsOut
 	ValidatorCheck         = chainsetupmod.ValidatorCheck
-	NetEnodesIn            = chainsetupmod.NetEnodesIn
-	NetEnodesOut           = chainsetupmod.NetEnodesOut
+
+	NetBaselineIn  = chainsetupmod.NetBaselineIn
+	NetBaselineOut = chainsetupmod.NetBaselineOut
+	NetEnodesIn    = chainsetupmod.NetEnodesIn
+	NetEnodesOut   = chainsetupmod.NetEnodesOut
 	// State is a workspace's recorded progress: which steps have run and what
 	// each produced. A surface renders it; it is not a use case's input.
 	State            = chainsetupmod.State
@@ -92,6 +95,18 @@ func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (chainsetupmod.NetHe
 // `verify --validators`, shared by both surfaces.
 func VerifyValidators(ctx context.Context, d Deps, in NetVerifyValidatorsIn) (NetVerifyValidatorsOut, error) {
 	return chainsetupmod.NetVerifyValidators(ctx, d.chainsetupDeps(), in)
+}
+
+// BaselineCheck compares a composition against its environment's approved
+// baseline. It writes nothing — approving is a separate, explicit act.
+func BaselineCheck(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
+	return chainsetupmod.NetBaselineCheck(ctx, d.chainsetupDeps(), in)
+}
+
+// BaselineApprove records this composition as the environment's approved
+// baseline, the one path that writes one.
+func BaselineApprove(ctx context.Context, d Deps, in NetBaselineIn) (NetBaselineOut, error) {
+	return chainsetupmod.NetBaselineApprove(ctx, d.chainsetupDeps(), in)
 }
 
 func NetInit(ctx context.Context, d Deps, in NetInitIn) (chainsetupmod.StepOut, error) {
