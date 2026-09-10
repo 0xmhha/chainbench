@@ -47,7 +47,7 @@ func TestReconcileReuse_AllMatchLeavesRunningNodesUntouched(t *testing.T) {
 		},
 		alive: map[int]bool{1: true, 2: true},
 	}
-	plan, err := w.reconcileReuse(context.Background(), snap)
+	plan, err := w.reconcileReuse(context.Background(), snap, candFor(w))
 	if err != nil {
 		t.Fatalf("reconcile: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestReconcileReuse_GenesisChangeRefusesAndTouchesNothing(t *testing.T) {
 		before:      map[int]nodeBaseline{1: {Index: 1, ConfigHash: "h1", Binary: "/bin/gwbft", PID: 111}},
 		alive:       map[int]bool{1: true},
 	}
-	plan, err := w.reconcileReuse(context.Background(), snap)
+	plan, err := w.reconcileReuse(context.Background(), snap, candFor(w))
 	if err != nil {
 		t.Fatalf("reconcile: %v", err)
 	}
@@ -100,7 +100,7 @@ func TestReconcileReuse_StoppedDriftedNodeClearedFromLedger(t *testing.T) {
 		},
 		alive: map[int]bool{1: true},
 	}
-	plan, err := w.reconcileReuse(context.Background(), snap)
+	plan, err := w.reconcileReuse(context.Background(), snap, candFor(w))
 	if err != nil {
 		t.Fatalf("reconcile: %v", err)
 	}
@@ -113,4 +113,15 @@ func TestReconcileReuse_StoppedDriftedNodeClearedFromLedger(t *testing.T) {
 	if w.state.Nodes[1].PID != 0 {
 		t.Fatalf("redo node2 pid = %d, want 0", w.state.Nodes[1].PID)
 	}
+}
+
+// candFor turns the workspace's recorded input hashes into the candidate the
+// reconcile now compares against. The fixtures seed those hashes to stand for
+// "what this run would produce", which is exactly what a candidate is.
+func candFor(w *Workspace) candidateInputs {
+	c := candidateInputs{Genesis: w.state.LaunchInputs[w.state.GenesisPath], Configs: map[string]string{}}
+	for _, ns := range w.state.Nodes {
+		c.Configs[ns.ConfigPath] = w.state.LaunchInputs[ns.ConfigPath]
+	}
+	return c
 }

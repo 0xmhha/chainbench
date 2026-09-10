@@ -642,30 +642,9 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		art genesis.Artifacts
 		gen []byte
 	)
-	if opts.Existing != "" {
-		// A finished genesis is read on its own machine and used verbatim — no
-		// template build, no overrides. It must be valid JSON, and (for a family
-		// that carries its validator set in the genesis) its validators must be
-		// the composed key set — checked below, not left to trust.
-		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
-		if rerr != nil {
-			return "", fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
-		}
-		if !json.Valid(b) {
-			return "", fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
-		}
-		// The validators an existing genesis names must be exactly the keys the
-		// network runs, or block signing fails at consensus rather than here.
-		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
-			return "", err
-		}
-		gen = b
-	} else {
-		art, err = w.genesisArtifacts(ctx, p, opts)
-		if err != nil {
-			return "", err
-		}
-		gen = art.Genesis
+	gen, art, err = w.genesisBytes(ctx, p, opts)
+	if err != nil {
+		return "", err
 	}
 	// Every machine gets the genesis (and its by-products): each node's init
 	// reads it locally, and spread across a set "locally" is that node's server.
@@ -785,28 +764,46 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	if err != nil {
 		return ConfigProvenance{}, err
 	}
-	// A node that names its own config file uses it verbatim: the file is the
-	// whole config, so the composition renders nothing and applies no overrides
-	// for it. It still goes through the same write + readback as a rendered one,
-	// so a truncated copy is caught here rather than at boot.
+	toml, err := w.nodeConfigBytes(ctx, p, preset, placed, peering, pubkey, ns)
+	if err != nil {
+		return ConfigProvenance{}, err
+	}
+	// A node that names its own config file applies no overrides: the file is
+	// the whole config.
+	var overrides []string
+	if ns.Config == "" {
+		overrides = w.configOverridesFor(ns.Index)
+	}
+	return w.writeConfigFile(ctx, t, ns, toml, purpose, overrides)
+}
+
+// nodeConfigBytes renders what a node's config file would hold, without writing
+// anything.
+//
+// Rendering is separated from writing so a caller can ask what a composition
+// WOULD produce before it touches the target. reuse-if-matching needs exactly
+// that: it has to decide whether the inputs changed, and deciding after the
+// write means a refusal that has already replaced the running network's files.
+//
+// A node that names its own config file uses it verbatim — the file is the
+// whole config, so nothing is rendered and no override applies to it.
+func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, placed *node.Map, peering node.Peering, pubkey func(int) (string, bool), ns node.Record) ([]byte, error) {
 	if ns.Config != "" {
 		toml, rerr := w.readInputRef(ctx, ns, ns.Config, resource.PurposeConfigs)
 		if rerr != nil {
-			return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
+			return nil, fmt.Errorf("chainsetup: config: node%d: read pinned config %s: %w", ns.Index, ns.Config, rerr)
 		}
-		return w.writeConfigFile(ctx, t, ns, toml, purpose, nil)
+		return toml, nil
 	}
 	staticNodes, err := node.PeerList(placed, peering, ns.NodeLabel(), pubkey)
 	if err != nil {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
+		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
 	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
-	overrides := w.configOverridesFor(ns.Index)
 	if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
-		return ConfigProvenance{}, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
+		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
-	toml := nodeconfig.TOML(spec)
-	return w.writeConfigFile(ctx, t, ns, toml, purpose, overrides)
+	return nodeconfig.TOML(spec), nil
 }
 
 // writeConfigFile writes one node's config to its target and reads it back:
@@ -1061,6 +1058,36 @@ func netmapRequests(reqs []node.LaunchReq) []resource.Request {
 		out = append(out, resource.Request{Role: r.Role})
 	}
 	return out
+}
+
+// genesisBytes produces the genesis this composition would write, without
+// writing it. Rendering is separated from writing so a caller can ask what a
+// composition WOULD produce — reuse-if-matching has to know whether the inputs
+// changed before it touches the target, and asking afterwards means a refusal
+// that has already replaced the running network's genesis.
+//
+// A finished genesis is read on its own machine and used verbatim — no template
+// build, no overrides. It must be valid JSON, and (for a family that carries its
+// validator set in the genesis) its validators must be the composed key set.
+func (w *Workspace) genesisBytes(ctx context.Context, p registry.ChainPlugin, opts GenesisOpts) ([]byte, genesis.Artifacts, error) {
+	if opts.Existing != "" {
+		b, rerr := w.readInputRef(ctx, node.Record{}, opts.Existing, resource.PurposeGenesis)
+		if rerr != nil {
+			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: read existing %q: %w", opts.Existing, rerr)
+		}
+		if !json.Valid(b) {
+			return nil, genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: existing genesis %q is not valid JSON", opts.Existing)
+		}
+		if err := w.verifyExistingGenesisKeys(p, b, opts.Existing); err != nil {
+			return nil, genesis.Artifacts{}, err
+		}
+		return b, genesis.Artifacts{}, nil
+	}
+	art, err := w.genesisArtifacts(ctx, p, opts)
+	if err != nil {
+		return nil, genesis.Artifacts{}, err
+	}
+	return art.Genesis, art, nil
 }
 
 // genesisArtifacts builds the genesis through the one composition every surface

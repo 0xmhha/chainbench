@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
 )
@@ -163,14 +164,14 @@ func (w *Workspace) snapshotForReuse(ctx context.Context) reuseSnapshot {
 // datadir and process are left untouched); a node that must be redone and is
 // still up is stopped here so init can re-initialize its datadir. A changed
 // shared genesis refuses the whole reuse and touches nothing.
-func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot) (reusePlan, error) {
-	genesisAfter := w.state.LaunchInputs[w.state.GenesisPath]
+func (w *Workspace) reconcileReuse(ctx context.Context, snap reuseSnapshot, cand candidateInputs) (reusePlan, error) {
+	genesisAfter := cand.Genesis
 	after := make([]nodeTarget, 0, len(w.state.Nodes))
 	for _, ns := range w.state.Nodes {
 		after = append(after, nodeTarget{
 			Index:      ns.Index,
 			Label:      ns.Label,
-			ConfigHash: w.state.LaunchInputs[ns.ConfigPath],
+			ConfigHash: cand.Configs[ns.ConfigPath],
 			Binary:     w.binaryFor(ns, w.state.Binary),
 		})
 	}
@@ -307,4 +308,53 @@ func (p reusePlan) describe() string {
 		return fmt.Sprintf("reuse-if-matching: all %d node(s) match and are running; nothing to redo", len(p.Nodes))
 	}
 	return fmt.Sprintf("reuse-if-matching: %d node(s) reused, %d redone %v", p.reused(), len(redo), redo)
+}
+
+// candidateInputs is what a composition WOULD write, hashed, without anything
+// having been written yet.
+//
+// This is the whole point of the reuse gate. The genesis and config steps do not
+// merely plan: they write to the target and record the new hashes. Judging after
+// them meant a refusal that had already replaced the running network's genesis
+// and configs — the refusal said "use execution.chain=fresh" while the files the
+// live nodes were launched from had been swapped underneath. So the candidate is
+// rendered first, compared, and only then written.
+type candidateInputs struct {
+	// Genesis is the content hash of the genesis this run would write.
+	Genesis string
+	// Configs is the content hash of each node's config, keyed by the target
+	// path the config step would write it to.
+	Configs map[string]string
+}
+
+// buildCandidateInputs renders the genesis and every node config this run would
+// produce and hashes them, writing nothing to the target.
+//
+// It runs after the keys step — it needs the ring and the node table — and
+// before the genesis step, which is the last moment at which a refusal still
+// leaves the running network exactly as it was.
+func (w *Workspace) buildCandidateInputs(ctx context.Context, gopts GenesisOpts) (candidateInputs, error) {
+	cand := candidateInputs{Configs: map[string]string{}}
+	p, err := w.plugin()
+	if err != nil {
+		return cand, err
+	}
+	gen, _, err := w.genesisBytes(ctx, p, gopts)
+	if err != nil {
+		return cand, err
+	}
+	cand.Genesis = filestore.Hash(gen)
+
+	preset, placed, peering, pubkey, err := w.peerPlan(p)
+	if err != nil {
+		return cand, fmt.Errorf("chainsetup: reuse: %w", err)
+	}
+	for _, ns := range w.state.Nodes {
+		toml, cerr := w.nodeConfigBytes(ctx, p, preset, placed, peering, pubkey, ns)
+		if cerr != nil {
+			return cand, cerr
+		}
+		cand.Configs[ns.ConfigPath] = filestore.Hash(toml)
+	}
+	return cand, nil
 }

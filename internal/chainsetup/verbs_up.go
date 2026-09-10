@@ -277,11 +277,19 @@ func netUpFrom(ctx context.Context, d Deps, in NetUpIn, from string) (NetUpOut, 
 		if err := record(name, steps[name]); err != nil {
 			return out, err
 		}
-		// After the artifacts are composed (through build) and before anything is
-		// deployed or launched, reconcile against the running network: leave the
-		// matching nodes up, tear down only the ones that drifted.
-		if reuseMode && name == "build" {
-			plan, rerr := reconcileUp(ctx, d, in.DataDir, snap)
+		// Reconcile against the running network as soon as the keys exist and
+		// before the genesis step, which is the first step that writes to the
+		// target. Judging later meant a refusal that had already overwritten the
+		// running network's genesis and configs.
+		if reuseMode && name == "keys" {
+			gopts, gerr := genesisOpts(NetGenesisIn{
+				DataDir: in.DataDir, ChainID: in.ChainID, Set: in.GenesisSet,
+				OverlayPath: in.OverlayPath, GenesisExisting: in.GenesisExisting,
+			})
+			if gerr != nil {
+				return out, gerr
+			}
+			plan, rerr := reconcileUp(ctx, d, in.DataDir, snap, gopts)
 			if rerr != nil {
 				return out, rerr
 			}
@@ -320,10 +328,17 @@ func upChainMode(in NetUpIn) (resource.ChainMode, error) {
 // reconcileUp runs the reuse reconciliation against the freshly composed
 // workspace and saves the result, returning the plan for the caller to report
 // and to stop on a refusal.
-func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot) (reusePlan, error) {
+func reconcileUp(ctx context.Context, d Deps, dataDir string, snap reuseSnapshot, gopts GenesisOpts) (reusePlan, error) {
 	var plan reusePlan
 	_, err := withWorkspace(d, dataDir, func(ws *Workspace) (string, error) {
-		p, err := ws.reconcileReuse(ctx, snap)
+		// Render what this run would write and compare THAT. Nothing has been
+		// written to the target yet at this point, which is what makes a refusal
+		// leave the running network untouched.
+		cand, cerr := ws.buildCandidateInputs(ctx, gopts)
+		if cerr != nil {
+			return "", cerr
+		}
+		p, err := ws.reconcileReuse(ctx, snap, cand)
 		if err != nil {
 			return "", err
 		}
