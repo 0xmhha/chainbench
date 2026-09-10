@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "wbft-proxied-routing",
-  "description": "WA25: verify the proxied peer graph a production network runs — bp <-> bp direct, bp <-> pn and pn <-> en through the tier, and an endpoint that never learns a producer. Declaring a pn selects this graph; the peer counts are its signature, and under a full mesh the endpoint would see 3 peers instead of 1.",
+  "description": "WA25: verify the proxied peer graph's SHAPE — bp <-> bp direct, bp <-> pn and pn <-> en through the tier, and an endpoint that never learns a producer. Peer counts are the signature; a 4-node mesh gives the endpoint 3 peers, so en1 == 1 distinguishes the two graphs. Complements go-stablenet/topology/01-proxied-pn-routing, which proves the tier RELAYS (a rising head on en) — true under a mesh too, so it does not pin the shape. LIVE-VERIFIED 2026-09-11 on the docker fleet, with a mesh control run.",
   "requires": [
     "rpc"
   ],
@@ -57,7 +57,12 @@
     },
     {
       "expect": "blockAdvance",
-      "onEach": ["bp1", "bp2", "pn1", "en1"],
+      "onEach": [
+        "bp1",
+        "bp2",
+        "pn1",
+        "en1"
+      ],
       "timeout": "90s"
     }
   ]
