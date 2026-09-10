@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -95,10 +96,10 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 	// over the source string because a table that declares keys has said where
 	// its identities come from.
 	var src store.KeySource
-	if set, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
+	if set, pinned, keyed, kerr := w.nodeTableKeys(ctx, n); kerr != nil {
 		return "", kerr
 	} else if keyed {
-		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
+		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
 	} else {
 		switch opts.Source {
 		case "", "preset":
@@ -114,7 +115,16 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set}
+			// A blueprint names a key for every node it declares (a node without
+			// one is an error there), so every index is pinned: if the ring on
+			// disk holds a different identity, the document and the disk
+			// disagree and the operator has to say which is right.
+			pinned := make([]int, 0, len(set.Nodes))
+			for _, e := range set.Nodes {
+				pinned = append(pinned, e.Index)
+			}
+			sort.Ints(pinned)
+			src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
 		case "generate":
 			// A generated set must declare exactly the topology's validators, not
 			// make every node one: a network with endpoints (4 bp + 11 en) whose key
@@ -188,50 +198,54 @@ func (w *Workspace) declaredKeys(bp blueprint.Blueprint, n int) (keyring.Preset,
 // rest of the system expects — rather than being hand-rolled here. Only their
 // key material is taken; DeclaredKeys re-writes the ring (keystores, password,
 // metadata) at the workspace's key dir, the way the declared source already does.
-func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, bool, error) {
+func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, []int, bool, error) {
 	byIndex := make(map[int]node.Record, len(w.state.Nodes))
-	keyed := false
+	// pinned are the nodes whose key the table actually names. They are the only
+	// ones an existing ring can contradict — the rest are filled with fresh
+	// entropy, so they differ on every call by construction.
+	var pinned []int
 	for _, r := range w.state.Nodes {
 		byIndex[r.Index] = r
 		if r.Key != "" {
-			keyed = true
+			pinned = append(pinned, r.Index)
 		}
 	}
-	if !keyed {
-		return keyring.Preset{}, false, nil
+	if len(pinned) == 0 {
+		return keyring.Preset{}, nil, false, nil
 	}
+	sort.Ints(pinned)
 
 	// Generate a full set once, to a throwaway dir, for the entropy of the nodes
 	// that name no key. Its keystores are not reused — DeclaredKeys re-writes
 	// them from the key material below — so the dir is temporary.
 	tmp, err := os.MkdirTemp("", "cb-nodekeys-")
 	if err != nil {
-		return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: %w", err)
+		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
 	gen, err := store.GenerateAt(ctx, store.GenerateOpts{Nodes: n, Out: tmp, Derive: derive.WithBLS}, nil)
 	if err != nil {
-		return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
+		return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: generate node identities: %w", err)
 	}
 
 	var set keyring.Preset
 	for i := 1; i <= n; i++ {
 		r, ok := byIndex[i]
 		if !ok {
-			return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
+			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node table has no node%d", i)
 		}
 		var key derive.PrivateKey
 		if r.Key != "" {
 			key, err = parseNodeKey(r.Key)
 			if err != nil {
-				return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
+				return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, err)
 			}
 		} else {
 			key = gen.Nodes[i-1].Nodekey
 		}
 		id, derr := derive.Derive(key, derive.WithBLS)
 		if derr != nil {
-			return keyring.Preset{}, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
+			return keyring.Preset{}, nil, true, fmt.Errorf("chainsetup: keys: node%d: %w", i, derr)
 		}
 		set.Nodes = append(set.Nodes, keyring.Entry{
 			Label:    keyring.Label(node.LabelFor(i)),
@@ -247,12 +261,11 @@ func (w *Workspace) nodeTableKeys(ctx context.Context, n int) (keyring.Preset, b
 			set.Network.Validators = append(set.Network.Validators, set.Nodes[i-1].Address)
 		}
 	}
-	return set, true, nil
+	return set, pinned, true, nil
 }
 
-// parseNodeKey reads a node's declared key. A path that exists is read as a key
-// file; anything else is parsed as 0x-hex, so a network can pin a key inline or
-// point at a file, the way a blueprint's nodekey does.
+// parseNodeKey reads a node's declared key from the local file the node table
+// names. Inline key material is refused — see the reasoning on the function.
 // localKeyReader is the file reader a blueprint's declared keys are read
 // through. Like parseNodeKey, it refuses a server reference: a private key a
 // blueprint names is a local file or inline hex, never a secret pulled off a
@@ -265,22 +278,30 @@ func localKeyReader(path string) ([]byte, error) {
 }
 
 func parseNodeKey(ref string) (derive.PrivateKey, error) {
-	// A private key is never pulled off a server to be derived here: a server
-	// reference for a key would read the secret onto this machine, which the key
-	// contract forbids (a prepared key is verified on its own server, and only
-	// its public identity leaves it). A key is therefore inline hex or a local
-	// file only; on-server key verification is a separate, explicit path.
+	// A node table's key is a local FILE, and nothing else.
+	//
+	// Not a server reference: reading a secret off a server onto this machine is
+	// what the key contract forbids (a prepared key is verified on its own
+	// server, and only its public identity leaves it).
+	//
+	// And not inline hex either. The node table is copied into the workspace's
+	// own state — node records and the recorded request both keep this string —
+	// and that state is ordinary JSON a person reads, diffs and copies. A key
+	// written inline would sit there in cleartext, which is the same reason the
+	// blueprint generator references keys by path and never inlines them
+	// (blueprint.FromPreset). A path in state names a secret; it is not one.
 	if strings.HasPrefix(ref, "srv://") {
-		return derive.PrivateKey{}, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — use inline 0x-hex or a local key file", ref)
+		return derive.PrivateKey{}, fmt.Errorf("key reference %q is on a server: a private key is not read across machines — point it at a local key file", ref)
 	}
-	if _, err := os.Stat(ref); err == nil {
-		b, rerr := os.ReadFile(ref)
-		if rerr != nil {
-			return derive.PrivateKey{}, fmt.Errorf("read key file %q: %w", ref, rerr)
-		}
-		return derive.ParsePrivateKey(string(b))
+	if _, err := os.Stat(ref); err != nil {
+		return derive.PrivateKey{}, fmt.Errorf(
+			"key reference %q is not a readable file: a node key is named by a local file path, never written inline — an inline key would be stored in this workspace's state in cleartext", ref)
 	}
-	return derive.ParsePrivateKey(ref)
+	b, rerr := os.ReadFile(ref)
+	if rerr != nil {
+		return derive.PrivateKey{}, fmt.Errorf("read key file %q: %w", ref, rerr)
+	}
+	return derive.ParsePrivateKey(string(b))
 }
 
 // AllocateOpts sizes the network.

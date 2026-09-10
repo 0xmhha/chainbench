@@ -50,8 +50,14 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 	dir := t.TempDir()
 	keysDir := filepath.Join(dir, "keys")
 
-	// A fixed key so the test knows the address the pin must produce.
+	// A fixed key so the test knows the address the pin must produce. It is
+	// written to a file because a node table names a key by path: inline key
+	// material would be copied into the workspace's own state in cleartext.
 	const pinnedHex = "0x1111111111111111111111111111111111111111111111111111111111111111"
+	pinnedFile := filepath.Join(dir, "node1.key")
+	if err := os.WriteFile(pinnedFile, []byte(pinnedHex), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	pinnedKey, err := derive.ParsePrivateKey(pinnedHex)
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +76,7 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 		t.Fatal(err)
 	}
 	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
-		{Index: 1, Role: "bp", Key: pinnedHex},
+		{Index: 1, Role: "bp", Key: pinnedFile},
 		{Index: 2, Role: "bp"},
 		{Index: 3, Role: "en"},
 	}}
@@ -128,5 +134,84 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 	}
 	if !strings.Contains(strings.ToLower(string(gen)), strings.ToLower(strings.TrimPrefix(wantAddr, "0x"))) {
 		t.Errorf("composed genesis does not carry the pinned validator address %s", wantAddr)
+	}
+}
+
+// TestKeys_NodeTableRejectsInlineKeyMaterial is MON-001's guard. A node table is
+// copied into the workspace's own state — the node records and the recorded
+// request both keep the key string — and that state is ordinary JSON at 0644.
+// So a key is named by a local file and never written inline.
+func TestKeys_NodeTableRejectsInlineKeyMaterial(t *testing.T) {
+	dir := t.TempDir()
+	ws, err := chainsetup.Open(dir, fixedClock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: filepath.Join(dir, "keys")}); err != nil {
+		t.Fatal(err)
+	}
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Key: "0x1111111111111111111111111111111111111111111111111111111111111111"},
+		{Index: 2, Role: "bp"},
+	}}
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{Topology: topo}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	_, err = ws.Keys(context.Background(), chainsetup.KeysOpts{})
+	if err == nil {
+		t.Fatal("an inline private key was accepted")
+	}
+	if !strings.Contains(err.Error(), "inline") {
+		t.Fatalf("the refusal should say why inline is refused: %v", err)
+	}
+}
+
+// TestWorkspaceState_HoldsNoKeyMaterial composes with a pinned key file and then
+// reads the saved state back as text: neither the node table nor the recorded
+// request may carry the key's bytes. This is the assertion MON-001 asked for —
+// the earlier tests exercised the pin but never looked at what was persisted.
+func TestWorkspaceState_HoldsNoKeyMaterial(t *testing.T) {
+	dir := t.TempDir()
+	keysDir := filepath.Join(dir, "keys")
+	const pinnedHex = "0x2222222222222222222222222222222222222222222222222222222222222222"
+	pinnedFile := filepath.Join(dir, "node1.key")
+	if err := os.WriteFile(pinnedFile, []byte(pinnedHex), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	ws, err := chainsetup.Open(dir, fixedClock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ws.New(chainsetup.NewOpts{Chain: "stablenet", KeysDir: keysDir}); err != nil {
+		t.Fatal(err)
+	}
+	topo := &node.Topology{Chain: "stablenet", Nodes: []node.Entry{
+		{Index: 1, Role: "bp", Key: pinnedFile},
+		{Index: 2, Role: "bp"},
+	}}
+	if _, err := ws.Allocate(chainsetup.AllocateOpts{Topology: topo}); err != nil {
+		t.Fatalf("allocate: %v", err)
+	}
+	if _, err := ws.Keys(context.Background(), chainsetup.KeysOpts{}); err != nil {
+		t.Fatalf("keys: %v", err)
+	}
+	if err := ws.Save(); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	raw, err := os.ReadFile(filepath.Join(dir, "workspace.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The bare hex too: a writer that stripped the 0x would still be a leak.
+	for _, secret := range []string{pinnedHex, strings.TrimPrefix(pinnedHex, "0x")} {
+		if strings.Contains(string(raw), secret) {
+			t.Fatalf("workspace.json carries the private key")
+		}
+	}
+	// The path may (and should) be there — it names the secret without being one.
+	if !strings.Contains(string(raw), "node1.key") {
+		t.Fatal("the key file path was not recorded, so the node's key is unnamed")
 	}
 }
