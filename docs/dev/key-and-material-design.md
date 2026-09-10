@@ -7,6 +7,14 @@
 > [[keyring-design]] 이 *키가 무엇인가* 를 정한다면, 이 문서는 **그 키와 나머지 자료가 어디에
 > 놓이고 언제 다시 올라가는가** 를 정한다. 실측: 2026-08-20.
 
+> **경로 정정 (2026-09-11).** 실측은 2026-08-20 기준이다. 본문이 인용하는 스펙 경로
+> `tests/specs/consensus/istanbul-status-fields.json` 은
+> `tests/tc/go-stablenet/regression/api/15-istanbul-status-fields.json` 으로 옮겨졌다
+> (`tests/specs/` 트리는 `tests/tc/` 로 통합됐다). 키 6패키지 실측은 그 뒤 통폐합을 거쳐
+> 지금 `internal/core/keyring{,/store,/derive,/operation}` 4개다 —
+> [`architecture/code-graph.md`](architecture/code-graph.md) 참조. **destination 레이아웃
+> (`bin`/`material`/`run`, 내용 해시 경로)과 재업로드 판정 결함의 진단은 유효하다.**
+
 ---
 
 ## 1. 문제 — 측정한 것만

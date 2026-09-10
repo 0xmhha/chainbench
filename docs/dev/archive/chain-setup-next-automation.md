@@ -1,5 +1,11 @@
 # 인수인계 — governance-etcd 부트스트랩 자동화
 
+
+> **[대체됨 — 완료] 2026-09-11.** 이 문서의 한 줄 요약은 "절차는 확정됐고, 그대로
+> **자동화하는 코드가 아직 없다**" 였다. 그 코드가 `chainbench chain up` 이다(20 스텝,
+> wemix 2-페이즈 부트스트랩은 poa 패밀리 phase 로 돈다). 아래 서술은 착수 전 컨텍스트이며
+> **현재 상태를 말하지 않는다.** 지금 무엇이 되는지는 [`../chain-setup/README.md`](../chain-setup/README.md)
+> 와 `chainbench chain --help`, 남은 일은 [`../chainbench-worklist.md`](../chainbench-worklist.md).
 > 새 세션이 이 문서만 읽고 이어서 작업할 수 있도록 정리한 컨텍스트다.
 > 작성: 2026-08-10 · 기준 커밋: `2082f94` (main)
 >
@@ -150,7 +156,7 @@ A 가 끝난 뒤. 같은 2-페이즈를 쓰되 후계 체인이 없다.
 
 레거시 134개 중 18개 이관 완료(#228). 남은 106개: `system-contracts`(46) · `accounts`(35) ·
 `gas-policy`(17) · `hardfork`(8). 표현력 블로커는 #225 에서 모두 해소됐고 작업량만 남았다.
-상세: `tests/specs/README.md`, `docs/dev/legacy-retirement-plan.md` §4.4.
+상세: `tests/specs/README.md`, `docs/dev/archive/legacy-retirement-plan.md` §4.4.
 
 이관 불가로 남긴 4건(순서·산술·조건부대기·토폴로지 참조)도 같은 문서에 이유와 함께 있다.
 

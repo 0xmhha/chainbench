@@ -12,6 +12,12 @@
 > [[family-bringup-design]](family-bringup-design.md) · [[server-set]](server-set.md).
 > 작업 순서는 [[chainbench-worklist]](chainbench-worklist.md) §1g.
 
+> **경로 정정 (2026-09-11).** 실측은 2026-08-18 기준이다. 본문 §부록의 패키지 표에서
+> `internal/core/capability` 는 `internal/core/registry` 로 병합됐고(`Capability`·`LoadCatalog`·
+> `RegisterHandler`·`GetByAddress` 가 거기 있다), DSL 게이팅 쪽 `internal/engine/capability.go` 는
+> `internal/testengine/capability.go` 다. 청사진 자체는 구현됐다 — `internal/core/blueprint`
+> (1,248줄)와 `chainbench chain blueprint`·`chain up --blueprint` 가 그것이다.
+
 ---
 
 ## 1. 진단

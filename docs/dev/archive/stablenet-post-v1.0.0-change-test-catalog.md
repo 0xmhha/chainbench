@@ -1,5 +1,9 @@
 # go-stablenet post-v1.0.0-change 테스트 카탈로그 (포팅 참고용)
 
+
+> **[대체됨 — 이관 완료] 2026-09-11.** 이 카탈로그가 참고용으로 존재하던 이유(포팅 대상
+> 목록)는 해소됐다 — [`../legacy-test-migration.md`](../legacy-test-migration.md) §7 이 이관
+> 완료를 기록한다. 케이스가 무엇이었는지의 **목록**으로서만 남긴다.
 > 출처: 삭제된 로컬 브랜치 `feat/post-v1.0.0-change-migration`(커밋 `9908be2`, 2026-07-20, bash 시절)의
 > `tests/regression/post-v1.0.0-change/` 51개 bash 회귀 테스트. **코드(bash)는 Go 재작성으로 폐기**됐으나,
 > 향후 go-stablenet 테스트를 Go로 포팅할 때 "어떤 케이스가 있는지"의 **카탈로그**로 보존한다.

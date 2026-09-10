@@ -3,6 +3,12 @@
 > **등급: [현행 설계]** — 분석·준비 단계다. 구현 전이며, 작업 상태는 worklist §1g R 트랙이
 > 정본이다. 참조 구현: `~/Work/github/packages/wemix-bp-test` (동작 검증 완료된 선례).
 
+> **경로 정정 (2026-09-11).** 이 설계는 구현됐다 — `--docker` 플래그가 `chain up`·`run` 양쪽에
+> 있고, 주소 치환은 `internal/resource/localmap.go` 가 소유한다(본문의 `internal/config/localmap.go`
+> 는 없다). 접속 경계의 자격증명·주소 변환은 `internal/core/remote`(`AddrMap`·`Credentials`)와
+> `internal/resource` 가 나눠 갖는다. **§4 의 함정 4개(loopback 판정·산출물 오염 등)는 여전히
+> 읽을 값이 있다.**
+
 실 원격 서버에 지금 연결할 수 없으므로, Rancher Desktop 의 docker 로 ubuntu 가상
 서버들을 만들어 **원격 코드 경로를 로컬에서 검증**한다. 상위 레이어는 서버 주소를
 그대로 쓰고, 접속하는 최하위 지점에서만 주소를 loopback 의 퍼블리시 포트로 바꾼다.

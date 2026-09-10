@@ -6,7 +6,21 @@
 
 > 지시 1(DSL 문법 신규 제안) · 지시 4(x-bar 기반 문서 대조·갭) 응답. 작성: 2026-08-11 · 기준 커밋 `2181191`.
 > 대조 대상: [`chainbench-design.md`](chainbench-design.md) §3.2·§4.3 · [`chainbench-feature-spec.md`](chainbench-feature-spec.md) ·
-> [`chainbench-component-architecture.md`](chainbench-component-architecture.md) · 구현 정본 `internal/testspec/spec.go`.
+> [`chainbench-component-architecture.md`](archive/chainbench-component-architecture.md) · 구현 정본
+> `internal/testspec/spec.go` (**2026-09-11: 지금은 `internal/dsl/spec.go`** — 아래 경로 정정 참조).
+
+> **경로 정정 (2026-09-11).** 작성 시점 기준 커밋은 `2181191` 이고, 문법은 T7.8 에서
+> 구현됐다. 그 뒤 패키지가 옮겨졌다 — **`internal/testspec` 은 없다.**
+>
+> | 본문의 경로 | 지금 |
+> |---|---|
+> | `internal/testspec/spec.go` | `internal/dsl/spec.go` (`type Spec struct` at :29) |
+> | `internal/testspec/schema/v2.schema.json` | `internal/dsl/schema/v2.schema.json` |
+> | `tests/specs/` (이관 ledger) | `tests/tc/` — [`../../tests/tc/SPECS.md`](../../tests/tc/SPECS.md) 가 그 기록이다 |
+>
+> 제안한 4분할(`dsl` · `dsl/assert` · `dsl/bind` · `dsl/interp`)은 **3분할로 구현**됐다 —
+> `dsl/bind` 는 만들지 않고 값 바인딩을 `internal/dsl/interp/binding.go` 안에 뒀다.
+> 지금 등록된 어휘 전수는 [`../guide/dsl-authoring.md`](../guide/dsl-authoring.md) 가 코드에서 뽑아 싣는다.
 
 ---
 
@@ -24,7 +38,7 @@ v2 는 문법을 넓히는 것이 아니라 **선언부(environment)와 시나�
 
 ## 1. 현행 문법 실측 (v1)
 
-`internal/testspec/spec.go:26-41` 이 정본이다.
+`internal/testspec/spec.go:26-41` 이 정본이다. (지금은 `internal/dsl/spec.go:29` `type Spec struct`.)
 
 ```
 Spec := schemaVersion id [applicableChains] [requires] chain [topology] [hardforks]
@@ -98,7 +112,7 @@ complement 와 같은 층에 넣을 수밖에 없고, (b) `save` 같은 adjunct 
 |---|---|---|---|---|
 | **G1** | 배경 1.4·1.5 / 알고리즘 2·3 — node key·keystore 를 **random 생성할지 기존 사용할지 결정** | design §3.5 `keyreg`(인터페이스만) | `keyreg.New` 는 **프로덕션 호출 지점 0**. `engine/attach.go:79`·`app.go:114` 가 `session.New(…, nil)` 로 nil 전달. 실경로는 `keys/preset` 하드코딩(`app.go:50`) | **미구현**. DSL 필드도 없음 |
 | **G2** | 배경 1.2 — genesis 4모드 | design §3.8 (4모드 명시) | DSL 은 `chain.genesisOverlay` 1개만 노출 | **문법 갭 3/4** |
-| **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → [`chain-binary-flag-graph.md`](chain-binary-flag-graph.md) §2 | **구현(2026-09-02)**: `env.launch` 가 스코프별(all·역할·node<N>) 오버라이드를 노드마다 병합 |
+| **G3** | 배경 2 / 알고리즘 7 — 바이너리 sub-command·flag 로 http/ws/metric/chainId/networkId 설정 | **어느 문서에도 head 없음** (component-arch §2 책임귀속표에 행 자체가 없음) | 5곳 하드코딩 → [`chain-binary-flag-graph.md`](archive/chain-binary-flag-graph.md) §2 | **구현(2026-09-02)**: `env.launch` 가 스코프별(all·역할·node<N>) 오버라이드를 노드마다 병합 |
 | **G4** | 배경 3 — 검증에 **log·rpc·metric** 활용 | design §3.6 collector 는 log·chainstate 만 | 어세션 16종 중 metric 소스 0 | **1/3 미구현** |
 | **G5** | 배경 4 — pre/post hook 의 **override 동작** 정의 | design §3.2 는 액션 리스트로만 해석 | preActions/postActions = 액션 배열 | **시맨틱 부재** |
 | **G6** | key point 2 — local/remote 를 단일 "경로"로 | design §7 은 `remote.cluster` 참조 | §2.3 문제 ④ 참조 | **표현 분산** |
@@ -296,6 +310,7 @@ v1 은 **v2 의 부분집합으로 기계 변환 가능**하다. 파서에 desug
 ### 3.7 문법 정본화 (구조적 문제 ① 해소)
 
 - `internal/testspec/schema/v2.schema.json` 을 **문법 정본**으로 두고 `Parse` 가 이를 강제한다.
+  (구현 위치: `internal/dsl/schema/v2.schema.json`.)
 - design §4.3 의 jsonc 예시는 스키마를 **참조**만 하고 필드 목록을 중복 기재하지 않는다.
 - CI 가드: `chainbench validate` 가 `examples/specs/**` 전량 + 스키마 self-check 를 돌린다
   (T6.7 의 가드를 스키마 기반으로 승격).
@@ -307,7 +322,7 @@ v1 은 **v2 의 부분집합으로 기계 변환 가능**하다. 파서에 desug
 | 순위 | 항목 | 이유 |
 |---|---|---|
 | 1 | **G1 keyreg 배선** (`keys` 선언 + `session.New(…, keyreg.New(…))`) | 알고리즘 2·3 이 통째로 미구현. `keyreg` 는 이미 구현·테스트되어 있고 **호출 지점만 없다** — 문서가 경고한 "테스트 있음 ≠ 배선됨"의 재발 |
-| 2 | **G3 launch 옵션** | 배경 2·알고리즘 7 미충족. 설계는 [`chain-binary-flag-graph.md`](chain-binary-flag-graph.md) §3.3 |
+| 2 | **G3 launch 옵션** | 배경 2·알고리즘 7 미충족. 설계는 [`chain-binary-flag-graph.md`](archive/chain-binary-flag-graph.md) §3.3 |
 | 3 | **§3.5 문법 통일 + 스키마 정본화** | 이후 모든 이관(106건 잔여)이 이 문법 위에 쌓임. 늦출수록 재작업 비용 증가 |
 | 4 | G2 genesis 4모드 노출 | 코드(`core/genesis`)는 이미 4모드 지원 — DSL 필드만 열면 됨 |
 | 5 | G4 metric 어세션 | collector 에 metrics 스크레이프 추가 필요(신규 작업) |

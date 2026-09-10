@@ -10,6 +10,15 @@
 > 근거: 2026-08-18 라이브 실측(3체인 기동) · `script/wemix-upgrade/{manage_chain.sh, upgrade_test/}` ·
 > `go-wemix/build/bin/gwemix.sh` 코드 대조.
 
+> **경로 정정 (2026-09-11).** 근거 실측은 2026-08-18 기준이다. 본문이 boundary 소유자로
+> 적은 `internal/engine` 은 없다 — 테스트벤치 엔진은 `internal/testengine`, 기동 순서를 도는
+> 쪽은 `internal/chainsetup` 이고, `GenesisSource`/`KeySource` 는 각각 `genesis.Source` 패밀리
+> 구현(`internal/consensus/poa/genesis_source.go`)과 `chainsetup.NetKeys` → `core/keyring` 로
+> 갈라졌다. §1 표의 `core/supervisor`(`Deps.LeaderGate`) 도 없다 — etcd 클러스터 형성 확인은
+> 패밀리 phase 액션 `ActionVerifyEtcd`(`consensus/poa/executor.go:218` → `poa.VerifyEtcd`)가,
+> 블록 전진 판정은 `core/health` 가 맡는다. **네 boundary(BringUpPhases·Action·
+> GenesisArtifacts·PortReservation)의 설계 판단은 그대로 유효하고, 소유자 이름만 바뀌었다.**
+
 ---
 
 ## 1. 이미 있는 것 (실측)

@@ -5,6 +5,12 @@
 > 상태: ✅ **절차 검증 완료** — 2026-08-09 실 바이너리로 블록 100 인계 확인(§5). 단, **`chain up` 자동화는 아직 옛 순서**라 그대로 돌리면 실패한다(§6).
 > 공통 절차·변곡점은 [README.md](README.md) 참조.
 
+> **명령 표면 정정 (2026-09-11).** 본문 서술은 그때의 기록이다. **현재 표면은 `chain` 하나다** —
+> `net` 명령군과 `chain up --case`, `chainbench setup` 은 모두 없다. 대응: `net up`/`chain up --case X`
+> → `chain up --chain X`, `net <verb>` → `chain <verb>`, `--data-dir` → `--workspace-dir`,
+> `--stop-after provision` → `--stage deploy`. 아래 실행 예시는 현재 표면으로 고쳐 두었다.
+> 근거: `chainbench chain --help` · `cmd/chainbench/chaincmd/up.go`.
+
 ---
 
 ## 1. 전제
@@ -86,7 +92,7 @@ to-chain 의 자기 genesis 템플릿에서 **데이터로 추출**해 from-chai
 
 ```sh
 CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
-chainbench chain up --case wemix-wbft \
+chainbench upgrade run \
   --profile profiles/wemix-upgrade.yaml \
   --from-binary $CHAIN/go-wemix/build/bin/gwemix \
   --to-binary   $CHAIN/go-wbft/build/bin/gwemix \

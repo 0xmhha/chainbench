@@ -1,6 +1,13 @@
 # 아키텍처 v2 이동표 — 실측 기반
 
-> **[현행 설계]** [[architecture-v2]](architecture-v2.md) 의 함수·파일 이동 계획.
+
+> **[대체됨 — 이동 완료] 2026-09-11.** 이 이동표의 대상 8패키지(`internal/netcompose`·
+> `core/launchopt`·`internal/engine`·`internal/testspec`·`core/keyreg` 등)는 **코드에 하나도
+> 남아 있지 않다.** 이동은 끝났고 이 문서는 그 계획의 기록이다. 모듈 경계는
+> [`../architecture/architecture-v2.md`](../architecture/architecture-v2.md), 현재 실측은
+> [`../architecture/code-graph.md`](../architecture/code-graph.md) 가 말한다.
+
+> **[현행 설계]**(원문) [[architecture-v2]](../architecture/architecture-v2.md) 의 함수·파일 이동 계획.
 > 실측 2026-08-25: 재편 대상 8개 패키지의 심볼(함수·메서드·타입) 전수를 AST 로
 > 뽑았다(테스트 파일 제외). 작업 상태는 [[chainbench-worklist]] §1h 이 정본이다.
 

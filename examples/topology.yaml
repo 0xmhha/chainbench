@@ -1,15 +1,16 @@
-# Example local-network topology for `chainbench setup --topology`.
+# Example per-node topology for `chainbench chain place|up --topology`.
 #
 # It replaces the positional `--validators N --endpoints M` counts with an
 # explicit, per-node layout: which node index plays which role, its sync mode,
 # and which node is the bootnode. One consistent rule sets up the test
-# environment, and the file is copied into the data root (as topology.yaml) so
-# the running network's shape is inspectable.
+# environment, and the resulting node table is recorded in the workspace so the
+# running network's shape is inspectable (chainbench chain show / status).
 #
-#   chainbench setup --topology examples/topology.yaml --launch --binary <path>
+#   chainbench chain up --topology examples/topology.yaml --binary <path>
 #
 # role:      bp | validator  (block producer / staker)
 #            en | endpoint    (non-producing RPC node)
+#            pn | proxy       (proxy tier)
 #            boot             (bootstrap node)
 # sync_mode: full (default) | snap | archive
 # bootnode:  at most one node may set this true

@@ -184,7 +184,7 @@ left to port:
 - `attach-external` (the legacy "Layer 2 E2E" section) is **not a porting target**.
   Despite the legacy name it is NOT an Ethereum L2 — in chainbench terms it is an
   **external chain**: one already running elsewhere that chainbench attaches to over
-  RPC (`chainbench test --rpc <url>`), never launching or managing it. The reference
+  RPC (`chainbench run --attach --rpc <url>`), never launching or managing it. The reference
   suite has no runnable scripts there (only a design note), chainbench has no
   external-chain family to build, and "L2 E2E" is just the existing chain-agnostic
   RPC cases run attach-mode. Nothing to build or port; a live external RPC URL is

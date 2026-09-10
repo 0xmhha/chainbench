@@ -1,5 +1,10 @@
 # tests/repro → Go e2e migration — remaining work
 
+
+> **[대체됨 — 이관 완료] 2026-09-11.** 자체 §"Remaining — nothing to port". 포팅 대상이
+> 아니라고 결론난 `attach-external` 하나만 남았고 그것도 대상이 아니다. 본문의
+> `chainbench test --rpc` 는 지금 `chainbench run --attach --rpc` 이고, `chainbench setup` 은
+> 없다. e2e 실행법은 [`../../../tests/e2e/README.md`](../../../tests/e2e/README.md).
 > Status as of 2026-07-29. The live-verification tier is being ported from
 > `tests/repro/*.sh` (bash+python) to Go gated e2e tests under `tests/e2e/`
 > (`//go:build e2e`) + `cmd/chainbench/upgrade_run_e2e_test.go`. See

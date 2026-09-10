@@ -1,6 +1,6 @@
 # chainbench capabilities
 
-The **capability registry** (`internal/core/capability`) is the layered, per-project
+The **capability registry** (`internal/core/registry`) is the layered, per-project
 feature model behind the chainbench MCP and CLI surfaces. It answers "which
 features does chain X support, and how are they called" as data, so the exposed
 tool set grows with chains/projects **without editing a central switch**.

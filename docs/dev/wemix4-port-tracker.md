@@ -1,12 +1,20 @@
 # wemix4 test-case port tracker (Phase 6)
 
-Phase 6 of the wemix4 migration ports the `tests/wemix4/{NODE,WBFT,RPC,GOV,TX}`
-shell cases into the chainbench Go **testkit** (`tests/wbft/...`, run by
-`internal/core/pipeline/testrun`) — NOT a blind 1:1 re-port.
+> **Path note (2026-09-11).** The Go **testkit** this tracker was written against
+> was retired on 2026-09-01 (R5): `internal/testkit`, `internal/core/pipeline/testrun`
+> and the `tests/wbft/` · `tests/api/` case packages no longer exist. The coverage
+> itself was not dropped — it lives in the v2 DSL cases under `tests/tc/` (run by
+> `chainbench run`) and in the gated Go e2e tests under `tests/e2e/`. The
+> `tests/wbft/...` paths below are the record of where a case *was* ported, not a
+> live path. The port verdicts (covered / ported / deferred) still stand; only the
+> location moved. See [[legacy-retirement-plan]](archive/legacy-retirement-plan.md)
+> and [[legacy-test-migration]](legacy-test-migration.md).
 
-A large share of wemix4's coverage **already exists** in the testkit corpus
-(`tests/wbft/consensus`, `tests/wbft/accounts`, `tests/api`), ported earlier
-from the ethereum/wbft regression suites. Phase 6 is therefore driven by a **gap
+Phase 6 of the wemix4 migration ports the `tests/wemix4/{NODE,WBFT,RPC,GOV,TX}`
+shell cases into the chainbench Go **testkit** — NOT a blind 1:1 re-port.
+
+A large share of wemix4's coverage **already existed** in the testkit corpus,
+ported earlier from the ethereum/wbft regression suites. Phase 6 is therefore driven by a **gap
 analysis**: port only what is not already covered, and defer what needs
 machinery the testkit does not yet have (multi-node fault injection, a deployed
 wemix governance).

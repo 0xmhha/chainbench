@@ -118,7 +118,7 @@ test      (A: testkit Go-func)                                      ↔  run (B:
 | 패키지 | 역할 | 근거 |
 |---|---|---|
 | `internal/app` [NEW] | 유스케이스 함수 집합. CLI RunE 와 MCP 핸들러가 **같은 함수**를 호출 | 지시 3 의 "CLI ↔ MCP 행위 동일" 요구, chain-cli-execution-plan §4.1 |
-| `internal/core/launchopt` [NEW] | 실행옵션 모듈 + Dialect + Builder | [`chain-binary-flag-graph.md`](../chain-binary-flag-graph.md) §3.3 |
+| `internal/core/launchopt` [NEW] | 실행옵션 모듈 + Dialect + Builder | [`chain-binary-flag-graph.md`](chain-binary-flag-graph.md) §3.3 |
 
 **흡수/폐기 (신규 작업 아님 — 소비자 이관 후 삭제):**
 

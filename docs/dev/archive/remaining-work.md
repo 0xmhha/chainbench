@@ -1,7 +1,12 @@
 # 잔여 작업 리스트 (DSL 이관 · 레거시 은퇴 · 후속 발견)
 
+
+> **[대체됨] 2026-09-11.** 기준일 2026-08-14 의 잔여 목록이다. 근거로 삼은 이관 ledger
+> `tests/specs/README.md` 는 없어졌고(→ `tests/tc/`), 본문이 인용하는 `internal/testkit`·
+> `internal/core/pipeline/testrun`·`internal/engine`·`chainbench setup --launch` 도 전부
+> 존재하지 않는다. 남은 일감의 단일 출처는 [`../chainbench-worklist.md`](../chainbench-worklist.md) 다.
 > 기준일: 2026-08-14 · 브랜치: `refactor/retire-pipeline-setup`
-> 근거 문서: 이관 ledger `tests/specs/README.md` · [[legacy-retirement-plan]] (`docs/dev/legacy-retirement-plan.md`) · [[chainbench-worklist]] (`docs/dev/chainbench-worklist.md`)
+> 근거 문서: 이관 ledger `tests/specs/README.md` · [[legacy-retirement-plan]] (`docs/dev/archive/legacy-retirement-plan.md`) · [[chainbench-worklist]] (`docs/dev/chainbench-worklist.md`)
 > 표기: ☐ 미착수 · ◐ 진행 · ☑ 완료
 
 이 문서는 **표현력 블로커가 해소되고 오버레이 케이스까지 라이브 이관이 끝난 시점**의 남은 일감이다.
