@@ -86,7 +86,11 @@ server-set.yaml
 server-set.yml
 *server-set.yaml
 *server-set.yml
-!server-set.sample.yaml
+# Workspace path configuration: track the proposal template, never site values.
+workspace-config*.yaml
+workspace-config*.yml
+*workspace-config.yaml
+*workspace-config.yml
 # Older copies of the same file under its previous name may still exist
 # locally; keep them out too.
 remote-server-config.yaml
