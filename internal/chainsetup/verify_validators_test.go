@@ -79,7 +79,7 @@ func TestVerifyValidators_MatchAndMismatch(t *testing.T) {
 	if !got.Match {
 		t.Fatalf("expected match; mismatch=%q actual=%v expected=%v", got.Mismatch, got.Actual, got.Expected)
 	}
-	if got.Method != "wbft runtime validators" {
+	if got.Method != "istanbul_getValidators" {
 		t.Fatalf("method = %q", got.Method)
 	}
 

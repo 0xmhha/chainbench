@@ -6,8 +6,6 @@
 package wbft
 
 import (
-	"context"
-
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 )
@@ -22,13 +20,10 @@ func (Family) ID() string               { return "wbft" }
 func (Family) RPCNamespace() string     { return "istanbul" }
 func (Family) ValidatorsMethod() string { return "istanbul_getValidators" }
 
-// RuntimeValidators reads the running chain's validator set through its
-// consensus RPC method, satisfying registry.RuntimeValidatorReader so both
-// families answer the runtime validator check the same way from the caller's
-// side, each in the manner its chain exposes.
-func (f Family) RuntimeValidators(ctx context.Context, c registry.Caller) ([]string, error) {
-	return registry.Validators(ctx, c, f.ValidatorsMethod())
-}
+// wbft needs no RuntimeValidatorReader: its validators are read through the
+// manifest's istanbul_getValidators method, so RunningValidators falls back to
+// that. Only poa, whose validators live in a governance contract with no RPC
+// method, implements a reader.
 
 // BuildGenesis substitutes the wbft-family placeholders in template with the
 // family-relevant fields of params (validators/BLS/extra-data/members/alloc).

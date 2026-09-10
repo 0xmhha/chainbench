@@ -55,23 +55,10 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	}
 	caller := rpc.Dial(w.nodeHTTPURL(w.state.Nodes[0], m))
 
-	// A family reads its validator set the way its chain exposes it: wbft through
-	// a getValidators RPC, poa through its governance contract. A family that
-	// declares only a manifest method falls back to it.
-	var (
-		actual []string
-		method string
-	)
-	if r, ok := p.Family().(registry.RuntimeValidatorReader); ok {
-		method = p.Family().ID() + " runtime validators"
-		actual, err = r.RuntimeValidators(ctx, caller)
-	} else {
-		method = p.Manifest().Consensus.ValidatorsMethod
-		if method == "" {
-			return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: chain %s exposes no way to read its validators", p.Manifest().ID)
-		}
-		actual, err = registry.Validators(ctx, caller, method)
-	}
+	// How the running set is read — a getValidators RPC or a governance query —
+	// is the family's choice, made once in registry.RunningValidators so this
+	// check and the `validators` query cannot ask it differently.
+	method, actual, err := registry.RunningValidators(ctx, p, caller)
 	if err != nil {
 		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: %w", err)
 	}
