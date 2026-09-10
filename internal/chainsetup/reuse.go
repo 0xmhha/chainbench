@@ -3,7 +3,6 @@ package chainsetup
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -258,7 +257,9 @@ func (w *Workspace) mergeRunning(ctx context.Context, after []nodeTarget, snap r
 		return before, alive, attach, "", nil
 	}
 
-	running, err := w.introspectRunning(ctx, path.Base(w.state.Binary))
+	// The fallback, not the only name: introspectRunning asks binaryFor for
+	// each node's own binary and searches every distinct one.
+	running, err := w.introspectRunning(ctx, w.state.Binary)
 	if err != nil {
 		return nil, nil, nil, "", err
 	}

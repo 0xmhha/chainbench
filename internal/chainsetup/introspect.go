@@ -3,6 +3,7 @@ package chainsetup
 import (
 	"context"
 	"fmt"
+	"path"
 
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
@@ -49,19 +50,29 @@ type runningNode struct {
 	ConfigHash string
 }
 
-// introspectRunning finds every process of binaryName on the target and, per
-// node label (the last element of its --datadir), recovers the config it runs
-// with: it reads the process's argv, parses out the --config path, and hashes
-// that file's bytes ON the machine — the same hash the compose steps record. A
-// target whose driver cannot read cmdlines, or a process whose config cannot be
-// read, contributes nothing rather than failing the run: the affected node then
-// composes fresh, which is the safe default.
-func (w *Workspace) introspectRunning(ctx context.Context, binaryName string) (map[nodeAddr]runningNode, error) {
+// introspectRunning finds the processes already running the composition's node
+// binaries and, per node address, recovers the config each runs with: it reads
+// the process's argv, parses out the --config path, and hashes that file's bytes
+// ON the machine — the same hash the compose steps record. A target whose driver
+// cannot read cmdlines, or a process whose config cannot be read, contributes
+// nothing rather than failing the run: the affected node then composes fresh,
+// which is the safe default.
+//
+// fallback is the composition's single binary, used for nodes that do not name
+// one of their own. It is not the only name searched. A node table may assign
+// each node its own binary (binaryFor), and the handoff and binary-swap specs
+// in tests/tc do exactly that — producers on gwemix, validators on gwbft. The
+// search used to take one name, so on those networks every node running the
+// other binary was invisible: reuse quietly missed it, composed it fresh, and
+// the run then died at init with a message about ports.
+//
+// The names are collected per server from the nodes placed there, which is both
+// narrower and cheaper than one global set, and deduplicated: pgrep is an exact
+// name match, so searching the same name twice would return the same pid twice
+// and the one-process-per-datadir rule below would read that as two processes.
+func (w *Workspace) introspectRunning(ctx context.Context, fallback string) (map[nodeAddr]runningNode, error) {
 	found := map[nodeAddr]runningNode{}
-	if binaryName == "" {
-		return found, nil
-	}
-	err := w.eachMachine(func(t *resource.Access, _ []node.Record) error {
+	err := w.eachMachine(func(t *resource.Access, nodes []node.Record) error {
 		insp, ok := t.Driver.(process.ProcessInspector)
 		if !ok {
 			return nil
@@ -70,43 +81,77 @@ func (w *Workspace) introspectRunning(ctx context.Context, binaryName string) (m
 		if !ok {
 			return nil
 		}
-		pids, err := insp.FindBinary(ctx, binaryName)
-		if err != nil {
-			return err
-		}
-		for _, pid := range pids {
-			argv, err := cmd.Cmdline(ctx, pid)
+		// One search per distinct binary name this server's nodes run, and each
+		// pid considered once however many names turned it up.
+		seen := map[int]bool{}
+		for _, name := range w.binaryNamesOn(nodes, fallback) {
+			pids, err := insp.FindBinary(ctx, name)
 			if err != nil {
-				continue // exited between listing and reading — skip it
+				return err
 			}
-			view := nodeconfig.ParseArgv(argv)
-			if view.DataDir == "" || view.ConfigPath == "" {
-				continue // not a node this compares by label + config
-			}
-			cfg, err := t.Files.Read(ctx, view.ConfigPath)
-			if err != nil {
-				continue // config gone or unreadable — cannot compare it
-			}
-			addr := nodeAddr{Server: t.Spec.Server, DataDir: view.DataDir}
-			// Two live processes out of one datadir is not something to pick a
-			// winner from: adopting either would bind this composition to a pid
-			// chosen by listing order.
-			if prev, dup := found[addr]; dup {
-				return fmt.Errorf(
-					"chainsetup: reuse: two processes are running out of %s on %s (pids %d and %d) — stop one before reusing this composition",
-					view.DataDir, serverLabel(t.Spec.Server), prev.PID, pid)
-			}
-			found[addr] = runningNode{
-				Addr:       addr,
-				ConfigPath: view.ConfigPath,
-				PID:        pid,
-				Binary:     view.Binary,
-				ConfigHash: filestore.Hash(cfg),
+			for _, pid := range pids {
+				if seen[pid] {
+					continue
+				}
+				seen[pid] = true
+				argv, err := cmd.Cmdline(ctx, pid)
+				if err != nil {
+					continue // exited between listing and reading — skip it
+				}
+				view := nodeconfig.ParseArgv(argv)
+				if view.DataDir == "" || view.ConfigPath == "" {
+					continue // not a node this compares by label + config
+				}
+				cfg, err := t.Files.Read(ctx, view.ConfigPath)
+				if err != nil {
+					continue // config gone or unreadable — cannot compare it
+				}
+				addr := nodeAddr{Server: t.Spec.Server, DataDir: view.DataDir}
+				// Two live processes out of one datadir is not something to pick
+				// a winner from: adopting either would bind this composition to a
+				// pid chosen by listing order.
+				if prev, dup := found[addr]; dup {
+					return fmt.Errorf(
+						"chainsetup: reuse: two processes are running out of %s on %s (pids %d and %d) — stop one before reusing this composition",
+						view.DataDir, serverLabel(t.Spec.Server), prev.PID, pid)
+				}
+				found[addr] = runningNode{
+					Addr:       addr,
+					ConfigPath: view.ConfigPath,
+					PID:        pid,
+					Binary:     view.Binary,
+					ConfigHash: filestore.Hash(cfg),
+				}
 			}
 		}
 		return nil
 	})
 	return found, err
+}
+
+// binaryNamesOn returns the distinct executable names the given nodes run, in a
+// stable order.
+//
+// binaryFor is what decides which binary a node runs everywhere else — init,
+// start, restart, and the reuse candidates — so it decides here too. Asking it
+// rather than reading the binaries map directly is what keeps discovery and
+// comparison from disagreeing about the same node.
+//
+// Only the base name is searched, because that is what pgrep matches: a node
+// launched as /data/bin/gwbft is a process named gwbft.
+func (w *Workspace) binaryNamesOn(nodes []node.Record, fallback string) []string {
+	seen := map[string]bool{}
+	out := make([]string, 0, 2)
+	for _, ns := range nodes {
+		name := path.Base(w.binaryFor(ns, fallback))
+		// path.Base("") is ".", which matches nothing and is not worth a call.
+		if name == "" || name == "." || name == "/" || seen[name] {
+			continue
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
+	return out
 }
 
 // serverLabel names a server for a message; a local target has no name.
