@@ -546,10 +546,11 @@ func (w *Workspace) NodeSet() node.NodeSet {
 			nodeHost = host
 		}
 		ns.Nodes = append(ns.Nodes, node.Node{
-			Index:  n.Index,
-			Role:   node.Role(n.Role),
-			Host:   nodeHost,
-			RPCURL: rpcURLOf(w, n),
+			Index:      n.Index,
+			Role:       node.Role(n.Role),
+			Host:       nodeHost,
+			RPCURL:     rpcURLOf(w, n),
+			MetricsURL: metricsURLOf(w, n),
 			// The record's embedded Endpoints, whole: copying fields one by one
 			// is how the etcd port went missing between the plan and the
 			// running network before.

@@ -122,3 +122,22 @@ func rpcURLOf(w *Workspace, ns node.Record) string {
 	}
 	return url
 }
+
+// metricsURLOf is rpcURLOf for the metrics endpoint. It goes through the same
+// opener, so a docker node's metrics are scraped at the published port rather
+// than the container-internal one — the translation the RPC dial has always had
+// and this one did not. A node with no metrics port has no endpoint to give.
+func metricsURLOf(w *Workspace, ns node.Record) string {
+	if ns.Metrics == 0 {
+		return ""
+	}
+	host := ns.Host
+	if host == "" {
+		host = w.RPCHost()
+	}
+	url, err := w.opener().HTTPEndpoint(host, ns.Metrics)
+	if err != nil {
+		return ""
+	}
+	return url
+}

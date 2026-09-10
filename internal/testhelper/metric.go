@@ -52,12 +52,22 @@ func (metricAssertion) Check(ctx context.Context, ac *interp.AssertCtx) (session
 		return res, err
 	}
 	for _, t := range targets {
-		if t.node.Ports.Metrics == 0 {
-			err := fmt.Errorf("dsl: metric: %s has no metrics port — was it launched with --metrics?", t.name)
-			res.Pass, res.Actual = false, err.Error()
-			return res, err
+		// The composition records the endpoint this tool should dial, already
+		// translated for the target (a docker node publishes on loopback).
+		// Host+Ports is the node's OWN address, which is what peers use; building
+		// the URL from it is how this assertion used to dial a container-internal
+		// address and time out. Fall back to that pair only when nothing recorded
+		// an endpoint — an attached node, or a plain local run.
+		url := t.node.MetricsURL
+		if url == "" {
+			if t.node.Ports.Metrics == 0 {
+				err := fmt.Errorf("dsl: metric: %s has no metrics port — was it launched with --metrics?", t.name)
+				res.Pass, res.Actual = false, err.Error()
+				return res, err
+			}
+			url = collector.MetricsURL(t.node.Host, t.node.Ports.Metrics)
 		}
-		samples, err := collector.ScrapeMetrics(ctx, collector.MetricsURL(t.node.Host, t.node.Ports.Metrics))
+		samples, err := collector.ScrapeMetrics(ctx, url)
 		if err != nil {
 			res.Pass, res.Actual = false, err.Error()
 			return res, err
