@@ -534,17 +534,17 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	if len(w.state.Nodes) == 0 {
 		return nil, fmt.Errorf("chainsetup: health: no node table — run `chain place` first")
 	}
-	m, err := w.opener().AddrMap()
-	if err != nil {
-		return nil, err
-	}
 	out := make([]NodeHealth, len(w.state.Nodes))
 	for i, ns := range w.state.Nodes {
 		h := NodeHealth{Index: ns.Index, PID: ns.PID}
 		// A network spread across a set places each node on its own address, so the probe asks the
-		// node's recorded host, not the target-level one (nodeHTTPURL applies the
-		// same dial-time address translation the validator check uses).
-		c := rpc.Dial(w.nodeHTTPURL(ns, m))
+		// node's recorded host, not the target-level one; the resource layer turns
+		// that into the address this machine actually dials.
+		url, err := w.nodeHTTPURL(ns)
+		if err != nil {
+			return nil, err
+		}
+		c := rpc.Dial(url)
 		if bn, err := c.BlockNumber(ctx); err != nil {
 			h.Err = err.Error()
 		} else {

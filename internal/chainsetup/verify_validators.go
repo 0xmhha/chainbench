@@ -49,11 +49,11 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	}
 	expected := preset.NetworkFor(w.state.Validators).Validators
 
-	m, err := w.opener().AddrMap()
+	url, err := w.nodeHTTPURL(w.state.Nodes[0])
 	if err != nil {
 		return ValidatorCheck{}, err
 	}
-	caller := rpc.Dial(w.nodeHTTPURL(w.state.Nodes[0], m))
+	caller := rpc.Dial(url)
 
 	// How the running set is read — a getValidators RPC or a governance query —
 	// is the family's choice, made once in registry.RunningValidators so this
@@ -95,15 +95,30 @@ func NetVerifyValidators(ctx context.Context, d Deps, in NetVerifyValidatorsIn) 
 	return NetVerifyValidatorsOut{Check: check}, err
 }
 
-// nodeHTTPURL is a node's http RPC URL, translated through the dial-time address
-// map (docker/ssh) the same way Health reaches a node.
-func (w *Workspace) nodeHTTPURL(ns node.Record, m func(string, int) (string, int)) string {
-	host, port := ns.Host, ns.HTTP
+// nodeHTTPURL is the URL to dial for a node's HTTP RPC.
+//
+// This layer names the node's own address — its recorded host, or the target's
+// when a node carries none — and the resource layer decides how that address is
+// reached (a docker container's is translated through the localmap, a remote
+// server's is not). Holding a translation map here is what let one dial site
+// forget to apply it.
+func (w *Workspace) nodeHTTPURL(ns node.Record) (string, error) {
+	host := ns.Host
 	if host == "" {
 		host = w.RPCHost()
 	}
-	if m != nil {
-		host, port = m(host, port)
+	return w.opener().HTTPEndpoint(host, ns.HTTP)
+}
+
+// rpcURLOf is nodeHTTPURL for a caller that cannot return an error — NodeSet,
+// which renders recorded state and must stay total. A resolution failure (docker
+// mode with no localmap) yields an empty URL rather than a wrong one: a reader
+// sees "no endpoint", and the steps that actually dial (health, endpoints,
+// preflight) still refuse loudly and name the fix.
+func rpcURLOf(w *Workspace, ns node.Record) string {
+	url, err := w.nodeHTTPURL(ns)
+	if err != nil {
+		return ""
 	}
-	return fmt.Sprintf("http://%s:%d", host, port)
+	return url
 }

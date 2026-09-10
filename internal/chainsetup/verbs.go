@@ -131,15 +131,15 @@ func NetEndpoints(_ context.Context, d Deps, in NetEndpointsIn) ([]string, error
 	if len(st.Nodes) == 0 {
 		return nil, fmt.Errorf("chainsetup: endpoints: no node table — run `chain place` first")
 	}
-	m, err := ws.opener().AddrMap()
-	if err != nil {
-		return nil, err
-	}
-	// The one translator, shared with NodeSet and Health: a node's reachable URL
-	// is computed in a single place so the three cannot disagree.
+	// One helper, shared with NodeSet and Health: a node's reachable URL is
+	// resolved in a single place so the three cannot disagree.
 	urls := make([]string, 0, len(st.Nodes))
 	for _, ns := range st.Nodes {
-		urls = append(urls, ws.nodeHTTPURL(ns, m))
+		url, err := ws.nodeHTTPURL(ns)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, url)
 	}
 	return urls, nil
 }

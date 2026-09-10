@@ -12,6 +12,8 @@
 package resource
 
 import (
+	"fmt"
+
 	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
@@ -55,10 +57,38 @@ func (o Opener) Open(spec Spec) (*Access, error) {
 	return spec.ResolveWithPolicy(env, SetLookup(o.ServerSet), m, SetPolicy(o.ServerSet))
 }
 
+// HTTPEndpoint returns the URL a caller should dial to reach the HTTP service a
+// node advertises at host:port.
+//
+// The caller passes the address it knows — the node's own, as the composition
+// recorded it — and this decides how that address is actually reached: a docker
+// container's address is translated through the localmap (the same translation
+// SSH credentials get inside resolveOver), a remote server's address is not in
+// the localmap and is dialled as given, and a local node is already its own
+// address. So no caller above this layer needs to know a localmap exists, or
+// pass a flag saying whether one applies — which is what let one dial site
+// (the preflight liveness probe) miss the translation and read a live docker
+// network as dead.
+//
+// Docker mode without a readable localmap is an error rather than an
+// untranslated dial: the flag is the power switch, so a missing mapping file is
+// a refusal that names the fix instead of a silent dial at an address nothing
+// answers on.
+func (o Opener) HTTPEndpoint(host string, port int) (string, error) {
+	m, err := o.AddrMap()
+	if err != nil {
+		return "", err
+	}
+	if m != nil {
+		host, port = m(host, port)
+	}
+	return fmt.Sprintf("http://%s:%d", host, port), nil
+}
+
 // AddrMap returns the dial-time address translation this opener applies — nil
-// without docker mode. A consumer that dials something other than SSH (an
-// HTTP health probe) translates through this same map, so no second copy of
-// the localmap wiring can exist.
+// without docker mode. Prefer HTTPEndpoint for a node dial: it applies this map
+// so the caller does not have to hold it. This stays exported for the resolve
+// path, which threads the map into credentials.
 func (o Opener) AddrMap() (remote.AddrMap, error) {
 	if !o.Docker {
 		return nil, nil

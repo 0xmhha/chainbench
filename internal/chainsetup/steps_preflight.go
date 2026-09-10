@@ -81,12 +81,14 @@ func (w *Workspace) liveness(ctx context.Context, n preflight.Node) (bool, strin
 			return false, fmt.Sprintf("pid %d not running", n.PID)
 		}
 	}
-	// The probe dials, so it uses the reachable address — the same translated
-	// URL NodeSet and Health use. Probing the node's own recorded host is what
-	// made a live docker network read as "no composed node is alive", and a
-	// reusable chain get rebuilt.
-	m, _ := w.opener().AddrMap()
-	url := w.nodeHTTPURL(rec, m)
+	// The probe dials, so it asks for the reachable address like NodeSet and
+	// Health do. Probing the node's own recorded host is what made a live docker
+	// network read as "no composed node is alive", and a reusable chain get
+	// rebuilt.
+	url, err := w.nodeHTTPURL(rec)
+	if err != nil {
+		return false, err.Error()
+	}
 	if _, err := rpc.Dial(url).BlockNumber(ctx); err != nil {
 		return false, fmt.Sprintf("no RPC head at %s: %v", url, err)
 	}
