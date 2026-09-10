@@ -1325,6 +1325,45 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 일이다. 착수 전에 인계 문서 §7·§8 을 함께 읽을 것.
 
 
+## 1r. 모니터링 이슈 재검토와 수정 계획 (2026-09-10)
+
+모니터링 세션이 제기한 16건(MON-001~016,
+`docs/research/chainbench/analyses/11-monitoring-open-issues.md`)을 HEAD `2cc82692` 기준으로
+다시 판정했다. 판정 근거·추가 발견·검증 계획은 정본
+[`monitoring-issue-review-2026-09-10.md`](monitoring-issue-review-2026-09-10.md)에 있다.
+
+결과: **유효 14건, 해결·검증 완료 2건(MON-004·MON-006), 오탐 0건.** 기준 시점의 전체
+테스트는 통과 상태였으므로, 남은 14건은 모두 기존 테스트가 잡지 못하는 결함이다.
+문서에 없던 추가 발견 5건(N1~N5)도 정본에 적었다.
+
+작업은 작은 모듈에서 상위 조합, 표면 순서로 진행한다. 각 항목의 완료 기준은 정본의
+6절, 검증 방법은 7절을 따른다.
+
+- [ ] **MR-A. 프리미티브·합의 패밀리** (서로 독립, 병렬 가능)
+  - A1 MON-012 `internal/consensus/wbft` RLP 길이 범위 검사 + fuzz
+  - A2 MON-014 `internal/consensus/poa` 멤버 수 uint256 검증·상한
+  - A3 MON-003 `internal/dsl` null·비객체 env 거부
+  - A4 MON-011·N1 `internal/core/filestore` 로컬 Write가 mode 강제(심볼릭 링크 포함).
+    비밀 쓰기 여러 곳의 공통 원인이므로 호출부마다 고치지 않고 스토어에서 고친다.
+- [ ] **MR-B. 키와 비밀** (①② 결정 필요)
+  - B1 MON-001 인라인 개인 키가 `State.Nodes[].Key`·`State.Request`에 남지 않게
+  - B2 MON-002 명시 키와 기존 keyring 신원 불일치를 자원 변경 전에 거부(재사용 자체는 유지)
+- [ ] **MR-C. 구성 오케스트레이션** (`internal/chainsetup`)
+  - C1 MON-009 후보 생성과 실행 경로 반영 분리 — 거부 시 파일·해시·PID 보존
+  - C2 MON-010 발견 결과에 서버·전체 datadir 보존(구성 간 label 충돌 제거)
+  - C3 MON-008·N2 `recordRun`이 실제 GenesisPath 사용 + 노드 config 수집
+  - C4 MON-007 existing genesis와 변경 옵션 충돌 거부(capability 산출 포함)
+  - C5 MON-016 baseline 관측 시점·누락 처리 정정
+  - C1·C5는 "대상의 현재 파일을 읽어 해시" 기능을 공유하므로 공용 헬퍼 하나로 만든다.
+- [ ] **MR-D. 표면·환경**
+  - D1 MON-015·N3 `--json` stdout 계약과 순차 실행 종료 코드
+  - D2 MON-005·N5 `env/docker/gen-env.sh`와 README를 새 server-set 계약에 맞춤
+  - D3 MON-013 샘플 안내를 실제 소비 범위와 일치
+  - D4 N4 data-root 충돌 규칙을 `internal/resource` 한 곳으로
+
+승인이 필요한 결정 6건은 정본 8절에 있다. 승인 전에는 구현하지 않는다.
+
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결
