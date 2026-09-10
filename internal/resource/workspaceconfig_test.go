@@ -213,3 +213,49 @@ func TestParseWorkspaceConfig_Sample(t *testing.T) {
 		t.Fatalf("sample parsed unexpectedly: dataRoot=%q mode=%q", c.DataRoot, c.Inputs.Mode)
 	}
 }
+
+// TestWorkspaceConfig_SampleCommentsMatchWhatParses guards the sample against
+// the drift that made it wrong: it promised the reader everything below it was
+// supported, while two of the things it showed were not.
+//
+// The subtler half is that the two are unsupported in different ways.
+// binaryAliases parses and validates and is then read by nobody, so writing one
+// is merely ignored. The object reference forms are worse: a preset's genesis
+// and keyring are strings, so a mapping there refuses the whole file, and an
+// operator who uncomments the example loses the config rather than the feature.
+//
+// The sample now says so at both spots. This pins the statements: implement
+// either one and this test fails, which is the moment those comments have to
+// come out.
+func TestWorkspaceConfig_SampleCommentsMatchWhatParses(t *testing.T) {
+	// Still nothing but a test reads binaryAliases. If BinaryPath gains a real
+	// caller, drop this and the sample's "미구현" note with it.
+	c, err := ParseWorkspaceConfig([]byte(validConfig))
+	if err != nil {
+		t.Fatalf("binaryAliases should still parse: %v", err)
+	}
+	if got := c.BinaryAliases["gwemix"]; got != "linux-amd64/gwemix" {
+		t.Fatalf("binaryAliases = %q, want it parsed", got)
+	}
+
+	// The object form the sample sketches. It must still be refused, and
+	// refused in the way the sample and the guide tell the reader it is.
+	objectForm := strings.Replace(validConfig, `inputs:
+  mode: generated
+`, `inputs:
+  mode: prepared
+  preset: regression
+presets:
+  regression:
+    genesis:
+      server: server-01
+      ref: genesis.json
+`, 1)
+	_, err = ParseWorkspaceConfig([]byte(objectForm))
+	if err == nil {
+		t.Fatal("the object reference form now parses — update the sample and the guide, which both say it does not")
+	}
+	if !strings.Contains(err.Error(), "cannot unmarshal !!map into string") {
+		t.Fatalf("refusal changed shape, and the sample quotes the old one: %v", err)
+	}
+}
