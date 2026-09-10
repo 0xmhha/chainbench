@@ -1339,29 +1339,34 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 작업은 작은 모듈에서 상위 조합, 표면 순서로 진행한다. 각 항목의 완료 기준은 정본의
 6절, 검증 방법은 7절을 따른다.
 
-- [ ] **MR-A. 프리미티브·합의 패밀리** (서로 독립, 병렬 가능)
+- ☑ **MR-A. 프리미티브·합의 패밀리** (`c6b8b091`)
   - A1 MON-012 `internal/consensus/wbft` RLP 길이 범위 검사 + fuzz
   - A2 MON-014 `internal/consensus/poa` 멤버 수 uint256 검증·상한
   - A3 MON-003 `internal/dsl` null·비객체 env 거부
   - A4 MON-011·N1 `internal/core/filestore` 로컬 Write가 mode 강제(심볼릭 링크 포함).
     비밀 쓰기 여러 곳의 공통 원인이므로 호출부마다 고치지 않고 스토어에서 고친다.
-- [ ] **MR-B. 키와 비밀** (①② 결정 필요)
+- ☑ **MR-B. 키와 비밀** (`2246f14e`) — 결정 ①② 승인 반영
   - B1 MON-001 인라인 개인 키가 `State.Nodes[].Key`·`State.Request`에 남지 않게
   - B2 MON-002 명시 키와 기존 keyring 신원 불일치를 자원 변경 전에 거부(재사용 자체는 유지)
-- [ ] **MR-C. 구성 오케스트레이션** (`internal/chainsetup`)
+- ☑ **MR-C. 구성 오케스트레이션** (`internal/chainsetup`) — C1 `e6641505`, C2~C4 `72e7ca63`, C5 `d370597d`
   - C1 MON-009 후보 생성과 실행 경로 반영 분리 — 거부 시 파일·해시·PID 보존
   - C2 MON-010 발견 결과에 서버·전체 datadir 보존(구성 간 label 충돌 제거)
   - C3 MON-008·N2 `recordRun`이 실제 GenesisPath 사용 + 노드 config 수집
   - C4 MON-007 existing genesis와 변경 옵션 충돌 거부(capability 산출 포함)
   - C5 MON-016 baseline 관측 시점·누락 처리 정정
   - C1·C5는 "대상의 현재 파일을 읽어 해시" 기능을 공유하므로 공용 헬퍼 하나로 만든다.
-- [ ] **MR-D. 표면·환경**
-  - D1 MON-015·N3 `--json` stdout 계약과 순차 실행 종료 코드
-  - D2 MON-005·N5 `env/docker/gen-env.sh`와 README를 새 server-set 계약에 맞춤
-  - D3 MON-013 샘플 안내를 실제 소비 범위와 일치
-  - D4 N4 data-root 충돌 규칙을 `internal/resource` 한 곳으로
+- ☑ **MR-D. 표면·환경**
+  - ☑ D1 MON-015·N3 `--json` stdout 계약과 순차 실행 종료 코드 (`edb05eb8`)
+  - ☑ D2 MON-005·N5 `env/docker/gen-env.sh`와 README를 새 server-set 계약에 맞춤 (`d210ac93`).
+    생성기가 workspace-config 와 server-set-wemix 까지 찍고, 생성물을 실제 파서로 읽는
+    테스트를 붙였다. 로컬 `build/` 는 손으로 고쳐 놓은 상태였고 생성기만 옛 형식을
+    쓰고 있었다 — 새 체크아웃에서만 깨지는 모양이었다.
+  - ☑ D3 MON-013 샘플 안내를 실제 소비 범위와 일치 (`21d47abe`).
+    `binaryAliases` 는 파싱만 되고 읽는 곳이 없으며, 객체형 참조는 아예 로드에
+    실패한다. 두 경우를 갈라 적고 테스트로 고정했다.
+  - ☑ D4 N4 data-root 충돌 규칙을 `internal/resource` 한 곳으로 (`35735508`)
 
-승인이 필요한 결정 6건은 정본 8절에 있다. 승인 전에는 구현하지 않는다.
+6절 결정 6건은 승인 완료(정본 8절). 남은 것은 Docker 라이브 검증(정본 7절)과 PR 하나.
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)
