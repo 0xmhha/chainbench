@@ -1440,6 +1440,19 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   가 실패하며 그 주석을 걷으라고 알린다.
 - [ ] **여러 정의서 실행의 통합 report.** 지금은 실행마다 따로 남는다.
 
+### D2. 코드 건강도 검토에서 나온 것 (2026-09-10, 착수 미정)
+
+AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통과, 린터 0건. 중복과 문서
+두 갈래만 남았고, 중복은 **표면·상위 계층이 프리미티브를 각자 다시 만든** 한 가지
+경향이다. 근거와 위치는 정본
+[`architecture/code-health-review-2026-09-10.md`](architecture/code-health-review-2026-09-10.md).
+
+- [ ] `shellQuote` 4곳 통합 (보안에 닿는 프리미티브, 사본 최다)
+- [ ] `ArgString`/`ArgInt` 사본 제거 (`mcp` 가 `core/registry` 를 복제)
+- [ ] `deps(cmd)` 10곳을 `cmd/chainbench/surface` 로 (자리는 이미 있다)
+- [ ] `internal/testhelper` package doc (3,671줄인데 패키지 설명이 없다)
+- [ ] `netUpFrom`(191줄) 분해 — 다른 변경에 얹지 말고 따로
+
 ### E. 오래 남아 있는 잔여 (§1n 및 그 이전)
 
 - [ ] **원격 `chain rm`.** `filestore.Store` 에 삭제가 없다(확인·읽기·쓰기·체크섬뿐).
