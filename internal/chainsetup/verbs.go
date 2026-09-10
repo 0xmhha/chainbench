@@ -135,16 +135,11 @@ func NetEndpoints(_ context.Context, d Deps, in NetEndpointsIn) ([]string, error
 	if err != nil {
 		return nil, err
 	}
+	// The one translator, shared with NodeSet and Health: a node's reachable URL
+	// is computed in a single place so the three cannot disagree.
 	urls := make([]string, 0, len(st.Nodes))
 	for _, ns := range st.Nodes {
-		host, port := ns.Host, ns.HTTP
-		if host == "" {
-			host = ws.RPCHost()
-		}
-		if m != nil {
-			host, port = m(host, port)
-		}
-		urls = append(urls, fmt.Sprintf("http://%s:%d", host, port))
+		urls = append(urls, ws.nodeHTTPURL(ns, m))
 	}
 	return urls, nil
 }
