@@ -53,13 +53,27 @@ func (w *Workspace) VerifyValidators(ctx context.Context) (ValidatorCheck, error
 	if err != nil {
 		return ValidatorCheck{}, err
 	}
-	method := p.Manifest().Consensus.ValidatorsMethod
-	if method == "" {
-		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: chain %s declares no validators RPC method", p.Manifest().ID)
+	caller := rpc.Dial(w.nodeHTTPURL(w.state.Nodes[0], m))
+
+	// A family reads its validator set the way its chain exposes it: wbft through
+	// a getValidators RPC, poa through its governance contract. A family that
+	// declares only a manifest method falls back to it.
+	var (
+		actual []string
+		method string
+	)
+	if r, ok := p.Family().(registry.RuntimeValidatorReader); ok {
+		method = p.Family().ID() + " runtime validators"
+		actual, err = r.RuntimeValidators(ctx, caller)
+	} else {
+		method = p.Manifest().Consensus.ValidatorsMethod
+		if method == "" {
+			return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: chain %s exposes no way to read its validators", p.Manifest().ID)
+		}
+		actual, err = registry.Validators(ctx, caller, method)
 	}
-	actual, err := registry.Validators(ctx, rpc.Dial(w.nodeHTTPURL(w.state.Nodes[0], m)), method)
 	if err != nil {
-		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: %s: %w", method, err)
+		return ValidatorCheck{}, fmt.Errorf("chainsetup: verify validators: %w", err)
 	}
 
 	check := ValidatorCheck{Method: method, Expected: expected, Actual: actual}

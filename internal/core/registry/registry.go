@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -103,6 +104,19 @@ type Phase struct {
 // the check is skipped for that family.
 type GenesisValidatorReader interface {
 	GenesisValidators(genesisJSON []byte) ([]string, error)
+}
+
+// RuntimeValidatorReader is an optional ConsensusFamily capability: ask a
+// running chain, over RPC, which validators it currently recognizes. It exists
+// because the answer is not one shape for every family — wbft returns the set
+// from a single <ns>_getValidators method, while poa keeps it in a governance
+// contract the first producer deploys and must be read by eth_call. Both go
+// through the same RPC the harness already reaches a node by (no IPC, so a
+// remote or docker node is reached the same way a local one is). A family that
+// declares its method in the manifest and needs nothing family-specific does
+// not implement it, and the caller falls back to that method.
+type RuntimeValidatorReader interface {
+	RuntimeValidators(ctx context.Context, c Caller) ([]string, error)
 }
 
 // ChainPlugin is one chain's registration. Most of a chain is data (Manifest)
