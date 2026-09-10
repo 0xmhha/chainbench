@@ -723,7 +723,7 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
   방향: `inspector` 는 atomic 실사 프리미티브(L1, "판단 없음")로 두고, `health`(블록 전진 *판정*)는
   그 atomic 들을 **조합하는 inspector 위 레이어**로 제공한다(현재 health 는 obs/rpc 를 직접 쓴다 →
   inspector 프리미티브를 쓰도록 재배선). atomic ↔ 조합의 층 분리.
-- ☐ **hardfork 는 통폐합 대상 아님** — `hardfork`(바이너리 swap)와 `consensus/upgrade`(합의-패밀리
+- ☑ **hardfork 는 통폐합 대상 아님**(결정으로 닫힘) — `hardfork`(바이너리 swap)와 `consensus/upgrade`(합의-패밀리
   handoff)는 의도적으로 다른 모델이라 별개로 유지. R1 표의 `hardfork→genesis` 항목은 폐기.
 
 이전 기록 (2026-08-31 이전 후보):
@@ -1217,6 +1217,13 @@ tests/tc 코퍼스)을 병렬로 감사했다. 두 목적은 이렇다.
 happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스트다. 모두 정적 분석이며 라이브
 실행으로 확인한 것은 없다(특히 WA1 은 이름·grep 증거다).
 
+> **상태(2026-09-10):** 이 목록은 **PR #363 으로 반영을 마쳤다.** 아래 체크박스는 감사 당시
+> 상태 그대로이고 갱신되지 않았으니, 미완으로 읽지 않는다. 표본 확인: WA2(`internal/mcp/test_tools.go`·
+> `cmd/chainbench/testcmd/test.go`), WA4(`internal/mcp/node_tools.go`), WA8(`spec_v2.go:549,565` 의
+> expect 검증), WA16(주석에 적힌 대로 testhelper 비교자 경유), WA26(`SPECS.md` 의
+> `internal/testspec` 참조 0건). **남은 것은 §1p 에 따로 적혀 있다** — metric 수집(C),
+> 체인별 거버넌스 케이스(B 잔여), MCP 플러그인 재배포(D), 커버리지(WA25).
+
 ### A. 정확성·목적 차단 (먼저 반영)
 
 - [ ] **WA1** [치명] 라이브 MCP 플러그인이 이 소스로 빌드된 게 아니다. 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
@@ -1371,6 +1378,83 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   같이 고쳤다(`9d0109e3`). 상세는 정본 9절.
 
 6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
+
+
+## 1s. 남은 작업 한눈에 (2026-09-10)
+
+§1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
+배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다. 표시가
+낡아 미완으로 보이던 것들(§1o 의 WA 체크박스, `hardfork` 결정)은 이번에 정리했다.
+
+착수 순서를 정한 목록이 아니다. 성격이 다른 다섯 갈래이고, 갈래끼리는 서로 막지 않는다.
+
+### A. 지금 진행 중
+
+- **모니터링 트랙(§1r)** — 코드·문서·라이브 검증 모두 끝났다. PR #371 의 리뷰와 머지만
+  남았다.
+
+### B. fleet 커버리지와 관측 (§1p)
+
+라이브 함대가 있어야 진행되는 갈래다.
+
+- [ ] **C. metric 수집 인프라.** `metric` 어서션은 등록돼 있는데 수집 경로가 없다. 셋이
+  필요하다 — 노드 기동 때 metrics 활성화를 launch 로 배선, 수집 경로(collector/scrape),
+  `--docker` 에서 metrics 포트를 localmap 으로 번역. 지금은 컨테이너 내부 주소로 직접
+  dial 해 timeout 난다. 셋이 되면 제거했던 `03-metric-head-block` 스펙을 되살린다.
+- [ ] **B 잔여 — 체인별 거버넌스 케이스.** stablenet 의 GovValidator 흐름을 go-wbft 로
+  그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
+  멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.
+  실제 ABI 를 쓰는 `registerContract` 케이스와 negative-tx 의 reject 변형도 여기 묶인다.
+- [ ] **WA25. go-wemix·go-wbft 커버리지가 얕다.** 각각 5건·6건뿐이고, pn/proxied 라우팅을
+  검증하는 스펙이 없다.
+- [ ] **D. 라이브 MCP 플러그인 재배포.** 배포본이 `net_*` 이름의 낡은 빌드다. 저장소는
+  `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. **코드 작업이 아니라 배포 작업이다.**
+
+### C. 키 취급과 증적 (§1q)
+
+둘 다 지금 동작을 막지 않는다. 하나는 증적 보존, 하나는 키가 로컬에 내려오는 범위를
+좁히는 일이다.
+
+- [ ] **L1. 노드별 시도(attempt) 로그 축.** 노드 로그가 노드당 한 파일이라 재기동하면
+  이전 시도의 로그가 덮인다. reuse-if-matching 이 한 노드를 여러 번 재작업할 때 특히
+  문제다. `core/node/layout.go` 에 attempt 축이 없다.
+- [ ] **L2. 대상에서 키 검증(공개 신원만 반환).** 지금 `srv://` keyring 은 묶음 전체를
+  로컬로 내려받는다. 서명에 로컬 경로가 필요해 정당한 경로지만, 대조만 필요한 경우까지
+  내려받을 이유는 없다. 다운로드가 필요한 경우와 검증만 필요한 경우를 가르는 것이 요점이다.
+
+### D. 모니터링 트랙에서 파생된 후속 (§1r 8절)
+
+이번 PR 의 범위 밖으로 명시하고 미룬 것들이다.
+
+- [ ] **후보·반영 완전 분리.** 부분 재사용에서 승인된 노드만 정지·반영·재기동한다.
+  지금은 판정을 쓰기 앞으로 옮기는 데까지 했다(MON-009).
+- [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 파싱만 되고 읽는 곳이 없고,
+  후자(`{server,ref}`·`serverIndex`·`localPath`)는 아직 파싱조차 안 된다. 샘플과 안내
+  문서가 "미구현" 이라고 적어 두었고, 구현하면 `TestWorkspaceConfig_SampleCommentsMatchWhatParses`
+  가 실패하며 그 주석을 걷으라고 알린다.
+- [ ] **여러 정의서 실행의 통합 report.** 지금은 실행마다 따로 남는다.
+
+### E. 오래 남아 있는 잔여 (§1n 및 그 이전)
+
+- [ ] **원격 `chain rm`.** `filestore.Store` 에 삭제가 없다(확인·읽기·쓰기·체크섬뿐).
+  파괴적 원격 작업이라 검증할 함대가 있을 때 함께 한다.
+- ◐ **G2. 핸드오프 원격.** `remote` 명령군과 `deploy` 패키지 폐기까지는 끝났고, 핸드오프
+  경로를 패밀리 선언으로 옮기는 일이 남았다.
+- [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
+  **체인팀 몫이다.**
+- [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에
+  뒀다. 로스터 계산의 올바른 소유 모듈을 정해야 한다. 소비자는 `cmd` 하나뿐이라 급하지 않다.
+- [ ] **health 를 inspector 조합 레이어로 재배선.** `inspector` 는 판단 없는 atomic
+  프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
+  `health` 는 obs/rpc 를 직접 쓴다.
+- ◐ **Phase 2~6 의 부분 완료 항목** — T2.1(driver 위 Transport 타입 형식화), T3.3, T5.1,
+  T6.6. 각 절에 무엇이 끝났고 무엇이 남았는지 적혀 있다.
+
+### 이번에 바로잡은 표시
+
+- §1o 의 WA1~WA26 체크박스는 PR #363 으로 반영을 마쳤는데 미완으로 남아 있었다. 절
+  머리에 상태와 표본 확인 근거를 적었다.
+- `hardfork 는 통폐합 대상 아님` 은 할 일이 아니라 내린 결정이라 ☑ 로 바꿨다.
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)
