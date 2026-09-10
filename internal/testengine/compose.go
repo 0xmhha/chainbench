@@ -583,7 +583,7 @@ func handoffUp(ctx context.Context, in upgrade.HandoffInputs) (node.NodeSet, []s
 		return fail("base-genesis", err)
 	}
 	record("base-genesis", base)
-	if err := h.ComposePlan(base); err != nil {
+	if err := h.ComposePlan(ctx, base); err != nil {
 		return fail("plan", err)
 	}
 	record("plan", fmt.Sprintf("%d node(s); fork section %q merged", len(h.Plan.Nodes), h.Plan.AtFork))

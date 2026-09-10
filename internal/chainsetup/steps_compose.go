@@ -17,7 +17,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/genesis"
 	"github.com/0xmhha/chainbench/internal/core/keyring"
 	"github.com/0xmhha/chainbench/internal/core/process"
-	"github.com/0xmhha/chainbench/internal/core/remote"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
 	"github.com/0xmhha/chainbench/internal/core/blueprint"
@@ -1253,21 +1252,11 @@ func firstProducer(nodes []node.Record) (node.Record, bool) {
 // arbitrary-command capability) into the runner a binary-written genesis and the
 // poa bootstrap take, so both run on the same transport as init and start. The
 // binary and its args are shell-quoted into one command line.
+// commanderRunner is process.ShellRunner in the genesis package's spelling. The
+// adapter itself lives in process, beside Commander, because app needs the same
+// one for the handoff's bootstrap on a target.
 func commanderRunner(c process.Commander) genesis.CommandRunner {
-	return func(ctx context.Context, name string, args ...string) ([]byte, error) {
-		out, err := c.Run(ctx, shellCommand(name, args...))
-		return []byte(out), err
-	}
-}
-
-// shellCommand quotes a binary and its args into one command line for a shell.
-func shellCommand(name string, args ...string) string {
-	parts := make([]string, 0, len(args)+1)
-	parts = append(parts, remote.ShellQuote(name))
-	for _, a := range args {
-		parts = append(parts, remote.ShellQuote(a))
-	}
-	return strings.Join(parts, " ")
+	return process.ShellRunner(c)
 }
 
 // peerPlan is what every per-node rendering needs beyond the record: the key

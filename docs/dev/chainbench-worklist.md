@@ -1509,8 +1509,26 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   - 남은 흠(경미): 삭제 후 `runtime/<id>/`·`configs/` **빈 디렉터리가 남는다.** 기록된
     경로만 지우기 때문이고(그게 안전한 쪽이다 — 구성 id 가 비면 `runtime/` 전체가 대상이
     될 수 있다), 아무것도 막지 않는다.
-- ◐ **G2. 핸드오프 원격.** `remote` 명령군과 `deploy` 패키지 폐기까지는 끝났고, 핸드오프
-  경로를 패밀리 선언으로 옮기는 일이 남았다.
+- ◐ **G2. 핸드오프 원격** — **크게 전진, 아직 닫히지 않았다 (2026-09-11).**
+  `upgrade.HandoffInputs` 는 원래부터 `Host`·`Files`·`Driver`·`Exec` 경계를 갖고 있었고,
+  **아무도 그것을 해석하지 않아** CLI 에 target 플래그가 없었다. 그 해석을 배선하고
+  (`upgrade run --server/--server-set/--workspace-config/--docker`), 라이브 실행이 한 번에
+  하나씩 드러낸 **로컬 가정 6건**을 고쳤다. 각각은 대상 인식 경계가 이미 있는데 로컬
+  호출이 남아 있던 자리였다:
+  1. 바이너리 존재 확인을 **운영자 PATH** 에서 했다 → 대상이 지정되면 대상의 store 로 probe.
+  2. genesis **템플릿**(운영자 파일) 경로를 대상 명령에 그대로 넘겼다 → 대상으로 ship.
+  3. 생성된 base genesis 를 **로컬로 읽었다** → store 로 읽는다(`ComposePlan` 이 ctx 를 받는다).
+  4. `Launch` 이 `process.Initializer` **능력을 묻지 않아** 로컬 init 을 썼다 → 드라이버에 묻는다.
+  5. IPC 대기가 로컬 `WaitForIPC` 였다 → `poa.WaitForIPCOn`(store 인식, 원래 비공개로 존재).
+  6. 프로듀서 keystore 를 **디렉터리 리스팅**으로 다시 찾았다(store 에 리스팅이 없다) →
+     ship 할 때 경로를 기록해 쓴다.
+  - **남은 것은 구조적 문제 하나다: 핸드오프가 포트를 profile 에서 가져오고 resource 모듈의
+    포트 대역을 쓰지 않는다.** 그래서 `profiles/wemix-upgrade.yaml` 의 `base_rpc: 40010` 으로
+    dial 하고, 함대가 퍼블리시하지 않는 포트라 mesh 단계에서 멈춘다
+    (`endpoint http://127.0.0.1:40010 not ready`). 선택지는 둘 — (a) 핸드오프가 server set 의
+    대역에서 포트를 받는다(컴포지션 경로와 같아진다), (b) profile 포트를 함대가 퍼블리시한다.
+    (a) 가 옳아 보이지만 profile 의 의미를 바꾸는 결정이라 별건으로 둔다.
+  - 로컬 경로는 회귀 없음: `TestUpgradeRunE2E`(e2e 태그) 통과.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
 - [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에

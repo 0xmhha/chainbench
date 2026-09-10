@@ -30,9 +30,19 @@ func handoffInputs(t *testing.T) upgrade.HandoffInputs {
 		}
 		return nil, nil
 	}
+	// The template is a real file now: the handoff ships it to wherever the
+	// producer's binary runs, so it has to be readable here rather than merely
+	// named. A path the fake runner ignored used to be enough.
+	tmpl := filepath.Join(dataDir, "template.json")
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(tmpl, []byte(`{"config":{}}`), 0o644); err != nil {
+		panic(err)
+	}
 	return upgrade.HandoffInputs{
 		ProfilePath: goldenProfilePath(), PresetDir: presetPath(),
-		FromBinary: "gwemix", ToBinary: "gwbft", Template: "template.json",
+		FromBinary: "gwemix", ToBinary: "gwbft", Template: tmpl,
 		DataDir: dataDir, Exec: exec,
 	}
 }
@@ -75,7 +85,7 @@ func TestHandoff_ComposesFromProfileAndPreset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BaseGenesis: %v", err)
 	}
-	if err := h.ComposePlan(basePath); err != nil {
+	if err := h.ComposePlan(context.Background(), basePath); err != nil {
 		t.Fatalf("ComposePlan: %v", err)
 	}
 	want := h.Profile.Roles.Producers + h.Profile.Roles.Validators
@@ -111,7 +121,7 @@ func TestHandoff_ApplyOverlayReachesTheGenesis(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := h.ComposePlan(basePath); err != nil {
+	if err := h.ComposePlan(context.Background(), basePath); err != nil {
 		t.Fatal(err)
 	}
 	detail, err := h.ApplyOverlay()
