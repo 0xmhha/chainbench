@@ -3,6 +3,7 @@ package lifecyclecmd
 import (
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/dashboard"
+	"os"
 	"text/tabwriter"
 	"time"
 
@@ -20,6 +21,8 @@ func NewVerify() *cobra.Command {
 		rpcURLs      []string
 		delay        time.Duration
 		readyTimeout time.Duration
+		validators   bool
+		baseline     bool
 	)
 	cmd := &cobra.Command{
 		Use:   "verify",
@@ -47,7 +50,46 @@ func NewVerify() *cobra.Command {
 				fmt.Fprintf(w, "%d\t%s\t%d\t%d\t%d\t%v\t%v\n",
 					n.Index, n.RPCURL, n.ChainID, n.BlockNumber, n.PeerCount, n.Syncing, n.OK)
 			}
-			return w.Flush()
+			if err := w.Flush(); err != nil {
+				return err
+			}
+			if validators {
+				if dataDir == "" {
+					return fmt.Errorf("--validators needs --workspace-dir (it reads the composed keys to compare against)")
+				}
+				vres, verr := app.VerifyValidators(cmd.Context(), deps(cmd), app.NetVerifyValidatorsIn{DataDir: dataDir})
+				if verr != nil {
+					return verr
+				}
+				c := vres.Check
+				fmt.Fprintf(out, "\nvalidators (%s) match: %v\n", c.Method, c.Match)
+				if !c.Match {
+					fmt.Fprintf(out, "  %s\n", c.Mismatch)
+					return fmt.Errorf("validator set does not match the composed keys")
+				}
+			}
+			if baseline {
+				if dataDir == "" {
+					return fmt.Errorf("--baseline needs --workspace-dir (the composition to check against the approved record)")
+				}
+				bres, berr := app.BaselineCheck(cmd.Context(), deps(cmd), app.NetBaselineIn{DataDir: dataDir})
+				if berr != nil {
+					return berr
+				}
+				c := bres.Check
+				if !c.Approved {
+					fmt.Fprintf(out, "\nbaseline: none approved yet (%s) — approve one with `chainbench baseline approve`\n", c.Path)
+					return nil
+				}
+				fmt.Fprintf(out, "\nbaseline (%s) match: %v\n", c.Path, c.Match)
+				if !c.Match {
+					for _, d := range c.Diffs {
+						fmt.Fprintf(out, "  %s\n", d)
+					}
+					return fmt.Errorf("composition drifted from the approved baseline")
+				}
+			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (optional metadata, used with --rpc)")
@@ -55,13 +97,18 @@ func NewVerify() *cobra.Command {
 	cmd.Flags().StringArrayVar(&rpcURLs, "rpc", nil, "node RPC URL (repeatable)")
 	cmd.Flags().DurationVar(&delay, "progress-delay", 2*time.Second, "wait between block-height samples")
 	cmd.Flags().DurationVar(&readyTimeout, "ready-timeout", 45*time.Second, "how long to wait for the network to start producing blocks (0 = single check, no wait)")
+	cmd.Flags().BoolVar(&validators, "validators", false, "also check the running chain recognizes exactly the composed keys as its validators (needs --workspace-dir)")
+	cmd.Flags().BoolVar(&baseline, "baseline", false, "also check the composition still matches the environment's approved baseline (needs --workspace-dir); never updates it")
 	return surface.ReadOnly(cmd)
 }
 
 // deps is what every lifecycle verb hands the app layer.
 func deps(cmd *cobra.Command) app.Deps {
 	errOut := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
+	return app.Deps{
+		Env: os.Getenv,
+		Logf: func(format string, args ...any) {
+			fmt.Fprintf(errOut, format+"\n", args...)
+		},
+	}
 }

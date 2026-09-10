@@ -77,8 +77,10 @@ func Validators(ctx context.Context, _ Deps, chain, manifest, template, rpcURL s
 	if err != nil {
 		return ValidatorsOut{}, err
 	}
-	method := p.Manifest().Consensus.ValidatorsMethod
-	vals, err := registry.Validators(ctx, rpc.Dial(rpcURL), method)
+	// The family decides how its validators are read (a method call, or poa's
+	// governance query); RunningValidators makes that choice in one place, so a
+	// poa chain — which has no getValidators method — answers here too.
+	method, vals, err := registry.RunningValidators(ctx, p, rpc.Dial(rpcURL))
 	if err != nil {
 		return ValidatorsOut{}, err
 	}

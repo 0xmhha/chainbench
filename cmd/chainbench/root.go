@@ -40,6 +40,7 @@ func newRootCmd() *cobra.Command {
 		lifecyclecmd.NewStatus(),
 		lifecyclecmd.NewClean(),
 		lifecyclecmd.NewVerify(),
+		lifecyclecmd.NewBaseline(),
 		suitecmd.NewRun(),
 		chaincmd.New(),
 		keyringcmd.NewValidator(),

@@ -20,6 +20,11 @@ func (Family) ID() string               { return "wbft" }
 func (Family) RPCNamespace() string     { return "istanbul" }
 func (Family) ValidatorsMethod() string { return "istanbul_getValidators" }
 
+// wbft needs no RuntimeValidatorReader: its validators are read through the
+// manifest's istanbul_getValidators method, so RunningValidators falls back to
+// that. Only poa, whose validators live in a governance contract with no RPC
+// method, implements a reader.
+
 // BuildGenesis substitutes the wbft-family placeholders in template with the
 // family-relevant fields of params (validators/BLS/extra-data/members/alloc).
 func (Family) BuildGenesis(template []byte, p registry.GenesisParams) ([]byte, error) {

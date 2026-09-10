@@ -22,7 +22,7 @@ import (
 //
 // Measured 2026-09-08, after S1 and S4 registered the compose and report stages.
 // Lower it as more register; never raise it.
-const unregistered = 63
+const unregistered = 62
 
 // TestRegistry_CoversMoreOfAppEachTime counts the use cases in internal/app and
 // holds the unregistered remainder to a ceiling that only comes down.

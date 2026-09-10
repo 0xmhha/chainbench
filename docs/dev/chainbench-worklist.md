@@ -1294,6 +1294,37 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
 (filestore Remove 부재)은 WA 와 무관하게 그대로 남아 있다.
 
 
+## 1q. workspace-config 트랙 이후 — 남은 두 항목 (2026-09-10)
+
+workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정의서 순차 실행·
+승인 기준·다이얼 주소 레이어 정리, PR #370)은 반영됐다. 인계 문서
+`docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 에서 나온
+항목 중 **둘은 아직 코드가 없고, 지금까지 이 작업 리스트에 적혀 있지 않았다.** 연구
+문서에만 남아 있으면 사라지므로 여기 옮긴다.
+
+- [ ] **L1. 노드별 시도(attempt) 로그 경로**. 지금 노드 로그는 노드당 한 파일
+  (`logs/<compId>/<label>.log`)이라 **재기동하면 이전 실행의 로그가 덮인다**. 실패한
+  시도의 증적이 다음 시도로 지워지는 것이 문제다 — 특히 reuse-if-matching 이 한 노드를
+  여러 번 재작업할 때. 인계 문서와 `workspace-config.sample.yaml` 의 주석은
+  `logs/<compId>/<nodeId>/<attemptId>.log` 를 예고하지만 `core/node/layout.go` 에
+  attemptId 개념이 없다. **필요한 것**: layout 에 attempt 축 추가, 기동마다 증가시키는
+  소유자 결정(런 원장이 유력), 실패 수집(`collectFailureData`)이 해당 시도의 로그를
+  고르도록 배선. **게이트**: 한 노드를 두 번 재기동한 뒤 두 시도의 로그가 모두 남아 있고,
+  실패한 테스트의 관측 폴더가 그 시도의 것을 담는다.
+
+- [ ] **L2. 준비된 키의 대상 검증(공개 신원만 반환)**. 인계 문서 §7 은 "준비된 키의 검증은
+  가능한 한 대상에서 수행하고 공개 신원만 반환한다"고 정했다. 현재 srv:// keyring 은
+  **키 묶음 전체를 로컬로 내려받아** 쓴다(`materializeKeyring`, PR #370). 이는 사용자가
+  명시적으로 승인한 경로이고 런타임 서명에 로컬 경로가 필요해서 정당하지만, §7 이 말한
+  "대상에서 검증" 은 아직 없다. **필요한 것**: 대상 서버에서 키를 열어 주소·공개키만
+  돌려주는 경로(다운로드 없이), 그리고 그 결과로 genesis validator 대조. 다운로드가 필요한
+  경우(서명)와 검증만 필요한 경우(대조)를 구분하는 것이 요점이다. **게이트**: 원격 키 묶음을
+  로컬에 내려받지 않고 공개 신원 목록을 얻어 genesis 와 대조한다.
+
+두 항목 모두 지금 동작을 막지 않는다 — L1 은 증적 보존, L2 는 키 취급 범위를 좁히는
+일이다. 착수 전에 인계 문서 §7·§8 을 함께 읽을 것.
+
+
 ## 2. 전체 작업 리스트 (Phase · Task)
 
 ### Phase 0 — 레이아웃 정리 + 인터페이스 동결

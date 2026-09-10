@@ -96,6 +96,12 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("workspace-config") {
 				in.WorkspaceConfigPath = workspaceConfig
 			}
+			if len(args) > 1 {
+				// Several definitions are the same run repeated, in the order
+				// given; the network is kept up between them so each one's own
+				// preflight decides whether to reuse it.
+				return runComposedSequence(cmd, in, jsonOut)
+			}
 			return runComposed(cmd, in, jsonOut)
 		},
 	}
@@ -211,6 +217,47 @@ func runComposed(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
 		return err
 	}
 	return printSession(out, res.SessionRoot, jsonOut)
+}
+
+// runComposedSequence runs several test definitions in order, each through the
+// same path a single one takes, and prints each definition's setup, preflight
+// and session under its own heading. It ends with one line per definition so a
+// long run's outcome is readable without scrolling back.
+func runComposedSequence(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+	out := cmd.OutOrStdout()
+	res, err := app.RunSuites(cmd.Context(), deps(cmd), in)
+	if err != nil {
+		return err
+	}
+	for i, r := range res.Runs {
+		fmt.Fprintf(out, "\n=== [%d/%d] %s ===\n", i+1, len(res.Runs), r.Spec)
+		for _, step := range r.Out.SetupSteps {
+			fmt.Fprintln(out, step)
+		}
+		if r.Out.Preflight != "" {
+			fmt.Fprintf(out, "preflight: %s\n", r.Out.Preflight)
+		}
+		if r.Err != "" {
+			fmt.Fprintf(out, "error: %s\n", r.Err)
+			continue
+		}
+		// A failed definition is reported in the tally below, so its own
+		// non-nil verdict must not stop the remaining ones from printing.
+		_ = printSession(out, r.Out.SessionRoot, jsonOut)
+	}
+	fmt.Fprintf(out, "\n=== %d definition(s) ===\n", len(res.Runs))
+	for i, r := range res.Runs {
+		s := r.Out.Summary.Summary
+		status := fmt.Sprintf("pass=%d fail=%d blocked=%d skip=%d", s.Pass, s.Fail, s.Blocked, s.Skip)
+		if r.Err != "" {
+			status = "error: " + r.Err
+		}
+		fmt.Fprintf(out, "%d. %s — %s\n", i+1, r.Spec, status)
+	}
+	if res.Failed() {
+		return fmt.Errorf("run: one or more definitions failed")
+	}
+	return nil
 }
 
 // printSession reads the saved session and prints a table plus a summary,

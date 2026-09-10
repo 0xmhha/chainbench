@@ -527,6 +527,10 @@ func (w *Workspace) RPCHost() string {
 // did not launch.
 func (w *Workspace) NodeSet() node.NodeSet {
 	host := w.RPCHost()
+	// RPCURL is the address the harness dials, so it is the reachable one Health
+	// and NetEndpoints use — a docker node's URL is the mapped one, not the
+	// container-internal address. Host keeps the node's own address, which is
+	// what a display or record wants.
 	ns := node.NodeSet{
 		Chain:        w.state.Chain,
 		Network:      w.state.Target.Describe(),
@@ -545,7 +549,7 @@ func (w *Workspace) NodeSet() node.NodeSet {
 			Index:  n.Index,
 			Role:   node.Role(n.Role),
 			Host:   nodeHost,
-			RPCURL: fmt.Sprintf("http://%s:%d", nodeHost, n.HTTP),
+			RPCURL: rpcURLOf(w, n),
 			// The record's embedded Endpoints, whole: copying fields one by one
 			// is how the etcd port went missing between the plan and the
 			// running network before.
