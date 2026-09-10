@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-proxied-routing",
+  "description": "WA25: verify the proxied peer graph a production network runs — bp <-> bp direct, bp <-> pn and pn <-> en through the tier, and an endpoint that never learns a producer. Declaring a pn selects this graph; the peer counts are its signature, and under a full mesh the endpoint would see 3 peers instead of 1.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-proxied",
+    "chain": "wbft",
+    "binaries": {
+      "default": "gwbft"
+    },
+    "topology": {
+      "bp": 2,
+      "pn": 1,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "generate"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "180s"
+    },
+    {
+      "expect": "peerCount",
+      "on": "en1",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "peerCount",
+      "on": "pn1",
+      "compare": "Equal",
+      "is": "3"
+    },
+    {
+      "expect": "peerCount",
+      "on": "bp1",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "peerCount",
+      "on": "bp2",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": ["bp1", "bp2", "pn1", "en1"],
+      "timeout": "90s"
+    }
+  ]
+}

@@ -1259,7 +1259,7 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 - [ ] **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
 - [ ] **WA24** [죽은 능력] 스펙이 안 쓰는 등록물: 액션 `faucet`·`registerContract`, 어서션 `metric`·`createAddress`·`contractChecksum`, `hooks.post/onFail`, `defaultOn`, `placement`, `boot` role. 방향: 스펙으로 검증하거나 등록을 뺀다.
-- [ ] **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. pn/proxied 라우팅을 검증하는 스펙이 없다. 방향: 두 체인에 tx·fault·거버넌스 케이스와 proxied 라우팅 검증 케이스를 더한다.
+- ◐ **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 함대에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
 - [ ] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.)
 
 
@@ -1478,11 +1478,13 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 
 **이 작업이 새로 찾은 것**
 
-- [ ] **`core/keyring/derive` 에 테스트가 하나도 없다.** BLS 파생은 blst 의
-      `blst_keygen` 을 따라야 하고 어긋나면 *형태는 맞지만 wbft 노드가 거부하는* 키가
-      나온다 — 합의 문제처럼 보이는 키 문제다. 지금은 `core/keyring` 프리셋 테스트를
-      통해 간접적으로만 지나간다. 커밋된 `keys/preset` 이 nodekey 와 그것이 만든 BLS
-      공개키를 나란히 갖고 있어 **그대로 정답 벡터로 쓸 수 있다.**
+- [x] ~~**`core/keyring/derive` 에 테스트가 하나도 없다.**~~ **해소 (2026-09-11).**
+      `keys/preset` 을 정답 벡터로 삼아 5노드의 주소·devp2p 공개키·BLS 공개키·PoP 를 전부
+      재파생해 바이트 단위로 대조한다. **테스트가 실패할 수 있음을 뮤테이션으로 확인**했다 —
+      version-3 salt(주석이 지목한 그 미묘한 지점)로 바꾸면 preset 대조가 깨진다.
+      `Derive` 의 doc 이 이미 "픽스처와 바이트 단위로 대조된다"고 적어 두었는데 그 대조가
+      실제로는 없었다. 원래 진단: BLS 파생이 blst 의 `blst_keygen` 과 어긋나면 *형태는
+      맞지만 wbft 노드가 거부하는* 키가 나온다 — 합의 문제처럼 보이는 키 문제다.
 
 ### E. 오래 남아 있는 잔여 (§1n 및 그 이전)
 
