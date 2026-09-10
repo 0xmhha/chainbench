@@ -15,10 +15,13 @@
 
 점검용 CLI: `chainbench chain`. 케이스별 절차를 **단계 단위로 실행·중단·검증**한다 — [§4](#4-cli-로-직접-점검) 참조.
 
-> **2026-08-28 (P7):** 네 케이스는 이제 DSL 선언으로도 세운다 — `tests/cases/env/` 의
-> env 4개와 `chainbench run --workspace-dir DIR tests/cases/<케이스>/*.json`. 실행기는
-> 선언의 모양으로 조립기를 고르고 체인 이름으로 분기하지 않는다. `chain up --case` 러너는
-> P6.4 에서 은퇴한다. 자세한 것은 `tests/cases/README.md`.
+> **2026-08-28 (P7):** 네 케이스는 이제 DSL 선언으로도 세운다. 실행기는 선언의 모양으로
+> 조립기를 고르고 체인 이름으로 분기하지 않는다. `chain up --case` 러너는 P6.4 에서
+> 은퇴했다.
+>
+> **2026-09-10 갱신:** 그때 쓰던 `tests/cases/` 는 `3c42fb76` 에서 `tests/tc/` 로
+> 통합됐고, 별도 파일이던 env 는 각 정의서 안에 인라인으로 들어갔다. 아래 경로는 모두
+> 새 트리 기준이다. 자세한 것은 `tests/tc/CHAIN-BRINGUP.md`.
 
 ---
 
@@ -219,25 +222,30 @@ CHAIN=/Users/0xtopaz/work/github/0xmhha/chain
 ## 4. CLI 로 직접 점검
 
 > **2026-08-28 (P6.4):** `chainbench chain cases|steps|up|status|down` 은 은퇴했다. 네 케이스는
-> `tests/cases/` 의 선언으로 세우고, 단계 보고는 `run --workspace-dir` 의 출력(`RunSuiteOut.SetupSteps`)이
+> DSL 선언으로 세우고, 단계 보고는 `run --workspace-dir` 의 출력(`RunSuiteOut.SetupSteps`)이
 > 대신한다. 아래는 그 방법이다.
+>
+> **2026-09-10 갱신:** 경로는 `tests/tc/` 기준으로 고쳤고, 없어진 `net` 명령을 지금
+> 쓰는 `status`·`stop` 으로 바꿨다.
 
 ```sh
-chainbench validate tests/cases/*/*.json                                   # 선언 4 + 케이스 4 오프라인 검증
-chainbench run --workspace-dir /tmp/x --binary <gstable> tests/cases/stablenet/chain-up.json
-chainbench run --workspace-dir /tmp/x --keep-up tests/cases/wemix/chain-up.json   # 네트워크를 남긴다
-chainbench net status --workspace-dir /tmp/x                               # 남긴 네트워크 상태
-chainbench net stop   --workspace-dir /tmp/x                               # 종료
+chainbench validate tests/tc/*/*.json                                      # 오프라인 검증
+chainbench run --workspace-dir /tmp/x --binary <gstable> \
+  tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json
+chainbench run --workspace-dir /tmp/x --keep-up \
+  tests/tc/go-wemix/chain-up/01-wemix-chain-up.json                        # 네트워크를 남긴다
+chainbench status --workspace-dir /tmp/x                                   # 남긴 네트워크 상태
+chainbench stop   --workspace-dir /tmp/x                                   # 종료
 ```
 
-**케이스별 진입점**:
+**케이스별 진입점**. env 는 더 이상 별도 파일이 아니라 각 정의서의 `env` 블록이다:
 
-| 케이스 | 선언 | 비고 |
+| 케이스 | 정의서 | 비고 |
 |---|---|---|
-| stablenet | `tests/cases/env/stablenet.env.json` | 라이브 통과(gstable) |
-| wbft | `tests/cases/env/wbft.env.json` | `GWBFT_BIN=<go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
-| wemix | `tests/cases/env/wemix.env.json` | 패밀리가 선언한 2-페이즈 부트스트랩이 `net up` 안에서 돈다 |
-| wemix-wbft | `tests/cases/env/wemix-wbft.env.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
+| stablenet | `tests/tc/go-stablenet/regression/ethereum/01-stablenet-chain-up.json` | 라이브 통과(gstable) |
+| wbft | `tests/tc/go-wbft/chain-up/01-wbft-chain-up.json` | `GWBFT_BIN=<go-wbft/build/bin/gwemix>` (이름이 `gwemix` 라 경로가 필요) |
+| wemix | `tests/tc/go-wemix/chain-up/01-wemix-chain-up.json` | 패밀리가 선언한 2-페이즈 부트스트랩이 `chain up` 안에서 돈다 |
+| wemix-wbft | `tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json` | `upgrade` 블록 → `consensus/upgrade.Handoff`; `GOWEMIX_TEMPLATE` 필요 |
 
 실행은 **단계마다 이름과 결과를 한 줄씩** 찍고, 실패하면 거기서 멈춘다. 어느 단계가 깨졌는지가
 곧 답이 되도록 만든 것은 그대로다.

@@ -1,7 +1,7 @@
 # Legacy shell test-suite → DSL migration
 
 > Source: `~/Work/github/packages/chainbench/tests` (~420 shell test scripts).
-> Target: this project's v2 DSL cases (`tests/cases/`) run by `chainbench run`.
+> Target: this project's v2 DSL cases (`tests/tc/`) run by `chainbench run`.
 > This doc is the map both sides were parsed into and the plan for porting the rest.
 > All local categories (basic, fault, stress, anzeon) are ported and live-verified
 > (§5–§5d); the remote/stablenet/wemix4 remainder is covered by specs + Go e2e, and
@@ -30,7 +30,7 @@ Both map onto this project's compose model: `env` declares a private network (ch
 
 Most of the suite is already covered — do NOT re-port these; port the gap.
 - `tests/specs/` (122 v1 specs): accounts, api, consensus, gas-policy, hardfork, network, system-contracts.
-- `tests/cases/` (v2): stablenet/wbft/wemix chain-up (+15-node), handoff.
+- `tests/tc/` (v2): stablenet/wbft/wemix chain-up (+15-node), handoff.
 - Go e2e (`//go:build e2e`): the consensus/fault/upgrade tiers (`tests/e2e/`, `cmd/chainbench/*_e2e_test.go`).
 - Trackers: `wemix4-port-tracker.md` (wemix4 ~62 ported / ~8 deferred), `stablenet-post-v1.0.0-change-test-catalog.md`.
 
@@ -72,7 +72,7 @@ Legacy uses numeric-local (`"1"` via `pids.json`) or alias-remote (`@stablenet-b
 
 ## 5. First ported slice — `fault` (live-verified)
 
-`tests/cases/fault/` + env `tests/cases/env/fault-stablenet.env.json` (stablenet, 4 bp, preset keys). Each ran green against a real `gstable` 4-node network:
+`tests/tc/fault/` (env inline, stablenet, 4 bp, preset keys). Each ran green against a real `gstable` 4-node network:
 
 | legacy | DSL case | procedure |
 |---|---|---|
@@ -89,7 +89,7 @@ four fault cases now run green.
 
 ## 5b. Second ported slice — `basic` (live-verified)
 
-`tests/cases/basic/` + env `basic-stablenet` (stablenet, 4 bp + 1 en). All seven
+`tests/tc/basic/` (env inline, stablenet, 4 bp + 1 en). All seven
 ran green against a real `gstable` 5-node network in one suite:
 
 | legacy | DSL case | check |
@@ -104,7 +104,7 @@ ran green against a real `gstable` 5-node network in one suite:
 
 ## 5c. Third ported slice — `anzeon` dynamic base fee (live-verified)
 
-`tests/cases/anzeon/` + env `anzeon-stablenet` (stablenet, 4 bp, preset keys).
+`tests/tc/go-stablenet/regression/anzeon/` (env inline, stablenet, 4 bp, preset keys).
 These were the one genuine regression gap (§6 item 2): the base fee moves ±2% a
 block by block gas usage, which no static spec can drive. The new `load` action
 (§7) deploys a gas-burner sized to a percent of the block gas limit, one burn per
@@ -131,7 +131,7 @@ porting.
 
 ## 5d. Fourth ported slice — `stress` (live-verified)
 
-`tests/cases/stress/` + env `stress-stablenet` (stablenet, 4 bp, preset keys).
+`tests/tc/stress/` (env inline, stablenet, 4 bp, preset keys).
 Both ran green against a real `gstable` 4-node network:
 
 | legacy | DSL case | check |
@@ -155,7 +155,7 @@ Port category-by-category, each slice live-verified against the from-source bina
    - **system-contracts (24) / blacklist-authorized (9) / fee-delegation (4)** — covered by the `system-contracts` (45) and `accounts` specs (native transfer, approve/transferFrom, mint/burn proposals, gov lifecycle, blacklist/authorize + events, fee-delegation valid + tampered).
    - **anzeon (7)** — gastip-forced/free, min/max baseFee are in `gas-policy` specs. The dynamic `basefee-increase` / `basefee-stable` / `basefee-decrease` cases (±2% by block gas usage) are now **ported and live-verified** (§5c) via the new `load` action — the last genuine regression gap is closed.
 3. **stablenet post-v1.0.0-change (80)** — hardfork/boho behaviors; ported to Go e2e (`TestE2E_StablenetHardforkSwap`) and to the DSL cases here (`delayed-fork`, `account-extra`; see `repro-migration-remaining.md`). No DSL gap remains; the only non-item is `attach-external` (not a porting target).
-4. **wemix4 (95)** — `wemix4-port-tracker.md`: fully ported/covered (DSL + Go e2e). RPC-008 brioche was the last item, now ported (`tests/cases/wemix/brioche-block-reward.json`).
+4. **wemix4 (95)** — `wemix4-port-tracker.md`: fully ported/covered (DSL + Go e2e). RPC-008 brioche was the last item, now ported (`tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json`).
 
 **Net for items 2–4:** the local categories (basic, fault, stress, anzeon) are
 **fully ported** (§5–§5d); the rest is covered by `tests/specs` + Go e2e, and the
@@ -174,7 +174,7 @@ All four primitives the earlier slices called for are now built and live-verifie
 
 The **wemix4** suite is now fully ported/covered (see `wemix4-port-tracker.md`):
 RPC-008 `wemix_getBriocheBlockReward` was the last item, ported as
-`tests/cases/wemix/brioche-block-reward.json` by injecting a `brioche`
+`tests/tc/go-wemix/rpc/01-wemix-brioche-block-reward.json` by injecting a `brioche`
 halving-config object through `genesis.overlay` (no code change — the overlay
 deep-merges into the poa genesis `config`). GOV-023 and WBFT-012/013 were already
 Go e2e (the earlier "remaining" prose was stale).
@@ -191,12 +191,14 @@ left to port:
   needed only to smoke-run the existing generic cases.
 
 Now resolved and ported to DSL cases here:
-- `stablenet-delayed-fork` (`tests/cases/stablenet/delayed-fork.json`) — the boho
+- `stablenet-delayed-fork`
+  (`tests/tc/go-stablenet/post-v1.0.0-change/common-all/01-stablenet-delayed-fork.json`) — the boho
   effects (GovMinter-v2 code swap, P-256 at 0x100, prealloc preserved) are real;
   the old failures were genesis wiring (the genesis needs the full `boho` object,
   not just `bohoBlock`). The case reads across the fork with `rpcCall` at explicit
   block tags.
-- `stablenet-account-extra` (`tests/cases/stablenet/account-extra.json`, plus the
+- `stablenet-account-extra`
+  (`tests/tc/go-stablenet/post-v1.0.0-change/extra-state/02-stablenet-account-extra.json`, plus the
   overlay fixture fix).
-- `wemix-chain` scenario 1 (`tests/cases/wemix/tx-and-contract.json`).
+- `wemix-chain` scenario 1 (`tests/tc/go-wemix/tx/01-wemix-tx-and-contract.json`).
 - `stablenet-basefee-dynamics` (superseded by the anzeon cases, §5c).

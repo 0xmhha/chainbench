@@ -271,6 +271,24 @@ C2 시나리오에서 포트 충돌 거부 메시지가 **다른 워크스페이
 ### 아직 남은 것
 
 - 8절의 "이번 범위 밖" 후속 3건은 그대로 남는다.
-- **문서 부패(범위 밖)**: `tests/cases/` → `tests/tc/` 통합(`3c42fb76`) 이후 옛 경로를
-  가리키는 추적 문서가 10 개 넘게 남아 있다. 이번에는 직접 손댄
-  `env/docker/README.md` 만 고쳤다.
+### 문서 경로 부패 정리 (2026-09-10)
+
+`tests/cases/` → `tests/tc/` 통합(`3c42fb76`) 이후 옛 경로를 가리키는 추적 파일이
+15 개, 언급이 61 곳 있었다. 단순 rename 이 아니라 삭제 후 재작성이라 기계적 대응이
+없어서, 케이스마다 현재 위치를 찾아 옮겼다. env 는 별도 파일이 없어지고 각 정의서의
+`env` 블록으로 들어갔으므로 그 표기도 함께 고쳤다.
+
+성격에 따라 셋으로 나눠 처리했다.
+
+**고친 것** — 현재형으로 위치를 주장하거나 그대로 실행되는 명령이 있는 곳이다.
+`docs/dev/chain-setup/README.md`(경로 + 없어진 `net` 명령 → `status`·`stop`),
+`server-set.md`, `architecture/{consolidation-plan,layers,module-plan}.md`,
+`legacy-test-migration.md`, `repro-migration-remaining.md`,
+`wemix4-port-tracker.md`, `dsl-v2-proposal.md`.
+
+**날짜를 붙여 남긴 것** — 그날의 기록이라 당시 경로가 맞다. 지금 위치만 괄호로
+덧붙였다(`module-plan.md` 의 P6.4·P7 기록, worklist 의 P7 완료 줄).
+
+**본문을 건드리지 않은 것** — `legacy-port-audit/02-graph-chainbench.md` 는 생성된
+AST 스냅샷이다. 경로를 고치면 산출물이 그때 본 트리와 달라져 거짓이 되므로, 머리말에
+안내만 넣고 그래프 21 곳은 그대로 뒀다.

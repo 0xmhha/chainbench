@@ -148,7 +148,7 @@ specs/suite/<id>.suite.json  kind:"suite"  케이스 묶음 + 공통 hook   (선
   "binaries": { "default": "gwbft", "bp1": "gwemix" },     // 1.1 (handoff = 역할별 상이)
   // 구현(2026-08-28, P7): 핸드오프는 "upgrade" 블록으로 선언하고, 그때 binaries 는
   // {"producer": ..., "validator": ...} 역할 이름만 받는다. 실행기는 이 블록의
-  // 유무로 조립기를 고른다(tests/cases/env/wemix-wbft.env.json).
+  // 유무로 조립기를 고른다(tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json 의 env 블록).
   // "upgrade": { "profile": "profiles/wemix-upgrade.yaml", "template": "${GOWEMIX_TEMPLATE}" },
 
   "keys": {                                                 // 1.4 · 1.5 — G1 해소

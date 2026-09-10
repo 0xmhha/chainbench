@@ -192,7 +192,7 @@ chainbench run \
   --server-set env/docker/build/server-set.yaml \
   --docker --all-servers \
   --keys <ws>/genkeys \
-  tests/cases/stablenet/chain-up-15.json
+  tests/tc/go-stablenet/regression/ethereum/33-stablenet-chain-up-15.json
 ```
 
 컨테이너에는 대상 체인 바이너리(그 컨테이너 아키텍처의 Linux 판)가 서버 세트의

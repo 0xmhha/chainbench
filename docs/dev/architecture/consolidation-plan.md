@@ -49,7 +49,7 @@
 
 각 단계의 공통 게이트: `go build/vet/test ./...` · `-race`(손댄 패키지) · lint 0 ·
 `internal/arch` 통과 · 그래프 재생성(패키지 수 감소 확인) · 실행 경로를 건드린
-단계는 stablenet 라이브 케이스(`run --workspace-dir tests/cases/stablenet/…`) 1회.
+단계는 stablenet 라이브 케이스(`run --workspace-dir tests/tc/go-stablenet/…`) 1회.
 
 ### R1. 소형 흡수 (독립적, 낱개 커밋·PR 1~2개)
 

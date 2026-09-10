@@ -81,7 +81,7 @@ path.
 ## Run with both files
 
 ```sh
-chainbench run tests/tc/example.json \
+chainbench run tests/tc/samples/01-sample-minimal.json \
   --server-set  ./server-set.yaml \
   --workspace-config ./workspace-config.yaml \
   --workspace-dir /tmp/control/chain-a
