@@ -1,8 +1,11 @@
-// Package keyring is the key module's surface: the verbs a surface (CLI, or
-// app on behalf of MCP) runs against a key set, composed from the model
-// (core/keyring), the storage (core/keyring/store), and the netmap module for
-// anything that lives on a server. CLI calls this package directly; app wraps
-// it thinly for MCP.
+// Package operation is the key module's verb surface: what a caller (the CLI
+// directly, or app on behalf of MCP) runs against a key set. It composes the
+// model (core/keyring), the storage (core/keyring/store), and the resource
+// module for anything that lives on a server.
+//
+// The doc comment here used to read "Package keyring", left behind when the
+// verbs moved out of that package. The name a reader sees in godoc has to be
+// the name they import.
 package operation
 
 import (

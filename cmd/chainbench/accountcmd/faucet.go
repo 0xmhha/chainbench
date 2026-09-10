@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -22,7 +23,7 @@ func NewFaucet() *cobra.Command {
 		Use:   "faucet",
 		Short: "Send funds from a genesis-allocated key to an account (requirement #3)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			hash, err := app.Faucet(cmd.Context(), deps(cmd), app.FaucetIn{
+			hash, err := app.Faucet(cmd.Context(), surface.Deps(cmd), app.FaucetIn{
 				Chain: app.ChainRef{
 					Chain: chain, Manifest: manifestPath, Template: templatePath, RPC: rpcURL,
 				},

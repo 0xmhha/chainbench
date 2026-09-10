@@ -27,7 +27,7 @@ func newPoolCmd() *cobra.Command {
 			"uses. Credentials are never part of the answer — the pool says where nodes\n" +
 			"may run, not how to log in.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			out, err := app.NetPool(cmd.Context(), deps(cmd), app.NetPoolIn{
+			out, err := app.NetPool(cmd.Context(), surface.Deps(cmd), app.NetPoolIn{
 				DataDir: workspaceDir, Server: sf.Ref(),
 			})
 			if err != nil {

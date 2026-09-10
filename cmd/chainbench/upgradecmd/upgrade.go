@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -32,7 +33,7 @@ func newGenesisCmd() *cobra.Command {
 			if profilePath == "" || fromGenesis == "" {
 				return fmt.Errorf("--profile and --from-genesis are required")
 			}
-			res, err := app.UpgradeGenesis(deps(cmd), profilePath, fromGenesis)
+			res, err := app.UpgradeGenesis(surface.Deps(cmd), profilePath, fromGenesis)
 			if err != nil {
 				return err
 			}

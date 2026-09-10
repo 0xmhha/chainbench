@@ -325,7 +325,7 @@ func (a *Access) listFilesMaybeElevated(ctx context.Context, dir string) ([]stri
 // line. A non-zero exit (an unreadable or missing directory) is an error so the
 // elevated retry is tried.
 func runFind(ctx context.Context, run process.Runner, dir string) ([]string, error) {
-	res, err := run(ctx, "find "+shellQuote(dir)+" -type f")
+	res, err := run(ctx, "find "+remote.ShellQuote(dir)+" -type f")
 	if err != nil {
 		return nil, err
 	}
@@ -339,13 +339,6 @@ func runFind(ctx context.Context, run process.Runner, dir string) ([]string, err
 		}
 	}
 	return out, nil
-}
-
-// shellQuote single-quotes s for a POSIX shell. The process package has its own
-// unexported copy for the driver commands; this is the resource layer's, for the
-// listing command it issues directly.
-func shellQuote(s string) string {
-	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // Lookup turns a server-set entry name into SSH credentials.

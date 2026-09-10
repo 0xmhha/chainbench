@@ -9,12 +9,7 @@
 package filecmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
-
-	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // New builds the file command group.
@@ -30,16 +25,4 @@ func New() *cobra.Command {
 	}
 	cmd.AddCommand(newUploadCmd(), newDownloadCmd())
 	return cmd
-}
-
-// deps is the Deps every file verb runs with: side notes print as they happen,
-// and the environment is read for any credentials the server set defers to it.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{
-		Env: os.Getenv,
-		Logf: func(format string, args ...any) {
-			fmt.Fprintf(errOut, format+"\n", args...)
-		},
-	}
 }

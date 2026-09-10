@@ -40,7 +40,7 @@ func newBaselineShowCmd() *cobra.Command {
 		Use:   "show",
 		Short: "Read the target's inputs now and report whether they match the approved baseline",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			res, err := app.BaselineCheck(cmd.Context(), deps(cmd), app.NetBaselineIn{DataDir: dataDir})
+			res, err := app.BaselineCheck(cmd.Context(), surface.Deps(cmd), app.NetBaselineIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
@@ -71,7 +71,7 @@ func newBaselineApproveCmd() *cobra.Command {
 		Use:   "approve",
 		Short: "Record the current composition as the environment's approved baseline",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			res, err := app.BaselineApprove(cmd.Context(), deps(cmd), app.NetBaselineIn{
+			res, err := app.BaselineApprove(cmd.Context(), surface.Deps(cmd), app.NetBaselineIn{
 				DataDir: dataDir, Note: note,
 				// Stamped by the surface so the record does not depend on a
 				// clock read inside the module.

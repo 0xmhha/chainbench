@@ -24,7 +24,7 @@ func NewConsensus() *cobra.Command {
 			if rpcURL == "" {
 				return fmt.Errorf("--rpc url is required")
 			}
-			res, err := app.Validators(cmd.Context(), deps(cmd), chain, manifestPath, templatePath, rpcURL)
+			res, err := app.Validators(cmd.Context(), surface.Deps(cmd), chain, manifestPath, templatePath, rpcURL)
 			if err != nil {
 				return err
 			}

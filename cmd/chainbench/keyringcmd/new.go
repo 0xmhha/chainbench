@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -104,7 +105,7 @@ type ringCreateFunc func(context.Context, app.Deps, app.RingCreateIn) (app.RingO
 // which function they call, not in what they print.
 func runRingCreate(cmd *cobra.Command, use ringCreateFunc, mk *makeFlags) error {
 	out := cmd.OutOrStdout()
-	r, err := use(cmd.Context(), deps(cmd), mk.in(cmd))
+	r, err := use(cmd.Context(), surface.Deps(cmd), mk.in(cmd))
 	announce(cmd, r)
 	if mk.jsonF.on {
 		if err != nil {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // RemoteLogReader reads a node's log from another host over SSH. It satisfies
@@ -29,7 +31,7 @@ func (r RemoteLogReader) ReadFrom(ctx context.Context, path string, offset int64
 	if r.Run == nil {
 		return nil, fmt.Errorf("driver: remote log reader has no runner")
 	}
-	cmd := "tail -c +" + strconv.FormatInt(offset+1, 10) + " " + shq(path) + " 2>/dev/null"
+	cmd := "tail -c +" + strconv.FormatInt(offset+1, 10) + " " + remote.ShellQuote(path) + " 2>/dev/null"
 	res, err := r.Run(ctx, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("driver: remote tail %s: %w", path, err)

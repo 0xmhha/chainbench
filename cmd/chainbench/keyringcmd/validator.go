@@ -36,13 +36,13 @@ func runValidator(cmd *cobra.Command, chain string, key app.PrivateKey, sf *stor
 		return fmt.Errorf("--chain is required")
 	}
 
-	path, err := saveKey(cmd.Context(), deps(cmd), sf, pf, key)
+	path, err := saveKey(cmd.Context(), surface.Deps(cmd), sf, pf, key)
 	if err != nil {
 		return err
 	}
 	// A wbft validator's BLS material comes from the same key as its address,
 	// so ask for it up front and let the family decide whether it is used.
-	id, err := app.DeriveIdentity(deps(cmd), chain, key)
+	id, err := app.DeriveIdentity(surface.Deps(cmd), chain, key)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func newValidatorNewCmd() *cobra.Command {
 		Use:   "new",
 		Short: "Generate a new validator identity for a chain (chain-aware consensus material)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			key, err := app.GenerateKey(cmd.Context(), deps(cmd))
+			key, err := app.GenerateKey(cmd.Context(), surface.Deps(cmd))
 			if err != nil {
 				return err
 			}
@@ -138,7 +138,7 @@ func newValidatorImportCmd() *cobra.Command {
 		Use:   "import",
 		Short: "Import a key as a validator identity for a chain",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			key, err := src.Resolve(cmd.Context(), deps(cmd), pf.Source())
+			key, err := src.Resolve(cmd.Context(), surface.Deps(cmd), pf.Source())
 			if err != nil {
 				return err
 			}
@@ -167,7 +167,7 @@ func newValidatorRosterCmd() *cobra.Command {
 			if chain == "" {
 				return fmt.Errorf("--chain is required")
 			}
-			r, err := app.ValidatorSetOf(deps(cmd), chain, keysDir)
+			r, err := app.ValidatorSetOf(surface.Deps(cmd), chain, keysDir)
 			if err != nil {
 				return err
 			}
@@ -231,7 +231,7 @@ func newValidatorSetCmd() *cobra.Command {
 			if validators > 0 {
 				opts.Validators = &validators
 			}
-			meta, err := app.GenerateSet(deps(cmd), opts, func(line string) { fmt.Fprintln(out, line) })
+			meta, err := app.GenerateSet(surface.Deps(cmd), opts, func(line string) { fmt.Fprintln(out, line) })
 			if err != nil {
 				return err
 			}

@@ -11,14 +11,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// deps is what every report verb hands the app layer.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
-}
-
 func NewReport() *cobra.Command {
 	var dataDir string
 	cmd := &cobra.Command{
@@ -28,7 +20,7 @@ func NewReport() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			rep, err := app.Report(cmd.Context(), deps(cmd), app.ReportIn{Dir: dataDir})
+			rep, err := app.Report(cmd.Context(), surface.Deps(cmd), app.ReportIn{Dir: dataDir})
 			if err != nil {
 				return err
 			}

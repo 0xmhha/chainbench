@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/0xmhha/chainbench/internal/core/remote"
 )
 
 // ProcessInspector is an optional Driver capability: ask the machine the
@@ -119,7 +121,7 @@ func (d *RemoteDriver) PIDAlive(ctx context.Context, pid int) (bool, error) {
 
 // FindBinary asks the machine's pgrep for exact-name matches.
 func (d *RemoteDriver) FindBinary(ctx context.Context, name string) ([]int, error) {
-	out, err := d.sh(ctx, "pgrep -x "+shq(name)+" || true")
+	out, err := d.sh(ctx, "pgrep -x "+remote.ShellQuote(name)+" || true")
 	if err != nil {
 		return nil, fmt.Errorf("driver: remote pgrep %s: %w", name, err)
 	}

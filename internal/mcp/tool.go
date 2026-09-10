@@ -9,7 +9,8 @@ package mcp
 
 import (
 	"context"
-	"strconv"
+
+	"github.com/0xmhha/chainbench/internal/app"
 )
 
 // Handler runs a tool with decoded arguments and returns human/agent-readable
@@ -38,57 +39,26 @@ type Tool struct {
 	ReadOnly bool
 }
 
-// argString returns a string argument or def if absent/not a string.
+// The four arg* helpers below are this surface's short spellings for the
+// decoders the app layer relays from core/registry (see app/args.go). They
+// delegate rather than reimplement: this file used to carry byte-identical
+// copies of the string and int decoders, so a change to how an argument decodes
+// had to be made twice, and the copy that was missed would have been the one an
+// agent actually reached. The short names stay because the handlers read better
+// with them at 183 call sites.
+
 func argString(args map[string]any, key, def string) string {
-	if v, ok := args[key]; ok {
-		if s, ok := v.(string); ok {
-			return s
-		}
-	}
-	return def
+	return app.ArgString(args, key, def)
 }
 
-// argStrings returns a []string argument (JSON array of strings), or nil.
 func argStrings(args map[string]any, key string) []string {
-	v, ok := args[key]
-	if !ok {
-		return nil
-	}
-	switch t := v.(type) {
-	case []string:
-		return t
-	case []any:
-		out := make([]string, 0, len(t))
-		for _, e := range t {
-			if s, ok := e.(string); ok {
-				out = append(out, s)
-			}
-		}
-		return out
-	}
-	return nil
+	return app.ArgStrings(args, key)
 }
 
-// argInt returns an integer argument or def. JSON numbers decode as float64;
-// a numeric string is also accepted.
 func argInt(args map[string]any, key string, def int) int {
-	switch v := args[key].(type) {
-	case float64:
-		return int(v)
-	case int:
-		return v
-	case string:
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return def
+	return app.ArgInt(args, key, def)
 }
 
-// argBool returns a boolean argument or def if absent/not a boolean.
 func argBool(args map[string]any, key string, def bool) bool {
-	if v, ok := args[key].(bool); ok {
-		return v
-	}
-	return def
+	return app.ArgBool(args, key, def)
 }

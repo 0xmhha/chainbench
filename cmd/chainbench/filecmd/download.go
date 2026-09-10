@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -20,7 +21,7 @@ func newDownloadCmd() *cobra.Command {
 		Use:   "download [flags]",
 		Short: "Download a server file to a local path (elevates through sudo where permitted)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			res, err := app.Download(cmd.Context(), deps(cmd), app.DownloadIn{
+			res, err := app.Download(cmd.Context(), surface.Deps(cmd), app.DownloadIn{
 				Target: app.TransferServer{
 					ServerSet: serverSet, Server: server, Docker: docker,
 					WorkspaceConfigPath: workspaceConfig,

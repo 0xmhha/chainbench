@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -16,7 +17,7 @@ import (
 // arithmetic. A CLI run and an MCP call that both omit the workspace have to
 // land in the same directory, or one composes somewhere the other cannot find.
 func defaultWorkspaceDir(cmd *cobra.Command) (string, error) {
-	dir, err := app.DefaultWorkspaceDir(deps(cmd))
+	dir, err := app.DefaultWorkspaceDir(surface.Deps(cmd))
 	if err != nil {
 		return "", err
 	}

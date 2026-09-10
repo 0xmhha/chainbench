@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -39,11 +40,11 @@ func newBlueprintCmd() *cobra.Command {
 				err error
 			)
 			if fromTopology != "" {
-				res, err = app.BlueprintFromTopology(cmd.Context(), deps(cmd), app.BlueprintFromTopologyIn{
+				res, err = app.BlueprintFromTopology(cmd.Context(), surface.Deps(cmd), app.BlueprintFromTopologyIn{
 					Path: fromTopology, Binary: binary, Peering: peering,
 				})
 			} else {
-				res, err = app.BlueprintFromPreset(cmd.Context(), deps(cmd), app.BlueprintFromPresetIn{
+				res, err = app.BlueprintFromPreset(cmd.Context(), surface.Deps(cmd), app.BlueprintFromPresetIn{
 					KeysDir: keysDir, Chain: chain, Manifest: manifest,
 					Producers: producers, Endpoints: endpoints, Binary: binary, Peering: peering,
 				})

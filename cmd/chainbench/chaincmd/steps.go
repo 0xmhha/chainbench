@@ -46,7 +46,7 @@ func newNetKeysCmd() *cobra.Command {
 	var nodes, validators int
 	cmd, _ := stepCmd("keys", "Ensure the key set exists and covers the node count (preset or generate)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetKeys(cmd.Context(), deps(cmd), app.NetKeysIn{
+			out, err := app.NetKeys(cmd.Context(), surface.Deps(cmd), app.NetKeysIn{
 				DataDir: dataDir, Source: source, Nodes: nodes, Validators: validators,
 			})
 			return out.Detail, err
@@ -70,7 +70,7 @@ func newNetAllocateCmd() *cobra.Command {
 			if err != nil {
 				return "", err
 			}
-			out, err := app.NetAllocate(cmd.Context(), deps(cmd), app.NetAllocateIn{
+			out, err := app.NetAllocate(cmd.Context(), surface.Deps(cmd), app.NetAllocateIn{
 				DataDir: dataDir, Validators: validators, Endpoints: endpoints, Proxies: proxies,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, Peering: peering,
 				Binaries: bins, Server: sf.Ref(),
@@ -112,7 +112,7 @@ func newNetGenesisCmd() *cobra.Command {
 	var overlay string
 	cmd, _ := stepCmd("genesis", "Build the genesis from the key set and write it to the target",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetGenesis(cmd.Context(), deps(cmd), app.NetGenesisIn{
+			out, err := app.NetGenesis(cmd.Context(), surface.Deps(cmd), app.NetGenesisIn{
 				DataDir: dataDir, ChainID: chainID, Set: sets, OverlayPath: overlay,
 			})
 			return out.Detail, err
@@ -134,7 +134,7 @@ func newNetConfigCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetConfig(cmd.Context(), deps(cmd), app.NetConfigIn{
+			out, err := app.NetConfig(cmd.Context(), surface.Deps(cmd), app.NetConfigIn{
 				DataDir: dataDir, Node: nodeIdx, Set: sets,
 			})
 			if err != nil {
@@ -161,7 +161,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetLaunchOpts(cmd.Context(), deps(cmd), app.NetLaunchOptsIn{
+			out, err := app.NetLaunchOpts(cmd.Context(), surface.Deps(cmd), app.NetLaunchOptsIn{
 				DataDir: dataDir, Set: sets,
 			})
 			if err != nil {
@@ -183,7 +183,7 @@ func newNetLaunchOptsCmd() *cobra.Command {
 func newNetProvisionCmd() *cobra.Command {
 	cmd, _ := stepCmd("deploy", "Put the launch inputs on the target and verify they are present (skip-if-exists)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetProvision(cmd.Context(), deps(cmd), app.NetProvisionIn{DataDir: dataDir})
+			out, err := app.NetProvision(cmd.Context(), surface.Deps(cmd), app.NetProvisionIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -193,7 +193,7 @@ func newNetInitCmd() *cobra.Command {
 	var binary string
 	cmd, _ := stepCmd("init", "Initialize each node's datadir from the built genesis",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetInit(cmd.Context(), deps(cmd), app.NetInitIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetInit(cmd.Context(), surface.Deps(cmd), app.NetInitIn{DataDir: dataDir, Binary: binary})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the workspace's)")
@@ -204,7 +204,7 @@ func newNetStartCmd() *cobra.Command {
 	var binary string
 	cmd, _ := stepCmd("start", "Launch every stopped node and record its PID",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetStart(cmd.Context(), deps(cmd), app.NetStartIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetStart(cmd.Context(), surface.Deps(cmd), app.NetStartIn{DataDir: dataDir, Binary: binary})
 			return out.Detail, err
 		})
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (default: the workspace's)")
@@ -214,7 +214,7 @@ func newNetStartCmd() *cobra.Command {
 func newNetStopCmd() *cobra.Command {
 	cmd, _ := stepCmd("stop", "Stop every running node by its recorded PID",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetStop(cmd.Context(), deps(cmd), app.NetStopIn{DataDir: dataDir})
+			out, err := app.NetStop(cmd.Context(), surface.Deps(cmd), app.NetStopIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -224,7 +224,7 @@ func newNetRestartCmd() *cobra.Command {
 	var nodeIdx int
 	cmd, _ := stepCmd("restart", "Stop and relaunch one node with its recorded arming",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetRestart(cmd.Context(), deps(cmd), app.NetRestartIn{DataDir: dataDir, Node: nodeIdx})
+			out, err := app.NetRestart(cmd.Context(), surface.Deps(cmd), app.NetRestartIn{DataDir: dataDir, Node: nodeIdx})
 			return out.Detail, err
 		})
 	cmd.Flags().IntVar(&nodeIdx, "node", 0, "node index (1-based)")
@@ -234,7 +234,7 @@ func newNetRestartCmd() *cobra.Command {
 func newNetRmCmd() *cobra.Command {
 	cmd, _ := stepCmd("rm", "Remove the composed data plane (stopped nodes only)",
 		func(cmd *cobra.Command, dataDir string) (string, error) {
-			out, err := app.NetRm(cmd.Context(), deps(cmd), app.NetRmIn{DataDir: dataDir})
+			out, err := app.NetRm(cmd.Context(), surface.Deps(cmd), app.NetRmIn{DataDir: dataDir})
 			return out.Detail, err
 		})
 	return cmd
@@ -250,7 +250,7 @@ func newNetLogsCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetLogs(cmd.Context(), deps(cmd), app.NetLogsIn{
+			out, err := app.NetLogs(cmd.Context(), surface.Deps(cmd), app.NetLogsIn{
 				DataDir: dataDir, Node: nodeIdx, Lines: lines,
 			})
 			if err != nil {
@@ -276,7 +276,7 @@ func newNetHealthCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetHealth(cmd.Context(), deps(cmd), app.NetHealthIn{DataDir: dataDir})
+			out, err := app.NetHealth(cmd.Context(), surface.Deps(cmd), app.NetHealthIn{DataDir: dataDir})
 			if err != nil {
 				return err
 			}
@@ -308,7 +308,7 @@ func newNetResumeCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetResume(cmd.Context(), deps(cmd), app.NetResumeIn{DataDir: dataDir, Binary: binary})
+			out, err := app.NetResume(cmd.Context(), surface.Deps(cmd), app.NetResumeIn{DataDir: dataDir, Binary: binary})
 			w := cmd.OutOrStdout()
 			for _, line := range out.Reconciled {
 				fmt.Fprintln(w, "reconcile:", line)
@@ -364,7 +364,7 @@ func newNetEnodeCmd() *cobra.Command {
 			if dataDir == "" {
 				return fmt.Errorf("--workspace-dir is required")
 			}
-			out, err := app.NetEnodes(cmd.Context(), deps(cmd), app.NetEnodesIn{
+			out, err := app.NetEnodes(cmd.Context(), surface.Deps(cmd), app.NetEnodesIn{
 				DataDir: dataDir, Node: nodeIdx,
 			})
 			if err != nil {

@@ -2,7 +2,6 @@ package accountcmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
@@ -24,7 +23,7 @@ func newStateCmd() *cobra.Command {
 			if rpcURL == "" || addr == "" {
 				return fmt.Errorf("--rpc and --address are required")
 			}
-			out, err := app.AccountState(cmd.Context(), deps(cmd), app.AccountStateIn{
+			out, err := app.AccountState(cmd.Context(), surface.Deps(cmd), app.AccountStateIn{
 				RPC: rpcURL, Address: addr,
 			})
 			if err != nil {
@@ -38,12 +37,4 @@ func newStateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&rpcURL, "rpc", "", "node RPC URL")
 	cmd.Flags().StringVar(&addr, "address", "", "account address (0x-hex)")
 	return surface.ReadOnly(cmd)
-}
-
-// deps is what every account verb hands the app layer: side notes to stderr.
-func deps(cmd *cobra.Command) app.Deps {
-	errOut := cmd.ErrOrStderr()
-	return app.Deps{Env: os.Getenv, Logf: func(format string, args ...any) {
-		fmt.Fprintf(errOut, format+"\n", args...)
-	}}
 }

@@ -22,7 +22,7 @@ func newKeyringListCmd() *cobra.Command {
 		Short: "List a key set's identities",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			out := cmd.OutOrStdout()
-			r, err := app.KeyringList(cmd.Context(), deps(cmd),
+			r, err := app.KeyringList(cmd.Context(), surface.Deps(cmd),
 				app.RingListIn{Ring: ring.ref(), Verify: verify})
 			if err != nil {
 				return err
@@ -58,7 +58,7 @@ func newKeyringShowCmd() *cobra.Command {
 			if err := label.require("show"); err != nil {
 				return err
 			}
-			e, err := app.KeyringShow(cmd.Context(), deps(cmd),
+			e, err := app.KeyringShow(cmd.Context(), surface.Deps(cmd),
 				app.RingEntryIn{Ring: ring.ref(), Label: label.name})
 			if err != nil {
 				return err
@@ -98,7 +98,7 @@ func newKeyringExportCmd() *cobra.Command {
 			if err := label.require("export"); err != nil {
 				return err
 			}
-			e, err := app.KeyringExport(cmd.Context(), deps(cmd),
+			e, err := app.KeyringExport(cmd.Context(), surface.Deps(cmd),
 				app.RingEntryIn{Ring: ring.ref(), Label: label.name})
 			if err != nil {
 				return err

@@ -7,6 +7,7 @@ import (
 
 	"github.com/0xmhha/chainbench/cmd/chainbench/keyringcmd"
 
+	"github.com/0xmhha/chainbench/cmd/chainbench/surface"
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
@@ -30,11 +31,11 @@ func newFundCmd() *cobra.Command {
 		Use:   "fund",
 		Short: "Send funds to an account from a funding key (private key, mnemonic, or file)",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			funder, err := src.Resolve(cmd.Context(), deps(cmd), pf.Source())
+			funder, err := src.Resolve(cmd.Context(), surface.Deps(cmd), pf.Source())
 			if err != nil {
 				return err
 			}
-			hash, err := app.FaucetFromKey(cmd.Context(), deps(cmd), app.FaucetKeyIn{
+			hash, err := app.FaucetFromKey(cmd.Context(), surface.Deps(cmd), app.FaucetKeyIn{
 				Chain: app.ChainRef{
 					Chain: chain, Manifest: manifestPath, Template: templatePath, RPC: rpcURL,
 				},

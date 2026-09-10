@@ -1173,7 +1173,7 @@ S0·S1·S2·S4 는 여기서 닫는다.
 | **S2 스키마 감축** | 지금 되풀이는 `rpc` 16 · `workspaceDir` 11 · `chain` 11 인데 **설명이 갈라지지 않았다**(16곳 중 15곳이 같은 표현). 예방이지 교정이 아니다. 저 숫자를 다시 세어 갈라짐이 보이면 그때다 |
 | **어휘에서 이름 떼기** | `validate` 가 이름 해석에 부르는 레지스트리가 액션 구현 자체라 rpc·session 을 끌고 온다. 액션 45개의 등록 방식을 바꾸는 일이고, 문법만 쓰는 **다른 소비자**가 생기면 근거가 선다 |
 | **testengine→chainsetup 엣지** | 좁히기로는 안 된다(4파일 중 1개만 사라진다, P6 참조). 조립을 엔진 밖으로 내보내 엔진이 망을 *받게* 하는 재설계라야 하고, 그럴 이유가 생기면 별도 항목으로 세운다 |
-| **나머지 63개 기능 등록** | `internal/feature` 에 17개가 등록됐고 래칫이 63을 천장으로 잡고 있다. 표면을 파생 플래그로 바꾸는 일은 `TestComposeFeatures_TagsMatchTheCommands` 가 지켜 주므로 **손으로 쓴 절반을 지우는 일**이 된다 |
+| **나머지 기능 등록** | `internal/feature` 에 **24개**가 등록됐고(2026-09-11 재측정, 문서의 17은 낡았다) 래칫이 63을 천장으로 잡고 있다. 표면을 파생 플래그로 바꾸는 일은 `TestComposeFeatures_TagsMatchTheCommands` 가 지켜 주므로 **손으로 쓴 절반을 지우는 일**이 된다 |
 
 ### 남은 것 3 — 재현되면 본다
 
@@ -1390,7 +1390,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 ### A. 지금 진행 중
 
-- **모니터링 트랙(§1r)** — PR #371 의 리뷰와 머지만 남았다. 재검토를 두 번 거쳤다.
+- ~~**모니터링 트랙(§1r)**~~ — **머지 완료 (`9b6b0930`).** 재검토를 두 번 거쳤다.
   1차에서 **MON-001 이 미해결이었음을 확인하고 고쳤다**(인라인 키가 상태 파일·stderr·
   `--json` stdout 세 곳으로 샜다). 2차에서 **MON-017 을 새로 확인해 고쳤다** — 노드별
   바이너리 이름이 다르면 실행 중인 노드를 발견하지 못했고, Docker 에서 전후를 대조해
@@ -1434,24 +1434,47 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 - [ ] **후보·반영 완전 분리.** 부분 재사용에서 승인된 노드만 정지·반영·재기동한다.
   지금은 판정을 쓰기 앞으로 옮기는 데까지 했다(MON-009).
-- [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 파싱만 되고 읽는 곳이 없고,
+- [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 **리졸버까지는 생겼다** —
+  `WorkspaceConfig.BinaryPath`(`resource/workspaceconfig.go:327`)가 별칭을 적용한다. 다만
+  **호출자가 테스트 둘뿐이라 프로덕션 경로에는 아직 배선되지 않았다**(2026-09-11 확인). 후자
   후자(`{server,ref}`·`serverIndex`·`localPath`)는 아직 파싱조차 안 된다. 샘플과 안내
   문서가 "미구현" 이라고 적어 두었고, 구현하면 `TestWorkspaceConfig_SampleCommentsMatchWhatParses`
   가 실패하며 그 주석을 걷으라고 알린다.
 - [ ] **여러 정의서 실행의 통합 report.** 지금은 실행마다 따로 남는다.
 
-### D2. 코드 건강도 검토에서 나온 것 (2026-09-10, 착수 미정)
+### D2. 코드 건강도 검토에서 나온 것 — **다섯 항목 완료 (2026-09-11)**
 
 AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통과, 린터 0건. 중복과 문서
 두 갈래만 남았고, 중복은 **표면·상위 계층이 프리미티브를 각자 다시 만든** 한 가지
-경향이다. 근거와 위치는 정본
+경향이었다. 근거와 위치는 정본
 [`architecture/code-health-review-2026-09-10.md`](architecture/code-health-review-2026-09-10.md).
 
-- [ ] `shellQuote` 4곳 통합 (보안에 닿는 프리미티브, 사본 최다)
-- [ ] `ArgString`/`ArgInt` 사본 제거 (`mcp` 가 `core/registry` 를 복제)
-- [ ] `deps(cmd)` 10곳을 `cmd/chainbench/surface` 로 (자리는 이미 있다)
-- [ ] `internal/testhelper` package doc (3,671줄인데 패키지 설명이 없다)
-- [ ] `netUpFrom`(191줄) 분해 — 다른 변경에 얹지 말고 따로
+- [x] `shellQuote` 4곳 통합 → `remote.ShellQuote` 하나. 셸을 실제로 태워 왕복시키는
+      테스트를 붙였다(따옴표·개행·`$(id)`·`;id;` 18케이스). 네 사본 중 어느 것도
+      테스트가 없었다.
+- [x] `ArgString`/`ArgInt` 사본 제거. **단순 치환이 불가능했다** — `internal/mcp` 는
+      `core/*` 를 직접 import 할 수 없고(`arch.TestMCPGoesThroughApp`, shrink-only),
+      그래서 그 사본은 **규칙이 만들어낸 결과**였다. `app` 이 중계하도록 고쳤다
+      (`app/args.go`). 구현은 `core/registry` 한 곳, 짧은 이름은 183 호출부에 그대로.
+      `ArgStrings`/`ArgBool` 도 같이 올렸다.
+- [x] `deps(cmd)` → `surface.Deps`. 실제로는 **12곳이었고 세 갈래로 갈라져 있었다** —
+      7곳 Logf 만, 4곳 +Env, 1곳 +Command. 즉 어떤 명령 트리로 들어왔느냐에 따라
+      워크스페이스 잠금이 `(command not recorded)` 로 남거나 실행을 이름으로 남겼다.
+      합집합으로 통일했다(Env 는 app 의 nil 폴백과 동일, Command 는 잠금이 늘 가져야
+      할 출처).
+- [x] package doc — `internal` 미문서 **8개를 0개로**. 그 과정에서 두 건은 이름이
+      틀린 문서였다: `core/keyring/operation` 이 "Package keyring", `core/filestore` 가
+      "Package provision" 으로 시작했다(이관 후 남은 잔재, godoc 에 틀린 이름이 뜬다).
+- [x] `netUpFrom` 191줄 → **95줄**. `planUp`(38, 검증·기본값)과 `upSteps`(69, 스텝
+      테이블)로 갈랐다. 잠금 획득과 실행 루프만 본문에 남는다.
+
+**이 작업이 새로 찾은 것**
+
+- [ ] **`core/keyring/derive` 에 테스트가 하나도 없다.** BLS 파생은 blst 의
+      `blst_keygen` 을 따라야 하고 어긋나면 *형태는 맞지만 wbft 노드가 거부하는* 키가
+      나온다 — 합의 문제처럼 보이는 키 문제다. 지금은 `core/keyring` 프리셋 테스트를
+      통해 간접적으로만 지나간다. 커밋된 `keys/preset` 이 nodekey 와 그것이 만든 BLS
+      공개키를 나란히 갖고 있어 **그대로 정답 벡터로 쓸 수 있다.**
 
 ### E. 오래 남아 있는 잔여 (§1n 및 그 이전)
 
