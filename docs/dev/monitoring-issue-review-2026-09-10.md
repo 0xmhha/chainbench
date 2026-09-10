@@ -329,6 +329,103 @@ MON-007·010·015 는 공통점이 다르다. 셋 다 **동작은 맞는데 근�
 호출자에만 있거나, 테스트가 한 갈래만 덮거나, 라이브 확인이 다른 것을 확인했다. 통과하는
 테스트는 무엇이 맞는지는 말해 주지만 무엇을 안 봤는지는 말해 주지 않는다.
 
+### 추가 검토 — MON-017·015·010 (2026-09-10, 기준 `94c2ed99`)
+
+분석 문서(`11-monitoring-open-issues.md`)가 올린 세 항목을 최신 코드로 다시 판정했다.
+문서를 정답으로 전제하지 않고 코드와 실행으로 확인했다. **셋 다 유효했다.**
+
+#### MON-017 — 유효, 수정함 (`7529d470`)
+
+재사용의 비교 대상은 `binaryFor`로 노드마다 만드는데(`reuse.go:147,175`) 발견은 이름
+하나만 썼다(`reuse.go:261`의 `path.Base(w.state.Binary)`). `pgrep -x`는 정확한 이름만
+찾으므로(`process/inspect.go:66,121`) 다른 이름의 바이너리로 도는 노드는 보이지 않았다.
+
+조건은 실재한다. `tests/tc/go-wemix/handoff/01-wemix-wbft-handoff.json`이 producer를
+`gwemix`, validator를 `gwbft`로 돌리고, stablenet 스왑 정의서가 `gstable`과
+`gstable-genesis-mismatch`를 짝짓는다. 단일 바이너리가 없으면 첫 노드의 것으로 떨어지므로
+(`testengine/compose.go:153-163`) **전부가 아니라 이름이 다른 노드만** 누락된다.
+
+피해는 데이터 훼손이 아니다. `Init`이 쓰기 전에 `checkVacant`를 먼저 부르고
+(`steps_lifecycle.go:70`) 놓친 노드가 자기 포트를 쥐고 있어 거기서 멈춘다. 실제 피해는
+재사용 실패와, 원인을 포트로 가리키는 오해를 부르는 메시지다.
+
+`introspectRunning`이 이제 fallback을 받아 `binaryFor`로 노드별 이름을 모으고, 서버별로
+중복 없이 검색한다. 중복 제거는 두 겹 다 필요하다. 같은 이름을 두 번 검색하면 같은 PID가
+두 번 들어와 "한 datadir에 두 프로세스"라는 거짓 거부가 난다.
+
+#### MON-015 단일 실행 — 유효, 수정함 (`2881d7d4`)
+
+`runComposed`가 `printSession` 전에 오류를 반환해(`run.go:218-220`) 같은 구성 실패가
+단일에서는 종료 코드 1에 stdout 0바이트, 복수에서는 2에 문서였다. 이제 `setupFailure`가
+문서를 쓰고 2를 돌려준다. `--json` 여부와 무관하게 2다. 무엇이 일어났는지를 말하는 값이지
+어떻게 출력하는지의 값이 아니기 때문이다.
+
+`runReport`에 `error`를 `omitempty`로 더해 성공 문서는 그대로다(`session`·`tests`·`summary`).
+
+#### MON-010 — 검증 부족이었고 테스트를 더함 (`51a6cb6c`)
+
+발견 단계의 서버 구분은 맞았다. 다만 검증이 거기서 끝났고, 기존 테스트는 서버마다 **다른
+config 경로**를 써서 어느 저장소에서 읽었는지가 갈리지 않았다.
+
+서버마다 별도 파일 저장소를 주고 같은 경로에 다른 내용을 두는 테스트를 더했다.
+`mergeRunning` → `reconcileReuse` → `recordLaunch` → 원장 → 재오픈까지 따라가며 PID·host·
+datadir·config 경로를 확인한다. 프로덕션 코드는 바꾸지 않았다.
+
+### 검증 수준 구분
+
+같은 "통과" 라도 근거의 무게가 다르므로 나눠 적는다.
+
+| 항목 | 단위 테스트 작성 | 테스트 통과 | Docker 검증 | 실제 원격 |
+|---|---|---|---|---|
+| MON-017 | ○ (4건) | ○ | **○ 전후 대조** | ✕ |
+| MON-015 | ○ (3건, CLI 진입점) | ○ | ○ | ✕ |
+| MON-010 | ○ (2건) | ○ | ○ (부수적) | ✕ |
+
+각 커밋에서 `go build`·`go vet`·`gofmt`·`go test ./internal/... ./cmd/...`·
+`golangci-lint`(0건)·손댄 패키지 `-race`·`betterleaks`를 통과시켰다.
+
+수정이 실효 있는지는 되돌려 확인했다. MON-017은 이름 하나만 검색하게 되돌리면 node2가
+pid 0이 되고, 중복 제거를 빼면 같은 PID를 "pids 801 and 801"로 충돌 판정한다. MON-015는
+옛 분기로 되돌리면 종료 코드가 1이 된다. MON-010은 키에서 server를 빼면 두 서버가 한
+datadir로 합쳐진다.
+
+### Docker 전후 대조 (MON-017)
+
+컨테이너 15대 환경에서 `gstable`을 `gstable-b`로 복사해 node4만 그 이름으로 띄웠다.
+서버1~3은 `gstable`, 서버4는 `gstable-b`로 도는 것을 컨테이너에서 확인했다. 그다음
+workspace의 기록만 지워 "기록 없는 워크스페이스가 이미 도는 대상을 만나는" 상황을 만들고
+양쪽 바이너리로 같은 명령을 돌렸다.
+
+수정 전(`7529d470^`)은 이렇게 답했다.
+
+```
+reuse: reuse-if-matching: 3 node(s) reused, 1 redone [4]
+error: chainsetup: chain up: init: chainsetup: start: 5 port(s) are already in use:
+  172.30.0.14:30301 (node4 p2p) — planned for this workspace's node4, but it started nothing there
+```
+
+수정 후는 이렇게 답했다.
+
+```
+reuse: reuse-if-matching: all 4 node(s) match and are running; nothing to redo
+start: 0 node(s) started (4 already running)
+```
+
+기록된 PID 네 개가 원래 값과 정확히 같았다(node4는 서버4의 27077). 이것이 MON-010의
+서버별 PID 연결에 대한 부수 증거이기도 하다.
+
+검증 뒤 `gstable-b`를 네 컨테이너에서 지우고 노드를 모두 정지시켰다. 15대 전부 고아
+프로세스 0을 확인했다. **실제 원격 서버는 건드리지 않았다.**
+
+### 남은 검증 한계
+
+- 실제 원격 서버(SSH) 검증은 하지 않았다. Docker는 원격 코드 경로를 태우지만 같은
+  머신이다.
+- MON-010의 "두 서버가 **같은 datadir 문자열**을 쓰는" 경우는 단위 테스트로만 덮었다.
+  Docker에서는 노드마다 라벨이 달라 경로가 갈리므로 그 조합이 자연히 생기지 않는다.
+- MON-015의 Docker 구성 실패는 두 종류(슬롯 부족, init 실패)를 봤다. 모든 구성 실패
+  단계를 훑은 것은 아니다.
+
 ### 문서 경로 부패 정리 (2026-09-10)
 
 `tests/cases/` → `tests/tc/` 통합(`3c42fb76`) 이후 옛 경로를 가리키는 추적 파일이
