@@ -80,6 +80,19 @@ type HandoffInputs struct {
 	Driver process.Driver
 	// Peers wires the mesh; nil uses JSON-RPC admin_addPeer.
 	Peers PeerCaller
+	// MultiMachine says the placement spans more than one server, which needs a
+	// file store and a driver per node. That wiring does not exist here yet, so it
+	// is refused rather than silently collapsed onto one machine. A placement on a
+	// single server needs none of it and is accepted.
+	MultiMachine bool
+	// DialURL turns a node's own address into the one this tool reaches it at.
+	DialURL func(host string, port int) (string, error)
+	// Placement, when set, is where the resource module put this handoff's nodes:
+	// which server each one runs on and which port band it got. It wins over the
+	// profile's port bases, because a server set steps ports by SLOT rather than
+	// by node index — 15 producers and 15 successors over 15 servers is two nodes
+	// per server, and no base-plus-index arithmetic produces that.
+	Placement *node.Map
 }
 
 func (in HandoffInputs) host() string {
@@ -265,6 +278,22 @@ func (h *Handoff) ComposePlan(ctx context.Context, basePath string) error {
 	if err != nil {
 		return err
 	}
+	// A placement without a per-node machine would be decorative: the plan would
+	// say node2 is on server2 while Files and Driver still point at one machine,
+	// so every node would launch on that one and the run would look like it
+	// worked. Refuse instead, naming what is missing.
+	//
+	// Wiring it is the remaining half of a multi-server handoff: LaunchOptions
+	// carries one Files and Launch takes one Driver, where the composition path
+	// resolves a machine per node (chainsetup.machineFor). The readiness and mesh
+	// dials need the same treatment — they reach a node at its own address, which
+	// is not the address this tool can dial under --docker.
+	if h.in.MultiMachine {
+		return fmt.Errorf("upgrade: a placement across servers needs a machine per node, which this path does not resolve yet — " +
+			"every node would launch on one server while the plan claimed otherwise. Run without --all-servers, or place the handoff on a single server with --server")
+	}
+	in.Placement = h.in.Placement
+	in.DialURL = h.in.DialURL
 	in.NodePubkeys = make([]string, len(h.order))
 	for i, num := range h.order {
 		nk, ok := h.Preset.Node(num)

@@ -50,6 +50,14 @@ type UpgradeRunIn struct {
 	// Docker translates this tool's dials through the localmap beside the server
 	// set, for a fleet of containers standing in for servers.
 	Docker bool
+	// AllServers spreads the handoff across every server in the set, drawing each
+	// node's host and port band from the resource module instead of the profile's
+	// port bases.
+	//
+	// It is what makes a handoff wider than one machine: the allocator hands out
+	// slot 1 on every server, then slot 2 on every server at the next port band,
+	// so 15 producers and 15 successors over 15 servers is one of each per server.
+	AllServers bool
 }
 
 // UpgradeRunOut is the handoff result.
@@ -117,6 +125,26 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	// configs, keystores and the node processes go through the target's own
 	// boundaries. That split is already what HandoffInputs documents; this is
 	// the resolution that was missing.
+	// A named server means the ports come from the server set rather than the
+	// profile. That matters even for ONE server: the profile's bases (rpc 40010,
+	// step 10) are not what a fleet publishes, so a handoff on a server dialled a
+	// port nothing answered on. Drawing from the set puts the nodes on that
+	// server's slots, whose ports the set already declares and the fleet already
+	// maps.
+	if in.Server.Name != "" || in.AllServers {
+		placed, err := placeHandoff(d, in, prof.Roles.Producers+prof.Roles.Validators)
+		if err != nil {
+			return UpgradeRunOut{}, err
+		}
+		hi.Placement = placed
+		hi.MultiMachine = spansHosts(placed)
+		// The opener is the one place an address becomes reachable: it applies the
+		// localmap under --docker and leaves a real server's address alone. The
+		// handoff dialled the node's own address before, which under --docker is
+		// the container's and answers to nobody else.
+		opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
+		hi.DialURL = opener.HTTPEndpoint
+	}
 	if acc != nil {
 		hi.Host = acc.Spec.Host
 		hi.DataDir = acc.DataRoot
@@ -299,4 +327,54 @@ func handoffExec(acc *resource.Access) (poa.Runner, error) {
 		return nil, fmt.Errorf("upgrade run: target %q cannot run commands, so governance and etcd cannot be bootstrapped on it", acc.Spec.Server)
 	}
 	return poa.Runner(process.ShellRunner(cmdr)), nil
+}
+
+// placeHandoff draws the handoff's nodes from the server set: which machine each
+// one runs on and which port band it gets.
+//
+// Every node is requested as a producer role because a handoff's roles are
+// producer/successor rather than bp/en, and the allocator only needs to know how
+// many slots to hand out. The order it returns is the order the plan reads: the
+// profile's producers come first, so nodes 1..P are the from-chain miners and the
+// rest are the successors — which on a 15-server set puts one of each on every
+// server, the second at the next port band.
+func placeHandoff(d Deps, in UpgradeRunIn, total int) (*node.Map, error) {
+	ref := in.Server
+	ref.All = in.AllServers
+	resolved, err := resource.ResolveServer(ref, 1, handoffPortBand)
+	if err != nil {
+		return nil, fmt.Errorf("upgrade run: placing %d node(s): %w", total, err)
+	}
+	inv, err := resource.NewInventory(resolved.Pool)
+	if err != nil {
+		return nil, fmt.Errorf("upgrade run: %w", err)
+	}
+	reqs := make([]resource.Request, total)
+	for i := range reqs {
+		reqs[i] = resource.Request{Role: node.RoleBP}
+	}
+	placed, err := inv.Assign(reqs, "")
+	if err != nil {
+		return nil, fmt.Errorf("upgrade run: placing %d node(s) on the server set: %w", total, err)
+	}
+	if d.Logf != nil {
+		for _, pl := range placed.Placements() {
+			d.Logf("place: %s on %s p2p=%d http=%d", pl.Label, pl.Host, pl.Ports.P2P, pl.Ports.HTTP)
+		}
+	}
+	return placed, nil
+}
+
+// handoffPortBand is the span one server's port purposes occupy, matching what
+// the composition path reserves.
+const handoffPortBand = 100
+
+// spansHosts reports whether a placement put nodes on more than one machine,
+// which is what needs a file store and a driver per node.
+func spansHosts(m *node.Map) bool {
+	seen := map[string]bool{}
+	for _, pl := range m.Placements() {
+		seen[pl.Host] = true
+	}
+	return len(seen) > 1
 }

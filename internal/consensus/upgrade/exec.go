@@ -120,10 +120,17 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 		if err != nil {
 			return nil, fmt.Errorf("upgrade: node%d: %w", num, err)
 		}
+		// The node's own host when the plan placed it on one; the launch's single
+		// host otherwise. A handoff over a server set has a host per node.
+		host := n.Host
+		if host == "" {
+			host = opts.host()
+		}
 		specs = append(specs, process.NodeSpec{
 			Index:      n.Index,
 			Role:       n.Role,
-			Host:       opts.host(),
+			Host:       host,
+			RPCURL:     n.RPCURL,
 			Binary:     binary,
 			DataDir:    dataDir,
 			ConfigPath: configPath,

@@ -18,9 +18,13 @@ import (
 // the setup planner. It is self-contained: a driver needs nothing else to
 // provision and launch the node.
 type NodeSpec struct {
-	Index         int
-	Role          node.Role
-	Host          string
+	Index int
+	Role  node.Role
+	Host  string
+	// RPCURL is the address THIS TOOL dials the node at, when that differs from
+	// Host:Ports.HTTP. Empty derives it from the pair, which is right whenever the
+	// node's own address is also reachable from here.
+	RPCURL        string
 	Binary        string
 	DataDir       string
 	ConfigPath    string // where the node config file is written
@@ -79,11 +83,19 @@ type FileProvisioner interface {
 // them. It is the one place a Node is assembled from a launch — three copies
 // of these six lines used to exist, and the etcd port was lost in one.
 func NodeOf(spec NodeSpec, pid int) node.Node {
+	// Host and Ports are the node's OWN address, which is what peers dial. When
+	// the caller knows a different address to reach it at — a container publishing
+	// on loopback — it supplies that, because composing the pair by hand is how a
+	// dial came to go to an address only the node itself can reach.
+	rpc := spec.RPCURL
+	if rpc == "" {
+		rpc = fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP)
+	}
 	return node.Node{
 		Index:  spec.Index,
 		Role:   spec.Role,
 		Host:   spec.Host,
-		RPCURL: fmt.Sprintf("http://%s:%d", spec.Host, spec.Ports.HTTP),
+		RPCURL: rpc,
 		Ports:  spec.Ports,
 		PID:    pid,
 	}

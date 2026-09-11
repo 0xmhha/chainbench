@@ -24,6 +24,19 @@ import (
 // every setting on the command line (no --config file), so the two binaries
 // need no pre-written node config.
 func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string, overrides ...nodeconfig.Override) ([]string, error) {
+	// The HTTP endpoint binds where the caller can reach it.
+	//
+	// It was pinned to 127.0.0.1, which is right for a handoff on this machine and
+	// wrong everywhere else: inside a container that is the container's own
+	// loopback, so the published port reaches nothing and every node reads as
+	// "not ready" while it is in fact running. A node placed on a target binds
+	// 0.0.0.0, the same as the composition path, and the exposure is bounded the
+	// same way — a container publishes to loopback only, and a server's inbound is
+	// an allow list.
+	httpHost := "127.0.0.1"
+	if n.Host != "" {
+		httpHost = "0.0.0.0"
+	}
 	// A handoff relaunch carries no config file, so the ports the file would
 	// have named travel on the command line; nodeconfig applies that rule.
 	return nodeconfig.Argv(nodeconfig.Spec{
@@ -31,6 +44,6 @@ func LaunchArgs(n NodeSpec, dataDir string, familyFlags []string, overrides ...n
 		Role:     n.Role,
 		Ports:    n.Ports,
 		DataDir:  dataDir,
-		HTTPHost: "127.0.0.1",
+		HTTPHost: httpHost,
 	}, overrides...)
 }
