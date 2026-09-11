@@ -106,6 +106,55 @@ type GenesisValidatorReader interface {
 	GenesisValidators(genesisJSON []byte) ([]string, error)
 }
 
+// The account roles a ring supplies. They are the roster's wire vocabulary: a
+// family produces them and a reader matches on them, so they belong with the
+// type that carries them rather than being spelled once in each.
+//
+// Spelled Account rather than Role because a node's role and an account's
+// function are different questions about different things, and sharing the word
+// made them look like one (A7).
+const (
+	AccountValidator  = "validator"
+	AccountGovernance = "governance-member"
+	AccountNode       = "node"
+)
+
+// RingAccount is one account a key set supplies to a chain, with what the chain
+// uses it for.
+type RingAccount struct {
+	// Role is what this account does: a validator, a governance council member,
+	// a node identity. It is spelled Role rather than reusing node.Role because
+	// a node's role and an account's function are different questions about
+	// different things.
+	Role string
+	// Index is the 1-based position within its role, or 0 when the role is not
+	// numbered.
+	Index int
+	// Address is the account's address (0x-hex).
+	Address string
+	// Detail says something the operator needs that the role does not, such as
+	// whether a validator carries BLS material.
+	Detail string
+}
+
+// RingAccountReader is an optional ConsensusFamily capability: which accounts a
+// family takes out of a key set, beyond the node identities every family uses.
+//
+// It exists because the answer is family-shaped and was being decided by a
+// switch on the family's id in a package above — the same "branch on the target
+// instead of asking it" the step ratchet forbids, with the same cost: adding a
+// family meant editing that switch as well as the family, and a family the
+// switch did not know fell into a default that reported it as unknown rather
+// than as unimplemented.
+//
+// note carries what the roster cannot say in accounts — poa has no validators in
+// genesis at all, and a roster that simply omits them looks like a key set that
+// is missing some. A family that does not implement this capability supplies
+// node identities only.
+type RingAccountReader interface {
+	RingAccounts(validators, blsKeys, members []string) (accounts []RingAccount, note string)
+}
+
 // RuntimeValidatorReader is an optional ConsensusFamily capability: ask a
 // running chain, over RPC, which validators it currently recognizes. It exists
 // because the answer is not one shape for every family — wbft returns the set
