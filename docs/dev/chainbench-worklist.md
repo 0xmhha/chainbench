@@ -1423,6 +1423,22 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 4. **L1 / L2 / 후보·반영 분리 / 통합 report** — 증적·운영 품질. 지금 동작을 막지 않는다.
 5. **R6 / validatorset 홈 / health 재배선** — 각각 체인팀 몫, 설계 결정, 구조 정리.
 
+### 묶음 (PR 단위, 2026-09-11)
+
+항목 하나에 PR 하나는 비효율이다. 아래는 **같은 코드 면을 건드려서 함께 검증하는 편이 싼**
+단위로 묶은 것이다. 묶음 안에서는 커밋을 나누되 PR 은 하나로 낸다.
+
+| 묶음 | 담긴 항목 | 왜 한 묶음인가 | 전제 |
+|---|---|---|---|
+| **G-A. 커버리지** | WA25 잔여 · B 잔여(체인별 거버넌스) · `istanbul_getWbftExtraInfo` 태그 관측 | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
+| **G-B. 증적** | L1(attempt 로그 축) · 여러 정의서 실행의 통합 report · 후보·반영 완전 분리 | 셋 다 "실행이 무엇을 남기는가" 다. `core/node/layout.go` 와 세션 기록을 같이 건드린다 | 없음 |
+| **G-C. 대상 경계 잔여** | L2(대상에서 키 검증) · `binaryAliases`/객체형 참조 소비 · T3.3·T5.1 의 실 SSH 라이브 e2e · T2.1(driver 위 Transport 형식화) | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
+| **G-D. 구조 정리** | validatorset 홈 결정 · health 를 inspector 조합으로 재배선 | 둘 다 소유 모듈 결정이고 소비자가 적다. 동작 변화 없이 한 번에 옮긴다 | 없음 |
+| **G-E. 이관** | T5.5 wemix4 DSL 이관 | 단독으로 크다. 다른 묶음과 섞지 않는다 | docker 15대 |
+
+**여기서 할 수 없는 것.** `D. 라이브 MCP 플러그인 재배포` 는 코드가 아니라 배포다.
+`R6. go-wemix boot-etcd collapse` 는 체인팀 몫으로 넘겼다. 둘 다 묶음에 넣지 않는다.
+
 ### A. 지금 진행 중
 
 - ~~**모니터링 트랙(§1r)**~~ — **머지 완료 (`9b6b0930`).** 재검토를 두 번 거쳤다.
@@ -1687,7 +1703,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     "NCP 7개가 필요해서 above-threshold 분기는 포팅하지 않았다"고 적어 둔 것은 과한 전제였다 —
     필요한 것은 **operator 계정 수**였고, alloc overlay 로 만들면 된다.
 
-- [ ] **(원래 진단, 보존) R7 이 무엇이었나.** wbft 는 epoch 경계마다
+- **(원래 진단, 보존) R7 이 무엇이었나.** wbft 는 epoch 경계마다
   validator 집합을 다시 정하는데(`decideValidators`), chainbench 가 만드는 체인은 그 경계에
   **도달하지 않는다.** genesis epoch 가 `Stabilizing = true` 로 시작하고, 안정화 중에는
   `newEpoch.Validators = latestEpochInfo.Validators` 로 직행해 재결정을 건너뛴다. 벗어나는
@@ -1719,8 +1735,11 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - [ ] **health 를 inspector 조합 레이어로 재배선.** `inspector` 는 판단 없는 atomic
   프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
   `health` 는 obs/rpc 를 직접 쓴다.
-- ◐ **Phase 2~6 의 부분 완료 항목** — T2.1(driver 위 Transport 타입 형식화), T3.3, T5.1,
-  T6.6. 각 절에 무엇이 끝났고 무엇이 남았는지 적혀 있다.
+- ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 "driver 위 Transport
+  타입 형식화" 하나가 남았다. **T3.3·T5.1** 에 남은 것은 둘 다 "실 SSH 호스트 대상 라이브
+  e2e" 인데, **그 전제는 이제 충족됐다** — `env/docker` 의 15대가 SSH 로 닿는 원격이고 그
+  위에서 핸드오프·chain rm·metric 이 이미 라이브로 돌았다. 즉 막힌 항목이 아니라 **할 수 있는
+  항목**이다. **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
 
 ### 이번에 바로잡은 표시
 
@@ -1781,11 +1800,11 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - ☑ **T4.6 launcher 파일 물질화를 provision.Provisioner 경유 [B안]** `LocalLauncher` 가 genesis·per-node config 를 `provision.Provisioner`(`FileSink`) 로 물질화 — 기존 ad-hoc `os.WriteFile(genesis)`+`driver.Provision(config)` 제거. **upload-if-absent**(기존 파일 재사용) + **원격 `RemoteFileSink` 로 교체할 boundary**(슬라이스 C 대비) 확보. 순수 `materialize` 헬퍼로 분리해 recording FileSink 로 단위검증(genesis+config 기록·재사용 스킵). 리팩터 후 실 gstable 라이브 2종(BuildEnv/FullRun) 재통과·고아0. 프로덕션 engine 은 이제 레거시 `setup.Provision/Launch` 미호출(`setup.Plan` 타입만 사용).
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
-- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 실 원격 SSH 호스트 대상 라이브 e2e(사용자 환경·SSH 필요). · ☐ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
+- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 실 원격 SSH 호스트 대상 라이브 e2e(사용자 환경·SSH 필요). · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
 
 ### Phase 6 — 표면·마감
 - ☑ **T6.7 spec 오프라인 검증 + 예제** `chainbench validate [spec…]` — 실행 없이 (1) 파싱 검증(OK/INVALID), (2) **이름 해결**(`testspec.Unresolved`: 스텝 액션·어세션 이름을 빌트인 registry 와 대조 → 미등록 시 `UNRESOLVED: action:…/assert:…`, 오타를 런타임 전 포착), 무효/미해결 시 exit 1. `--chain` 은 manifest capability·applicableChains 대조로 실행/스킵(OK·SKIP(chain not applicable)·SKIP(needs caps))을 정보 표시(파싱/해결 오류만 실패). `examples/specs/*.json`(RPC-read·tx/waitBlock 스텝·expectRevert negative·call/txStatus) + CI 가드 테스트(`validate --chain stablenet` 전부 OK)로 DSL 문서-파서 드리프트 방지. → 이관 작성자 빠른 피드백.
-- ◐ **T6.6 F16 세션 운영·보안 규약** ☑ **schemaVersion 거부(O2)**: `testspec.validate` 가 미지원 버전 명시 거부(현재 지원 `"1"`). ☑ **CI exit code(O5)**: `chainbench run` 이 세션 판정을 exit code 로 매핑 — 전건 pass=0·fail=1·blocked/인프라=2(`exitError`+`main` 배선). ☑ **세션 GC(O4)**: `chainbench clean --artifact-root --older-than <Nd|Nw|dur>/--keep-last N` — 완료 세션(session.json 보유)만 대상 → 실행중 세션 보존, `session.SessionDir`/`List` 재사용. ☑ **키파일 0600(O3)**: keyreg 가 이미 0600/0700 생성(기존). 단위검증(버전 거부·exit 0/1/2·older-than/keep-last/정책필수·실행중 보존).
+- ☑ **T6.6 F16 세션 운영·보안 규약** (O2·O3·O4·O5 전부 완료 — 미완 표시가 하나도 없는데 ◐ 로 남아 있었다) ☑ **schemaVersion 거부(O2)**: `testspec.validate` 가 미지원 버전 명시 거부(현재 지원 `"1"`). ☑ **CI exit code(O5)**: `chainbench run` 이 세션 판정을 exit code 로 매핑 — 전건 pass=0·fail=1·blocked/인프라=2(`exitError`+`main` 배선). ☑ **세션 GC(O4)**: `chainbench clean --artifact-root --older-than <Nd|Nw|dur>/--keep-last N` — 완료 세션(session.json 보유)만 대상 → 실행중 세션 보존, `session.SessionDir`/`List` 재사용. ☑ **키파일 0600(O3)**: keyreg 가 이미 0600/0700 생성(기존). 단위검증(버전 거부·exit 0/1/2·older-than/keep-last/정책필수·실행중 보존).
 - ☑ **T6.5 문서 경로 드리프트 정리** T0.0(`pkg/`→`internal/`) 완료 후에도 문서가 삭제된 `pkg/` 경로를 참조 → 후속 작업 착수 시 혼선. 실제 대상은 모두 `internal/` 하위에 존재(경로만 stale). **최초 스코프는 2문서 6건이었으나 x-bar 정렬 검토(2026-08-09)에서 실제 표면이 7문서 20건임이 드러나 확대**: `repro-migration-remaining.md`(3) · `wemix4-migration-plan.md`(5) · `wemix4-port-tracker.md`(4: `pkg/core/pipeline/testrun`·`pkg/core/procman`×2·`pkg/core/topology`) · **`topology.md`(1: `pkg/core/topology` — 사용자 대상 참조 문서라 최우선)** · `chainbench-requirements-review.md`(2: `pkg/mcp`·`pkg/consensus/poa`) · `chainbench-refactoring.md`(3: `pkg/mcp`·`pkg/dashboard`·`pkg/testkit`) · `chainbench-component-architecture.md`(2: `pkg/core/place`) 전부 `internal/…` 로 정정. `worklist`/`audit` 의 `pkg/` 언급은 마이그레이션 자체를 서술하므로 유지. **경로가 아니라 판정이 낡은 건은 T6.5b**(§2b 실측 매트릭스).
 - ☑ **T6.5b component-architecture §2b 실측 매트릭스 갱신** §2b 판정이 낡았던 것(`place` 없음·`procman` 미배선·용량검증·upload-if-absent·로컬 tail·bp참여/reorg 없음)을 **현재(#225) 열로 전부 해소 표기**(#225). 후속 정합(이 검토): §3 C-테이블에 남아있던 stale 델타(C1 "어휘 △"·C3 "게이트 △"·C4 "원격 tail ✗")를 #225 반영으로 갱신 + §2b 컬럼 헤더 `#224`→`#225`.
 - ☑ **T6.1 Capabilities** spec `requires: [cap...]` 필드 + 엔진 capability 게이팅: `satisfies`/`applicableWithCaps`(체인 매칭 ∧ 필요 capability ⊆ 타깃 제공). NewLocalEngine 은 `localCapabilities`(manifest.Capabilities + "ws"), NewAttachEngine 은 `["rpc"]` 를 제공집합으로. 미충족 spec 은 skip(fail 아님). 단위(satisfies 4케이스·applicableWithCaps) + attach mock RPC e2e(ws 요구 spec → rpc-only attach 에서 skip). `requires` 는 env 를 바꾸지 않으므로 fingerprint 미포함. · ☑ **T6.2 MCP 결과연동**(F14) `chainbench_run` MCP 도구 — attach 모드로 DSL spec 실행 후 session 판정 반환(CLI `run` 의 MCP 대응). `engine.ReadSessionSummary`(session.json 단일 리더)를 CLI·MCP 가 공유(중복 제거). attach+mock RPC 로 CI 테스트(pass=1·인자 검증). · ☑ **T6.3 dashboard**(F15) — 엔진 오케스트레이션이 obs 이벤트 emit(`Deps.Emit`/`Network`, nil-safe no-op): run started·building environment·environment reused·running spec·spec `<status>`·run complete. `NewLocalEngine`/`NewAttachEngine` 가 `Bus` 옵션으로 배선, `chainbench run --dashboard <url>` 가 `dashboard.Forward` 로 chainbench-dashboard `/api/events` 에 스트리밍(종료 시 flush). 엔진 emit 단위 + attach mock RPC → Forward → dashboard.Server end-to-end CI 테스트. obs.Bus 백프레셔(bounded buffer·drop-on-full)로 관측이 실행을 막지 않음. ☑ **완료 세션 디스크 조회**(F15 AC3): `session.List`/`SessionFilePath`/`ChainstatePaths`(레이아웃 소유자) + dashboard `/api/sessions`·`/api/sessions/{id}`(session.json 판정)·`/api/sessions/{id}/chainstate`(chainstate.jsonl → JSON 배열), id 는 단일 세그먼트 검증(traversal 방지), `chainbench-dashboard -artifact-root` 로 활성화(httptest 검증). · ◐ **T6.4** 백프레셔(O7)·`-race` 게이트(O6)·CLI 정리. ☑ **`-race` 게이트**: CI test 잡을 `go test -race ./...` 로(경합 CI 상시 검출; 풀런 ~71s 로 기존과 동등 — 느린 `verify` 테스트가 CPU 아닌 대기 바운드). ☑ **백프레셔(O7)** obs.Bus 는 bounded buffer(256)·drop-on-full(non-blocking select)·`Dropped` 카운터로 이미 구현 — 회귀 테스트 추가(느린 구독자에서 blocking 없이 drop·정확한 카운트 검증). · ☑ **CLI 엔진 배선**: `chainbench run [spec.json…]` 명령 — `--rpc`(attach: `NewAttachEngine`) 또는 `--binary`(local: `NewLocalEngine`) 로 DSL spec 을 엔진에 실행, `session.json` 요약 출력·실패 시 non-zero exit. attach+mock RPC 로 CI 테스트(pass=1·실패 non-zero·모드 검증). → 재설계 엔진이 CLI 에서 도달 가능. ☑ **기계 판독 출력**: `run --json`(세션 판정: session 경로+tests+pass/fail/blocked/skip)·`validate --json`(per-spec spec/id/ok/result 배열) — exit code(F16-O5)와 함께 무인 CI 게이팅 완성. 단위검증(JSON 파싱·필드).
