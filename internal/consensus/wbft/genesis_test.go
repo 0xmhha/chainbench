@@ -142,3 +142,80 @@ func wbftGenesisParams() GenesisParams {
 		},
 	}
 }
+
+// sizingTmpl carries only the two sizing placeholders, so a failure points at the
+// derivation rather than at anything else in a genesis.
+const sizingTmpl = `{"config":{"chainId":__CHAIN_ID__,"croissant":{"wBFT":{` +
+	`"epochLength":__EPOCH_LENGTH__,"targetValidators":__TARGET_VALIDATORS__},` +
+	`"init":{"validators":"__VALIDATORS_JSON__","blsPublicKeys":"__BLS_PUBLIC_KEYS_JSON__"}}},` +
+	`"extraData":"__EXTRA_DATA__"}`
+
+// sizingOf builds sizingTmpl for n validators and returns (targetValidators,
+// epochLength) as the genesis declares them.
+func sizingOf(t *testing.T, n int) (int, int) {
+	t.Helper()
+	vals := make([]string, n)
+	keys := make([]string, n)
+	for i := range vals {
+		vals[i] = "0xaaa"
+		keys[i] = "0x111"
+	}
+	out, err := BuildGenesis([]byte(sizingTmpl), GenesisParams{
+		ChainID: 8283, Validators: vals, BLSKeys: keys, ExtraData: "0xdeadbeef",
+	})
+	if err != nil {
+		t.Fatalf("BuildGenesis with %d validators: %v", n, err)
+	}
+	var g struct {
+		Config struct {
+			Croissant struct {
+				WBFT struct {
+					EpochLength      int `json:"epochLength"`
+					TargetValidators int `json:"targetValidators"`
+				} `json:"wBFT"`
+			} `json:"croissant"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(out, &g); err != nil {
+		t.Fatalf("output not valid JSON: %v\n%s", err, out)
+	}
+	return g.Config.Croissant.WBFT.TargetValidators, g.Config.Croissant.WBFT.EpochLength
+}
+
+// TestBuildGenesis_TargetValidatorsIsTheSetItDeclares: the template used to carry
+// a literal 1, so a genesis naming fifteen validators asked go-wbft for a set of
+// one. go-wbft cuts the stake-sorted candidate list at targetValidators, so the
+// first epoch that decided a set would have collapsed it to a single node.
+func TestBuildGenesis_TargetValidatorsIsTheSetItDeclares(t *testing.T) {
+	for _, n := range []int{1, 4, 15, 30} {
+		target, _ := sizingOf(t, n)
+		if target != n {
+			t.Errorf("%d validators declared but targetValidators is %d", n, target)
+		}
+	}
+}
+
+// TestBuildGenesis_EpochIsNeverShorterThanTheTargetSet: go-wbft rejects a config
+// whose epochLength is below targetValidators ("epochLength must be greater than
+// or equal to targetValidators"), so raising one without the other produces a
+// genesis the node refuses.
+func TestBuildGenesis_EpochIsNeverShorterThanTheTargetSet(t *testing.T) {
+	for _, n := range []int{1, 4, 10, 15, 30} {
+		target, epoch := sizingOf(t, n)
+		if epoch < target {
+			t.Errorf("%d validators: epochLength %d is shorter than targetValidators %d, which go-wbft rejects", n, epoch, target)
+		}
+	}
+}
+
+// TestBuildGenesis_SmallSetsKeepTheTemplateEpoch: the derivation must not shorten
+// the epoch a small set had. Ten was the template's literal, and an epoch of four
+// blocks would change how often a four-validator chain re-decides its set for no
+// reason connected to this fix.
+func TestBuildGenesis_SmallSetsKeepTheTemplateEpoch(t *testing.T) {
+	for _, n := range []int{1, 4, 10} {
+		if _, epoch := sizingOf(t, n); epoch != minEpochLength {
+			t.Errorf("%d validators: epochLength %d, want the floor %d", n, epoch, minEpochLength)
+		}
+	}
+}

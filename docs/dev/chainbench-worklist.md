@@ -1549,6 +1549,96 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     `0xf9593d…`, 21~30 은 wbft validator 3명 이상이 교대. DSL 경로도 같은 함수를 타므로
     (`testengine/compose.go:645`) 자동 적용된다. 실패 가능함을 단위 테스트 5건으로 고정했다.
   - 로컬 경로 회귀 없음: 로컬 핸드오프도 `handoff confirmed: head 22` 로 완주.
+- [x] **G3. 15+15 핸드오프 — 완료·라이브 검증 (2026-09-11).** docker 15대에
+  **wemix 노드 15대 + wbft 노드 15대**, 서버 1대당 각 1대씩. 할당기는 이미 요청한 대로
+  동작한다 — slot-major 로 서버 1~15 에 slot 1 을 주고, 다시 서버 1 로 돌아와 **포트만
+  바꿔** slot 2 를 준다(plan 1~15 = p2p 30301/http 8601, plan 16~30 = p2p 30304/http 8602).
+  제네시스는 **1개 파일**이다: wemix 제네시스를 base 로 `config.croissant` 섹션만 병합한
+  것으로, 15대 전 서버에서 md5 동일(`340b27d7…`), croissant.init 에 validator 15명과 BLS
+  키 15개. `profiles/wemix-upgrade-15.yaml` 신설(골든 1+4 프로파일은 손대지 않았다).
+  - **확인한 결과** — `handoff confirmed: head 50; blocks 21-50 all sealed by the
+    successor set, across 15 of 15 validator(s)`. RPC 로 따로 읽은 것: 블록 19 는 boot
+    wemix producer `0xfa119c06…`, 블록 20 부터는 wbft validator, **producer 자신의 head 는
+    19 에서 멈춘다**(설계대로). 컨테이너마다 프로세스는 정확히 `gwemix` 1개 + `gwbft` 1개.
+  - **관측 창을 집합 크기에 맞췄다.** 10블록 고정이면 아무리 많아도 최대 10명만 보인다 —
+    15명 세트가 "10 of 15" 로 보고됐고 그보다 더 보고할 수가 없었다. 창은 이제 `2n`
+    (최소 10)이고, **DISTINCT 봉인자가 wbft 자신의 정족수 `floor(2n/3)+1` 이상**이어야
+    한다. "모든 블록이 집합 소속"은 한 명이 전부 봉인해도 성립하므로 집합이 생산한다는
+    주장이 못 된다. 전원(n명) 요구는 라운드 체인지 한 번에 실패하므로 쓰지 않는다.
+  - **`--all-servers` 가 단독으로 동작하지 않았다.** CLI 가드가 `--server` 만 알아서
+    `--data-dir is required` 로 막혔고, 통과시켜도 app 안에서 `a data dir is required` 로
+    죽었다. base target 은 이제 **배치가 답한다** — placement 의 첫 노드가 앉은 머신이
+    workspace-config 의 data root 를 소유하는 서버다(`firstPlacedServer`). `--server` 를
+    나란히 적을 필요가 없어졌다.
+  - **DSL 쪽 단정도 같은 강도로 올렸다.** `miner NotEqual <producer>` 는 **세상의 다른 모든
+    주소**를 통과시킨다. `assert.In`(멤버십, 집합이 `is` 쪽·주소 대소문자 무시·빈 집합은
+    거부)을 더하고 `tests/tc/go-wemix/handoff/01-*.json` 이 선언된 successor 집합을 쓰게 했다.
+  - **profile 의 `extra_data` 는 핸드오프에서 무효다(실측).** 병합은 `config.croissant`
+    섹션만 들어올리므로 wbft 제네시스의 top-level extraData 는 버려지고, 병합 파일은 wemix
+    템플릿의 것을 유지한다(ASCII `"chainbench handoff…"` 149바이트). validator 집합은
+    `croissant.init` 으로 들어간다. 프로파일 주석을 사실에 맞게 고쳤다.
+  - **`targetValidators` 고정값 해결 — 완료·라이브 검증 (2026-09-11).** 제네시스 템플릿의
+    `targetValidators`·`epochLength` 를 플레이스홀더로 바꿔 **validator 수에서 파생**시켰다
+    (`__TARGET_VALIDATORS__` = n, `__EPOCH_LENGTH__` = max(10, n)). 둘을 함께 파생시키는
+    이유는 go-wbft 가 `epochLength >= targetValidators` 를 강제하기 때문에 하나만 올리면
+    제네시스가 거부되기 때문이다. 값이 한 곳에서만 결정되므로 wbft 단독 체인 경로와 핸드오프
+    경로가 갈라지지 않는다.
+    - 라이브 3건. **15+15 핸드오프**: 병합 제네시스 `targetValidators: 15, epochLength: 15`,
+      `handoff confirmed: head 50; … across 15 of 15 validator(s)`, epoch 경계가 10블록에서
+      15블록 간격(블록 20·35·50)으로 옮겨진 것까지 확인. **wbft 4노드**(골든 경로, 로컬):
+      `targetValidators: 4, epochLength: 10`, `wbft-chain-up pass`. **wbft 15노드**(docker,
+      bp 13): `targetValidators: 13, epochLength: 13`, `wbft-chain-up-15 pass`.
+    - 테스트 5건. 파생 자체(집합 크기 일치·`epochLength >= targetValidators`·작은 집합은
+      바닥 10 유지)와 **출하 템플릿이 실제로 플레이스홀더를 들고 있는지**를 따로 고정했다 —
+      후자가 없으면 파생이 맞아도 도달하지 않는다(이 브랜치 전체가 그 실패 양식이었다).
+      변이 3건으로 실패 가능함을 증명했다.
+    - 남은 것은 **R7** 로 분리했다: `stabilizingStakersThreshold` 는 5 고정 그대로이고,
+      그래서 epoch 재결정 경로 자체가 아직 한 번도 실행된 적이 없다.
+  - **(위 문제의 진단 기록)**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합 크기와
+    무관하게 **1 로 고정**이고, 병합 결과에도 1 로 남는다. 출처는 go-wbft 상류의 플레이스홀더
+    (`params/config.go` 의 `TargetValidators: newUint64(1), // TODO: define validators`)이며,
+    chainbench 템플릿은 최초 커밋(#16)부터 그 값을 그대로 들고 있다.
+    - **처음에 "useNCP 가 꺼져 있어 읽히지 않는다"고 적었는데 그건 틀렸다.** `UseNCP` 는
+      staker 를 어디서 읽을지만 고른다(`engine.GetStakers`). epoch 경계의
+      `decideValidators(…, TargetValidators)` 는 NCP 와 무관하게 돈다.
+    - **실제 이유는 체인이 안정화 단계를 벗어나지 않기 때문이다.** genesis epoch 는
+      `Stabilizing = true` 로 시작하고(`consensus/wbft/config.go:264`), 안정화 중에는
+      `newEpoch.Validators = latestEpochInfo.Validators` 로 직행해 `decideValidators` 를
+      아예 부르지 않는다. 벗어나는 조건은 GovStaking 컨트랙트의 staker 수가
+      `stabilizingStakersThreshold`(템플릿 5) 이상이 되는 것인데, 핸드오프에서는 producer 가
+      **wemix** 거버넌스에 스테이킹했을 뿐 wbft GovStaking 에는 아무도 스테이킹하지 않는다.
+      라이브 실측: 블록 30·100·2000 모두 `stabilizing: true`, stakers 15 / validators 15.
+    - **벗어나는 순간 validator 가 1명으로 줄어든다.** `decideValidators` 는 stake 내림차순
+      정렬 후 `indices[:targetValidators]` 로 자른다(`engine.go:1287`). 따라서 이것은 무해가
+      아니라 **아직 도달하지 않은** 경로다.
+    - **고칠 때 같이 봐야 하는 제약**: `params/config_wbft.go:130` 이
+      `epochLength >= targetValidators` 를 강제한다. 템플릿의 `epochLength` 는 10 이므로
+      `targetValidators: 15` 만 바꾸면 제네시스 검증에서 거부된다. 둘을 함께 올려야 한다.
+- [ ] **R7. epoch 재결정 경로가 한 번도 실행되지 않았다.** wbft 는 epoch 경계마다
+  validator 집합을 다시 정하는데(`decideValidators`), chainbench 가 만드는 체인은 그 경계에
+  **도달하지 않는다.** genesis epoch 가 `Stabilizing = true` 로 시작하고, 안정화 중에는
+  `newEpoch.Validators = latestEpochInfo.Validators` 로 직행해 재결정을 건너뛴다. 벗어나는
+  조건은 wbft `GovStaking` 의 staker 수가 `stabilizingStakersThreshold`(템플릿 5) 이상이
+  되는 것인데, 핸드오프에서 producer 는 **wemix** 거버넌스에 스테이킹하고 wbft 쪽에는
+  아무도 하지 않는다. 라이브 실측(15+15, `istanbul_getWbftExtraInfo`): 관측한 모든 epoch
+  경계에서 `stabilizing: true`.
+  - **왜 남겨두면 안 되는가.** `targetValidators` 를 집합 크기에서 파생시킨 것(G3)은 제네시스가
+    **수용되는지**까지만 라이브로 확인했다. 그 값이 실제로 쓰이는 곳은 재결정 경로 하나뿐이라,
+    파생이 의도대로 동작하는지는 아직 관측되지 않았다. 지금 상태에서 회귀가 생기면 안정화를
+    벗어나는 첫 체인에서야 드러난다.
+  - **기존 커버리지의 경계.** `TestWemixGovernanceStabilizingE2E`(`cmd/chainbench/
+    upgrade_gov_staking_e2e_test.go`)가 **below-threshold 분기만** 검증한다. 테스트 주석이
+    이유를 적어 뒀다 — `stabilizing -> false` 로 넘기려면 staker 를 문턱까지 올려야 하고,
+    그건 useNCP 기반 선출과 거버넌스 NCP 7개, 즉 최소 핸드오프 preset 보다 많은 펀딩된
+    계정을 요구한다.
+  - **하려면 무엇이 필요한가.** (1) wbft `GovStaking` 에 문턱 이상(5명)이 스테이킹하도록 계정을
+    펀딩·등록, (2) epoch 경계를 하나 넘기고 `istanbul_getWbftExtraInfo` 로 `stabilizing: false`
+    확인, (3) 그 시점의 validator 수가 **집합 크기 그대로**(`targetValidators` 로 잘리지 않음)
+    인지 단정. 15+15 프로파일은 producer 15명이 이미 펀딩돼 있어(handoffBalance) 계정 수는
+    문제가 아니다 — wbft 쪽 `stake()` 를 태우는 절차가 없는 것이 문제다.
+  - **판단이 필요한 선택지.** 문턱을 낮춰(예: 1) 재결정을 빨리 관측할 수도 있지만, 그러면
+    체인이 epoch마다 집합을 다시 정하므로 다른 케이스들의 안정성 가정이 바뀐다. 문턱은 집합
+    크기가 아니라 운영 파라미터라 G3 의 파생에 넣지 않았다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
 - [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에

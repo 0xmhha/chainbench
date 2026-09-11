@@ -1089,7 +1089,10 @@ func TestWemixGovernanceCredentialExpiryE2E(t *testing.T) {
 
 // stabilizingStakersThreshold is the wbft test genesis'
 // croissant.wBFT.stabilizingStakersThreshold — the staker count at or above which
-// the epoch leaves the stabilizing stage. Kept in sync with pkg/chains/wbft/genesis.json.
+// the epoch leaves the stabilizing stage. Kept in sync with
+// internal/chains/wbft/genesis.json, which is a literal there: unlike
+// targetValidators and epochLength it is not derived from the validator set,
+// because it is a threshold for leaving a stage rather than a size (worklist R7).
 const stabilizingStakersThreshold = 5
 
 // TestWemixGovernanceStabilizingE2E ports the reachable core of wemix4 GOV-010
@@ -1102,8 +1105,9 @@ const stabilizingStakersThreshold = 5
 // than asserting it in isolation.
 //
 // EpochInfo is only present on epoch-boundary blocks (multiples of epochLength,
-// which is 10 here; the fork lands on block 20), so this queries a boundary block
-// rather than "latest". The stabilizing->false transition needs the staker count
+// which is 10 here — this profile declares four validators and epochLength is
+// derived as max(10, validators); the fork lands on block 20), so this queries a
+// boundary block rather than "latest". The stabilizing->false transition needs the staker count
 // pushed to >= threshold, which in turn needs useNCP-driven validator selection
 // and 7 governance NCPs — more distinct funded accounts than the minimal handoff
 // preset carries — so only the below-threshold branch is ported here.

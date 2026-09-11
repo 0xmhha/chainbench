@@ -40,6 +40,25 @@ const (
 	phBLSKeys    = "__BLS_PUBLIC_KEYS_JSON__"
 	phExtraData  = "__EXTRA_DATA__"
 
+	// Consensus sizing derived from the validator set. Both sit in JSON value
+	// position (bare numbers).
+	//
+	// targetValidators is how many validators an epoch keeps, and go-wbft cuts
+	// the stake-sorted candidate list at it (consensus/wbft/engine: decideValidators
+	// does indices[:targetValidators]). The template carried a literal 1 — the
+	// placeholder go-wbft itself ships with a "TODO: define validators" — which
+	// meant a genesis declaring fifteen validators asked for a set of one. It
+	// stayed invisible only because a fresh chain never leaves the stabilization
+	// stage, where the epoch copies the previous set instead of deciding one; the
+	// first epoch that did decide would collapse the set to a single node.
+	//
+	// epochLength appears with it because go-wbft rejects a config whose epoch is
+	// shorter than its target set (params/config_wbft.go: "epochLength must be
+	// greater than or equal to targetValidators"), so the two cannot be set apart
+	// from each other.
+	phTargetValidators = "__TARGET_VALIDATORS__"
+	phEpochLength      = "__EPOCH_LENGTH__"
+
 	// System-contract (anzeon) placeholders. Each sits inside a JSON string
 	// value ("params" entries are string→string), so it is substituted in
 	// bare form with a comma-separated address/key list.
@@ -50,6 +69,12 @@ const (
 	// Alloc placeholder sits in JSON value position (unquoted object).
 	phAlloc = "__ALLOC_JSON__"
 )
+
+// minEpochLength is the epoch a small validator set gets. It is the length the
+// template carried as a literal, kept so a set smaller than it is unaffected by
+// the derivation; a larger set raises the epoch to its own size because the
+// config is otherwise rejected.
+const minEpochLength = 10
 
 // BuildGenesis substitutes the wbft-family placeholders in template with params
 // and returns the resulting JSON, erroring if the result is not valid JSON.
@@ -83,6 +108,16 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 
 	out := string(template)
 
+	// One validator's worth of sizing per validator declared. Deriving both from
+	// the same count is the point: they are two spellings of the set's size, and
+	// the defect was a template that spelled it "1" while the init section
+	// spelled it fifteen.
+	targetValidators := len(p.Validators)
+	epochLength := targetValidators
+	if epochLength < minEpochLength {
+		epochLength = minEpochLength
+	}
+
 	// System-contract templates (anzeon) require a governance member set. Fail
 	// early with a clear message rather than emitting an empty members list the
 	// node would later reject.
@@ -98,6 +133,8 @@ func BuildGenesis(template []byte, p GenesisParams) ([]byte, error) {
 	out = strings.ReplaceAll(out, phBLSKeys, string(blsJSON))
 	out = strings.ReplaceAll(out, `"`+phExtraData+`"`, strconv.Quote(extraData))
 	out = strings.ReplaceAll(out, phExtraData, extraData)
+	out = strings.ReplaceAll(out, phTargetValidators, strconv.Itoa(targetValidators))
+	out = strings.ReplaceAll(out, phEpochLength, strconv.Itoa(epochLength))
 
 	// System-contract list placeholders (bare, inside JSON string values).
 	out = strings.ReplaceAll(out, phSCValidators, strings.Join(p.Validators, ","))

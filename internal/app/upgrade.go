@@ -97,8 +97,44 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	// something. A remote handoff names paths on the server; looking those up in
 	// the operator's own PATH is how the first remote run failed, reporting a
 	// binary "not found" that was sitting on the target all along.
-	var acc *resource.Access
-	if in.Server.Name != "" {
+	//
+	// Placement comes before the target for the same reason in reverse: with
+	// --all-servers the set names every machine, so the base target is not a
+	// flag the operator repeats but the machine the first node landed on.
+	// Requiring --server beside --all-servers asked for a fact the placement
+	// already knew, and omitting it failed with "a data dir is required".
+	var (
+		acc      *resource.Access
+		placed   *node.Map
+		machines func(int) (filestore.Store, process.Driver, error)
+		dialURL  func(string, int) (string, error)
+	)
+	if in.Server.Name != "" || in.AllServers {
+		placed, err = placeHandoff(d, in, prof.Roles.Producers+prof.Roles.Validators)
+		if err != nil {
+			return UpgradeRunOut{}, err
+		}
+		// The opener is the one place an address becomes reachable: it applies the
+		// localmap under --docker and leaves a real server's address alone. The
+		// handoff dialled the node's own address before, which under --docker is
+		// the container's and answers to nobody else.
+		opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
+		dialURL = opener.HTTPEndpoint
+		// Each node's machine, resolved from the server the placement put it on.
+		// Without this a driver bound to one host runs every node there, whatever
+		// the plan says: the composition path has resolved per node since it
+		// started placing networks across a set, and this is the same seam.
+		machines, err = handoffMachines(d, in, placed, opener)
+		if err != nil {
+			return UpgradeRunOut{}, err
+		}
+		if in.Server.Name == "" {
+			name, err := firstPlacedServer(in, placed)
+			if err != nil {
+				return UpgradeRunOut{}, err
+			}
+			in.Server.Name = name
+		}
 		acc, err = openHandoffTarget(d, in)
 		if err != nil {
 			return UpgradeRunOut{}, err
@@ -132,28 +168,11 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	// port nothing answered on. Drawing from the set puts the nodes on that
 	// server's slots, whose ports the set already declares and the fleet already
 	// maps.
-	if in.Server.Name != "" || in.AllServers {
-		placed, err := placeHandoff(d, in, prof.Roles.Producers+prof.Roles.Validators)
-		if err != nil {
-			return UpgradeRunOut{}, err
-		}
+	if placed != nil {
 		hi.Placement = placed
 		hi.MultiMachine = spansHosts(placed)
-		// The opener is the one place an address becomes reachable: it applies the
-		// localmap under --docker and leaves a real server's address alone. The
-		// handoff dialled the node's own address before, which under --docker is
-		// the container's and answers to nobody else.
-		opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
-		hi.DialURL = opener.HTTPEndpoint
-		// Each node's machine, resolved from the server the placement put it on.
-		// Without this a driver bound to one host runs every node there, whatever
-		// the plan says: the composition path has resolved per node since it
-		// started placing networks across a set, and this is the same seam.
-		mach, err := handoffMachines(d, in, placed, opener)
-		if err != nil {
-			return UpgradeRunOut{}, err
-		}
-		hi.Machine = mach
+		hi.DialURL = dialURL
+		hi.Machine = machines
 	}
 	if acc != nil {
 		hi.Host = acc.Spec.Host
@@ -317,7 +336,7 @@ func UpgradeGenesis(_ Deps, profilePath, fromGenesisPath string) (UpgradeGenesis
 // an error naming the missing file rather than a resolution failure further down.
 func openHandoffTarget(d Deps, in UpgradeRunIn) (*resource.Access, error) {
 	if in.WorkspaceConfigPath == "" {
-		return nil, fmt.Errorf("upgrade run: --workspace-config is required with --server (it owns the target data root)")
+		return nil, fmt.Errorf("upgrade run: --workspace-config is required with --server/--all-servers (it owns the target data root)")
 	}
 	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
 	if err != nil {
@@ -389,19 +408,27 @@ func spansHosts(m *node.Map) bool {
 	return len(seen) > 1
 }
 
-// handoffMachines resolves a file store and a driver for each placed node, by the
-// server its address belongs to.
-//
-// The placement records an address, and a server set maps an address back to the
-// entry that owns its credentials — so the lookup goes address -> server name ->
-// Access, and each Access is opened once and shared by the nodes on that machine.
-func handoffMachines(d Deps, in UpgradeRunIn, placed *node.Map, opener resource.Opener) (
-	func(int) (filestore.Store, process.Driver, error), error,
-) {
-	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+// firstPlacedServer names the server the handoff's first node landed on. With
+// --all-servers there is no --server to read the base target from, and every
+// machine in the set is equally a target, so the plan's own first node decides:
+// its machine is the one whose workspace-config owns the data root and whose
+// PATH a bare binary name is looked up on.
+func firstPlacedServer(in UpgradeRunIn, placed *node.Map) (string, error) {
+	names, err := serverNamesByIndex(in, placed)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+	name, ok := names[0]
+	if !ok {
+		return "", fmt.Errorf("upgrade run: the placement has no node1, so there is no server to take the data root from")
+	}
+	return name, nil
+}
+
+// serverNamesByIndex maps each placed node's zero-based index to the name of the
+// server set entry that owns its address. The placement records an address; the
+// credentials, and therefore the Access, belong to the named entry.
+func serverNamesByIndex(in UpgradeRunIn, placed *node.Map) (map[int]string, error) {
 	setPath := in.Server.SetPath
 	if setPath == "" {
 		setPath = resource.DefaultSetFile
@@ -421,6 +448,26 @@ func handoffMachines(d Deps, in UpgradeRunIn, placed *node.Map, opener resource.
 			return nil, fmt.Errorf("upgrade run: %s was placed at %s, which the server set does not name", pl.Label, pl.Host)
 		}
 		byIndex[pl.Index-1] = name
+	}
+	return byIndex, nil
+}
+
+// handoffMachines resolves a file store and a driver for each placed node, by the
+// server its address belongs to.
+//
+// The placement records an address, and a server set maps an address back to the
+// entry that owns its credentials — so the lookup goes address -> server name ->
+// Access, and each Access is opened once and shared by the nodes on that machine.
+func handoffMachines(d Deps, in UpgradeRunIn, placed *node.Map, opener resource.Opener) (
+	func(int) (filestore.Store, process.Driver, error), error,
+) {
+	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	byIndex, err := serverNamesByIndex(in, placed)
+	if err != nil {
+		return nil, err
 	}
 	cache := map[string]*resource.Access{}
 	return func(i int) (filestore.Store, process.Driver, error) {

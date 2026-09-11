@@ -171,7 +171,11 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 `compare` 에 쓸 수 있는 것은 16개다.
 
-`Equal` `NotEqual` `EqualCI` `Len` `Greater` `GreaterOrEqual` `Less` `LessOrEqual` `Contains` `NotContains` `Regexp` `True` `False` `Nil` `NotNil` `ElementsMatch`
+`Equal` `NotEqual` `EqualCI` `Len` `Greater` `GreaterOrEqual` `Less` `LessOrEqual` `Contains` `NotContains` `In` `Regexp` `True` `False` `Nil` `NotNil` `ElementsMatch`
+
+`In` 은 멤버십이고, 집합이 `is` 쪽에 온다(`Contains` 는 컨테이너가 앞에 오는 반대 방향이다).
+주소는 대소문자를 무시하며, 빈 집합은 아무것도 통과시키지 않는다. "이 주소가 아니다"를
+`NotEqual` 로 쓰면 세상의 다른 모든 주소가 통과하므로, 허용 집합이 있으면 `In` 을 쓴다.
 
 `derive` 의 `op` 는 다섯 가지다. `sum` `diff` `word` `quorum` `abiCall`.
 

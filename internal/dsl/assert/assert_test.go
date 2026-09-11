@@ -1,6 +1,7 @@
 package assert_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/dsl/assert"
@@ -131,5 +132,57 @@ func TestLookup(t *testing.T) {
 	}
 	if _, ok := assert.Lookup("NoSuchAssert"); ok {
 		t.Fatal("unknown assert must not resolve")
+	}
+}
+
+// TestIn_IsMembershipWithTheSetOnTheExpectedSide is the comparator the handoff
+// case needed. "NotEqual <the producer>" is satisfied by every address that is
+// not the producer, so a chain handed to a stranger passed; In names the set the
+// sealer has to belong to.
+func TestIn_IsMembershipWithTheSetOnTheExpectedSide(t *testing.T) {
+	set := []any{"0xaaa1", "0xbbb2", "0xccc3"}
+	if pass, why := assert.In("0xbbb2", set); !pass {
+		t.Errorf("a member of the set should pass: %s", why)
+	}
+	if pass, _ := assert.In("0xdead", set); pass {
+		t.Error("an address outside the set was admitted")
+	}
+}
+
+// TestIn_IgnoresAddressCasing: the set is written in the spec and the value comes
+// back from an RPC, which may checksum-case it. A casing difference is not a
+// different validator.
+func TestIn_IgnoresAddressCasing(t *testing.T) {
+	if pass, why := assert.In("0xAbC1", []any{"0xabc1"}); !pass {
+		t.Errorf("casing should not decide membership: %s", why)
+	}
+}
+
+// TestIn_RefusesAnEmptySet guards the comparator itself: an empty allowed-set
+// must admit nothing. Read as "no constraint" it would pass every value, which is
+// the same vacuous-truth hole the handoff's own successor check had to close.
+func TestIn_RefusesAnEmptySet(t *testing.T) {
+	pass, why := assert.In("0xabc1", []any{})
+	if pass {
+		t.Fatal("an empty allowed-set admitted a value")
+	}
+	if !strings.Contains(why, "at least one allowed value") {
+		t.Errorf("the refusal should say the set is empty: %s", why)
+	}
+}
+
+// TestIn_RefusesANonSliceExpected: the set has to be a list. A bare string would
+// otherwise be compared as one value and quietly behave like Equal.
+func TestIn_RefusesANonSliceExpected(t *testing.T) {
+	if pass, why := assert.In("0xabc1", "0xabc1"); pass || !strings.Contains(why, "slice") {
+		t.Errorf("a non-slice expected should be refused as such: pass=%v why=%s", pass, why)
+	}
+}
+
+// TestIn_IsRegistered: the spec reaches comparators by name, so an unregistered
+// one is unreachable from a case file however correct it is.
+func TestIn_IsRegistered(t *testing.T) {
+	if _, ok := assert.Lookup("In"); !ok {
+		t.Error(`assert.Lookup("In") found nothing, so no case file can use it`)
 	}
 }
