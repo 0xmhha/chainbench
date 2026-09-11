@@ -42,7 +42,10 @@ tractable first:
 4. GOV-021 delayed fee change — **ported** (`TestWemixGovernanceFeeChangeDelayedE2E`:
    with a delegator, requestChangingFee records a pending request and does NOT
    apply the fee immediately; the execute-after-`changeFeeDelay` half is not
-   waited out). GOV-023 credential expiry still needs the unbonding window. *Partly done.*
+   waited out). *Done.* GOV-023 credential expiry, which this line once listed as
+   outstanding, is **ported** too — `TestWemixGovernanceCredentialExpiryE2E`, with
+   a short unbonding window (staker 15s / delegator 5s) in the test genesis making
+   the per-credential expiry waitable. See the GOV table.
 5. **GOV-005 / GOV-009 / GOV-010 + RPC-023** — **resolved** (all ported). GOV-010
    (below-threshold stabilizing) and RPC-023 (isValidator) were reachable directly;
    GOV-005 (staker→validator growth) and GOV-009 (non-NCP staker excluded) are
