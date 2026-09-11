@@ -1291,6 +1291,22 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
   - **남은 공백**: compose(키→제네시스→config→provision)를 바이너리 없이 지나는 testengine
     통합 테스트는 여전히 없다. `chainsetup` 쪽은 스텁 드라이버로 CI 에서 돌고 있다
     (`reuse_up_test.go`). 그래서 원래 문구의 "compose→run→report" 중 **compose 만** 남는다.
+  - **이어서 (2026-09-12): 커버리지 숫자만으로는 어디를 칠지 못 정한다.** `internal/app` 이
+    11.4% 인데 함수 135개 중 118개가 0% 다. 배선 계층이라 **그 대부분은 통과시키기만 하는
+    함수**이고, 숫자를 따라가면 값 없는 곳에 테스트를 쓰게 된다.
+    - **그래서 판정 밀도로 줄을 세웠다**: 0% 함수마다 본문의 분기(`if`/`switch`/`for`) 수와
+      거부(`fmt.Errorf`/`errors.New`) 수를 세어 `분기 + 2×거부` 로 정렬했다. 거부에 가중치를
+      두는 이유는, **틀렸을 때 실패하지 않고 잘못된 일을 하는 자리**가 거부가 많은 자리이기
+      때문이다. 상위: `UpgradeRun`(23)·`AttachRun`(16)·`TxWait`(15)·`uploadDests`(13)·
+      `transferSource`(11).
+    - **`transfer.go` 의 목적지 결정을 골랐다** — 순수 함수라 I/O 없이 표로 덮이고,
+      **파일이 남의 기계 어디에 쓰이는지**를 정한다. 업로드가 잘못된 경로로 풀리면 실패하지
+      않고 **쓴다**.
+    - 결정표 2개(각 6~7 케이스) + 성질 2개를 붙였다. 성질 쪽이 더 값지다: 업로드는
+      **base name 만** 서버에 닿으므로 로컬 디렉터리 구조가 재현되지 않고 `../../../etc/passwd`
+      가 `passwd` 로 납작해진다. 다운로드의 `--name` 은 용도 폴더를 벗어날 수 없다.
+    - 변이 2건(`--remote` 가 여러 파일을 받게 하기·`Base` 대신 전체 경로 쓰기)으로 확인.
+      `internal/app` 11.4% → 21.4%.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
