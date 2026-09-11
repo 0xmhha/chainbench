@@ -168,3 +168,14 @@ func (Family) SupportsRole(role node.Role) bool {
 		return false
 	}
 }
+
+// RingAccounts: a poa-family chain has NO validators in genesis. They are
+// registered at the governance/etcd bootstrap, so the key set fixes node
+// identities and nothing else.
+//
+// It returns no accounts and says why. A roster that simply showed none would
+// look like a key set missing its validators, which is the opposite of the
+// truth: there is nowhere in this family's genesis for them to go.
+func (Family) RingAccounts(_, _, _ []string) ([]registry.RingAccount, string) {
+	return nil, "poa: validators are not in genesis — they are registered at the governance/etcd bootstrap; the key set only fixes node identities."
+}

@@ -1433,7 +1433,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 | **G-A. 커버리지** — ☑ 완료 (2026-09-11) | WA25 ☑ · B 잔여(체인별 거버넌스) ◐ · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
 | **G-B. 증적** — ☑ 완료 (2026-09-11) | L1 ☑(원격 로그 truncate 수정) · 통합 report ☑(`report --all`) · 후보·반영 완전 분리 ☑(표적 정지를 증명) | 셋 다 "실행이 무엇을 남기는가" 다 | 없음 |
 | **G-C. 대상 경계 잔여** — ☑ 대체로 완료 (2026-09-11) | L2 ◐(가르기 완료·전송 제거 남음) · `binaryAliases` ☑(객체형 참조는 남음) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
-| **G-D. 구조 정리** | validatorset 홈 결정 · health 를 inspector 조합으로 재배선 | 둘 다 소유 모듈 결정이고 소비자가 적다. 동작 변화 없이 한 번에 옮긴다 | 없음 |
+| **G-D. 구조 정리** — ☑ 완료 (2026-09-12) | validatorset ☑(패밀리가 자기 지식을 소유) · health→inspector ☑ 철회(공통 기반 없음, 래칫으로 고정) | 둘 다 소유 모듈 결정이고 소비자가 적다 | 없음 |
 | **G-E. 이관** | T5.5 wemix4 DSL 이관 | 단독으로 크다. 다른 묶음과 섞지 않는다 | docker 15대 |
 
 **여기서 할 수 없는 것.** `D. 라이브 MCP 플러그인 재배포` 는 코드가 아니라 배포다.
@@ -1854,11 +1854,39 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     크기가 아니라 운영 파라미터라 G3 의 파생에 넣지 않았다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
-- [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에
-  뒀다. 로스터 계산의 올바른 소유 모듈을 정해야 한다. 소비자는 `cmd` 하나뿐이라 급하지 않다.
-- [ ] **health 를 inspector 조합 레이어로 재배선.** `inspector` 는 판단 없는 atomic
-  프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
-  `health` 는 obs/rpc 를 직접 쓴다.
+- [x] **validatorset 홈 결정 — 완료 (2026-09-12).** "어느 모듈로 옮길까"가 아니라 **무엇을
+  잘못 소유하고 있나**가 답이었다. `validatorset.Load` 가 **합의 패밀리를 문자열로 분기**하고
+  있었다(`switch family { case "wbft": … case "poa": … }`). 이 저장소가 다른 곳에서 래칫으로
+  금지한 바로 그 패턴이다 — 대상에게 묻는 대신 대상을 보고 분기한다.
+  - **패밀리 지식은 패밀리가 소유한다.** `registry.RingAccountReader` 를 더했다 — 이미 있는
+    `GenesisValidatorReader`·`RuntimeValidatorReader` 와 같은 선택적 capability 형태다.
+    wbft 는 validator(+BLS 유무)와 거버넌스 council 을, poa 는 **빈 목록과 이유**를 돌려준다
+    (제네시스에 validator 가 들어갈 자리 자체가 없다 — 그냥 비워 두면 *키가 빠진 키셋*처럼
+    보인다). `validatorset` 은 조합만 남았고, 패키지 자체는 제자리(domain)에 둔다 — code-graph
+    가 이미 `chains`·`consensus`·`accounts` 와 같은 domain 으로 분류하고 있었다.
+  - **default 가 구조적이 됐다.** 전에는 switch 가 모르는 패밀리를 "unknown" 으로 보고했는데,
+    그건 체인이 아니라 **이 패키지**에 대한 사실이었다. 이제 "아직 말하지 않았다"로 바뀐다.
+  - **역할 어휘를 한 곳으로.** `AccountValidator`·`AccountGovernance`·`AccountNode` 를
+    `registry` 로 옮겼다(그 이름들을 담는 타입 곁). `validatorset` 에 중계를 두려다
+    `arch.TestNamesDoNotCollide` 에 걸렸다 — 중계도 두 번째 선언이고, 래칫이 옳았다.
+  - 새 커버리지 래칫: **등록된 모든 패밀리가 이 capability 를 구현해야 한다**
+    (`TestRoster_EveryRegisteredFamilyAnswers`). 구현을 잊으면 로스터가 조용히 노드 신원만
+    보여주는데, 운영자는 그것을 읽고 믿는다. 변이 2건으로 실패 확인. CLI 출력은 세 체인 모두
+    이전과 동일하다(동작 보존 리팩터).
+- [x] **health 를 inspector 조합으로 재배선 — 철회 (2026-09-12).** 두 패키지를 읽으니 **조합할
+  공통 기반이 없다.** `inspector` 는 실행 **전** 대상 환경을 TCP·파일스토어로 묻는다(포트가
+  잡혀 있나·경로가 없나·호스트가 닿나). `health` 는 **체인**이 생산 중인지를 RPC 로 묻고
+  판정한다. health 를 inspector 위에 올리려면 inspector 에 "이 노드들을 RPC 로 샘플링하라"는
+  네 번째 질문을 줘야 하는데, 그건 아무도 요구하지 않고 inspector 자신의 doc 이 배제한다.
+  - **결정을 산문이 아니라 제약으로 남겼다**: `arch.TestInspectorStaysOnTheEnvironmentSide`
+    가 `core/inspector` 의 `core/rpc` import 를 거부한다. 재배선의 첫걸음이 이유와 함께 실패한다.
+    변이로 확인.
+  - **겹치는 것이 없다는 말은 아니다.** 체인 생존을 샘플링하는 곳이 셋이다 — `health`(verify 의
+    판정), `collector`(대시보드 스트림), 엔진의 launch gate. health 의 doc 이 gate 를 분리해
+    두어야 하는 이유를 이미 적어 두었다(하나는 전 노드 보고, 하나는 한 노드로 기동을 막는다).
+    **health 와 collector 가 샘플러를 공유해야 하는가는 진짜 열린 질문**이고, health 는
+    collector 를 Bus(이벤트)로만 쓰므로 오늘 둘은 독립이다. inspector 는 그 질문이 답해지는
+    자리가 아니다.
 - ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
   이미 쓰였다가 "Driver 가 이미 그것이고 구현체가 없다"는 이유로 삭제됐다(철회, 각 절 참고). **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
   e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그

@@ -87,3 +87,27 @@ func (Family) SupportsRole(role node.Role) bool {
 		return false
 	}
 }
+
+// RingAccounts: a wbft-family chain bakes its validator set into genesis, with
+// BLS material per validator, and — where the anzeon system contracts are used —
+// a governance council alongside it. Both come out of the key set, so both are
+// shown; a validator without BLS material is reported rather than hidden,
+// because it is a set that will pass genesis and then fail to sign.
+func (Family) RingAccounts(validators, blsKeys, members []string) ([]registry.RingAccount, string) {
+	out := make([]registry.RingAccount, 0, len(validators)+len(members))
+	for i, addr := range validators {
+		detail := "no BLS"
+		if i < len(blsKeys) && blsKeys[i] != "" {
+			detail = "BLS present"
+		}
+		out = append(out, registry.RingAccount{
+			Role: registry.AccountValidator, Index: i + 1, Address: addr, Detail: detail,
+		})
+	}
+	for _, addr := range members {
+		out = append(out, registry.RingAccount{
+			Role: registry.AccountGovernance, Address: addr, Detail: "system-contract council",
+		})
+	}
+	return out, ""
+}
