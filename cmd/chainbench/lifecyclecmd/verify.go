@@ -42,7 +42,19 @@ func NewVerify() *cobra.Command {
 			rep := res.Report
 
 			out := cmd.OutOrStdout()
+			// Agreement is reported next to producing because the two together are
+			// the verdict: a split network produces on every side of the split, so
+			// "producing: true" alone has answered a question nobody asked. An
+			// unchecked comparison says so rather than reading as agreement.
 			fmt.Fprintf(out, "producing: %v\n", rep.Producing)
+			switch {
+			case !rep.Agreement.Checked:
+				fmt.Fprintf(out, "agreement: not checked (%s)\n", rep.Agreement.Detail)
+			case rep.Agreement.Agreed:
+				fmt.Fprintf(out, "agreement: yes, at block %d\n", rep.Agreement.Height)
+			default:
+				fmt.Fprintf(out, "agreement: NO — %s\n", rep.Agreement.Detail)
+			}
 			w := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
 			fmt.Fprintln(w, "NODE\tRPC\tCHAIN_ID\tBLOCK\tPEERS\tSYNCING\tOK")
 			for _, n := range rep.Nodes {

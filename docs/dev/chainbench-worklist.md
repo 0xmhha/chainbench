@@ -1941,9 +1941,30 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   - **겹치는 것이 없다는 말은 아니다.** 체인 생존을 샘플링하는 곳이 셋이다 — `health`(verify 의
     판정), `collector`(대시보드 스트림), 엔진의 launch gate. health 의 doc 이 gate 를 분리해
     두어야 하는 이유를 이미 적어 두었다(하나는 전 노드 보고, 하나는 한 노드로 기동을 막는다).
-    **health 와 collector 가 샘플러를 공유해야 하는가는 진짜 열린 질문**이고, health 는
-    collector 를 Bus(이벤트)로만 쓰므로 오늘 둘은 독립이다. inspector 는 그 질문이 답해지는
-    자리가 아니다.
+    **health 와 collector 가 샘플러를 공유해야 하는가** — **답: 공유하지 않는다 (2026-09-12).**
+    두 샘플의 교집합은 height·peers 둘뿐이고, health 는 chainId·syncing 을, collector 는
+    headHash·headMiner 를 따로 필요로 한다. 모양도 다르다 — collector 는 주기적으로 폴링하며
+    **이력을 누적**하고(fork 검출·BP 참여 집계가 창을 요구한다), health 는 요청 시 **두 번
+    샘플링해 판정**한다. 합치면 한쪽 로직을 다른 쪽 위에 다시 구현하게 된다. health 의 doc 이
+    launch gate 를 분리해 둔 이유와 같다.
+    - **대신 진짜 결함이 나왔다.** 물으려던 질문("두 샘플러가 무엇을 아는가")을 나란히 놓고
+      보니, **collector 는 분기를 검출하는데 health 는 보지 않았다.** `health.Report` 는
+      `Producing` 과 노드별 상태뿐이었고, `Producing` 은 **primary 노드의 높이가 오르는지**다 —
+      **갈라진 망은 갈라진 양쪽이 모두 생산하므로 그 조건을 만족한다.** 즉 `chainbench verify`
+      가 분기된 망을 healthy 로 보고했다. DSL 에는 `sameBlockHash` 어서션이 이미 있었으니,
+      능력이 없던 게 아니라 **판정에 배선되지 않았다.**
+    - 고쳤다: `health.Agreement` 를 더해 **응답하는 모든 노드가 가진 가장 높은 블록**에서
+      해시를 비교한다. 머리(head)가 아니라 공통 높이인 이유는, 한 블록 뒤처진 노드가
+      **정상적으로** 다른 머리 해시를 갖기 때문이다 — 머리로 비교하면 지연을 분기로 오판한다.
+    - **검사를 못 했을 때 "합의함" 으로 보고하지 않는다.** `Checked` 와 `Agreed` 를 분리했다.
+      노드가 하나뿐이거나, Prober 가 해시를 못 읽거나, 한 노드가 응답을 거부하면 `Checked=false`
+      와 이유를 낸다. 이번 세션에서 반복된 공허한 참(빈 successor 집합·빈 `In` 집합)과 같은 자리다.
+    - **라이브 증명**: 서로 독립인 두 wbft 망의 노드를 섞어 물었다 —
+      `producing: true` / `agreement: NO — block 77 has 2 different hashes — 0x7dd9cf5d3a…: [1];
+      0xa874c0a900…: [2]`. 첫 줄이 예전 `verify` 의 답 전부였다. 정상 망에서는
+      `agreement: yes, at block 79`.
+    - 단위 6건(분기·정상·지연은 분기 아님·검사 불가 3종) + 변이 2건(머리로 비교하기·검사 불가를
+      합의로 처리하기). CLI·MCP 두 표면 모두 `producing` 옆에 나란히 보고한다.
 - ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
   이미 쓰였다가 "Driver 가 이미 그것이고 구현체가 없다"는 이유로 삭제됐다(철회, 각 절 참고). **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
   e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그

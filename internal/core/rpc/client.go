@@ -413,3 +413,19 @@ func (c *Client) BlockMiner(ctx context.Context, n uint64) (string, error) {
 	}
 	return b.Miner, nil
 }
+
+// BlockHashAt returns the hash of the block at height n.
+//
+// It is the counterpart of BlockMiner and exists for the same reason: the one
+// question health's agreement check asks per node, named once so the hex
+// encoding of a block number is not re-spelled at every caller. It reads a
+// HEIGHT rather than the head because nodes at different heads legitimately hold
+// different head hashes, and comparing those reports a node one block behind as
+// a fork.
+func (c *Client) BlockHashAt(ctx context.Context, n uint64) (string, error) {
+	b, err := c.BlockByNumber(ctx, "0x"+strconv.FormatUint(n, 16))
+	if err != nil {
+		return "", err
+	}
+	return b.Hash, nil
+}

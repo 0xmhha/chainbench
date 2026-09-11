@@ -16,6 +16,9 @@ package health
 
 import (
 	"context"
+	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/collector"
@@ -51,6 +54,34 @@ type Options struct {
 	Sleep func(d time.Duration)
 }
 
+// BlockHasher reads the hash of a block at a height. It is a separate interface
+// from Prober for the same reason Sealer is: a Prober that cannot answer it is
+// not broken, and the check then reports that it could not tell rather than
+// guessing. *rpc.Client satisfies it.
+type BlockHasher interface {
+	BlockHashAt(ctx context.Context, n uint64) (string, error)
+}
+
+// Agreement is whether the nodes are on the same chain.
+//
+// It is a struct rather than a bool because "not checked" and "agreed" are
+// different answers and collapsing them is the failure this exists to prevent.
+// A single node, or a Prober that cannot read a hash, yields Checked=false with
+// a reason — never Agreed=true by default.
+type Agreement struct {
+	// Checked is whether the comparison could be made at all.
+	Checked bool `json:"checked"`
+	// Agreed is whether every node reported the same hash at Height. It is
+	// meaningless unless Checked.
+	Agreed bool `json:"agreed"`
+	// Height is the block compared: the highest block every answering node has,
+	// because nodes at different heads legitimately hold different head hashes
+	// and comparing those would call a lagging node a fork.
+	Height uint64 `json:"height,omitempty"`
+	// Detail names the disagreement, or says why no comparison was made.
+	Detail string `json:"detail,omitempty"`
+}
+
 // NodeInfo is the verified state of one node.
 type NodeInfo struct {
 	Index       int    `json:"index"`
@@ -65,8 +96,14 @@ type NodeInfo struct {
 
 // Report is the outcome of a verify run.
 type Report struct {
-	Network   string     `json:"network"`
-	Producing bool       `json:"producing"`
+	Network   string `json:"network"`
+	Producing bool   `json:"producing"`
+	// Agreement is whether the nodes are on one chain. Producing alone does not
+	// say: it reads the PRIMARY node's height rising, which is equally true of a
+	// network that has split, where every partition keeps producing on its own
+	// fork. A verify that answered "healthy" for that was answering a question
+	// nobody asked.
+	Agreement Agreement  `json:"agreement"`
 	Nodes     []NodeInfo `json:"nodes"`
 }
 
@@ -113,9 +150,82 @@ func Run(ctx context.Context, ns node.NodeSet, opts Options, bus *collector.Bus)
 		rep.Nodes = append(rep.Nodes, info)
 	}
 
+	rep.Agreement = checkAgreement(ctx, ns, rep.Nodes, dial)
+	if rep.Agreement.Checked && !rep.Agreement.Agreed {
+		emit(bus, collector.Event{Phase: collector.PhaseVerify, Kind: collector.KindError, Network: ns.Network,
+			Message: "nodes disagree", Fields: map[string]any{"detail": rep.Agreement.Detail, "height": rep.Agreement.Height}})
+	}
+
 	emit(bus, collector.Event{Phase: collector.PhaseVerify, Kind: collector.KindResult, Network: ns.Network,
-		Message: "verify complete", Fields: map[string]any{"producing": rep.Producing, "nodes": len(rep.Nodes)}})
+		Message: "verify complete", Fields: map[string]any{
+			"producing": rep.Producing, "nodes": len(rep.Nodes),
+			"agreed": rep.Agreement.Agreed, "agreement_checked": rep.Agreement.Checked}})
 	return rep, nil
+}
+
+// checkAgreement asks every answering node for its hash at the highest block ALL
+// of them have, and reports whether they match.
+//
+// The height matters. Nodes at different heads legitimately hold different head
+// hashes, so comparing heads would report a node that is one block behind as a
+// fork. The common height is the lowest head among the answering nodes: the last
+// block every one of them has an opinion about.
+func checkAgreement(ctx context.Context, ns node.NodeSet, infos []NodeInfo, dial func(string) Prober) Agreement {
+	type answer struct {
+		index int
+		url   string
+	}
+	var live []answer
+	common := ^uint64(0)
+	for i, info := range infos {
+		if !info.OK {
+			continue
+		}
+		live = append(live, answer{index: info.Index, url: ns.Nodes[i].RPCURL})
+		if info.BlockNumber < common {
+			common = info.BlockNumber
+		}
+	}
+	if len(live) < 2 {
+		return Agreement{Detail: fmt.Sprintf("only %d node(s) answered; agreement needs at least two", len(live))}
+	}
+	if common == 0 {
+		return Agreement{Detail: "the lowest node is still at genesis; nothing produced to compare yet"}
+	}
+
+	byHash := map[string][]int{}
+	for _, a := range live {
+		h, ok := dial(a.url).(BlockHasher)
+		if !ok {
+			return Agreement{Detail: "this prober cannot read a block hash, so agreement was not checked"}
+		}
+		hash, err := h.BlockHashAt(ctx, common)
+		if err != nil || hash == "" {
+			return Agreement{Detail: fmt.Sprintf("node%d could not report its hash at block %d, so agreement was not checked", a.index, common)}
+		}
+		byHash[hash] = append(byHash[hash], a.index)
+	}
+	if len(byHash) == 1 {
+		return Agreement{Checked: true, Agreed: true, Height: common,
+			Detail: fmt.Sprintf("all %d node(s) report the same hash at block %d", len(live), common)}
+	}
+
+	parts := make([]string, 0, len(byHash))
+	for hash, nodes := range byHash {
+		sort.Ints(nodes)
+		parts = append(parts, fmt.Sprintf("%s: %v", short(hash), nodes))
+	}
+	sort.Strings(parts)
+	return Agreement{Checked: true, Agreed: false, Height: common,
+		Detail: fmt.Sprintf("block %d has %d different hashes — %s", common, len(byHash), strings.Join(parts, "; "))}
+}
+
+// short trims a hash for a message that has to name several.
+func short(hash string) string {
+	if len(hash) > 12 {
+		return hash[:12] + "…"
+	}
+	return hash
 }
 
 func fill(ctx context.Context, p Prober, info *NodeInfo) error {
