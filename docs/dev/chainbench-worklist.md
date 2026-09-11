@@ -1258,7 +1258,13 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 ### D. 커버리지·문서
 
 - [ ] **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
-- [ ] **WA24** [죽은 능력] 스펙이 안 쓰는 등록물: 액션 `faucet`·`registerContract`, 어서션 `metric`·`createAddress`·`contractChecksum`, `hooks.post/onFail`, `defaultOn`, `placement`, `boot` role. 방향: 스펙으로 검증하거나 등록을 뺀다.
+- ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
+  - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
+  - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
+  - **훅도 같은 실행에서 돌았다.** `hooks.pre`·`hooks.post` 를 얹었고 세션 기록의 `postaction.json` 에 `{"Name":"waitBlock","OK":true}` 로 남는다. 첫 단정의 provenance 에 `"on": "node3"` 이 찍히는 것이 기본 타깃이 적용된 증거다.
+  - **`boot` 는 죽은 어휘가 아니다.** `core/node/node.go:50` 이 **RoleBP 의 레거시 철자**라고 적어 두었다 — 별칭이지 쓰이지 않는 능력이 아니다. 목록에서 성격이 잘못 분류돼 있었다.
+  - **남은 것 둘, 각각 이유가 다르다**: `hooks.onFail` 은 **실패할 때만** 돈다 — 통과하는 tc 케이스로는 도달할 수 없고(스위트에 일부러 실패하는 케이스를 둘 수 없다), 낮춤(lowering)은 `spec_v2_test.go` 가 이미 고정한다. 실행까지 보려면 인터프리터 레벨 테스트가 맞다. `placement`(= `env.target`)는 **WA19 와 같은 항목**이다 — 파싱은 되는데 배치를 하지 않고 fingerprint 만 바꾼다. 어휘 문제가 아니라 오배선이라 WA19 로 남긴다.
+- [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn) 라우팅 — **이미 고쳐져 있다 (2026-09-12 확인).** `interp/run.go:57` 이 매 statement 마다 `applyDefaultOn` 을 부르고, 명시적 `on`/`onEach` 가 있으면 비켜난다. 인터프리터 테스트(`TestRun_DefaultOnRoutesStatements`)가 WA14 를 지목해 고정하고 있다. 이번에 라이브 스펙까지 붙였다(위 WA24 참고).
 - ◐ **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
 - [ ] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.)
 
