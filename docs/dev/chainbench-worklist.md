@@ -1432,7 +1432,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 |---|---|---|---|
 | **G-A. 커버리지** — ☑ 완료 (2026-09-11) | WA25 ☑ · B 잔여(체인별 거버넌스) ◐ · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
 | **G-B. 증적** | L1(attempt 로그 축) · 여러 정의서 실행의 통합 report · 후보·반영 완전 분리 | 셋 다 "실행이 무엇을 남기는가" 다. `core/node/layout.go` 와 세션 기록을 같이 건드린다 | 없음 |
-| **G-C. 대상 경계 잔여** | L2(대상에서 키 검증) · `binaryAliases`/객체형 참조 소비 · T3.3·T5.1 의 실 SSH 라이브 e2e · T2.1(driver 위 Transport 형식화) | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
+| **G-C. 대상 경계 잔여** — ☑ 대체로 완료 (2026-09-11) | L2 ◐(가르기 완료·전송 제거 남음) · `binaryAliases` ☑(객체형 참조는 남음) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
 | **G-D. 구조 정리** | validatorset 홈 결정 · health 를 inspector 조합으로 재배선 | 둘 다 소유 모듈 결정이고 소비자가 적다. 동작 변화 없이 한 번에 옮긴다 | 없음 |
 | **G-E. 이관** | T5.5 wemix4 DSL 이관 | 단독으로 크다. 다른 묶음과 섞지 않는다 | docker 15대 |
 
@@ -1810,8 +1810,8 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - [ ] **health 를 inspector 조합 레이어로 재배선.** `inspector` 는 판단 없는 atomic
   프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
   `health` 는 obs/rpc 를 직접 쓴다.
-- ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 "driver 위 Transport
-  타입 형식화" 하나가 남았다. **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
+- ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
+  이미 쓰였다가 "Driver 가 이미 그것이고 구현체가 없다"는 이유로 삭제됐다(철회, 각 절 참고). **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
   e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그
   tail 을 실 sshd 에 대고 검증했다(각 절 참고). **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
 
@@ -1838,7 +1838,13 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - **게이트**: 단위 100% + 동시 모듈 `-race`.
 
 ### Phase 2 — Transport
-- ◐ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)** + **key_file 인증**. **[D안]** ☑ **key_file 인증**: `remote.Credentials` 에 `PrivateKey`/`Passphrase` 추가, `authMethods`(key 우선+password, 최소 1개 필수, 키자료 미노출), `LoadPrivateKey`(0600 강제·insecure perm 거부). deploy `credentials.go` 가 `key_file`(+ `CHAINBENCH_REMOTE_KEY_FILE`/`_PASSPHRASE` env) 를 `remote.Credentials.PrivateKey` 로 로드 — "future phase 예약" 게이트 제거. 단위검증(authMethods 4케이스·키 미노출·perm 거부·For key_file). ☑ **종료검증(`kill -0`)**: 이미 `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)로 구현, 엔진 teardown 이 이를 경유(라이브 고아0 확인). **남은 것**: driver 위 Transport 타입 형식화(C 원격 슬라이스와 함께).
+- ◐ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)** + **key_file 인증**. **[D안]** ☑ **key_file 인증**: `remote.Credentials` 에 `PrivateKey`/`Passphrase` 추가, `authMethods`(key 우선+password, 최소 1개 필수, 키자료 미노출), `LoadPrivateKey`(0600 강제·insecure perm 거부). deploy `credentials.go` 가 `key_file`(+ `CHAINBENCH_REMOTE_KEY_FILE`/`_PASSPHRASE` env) 를 `remote.Credentials.PrivateKey` 로 로드 — "future phase 예약" 게이트 제거. 단위검증(authMethods 4케이스·키 미노출·perm 거부·For key_file). ☑ **종료검증(`kill -0`)**: 이미 `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)로 구현, 엔진 teardown 이 이를 경유(라이브 고아0 확인). **남은 것: 없음 — 철회 (2026-09-11).** "driver 위 Transport 타입 형식화" 는 **이미 해봤고
+되돌렸다.** `internal/arch/reach_test.go` 의 기록: 도달 불가 심볼 정리에서 삭제된 셋 중 하나가
+"a Transport interface that described what Driver already is and had no implementer" 였다. 즉
+`Driver` + capability 인터페이스들(`Initializer`·`Commander`·`ProcessInspector`·
+`FileProvisioner`·`CmdlineInspector`·`PortProber`)이 그 역할을 이미 하고 있고, 그 위에 타입을
+하나 더 두면 구현체 없는 껍데기가 된다. 두 기록이 이어지지 않아 여기에 미완으로 남아 있었을
+뿐이다. **다시 쓰지 않는다.**
 - ☑ **T2.2 upload-if-absent**(로컬·FileSink; 원격 SSH sink는 remote 슬라이스) `test -f` 존재확인 → 재사용/업로드(현재 항상-업로드 or 항상-읽기).
 - **게이트**: 단위(모의) + 통합 1건(로컬 더미 프로세스 검증-종료·고아0).
 
