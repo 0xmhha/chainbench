@@ -37,6 +37,8 @@ func (s stubStore) Read(_ context.Context, path string) ([]byte, error) {
 	return b, nil
 }
 
+func (s stubStore) Remove(context.Context, string) error { return nil }
+
 func (s stubStore) Write(context.Context, string, []byte, fs.FileMode) error { return nil }
 
 func (s stubStore) Checksum(_ context.Context, path string) (string, error) {

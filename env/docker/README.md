@@ -88,13 +88,24 @@ go-wemix(poa)는 stablenet/wbft 와 두 가지가 다르다:
    대기(90s)보다 오래 걸린다. `--node-monitor-timeout 5m` 로 게이트가 형성 중인 망을
    조기 종료하지 않게 한다.
 
-**체인을 바꿔 다시 돌릴 때는 컨테이너를 먼저 비운다.** genesis 가 다르면(다른 키·다른
-패밀리) 남아 있는 datadir·genesis 가 init 을 `incompatible genesis` 로 막는다. 원격
-`chain rm` 이 아직 없으므로(worklist §1n) 지금은 수동으로 비운다:
+**체인을 바꿔 다시 돌릴 때는 그 구성을 먼저 지운다.** genesis 가 다르면(다른 키·다른
+패밀리) 남아 있는 datadir·genesis 가 init 을 `incompatible genesis` 로 막는다. `chain rm`
+이 원격에서도 동작하므로(2026-09-11) 컨테이너를 손으로 비울 필요가 없다:
+
+```bash
+bin/chainbench chain stop --workspace-dir <ws>   # rm 은 실행 중인 노드를 거부한다
+bin/chainbench chain rm   --workspace-dir <ws>
+```
+
+**자기 구성만 지운다** — 같은 서버의 다른 구성과 `bin/` 은 건드리지 않는다(구성 id 로
+경로가 갈리고, 삭제는 target 의 dataRoot 안으로 구속된다). 라이브 확인: stablenet 3노드
+→ stop → rm → **수동 정리 없이** wbft 3노드가 같은 서버에 올라가 블록 8까지 진행.
+
+워크스페이스를 잃어버려 `chain rm` 을 걸 수 없을 때만 손으로 비운다:
 
 ```bash
 for i in $(seq 1 15); do docker exec chainbench-server$i sh -c \
-  'cd /data/chainbench && sudo find . -maxdepth 1 -mindepth 1 ! -name bin -exec rm -rf {} +'; done
+  'cd /data/chainbench && find . -maxdepth 1 -mindepth 1 ! -name bin -exec rm -rf {} +'; done
 ```
 
 생성물(`build/`, gitignore):

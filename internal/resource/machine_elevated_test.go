@@ -21,6 +21,8 @@ type fakeStore struct {
 
 func (f fakeStore) Exists(context.Context, string) (bool, error) { return f.data != nil, nil }
 func (f fakeStore) Read(context.Context, string) ([]byte, error) { return f.data, f.err }
+func (f fakeStore) Remove(context.Context, string) error         { return nil }
+
 func (f fakeStore) Write(context.Context, string, []byte, fs.FileMode) error {
 	return errors.New("not used")
 }
@@ -50,6 +52,8 @@ func (s *recordingStore) Exists(_ context.Context, p string) (bool, error) {
 	return ok, nil
 }
 func (s *recordingStore) Read(_ context.Context, p string) ([]byte, error) { return s.files[p], nil }
+func (s *recordingStore) Remove(context.Context, string) error             { return nil }
+
 func (s *recordingStore) Write(_ context.Context, p string, b []byte, _ fs.FileMode) error {
 	if s.refuseWrite {
 		return errors.New("permission denied")

@@ -1495,8 +1495,18 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 
 ### E. 오래 남아 있는 잔여 (§1n 및 그 이전)
 
-- [ ] **원격 `chain rm`.** `filestore.Store` 에 삭제가 없다(확인·읽기·쓰기·체크섬뿐).
-  파괴적 원격 작업이라 검증할 함대가 있을 때 함께 한다.
+- [x] **원격 `chain rm`** — **완료·라이브 검증 (2026-09-11).** `filestore.Store` 에
+  `Remove` 를 더하고 `Workspace.Rm` 이 target 의 store 를 지나게 했다. 그래서 이제 원격이
+  분기가 아니라 같은 경로다 — `internal/arch` 의 target-분기 허용 목록에서 `Rm` 항목이
+  **사라졌다**(래칫이 줄었다). 파괴적 연산이라 가드를 두 겹으로 뒀다:
+  `filestore.CheckRemovable`(빈 경로·상대 경로·`/`·1세그먼트·glob·`$`/`~` 거부, 두 Store
+  구현 모두가 적용)과 `filestore.CheckWithin`(호출자가 아는 target dataRoot 안으로 구속,
+  root 자신도 거부). 라이브: stablenet 3노드 → stop → rm → **수동 정리 없이** wbft 3노드가
+  같은 서버에 올라가 블록 8까지 진행. 자기 구성만 지우고 다른 구성과 `bin/` 은 남는다.
+  `env/docker/README.md` 의 수동 정리 절차를 이 명령으로 교체했다.
+  - 남은 흠(경미): 삭제 후 `runtime/<id>/`·`configs/` **빈 디렉터리가 남는다.** 기록된
+    경로만 지우기 때문이고(그게 안전한 쪽이다 — 구성 id 가 비면 `runtime/` 전체가 대상이
+    될 수 있다), 아무것도 막지 않는다.
 - ◐ **G2. 핸드오프 원격.** `remote` 명령군과 `deploy` 패키지 폐기까지는 끝났고, 핸드오프
   경로를 패밀리 선언으로 옮기는 일이 남았다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.

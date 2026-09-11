@@ -461,28 +461,50 @@ func (w *Workspace) Rm(ctx context.Context) (string, error) {
 			return "", fmt.Errorf("chainsetup: rm: node%d is running (pid %d) — run `chain stop` first", ns.Index, ns.PID)
 		}
 	}
-	if w.state.Target.IsRemote() {
-		return "", fmt.Errorf("chainsetup: rm: remote data-plane removal is not supported yet")
-	}
+	// Removal goes through the target's file store, the same boundary that wrote
+	// these paths. That is what makes a remote data plane removable at all: this
+	// used to call os.RemoveAll directly and so could only ever clear the local
+	// machine, which is why the remote case was a refusal rather than a branch.
+	//
+	// Every path is confined to the target's data root before it is deleted. The
+	// store applies its own coarse guard underneath; this is the precise one,
+	// made here because this is the layer that knows what the root is.
 	removed := 0
-	for _, ns := range w.state.Nodes {
-		for _, path := range []string{ns.DataDir, ns.ConfigPath} {
-			if path == "" {
-				continue
-			}
-			if err := os.RemoveAll(path); err != nil {
-				return "", fmt.Errorf("chainsetup: rm: %s: %w", path, err)
-			}
-			removed++
+	remove := func(acc *resource.Access, p string) error {
+		if p == "" {
+			return nil
 		}
-	}
-	if w.state.GenesisPath != "" {
-		if err := os.RemoveAll(w.state.GenesisPath); err != nil {
-			return "", fmt.Errorf("chainsetup: rm: %s: %w", w.state.GenesisPath, err)
+		if err := filestore.CheckWithin(acc.DataRoot, p); err != nil {
+			return fmt.Errorf("chainsetup: rm: %w", err)
+		}
+		if err := acc.Files.Remove(ctx, p); err != nil {
+			return fmt.Errorf("chainsetup: rm: %s: %w", p, err)
 		}
 		removed++
+		return nil
 	}
-	_ = ctx
+	// The genesis lives on every machine the network was placed on, so it is
+	// cleared once per machine rather than once — a set, because two nodes on
+	// the same server share the file and removing it twice is not an error but
+	// is a second round trip.
+	genesisDone := map[string]bool{}
+	for _, ns := range w.state.Nodes {
+		acc, err := w.machineFor(ns)
+		if err != nil {
+			return "", fmt.Errorf("chainsetup: rm: node%d: %w", ns.Index, err)
+		}
+		for _, p := range []string{ns.DataDir, ns.ConfigPath} {
+			if err := remove(acc, p); err != nil {
+				return "", err
+			}
+		}
+		if w.state.GenesisPath != "" && !genesisDone[ns.Server] {
+			if err := remove(acc, w.state.GenesisPath); err != nil {
+				return "", err
+			}
+			genesisDone[ns.Server] = true
+		}
+	}
 	w.state.GenesisPath = ""
 	w.state.Nodes = nil
 	detail := fmt.Sprintf("%d path(s) removed; node table cleared", removed)

@@ -42,6 +42,19 @@ type Store interface {
 	// on Exists first, so a missing file is an error here. A remote store hashes
 	// on the host, so an unchanged file is not downloaded just to compare it.
 	Checksum(ctx context.Context, path string) (string, error)
+	// Remove deletes the file or directory tree at path. Absence is not an
+	// error: clearing a composition twice must not fail the second time.
+	//
+	// It is the one operation here that destroys something, and it is on the
+	// interface for the same reason Read is. While the contract could only
+	// create, the one caller that had to delete reached past it to os.RemoveAll
+	// and could therefore only ever work locally — `chain rm` refused on a
+	// remote target because the abstraction had no way to say it. An interface
+	// that only builds gets a second one built next to it that tears down.
+	//
+	// Every implementation applies [CheckRemovable] first. A caller that knows
+	// the target's data root should apply [CheckWithin] as well.
+	Remove(ctx context.Context, path string) error
 }
 
 // File is one file to place, at a path relative to the node's data dir.
@@ -139,6 +152,14 @@ func (Local) Checksum(_ context.Context, path string) (string, error) {
 		return "", err
 	}
 	return Hash(b), nil
+}
+
+// Remove deletes the file or directory tree at path. Absence is not an error.
+func (Local) Remove(_ context.Context, p string) error {
+	if err := CheckRemovable(p); err != nil {
+		return err
+	}
+	return os.RemoveAll(p)
 }
 
 // Write creates any parent directories and writes the file with mode.

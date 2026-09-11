@@ -29,6 +29,8 @@ type serverStore struct{ body []byte }
 
 func (s serverStore) Exists(context.Context, string) (bool, error) { return true, nil }
 func (s serverStore) Read(context.Context, string) ([]byte, error) { return s.body, nil }
+func (s serverStore) Remove(context.Context, string) error         { return nil }
+
 func (s serverStore) Write(context.Context, string, []byte, fs.FileMode) error {
 	return nil
 }

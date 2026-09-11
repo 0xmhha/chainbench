@@ -40,13 +40,15 @@ var targetBranches = map[string]string{
 	"workspace.go:keysBase":              "where the keys are: under the target's data root when remote, the key set itself when local",
 	"workspace.go:RPCHost":               "which host answers RPC",
 
-	// The one that is NOT a fact. Removing a remote data plane needs a delete
-	// on the filestore boundary, which does not exist: Store can check, read,
-	// write and checksum, and nothing removes. Adding it is a destructive
-	// remote operation, so it goes with R6, where there is a machine to verify
-	// it on. Until then the step refuses out loud rather than deleting the
-	// wrong thing or claiming it removed something it did not.
-	"steps_lifecycle.go:Rm": "MISSING CAPABILITY (R6) — filestore.Store has no remove, so a remote data plane is refused rather than half-deleted",
+	// The list is exhausted: every entry left is a fact about the target, not a
+	// branch around a missing capability.
+	//
+	// "steps_lifecycle.go:Rm" was the one exception — removing a remote data
+	// plane needed a delete on the filestore boundary and there was none, so the
+	// step refused out loud rather than deleting the wrong thing. filestore.Store
+	// gained Remove (verified live on the docker fleet, 2026-09-11) and Rm now
+	// goes through the target's store like every other step, so it no longer asks
+	// where the target is.
 }
 
 // TestStepsDoNotBranchOnTheTarget holds N4's gate: a composition step asks
