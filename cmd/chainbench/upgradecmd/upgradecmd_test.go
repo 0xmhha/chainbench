@@ -74,3 +74,36 @@ func TestHardfork_RefusesWithoutAWorkspace(t *testing.T) {
 		t.Fatalf("hardfork with no workspace was accepted:\n%s", out)
 	}
 }
+
+// TestUpgradeRun_AllServersSatisfiesTheDataDir: --data-dir names a LOCAL data
+// root, and on a target the workspace-config owns it instead. A target is named
+// by either --server or --all-servers, but the guard knew only the first, so the
+// whole-set form — the one a 15+15 handoff uses — was rejected before it reached
+// the code that handles it.
+func TestUpgradeRun_AllServersSatisfiesTheDataDir(t *testing.T) {
+	_, err := run(t, "upgrade", "run",
+		"--profile", "/no/such/profile.yaml", "--template", "/no/such/template.json",
+		"--all-servers", "--workspace-config", "/no/such/workspace.yaml")
+	if err == nil {
+		t.Fatal("a missing profile should still fail")
+	}
+	if strings.Contains(err.Error(), "--data-dir is required") {
+		t.Errorf("--all-servers names the target, so --data-dir must not be demanded: %v", err)
+	}
+}
+
+// TestUpgradeRun_AllServersNeedsAWorkspaceConfig is the other half: the target's
+// data root comes from the workspace-config, so --all-servers without one has no
+// data root at all. It used to get past the CLI and fail deep inside the handoff
+// as "a data dir is required", which does not say which flag is missing.
+func TestUpgradeRun_AllServersNeedsAWorkspaceConfig(t *testing.T) {
+	_, err := run(t, "upgrade", "run",
+		"--profile", "/no/such/profile.yaml", "--template", "/no/such/template.json",
+		"--all-servers")
+	if err == nil {
+		t.Fatal("--all-servers with no workspace-config was accepted")
+	}
+	if !strings.Contains(err.Error(), "--workspace-config is required") {
+		t.Errorf("the refusal should name the missing flag: %v", err)
+	}
+}

@@ -1549,6 +1549,38 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     `0xf9593d…`, 21~30 은 wbft validator 3명 이상이 교대. DSL 경로도 같은 함수를 타므로
     (`testengine/compose.go:645`) 자동 적용된다. 실패 가능함을 단위 테스트 5건으로 고정했다.
   - 로컬 경로 회귀 없음: 로컬 핸드오프도 `handoff confirmed: head 22` 로 완주.
+- [x] **G3. 15+15 핸드오프 — 완료·라이브 검증 (2026-09-11).** docker 15대에
+  **wemix 노드 15대 + wbft 노드 15대**, 서버 1대당 각 1대씩. 할당기는 이미 요청한 대로
+  동작한다 — slot-major 로 서버 1~15 에 slot 1 을 주고, 다시 서버 1 로 돌아와 **포트만
+  바꿔** slot 2 를 준다(plan 1~15 = p2p 30301/http 8601, plan 16~30 = p2p 30304/http 8602).
+  제네시스는 **1개 파일**이다: wemix 제네시스를 base 로 `config.croissant` 섹션만 병합한
+  것으로, 15대 전 서버에서 md5 동일(`340b27d7…`), croissant.init 에 validator 15명과 BLS
+  키 15개. `profiles/wemix-upgrade-15.yaml` 신설(골든 1+4 프로파일은 손대지 않았다).
+  - **확인한 결과** — `handoff confirmed: head 50; blocks 21-50 all sealed by the
+    successor set, across 15 of 15 validator(s)`. RPC 로 따로 읽은 것: 블록 19 는 boot
+    wemix producer `0xfa119c06…`, 블록 20 부터는 wbft validator, **producer 자신의 head 는
+    19 에서 멈춘다**(설계대로). 컨테이너마다 프로세스는 정확히 `gwemix` 1개 + `gwbft` 1개.
+  - **관측 창을 집합 크기에 맞췄다.** 10블록 고정이면 아무리 많아도 최대 10명만 보인다 —
+    15명 세트가 "10 of 15" 로 보고됐고 그보다 더 보고할 수가 없었다. 창은 이제 `2n`
+    (최소 10)이고, **DISTINCT 봉인자가 wbft 자신의 정족수 `floor(2n/3)+1` 이상**이어야
+    한다. "모든 블록이 집합 소속"은 한 명이 전부 봉인해도 성립하므로 집합이 생산한다는
+    주장이 못 된다. 전원(n명) 요구는 라운드 체인지 한 번에 실패하므로 쓰지 않는다.
+  - **`--all-servers` 가 단독으로 동작하지 않았다.** CLI 가드가 `--server` 만 알아서
+    `--data-dir is required` 로 막혔고, 통과시켜도 app 안에서 `a data dir is required` 로
+    죽었다. base target 은 이제 **배치가 답한다** — placement 의 첫 노드가 앉은 머신이
+    workspace-config 의 data root 를 소유하는 서버다(`firstPlacedServer`). `--server` 를
+    나란히 적을 필요가 없어졌다.
+  - **DSL 쪽 단정도 같은 강도로 올렸다.** `miner NotEqual <producer>` 는 **세상의 다른 모든
+    주소**를 통과시킨다. `assert.In`(멤버십, 집합이 `is` 쪽·주소 대소문자 무시·빈 집합은
+    거부)을 더하고 `tests/tc/go-wemix/handoff/01-*.json` 이 선언된 successor 집합을 쓰게 했다.
+  - **profile 의 `extra_data` 는 핸드오프에서 무효다(실측).** 병합은 `config.croissant`
+    섹션만 들어올리므로 wbft 제네시스의 top-level extraData 는 버려지고, 병합 파일은 wemix
+    템플릿의 것을 유지한다(ASCII `"chainbench handoff…"` 149바이트). validator 집합은
+    `croissant.init` 으로 들어간다. 프로파일 주석을 사실에 맞게 고쳤다.
+  - **남은 흠(경미)**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합
+    크기와 무관하게 **1 로 고정**이다. 병합 결과에도 1 로 남는다. `useNCP` 가 꺼져 있으면
+    go-wbft 가 읽지 않아 이 경로에서는 무해하고(15명 전원 교대가 그 증거), 켜는 순간
+    의미가 생긴다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
 - [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에

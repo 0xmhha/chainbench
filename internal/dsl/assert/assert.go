@@ -155,6 +155,35 @@ func Nil(actual, _ any) (bool, string) { return report(isNil(actual), actual, ni
 // NotNil is the negation of Nil.
 func NotNil(actual, _ any) (bool, string) { return report(!isNil(actual), actual, nil) }
 
+// In reports whether actual equals one of the elements of the expected slice —
+// membership, with the set on the expected side. Contains is the same relation
+// read the other way round (container first), which is the wrong way round for
+// the case this exists for: a block's sealer must belong to a declared validator
+// set. Spelling that as NotEqual against the one address it must not be passes
+// for every other address in existence, which is how a handoff to a stranger
+// read as a handoff to the successors.
+//
+// Comparison is case-insensitive when both sides are strings, because the set is
+// usually addresses and an RPC may return either casing.
+func In(actual, expected any) (bool, string) {
+	es, ok := toSlice(expected)
+	if !ok {
+		return false, fmt.Sprintf("In needs a slice of allowed values, got %T", expected)
+	}
+	if len(es) == 0 {
+		return false, "In needs at least one allowed value: an empty set admits nothing, and reading it as admitting everything is the bug this guards"
+	}
+	for _, e := range es {
+		if pass, _ := Equal(actual, e); pass {
+			return report(true, actual, expected)
+		}
+		if strings.EqualFold(fmt.Sprint(actual), fmt.Sprint(e)) {
+			return report(true, actual, expected)
+		}
+	}
+	return report(false, actual, expected)
+}
+
 // ElementsMatch reports whether two slices hold the same multiset of elements
 // regardless of order.
 func ElementsMatch(actual, expected any) (bool, string) {
@@ -217,6 +246,7 @@ var funcs = map[string]Func{
 	"Nil":            Nil,
 	"NotNil":         NotNil,
 	"ElementsMatch":  ElementsMatch,
+	"In":             In,
 }
 
 // Lookup returns the assertion primitive registered under name.

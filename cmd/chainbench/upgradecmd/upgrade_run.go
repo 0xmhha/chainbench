@@ -24,13 +24,19 @@ func newRunCmd() *cobra.Command {
 			"the producer, and confirm the cluster formed. Requires the built " +
 			"binaries, etcd, and a preset key set.",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			// --data-dir names the local data root. With --server the target's
-			// workspace-config owns it instead, so it is not required there.
+			// --data-dir names the local data root. On a target the
+			// workspace-config owns it instead, so it is not required there —
+			// and a target is named by EITHER --server or --all-servers. The
+			// guard knew only the first, so the whole-set form was rejected
+			// before it reached the code that handles it.
 			if profilePath == "" || template == "" {
 				return fmt.Errorf("--profile and --template are required")
 			}
-			if dataDir == "" && server == "" {
-				return fmt.Errorf("--data-dir is required (or --server, whose workspace-config owns the target data root)")
+			if dataDir == "" && server == "" && !allServers {
+				return fmt.Errorf("--data-dir is required (or --server/--all-servers, whose workspace-config owns the target data root)")
+			}
+			if (server != "" || allServers) && workspaceConfig == "" {
+				return fmt.Errorf("--workspace-config is required with --server/--all-servers: it owns the target's data root")
 			}
 			out := cmd.OutOrStdout()
 			res, err := app.UpgradeRun(cmd.Context(), surface.Deps(cmd), app.UpgradeRunIn{
@@ -70,7 +76,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&server, "server", "", "run the handoff's data plane on this server, by name from the server set (default: this machine)")
 	cmd.Flags().StringVar(&serverSet, "server-set", "", "server-set file: which servers exist and how to reach them (default: server-set.yaml when present)")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "environment file owning the target dataRoot and its purpose directories; required with --server")
-	cmd.Flags().BoolVar(&allServers, "all-servers", false, "spread the handoff across every server in the set, drawing each node's host and port band from the server set instead of the profile's port bases")
+	cmd.Flags().BoolVar(&allServers, "all-servers", false, "spread the handoff across every server in the set, drawing each node's host and port band from the server set instead of the profile's port bases (needs --workspace-config, like --server)")
 	cmd.Flags().BoolVar(&docker, "docker", false, "the server set's hosts are local docker containers — translate this tool's dials via the localmap next to the server set")
 	return cmd
 }

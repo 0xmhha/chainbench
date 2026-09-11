@@ -47,8 +47,13 @@
         false
       ],
       "select": "miner",
-      "compare": "NotEqual",
-      "is": "0xf9593d358b373d354a348c00887b914b408f6984"
+      "compare": "In",
+      "is": [
+        "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+        "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+        "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+      ]
     },
     {
       "expect": "rpc",

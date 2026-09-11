@@ -71,6 +71,12 @@ func handoffAt(t *testing.T, forkBlock int64, successors []string) *upgrade.Hand
 	}
 	h.Profile.Upgrade.ForkBlock = forkBlock
 	h.Plan.Network.WbftValidators = successors
+	// A plan with one producer and one successor, so AwaitFork picks its
+	// observation target the way it does in a real run rather than falling back.
+	h.Plan.Nodes = []upgrade.NodeSpec{
+		{Index: 0, Producer: true},
+		{Index: 1, Producer: false},
+	}
 	return h
 }
 
@@ -169,5 +175,75 @@ func TestAwaitFork_RefusesAPlanWithNoSuccessors(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "no successor validators") {
 		t.Errorf("the refusal should name what is missing: %v", err)
+	}
+}
+
+// valSet returns n distinct lowercase addresses, for the cases whose subject is
+// the SIZE of the successor set rather than any particular member.
+func valSet(n int) []string {
+	out := make([]string, n)
+	for i := range out {
+		out[i] = fmt.Sprintf("0x%040x", i+1)
+	}
+	return out
+}
+
+// TestAwaitFork_WidensTheWindowWithTheSuccessorSet is why the window is no longer
+// a constant. Ten blocks can show at most ten sealers, so a fifteen-validator
+// handoff could only ever report "10 of 15" — the report was bounded by the
+// window, not by what the chain did. The window now scales with the set, so a
+// rotation across all fifteen is visible as all fifteen.
+func TestAwaitFork_WidensTheWindowWithTheSuccessorSet(t *testing.T) {
+	successors := valSet(15)
+	url := forkChain(t, 60, testProducer, 20, successors)
+	h := handoffAt(t, 20, successors)
+
+	detail, err := h.AwaitFork(context.Background(), nodeSetAt(url), 5*time.Second)
+	if err != nil {
+		t.Fatalf("AwaitFork: %v", err)
+	}
+	// 2 x 15 validators = blocks 21-50, giving every member two turns.
+	for _, want := range []string{"blocks 21-50", "15 of 15 validator(s)"} {
+		if !strings.Contains(detail, want) {
+			t.Errorf("detail %q is missing %q", detail, want)
+		}
+	}
+}
+
+// TestAwaitFork_RefusesOneValidatorSealingTheWholeWindow is the claim "every
+// block belongs to the successor set" does not make. One member sealing all of
+// them satisfies it while production has moved to a single node, not to the set —
+// which is indistinguishable from the pre-fork situation with a different
+// address. A quorum of the set has to take a turn.
+func TestAwaitFork_RefusesOneValidatorSealingTheWholeWindow(t *testing.T) {
+	successors := valSet(15)
+	url := forkChain(t, 60, testProducer, 20, successors[:1])
+	h := handoffAt(t, 20, successors)
+
+	_, err := h.AwaitFork(context.Background(), nodeSetAt(url), 5*time.Second)
+	if err == nil {
+		t.Fatal("one validator sealing every block after the fork was accepted as the set producing")
+	}
+	for _, want := range []string{"only 1 of 15", "rotating across the set"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("the refusal should say how few sealed and why that is not enough: %v", err)
+		}
+	}
+}
+
+// TestAwaitFork_AcceptsAQuorumShortOfTheWholeSet pins the floor from the other
+// side: requiring all n would fail on a single round change, which is normal wbft
+// operation and not a failed handoff. A quorum of fifteen is eleven.
+func TestAwaitFork_AcceptsAQuorumShortOfTheWholeSet(t *testing.T) {
+	successors := valSet(15)
+	url := forkChain(t, 60, testProducer, 20, successors[:11])
+	h := handoffAt(t, 20, successors)
+
+	detail, err := h.AwaitFork(context.Background(), nodeSetAt(url), 5*time.Second)
+	if err != nil {
+		t.Fatalf("eleven of fifteen sealing is a quorum and should confirm: %v", err)
+	}
+	if !strings.Contains(detail, "11 of 15 validator(s)") {
+		t.Errorf("detail %q should report the eleven that took a turn", detail)
 	}
 }
