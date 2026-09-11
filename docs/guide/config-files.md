@@ -139,9 +139,17 @@ file the same way.
   `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`,
   `10-prepared-inputs-server-ref-handoff.md` 참고. 배선되기 전 필드는 파싱은 되지만
   아직 아무 일도 하지 않는다.
-- The object reference forms the sample sketches in comments (`{server, ref}`,
-  `serverIndex`, `localPath`) are a step behind that, and the difference matters
-  when you copy one out. A preset's `genesis` and `keyring` are strings and its
-  `configs` is a string map, so a mapping in those positions does not parse at
-  all: the whole file is refused with `cannot unmarshal !!map into string`.
-  Today a preset reference is an `srv://` string or a plain relative filename.
+- **preset 참조는 문자열 세 형식이 전부다** — `srv://<서버>/<절대경로>`, 대상의 용도별
+  디렉터리 아래를 가리키는 상대 파일명, 그리고 이 기계의 절대경로(로컬 키셋을 가리킬 때).
+  객체형 참조(`{server, ref}`·`{serverIndex, ref}`·`{localPath}`)는 **계획을 철회했다
+  (2026-09-12)**. 샘플에 "미구현" 딱지와 함께 예시로 남아 있던 것도 걷었다.
+  - 철회한 이유는 표현력이 아니라 값이다. `srv://` 와 상대 파일명이 실제로 쓰이는 경우를
+    모두 덮고 있고, 객체형을 preset 에서 끝까지 나르려면 `KeysDir`·`GenesisExisting` 을
+    문자열로 쓰는 **32개 파일 105곳**을 구조체로 바꿔야 하는데, 그 표현력을 요구하는
+    호출자가 하나도 없다. 소비자 없는 구조를 넓게 배선하는 것은 이 저장소가 이미
+    두 번(`Transport` 타입, health→inspector 재배선) 되돌린 모양이다.
+  - **포기한 것은 하나다**: `serverIndex` — 서버를 이름이 아니라 **순번**으로 고르는 것은
+    문자열로 표현할 수 없다. 환경마다 서버 이름이 다른 곳에 같은 preset 을 쓰려면 필요해질
+    수 있고, 그때는 요구와 함께 다시 연다.
+  - `resource.InputRef` 자체는 네 형식을 모두 구현·테스트한 채로 남는다. 내부에서 쓰이며,
+    다시 열 때 배선만 하면 되는 상태다.
