@@ -1790,10 +1790,9 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
   `health` 는 obs/rpc 를 직접 쓴다.
 - ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 "driver 위 Transport
-  타입 형식화" 하나가 남았다. **T3.3·T5.1** 에 남은 것은 둘 다 "실 SSH 호스트 대상 라이브
-  e2e" 인데, **그 전제는 이제 충족됐다** — `env/docker` 의 15대가 SSH 로 닿는 원격이고 그
-  위에서 핸드오프·chain rm·metric 이 이미 라이브로 돌았다. 즉 막힌 항목이 아니라 **할 수 있는
-  항목**이다. **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
+  타입 형식화" 하나가 남았다. **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
+  e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그
+  tail 을 실 sshd 에 대고 검증했다(각 절 참고). **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
 
 ### 이번에 바로잡은 표시
 
@@ -1825,7 +1824,15 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 ### Phase 3 — Middle 통합(라이브)
 - ☑ **T3.1 Provisioner** datadir+키+genesis+config 물질화(local·remote 동일경로)+upload-if-absent.
 - ☑ **T3.2 Supervisor** 오케스트레이션·teardown·procman배선 단위완료 + **실4노드 라이브 헬스게이트(블록전진 gate)로 Phase4 BuildEnv e2e 에서 검증**(고아0). etcd 리더 게이트는 wemix 계열(gwemix/etcd 필요) 후속.
-- ◐ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 boundary)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☑ **원격 SSH tail**: tail 루프가 **`collector.LogReader` boundary**(`ReadFrom(ctx,path,offset)`)을 거치도록 리팩터 → 로컬은 `LocalLogReader`(파일), 원격은 `driver.RemoteLogReader`(SSH `tail -c +N`, **1-based 바이트 오프셋** — `tail -n` 은 줄 단위라 collector 가 추적하는 정확한 바이트 위치를 잃어 줄 중복/분할이 남). 파일 부재는 오류 아님(첫 줄 쓰기 전 tail 시작 허용), 전송 실패만 오류. 단위검증 5건. **실 SSH 호스트 라이브 e2e 는 사용자 환경 필요**(T5.1·C2). attach=RPC-only(로컬 로그 없음→tail no-op).
+- ◐ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 boundary)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☑ **원격 SSH tail**: tail 루프가 **`collector.LogReader` boundary**(`ReadFrom(ctx,path,offset)`)을 거치도록 리팩터 → 로컬은 `LocalLogReader`(파일), 원격은 `driver.RemoteLogReader`(SSH `tail -c +N`, **1-based 바이트 오프셋** — `tail -n` 은 줄 단위라 collector 가 추적하는 정확한 바이트 위치를 잃어 줄 중복/분할이 남). 파일 부재는 오류 아님(첫 줄 쓰기 전 tail 시작 허용), 전송 실패만 오류. 단위검증 5건. **실 SSH 호스트 라이브 e2e — 완료 (2026-09-11)**: `internal/core/process/remote_log_live_test.go`
+(`Live_RemoteLog*`, `CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build`). 가짜 runner 로는 명령의
+**철자**만 고정할 수 있고 그 명령이 **무엇을 하는지**는 보이지 않는다 — 그리고 오프셋 산술이
+바로 증분 tail 이 바이트를 중복시키거나 잃는 자리다. 실 sshd 에 대고 네 가지를 확인했다:
+offset 0 이 파일 전체, 직전 읽기가 끝난 오프셋에서 읽으면 **덧붙은 부분만**, 두 읽기를 이으면
+파일과 정확히 같음, EOF 오프셋은 빈 결과. 줄 중간 오프셋(바이트 단위이지 줄 단위가 아님)과
+파일 부재(오류 아님), `collector.LogReader` 로 어댑터 없이 쓰이는 것도 같이 고정했다.
+**변이로 실패 확인**: `tail -c +N` 을 0-based 로 착각하면(`offset+1` → `offset`) 읽기 경계마다
+`\n` 이 하나 중복돼 실패한다 — 주석이 경고하던 바로 그 결함이다. attach=RPC-only(로컬 로그 없음→tail no-op).
 - ☑ **T3.4 Session 저장·재사용** `session.json`·env fingerprint 재사용(엔진 오케스트레이션이 fingerprint 로 env 재사용)·records(spec/steps/assert/status). 엔진 단위·라이브 e2e·attach e2e 로 검증(summary.pass 판정).
 - ☑ **T3.2b supervisor 선언 논항 방출** (x-bar 정렬 검토 2026-08-09) 선언만 되어 있던 `Options` 3개를 실제로 읽는다.
   - **`LeaderGate`**: `Deps.LeaderGate(ctx, ns, window)` boundary 신설 — **HealthGate 보다 먼저** 실행(클러스터에 리더가 없으면 노드는 healthy 일 수 없다). "리더 준비"의 판정은 체인특화(go-wemix 내장 etcd)라 주입식이고, **언제 돌릴지·얼마나 기다릴지·실패를 어떻게 분류할지는 supervisor 가 소유**. **요청했는데 미배선이면 조용히 통과가 아니라 오류**(F13 AC-1).
@@ -1854,7 +1861,8 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - ☑ **T4.6 launcher 파일 물질화를 provision.Provisioner 경유 [B안]** `LocalLauncher` 가 genesis·per-node config 를 `provision.Provisioner`(`FileSink`) 로 물질화 — 기존 ad-hoc `os.WriteFile(genesis)`+`driver.Provision(config)` 제거. **upload-if-absent**(기존 파일 재사용) + **원격 `RemoteFileSink` 로 교체할 boundary**(슬라이스 C 대비) 확보. 순수 `materialize` 헬퍼로 분리해 recording FileSink 로 단위검증(genesis+config 기록·재사용 스킵). 리팩터 후 실 gstable 라이브 2종(BuildEnv/FullRun) 재통과·고아0. 프로덕션 engine 은 이제 레거시 `setup.Provision/Launch` 미호출(`setup.Plan` 타입만 사용).
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
-- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 실 원격 SSH 호스트 대상 라이브 e2e(사용자 환경·SSH 필요). · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
+- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 없음 — 원격 로그 tail 의 실 SSH 라이브 e2e 는 T3.3 항목에 적은 대로 완료(2026-09-11).
+원격 기동 자체는 핸드오프·`chain rm`·metric 이 이미 docker 에서 라이브로 돌았다. · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
 
 ### Phase 6 — 표면·마감
 - ☑ **T6.7 spec 오프라인 검증 + 예제** `chainbench validate [spec…]` — 실행 없이 (1) 파싱 검증(OK/INVALID), (2) **이름 해결**(`testspec.Unresolved`: 스텝 액션·어세션 이름을 빌트인 registry 와 대조 → 미등록 시 `UNRESOLVED: action:…/assert:…`, 오타를 런타임 전 포착), 무효/미해결 시 exit 1. `--chain` 은 manifest capability·applicableChains 대조로 실행/스킵(OK·SKIP(chain not applicable)·SKIP(needs caps))을 정보 표시(파싱/해결 오류만 실패). `examples/specs/*.json`(RPC-read·tx/waitBlock 스텝·expectRevert negative·call/txStatus) + CI 가드 테스트(`validate --chain stablenet` 전부 OK)로 DSL 문서-파서 드리프트 방지. → 이관 작성자 빠른 피드백.
