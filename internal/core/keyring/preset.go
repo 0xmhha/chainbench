@@ -28,6 +28,24 @@ type Entry struct {
 	derive.Identity
 }
 
+// PublicOnly returns the ring with every private key dropped, so a caller that
+// wants identities cannot hold, log, or persist one by accident.
+//
+// It does not undo a transfer. A ring's index is one file and it carries the
+// nodekeys, so reading a ring on a server brings them across whatever the caller
+// intends to do with them; this drops them the moment the read returns. Removing
+// the transfer itself needs the derivation to happen on the target, which needs
+// a chainbench there — see worklist L2.
+func (p Preset) PublicOnly() Preset {
+	out := p
+	out.Nodes = make([]Entry, len(p.Nodes))
+	for i, e := range p.Nodes {
+		e.Nodekey = derive.PrivateKey{}
+		out.Nodes[i] = e
+	}
+	return out
+}
+
 // Network is what a *network* decides about a ring's identities: which of them
 // validate, which seed the governance council, and who starts with a balance.
 //
@@ -202,6 +220,12 @@ func truncate(s []string, n int) []string {
 // apart: a node would launch with one identity while the genesis registers
 // another, which shows up as a chain that produces no blocks.
 func (e Entry) Verify() error {
+	// A public-only entry has no key to derive from, and deriving from the zero
+	// key would produce a mismatch that reads like corrupted material. Say which
+	// it is.
+	if e.Nodekey == (derive.PrivateKey{}) {
+		return fmt.Errorf("keyring: node %d: cannot verify a public-only entry — verification re-derives from the private key, which this read did not fetch", e.Index)
+	}
 	want, err := derive.Derive(e.Nodekey, derivationFor(e.Identity))
 	if err != nil {
 		return err

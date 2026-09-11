@@ -1432,7 +1432,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 |---|---|---|---|
 | **G-A. 커버리지** — ☑ 완료 (2026-09-11) | WA25 ☑ · B 잔여(체인별 거버넌스) ◐ · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
 | **G-B. 증적** | L1(attempt 로그 축) · 여러 정의서 실행의 통합 report · 후보·반영 완전 분리 | 셋 다 "실행이 무엇을 남기는가" 다. `core/node/layout.go` 와 세션 기록을 같이 건드린다 | 없음 |
-| **G-C. 대상 경계 잔여** | L2(대상에서 키 검증) · `binaryAliases`/객체형 참조 소비 · T3.3·T5.1 의 실 SSH 라이브 e2e · T2.1(driver 위 Transport 형식화) | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
+| **G-C. 대상 경계 잔여** — ☑ 대체로 완료 (2026-09-11) | L2 ◐(가르기 완료·전송 제거 남음) · `binaryAliases` ☑(객체형 참조는 남음) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
 | **G-D. 구조 정리** | validatorset 홈 결정 · health 를 inspector 조합으로 재배선 | 둘 다 소유 모듈 결정이고 소비자가 적다. 동작 변화 없이 한 번에 옮긴다 | 없음 |
 | **G-E. 이관** | T5.5 wemix4 DSL 이관 | 단독으로 크다. 다른 묶음과 섞지 않는다 | docker 15대 |
 
@@ -1523,6 +1523,18 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   쓰는 기존 케이스들이 그렇다) 같은 습관으로 쓰면 실패한다. 이 메서드를 쓰는 스펙은 epoch
   경계 번호를 명시해야 한다. **체인팀 몫이지만, 스펙 작성자가 먼저 밟는다.**
 
+- [ ] **관측 (2026-09-11). go-wemix 바이너리가 `verifyBlockSig` 에서 패닉한다.** 15+15
+  핸드오프 중 **15대 중 한 대**가 동기화하다 죽는다 —
+  `panic: runtime error: invalid memory address or nil pointer dereference` →
+  `math/big.(*Int).Sign` ← `wemix.verifyBlockSig` (`wemix/admin.go:1002`) ←
+  `consensus/ethash.(*Ethash).verifyHeader`. 3회 연속 재현했고 **매번 다른 노드**가 죽는다
+  (node4 → node5 → node5). 결과는 `nodes not ready for mesh: endpoint … not ready within 30s`.
+  - **chainbench 결함이 아니다.** 오늘 오전에 세 번 성공하던 **명시 경로 호출**
+    (`--from-binary /data/chainbench/bin/gwemix`)을 그대로 다시 돌려도 같은 패닉으로 실패한다.
+    즉 호출 형태와 무관하고, 이 기기의 상태가 달라지면서 go-wemix 쪽 경합에 걸리기 시작했다.
+  - 눈에 띄는 점: 죽는 노드는 **ethash 검증 경로**를 타면서 wemix 블록 서명을 검증하고 있다.
+    거버넌스를 아직 싣기 전의 창으로 보인다. **체인팀 몫**이고 R6 과 같은 성격이되 증상은 다르다.
+
 ### C. 키 취급과 증적 (§1q)
 
 둘 다 지금 동작을 막지 않는다. 하나는 증적 보존, 하나는 키가 로컬에 내려오는 범위를
@@ -1532,9 +1544,30 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   이전 시도의 로그가 덮인다. reuse-if-matching 이 한 노드를 여러 번 재작업할 때 특히
   문제다. 확인 (2026-09-11): `core/node/layout.go` 에 `attempt` 라는 말이 없다 — 축이
   여전히 없다.
-- [ ] **L2. 대상에서 키 검증(공개 신원만 반환).** 지금 `srv://` keyring 은 묶음 전체를
-  로컬로 내려받는다. 서명에 로컬 경로가 필요해 정당한 경로지만, 대조만 필요한 경우까지
-  내려받을 이유는 없다. 다운로드가 필요한 경우와 검증만 필요한 경우를 가르는 것이 요점이다.
+- ◐ **L2. 대상에서 키 검증(공개 신원만 반환).** **가르는 일은 했다 (2026-09-11). 전송을
+  없애는 일이 남았다.**
+  - **먼저 진단이 정확하지 않았다.** "묶음 전체를 내려받는다"는 것은 compose 경로
+    (`chainsetup.materializeKeyring`)의 이야기이고, 그쪽은 **키를 각 노드에 배포해야 하므로
+    정당하다**. 읽기 경로(`keyring list`/`show`)는 이미 다운로드 없이 대상에서 읽고 있었다.
+    실제 문제는 다른 자리였다: **링 인덱스는 파일 하나이고 그 안에 모든 노드의 `nodekey` 가
+    있다.** 그래서 `LoadPresetAt` 한 번이 원격이면 **링 전체의 개인키가 운영자 프로세스로
+    넘어온다** — `list` 가 `export` 와 같은 만큼 공개하고 있었고, 어디에도 그렇게 적혀 있지
+    않았다.
+  - **가른 것.** `Preset.PublicOnly()` 와 `store.LoadPublicPreset(At)` 을 더해, 읽기가 돌아오는
+    순간 개인키를 버린다. 신원만 필요한 호출부는 전부 그쪽으로 옮겼다 — `operation.List`
+    (단 `--verify` 는 아니다), `operation.Show`, `chainsetup/genesis_verify`,
+    `chainsetup/baseline`. 키를 요구하는 곳은 **두 곳만 남았고 그렇게 말한다**:
+    `--verify`(개인키에서 신원을 재파생하므로 없이는 불가)와 `Export`(의도적 공개).
+    `LoadPresetAt` 의 doc 이 이제 **원격 읽기는 개인키를 옮긴다**고 명시한다.
+  - **public-only 항목은 검증을 거부한다.** 없으면 0 키로 파생해 *진짜 같은* 주소 불일치를
+    보고하고(실측: `key derives address 0x3f17f196… but the file records 0xc17d4938…`), 손상된
+    키자료처럼 읽힌다. 변이로 확인했다.
+  - **라이브 (docker).** 원격 링을 만들고 `keyring list` 가 신원만 내보내는 것과
+    `list --verify` 가 여전히 통과하는 것을 확인했다.
+  - **남은 것 — 전송 자체.** `PublicOnly` 는 호출자가 **쥐는 값**을 공개로 만들지만, 바이트는
+    이미 건너온다. 그것을 없애려면 파생을 **대상에서** 해야 하고, 그건 대상에 chainbench 가
+    있어야 한다는 뜻이다. 대안은 인덱스를 공개부와 비밀부로 쪼개 공개부만 읽는 것인데, 링
+    포맷 변경이라 기존 링과의 호환을 함께 결정해야 한다. **둘 중 무엇을 할지가 결정 사항이다.**
 
 ### D. 모니터링 트랙에서 파생된 후속 (§1r 8절)
 
@@ -1542,7 +1575,18 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 - [ ] **후보·반영 완전 분리.** 부분 재사용에서 승인된 노드만 정지·반영·재기동한다.
   지금은 판정을 쓰기 앞으로 옮기는 데까지 했다(MON-009).
-- [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 **리졸버까지는 생겼다** —
+- ◐ **`binaryAliases` 와 객체형 참조를 실제로 소비.** **`binaryAliases` 는 배선했다
+  (2026-09-11).** 대상에서 **bare 바이너리 이름**이 workspace-config 를 거쳐 풀린다 —
+  `dataRoot` + `paths.binaries` 에서 찾고 별칭이 있으면 적용한다(`app.resolveBinaryOn` →
+  `WorkspaceConfig.BinaryPath`). 이전에는 대상에서 bare 이름을 **거부**했고, 그래서
+  `upgrade run --all-servers` 를 돌릴 때마다 config 가 이미 아는 경로를
+  `--from-binary /data/chainbench/bin/gwemix` 로 손으로 적어야 했다. 즉 별칭에 소비자가
+  없던 것과 그 papercut 은 **같은 결함의 양면**이었다. 단위 테스트 5건 + 변이 2건.
+  라이브: bare 이름이 `/data/chainbench/bin/gwbft` 로 풀려 노드가 떴다(아래 관측 참고).
+  **남은 것은 객체형 참조**(`{server,ref}`·`serverIndex`·`localPath`)이고, 아직 파싱조차
+  안 된다. 샘플과 안내 문서가 그 자리에만 "미구현" 이라고 적어 두었고, 구현하면
+  `TestWorkspaceConfig_SampleCommentsMatchWhatParses` 가 실패하며 그 주석을 걷으라고 알린다.
+  - **(원래 진단)** 전자는 **리졸버까지는 생겼다** —
   `WorkspaceConfig.BinaryPath`(`resource/workspaceconfig.go:327`)가 별칭을 적용한다. 다만
   **호출자가 테스트 둘뿐이라 프로덕션 경로에는 아직 배선되지 않았다** — PR #383 머지 후
   재확인해도 `.BinaryPath(` 호출부는 `workspaceconfig_test.go` 2곳뿐이다. 후자
@@ -1766,11 +1810,10 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - [ ] **health 를 inspector 조합 레이어로 재배선.** `inspector` 는 판단 없는 atomic
   프리미티브로 두고, 블록 전진을 *판정* 하는 `health` 가 그 위에서 조합하게 한다. 지금
   `health` 는 obs/rpc 를 직접 쓴다.
-- ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 "driver 위 Transport
-  타입 형식화" 하나가 남았다. **T3.3·T5.1** 에 남은 것은 둘 다 "실 SSH 호스트 대상 라이브
-  e2e" 인데, **그 전제는 이제 충족됐다** — `env/docker` 의 15대가 SSH 로 닿는 원격이고 그
-  위에서 핸드오프·chain rm·metric 이 이미 라이브로 돌았다. 즉 막힌 항목이 아니라 **할 수 있는
-  항목**이다. **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
+- ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
+  이미 쓰였다가 "Driver 가 이미 그것이고 구현체가 없다"는 이유로 삭제됐다(철회, 각 절 참고). **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
+  e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그
+  tail 을 실 sshd 에 대고 검증했다(각 절 참고). **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
 
 ### 이번에 바로잡은 표시
 
@@ -1795,14 +1838,28 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - **게이트**: 단위 100% + 동시 모듈 `-race`.
 
 ### Phase 2 — Transport
-- ◐ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)** + **key_file 인증**. **[D안]** ☑ **key_file 인증**: `remote.Credentials` 에 `PrivateKey`/`Passphrase` 추가, `authMethods`(key 우선+password, 최소 1개 필수, 키자료 미노출), `LoadPrivateKey`(0600 강제·insecure perm 거부). deploy `credentials.go` 가 `key_file`(+ `CHAINBENCH_REMOTE_KEY_FILE`/`_PASSPHRASE` env) 를 `remote.Credentials.PrivateKey` 로 로드 — "future phase 예약" 게이트 제거. 단위검증(authMethods 4케이스·키 미노출·perm 거부·For key_file). ☑ **종료검증(`kill -0`)**: 이미 `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)로 구현, 엔진 teardown 이 이를 경유(라이브 고아0 확인). **남은 것**: driver 위 Transport 타입 형식화(C 원격 슬라이스와 함께).
+- ◐ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)** + **key_file 인증**. **[D안]** ☑ **key_file 인증**: `remote.Credentials` 에 `PrivateKey`/`Passphrase` 추가, `authMethods`(key 우선+password, 최소 1개 필수, 키자료 미노출), `LoadPrivateKey`(0600 강제·insecure perm 거부). deploy `credentials.go` 가 `key_file`(+ `CHAINBENCH_REMOTE_KEY_FILE`/`_PASSPHRASE` env) 를 `remote.Credentials.PrivateKey` 로 로드 — "future phase 예약" 게이트 제거. 단위검증(authMethods 4케이스·키 미노출·perm 거부·For key_file). ☑ **종료검증(`kill -0`)**: 이미 `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)로 구현, 엔진 teardown 이 이를 경유(라이브 고아0 확인). **남은 것: 없음 — 철회 (2026-09-11).** "driver 위 Transport 타입 형식화" 는 **이미 해봤고
+되돌렸다.** `internal/arch/reach_test.go` 의 기록: 도달 불가 심볼 정리에서 삭제된 셋 중 하나가
+"a Transport interface that described what Driver already is and had no implementer" 였다. 즉
+`Driver` + capability 인터페이스들(`Initializer`·`Commander`·`ProcessInspector`·
+`FileProvisioner`·`CmdlineInspector`·`PortProber`)이 그 역할을 이미 하고 있고, 그 위에 타입을
+하나 더 두면 구현체 없는 껍데기가 된다. 두 기록이 이어지지 않아 여기에 미완으로 남아 있었을
+뿐이다. **다시 쓰지 않는다.**
 - ☑ **T2.2 upload-if-absent**(로컬·FileSink; 원격 SSH sink는 remote 슬라이스) `test -f` 존재확인 → 재사용/업로드(현재 항상-업로드 or 항상-읽기).
 - **게이트**: 단위(모의) + 통합 1건(로컬 더미 프로세스 검증-종료·고아0).
 
 ### Phase 3 — Middle 통합(라이브)
 - ☑ **T3.1 Provisioner** datadir+키+genesis+config 물질화(local·remote 동일경로)+upload-if-absent.
 - ☑ **T3.2 Supervisor** 오케스트레이션·teardown·procman배선 단위완료 + **실4노드 라이브 헬스게이트(블록전진 gate)로 Phase4 BuildEnv e2e 에서 검증**(고아0). etcd 리더 게이트는 wemix 계열(gwemix/etcd 필요) 후속.
-- ◐ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 boundary)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☑ **원격 SSH tail**: tail 루프가 **`collector.LogReader` boundary**(`ReadFrom(ctx,path,offset)`)을 거치도록 리팩터 → 로컬은 `LocalLogReader`(파일), 원격은 `driver.RemoteLogReader`(SSH `tail -c +N`, **1-based 바이트 오프셋** — `tail -n` 은 줄 단위라 collector 가 추적하는 정확한 바이트 위치를 잃어 줄 중복/분할이 남). 파일 부재는 오류 아님(첫 줄 쓰기 전 tail 시작 허용), 전송 실패만 오류. 단위검증 5건. **실 SSH 호스트 라이브 e2e 는 사용자 환경 필요**(T5.1·C2). attach=RPC-only(로컬 로그 없음→tail no-op).
+- ◐ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 boundary)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☑ **원격 SSH tail**: tail 루프가 **`collector.LogReader` boundary**(`ReadFrom(ctx,path,offset)`)을 거치도록 리팩터 → 로컬은 `LocalLogReader`(파일), 원격은 `driver.RemoteLogReader`(SSH `tail -c +N`, **1-based 바이트 오프셋** — `tail -n` 은 줄 단위라 collector 가 추적하는 정확한 바이트 위치를 잃어 줄 중복/분할이 남). 파일 부재는 오류 아님(첫 줄 쓰기 전 tail 시작 허용), 전송 실패만 오류. 단위검증 5건. **실 SSH 호스트 라이브 e2e — 완료 (2026-09-11)**: `internal/core/process/remote_log_live_test.go`
+(`Live_RemoteLog*`, `CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build`). 가짜 runner 로는 명령의
+**철자**만 고정할 수 있고 그 명령이 **무엇을 하는지**는 보이지 않는다 — 그리고 오프셋 산술이
+바로 증분 tail 이 바이트를 중복시키거나 잃는 자리다. 실 sshd 에 대고 네 가지를 확인했다:
+offset 0 이 파일 전체, 직전 읽기가 끝난 오프셋에서 읽으면 **덧붙은 부분만**, 두 읽기를 이으면
+파일과 정확히 같음, EOF 오프셋은 빈 결과. 줄 중간 오프셋(바이트 단위이지 줄 단위가 아님)과
+파일 부재(오류 아님), `collector.LogReader` 로 어댑터 없이 쓰이는 것도 같이 고정했다.
+**변이로 실패 확인**: `tail -c +N` 을 0-based 로 착각하면(`offset+1` → `offset`) 읽기 경계마다
+`\n` 이 하나 중복돼 실패한다 — 주석이 경고하던 바로 그 결함이다. attach=RPC-only(로컬 로그 없음→tail no-op).
 - ☑ **T3.4 Session 저장·재사용** `session.json`·env fingerprint 재사용(엔진 오케스트레이션이 fingerprint 로 env 재사용)·records(spec/steps/assert/status). 엔진 단위·라이브 e2e·attach e2e 로 검증(summary.pass 판정).
 - ☑ **T3.2b supervisor 선언 논항 방출** (x-bar 정렬 검토 2026-08-09) 선언만 되어 있던 `Options` 3개를 실제로 읽는다.
   - **`LeaderGate`**: `Deps.LeaderGate(ctx, ns, window)` boundary 신설 — **HealthGate 보다 먼저** 실행(클러스터에 리더가 없으면 노드는 healthy 일 수 없다). "리더 준비"의 판정은 체인특화(go-wemix 내장 etcd)라 주입식이고, **언제 돌릴지·얼마나 기다릴지·실패를 어떻게 분류할지는 supervisor 가 소유**. **요청했는데 미배선이면 조용히 통과가 아니라 오류**(F13 AC-1).
@@ -1831,7 +1888,8 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - ☑ **T4.6 launcher 파일 물질화를 provision.Provisioner 경유 [B안]** `LocalLauncher` 가 genesis·per-node config 를 `provision.Provisioner`(`FileSink`) 로 물질화 — 기존 ad-hoc `os.WriteFile(genesis)`+`driver.Provision(config)` 제거. **upload-if-absent**(기존 파일 재사용) + **원격 `RemoteFileSink` 로 교체할 boundary**(슬라이스 C 대비) 확보. 순수 `materialize` 헬퍼로 분리해 recording FileSink 로 단위검증(genesis+config 기록·재사용 스킵). 리팩터 후 실 gstable 라이브 2종(BuildEnv/FullRun) 재통과·고아0. 프로덕션 engine 은 이제 레거시 `setup.Provision/Launch` 미호출(`setup.Plan` 타입만 사용).
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
-- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 실 원격 SSH 호스트 대상 라이브 e2e(사용자 환경·SSH 필요). · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
+- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 없음 — 원격 로그 tail 의 실 SSH 라이브 e2e 는 T3.3 항목에 적은 대로 완료(2026-09-11).
+원격 기동 자체는 핸드오프·`chain rm`·metric 이 이미 docker 에서 라이브로 돌았다. · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
 
 ### Phase 6 — 표면·마감
 - ☑ **T6.7 spec 오프라인 검증 + 예제** `chainbench validate [spec…]` — 실행 없이 (1) 파싱 검증(OK/INVALID), (2) **이름 해결**(`testspec.Unresolved`: 스텝 액션·어세션 이름을 빌트인 registry 와 대조 → 미등록 시 `UNRESOLVED: action:…/assert:…`, 오타를 런타임 전 포착), 무효/미해결 시 exit 1. `--chain` 은 manifest capability·applicableChains 대조로 실행/스킵(OK·SKIP(chain not applicable)·SKIP(needs caps))을 정보 표시(파싱/해결 오류만 실패). `examples/specs/*.json`(RPC-read·tx/waitBlock 스텝·expectRevert negative·call/txStatus) + CI 가드 테스트(`validate --chain stablenet` 전부 OK)로 DSL 문서-파서 드리프트 방지. → 이관 작성자 빠른 피드백.

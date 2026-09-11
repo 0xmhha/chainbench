@@ -218,18 +218,17 @@ func TestParseWorkspaceConfig_Sample(t *testing.T) {
 // the drift that made it wrong: it promised the reader everything below it was
 // supported, while two of the things it showed were not.
 //
-// The subtler half is that the two are unsupported in different ways.
-// binaryAliases parses and validates and is then read by nobody, so writing one
-// is merely ignored. The object reference forms are worse: a preset's genesis
-// and keyring are strings, so a mapping there refuses the whole file, and an
-// operator who uncomments the example loses the config rather than the feature.
+// binaryAliases used to be the other half of this: parsed, validated, and read
+// by nobody. It is wired now -- app.resolveBinaryOn resolves a bare binary name
+// on a target through WorkspaceConfig.BinaryPath, which applies the alias -- so
+// what is pinned here is only that it still parses. The object reference forms
+// remain unsupported, and worse than ignored: a preset's genesis and keyring are
+// strings, so a mapping there refuses the whole file, and an operator who
+// uncomments the example loses the config rather than the feature.
 //
-// The sample now says so at both spots. This pins the statements: implement
-// either one and this test fails, which is the moment those comments have to
-// come out.
+// The sample says so at that spot. This pins the statement: implement the object
+// form and this test fails, which is the moment that comment has to come out.
 func TestWorkspaceConfig_SampleCommentsMatchWhatParses(t *testing.T) {
-	// Still nothing but a test reads binaryAliases. If BinaryPath gains a real
-	// caller, drop this and the sample's "미구현" note with it.
 	c, err := ParseWorkspaceConfig([]byte(validConfig))
 	if err != nil {
 		t.Fatalf("binaryAliases should still parse: %v", err)

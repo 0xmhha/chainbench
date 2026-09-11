@@ -232,7 +232,9 @@ type ListIn struct {
 
 // List reports what a key set holds.
 func List(ctx context.Context, d Deps, in ListIn) (SetOut, error) {
-	dir, source, set, err := openSet(ctx, in.Ring, d)
+	// Listing reports identities and needs no secret; --verify re-derives each
+	// identity from its key and cannot be done without one.
+	dir, source, set, err := openSetWithKeys(ctx, in.Ring, d, in.Verify)
 	if err != nil {
 		return SetOut{Dir: dir, Source: source}, err
 	}
@@ -276,7 +278,9 @@ func Export(ctx context.Context, d Deps, in EntryIn) (EntryOut, error) {
 	if err != nil {
 		return EntryOut{}, err
 	}
-	_, _, set, err := openSet(ctx, in.Ring, d)
+	// The one read in this package that asks for the key, which is the whole
+	// point of Export existing separately from Show.
+	_, _, set, err := openSetWithKeys(ctx, in.Ring, d, true)
 	if err != nil {
 		return EntryOut{}, err
 	}
@@ -520,11 +524,27 @@ func (f passwordFunc) Password() (string, error) { return f() }
 // openSet resolves and loads a key set, naming the source in the error so that a
 // missing default key set is not a mystery.
 func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set keyring.Preset, err error) {
+	return openSetWithKeys(ctx, ref, d, false)
+}
+
+// openSetWithKeys is openSet with the disclosure made a parameter. withKeys=false
+// drops the private keys as the read returns, which is what every question about
+// identities needs; only verification (re-derives from the key) and export
+// (discloses it on purpose) ask for true.
+//
+// The distinction is not cosmetic on a remote ring: the index is one file
+// carrying every nodekey, so the read transfers them either way, and what this
+// decides is whether the value the caller then holds contains a secret.
+func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (dir, source string, set keyring.Preset, err error) {
 	files, dir, source, err := ref.open(d)
 	if err != nil {
 		return displaySet(ref, dir), source, keyring.Preset{}, err
 	}
-	set, err = store.LoadPresetAt(ctx, files, dir)
+	if withKeys {
+		set, err = store.LoadPresetAt(ctx, files, dir)
+	} else {
+		set, err = store.LoadPublicPresetAt(ctx, files, dir)
+	}
 	dir = displaySet(ref, dir)
 	if err != nil {
 		return dir, source, keyring.Preset{}, fmt.Errorf("keyring %s (%s): %w", dir, source, err)
