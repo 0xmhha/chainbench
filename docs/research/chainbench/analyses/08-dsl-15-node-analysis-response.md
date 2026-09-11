@@ -81,7 +81,7 @@ endpoints/peering 만). blueprint 필드의 **e2e/docker 커버리지 0**(tests/
 - **bootnode 는 역할이 아니라 속성**이다(`topology.go:32-43` Entry.Bootnode, 최대 1개). 잔재
   `boot` 역할 문자열은 남아 있으나 "bp 의 속성으로 접어야 한다"고 코드 주석이 유보(`node.go:50-53`).
   count-form 은 poa 가 최상위 인덱스 producer 를 boot 로 암묵 선택한다(`poa.go:87-90`).
-- **함대 용량 = 15 호스트 × 4 슬롯 = 60 슬롯.** 15노드는 15 슬롯이면 되고 15대가 꼭 필요하지
+- **docker 용량 = 15 호스트 × 4 슬롯 = 60 슬롯.** 15노드는 15 슬롯이면 되고 15대가 꼭 필요하지
   않다(4대에도 들어감). 15대가 필요한 건 `--all-servers` 로 서버당 하나씩 펼칠 때뿐.
 
 ## 5. `keys.nodekeys.validators` 불변식 (WA21/E) — **중대 발견**
@@ -175,7 +175,7 @@ config 는 못 한다. 즉 통합 설계의 선결 조건은 "형식 선택"이 
    조용히 무효. (07 §3.3·§10.5 가 임의 결론 금지로 지정한 항목.)
 5. **bootnode 명시 여부** — count-form 은 암묵 선택. 특정 노드 고정은 node-table 필요. `boot`
    역할을 bp 속성으로 접을지도 미결.
-6. **함대 배치 정책** — 15노드를 15대에 하나씩(`--all-servers`) vs 소수 서버 슬롯으로.
+6. **docker 배치 정책** — 15노드를 15대에 하나씩(`--all-servers`) vs 소수 서버 슬롯으로.
 7. **per-node server 배치를 지원할지** — 지원하면 단계 D 필요(resource 계층 변경).
 8. **문서 stale 정정 범위**(§ 아래) — 모델 결정과 별개.
 

@@ -329,7 +329,7 @@ K0·S0 가 추측 위에 서게 된다.
 | **K5** | preset 분해 — 신원과 네트워크 결정을 타입으로 분리 | `Preset{Nodes, Network}` · `NetworkFor(n)` 이 선언 유무를 흡수 · **`keyring new --validators 0` = 신원만** · **라이브: 신원만 있는 링으로 stablenet 4노드 블록 생성 + api 9/9** · 기존 preset 읽기 호환 | ☑ |
 | **K6** | `provision.FileSink` → `FileStore` (읽기 추가) | **자체 SSH 파일 I/O 9곳 → 0** · 와이어 형식 정의 1곳 · `keyring.FileSource` 가 로컬·원격 겸용 | ☑ |
 | **K8** | **표면 통일** — 유스케이스를 `internal/app` 으로, CLI·MCP 는 노출 수단으로 | CLI 로 만든 링을 MCP 가 읽음(실증) · MCP 도구 5개(`new`/`add`/`list`/`show`/`import`) · **`export` 는 의도적 부재**(비밀이 에이전트 기록에 남지 않도록, 부재를 테스트로 고정) · `GenerateOpts.Validators` 를 `*int` 로 바꿔 "미설정"과 "없음"을 타입으로 구분 | ☑ |
-| **K9** | **원격 링** (사용자 결정 2026-08-25) — `--keyring-dir` 이 target 문법(`srv://…`)을 수용, 링의 생성·조회·가져오기가 **파일 인터페이스 경유로 서버 위에서** 동작(`GenerateAt/ExtendAt/ImportAt/LoadPresetAt`, 로컬 래퍼 유지로 기존 18개 호출처 무변경). `--server-set`·`--docker` 는 전 동사 공통 플래그로 승격. **수정된 선재 결함**: 원격형 경로를 로컬 폴더 *이름*으로 취급해 운영자 머신에 조용히 생성하던 오배치 | 라이브(함대): 서버 위 생성·add 비승격·`list --verify` 원격 통과·중복 생성 원격 존재 검사로 거부·`--docker` 부재 시 실주소 timeout · 게이트 스위트 `Live_…CreatesARingOnAServer` 상설화 | ☑ |
+| **K9** | **원격 링** (사용자 결정 2026-08-25) — `--keyring-dir` 이 target 문법(`srv://…`)을 수용, 링의 생성·조회·가져오기가 **파일 인터페이스 경유로 서버 위에서** 동작(`GenerateAt/ExtendAt/ImportAt/LoadPresetAt`, 로컬 래퍼 유지로 기존 18개 호출처 무변경). `--server-set`·`--docker` 는 전 동사 공통 플래그로 승격. **수정된 선재 결함**: 원격형 경로를 로컬 폴더 *이름*으로 취급해 운영자 머신에 조용히 생성하던 오배치 | 라이브(docker): 서버 위 생성·add 비승격·`list --verify` 원격 통과·중복 생성 원격 존재 검사로 거부·`--docker` 부재 시 실주소 timeout · 게이트 스위트 `Live_…CreatesARingOnAServer` 상설화 | ☑ |
 | **K10** | **링 통째 가져오기 + 무결성 게이트** (사용자 결정 2026-08-25) — `import --from-ring <target>` 이 원격/로컬 링 전체를 한 명령으로 복제: 라벨·순번·validator 선언(BLS 목록·alloc 포함) 그대로, 항목마다 키에서 재파생해 원본 인덱스와 대조(`Entry.Verify`) 후 하나라도 다르면 전체 거부, 목적지에 링이 있으면 거부, 비밀번호는 원본 유지 또는 `--password` 재암호화. 단건 import 는 `--expect-address` 로 같은 대조를 호출자가 걸 수 있다. MCP `keyring_import` 에 `fromRing`/`expectAddress` 동일 노출 | 단위(복제가 선언 보존·변조 원본 거부·목적지 점유 거부) + CLI(선언 동반·플래그 혼용 거부·주소 불일치 거부) + 라이브 `Live_…ClonesARingFromAServer`(서버 링 → 로컬, 치환 보고·양측 주소 일치·로컬 재검증) | ☑ |
 | **K7** | `--from` 단일 경로 문법 + `srv://<인벤토리이름>/path` | **네 표기가 한 코드로**(로컬·srv·host:path·ssh://) · **명령줄에 IP 없음** · 플래그 4개 → 1개(구 플래그는 deprecated 유지) | ☑ |
 
@@ -500,7 +500,7 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 |---|---|---|---|
 | **R1** | `AddrMap` boundary — **`--docker` 옵션이 전원**(파일 존재는 활성화 아님, §3.2a) + 매핑 파일(gitignore) 로드 + 접속 경계 주입 + 적용 보고 | ☑ **완료 2026-08-24.** `remote.AddrMap` 을 `target.resolveOver`(SSH 두 형태의 단일 수렴점)와 netcompose 의 `resolveTarget`/헬스 프로브에 주입. 옵션 없으면 파일 있어도 항등(라이브: 실주소 다이얼 후 timeout 실증) · 옵션+파일 부재는 오류(패키지·CLI 회귀) · `net` 은 `State.Docker` 영속 · 적용 내역 보고("docker: dialing 172.30.0.11:22 as 127.0.0.1:2201") · CLI/MCP 동일 옵션 | ☑ |
 | R2 | docker 가상 서버 생성 스크립트 — compose + 인벤토리 v2 + localmap 자동 생성 | ☑ **완료 2026-08-24** (`env/docker/gen-env.sh`). 15대 기동, 생성된 인벤토리를 `net pool --fleet` 이 15×1=15 로 읽음. 퍼블리시 포트는 127.0.0.1 바인딩. server15 는 pn 예정(역할은 할당이 정하므로 서버 계층 구분 없음). **같은 날 접근 모델 교체(DR-b 해소)**: 실서버가 id+password 이고 sudo 가 그 비밀번호를 요구한다는 운영 사실에 맞춰, 키 로그인을 없애고 사용자 `chainbench`+비밀번호(+비밀번호 요구 sudo)로 재구성. `remote.ExecWithInput` + `driver.SSHSudoRunner`(sudo -S -k, 비밀번호는 stdin) 신설 — NM-e 의 "운반만 되던 sudo" 가 소비 가능해짐. 라이브: password 로그인·sudo whoami=root·root 전용 쓰기·keyring 원격 2종 전부 통과 | ☑ |
-| R3 | keyring 원격 경로 라이브 — `import --from srv://` | ☑ **완료 2026-08-24.** server1 의 nodekey 를 `srv://server1/...` + `--docker` 로 가져와 주소·공개키 파생, 번역 보고 출력. 서버로의 쓰기 방향은 R4 의 provision 이 담당(keyring 에 서버 쓰기 verb 없음 — 의도). **후속(같은 날): 검증을 상설 테스트로** — 게이트된 라이브 스위트(`Live_Keyring*`, `CHAINBENCH_DOCKER_SERVERS=<build>` + 함대만 있으면 한 명령) 가 raw key·암호화 keystore(+password) 원격 가져오기와 주소 왕복 동일성을 검증. 이 스위트가 **실결함 1건을 즉시 잡음**: `user@host:path` 형태는 포트 미지정(0)이 매핑 뒤에 22 로 기본화되어 변환표를 지나침 → 매핑 전 기본화(`mapCredentials`, 함대 불필요 단위 회귀 동반). **니모닉 가져오기를 CLI/MCP 에 노출**(core 에만 있던 갭): 골든 벡터(dev mnemonic → 0xf39F…) + 출처 배타성 테스트. 실측: `Ring.Install` 은 소비자 0 (배송은 provision 소관 — 정리 후보) | ☑ |
+| R3 | keyring 원격 경로 라이브 — `import --from srv://` | ☑ **완료 2026-08-24.** server1 의 nodekey 를 `srv://server1/...` + `--docker` 로 가져와 주소·공개키 파생, 번역 보고 출력. 서버로의 쓰기 방향은 R4 의 provision 이 담당(keyring 에 서버 쓰기 verb 없음 — 의도). **후속(같은 날): 검증을 상설 테스트로** — 게이트된 라이브 스위트(`Live_Keyring*`, `CHAINBENCH_DOCKER_SERVERS=<build>` + docker 만 있으면 한 명령) 가 raw key·암호화 keystore(+password) 원격 가져오기와 주소 왕복 동일성을 검증. 이 스위트가 **실결함 1건을 즉시 잡음**: `user@host:path` 형태는 포트 미지정(0)이 매핑 뒤에 22 로 기본화되어 변환표를 지나침 → 매핑 전 기본화(`mapCredentials`, docker 불필요 단위 회귀 동반). **니모닉 가져오기를 CLI/MCP 에 노출**(core 에만 있던 갭): 골든 벡터(dev mnemonic → 0xf39F…) + 출처 배타성 테스트. 실측: `Ring.Install` 은 소비자 0 (배송은 provision 소관 — 정리 후보) | ☑ |
 | R4 | 원격 조립·기동 라이브 (단일 서버) | ☑ **완료 2026-08-24.** `net up --server server1 --docker` 로 stablenet 4검증자가 **docker 서버 위에서** 15스텝 완주, 블록 16→24 전진(매핑 포트로 프로브), stop 후 고아 0. **P2 실증**: genesis·static-nodes·workspace 전부 실주소(172.30.0.11), loopback 0건(metrics 자기 바인드 기본값 제외). **원격 경로의 선재 결함 4건을 이 과정에서 발견·수정**: ① init 이 타깃 경로를 로컬 `os.ReadFile` 로 읽음 → Files boundary 경유 ② netcompose 에 신원 배송 부재 + config/argv 가 로컬 키 경로를 타깃에 구움 → `keysBase()` + provision 의 `shipIdentities`(engine 방식 이식) ③ **원격 launch 셸 문법** — `mkdir && nohup CMD &` 는 리스트 전체가 백그라운드 서브셸이 되어 세션 파이프를 문 채 노드를 기다림(노드가 즉사할 때만 우연히 통과) → `|| exit 1; nohup … &` + 문법 회귀 테스트 ④ 헬스 프로브가 fleet 에서 노드별 주소 대신 target 주소를 물음 → 노드 기록 주소로 | ☑ |
 | R5 | **fleet 다중 호스트 기동** — 노드별 머신 해석 완성: allocate 가 노드마다 서버 세트 항목명을 기록하고(`NodeState.Server`), genesis·config·provision(신원 배송)·init·start·stop·restart·logs·사전 점검(포트 프로브·바이너리 검사)이 전부 **그 노드의 머신**으로 간다(`machineFor`/`eachMachine`, 명령당 머신별 1회 dial 캐시) | ☑ 라이브(2026-08-26): 5대 서버에 4 검증자+1 endpoint 분산 기동 → 서로 다른 머신끼리 합의해 블록 26 봉인 → 대장에 5머신 5기록 → stop → 5대 전부 고아 0. 단위: fleet allocate 가 서버명·호스트 분산을 기록 | ☑ |
 
@@ -1105,19 +1105,19 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 진입점을 쓴다. 남은 값어치는 **MCP 손작성 스키마 감축**과 **`query` 투영(S7)** 둘뿐이다.
 S0·S1·S2·S4 는 여기서 닫는다.
 
-### 이 기기에서 못 하는 것 — 로컬 docker 함대가 필요하다
+### 이 기기에서 못 하는 것 — 로컬 docker 가 필요하다
 
 > **정정 2026-09-07.** 이 절은 "다른 머신이 필요하다"고 적혀 있었는데 **근거 없이 쓴 것이고 사실과 반대다.**
 > R 트랙의 전제 자체가 "실 원격 서버 없이 컨테이너를 가상 서버로 쓴다"이고([[docker-remote-design]]),
 > R1~R5 는 전부 끝났으며 **R6 도 15대 docker 서버셋에서 라이브로 완주했다**(2026-09-02).
 > 필요한 것은 다른 기계가 아니라 이 기계 위의 docker 데몬이고, 지금 그것이 떠 있지 않다.
-> 함대는 `env/docker/gen-env.sh` 가 만들고 산출물(인벤토리·localmap)은 gitignore 대상이다.
+> docker 는 `env/docker/gen-env.sh` 가 만들고 산출물(인벤토리·localmap)은 gitignore 대상이다.
 
 | # | 무엇 | 남은 것 |
 |---|---|---|
 | **R6** 잔여 | poa 원격 브링업 | **chainbench 결함이 아니다.** `etcdInit` 이 형성한 클러스터를 노드의 배경 etcd 관리가 거버넌스 멤버 14개를 보고 다시 join 하려다 잃는다. 재현 2회 중 1회. go-wemix 바이너리 쪽이다 |
-| **G2** 잔여 | 핸드오프의 원격 경로 | R6 과 같은 함대에서 본다 |
-| `chain rm` 원격 | N4 가 남긴 유일한 진짜 분기 | `filestore.Store` 에 삭제가 없다. 파괴적 원격 작업이라 검증할 함대가 있을 때 함께 |
+| **G2** 잔여 | 핸드오프의 원격 경로 | R6 과 같은 docker 에서 본다 |
+| `chain rm` 원격 | N4 가 남긴 유일한 진짜 분기 | `filestore.Store` 에 삭제가 없다. 파괴적 원격 작업이라 검증할 docker 가 있을 때 함께 |
 
 ### 미해결 조사
 
@@ -1125,7 +1125,7 @@ S0·S1·S2·S4 는 여기서 닫는다.
 |---|---|---|
 | **`TestE2E_WbftQuorum6of6Halts2`** | **2026-09-07: 18판 무실패** | **재현되지 않는다. 고쳤다는 말이 아니다.** 실제 테스트 10판 + 손 재현 8판. "head 2 에 멈춤"이라는 기록에서 **이른 정지가 방아쇠**라는 가설을 세워 head 2·4·20 에서 시험했는데 여덟 판 전부 3초 만에 회복했고 여섯 노드가 피어 5를 보고했다 — 가설은 무너졌고 대신할 원인은 없다. 그 사이 들어간 변경(`process.Stop`·NM6)이 이것과 연결된다는 것도 보인 적이 없다. 재현되면 이제 진단이 남는다 |
 | ~~**`TestE2E_StablenetProposalExpiry`**~~ | ☑ **규명·수정 2026-09-07 (#358)** | 실패 4판과 통과 5판이 **`node1 sealed=0`** 하나로 갈렸다. chainbench 의 결함은 준비 판정이었다 — `detectProducing` 이 주 노드 하나에게만 물어서, 4검증자 BFT 망이 셋만 봉인해도 "생산 중"이었다. `health.Participants` 로 봉인자를 세고 하네스가 **모든 생산자의 참여**를 기다린다. 검사 없이 16판 중 5실패 → 검사와 함께 16판 중 0실패, 빼면 5판 안에 복귀 |
-| **`G2` 잔여** | — | 원격 경로라 함대와 함께 본다 |
+| **`G2` 잔여** | — | 원격 경로라 docker 와 함께 본다 |
 
 ### 이 순서의 단점
 
@@ -1149,21 +1149,21 @@ S0·S1·S2·S4 는 여기서 닫는다.
 
 이번에 닫힌 것: S0·S1·S2(조회 목록)·S4·S7 · N0/NM6 · N9 · N1~N6 · A7 · A7b · A8 · B1 · B1-b · N11 · P6 · P8 · V7.
 
-### 남은 것 1 — 로컬 docker 함대가 필요하다 (유일한 실제 작업)
+### 남은 것 1 — 로컬 docker 가 필요하다 (유일한 실제 작업)
 
 **다른 기계가 아니라 docker 데몬이 필요하다.** R 트랙의 전제가 "실 원격 서버 없이 컨테이너를 가상
 서버로 쓴다"이고 R1~R5 는 끝났으며 R6 도 15대 서버셋에서 라이브 완주했다([[docker-remote-design]]).
 
 착수 순서:
 
-1. docker 를 띄우고 `env/docker/gen-env.sh` 로 15대 함대를 만든다. 산출물(인벤토리·localmap)은
+1. docker 를 띄우고 `env/docker/gen-env.sh` 로 15대 docker 를 만든다. 산출물(인벤토리·localmap)은
    gitignore 대상이라 저장소에 없다.
 2. **R6 잔여** — `etcdInit` 이 형성한 클러스터를 노드의 배경 etcd 관리가 거버넌스 멤버 14개를 보고
    다시 join 하려다 잃는다(재현 2회 중 1회). **chainbench 오케스트레이션은 정상이고 go-wemix
    바이너리 쪽이다.** 체인팀과 볼 일이지 여기서 고칠 것이 아닐 수 있다.
-3. **G2 잔여** — 핸드오프의 원격 경로. 같은 함대에서 본다.
+3. **G2 잔여** — 핸드오프의 원격 경로. 같은 docker 에서 본다.
 4. **`chain rm` 원격** — `filestore.Store` 에 삭제가 없어(확인·읽기·쓰기·체크섬뿐) 경계를 통과하지
-   못한다. 파괴적 원격 작업이므로 검증할 함대가 있을 때 인터페이스에 `Remove` 를 더한다. 지금은
+   못한다. 파괴적 원격 작업이므로 검증할 docker 가 있을 때 인터페이스에 `Remove` 를 더한다. 지금은
    절반만 지우거나 지웠다고 거짓말하지 않고 소리 내어 거절한다.
 
 ### 남은 것 2 — 근거가 생기면 (지금은 하지 않는다)
@@ -1259,14 +1259,14 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 - [ ] **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
 - [ ] **WA24** [죽은 능력] 스펙이 안 쓰는 등록물: 액션 `faucet`·`registerContract`, 어서션 `metric`·`createAddress`·`contractChecksum`, `hooks.post/onFail`, `defaultOn`, `placement`, `boot` role. 방향: 스펙으로 검증하거나 등록을 뺀다.
-- ◐ **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 함대에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
+- ◐ **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
 - [ ] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.)
 
 
 ## 1p. WA 트랙 이후 — fleet 검증 결과와 남은 작업 (2026-09-08)
 
 WA 트랙은 PR #363 으로 main 에 머지됐다(WA1~WA26 중 코드/문법/표면 항목 반영). 이어
-docker 함대(15대, stablenet/wbft/wemix)에서 커버리지 스펙을 라이브로 돌려 다음을 확인했다.
+docker(15대, stablenet/wbft/wemix)에서 커버리지 스펙을 라이브로 돌려 다음을 확인했다.
 
 **라이브 통과 확인**: createAddress·contractChecksum, faucet(amount 를 십진 wei 로 수정),
 proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·fault, go-wemix fault.
@@ -1286,13 +1286,13 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
     아예 없었다(같은 망이 포크 전에는 답하고 후에는 답하지 않았다). 포트가 배정된 노드면
     커맨드라인으로도 말하게 했다.
   - 제거했던 `03-metric-head-block` 스펙을 **되살렸고 라이브로 통과시켰다**(2026-09-11,
-    15대 함대, `chain_head_block=3`).
+    15대 docker, `chain_head_block=3`).
   - **라이브가 유닛 검증이 놓친 것 둘을 더 찾았다.** ① `env/docker/gen-env.sh` 가 metrics
     포트 6060 을 퍼블리시하지도 localmap 에 넣지도 않았다 — `AddrMap` 은 매핑 없는 포트를
     **그대로 두므로** 호스트는 loopback 으로 바뀌고 포트는 6060 으로 남아 아무것도 답하지
     않았다. ② 기록된 `MetricsURL` 을 `HTTPEndpoint`(주소만 해석)로 만들어
     **`/debug/metrics/prometheus` 경로가 빠졌다** — 살아 있는 metrics 서버가 루트에서 404 를
-    냈다. 유닛 테스트는 둘 다 잡지 못했다(전자는 함대 정의, 후자는 경로를 검사하지 않음).
+    냈다. 유닛 테스트는 둘 다 잡지 못했다(전자는 docker 정의, 후자는 경로를 검사하지 않음).
 - [x] **B — 부정 경로**: `go-stablenet/tx/01-negative-tx-revert` (revert 하는 런타임 배포
   후 `expect:revert`) fleet 검증 완료.
 - [ ] **B 잔여 — 거버넌스(체인 특화, fleet)**. go-wbft·go-wemix 거버넌스는 stablenet 을
@@ -1394,13 +1394,35 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 6절 결정 6건은 승인 완료(정본 8절). 남은 것은 PR 하나.
 
 
-## 1s. 남은 작업 한눈에 (2026-09-10)
+## 1s. 남은 작업 한눈에 (2026-09-10 작성 · **2026-09-11 재측정**)
 
 §1n 부터 §1r 까지 트랙마다 흩어져 있던 미완 항목을 한 곳에 모았다. 각 항목의 근거와
-배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다. 표시가
-낡아 미완으로 보이던 것들(§1o 의 WA 체크박스, `hardfork` 결정)은 이번에 정리했다.
+배경은 원래 절에 그대로 두고, 여기서는 **무엇이 남았고 왜 남았는지**만 적는다.
 
-착수 순서를 정한 목록이 아니다. 성격이 다른 다섯 갈래이고, 갈래끼리는 서로 막지 않는다.
+### 재측정 (2026-09-11, PR #383 머지 후)
+
+`main` 기준으로 이 절의 열린 항목을 하나씩 코드에 대조했다. 세 가지가 달라졌다.
+
+| 항목 | 적혀 있던 것 | 실제 (2026-09-11) |
+|---|---|---|
+| WA25 커버리지 | go-wemix 5건·go-wbft 6건, proxied 라우팅 스펙 없음 | **8건·11건**, `go-wbft/network/01-wbft-proxied-routing.json` 으로 **pn/proxied 는 해소** |
+| D. MCP 재배포 | 라이브가 `net_*` 이름의 낡은 빌드 | 라이브도 `chainbench_*` 이지만 **다른(더 오래된) 집합**이다 — 진단 문구를 아래에서 고쳤다 |
+| `binaryAliases` | 리졸버는 있고 호출자가 테스트 둘뿐 | 변화 없음 (`BinaryPath` 호출부는 여전히 `workspaceconfig_test.go` 2곳뿐) |
+
+나머지 열린 항목(B 거버넌스 케이스, L1, L2, 후보·반영 분리, 통합 report, R6, validatorset
+홈, health 재배선)은 **그대로 열려 있다**. 확인 방법은 각 항목에 적었다.
+
+**착수 순서 제안.** 갈래끼리 서로 막지 않으므로 순서는 강제가 아니지만, 지금 시점에서
+값이 큰 순서는 이렇다.
+
+1. **R7 (epoch 재결정 경로)** — 방금 넣은 파생이 의도대로 도는지 아직 관측되지 않았다.
+   회귀가 생기면 안정화를 벗어나는 첫 체인에서야 드러난다. 라이브 docker 가 서 있는 지금이
+   가장 싸다.
+2. **D. MCP 플러그인 재배포** — 코드가 아니라 배포다. 저장소 58개 도구 중 라이브가 못
+   보는 것이 절반이라, 이걸 두면 MCP 표면 작업의 검증이 전부 겉돈다.
+3. **WA25 잔여 + B 거버넌스 케이스** — 커버리지. docker 가 서 있는 동안 해야 싸다.
+4. **L1 / L2 / 후보·반영 분리 / 통합 report** — 증적·운영 품질. 지금 동작을 막지 않는다.
+5. **R6 / validatorset 홈 / health 재배선** — 각각 체인팀 몫, 설계 결정, 구조 정리.
 
 ### A. 지금 진행 중
 
@@ -1415,12 +1437,12 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 ### B. fleet 커버리지와 관측 (§1p)
 
-라이브 함대가 있어야 진행되는 갈래다. **함대는 2026-09-11 에 섰다** — 15대 docker,
+라이브 docker 가 있어야 진행되는 갈래다. **docker 는 2026-09-11 에 섰다** — 15대 docker,
 세 체인 패밀리 15노드 스모크가 모두 통과했다(stablenet · wbft · wemix(poa)). 체인
 바이너리는 세 저장소를 `golang:1.23-bookworm` 컨테이너에서 linux/arm64 로 빌드했다
 (호스트가 macOS 라 `CGO_ENABLED=0` 크로스컴파일은 blst 에서 실패한다).
 
-- [x] **C. metric 수집 인프라** — **라이브 검증 완료 (2026-09-11).** 15대 docker 함대에서
+- [x] **C. metric 수집 인프라** — **라이브 검증 완료 (2026-09-11).** 15대 docker 에서
   `03-metric-head-block` 통과(`chain_head_block=3`). 상세는 §1p C. 라이브가 코드 검증이
   놓친 결함 둘을 더 찾았다 — `gen-env.sh` 가 metrics 포트를 퍼블리시·매핑하지 않았고,
   기록된 `MetricsURL` 에 Prometheus 경로가 빠져 있었다(둘 다 수정).
@@ -1428,10 +1450,32 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
   멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.
   실제 ABI 를 쓰는 `registerContract` 케이스와 negative-tx 의 reject 변형도 여기 묶인다.
-- [ ] **WA25. go-wemix·go-wbft 커버리지가 얕다.** 각각 5건·6건뿐이고, pn/proxied 라우팅을
-  검증하는 스펙이 없다.
-- [ ] **D. 라이브 MCP 플러그인 재배포.** 배포본이 `net_*` 이름의 낡은 빌드다. 저장소는
-  `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. **코드 작업이 아니라 배포 작업이다.**
+- [ ] **WA25 잔여. go-wemix·go-wbft 커버리지.** **부분 해소 (2026-09-11 재측정).** 각각
+  **8건·11건**으로 늘었고(go-stablenet 은 156건), 없다고 적혀 있던 **pn/proxied 라우팅
+  스펙은 생겼다** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`(bp 2·pn 1·en 1,
+  네 노드의 peerCount 를 각각 단정한 뒤 blockAdvance). 남은 것은 **깊이**다: 두 체인 모두
+  fault 가 노드 크래시 1건뿐이고, 15노드 스펙은 chain-up 뿐이라 규모에서의 tx·합의 거동을
+  보는 스펙이 없다. 확인: `find tests/tc/go-wemix tests/tc/go-wbft -name '*.json' | wc -l`.
+- [ ] **D. 라이브 MCP 플러그인 재배포.** **여전히 열려 있고, 진단 문구를 고쳤다
+  (2026-09-11).** "라이브가 `net_*` 이름" 은 이제 맞지 않는다 — 라이브도 `chainbench_*` 를
+  쓰지만 **더 오래된 다른 집합**이다. 저장소는 도구 58개를 등록하는데
+  (`grep -rh 'Name:\s*"chainbench_' internal/mcp/*.go`), 라이브에는 `chainbench_chain_*`
+  20여 개와 `keyring_*`·`resource_*`·`upgrade`·`hardfork`·`validate`·`run`·`node_start/stop`
+  이 **아예 없고**, 반대로 라이브에만 있는 `chainbench_start`·`chainbench_test`·
+  `chainbench_setup_plan` 은 저장소에 없는 옛 이름이다. **코드 작업이 아니라 배포 작업이며**,
+  두기만 하면 MCP 표면을 건드리는 작업의 라이브 검증이 전부 겉돈다.
+  - CLI 쪽은 해소됐다(2026-09-11 확인): `test`·`network`·`node`·`resource`·`validate`·
+    `report` 그룹이 모두 `chainbench --help` 에 있다. WA2·WA5 가 가리키던 공백이다.
+
+- [ ] **관측 (2026-09-11). `istanbul_getWbftExtraInfo` 는 `"latest"` 같은 블록 태그를 받지
+  못한다.** 라이브에서 `"latest"` 로 부르면 `block is not a wbft block` 로 실패하고, 같은
+  체인에 16진수 블록 번호를 주면 정상 응답한다. 원인은 go-wbft 쪽이다 —
+  `consensus/wbft/backend/api.go:418` 이 `big.NewInt(int64(number))` 로 태그의 음수 표현을
+  그대로 블록 번호로 쓰고 `IsCroissant` 가 거짓이 되어 나간다. **오류 메시지가 원인을
+  가린다**(태그를 못 푼 것인데 "wbft 블록이 아니다" 라고 한다). chainbench 쪽 영향은
+  스펙 작성이다: 다른 `istanbul_*` 는 `"latest"` 를 받으므로(`istanbul_getValidators` 를
+  쓰는 기존 케이스들이 그렇다) 같은 습관으로 쓰면 실패한다. 이 메서드를 쓰는 스펙은 epoch
+  경계 번호를 명시해야 한다. **체인팀 몫이지만, 스펙 작성자가 먼저 밟는다.**
 
 ### C. 키 취급과 증적 (§1q)
 
@@ -1440,7 +1484,8 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 - [ ] **L1. 노드별 시도(attempt) 로그 축.** 노드 로그가 노드당 한 파일이라 재기동하면
   이전 시도의 로그가 덮인다. reuse-if-matching 이 한 노드를 여러 번 재작업할 때 특히
-  문제다. `core/node/layout.go` 에 attempt 축이 없다.
+  문제다. 확인 (2026-09-11): `core/node/layout.go` 에 `attempt` 라는 말이 없다 — 축이
+  여전히 없다.
 - [ ] **L2. 대상에서 키 검증(공개 신원만 반환).** 지금 `srv://` keyring 은 묶음 전체를
   로컬로 내려받는다. 서명에 로컬 경로가 필요해 정당한 경로지만, 대조만 필요한 경우까지
   내려받을 이유는 없다. 다운로드가 필요한 경우와 검증만 필요한 경우를 가르는 것이 요점이다.
@@ -1453,8 +1498,9 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   지금은 판정을 쓰기 앞으로 옮기는 데까지 했다(MON-009).
 - [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 **리졸버까지는 생겼다** —
   `WorkspaceConfig.BinaryPath`(`resource/workspaceconfig.go:327`)가 별칭을 적용한다. 다만
-  **호출자가 테스트 둘뿐이라 프로덕션 경로에는 아직 배선되지 않았다**(2026-09-11 확인). 후자
-  후자(`{server,ref}`·`serverIndex`·`localPath`)는 아직 파싱조차 안 된다. 샘플과 안내
+  **호출자가 테스트 둘뿐이라 프로덕션 경로에는 아직 배선되지 않았다** — PR #383 머지 후
+  재확인해도 `.BinaryPath(` 호출부는 `workspaceconfig_test.go` 2곳뿐이다. 후자
+  (`{server,ref}`·`serverIndex`·`localPath`)는 아직 파싱조차 안 된다. 샘플과 안내
   문서가 "미구현" 이라고 적어 두었고, 구현하면 `TestWorkspaceConfig_SampleCommentsMatchWhatParses`
   가 실패하며 그 주석을 걷으라고 알린다.
 - [ ] **여러 정의서 실행의 통합 report.** 지금은 실행마다 따로 남는다.
@@ -1513,7 +1559,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   끝까지 돈다: `handoff confirmed: head 21; block 21 sealed by 0x8eb79036… (successor)`.
   `upgrade run --server <name> --server-set … --workspace-config … --docker`.
   - **포트는 이제 server set 에서 나온다.** 이전에는 profile 의 `base_rpc: 40010` 을 써서
-    함대가 퍼블리시하지 않는 포트로 dial 했다. 서버를 지정하면 그 서버의 slot 을 받는다
+    docker 가 퍼블리시하지 않는 포트로 dial 했다. 서버를 지정하면 그 서버의 slot 을 받는다
     (5노드 → slot 1~5, http 8601~8605, p2p step 3 으로 30301/30304/…). profile 의
     `ports:` 는 단일 호스트 로컬 실행의 폴백으로 남는다.
   - **라이브가 찾은 결함 셋** — 전부 "대상 인식 경계가 이미 있는데 로컬 가정이 남아 있던" 자리:
