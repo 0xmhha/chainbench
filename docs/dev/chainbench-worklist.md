@@ -1577,7 +1577,24 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     섹션만 들어올리므로 wbft 제네시스의 top-level extraData 는 버려지고, 병합 파일은 wemix
     템플릿의 것을 유지한다(ASCII `"chainbench handoff…"` 149바이트). validator 집합은
     `croissant.init` 으로 들어간다. 프로파일 주석을 사실에 맞게 고쳤다.
-  - **남은 흠**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합 크기와
+  - **`targetValidators` 고정값 해결 — 완료·라이브 검증 (2026-09-11).** 제네시스 템플릿의
+    `targetValidators`·`epochLength` 를 플레이스홀더로 바꿔 **validator 수에서 파생**시켰다
+    (`__TARGET_VALIDATORS__` = n, `__EPOCH_LENGTH__` = max(10, n)). 둘을 함께 파생시키는
+    이유는 go-wbft 가 `epochLength >= targetValidators` 를 강제하기 때문에 하나만 올리면
+    제네시스가 거부되기 때문이다. 값이 한 곳에서만 결정되므로 wbft 단독 체인 경로와 핸드오프
+    경로가 갈라지지 않는다.
+    - 라이브 3건. **15+15 핸드오프**: 병합 제네시스 `targetValidators: 15, epochLength: 15`,
+      `handoff confirmed: head 50; … across 15 of 15 validator(s)`, epoch 경계가 10블록에서
+      15블록 간격(블록 20·35·50)으로 옮겨진 것까지 확인. **wbft 4노드**(골든 경로, 로컬):
+      `targetValidators: 4, epochLength: 10`, `wbft-chain-up pass`. **wbft 15노드**(docker,
+      bp 13): `targetValidators: 13, epochLength: 13`, `wbft-chain-up-15 pass`.
+    - 테스트 5건. 파생 자체(집합 크기 일치·`epochLength >= targetValidators`·작은 집합은
+      바닥 10 유지)와 **출하 템플릿이 실제로 플레이스홀더를 들고 있는지**를 따로 고정했다 —
+      후자가 없으면 파생이 맞아도 도달하지 않는다(이 브랜치 전체가 그 실패 양식이었다).
+      변이 3건으로 실패 가능함을 증명했다.
+    - 남은 것: `stabilizingStakersThreshold` 는 5 고정 그대로다. 안정화 단계를 벗어나는
+      문턱이지 집합 크기가 아니라 이번 파생에 넣지 않았다.
+  - **(위 문제의 진단 기록)**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합 크기와
     무관하게 **1 로 고정**이고, 병합 결과에도 1 로 남는다. 출처는 go-wbft 상류의 플레이스홀더
     (`params/config.go` 의 `TargetValidators: newUint64(1), // TODO: define validators`)이며,
     chainbench 템플릿은 최초 커밋(#16)부터 그 값을 그대로 들고 있다.

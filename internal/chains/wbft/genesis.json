@@ -19,9 +19,9 @@
       "wBFT": {
         "requestTimeoutSeconds": 1,
         "blockPeriodSeconds": 1,
-        "epochLength": 10,
+        "epochLength": __EPOCH_LENGTH__,
         "proposerPolicy": 0,
-        "targetValidators": 1,
+        "targetValidators": __TARGET_VALIDATORS__,
         "maxRequestTimeoutSeconds": null,
         "stabilizingStakersThreshold": 5
       },
