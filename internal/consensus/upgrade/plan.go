@@ -66,8 +66,25 @@ type Inputs struct {
 	// node specs so the mesh can be wired from the plan. Length, if non-zero,
 	// must equal the total node count.
 	NodePubkeys []string
-	// Port bases/steps for resource.Plan (per-node p2p/etcd/http/ws/auth).
+	// Port bases/steps for resource.Plan (per-node p2p/etcd/http/ws/auth). They
+	// are the single-host fallback: one machine, ports stepped by node index.
 	P2PBase, P2PStep, RPCBase, RPCStep int
+	// DialURL, when set, turns a node's own address into the one this tool can
+	// reach it at. It exists for the same reason the composition path records a
+	// translated RPCURL: under --docker a node's address is the container's, and
+	// only the published loopback port answers from here. Nil dials the node's own
+	// address, which is right for a local run and a real server.
+	DialURL func(host string, port int) (string, error)
+	// Placement, when set, is where the resource module put these nodes, and it
+	// wins over the bases above.
+	//
+	// It has to win, because the two schemes answer different questions. The
+	// bases assume one machine and step ports by node index; a server set places
+	// nodes across machines and steps ports by SLOT, so node 16 of 30 on a
+	// 15-server set is the second slot of server 1 — same host as node 1, a port
+	// band further along. Deriving that from a base and an index is not possible,
+	// and it is the shape a 15-producer/15-successor handoff needs.
+	Placement *node.Map
 }
 
 // NodeSpec is one node's resolved launch assignment.
@@ -88,6 +105,17 @@ type NodeSpec struct {
 	Recommit string
 	// Ports is the node's resolved port set.
 	Ports node.Endpoints
+	// RPCURL is the address this tool dials the node at, when it differs from
+	// Host:Ports.HTTP — a container publishes on loopback. Empty derives it.
+	RPCURL string
+	// Host is the address this node binds and is dialled on. Empty means the
+	// launch's single host, which is what a local handoff has always used.
+	//
+	// It is per node because a handoff placed on a server set does not run on
+	// one machine: 15 producers and 15 successors over 15 servers is two nodes
+	// per server, and which server a node landed on is a property of the node,
+	// not of the run.
+	Host string
 	// Pubkey is the node's 128-hex devp2p public key (no 0x prefix), used to
 	// build its enode for mesh wiring. Empty when identities are not supplied.
 	Pubkey string
@@ -174,16 +202,41 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 	}
 	nodes := make([]NodeSpec, 0, total)
 	ports := make([]node.Endpoints, 0, total)
+	hosts := make([]string, 0, total)
 	netids := make([]int64, 0, total)
+	if in.Placement != nil && len(in.Placement.Placements()) != total {
+		return Plan{}, fmt.Errorf("upgrade: placement has %d node(s) but the profile asks for %d (%d producer(s) + %d validator(s))",
+			len(in.Placement.Placements()), total, in.Roles.Producers, in.Roles.Validators)
+	}
 	for i := 0; i < total; i++ {
-		p, err := resource.Plan(i+1, in.P2PBase, in.P2PStep, in.RPCBase, in.RPCStep, node.DefaultReservation)
-		if err != nil {
-			return Plan{}, fmt.Errorf("upgrade: port plan node %d: %w", i, err)
+		var (
+			p    node.Endpoints
+			host string
+			dial string
+		)
+		if in.Placement != nil {
+			pl, ok := in.Placement.Lookup(node.LabelFor(i + 1))
+			if !ok {
+				return Plan{}, fmt.Errorf("upgrade: placement has no %s", node.LabelFor(i+1))
+			}
+			p, host = pl.Ports, pl.Host
+			if in.DialURL != nil {
+				u, derr := in.DialURL(pl.Host, pl.Ports.HTTP)
+				if derr != nil {
+					return Plan{}, fmt.Errorf("upgrade: %s dial address: %w", pl.Label, derr)
+				}
+				dial = u
+			}
+		} else {
+			var err error
+			if p, err = resource.Plan(i+1, in.P2PBase, in.P2PStep, in.RPCBase, in.RPCStep, node.DefaultReservation); err != nil {
+				return Plan{}, fmt.Errorf("upgrade: port plan node %d: %w", i, err)
+			}
 		}
 		producer := i < in.Roles.Producers
 		spec := NodeSpec{
 			Index: i, Role: node.RoleBP, Producer: producer,
-			NetworkID: in.NetworkID, Ports: p,
+			NetworkID: in.NetworkID, Ports: p, Host: host, RPCURL: dial,
 		}
 		if len(in.NodePubkeys) != 0 {
 			spec.Pubkey = in.NodePubkeys[i]
@@ -195,6 +248,7 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 		}
 		nodes = append(nodes, spec)
 		ports = append(ports, p)
+		hosts = append(hosts, host)
 		netids = append(netids, in.NetworkID)
 	}
 
@@ -203,6 +257,7 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 	// checks the one rule that is its own — a validator is not a member.
 	net := NetworkPlan{
 		NetworkIDs:     netids,
+		Hosts:          hosts,
 		Ports:          ports,
 		Genesis:        merged,
 		WemixMembers:   in.ProducerAddrs,
@@ -218,6 +273,10 @@ func BuildPlan(from, to registry.ChainPlugin, in Inputs) (Plan, error) {
 // NetworkPlan is the fully-resolved description of the handoff network about
 // to launch, kept on the Plan so a surface can show what was validated.
 type NetworkPlan struct {
+	// Hosts is each node's address, in plan order. Empty entries mean the single
+	// host of a local run. It is here so port validation knows which ports share
+	// a machine: two nodes on different servers may hold the same port.
+	Hosts []string
 	// NetworkIDs is each node's configured devp2p network id.
 	NetworkIDs []int64
 	// Ports is each node's resolved port set.
@@ -237,7 +296,11 @@ func (p NetworkPlan) validate() error {
 	if err := resource.ValidateUniform(p.NetworkIDs); err != nil {
 		return err
 	}
-	if err := resource.ValidatePorts(p.Ports); err != nil {
+	hosts := p.Hosts
+	if hosts == nil {
+		hosts = make([]string, len(p.Ports))
+	}
+	if err := resource.ValidatePortsPerHost(hosts, p.Ports); err != nil {
 		return err
 	}
 	if len(p.NetworkIDs) != len(p.Ports) {

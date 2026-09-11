@@ -1509,26 +1509,31 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   - 남은 흠(경미): 삭제 후 `runtime/<id>/`·`configs/` **빈 디렉터리가 남는다.** 기록된
     경로만 지우기 때문이고(그게 안전한 쪽이다 — 구성 id 가 비면 `runtime/` 전체가 대상이
     될 수 있다), 아무것도 막지 않는다.
-- ◐ **G2. 핸드오프 원격** — **크게 전진, 아직 닫히지 않았다 (2026-09-11).**
-  `upgrade.HandoffInputs` 는 원래부터 `Host`·`Files`·`Driver`·`Exec` 경계를 갖고 있었고,
-  **아무도 그것을 해석하지 않아** CLI 에 target 플래그가 없었다. 그 해석을 배선하고
-  (`upgrade run --server/--server-set/--workspace-config/--docker`), 라이브 실행이 한 번에
-  하나씩 드러낸 **로컬 가정 6건**을 고쳤다. 각각은 대상 인식 경계가 이미 있는데 로컬
-  호출이 남아 있던 자리였다:
-  1. 바이너리 존재 확인을 **운영자 PATH** 에서 했다 → 대상이 지정되면 대상의 store 로 probe.
-  2. genesis **템플릿**(운영자 파일) 경로를 대상 명령에 그대로 넘겼다 → 대상으로 ship.
-  3. 생성된 base genesis 를 **로컬로 읽었다** → store 로 읽는다(`ComposePlan` 이 ctx 를 받는다).
-  4. `Launch` 이 `process.Initializer` **능력을 묻지 않아** 로컬 init 을 썼다 → 드라이버에 묻는다.
-  5. IPC 대기가 로컬 `WaitForIPC` 였다 → `poa.WaitForIPCOn`(store 인식, 원래 비공개로 존재).
-  6. 프로듀서 keystore 를 **디렉터리 리스팅**으로 다시 찾았다(store 에 리스팅이 없다) →
-     ship 할 때 경로를 기록해 쓴다.
-  - **남은 것은 구조적 문제 하나다: 핸드오프가 포트를 profile 에서 가져오고 resource 모듈의
-    포트 대역을 쓰지 않는다.** 그래서 `profiles/wemix-upgrade.yaml` 의 `base_rpc: 40010` 으로
-    dial 하고, 함대가 퍼블리시하지 않는 포트라 mesh 단계에서 멈춘다
-    (`endpoint http://127.0.0.1:40010 not ready`). 선택지는 둘 — (a) 핸드오프가 server set 의
-    대역에서 포트를 받는다(컴포지션 경로와 같아진다), (b) profile 포트를 함대가 퍼블리시한다.
-    (a) 가 옳아 보이지만 profile 의 의미를 바꾸는 결정이라 별건으로 둔다.
-  - 로컬 경로는 회귀 없음: `TestUpgradeRunE2E`(e2e 태그) 통과.
+- [x] **G2. 핸드오프 원격 — 완료·라이브 검증 (2026-09-11).** 원격 대상에서 핸드오프가
+  끝까지 돈다: `handoff confirmed: head 21; block 21 sealed by 0x8eb79036… (successor)`.
+  `upgrade run --server <name> --server-set … --workspace-config … --docker`.
+  - **포트는 이제 server set 에서 나온다.** 이전에는 profile 의 `base_rpc: 40010` 을 써서
+    함대가 퍼블리시하지 않는 포트로 dial 했다. 서버를 지정하면 그 서버의 slot 을 받는다
+    (5노드 → slot 1~5, http 8601~8605, p2p step 3 으로 30301/30304/…). profile 의
+    `ports:` 는 단일 호스트 로컬 실행의 폴백으로 남는다.
+  - **라이브가 찾은 결함 셋** — 전부 "대상 인식 경계가 이미 있는데 로컬 가정이 남아 있던" 자리:
+    1. `upgrade/launch.go` 가 HTTP 를 **`127.0.0.1` 에 하드코딩**했다. 컨테이너 안에서는 그것이
+       컨테이너 자신의 loopback 이라 퍼블리시 포트가 아무것도 못 만난다 — 노드는 돌고 있는데
+       바깥에서 "not ready" 로 보인다. 대상에 배치된 노드는 `0.0.0.0` 에 바인드한다.
+    2. readiness·mesh dial 이 노드 **자기 주소**로 나갔다. `NodeSpec.RPCURL`(opener 가 번역)을
+       더해 `process.NodeOf` 가 그것을 우선한다 — `MetricsURL` 과 같은 형태다.
+    3. `env/docker/firewall.sh` 가 포트 대역을 **4 slot 폭으로 하드코딩**했다(8601:8604).
+       `gen-env.sh` 의 `SLOTS` 를 올려도 방화벽이 안 따라와, slot 5 노드가 돌면서 DROP 됐다.
+       이제 두 파일이 같은 knob 에서 파생된다.
+  - `resource.ValidatePortsPerHost` 를 더했다. 포트는 **머신 안에서만** 경쟁하므로, 서버 15대에
+    퍼진 망은 node1·node2 가 다른 호스트에 같은 포트를 갖는 것이 정상이다. 기존
+    `ValidatePorts` 는 그것을 충돌로 봤다.
+  - **남은 것: 서버 여러 대에 걸친 핸드오프.** 배치는 되지만(`--all-servers`) 실행이 아직
+    단일 머신을 지난다 — `LaunchOptions` 가 `Files` 하나, `Launch` 가 `Driver` 하나를 받고,
+    컴포지션 경로는 노드마다 머신을 푼다(`chainsetup.machineFor`). 그 배선이 없는 채로 돌면
+    전 노드가 한 서버에 뜨면서 겉보기엔 성공하므로, **호스트가 둘 이상인 배치는 이유를 말하고
+    거절한다**(`MultiMachine`). 요청받은 15+15(서버당 wemix 1 + wbft 1)는 이 배선 다음이다.
+  - 로컬 경로 회귀 없음: 로컬 핸드오프도 `handoff confirmed: head 22` 로 완주.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
 - [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에

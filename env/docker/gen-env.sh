@@ -28,6 +28,9 @@ RPC_PUB_BASE=18600                # slot s of server i published at $((base + 10
 # has its own band (auth 85xx, http 86xx, ws 87xx, p2p 303xx, one metrics
 # port), and firewall.sh opens exactly these inside every container.
 P2P_PORT=30301; P2P_STEP=1
+# How many p2p-side ports the firewall opens above the base: slots x step, plus
+# the etcd port each poa node reserves beside its own.
+P2P_SPAN="${P2P_SPAN:-$(( (SLOTS > WEMIX_SLOTS ? SLOTS : WEMIX_SLOTS) * 3 ))}"
 # The wemix (poa) family needs two consecutive p2p-side ports per node, so it
 # gets its own set off the same body: one node per host, p2p ports 3 apart.
 WEMIX_SLOTS="${WEMIX_SLOTS:-1}"
@@ -130,7 +133,7 @@ EOF
       - /bin/sh
       - -c
       - >-
-        sh /usr/local/lib/chainbench/firewall.sh
+        SLOTS=${SLOTS} P2P_SPAN=${P2P_SPAN} sh /usr/local/lib/chainbench/firewall.sh
         && sh /usr/local/lib/chainbench/setup-accounts.sh
         && mkdir -p ${DATA_ROOT}
         && chown ${SSH_USER}:${SSH_USER} ${DATA_ROOT}

@@ -13,7 +13,7 @@ import (
 func newRunCmd() *cobra.Command {
 	var profilePath, presetDir, fromBinary, toBinary, template, dataDir, genesisOverlay string
 	var server, serverSet, workspaceConfig string
-	var docker bool
+	var docker, allServers bool
 	var waitFor int
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -42,6 +42,7 @@ func newRunCmd() *cobra.Command {
 				Server:              app.ServerRef{Name: server, SetPath: serverSet},
 				WorkspaceConfigPath: workspaceConfig,
 				Docker:              docker,
+				AllServers:          allServers,
 			})
 			if err != nil {
 				return err
@@ -69,6 +70,7 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&server, "server", "", "run the handoff's data plane on this server, by name from the server set (default: this machine)")
 	cmd.Flags().StringVar(&serverSet, "server-set", "", "server-set file: which servers exist and how to reach them (default: server-set.yaml when present)")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "environment file owning the target dataRoot and its purpose directories; required with --server")
+	cmd.Flags().BoolVar(&allServers, "all-servers", false, "spread the handoff across every server in the set, drawing each node's host and port band from the server set instead of the profile's port bases")
 	cmd.Flags().BoolVar(&docker, "docker", false, "the server set's hosts are local docker containers — translate this tool's dials via the localmap next to the server set")
 	return cmd
 }
