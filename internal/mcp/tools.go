@@ -81,13 +81,15 @@ func Default(name, version string) *Server {
 
 func reportTool() Tool {
 	return Tool{
-		Name:        "chainbench_report",
-		ReadOnly:    true,
-		Description: "Read a run's report from a session directory. Args: workspaceDir.",
+		Name:     "chainbench_report",
+		ReadOnly: true,
+		Description: "Read a run's report from a session directory. Args: workspaceDir, all " +
+			"(combine every session under the directory into one tally, instead of reading the most recent).",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"workspaceDir": map[string]any{"type": "string"},
+				"all":          map[string]any{"type": "boolean"},
 			},
 			"required": []string{"workspaceDir"},
 		},
@@ -96,16 +98,29 @@ func reportTool() Tool {
 			if dir == "" {
 				return "", fmt.Errorf("workspaceDir is required")
 			}
-			rep, err := app.Report(context.Background(), app.Deps{}, app.ReportIn{Dir: dir})
+			all := app.ArgBool(args, "all", false)
+			rep, err := app.Report(context.Background(), app.Deps{}, app.ReportIn{Dir: dir, All: all})
 			if err != nil {
 				return "", err
 			}
 			if len(rep.Tests) == 0 {
 				return "no runs recorded", nil
 			}
+			// A combined report names the run per row: seq is unique within a run, so
+			// several runs each have a seq 1 and the number alone misleads.
+			combined := rep.Session == app.CombinedSession
 			var b strings.Builder
 			for _, t := range rep.Tests {
+				if combined {
+					fmt.Fprintf(&b, "%s %d %s [%s] %s\n", t.Session, t.Seq, t.ID, t.Env, t.Status)
+					continue
+				}
 				fmt.Fprintf(&b, "%d %s [%s] %s\n", t.Seq, t.ID, t.Env, t.Status)
+			}
+			if combined {
+				fmt.Fprintf(&b, "%d session(s) combined pass=%d fail=%d blocked=%d skip=%d",
+					app.ReportSessions(rep), rep.Summary.Pass, rep.Summary.Fail, rep.Summary.Blocked, rep.Summary.Skip)
+				return b.String(), nil
 			}
 			fmt.Fprintf(&b, "session=%s pass=%d fail=%d blocked=%d skip=%d",
 				rep.Session, rep.Summary.Pass, rep.Summary.Fail, rep.Summary.Blocked, rep.Summary.Skip)

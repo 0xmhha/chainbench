@@ -46,9 +46,13 @@ type Report struct {
 // TestReport is one test's verdict and the session-relative paths to the
 // evidence that backs it (only files that exist are listed).
 type TestReport struct {
-	Seq      int      `json:"seq"`
-	ID       string   `json:"id"`
-	Env      string   `json:"env,omitempty"`
+	Seq int    `json:"seq"`
+	ID  string `json:"id"`
+	Env string `json:"env,omitempty"`
+	// Session names the run this test came from. It is empty in a single run's
+	// report, where the report itself names the session, and set in a combined
+	// one, where "seq 1" means nothing without it -- several runs each have a seq 1.
+	Session  string   `json:"session,omitempty"`
 	Status   string   `json:"status"`
 	Dir      string   `json:"dir"`
 	Evidence []string `json:"evidence,omitempty"`
@@ -144,6 +148,42 @@ func Generate(sessionDir string) (Report, error) {
 	}
 	return rep, nil
 }
+
+// Combine merges several runs' reports into one.
+//
+// A run per spec file is the normal way to use this harness, and until now each
+// one answered only for itself: the verdict over a batch had to be assembled by
+// eye, and "the most recent session" is the wrong answer to "did the batch pass".
+// Combining is not a rendering concern -- the tally has to be summed in one
+// place, or two surfaces will sum it differently.
+//
+// Tests keep their own seq and gain the session they came from, because seq is
+// unique within a run and not across runs. Order follows the order given, which
+// callers supply oldest-first, so a reader scans a batch in the order it ran.
+func Combine(reps []Report) Report {
+	out := Report{Session: CombinedSession}
+	for _, r := range reps {
+		if out.StartedAt == "" || (r.StartedAt != "" && r.StartedAt < out.StartedAt) {
+			out.StartedAt = r.StartedAt
+		}
+		out.Summary.Pass += r.Summary.Pass
+		out.Summary.Fail += r.Summary.Fail
+		out.Summary.Blocked += r.Summary.Blocked
+		out.Summary.Skip += r.Summary.Skip
+		for _, t := range r.Tests {
+			if t.Session == "" {
+				t.Session = r.Session
+			}
+			out.Tests = append(out.Tests, t)
+		}
+	}
+	return out
+}
+
+// CombinedSession is the session id a combined report carries. It is not a
+// session that exists, and saying so is the point: a reader who follows it to a
+// directory should find nothing rather than another run's evidence.
+const CombinedSession = "(combined)"
 
 // Read loads a previously written report.json from a session directory, for
 // display by the CLI and MCP report surfaces.
