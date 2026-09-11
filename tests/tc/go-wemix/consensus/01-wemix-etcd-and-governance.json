@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-etcd-and-governance",
+  "description": "A go-wemix (poa) network is only healthy if its etcd cluster formed and every governance member is producing. Blocks advancing shows neither: a member registered in governance that never joins etcd reports \"down\" while the chain keeps moving on the rest, and the handoff work met a cluster that stayed empty while every earlier step reported success. admin_wemixInfo carries both facts, and they are different facts -- etcd.members is registration, so it still reads 4 with a node stopped, while \"miners\" is liveness and flips that node to /down. Asserting only one of them would miss half the failures (WA25 depth).",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wemix-poa",
+    "chain": "wemix",
+    "binaries": {
+      "default": "gwemix"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "300s"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "etcd.members",
+      "compare": "Len",
+      "is": 4
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "etcd.leader.name",
+      "compare": "Regexp",
+      "is": "^node[0-9]+$"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "miners",
+      "compare": "NotContains",
+      "is": "down"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "miners",
+      "compare": "Regexp",
+      "is": "node1/up.*node2/up.*node3/up.*node4/up"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "governance",
+      "compare": "NotEqual",
+      "is": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "staking",
+      "compare": "NotEqual",
+      "is": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "expect": "rpc",
+      "on": "node1",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "nodes",
+      "compare": "Len",
+      "is": 4
+    },
+    {
+      "expect": "rpc",
+      "on": "node4",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "etcd.members",
+      "compare": "Len",
+      "is": 4
+    }
+  ]
+}
