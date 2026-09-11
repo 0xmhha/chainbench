@@ -1320,6 +1320,18 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
       스펙은 설계상 precheck 에서 조용히 빠진다. 처음 쓴 스펙에 `env` 가 없어 precheck 을
       통과해 버렸다 — 의도된 간격이지만, 스펙 한 줄이 빠지면 검사 자체가 건너뛰어진다는 뜻이라
       테스트에 그 이유를 적어 두었다.
+  - **이어서: `TxWait`(순위 3위, 15점).** 결함은 없었지만 **테스트가 하나를 찾아냈다.**
+    - **이 함수의 실패 모양은 크래시가 아니다.** 대기 중(null) 영수증을 답으로 받으면
+      `Status` 가 빈 **0 값 영수증**이 돌아가고, `Succeeded()` 가 false 라 호출자는
+      **"트랜잭션 실패"** 로 읽는다 — 사실은 아직 안 들어간 것인데. 막는 곳이 두 군데다
+      (클라이언트가 `null`→`nil`, `TxWait` 이 nil→계속 대기). 따로 바뀔 수 있어 호출자 쪽에서
+      성질로 고정했다. 변이로 확인: 클라이언트의 정규화를 빼면 `{Status: BlockNumber: GasUsed:}`
+      가 **오류 없이** 돌아온다.
+    - **테스트가 찾은 것 — 대기가 자기가 말한 한도를 넘었다.** `Timeout: 1ms` 로 준 테스트가
+      **1초** 걸렸다. 폴링 수면이 남은 예산과 무관하게 고정 1초였기 때문이다. 타임아웃을
+      **단정으로** 쓰는 하네스에서("X 안에 들어와야 한다") 실제 한도가 최대 1초 더 길다는 것은
+      단정이 말보다 약하다는 뜻이다. 수면을 남은 예산으로 깎았다. 변이(고정 1초 복원)로 확인.
+    - 6건. `internal/app` 22.9% → 25.6%.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
