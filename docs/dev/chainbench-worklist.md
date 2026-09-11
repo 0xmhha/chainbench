@@ -1592,8 +1592,8 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
       바닥 10 유지)와 **출하 템플릿이 실제로 플레이스홀더를 들고 있는지**를 따로 고정했다 —
       후자가 없으면 파생이 맞아도 도달하지 않는다(이 브랜치 전체가 그 실패 양식이었다).
       변이 3건으로 실패 가능함을 증명했다.
-    - 남은 것: `stabilizingStakersThreshold` 는 5 고정 그대로다. 안정화 단계를 벗어나는
-      문턱이지 집합 크기가 아니라 이번 파생에 넣지 않았다.
+    - 남은 것은 **R7** 로 분리했다: `stabilizingStakersThreshold` 는 5 고정 그대로이고,
+      그래서 epoch 재결정 경로 자체가 아직 한 번도 실행된 적이 없다.
   - **(위 문제의 진단 기록)**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합 크기와
     무관하게 **1 로 고정**이고, 병합 결과에도 1 로 남는다. 출처는 go-wbft 상류의 플레이스홀더
     (`params/config.go` 의 `TargetValidators: newUint64(1), // TODO: define validators`)이며,
@@ -1614,6 +1614,31 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     - **고칠 때 같이 봐야 하는 제약**: `params/config_wbft.go:130` 이
       `epochLength >= targetValidators` 를 강제한다. 템플릿의 `epochLength` 는 10 이므로
       `targetValidators: 15` 만 바꾸면 제네시스 검증에서 거부된다. 둘을 함께 올려야 한다.
+- [ ] **R7. epoch 재결정 경로가 한 번도 실행되지 않았다.** wbft 는 epoch 경계마다
+  validator 집합을 다시 정하는데(`decideValidators`), chainbench 가 만드는 체인은 그 경계에
+  **도달하지 않는다.** genesis epoch 가 `Stabilizing = true` 로 시작하고, 안정화 중에는
+  `newEpoch.Validators = latestEpochInfo.Validators` 로 직행해 재결정을 건너뛴다. 벗어나는
+  조건은 wbft `GovStaking` 의 staker 수가 `stabilizingStakersThreshold`(템플릿 5) 이상이
+  되는 것인데, 핸드오프에서 producer 는 **wemix** 거버넌스에 스테이킹하고 wbft 쪽에는
+  아무도 하지 않는다. 라이브 실측(15+15, `istanbul_getWbftExtraInfo`): 관측한 모든 epoch
+  경계에서 `stabilizing: true`.
+  - **왜 남겨두면 안 되는가.** `targetValidators` 를 집합 크기에서 파생시킨 것(G3)은 제네시스가
+    **수용되는지**까지만 라이브로 확인했다. 그 값이 실제로 쓰이는 곳은 재결정 경로 하나뿐이라,
+    파생이 의도대로 동작하는지는 아직 관측되지 않았다. 지금 상태에서 회귀가 생기면 안정화를
+    벗어나는 첫 체인에서야 드러난다.
+  - **기존 커버리지의 경계.** `TestWemixGovernanceStabilizingE2E`(`cmd/chainbench/
+    upgrade_gov_staking_e2e_test.go`)가 **below-threshold 분기만** 검증한다. 테스트 주석이
+    이유를 적어 뒀다 — `stabilizing -> false` 로 넘기려면 staker 를 문턱까지 올려야 하고,
+    그건 useNCP 기반 선출과 거버넌스 NCP 7개, 즉 최소 핸드오프 preset 보다 많은 펀딩된
+    계정을 요구한다.
+  - **하려면 무엇이 필요한가.** (1) wbft `GovStaking` 에 문턱 이상(5명)이 스테이킹하도록 계정을
+    펀딩·등록, (2) epoch 경계를 하나 넘기고 `istanbul_getWbftExtraInfo` 로 `stabilizing: false`
+    확인, (3) 그 시점의 validator 수가 **집합 크기 그대로**(`targetValidators` 로 잘리지 않음)
+    인지 단정. 15+15 프로파일은 producer 15명이 이미 펀딩돼 있어(handoffBalance) 계정 수는
+    문제가 아니다 — wbft 쪽 `stake()` 를 태우는 절차가 없는 것이 문제다.
+  - **판단이 필요한 선택지.** 문턱을 낮춰(예: 1) 재결정을 빨리 관측할 수도 있지만, 그러면
+    체인이 epoch마다 집합을 다시 정하므로 다른 케이스들의 안정성 가정이 바뀐다. 문턱은 집합
+    크기가 아니라 운영 파라미터라 G3 의 파생에 넣지 않았다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
 - [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에
