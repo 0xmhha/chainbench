@@ -35,7 +35,12 @@ const suiteDefaultValidators = 4
 const (
 	// etcdFormWait bounds the wait for the producer's etcd cluster to form.
 	etcdFormWait = 60 * time.Second
-	// forkWait bounds the wait for a successor to seal the first post-fork
+	// forkWait bounds the wait for the successor set to produce past the fork.
+	// It is not the wait for one block: AwaitFork now requires ten, so a chain
+	// with a one-second block period needs that much more headroom.
+	//
+	// The comment below is the original one, kept because the bound it chose is
+	// still the bound: the wait for a successor to seal the first post-fork
 	// block. The profile's fork height and block time decide the real figure;
 	// this is the ceiling.
 	forkWait = 180 * time.Second
