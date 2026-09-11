@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-insufficient-funds-rejected",
+  "description": "WA25: a transfer above the sender's balance is refused before it reaches a block. Proven on stablenet (regression/ethereum/14); go-wbft never exercised the rejection path, so a family-specific txpool guard could have regressed unnoticed. LIVE-VERIFIED 2026-09-11 on the 15-server docker fleet.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-insufficient-funds",
+    "chain": "wbft",
+    "binaries": {
+      "default": "gwbft"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "read",
+      "source": "balanceAt",
+      "address": "node1",
+      "save": "bal"
+    },
+    {
+      "do": "read",
+      "source": "derive",
+      "op": "sum",
+      "of": [
+        "$bal",
+        "1000000000000000000"
+      ],
+      "save": "over"
+    },
+    {
+      "do": "sendTx",
+      "expect": "reject",
+      "from": "node1",
+      "to": "0x00000000000000000000000000000000C0FFEE07",
+      "value": "$over",
+      "gas": "21000"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "90s"
+    }
+  ]
+}

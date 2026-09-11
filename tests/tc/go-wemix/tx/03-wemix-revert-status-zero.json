@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-revert-status-zero",
+  "description": "WA25: a call into a contract whose code reverts is mined with status 0x0 rather than vanishing or failing the block. Deploy uses runtime bytecode that unconditionally reverts. Proven on stablenet (regression/ethereum/24); go-wemix had no revert coverage. LIVE-VERIFIED 2026-09-11 on the 15-server docker fleet. The status assertion discriminates: expecting 0x1 instead makes the case fail, so a passing run is not an accident of shape.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wemix-revert",
+    "chain": "wemix",
+    "binaries": {
+      "default": "gwemix"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "sendTx",
+      "from": "node1",
+      "gas": "200000",
+      "data": "0x600580600b6000396000f360006000fd",
+      "save": "dhash"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$dhash"
+      ],
+      "select": "contractAddress",
+      "save": "addr"
+    },
+    {
+      "expect": "txStatus",
+      "hash": "$dhash",
+      "is": "0x1"
+    },
+    {
+      "do": "sendTx",
+      "expect": "revert",
+      "from": "node1",
+      "to": "$addr",
+      "gas": "100000",
+      "save": "chash"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "eth_getTransactionReceipt",
+      "params": [
+        "$chash"
+      ],
+      "select": "status",
+      "compare": "Equal",
+      "is": "0x0"
+    },
+    {
+      "expect": "blockAdvance",
+      "timeout": "90s"
+    }
+  ]
+}
