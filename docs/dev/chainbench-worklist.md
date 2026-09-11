@@ -1434,7 +1434,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 | **G-B. 증적** — ☑ 완료 (2026-09-11) | L1 ☑(원격 로그 truncate 수정) · 통합 report ☑(`report --all`) · 후보·반영 완전 분리 ☑(표적 정지를 증명) | 셋 다 "실행이 무엇을 남기는가" 다 | 없음 |
 | **G-C. 대상 경계 잔여** — ☑ 대체로 완료 (2026-09-11) | L2 ◐(가르기 완료·전송 제거 남음) · `binaryAliases` ☑(객체형 참조는 남음) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
 | **G-D. 구조 정리** — ☑ 완료 (2026-09-12) | validatorset ☑(패밀리가 자기 지식을 소유) · health→inspector ☑ 철회(공통 기반 없음, 래칫으로 고정) | 둘 다 소유 모듈 결정이고 소비자가 적다 | 없음 |
-| **G-E. 이관** | T5.5 wemix4 DSL 이관 | 단독으로 크다. 다른 묶음과 섞지 않는다 | docker 15대 |
+| **G-E. 이관** — ☑ 완료였음 (2026-09-12 확인) | T5.5 wemix4 이관 — 표시만 낡았고 47건 전부 ported | 실제로 남은 이관 작업은 없다 | — |
 
 **여기서 할 수 없는 것.** `D. 라이브 MCP 플러그인 재배포` 는 코드가 아니라 배포다.
 `R6. go-wemix boot-etcd collapse` 는 체인팀 몫으로 넘겼다. 둘 다 묶음에 넣지 않는다.
@@ -1461,10 +1461,18 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   `03-metric-head-block` 통과(`chain_head_block=3`). 상세는 §1p C. 라이브가 코드 검증이
   놓친 결함 둘을 더 찾았다 — `gen-env.sh` 가 metrics 포트를 퍼블리시·매핑하지 않았고,
   기록된 `MetricsURL` 에 Prometheus 경로가 빠져 있었다(둘 다 수정).
-- [ ] **B 잔여 — 체인별 거버넌스 케이스.** stablenet 의 GovValidator 흐름을 go-wbft 로
-  그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
-  멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.
-  실제 ABI 를 쓰는 `registerContract` 케이스와 negative-tx 의 reject 변형도 여기 묶인다.
+- ◐ **B 잔여 — 체인별 거버넌스 케이스.** **go-wbft 쓰기 완료 (2026-09-12).**
+  `governance/02-wbft-governance-register-staker` — 읽기 케이스(`governance/01`)가 제네시스가
+  무엇을 들고 있는지를 고정한다면, 이것은 **거버넌스 상태를 바꾸고 체인이 동의하는지**를 본다.
+  - **stablenet 흐름을 옮기지 않고 go-wbft 자신의 컨트랙트로 썼다** — 이 항목이 경고하던
+    그대로다. `GovStaking.registerStaker` 는 `msg.sender != _staker` 와 operator 1인 1스테이커를
+    강제하므로, 자기 키를 자기 노드에서 서명할 수 있는 node1 이 node2 의 신원을 등록한다.
+    BLS 공개키·PoP 는 `keys/preset` 픽스처에서 가져온다.
+  - 단정: 쓰기 **전** `isStaker(node2) == false`, 쓰기 **후** `true`, 그리고 **다른 노드(node3)에서도**
+    `true`. 라이브 통과. **변이**로 `sendTx` 를 빼면 정확히 **2건**(node1·node3 의 사후 단정)이
+    실패한다 — 상태를 바꾼 것이 그 쓰기였고, 두 노드가 같은 답을 한다는 뜻이다.
+  - **남은 것**: go-wemix(poa) 쪽 거버넌스 쓰기(etcd·거버넌스 배포 경로라 형태가 더 다르다),
+    실제 ABI 를 쓰는 `registerContract` 케이스, negative-tx 의 reject 변형.
 - [x] **WA25. go-wemix·go-wbft 커버리지 — 해소 (2026-09-11).** 각각 **9건·15건**이 됐고
   (시작은 5건·6건), 비어 있던 축을 전부 채웠다: pn/proxied 라우팅, 정족수 경계(4노드·15노드),
   제네시스 거버넌스(wbft·poa 각각), 15노드 엣지 제출. 아래는 그 과정의 기록이다.
@@ -1890,7 +1898,15 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
   이미 쓰였다가 "Driver 가 이미 그것이고 구현체가 없다"는 이유로 삭제됐다(철회, 각 절 참고). **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
   e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그
-  tail 을 실 sshd 에 대고 검증했다(각 절 참고). **T5.5**(wemix4 DSL 이관)는 그대로 열려 있다. T5.2·T6.6 은 완료로 고쳤다.
+  tail 을 실 sshd 에 대고 검증했다(각 절 참고). **T5.5**(wemix4 이관)도 **완료였다 (2026-09-12 확인)** — 포트 트래커의 케이스 표는
+  47건이 전부 `ported` 이고 `covered`·`deferred` 가 하나도 없으며, 마지막 항목이
+  "This was the last open wemix4 item — the suite is now fully ported/covered" 라고 적어
+  두었다. 이름이 적힌 테스트 6건이 저장소에 실재하는 것도 확인했다(`TestE2E_WbftSnapSync`,
+  `TestE2E_WbftGenesisNCPWhitespace`, `TestE2E_WbftGenesisEmptyNCP`,
+  `TestWemixDataMigrationE2E`, `TestWemixGovernanceCredentialExpiryE2E`,
+  `TestWemixGovernanceFeeChangeDelayedE2E`). **T5.2·T6.6 에 이어 세 번째로, 끝난 일이 두
+  기록 사이에서 미완으로 보이던 경우다.** 트래커의 "Remaining work" 머리말이 GOV-023 을
+  미해결로 적고 케이스 표는 ported 로 적는 모순도 함께 고쳤다.
 
 ### 이번에 바로잡은 표시
 

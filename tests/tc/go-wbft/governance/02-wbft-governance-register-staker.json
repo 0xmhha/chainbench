@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-governance-register-staker",
+  "description": "A governance WRITE on go-wbft. The read case (governance/01) pins what genesis carries; this one changes governance state and checks the chain agrees. It is written against go-wbft's own contracts rather than ported from stablenet's GovValidator flow, which is what the worklist's B item warned about: the addresses, selectors and guards differ per chain, and stablenet's two-step proposeAddMember reverts here. GovStaking.registerStaker enforces msg.sender != _staker and one staker per operator, so node1 (which holds its own key and can sign at its own node) registers node2's identity.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-gov-write",
+    "chain": "wbft",
+    "binaries": {
+      "default": "gwbft"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "180s"
+    },
+    {
+      "expect": "call",
+      "on": "node1",
+      "to": "0x0000000000000000000000000000000000001001",
+      "data": "0x6f1e85330000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "faucet",
+      "to": "0x0000000000000000000000000000000000001001",
+      "value": "10000000000000000000000000",
+      "data": "0xc4d3927c000000000000000000000000000000000000000000084595161401484a0000000000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c0000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000030929af9896092b61db0ead8931feaed3f77058825c3c82f20fd9557a244b8732303f2136b6acd06ba7e1b861bf5514449000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060899fa6f89ff2698d584f42b19978472c0374d30d9272c6bfff1bc054e2d84bd1268418cb09648ecbcad58dbea2d507d80743db84f58d858f9a1d6d3da8850bbf646bf31b95562255e323b84c3cddbfc5752651477e51981c7657d15a981202df",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "expect": "call",
+      "on": "node1",
+      "to": "0x0000000000000000000000000000000000001001",
+      "data": "0x6f1e85330000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "call",
+      "on": "node3",
+      "to": "0x0000000000000000000000000000000000001001",
+      "data": "0x6f1e85330000000000000000000000002493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    }
+  ]
+}
