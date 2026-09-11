@@ -1307,6 +1307,19 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
       가 `passwd` 로 납작해진다. 다운로드의 `--name` 은 용도 폴더를 벗어날 수 없다.
     - 변이 2건(`--remote` 가 여러 파일을 받게 하기·`Base` 대신 전체 경로 쓰기)으로 확인.
       `internal/app` 11.4% → 21.4%.
+  - **이어서: `AttachRun`(순위 2위, 16점).** 먼저 **WA10 이 이미 고쳐져 있음을 확인**했다 —
+    주석이 WA10 을 직접 인용하고, `Precheck` 이 돌며, DataDir 이 있으면
+    `AttachWorkspaceRun`(readiness 게이트·실패증적·fault control·매니페스트 배선)로 간다.
+    - **그래서 붙인 것은 그 수정을 구조적으로 고정하는 테스트다.** 두 분기를 가르는 것은
+      **출력이 없는 라우팅 결정**이라, 누가 둘을 합쳐도 아무것도 실패하지 않고 증적 수집만
+      조용히 멈춘다 — WA10 이 말한 실패가 정확히 그것이다. 그래서 **실패가 어느 쪽에서
+      나왔는지**로 라우팅을 고정한다(워크스페이스 경로는 자기 접두사를 붙인다).
+    - 4건 + 변이 2건: 워크스페이스 분기를 접으면 잡히고, `Precheck` 을 빼면 잡힌다.
+      `internal/app` 21.4% → 22.9%.
+    - **테스트를 쓰다 배운 것**: v2 케이스는 `env` 가 없으면 **파싱되지 않고**, 파싱되지 않은
+      스펙은 설계상 precheck 에서 조용히 빠진다. 처음 쓴 스펙에 `env` 가 없어 precheck 을
+      통과해 버렸다 — 의도된 간격이지만, 스펙 한 줄이 빠지면 검사 자체가 건너뛰어진다는 뜻이라
+      테스트에 그 이유를 적어 두었다.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
