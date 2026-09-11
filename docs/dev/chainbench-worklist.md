@@ -1577,10 +1577,26 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     섹션만 들어올리므로 wbft 제네시스의 top-level extraData 는 버려지고, 병합 파일은 wemix
     템플릿의 것을 유지한다(ASCII `"chainbench handoff…"` 149바이트). validator 집합은
     `croissant.init` 으로 들어간다. 프로파일 주석을 사실에 맞게 고쳤다.
-  - **남은 흠(경미)**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합
-    크기와 무관하게 **1 로 고정**이다. 병합 결과에도 1 로 남는다. `useNCP` 가 꺼져 있으면
-    go-wbft 가 읽지 않아 이 경로에서는 무해하고(15명 전원 교대가 그 증거), 켜는 순간
-    의미가 생긴다.
+  - **남은 흠**: `internal/chains/wbft/genesis.json` 의 `targetValidators` 가 집합 크기와
+    무관하게 **1 로 고정**이고, 병합 결과에도 1 로 남는다. 출처는 go-wbft 상류의 플레이스홀더
+    (`params/config.go` 의 `TargetValidators: newUint64(1), // TODO: define validators`)이며,
+    chainbench 템플릿은 최초 커밋(#16)부터 그 값을 그대로 들고 있다.
+    - **처음에 "useNCP 가 꺼져 있어 읽히지 않는다"고 적었는데 그건 틀렸다.** `UseNCP` 는
+      staker 를 어디서 읽을지만 고른다(`engine.GetStakers`). epoch 경계의
+      `decideValidators(…, TargetValidators)` 는 NCP 와 무관하게 돈다.
+    - **실제 이유는 체인이 안정화 단계를 벗어나지 않기 때문이다.** genesis epoch 는
+      `Stabilizing = true` 로 시작하고(`consensus/wbft/config.go:264`), 안정화 중에는
+      `newEpoch.Validators = latestEpochInfo.Validators` 로 직행해 `decideValidators` 를
+      아예 부르지 않는다. 벗어나는 조건은 GovStaking 컨트랙트의 staker 수가
+      `stabilizingStakersThreshold`(템플릿 5) 이상이 되는 것인데, 핸드오프에서는 producer 가
+      **wemix** 거버넌스에 스테이킹했을 뿐 wbft GovStaking 에는 아무도 스테이킹하지 않는다.
+      라이브 실측: 블록 30·100·2000 모두 `stabilizing: true`, stakers 15 / validators 15.
+    - **벗어나는 순간 validator 가 1명으로 줄어든다.** `decideValidators` 는 stake 내림차순
+      정렬 후 `indices[:targetValidators]` 로 자른다(`engine.go:1287`). 따라서 이것은 무해가
+      아니라 **아직 도달하지 않은** 경로다.
+    - **고칠 때 같이 봐야 하는 제약**: `params/config_wbft.go:130` 이
+      `epochLength >= targetValidators` 를 강제한다. 템플릿의 `epochLength` 는 10 이므로
+      `targetValidators: 15` 만 바꾸면 제네시스 검증에서 거부된다. 둘을 함께 올려야 한다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
 - [ ] **validatorset 홈 결정.** `core/node`(L0)로 넣으려던 계획은 층 위반이라 제자리에
