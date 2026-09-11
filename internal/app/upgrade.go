@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
@@ -144,6 +145,15 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 		// the container's and answers to nobody else.
 		opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
 		hi.DialURL = opener.HTTPEndpoint
+		// Each node's machine, resolved from the server the placement put it on.
+		// Without this a driver bound to one host runs every node there, whatever
+		// the plan says: the composition path has resolved per node since it
+		// started placing networks across a set, and this is the same seam.
+		mach, err := handoffMachines(d, in, placed, opener)
+		if err != nil {
+			return UpgradeRunOut{}, err
+		}
+		hi.Machine = mach
 	}
 	if acc != nil {
 		hi.Host = acc.Spec.Host
@@ -377,4 +387,55 @@ func spansHosts(m *node.Map) bool {
 		seen[pl.Host] = true
 	}
 	return len(seen) > 1
+}
+
+// handoffMachines resolves a file store and a driver for each placed node, by the
+// server its address belongs to.
+//
+// The placement records an address, and a server set maps an address back to the
+// entry that owns its credentials — so the lookup goes address -> server name ->
+// Access, and each Access is opened once and shared by the nodes on that machine.
+func handoffMachines(d Deps, in UpgradeRunIn, placed *node.Map, opener resource.Opener) (
+	func(int) (filestore.Store, process.Driver, error), error,
+) {
+	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	setPath := in.Server.SetPath
+	if setPath == "" {
+		setPath = resource.DefaultSetFile
+	}
+	set, err := resource.LoadSet(setPath)
+	if err != nil {
+		return nil, fmt.Errorf("upgrade run: server set: %w", err)
+	}
+	nameOf := map[string]string{}
+	for _, h := range set.PoolSpec.Hosts {
+		nameOf[h.Addr] = h.Name
+	}
+	byIndex := map[int]string{}
+	for _, pl := range placed.Placements() {
+		name, ok := nameOf[pl.Host]
+		if !ok {
+			return nil, fmt.Errorf("upgrade run: %s was placed at %s, which the server set does not name", pl.Label, pl.Host)
+		}
+		byIndex[pl.Index-1] = name
+	}
+	cache := map[string]*resource.Access{}
+	return func(i int) (filestore.Store, process.Driver, error) {
+		name, ok := byIndex[i]
+		if !ok {
+			return nil, nil, fmt.Errorf("upgrade run: node%d has no placement", i+1)
+		}
+		if acc, hit := cache[name]; hit {
+			return acc.Files, acc.Driver, nil
+		}
+		acc, err := opener.Open(resource.Spec{Server: name, DataRoot: wc.DataRoot})
+		if err != nil {
+			return nil, nil, fmt.Errorf("upgrade run: node%d on %s: %w", i+1, name, err)
+		}
+		cache[name] = acc
+		return acc.Files, acc.Driver, nil
+	}, nil
 }

@@ -80,13 +80,17 @@ type HandoffInputs struct {
 	Driver process.Driver
 	// Peers wires the mesh; nil uses JSON-RPC admin_addPeer.
 	Peers PeerCaller
-	// MultiMachine says the placement spans more than one server, which needs a
-	// file store and a driver per node. That wiring does not exist here yet, so it
-	// is refused rather than silently collapsed onto one machine. A placement on a
-	// single server needs none of it and is accepted.
+	// MultiMachine says the placement spans more than one server, which needs
+	// Machine to resolve a file store and a driver per node. Set without it, the
+	// run is refused rather than silently collapsed onto one machine — the shape
+	// measured before Machine existed, where five nodes placed across five servers
+	// all landed on the first.
 	MultiMachine bool
 	// DialURL turns a node's own address into the one this tool reaches it at.
 	DialURL func(host string, port int) (string, error)
+	// Machine resolves which machine node i runs on — its file store and its
+	// driver. Nil uses Files and Driver for every node, which is one machine.
+	Machine func(index int) (filestore.Store, process.Driver, error)
 	// Placement, when set, is where the resource module put this handoff's nodes:
 	// which server each one runs on and which port band it got. It wins over the
 	// profile's port bases, because a server set steps ports by SLOT rather than
@@ -288,7 +292,7 @@ func (h *Handoff) ComposePlan(ctx context.Context, basePath string) error {
 	// resolves a machine per node (chainsetup.machineFor). The readiness and mesh
 	// dials need the same treatment — they reach a node at its own address, which
 	// is not the address this tool can dial under --docker.
-	if h.in.MultiMachine {
+	if h.in.MultiMachine && h.in.Machine == nil {
 		return fmt.Errorf("upgrade: a placement across servers needs a machine per node, which this path does not resolve yet — " +
 			"every node would launch on one server while the plan claimed otherwise. Run without --all-servers, or place the handoff on a single server with --server")
 	}
@@ -368,9 +372,19 @@ func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) 
 		ProvisionKeys: h.provisionKeys(),
 		Overrides:     h.overrides(),
 		Files:         h.in.Files,
+		Machine:       h.in.Machine,
 		Only:          only,
 	}
 	return Launch(ctx, h.in.driver(), h.Plan, opts)
+}
+
+// machineFiles is node i's file store: its own machine's when one is resolved,
+// the single store otherwise.
+func (h *Handoff) machineFiles(i int) (filestore.Store, process.Driver, error) {
+	if h.in.Machine == nil {
+		return h.in.files(), h.in.driver(), nil
+	}
+	return h.in.Machine(i)
 }
 
 // checkVacant refuses to launch onto ports something else is already holding.
@@ -634,8 +648,14 @@ func (h *Handoff) label(n node.Node) node.Label { return node.LabelFor(n.Index +
 func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) error {
 	enodes := h.Plan.Enodes(h.in.host())
 	staticNodes, _ := json.MarshalIndent(enodes, "", "  ")
-	files := h.in.files()
 	return func(ctx context.Context, spec process.NodeSpec, producer bool) error {
+		// This node's own store. Capturing one store for the whole network sent
+		// every node's key material to one machine, which is where a placement
+		// across servers quietly collapsed.
+		files, _, err := h.machineFiles(spec.Index)
+		if err != nil {
+			return err
+		}
 		inst := h.Profile.Chains.To.NodekeyDir
 		if producer {
 			inst = h.Profile.Chains.From.NodekeyDir

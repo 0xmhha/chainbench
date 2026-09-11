@@ -1528,11 +1528,18 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   - `resource.ValidatePortsPerHost` 를 더했다. 포트는 **머신 안에서만** 경쟁하므로, 서버 15대에
     퍼진 망은 node1·node2 가 다른 호스트에 같은 포트를 갖는 것이 정상이다. 기존
     `ValidatePorts` 는 그것을 충돌로 봤다.
-  - **남은 것: 서버 여러 대에 걸친 핸드오프.** 배치는 되지만(`--all-servers`) 실행이 아직
-    단일 머신을 지난다 — `LaunchOptions` 가 `Files` 하나, `Launch` 가 `Driver` 하나를 받고,
-    컴포지션 경로는 노드마다 머신을 푼다(`chainsetup.machineFor`). 그 배선이 없는 채로 돌면
-    전 노드가 한 서버에 뜨면서 겉보기엔 성공하므로, **호스트가 둘 이상인 배치는 이유를 말하고
-    거절한다**(`MultiMachine`). 요청받은 15+15(서버당 wemix 1 + wbft 1)는 이 배선 다음이다.
+  - **서버 여러 대에 걸친 핸드오프도 완료 (2026-09-11).** `LaunchOptions.Machine` /
+    `HandoffInputs.Machine` 이 노드별로 file store 와 driver 를 푼다 —
+    `chainsetup.machineFor` 와 같은 seam 이다. 그 전에는 드라이버가 자기 transport 의 호스트로만
+    접속하고 `NodeSpec.Host` 를 **읽지 않아**, 실측상 5노드를 5서버에 배치해도 datadir 5개와
+    살아남은 프로세스 1개가 전부 server1 에 몰렸다(나머지는 그 서버의 포트에서 충돌). 라이브
+    확인: server1 에 wemix producer 1대, server2~5 에 wbft validator 각 1대,
+    `handoff confirmed: head 21`.
+    - genesis 는 **머신마다 한 번** 쓴다. 중복 제거 키는 store 가 아니라 **호스트**다 — store 는
+      비교 불가능한 인터페이스 값이라(원격 것은 func 를 담은 struct) map 키로 쓰면 panic 한다.
+      실제로 그렇게 만들었다가 `hash of unhashable type: process.RemoteFileStore` 로 터졌다.
+    - enode 는 각 노드 **자기 호스트**로 만든다. 한 호스트를 쓰면 전 노드가 첫 서버 주소를
+      광고해 피어링이 성립하지 않는다.
   - 로컬 경로 회귀 없음: 로컬 핸드오프도 `handoff confirmed: head 22` 로 완주.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**
