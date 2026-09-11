@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-proxied-routing",
+  "description": "WA25: verify the proxied peer graph's SHAPE — bp <-> bp direct, bp <-> pn and pn <-> en through the tier, and an endpoint that never learns a producer. Peer counts are the signature; a 4-node mesh gives the endpoint 3 peers, so en1 == 1 distinguishes the two graphs. Complements go-stablenet/topology/01-proxied-pn-routing, which proves the tier RELAYS (a rising head on en) — true under a mesh too, so it does not pin the shape. LIVE-VERIFIED 2026-09-11 on the docker fleet, with a mesh control run.",
+  "requires": [
+    "rpc"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-proxied",
+    "chain": "wbft",
+    "binaries": {
+      "default": "gwbft"
+    },
+    "topology": {
+      "bp": 2,
+      "pn": 1,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "generate"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "180s"
+    },
+    {
+      "expect": "peerCount",
+      "on": "en1",
+      "compare": "Equal",
+      "is": "1"
+    },
+    {
+      "expect": "peerCount",
+      "on": "pn1",
+      "compare": "Equal",
+      "is": "3"
+    },
+    {
+      "expect": "peerCount",
+      "on": "bp1",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "peerCount",
+      "on": "bp2",
+      "compare": "Equal",
+      "is": "2"
+    },
+    {
+      "expect": "blockAdvance",
+      "onEach": [
+        "bp1",
+        "bp2",
+        "pn1",
+        "en1"
+      ],
+      "timeout": "90s"
+    }
+  ]
+}
