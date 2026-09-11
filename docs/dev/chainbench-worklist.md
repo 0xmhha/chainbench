@@ -1657,9 +1657,23 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   `--from-binary /data/chainbench/bin/gwemix` 로 손으로 적어야 했다. 즉 별칭에 소비자가
   없던 것과 그 papercut 은 **같은 결함의 양면**이었다. 단위 테스트 5건 + 변이 2건.
   라이브: bare 이름이 `/data/chainbench/bin/gwbft` 로 풀려 노드가 떴다(아래 관측 참고).
-  **남은 것은 객체형 참조**(`{server,ref}`·`serverIndex`·`localPath`)이고, 아직 파싱조차
-  안 된다. 샘플과 안내 문서가 그 자리에만 "미구현" 이라고 적어 두었고, 구현하면
-  `TestWorkspaceConfig_SampleCommentsMatchWhatParses` 가 실패하며 그 주석을 걷으라고 알린다.
+  **객체형 참조는 철회했다 (2026-09-12, 사용자 결정).** `{server,ref}`·`{serverIndex,ref}`·
+  `{localPath}` 은 구현하지 않고 문서에서 약속을 걷었다.
+  - **이유는 표현력이 아니라 값이다.** `resource.InputRef` 는 네 형식을 이미 구현·테스트한
+    채로 있지만, 그 값을 preset 에서 끝까지 나르려면 `KeysDir`·`GenesisExisting` 을 문자열로
+    쓰는 **32개 파일 105곳**을 구조체로 바꿔야 한다(측정값). 그 표현력을 요구하는 호출자가
+    하나도 없다 — 소비자 없는 구조를 넓게 배선하는 것은 이 저장소가 이미 두 번 되돌린
+    모양이다(`Transport` 타입, health→inspector 재배선).
+  - **포기한 것은 `serverIndex` 하나.** 서버를 이름이 아니라 **순번**으로 고르는 것은 문자열로
+    표현할 수 없다. 환경마다 서버 이름이 다른 곳에 같은 preset 을 쓰려면 필요해질 수 있고,
+    그때 요구와 함께 다시 연다. `InputRef` 는 그대로 두었으니 배선만 하면 된다.
+  - **샘플에서 스케치를 걷은 것이 핵심이다.** "미구현" 딱지가 붙은 주석 예시는 기능의 부재보다
+    나쁘다 — preset 의 genesis/keyring 자리에 맵을 적으면 폴백이 아니라 **파일 전체가 거부**되므로,
+    주석을 푼 운영자는 기능을 얻는 게 아니라 설정을 잃는다.
+  - 가드 테스트를 목적에 맞게 바꿨다(`TestWorkspaceConfig_SampleSketchesNothingThatCannotBeUsed`):
+    파서가 여전히 거부하는지 **그리고** 샘플이 그것을 **복사 가능한 형태로 보여주지 않는지**를
+    함께 본다. 단어가 아니라 YAML 모양(콜론 붙은 키)을 보므로, 철회 사실을 산문으로 적는 것은
+    막지 않는다. 변이 2건으로 양쪽 절반이 각각 실패함을 확인했다.
   - **(원래 진단)** 전자는 **리졸버까지는 생겼다** —
   `WorkspaceConfig.BinaryPath`(`resource/workspaceconfig.go:327`)가 별칭을 적용한다. 다만
   **호출자가 테스트 둘뿐이라 프로덕션 경로에는 아직 배선되지 않았다** — PR #383 머지 후

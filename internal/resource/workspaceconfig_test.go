@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -214,21 +215,29 @@ func TestParseWorkspaceConfig_Sample(t *testing.T) {
 	}
 }
 
-// TestWorkspaceConfig_SampleCommentsMatchWhatParses guards the sample against
-// the drift that made it wrong: it promised the reader everything below it was
-// supported, while two of the things it showed were not.
+// TestWorkspaceConfig_SampleSketchesNothingThatCannotBeUsed guards the sample
+// against the drift that made it wrong once: it promised the reader everything
+// below it was supported, while two of the things it showed were not.
 //
-// binaryAliases used to be the other half of this: parsed, validated, and read
-// by nobody. It is wired now -- app.resolveBinaryOn resolves a bare binary name
-// on a target through WorkspaceConfig.BinaryPath, which applies the alias -- so
-// what is pinned here is only that it still parses. The object reference forms
-// remain unsupported, and worse than ignored: a preset's genesis and keyring are
-// strings, so a mapping there refuses the whole file, and an operator who
-// uncomments the example loses the config rather than the feature.
+// binaryAliases was one half and is wired now -- app.resolveBinaryOn resolves a
+// bare binary name on a target through WorkspaceConfig.BinaryPath, applying the
+// alias -- so what is pinned for it is that it still parses.
 //
-// The sample says so at that spot. This pins the statement: implement the object
-// form and this test fails, which is the moment that comment has to come out.
-func TestWorkspaceConfig_SampleCommentsMatchWhatParses(t *testing.T) {
+// The object reference forms were the other half, and they are gone rather than
+// fixed. The sample used to sketch {server, ref} / {serverIndex, ref} /
+// {localPath} in comments under a "not implemented" label, and that label is a
+// worse failure than the feature's absence: a mapping in a preset's genesis or
+// keyring position does not fall back, it refuses the WHOLE FILE, so an operator
+// who uncommented the example lost their config rather than gaining a feature.
+// The plan was withdrawn on 2026-09-12 (see the guide for why) and the sketch
+// came out with it.
+//
+// What this pins now is the invariant rather than the apology: the sample must
+// not show a form the parser rejects. So it checks the rejection is still real
+// AND that the sample no longer advertises it -- implement the object form and
+// the first half fails; sketch it again without implementing it and the second
+// half does.
+func TestWorkspaceConfig_SampleSketchesNothingThatCannotBeUsed(t *testing.T) {
 	c, err := ParseWorkspaceConfig([]byte(validConfig))
 	if err != nil {
 		t.Fatalf("binaryAliases should still parse: %v", err)
@@ -237,8 +246,6 @@ func TestWorkspaceConfig_SampleCommentsMatchWhatParses(t *testing.T) {
 		t.Fatalf("binaryAliases = %q, want it parsed", got)
 	}
 
-	// The object form the sample sketches. It must still be refused, and
-	// refused in the way the sample and the guide tell the reader it is.
 	objectForm := strings.Replace(validConfig, `inputs:
   mode: generated
 `, `inputs:
@@ -252,10 +259,28 @@ presets:
 `, 1)
 	_, err = ParseWorkspaceConfig([]byte(objectForm))
 	if err == nil {
-		t.Fatal("the object reference form now parses — update the sample and the guide, which both say it does not")
+		t.Fatal("the object reference form now parses — the guide says it was withdrawn; restore the sample's example and say so there")
 	}
 	if !strings.Contains(err.Error(), "cannot unmarshal !!map into string") {
-		t.Fatalf("refusal changed shape, and the sample quotes the old one: %v", err)
+		t.Fatalf("refusal changed shape: %v", err)
+	}
+
+	// And the sample must not be SHOWING it. A commented example is still an
+	// example -- this is the form whose cost is losing the whole file, so a
+	// copyable sketch of it is the defect, not the wording beside it.
+	//
+	// The test is for the YAML shape (a key with a colon), not the word: the
+	// sample is free to say in prose that {serverIndex, ref} was withdrawn and
+	// why, and saying so is more useful than silence. What it may not carry is a
+	// line an operator can uncomment.
+	sample, err := os.ReadFile(filepath.Join("..", "..", "workspace-config.sample.yaml"))
+	if err != nil {
+		t.Fatalf("read sample: %v", err)
+	}
+	for _, sketch := range []string{"serverIndex:", "localPath:", "ref: genesis"} {
+		if strings.Contains(string(sample), sketch) {
+			t.Errorf("the sample carries a copyable %q, which the parser refuses — uncommenting it costs the operator the file", sketch)
+		}
 	}
 }
 

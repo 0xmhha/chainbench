@@ -110,25 +110,19 @@ execution:
 # 원본 파일 위치를 지정하는 것이며 노드 배치나 개인 키 전송을 지시하지 않는다.
 # 모든 노드가 다른 서버에 있으면 원본/목적지와 배포 정책을 별도로 검증한다.
 #
-# 미구현: 아래 객체형 참조는 셋 다 파싱되지 않는다. preset의 genesis/keyring은
-# 문자열이고 configs는 문자열 맵이라, 자리에 맵을 적으면 파일 전체가
-# "cannot unmarshal !!map into string"으로 로드에 실패한다. 지금 쓸 수 있는
-# 참조는 위의 srv:// 문자열과 평범한 상대 파일명뿐이다.
+# preset 참조로 쓸 수 있는 것은 문자열 세 형식이다. 다른 형식은 없다.
 #
-# 붙일 때의 의미는 이렇다.
+#   srv://<서버이름>/<절대경로>   지정한 서버의 그 경로 (dataRoot를 덧붙이지 않는다)
+#   <상대 파일명>                대상의 용도별 디렉터리 아래
+#   /<절대경로>                  이 기계의 파일 (keyring에 한해 로컬 키셋을 가리킬 때)
 #
-# 절대경로 대신 root + 용도별 디렉터리 조합:
-# genesis:
-#   server: server-01
-#   ref: genesis-wemix-regression.json
-#
-# 번호로 고를 때는 server 대신 serverIndex: 1을 쓴다(1-based).
-# 번호는 현재 server-set 순서다. 최초 해석한 서버 이름을 기록하고 resume 때 유지한다.
-# srv://1/...는 기존 의미인 이름 "1"을 유지하며 번호 1로 재해석하지 않는다.
-#
-# 로컬 원본을 명시할 때: genesis: {localPath: /private/chainbench/fixtures/base.json}
-# 상대 localPath는 이 환경 파일의 디렉터리가 기준이다.
-# bare 파일명은 대상의 용도별 디렉터리에서 찾으며 로컬로 자동 대체하지 않는다.
+# 예전 이 자리에는 객체형 참조({server, ref} / {serverIndex, ref} / {localPath})가
+# "미구현"이라는 딱지와 함께 예시로 적혀 있었다. 2026-09-12에 그 계획을 철회했다.
+# 이유는 표현력이 아니라 값이다 — srv://와 상대 파일명이 실제로 쓰이는 경우를 모두
+# 덮고 있고, 객체형을 preset에서 끝까지 나르려면 KeysDir/GenesisExisting이 문자열인
+# 32개 파일 105곳을 구조체로 바꿔야 하는데 그 표현력을 요구하는 호출자가 없다.
+# 포기한 것은 serverIndex 하나다: 서버를 이름이 아니라 순번으로 고르는 것은 문자열로
+# 표현할 수 없다. 필요해지면 그때 요구와 함께 다시 연다.
 
 # 구성 ID, 노드 ID, 실행 시각, PID, 실제 명령어, 체크섬은 운영자가 입력하지 않는다.
 # chainbench가 생성하여 기존 workspace.json 및 실행 기록에 저장한다.
