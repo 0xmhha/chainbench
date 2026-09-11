@@ -1471,8 +1471,22 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   - 단정: 쓰기 **전** `isStaker(node2) == false`, 쓰기 **후** `true`, 그리고 **다른 노드(node3)에서도**
     `true`. 라이브 통과. **변이**로 `sendTx` 를 빼면 정확히 **2건**(node1·node3 의 사후 단정)이
     실패한다 — 상태를 바꾼 것이 그 쓰기였고, 두 노드가 같은 답을 한다는 뜻이다.
-  - **남은 것**: go-wemix(poa) 쪽 거버넌스 쓰기(etcd·거버넌스 배포 경로라 형태가 더 다르다),
-    실제 ABI 를 쓰는 `registerContract` 케이스, negative-tx 의 reject 변형.
+  - **go-wemix(poa) 쓰기도 완료 (2026-09-12).**
+    `go-wemix/governance/01-wemix-governance-staking-deposit` — 형태가 정말 다르다:
+    **wbft 는 거버넌스 컨트랙트가 제네시스 고정 주소(0x1000~)에 있지만, wemix 는 etcd/거버넌스
+    부트스트랩 중에 배포하므로 주소가 실행마다 다르다.** 그래서 스펙이 쓰기 전에 체인에게
+    **어디에 staking 이 있는지 물어야** 한다 — `read` 의 `rpcCall` source 로
+    `admin_wemixInfo` 의 `staking` 을 뽑아 `$staking` 으로 쓴다.
+    - `Staking.deposit()` 은 payable 이고 `nonReentrant`·`notRevoked` 만 걸려 있다(투표 없음).
+      wbft 의 `registerStaker` 에 해당하는 자리다.
+    - **사전 단정이 쓰기만큼 값어치 있다**: 프로듀서의 스테이크는 부트스트랩에서 **전부
+      잠긴다**. 그래서 `availableBalanceOf` 가 0 에서 시작하고, 그것을 움직일 수 있는 것은
+      이 입금뿐이다. 0 → 정확히 1e18, 그리고 **다른 노드(node3)에서도** 같은 답.
+    - 변이(`sendTx` 제거)로 정확히 2건이 실패한다.
+    - **공허한 단정 하나를 빼면서 배운 것**: 처음에 `balanceOf(node1) > 1 ether` 를 넣었는데,
+      부트스트랩 스테이크가 이미 ~1.5e24 라 **입금과 무관하게 항상 통과**했다. 변이가 3건이
+      아니라 2건만 실패하는 것으로 드러났다 — 증거처럼 보이지만 증거가 아닌 검사다. 뺐다.
+  - **남은 것**: 실제 ABI 를 쓰는 `registerContract` 케이스, negative-tx 의 reject 변형.
 - [x] **WA25. go-wemix·go-wbft 커버리지 — 해소 (2026-09-11).** 각각 **9건·15건**이 됐고
   (시작은 5건·6건), 비어 있던 축을 전부 채웠다: pn/proxied 라우팅, 정족수 경계(4노드·15노드),
   제네시스 거버넌스(wbft·poa 각각), 15노드 엣지 제출. 아래는 그 과정의 기록이다.

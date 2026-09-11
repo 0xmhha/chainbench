@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wemix-governance-staking-deposit",
+  "description": "A governance WRITE on go-wemix (poa). It is a different shape from the wbft one, which is what the worklist's B item warned about: wbft's gov contracts sit at fixed genesis addresses, while wemix deploys them during the etcd/governance bootstrap, so their addresses are run-specific and the spec has to ASK the chain where staking lives before it can write to it. Staking.deposit() is payable and guarded only by nonReentrant/notRevoked -- no ballot -- so it is the poa counterpart of registering a staker on wbft. The pre-state assertion is worth as much as the write: a producer's whole stake is LOCKED at bootstrap, so availableBalanceOf starts at zero and the deposit is the only thing that can move it. One assertion is deliberately absent: a balanceOf(node1) > 1 ether check. A producer's bootstrap stake is already ~1.5e24, so it holds whether or not the deposit lands -- it reads like evidence and is not. The two availableBalanceOf reads carry the claim exactly, from zero to exactly the deposited amount, and a third that cannot fail would only dilute them.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wemix-gov-write",
+    "chain": "wemix",
+    "binaries": {
+      "default": "gwemix"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "300s"
+    },
+    {
+      "do": "read",
+      "on": "node1",
+      "source": "rpcCall",
+      "method": "admin_wemixInfo",
+      "params": [],
+      "select": "staking",
+      "save": "staking"
+    },
+    {
+      "expect": "codeAt",
+      "on": "node1",
+      "address": "$staking",
+      "compare": "NotEqual",
+      "is": "0x"
+    },
+    {
+      "expect": "call",
+      "on": "node1",
+      "to": "$staking",
+      "data": "0x25d998bb000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "do": "sendTx",
+      "on": "node1",
+      "from": "faucet",
+      "to": "$staking",
+      "value": "1000000000000000000",
+      "data": "0xd0e30db0",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "expect": "call",
+      "on": "node1",
+      "to": "$staking",
+      "data": "0x25d998bb000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+    },
+    {
+      "expect": "call",
+      "on": "node3",
+      "to": "$staking",
+      "data": "0x25d998bb000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "compare": "Equal",
+      "is": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "node1",
+      "timeout": "120s",
+      "pollInterval": "3s"
+    }
+  ]
+}
