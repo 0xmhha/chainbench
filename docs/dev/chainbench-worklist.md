@@ -1430,7 +1430,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 | 묶음 | 담긴 항목 | 왜 한 묶음인가 | 전제 |
 |---|---|---|---|
-| **G-A. 커버리지** | WA25 잔여 · B 잔여(체인별 거버넌스) · `istanbul_getWbftExtraInfo` 태그 관측 | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
+| **G-A. 커버리지** — ☑ 완료 (2026-09-11) | WA25 ☑ · B 잔여(체인별 거버넌스) ◐ · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
 | **G-B. 증적** | L1(attempt 로그 축) · 여러 정의서 실행의 통합 report · 후보·반영 완전 분리 | 셋 다 "실행이 무엇을 남기는가" 다. `core/node/layout.go` 와 세션 기록을 같이 건드린다 | 없음 |
 | **G-C. 대상 경계 잔여** | L2(대상에서 키 검증) · `binaryAliases`/객체형 참조 소비 · T3.3·T5.1 의 실 SSH 라이브 e2e · T2.1(driver 위 Transport 형식화) | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
 | **G-D. 구조 정리** | validatorset 홈 결정 · health 를 inspector 조합으로 재배선 | 둘 다 소유 모듈 결정이고 소비자가 적다. 동작 변화 없이 한 번에 옮긴다 | 없음 |
@@ -1465,7 +1465,10 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   그대로 옮기면 2단계 `proposeAddMember` 가 revert 한다. 체인마다 컨트랙트 주소·선택자·
   멤버·정족수를 확인한 뒤 써야 한다. go-wemix(poa)는 etcd·거버넌스 배포 경로라 더 다르다.
   실제 ABI 를 쓰는 `registerContract` 케이스와 negative-tx 의 reject 변형도 여기 묶인다.
-- [ ] **WA25 잔여. go-wemix·go-wbft 커버리지.** **부분 해소 (2026-09-11 재측정).** 각각
+- [x] **WA25. go-wemix·go-wbft 커버리지 — 해소 (2026-09-11).** 각각 **9건·15건**이 됐고
+  (시작은 5건·6건), 비어 있던 축을 전부 채웠다: pn/proxied 라우팅, 정족수 경계(4노드·15노드),
+  제네시스 거버넌스(wbft·poa 각각), 15노드 엣지 제출. 아래는 그 과정의 기록이다.
+  **(원래 진단)** **부분 해소 (2026-09-11 재측정).** 각각
   **8건·11건**으로 늘었고(go-stablenet 은 156건), 없다고 적혀 있던 **pn/proxied 라우팅
   스펙은 생겼다** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`(bp 2·pn 1·en 1,
   네 노드의 peerCount 를 각각 단정한 뒤 blockAdvance). 남은 것은 **깊이**다: 두 체인 모두
@@ -1494,7 +1497,11 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     - 변이로 실패 확인(`etcd.members` 기대값을 5로). **주의**: 노드를 죽여서 변이하려 하면
       readiness 게이트가 `network not ready to test` 로 단정 전에 막는다 — 의도된 동작이고,
       fault 주입은 attach 가 아니라 스펙 안의 `stopNode` 로 해야 한다.
-  - **남은 것**: 15노드에서의 fault.
+  - **15노드 fault 도 채웠다 (2026-09-11).** `fault/02-wbft-quorum-at-15-nodes` — validator 13
+    이면 정족수는 9 다. **4대를 세워 정확히 9 를 남기면 계속 생산**하고, **5대째를 세워 8 이
+    되면 멈춰야** 하며, 되살리면 재개해야 한다. 한 스펙 안에서 두 절반이 서로를 증명한다 —
+    9 로 계속 도는 것이 8 에서 멈춘 것을 우연이 아니게 만든다. 변이(5대째를 세우지 않음)로
+    실패 확인.
 - [ ] **D. 라이브 MCP 플러그인 재배포.** **여전히 열려 있고, 진단 문구를 고쳤다
   (2026-09-11).** "라이브가 `net_*` 이름" 은 이제 맞지 않는다 — 라이브도 `chainbench_*` 를
   쓰지만 **더 오래된 다른 집합**이다. 저장소는 도구 58개를 등록하는데

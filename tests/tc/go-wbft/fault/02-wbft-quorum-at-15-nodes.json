@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-quorum-at-15-nodes",
+  "description": "The quorum boundary at the size the docker environment is built for. With 13 validators the quorum is floor(2n/3)+1 = 9, so nine producing must be enough and eight must not. The case stops four (leaving exactly nine) and requires production to continue, stops a fifth and requires it to halt, then restarts all five and requires it to resume -- so each half proves the other is not a coincidence. The four-node case (consensus/02) checks the same rule where the numbers are small; this one checks it where round changes have thirteen participants and two of the fifteen nodes are not validators at all.",
+  "requires": ["rpc", "consensus", "process"],
+  "env": {
+    "schemaVersion": "2", "kind": "env", "id": "wbft-docker15-fault", "chain": "wbft",
+    "binaries": { "default": "/data/chainbench/bin/gwbft" },
+    "topology": { "bp": 13, "pn": 1, "en": 1 },
+    "keys": { "nodekeys": { "source": "generate" } }
+  },
+  "steps": [
+    { "do": "waitBlock", "target": 3, "timeout": "240s" },
+
+    { "do": "stopNode", "on": "bp10" },
+    { "do": "stopNode", "on": "bp11" },
+    { "do": "stopNode", "on": "bp12" },
+    { "do": "stopNode", "on": "bp13" },
+    { "expect": "blockAdvance", "on": "bp1", "timeout": "180s", "pollInterval": "3s" },
+
+    { "do": "stopNode", "on": "bp9" },
+    { "expect": "blockStalled", "on": "bp1", "timeout": "60s", "pollInterval": "3s" },
+
+    { "do": "restartNode", "on": "bp9" },
+    { "do": "restartNode", "on": "bp10" },
+    { "do": "restartNode", "on": "bp11" },
+    { "do": "restartNode", "on": "bp12" },
+    { "do": "restartNode", "on": "bp13" },
+    { "expect": "blockAdvance", "on": "bp1", "timeout": "300s", "pollInterval": "3s" }
+  ]
+}
