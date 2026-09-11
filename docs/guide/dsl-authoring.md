@@ -165,6 +165,29 @@ v1 표기는 문법에서 없어지지 않았다. 다만 `tests/tc` 는 v2 로 �
 
 이름이 키 세트에 없으면 그 자리에서 실패하고 무엇이 있는지 알려 준다. 0 주소로 조용히 떨어지지 않는다.
 
+#### 어느 노드에서 보낼 수 있는가
+
+`from` 에 노드 계정(`node1`·`faucet`)을 적으면 **그 노드가 서명한다**(`eth_sendTransaction`).
+따라서 그 키를 가진 노드에서만 보낼 수 있다. 키를 갖지 않은 노드에 보내달라고 하면
+`unknown account` 로 실패하는데, 이 메시지는 키스토어 이야기일 뿐 토폴로지 이야기가 아니라서
+원인을 짐작하기 어렵다.
+
+엣지 노드처럼 **키를 갖지 않은 곳에서 트랜잭션을 넣고 싶으면 하네스가 서명하게 한다.**
+`sendTx` 에 `key` 를 주면 로컬 서명 후 `eth_sendRawTransaction` 으로 보낸다.
+
+```json
+{ "do": "newAccount", "save": "s", "saveKey": "sk" },
+{ "do": "sendTx", "on": "bp1",  "from": "faucet", "to": "$s", "value": "10000000000000000000", "expect": "receipt" },
+{ "do": "waitFor", "on": "en1", "source": "balanceAt", "address": "$s",
+  "compare": "GreaterOrEqual", "expected": "10000000000000000000", "timeout": "120s" },
+{ "do": "sendTx", "on": "en1", "key": "$sk", "to": "$r", "value": "1000000000000000000", "expect": "receipt" }
+```
+
+가운데 `waitFor` 는 여유분이 아니다. **프록시 뒤의 노드는 프로듀서보다 뒤처진다** — bp1 이
+영수증을 돌려준 직후에도 en1 에는 그 블록이 아직 없어서, 바로 보내면 `balance 0` 으로 거절된다
+(15노드 proxied 환경에서 실측). 다른 노드에서 만든 상태를 근거로 무언가를 보내려면 그 상태가
+**보내려는 노드에** 도착했는지 먼저 기다린다.
+
 ---
 
 ## 5. 비교 연산
