@@ -3,8 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/0xmhha/chainbench/internal/consensus/poa"
+	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
@@ -30,6 +34,22 @@ type UpgradeRunIn struct {
 	// over after the fork block, so a caller can ask for the handoff to be
 	// confirmed rather than merely started.
 	AwaitFork time.Duration
+	// Server names where the handoff's data plane lives, from the server set.
+	// Empty runs it on this machine, which is what it has always done.
+	//
+	// The sequence itself never needed a branch for this: upgrade.HandoffInputs
+	// has taken Host, Files, Driver and Exec since the family rework, so a
+	// remote handoff was one resolution away. Nothing resolved it, so the CLI
+	// had no target flags and every handoff was local by construction — the
+	// last piece of G2.
+	Server ServerRef
+	// WorkspaceConfigPath owns the target's data root, and is required with
+	// Server: a remote server cannot resolve without knowing where its data
+	// lives.
+	WorkspaceConfigPath string
+	// Docker translates this tool's dials through the localmap beside the server
+	// set, for a fleet of containers standing in for servers.
+	Docker bool
 }
 
 // UpgradeRunOut is the handoff result.
@@ -56,7 +76,7 @@ type UpgradePlanOut struct {
 // UpgradeRun performs a profile-based consensus handoff (go-wemix -> go-wbft at
 // a fork), the same sequence the CLI `upgrade run` drives, so the MCP surface
 // reaches it too. It wraps upgrade.NewHandoff and the shared Handoff.Run.
-func UpgradeRun(ctx context.Context, _ Deps, in UpgradeRunIn) (UpgradeRunOut, error) {
+func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, error) {
 	// The binaries resolve here, not in the sequence: a profile names each by
 	// its command name, and a caller may point at a build instead. Doing it
 	// here means every surface accepts both spellings.
@@ -64,15 +84,26 @@ func UpgradeRun(ctx context.Context, _ Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	if err != nil {
 		return UpgradeRunOut{}, err
 	}
-	fromBin, err := ResolveBinary(in.FromBinary, prof.Chains.From.Binary)
+	// The target resolves first, because it decides WHERE a binary path means
+	// something. A remote handoff names paths on the server; looking those up in
+	// the operator's own PATH is how the first remote run failed, reporting a
+	// binary "not found" that was sitting on the target all along.
+	var acc *resource.Access
+	if in.Server.Name != "" {
+		acc, err = openHandoffTarget(d, in)
+		if err != nil {
+			return UpgradeRunOut{}, err
+		}
+	}
+	fromBin, err := resolveBinaryOn(ctx, acc, in.FromBinary, prof.Chains.From.Binary)
 	if err != nil {
 		return UpgradeRunOut{}, fmt.Errorf("from binary: %w", err)
 	}
-	toBin, err := ResolveBinary(in.ToBinary, prof.Chains.To.Binary)
+	toBin, err := resolveBinaryOn(ctx, acc, in.ToBinary, prof.Chains.To.Binary)
 	if err != nil {
 		return UpgradeRunOut{}, fmt.Errorf("to binary: %w", err)
 	}
-	h, err := upgrade.NewHandoff(upgrade.HandoffInputs{
+	hi := upgrade.HandoffInputs{
 		ProfilePath:    in.ProfilePath,
 		PresetDir:      in.PresetDir,
 		FromBinary:     fromBin,
@@ -80,7 +111,24 @@ func UpgradeRun(ctx context.Context, _ Deps, in UpgradeRunIn) (UpgradeRunOut, er
 		Template:       in.Template,
 		GenesisOverlay: in.GenesisOverlay,
 		DataDir:        in.DataDir,
-	})
+	}
+	// A named server moves the data plane. The profile, template, preset and
+	// overlay stay local — they are the operator's inputs — while the genesis,
+	// configs, keystores and the node processes go through the target's own
+	// boundaries. That split is already what HandoffInputs documents; this is
+	// the resolution that was missing.
+	if acc != nil {
+		hi.Host = acc.Spec.Host
+		hi.DataDir = acc.DataRoot
+		hi.Files = acc.Files
+		hi.Driver = acc.Driver
+		ex, err := handoffExec(acc)
+		if err != nil {
+			return UpgradeRunOut{}, err
+		}
+		hi.Exec = ex
+	}
+	h, err := upgrade.NewHandoff(hi)
 	if err != nil {
 		return UpgradeRunOut{}, err
 	}
@@ -115,6 +163,36 @@ func UpgradeRun(ctx context.Context, _ Deps, in UpgradeRunIn) (UpgradeRunOut, er
 // Every surface accepts both spellings, so both are read here. A surface that
 // resolved this itself would be one that could accept a name the other
 // rejects.
+// resolveBinaryOn resolves a node binary for the machine that will run it.
+//
+// Locally that is a PATH lookup, which is what it has always been. On a target
+// it is a probe of the target's own filesystem: the path names a file over
+// there, so the check has to happen over there too. An absent binary is refused
+// here rather than at launch, so the message names the file and the server
+// instead of surfacing as a node that never came up.
+func resolveBinaryOn(ctx context.Context, acc *resource.Access, explicit, chainBinary string) (string, error) {
+	if acc == nil {
+		return ResolveBinary(explicit, chainBinary)
+	}
+	name := explicit
+	if name == "" {
+		name = chainBinary
+	}
+	if !path.IsAbs(name) {
+		return "", fmt.Errorf("binary %q must be an absolute path on server %q — a bare name would be looked up on this machine, not there",
+			name, acc.Spec.Server)
+	}
+	ok, err := acc.Files.Exists(ctx, name)
+	if err != nil {
+		return "", fmt.Errorf("probing %s on server %q: %w", name, acc.Spec.Server, err)
+	}
+	if !ok {
+		return "", fmt.Errorf("binary %s is not on server %q (upload it, e.g. `chainbench file upload --purpose bin`)", name, acc.Spec.Server)
+	}
+	return name, nil
+}
+
+// ResolveBinary finds a node binary on THIS machine.
 func ResolveBinary(explicit, chainBinary string) (string, error) {
 	name := explicit
 	if name == "" {
@@ -192,4 +270,33 @@ func UpgradeGenesis(_ Deps, profilePath, fromGenesisPath string) (UpgradeGenesis
 		})
 	}
 	return out, nil
+}
+
+// openHandoffTarget resolves where a remote handoff's data plane lives.
+//
+// It mirrors openTransferTarget: the workspace-config owns the data root, and a
+// remote server cannot resolve without it, so asking for a server without one is
+// an error naming the missing file rather than a resolution failure further down.
+func openHandoffTarget(d Deps, in UpgradeRunIn) (*resource.Access, error) {
+	if in.WorkspaceConfigPath == "" {
+		return nil, fmt.Errorf("upgrade run: --workspace-config is required with --server (it owns the target data root)")
+	}
+	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
+	return opener.Open(resource.Spec{Server: in.Server.Name, DataRoot: wc.DataRoot})
+}
+
+// handoffExec is the bootstrap runner for a remote target: the poa helpers take
+// a binary and arguments, and a remote target takes one command line, so the
+// target's own Commander does the quoting through process.ShellRunner — the same
+// adapter the composition path uses for the poa phase actions.
+func handoffExec(acc *resource.Access) (poa.Runner, error) {
+	cmdr, ok := acc.Driver.(process.Commander)
+	if !ok {
+		return nil, fmt.Errorf("upgrade run: target %q cannot run commands, so governance and etcd cannot be bootstrapped on it", acc.Spec.Server)
+	}
+	return poa.Runner(process.ShellRunner(cmdr)), nil
 }

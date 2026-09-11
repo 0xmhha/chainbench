@@ -159,12 +159,30 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 	if err != nil {
 		return ns, err
 	}
+	// A driver that can initialize a datadir itself is asked to. The remote
+	// driver is one — it ships the genesis and runs `init` on the host — and
+	// skipping the question is why a remote handoff tried to mkdir the target's
+	// data root on the operator's own machine. The local fallback stays for a
+	// driver that has no opinion, and an explicit InitFn still wins so a test can
+	// substitute one.
+	init, canInit := d.(process.Initializer)
 	for i, spec := range specs {
 		if !opts.wants(i) {
 			continue
 		}
-		if err := initFn(ctx, spec.Binary, spec.DataDir, genesisPath); err != nil {
-			return ns, fmt.Errorf("upgrade: init node%d (%s): %w", spec.Index+1, spec.Binary, err)
+		switch {
+		case opts.InitFn != nil:
+			if err := opts.InitFn(ctx, spec.Binary, spec.DataDir, genesisPath); err != nil {
+				return ns, fmt.Errorf("upgrade: init node%d (%s): %w", spec.Index+1, spec.Binary, err)
+			}
+		case canInit:
+			if err := init.InitDatadir(ctx, spec, plan.Genesis); err != nil {
+				return ns, fmt.Errorf("upgrade: init node%d (%s) on the target: %w", spec.Index+1, spec.Binary, err)
+			}
+		default:
+			if err := initFn(ctx, spec.Binary, spec.DataDir, genesisPath); err != nil {
+				return ns, fmt.Errorf("upgrade: init node%d (%s): %w", spec.Index+1, spec.Binary, err)
+			}
 		}
 		if opts.ProvisionKeys != nil {
 			if err := opts.ProvisionKeys(ctx, spec, plan.Nodes[i].Producer); err != nil {

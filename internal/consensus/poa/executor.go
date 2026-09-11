@@ -102,10 +102,20 @@ func (b Bootstrap) resolve(index int) (Runner, filestore.Store, error) {
 	return run, b.Files, nil
 }
 
-// waitForIPC blocks until the node's IPC endpoint appears. A local target
-// checks for a socket file; a remote one probes the target through the store,
-// where the socket lives.
+// waitForIPC is the unexported name the executor uses; WaitForIPCOn is the same
+// wait for a caller outside this package.
 func waitForIPC(ctx context.Context, files filestore.Store, ipc string, timeout time.Duration) error {
+	return WaitForIPCOn(ctx, files, ipc, timeout)
+}
+
+// WaitForIPCOn blocks until the node's IPC endpoint appears, on whichever
+// machine it is going to appear on. A nil store means this one and checks for a
+// socket file; a store probes the target, where the socket actually lives.
+//
+// The handoff called the local-only WaitForIPC, so a remote run waited 30s for a
+// socket on the operator's disk that was never going to be there and reported it
+// as the node failing to come up.
+func WaitForIPCOn(ctx context.Context, files filestore.Store, ipc string, timeout time.Duration) error {
 	if files == nil {
 		return WaitForIPC(ctx, ipc, timeout)
 	}

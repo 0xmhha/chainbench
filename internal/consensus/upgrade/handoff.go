@@ -122,6 +122,10 @@ func (in HandoffInputs) driver() process.Driver {
 // assumes the ones before it ran.
 type Handoff struct {
 	in HandoffInputs
+	// producerKeystore is the path this run shipped the producer's keystore to.
+	// It is recorded rather than re-found, because the destination may be on
+	// another machine and the file interface cannot list a directory.
+	producerKeystore string
 	// Profile is the loaded golden profile.
 	Profile Profile
 	// Preset is the loaded key preset.
@@ -219,17 +223,41 @@ func (h *Handoff) BaseGenesis(ctx context.Context) (string, error) {
 	if h.configPath == "" {
 		return "", fmt.Errorf("upgrade: base genesis needs the governance config written first")
 	}
+	// The template is the OPERATOR's file, and the binary that reads it runs on
+	// the target — so it has to be shipped there first, exactly as the governance
+	// config above is. Passing the local path straight through worked only
+	// because a local run shares one filesystem; on a server the binary opened a
+	// path that does not exist there and reported it as a missing genesis
+	// template.
+	tmpl, err := h.shipTemplate(ctx)
+	if err != nil {
+		return "", err
+	}
 	path := filepath.Join(h.in.DataDir, "base-genesis.json")
-	if err := poa.GenerateGenesis(ctx, h.in.exec(), h.in.FromBinary, h.configPath, h.in.Template, path); err != nil {
+	if err := poa.GenerateGenesis(ctx, h.in.exec(), h.in.FromBinary, h.configPath, tmpl, path); err != nil {
 		return "", fmt.Errorf("%w (is --template go-wemix's own wemix/scripts/genesis-template.json?)", err)
 	}
 	return path, nil
 }
 
+// shipTemplate places the operator's genesis template where the producer's
+// binary can read it, and returns that path.
+func (h *Handoff) shipTemplate(ctx context.Context) (string, error) {
+	b, err := os.ReadFile(h.in.Template)
+	if err != nil {
+		return "", fmt.Errorf("upgrade: genesis template: %w", err)
+	}
+	dst := filepath.Join(h.in.DataDir, "genesis-template.json")
+	if err := h.in.files().Write(ctx, dst, b, 0o644); err != nil {
+		return "", fmt.Errorf("upgrade: shipping the genesis template: %w", err)
+	}
+	return dst, nil
+}
+
 // ComposePlan lifts the successor's fork section onto the base genesis and
 // builds the plan, with every node's devp2p pubkey so the mesh can be wired.
-func (h *Handoff) ComposePlan(basePath string) error {
-	base, err := forkPrereqs(basePath, h.Profile.Upgrade.NetworkID)
+func (h *Handoff) ComposePlan(ctx context.Context, basePath string) error {
+	base, err := h.forkPrereqs(ctx, basePath, h.Profile.Upgrade.NetworkID)
 	if err != nil {
 		return err
 	}
@@ -376,7 +404,7 @@ func (h *Handoff) WireMesh(ctx context.Context, ns node.NodeSet) error {
 // IPC, signing with the producer's keystore.
 func (h *Handoff) DeployGovernance(ctx context.Context, producer node.Node) error {
 	ipc := h.ProducerIPC(producer)
-	if err := poa.WaitForIPC(ctx, ipc, ipcWait); err != nil {
+	if err := poa.WaitForIPCOn(ctx, h.in.Files, ipc, ipcWait); err != nil {
 		return err
 	}
 	// The deploy is a transaction and waits for its receipt, so the chain has
@@ -393,10 +421,16 @@ func (h *Handoff) DeployGovernance(ctx context.Context, producer node.Node) erro
 	if err := poa.WaitProducing(ctx, h.in.exec(), h.in.FromBinary, ipc, producingWait); err != nil {
 		return err
 	}
-	ksDir := node.Layout{Root: h.in.DataDir}.KeystoreDir(h.label(producer))
-	ksFile, err := firstEntry(ksDir)
-	if err != nil {
-		return fmt.Errorf("upgrade: producer keystore: %w", err)
+	// The keystore was shipped by this run, so its path is a fact this run holds.
+	// Re-finding it by listing the directory only worked when the directory was
+	// on this machine; the file interface cannot list a remote one.
+	ksFile := h.producerKeystore
+	if ksFile == "" {
+		ksDir := node.Layout{Root: h.in.DataDir}.KeystoreDir(h.label(producer))
+		var err error
+		if ksFile, err = firstEntry(ksDir); err != nil {
+			return fmt.Errorf("upgrade: producer keystore: %w", err)
+		}
 	}
 	return poa.DeployGovernance(ctx, h.in.exec(), h.in.FromBinary, ipc, h.configPath, ksFile, h.pwPath)
 }
@@ -438,7 +472,7 @@ func (h *Handoff) Run(ctx context.Context, etcdTimeout time.Duration) (node.Node
 	if err != nil {
 		return node.NodeSet{}, poa.Info{}, err
 	}
-	if err := h.ComposePlan(basePath); err != nil {
+	if err := h.ComposePlan(ctx, basePath); err != nil {
 		return node.NodeSet{}, poa.Info{}, err
 	}
 	if _, err := h.ApplyOverlay(); err != nil {
@@ -593,7 +627,11 @@ func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) 
 			return nil
 		}
 		src := filepath.Join(h.in.PresetDir, fmt.Sprintf("node%d", num), "keystore")
-		if err := copyFiles(ctx, files, src, filepath.Join(spec.DataDir, "keystore")); err != nil {
+		shipped, err := copyFiles(ctx, files, src, filepath.Join(spec.DataDir, "keystore"))
+		if err == nil && producer && len(shipped) > 0 {
+			h.producerKeystore = shipped[0]
+		}
+		if err != nil {
 			return fmt.Errorf("upgrade: copy keystore: %w", err)
 		}
 		return nil
@@ -658,8 +696,12 @@ func (h *Handoff) poaConfig(prod keyring.Entry) poa.Config {
 
 // forkPrereqs sets chainId and petersburgBlock on the base genesis, which the
 // wemix template omits but the successor requires for fork ordering.
-func forkPrereqs(path string, networkID int64) ([]byte, error) {
-	b, err := os.ReadFile(path)
+// forkPrereqs reads the base genesis the producer's binary just wrote — through
+// the same store it was written to, because on a remote target it is over there
+// — and sets the two fields the wemix template omits but the successor needs for
+// fork ordering.
+func (h *Handoff) forkPrereqs(ctx context.Context, path string, networkID int64) ([]byte, error) {
+	b, err := h.in.files().Read(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -696,22 +738,29 @@ func firstEntry(dir string) (string, error) {
 // copyFiles copies the regular files of src into dst. src is read from this
 // machine — the key preset is the operator's — while dst is written through
 // the file seam, because that side is the target.
-func copyFiles(ctx context.Context, files filestore.Store, src, dst string) error {
+// It returns the destination paths it wrote, so a later step names a shipped
+// file from the record rather than by listing the destination. Listing is the one
+// thing the file interface does not offer, and re-deriving the name locally is
+// what made the producer's keystore unfindable on a remote target.
+func copyFiles(ctx context.Context, files filestore.Store, src, dst string) ([]string, error) {
 	ents, err := os.ReadDir(src)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	var written []string
 	for _, e := range ents {
 		if e.IsDir() {
 			continue
 		}
 		b, err := os.ReadFile(filepath.Join(src, e.Name()))
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if err := files.Write(ctx, filepath.Join(dst, e.Name()), b, 0o600); err != nil {
-			return err
+		out := filepath.Join(dst, e.Name())
+		if err := files.Write(ctx, out, b, 0o600); err != nil {
+			return nil, err
 		}
+		written = append(written, out)
 	}
-	return nil
+	return written, nil
 }

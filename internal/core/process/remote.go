@@ -220,3 +220,30 @@ func (d *RemoteDriver) Stop(ctx context.Context, h Handle) error {
 	}
 	return nil
 }
+
+// ShellRunner adapts a [Commander] to the name+args runner shape the genesis and
+// poa bootstrap helpers take, quoting the binary and every argument into one
+// command line.
+//
+// It is exported and lives here, beside Commander and Runner, because two
+// callers need it: chainsetup drives the poa phase actions on a target, and app
+// drives the handoff's bootstrap on one. It was private to chainsetup, and a
+// second copy in app would have been the same shape as the four shellQuote
+// copies this module just finished consolidating.
+func ShellRunner(c Commander) func(ctx context.Context, name string, args ...string) ([]byte, error) {
+	return func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		out, err := c.Run(ctx, ShellCommand(name, args...))
+		return []byte(out), err
+	}
+}
+
+// ShellCommand quotes a binary and its arguments into one command line a shell
+// takes literally.
+func ShellCommand(name string, args ...string) string {
+	parts := make([]string, 0, len(args)+1)
+	parts = append(parts, remote.ShellQuote(name))
+	for _, a := range args {
+		parts = append(parts, remote.ShellQuote(a))
+	}
+	return strings.Join(parts, " ")
+}
