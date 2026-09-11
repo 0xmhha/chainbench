@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "wbft-tx-crosses-the-proxied-topology",
+  "description": "A transaction submitted at the EDGE of a 15-node proxied network must reach the producers and come back as state every node agrees on. The 15-node specs only brought a chain up and the tx specs only ran on four mesh-peered nodes, so nothing checked that a tx crosses en -> pn -> bp at scale (WA25 depth). The sender is an account this harness holds a key for, because a node can only sign for keys it has: asking en1 to send from the faucet fails with \"unknown account\", which is about the keystore and not the topology. The waitFor between the two sends is not padding -- the edge is two hops from the producers and does not have the funding block the moment bp1 reports its receipt, so sending immediately fails with balance 0.",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "wbft-docker15-tx",
+    "chain": "wbft",
+    "binaries": {
+      "default": "/data/chainbench/bin/gwbft"
+    },
+    "topology": {
+      "bp": 13,
+      "pn": 1,
+      "en": 1
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "generate"
+      }
+    }
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 3,
+      "timeout": "240s"
+    },
+    {
+      "do": "newAccount",
+      "save": "s",
+      "saveKey": "sk"
+    },
+    {
+      "do": "newAccount",
+      "save": "r",
+      "saveKey": "rk"
+    },
+    {
+      "do": "sendTx",
+      "on": "bp1",
+      "from": "faucet",
+      "to": "$s",
+      "value": "10000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "do": "waitFor",
+      "on": "en1",
+      "source": "balanceAt",
+      "address": "$s",
+      "compare": "GreaterOrEqual",
+      "expected": "10000000000000000000",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    },
+    {
+      "do": "sendTx",
+      "on": "en1",
+      "key": "$sk",
+      "to": "$r",
+      "value": "1000000000000000000",
+      "expect": "receipt",
+      "timeout": "120s"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "bp1",
+      "address": "$r",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "bp13",
+      "address": "$r",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "balanceAt",
+      "on": "pn1",
+      "address": "$r",
+      "compare": "Equal",
+      "is": "1000000000000000000"
+    },
+    {
+      "expect": "sameBlockHash",
+      "block": "latest"
+    },
+    {
+      "expect": "blockAdvance",
+      "on": "en1",
+      "timeout": "120s",
+      "pollInterval": "2s"
+    }
+  ]
+}
