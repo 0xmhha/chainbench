@@ -1,4 +1,4 @@
-# env/docker — 원격 서버 행세를 하는 로컬 docker 함대
+# env/docker — 원격 서버 행세를 하는 로컬 docker
 
 실 원격 서버 없이 chainbench 의 원격 코드 경로를 검증하기 위한 가상 서버들이다.
 설계와 근거는 [`docs/dev/docker-remote-design.md`](../../docs/dev/docker-remote-design.md),
