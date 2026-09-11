@@ -47,6 +47,36 @@ func LoadPreset(dir string) (keyring.Preset, error) {
 
 // LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
 // one file, so a ring on a server reads back with a single remote read.
+//
+// That one file carries the NODEKEYS. A remote read therefore brings every
+// private key in the ring across to this machine, whether the caller wants them
+// or not — listing a ring costs the same disclosure as exporting one. Callers
+// that only need identities should use [LoadPublicPresetAt], which drops the keys
+// as the read returns; callers that verify or sign need them and say so by asking
+// for this one.
+// LoadPublicPresetAt reads a ring and returns it with every private key dropped.
+//
+// It is the read for the questions that are about identities: which addresses
+// validate, does this ring match that genesis, what is node3's devp2p key. None
+// of them need a secret, and before this they were answered from a value that
+// carried one — so a caller could log or persist a key while meaning to report
+// an address.
+//
+// It does not make the transfer smaller (see [LoadPresetAt]); it makes the value
+// the caller holds public.
+func LoadPublicPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+	set, err := LoadPresetAt(ctx, files, dir)
+	if err != nil {
+		return keyring.Preset{}, err
+	}
+	return set.PublicOnly(), nil
+}
+
+// LoadPublicPreset is LoadPublicPresetAt on the local filesystem.
+func LoadPublicPreset(dir string) (keyring.Preset, error) {
+	return LoadPublicPresetAt(context.Background(), nil, dir)
+}
+
 func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
 	if files == nil {
 		files = filestore.Local{}
