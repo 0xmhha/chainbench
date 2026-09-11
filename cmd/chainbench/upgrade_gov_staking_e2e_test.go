@@ -1107,10 +1107,15 @@ const stabilizingStakersThreshold = 5
 // EpochInfo is only present on epoch-boundary blocks (multiples of epochLength,
 // which is 10 here — this profile declares four validators and epochLength is
 // derived as max(10, validators); the fork lands on block 20), so this queries a
-// boundary block rather than "latest". The stabilizing->false transition needs the staker count
-// pushed to >= threshold, which in turn needs useNCP-driven validator selection
-// and 7 governance NCPs — more distinct funded accounts than the minimal handoff
-// preset carries — so only the below-threshold branch is ported here.
+// boundary block rather than "latest". The stabilizing->false transition is
+// covered separately, by TestWemixGovernanceEpochDecidesTheValidatorSetE2E.
+//
+// An earlier version of this comment said that branch needed useNCP-driven
+// selection and 7 governance NCPs. That was wrong: GovNCP.inspectOperation
+// returns !emergencyMode, so registering a staker needs no ballot. What it does
+// need is one operator account per staker — GovStaking refuses msg.sender ==
+// _staker and refuses an address that already operates another staker — which an
+// alloc overlay supplies.
 //
 //	go test -tags e2e -run TestWemixGovernanceStabilizingE2E -timeout 8m ./cmd/chainbench
 func TestWemixGovernanceStabilizingE2E(t *testing.T) {

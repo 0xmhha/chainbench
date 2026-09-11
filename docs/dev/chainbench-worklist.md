@@ -1415,9 +1415,8 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 **착수 순서 제안.** 갈래끼리 서로 막지 않으므로 순서는 강제가 아니지만, 지금 시점에서
 값이 큰 순서는 이렇다.
 
-1. **R7 (epoch 재결정 경로)** — 방금 넣은 파생이 의도대로 도는지 아직 관측되지 않았다.
-   회귀가 생기면 안정화를 벗어나는 첫 체인에서야 드러난다. 라이브 docker 가 서 있는 지금이
-   가장 싸다.
+1. ~~**R7 (epoch 재결정 경로)**~~ — **완료 (2026-09-11).** 라이브로 재결정을 일으켜
+   관측하고 상설 e2e 로 고정했다. 상세는 §1s E 의 R7 항목.
 2. **D. MCP 플러그인 재배포** — 코드가 아니라 배포다. 저장소 58개 도구 중 라이브가 못
    보는 것이 절반이라, 이걸 두면 MCP 표면 작업의 검증이 전부 겉돈다.
 3. **WA25 잔여 + B 거버넌스 케이스** — 커버리지. docker 가 서 있는 동안 해야 싸다.
@@ -1660,7 +1659,35 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     - **고칠 때 같이 봐야 하는 제약**: `params/config_wbft.go:130` 이
       `epochLength >= targetValidators` 를 강제한다. 템플릿의 `epochLength` 는 10 이므로
       `targetValidators: 15` 만 바꾸면 제네시스 검증에서 거부된다. 둘을 함께 올려야 한다.
-- [ ] **R7. epoch 재결정 경로가 한 번도 실행되지 않았다.** wbft 는 epoch 경계마다
+- [x] **R7. epoch 재결정 경로 — 완료·라이브 검증 (2026-09-11).** "한 번도 실행된 적 없다"는
+  진단이 맞았고, 이제 실행시켜 보고 상설 테스트로 고정했다.
+  - **라이브 (docker 15+15).** wbft `GovStaking` 에 문턱(5) 이상인 **6명을 등록**했다 —
+    `registerStaker(amount, staker, feeRecipient, 0, blsPK, blsSig)`, operator 는 producer
+    계정 6개(컨트랙트가 `msg.sender != _staker` 와 operator 1인 1스테이커를 강제하므로
+    스테이커 수만큼 별도 operator 가 필요하다), staker 는 **실행 중인 wbft 노드** 6개의 주소
+    (실행 중이 아닌 주소를 넣으면 경계에서 생산 주체가 사라져 체인이 선다). 등록은 블록 158
+    에 들어갔고, **다음 경계인 블록 170 에서 `stabilizing: false`, stakers 6, validators 6**
+    으로 바뀌었다. 그 뒤 블록 171~244(74블록)의 봉인자는 **정확히 그 6명**이고 고르게
+    교대했다. 제네시스의 15명은 생산에서 빠졌다 — 재결정된 집합은 기존 집합을 확장하는 것이
+    아니라 **대체한다**.
+  - **이것이 G3 의 파생을 검증한다.** 옛 고정값 `targetValidators: 1` 이었다면
+    `decideValidators` 가 `indices[:1]` 로 잘라 **validator 1명**이 됐을 상황이다.
+  - **상설 테스트**: `cmd/chainbench/upgrade_gov_epoch_e2e_test.go`
+    (`TestWemixGovernanceEpochDecidesTheValidatorSetE2E`, `-tags e2e`). 골든 1+4 프로파일에
+    `stabilizingStakersThreshold` 를 4 로 낮추는 genesis overlay 를 씌우고, alloc 으로 펀딩한
+    **operator 4개**(preset 키가 아닌 고정 dev 키)가 선언된 validator 4명을 스테이커로 등록한다.
+    경계에서 `stabilizing:false` · **decided validators == 스테이킹한 4명**(수만이 아니라 주소
+    집합까지) · 그 뒤 한 epoch 동안 실제로 봉인하며 2명 이상이 교대하는 것까지 단정한다.
+    라이브 결과: `epoch 40 decided 4 validators from 4 stakers; blocks 41-50 sealed by 4 of them`.
+  - **실패 가능함을 변이로 증명했다.** 템플릿을 옛 `targetValidators: 1` 로 되돌리고 같은
+    테스트를 돌리면 `block 40 decided 1 validator(s), want 4` 로 실패한다. 즉 이 테스트는
+    G3 의 회귀를 실제로 잡는다.
+  - **부수로 확인된 것**: `GovNCP.inspectOperation` 은 `!emergencyMode` 만 보므로 스테이커
+    등록에 NCP 투표가 필요하지 않다. 기존 `TestWemixGovernanceStabilizingE2E` 주석이
+    "NCP 7개가 필요해서 above-threshold 분기는 포팅하지 않았다"고 적어 둔 것은 과한 전제였다 —
+    필요한 것은 **operator 계정 수**였고, alloc overlay 로 만들면 된다.
+
+- [ ] **(원래 진단, 보존) R7 이 무엇이었나.** wbft 는 epoch 경계마다
   validator 집합을 다시 정하는데(`decideValidators`), chainbench 가 만드는 체인은 그 경계에
   **도달하지 않는다.** genesis epoch 가 `Stabilizing = true` 로 시작하고, 안정화 중에는
   `newEpoch.Validators = latestEpochInfo.Validators` 로 직행해 재결정을 건너뛴다. 벗어나는
