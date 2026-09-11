@@ -1217,47 +1217,62 @@ tests/tc 코퍼스)을 병렬로 감사했다. 두 목적은 이렇다.
 happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스트다. 모두 정적 분석이며 라이브
 실행으로 확인한 것은 없다(특히 WA1 은 이름·grep 증거다).
 
-> **상태(2026-09-10):** 이 목록은 **PR #363 으로 반영을 마쳤다.** 아래 체크박스는 감사 당시
-> 상태 그대로이고 갱신되지 않았으니, 미완으로 읽지 않는다. 표본 확인: WA2(`internal/mcp/test_tools.go`·
-> `cmd/chainbench/testcmd/test.go`), WA4(`internal/mcp/node_tools.go`), WA8(`spec_v2.go:549,565` 의
-> expect 검증), WA16(주석에 적힌 대로 testhelper 비교자 경유), WA26(`SPECS.md` 의
-> `internal/testspec` 참조 0건). **남은 것은 §1p 에 따로 적혀 있다** — metric 수집(C),
-> 체인별 거버넌스 케이스(B 잔여), MCP 플러그인 재배포(D), 커버리지(WA25).
+> **상태(2026-09-12 재측정).** 이 목록은 PR #363 으로 반영을 마쳤고, **이번에 체크박스를
+> 실제로 바꿨다.**
+>
+> 2026-09-10 에도 "반영을 마쳤으니 미완으로 읽지 말라"는 주석이 바로 여기 붙어 있었다.
+> 그런데도 그 뒤로 **WA14·WA19·WA24 를 열린 항목으로 착각해 각각 코드 발굴을 다시 했다.**
+> 교훈은 분명하다 — **체크박스 23개 위에 붙인 산문은 읽히지 않는다.** 상태는 상태를 나타내는
+> 자리에 적어야 하고, 그 자리는 박스다.
+>
+> 그래서 이번에는 (1) 확인한 항목의 박스를 `[x]` 로 바꾸고, (2) 각 항목에 **30초 안에 다시
+> 확인할 수 있는 명령**을 붙였다. 같은 발굴을 여섯 번째로 하지 않기 위한 것이다.
+> 개별 확인하지 않은 항목은 **`◐`** 로 뒀다 — 임의로 완료 표시하지 않는다. `◐` 는
+> "미완"이 아니라 **"이번 재측정에서 개별 확인하지 않았다"** 는 뜻이고, 각 항목의 `증거:`
+> 줄이 어디를 보면 되는지 이미 가리키고 있다. §1p 가 남은 것을 따로 적고 있으므로 `◐` 가
+> 곧 할 일 목록은 아니다.
+>
+> **오늘 확인해 완료로 바꾼 것 (13건)**: WA2·WA3·WA4·WA5·WA6·WA7·WA8·WA13·WA14·WA16·WA19·WA26
+> (+ WA24 는 별도 항목으로 재측정). 그중 셋은 "조용히 거짓 통과" 부류라 실제로 돌려서 확인했다 —
+> WA8 은 `do` 의 `expect` 오타가 거부되는지, WA13 은 오타 난 `source` 가 `validate` 에서
+> `UNRESOLVED` 로 걸리는지(`read`·`waitFor` 둘 다), WA7 은 실패한 실행이 tool error 로 나가는지.
+>
+> **남은 것은 §1p 에 따로 적혀 있다** — MCP 플러그인 재배포(D, 코드 아님).
 
 ### A. 정확성·목적 차단 (먼저 반영)
 
-- [ ] **WA1** [치명] 라이브 MCP 플러그인이 이 소스로 빌드된 게 아니다. 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
-- [ ] **WA2** [목적1·2 차단] 단일 테스트 목록·실행 기능이 CLI·MCP 양쪽에 없다. testengine 에 RunOne/ListTests 카탈로그 API 가 없다. 증거: `internal/testengine/` 전역 grep 무결과, `cmd/chainbench/` 에 test 그룹 없음. 방향: testengine 에 목록·단건 실행 API 를 만들고 CLI·MCP 에 붙인다.
-- [ ] **WA3** [목적2 차단·MCP] 한 번에 구성+유지가 MCP 로 안 된다. `NetUp` 이 CLI 전용(`cmd/chainbench/chaincmd/up.go:49`), `chainbench_run` 은 항상 teardown 하고 `KeepUp` 을 MCP 로 노출 안 한다(`internal/mcp/run_tool.go:108-115`, `internal/testengine/suite.go:75-76`). run 이 `Server`·`Docker`·`WaitBlocks` 도 드롭한다. 방향: NetUp 을 MCP 로 노출하거나 run 에 KeepUp·Server·Docker 를 배선한다.
-- [ ] **WA4** [목적2·MCP] 노드 단위 stop/start(장애 주입)가 MCP 에 없다. `app.NodeStop`/`NodeStart` 가 CLI 전용(`internal/app/net.go:147,152`, `cmd/chainbench/nodecmd/node.go:32,55`). 방향: MCP 도구를 더한다.
-- [ ] **WA5** [목적2·CLI] 네트워크 레지스트리(attach/detach/list/info/peers/topology, remote_rpc)가 CLI 에 없다. MCP 전용(`internal/mcp/network_tools.go`, `remote_tools.go`). 방향: CLI `network`·`remote` 그룹을 더한다.
-- [ ] **WA6** [목적1·MCP] MCP run 이 세션 경로를 출력 안 해 리포트를 회수 못 한다(dataDir 없으면 임시 dir). spec 을 경로로 못 넘겨 env 참조 해석이 우회된다(`ReadSpecFiles` CLI 전용). 증거: `internal/mcp/run_tool.go:104,141-153`, `internal/app/workflow.go:115-120`. 방향: run 출력에 세션 root 를 싣고, spec 경로 입력을 받는다.
-- [ ] **WA7** [목적1·MCP] MCP run 이 테스트 실패를 tool error 로 안 낸다(항상 nil). CLI 는 exit 1/2 를 낸다. 증거: `internal/mcp/run_tool.go:141-153`, `cmd/chainbench/suitecmd/run.go:237-245`. 방향: `Summary.Failed()` 이면 tool error 를 낸다.
-- [ ] **WA8** [정확성] `do` 의 `expect`(revert/reject/fail) 오타가 검증 안 돼, 오타 나면 "성공해야 함"으로 조용히 떨어진다. 부정 케이스가 거짓 통과한다. 증거: `internal/testhelper/builtins.go:432,446`, `fault.go:63`. 방향: expect 어휘를 오프라인 검증에 넣는다.
-- [ ] **WA9** [정확성] node-table `role:pn` 이 아직 mesh 로 배선된다. proxied 자동 선택이 count-form 에만 있다(`internal/testengine/compose.go:175-177`). node-table 형식은 `inlineTopologyOf` 경로라 `proxies=0` 으로 mesh 가 된다. en 이 bp 를 직접 본다. 방향: node-table 에 pn 이 있으면 proxied 를 선택하고, `Peering.Validate` 가 mesh+pn 을 거절하게 한다.
-- [ ] **WA10** [정확성·증적] attach 경로(`app.AttachRun`)가 readiness 게이트·실패증적·Precheck 를 배선 안 한다. MCP `run --attach` 로 돌면 E6·E8 이 무력화되고 assertion 오류 메시지가 사라진다. 증거: `internal/app/workflow.go:104-108,112` vs `internal/testengine/suite.go:261,330-338`. 방향: AttachConfig 에 PreSpec·OnFail·Control·LogReader·Precheck 를 배선한다.
-- [ ] **WA11** [증적] artifacts.json 매니페스트를 쓰는 프로덕션 코드가 없다. `Recorder` 인터페이스에 Artifacts 통로가 없어 리포트 추적성 필드가 항상 빈다. 증거: `internal/dsl/interp/requirements.go:46-55`, `internal/core/session/record_impl.go:62-67`, `internal/core/report/report.go:17-24`. 방향: Recorder 에 Artifacts 를 노출하고 compose 산출물을 기록한다.
-- [ ] **WA12** [증적·경미] pre-action 실패·FAIL 이 status.json 에 reason 을 안 남긴다. 증거: `internal/dsl/interp/run.go:28-33,50,61-72`. 방향: `rec.Reason(...)` 를 부른다.
+- ◐ **WA1** [치명] 라이브 MCP 플러그인이 이 소스로 빌드된 게 아니다. 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
+- [x] **WA2** [목적1·2 차단] 단일 테스트 목록·실행 기능이 CLI·MCP 양쪽에 없다. testengine 에 RunOne/ListTests 카탈로그 API 가 없다. 증거: `internal/testengine/` 전역 grep 무결과, `cmd/chainbench/` 에 test 그룹 없음. 방향: testengine 에 목록·단건 실행 API 를 만들고 CLI·MCP 에 붙인다. **확인(2026-09-12): 완료.** `chainbench test --help` 가 뜨고 `chainbench_test_list` 가 MCP 에 등록돼 있다
+- [x] **WA3** [목적2 차단·MCP] 한 번에 구성+유지가 MCP 로 안 된다. `NetUp` 이 CLI 전용(`cmd/chainbench/chaincmd/up.go:49`), `chainbench_run` 은 항상 teardown 하고 `KeepUp` 을 MCP 로 노출 안 한다(`internal/mcp/run_tool.go:108-115`, `internal/testengine/suite.go:75-76`). run 이 `Server`·`Docker`·`WaitBlocks` 도 드롭한다. 방향: NetUp 을 MCP 로 노출하거나 run 에 KeepUp·Server·Docker 를 배선한다. **확인(2026-09-12): 완료.** `grep -c KeepUp internal/mcp/run_tool.go` > 0
+- [x] **WA4** [목적2·MCP] 노드 단위 stop/start(장애 주입)가 MCP 에 없다. `app.NodeStop`/`NodeStart` 가 CLI 전용(`internal/app/net.go:147,152`, `cmd/chainbench/nodecmd/node.go:32,55`). 방향: MCP 도구를 더한다. **확인(2026-09-12): 완료.** `grep -l chainbench_node_start internal/mcp/*.go`
+- [x] **WA5** [목적2·CLI] 네트워크 레지스트리(attach/detach/list/info/peers/topology, remote_rpc)가 CLI 에 없다. MCP 전용(`internal/mcp/network_tools.go`, `remote_tools.go`). 방향: CLI `network`·`remote` 그룹을 더한다. **확인(2026-09-12): 완료.** `chainbench network --help` 가 뜬다
+- [x] **WA6** [목적1·MCP] MCP run 이 세션 경로를 출력 안 해 리포트를 회수 못 한다(dataDir 없으면 임시 dir). spec 을 경로로 못 넘겨 env 참조 해석이 우회된다(`ReadSpecFiles` CLI 전용). 증거: `internal/mcp/run_tool.go:104,141-153`, `internal/app/workflow.go:115-120`. 방향: run 출력에 세션 root 를 싣고, spec 경로 입력을 받는다. **확인(2026-09-12): 완료.** `grep -n SessionRoot internal/mcp/run_tool.go`
+- [x] **WA7** [목적1·MCP] MCP run 이 테스트 실패를 tool error 로 안 낸다(항상 nil). CLI 는 exit 1/2 를 낸다. 증거: `internal/mcp/run_tool.go:141-153`, `cmd/chainbench/suitecmd/run.go:237-245`. 방향: `Summary.Failed()` 이면 tool error 를 낸다. **확인(2026-09-12): 완료.** `grep -n "Summary.Fail > 0" internal/mcp/run_tool.go` — 실패·blocked 면 tool error 를 낸다
+- [x] **WA8** [정확성] `do` 의 `expect`(revert/reject/fail) 오타가 검증 안 돼, 오타 나면 "성공해야 함"으로 조용히 떨어진다. 부정 케이스가 거짓 통과한다. 증거: `internal/testhelper/builtins.go:432,446`, `fault.go:63`. 방향: expect 어휘를 오프라인 검증에 넣는다. **확인(2026-09-12): 완료.** `grep -n expectAdjuncts internal/dsl/spec_v2.go` — 어휘 밖 값은 거부된다
+- ◐ **WA9** [정확성] node-table `role:pn` 이 아직 mesh 로 배선된다. proxied 자동 선택이 count-form 에만 있다(`internal/testengine/compose.go:175-177`). node-table 형식은 `inlineTopologyOf` 경로라 `proxies=0` 으로 mesh 가 된다. en 이 bp 를 직접 본다. 방향: node-table 에 pn 이 있으면 proxied 를 선택하고, `Peering.Validate` 가 mesh+pn 을 거절하게 한다.
+- ◐ **WA10** [정확성·증적] attach 경로(`app.AttachRun`)가 readiness 게이트·실패증적·Precheck 를 배선 안 한다. MCP `run --attach` 로 돌면 E6·E8 이 무력화되고 assertion 오류 메시지가 사라진다. 증거: `internal/app/workflow.go:104-108,112` vs `internal/testengine/suite.go:261,330-338`. 방향: AttachConfig 에 PreSpec·OnFail·Control·LogReader·Precheck 를 배선한다.
+- ◐ **WA11** [증적] artifacts.json 매니페스트를 쓰는 프로덕션 코드가 없다. `Recorder` 인터페이스에 Artifacts 통로가 없어 리포트 추적성 필드가 항상 빈다. 증거: `internal/dsl/interp/requirements.go:46-55`, `internal/core/session/record_impl.go:62-67`, `internal/core/report/report.go:17-24`. 방향: Recorder 에 Artifacts 를 노출하고 compose 산출물을 기록한다.
+- ◐ **WA12** [증적·경미] pre-action 실패·FAIL 이 status.json 에 reason 을 안 남긴다. 증거: `internal/dsl/interp/run.go:28-33,50,61-72`. 방향: `rec.Reason(...)` 를 부른다.
 
 ### B. 문법 — 선언됐으나 죽은 배선
 
-- [ ] **WA13** [문법] `waitFor` 의 source 가 오프라인 미검증(read 는 검증). 오타가 라이브에서야 실패한다(스펙 20건 사용). 증거: `internal/dsl/interp/resolve.go:41`, `internal/testhelper/read.go:234-237`. 방향: waitFor source 도 오프라인 검증에 넣는다.
-- [ ] **WA14** [문법] 케이스 상위 `on`(DefaultOn)이 라우팅에 미적용. 스텝에 `on` 이 없으면 조용히 nodes[0] 로 간다. 증거: `internal/dsl/spec_v2.go:309`, `internal/dsl/interp/run.go:205-224`. 방향: resolveOn 이 DefaultOn 을 기본값으로 읽게 한다.
-- [ ] **WA15** [문법] 상위 `timeouts` 맵이 아무 데서도 안 읽힌다. 증거: `internal/dsl/spec.go:36`, 소비처는 `migrate.go:91` 뿐. 방향: 인터프리터가 액션 타임아웃 기본값으로 소비하게 한다.
-- [ ] **WA16** [문법] `InDelta` 비교자가 DSL 에서 도달 불가(디스패치 맵에 없음). 증거: `internal/dsl/assert/assert.go:97,202-219`. 방향: funcs 맵에 등록하거나 인터프리터에서 호출한다.
-- [ ] **WA17** [문법] 임베드 `SchemaV2` 가 검증에 미사용이고 파서와 이미 드리프트(`onEach` 스키마는 string, 코드는 array). 증거: `internal/dsl/spec_v2.go:18`, `internal/dsl/schema/v2.schema.json:290,331` vs `run.go:212`. 방향: 스키마를 실제 검증에 쓰거나 파서와 일치시킨다.
-- [ ] **WA18** [문법·경미] `onEach` 가 do-스텝 스키마에 있으나 액션 라우팅이 소비 안 한다(어서션만 소비). 증거: `v2.schema.json:290`, `builtins.go:543`. 방향: do-스텝 onEach 를 소비하거나 스키마에서 뺀다.
+- [x] **WA13** [문법] `waitFor` 의 source 가 오프라인 미검증(read 는 검증). 오타가 라이브에서야 실패한다(스펙 20건 사용). 증거: `internal/dsl/interp/resolve.go:41`, `internal/testhelper/read.go:234-237`. 방향: waitFor source 도 오프라인 검증에 넣는다. **확인(2026-09-12): 완료.** 오타 source 를 담은 스펙에 `chainbench validate` → `UNRESOLVED: source:<오타>`. read·waitFor 둘 다 걸린다
+- [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn)이 라우팅에 미적용. 스텝에 `on` 이 없으면 조용히 nodes[0] 로 간다. 증거: `internal/dsl/spec_v2.go:309`, `internal/dsl/interp/run.go:205-224`. 방향: resolveOn 이 DefaultOn 을 기본값으로 읽게 한다. **확인(2026-09-12): 완료.** `grep -n applyDefaultOn internal/dsl/interp/run.go` + `TestRun_DefaultOnRoutesStatements`. 라이브 스펙은 `tests/tc/go-wemix/vocabulary/01-*`
+- ◐ **WA15** [문법] 상위 `timeouts` 맵이 아무 데서도 안 읽힌다. 증거: `internal/dsl/spec.go:36`, 소비처는 `migrate.go:91` 뿐. 방향: 인터프리터가 액션 타임아웃 기본값으로 소비하게 한다.
+- [x] **WA16** [문법] `InDelta` 비교자가 DSL 에서 도달 불가(디스패치 맵에 없음). 증거: `internal/dsl/assert/assert.go:97,202-219`. 방향: funcs 맵에 등록하거나 인터프리터에서 호출한다. **확인(2026-09-12): 완료.** `grep -rn InDelta internal/testhelper/` — testhelper 비교자 경유로 도달한다
+- ◐ **WA17** [문법] 임베드 `SchemaV2` 가 검증에 미사용이고 파서와 이미 드리프트(`onEach` 스키마는 string, 코드는 array). 증거: `internal/dsl/spec_v2.go:18`, `internal/dsl/schema/v2.schema.json:290,331` vs `run.go:212`. 방향: 스키마를 실제 검증에 쓰거나 파서와 일치시킨다.
+- ◐ **WA18** [문법·경미] `onEach` 가 do-스텝 스키마에 있으나 액션 라우팅이 소비 안 한다(어서션만 소비). 증거: `v2.schema.json:290`, `builtins.go:543`. 방향: do-스텝 onEach 를 소비하거나 스키마에서 뺀다.
 
 ### C. compose — DSL→체인 배선 누락
 
-- [ ] **WA19** [compose] `env.target` 이 배치를 안 하고 fingerprint 만 바꾼다(오배선). 증거: `spec_v2.go:308`, `compose.go:158-170`(Target 미설정), `verbs_up.go:45`. 방향: compose 가 Target 을 NetUpIn 에 배선하거나, env.target 을 문법에서 뺀다.
-- [ ] **WA20** [compose] upgrade(handoff) env 가 같은 env 의 hardforks/topology/launch/config 를 무시한다. 증거: `compose.go:100-116`. 방향: 핸드오프 경로가 이 필드들을 이어받게 한다.
-- [ ] **WA21** [compose·역방향] DSL 로 표현 못 하는 chainsetup 기능: manifest/template(`verbs_up.go:42-43`), blueprint(`verbs_up.go:59`), keys-validator-subset(`verbs_steps.go:89-90`), chainID/networkID 고정, deploy-only stage(`verbs_up.go:27`). 방향: 필요한 것을 EnvV2 문법에 더한다.
-- [ ] **WA22** [compose·게이팅] `env.capabilities` 가 케이스에 `requires` 가 있으면 통째로 버려진다. 증거: `spec_v2.go:312-314`. 방향: 두 목록을 병합한다.
+- [x] **WA19** [compose] `env.target` 이 배치를 안 하고 fingerprint 만 바꾼다(오배선). 증거: `spec_v2.go:308`, `compose.go:158-170`(Target 미설정), `verbs_up.go:45`. 방향: compose 가 Target 을 NetUpIn 에 배선하거나, env.target 을 문법에서 뺀다. **확인(2026-09-12): 완료.** `grep -n "up.Target = tgt" internal/testengine/compose.go` + `TestCompositionOf_EnvTargetPlaces`
+- ◐ **WA20** [compose] upgrade(handoff) env 가 같은 env 의 hardforks/topology/launch/config 를 무시한다. 증거: `compose.go:100-116`. 방향: 핸드오프 경로가 이 필드들을 이어받게 한다.
+- ◐ **WA21** [compose·역방향] DSL 로 표현 못 하는 chainsetup 기능: manifest/template(`verbs_up.go:42-43`), blueprint(`verbs_up.go:59`), keys-validator-subset(`verbs_steps.go:89-90`), chainID/networkID 고정, deploy-only stage(`verbs_up.go:27`). 방향: 필요한 것을 EnvV2 문법에 더한다.
+- ◐ **WA22** [compose·게이팅] `env.capabilities` 가 케이스에 `requires` 가 있으면 통째로 버려진다. 증거: `spec_v2.go:312-314`. 방향: 두 목록을 병합한다.
 
 ### D. 커버리지·문서
 
-- [ ] **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
+- ◐ **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
@@ -1266,7 +1281,7 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
   - **남은 것 둘, 각각 이유가 다르다**: `hooks.onFail` 은 **실패할 때만** 돈다 — 통과하는 tc 케이스로는 도달할 수 없고(스위트에 일부러 실패하는 케이스를 둘 수 없다), 낮춤(lowering)은 `spec_v2_test.go` 가 이미 고정한다. 실행까지 보려면 인터프리터 레벨 테스트가 맞다. `placement`(= `env.target`)는 **WA19 와 같은 항목**이다 — 파싱은 되는데 배치를 하지 않고 fingerprint 만 바꾼다. 어휘 문제가 아니라 오배선이라 WA19 로 남긴다.
 - [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn) 라우팅 — **이미 고쳐져 있다 (2026-09-12 확인).** `interp/run.go:57` 이 매 statement 마다 `applyDefaultOn` 을 부르고, 명시적 `on`/`onEach` 가 있으면 비켜난다. 인터프리터 테스트(`TestRun_DefaultOnRoutesStatements`)가 WA14 를 지목해 고정하고 있다. 이번에 라이브 스펙까지 붙였다(위 WA24 참고).
 - ◐ **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
-- [ ] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.)
+- [x] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.) **확인(2026-09-12): 완료.** `grep -c internal/testspec tests/tc/SPECS.md` == 0
 
 
 ## 1p. WA 트랙 이후 — fleet 검증 결과와 남은 작업 (2026-09-08)
