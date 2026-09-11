@@ -105,6 +105,7 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 	// already knew, and omitting it failed with "a data dir is required".
 	var (
 		acc      *resource.Access
+		wc       *resource.WorkspaceConfig
 		placed   *node.Map
 		machines func(int) (filestore.Store, process.Driver, error)
 		dialURL  func(string, int) (string, error)
@@ -135,16 +136,16 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 			}
 			in.Server.Name = name
 		}
-		acc, err = openHandoffTarget(d, in)
+		acc, wc, err = openHandoffTarget(d, in)
 		if err != nil {
 			return UpgradeRunOut{}, err
 		}
 	}
-	fromBin, err := resolveBinaryOn(ctx, acc, in.FromBinary, prof.Chains.From.Binary)
+	fromBin, err := resolveBinaryOn(ctx, acc, wc, in.FromBinary, prof.Chains.From.Binary)
 	if err != nil {
 		return UpgradeRunOut{}, fmt.Errorf("from binary: %w", err)
 	}
-	toBin, err := resolveBinaryOn(ctx, acc, in.ToBinary, prof.Chains.To.Binary)
+	toBin, err := resolveBinaryOn(ctx, acc, wc, in.ToBinary, prof.Chains.To.Binary)
 	if err != nil {
 		return UpgradeRunOut{}, fmt.Errorf("to binary: %w", err)
 	}
@@ -227,7 +228,7 @@ func UpgradeRun(ctx context.Context, d Deps, in UpgradeRunIn) (UpgradeRunOut, er
 // there, so the check has to happen over there too. An absent binary is refused
 // here rather than at launch, so the message names the file and the server
 // instead of surfacing as a node that never came up.
-func resolveBinaryOn(ctx context.Context, acc *resource.Access, explicit, chainBinary string) (string, error) {
+func resolveBinaryOn(ctx context.Context, acc *resource.Access, wc *resource.WorkspaceConfig, explicit, chainBinary string) (string, error) {
 	if acc == nil {
 		return ResolveBinary(explicit, chainBinary)
 	}
@@ -236,8 +237,20 @@ func resolveBinaryOn(ctx context.Context, acc *resource.Access, explicit, chainB
 		name = chainBinary
 	}
 	if !path.IsAbs(name) {
-		return "", fmt.Errorf("binary %q must be an absolute path on server %q — a bare name would be looked up on this machine, not there",
-			name, acc.Spec.Server)
+		// A bare name is a name on the TARGET, and the workspace-config is what
+		// knows where names live there: dataRoot + paths.binaries, with
+		// binaryAliases applied. Before this, a bare name was simply refused, so
+		// every remote run had to spell out a path the config already described
+		// and binaryAliases had no consumer at all.
+		if wc == nil {
+			return "", fmt.Errorf("binary %q must be an absolute path on server %q — without a workspace-config there is nothing that says where a bare name lives there",
+				name, acc.Spec.Server)
+		}
+		resolved, err := wc.BinaryPath(name)
+		if err != nil {
+			return "", fmt.Errorf("resolving binary %q on server %q: %w", name, acc.Spec.Server, err)
+		}
+		name = resolved
 	}
 	ok, err := acc.Files.Exists(ctx, name)
 	if err != nil {
@@ -334,16 +347,23 @@ func UpgradeGenesis(_ Deps, profilePath, fromGenesisPath string) (UpgradeGenesis
 // It mirrors openTransferTarget: the workspace-config owns the data root, and a
 // remote server cannot resolve without it, so asking for a server without one is
 // an error naming the missing file rather than a resolution failure further down.
-func openHandoffTarget(d Deps, in UpgradeRunIn) (*resource.Access, error) {
+func openHandoffTarget(d Deps, in UpgradeRunIn) (*resource.Access, *resource.WorkspaceConfig, error) {
 	if in.WorkspaceConfigPath == "" {
-		return nil, fmt.Errorf("upgrade run: --workspace-config is required with --server/--all-servers (it owns the target data root)")
+		return nil, nil, fmt.Errorf("upgrade run: --workspace-config is required with --server/--all-servers (it owns the target data root)")
 	}
 	wc, err := resource.LoadWorkspaceConfig(in.WorkspaceConfigPath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	opener := resource.Opener{ServerSet: in.Server.SetPath, Docker: in.Docker, Env: d.Env, Report: d.Logf}
-	return opener.Open(resource.Spec{Server: in.Server.Name, DataRoot: wc.DataRoot})
+	acc, err := opener.Open(resource.Spec{Server: in.Server.Name, DataRoot: wc.DataRoot})
+	if err != nil {
+		return nil, nil, err
+	}
+	// The config is returned rather than dropped because it is also the answer to
+	// "where does a bare binary name live over there": dataRoot + paths.binaries,
+	// with binaryAliases applied. Dropping it is why that question had no answer.
+	return acc, &wc, nil
 }
 
 // handoffExec is the bootstrap runner for a remote target: the poa helpers take

@@ -1523,6 +1523,18 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   쓰는 기존 케이스들이 그렇다) 같은 습관으로 쓰면 실패한다. 이 메서드를 쓰는 스펙은 epoch
   경계 번호를 명시해야 한다. **체인팀 몫이지만, 스펙 작성자가 먼저 밟는다.**
 
+- [ ] **관측 (2026-09-11). go-wemix 바이너리가 `verifyBlockSig` 에서 패닉한다.** 15+15
+  핸드오프 중 **15대 중 한 대**가 동기화하다 죽는다 —
+  `panic: runtime error: invalid memory address or nil pointer dereference` →
+  `math/big.(*Int).Sign` ← `wemix.verifyBlockSig` (`wemix/admin.go:1002`) ←
+  `consensus/ethash.(*Ethash).verifyHeader`. 3회 연속 재현했고 **매번 다른 노드**가 죽는다
+  (node4 → node5 → node5). 결과는 `nodes not ready for mesh: endpoint … not ready within 30s`.
+  - **chainbench 결함이 아니다.** 오늘 오전에 세 번 성공하던 **명시 경로 호출**
+    (`--from-binary /data/chainbench/bin/gwemix`)을 그대로 다시 돌려도 같은 패닉으로 실패한다.
+    즉 호출 형태와 무관하고, 이 기기의 상태가 달라지면서 go-wemix 쪽 경합에 걸리기 시작했다.
+  - 눈에 띄는 점: 죽는 노드는 **ethash 검증 경로**를 타면서 wemix 블록 서명을 검증하고 있다.
+    거버넌스를 아직 싣기 전의 창으로 보인다. **체인팀 몫**이고 R6 과 같은 성격이되 증상은 다르다.
+
 ### C. 키 취급과 증적 (§1q)
 
 둘 다 지금 동작을 막지 않는다. 하나는 증적 보존, 하나는 키가 로컬에 내려오는 범위를
@@ -1542,7 +1554,18 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 - [ ] **후보·반영 완전 분리.** 부분 재사용에서 승인된 노드만 정지·반영·재기동한다.
   지금은 판정을 쓰기 앞으로 옮기는 데까지 했다(MON-009).
-- [ ] **`binaryAliases` 와 객체형 참조를 실제로 소비.** 전자는 **리졸버까지는 생겼다** —
+- ◐ **`binaryAliases` 와 객체형 참조를 실제로 소비.** **`binaryAliases` 는 배선했다
+  (2026-09-11).** 대상에서 **bare 바이너리 이름**이 workspace-config 를 거쳐 풀린다 —
+  `dataRoot` + `paths.binaries` 에서 찾고 별칭이 있으면 적용한다(`app.resolveBinaryOn` →
+  `WorkspaceConfig.BinaryPath`). 이전에는 대상에서 bare 이름을 **거부**했고, 그래서
+  `upgrade run --all-servers` 를 돌릴 때마다 config 가 이미 아는 경로를
+  `--from-binary /data/chainbench/bin/gwemix` 로 손으로 적어야 했다. 즉 별칭에 소비자가
+  없던 것과 그 papercut 은 **같은 결함의 양면**이었다. 단위 테스트 5건 + 변이 2건.
+  라이브: bare 이름이 `/data/chainbench/bin/gwbft` 로 풀려 노드가 떴다(아래 관측 참고).
+  **남은 것은 객체형 참조**(`{server,ref}`·`serverIndex`·`localPath`)이고, 아직 파싱조차
+  안 된다. 샘플과 안내 문서가 그 자리에만 "미구현" 이라고 적어 두었고, 구현하면
+  `TestWorkspaceConfig_SampleCommentsMatchWhatParses` 가 실패하며 그 주석을 걷으라고 알린다.
+  - **(원래 진단)** 전자는 **리졸버까지는 생겼다** —
   `WorkspaceConfig.BinaryPath`(`resource/workspaceconfig.go:327`)가 별칭을 적용한다. 다만
   **호출자가 테스트 둘뿐이라 프로덕션 경로에는 아직 배선되지 않았다** — PR #383 머지 후
   재확인해도 `.BinaryPath(` 호출부는 `workspaceconfig_test.go` 2곳뿐이다. 후자

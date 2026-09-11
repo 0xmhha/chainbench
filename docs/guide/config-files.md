@@ -123,13 +123,22 @@ file the same way.
   this target (`configs: {validator: srv://.../v.toml}`), so one spec runs
   against different targets by swapping the map. A config value that is not a
   preset name stays a direct file reference.
-- `paths`, `binaryAliases`, and the rest of `inputs`/`presets` parse and
-  validate, and their consumption (purpose-directory resolution, server file
-  references, prepared/generated wiring) lands incrementally — see the handoff docs
-  `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`
-  and `10-prepared-inputs-server-ref-handoff.md`. Until a field is wired, it is
-  parsed but not yet acted on. `binaryAliases` is at that stage today: it is
-  validated, and nothing outside a test reads it.
+- `binaryAliases` **는 이제 동작한다.** 대상에서 bare 이름으로 바이너리를 가리키면
+  `dataRoot` + `paths.binaries` 아래에서 찾고, 그 이름에 별칭이 선언돼 있으면 별칭을 적용한다.
+  즉 `upgrade run --all-servers` 에서 프로파일이 `binary: gwemix` 라고만 적어도 대상의
+  `/data/chainbench/bin/gwemix` 로 풀린다. 아키텍처가 다른 빌드를 나란히 두었다면
+  `binaryAliases: {gwemix: linux-arm64/gwemix}` 로 한 줄만 바꿔 가른다.
+
+  ```yaml
+  binaryAliases:
+    gwemix: linux-arm64/gwemix
+  ```
+
+- `paths` 와 나머지 `inputs`/`presets` 의 소비(용도 디렉터리 해석, 서버 파일 참조,
+  prepared/generated 배선)는 점진적으로 들어온다 — 인계 문서
+  `docs/research/chainbench/analyses/09-workspace-config-refactoring-handoff.md`,
+  `10-prepared-inputs-server-ref-handoff.md` 참고. 배선되기 전 필드는 파싱은 되지만
+  아직 아무 일도 하지 않는다.
 - The object reference forms the sample sketches in comments (`{server, ref}`,
   `serverIndex`, `localPath`) are a step behind that, and the difference matters
   when you copy one out. A preset's `genesis` and `keyring` are strings and its
