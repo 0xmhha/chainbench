@@ -149,15 +149,41 @@ func (d *RemoteDriver) Launch(ctx context.Context, spec NodeSpec) (Handle, error
 // at startup (a dead subshell closes the pipes); the first node that lived
 // hung the harness. `mkdir || exit 1; nohup CMD … &` backgrounds only CMD.
 // stdin is redirected away so the node never holds the session's stdin either.
+//
+// The log is APPENDED to, not truncated. `>` here erased the previous attempt
+// every time a node restarted, which is exactly when its log is the evidence
+// wanted — a node that died and was restarted lost the reason it died, and the
+// fault specs and reuse-if-matching are both restart paths. The local driver has
+// always opened the log with O_APPEND, so `>` also made the two targets disagree
+// about what a run leaves behind.
+//
+// It compounded: the collector tails by byte offset, so after a truncation its
+// offset sat past the end of a shorter file and it read nothing until the new
+// attempt grew past the old length. The lines it skipped were the new attempt's
+// startup, the part that says why the restart went the way it did.
+//
+// A marker line is written before the node's own output so the attempts stay
+// separable inside the one file. It goes through the same append so it cannot
+// land in a different file than the output it introduces.
 func launchCommand(spec NodeSpec) string {
 	parts := make([]string, 0, len(spec.Args)+1)
 	parts = append(parts, remote.ShellQuote(spec.Binary))
 	for _, a := range spec.Args {
 		parts = append(parts, remote.ShellQuote(a))
 	}
+	log := remote.ShellQuote(spec.LogPath)
 	return "mkdir -p " + remote.ShellQuote(path.Dir(spec.LogPath)) +
-		" || exit 1; nohup " + strings.Join(parts, " ") +
-		" > " + remote.ShellQuote(spec.LogPath) + " 2>&1 < /dev/null & echo $!"
+		" || exit 1; printf '%s\n' " + remote.ShellQuote(attemptMarker(spec)) + " >> " + log +
+		"; nohup " + strings.Join(parts, " ") +
+		" >> " + log + " 2>&1 < /dev/null & echo $!"
+}
+
+// attemptMarker introduces one launch inside a log that holds several. It names
+// the node and the binary, because a restart may be a different build — that is
+// what a hardfork swap is — and "the log has two attempts" is not useful without
+// knowing which binary each one was.
+func attemptMarker(spec NodeSpec) string {
+	return fmt.Sprintf("=== chainbench: launch node%d %s ===", spec.Index, path.Base(spec.Binary))
 }
 
 // PortProber reports which of a host's ports something is already listening

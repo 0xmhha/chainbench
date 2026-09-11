@@ -170,23 +170,88 @@ type ReportDoc = report.Report
 // ReportIn names the session to read.
 type ReportIn struct {
 	Dir string `cb:"workspace-dir,required" help:"session directory, or a root holding sessions"`
+	// All combines every session under Dir instead of reading the most recent.
+	// A run per spec file is the normal way to use this harness, and "the most
+	// recent session" is the wrong answer to "did the batch pass".
+	All bool `cb:"all" help:"combine every session under the directory into one tally, instead of reading the most recent"`
 }
 
 func Report(_ context.Context, _ Deps, in ReportIn) (ReportDoc, error) {
 	dir := in.Dir
+	ids, _ := session.List(dir)
+	if in.All {
+		return combinedReport(dir, ids)
+	}
 	sessionDir := dir
-	if ids, _ := session.List(dir); len(ids) > 0 {
+	if len(ids) > 0 {
 		sessionDir = session.SessionDir(dir, ids[len(ids)-1])
 	}
-	rep, err := report.Read(sessionDir)
+	rep, err := readReport(sessionDir)
 	if err != nil {
-		rep, err = report.Build(sessionDir)
+		if errors.Is(err, os.ErrNotExist) {
+			return ReportDoc{}, nil
+		}
+		return ReportDoc{}, err
+	}
+	return rep, nil
+}
+
+// CombinedSession is relayed for the surfaces, which lay a combined report out
+// differently (a session column per row, a run count instead of a session id) and
+// so must be able to tell one. They may not import core (architecture-v2 §2,
+// enforced by arch.TestSurfacesReachThroughApp), and without a relay each surface
+// would carry its own copy of the literal — the same shape the argument decoders
+// were in before app/args.go.
+const CombinedSession = report.CombinedSession
+
+// ReportSessions reports how many distinct runs a report covers. A combined
+// report's session id names no directory, so this is what a reader gets instead.
+func ReportSessions(rep ReportDoc) int {
+	seen := map[string]bool{}
+	for _, t := range rep.Tests {
+		seen[t.Session] = true
+	}
+	return len(seen)
+}
+
+// combinedReport reads every session under dir and merges them.
+//
+// A session that cannot be read is skipped rather than failing the whole answer:
+// a batch is usually read while something is still writing, and refusing to
+// report on nine finished runs because a tenth is mid-write would make the
+// combined view useless exactly when it is wanted.
+func combinedReport(dir string, ids []string) (ReportDoc, error) {
+	if len(ids) == 0 {
+		// Dir may itself be one session rather than a root of them.
+		rep, err := readReport(dir)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return ReportDoc{}, nil
 			}
 			return ReportDoc{}, err
 		}
+		return rep, nil
 	}
-	return rep, nil
+	reps := make([]report.Report, 0, len(ids))
+	for _, id := range ids {
+		rep, err := readReport(session.SessionDir(dir, id))
+		if err != nil {
+			continue
+		}
+		reps = append(reps, rep)
+	}
+	if len(reps) == 0 {
+		return ReportDoc{}, nil
+	}
+	return report.Combine(reps), nil
+}
+
+// readReport prefers the persisted report.json and falls back to building one
+// from session.json, so a run recorded before report.json existed still shows.
+func readReport(sessionDir string) (report.Report, error) {
+	rep, err := report.Read(sessionDir)
+	if err == nil {
+		return rep, nil
+	}
+	return report.Build(sessionDir)
 }
