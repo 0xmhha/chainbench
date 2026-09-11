@@ -1273,6 +1273,24 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 ### D. 커버리지·문서
 
 - ◐ **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
+  - **재측정 (2026-09-12).** 방향을 짐작하지 말고 **재고 골랐다**: live 테스트는 환경변수 없이는
+    skip 되므로 평소 `go test -cover` 가 곧 CI 커버리지다. 전체 64.6%.
+    `TestEngine_GeneratesReport`(run→report)와 `TestAttachEngine_RunAgainstMockRPC`(attach)는
+    이미 CI 에서 돈다 — 진짜 공백은 그쪽이 아니었다.
+  - **측정이 지목한 것: `internal/core/keyring/operation` 이 0.0%, 함수 29개, 테스트 파일 없음.**
+    **누가 개인키를 받는지 결정하는 바로 그 패키지**다(L2 에서 방금 고친 곳). 인덱스가 모든 키를
+    담은 채 `keyring list` 에 읽히던 것이 아무에게도 걸리지 않은 이유가 여기 있었다.
+  - **단정을 "출력" 이 아니라 "무엇을 읽었는가" 로 썼다.** 읽은 경로를 기록하는 store 를 끼워
+    `list` 가 `node<N>/nodekey` 를 **한 번도 열지 않는지**를 본다. 출력만 검사하면 모든 키를
+    읽고 나서 버리는 구현도 통과한다 — 그건 공개의 양을 재는 검사가 아니다.
+    `--verify` 는 반대로 **반드시 읽어야** 한다(키에서 재파생하므로). `Show` 는 양쪽 모두
+    아니어야 하고, `Export` 만 낸다.
+  - 5건, 변이 3건으로 확인: `list` 가 다시 키를 읽게 하면 잡히고(오늘 고친 그 결함),
+    `--verify` 를 키 없이 돌리면 잡히고, `Show` 가 개인키를 실으면 잡힌다.
+    패키지 커버리지 0.0% → 34.4%.
+  - **남은 공백**: compose(키→제네시스→config→provision)를 바이너리 없이 지나는 testengine
+    통합 테스트는 여전히 없다. `chainsetup` 쪽은 스텁 드라이버로 CI 에서 돌고 있다
+    (`reuse_up_test.go`). 그래서 원래 문구의 "compose→run→report" 중 **compose 만** 남는다.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
