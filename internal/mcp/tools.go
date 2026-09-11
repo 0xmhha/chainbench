@@ -271,7 +271,17 @@ func verifyTool() Tool {
 			}
 			rep := res.Report
 			var b strings.Builder
+			// Reported beside producing: a split network produces on every side,
+			// so producing alone is not the verdict. Not-checked says so.
 			fmt.Fprintf(&b, "producing: %v\n", rep.Producing)
+			switch {
+			case !rep.Agreement.Checked:
+				fmt.Fprintf(&b, "agreement: not checked (%s)\n", rep.Agreement.Detail)
+			case rep.Agreement.Agreed:
+				fmt.Fprintf(&b, "agreement: yes, at block %d\n", rep.Agreement.Height)
+			default:
+				fmt.Fprintf(&b, "agreement: NO — %s\n", rep.Agreement.Detail)
+			}
 			for _, n := range rep.Nodes {
 				fmt.Fprintf(&b, "node%d %s chain_id=%d block=%d peers=%d ok=%v\n",
 					n.Index, n.RPCURL, n.ChainID, n.BlockNumber, n.PeerCount, n.OK)
