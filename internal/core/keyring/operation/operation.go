@@ -387,7 +387,10 @@ func ImportSet(ctx context.Context, d Deps, in ImportIn) (SetOut, error) {
 	if err != nil {
 		return SetOut{}, err
 	}
-	srcSet, err := store.LoadPresetAt(ctx, srcFiles, srcDir)
+	// With keys: importing a ring COPIES the identities, so it needs what makes
+	// them identities. It is the third caller that asks for secrets, and like the
+	// other two it is a call whose whole purpose is to move them.
+	srcSet, err := store.LoadPresetWithKeysAt(ctx, srcFiles, srcDir)
 	if err != nil {
 		return SetOut{}, fmt.Errorf("keyring: import-ring: read source %s: %w", in.FromRing, err)
 	}
@@ -528,22 +531,23 @@ func openSet(ctx context.Context, ref SetRef, d Deps) (dir, source string, set k
 }
 
 // openSetWithKeys is openSet with the disclosure made a parameter. withKeys=false
-// drops the private keys as the read returns, which is what every question about
-// identities needs; only verification (re-derives from the key) and export
-// (discloses it on purpose) ask for true.
+// reads identities only, which is what every question about a ring needs bar
+// two; verification (re-derives from the key) and export (discloses it on
+// purpose) ask for true.
 //
-// The distinction is not cosmetic on a remote ring: the index is one file
-// carrying every nodekey, so the read transfers them either way, and what this
-// decides is whether the value the caller then holds contains a secret.
+// It decides what TRAVELS, not merely what the caller holds. The ring index
+// carries no private key any more, so the identity read moves none; asking for
+// keys reads node<N>/nodekey per entry, which is N round trips on a remote ring
+// and is the reason the two callers that need them are the only ones that ask.
 func openSetWithKeys(ctx context.Context, ref SetRef, d Deps, withKeys bool) (dir, source string, set keyring.Preset, err error) {
 	files, dir, source, err := ref.open(d)
 	if err != nil {
 		return displaySet(ref, dir), source, keyring.Preset{}, err
 	}
 	if withKeys {
-		set, err = store.LoadPresetAt(ctx, files, dir)
+		set, err = store.LoadPresetWithKeysAt(ctx, files, dir)
 	} else {
-		set, err = store.LoadPublicPresetAt(ctx, files, dir)
+		set, err = store.LoadPresetAt(ctx, files, dir)
 	}
 	dir = displaySet(ref, dir)
 	if err != nil {

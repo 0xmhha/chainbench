@@ -16,7 +16,8 @@ import (
 // actually consume, including the fields that used to need a second type to
 // hold them.
 func TestLoadPreset_ShippedFixture(t *testing.T) {
-	p, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	dir := filepath.Join("..", "..", "..", "..", "keys", "preset")
+	p, err := store.LoadPreset(dir)
 	if err != nil {
 		t.Fatalf("LoadPreset: %v", err)
 	}
@@ -26,11 +27,23 @@ func TestLoadPreset_ShippedFixture(t *testing.T) {
 	if len(p.Network.Validators) != len(p.Network.BLSKeys) {
 		t.Errorf("%d validators but %d BLS keys", len(p.Network.Validators), len(p.Network.BLSKeys))
 	}
-	// Every entry carries its secret and its public identity in one value.
+	// The identity read carries identities and NO secret: that is the property
+	// the index format now has, and reading it is how it is checked.
 	for _, e := range p.Nodes {
 		if e.Address == "" || e.PublicKey == "" || e.BLS == nil {
 			t.Errorf("node %d is missing derived material: %+v", e.Index, e.Identity)
 		}
+		if e.Nodekey != (derive.PrivateKey{}) {
+			t.Errorf("node %d: the identity read returned a private key", e.Index)
+		}
+	}
+	// Asking for keys yields them, from the per-entry files, and they derive the
+	// identities the index recorded.
+	keyed, err := store.LoadPresetWithKeys(dir)
+	if err != nil {
+		t.Fatalf("LoadPresetWithKeys: %v", err)
+	}
+	for _, e := range keyed.Nodes {
 		if err := e.Verify(); err != nil {
 			t.Errorf("node %d: %v", e.Index, err)
 		}
@@ -66,10 +79,25 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	if len(read.Nodes) != nodes || len(read.Network.Validators) != 2 {
 		t.Fatalf("read back %d nodes / %d validators", len(read.Nodes), len(read.Network.Validators))
 	}
+	// The identities round trip through the index; the keys do not travel in it
+	// at all, which is checked below by reading them from where they do live.
 	for i, want := range written.Nodes {
 		got := read.Nodes[i]
-		if got.Nodekey.Hex() != want.Nodekey.Hex() || got.Address != want.Address {
-			t.Errorf("node %d did not round trip", want.Index)
+		if got.Address != want.Address || got.PublicKey != want.PublicKey {
+			t.Errorf("node %d identity did not round trip", want.Index)
+		}
+		if got.Nodekey != (derive.PrivateKey{}) {
+			t.Errorf("node %d: the index handed back a private key", want.Index)
+		}
+	}
+	keyed, err := store.LoadPresetWithKeys(dir)
+	if err != nil {
+		t.Fatalf("LoadPresetWithKeys: %v", err)
+	}
+	for i, want := range written.Nodes {
+		got := keyed.Nodes[i]
+		if got.Nodekey.Hex() != want.Nodekey.Hex() {
+			t.Errorf("node %d key did not round trip through its own file", want.Index)
 		}
 		if err := got.Verify(); err != nil {
 			t.Errorf("node %d: %v", want.Index, err)
@@ -80,13 +108,26 @@ func TestGenerate_RoundTrips(t *testing.T) {
 	if read.Network.ExtraData != "" {
 		t.Errorf("generated set stored extra-data: %q", read.Network.ExtraData)
 	}
-	// The nodekey file a node launches with must match the index.
+	// The nodekey file a node launches with is the key, so it must be what the
+	// keyed read returns. It used to be compared against the index's copy; there
+	// is no copy now, which is the point.
 	onDisk, err := os.ReadFile(filepath.Join(dir, "node1", "nodekey"))
 	if err != nil {
 		t.Fatalf("read nodekey: %v", err)
 	}
-	if strings.TrimSpace(string(onDisk)) != read.Nodes[0].Nodekey.Hex() {
-		t.Error("node1's file and the index disagree")
+	if strings.TrimSpace(string(onDisk)) != keyed.Nodes[0].Nodekey.Hex() {
+		t.Error("node1's file and the keyed read disagree")
+	}
+	// And the index itself must not carry it. This is the property the format
+	// change exists for, checked on the bytes rather than through the loader.
+	raw, err := os.ReadFile(filepath.Join(dir, store.PresetFile))
+	if err != nil {
+		t.Fatalf("read index: %v", err)
+	}
+	for _, e := range written.Nodes {
+		if strings.Contains(string(raw), e.Nodekey.Hex()) {
+			t.Fatalf("node %d's private key is in the shared index", e.Index)
+		}
 	}
 }
 

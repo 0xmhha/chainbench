@@ -322,9 +322,12 @@ func writePreset(ctx context.Context, opts GenerateOpts, set keyring.Preset) err
 		Alloc:                 set.Network.Alloc,
 	}
 	for _, e := range set.Nodes {
+		// The index carries identities only. The private key is written to
+		// node<N>/nodekey by writeEntryDir; putting a copy here as well meant a
+		// single read of this one file — a remote `keyring list`, say — carried
+		// every key in the ring to whoever asked.
 		n := presetNode{
 			Index:     e.Index,
-			Nodekey:   e.Nodekey.Hex(),
 			PublicKey: e.PublicKey,
 			Address:   e.Address,
 		}

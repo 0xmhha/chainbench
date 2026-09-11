@@ -27,8 +27,15 @@ type presetNode struct {
 	// identities a generated ring holds, whose label follows from the index; an
 	// imported one ("faucet") records its own, because nothing else could
 	// recover it.
-	Label        string `json:"label,omitempty"`
-	Nodekey      string `json:"nodekey"`
+	Label string `json:"label,omitempty"`
+	// Nodekey is what this format used to carry and no longer writes: the private
+	// key lives in node<N>/nodekey, and duplicating it in the shared index meant
+	// one remote read of the index disclosed every key in the ring.
+	//
+	// It is still PARSED, but only by legacyIndexKeys, and only when a caller has
+	// asked for keys on a ring whose per-entry files are missing. The identity
+	// read never looks at it, which is the whole point.
+	Nodekey      string `json:"nodekey,omitempty"`
 	PublicKey    string `json:"publicKey"`
 	Address      string `json:"address"`
 	BLSPublicKey string `json:"blsPublicKey,omitempty"`
@@ -45,36 +52,106 @@ func LoadPreset(dir string) (keyring.Preset, error) {
 	return LoadPresetAt(context.Background(), nil, dir)
 }
 
-// LoadPresetAt is LoadPreset through files (nil = local): the ring's index is
-// one file, so a ring on a server reads back with a single remote read.
+// LoadPresetAt is LoadPreset through files (nil = local): the ring's index is one
+// file, so a ring on a server reads back with a single remote read.
 //
-// That one file carries the NODEKEYS. A remote read therefore brings every
-// private key in the ring across to this machine, whether the caller wants them
-// or not — listing a ring costs the same disclosure as exporting one. Callers
-// that only need identities should use [LoadPublicPresetAt], which drops the keys
-// as the read returns; callers that verify or sign need them and say so by asking
-// for this one.
-// LoadPublicPresetAt reads a ring and returns it with every private key dropped.
+// It returns IDENTITIES. The index used to carry the nodekeys as well, which made
+// that single remote read a disclosure of every key in the ring — listing a ring
+// cost the same as exporting one, and nothing said so. The keys now live only in
+// node<N>/nodekey, and a caller that needs them asks for
+// [LoadPresetWithKeysAt] and pays N reads for it.
+// LoadPresetWithKeysAt is LoadPresetAt plus each identity's private key, read
+// from its own file (node<N>/nodekey).
 //
-// It is the read for the questions that are about identities: which addresses
-// validate, does this ring match that genesis, what is node3's devp2p key. None
-// of them need a secret, and before this they were answered from a value that
-// carried one — so a caller could log or persist a key while meaning to report
-// an address.
+// It is deliberately the longer call. Identities answer nearly every question a
+// ring is asked — which addresses validate, does this ring match that genesis,
+// what is node3's devp2p key — and none of them need a secret. The two callers
+// that do need one say so by asking for it: verification re-derives an identity
+// from its key, and export discloses it on purpose.
 //
-// It does not make the transfer smaller (see [LoadPresetAt]); it makes the value
-// the caller holds public.
-func LoadPublicPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
+// The cost is N reads instead of one, which on a remote ring is N round trips.
+// That is the price of the secret not travelling for the other questions, and it
+// is only paid by the two that need it.
+func LoadPresetWithKeysAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
 	set, err := LoadPresetAt(ctx, files, dir)
 	if err != nil {
 		return keyring.Preset{}, err
 	}
-	return set.PublicOnly(), nil
+	if files == nil {
+		files = filestore.Local{}
+	}
+	legacy, lerr := legacyIndexKeys(ctx, files, dir)
+	if lerr != nil {
+		return keyring.Preset{}, lerr
+	}
+	for i := range set.Nodes {
+		key, kerr := NodeKeyAt(ctx, files, dir, set.Nodes[i].Index)
+		if kerr == nil {
+			set.Nodes[i].Nodekey = key
+			continue
+		}
+		// A ring written before the index stopped carrying keys may have no
+		// per-entry key file. Fall back to the index's copy for THIS call only —
+		// the identity read never looks there, so an old ring keeps working
+		// without making every read of it a disclosure again.
+		if old, ok := legacy[set.Nodes[i].Index]; ok {
+			set.Nodes[i].Nodekey = old
+			continue
+		}
+		return keyring.Preset{}, kerr
+	}
+	return set, nil
 }
 
-// LoadPublicPreset is LoadPublicPresetAt on the local filesystem.
-func LoadPublicPreset(dir string) (keyring.Preset, error) {
-	return LoadPublicPresetAt(context.Background(), nil, dir)
+// legacyIndexKeys reads the private keys an older index carried, if any. A ring
+// written by a current chainbench has none and this returns an empty map.
+func legacyIndexKeys(ctx context.Context, files filestore.Store, dir string) (map[int]derive.PrivateKey, error) {
+	b, err := files.Read(ctx, filepath.Join(dir, PresetFile))
+	if err != nil {
+		return nil, fmt.Errorf("keyring: read preset: %w", err)
+	}
+	var f presetFile
+	if err := json.Unmarshal(b, &f); err != nil {
+		return nil, fmt.Errorf("keyring: parse %s: %w", filepath.Join(dir, PresetFile), err)
+	}
+	out := map[int]derive.PrivateKey{}
+	for _, n := range f.Nodes {
+		if n.Nodekey == "" {
+			continue
+		}
+		key, perr := derive.ParsePrivateKey(n.Nodekey)
+		if perr != nil {
+			return nil, fmt.Errorf("keyring: %s node %d: %w", PresetFile, n.Index, perr)
+		}
+		out[n.Index] = key
+	}
+	return out, nil
+}
+
+// LoadPresetWithKeys is LoadPresetWithKeysAt on the local filesystem.
+func LoadPresetWithKeys(dir string) (keyring.Preset, error) {
+	return LoadPresetWithKeysAt(context.Background(), nil, dir)
+}
+
+// NodeKeyAt reads one identity's private key from node<N>/nodekey.
+//
+// It is the only way to obtain a key from a ring on disk. The index used to
+// carry a copy, which made every read of it a disclosure of the whole ring; now
+// a caller that wants one key reads one key.
+func NodeKeyAt(ctx context.Context, files filestore.Store, dir string, index int) (derive.PrivateKey, error) {
+	if files == nil {
+		files = filestore.Local{}
+	}
+	path := filepath.Join(dir, string(nodeLabel(index)), "nodekey")
+	b, err := files.Read(ctx, path)
+	if err != nil {
+		return derive.PrivateKey{}, fmt.Errorf("keyring: read %s: %w", path, err)
+	}
+	key, err := derive.ParsePrivateKey(strings.TrimSpace(string(b)))
+	if err != nil {
+		return derive.PrivateKey{}, fmt.Errorf("keyring: %s: %w", path, err)
+	}
+	return key, nil
 }
 
 func LoadPresetAt(ctx context.Context, files filestore.Store, dir string) (keyring.Preset, error) {
@@ -131,10 +208,6 @@ func (f presetFile) validate(path string) error {
 func (f presetFile) entries(path string) ([]keyring.Entry, error) {
 	out := make([]keyring.Entry, 0, len(f.Nodes))
 	for _, n := range f.Nodes {
-		key, err := derive.ParsePrivateKey(n.Nodekey)
-		if err != nil {
-			return nil, fmt.Errorf("keyring: %s node %d: %w", path, n.Index, err)
-		}
 		label := keyring.Label(n.Label)
 		if label == "" {
 			// A numbered identity's label follows from its index, so reading a
@@ -142,9 +215,8 @@ func (f presetFile) entries(path string) ([]keyring.Entry, error) {
 			label = nodeLabel(n.Index)
 		}
 		e := keyring.Entry{
-			Label:   label,
-			Index:   n.Index,
-			Nodekey: key,
+			Label: label,
+			Index: n.Index,
 			Identity: derive.Identity{
 				PublicKey: n.PublicKey,
 				Address:   n.Address,

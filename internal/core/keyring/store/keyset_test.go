@@ -222,9 +222,11 @@ func TestKeySet_AddIsSafeUnderConcurrency(t *testing.T) {
 
 // presetEntry returns the shipped preset's first entry — a published test
 // fixture, reused so no key literal appears in source.
+// presetEntry takes one identity from the shipped ring WITH its key: the callers
+// here sign and re-derive, which is what the keyed loader exists for.
 func presetEntry(t *testing.T) keyring.Entry {
 	t.Helper()
-	set, err := store.LoadPreset(filepath.Join("..", "..", "..", "..", "keys", "preset"))
+	set, err := store.LoadPresetWithKeys(filepath.Join("..", "..", "..", "..", "keys", "preset"))
 	if err != nil {
 		t.Fatalf("read shipped preset: %v", err)
 	}

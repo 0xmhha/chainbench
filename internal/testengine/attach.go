@@ -217,7 +217,11 @@ func ringFor(dir string) (*store.KeySet, error) {
 	if dir == "" {
 		return nil, nil
 	}
-	set, err := store.LoadPreset(dir)
+	// With keys: the ring this builds is what a spec SIGNS with, so the entries
+	// it registers have to carry their keys. This is the run's own local ring —
+	// a srv:// one is downloaded before this point — so the per-entry reads are
+	// local.
+	set, err := store.LoadPresetWithKeys(dir)
 	if err != nil {
 		// A key set that is not there is not an error here. Attaching to a
 		// network somebody else composed is the ordinary case, and the compose

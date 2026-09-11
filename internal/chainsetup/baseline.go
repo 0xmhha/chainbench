@@ -62,7 +62,7 @@ func (w *Workspace) ObserveBaseline(ctx context.Context) (resource.Observed, err
 		obs.Configs[string(ns.NodeLabel())] = filestore.Hash(cfg)
 	}
 	if w.state.KeysDir != "" {
-		preset, err := store.LoadPublicPreset(w.state.KeysDir)
+		preset, err := store.LoadPreset(w.state.KeysDir)
 		if err != nil {
 			return obs, fmt.Errorf("chainsetup: baseline: load keys: %w", err)
 		}

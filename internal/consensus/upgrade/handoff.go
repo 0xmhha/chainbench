@@ -183,7 +183,10 @@ func NewHandoff(in HandoffInputs) (*Handoff, error) {
 	if err != nil {
 		return nil, err
 	}
-	preset, err := store.LoadPreset(in.PresetDir)
+	// With keys: the handoff writes each node's nodekey into its datadir, which
+	// is the one thing in this flow that needs the secret rather than the
+	// identity.
+	preset, err := store.LoadPresetWithKeys(in.PresetDir)
 	if err != nil {
 		return nil, err
 	}

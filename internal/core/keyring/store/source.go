@@ -54,8 +54,13 @@ func (s PresetKeys) Dir() string { return s.Path }
 func (s PresetKeys) Describe() string { return "preset:" + s.Path }
 
 // Ensure loads the preset and checks it covers n nodes.
+//
+// With keys: this is the KEY source a composition draws from, and what it hands
+// back is registered into a ring that writes each identity's key file. It reads
+// a local directory (a srv:// ring is downloaded before this point), so the N
+// per-entry reads are local ones.
 func (s PresetKeys) Ensure(_ context.Context, n int) (keyring.Preset, error) {
-	p, err := LoadPreset(s.Path)
+	p, err := LoadPresetWithKeys(s.Path)
 	if err != nil {
 		return keyring.Preset{}, fmt.Errorf("keyring: key source: %w", err)
 	}
