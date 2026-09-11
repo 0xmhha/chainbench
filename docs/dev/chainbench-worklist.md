@@ -1540,6 +1540,14 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
       실제로 그렇게 만들었다가 `hash of unhashable type: process.RemoteFileStore` 로 터졌다.
     - enode 는 각 노드 **자기 호스트**로 만든다. 한 호스트를 쓰면 전 노드가 첫 서버 주소를
       광고해 피어링이 성립하지 않는다.
+  - **핸드오버 검증을 강화했다 (2026-09-11).** `AwaitFork` 가 블록 `fork+1` **하나**를 읽고
+    `miner != producer` 만 보고 있었다. 두 구멍이 있었다 — producer 가 아닌 **제3의 주소**가
+    봉인해도 통과하고, successor 가 한 블록만 봉인하고 producer 가 다시 가져가도 통과했다.
+    이제 `fork+1`~`fork+10` 전부를 읽어 **선언된 successor validator 집합 안에서** 봉인됐는지
+    확인하고, 몇 명이 교대했는지 보고한다. 라이브: `blocks 21-30 all sealed by the successor
+    set, across 4 of 4 validator(s)`. 직접 확인한 봉인자 — 블록 18·19 는 producer
+    `0xf9593d…`, 21~30 은 wbft validator 3명 이상이 교대. DSL 경로도 같은 함수를 타므로
+    (`testengine/compose.go:645`) 자동 적용된다. 실패 가능함을 단위 테스트 5건으로 고정했다.
   - 로컬 경로 회귀 없음: 로컬 핸드오프도 `handoff confirmed: head 22` 로 완주.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다.**

@@ -41,6 +41,10 @@ const (
 	// forkPoll is how often the successor's head is read while waiting for the
 	// fork.
 	forkPoll = time.Second
+	// postForkBlocks is how far past the fork the handoff is observed. One block
+	// proves the boundary was crossed; several prove the successor kept producing,
+	// and let the report say how many validators took a turn.
+	postForkBlocks = 10
 )
 
 // handoffBalance funds the producer and every validator in the governance
@@ -609,24 +613,30 @@ func (h *Handoff) AwaitFork(ctx context.Context, ns node.NodeSet, timeout time.D
 	if target == "" {
 		return "", fmt.Errorf("upgrade: no successor validator to observe the handoff on")
 	}
-	forkBlock := h.ForkBlock()
+	// The successor set from the genesis, which is what "the successor produces"
+	// has to mean. Checking only that the sealer is not the producer passes for
+	// any third address, and it is the check this used to make.
+	successors := map[string]bool{}
+	for _, v := range h.Plan.Network.WbftValidators {
+		successors[strings.ToLower(v)] = true
+	}
+	if len(successors) == 0 {
+		return "", fmt.Errorf("upgrade: the plan names no successor validators, so a handoff cannot be confirmed against them")
+	}
+	forkBlock := uint64(h.ForkBlock())
+	// Enough blocks past the fork to tell a handoff from a single lucky seal, and
+	// to see production move between validators. One block only proves the
+	// boundary was crossed; it does not prove the successor kept going.
+	last := forkBlock + postForkBlocks
 	c := rpc.Dial(target)
-	producer := strings.ToLower(h.ProducerAccount())
 	deadline := time.Now().Add(timeout)
 	var head uint64
 	for time.Now().Before(deadline) {
-		if hd, err := c.BlockNumber(ctx); err == nil {
+		hd, err := c.BlockNumber(ctx)
+		if err == nil {
 			head = hd
-			if hd > uint64(forkBlock) {
-				var blk struct {
-					Miner string `json:"miner"`
-				}
-				if err := c.Call(ctx, "eth_getBlockByNumber", &blk, fmt.Sprintf("0x%x", forkBlock+1), false); err == nil {
-					miner := strings.ToLower(blk.Miner)
-					if miner != "" && miner != producer {
-						return fmt.Sprintf("head %d; block %d sealed by %s (successor)", hd, forkBlock+1, miner), nil
-					}
-				}
+			if hd >= last {
+				return h.confirmPostFork(ctx, c, forkBlock, last, hd, successors)
 			}
 		}
 		select {
@@ -635,7 +645,40 @@ func (h *Handoff) AwaitFork(ctx context.Context, ns node.NodeSet, timeout time.D
 		case <-time.After(forkPoll):
 		}
 	}
-	return "", fmt.Errorf("upgrade: head stalled at %d, never crossed fork block %d within %s", head, forkBlock, timeout)
+	return "", fmt.Errorf("upgrade: head stalled at %d, never reached %d (fork %d + %d blocks) within %s",
+		head, last, forkBlock, postForkBlocks, timeout)
+}
+
+// confirmPostFork reads every block from the fork boundary to last and requires
+// that all of them were sealed by a declared successor validator.
+//
+// It also reports how many distinct validators sealed them, because a set that
+// rotates is the property a multi-validator successor chain has and a single
+// validator sealing everything does not — the latter is one node mining, which
+// looks identical if only the boundary block is read.
+func (h *Handoff) confirmPostFork(
+	ctx context.Context, c *rpc.Client, forkBlock, last, head uint64, successors map[string]bool,
+) (string, error) {
+	sealers := map[string]int{}
+	for n := forkBlock + 1; n <= last; n++ {
+		var blk struct {
+			Miner string `json:"miner"`
+		}
+		if err := c.Call(ctx, "eth_getBlockByNumber", &blk, fmt.Sprintf("0x%x", n), false); err != nil {
+			return "", fmt.Errorf("upgrade: reading block %d after the fork: %w", n, err)
+		}
+		miner := strings.ToLower(blk.Miner)
+		if miner == "" {
+			return "", fmt.Errorf("upgrade: block %d names no sealer", n)
+		}
+		if !successors[miner] {
+			return "", fmt.Errorf("upgrade: block %d after the fork was sealed by %s, which is not a declared successor validator — the handoff did not move production to the successor set",
+				n, miner)
+		}
+		sealers[miner]++
+	}
+	return fmt.Sprintf("head %d; blocks %d-%d all sealed by the successor set, across %d of %d validator(s)",
+		head, forkBlock+1, last, len(sealers), len(successors)), nil
 }
 
 // label is a launched node's directory name. The plan numbers nodes from
