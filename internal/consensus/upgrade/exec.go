@@ -46,6 +46,17 @@ type LaunchOptions struct {
 	// the bootstrap runs, and the rest follow. Empty launches every node, which
 	// is what a family with nothing to order asks for.
 	Only []int
+	// Machine, when set, resolves which machine node i runs on: its file store
+	// and its driver. It wins over Files and over the driver passed to Launch.
+	//
+	// It exists because a handoff spread across a server set is not one machine.
+	// A driver is bound to the host its transport was built for and never reads
+	// NodeSpec.Host, so without this every node launches wherever the single
+	// driver points — measured: a five-node placement across five servers put all
+	// five datadirs and the one surviving process on the first server, the rest
+	// colliding on its ports. The composition path resolves a machine per node
+	// (chainsetup.machineFor) and this is the same seam.
+	Machine func(index int) (filestore.Store, process.Driver, error)
 	// Files is where the shared genesis is written. Nil is the local
 	// filesystem, which is what a local handoff wants and what this used to do
 	// unconditionally — the boundary exists so a caller running against a remote
@@ -57,6 +68,15 @@ type LaunchOptions struct {
 
 // wants reports whether position i is in this launch.
 func (o LaunchOptions) wants(i int) bool { return selected(o.Only, i) }
+
+// machineFor is where node i's files and processes go: its own machine when the
+// caller resolves one, the single pair otherwise.
+func (o LaunchOptions) machineFor(i int, d process.Driver) (filestore.Store, process.Driver, error) {
+	if o.Machine == nil {
+		return o.files(), d, nil
+	}
+	return o.Machine(i)
+}
 
 // selected reports whether a phase that names these 0-based positions includes
 // this one; naming none means all of them.
@@ -156,15 +176,37 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 	}
 	ns := node.NodeSet{Chain: plan.To.ID, Network: "local"}
 
-	// Write creates the parents, so the data root needs no separate mkdir.
 	genesisPath := filepath.Join(opts.DataRoot, "genesis.json")
-	if err := opts.files().Write(ctx, genesisPath, plan.Genesis, 0o644); err != nil {
-		return ns, fmt.Errorf("upgrade: write genesis: %w", err)
-	}
 
 	specs, err := BuildNodeSpecs(plan, opts)
 	if err != nil {
 		return ns, err
+	}
+	// The genesis goes to every machine that will hold a node, not once.
+	//
+	// One write was right while the whole network shared a filesystem. Across a
+	// server set each machine needs its own copy, because the binary that reads it
+	// runs over there. Machines are told apart by the node's HOST rather than by
+	// its store: a store is an interface value that need not be comparable (the
+	// remote one is a struct holding funcs, and using it as a map key panics), and
+	// the host is the fact that actually says which machine this is.
+	written := map[string]bool{}
+	for i := range specs {
+		if !opts.wants(i) {
+			continue
+		}
+		at := specs[i].Host
+		if written[at] {
+			continue
+		}
+		files, _, merr := opts.machineFor(i, d)
+		if merr != nil {
+			return ns, fmt.Errorf("upgrade: node%d machine: %w", i+1, merr)
+		}
+		if err := files.Write(ctx, genesisPath, plan.Genesis, 0o644); err != nil {
+			return ns, fmt.Errorf("upgrade: write genesis for node%d: %w", i+1, err)
+		}
+		written[at] = true
 	}
 	// A driver that can initialize a datadir itself is asked to. The remote
 	// driver is one — it ships the genesis and runs `init` on the host — and
@@ -172,11 +214,18 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 	// data root on the operator's own machine. The local fallback stays for a
 	// driver that has no opinion, and an explicit InitFn still wins so a test can
 	// substitute one.
-	init, canInit := d.(process.Initializer)
 	for i, spec := range specs {
 		if !opts.wants(i) {
 			continue
 		}
+		// This node's machine: its own when the caller resolves one, the single
+		// driver otherwise. A driver never reads spec.Host, so asking here is the
+		// only thing that sends a node to the server the plan placed it on.
+		_, nodeDriver, merr := opts.machineFor(i, d)
+		if merr != nil {
+			return ns, fmt.Errorf("upgrade: node%d machine: %w", spec.Index+1, merr)
+		}
+		init, canInit := nodeDriver.(process.Initializer)
 		switch {
 		case opts.InitFn != nil:
 			if err := opts.InitFn(ctx, spec.Binary, spec.DataDir, genesisPath); err != nil {
@@ -196,10 +245,10 @@ func Launch(ctx context.Context, d process.Driver, plan Plan, opts LaunchOptions
 				return ns, fmt.Errorf("upgrade: provision keys node%d: %w", spec.Index+1, err)
 			}
 		}
-		if err := d.Provision(ctx, spec); err != nil {
+		if err := nodeDriver.Provision(ctx, spec); err != nil {
 			return ns, fmt.Errorf("upgrade: provision node%d: %w", spec.Index+1, err)
 		}
-		h, err := d.Launch(ctx, spec)
+		h, err := nodeDriver.Launch(ctx, spec)
 		if err != nil {
 			return ns, fmt.Errorf("upgrade: launch node%d (%s): %w", spec.Index+1, spec.Binary, err)
 		}

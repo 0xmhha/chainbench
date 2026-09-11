@@ -61,7 +61,15 @@ func (p Plan) Enodes(host string) []string {
 		if n.Pubkey == "" {
 			continue
 		}
-		out[i] = node.Enode(n.Pubkey, host, n.Ports.P2P)
+		// A node's enode carries the address its PEERS dial, which is its own.
+		// The argument is the fallback for a plan that placed nothing, so a
+		// network across servers advertises each node where it actually is
+		// instead of advertising all of them at the first one's address.
+		at := n.Host
+		if at == "" {
+			at = host
+		}
+		out[i] = node.Enode(n.Pubkey, at, n.Ports.P2P)
 	}
 	return out
 }
