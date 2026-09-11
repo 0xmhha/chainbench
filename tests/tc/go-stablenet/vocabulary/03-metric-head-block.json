@@ -2,7 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-metric-head-block",
-  "description": "Exercise the metric assertion (WA24): read the node's chain_head_block Prometheus metric once the chain has advanced. Restored after the three gaps that made it unusable were closed — the metrics endpoint now binds where the harness can reach it, the composition records a translated endpoint per node, and a config-less launch says --metrics on the command line. LIVE-UNVERIFIED: still needs a fleet run to confirm the endpoint exposes this series.",
+  "description": "Exercise the metric assertion (WA24): read the node's chain_head_block Prometheus metric once the chain has advanced. LIVE-VERIFIED 2026-09-11 on the 15-server docker fleet (4 bp, gstable 1.1.0). Restored once the three gaps that made it unusable were closed — the endpoint binds where the harness can reach it, the composition records a translated scrape URL per node, and a config-less launch says --metrics on the command line.",
   "requires": [
     "rpc"
   ],

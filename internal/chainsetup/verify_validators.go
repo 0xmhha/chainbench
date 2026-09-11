@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/0xmhha/chainbench/internal/core/collector"
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/registry"
@@ -135,9 +136,12 @@ func metricsURLOf(w *Workspace, ns node.Record) string {
 	if host == "" {
 		host = w.RPCHost()
 	}
-	url, err := w.opener().HTTPEndpoint(host, ns.Metrics)
+	base, err := w.opener().HTTPEndpoint(host, ns.Metrics)
 	if err != nil {
 		return ""
 	}
-	return url
+	// HTTPEndpoint resolves an address, not a path. The recorded value has to be
+	// the URL a scraper can use unchanged, or the path becomes something every
+	// caller has to remember — and the first one did not.
+	return collector.MetricsURLOn(base)
 }

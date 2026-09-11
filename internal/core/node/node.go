@@ -93,7 +93,8 @@ type Node struct {
 	// RPCURL is the JSON-RPC endpoint used for verify/test. For attached
 	// nodes this is the only field that must be set.
 	RPCURL string `json:"rpc_url"`
-	// MetricsURL is the endpoint a caller dials to scrape this node's metrics.
+	// MetricsURL is the full URL a caller GETs to scrape this node's metrics —
+	// scheme, reachable host and port, AND the Prometheus path.
 	//
 	// It exists for the same reason RPCURL does: Host and Ports hold the node's
 	// OWN address, which is what peers use and what goes into the genesis and

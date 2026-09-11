@@ -31,6 +31,18 @@ func MetricsURL(host string, port int) string {
 	return fmt.Sprintf("http://%s:%d%s", host, port, metricsPath)
 }
 
+// MetricsURLOn appends the Prometheus path to an address that has already been
+// resolved — a composition's translated endpoint, where the host and port are
+// the ones this tool can actually reach rather than the node's own.
+//
+// It exists because building the URL in two steps is what dropped the path: the
+// resolver returned "http://127.0.0.1:16061", the caller passed that to the
+// scraper as-is, and geth answered 404 from the root of a working metrics
+// server. The path is not the caller's to remember.
+func MetricsURLOn(base string) string {
+	return strings.TrimSuffix(base, "/") + metricsPath
+}
+
 // ScrapeMetrics fetches and parses one node's metrics endpoint. The result
 // maps metric name (labels stripped) to its last sample value — chainbench's
 // assertions compare single gauges/counters, so label sets collapse to the
