@@ -1651,7 +1651,8 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   `03-metric-head-block` 통과(`chain_head_block=3`). 상세는 §1p C. 라이브가 코드 검증이
   놓친 결함 둘을 더 찾았다 — `gen-env.sh` 가 metrics 포트를 퍼블리시·매핑하지 않았고,
   기록된 `MetricsURL` 에 Prometheus 경로가 빠져 있었다(둘 다 수정).
-- ◐ **B 잔여 — 체인별 거버넌스 케이스.** **go-wbft 쓰기 완료 (2026-09-12).**
+- [x] **B 잔여 — 체인별 거버넌스 케이스 — 완료 (2026-09-12).** 쓰기 2건에 이어 남아 있던 둘(실제 ABI `registerContract`, reject 변형)도 닫았다. 상세는 이 항목 끝의 "남은 둘 다 완료".
+  **(원래 기록)** go-wbft 쓰기 완료 (2026-09-12).
   `governance/02-wbft-governance-register-staker` — 읽기 케이스(`governance/01`)가 제네시스가
   무엇을 들고 있는지를 고정한다면, 이것은 **거버넌스 상태를 바꾸고 체인이 동의하는지**를 본다.
   - **stablenet 흐름을 옮기지 않고 go-wbft 자신의 컨트랙트로 썼다** — 이 항목이 경고하던
@@ -1676,7 +1677,38 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     - **공허한 단정 하나를 빼면서 배운 것**: 처음에 `balanceOf(node1) > 1 ether` 를 넣었는데,
       부트스트랩 스테이크가 이미 ~1.5e24 라 **입금과 무관하게 항상 통과**했다. 변이가 3건이
       아니라 2건만 실패하는 것으로 드러났다 — 증거처럼 보이지만 증거가 아닌 검사다. 뺐다.
-  - **남은 것**: 실제 ABI 를 쓰는 `registerContract` 케이스, negative-tx 의 reject 변형.
+  - **남은 둘 다 완료 (2026-09-12).** 둘 다 "이름이 말하는 것을 검사하지 않고 있었다" 였다.
+    - **`registerContract` 실제 ABI** — `go-stablenet/vocabulary/03-register-contract` 를 고쳤다.
+      전에는 **아무 호출이나 받고 상수를 돌려주는 스텁**을 배포해 "revert 하지 않았다" 만
+      단정했다. 4바이트 아무거나로 통과하므로 **액션을 태웠을 뿐 등록을 증명하지 않았다.**
+      이제 `register(address)`·`registered(address)`·`count()` 를 가진 NodeRegistry 를 배포하고
+      **되읽는다**: 전 0 · 후 1 · **다른 노드(node3)도 같은 답** · `count == 1` ·
+      같은 주소 재등록은 컨트랙트 자신의 `require` 로 revert. solc 0.8.28 로 컴파일한 바이트코드를
+      인라인해 저장소에 컴파일러 의존을 만들지 않았고, 소스와 선택자 3개를 설명에 적었다.
+      변이(등록 스텝 제거)로 사후 단정이 0 을 보며 실패.
+    - **negative-tx 의 reject 변형은 이미 있었다 — 문제는 다른 것이었다.** 실측: reject 스펙이
+      go-stablenet 16건(158건 중), go-wbft·go-wemix 각 1건이다. 즉 "변형이 없다" 는 낡은 기록이다.
+      실제 결함은 **`expect: reject` 에 `reason` 이 없으면 어떤 거절이든 통과한다**는 것이었다.
+      세 건(`go-stablenet/regression/ethereum/14`, `go-wbft/tx/02`, `go-wemix/tx/02`)이
+      "잔액 부족으로 거절" 을 주장하면서 **아무 이유의 거절이나 받고** 있었다. `reason` 을
+      `insufficient funds` 로 못 박았다.
+      - **추측하지 않고 탐침했다**: 일부러 틀린 `reason` 을 넣으니 스텝이 실패하며 실제 메시지를
+        찍었다 — `insufficient funds for gas * price + value: balance 10000000000000000000000000,
+        tx cost 10000002419600000000000000`. 같은 상수가 세 포크의 `core/error.go` 에 동일하게
+        선언돼 있고, 세 스펙이 각자의 바이너리에서 통과하는 것이 그 부분 문자열이 거기서도
+        맞는다는 증거다.
+- [ ] **F5. `expect: reject` 에 `reason` 이 없는 스펙 10건 (신규 2026-09-12).** [권장]
+  위 작업에서 3건을 고치고 세어 보니 **10건이 더 남았다** — 전부 go-stablenet 이고, 파일명은
+  각각 구체적인 거절 이유를 주장하는데 스펙은 **아무 거절이나 받는다**:
+  `post-v1.0.0-change/common-all/12`·`13`·`14`, `regression/fee-delegation/04`·`07`,
+  `regression/anzeon/11`, `regression/system-contracts/15`·`20`,
+  `regression/ethereum/12`·`15`.
+  - **방법은 정해져 있다(위에서 썼다)**: 일부러 틀린 `reason` 을 넣어 돌리면 실패 메시지가
+    실제 거절 문구를 찍는다. 그것을 부분 문자열로 못 박는다. **부분 문자열을 추측하면 안 된다** —
+    틀리면 통과하던 스펙이 깨지고, 맞아도 우연일 수 있다.
+  - 한 묶음으로 하는 편이 싸다: 대부분 같은 4-bp 환경이고, blacklist·fee-delegation·
+    system-contracts 계열만 자기 환경이 필요하다.
+  - 재확인: `expect: reject` 이면서 `reason` 이 없는 스텝을 세는 스크립트(위 실측과 동일).
 - [x] **WA25. go-wemix·go-wbft 커버리지 — 해소 (2026-09-11).** 각각 **9건·15건**이 됐고
   (시작은 5건·6건), 비어 있던 축을 전부 채웠다: pn/proxied 라우팅, 정족수 경계(4노드·15노드),
   제네시스 거버넌스(wbft·poa 각각), 15노드 엣지 제출. 아래는 그 과정의 기록이다.
