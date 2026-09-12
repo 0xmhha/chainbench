@@ -3,6 +3,7 @@ package registry
 import (
 	"math/big"
 	"strconv"
+	"strings"
 )
 
 // This file is the argument decoding for a capability or tool call. Both
@@ -76,10 +77,30 @@ func ArgStrings(args map[string]any, key string) []string {
 	return nil
 }
 
-// ArgBool returns a boolean argument, or def if absent/not a boolean.
+// ArgBool returns a boolean argument, or def if absent or unreadable.
+//
+// A "true"/"false" string is accepted, because [ArgInt] beside it already accepts
+// a numeric string and the two being different was an asymmetry with a silent
+// cost: a caller sending "all": "true" got the DEFAULT, so the flag it asked for
+// was not refused, it was ignored, and the tool did something else. These
+// decoders cannot refuse — returning def is the contract, and the schema is what
+// rejects a malformed argument — so between ignoring a value and understanding
+// it, understanding is the only one that does not mislead.
+//
+// A number is not accepted. 1 and 0 as booleans is a convention of other
+// languages, not of JSON, and guessing which way an empty string or 2 leans
+// would be inventing an answer rather than reading one.
 func ArgBool(args map[string]any, key string, def bool) bool {
-	if v, ok := args[key].(bool); ok {
+	switch v := args[key].(type) {
+	case bool:
 		return v
+	case string:
+		switch strings.ToLower(strings.TrimSpace(v)) {
+		case "true":
+			return true
+		case "false":
+			return false
+		}
 	}
 	return def
 }
