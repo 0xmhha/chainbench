@@ -72,8 +72,26 @@ func cleanSessions(cmd *cobra.Command, root, olderThan string, keepLast int) err
 
 // parseAge parses a duration, additionally accepting day (Nd) and week (Nw)
 // suffixes that time.ParseDuration does not.
+//
+// An age at or below zero is refused. It is not a small age: GCSessions reads a
+// non-positive OlderThan as "no age policy at all", so "--older-than -7d
+// --keep-last 5" silently dropped the age the operator gave and kept the last
+// five whatever their date — deleting more than was asked for, on a command that
+// removes directories. The refusal belongs here, where the value is still what
+// the operator typed.
 func parseAge(s string) (time.Duration, error) {
 	s = strings.TrimSpace(s)
+	d, err := parseAgeUnits(s)
+	if err != nil {
+		return 0, err
+	}
+	if d <= 0 {
+		return 0, fmt.Errorf("an age must be positive (got %s)", d)
+	}
+	return d, nil
+}
+
+func parseAgeUnits(s string) (time.Duration, error) {
 	switch {
 	case strings.HasSuffix(s, "d"):
 		n, err := strconv.Atoi(strings.TrimSuffix(s, "d"))
