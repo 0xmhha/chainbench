@@ -2096,6 +2096,54 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 ### D2. 코드 건강도 검토에서 나온 것 — **다섯 항목 완료 (2026-09-11)**
 
+**추가 정리 (2026-09-12).** 남아 있던 넷을 다시 재고 둘을 처리했다. 하나는 **제 측정이
+틀렸고**, 하나는 판단해서 손대지 않기로 했다.
+
+- [x] **package doc 공백 — 해소. 다만 14개가 아니라 9개였다.** 제가 `^// Package ` 만 세어서
+  `main` 패키지 5개(`cmd/chainbench`·`chainbench-dashboard`·`chainbench-mcp`,
+  `scripts/inventory/` 둘)를 공백으로 잡았는데, **main 패키지의 올바른 형식은 `// Command X`**
+  이고 다섯 개 전부 이미 갖고 있었다. 실제 공백은 `cmd/chainbench/*cmd` 9개였다.
+  - **그 9개는 채울 값이 있었다** — 명령 묶음의 경계가 자명하지 않다. 왜 `clean`·`verify` 가
+    `lifecyclecmd` 이고 `show`·`status` 는 `chaincmd` 인지, `faucet` 이 왜 `txcmd` 가 아니라
+    `accountcmd` 인지 같은 것이다. 각 doc 이 **주체가 무엇인가**로 그 경계를 적는다
+    (composition 이냐 running network 냐, transaction 이냐 account 냐).
+  - 재확인: `for d in $(go list ./... | sed 's|github.com/0xmhha/chainbench/||'); do [ -d "$d" ] && { grep -lqE "^// (Package|Command) " $d/*.go 2>/dev/null || echo $d; }; done`
+    — 아무것도 출력되지 않아야 한다. **`// Command` 를 함께 받는 것이 핵심이다.**
+- [x] **`internal/chains/stablenet` 테스트 없음 — 해소. 그리고 없던 이음매를 찾았다.**
+  이 패키지는 `caps.jsonl` 로 능력 10개를 **선언**하고 `init()` 에서 핸들러를 **따로** 등록한다.
+  `registry.All`/`For` 는 **노출된 것만**(핸들러나 flat tool 이 있는 것) 돌려주므로, jsonl 에
+  항목을 더하고 핸들러를 안 쓰면 **아무 데서도 오류가 아니다** — 파일은 있다고 말하는데
+  호출자는 없다고 듣는다. 지금은 10 = 10 으로 맞지만 붙잡는 것이 없었다.
+  - **반대 방향은 쓸 수 없다는 것을 변이로 배웠다.** 처음에 "선언 없는 핸들러" 도 단정했는데,
+    `For()` 가 **카탈로그를 순회**하므로 jsonl 한 줄을 지우면 양쪽에서 동시에 사라져 **테스트가
+    통과했다.** 제거하려던 바로 그 모양(공허한 단정)을 제가 만든 것이라 지우고, **왜 쓸 수
+    없는지**를 파일에 적었다(핸들러 맵은 private 이고 lister 가 없다). 그 방향의 심각도도 낮다 —
+    고아 핸들러는 도달 불가일 뿐 틀리지 않는다. 그래서 core 에 lister 를 더하지 않았다.
+- [ ] **폴링 루프가 10벌 중복이다 (신규 2026-09-12).** [권장] `internal/consensus/` 의
+  `time.Now()` 20곳은 **전부 같은 모양**이다: `deadline := time.Now().Add(timeout)` → 시도 →
+  `time.Now().After(deadline)` 면 **자기만의 오류 메시지**로 반환 → `select ctx.Done() /
+  time.After(interval)`. 결정에 쓰이는 시계는 **하나도 없다** — 전부 기다림의 한계다.
+  - **그래서 "시계를 주입하라" 가 이 항목의 답이 아니다.** 20곳에 `Clock` 을 꿰는 것은
+    재현성을 얻지 못하고 변경 면만 넓힌다. 실제 결함은 **중복**이고, 이 저장소가 `shellQuote`
+    4벌·`Arg*` 2벌에서 한 번씩 처리한 그 모양이다.
+  - **다른 것은 오류 메시지뿐이고 그것은 값이 있다** — "cluster is still empty 30s after init"
+    처럼 각 자리가 무엇을 기다렸는지 말한다. 그래서 헬퍼는 메시지를 클로저로 받아야 하고,
+    **메시지를 하나로 합치면 안 된다.**
+  - **별도 항목으로 둔다.** 브링업 경로 10곳을 건드리는 변경이라 라이브 확인이 필요하고,
+    `netUpFrom` 분해를 따로 두기로 한 것과 같은 이유다 — 다른 변경에 얹으면 검토 범위가 흐려진다.
+  - 재확인: `grep -rn "time.Now()" internal/consensus/ | grep -v _test | wc -l` (20) ·
+    `grep -rn "deadline := time.Now().Add" internal/consensus/ | grep -v _test | wc -l` (10)
+- [x] **가장 긴 함수 `lowerCase`(195줄) — 손대지 않기로 판단했다 (2026-09-12).**
+  `internal/dsl/spec_v2.go:357`. 읽어 보니 **엉킨 로직이 아니라 문법의 크기**다 — id·env 검증
+  뒤에 선언을 하나씩 접어 넣는 **순차 fold** 이고(timeouts·capabilities·manifest·binaries·
+  upgrade·genesis·keys/launch·hooks·statements), 각 블록에 관심사를 적은 주석이 있다.
+  - 9개 헬퍼로 쪼개면 전부 같은 `spec` 값을 만지므로 **결합은 그대로이고 간접만 늘어난다.**
+    그리고 순서가 규칙을 읽히게 하는 자리가 있다 — "capabilities 는 requires 와 합집합, 케이스
+    순서 먼저" 는 앞뒤 맥락에서만 뜻이 통한다.
+  - 길이만 보고 다시 열지 않도록 판단을 적어 둔다. 코드 건강도 검토도 `netUpFrom` 을 같은
+    이유로 따로 두라고 했다.
+
+
 AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통과, 린터 0건. 중복과 문서
 두 갈래만 남았고, 중복은 **표면·상위 계층이 프리미티브를 각자 다시 만든** 한 가지
 경향이었다. 근거와 위치는 정본

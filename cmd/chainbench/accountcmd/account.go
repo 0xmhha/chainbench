@@ -1,3 +1,6 @@
+// Package accountcmd owns the commands that act on an ACCOUNT rather than on a
+// node or a chain: reading its state, and funding it. `faucet` is here and not
+// under `tx` because its subject is the recipient, not the transaction.
 package accountcmd
 
 import (

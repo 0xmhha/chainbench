@@ -1,3 +1,7 @@
+// Package catalogcmd owns the commands that answer "what does this build know
+// about", without touching a network: the chains it can compose and the
+// capabilities it registers. Every other group needs a chain; this one does not,
+// which is why it is separate.
 package catalogcmd
 
 import (

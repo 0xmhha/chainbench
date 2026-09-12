@@ -1,3 +1,10 @@
+// Package suitecmd owns RUNNING test specs: composing or attaching to the
+// network a spec declares and executing it (run), checking a spec without running
+// it (validate), and lifting a v1 spec to v2 (migrate-spec).
+//
+// validate is here rather than in catalogcmd because it resolves a spec against
+// the registered vocabulary, which is the same resolution run performs — one
+// answer, two moments.
 package suitecmd
 
 import (
