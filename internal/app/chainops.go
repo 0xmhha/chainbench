@@ -145,13 +145,22 @@ func TxWait(ctx context.Context, _ Deps, in TxWaitIn) (TxReceipt, error) {
 			}
 			return r, nil
 		}
-		if time.Now().After(deadline) {
+		// The sleep is capped at what is left of the budget. A fixed second
+		// meant the wait overshot its stated bound by up to a second — ask for
+		// 100ms and you waited a second — so a timeout used as an assertion
+		// ("this must land within X") was weaker than it said.
+		remaining := time.Until(deadline)
+		if remaining <= 0 {
 			return TxReceipt{}, fmt.Errorf("timed out after %s waiting for tx %s", timeout, in.Hash)
+		}
+		wait := time.Second
+		if remaining < wait {
+			wait = remaining
 		}
 		select {
 		case <-ctx.Done():
 			return TxReceipt{}, ctx.Err()
-		case <-time.After(time.Second):
+		case <-time.After(wait):
 		}
 	}
 }
