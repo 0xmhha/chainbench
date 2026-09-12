@@ -1415,6 +1415,10 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 ## 1p. WA 트랙 이후 — fleet 검증 결과와 남은 작업 (2026-09-08)
 
+> **이 절은 이력이다 (2026-09-12).** 여기 적힌 항목은 전부 닫혔고, 표시도 맞췄다.
+> **열린 작업은 §1s 에만 있다** — 같은 항목을 두 곳에 두면 한 곳이 낡고, 그 낡은 쪽이
+> 읽히는 일이 이 문서에서 여섯 번 있었다(T5.2·T6.6·T5.5·WA14·WA19·그리고 이 절의 L1·L2).
+
 WA 트랙은 PR #363 으로 main 에 머지됐다(WA1~WA26 중 코드/문법/표면 항목 반영). 이어
 docker(15대, stablenet/wbft/wemix)에서 커버리지 스펙을 라이브로 돌려 다음을 확인했다.
 
@@ -1445,7 +1449,7 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
     냈다. 유닛 테스트는 둘 다 잡지 못했다(전자는 docker 정의, 후자는 경로를 검사하지 않음).
 - [x] **B — 부정 경로**: `go-stablenet/tx/01-negative-tx-revert` (revert 하는 런타임 배포
   후 `expect:revert`) fleet 검증 완료.
-- [ ] **B 잔여 — 거버넌스(체인 특화, fleet)**. go-wbft·go-wemix 거버넌스는 stablenet 을
+- [x] **B 잔여 — 거버넌스(체인 특화, fleet)** — **완료 (2026-09-12).** go-wbft 쓰기는 `tests/tc/go-wbft/governance/02-*`(PR #391), go-wemix(poa) 쓰기는 `tests/tc/go-wemix/governance/01-*`(PR #392). 아래 진단이 맞았다 — 옮겨 쓸 수 없었고, 각 체인의 컨트랙트로 따로 썼다. **(원래 진단)** go-wbft·go-wemix 거버넌스는 stablenet 을
   그대로 옮길 수 없다 — stablenet 의 GovValidator 흐름(0x…1001, proposeAddMember)을 go-wbft 로
   적응해 fleet 에서 돌리니 **2단계 proposeAddMember 가 revert** 했다(node1 이 gwbft 의 gov
   멤버가 아니거나 시스템 컨트랙트 셋업이 다름). 각 체인의 실제 거버넌스(컨트랙트 주소·선택자·
@@ -1459,7 +1463,7 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   **deploy-only stage 는 넣지 않았다** — 테스트 케이스는 어서션을 돌리므로 항상 망을 기동해야
   한다(UpStart). 배포만 하는 compose 는 테스트 env 의미가 없다. blueprint/validator-subset 를
   실제로 쓰는 라이브 스펙은 다른 커버리지처럼 fleet 에서 작성·검증하면 된다.
-- [ ] **WA10 잔여 없음** — attach 경로 게이트·증적(E6·E8)까지 반영됨(PR #363).
+- [x] **WA10 잔여 없음** — attach 경로 게이트·증적(E6·E8)까지 반영됨(PR #363). 라우팅을 구조적으로 고정한 테스트는 PR #400.
 
 기존 §1n 의 R6(go-wemix etcd collapse — 체인팀), G2(핸드오프 원격), 원격 `chain rm`
 (filestore Remove 부재)은 WA 와 무관하게 그대로 남아 있다.
@@ -1467,13 +1471,17 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
 
 ## 1q. workspace-config 트랙 이후 — 남은 두 항목 (2026-09-10)
 
+> **이 절은 이력이다 (2026-09-12).** 두 항목(L1·L2) 모두 닫혔다. 둘 다 **원래 진단이
+> 빗나갔던** 경우라 진단을 남겨 뒀다 — L1 은 attempt 축이 아니라 원격의 로그 덮어쓰기였고,
+> L2 는 compose 의 다운로드가 아니라 링 인덱스가 개인키를 담은 것이었다. 상세는 §1s.
+
 workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정의서 순차 실행·
 승인 기준·다이얼 주소 레이어 정리, PR #370)은 반영됐다. 인계 문서
 `docs/research/chainbench/analyses/10-prepared-inputs-server-ref-handoff.md` 에서 나온
 항목 중 **둘은 아직 코드가 없고, 지금까지 이 작업 리스트에 적혀 있지 않았다.** 연구
 문서에만 남아 있으면 사라지므로 여기 옮긴다.
 
-- [ ] **L1. 노드별 시도(attempt) 로그 경로**. 지금 노드 로그는 노드당 한 파일
+- [x] **L1 — 완료 (2026-09-12, PR #389).** 진단이 옮겨졌다: attempt 축이 없는 것이 아니라 **원격 launch 가 로그를 덮어쓰는 것**(로컬은 `O_APPEND`, 원격은 `>`)이 문제였다. 원격도 덧붙이고 launch 마다 마커를 쓴다 — 경로 축을 만들지 않고 파일 안에서 시도를 가른다. 상세는 §1s. **(원래 진단)** 지금 노드 로그는 노드당 한 파일
   (`logs/<compId>/<label>.log`)이라 **재기동하면 이전 실행의 로그가 덮인다**. 실패한
   시도의 증적이 다음 시도로 지워지는 것이 문제다 — 특히 reuse-if-matching 이 한 노드를
   여러 번 재작업할 때. 인계 문서와 `workspace-config.sample.yaml` 의 주석은
@@ -1483,7 +1491,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   고르도록 배선. **게이트**: 한 노드를 두 번 재기동한 뒤 두 시도의 로그가 모두 남아 있고,
   실패한 테스트의 관측 폴더가 그 시도의 것을 담는다.
 
-- [ ] **L2. 준비된 키의 대상 검증(공개 신원만 반환)**. 인계 문서 §7 은 "준비된 키의 검증은
+- [x] **L2 — 완료 (2026-09-12, PR #394·#397).** 진단이 옮겨졌다: 문제는 compose 의 다운로드가 아니라 **링 인덱스가 모든 개인키를 담고 있어 인덱스 한 번 읽기가 링 전체를 공개**한 것이었다. 인덱스에서 키를 뺐고, 키가 필요한 세 호출자만 노드별 파일을 읽는다. 상세는 §1s. **(원래 진단)** 인계 문서 §7 은 "준비된 키의 검증은
   가능한 한 대상에서 수행하고 공개 신원만 반환한다"고 정했다. 현재 srv:// keyring 은
   **키 묶음 전체를 로컬로 내려받아** 쓴다(`materializeKeyring`, PR #370). 이는 사용자가
   명시적으로 승인한 경로이고 런타임 서명에 로컬 경로가 필요해서 정당하지만, §7 이 말한
