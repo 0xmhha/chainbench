@@ -22,6 +22,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/resource"
+	"time"
 )
 
 // Lifecycle steps: init, start, stop, restart, rm, logs, health. They act on
@@ -437,18 +438,23 @@ func (w *Workspace) swapNodeConfig(ctx context.Context, ni int, config []string,
 	if err != nil {
 		return err
 	}
-	w.setConfigProvenance(prov)
+	w.addConfigProvenance(prov)
 	return nil
 }
 
-// setConfigProvenance replaces node prov.Node's config provenance entry, or
-// appends it, so a mid-test config swap updates just that node's record.
-func (w *Workspace) setConfigProvenance(prov ConfigProvenance) {
-	for i, e := range w.state.ConfigProvenance {
-		if e.Node == prov.Node {
-			w.state.ConfigProvenance[i] = prov
-			return
-		}
+// addConfigProvenance appends a revision to the node's config history.
+//
+// It used to replace the node's entry, which lost the config the node was
+// composed with the moment a swapNode gave it another one — and the state's own
+// comment called each write "a new revision" while keeping exactly one. The
+// requirement is to preserve the fixture, the overrides, the resulting config and
+// the node with its time; a list that overwrites preserves only the last of them.
+//
+// A fresh compose clears the list first (see the config step), so this grows only
+// with the swaps a run actually made.
+func (w *Workspace) addConfigProvenance(prov ConfigProvenance) {
+	if prov.At == "" {
+		prov.At = w.now().UTC().Format(time.RFC3339)
 	}
 	w.state.ConfigProvenance = append(w.state.ConfigProvenance, prov)
 }

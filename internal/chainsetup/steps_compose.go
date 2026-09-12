@@ -840,7 +840,7 @@ func (w *Workspace) Config(ctx context.Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		w.state.ConfigProvenance = append(w.state.ConfigProvenance, prov)
+		w.addConfigProvenance(prov)
 		if len(prov.Overrides) > 0 {
 			overridden++
 		}

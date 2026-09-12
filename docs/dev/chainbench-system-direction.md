@@ -91,6 +91,14 @@ working directory와 log 경로를 확정한다. 실제 command는 민감 정보
 테스트별 config fixture는 `config-<test-purpose>...` 형식으로 이름 짓는다. 원본 fixture, override,
 최종 config, 적용 노드·시각과 checksum을 보존한다.
 
+> **실측 (2026-09-12).** 요구 추적성(§12)을 처음으로 걸어 보며 확인한 자리다. 이름 규칙과 보존은
+> `chainsetup.ConfigProvenance` 가 맡고 있었는데 **두 조각이 빠져 있었다**:
+> `적용 시각`이 없었고, 기록이 **노드별로 덮어써지고** 있었다(`setConfigProvenance` 가 같은 노드의
+> 항목을 교체했다). 그래서 `swapNode` 가 mid-test 로 config 를 바꾸면 **구성 당시의 config 기록이
+> 사라졌다** — 코드 주석이 각 기록을 "a new revision" 이라 부르면서 하나만 남기고 있었다.
+> 이제 리비전이 쌓이고(`addConfigProvenance`) 각 리비전이 주입된 시계로 찍힌 `at` 을 든다.
+> 남은 질문("node N 이 어떤 config 를 언제부터 들고 있었나")의 양쪽이 답해진다.
+
 ## 8. 컨트랙트 테스트
 
 컨트랙트 배포 결과 주소는 `save/$ref`로 뒤 단계에 전달할 수 있어야 한다. 약속된 deployer와 nonce로
