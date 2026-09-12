@@ -171,27 +171,27 @@ FATAL       → 강제 조치가 필요하므로 즉시 종료
 
 ## 12. 요구 추적성
 
-| ID | 사용자 요구 | 본문 | 작업 |
-|---|---|---|---|
-| R01 | local 또는 remote 체인 구성 | §2 | E9 |
-| R02 | Docker로 폐쇄망 remote 환경 모사 | §2 | E9 |
-| R03 | 서버 자료 확인·재사용·upload/download·동일성 검사 | §6 | E2 |
-| R04 | local/remote 노드 PID와 실행 command 관리 | §4·§5·§7 | E4 |
-| R05 | 테스트 노드 개별 제어 | §7 | E4·E7 |
-| R06 | Command Builder와 실제 설정·배포 정보 반영 및 기록 | §5·§7 | E3·E4 |
-| R07 | 테스트 중 stop/start, binary와 config 교체 | §7 | E4·E7 |
-| R08 | 노드별 서로 다른 binary | §4·§7 | E3·E7 |
-| R09 | Config Builder와 override | §5·§7 | E3 |
-| R10 | `config-<test-purpose>` fixture naming | §7 | E3 |
-| R11 | contract 배포, 동적·결정적 주소 | §8 | E7 |
-| R12 | 실패 시 log와 디버깅 자료 수집 | §11 | E6·E8 |
-| R13 | 전체 테스트 종료 후 최종 report | §11 | E8 |
-| R14 | 단일 테스트 직렬 실행과 한 명령의 다중 테스트 | §11 | E7·E8 |
-| R15 | CLI 단계·DSL 자동 구성·MCP 도구 | §3 | E9 |
-| R16 | DSL syntax 및 chain/binary capability 사전 검사 | §9 | E5 |
-| R17 | 동일 환경 재사용 | §9 | E5·E6 |
-| R18 | Node Monitor, timeout, 제한 재시작과 즉시 종료 | §10 | E6 |
-| R19 | timestamp/test별 산출물과 root report | §11 | E0A·E8 |
+| ID | 사용자 요구 | 본문 | 작업 | 증거 (이 테스트가 그 요구를 붙잡는다) |
+|---|---|---|---|---|
+| R01 | local 또는 remote 체인 구성 | §2 | E9 | `TestNetAllocate_RemoteServerRetargetsTheDataPlane` |
+| R02 | Docker로 폐쇄망 remote 환경 모사 | §2 | E9 | `TestWorkspace_DockerWithoutLocalmapRefusesLoudly` |
+| R03 | 서버 자료 확인·재사용·upload/download·동일성 검사 | §6 | E2 | `TestProvision_ReusesIdenticalOverwritesDifferent` |
+| R04 | local/remote 노드 PID와 실행 command 관리 | §4·§5·§7 | E4 | `TestLedger_RecordsQueriesAndSurvivesReopen` |
+| R05 | 테스트 노드 개별 제어 | §7 | E4·E7 | `TestNodeStart_RelaunchesWithTheRecordedArgv` |
+| R06 | Command Builder와 실제 설정·배포 정보 반영 및 기록 | §5·§7 | E3·E4 | `TestArgv_SaysMetricsOnTheCommandLine` |
+| R07 | 테스트 중 stop/start, binary와 config 교체 | §7 | E4·E7 | `TestNodeSwap_ConfigOnlyRewritesOneNode` |
+| R08 | 노드별 서로 다른 binary | §4·§7 | E3·E7 | `TestBinaryFor_ResolvesPerNodeOverFallback` |
+| R09 | Config Builder와 override | §5·§7 | E3 | `TestBuildOverridesWin` |
+| R10 | `config-<test-purpose>` fixture naming | §7 | E3 | `TestConfigProvenance_ASwapKeepsTheRevisionItReplaced` |
+| R11 | contract 배포, 동적·결정적 주소 | §8 | E7 | `TestReadCreateAddress_ExplicitNonce` |
+| R12 | 실패 시 log와 디버깅 자료 수집 | §11 | E6·E8 | `TestEngine_OnFailGathersOnFailedTest` |
+| R13 | 전체 테스트 종료 후 최종 report | §11 | E8 | `TestCombine_SumsTheTally` |
+| R14 | 단일 테스트 직렬 실행과 한 명령의 다중 테스트 | §11 | E7·E8 | `TestSequenceExit_MapsTheThreeOutcomesToCodes` |
+| R15 | CLI 단계·DSL 자동 구성·MCP 도구 | §3 | E9 | `TestSurfacesReachThroughApp` |
+| R16 | DSL syntax 및 chain/binary capability 사전 검사 | §9 | E5 | `TestValidate_RefusesAStatementThatNamesNothing` |
+| R17 | 동일 환경 재사용 | §9 | E5·E6 | `TestCheck_ADifferentGenesisIsADifferentChain` |
+| R18 | Node Monitor, timeout, 제한 재시작과 즉시 종료 | §10 | E6 | `TestGate_AllReadyImmediately` |
+| R19 | timestamp/test별 산출물과 root report | §11 | E0A·E8 | `TestSessionID_Format` |
 
 ## 13. 현재 상태와 목표 구분
 
