@@ -188,8 +188,19 @@ FATAL       → 강제 조치가 필요하므로 즉시 종료
 ## 13. 현재 상태와 목표 구분
 
 현재 코드에는 단계형 chainsetup, node record, per-node binary, process ledger, workspace resume, DSL schema
-drift 검사와 일부 collector/session 기능이 있다. checksum 기반 전체 자료 재사용, 위 상태 모델의 Node Monitor,
-19번의 완전한 산출물 구조와 전체 report는 목표이며 구현 완료로 간주하지 않는다. 정확한 상태는 worklist §1k에서 관리한다.
+drift 검사와 일부 collector/session 기능이 있다. 정확한 상태는 worklist가 관리한다.
+
+**2026-09-12 정정.** 이 절은 세 가지를 "목표이며 구현 완료로 간주하지 않는다"고 적고 있었는데,
+셋 다 들어갔다. 이 문서는 [제품 목표·확정 방향] 등급이라 낡은 채로 두면 worklist보다 오래
+인용되므로 여기서 고친다.
+
+| 미완이라 적혀 있던 것 | 실제 | 확인 |
+|---|---|---|
+| checksum 기반 전체 자료 재사용 (R03) | 들어갔다. 재사용 판정이 **존재 여부가 아니라 내용 해시**다 — 같은 자리에 다른 digest면 다른 파일로 보고 다시 쓴다 | `internal/core/filestore/doc.go` |
+| 위 상태 모델의 Node Monitor (R18) | 들어갔다. 모니터링 트랙이 머지됐고 이슈 16건 중 14건이 그 커밋에서 해소됐다 | `9b6b0930`, `dev/monitoring-issue-review-2026-09-10.md` |
+| 19번의 완전한 산출물 구조와 전체 report (R13·R19) | 들어갔다. 여러 세션을 하나의 집계로 합친다 — 스펙마다 실행이 하나씩 생기는 모양에서 최신 세션 하나만 읽으면 배치가 통과했는지 답하지 못한다 | `chainbench report --all`, `report.Combine` |
+
+남은 것은 이 절이 아니라 worklist가 말한다.
 
 ## 14. 완료 판단 원칙
 

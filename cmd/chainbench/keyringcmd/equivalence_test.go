@@ -155,7 +155,7 @@ func TestEquivalence_KeyringShowRevealsTheSameIdentity(t *testing.T) {
 // request. Both readings had to agree about what "exactly one origin" meant,
 // and nothing checked that they did.
 func TestEquivalence_ImportingTheSameKeyLandsTheSameIdentity(t *testing.T) {
-	const key = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21"
+	const key = "0xeb47b675926a348755d89dfaca9ba5a2c02a192fd54e7e78475f15443ddf8c21" // betterleaks:allow — throwaway signing key for this test only; its derived address appears in no genesis, config or keystore
 	cliDir := filepath.Join(t.TempDir(), "cli")
 	mcpDir := filepath.Join(t.TempDir(), "mcp")
 
