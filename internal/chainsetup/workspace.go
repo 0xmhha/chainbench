@@ -369,14 +369,26 @@ func (w *Workspace) configOverridesFor(index int) []string {
 	return out
 }
 
-// ConfigProvenance is one node's config record: the overrides applied to it and
-// the checksum ("sha256:<hex>") of the config that resulted. Fixture names a
-// mid-test config swap (config-<test-purpose>), empty for the initial compose.
+// ConfigProvenance is one REVISION of one node's config: the overrides applied to
+// it, the checksum ("sha256:<hex>") of the config that resulted, and when. Fixture
+// names a mid-test config swap (config-<test-purpose>), empty for the initial
+// compose.
+//
+// Revisions accumulate. The word was already in this file's comments — "a fresh
+// config is a new revision" — while the writer replaced the node's entry, so a
+// swapNode erased the config the node had been composed with. What a run is asked
+// afterwards is "which config did node N have, and since when", and one entry with
+// no time answers neither half. A fresh compose clears the list; a swap appends.
 type ConfigProvenance struct {
 	Node      int      `json:"node"`
 	Fixture   string   `json:"fixture,omitempty"`
 	Overrides []string `json:"overrides,omitempty"`
 	Checksum  string   `json:"checksum"`
+	// At is when this revision was applied (RFC3339, UTC). The requirement asks
+	// for the node AND the time, and without it two revisions of one node's
+	// config cannot be ordered — which is the only question a swap makes anyone
+	// ask.
+	At string `json:"at,omitempty"`
 }
 
 // recordLaunchSet stores launch-argv overrides under a scope ("all", a role,
