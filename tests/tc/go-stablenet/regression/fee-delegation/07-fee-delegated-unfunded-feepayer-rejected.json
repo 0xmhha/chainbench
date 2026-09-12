@@ -61,7 +61,8 @@
       "key": "$senderKey",
       "on": "en1",
       "to": "0x00000000000000000000000000000000C0FFEE10",
-      "value": "1"
+      "value": "1",
+      "reason": "insufficient feePayer's funds"
     },
     {
       "expect": "txStatus",

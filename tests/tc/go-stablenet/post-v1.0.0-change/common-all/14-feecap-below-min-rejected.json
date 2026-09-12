@@ -37,7 +37,8 @@
       "maxFeePerGas": "1",
       "maxPriorityFeePerGas": "1",
       "to": "0x00000000000000000000000000000000C0FFEE0E",
-      "value": "1"
+      "value": "1",
+      "reason": "transaction underpriced"
     },
     {
       "compare": "GreaterOrEqual",
