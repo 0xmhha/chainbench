@@ -1,3 +1,7 @@
+// Package reportcmd owns reading a run BACK: the verdicts and evidence a session
+// recorded (report), and the node logs a run collected (log). It never composes
+// or touches a network — everything it reads is already on disk, which is what
+// lets it answer after the network is gone.
 package reportcmd
 
 import (

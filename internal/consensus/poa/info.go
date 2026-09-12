@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
 
 // EtcdState is what a wemix producer reports about its embedded etcd cluster.
@@ -93,10 +95,8 @@ func WaitEtcdCluster(ctx context.Context, exec Runner, binary, ipc string, timeo
 		if !time.Now().Before(deadline) {
 			break
 		}
-		select {
-		case <-ctx.Done():
-			return last, ctx.Err()
-		case <-time.After(poll):
+		if err := wait.Sleep(ctx, poll); err != nil {
+			return last, err
 		}
 	}
 	if lastErr != nil {

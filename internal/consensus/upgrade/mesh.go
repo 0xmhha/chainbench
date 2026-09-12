@@ -7,11 +7,25 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
+
+// endpointPoll is how often an endpoint is re-dialled while waiting for its RPC
+// to open. Named because the wait's responsiveness to cancellation is now part of
+// the contract, and a literal buried in a select does not read as a decision.
+const endpointPoll = 500 * time.Millisecond
 
 // WaitEndpointsReady polls each RPC endpoint until it answers (eth_blockNumber)
 // or the deadline passes. It is what a handoff waits on before
 // mesh wiring so admin_addPeer does not race the nodes' HTTP servers.
+//
+// The wait honours cancellation. It used to sleep with time.Sleep, which is the
+// one form of waiting a context cannot interrupt: once the caller gave up, this
+// kept dialling a dead endpoint for the rest of the budget — thirty seconds on the
+// handoff path — and the run's own cancellation was reported that much later, by
+// which time the reason it was cancelled had scrolled away. Every other polling
+// loop in this package already selected on ctx.Done(); this was the one that did
+// not.
 func WaitEndpointsReady(ctx context.Context, endpoints []string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for _, ep := range endpoints {
@@ -26,7 +40,9 @@ func WaitEndpointsReady(ctx context.Context, endpoints []string, timeout time.Du
 			if time.Now().After(deadline) {
 				return fmt.Errorf("endpoint %s not ready within %s", ep, timeout)
 			}
-			time.Sleep(500 * time.Millisecond)
+			if err := wait.Sleep(ctx, endpointPoll); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

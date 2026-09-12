@@ -1,3 +1,7 @@
+// Package txcmd owns submitting work to a chain and waiting for its outcome:
+// transactions (send, wait) and contracts (deploy, call). Its subject is the
+// transaction; a command whose subject is the account it moves value to belongs
+// in accountcmd.
 package txcmd
 
 import (

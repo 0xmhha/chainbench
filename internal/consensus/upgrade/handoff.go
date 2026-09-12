@@ -23,6 +23,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/process"
 	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
 
 // Timing of a live handoff.
@@ -753,10 +754,8 @@ func (h *Handoff) AwaitFork(ctx context.Context, ns node.NodeSet, timeout time.D
 				return h.confirmPostFork(ctx, c, forkBlock, last, hd, successors)
 			}
 		}
-		select {
-		case <-ctx.Done():
-			return "", ctx.Err()
-		case <-time.After(forkPoll):
+		if err := wait.Sleep(ctx, forkPoll); err != nil {
+			return "", err
 		}
 	}
 	return "", fmt.Errorf("upgrade: head stalled at %d, never reached %d (fork %d + %d blocks) within %s",

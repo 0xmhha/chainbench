@@ -1,3 +1,10 @@
+// Package upgradecmd owns moving a chain from one binary or one fork to another:
+// the wemix-to-wbft handoff (upgrade run) and a fork applied to a composed chain
+// (hardfork), with the genesis derivation both need.
+//
+// It is its own group because a handoff runs TWO binaries against one chain,
+// which no other command does — the assumption that a network has one binary is
+// what six defects in this path had in common.
 package upgradecmd
 
 import (

@@ -11,6 +11,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/filestore"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
 
 // ipcWait is how long a bootstrap action waits for the node's IPC socket. The
@@ -131,10 +132,8 @@ func WaitForIPCOn(ctx context.Context, files filestore.Store, ipc string, timeou
 		if time.Now().After(deadline) {
 			return fmt.Errorf("poa: the node's IPC socket never appeared at %s within %s", ipc, timeout)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(250 * time.Millisecond):
+		if err := wait.Sleep(ctx, 250*time.Millisecond); err != nil {
+			return err
 		}
 	}
 }
@@ -323,10 +322,8 @@ func joinOne(ctx context.Context, joinerRun Runner, joinerFiles filestore.Store,
 			}
 			return fmt.Errorf("still outside the cluster %s after asking %s to add it (cluster = %s)", etcdJoinWait, peer, cluster)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(2 * time.Second):
+		if err := wait.Sleep(ctx, 2*time.Second); err != nil {
+			return err
 		}
 	}
 }

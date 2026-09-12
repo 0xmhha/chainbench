@@ -57,7 +57,13 @@
 - **T5.5 wemix4 이관**(레거시 스위트 → DSL) — 대규모.
 - **Collector 심화(T3.3)** — ☑ 로컬 live tail(스캔→tail·부분줄 안전)·bp참여 집계(head producer·window prune)·fork/reorg 검출(높이별 hash 불일치)·**엔진 배선**(local/attach 이 `Bus` 설정 시 collection 실행→chainstate·로그를 obs 로 미러, teardown 시 정지)·**chainstate 세션 영속화**(`chainstate/chainstate.jsonl` — F10/F15 jsonl+obs 미러). ☐ 원격 SSH tail(사용자 SSH 환경 필요, T5.1 계열).
 - **실 원격 SSH 호스트 라이브 e2e**(RemoteFileSink+RemoteDriver) — SSH 대상 필요(사용자 환경).
-- ◐ **레거시 경로 정리** — 착수: 죽은 심볼 제거(`testkit.RunCase`)·레거시 패키지 signpost(testkit·testrun→engine+testspec)·**은퇴 계획 문서**([[legacy-retirement-plan]] = `docs/dev/archive/legacy-retirement-plan.md`: 매핑·순서·블로커·DSL 표현력 갭). **suite 이관 착수**: `tests/` Go-func 케이스는 repo 에 있어 DSL 포팅 가능(라이브만 바이너리 필요) — `onEach` 다중노드 어세션 수정 + 신규 빌트인(`blockAdvance` 헤드 전진·`sameBlockHash` 노드간 no-fork, `rpc.BlockByNumber` 기반) 추가로 **`tests/network` 3케이스 전부 DSL 포팅 완료**(`network-peers.json`·`network-health.json`). **`tests/anzeon` 착수**: read-shape 계열(adapter-code `codeAt NotEqual`, balanceOf/isAuthorized `call Regexp`)→`stablenet-system-contracts.json`, base fee 경계(`baseFee` 신규 빌트인, `rpc.BlockByNumber` baseFeePerGas)→`stablenet-gas-policy.json`, 하드포크 아티팩트(P-256 precompile `call`·GovMinter `codeAt`·chainId/blockNumber)→`stablenet-hardfork.json`, 가스 추정(`estimateGas`=`rpc.EstimateGas`)→`stablenet-estimate-gas.json`, token-metadata(`call`+`Contains` 심볼)→`stablenet-token-metadata.json` 포팅. **read-기반 anzeon 이관 완료**(시스템컨트랙트·getter·base fee·하드포크·estimate-gas·token-metadata). **잔여 anzeon 6범주(교차-call 비교·거버넌스 다단계·gasTip 조합·fee-cap tx·명시 nonce·WS)의 표현력 블로커는 2026-08-09 전부 해소** — `save`/`$ref` 바인딩+`read`(T4.2a)·`logs`(eth_getLogs)·`gasPrice`+범용 `rpcCall`·tx fee-cap/nonce 인자·`wsSubscribe`. 예제: `stablenet-token-invariants`·`governance-event-flow`·`gas-policy-derived`·`stablenet-fee-boundary`·`stablenet-nonce-ordering`·`ws-subscribe-heads`. **라이브 증명**: `TestEngine_Live_NewVocabulary`(실 gstable 4노드, GSTABLE_BIN). 남은 건 표현력이 아니라 **케이스별 이관 작업량**([[legacy-retirement-plan]] §4.3). `test`/MCP/upgrade 가 아직 레거시 사용 → 소비자 이관 전 제거 금지.
+- [x] **레거시 경로 정리 — 완료 (2026-09-12 실측).** 이 항목이 "소비자 이관 전 제거 금지" 로
+  끝나 있었는데, **제거가 이미 끝났다**: `internal/testkit`·`internal/testrun`·`internal/testspec`
+  세 디렉토리가 모두 없고, `RunCase` 는 프로덕션에서 참조되지 않으며, 은퇴 계획 문서는
+  `docs/dev/archive/legacy-retirement-plan.md` 로 보관됐다.
+  재확인: `for p in internal/testkit internal/testrun internal/testspec; do [ -d $p ] && echo "$p EXISTS"; done`
+  (아무것도 출력되지 않아야 한다) · `grep -rn "RunCase" internal/ cmd/ | grep -v _test`
+  **(원래 기록)** 착수: 죽은 심볼 제거(`testkit.RunCase`)·레거시 패키지 signpost(testkit·testrun→engine+testspec)·**은퇴 계획 문서**([[legacy-retirement-plan]] = `docs/dev/archive/legacy-retirement-plan.md`: 매핑·순서·블로커·DSL 표현력 갭). **suite 이관 착수**: `tests/` Go-func 케이스는 repo 에 있어 DSL 포팅 가능(라이브만 바이너리 필요) — `onEach` 다중노드 어세션 수정 + 신규 빌트인(`blockAdvance` 헤드 전진·`sameBlockHash` 노드간 no-fork, `rpc.BlockByNumber` 기반) 추가로 **`tests/network` 3케이스 전부 DSL 포팅 완료**(`network-peers.json`·`network-health.json`). **`tests/anzeon` 착수**: read-shape 계열(adapter-code `codeAt NotEqual`, balanceOf/isAuthorized `call Regexp`)→`stablenet-system-contracts.json`, base fee 경계(`baseFee` 신규 빌트인, `rpc.BlockByNumber` baseFeePerGas)→`stablenet-gas-policy.json`, 하드포크 아티팩트(P-256 precompile `call`·GovMinter `codeAt`·chainId/blockNumber)→`stablenet-hardfork.json`, 가스 추정(`estimateGas`=`rpc.EstimateGas`)→`stablenet-estimate-gas.json`, token-metadata(`call`+`Contains` 심볼)→`stablenet-token-metadata.json` 포팅. **read-기반 anzeon 이관 완료**(시스템컨트랙트·getter·base fee·하드포크·estimate-gas·token-metadata). **잔여 anzeon 6범주(교차-call 비교·거버넌스 다단계·gasTip 조합·fee-cap tx·명시 nonce·WS)의 표현력 블로커는 2026-08-09 전부 해소** — `save`/`$ref` 바인딩+`read`(T4.2a)·`logs`(eth_getLogs)·`gasPrice`+범용 `rpcCall`·tx fee-cap/nonce 인자·`wsSubscribe`. 예제: `stablenet-token-invariants`·`governance-event-flow`·`gas-policy-derived`·`stablenet-fee-boundary`·`stablenet-nonce-ordering`·`ws-subscribe-heads`. **라이브 증명**: `TestEngine_Live_NewVocabulary`(실 gstable 4노드, GSTABLE_BIN). 남은 건 표현력이 아니라 **케이스별 이관 작업량**([[legacy-retirement-plan]] §4.3). `test`/MCP/upgrade 가 아직 레거시 사용 → 소비자 이관 전 제거 금지.
 
 ---
 
@@ -1258,30 +1264,158 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 - [x] **WA6** [목적1·MCP] MCP run 이 세션 경로를 출력 안 해 리포트를 회수 못 한다(dataDir 없으면 임시 dir). spec 을 경로로 못 넘겨 env 참조 해석이 우회된다(`ReadSpecFiles` CLI 전용). 증거: `internal/mcp/run_tool.go:104,141-153`, `internal/app/workflow.go:115-120`. 방향: run 출력에 세션 root 를 싣고, spec 경로 입력을 받는다. **확인(2026-09-12): 완료.** `grep -n SessionRoot internal/mcp/run_tool.go`
 - [x] **WA7** [목적1·MCP] MCP run 이 테스트 실패를 tool error 로 안 낸다(항상 nil). CLI 는 exit 1/2 를 낸다. 증거: `internal/mcp/run_tool.go:141-153`, `cmd/chainbench/suitecmd/run.go:237-245`. 방향: `Summary.Failed()` 이면 tool error 를 낸다. **확인(2026-09-12): 완료.** `grep -n "Summary.Fail > 0" internal/mcp/run_tool.go` — 실패·blocked 면 tool error 를 낸다
 - [x] **WA8** [정확성] `do` 의 `expect`(revert/reject/fail) 오타가 검증 안 돼, 오타 나면 "성공해야 함"으로 조용히 떨어진다. 부정 케이스가 거짓 통과한다. 증거: `internal/testhelper/builtins.go:432,446`, `fault.go:63`. 방향: expect 어휘를 오프라인 검증에 넣는다. **확인(2026-09-12): 완료.** `grep -n expectAdjuncts internal/dsl/spec_v2.go` — 어휘 밖 값은 거부된다
-- ◐ **WA9** [정확성] node-table `role:pn` 이 아직 mesh 로 배선된다. proxied 자동 선택이 count-form 에만 있다(`internal/testengine/compose.go:175-177`). node-table 형식은 `inlineTopologyOf` 경로라 `proxies=0` 으로 mesh 가 된다. en 이 bp 를 직접 본다. 방향: node-table 에 pn 이 있으면 proxied 를 선택하고, `Peering.Validate` 가 mesh+pn 을 거절하게 한다.
-- ◐ **WA10** [정확성·증적] attach 경로(`app.AttachRun`)가 readiness 게이트·실패증적·Precheck 를 배선 안 한다. MCP `run --attach` 로 돌면 E6·E8 이 무력화되고 assertion 오류 메시지가 사라진다. 증거: `internal/app/workflow.go:104-108,112` vs `internal/testengine/suite.go:261,330-338`. 방향: AttachConfig 에 PreSpec·OnFail·Control·LogReader·Precheck 를 배선한다.
-- ◐ **WA11** [증적] artifacts.json 매니페스트를 쓰는 프로덕션 코드가 없다. `Recorder` 인터페이스에 Artifacts 통로가 없어 리포트 추적성 필드가 항상 빈다. 증거: `internal/dsl/interp/requirements.go:46-55`, `internal/core/session/record_impl.go:62-67`, `internal/core/report/report.go:17-24`. 방향: Recorder 에 Artifacts 를 노출하고 compose 산출물을 기록한다.
-- ◐ **WA12** [증적·경미] pre-action 실패·FAIL 이 status.json 에 reason 을 안 남긴다. 증거: `internal/dsl/interp/run.go:28-33,50,61-72`. 방향: `rec.Reason(...)` 를 부른다.
+- [x] **WA9** [정확성] node-table `role:pn` 이 아직 mesh 로 배선된다. proxied 자동 선택이 count-form 에만 있다(`internal/testengine/compose.go:175-177`). node-table 형식은 `inlineTopologyOf` 경로라 `proxies=0` 으로 mesh 가 된다. en 이 bp 를 직접 본다. 방향: node-table 에 pn 이 있으면 proxied 를 선택하고, `Peering.Validate` 가 mesh+pn 을 거절하게 한다.
+  - **해소 확인 (2026-09-12 실측).** node-table 경로도 덮인다 —
+    `compose.go:237` 이 `proxies > 0 || topologyHasProxy(inlineTopo)` 로 peering 을 proxied 로
+    만들고, `topologyHasProxy`(`compose.go:359-372`)가 node-table 의 `RolePN` 을 본다. 즉 pn 을
+    **개수로 쓰든 역할로 쓰든 같은 계층**이 된다.
+    재확인: `grep -n "topologyHasProxy" internal/testengine/compose.go`
+- [x] **WA10** [정확성·증적] attach 경로(`app.AttachRun`)가 readiness 게이트·실패증적·Precheck 를 배선 안 한다. MCP `run --attach` 로 돌면 E6·E8 이 무력화되고 assertion 오류 메시지가 사라진다. 증거: `internal/app/workflow.go:104-108,112` vs `internal/testengine/suite.go:261,330-338`. 방향: AttachConfig 에 PreSpec·OnFail·Control·LogReader·Precheck 를 배선한다.
+  - **해소 확인 (2026-09-12 실측).** compose 와 attach 가 **같은 꼬리를 공유한다** —
+    `readWorkspaceComposed` 가 `suite.go:430`(attach)와 `505`(compose) 양쪽에서 불리고,
+    그 안에서 엔드포인트·능력·노드표를 읽고 `gateReady` 로 게이트한다. 함수 주석이 WA10 을
+    인용한다. 재확인: `grep -n "readWorkspaceComposed" internal/testengine/suite.go`
+- [x] **WA11** [증적] artifacts.json 매니페스트를 쓰는 프로덕션 코드가 없다. `Recorder` 인터페이스에 Artifacts 통로가 없어 리포트 추적성 필드가 항상 빈다. 증거: `internal/dsl/interp/requirements.go:46-55`, `internal/core/session/record_impl.go:62-67`, `internal/core/report/report.go:17-24`. 방향: Recorder 에 Artifacts 를 노출하고 compose 산출물을 기록한다.
+  - **해소 확인 (2026-09-12 실측).** 프로덕션 writer 가 있다 —
+    `engine_impl.go:85-90` 의 `recordArtifacts` 가 `rec.Artifacts` 를 부르고, 그 입력
+    `Deps.Artifacts` 는 **compose**(`suite.go:372`, `composedArtifacts(net)`)와
+    **attach**(`attach.go:205`) 양쪽에서 채워진다. 즉 추적성 필드는 더 이상 항상 비지 않는다.
+    재확인: `grep -rn "\.Artifacts(\|Artifacts:" internal/testengine/ | grep -v _test`
+      — 호출부 1개와 채우는 곳 2개(compose·attach)가 함께 나와야 한다.
+- [x] **WA12** [증적·경미] pre-action 실패·FAIL 이 status.json 에 reason 을 안 남긴다. 증거: `internal/dsl/interp/run.go:28-33,50,61-72`. 방향: `rec.Reason(...)` 를 부른다.
+  - **해소 확인 (2026-09-12 실측).** `rec.Reason` 이 세 자리에 있다 —
+    pre-action 실패(`interp/run.go:40`), 스텝 실패(`:64`), 단정 실패(`:81`). 라이브 실행의
+    `status.json` 에서 `"reason": "2 assertion(s) failed"` 와
+    `"step 3 (sendTx) failed: …"` 를 직접 확인했다.
+    재확인: `grep -n "rec.Reason" internal/dsl/interp/run.go`
 
 ### B. 문법 — 선언됐으나 죽은 배선
 
 - [x] **WA13** [문법] `waitFor` 의 source 가 오프라인 미검증(read 는 검증). 오타가 라이브에서야 실패한다(스펙 20건 사용). 증거: `internal/dsl/interp/resolve.go:41`, `internal/testhelper/read.go:234-237`. 방향: waitFor source 도 오프라인 검증에 넣는다. **확인(2026-09-12): 완료.** 오타 source 를 담은 스펙에 `chainbench validate` → `UNRESOLVED: source:<오타>`. read·waitFor 둘 다 걸린다
 - [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn)이 라우팅에 미적용. 스텝에 `on` 이 없으면 조용히 nodes[0] 로 간다. 증거: `internal/dsl/spec_v2.go:309`, `internal/dsl/interp/run.go:205-224`. 방향: resolveOn 이 DefaultOn 을 기본값으로 읽게 한다. **확인(2026-09-12): 완료.** `grep -n applyDefaultOn internal/dsl/interp/run.go` + `TestRun_DefaultOnRoutesStatements`. 라이브 스펙은 `tests/tc/go-wemix/vocabulary/01-*`
-- ◐ **WA15** [문법] 상위 `timeouts` 맵이 아무 데서도 안 읽힌다. 증거: `internal/dsl/spec.go:36`, 소비처는 `migrate.go:91` 뿐. 방향: 인터프리터가 액션 타임아웃 기본값으로 소비하게 한다.
+- [x] **WA15** [문법] 상위 `timeouts` 맵이 아무 데서도 안 읽힌다. 증거: `internal/dsl/spec.go:36`, 소비처는 `migrate.go:91` 뿐. 방향: 인터프리터가 액션 타임아웃 기본값으로 소비하게 한다.
+  - **완료 (2026-09-12). 그리고 제가 어제 적은 판단이 틀렸다.**
+    "런타임 기본값으로는 안 쓰인다" 고 썼는데 **소비자가 있다** — `interp/run.go:30` 이
+    `caseTimeout(s.Timeouts)` 으로 **케이스 전체를 context 데드라인으로 묶는다**
+    (`run.go:253-265`, 단위 테스트 `run_test.go:102`). 제가 `spec_v2.go` 와 `testhelper` 만
+    grep 하고 `interp` 를 안 봤다. **두 선택지(소비 / 철회)는 애초에 필요하지 않았다.**
+  - **남아 있던 진짜 느슨함은 키였다.** 값은 duration 으로 검사하는데 **이름은 검사하지
+    않았다** — `timeouts.step` 은 유효한 duration 으로 통과한 뒤 **아무것도 묶지 않는다.**
+    예산을 정한 것처럼 보이는데 예산이 없다. 읽히는 것은 `case`(별칭 `test`) 하나다.
+  - **한 것**: 어휘 밖 이름을 파싱 시점에 거부하고(`timeoutKeys`), 스키마에도
+    `propertyNames.enum` 으로 같은 두 이름을 못 박고, **둘이 어긋나면 실패하는 테스트**를
+    더했다(§WA17 의 이음매와 같은 방식 — 목록을 복사하지 않고 `timeoutKeys` 와 직접 비교).
+  - 변이 3건: 키 검사 제거(이 변경 직전 상태) · 파서 어휘만 넓히기(스키마와 불일치) ·
+    스키마 제약 제거. 셋 다 실패 확인. 값 검사를 이름 검사가 가리지 않는지도 테스트로 고정했다.
+  - **절반 해소 (2026-09-12 실측). 남은 것은 판단이다.**
+    "아무 데서도 안 읽힌다" 는 더 이상 맞지 않다 — `spec_v2.go:380-384` 가 각 값을
+    `time.ParseDuration` 으로 검증하고 파싱 불가하면 **파싱 시점에 거부**한다. 그래서 오타가
+    조용히 무시되는 절반은 사라졌다.
+    - **여전히 런타임 기본값으로는 쓰이지 않는다.** 값이 검증만 되고 아무 액션의 타임아웃도
+      정하지 않는다. 이대로 두면 "선언은 받는데 효과가 없는 어휘" 이며, 이 저장소가
+      `WA24`(죽은 능력)에서 걷어내던 바로 그 모양이다.
+    - **선택지 둘.** (가) 인터프리터가 액션 타임아웃 기본값으로 소비한다 — 스펙이 반복해서
+      쓰는 `timeout` 을 한 곳에 모을 수 있지만, 액션별 기본값과의 우선순위를 정해야 하고
+      기존 스펙의 동작이 바뀔 수 있다. (나) 어휘에서 걷는다 — 값이 없으면 싸고 정직하지만,
+      스펙 작성자가 반복을 계속 진다.
+    - 재확인: `grep -n "Timeouts" internal/dsl/spec_v2.go internal/testhelper/*.go | grep -v _test`
 - [x] **WA16** [문법] `InDelta` 비교자가 DSL 에서 도달 불가(디스패치 맵에 없음). 증거: `internal/dsl/assert/assert.go:97,202-219`. 방향: funcs 맵에 등록하거나 인터프리터에서 호출한다. **확인(2026-09-12): 완료.** `grep -rn InDelta internal/testhelper/` — testhelper 비교자 경유로 도달한다
-- ◐ **WA17** [문법] 임베드 `SchemaV2` 가 검증에 미사용이고 파서와 이미 드리프트(`onEach` 스키마는 string, 코드는 array). 증거: `internal/dsl/spec_v2.go:18`, `internal/dsl/schema/v2.schema.json:290,331` vs `run.go:212`. 방향: 스키마를 실제 검증에 쓰거나 파서와 일치시킨다.
-- ◐ **WA18** [문법·경미] `onEach` 가 do-스텝 스키마에 있으나 액션 라우팅이 소비 안 한다(어서션만 소비). 증거: `v2.schema.json:290`, `builtins.go:543`. 방향: do-스텝 onEach 를 소비하거나 스키마에서 뺀다.
+- [x] **WA17 — 완료 (2026-09-12). 드리프트 주장은 낡았고, 진짜 구멍은 다른 자리였다.**
+  - **낡은 절반**: "`onEach` 스키마는 string, 코드는 array" 는 더 이상 맞지 않다. 스키마의
+    `doStatement.onEach`·`expectStatement.onEach` 는 **array of string** 이고 코드는
+    `args["onEach"].([]any)` 로 읽는다 — 일치한다. 그리고 `envSpec`·`caseSpec` 의 필드 이름은
+    Go 구조체의 json 태그와 **양방향으로 정확히 같다**(실측: 차집합 양쪽 다 공집합).
+    이미 지키는 테스트가 있었다 — `TestSchemaV2MatchesParsedFields`·`…ParsedTypes`·
+    `…StatementOnEachIsArray`.
+  - **진짜 구멍**: `doStatement.expect` 가 **제약 없는 string** 이었다. 파서는 네 값
+    (`receipt`·`revert`·`reject`·`fail`, `dsl.expectAdjuncts`)만 받고 그 밖의 값을 거부하는데,
+    스키마는 아무 문자열이나 받았다. **WA8 이 파서에서 막은 구멍이 문서에는 그대로 남아
+    있었다** — 이 파일로 검증하는 쪽(에디터·외부 도구·`$schema` 참조)은 오타를 유효하다고 말한다.
+    오타가 통과하면 기본값 "성공해야 한다" 로 흘러 **부정 케이스가 조용히 긍정이 된다.**
+  - **한 것**: 스키마에 `enum` 을 더해 파서와 맞췄고, 그 둘이 어긋나면 실패하는 테스트를 뒀다
+    (`internal/dsl/schemasync_test.go`). 목록을 복사하지 않고 `expectAdjuncts` 와 직접 비교한다 —
+    복사본은 다시 어긋난다. 더 느슨해질 수 있는 다른 두 축(`additionalProperties:false`,
+    `required` 집합)도 같은 테스트가 잡는다.
+  - **중복은 만들지 않았다.** 필드 이름·타입·`onEach` 는 이미 지키는 테스트가 있어서 다시 쓰지
+    않았고, 그 테스트들이 덮지 않는 것만 더했다. 같은 검사를 두 번 구현하면 둘이 어긋난다.
+  - **검증을 스키마로 돌리지는 않았다.** JSON-schema 의존성을 들여 파서의 집행을 복제하는
+    값이 없다. 임베드 주석이 말하는 역할("파서·문서·외부 도구가 공유하는 필드 수준 정본")은
+    그대로 두고, **그 말이 참이 되도록 이음매를 테스트로 고정**했다.
+  - 변이 4건: enum 제거(이 변경 직전 상태) · enum 이 파서와 불일치 · `additionalProperties` 완화 ·
+    `required` 에서 한 항목 제거. 각각 실패 확인.
+  - 작성자 문서에도 네 값과 `reject` 의 `reason` 규율을 적었다(`docs/guide/dsl-authoring.md`) —
+    같은 사실이 세 곳(파서·스키마·가이드)에 필요하고, 가이드가 비어 있었다.
+  **(원래 진단)** 임베드 `SchemaV2` 가 검증에 미사용이고 파서와 이미 드리프트(`onEach` 스키마는 string, 코드는 array). 증거: `internal/dsl/spec_v2.go:18`, `internal/dsl/schema/v2.schema.json:290,331` vs `run.go:212`. 방향: 스키마를 실제 검증에 쓰거나 파서와 일치시킨다.
+- [x] **WA18** [문법·경미] `onEach` 가 do-스텝 스키마에 있으나 액션 라우팅이 소비 안 한다(어서션만 소비). 증거: `v2.schema.json:290`, `builtins.go:543`. 방향: do-스텝 onEach 를 소비하거나 스키마에서 뺀다.
+  - **해소 확인 (2026-09-12 실측).** do-스텝도 소비한다 — `interp/run.go:152-191` 이
+    `onEach` 를 팬아웃해 선택된 노드마다 액션을 한 번씩 돌리고(각 호출은 `on` 한 개로
+    바뀌어 `selectorTarget` 가 그 노드로 라우팅한다), 주석이 WA18 을 인용한다.
+    재확인: `grep -n "onEach" internal/dsl/interp/run.go`
 
 ### C. compose — DSL→체인 배선 누락
 
 - [x] **WA19** [compose] `env.target` 이 배치를 안 하고 fingerprint 만 바꾼다(오배선). 증거: `spec_v2.go:308`, `compose.go:158-170`(Target 미설정), `verbs_up.go:45`. 방향: compose 가 Target 을 NetUpIn 에 배선하거나, env.target 을 문법에서 뺀다. **확인(2026-09-12): 완료.** `grep -n "up.Target = tgt" internal/testengine/compose.go` + `TestCompositionOf_EnvTargetPlaces`
-- ◐ **WA20** [compose] upgrade(handoff) env 가 같은 env 의 hardforks/topology/launch/config 를 무시한다. 증거: `compose.go:100-116`. 방향: 핸드오프 경로가 이 필드들을 이어받게 한다.
-- ◐ **WA21** [compose·역방향] DSL 로 표현 못 하는 chainsetup 기능: manifest/template(`verbs_up.go:42-43`), blueprint(`verbs_up.go:59`), keys-validator-subset(`verbs_steps.go:89-90`), chainID/networkID 고정, deploy-only stage(`verbs_up.go:27`). 방향: 필요한 것을 EnvV2 문법에 더한다.
-- ◐ **WA22** [compose·게이팅] `env.capabilities` 가 케이스에 `requires` 가 있으면 통째로 버려진다. 증거: `spec_v2.go:312-314`. 방향: 두 목록을 병합한다.
+- [x] **WA20** [compose] upgrade(handoff) env 가 같은 env 의 hardforks/topology/launch/config 를 무시한다. 증거: `compose.go:100-116`. 방향: 핸드오프 경로가 이 필드들을 이어받게 한다.
+  - **해소 확인 (2026-09-12 실측) — 다르게 해결됐다.** 무시하는 것이 아니라 **소리 내어
+    거절한다**: `compose.go:147-149` 가 핸드오프 env 에 hardforks·topology·launch·config 가
+    있으면 오류로 나간다("a handoff composes from its profile and template; …"). 선언의 절반을
+    조용히 버리는 것보다 거절이 낫다는 판단이며, 이 항목이 요구한 것을 만족한다.
+    재확인: `grep -n "a handoff composes from its profile" internal/testengine/compose.go`
+- [x] **WA21** [compose·역방향] DSL 로 표현 못 하는 chainsetup 기능: manifest/template(`verbs_up.go:42-43`), blueprint(`verbs_up.go:59`), keys-validator-subset(`verbs_steps.go:89-90`), chainID/networkID 고정, deploy-only stage(`verbs_up.go:27`). 방향: 필요한 것을 EnvV2 문법에 더한다.
+  - **완료 (2026-09-12 실측). 5개 중 3개는 이미 표현 가능하고, 1개는 다른 경로로 되고,
+    1개는 철회한다.**
+    - `manifest`·`genesisTemplate` → **EnvV2 에 있다.**
+    - `blueprint` → **EnvV2 에 있다.**
+    - keys-validator-subset → **`keys.validators` 로 있다**(`KeySourceV2` 의 필드는
+      `source`·`ref`·`validators`·`bootnode`).
+    - **chainID/networkID 고정 → genesis 오버레이로 된다.** `genesis.set` / `genesis.overlay`
+      가 `spec.Chain.GenesisOverlay` 로 그대로 실려 genesis config 에 적용되고,
+      `config.chainId` 는 그 config 안에 있다. 같은 경로로 `config.applepieBlock: 0` 이
+      구성된 genesis 에 들어가는 것을 F6 작업에서 실측했다. `--chain-id`/`--network-id` 는
+      **실행 오버라이드**로 남는다 — 선언이 아니라 그 실행에 대한 지시라 자리가 맞다.
+    - **deploy-only stage → 철회한다.** DSL 케이스는 **기동되지 않은 망에 단정할 수 없다** —
+      RPC 가 없으면 읽을 것이 없다. 구성 산출물만 보는 케이스를 위해 문법을 넓히는 것은
+      소비자 없는 표현력이고, 이 저장소가 두 번 되돌린 모양이다(`Transport` 타입, 객체형 참조).
+      필요해지면 요구와 함께 다시 연다.
+    - 재확인: `python3 -c "import re;src=open('internal/dsl/spec_v2.go').read();print(re.findall(r'json:\"([^\",]+)',re.search(r'type EnvV2 struct \{(.*?)\n\}',src,re.S).group(1)))"`
+- [x] **WA22** [compose·게이팅] `env.capabilities` 가 케이스에 `requires` 가 있으면 통째로 버려진다. 증거: `spec_v2.go:312-314`. 방향: 두 목록을 병합한다.
+  - **해소 확인 (2026-09-12 실측).** 버리지 않고 **합집합**이다 —
+    `spec_v2.go:398-412` 가 케이스의 `requires` 를 먼저 넣고 env 의 `capabilities` 중
+    중복 아닌 것을 덧붙인다. 주석이 그 의도를 적고 있다.
+    재확인: `grep -n -A14 "The env.s capabilities and the case" internal/dsl/spec_v2.go`
 
 ### D. 커버리지·문서
 
-- ◐ **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
+- [x] **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
+  - **완료 (2026-09-12). 양쪽 절반을 다른 방법으로 덮었다.**
+    - **compose 쪽**은 이미 있었다 — `runsuite_gate_test.go` 가 **기동 전 게이트의 거절
+      15개**를 바이너리 없이 태운다. 그 거절들이 되돌릴 수 없는 것을 막는 자리다.
+    - **run→report 쪽을 이번에 더했다** — `runtoreport_internal_test.go`. `NewAttachEngine`
+      은 바이너리도 preset 도 필요 없고 **도달 가능한 RPC 만** 필요하므로, `httptest` 로
+      **JSON-RPC 서버를 세워** 스펙을 판정과 리포트까지 태운다.
+    - **스텁은 하네스가 아니라 체인이다. 이 구분이 이 테스트의 존재 이유다.** 하네스를
+      스텁하면 RPC 에 아무도 답하지 않아 게이트와 단정이 **코드와 무관한 이유로** 통과·실패한다 —
+      이 작업 앞부분의 스텁 라이프사이클 테스트가 통과하면서 아무것도 증명하지 못한 그 자리다.
+      루프백에 진짜 서버를 세우면 인터프리터·단정·레코더가 **자기 일을 실제로** 한다.
+    - 단정하는 것: 통과 스펙이 `session.json` 에 verdict 와 `assert.json` 에 **실제 수치**를
+      남긴다 · 실패 스펙이 `status.json` 에 **이유**를 남긴다(WA12 가 말한 그것) · 체인이
+      답하지 못한 메서드는 **패닉도 조용한 통과도 아니고 기록된 판정**이 된다.
+    - **계약 하나를 잘못 알고 있었다.** 처음에 "실패 스펙이면 `Run` 이 에러를 돌려야 한다" 고
+      단정했는데 아니다 — **실패한 테스트는 결과이고 엔진 에러가 아니다.** 엔진은 기록하고
+      표면이 판단한다(CLI 는 exit code, MCP 는 tool error — WA7). 그 경계를 별도 테스트로
+      못 박았다. 둘을 합치면 **실패한 스위트와 망가진 하네스를 구별할 수 없다.**
+    - 변이 3건: 이유 기록 제거 · 실패 단정이 verdict 를 못 뒤집게 하기 · `assert.json` 기록
+      제거. 셋 다 실패 확인. **첫 M2 는 메시지의 숫자만 바꿔 통과했다** — verdict 자체를
+      건드리도록 다시 했다.
+  - **절반 해소 (2026-09-12 실측).** "전부 live-gated" 는 더 이상 맞지 않다 —
+    `RunSuite` 를 구동하는 테스트 6개 중 `runsuite_gate_test.go` 는 **라이브 게이트가 없다**.
+    남은 5개(`suite_live_test.go`·`vocabulary_live_test.go`·`accountlabel_live_test.go`·
+    `devaccount_live_test.go`·`wemix_live_test.go`)는 여전히 바이너리를 요구한다.
+    - 남은 것은 **compose→run→report 전 과정**을 바이너리 없이 한 번 지나가는 테스트다.
+      스텁으로 하면 이 세션이 이미 밟은 함정이 있다 — 스텁은 RPC 에 답하지 않으므로 게이트가
+      엉뚱한 이유로 통과·실패하고, 테스트가 통과하면서 아무것도 증명하지 않는다.
+      그래서 무엇을 스텁하고 무엇을 진짜로 둘지가 이 작업의 실체다.
+    - 재확인: `grep -rln "RunSuite(" internal/testengine/*_test.go`
   - **재측정 (2026-09-12).** 방향을 짐작하지 말고 **재고 골랐다**: live 테스트는 환경변수 없이는
     skip 되므로 평소 `go test -cover` 가 곧 CI 커버리지다. 전체 64.6%.
     `TestEngine_GeneratesReport`(run→report)와 `TestAttachEngine_RunAgainstMockRPC`(attach)는
@@ -1428,14 +1562,21 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
     - 거부 3건(없는 프로파일·없는 from-genesis·미등록 to-chain)도 덮었다.
     - `internal/app` 31.7% → 34.3%. **판정 밀도 순위표의 상위 6개를 다 지났다** — 남은 것은
       라이브가 필요한 `UpgradeRun`(23) 하나다.
-- ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
+- [x] **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
+  - **완료 (2026-09-12 실측). `hooks.onFail` 은 실행까지 테스트돼 있다.**
+    `interp/run.go:63`(do 실패)과 `:84`(단정 실패) 두 경로가 `runRecorded(s.OnFailActions…)`
+    를 부르고, `interp/run_test.go` 의 두 테스트가 **훅이 돌았는지를 단정한다**
+    (`onFailRan`, :308 과 :347 — "onFail diagnostics must run after a do failure").
+  - 즉 "통과하는 tc 케이스로는 도달할 수 없다" 는 맞지만, 그것은 **인터프리터 레벨에서
+    덮인 이유**이고 열린 공백이 아니었다. 스위트에 일부러 실패하는 케이스를 두지 않아도 된다.
+    재확인: `grep -n "onFailRan" internal/dsl/interp/run_test.go`
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
   - **훅도 같은 실행에서 돌았다.** `hooks.pre`·`hooks.post` 를 얹었고 세션 기록의 `postaction.json` 에 `{"Name":"waitBlock","OK":true}` 로 남는다. 첫 단정의 provenance 에 `"on": "node3"` 이 찍히는 것이 기본 타깃이 적용된 증거다.
   - **`boot` 는 죽은 어휘가 아니다.** `core/node/node.go:50` 이 **RoleBP 의 레거시 철자**라고 적어 두었다 — 별칭이지 쓰이지 않는 능력이 아니다. 목록에서 성격이 잘못 분류돼 있었다.
   - **남은 것 둘, 각각 이유가 다르다**: `hooks.onFail` 은 **실패할 때만** 돈다 — 통과하는 tc 케이스로는 도달할 수 없고(스위트에 일부러 실패하는 케이스를 둘 수 없다), 낮춤(lowering)은 `spec_v2_test.go` 가 이미 고정한다. 실행까지 보려면 인터프리터 레벨 테스트가 맞다. `placement`(= `env.target`)는 **WA19 와 같은 항목**이다 — 파싱은 되는데 배치를 하지 않고 fingerprint 만 바꾼다. 어휘 문제가 아니라 오배선이라 WA19 로 남긴다.
 - [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn) 라우팅 — **이미 고쳐져 있다 (2026-09-12 확인).** `interp/run.go:57` 이 매 statement 마다 `applyDefaultOn` 을 부르고, 명시적 `on`/`onEach` 가 있으면 비켜난다. 인터프리터 테스트(`TestRun_DefaultOnRoutesStatements`)가 WA14 를 지목해 고정하고 있다. 이번에 라이브 스펙까지 붙였다(위 WA24 참고).
-- ◐ **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
+- [x] **WA25** [커버리지] go-wemix(5건)·go-wbft(6건) 얕음. **해소 — 아래 §1p 의 `WA25. go-wemix·go-wbft 커버리지` 항목이 정본이다**(각각 9건·15건, 2026-09-11). 이 줄은 §1o 의 원본 표시이며 닫힌 것을 부분으로 보이고 있었다. **proxied 라우팅 스펙은 생겼다 (2026-09-11)** — `tests/tc/go-wbft/network/01-wbft-proxied-routing.json`. peer 수가 그 그래프의 서명이다: en1=1 · pn1=3 · bp1=bp2=2, 라이브 실측이 정확히 일치했다. **판별력도 확인**했다 — 같은 docker 에서 pn 없는 4노드 mesh 를 올리면 en1 이 3 을 보므로 `en1 == 1` 은 mesh 를 실제로 구분한다(공허한 검사가 아니다). 남은 것은 두 체인의 tx·fault·거버넌스 케이스 확충이다. 참고: **poa(go-wemix) 는 pn 을 거부**하므로(패밀리에 프록시 계층이 없다) proxied 라우팅 검증은 wbft 계열에만 성립한다.
 - [x] **WA26** [문서] SPECS.md 가 없어진 `internal/testspec` 를 7곳 참조(드리프트). 증거: `tests/tc/SPECS.md:123,136,155,159,336,380`. 방향: `internal/testhelper`/`internal/testengine` 로 갱신한다. (2026-09-08 추가된 `docs/guide/dsl-authoring.md` 로 일부 해소 가능.) **확인(2026-09-12): 완료.** `grep -c internal/testspec tests/tc/SPECS.md` == 0
 
 
@@ -1454,8 +1595,15 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
 
 ### 남은 작업
 
-- ◐ **C. metric 수집 인프라 (신규 — WA24 metric 이 드러냄)**. **코드 경로는 열렸다
-  (2026-09-11), 라이브 검증만 남았다.** 진단이 셋 중 하나 틀렸다 — ②수집 경로는 이미
+- [x] **C. metric 수집 인프라 — 완료 (2026-09-12 실측).** 머리글이 "라이브 검증만 남았다" 로
+  남아 있었지만 본문이 이미 라이브 통과를 적고 있고(15대 docker, `chain_head_block=3`),
+  라이브가 더 찾은 둘도 고쳐져 있다: `env/docker/gen-env.sh` 가 metrics 포트를
+  퍼블리시하고(`METRICS_PUB_BASE`, 기본 16060) localmap 에 `6060: 1606N` 이 들어가며,
+  경로는 `collector.MetricsURLOn` 이 붙인다(주소만 해석하던 `HTTPEndpoint` 와 분리). 되살린
+  스펙도 자리에 있다(`tests/tc/go-stablenet/vocabulary/03-metric-head-block.json`).
+  재확인: `grep -n "METRICS_PUB_BASE" env/docker/gen-env.sh` ·
+  `grep -n "func MetricsURLOn" internal/core/collector/metrics.go`
+  **(원래 기록)** 코드 경로는 열렸다 (2026-09-11), 라이브 검증만 남았다. 진단이 셋 중 하나 틀렸다 — ②수집 경로는 이미
   있었다(`collector.ScrapeMetrics`). 실제로 막던 것과 처리:
   - **바인드 주소**: `metricsHost` 기본값이 `127.0.0.1` 이라 노드 자기 기계에서만 닿았다.
     HTTP 와 같은 `0.0.0.0` 으로 맞췄다. 좁히려면 `metricsHost` 노브를 노드별로 준다.
@@ -1616,7 +1764,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 | 묶음 | 담긴 항목 | 왜 한 묶음인가 | 전제 |
 |---|---|---|---|
-| **G-A. 커버리지** — ☑ 완료 (2026-09-11) | WA25 ☑ · B 잔여(체인별 거버넌스) ◐ · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
+| **G-A. 커버리지** — ☑ 완료 (2026-09-12) | WA25 ☑ · B 잔여(체인별 거버넌스) ☑(2026-09-12: 실제 ABI `registerContract` + reject 이유 못 박기까지) · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
 | **G-B. 증적** — ☑ 완료 (2026-09-11) | L1 ☑(원격 로그 truncate 수정) · 통합 report ☑(`report --all`) · 후보·반영 완전 분리 ☑(표적 정지를 증명) | 셋 다 "실행이 무엇을 남기는가" 다 | 없음 |
 | **G-C. 대상 경계 잔여** — ☑ 완료 (2026-09-12) | L2 ☑(전송까지 제거) · `binaryAliases` ☑(객체형 참조는 철회) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
 | **G-D. 구조 정리** — ☑ 완료 (2026-09-12) | validatorset ☑(패밀리가 자기 지식을 소유) · health→inspector ☑ 철회(공통 기반 없음, 래칫으로 고정) | 둘 다 소유 모듈 결정이고 소비자가 적다 | 없음 |
@@ -2004,6 +2152,95 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 
 ### D2. 코드 건강도 검토에서 나온 것 — **다섯 항목 완료 (2026-09-11)**
 
+**추가 정리 (2026-09-12).** 남아 있던 넷을 다시 재고 둘을 처리했다. 하나는 **제 측정이
+틀렸고**, 하나는 판단해서 손대지 않기로 했다.
+
+- [x] **package doc 공백 — 해소. 다만 14개가 아니라 9개였다.** 제가 `^// Package ` 만 세어서
+  `main` 패키지 5개(`cmd/chainbench`·`chainbench-dashboard`·`chainbench-mcp`,
+  `scripts/inventory/` 둘)를 공백으로 잡았는데, **main 패키지의 올바른 형식은 `// Command X`**
+  이고 다섯 개 전부 이미 갖고 있었다. 실제 공백은 `cmd/chainbench/*cmd` 9개였다.
+  - **그 9개는 채울 값이 있었다** — 명령 묶음의 경계가 자명하지 않다. 왜 `clean`·`verify` 가
+    `lifecyclecmd` 이고 `show`·`status` 는 `chaincmd` 인지, `faucet` 이 왜 `txcmd` 가 아니라
+    `accountcmd` 인지 같은 것이다. 각 doc 이 **주체가 무엇인가**로 그 경계를 적는다
+    (composition 이냐 running network 냐, transaction 이냐 account 냐).
+  - 재확인: `for d in $(go list ./... | sed 's|github.com/0xmhha/chainbench/||'); do [ -d "$d" ] && { grep -lqE "^// (Package|Command) " $d/*.go 2>/dev/null || echo $d; }; done`
+    — 아무것도 출력되지 않아야 한다. **`// Command` 를 함께 받는 것이 핵심이다.**
+- [x] **`internal/chains/stablenet` 테스트 없음 — 해소. 그리고 없던 이음매를 찾았다.**
+  이 패키지는 `caps.jsonl` 로 능력 10개를 **선언**하고 `init()` 에서 핸들러를 **따로** 등록한다.
+  `registry.All`/`For` 는 **노출된 것만**(핸들러나 flat tool 이 있는 것) 돌려주므로, jsonl 에
+  항목을 더하고 핸들러를 안 쓰면 **아무 데서도 오류가 아니다** — 파일은 있다고 말하는데
+  호출자는 없다고 듣는다. 지금은 10 = 10 으로 맞지만 붙잡는 것이 없었다.
+  - **반대 방향은 쓸 수 없다는 것을 변이로 배웠다.** 처음에 "선언 없는 핸들러" 도 단정했는데,
+    `For()` 가 **카탈로그를 순회**하므로 jsonl 한 줄을 지우면 양쪽에서 동시에 사라져 **테스트가
+    통과했다.** 제거하려던 바로 그 모양(공허한 단정)을 제가 만든 것이라 지우고, **왜 쓸 수
+    없는지**를 파일에 적었다(핸들러 맵은 private 이고 lister 가 없다). 그 방향의 심각도도 낮다 —
+    고아 핸들러는 도달 불가일 뿐 틀리지 않는다. 그래서 core 에 lister 를 더하지 않았다.
+- ☑ **폴링 루프 — 결함 하나를 고치고, 제 측정을 정정했다 (2026-09-12).**
+  - **"10벌이 같은 모양" 은 과장이었다.** 열어 보니 루프들이 서로 다르다: 반환형이
+    `error` 와 `(T, error)` 로 갈리고, 시도 중 에러를 **즉시 반환하는 것**(`executor.go:122`
+    의 `files.Exists`)과 **모아 두는 것**(`executor.go:310` 의 `last error`,
+    `info.go:80` 의 `last`/`lastErr`)이 섞이고, 데드라인 검사 위치도 다르다
+    (`handoff.go:746` 은 루프 머리에서 본다). 하나의 헬퍼로 흡수하려면 제네릭과 노브 여럿이
+    필요하고, **그러면 원래 루프보다 읽기 어려워진다.**
+  - **정말 같은 것은 안쪽의 "취소를 존중하는 대기" 하나다** — `select { ctx.Done() /
+    time.After(interval) }` 가 9곳에서 글자까지 같다. **그리고 10번째가 버그였다.**
+  - **`upgrade.WaitEndpointsReady` 가 취소를 무시하고 있었다 (고쳤다).** 그 자리만
+    `time.Sleep` 이었다 — context 가 끼어들 수 없는 유일한 대기 형태다. 호출자가 포기한 뒤에도
+    죽은 엔드포인트를 **남은 예산 전부**(핸드오프 경로에서 30초) 계속 찔렀고, 그래서 실행의
+    취소가 그만큼 늦게 보고됐다. 같은 패키지의 다른 폴링 루프는 전부 `ctx.Done()` 을 보고
+    있었고 이 하나만 아니었다.
+    - 단위 테스트 3건: 취소가 **즉시** `context.Canceled` 로 돌아온다(예산은 5분으로 두어,
+      존중하지 않으면 통과가 아니라 **타임아웃으로 실패**한다) · 취소가 없으면 여전히 자기
+      데드라인으로 실패하고 **엔드포인트 이름을 말한다** · 빈 항목은 기다릴 것이 아니라 건너뛴다.
+    - 변이(`time.Sleep` 으로 되돌리기)로 확인: 테스트가 "ignored cancellation" 으로 실패하고
+      11초를 쓴다(고친 뒤에는 0.9초).
+  - **공통 대기도 통합했다 (2026-09-12).** 처음에 "비용의 모양 때문에 따로 연다" 고 적었는데,
+    그 비용이 실제로는 표 한 줄이었다. `internal/core/wait` 를 만들고 `Sleep(ctx, d)` 하나를 뒀다.
+    - **11곳을 바꿨다** — `upgrade`(mesh·handoff) · `poa`(info·executor 2곳·bootstrap_exec 5곳) ·
+      `core/collector`. 각 자리는 `if err := wait.Sleep(ctx, poll); err != nil { return …, err }`
+      한 줄이 되고, 반환값이 다른 것(`""`·`last`·`LogMatch{}`)은 그대로 유지된다.
+    - **12번째는 바꾸지 않았다.** `core/process/stop.go:58` 은 취소 시 `ctx.Err()` 가 아니라
+      `gone(pid)` 를 돌려준다 — "포기했으니 프로세스가 사라졌는지 답한다" 는 **다른 의미**이고,
+      통합한다고 같게 만들면 안 된다.
+    - **왜 이름 하나가 값인가**: 올바른 형태가 `select` 4줄이고 틀린 형태가 `time.Sleep` 한 줄이면,
+      **틀린 쪽이 더 짧다.** 11곳에 손으로 쓰여 있었다는 것은 짧은 쪽을 실수로 쓸 기회가 11번
+      있었다는 뜻이고, 실제로 한 번 그랬다. 이제 올바른 쪽이 한 줄이다.
+    - **배치 래칫이 제 역할을 했다.** 새 패키지를 넣자마자 `arch.TestEveryPackageIsPlaced` 가
+      "`core/wait` 가 `layers.md` §3 에 없다" 로 실패했다. L0(내부 import 0)에 한 줄을 적어 해소.
+    - 단위 테스트 5건 + 변이 4건: 기다리지 않는 구현 · 위쪽 `ctx.Err()` 제거 · `d<=0` 을
+      취소보다 먼저 보기 · 취소를 `nil` 로 삼키기. 넷 다 실패 확인.
+      **변이가 하나 알려 준 것**: 위쪽 `ctx.Err()` 검사를 지워도 `d<=0` 케이스만 깨진다 —
+      양수 d 에서는 `select` 가 이미 기다리지 않고 취소를 보고하기 때문이다. 그래서 그 검사의
+      진짜 용도는 **0 간격**이며, 주석을 그렇게 고쳤다(처음에 더 넓게 적었다).
+      **변이 M1 은 한 번 실패했다** — 본문을 `time.Sleep(d)` 로 바꾸니 한 시간짜리 테스트가
+      go test 기본 타임아웃까지 매달렸다. `-timeout 20s` 로 다시 돌려 판정했다.
+  - 재확인: `grep -rn "case <-time.After" internal/consensus/ internal/core/ | grep -v _test | wc -l` ·
+    `grep -rn "time\.Sleep(" internal/consensus/ | grep -v _test` (비어야 한다 — 호출 형태로 찾는다. `time.Sleep` 만 찾으면 이 수정을 설명하는 주석 문장에 걸린다)
+  **(원래 진단, 과장)** `internal/consensus/` 의
+  `time.Now()` 20곳은 **전부 같은 모양**이다: `deadline := time.Now().Add(timeout)` → 시도 →
+  `time.Now().After(deadline)` 면 **자기만의 오류 메시지**로 반환 → `select ctx.Done() /
+  time.After(interval)`. 결정에 쓰이는 시계는 **하나도 없다** — 전부 기다림의 한계다.
+  - **그래서 "시계를 주입하라" 가 이 항목의 답이 아니다.** 20곳에 `Clock` 을 꿰는 것은
+    재현성을 얻지 못하고 변경 면만 넓힌다. 실제 결함은 **중복**이고, 이 저장소가 `shellQuote`
+    4벌·`Arg*` 2벌에서 한 번씩 처리한 그 모양이다.
+  - **다른 것은 오류 메시지뿐이고 그것은 값이 있다** — "cluster is still empty 30s after init"
+    처럼 각 자리가 무엇을 기다렸는지 말한다. 그래서 헬퍼는 메시지를 클로저로 받아야 하고,
+    **메시지를 하나로 합치면 안 된다.**
+  - **별도 항목으로 둔다.** 브링업 경로 10곳을 건드리는 변경이라 라이브 확인이 필요하고,
+    `netUpFrom` 분해를 따로 두기로 한 것과 같은 이유다 — 다른 변경에 얹으면 검토 범위가 흐려진다.
+  - 재확인: `grep -rn "time.Now()" internal/consensus/ | grep -v _test | wc -l` (20) ·
+    `grep -rn "deadline := time.Now().Add" internal/consensus/ | grep -v _test | wc -l` (10)
+- [x] **가장 긴 함수 `lowerCase`(195줄) — 손대지 않기로 판단했다 (2026-09-12).**
+  `internal/dsl/spec_v2.go:357`. 읽어 보니 **엉킨 로직이 아니라 문법의 크기**다 — id·env 검증
+  뒤에 선언을 하나씩 접어 넣는 **순차 fold** 이고(timeouts·capabilities·manifest·binaries·
+  upgrade·genesis·keys/launch·hooks·statements), 각 블록에 관심사를 적은 주석이 있다.
+  - 9개 헬퍼로 쪼개면 전부 같은 `spec` 값을 만지므로 **결합은 그대로이고 간접만 늘어난다.**
+    그리고 순서가 규칙을 읽히게 하는 자리가 있다 — "capabilities 는 requires 와 합집합, 케이스
+    순서 먼저" 는 앞뒤 맥락에서만 뜻이 통한다.
+  - 길이만 보고 다시 열지 않도록 판단을 적어 둔다. 코드 건강도 검토도 `netUpFrom` 을 같은
+    이유로 따로 두라고 했다.
+
+
 AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통과, 린터 0건. 중복과 문서
 두 갈래만 남았고, 중복은 **표면·상위 계층이 프리미티브를 각자 다시 만든** 한 가지
 경향이었다. 근거와 위치는 정본
@@ -2275,7 +2512,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
       `agreement: yes, at block 79`.
     - 단위 6건(분기·정상·지연은 분기 아님·검사 불가 3종) + 변이 2건(머리로 비교하기·검사 불가를
       합의로 처리하기). CLI·MCP 두 표면 모두 `producing` 옆에 나란히 보고한다.
-- ◐ **Phase 2~6 의 부분 완료 항목 (2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
+- [x] **Phase 2~6 의 부분 완료 항목 — 닫혔다 (2026-09-12).** 이 항목의 본문이 이미 T2.1·T3.3·T5.1·T5.5 를 전부 해소로 적고 있는데 머리글만 부분으로 남아 있었다. 아래 각 절의 `◐` 도 같은 이유로 ☑ 로 바꿨다. **(원래 기록, 2026-09-11 재확인)** — **T2.1** 은 남은 것이 없다 — Transport 타입은
   이미 쓰였다가 "Driver 가 이미 그것이고 구현체가 없다"는 이유로 삭제됐다(철회, 각 절 참고). **T3.3·T5.1** 에 남아 있던 "실 SSH 호스트 대상 라이브
   e2e" 는 **완료됐다 (2026-09-11)** — `env/docker` 의 15대가 SSH 로 닿는 원격이고, 원격 로그
   tail 을 실 sshd 에 대고 검증했다(각 절 참고). **T5.5**(wemix4 이관)도 **완료였다 (2026-09-12 확인)** — 포트 트래커의 케이스 표는
@@ -2425,6 +2662,76 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   머리에 상태와 표본 확인 근거를 적었다.
 - `hardfork 는 통폐합 대상 아님` 은 할 일이 아니라 내린 결정이라 ☑ 로 바꿨다.
 
+**2026-09-12 — 브랜치 정리와, 남기고 싶었던 것.** 원격에 PR 없는 브랜치가 둘 있었다.
+
+- `chore/mark-test-only-signing-key` — **삭제했다.** 커밋 `6f054014` 의 내용(테스트 키 3곳의
+  `betterleaks:allow` 주석)이 main 에 그대로 있다. 확인은 `git diff origin/main...<branch>`
+  (세 점 — 두 점은 main 의 진전을 브랜치의 삭제로 보여줘서 349파일 diff 가 나온다)와
+  `git grep betterleaks:allow origin/main` 으로 했다. 되살릴 필요가 생기면 `6f054014` 다.
+- `feat/invariant-test-catalog` — **삭제했다 (2026-09-12, 사용자 승인).** 되살릴 필요가
+  생기면 `31764df51fb8faf508dd6f62ce0031d8a3637d33` (2026-06-16, `catalog/invariant-tests.yaml`
+  78줄 한 파일)이다. 지우기 전에 남길 것을 먼저 남겼다 — 이 브랜치의 **발견**은
+  F1·F2·F3 으로 흡수했지만 **방법**은 어디에도 없었다. 그 방법이 이 세션에서 값을 증명한
+  것이라 [`../guide/dsl-authoring.md`](../guide/dsl-authoring.md) §8 로 옮겼다 — "통과하는데
+  아무것도 막지 못하는 케이스를 쓰지 않는 법".
+  - 옮긴 것: **구별되는 주장 vs 메커니즘**을 가르는 질문("이 단정을 통과시키면서 불변식을
+    깨는 구현이 있는가"), 이 세션의 실례 4건(baseFee 공식·validator 멤버십·`reason` 없는
+    reject·팁으로도 오르는 잔액), **변이의 함정 둘**(적용됐는지 확인 / 실패 건수를 센다),
+    그리고 **쓸 수 없는 것은 쓸 수 없다고 적는다**.
+  - 그래서 **버려도 잃는 것이 없었다** — `catalog/invariant-tests.yaml` 은 이 저장소에 없는
+    외부 경로를 불변식 ID 출처로 적고 테스트 참조가 옛 레이아웃이라, 되살리려면 두 축을 다시
+    매핑해야 한다. 값은 파일이 아니라 **등급 매기는 방법**이었고 그것은 가이드에 있다.
+  - **원격 브랜치는 이제 `main` 뿐이다** (작업 브랜치 제외). 확인:
+    `git ls-remote --heads origin`
+
+**2026-09-12 — "한쪽이 채워지지 않음" 을 래칫으로 고정했다.** 이번 주에 같은 결함을 세 번
+만났다. 세 번 모두 diff 에서는 버그처럼 보이지 않았다 — 필드도, 비교도, 조건도 전부 작성돼
+있고 테스트까지 있는데, **값을 넣는 쪽이 없어서 배포된 날부터 무력**이었다.
+
+| 결함 | 죽어 있던 것 | 결과 |
+|---|---|---|
+| `preflight.Want.GenesisDeclared` | genesis 비교(양쪽 중 하나만 비면 건너뛴다) | 오버레이만 다른 두 환경이 한 네트워크를 공유, 두 번째 테스트가 첫 번째의 체인에서 돌았다 |
+| `nodemonitor.Facts.WantPeers` | 피어 없는 노드를 거부하는 조건 | validator 4대 중 1대가 높이 0에 있는데 게이트가 ready 라고 했다 |
+| `nodemonitor.Facts.Forked` | 분기를 FATAL 로 보는 조건 | **이번에 찾았다** — health 가 답을 갖고 있고 분류기가 조건을 갖고 있는데 아무도 옮기지 않았다. 포크된 망이 ready 로 통과한다 |
+
+`arch.TestEveryFieldAProducerOwnsIsFilledOrExplained` 가 이 부류를 잡는다. **grep 으로는 판정
+할 수 없다** — CLI 플래그를 리플렉션으로 바인딩하는 요청 타입은 소스에 대입이 아예 없으므로
+"한 번도 대입되지 않았다" 가 참이면서 아무 뜻도 아니다(실측: 순진하게 세면 100건, 태그를 걸러도
+61건, 그중 `UpgradeRunIn.AllServers` 는 실제로 동작한다). 그래서 규칙을 **이름 붙인 (타입,
+생산자) 쌍**으로 좁혔다 — 손으로 쓴 결정 구조체를 한 함수가 만들어 다른 함수가 읽는 자리,
+생산자가 유일한 writer 인 경우다.
+- 예외는 **이유와 함께** 적는다. `WantChainID` 는 권위 있는 출처가 없고(관측에서 가져오면
+  순환), `WantParticipate`·`Participating` 은 이 관측자에 출처가 없고, `Failure` 는 프로세스
+  점검이 분류하는 것이며, `Want.Nodes` 는 개수만 아는 요청이 노드별 사실을 발명할 수 없다.
+- 래칫이 **양방향**이다: 채워지지도 적히지도 않은 필드도 실패하고, **적혀 있는데 실제로는
+  채워지는** 필드도 실패한다(낡은 예외는 다음 사람에게 목록을 건너뛰라고 가르친다).
+- 변이 4건: `GenesisDeclared` 대입 제거(PR #412 직전 상태) · `Forked` 대입 제거(이 커밋 직전
+  상태) · 낡은 예외 · 없는 필드 이름. 넷 다 실패 확인.
+- **목록은 늘고, 예외는 줄기만 한다.** 새 결정 구조체가 생기면 쌍을 더한다.
+
+**2026-09-12 — `◐` 전수 상태 점검 (19 → 5).** 체크박스는 0건이었는데 부분 표시가 19건
+남아 있었다. 하나씩 실측했더니 **14건이 낡은 기록**이었다. 부분 표시는 체크박스보다 더 잘
+썩는다 — "일부는 됐다" 는 다시 재도 틀리지 않으므로 아무도 고치지 않는다.
+
+| 항목 | 적혀 있던 것 | 실측 |
+|---|---|---|
+| WA9 | node-table `role:pn` 이 mesh 로 배선된다 | `topologyHasProxy` 가 node-table 경로를 덮는다 |
+| WA10 | attach 가 게이트·증적·Precheck 를 잃는다 | `readWorkspaceComposed` 를 compose·attach 가 공유한다 |
+| WA11 | artifacts.json 프로덕션 writer 가 없다 | `recordArtifacts` 가 있고 양쪽 경로가 채운다 |
+| WA12 | FAIL 이 reason 을 안 남긴다 | `rec.Reason` 이 세 자리에 있고 라이브 `status.json` 으로 확인 |
+| WA18 | `onEach` 를 do-스텝이 소비 안 한다 | `interp/run.go` 가 팬아웃한다 |
+| WA20 | 핸드오프 env 가 선언 절반을 무시한다 | 무시가 아니라 **거절**한다 |
+| WA22 | `env.capabilities` 가 버려진다 | **합집합**이다 |
+| WA25 | 커버리지 얕음 | 아래 §1p 항목이 정본이고 닫혔다 |
+| 레거시 경로 정리 | "소비자 이관 전 제거 금지" | 세 패키지가 이미 **없다** |
+| Phase 2~6 + T2.1·T3.3·T5.1 | 부분 완료 | 본문이 이미 전부 해소로 적고 있었다 |
+| C. metric 수집 | "라이브 검증만 남았다" | 본문이 이미 라이브 통과를 적고, 파생 둘도 고쳐져 있다 |
+
+**절반만 해소된 둘은 절반이라고 적었다.** WA15 는 파싱 시점 검증이 생겼고 런타임 기본값은
+아직 없다(판단 필요). WA23 은 live 게이트 없는 실행 테스트가 하나 생겼고 다섯은 남았다.
+**진짜 열린 셋**은 WA17(임베드 스키마가 검증에 미사용)·WA21(DSL 표현력 갭 목록 재측정)·
+WA24(`hooks.onFail` 은 통과하는 스위트로 도달 불가)다.
+
 **2026-09-12 — 내가 만든 잘못된 측정 하나.** "원격 브랜치 27개가 스테일하다" 고 정리했는데
 틀렸다. 원격에는 처음부터 **브랜치가 3개뿐**이었다(`main` + PR 없는 2개). 내가 본 27개는
 **로컬 클론의 낡은 remote-tracking 참조**였고, GitHub 가 머지 때 head 브랜치를 자동 삭제하고
@@ -2450,7 +2757,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 - **게이트**: 단위 100% + 동시 모듈 `-race`.
 
 ### Phase 2 — Transport
-- ◐ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)** + **key_file 인증**. **[D안]** ☑ **key_file 인증**: `remote.Credentials` 에 `PrivateKey`/`Passphrase` 추가, `authMethods`(key 우선+password, 최소 1개 필수, 키자료 미노출), `LoadPrivateKey`(0600 강제·insecure perm 거부). deploy `credentials.go` 가 `key_file`(+ `CHAINBENCH_REMOTE_KEY_FILE`/`_PASSPHRASE` env) 를 `remote.Credentials.PrivateKey` 로 로드 — "future phase 예약" 게이트 제거. 단위검증(authMethods 4케이스·키 미노출·perm 거부·For key_file). ☑ **종료검증(`kill -0`)**: 이미 `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)로 구현, 엔진 teardown 이 이를 경유(라이브 고아0 확인). **남은 것: 없음 — 철회 (2026-09-11).** "driver 위 Transport 타입 형식화" 는 **이미 해봤고
+- ☑ **T2.1** Local/Remote Transport를 driver 위에 형식화 + **종료검증(`kill -0`)** + **key_file 인증**. **[D안]** ☑ **key_file 인증**: `remote.Credentials` 에 `PrivateKey`/`Passphrase` 추가, `authMethods`(key 우선+password, 최소 1개 필수, 키자료 미노출), `LoadPrivateKey`(0600 강제·insecure perm 거부). deploy `credentials.go` 가 `key_file`(+ `CHAINBENCH_REMOTE_KEY_FILE`/`_PASSPHRASE` env) 를 `remote.Credentials.PrivateKey` 로 로드 — "future phase 예약" 게이트 제거. 단위검증(authMethods 4케이스·키 미노출·perm 거부·For key_file). ☑ **종료검증(`kill -0`)**: 이미 `procman.Alive`(signal 0)+`StopAll`(SIGTERM→wait→SIGKILL→poll→leak 보고)로 구현, 엔진 teardown 이 이를 경유(라이브 고아0 확인). **남은 것: 없음 — 철회 (2026-09-11).** "driver 위 Transport 타입 형식화" 는 **이미 해봤고
 되돌렸다.** `internal/arch/reach_test.go` 의 기록: 도달 불가 심볼 정리에서 삭제된 셋 중 하나가
 "a Transport interface that described what Driver already is and had no implementer" 였다. 즉
 `Driver` + capability 인터페이스들(`Initializer`·`Commander`·`ProcessInspector`·
@@ -2463,7 +2770,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
 ### Phase 3 — Middle 통합(라이브)
 - ☑ **T3.1 Provisioner** datadir+키+genesis+config 물질화(local·remote 동일경로)+upload-if-absent.
 - ☑ **T3.2 Supervisor** 오케스트레이션·teardown·procman배선 단위완료 + **실4노드 라이브 헬스게이트(블록전진 gate)로 Phase4 BuildEnv e2e 에서 검증**(고아0). etcd 리더 게이트는 wemix 계열(gwemix/etcd 필요) 후속.
-- ◐ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 boundary)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☑ **원격 SSH tail**: tail 루프가 **`collector.LogReader` boundary**(`ReadFrom(ctx,path,offset)`)을 거치도록 리팩터 → 로컬은 `LocalLogReader`(파일), 원격은 `driver.RemoteLogReader`(SSH `tail -c +N`, **1-based 바이트 오프셋** — `tail -n` 은 줄 단위라 collector 가 추적하는 정확한 바이트 위치를 잃어 줄 중복/분할이 남). 파일 부재는 오류 아님(첫 줄 쓰기 전 tail 시작 허용), 전송 실패만 오류. 단위검증 5건. **실 SSH 호스트 라이브 e2e — 완료 (2026-09-11)**: `internal/core/process/remote_log_live_test.go`
+- ☑ **T3.3 Collector** ☑ RPC 스냅샷(height·peers)·WaitLog poll·**로컬 live tail**(offset 증분·스캔→tail·부분줄 미방출·`Deps.OnLine` obs 미러 boundary)·**bp참여 집계**(head producer 샘플→`BPParticipation`, `Deps.BPWindow` 로 bounded prune)·**fork/reorg 검출**(높이별 first-seen hash, 노드 간/샘플 간 불일치→`Forked`). 단위+`-race` 검증. ☑ **엔진 배선**(`withCollection` 이 local/attach 의 BuildEnv 를 래핑 — `Bus` 설정 시 env 별 collector 실행, RPC probe(`rpc.Client.HeadBlock`)로 샘플, chainstate 스냅샷·tail 로그를 obs 로 미러, teardown 시 정지; attach+mock RPC 로 chainstate 이벤트 e2e 검증)·**chainstate 세션 영속화**(collection 이 스냅샷을 `chainstate/chainstate.jsonl` 로 기록 — F10/F15 jsonl+obs 미러, 완료 세션 재생용; best-effort). ☑ **원격 SSH tail**: tail 루프가 **`collector.LogReader` boundary**(`ReadFrom(ctx,path,offset)`)을 거치도록 리팩터 → 로컬은 `LocalLogReader`(파일), 원격은 `driver.RemoteLogReader`(SSH `tail -c +N`, **1-based 바이트 오프셋** — `tail -n` 은 줄 단위라 collector 가 추적하는 정확한 바이트 위치를 잃어 줄 중복/분할이 남). 파일 부재는 오류 아님(첫 줄 쓰기 전 tail 시작 허용), 전송 실패만 오류. 단위검증 5건. **실 SSH 호스트 라이브 e2e — 완료 (2026-09-11)**: `internal/core/process/remote_log_live_test.go`
 (`Live_RemoteLog*`, `CHAINBENCH_DOCKER_SERVERS=$PWD/env/docker/build`). 가짜 runner 로는 명령의
 **철자**만 고정할 수 있고 그 명령이 **무엇을 하는지**는 보이지 않는다 — 그리고 오프셋 산술이
 바로 증분 tail 이 바이트를 중복시키거나 잃는 자리다. 실 sshd 에 대고 네 가지를 확인했다:
@@ -2500,7 +2807,7 @@ offset 0 이 파일 전체, 직전 읽기가 끝난 오프셋에서 읽으면 **
 - ☑ **T4.6 launcher 파일 물질화를 provision.Provisioner 경유 [B안]** `LocalLauncher` 가 genesis·per-node config 를 `provision.Provisioner`(`FileSink`) 로 물질화 — 기존 ad-hoc `os.WriteFile(genesis)`+`driver.Provision(config)` 제거. **upload-if-absent**(기존 파일 재사용) + **원격 `RemoteFileSink` 로 교체할 boundary**(슬라이스 C 대비) 확보. 순수 `materialize` 헬퍼로 분리해 recording FileSink 로 단위검증(genesis+config 기록·재사용 스킵). 리팩터 후 실 gstable 라이브 2종(BuildEnv/FullRun) 재통과·고아0. 프로덕션 engine 은 이제 레거시 `setup.Provision/Launch` 미호출(`setup.Plan` 타입만 사용).
 
 ### Phase 5 — 수직 슬라이스 (매번 통합 유지)
-- ◐ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 없음 — 원격 로그 tail 의 실 SSH 라이브 e2e 는 T3.3 항목에 적은 대로 완료(2026-09-11).
+- ☑ **T5.1 remote [C안]** ☑ `driver.RemoteFileSink`(`provision.FileSink` 구현: SSH `test -f` 존재확인 + `ProvisionFile` base64 전송) — B의 `LocalLauncher.Sink` boundary 에 그대로 주입 가능(upload-if-absent). ☑ launcher init 을 `driver.Initializer` capability 경유로 라우팅(local/remote 드라이버 공통) → `LocalLauncher{Driver:RemoteDriver, Sink:RemoteFileSink}` 로 **원격 기동 가능**. 단위검증: RemoteFileSink(exist/absent/transport err·base64 write·`provision.FileSink` 만족), launcher 전체 합성(materialize→init(Initializer)→launch, fake driver/sink). 로컬 live 2종 재통과(init 라우팅 변경 후·고아0). **남은 것**: 없음 — 원격 로그 tail 의 실 SSH 라이브 e2e 는 T3.3 항목에 적은 대로 완료(2026-09-11).
 원격 기동 자체는 핸드오프·`chain rm`·metric 이 이미 docker 에서 라이브로 돌았다. · ☑ **T5.2 업그레이드 멀티바이너리**(wemix+wbft) — `internal/consensus/upgrade` 가 두 바이너리를 동시에 기동한다. 라이브: 골든 1+4 와 **docker 15+15** 모두 `handoff confirmed`(2026-09-11). DSL 쪽도 `env.binaries.{producer,validator}` 로 표현된다(`tests/tc/go-wemix/handoff/01-*.json`) · ☑ **T5.3 attach** `engine.NewAttachEngine(AttachConfig{Chain,RPCURLs,ArtifactRoot})` + `NewAttachBuildEnv`(attach.Build 로 RPC 엔드포인트에서 NodeSet 구성, **기동/teardown 없음** — attach 는 노드를 만들지 않음). 바이너리·preset 불필요 → **mock RPC 로 Engine.Run 전체 e2e 가 CI 에서 실행**(chainId/blockNumber 어세션 pass·미적용 spec skip·구성검증). walking skeleton 실행수직을 바이너리 없이 CI 커버하는 첫 통합. · ☑ **T5.4 stablenet**(ACL 플러그인·Core 무변경) — 거버넌스 read 시나리오를 DSL 로 표현·엔진 실행 CI 검증(예제 spec + govbind calldata mock RPC e2e). · ☐ **T5.5 wemix4 이관**(DSL).
 
 ### Phase 6 — 표면·마감

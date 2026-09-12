@@ -1,3 +1,7 @@
+// Package nodecmd owns the commands that act on ONE node of a composed network:
+// starting and stopping it individually, and speaking RPC to it. It is the
+// surface fault injection uses, so it deliberately offers no whole-network verb
+// — that is lifecyclecmd.
 package nodecmd
 
 import (

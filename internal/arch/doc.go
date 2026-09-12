@@ -15,7 +15,19 @@
 //     that skips what it does not know is not a check.
 //   - state_test.go parses the state-ownership verdicts out of the same
 //     document and checks which packages actually write files.
+//// Not every rule has a document to read. Some are properties of the code that no
+// prose states, and those carry their own list with a reason per entry — a
+// reviewer reads the reason, not a diff:
 //
+//   - target_test.go: a composition step may ask where its target is and may not
+//     run a different job because of the answer.
+//   - producer_fills_test.go: when one function is the sole producer of a struct
+//     another function decides on, every field the decider reads is filled or
+//     explained. Three shipped defects were that shape — a comparison, a peering
+//     check and a fork check that were all written, all tested, and all inert
+//     because nothing supplied the value.
+//
+
 // There is no production code here. The package exists so the rules have a
 // home that `go test ./...` runs.
 package arch

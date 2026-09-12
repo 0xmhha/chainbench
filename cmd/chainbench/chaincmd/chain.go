@@ -1,3 +1,10 @@
+// Package chaincmd owns COMPOSING a chain and reading what was composed: new,
+// build, config, up, resume, blueprint, and the read verbs beside them (show,
+// status, health, logs, enode).
+//
+// The split from lifecyclecmd is by subject, not by phase. This group answers
+// "what is this composition made of"; lifecyclecmd answers "what is it doing
+// now, and is it still trustworthy".
 package chaincmd
 
 import (

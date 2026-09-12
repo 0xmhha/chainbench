@@ -83,3 +83,36 @@ func TestFactsFromReport_TheHeadIsTheMaximumNotTheFirst(t *testing.T) {
 		}
 	}
 }
+
+// TestFactsFromReport_ACheckedDisagreementIsAFork carries the last fact the
+// classifier had a condition for and no source. health's agreement check compares
+// hashes at the highest block every answering node has, so a lagging node cannot
+// be mistaken for a split; the classifier calls a split FATAL because clearing it
+// needs a rewind. Nothing joined the two, so a forked network gated as ready —
+// the same blind spot verify had before the agreement check existed.
+func TestFactsFromReport_ACheckedDisagreementIsAFork(t *testing.T) {
+	ns := node.NodeSet{Nodes: []node.Node{{Index: 1, PID: 1}, {Index: 2, PID: 2}}}
+	nodes := []health.NodeInfo{{Index: 1, OK: true, BlockNumber: 9}, {Index: 2, OK: true, BlockNumber: 9}}
+
+	for name, tc := range map[string]struct {
+		agree health.Agreement
+		want  bool
+	}{
+		"a checked disagreement is a fork":      {health.Agreement{Checked: true, Agreed: false, Height: 9}, true},
+		"a checked agreement is not":            {health.Agreement{Checked: true, Agreed: true, Height: 9}, false},
+		"an unchecked comparison is not a fork": {health.Agreement{Checked: false}, false},
+		// Unchecked-and-not-agreed is the shape during bring-up, when the nodes
+		// are at different heads and no comparison was possible. Reading it as a
+		// fork would terminate a healthy run on its first observation.
+		"unchecked beats the agreed flag": {health.Agreement{Checked: false, Agreed: false}, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			facts := factsFromReport(health.Report{Producing: true, Agreement: tc.agree, Nodes: nodes}, ns)
+			for _, f := range facts {
+				if f.Forked != tc.want {
+					t.Errorf("node%d: Forked = %v, want %v", f.Node, f.Forked, tc.want)
+				}
+			}
+		})
+	}
+}

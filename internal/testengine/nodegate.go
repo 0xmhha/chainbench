@@ -94,6 +94,21 @@ func factsFromReport(rep health.Report, ns node.NodeSet) []nodemonitor.Facts {
 	if len(ns.Nodes) > 1 {
 		wantPeers = 1
 	}
+
+	// A confirmed split is a fact about the whole set, so it lands on every
+	// node's facts the way Advancing does. health already answers it — the
+	// agreement check compares hashes at the highest block EVERY answering node
+	// has, which is why a lagging node cannot be mistaken for a fork — and the
+	// classifier already has the condition. Nothing carried the answer from one
+	// to the other, so the FATAL "chain diverged" verdict could not fire from the
+	// run path: a split network gated as ready, which is the same blind spot
+	// `verify` had before the agreement check existed (it reported a forked
+	// network healthy because the primary node's height was rising).
+	//
+	// Only a CHECKED disagreement counts. Unchecked means no comparison was
+	// possible — every node at a different head during bring-up, say — and
+	// reading that as a fork would terminate a healthy run.
+	forked := rep.Agreement.Checked && !rep.Agreement.Agreed
 	facts := make([]nodemonitor.Facts, 0, len(rep.Nodes))
 	for _, ni := range rep.Nodes {
 		facts = append(facts, nodemonitor.Facts{
@@ -107,6 +122,7 @@ func factsFromReport(rep health.Report, ns node.NodeSet) []nodemonitor.Facts {
 			Advancing:  rep.Producing,
 			WantHeight: head,
 			WantPeers:  wantPeers,
+			Forked:     forked,
 			Syncing:    ni.Syncing,
 			Peers:      clampCount(ni.PeerCount),
 		})

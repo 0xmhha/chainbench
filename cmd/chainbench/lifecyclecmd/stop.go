@@ -1,3 +1,11 @@
+// Package lifecyclecmd owns a composed network AFTER it is up: stopping it,
+// reporting what is running, removing what a run left behind (clean), and
+// judging whether it is still one healthy chain (verify, consensus, baseline).
+//
+// verify and baseline sit here rather than with the read verbs in chaincmd
+// because they do not describe a composition, they pass judgement on a running
+// one — the distinction that made a forked network report healthy until the
+// agreement check was added.
 package lifecyclecmd
 
 import (

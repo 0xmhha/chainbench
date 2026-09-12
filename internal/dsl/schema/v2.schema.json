@@ -243,7 +243,14 @@
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          }
+          },
+          "propertyNames": {
+            "enum": [
+              "case",
+              "test"
+            ]
+          },
+          "description": "per-case timeout budgets. Only case (alias test) is read — the interpreter bounds the whole case with it — so the parser refuses any other name rather than validating a duration that nothing applies."
         },
         "hooks": {
           "type": "object",
@@ -317,7 +324,13 @@
         },
         "expect": {
           "type": "string",
-          "description": "adjunct on a do statement (e.g. sendTx expect receipt|revert)"
+          "description": "adjunct on a do statement: the outcome the step must reach. receipt = mined, revert = mined with status 0x0, reject = the submit itself must fail, fail = a launched node must not come up. The parser refuses anything else (dsl.expectAdjuncts), because a typo would otherwise fall through to the default \"must succeed\" and turn a negative case positive.",
+          "enum": [
+            "receipt",
+            "revert",
+            "reject",
+            "fail"
+          ]
         }
       }
     },
