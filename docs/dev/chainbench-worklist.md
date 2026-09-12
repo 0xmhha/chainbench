@@ -1293,7 +1293,20 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 - [x] **WA13** [문법] `waitFor` 의 source 가 오프라인 미검증(read 는 검증). 오타가 라이브에서야 실패한다(스펙 20건 사용). 증거: `internal/dsl/interp/resolve.go:41`, `internal/testhelper/read.go:234-237`. 방향: waitFor source 도 오프라인 검증에 넣는다. **확인(2026-09-12): 완료.** 오타 source 를 담은 스펙에 `chainbench validate` → `UNRESOLVED: source:<오타>`. read·waitFor 둘 다 걸린다
 - [x] **WA14** [문법] 케이스 상위 `on`(DefaultOn)이 라우팅에 미적용. 스텝에 `on` 이 없으면 조용히 nodes[0] 로 간다. 증거: `internal/dsl/spec_v2.go:309`, `internal/dsl/interp/run.go:205-224`. 방향: resolveOn 이 DefaultOn 을 기본값으로 읽게 한다. **확인(2026-09-12): 완료.** `grep -n applyDefaultOn internal/dsl/interp/run.go` + `TestRun_DefaultOnRoutesStatements`. 라이브 스펙은 `tests/tc/go-wemix/vocabulary/01-*`
-- ◐ **WA15** [문법] 상위 `timeouts` 맵이 아무 데서도 안 읽힌다. 증거: `internal/dsl/spec.go:36`, 소비처는 `migrate.go:91` 뿐. 방향: 인터프리터가 액션 타임아웃 기본값으로 소비하게 한다.
+- [x] **WA15** [문법] 상위 `timeouts` 맵이 아무 데서도 안 읽힌다. 증거: `internal/dsl/spec.go:36`, 소비처는 `migrate.go:91` 뿐. 방향: 인터프리터가 액션 타임아웃 기본값으로 소비하게 한다.
+  - **완료 (2026-09-12). 그리고 제가 어제 적은 판단이 틀렸다.**
+    "런타임 기본값으로는 안 쓰인다" 고 썼는데 **소비자가 있다** — `interp/run.go:30` 이
+    `caseTimeout(s.Timeouts)` 으로 **케이스 전체를 context 데드라인으로 묶는다**
+    (`run.go:253-265`, 단위 테스트 `run_test.go:102`). 제가 `spec_v2.go` 와 `testhelper` 만
+    grep 하고 `interp` 를 안 봤다. **두 선택지(소비 / 철회)는 애초에 필요하지 않았다.**
+  - **남아 있던 진짜 느슨함은 키였다.** 값은 duration 으로 검사하는데 **이름은 검사하지
+    않았다** — `timeouts.step` 은 유효한 duration 으로 통과한 뒤 **아무것도 묶지 않는다.**
+    예산을 정한 것처럼 보이는데 예산이 없다. 읽히는 것은 `case`(별칭 `test`) 하나다.
+  - **한 것**: 어휘 밖 이름을 파싱 시점에 거부하고(`timeoutKeys`), 스키마에도
+    `propertyNames.enum` 으로 같은 두 이름을 못 박고, **둘이 어긋나면 실패하는 테스트**를
+    더했다(§WA17 의 이음매와 같은 방식 — 목록을 복사하지 않고 `timeoutKeys` 와 직접 비교).
+  - 변이 3건: 키 검사 제거(이 변경 직전 상태) · 파서 어휘만 넓히기(스키마와 불일치) ·
+    스키마 제약 제거. 셋 다 실패 확인. 값 검사를 이름 검사가 가리지 않는지도 테스트로 고정했다.
   - **절반 해소 (2026-09-12 실측). 남은 것은 판단이다.**
     "아무 데서도 안 읽힌다" 는 더 이상 맞지 않다 — `spec_v2.go:380-384` 가 각 값을
     `time.ParseDuration` 으로 검증하고 파싱 불가하면 **파싱 시점에 거부**한다. 그래서 오타가
@@ -1348,7 +1361,23 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
     있으면 오류로 나간다("a handoff composes from its profile and template; …"). 선언의 절반을
     조용히 버리는 것보다 거절이 낫다는 판단이며, 이 항목이 요구한 것을 만족한다.
     재확인: `grep -n "a handoff composes from its profile" internal/testengine/compose.go`
-- ◐ **WA21** [compose·역방향] DSL 로 표현 못 하는 chainsetup 기능: manifest/template(`verbs_up.go:42-43`), blueprint(`verbs_up.go:59`), keys-validator-subset(`verbs_steps.go:89-90`), chainID/networkID 고정, deploy-only stage(`verbs_up.go:27`). 방향: 필요한 것을 EnvV2 문법에 더한다.
+- [x] **WA21** [compose·역방향] DSL 로 표현 못 하는 chainsetup 기능: manifest/template(`verbs_up.go:42-43`), blueprint(`verbs_up.go:59`), keys-validator-subset(`verbs_steps.go:89-90`), chainID/networkID 고정, deploy-only stage(`verbs_up.go:27`). 방향: 필요한 것을 EnvV2 문법에 더한다.
+  - **완료 (2026-09-12 실측). 5개 중 3개는 이미 표현 가능하고, 1개는 다른 경로로 되고,
+    1개는 철회한다.**
+    - `manifest`·`genesisTemplate` → **EnvV2 에 있다.**
+    - `blueprint` → **EnvV2 에 있다.**
+    - keys-validator-subset → **`keys.validators` 로 있다**(`KeySourceV2` 의 필드는
+      `source`·`ref`·`validators`·`bootnode`).
+    - **chainID/networkID 고정 → genesis 오버레이로 된다.** `genesis.set` / `genesis.overlay`
+      가 `spec.Chain.GenesisOverlay` 로 그대로 실려 genesis config 에 적용되고,
+      `config.chainId` 는 그 config 안에 있다. 같은 경로로 `config.applepieBlock: 0` 이
+      구성된 genesis 에 들어가는 것을 F6 작업에서 실측했다. `--chain-id`/`--network-id` 는
+      **실행 오버라이드**로 남는다 — 선언이 아니라 그 실행에 대한 지시라 자리가 맞다.
+    - **deploy-only stage → 철회한다.** DSL 케이스는 **기동되지 않은 망에 단정할 수 없다** —
+      RPC 가 없으면 읽을 것이 없다. 구성 산출물만 보는 케이스를 위해 문법을 넓히는 것은
+      소비자 없는 표현력이고, 이 저장소가 두 번 되돌린 모양이다(`Transport` 타입, 객체형 참조).
+      필요해지면 요구와 함께 다시 연다.
+    - 재확인: `python3 -c "import re;src=open('internal/dsl/spec_v2.go').read();print(re.findall(r'json:\"([^\",]+)',re.search(r'type EnvV2 struct \{(.*?)\n\}',src,re.S).group(1)))"`
 - [x] **WA22** [compose·게이팅] `env.capabilities` 가 케이스에 `requires` 가 있으면 통째로 버려진다. 증거: `spec_v2.go:312-314`. 방향: 두 목록을 병합한다.
   - **해소 확인 (2026-09-12 실측).** 버리지 않고 **합집합**이다 —
     `spec_v2.go:398-412` 가 케이스의 `requires` 를 먼저 넣고 env 의 `capabilities` 중
@@ -1357,7 +1386,27 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 ### D. 커버리지·문서
 
-- ◐ **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
+- [x] **WA23** [커버리지] compose→run→report 전 과정 테스트가 전부 live-gated 라 CI 가 건너뛴다. 증거: `internal/testengine/*_live_test.go`. 방향: 바이너리 없이 도는 CI 통합 테스트를 하나 만든다.
+  - **완료 (2026-09-12). 양쪽 절반을 다른 방법으로 덮었다.**
+    - **compose 쪽**은 이미 있었다 — `runsuite_gate_test.go` 가 **기동 전 게이트의 거절
+      15개**를 바이너리 없이 태운다. 그 거절들이 되돌릴 수 없는 것을 막는 자리다.
+    - **run→report 쪽을 이번에 더했다** — `runtoreport_internal_test.go`. `NewAttachEngine`
+      은 바이너리도 preset 도 필요 없고 **도달 가능한 RPC 만** 필요하므로, `httptest` 로
+      **JSON-RPC 서버를 세워** 스펙을 판정과 리포트까지 태운다.
+    - **스텁은 하네스가 아니라 체인이다. 이 구분이 이 테스트의 존재 이유다.** 하네스를
+      스텁하면 RPC 에 아무도 답하지 않아 게이트와 단정이 **코드와 무관한 이유로** 통과·실패한다 —
+      이 작업 앞부분의 스텁 라이프사이클 테스트가 통과하면서 아무것도 증명하지 못한 그 자리다.
+      루프백에 진짜 서버를 세우면 인터프리터·단정·레코더가 **자기 일을 실제로** 한다.
+    - 단정하는 것: 통과 스펙이 `session.json` 에 verdict 와 `assert.json` 에 **실제 수치**를
+      남긴다 · 실패 스펙이 `status.json` 에 **이유**를 남긴다(WA12 가 말한 그것) · 체인이
+      답하지 못한 메서드는 **패닉도 조용한 통과도 아니고 기록된 판정**이 된다.
+    - **계약 하나를 잘못 알고 있었다.** 처음에 "실패 스펙이면 `Run` 이 에러를 돌려야 한다" 고
+      단정했는데 아니다 — **실패한 테스트는 결과이고 엔진 에러가 아니다.** 엔진은 기록하고
+      표면이 판단한다(CLI 는 exit code, MCP 는 tool error — WA7). 그 경계를 별도 테스트로
+      못 박았다. 둘을 합치면 **실패한 스위트와 망가진 하네스를 구별할 수 없다.**
+    - 변이 3건: 이유 기록 제거 · 실패 단정이 verdict 를 못 뒤집게 하기 · `assert.json` 기록
+      제거. 셋 다 실패 확인. **첫 M2 는 메시지의 숫자만 바꿔 통과했다** — verdict 자체를
+      건드리도록 다시 했다.
   - **절반 해소 (2026-09-12 실측).** "전부 live-gated" 는 더 이상 맞지 않다 —
     `RunSuite` 를 구동하는 테스트 6개 중 `runsuite_gate_test.go` 는 **라이브 게이트가 없다**.
     남은 5개(`suite_live_test.go`·`vocabulary_live_test.go`·`accountlabel_live_test.go`·
@@ -1513,7 +1562,14 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
     - 거부 3건(없는 프로파일·없는 from-genesis·미등록 to-chain)도 덮었다.
     - `internal/app` 31.7% → 34.3%. **판정 밀도 순위표의 상위 6개를 다 지났다** — 남은 것은
       라이브가 필요한 `UpgradeRun`(23) 하나다.
-- ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
+- [x] **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
+  - **완료 (2026-09-12 실측). `hooks.onFail` 은 실행까지 테스트돼 있다.**
+    `interp/run.go:63`(do 실패)과 `:84`(단정 실패) 두 경로가 `runRecorded(s.OnFailActions…)`
+    를 부르고, `interp/run_test.go` 의 두 테스트가 **훅이 돌았는지를 단정한다**
+    (`onFailRan`, :308 과 :347 — "onFail diagnostics must run after a do failure").
+  - 즉 "통과하는 tc 케이스로는 도달할 수 없다" 는 맞지만, 그것은 **인터프리터 레벨에서
+    덮인 이유**이고 열린 공백이 아니었다. 스위트에 일부러 실패하는 케이스를 두지 않아도 된다.
+    재확인: `grep -n "onFailRan" internal/dsl/interp/run_test.go`
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
   - **훅도 같은 실행에서 돌았다.** `hooks.pre`·`hooks.post` 를 얹었고 세션 기록의 `postaction.json` 에 `{"Name":"waitBlock","OK":true}` 로 남는다. 첫 단정의 provenance 에 `"on": "node3"` 이 찍히는 것이 기본 타깃이 적용된 증거다.

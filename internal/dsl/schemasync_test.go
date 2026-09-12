@@ -106,3 +106,36 @@ func TestSchemaV2IsAsStrictAsTheParser(t *testing.T) {
 		})
 	}
 }
+
+// TestSchemaV2ConstrainsTheTimeoutKeys is the same agreement one level down. Only
+// timeouts.case (alias test) is read — the interpreter bounds the whole case with
+// it — and any other name was validated as a duration and then ignored, so a spec
+// could declare a budget that did not exist. The parser refuses it now, and the
+// document has to refuse it with the same names.
+func TestSchemaV2ConstrainsTheTimeoutKeys(t *testing.T) {
+	raw, ok := schemaDefsRaw(t)["caseSpec"].Properties["timeouts"]
+	if !ok {
+		t.Fatal("the schema's caseSpec has no timeouts property")
+	}
+	var prop struct {
+		PropertyNames struct {
+			Enum []string `json:"enum"`
+		} `json:"propertyNames"`
+	}
+	if err := json.Unmarshal(raw, &prop); err != nil {
+		t.Fatalf("caseSpec.timeouts does not parse: %v", err)
+	}
+	got := append([]string(nil), prop.PropertyNames.Enum...)
+	if len(got) == 0 {
+		t.Fatal("caseSpec.timeouts constrains no key names, so the schema accepts a budget nothing applies")
+	}
+	want := make([]string, 0, len(timeoutKeys))
+	for k := range timeoutKeys {
+		want = append(want, k)
+	}
+	sort.Strings(got)
+	sort.Strings(want)
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("the schema's timeout vocabulary differs from the parser's\n  schema: %v\n  parser: %v", got, want)
+	}
+}

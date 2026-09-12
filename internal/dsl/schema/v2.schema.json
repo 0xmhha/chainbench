@@ -243,7 +243,14 @@
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          }
+          },
+          "propertyNames": {
+            "enum": [
+              "case",
+              "test"
+            ]
+          },
+          "description": "per-case timeout budgets. Only case (alias test) is read — the interpreter bounds the whole case with it — so the parser refuses any other name rather than validating a duration that nothing applies."
         },
         "hooks": {
           "type": "object",

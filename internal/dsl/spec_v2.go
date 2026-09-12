@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -377,7 +378,16 @@ func lowerCase(c CaseV2) (Spec, error) {
 	}
 	// Timeout values are durations; reject an unparsable one here so a typo
 	// fails at parse time rather than being silently ignored at run time.
+	//
+	// The KEY is checked too, and for the same reason. Only case (alias test) is
+	// consumed — the interpreter bounds the whole case with it — so any other key
+	// was validated as a duration and then ignored, which is the worst of both:
+	// the spec looks like it set a budget and no budget exists. A name outside the
+	// vocabulary is a typo, not a feature request.
 	for name, v := range c.Timeouts {
+		if !timeoutKeys[name] {
+			return Spec{}, fmt.Errorf("dsl: case %s: timeouts.%s is not a known timeout (want %s)", c.ID, name, timeoutKeyList())
+		}
 		if _, err := time.ParseDuration(v); err != nil {
 			return Spec{}, fmt.Errorf("dsl: case %s: timeouts.%s %q is not a duration: %w", c.ID, name, v, err)
 		}
@@ -540,6 +550,23 @@ func lowerCase(c CaseV2) (Spec, error) {
 // expectAliases maps proposal-vocabulary source names onto registered
 // assertion names.
 var expectAliases = map[string]string{"rpc": "rpcCall"}
+
+// timeoutKeys is the timeout vocabulary a case's "timeouts" may name. Only these
+// are read — interp.caseTimeout bounds the whole case with case (or its alias
+// test) — so the set is the parser's promise that a declared budget takes effect.
+// Widening it means giving the new key a consumer in the same change.
+var timeoutKeys = map[string]bool{"case": true, "test": true}
+
+// timeoutKeyList renders the vocabulary for an error message, sorted so the text
+// does not depend on map order.
+func timeoutKeyList() string {
+	keys := make([]string, 0, len(timeoutKeys))
+	for k := range timeoutKeys {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return strings.Join(keys, ", ")
+}
 
 // expectAdjuncts is the outcome vocabulary a do step's "expect" may name:
 // receipt (the default — the tx must be mined), revert (mined with status 0x0),
