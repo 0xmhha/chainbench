@@ -1358,6 +1358,22 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
       (`rpcStep is 1, want >= 3` — http/ws/auth 를 rpc 에서 파생하므로). ws·auth 대역을
       선언하면 step 1 이 정당해진다. `env/docker` 가 그렇게 쓰는 이유가 이것이다.
     - `internal/app` 28.2% → 31.7%.
+  - **이어서: `UpgradeGenesis`(순위 6위, 13점) — 순위표의 마지막 실질 항목.** 결함은 없었고,
+    **이 세션에서 실측으로 알아낸 성질이 아직 아무데도 단정돼 있지 않았다**는 것을 채웠다.
+    - **병합이 무엇을 하는지가 프로파일 주석에 틀리게 적혀 있었던 그 자리다.** 주석은
+      `extra_data` 가 validator 의 RLP 인코딩이라고 했지만, 병합은 후속 제네시스의 extraData 를
+      **가져오지 않는다** — `config.<fork>` 섹션과 `<fork>Block` 만 들어올리고 나머지는 전부
+      from-chain 의 것이다(extraData·alloc 포함). 그것을 성질로 고정했다: base 의 config 키 +
+      `{croissant, croissantBlock}` **정확히 그만큼**, extraData 는 그대로, alloc 은 그대로.
+    - **변이가 그 틀린 주석이 주장했던 동작을 그대로 재현한다.** 병합의 base 를 후속 제네시스로
+      바꾸면 실패 출력에 **validator RLP extraData** 가 찍히고 `berlinBlock`·`pangyoBlock` 이
+      섞여 들어온다. 즉 주석이 묘사한 것은 실제로 존재할 수 있었던 다른 구현이었다.
+    - 나머지 성질: fork 섹션이 프로파일의 validator 집합을 담고 **BLS 키 수가 일치**하는지
+      (어긋나면 제네시스는 통과하고 서명에서 실패한다), 노드 투영이 **프로듀서 먼저**이고
+      network id 가 하나이며 포트가 0 이 아닌지. 변이(프로듀서를 뒤로) 로 확인.
+    - 거부 3건(없는 프로파일·없는 from-genesis·미등록 to-chain)도 덮었다.
+    - `internal/app` 31.7% → 34.3%. **판정 밀도 순위표의 상위 6개를 다 지났다** — 남은 것은
+      라이브가 필요한 `UpgradeRun`(23) 하나다.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
