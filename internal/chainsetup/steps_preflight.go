@@ -20,13 +20,14 @@ func (w *Workspace) Have(ctx context.Context) preflight.Have {
 		Chain: st.Chain, Binary: st.Binary, KeysDir: st.KeysDir, Peering: st.Peering,
 		Validators: st.Validators, Started: st.Steps["start"].Done,
 	}
-	if st.GenesisPath != "" {
-		if t, err := w.resolveTarget(); err == nil {
-			if b, err := t.Files.Read(ctx, st.GenesisPath); err == nil {
-				sum := sha256.Sum256(b)
-				h.GenesisSum = hex.EncodeToString(sum[:])
-			}
-		}
+	// The genesis this composition was asked for, not the bytes it produced:
+	// WantOf can only digest a request, so Have has to speak the same language
+	// or the comparison is between two different things and never matches. The
+	// request is on disk for exactly this kind of question (F1). A workspace
+	// written before it was recorded digests to nothing, which skips the check
+	// rather than forcing every old workspace to rebuild.
+	if st.Request != nil {
+		h.GenesisDeclared = GenesisDeclared(*st.Request)
 	}
 	for _, r := range st.Nodes {
 		h.Nodes = append(h.Nodes, preflight.Node{
@@ -44,7 +45,36 @@ func WantOf(in NetUpIn) preflight.Want {
 	return preflight.Want{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Peering: in.Peering,
 		ChainID: in.ChainID, Validators: in.Validators, Endpoints: in.Endpoints,
+		GenesisDeclared: GenesisDeclared(in),
 	}
+}
+
+// GenesisDeclared digests the fields of a request that decide the genesis, so
+// two requests wanting different chains cannot be mistaken for one.
+//
+// It is exported because both sides of the preflight comparison must compute it
+// identically: the request being made ([WantOf]) and the request this workspace
+// was composed from ([Workspace.Have], via the recorded request). A second
+// implementation is how the comparison silently stops matching.
+//
+// The digest covers the chain id, the overlay file, the dot-path genesis set, an
+// existing genesis used verbatim, and the template and manifest that supply the
+// base document. It deliberately does NOT cover the keys or the validator count:
+// those are compared on their own, and folding them in here would report "genesis
+// differs" for a difference the reader can already see named.
+func GenesisDeclared(in NetUpIn) string {
+	h := sha256.New()
+	write := func(parts ...string) {
+		for _, p := range parts {
+			// Length-prefixed so "ab"+"c" and "a"+"bc" do not collide.
+			fmt.Fprintf(h, "%d:%s\x00", len(p), p)
+		}
+	}
+	write(fmt.Sprintf("%d", in.ChainID), in.OverlayPath, in.GenesisExisting, in.TemplatePath, in.ManifestPath)
+	// Order matters: the set is applied in order and a later key wins, so two
+	// different orders can produce two different genesis documents.
+	write(in.GenesisSet...)
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // Compare decides how much of the composed chain a request can reuse: the

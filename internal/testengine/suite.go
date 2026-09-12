@@ -476,8 +476,27 @@ func composeWorkspace(ctx context.Context, sd chainsetup.Deps, up chainsetup.Net
 			out.SetupSteps = append(out.SetupSteps, "restart: "+st.Detail)
 		}
 	default:
+		// RebuildAll means a network-wide fact differs, and the most common one
+		// is the genesis — a different chain. The compose steps alone do not
+		// deliver that: init and start SKIP a node that still carries a recorded
+		// pid, so a second up over a workspace whose nodes are still running
+		// rewrites the genesis on disk and leaves every node serving the old one.
+		// Measured: the verdict read "rebuild-all: genesis differs", the
+		// workspace genesis had applepieBlock 0, and all four running nodes
+		// reported "Applepie: #<nil>" with one startup each.
+		//
+		// So the network is stopped first, which is what makes "rebuild all"
+		// true. Only on RebuildAll: Compose has nothing to stop, and
+		// RebuildNodes is handled above, per node.
+		if decision.Verdict == preflight.RebuildAll {
+			st, serr := chainsetup.NetStop(ctx, sd, chainsetup.NetStopIn{DataDir: up.DataDir})
+			if serr != nil {
+				return composed{}, fmt.Errorf("engine: run suite: preflight stop before rebuild: %w", serr)
+			}
+			out.SetupSteps = append(out.SetupSteps, "stop (rebuild-all): "+st.Detail)
+		}
 		res, err := chainsetup.NetUp(ctx, sd, up)
-		out.SetupSteps = res.Steps
+		out.SetupSteps = append(out.SetupSteps, res.Steps...)
 		if err != nil {
 			return composed{}, fmt.Errorf("engine: run suite: setup: %w", err)
 		}
