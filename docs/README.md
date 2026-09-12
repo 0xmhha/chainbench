@@ -5,7 +5,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 구성하고, 테스트 중 노드를 개별 제어하며, 실행 증적을 모아 보고서를 낸다.
 그 목표의 정본은 [`dev/chainbench-system-direction.md`](dev/chainbench-system-direction.md) 다.
 
-> 인덱스 갱신: **2026-09-11** (`3cf992db`). 문서를 더하거나 옮기면 이 표도 같이 고친다 —
+> 인덱스 갱신: **2026-09-12** (`ea486e50`). 문서를 더하거나 옮기면 이 표도 같이 고친다 —
 > 등급 체계는 인덱스가 정직할 때만 작동한다.
 
 ## 0. 무엇을 알고 싶은가
@@ -95,6 +95,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/legacy-port-audit/`](dev/legacy-port-audit/README.md) | **[측정] 이관 감사** — 셸 460파일과 신규 Go+DSL 을 각각 AST 그래프로 만들어(노드 943 / 1,413) 테스트 단위로 대조한 기록. |
 | [`dev/wemix4-port-tracker.md`](dev/wemix4-port-tracker.md) | wemix4 케이스 포팅 추적(covered / ported / deferred). 상단에 **경로 정정** — 판정은 유효하고 위치만 `tests/tc`·`tests/e2e` 로 옮겼다. |
 | [`dev/monitoring-issue-review-2026-09-10.md`](dev/monitoring-issue-review-2026-09-10.md) | **모니터링 이슈 16건 재판정과 수정 계획** (기준 `2cc82692`). 그중 14건은 `9b6b0930` 에서 해소됐다. |
+| [`dev/chain-handover-2026-09-12.md`](dev/chain-handover-2026-09-12.md) | **[측정] 체인팀 인계 3건** — chainbench 를 고쳐서는 해소되지 않는 go-wemix / go-wbft 결함. `verifyBlockSig` 의 nil 역참조 패닉(원인 확정), 부트 etcd 붕괴(R6, 범위 좁힘), `istanbul_getWbftExtraInfo` 의 블록 태그. 증상·근거·재현·제안까지. |
 
 ## 4. `dev/architecture/` — 구조와 측정
 

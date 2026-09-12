@@ -524,6 +524,11 @@ chainbench 오케스트레이션(genesis·부트스트랩·직렬 순서)은 정
 감지 후 재형성(`etcdInit` 재발행)을 브링업에 넣을지 — 단 형성 중 재발행이 오히려 방해한 선례 있음.
 키·genesis 는 원인이 아님을 실측 확인(genesis 해시 전 노드 동일, 배포된 키 경로를 command 가 사용).
 
+> **정정·인계 (2026-09-12).** 위 단락의 "join 하려다 형성된 클러스터를 잃는다" 는 소스와 맞지
+> 않는다. join 경로는 `etcdIsRunning()` 가드 뒤에 있어 돌고 있는 etcd 를 내릴 수 없고,
+> `"not found"` 는 join 을 할 **피어를 못 찾은** 것이다. 현재 판독과 재현·조사 방향은
+> [`chain-handover-2026-09-12.md`](chain-handover-2026-09-12.md) §2 가 이긴다.
+
 ### 확정된 결정 (2026-08-22)
 
 | # | 결정 | 근거 |
@@ -1719,6 +1724,16 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   스펙 작성이다: 다른 `istanbul_*` 는 `"latest"` 를 받으므로(`istanbul_getValidators` 를
   쓰는 기존 케이스들이 그렇다) 같은 습관으로 쓰면 실패한다. 이 메서드를 쓰는 스펙은 epoch
   경계 번호를 명시해야 한다. **체인팀 몫이지만, 스펙 작성자가 먼저 밟는다.**
+  - **인계 완료 (2026-09-12).** `docs/dev/chain-handover-2026-09-12.md` §3 (B1) 으로 옮겼다.
+    거기서 하나 더 확인했다: **고칠 모양이 같은 파일 안에 이미 있다.** 285줄 위
+    `GetValidators` 는 포인터로 받고 `rpc.LatestBlockNumber` 를 먼저 판정하며,
+    `GetCommitSignersFromBlock`·`calculateBlockRange`·`IsValidator` 도 같다.
+    `GetWbftExtraInfo` 만 값으로 받고 판정을 생략한다.
+  - **정정.** 위 단락의 "스펙은 epoch 경계 번호를 명시해야 한다" 는 필요 이상으로 좁다.
+    저장소에는 이미 일반 우회가 있다 — DSL 의 `"@latest"` 센티넬
+    (`internal/testhelper/derived.go:235`)이 호출 시점에 `eth_blockNumber` 결과로 치환하고,
+    `waitFor` 안에서는 폴링마다 재치환한다. 이 메서드를 쓰는 기존 스펙들이 전부 그것을 쓴다.
+    **그 센티넬이 존재하는 이유가 이 결함이다.**
 
 - [ ] **관측 (2026-09-11). go-wemix 바이너리가 `verifyBlockSig` 에서 패닉한다.** 15+15
   핸드오프 중 **15대 중 한 대**가 동기화하다 죽는다 —
@@ -1731,6 +1746,15 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     즉 호출 형태와 무관하고, 이 기기의 상태가 달라지면서 go-wemix 쪽 경합에 걸리기 시작했다.
   - 눈에 띄는 점: 죽는 노드는 **ethash 검증 경로**를 타면서 wemix 블록 서명을 검증하고 있다.
     거버넌스를 아직 싣기 전의 창으로 보인다. **체인팀 몫**이고 R6 과 같은 성격이되 증상은 다르다.
+  - **원인을 소스에서 확정하고 인계했다 (2026-09-12).** `docs/dev/chain-handover-2026-09-12.md`
+    §1 (W1). **단락 평가의 좌우가 뒤집혀 있다.** `admin.go:1001` 의 가드는
+    `err != nil || count.Sign() == 0` 이라 `err != nil` 에서 단락해 `count` 를 읽지 않는데,
+    1002 줄의 반환식은 `err == ErrNotInitialized || count.Sign() == 0` 로 순서가 바뀌어,
+    `err` 이 **다른 에러**이면 nil `count` 를 읽는다. 생성된 바인딩이 에러 경로에서 nil 을
+    돌려준다(`wemix/bind/gen_gov_abi.go:2129` 의 `*new(*big.Int)`). 그 높이에 거버넌스 코드가
+    없으면 언팩이 `abi: attempting to unmarshall an empty string …` 로 실패하는데, 이것이
+    nil 도 `ErrNotInitialized` 도 아닌 바로 그 값이다. 관측된 `addr=0x10` 은 nil `*big.Int`
+    의 `abs` 슬라이스 길이 필드 오프셋(16)과 같다.
 
 ### C. 키 취급과 증적 (§1q)
 
@@ -2082,7 +2106,16 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
     체인이 epoch마다 집합을 다시 정하므로 다른 케이스들의 안정성 가정이 바뀐다. 문턱은 집합
     크기가 아니라 운영 파라미터라 G3 의 파생에 넣지 않았다.
 - [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
-  **체인팀 몫이다.**
+  **체인팀 몫이다. 인계 완료 (2026-09-12)** — `docs/dev/chain-handover-2026-09-12.md` §2 (W2).
+  - **인계하면서 이전 판독을 고쳤다.** "join 하려다 형성된 클러스터를 잃는다" 는 **틀렸다** —
+    join 경로는 `etcdIsRunning()` 으로 가드되어 돌고 있는 로컬 etcd 를 내릴 수 없고,
+    `etcd join failed … "not found"` 는 `etcdAutoJoin` 이 **etcd 를 돌린다고 광고하는 피어를
+    하나도 못 찾은** 결과다(원인이 아니라 결과).
+  - **범위가 한 질문으로 줄었다.** `etcdInfo()` 는 `ma.etcd == nil` 일 때만 `.cluster` 가
+    `undefined` 로 보이고(멤버 조회 실패는 빈 문자열이다), **생산 코드는 `ma.etcd` 를 다시
+    nil 로 만들지 않는다**(`wemix/` 전체에서 그 대입은 테스트 한 곳뿐). 그러면 `VerifyEtcd`
+    가 통과한 프로세스와 `undefined` 를 돌려준 프로세스는 같을 수 없다 — **부트가 재시작했다는
+    뜻이고, 그 죽음이 W1 일 수 있다**(미확인: W2 는 2026-09-02, W1 패닉 관측은 2026-09-11).
 - [x] **validatorset 홈 결정 — 완료 (2026-09-12).** "어느 모듈로 옮길까"가 아니라 **무엇을
   잘못 소유하고 있나**가 답이었다. `validatorset.Load` 가 **합의 패밀리를 문자열로 분기**하고
   있었다(`switch family { case "wbft": … case "poa": … }`). 이 저장소가 다른 곳에서 래칫으로
