@@ -2175,7 +2175,33 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     통과했다.** 제거하려던 바로 그 모양(공허한 단정)을 제가 만든 것이라 지우고, **왜 쓸 수
     없는지**를 파일에 적었다(핸들러 맵은 private 이고 lister 가 없다). 그 방향의 심각도도 낮다 —
     고아 핸들러는 도달 불가일 뿐 틀리지 않는다. 그래서 core 에 lister 를 더하지 않았다.
-- [ ] **폴링 루프가 10벌 중복이다 (신규 2026-09-12).** [권장] `internal/consensus/` 의
+- ☑ **폴링 루프 — 결함 하나를 고치고, 제 측정을 정정했다 (2026-09-12).**
+  - **"10벌이 같은 모양" 은 과장이었다.** 열어 보니 루프들이 서로 다르다: 반환형이
+    `error` 와 `(T, error)` 로 갈리고, 시도 중 에러를 **즉시 반환하는 것**(`executor.go:122`
+    의 `files.Exists`)과 **모아 두는 것**(`executor.go:310` 의 `last error`,
+    `info.go:80` 의 `last`/`lastErr`)이 섞이고, 데드라인 검사 위치도 다르다
+    (`handoff.go:746` 은 루프 머리에서 본다). 하나의 헬퍼로 흡수하려면 제네릭과 노브 여럿이
+    필요하고, **그러면 원래 루프보다 읽기 어려워진다.**
+  - **정말 같은 것은 안쪽의 "취소를 존중하는 대기" 하나다** — `select { ctx.Done() /
+    time.After(interval) }` 가 9곳에서 글자까지 같다. **그리고 10번째가 버그였다.**
+  - **`upgrade.WaitEndpointsReady` 가 취소를 무시하고 있었다 (고쳤다).** 그 자리만
+    `time.Sleep` 이었다 — context 가 끼어들 수 없는 유일한 대기 형태다. 호출자가 포기한 뒤에도
+    죽은 엔드포인트를 **남은 예산 전부**(핸드오프 경로에서 30초) 계속 찔렀고, 그래서 실행의
+    취소가 그만큼 늦게 보고됐다. 같은 패키지의 다른 폴링 루프는 전부 `ctx.Done()` 을 보고
+    있었고 이 하나만 아니었다.
+    - 단위 테스트 3건: 취소가 **즉시** `context.Canceled` 로 돌아온다(예산은 5분으로 두어,
+      존중하지 않으면 통과가 아니라 **타임아웃으로 실패**한다) · 취소가 없으면 여전히 자기
+      데드라인으로 실패하고 **엔드포인트 이름을 말한다** · 빈 항목은 기다릴 것이 아니라 건너뛴다.
+    - 변이(`time.Sleep` 으로 되돌리기)로 확인: 테스트가 "ignored cancellation" 으로 실패하고
+      11초를 쓴다(고친 뒤에는 0.9초).
+  - **남은 공통 대기의 통합은 하지 않았다.** 이유는 값이 아니라 **비용의 모양**이다 — 두
+    패키지(`poa`·`upgrade`)가 공유할 자리가 없어 `internal/core` 에 **새 패키지**가 필요하고,
+    그러면 `layers.md` §3 배치표와 `arch.TestEveryPackageIsPlaced` 를 함께 고쳐야 한다.
+    `core/collector`·`core/process` 에도 같은 select 가 있으니 그때는 그 둘까지 함께 가는 것이
+    맞다. 지금 결함은 없고, 정리는 그 범위로 따로 연다.
+  - 재확인: `grep -rn "case <-time.After" internal/consensus/ internal/core/ | grep -v _test | wc -l` ·
+    `grep -rn "time\.Sleep(" internal/consensus/ | grep -v _test` (비어야 한다 — 호출 형태로 찾는다. `time.Sleep` 만 찾으면 이 수정을 설명하는 주석 문장에 걸린다)
+  **(원래 진단, 과장)** `internal/consensus/` 의
   `time.Now()` 20곳은 **전부 같은 모양**이다: `deadline := time.Now().Add(timeout)` → 시도 →
   `time.Now().After(deadline)` 면 **자기만의 오류 메시지**로 반환 → `select ctx.Done() /
   time.After(interval)`. 결정에 쓰이는 시계는 **하나도 없다** — 전부 기다림의 한계다.
