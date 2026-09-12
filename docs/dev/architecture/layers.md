@@ -84,8 +84,13 @@ flowchart TD
 > **보정 있음**: 이 문서는 *패키지가 어느 층인지*만 답한다. *관심사의 주인이 누구인지*와
 > 3체인 실행 추적은 [[module-responsibilities]](module-responsibilities.md) 에 있고,
 > 거기서 이 문서의 보정 3건(B1 `testspec` 분할 · B2 노드 생명주기 소유자 · B3 관심사 열)을 제기한다.
+>
+> *디렉토리가 지금 어떻게 생겼는지*와 *각 패키지가 무엇을 지원하는지*는
+> [[package-tree]](package-tree.md) 에 있다. 아래 §3 은 **층**으로 묶고 그쪽은 **경로**로 묶으므로
+> 두 목록의 순서는 일부러 다르다 — `core` 안에 L0·L1·L3 이 함께 있고 L3 인 `dsl/*`·`testhelper` 는
+> `core` 밖이라, 경로만 보고는 층을 알 수 없다.
 
-## 3. 모듈 배치 (43개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01)
+## 3. 모듈 배치 (48개 전수 — R5 은퇴: testkit·testrun 삭제, testsupport 신설; 2026-09-01)
 
 ### L0 커널 — 공용 어휘
 
