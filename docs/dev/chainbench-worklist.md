@@ -1346,6 +1346,18 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
     - `HexBytes("0x")` 자체는 그대로 뒀다 — 빈 calldata 는 정당하다. **바이트가 필요한 호출자가
       그렇게 말해야 한다**는 쪽으로 고쳤다.
     - 결정표 2개 + 케이스 2개. `internal/app` 25.6% → 28.2%.
+  - **이어서: `NetPlan`(순위 5위, 12점).** 결함은 없었다 — 대신 **사용자가 말로 요구한 배치
+    순서가 운영자가 쓰는 층에서 한 번도 단정된 적이 없었다**는 것을 채웠다.
+    - 고정한 성질: 요청한 모양 그대로 나오는지(총수·역할별 수·모든 항목에 호스트와 포트가
+      있는지), **모든 서버에 한 칸씩 주고 나서야 첫 서버로 되돌아오며 그때는 포트 대역이
+      달라지는지**(= 15대에 30노드를 얹는 근거), validator 0 이하 거부, 미등록 체인 거부,
+      **용량 초과를 조용히 잘라내지 않고 계산을 담은 메시지로 거부하는지**.
+    - 변이 2건: `Inventory.free()` 의 순회를 호스트 우선으로 뒤집으면 `six nodes landed on
+      1 host(s)` 로 잡히고, 용량 초과를 조용히 자르면 `total=1` 로 잡힌다.
+    - **테스트 픽스처가 규격을 가르쳐 줬다**: p2p·rpc 만 선언한 서버 세트는 거부된다
+      (`rpcStep is 1, want >= 3` — http/ws/auth 를 rpc 에서 파생하므로). ws·auth 대역을
+      선언하면 step 1 이 정당해진다. `env/docker` 가 그렇게 쓰는 이유가 이것이다.
+    - `internal/app` 28.2% → 31.7%.
 - ◐ **WA24** [죽은 능력] — **재측정 (2026-09-12).** 목록의 9개 중 **대부분은 이미 해소됐고**, 남은 것은 성격이 다르다. 스펙을 JSON 으로 파싱해 `do`/`expect`/`source` 실사용을 세었다(설명 문구의 단어가 아니라).
   - **이미 스펙이 있다 (5개)**: `faucet`·`registerContract`·`metric`·`createAddress`·`contractChecksum` — 전부 `tests/tc/go-stablenet/vocabulary/` 아래에 있다.
   - **`defaultOn` — 이번에 채웠다.** `tests/tc/go-wemix/vocabulary/01-default-on-routes-every-step`. 인터프리터 단위 테스트(`TestRun_DefaultOnRoutesStatements`)는 있었지만 **`chainbench run` 을 지나는 라이브 스펙이 없었다**. 단정을 구별되게 골랐다 — `admin_wemixInfo.self.name` 은 **노드마다 답이 다른 유일한 값**이라, 기본 타깃이 무시돼 `nodes[0]` 로 떨어지면 `node1` 이 나와 실패한다. `blockNumber`·`peerCount` 로 썼으면 어느 쪽이든 통과해 아무것도 증명하지 못했을 것이고, **조용히 무시되는 기본값이 살아남는 방식이 정확히 그것이다.** 변이(케이스 상위 `on` 제거)로 확인: `expected node3 actual node1`.
