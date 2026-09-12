@@ -2662,6 +2662,25 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   머리에 상태와 표본 확인 근거를 적었다.
 - `hardfork 는 통폐합 대상 아님` 은 할 일이 아니라 내린 결정이라 ☑ 로 바꿨다.
 
+**2026-09-12 — 라이브 없이 보낸 것을 라이브로 검증했다 (11/11).** PR #414 가 `wait.Sleep`
+으로 **11곳**을 바꿨는데, 그중 **8곳이 poa 브링업 경로**다. 단위 테스트만 돌리고 보냈고, 이
+저장소의 기록이 반복해서 말하는 것이 바로 그 위험이다 — 라이브가 단위 테스트가 못 잡는 부류를
+잡는다(핸드오프 결함 6건, 원격 로그 잘림, `ringFor`). 그래서 돌렸다.
+
+| 검증 | 덮은 사이트 | 결과 |
+|---|---|---|
+| **15노드 wemix 브링업** (docker 15대, 13 bp + 2 en, `tests/tc/go-wemix/chain-up/02`) | poa 8곳 — `WaitForIPC`·`WaitForIPCOn`·`WaitSelf`·`VerifyEtcd`·`WaitForMember`·`joinOne`·`WaitProducing`·`WaitEtcdCluster` | **pass.** 직렬 내림차순 브링업 완주, 13 bp 전부 etcd 형성, 블록 생산 |
+| **golden 5노드 핸드오프** (로컬, `profiles/wemix-upgrade.yaml`) | upgrade 2곳 — `WaitEndpointsReady`·`AwaitFork` | **pass.** `handoff confirmed: head 30; blocks 21-30 all sealed by the successor set, across 4 of 4 validator(s)` |
+| 단위 테스트 | `collector.WaitLog` 1곳 | 타임아웃 경로(`"nonexistent"`, 100ms)가 그 루프를 실제로 돈다. **프로덕션 호출자는 없다** — 인터페이스 계약이다 |
+
+- **8곳이 어디서 쓰이는지 먼저 확인하고 실행을 골랐다.** 각 사이트의 함수를 AST 가 아니라
+  `awk` 로 거슬러 올라가 이름을 뽑고, 그 함수들이 poa 브링업이 지나가는 자리임을 확인한 뒤
+  15노드 브링업을 선택했다. 핸드오프는 2곳만 추가로 덮으므로 **5노드 golden** 으로 충분했다
+  (15+15 는 30노드 키셋이 필요하고 W1 패닉 위험이 있다).
+- **golden 실행은 W1 을 밟지 않았다.** 로컬 5노드다. W1 은 15노드 docker 에서만 관측됐다.
+- 재확인: `ls ~/.chainbench/ws-live15/sessions/*/session.json` · `grep "handoff confirmed" /tmp/golden.log`
+  (세션은 재실행하면 새로 생긴다 — 위 인용이 그 실행의 출력이다)
+
 **2026-09-12 — 브랜치 정리와, 남기고 싶었던 것.** 원격에 PR 없는 브랜치가 둘 있었다.
 
 - `chore/mark-test-only-signing-key` — **삭제했다.** 커밋 `6f054014` 의 내용(테스트 키 3곳의

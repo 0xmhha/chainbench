@@ -194,7 +194,8 @@ chainbench 의 브링업은 부트 노드를 그 사이에 재시작하지 않�
 않았다. W2 는 2026-09-02 기록이고 W1 패닉은 2026-09-11 에 관측했으므로 그 실행의 로그로
 대조하지 못했다. 다만 재시작 뒤에 나는 에러 문장이 정확히 관측된 두 줄과 맞는다(아래).
 
-**(3) 재시작 뒤의 두 줄은 코드에서 그대로 나온다.** admin 루프가 거버넌스 파트너인데 etcd 가
+**(3) 두 줄은 코드에서 그대로 나온다 — 그리고 첫 줄은 정상 브링업에서도 매번 나온다
+(2026-09-12 실측).** admin 루프가 거버넌스 파트너인데 etcd 가
 안 돌면 `EtcdStart()` 를 부른다(`wemix/admin.go:731`):
 
 ```go
@@ -210,6 +211,27 @@ if ma.contracts != nil && ma.nodeInfo != nil {
 이면서 **`InitialCluster` 에 자기 자신만** 적는다(`etcdutil.go:118-148`). 데이터 디렉토리에
 멤버 기록이 없는 상태로 이 설정을 쓰면 etcd 는 클러스터 정보를 가져올 곳이 없다 —
 `cannot fetch cluster info from peer urls` 가 그 문장이다.
+
+> **실측 정정 (2026-09-12). 이 줄은 붕괴의 신호가 아니다 — 건강한 브링업에서도 매번 나온다.**
+> 15대 docker 에 13 bp + 2 en 웹믹스를 올려 완주시킨 실행에서, **13개 bp 전부가**
+> `etcd failed to start: cannot fetch cluster info from peer urls` 를 **정확히 한 번** 찍고
+> 곧바로 `etcd started server` · `etcd server ready` 로 이어졌다. en 2대는 둘 다 찍지 않는다
+> (etcd 멤버가 아니다). 체인은 블록을 생산했고 스펙은 통과했다.
+>
+> | 노드 | `etcd failed to start` | `etcd server ready` |
+> |---|---|---|
+> | node1~node13 (bp) | 각 1회 | 각 1회 |
+> | node14·node15 (en) | 0 | 0 |
+>
+> **왜 그런가**: admin 루프의 `EtcdStart()` 는 거버넌스 파트너이고 etcd 가 안 돌면 무조건
+> 불리는데, 그 설정(`ClusterState = existing` + `InitialCluster` 에 자기 자신만)은 **한 번도
+> 멤버였던 적 없는 노드에서는 반드시 실패한다.** 클러스터를 실제로 만드는 것은 그 뒤의
+> `etcdInit` 이다. 즉 이 실패는 **정상 경로의 일부**다.
+>
+> **체인팀에게 중요한 점 둘.** (가) 이 줄로 붕괴를 감지하려 하면 **건강한 실행마다 걸린다** —
+> 탐지 신호로 쓸 수 없다. 붕괴를 가리는 것은 이 줄이 아니라 그 뒤에 `etcd server ready` 가
+> **오지 않는 것**이다. (나) 위의 "재시작 뒤에 나는 문장" 이라는 설명은 좁았다. 재시작에서도
+> 나지만, **첫 기동에서도 난다.**
 
 그 다음 `EtcdStart` 는 `go admin.etcdAutoJoin()` 으로 넘어가고, `etcdAutoJoin` 은 `up` 이면서
 `MiningPeers` 에 `*` 가 있는 다른 miner 를 찾는다. 없으면 `ErrNotFound` 를 남긴다
