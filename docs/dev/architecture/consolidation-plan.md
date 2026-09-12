@@ -1,5 +1,10 @@
 # 통폐합 계획 — 55개 모듈을 관심사 단위로 (사용자 주도, 2026-08-31 확정)
 
+> **[측정 재검토 2026-09-12]** 이 계획은 실행됐고, **흡수 14건이 끝났다.** 남은 6건 중
+> **3건은 이후에 반대로 결정**됐고, **3건은 오늘 측정으로 반대 근거가 나왔다** — 그중 하나는
+> **import 순환이라 불가능**하다. 목표 수 "약 20" 은 산술적으로 낡았다. 상세는 **§5**.
+> 이 문서 자체는 등급 표기가 없었다 — 성격은 [현행 설계]이고, §5 는 [측정]이다.
+
 > 배경: 모듈 재편(module-plan)은 파일을 주인에게 옮기는 데는 성공했지만(위반 0),
 > 모듈 수는 거의 줄지 않았다(75 → 69, internal 55개). `core` 아래 30개가 평평한
 > 형제로 남아 역할이 이름만으로 구분되지 않는다(300줄 미만 24개). 이 문서는
@@ -212,3 +217,90 @@ verb 로 고정해(사전 밖 명령·개명 잔재를 막아) 표면 드리프�
 > launchopts→build, provision→deploy). `chainbench_network_*`(붙인 네트워크 레지스트리)는
 > 별개 개념이라 유지. 외부 계약 변경이라 옛 이름은 "unknown tool" 로 거부된다.
 > `TestChainToolsRenamed` 가 chain 도구 집합을 고정하고 net 잔재를 차단.
+
+---
+
+## 5. 현재 상태 재측정 (2026-09-12) — [측정]
+
+기준: main `c05250cf` · `go run ./scripts/inventory/code-graph .`
+(internal 패키지 **48** · 엣지 236 · internal 47,583줄).
+
+### 5.1 계획의 진단이 더 이상 성립하지 않는다
+
+머리말의 근거는 "`core` 아래 **30개**가 평평한 형제로 남아 역할이 이름만으로 구분되지 않는다
+(**300줄 미만 24개**)" 였다. 오늘:
+
+| 지표 | 계획 시점 (2026-08-31) | 오늘 (2026-09-12) |
+|---|---|---|
+| internal 패키지 | 55 | **48** |
+| `core` 아래 | 30 | **22** |
+| `core` 아래 300줄 미만 | 24 | **7** |
+
+**작고 구분 안 되는 형제라는 문제는 대체로 해소됐다.** 남은 7개는
+`filestore`(297) · `preflight`(297) · `inspector`(241) · `report`(214) · `hardfork`(136) ·
+`home`(52) · `wait`(43) 이고, 뒤의 둘은 **하나의 사실만 담기 위해 일부러 작다**.
+
+### 5.2 오늘의 형태는 분산이 아니라 집중이다
+
+| 패키지 | 줄 | fanIn | fanOut |
+|---|---|---|---|
+| `chainsetup` | 6,585 | 2 | **20** |
+| `testhelper` | 3,717 | **1** | 9 |
+| `resource` | 3,080 | 6 | 4 |
+| `app` | 2,943 | 17 | **24** |
+| `testengine` | 2,892 | 1 | **23** |
+| `mcp` | 2,874 | 1 | 1 |
+
+계획은 **조각이 너무 많다**고 진단했고, 지금 측정은 **덩어리가 너무 크다**고 말한다.
+더 합치면 `chainsetup`(이미 6,585줄)이 더 커진다. **방향이 반대다.**
+
+### 5.3 R 단계 실제 상태 — 워크리스트의 "다음은 R2" 는 12일째 틀린 기록이다
+
+| 단계 | 계획 | 오늘 |
+|---|---|---|
+| R1 소형 흡수 | 8건 중 arch-안전한 것 | ☑ 2026-08-31 (PR #325) |
+| R2 DSL 분리 | `testspec`→`dsl`, interpreter→`testengine` | **☑ 목표 달성, 배치는 다름.** `testspec` 은 없고 `dsl`(문법, **fanOut 0**)·`dsl/interp`(실행기, fanOut 8)로 갈렸다. 게이트("`dsl` out-edge 에 실행 인프라 0")는 **만족**한다 — interpreter 를 `testengine` 에 넣는 대신 `dsl` 하위에 둔 것이 그 게이트를 더 깨끗하게 만족시킨다 |
+| R3 프로세스·자원 | driver+launcher+filestore→process · machine+remote→resource | **◐ 2/3.** driver·launcher·machine 은 흡수됐다. `filestore`·`remote` 는 남았고 **§5.4 가 남겨야 할 이유를 말한다** |
+| R4 구성 경로 단일화 | testengine 4단계 | ☑ 이 문서 §R4 가 2026-09-01 실행 결과를 적고 있다 |
+| R5 은퇴 | testkit·testrun·test cmd | ☑ 세 패키지 모두 없다 |
+
+### 5.4 남은 6건 — 3건은 이미 반대로 결정됐고, 3건은 오늘 반대 근거가 나왔다
+
+**이후에 반대로 결정된 셋** (정본은 워크리스트):
+
+| 흡수 | 결정 |
+|---|---|
+| `validatorset` → `core/node` | 층 위반이라 제자리에 두고, 대신 패밀리가 자기 지식을 소유하도록 `registry.RingAccountReader` 를 더했다 (2026-09-12) |
+| `core/hardfork` → `core/genesis` | **통폐합 대상 아님** — 바이너리 swap 과 합의-패밀리 handoff 는 의도적으로 다른 모델이다 (결정으로 닫힘) |
+| `core/health` → `core/inspector` | **철회** — 공통 기반이 없어 값이 없다고 판정하고 래칫으로 경계를 고정했다 (2026-09-12) |
+
+**오늘 측정이 반대하는 셋**:
+
+- **`core/remote` → `resource` 는 불가능하다.** `resource` → `core/process` 가 이미 있고
+  `core/process` → `core/remote` 도 있다. remote 를 resource 에 넣으면 `core/process` → `resource`
+  가 되어 **import 순환**이다. `core/process` 가 remote 에서 쓰는 것은 `ShellQuote` 28회 등
+  SSH 원시 기능이며, remote 는 **fanOut 0** 인 순수 프리미티브다.
+- **`core/filestore` → `core/process` 는 코드가 스스로 반대한다.** `filestore/doc.go` 가
+  *"It has fan-out zero and is depended on by twelve packages: it is a primitive, and it stays
+  one."* 라고 적는다. 실측 fanIn **13**, fanOut **0**. 합치면 파일 한 줄 쓰려는 13개 패키지가
+  프로세스 기동·정지를 함께 끌어온다.
+- **`core/keyring/operation` → `core/keyring` 은 층을 거꾸로 만든다.** operation 은 fanIn **1**
+  (`app` 하나)·fanOut **5**(`resource` 포함)인 use-case 층이고, `keyring` 은 fanIn **11**·fanOut 2
+  인 모델이다. 합치면 **11개 패키지가 `resource` 에 전이 의존**하게 된다 — 키 모델을 쓰려던
+  패키지가 서버 배치를 함께 끌어온다.
+
+### 5.5 그래서 열린 질문은 "재개냐 종료냐" 가 아니다
+
+목표 "약 20" 은 도달 불가다: 흡수 14건이 끝났고 3건이 반대로 결정됐으므로, 남은 3건을 모두
+해도 48 → 45 다. **숫자가 목표였던 적이 없고, 진단이 목표였다** — 그 진단(작은 형제 24개)은
+7개로 줄었다.
+
+판단이 필요한 것은 둘이다.
+
+1. **이 계획을 완료로 닫는가.** 근거: 진단이 해소되고, 남은 3건은 각각 불가능·코드가 반대·층
+   역행이다. 단점: "약 20" 에 도달하지 못한 채 닫으므로, 나중에 같은 진단이 다시 나오면
+   이 문서를 다시 읽게 된다 — 그때 §5 가 왜 닫혔는지 말해야 한다.
+2. **방향을 뒤집어 큰 덩어리를 보는가.** §5.2 의 여섯 개(특히 `chainsetup` 6,585줄·fanOut 20,
+   `app` fanOut 24, `testengine` fanOut 23)가 오늘의 실제 형태다. 단점: 분할은 합치기보다
+   위험하고, 이 저장소는 이미 소비자 없는 구조를 넓게 배선하다 두 번 되돌렸다
+   (`Transport` 타입, 객체형 참조). **요구가 있을 때 열어야 한다.**

@@ -33,10 +33,12 @@
 - [ ] **N2~N6. blueprint 흡수가 중간 상태다** — 근거: §1m 표 `N2~N6` 행. 다섯 중 둘(해석·preset)이
       들어갔고 나머지 셋(raw 경로·물질화·topology)은 **측정하지 않았다**. 여는 사람이 먼저 잴 것.
 - [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. 3단계는 N1~N6 뒤이므로 위 항목에 막혀 있다.
-- [ ] **통폐합 R2 (DSL 분리) 이후** — 근거: §1j. 정본은
-      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md). 목표는 internal
-      55 → 약 20 이고 **오늘 48** 이다(R1 만 끝났다, 2026-08-31). **재개인지 종료인지 기록이 없다** —
-      이 항목은 판단을 기다린다.
+- [ ] **통폐합 — 닫을지 판단** — 근거: §1j. 정본은
+      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) **§5(2026-09-12 재측정)**.
+      "다음은 R2" 는 **틀린 기록이었다**: R2·R4·R5 는 끝났고 R3 만 2/3 다. 흡수 14건 완료, 3건은
+      이후 반대로 결정, **남은 3건은 각각 import 순환·코드가 명시적으로 반대·층 역행**이다.
+      진단("작은 형제 24개")도 7개로 해소됐다. 판단 대상은 "재개/종료" 가 아니라 **①계획을 완료로
+      닫을지** 와 **②방향을 뒤집어 큰 덩어리(`chainsetup` 6,585줄·fanOut 20 등)를 볼지**다.
 - [ ] **요구 19개의 충분성** — 근거: §1s. `arch.TestEveryRequirementNamesEvidence` 가 *연결*은
       지키지만 그 테스트가 요구를 **증명하는지**는 사람이 읽어야 한다. 표본 6개 중 R14·R15·R19 가
       `partial` 로 읽혔다.
@@ -776,7 +778,7 @@ NM1c 가 셀렉터에서 찾은 것과 같은 부류이며, 이번엔 블록 생
 **R1 완료 (2026-08-31, PR #325 — 9 relocation, internal 46).** 소형 흡수 8건 계획 중,
 측정된 층 그래프와 대조해 arch-안전한 것만 실행했다: topology→node · launchopt·config→nodeconfig ·
 netid→resource · consensus·capability→registry · obs·logs→collector · netreg→session. 상세·근거는
-정본(`consolidation-plan.md` §R1 실행 결과). **다음은 R2(DSL 분리).**
+정본(`consolidation-plan.md` §R1 실행 결과). **~~다음은 R2(DSL 분리).~~ 2026-09-12 정정: R2·R4·R5 는 이미 끝났다** — R2 는 배치가 계획과 다르지만 게이트를 만족한다(`dsl` fanOut 0). 남은 것은 R3 의 3분의 1 이고, 그 3건에 반대 근거가 있다. `consolidation-plan.md` §5 를 본다.
 
 **R1 에서 갈라져 나온 후속 작업 (별도 트랙):**
 
