@@ -1246,7 +1246,11 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
 
 ### A. 정확성·목적 차단 (먼저 반영)
 
-- ◐ **WA1** [치명] 라이브 MCP 플러그인이 이 소스로 빌드된 게 아니다. 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
+- [x] **WA1** [치명] 라이브 MCP 플러그인이 이 소스로 빌드된 게 아니다. **해소 (2026-09-12)** —
+  "이 소스로 빌드된 게 아니다" 가 문자 그대로 맞았다. PATH 의 `chainbench-mcp` 가 **다른
+  저장소**(`auto-coding/chainbench`)의 2026-07-26 빌드를 가리키는 심볼릭 링크였다. 이 저장소로
+  다시 빌드해 링크를 돌리고 `tools/list` 로 73개를 확인했다. 상세는 §1s D.
+  **(원래 진단)** 라이브는 `net_*`·`chainbench_test`·`test_list`·`setup_plan` 이름인데 이 브랜치는 `chain_*` 로 등록하고 test/test_list/setup_plan 이 없다. 증거: `internal/mcp/tools.go:16-76`. 방향: 라이브 바이너리를 이 소스로 재빌드하거나 이름 매핑을 맞춘다.
 - [x] **WA2** [목적1·2 차단] 단일 테스트 목록·실행 기능이 CLI·MCP 양쪽에 없다. testengine 에 RunOne/ListTests 카탈로그 API 가 없다. 증거: `internal/testengine/` 전역 grep 무결과, `cmd/chainbench/` 에 test 그룹 없음. 방향: testengine 에 목록·단건 실행 API 를 만들고 CLI·MCP 에 붙인다. **확인(2026-09-12): 완료.** `chainbench test --help` 가 뜨고 `chainbench_test_list` 가 MCP 에 등록돼 있다
 - [x] **WA3** [목적2 차단·MCP] 한 번에 구성+유지가 MCP 로 안 된다. `NetUp` 이 CLI 전용(`cmd/chainbench/chaincmd/up.go:49`), `chainbench_run` 은 항상 teardown 하고 `KeepUp` 을 MCP 로 노출 안 한다(`internal/mcp/run_tool.go:108-115`, `internal/testengine/suite.go:75-76`). run 이 `Server`·`Docker`·`WaitBlocks` 도 드롭한다. 방향: NetUp 을 MCP 로 노출하거나 run 에 KeepUp·Server·Docker 를 배선한다. **확인(2026-09-12): 완료.** `grep -c KeepUp internal/mcp/run_tool.go` > 0
 - [x] **WA4** [목적2·MCP] 노드 단위 stop/start(장애 주입)가 MCP 에 없다. `app.NodeStop`/`NodeStart` 가 CLI 전용(`internal/app/net.go:147,152`, `cmd/chainbench/nodecmd/node.go:32,55`). 방향: MCP 도구를 더한다. **확인(2026-09-12): 완료.** `grep -l chainbench_node_start internal/mcp/*.go`
@@ -1478,7 +1482,9 @@ proxied pn 라우팅(keys preset 로 변경), registerContract, go-wbft tx·faul
   멤버·정족수)를 확인한 뒤 작성해야 한다. go-wemix(poa)는 etcd/거버넌스 배포 경로라 더 다르다.
   registerContract 도 실제 메서드/ABI 를 쓰는 케이스는 여기 포함(현재는 임의 호출 컨트랙트로 최소 검증).
   negative-tx 의 reject(제출 거부) 변형도 남아 있다(신뢰할 수 있는 재현 방법 확정 필요).
-- [ ] **D. WA1 — 라이브 MCP 플러그인 재배포**. 배포본이 `net_*` 이름의 stale 빌드다. 저장소는
+- [x] **D. WA1 — 라이브 MCP 플러그인 — 해소 (2026-09-12).** 원인은 낡은 빌드가 아니라
+  **심볼릭 링크가 다른 저장소를 가리키는 것**이었다. 아래 §1s D 에 실측과 조치가 있다.
+  **(원래 진단, 틀렸다)** 배포본이 `net_*` 이름의 stale 빌드다. 저장소는
   `chain_*` 로 개명됐으니 재빌드·재배포만 하면 맞는다. 코드가 아니라 배포 작업이다.
 - [x] **E. WA21 — DSL 문법 확장(D4 로 미룬 것)**. env 에 `blueprint`(레이아웃+키 한 문서)와
   `keys.nodekeys.validators`(생성 키 중 N개만 validator)를 더해 compose 로 배선했다(단위 테스트).
@@ -1612,12 +1618,16 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
 |---|---|---|---|
 | **G-A. 커버리지** — ☑ 완료 (2026-09-11) | WA25 ☑ · B 잔여(체인별 거버넌스) ◐ · `istanbul_getWbftExtraInfo` 태그 관측 ☑(가이드에 기록) | 전부 `tests/tc` 스펙과 라이브 실행이다. 같은 docker 를 한 번 세워 한꺼번에 돌린다 | docker 15대 |
 | **G-B. 증적** — ☑ 완료 (2026-09-11) | L1 ☑(원격 로그 truncate 수정) · 통합 report ☑(`report --all`) · 후보·반영 완전 분리 ☑(표적 정지를 증명) | 셋 다 "실행이 무엇을 남기는가" 다 | 없음 |
-| **G-C. 대상 경계 잔여** — ☑ 대체로 완료 (2026-09-11) | L2 ◐(가르기 완료·전송 제거 남음) · `binaryAliases` ☑(객체형 참조는 남음) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
+| **G-C. 대상 경계 잔여** — ☑ 완료 (2026-09-12) | L2 ☑(전송까지 제거) · `binaryAliases` ☑(객체형 참조는 철회) · T3.3·T5.1 실 SSH 라이브 e2e ☑ · T2.1 ☑ 철회 | 전부 "로컬 가정이 남은 대상 경계" 라는 한 가지 경향이다. 이 트랙이 지금까지 찾은 결함이 전부 그 모양이었다 | docker 15대 |
 | **G-D. 구조 정리** — ☑ 완료 (2026-09-12) | validatorset ☑(패밀리가 자기 지식을 소유) · health→inspector ☑ 철회(공통 기반 없음, 래칫으로 고정) | 둘 다 소유 모듈 결정이고 소비자가 적다 | 없음 |
 | **G-E. 이관** — ☑ 완료였음 (2026-09-12 확인) | T5.5 wemix4 이관 — 표시만 낡았고 47건 전부 ported | 실제로 남은 이관 작업은 없다 | — |
 
-**여기서 할 수 없는 것.** `D. 라이브 MCP 플러그인 재배포` 는 코드가 아니라 배포다.
-`R6. go-wemix boot-etcd collapse` 는 체인팀 몫으로 넘겼다. 둘 다 묶음에 넣지 않는다.
+**여기서 할 수 없는 것 — 둘 다 틀렸다 (2026-09-12).** `D. 라이브 MCP 플러그인` 은 배포가
+아니라 **심볼릭 링크가 다른 저장소를 가리키는 것**이었고 여기서 고쳤다(아래 D 항목).
+`R6. go-wemix boot-etcd collapse` 는 체인팀 몫이 맞지만 "넘겼다" 로 끝낼 일이 아니었다 —
+소스를 읽으니 범위를 한 질문으로 줄일 수 있었다([[chain-handover-2026-09-12]] §2).
+**남은 교훈**: "여기서 할 수 없다" 는 분류는 원인을 짚은 뒤에만 쓸 수 있다. 두 항목 모두
+원인을 짚지 않은 채로 그 칸에 들어가 있었고, 짚어 보니 둘 다 할 일이 있었다.
 
 ### A. 지금 진행 중
 
@@ -1704,8 +1714,25 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     되면 멈춰야** 하며, 되살리면 재개해야 한다. 한 스펙 안에서 두 절반이 서로를 증명한다 —
     9 로 계속 도는 것이 8 에서 멈춘 것을 우연이 아니게 만든다. 변이(5대째를 세우지 않음)로
     실패 확인.
-- [ ] **D. 라이브 MCP 플러그인 재배포.** **여전히 열려 있고, 진단 문구를 고쳤다
-  (2026-09-11).** "라이브가 `net_*` 이름" 은 이제 맞지 않는다 — 라이브도 `chainbench_*` 를
+- [x] **D. 라이브 MCP 플러그인 — 해소 (2026-09-12). 원인은 배포가 아니라 심볼릭 링크였다.**
+  플러그인은 `command: chainbench-mcp` 로 PATH 에서 찾는데
+  (`~/.claude/plugins/cache/stablenet-expert/core-dev/0.1.0/.mcp.json`), 그 항목이
+  **다른 저장소**를 가리키고 있었다:
+  `~/.local/bin/chainbench-mcp` → `~/work/github/0xmhha/auto-coding/chainbench/bin/chainbench-mcp`
+  (링크 2026-06-09, 바이너리 2026-07-26). `auto-coding/chainbench` 는 별개 git 저장소이고
+  마지막 커밋이 `b1471fa`(PR #170) 이며 작업이 2026-08-04 에 멈췄다 — 이 저장소는 PR #409 다.
+  - **"낡은 빌드" 가 아니라 "다른 저장소의 빌드" 였다.** 도구 집합이 절반만 겹치고 라이브에만
+    옛 이름 3개(`chainbench_setup_plan`·`chainbench_start`·`chainbench_test`)가 있는 것이
+    그것으로 전부 설명된다. 이 저장소에는 그 세 이름이 없다.
+  - **조치**: 이 저장소의 `cmd/chainbench-mcp` 를 빌드해 링크를 돌렸다. `tools/list` 를
+    stdio 로 직접 물어 **73개**를 확인했다(라이브는 30개였다). 옛 대상 경로는 되돌릴 수 있게
+    기록해 두었다. `auto-coding/chainbench` 는 5주 넘게 멈춰 있어 그쪽을 깨뜨릴 위험이 낮다고
+    판단했다.
+  - **다음 세션에서 적용된다.** MCP 서버는 세션 시작에 연결되므로 링크를 돌린 세션의 도구
+    목록은 바뀌지 않는다. 확인은 새 세션에서 `chainbench_chain_up` 이 보이는지로 한다.
+  - **`CHAINBENCH_DIR` 는 이 저장소에서 읽는 곳이 없다**(플러그인 `.mcp.json` 은 여전히
+    넘긴다). 옛 빌드의 잔재이고, 지금은 무해하다.
+  **(원래 진단, 2026-09-11 — 원인을 못 짚었다)** "라이브가 `net_*` 이름" 은 이제 맞지 않는다 — 라이브도 `chainbench_*` 를
   쓰지만 **더 오래된 다른 집합**이다. 저장소는 도구 58개를 등록하는데
   (`grep -rh 'Name:\s*"chainbench_' internal/mcp/*.go`), 라이브에는 `chainbench_chain_*`
   20여 개와 `keyring_*`·`resource_*`·`upgrade`·`hardfork`·`validate`·`run`·`node_start/stop`
@@ -1715,7 +1742,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   - CLI 쪽은 해소됐다(2026-09-11 확인): `test`·`network`·`node`·`resource`·`validate`·
     `report` 그룹이 모두 `chainbench --help` 에 있다. WA2·WA5 가 가리키던 공백이다.
 
-- [ ] **관측 (2026-09-11). `istanbul_getWbftExtraInfo` 는 `"latest"` 같은 블록 태그를 받지
+- [x] **관측 (2026-09-11). `istanbul_getWbftExtraInfo` 는 `"latest"` 같은 블록 태그를 받지
   못한다.** 라이브에서 `"latest"` 로 부르면 `block is not a wbft block` 로 실패하고, 같은
   체인에 16진수 블록 번호를 주면 정상 응답한다. 원인은 go-wbft 쪽이다 —
   `consensus/wbft/backend/api.go:418` 이 `big.NewInt(int64(number))` 로 태그의 음수 표현을
@@ -1735,7 +1762,7 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     `waitFor` 안에서는 폴링마다 재치환한다. 이 메서드를 쓰는 기존 스펙들이 전부 그것을 쓴다.
     **그 센티넬이 존재하는 이유가 이 결함이다.**
 
-- [ ] **관측 (2026-09-11). go-wemix 바이너리가 `verifyBlockSig` 에서 패닉한다.** 15+15
+- [x] **관측 (2026-09-11). go-wemix 바이너리가 `verifyBlockSig` 에서 패닉한다.** 15+15
   핸드오프 중 **15대 중 한 대**가 동기화하다 죽는다 —
   `panic: runtime error: invalid memory address or nil pointer dereference` →
   `math/big.(*Int).Sign` ← `wemix.verifyBlockSig` (`wemix/admin.go:1002`) ←
@@ -1782,8 +1809,11 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
   - **기존 테스트 둘을 고쳐야 했다.** `"|| exit 1; nohup"` 의 **인접**을 단정하고 있었는데,
     지키려던 성질은 "mkdir 이 `&&` 가 아니라 `|| exit 1;` 로 갈라지고 nohup 이 그 뒤에 온다"는
     것이다. 인접을 박으면 그 틈에 올바른 것을 더할 때마다 깨진다. 성질로 바꿨다.
-- ◐ **L2. 대상에서 키 검증(공개 신원만 반환).** **가르는 일은 했다 (2026-09-11). 전송을
-  없애는 일이 남았다.**
+- [x] **L2. 대상에서 키 검증(공개 신원만 반환) — 완료 (2026-09-12).** 가르는 일(2026-09-11)에
+  이어 **전송 자체를 없앴다**. 재확인: `grep -n "func LoadPresetWithKeys" internal/core/keyring/store/preset.go`
+  가 둘을 보이고, 인덱스 읽기(`LoadPresetAt`)는 신원만 돌려준다. 아래 본문의 `LoadPublicPreset`
+  은 그 중간 단계의 이름이고, 지금은 `LoadPreset`(신원) / `LoadPresetWithKeys`(키) 로 갈렸다.
+  **(원래 표기)** 가르는 일은 했다 (2026-09-11). 전송을 없애는 일이 남았다.
   - **먼저 진단이 정확하지 않았다.** "묶음 전체를 내려받는다"는 것은 compose 경로
     (`chainsetup.materializeKeyring`)의 이야기이고, 그쪽은 **키를 각 노드에 배포해야 하므로
     정당하다**. 읽기 경로(`keyring list`/`show`)는 이미 다운로드 없이 대상에서 읽고 있었다.
@@ -1845,8 +1875,11 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
     `not answering` 으로 redo 되고(`0 node(s) reused, 2 redone`), pid 는 스텁이 같은 값을
     돌려줘서 우연히 같았다. 그 테스트는 버렸다. 판정에 `alive` 가 필요한 성질은 응답하는 노드가
     있어야 하므로 reconcile 수준에서 보는 것이 맞다.
-- ◐ **`binaryAliases` 와 객체형 참조를 실제로 소비.** **`binaryAliases` 는 배선했다
-  (2026-09-11).** 대상에서 **bare 바이너리 이름**이 workspace-config 를 거쳐 풀린다 —
+- [x] **`binaryAliases` 와 객체형 참조 — 닫혔다 (2026-09-12).** 별칭은 배선됐고 실사용
+  호출부가 있다(`internal/app/upgrade.go:249` → `resource.WorkspaceConfig.BinaryPath`; 재확인:
+  `grep -rn "BinaryPath(" internal/ cmd/ | grep -v _test.go`). 객체형 참조는 사용자 결정으로
+  철회했다. 양쪽이 닫혔으므로 `◐` 가 아니다.
+  **(원래 표기)** `binaryAliases` 는 배선했다 (2026-09-11). 대상에서 **bare 바이너리 이름**이 workspace-config 를 거쳐 풀린다 —
   `dataRoot` + `paths.binaries` 에서 찾고 별칭이 있으면 적용한다(`app.resolveBinaryOn` →
   `WorkspaceConfig.BinaryPath`). 이전에는 대상에서 bare 이름을 **거부**했고, 그래서
   `upgrade run --all-servers` 를 돌릴 때마다 config 가 이미 아는 경로를
@@ -2105,7 +2138,7 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   - **판단이 필요한 선택지.** 문턱을 낮춰(예: 1) 재결정을 빨리 관측할 수도 있지만, 그러면
     체인이 epoch마다 집합을 다시 정하므로 다른 케이스들의 안정성 가정이 바뀐다. 문턱은 집합
     크기가 아니라 운영 파라미터라 G3 의 파생에 넣지 않았다.
-- [ ] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
+- [x] **R6. go-wemix boot-etcd collapse.** 키·genesis 문제가 아님을 확인하고 넘겼다.
   **체인팀 몫이다. 인계 완료 (2026-09-12)** — `docs/dev/chain-handover-2026-09-12.md` §2 (W2).
   - **인계하면서 이전 판독을 고쳤다.** "join 하려다 형성된 클러스터를 잃는다" 는 **틀렸다** —
     join 경로는 `etcdIsRunning()` 으로 가드되어 돌고 있는 로컬 etcd 를 내릴 수 없고,
@@ -2183,11 +2216,64 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   기록 사이에서 미완으로 보이던 경우다.** 트래커의 "Remaining work" 머리말이 GOV-023 을
   미해결로 적고 케이스 표는 ported 로 적는 모순도 함께 고쳤다.
 
+### F. 거짓 보증 — 통과해도 아무것도 막지 못하는 검사 (신규 2026-09-12)
+
+`feat/invariant-test-catalog` 브랜치(2026-06-16, PR 없이 남아 있었다)를 읽다가 나왔다. 그
+브랜치는 불변식 5개를 기존 테스트에 묶으면서 **binding 등급을 정직하게** 매겼다 — `good` 은
+"그 불변식의 *구별되는* 주장을 단정한다", `partial` 은 "메커니즘은 단정하지만 구별되는 주장은
+아니다 → 초록불이 **거짓 보증**을 준다". 그 `partial` 세 건을 오늘 다시 측정했다.
+
+한 건은 그 사이에 닫혔다. 둘은 그대로 열려 있고, **둘 다 이 저장소가 반복해서 만난 모양**이다:
+증거처럼 보이지만 증거가 아닌 검사.
+
+- [ ] **F1. baseFee 가 소각되지 않고 재분배된다는 것을 아무 테스트도 보지 않는다.** [치명]
+  go-stablenet 의 baseFee 는 EIP-1559 와 달리 소각되지 않고 validator 에게 재분배된다
+  (WKRC 공급 보존). 그런데 `tests/tc/go-stablenet/regression/anzeon/` 의 basefee 스펙 6건
+  (`03-increase`·`04-stable`·`05-decrease`·`06-minimum`·`07-maximum`, `09-feecap-exact-min`)은
+  **공식만** 본다 — 사용률에 따라 baseFee 가 오르내리는지.
+  - **그래서 baseFee 를 소각하도록 바꿔도 6건 전부 초록이다.** 공급 보존이라는 구별되는 주장을
+    단정하는 검사가 0건이다. 재측정(2026-09-12): baseFee 를 언급하는 스펙 중 coinbase·validator
+    잔액을 단정하는 것은 없다. 확인: `for f in $(grep -rln basefee tests/tc/go-stablenet); do grep -li "coinbase\|balance" $f; done`
+  - **해야 할 것**: 블록 하나를 사이에 두고 **validator(coinbase) 잔액 증가**를 단정한다. 수수료
+    총액과 정확히 같은지까지 갈 수 있으면 더 좋지만, 그 전에 "늘어난다" 만으로도 소각 구현을
+    거른다. 단정이 진짜 걸리는지는 변이로 확인한다 — 증가 기대를 **감소**로 바꿔 실패시킨다.
+  - **주의**: 잔액이 "0보다 크다" 는 공허할 수 있다(제네시스 배분이 이미 크다). 앞서 poa
+    거버넌스 케이스에서 정확히 그 함정을 밟았다 — 반드시 **전후 차이**를 본다.
+- [ ] **F2. validator 의 투표 권한이 동등한지를 아무 테스트도 보지 않는다.** [권장]
+  불변식은 "모든 활성 validator 는 동등한 투표 권한을 가진다" 인데, `istanbul_getValidators`
+  를 쓰는 스펙들(`go-stablenet/regression/api/12-validator-set-nonempty`·`12b-validator-set-count`,
+  `go-wbft/chain-up/01`·`02`, `basic/07`)은 **집합 멤버십과 개수**만 단정한다. 가중치·표=1 을
+  보는 것은 0건이다. 확인: `grep -rln "votingPower\|weight" tests/tc` 무결과.
+  - **어떻게 볼지가 F1 보다 어렵다.** 권한을 직접 읽는 RPC 가 있으면 그것을 단정하고, 없으면
+    **프로포저 로테이션의 균등성**이 대리 지표다 — epoch 하나에서 각 validator 가 제안한 횟수가
+    같은 범위에 드는지. 후자는 대리 지표이므로 그렇게 적어야 한다.
+  - F1 보다 우선도가 낮은 이유: 동등 권한이 깨지는 경로가 지금 코드에 없다(제네시스 목록이
+    곧 집합이고 가중치 필드가 없다). **지금은 회귀 방지**이고, 거버넌스로 가중치가 들어오면
+    그때 차단이 된다.
+- [x] **F3. WBFT 정족수 공식의 수치 직접 검증 — 이미 닫혔다 (2026-09-11).** 카탈로그가
+  "임계 동작만 보고 `ceil(2N/3)` 수치를 직접 단정하지 않는다" 고 지적한 것은 그 시점에
+  맞았다. `fault/02-wbft-quorum-at-15-nodes` 가 그것을 닫았다 — validator 13 에서 정족수 9 를
+  **수치로** 붙잡고, 9 면 계속 돌고 8 이면 멈추는 양쪽을 한 스펙에서 증명한다.
+
+**카탈로그 파일 자체는 가져오지 않았다.** `catalog/invariant-tests.yaml` 은 (1) 이 저장소에
+없는 외부 경로(`study/docs/research/ai-knowledge-data/...`)를 불변식 ID 의 출처로 적고,
+(2) 테스트 `ref` 를 옛 레이아웃(`regression/d-fee-delegation/...`)으로 적는다 — 지금은
+`tests/tc/...` 다. 즉 **파일을 살리려면 두 축을 다시 매핑**해야 하고, 그 값은 위 두 항목을
+직접 고치는 것보다 작다. 브랜치는 남겨 두었다(`origin/feat/invariant-test-catalog`).
+
 ### 이번에 바로잡은 표시
 
 - §1o 의 WA1~WA26 체크박스는 PR #363 으로 반영을 마쳤는데 미완으로 남아 있었다. 절
   머리에 상태와 표본 확인 근거를 적었다.
 - `hardfork 는 통폐합 대상 아님` 은 할 일이 아니라 내린 결정이라 ☑ 로 바꿨다.
+
+**2026-09-12 — 내가 만든 잘못된 측정 하나.** "원격 브랜치 27개가 스테일하다" 고 정리했는데
+틀렸다. 원격에는 처음부터 **브랜치가 3개뿐**이었다(`main` + PR 없는 2개). 내가 본 27개는
+**로컬 클론의 낡은 remote-tracking 참조**였고, GitHub 가 머지 때 head 브랜치를 자동 삭제하고
+있었다. 확인은 `git branch -r`(로컬 캐시)이 아니라 `git ls-remote --heads origin`(원격 진실)
+으로 해야 하고, 정리는 `git push --delete`(없는 것을 지우려다 실패한다)가 아니라
+`git remote prune origin` 이다. 같은 실수를 막는 문장: **`git branch -r` 은 원격을 보여주지
+않는다. 마지막으로 fetch 했을 때의 원격을 보여준다.**
 
 
 ## 2. 전체 작업 리스트 (Phase · Task)
