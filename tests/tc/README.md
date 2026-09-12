@@ -135,7 +135,7 @@ tests/tc/
 | `05-authorized-accounts-single.json` | TC-4-3-05: GovCouncil authorizedAccounts splitAndTrim — 단일 항목 "0xaaa" → 1 | stablenet | `default=gstable` | bp=4 | 있음 |
 | `06-authorized-accounts-empty.json` | TC-4-3-06: GovCouncil authorizedAccounts splitAndTrim — 빈 문자열 "" → 0 | stablenet | `default=gstable` | bp=4 | 있음 |
 
-### `go-stablenet/regression/anzeon` (10)
+### `go-stablenet/regression/anzeon` (11)
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
@@ -149,6 +149,7 @@ tests/tc/
 | `08-feecap-above-min-accepted.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
 | `09-feecap-exact-min-accepted.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
 | `11-gaslimit-exceeded-rejected.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
+| `12-basefee-redistributed-not-burned.json` | **baseFee 가 소각되지 않고 재분배된다** — 옆의 basefee 6건은 공식만 보므로 소각해도 전부 초록이다. 팁 0(인가 계정)으로 한 건 보내고 validator 4명의 잔액 증분을 본다: 모두 증가(봉인 안 한 셋도) · 네 증분이 동일 · **송신자가 낸 것과 validator 들이 받은 것이 wei 단위로 일치**(공급 보존). 실측: 각 105000000000000000, 합 420000000000000000 | stablenet | `default=gstable` | bp=4 | — |
 
 ### `go-stablenet/regression/api` (25)
 
