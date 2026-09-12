@@ -195,6 +195,12 @@ func ContractDeploy(ctx context.Context, _ Deps, in ContractDeployIn) (ContractD
 	if err != nil {
 		return ContractDeployOut{}, fmt.Errorf("bad bytecode: %w", err)
 	}
+	// "0x" is not empty as a string and is empty as bytecode, so the check above
+	// on in.Bytecode let it through. A creation with no code succeeds and reports
+	// an address holding nothing — a deploy that looks done and deployed nothing.
+	if len(code) == 0 {
+		return ContractDeployOut{}, fmt.Errorf("contract creation bytecode is empty (%q decodes to no bytes)", in.Bytecode)
+	}
 	wei, err := Wei(in.Value)
 	if err != nil {
 		return ContractDeployOut{}, err
@@ -354,6 +360,13 @@ func Wei(s string) (*big.Int, error) {
 	v, ok := new(big.Int).SetString(s, 10)
 	if !ok {
 		return nil, fmt.Errorf("bad amount %q (decimal wei expected)", s)
+	}
+	// A negative amount is not a small one. SetString accepts the sign happily,
+	// so "-5" travelled to the node, which refuses it with a message about
+	// encoding rather than about the sum the operator typed. Refused here, where
+	// the number is still the operator's words.
+	if v.Sign() < 0 {
+		return nil, fmt.Errorf("bad amount %q (a wei amount cannot be negative)", s)
 	}
 	return v, nil
 }
