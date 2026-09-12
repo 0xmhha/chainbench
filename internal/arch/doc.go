@@ -26,6 +26,12 @@
 //     explained. Three shipped defects were that shape — a comparison, a peering
 //     check and a fork check that were all written, all tested, and all inert
 //     because nothing supplied the value.
+////   - requirements_test.go reads the product requirements' traceability table out
+//     of docs/dev/chainbench-system-direction.md §12 and holds two things a
+//     machine can hold: every requirement names a test, and every named test
+//     exists. It does not judge whether the test proves the requirement — nothing
+//     can, and a check that pretended to would be the vacuous kind this package
+//     exists to remove.
 //
 
 // There is no production code here. The package exists so the rules have a
