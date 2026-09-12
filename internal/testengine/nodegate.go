@@ -38,24 +38,77 @@ func (o healthObserver) Observe(ctx context.Context) ([]nodemonitor.Facts, error
 // factsFromReport maps a health report to per-node facts, taking PIDAlive from
 // each node's recorded pid in ns (a node with no recorded pid is not alive).
 // Pure, so the mapping is unit-tested without a live network.
+//
+// It fills the Want* fields, which is what makes the classifier's conditions
+// live. Before this it set only Wanted, so three of them never fired: the
+// wrong-genesis check (WantChainID zero), the peering check (WantPeers zero) and
+// the participation check. The conditions were written, tested in the classifier,
+// and unreachable from the run path — the same shape as a comparison whose want
+// side is never supplied.
+//
+// Two are still left unset, each for a reason worth writing down rather than
+// filling badly.
+//
+// WantParticipate: Participating comes from the collector and this observer has
+// no source for it, so requiring it would hold every network until the wait
+// budget ran out.
+//
+// WantChainID: the classifier treats a mismatch as FATAL, so the wanted value
+// has to be authoritative. Taking it from the observation itself is circular —
+// if every node shares the wrong genesis it agrees with itself — and the
+// composed value is not reachable here: the workspace records the chain's NAME,
+// and the request's numeric id is zero whenever the chain's own manifest supplies
+// it, which is the usual case. Filling it from the first node that answers would
+// make a fatal verdict depend on iteration order. It stays unset until there is
+// a real source, and the genesis a composition was built from is compared by
+// preflight instead.
 func factsFromReport(rep health.Report, ns node.NodeSet) []nodemonitor.Facts {
 	pid := make(map[int]int, len(ns.Nodes))
 	for _, n := range ns.Nodes {
 		pid[n.Index] = n.PID
 	}
+	// The network's head as this round saw it, so the classifier can tell a node
+	// that has caught up from one that is merely not syncing. health.Report has
+	// no such field: Producing is one fact about the whole network, which is
+	// exactly why a node sitting at height 0 read as ready while the other three
+	// produced.
+	var head uint64
+	for _, ni := range rep.Nodes {
+		if ni.BlockNumber > head {
+			head = ni.BlockNumber
+		}
+	}
+	// A node in a multi-node network with no peer cannot receive a block or take
+	// its turn, and nothing else in the facts says so: it is not syncing (it has
+	// no one to sync from), and "advancing" is a fact about the network, which
+	// the others make true. Measured: one validator of four sat at height 0
+	// while the other three produced, every turn the round robin gave it was
+	// lost to a round-change timeout, and it only joined after catching up ~30
+	// blocks in one import.
+	//
+	// The floor is one peer, not n-1. A mesh gives every node n-1, but a proxied
+	// topology deliberately gives a bp only its pn, so n-1 would refuse a
+	// network that is exactly as connected as it declared. One peer is the line
+	// between connected and alone, which is the failure this saw.
+	wantPeers := 0
+	if len(ns.Nodes) > 1 {
+		wantPeers = 1
+	}
 	facts := make([]nodemonitor.Facts, 0, len(rep.Nodes))
 	for _, ni := range rep.Nodes {
 		facts = append(facts, nodemonitor.Facts{
-			Node:      ni.Index,
-			Label:     "node" + strconv.Itoa(ni.Index),
-			Wanted:    true,
-			PIDAlive:  pid[ni.Index] > 0,
-			RPCUp:     ni.OK,
-			ChainID:   ni.ChainID,
-			Height:    ni.BlockNumber,
-			Advancing: rep.Producing,
-			Syncing:   ni.Syncing,
-			Peers:     clampCount(ni.PeerCount),
+			Node:       ni.Index,
+			Label:      "node" + strconv.Itoa(ni.Index),
+			Wanted:     true,
+			PIDAlive:   pid[ni.Index] > 0,
+			RPCUp:      ni.OK,
+			ChainID:    ni.ChainID,
+			Height:     ni.BlockNumber,
+			Advancing:  rep.Producing,
+			WantHeight: head,
+			WantPeers:  wantPeers,
+			Syncing:    ni.Syncing,
+			Peers:      clampCount(ni.PeerCount),
 		})
 	}
 	return facts

@@ -24,6 +24,10 @@ type Facts struct {
 	WantChainID     uint64
 	WantPeers       int
 	WantParticipate bool // a validator/producer expected to seal
+	// WantHeight is the highest height any wanted node reports this round — the
+	// network's head, as the observer sees it. Zero means the caller did not
+	// supply it and the lag is not checked.
+	WantHeight uint64
 
 	PIDAlive      bool
 	RPCUp         bool
@@ -37,6 +41,13 @@ type Facts struct {
 
 	Failure process.FailureMode // classified launch/bring-up failure, if any
 }
+
+// heightLagTolerance is how far behind the network's head a node may be and
+// still count as ready. It is not zero: heights are read one node at a time
+// while the chain keeps moving, so the last node read is routinely a block or
+// two behind the first. Two blocks absorbs that sampling skew without absorbing
+// a node that has not started importing at all.
+const heightLagTolerance = 2
 
 // NodeReport is one node's verdict and the reasons behind it (the evidence).
 type NodeReport struct {
@@ -108,6 +119,20 @@ func Classify(f Facts) NodeReport {
 	}
 	if !f.Advancing {
 		r = reason(Waitable, "block height not advancing yet")
+	}
+	// Behind the network is its own condition, because neither of the two above
+	// catches it. "Syncing" is false both for a node that has caught up and for
+	// one that has not started — a node with no peers yet is not syncing, it is
+	// idle at height 0. And "advancing" is a fact about the NETWORK, so the
+	// three nodes that are producing make it true for the one that is not.
+	//
+	// Measured: a fourth validator reported ready while 33 blocks behind, and
+	// every turn the round robin gave it was lost to a round-change timeout, so
+	// the chain rotated among three for its first 33 blocks. A spec reading
+	// proposer identity or rotation in that window measures something else, and
+	// the gate said the network was ready to test.
+	if f.WantHeight > f.Height+heightLagTolerance {
+		r = reason(Waitable, "behind the network: height %d, network at %d", f.Height, f.WantHeight)
 	}
 	if f.WantPeers > 0 && f.Peers < f.WantPeers {
 		r = reason(Waitable, "peers %d < wanted %d", f.Peers, f.WantPeers)
