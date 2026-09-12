@@ -1307,7 +1307,32 @@ happy path 는 CLI 에서만 온전하다. 아래는 심각도 순 작업리스�
       스펙 작성자가 반복을 계속 진다.
     - 재확인: `grep -n "Timeouts" internal/dsl/spec_v2.go internal/testhelper/*.go | grep -v _test`
 - [x] **WA16** [문법] `InDelta` 비교자가 DSL 에서 도달 불가(디스패치 맵에 없음). 증거: `internal/dsl/assert/assert.go:97,202-219`. 방향: funcs 맵에 등록하거나 인터프리터에서 호출한다. **확인(2026-09-12): 완료.** `grep -rn InDelta internal/testhelper/` — testhelper 비교자 경유로 도달한다
-- ◐ **WA17** [문법] 임베드 `SchemaV2` 가 검증에 미사용이고 파서와 이미 드리프트(`onEach` 스키마는 string, 코드는 array). 증거: `internal/dsl/spec_v2.go:18`, `internal/dsl/schema/v2.schema.json:290,331` vs `run.go:212`. 방향: 스키마를 실제 검증에 쓰거나 파서와 일치시킨다.
+- [x] **WA17 — 완료 (2026-09-12). 드리프트 주장은 낡았고, 진짜 구멍은 다른 자리였다.**
+  - **낡은 절반**: "`onEach` 스키마는 string, 코드는 array" 는 더 이상 맞지 않다. 스키마의
+    `doStatement.onEach`·`expectStatement.onEach` 는 **array of string** 이고 코드는
+    `args["onEach"].([]any)` 로 읽는다 — 일치한다. 그리고 `envSpec`·`caseSpec` 의 필드 이름은
+    Go 구조체의 json 태그와 **양방향으로 정확히 같다**(실측: 차집합 양쪽 다 공집합).
+    이미 지키는 테스트가 있었다 — `TestSchemaV2MatchesParsedFields`·`…ParsedTypes`·
+    `…StatementOnEachIsArray`.
+  - **진짜 구멍**: `doStatement.expect` 가 **제약 없는 string** 이었다. 파서는 네 값
+    (`receipt`·`revert`·`reject`·`fail`, `dsl.expectAdjuncts`)만 받고 그 밖의 값을 거부하는데,
+    스키마는 아무 문자열이나 받았다. **WA8 이 파서에서 막은 구멍이 문서에는 그대로 남아
+    있었다** — 이 파일로 검증하는 쪽(에디터·외부 도구·`$schema` 참조)은 오타를 유효하다고 말한다.
+    오타가 통과하면 기본값 "성공해야 한다" 로 흘러 **부정 케이스가 조용히 긍정이 된다.**
+  - **한 것**: 스키마에 `enum` 을 더해 파서와 맞췄고, 그 둘이 어긋나면 실패하는 테스트를 뒀다
+    (`internal/dsl/schemasync_test.go`). 목록을 복사하지 않고 `expectAdjuncts` 와 직접 비교한다 —
+    복사본은 다시 어긋난다. 더 느슨해질 수 있는 다른 두 축(`additionalProperties:false`,
+    `required` 집합)도 같은 테스트가 잡는다.
+  - **중복은 만들지 않았다.** 필드 이름·타입·`onEach` 는 이미 지키는 테스트가 있어서 다시 쓰지
+    않았고, 그 테스트들이 덮지 않는 것만 더했다. 같은 검사를 두 번 구현하면 둘이 어긋난다.
+  - **검증을 스키마로 돌리지는 않았다.** JSON-schema 의존성을 들여 파서의 집행을 복제하는
+    값이 없다. 임베드 주석이 말하는 역할("파서·문서·외부 도구가 공유하는 필드 수준 정본")은
+    그대로 두고, **그 말이 참이 되도록 이음매를 테스트로 고정**했다.
+  - 변이 4건: enum 제거(이 변경 직전 상태) · enum 이 파서와 불일치 · `additionalProperties` 완화 ·
+    `required` 에서 한 항목 제거. 각각 실패 확인.
+  - 작성자 문서에도 네 값과 `reject` 의 `reason` 규율을 적었다(`docs/guide/dsl-authoring.md`) —
+    같은 사실이 세 곳(파서·스키마·가이드)에 필요하고, 가이드가 비어 있었다.
+  **(원래 진단)** 임베드 `SchemaV2` 가 검증에 미사용이고 파서와 이미 드리프트(`onEach` 스키마는 string, 코드는 array). 증거: `internal/dsl/spec_v2.go:18`, `internal/dsl/schema/v2.schema.json:290,331` vs `run.go:212`. 방향: 스키마를 실제 검증에 쓰거나 파서와 일치시킨다.
 - [x] **WA18** [문법·경미] `onEach` 가 do-스텝 스키마에 있으나 액션 라우팅이 소비 안 한다(어서션만 소비). 증거: `v2.schema.json:290`, `builtins.go:543`. 방향: do-스텝 onEach 를 소비하거나 스키마에서 뺀다.
   - **해소 확인 (2026-09-12 실측).** do-스텝도 소비한다 — `interp/run.go:152-191` 이
     `onEach` 를 팬아웃해 선택된 노드마다 액션을 한 번씩 돌리고(각 호출은 `on` 한 개로

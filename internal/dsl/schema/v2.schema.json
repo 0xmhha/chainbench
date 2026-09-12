@@ -317,7 +317,13 @@
         },
         "expect": {
           "type": "string",
-          "description": "adjunct on a do statement (e.g. sendTx expect receipt|revert)"
+          "description": "adjunct on a do statement: the outcome the step must reach. receipt = mined, revert = mined with status 0x0, reject = the submit itself must fail, fail = a launched node must not come up. The parser refuses anything else (dsl.expectAdjuncts), because a typo would otherwise fall through to the default \"must succeed\" and turn a negative case positive.",
+          "enum": [
+            "receipt",
+            "revert",
+            "reject",
+            "fail"
+          ]
         }
       }
     },
