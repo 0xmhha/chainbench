@@ -5,7 +5,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 구성하고, 테스트 중 노드를 개별 제어하며, 실행 증적을 모아 보고서를 낸다.
 그 목표의 정본은 [`dev/chainbench-system-direction.md`](dev/chainbench-system-direction.md) 다.
 
-> 인덱스 갱신: **2026-09-12** (`ea486e50`). 문서를 더하거나 옮기면 이 표도 같이 고친다 —
+> 인덱스 갱신: **2026-09-12** (`c05250cf`). 문서를 더하거나 옮기면 이 표도 같이 고친다 —
 > 등급 체계는 인덱스가 정직할 때만 작동한다.
 
 ## 0. 무엇을 알고 싶은가
@@ -60,7 +60,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`dev/chainbench-requirements-review.md`](dev/chainbench-requirements-review.md) | 요구사항 37 · 사양 검토 · 코드 격차 · **etcd flaky 실체** · 동시성/안전성. |
 | [`dev/chainbench-design.md`](dev/chainbench-design.md) | **아키텍처 SSoT** — 구조·패키지 인터페이스(§3)·데이터 모델(§4)·동시성(§6)·마이그레이션. |
 | [`dev/chainbench-feature-spec.md`](dev/chainbench-feature-spec.md) | F1~F16 동작 계약 · 수용기준(AC). |
-| [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) | **[정본] 작업 순서·상태의 단일 출처.** 무엇을 다음에 하는지는 여기서 읽는다. |
+| [`dev/chainbench-worklist.md`](dev/chainbench-worklist.md) | **[정본] 작업 순서·상태의 단일 출처.** 열린 작업은 **§0 정본 목록**만 보면 된다 — 그 아래 2,900여 줄은 이력이다. `arch.TestWorklistOpenWorkIsListed` 가 §0 을 붙잡는다. |
 
 ## 3. `dev/` — 현행 설계
 

@@ -6,7 +6,60 @@
 > 근거: `chainbench-component-architecture.md`(§2b 실측·§3 컴포넌트·§5 Phase·§1b DDD) · `chainbench-design.md`(§3 인터페이스) ·
 > `chainbench-feature-spec.md`(F1~F16 AC) · `chainbench-refactoring.md`(WP1~6).
 > 원칙: **Low는 TDD 먼저 → walking skeleton으로 조기 통합 → 수직 슬라이스 확장**(big-bang 금지). 코드는 [[go-code-quality-guidelines]] 준수.
-> 상태 표기: ☐ 미착수 · ◐ 진행 · ☑ 완료.
+> 상태 표기: 본문은 ☐ 미착수 · ◐ 진행 · ☑ 완료. **열린 작업은 본문이 아니라 아래 §0 을 본다.**
+
+---
+
+## 0. 열린 작업 — 정본 목록 (2026-09-12)
+
+> **여기만 보면 된다.** 아래 본문 2,900여 줄은 **이력**이고, 본문의 `☐`/`◐` 는 *그 시점의*
+> 기록이다. 새 작업은 이 목록에 한 줄을 더하고 근거를 본문에 적는다.
+>
+> **왜 이 절이 생겼나.** 이 문서는 마커를 **두 어휘**로 써 왔다 — 머리말이 선언한
+> `☐ ◐ ☑` 와, 나중 절들이 쓰는 GitHub 식 `- [ ]`/`- [x]`. 2026-09-12 에 세 차례에 걸쳐
+> "미완료 0건" 으로 보고했는데 **틀렸다**: `- [ ]` 와 `◐` 만 세고 `☐` 11개를 빼놓았다.
+> 게다가 마커가 **산문·셀 중간·셀 머리** 세 자리에 섞여 나와서 기계로 셀 수 없다 —
+> "마지막 셀이 마커로 시작" 규칙을 짜 보니 S2 를 놓치고(줄바꿈된 표 행) 다른 행을
+> 잘못 셌다. 그래서 **세는 대신 한곳에 적는다.**
+>
+> 한계는 정직하게 적는다: 이 목록은 **본문에만 조용히 추가된 항목을 잡지 못한다.**
+> 잡는 것은 목록 자체의 표류다 — `arch.TestWorklistOpenWorkIsListed` 가 개수를 못 박고,
+> 각 줄이 가리키는 절이 실제로 있는지 확인한다.
+
+- [ ] **수직 슬라이스 확장** — 근거: §1 표 `10+` 행. 남은 조각은 그 행이 적고 있다.
+- [ ] **b-5 `setup` → `net up` 전환 — 재검토 필요** — 근거: §1f 표 `b-5` 행. 전제가 바뀌었다.
+- [ ] **S2. MCP 를 레지스트리 소비로 전환 — 스키마 감축의 근거가 약하다** — 근거: §1g 표 `S2` 행.
+      조회 전용 목록은 2026-09-08 에 끝났고, 감축분을 측정할 근거가 없는 것이 남았다.
+- [ ] **N2~N6. blueprint 흡수가 중간 상태다** — 근거: §1m 표 `N2~N6` 행. 다섯 중 둘(해석·preset)이
+      들어갔고 나머지 셋(raw 경로·물질화·topology)은 **측정하지 않았다**. 여는 사람이 먼저 잴 것.
+- [ ] **2단계·3단계 (netmap 트랙)** — 근거: §1m. 3단계는 N1~N6 뒤이므로 위 항목에 막혀 있다.
+- [ ] **통폐합 R2 (DSL 분리) 이후** — 근거: §1j. 정본은
+      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md). 목표는 internal
+      55 → 약 20 이고 **오늘 48** 이다(R1 만 끝났다, 2026-08-31). **재개인지 종료인지 기록이 없다** —
+      이 항목은 판단을 기다린다.
+- [ ] **요구 19개의 충분성** — 근거: §1s. `arch.TestEveryRequirementNamesEvidence` 가 *연결*은
+      지키지만 그 테스트가 요구를 **증명하는지**는 사람이 읽어야 한다. 표본 6개 중 R14·R15·R19 가
+      `partial` 로 읽혔다.
+- [ ] **feature 레지스트리 62/86 미등록** — 근거: `internal/feature/coverage_test.go`. 래칫은
+      정확(양방향)하지만 2026-09-08 이후 진전이 없다. **계획 재개인지 종료인지 판단 필요.**
+
+- [ ] **`R` 접두사가 두 계획에서 충돌한다** — 근거: §1n 표 `R1` 행(원격 트랙의 `AddrMap` 경계)과
+      [`architecture/consolidation-plan.md`](architecture/consolidation-plan.md) §R1(소형 모듈 흡수).
+      같은 `R1`~`R5/R6` 이 **서로 다른 것**을 가리키고 둘 다 살아 있는 문서다. 이번 검토에서 제가
+      "R1 완료" 를 통폐합으로 읽을 뻔했다. 한쪽을 개명해야 한다(`C1~C5` 또는 `D1~D6`).
+- [ ] **[`architecture/target-architecture.md`](architecture/target-architecture.md) 가 [현행 설계]인데 낡았다** — 최종수정
+      2026-08-26(17일 정체)이고 모듈을 **`netmap`** 으로 부른다(3회). 그 모듈은 통합되어 지금
+      `internal/resource` 이며 문서에 `internal/resource` 는 **0회** 나온다. 등급 규칙상
+      [현행 설계]는 **코드를 이기므로**, 읽는 사람이 없는 구조를 향해 만든다. 갱신하거나 [이력]로 내린다.
+      (`dsl/engine`·`app/feature` 는 *거부된 선택지*로 인용된 것이라 낡지 않았다 — 확인했다.)
+
+**체인팀 몫 (여기서 할 일 없음)**: R6 잔여(go-wemix boot-etcd) · W1 `verifyBlockSig` 패닉 ·
+B1 `istanbul_getWbftExtraInfo` 블록 태그. 정본은
+[`chain-handover-2026-09-12.md`](chain-handover-2026-09-12.md).
+
+**일부러 비워 둔 자리 (요구가 생기면 연다)**: 게이트의 `WantChainID`(권위 있는 출처 없음) ·
+stablenet 고아 핸들러 방향(registry 에 lister 없음) · `process/stop.go` 의 취소 의미(의도적).
+
 
 > **이어서 할 일은 §1n "다음 사람에게" 부터 읽는다** (2026-09-08). 남은 것이 무엇이고 무엇이
 > 필요한지, 그리고 라이브를 쫓을 때 이번에 비싸게 배운 측정 함정 여섯이 거기 있다.
@@ -102,7 +155,7 @@
 | **T7.10** | **단일 경로 문법** — `netcompose.ParseTarget`: `/local/path` · `user@host:/path` · `ssh://user@host:port/path`. `net new --target` + MCP `target` 인자; 레거시 4-플래그는 유지하되 혼용 거부 | setup 명령의 4-플래그는 T7.11 에서 스택과 함께 | ☑ |
 | **T7.11** | **레거시 스택 A 제거** — 진행: `core/probe`→`core/collector`(Detect) · `Plan`→`core/driver` · `pipeline/verify`→**`core/health`**(app.VerifyNetwork 경유) · `pipeline/attach`→**`core/node.AttachedSet`** 흡수 완료. pipeline 3/5 소멸(verify·attach 제거, Plan 이전). **표면 이관 완료**(§1d) · **패키지 이동 완료**(§1e: `pipeline/setup`→`core/bringup`) · **netcompose 대체 진행 중**(§1f: b-1~b-4 완료, b-5·b-6 은 라이브 검증 선행). **잔여**: `pipeline/testrun`+`testkit`(cmd test + mcp, **케이스 이관 91건 선행**) | 표면은 app 1곳으로 수렴 — 남은 건 라이브 검증 후 전환·삭제, 그리고 케이스 이관(작업량) | ☑ **완료 확인 2026-09-07.** 대상 셋이 전부 없다 — `core/probe`·`core/driver`·`internal/pipeline` 어느 것도 트리에 없고, 흡수처(`core/collector`·`core/health`·`core/node`)만 남았다. 게이트로 재고 닫는다 |
 | **T7.12** | **`overlays/account-extra.json` params 형식 교정** — `internal/chains/stablenet/overlays/account-extra.json` 의 `govCouncil.params.authorizedAddresses`·`blacklistedAddresses` 가 JSON 배열인데, genesis 의 `SystemContract.params` 는 `map[string]string` 이라 `gstable init` 이 `cannot unmarshal array ... of type string` 으로 거부한다. 콤마로 이어붙인 문자열로 고쳐야 `setup --genesis-overlay` 기동이 성공한다. 다른 소비자(레거시 testkit setup 경로)도 이 오버레이를 쓰는지 확인 후 일괄 교정. **게이트**: 이 오버레이로 `tests/repro/stablenet-account-extra.sh` 가 스킵 없이 통과 | 라이브 검증 때 스크래치 사본으로만 우회했고 원본은 그대로다 — 오버레이 경로가 실제로는 깨져 있다 ([[remaining-work]] §1.1) | ☑ **완료 확인 2026-09-07.** 오버레이에 `params` 키가 아예 없고, **왜 넣으면 안 되는지**가 파일 주석에 남아 있다(base 템플릿의 `govCouncil.params` 는 평평한 string-map 이라 배열을 넣으면 `gstable init` 이 거부한다). 이 오버레이를 쓰는 스펙 4건 전부 `validate` 통과 |
-| — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☐ |
+| — | **T5.2 업그레이드 멀티바이너리** · **T5.5 wemix4 이관** · **실 SSH 라이브 e2e** | §2 기존 항목, 환경 의존 | ☑ 셋 다 닫혔다 (T5.2 §2 에 ☑ · T5.5 2026-09-12 확인 · SSH e2e 2026-09-11 docker 15대) |
 
 ---
 
@@ -475,7 +528,7 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | **A1** | 인터럽트 핸들러 + 노드 수명 분리 + 실패 경로에서도 기록 | ☑ **완료 2026-08-25.** `net up --chain wemix` 를 30초에 인터럽트 → 종료 130 · 노드 4개 · **PID 4개 기록** · `net stop` 이 0으로 정리. 드러난 결함 2건: 노드를 `exec.CommandContext(요청 ctx)` 로 띄워 CLI 호출에 종속(취소되자 4개 중 3개만 남음) · 워크스페이스를 성공 시에만 저장해 실패한 스텝이 PID까지 버림 | ☑ |
 | **A2** | 워크스페이스 락 — 실행 단위, 4상태(free/live/stale/foreign) | ☑ **완료 2026-08-25.** 46초 wemix 기동 중 t=20s 동시 실행이 pid·host·시각·명령줄과 함께 거부됨. **락은 호출이 아니라 실행 단위** — `net up` 이 9스텝을 부르며 각각 또 잡으므로 재진입 허용, 가장 바깥만 해제(첫 구현은 안쪽 release 가 바깥 락을 지워 동시 실행이 그대로 들어왔다) | ☑ |
 | **A3** | 기동 전 포트 점유 조회 (`core/occupancy`) | ☑ **완료 2026-08-25.** `init` 직전(타깃에 쓰기 전) 전 노드 포트를 조회해 거부하고, **우리 것인지 남의 것인지** 분류한다. **dial 로는 못 잡는다**: 노드가 와일드카드 소켓에 바인드하면 루프백 dial 이 거부된다(lsof `*:8600` 점유 중 dial 실패 실측). bind 도 한 형태로는 부족 — 실측: 8600(와일드카드 점유)은 `127.0.0.1` bind 성공/`:` bind 실패, 8603(루프백 점유)은 정반대. **둘 다 성공해야 비어 있는 것**으로 판정하니 20개 리슨 소켓을 20개로 정확히 잡는다 | ☑ |
-| A4 | 원격/fleet 점유 조회 — 모든 서버 대상(요구 ⑩의 "모든 서버") | dial 경로는 있으나 fleet 다중 호스트는 R5 선행(☑ 2026-08-26 해소) | ☐ |
+| A4 | 원격/fleet 점유 조회 — 모든 서버 대상(요구 ⑩의 "모든 서버") | **해소 확인 (2026-09-12 실측)**: `scanPorts`(`steps_lifecycle.go:715`)가 주소를 호스트별로 묶고 **각 호스트를 그 호스트 자신의 머신이 프로브**한다("the probe lies from anywhere else"). 비고가 이미 R5 해소를 적고도 상태가 ☐ 였다 | ☑ |
 
 ### H — 약속된 위치 (요구 ⑦)
 
@@ -493,7 +546,7 @@ S1 에서 등록해야 두 번 등록하지 않는다.
 | **G1** | **조립 지점 단일화** — `engine.BuildGenesis`(소스 선택 + 커스터마이즈)를 모든 경로가 부른다 | ☑ **완료 2026-08-25.** 소스 선택이 **5곳 → 1곳**(엔진·스텝 두 경로가 `poa.FamilyID` 로 분기 + 세 곳이 하드코딩). 커스터마이즈를 소스 **밖으로** 빼서 `netcompose.customizeGenesis`(=`genesis.BuildNetwork` 의 옵션 처리를 줄 단위로 재구현한 사본) 소멸. 라이브: stablenet 4노드 · `chain up --case wemix` 15/15 | ☑ |
 | **G1a** | 닫힌 격차 — **wemix + overlay** | ☑ genesis overlay 가 스텝 경로에선 반영되고 엔진 경로에선 **말없이 버려지던** 분기. 커스터마이즈가 소스 안(한 패밀리만 쓰는 곳)에 있었던 탓. 이제 패밀리가 만든 base 위에 동일하게 적용된다 | ☑ |
 | **G2** | 핸드오프 경로를 패밀리 선언으로 · `chains/wemix/deploy` 폐기 | ◐ **2026-09-05.** **`remote` 명령군과 `deploy` 패키지(995줄) 폐기** — 네 하위명령 모두 core 경유 대체가 있다(`chain up --server`·poa 페이즈 액션·`upgrade`·`keyring import --from srv://`). **핸드오프가 패밀리 순서를 따른다**: 전원 기동 후 부트스트랩하던 것을 `BringUpPhases` 로 물어 프로듀서 단독 → 거버넌스·etcd → 나머지 → 메시 순으로. 거버넌스 배포 전 `WaitProducing` 도 컴포지션 경로와 맞췄다. **간헐 실패의 원인을 잡았다(2026-09-05).** 앞서 신원 대조 문제로 적었는데, 측정해 보니 아니었다. 실패한 판에서 프로듀서에게 직접 물으니 `self.name="producer"`, `self.addr=0xf959…` 로 자신을 제대로 찾고 있었다. `self.miner=false` 는 원인이 아니라 클러스터가 비어 있어서 생긴 결과였다. 진짜 원인은 두 가지다. 첫째, 노드는 거버넌스 계약을 읽고 나서야 자기가 어느 멤버인지 알고, 그 전에는 `admin.etcdInit()` 이 `ErrNotRunning` 으로 거절한다. 둘째, 그 거절을 콘솔이 글자로 찍을 뿐 프로세스는 성공으로 끝나는데 `poa.EtcdInit` 이 출력을 안 읽었다. 형제 함수 `EtcdJoin` 은 F5b 때 같은 대가를 치르고 이미 읽고 있었다. 그래서 클러스터가 만들어지지 않았는데도 아무 데서도 오류가 나지 않았다. 고친 것은 `poa.WaitSelf`(자신을 알아볼 때까지 대기, 두 경로 모두 배선)와 `EtcdInit` 의 출력 검사다. **덤으로 요구사항 ⑩의 미배선을 찾았다** — 컴포지션 경로는 A3 이후 포트를 검사하는데 핸드오프는 안 했다. 남은 노드가 프로듀서 p2p 포트를 잡고 있자 "IPC 가 30초 안에 안 생겼다"로만 보고하고 포트도 범인도 말하지 않았다(3연속 실패). `Handoff.checkVacant` 로 배선하고, 어느 노드를 띄우는지 판정하는 규칙을 `selected` 하나로 합쳤다(검사와 기동이 어긋나면 안 되므로). **확인**: 최종 트리로 `TestUpgradeRunE2E` 연속 통과 | ☑ |
-| G3 | genesis 산출물의 by-product(`Extra`) 배치 규칙 정리 — 지금은 소비자마다 따로 쓴다 | | ☐ |
+| G3 | genesis 산출물의 by-product(`Extra`) 배치 규칙 정리 — 지금은 소비자마다 따로 쓴다 | **해소 확인 (2026-09-12 실측)**: 규칙이 하나이고 쓰는 곳도 하나다 — `steps_compose.go:768` 이 `filepath.Dir(genesis)` 옆에 `Extra` 를 놓고 launch input 으로 기록하며, 모든 머신에서 같은 file store 를 지난다. "소비자마다 따로 쓴다" 는 더 이상 맞지 않는다 | ☑ |
 
 ### R — 로컬 docker 를 원격 서버처럼 (원격 경로 검증)
 
@@ -727,10 +780,11 @@ netid→resource · consensus·capability→registry · obs·logs→collector ·
 
 **R1 에서 갈라져 나온 후속 작업 (별도 트랙):**
 
-- ☐ **validatorset 홈 결정** — `core/node`(L0)로 넣으려던 계획은 층 위반(validatorset 이
+- ☑ **validatorset 홈 결정 — 완료 (2026-09-12).** 정본은 아래 §1s D 의 `validatorset 홈 결정` 항목이다(패밀리가 자기 지식을 소유하도록 `registry.RingAccountReader` 를 더했다). 이 줄은 §1j 의 원본 표기였고 닫힌 것을 미착수로 보이고 있었다.
+  **(원래 기록)** `core/node`(L0)로 넣으려던 계획은 층 위반(validatorset 이
   `chains/all`·`registry` import). 지금은 제자리(독립 L3)에 둔다. 로스터 계산(키+registry→검증자)의
   올바른 소유 모듈을 후속에서 정한다. 소비자는 `cmd` 하나뿐.
-- ☐ **health 를 inspector 조합 레이어로 재배선** — health→inspector 흡수는 하지 않기로 결정.
+- ☑ **health 를 inspector 조합 레이어로 재배선 — 철회 (2026-09-12).** 공통 기반이 없어 재배선의 값이 없다고 판정하고 래칫(`arch.TestInspectorStaysOnTheEnvironmentSide`)으로 경계를 고정했다. 상세는 §1s G-D. **(원래 기록)** health→inspector 흡수는 하지 않기로 결정.
   방향: `inspector` 는 atomic 실사 프리미티브(L1, "판단 없음")로 두고, `health`(블록 전진 *판정*)는
   그 atomic 들을 **조합하는 inspector 위 레이어**로 제공한다(현재 health 는 obs/rpc 를 직접 쓴다 →
   inspector 프리미티브를 쓰도록 재배선). atomic ↔ 조합의 층 분리.
@@ -1094,7 +1148,7 @@ v1 스펙 45개가 `on: enN, from: nodeN` 으로 쓰여 있었고, 접속 표가
 다만 **불안정 두 건의 상태는 이 한 판으로 알 수 없다** — `WbftQuorum6of6Halts2`(원래 5판 중 2판 실패)와
 `StablenetProposalExpiry`(5판 중 1판 실패)가 통과했지만 한 판 통과는 예상 범위 안이다.
 | **N1** 선언 스키마와 파서 | ☑ `internal/core/blueprint`. `steps_compose.go` 를 건드리지 않는 새 패키지라 앞의 둘과 파일이 겹치지 않았다 |
-| **N2~N6** 해석·raw 경로·물질화·preset·topology 흡수 | ☐ 여기부터가 `steps_compose.go` 를 바꾼다. 다섯이 한 덩어리라 절반만 넣으면 중간 상태로 남는다 |
+| **N2~N6** 해석·raw 경로·물질화·preset·topology 흡수 | ◐ **경고가 그대로 실현됐다 (2026-09-12 실측).** "다섯이 한 덩어리라 절반만 넣으면 중간 상태로 남는다" 고 적어 두고 **절반이 들어갔다** — `steps_compose.go:161-179` 가 `blueprint.Resolve` 와 `blueprint.PresetFrom` 을 쓴다(해석·preset). 나머지 셋(raw 경로·물질화·topology 흡수)이 흡수됐는지는 **측정하지 않았다**. 다음에 이 항목을 여는 사람이 먼저 재야 할 것이 그 셋이다 |
 
 **3단계 ☐.** A8 을 다시 재고, 이어서 A7b 를 결정한다. N1~N6 뒤다.
 

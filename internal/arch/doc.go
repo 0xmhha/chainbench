@@ -26,7 +26,13 @@
 //     explained. Three shipped defects were that shape — a comparison, a peering
 //     check and a fork check that were all written, all tested, and all inert
 //     because nothing supplied the value.
-////   - requirements_test.go reads the product requirements' traceability table out
+////   - worklist_test.go holds the tracker's canonical open-work list (§0): its size
+//     is pinned, and every entry has to point at a section that exists AND that
+//     actually contains the row it names. The tracker had been counted with two
+//     marker vocabularies and a status pass reported "nothing open" three times
+//     while eleven items sat in the vocabulary it did not count.
+//
+//   - requirements_test.go reads the product requirements' traceability table out
 //     of docs/dev/chainbench-system-direction.md §12 and holds two things a
 //     machine can hold: every requirement names a test, and every named test
 //     exists. It does not judge whether the test proves the requirement — nothing
