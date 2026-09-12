@@ -2,6 +2,8 @@ package testengine
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -46,9 +48,17 @@ const (
 	forkWait = 180 * time.Second
 )
 
-// overlayFile is where a declared genesis overlay is written for the genesis
-// step, which reads overlays from a file.
-const overlayFile = "env-genesis-overlay.json"
+// overlayFilePrefix names the file a declared genesis overlay is written to for
+// the genesis step, which reads overlays from a file. The content's digest is
+// appended, so two environments declaring different overlays get two files.
+//
+// One fixed name was wrong twice over. Several specs run in one workspace, so
+// the second overlay overwrote the first — and the recorded request of the
+// earlier environment then pointed at the later one's bytes, which is the one
+// place a composition's own record could not be trusted. And two different
+// overlays produced the same path, so preflight's genesis comparison, which can
+// only see what the request names, could not tell them apart.
+const overlayFilePrefix = "env-genesis-overlay"
 
 // defaultKeysDir is the key set a declaration that names none composes from.
 const defaultKeysDir = "keys/preset"
@@ -554,7 +564,8 @@ func writeOverlay(ctx context.Context, dataDir string, overlay map[string]any) (
 	if err != nil {
 		return "", fmt.Errorf("render genesis overlay: %w", err)
 	}
-	path := filepath.Join(dataDir, overlayFile)
+	sum := sha256.Sum256(b)
+	path := filepath.Join(dataDir, fmt.Sprintf("%s-%s.json", overlayFilePrefix, hex.EncodeToString(sum[:8])))
 	if err := (filestore.Local{}).Write(ctx, path, b, 0o644); err != nil {
 		return "", fmt.Errorf("write genesis overlay: %w", err)
 	}

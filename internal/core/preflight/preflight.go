@@ -56,10 +56,22 @@ type Have struct {
 	Peering    string
 	ChainID    int64
 	Validators int
-	// GenesisSum identifies the genesis bytes on the target (any stable hash;
-	// both sides must use the same one). Empty on either side skips the check.
-	GenesisSum string
-	Nodes      []Node
+	// GenesisDeclared digests the inputs that decide the genesis: the chain id,
+	// the overlay, the dot-path set, the template and manifest, and an existing
+	// genesis used verbatim. Both sides must compute it the same way
+	// (chainsetup.GenesisDeclared does).
+	//
+	// It is the DECLARED genesis, not the built bytes, because the comparison
+	// happens before the genesis step runs — the question preflight has to
+	// answer is "was what is composed built from the genesis this request
+	// declares", and the request has only its inputs. The built bytes are
+	// checked elsewhere: the launch-input hashes catch a genesis that was
+	// edited after it was written.
+	//
+	// Empty on either side skips the check, which is what a workspace composed
+	// before this field existed gets — it has no recorded request to digest.
+	GenesisDeclared string
+	Nodes           []Node
 	// Started reports whether the composition reached the start step: a
 	// network that was composed but never launched is a shape, not a chain.
 	Started bool
@@ -74,7 +86,9 @@ type Want struct {
 	ChainID    int64
 	Validators int
 	Endpoints  int
-	GenesisSum string
+	// GenesisDeclared is the requested genesis, digested the same way as
+	// [Have.GenesisDeclared].
+	GenesisDeclared string
 	// Nodes, when given, pins per-node facts (sync mode, server). Empty means
 	// the counts are the whole requirement.
 	Nodes []Node
@@ -164,7 +178,14 @@ func Compare(have Have, want Want) Decision {
 	if want.ChainID != 0 && have.ChainID != want.ChainID {
 		all = append(all, fmt.Sprintf("chain id: have %d, want %d", have.ChainID, want.ChainID))
 	}
-	if have.GenesisSum != "" && want.GenesisSum != "" && have.GenesisSum != want.GenesisSum {
+	// A genesis difference is a different chain, so it has to outrank the
+	// cheaper differences above: two requests can agree on chain, binary, keys,
+	// peering and counts and still want different forks enabled. Before this
+	// was compared, the want side was never filled and the check was inert —
+	// two environments differing only in their overlay reused one network, and
+	// the second test ran against the first one's chain while the session
+	// recorded it under its own environment id.
+	if have.GenesisDeclared != "" && want.GenesisDeclared != "" && have.GenesisDeclared != want.GenesisDeclared {
 		all = append(all, "genesis differs")
 	}
 	// Want.Nodes pins facts about named nodes; it is not the node count. The

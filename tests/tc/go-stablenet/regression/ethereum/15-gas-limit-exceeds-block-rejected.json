@@ -56,7 +56,8 @@
       "from": "node1",
       "gas": "$over",
       "to": "0x00000000000000000000000000000000C0FFEE10",
-      "value": "1"
+      "value": "1",
+      "reason": "exceeds block gas limit"
     },
     {
       "compare": "GreaterOrEqual",

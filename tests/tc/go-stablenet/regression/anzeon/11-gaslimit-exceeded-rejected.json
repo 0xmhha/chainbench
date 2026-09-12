@@ -94,7 +94,8 @@
       "maxFeePerGas": "$feecap",
       "maxPriorityFeePerGas": "$tip",
       "to": "0x00000000000000000000000000000000C0FFEE0E",
-      "value": "1"
+      "value": "1",
+      "reason": "exceeds block gas limit"
     },
     {
       "compare": "GreaterOrEqual",
