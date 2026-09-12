@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/session"
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
 
 const (
@@ -317,10 +318,8 @@ func (c *collector) WaitLog(ctx context.Context, nodeName, pattern string, timeo
 		if time.Now().After(deadline) {
 			return LogMatch{}, fmt.Errorf("collector: pattern %q not found in %s within %s", pattern, path, timeout)
 		}
-		select {
-		case <-ctx.Done():
-			return LogMatch{}, ctx.Err()
-		case <-time.After(100 * time.Millisecond):
+		if err := wait.Sleep(ctx, 100*time.Millisecond); err != nil {
+			return LogMatch{}, err
 		}
 	}
 }

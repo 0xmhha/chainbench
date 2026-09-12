@@ -2194,11 +2194,26 @@ workspace-config(W1~W6, PR #369)와 그 후속(런타임 validator 검사·정�
       데드라인으로 실패하고 **엔드포인트 이름을 말한다** · 빈 항목은 기다릴 것이 아니라 건너뛴다.
     - 변이(`time.Sleep` 으로 되돌리기)로 확인: 테스트가 "ignored cancellation" 으로 실패하고
       11초를 쓴다(고친 뒤에는 0.9초).
-  - **남은 공통 대기의 통합은 하지 않았다.** 이유는 값이 아니라 **비용의 모양**이다 — 두
-    패키지(`poa`·`upgrade`)가 공유할 자리가 없어 `internal/core` 에 **새 패키지**가 필요하고,
-    그러면 `layers.md` §3 배치표와 `arch.TestEveryPackageIsPlaced` 를 함께 고쳐야 한다.
-    `core/collector`·`core/process` 에도 같은 select 가 있으니 그때는 그 둘까지 함께 가는 것이
-    맞다. 지금 결함은 없고, 정리는 그 범위로 따로 연다.
+  - **공통 대기도 통합했다 (2026-09-12).** 처음에 "비용의 모양 때문에 따로 연다" 고 적었는데,
+    그 비용이 실제로는 표 한 줄이었다. `internal/core/wait` 를 만들고 `Sleep(ctx, d)` 하나를 뒀다.
+    - **11곳을 바꿨다** — `upgrade`(mesh·handoff) · `poa`(info·executor 2곳·bootstrap_exec 5곳) ·
+      `core/collector`. 각 자리는 `if err := wait.Sleep(ctx, poll); err != nil { return …, err }`
+      한 줄이 되고, 반환값이 다른 것(`""`·`last`·`LogMatch{}`)은 그대로 유지된다.
+    - **12번째는 바꾸지 않았다.** `core/process/stop.go:58` 은 취소 시 `ctx.Err()` 가 아니라
+      `gone(pid)` 를 돌려준다 — "포기했으니 프로세스가 사라졌는지 답한다" 는 **다른 의미**이고,
+      통합한다고 같게 만들면 안 된다.
+    - **왜 이름 하나가 값인가**: 올바른 형태가 `select` 4줄이고 틀린 형태가 `time.Sleep` 한 줄이면,
+      **틀린 쪽이 더 짧다.** 11곳에 손으로 쓰여 있었다는 것은 짧은 쪽을 실수로 쓸 기회가 11번
+      있었다는 뜻이고, 실제로 한 번 그랬다. 이제 올바른 쪽이 한 줄이다.
+    - **배치 래칫이 제 역할을 했다.** 새 패키지를 넣자마자 `arch.TestEveryPackageIsPlaced` 가
+      "`core/wait` 가 `layers.md` §3 에 없다" 로 실패했다. L0(내부 import 0)에 한 줄을 적어 해소.
+    - 단위 테스트 5건 + 변이 4건: 기다리지 않는 구현 · 위쪽 `ctx.Err()` 제거 · `d<=0` 을
+      취소보다 먼저 보기 · 취소를 `nil` 로 삼키기. 넷 다 실패 확인.
+      **변이가 하나 알려 준 것**: 위쪽 `ctx.Err()` 검사를 지워도 `d<=0` 케이스만 깨진다 —
+      양수 d 에서는 `select` 가 이미 기다리지 않고 취소를 보고하기 때문이다. 그래서 그 검사의
+      진짜 용도는 **0 간격**이며, 주석을 그렇게 고쳤다(처음에 더 넓게 적었다).
+      **변이 M1 은 한 번 실패했다** — 본문을 `time.Sleep(d)` 로 바꾸니 한 시간짜리 테스트가
+      go test 기본 타임아웃까지 매달렸다. `-timeout 20s` 로 다시 돌려 판정했다.
   - 재확인: `grep -rn "case <-time.After" internal/consensus/ internal/core/ | grep -v _test | wc -l` ·
     `grep -rn "time\.Sleep(" internal/consensus/ | grep -v _test` (비어야 한다 — 호출 형태로 찾는다. `time.Sleep` 만 찾으면 이 수정을 설명하는 주석 문장에 걸린다)
   **(원래 진단, 과장)** `internal/consensus/` 의

@@ -93,6 +93,7 @@ flowchart TD
 |---|---|
 | `core/home` | **약속된 위치의 소유자** — `~/.chainbench`. 경로를 안 대면 키 세트·세션·구성이 전부 여기로 모인다(요구 ⑦). 세 곳이 각자 기본값을 들고 있어 `keys/default`·`chainbench-out` 이 **cwd 기준**이었던 것을 한 답으로 모은다 |
 | `core/node` | 노드에 대해 아는 것 전부 — `Node` · `NodeSet` · `Role` · `Endpoints` · `Label` · `Placement` · `Map` · `Peering` · `Layout` · `Enode`, 그리고 노드 레이아웃 선언(`Topology`·`Entry`·`Load`, R1 2026-08-31 — 선언과 사실은 같은 대상의 두 면). **최다 피참조** — 층을 잇는 공용 언어이며, 내부 패키지는 **아무것도 import 하지 않는다**(측정으로 고정; 외부 YAML 파서만 선언 로드에 쓴다) |
+| `core/wait` | **취소 가능한 유일한 멈춤** — `Sleep(ctx, d)`. 폴링 루프는 시도 사이에 멈춰야 하고 쓰는 법이 둘인데, `time.Sleep` 은 짧고 **틀렸다**: context 가 끼어들 수 없어 포기한 호출자가 남은 예산을 다 기다린다. 올바른 `select` 형태가 **11곳에 손으로** 쓰여 있었고, 그것은 짧은 쪽을 실수로 쓸 기회가 11번이라는 뜻이다 — 실제로 한 번 그랬다(핸드오프의 엔드포인트 대기, 취소된 실행이 죽은 엔드포인트를 30초 더 찔렀다). 이름 하나로 **올바른 형태를 짧은 쪽으로** 만든다. 내부 import 0 |
 | `testsupport` | **테스트 게이트**(제품 코드 없음) — 여러 패키지의 _test.go 가 공유하는 스킵 헬퍼(`ServersBuildDir`·`EnvDockerServers`). 패키지-로컬 _test.go 로는 교차 참조가 안 돼 정규 패키지로 둔다. 내부 import 0 |
 
 ### L1 프리미티브 — 바깥세계 접점 + 순수 계산

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
 
 // Runner runs a command and returns its combined output. It is injected so the
@@ -88,10 +90,8 @@ func WaitSelf(ctx context.Context, r Runner, binary, ipc string, timeout time.Du
 		if time.Now().After(deadline) {
 			return fmt.Errorf("poa: the node did not recognise itself in the governance member list within %s (self.name=%q) — etcd cannot be initialized until it does", timeout, last)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
+		if err := wait.Sleep(ctx, time.Second); err != nil {
+			return err
 		}
 	}
 }
@@ -136,10 +136,8 @@ func VerifyEtcd(ctx context.Context, r Runner, binary, ipc string, timeout time.
 		if time.Now().After(deadline) {
 			return fmt.Errorf("poa: verify etcd: the cluster is still empty %s after init — the bootstrap ran but formed nothing", timeout)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
+		if err := wait.Sleep(ctx, time.Second); err != nil {
+			return err
 		}
 	}
 }
@@ -156,10 +154,8 @@ func WaitForIPC(ctx context.Context, path string, timeout time.Duration) error {
 		if time.Now().After(deadline) {
 			return fmt.Errorf("poa: the node's IPC socket never appeared at %s within %s", path, timeout)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(250 * time.Millisecond):
+		if err := wait.Sleep(ctx, 250*time.Millisecond); err != nil {
+			return err
 		}
 	}
 }
@@ -185,10 +181,8 @@ func WaitProducing(ctx context.Context, r Runner, binary, ipc string, timeout ti
 		if time.Now().After(deadline) {
 			return fmt.Errorf("poa: the node produced no block within %s (eth.blockNumber = %q) — the bootstrap's transactions cannot be mined on a chain that is not sealing", timeout, last)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
+		if err := wait.Sleep(ctx, time.Second); err != nil {
+			return err
 		}
 	}
 }
@@ -233,10 +227,8 @@ func WaitForMember(ctx context.Context, r Runner, binary, ipc, name string, time
 		if time.Now().After(deadline) {
 			return fmt.Errorf("poa: %s never appeared in this node's governance member list within %s — it cannot join a cluster it does not know the members of", name, timeout)
 		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(time.Second):
+		if err := wait.Sleep(ctx, time.Second); err != nil {
+			return err
 		}
 	}
 }

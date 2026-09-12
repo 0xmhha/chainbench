@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/core/rpc"
+	"github.com/0xmhha/chainbench/internal/core/wait"
 )
 
 // endpointPoll is how often an endpoint is re-dialled while waiting for its RPC
@@ -39,10 +40,8 @@ func WaitEndpointsReady(ctx context.Context, endpoints []string, timeout time.Du
 			if time.Now().After(deadline) {
 				return fmt.Errorf("endpoint %s not ready within %s", ep, timeout)
 			}
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(endpointPoll):
+			if err := wait.Sleep(ctx, endpointPoll); err != nil {
+				return err
 			}
 		}
 	}
