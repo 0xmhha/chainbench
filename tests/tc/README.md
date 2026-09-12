@@ -135,7 +135,7 @@ tests/tc/
 | `05-authorized-accounts-single.json` | TC-4-3-05: GovCouncil authorizedAccounts splitAndTrim — 단일 항목 "0xaaa" → 1 | stablenet | `default=gstable` | bp=4 | 있음 |
 | `06-authorized-accounts-empty.json` | TC-4-3-06: GovCouncil authorizedAccounts splitAndTrim — 빈 문자열 "" → 0 | stablenet | `default=gstable` | bp=4 | 있음 |
 
-### `go-stablenet/regression/anzeon` (10)
+### `go-stablenet/regression/anzeon` (11)
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
@@ -149,8 +149,9 @@ tests/tc/
 | `08-feecap-above-min-accepted.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
 | `09-feecap-exact-min-accepted.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
 | `11-gaslimit-exceeded-rejected.json` | — | stablenet | `default=go-stablenet` | bp=4 | — |
+| `12-basefee-redistributed-not-burned.json` | **baseFee 가 소각되지 않고 재분배된다** — 옆의 basefee 6건은 공식만 보므로 소각해도 전부 초록이다. 팁 0(인가 계정)으로 한 건 보내고 validator 4명의 잔액 증분을 본다: 모두 증가(봉인 안 한 셋도) · 네 증분이 동일 · **송신자가 낸 것과 validator 들이 받은 것이 wei 단위로 일치**(공급 보존). 실측: 각 105000000000000000, 합 420000000000000000 | stablenet | `default=gstable` | bp=4 | — |
 
-### `go-stablenet/regression/api` (25)
+### `go-stablenet/regression/api` (26)
 
 | 파일 | 검증 내용 | 체인 | 바이너리 | 토폴로지 | genesis overlay |
 |---|---|---|---|---|---|
@@ -168,6 +169,7 @@ tests/tc/
 | `11-node-address-returned.json` | RT-G-3-01 — istanbul_nodeAddress (원본 regression/api/11-test-node-address) | stablenet | `default=gstable` | bp=4 | — |
 | `12-validator-set-nonempty.json` | RT-G-3-02 — istanbul_getValidators (원본 regression/api/12-test-get-validators) | stablenet | `default=gstable` | bp=4 | — |
 | `12b-validator-set-count.json` | — | stablenet | `default=gstable` | bp=4 | — |
+| `12c-validator-equal-power.json` | **validator 의 가중치가 동등하다** — 옆의 12·12b 는 집합이 비지 않았고 충분히 크다는 것만 본다. 네 validator 각자가 **최신 블록의 제안자로 등장할 때까지 기다려** 아무도 건너뛰어지지 않음을 보이고, `prevCommittedSeal.sealers` 가 **정족수가 아니라 집합 전체**임을 단정한다. 한 사이클 안의 턴 수 동등성은 단정하지 않는다(DSL 이 런타임 높이 기준 상대 블록을 주소지정하지 못한다) | stablenet | `default=gstable` | bp=4 | — |
 | `13-commit-signers-quorum.json` | RT-G-3-03 — istanbul_getCommitSignersFromBlock (원본 regression/api/13-test-get-commit-signers) | stablenet | `default=gstable` | bp=4 | — |
 | `14-wbft-extra-info-fields.json` | RT-G-3-04 — istanbul_getWbftExtraInfo (원본 regression/api/14-test-get-wbft-extra) | stablenet | `default=gstable` | bp=4 | — |
 | `15-istanbul-status-fields.json` | RT-G-3-05 — istanbul_status (원본 regression/api/15-test-istanbul-status) | stablenet | `default=gstable` | bp=4 | — |

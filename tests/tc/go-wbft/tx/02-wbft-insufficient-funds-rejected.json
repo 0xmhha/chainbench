@@ -47,7 +47,8 @@
       "from": "node1",
       "to": "0x00000000000000000000000000000000C0FFEE07",
       "value": "$over",
-      "gas": "21000"
+      "gas": "21000",
+      "reason": "insufficient funds"
     },
     {
       "expect": "blockAdvance",

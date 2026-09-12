@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "2",
+  "kind": "case",
+  "id": "validator-equal-power",
+  "description": "Every validator carries the same weight: each one takes proposing turns, and each one's vote is counted on every block. The two specs beside this one assert that the validator set is non-empty and large enough; neither says anything about what a member is worth, so a scheme that never gave one validator a turn, or that reached quorum from a subset every time, would leave both of them green. No RPC returns a weight, so this pins the two observable consequences of equality and says which one it is pinning. Turns: the policy is round robin (proposerPolicy 0 = RoundRobin, consensus/wbft/config.go:40), so waiting for each of the four preset validators to appear as the latest block's proposer proves none of them is skipped — a validator with no slot never appears and the wait fails on its timeout. Votes: prevCommittedSeal.sealers must hold the whole set, not merely a quorum, which is what one-seal-per-validator looks like from the outside; measured at 4 of 4 on thirty consecutive blocks. What this does NOT assert is that turn counts are equal within one cycle. The DSL cannot address a block relative to a height it learned at runtime (eth_getBlockByNumber needs hex and derive emits decimal), and fixed heights are unsafe here: a validator that is still syncing when the readiness gate passes is skipped by the rotation until it catches up — observed live, the fourth validator first proposed at block 31 while the gate had reported all four ready before block 2. That gap is recorded in the worklist rather than papered over with a sleep.",
+  "applicableChains": "stablenet",
+  "requires": [
+    "rpc",
+    "consensus"
+  ],
+  "env": {
+    "schemaVersion": "2",
+    "kind": "env",
+    "id": "validator-equal-power-env",
+    "chain": "stablenet",
+    "binaries": {
+      "default": "gstable"
+    },
+    "topology": {
+      "bp": 4
+    },
+    "keys": {
+      "nodekeys": {
+        "source": "preset",
+        "ref": "keys/preset"
+      }
+    },
+    "capabilities": [
+      "rpc",
+      "consensus"
+    ]
+  },
+  "steps": [
+    {
+      "do": "waitBlock",
+      "target": 2,
+      "timeout": "60s"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["@latest", false],
+      "select": "miner",
+      "compare": "EqualCI",
+      "expected": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "pollInterval": "1s",
+      "timeout": "180s"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["@latest", false],
+      "select": "miner",
+      "compare": "EqualCI",
+      "expected": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "pollInterval": "1s",
+      "timeout": "180s"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["@latest", false],
+      "select": "miner",
+      "compare": "EqualCI",
+      "expected": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "pollInterval": "1s",
+      "timeout": "180s"
+    },
+    {
+      "do": "waitFor",
+      "source": "rpcCall",
+      "method": "eth_getBlockByNumber",
+      "params": ["@latest", false],
+      "select": "miner",
+      "compare": "EqualCI",
+      "expected": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "pollInterval": "1s",
+      "timeout": "180s"
+    },
+    {
+      "do": "read",
+      "source": "rpcCall",
+      "method": "istanbul_getValidators",
+      "params": ["latest"],
+      "select": "#",
+      "save": "setSize"
+    },
+    {
+      "expect": "rpcCall",
+      "method": "istanbul_getWbftExtraInfo",
+      "params": ["@latest"],
+      "select": "prevCommittedSeal.sealers.#",
+      "compare": "Equal",
+      "is": "$setSize"
+    }
+  ]
+}
