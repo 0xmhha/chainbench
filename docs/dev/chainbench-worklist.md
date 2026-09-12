@@ -2234,11 +2234,27 @@ AST 로 다시 측정했다. 구조는 깨끗하다 — 층 위반 0, 래칫 통
   - **그래서 baseFee 를 소각하도록 바꿔도 6건 전부 초록이다.** 공급 보존이라는 구별되는 주장을
     단정하는 검사가 0건이다. 재측정(2026-09-12): baseFee 를 언급하는 스펙 중 coinbase·validator
     잔액을 단정하는 것은 없다. 확인: `for f in $(grep -rln basefee tests/tc/go-stablenet); do grep -li "coinbase\|balance" $f; done`
-  - **해야 할 것**: 블록 하나를 사이에 두고 **validator(coinbase) 잔액 증가**를 단정한다. 수수료
-    총액과 정확히 같은지까지 갈 수 있으면 더 좋지만, 그 전에 "늘어난다" 만으로도 소각 구현을
-    거른다. 단정이 진짜 걸리는지는 변이로 확인한다 — 증가 기대를 **감소**로 바꿔 실패시킨다.
-  - **주의**: 잔액이 "0보다 크다" 는 공허할 수 있다(제네시스 배분이 이미 크다). 앞서 poa
-    거버넌스 케이스에서 정확히 그 함정을 밟았다 — 반드시 **전후 차이**를 본다.
+  - **재분배 경로를 소스에서 확인했다** (go-stablenet `0937ac5c9`,
+    `consensus/wbft/engine/engine.go:972` `distributeBaseFee`): `BaseFee × GasUsed` 를 그 epoch
+    validator 들에게 **`Diligence` 비례로 나누고** 나머지(dust)만 `header.Coinbase` 로 보낸다.
+    `GasUsed == 0` 이면 건너뛴다. 즉 **블록을 봉인하지 않은 validator 도 받는다** — 이것이
+    구별되는 주장이다. 상류에 단위 테스트(`engine_test.go:1026` `TestBaseFeeDistribution`)가
+    있고, 없는 것은 **종단 검증**이다.
+  - **주의 — 순진한 단정은 그 자체로 공허하다.** "validator 잔액이 늘어난다" 만 보면 안 된다:
+    그 validator 가 블록을 봉인하면 `effectiveTip` 을 coinbase 로 받으므로(`core/state_transition.go:576`)
+    **baseFee 를 소각해도 잔액이 오른다.** 통과하지만 아무것도 막지 못하는, 이 항목이 지적하는
+    바로 그 모양이 된다.
+  - **그래서 팁을 0 으로 만들어야 한다.** anzeon 에는 이미 그 장치가 있다 — 인가된 계정은
+    gastip 을 면제받는다(`regression/anzeon/02-authorized-account-gastip-free`, 컨트랙트
+    `0x…1004` 의 2-of-N 승인 흐름이 DSL 로 이미 쓰여 있다). **인가 계정이 `maxPriorityFeePerGas: 0`
+    으로 부하를 보내면** coinbase 의 팁 수입이 0 이 되고, 그때 남는 잔액 증가는 재분배뿐이다.
+  - **설계**: (1) 02 의 인가 흐름을 재사용해 새 계정을 인가·펀딩, (2) validator 2·3 의 잔액을
+    읽어 저장(1번은 제외한다 — 기존 부하 스펙의 송신자이고 수수료를 내는 쪽이라 혼입된다),
+    (3) 팁 0 으로 여러 건 전송, (4) **두 validator 모두** 잔액 증가를 단정. 소각이면 둘 다
+    실패한다. 변이는 전송 스텝을 빼서 두 단정이 함께 실패하는 것으로 확인한다.
+  - 주소: validator 1 `0xc17d4938…`(= 기존 부하 송신자), 2 `0x2493a84a…`, 3 `0x8c4a10b9…`
+    (`keys/preset/metadata.json`). 네 validator 의 `Diligence` 는 extraData 에서 동일하므로
+    지분도 같다.
 - [ ] **F2. validator 의 투표 권한이 동등한지를 아무 테스트도 보지 않는다.** [권장]
   불변식은 "모든 활성 validator 는 동등한 투표 권한을 가진다" 인데, `istanbul_getValidators`
   를 쓰는 스펙들(`go-stablenet/regression/api/12-validator-set-nonempty`·`12b-validator-set-count`,
