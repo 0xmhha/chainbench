@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	// A family is resolved out of the registered set, so a caller has to link
+	// the families in — which is what a binary does through chains/all.
+	_ "github.com/0xmhha/chainbench/internal/chains/all"
 	"github.com/0xmhha/chainbench/internal/chains/external"
 )
 

@@ -39,6 +39,16 @@ type ConsensusFamily interface {
 	// ValidatorsMethod is the RPC method returning the validator/producer
 	// set.
 	ValidatorsMethod() string
+	// ValidatorsCarryBLS reports whether a validator identity of this family
+	// holds BLS material beyond its account key.
+	//
+	// It is asked rather than derived from the family's name because the name
+	// was being compared in the app layer to decide what a key derivation
+	// produces. A family registered after that comparison was written would
+	// have fallen into its else branch and produced identities missing the
+	// material its own genesis then asks for — a silent wrong answer, found
+	// later as a chain that will not seal.
+	ValidatorsCarryBLS() bool
 	// LaunchPolicy is what the consensus asks of one node's launch.
 	//
 	// It used to be StartFlags, a []string the launch parsed back into a typed

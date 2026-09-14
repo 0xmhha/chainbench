@@ -16,7 +16,16 @@ type Family struct{}
 // New returns the wbft consensus family.
 func New() Family { return Family{} }
 
-func (Family) ID() string               { return "wbft" }
+// Registering here means the family is available wherever it is linked in, and
+// the blank import that pulls in a chain pulls in the family the chain
+// composes. Nothing has to name the set in a switch.
+func init() { registry.RegisterFamily(New()) }
+
+func (Family) ID() string { return "wbft" }
+
+// ValidatorsCarryBLS: a wbft validator signs with a BLS key as well as its
+// account key, and the genesis extra-data carries the public half.
+func (Family) ValidatorsCarryBLS() bool { return true }
 func (Family) RPCNamespace() string     { return "istanbul" }
 func (Family) ValidatorsMethod() string { return "istanbul_getValidators" }
 

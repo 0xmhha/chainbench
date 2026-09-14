@@ -145,7 +145,7 @@ func DeriveIdentity(_ Deps, chain string, key PrivateKey) (IdentityOut, error) {
 		return IdentityOut{}, err
 	}
 	family := p.Manifest().ConsensusFamily
-	id, err := derive.Derive(key, derivationFor(family))
+	id, err := derive.Derive(key, derivationFor(p))
 	if err != nil {
 		return IdentityOut{}, err
 	}
@@ -160,9 +160,14 @@ type IdentityOut struct {
 	Family string
 }
 
-// derivationFor maps a consensus family to the material it needs.
-func derivationFor(family string) derive.Derivation {
-	if family == "wbft" {
+// derivationFor maps what a family says its validators carry onto the
+// derivation that produces it.
+//
+// It used to compare the family's NAME, which meant a family added later fell
+// into the else branch and produced identities without the material its own
+// genesis asks for. The family answers now; this only translates.
+func derivationFor(p registry.ChainPlugin) derive.Derivation {
+	if p.Family().ValidatorsCarryBLS() {
 		return derive.WithBLS
 	}
 	return derive.AccountOnly

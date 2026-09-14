@@ -18,11 +18,19 @@ type Family struct{}
 // New returns the poa consensus family.
 func New() Family { return Family{} }
 
+// Registering here means the family is available wherever it is linked in, and
+// the blank import that pulls in a chain pulls in the family the chain
+// composes. Nothing has to name the set in a switch.
+func init() { registry.RegisterFamily(New()) }
+
 // FamilyID names this consensus family. It is exported so a caller can branch
 // on the family it composed without spelling the string itself.
 const FamilyID = "poa"
 
-func (Family) ID() string               { return FamilyID }
+func (Family) ID() string { return FamilyID }
+
+// ValidatorsCarryBLS: poa producers sign with their account key alone.
+func (Family) ValidatorsCarryBLS() bool { return false }
 func (Family) RPCNamespace() string     { return "wemix" }
 func (Family) ValidatorsMethod() string { return "wemix_getValidators" }
 
