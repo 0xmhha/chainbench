@@ -50,7 +50,7 @@ func writeWorkspace(t *testing.T, dir, chain string, nodes ...node.Record) {
 	}
 	st := chainsetup.State{
 		FormatVersion: chainsetup.StateFormatVersion,
-		Chain:         chain, Binary: "/opt/fakebin", Validators: len(nodes),
+		Chain:         chain, Binary: "/opt/fakebin", BPCount: len(nodes),
 		Target: resource.Spec{DataRoot: dir}, Nodes: nodes,
 		Capabilities: []string{"rpc"},
 		Steps:        map[string]chainsetup.Step{},

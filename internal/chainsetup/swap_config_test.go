@@ -45,7 +45,7 @@ func TestNodeSwap_ConfigOnlyRewritesOneNode(t *testing.T) {
 		t.Fatalf("new: %v", err)
 	}
 	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 1, Endpoints: 1,
+		DataDir: dir, BPCount: 1, ENCount: 1,
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}

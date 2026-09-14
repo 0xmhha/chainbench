@@ -11,7 +11,7 @@ import (
 
 func have() preflight.Have {
 	return preflight.Have{
-		Chain: "stablenet", Binary: "/bin/gstable", KeysDir: "keys/preset", Validators: 2, Started: true,
+		Chain: "stablenet", Binary: "/bin/gstable", KeysDir: "keys/preset", BPCount: 2, Started: true,
 		Nodes: []preflight.Node{
 			{Index: 1, Role: node.RoleBP, Host: "127.0.0.1", PID: 100},
 			{Index: 2, Role: node.RoleBP, Host: "127.0.0.1", PID: 101},
@@ -29,10 +29,10 @@ func TestCompare(t *testing.T) {
 		nodes  []int
 		reason string
 	}{
-		{"same shape reuses", have(), preflight.Want{Chain: "stablenet", Validators: 2, Endpoints: 1}, preflight.Reuse, nil, ""},
+		{"same shape reuses", have(), preflight.Want{Chain: "stablenet", BPCount: 2, ENCount: 1}, preflight.Reuse, nil, ""},
 		{"nothing composed", preflight.Have{}, preflight.Want{Chain: "stablenet"}, preflight.Compose, nil, "nothing is composed"},
-		{"other chain rebuilds all", have(), preflight.Want{Chain: "wbft", Validators: 2, Endpoints: 1}, preflight.RebuildAll, nil, "chain:"},
-		{"more validators rebuilds all", have(), preflight.Want{Chain: "stablenet", Validators: 3, Endpoints: 1}, preflight.RebuildAll, nil, "validators:"},
+		{"other chain rebuilds all", have(), preflight.Want{Chain: "wbft", BPCount: 2, ENCount: 1}, preflight.RebuildAll, nil, "chain:"},
+		{"more validators rebuilds all", have(), preflight.Want{Chain: "stablenet", BPCount: 3, ENCount: 1}, preflight.RebuildAll, nil, "bp nodes:"},
 		{"other keys rebuild all", have(), preflight.Want{Chain: "stablenet", KeysDir: "keys/other"}, preflight.RebuildAll, nil, "keys:"},
 		{"never started rebuilds all", func() preflight.Have { h := have(); h.Started = false; return h }(), preflight.Want{Chain: "stablenet"}, preflight.RebuildAll, nil, "never started"},
 		{"one node's sync mode rebuilds that node", have(),
@@ -69,7 +69,7 @@ func TestCheck_ADeadNodeJoinsTheRebuild(t *testing.T) {
 		}
 		return true, ""
 	}
-	d := preflight.Check(context.Background(), have(), preflight.Want{Chain: "stablenet", Validators: 2, Endpoints: 1}, live)
+	d := preflight.Check(context.Background(), have(), preflight.Want{Chain: "stablenet", BPCount: 2, ENCount: 1}, live)
 	if d.Verdict != preflight.RebuildNodes || len(d.Nodes) != 1 || d.Nodes[0] != 2 {
 		t.Fatalf("decision = %s", d)
 	}

@@ -219,10 +219,10 @@ func NetPool(_ context.Context, d Deps, in NetPoolIn) (NetPoolOut, error) {
 // workspace exists. The chain matters because a family reserves a different
 // number of ports per node; the default is stablenet.
 type NetPlanIn struct {
-	Chain      string
-	Validators int
-	Endpoints  int
-	Server     ServerRef
+	Chain   string
+	BPCount int
+	ENCount int
+	Server  ServerRef
 }
 
 // NetPlan runs the allocator as a question: the same deterministic assignment
@@ -230,7 +230,7 @@ type NetPlanIn struct {
 // pool) and the requested shape, with nothing written anywhere. It is how a
 // placement change is inspected — and tested — without composing a network.
 func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
-	if in.Validators < 1 {
+	if in.BPCount < 1 {
 		return NetMapOut{}, fmt.Errorf("app: netmap plan: a network needs at least one validator — nothing seals without one")
 	}
 	chain := in.Chain
@@ -241,7 +241,7 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 	if err != nil {
 		return NetMapOut{}, err
 	}
-	resolved, err := ResolveServer(d, in.Server, in.Validators, defaultPortBand)
+	resolved, err := ResolveServer(d, in.Server, in.BPCount, defaultPortBand)
 	if err != nil {
 		return NetMapOut{}, err
 	}
@@ -250,11 +250,11 @@ func NetPlan(_ context.Context, d Deps, in NetPlanIn) (NetMapOut, error) {
 		pool.Slots = 1
 	}
 	pool.Reservation = plugin.Family().PortReservation()
-	reqs := make([]resource.Request, 0, in.Validators+in.Endpoints)
-	for range in.Validators {
+	reqs := make([]resource.Request, 0, in.BPCount+in.ENCount)
+	for range in.BPCount {
 		reqs = append(reqs, resource.Request{Role: node.RoleBP})
 	}
-	for range in.Endpoints {
+	for range in.ENCount {
 		reqs = append(reqs, resource.Request{Role: node.RoleEN})
 	}
 	// The plan is what a composition would actually get, so it draws from

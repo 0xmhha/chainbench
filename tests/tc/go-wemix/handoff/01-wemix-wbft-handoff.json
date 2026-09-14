@@ -11,8 +11,8 @@
     "id": "wemix-wbft",
     "chain": "wbft",
     "binaries": {
-      "producer": "${GWEMIX_BIN:-gwemix}",
-      "validator": "${GWBFT_BIN:-gwbft}"
+      "from": "${GWEMIX_BIN:-gwemix}",
+      "to": "${GWBFT_BIN:-gwbft}"
     },
     "topology": {
       "bp": 4

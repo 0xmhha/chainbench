@@ -45,7 +45,7 @@ func serverSet(t *testing.T, n, slots int) string {
 
 func TestNetPlan_RefusesANetworkWithNoValidator(t *testing.T) {
 	for _, n := range []int{0, -1} {
-		_, err := NetPlan(context.Background(), Deps{}, NetPlanIn{Validators: n})
+		_, err := NetPlan(context.Background(), Deps{}, NetPlanIn{BPCount: n})
 		if err == nil {
 			t.Errorf("%d validators was accepted", n)
 			continue
@@ -61,7 +61,7 @@ func TestNetPlan_RefusesANetworkWithNoValidator(t *testing.T) {
 // the failure worth ruling out.
 func TestNetPlan_PlansWhatWasAskedFor(t *testing.T) {
 	out, err := NetPlan(context.Background(), Deps{}, NetPlanIn{
-		Chain: "wbft", Validators: 4, Endpoints: 2,
+		Chain: "wbft", BPCount: 4, ENCount: 2,
 		Server: ServerRef{SetPath: serverSet(t, 3, 6), All: true},
 	})
 	if err != nil {
@@ -93,7 +93,7 @@ func TestNetPlan_PlansWhatWasAskedFor(t *testing.T) {
 // 15-container environment hold thirty nodes, one per purpose per machine.
 func TestNetPlan_FillsEveryServerBeforeReusingOne(t *testing.T) {
 	out, err := NetPlan(context.Background(), Deps{}, NetPlanIn{
-		Chain: "wbft", Validators: 6,
+		Chain: "wbft", BPCount: 6,
 		Server: ServerRef{SetPath: serverSet(t, 3, 6), All: true},
 	})
 	if err != nil {
@@ -129,7 +129,7 @@ func TestNetPlan_FillsEveryServerBeforeReusingOne(t *testing.T) {
 // TestNetPlan_UnknownChainIsRefused: the family supplies the port reservation,
 // so a chain nobody registered cannot be planned for.
 func TestNetPlan_UnknownChainIsRefused(t *testing.T) {
-	if _, err := NetPlan(context.Background(), Deps{}, NetPlanIn{Chain: "nope", Validators: 1}); err == nil {
+	if _, err := NetPlan(context.Background(), Deps{}, NetPlanIn{Chain: "nope", BPCount: 1}); err == nil {
 		t.Fatal("a plan was produced for an unregistered chain")
 	}
 }
@@ -139,7 +139,7 @@ func TestNetPlan_UnknownChainIsRefused(t *testing.T) {
 // quietly return fewer nodes than were asked for.
 func TestNetPlan_TooManyNodesForTheSetIsRefused(t *testing.T) {
 	out, err := NetPlan(context.Background(), Deps{}, NetPlanIn{
-		Chain: "wbft", Validators: 9,
+		Chain: "wbft", BPCount: 9,
 		Server: ServerRef{SetPath: serverSet(t, 2, 2), All: true}, // holds 4
 	})
 	if err == nil {

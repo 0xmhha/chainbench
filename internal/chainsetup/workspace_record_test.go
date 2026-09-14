@@ -34,7 +34,7 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 	// in for a start that launched nodes and was then interrupted.
 	boom := errors.New("the step failed after starting something")
 	_, err = withWorkspace(Deps{}, dir, func(ws *Workspace) (string, error) {
-		if _, aerr := ws.Allocate(AllocateOpts{Validators: 2}); aerr != nil {
+		if _, aerr := ws.Allocate(AllocateOpts{BPCount: 2}); aerr != nil {
 			return "", aerr
 		}
 		return "", boom

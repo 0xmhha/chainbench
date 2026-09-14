@@ -48,9 +48,9 @@ type NetUpIn struct {
 	Binary string `json:"binary,omitempty"`
 
 	// Layout (step: allocate).
-	Validators       int    `json:"validators,omitempty"`
-	Endpoints        int    `json:"endpoints,omitempty"`
-	Proxies          int    `json:"proxies,omitempty"`
+	BPCount          int    `json:"bp,omitempty"`
+	ENCount          int    `json:"en,omitempty"`
+	PNCount          int    `json:"pn,omitempty"`
 	EndpointSyncMode string `json:"endpointSyncMode,omitempty"`
 	TopologyPath     string `json:"topologyPath,omitempty"`
 	// AutoSize fills the validator count to the server set (bp: "max"): one node
@@ -199,7 +199,7 @@ func upSteps(ctx context.Context, d Deps, in NetUpIn) map[string]func() (string,
 		// node table, so the layout has to exist first.
 		"place": func() (string, error) {
 			r, err := NetAllocate(ctx, d, NetAllocateIn{
-				DataDir: in.DataDir, Validators: in.Validators, Endpoints: in.Endpoints, Proxies: in.Proxies,
+				DataDir: in.DataDir, BPCount: in.BPCount, ENCount: in.ENCount, PNCount: in.PNCount,
 				EndpointSyncMode: in.EndpointSyncMode, TopologyPath: in.TopologyPath,
 				BlueprintPath: in.BlueprintPath,
 				Topology:      in.Topology, Binaries: in.Binaries, Peering: in.Peering,

@@ -45,8 +45,8 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 	if up.Chain != "stablenet" || up.Binary != "gstable" || up.Stage != chainsetup.UpStart {
 		t.Errorf("chain/binary/stage = %q/%q/%q", up.Chain, up.Binary, up.Stage)
 	}
-	if up.Validators != 3 || up.Endpoints != 1 || up.EndpointSyncMode != "snap" {
-		t.Errorf("topology = %d/%d/%q, want 3/1/snap", up.Validators, up.Endpoints, up.EndpointSyncMode)
+	if up.BPCount != 3 || up.ENCount != 1 || up.EndpointSyncMode != "snap" {
+		t.Errorf("topology = %d/%d/%q, want 3/1/snap", up.BPCount, up.ENCount, up.EndpointSyncMode)
 	}
 	if up.KeysDir != "/keys/gen" || up.KeysSource != "generate" {
 		t.Errorf("keys = %q/%q", up.KeysDir, up.KeysSource)
@@ -74,18 +74,18 @@ func TestCompositionOf_WorkspaceFromDeclaration(t *testing.T) {
 
 func TestCompositionOf_OverridesAndDefaults(t *testing.T) {
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
-	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Binary: "/opt/gstable", Validators: 5, KeysDir: "/k"})
+	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Binary: "/opt/gstable", BPCount: 5, KeysDir: "/k"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if comp.up.Binary != "/opt/gstable" || comp.up.Validators != 5 || comp.up.KeysDir != "/k" {
+	if comp.up.Binary != "/opt/gstable" || comp.up.BPCount != 5 || comp.up.KeysDir != "/k" {
 		t.Errorf("overrides not applied: %+v", comp.up)
 	}
 	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if comp.up.Validators != suiteDefaultValidators || comp.up.KeysDir != defaultKeysDir || comp.up.OverlayPath != "" {
+	if comp.up.BPCount != suiteDefaultValidators || comp.up.KeysDir != defaultKeysDir || comp.up.OverlayPath != "" {
 		t.Errorf("defaults: %+v", comp.up)
 	}
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir(), Chain: "wbft"}); err == nil {
@@ -97,7 +97,7 @@ func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
 	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/genesis-template.json")
 	t.Setenv("GWBFT_BIN", "")
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"producer":"gwemix","validator":"${GWBFT_BIN:-gwbft}"},
+	  "binaries":{"from":"gwemix","to":"${GWBFT_BIN:-gwbft}"},
 	  "upgrade":{"profile":"profiles/wemix-upgrade.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
 	dir := t.TempDir()
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir})
@@ -149,8 +149,8 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 		t.Errorf("binaries not resolved: %v", up.Binaries)
 	}
 	// No count is set; the node table is the sizing.
-	if up.Validators != 0 || up.Endpoints != 0 {
-		t.Errorf("counts leaked with a node table: %d/%d", up.Validators, up.Endpoints)
+	if up.BPCount != 0 || up.ENCount != 0 {
+		t.Errorf("counts leaked with a node table: %d/%d", up.BPCount, up.ENCount)
 	}
 	// The fallback binary is the first node's, for any node naming none.
 	if up.Binary != "/opt/gstable" {
@@ -413,8 +413,8 @@ func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
 	if unset.up.KeysDir != explicit.up.KeysDir || unset.up.KeysDir != "keys/preset" {
 		t.Errorf("keys default diverges: unset=%q explicit=%q", unset.up.KeysDir, explicit.up.KeysDir)
 	}
-	if unset.up.Validators != suiteDefaultValidators {
-		t.Errorf("validators default = %d, want %d", unset.up.Validators, suiteDefaultValidators)
+	if unset.up.BPCount != suiteDefaultValidators {
+		t.Errorf("validators default = %d, want %d", unset.up.BPCount, suiteDefaultValidators)
 	}
 }
 
@@ -524,7 +524,7 @@ func TestCompositionOf_EnvTargetPlaces(t *testing.T) {
 func TestCompositionOf_HandoffRejectsEnvComposeFields(t *testing.T) {
 	t.Setenv("HANDOFF_TEMPLATE", "/tmpl/g.json")
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"producer":"gwemix","validator":"gwbft"},
+	  "binaries":{"from":"gwemix","to":"gwbft"},
 	  "topology":{"validators":4},
 	  "upgrade":{"profile":"p.yaml","template":"${HANDOFF_TEMPLATE}"}}`)
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {

@@ -47,8 +47,8 @@ type RunSuiteIn struct {
 	Chain string
 	// Binary overrides the declared binary path for a single-binary network.
 	Binary string
-	// Validators overrides the declared validator count.
-	Validators int
+	// BPCount overrides the bp node count the specs declare.
+	BPCount int
 	// Server selects where the nodes run, from the operator's server set.
 	Server resource.ServerRef
 	// Docker treats the servers as local docker containers (the option is the

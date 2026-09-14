@@ -19,7 +19,7 @@ func newNetUpCmd() *cobra.Command {
 		dataDir, chain, binary, keysDir                      string
 		workspaceConfig                                      string
 		manifestPath, templatePath                           string
-		validators, endpoints, proxies                       int
+		bpCount, enCount, pnCount                            int
 		endpointSyncMode, topologyPath, blueprintPath, stage string
 		keysSource, bootnode, genesisExisting                string
 		chainID                                              int64
@@ -56,7 +56,7 @@ func newNetUpCmd() *cobra.Command {
 				DataDir: dataDir, Stage: app.UpStage(stage),
 				Chain: chain, ManifestPath: manifestPath, TemplatePath: templatePath,
 				KeysDir: keysDir, Target: target, Binary: binary,
-				Validators: validators, Endpoints: endpoints, Proxies: proxies,
+				BPCount: bpCount, ENCount: enCount, PNCount: pnCount,
 				EndpointSyncMode: endpointSyncMode, TopologyPath: topologyPath, BlueprintPath: blueprintPath, Peering: peering,
 				Binaries:            bins,
 				Server:              sf.Ref(),
@@ -85,13 +85,13 @@ func newNetUpCmd() *cobra.Command {
 	cmd.Flags().StringVar(&templatePath, "genesis-template", "", "path to the genesis template for --manifest")
 	cmd.Flags().StringVar(&binary, "binary", "", "node binary path (required for --stage=start)")
 	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the network composes from")
-	cmd.Flags().IntVar(&validators, "validators", 4, "validator node count")
-	cmd.Flags().IntVar(&endpoints, "endpoints", 0, "endpoint (non-validator) node count")
-	cmd.Flags().IntVar(&proxies, "proxies", 0, "pn (proxy-tier) node count; a family with no proxy tier (poa) refuses it")
+	cmd.Flags().IntVar(&bpCount, "bp", 4, "bp (block-producing) node count")
+	cmd.Flags().IntVar(&enCount, "en", 0, "en (endpoint, non-producing) node count")
+	cmd.Flags().IntVar(&pnCount, "pn", 0, "pn (proxy-tier) node count; a family with no proxy tier refuses it")
 	cmd.Flags().StringVar(&endpointSyncMode, "endpoint-syncmode", "", "sync mode for endpoints (snap|archive); default full")
-	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --validators/--endpoints")
+	cmd.Flags().StringVar(&topologyPath, "topology", "", "per-node layout YAML (role/sync-mode/bootnode/binary); overrides --bp/--en/--pn")
 	cmd.Flags().StringArrayVar(&binaries, "binaries", nil, "resolve a topology binary name to a path (repeatable), e.g. --binaries wbft=/path/gwbft")
-	cmd.Flags().StringVar(&blueprintPath, "blueprint", "", "network declaration YAML: the layout AND the node keys in one document. With one, no key set is needed — it replaces --topology and --validators/--endpoints, and --keys-source defaults to declared")
+	cmd.Flags().StringVar(&blueprintPath, "blueprint", "", "network declaration YAML: the layout AND the node keys in one document. With one, no key set is needed — it replaces --topology and --bp/--en/--pn, and --keys-source defaults to declared")
 	cmd.Flags().StringVar(&peering, "peering", "", "peer graph: mesh (default, every node dials every other) | proxied (bp <-> pn <-> en; endpoints never dial a producer)")
 	cmd.Flags().StringVar(&keysSource, "keys-source", "", "preset (default), generate, or declared (with --blueprint)")
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")

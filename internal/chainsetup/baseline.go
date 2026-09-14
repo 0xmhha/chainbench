@@ -66,7 +66,7 @@ func (w *Workspace) ObserveBaseline(ctx context.Context) (resource.Observed, err
 		if err != nil {
 			return obs, fmt.Errorf("chainsetup: baseline: load keys: %w", err)
 		}
-		obs.Validators = preset.NetworkFor(w.state.Validators).Validators
+		obs.Validators = preset.NetworkFor(w.state.BPCount).Validators
 	}
 	return obs, nil
 }

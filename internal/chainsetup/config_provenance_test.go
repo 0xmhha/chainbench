@@ -57,7 +57,7 @@ func TestNetConfig_OverrideIsolationAndProvenance(t *testing.T) {
 		}
 	}
 	must(chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}))
-	must(chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 3}))
+	must(chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 3}))
 	must(chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}))
 	must(chainsetup.NetGenesis(ctx, d, chainsetup.NetGenesisIn{DataDir: dir, ChainID: 9999}))
 	// Every node gets metricsHost; only node2 gets httpHost.

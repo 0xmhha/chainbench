@@ -32,7 +32,7 @@ func TestNetStepPipeline(t *testing.T) {
 	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2, Endpoints: 1}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 2, ENCount: 1}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	if out, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
@@ -120,7 +120,7 @@ func TestNetStepPrerequisites(t *testing.T) {
 	ctx := context.Background()
 	d := chainsetup.Deps{Clock: fixedClock()}
 
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 1}); err == nil ||
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 1}); err == nil ||
 		!strings.Contains(err.Error(), "chain new") {
 		t.Fatalf("allocate before new: %v", err)
 	}
@@ -197,7 +197,7 @@ nodes:
 	}
 
 	// An impossible graph is refused where the layout is chosen, not later.
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2, Peering: "starfish"}); err == nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 2, Peering: "starfish"}); err == nil {
 		t.Fatal("an unknown peering must be refused")
 	}
 }
@@ -256,7 +256,7 @@ func TestNetAllocate_RecordsTheEtcdPort(t *testing.T) {
 	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "wemix", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 2}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 2}); err != nil {
 		t.Fatalf("allocate: %v", err)
 	}
 	out, err := chainsetup.NetStatus(ctx, d, chainsetup.NetStatusIn{DataDir: dir})
@@ -292,7 +292,7 @@ func TestAllocate_AllServersRecordsEachNodesServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := chainsetup.NetAllocate(context.Background(), d, chainsetup.NetAllocateIn{
-		DataDir: dir, Validators: 3,
+		DataDir: dir, BPCount: 3,
 		Server: resource.ServerRef{SetPath: set, All: true},
 	}); err != nil {
 		t.Fatalf("allocate: %v", err)

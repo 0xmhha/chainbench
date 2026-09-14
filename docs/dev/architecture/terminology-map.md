@@ -40,11 +40,11 @@
 
 | 뜻 | 무엇인가 | 주인 | 주로 사는 곳 | 코드 | 판정 |
 |---|---|---|---|---|---|
-| 1 | **bp 노드의 개수** | 우리 | `cmd/chainbench/{chaincmd,suitecmd,resourcecmd}`, `chainsetup.State` | 42 | **틀렸다. 고친다** |
+| 1 | **bp 노드의 개수** | 우리 | `cmd/chainbench/{chaincmd,suitecmd,resourcecmd}`, `chainsetup.State` | 42 | **고쳤다 (V9-b)** |
 | 2 | **계정 기능** — 키 집합에서 블록을 만드는 신원 | 우리 | `internal/core/keyring`, `cmd/chainbench/keyringcmd`, `registry.AccountValidator` | 108 | 맞다. 둔다 |
 | 3 | **genesis 에 박히는 주소 집합** | 체인 | `internal/core/genesis`, `internal/core/blueprint`, `registry.GenesisParams` | 43 | 맞다. 둔다 |
 | 4 | **실행 중인 합의 참여 집합** | 체인 | `ValidatorsMethod`, `RunningValidators`, `internal/core/health` | 31 | 맞다. 둔다 |
-| 5 | **포크 뒤를 이어받는 바이너리** | 우리 | `dsl.BinaryAfter`, 정의서의 `binaries` 키 | 2 | **틀렸다. 고친다** |
+| 5 | **포크 뒤를 이어받는 바이너리** | 우리 | `dsl.BinaryAfter`, 정의서의 `binaries` 키 | 2 | **고쳤다 (V9-b)** |
 | 6 | **wbft 합의에 참여하는 노드** | 체인 | `internal/consensus/wbft`, `internal/consensus/poa` | 81 | 맞다. 둔다 |
 
 ### 왜 2·3·4·6 은 맞는가
@@ -159,14 +159,26 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 
 ---
 
-## 6. V9-b 가 바꿀 것
+## 6. V9-b 가 바꾼 것 (2026-09-14 완료)
 
 이 조사로 확정된 변경 대상은 둘뿐이다. 1,426곳 중 **44곳**이다.
 
-| 대상 | 지금 | 바꿀 것 | 규모 |
-|---|---|---|---|
-| 노드 개수 플래그와 그 배선 | `--validators` / `--endpoints` / `--proxies` | `--bp` / `--en` / `--pn` | 플래그 10곳 + 배선 32곳 |
-| 정의서의 바이너리 키 | `producer` / `validator` | 코드가 이미 쓰는 `from` / `to` 에 맞춘다 | 상수 2곳 + 정의서 1건 |
+| 대상 | 전 | 후 |
+|---|---|---|
+| CLI 플래그 (`chain place`·`chain up`·`run`·`resource plan`) | `--validators` / `--endpoints` / `--proxies` | `--bp` / `--en` / `--pn` |
+| MCP 도구 인자와 스키마 | `validators` / `endpoints` / `proxies` | `bp` / `en` / `pn` |
+| Go 필드 | `Validators` / `Endpoints` / `Proxies` / `Producers` | `BPCount` / `ENCount` / `PNCount` |
+| 구성 기록의 키 | `"validators"` | `"bp"` |
+| 정의서의 바이너리 키 | `producer` / `validator` | `from` / `to` |
+| `chain place` 출력 | `2 validator(s) + 2 endpoint(s)` | `2 bp + 1 en + 1 pn` |
+| `chain status` 출력 | `validators: 2` | `bp: 2` |
+
+뜻이 다른 `--validators` 는 그대로 뒀다. `chain keys` 와 `account` 의 것은 신원 수
+(뜻 2)이고, `verify --validators` 는 실행 중 집합 대조(뜻 4)다.
+
+`chain place` 출력은 역할별로 세도록 바꿨다. 전에는 생산자가 아닌 노드를 전부
+endpoint 로 셌고, 그래서 `pn` 이 endpoint 로 보고됐다. 무엇이 놓였는지 말하는 한 줄이
+프록시 계층을 감추고 있었다.
 
 나머지 1,382곳은 **그대로 둔다.** 뜻이 맞거나, 체인의 것이다.
 
@@ -187,4 +199,5 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-09-14 | V9-b 반영. 뜻 1·5 를 고치고 나머지 4뜻은 그대로 뒀다 |
 | 2026-09-14 | 최초 작성. V9-a 조사 결과. `validator` 6뜻, `boot` 4뜻, `workspace` 4뜻, `preset` 3뜻 |

@@ -23,7 +23,7 @@ func poolOf(n int) resource.Pool {
 // rest. A named count is untouched — this only fires under AutoSize.
 func TestPlacements_AutoSizeFillsToServerCount(t *testing.T) {
 	// 15 servers, one pn and one en by default -> 13 bp + 1 en + 1 pn, pn last.
-	reqs, modes, err := AllocateOpts{AutoSize: true, Proxies: 1, Endpoints: 1, Pool: poolOf(15)}.placements()
+	reqs, modes, err := AllocateOpts{AutoSize: true, PNCount: 1, ENCount: 1, Pool: poolOf(15)}.placements()
 	if err != nil {
 		t.Fatalf("placements: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestPlacements_AutoSizeFillsToServerCount(t *testing.T) {
 // TestPlacements_AutoSizeHonoursExplicitProxyEndpointCounts: the counts the
 // spec did name still hold; only the validators are filled.
 func TestPlacements_AutoSizeHonoursExplicitProxyEndpointCounts(t *testing.T) {
-	reqs, _, err := AllocateOpts{AutoSize: true, Proxies: 2, Endpoints: 3, Pool: poolOf(10)}.placements()
+	reqs, _, err := AllocateOpts{AutoSize: true, PNCount: 2, ENCount: 3, Pool: poolOf(10)}.placements()
 	if err != nil {
 		t.Fatalf("placements: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestPlacements_AutoSizeHonoursExplicitProxyEndpointCounts(t *testing.T) {
 // TestPlacements_AutoSizeNeedsAServerSet: with no pool there is no capacity to
 // fill, and sizing to nothing would silently make a one-node network.
 func TestPlacements_AutoSizeNeedsAServerSet(t *testing.T) {
-	_, _, err := AllocateOpts{AutoSize: true, Proxies: 1, Endpoints: 1}.placements()
+	_, _, err := AllocateOpts{AutoSize: true, PNCount: 1, ENCount: 1}.placements()
 	if err == nil || !strings.Contains(err.Error(), "server-set") {
 		t.Fatalf("err = %v, want a server-set requirement", err)
 	}
@@ -89,7 +89,7 @@ func TestPlacements_AutoSizeNeedsAServerSet(t *testing.T) {
 // TestPlacements_AutoSizeRefusesAServerSetTooSmall: three servers cannot hold a
 // pn, an en, and still leave a validator.
 func TestPlacements_AutoSizeRefusesAServerSetTooSmall(t *testing.T) {
-	_, _, err := AllocateOpts{AutoSize: true, Proxies: 1, Endpoints: 1, Pool: poolOf(2)}.placements()
+	_, _, err := AllocateOpts{AutoSize: true, PNCount: 1, ENCount: 1, Pool: poolOf(2)}.placements()
 	if err == nil {
 		t.Fatal("a 2-server set was accepted for pn+en+bp")
 	}
@@ -120,7 +120,7 @@ func TestPlacements_TopologyCarriesPerNodeConfig(t *testing.T) {
 // TestPlacements_NamedCountKeepsBpPnEnOrder: without AutoSize the ordering the
 // existing specs address by index is unchanged (bp, then pn, then en).
 func TestPlacements_NamedCountKeepsBpPnEnOrder(t *testing.T) {
-	reqs, _, err := AllocateOpts{Validators: 2, Proxies: 1, Endpoints: 1}.placements()
+	reqs, _, err := AllocateOpts{BPCount: 2, PNCount: 1, ENCount: 1}.placements()
 	if err != nil {
 		t.Fatalf("placements: %v", err)
 	}

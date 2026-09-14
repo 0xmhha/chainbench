@@ -50,12 +50,12 @@ type Node struct {
 // Have is the chain composed on the target now, read from the composition's
 // record. Zero Nodes means nothing is composed.
 type Have struct {
-	Chain      string
-	Binary     string
-	KeysDir    string
-	Peering    string
-	ChainID    int64
-	Validators int
+	Chain   string
+	Binary  string
+	KeysDir string
+	Peering string
+	ChainID int64
+	BPCount int
 	// GenesisDeclared digests the inputs that decide the genesis: the chain id,
 	// the overlay, the dot-path set, the template and manifest, and an existing
 	// genesis used verbatim. Both sides must compute it the same way
@@ -79,13 +79,13 @@ type Have struct {
 
 // Want is the chain the next test needs, in the same terms.
 type Want struct {
-	Chain      string
-	Binary     string
-	KeysDir    string
-	Peering    string
-	ChainID    int64
-	Validators int
-	Endpoints  int
+	Chain   string
+	Binary  string
+	KeysDir string
+	Peering string
+	ChainID int64
+	BPCount int
+	ENCount int
 	// GenesisDeclared is the requested genesis, digested the same way as
 	// [Have.GenesisDeclared].
 	GenesisDeclared string
@@ -190,9 +190,9 @@ func Compare(have Have, want Want) Decision {
 	}
 	// Want.Nodes pins facts about named nodes; it is not the node count. The
 	// count is the counts, and a request that gives none accepts what is there.
-	wantTotal := want.Validators + want.Endpoints
-	if want.Validators != 0 && have.Validators != want.Validators {
-		all = append(all, fmt.Sprintf("validators: have %d, want %d", have.Validators, want.Validators))
+	wantTotal := want.BPCount + want.ENCount
+	if want.BPCount != 0 && have.BPCount != want.BPCount {
+		all = append(all, fmt.Sprintf("bp nodes: have %d, want %d", have.BPCount, want.BPCount))
 	}
 	if wantTotal != 0 && len(have.Nodes) != wantTotal {
 		all = append(all, fmt.Sprintf("nodes: have %d, want %d", len(have.Nodes), wantTotal))

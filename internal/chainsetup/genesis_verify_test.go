@@ -30,14 +30,14 @@ func TestVerifyExistingGenesisKeys_MatchesAndMismatches(t *testing.T) {
 	genesis := []byte(`{"extraData":"` + preset.Network.ExtraData + `"}`)
 
 	// The whole key set matches the genesis's validators.
-	w := &Workspace{state: State{KeysDir: presetDir, Validators: full}}
+	w := &Workspace{state: State{KeysDir: presetDir, BPCount: full}}
 	if err := w.verifyExistingGenesisKeys(p, genesis, "preset.json"); err != nil {
 		t.Fatalf("matching key set should pass: %v", err)
 	}
 
 	// One fewer validator in the key set than the genesis names -> a genesis
 	// validator with no running key -> refused.
-	wShort := &Workspace{state: State{KeysDir: presetDir, Validators: full - 1}}
+	wShort := &Workspace{state: State{KeysDir: presetDir, BPCount: full - 1}}
 	if err := wShort.verifyExistingGenesisKeys(p, genesis, "preset.json"); err == nil {
 		t.Fatal("a key set missing a genesis validator must be refused")
 	}

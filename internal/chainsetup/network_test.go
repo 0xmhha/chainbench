@@ -75,7 +75,7 @@ func seedWorkspace(t *testing.T, dir, chain, binary string, nodes []node.Record)
 	}
 	st := chainsetup.State{
 		FormatVersion: chainsetup.StateFormatVersion,
-		Chain:         chain, Binary: binary, Validators: len(nodes),
+		Chain:         chain, Binary: binary, BPCount: len(nodes),
 		Target: resource.Spec{DataRoot: dir},
 		Nodes:  nodes,
 		Steps:  map[string]chainsetup.Step{},

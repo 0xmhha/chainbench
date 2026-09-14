@@ -46,7 +46,7 @@ func newBlueprintCmd() *cobra.Command {
 			} else {
 				res, err = app.BlueprintFromPreset(cmd.Context(), surface.Deps(cmd), app.BlueprintFromPresetIn{
 					KeysDir: keysDir, Chain: chain, Manifest: manifest,
-					Producers: producers, Endpoints: endpoints, Binary: binary, Peering: peering,
+					BPCount: producers, ENCount: endpoints, Binary: binary, Peering: peering,
 				})
 			}
 			if err != nil {

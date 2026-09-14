@@ -60,13 +60,17 @@ type State struct {
 	// ManifestPath and TemplatePath name an external, project-supplied chain
 	// manifest. When set they win over Chain, so a workspace composed for a
 	// project's own chain resolves the same plugin on every later step.
-	ManifestPath string        `json:"manifestPath,omitempty"`
-	TemplatePath string        `json:"templatePath,omitempty"`
-	Binary       string        `json:"binary,omitempty"`
-	KeysDir      string        `json:"keysDir,omitempty"`
-	Validators   int           `json:"validators,omitempty"`
-	Target       resource.Spec `json:"target"`
-	GenesisPath  string        `json:"genesisPath,omitempty"`
+	ManifestPath string `json:"manifestPath,omitempty"`
+	TemplatePath string `json:"templatePath,omitempty"`
+	Binary       string `json:"binary,omitempty"`
+	KeysDir      string `json:"keysDir,omitempty"`
+	// BPCount is how many bp nodes the placement resolved to. The genesis step
+	// sizes the validator set from it: the producers ARE the validator set, and
+	// counting the placements rather than the request is what makes a topology
+	// decide it.
+	BPCount     int           `json:"bp,omitempty"`
+	Target      resource.Spec `json:"target"`
+	GenesisPath string        `json:"genesisPath,omitempty"`
 	// LaunchInputs is what each launch input hashed to when this workspace
 	// wrote it, keyed by path on the target.
 	//

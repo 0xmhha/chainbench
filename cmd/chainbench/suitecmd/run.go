@@ -49,7 +49,7 @@ func NewRun() *cobra.Command {
 		keysDir         string
 		keysSource      string
 		artifactRoot    string
-		validators      int
+		bpCount         int
 		chainID         int64
 		networkID       int64
 		launchOpts      []string
@@ -99,8 +99,8 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("keys-source") {
 				in.KeysSource = keysSource
 			}
-			if cmd.Flags().Changed("validators") {
-				in.Validators = validators
+			if cmd.Flags().Changed("bp") {
+				in.BPCount = bpCount
 			}
 			if cmd.Flags().Changed("artifact-root") {
 				in.ArtifactRoot = artifactRoot
@@ -132,7 +132,7 @@ func NewRun() *cobra.Command {
 		"compose: where node identities come from — preset (use --keys as-is) | generate (create a fresh set in --keys)")
 	cmd.Flags().StringVar(&artifactRoot, "artifact-root", defaultArtifactRoot(),
 		"session artifact base directory (compose default: the workspace's sessions directory)")
-	cmd.Flags().IntVar(&validators, "validators", 4, "compose: validator node count, overriding what the specs declare")
+	cmd.Flags().IntVar(&bpCount, "bp", 4, "compose: bp node count, overriding what the specs declare")
 	cmd.Flags().Int64Var(&chainID, "chain-id", 0, "compose: override the chain id in the built genesis (0 = declared/manifest)")
 	cmd.Flags().Int64Var(&networkID, "network-id", 0, "compose: pin the devp2p network id on every node (0 = binary default)")
 	cmd.Flags().StringArrayVar(&launchOpts, "launch-opt", nil,

@@ -536,13 +536,13 @@ func sortedKeys(m map[string]bool) []string {
 	return out
 }
 
-// TestV2_UpgradeEnvNamesItsBinariesByRole: a handoff declaration carries
-// through to the executable spec, and one that leaves a role out is refused
+// TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork: a handoff declaration carries
+// through to the executable spec, and one that leaves a side out is refused
 // rather than composed as a single-binary network.
-func TestV2_UpgradeEnvNamesItsBinariesByRole(t *testing.T) {
+func TestV2_UpgradeEnvNamesOneBinaryPerSideOfTheFork(t *testing.T) {
 	good := `{"schemaVersion":"2","kind":"case","id":"h","env":{
 	  "schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"producer":"gwemix","validator":"gwbft"},
+	  "binaries":{"from":"gwemix","to":"gwbft"},
 	  "upgrade":{"profile":"p.yaml","template":"t.json"}},
 	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`
 	s, err := Parse([]byte(good))
@@ -552,14 +552,14 @@ func TestV2_UpgradeEnvNamesItsBinariesByRole(t *testing.T) {
 	if s.EnvUpgrade == nil || s.EnvUpgrade.Profile != "p.yaml" || s.EnvUpgrade.Template != "t.json" {
 		t.Fatalf("upgrade not lowered: %+v", s.EnvUpgrade)
 	}
-	if s.Chain.Binaries[BinaryBefore] != "gwemix" || s.Chain.Binaries[BinaryAfter] != "gwbft" || s.Chain.Binary != "" {
+	if s.Chain.Binaries[BinaryFrom] != "gwemix" || s.Chain.Binaries[BinaryTo] != "gwbft" || s.Chain.Binary != "" {
 		t.Fatalf("binaries = %v / %q", s.Chain.Binaries, s.Chain.Binary)
 	}
 
 	bad := map[string]string{
-		"missing validator":    `"binaries":{"producer":"gwemix"},"upgrade":{"profile":"p","template":"t"}`,
-		"default with upgrade": `"binaries":{"producer":"gwemix","validator":"gwbft","default":"x"},"upgrade":{"profile":"p","template":"t"}`,
-		"no template":          `"binaries":{"producer":"gwemix","validator":"gwbft"},"upgrade":{"profile":"p"}`,
+		"missing the to side":  `"binaries":{"from":"gwemix"},"upgrade":{"profile":"p","template":"t"}`,
+		"default with upgrade": `"binaries":{"from":"gwemix","to":"gwbft","default":"x"},"upgrade":{"profile":"p","template":"t"}`,
+		"no template":          `"binaries":{"from":"gwemix","to":"gwbft"},"upgrade":{"profile":"p"}`,
 	}
 	for name, env := range bad {
 		raw := `{"schemaVersion":"2","kind":"case","id":"h","env":{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",` + env + `},

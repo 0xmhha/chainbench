@@ -151,8 +151,8 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
 			PresetDir:      keysDir,
-			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryBefore]),
-			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryAfter]),
+			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryFrom]),
+			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryTo]),
 			GenesisOverlay: overlayPath,
 			DataDir:        in.DataDir,
 		}}, nil
@@ -186,10 +186,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if err != nil {
 			return composition{}, err
 		}
-		// An explicit --validators is a named count: it turns dynamic sizing off
-		// rather than being filled over.
-		if in.Validators > 0 {
-			validators = in.Validators
+		// An explicit --bp is a named count: it turns dynamic sizing off rather
+		// than being filled over.
+		if in.BPCount > 0 {
+			validators = in.BPCount
 			autoBP = false
 		}
 		if autoBP {
@@ -217,7 +217,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		Chain: chain, Binary: binary, KeysDir: keysDir, KeysSource: keysSource,
 		KeysValidators: keysValidators, BlueprintPath: expand(spec.EnvBlueprint),
 		ManifestPath: expand(spec.Chain.ManifestPath), TemplatePath: expand(spec.Chain.TemplatePath),
-		Validators: validators, Endpoints: endpoints, Proxies: proxies, EndpointSyncMode: syncMode,
+		BPCount: validators, ENCount: endpoints, PNCount: proxies, EndpointSyncMode: syncMode,
 		AutoSize: autoBP,
 		Topology: inlineTopo, Binaries: resolvedBins,
 		Server: in.Server, Docker: in.Docker,

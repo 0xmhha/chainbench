@@ -18,7 +18,7 @@ func (w *Workspace) Have(ctx context.Context) preflight.Have {
 	st := w.state
 	h := preflight.Have{
 		Chain: st.Chain, Binary: st.Binary, KeysDir: st.KeysDir, Peering: st.Peering,
-		Validators: st.Validators, Started: st.Steps["start"].Done,
+		BPCount: st.BPCount, Started: st.Steps["start"].Done,
 	}
 	// The genesis this composition was asked for, not the bytes it produced:
 	// WantOf can only digest a request, so Have has to speak the same language
@@ -44,7 +44,7 @@ func (w *Workspace) Have(ctx context.Context) preflight.Have {
 func WantOf(in NetUpIn) preflight.Want {
 	return preflight.Want{
 		Chain: in.Chain, Binary: in.Binary, KeysDir: in.KeysDir, Peering: in.Peering,
-		ChainID: in.ChainID, Validators: in.Validators, Endpoints: in.Endpoints,
+		ChainID: in.ChainID, BPCount: in.BPCount, ENCount: in.ENCount,
 		GenesisDeclared: GenesisDeclared(in),
 	}
 }

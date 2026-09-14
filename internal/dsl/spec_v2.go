@@ -105,15 +105,26 @@ type AccountV2 struct {
 
 // The two binaries an upgrade env names, by the key it names them under.
 //
-// They are spelled Binary rather than Role because they are not node roles.
-// A handoff names the binary that seals up to the fork and the one that takes
-// over after it, and calling that a "role" put a third meaning on a word that
-// already meant a node's job and an account's function (A7).
+// They are named for the fork rather than for a role, because that is what
+// tells them apart. Both binaries run nodes of several roles; what differs is
+// which side of the fork each one seals.
+//
+// They used to be spelled "producer" and "validator". Both words were wrong in
+// the same way: "producer" reads as the bp role, and "validator" names what a
+// bp does while another bp proposes — neither describes a binary. The names
+// also disagreed with the rest of the handoff, which already says From and To
+// in the code (upgrade.HandoffInputs) and on the command line
+// (--from-binary/--to-binary, --from-genesis/--to-chain).
+//
+// Concretely, on the handoff this harness runs: BinaryFrom is go-wemix, which
+// seals under poa up to the fork block; BinaryTo is go-wbft, which syncs those
+// blocks as an endpoint until the fork and produces under the new consensus
+// after it.
 const (
-	// BinaryBefore seals up to the fork.
-	BinaryBefore = "producer"
-	// BinaryAfter takes over after it.
-	BinaryAfter = "validator"
+	// BinaryFrom seals up to the fork.
+	BinaryFrom = "from"
+	// BinaryTo takes over after it.
+	BinaryTo = "to"
 )
 
 // UpgradeV2 declares a handoff composition: which golden profile shapes it
@@ -434,19 +445,20 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.Chain.Binaries = env.Binaries
 	}
 
-	// An upgrade names its two binaries by role, and nothing else: a default
-	// would mean every node runs one binary, which is not a handoff.
+	// An upgrade names its two binaries by which side of the fork each seals,
+	// and nothing else: a default would mean every node runs one binary, which
+	// is not a handoff.
 	if u := env.Upgrade; u != nil {
 		if u.Profile == "" || u.Template == "" {
 			return Spec{}, fmt.Errorf("dsl: case %s: upgrade needs \"profile\" and \"template\"", c.ID)
 		}
-		for _, role := range []string{BinaryBefore, BinaryAfter} {
-			if env.Binaries[role] == "" {
-				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names binaries by role — binaries.%s is missing", c.ID, role)
+		for _, key := range []string{BinaryFrom, BinaryTo} {
+			if env.Binaries[key] == "" {
+				return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names one binary per side of the fork — binaries.%s is missing", c.ID, key)
 			}
 		}
 		if len(env.Binaries) != 2 {
-			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, BinaryBefore, BinaryAfter)
+			return Spec{}, fmt.Errorf("dsl: case %s: an upgrade env names exactly the %s and %s binaries", c.ID, BinaryFrom, BinaryTo)
 		}
 		spec.EnvUpgrade = u
 	}

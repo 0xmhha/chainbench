@@ -133,7 +133,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			// authority; an explicit opts.Validators still wins.
 			validators := opts.Validators
 			if validators <= 0 {
-				validators = w.state.Validators
+				validators = w.state.BPCount
 			}
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 		default:
@@ -384,13 +384,13 @@ func parseNodeKey(index int, ref string) (derive.PrivateKey, error) {
 
 // AllocateOpts sizes the network.
 type AllocateOpts struct {
-	// Validators is the validator node count (>=1).
-	Validators int
-	// Endpoints is the non-validator (endpoint) node count.
-	Endpoints int
-	// Proxies is the pn (proxy-tier) node count. A family with no proxy tier
-	// (poa, where etcd occupies that place) refuses a pn at peering validation.
-	Proxies int
+	// BPCount is the bp (block-producing) node count (>=1).
+	BPCount int
+	// ENCount is the en (endpoint, non-producing) node count.
+	ENCount int
+	// PNCount is the pn (proxy-tier) node count. A family with no proxy tier
+	// refuses a pn at peering validation.
+	PNCount int
 	// Peering is the peer graph to wire ("mesh" default, "proxied" for
 	// bp <-> pn <-> en). It is recorded now and consumed by the config step,
 	// so the graph a network runs is decided where its layout is.
@@ -466,7 +466,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 		}
 		return reqs, modes, nil
 	}
-	validators := o.Validators
+	validators := o.BPCount
 	if o.AutoSize {
 		v, err := o.autoValidators()
 		if err != nil {
@@ -477,7 +477,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	if validators < 1 {
 		return nil, nil, fmt.Errorf("chainsetup: allocate: at least one validator is required")
 	}
-	reqs := make([]node.LaunchReq, 0, validators+o.Proxies+o.Endpoints)
+	reqs := make([]node.LaunchReq, 0, validators+o.PNCount+o.ENCount)
 	modes := make([]string, 0, cap(reqs))
 	for i := 0; i < validators; i++ {
 		reqs = append(reqs, node.LaunchReq{Role: node.RoleBP})
@@ -489,13 +489,13 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 	// unified model puts at the highest index (and, on wemix, still leaves the
 	// etcd seed as the highest-index bp, which comes before it either way).
 	appendProxies := func() {
-		for i := 0; i < o.Proxies; i++ {
+		for i := 0; i < o.PNCount; i++ {
 			reqs = append(reqs, node.LaunchReq{Role: node.RolePN})
 			modes = append(modes, syncModeFor(node.RolePN, o.EndpointSyncMode))
 		}
 	}
 	appendEndpoints := func() {
-		for i := 0; i < o.Endpoints; i++ {
+		for i := 0; i < o.ENCount; i++ {
 			reqs = append(reqs, node.LaunchReq{Role: node.RoleEN})
 			modes = append(modes, syncModeFor(node.RoleEN, o.EndpointSyncMode))
 		}
@@ -519,9 +519,9 @@ func (o AllocateOpts) autoValidators() (int, error) {
 	if servers == 0 {
 		return 0, fmt.Errorf("chainsetup: allocate: dynamic sizing (bp: \"max\") needs a server-set target — there is no capacity to fill without one")
 	}
-	validators := servers - o.Proxies - o.Endpoints
+	validators := servers - o.PNCount - o.ENCount
 	if validators < 1 {
-		return 0, fmt.Errorf("chainsetup: allocate: %d server(s) cannot hold %d pn + %d en and still leave a validator", servers, o.Proxies, o.Endpoints)
+		return 0, fmt.Errorf("chainsetup: allocate: %d server(s) cannot hold %d pn + %d en and still leave a validator", servers, o.PNCount, o.ENCount)
 	}
 	return validators, nil
 }
@@ -674,15 +674,27 @@ func (w *Workspace) Allocate(opts AllocateOpts) (string, error) {
 	}
 	// Counted from the resolved placements, not the requested count: a topology
 	// decides the validator set, and the genesis step sizes itself from this.
-	w.state.Validators = validators
+	w.state.BPCount = validators
 	if opts.Topology != nil {
 		w.state.Bootnode = opts.Topology.BootnodeIndex()
 	}
 
 	w.state.PortSource = pool.Source
 
-	detail := fmt.Sprintf("%d node(s): %d validator(s) + %d endpoint(s); ports: %s; p2p from %d, http from %d",
-		len(nodes), validators, len(nodes)-validators, pool.Source, nodes[0].P2P, nodes[0].HTTP)
+	// Counted by role rather than as "producers and the rest": the rest is two
+	// different jobs, and a pn reported as an endpoint is how a proxy tier goes
+	// unnoticed in the one line that says what was placed.
+	var ens, pns int
+	for _, n := range nodes {
+		switch {
+		case node.Is(node.Role(n.Role), node.RoleEN):
+			ens++
+		case node.Is(node.Role(n.Role), node.RolePN):
+			pns++
+		}
+	}
+	detail := fmt.Sprintf("%d node(s): %d bp + %d en + %d pn; ports: %s; p2p from %d, http from %d",
+		len(nodes), validators, ens, pns, pool.Source, nodes[0].P2P, nodes[0].HTTP)
 	if opts.Topology != nil {
 		detail += " (topology)"
 	}
@@ -780,7 +792,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 	w.state.GenesisPath = path
 	w.state.Capabilities = networkCapabilities(p.Manifest().Capabilities, opts)
 
-	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.Validators)
+	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
 	if opts.ChainID != 0 {
 		detail += fmt.Sprintf(", chain id %d (override)", opts.ChainID)
 	}
@@ -1201,7 +1213,7 @@ func (w *Workspace) genesisArtifacts(ctx context.Context, p registry.ChainPlugin
 	if err != nil {
 		return genesis.Artifacts{}, fmt.Errorf("chainsetup: genesis: %w", err)
 	}
-	req := genesis.Request{Validators: w.state.Validators, Nodes: placed}
+	req := genesis.Request{Validators: w.state.BPCount, Nodes: placed}
 	cfg := genesis.Config{
 		KeysDir:         w.state.KeysDir,
 		Binary:          w.state.Binary,

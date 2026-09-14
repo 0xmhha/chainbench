@@ -27,7 +27,7 @@ func TestFromPreset_ComposesTheSameNetwork(t *testing.T) {
 	}
 
 	bp, err := blueprint.FromPreset(want, blueprint.FromPresetIn{
-		Dir: presetDir, Chain: "wbft", Producers: 4, Endpoints: 1,
+		Dir: presetDir, Chain: "wbft", BPCount: 4, ENCount: 1,
 	})
 	if err != nil {
 		t.Fatalf("from preset: %v", err)
@@ -128,7 +128,7 @@ func TestFromPreset_Refuses(t *testing.T) {
 	}{
 		"no directory to point the keys at": {blueprint.FromPresetIn{Chain: "wbft"}, "points its keys at"},
 		"more nodes than the set holds": {
-			blueprint.FromPresetIn{Dir: presetDir, Chain: "wbft", Producers: 9}, "holds 5 identities"},
+			blueprint.FromPresetIn{Dir: presetDir, Chain: "wbft", BPCount: 9}, "holds 5 identities"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := blueprint.FromPreset(set, c.in)

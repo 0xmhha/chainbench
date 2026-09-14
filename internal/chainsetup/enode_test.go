@@ -32,7 +32,7 @@ func TestNetEnodes(t *testing.T) {
 		t.Fatalf("enode before place: %v", err)
 	}
 
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 3}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
 		t.Fatalf("place: %v", err)
 	}
 	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
@@ -84,7 +84,7 @@ func TestNetConfigNodeScoped(t *testing.T) {
 	if _, err := chainsetup.NetNew(ctx, d, chainsetup.NetNewIn{DataDir: dir, Chain: "stablenet", KeysDir: keysAbs}); err != nil {
 		t.Fatalf("new: %v", err)
 	}
-	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, Validators: 3}); err != nil {
+	if _, err := chainsetup.NetAllocate(ctx, d, chainsetup.NetAllocateIn{DataDir: dir, BPCount: 3}); err != nil {
 		t.Fatalf("place: %v", err)
 	}
 	if _, err := chainsetup.NetKeys(ctx, d, chainsetup.NetKeysIn{DataDir: dir}); err != nil {
