@@ -107,6 +107,7 @@ chainbench 는 **go-stablenet / wbft / wemix 용 Go-first 다체인 테스트벤
 | [`module-plan.md`](dev/architecture/module-plan.md) | [현행 설계] | **모듈 재편 계획** — 자원·노드정보·프로세스 3모듈 + genesis·nodeconfig·dsl 빌더 3종 · 합칠 것과 지울 것 · P1~P8 단계와 게이트. |
 | [`consolidation-plan.md`](dev/architecture/consolidation-plan.md) | [현행 설계] | **통폐합 계획 (2026-08-31 사용자 확정)** — `core` 아래 평평한 형제들을 관심사 단위로. 확정된 목표 구조와 이동표. |
 | [`mainnet-config-worklist.md`](dev/architecture/mainnet-config-worklist.md) | [현행 설계] | **메인넷별 설정 구조 개선 작업 리스트 (2026-09-14)** — 항목 58건(결정 D · 주석 C · 어휘 V · 워크스페이스 W · 병합 M · preset P · 하드코딩 H · 실제망 R · 결함 X · 마무리 Z). PR #419 `HANDOFF.md` 요구사항 9개와의 대응, 측정 사실, 검증 기준. **이 트랙의 작업은 이 문서를 따른다.** |
+| [`terminology-map.md`](dev/architecture/terminology-map.md) | [측정] | **용어 지도 (2026-09-14)** — 한 낱말이 몇 뜻으로 쓰이는지, 뜻마다 주인이 우리인지 체인인지. `validator` 6뜻 · `boot` 4뜻 · `workspace` 4뜻 · `preset` 3뜻. **새 낱말을 쓰기 전에 본다.** |
 | [`target-architecture.md`](dev/architecture/target-architecture.md) | [현행 설계] | **목표 아키텍처 다이어그램 8종** — 디렉토리/호출 두 축 분리 · 레이어 · 청사진 파이프라인 · 패밀리 분기 · 키 파생 · 피어링 그래프 · 표면 통일. |
 | [`f1-recovery.md`](dev/architecture/f1-recovery.md) | [현행 설계] | **F1 파일 영속·복구** — 프로세스가 죽어도 다시 실행하면 이전 진행을 이어받는다. §0 원칙: 복구용 사본을 만들지 않는다. |
 | [`code-graph.md`](dev/architecture/code-graph.md) | [측정] | **AST 실측 패키지 그래프** — 2026-09-11 재측정(70패키지 · 225엣지 · 51,151줄 · **층 위반 0**), 레이어별 규모와 fan-in/out, 자원 소유자로의 수렴. 다시 뽑기: `go run ./scripts/inventory/code-graph .` |
