@@ -2,6 +2,12 @@
 
 상태: **DRAFT / 구현 전 설계 검토**. Seed v1.0.5에 기반한 분석·목표 구조·단계별 계획을 PR에서 계속 검토하기 위한 문서다. 이 문서의 병합은 제품 리팩토링 실행이나 전체 호환성 검증 완료를 의미하지 않는다. 최종 검토된 문서 revision을 후속 구현의 기준으로 확정한다.
 
+## Current review direction (supersedes the earlier sequencing)
+
+The agreed priority is **CLI functionality and refactoring preparation → MCP → dashboard and daemon**. CLI execution remains independent of a daemon. Both execution modes should publish interoperable environment, test, event and metric records; reading those records does not transfer process-control ownership. `.dsl` migration and `chainbenchd` are explicit requirements whose transitions remain to be designed.
+
+Start with [CLI review 1: standalone composition and later testing](cli-composition-review.md), including the current call graph, storage/reuse paths, selected test receipt, and open questions. The P0–P5 plan below is a historical draft to revise after these functional reviews; its layout and schedule are not final decisions. The earlier evaluation did not cover these newly clarified requirements.
+
 ## 읽는 순서
 
 1. [분석과 근거](analysis-evidence.md): 현재 사실, 위험 후보, 유지할 경계 및 상충 문서의 해석.

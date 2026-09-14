@@ -1,5 +1,7 @@
 # Chainbench 목표 구조와 단계별 리팩토링 제안 (AC2)
 
+> Review update: this is the earlier P0–P5 proposal, not an approved schedule. Follow the [current CLI-first review](cli-composition-review.md) before accepting its boundaries. MCP follows CLI; dashboard/daemon follow MCP. Shared records, `.dsl` migration and `chainbenchd` require explicit additions to this plan.
+
 세 geth 계열 체인의 네트워크 구성·검증·테스트를 공통 Go 코어와 CLI/MCP/dashboard에서 일관되게 제공한다. 합의 패밀리 재사용과 체인별 선언적 확장이 비전이다.
 
 리팩토링 준비 제안만 작성한다. 개선 대상은 chainbench이며 참조 세 체인의 내부 개선, 제품 코드 수정, 추가 E2E·기준선 재수집은 제외한다.
