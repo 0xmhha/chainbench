@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "burn-expire-refundable-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

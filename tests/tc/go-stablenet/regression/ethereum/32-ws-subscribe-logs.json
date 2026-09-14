@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "ws-subscribe-logs-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

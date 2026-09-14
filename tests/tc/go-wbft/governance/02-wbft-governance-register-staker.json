@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "wbft-gov-write",
     "chain": "wbft",
-    "binaries": {
-      "default": "gwbft"
-    },
     "topology": {
       "bp": 4
     },

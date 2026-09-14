@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "admin-peers-populated-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

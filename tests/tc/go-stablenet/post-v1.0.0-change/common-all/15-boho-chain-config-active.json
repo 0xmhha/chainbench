@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "boho-chain-config-active-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

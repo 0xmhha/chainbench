@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "fd-feepayer-sig-invalid-rejected-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

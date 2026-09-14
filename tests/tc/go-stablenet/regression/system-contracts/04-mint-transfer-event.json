@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "mint-transfer-event-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

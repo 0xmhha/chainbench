@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "remote-rpc-health-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "precompile-transfer-rejected-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

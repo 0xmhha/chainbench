@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "gaslimit-exceeded-rejected-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

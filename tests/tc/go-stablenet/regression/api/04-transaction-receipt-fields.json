@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "transaction-receipt-fields-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

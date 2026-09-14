@@ -10,9 +10,6 @@
     "kind": "env",
     "id": "anzeon-stablenet",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

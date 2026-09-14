@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "regular-account-gastip-forced-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "wbft-proxied",
     "chain": "wbft",
-    "binaries": {
-      "default": "gwbft"
-    },
     "topology": {
       "bp": 2,
       "pn": 1,

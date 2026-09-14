@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "dynamic-fee-tx-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

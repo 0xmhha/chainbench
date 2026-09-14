@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "effective-gas-price-regular-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

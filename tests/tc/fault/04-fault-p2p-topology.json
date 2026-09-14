@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "fault-stablenet",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

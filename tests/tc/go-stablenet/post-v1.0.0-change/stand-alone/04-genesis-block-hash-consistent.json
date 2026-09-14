@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "genesis-block-hash-consistent-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

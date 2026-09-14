@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "add-validator-stablenet",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4,
       "en": 1

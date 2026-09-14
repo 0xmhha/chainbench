@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "authorized-accounts-empty-item-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

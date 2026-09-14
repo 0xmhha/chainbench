@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "wemix-vocab",
     "chain": "wemix",
-    "binaries": {
-      "default": "gwemix"
-    },
     "topology": {
       "bp": 4
     },

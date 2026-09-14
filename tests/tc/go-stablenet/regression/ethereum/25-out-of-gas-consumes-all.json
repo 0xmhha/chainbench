@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "out-of-gas-consumes-all-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

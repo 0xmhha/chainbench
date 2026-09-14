@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "minter-status-readable-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

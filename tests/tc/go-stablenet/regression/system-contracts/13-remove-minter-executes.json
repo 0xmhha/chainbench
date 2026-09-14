@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "remove-minter-executes-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

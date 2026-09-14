@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "burn-execute-no-refundable-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

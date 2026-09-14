@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "ws-subscribe-new-heads-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

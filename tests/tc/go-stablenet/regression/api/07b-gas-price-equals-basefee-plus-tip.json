@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "gas-price-equals-basefee-plus-tip-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

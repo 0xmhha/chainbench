@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "wemix-revert",
     "chain": "wemix",
-    "binaries": {
-      "default": "gwemix"
-    },
     "topology": {
       "bp": 4
     },

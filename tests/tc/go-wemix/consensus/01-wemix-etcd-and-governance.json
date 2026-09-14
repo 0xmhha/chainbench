@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "wemix-poa",
     "chain": "wemix",
-    "binaries": {
-      "default": "gwemix"
-    },
     "topology": {
       "bp": 4
     },

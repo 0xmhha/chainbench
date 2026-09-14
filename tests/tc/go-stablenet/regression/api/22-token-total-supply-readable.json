@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "token-total-supply-readable-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

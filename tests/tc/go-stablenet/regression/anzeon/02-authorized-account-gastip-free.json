@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "authorized-account-gastip-free-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

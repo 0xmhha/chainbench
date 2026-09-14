@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "prev-seals-quorum-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

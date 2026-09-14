@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "legacy-gasprice-below-min-rejected-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

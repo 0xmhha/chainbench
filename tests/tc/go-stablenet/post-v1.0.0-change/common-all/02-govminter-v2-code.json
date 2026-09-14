@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "govminter-v2-code-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

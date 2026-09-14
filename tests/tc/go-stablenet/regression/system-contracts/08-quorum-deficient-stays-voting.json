@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "quorum-deficient-stays-voting-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

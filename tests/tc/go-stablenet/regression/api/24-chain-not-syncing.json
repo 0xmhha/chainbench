@@ -10,9 +10,6 @@
     "kind": "env",
     "id": "chain-not-syncing-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

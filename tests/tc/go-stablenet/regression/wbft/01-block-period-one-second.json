@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "block-period-one-second-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

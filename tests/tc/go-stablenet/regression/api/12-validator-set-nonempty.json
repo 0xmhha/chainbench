@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "validator-set-nonempty-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "feecap-exact-min-accepted-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

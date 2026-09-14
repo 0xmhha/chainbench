@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "wbft-revert",
     "chain": "wbft",
-    "binaries": {
-      "default": "gwbft"
-    },
     "topology": {
       "bp": 4
     },

@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "epoch-transition-carries-epoch-info-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

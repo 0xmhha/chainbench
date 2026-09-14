@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "anzeon-active-before-boho-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

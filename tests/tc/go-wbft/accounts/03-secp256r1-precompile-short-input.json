@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "secp256r1-precompile-short-input-env",
     "chain": "wbft",
-    "binaries": {
-      "default": "gwbft"
-    },
     "topology": {
       "bp": 4
     },

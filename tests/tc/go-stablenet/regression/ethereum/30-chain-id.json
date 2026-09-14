@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "chain-id-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

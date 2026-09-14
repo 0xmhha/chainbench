@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "out-of-order-nonces-mine-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

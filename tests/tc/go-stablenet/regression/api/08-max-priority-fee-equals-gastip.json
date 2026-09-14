@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "max-priority-fee-equals-gastip-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

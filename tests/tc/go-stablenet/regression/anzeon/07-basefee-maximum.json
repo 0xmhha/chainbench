@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "basefee-maximum-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "go-stablenet"
-    },
     "topology": {
       "bp": 4
     },

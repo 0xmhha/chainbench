@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "blacklisted-extra-bit-synced-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

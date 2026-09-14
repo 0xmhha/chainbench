@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "stablenet-metrics",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

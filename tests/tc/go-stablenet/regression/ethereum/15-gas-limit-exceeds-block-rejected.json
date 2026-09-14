@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "gas-limit-exceeds-block-rejected-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

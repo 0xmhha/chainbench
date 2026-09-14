@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "token-transfer-emits-event-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

@@ -12,9 +12,6 @@
     "kind": "env",
     "id": "direct-blacklist-call-rejected-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

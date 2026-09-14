@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "randao-and-mixdigest-present-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },

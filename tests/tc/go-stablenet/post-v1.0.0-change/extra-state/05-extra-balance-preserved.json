@@ -13,9 +13,6 @@
     "kind": "env",
     "id": "extra-balance-preserved-env",
     "chain": "stablenet",
-    "binaries": {
-      "default": "gstable"
-    },
     "topology": {
       "bp": 4
     },
