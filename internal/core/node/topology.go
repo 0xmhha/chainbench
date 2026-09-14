@@ -1,4 +1,6 @@
-// Package topology is the config-file model for a local test network's node
+// Topology, the node-table declaration. The package comment is in node.go.
+//
+// This file is the config-file model for a local test network's node
 // layout: which node index plays which role (block producer / endpoint / boot),
 // its sync mode (full / snap / archive), and which node is the boot It
 // replaces the positional "N validators + M endpoints" counts with an explicit,

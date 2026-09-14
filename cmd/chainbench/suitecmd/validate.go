@@ -13,7 +13,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/app"
 )
 
-// newValidateCmd parses DSL specs offline and reports which are well-formed,
+// NewValidate parses DSL specs offline and reports which are well-formed,
 // without launching anything — fast feedback while authoring or porting specs.
 // With --chain it also reports whether each spec would run on that chain.
 func NewValidate() *cobra.Command {

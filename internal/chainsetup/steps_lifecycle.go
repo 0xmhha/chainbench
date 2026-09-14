@@ -292,14 +292,6 @@ func (w *Workspace) Restart(ctx context.Context, index int) (string, error) {
 	return detail, nil
 }
 
-// SwapNode stops node index and relaunches it with a different binary and/or
-// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
-// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
-// command are kept as a ledger revision (recordSwap); the node's per-node
-// binary and config provenance are updated so a later restart uses the swapped
-// ones. binary is a path (empty keeps the current one); config is a set of
-// key=value config overrides (empty keeps the current config); purpose names the
-// config fixture in provenance.
 // SwapNodeOpts is what one node is relaunched with. Every field is optional on
 // its own, but at least one must be set — a swap that changes nothing is a
 // restart, and saying so is clearer than doing it silently.
@@ -320,6 +312,12 @@ type SwapNodeOpts struct {
 	Purpose string
 }
 
+// SwapNode stops node index and relaunches it with a different binary and/or
+// config, keeping the same datadir, genesis and argv — a per-node swap mid-test
+// (so one network runs mixed binaries), not a rebuild. The pre-swap pid and
+// command are kept as a ledger revision (recordSwap); the node's per-node
+// binary and config provenance are updated so a later restart uses the swapped
+// ones.
 func (w *Workspace) SwapNode(ctx context.Context, opts SwapNodeOpts) (string, error) {
 	index := opts.Index
 	binary, config, purpose := opts.Binary, opts.Config, opts.Purpose
@@ -583,17 +581,6 @@ func (w *Workspace) Health(ctx context.Context) ([]NodeHealth, error) {
 	return out, nil
 }
 
-// startPhase launches one phase's nodes, or every stopped node when the phase
-// names none. A node already running is left alone: `chain restart` bounces one,
-// and re-running `chain start` should not double-launch the rest.
-// checkVacant refuses to launch onto ports something is already listening on.
-//
-// Without it the collision is discovered by the node, which dies with "address
-// already in use" partway through a bring-up, and the operator has to work out
-// which of three situations they are in. This says which: a port held by a node
-// this workspace recorded is its own leftover and `chain stop` clears it; anything
-// else belongs to something this workspace did not start, and guessing would be
-// worse than refusing.
 // Preflight is the check-only entry: the same pre-launch inspection Start
 // runs, callable without composing anything. It answers "may a network of
 // this shape start here right now?" with the refusal Start would give — port
@@ -651,6 +638,14 @@ func (w *Workspace) checkUnmanagedOn(ctx context.Context, t *resource.Access, na
 	return nil
 }
 
+// checkVacant refuses to launch onto ports something is already listening on.
+//
+// Without it the collision is discovered by the node, which dies with "address
+// already in use" partway through a bring-up, and the operator has to work out
+// which of three situations they are in. This says which: a port held by a node
+// this workspace recorded is its own leftover and `chain stop` clears it; anything
+// else belongs to something this workspace did not start, and guessing would be
+// worse than refusing.
 func (w *Workspace) checkVacant(ctx context.Context, phase registry.Phase) error {
 	var addrs []inspector.Addr
 	for _, ns := range w.state.Nodes {
@@ -815,6 +810,9 @@ type owner struct {
 	pid  int
 }
 
+// startPhase launches one phase's nodes, or every stopped node when the phase
+// names none. A node already running is left alone: `chain restart` bounces one,
+// and re-running `chain start` should not double-launch the rest.
 func (w *Workspace) startPhase(ctx context.Context, p registry.ChainPlugin, preset keyring.Preset, bin string, phase registry.Phase) (int, error) {
 	if err := w.checkVacant(ctx, phase); err != nil {
 		return 0, err

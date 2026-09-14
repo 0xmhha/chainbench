@@ -9,8 +9,8 @@ import (
 
 // GenesisParams are the wbft-family inputs a chain supplies to materialize a
 // genesis.json from a template. The full stablenet system-contract/alloc
-// substitution (ported from network/internal/adapters/stablenet with its golden
-// vectors) attaches here as the network module is absorbed; G2 implements the
+// substitution (ported from the retired network module's stablenet adapter, with its
+// golden vectors) attaches here as the network module is absorbed; G2 implements the
 // consensus-critical placeholders (chain id, validator set, BLS keys,
 // extraData) that define block production for the wbft family.
 type GenesisParams struct {

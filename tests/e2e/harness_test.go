@@ -8,7 +8,7 @@
 //
 // This replaces the former bash+python `tests/repro/*.sh` scripts: network
 // orchestration goes through the chainbench CLI (the same surface a user drives),
-// and every assertion is pure Go (pkg/core/rpc + pkg/accounts) — no python, no
+// and every assertion is pure Go (internal/core/rpc + internal/accounts) — no python, no
 // web3.
 package e2e
 
@@ -34,8 +34,7 @@ import (
 )
 
 // returns42Init is the creation bytecode of a contract whose runtime
-// (602a60005260206000f3) returns the 32-byte value 42 for any call. Shared
-// fixture (mirrors tests/wbft/accounts/contract_roundtrip.go).
+// (602a60005260206000f3) returns the 32-byte value 42 for any call.
 const returns42Init = "600a600c600039600a6000f3602a60005260206000f3"
 
 // deadAddr is a throwaway value-transfer sink.

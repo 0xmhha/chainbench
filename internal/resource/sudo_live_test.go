@@ -17,7 +17,7 @@ import (
 // sudo elevates by asking for that same password — which SSHSudoRunner feeds
 // on stdin. Gated on the docker server set:
 //
-//	CHAINBENCH_DOCKER_SERVERS=<repo>/env/docker/build go test ./internal/serverset/ -run Live_Sudo -v
+//	CHAINBENCH_DOCKER_SERVERS=<repo>/env/docker/build go test ./internal/resource/ -run Live_Sudo -v
 func TestLive_SudoElevatesWithThePassword(t *testing.T) {
 	build := testsupport.ServersBuildDir(t)
 

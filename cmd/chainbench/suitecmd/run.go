@@ -36,7 +36,7 @@ type runReport struct {
 	app.RunSummary
 }
 
-// newRunCmd runs DSL test specs through the test engine. With --workspace-dir
+// NewRun runs DSL test specs through the test engine. With --workspace-dir
 // it composes the network the specs declare through the workspace steps (a
 // handoff env composes the handoff) and runs against that; with --rpc it
 // attaches to a running network. The engine's self-assembly build path is

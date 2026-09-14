@@ -68,11 +68,6 @@ const (
 	defaultBlockAdvancePoll    = 500 * time.Millisecond
 )
 
-// Register puts the built-in vocabulary on r: the actions a spec can do, the
-// assertions it can check, and the readers "read" and "waitFor" draw from.
-// The grammar and interpreter (dsl) know none of these — a run wires
-// them by calling this, and a test that wants a narrower vocabulary registers
-// its own.
 // Registry returns a fresh registry with the built-ins registered — the
 // default vocabulary a run or `validate` resolves against.
 func Registry() interp.Registry {
@@ -81,6 +76,11 @@ func Registry() interp.Registry {
 	return r
 }
 
+// Register puts the built-in vocabulary on r: the actions a spec can do, the
+// assertions it can check, and the readers "read" and "waitFor" draw from.
+// The grammar and interpreter (dsl) know none of these — a run wires
+// them by calling this, and a test that wants a narrower vocabulary registers
+// its own.
 func Register(r interp.Registry) {
 	r.RegisterAction(actionSendTx, sendTxAction{})
 	r.RegisterAction(actionWaitBlock, waitBlockAction{})

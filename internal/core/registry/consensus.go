@@ -1,4 +1,6 @@
-// Package consensus queries a node's consensus state. A family that keeps its
+// Consensus-family lookup. The package comment is in manifest.go.
+//
+// This file queries a node's consensus state. A family that keeps its
 // validators behind a plain RPC method (wbft: istanbul_getValidators) is read
 // through that method; one that keeps them elsewhere (poa: a governance
 // contract) reads them its own way via RuntimeValidatorReader. RunningValidators

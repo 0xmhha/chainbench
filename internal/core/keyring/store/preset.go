@@ -52,7 +52,7 @@ func LoadPreset(dir string) (keyring.Preset, error) {
 	return LoadPresetAt(context.Background(), nil, dir)
 }
 
-// LoadPresetAt is LoadPreset through files (nil = local): the ring's index is one
+// LoadPresetWithKeysAt is LoadPreset through files (nil = local): the ring's index is one
 // file, so a ring on a server reads back with a single remote read.
 //
 // It returns IDENTITIES. The index used to carry the nodekeys as well, which made

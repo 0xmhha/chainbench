@@ -137,13 +137,13 @@ func SessionSummary(root string) (RunSummary, error) {
 	return testengine.ReadSessionSummary(root)
 }
 
-// Validate runs the shared offline DSL validation for the MCP surface: the same
-// parse, name-resolution, selector, and capability checks the CLI `validate`
-// runs, so both surfaces reach the same verdict. It writes and composes nothing.
 // ValidateResult is one spec's verdict: whether it parses, and what is wrong
 // with it if not.
 type ValidateResult = testengine.ValidateResult
 
+// Validate runs the shared offline DSL validation for the MCP surface: the same
+// parse, name-resolution, selector, and capability checks the CLI `validate`
+// runs, so both surfaces reach the same verdict. It writes and composes nothing.
 func Validate(paths []string, chain string) ([]testengine.ValidateResult, error) {
 	return testengine.ValidateSpecs(paths, chain)
 }
@@ -158,15 +158,6 @@ func ValidateContent(raws [][]byte, labels []string, chain string) ([]testengine
 // one entry per test.
 type ReportDoc = report.Report
 
-// Report reads a run's report from a session directory, or from a root holding
-// several sessions, in which case the most recent is read.
-//
-// It answers with the report rather than with prose, because the two surfaces
-// lay it out differently — a table for a person, JSON for a program — and a
-// layer that renders is a layer each surface has to work around. Reading it is
-// what they share: prefer the persisted report.json, and fall back to building
-// it from session.json so a run recorded before report.json existed still
-// shows.
 // ReportIn names the session to read.
 type ReportIn struct {
 	Dir string `cb:"workspace-dir,required" help:"session directory, or a root holding sessions"`
@@ -176,6 +167,15 @@ type ReportIn struct {
 	All bool `cb:"all" help:"combine every session under the directory into one tally, instead of reading the most recent"`
 }
 
+// Report reads a run's report from a session directory, or from a root holding
+// several sessions, in which case the most recent is read.
+//
+// It answers with the report rather than with prose, because the two surfaces
+// lay it out differently — a table for a person, JSON for a program — and a
+// layer that renders is a layer each surface has to work around. Reading it is
+// what they share: prefer the persisted report.json, and fall back to building
+// it from session.json so a run recorded before report.json existed still
+// shows.
 func Report(_ context.Context, _ Deps, in ReportIn) (ReportDoc, error) {
 	dir := in.Dir
 	ids, _ := session.List(dir)

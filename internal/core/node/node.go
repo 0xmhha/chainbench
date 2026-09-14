@@ -140,7 +140,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 }
 
 // Auth is a node's authentication descriptor for reaching a remote attached
-// endpoint. It is a flexible map (converted to/from pkg/core/remote.Auth at the
+// endpoint. It is a flexible map (converted to/from internal/core/remote.Auth at the
 // boundary, so node need not import remote) with a fixed key convention: "type"
 // (e.g. "api_key" | "bearer") and the name of the env var holding the secret —
 // never the secret value itself. A named type so the boundary is documented and

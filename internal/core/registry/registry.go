@@ -15,7 +15,7 @@ import (
 // substitutes into a chain's template. It is the union of what the families
 // need — the wbft family uses the validator set / BLS / extra-data / members /
 // alloc; the poa family uses only ChainID / Coinbase (its membership is set at
-// bootstrap). Defined here (not in pkg/core/genesis) so the ConsensusFamily
+// bootstrap). Defined here (not in internal/core/genesis) so the ConsensusFamily
 // contract stays the single dispatch boundary and core need not import a family.
 type GenesisParams struct {
 	ChainID    int64
@@ -67,7 +67,7 @@ type ConsensusFamily interface {
 	SupportsRole(role node.Role) bool
 	// BuildGenesis substitutes the family's placeholders in template with
 	// params and returns the genesis.json bytes. This is the dispatch boundary that
-	// lets pkg/core/genesis build a genesis without importing any family.
+	// lets internal/core/genesis build a genesis without importing any family.
 	BuildGenesis(template []byte, params GenesisParams) ([]byte, error)
 }
 

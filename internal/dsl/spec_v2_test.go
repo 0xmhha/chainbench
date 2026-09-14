@@ -209,7 +209,7 @@ func TestGenesisExistingMode(t *testing.T) {
 	}
 }
 
-// TestInlineEnv_Extends pins S6's override form: a case extends a canonical env
+// TestInlineEnv_NonObjectBaseIsAnError pins S6's override form: a case extends a canonical env
 // and names only what differs. The named fields replace the canonical env's
 // whole; everything else is inherited.
 // TestInlineEnv_NonObjectBaseIsAnError: a referenced env that is not an object

@@ -5,7 +5,7 @@
 // session artifacts from disk (session verdict and chainstate history) under
 // /api/sessions. The realtime contract is SSE (one-way event stream); the served
 // page is the built Svelte SPA (decision D5), with the interim build-free page
-// kept at /legacy as a no-JS fallback (docs/CHAINBENCH_GO_REDESIGN.md §8.2).
+// kept at /legacy as a no-JS fallback.
 package dashboard
 
 import (

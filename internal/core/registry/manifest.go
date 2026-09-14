@@ -1,8 +1,8 @@
 // Package registry is the chain-agnostic plugin registry. It holds the
 // declarative per-chain Manifest data and the ChainPlugin/ConsensusFamily
 // contracts that core code (pipeline, drivers, mcp) uses without importing any
-// specific chain — chain knowledge lives in pkg/chains/* and pkg/consensus/*,
-// which register here at init (docs/CHAINBENCH_GO_REDESIGN.md §4).
+// specific chain — chain knowledge lives in internal/chains/* and internal/consensus/*,
+// which register here at init.
 package registry
 
 import (
@@ -11,8 +11,8 @@ import (
 )
 
 // Manifest is the declarative static profile of one chain, mirroring
-// pkg/chains/<id>/manifest.json. It data-izes the facts that were previously
-// hardcoded across lib/*.sh and network/internal/probe (binary name, consensus
+// internal/chains/<id>/manifest.json. It data-izes the facts that were previously
+// hardcoded across lib/*.sh and the retired network module's probe (binary name, consensus
 // namespace, hardfork fields, supported tx types, probe signature) so adding a
 // chain is mostly data, not code.
 type Manifest struct {
@@ -104,7 +104,7 @@ type BuildSpec struct {
 // key that carries consensus config ("anzeon" for stablenet, "croissant" for
 // wbft; empty for the poa/registry family whose genesis is deploy-time).
 // Template names the chain's genesis template (embedded as
-// pkg/chains/<id>/genesis.json by the plugin).
+// internal/chains/<id>/genesis.json by the plugin).
 type GenesisSpec struct {
 	EngineField string   `json:"engine_field"`
 	Hardforks   []string `json:"hardforks"`
@@ -117,7 +117,7 @@ type ConsensusSpec struct {
 	ValidatorsMethod string `json:"validators_method"` // "istanbul_getValidators" | ...
 }
 
-// ProbeSpec is the chain-detection signature (see network/internal/probe).
+// ProbeSpec is the chain-detection signature (it replaced the retired network module's probe).
 type ProbeSpec struct {
 	Method   string  `json:"method"`              // RPC method whose presence identifies the chain
 	ChainIDs []int64 `json:"chain_ids,omitempty"` // optional chain-id gate for disambiguation

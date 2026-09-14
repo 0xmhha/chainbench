@@ -1,20 +1,8 @@
-// Package netcompose is the shared core behind the `chainbench net` step
-// commands and their MCP mirrors: it composes a chain network for testing one
-// customizable step at a time (keys, allocate, genesis, config, provision,
-// init, start/stop, logs, test), persisting the accumulating state in a local
-// data directory so steps run independently, re-run, and are inspectable.
+// Workspace and the state it records. The package comment is in doc.go.
 //
-// Two planes are kept separate. The CONTROL plane — the composition state in
-// workspace.json (chain, keys, placements, node table, step-tracking) — always
-// lives locally on the operator's resource. The DATA plane — genesis, configs,
-// datadirs, logs — lives on a Target (this machine's filesystem, or a remote
-// SSH host); see target.go. Step functions use the Target's FileStore/Driver and
-// never branch on local vs remote.
-//
-// Persistence belongs to core/session (Composition — the long-lived
-// environment mode); this package owns only the domain state and the step
-// functions. The CLI and MCP surfaces are thin wrappers over the app layer,
-// which calls the step functions here, so both drive the exact same behavior.
+// Persistence belongs to core/session (Composition, the long-lived environment
+// mode); this file owns the domain state and the accessors the steps use.
+
 package chainsetup
 
 import (

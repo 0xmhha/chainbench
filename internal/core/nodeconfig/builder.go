@@ -16,7 +16,7 @@ type Override struct {
 
 // Builder assembles modules into a command line in a fixed order and then runs
 // the cross-module checks no single module can see. Module order is the
-// declaration order in docs/chain-binary-flag-graph.md §3.3 — deterministic
+// declaration order in docs/dev/archive/chain-binary-flag-graph.md §3.3 — deterministic
 // output is part of the contract.
 type Builder struct {
 	dialect   Dialect
