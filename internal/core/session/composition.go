@@ -56,20 +56,26 @@ func OpenComposition(dir string, now func() time.Time) (Composition, error) {
 // Dir is the composition's control directory.
 func (c Composition) Dir() string { return c.dir }
 
-// Load reads the persisted state into out. A composition that has never been
-// saved loads nothing and returns nil — the zero state is the starting point.
-func (c Composition) Load(out any) error {
+// Load reads the persisted state into out and reports whether a record was
+// there to read. A composition that has never been saved loads nothing and
+// reports false — the zero state is the starting point.
+//
+// The caller needs the two apart. A zero field in a record that exists means
+// the record was written without it; the same zero in a record that does not
+// exist means nothing at all, and a caller that cannot tell which reads the
+// first case as the second.
+func (c Composition) Load(out any) (bool, error) {
 	b, err := os.ReadFile(filepath.Join(c.dir, compositionFile))
 	if os.IsNotExist(err) {
-		return nil
+		return false, nil
 	}
 	if err != nil {
-		return fmt.Errorf("session: read %s: %w", compositionFile, err)
+		return false, fmt.Errorf("session: read %s: %w", compositionFile, err)
 	}
 	if err := json.Unmarshal(b, out); err != nil {
-		return fmt.Errorf("session: parse %s: %w", compositionFile, err)
+		return false, fmt.Errorf("session: parse %s: %w", compositionFile, err)
 	}
-	return nil
+	return true, nil
 }
 
 // Save writes the state to the composition's manifest.

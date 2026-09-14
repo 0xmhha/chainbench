@@ -20,6 +20,19 @@ import (
 	"github.com/0xmhha/chainbench/internal/resource"
 )
 
+// StateFormatVersion is the shape of the composition record this build reads
+// and writes.
+//
+// It exists because the record had no version at all. A field could be renamed
+// or its meaning changed and an older record would still decode — the missing
+// field reads as a zero, and a zero is a legitimate value for most of them, so
+// the composition came up describing itself wrongly rather than refusing. There
+// is no migration path on purpose: this track keeps one current shape, and a
+// record from another version is a workspace to compose again.
+//
+// Raise it whenever a field changes meaning, is removed, or is renamed.
+const StateFormatVersion = 1
+
 // Step is a completed composition step (persistence model owned by session).
 type Step = session.Step
 
@@ -29,6 +42,14 @@ type Step = session.Step
 // secrets — a server-set placement reads its login from the server-set file at
 // resolve time, and a directly named target reads the environment.
 type State struct {
+	// FormatVersion is the shape this record was written in. A build reads only
+	// the version it writes: this track removes old-format readers rather than
+	// keeping one per era, so a record from another version is refused by name
+	// instead of being half-understood.
+	//
+	// It is first because it decides whether the rest means anything.
+	FormatVersion int `json:"formatVersion"`
+
 	Chain string `json:"chain"`
 	// CompositionID is a stable identifier for this composition, set once at
 	// `new` and kept across resume and binary swap. It names the composition's
@@ -78,10 +99,6 @@ type State struct {
 	// composition was set up with, recorded so later steps and a resume resolve
 	// portable file references under the same data root and purpose directories.
 	WorkspaceConfig string `json:"workspaceConfig,omitempty"`
-	// LegacyServerSet reads the field's pre-rename key so a workspace composed
-	// before the rename keeps its recorded path. It is migrated into ServerSet
-	// on open and never written back.
-	LegacyServerSet string `json:"serverConfig,omitempty"`
 	// Docker records that this composition treats its servers as local docker
 	// containers: the harness's own dials are translated through the localmap
 	// next to ServerSet. It is recorded once at `chain new --docker` so a
@@ -185,16 +202,19 @@ func open(dir string, now func() time.Time) (*Workspace, error) {
 		return nil, err
 	}
 	ws := &Workspace{comp: comp, env: os.Getenv, now: now, state: State{Steps: map[string]Step{}}}
-	if err := comp.Load(&ws.state); err != nil {
+	found, err := comp.Load(&ws.state)
+	if err != nil {
 		return nil, err
 	}
+	if found && ws.state.FormatVersion != StateFormatVersion {
+		return nil, fmt.Errorf(
+			"chainsetup: the composition record in %s is format %d, and this build reads format %d — compose it again with `chain new`",
+			dir, ws.state.FormatVersion, StateFormatVersion)
+	}
+	ws.state.FormatVersion = StateFormatVersion
 	if ws.state.Steps == nil {
 		ws.state.Steps = map[string]Step{}
 	}
-	if ws.state.ServerSet == "" && ws.state.LegacyServerSet != "" {
-		ws.state.ServerSet = ws.state.LegacyServerSet
-	}
-	ws.state.LegacyServerSet = ""
 	return ws, nil
 }
 

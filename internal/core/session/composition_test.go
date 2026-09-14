@@ -23,8 +23,12 @@ func TestCompositionRoundTrip(t *testing.T) {
 
 	// A never-saved composition loads the zero state (not an error).
 	var st compState
-	if err := c.Load(&st); err != nil {
+	found, err := c.Load(&st)
+	if err != nil {
 		t.Fatalf("load of a fresh composition: %v", err)
+	}
+	if found {
+		t.Error("a composition that was never saved must report no record")
 	}
 	if st.Name != "" {
 		t.Fatalf("fresh state = %+v", st)
@@ -42,8 +46,12 @@ func TestCompositionRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	var got compState
-	if err := c2.Load(&got); err != nil {
+	found, err = c2.Load(&got)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if !found {
+		t.Error("a saved composition must report a record")
 	}
 	if got.Name != "demo" || !got.Steps["new"].Done {
 		t.Fatalf("round-trip lost state: %+v", got)

@@ -74,7 +74,8 @@ func seedWorkspace(t *testing.T, dir, chain, binary string, nodes []node.Record)
 		t.Fatalf("open composition: %v", err)
 	}
 	st := chainsetup.State{
-		Chain: chain, Binary: binary, Validators: len(nodes),
+		FormatVersion: chainsetup.StateFormatVersion,
+		Chain:         chain, Binary: binary, Validators: len(nodes),
 		Target: resource.Spec{DataRoot: dir},
 		Nodes:  nodes,
 		Steps:  map[string]chainsetup.Step{},
