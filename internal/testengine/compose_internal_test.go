@@ -125,7 +125,7 @@ func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
 func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	// Two binaries of the same family run side by side, declared per node.
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-	  "binaries":{"stable":"/opt/gstable","wbft":"/opt/gwbft"},
+	  "binaries":{"stable":"gstable","wbft":"gwbft"},
 	  "topology":{"nodes":[
 	    {"role":"bp","binary":"stable"},
 	    {"role":"bp","binary":"wbft"},
@@ -145,7 +145,7 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 	if up.Topology.Nodes[0].Binary != "stable" || up.Topology.Nodes[2].SyncMode != "snap" {
 		t.Errorf("per-node fields lost: %+v", up.Topology.Nodes)
 	}
-	if up.Binaries["stable"] != "/opt/gstable" || up.Binaries["wbft"] != "/opt/gwbft" {
+	if up.Binaries["stable"] != "gstable" || up.Binaries["wbft"] != "gwbft" {
 		t.Errorf("binaries not resolved: %v", up.Binaries)
 	}
 	// No count is set; the node table is the sizing.
@@ -153,7 +153,7 @@ func TestCompositionOf_NodeTablePerNodeBinary(t *testing.T) {
 		t.Errorf("counts leaked with a node table: %d/%d", up.BPCount, up.ENCount)
 	}
 	// The fallback binary is the first node's, for any node naming none.
-	if up.Binary != "/opt/gstable" {
+	if up.Binary != "gstable" {
 		t.Errorf("fallback binary = %q, want the first node's", up.Binary)
 	}
 }
@@ -419,7 +419,7 @@ func TestCompositionOf_SurfaceDefaultsConverge(t *testing.T) {
 }
 
 func TestInlineTopologyOf_Rejects(t *testing.T) {
-	bins := map[string]string{"wbft": "/opt/gwbft"}
+	bins := map[string]string{"wbft": "gwbft"}
 	cases := map[string]string{
 		"undeclared binary": `{"nodes":[{"role":"bp","binary":"ghost"}]}`,
 		"missing role":      `{"nodes":[{"binary":"wbft"}]}`,
@@ -430,7 +430,7 @@ func TestInlineTopologyOf_Rejects(t *testing.T) {
 	for name, topoJSON := range cases {
 		t.Run(name, func(t *testing.T) {
 			spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
-			  "binaries":{"wbft":"/opt/gwbft"},"topology":`+topoJSON+`}`)
+			  "binaries":{"wbft":"gwbft"},"topology":`+topoJSON+`}`)
 			_ = bins
 			if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: t.TempDir()}); err == nil {
 				t.Fatalf("topology %s accepted", topoJSON)

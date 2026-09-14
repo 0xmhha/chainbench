@@ -4,8 +4,10 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -438,6 +440,14 @@ func lowerCase(c CaseV2) (Spec, error) {
 	spec.Chain.ManifestPath = env.Manifest
 	spec.Chain.TemplatePath = env.GenesisTemplate
 
+	// A definition names a binary; it does not place one. A path here is a
+	// fact about one machine, and a case that carries it runs nowhere else.
+	for key, ref := range env.Binaries {
+		if err := binaryRefIsAName(ref); err != nil {
+			return Spec{}, fmt.Errorf("dsl: case %s: binaries.%s %q %w", c.ID, key, ref, err)
+		}
+	}
+
 	// Binaries: "default" is every node's binary; other keys are per-role.
 	if b, ok := env.Binaries["default"]; ok && len(env.Binaries) == 1 {
 		spec.Chain.Binary = b
@@ -670,4 +680,42 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 		out = append(out, StatementStep(st))
 	}
 	return out, nil
+}
+
+// envDefaultRE matches the ${VAR:-default} form and captures the default, which
+// is the only part of an expansion this file can judge.
+var envDefaultRE = regexp.MustCompile(`^\$\{[A-Za-z_][A-Za-z0-9_]*:-(.*)\}$`)
+
+// binaryRefIsAName reports why a declared binary reference is not one.
+//
+// A definition says WHICH binary; a workspace-config says WHERE binaries live
+// on the target (dataRoot plus paths.binaries) and binaryAliases says which
+// file this environment calls that name. Writing the path in the definition
+// says both at once, in the document that is supposed to travel: five specs
+// carried /data/chainbench/bin/... and ran on one docker environment and
+// nowhere else, while the environment file beside them already produced the
+// same path from the name.
+//
+// An expansion is judged by its default, because that is the part the
+// definition wrote. ${GWBFT_BIN:-gwbft} is a name with a machine-local escape
+// hatch; ${GWBFT_BIN:-/opt/gwbft} is the path problem wearing a variable. A
+// bare $VAR names nothing this file can see, so it passes and placeBinary
+// judges what it expands to.
+func binaryRefIsAName(ref string) error {
+	if strings.TrimSpace(ref) == "" {
+		return errors.New("is empty — name the binary, or leave it out and let the chain name it")
+	}
+	lit := ref
+	if m := envDefaultRE.FindStringSubmatch(ref); m != nil {
+		lit = m[1]
+	} else if strings.Contains(ref, "$") {
+		return nil // an expansion with no default: only the machine knows
+	}
+	switch {
+	case strings.HasPrefix(lit, "~"):
+		return errors.New("starts at a home directory, which is a fact about one machine")
+	case strings.ContainsRune(lit, '/'):
+		return errors.New("is a path — name the binary, and let a workspace-config say where binaries live on the target")
+	}
+	return nil
 }

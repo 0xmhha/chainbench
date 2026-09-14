@@ -655,3 +655,51 @@ func TestSchemaV2StatementOnEachIsArray(t *testing.T) {
 		}
 	}
 }
+
+// TestV2_BinaryReferenceMustBeAName is the rule that keeps a definition
+// portable.
+//
+// Five specs carried /data/chainbench/bin/... and ran on one docker environment
+// and nowhere else, while the environment file passed on the same command line
+// already produced that exact path from the binary's name. A definition says
+// WHICH binary; a workspace-config says WHERE binaries live.
+func TestV2_BinaryReferenceMustBeAName(t *testing.T) {
+	caseWith := func(binaries string) []byte {
+		return []byte(`{"schemaVersion":"2","kind":"case","id":"b","env":{
+		  "schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+		  "binaries":` + binaries + `,"topology":{"bp":4}},
+		  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
+	}
+
+	for _, ok := range []string{
+		`{"default":"gstable"}`,
+		`{"default":"${GSTABLE_BIN:-gstable}"}`, // a name with a machine-local escape hatch
+		`{"default":"$GSTABLE_BIN"}`,            // only the machine knows; placeBinary judges it
+		`{"default":"${GSTABLE_BIN}"}`,          // same
+		`{"default":"gstable-2.1.0"}`,           // a version in the name is still a name
+	} {
+		if _, err := Parse(caseWith(ok)); err != nil {
+			t.Errorf("binaries %s must parse: %v", ok, err)
+		}
+	}
+
+	for _, bad := range []struct{ binaries, why string }{
+		{`{"default":"/data/chainbench/bin/gstable"}`, "an absolute path"},
+		{`{"default":"build/gstable"}`, "a relative path"},
+		{`{"default":"~/bin/gstable"}`, "a home directory"},
+		{`{"default":"${GSTABLE_BIN:-/opt/gstable}"}`, "a path wearing a variable"},
+		{`{"default":""}`, "empty"},
+	} {
+		_, err := Parse(caseWith(bad.binaries))
+		if err == nil {
+			t.Errorf("binaries %s (%s) must be refused", bad.binaries, bad.why)
+			continue
+		}
+		// The refusal has to say where the path belongs instead, or the author
+		// has nowhere to put it.
+		if bad.binaries != `{"default":""}` && !strings.Contains(err.Error(), "workspace-config") &&
+			!strings.Contains(err.Error(), "machine") {
+			t.Errorf("binaries %s: error %q says nothing about where a path belongs", bad.binaries, err)
+		}
+	}
+}

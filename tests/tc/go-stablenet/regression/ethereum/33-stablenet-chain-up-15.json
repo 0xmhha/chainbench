@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "stablenet-docker15",
     "chain": "stablenet",
-    "binaries": {
-      "default": "/data/chainbench/bin/gstable"
-    },
     "topology": {
       "bp": 7,
       "en": 7,

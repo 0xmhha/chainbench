@@ -11,9 +11,6 @@
     "kind": "env",
     "id": "wemix-docker15",
     "chain": "wemix",
-    "binaries": {
-      "default": "/data/chainbench/bin/gwemix"
-    },
     "topology": {
       "bp": 7,
       "en": 7,
