@@ -21,8 +21,13 @@ type LaunchOptions struct {
 	DataRoot string
 	// FromBinary runs the producers (pre-fork), ToBinary the validators (post-fork).
 	FromBinary, ToBinary string
-	// FromFamily/ToFamily supply each node's role launch flags.
-	FromFamily, ToFamily registry.ConsensusFamily
+	// FromChain/ToChain are the two chains a node may run, and each supplies
+	// both halves of its launch: what its consensus asks for (a producer seals)
+	// and which flag vocabulary its binary accepts. They travel as plugins
+	// rather than as families because the vocabulary is the manifest's answer,
+	// and a handoff that carried only the family left it unset — every node
+	// then assembled argv against an empty dialect.
+	FromChain, ToChain registry.ChainPlugin
 	// Host is the address nodes bind/advertise; defaults to 127.0.0.1.
 	Host string
 	// InitFn initializes a node's datadir from the shared genesis using the
@@ -119,14 +124,14 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 	if opts.FromBinary == "" || opts.ToBinary == "" {
 		return nil, fmt.Errorf("upgrade: both from and to binaries must be set")
 	}
-	if opts.FromFamily == nil || opts.ToFamily == nil {
-		return nil, fmt.Errorf("upgrade: both from and to consensus families must be set")
+	if opts.FromChain == nil || opts.ToChain == nil {
+		return nil, fmt.Errorf("upgrade: both from and to chains must be set")
 	}
 	specs := make([]process.NodeSpec, 0, len(plan.Nodes))
 	for _, n := range plan.Nodes {
-		binary, fam := opts.ToBinary, opts.ToFamily
+		binary, chain := opts.ToBinary, opts.ToChain
 		if n.Producer {
-			binary, fam = opts.FromBinary, opts.FromFamily
+			binary, chain = opts.FromBinary, opts.FromChain
 		}
 		num := n.Index + 1
 		dataDir := filepath.Join(opts.DataRoot, fmt.Sprintf("node%d", num))
@@ -136,7 +141,7 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 		if opts.Overrides != nil {
 			overrides = opts.Overrides(n, n.Producer)
 		}
-		args, err := LaunchArgs(n, dataDir, fam.LaunchPolicy(n.Role), overrides...)
+		args, err := LaunchArgs(n, dataDir, chain, overrides...)
 		if err != nil {
 			return nil, fmt.Errorf("upgrade: node%d: %w", num, err)
 		}

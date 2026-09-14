@@ -30,6 +30,17 @@ type Manifest struct {
 	// There is deliberately no code default — set it here so a run's network id
 	// is always traceable to the manifest.
 	NetworkID int64 `json:"network_id"`
+	// Dialect names the flag vocabulary this chain's binary accepts, by the id
+	// the launch-option tables use ("geth114" | "geth110-wemix").
+	//
+	// The chain says it because only the chain knows. It was decided by
+	// comparing the chain's id against "wemix" in the layer that assembles
+	// argv, so a chain on the older generation under any other name silently
+	// got the modern vocabulary and launched with flags its binary does not
+	// have. There is deliberately no code default, for the same reason
+	// network_id has none: a wrong guess here is a node that dies at boot with
+	// a message about a flag rather than about the manifest.
+	Dialect string `json:"dialect"`
 	// MinerRecommit selects the TOML encoding of miner.Config.Recommit that
 	// this chain's binary accepts: "duration" (a TOML string like "2s", used by
 	// go-stablenet/go-wbft) or "nanos" (an integer number of nanoseconds, used
@@ -151,6 +162,9 @@ func (m Manifest) validate() error {
 	}
 	if m.NetworkID <= 0 {
 		return fmt.Errorf("registry: manifest %q missing/invalid network_id (set it explicitly; there is no default)", m.ID)
+	}
+	if m.Dialect == "" {
+		return fmt.Errorf("registry: manifest %q missing dialect (set it explicitly; there is no default)", m.ID)
 	}
 	switch m.MinerRecommit {
 	case "duration", "nanos":

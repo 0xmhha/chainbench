@@ -26,13 +26,36 @@ func TestDialectGenerations(t *testing.T) {
 	}
 }
 
-func TestDialectFor(t *testing.T) {
-	if d := DialectFor("wemix"); d.ID != "geth110-wemix" {
-		t.Fatalf("wemix -> %s", d.ID)
+// TestDialectFor_ResolvesByNameAndRefusesTheRest: a manifest names the flag
+// vocabulary its binary accepts, and this returns it.
+//
+// It used to take a CHAIN id and answer by comparing against "wemix", so every
+// other chain got the modern vocabulary whether or not its binary has it. An
+// unknown name is an error rather than a fallback: a fallback is a node that
+// launches with flags it does not have and dies at boot talking about the flag.
+func TestDialectFor_ResolvesByNameAndRefusesTheRest(t *testing.T) {
+	for name, wantID := range map[string]string{"geth114": "geth114", "geth110-wemix": "geth110-wemix"} {
+		d, err := DialectFor(name)
+		if err != nil {
+			t.Errorf("dialect %q: %v", name, err)
+			continue
+		}
+		if d.ID != wantID {
+			t.Errorf("dialect %q -> %s, want %s", name, d.ID, wantID)
+		}
 	}
-	for _, chain := range []string{"stablenet", "wbft", "anything-else"} {
-		if d := DialectFor(chain); d.ID != "geth114" {
-			t.Fatalf("%s -> %s, want geth114", chain, d.ID)
+	// The old input is now a name this build does not carry, and the message
+	// has to say what it does.
+	for _, name := range []string{"wemix", "stablenet", "anything-else", ""} {
+		_, err := DialectFor(name)
+		if err == nil {
+			t.Errorf("dialect %q must be refused", name)
+			continue
+		}
+		for _, want := range DialectNames() {
+			if !strings.Contains(err.Error(), want) {
+				t.Errorf("error %q does not name %q", err, want)
+			}
 		}
 	}
 }

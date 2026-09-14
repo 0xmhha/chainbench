@@ -18,7 +18,7 @@ import (
 // other could agree to.
 func TestNodeConfigArgv_EmitsTheManifestNetworkID(t *testing.T) {
 	plugin := registry.StaticPlugin{
-		M: registry.Manifest{
+		M: registry.Manifest{Dialect: "geth114",
 			ID: "stablenet", Binary: "go-stablenet", NetworkID: 8283,
 			Consensus: registry.ConsensusSpec{RPCNamespace: "istanbul"},
 		},

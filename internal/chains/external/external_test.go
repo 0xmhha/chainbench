@@ -28,7 +28,7 @@ func writeManifest(t *testing.T, family, proto, template string) string {
 	m := `{
 		"id": "foonet", "binary": "gfoo", "chain_id": 9999, "network_id": 9999,
 		"miner_recommit": "duration", "bootstrap": {"type": "static"},
-		"consensus_family": "` + family + `", ` + protoField + `
+		"dialect":"geth114", "consensus_family": "` + family + `", ` + protoField + `
 		"genesis": {` + tmplField + `},
 		"consensus": {"rpc_namespace": "istanbul", "validators_method": "istanbul_getValidators"},
 		"probe": {"method": "istanbul_getValidators"}
@@ -69,7 +69,7 @@ func TestLoad_ProtocolDefaultsToID(t *testing.T) {
 	// no "protocol" field, id "wbft" -> resolves the wbft SDK protocol by id.
 	dir := t.TempDir()
 	m := `{"id":"wbft","binary":"gwbft","chain_id":8284,"network_id":8284,
-		"miner_recommit":"duration","bootstrap":{"type":"static"},"consensus_family":"wbft",
+		"miner_recommit":"duration","dialect":"geth114","bootstrap":{"type":"static"},"consensus_family":"wbft",
 		"genesis":{},"consensus":{"rpc_namespace":"istanbul","validators_method":"istanbul_getValidators"},
 		"probe":{"method":"istanbul_getValidators"}}`
 	path := filepath.Join(dir, "m.json")

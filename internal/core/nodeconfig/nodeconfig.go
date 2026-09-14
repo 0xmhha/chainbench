@@ -29,8 +29,13 @@ var baseModules = []string{"admin", "eth", "debug", "miner", "net", "txpool", "p
 // Chain is what a node's configuration takes from the chain it runs: facts
 // from the manifest and the consensus family, none of them per node.
 type Chain struct {
-	// ID is the manifest id; it selects the flag dialect the binary speaks.
+	// ID is the manifest id.
 	ID string
+	// Dialect names the flag vocabulary the chain's binary accepts, as the
+	// manifest declares it. It used to be derived from ID by comparing against
+	// one chain's name, which answered wrongly for every other chain on that
+	// binary generation.
+	Dialect string
 	// RPCNamespace is the consensus namespace exposed over RPC ("istanbul",
 	// "wemix").
 	RPCNamespace string
@@ -50,6 +55,7 @@ func ChainOf(plugin registry.ChainPlugin, role node.Role) Chain {
 	m := plugin.Manifest()
 	return Chain{
 		ID:            m.ID,
+		Dialect:       m.Dialect,
 		RPCNamespace:  m.Consensus.RPCNamespace,
 		MinerRecommit: m.MinerRecommit,
 		NetworkID:     m.NetworkID,
@@ -219,7 +225,11 @@ func Argv(s Spec, overrides ...Override) ([]string, error) {
 			Port:    s.Ports.Metrics,
 		})
 	}
-	return New(DialectFor(s.Chain.ID), modules...).WithOverrides(overrides...).Build()
+	d, err := DialectFor(s.Chain.Dialect)
+	if err != nil {
+		return nil, err
+	}
+	return New(d, modules...).WithOverrides(overrides...).Build()
 }
 
 func quoteList(ss []string) string {

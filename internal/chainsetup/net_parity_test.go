@@ -406,7 +406,7 @@ func TestNetNew_ExternalManifestChainSurvivesLaterSteps(t *testing.T) {
 	if err := os.WriteFile(manifest, []byte(`{
 		"id": "foonet", "binary": "gfoo", "chain_id": 9999, "network_id": 9999,
 		"miner_recommit": "duration", "bootstrap": {"type": "static"},
-		"consensus_family": "wbft", "protocol": "stablenet",
+		"consensus_family": "wbft", "dialect": "geth114", "protocol": "stablenet",
 		"genesis": {"template": "foonet-genesis"},
 		"consensus": {"rpc_namespace": "istanbul", "validators_method": "istanbul_getValidators"},
 		"probe": {"method": "istanbul_getValidators"}

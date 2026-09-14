@@ -14,6 +14,12 @@
 // unit-testable.
 package nodeconfig
 
+import (
+	"fmt"
+	"sort"
+	"strings"
+)
+
 // Key is the chain-agnostic name of one launch knob. Typed so a knob is never
 // a magic string; the Dialect maps it to (or refuses) a concrete flag.
 type Key string
@@ -337,12 +343,35 @@ func Geth110Wemix() Dialect {
 	return Dialect{ID: "geth110-wemix", flags: f}
 }
 
-// DialectFor selects the dialect for a chain manifest's binary generation.
-// The mapping is a measured fact (flag-graph §1.1): gstable and gwbft share
-// one surface; gwemix is the older generation.
-func DialectFor(chainID string) Dialect {
-	if chainID == "wemix" {
-		return Geth110Wemix()
+// dialects are the flag vocabularies this build knows, by the id a chain
+// manifest names. Which one a chain speaks is the chain's answer; what each one
+// contains is this package's, and that split is the point: the mapping used to
+// be an `if chainID == "wemix"` here, so a chain on the older generation under
+// any other name silently got the modern vocabulary.
+var dialects = map[string]func() Dialect{
+	"geth114":       Geth114,
+	"geth110-wemix": Geth110Wemix,
+}
+
+// DialectFor returns the flag vocabulary named by a manifest's dialect field.
+//
+// An unknown name is an error rather than a fallback. A fallback here is a node
+// that launches with flags its binary does not have and dies at boot saying so
+// about the flag, which tells nobody that a manifest named a vocabulary this
+// build does not carry.
+func DialectFor(name string) (Dialect, error) {
+	if f, ok := dialects[name]; ok {
+		return f(), nil
 	}
-	return Geth114()
+	return Dialect{}, fmt.Errorf("launchopt: unknown dialect %q (this build has %s)", name, strings.Join(DialectNames(), ", "))
+}
+
+// DialectNames returns the sorted ids of the vocabularies this build carries.
+func DialectNames() []string {
+	names := make([]string, 0, len(dialects))
+	for n := range dialects {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names
 }

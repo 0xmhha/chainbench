@@ -409,7 +409,7 @@ func (h *Handoff) launch(ctx context.Context, only []int) (node.NodeSet, error) 
 	opts := LaunchOptions{
 		DataRoot:   h.in.DataDir,
 		FromBinary: h.in.FromBinary, ToBinary: h.in.ToBinary,
-		FromFamily: h.From.Family(), ToFamily: h.To.Family(),
+		FromChain: h.From, ToChain: h.To,
 		Host:          h.in.host(),
 		ProvisionKeys: h.provisionKeys(),
 		Overrides:     h.overrides(),
