@@ -15,8 +15,9 @@
       "default": "/data/chainbench/bin/gwemix"
     },
     "topology": {
-      "bp": 13,
-      "en": 2
+      "bp": 7,
+      "en": 7,
+      "pn": 1
     },
     "keys": {
       "nodekeys": {
@@ -46,5 +47,6 @@
       "compare": "NotEqual",
       "is": "0x0"
     }
-  ]
+  ],
+  "description": "The standard 15-node shape brought up and producing: 7 bp, 7 en and 1 pn. Endpoints reach the producers through the pn rather than dialling one, so this is also the smallest check that a proxied network of the standard size comes up at all."
 }

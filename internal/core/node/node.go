@@ -40,9 +40,10 @@ const (
 	// reaches the producers through a pn rather than dialling one directly.
 	RoleEN Role = "en"
 	// RolePN is a proxy node: the tier that carries traffic between producers
-	// and endpoints. It is expressed through the static-nodes graph rather
-	// than a binary flag, and it is what connects nodes on every chain this
-	// harness supports — there is no separate "boot" role for that job.
+	// and endpoints. It is expressed through the static-nodes graph rather than
+	// a binary flag, and it is what connects nodes on every chain this harness
+	// supports — both families run one, and there is no separate "boot" role
+	// for that job.
 	RolePN Role = "pn"
 )
 

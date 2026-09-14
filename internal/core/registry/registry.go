@@ -60,10 +60,13 @@ type ConsensusFamily interface {
 	// differs: a wemix node's embedded etcd listens on two ports beyond p2p,
 	// and a global rule sized for one of them is wrong for the other.
 	PortReservation() node.Reservation
-	// SupportsRole reports whether this family can run a role. The proxy tier
-	// (pn) is the case that matters: poa has no such tier — etcd occupies that
-	// place — so a topology declaring one is asking for something that will not
-	// exist, and only the family can say so (netmap-design 2.6).
+	// SupportsRole reports whether this family can run a role, so a topology
+	// declaring one the family cannot run is refused before anything is placed
+	// rather than launched into a tier that will not exist.
+	//
+	// Both families answer yes to all three today; poa gained a proxy tier and
+	// this comment kept saying it had none. The question stays the family's
+	// because the next family may answer differently, not because one does now.
 	SupportsRole(role node.Role) bool
 	// BuildGenesis substitutes the family's placeholders in template with
 	// params and returns the genesis.json bytes. This is the dispatch boundary that

@@ -96,6 +96,21 @@ BinaryAfter  = "validator"
 `--from-binary`·`--to-binary`·`--to-chain`·`--from-genesis` 다. **정의서의 두 키만
 다르다.**
 
+### 표준 노드 구성
+
+15대짜리 망은 `bp` 7대, `en` 7대, `pn` 1대로 짠다. `en` 은 `pn` 과 연결하고 `pn` 을
+거쳐 `bp` 와 주고받는다. `en` 이 `bp` 에 직접 연결하지 않는다.
+
+연결 규칙은 코드가 이미 그렇게 한다. `pn` 이 하나라도 있으면 구성이 자동으로 proxied
+가 되고(`internal/testengine/compose.go`), proxied 에서 `en` 의 피어는 `pn` 뿐이다
+(`internal/core/node/peering.go`).
+
+`bp` 7대는 BFT 정족수를 floor(2n/3)+1 = 5 로 만든다. 두 대가 빠져도 돌고 세 대가
+빠지면 멈춘다. 전에는 `bp` 13대에 `en` 1대였고 정족수가 9였다.
+
+두 패밀리 모두 `pn` 을 돌린다. poa 에 프록시 계층이 없다고 적힌 주석이 여러 곳에
+있었는데 코드와 달랐다(2026-09-14 정정).
+
 ---
 
 ## 2. `boot`
