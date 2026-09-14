@@ -209,7 +209,7 @@ nodes:
     role: en
     sync_mode: archive
   - index: 3
-    role: validator
+    role: bp
 `), 0o644); err != nil {
 		t.Fatal(err)
 	}

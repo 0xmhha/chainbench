@@ -492,7 +492,7 @@ func lowerCase(c CaseV2) (Spec, error) {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
 			if !launchScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"", c.ID, scope)
+				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be \"all\", a role (bp, en), or \"node<N>\"", c.ID, scope)
 			}
 			for k, v := range kvs {
 				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
@@ -662,7 +662,10 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 // nodeScopeRE matches a per-node config scope key ("node1", "node12").
 var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
 
-// launchScopeRE matches a launch scope key: "all", a role token, or "node<N>".
+// launchScopeRE matches a launch scope key: "all", a role, or "node<N>".
 // Launch is scoped more widely than config because a launch flag often applies
 // to a whole role (every producer mines), not just one node.
-var launchScopeRE = regexp.MustCompile(`^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$`)
+//
+// The roles are spelled out here rather than drawn from the vocabulary, which
+// is why "pn" is missing from it. That duplication is V4's to remove.
+var launchScopeRE = regexp.MustCompile(`^(all|bp|en|node[1-9][0-9]*)$`)

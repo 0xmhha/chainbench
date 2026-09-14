@@ -47,7 +47,7 @@ func (h *harness) deps(t *testing.T) testengine.Deps {
 		Applicable: h.applicable,
 		BuildEnv: func(_ context.Context, _ session.Environment, _ dsl.Spec) (node.NodeSet, testengine.TeardownFunc, error) {
 			h.buildCount++
-			ns := node.NodeSet{Nodes: []node.Node{{Index: 1, Role: node.RoleValidator}}}
+			ns := node.NodeSet{Nodes: []node.Node{{Index: 1, Role: node.RoleBP}}}
 			return ns, func(context.Context) error { h.teardownCount++; return nil }, nil
 		},
 		RunSpec: func(_ context.Context, _ dsl.Spec, _ session.Environment, rec session.TestRecord) (session.TestStatus, error) {

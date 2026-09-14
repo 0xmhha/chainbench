@@ -18,17 +18,18 @@ func TestSelectorWellFormed(t *testing.T) {
 		{"bp2", true},
 		{"en1", true},
 		{"pn", true},
-		{"boot", true},
-		{"validator", true}, // legacy spelling
 		{"bp:any", true},
 		{"en:0", true},
 		{"", false},
-		{"node0", false},  // 1-based
-		{"node", false},   // needs an index
-		{"nodeX", false},  // non-numeric
-		{"xyz", false},    // unknown role
-		{"bp:two", false}, // non-numeric suffix
-		{"bp:-1", false},  // negative suffix
+		{"node0", false},     // 1-based
+		{"node", false},      // needs an index
+		{"nodeX", false},     // non-numeric
+		{"xyz", false},       // unknown role
+		{"validator", false}, // retired: what a bp does, not a role
+		{"endpoint", false},  // retired: en names it
+		{"boot", false},      // retired: pn connects the nodes
+		{"bp:two", false},    // non-numeric suffix
+		{"bp:-1", false},     // negative suffix
 	}
 	for _, tc := range cases {
 		if got := selectorWellFormed(tc.sel); got != tc.want {

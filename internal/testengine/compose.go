@@ -468,9 +468,7 @@ func inlineTopologyOf(chain string, t map[string]any, binaries map[string]string
 
 // Topology keys a declaration may use for its node counts.
 const (
-	topoValidators   = "validators"
 	topoBP           = "bp"
-	topoEndpoints    = "endpoints"
 	topoEN           = "en"
 	topoPN           = "pn"
 	topoSyncMode     = "syncMode"
@@ -489,7 +487,7 @@ const (
 func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode string, autoBP bool, err error) {
 	for k, v := range t {
 		switch k {
-		case topoValidators, topoBP:
+		case topoBP:
 			if s, ok := v.(string); ok {
 				if s != topoMax {
 					return 0, 0, 0, "", false, fmt.Errorf("topology.%s must be a number or %q, got %q", k, topoMax, s)
@@ -498,7 +496,7 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 				break
 			}
 			validators, err = countOf(k, v)
-		case topoEndpoints, topoEN:
+		case topoEN:
 			endpoints, err = countOf(k, v)
 		case topoPN:
 			proxies, err = countOf(k, v)
@@ -509,7 +507,7 @@ func topologyOf(t map[string]any) (validators, endpoints, proxies int, syncMode 
 			}
 			syncMode = s
 		default:
-			err = fmt.Errorf("topology.%s is not a key the composer knows (validators|bp, endpoints|en, pn, syncMode)", k)
+			err = fmt.Errorf("topology.%s is not a key the composer knows (bp, en, pn, syncMode)", k)
 		}
 		if err != nil {
 			return 0, 0, 0, "", false, err

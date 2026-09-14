@@ -21,38 +21,29 @@
 // NodeSet, so a phase can run standalone against nodes it did not create.
 package node
 
-import "encoding/json"
-
-// Role is a node's operational role within a network. The BFT chains
-// (stablenet/wbft) use validator/endpoint; the wemix (poa) bootstrap adds the
-// boot/en distinction seen in ../script/wemix-upgrade (boot-node deploys
-// governance). Roles are orthogonal facts a driver may key launch flags off.
+// Role is what a node does in a network. A driver keys launch flags off it,
+// the peering graph decides who dials whom by it, and a spec addresses a node
+// by it ("bp1", "en2").
 type Role string
 
-// The canonical vocabulary is bp / en / pn. The legacy spellings
-// (validator, endpoint, boot) survive because they are written into persisted
-// state (workspace.json, topology files) and launch flows; NormalizeRole folds
-// them onto the canonical three, and new code should not emit them.
+// The role vocabulary is three words, and these are the three. Nothing else is
+// accepted anywhere: not in a declaration, not in a record.
 const (
-	// RoleBP is a block producer: a BFT validator, or a staked poa producer.
+	// RoleBP is a block producer. It builds a block and proposes it.
+	//
+	// When it is not this node's turn to propose, it verifies the block
+	// another producer proposed; that verifying is what "validator" names. A
+	// validator is therefore something a bp does, not a fourth role, which is
+	// why the word is not in this vocabulary.
 	RoleBP Role = "bp"
-	// RoleEN is a non-producing RPC endpoint.
+	// RoleEN is an endpoint. It serves RPC and never produces a block. It
+	// reaches the producers through a pn rather than dialling one directly.
 	RoleEN Role = "en"
-	// RolePN is a peer node: the proxy tier between producers and endpoints.
-	// It is expressed through the static-nodes graph, not a binary flag, and
-	// the poa family does not have it (etcd takes that place).
+	// RolePN is a proxy node: the tier that carries traffic between producers
+	// and endpoints. It is expressed through the static-nodes graph rather
+	// than a binary flag, and it is what connects nodes on every chain this
+	// harness supports — there is no separate "boot" role for that job.
 	RolePN Role = "pn"
-
-	// RoleValidator is the legacy spelling of RoleBP.
-	RoleValidator Role = "validator"
-	// RoleEndpoint is the legacy spelling of RoleEN.
-	RoleEndpoint Role = "endpoint"
-	// RoleBoot is the legacy spelling of RoleBP. It once marked the node that
-	// runs the poa governance bootstrap; that is not a role but an attribute of
-	// a producer, and the poa bring-up picks it positionally (the highest-index
-	// producer inits etcd and the rest join). The spelling survives only so a
-	// topology written before that change still parses.
-	RoleBoot Role = "boot"
 )
 
 // Endpoints holds a node's reachable ports on its host. For nodes on the same
@@ -113,30 +104,6 @@ type Node struct {
 	// Auth is the optional authentication descriptor for reaching a remote
 	// attached endpoint. Empty for local or unauthenticated nodes.
 	Auth Auth `json:"auth,omitempty"`
-}
-
-// UnmarshalJSON folds Role onto the canonical vocabulary as the node is read.
-//
-// This is the boundary the legacy spellings survive at. A workspace composed
-// before NM6 holds "validator" on disk, and every consumer used to have to
-// remember that; folding here means nothing above this package ever sees the
-// old word, so a comparison cannot pick the wrong spelling to compare against.
-//
-// An unrecognised role is left as it was found rather than rejected. Decoding
-// is not the place that decides a role is usable — Topology.Validate and
-// ChainPlugin.SupportsRole are, and they say so with the node's own word in the
-// message. Erroring here would turn a bad topology into an unreadable session.
-func (n *Node) UnmarshalJSON(b []byte) error {
-	type raw Node // shed the method, or this recurses
-	var r raw
-	if err := json.Unmarshal(b, &r); err != nil {
-		return err
-	}
-	*n = Node(r)
-	if canonical, err := NormalizeRole(string(n.Role)); err == nil {
-		n.Role = canonical
-	}
-	return nil
 }
 
 // Auth is a node's authentication descriptor for reaching a remote attached

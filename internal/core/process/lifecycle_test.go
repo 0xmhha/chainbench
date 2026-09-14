@@ -47,8 +47,8 @@ func twoNodeSet() node.NodeSet {
 	return node.NodeSet{
 		Chain: "stablenet", Network: "local",
 		Nodes: []node.Node{
-			{Index: 1, Role: node.RoleValidator, PID: 1001},
-			{Index: 5, Role: node.RoleEndpoint, PID: 1005},
+			{Index: 1, Role: node.RoleBP, PID: 1001},
+			{Index: 5, Role: node.RoleEN, PID: 1005},
 		},
 	}
 }

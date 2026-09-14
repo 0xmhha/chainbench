@@ -33,7 +33,7 @@ type Topology struct {
 // it is the boot
 type Entry struct {
 	Index    int    `yaml:"index"`
-	Role     string `yaml:"role"`                // bp|validator, en|endpoint, boot
+	Role     string `yaml:"role"`                // bp | en | pn
 	SyncMode string `yaml:"sync_mode,omitempty"` // full (default) | snap | archive
 	Bootnode bool   `yaml:"bootnode,omitempty"`
 	// Binary names which binary this node runs, by the key an operator declared
@@ -87,7 +87,7 @@ func (t Topology) Validate() error {
 	for _, n := range t.Nodes {
 		role, err := NormalizeRole(n.Role)
 		if err != nil {
-			return fmt.Errorf("topology: node %d has unknown role %q (want bp|validator, en|endpoint, boot)", n.Index, n.Role)
+			return fmt.Errorf("topology: node %d has unknown role %q (want bp, en or pn)", n.Index, n.Role)
 		}
 		if !validSyncModes[n.SyncMode] {
 			return fmt.Errorf("topology: node %d has unknown sync_mode %q (want full, snap, archive)", n.Index, n.SyncMode)
@@ -101,7 +101,7 @@ func (t Topology) Validate() error {
 		idx = append(idx, n.Index)
 	}
 	if producers == 0 {
-		return fmt.Errorf("topology: need at least one block-producer (bp/validator) node")
+		return fmt.Errorf("topology: need at least one block-producer (bp) node")
 	}
 	if bootnodes > 1 {
 		return fmt.Errorf("topology: at most one bootnode (found %d)", bootnodes)
@@ -115,9 +115,9 @@ func (t Topology) Validate() error {
 	return nil
 }
 
-// NodeRole returns the Role for n (validated by Validate) in the canonical
-// vocabulary, whichever spelling the file used. A topology may still say
-// "validator"; nothing downstream of this method sees that word.
+// NodeRole returns the Role for n, which Validate has already accepted. An
+// unreadable role never reaches here, so the error is dropped rather than
+// invented into a role.
 func (n Entry) NodeRole() Role {
 	role, err := NormalizeRole(n.Role)
 	if err != nil {

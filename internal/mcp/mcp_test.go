@@ -82,7 +82,7 @@ func TestInitializeAndList(t *testing.T) {
 // to know which era wrote the file.
 func TestStatusTool(t *testing.T) {
 	dir := t.TempDir()
-	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, 4321))
+	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "bp", 8501, 4321))
 	text, isErr := callText(t, newServer(), "chainbench_status", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "chain=stablenet") || !strings.Contains(text, "node1 bp") || !strings.Contains(text, "pid=4321") {
 		t.Errorf("status tool: err=%v text=%s", isErr, text)

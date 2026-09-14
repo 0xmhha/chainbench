@@ -79,18 +79,20 @@ func TestFamily_StaticFacts(t *testing.T) {
 // live: a wemix bp/pn/en network comes up and produces blocks).
 func TestSupportsRole_PoaAcceptsProxyTier(t *testing.T) {
 	f := Family{}
-	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleEN, node.RolePN, node.RoleBoot} {
+	for _, role := range []node.Role{node.RoleBP, node.RoleEN, node.RolePN} {
 		if !f.SupportsRole(role) {
 			t.Errorf("poa should run %q", role)
 		}
 	}
 }
 
-// TestStartFlags_MineFollowsTheRoleNotItsSpelling mirrors the wbft case: the
-// producer and the bootstrap node both seal, under either spelling.
-func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
+// TestStartFlags_OnlyAProducerSeals mirrors the wbft case: bp seals and
+// nothing else does. The flag used to be gated on one spelling of the role,
+// which is how a producer recorded under the other word launched without
+// --mine and the chain stalled with every node reporting healthy.
+func TestStartFlags_OnlyAProducerSeals(t *testing.T) {
 	f := Family{}
-	for _, role := range []node.Role{node.RoleBP, node.RoleValidator, node.RoleBoot} {
+	for _, role := range []node.Role{node.RoleBP} {
 		found := false
 		for _, fl := range f.StartFlags(role) {
 			if fl == "--mine" {

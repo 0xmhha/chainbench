@@ -94,7 +94,7 @@ func TestAssign_RolesAndOrdinals(t *testing.T) {
 	// than requiring roles to be contiguous.
 	m, err := resource.Assign(pool, []resource.Request{
 		{Role: node.RoleBP},
-		{Role: node.RoleEndpoint}, // legacy spelling folds
+		{Role: node.RoleEN}, // legacy spelling folds
 		{Role: node.RoleBP},
 		{Role: node.RolePN},
 		{Role: node.RoleEN},
@@ -251,7 +251,7 @@ func TestPool_ValidateAllowsZeroStepMetrics(t *testing.T) {
 	}
 	// And the placement it validated actually assigns the shared port once.
 	assigned, err := resource.Assign(p, []resource.Request{
-		{Role: "validator"}, {Role: "validator"}, {Role: "validator"}, {Role: "validator"},
+		{Role: "bp"}, {Role: "bp"}, {Role: "bp"}, {Role: "bp"},
 	})
 	if err != nil {
 		t.Fatalf("Assign: %v", err)

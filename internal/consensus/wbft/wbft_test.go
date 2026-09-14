@@ -8,18 +8,18 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
-// TestStartFlags_MineFollowsTheRoleNotItsSpelling: --mine was gated on the
-// legacy word alone. A producer recorded with the canonical role would have
-// launched without it and the chain would stall — the same latent break the
-// selector had, this time in the flag that decides whether blocks get made.
-func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
+// TestStartFlags_OnlyAProducerSeals: --mine was once gated on one spelling of
+// the producer role. A producer recorded under the other word launched without
+// it and the chain stalled — the same latent break the selector had, this time
+// in the flag that decides whether blocks get made.
+func TestStartFlags_OnlyAProducerSeals(t *testing.T) {
 	f := wbft.New()
-	for _, role := range []node.Role{node.RoleBP, node.RoleValidator} {
+	for _, role := range []node.Role{node.RoleBP} {
 		if !hasFlag(f.StartFlags(role), "--mine") {
 			t.Fatalf("role %q must seal: %v", role, f.StartFlags(role))
 		}
 	}
-	for _, role := range []node.Role{node.RoleEN, node.RoleEndpoint, node.RolePN} {
+	for _, role := range []node.Role{node.RoleEN, node.RolePN} {
 		if hasFlag(f.StartFlags(role), "--mine") {
 			t.Fatalf("role %q must not seal: %v", role, f.StartFlags(role))
 		}
@@ -28,16 +28,18 @@ func TestStartFlags_MineFollowsTheRoleNotItsSpelling(t *testing.T) {
 
 func TestSupportsRole_WbftHasAProxyTier(t *testing.T) {
 	f := wbft.New()
-	// The legacy spellings fold onto their canonical role, so a topology that
-	// still says "validator"/"endpoint"/"boot" runs as bp/en/bp.
-	for _, role := range []node.Role{node.RoleBP, node.RoleEN, node.RolePN, node.RoleValidator, node.RoleEndpoint, node.RoleBoot} {
+	for _, role := range []node.Role{node.RoleBP, node.RoleEN, node.RolePN} {
 		if !f.SupportsRole(role) {
 			t.Errorf("wbft should run %q", role)
 		}
 	}
-	// A word that is not a role, under any spelling, is refused.
-	if f.SupportsRole(node.Role("sideways")) {
-		t.Error("wbft should not claim \"sideways\"")
+	// A word outside the vocabulary is refused rather than folded onto the role
+	// it resembles. "validator" is what a bp does while another bp proposes,
+	// and "boot" was a way to say pn; neither is a role a family can run.
+	for _, retired := range []node.Role{"validator", "endpoint", "boot", "sideways"} {
+		if f.SupportsRole(retired) {
+			t.Errorf("wbft should not claim %q", retired)
+		}
 	}
 }
 

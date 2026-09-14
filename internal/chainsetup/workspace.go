@@ -110,7 +110,7 @@ type State struct {
 	// recomputes it each time it runs — a fresh config is a new revision.
 	ConfigProvenance []ConfigProvenance `json:"configProvenance,omitempty"`
 	// LaunchSet holds per-scope launch-argv overrides, keyed by scope: "all" for
-	// every node, a role ("bp"/"en"/"boot") for that role, "node<N>" for one.
+	// every node, a role ("bp"/"en") for that role, "node<N>" for one.
 	// Each value is a list of "key" (boolean flag) or "key=value" applied at
 	// argv assembly, most-general-first (all, then role, then node — node wins).
 	LaunchSet map[string][]string `json:"launchSet,omitempty"`
@@ -388,7 +388,7 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 		return nil
 	}
 	if !validLaunchScope(scope) {
-		return fmt.Errorf("launch scope %q must be \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"", scope)
+		return fmt.Errorf("launch scope %q must be \"all\", a role (bp, en), or \"node<N>\"", scope)
 	}
 	if _, err := ParseOverrides(sets); err != nil {
 		return err
@@ -419,12 +419,14 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	return out
 }
 
-// validLaunchScope reports whether scope is a launch scope the workspace applies:
-// "all", a role token, or "node<N>". A role is stored normalized (bp/en/boot).
+// validLaunchScope reports whether scope is a launch scope the workspace
+// applies: "all", a role, or "node<N>".
+//
+// The role list is spelled out here rather than asked of the vocabulary, which
+// is why "pn" is missing from it. That duplication is V4's to remove.
 func validLaunchScope(scope string) bool {
 	switch scope {
-	case "all", string(node.RoleBP), string(node.RoleValidator),
-		string(node.RoleEN), string(node.RoleEndpoint), string(node.RoleBoot):
+	case "all", string(node.RoleBP), string(node.RoleEN):
 		return true
 	}
 	return nodeScopeRE.MatchString(scope)

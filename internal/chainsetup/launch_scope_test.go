@@ -21,9 +21,9 @@ func TestLaunchOverridesFor_MergesScopesMostGeneralFirst(t *testing.T) {
 		index int
 		want  string // comma-joined, in application order
 	}{
-		"producer node1 gets all+bp+node1": {"validator", 1, "metrics,mine,verbosity=5"},
+		"producer node1 gets all+bp+node1": {"bp", 1, "metrics,mine,verbosity=5"},
 		"producer node2 gets all+bp":       {"bp", 2, "metrics,mine"},
-		"endpoint node3 gets all+en":       {"endpoint", 3, "metrics,gcmode=archive"},
+		"endpoint node3 gets all+en":       {"en", 3, "metrics,gcmode=archive"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

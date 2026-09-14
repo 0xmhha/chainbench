@@ -57,7 +57,7 @@ func record(root string, index, http, pid int) node.Record {
 	label := node.LabelFor(index)
 	layout := node.Layout{Root: root}
 	return node.Record{
-		Index: index, Label: string(label), Role: string(node.RoleValidator), Host: "127.0.0.1",
+		Index: index, Label: string(label), Role: string(node.RoleBP), Host: "127.0.0.1",
 		DataDir: layout.DataDir(label), ConfigPath: layout.ConfigPath(label), LogPath: layout.LogPath(label),
 		Endpoints: node.Endpoints{P2P: 31000 + (index-1)*10, HTTP: http},
 		Args:      []string{"--datadir", layout.DataDir(label)},

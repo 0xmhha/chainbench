@@ -46,9 +46,9 @@ func TestAttach_ARecordedSetKeepsItsRoles(t *testing.T) {
 		Chain: "stablenet", Network: "local",
 		Capabilities: []string{"rpc", "short-expiry"},
 		Nodes: []node.Node{
-			{Index: 1, Role: node.RoleValidator, RPCURL: "http://127.0.0.1:8600"},
-			{Index: 2, Role: node.RoleValidator, RPCURL: "http://127.0.0.1:8610"},
-			{Index: 5, Role: node.RoleEndpoint, RPCURL: "http://127.0.0.1:8640"},
+			{Index: 1, Role: node.RoleBP, RPCURL: "http://127.0.0.1:8600"},
+			{Index: 2, Role: node.RoleBP, RPCURL: "http://127.0.0.1:8610"},
+			{Index: 5, Role: node.RoleEN, RPCURL: "http://127.0.0.1:8640"},
 		},
 	}
 	ns, teardown, err := testengine.NewRecordedBuildEnv(recorded)(context.Background(), nil, dsl.Spec{})

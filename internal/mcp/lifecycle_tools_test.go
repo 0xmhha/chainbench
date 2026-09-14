@@ -25,7 +25,7 @@ func TestStopTool(t *testing.T) {
 	t.Cleanup(func() { _ = proc.Process.Kill(); _, _ = proc.Process.Wait() })
 
 	dir := t.TempDir()
-	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "validator", 8501, pid))
+	writeWorkspace(t, dir, "stablenet", wsNode(dir, 1, "bp", 8501, pid))
 
 	text, isErr := callText(t, newServer(), "chainbench_stop", map[string]any{"workspaceDir": dir})
 	if isErr || !strings.Contains(text, "stopped 1 node") {

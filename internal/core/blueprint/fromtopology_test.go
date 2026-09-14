@@ -19,7 +19,7 @@ func topo(entries ...node.Entry) node.Topology {
 func TestFromTopology_KeepsTheLayout(t *testing.T) {
 	in := topo(
 		node.Entry{Index: 1, Role: "bp"},
-		node.Entry{Index: 3, Role: "endpoint", SyncMode: "archive"}, // out of order, legacy spelling
+		node.Entry{Index: 3, Role: "en", SyncMode: "archive"}, // out of order
 		node.Entry{Index: 2, Role: "bp", SyncMode: "full"},
 	)
 	bp, err := blueprint.FromTopology(in, blueprint.FromTopologyIn{Binary: "/opt/gwbft"})
@@ -45,14 +45,16 @@ func TestFromTopology_KeepsTheLayout(t *testing.T) {
 			t.Errorf("node %d = %s/%s/%q, want %s/%s/%q", i+1, got.Name, got.Role, got.SyncMode, w.name, w.role, w.sync)
 		}
 	}
-	// The legacy spelling does not survive into the new document: one
-	// vocabulary, decided at NM6.
+	// The converted document speaks the vocabulary and nothing else: a word
+	// outside it would mean two ways to say the same role again.
 	raw, err := blueprint.Marshal(bp)
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
 	}
-	if strings.Contains(string(raw), "endpoint") {
-		t.Errorf("the converted document still carries the legacy spelling:\n%s", raw)
+	for _, retired := range []string{"validator", "endpoint", "boot"} {
+		if strings.Contains(string(raw), retired) {
+			t.Errorf("the converted document carries %q:\n%s", retired, raw)
+		}
 	}
 }
 

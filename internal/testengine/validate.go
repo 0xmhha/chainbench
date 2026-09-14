@@ -105,6 +105,10 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 		r.Result = "UNRESOLVED: " + strings.Join(unresolved, ", ")
 		return r
 	}
+	if bad := declaredRoles(s); len(bad) > 0 {
+		r.Result = "INVALID ROLE: " + strings.Join(bad, ", ")
+		return r
+	}
 	if bad := malformedSelectors(s); len(bad) > 0 {
 		r.Result = "INVALID SELECTOR: " + strings.Join(bad, ", ")
 		return r
@@ -127,6 +131,9 @@ func Precheck(specs []dsl.Spec) error {
 		if unresolved := interp.Unresolved(s, reg); len(unresolved) > 0 {
 			return fmt.Errorf("spec %s has unresolved references (nothing composed): %s", s.ID, strings.Join(unresolved, ", "))
 		}
+		if bad := declaredRoles(s); len(bad) > 0 {
+			return fmt.Errorf("spec %s declares a role that is not one (nothing composed): %s", s.ID, strings.Join(bad, ", "))
+		}
 		if bad := malformedSelectors(s); len(bad) > 0 {
 			return fmt.Errorf("spec %s has malformed node selectors: %s", s.ID, strings.Join(bad, ", "))
 		}
@@ -135,6 +142,39 @@ func Precheck(specs []dsl.Spec) error {
 		}
 	}
 	return nil
+}
+
+// declaredRoles reports every role a spec's node table names that the
+// vocabulary does not have.
+//
+// It is checked here, offline, because the alternative is finding out at
+// compose time: the workspace is created, keys are derived and ports are
+// allocated before the topology is built, so a mistyped role costs a bring-up
+// to discover. `chainbench validate` answers it with nothing allocated.
+//
+// The count form is not checked here — its keys are the composer's, and it
+// reports an unknown one itself.
+func declaredRoles(s dsl.Spec) []string {
+	list, ok := s.Topology["nodes"].([]any)
+	if !ok {
+		return nil
+	}
+	var bad []string
+	for i, raw := range list {
+		entry, ok := raw.(map[string]any)
+		if !ok {
+			continue // a malformed node list is the topology parser's error to report
+		}
+		role, ok := entry["role"].(string)
+		if !ok || role == "" {
+			continue // an absent role defaults; only a wrong word is this check's business
+		}
+		if _, err := node.NormalizeRole(role); err != nil {
+			bad = append(bad, fmt.Sprintf("topology.nodes[%d].role %q (want %s, %s or %s)",
+				i, role, node.RoleBP, node.RoleEN, node.RolePN))
+		}
+	}
+	return bad
 }
 
 // misdirectedSends reports steps that ask one node to sign with another's key.
