@@ -2,6 +2,7 @@ package dsl
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -258,6 +259,8 @@ func TestInlineEnv_NullBaseWithNoOverrideIsAlsoRefused(t *testing.T) {
 	}
 }
 
+// TestInlineEnv_Extends pins S6's override form on the merge rule that replaced
+// the shallow one: a case names what differs and inherits the rest, key by key.
 func TestInlineEnv_Extends(t *testing.T) {
 	canonical := `{"schemaVersion":"2","kind":"env","id":"stablenet-15","chain":"stablenet",
 		"binaries":{"default":"gstable"},"topology":{"bp":"max","pn":1,"en":1}}`
@@ -282,13 +285,31 @@ func TestInlineEnv_Extends(t *testing.T) {
 	if s.Chain.Name != "stablenet" {
 		t.Fatalf("chain not inherited: %+v", s.Chain)
 	}
-	// Overridden whole: the case's topology replaces the canonical "max" form.
+	// Merged by key: the case's bp replaces the shared env's "max" form, and
+	// what the case did not name stays. A case that wanted no proxy tier used
+	// to get it by naming the whole field; it says so now.
 	bp, ok := s.Topology["bp"]
 	if !ok || bp != float64(3) {
 		t.Fatalf("topology.bp = %v, want the overriding 3", s.Topology["bp"])
 	}
+	if pn, hasPN := s.Topology["pn"]; !hasPN || pn != float64(1) {
+		t.Fatalf("topology.pn = %v, want the shared env's 1 to survive: %v", s.Topology["pn"], s.Topology)
+	}
+
+	// And the way to drop it.
+	dropped := `{"schemaVersion":"2","kind":"case","id":"c1",
+		"env":{"extends":"stablenet-15","topology":{"bp":3,"pn":null}},
+		"steps":[{"expect":"blockNumber","is":1}]}`
+	out, err = InlineEnv([]byte(dropped), func(string) ([]byte, error) { return []byte(canonical), nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err = Parse(out)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, hasPN := s.Topology["pn"]; hasPN {
-		t.Fatalf("topology should be replaced whole, not merged: %v", s.Topology)
+		t.Fatalf("a null must remove the key: %v", s.Topology)
 	}
 
 	// extends with a non-string id is rejected.
@@ -701,5 +722,132 @@ func TestV2_BinaryReferenceMustBeAName(t *testing.T) {
 			!strings.Contains(err.Error(), "machine") {
 			t.Errorf("binaries %s: error %q says nothing about where a path belongs", bad.binaries, err)
 		}
+	}
+}
+
+// mergeCase builds a case whose env extends "base" with the given override.
+func mergeCase(override string) []byte {
+	return []byte(`{"schemaVersion":"2","kind":"case","id":"m","env":` + override + `,
+	  "steps":[{"expect":"blockNumber","compare":"Greater","is":"0"}]}`)
+}
+
+// sharedEnv is the shape a case extends in these tests: two scopes of config
+// and a capability list, which is where the old shallow rule lost things.
+const sharedEnv = `{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet",
+  "topology":{"bp":4,"en":1},
+  "config":{"all":{"metricsHost":"0.0.0.0"},"node1":{"syncMode":"archive"}},
+  "capabilities":["rpc","consensus"]}`
+
+func lookupShared(id string) ([]byte, error) {
+	if id != "base" {
+		return nil, errors.New("no such env")
+	}
+	return []byte(sharedEnv), nil
+}
+
+// TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName is the defect the rule
+// change exists to remove.
+//
+// The override used to replace a whole field. A case that wanted one node to
+// differ wrote config.node2, and the shared env's "all" scope and node1's went
+// with it — the case ran, and only the result was different.
+func TestInlineEnv_DeepMergeKeepsWhatTheCaseDidNotName(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","config":{"node2":{"syncMode":"snap"}}}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	var got struct {
+		Env struct {
+			Config   map[string]map[string]any `json:"config"`
+			Topology map[string]any            `json:"topology"`
+		} `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	for _, scope := range []string{"all", "node1", "node2"} {
+		if _, ok := got.Env.Config[scope]; !ok {
+			t.Errorf("config scope %q was dropped: %v", scope, got.Env.Config)
+		}
+	}
+	if got.Env.Config["node2"]["syncMode"] != "snap" {
+		t.Errorf("the case's own value did not land: %v", got.Env.Config["node2"])
+	}
+	// A field the case did not mention is untouched.
+	if got.Env.Topology["bp"] != float64(4) {
+		t.Errorf("topology = %v, want the shared env's", got.Env.Topology)
+	}
+}
+
+// TestInlineEnv_NullRemoves: deep merge alone can only add and overwrite, so
+// without this there is no way to switch off what the shared env turned on. The
+// commonest difference among the inline envs is exactly an absent capability
+// list.
+func TestInlineEnv_NullRemoves(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","capabilities":null,"config":{"node1":null}}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	var got struct {
+		Env map[string]any `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if _, present := got.Env["capabilities"]; present {
+		t.Errorf("capabilities survived a null: %v", got.Env)
+	}
+	cfg, _ := got.Env["config"].(map[string]any)
+	if _, present := cfg["node1"]; present {
+		t.Errorf("config.node1 survived a null: %v", cfg)
+	}
+	if _, present := cfg["all"]; !present {
+		t.Errorf("removing one scope took another with it: %v", cfg)
+	}
+}
+
+// TestInlineEnv_ArraysReplace: unioning reads as generous and takes away the
+// only way to drop an entry, which is the same hole as having no delete.
+func TestInlineEnv_ArraysReplace(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","capabilities":["rpc"]}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	var got struct {
+		Env struct {
+			Capabilities []string `json:"capabilities"`
+		} `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Env.Capabilities) != 1 || got.Env.Capabilities[0] != "rpc" {
+		t.Errorf("capabilities = %v, want the case's list alone", got.Env.Capabilities)
+	}
+}
+
+// TestInlineEnv_RefusesAChainOfExtends: a shared env is the base, not a step in
+// a chain. Following one would make "what does this case actually declare"
+// answerable only by reading a sequence of files, which is the thing the shared
+// env exists to avoid.
+func TestInlineEnv_RefusesAChainOfExtends(t *testing.T) {
+	chained := func(string) ([]byte, error) {
+		return []byte(`{"schemaVersion":"2","kind":"env","id":"base","chain":"stablenet","extends":"other"}`), nil
+	}
+	if _, err := InlineEnv(mergeCase(`{"extends":"base"}`), chained); err == nil {
+		t.Error("an env that extends another must be refused")
+	}
+}
+
+// TestInlineEnv_MergedResultIsStillParsedStrictly: the merge does not check for
+// keys neither side should have, because the parse that follows does. A typo
+// that survives the merge has to fail there.
+func TestInlineEnv_MergedResultIsStillParsedStrictly(t *testing.T) {
+	raw, err := InlineEnv(mergeCase(`{"extends":"base","toplogy":{"bp":9}}`), lookupShared)
+	if err != nil {
+		t.Fatalf("inline: %v", err)
+	}
+	if _, err := Parse(raw); err == nil {
+		t.Error("a misspelled field must be refused by the parse")
 	}
 }

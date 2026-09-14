@@ -280,11 +280,12 @@ func ParseEnv(raw []byte) (EnvV2, error) {
 //	                                             named fields overridden.
 //	"env": { …a full env object… }             — inline, no lookup.
 //
-// The override form is a shallow top-level merge: each field the case names
-// replaces that field of the canonical env whole (topology, hardforks, keys),
-// so a test declares only what differs. A case with an inline env (or a v1
-// spec) passes through untouched. lookup receives the env id and returns the
-// env file's bytes; the caller owns where env files live.
+// The override form is a deep merge: an object meets an object by key, a null
+// removes the key, and anything else replaces — so a case declares what differs
+// and keeps the rest of the shared env. See mergeEnv for why each rule is what
+// it is. A case with an inline env (or a v1 spec) passes through untouched.
+// lookup receives the env id and returns the env file's bytes; the caller owns
+// where env files live.
 func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, error) {
 	if !IsV2(raw) {
 		return raw, nil
@@ -320,23 +321,19 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 			if err != nil {
 				return nil, err
 			}
-			var base map[string]json.RawMessage
-			if err := json.Unmarshal(baseRaw, &base); err != nil {
-				return nil, fmt.Errorf("dsl: env %q is not an object: %w", baseID, err)
+			base, err := objectOf(baseRaw, baseID)
+			if err != nil {
+				return nil, err
 			}
-			// JSON null unmarshals into a nil map without error, and the
-			// override loop below would then assign into it and panic. A null
-			// env is not an object either, so it fails the way the line above
-			// already promises.
-			if base == nil {
-				return nil, fmt.Errorf("dsl: env %q is not an object: it is null", baseID)
+			if _, chained := base["extends"]; chained {
+				return nil, fmt.Errorf("dsl: env %q extends another env; a shared env is the base, not a step in a chain", baseID)
 			}
-			// Shallow override: each field the case names replaces the base's.
-			delete(envObj, "extends")
-			for k, v := range envObj {
-				base[k] = v
+			over, err := objectOf(probe.Env, "the case's env")
+			if err != nil {
+				return nil, err
 			}
-			merged, err := json.Marshal(base)
+			delete(over, "extends")
+			merged, err := json.Marshal(mergeEnv(base, over))
 			if err != nil {
 				return nil, fmt.Errorf("dsl: merge env %q: %w", baseID, err)
 			}
@@ -718,4 +715,53 @@ func binaryRefIsAName(ref string) error {
 		return errors.New("is a path — name the binary, and let a workspace-config say where binaries live on the target")
 	}
 	return nil
+}
+
+// objectOf decodes a JSON object, naming what failed. A null decodes into a nil
+// map without error, and a caller that then assigns into it panics — so it is
+// refused here with the same words a non-object gets.
+func objectOf(raw []byte, what string) (map[string]any, error) {
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return nil, fmt.Errorf("dsl: %s is not an object: %w", what, err)
+	}
+	if m == nil {
+		return nil, fmt.Errorf("dsl: %s is not an object: it is null", what)
+	}
+	return m, nil
+}
+
+// mergeEnv lays a case's overrides over a shared env and returns the result.
+//
+// Three rules, and each exists because the alternative loses something the
+// author wrote:
+//
+//   - An object meets an object by KEY, recursively. Replacing the whole object
+//     was the old rule, and under it a case that wanted node2 to differ wrote
+//     config.node2 and silently dropped the shared env's "all" scope and every
+//     other node's — the case ran, and only the result was different.
+//   - null REMOVES the key. Deep merge alone can only add and overwrite, so
+//     there would be no way to switch off something the shared env turned on.
+//     That is not hypothetical: the commonest difference between the 205 inline
+//     envs and the shape they share is a capability list that is absent.
+//   - An array REPLACES. Unioning reads as generous and takes away the only way
+//     to drop an entry, which is the same hole as having no delete.
+//
+// The merged object is parsed strictly afterwards, so a key neither side should
+// have is refused there rather than checked twice here.
+func mergeEnv(base, over map[string]any) map[string]any {
+	for k, v := range over {
+		if v == nil {
+			delete(base, k)
+			continue
+		}
+		bo, baseIsObject := base[k].(map[string]any)
+		oo, overIsObject := v.(map[string]any)
+		if baseIsObject && overIsObject {
+			base[k] = mergeEnv(bo, oo)
+			continue
+		}
+		base[k] = v
+	}
+	return base
 }
