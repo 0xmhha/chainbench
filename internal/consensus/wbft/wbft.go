@@ -38,21 +38,15 @@ func (Family) BuildGenesis(template []byte, p registry.GenesisParams) ([]byte, e
 	})
 }
 
-// StartFlags returns the node launch flags for a role. Validators mine; all
-// nodes allow the dev-oriented RPC surface chainbench relies on.
-func (Family) StartFlags(role node.Role) []string {
-	flags := []string{
-		"--allow-insecure-unlock",
-		"--rpc.enabledeprecatedpersonal",
-		"--rpc.allow-unprotected-txs",
-	}
-	// Both spellings of the producing role seal. Comparing against one of them
-	// makes --mine depend on which word the composition happened to record,
-	// and a producer launched without it stalls the chain.
-	if canonical, err := node.NormalizeRole(string(role)); err == nil && canonical == node.RoleBP {
-		flags = append(flags, "--mine")
-	}
-	return flags
+// LaunchPolicy says what this consensus asks of a node's launch. Only sealing:
+// the dev-oriented RPC surface the harness relies on is asked for on every
+// launch and granted by whichever dialect has it, which is where a binary's
+// flags belong.
+func (Family) LaunchPolicy(role node.Role) registry.LaunchPolicy {
+	// Asking the vocabulary rather than comparing words: --mine used to depend
+	// on which spelling the composition happened to record, and a producer
+	// launched without it stalls the chain while every node reports healthy.
+	return registry.LaunchPolicy{Mine: node.Is(role, node.RoleBP)}
 }
 
 // BringUpPhases: every wbft node starts at once and nothing has to happen in

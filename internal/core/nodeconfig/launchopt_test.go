@@ -221,24 +221,6 @@ func TestBuildOverridesWin(t *testing.T) {
 	}
 }
 
-// --- Family shim ---
-
-func TestParseFamilyFlags(t *testing.T) {
-	p, err := ParseFamilyFlags([]string{
-		"--allow-insecure-unlock", "--rpc.enabledeprecatedpersonal",
-		"--rpc.allow-unprotected-txs", "--mine",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !p.AllowInsecureUnlock || !p.DeprecatedPersonal || !p.UnprotectedTxs || !p.Mine {
-		t.Fatalf("policy = %+v", p)
-	}
-	if _, err := ParseFamilyFlags([]string{"--verbosity"}); err == nil {
-		t.Fatal("unknown family flag must fail")
-	}
-}
-
 func equal(a, b []string) bool {
 	if len(a) != len(b) {
 		return false

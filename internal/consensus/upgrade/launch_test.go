@@ -2,6 +2,7 @@ package upgrade_test
 
 import (
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestLaunchArgs(t *testing.T) {
 		NetworkID: 8285,
 		Ports:     node.Endpoints{P2P: 30011, Etcd: 30012, HTTP: 40011, WS: 40012, Auth: 40013},
 	}
-	args, err := upgrade.LaunchArgs(n, "/data/node1", []string{"--mine"})
+	args, err := upgrade.LaunchArgs(n, "/data/node1", registry.LaunchPolicy{Mine: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -136,7 +136,7 @@ func BuildNodeSpecs(plan Plan, opts LaunchOptions) ([]process.NodeSpec, error) {
 		if opts.Overrides != nil {
 			overrides = opts.Overrides(n, n.Producer)
 		}
-		args, err := LaunchArgs(n, dataDir, fam.StartFlags(n.Role), overrides...)
+		args, err := LaunchArgs(n, dataDir, fam.LaunchPolicy(n.Role), overrides...)
 		if err != nil {
 			return nil, fmt.Errorf("upgrade: node%d: %w", num, err)
 		}

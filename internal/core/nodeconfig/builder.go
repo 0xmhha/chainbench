@@ -88,44 +88,5 @@ func (b *Builder) crossChecks(a *Args) []error {
 	return errs
 }
 
-// FamilyPolicy is the consensus family's contribution translated to typed
-// knobs. It exists so families can keep exposing their launch posture as data
-// while argv assembly stays single-sited here.
-type FamilyPolicy struct {
-	AllowInsecureUnlock bool
-	DeprecatedPersonal  bool
-	UnprotectedTxs      bool
-	Mine                bool
-}
-
-// ParseFamilyFlags maps a family's legacy StartFlags vocabulary onto a
-// FamilyPolicy. The vocabulary is closed (families emit only these four); an
-// unknown flag is an error so a family extending its surface is forced to
-// extend the typed model instead of leaking a raw string through.
-//
-// Transitional: this shim exists so registry.ChainPlugin keeps its StartFlags
-// signature during the golden conversion. It goes away when families declare
-// a FamilyPolicy directly.
-func ParseFamilyFlags(flags []string) (FamilyPolicy, error) {
-	var p FamilyPolicy
-	for _, f := range flags {
-		switch f {
-		case "--allow-insecure-unlock":
-			p.AllowInsecureUnlock = true
-		case "--rpc.enabledeprecatedpersonal":
-			p.DeprecatedPersonal = true
-		case "--rpc.allow-unprotected-txs":
-			p.UnprotectedTxs = true
-		case "--mine":
-			p.Mine = true
-		default:
-			return FamilyPolicy{}, fmt.Errorf(
-				"launchopt: family flag %q is outside the typed vocabulary %s",
-				f, "[--allow-insecure-unlock --rpc.enabledeprecatedpersonal --rpc.allow-unprotected-txs --mine]")
-		}
-	}
-	return p, nil
-}
-
 // String renders an argv for logs and errors.
 func String(argv []string) string { return strings.Join(argv, " ") }

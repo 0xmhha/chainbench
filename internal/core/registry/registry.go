@@ -39,8 +39,17 @@ type ConsensusFamily interface {
 	// ValidatorsMethod is the RPC method returning the validator/producer
 	// set.
 	ValidatorsMethod() string
-	// StartFlags returns the node launch flags for a given role.
-	StartFlags(role node.Role) []string
+	// LaunchPolicy is what the consensus asks of one node's launch.
+	//
+	// It used to be StartFlags, a []string the launch parsed back into a typed
+	// value, and the two families differed in it by exactly two entries:
+	// --rpc.enabledeprecatedpersonal and --rpc.allow-unprotected-txs. Neither is
+	// a consensus fact. They are flags one binary generation accepts and another
+	// does not, which is the dialect's question, and go-wemix's generation is
+	// missing the first — so a family was deciding a thing it cannot know.
+	//
+	// What is left is what the consensus actually requires: a producer seals.
+	LaunchPolicy(role node.Role) LaunchPolicy
 	// BringUpPhases orders the launch: which nodes start together, and what
 	// must complete between one group and the next.
 	//
@@ -72,6 +81,20 @@ type ConsensusFamily interface {
 	// params and returns the genesis.json bytes. This is the dispatch boundary that
 	// lets internal/core/genesis build a genesis without importing any family.
 	BuildGenesis(template []byte, params GenesisParams) ([]byte, error)
+}
+
+// LaunchPolicy is what a consensus family requires of one node's launch, as
+// facts rather than as flag spellings.
+//
+// Spellings belong to the binary: two generations of geth name the same knob
+// differently, and one of them does not have it at all. A family that emitted
+// strings was answering for both, and the launch then had to read the strings
+// back to find out what was meant.
+type LaunchPolicy struct {
+	// Mine asks the node to seal blocks. It is the producing role's whole
+	// consensus requirement: a producer launched without it leaves the chain
+	// stalled while every node reports healthy.
+	Mine bool
 }
 
 // Phase is one ordered group of a bring-up: nodes that start together, then

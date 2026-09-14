@@ -8,20 +8,20 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
-// TestStartFlags_OnlyAProducerSeals: --mine was once gated on one spelling of
-// the producer role. A producer recorded under the other word launched without
-// it and the chain stalled — the same latent break the selector had, this time
-// in the flag that decides whether blocks get made.
-func TestStartFlags_OnlyAProducerSeals(t *testing.T) {
+// TestLaunchPolicy_OnlyAProducerSeals: sealing was once gated on one spelling
+// of the producing role, so a producer recorded under the other word launched
+// without --mine and the chain stalled while every node reported healthy.
+//
+// The policy carries the fact and not the flag. Which flag says "seal", and
+// whether the binary has it, is the dialect's question.
+func TestLaunchPolicy_OnlyAProducerSeals(t *testing.T) {
 	f := wbft.New()
-	for _, role := range []node.Role{node.RoleBP} {
-		if !hasFlag(f.StartFlags(role), "--mine") {
-			t.Fatalf("role %q must seal: %v", role, f.StartFlags(role))
-		}
+	if !f.LaunchPolicy(node.RoleBP).Mine {
+		t.Error("a bp must seal")
 	}
-	for _, role := range []node.Role{node.RoleEN, node.RolePN} {
-		if hasFlag(f.StartFlags(role), "--mine") {
-			t.Fatalf("role %q must not seal: %v", role, f.StartFlags(role))
+	for _, role := range []node.Role{node.RoleEN, node.RolePN, node.Role("sideways")} {
+		if f.LaunchPolicy(role).Mine {
+			t.Errorf("role %q must not seal", role)
 		}
 	}
 }
