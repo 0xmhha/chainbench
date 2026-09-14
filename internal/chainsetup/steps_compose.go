@@ -871,7 +871,7 @@ func (w *Workspace) writeNodeConfig(ctx context.Context, p registry.ChainPlugin,
 	// the whole config.
 	var overrides []string
 	if ns.Config == "" {
-		overrides = w.configOverridesFor(ns.Index)
+		overrides = w.configOverridesFor(node.Role(ns.Role), ns.Index)
 	}
 	return w.writeConfigFile(ctx, t, ns, toml, purpose, overrides)
 }
@@ -899,7 +899,7 @@ func (w *Workspace) nodeConfigBytes(ctx context.Context, p registry.ChainPlugin,
 		return nil, fmt.Errorf("chainsetup: config: node%d peers: %w", ns.Index, err)
 	}
 	spec := process.NodeConfig(p, preset, process.SpecOf(ns), w.keysBase(), staticNodes)
-	if err := w.applyConfigOverrides(&spec, ns.Index); err != nil {
+	if err := w.applyConfigOverrides(&spec, node.Role(ns.Role), ns.Index); err != nil {
 		return nil, fmt.Errorf("chainsetup: config: node%d: %w", ns.Index, err)
 	}
 	return nodeconfig.TOML(spec), nil

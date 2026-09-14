@@ -104,22 +104,22 @@
         },
         "launch": {
           "type": "object",
-          "description": "scope -> launchopt knobs. scope: \"all\", a role (bp|validator, en|endpoint, boot), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
+          "description": "scope -> launchopt knobs. scope: \"all\", a role (bp, en, pn), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
           "additionalProperties": {
             "type": "object"
           },
           "propertyNames": {
-            "pattern": "^(all|bp|validator|en|endpoint|boot|node[1-9][0-9]*)$"
+            "pattern": "^(all|bp|en|pn|node[1-9][0-9]*)$"
           }
         },
         "config": {
           "type": "object",
-          "description": "scope -> config-knob overrides. scope: \"all\" or \"node<N>\"",
+          "description": "scope -> config-knob overrides. scope: \"all\", a role (bp, en, pn), or \"node<N>\"; applied per node most-general-first (all, then role, then node)",
           "additionalProperties": {
             "type": "object"
           },
           "propertyNames": {
-            "pattern": "^(all|node[1-9][0-9]*)$"
+            "pattern": "^(all|bp|en|pn|node[1-9][0-9]*)$"
           }
         },
         "capabilities": {

@@ -322,11 +322,11 @@ func (w *Workspace) opener() resource.Opener {
 }
 
 // applyConfigOverrides applies the workspace's config-knob overrides to one
-// node's spec: the "all" scope first, then that node's own scope (so a node
-// override wins). Each entry is a dot-path "key=value"; an unknown key or a
-// malformed entry is an error, never a silent no-op.
-func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error {
-	for _, kv := range w.configOverridesFor(index) {
+// node's spec, most-general-first, so the narrowest scope wins. Each entry is a
+// dot-path "key=value"; an unknown key or a malformed entry is an error, never
+// a silent no-op.
+func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, role node.Role, index int) error {
+	for _, kv := range w.configOverridesFor(role, index) {
 		key, value, ok := strings.Cut(kv, "=")
 		if !ok || key == "" {
 			return fmt.Errorf("config override %q must be key=value", kv)
@@ -339,14 +339,16 @@ func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error
 }
 
 // configOverridesFor returns the config overrides that apply to one node,
-// most-general-first: "all" then "node<N>" (node wins). It is the single source
-// of which overrides shape a node's config — applyConfigOverrides applies them
-// and the config step records them as provenance, so the two never diverge. A
-// node reads only its own "node<N>" scope, so one node's override never leaks
-// into another's config.
-func (w *Workspace) configOverridesFor(index int) []string {
+// most-general-first: "all", then the node's role, then the node itself, so the
+// narrowest scope wins.
+//
+// It is the single source of which overrides shape a node's config —
+// applyConfigOverrides applies them and the config step records them as
+// provenance, so the two never diverge. A node reads only its own "node<N>"
+// scope, so one node's override never leaks into another's config.
+func (w *Workspace) configOverridesFor(role node.Role, index int) []string {
 	var out []string
-	for _, scope := range []string{node.ScopeAll, fmt.Sprintf("node%d", index)} {
+	for _, scope := range node.ScopeFor(role, index) {
 		out = append(out, w.state.ConfigSet[scope]...)
 	}
 	return out
@@ -407,13 +409,19 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	return out
 }
 
-// recordConfigSet stores config overrides under a scope ("all" or "node<N>"),
-// appending to what that scope already holds so repeated --set calls accumulate.
-// It validates each entry against the knob contract up front, so a bad override
-// is refused at the point it is set rather than at render.
+// recordConfigSet stores config overrides under a scope, appending to what that
+// scope already holds so repeated --set calls accumulate.
+//
+// Both halves are validated up front, so a bad override is refused where it is
+// set rather than at render. The scope was not checked at all before: a typo
+// stored values under a key nothing reads, and the node it was meant for came
+// up with a config that silently lacked them.
 func (w *Workspace) recordConfigSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
+	}
+	if !node.ValidScope(scope) {
+		return fmt.Errorf("config scope %q must be %s", scope, node.ScopeWords())
 	}
 	var probe nodeconfig.Spec
 	for _, kv := range sets {

@@ -503,10 +503,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Config) > 0 {
 		spec.EnvConfig = map[string][]string{}
 		for scope, kvs := range env.Config {
-			// Config takes no role scope yet; V5 widens it to the same
-			// three forms launch already accepts.
-			if scope != node.ScopeAll && node.ScopeIndex(scope) == 0 {
-				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be %q or \"node<N>\"", c.ID, scope, node.ScopeAll)
+			if !node.ValidScope(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))

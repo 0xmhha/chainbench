@@ -71,6 +71,24 @@ func ScopeFor(role Role, index int) []string {
 	return out
 }
 
+// ScopeRank orders a scope from most general to most specific, so a caller
+// that holds several can apply them in the order the fold expects without
+// re-deriving which is which. A scope that is not one ranks last; it is not
+// applied, and ranking it here keeps a sort total rather than undefined.
+func ScopeRank(s string) int {
+	switch {
+	case s == ScopeAll:
+		return 0
+	case ScopeIndex(s) > 0:
+		return 2
+	default:
+		if _, err := NormalizeRole(s); err == nil {
+			return 1
+		}
+		return 3
+	}
+}
+
 // ScopeWords says what a scope may be, so every surface refuses one in the same
 // words and names the same roles.
 func ScopeWords() string {

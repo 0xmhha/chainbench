@@ -355,8 +355,9 @@ type NetConfigIn struct {
 	// Set are dot-path "key=value" config-knob overrides to record. Empty
 	// renders with whatever overrides the workspace already holds.
 	Set []string `cb:"set" help:"config knob override key=value (repeatable; supported keys: syncMode, httpHost, metricsHost)"`
-	// ScopedSet records overrides for several scopes at once ("all", "node<N>"),
-	// the form the up flow and a DSL env pass. It is applied before Set.
+	// ScopedSet records overrides for several scopes at once ("all", a role,
+	// "node<N>"), the form the up flow and a DSL env pass. It is applied before
+	// Set, most general scope first.
 	ScopedSet map[string][]string
 }
 
@@ -371,7 +372,7 @@ func NetConfig(ctx context.Context, d Deps, in NetConfigIn) (StepOut, error) {
 			}
 		}
 		if len(in.Set) > 0 {
-			scope := "all"
+			scope := node.ScopeAll
 			if in.Node > 0 {
 				scope = fmt.Sprintf("node%d", in.Node)
 			}
@@ -546,9 +547,9 @@ func NetHealth(ctx context.Context, d Deps, in NetHealthIn) (NetHealthOut, error
 	return NetHealthOut{Nodes: nodes}, err
 }
 
-// sortedScopes orders config-override scopes deterministically: "all" first,
-// then the node scopes by index, so recording is reproducible regardless of
-// map iteration order.
+// sortedScopes orders config-override scopes deterministically, most general
+// first, so recording is reproducible regardless of map iteration order. Ties
+// within a rank are broken by name for the same reason.
 func sortedScopes(m map[string][]string) []string {
 	if len(m) == 0 {
 		return nil
@@ -558,11 +559,9 @@ func sortedScopes(m map[string][]string) []string {
 		scopes = append(scopes, k)
 	}
 	sort.Slice(scopes, func(i, j int) bool {
-		if scopes[i] == "all" {
-			return true
-		}
-		if scopes[j] == "all" {
-			return false
+		ri, rj := node.ScopeRank(scopes[i]), node.ScopeRank(scopes[j])
+		if ri != rj {
+			return ri < rj
 		}
 		return scopes[i] < scopes[j]
 	})
