@@ -220,11 +220,27 @@ type ChainPlugin interface {
 	GenesisTemplate() []byte
 }
 
-// StaticPlugin is a ChainPlugin assembled from already-resolved parts. It backs
-// a chain whether its manifest came from the embedded set or an external file,
-// so both paths produce the same object. The family and protocol are supplied by
-// the composition layer (which may import concrete families), keeping this core
-// type free of any consensus/chain import.
+// StaticPlugin is a ChainPlugin assembled from already-resolved parts, and it
+// is where a chain is put together.
+//
+// A chain is four choices and two files. The choices are which consensus it
+// runs, which accounts protocol its transactions and system contracts follow,
+// which flag vocabulary its binary accepts (in the manifest, since it is data),
+// and the chain constants; the files are that manifest and a genesis template.
+// Stating them as one literal is what makes a chain's own folder the place to
+// read what it is — the three built-in chains each hand-wrote an identical
+// four-method type around the same four values before this.
+//
+// A chain that must differ from the implementation it composes embeds it and
+// overrides the one method, which is Go's answer to inheritance here:
+//
+//	type family struct{ wbft.Family }
+//	func (family) PortReservation() node.Reservation { ... }
+//
+// Nothing is copied — the embedded value answers everything else.
+//
+// The family and protocol are supplied by the caller (which may import concrete
+// families), keeping this core type free of any consensus/chain import.
 type StaticPlugin struct {
 	M     Manifest
 	Fam   ConsensusFamily
@@ -240,11 +256,21 @@ func (p StaticPlugin) GenesisTemplate() []byte     { return p.Tmpl }
 var chains = map[string]ChainPlugin{}
 
 // Register adds a chain plugin. Intended to be called from a chain package's
-// init(); panics on duplicate id so a wiring mistake fails loudly at startup.
+// init(); panics on a duplicate or half-wired plugin so a wiring mistake fails
+// at startup rather than as a nil dereference in the middle of a composition.
 func Register(p ChainPlugin) {
+	if p == nil {
+		panic("registry: nil chain plugin")
+	}
 	id := p.Manifest().ID
 	if id == "" {
 		panic("registry: plugin with empty manifest id")
+	}
+	if p.Family() == nil {
+		panic(fmt.Sprintf("registry: chain %q composes no consensus family", id))
+	}
+	if p.Protocol().Name == "" {
+		panic(fmt.Sprintf("registry: chain %q composes no accounts protocol", id))
 	}
 	if _, dup := chains[id]; dup {
 		panic(fmt.Sprintf("registry: duplicate chain plugin %q", id))

@@ -213,6 +213,37 @@ poa family 의 문자열 목록에 그 플래그가 없어서 빠졌는데, wemi
 
 ---
 
+## 4.7 체인 하나는 네 가지 선택이다
+
+V11 이후 체인 폴더의 파일 하나가 그 넷을 고른다.
+
+```go
+registry.Register(registry.StaticPlugin{
+    M:     registry.MustParseManifest(manifestJSON),  // 체인 상수 + 방언
+    Fam:   poa.New(),                                 // 합의
+    Proto: protocol.WeMix(),                          // 계정·암호
+    Tmpl:  genesisTmpl,                               // genesis 템플릿
+})
+```
+
+전에는 세 체인이 각자 똑같은 네 메서드짜리 타입을 손으로 썼다. 선택이 체인마다
+네 곳에 흩어져 있었고, 하나를 빠뜨려도 검사하는 것이 없었다.
+
+공용 구현은 복제되지 않는다. stablenet 과 wbft 는 서로 다른 프로젝트인데 같은
+`wbft.Family` 를 고른다. 한 메서드만 달라야 하면 임베딩으로 덮는다.
+
+```go
+type family struct{ wbft.Family }
+func (family) PortReservation() node.Reservation { ... }
+```
+
+**기존 합의와 계정 프로토콜을 빌려 쓰는 EVM 체인은 Go 파일 없이 더할 수 있다.**
+매니페스트와 genesis 템플릿 두 파일이면 된다(2026-09-14 실측: `--manifest` 로
+새 체인을 열어 확인). 계정 모델이나 시스템 컨트랙트 방식이 다르면 accounts SDK
+작업이 필요하고, 그건 다른 저장소다.
+
+---
+
 ## 5. 앞으로의 규칙
 
 **낱말을 새로 쓰기 전에 이 문서를 본다.** 이미 쓰이고 있으면 다른 낱말을 고르거나, 이
@@ -270,6 +301,7 @@ endpoint 로 셌고, 그래서 `pn` 이 endpoint 로 보고됐다. 무엇이 놓
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-09-14 | V11 반영. 체인 하나가 네 선택이라는 것을 적음 |
 | 2026-09-14 | V7 반영. 방언의 주인은 매니페스트 |
 | 2026-09-14 | V10 반영. 합의와 바이너리 방언을 가름 |
 | 2026-09-14 | V2 반영. 정의서는 이름만 적는다 |

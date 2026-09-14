@@ -134,6 +134,21 @@ type ProbeSpec struct {
 	ChainIDs []int64 `json:"chain_ids,omitempty"` // optional chain-id gate for disambiguation
 }
 
+// MustParseManifest is ParseManifest for a manifest embedded in the binary.
+//
+// A chain's own manifest is compiled in, so a parse failure is a build that
+// should not have shipped rather than a condition to handle: every chain
+// package did the same four lines of parse-and-panic, and the panic is the
+// honest answer. An operator's manifest arrives through ParseManifest, where a
+// bad file is an error they can fix.
+func MustParseManifest(b []byte) Manifest {
+	m, err := ParseManifest(b)
+	if err != nil {
+		panic(fmt.Sprintf("registry: embedded manifest: %v", err))
+	}
+	return m
+}
+
 // ParseManifest decodes a Manifest from JSON bytes and validates required
 // fields.
 func ParseManifest(b []byte) (Manifest, error) {

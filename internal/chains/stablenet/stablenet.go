@@ -1,8 +1,10 @@
-// Package stablenet registers the go-stablenet chain plugin: the wbft consensus
-// family + the stablenet accounts protocol + the stablenet manifest and genesis
-// template (anzeon), embedded from this folder. It is a thin composition layer
-// (decision D9) — importing it for side effects registers the chain (and, via
-// caps.go, its capabilities).
+// Package stablenet composes the go-stablenet chain: the wbft consensus family,
+// the stablenet accounts protocol, and the manifest and genesis template
+// embedded from this folder. Importing it for side effects registers the chain
+// (and, via caps.go, its capabilities).
+//
+// Everything this chain IS, is in this folder: the four choices are in the
+// literal below and the chain's constants are in manifest.json beside it.
 package stablenet
 
 import (
@@ -20,17 +22,11 @@ var manifestJSON []byte
 //go:embed genesis.json
 var genesisTmpl []byte
 
-type plugin struct{ m registry.Manifest }
-
 func init() {
-	m, err := registry.ParseManifest(manifestJSON)
-	if err != nil {
-		panic(err)
-	}
-	registry.Register(plugin{m: m})
+	registry.Register(registry.StaticPlugin{
+		M:     registry.MustParseManifest(manifestJSON),
+		Fam:   wbft.New(),
+		Proto: protocol.StableNet(),
+		Tmpl:  genesisTmpl,
+	})
 }
-
-func (p plugin) Manifest() registry.Manifest      { return p.m }
-func (p plugin) Family() registry.ConsensusFamily { return wbft.New() }
-func (p plugin) Protocol() protocol.Protocol      { return protocol.StableNet() }
-func (p plugin) GenesisTemplate() []byte          { return genesisTmpl }

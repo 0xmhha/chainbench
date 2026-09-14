@@ -92,3 +92,63 @@ func TestValidatorsCarryBLS_IsTheFamilysAnswer(t *testing.T) {
 		}
 	}
 }
+
+// TestRegister_RefusesAHalfWiredPlugin: a chain is four choices, and a plugin
+// missing one of them is a wiring mistake that used to surface much later.
+//
+// Each chain hand-wrote a four-method type, so the choices were made in four
+// places per chain and nothing checked they were all made. Composing one
+// literal makes an omission possible in a new way — a zero field — so
+// registration refuses it where the mistake is, rather than as a nil
+// dereference in the middle of a composition.
+func TestRegister_RefusesAHalfWiredPlugin(t *testing.T) {
+	m := registry.MustParseManifest([]byte(`{
+		"id":"probe-only","binary":"gx","dialect":"geth114","chain_id":1,"network_id":1,
+		"miner_recommit":"duration","bootstrap":{"type":"static"},"consensus_family":"wbft"}`))
+
+	for name, p := range map[string]registry.ChainPlugin{
+		"no family":   registry.StaticPlugin{M: m},
+		"no protocol": registry.StaticPlugin{M: m, Fam: mustFamily(t, "wbft")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("registering a plugin with %s must panic", name)
+				}
+			}()
+			registry.Register(p)
+		})
+	}
+}
+
+func mustFamily(t *testing.T, id string) registry.ConsensusFamily {
+	t.Helper()
+	f, err := registry.FamilyByName(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return f
+}
+
+// TestEveryChainComposesAllFourChoices reads the built-in chains the way an
+// operator reads a chain's folder: what consensus, what accounts protocol, what
+// flag vocabulary, what constants.
+func TestEveryChainComposesAllFourChoices(t *testing.T) {
+	for _, id := range registry.Names() {
+		p, err := registry.Get(id)
+		if err != nil {
+			t.Fatalf("chain %q: %v", id, err)
+		}
+		m := p.Manifest()
+		switch {
+		case p.Family() == nil:
+			t.Errorf("chain %q composes no consensus family", id)
+		case p.Protocol().Name == "":
+			t.Errorf("chain %q composes no accounts protocol", id)
+		case m.Dialect == "":
+			t.Errorf("chain %q names no flag vocabulary", id)
+		case m.Binary == "":
+			t.Errorf("chain %q names no binary", id)
+		}
+	}
+}
