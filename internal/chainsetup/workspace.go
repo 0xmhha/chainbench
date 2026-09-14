@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -20,10 +19,6 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
-
-// nodeScopeRE matches a per-node override scope key ("node1", "node12"), the
-// storage form both config and launch overrides share.
-var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
 
 // Step is a completed composition step (persistence model owned by session).
 type Step = session.Step
@@ -351,7 +346,7 @@ func (w *Workspace) applyConfigOverrides(spec *nodeconfig.Spec, index int) error
 // into another's config.
 func (w *Workspace) configOverridesFor(index int) []string {
 	var out []string
-	for _, scope := range []string{"all", fmt.Sprintf("node%d", index)} {
+	for _, scope := range []string{node.ScopeAll, fmt.Sprintf("node%d", index)} {
 		out = append(out, w.state.ConfigSet[scope]...)
 	}
 	return out
@@ -387,8 +382,8 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
 	}
-	if !validLaunchScope(scope) {
-		return fmt.Errorf("launch scope %q must be \"all\", a role (bp, en), or \"node<N>\"", scope)
+	if !node.ValidScope(scope) {
+		return fmt.Errorf("launch scope %q must be %s", scope, node.ScopeWords())
 	}
 	if _, err := ParseOverrides(sets); err != nil {
 		return err
@@ -406,30 +401,10 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 // layer is last-write-wins), so a node override beats a role override beats all.
 func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	var out []string
-	roleScope := ""
-	if r, err := node.NormalizeRole(role); err == nil {
-		roleScope = string(r)
-	}
-	for _, scope := range []string{"all", roleScope, fmt.Sprintf("node%d", index)} {
-		if scope == "" {
-			continue
-		}
+	for _, scope := range node.ScopeFor(node.Role(role), index) {
 		out = append(out, w.state.LaunchSet[scope]...)
 	}
 	return out
-}
-
-// validLaunchScope reports whether scope is a launch scope the workspace
-// applies: "all", a role, or "node<N>".
-//
-// The role list is spelled out here rather than asked of the vocabulary, which
-// is why "pn" is missing from it. That duplication is V4's to remove.
-func validLaunchScope(scope string) bool {
-	switch scope {
-	case "all", string(node.RoleBP), string(node.RoleEN):
-		return true
-	}
-	return nodeScopeRE.MatchString(scope)
 }
 
 // recordConfigSet stores config overrides under a scope ("all" or "node<N>"),

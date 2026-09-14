@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
 // SchemaV2 is the canonical v2 grammar (schema/v2.schema.json). The strict
@@ -491,8 +492,8 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Launch) > 0 {
 		spec.EnvLaunch = map[string][]string{}
 		for scope, kvs := range env.Launch {
-			if !launchScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be \"all\", a role (bp, en), or \"node<N>\"", c.ID, scope)
+			if !node.ValidScope(scope) {
+				return Spec{}, fmt.Errorf("dsl: case %s: launch scope %q must be %s", c.ID, scope, node.ScopeWords())
 			}
 			for k, v := range kvs {
 				spec.EnvLaunch[scope] = append(spec.EnvLaunch[scope], fmt.Sprintf("%s=%v", k, v))
@@ -502,8 +503,10 @@ func lowerCase(c CaseV2) (Spec, error) {
 	if len(env.Config) > 0 {
 		spec.EnvConfig = map[string][]string{}
 		for scope, kvs := range env.Config {
-			if scope != "all" && !nodeScopeRE.MatchString(scope) {
-				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be \"all\" or \"node<N>\"", c.ID, scope)
+			// Config takes no role scope yet; V5 widens it to the same
+			// three forms launch already accepts.
+			if scope != node.ScopeAll && node.ScopeIndex(scope) == 0 {
+				return Spec{}, fmt.Errorf("dsl: case %s: config scope %q must be %q or \"node<N>\"", c.ID, scope, node.ScopeAll)
 			}
 			for k, v := range kvs {
 				spec.EnvConfig[scope] = append(spec.EnvConfig[scope], fmt.Sprintf("%s=%v", k, v))
@@ -658,14 +661,3 @@ func lowerHookActions(caseID, hook string, stmts []map[string]any) ([]map[string
 	}
 	return out, nil
 }
-
-// nodeScopeRE matches a per-node config scope key ("node1", "node12").
-var nodeScopeRE = regexp.MustCompile(`^node[1-9][0-9]*$`)
-
-// launchScopeRE matches a launch scope key: "all", a role, or "node<N>".
-// Launch is scoped more widely than config because a launch flag often applies
-// to a whole role (every producer mines), not just one node.
-//
-// The roles are spelled out here rather than drawn from the vocabulary, which
-// is why "pn" is missing from it. That duplication is V4's to remove.
-var launchScopeRE = regexp.MustCompile(`^(all|bp|en|node[1-9][0-9]*)$`)
