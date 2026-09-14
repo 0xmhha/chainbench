@@ -43,16 +43,6 @@ func (w *Workspace) binaryFor(ns node.Record, fallback string) string {
 	return fallback
 }
 
-func (w *Workspace) binary(arg string) (string, error) {
-	if arg != "" {
-		return arg, nil
-	}
-	if w.state.Binary != "" {
-		return w.state.Binary, nil
-	}
-	return "", fmt.Errorf("chainsetup: a node binary is required (--binary, or set it at `chain new`)")
-}
-
 // Init initializes each node's datadir from the built genesis (`<binary> init`),
 // through the driver's Initializer capability.
 func (w *Workspace) Init(ctx context.Context, binaryArg string) (string, error) {
@@ -985,8 +975,13 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 		if err != nil {
 			return err
 		}
+		// The binary is asked for separately because a name is not a path: a
+		// bare name is whatever the target's PATH resolves, and stating it
+		// would report a binary the launch will find as missing.
+		if err := checkBinary(ctx, t, bin); err != nil {
+			lines = append(lines, "  "+err.Error())
+		}
 		want := []inspector.Path{
-			{Path: bin, Purpose: "binary"},
 			{Path: w.state.GenesisPath, Purpose: "genesis"},
 			{Path: ns.DataDir, Node: ns.Index, Purpose: "datadir"},
 			{Path: ns.ConfigPath, Node: ns.Index, Purpose: "config"},
@@ -1006,8 +1001,41 @@ func (w *Workspace) checkPaths(ctx context.Context, bin string) error {
 	if len(lines) == 0 {
 		return nil
 	}
-	return fmt.Errorf("chainsetup: start: %d path(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
+	return fmt.Errorf("chainsetup: start: %d thing(s) the launch needs are missing on the target:\n%s\nrun the earlier steps (`chain genesis`, `chain config`, `chain init`) or check --binary",
 		len(lines), strings.Join(uniq(lines), "\n"))
+}
+
+// checkBinary reports the binary as missing when the target cannot produce it,
+// whether it was named as a path or as a command.
+//
+// It is the one pre-launch check that cannot be a file lookup. A workspace-
+// config places the binary under the data root and the answer is a path; with
+// no workspace-config the name is the target's to resolve on PATH, and asking
+// the file store about it stats it against the working directory and answers
+// no for a binary the launch would have found.
+func checkBinary(ctx context.Context, t *resource.Access, bin string) error {
+	if bin == "" {
+		return fmt.Errorf("binary: none is set")
+	}
+	if strings.ContainsRune(bin, '/') {
+		ok, err := t.Files.Exists(ctx, bin)
+		if err != nil {
+			return fmt.Errorf("binary %s: %v", bin, err)
+		}
+		if !ok {
+			return fmt.Errorf("binary %s: not on the target", bin)
+		}
+		return nil
+	}
+	path, ok, err := inspector.OnPath(ctx, t.Runner, bin)
+	if err != nil {
+		return fmt.Errorf("binary %s: %v", bin, err)
+	}
+	if !ok {
+		return fmt.Errorf("binary %s: not on the target's PATH (name it in a workspace-config, or pass --binary with a path)", bin)
+	}
+	_ = path
+	return nil
 }
 
 // uniq drops repeated lines, keeping first occurrence order — the binary and

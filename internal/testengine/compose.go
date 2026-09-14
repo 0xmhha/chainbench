@@ -18,6 +18,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
 	"github.com/0xmhha/chainbench/internal/core/process"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/dsl"
 	"github.com/0xmhha/chainbench/internal/resource"
 )
@@ -175,7 +176,18 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		binary = topoBinary
 	}
 	if binary == "" {
-		return composition{}, fmt.Errorf("the spec declares no binary and none was given")
+		// Neither the run nor the declaration named one, so the chain does. A
+		// definition that repeats the chain's own name for its binary is how
+		// one binary came to be spelled two ways across the specs; leaving it
+		// out is now the normal case, and chainsetup places the name.
+		p, err := registry.Get(chain)
+		if err != nil {
+			return composition{}, fmt.Errorf("no binary was given and chain %q is not known: %w", chain, err)
+		}
+		binary = p.Manifest().Binary
+	}
+	if binary == "" {
+		return composition{}, fmt.Errorf("no binary was given and chain %q names none", chain)
 	}
 
 	var validators, endpoints, proxies int
