@@ -15,7 +15,7 @@
   },
   "steps": [
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"

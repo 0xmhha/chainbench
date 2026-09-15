@@ -19,7 +19,7 @@
       "from": "node1",
       "gas": "100000",
       "save": "hash",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "do": "read",
@@ -37,7 +37,7 @@
       "is": "0x1"
     },
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "GreaterOrEqual",
       "expect": "logs",
       "fromBlock": "$blk",
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "Equal",
       "expect": "logs",
       "fromBlock": "$blk",

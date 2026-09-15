@@ -32,7 +32,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "propHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "do": "read",
@@ -59,14 +59,14 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "apHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "data": "0x08ae4b0c0000000000000000000000005400d8b543eaf6738c7b44799623bea88fd0f5ee",
       "do": "read",
       "save": "membersRet",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "expect": "txStatus",

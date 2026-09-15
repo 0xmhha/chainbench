@@ -34,7 +34,7 @@
       "expect": "revert",
       "key": "$acctKey",
       "on": "en1",
-      "to": "0x0000000000000000000000000000000000001002"
+      "to": "govMasterMinter"
     },
     {
       "expect": "txStatus",

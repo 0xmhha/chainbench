@@ -15,31 +15,31 @@
   },
   "steps": [
     {
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "nativeCoinAdapter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001001",
+      "address": "govValidator",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001002",
+      "address": "govMasterMinter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govMinter",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"
     },
     {
-      "address": "0x0000000000000000000000000000000000001004",
+      "address": "govCouncil",
       "compare": "NotEqual",
       "expect": "codeAt",
       "is": "0x"

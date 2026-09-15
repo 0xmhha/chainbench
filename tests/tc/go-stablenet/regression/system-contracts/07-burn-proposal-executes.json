@@ -21,7 +21,7 @@
       "gas": "0xb71b0",
       "on": "node1",
       "save": "burnHash",
-      "to": "0x0000000000000000000000000000000000001003",
+      "to": "govMinter",
       "value": "0x38d7ea4c68000"
     },
     {
@@ -49,7 +49,7 @@
       "gas": "0xb71b0",
       "on": "node2",
       "save": "burnApHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "do": "read",
@@ -66,7 +66,7 @@
       "do": "read",
       "save": "proposalsRet",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "expect": "txStatus",

@@ -59,7 +59,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "addHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -86,7 +86,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "addApHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "sendTx",

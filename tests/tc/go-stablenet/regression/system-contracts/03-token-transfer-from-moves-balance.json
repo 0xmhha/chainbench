@@ -63,7 +63,7 @@
       "key": "$ownerKey",
       "on": "en1",
       "save": "approveHash",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "do": "read",
@@ -83,7 +83,7 @@
       "key": "$spenderKey",
       "on": "en1",
       "save": "transferFromHash",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "do": "read",
@@ -120,7 +120,7 @@
       "data": "$balOfRecipient",
       "expect": "call",
       "is": "0x00000000000000000000000000000000000000000000000000000000000f4240",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     }
   ]
 }

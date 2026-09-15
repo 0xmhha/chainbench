@@ -19,7 +19,7 @@
       "data": "0x18160ddd",
       "expect": "call",
       "is": "0x",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     }
   ]
 }

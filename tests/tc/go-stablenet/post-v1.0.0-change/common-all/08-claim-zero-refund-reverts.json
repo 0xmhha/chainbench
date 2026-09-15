@@ -36,7 +36,7 @@
       "key": "$acctKey",
       "on": "en1",
       "save": "claimHash",
-      "to": "0x0000000000000000000000000000000000001003"
+      "to": "govMinter"
     },
     {
       "expect": "txStatus",

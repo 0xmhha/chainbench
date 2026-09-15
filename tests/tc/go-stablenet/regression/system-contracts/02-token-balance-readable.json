@@ -19,14 +19,14 @@
       "do": "read",
       "save": "bal",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     },
     {
       "compare": "GreaterOrEqual",
       "data": "0x18160ddd",
       "expect": "call",
       "is": "$bal",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     }
   ]
 }

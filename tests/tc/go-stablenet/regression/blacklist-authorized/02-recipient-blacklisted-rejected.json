@@ -21,7 +21,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "addHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -48,14 +48,14 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "addApHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "data": "0xfe575a8700000000000000000000000000000000000000000000000000000000c0ffee32",
       "do": "read",
       "save": "isBl",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000B00003"
+      "to": "accountManager"
     },
     {
       "do": "sendTx",
@@ -74,7 +74,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "rmHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "do": "read",
@@ -101,7 +101,7 @@
       "gas": "0x16e360",
       "on": "node2",
       "save": "rmApHash",
-      "to": "0x0000000000000000000000000000000000001004"
+      "to": "govCouncil"
     },
     {
       "expect": "txStatus",

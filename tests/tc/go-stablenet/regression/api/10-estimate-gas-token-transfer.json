@@ -20,7 +20,7 @@
       "expect": "estimateGas",
       "from": "node1",
       "is": "21001",
-      "to": "0x0000000000000000000000000000000000001000"
+      "to": "nativeCoinAdapter"
     }
   ]
 }

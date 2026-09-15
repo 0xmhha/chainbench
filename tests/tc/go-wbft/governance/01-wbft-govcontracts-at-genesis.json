@@ -18,28 +18,28 @@
     {
       "expect": "codeAt",
       "on": "node1",
-      "address": "0x0000000000000000000000000000000000001000",
+      "address": "govConfig",
       "compare": "NotEqual",
       "is": "0x"
     },
     {
       "expect": "codeAt",
       "on": "node1",
-      "address": "0x0000000000000000000000000000000000001001",
+      "address": "govStaking",
       "compare": "NotEqual",
       "is": "0x"
     },
     {
       "expect": "codeAt",
       "on": "node1",
-      "address": "0x0000000000000000000000000000000000001003",
+      "address": "govNCP",
       "compare": "NotEqual",
       "is": "0x"
     },
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000001000",
+      "to": "govConfig",
       "data": "0xd479ed71",
       "compare": "Equal",
       "is": "0x000000000000000000000000000000000000000000084595161401484a000000"
@@ -47,7 +47,7 @@
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000001000",
+      "to": "govConfig",
       "data": "0x478b6653",
       "compare": "Equal",
       "is": "0x00000000000000000000000000000000000000000052b7d2dcc80cd2e4000000"
@@ -55,7 +55,7 @@
     {
       "expect": "call",
       "on": "node1",
-      "to": "0x0000000000000000000000000000000000001001",
+      "to": "govStaking",
       "data": "0x6f1e8533000000000000000000000000c17d493883eaa3b4cceb0f214b273392d562f9d8",
       "compare": "Equal",
       "is": "0x0000000000000000000000000000000000000000000000000000000000000000"

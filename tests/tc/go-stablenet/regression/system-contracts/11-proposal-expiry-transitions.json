@@ -33,7 +33,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "propHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "do": "read",
@@ -95,7 +95,7 @@
       "gas": "0x16e360",
       "on": "node1",
       "save": "expHash",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "do": "read",
@@ -112,7 +112,7 @@
       "do": "read",
       "save": "proposalsRet",
       "source": "call",
-      "to": "0x0000000000000000000000000000000000001001"
+      "to": "govValidator"
     },
     {
       "expect": "txStatus",

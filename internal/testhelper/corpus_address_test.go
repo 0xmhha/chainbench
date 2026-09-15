@@ -316,3 +316,97 @@ func firstDifference(want, got string) string {
 	}
 	return "(lengths differ with no differing line)"
 }
+
+// TestCorpus_ANamedContractIsNotWrittenAsAnAddress is the ratchet that keeps
+// the addresses from coming back.
+//
+// It is deliberately not "no address literals anywhere". Plenty of addresses in
+// this corpus have no name to use instead: the markers a case deploys for
+// itself, the EVM's precompiles, an arbitrary recipient. What it forbids is
+// narrower and exact — writing the address of a contract the chain DOES name,
+// in a position where the name would have worked.
+//
+// The rule tightens on its own. Every contract added to a manifest brings its
+// address under this check without the check changing, which is what makes it a
+// ratchet rather than a list someone has to remember to extend.
+func TestCorpus_ANamedContractIsNotWrittenAsAnAddress(t *testing.T) {
+	err := filepath.WalkDir(corpusDir, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, ".json") || strings.HasSuffix(p, ".env.json") {
+			return err
+		}
+		raws, rerr := dsl.ReadFiles([]string{p})
+		if rerr != nil {
+			return fmt.Errorf("%s: %w", p, rerr)
+		}
+		spec, perr := dsl.Parse(raws[0])
+		if perr != nil {
+			return fmt.Errorf("%s: %w", p, perr)
+		}
+		named := byAddress(contractsOf(spec.Chain.Name))
+		if len(named) == 0 {
+			return nil
+		}
+		var doc any
+		if uerr := json.Unmarshal(raws[0], &doc); uerr != nil {
+			return fmt.Errorf("%s: %w", p, uerr)
+		}
+		rel := strings.TrimPrefix(filepath.ToSlash(p), corpusDir+"/")
+		for _, w := range writtenOutContracts(doc, named, "") {
+			t.Errorf("%s%s", rel, w)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// byAddress inverts a contract table so a literal can be looked up.
+func byAddress(contracts map[string]string) map[string]string {
+	out := make(map[string]string, len(contracts))
+	for name, addr := range contracts {
+		out[strings.ToLower(addr)] = name
+	}
+	return out
+}
+
+// writtenOutContracts reports every address position holding the address of a
+// contract the chain names.
+func writtenOutContracts(node any, named map[string]string, path string) []string {
+	var out []string
+	switch v := node.(type) {
+	case map[string]any:
+		if isStep(v) {
+			for _, key := range append(append([]string{}, signerArgs...), addressArgs...) {
+				if s, ok := v[key].(string); ok {
+					if name, found := named[strings.ToLower(s)]; found {
+						out = append(out, fmt.Sprintf("%s %s: writes %s, which this chain calls %q", path, key, s, name))
+					}
+				}
+			}
+			for _, key := range addressListArgs {
+				list, _ := v[key].([]any)
+				for i, e := range list {
+					s, ok := e.(string)
+					if !ok {
+						continue
+					}
+					if name, found := named[strings.ToLower(s)]; found {
+						out = append(out, fmt.Sprintf("%s %s[%d]: writes %s, which this chain calls %q", path, key, i, s, name))
+					}
+				}
+			}
+		}
+		for _, k := range sortedKeys(v) {
+			if contains(opaqueKeys, k) {
+				continue
+			}
+			out = append(out, writtenOutContracts(v[k], named, path+"."+k)...)
+		}
+	case []any:
+		for i, e := range v {
+			out = append(out, writtenOutContracts(e, named, fmt.Sprintf("%s[%d]", path, i))...)
+		}
+	}
+	return out
+}
