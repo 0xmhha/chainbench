@@ -93,35 +93,35 @@ type network struct {
 	rpcURL string // node 1
 }
 
-// boot launches `validators` validators + `endpoints` endpoints of chain on
+// boot launches `bp` block producers + `en` endpoints of chain on
 // binary via `chainbench net up`, and registers cleanup. extraSet are
 // additional genesis config overrides, given either bare ("bohoBlock=40") or
 // in the old "genesis.overrides.<key>=<v>" spelling.
-func boot(t *testing.T, cli, chain, binary string, validators, endpoints int, extraSet ...string) *network {
+func boot(t *testing.T, cli, chain, binary string, bp, en int, extraSet ...string) *network {
 	t.Helper()
 	extra := make([]string, 0, len(extraSet)*2)
 	for _, s := range extraSet {
 		extra = append(extra, "--set", strings.TrimPrefix(s, "genesis.overrides."))
 	}
-	return launch(t, cli, chain, binary, validators, endpoints, extra)
+	return launch(t, cli, chain, binary, bp, en, extra)
 }
 
 // bootOverlay is boot with a --genesis-overlay applied (an overlay file adds
 // capabilities + genesis fields deep-merged into the built genesis).
-func bootOverlay(t *testing.T, cli, chain, binary string, validators, endpoints int, overlay string) *network {
+func bootOverlay(t *testing.T, cli, chain, binary string, bp, en int, overlay string) *network {
 	t.Helper()
-	return launch(t, cli, chain, binary, validators, endpoints, []string{"--overlay", overlay})
+	return launch(t, cli, chain, binary, bp, en, []string{"--overlay", overlay})
 }
 
 // launch runs `chainbench net up` with extraArgs and registers cleanup.
-func launch(t *testing.T, cli, chain, binary string, validators, endpoints int, extraArgs []string) *network {
+func launch(t *testing.T, cli, chain, binary string, bp, en int, extraArgs []string) *network {
 	t.Helper()
-	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), validators, endpoints, extraArgs)
+	return launchPreset(t, cli, chain, binary, filepath.Join(repoRoot(t), "keys", "preset"), bp, en, extraArgs)
 }
 
 // launchPreset is launch with an explicit preset key set (e.g. a generated one
 // larger than the committed 5-node preset).
-func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, endpoints int, extraArgs []string) *network {
+func launchPreset(t *testing.T, cli, chain, binary, keysDir string, bp, en int, extraArgs []string) *network {
 	t.Helper()
 	// Use a SHORT datadir under /tmp, not t.TempDir(): a node's IPC endpoint is a
 	// unix-domain socket at <datadir>/nodeN/<binary>.ipc, and the ~104-byte socket
@@ -144,7 +144,7 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 	})
 	args := []string{"chain", "up",
 		"--workspace-dir", dir, "--chain", chain, "--binary", binary, "--keys", keysDir,
-		"--validators", itoa(validators), "--endpoints", itoa(endpoints),
+		"--bp", itoa(bp), "--en", itoa(en),
 	}
 	args = append(args, extraArgs...)
 	cmd := exec.Command(cli, args...)
