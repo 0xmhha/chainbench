@@ -266,10 +266,10 @@ func (family) PortReservation() node.Reservation { ... }
 |---|---|---|
 | 1차 | 공유하는 체인 구성 | `chain-preset` (아직 없다. P1 에서 만든다) |
 | 2차 | 그 테스트만 다른 것 | `LayerEnv` |
-| 3차 | CLI·MCP 가 실행할 때 덮는 것 | `LayerCommand` (N2, 지금은 `LayerCase`) |
+| 3차 | CLI·MCP 가 실행할 때 덮는 것 | `LayerCommand` |
 
-**층 이름 넷은 이 해석 순서와 같은 축이 아니다.** `LayerFamily`·`LayerRole` 은
-"누가 그 값을 계산했나" 를, `LayerEnv`·`LayerCase` 는 "어느 문서에서 왔나" 를
+**층 이름 넷은 이 해석 순서와 같은 축이 아니다.** `LayerHarness`·`LayerRole` 은
+"누가 그 값을 계산했나" 를, `LayerEnv`·`LayerCommand` 는 "어느 문서에서 왔나" 를
 말한다. 1차와 2차는 병합이 끝나면 둘 다 `LayerEnv` 로 들어오고 층은 그 둘을
 구분하지 못한다 — 정의서에 무엇을 덮었는지가 남으므로 구분할 필요가 없다.
 

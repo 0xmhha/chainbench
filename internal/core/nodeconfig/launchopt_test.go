@@ -75,7 +75,7 @@ func TestArgsUnsupportedKeyIsClassifiedError(t *testing.T) {
 
 func TestArgsSetIfSupportedSkipsSilently(t *testing.T) {
 	a := NewArgs(Geth110Wemix())
-	a.EnableIfSupported(KeyRPCDeprecatedPersonal, LayerFamily)
+	a.EnableIfSupported(KeyRPCDeprecatedPersonal, LayerHarness)
 	if len(a.Problems()) != 0 || a.Has(KeyRPCDeprecatedPersonal) {
 		t.Fatalf("harmless absence must skip: problems=%v has=%v",
 			a.Problems(), a.Has(KeyRPCDeprecatedPersonal))
@@ -99,7 +99,7 @@ func TestArgsOverrideKeepsPosition(t *testing.T) {
 	a := NewArgs(Geth114())
 	a.Set(KeyHTTPPort, "8545", LayerRole)
 	a.Set(KeySyncMode, "full", LayerEnv)
-	a.Set(KeyHTTPPort, "9999", LayerCase) // override must not reshuffle
+	a.Set(KeyHTTPPort, "9999", LayerCommand) // override must not reshuffle
 	want := []string{"--http.port", "9999", "--syncmode", "full"}
 	if got := a.Argv(); !equal(got, want) {
 		t.Fatalf("argv = %v, want %v", got, want)

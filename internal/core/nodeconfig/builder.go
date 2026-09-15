@@ -50,7 +50,7 @@ func (b *Builder) Build() ([]string, error) {
 	for _, ov := range b.overrides {
 		layer := ov.Layer
 		if layer == "" {
-			layer = LayerCase
+			layer = LayerCommand
 		}
 		if b.dialect.IsBool(ov.Key) {
 			a.Enable(ov.Key, layer)

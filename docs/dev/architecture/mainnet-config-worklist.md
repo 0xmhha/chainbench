@@ -183,11 +183,11 @@ netcompose" 로 시작하는 옛 패키지 주석을 갖고 있어 `doc.go` 의 
 | ID | 어긋난 이름 | 실제로 무엇인가 | 정한 이름 | 상태 |
 |---|---|---|---|---|
 | N1 | `env` (정의서의 블록·파일) | 체인 구성 선언. 지금은 "구성해라" 만 말할 수 있고 "이미 있는 체인에 붙어라" 를 말할 수 없다 | 보류 — §2.5.1 | **보류 (P 묶음 뒤)** |
-| N2 | `LayerCase` (`"case"`) | 테스트 정의서가 아니라 **CLI·MCP 가 넘긴 override** 다. 층을 밝히지 않은 값이 여기로 떨어진다(`builder.go:53`) | `LayerCommand` | 미착수 |
+| N2 | `LayerCase` (`"case"`) | 테스트 정의서가 아니라 **CLI·MCP 가 넘긴 override** 다. 층을 밝히지 않은 값이 여기로 떨어진다(`builder.go:53`) | `LayerCommand` | **완료 (2026-09-15)** |
 | N3 | `LayerEnv` (`"env.launch"`) | 선언이 정한 값. 정의서의 `launch` 블록만이 아니라 포트·HTTP·마이너 등 25곳이 이 층을 쓴다 | **그대로 둔다** | 판정 완료 |
 | N4 | `workspace.json` | 대상 워크스페이스가 아니라 한 체인의 **요청·구성·상태 기록**이다 | `chain-record.json` | 미착수 (W0 흡수) |
 | N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(`resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | `key-preset` · `existing-inputs` · `chain-preset` | 미착수 |
-| N6 | `LayerFamily` (`"family"`) | 합의 family 가 정하지 않는다. V10 이후 이 층의 세 값은 전부 하니스가 정하고 방언이 거른다 | `LayerHarness` | 미착수 |
+| N6 | `LayerFamily` (`"family"`) | 합의 family 가 정하지 않는다. V10 이후 이 층의 세 값은 전부 하니스가 정하고 방언이 거른다 | `LayerHarness` | **완료 (2026-09-15)** |
 
 ### N3 을 그대로 두는 이유
 

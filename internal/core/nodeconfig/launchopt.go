@@ -175,15 +175,30 @@ const (
 // display that was never built — nothing read it in the two years it existed,
 // so the value went and the diagnostic stayed.
 //
-// The names below do not match what actually supplies each layer; see the
-// naming worklist (N1).
+// These four are not the three tiers a declaration is merged through
+// (chain-preset, then the case's own override, then the command). The first
+// two name who COMPUTED a value and the last two which document SUPPLIED one,
+// and the first two tiers both arrive already merged as LayerEnv. That is on
+// purpose: which tier a declared value came from is answered by reading the
+// case file, not by the argv assembler.
 type Layer string
 
 const (
-	LayerFamily Layer = "family"     // consensus-family defaults
-	LayerRole   Layer = "role"       // role-derived (validator mines, ...)
-	LayerEnv    Layer = "env.launch" // DSL environment launch block
-	LayerCase   Layer = "case"       // per-test-case override — always wins
+	// LayerHarness is what the harness itself turns on for every node it
+	// composes, regardless of chain or role. It is not a consensus-family
+	// choice — the three knobs here (insecure unlock, the two legacy RPC
+	// permissions) are what a test network needs and what the dialect then
+	// filters by whether the binary has the flag at all.
+	LayerHarness Layer = "harness"
+	// LayerRole is derived from the node's own facts: where its data lives,
+	// which ports it holds, which key files it opens, whether it mines.
+	LayerRole Layer = "role"
+	// LayerEnv is what a declaration asked for, after the chain-preset and the
+	// case's own overrides have been merged into one document.
+	LayerEnv Layer = "env.launch"
+	// LayerCommand is what the invocation overrode, from the CLI or from MCP.
+	// It is also where an override that names no layer lands, and it wins.
+	LayerCommand Layer = "command"
 )
 
 // flagSpec is one dialect row: concrete spelling plus whether the flag is
