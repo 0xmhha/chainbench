@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/0xmhha/chainbench/internal/core/keyring"
@@ -97,5 +98,87 @@ func TestResolveAddressArgs_AnUnknownLabelInAnAddressArgumentStillFails(t *testi
 	}
 	if _, err := resolveAddressArgs(d, map[string]any{"of": []any{"nosuchlabel"}}); err != nil {
 		t.Fatalf("an unknown name in \"of\" must be left alone: %v", err)
+	}
+}
+
+// TestResolveAddress_NamesAContractTheChainDeclares.
+//
+// The address does not identify a contract: 0x…1001 is govValidator on
+// stablenet and govStaking on wbft. A spec that writes the address calls a
+// different contract the moment it runs anywhere else, and nothing says so.
+func TestResolveAddress_NamesAContractTheChainDeclares(t *testing.T) {
+	d, r := depsWithRing(t)
+	d.Contracts = map[string]string{"govMinter": "0x0000000000000000000000000000000000001003"}
+	node1, _ := r.Get("node1")
+
+	for _, tc := range []struct{ ref, want string }{
+		{"govMinter", "0x0000000000000000000000000000000000001003"},
+		{"node1", node1.Address},
+		{"0x00000000000000000000000000000000c0ffee01", "0x00000000000000000000000000000000c0ffee01"},
+	} {
+		got, err := ResolveAddress(d, tc.ref)
+		if err != nil {
+			t.Errorf("%s: %v", tc.ref, err)
+			continue
+		}
+		if got != tc.want {
+			t.Errorf("%s resolved to %s, want %s", tc.ref, got, tc.want)
+		}
+	}
+}
+
+// TestResolveAddress_SaysBothPlacesItLooked: a name that is neither is a typo,
+// and the reader has to learn which of the two vocabularies they missed.
+func TestResolveAddress_SaysBothPlacesItLooked(t *testing.T) {
+	d, _ := depsWithRing(t)
+	d.Contracts = map[string]string{"govMinter": "0x0000000000000000000000000000000000001003"}
+
+	_, err := ResolveAddress(d, "govMintr")
+	if err == nil {
+		t.Fatal("an unknown name must be refused")
+	}
+	for _, want := range []string{"node1", "govMinter"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("the refusal must list %s: %v", want, err)
+		}
+	}
+}
+
+// TestResolveAddress_AChainWithNoContractsSaysSo: wemix declares none because it
+// deploys them at run time. "this chain has no govMinter" and "this build does
+// not know the chain" lead to different next steps, so the message must not read
+// as a missing name.
+func TestResolveAddress_AChainWithNoContractsSaysSo(t *testing.T) {
+	d, _ := depsWithRing(t)
+
+	_, err := ResolveAddress(d, "govMinter")
+	if err == nil {
+		t.Fatal("a chain with no contract table cannot resolve a contract name")
+	}
+	if !strings.Contains(err.Error(), "no contracts") {
+		t.Errorf("message must say the chain declares none: %v", err)
+	}
+}
+
+// TestResolveAddressArgs_ASignerIsNeverAContract.
+//
+// A contract has no key. Letting its name stand in a signing position would
+// hand a node an address it cannot sign for, and the failure would come back
+// from the node as "unknown account" — about the address, not about the name
+// that produced it.
+func TestResolveAddressArgs_ASignerIsNeverAContract(t *testing.T) {
+	d, _ := depsWithRing(t)
+	d.Contracts = map[string]string{"govMinter": "0x0000000000000000000000000000000000001003"}
+
+	if _, err := resolveAddressArgs(d, map[string]any{"from": "govMinter"}); err == nil {
+		t.Error("a contract name in \"from\" must be refused")
+	}
+	// The same name in an address position resolves.
+	out, err := resolveAddressArgs(d, map[string]any{"to": "govMinter"})
+	if err != nil {
+		t.Fatalf("\"to\" must accept a contract: %v", err)
+	}
+	if out["to"] != "0x0000000000000000000000000000000000001003" {
+		t.Errorf("to = %v", out["to"])
 	}
 }

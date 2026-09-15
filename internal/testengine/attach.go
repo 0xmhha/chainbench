@@ -16,6 +16,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/core/keyring/store"
 	"github.com/0xmhha/chainbench/internal/core/node"
 	"github.com/0xmhha/chainbench/internal/core/nodeconfig"
+	"github.com/0xmhha/chainbench/internal/core/registry"
 	"github.com/0xmhha/chainbench/internal/core/rpc"
 	"github.com/0xmhha/chainbench/internal/core/session"
 	"github.com/0xmhha/chainbench/internal/dsl"
@@ -163,11 +164,12 @@ func NewAttachEngine(cfg AttachConfig) (Engine, error) {
 		return nil, fmt.Errorf("engine: attach engine: %w", err)
 	}
 	run := NewRunSpec(interp.Deps{
-		RPC:      func(u string) *rpc.Client { return rpc.Dial(u) },
-		Actions:  testhelper.Registry(),
-		Accounts: accts,
-		Keys:     keys,
-		Nodes:    cfg.Control,
+		RPC:       func(u string) *rpc.Client { return rpc.Dial(u) },
+		Actions:   testhelper.Registry(),
+		Accounts:  accts,
+		Keys:      keys,
+		Nodes:     cfg.Control,
+		Contracts: chainContracts(cfg.Chain),
 	})
 
 	build := NewAttachBuildEnv(cfg.Chain, eps)
@@ -271,4 +273,20 @@ func loadEntries(ring *store.KeySet, dir string) error {
 		}
 	}
 	return nil
+}
+
+// chainContracts is the named-contract table for a chain, or nil when there is
+// none to be had.
+//
+// A missing table is not an error here. The chain may deploy its contracts at
+// run time and so declare none, or the run may be attached to something this
+// build does not know. Either way a spec that names a contract fails where it
+// names it, saying what the chain declares, rather than here where the message
+// would be about wiring.
+func chainContracts(chain string) map[string]string {
+	p, err := registry.Get(chain)
+	if err != nil {
+		return nil
+	}
+	return p.Manifest().SystemContracts
 }

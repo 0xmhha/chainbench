@@ -25,6 +25,16 @@ type Deps struct {
 	// processes — attach mode — and those actions then fail with a clear reason
 	// rather than silently doing nothing.
 	Nodes NodeControl
+	// Contracts are the chain's own contracts by the name that chain calls
+	// them, so a spec can name one instead of writing the address.
+	//
+	// The address alone does not identify a contract: the same one holds a
+	// different contract on different chains, so a spec that writes it says
+	// nothing about what it meant and calls something else when it moves. The
+	// table is resolved per run from the chain's manifest; a chain that deploys
+	// its contracts at run time supplies none, and naming one there fails rather
+	// than resolving to an address that means something else.
+	Contracts map[string]string
 }
 
 // Registry holds the action, assertion and reader implementations a run

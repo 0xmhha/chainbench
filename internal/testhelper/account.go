@@ -96,6 +96,58 @@ func ResolveAccount(d *interp.Deps, ref string) (Account, error) {
 	return acct, nil
 }
 
+// ResolveAddress turns what a spec wrote in an address position into an
+// address, from either of the two things that have one.
+//
+//	0x...       an address written out
+//	<label>     an account in the key set
+//	<name>      a contract the chain declares
+//
+// Contracts are named rather than written out because the address does not
+// identify one: 0x…1001 is govValidator on stablenet and govStaking on wbft, so
+// a spec that writes it calls a different contract the moment it runs anywhere
+// else. Naming it makes that a refusal instead.
+//
+// An account wins a name collision. Key-set labels are chosen per run and a
+// contract table is fixed by the chain, so a run that introduces a clash meant
+// the thing it just created.
+func ResolveAddress(d *interp.Deps, ref string) (string, error) {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return "", fmt.Errorf("dsl: an address is required (an account label, a contract name, or a 0x address)")
+	}
+	if addressLiteral.MatchString(ref) {
+		return ref, nil
+	}
+	if d != nil && d.Keys != nil {
+		if _, ok := d.Keys.Get(keyring.Label(ref)); ok || ref == FaucetLabel {
+			acct, err := ResolveAccount(d, ref)
+			return acct.Address, err
+		}
+	}
+	if d != nil {
+		if addr, ok := d.Contracts[ref]; ok {
+			return addr, nil
+		}
+	}
+	return "", fmt.Errorf("dsl: unknown address %q; the key set holds %s, and this chain declares %s",
+		ref, strings.Join(knownLabels(d), ", "), knownContracts(d))
+}
+
+// knownContracts lists the chain's contract names for an error message, so a
+// reader learns whether the chain declares none at all or just not this one.
+func knownContracts(d *interp.Deps) string {
+	if d == nil || len(d.Contracts) == 0 {
+		return "no contracts (it deploys them at run time, or this build does not know it)"
+	}
+	names := make([]string, 0, len(d.Contracts))
+	for n := range d.Contracts {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return strings.Join(names, ", ")
+}
+
 // knownLabels lists the key set's labels for an error message, with the
 // reserved name included so a reader learns it exists at the moment they need
 // it.
@@ -121,7 +173,15 @@ func knownLabels(d *interp.Deps) []string {
 // address is — a label that worked in "from" but not in "address" would be a
 // half-usable feature, and a spec would go back to pasting hex for the half it
 // could not name.
-var addressArgs = []string{"address", "from", "to", "deployer", "funder"}
+var addressArgs = []string{"address", "to"}
+
+// signerArgs are the argument names that hold an account that will SIGN.
+//
+// They resolve against the key set only. A contract has no key, so letting a
+// contract name stand here would hand a node an address it cannot sign for and
+// the failure would come back as "unknown account" from the node, about the
+// address rather than about the name that produced it.
+var signerArgs = []string{"from", "deployer", "funder"}
 
 // addressListArgs are the arguments that hold a LIST of values, some of which
 // may be addresses.
@@ -153,7 +213,7 @@ func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, er
 			out[k] = v
 		}
 	}
-	for _, key := range addressArgs {
+	for _, key := range signerArgs {
 		ref, ok := spec[key].(string)
 		if !ok || ref == "" || addressLiteral.MatchString(ref) {
 			continue
@@ -164,6 +224,18 @@ func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, er
 		}
 		copyOnce()
 		out[key] = acct.Address
+	}
+	for _, key := range addressArgs {
+		ref, ok := spec[key].(string)
+		if !ok || ref == "" || addressLiteral.MatchString(ref) {
+			continue
+		}
+		addr, err := ResolveAddress(d, ref)
+		if err != nil {
+			return nil, err
+		}
+		copyOnce()
+		out[key] = addr
 	}
 	for _, key := range addressListArgs {
 		list, ok := spec[key].([]any)
@@ -194,14 +266,14 @@ func resolveAddressList(d *interp.Deps, list []any) ([]any, bool) {
 		if !ok || ref == "" || addressLiteral.MatchString(ref) {
 			continue
 		}
-		acct, err := ResolveAccount(d, ref)
+		addr, err := ResolveAddress(d, ref)
 		if err != nil {
 			continue
 		}
 		if out == nil {
 			out = append(out, list...)
 		}
-		out[i] = acct.Address
+		out[i] = addr
 	}
 	return out, out != nil
 }
