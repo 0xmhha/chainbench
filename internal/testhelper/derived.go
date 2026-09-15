@@ -68,7 +68,11 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 		event = "logs"
 	}
 	params := []any{event}
-	if filter := logsFilter(ac.Args); filter != nil {
+	filter, ferr := logsFilter(ac.Deps, ac.Args)
+	if ferr != nil {
+		return ferr
+	}
+	if filter != nil {
 		params = append(params, filter)
 	}
 	if extra, ok := ac.Args["params"].([]any); ok {
@@ -95,18 +99,22 @@ func (wsOpenAction) Do(ctx context.Context, ac *interp.ActionCtx) error {
 // logsFilter builds an eth_subscribe "logs" filter object from an action's
 // address and topics arguments, or nil when neither is given (subscribe to all
 // logs). topics passes through verbatim so a spec can use the null wildcard.
-func logsFilter(args map[string]any) map[string]any {
+func logsFilter(d *interp.Deps, args map[string]any) (map[string]any, error) {
 	filter := map[string]any{}
-	if addr, ok := args["address"].(string); ok && addr != "" {
+	if ref, ok := args["address"].(string); ok && ref != "" {
+		addr, err := ResolveAddress(d, ref)
+		if err != nil {
+			return nil, err
+		}
 		filter["address"] = addr
 	}
 	if topics, ok := args["topics"].([]any); ok {
 		filter["topics"] = topics
 	}
 	if len(filter) == 0 {
-		return nil
+		return nil, nil
 	}
-	return filter
+	return filter, nil
 }
 
 // wsCollectedAssertion drains a subscription an earlier wsOpen bound, passing
