@@ -85,6 +85,13 @@ func ResolveAccount(d *interp.Deps, ref string) (Account, error) {
 	}
 	entry, ok := d.Keys.Get(keyring.Label(label))
 	if !ok {
+		// A contract name reaching an account position is a wiring mistake, not
+		// a typo, and the two need different fixes. Saying "unknown account"
+		// about a name the chain does declare sends the reader to look for a
+		// missing key; this says which position accepted it and which did not.
+		if _, isContract := d.Contracts[ref]; isContract {
+			return Account{}, fmt.Errorf("dsl: %q is one of this chain's contracts, not an account — it has no key, so it cannot stand where one signs", ref)
+		}
 		return Account{}, fmt.Errorf("dsl: unknown account %q; the key set holds %s",
 			ref, strings.Join(knownLabels(d), ", "))
 	}

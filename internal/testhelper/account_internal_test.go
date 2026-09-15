@@ -182,3 +182,30 @@ func TestResolveAddressArgs_ASignerIsNeverAContract(t *testing.T) {
 		t.Errorf("to = %v", out["to"])
 	}
 }
+
+// TestResolveAccount_TellsAContractFromATypo.
+//
+// A contract name reaching an account position is a wiring mistake: some
+// argument resolves through the account path when it should take an address.
+// That happened — sendTx resolved "to" with ResolveAccount, so a case naming a
+// contract there failed with "unknown account govValidator", which reads as a
+// missing key and sends the reader looking in the wrong place.
+func TestResolveAccount_TellsAContractFromATypo(t *testing.T) {
+	d, _ := depsWithRing(t)
+	d.Contracts = map[string]string{"govValidator": "0x0000000000000000000000000000000000001001"}
+
+	_, err := ResolveAccount(d, "govValidator")
+	if err == nil {
+		t.Fatal("a contract is not an account")
+	}
+	for _, want := range []string{"contracts", "no key"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("the message must say it is a contract without a key: %v", err)
+		}
+	}
+	// A name that is neither still reads as a typo.
+	_, err = ResolveAccount(d, "nosuchthing")
+	if err == nil || !strings.Contains(err.Error(), "unknown account") {
+		t.Errorf("a plain typo must still say unknown account: %v", err)
+	}
+}

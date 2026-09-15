@@ -17,6 +17,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math/big"
 	"os"
 	"os/exec"
@@ -197,12 +198,49 @@ func (n *network) runCase(name string) string {
 	// Attached to the workspace, not composed from the spec: the network is
 	// already up with the capability this case is gated on, and composing again
 	// would test a different one.
-	spec := filepath.Join("tests", "specs", "system-contracts", name+".json")
-	out := n.run("run", "--workspace-dir", n.dir, "--attach", spec)
+	out := n.run("run", "--workspace-dir", n.dir, "--attach", casePath(n.t, name))
 	if skipRe.MatchString(out) {
 		n.t.Fatalf("case %q was skipped (capability/gating problem):\n%s", name, out)
 	}
 	return out
+}
+
+// casePath finds a committed case by its name, wherever the corpus keeps it.
+//
+// It searches rather than joining a path because the corpus has moved once
+// already: these cases lived under tests/specs/system-contracts until the tc
+// consolidation (#362) put them in tests/tc/<chain>/<group>/, with an ordering
+// prefix on the file name. The old path stayed here and nothing noticed —
+// these tests are behind a build tag, so neither the compiler nor CI reads it.
+// A search survives the next move; a missing or ambiguous name fails here,
+// naming what it looked for, instead of forty seconds later as "no such file".
+func casePath(t *testing.T, name string) string {
+	t.Helper()
+	var found []string
+	root := filepath.Join(repoRoot(t), "tests", "tc")
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(p, name+".json") {
+			return err
+		}
+		rel, rerr := filepath.Rel(repoRoot(t), p)
+		if rerr != nil {
+			return rerr
+		}
+		found = append(found, rel)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("looking for case %q under %s: %v", name, root, err)
+	}
+	switch len(found) {
+	case 1:
+		return found[0]
+	case 0:
+		t.Fatalf("no case named %q under %s", name, root)
+	default:
+		t.Fatalf("case %q is ambiguous: %v", name, found)
+	}
+	return ""
 }
 
 // skipRe matches a non-zero skip count in a run summary. A skipped case is a
