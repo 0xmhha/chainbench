@@ -60,6 +60,15 @@
 
 - `ethereum/08-legacy-transfer` · `ethereum/09-dynamic-fee-tx` · `wbft/01-block-period-one-second`
 
+**확인했고, 선언 쪽이 틀렸다 (2026-09-15).** wbft 를 띄워 `istanbul_getWbftExtraInfo`
+를 블록 1·5·32 에서 읽으니 필드가 `committedSeal·epochInfo·preparedSeal·
+prevCommittedSeal·prevPreparedSeal·prevRound·randaoReveal·round·vanityData` 뿐이고
+`gasTip` 이 없다. `08-legacy-transfer` 를 `--env wbft-bp4` 로 올리자
+`step 3 (read) failed: no "gasTip" in the result` 로 FAIL 했다.
+
+**기존 선언은 증거이되, 증거가 틀릴 수도 있다.** 그래서 뒤집으려면 추론이 아니라
+실행이 있어야 한다는 규칙은 그대로다 — 이번에는 실행이 내 추론 쪽을 지지했다.
+
 ### 주소에서 이름을 되찾을 때는 그 케이스의 체인 표를 쓴다
 
 `0x…1003` 은 stablenet 에서 govMinter 이고 wbft 에서 govNCP 다. 체인을 안 가리고

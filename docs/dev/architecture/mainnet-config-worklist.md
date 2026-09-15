@@ -392,7 +392,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 | P4 | 케이스에 `needs`, preset 에 `provides` 를 둔다 | HANDOFF 요구사항 5. 못 주는 값이면 SKIP 하고 사유를 남긴다 | D4 | 미착수 |
 | P5 | `applicableChains` 를 능력 요구로 바꾼다 — **오프라인으로 가능한 부분** | 판정표(`case-gate-table.md`)대로 `contract:`·`engine:`·`fork:` 로 표현되는 것을 옮겼다. 143 → **66건**. 판정 변화 0 | ~~V7~~, ~~P4~~, ~~P6~~, ~~매니페스트 능력~~ | **완료 (2026-09-15)** |
 | P5-L1 | 남은 게이트를 넓히는 작업 — **라이브 필요** | 35건이 남았고 둘로 갈린다. **`family:wbft` 14건**은 wbft 로, **게이트 불필요 21건**은 세 체인 전부로 넓어진다. `validate` 는 "돌 수 있다" 까지만 말하고 "통과한다" 는 말하지 못한다. 넓히는 것이 의도라 **판정표 비교도 X8 가드도 잡아 주지 못한다** — 오프라인 검사가 없는 유일한 묶음이다. 각 케이스를 `--env` 로 대상 체인에 올려 실제로 통과하는지 본 뒤 옮긴다 | ~~P5~~, `--env`(P6) | **라이브 대기** |
-| P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | 3건(`ethereum/08`·`ethereum/09`·`wbft/01`)이 `applicableChains: "stablenet,wbft"` 인데 `istanbul_getWbftExtraInfo` 로 `gasTip` 을 읽는다. stablenet genesis 에만 그 필드가 있어 `engine:anzeon` 으로 좁히려 했으나, **기존 선언이 wbft 를 허용하고 있어 근거 없이 뒤집을 수 없다.** wbft 를 띄워 그 필드를 읽어 보면 끝난다 | ~~P5~~ | **라이브 대기** |
+| P5-L2 | `gasTip` 이 wbft 헤더에 있는지 확인한다 | **해소 (2026-09-15). 없다.** 실제 wbft 망을 띄워 `istanbul_getWbftExtraInfo` 를 블록 1·5·32 에서 읽었더니 필드는 `committedSeal · epochInfo · preparedSeal · prevCommittedSeal · prevPreparedSeal · prevRound · randaoReveal · round · vanityData` 뿐이고 **`gasTip` 이 없다**. 그리고 `08-legacy-transfer` 를 `--env wbft-bp4` 로 실제로 올려 보니 `step 3 (read) failed: no "gasTip" in the result` 로 **FAIL** 했다. 즉 `applicableChains: "stablenet,wbft"` 라고 적힌 3건은 **wbft 에서 돌지 않는다** — 선언이 틀렸고, `engine:anzeon` 으로 좁히는 것이 맞았다 | **해소 (2026-09-15)** |
 | P6 | 실행 시점에 체인 선언을 주입한다 | 완료 조건 3번. `suite run --env <id\|경로>` 가 케이스의 참조를 갈아끼우고, 케이스가 덮은 것은 남긴다. §P1 아래 참조 | ~~P1~~ | **완료 (2026-09-15)** |
 
 ### P1 이 한 것과 하지 않은 것
@@ -917,7 +917,7 @@ remote 검증이 끝난 뒤에 한 번에 한다. 중간에 하면 표면이 두
 | X1 | stablenet 바이너리 철자가 둘이다 | 없어졌다. `go-stablenet` 은 바이너리 이름이 아니라 저장소 이름이었다(매니페스트의 `build.repo`). 중복 선언을 지우니 둘 다 사라졌다 | **해소 (2026-09-14)** |
 | X2 | 대상 서버 절대 경로가 케이스에 있다 | 5건이었다. 전부 표준 15노드 케이스였고 도커 워크스페이스 설정이 같은 경로를 만든다 | **해소 (2026-09-14)** |
 | X3 | `pn` 스코프를 못 쓴다 | V4 에서 해소 | **해소 (2026-09-14)** |
-| X4 | wbft 매니페스트의 바이너리 이름이 실제와 다르다 | **확인 완료 (2026-09-15).** go-wbft 의 Makefile 타깃은 `gwemix`, 명령 디렉터리는 `cmd/gwemix`, 빌드 산출물이 스스로 `gwemix / Version: 1.0.0-alpha` 라고 답한다. 매니페스트는 `binary: gwbft`, `make_target: gwbft` 다. **둘 다 틀렸다** — 그래서 `gwbft` 라는 파일이 어디에도 없다. 다만 실제 이름 `gwemix` 는 **go-wemix 의 산출물과 겹치므로** 매니페스트만 고치면 한 대상에 둘이 있을 때 엉뚱한 바이너리를 집는다. go-wbft 쪽 이름을 바꿀지, 워크스페이스 별칭으로 가를지 **결정이 필요하다** | **확인 완료, 결정 대기 (2026-09-15)** |
+| X4 | wbft 매니페스트의 `make_target` 이 틀렸다 | **해소 (2026-09-15).** 세 저장소를 소스까지 확인했다 — go-stablenet 은 `cmd/gstable`/타깃 `gstable`, go-wbft 는 `cmd/gwemix`/타깃 `gwemix`, go-wemix 도 `cmd/gwemix`/타깃 `gwemix` 다. go-wbft 안에 `gwbft` 라는 낱말은 없다(`git grep -il gwbft` 0건). **두 필드를 갈라 봐야 한다**: `binary: gwbft` 는 **틀린 주장이 아니라 chainbench 의 요구**다 — 핸드오프가 go-wemix 의 `gwemix` 와 go-wbft 의 것을 **한 망에서 동시에** 쓰므로 두 이름이 필요하고, 운영자가 `GWBFT_BIN` 으로 실물을 잇는다(`tests/tc/CHAIN-BRINGUP.md` 가 이미 그렇게 적고 있다). 반면 `build.make_target` 은 **빌드 방법에 대한 사실 진술**이고 `make gwbft` 는 없다 — `gwemix` 로 고쳤다 | **해소 (2026-09-15)** |
 | X5 | Stablenet 기준선 실패가 열려 있다 | **Go 테스트 절반은 대조 완료 (2026-09-15).** 기준선 `20260913T101856Z` 는 58패키지·1,944 PASS·27 SKIP·테스트 없는 패키지 12 였다. 지금은 **58패키지 통과·0 실패·2,030 PASS·0 FAIL·27 SKIP·테스트 없는 패키지 12** 다. **SKIP 이 27 그대로**이고 PASS 가 86 늘었다(이 트랙이 추가한 테스트). **라이브 절반은 아직이다** — 기준선의 Stablenet 실패는 송금 receipt 는 관측되는데 수신자 잔고가 0→0 이던 시나리오이고, 오늘 돌린 것은 `basic-consensus` 한 건이라 그 시나리오를 재현하지 않았다 | 절반 확인 (2026-09-15), 라이브 절반 미확인 |
 | X6 | `peering.go` 의 `RoleSupport` 주석이 실제와 다르다 | 같은 주장이 `registry.go` 와 `node.go` 에도 있었다. 셋 다 고쳤다 | **해소 (2026-09-14)** |
 | X7 | `01-wemix-wbft-handoff.json` 은 구동될 수 없었다 | 업그레이드 env 인데 `topology: {bp: 4}` 를 들고 있었고, `compositionOf` 는 핸드오프 env 의 topology·launch·config·hardforks 를 거부한다. 케이스는 `3618dd7c`(#383) 부터 그 필드를 갖고 있었고 거부는 `dad54b37`(#363) 에 들어왔다 — 그 사이에 이 케이스가 `suite run` 으로 돌아간 적이 없다. e2e 는 `upgrade run` 을 직접 부르므로 잡지 못했다. **그 수는 쓰이지도 않았고 틀리기까지 했다**: 프로파일은 그 망을 producer 1 + validator 4, 즉 노드 5대로 잡는데 `bp: 4` 는 validator 수를 다른 뜻의 칸에 옮겨 적은 것이었다. 케이스에서 지웠고, 크기는 계획이 프로파일에서 읽어 보여준다 | **해소 (2026-09-15)** |
@@ -973,7 +973,14 @@ H4(1단계) · X1~X3 · X6~X8, 그리고 매니페스트 능력 1~3단계.
 104자로 제한되기 때문이고, `chainsetup/discover.go` 주석이 이미 그렇게 적고 있다.
 코드 문제로 오해하기 쉬운 자리라 적어 둔다.
 
-**wbft 는 아직 못 띄운다.** X4 참조 — `gwbft` 라는 파일이 없다.
+**wbft 도 띄울 수 있다.** `GWBFT_BIN=~/Work/github/chain/go-wbft/build/bin/gwemix`
+를 주면 된다. 그 파일 이름이 `gwemix` 인 것은 결함이 아니라 go-wbft 가 go-wemix 의
+포크라서이고, chainbench 가 그것을 `gwbft` 라고 부르는 이유는 핸드오프가 두 바이너리를
+한 망에서 쓰기 때문이다(X4).
+
+**처음에 "gwbft 라는 파일이 없으니 못 띄운다" 고 적었던 것은 틀렸다.** 빌드 산출물만
+보고 판단했고, 저장소의 안내 문서(`tests/tc/CHAIN-BRINGUP.md`,
+`docs/dev/chain-setup/README.md`)가 이미 그 경로를 적어 두고 있었다.
 
 P5-L2 를 P5-L1 앞에 두는 이유는, `gasTip` 한 번 읽는 것이 `family:wbft` 14건의
 판정에도 쓰이기 때문이다.

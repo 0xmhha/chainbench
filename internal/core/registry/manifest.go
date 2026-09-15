@@ -122,9 +122,16 @@ type UpgradeSpec struct {
 }
 
 // BuildSpec describes how to obtain the node binary.
+//
+// MakeTarget is the repository's own target name and is not always Binary:
+// go-wbft builds cmd/gwemix through a target called gwemix, while chainbench
+// calls the result gwbft because a handoff runs go-wemix's gwemix and
+// go-wbft's beside each other and two binaries cannot share one name. The
+// operator bridges the two with GWBFT_BIN or a workspace alias; this field says
+// how to BUILD it, so it has to be what the repository actually answers to.
 type BuildSpec struct {
 	Repo       string `json:"repo"`        // e.g. "go-wbft"
-	MakeTarget string `json:"make_target"` // e.g. "gwbft"
+	MakeTarget string `json:"make_target"` // e.g. "gwemix" — the repo's target, not Binary
 }
 
 // GenesisSpec describes a chain's genesis structure. EngineField is the config

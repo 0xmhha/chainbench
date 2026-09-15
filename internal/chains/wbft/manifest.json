@@ -10,7 +10,7 @@
   },
   "build": {
     "repo": "go-wbft",
-    "make_target": "gwbft"
+    "make_target": "gwemix"
   },
   "consensus_family": "wbft",
   "genesis": {
