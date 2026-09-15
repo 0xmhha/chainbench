@@ -73,7 +73,7 @@ func TestRecordConfigSet_RefusesAScopeNothingWouldRead(t *testing.T) {
 }
 
 // TestSortedScopes_OrdersMostGeneralFirst: recording walks the scopes in the
-// order they will be applied, so a reader of workspace.json sees them in the
+// order they will be applied, so a reader of chain-record.json sees them in the
 // order that decides the outcome, and the walk does not depend on map order.
 func TestSortedScopes_OrdersMostGeneralFirst(t *testing.T) {
 	got := strings.Join(sortedScopes(map[string][]string{

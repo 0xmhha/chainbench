@@ -93,12 +93,12 @@
 | 쓸 말 | 무엇 | 지금 코드의 이름 |
 |---|---|---|
 | **대상 워크스페이스** | 실행 대상 머신의 `dataRoot` 아래 약속된 폴더 트리. bin, configs, genesis, keystore, keys, node, runtime, logs 여덟 칸. 24/7 개발 서버라면 여기에 키·genesis·설정이 이미 올라가 있고, 테스트마다 다시 올리지 않는다 | `resource.WorkspaceConfig` 의 `dataRoot` + `paths`, 선언 파일은 `workspace-config.yaml` |
-| **체인 기록** | 한 체인이 무엇으로 요청됐고(`request`), 무엇으로 구성됐고(노드 표·키·genesis·설정·피어링·포트), 지금 어떤 상태인지(단계 진행·pid·argv). 테스트마다 하나씩 생기며, 결과 확인과 디버깅의 정본이다. 실행 이력은 이 파일이 아니라 옆의 `runs/<타임스탬프>/` 와 `chainstate.jsonl` 이 쌓는다 | `chainsetup.State`, 파일 이름이 `workspace.json` 이다. **이름이 틀렸다 — N4·W0 에서 `chain-record.json` 으로 고친다** |
+| **체인 기록** | 한 체인이 무엇으로 요청됐고(`request`), 무엇으로 구성됐고(노드 표·키·genesis·설정·피어링·포트), 지금 어떤 상태인지(단계 진행·pid·argv). 테스트마다 하나씩 생기며, 결과 확인과 디버깅의 정본이다. 실행 이력은 이 파일이 아니라 옆의 `runs/<타임스탬프>/` 와 `chainstate.jsonl` 이 쌓는다 | `chainsetup.State`, 파일은 `chain-record.json` |
 | **실행 세션** | 엔진 한 번의 실행이 남긴 아티팩트와 결과 | `internal/core/session` 의 per-run session |
 | **로컬 작업 공간** | 따로 지정하지 않았을 때 chainbench 가 자기 것을 두는 곳. 기본 `~/.chainbench` | `internal/core/home`, `control.artifactRoot` |
 
-"워크스페이스" 라는 말은 **대상 워크스페이스**에만 쓴다. `workspace.json` 이 담는 것은
-대상 경로가 아니라 체인 기록이므로, 그 파일을 워크스페이스라 부르지 않는다.
+"워크스페이스" 라는 말은 **대상 워크스페이스**에만 쓴다. 체인 기록이 담는 것은
+대상 경로가 아니라 한 체인의 사실이므로, 그 파일을 워크스페이스라 부르지 않는다.
 
 다만 그 파일이 든 **디렉터리**는 워크스페이스가 맞다. `runs/`, 노드 데이터 디렉터리,
 genesis, 설정이 그 안에 있다. 그래서 `--workspace-dir` 플래그는 바꾸지 않는다.
@@ -185,7 +185,7 @@ netcompose" 로 시작하는 옛 패키지 주석을 갖고 있어 `doc.go` 의 
 | N1 | `env` (정의서의 블록·파일) | 체인 구성 선언. 지금은 "구성해라" 만 말할 수 있고 "이미 있는 체인에 붙어라" 를 말할 수 없다 | 보류 — §2.5.1 | **보류 (P 묶음 뒤)** |
 | N2 | `LayerCase` (`"case"`) | 테스트 정의서가 아니라 **CLI·MCP 가 넘긴 override** 다. 층을 밝히지 않은 값이 여기로 떨어진다(`builder.go:53`) | `LayerCommand` | **완료 (2026-09-15)** |
 | N3 | `LayerEnv` (`"env.launch"`) | 선언이 정한 값. 정의서의 `launch` 블록만이 아니라 포트·HTTP·마이너 등 25곳이 이 층을 쓴다 | **그대로 둔다** | 판정 완료 |
-| N4 | `workspace.json` | 대상 워크스페이스가 아니라 한 체인의 **요청·구성·상태 기록**이다 | `chain-record.json` | 미착수 (W0 흡수) |
+| N4 | `workspace.json` | 대상 워크스페이스가 아니라 한 체인의 **요청·구성·상태 기록**이다. 실행 이력은 이 파일이 아니라 옆의 `runs/` 와 `chainstate.jsonl` 이 쌓으므로 "history" 는 붙이지 않는다 | `chain-record.json` | **완료 (2026-09-15)** — W0 흡수 |
 | N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(`resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | `key-preset` · `existing-inputs` · `chain-preset` | 미착수 |
 | N6 | `LayerFamily` (`"family"`) | 합의 family 가 정하지 않는다. V10 이후 이 층의 세 값은 전부 하니스가 정하고 방언이 거른다 | `LayerHarness` | **완료 (2026-09-15)** |
 
@@ -287,7 +287,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 
 | ID | 항목 | 근거 | 의존 | 상태 |
 |---|---|---|---|---|
-| W0 | `workspace.json` 을 `chain-record.json` 으로 개명한다 (**N4**) | 그 파일이 담는 것은 대상 경로가 아니라 한 체인의 요청·구성·상태다. `--workspace-dir` 은 **바꾸지 않는다** — 그 디렉터리는 진짜 워크스페이스다(`runs/`·노드 데이터·genesis·설정이 그 안에 있다). 고칠 코드는 `session.compositionFile` 상수 한 줄이고 나머지는 문자열을 직접 쓴 테스트 8파일과 문서다. **옛 이름만 있는 디렉터리를 만나면 새로 구성하지 말고 파일 이름을 대며 거부하는 가드를 같은 커밋에 넣는다** — 형식 버전이 거부해 주던 자리를 조용히 지나가기 때문이다 | D1 | 조사 완료, 미착수 |
+| W0 | `workspace.json` 을 `chain-record.json` 으로 개명한다 (**N4**) | 고친 코드는 `session.chainRecordFile` 상수와 `CompositionFilePath`→`ChainRecordPath` 뿐이고, 나머지는 문자열을 직접 쓰던 파일 18개다. `--workspace-dir` 은 **바꾸지 않았다** — 그 디렉터리는 진짜 워크스페이스다(`runs/`·노드 데이터·genesis·설정이 그 안에 있다). 옛 이름만 있는 디렉터리는 조용히 "구성 안 됨" 으로 읽혀 두 번째 체인이 옆에 생기므로, 두 파일 이름을 대며 거부하는 가드를 같이 넣었다 | ~~D1~~ | **완료 (2026-09-15)** |
 | W1 | 구성 식별자가 위치에서 파생되는 문제 | 디렉터리를 옮기면 동일성이 깨진다 (PR #419 CLI-C2) | W0 | 조사 필요 |
 | W2 | 구성 기록 저장이 원자적이지 않다 | `Composition.Save` 가 `os.WriteFile` 을 직접 부른다. 동시 독자에게 어떻게 보이는지가 열린 문제다 (PR #419 CLI-C2) | W0 | 조사 필요 |
 | W3 | 기록된 PID 는 살아 있다는 증거가 아니다 | `NetworkStatus` 가 기록을 읽을 뿐 실사하지 않는다 | W0 | 조사 필요 |

@@ -10,7 +10,7 @@ package node
 // It exists because the same facts used to live in ten types across seven
 // packages, none holding all of them, and the copies drifted — the etcd port
 // vanished between the plan and the running network twice. The JSON tags are
-// the workspace.json contract: changing one is a migration, not a rename.
+// the chain-record.json contract: changing one is a migration, not a rename.
 type Record struct {
 	Index int `json:"index"`
 	// Label is the node's identity: the name its datadir, config and log file

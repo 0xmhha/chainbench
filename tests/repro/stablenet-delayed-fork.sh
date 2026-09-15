@@ -80,8 +80,8 @@ log "boot stablenet with Boho delayed to block $BOHO_BLOCK"
 
 # The workspace must advertise the delayed-boho capability, else the
 # fork-transition cases would silently skip and this smoke test would be moot.
-if ! python3 -c "import json,sys; caps=json.load(open('$WORK/workspace.json')).get('capabilities',[]); sys.exit(0 if 'delayed-boho' in caps else 1)"; then
-  echo "workspace.json missing delayed-boho capability — override not applied"
+if ! python3 -c "import json,sys; caps=json.load(open('$WORK/chain-record.json')).get('capabilities',[]); sys.exit(0 if 'delayed-boho' in caps else 1)"; then
+  echo "chain-record.json missing delayed-boho capability — override not applied"
   exit 1
 fi
 

@@ -34,7 +34,7 @@ func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatus
 		return NetworkStatusOut{}, ErrNoDataDir
 	}
 	if !isComposition(in.DataDir) {
-		return NetworkStatusOut{}, fmt.Errorf("chainsetup: %s holds no workspace (no %s)", in.DataDir, session.CompositionFilePath(in.DataDir))
+		return NetworkStatusOut{}, fmt.Errorf("chainsetup: %w", session.NoRecordError(in.DataDir))
 	}
 	ws, err := Open(in.DataDir, d.Clock)
 	if err != nil {
@@ -43,10 +43,10 @@ func NetworkStatus(_ context.Context, d Deps, in NetworkStatusIn) (NetworkStatus
 	return NetworkStatusOut{Nodes: ws.NodeSet()}, nil
 }
 
-// isComposition reports whether dir holds a workspace. Its state manifest is
+// isComposition reports whether dir holds a composed chain. Its chain record is
 // the marker, and session owns where that lives.
 func isComposition(dir string) bool {
-	_, err := os.Stat(session.CompositionFilePath(dir))
+	_, err := os.Stat(session.ChainRecordPath(dir))
 	return err == nil
 }
 
@@ -235,8 +235,7 @@ func NetworkRemove(ctx context.Context, d Deps, in NetworkRemoveIn) (NetworkRemo
 		return NetworkRemoveOut{}, ErrNoDataDir
 	}
 	if !isComposition(in.DataDir) {
-		return NetworkRemoveOut{}, fmt.Errorf(
-			"chainsetup: %q does not look like a chainbench workspace (no %s); refusing to remove", in.DataDir, session.CompositionFilePath(in.DataDir))
+		return NetworkRemoveOut{}, fmt.Errorf("chainsetup: refusing to remove %q: %w", in.DataDir, session.NoRecordError(in.DataDir))
 	}
 	stop, err := NetworkStop(ctx, d, NetworkStopIn(in))
 	if err != nil {

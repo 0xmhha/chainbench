@@ -15,8 +15,24 @@ import (
 // both here removes the third parallel state-store implementation the
 // structure review measured (state / session / Workspace).
 
-// compositionFile is the composition-state manifest at the directory root.
-const compositionFile = "workspace.json"
+// chainRecordFile is the chain record at the directory root: what this chain
+// was asked to be, what was composed for it, and how far the composition got.
+//
+// It is not named for the directory it sits in. The directory IS a workspace —
+// runs/, the node data directories, genesis and the configs are all in it —
+// but this one file is the record of a chain, and calling it workspace.json
+// made every reader ask which of the two a given mention meant.
+const chainRecordFile = "chain-record.json"
+
+// legacyRecordFile is the name the chain record had before it was named for
+// what it holds.
+//
+// It is still looked for. A build reads only the format version it writes and
+// refuses any other by name (see chainsetup.StateFormatVersion); a rename with
+// no lookup would turn that refusal into silence, because a directory holding
+// only the old name reads as never composed and the next command would compose
+// a second chain beside the first.
+const legacyRecordFile = "workspace.json"
 
 // compositionDirPerm is the permission for a created composition directory.
 const compositionDirPerm os.FileMode = 0o755
@@ -65,15 +81,18 @@ func (c Composition) Dir() string { return c.dir }
 // exist means nothing at all, and a caller that cannot tell which reads the
 // first case as the second.
 func (c Composition) Load(out any) (bool, error) {
-	b, err := os.ReadFile(filepath.Join(c.dir, compositionFile))
+	b, err := os.ReadFile(filepath.Join(c.dir, chainRecordFile))
 	if os.IsNotExist(err) {
+		if legacyErr := refuseLegacyRecord(c.dir); legacyErr != nil {
+			return false, legacyErr
+		}
 		return false, nil
 	}
 	if err != nil {
-		return false, fmt.Errorf("session: read %s: %w", compositionFile, err)
+		return false, fmt.Errorf("session: read %s: %w", chainRecordFile, err)
 	}
 	if err := json.Unmarshal(b, out); err != nil {
-		return false, fmt.Errorf("session: parse %s: %w", compositionFile, err)
+		return false, fmt.Errorf("session: parse %s: %w", chainRecordFile, err)
 	}
 	return true, nil
 }
@@ -84,8 +103,8 @@ func (c Composition) Save(state any) error {
 	if err != nil {
 		return fmt.Errorf("session: marshal composition state: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(c.dir, compositionFile), b, 0o644); err != nil {
-		return fmt.Errorf("session: write %s: %w", compositionFile, err)
+	if err := os.WriteFile(filepath.Join(c.dir, chainRecordFile), b, 0o644); err != nil {
+		return fmt.Errorf("session: write %s: %w", chainRecordFile, err)
 	}
 	return nil
 }
@@ -95,9 +114,29 @@ func (c Composition) StepMark(detail string) Step {
 	return Step{Done: true, Detail: detail, At: c.now().UTC().Format(time.RFC3339)}
 }
 
-// CompositionFilePath is where a composition's state manifest lives under dir.
+// ChainRecordPath is where a composition's chain record lives under dir.
 // Exported because session owns the artifact layout: a caller asking "is this
 // directory a composition?" must not hard-code the file name.
-func CompositionFilePath(dir string) string {
-	return filepath.Join(dir, compositionFile)
+func ChainRecordPath(dir string) string {
+	return filepath.Join(dir, chainRecordFile)
+}
+
+// NoRecordError says dir holds no chain record. It says so differently when
+// the directory still holds the name the record used to have, so an operator
+// reading the refusal is told which file to look at rather than being told
+// their composed directory is empty.
+func NoRecordError(dir string) error {
+	if err := refuseLegacyRecord(dir); err != nil {
+		return err
+	}
+	return fmt.Errorf("session: %s holds no chain record (no %s)", dir, chainRecordFile)
+}
+
+// refuseLegacyRecord returns an error naming both files when dir holds only
+// the old record, and nil otherwise.
+func refuseLegacyRecord(dir string) error {
+	if _, err := os.Stat(filepath.Join(dir, legacyRecordFile)); err != nil {
+		return nil
+	}
+	return fmt.Errorf("session: %s holds %s, which this build does not read — compose the chain again to get %s", dir, legacyRecordFile, chainRecordFile)
 }

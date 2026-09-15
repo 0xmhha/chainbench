@@ -452,7 +452,7 @@ func (o AllocateOpts) placements() ([]node.LaunchReq, []string, error) {
 			// The refusal used to live in the keys step, which runs after place
 			// has put this exact string into the node record and after
 			// withWorkspace has saved it: the run stopped, and the key it
-			// stopped for was already in workspace.json — and in the --json
+			// stopped for was already in chain-record.json — and in the --json
 			// report, since a setup error is carried in it verbatim. Rejecting
 			// a value the moment it is read is the only order in which "never
 			// stored" is true.

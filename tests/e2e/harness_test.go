@@ -161,7 +161,7 @@ func launchPreset(t *testing.T, cli, chain, binary, keysDir string, validators, 
 // workspace reads the composed network's record.
 func (n *network) workspace() workspaceState {
 	n.t.Helper()
-	b, err := os.ReadFile(filepath.Join(n.dir, "workspace.json"))
+	b, err := os.ReadFile(filepath.Join(n.dir, "chain-record.json"))
 	if err != nil {
 		n.t.Fatalf("read workspace: %v", err)
 	}

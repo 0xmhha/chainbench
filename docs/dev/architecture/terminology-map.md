@@ -135,7 +135,7 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 | 쓸 말 | 무엇인가 | 코드의 이름 |
 |---|---|---|
 | 대상 워크스페이스 | 실행 대상 머신의 `dataRoot` 아래 약속된 폴더 트리 | `resource.WorkspaceConfig`, `workspace-config.yaml` |
-| 체인 기록 | 한 체인이 무엇으로 요청됐고, 무엇으로 구성됐고, 지금 어떤 상태인지 | `chainsetup.State`, 파일은 `workspace.json` → **`chain-record.json` (N4·W0)** |
+| 체인 기록 | 한 체인이 무엇으로 요청됐고, 무엇으로 구성됐고, 지금 어떤 상태인지 | `chainsetup.State`, 파일은 `chain-record.json`. 실행 이력은 옆의 `runs/<타임스탬프>/` 와 `chainstate.jsonl` 이 쌓는다 |
 | 실행 세션 | 엔진 한 번의 실행이 남긴 아티팩트 | `internal/core/session` |
 | 로컬 작업 공간 | 따로 지정하지 않았을 때 chainbench 가 자기 것을 두는 곳 | `internal/core/home`, `~/.chainbench` |
 

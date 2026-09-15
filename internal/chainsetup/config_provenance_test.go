@@ -16,15 +16,15 @@ import (
 // workspace's composition file.
 func readProvenance(t *testing.T, dir string) []chainsetup.ConfigProvenance {
 	t.Helper()
-	matches, err := filepath.Glob(filepath.Join(dir, "**", "workspace.json"))
+	matches, err := filepath.Glob(filepath.Join(dir, "**", "chain-record.json"))
 	if err != nil || len(matches) == 0 {
 		// The composition file may sit directly under dir.
-		if _, statErr := os.Stat(filepath.Join(dir, "workspace.json")); statErr == nil {
-			matches = []string{filepath.Join(dir, "workspace.json")}
+		if _, statErr := os.Stat(filepath.Join(dir, "chain-record.json")); statErr == nil {
+			matches = []string{filepath.Join(dir, "chain-record.json")}
 		}
 	}
 	if len(matches) == 0 {
-		t.Fatalf("no workspace.json under %s", dir)
+		t.Fatalf("no chain-record.json under %s", dir)
 	}
 	b, err := os.ReadFile(matches[0])
 	if err != nil {
@@ -34,7 +34,7 @@ func readProvenance(t *testing.T, dir string) []chainsetup.ConfigProvenance {
 		ConfigProvenance []chainsetup.ConfigProvenance `json:"configProvenance"`
 	}
 	if err := json.Unmarshal(b, &state); err != nil {
-		t.Fatalf("parse workspace.json: %v", err)
+		t.Fatalf("parse chain-record.json: %v", err)
 	}
 	return state.ConfigProvenance
 }

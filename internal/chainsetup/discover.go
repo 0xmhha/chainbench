@@ -14,13 +14,13 @@ import (
 )
 
 // Workspaces are found, not registered. There is no index of them — a
-// workspace is a directory with a workspace.json in it — so the default root
+// workspace is a directory with a chain-record.json in it — so the default root
 // is where compositions land when no --workspace-dir is given, and Discover
 // is how a later command sees the ones that exist. A workspace composed
 // elsewhere is counted only when it is named.
 
 // setupDir is the segment under a composition that holds its setup: the
-// workspace.json and everything the steps generate before launch.
+// chain-record.json and everything the steps generate before launch.
 const setupDir = "chainsetup"
 
 // timestampLayout names a composition by when it began, to the second — two
@@ -62,7 +62,7 @@ func Discover(root string) ([]string, error) {
 			continue
 		}
 		dir := filepath.Join(root, e.Name(), setupDir)
-		if _, err := os.Stat(session.CompositionFilePath(dir)); err == nil {
+		if _, err := os.Stat(session.ChainRecordPath(dir)); err == nil {
 			out = append(out, dir)
 		}
 	}

@@ -51,7 +51,7 @@ func TestWithWorkspace_RecordsWhatAStepDidEvenWhenItFailed(t *testing.T) {
 		t.Fatalf("the reopened workspace has %d node(s); what the step did was discarded with its error", n)
 	}
 
-	if _, err := os.Stat(filepath.Join(dir, "workspace.json")); err != nil {
+	if _, err := os.Stat(filepath.Join(dir, "chain-record.json")); err != nil {
 		t.Fatalf("workspace file missing: %v", err)
 	}
 }

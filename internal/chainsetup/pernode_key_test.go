@@ -147,7 +147,7 @@ func TestKeys_NodeTablePinnedKeyDrivesGenesis(t *testing.T) {
 // That version asserted only that the use was refused. Both leaks it was meant
 // to close were still open underneath: place had already copied the key into the
 // node record and withWorkspace had saved it, so the run stopped over a key that
-// was by then in workspace.json; and the refusal itself quoted the key, which
+// was by then in chain-record.json; and the refusal itself quoted the key, which
 // put it on stderr and — a setup error is carried verbatim — into the --json
 // report. The test passed because it never called Save and never read the
 // message.
@@ -202,13 +202,13 @@ func TestKeys_NodeTableRejectsInlineKeyMaterial(t *testing.T) {
 			if err := ws.Save(); err != nil {
 				t.Fatalf("save: %v", err)
 			}
-			raw, rerr := os.ReadFile(filepath.Join(dir, "workspace.json"))
+			raw, rerr := os.ReadFile(filepath.Join(dir, "chain-record.json"))
 			if rerr != nil {
 				t.Fatal(rerr)
 			}
 			for _, secret := range []string{tc.key, bare, strings.ToLower(tc.key)} {
 				if strings.Contains(string(raw), secret) {
-					t.Fatal("workspace.json carries the private key of a refused request")
+					t.Fatal("chain-record.json carries the private key of a refused request")
 				}
 			}
 		})
@@ -249,14 +249,14 @@ func TestWorkspaceState_HoldsNoKeyMaterial(t *testing.T) {
 		t.Fatalf("save: %v", err)
 	}
 
-	raw, err := os.ReadFile(filepath.Join(dir, "workspace.json"))
+	raw, err := os.ReadFile(filepath.Join(dir, "chain-record.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	// The bare hex too: a writer that stripped the 0x would still be a leak.
 	for _, secret := range []string{pinnedHex, strings.TrimPrefix(pinnedHex, "0x")} {
 		if strings.Contains(string(raw), secret) {
-			t.Fatalf("workspace.json carries the private key")
+			t.Fatalf("chain-record.json carries the private key")
 		}
 	}
 	// The path may (and should) be there — it names the secret without being one.

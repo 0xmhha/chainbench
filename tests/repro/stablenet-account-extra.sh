@@ -74,8 +74,8 @@ log "boot stablenet with the account-extra overlay"
 }
 
 # The overlay must advertise account-extra, else the cases would silently skip.
-if ! python3 -c "import json,sys; caps=json.load(open('$WORK/workspace.json')).get('capabilities',[]); sys.exit(0 if 'account-extra' in caps else 1)"; then
-  echo "workspace.json missing account-extra capability — overlay not applied"
+if ! python3 -c "import json,sys; caps=json.load(open('$WORK/chain-record.json')).get('capabilities',[]); sys.exit(0 if 'account-extra' in caps else 1)"; then
+  echo "chain-record.json missing account-extra capability — overlay not applied"
   exit 1
 fi
 
