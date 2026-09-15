@@ -135,7 +135,7 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 | 쓸 말 | 무엇인가 | 코드의 이름 |
 |---|---|---|
 | 대상 워크스페이스 | 실행 대상 머신의 `dataRoot` 아래 약속된 폴더 트리 | `resource.WorkspaceConfig`, `workspace-config.yaml` |
-| 구성 기록 | 한 번의 구성이 무엇을 만들었는지 남긴 기록 | `chainsetup.State`, 파일은 `workspace.json` (**이름이 틀렸다 — W0**) |
+| 체인 기록 | 한 체인이 무엇으로 요청됐고, 무엇으로 구성됐고, 지금 어떤 상태인지 | `chainsetup.State`, 파일은 `workspace.json` → **`chain-record.json` (N4·W0)** |
 | 실행 세션 | 엔진 한 번의 실행이 남긴 아티팩트 | `internal/core/session` |
 | 로컬 작업 공간 | 따로 지정하지 않았을 때 chainbench 가 자기 것을 두는 곳 | `internal/core/home`, `~/.chainbench` |
 
@@ -143,17 +143,22 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 
 ## 4. `preset`
 
-세 가지로 쓰인다. 어느 것을 정본 이름으로 할지는 워크리스트 D1 의 결정 대상이다.
+세 가지로 쓰인다. **셋 다 이름을 받는다 (N5).** 맨 낱말 `preset` 은 어느 것도
+뜻하지 않으므로 코드에도 문서에도 홀로 쓰지 않는다.
 
-| 뜻 | 무엇인가 | 사는 곳 |
-|---|---|---|
-| 1 | 키 출처 — 미리 만들어 둔 키 집합 | 정의서의 `keys.nodekeys.source: "preset"` (케이스 93건), `internal/core/keyring/store` |
-| 2 | 미리 준비된 입력 묶음 — genesis·키링·설정 | `resource.InputPreset`, `workspace-config.yaml` 의 `presets:` |
-| 3 | (예정) 테스트가 공통으로 참조할 설정 문서 | 아직 없다 |
+| 뜻 | 무엇인가 | 사는 곳 | 정한 이름 |
+|---|---|---|---|
+| 1 | 키 출처 — 미리 만들어 둔 키 집합 | 정의서의 `keys.nodekeys.source: "preset"` (케이스 199건), `internal/core/keyring/store` | `key-preset` |
+| 2 | 대상에 **이미 있는** 입력 묶음 — genesis·키링·설정 | `resource.InputPreset`, `workspace-config.yaml` 의 `presets:` | `existing-inputs` |
+| 3 | 테스트가 공통으로 참조할 체인 구성 | 아직 없다. P1 에서 만든다 | `chain-preset` |
+
+2번을 `prepared` 가 아니라 `existing` 으로 부르는 이유는, 확인되는 사실이 "누가
+준비했다" 가 아니라 **"대상에 이미 있고 chainbench 가 만들지 않는다"** 뿐이기
+때문이다.
 
 `InputPreset` 타입 주석에 이미 이렇게 적혀 있다. "이름을 일부러 Preset 으로 하지
 않았다. keyring 이 이미 그 낱말을 키 출처로 쓰고 있고, 한 개념은 한 이름을 갖는다."
-세 번째 뜻을 얹으면 그 원칙이 깨진다.
+그 관찰이 맞았고, 해법은 셋을 갈라 부르는 것이다.
 
 ---
 
@@ -259,9 +264,14 @@ func (family) PortReservation() node.Reservation { ... }
 
 | 차수 | 무엇 | 지금 코드의 이름 |
 |---|---|---|
-| 1차 | 공유하는 체인 구성 | `chain-preset` (N1, 지금은 `env`) |
-| 2차 | 그 테스트만 다른 것 | `LayerEnv` (**N3 — 이름이 `env.launch` 인데 거의 모든 모듈이 쓴다**) |
-| 3차 | CLI·MCP 가 실행할 때 덮는 것 | `LayerCase` (**N2 — 테스트 정의서가 아니다**) |
+| 1차 | 공유하는 체인 구성 | `chain-preset` (아직 없다. P1 에서 만든다) |
+| 2차 | 그 테스트만 다른 것 | `LayerEnv` |
+| 3차 | CLI·MCP 가 실행할 때 덮는 것 | `LayerCommand` (N2, 지금은 `LayerCase`) |
+
+**층 이름 넷은 이 해석 순서와 같은 축이 아니다.** `LayerFamily`·`LayerRole` 은
+"누가 그 값을 계산했나" 를, `LayerEnv`·`LayerCase` 는 "어느 문서에서 왔나" 를
+말한다. 1차와 2차는 병합이 끝나면 둘 다 `LayerEnv` 로 들어오고 층은 그 둘을
+구분하지 못한다 — 정의서에 무엇을 덮었는지가 남으므로 구분할 필요가 없다.
 
 3차가 무조건 이긴다. 그래서 병합을 아무리 잘해도 **마지막에 실행 명령이 달라지면
 다른 구성으로 도는 것**이고, 계획과 실제를 대조하는 자리가 필요하다(M4-c).
