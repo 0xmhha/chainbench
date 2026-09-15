@@ -16,7 +16,7 @@
     {
       "do": "deployContract",
       "on": "node1",
-      "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "from": "node1",
       "bytecode": "0x600580600b6000396000f360006000fd",
       "gas": "300000",
       "save": "rv"
@@ -31,7 +31,7 @@
     {
       "do": "sendTx",
       "on": "node1",
-      "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "from": "node1",
       "to": "$rv",
       "gas": "100000",
       "expect": "revert"

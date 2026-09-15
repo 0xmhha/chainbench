@@ -53,7 +53,7 @@
     {
       "do": "sendTx",
       "on": "node1",
-      "from": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "from": "node1",
       "to": "$r",
       "value": "1",
       "expect": "receipt"

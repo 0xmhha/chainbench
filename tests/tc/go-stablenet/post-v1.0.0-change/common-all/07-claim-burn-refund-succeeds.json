@@ -17,7 +17,7 @@
     {
       "do": "read",
       "of": [
-        "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6"
+        "node4"
       ],
       "op": "abiCall",
       "save": "refBalCall",

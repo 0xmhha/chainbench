@@ -123,12 +123,36 @@ func knownLabels(d *interp.Deps) []string {
 // could not name.
 var addressArgs = []string{"address", "from", "to", "deployer", "funder"}
 
+// addressListArgs are the arguments that hold a LIST of values, some of which
+// may be addresses.
+//
+// "of" is the readers' value list: derive sums numbers with it, packs ABI words
+// with it, and slices a hex blob with it. An address in that list is packed as a
+// 32-byte word, which is the one place a spec still had to paste hex to say
+// "this account" — the selector takes an address, and the label mechanism
+// stopped at the argument names above.
+//
+// An element that does not resolve is left exactly as written. The list
+// legitimately carries numbers, hex blobs and already-substituted bindings, and
+// whatever consumes it reports a bad element with the message that knows what it
+// expected. Resolving here can only turn what was an error into an address.
+var addressListArgs = []string{"of"}
+
 // resolveAddressArgs returns spec with every address-shaped argument resolved,
 // leaving everything else untouched. The input map is not modified: a spec is
 // read more than once (an assertion runs against each target node), and
 // rewriting it in place would resolve against a spec that had already changed.
 func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, error) {
 	var out map[string]any
+	copyOnce := func() {
+		if out != nil {
+			return
+		}
+		out = make(map[string]any, len(spec))
+		for k, v := range spec {
+			out[k] = v
+		}
+	}
 	for _, key := range addressArgs {
 		ref, ok := spec[key].(string)
 		if !ok || ref == "" || addressLiteral.MatchString(ref) {
@@ -138,16 +162,46 @@ func resolveAddressArgs(d *interp.Deps, spec map[string]any) (map[string]any, er
 		if err != nil {
 			return nil, err
 		}
-		if out == nil {
-			out = make(map[string]any, len(spec))
-			for k, v := range spec {
-				out[k] = v
-			}
-		}
+		copyOnce()
 		out[key] = acct.Address
+	}
+	for _, key := range addressListArgs {
+		list, ok := spec[key].([]any)
+		if !ok {
+			continue
+		}
+		resolved, changed := resolveAddressList(d, list)
+		if !changed {
+			continue
+		}
+		copyOnce()
+		out[key] = resolved
 	}
 	if out == nil {
 		return spec, nil
 	}
 	return out, nil
+}
+
+// resolveAddressList resolves the account labels in a value list, reporting
+// whether any element changed so an unchanged list is not copied.
+//
+// A failure to resolve is not an error here: see addressListArgs.
+func resolveAddressList(d *interp.Deps, list []any) ([]any, bool) {
+	var out []any
+	for i, v := range list {
+		ref, ok := v.(string)
+		if !ok || ref == "" || addressLiteral.MatchString(ref) {
+			continue
+		}
+		acct, err := ResolveAccount(d, ref)
+		if err != nil {
+			continue
+		}
+		if out == nil {
+			out = append(out, list...)
+		}
+		out[i] = acct.Address
+	}
+	return out, out != nil
 }

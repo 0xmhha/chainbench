@@ -98,28 +98,28 @@
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "address": "node1",
       "save": "v1before"
     },
     {
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "address": "node2",
       "save": "v2before"
     },
     {
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "address": "node3",
       "save": "v3before"
     },
     {
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "address": "node4",
       "save": "v4before"
     },
     {
@@ -144,28 +144,28 @@
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0xc17d493883eaa3b4cceb0f214b273392d562f9d8",
+      "address": "node1",
       "save": "v1after"
     },
     {
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0x2493a84a8f83cb87fdcbe0bb3b2d313f69a58d3c",
+      "address": "node2",
       "save": "v2after"
     },
     {
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0x8c4a10b9108d49b9d23f764464090831d9c17764",
+      "address": "node3",
       "save": "v3after"
     },
     {
       "do": "read",
       "source": "balanceAt",
       "on": "node1",
-      "address": "0x8eb79036bc0f3aba136ef18b3a2fb8c1188939a6",
+      "address": "node4",
       "save": "v4after"
     },
     {

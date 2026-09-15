@@ -19,7 +19,7 @@
     {
       "do": "read",
       "of": [
-        "0x8c4a10b9108d49b9d23f764464090831d9c17764"
+        "node3"
       ],
       "op": "abiCall",
       "save": "refBalCall",
