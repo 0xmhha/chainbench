@@ -539,6 +539,107 @@ H1 이 치울 대상이고, 둘은 같은 작업의 앞뒤다.
 `"from": "node1"` 이 키셋의 주소로 풀린다(`internal/testengine/accounts.go`,
 `accountlabel_live_test.go`). H3 은 새 문법이 필요 없고 치환이다.
 
+#### 7.0.1 매니페스트 능력 설계 (P5 의 전제)
+
+##### 조사가 뒤집은 사실 하나
+
+같은 주소가 체인마다 **다른 컨트랙트**를 담고 있다.
+
+| 주소 | stablenet | wbft |
+|---|---|---|
+| `0x…1000` | nativeCoinAdapter | govConfig |
+| `0x…1001` | govValidator | govStaking |
+| `0x…1002` | govMasterMinter | govRewardeeImp |
+| `0x…1003` | govMinter | govNCP |
+| `0x…1004` | govCouncil | (없음) |
+
+X8 을 하면서 "0x…1000~1003 은 두 체인 genesis 에 다 있으니 케이스를 둘 다에서
+돌려도 되겠다" 고 잠깐 생각했는데, **틀렸다.** 주소는 같고 컨트랙트가 다르다. 그
+케이스들을 `wbft` 로 좁힌 것이 맞았고, 넓혔으면 조용히 엉뚱한 컨트랙트를 불렀을
+것이다.
+
+**이 사실이 설계를 정한다. 케이스는 주소가 아니라 컨트랙트를 이름으로 불러야 한다.**
+
+##### 원칙 — 있는 데이터를 다시 선언하지 않는다
+
+능력은 세 군데서 온다. 어디서 오는지에 따라 다루는 법이 다르다.
+
+| 출처 | 예 | 어떻게 |
+|---|---|---|
+| 매니페스트에 **이미 있는** 데이터 | `genesis.hardforks`, `genesis.engine_field`, `consensus_family`, `tx_types` | **파생한다.** `capabilities` 에 다시 적으면 같은 사실이 두 곳에 남는다 |
+| 체인만 아는 것 | 시스템 컨트랙트 이름표, 바이너리가 주는 AccountManager | **매니페스트에 새로 선언한다** |
+| 그 실행이 만든 것 | overlay, 지연 포크 | **이미 동작한다** (`networkCapabilities`) |
+
+##### 더할 것: 매니페스트가 자기 컨트랙트를 이름으로 말한다
+
+```json
+"system_contracts": {
+  "govValidator":      "0x0000000000000000000000000000000000001001",
+  "nativeCoinAdapter": "0x0000000000000000000000000000000000001000",
+  "govMasterMinter":   "0x0000000000000000000000000000000000001002",
+  "govMinter":         "0x0000000000000000000000000000000000001003",
+  "govCouncil":        "0x0000000000000000000000000000000000001004",
+  "accountManager":    "0x00000000000000000000000000000000000b00003"
+}
+```
+
+genesis 템플릿이 이미 같은 이름과 주소를 담고 있으므로, **둘이 어긋나면 실패하는
+테스트를 같이 넣는다.** wemix 는 템플릿이 없고 컨트랙트를 실행 중에 배포하므로
+매니페스트가 유일한 자리다. AccountManager 는 genesis 가 아니라 바이너리가 주므로
+어차피 템플릿에 없다.
+
+##### 파생하는 능력의 문법
+
+접두사로 갈래를 밝힌다. 접두사가 없으면 지금처럼 하니스가 주는 능력이다.
+
+| 형태 | 어디서 | 예 |
+|---|---|---|
+| `contract:<이름>` | `system_contracts` 의 키 | `contract:govMinter` |
+| `fork:<이름>` | `genesis.hardforks` | `fork:boho` |
+| `engine:<이름>` | `genesis.engine_field` | `engine:anzeon` |
+| `family:<이름>` | `consensus_family` | `family:wbft` |
+| `tx:<타입>` | `tx_types` | `tx:0x16` |
+| (접두사 없음) | `capabilities` · overlay · 지연 포크 | `rpc`, `ws`, `account-extra`, `delayed-boho` |
+
+`networkCapabilities` 가 이 목록을 만든다. 게이트(`satisfies`)와 SKIP 사유는 이미
+있으므로 배선만 는다.
+
+##### 케이스가 바뀌는 모양
+
+```json
+"applicableChains": "stablenet"          →   "requires": ["contract:govMinter"]
+"to": "0x0000…1003"                      →   "to": "govMinter"
+```
+
+**한 번의 선언이 두 가지를 동시에 한다.** 게이트가 "이 체인에 govMinter 가 있는가"
+로 바뀌고, 주소 리터럴이 사라진다. 그래서 P5 와 H1 은 같은 커밋이다.
+
+이름이 겹치는 문제는 `ResolveAccount` 가 이미 푸는 방식대로 푼다 — 모양으로 가른다.
+`0x…` 는 주소, 계정 라벨은 키셋에 있는 이름, 컨트랙트는 매니페스트에 있는 이름.
+셋 중 어디에도 없으면 오류이고, 그 오류가 무엇을 찾아봤는지 말한다.
+
+##### 이 설계의 단점
+
+- **케이스가 접두사를 외워야 한다.** `contract:govMinter` 는 `stablenet` 보다 길고,
+  처음 쓰는 사람에게 덜 분명하다. `chainbench validate` 가 모르는 접두사를 거부하고
+  아는 목록을 보여 주는 것으로 덜어야 한다.
+- **모든 것을 능력으로 바꿀 수는 없다.** "anzeon 수수료 정책이 basefee 하한을
+  강제한다" 는 `engine:anzeon` 으로 표현되지만, 하한 값 자체는 아니다. 값이 필요한
+  케이스는 P2(`values`)가 답한다.
+- **파생은 매니페스트를 신뢰한다.** `genesis.hardforks` 가 실제 바이너리와 다르면
+  게이트가 틀린 답을 낸다. 지금도 그 위험은 같으므로 새로 생기는 위험은 아니지만,
+  게이트가 그 위에 얹히면 틀렸을 때의 결과가 커진다.
+
+##### 착수 단위
+
+1. `system_contracts` 를 세 매니페스트에 더하고, genesis 템플릿과 대조하는 테스트.
+2. `networkCapabilities` 가 파생 능력을 내놓게 하고, `validate` 가 모르는 요구를
+   거부하게 한다. **케이스는 아직 안 고친다** — 이 단계까지는 아무 동작도 안 바뀐다.
+3. 컨트랙트 이름을 주소 자리에서 푼다(H1 의 기계).
+4. 62건의 `applicableChains` 를 `requires` 로 옮기고 주소를 이름으로 바꾼다.
+   H4(리터럴 금지 테스트)를 같은 커밋에 넣는다.
+5. 남은 39건을 한 건씩 읽어 판정한다. 낱말 검색으로는 안 되는 자리다.
+
 #### 순서
 
 1. ~~**H3 먼저.**~~ **완료 (2026-09-15).** 35곳/20파일. 남은 14곳은 H3-b.
