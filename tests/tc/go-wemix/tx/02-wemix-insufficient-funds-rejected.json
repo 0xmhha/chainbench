@@ -6,21 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wemix-insufficient-funds",
-    "chain": "wemix",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "wemix-bp4",
   "steps": [
     {
       "do": "read",

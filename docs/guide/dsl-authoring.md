@@ -6,11 +6,11 @@
 
 ---
 
-## 1. 문서 한 장이 전부다
+## 1. 케이스는 망을 고르고, 망은 따로 산다
 
-`tests/tc` 아래 문서는 모두 `schemaVersion: "2"` 의 케이스다. 하나를 열면 그 테스트가
-**어떤 체인 위에서, 어떤 바이너리로, 어떤 genesis·config 로, 무엇을 검증하는지**가
-그 안에 다 있다. 다른 파일을 열 필요가 없다.
+`tests/tc` 아래 문서는 모두 `schemaVersion: "2"` 의 케이스다. 케이스는 **무엇을
+검증하는지**를 말하고, **어떤 망 위에서 도는지**는 `tests/tc/env/` 의 선언을 이름으로
+고른다.
 
 ```json
 {
@@ -19,16 +19,56 @@
   "id": "legacy-transfer",
   "description": "RT-A-2-01 — 레거시(type 0x00) 송금",
   "requires": ["rpc"],
-  "env": {
-    "kind": "env",
-    "chain": "stablenet",
-    "binaries": { "default": "gstable" },
-    "topology": { "bp": 4 },
-    "keys": { "nodekeys": { "source": "keyPreset", "ref": "keys/preset" } }
-  },
+  "env": "stablenet-bp4",
   "steps": [ ... ]
 }
 ```
+
+`tests/tc/env/stablenet-bp4.env.json` 이 그 망이다.
+
+```json
+{
+  "schemaVersion": "2",
+  "kind": "env",
+  "id": "stablenet-bp4",
+  "chain": "stablenet",
+  "topology": { "bp": 4 },
+  "keys": { "nodekeys": { "source": "keyPreset", "ref": "keys/preset" } }
+}
+```
+
+이 망 하나를 161개 케이스가 쓴다. 전에는 같은 선언이 161번 복사돼 있었고, bp 수를
+하나 바꾸려면 161개 파일을 고쳐야 했다.
+
+**대신 파일을 두 개 열게 됐다.** 케이스만 보고는 노드가 몇 대인지 알 수 없다. 그
+값은 `chainbench run --plan` 이 대신 답한다(§7).
+
+### 그 테스트만 다른 것은 케이스가 덮는다
+
+망은 같은데 genesis 한 줄이나 capabilities 가 다른 케이스는 `extends` 로 덮는다.
+깊은 병합이라 **다른 것만 적고 나머지는 물려받는다.**
+
+```json
+"env": {
+  "extends": "stablenet-bp4",
+  "genesis": { "overlay": { "config": { "applepieBlock": 0 } } },
+  "capabilities": ["rpc"]
+}
+```
+
+`null` 을 쓰면 물려받은 키를 지운다. 배열은 통째로 갈린다 — 합집합이면 항목을 뺄
+방법이 없어진다.
+
+**`extends` 는 한 단계뿐이다.** 물려받은 망이 또 다른 망을 물려받으면 거부한다. 값이
+어디서 왔는지 따라가려고 파일을 세 개 열게 두지 않는다.
+
+### 망 파일 이름
+
+`<체인>-bp<수>[-en<수>][-pn<수>]` 다. `stablenet-bp4`, `stablenet-bp4-en1`,
+`wbft-bp7-en7-pn1` 처럼 읽는다. 0인 역할은 적지 않는다.
+
+바이너리 이름이나 chain id 는 이름에 넣지 않는다. **그 파일이 말하지 않는 사실이기
+때문이다** — 둘 다 매니페스트가 정하고, 체인 이름이 이미 그 둘을 결정한다.
 
 ### `kind` 는 두 가지뿐이다
 
@@ -54,13 +94,15 @@ runnable 하지 않다고 거부한다. 테스트가 없으니 돌릴 것이 없
 `lowerCase` 가 인라인 env 의 `kind` 를 검사한다. 비어 있으면 통과시키고, 값이 있는데
 `"env"` 가 아니면 거부한다.
 
-`env` 는 문법상 두 가지를 받는다. 환경 선언 객체를 그대로 넣거나, 다른 파일에 있는
-선언의 id 를 문자열로 부르거나. **`tests/tc` 는 전부 객체를 넣는 쪽을 쓴다.** id 로
-부르면 파일만 봐서는 어떤 네트워크에서 도는지 알 수 없기 때문이다.
+`env` 는 문법상 세 가지를 받는다. 다른 파일에 있는 선언의 id 를 문자열로 부르거나,
+`extends` 로 부르면서 일부를 덮거나, 선언 객체를 그대로 넣거나. **`tests/tc` 는 앞의
+두 가지만 쓴다.** 객체를 그대로 넣는 형태는 문법이 받지만, 같은 선언이 파일마다
+복사되는 것이 P1 이 없앤 문제다.
 
-env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — 검증자 4대와
-`keys/preset` 이다(`internal/testengine/compose.go`). `tests/tc` 는 그 기본값도 적어
-둔다. 기본값이 바뀌었을 때 테스트가 조용히 다른 네트워크에서 도는 일을 막기 위해서다.
+env 에 `topology` 나 `keys` 를 적지 않으면 실행기가 기본값을 쓴다 — bp 4대와
+`keys/preset` 이다(`internal/testengine/compose.go`). `tests/tc/env` 의 선언은 그
+기본값도 적어 둔다. 기본값이 바뀌었을 때 테스트가 조용히 다른 네트워크에서 도는 일을
+막기 위해서다.
 
 `description` 은 실행에 영향을 주지 않는다. 무엇을 검증하는 문서인지 사람이 읽으라고
 있는 자리다.

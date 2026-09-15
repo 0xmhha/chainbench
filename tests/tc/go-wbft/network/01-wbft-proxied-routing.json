@@ -6,22 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wbft-proxied",
-    "chain": "wbft",
-    "topology": {
-      "bp": 2,
-      "pn": 1,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "generate"
-      }
-    }
-  },
+  "env": "wbft-bp2-en1-pn1",
   "steps": [
     {
       "do": "waitBlock",

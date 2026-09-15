@@ -7,19 +7,7 @@
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "secp256r1-precompile-short-input-env",
-    "chain": "wbft",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "wbft-bp4",
     "capabilities": [
       "rpc"
     ]

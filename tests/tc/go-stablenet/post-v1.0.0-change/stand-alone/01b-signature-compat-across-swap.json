@@ -8,26 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "signature-compat-stablenet",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "gstable",
-      "upgrade": "${GSTABLE_UPGRADE_BIN:-gstable}"
-    },
-    "topology": {
-      "bp": 4,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4-en1-default-upgrade",
   "steps": [
     {
       "do": "waitBlock",

@@ -8,22 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "invalid-extra-stablenet",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 4,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4-en1",
   "steps": [
     {
       "do": "waitBlock",

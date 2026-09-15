@@ -9,19 +9,7 @@
     "consensus"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "is-validator-flags-env",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "consensus"

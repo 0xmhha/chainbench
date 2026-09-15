@@ -6,21 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wbft-revert",
-    "chain": "wbft",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "wbft-bp4",
   "steps": [
     {
       "do": "sendTx",

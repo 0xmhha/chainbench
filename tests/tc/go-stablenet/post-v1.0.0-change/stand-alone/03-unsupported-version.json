@@ -9,19 +9,7 @@
     "process"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "unsupported-version-stablenet",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "genesis": {
       "overlay": {
         "config": {

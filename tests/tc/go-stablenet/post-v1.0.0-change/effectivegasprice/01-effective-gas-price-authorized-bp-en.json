@@ -6,23 +6,7 @@
   "requires": [
     "rpc"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "egp-snap-stablenet",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 4,
-      "en": 1,
-      "syncMode": "snap"
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp4-en1-snap",
   "steps": [
     {
       "do": "waitBlock",

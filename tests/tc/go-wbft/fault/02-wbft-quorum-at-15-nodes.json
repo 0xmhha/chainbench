@@ -8,22 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wbft-docker15-fault",
-    "chain": "wbft",
-    "topology": {
-      "bp": 7,
-      "en": 7,
-      "pn": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "generate"
-      }
-    }
-  },
+  "env": "wbft-bp7-en7-pn1",
   "steps": [
     {
       "do": "waitBlock",

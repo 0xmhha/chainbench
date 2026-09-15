@@ -6,20 +6,7 @@
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wemix-wbft",
-    "chain": "wbft",
-    "binaries": {
-      "from": "${GWEMIX_BIN:-gwemix}",
-      "to": "${GWBFT_BIN:-gwbft}"
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "wbft-from-to",
     "upgrade": {
       "profile": "profiles/wemix-upgrade.yaml",
       "template": "${GOWEMIX_TEMPLATE}"

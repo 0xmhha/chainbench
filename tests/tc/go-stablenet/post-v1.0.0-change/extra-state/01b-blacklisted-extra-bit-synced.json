@@ -8,19 +8,7 @@
     "account-extra"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "blacklisted-extra-bit-synced-env",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "account-extra"

@@ -9,19 +9,7 @@
     "short-expiry"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "burn-expire-refundable-env",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4",
     "capabilities": [
       "rpc",
       "short-expiry"

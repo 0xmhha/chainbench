@@ -6,22 +6,7 @@
     "rpc",
     "consensus"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wemix-docker15",
-    "chain": "wemix",
-    "topology": {
-      "bp": 7,
-      "en": 7,
-      "pn": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "generate"
-      }
-    }
-  },
+  "env": "wemix-bp7-en7-pn1",
   "steps": [
     {
       "do": "waitBlock",

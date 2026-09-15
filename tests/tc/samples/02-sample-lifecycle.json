@@ -9,23 +9,7 @@
     "process"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "sample",
-    "chain": "stablenet",
-    "binaries": {
-      "default": "${GSTABLE_BIN:-gstable}"
-    },
-    "topology": {
-      "bp": 4,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "stablenet-bp4-en1-binvar",
     "genesis": {
       "overlay": {
         "config": {

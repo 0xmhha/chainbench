@@ -7,23 +7,7 @@
     "rpc",
     "consensus"
   ],
-  "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "stablenet-proxied",
-    "chain": "stablenet",
-    "topology": {
-      "bp": 3,
-      "pn": 1,
-      "en": 1
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    }
-  },
+  "env": "stablenet-bp3-en1-pn1",
   "steps": [
     {
       "do": "waitBlock",

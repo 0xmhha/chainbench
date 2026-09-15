@@ -6,22 +6,7 @@
     "rpc"
   ],
   "env": {
-    "schemaVersion": "2",
-    "kind": "env",
-    "id": "wemix-funded",
-    "chain": "wemix",
-    "binaries": {
-      "default": "${GWEMIX_BIN:-gwemix}"
-    },
-    "topology": {
-      "bp": 4
-    },
-    "keys": {
-      "nodekeys": {
-        "source": "keyPreset",
-        "ref": "keys/preset"
-      }
-    },
+    "extends": "wemix-bp4-binvar",
     "genesis": {
       "overlay": {
         "alloc": {
