@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "validator-add-member-executes",
   "description": "RT-B-04 — 신규 검증자 추가 및 에폭 합의 참여 확인 (원본 regression/wbft/04-test-add-validator)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govValidator"
   ],
   "env": {
     "extends": "stablenet-bp4",

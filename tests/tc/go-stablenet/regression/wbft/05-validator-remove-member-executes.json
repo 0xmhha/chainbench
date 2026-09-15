@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "validator-remove-member-executes",
   "description": "RT-B-05: proposeRemoveMember 가 실행되면 GovValidator 멤버에서 빠진다. 제거 대상을 먼저 추가해 자기 완결로 만든다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govValidator"
   ],
   "env": {
     "extends": "stablenet-bp4",

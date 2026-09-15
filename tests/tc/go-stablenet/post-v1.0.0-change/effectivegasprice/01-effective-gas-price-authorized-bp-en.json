@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "effective-gas-price-authorized-bp-en",
   "description": "TC-4-6-01 — 인가 계정 tx 의 effectiveGasPrice 가 블록 생산 노드와 snap-sync 엔드포인트에서 같다",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil"
   ],
   "env": "stablenet-bp4-en1-snap",
   "steps": [

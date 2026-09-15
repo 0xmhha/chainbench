@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "wbft-governance-register-staker",
   "description": "A governance WRITE on go-wbft. The read case (governance/01) pins what genesis carries; this one changes governance state and checks the chain agrees. It is written against go-wbft's own contracts rather than ported from stablenet's GovValidator flow, which is what the worklist's B item warned about: the addresses, selectors and guards differ per chain, and stablenet's two-step proposeAddMember reverts here. GovStaking.registerStaker enforces msg.sender != _staker and one staker per operator, so node1 (which holds its own key and can sign at its own node) registers node2's identity.",
-  "applicableChains": "wbft",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "contract:govStaking"
   ],
   "env": "wbft-bp4",
   "steps": [

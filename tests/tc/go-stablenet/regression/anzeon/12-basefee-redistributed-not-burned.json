@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "basefee-redistributed-not-burned",
   "description": "baseFee is redistributed to the epoch's validators and none of it is destroyed. The six basefee specs beside this one check only the formula, so burning the baseFee would leave every one of them green; this asserts the claim that separates the two designs, and asserts it as an equation rather than an inequality. The load is one transfer from an authorized account at maxPriorityFeePerGas 0. An authorized sender keeps its own tip cap instead of being forced to the header's (go-stablenet core/state_transition.go:169), so AddBalance(Coinbase, fee) adds zero and no tip income can be mistaken for redistribution. Finalize credits balances through distributeBaseFee alone (consensus/wbft/engine/engine.go:972) - there is no fixed block reward, which is why the four validator deltas are zero when the transfer is removed. Three claims, each failing for a different reason. (1) Every validator gains, including the three that sealed nothing - a tip goes to one coinbase and cannot do that. (2) The four gains are equal, because Diligence is equal for all four in this preset. (3) What the sender paid equals what the validators received, to the wei, once the transferred value is taken out: supply is conserved and nothing is burned. Measured live: the sender lost 420000000000000001 wei and each validator gained 105000000000000000 - four equal quarters and a 1 wei transfer. Burn any part of the baseFee and (3) fails by exactly the burned amount. The after-readings are stable because a block with GasUsed 0 distributes nothing, so the empty blocks that follow the transfer move no balance.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

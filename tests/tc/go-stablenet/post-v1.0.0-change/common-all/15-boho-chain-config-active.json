@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "boho-chain-config-active",
   "description": "TC-4-1-01 — Boho hardfork chain config verification (원본 post-v1.0.0-change/common-all/15-test-chain-config-boho)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "fork:boho"
   ],
   "env": {
     "extends": "stablenet-bp4",

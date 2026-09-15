@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "token-approve-sets-allowance",
   "description": "RT-G-5-03 — eth_call NativeCoinAdapter.allowance (원본 regression/api/23-test-allowance)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

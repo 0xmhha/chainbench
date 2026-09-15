@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "burn-cancel-refundable",
   "description": "TC-1-1-01, TC-1-1-10 — 소각 제안 취소 → refundableBalance 이동 및 BurnDepositRefunded 이벤트 검증 (원본 post-v1.0.0-change/common-all/03-test-burn-cancel-refund)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "burn-execute-no-refundable",
   "description": "TC-1-1-04 — 소각 제안 승인(approve) → 자동 실행(execute) → refundableBalance == 0 검증 (원본 post-v1.0.0-change/common-all/06-test-burn-execute-no-refund)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

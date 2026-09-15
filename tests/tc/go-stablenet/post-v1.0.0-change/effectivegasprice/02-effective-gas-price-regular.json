@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "effective-gas-price-regular",
   "description": "TC-4-6-02 — EffectiveGasPrice for regular (non-authorized) account (BP vs snap-sync EN comparison) (원본 post-v1.0.0-change/effectivegasprice/02-test-regular-account)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "gas-price-equals-basefee-plus-tip",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,13 @@
   "kind": "case",
   "id": "system-contracts-deployed",
   "description": "RT-G-1-06 — eth_getCode on NativeCoinAdapter (0x1000) (원본 regression/api/06-test-get-code-system)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil",
+    "contract:govMasterMinter",
+    "contract:govMinter",
+    "contract:govValidator",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

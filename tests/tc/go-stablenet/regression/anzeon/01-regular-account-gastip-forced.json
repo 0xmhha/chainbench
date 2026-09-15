@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "regular-account-gastip-forced",
   "description": "RT-C-01 — 일반 계정의 tipCap이 header.GasTip()으로 강제 대체됨 (원본 regression/anzeon/01-test-regular-account-gastip-forced)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4",

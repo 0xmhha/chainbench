@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "govminter-v2-code",
   "description": "TC-5-2-05: GovMinter v2 업그레이드는 코드만 교체하고 잔액은 건드리지 않는다. 하드포크 전후의 코드가 다르고 잔액이 같은지를 함께 본다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

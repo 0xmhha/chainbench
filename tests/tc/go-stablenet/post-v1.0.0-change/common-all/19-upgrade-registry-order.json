@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "upgrade-registry-order",
   "description": "TC-5-2-01/02/03: block 0 에 Anzeon baseline 이 등록돼 있고, BohoBlock(100) 전까지 중간 업그레이드가 없으며, BohoBlock 에서 GovMinter 코드가 교체된다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

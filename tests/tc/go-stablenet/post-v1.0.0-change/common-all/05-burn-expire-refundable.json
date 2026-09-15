@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "burn-expire-refundable",
   "description": "TC-1-1-03: 소각 제안이 만료되면 GovMinter 로 옮겨진 예치금이 환불 가능 잔액이 된다. proposeBurn 직후 GovMinter 잔액 증가, 만료 후 상태 Expired(5), refundableBalance 증가분, BurnDepositRefunded 이벤트를 확인한다.",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "short-expiry"
+    "short-expiry",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

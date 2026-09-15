@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "estimate-gas-token-transfer",
   "description": "RT-G-2-04 — eth_estimateGas (NativeCoinAdapter.transfer) (원본 regression/api/10-test-estimate-system-call)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

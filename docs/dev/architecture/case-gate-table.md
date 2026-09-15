@@ -44,9 +44,42 @@
 있는 것은 **무엇을 필요로 하는가**까지다. 게이트를 통과시켜도 ABI 가 다르거나 값이
 달라 실패할 수 있다. 통과 여부는 **돌려 봐야** 안다.
 
+## 5. 적용하면서 배운 것 (2026-09-15)
+
+표의 `contract:`·`engine:`·`fork:` 41건을 적용했다. 판정표가 맞았는지 두 검사가
+말해 줬고, **둘 다 무언가를 잡았다.**
+
+### 기존 `applicableChains` 도 증거다
+
+증거를 케이스 본문에서만 뽑았더니, 이미 `stablenet,wbft` 라고 적힌 3건에
+`engine:anzeon` 을 붙여 **wbft 에서 SKIP 되게 만들었다.** 판정표 비교가 잡았다.
+
+누군가 이미 "이건 wbft 에서도 돈다" 고 판단해 둔 것이고, **내 추론이 그것을 조용히
+뒤집을 근거는 없다.** 셋은 그대로 두고 `gasTip` 이 wbft 헤더에 있는지부터 확인해야
+한다.
+
+- `ethereum/08-legacy-transfer` · `ethereum/09-dynamic-fee-tx` · `wbft/01-block-period-one-second`
+
+### 주소에서 이름을 되찾을 때는 그 케이스의 체인 표를 쓴다
+
+`0x…1003` 은 stablenet 에서 govMinter 이고 wbft 에서 govNCP 다. 체인을 안 가리고
+주소→이름 표를 하나로 만들었더니 **stablenet 케이스에 `contract:govNCP` 를 붙였다.**
+이 트랙이 §7.0.1 에서 확인한 사실을 스크립트가 어겼다.
+
+### 요구 목록은 케이스가 실제로 쓰는 것에서 뽑는다
+
+처음에는 표의 조건을 그대로 적었는데, 손으로 판정한 둘이 틀렸다 —
+`19-upgrade-registry-order` 와 `20-v1-params-init-storage` 에 govCouncil 을 적었지만
+실제로 읽는 것은 govMinter 와 govValidator 다. **주소는 증거이고, "이 케이스는 무엇에
+관한 것인가" 라는 내 짐작은 증거가 아니다.** 지금은 이름이든 주소든 케이스가 쓰는
+컨트랙트를 그대로 모아 적고, X8 가드가 둘이 어긋나면 잡는다.
+
+컨트랙트는 `steps` 밖에도 있다 — genesis 오버레이가 `govMinter` 를 이름으로 적는다
+(`stand-alone/03-unsupported-version`). 문서 전체를 훑어야 한다.
+
 ---
 
-## 5. 케이스별 판정
+## 6. 케이스별 판정
 
 #### `contract:govMinter` — 9건
 

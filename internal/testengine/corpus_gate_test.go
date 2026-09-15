@@ -2,12 +2,17 @@ package testengine_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/0xmhha/chainbench/internal/core/registry"
+
+	_ "github.com/0xmhha/chainbench/internal/chains/all"
 )
 
 // corpusRoot is the committed case tree. The rule below is about those
@@ -37,6 +42,12 @@ var (
 // Nine cases were in exactly that state, and nothing caught them because until
 // the declaration could be swapped at run time nobody ran a stablenet case
 // against wbft. This is the guard for that.
+//
+// Two things count as saying which. applicableChains names the chains outright.
+// A contract requirement says it better: it gates on the chain HAVING the
+// contract, so it follows the manifests rather than a list someone maintains.
+// The address a case writes and the contract it requires have to be the same
+// one, or the gate is about something other than what the case touches.
 func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 	var offenders []string
 	err := filepath.WalkDir(corpusRoot, func(p string, d fs.DirEntry, err error) error {
@@ -57,8 +68,16 @@ func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 		if chains, _ := doc["applicableChains"].(string); strings.TrimSpace(chains) != "" {
 			return nil
 		}
-		if addr := findSystemContract(doc); addr != "" {
-			offenders = append(offenders, p+" names "+addr)
+		addr := findSystemContract(doc)
+		if addr == "" {
+			return nil
+		}
+		name, known := contractNameAt(addr)
+		switch {
+		case !known:
+			offenders = append(offenders, fmt.Sprintf("%s names %s, which no chain declares, and declares no applicableChains", p, addr))
+		case !requiresContract(doc, name):
+			offenders = append(offenders, fmt.Sprintf("%s names %s and declares neither applicableChains nor requires %q", p, addr, registry.CapContract+name))
 		}
 		return nil
 	})
@@ -66,8 +85,36 @@ func TestCorpus_ACaseNamingASystemContractSaysWhereItRuns(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, o := range offenders {
-		t.Errorf("%s but declares no applicableChains", o)
+		t.Error(o)
 	}
+}
+
+// contractNameAt is what the chains call the contract at addr, and whether any
+// of them declares one there at all.
+func contractNameAt(addr string) (string, bool) {
+	for _, id := range registry.Names() {
+		p, err := registry.Get(id)
+		if err != nil {
+			continue
+		}
+		for name, a := range p.Manifest().SystemContracts {
+			if strings.EqualFold(a, addr) {
+				return name, true
+			}
+		}
+	}
+	return "", false
+}
+
+// requiresContract reports whether the case asks for that contract.
+func requiresContract(doc map[string]any, name string) bool {
+	list, _ := doc["requires"].([]any)
+	for _, r := range list {
+		if s, ok := r.(string); ok && s == registry.CapContract+name {
+			return true
+		}
+	}
+	return false
 }
 
 // findSystemContract returns the first system-contract address the document

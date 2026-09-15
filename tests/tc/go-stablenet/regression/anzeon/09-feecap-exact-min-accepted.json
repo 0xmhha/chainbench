@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "feecap-exact-min-accepted",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4",

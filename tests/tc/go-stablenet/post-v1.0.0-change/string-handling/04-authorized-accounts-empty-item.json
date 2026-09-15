@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "authorized-accounts-empty-item",
   "description": "TC-4-3-04: GovCouncil authorizedAccounts splitAndTrim — 빈 항목 \"0xaaa,,0xbbb\" → 2",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

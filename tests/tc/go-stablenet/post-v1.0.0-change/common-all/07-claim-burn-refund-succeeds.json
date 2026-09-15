@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "claim-burn-refund-succeeds",
   "description": "TC-1-1-05, TC-1-1-09 — claimBurnRefund 정상 출금 및 BurnRefundClaimed 이벤트 검증 (원본 post-v1.0.0-change/common-all/07-test-claim-refund-success)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

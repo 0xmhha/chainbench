@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-gastip-field",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "prealloc-preserved-across-boho",
   "description": "TC-1-1-11/12: 하드포크가 prealloc 계정의 잔액·nonce 를 보존하고, 시스템 컨트랙트의 스토리지 슬롯도 그대로 둔다.",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "fork:boho",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

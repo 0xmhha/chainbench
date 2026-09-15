@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "burn-refund-events",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

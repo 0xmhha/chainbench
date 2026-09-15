@@ -3,9 +3,11 @@
   "kind": "case",
   "id": "authorized-account-gastip-free",
   "description": "RT-C-02 — Authorized 계정은 tipCap을 자유롭게 설정할 수 있음 (원본 regression/anzeon/02-test-authorized-account-gastip-free)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "burn-reject-refundable",
   "description": "TC-1-1-02 — 소각 제안 거부(reject) → refundableBalance 이동 → claimBurnRefund 정상 출금 검증 (원본 post-v1.0.0-change/common-all/04-test-burn-reject-refund)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

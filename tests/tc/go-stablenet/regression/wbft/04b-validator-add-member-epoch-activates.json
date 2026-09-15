@@ -3,10 +3,11 @@
   "kind": "case",
   "id": "validator-add-member-epoch-activates",
   "description": "RT-B-04 — 멤버로 추가된 노드가 에폭 경계에서 실제 검증자 집합에 들어간다",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "consensus"
+    "consensus",
+    "engine:anzeon",
+    "contract:govValidator"
   ],
   "env": {
     "extends": "stablenet-bp4-en1",

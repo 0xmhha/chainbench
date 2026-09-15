@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "token-total-supply-readable",
   "description": "RT-G-5-02 — eth_call NativeCoinAdapter.totalSupply (원본 regression/api/22-test-total-supply)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

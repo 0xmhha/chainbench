@@ -2,9 +2,10 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-delayed-fork",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "fork:boho",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

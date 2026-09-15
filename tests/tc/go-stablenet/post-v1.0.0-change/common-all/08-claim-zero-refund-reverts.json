@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "claim-zero-refund-reverts",
   "description": "TC-1-1-06 — refundableBalance 0 계정 claimBurnRefund revert 검증 (원본 post-v1.0.0-change/common-all/08-test-claim-refund-zero-revert)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

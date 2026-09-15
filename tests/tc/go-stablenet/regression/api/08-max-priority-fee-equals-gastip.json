@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "max-priority-fee-equals-gastip",
   "description": "RT-G-2-02 — eth_maxPriorityFeePerGas == WBFTExtra.GasTip (원본 regression/api/08-test-max-priority-fee)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "engine:anzeon"
   ],
   "env": {
     "extends": "stablenet-bp4",

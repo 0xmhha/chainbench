@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "claim-burn-refund-double-reverts",
   "description": "TC-1-1-07 — claimBurnRefund 중복 호출 revert 검증 (원본 post-v1.0.0-change/common-all/09-test-claim-refund-double-revert)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",
