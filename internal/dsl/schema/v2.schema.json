@@ -172,7 +172,7 @@
       "properties": {
         "source": {
           "enum": [
-            "preset",
+            "keyPreset",
             "generate"
           ]
         },

@@ -56,7 +56,7 @@ type RunSuiteIn struct {
 	Docker bool
 	// KeysDir overrides the declared key set (default keys/preset).
 	KeysDir string
-	// KeysSource overrides where node identities come from ("preset" or
+	// KeysSource overrides where node identities come from ("keyPreset" or
 	// "generate"); empty follows the declaration.
 	KeysSource string
 	// ChainID overrides the manifest chain id in the built genesis.

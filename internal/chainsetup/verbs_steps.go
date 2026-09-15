@@ -84,7 +84,7 @@ type StepOut struct {
 type NetKeysIn struct {
 	DataDir string `cb:"workspace-dir,required" help:"workspace directory (where the composition is set up)"`
 	// Source is preset (default) | generate | declared.
-	Source string `cb:"keys-source" default:"preset" help:"preset (use the recorded key set) | generate (create a fresh set)"`
+	Source string `cb:"keys-source" default:"keyPreset" help:"keyPreset (use the recorded key set) | generate (create a fresh set)"`
 	// BlueprintPath is the declaration the keys come from when Source is
 	// "declared" (or when a blueprint is given and Source is silent).
 	BlueprintPath string

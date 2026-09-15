@@ -320,7 +320,7 @@ func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, sp
 		// The key SOURCE is a different preset: it says the ring is read as
 		// recorded rather than generated. Naming the bundle "existing inputs"
 		// is what keeps these two readable in one function.
-		up.KeysSource = "preset"
+		up.KeysSource = "keyPreset"
 	}
 	applyExistingConfigs(up, existing)
 	return nil

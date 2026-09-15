@@ -24,7 +24,7 @@
     "chain": "stablenet",
     "binaries": { "default": "gstable" },
     "topology": { "bp": 4 },
-    "keys": { "nodekeys": { "source": "preset", "ref": "keys/preset" } }
+    "keys": { "nodekeys": { "source": "keyPreset", "ref": "keys/preset" } }
   },
   "steps": [ ... ]
 }

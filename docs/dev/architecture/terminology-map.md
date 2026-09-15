@@ -148,9 +148,9 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 
 | 뜻 | 무엇인가 | 사는 곳 | 정한 이름 |
 |---|---|---|---|
-| 1 | 키 출처 — 미리 만들어 둔 키 집합 | 정의서의 `keys.nodekeys.source: "preset"` (케이스 199건), `internal/core/keyring/store` | `key-preset` |
+| 1 | 키 출처 — 미리 만들어 둔 키 집합 | 정의서의 `keys.nodekeys.source: "keyPreset"` (케이스 199건), 코드는 `keyring.Preset` | **`keyPreset` (완료)** |
 | 2 | 대상에 **이미 있는** 입력 묶음 — genesis·키링·설정 | `resource.ExistingInputs`, `workspace-config.yaml` 의 `existingInputs:` | **`existing-inputs` (완료)** |
-| 3 | 테스트가 공통으로 참조할 체인 구성 | 아직 없다. P1 에서 만든다 | `chain-preset` |
+| 3 | 테스트가 공통으로 참조할 체인 구성 | 아직 없다. P1 에서 만든다 | `chainPreset` (정의서 키) |
 
 2번을 `prepared` 가 아니라 `existing` 으로 부르는 이유는, 확인되는 사실이 "누가
 준비했다" 가 아니라 **"대상에 이미 있고 chainbench 가 만들지 않는다"** 뿐이기
@@ -164,6 +164,10 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 바꾸면 패키지가 이미 말한 것을 타입 이름이 되풀이한다(Go 의 stutter). 애매한 것은
 패키지가 자격을 주지 않는 자리뿐이다 — 정의서의 enum 값, yaml 키, 그리고 산문의 맨
 낱말. 워크리스트 §2.5.3 을 본다.
+
+**정의서와 코드는 한 곳에서 만난다.** 정의서가 `"source": "keyPreset"` 이라고 쓰면
+`internal/chainsetup/steps_compose.go` 의 switch 가 그것을 `store.PresetKeys` 로
+바꾼다. 정의서는 무엇의 preset 인지 말하고, 패키지 이름이 코드에서 같은 일을 한다.
 
 ---
 

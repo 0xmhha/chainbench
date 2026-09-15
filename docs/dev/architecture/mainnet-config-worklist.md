@@ -186,8 +186,9 @@ netcompose" 로 시작하는 옛 패키지 주석을 갖고 있어 `doc.go` 의 
 | N2 | `LayerCase` (`"case"`) | 테스트 정의서가 아니라 **CLI·MCP 가 넘긴 override** 다. 층을 밝히지 않은 값이 여기로 떨어진다(`builder.go:53`) | `LayerCommand` | **완료 (2026-09-15)** |
 | N3 | `LayerEnv` (`"env.launch"`) | 선언이 정한 값. 정의서의 `launch` 블록만이 아니라 포트·HTTP·마이너 등 25곳이 이 층을 쓴다 | **그대로 둔다** | 판정 완료 |
 | N4 | `workspace.json` | 대상 워크스페이스가 아니라 한 체인의 **요청·구성·상태 기록**이다. 실행 이력은 이 파일이 아니라 옆의 `runs/` 와 `chainstate.jsonl` 이 쌓으므로 "history" 는 붙이지 않는다 | `chain-record.json` | **완료 (2026-09-15)** — W0 흡수 |
-| N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(옛 `resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | `key-preset` · `existing-inputs` · `chain-preset` | **뜻 2 완료 (2026-09-15)**, 뜻 1 표면 미착수 |
+| N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(옛 `resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | 정의서는 `keyPreset`·`chainPreset`, 워크스페이스 설정은 `existingInputs` | **완료 (2026-09-15)** — `chainPreset` 은 P1 에서 만든다 |
 | N6 | `LayerFamily` (`"family"`) | 합의 family 가 정하지 않는다. V10 이후 이 층의 세 값은 전부 하니스가 정하고 방언이 거른다 | `LayerHarness` | **완료 (2026-09-15)** |
+| N7 | `upgrade run --preset` | 키 preset **디렉터리**를 받는 플래그인데 이름이 자격을 안 준다 | `--key-preset-dir` | 미착수 |
 
 ### N3 을 그대로 두는 이유
 
@@ -256,10 +257,19 @@ rpc-url 로 붙어라" 를 말할 자리가 없다. `envSpec` 의 열여덟 속�
    (yaml `name`), `InputPrepared` `"prepared"` → `InputExisting` `"existing"`,
    `applyPreset`/`applyPresetConfigs` → `applyExistingInputs`/
    `applyExistingConfigs`. 모드와 묶음이 같은 낱말을 쓴다. 파일 6개.
-2. **뜻 1 의 이름 없는 표면만 `key-preset` 으로 옮긴다.** 정의서의
-   `"source": "preset"` 199건과 스키마 enum, CLI 의 `--preset`·`keys-source` 기본값.
-   **미착수.**
-3. **뜻 1 의 Go 심볼은 그대로 둔다.** §2.5.3 참조.
+2. ~~**뜻 1 의 이름 없는 표면만 `keyPreset` 으로 옮긴다.**~~ **완료 (2026-09-15).**
+   스키마 enum `["preset","generate"]` → `["keyPreset","generate"]`, 정의서 199건,
+   `steps_compose` 의 switch 와 거부 문구, `--keys-source` 기본값 2곳과 구조체 태그,
+   MCP 설명, `testengine` 이 기록하는 값. **한 낱말이 정의서·CLI·MCP·기록에서 같다.**
+   205건을 `chainbench validate` 로 전수 검사해 전부 통과했다.
+3. **뜻 1 의 Go 심볼은 그대로 둔다.** §2.5.3 참조. 정의서의 `keyPreset` 이 코드의
+   `keyring.Preset` 에 대응한다 — 대응 지점은 `steps_compose.go` 의 switch 한 곳이다.
+
+#### 남은 자리 하나
+
+`upgrade run --preset` 은 **키 preset 디렉터리**를 받는데 이름이 그냥 `--preset` 이다
+(`cmd/chainbench/upgradecmd/upgrade_run.go:69`, MCP 의 같은 인자). 자격 없는 표면이므로
+`--key-preset-dir` 이 맞다. 플래그 1개·MCP 인자 1개·테스트로, N7 로 따로 뺀다.
 
 ### 2.5.3 뜻 1 의 Go 심볼을 안 바꾸는 이유
 

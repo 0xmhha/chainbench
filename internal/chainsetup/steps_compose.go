@@ -53,7 +53,7 @@ func (w *Workspace) plugin() (registry.ChainPlugin, error) {
 
 // KeysOpts selects where node identities come from (algorithm steps 2-3).
 type KeysOpts struct {
-	// Source is "preset" (default), "generate", or "declared".
+	// Source is "keyPreset" (default), "generate", or "declared".
 	Source string
 	// Blueprint is the declaration the keys come from when Source is
 	// "declared". Its nodes carry their own nodekeys, which is what lets a
@@ -102,7 +102,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 		src = store.DeclaredKeys{Path: w.state.KeysDir, Set: set, Pinned: pinned}
 	} else {
 		switch opts.Source {
-		case "", "preset":
+		case "", "keyPreset":
 			src = store.PresetKeys{Path: w.state.KeysDir}
 		case "declared":
 			// The declaration is the origin, and the ring is materialised from it
@@ -137,7 +137,7 @@ func (w *Workspace) Keys(ctx context.Context, opts KeysOpts) (string, error) {
 			}
 			src = store.GeneratedKeys{Path: w.state.KeysDir, Validators: validators}
 		default:
-			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want preset, generate or declared)", opts.Source)
+			return "", fmt.Errorf("chainsetup: keys: unknown source %q (want keyPreset, generate or declared)", opts.Source)
 		}
 	}
 	ks, err := src.Ensure(ctx, n)

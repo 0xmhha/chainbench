@@ -107,7 +107,7 @@ func chainKeysTool() Tool {
 		Name:        "chainbench_chain_keys",
 		Description: "Ensure the workspace's key set exists and covers the node count (preset, or generate a fresh set in process).",
 		InputSchema: workspaceDirSchema(map[string]any{
-			"source":     map[string]any{"type": "string", "description": "preset (default) | generate"},
+			"source":     map[string]any{"type": "string", "description": "keyPreset (default) | generate"},
 			"nodes":      map[string]any{"type": "number", "description": "identities the set must cover (default: allocated node count)"},
 			"validators": map[string]any{"type": "number", "description": "identities joining the validator set (generate; 0 = all)"},
 		}),

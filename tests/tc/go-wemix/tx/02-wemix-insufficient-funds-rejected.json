@@ -16,7 +16,7 @@
     },
     "keys": {
       "nodekeys": {
-        "source": "preset",
+        "source": "keyPreset",
         "ref": "keys/preset"
       }
     }

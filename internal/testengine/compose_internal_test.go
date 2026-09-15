@@ -296,7 +296,7 @@ func TestCompositionOf_ExistingInputsExpand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("srv:// bundle keyring: %v", err)
 	}
-	if comp.up.KeysDir != "srv://server-01/data/keys/r" || comp.up.KeysSource != "preset" {
+	if comp.up.KeysDir != "srv://server-01/data/keys/r" || comp.up.KeysSource != "keyPreset" {
 		t.Fatalf("srv:// keyring not carried: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
 	}
 
@@ -312,7 +312,7 @@ func TestCompositionOf_ExistingInputsExpand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("local bundle keyring: %v", err)
 	}
-	if comp.up.KeysDir != "/opt/keys/regression" || comp.up.KeysSource != "preset" {
+	if comp.up.KeysDir != "/opt/keys/regression" || comp.up.KeysSource != "keyPreset" {
 		t.Fatalf("local keyring not applied: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
 	}
 }

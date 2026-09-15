@@ -51,7 +51,7 @@ func newNetKeysCmd() *cobra.Command {
 			})
 			return out.Detail, err
 		})
-	cmd.Flags().StringVar(&source, "keys-source", "preset", "preset (use the recorded key set) | generate (create a fresh set)")
+	cmd.Flags().StringVar(&source, "keys-source", "keyPreset", "keyPreset (use the recorded key set) | generate (create a fresh set)")
 	cmd.Flags().StringVar(&bootnode, "bootnode", "", "deprecated: ignored, BLS material is derived in process")
 	_ = cmd.Flags().MarkDeprecated("bootnode", "no longer needed — BLS material is derived in process")
 	cmd.Flags().IntVar(&nodes, "nodes", 0, "identities the set must cover (default: the allocated node count)")
