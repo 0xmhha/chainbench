@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-account-extra",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",

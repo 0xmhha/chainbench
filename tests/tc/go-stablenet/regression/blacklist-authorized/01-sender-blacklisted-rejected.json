@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "sender-blacklisted-rejected",
   "description": "RT-E-01 — 블랙리스트 계정이 Sender인 tx 거부 (ErrBlacklistedAccount) (원본 regression/blacklist-authorized/01-test-sender-blacklisted)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -2,10 +2,10 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "blacklisted-extra-bit-synced",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "account-extra"
+    "account-extra",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "account-authorization-readable",
   "description": "RT-E-08 — AccountManager.isAuthorized() 조회 검증 (원본 regression/blacklist-authorized/08-test-is-authorized)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",

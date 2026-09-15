@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "feepayer-blacklisted-rejected",
   "description": "RT-E-03 — FeePayer가 블랙리스트 계정이면 거부 (원본 regression/blacklist-authorized/03-test-feepayer-blacklisted)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

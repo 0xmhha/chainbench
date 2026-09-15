@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "dual-status-extra",
   "description": "TC-4-5-07 — 동일 주소 dual-status — authorized AND blacklisted 동시 반영 (원본 post-v1.0.0-change/extra-state/04-test-extra-dual-status)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "account-extra"
+    "account-extra",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",

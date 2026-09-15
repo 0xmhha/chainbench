@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "account-blacklist-readable",
   "description": "RT-E-07 — AccountManager.isBlacklisted() 조회 검증 (원본 regression/blacklist-authorized/07-test-is-blacklisted)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",

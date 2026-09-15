@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "recipient-blacklisted-rejected",
   "description": "RT-E-02 — 블랙리스트 계정이 Recipient인 tx 거부 (원본 regression/blacklist-authorized/02-test-recipient-blacklisted)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

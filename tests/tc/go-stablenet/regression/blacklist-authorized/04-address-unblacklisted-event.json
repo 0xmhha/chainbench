@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "address-unblacklisted-event",
   "description": "RT-E-04 — 블랙리스트 해제 거버넌스 흐름 검증 (원본 regression/blacklist-authorized/04-test-unblacklist)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "extra-state-across-delayed-boho",
   "description": "TC-4-5-10/11/12 — 하드포크가 지연돼도 alloc.Extra 가 AccountManager 에 반영되고 잔액은 보존된다",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",
