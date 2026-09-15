@@ -296,6 +296,32 @@ chainbench validate $(find tests/tc -name '*.json' ! -name '*.env.json')
 
 `go test ./cmd/chainbench/ -run TestValidateCmd` 가 같은 검사를 CI 에서 돌린다. 새 문서를 넣으면 이 테스트가 자동으로 집어 간다.
 
+### 어떤 체인이 뜨는지 미리 보기
+
+`validate` 는 문서가 말이 되는지만 본다. **어떤 망이 뜨는지**는 `--plan` 이 답한다.
+선언과 명령행 옵션을 합친 결과를 찍고, 아무것도 만들지 않고 멈춘다.
+
+```
+chainbench run --plan --workspace-dir /tmp/ws tests/tc/basic/01-basic-consensus.json
+```
+
+```
+  chain      stablenet
+  workspace  /tmp/ws
+  target     this machine
+  binary     gstable
+  nodes      bp 4 · en 1 · pn 0, peering mesh
+  keys       keyPreset  keys/preset
+  genesis    built from the chain template
+```
+
+`--plan` 없이 그냥 돌려도 같은 내용이 **합성 직전에** stderr 로 한 번 찍힌다.
+`--json` 으로 받는 문서는 그대로다. 정의서 여러 개를 넘겼을 때, 앞 것과 계획이 같으면
+찍지 않는다 — 망이 바뀌는 순간만 새 블록이 나온다.
+
+계획은 **합성기가 받는 바로 그 값**에서 나온다. 따로 계산하지 않으므로 실제로 뜨는
+망과 다를 수 없다.
+
 ## 8. 통과하는데 아무것도 막지 못하는 케이스를 쓰지 않는 법
 
 `validate` 는 문법을 본다. 문법이 맞고 라이브에서 초록불인 케이스가 **아무것도 증명하지 않을 수 있다.** 이 저장소에서 실제로 나온 것들이다.

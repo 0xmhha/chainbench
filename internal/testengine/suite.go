@@ -85,6 +85,12 @@ type RunSuiteIn struct {
 	// endpoints sync slowly) raises it so the gate does not terminate a network
 	// that is merely still forming.
 	NodeMonitorTimeout time.Duration
+	// OnPlan, when set, is handed the merged composition plan after the
+	// declaration and these overrides are resolved and before anything is
+	// written or launched. It is the seam the CLI prints through: a library
+	// that writes to a terminal cannot be used by one that does not have one.
+	// Nil runs silently.
+	OnPlan func(ComposePlan)
 	// WorkspaceConfigPath is the environment file (--workspace-config) that owns
 	// the target dataRoot and its purpose directories. When set, its dataRoot is
 	// the target's data root, so the same DSL runs across targets by swapping
@@ -228,6 +234,51 @@ func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (strin
 	return string(buf[:read]), nil
 }
 
+// resolveComposition is everything RunSuite does before it writes anything:
+// read the specs, parse them, refuse a set that cannot share one network, run
+// the pre-flight, and merge the declaration with the command's overrides.
+//
+// It is separate so that planning and running resolve the same way. A planner
+// that repeated these steps would eventually answer a different question than
+// the runner, which is the one thing a plan must never do.
+func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spec, composition, error) {
+	if in.DataDir == "" {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: a workspace directory is required")
+	}
+	specs := in.SpecContent
+	if len(specs) == 0 {
+		var err error
+		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
+			return nil, nil, composition{}, err
+		}
+	}
+	parsed := make([]dsl.Spec, 0, len(specs))
+	for i, raw := range specs {
+		s, err := dsl.Parse(raw)
+		if err != nil {
+			return nil, nil, composition{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
+		}
+		parsed = append(parsed, s)
+	}
+	if err := sameChain(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	if err := sameComposition(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	// Pre-flight before anything is allocated or written: a spec that names an
+	// action/assertion/reader/reference that does not resolve, or a malformed
+	// node selector, fails here rather than after a network is composed.
+	if err := Precheck(parsed); err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	comp, err := compositionOf(ctx, parsed[0], in)
+	if err != nil {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: %w", err)
+	}
+	return specs, parsed, comp, nil
+}
+
 // RunSuite runs the whole flow: read the DSL, compose the chain it declares
 // through chainsetup, run the tests, collect, and stop the network unless
 // asked to keep it. Setup failure aborts before any test runs; a test-phase
@@ -236,39 +287,16 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if len(in.SpecPaths) == 0 && len(in.SpecContent) == 0 {
 		return RunSuiteOut{}, fmt.Errorf("engine: run suite: no specs given")
 	}
-	if in.DataDir == "" {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: a workspace directory is required")
-	}
-	specs := in.SpecContent
-	if len(specs) == 0 {
-		var err error
-		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
-			return RunSuiteOut{}, err
-		}
-	}
-	parsed := make([]dsl.Spec, 0, len(specs))
-	for i, raw := range specs {
-		s, err := dsl.Parse(raw)
-		if err != nil {
-			return RunSuiteOut{}, fmt.Errorf("engine: run suite: spec %d: %w", i+1, err)
-		}
-		parsed = append(parsed, s)
-	}
-	if err := sameChain(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	if err := sameComposition(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	// Pre-flight before anything is allocated or written: a spec that names an
-	// action/assertion/reader/reference that does not resolve, or a malformed
-	// node selector, fails here rather than after a network is composed.
-	if err := Precheck(parsed); err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
-	}
-	comp, err := compositionOf(ctx, parsed[0], in)
+	specs, parsed, comp, err := resolveComposition(ctx, in)
 	if err != nil {
-		return RunSuiteOut{}, fmt.Errorf("engine: run suite: %w", err)
+		return RunSuiteOut{}, err
+	}
+	// Announced before the first byte is written: the merge that produced this
+	// happened across three layers and none of them is the file the operator
+	// just named, so this is the only place the network can be seen whole
+	// while it is still cheap to stop.
+	if in.OnPlan != nil {
+		in.OnPlan(planOf(comp, parsed[0].Chain.Name))
 	}
 	if in.ArtifactRoot == "" {
 		// The session belongs with the workspace it tested.

@@ -62,6 +62,7 @@ func NewRun() *cobra.Command {
 		nodeMonitorT    time.Duration
 		docker          bool
 		attach          bool
+		planOnly        bool
 		sf              resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -108,6 +109,12 @@ func NewRun() *cobra.Command {
 			if cmd.Flags().Changed("workspace-config") {
 				in.WorkspaceConfigPath = workspaceConfig
 			}
+			if planOnly {
+				return showPlan(cmd, in, jsonOut)
+			}
+			// The plan goes to stderr, not stdout: --json promises a document
+			// and a run that printed prose above it would break every reader.
+			in.OnPlan = planPrinter(cmd.ErrOrStderr())
 			if len(args) > 1 {
 				// Several definitions are the same run repeated, in the order
 				// given; the network is kept up between them so each one's own
@@ -120,6 +127,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
+	cmd.Flags().BoolVar(&planOnly, "plan", false, "compose: print the network the specs and flags resolve to, then stop without composing it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")
 	cmd.Flags().DurationVar(&nodeMonitorT, "node-monitor-timeout", 0, "compose: how long the readiness gate waits on nodes still coming up (0 = default; raise for a large/slow bring-up, e.g. 5m for a 15-node poa network over docker)")
@@ -381,6 +389,43 @@ func printSession(out io.Writer, root string, jsonOut bool) error {
 			code = 2
 		}
 		return &exitcode.Error{Code: code, Err: fmt.Errorf("run: %d failed, %d blocked", doc.Summary.Fail, doc.Summary.Blocked)}
+	}
+	return nil
+}
+
+// planPrinter returns a sink that writes each compose plan to w, skipping one
+// that repeats the last.
+//
+// A run of many definitions composes once and reuses the network, so printing
+// every definition's plan would bury the one thing worth seeing: the moment the
+// network changes between definitions. Repetition is silence; a difference is a
+// new block.
+func planPrinter(w io.Writer) func(app.ComposePlan) {
+	var last string
+	return func(p app.ComposePlan) {
+		s := p.String()
+		if s == last {
+			return
+		}
+		last = s
+		fmt.Fprintf(w, "composing:\n%s", s)
+	}
+}
+
+// showPlan resolves what the run would compose and prints it without composing.
+func showPlan(cmd *cobra.Command, in app.RunSuiteIn, jsonOut bool) error {
+	plans, err := app.PlanSuites(cmd.Context(), in)
+	if err != nil {
+		return err
+	}
+	out := cmd.OutOrStdout()
+	if jsonOut {
+		enc := json.NewEncoder(out)
+		enc.SetIndent("", "  ")
+		return enc.Encode(plans)
+	}
+	for _, p := range plans {
+		fmt.Fprintf(out, "%s\n%s\n", p.Spec, p.Plan.String())
 	}
 	return nil
 }

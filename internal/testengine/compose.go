@@ -65,8 +65,12 @@ const overlayFilePrefix = "env-genesis-overlay"
 const defaultKeysDir = "keys/preset"
 
 // keySourceGenerate is the key source that creates a fresh set rather than
-// reading a recorded one.
-const keySourceGenerate = "generate"
+// reading a recorded one; keySourceKeyPreset reads the recorded one and is what
+// a declaration that names no source gets.
+const (
+	keySourceGenerate  = "generate"
+	keySourceKeyPreset = "keyPreset"
+)
 
 // generatedKeysSubdir is where a generated set with no ref lands, under the
 // workspace, so generate does not reuse the shared preset by default.

@@ -31,6 +31,10 @@ func RunSuite(ctx context.Context, d Deps, in RunSuiteIn) (RunSuiteOut, error) {
 	return testengine.RunSuite(ctx, d.chainsetupDeps(), in)
 }
 
+// ComposePlan is the network a run is about to compose, after the declaration
+// and the request's overrides are merged.
+type ComposePlan = testengine.ComposePlan
+
 // RunSummary is a collected session result.
 type RunSummary = testengine.Summary
 
