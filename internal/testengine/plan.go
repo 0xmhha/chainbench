@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
+	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/node"
 )
 
@@ -94,11 +95,24 @@ type PlanGenesis struct {
 }
 
 // PlanHandoff is the upgrade form: two binaries and a profile, not a layout.
+//
+// The size fields are read from the profile, which owns them. A handoff's
+// network is not sized by the declaration — the profile carries the producer
+// and validator counts AND the per-node material that has to match them (the
+// identity order, the validator addresses, the BLS keys, the pre-computed
+// extradata), so a second document naming a size could only disagree with it.
+// Showing them here is how an operator still sees the size without a case
+// repeating it.
 type PlanHandoff struct {
 	Profile    string `json:"profile"`
 	Template   string `json:"template,omitempty"`
 	FromBinary string `json:"fromBinary"`
 	ToBinary   string `json:"toBinary"`
+	Producers  int    `json:"producers,omitempty"`
+	Validators int    `json:"validators,omitempty"`
+	AtFork     string `json:"atFork,omitempty"`
+	ForkBlock  int64  `json:"forkBlock,omitempty"`
+	NetworkID  int64  `json:"networkID,omitempty"`
 }
 
 // planOf renders the plan from the composer's input. It reads only what is
@@ -107,16 +121,26 @@ type PlanHandoff struct {
 func planOf(c composition, chain string) ComposePlan {
 	if c.handoff != nil {
 		h := c.handoff
+		hp := &PlanHandoff{
+			Profile: h.ProfilePath, Template: h.Template,
+			FromBinary: h.FromBinary, ToBinary: h.ToBinary,
+		}
+		// Best effort on purpose. A profile that cannot be read fails the run a
+		// moment later, with the message that knows why; a display that invents
+		// a second failure path for the same cause only makes the first one
+		// harder to find. The size fields stay zero and the renderer omits them.
+		if prof, err := upgrade.LoadProfile(h.ProfilePath); err == nil {
+			hp.Producers, hp.Validators = prof.Roles.Producers, prof.Roles.Validators
+			hp.AtFork, hp.ForkBlock = prof.Upgrade.AtFork, prof.Upgrade.ForkBlock
+			hp.NetworkID = prof.Upgrade.NetworkID
+		}
 		return ComposePlan{
 			Chain:     chain,
 			Workspace: h.DataDir,
 			Target:    "this machine",
 			Keys:      PlanKeys{Dir: h.KeysDir},
 			Genesis:   PlanGenesis{Overlay: h.GenesisOverlay},
-			Handoff: &PlanHandoff{
-				Profile: h.ProfilePath, Template: h.Template,
-				FromBinary: h.FromBinary, ToBinary: h.ToBinary,
-			},
+			Handoff:   hp,
 		}
 	}
 	up := c.up
@@ -221,6 +245,8 @@ func (p ComposePlan) String() string {
 		row("profile", p.Handoff.Profile)
 		row("template", p.Handoff.Template)
 		row("binaries", fmt.Sprintf("from %s -> to %s", p.Handoff.FromBinary, p.Handoff.ToBinary))
+		row("nodes", p.Handoff.nodesLine())
+		row("fork", p.Handoff.forkLine())
 		row("keys", p.Keys.Dir)
 		row("overlay", p.Genesis.Overlay)
 		return b.String()
@@ -343,4 +369,26 @@ func PlanSuite(ctx context.Context, in RunSuiteIn) (ComposePlan, error) {
 		return ComposePlan{}, err
 	}
 	return planOf(comp, parsed[0].Chain.Name), nil
+}
+
+// nodesLine says how many nodes the profile sizes the handoff to, and where
+// that number came from — the question a reader asks first and the one the
+// declaration deliberately does not answer.
+func (h PlanHandoff) nodesLine() string {
+	if h.Producers == 0 && h.Validators == 0 {
+		return ""
+	}
+	return fmt.Sprintf("producers %d · validators %d  (sized by the profile)", h.Producers, h.Validators)
+}
+
+// forkLine says where the handoff happens.
+func (h PlanHandoff) forkLine() string {
+	if h.AtFork == "" {
+		return ""
+	}
+	s := fmt.Sprintf("%s at block %d", h.AtFork, h.ForkBlock)
+	if h.NetworkID != 0 {
+		s += fmt.Sprintf(", network id %d", h.NetworkID)
+	}
+	return s
 }

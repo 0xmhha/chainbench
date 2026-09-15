@@ -14,9 +14,6 @@
       "from": "${GWEMIX_BIN:-gwemix}",
       "to": "${GWBFT_BIN:-gwbft}"
     },
-    "topology": {
-      "bp": 4
-    },
     "keys": {
       "nodekeys": {
         "source": "keyPreset",

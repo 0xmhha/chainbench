@@ -148,3 +148,50 @@ func TestPlan_TargetNamesWhereTheNodesRun(t *testing.T) {
 		t.Errorf("target = %q", got)
 	}
 }
+
+// TestPlan_HandoffTakesItsSizeFromTheProfile is the fix for X7.
+//
+// The handoff case carried "topology": {"bp": 4} and the composer refused it,
+// so the case could not run at all. The number was wrong as well as unused: the
+// profile sizes that network at one producer plus four validators, five nodes,
+// and 4 was the validator count copied into a field that means something else.
+//
+// Removing it from the case leaves the size visible in exactly one place, and
+// the plan is where a reader finds it.
+func TestPlan_HandoffTakesItsSizeFromTheProfile(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	  "binaries":{"from":"gwemix","to":"gwbft"},
+	  "upgrade":{"profile":"../../profiles/wemix-upgrade.yaml","template":"t.json"}}`
+	p := planFor(t, env, RunSuiteIn{})
+
+	if p.Handoff.Producers != 1 || p.Handoff.Validators != 4 {
+		t.Fatalf("roles = producers %d validators %d, want 1/4 from the profile",
+			p.Handoff.Producers, p.Handoff.Validators)
+	}
+	if p.Handoff.AtFork != "croissant" || p.Handoff.ForkBlock != 20 {
+		t.Errorf("fork = %s at %d", p.Handoff.AtFork, p.Handoff.ForkBlock)
+	}
+	if got := p.String(); !strings.Contains(got, "producers 1 · validators 4") {
+		t.Errorf("the size must be on the plan:\n%s", got)
+	}
+}
+
+// TestPlan_HandoffSurvivesAnUnreadableProfile: the plan is a display, and a
+// display that fails for a reason the run is about to report more clearly only
+// hides the real message.
+func TestPlan_HandoffSurvivesAnUnreadableProfile(t *testing.T) {
+	env := `{"schemaVersion":"2","kind":"env","id":"e","chain":"wbft",
+	  "binaries":{"from":"gwemix","to":"gwbft"},
+	  "upgrade":{"profile":"no/such/profile.yaml","template":"t.json"}}`
+	p := planFor(t, env, RunSuiteIn{})
+
+	if p.Handoff == nil || p.Handoff.Profile != "no/such/profile.yaml" {
+		t.Fatalf("handoff = %+v", p.Handoff)
+	}
+	if p.Handoff.Producers != 0 || p.Handoff.Validators != 0 {
+		t.Error("an unread profile must leave the size unstated, not guessed")
+	}
+	if got := p.String(); strings.Contains(got, "producers") {
+		t.Errorf("an unknown size must be omitted, not printed as zero:\n%s", got)
+	}
+}

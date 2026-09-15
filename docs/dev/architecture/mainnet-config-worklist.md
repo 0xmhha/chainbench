@@ -377,8 +377,8 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 없으면 205건이 조용히 다른 체인에서 도는 것을 못 잡는다. `--plan` 은 합성하지 않으므로
 205건을 전부 돌려도 몇 초다.
 
-**M4-a 가 바로 결함을 하나 잡았다.** 205건 중 204건은 계획이 나오고 1건이 거부된다
-(X7).
+**M4-a 가 바로 결함을 하나 잡았다.** 205건 중 204건은 계획이 나오고 1건이 거부됐다
+(X7). 고친 뒤 205건 전부가 계획된다.
 
 ---
 
@@ -448,7 +448,7 @@ remote 검증이 끝난 뒤에 한 번에 한다. 중간에 하면 표면이 두
 | X4 | wbft 매니페스트의 바이너리 이름이 실제와 다를 수 있다 | chainbench 안에서는 일관됐다. `binary`, `build.make_target` 이 모두 `gwbft` 이고 `repo` 는 `go-wbft` 다. go-wbft 저장소의 산출물 이름은 아직 대조 못 했다 | 부분 확인 (2026-09-14) |
 | X5 | Stablenet 기준선 실패가 열려 있다 | 치환 작업 내내 FAIL 로 남아야 한다 | 확인됨, 미해결 |
 | X6 | `peering.go` 의 `RoleSupport` 주석이 실제와 다르다 | 같은 주장이 `registry.go` 와 `node.go` 에도 있었다. 셋 다 고쳤다 | **해소 (2026-09-14)** |
-| X7 | `01-wemix-wbft-handoff.json` 은 구동될 수 없다 | 업그레이드 env 인데 `topology: {bp: 4}` 를 들고 있고, `compositionOf` 는 핸드오프 env 의 topology·launch·config·hardforks 를 거부한다(`internal/testengine/compose.go`). 케이스는 `3618dd7c`(#383) 부터 그 필드를 갖고 있었고 거부는 `dad54b37`(#363) 에 들어왔다 — 그 사이에 이 케이스가 `suite run` 으로 돌아간 적이 없다는 뜻이다. e2e 는 `upgrade run` 을 직접 부르므로 잡지 못했다. **고치는 방향이 둘이라 결정이 필요하다**: 케이스에서 topology 를 빼거나(프로파일이 노드 수를 갖고 있다), 핸드오프 env 가 망 크기를 말할 수 있게 하거나 | M4-a 가 발견 (2026-09-15), 미해결 |
+| X7 | `01-wemix-wbft-handoff.json` 은 구동될 수 없었다 | 업그레이드 env 인데 `topology: {bp: 4}` 를 들고 있었고, `compositionOf` 는 핸드오프 env 의 topology·launch·config·hardforks 를 거부한다. 케이스는 `3618dd7c`(#383) 부터 그 필드를 갖고 있었고 거부는 `dad54b37`(#363) 에 들어왔다 — 그 사이에 이 케이스가 `suite run` 으로 돌아간 적이 없다. e2e 는 `upgrade run` 을 직접 부르므로 잡지 못했다. **그 수는 쓰이지도 않았고 틀리기까지 했다**: 프로파일은 그 망을 producer 1 + validator 4, 즉 노드 5대로 잡는데 `bp: 4` 는 validator 수를 다른 뜻의 칸에 옮겨 적은 것이었다. 케이스에서 지웠고, 크기는 계획이 프로파일에서 읽어 보여준다 | **해소 (2026-09-15)** |
 
 ---
 

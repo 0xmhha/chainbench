@@ -150,7 +150,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		// Refuse them loudly rather than parse an upgrade env that carries them
 		// and silently drop half its declaration.
 		if len(spec.Hardforks) > 0 || len(spec.Topology) > 0 || len(spec.EnvLaunch) > 0 || len(spec.EnvConfig) > 0 {
-			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply")
+			return composition{}, fmt.Errorf("a handoff composes from its profile and template; env hardforks, topology, launch, and config do not apply — the network's size lives in the profile's roles (producers, validators), together with the identity order, validator addresses and extradata that have to agree with it, so run a different profile to run a different size")
 		}
 		return composition{handoff: &upgrade.HandoffInputs{
 			ProfilePath:    expand(u.Profile),
