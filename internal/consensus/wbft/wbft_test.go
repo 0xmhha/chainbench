@@ -43,15 +43,6 @@ func TestSupportsRole_WbftHasAProxyTier(t *testing.T) {
 	}
 }
 
-func hasFlag(flags []string, want string) bool {
-	for _, f := range flags {
-		if f == want {
-			return true
-		}
-	}
-	return false
-}
-
 // TestPortReservation_IsHonest: a wbft node listens on one p2p-side port and
 // reserves one. The span said 2 out of inertia until the Wemix3.5 test-server
 // scheme (p2p packed one apart, 30301..30304) showed the over-reservation
