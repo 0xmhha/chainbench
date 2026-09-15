@@ -2,6 +2,7 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "stablenet-account-extra",
+  "applicableChains": "stablenet",
   "requires": [
     "rpc"
   ],
