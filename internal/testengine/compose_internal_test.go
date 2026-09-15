@@ -254,63 +254,63 @@ func TestCompositionOf_NodeTablePerNodeKey(t *testing.T) {
 	}
 }
 
-// TestCompositionOf_PreparedPresetExpands pins W4's preset bundle: inputs.mode
-// prepared expands the named preset onto the composition — its finished genesis
+// TestCompositionOf_ExistingInputsExpand pins W4's bundle: inputs.mode
+// existing expands the named bundle onto the composition — its finished genesis
 // stands in for declaring one in the DSL — and a keyring on a server is refused
 // for now (keys are read locally).
-func TestCompositionOf_PreparedPresetExpands(t *testing.T) {
+func TestCompositionOf_ExistingInputsExpand(t *testing.T) {
 	dir := t.TempDir()
 	wcPath := filepath.Join(dir, "workspace-config.yaml")
 	base := "version: 1\ndataRoot: /data\n" +
 		"paths: {binaries: bin, configs: configs, genesis: genesis, keystore: keystore, keyrings: keys, nodes: node, runtime: runtime, logs: logs}\n" +
 		"control: {artifactRoot: ~/.chainbench}\n" +
-		"inputs: {mode: prepared, preset: regression}\nexecution: {chain: fresh}\n"
-	write := func(presetBody string) {
-		if err := os.WriteFile(wcPath, []byte(base+presetBody), 0o644); err != nil {
+		"inputs: {mode: existing, name: regression}\nexecution: {chain: fresh}\n"
+	write := func(bundleBody string) {
+		if err := os.WriteFile(wcPath, []byte(base+bundleBody), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
 	spec := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"}}`)
 
-	// A preset genesis expands to an existing-genesis reference.
-	write("presets:\n  regression:\n    genesis: srv://server-01/data/genesis/g.json\n")
+	// A genesis the bundle names expands to an existing-genesis reference.
+	write("existingInputs:\n  regression:\n    genesis: srv://server-01/data/genesis/g.json\n")
 	comp, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
-		t.Fatalf("preset genesis: %v", err)
+		t.Fatalf("bundle genesis: %v", err)
 	}
 	if comp.up.GenesisExisting != "srv://server-01/data/genesis/g.json" {
-		t.Fatalf("preset genesis not applied: %q", comp.up.GenesisExisting)
+		t.Fatalf("bundle genesis not applied: %q", comp.up.GenesisExisting)
 	}
 
-	// A preset genesis conflicts with a spec that already declares a genesis.
+	// A bundle genesis conflicts with a spec that already declares a genesis.
 	specG := caseWithEnv(t, `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet","binaries":{"default":"gstable"},"genesis":{"set":{"config.chainId":9}}}`)
 	if _, err := compositionOf(context.Background(), specG, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
-		t.Fatal("a preset genesis over a declared genesis must conflict")
+		t.Fatal("a bundle genesis over a declared genesis must conflict")
 	}
 
 	// A keyring on a server is accepted onto KeysDir as a srv:// reference; the
 	// keys step downloads it to a local directory (materializeKeyring). compose
 	// only records the reference here.
-	write("presets:\n  regression:\n    keyring: srv://server-01/data/keys/r\n")
+	write("existingInputs:\n  regression:\n    keyring: srv://server-01/data/keys/r\n")
 	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
-		t.Fatalf("srv:// preset keyring: %v", err)
+		t.Fatalf("srv:// bundle keyring: %v", err)
 	}
 	if comp.up.KeysDir != "srv://server-01/data/keys/r" || comp.up.KeysSource != "preset" {
 		t.Fatalf("srv:// keyring not carried: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)
 	}
 
 	// A bare relative name is neither a local path nor a srv:// reference.
-	write("presets:\n  regression:\n    keyring: just-a-name\n")
+	write("existingInputs:\n  regression:\n    keyring: just-a-name\n")
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath}); err == nil {
 		t.Fatal("a bare relative keyring name must be rejected")
 	}
 
 	// A local keyring becomes the key dir.
-	write("presets:\n  regression:\n    keyring: /opt/keys/regression\n")
+	write("existingInputs:\n  regression:\n    keyring: /opt/keys/regression\n")
 	comp, err = compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, WorkspaceConfigPath: wcPath})
 	if err != nil {
-		t.Fatalf("local preset keyring: %v", err)
+		t.Fatalf("local bundle keyring: %v", err)
 	}
 	if comp.up.KeysDir != "/opt/keys/regression" || comp.up.KeysSource != "preset" {
 		t.Fatalf("local keyring not applied: dir=%q source=%q", comp.up.KeysDir, comp.up.KeysSource)

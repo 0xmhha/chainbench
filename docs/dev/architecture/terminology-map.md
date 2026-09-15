@@ -149,16 +149,21 @@ V3 에서 노드 역할로서의 `boot` 를 없앴다. 남은 것들은 서로 �
 | 뜻 | 무엇인가 | 사는 곳 | 정한 이름 |
 |---|---|---|---|
 | 1 | 키 출처 — 미리 만들어 둔 키 집합 | 정의서의 `keys.nodekeys.source: "preset"` (케이스 199건), `internal/core/keyring/store` | `key-preset` |
-| 2 | 대상에 **이미 있는** 입력 묶음 — genesis·키링·설정 | `resource.InputPreset`, `workspace-config.yaml` 의 `presets:` | `existing-inputs` |
+| 2 | 대상에 **이미 있는** 입력 묶음 — genesis·키링·설정 | `resource.ExistingInputs`, `workspace-config.yaml` 의 `existingInputs:` | **`existing-inputs` (완료)** |
 | 3 | 테스트가 공통으로 참조할 체인 구성 | 아직 없다. P1 에서 만든다 | `chain-preset` |
 
 2번을 `prepared` 가 아니라 `existing` 으로 부르는 이유는, 확인되는 사실이 "누가
 준비했다" 가 아니라 **"대상에 이미 있고 chainbench 가 만들지 않는다"** 뿐이기
 때문이다.
 
-`InputPreset` 타입 주석에 이미 이렇게 적혀 있다. "이름을 일부러 Preset 으로 하지
-않았다. keyring 이 이미 그 낱말을 키 출처로 쓰고 있고, 한 개념은 한 이름을 갖는다."
-그 관찰이 맞았고, 해법은 셋을 갈라 부르는 것이다.
+옛 `InputPreset` 타입 주석에 이미 이렇게 적혀 있었다. "이름을 일부러 Preset 으로
+하지 않았다. keyring 이 이미 그 낱말을 키 출처로 쓰고 있고, 한 개념은 한 이름을
+갖는다." 그 관찰이 맞았고, 해법은 셋을 갈라 부르는 것이다.
+
+**뜻 1 의 Go 심볼은 바꾸지 않는다.** `keyring.Preset` 을 `keyring.KeyPreset` 으로
+바꾸면 패키지가 이미 말한 것을 타입 이름이 되풀이한다(Go 의 stutter). 애매한 것은
+패키지가 자격을 주지 않는 자리뿐이다 — 정의서의 enum 값, yaml 키, 그리고 산문의 맨
+낱말. 워크리스트 §2.5.3 을 본다.
 
 ---
 

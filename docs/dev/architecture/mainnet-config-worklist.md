@@ -186,7 +186,7 @@ netcompose" 로 시작하는 옛 패키지 주석을 갖고 있어 `doc.go` 의 
 | N2 | `LayerCase` (`"case"`) | 테스트 정의서가 아니라 **CLI·MCP 가 넘긴 override** 다. 층을 밝히지 않은 값이 여기로 떨어진다(`builder.go:53`) | `LayerCommand` | **완료 (2026-09-15)** |
 | N3 | `LayerEnv` (`"env.launch"`) | 선언이 정한 값. 정의서의 `launch` 블록만이 아니라 포트·HTTP·마이너 등 25곳이 이 층을 쓴다 | **그대로 둔다** | 판정 완료 |
 | N4 | `workspace.json` | 대상 워크스페이스가 아니라 한 체인의 **요청·구성·상태 기록**이다. 실행 이력은 이 파일이 아니라 옆의 `runs/` 와 `chainstate.jsonl` 이 쌓으므로 "history" 는 붙이지 않는다 | `chain-record.json` | **완료 (2026-09-15)** — W0 흡수 |
-| N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(`resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | `key-preset` · `existing-inputs` · `chain-preset` | 미착수 |
+| N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(옛 `resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | `key-preset` · `existing-inputs` · `chain-preset` | **뜻 2 완료 (2026-09-15)**, 뜻 1 표면 미착수 |
 | N6 | `LayerFamily` (`"family"`) | 합의 family 가 정하지 않는다. V10 이후 이 층의 세 값은 전부 하니스가 정하고 방언이 거른다 | `LayerHarness` | **완료 (2026-09-15)** |
 
 ### N3 을 그대로 두는 이유
@@ -231,15 +231,50 @@ rpc-url 로 붙어라" 를 말할 자리가 없다. `envSpec` 의 열여덟 속�
 - 명령행의 `--attach`·`--rpc` 는 이 기능이 들어온 뒤 정의서 쪽과 어느 쪽이 이기는지
   정해야 한다. 3차 override 규칙(§2.5 해석 순서)을 따르면 명령행이 이긴다.
 
-### 2.5.2 N5 를 AST 로 처리하는 이유
+### 2.5.2 N5 — AST 로 센 결과와 수정 계획
 
-`preset` 세 뜻 중 둘은 코드 심볼이고(`resource.InputPreset`, 키 preset 경로) 하나는
-정의서 표면이다(`"source": "preset"` 199건 + 스키마 enum). 문자열 치환으로 하면
-같은 낱말이 다른 뜻으로 쓰인 자리를 같이 바꾼다.
+`go/parser` 로 전 파일을 읽어 `preset` 이 든 식별자·문자열·태그를 전부 뽑고, 선언과
+참조를 이어 뜻을 갈랐다. 총 528곳이다(선언 91, 패키지 경유 참조 200, 문자열 233,
+태그 3).
 
-그래서 **먼저 코드를 AST 로 읽어 심볼 그래프를 만들고**, 각 `preset` 이 어느 뜻인지
-정의·참조 단위로 판정한 뒤 수정 계획을 세운다. 정의서와 스키마는 그래프가 아니라
-JSON 경로(`keys.nodekeys.source`)로 판정한다. 계획이 선 다음에 고친다.
+| 뜻 | 대표 심볼 | 참조 | 판정 근거 |
+|---|---|---|---|
+| **키 preset** | `keyring.Preset`(106) · `store.LoadPreset` 계열(36) · `store.PresetKeys`(10) · `blueprint.FromPreset`/`PresetFrom` · `genesis.PresetSource` · `keys/preset/` · `--preset` · 정의서의 `"source": "preset"`(199건) | ~480 | 전부 키 집합을 읽거나 그 키로 genesis·설정을 만든다 |
+| **대상에 이미 있는 입력** | `resource.InputPreset` · `WorkspaceConfig.Presets` · `Inputs.Preset` · `testengine.applyPreset`/`applyPresetConfigs` | ~40 | `inputs.mode: prepared` 일 때만 돈다. genesis·키링·설정 파일을 **가리킬 뿐 만들지 않는다** |
+
+(뜻 2 의 심볼 이름은 아래 1번이 끝나 바뀌었다. 위 표는 바꾸기 전의 측정이다.)
+
+**두 뜻이 한 함수 안에서 만나는 자리를 하나 찾았다.** `testengine.applyPreset` 은
+뜻 2 인데 그 안에서 `up.KeysSource = "preset"` 으로 뜻 1 의 enum 값을 쓴다
+(`internal/testengine/compose.go:320`). 이름이 같아서 읽는 사람이 구분할 단서가 없다.
+
+#### 수정 순서
+
+1. ~~**뜻 2 를 `existing-inputs` 로 옮긴다.**~~ **완료 (2026-09-15).**
+   `resource.InputPreset` → `ExistingInputs`, `WorkspaceConfig.Presets` →
+   `ExistingInputs`(yaml `existingInputs`), `Inputs.Preset` → `Inputs.Name`
+   (yaml `name`), `InputPrepared` `"prepared"` → `InputExisting` `"existing"`,
+   `applyPreset`/`applyPresetConfigs` → `applyExistingInputs`/
+   `applyExistingConfigs`. 모드와 묶음이 같은 낱말을 쓴다. 파일 6개.
+2. **뜻 1 의 이름 없는 표면만 `key-preset` 으로 옮긴다.** 정의서의
+   `"source": "preset"` 199건과 스키마 enum, CLI 의 `--preset`·`keys-source` 기본값.
+   **미착수.**
+3. **뜻 1 의 Go 심볼은 그대로 둔다.** §2.5.3 참조.
+
+### 2.5.3 뜻 1 의 Go 심볼을 안 바꾸는 이유
+
+`keyring.Preset` 을 `keyring.KeyPreset` 으로 바꾸면 패키지 이름이 이미 말한 것을
+타입 이름이 되풀이한다. Go 는 이것을 stutter 라고 부르고 피하라고 한다
+(`chain.Config`, `rpc.Client`). `store.LoadPreset` 도 같다 — 패키지가
+`keyring/store` 다.
+
+**애매했던 것은 심볼이 아니라 자격 없는 표면이었다.** `resource.InputPreset` 과
+`keyring.Preset` 은 패키지가 이미 갈라 준다. 갈라 주는 것이 없는 자리는 셋이다:
+정의서의 enum 값, workspace-config 의 yaml 키, 그리고 산문의 맨 낱말 "preset".
+그 셋만 고친다.
+
+맨 낱말 `preset` 은 코드에도 문서에도 홀로 쓰지 않는다. `internal/arch` 가 이것을
+검사하게 할지는 뜻 1 의 표면을 옮긴 뒤 판단한다.
 
 ---
 
@@ -282,7 +317,7 @@ V6·V7 이 끝나면 다음이 성립해야 한다.
 설정이 이미 있다. 테스트마다 새로 만들어 올리면 느려지고, 만들 이유도 없다. 그래서
 대상 워크스페이스의 폴더 트리를 약속하고 그 안의 파일을 쓴다.
 
-그 기계는 이미 있다. `inputs.mode: prepared` 와 `presets` 가 그것이고, 키링은
+그 기계는 이미 있다. `inputs.mode: existing` 과 `existingInputs` 가 그것이고, 키링은
 `srv://` 참조를, 설정은 논리 이름을 대상 파일로 매핑한다. 정리할 것은 그 주변이다.
 
 | ID | 항목 | 근거 | 의존 | 상태 |

@@ -279,60 +279,63 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		}
 		up.Target = target
 		up.WorkspaceConfigPath = in.WorkspaceConfigPath
-		if err := applyPreset(up, wc, spec); err != nil {
+		if err := applyExistingInputs(up, wc, spec); err != nil {
 			return composition{}, err
 		}
 	}
 	return composition{up: up}, nil
 }
 
-// applyPreset expands a prepared input preset onto the composition: the
-// preset's finished genesis and its keyring stand in for declaring them in the
-// DSL, which is the point of naming a bundle. A field the DSL already declared
-// is a conflict rather than a silent override. It runs only for inputs.mode
-// prepared; a generated run has no preset (workspace-config validation ensures
-// that).
-func applyPreset(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
-	if wc.Inputs.Mode != resource.InputPrepared {
+// applyExistingInputs expands a named bundle of inputs that are already on the
+// target onto the composition: the bundle's finished genesis and its keyring
+// stand in for declaring them in the DSL, which is the point of naming a
+// bundle. A field the DSL already declared is a conflict rather than a silent
+// override. It runs only for inputs.mode existing; a generated run names no
+// bundle (workspace-config validation ensures that).
+func applyExistingInputs(up *chainsetup.NetUpIn, wc resource.WorkspaceConfig, spec dsl.Spec) error {
+	if wc.Inputs.Mode != resource.InputExisting {
 		return nil
 	}
-	name := wc.Inputs.Preset
-	preset := wc.Presets[name] // validated to exist at parse time
-	if preset.Genesis != "" {
+	name := wc.Inputs.Name
+	existing := wc.ExistingInputs[name] // validated to exist at parse time
+	if existing.Genesis != "" {
 		if up.GenesisExisting != "" || len(spec.Chain.GenesisOverlay) > 0 {
-			return fmt.Errorf("testengine: preset %q sets a genesis, but the spec already declares one — declare it in one place", name)
+			return fmt.Errorf("testengine: existing inputs %q set a genesis, but the spec already declares one — declare it in one place", name)
 		}
-		up.GenesisExisting = preset.Genesis
+		up.GenesisExisting = existing.Genesis
 	}
-	if preset.Keyring != "" {
+	if existing.Keyring != "" {
 		if spec.EnvKeys != nil {
-			return fmt.Errorf("testengine: preset %q sets a keyring, but the spec already declares keys — declare them in one place", name)
+			return fmt.Errorf("testengine: existing inputs %q set a keyring, but the spec already declares keys — declare them in one place", name)
 		}
 		// A local key set is used in place; a keyring on a server (srv://) is
 		// downloaded to a local directory by the keys step (materializeKeyring)
 		// so the ring is read the one local way and a node signs with keys at a
 		// known local path. A bare relative name is neither, and is rejected here
 		// rather than mistaken for a local directory.
-		if !strings.HasPrefix(preset.Keyring, "srv://") && !filepath.IsAbs(preset.Keyring) {
-			return fmt.Errorf("testengine: preset %q keyring %q must be a local absolute path or a srv:// reference", name, preset.Keyring)
+		if !strings.HasPrefix(existing.Keyring, "srv://") && !filepath.IsAbs(existing.Keyring) {
+			return fmt.Errorf("testengine: existing inputs %q keyring %q must be a local absolute path or a srv:// reference", name, existing.Keyring)
 		}
-		up.KeysDir = preset.Keyring
+		up.KeysDir = existing.Keyring
+		// The key SOURCE is a different preset: it says the ring is read as
+		// recorded rather than generated. Naming the bundle "existing inputs"
+		// is what keeps these two readable in one function.
 		up.KeysSource = "preset"
 	}
-	applyPresetConfigs(up, preset)
+	applyExistingConfigs(up, existing)
 	return nil
 }
 
-// applyPresetConfigs resolves each node's logical config name to the preset's
-// file. A node table's config value is a logical name when it is a key in the
-// preset's configs map: the DSL names a config, and the environment's preset
-// says which file that name is on this target, so one spec runs against
-// different targets by swapping the map. A config value that is not a preset
-// key is left as a direct file reference, which is how a node named its config
-// before presets existed. With no node table there is nothing to map onto, and
-// the map is simply unused.
-func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
-	if len(preset.Configs) == 0 || up.Topology == nil {
+// applyExistingConfigs resolves each node's logical config name to the file the
+// bundle names. A node table's config value is a logical name when it is a key
+// in the bundle's configs map: the DSL names a config, and the environment says
+// which file that name is on this target, so one spec runs against different
+// targets by swapping the map. A config value that is not a key is left as a
+// direct file reference, which is how a node named its config before bundles
+// existed. With no node table there is nothing to map onto, and the map is
+// simply unused.
+func applyExistingConfigs(up *chainsetup.NetUpIn, existing resource.ExistingInputs) {
+	if len(existing.Configs) == 0 || up.Topology == nil {
 		return
 	}
 	for i := range up.Topology.Nodes {
@@ -340,7 +343,7 @@ func applyPresetConfigs(up *chainsetup.NetUpIn, preset resource.InputPreset) {
 		if logical == "" {
 			continue
 		}
-		if file, ok := preset.Configs[logical]; ok {
+		if file, ok := existing.Configs[logical]; ok {
 			up.Topology.Nodes[i].Config = file
 		}
 	}
