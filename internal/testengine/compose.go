@@ -151,7 +151,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		return composition{handoff: &upgrade.HandoffInputs{
 			ProfilePath:    expand(u.Profile),
 			Template:       expand(u.Template),
-			PresetDir:      keysDir,
+			KeysDir:        keysDir,
 			FromBinary:     expand(spec.Chain.Binaries[dsl.BinaryFrom]),
 			ToBinary:       expand(spec.Chain.Binaries[dsl.BinaryTo]),
 			GenesisOverlay: overlayPath,

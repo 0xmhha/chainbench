@@ -114,8 +114,8 @@ func TestCompositionOf_HandoffFromDeclaration(t *testing.T) {
 	if h.Template != "/tmpl/genesis-template.json" || h.ProfilePath != "profiles/wemix-upgrade.yaml" || h.DataDir != dir {
 		t.Errorf("handoff inputs = %+v", h)
 	}
-	if h.PresetDir != defaultKeysDir {
-		t.Errorf("preset = %q", h.PresetDir)
+	if h.KeysDir != defaultKeysDir {
+		t.Errorf("preset = %q", h.KeysDir)
 	}
 	if _, err := compositionOf(context.Background(), spec, RunSuiteIn{DataDir: dir, Binary: "/x"}); err == nil {
 		t.Error("--binary has no role in a handoff and must be refused")

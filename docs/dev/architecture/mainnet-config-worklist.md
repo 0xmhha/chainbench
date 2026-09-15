@@ -188,7 +188,7 @@ netcompose" 로 시작하는 옛 패키지 주석을 갖고 있어 `doc.go` 의 
 | N4 | `workspace.json` | 대상 워크스페이스가 아니라 한 체인의 **요청·구성·상태 기록**이다. 실행 이력은 이 파일이 아니라 옆의 `runs/` 와 `chainstate.jsonl` 이 쌓으므로 "history" 는 붙이지 않는다 | `chain-record.json` | **완료 (2026-09-15)** — W0 흡수 |
 | N5 | `preset` (세 뜻) | 키 출처(`keys.nodekeys.source`), 대상에 이미 있는 입력 묶음(옛 `resource.InputPreset`), 그리고 D1 이 정한 공유 체인 구성 | 정의서는 `keyPreset`·`chainPreset`, 워크스페이스 설정은 `existingInputs` | **완료 (2026-09-15)** — `chainPreset` 은 P1 에서 만든다 |
 | N6 | `LayerFamily` (`"family"`) | 합의 family 가 정하지 않는다. V10 이후 이 층의 세 값은 전부 하니스가 정하고 방언이 거른다 | `LayerHarness` | **완료 (2026-09-15)** |
-| N7 | `upgrade run --preset` | 키 preset **디렉터리**를 받는 플래그인데 이름이 자격을 안 준다 | `--key-preset-dir` | 미착수 |
+| N7 | `upgrade run --preset` · `HandoffInputs.PresetDir` | 다른 네 명령이 `--keys` 라고 부르는 것과 **같은 값**이다. 한 값이 이름 셋을 갖고 있었다 | `--keys` · `KeysDir` | **완료 (2026-09-15)** |
 
 ### N3 을 그대로 두는 이유
 
@@ -240,7 +240,7 @@ rpc-url 로 붙어라" 를 말할 자리가 없다. `envSpec` 의 열여덟 속�
 
 | 뜻 | 대표 심볼 | 참조 | 판정 근거 |
 |---|---|---|---|
-| **키 preset** | `keyring.Preset`(106) · `store.LoadPreset` 계열(36) · `store.PresetKeys`(10) · `blueprint.FromPreset`/`PresetFrom` · `genesis.PresetSource` · `keys/preset/` · `--preset` · 정의서의 `"source": "preset"`(199건) | ~480 | 전부 키 집합을 읽거나 그 키로 genesis·설정을 만든다 |
+| **키 preset** | `keyring.Preset`(106) · `store.LoadPreset` 계열(36) · `store.PresetKeys`(10) · `blueprint.FromPreset`/`PresetFrom` · `genesis.PresetSource` · `keys/preset/` · 정의서의 `"source": "preset"`(199건) | ~480 | 전부 키 집합을 읽거나 그 키로 genesis·설정을 만든다 |
 | **대상에 이미 있는 입력** | `resource.InputPreset` · `WorkspaceConfig.Presets` · `Inputs.Preset` · `testengine.applyPreset`/`applyPresetConfigs` | ~40 | `inputs.mode: prepared` 일 때만 돈다. genesis·키링·설정 파일을 **가리킬 뿐 만들지 않는다** |
 
 (뜻 2 의 심볼 이름은 아래 1번이 끝나 바뀌었다. 위 표는 바꾸기 전의 측정이다.)
@@ -265,11 +265,21 @@ rpc-url 로 붙어라" 를 말할 자리가 없다. `envSpec` 의 열여덟 속�
 3. **뜻 1 의 Go 심볼은 그대로 둔다.** §2.5.3 참조. 정의서의 `keyPreset` 이 코드의
    `keyring.Preset` 에 대응한다 — 대응 지점은 `steps_compose.go` 의 switch 한 곳이다.
 
-#### 남은 자리 하나
+#### N7 — 한 값이 갖고 있던 이름 셋 (완료)
 
-`upgrade run --preset` 은 **키 preset 디렉터리**를 받는데 이름이 그냥 `--preset` 이다
-(`cmd/chainbench/upgradecmd/upgrade_run.go:69`, MCP 의 같은 인자). 자격 없는 표면이므로
-`--key-preset-dir` 이 맞다. 플래그 1개·MCP 인자 1개·테스트로, N7 로 따로 뺀다.
+`upgrade run` 만 `--preset` 이라고 불렀다. 같은 값을 `chain new`·`chain up`·
+`suite run`·`validator roster` 넷은 `--keys` 라고 부르고, 기본값도 다 `keys/preset`
+이다. 코드 안에서는 한 줄에 두 이름이 있었다 — `PresetDir: keysDir`
+(`internal/testengine/compose.go:154`).
+
+처음에는 `--key-preset-dir` 을 제안했는데 그건 낱말을 하나 더 만드는 것이었다.
+저장소에 이미 이 값의 이름이 있다. 셋을 `keys`/`KeysDir` 로 모았다: 플래그, MCP 인자,
+`HandoffInputs.KeysDir`, `UpgradeRunIn.KeysDir`.
+
+**옛 플래그를 별칭으로 남기지 않았다.** 동작하는 별칭은 이 트랙이 없애는 하위호환
+그 자체다. 다만 실제로 쳐 보니 거부 문구는 `error: unknown flag: --preset` 한 줄이고
+usage 를 찍지 않는다 — 새 이름을 알려면 `--help` 를 한 번 더 쳐야 한다. 플래그 오류에
+usage 를 붙이는 것은 명령 전체에 걸리는 설정이라 이 항목에서 건드리지 않았다.
 
 ### 2.5.3 뜻 1 의 Go 심볼을 안 바꾸는 이유
 

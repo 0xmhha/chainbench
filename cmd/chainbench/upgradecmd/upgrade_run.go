@@ -11,7 +11,7 @@ import (
 )
 
 func newRunCmd() *cobra.Command {
-	var profilePath, presetDir, fromBinary, toBinary, template, dataDir, genesisOverlay string
+	var profilePath, keysDir, fromBinary, toBinary, template, dataDir, genesisOverlay string
 	var server, serverSet, workspaceConfig string
 	var docker, allServers bool
 	var waitFor int
@@ -40,7 +40,7 @@ func newRunCmd() *cobra.Command {
 			}
 			out := cmd.OutOrStdout()
 			res, err := app.UpgradeRun(cmd.Context(), surface.Deps(cmd), app.UpgradeRunIn{
-				ProfilePath: profilePath, PresetDir: presetDir,
+				ProfilePath: profilePath, KeysDir: keysDir,
 				FromBinary: fromBinary, ToBinary: toBinary,
 				Template: template, GenesisOverlay: genesisOverlay,
 				DataDir:             dataDir,
@@ -66,7 +66,7 @@ func newRunCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&profilePath, "profile", "", "golden upgrade profile (profiles/*.yaml)")
-	cmd.Flags().StringVar(&presetDir, "preset", "keys/preset", "preset key set directory")
+	cmd.Flags().StringVar(&keysDir, "keys", "keys/preset", "key set the handoff's nodes take their identities from")
 	cmd.Flags().StringVar(&fromBinary, "from-binary", "", "from-chain (producer) binary path")
 	cmd.Flags().StringVar(&toBinary, "to-binary", "", "to-chain (validator) binary path")
 	cmd.Flags().StringVar(&template, "template", "", "wemix genesis template path")

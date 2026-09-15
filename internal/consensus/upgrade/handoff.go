@@ -63,8 +63,9 @@ const handoffBalance = "1000000000000000000000000000"
 type HandoffInputs struct {
 	// ProfilePath is the golden upgrade profile (profiles/*.yaml).
 	ProfilePath string
-	// PresetDir holds the key preset the nodes' identities come from.
-	PresetDir string
+	// KeysDir is the key set the nodes' identities come from. It is the same
+	// value every other surface calls --keys, and empty means the shipped one.
+	KeysDir string
 	// FromBinary produces blocks up to the fork; ToBinary takes over after it.
 	FromBinary, ToBinary string
 	// Template is go-wemix's OWN genesis template (not chainbench's
@@ -177,8 +178,8 @@ func NewHandoff(in HandoffInputs) (*Handoff, error) {
 	if in.DataDir == "" {
 		return nil, fmt.Errorf("upgrade: a data dir is required")
 	}
-	if in.PresetDir == "" {
-		in.PresetDir = "keys/preset"
+	if in.KeysDir == "" {
+		in.KeysDir = "keys/preset"
 	}
 	prof, err := LoadProfile(in.ProfilePath)
 	if err != nil {
@@ -187,7 +188,7 @@ func NewHandoff(in HandoffInputs) (*Handoff, error) {
 	// With keys: the handoff writes each node's nodekey into its datadir, which
 	// is the one thing in this flow that needs the secret rather than the
 	// identity.
-	preset, err := store.LoadPresetWithKeys(in.PresetDir)
+	preset, err := store.LoadPresetWithKeys(in.KeysDir)
 	if err != nil {
 		return nil, err
 	}
@@ -863,7 +864,7 @@ func (h *Handoff) provisionKeys() func(context.Context, process.NodeSpec, bool) 
 		if !producer {
 			return nil
 		}
-		src := filepath.Join(h.in.PresetDir, fmt.Sprintf("node%d", num), "keystore")
+		src := filepath.Join(h.in.KeysDir, fmt.Sprintf("node%d", num), "keystore")
 		shipped, err := copyFiles(ctx, files, src, filepath.Join(spec.DataDir, "keystore"))
 		if err == nil && producer && len(shipped) > 0 {
 			h.producerKeystore = shipped[0]

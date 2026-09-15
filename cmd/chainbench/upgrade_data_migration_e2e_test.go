@@ -139,7 +139,7 @@ func runHandoffKeepDatadir(t *testing.T, fromBin, toBin, template string) (strin
 		cmd.SetArgs([]string{
 			"upgrade", "run",
 			"--profile", "../../profiles/wemix-upgrade.yaml",
-			"--preset", "../../keys/preset",
+			"--keys", "../../keys/preset",
 			"--from-binary", fromBin,
 			"--to-binary", toBin,
 			"--template", template,

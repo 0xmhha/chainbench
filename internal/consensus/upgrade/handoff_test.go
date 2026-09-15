@@ -41,7 +41,7 @@ func handoffInputs(t *testing.T) upgrade.HandoffInputs {
 		panic(err)
 	}
 	return upgrade.HandoffInputs{
-		ProfilePath: goldenProfilePath(), PresetDir: presetPath(),
+		ProfilePath: goldenProfilePath(), KeysDir: presetPath(),
 		FromBinary: "gwemix", ToBinary: "gwbft", Template: tmpl,
 		DataDir: dataDir, Exec: exec,
 	}
@@ -143,7 +143,7 @@ func TestNewHandoff_RejectsMissingInputs(t *testing.T) {
 		{"no template", func(in *upgrade.HandoffInputs) { in.Template = "" }},
 		{"no from binary", func(in *upgrade.HandoffInputs) { in.FromBinary = "" }},
 		{"no data dir", func(in *upgrade.HandoffInputs) { in.DataDir = "" }},
-		{"unknown preset", func(in *upgrade.HandoffInputs) { in.PresetDir = t.TempDir() }},
+		{"unknown preset", func(in *upgrade.HandoffInputs) { in.KeysDir = t.TempDir() }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
