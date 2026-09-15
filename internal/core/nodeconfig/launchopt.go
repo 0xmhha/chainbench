@@ -165,9 +165,18 @@ const (
 	KeyMinerGasTarget    Key = "miner.gastarget"          // gwemix --miner.gastarget
 )
 
-// Layer names one precedence level of the value stack. A later layer setting
-// the same Key wins; Args records the winner so `chain status` can show which
-// layer produced each flag (mirrors config's flag > file > default rule).
+// Layer names one precedence level of the value stack: a later layer setting
+// the same Key wins.
+//
+// It travels so a refusal can say WHO asked for a knob the binary does not
+// have, which is the difference between "this dialect has no such flag" and
+// "the case you wrote asked for a flag this dialect has no such flag". The
+// winner used to be stored alongside each value as well, for a `chain status`
+// display that was never built — nothing read it in the two years it existed,
+// so the value went and the diagnostic stayed.
+//
+// The names below do not match what actually supplies each layer; see the
+// naming worklist (N1).
 type Layer string
 
 const (

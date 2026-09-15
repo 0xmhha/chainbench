@@ -91,7 +91,11 @@ func TestArgsBoolValueMismatch(t *testing.T) {
 	}
 }
 
-func TestArgsOverrideKeepsPositionAndRecordsLayer(t *testing.T) {
+// TestArgsOverrideKeepsPosition: a later layer replaces a knob's value in
+// place. Re-ordering argv on an override would make two runs that asked for the
+// same thing produce different command lines, and a command line is what a
+// reader compares when a node came up wrong.
+func TestArgsOverrideKeepsPosition(t *testing.T) {
 	a := NewArgs(Geth114())
 	a.Set(KeyHTTPPort, "8545", LayerRole)
 	a.Set(KeySyncMode, "full", LayerEnv)
@@ -100,8 +104,20 @@ func TestArgsOverrideKeepsPositionAndRecordsLayer(t *testing.T) {
 	if got := a.Argv(); !equal(got, want) {
 		t.Fatalf("argv = %v, want %v", got, want)
 	}
-	if l := a.WonBy(KeyHTTPPort); l != LayerCase {
-		t.Fatalf("winner = %s, want %s", l, LayerCase)
+}
+
+// TestArgsLayerNamesTheAsker: the layer travels so a refusal can say who asked
+// for a knob the binary does not have. That is the only thing it is for now —
+// the stored winner it also fed went with the display that never read it.
+func TestArgsLayerNamesTheAsker(t *testing.T) {
+	a := NewArgs(Geth110Wemix()) // has no --rpc.enabledeprecatedpersonal
+	a.Enable(KeyRPCDeprecatedPersonal, LayerEnv)
+	probs := a.Problems()
+	if len(probs) != 1 {
+		t.Fatalf("problems = %v, want one", probs)
+	}
+	if !strings.Contains(probs[0].Error(), string(LayerEnv)) {
+		t.Errorf("problem %q does not say which layer asked", probs[0])
 	}
 }
 
