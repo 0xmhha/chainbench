@@ -599,6 +599,7 @@ genesis 템플릿이 이미 같은 이름과 주소를 담고 있으므로, **�
 | `engine:<이름>` | `genesis.engine_field` | `engine:anzeon` |
 | `family:<이름>` | `consensus_family` | `family:wbft` |
 | `tx:<타입>` | `tx_types` | `tx:0x16` |
+| `precompile:<이름>` | (아직 없다 — 아래) | `precompile:secp256r1` |
 | (접두사 없음) | `capabilities` · overlay · 지연 포크 | `rpc`, `ws`, `account-extra`, `delayed-boho` |
 
 `networkCapabilities` 가 이 목록을 만든다. 게이트(`satisfies`)와 SKIP 사유는 이미
@@ -618,6 +619,16 @@ genesis 템플릿이 이미 같은 이름과 주소를 담고 있으므로, **�
 `0x…` 는 주소, 계정 라벨은 키셋에 있는 이름, 컨트랙트는 매니페스트에 있는 이름.
 셋 중 어디에도 없으면 오류이고, 그 오류가 무엇을 찾아봤는지 말한다.
 
+##### 1단계에서 나온 것: 프리컴파일도 체인마다 다르다
+
+`0x…0100` 은 secp256r1(P-256, RIP-7212) 프리컴파일이다. 프리컴파일이라 시스템
+컨트랙트가 아닌데, **모든 EVM 에 있는 것도 아니다.** 지금은 그것을 쓰는 케이스 3건이
+`applicableChains: "wbft"` 로 막혀 있다.
+
+`system_contracts` 에 넣으면 이름이 거짓말을 한다. 매니페스트에 `precompiles` 를
+따로 두고 `precompile:<이름>` 으로 파생하는 것이 맞아 보이는데, **3건뿐이라 지금
+정하지 않는다.** 4단계에서 그 3건을 만질 때 같이 정한다.
+
 ##### 이 설계의 단점
 
 - **케이스가 접두사를 외워야 한다.** `contract:govMinter` 는 `stablenet` 보다 길고,
@@ -632,7 +643,14 @@ genesis 템플릿이 이미 같은 이름과 주소를 담고 있으므로, **�
 
 ##### 착수 단위
 
-1. `system_contracts` 를 세 매니페스트에 더하고, genesis 템플릿과 대조하는 테스트.
+1. ~~`system_contracts` 를 세 매니페스트에 더하고, genesis 템플릿과 대조하는 테스트.~~
+   **완료 (2026-09-15).** stablenet 6개(genesis 5 + 바이너리가 주는 `accountManager`),
+   wbft 4개, wemix 0개(거버넌스 주소를 `admin_wemixInfo` 로 실행 중에 읽으므로 선언할
+   고정 주소가 없다 — 그래서 `contract:` 요구는 wemix 에서 SKIP 되는 것이 맞다).
+   대조 테스트는 템플릿의 치환 토큰을 채워 파싱한 뒤 컨트랙트 블록을 읽는다
+   (stablenet 은 `systemContracts`, wbft 는 `govContracts` 로 이름이 다르다).
+   변이 둘로 실효성을 확인했다 — 주소를 틀리게 해도, 이름을 빠뜨려도 잡는다.
+   **아무 동작도 바뀌지 않았다.**
 2. `networkCapabilities` 가 파생 능력을 내놓게 하고, `validate` 가 모르는 요구를
    거부하게 한다. **케이스는 아직 안 고친다** — 이 단계까지는 아무 동작도 안 바뀐다.
 3. 컨트랙트 이름을 주소 자리에서 푼다(H1 의 기계).

@@ -72,6 +72,22 @@ type Manifest struct {
 	// Capabilities is the provider-independent capability set the chain
 	// supports (e.g. "consensus").
 	Capabilities []string `json:"capabilities"`
+	// SystemContracts maps this chain's own contracts to the addresses they sit
+	// at, by the name the chain calls them.
+	//
+	// The name is the point. The same address holds a different contract on
+	// different chains — 0x…1001 is govValidator on stablenet and govStaking on
+	// wbft, 0x…1003 is govMinter and govNCP — so an address written into a test
+	// says nothing about which contract it meant, and a test moved to another
+	// chain calls a different one in silence.
+	//
+	// Where a chain has a genesis template the same pairs are in it, and a test
+	// holds the two to each other. Entries with no template counterpart are
+	// legitimate: a chain may deploy its contracts at run time (wemix reads its
+	// governance address from admin_wemixInfo and so declares none here), and a
+	// contract the binary provides rather than genesis is nowhere in a template
+	// at all (stablenet's accountManager).
+	SystemContracts map[string]string `json:"system_contracts,omitempty"`
 	// Upgrade, when present, declares that a network of this chain hands block
 	// production off to another chain's binary/consensus at a fork block (the
 	// wemix+etcd -> wbft hardfork). Absent for chains with no upgrade.
