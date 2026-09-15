@@ -651,8 +651,14 @@ genesis 템플릿이 이미 같은 이름과 주소를 담고 있으므로, **�
    (stablenet 은 `systemContracts`, wbft 는 `govContracts` 로 이름이 다르다).
    변이 둘로 실효성을 확인했다 — 주소를 틀리게 해도, 이름을 빠뜨려도 잡는다.
    **아무 동작도 바뀌지 않았다.**
-2. `networkCapabilities` 가 파생 능력을 내놓게 하고, `validate` 가 모르는 요구를
-   거부하게 한다. **케이스는 아직 안 고친다** — 이 단계까지는 아무 동작도 안 바뀐다.
+2. ~~`networkCapabilities` 가 파생 능력을 내놓게 하고, `validate` 가 모르는 요구를
+   거부하게 한다.~~ **완료 (2026-09-15).** `Manifest.DerivedCapabilities()` 가 규칙을
+   갖고(사실이 사는 곳에 규칙을 둔다), 합성과 `validate` 가 그것을 쓴다.
+   `MalformedCapability` 는 **오타와 안 맞는 요구를 가른다** — 안 맞는 요구는 SKIP 이
+   정상이지만, 접두사 오타는 모든 체인에서 SKIP 이라 올바르게 걸러진 케이스와 구별되지
+   않는다. 그래서 오타는 `validate` 와 `Precheck` 이 거부한다.
+   확인: `contract:govMinter` 는 stablenet 에서 OK, wbft·wemix 에서 SKIP.
+   205건 전부 통과하고 **아무 케이스도 아직 접두사를 쓰지 않으므로 동작이 안 바뀌었다.**
 3. 컨트랙트 이름을 주소 자리에서 푼다(H1 의 기계).
 4. 62건의 `applicableChains` 를 `requires` 로 옮기고 주소를 이름으로 바꾼다.
    H4(리터럴 금지 테스트)를 같은 커밋에 넣는다.

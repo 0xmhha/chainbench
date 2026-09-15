@@ -36,7 +36,8 @@ func ValidateSpecs(paths []string, chain string) ([]ValidateResult, error) {
 		if err != nil {
 			return nil, fmt.Errorf("validate: --chain: %w", err)
 		}
-		caps = plugin.Manifest().Capabilities
+		m := plugin.Manifest()
+		caps = append(append([]string(nil), m.Capabilities...), m.DerivedCapabilities()...)
 	}
 	reg := testhelper.Registry()
 
@@ -65,7 +66,8 @@ func ValidateContent(raws [][]byte, labels []string, chain string) ([]ValidateRe
 		if err != nil {
 			return nil, fmt.Errorf("validate: --chain: %w", err)
 		}
-		caps = plugin.Manifest().Capabilities
+		m := plugin.Manifest()
+		caps = append(append([]string(nil), m.Capabilities...), m.DerivedCapabilities()...)
 	}
 	reg := testhelper.Registry()
 	results := make([]ValidateResult, 0, len(raws))
@@ -117,8 +119,29 @@ func validateRaw(raw []byte, chain string, caps []string, reg interp.Registry) V
 		r.Result = "MISDIRECTED SEND: " + strings.Join(bad, "; ")
 		return r
 	}
+	if bad := malformedRequires(s); len(bad) > 0 {
+		r.Result = "INVALID REQUIRES: " + strings.Join(bad, "; ")
+		return r
+	}
 	r.OK, r.Result = true, specResult(s, chain, caps)
 	return r
+}
+
+// malformedRequires reports requirements no chain could ever provide because
+// they are misspelled rather than unmet.
+//
+// The two have to be told apart. A requirement a chain does not provide is a
+// SKIP, which is the whole point of gating; a requirement with a typo in its
+// prefix would be that same silent SKIP on every chain, and a case that never
+// runs anywhere looks exactly like a case that is correctly gated out.
+func malformedRequires(s dsl.Spec) []string {
+	var bad []string
+	for _, req := range s.Requires {
+		if why := registry.MalformedCapability(req); why != "" {
+			bad = append(bad, fmt.Sprintf("%q: %s", req, why))
+		}
+	}
+	return bad
 }
 
 // Precheck validates already-parsed specs before any network is composed, so an
@@ -139,6 +162,9 @@ func Precheck(specs []dsl.Spec) error {
 		}
 		if bad := misdirectedSends(s); len(bad) > 0 {
 			return fmt.Errorf("spec %s sends from a node account through a different node: %s", s.ID, strings.Join(bad, "; "))
+		}
+		if bad := malformedRequires(s); len(bad) > 0 {
+			return fmt.Errorf("spec %s requires something no chain can provide (nothing composed): %s", s.ID, strings.Join(bad, "; "))
 		}
 	}
 	return nil

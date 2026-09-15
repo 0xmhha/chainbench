@@ -790,7 +790,7 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 		return "", err
 	}
 	w.state.GenesisPath = path
-	w.state.Capabilities = networkCapabilities(p.Manifest().Capabilities, opts)
+	w.state.Capabilities = networkCapabilities(p.Manifest(), opts)
 
 	detail := fmt.Sprintf("%d bytes at %s, %d validator(s)", len(gen), path, w.state.BPCount)
 	if opts.ChainID != 0 {
@@ -812,11 +812,19 @@ func (w *Workspace) Genesis(ctx context.Context, opts GenesisOpts) (string, erro
 const delayedForkSuffix = "Block"
 
 // networkCapabilities is what the composed network advertises: the chain's own
-// capabilities, "ws" (composed nodes always serve a WebSocket endpoint), a
-// delayed-<fork> marker per fork moved off genesis, and whatever the caller
-// declared for its overlay.
-func networkCapabilities(manifest []string, opts GenesisOpts) []string {
-	caps := append([]string(nil), manifest...)
+// capabilities, the ones its manifest data implies (its contracts, hardforks,
+// engine, family and tx types — see registry.Manifest.DerivedCapabilities),
+// "ws" (composed nodes always serve a WebSocket endpoint), a delayed-<fork>
+// marker per fork moved off genesis, and whatever the caller declared for its
+// overlay.
+//
+// The derived ones are what let a case ask for what it needs — a govMinter, the
+// boho fork — instead of naming the chain it was written on. The chain's name
+// is not one of them on purpose: a case that gates on a name has to be edited
+// to meet a second chain, which is the thing being removed.
+func networkCapabilities(m registry.Manifest, opts GenesisOpts) []string {
+	caps := append([]string(nil), m.Capabilities...)
+	caps = append(caps, m.DerivedCapabilities()...)
 	caps = append(caps, "ws")
 	for _, key := range slices.Sorted(maps.Keys(opts.Overrides)) {
 		fork, ok := strings.CutSuffix(key, delayedForkSuffix)
