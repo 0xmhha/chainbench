@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "token-balance-readable",
   "description": "RT-F-1-02 — NativeCoinAdapter.balanceOf == eth_getBalance (원본 regression/system-contracts/02-test-balance-of)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

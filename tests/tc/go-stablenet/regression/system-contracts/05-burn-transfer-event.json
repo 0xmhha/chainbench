@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "burn-transfer-event",
   "description": "RT-F-1-05 — Burn 실행 시 Transfer(account → 0x0) 이벤트 발생 (원본 regression/system-contracts/05-test-burn-transfer-event)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

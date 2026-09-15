@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "direct-blacklist-call-rejected",
   "description": "RT-F-5-05 — 비멤버가 AccountManager.blacklist 직접 호출 → revert (원본 regression/system-contracts/20-test-direct-blacklist-rejected)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager"
   ],
   "env": {
     "extends": "stablenet-bp4",

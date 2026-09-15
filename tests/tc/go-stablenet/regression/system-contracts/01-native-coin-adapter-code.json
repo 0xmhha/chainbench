@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "native-coin-adapter-code",
   "description": "RT-F-1-01 — NativeCoinAdapter.transfer → 기본 코인 전송과 동일 (원본 regression/system-contracts/01-test-native-transfer)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "mint-transfer-event",
   "description": "RT-F-1-04 — Mint 실행 시 Transfer(0x0 → beneficiary) 이벤트 발생 (원본 regression/system-contracts/04-test-mint-transfer-event)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

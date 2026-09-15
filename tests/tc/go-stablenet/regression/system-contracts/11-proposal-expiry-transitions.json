@@ -3,10 +3,10 @@
   "kind": "case",
   "id": "proposal-expiry-transitions",
   "description": "RT-F-3-06 — proposal expiry 초과 → Expired 상태 전환 → execute 불가 (원본 regression/system-contracts/11-test-proposal-expiry)",
-  "applicableChains": "stablenet",
   "requires": [
     "rpc",
-    "short-expiry"
+    "short-expiry",
+    "contract:govValidator"
   ],
   "env": {
     "extends": "stablenet-bp4",

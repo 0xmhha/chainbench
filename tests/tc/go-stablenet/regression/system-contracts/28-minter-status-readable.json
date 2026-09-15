@@ -2,9 +2,9 @@
   "schemaVersion": "2",
   "kind": "case",
   "id": "minter-status-readable",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

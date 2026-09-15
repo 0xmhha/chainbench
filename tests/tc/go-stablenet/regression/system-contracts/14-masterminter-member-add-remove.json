@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "masterminter-member-add-remove",
   "description": "RT-F-4-03 — GovMasterMinter 자체 멤버 추가/제거 (proposeAddMember, proposeRemoveMember) (원본 regression/system-contracts/14-test-masterminter-self-member)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMasterMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

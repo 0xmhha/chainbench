@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "non-member-configure-minter-rejected",
   "description": "RT-F-4-04 — 비멤버 계정의 GovMasterMinter.proposeConfigureMinter 호출 거부 (원본 regression/system-contracts/15-test-non-member-rejected)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMasterMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

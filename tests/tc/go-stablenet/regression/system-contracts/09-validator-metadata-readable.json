@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "validator-metadata-readable",
   "description": "RT-F-3-04 — validatorList() + validatorToOperator(v) + validatorToBlsKey(v) 다중 호출 (원본 regression/system-contracts/09-test-validator-metadata)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govValidator"
   ],
   "env": {
     "extends": "stablenet-bp4",

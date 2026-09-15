@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "mint-proposal-executes",
   "description": "RT-F-2-01 — 코인 발행: proposeMint(proofData) → 승인 → execute (원본 regression/system-contracts/06-test-mint-proposal)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

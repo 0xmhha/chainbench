@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "configure-minter-proposal-executes",
   "description": "RT-F-4-01 — GovMasterMinter.proposeConfigureMinter(address, uint256) → 승인 → execute (원본 regression/system-contracts/12-test-add-minter)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMasterMinter",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

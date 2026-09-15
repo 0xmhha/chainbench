@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "authorized-account-added-event",
   "description": "RT-F-5-08 — AuthorizedAccountAdded 이벤트 (원본 regression/system-contracts/23-test-authorized-account-added-event)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

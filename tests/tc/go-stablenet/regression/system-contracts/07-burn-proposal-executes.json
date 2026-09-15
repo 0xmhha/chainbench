@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "burn-proposal-executes",
   "description": "RT-F-2-02 — 코인 소각: proposeBurn(proofData) payable → 승인 → execute (원본 regression/system-contracts/07-test-burn-proposal)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

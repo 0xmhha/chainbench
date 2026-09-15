@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "quorum-deficient-stays-voting",
   "description": "RT-F-2-03 — quorum 미달 → proposal 상태 Voting 유지, 발행 미실행 (원본 regression/system-contracts/08-test-quorum-deficient)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMinter"
   ],
   "env": {
     "extends": "stablenet-bp4",

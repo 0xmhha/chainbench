@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "unauthorize-proposal-executes",
   "description": "f5-04-unauthorize (원본 regression/system-contracts/19-test-unauthorize)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

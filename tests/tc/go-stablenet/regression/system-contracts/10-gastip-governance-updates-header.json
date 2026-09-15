@@ -3,9 +3,9 @@
   "kind": "case",
   "id": "gastip-governance-updates-header",
   "description": "RT-B-06 — GasTip 거버넌스 변경 → 블록 헤더 WBFTExtra.GasTip 반영 검증 + 원복 (원본 regression/wbft/06-test-gastip-header-sync)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govValidator"
   ],
   "env": {
     "extends": "stablenet-bp4",

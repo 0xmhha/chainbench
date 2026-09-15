@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "remove-minter-executes",
   "description": "RT-F-4-02 — GovMasterMinter.proposeRemoveMinter(address) → 승인 → execute (원본 regression/system-contracts/13-test-remove-minter)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:govMasterMinter",
+    "contract:nativeCoinAdapter"
   ],
   "env": {
     "extends": "stablenet-bp4",

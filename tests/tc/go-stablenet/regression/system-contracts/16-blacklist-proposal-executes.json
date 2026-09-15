@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "blacklist-proposal-executes",
   "description": "RT-F-5-01 — GovCouncil blacklist proposal → execute → isBlacklisted == true (원본 regression/system-contracts/16-test-blacklist)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",

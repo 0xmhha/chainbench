@@ -3,9 +3,10 @@
   "kind": "case",
   "id": "authorize-proposal-executes",
   "description": "RT-F-5-03 — GovCouncil authorized account proposal → execute → isAuthorized == true (원본 regression/system-contracts/18-test-authorize)",
-  "applicableChains": "stablenet",
   "requires": [
-    "rpc"
+    "rpc",
+    "contract:accountManager",
+    "contract:govCouncil"
   ],
   "env": {
     "extends": "stablenet-bp4",
