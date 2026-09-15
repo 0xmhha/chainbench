@@ -63,6 +63,7 @@ func NewRun() *cobra.Command {
 		docker          bool
 		attach          bool
 		planOnly        bool
+		envRef          string
 		sf              resourcecmd.ServerFlags
 	)
 	cmd := &cobra.Command{
@@ -89,7 +90,7 @@ func NewRun() *cobra.Command {
 				return fmt.Errorf("run: provide --workspace-dir <dir> (compose the network the specs declare), --workspace-dir <dir> --attach (run against the one it already composed), or --rpc <url> (attach to a running one)")
 			}
 			in := app.RunSuiteIn{
-				SpecPaths: args, DataDir: workspaceDir, Chain: chain,
+				SpecPaths: args, DataDir: workspaceDir, Chain: chain, Env: envRef,
 				Binary: binary, Server: sf.Ref(), Docker: docker, KeepUp: keepUp, WaitBlocks: waitBlocks,
 				ChainID: chainID, NetworkID: networkID, LaunchOpts: launchOpts,
 				NodeMonitorTimeout: nodeMonitorT,
@@ -127,6 +128,7 @@ func NewRun() *cobra.Command {
 	cmd.Flags().StringVar(&chain, "chain", "", "chain id (e.g. stablenet); required to attach, with --workspace-dir it must agree with what the specs declare and may be omitted")
 	cmd.Flags().StringVar(&workspaceDir, "workspace-dir", "", "compose: workspace where the network the specs declare is set up, then run against it")
 	cmd.Flags().StringVar(&workspaceConfig, "workspace-config", "", "compose: environment file owning the target dataRoot and its purpose directories; the same DSL runs across targets by swapping this file")
+	cmd.Flags().StringVar(&envRef, "env", "", "compose: run every case on this chain declaration instead of the one it names (an env id, or a path to an env file); what a case overrode is kept")
 	cmd.Flags().BoolVar(&planOnly, "plan", false, "compose: print the network the specs and flags resolve to, then stop without composing it")
 	cmd.Flags().BoolVar(&keepUp, "keep-up", false, "compose: leave the network running after the run")
 	cmd.Flags().Uint64Var(&waitBlocks, "wait-blocks", 0, "compose: wait until the head reaches this height before running")

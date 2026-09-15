@@ -85,6 +85,14 @@ type RunSuiteIn struct {
 	// endpoints sync slowly) raises it so the gate does not terminate a network
 	// that is merely still forming.
 	NodeMonitorTimeout time.Duration
+	// Env, when set, moves every case onto that chain declaration instead of
+	// the one it names. It is an env id, or a path to an env file.
+	//
+	// It is what lets one set of cases meet more than one chain: the steps say
+	// nothing about which mainnet they are on, so the only thing that has to
+	// change is which declaration they compose against. A case's own overrides
+	// survive the swap, because those belong to the test.
+	Env string
 	// OnPlan, when set, is handed the merged composition plan after the
 	// declaration and these overrides are resolved and before anything is
 	// written or launched. It is the seam the CLI prints through: a library
@@ -246,9 +254,12 @@ func resolveComposition(ctx context.Context, in RunSuiteIn) ([][]byte, []dsl.Spe
 		return nil, nil, composition{}, fmt.Errorf("engine: run suite: a workspace directory is required")
 	}
 	specs := in.SpecContent
+	if len(specs) > 0 && in.Env != "" {
+		return nil, nil, composition{}, fmt.Errorf("engine: run suite: --env moves a case onto another declaration, and inline spec content names no file to resolve it against")
+	}
 	if len(specs) == 0 {
 		var err error
-		if specs, err = dsl.ReadFiles(in.SpecPaths); err != nil {
+		if specs, err = dsl.ReadFilesWithEnv(in.SpecPaths, in.Env); err != nil {
 			return nil, nil, composition{}, err
 		}
 	}

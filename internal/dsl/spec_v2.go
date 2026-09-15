@@ -343,6 +343,61 @@ func InlineEnv(raw []byte, lookup func(id string) ([]byte, error)) ([]byte, erro
 	return raw, nil // inline env object (or malformed — ParseV2 reports it)
 }
 
+// UseEnv rewrites a case so it runs on the env named envID, keeping whatever
+// the case itself overrode.
+//
+// It is how one case runs on more than one chain without being edited. A case
+// names its network, and that name is the last mainnet-specific thing left in
+// the common cases; replacing it at read time is what lets the same steps meet
+// a different chain.
+//
+// The two reference forms are rewritten; an inline env object is refused. An
+// inline object IS the case's declaration, and swapping it would discard what
+// the case asked for with no way to tell which parts mattered. Such a case is
+// converted to the extends form first, which says out loud what it keeps.
+//
+// A non-case document, or a case with no env, passes through untouched.
+func UseEnv(raw []byte, envID string) ([]byte, error) {
+	if envID == "" || !IsV2(raw) {
+		return raw, nil
+	}
+	var probe struct {
+		Kind string          `json:"kind"`
+		ID   string          `json:"id"`
+		Env  json.RawMessage `json:"env"`
+	}
+	if err := json.Unmarshal(raw, &probe); err != nil {
+		return nil, fmt.Errorf("dsl: use env: %w", err)
+	}
+	if probe.Kind != KindCase || len(probe.Env) == 0 {
+		return raw, nil
+	}
+	var id string
+	if json.Unmarshal(probe.Env, &id) == nil && id != "" {
+		return replaceEnv(raw, mustQuote(envID))
+	}
+	over, err := objectOf(probe.Env, "the case's env")
+	if err != nil {
+		return nil, err
+	}
+	if _, ok := over["extends"]; !ok {
+		return nil, fmt.Errorf("dsl: case %s declares its env inline, so it cannot be moved onto env %q — give it \"extends\" and keep only what differs", probe.ID, envID)
+	}
+	over["extends"] = envID
+	merged, err := json.Marshal(over)
+	if err != nil {
+		return nil, fmt.Errorf("dsl: use env %q: %w", envID, err)
+	}
+	return replaceEnv(raw, merged)
+}
+
+// mustQuote renders a string as a JSON scalar. The input is an env id that has
+// already round-tripped through the resolver, so encoding cannot fail.
+func mustQuote(s string) []byte {
+	b, _ := json.Marshal(s)
+	return b
+}
+
 // resolveEnv looks up a canonical env by id, requiring a resolver.
 func resolveEnv(id string, lookup func(id string) ([]byte, error)) ([]byte, error) {
 	if lookup == nil {
