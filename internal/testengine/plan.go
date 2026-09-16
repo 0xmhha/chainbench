@@ -35,6 +35,10 @@ type ComposePlan struct {
 	Workspace string `json:"workspace"`
 	// Target says where the nodes run: this machine, or a server set entry.
 	Target string `json:"target"`
+	// Placement is the value Target was rendered from. It is kept beside the
+	// phrase because a phrase cannot be compared: a verify holds the plan
+	// against what the workspace recorded, and the workspace records the value.
+	Placement resource.Spec `json:"placement,omitempty"`
 	// Binary is the node executable every node runs unless its table row names
 	// another; Binaries maps those per-node names to what they resolved to.
 	Binary   string            `json:"binary,omitempty"`
@@ -211,6 +215,7 @@ func planOf(c composition, chain string) ComposePlan {
 		Chain:     up.Chain,
 		Workspace: up.DataDir,
 		Target:    describeTarget(up),
+		Placement: up.Target,
 		Binary:    up.Binary,
 		Binaries:  up.Binaries,
 		Nodes:     planNodes(up),

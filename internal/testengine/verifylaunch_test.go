@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
 	"github.com/0xmhha/chainbench/internal/testengine"
 )
 
@@ -145,5 +146,56 @@ func TestVerifyLaunched_SaysNothingAboutAHandoff(t *testing.T) {
 	p.Handoff = &testengine.PlanHandoff{Profile: "profiles/p.yaml"}
 	if got := testengine.VerifyLaunched(p, recorded()); len(got) != 0 {
 		t.Fatalf("a handoff reported %v", got)
+	}
+}
+
+// TestVerifyLaunched_CatchesAWorkspaceComposedWithAnotherBinary is the reuse
+// case. A workspace is composed once and run against many times, so the plan is
+// this run's and the record may be an earlier run's. A network built from
+// another binary answers every RPC the suite asks and answers it about a
+// different program.
+func TestVerifyLaunched_CatchesAWorkspaceComposedWithAnotherBinary(t *testing.T) {
+	p := planFor()
+	p.Binary = "/b/gstable"
+	p.From = map[testengine.PlanField]testengine.PlanSource{
+		testengine.FieldBinary: testengine.SourceCommand,
+	}
+
+	st := recorded(bp(1), bp(2), en(3))
+	st.Binary = "/b/gstable"
+	if got := testengine.VerifyLaunched(p, st); len(got) != 0 {
+		t.Fatalf("the same binary must not be a mismatch: %v", got)
+	}
+
+	st.Binary = "/b/gwemix"
+	got := testengine.VerifyLaunched(p, st)
+	if len(got) != 1 {
+		t.Fatalf("mismatches = %v", got)
+	}
+	if !strings.Contains(got[0].String(), "gwemix") || !strings.Contains(got[0].String(), "gstable") {
+		t.Errorf("the mismatch must name both binaries: %s", got[0])
+	}
+	if !strings.Contains(got[0].String(), string(testengine.SourceCommand)) {
+		t.Errorf("the mismatch must name who asked for the binary: %s", got[0])
+	}
+}
+
+// TestVerifyLaunched_CatchesNodesOnAnotherMachine is the same hole one field
+// over: the declaration places the network, and a workspace composed under a
+// different placement holds nodes somewhere else entirely.
+func TestVerifyLaunched_CatchesNodesOnAnotherMachine(t *testing.T) {
+	p := planFor()
+	p.Placement = resource.Spec{Host: "a.example", User: "ops", DataRoot: "/data/net1"}
+
+	st := recorded(bp(1), bp(2), en(3))
+	st.Target = p.Placement
+	if got := testengine.VerifyLaunched(p, st); len(got) != 0 {
+		t.Fatalf("the same placement must not be a mismatch: %v", got)
+	}
+
+	st.Target = resource.Spec{Host: "b.example", User: "ops", DataRoot: "/data/net1"}
+	got := testengine.VerifyLaunched(p, st)
+	if len(got) != 1 || !strings.Contains(got[0].String(), "b.example") {
+		t.Fatalf("mismatches = %v", got)
 	}
 }

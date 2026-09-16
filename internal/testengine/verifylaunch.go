@@ -18,6 +18,7 @@ import (
 
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // LaunchMismatch is one thing the plan asked for that the launched network
@@ -46,6 +47,11 @@ func (m LaunchMismatch) String() string {
 // declaration asked for that never reached an argv is invisible everywhere
 // else.
 //
+// The binary and the placement are in that same class and were missing. A
+// workspace is reused, so the plan is this run's and the record may be an
+// earlier run's: a network composed with another binary, or on another machine,
+// answers the suite happily and answers it about something else.
+//
 // A handoff plans no layout of its own, so there is nothing here to hold it to.
 func VerifyLaunched(plan ComposePlan, st chainsetup.State) []LaunchMismatch {
 	if plan.Handoff != nil {
@@ -54,6 +60,18 @@ func VerifyLaunched(plan ComposePlan, st chainsetup.State) []LaunchMismatch {
 	var out []LaunchMismatch
 	if st.Chain != plan.Chain {
 		out = append(out, LaunchMismatch{Want: "chain " + plan.Chain, Got: "chain " + st.Chain})
+	}
+	if plan.Binary != "" && st.Binary != plan.Binary {
+		out = append(out, LaunchMismatch{
+			Want: "binary " + plan.Binary + askedBy(plan, FieldBinary),
+			Got:  "binary " + st.Binary,
+		})
+	}
+	if plan.Placement != (resource.Spec{}) && st.Target != plan.Placement {
+		out = append(out, LaunchMismatch{
+			Want: "nodes on " + plan.Placement.Describe() + askedBy(plan, FieldTarget),
+			Got:  "nodes on " + st.Target.Describe(),
+		})
 	}
 	if plan.Keys.Dir != "" && st.KeysDir != plan.Keys.Dir {
 		out = append(out, LaunchMismatch{

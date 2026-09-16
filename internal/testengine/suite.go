@@ -335,6 +335,7 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if err != nil {
 		return RunSuiteOut{}, err
 	}
+	out := RunSuiteOut{}
 	// Announced before the first byte is written: the merge that produced this
 	// happened across three layers and none of them is the file the operator
 	// just named, so this is the only place the network can be seen whole
@@ -343,13 +344,17 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	if in.OnPlan != nil {
 		in.OnPlan(plan)
 	}
+	// And kept, so the question survives the run that answered it. A handoff
+	// composes from its profile into the same directory, so it is saved too.
+	if err := WritePlan(in.DataDir, plan); err != nil {
+		out.SetupSteps = append(out.SetupSteps, "plan: "+err.Error())
+	}
 	if in.ArtifactRoot == "" {
 		// The session belongs with the workspace it tested.
 		in.ArtifactRoot = filepath.Join(in.DataDir, "sessions")
 	}
 	chain := parsed[0].Chain.Name
 
-	out := RunSuiteOut{}
 	var net composed
 	if comp.handoff != nil {
 		ns, steps, teardown, err := handoffUp(ctx, *comp.handoff)
