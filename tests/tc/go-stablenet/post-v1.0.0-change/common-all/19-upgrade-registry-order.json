@@ -8,12 +8,17 @@
     "contract:govMinter"
   ],
   "env": {
-    "extends": "stablenet-bp4-boho",
+    "extends": "stablenet-bp4-boho-at-100",
     "capabilities": [
       "rpc"
     ]
   },
   "steps": [
+    {
+      "do": "waitBlock",
+      "target": 100,
+      "timeout": "300s"
+    },
     {
       "do": "read",
       "method": "eth_getCode",

@@ -9,12 +9,17 @@
     "contract:govValidator"
   ],
   "env": {
-    "extends": "stablenet-bp4",
+    "extends": "stablenet-bp4-boho-at-100",
     "capabilities": [
       "rpc"
     ]
   },
   "steps": [
+    {
+      "do": "waitBlock",
+      "target": 99,
+      "timeout": "300s"
+    },
     {
       "compare": "NotEqual",
       "expect": "rpcCall",
