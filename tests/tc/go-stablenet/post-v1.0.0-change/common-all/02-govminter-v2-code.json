@@ -8,7 +8,7 @@
     "contract:govMinter"
   ],
   "env": {
-    "extends": "stablenet-bp4",
+    "extends": "stablenet-bp4-boho-at-10",
     "capabilities": [
       "rpc"
     ]

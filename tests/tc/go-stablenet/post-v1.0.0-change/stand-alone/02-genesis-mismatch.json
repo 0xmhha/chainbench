@@ -8,7 +8,7 @@
     "consensus",
     "process"
   ],
-  "env": "stablenet-bp4-default-mismatch",
+  "env": "stablenet-bp4",
   "steps": [
     {
       "do": "waitBlock",
@@ -22,11 +22,17 @@
     {
       "do": "swapNode",
       "on": "node4",
-      "binary": "mismatch",
       "purpose": "genesis-mismatch",
       "expect": "fail",
       "reason": "genesis",
-      "save": "mismatchEvidence"
+      "save": "mismatchEvidence",
+      "genesisOverlay": {
+        "alloc": {
+          "0x00000000000000000000000000000000000000ff": {
+            "balance": "0x1"
+          }
+        }
+      }
     },
     {
       "do": "readNodeLog",

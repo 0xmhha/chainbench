@@ -7,12 +7,7 @@
     "rpc",
     "contract:govMinter"
   ],
-  "env": {
-    "extends": "stablenet-bp4",
-    "capabilities": [
-      "rpc"
-    ]
-  },
+  "env": "stablenet-bp4-boho",
   "steps": [
     {
       "do": "read",

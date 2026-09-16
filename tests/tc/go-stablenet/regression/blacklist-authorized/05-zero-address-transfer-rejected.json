@@ -8,7 +8,7 @@
     "rpc"
   ],
   "env": {
-    "extends": "stablenet-bp4",
+    "extends": "stablenet-bp4-boho",
     "capabilities": [
       "rpc"
     ]
