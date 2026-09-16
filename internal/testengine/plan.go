@@ -19,6 +19,7 @@ import (
 	"github.com/0xmhha/chainbench/internal/chainsetup"
 	"github.com/0xmhha/chainbench/internal/consensus/upgrade"
 	"github.com/0xmhha/chainbench/internal/core/node"
+	"github.com/0xmhha/chainbench/internal/resource"
 )
 
 // ComposePlan is the network a run is about to compose, after the declaration
@@ -48,6 +49,10 @@ type ComposePlan struct {
 	// a knob that surprises them was set in one of these.
 	Launch map[string][]PlanKnob `json:"launch,omitempty"`
 	Config map[string][]string   `json:"config,omitempty"`
+
+	// From says who chose each value that could have come from more than one
+	// place. A handoff composes from its profile and leaves this empty.
+	From map[PlanField]PlanSource `json:"from,omitempty"`
 
 	// Handoff, when set, means this env composes a consensus handoff instead of
 	// a plain network, and the fields above that a handoff does not use are
@@ -94,27 +99,63 @@ type PlanGenesis struct {
 	Overlay string `json:"overlay,omitempty"`
 }
 
-// PlanKnob is one launch override and who asked for it.
+// PlanSource is where one value in the plan came from.
 //
-// The two sources arrive on different fields and are merged before anything
-// reads them, and after the merge a knob cannot say where it came from. That
-// matters at exactly one moment: a knob is missing from a node and someone has
-// to find the line that asked for it. The declaration is a file they can open;
-// the command is the line they just typed.
-type PlanKnob struct {
-	Knob string `json:"knob"`
-	// From is "declaration" or "command".
-	From string `json:"from"`
-}
+// Merging is silent, so after it a value cannot say who chose it. That matters
+// whenever someone has to go change the value: the declaration is a file they
+// can open, the command is the line they just typed, and a harness default is
+// neither — it is a value nobody asked for, which is the one a reader is most
+// likely to be surprised by.
+//
+// These name the same idea as nodeconfig.Layer, which orders the layers that
+// assemble one node's argv. They are a separate vocabulary because they answer
+// a different question: that one asks which layer wins for a knob, this one
+// asks who chose a value the plan shows, including values no argv ever carries
+// (the binary, the node counts, the target).
+type PlanSource string
 
-// Knob sources. The command is the layer that names no layer and wins over
-// every document, which is why telling them apart is worth a field.
 const (
-	KnobFromDeclaration = "declaration"
-	KnobFromCommand     = "command"
+	// SourceDeclaration is the merged document: the chain declaration plus the
+	// case's own overrides. A reader goes and edits a file.
+	SourceDeclaration PlanSource = "declaration"
+	// SourceCommand is the invocation. It names no layer and wins over every
+	// document. A reader goes and edits the line they typed.
+	SourceCommand PlanSource = "command"
+	// SourceHarness is a default this code chose because neither of the other
+	// two named the value. A reader has nothing to edit, which is exactly why
+	// the plan has to say so out loud.
+	SourceHarness PlanSource = "harness"
 )
 
-func (k PlanKnob) String() string { return k.Knob + " (" + k.From + ")" }
+// PlanField names one value of the plan that can come from more than one
+// source. Values with a single possible source are absent on purpose: a field
+// whose answer is always the same word says nothing.
+type PlanField string
+
+const (
+	FieldBinary     PlanField = "binary"
+	FieldTarget     PlanField = "target"
+	FieldNodesBP    PlanField = "nodes.bp"
+	FieldNodesEN    PlanField = "nodes.en"
+	FieldNodesPN    PlanField = "nodes.pn"
+	FieldKeysSource PlanField = "keys.source"
+	FieldKeysDir    PlanField = "keys.dir"
+)
+
+// planFields is the render order, which is the order the values appear above.
+var planFields = []PlanField{
+	FieldBinary, FieldTarget,
+	FieldNodesBP, FieldNodesEN, FieldNodesPN,
+	FieldKeysSource, FieldKeysDir,
+}
+
+// PlanKnob is one launch override and who asked for it.
+type PlanKnob struct {
+	Knob string     `json:"knob"`
+	From PlanSource `json:"from"`
+}
+
+func (k PlanKnob) String() string { return k.Knob + " (" + string(k.From) + ")" }
 
 // PlanHandoff is the upgrade form: two binaries and a profile, not a layout.
 //
@@ -182,6 +223,7 @@ func planOf(c composition, chain string) ComposePlan {
 			Hardforks: up.GenesisSet, Overlay: up.OverlayPath,
 		},
 		Config: up.ConfigSet,
+		From:   c.from,
 	}
 	if p.Keys.Source == "" {
 		p.Keys.Source = keySourceKeyPreset
@@ -201,11 +243,11 @@ func mergeScopes(scoped map[string][]string, all []string) map[string][]PlanKnob
 	out := make(map[string][]PlanKnob, len(scoped)+1)
 	for k, v := range scoped {
 		for _, knob := range v {
-			out[k] = append(out[k], PlanKnob{Knob: knob, From: KnobFromDeclaration})
+			out[k] = append(out[k], PlanKnob{Knob: knob, From: SourceDeclaration})
 		}
 	}
 	for _, knob := range all {
-		out[node.ScopeAll] = append(out[node.ScopeAll], PlanKnob{Knob: knob, From: KnobFromCommand})
+		out[node.ScopeAll] = append(out[node.ScopeAll], PlanKnob{Knob: knob, From: SourceCommand})
 	}
 	return out
 }
@@ -236,7 +278,18 @@ func planNodes(up *chainsetup.NetUpIn) PlanNodes {
 	return n
 }
 
-// describeTarget says where the nodes run in one phrase.
+// describeTarget says where the nodes will run.
+//
+// Two fields answer that and both have to be read. Server is the server-set
+// entry a command selected; Target is the placement a declaration named, and it
+// carries a host and data root of its own. Reading only Server printed "this
+// machine" for a case whose env.target sent every node to another host — a plan
+// that describes a different network than the one that launches, which is the
+// one thing this file exists to prevent.
+//
+// What a placement reads as is resource's to say, not this row's: it owns the
+// locality rule, so no display site decides what counts as remote
+// (architecture-v2 §4).
 func describeTarget(up *chainsetup.NetUpIn) string {
 	var where string
 	switch {
@@ -246,6 +299,8 @@ func describeTarget(up *chainsetup.NetUpIn) string {
 		where = "server " + up.Server.Name
 	case up.Server.SetPath != "":
 		where = "the server set's default entry"
+	case up.Target != (resource.Spec{}):
+		where = up.Target.Describe()
 	default:
 		where = "this machine"
 	}
@@ -285,7 +340,26 @@ func (p ComposePlan) String() string {
 	row("genesis", p.Genesis.line())
 	writeKnobScopes(row, "launch", p.Launch)
 	writeScopes(row, "config", p.Config)
+	row("chosen by", p.chosenByLine())
 	return b.String()
+}
+
+// chosenByLine names the values the declaration did not choose.
+//
+// It lists only those, and the row disappears when there are none. A reader
+// scanning a plan already assumes the document decided; what they need told is
+// where that assumption is wrong, and a table that repeats "declaration" seven
+// times buries the two rows that do not say it.
+func (p ComposePlan) chosenByLine() string {
+	var parts []string
+	for _, f := range planFields {
+		src := p.From[f]
+		if src == "" || src == SourceDeclaration {
+			continue
+		}
+		parts = append(parts, string(f)+": "+string(src))
+	}
+	return strings.Join(parts, " · ")
 }
 
 func (p ComposePlan) binaryLine() string {

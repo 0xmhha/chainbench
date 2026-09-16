@@ -76,13 +76,13 @@ func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
 
 	if got := p.Launch["bp"]; len(got) != 1 || !strings.HasPrefix(got[0].Knob, "mine") {
 		t.Errorf("declared bp launch = %v", got)
-	} else if got[0].From != KnobFromDeclaration {
+	} else if got[0].From != SourceDeclaration {
 		t.Errorf("the bp knob came from the declaration, not %q", got[0].From)
 	}
 	var all []string
 	for _, k := range p.Launch["all"] {
 		all = append(all, k.Knob)
-		if k.From != KnobFromCommand {
+		if k.From != SourceCommand {
 			t.Errorf("%q landed in the all scope from the command, not %q", k.Knob, k.From)
 		}
 	}
@@ -202,5 +202,89 @@ func TestPlan_HandoffSurvivesAnUnreadableProfile(t *testing.T) {
 	}
 	if got := p.String(); strings.Contains(got, "producers") {
 		t.Errorf("an unknown size must be omitted, not printed as zero:\n%s", got)
+	}
+}
+
+// TestPlan_NamesWhoChoseEachValue walks one value through all three sources.
+//
+// The merge is the thing that loses provenance, so each case differs only in
+// which layer names the value and asserts that the plan still knows. A value
+// nobody named is the case worth holding hardest: a harness default is the one
+// a reader cannot find by grepping their own files.
+func TestPlan_NamesWhoChoseEachValue(t *testing.T) {
+	const bare = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet"}`
+	const declared = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"topology":{"bp":2},
+	  "target":"/srv/net1","keys":{"nodekeys":{"ref":"keys/preset","source":"keyPreset"}}}`
+
+	for _, tc := range []struct {
+		name  string
+		env   string
+		in    RunSuiteIn
+		field PlanField
+		want  PlanSource
+	}{
+		{"binary from the command", declared, RunSuiteIn{Binary: "/bin/gstable"}, FieldBinary, SourceCommand},
+		{"binary from the declaration", declared, RunSuiteIn{}, FieldBinary, SourceDeclaration},
+		{"binary from the chain manifest", bare, RunSuiteIn{}, FieldBinary, SourceHarness},
+
+		{"bp from the command", declared, RunSuiteIn{BPCount: 7}, FieldNodesBP, SourceCommand},
+		{"bp from the declaration", declared, RunSuiteIn{}, FieldNodesBP, SourceDeclaration},
+		{"bp from the harness default", bare, RunSuiteIn{}, FieldNodesBP, SourceHarness},
+
+		{"keys dir from the command", declared, RunSuiteIn{KeysDir: "/k"}, FieldKeysDir, SourceCommand},
+		{"keys dir from the declaration", declared, RunSuiteIn{}, FieldKeysDir, SourceDeclaration},
+		{"keys dir from the harness default", bare, RunSuiteIn{}, FieldKeysDir, SourceHarness},
+
+		{"keys source from the command", declared, RunSuiteIn{KeysSource: "generate"}, FieldKeysSource, SourceCommand},
+		{"keys source from the declaration", declared, RunSuiteIn{}, FieldKeysSource, SourceDeclaration},
+		{"keys source from the harness default", bare, RunSuiteIn{}, FieldKeysSource, SourceHarness},
+
+		{"target from the declaration", declared, RunSuiteIn{}, FieldTarget, SourceDeclaration},
+		{"target from the harness default", bare, RunSuiteIn{}, FieldTarget, SourceHarness},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p := planFor(t, tc.env, tc.in)
+			if got := p.From[tc.field]; got != tc.want {
+				t.Fatalf("%s was chosen by %q, want %q", tc.field, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose keeps the rendered row short
+// enough to read. Listing every field would put five words a reader already
+// assumes in front of the one they need.
+func TestPlan_SaysOnlyWhatTheDeclarationDidNotChoose(t *testing.T) {
+	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"topology":{"bp":2},
+	  "keys":{"nodekeys":{"ref":"keys/preset","source":"keyPreset"}}}`
+	line := planFor(t, env, RunSuiteIn{}).chosenByLine()
+
+	if strings.Contains(line, string(FieldBinary)) || strings.Contains(line, string(FieldKeysDir)) {
+		t.Errorf("the declaration chose the binary and the keys, so the row must not mention them: %q", line)
+	}
+	// Nothing named a target, and that is exactly what the row is for.
+	if !strings.Contains(line, string(FieldTarget)+": "+string(SourceHarness)) {
+		t.Errorf("the harness chose the target and the row must say so: %q", line)
+	}
+}
+
+// TestPlan_ATargetTheDeclarationNamedIsShown is the defect this found: the
+// target row read the command's server selection alone, so a case whose
+// env.target sent every node to another host printed "this machine". A plan
+// that describes a different network than the one that launches is worse than
+// no plan.
+func TestPlan_ATargetTheDeclarationNamedIsShown(t *testing.T) {
+	const env = `{"schemaVersion":"2","kind":"env","id":"e","chain":"stablenet",
+	  "binaries":{"default":"gstable"},"topology":{"bp":2},
+	  "target":"ops@host.example:/data/net1"}`
+	p := planFor(t, env, RunSuiteIn{})
+
+	if strings.Contains(p.Target, "this machine") {
+		t.Fatalf("the nodes run on another host, the plan says %q", p.Target)
+	}
+	if !strings.Contains(p.Target, "host.example") || !strings.Contains(p.Target, "/data/net1") {
+		t.Errorf("the target must name the host and the root it was given: %q", p.Target)
 	}
 }

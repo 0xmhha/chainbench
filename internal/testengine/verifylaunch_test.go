@@ -86,8 +86,8 @@ func TestVerifyLaunched_AutoSizedBPIsAFloor(t *testing.T) {
 func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 	p := planFor()
 	p.Launch = map[string][]testengine.PlanKnob{
-		node.ScopeAll: {{Knob: "nodiscover", From: testengine.KnobFromCommand}},
-		"bp":          {{Knob: "mine", From: testengine.KnobFromDeclaration}},
+		node.ScopeAll: {{Knob: "nodiscover", From: testengine.SourceCommand}},
+		"bp":          {{Knob: "mine", From: testengine.SourceDeclaration}},
 	}
 
 	full := recorded(
@@ -113,7 +113,7 @@ func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 		t.Errorf("the mismatch must name the node and the knob: %s", got[0])
 	}
 	// Whoever reads this has to go change something, so it says where to go.
-	if !strings.Contains(got[0].String(), testengine.KnobFromDeclaration) {
+	if !strings.Contains(got[0].String(), string(testengine.SourceDeclaration)) {
 		t.Errorf("the mismatch must name who asked for the knob: %s", got[0])
 	}
 }
@@ -124,8 +124,8 @@ func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 func TestVerifyLaunched_AKnobIsFoundByItsLastSegment(t *testing.T) {
 	p := planFor()
 	p.Launch = map[string][]testengine.PlanKnob{node.ScopeAll: {
-		{Knob: "chain.networkid=8283", From: testengine.KnobFromCommand},
-		{Knob: "rpc.allow-unprotected-txs", From: testengine.KnobFromDeclaration},
+		{Knob: "chain.networkid=8283", From: testengine.SourceCommand},
+		{Knob: "rpc.allow-unprotected-txs", From: testengine.SourceDeclaration},
 	}}
 
 	st := recorded(

@@ -93,11 +93,29 @@ func expand(s string) string {
 	})
 }
 
+// countFrom records that the declaration asked for a node count.
+//
+// A count left at zero records nothing. Zero means the role is absent, and
+// nobody chose that — a later branch may still fill it, and that branch says so
+// itself. Recording zero as a harness choice put two rows nobody asked about in
+// front of every reader.
+func countFrom(from map[PlanField]PlanSource, f PlanField, count int) {
+	if count > 0 {
+		from[f] = SourceDeclaration
+	}
+}
+
 // composition is what one suite composes: a single-binary network through
 // the workspace steps, or a mixed-binary handoff. Exactly one is set.
+//
+// from records who chose each value that had more than one candidate. It is
+// filled here rather than derived later because only this function sees the
+// candidates: once the merge is done, a value that came from the command and
+// one that came from the document are the same string.
 type composition struct {
 	up      *chainsetup.NetUpIn
 	handoff *upgrade.HandoffInputs
+	from    map[PlanField]PlanSource
 }
 
 // compositionOf reads the network a spec declares and applies the caller's
@@ -108,17 +126,29 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	if in.Chain != "" && in.Chain != chain {
 		return composition{}, fmt.Errorf("the request names chain %q but the spec declares %q", in.Chain, chain)
 	}
+	from := map[PlanField]PlanSource{}
 	keysDir := in.KeysDir
 	keysSource := in.KeysSource
+	if keysSource != "" {
+		from[FieldKeysSource] = SourceCommand
+	}
+	if keysDir != "" {
+		from[FieldKeysDir] = SourceCommand
+	}
 	keysValidators := 0
 	if k := spec.EnvKeys; k != nil {
-		if keysSource == "" {
+		if keysSource == "" && k.Source != "" {
 			keysSource = k.Source
+			from[FieldKeysSource] = SourceDeclaration
 		}
-		if keysDir == "" {
+		if keysDir == "" && k.Ref != "" {
 			keysDir = expand(k.Ref)
+			from[FieldKeysDir] = SourceDeclaration
 		}
 		keysValidators = k.Validators
+	}
+	if keysSource == "" {
+		from[FieldKeysSource] = SourceHarness
 	}
 	if keysDir == "" {
 		// A generated set — or a node table that pins per-node keys — goes to a
@@ -132,6 +162,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		} else {
 			keysDir = defaultKeysDir
 		}
+		from[FieldKeysDir] = SourceHarness
 	}
 	overlayPath, err := writeOverlay(ctx, in.DataDir, spec.Chain.GenesisOverlay)
 	if err != nil {
@@ -171,8 +202,10 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	}
 
 	binary := in.Binary
+	from[FieldBinary] = SourceCommand
 	if binary == "" {
 		binary = expand(spec.Chain.Binary)
+		from[FieldBinary] = SourceDeclaration
 	}
 	if binary == "" {
 		// With a node table but no single binary, launch falls back per node to
@@ -180,6 +213,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		binary = topoBinary
 	}
 	if binary == "" {
+		from[FieldBinary] = SourceHarness
 		// Neither the run nor the declaration named one, so the chain does. A
 		// definition that repeats the chain's own name for its binary is how
 		// one binary came to be spelled two ways across the specs; leaving it
@@ -202,11 +236,15 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 		if err != nil {
 			return composition{}, err
 		}
+		countFrom(from, FieldNodesBP, validators)
+		countFrom(from, FieldNodesEN, endpoints)
+		countFrom(from, FieldNodesPN, proxies)
 		// An explicit --bp is a named count: it turns dynamic sizing off rather
 		// than being filled over.
 		if in.BPCount > 0 {
 			validators = in.BPCount
 			autoBP = false
+			from[FieldNodesBP] = SourceCommand
 		}
 		if autoBP {
 			// The unified model's default shape: one pn (the discovery hub on the
@@ -214,14 +252,20 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			// fills the rest with validators once it knows the server count.
 			if proxies == 0 {
 				proxies = 1
+				from[FieldNodesPN] = SourceHarness
 			}
 			if endpoints == 0 {
 				endpoints = 1
+				from[FieldNodesEN] = SourceHarness
 			}
 		} else if validators <= 0 {
 			validators = suiteDefaultValidators
+			from[FieldNodesBP] = SourceHarness
 		}
 	}
+	// A node table is not recorded here: it names every node, and the nodes row
+	// already prints "declared per node". Saying it twice is not saying it
+	// better.
 	// The request's flat launch opts and the network id join the "all" scope;
 	// the env's scoped launch (per role or node) travels in LaunchScopedSet.
 	launch := append([]string(nil), in.LaunchOpts...)
@@ -257,12 +301,19 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 	// server-set entry, or an ssh host). It fed only the reuse fingerprint
 	// before, so a declared target shifted the key without moving the nodes;
 	// thread it to the composition so it actually places them.
+	from[FieldTarget] = SourceHarness
+	if in.Server.All || in.Server.Name != "" || in.Server.SetPath != "" || in.Docker {
+		from[FieldTarget] = SourceCommand
+	}
 	if spec.Placement != "" {
 		tgt, perr := resource.Parse(spec.Placement)
 		if perr != nil {
 			return composition{}, fmt.Errorf("testengine: env target %q: %w", spec.Placement, perr)
 		}
 		up.Target = tgt
+		if from[FieldTarget] == SourceHarness {
+			from[FieldTarget] = SourceDeclaration
+		}
 	}
 	// The workspace-config owns the target data root (it moved off the server
 	// set). Setting it here means `new` records it and every later step — and a
@@ -287,7 +338,7 @@ func compositionOf(ctx context.Context, spec dsl.Spec, in RunSuiteIn) (compositi
 			return composition{}, err
 		}
 	}
-	return composition{up: up}, nil
+	return composition{up: up, from: from}, nil
 }
 
 // applyExistingInputs expands a named bundle of inputs that are already on the

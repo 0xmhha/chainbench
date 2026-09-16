@@ -56,7 +56,10 @@ func VerifyLaunched(plan ComposePlan, st chainsetup.State) []LaunchMismatch {
 		out = append(out, LaunchMismatch{Want: "chain " + plan.Chain, Got: "chain " + st.Chain})
 	}
 	if plan.Keys.Dir != "" && st.KeysDir != plan.Keys.Dir {
-		out = append(out, LaunchMismatch{Want: "keys " + plan.Keys.Dir, Got: "keys " + st.KeysDir})
+		out = append(out, LaunchMismatch{
+			Want: "keys " + plan.Keys.Dir + askedBy(plan, FieldKeysDir),
+			Got:  "keys " + st.KeysDir,
+		})
 	}
 	out = append(out, roleCountMismatches(plan, st)...)
 	out = append(out, launchKnobMismatches(plan, st)...)
@@ -73,7 +76,7 @@ func roleCountMismatches(plan ComposePlan, st chainsetup.State) []LaunchMismatch
 		got[node.Role(n.Role)]++
 	}
 	var out []LaunchMismatch
-	add := func(role node.Role, want int) {
+	add := func(role node.Role, want int, f PlanField) {
 		have := got[role]
 		if want == have {
 			return
@@ -82,13 +85,13 @@ func roleCountMismatches(plan ComposePlan, st chainsetup.State) []LaunchMismatch
 			return
 		}
 		out = append(out, LaunchMismatch{
-			Want: fmt.Sprintf("%d %s", want, role),
+			Want: fmt.Sprintf("%d %s%s", want, role, askedBy(plan, f)),
 			Got:  fmt.Sprintf("%d", have),
 		})
 	}
-	add(node.RoleBP, plan.Nodes.BP)
-	add(node.RoleEN, plan.Nodes.EN)
-	add(node.RolePN, plan.Nodes.PN)
+	add(node.RoleBP, plan.Nodes.BP, FieldNodesBP)
+	add(node.RoleEN, plan.Nodes.EN, FieldNodesEN)
+	add(node.RolePN, plan.Nodes.PN, FieldNodesPN)
 	return out
 }
 
@@ -128,6 +131,20 @@ func launchKnobMismatches(plan ComposePlan, st chainsetup.State) []LaunchMismatc
 		}
 	}
 	return out
+}
+
+// askedBy is the phrase naming who chose a value, or "" when the plan does not
+// record a source for that field.
+//
+// A mismatch is read by someone who has to go change something, so it says
+// where to go. It stays silent rather than guessing: a wrong address sends them
+// to edit a file that says nothing about the value.
+func askedBy(plan ComposePlan, f PlanField) string {
+	src, ok := plan.From[f]
+	if !ok {
+		return ""
+	}
+	return ", asked by the " + string(src)
 }
 
 // scopeCovers reports whether a launch scope applies to a node.
