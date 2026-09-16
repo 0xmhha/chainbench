@@ -401,9 +401,16 @@ type ConfigProvenance struct {
 }
 
 // recordLaunchSet stores launch-argv overrides under a scope ("all", a role,
-// or "node<N>"), appending to what that scope already holds so repeated calls
-// accumulate. Each entry is validated as a launch override up front, so a bad
-// knob is refused where it is set rather than at argv assembly.
+// or "node<N>"). Each entry is validated as a launch override up front, so a
+// bad knob is refused where it is set rather than at argv assembly.
+//
+// A scope holds one entry per key. Setting a key it already has replaces that
+// entry where it stands rather than appending a second one: argv assembly is
+// last-write-wins, so two entries for one key mean the same node either way,
+// and the record is what says what was ASKED for. It used to append
+// unconditionally, so composing the same declaration twice over one workspace
+// wrote the knob twice and a workspace reused all week grew a line per run.
+// Replacing in place keeps the order a reader sees stable across runs.
 func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 	if len(sets) == 0 {
 		return nil
@@ -417,8 +424,34 @@ func (w *Workspace) recordLaunchSet(scope string, sets []string) error {
 	if w.state.LaunchSet == nil {
 		w.state.LaunchSet = map[string][]string{}
 	}
-	w.state.LaunchSet[scope] = append(w.state.LaunchSet[scope], sets...)
+	w.state.LaunchSet[scope] = holdOnePerKey(w.state.LaunchSet[scope], sets)
 	return nil
+}
+
+// holdOnePerKey folds new overrides into what a scope already holds, keeping
+// one entry per key. A key already there is replaced where it stands; a new one
+// is appended.
+//
+// An override is "key=value" or a bare key, and the key is the text before the
+// first "=" — the same split ParseOverrides makes, so the two agree on what
+// counts as one key. Replacing in place rather than appending keeps the order a
+// reader sees stable no matter how many times a workspace is recomposed.
+func holdOnePerKey(held, sets []string) []string {
+	at := make(map[string]int, len(held))
+	for i, kv := range held {
+		key, _, _ := strings.Cut(kv, "=")
+		at[key] = i
+	}
+	for _, kv := range sets {
+		key, _, _ := strings.Cut(kv, "=")
+		if j, ok := at[key]; ok {
+			held[j] = kv
+			continue
+		}
+		at[key] = len(held)
+		held = append(held, kv)
+	}
+	return held
 }
 
 // launchOverridesFor returns the launch-argv overrides for one node, folding the
@@ -433,8 +466,10 @@ func (w *Workspace) launchOverridesFor(role string, index int) []string {
 	return out
 }
 
-// recordConfigSet stores config overrides under a scope, appending to what that
-// scope already holds so repeated --set calls accumulate.
+// recordConfigSet stores config overrides under a scope, one entry per key, the
+// same way recordLaunchSet does and for the same reason: render is
+// last-write-wins, so a second entry for one key means the same node either way
+// and only makes the record grow every time the workspace is recomposed.
 //
 // Both halves are validated up front, so a bad override is refused where it is
 // set rather than at render. The scope was not checked at all before: a typo
@@ -460,7 +495,7 @@ func (w *Workspace) recordConfigSet(scope string, sets []string) error {
 	if w.state.ConfigSet == nil {
 		w.state.ConfigSet = map[string][]string{}
 	}
-	w.state.ConfigSet[scope] = append(w.state.ConfigSet[scope], sets...)
+	w.state.ConfigSet[scope] = holdOnePerKey(w.state.ConfigSet[scope], sets)
 	return nil
 }
 

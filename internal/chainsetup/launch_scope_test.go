@@ -80,3 +80,35 @@ func TestRecordLaunchSet_ValidatesTheKnobAndAccumulates(t *testing.T) {
 		t.Errorf("bp scope = %q, want mine,metrics", got)
 	}
 }
+
+// TestRecordLaunchSet_HoldsOneEntryPerKey.
+//
+// The record answers "what was asked for", and composing the same declaration
+// twice over one workspace asks for the same thing twice, not for two things.
+// It used to append unconditionally, so a workspace reused across runs grew a
+// duplicate line each time — harmless at argv assembly, which is
+// last-write-wins, and misleading in the one place meant to say what the run
+// was told to do. Measured on a workspace run three times: bp held
+// ["mine=true", "mine=true", "mine=true"].
+func TestRecordLaunchSet_HoldsOneEntryPerKey(t *testing.T) {
+	w := &Workspace{}
+	for i := 0; i < 3; i++ {
+		if err := w.recordLaunchSet("bp", []string{"mine=true", "nodiscover"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := w.state.LaunchSet["bp"]
+	if len(got) != 2 {
+		t.Fatalf("three identical requests recorded %v", got)
+	}
+
+	// A new value for a key it already holds replaces that entry where it
+	// stands, so the order a reader sees does not move under them.
+	if err := w.recordLaunchSet("bp", []string{"mine=false"}); err != nil {
+		t.Fatal(err)
+	}
+	got = w.state.LaunchSet["bp"]
+	if len(got) != 2 || got[0] != "mine=false" || got[1] != "nodiscover" {
+		t.Fatalf("after replacing mine: %v", got)
+	}
+}

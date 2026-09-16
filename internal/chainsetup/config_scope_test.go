@@ -83,3 +83,30 @@ func TestSortedScopes_OrdersMostGeneralFirst(t *testing.T) {
 		t.Errorf("sortedScopes = %q, want %q", got, want)
 	}
 }
+
+// TestRecordConfigSet_HoldsOneEntryPerKey is the same rule on the config side.
+//
+// Config overrides reach a node through the same fold and the same
+// last-write-wins render, so a repeated recompose grew the record here too. The
+// two records are read side by side; only one of them keeping its shape would
+// be worse than neither.
+func TestRecordConfigSet_HoldsOneEntryPerKey(t *testing.T) {
+	w := &Workspace{}
+	for i := 0; i < 3; i++ {
+		if err := w.recordConfigSet("bp", []string{"syncMode=full", "httpHost=127.0.0.1"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := w.state.ConfigSet["bp"]
+	if len(got) != 2 {
+		t.Fatalf("three identical requests recorded %v", got)
+	}
+
+	if err := w.recordConfigSet("bp", []string{"syncMode=snap"}); err != nil {
+		t.Fatal(err)
+	}
+	got = w.state.ConfigSet["bp"]
+	if len(got) != 2 || got[0] != "syncMode=snap" || got[1] != "httpHost=127.0.0.1" {
+		t.Fatalf("after replacing syncMode: %v", got)
+	}
+}
