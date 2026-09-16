@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/0xmhha/chainbench/internal/chains/external"
@@ -242,6 +243,38 @@ func (w workspaceNodes) Log(_ context.Context, n node.Node, maxBytes int) (strin
 	return string(buf[:read]), nil
 }
 
+// verifyAgainstPlan holds the launched network to the plan and refuses to test
+// one that is not it.
+//
+// Every other check in this package asks whether the declaration is coherent.
+// This is the only one that asks whether the network that came up is the one
+// described, which matters because the last word belongs to the command line:
+// an override naming no layer beats every document, so the merge can be right
+// and the nodes still run something else. A test against the wrong network
+// does not fail, it answers a question nobody asked.
+//
+// Reading the record rather than the in-memory state is deliberate: the record
+// is what a later reader sees, so a fact that never reached it is a fact the
+// run cannot show afterwards either.
+func verifyAgainstPlan(plan ComposePlan, dir string, out *RunSuiteOut) error {
+	ws, err := chainsetup.Open(dir, nil)
+	if err != nil {
+		// The compose error, if there is one, says more than this would.
+		return nil //nolint:nilerr // absence of a record is reported by the caller
+	}
+	bad := VerifyLaunched(plan, ws.State())
+	if len(bad) == 0 {
+		out.SetupSteps = append(out.SetupSteps, "verify: the launched network matches the plan")
+		return nil
+	}
+	lines := make([]string, 0, len(bad))
+	for _, m := range bad {
+		lines = append(lines, m.String())
+	}
+	out.SetupSteps = append(out.SetupSteps, "verify: "+strings.Join(lines, "; "))
+	return fmt.Errorf("engine: run suite: the launched network is not the one planned: %s", strings.Join(lines, "; "))
+}
+
 // resolveComposition is everything RunSuite does before it writes anything:
 // read the specs, parse them, refuse a set that cannot share one network, run
 // the pre-flight, and merge the declaration with the command's overrides.
@@ -306,8 +339,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 	// happened across three layers and none of them is the file the operator
 	// just named, so this is the only place the network can be seen whole
 	// while it is still cheap to stop.
+	plan := planOf(comp, parsed[0].Chain.Name)
 	if in.OnPlan != nil {
-		in.OnPlan(planOf(comp, parsed[0].Chain.Name))
+		in.OnPlan(plan)
 	}
 	if in.ArtifactRoot == "" {
 		// The session belongs with the workspace it tested.
@@ -327,6 +361,9 @@ func RunSuite(ctx context.Context, sd chainsetup.Deps, in RunSuiteIn) (RunSuiteO
 		net = composed{endpoints: handoffEndpoints(ns), caps: chainCaps(chain), teardown: teardown}
 	} else {
 		net, err = composeWorkspace(ctx, sd, *comp.up, &out, in.NodeMonitorTimeout)
+		if verr := verifyAgainstPlan(plan, comp.up.DataDir, &out); err == nil && verr != nil {
+			return out, verr
+		}
 		if err != nil {
 			return out, err
 		}
