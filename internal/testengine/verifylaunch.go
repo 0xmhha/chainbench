@@ -100,11 +100,15 @@ func roleCountMismatches(plan ComposePlan, st chainsetup.State) []LaunchMismatch
 // comparing values here would be comparing this package's idea of a spelling
 // against the one that actually assembles argv — two copies of one fact, which
 // is the thing this track keeps removing.
+//
+// The message names who asked for the knob. Whoever reads it has to go change
+// something, and the declaration and the command line are different places to
+// go.
 func launchKnobMismatches(plan ComposePlan, st chainsetup.State) []LaunchMismatch {
 	var out []LaunchMismatch
 	for _, scope := range sortedScopes(plan.Launch) {
 		for _, knob := range plan.Launch[scope] {
-			name := knobName(knob)
+			name := knobName(knob.Knob)
 			if name == "" {
 				continue
 			}
@@ -117,7 +121,7 @@ func launchKnobMismatches(plan ComposePlan, st chainsetup.State) []LaunchMismatc
 				}
 				out = append(out, LaunchMismatch{
 					Where: n.Label,
-					Want:  fmt.Sprintf("launch %s (scope %s)", knob, scope),
+					Want:  fmt.Sprintf("launch %s (scope %s, asked by the %s)", knob.Knob, scope, knob.From),
 					Got:   "an argv without it",
 				})
 			}
@@ -172,7 +176,8 @@ func argvNames(args []string) map[string]bool {
 	return out
 }
 
-func sortedScopes(m map[string][]string) []string {
+// sortedScopes orders scopes most general first, whatever the scope holds.
+func sortedScopes[T any](m map[string][]T) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
 		out = append(out, k)

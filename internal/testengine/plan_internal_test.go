@@ -74,12 +74,21 @@ func TestPlan_ShowsBothOverrideLayers(t *testing.T) {
 	  "config":{"node1":{"txpool.pricelimit":1}}}`
 	p := planFor(t, env, RunSuiteIn{LaunchOpts: []string{"nodiscover"}, NetworkID: 4242})
 
-	if got := p.Launch["bp"]; len(got) != 1 || !strings.HasPrefix(got[0], "mine") {
+	if got := p.Launch["bp"]; len(got) != 1 || !strings.HasPrefix(got[0].Knob, "mine") {
 		t.Errorf("declared bp launch = %v", got)
+	} else if got[0].From != KnobFromDeclaration {
+		t.Errorf("the bp knob came from the declaration, not %q", got[0].From)
 	}
-	all := strings.Join(p.Launch["all"], " ")
-	if !strings.Contains(all, "nodiscover") || !strings.Contains(all, "4242") {
-		t.Errorf("the command's opts must land in the all scope: %q", all)
+	var all []string
+	for _, k := range p.Launch["all"] {
+		all = append(all, k.Knob)
+		if k.From != KnobFromCommand {
+			t.Errorf("%q landed in the all scope from the command, not %q", k.Knob, k.From)
+		}
+	}
+	joined := strings.Join(all, " ")
+	if !strings.Contains(joined, "nodiscover") || !strings.Contains(joined, "4242") {
+		t.Errorf("the command's opts must land in the all scope: %q", joined)
 	}
 	if got := p.Config["node1"]; len(got) != 1 {
 		t.Errorf("declared config = %v", got)

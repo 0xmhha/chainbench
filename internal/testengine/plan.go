@@ -46,8 +46,8 @@ type ComposePlan struct {
 	// Launch and Config are the overrides that reach the nodes, by scope
 	// ("all", a role, or "node<N>"). They are what a reader most often wants:
 	// a knob that surprises them was set in one of these.
-	Launch map[string][]string `json:"launch,omitempty"`
-	Config map[string][]string `json:"config,omitempty"`
+	Launch map[string][]PlanKnob `json:"launch,omitempty"`
+	Config map[string][]string   `json:"config,omitempty"`
 
 	// Handoff, when set, means this env composes a consensus handoff instead of
 	// a plain network, and the fields above that a handoff does not use are
@@ -93,6 +93,28 @@ type PlanGenesis struct {
 	// Overlay is the rendered overlay file, when the declaration carried one.
 	Overlay string `json:"overlay,omitempty"`
 }
+
+// PlanKnob is one launch override and who asked for it.
+//
+// The two sources arrive on different fields and are merged before anything
+// reads them, and after the merge a knob cannot say where it came from. That
+// matters at exactly one moment: a knob is missing from a node and someone has
+// to find the line that asked for it. The declaration is a file they can open;
+// the command is the line they just typed.
+type PlanKnob struct {
+	Knob string `json:"knob"`
+	// From is "declaration" or "command".
+	From string `json:"from"`
+}
+
+// Knob sources. The command is the layer that names no layer and wins over
+// every document, which is why telling them apart is worth a field.
+const (
+	KnobFromDeclaration = "declaration"
+	KnobFromCommand     = "command"
+)
+
+func (k PlanKnob) String() string { return k.Knob + " (" + k.From + ")" }
 
 // PlanHandoff is the upgrade form: two binaries and a profile, not a layout.
 //
@@ -169,18 +191,21 @@ func planOf(c composition, chain string) ComposePlan {
 }
 
 // mergeScopes folds the flat "all"-scope list into the scoped map so a reader
-// sees one table. The flat list is what the command passed and the scoped map
-// is what the declaration asked for, and the command wins, so it goes last.
-func mergeScopes(scoped map[string][]string, all []string) map[string][]string {
+// sees one table, keeping which side each knob came from. The flat list is what
+// the command passed and the scoped map is what the declaration asked for, and
+// the command wins, so it goes last.
+func mergeScopes(scoped map[string][]string, all []string) map[string][]PlanKnob {
 	if len(scoped) == 0 && len(all) == 0 {
 		return nil
 	}
-	out := make(map[string][]string, len(scoped)+1)
+	out := make(map[string][]PlanKnob, len(scoped)+1)
 	for k, v := range scoped {
-		out[k] = append([]string(nil), v...)
+		for _, knob := range v {
+			out[k] = append(out[k], PlanKnob{Knob: knob, From: KnobFromDeclaration})
+		}
 	}
-	if len(all) > 0 {
-		out[node.ScopeAll] = append(out[node.ScopeAll], all...)
+	for _, knob := range all {
+		out[node.ScopeAll] = append(out[node.ScopeAll], PlanKnob{Knob: knob, From: KnobFromCommand})
 	}
 	return out
 }
@@ -258,7 +283,7 @@ func (p ComposePlan) String() string {
 	row("nodes", p.Nodes.line())
 	row("keys", p.Keys.line())
 	row("genesis", p.Genesis.line())
-	writeScopes(row, "launch", p.Launch)
+	writeKnobScopes(row, "launch", p.Launch)
 	writeScopes(row, "config", p.Config)
 	return b.String()
 }
@@ -320,6 +345,20 @@ func (g PlanGenesis) line() string {
 		s += ", overlay " + g.Overlay
 	}
 	return s
+}
+
+// writeKnobScopes prints the launch table, each knob with who asked for it.
+func writeKnobScopes(row func(string, string), label string, m map[string][]PlanKnob) {
+	if len(m) == 0 {
+		return
+	}
+	plain := make(map[string][]string, len(m))
+	for scope, knobs := range m {
+		for _, k := range knobs {
+			plain[scope] = append(plain[scope], k.String())
+		}
+	}
+	writeScopes(row, label, plain)
 }
 
 // writeScopes prints one line per scope, most general first, so the reader sees

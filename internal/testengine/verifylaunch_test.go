@@ -85,7 +85,10 @@ func TestVerifyLaunched_AutoSizedBPIsAFloor(t *testing.T) {
 // succeeded.
 func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 	p := planFor()
-	p.Launch = map[string][]string{node.ScopeAll: {"nodiscover"}, "bp": {"mine"}}
+	p.Launch = map[string][]testengine.PlanKnob{
+		node.ScopeAll: {{Knob: "nodiscover", From: testengine.KnobFromCommand}},
+		"bp":          {{Knob: "mine", From: testengine.KnobFromDeclaration}},
+	}
 
 	full := recorded(
 		bp(1, "--nodiscover", "--mine"),
@@ -109,6 +112,10 @@ func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 	if !strings.Contains(got[0].String(), "node2") || !strings.Contains(got[0].String(), "mine") {
 		t.Errorf("the mismatch must name the node and the knob: %s", got[0])
 	}
+	// Whoever reads this has to go change something, so it says where to go.
+	if !strings.Contains(got[0].String(), testengine.KnobFromDeclaration) {
+		t.Errorf("the mismatch must name who asked for the knob: %s", got[0])
+	}
 }
 
 // TestVerifyLaunched_AKnobIsFoundByItsLastSegment: a declaration writes a knob
@@ -116,7 +123,10 @@ func TestVerifyLaunched_CatchesAKnobThatNeverReachedArgv(t *testing.T) {
 // other, and the name they share is the last segment.
 func TestVerifyLaunched_AKnobIsFoundByItsLastSegment(t *testing.T) {
 	p := planFor()
-	p.Launch = map[string][]string{node.ScopeAll: {"chain.networkid=8283", "rpc.allow-unprotected-txs"}}
+	p.Launch = map[string][]testengine.PlanKnob{node.ScopeAll: {
+		{Knob: "chain.networkid=8283", From: testengine.KnobFromCommand},
+		{Knob: "rpc.allow-unprotected-txs", From: testengine.KnobFromDeclaration},
+	}}
 
 	st := recorded(
 		bp(1, "--networkid", "8283", "--rpc.allow-unprotected-txs"),
